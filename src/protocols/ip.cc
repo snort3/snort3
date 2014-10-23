@@ -71,7 +71,7 @@ void IpApi::set(const ip::IP6Hdr* h6)
 bool IpApi::set(const uint8_t* raw_ip_data)
 {
     const IP4Hdr* h4 = reinterpret_cast<const IP4Hdr*>(raw_ip_data);
-    if (h4->get_ver() == 4)
+    if (h4->ver() == 4)
     {
         set(h4);
         return true;
@@ -79,7 +79,7 @@ bool IpApi::set(const uint8_t* raw_ip_data)
 
     const IP6Hdr* h6 = reinterpret_cast<const IP6Hdr*>(raw_ip_data);
 
-    if (h6->get_ver() == 6)
+    if (h6->ver() == 6)
     {
         set(h6);
         return true;
@@ -116,10 +116,10 @@ uint16_t IpApi::off() const
 const uint8_t* IpApi::ip_data() const
 {
     if (ip4h)
-        return reinterpret_cast<const uint8_t*>(ip4h) + (ip4h->get_hlen() << 2);
+        return reinterpret_cast<const uint8_t*>(ip4h) + (ip4h->hlen());
 
     if (ip6h)
-        return reinterpret_cast<const uint8_t*>(ip6h) + IP6_HEADER_LEN;
+        return reinterpret_cast<const uint8_t*>(ip6h) + ip6h->hlen();
 
     return nullptr;
 }
@@ -149,7 +149,7 @@ uint16_t IpApi::dgram_len() const
 uint16_t IpApi::pay_len() const
 {
     if (ip4h)
-        return ip4h->len() - IP4_HEADER_LEN;
+        return ip4h->len() - ip4h->hlen();
 
     if (ip6h)
         return ip6h->len();

@@ -106,7 +106,7 @@ struct IP6Frag
     inline uint32_t id() const
     { return ntohl(ip6f_ident); }
 
-    inline uint8_t get_res() const
+    inline uint8_t res() const
     { return ip6f_reserved; }
 
 
@@ -145,24 +145,30 @@ struct IP6Hdr
     inline uint16_t len() const
     { return ntohs(ip6_payload_len); }
 
-
-    inline uint8_t get_ver() const
-    { return (uint8_t)(ntohl(ip6_vtf) >> 28); }
-
-    inline uint8_t get_next() const
+    /* Same function as ipv4 */
+    inline uint8_t proto() const
     { return ip6_next; }
 
-    inline uint8_t get_hop_lim() const
+    inline uint8_t next() const
+    { return ip6_next; }
+
+    inline uint8_t hop_lim() const
     { return ip6_hoplim; }
+
+    inline uint8_t ver() const
+    { return (uint8_t)(ntohl(ip6_vtf) >> 28); }
 
     inline uint16_t tos() const
     { return (uint16_t)((ntohl(ip6_vtf) & 0x0FF00000) >> 20); }
 
+    inline uint32_t flow() const
+    { return (uint16_t)((ntohl(ip6_vtf) & 0x000FFFFF) >> 20); }
+
 
 
     // becaise Snort expects this in terms of 32 bit words.
-    inline uint8_t get_hlen() const
-    { return IP6_HEADER_LEN / 4; }
+    inline uint8_t hlen() const
+    { return IP6_HEADER_LEN; }
 
     inline const snort_in6_addr* get_src() const
     { return &ip6_src; }
@@ -199,10 +205,14 @@ struct IP6Hdr
 
     /*  setters  */
     inline void set_len(uint16_t new_len)
-    { ip6_payload_len = new_len; }
+    { ip6_payload_len = htons(new_len); }
 
     inline void set_proto(uint8_t prot)
     { ip6_next = prot; }
+
+
+    inline void set_raw_len(uint16_t new_len)
+    { ip6_payload_len = new_len; }
 
 
     /* Access raw data */

@@ -355,7 +355,7 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         else if (!strcasecmp("ip_len", type))
         {
             if (p->has_ip())
-                TextLog_Print(csv_log, "%d", p->ptrs.ip_api.len() << 2);
+                TextLog_Print(csv_log, "%d", p->ptrs.ip_api.pay_len());
         }
         else if (!strcasecmp("dgm_len", type))
         {

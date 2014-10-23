@@ -294,7 +294,7 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         dsize = 0;
 
     if ( (tcph->th_flags & TH_URG) &&
-        ((dsize == 0) || ntohs(tcph->th_urp) > dsize) )
+        ((dsize == 0) || tcph->urp() > dsize) )
         codec_events::decoder_event(codec, DECODE_TCP_BAD_URP);
 
     // Now that we are returning true, set the tcp header
@@ -583,7 +583,7 @@ void TcpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
             ntohs(tcph->th_win), tcph->off() << 2);
 
     if((tcph->th_flags & TH_URG) != 0)
-        TextLog_Print(text_log, "UrgPtr: 0x%X", (uint16_t) ntohs(tcph->th_urp));
+        TextLog_Print(text_log, "UrgPtr: 0x%X", tcph->urp());
 
 
     /* dump the TCP options */

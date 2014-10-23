@@ -74,12 +74,11 @@ struct IP4Hdr
     uint32_t ip_dst;  /* dest IP */
 
     /* getters */
-    inline uint8_t get_hlen() const
-    { return ip_verhl & 0x0f; }
-//    { return (ip_verhl & 0x0f) << 2; } //FIXIT-M J return the actual length
+    inline uint8_t hlen() const
+    { return (ip_verhl & 0x0f) << 2; }
 
-    inline uint8_t get_ver() const
-    { return ((ip_verhl & 0xf0) >> 4); }
+    inline uint8_t ver() const
+    { return (ip_verhl >> 4); }
 
     inline uint8_t tos() const
     { return ip_tos; };
@@ -100,7 +99,10 @@ struct IP4Hdr
     { return ntohs(ip_id); }
 
     inline uint8_t get_opt_len() const
-    { return (get_hlen() << 2) - IP4_HEADER_LEN; }
+    { return hlen() - IP4_HEADER_LEN; }
+
+    inline uint16_t csum() const
+    { return ntohs(ip_csum); }
 
 
     /* booleans */
@@ -111,20 +113,10 @@ struct IP4Hdr
     { return ip_dst == IP4_BROADCAST; }
 
     inline bool has_options() const
-    { return get_hlen() > 5; }
+    { return hlen() > 20; }
 
-    /*  setters  */
-    inline void set_hlen(uint8_t value)
-    { ip_verhl = (ip_verhl & 0xf0) | (value & 0x0f); }
-
-    inline void set_ip_len(uint16_t value)
-    { ip_len = value; }
-
-    inline void set_proto(uint8_t prot)
-    { ip_proto = prot; }
 
     /* Access raw data */
-
     inline uint16_t raw_len() const
     { return ip_len; }
 
@@ -134,7 +126,7 @@ struct IP4Hdr
     inline uint16_t raw_off() const
     { return ip_off; }
 
-    inline uint16_t get_csum() const
+    inline uint16_t raw_csum() const
     { return ip_csum; }
 
     inline uint32_t get_src() const
@@ -142,6 +134,19 @@ struct IP4Hdr
 
     inline uint32_t get_dst() const
     { return ip_dst; }
+
+
+
+    /*  setters  */
+    inline void set_hlen(uint8_t value)
+    { ip_verhl = (ip_verhl & 0xf0) | (value & 0x0f); }
+
+    inline void set_proto(uint8_t prot)
+    { ip_proto = prot; }
+
+    inline void set_ip_len(uint16_t new_len)
+    { ip_len = htons(new_len); }
+
 } ;
 
 

@@ -182,7 +182,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
      * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
      * So we are just ignoring non IP datagrams
      */
-    if (iph->get_ver() != 4)
+    if (iph->ver() != 4)
     {
         if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
             codec_events::decoder_event(codec, DECODE_NOT_IPV4_DGRAM);
@@ -190,8 +190,8 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     }
 
     /* get the IP datagram length */
-    ip_len = ntohs(iph->ip_len);
-    hlen = iph->get_hlen() << 2;
+    ip_len = iph->len();
+    hlen = iph->hlen();
 
     /* header length sanity check */
     if(hlen < ip::IP4_HEADER_LEN)
@@ -592,7 +592,7 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     TextLog_Putc(text_log, '\t');
 
 
-    const uint16_t hlen = ip4h->get_hlen() << 2;
+    const uint16_t hlen = ip4h->hlen();
     const uint16_t len = ip4h->len();
     const uint16_t frag_off = ip4h->off();
 
@@ -702,7 +702,7 @@ bool Ipv4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
     IP4Hdr* h = (IP4Hdr*)(lyr->start);
     int i = lyr - p->layers;
-    uint16_t hlen = h->get_hlen() << 2;
+    uint16_t hlen = h->hlen();
 
     *len += hlen;
 
@@ -710,7 +710,7 @@ bool Ipv4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
         *len += p->dsize;
 
 
-    h->set_ip_len(htons((uint16_t)*len));
+    h->set_ip_len((uint16_t)*len);
 
 
     if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) )
@@ -738,7 +738,7 @@ void Ipv4Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
     if ( f & ENC_FLAG_DEF )
     {
         lyr->length = ip::IP4_HEADER_LEN;
-        ch->set_ip_len(htons(ip::IP4_HEADER_LEN));
+        ch->set_ip_len(ip::IP4_HEADER_LEN);
         ch->set_hlen(ip::IP4_HEADER_LEN >> 2);
 
 #if 0
@@ -747,7 +747,7 @@ void Ipv4Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
         if ( i + 1 == p->num_layers )
         {
             lyr->length = ip::IP4_HEADER_LEN;
-            ch->set_ip_len(htons(ip::IP4_HEADER_LEN));
+            ch->set_ip_len(ip::IP4_HEADER_LEN);
             ch->set_hlen(ip::IP4_HEADER_LEN >> 2);
         }
 #endif

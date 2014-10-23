@@ -20,6 +20,7 @@
 
 #include <sstream>
 #include <vector>
+#include <stdexcept>
 
 #include "conversion_state.h"
 #include "utils/converter.h"

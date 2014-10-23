@@ -144,7 +144,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
 
         /* Verify version in IP6 Header agrees */
-        if(ip6h->get_ver() != 6)
+        if(ip6h->ver() != 6)
         {
             if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
                 codec_events::decoder_event(codec, DECODE_IPV6_IS_NOT);
@@ -199,11 +199,11 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         CheckIPV6Multicast(ip6h, codec);
 
         snort.set_pkt_type(PktType::IP);
-        codec.next_prot_id = ip6h->get_next();
+        codec.next_prot_id = ip6h->next();
         codec.lyr_len = ip::IP6_HEADER_LEN;
         codec.curr_ip6_extension = 0;
         codec.ip6_extension_count = 0;
-        codec.ip6_csum_proto = ip6h->get_next();
+        codec.ip6_csum_proto = ip6h->next();
         codec.codec_flags &= ~CODEC_ROUTING_SEEN;
 
         // FIXIT-M J  tunnel-byppas is NOT checked!!
@@ -583,7 +583,7 @@ void Ipv6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 
 
     TextLog_Print(text_log, "Next:0x%02X TTL:%u TOS:0x%X DgmLen:%u",
-            ip6h->get_next(), ip6h->get_hop_lim(), ip6h->tos(),
+            ip6h->next(), ip6h->hop_lim(), ip6h->tos(),
             ip6h->len());
 }
 

@@ -193,7 +193,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     }
     else if(snort.ip_api.is_ip6())
     {
-        const uint16_t ip_len = snort.ip_api.len();
+        const uint16_t ip_len = snort.ip_api.get_ip6h()->len();
         /* subtract the distance from udp header to 1st ip6 extension */
         /* This gives the length of the UDP "payload", when fragmented */
         uhlen = ip_len - ((uint8_t *)udph - snort.ip_api.ip_data());
@@ -201,9 +201,8 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     }
     else
     {
-        const uint16_t ip_len = snort.ip_api.len();
-        /* Don't forget, IP_HLEN is a word - multiply x 4 */
-        uhlen = ip_len - (snort.ip_api.hlen() * 4 );
+        const ip::IP4Hdr* const ip4h = snort.ip_api.get_ip4h();
+        uhlen = ip4h->len() - ip4h->hlen();
         fragmented_udp_flag = true;
     }
 

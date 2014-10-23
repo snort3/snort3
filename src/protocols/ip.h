@@ -107,28 +107,28 @@ public:
     { return ip4h ? ip4h->tos() : ip6h ? ip6h->tos() : 0; }
 
     inline uint8_t ttl() const
-    { return ip4h ? ip4h->ttl() : ip6h ? ip6h->get_hop_lim() : 0; }
+    { return ip4h ? ip4h->ttl() : ip6h ? ip6h->hop_lim() : 0; }
 
     /* This is different than the Packet's ip_proto_next field - this
      * variable hold the first non-ip and non-ipv6 extension protocols,
      * while proto() returns the next or proto() field of the raw IP
      * header */
     inline uint8_t proto() const
-    { return ip4h ? ip4h->proto() : ip6h ? ip6h->get_next() : 0xFF; }
+    { return ip4h ? ip4h->proto() : ip6h ? ip6h->next() : 0xFF; }
 
     // NOTE:  ipv4 len contains header, ipv6 header does not. If you
     //        want a standard, use dgram_len() or pay_len() instead.
-    inline uint16_t len() const
-    { return ip4h ? ip4h->len() : ip6h ? ip6h->len() : 0; }
+//    inline uint16_t len() const
+//    { return ip4h ? ip4h->len() : ip6h ? ip6h->len() : 0; }
 
     inline uint16_t raw_len() const
     { return ip4h ? ip4h->raw_len() : ip6h ? ip6h->raw_len() : 0; }
 
     inline uint8_t hlen() const
-    { return ip4h ? ip4h->get_hlen() : ip6h ? ip6h->get_hlen() : 0; }
+    { return ip4h ? ip4h->hlen() : ip6h ? ip6h->hlen() : 0; }
 
     inline uint8_t ver() const
-    { return ip4h ? ip4h->get_ver() : ip6h ? ip6h->get_ver() : 0; }
+    { return ip4h ? ip4h->ver() : ip6h ? ip6h->ver() : 0; }
 
 
     // only relevent to IP4.

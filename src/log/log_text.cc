@@ -626,8 +626,8 @@ void LogIPHeader(TextLog*  log, Packet * p)
             (is_ip6 ? layer::get_inner_ip6_frag() : nullptr);
 
         TextLog_Print(log, "%s TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
-                protocol_names[ip6h->get_next()],
-                ip6h->get_hop_lim(),
+                protocol_names[ip6h->next()],
+                ip6h->hop_lim(),
                 ip6h->tos(),
                 (ip6_frag ? ip6_frag->id() : 0),
                 ip::IP6_HEADER_LEN,
@@ -657,7 +657,7 @@ void LogIPHeader(TextLog*  log, Packet * p)
                 ip4h->ttl(),
                 ip4h->tos(),
                 ip4h->id(),
-                ip4h->get_hlen() << 2,
+                ip4h->hlen(),
                 ip4h->len());
 
         frag_off = ip4h->off();
@@ -886,7 +886,7 @@ void LogTCPHeader(TextLog*  log, Packet * p)
 
     if((tcph->th_flags & TH_URG) != 0)
     {
-        TextLog_Print(log, "  UrgPtr: 0x%X\n", (uint16_t) ntohs(tcph->th_urp));
+        TextLog_Print(log, "  UrgPtr: 0x%X\n", tcph->urp());
     }
     else
     {

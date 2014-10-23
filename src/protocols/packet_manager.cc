@@ -485,7 +485,7 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
 
         const ip::IP4Hdr* const ip4h =
                 reinterpret_cast<const ip::IP4Hdr*>(p->layers[inner_ip_index].start);
-        const uint8_t ip_len = ip4h->get_hlen() << 2;
+        const uint8_t ip_len = ip4h->hlen();
 
         if (!buf.allocate(ip_len))
             return nullptr;

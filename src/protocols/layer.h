@@ -40,7 +40,7 @@ struct Layer {
                                *
                                * Generally calculated by
                                *    (layers_entire_length) - length;
-                               *     (ip::IP4Hdr*) ip4h->get_hlen() * 4 - length;
+                               *     (ip::IP4Hdr*) ip4h->hlen()- length;
                                */
 };
 
