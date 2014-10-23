@@ -62,7 +62,7 @@ options from the input configuration that have changed.
 
 // FIXIT-J L include Snort2Lua commands
 
-=== Known Problems:
+=== Known Problems
 
 *  Any Snort ‘string’ which is dependent on a variable will no longer have
 that variable in the Lua string.

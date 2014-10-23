@@ -118,6 +118,7 @@ struct TcpStats
     PegCount segs_released;
     PegCount segs_used;
     PegCount rebuilt_packets;
+    PegCount rebuilt_buffers;
     PegCount overlaps;
     PegCount gaps;
     PegCount internalEvents;
@@ -145,6 +146,7 @@ const char* tcp_pegs[] =
     "segs released",
     "segs used",
     "rebuilt packets",
+    "rebuilt buffers",
     "overlaps",
     "gaps",
     "internal events",
@@ -1942,11 +1944,15 @@ static int FlushStream(
         unsigned flushbuf_size = flushbuf_end - flushbuf;
         unsigned bytes_to_copy = getSegmentFlushSize(st, ss, toSeq, flushbuf_size);
         unsigned bytes_copied = 0;
+        assert(bytes_to_copy);
 
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
             "Flushing %u bytes from %X\n", bytes_to_copy, ss->seq));
 
-        if ( SEQ_EQ(ss->seq + bytes_to_copy,  toSeq) )
+        if ( 
+            !ss->next || (bytes_to_copy < ss->size) ||
+            SEQ_EQ(ss->seq + bytes_to_copy,  toSeq)
+        )
             flags |= PKT_PDU_TAIL;
 
         const StreamBuffer* sb = st->splitter->reassemble(
@@ -1956,25 +1962,17 @@ static int FlushStream(
 
         if ( sb )
         {
-            unsigned len = s5_pkt->max_dsize;
-            assert(sb->length <= len);
-
-            if ( sb->length < len )
-                len = sb->length;
-
             s5_pkt->data = sb->data;
-            s5_pkt->dsize = len;
+            s5_pkt->dsize = sb->length;
 
+            // FIXIT-M flushbuf should be eliminated from this function
+            // since we are actually using the stream splitter buffer
+            flushbuf = (uint8_t*)s5_pkt->data;
+
+            // ensure we stop here
             bytes_to_copy = bytes_copied;
         }
-        else if ( !bytes_copied )
-        {
-            // FIXIT-P change stream splitter default reassemble 
-            // to copy into external buffer to eliminate this special case
-            memcpy(flushbuf, ss->payload, bytes_to_copy);
-        }
-        else
-            assert(bytes_to_copy == bytes_copied);
+        assert(bytes_to_copy == bytes_copied);
 
         flushbuf += bytes_to_copy;
         bytes_flushed += bytes_to_copy;
@@ -2018,7 +2016,6 @@ static int FlushStream(
     }
 
     STREAM5_DEBUG_WRAP(bytes_queued -= bytes_flushed;);
-
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
         "flushed %d bytes / %d segs on stream, "
         "%d still queued\n",
@@ -2102,48 +2099,51 @@ static inline int _flush_to_seq (
                     "Attempting to flush %lu bytes\n", footprint););
 
         /* setup the pseudopacket payload */
+        s5_pkt->dsize = 0;
         const uint8_t* s5_pkt_end = s5_pkt->data + s5_pkt->max_dsize;
         flushed_bytes = FlushStream(p, st, stop_seq, (uint8_t *)s5_pkt->data, s5_pkt_end);
 
-        if (flushed_bytes == 0)
+        if ( !flushed_bytes )
+            break; /* No more data... bail */
+
+        else if ( !s5_pkt->dsize )
+            tcpStats.rebuilt_buffers++;
+
+        else
         {
-            /* No more data... bail */
-            break;
+            ((TCPHdr *)s5_pkt->ptrs.tcph)->th_seq = htonl(st->seglist_next->seq);
+            s5_pkt->packet_flags |= (PKT_REBUILT_STREAM|PKT_STREAM_EST);
+
+            if ((p->packet_flags & PKT_PDU_TAIL))
+                s5_pkt->packet_flags |= PKT_PDU_TAIL;
+
+            PacketManager::encode_update(s5_pkt);
+
+            ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_sec = st->seglist_next->tv.tv_sec;
+            ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_usec = st->seglist_next->tv.tv_usec;
+
+            sfBase.iStreamFlushes++;
+            bytes_processed += s5_pkt->dsize;
+
+            s5_pkt->packet_flags |= dir;
+            s5_pkt->flow = tcpssn->flow;
+            s5_pkt->application_protocol_ordinal = p->application_protocol_ordinal;
+
+            ShowRebuiltPacket(tcpssn, s5_pkt);
+            tcpStats.rebuilt_packets++;
+            UpdateStreamReassStats(&sfBase, flushed_bytes);
+
+            MODULE_PROFILE_TMPEND(s5TcpFlushPerfStats);
+            {
+                PROFILE_VARS;
+                MODULE_PROFILE_START(s5TcpProcessRebuiltPerfStats);
+
+                DetectRebuiltPacket(s5_pkt);
+
+                MODULE_PROFILE_END(s5TcpProcessRebuiltPerfStats);
+            }
+            MODULE_PROFILE_TMPSTART(s5TcpFlushPerfStats);
         }
-
-        ((TCPHdr *)s5_pkt->ptrs.tcph)->th_seq = htonl(st->seglist_next->seq);
-        s5_pkt->packet_flags |= (PKT_REBUILT_STREAM|PKT_STREAM_EST);
-        s5_pkt->dsize = (uint16_t)flushed_bytes;
-
-        if ((p->packet_flags & PKT_PDU_TAIL))
-            s5_pkt->packet_flags |= PKT_PDU_TAIL;
-
-        PacketManager::encode_update(s5_pkt);
-
-        ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_sec = st->seglist_next->tv.tv_sec;
-        ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_usec = st->seglist_next->tv.tv_usec;
-
-        sfBase.iStreamFlushes++;
-        bytes_processed += s5_pkt->dsize;
-
-        s5_pkt->packet_flags |= dir;
-        s5_pkt->flow = tcpssn->flow;
-        s5_pkt->application_protocol_ordinal = p->application_protocol_ordinal;
-
-        ShowRebuiltPacket(tcpssn, s5_pkt);
-        tcpStats.rebuilt_packets++;
-        UpdateStreamReassStats(&sfBase, flushed_bytes);
-
-        MODULE_PROFILE_TMPEND(s5TcpFlushPerfStats);
-        {
-            PROFILE_VARS;
-            MODULE_PROFILE_START(s5TcpProcessRebuiltPerfStats);
-
-            DetectRebuiltPacket(s5_pkt);
-
-            MODULE_PROFILE_END(s5TcpProcessRebuiltPerfStats);
-        }
-        MODULE_PROFILE_TMPSTART(s5TcpFlushPerfStats);
 
         st->seglist_base_seq += flushed_bytes;
 

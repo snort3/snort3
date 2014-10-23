@@ -91,10 +91,10 @@ Flow::~Flow ()
 
 void Flow::reset()
 {
-    free_application_data();
-
     if ( session )
         session->cleanup();
+
+    free_application_data();
 
     // FIXIT-H cleanup() winds up calling clear()
     if ( ssn_client )
