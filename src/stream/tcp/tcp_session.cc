@@ -2112,8 +2112,10 @@ static inline int _flush_to_seq (
             break; /* No more data... bail */
 
         else if ( !s5_pkt->dsize )
+        {
             tcpStats.rebuilt_buffers++;
-
+            bytes_processed += flushed_bytes;
+        }
         else
         {
             s5_pkt->packet_flags |= (PKT_REBUILT_STREAM|PKT_STREAM_EST);
