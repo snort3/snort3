@@ -30,7 +30,7 @@ unsigned NHttpFlowData::nhttp_flow_id = 0;
 NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id) {
     /* FIXIT-L Temporary printf while we shake out stream interface */
     if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output()) {
-        printf("Flow Data destruct %p\n", (void*)this);
+        printf("Flow Data construct %p\n", (void*)this);
         fflush(nullptr);
     }
 }
