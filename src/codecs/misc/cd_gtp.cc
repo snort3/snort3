@@ -32,7 +32,7 @@
 #include "codecs/codec_events.h"
 #include "packet_io/active.h"
 #include "protocols/protocol_ids.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 
 #define CD_GTP_NAME "gtp"
 #define CD_GTP_HELP "support for general-packet-radio-service tunnelling protocol"
@@ -47,10 +47,10 @@ static const RuleMap gtp_rules[] =
     { 0, nullptr }
 };
 
-class GtpModule : public DecodeModule
+class GtpModule : public CodecModule
 {
 public:
-    GtpModule() : DecodeModule(CD_GTP_NAME, CD_GTP_HELP) {};
+    GtpModule() : CodecModule(CD_GTP_NAME, CD_GTP_HELP) {};
 
     const RuleMap* get_rules() const override
     { return gtp_rules; }

@@ -25,11 +25,11 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "protocols/packet.h"
 #include "framework/module.h"
 #include "codecs/codec_events.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "log/text_log.h"
 #include "protocols/packet_manager.h"
 

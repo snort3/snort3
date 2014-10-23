@@ -47,7 +47,7 @@ uint8_t Packet::ip_proto_next() const
 {
     if (is_ip4())
     {
-        return ptrs.ip_api.get_ip4h()->get_proto();
+        return ptrs.ip_api.get_ip4h()->proto();
     }
     else if (is_ip6())
     {

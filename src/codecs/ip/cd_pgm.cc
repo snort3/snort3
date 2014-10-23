@@ -26,7 +26,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 #include "codecs/ip/checksum.h"
 #include "protocols/packet.h"
@@ -43,10 +43,10 @@ static const RuleMap pgm_rules[] =
     { 0, nullptr }
 };
 
-class PgmModule : public DecodeModule
+class PgmModule : public CodecModule
 {
 public:
-    PgmModule() : DecodeModule(CD_PGM_NAME, CD_PGM_HELP) {}
+    PgmModule() : CodecModule(CD_PGM_NAME, CD_PGM_HELP) {}
 
     const RuleMap* get_rules() const
     { return pgm_rules; }

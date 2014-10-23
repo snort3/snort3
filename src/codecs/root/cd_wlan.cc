@@ -27,7 +27,7 @@
 #include <pcap.h>
 #include "protocols/wlan.h"
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
@@ -47,10 +47,10 @@ static const RuleMap wlan_rules[] =
     { 0, nullptr }
 };
 
-class WlanCodecModule : public DecodeModule
+class WlanCodecModule : public CodecModule
 {
 public:
-    WlanCodecModule() : DecodeModule(CD_WLAN_NAME, CD_WLAN_HELP) {}
+    WlanCodecModule() : CodecModule(CD_WLAN_NAME, CD_WLAN_HELP) {}
 
     const RuleMap* get_rules() const
     { return wlan_rules; }

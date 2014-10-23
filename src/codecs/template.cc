@@ -24,7 +24,7 @@
 
 #include <string.h> // memcpy
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "protocols/packet.h"
 #include "framework/module.h"
 #include "log/text_log.h"
@@ -39,11 +39,11 @@
 namespace
 {
 
-// inherit from DecodeModule rather than Module so the GID for
+// inherit from CodecModule rather than Module so the GID for
 // all codecs are identical. Additionally, all of the SIDS are
-// defined in DecodeModule. So, when creating new events, you
+// defined in CodecModule. So, when creating new events, you
 // only need to look for codec SID collisions in one locations
-class NameModule : public DecodeModule
+class NameModule : public CodecModule
 {
 public:
     NameModule();
@@ -83,7 +83,7 @@ static const RuleMap codec_rules[] =
 // template module
 //-------------------------------------------------------------------------
 
-NameModule::NameModule() : DecodeModule(CODEC_NAME, CODEC_HELP, codec_params)
+NameModule::NameModule() : CodecModule(CODEC_NAME, CODEC_HELP, codec_params)
 { }
 
 bool NameModule::set(const char* /*fqn*/, Value& v, SnortConfig* /*sc*/)

@@ -6,7 +6,7 @@ noinst_LIBRARIES = libcodecs.a
 
 x_include_HEADERS = \
 codec_events.h \
-decode_module.h
+codec_module.h
 
 libcodecs_a_SOURCES = \
 codec_api.cc \

@@ -52,10 +52,10 @@ static const Parameter esp_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-class EspModule : public DecodeModule
+class EspModule : public CodecModule
 {
 public:
-    EspModule() : DecodeModule(CD_ESP_NAME, CD_ESP_HELP, esp_params) {}
+    EspModule() : CodecModule(CD_ESP_NAME, CD_ESP_HELP, esp_params) {}
 
     const RuleMap* get_rules() const override
     { return esp_rules; }

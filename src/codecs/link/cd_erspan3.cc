@@ -23,7 +23,7 @@
 
 #include <arpa/inet.h>
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet.h"
@@ -40,10 +40,10 @@ static const RuleMap erspan3_rules[] =
     { 0, nullptr }
 };
 
-class Erspan3Module : public DecodeModule
+class Erspan3Module : public CodecModule
 {
 public:
-    Erspan3Module() : DecodeModule(CD_ERSPAN3_NAME, CD_ERSPAN3_HELP) {}
+    Erspan3Module() : CodecModule(CD_ERSPAN3_NAME, CD_ERSPAN3_HELP) {}
 
     const RuleMap* get_rules() const
     { return erspan3_rules; }

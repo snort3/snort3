@@ -26,7 +26,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/ip/checksum.h"
 #include "protocols/tcp.h"
 #include "protocols/tcp_options.h"
@@ -52,8 +52,8 @@ namespace
 
 const char* pegs[]
 {
-    "Bad Checksum (ip4)",
-    "Bad Checksum (ip6)",
+    "bad checksum (ip4)",
+    "bad checksum (ip6)",
     nullptr
 };
 
@@ -92,10 +92,10 @@ static const RuleMap tcp_rules[] =
     { 0, nullptr }
 };
 
-class TcpModule : public DecodeModule
+class TcpModule : public CodecModule
 {
 public:
-    TcpModule() : DecodeModule(CD_TCP_NAME, CD_TCP_HELP) {}
+    TcpModule() : CodecModule(CD_TCP_NAME, CD_TCP_HELP) {}
 
     const RuleMap* get_rules() const override
     { return tcp_rules; }
@@ -188,7 +188,7 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             ph.dip = ip4h->get_dst();
             /* setup the pseudo header for checksum calculation */
             ph.zero = 0;
-            ph.protocol = ip4h->get_proto();
+            ph.protocol = ip4h->proto();
             ph.len = htons((uint16_t)raw.len);
 
             /* if we're being "stateless" we probably don't care about the TCP

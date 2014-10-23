@@ -25,7 +25,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/ipv6.h"
 #include "protocols/protocol_ids.h"
@@ -97,7 +97,7 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
 #endif
 
     // three least signifigant bits are all flags
-    const uint16_t frag_offset =  ntohs(ip6frag_hdr->get_off()) >> 3;
+    const uint16_t frag_offset =  ip6frag_hdr->off() >> 3;
 
     if (frag_offset || (snort.decode_flags & DECODE_MF))
         snort.decode_flags |= DECODE_FRAG;
@@ -138,14 +138,17 @@ void Ipv6FragCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
                     const Packet* const)
 {
     const ip::IP6Frag* fragh = reinterpret_cast<const ip::IP6Frag*>(raw_pkt);
-    const uint16_t offlg = ntohs(fragh->get_off());
+    const uint16_t offlg = fragh->off();
 
 
     TextLog_Print(text_log, "Next:0x%02X Off:%u ID:%u",
-            fragh->ip6f_nxt, (offlg >> 3), ntohl(fragh->get_id()));
+            fragh->ip6f_nxt, (offlg >> 3), fragh->id());
 
     if (offlg & ip::IP6F_MF_MASK)
         TextLog_Puts(text_log, " MF");
+
+    if (offlg & ip::IP6F_RES_MASK)
+        TextLog_Puts(text_log, " RB");
 }
 
 //-------------------------------------------------------------------------

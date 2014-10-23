@@ -309,12 +309,12 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         }
         else if (!strcasecmp("src_addr", type))
         {
-            if (p->ptrs.ip_api.is_valid())
+            if (p->has_ip())
                 TextLog_Puts(csv_log, inet_ntoa(p->ptrs.ip_api.get_src()));
         }
         else if (!strcasecmp("dst_addr", type))
         {
-            if (p->ptrs.ip_api.is_valid())
+            if (p->has_ip())
                 TextLog_Puts(csv_log, inet_ntoa(p->ptrs.ip_api.get_dst()));
         }
         else if (!strcasecmp("icmp_type", type))
@@ -339,34 +339,30 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         }
         else if (!strcasecmp("ttl", type))
         {
-            if (p->ptrs.ip_api.is_valid())
+            if (p->has_ip())
                 TextLog_Print(csv_log, "%d",p->ptrs.ip_api.ttl());
         }
         else if (!strcasecmp("tos", type))
         {
-            if (p->ptrs.ip_api.is_valid())
+            if (p->has_ip())
                 TextLog_Print(csv_log, "%d", p->ptrs.ip_api.tos());
         }
         else if (!strcasecmp("id", type))
         {
-            if (p->ptrs.ip_api.is_valid())
-            {
-                TextLog_Print(csv_log, "%u", p->ptrs.ip_api.is_ip6()
-                        ? ntohl(p->ptrs.ip_api.id())
-                        : ntohs((uint16_t)p->ptrs.ip_api.id()));
-            }
+            if (p->has_ip())
+                TextLog_Print(csv_log, "%u", p->ptrs.ip_api.id());
         }
         else if (!strcasecmp("ip_len", type))
         {
-            if (p->ptrs.ip_api.is_valid())
+            if (p->has_ip())
                 TextLog_Print(csv_log, "%d", p->ptrs.ip_api.len() << 2);
         }
         else if (!strcasecmp("dgm_len", type))
         {
-            if (p->ptrs.ip_api.is_valid())
+            if (p->has_ip())
             {
                 // XXX might cause a bug when IPv6 is printed?
-                TextLog_Print(csv_log, "%d", ntohs(p->ptrs.ip_api.len()));
+                TextLog_Print(csv_log, "%d", p->ptrs.ip_api.dgram_len());
             }
         }
         else if (!strcasecmp("tcp_seq", type))

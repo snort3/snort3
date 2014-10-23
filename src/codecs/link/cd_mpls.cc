@@ -24,7 +24,7 @@
 
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "network_inspectors/perf_monitor/perf.h"
 #include "snort.h"
 #include "protocols/mpls.h"
@@ -74,10 +74,10 @@ static const RuleMap mpls_rules[] =
     { 0, nullptr }
 };
 
-class MplsModule : public DecodeModule
+class MplsModule : public CodecModule
 {
 public:
-    MplsModule() : DecodeModule(CD_MPLS_NAME, CD_MPLS_HELP, mpls_params) {};
+    MplsModule() : CodecModule(CD_MPLS_NAME, CD_MPLS_HELP, mpls_params) {};
 
     const RuleMap* get_rules() const override
     { return mpls_rules; }

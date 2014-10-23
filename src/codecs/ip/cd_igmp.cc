@@ -26,7 +26,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/packet.h"
 #include "protocols/ipv4_options.h"
@@ -44,10 +44,10 @@ static const RuleMap igmp_rules[] =
     { 0, nullptr }
 };
 
-class IgmpModule : public DecodeModule
+class IgmpModule : public CodecModule
 {
 public:
-    IgmpModule() : DecodeModule(CD_IGMP_NAME, CD_IGMP_HELP) {}
+    IgmpModule() : CodecModule(CD_IGMP_NAME, CD_IGMP_HELP) {}
 
     const RuleMap* get_rules() const
     { return igmp_rules; }
