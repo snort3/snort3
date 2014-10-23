@@ -47,7 +47,7 @@ using namespace std;
 #include "filters/sfthd.h"
 #include "filters/sfrf.h"
 #include "filters/rate_filter.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "time/ppm_module.h"
 #include "parser/parse_ip.h"
 #include "target_based/sftarget_data.h"

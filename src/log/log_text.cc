@@ -209,7 +209,7 @@ static void LogGREHeader(TextLog *log, Packet *p)
         return;
 
     TextLog_Print(log, "GRE version:%u flags:0x%02X ether-type:0x%04X\n",
-            greh->get_version(), greh->flags, greh->get_proto());
+            greh->get_version(), greh->flags, greh->proto());
 }
 
 /*--------------------------------------------------------------------
@@ -613,9 +613,6 @@ void LogIPHeader(TextLog*  log, Packet * p)
     // ip_api will return nullptr
     const bool is_ip6 = p->ptrs.ip_api.is_ip6();
     const ip::IP4Hdr* const ip4h = p->ptrs.ip_api.get_ip4h(); // nullptr if ipv6
-    const ip::IP6Hdr* const ip6h = p->ptrs.ip_api.get_ip6h(); // nullptr if ipv4
-    const ip::IP6Frag* const ip6_frag = // nullptr if ipv4
-        (is_ip6 ? layer::get_inner_ip6_frag() : nullptr);
     uint16_t frag_off;
 
     /* Since the ip_api needs to do an 'if' statement every time to
@@ -624,47 +621,69 @@ void LogIPHeader(TextLog*  log, Packet * p)
      */
     if (is_ip6)
     {
+        const ip::IP6Hdr* const ip6h = p->ptrs.ip_api.get_ip6h(); // nullptr if ipv4
+        const ip::IP6Frag* const ip6_frag = // nullptr if ipv4
+            (is_ip6 ? layer::get_inner_ip6_frag() : nullptr);
+
         TextLog_Print(log, "%s TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
                 protocol_names[ip6h->get_next()],
                 ip6h->get_hop_lim(),
-                ip6h->get_tos(),
-                (ip6_frag ? ntohl(ip6_frag->get_id()) : 0),
+                ip6h->tos(),
+                (ip6_frag ? ip6_frag->id() : 0),
                 ip::IP6_HEADER_LEN,
-                (ip6h->get_len() + ip::IP6_HEADER_LEN));
+                (ip6h->len() + ip::IP6_HEADER_LEN));
 
-        frag_off = ip6_frag ? ip6_frag->get_off() : 0;
+        if (!ip6_frag)
+        {
+            frag_off = 0;
+        }
+        else
+        {
+            frag_off = ip6_frag->off();
+
+            if(frag_off & ip::IP6F_RES_MASK)
+                TextLog_Puts(log, " RB");
+
+            if(frag_off & ip::IP6F_MF_MASK)
+                TextLog_Puts(log, " MF");
+
+            frag_off = (frag_off >> 3);
+        }
     }
     else
     {
         TextLog_Print(log, "%s TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
-                protocol_names[ip4h->get_proto()],
-                ip4h->get_ttl(),
-                ip4h->get_tos(),
-                ntohs((uint16_t)ip4h->get_id()),
+                protocol_names[ip4h->proto()],
+                ip4h->ttl(),
+                ip4h->tos(),
+                ip4h->id(),
                 ip4h->get_hlen() << 2,
-                ntohs(ip4h->get_len()));
+                ip4h->len());
 
-        frag_off = ntohs(ip4h->get_off());
+        frag_off = ip4h->off();
+
+        if (frag_off)
+        {
+          /* print the reserved bit if it's set */
+          if(frag_off & 0x8000)
+              TextLog_Puts(log, " RB");
+
+          /* printf more frags/don't frag bits */
+          if(frag_off & 0x4000)
+              TextLog_Puts(log, " DF");
+
+          if(frag_off & 0x2000)
+              TextLog_Puts(log, " MF");
+
+          frag_off = (frag_off & 0x1FFF);
+        }
     }
-
-
-    /* print the reserved bit if it's set */
-    if(frag_off & 0x8000)
-        TextLog_Puts(log, " RB");
-
-    /* printf more frags/don't frag bits */
-    if(frag_off & 0x4000)
-        TextLog_Puts(log, " DF");
-
-    if(frag_off & 0x2000)
-        TextLog_Puts(log, " MF");
 
     TextLog_NewLine(log);
 
     /* print IP options */
     if(!is_ip6)
     {
-
         if (ip4h->has_options())
           LogIpOptions(log, ip4h, p);
     }
@@ -673,8 +692,7 @@ void LogIPHeader(TextLog*  log, Packet * p)
     if(p->ptrs.decode_flags & DECODE_FRAG)
     {
         TextLog_Print(log, "Frag Offset: 0x%04X   Frag Size: 0x%04X\n",
-                (frag_off & 0x1FFF),
-                p->ptrs.ip_api.pay_len());
+                frag_off, p->ptrs.ip_api.pay_len());
     }
 }
 

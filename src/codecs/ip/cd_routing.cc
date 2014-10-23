@@ -26,7 +26,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"

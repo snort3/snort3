@@ -22,7 +22,7 @@
 
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/packet.h"
 #include "protocols/layer.h"
@@ -67,10 +67,10 @@ static const RuleMap pppoe_rules[] =
 #define pppoe_help \
     "support for point-to-point protocol over ethernet"
 
-class PPPoEModule : public DecodeModule
+class PPPoEModule : public CodecModule
 {
 public:
-    PPPoEModule() : DecodeModule(CD_PPPOE_NAME, pppoe_help) {}
+    PPPoEModule() : CodecModule(CD_PPPOE_NAME, pppoe_help) {}
 
     const RuleMap* get_rules() const override
     { return pppoe_rules; }

@@ -30,8 +30,8 @@
 #include "framework/codec.h"
 #include "protocols/icmp6.h"
 #include "protocols/icmp4.h"
-#include "codecs/decode_module.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 #include "codecs/ip/checksum.h"
 #include "codecs/ip/ip_util.h"
@@ -47,8 +47,8 @@ namespace
 
 const char* pegs[]
 {
-    "Bad Checksum (ip4)",
-    "Bad Checksum (ip6)",
+    "bad checksum (ip4)",
+    "bad checksum (ip6)",
     nullptr
 };
 
@@ -77,10 +77,10 @@ static const RuleMap icmp6_rules[] =
     { 0, nullptr }
 };
 
-class Icmp6Module : public DecodeModule
+class Icmp6Module : public CodecModule
 {
 public:
-    Icmp6Module() : DecodeModule(CD_ICMP6_NAME, CD_ICMP6_HELP) {}
+    Icmp6Module() : CodecModule(CD_ICMP6_NAME, CD_ICMP6_HELP) {}
 
     const RuleMap* get_rules() const override
     { return icmp6_rules; }

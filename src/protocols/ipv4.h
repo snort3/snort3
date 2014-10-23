@@ -23,6 +23,7 @@
 #define PROTOCOLS_IPV4_H
 
 #include <cstdint>
+#include <arpa/inet.h>
 
 
 #ifndef WIN32
@@ -75,39 +76,32 @@ struct IP4Hdr
     /* getters */
     inline uint8_t get_hlen() const
     { return ip_verhl & 0x0f; }
+//    { return (ip_verhl & 0x0f) << 2; } //FIXIT-M J return the actual length
 
     inline uint8_t get_ver() const
     { return ((ip_verhl & 0xf0) >> 4); }
 
-    inline uint8_t get_tos() const
+    inline uint8_t tos() const
     { return ip_tos; };
 
-    inline uint16_t get_len() const
-    { return ip_len; }
+    inline uint16_t len() const
+    { return ntohs(ip_len); }
 
-    inline uint32_t get_id() const
-    { return (uint32_t)ip_id; }
-
-    inline uint16_t get_off() const
-    { return ip_off; }
-
-    inline uint8_t get_ttl() const
+    inline uint8_t ttl() const
     { return ip_ttl; }
 
-    inline uint8_t get_proto() const
+    inline uint8_t proto() const
     { return ip_proto; }
 
-    inline uint16_t get_csum() const
-    { return ip_csum; }
+    inline uint16_t off() const
+    { return ntohs(ip_off); }
 
-    inline uint32_t get_src() const
-    { return ip_src; }
-
-    inline uint32_t get_dst() const
-    { return ip_dst; }
+    inline uint16_t id() const
+    { return ntohs(ip_id); }
 
     inline uint8_t get_opt_len() const
     { return (get_hlen() << 2) - IP4_HEADER_LEN; }
+
 
     /* booleans */
     inline bool is_src_broadcast() const
@@ -128,6 +122,26 @@ struct IP4Hdr
 
     inline void set_proto(uint8_t prot)
     { ip_proto = prot; }
+
+    /* Access raw data */
+
+    inline uint16_t raw_len() const
+    { return ip_len; }
+
+    inline uint16_t raw_id() const
+    { return ip_id; }
+
+    inline uint16_t raw_off() const
+    { return ip_off; }
+
+    inline uint16_t get_csum() const
+    { return ip_csum; }
+
+    inline uint32_t get_src() const
+    { return ip_src; }
+
+    inline uint32_t get_dst() const
+    { return ip_dst; }
 } ;
 
 

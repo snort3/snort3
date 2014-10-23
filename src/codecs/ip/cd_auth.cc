@@ -46,10 +46,10 @@ static const RuleMap auth_rules[] =
     { 0, nullptr }
 };
 
-class AuthModule : public DecodeModule
+class AuthModule : public CodecModule
 {
 public:
-    AuthModule() : DecodeModule(CD_AUTH_NAME, CD_AUTH_HELP) {}
+    AuthModule() : CodecModule(CD_AUTH_NAME, CD_AUTH_HELP) {}
 
     const RuleMap* get_rules() const
     { return auth_rules; }

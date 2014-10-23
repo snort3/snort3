@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "utils/dnet_header.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "protocols/udp.h"
 #include "protocols/teredo.h"
 #include "protocols/protocol_ids.h"
@@ -52,8 +52,8 @@ namespace
 
 const char* pegs[]
 {
-    "Bad Checksum (ip4)",
-    "Bad Checksum (ip6)",
+    "bad checksum (ip4)",
+    "bad checksum (ip6)",
     nullptr
 };
 
@@ -94,10 +94,10 @@ static const RuleMap udp_rules[] =
     { 0, nullptr }
 };
 
-class UdpModule : public DecodeModule
+class UdpModule : public CodecModule
 {
 public:
-    UdpModule() : DecodeModule(CD_UDP_NAME, CD_UDP_HELP, udp_params) {}
+    UdpModule() : CodecModule(CD_UDP_NAME, CD_UDP_HELP, udp_params) {}
 
     const RuleMap* get_rules() const override
     { return udp_rules; }
@@ -186,13 +186,14 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     const udp::UDPHdr* const udph =
         reinterpret_cast<const udp::UDPHdr*>(raw.data);
 
+    // FIXIT-M since we no longer let UDP fragments through, erase extra code
     if ((snort.decode_flags & DECODE_FRAG) == 0)
     {
         uhlen = ntohs(udph->uh_len);
     }
     else if(snort.ip_api.is_ip6())
     {
-        const uint16_t ip_len = ntohs(snort.ip_api.len());
+        const uint16_t ip_len = snort.ip_api.len();
         /* subtract the distance from udp header to 1st ip6 extension */
         /* This gives the length of the UDP "payload", when fragmented */
         uhlen = ip_len - ((uint8_t *)udph - snort.ip_api.ip_data());
@@ -200,7 +201,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     }
     else
     {
-        const uint16_t ip_len = ntohs(snort.ip_api.len());
+        const uint16_t ip_len = snort.ip_api.len();
         /* Don't forget, IP_HLEN is a word - multiply x 4 */
         uhlen = ip_len - (snort.ip_api.hlen() * 4 );
         fragmented_udp_flag = true;
@@ -246,7 +247,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                 ph.sip = ip4h->get_src();
                 ph.dip = ip4h->get_dst();
                 ph.zero = 0;
-                ph.protocol = ip4h->get_proto();
+                ph.protocol = ip4h->proto();
                 ph.len = udph->uh_len;
                 
                 csum = checksum::udp_cksum((uint16_t *)(udph), uhlen, &ph);

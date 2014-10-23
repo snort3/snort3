@@ -41,7 +41,7 @@
 #include "codecs/ip/checksum.h"
 #include "main/thread.h"
 #include "stream/stream_api.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "protocols/ip.h"
 #include "protocols/ipv4_options.h"
 #include "log/text_log.h"
@@ -54,7 +54,7 @@ namespace{
 
 const char* pegs[]
 {
-    "Bad Checksum",
+    "bad checksum",
     nullptr
 };
 
@@ -98,10 +98,10 @@ static const RuleMap ipv4_rules[] =
     { 0, nullptr }
 };
 
-class Ipv4Module : public DecodeModule
+class Ipv4Module : public CodecModule
 {
 public:
-    Ipv4Module() : DecodeModule(CD_IPV4_NAME, CD_IPV4_HELP) {}
+    Ipv4Module() : CodecModule(CD_IPV4_NAME, CD_IPV4_HELP) {}
 
     const RuleMap* get_rules() const override
     { return ipv4_rules; }
@@ -282,7 +282,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     ip_len -= hlen;
 
     /* check for fragmented packets */
-    uint16_t frag_off = ntohs(iph->get_off());
+    uint16_t frag_off = iph->off();
 
     /*
      * get the values of the reserved, more
@@ -342,12 +342,12 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
      * or if it is, its a UDP packet and offset is 0 */
     if(!(snort.decode_flags & DECODE_FRAG) /*||
         ((frag_off == 0) &&  // FIXIT-M this forces flow to udp instead of ip
-         (iph->get_proto() == IPPROTO_UDP))*/)
+         (iph->proto() == IPPROTO_UDP))*/)
     {
-        if (iph->get_proto() >= MIN_UNASSIGNED_IP_PROTO)
+        if (iph->proto() >= MIN_UNASSIGNED_IP_PROTO)
             codec_events::decoder_event(codec, DECODE_IP_UNASSIGNED_PROTO);
         else
-            codec.next_prot_id = iph->get_proto();
+            codec.next_prot_id = iph->proto();
     }
 
     // FIXIT-M J  tunnel-byppas is NOT checked!!
@@ -593,12 +593,12 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 
 
     const uint16_t hlen = ip4h->get_hlen() << 2;
-    const uint16_t len = ntohs(ip4h->get_len());
-    const uint16_t frag_off = ntohs(ip4h->get_off());
+    const uint16_t len = ip4h->len();
+    const uint16_t frag_off = ip4h->off();
 
     TextLog_Print(text_log, "Next:0x%02X TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
-            ip4h->get_proto(), ip4h->get_ttl(), ip4h->get_tos(),
-            ip4h->get_id(), hlen, len);
+            ip4h->proto(), ip4h->ttl(), ip4h->tos(),
+            ip4h->id(), hlen, len);
 
 
     /* print the reserved bit if it's set */

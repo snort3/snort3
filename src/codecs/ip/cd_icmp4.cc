@@ -30,7 +30,7 @@
 #include "protocols/icmp4.h"
 #include "codecs/codec_events.h"
 #include "codecs/ip/checksum.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/ip/ip_util.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet.h"
@@ -48,7 +48,7 @@ namespace{
 
 const char* pegs[]
 {
-    "Bad Checksum",
+    "bad checksum",
     nullptr
 };
 
@@ -90,10 +90,10 @@ static const RuleMap icmp4_rules[] =
     { 0, nullptr }
 };
 
-class Icmp4Module : public DecodeModule
+class Icmp4Module : public CodecModule
 {
 public:
-    Icmp4Module() : DecodeModule(CD_ICMP4_NAME, CD_ICMP4_HELP) {}
+    Icmp4Module() : CodecModule(CD_ICMP4_NAME, CD_ICMP4_HELP) {}
 
     const RuleMap* get_rules() const override
     { return icmp4_rules; }
