@@ -25,7 +25,7 @@
 #endif
 
 #include <pcap.h>
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "framework/codec.h"
 #include "protocols/packet.h"
 #include "protocols/eth.h"
@@ -46,10 +46,10 @@ static const RuleMap eth_rules[] =
     { 0, nullptr }
 };
 
-class EthModule : public DecodeModule
+class EthModule : public CodecModule
 {
 public:
-    EthModule() : DecodeModule(CD_ETH_NAME, CD_ETH_HELP) {}
+    EthModule() : CodecModule(CD_ETH_NAME, CD_ETH_HELP) {}
 
     const RuleMap* get_rules() const
     { return eth_rules; }

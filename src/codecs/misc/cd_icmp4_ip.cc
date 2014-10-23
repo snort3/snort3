@@ -77,7 +77,7 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snor
     }
 
     /* lay the IP struct over the raw data */
-    const IP4Hdr *ip4h = reinterpret_cast<const IP4Hdr *>(raw.data);
+    const IP4Hdr* const ip4h = reinterpret_cast<const IP4Hdr *>(raw.data);
 
     /*
      * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
@@ -100,7 +100,7 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snor
     /* set the remaining packet length */
     ip_len = raw.len - hlen;
 
-    uint16_t orig_frag_offset = ntohs(ip4h->get_off());
+    uint16_t orig_frag_offset = ip4h->off();
     orig_frag_offset &= 0x1FFF;
 
     if (orig_frag_offset == 0)
@@ -115,7 +115,7 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snor
         /* ICMP error packets could contain as much of original payload
          * as possible, but not exceed 576 bytes
          */
-        else if (ntohs(snort.ip_api.len()) > 576)
+        else if (snort.ip_api.dgram_len() > 576)
         {
             codec_events::decoder_event(codec, DECODE_ICMP_ORIG_PAYLOAD_GT_576);
         }
@@ -128,13 +128,7 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snor
     }
 
 
-    // since we know the protocol ID in this layer (and NOT the
-    // next layer), set the correct protocol here.  Normally,
-    // I would just set the next_protocol_id and let the packet_manger
-    // decode the next layer. However, I  can't set the next_prot_id in
-    // this case because I don't want this going to the TCP, UDP, or
-    // ICMP codec. Therefore, doing a minor decode here.
-    switch(ip4h->get_proto())
+    switch(ip4h->proto())
     {
         case IPPROTO_TCP: /* decode the interesting part of the header */
             codec.proto_bits |= PROTO_BIT__TCP_EMBED_ICMP;
@@ -151,7 +145,7 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snor
 
     // If you change this, change the buffer and
     // memcpy length in encode() below !!
-    codec.lyr_len = ip::IP4_HEADER_LEN;
+    codec.lyr_len = hlen;
     return true;
 }
 
@@ -198,13 +192,13 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     TextLog_Puts(text_log, "\t\t");
 
     const uint16_t hlen = ip4h->get_hlen() << 2;
-    const uint16_t len = ntohs(ip4h->get_len());
-    const uint16_t frag_off = ntohs(ip4h->get_off());
+    const uint16_t len = ip4h->len();
+    const uint16_t frag_off = ip4h->off();
 
     TextLog_Print(text_log, "Next:%s(%02X) TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
-            PacketManager::get_proto_name(ip4h->get_proto()),
-            ip4h->get_proto(), ip4h->get_ttl(), ip4h->get_tos(),
-            ip4h->get_id(), hlen, len);
+            PacketManager::get_proto_name(ip4h->proto()),
+            ip4h->proto(), ip4h->ttl(), ip4h->tos(),
+            ip4h->id(), hlen, len);
 
 
     /* print the reserved bit if it's set */
@@ -245,7 +239,7 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 
 
     /*  EMBEDDED PROTOCOL */
-    switch(ip4h->get_proto())
+    switch(ip4h->proto())
     {
         case IPPROTO_TCP: /* decode the interesting part of the header */
         {
@@ -323,8 +317,8 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
         default:
         {
             TextLog_Print(text_log, "Protocol:%s(%02X)",
-                PacketManager::get_proto_name(ip4h->get_proto()),
-                ip4h->get_proto());
+                PacketManager::get_proto_name(ip4h->proto()),
+                ip4h->proto());
             break;
         }
     }

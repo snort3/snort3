@@ -29,14 +29,14 @@
 #include "detection/fpdetect.h"
 
 #include "protocols/ipv6.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 #include "codecs/ip/ip_util.h"
 #include "framework/codec.h"
 #include "stream/stream_api.h"
 #include "main/snort.h"
 #include "packet_io/active.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet_manager.h"
 #include "log/text_log.h"
@@ -76,10 +76,10 @@ static const RuleMap ipv6_rules[] =
     { 0, nullptr }
 };
 
-class Ipv6Module : public DecodeModule
+class Ipv6Module : public CodecModule
 {
 public:
-    Ipv6Module() : DecodeModule(CD_IPV6_NAME, CD_IPV6_HELP) {}
+    Ipv6Module() : CodecModule(CD_IPV6_NAME, CD_IPV6_HELP) {}
 
     const RuleMap* get_rules() const override
     { return ipv6_rules; }
@@ -188,7 +188,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         /* set the real IP length for logging */
         codec.proto_bits |= PROTO_BIT__IP;
         // extra ipv6 header will be removed in PacketManager
-        const_cast<uint32_t&>(raw.len) = ntohs(ip6h->get_len()) + ip::IP6_HEADER_LEN;
+        const_cast<uint32_t&>(raw.len) = ip6h->len() + ip::IP6_HEADER_LEN;
 
         // check for isatap before overwriting the ip_api.
         IPV6CheckIsatap(ip6h, snort, codec);
@@ -228,7 +228,7 @@ static inline void IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
                                     const CodecData& codec)
 {
     /* Only check for IPv6 over IPv4 */
-    if (snort.ip_api.is_ip4() && snort.ip_api.get_ip4h()->get_proto() == IPPROTO_ID_IPV6)
+    if (snort.ip_api.is_ip4() && snort.ip_api.get_ip4h()->proto() == IPPROTO_ID_IPV6)
     {
         uint32_t isatap_interface_id = ntohl(ip6h->ip6_src.u6_addr32[2]) & 0xFCFFFFFF;
 
@@ -583,8 +583,8 @@ void Ipv6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 
 
     TextLog_Print(text_log, "Next:0x%02X TTL:%u TOS:0x%X DgmLen:%u",
-            ip6h->get_next(), ip6h->get_hop_lim(), ip6h->get_tos(),
-            ntohs(ip6h->get_len()));
+            ip6h->get_next(), ip6h->get_hop_lim(), ip6h->tos(),
+            ip6h->len());
 }
 
 

@@ -29,7 +29,7 @@
 #include "protocols/protocol_ids.h"
 #include "protocols/ipv6.h"
 #include "protocols/packet.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 
 

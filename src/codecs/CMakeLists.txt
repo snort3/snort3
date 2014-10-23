@@ -6,7 +6,7 @@ add_subdirectory(ip)
 add_subdirectory(misc)
 
 set(CODEC_INCLUDES
-    decode_module.h
+    codec_module.h
     codec_events.h
 )
 

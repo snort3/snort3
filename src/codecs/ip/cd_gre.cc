@@ -48,10 +48,10 @@ static const RuleMap gre_rules[] =
     { 0, nullptr }
 };
 
-class GreModule : public DecodeModule
+class GreModule : public CodecModule
 {
 public:
-    GreModule() : DecodeModule(CD_GRE_NAME, CD_GRE_HELP) {}
+    GreModule() : CodecModule(CD_GRE_NAME, CD_GRE_HELP) {}
 
     const RuleMap* get_rules() const override
     { return gre_rules; }
@@ -192,7 +192,7 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
             }
 
             /* protocol must be 0x880B - PPP */
-            if (greh->get_proto() != ETHERTYPE_PPP)
+            if (greh->proto() != ETHERTYPE_PPP)
             {
                 codec_events::decoder_event(codec, DECODE_GRE_V1_INVALID_HEADER);
                 return false;
@@ -227,7 +227,7 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     }
 
     codec.lyr_len = len;
-    codec.next_prot_id = greh->get_proto();
+    codec.next_prot_id = greh->proto();
     return true;
 }
 
@@ -239,7 +239,7 @@ void GreCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 
     TextLog_Print(text_log, "version:%u flags:0x%02X ethertype:(0x%04X)",
             greh->get_version(), greh->flags,
-            greh->get_proto());
+            greh->proto());
 }
 
 

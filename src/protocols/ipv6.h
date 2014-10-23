@@ -24,6 +24,7 @@
 #define PROTOCOLS_IPV6_H
 
 #include <cstdint>
+#include <arpa/inet.h>
 #include "sfip/sfip_t.h"
 
 #ifndef WIN32
@@ -46,6 +47,7 @@ constexpr uint32_t MIN_EXT_LEN = 8;
 constexpr uint8_t IP6_MULTICAST = 0xFF;  // first/most significant octet
 
 constexpr uint16_t IP6F_MF_MASK = 0x0001; /* more-fragments flag */
+constexpr uint16_t IP6F_RES_MASK = 0x0006; /* reserved bits */
 
 
 enum class MulticastScope : uint8_t
@@ -97,14 +99,23 @@ struct IP6Frag
     uint16_t  ip6f_offlg;   /* offset, reserved, and flag */
     uint32_t  ip6f_ident;   /* identification */
 
-    inline uint32_t get_id() const
-    { return ip6f_ident; }
+    inline uint16_t off() const
+    { return ntohs(ip6f_offlg); }
+//    { return ntohs(ip6f_offlg) >> 3; } // FIXIT-M  This will return the actual offset
 
-    inline uint16_t get_off() const
-    { return ip6f_offlg; }
+    inline uint32_t id() const
+    { return ntohl(ip6f_ident); }
 
     inline uint8_t get_res() const
     { return ip6f_reserved; }
+
+
+
+    inline uint16_t raw_off() const
+    { return ip6f_offlg; }
+
+    inline uint32_t raw_id() const
+    { return ip6f_ident; }
 };
 
 
@@ -131,20 +142,23 @@ struct IP6Hdr
     snort_in6_addr ip6_dst;      /* destination address */
 
 
+    inline uint16_t len() const
+    { return ntohs(ip6_payload_len); }
+
+
     inline uint8_t get_ver() const
     { return (uint8_t)(ntohl(ip6_vtf) >> 28); }
-
-    inline uint16_t get_tos() const
-    { return (uint16_t)((ntohl(ip6_vtf) & 0x0FF00000) >> 20); }
-
-    inline uint16_t get_len() const
-    { return ip6_payload_len; }
 
     inline uint8_t get_next() const
     { return ip6_next; }
 
     inline uint8_t get_hop_lim() const
     { return ip6_hoplim; }
+
+    inline uint16_t tos() const
+    { return (uint16_t)((ntohl(ip6_vtf) & 0x0FF00000) >> 20); }
+
+
 
     // becaise Snort expects this in terms of 32 bit words.
     inline uint8_t get_hlen() const
@@ -189,6 +203,12 @@ struct IP6Hdr
 
     inline void set_proto(uint8_t prot)
     { ip6_next = prot; }
+
+
+    /* Access raw data */
+
+    inline uint16_t raw_len() const
+    { return ip6_payload_len; }
 
 };
 

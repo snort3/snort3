@@ -547,7 +547,7 @@ int CheckTagList(Packet *p, Event *event)
 
         if(returned->metric & TAG_METRIC_BYTES)
         {
-            returned->bytes -= (int) ntohs(p->ptrs.ip_api.len());
+            returned->bytes -= (int) p->ptrs.ip_api.dgram_len();
 
             if(returned->bytes < 0)
             {

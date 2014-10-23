@@ -20,7 +20,7 @@
 // cd_arp.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/arp.h"
@@ -39,10 +39,10 @@ static const RuleMap arp_rules[] =
     { 0, nullptr }
 };
 
-class ArpModule : public DecodeModule
+class ArpModule : public CodecModule
 {
 public:
-    ArpModule() : DecodeModule(CD_ARP_NAME, CD_ARP_HELP) {}
+    ArpModule() : CodecModule(CD_ARP_NAME, CD_ARP_HELP) {}
 
     const RuleMap* get_rules() const override
     { return arp_rules; }

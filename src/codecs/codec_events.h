@@ -22,7 +22,7 @@
 #define CODEC_EVENTS_H
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "events/event_queue.h"
 
 

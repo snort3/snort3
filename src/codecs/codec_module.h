@@ -17,10 +17,10 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-// decode_module.h author Russ Combs <rucombs@cisco.com>
+// codec_module.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef DECODE_MODULE
-#define DECODE_MODULE
+#ifndef CODECS_CODEC_MODULE
+#define CODECS_CODEC_MODULE
 
 #include "framework/module.h"
 
@@ -210,13 +210,13 @@ enum CodecSid {
 // module
 //-------------------------------------------------------------------------
 
-class DecodeModule : public Module
+class CodecModule : public Module
 {
 public:
-    DecodeModule(const char* s, const char* h) : Module(s, h)
+    CodecModule(const char* s, const char* h) : Module(s, h)
     { };
 
-    DecodeModule(const char* s, const char* h, const Parameter* p, bool is_list = false)
+    CodecModule(const char* s, const char* h, const Parameter* p, bool is_list = false)
     : Module(s, h, p, is_list) { };
 
     unsigned get_gid() const override

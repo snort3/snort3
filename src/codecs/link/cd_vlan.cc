@@ -27,7 +27,7 @@
 
 #include "protocols/packet.h"
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/vlan.h"
 #include "protocols/eth.h"
@@ -49,10 +49,10 @@ static const RuleMap vlan_rules[] =
     { 0, nullptr }
 };
 
-class VlanModule : public DecodeModule
+class VlanModule : public CodecModule
 {
 public:
-    VlanModule() : DecodeModule(CD_VLAN_NAME, CD_VLAN_HELP) {}
+    VlanModule() : CodecModule(CD_VLAN_NAME, CD_VLAN_HELP) {}
 
     const RuleMap* get_rules() const override
     { return vlan_rules; }

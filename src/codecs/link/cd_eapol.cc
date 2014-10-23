@@ -26,7 +26,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/eapol.h"
@@ -45,10 +45,10 @@ static const RuleMap eapol_rules[] =
     { 0, nullptr }
 };
 
-class EapolModule : public DecodeModule
+class EapolModule : public CodecModule
 {
 public:
-    EapolModule() : DecodeModule(CD_EAPOL_NAME, CD_EAPOL_HELP) {}
+    EapolModule() : CodecModule(CD_EAPOL_NAME, CD_EAPOL_HELP) {}
 
     const RuleMap* get_rules() const override
     { return eapol_rules; }

@@ -21,7 +21,7 @@
 
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet.h"
@@ -39,10 +39,10 @@ static const RuleMap erspan2_rules[] =
     { 0, nullptr }
 };
 
-class Erspan2Module : public DecodeModule
+class Erspan2Module : public CodecModule
 {
 public:
-    Erspan2Module() : DecodeModule(CD_ERSPAN2_NAME, CD_ERSPAN2_HELP) {}
+    Erspan2Module() : CodecModule(CD_ERSPAN2_NAME, CD_ERSPAN2_HELP) {}
 
     const RuleMap* get_rules() const override
     { return erspan2_rules; }

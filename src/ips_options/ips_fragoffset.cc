@@ -90,7 +90,7 @@ bool FragOffsetOption::operator==(const IpsOption& ips) const
 
 int FragOffsetOption::eval(Cursor&, Packet *p)
 {
-    int p_offset = ntohs(p->ptrs.ip_api.off()) * 8;
+    int p_offset = p->ptrs.ip_api.off() * 8;
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 

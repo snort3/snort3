@@ -91,32 +91,24 @@ bool IpApi::set(const uint8_t* raw_ip_data)
 uint32_t IpApi::id() const
 {
     if (ip4h)
-        return ip4h->get_id();
-
-    // ensure we have an ipv6 frag
-    if (!ip6h)
-        return 0;
+        return (uint32_t)ip4h->id();
 
     const IP6Frag* const frag_hdr = layer::get_inner_ip6_frag();
 
     if (frag_hdr)
-        return frag_hdr->get_id();
+        return frag_hdr->id();
     return 0;
 }
 
 uint16_t IpApi::off() const
 {
     if (ip4h)
-        return (uint32_t)ip4h->get_off();
-
-    // ensure we have an ipv6 frag
-    if (!ip6h)
-        return 0;
+        return ip4h->off();
 
     const IP6Frag* const frag_hdr = layer::get_inner_ip6_frag();
 
     if (frag_hdr)
-        return frag_hdr->get_off();
+        return frag_hdr->off();
     return 0;
 }
 
@@ -135,10 +127,10 @@ const uint8_t* IpApi::ip_data() const
 uint16_t IpApi::actual_ip_len() const
 {
     if (ip4h)
-        return ntohs(ip4h->get_len());
+        return ip4h->len();
 
     if (ip6h)
-        return ntohs(ip6h->get_len());
+        return ip6h->len();
 
     return 0;
 }
@@ -146,10 +138,10 @@ uint16_t IpApi::actual_ip_len() const
 uint16_t IpApi::dgram_len() const
 {
     if (ip4h)
-        return ntohs(ip4h->get_len());
+        return ip4h->len();
 
     if (ip6h)
-        return ntohs(ip6h->get_len()) + IP6_HEADER_LEN;
+        return ip6h->len() + IP6_HEADER_LEN;
 
     return 0;
 }
@@ -157,10 +149,10 @@ uint16_t IpApi::dgram_len() const
 uint16_t IpApi::pay_len() const
 {
     if (ip4h)
-        return ntohs(ip4h->get_len()) - IP6_HEADER_LEN;
+        return ip4h->len() - IP4_HEADER_LEN;
 
     if (ip6h)
-        return ntohs(ip6h->get_len());
+        return ip6h->len();
 
     return 0;
 }
