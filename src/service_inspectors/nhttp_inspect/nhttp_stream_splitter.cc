@@ -212,20 +212,12 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
 
     /* FIXIT-L Temporary printf while we shake out stream interface */
     if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output()) {
-        printf("reassemble() from flow %p direction %d\n", (void*)flow, 1 - (int)to_server()); fflush(nullptr);
+        printf("reassemble() from flow %p direction %d total %u length %u offset %u\n", (void*)flow, 1 - (int)to_server(), total, len, offset); fflush(nullptr);
     }
 
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
     assert(session_data != nullptr);
     SourceId source_id = to_server() ? SRC_CLIENT : SRC_SERVER;
-    if (session_data->section_type[source_id] == SEC__NOTCOMPUTE) {
-        // FIXIT-M Apparently scan() did not flush this data. Probably Stream is flushing excess data while it prunes
-        // a session. In any event it doesn't belong here because we cannot process it. Forward it to our parent class
-        // for processing. There should be no more calls to scan() for this session but tell it to abort just in case.
-
-        // session_data->type_expected[source_id] = SEC_ABORT; /* FIXIT-M this statetment breaks the test tool */
-        return StreamSplitter::reassemble(flow, total, offset, data, len, flags, copied);
-    }
     copied = len;
 
     if (NHttpTestManager::use_test_input()) {
@@ -245,6 +237,15 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
     else if (NHttpTestManager::use_test_output()) {
         printf("Reassemble from flow data %p direction %d\n", (void*)session_data, source_id);
         fflush(stdout);
+    }
+
+    if (session_data->section_type[source_id] == SEC__NOTCOMPUTE) {
+        // FIXIT-M Apparently scan() did not flush this data. Probably Stream is flushing excess data while it prunes
+        // a session. In any event it doesn't belong here because we cannot process it. Forward it to our parent class
+        // for processing. There should be no more calls to scan() for this session but tell it to abort just in case.
+
+        // session_data->type_expected[source_id] = SEC_ABORT; /* FIXIT-M this statetment breaks the test tool */
+        return StreamSplitter::reassemble(flow, total, offset, data, len, flags, copied);
     }
 
     session_data->tcp_close[source_id] = tcp_close || session_data->tcp_close[source_id];
