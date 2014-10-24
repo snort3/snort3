@@ -13,7 +13,7 @@ snort_defaults.lua: No such file or directory)_
 _ERROR can't find xyz_
 
 * if xyz is the name of a module, make sure you are not assigning a scalar
-  where a table is required (eg xyz = 2 should be xyz = { }).
+  where a table is required (e.g. xyz = 2 should be xyz = { }).
 
 _ERROR can't find x.y_
 

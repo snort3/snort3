@@ -119,7 +119,7 @@ settings, etc., you can also script Loggers and IpsOptions.
 
 === New Http Inspector
 
-*TBD*
+ TBD
 
 === Binder
 

@@ -3,9 +3,9 @@ Snort++ differs from Snort in the following ways:
 * command line and conf file syntax made more uniform
 * removed unused and deprecated features
 * remove as many barriers to successful run as possible
-  (eg: no upper bounds on memcaps)
+  (e.g.: no upper bounds on memcaps)
 * assume the simplest mode of operation
-  (eg: never assume input from or output to some hardcoded filename)
+  (e.g.: never assume input from or output to some hardcoded filename)
 * all Snort config options are grouped into Snort++ modules
 
 === Build Options
@@ -41,7 +41,7 @@ Snort++ differs from Snort in the following ways:
 * Snort++ has a default unicode.map
 * Snort++ will not enforce an upper bound on memcaps and the like within 64 bits
 * Snort++ will supply a default *_global config if not specified
-  (Snort would fatal; eg http_inspect_server w/o http_inspect_global)
+  (Snort would fatal; e.g. http_inspect_server w/o http_inspect_global)
 * address list syntax changes: [[ and ]] must be [ [ and ] ] to avoid Lua string
   parsing errors (unless in quoted string)
 * because the Lua conf is live code, we lose file:line locations in app error messages
@@ -87,7 +87,7 @@ Snort++ differs from Snort in the following ways:
 * fastpattern_offset, fast_pattern_length
 * no ; separated content suboptions
 * offset, depth, distance, and within must use a space separator not colon
-  (eg. offset:5; becomes offset 5;)
+  (e.g. offset:5; becomes offset 5;)
 * rule option sequence: <stub> soid <hidden>
 * sid == 0 not allowed
 * soid is now a non-metadata option
@@ -100,7 +100,7 @@ Snort++ differs from Snort in the following ways:
 * deleted unused http_encode option
 * urilen replaced with generic bufferlen which applies to current sticky
   buffer
-* added optional selector to http_header, eg http_header:User-Agent;
+* added optional selector to http_header, e.g. http_header:User-Agent;
 * multiline rules w/o \n
 * #begin ... #end comments
 
