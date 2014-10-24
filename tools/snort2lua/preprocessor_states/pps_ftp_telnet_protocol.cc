@@ -192,7 +192,13 @@ bool FtpServer::convert(std::istringstream& data_stream)
     if (data_stream >> keyword)
     {
         if(!keyword.compare("default"))
+        {
             table_api.open_table("ftp_server");
+
+            // FIXIT-H  When bindings complete, remove this code
+            bind.print_binding(false);
+            // FIXIT-H  ^^^^^^^ When bindings complete, remove this coded
+        }
         else
         {
             std::string table_name = "ftp_server_target_" + std::to_string(ftpsever_binding_id);
@@ -371,7 +377,13 @@ bool FtpClient::convert(std::istringstream& data_stream)
     if (data_stream >> keyword)
     {
         if(!keyword.compare("default"))
+        {
             table_api.open_table("ftp_client");
+
+            // FIXIT-H  When bindings complete, remove this code
+            bind.print_binding(false);
+            // FIXIT-H  ^^^^^^^ When bindings complete, remove this coded
+        }
         else
         {
             std::string table_name = "ftp_client_target_" +
