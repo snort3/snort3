@@ -461,7 +461,7 @@ static inline void init_flush_policy(Flow* flow, StreamTracker* trk)
     if ( !trk->splitter )
         trk->flush_policy = STREAM_FLPOLICY_IGNORE;
 
-    else if ( !Normalize_IsEnabled(flow->normal_mask, NORM_TCP_IPS) )
+    else if ( !flow->norm_is_enabled(NORM_TCP_IPS) )
         trk->flush_policy = STREAM_FLPOLICY_ON_ACK;
 
     else

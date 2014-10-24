@@ -20,6 +20,7 @@
 -- patched force flushes to do memcpy
 -- patched session clear flushed to be forced
 -- fixed up --dump-defaults so that it can be validated unedited
+-- fixed normalizer init of flow
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to

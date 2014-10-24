@@ -29,6 +29,7 @@
 #include "snort_types.h"
 #include "snort.h"
 #include "framework/inspector.h"
+#include "flow/flow.h"
 
 THREAD_LOCAL ProfileStats norm_perf_stats;
 
@@ -216,7 +217,10 @@ void Normalizer::eval(Packet *p)
     MODULE_PROFILE_START(norm_perf_stats);
 
     if ( !PacketIsRebuilt(p) && !Active_PacketWasDropped() )
+    {
         Norm_Packet(&config, p);
+        p->flow->set_normalizations(config.normalizer_flags);
+    }
 
     MODULE_PROFILE_END(norm_perf_stats);
     return;
