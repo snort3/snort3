@@ -222,6 +222,10 @@ static void dump_field_lua(const string& key, const Parameter* p, bool table = f
     if ( table || p->is_table() )
         cout << key << " = { }";
 
+    // if there is no default, emit nothing
+    else if ( !p->deflt )
+        return;
+
     else if ( p->is_quoted() )
     {
         const char* s = p->deflt ? p->deflt : " ";
@@ -818,6 +822,7 @@ void ModuleManager::show_configs(const char* pfx, bool exact)
 void ModuleManager::dump_defaults(const char* pfx)
 {
     dump_fmt = DF_LUA;
+    cout << "require('snort_config')" << endl;
     show_configs(pfx);
 }
 

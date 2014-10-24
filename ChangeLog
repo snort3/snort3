@@ -16,6 +16,10 @@
    reassemble packets (ie nhttp internal buffers)
 -- added rebuilt buffers count
 -- fixed partial flushes
+-- fixed use of bytes copied vs actual length
+-- patched force flushes to do memcpy
+-- patched session clear flushed to be forced
+-- fixed up --dump-defaults so that it can be validated unedited
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to

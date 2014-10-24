@@ -157,9 +157,9 @@ static void Print_TCP (const NormalizerConfig* nc)
 class Normalizer : public Inspector
 {
 public:
-    Normalizer(NormalizeModule*);
+    Normalizer(const NormalizerConfig&);
 
-    bool configure(SnortConfig*) override;
+    void tinit() override;
     void show(SnortConfig*) override;
     void eval(Packet*) override;
 
@@ -168,21 +168,25 @@ private:
     bool disabled;
 };
 
-Normalizer::Normalizer(NormalizeModule* mod)
+Normalizer::Normalizer(const NormalizerConfig& nc)
 {
-    memcpy(&config, mod->get_config(), sizeof(config));
+    config = nc;
     disabled = false;
 }
 
-bool Normalizer::configure(SnortConfig*)
+void Normalizer::tinit()
 {
-    // FIXIT-M detection policy can't be used by normalizer
-    // (not set until after normalizer runs)
+    // FIXIT-H this isn't good with -z > 1
+    // this ensures we init just once but there is a race cond
+    // with other threads that won't normalize until this is done
+    if ( get_instance_id() ) 
+        return;
+
     if ( get_ips_policy()->policy_mode != POLICY_MODE__INLINE )
     {
         ParseWarning("normalizations disabled because not inline.\n");
         disabled = true;
-        return true;
+        return;
     }
 
     NetworkPolicy* nap = get_network_policy();
@@ -193,7 +197,7 @@ bool Normalizer::configure(SnortConfig*)
     }
 
     Norm_SetConfig(&config);
-    return true;
+    return;
 }
 
 void Normalizer::show(SnortConfig* sc)
@@ -230,7 +234,8 @@ static void mod_dtor(Module* m)
 
 static Inspector* no_ctor(Module* m)
 {
-    return new Normalizer((NormalizeModule*)m);
+    NormalizeModule* mod = (NormalizeModule*)m;
+    return new Normalizer(*mod->get_config());
 }
 
 static void no_dtor(Inspector* p)

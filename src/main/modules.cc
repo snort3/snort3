@@ -563,7 +563,7 @@ static const Parameter alerts_params[] =
     { "rate_filter_memcap", Parameter::PT_INT, "0:", "1048576",
       "set available memory for filters" },
 
-    { "reference_net", Parameter::PT_STRING, nullptr, "",
+    { "reference_net", Parameter::PT_STRING, nullptr, nullptr,
       "set the CIDR for homenet "
       "(for use with -l or -B, does NOT change $HOME_NET in IDS mode)"
     },
@@ -962,14 +962,14 @@ bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
 
 static const Parameter attribute_table_params[] =
 {
-    { "max_hosts", Parameter::PT_INT, "32:207551", "0",
+    { "max_hosts", Parameter::PT_INT, "32:207551", "1024",
       "maximum number of hosts in attribute table" },
 
-    { "max_services_per_host", Parameter::PT_INT, "1:65535", "0",
+    { "max_services_per_host", Parameter::PT_INT, "1:65535", "8",
       "maximum number of services per host entry in attribute table" },
 
-    { "max_metadata_services", Parameter::PT_INT, "1:256", "0",
-      "max" },
+    { "max_metadata_services", Parameter::PT_INT, "1:256", "8",
+      "maximum number of services in rule metadata" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -1155,13 +1155,13 @@ bool IpsModule::set(const char*, Value& v, SnortConfig*)
 
 static const Parameter thread_pinning_params[] =
 {
-    { "cpu", Parameter::PT_INT, "0:127", nullptr,
+    { "cpu", Parameter::PT_INT, "0:127", "0",
         "pin the associated source/thread to this cpu"},
 
     { "source", Parameter::PT_STRING, nullptr, nullptr,
         "set cpu affinity for this source (either pcap or <iface>"},
 
-    { "thread", Parameter::PT_INT, "0:", nullptr,
+    { "thread", Parameter::PT_INT, "0:", "0",
         "set cpu affinity for the <cur_thread_num> thread that runs"},
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -1449,8 +1449,10 @@ bool SuppressModule::begin(const char*, int, SnortConfig*)
 bool SuppressModule::end(const char*, int idx, SnortConfig* sc)
 {
     if ( idx && sfthreshold_create(sc, sc->threshold_config, &thdx) )
+    {
+        ParseError("bad suppress configuration [%d]", idx);
         return false;
-
+    }
     return true;
 }
 
@@ -1460,10 +1462,10 @@ bool SuppressModule::end(const char*, int idx, SnortConfig* sc)
 
 static const Parameter event_filter_params[] =
 {
-    { "gid", Parameter::PT_INT, "0:", "0",
+    { "gid", Parameter::PT_INT, "0:", "1",
       "rule generator ID" },
 
-    { "sid", Parameter::PT_INT, "0:", "0",
+    { "sid", Parameter::PT_INT, "0:", "1",
       "rule signature ID" },
 
     { "type", Parameter::PT_ENUM, "limit | threshold | both", nullptr,
@@ -1541,8 +1543,7 @@ bool EventFilterModule::end(const char*, int idx, SnortConfig* sc)
 {
     if ( idx && sfthreshold_create(sc, sc->threshold_config, &thdx) )
     {
-        LogMessage("ERROR: bad event_filter gid = %u, sid = %u",
-            thdx.gen_id, thdx.sig_id);
+        ParseError("bad event_filter configuration [%d]", idx);
         return false;
     }
     return true;
@@ -1554,19 +1555,19 @@ bool EventFilterModule::end(const char*, int idx, SnortConfig* sc)
 
 static const Parameter rate_filter_params[] =
 {
-    { "gid", Parameter::PT_INT, "0:", "0",
+    { "gid", Parameter::PT_INT, "0:", "1",
       "rule generator ID" },
 
-    { "sid", Parameter::PT_INT, "0:", "0",
+    { "sid", Parameter::PT_INT, "0:", "1",
       "rule signature ID" },
 
-    { "track", Parameter::PT_ENUM, "by_src | by_dst | by_rule", nullptr,
+    { "track", Parameter::PT_ENUM, "by_src | by_dst | by_rule", "by_src",
       "filter only matching source or destination addresses" },
 
-    { "count", Parameter::PT_INT, "0:", "0",
+    { "count", Parameter::PT_INT, "0:", "1",
       "number of events in interval before tripping" },
 
-    { "seconds", Parameter::PT_INT, "0:", "0",
+    { "seconds", Parameter::PT_INT, "0:", "1",
       "count interval" },
 
     { "new_action", Parameter::PT_SELECT,
@@ -1639,8 +1640,10 @@ bool RateFilterModule::begin(const char*, int, SnortConfig*)
 bool RateFilterModule::end(const char*, int idx, SnortConfig* sc)
 {
     if ( idx && RateFilter_Create(sc, sc->rate_filter_config,  &thdx) )
+    {
+        ParseError("bad rate_filter configuration [%d]", idx);
         return false;
-
+    }
     return true;
 }
 
@@ -1736,7 +1739,7 @@ static const Parameter service_params[] =
 
 static const Parameter hosts_params[] =
 {
-    { "ip", Parameter::PT_ADDR, nullptr, nullptr,
+    { "ip", Parameter::PT_ADDR, nullptr, "0.0.0.0/32",
       "hosts address / cidr" },
 
     { "frag_policy", Parameter::PT_ENUM, ip_policies, "linux",
