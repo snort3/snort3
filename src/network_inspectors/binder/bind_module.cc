@@ -113,7 +113,7 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-BinderModule::BinderModule() : Module(BIND_NAME, BIND_HELP, s_params)
+BinderModule::BinderModule() : Module(BIND_NAME, BIND_HELP, s_params, true)
 { work = nullptr; }
 
 BinderModule::~BinderModule()
@@ -127,8 +127,11 @@ ProfileStats* BinderModule::get_profile() const
 
 bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
 {
+    if ( !work )
+        return false;
+
     // both
-    if ( !strcmp(fqn, "binder.when.service") )
+    else if ( !strcmp(fqn, "binder.when.service") )
         work->when.svc = v.get_string();
 
     else if ( !strcmp(fqn, "binder.use.service") )

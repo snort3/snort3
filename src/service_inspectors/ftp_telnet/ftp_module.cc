@@ -21,7 +21,9 @@
 
 #include "ftp_module.h"
 #include <sstream>
+
 #include "main/snort_config.h"
+#include "parser/parser.h"
 
 using namespace std;
 
@@ -40,11 +42,11 @@ using namespace std;
 
 static const Parameter client_bounce_params[] =
 {
-    { "address", Parameter::PT_ADDR, nullptr, nullptr,
+    { "address", Parameter::PT_ADDR, nullptr, "1.0.0.0/32",
       "allowed ip address in CIDR format" },
 
     // FIXIT-L port and last_port should be replaced with a port list
-    { "port", Parameter::PT_PORT, "1:", nullptr,
+    { "port", Parameter::PT_PORT, "1:", "20",
       "allowed port" },
 
     { "last_port", Parameter::PT_PORT, "0:", nullptr,
@@ -169,12 +171,13 @@ bool FtpClientModule::end(const char* fqn, int idx, SnortConfig*)
 
     if ( idx && !strcmp(fqn, "ftp_client.bounce_to") )
     {
-        if ( !address.size() )
+        // FIXIT-H 0.0.0.0/32 is not captured correctly 
+        // see parameter.cc::valid_addr()
+        if ( /*!address.size() ||*/ (last_port && (port > last_port)) )
+        {
+            ParseError("bad ftp_client.bounce_to [%d]", idx);
             return false;
-
-        if ( last_port && (port > last_port) )
-            return false;
-
+        }
         bounce_to.push_back(new BounceTo(address, port, last_port));
     }
     return true;
@@ -248,7 +251,7 @@ static const Parameter ftp_directory_params[] =
     { "dir_cmd", Parameter::PT_STRING, nullptr, nullptr,
       "directory command" },
 
-    { "rsp_code", Parameter::PT_INT, "200:", "0",
+    { "rsp_code", Parameter::PT_INT, "200:", "200",
       "expected successful response code for command" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }

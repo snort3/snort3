@@ -461,7 +461,7 @@ static inline void init_flush_policy(Flow* flow, StreamTracker* trk)
     if ( !trk->splitter )
         trk->flush_policy = STREAM_FLPOLICY_IGNORE;
 
-    else if ( !Normalize_IsEnabled(flow->normal_mask, NORM_TCP_IPS) )
+    else if ( !flow->norm_is_enabled(NORM_TCP_IPS) )
         trk->flush_policy = STREAM_FLPOLICY_ON_ACK;
 
     else
@@ -1955,8 +1955,20 @@ static int FlushStream(
         )
             flags |= PKT_PDU_TAIL;
 
-        const StreamBuffer* sb = st->splitter->reassemble(
-            p->flow, total, bytes_flushed, ss->payload, bytes_to_copy, flags, bytes_copied);
+        const StreamBuffer* sb = nullptr;
+
+        // FIXIT-H force handling to work around nhttp
+        if ( st->flags & TF_FORCE_FLUSH )
+        {
+            memcpy(flushbuf, ss->payload, bytes_to_copy);
+            s5_pkt->dsize += bytes_to_copy;
+            bytes_copied = bytes_to_copy;
+        }
+        else
+        {
+            sb = st->splitter->reassemble(
+                p->flow, total, bytes_flushed, ss->payload, bytes_to_copy, flags, bytes_copied);
+        }
 
         flags = 0;
 
@@ -1964,6 +1976,7 @@ static int FlushStream(
         {
             s5_pkt->data = sb->data;
             s5_pkt->dsize = sb->length;
+            assert(sb->length < 65536); // FIXIT-H should be < s5_pkt->max_dsize);
 
             // FIXIT-M flushbuf should be eliminated from this function
             // since we are actually using the stream splitter buffer
@@ -1989,9 +2002,6 @@ static int FlushStream(
         st->flush_count++;
         segs++;
 
-        if ( sb )
-            break;
-
         if ( flushbuf >= flushbuf_end )
             break;
 
@@ -2013,6 +2023,9 @@ static int FlushStream(
             break;
 
         st->seglist_next = ss->next;
+
+        if ( sb )
+            break;
     }
 
     STREAM5_DEBUG_WRAP(bytes_queued -= bytes_flushed;);
@@ -2098,6 +2111,10 @@ static inline int _flush_to_seq (
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Attempting to flush %lu bytes\n", footprint););
 
+        ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_sec = st->seglist_next->tv.tv_sec;
+        ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_usec = st->seglist_next->tv.tv_usec;
+        ((TCPHdr *)s5_pkt->ptrs.tcph)->th_seq = htonl(st->seglist_next->seq);
+
         /* setup the pseudopacket payload */
         s5_pkt->dsize = 0;
         const uint8_t* s5_pkt_end = s5_pkt->data + s5_pkt->max_dsize;
@@ -2107,11 +2124,12 @@ static inline int _flush_to_seq (
             break; /* No more data... bail */
 
         else if ( !s5_pkt->dsize )
+        {
             tcpStats.rebuilt_buffers++;
-
+            bytes_processed += flushed_bytes;
+        }
         else
         {
-            ((TCPHdr *)s5_pkt->ptrs.tcph)->th_seq = htonl(st->seglist_next->seq);
             s5_pkt->packet_flags |= (PKT_REBUILT_STREAM|PKT_STREAM_EST);
 
             if ((p->packet_flags & PKT_PDU_TAIL))
@@ -2119,11 +2137,8 @@ static inline int _flush_to_seq (
 
             PacketManager::encode_update(s5_pkt);
 
-            ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_sec = st->seglist_next->tv.tv_sec;
-            ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_usec = st->seglist_next->tv.tv_usec;
-
             sfBase.iStreamFlushes++;
-            bytes_processed += s5_pkt->dsize;
+            bytes_processed += flushed_bytes;
 
             s5_pkt->packet_flags |= dir;
             s5_pkt->flow = tcpssn->flow;
@@ -5722,8 +5737,7 @@ dupfin:
                         "flushing FROM_SERVER\n"););
             if(talker->seg_bytes_logical)
             {
-                uint32_t flushed = flush_stream(tcpssn, talker, p,
-                        PKT_FROM_CLIENT);
+                uint32_t flushed = flush_stream(tcpssn, talker, p, PKT_FROM_CLIENT);
 
                 if(flushed)
                 {
@@ -5735,8 +5749,7 @@ dupfin:
 
             if(listener->seg_bytes_logical)
             {
-                uint32_t flushed = flush_stream(tcpssn, listener, p,
-                        PKT_FROM_SERVER);
+                uint32_t flushed = flush_stream(tcpssn, listener, p, PKT_FROM_SERVER);
 
                 if(flushed)
                 {
@@ -5751,8 +5764,7 @@ dupfin:
                         "flushing FROM_CLIENT\n"););
             if(listener->seg_bytes_logical)
             {
-                uint32_t flushed = flush_stream(tcpssn, listener, p,
-                        PKT_FROM_CLIENT);
+                uint32_t flushed = flush_stream(tcpssn, listener, p, PKT_FROM_CLIENT);
 
                 if(flushed)
                 {
@@ -5763,8 +5775,7 @@ dupfin:
 
             if(talker->seg_bytes_logical)
             {
-                uint32_t flushed = flush_stream(tcpssn, talker, p,
-                        PKT_FROM_SERVER);
+                uint32_t flushed = flush_stream(tcpssn, talker, p, PKT_FROM_SERVER);
 
                 if(flushed)
                 {

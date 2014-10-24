@@ -46,10 +46,11 @@ void NHttpMsgChunk::print_section(FILE *output) {
 void NHttpMsgChunk::update_flow() {
     if (tcp_close) {
         session_data->type_expected[source_id] = SEC_CLOSED;
+        session_data->section_type[source_id] = SEC__NOTCOMPUTE;
         session_data->half_reset(source_id);
     }
     else {
-        // Zero-length chunk is not visible here. StreamSplitter updates expected_type to SEC_TRAILER when necessary.
+        // Zero-length chunk is not visible here. StreamSplitter::reassemble() updates type_expected to SEC_TRAILER.
         session_data->body_octets[source_id] = body_octets;
     }
 }

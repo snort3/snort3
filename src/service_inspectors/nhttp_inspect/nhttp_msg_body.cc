@@ -59,6 +59,7 @@ void NHttpMsgBody::print_section(FILE *output) {
 void NHttpMsgBody::update_flow() {
     if (tcp_close) {
         session_data->type_expected[source_id] = SEC_CLOSED;
+        session_data->section_type[source_id] = SEC__NOTCOMPUTE;
         session_data->half_reset(source_id);
     }
     else if (body_octets < data_length) {
@@ -68,6 +69,7 @@ void NHttpMsgBody::update_flow() {
     else {
         // End of message
         session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
+        session_data->section_type[source_id] = SEC__NOTCOMPUTE;
         session_data->half_reset(source_id);
     }
 }

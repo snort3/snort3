@@ -32,7 +32,7 @@ public:
     NHttpStreamSplitter(bool is_client_to_server, NHttpInspect* my_inspector_) : StreamSplitter(is_client_to_server),
        my_inspector(my_inspector_) { };
     Status scan(Flow* flow, const uint8_t* data, uint32_t length, uint32_t not_used, uint32_t* flush_offset) override;
-    const StreamBuffer* reassemble(Flow* flow, unsigned /*total*/, unsigned offset, const uint8_t* data, unsigned len,
+    const StreamBuffer* reassemble(Flow* flow, unsigned total, unsigned offset, const uint8_t* data, unsigned len,
        uint32_t flags, unsigned& copied) override;
     bool is_paf() override { return true; };
     unsigned max() override { return NHttpTestManager::use_test_input() ? NHttpEnums::DATABLOCKSIZE : paf_max; };
@@ -44,6 +44,9 @@ private:
        const NHttpFlowData* session_data) const;
     NHttpInspect* const my_inspector;
     unsigned paf_max = NHttpEnums::MAXOCTETS;
+
+    // FIXIT-P a precaution we may wish to remove later
+    bool flow_data_exists = false;
 };
 
 #endif

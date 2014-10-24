@@ -311,7 +311,16 @@ Binding* Binder::get_binding(Flow* flow)
     // so we act as if binder wasn't configured at all
     return nullptr;
 }
-    
+
+// FIXIT-P these lookups should be optimized when the dust settles
+#define INS_WIZ  "wizard"
+#define INS_STR  "stream_"
+#define INS_IP   "stream_ip"
+#define INS_ICMP "stream_icmp"
+#define INS_TCP  "stream_tcp"
+#define INS_UDP  "stream_udp"
+#define INS_NORM "normalizer"
+
 BindAction Binder::apply(Flow* flow, Binding* pb)
 {
     if ( !pb )
@@ -327,7 +336,7 @@ BindAction Binder::apply(Flow* flow, Binding* pb)
         return pb->use.action;
     }
 
-    if ( !strncmp(pb->use.name.c_str(), "stream_", 7) )
+    if ( !strncmp(pb->use.name.c_str(), INS_STR, 7) )
     {
         set_session(flow, pb->use.name.c_str());
         return BA_INSPECT;
@@ -336,7 +345,7 @@ BindAction Binder::apply(Flow* flow, Binding* pb)
     init_flow(flow);
     Inspector* ins;
 
-    if ( pb->use.name == "wizard" )
+    if ( pb->use.name == INS_WIZ )
     {
         ins = InspectorManager::get_wizard();
         if ( ins )
@@ -365,22 +374,27 @@ BindAction Binder::apply(Flow* flow, Binding* pb)
 
 void Binder::init_flow(Flow* flow)
 {
+    Inspector* ins = InspectorManager::get_inspector(INS_NORM);
+
+    if ( ins )
+        ins->exec(0, flow);
+
     switch ( flow->protocol )
     {
     case PktType::IP:
-        set_session(flow, "stream_ip");
+        set_session(flow, INS_IP);
         break;
 
     case PktType::ICMP:
-        set_session(flow, "stream_icmp");
+        set_session(flow, INS_ICMP);
         break;
 
     case PktType::TCP:
-        set_session(flow, "stream_tcp");
+        set_session(flow, INS_TCP);
         break;
 
     case PktType::UDP:
-        set_session(flow, "stream_udp");
+        set_session(flow, INS_UDP);
         break;
 
     default:

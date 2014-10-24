@@ -19,6 +19,7 @@
 // nhttp_flow_data.cc author Tom Peters <thopeter@cisco.com>
 
 #include "nhttp_enum.h"
+#include "nhttp_test_manager.h"
 #include "nhttp_flow_data.h"
 #include "nhttp_transaction.h"
 
@@ -26,9 +27,20 @@ using namespace NHttpEnums;
 
 unsigned NHttpFlowData::nhttp_flow_id = 0;
 
-NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id) { }
+NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id) {
+    /* FIXIT-L Temporary printf while we shake out stream interface */
+    if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output()) {
+        printf("Flow Data construct %p\n", (void*)this);
+        fflush(nullptr);
+    }
+}
 
 NHttpFlowData::~NHttpFlowData() {
+    /* FIXIT-L Temporary printf while we shake out stream interface */
+    if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output()) {
+        printf("Flow Data destruct %p\n", (void*)this);
+        fflush(nullptr);
+    }
     for (int k=0; k <= 1; k++) {
         if (section_buffer_owned[k]) {
             delete[] section_buffer[k];

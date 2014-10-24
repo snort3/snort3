@@ -111,7 +111,9 @@ int Norm_Packet (NormalizerConfig* c, Packet* p)
     {
         uint16_t proto = p->layers[--lyr].prot_id;
         NormalFunc n = c->normalizers[PacketManager::proto_id(proto)];
-        if ( n ) changes = n(c, p, lyr, changes);
+
+        if ( n )
+            changes = n(c, p, lyr, changes);
     }
 
     if ( changes > 0 )
