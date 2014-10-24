@@ -21,6 +21,8 @@
 -- patched session clear flushed to be forced
 -- fixed up --dump-defaults so that it can be validated unedited
 -- fixed normalizer init of flow
+-- pulled latest from Tom
+-- removed force from session clear
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to

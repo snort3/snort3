@@ -5737,10 +5737,7 @@ dupfin:
                         "flushing FROM_SERVER\n"););
             if(talker->seg_bytes_logical)
             {
-                // FIXIT-H temporary force to work around nhttp
-                talker->flags |= TF_FORCE_FLUSH;
                 uint32_t flushed = flush_stream(tcpssn, talker, p, PKT_FROM_CLIENT);
-                talker->flags &= ~TF_FORCE_FLUSH;
 
                 if(flushed)
                 {
@@ -5752,10 +5749,7 @@ dupfin:
 
             if(listener->seg_bytes_logical)
             {
-                // FIXIT-H temporary force to work around nhttp
-                listener->flags |= TF_FORCE_FLUSH;
                 uint32_t flushed = flush_stream(tcpssn, listener, p, PKT_FROM_SERVER);
-                listener->flags &= ~TF_FORCE_FLUSH;
 
                 if(flushed)
                 {
@@ -5770,10 +5764,7 @@ dupfin:
                         "flushing FROM_CLIENT\n"););
             if(listener->seg_bytes_logical)
             {
-                // FIXIT-H temporary force to work around nhttp
-                listener->flags |= TF_FORCE_FLUSH;
                 uint32_t flushed = flush_stream(tcpssn, listener, p, PKT_FROM_CLIENT);
-                listener->flags &= ~TF_FORCE_FLUSH;
 
                 if(flushed)
                 {
@@ -5784,10 +5775,7 @@ dupfin:
 
             if(talker->seg_bytes_logical)
             {
-                // FIXIT-H temporary force to work around nhttp
-                talker->flags |= TF_FORCE_FLUSH;
                 uint32_t flushed = flush_stream(tcpssn, talker, p, PKT_FROM_SERVER);
-                talker->flags &= ~TF_FORCE_FLUSH;
 
                 if(flushed)
                 {
