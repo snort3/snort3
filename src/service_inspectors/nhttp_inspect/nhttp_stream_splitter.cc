@@ -85,6 +85,12 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
 
     assert(length <= MAXOCTETS);
 
+    /* FIXIT-L Temporary printf while we shake out stream interface */
+    if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output()) {
+        printf("scan() from flow %p direction %d\n", (void*)flow, 1 - (int)to_server());
+        fflush(nullptr);
+    }
+
     // When the system begins providing TCP connection close information this won't always be false. FIXIT-H
     bool tcp_close = false;
 
@@ -92,8 +98,12 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
     // by a TCP connection. Since scan() is the first to see a new TCP connection the new flow data object is created
     // here.
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
-    if (session_data == nullptr) flow->set_application_data(session_data = new NHttpFlowData);
+    if (session_data == nullptr) {
+        assert(!flow_data_exists);
+        flow->set_application_data(session_data = new NHttpFlowData);
+    }
     assert(session_data != nullptr);
+    flow_data_exists = true;
     SourceId source_id = to_server() ? SRC_CLIENT : SRC_SERVER;
 
     if (NHttpTestManager::use_test_input()) {
@@ -115,7 +125,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
         assert(session_data->type_expected[source_id] != SEC_CLOSED);
     }
     else if (NHttpTestManager::use_test_output()) {
-        printf("Scan from flow %p direction %d\n", (void*)session_data, source_id);
+        printf("Scan from flow data %p direction %d\n", (void*)session_data, source_id);
         fflush(stdout);
     }
 
@@ -192,13 +202,18 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
 
 // FIXIT-P total is not used because it is not reliably correct. Could be used to compute required buffer size
 // instead of always allocating the maximum
-const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* total */, unsigned offset,
+const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, unsigned offset,
        const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
 {
+    static THREAD_LOCAL StreamBuffer nhttp_buf;
+
     // When the system begins providing TCP connection close information this won't always be false. FIXIT-H
     bool tcp_close = false;
 
-    static THREAD_LOCAL StreamBuffer nhttp_buf;
+    /* FIXIT-L Temporary printf while we shake out stream interface */
+    if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output()) {
+        printf("reassemble() from flow %p direction %d total %u length %u offset %u\n", (void*)flow, 1 - (int)to_server(), total, len, offset); fflush(nullptr);
+    }
 
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
     assert(session_data != nullptr);
@@ -220,8 +235,17 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* tota
         offset = 0;
     }
     else if (NHttpTestManager::use_test_output()) {
-        printf("Reassemble from flow %p direction %d\n", (void*)session_data, source_id);
+        printf("Reassemble from flow data %p direction %d\n", (void*)session_data, source_id);
         fflush(stdout);
+    }
+
+    if (session_data->section_type[source_id] == SEC__NOTCOMPUTE) {
+        // FIXIT-M Apparently scan() did not flush this data. Probably Stream is flushing excess data while it prunes
+        // a session. In any event it doesn't belong here because we cannot process it. Forward it to our parent class
+        // for processing. There should be no more calls to scan() for this session but tell it to abort just in case.
+
+        // session_data->type_expected[source_id] = SEC_ABORT; /* FIXIT-M this statetment breaks the test tool */
+        return StreamSplitter::reassemble(flow, total, offset, data, len, flags, copied);
     }
 
     session_data->tcp_close[source_id] = tcp_close || session_data->tcp_close[source_id];
@@ -286,6 +310,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* tota
           case RES_INSPECT:
             nhttp_buf.data = buffer;
             nhttp_buf.length = buffer_length + offset + len - num_excess;
+            assert((nhttp_buf.length <= MAXOCTETS) && (nhttp_buf.length != 0));
             buffer = nullptr;
             buffer_length = 0;
             if (NHttpTestManager::use_test_output()) {
