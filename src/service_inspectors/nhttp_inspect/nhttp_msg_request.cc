@@ -158,6 +158,7 @@ void NHttpMsgRequest::update_flow() {
         session_data->version_id[source_id] = version_id;
         session_data->method_id = method_id;
     }
+    session_data->section_type[source_id] = SEC__NOTCOMPUTE;
 }
 
 // Legacy support function. Puts message fields into the buffers used by old Snort.
