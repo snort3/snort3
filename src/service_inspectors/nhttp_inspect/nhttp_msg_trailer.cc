@@ -57,6 +57,7 @@ void NHttpMsgTrailer::update_flow() {
         session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
         session_data->half_reset(source_id);
     }
+    session_data->section_type[source_id] = SEC__NOTCOMPUTE;
 }
 
 ProcessResult NHttpMsgTrailer::worth_detection() {

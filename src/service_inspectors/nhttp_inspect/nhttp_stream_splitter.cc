@@ -43,10 +43,6 @@ void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* f
         break;
       case SEC_CHUNK:
         paf_max = DATABLOCKSIZE - session_data->chunk_buffer_length[source_id];
-        if (num_excess == 1) {
-            // zero-length chunk
-            session_data->type_expected[source_id] = SEC_TRAILER;
-        }
         break;
       default:
         paf_max = MAXOCTETS;
@@ -244,7 +240,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
         // a session. In any event it doesn't belong here because we cannot process it. Forward it to our parent class
         // for processing. There should be no more calls to scan() for this session but tell it to abort just in case.
 
-        // session_data->type_expected[source_id] = SEC_ABORT; /* FIXIT-M this statetment breaks the test tool */
+        // session_data->type_expected[source_id] = SEC_ABORT; /* FIXIT-M this statement breaks the test tool */
         return StreamSplitter::reassemble(flow, total, offset, data, len, flags, copied);
     }
 
@@ -257,6 +253,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             fprintf(NHttpTestManager::get_output_file(), "Discarded %u octets\n\n", len);
             fflush(NHttpTestManager::get_output_file());
         }
+        session_data->section_type[source_id] = SEC__NOTCOMPUTE;
         return nullptr;
     }
 
@@ -299,10 +296,18 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
                 delete[] chunk_buffer;
                 chunk_buffer = nullptr;
                 chunk_buffer_length = 0;
+                // zero-length chunk is not visible to inspector. Transition to trailer must be handled here.
+                session_data->section_type[source_id] = SEC__NOTCOMPUTE;
+                session_data->type_expected[source_id] = SEC_TRAILER;
                 return nullptr;
             }
             paf_max = DATABLOCKSIZE;
             send_to_detection = my_inspector->process(chunk_buffer, total_chunk_len, flow, source_id, true);
+            if (num_excess > 0) {
+                // zero-length chunk is not visible to inspector. Transition to trailer must be handled here.
+                session_data->section_type[source_id] = SEC__NOTCOMPUTE;
+                session_data->type_expected[source_id] = SEC_TRAILER;
+            }
         }
 
         // Buffers are reset to nullptr without delete[] because NHttpMsgSection holds the pointer and is responsible
