@@ -140,6 +140,17 @@ static bool s5_paf_callback (
 {
     ps->paf = ss->scan(ssn, data, len, flags, &ps->fpt);
 
+#if 0
+    if ( ps->paf == StreamSplitter::SEARCH )
+        ps->fpt = 0;
+
+    if ( ssn->gadget )
+    printf(
+        "%s scan[%d] '%-8.8s' -> %d, %d\n", 
+        ss->to_server() ? "c2s" : "s2c", len, (char*)data,
+        ps->paf, ps->fpt);
+#endif
+
     if ( ps->paf != StreamSplitter::SEARCH )
     {
         ps->fpt += s5_idx;
