@@ -50,9 +50,12 @@ bool PafMax::convert(std::istringstream& data_stream)
     if (data_stream >> val)
     {
         if (val < 1460)
+        {
             table_api.add_diff_option_comment("paf_max [0:63780]", "max_pdu [1460:63780]");
-        else
-            retval = table_api.add_option("max_pdu", val);
+            val = 1460;
+        }
+
+        retval = table_api.add_option("max_pdu", val);
     }
     else
         data_api.failed_conversion(data_stream);
