@@ -147,7 +147,7 @@ bool PpmModule::set(const char*, Value& v, SnortConfig* sc)
             ppm_set_rule_log(&sc->ppm_cfg, PPM_LOG_ALERT);
     }
 #ifdef DEBUG
-    else if ( v.is("debug_pkts") )
+    else if ( v.is("debug_rules") )
         ppm_set_debug_rules(&sc->ppm_cfg, 1);
 #endif
     else

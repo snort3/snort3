@@ -113,7 +113,7 @@ static const Parameter norm_tcp_params[] =
     { "urp", Parameter::PT_BOOL, nullptr, "true",
       "adjust urgent pointer if beyond segment length" },
 
-    { "ecn", Parameter::PT_SELECT, "packet | stream", "false",
+    { "ecn", Parameter::PT_SELECT, "off | packet | stream", "off",
       "clear ecn for all packets | sessions w/o ecn setup" },
 
     { "trim", Parameter::PT_BOOL, nullptr, "false",
@@ -123,7 +123,7 @@ static const Parameter norm_tcp_params[] =
       "clear all options except mss, wscale, timestamp, and any explicitly allowed" },
 
     { "allow_names", Parameter::PT_MULTI, 
-      "sack | echo | partial_order | conn_count | alt_checksum | md5", "false",
+      "sack | echo | partial_order | conn_count | alt_checksum | md5", nullptr,
       "don't clear given option names" },
 
     // FIXIT-L provide a byte list for stuff like this
@@ -211,7 +211,7 @@ bool NormalizeModule::set_tcp(const char*, Value& v, SnortConfig*)
         if ( !strcmp(v.get_string(), "packet") )
             Norm_Set(&config, NORM_TCP_ECN_PKT, v.get_bool());
 
-        else
+        else if ( !strcmp(v.get_string(), "stream") )
             Norm_Set(&config, NORM_TCP_ECN_STR, v.get_bool());
     }
     else if ( v.is("allow_names") )

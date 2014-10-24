@@ -344,7 +344,7 @@ static const Parameter hi_server_params[] =
     { "no_pipeline_req", Parameter::PT_BOOL, nullptr, "false",
       "don't inspect pipelined requests after first (still does general detection)" },
 
-    { "non_rfc_chars", Parameter::PT_BIT_LIST, "255", "false",
+    { "non_rfc_chars", Parameter::PT_BIT_LIST, "255", nullptr,
       "alert on given non-RFC chars being present in the URI" },
 
     { "non_strict", Parameter::PT_BOOL, nullptr, "true",
@@ -398,7 +398,7 @@ static const Parameter hi_server_params[] =
     { "webroot", Parameter::PT_BOOL, nullptr, "true",
       "alert on directory traversals past the top level (web server root)" },
 
-    { "whitespace_chars", Parameter::PT_BIT_LIST, "255", "false",
+    { "whitespace_chars", Parameter::PT_BIT_LIST, "255", nullptr,
       "allowed white space characters" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
