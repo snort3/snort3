@@ -155,3 +155,7 @@ include::errors.txt[]
 * Snort can't tell you the exact filename or line number of a semantic
   error but it will tell you the fully qualified name.
 
+* The dump DAQ will not work with multiple threads unless you use --daq-var
+  file=/dev/null.  This will be fixed in at some point to use the Snort log
+  directory, etc.
+

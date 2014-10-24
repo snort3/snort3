@@ -163,6 +163,7 @@ public:
     void tinit() override;
     void show(SnortConfig*) override;
     void eval(Packet*) override;
+    int exec(int, void*) override;
 
 private:
     NormalizerConfig config;
@@ -217,13 +218,18 @@ void Normalizer::eval(Packet *p)
     MODULE_PROFILE_START(norm_perf_stats);
 
     if ( !PacketIsRebuilt(p) && !Active_PacketWasDropped() )
-    {
         Norm_Packet(&config, p);
-        p->flow->set_normalizations(config.normalizer_flags);
-    }
 
     MODULE_PROFILE_END(norm_perf_stats);
     return;
+}
+
+int Normalizer::exec(int, void* pv)
+{
+    Flow* flow = (Flow*)pv;
+    assert(flow);
+    flow->set_normalizations(config.normalizer_flags);
+    return 0;
 }
 
 //-------------------------------------------------------------------------
