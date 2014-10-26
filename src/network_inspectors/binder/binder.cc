@@ -328,15 +328,6 @@ void Stuff::apply_service(Flow* flow)
 
     else if ( wizard )
         flow->set_clouseau(wizard);
-#if 0
-    else
-    {
-        Inspector* ins = InspectorManager::get_wizard();
-
-        if ( ins )
-            flow->set_clouseau(ins);
-    }
-#endif
 }
 
 //-------------------------------------------------------------------------
