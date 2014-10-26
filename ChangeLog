@@ -23,6 +23,8 @@
 -- fixed normalizer init of flow
 -- pulled latest from Tom
 -- removed force from session clear
+-- updated http_server/inspect defaults
+-- updated binder to bind data, session, and gadget
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to

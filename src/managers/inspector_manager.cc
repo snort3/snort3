@@ -308,7 +308,7 @@ void InspectorManager::delete_policy (InspectionPolicy* pi)
 }
 
 static PHInstance* get_instance(
-    FrameworkPolicy* fp, const char* keyword)
+    FrameworkPolicy* fp, const char* keyword, bool dflt_only = false)
 {
     for ( auto* p : fp->ilist )
     {
@@ -316,7 +316,7 @@ static PHInstance* get_instance(
             return p;
 
         else if ( !strcmp(p->pp_class.api.base.name, keyword) )
-            return p;
+            return (!p->name.size() || !dflt_only) ? p : nullptr;
 
         else if ( p->pp_class.api.service && !strcmp(p->pp_class.api.service, keyword) )
             return p;
@@ -372,20 +372,30 @@ Inspector* InspectorManager::get_wizard()
 } 
 
 // FIXIT-P cache get_inspector() returns or provide indexed lookup
-Inspector* InspectorManager::get_inspector(const char* key)
+Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only)
 {
     InspectionPolicy* pi = get_inspection_policy();
 
     if ( !pi || !pi->framework_policy )
         return nullptr;
 
-    PHInstance* p = get_instance(pi->framework_policy, key);
+    PHInstance* p = get_instance(pi->framework_policy, key, dflt_only);
 
     if ( !p )
         return nullptr;
 
     return p->handler;
 } 
+
+InspectorType InspectorManager::get_type(const char* key)
+{
+    Inspector* p = get_inspector(key);
+
+    if ( !p )
+        return IT_MAX;
+
+    return p->get_api()->type;
+}
 
 void InspectorManager::free_inspector(Inspector* p)
 {
@@ -492,6 +502,9 @@ void InspectorManager::instantiate(
 
     else
     {
+        if ( name )
+            keyword = name;
+
         PHInstance* ppi = get_new(ppc, fp, keyword);
 
         if ( !ppi )
@@ -528,6 +541,7 @@ static void instantiate_binder(SnortConfig* sc, FrameworkPolicy* fp)
     const InspectApi* api = get_plugin(bind_id);
     InspectorManager::instantiate(api, nullptr, sc);
     fp->binder = get_instance(fp, bind_id)->handler;
+    fp->binder->configure(sc);
 }
 
 static bool configure(SnortConfig* sc, FrameworkPolicy* fp)

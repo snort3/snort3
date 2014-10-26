@@ -33,6 +33,7 @@
 #include "sfip/sfip_t.h"
 #include "flow/flow_key.h"
 #include "framework/inspector.h"
+#include "framework/plug_data.h"
 #include "normalize/normalize.h"
 #include "framework/codec.h"
 
@@ -212,6 +213,16 @@ public:
         gadget->rem_ref();
         gadget = nullptr;
     };
+    void set_data(PlugData* pd)
+    {
+        data = pd;
+        data->add_ref();
+    };
+    void clear_data()
+    {
+        data->rem_ref();
+        data = nullptr;
+    };
 
 public:  // FIXIT-M privatize if possible
     // these fields are const after initialization
@@ -231,6 +242,7 @@ public:  // FIXIT-M privatize if possible
     FlowData* appDataList;
     Inspector* clouseau;
     Inspector* gadget;
+    PlugData* data;
     const char* service;
 
     unsigned policy_id;

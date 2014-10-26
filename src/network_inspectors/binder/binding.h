@@ -42,6 +42,17 @@ enum BindAction
     BA_INSPECT
 };
 
+enum BindWhat
+{
+    BW_NONE,
+    BW_DATA,
+    BW_CLIENT,
+    BW_SERVER,
+    BW_STREAM,
+    BW_WIZARD,
+    BW_GADGET,
+};
+
 struct BindWhen
 {
     unsigned id;
@@ -56,11 +67,14 @@ struct BindWhen
 
 struct BindUse
 {
-    BindAction action;
     std::string svc;
     std::string type;
     std::string name;
+
+    BindAction action;
     unsigned index;
+    BindWhat what;
+    void* object;
 };
 
 struct Binding
@@ -71,6 +85,7 @@ struct Binding
     Binding();
     ~Binding();
 
+    bool check_all(const Flow*) const;
     bool check_iface(const Flow*) const;
     bool check_vlan(const Flow*) const;
     bool check_addr(const Flow*) const;
