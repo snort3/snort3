@@ -25,6 +25,8 @@
 -- removed force from session clear
 -- updated http_server/inspect defaults
 -- updated binder to bind data, session, and gadget
+-- http_inspect -> http_global, http_server -> http_inspect,
+   nhttp_inspect -> new_http_inspect
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to

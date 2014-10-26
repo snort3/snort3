@@ -26,7 +26,7 @@
 #include "framework/inspector.h"
 
 extern const BaseApi* sin_http_global;
-extern const BaseApi* sin_http_server;
+extern const BaseApi* sin_http_inspect;
 
 #ifdef STATIC_INSPECTORS
 extern const BaseApi* sin_bo;
@@ -42,7 +42,7 @@ extern const BaseApi* sin_wizard;
 const BaseApi* service_inspectors[] =
 {
     sin_http_global,
-    sin_http_server,
+    sin_http_inspect,
 
 #ifdef STATIC_INSPECTORS
     sin_bo,
