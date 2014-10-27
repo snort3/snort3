@@ -18,6 +18,8 @@
 */
 // converter.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
+#include <stdexcept>
+
 #include "utils/converter.h"
 #include "conversion_state.h"
 #include "data/data_types/dt_comment.h"
@@ -188,14 +190,26 @@ int Converter::parse_file(std::string input_file)
         {
             orig_text += tmp;
             std::istringstream data_stream(orig_text);
-            while(data_stream.peek() != EOF)
+
+            try
             {
-                //FIXIT-M J place this in a try catch
-                if ((state == nullptr) || !state->convert(data_stream))
+                while(data_stream.peek() != EOF)
                 {
-                    data_api.failed_conversion(data_stream);
-                    break;
+                    //FIXIT-M J place this in a try catch
+                    if ((state == nullptr) || !state->convert(data_stream))
+                    {
+                        data_api.failed_conversion(data_stream);
+                        break;
+                    }
                 }
+            }
+            catch (const std::invalid_argument& e)
+            {
+                data_api.failed_conversion(data_stream, e.what());
+            }
+            catch (const std::out_of_range& e)
+            {
+                data_api.failed_conversion(data_stream, e.what());
             }
 
             orig_text.clear();
