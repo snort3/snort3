@@ -34,6 +34,7 @@ public:
     static void release_plugins(void);
 
     static void instantiate(const DataApi*, Module*, SnortConfig*);
+    static PlugData* get_data(const char* key, SnortConfig*);
 
     SO_PUBLIC static PlugData* acquire(const char* key, SnortConfig*);
     SO_PUBLIC static void release(PlugData*);

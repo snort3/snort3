@@ -450,7 +450,7 @@ static const char* buffers[] =
     nullptr
 };
 
-static const InspectApi hs_api =
+static const InspectApi hi_api =
 {
     {
         PT_INSPECTOR,
@@ -479,11 +479,11 @@ static const InspectApi hs_api =
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &hg_api.base,
-    &hs_api.base,
+    &hi_api.base,
     nullptr
 };
 #else
 const BaseApi* sin_http_global = &hg_api.base;
-const BaseApi* sin_http_server = &hs_api.base;
+const BaseApi* sin_http_inspect = &hi_api.base;
 #endif
 

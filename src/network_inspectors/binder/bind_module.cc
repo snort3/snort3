@@ -36,6 +36,8 @@ using namespace std;
 #include "managers/module_manager.h"
 #include "parser/parser.h"
 
+#define FILE_KEY ".file"
+
 THREAD_LOCAL BindStats bstats;
 
 static const char* bind_pegs[] =
@@ -174,7 +176,7 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
             ParseError("you can't set binder.use.file with type or name");
 
         work->use.name = v.get_string();
-        work->use.type = ".file";
+        work->use.type = FILE_KEY;
     }
     else if ( v.is("name") )
     {
@@ -208,7 +210,7 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
 {
     if ( idx && !strcmp(fqn, BIND_NAME) )
     {
-        if ( work->use.type == ".file" )
+        if ( work->use.type == FILE_KEY )
         {
             Shell* sh = new Shell(work->use.name.c_str());
             work->use.index = sc->policy_map->add_shell(sh) + 1;

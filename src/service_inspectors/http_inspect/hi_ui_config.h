@@ -131,7 +131,6 @@ struct HTTPINSPECT_CONF
 {
     HTTPINSPECT_GLOBAL_CONF* global;
 
-    int  port_count;
     int  server_flow_depth;
     int  client_flow_depth;
     int  post_depth;

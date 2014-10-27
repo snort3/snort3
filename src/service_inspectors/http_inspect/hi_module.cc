@@ -317,7 +317,7 @@ static const Parameter hi_server_params[] =
     { "iis_unicode_map", Parameter::PT_TABLE, hi_umap_params, nullptr,
       "server unicode map configuration" },
 
-    { "inspect_gzip", Parameter::PT_BOOL, nullptr, "false",
+    { "inspect_gzip", Parameter::PT_BOOL, nullptr, "true",
       "enable gzip decompression of compressed bodies" },
 
     { "inspect_uri_only", Parameter::PT_BOOL, nullptr, "false",

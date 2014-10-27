@@ -58,13 +58,7 @@ dofile(dir .. 'reference.lua')
 -- uncomment normalizer if you are inline or not --pedantic
 --normalizer = { }
 
--- experimental: only enable http_* or nhttp_inspect, not both
---nhttp_inspect = { }
-
-stream =
-{
-    icmp_cache = { memcap = 100000 }
-}
+stream = { }
 stream_ip = { }
 stream_icmp = { }
 stream_tcp = { }
@@ -75,14 +69,12 @@ perf_monitor = { }
 arp_spoof = { }
 back_orifice = { }
 rpc_decode = { }
-
-port_scan_global = { }
 port_scan = { }
-
-http_inspect = { }
-http_server = { }
-
 telnet = { }
+
+-- use http_inspect or new_http_inspect (incomplete)
+http_inspect = { }
+--new_http_inspect = { }
 
 ftp_server = default_ftp_server
 ftp_client = { }

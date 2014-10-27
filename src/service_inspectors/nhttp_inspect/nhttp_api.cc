@@ -27,7 +27,7 @@
 #include "nhttp_inspect.h"
 #include "nhttp_api.h"
 
-const char* NHttpApi::nhttp_my_name = "nhttp_inspect";
+const char* NHttpApi::nhttp_my_name = "new_http_inspect";
 const char* NHttpApi::nhttp_help = "the new HTTP inspector!";
 
 Inspector* NHttpApi::nhttp_ctor(Module* mod)
