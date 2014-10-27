@@ -29,6 +29,8 @@
    nhttp_inspect -> new_http_inspect
 -- REG_TEST patches to make -A cmg look more like Snort
 -- adding some FIXIT-H-J due to segfaults
+-- removed REG_TEST http_server; now http_global/inspect only
+-- added missing ip|tcp|udp|icmp options to checksum_drop/eval
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to

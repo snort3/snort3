@@ -1009,11 +1009,11 @@ bool AttributeTableModule::set(const char*, Value& v, SnortConfig* sc)
 static const Parameter network_params[] =
 {
     { "checksum_drop", Parameter::PT_MULTI,
-      "all | noip | notcp | noudp | noicmp | none", "none",
+      "all | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none", "none",
       "drop if checksum is bad" },
 
     { "checksum_eval", Parameter::PT_MULTI, 
-      "all | noip | notcp | noudp | noicmp | none", "all",
+      "all | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none", "none",
       "checksums to verify" },
 
     { "decode_drops", Parameter::PT_BOOL, nullptr, "false",
