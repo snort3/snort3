@@ -515,7 +515,8 @@ static inline int ScGTPDecoding(void)
 
 static inline int ScIsGTPPort(uint16_t port)
 {
-    return snort_conf->gtp_ports[port];
+    // FIXIT-H-J check for gtp_ports should not be necessary
+    return snort_conf->gtp_ports && snort_conf->gtp_ports[port];
 }
 
 static inline int ScESPDecoding(void)
