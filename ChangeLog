@@ -32,6 +32,7 @@
 -- removed REG_TEST http_server; now http_global/inspect only
 -- added missing ip|tcp|udp|icmp options to checksum_drop/eval
 -- pulled in latest from Josh
+-- pulled in HI defaults patch from Bhagya
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to

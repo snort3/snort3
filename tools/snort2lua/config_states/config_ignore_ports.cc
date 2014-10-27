@@ -21,6 +21,7 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <stdexcept>
 
 #include "conversion_state.h"
 #include "utils/converter.h"

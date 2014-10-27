@@ -28,6 +28,7 @@
 #include "utils/util_binder.h"
 #include "utils/parse_cmd_line.h"
 #include "data/data_types/dt_comment.h"
+#include <stdexcept>
 
 namespace config
 {

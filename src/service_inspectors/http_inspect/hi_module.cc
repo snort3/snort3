@@ -67,13 +67,13 @@ static const Parameter hi_decode_params[] =
 
 static const Parameter hi_global_params[] =
 {
-    { "compress_depth", Parameter::PT_INT, "1:65535", "1460",
+    { "compress_depth", Parameter::PT_INT, "1:65535", "65535",
       "maximum amount of packet payload to decompress" },
 
     { "decode", Parameter::PT_TABLE, hi_decode_params, nullptr,
       "decode parameters" },
 
-    { "decompress_depth", Parameter::PT_INT, "1:65535", "2920",
+    { "decompress_depth", Parameter::PT_INT, "1:65535", "65535",
       "maximum amount of decompressed data to process" },
 
     // FIXIT-L does this work with bindings?
@@ -260,6 +260,9 @@ bool HttpInspectModule::end(const char* fqn, int, SnortConfig*)
     "RPC_CONNECT PROXY_SUCCESS BITS_POST CCM_POST SMS_POST RPC_IN_DATA " \
     "RPC_OUT_DATA RPC_ECHO_DATA"
 
+#define default_chars \
+    "0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07"
+
 // FIXIT-L refactor params to create a profile table so that user can define
 // different profiles (like above) and use those.  rename existing profile
 // to profile_type.
@@ -269,10 +272,10 @@ static const Parameter hi_server_params[] =
     { "allow_proxy_use", Parameter::PT_BOOL, nullptr, "false",
       "don't alert on proxy use for this server" },
 
-    { "apache_whitespace", Parameter::PT_BOOL, nullptr, "true",
+    { "apache_whitespace", Parameter::PT_BOOL, nullptr, "false",
       "don't alert if tab is used in lieu of space characters" },
 
-    { "ascii", Parameter::PT_BOOL, nullptr, "true",
+    { "ascii", Parameter::PT_BOOL, nullptr, "false",
       "enable decoding ASCII like %2f to /" },
 
     { "bare_byte", Parameter::PT_BOOL, nullptr, "false",
@@ -281,16 +284,16 @@ static const Parameter hi_server_params[] =
     { "chunk_length", Parameter::PT_INT, "1:", "500000",
       "alert on chunk lengths greater than specified" },
 
-    { "client_flow_depth", Parameter::PT_INT, "-1:1460", "300",
+    { "client_flow_depth", Parameter::PT_INT, "-1:1460", "0",
       "raw request payload to inspect" },
 
-    { "directory", Parameter::PT_BOOL, nullptr, "true",
+    { "directory", Parameter::PT_BOOL, nullptr, "false",
       "normalize . and .. sequences out of URI" },
 
     { "double_decode", Parameter::PT_BOOL, nullptr, "false",
       "iis specific extra decoding" },
 
-    { "enable_cookies", Parameter::PT_BOOL, nullptr, "false",
+    { "enable_cookies", Parameter::PT_BOOL, nullptr, "true",
       "extract cookies" },
 
     { "enable_xff", Parameter::PT_BOOL, nullptr, "false",
@@ -308,7 +311,7 @@ static const Parameter hi_server_params[] =
     { "iis_backslash", Parameter::PT_BOOL, nullptr, "false",
       "normalize directory slashes" },
 
-    { "iis_delimiter", Parameter::PT_BOOL, nullptr, "true",
+    { "iis_delimiter", Parameter::PT_BOOL, nullptr, "false",
       "allow use of non-standard delimiter" },
 
     { "iis_unicode", Parameter::PT_BOOL, nullptr, "false",
@@ -329,22 +332,22 @@ static const Parameter hi_server_params[] =
     { "log_uri", Parameter::PT_BOOL, nullptr, "false",
       "enable logging of URI with unified2 alerts as extra data" },
 
-    { "max_header_length", Parameter::PT_INT, "0:65535", "0",
+    { "max_header_length", Parameter::PT_INT, "0:65535", "750",
       "maximum allowed client request header field" },
 
-    { "max_headers", Parameter::PT_INT, "0:1024", "0",
+    { "max_headers", Parameter::PT_INT, "0:1024", "100",
       "maximum allowed client request headers" },
 
     { "max_spaces", Parameter::PT_INT, "0:65535", "200",
       "maximum allowed whitespaces when folding" },
 
-    { "multi_slash", Parameter::PT_BOOL, nullptr, "true",
+    { "multi_slash", Parameter::PT_BOOL, nullptr, "false",
       "normalize out consecutive slashes in URI" },
 
     { "no_pipeline_req", Parameter::PT_BOOL, nullptr, "false",
       "don't inspect pipelined requests after first (still does general detection)" },
 
-    { "non_rfc_chars", Parameter::PT_BIT_LIST, "255", nullptr,
+    { "non_rfc_chars", Parameter::PT_BIT_LIST, "255", default_chars,
       "alert on given non-RFC chars being present in the URI" },
 
     { "non_strict", Parameter::PT_BOOL, nullptr, "true",
@@ -356,46 +359,46 @@ static const Parameter hi_server_params[] =
     { "normalize_headers", Parameter::PT_BOOL, nullptr, "false",
       "normalize headers other than cookie similar to URI" },
 
-    { "normalize_javascript", Parameter::PT_BOOL, nullptr, "false",
+    { "normalize_javascript", Parameter::PT_BOOL, nullptr, "true",
       "normalize javascript between <script> tags" },
 
     { "max_javascript_whitespaces", Parameter::PT_INT, "0:", "200",
       "maximum number of consecutive whitespaces" },
 
-    { "normalize_utf", Parameter::PT_BOOL, nullptr, "false",
+    { "normalize_utf", Parameter::PT_BOOL, nullptr, "true",
       "normalize response bodies with UTF content-types" },
 
-    { "oversize_dir_length", Parameter::PT_INT, "0:", "0",
+    { "oversize_dir_length", Parameter::PT_INT, "0:", "500",
       "alert if a URL has a directory longer than this limit" },
 
-    { "post_depth", Parameter::PT_INT, "-1:65535", "-1",
+    { "post_depth", Parameter::PT_INT, "-1:65535", "65495",
       "amount of POST data to inspect" },
 
     { "profile", Parameter::PT_ENUM, profiles, "none",
       "set defaults appropriate for selected server" },
 
-    { "server_flow_depth", Parameter::PT_INT, "-1:65535", "300",
+    { "server_flow_depth", Parameter::PT_INT, "-1:65535", "0",
       "response payload to inspect; includes headers with extended_response_inspection" },
 
-    { "small_chunk_count", Parameter::PT_INT, "0:255", "0",
+    { "small_chunk_count", Parameter::PT_INT, "0:255", "5",
       "alert if more than this limit of consecutive chunks are below small_chunk_length" },
 
-    { "small_chunk_length", Parameter::PT_INT, "0:255", "0",
+    { "small_chunk_length", Parameter::PT_INT, "0:255", "10",
       "alert if more than small_chunk_count consecutive chunks below this limit" },
 
     { "tab_uri_delimiter", Parameter::PT_BOOL, nullptr, "false",
       "whether a tab not preceded by a space is considered a delimiter or part of URI" },
 
-    { "u_encode", Parameter::PT_BOOL, nullptr, "false",
+    { "u_encode", Parameter::PT_BOOL, nullptr, "true",
       "decode %uXXXX character sequences" },
 
-    { "unlimited_decompress", Parameter::PT_BOOL, nullptr, "false",
+    { "unlimited_decompress", Parameter::PT_BOOL, nullptr, "true",
       "decompress across multiple packets" },
 
-    { "utf_8", Parameter::PT_BOOL, nullptr, "true",
+    { "utf_8", Parameter::PT_BOOL, nullptr, "false",
       "decode UTF-8 unicode sequences in URI" },
 
-    { "webroot", Parameter::PT_BOOL, nullptr, "true",
+    { "webroot", Parameter::PT_BOOL, nullptr, "false",
       "alert on directory traversals past the top level (web server root)" },
 
     { "whitespace_chars", Parameter::PT_BIT_LIST, "255", nullptr,
@@ -598,6 +601,10 @@ bool HttpServerModule::begin(const char*, int, SnortConfig*)
         server = new HTTPINSPECT_CONF;
         server->inspect_response = true;
         methods = default_methods;
+
+        const char* s = default_chars;
+        while ( *s )
+            server->non_rfc_chars.set(*s++);
     }
     return true;
 }
