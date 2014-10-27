@@ -505,13 +505,6 @@ bool StreamTcp::convert(std::istringstream& data_stream)
         any.print_binding(false); // we just printed
     }
 
-
-    // FIXIT-H  When bindings complete, remove this code
-    client.print_binding(false);
-    server.print_binding(false);
-    any.print_binding(false);
-    // FIXIT-H  ^^^^^^^ When bindings complete, remove this coded
-
     table_api.close_table(); // "tcp_stream"
     return retval;
 }
