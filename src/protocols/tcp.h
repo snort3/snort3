@@ -98,6 +98,15 @@ struct TCPHdr
     inline uint16_t dst_port() const
     { return ntohs(th_dport); }
 
+    inline uint16_t win() const
+    { return ntohs(th_win); }
+
+    inline uint16_t cksum() const
+    { return ntohs(th_sum); }
+
+    inline uint16_t urp() const
+    { return ntohs(th_urp); }
+
     inline uint32_t seq() const
     { return ntohl(th_seq); }
 
@@ -122,6 +131,7 @@ struct TCPHdr
     inline bool is_rst() const
     { return (th_flags & TH_RST); }
 
+
     /*  raw data access */
     inline uint8_t raw_src_port() const
     { return th_sport; }
@@ -135,9 +145,25 @@ struct TCPHdr
     inline uint8_t raw_hdr_len() const
     { return th_offx2 >> 4; }
 
+    inline uint16_t raw_win() const
+    { return th_win; }
+
+    inline uint16_t raw_cksum() const
+    { return th_sum; }
+
+    inline uint16_t raw_urp() const
+    { return th_urp; }
+
+
     // setters
     inline void set_offset(uint8_t val)
     { th_offx2 = (uint8_t)((th_offx2 & 0x0f) | (val << 4)); }
+
+    inline void set_urp(uint16_t new_urp)
+    { th_urp = htons(new_urp); }
+
+    inline void set_raw_urp(uint16_t new_urp)
+    { th_urp = new_urp; }
 };
 
 }  // namespace tcp

@@ -422,7 +422,7 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
     // FIXIT-L: IP4 is gauranteed to have been set in update().  Is IP6()
     //        also gauranteed?
     if(g_tmp_pkt->ptrs.ip_api.is_ip6())
-        ((ip::IP6Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip6h())->set_len(htons((uint16_t)ip_size));
+        ((ip::IP6Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip6h())->set_len((uint16_t)ip_size);
 
     return 0;
 }

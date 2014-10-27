@@ -42,7 +42,6 @@ public:
 
 bool PafMax::convert(std::istringstream& data_stream)
 {
-    bool retval = true;
     int val;
 
     table_api.open_table("stream_tcp");
@@ -50,15 +49,33 @@ bool PafMax::convert(std::istringstream& data_stream)
     if (data_stream >> val)
     {
         if (val < 1460)
+        {
             table_api.add_diff_option_comment("paf_max [0:63780]", "max_pdu [1460:63780]");
-        else
-            retval = table_api.add_option("max_pdu", val);
+            val = 1460;
+        }
+
+        // FIXIT-H J  - this is a hack to ensure max_pdu is in
+        //              every configuratino file and does not
+        //              overwrite the stream_tcp table
+
+//      table_api.add_option("max_pdu", val);
+        data_api.add_comment("stream_tcp.max_pdu = " + std::to_string(val));
+
+        table_api.close_table();
+
+
+        if (!(data_stream >> val))
+            return true;
+
+
+        data_api.failed_conversion(data_stream, std::to_string(val));
     }
     else
-        data_api.failed_conversion(data_stream);
+    {
+        data_api.failed_conversion(data_stream, "option required!");
+    }
 
-    table_api.close_table();
-    return retval;
+    return false;
 }
 
 /**************************

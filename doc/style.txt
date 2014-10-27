@@ -11,7 +11,7 @@ yet firm so feedback is welcome to get something we can live with.
 
 * Use camel case for namespaces, classes, and types like WhizBangPdfChecker.
 
-* Use lower case identifiers with underscore separators, eg some_function()
+* Use lower case identifiers with underscore separators, e.g. some_function()
   and my_var.
 
 * Use lower case filenames with underscores.
@@ -37,8 +37,8 @@ yet firm so feedback is welcome to get something we can live with.
 
 ==== Logging
 
-* Messages intended for the user should not look like debug messages.  Eg,
-  the function name should not be included.
+* Messages intended for the user should not look like debug messages. In,
+  other words, the function name should not be included.
 
 * Most debug messages should just be deleted.
 
@@ -51,7 +51,7 @@ yet firm so feedback is welcome to get something we can live with.
   problems.  typedef uint16_t Port; bool foo(Port) is way better than
   int foo(int port).
 
-* Use forward declarations (eg struct SnortConfig;) instead of void*.
+* Use forward declarations (e.g. struct SnortConfig;) instead of void*.
 
 * Try not to use extern data unless absolutely necessary and then put the
   extern in an appropriate header.
@@ -92,7 +92,7 @@ yet firm so feedback is welcome to get something we can live with.
 
     #define SEQ_LT(a,b)  ((int)((a) - (b)) <  0)
 
-* Multiline macros should be blocked (ie inside { }) to avoid if-else type
+* Multiline macros should be blocked (i.e. inside { }) to avoid if-else type
   surprises.
 
 ==== Formatting

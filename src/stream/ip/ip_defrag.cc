@@ -1918,7 +1918,7 @@ left_overlap_last:
     {
         DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
                     "Overly large fragment %d 0x%x 0x%x %d\n",
-                    fragLength, p->ptrs.ip_api.len(), p->ptrs.ip_api.off(),
+                    fragLength, p->ptrs.ip_api.dgram_len(), p->ptrs.ip_api.off(),
                     net_frag_offset << 3););
         MODULE_PROFILE_END(fragInsertPerfStats);
         return FRAG_INSERT_FAILED;
@@ -2302,7 +2302,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
             "Overly large fragment length:%d(0x%x) off:0x%x(%d)\n",
-            fragLength, p->ptrs.ip_api.len(), p->ptrs.ip_api.off() << 3,
+            fragLength, p->ptrs.ip_api.dgram_len(), p->ptrs.ip_api.off() << 3,
             p->ptrs.ip_api.off() << 3););
 
         /* Ah, crap.  Return that tracker. */

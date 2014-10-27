@@ -17,7 +17,7 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-// packet_manager.h author Josh Rosenbaum <jrosenba@cisco.com>
+// codec_manager.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifndef MANAGERS_CODEC_MANAGER_H
 #define MANAGERS_CODEC_MANAGER_H

@@ -487,9 +487,9 @@ static int Norm_TCP (
             changes++;
         }
         else if ( Norm_IsEnabled(c, NORM_TCP_URP) &&
-            (ntohs(h->th_urp) > p->dsize) )
+            (h->urp() > p->dsize) )
         {
-            h->th_urp = ntohs(p->dsize);
+            h->set_urp(p->dsize);
             normStats[PC_TCP_URP]++;
             sfBase.iPegs[PERF_COUNT_TCP_URP]++;
             changes++;

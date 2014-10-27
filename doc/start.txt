@@ -15,13 +15,13 @@ Required:
 
 * pcap from http://www.tcpdump.org for tcpdump logging.
 
-* pcre from http://www.pcre.org for regex pattern matching.
+* pcre from http://www.pcre.org for regular expression pattern matching.
 
 * zlib from http://www.zlib.net for decompression.
 
 Optional:
 
-* asciidoc from http://www.methods.co.nz/asciidoc/ to build the html
+* asciidoc from http://www.methods.co.nz/asciidoc/ to build the HTML
   manual.
 
 * dblatex from http://dblatex.sourceforge.net to build the pdf manual (in

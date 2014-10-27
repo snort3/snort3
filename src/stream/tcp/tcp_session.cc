@@ -3129,7 +3129,7 @@ static int AddStreamNode(
     /* handle the urg ptr */
     if(p->ptrs.tcph->th_flags & TH_URG)
     {
-        if(ntohs(p->ptrs.tcph->th_urp) < p->dsize)
+        if(p->ptrs.tcph->urp() < p->dsize)
         {
             switch(st->os_policy)
             {
@@ -3137,7 +3137,7 @@ static int AddStreamNode(
             case STREAM_POLICY_OLD_LINUX:
                 /* Linux, Old linux discard data from urgent pointer */
                 /* If urg pointer is 0, it's treated as a 1 */
-                ss->urg_offset = ntohs(p->ptrs.tcph->th_urp);
+                ss->urg_offset = p->ptrs.tcph->urp();
                 if (ss->urg_offset == 0)
                 {
                     ss->urg_offset = 1;
@@ -3156,7 +3156,7 @@ static int AddStreamNode(
             case STREAM_POLICY_IRIX:
                 /* Others discard data from urgent pointer */
                 /* If urg pointer is beyond this packet, it's treated as a 0 */
-                ss->urg_offset = ntohs(p->ptrs.tcph->th_urp);
+                ss->urg_offset = p->ptrs.tcph->urp();
                 if (ss->urg_offset > p->dsize)
                 {
                     ss->urg_offset = 0;

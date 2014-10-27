@@ -33,7 +33,7 @@ namespace preprocessors
 template<const std::string *norm_option>
 static ConversionState* norm_sans_options_ctor(Converter& c)
 {
-    c.get_table_api().open_table("normalize");
+    c.get_table_api().open_table("normalizer");
     c.get_table_api().add_diff_option_comment("preprocessor normalize_" + *norm_option, *norm_option + " = <bool>");
     c.get_table_api().add_option(*norm_option, true);
     c.get_table_api().close_table();
@@ -103,7 +103,7 @@ bool Ip4Normalizer::convert(std::istringstream& data_stream)
     std::string keyword;
     bool retval = true;
 
-    table_api.open_table("normalize");
+    table_api.open_table("normalizer");
     table_api.open_table("ip4");
     table_api.add_option("base", true);
 
@@ -173,7 +173,7 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
     std::string value;
     bool retval = true;
 
-    table_api.open_table("normalize");
+    table_api.open_table("normalizer");
     table_api.open_table("tcp");
     table_api.add_option("base", true);
 

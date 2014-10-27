@@ -83,13 +83,13 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snor
      * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
      * So we are just ignoring non IP datagrams
      */
-    if((ip4h->get_ver() != 4) && !snort.ip_api.is_ip6())
+    if((ip4h->ver() != 4) && !snort.ip_api.is_ip6())
     {
         codec_events::decoder_event(codec, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
         return false;
     }
 
-    const uint32_t hlen = ip4h->get_hlen() << 2;    /* set the IP header length */
+    const uint32_t hlen = ip4h->hlen();    /* set the IP header length */
 
     if(raw.len < hlen)
     {
@@ -191,7 +191,7 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     TextLog_NewLine(text_log);
     TextLog_Puts(text_log, "\t\t");
 
-    const uint16_t hlen = ip4h->get_hlen() << 2;
+    const uint16_t hlen = ip4h->hlen();
     const uint16_t len = ip4h->len();
     const uint16_t frag_off = ip4h->off();
 

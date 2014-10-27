@@ -83,7 +83,7 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
      * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
      * So we are just ignoring non IP datagrams
      */
-    if(ip6h->get_ver() != 6)
+    if(ip6h->ver() != 6)
     {
         codec_events::decoder_event(codec, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
         return false;
@@ -109,7 +109,7 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     // ICMP codec. Therefore, doing a minor decode here.
 
     // FIXIT-J L   Will fail to decode Ipv6 options
-    switch(ip6h->get_next())
+    switch(ip6h->next())
     {
         case IPPROTO_TCP: /* decode the interesting part of the header */
             codec.proto_bits |= PROTO_BIT__TCP_EMBED_ICMP;

@@ -36,7 +36,7 @@ Some additional details to note:
 * String values are case sensitive too; use lower case only.
 * Numeric ranges may be of the form low:high where low and high are
   bounds included in the range.  If either is omitted, there is no hard
-  bound.  Eg 0: means any x where x >= 0.
+  bound. E.g. 0: means any x where x >= 0.
 * Strings may have a numeric range indicating a length limit; otherwise
   there is no hard limit.
 * bit_list is typically used to store a set of byte, port, or VLAN ID

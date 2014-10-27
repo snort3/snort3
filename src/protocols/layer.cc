@@ -209,7 +209,7 @@ uint8_t get_outer_ip_next_pro(const Packet* const p)
                 return reinterpret_cast<const ip::IP4Hdr*>(layers[i].start)->proto();
             case ETHERTYPE_IPV6:
             case IPPROTO_ID_IPV6:
-                return reinterpret_cast<const ip::IP6Hdr*>(layers[i].start)->get_next();
+                return reinterpret_cast<const ip::IP6Hdr*>(layers[i].start)->next();
             default:
                 break;
         }
