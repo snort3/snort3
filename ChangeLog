@@ -23,6 +23,12 @@
 -- fixed normalizer init of flow
 -- pulled latest from Tom
 -- removed force from session clear
+-- updated http_server/inspect defaults
+-- updated binder to bind data, session, and gadget
+-- http_inspect -> http_global, http_server -> http_inspect,
+   nhttp_inspect -> new_http_inspect
+-- REG_TEST patches to make -A cmg look more like Snort
+-- adding some FIXIT-H-J due to segfaults
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to

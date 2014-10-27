@@ -47,7 +47,7 @@ struct DataBlock
     
 static list<DataBlock*> s_data;
 
-static DataBlock* get_data(const char* keyword)
+static DataBlock* get_block(const char* keyword)
 {
     for ( auto* p : s_data )
         if ( !strcasecmp(p->api->base.name, keyword) )
@@ -56,7 +56,7 @@ static DataBlock* get_data(const char* keyword)
     return nullptr;
 }
 
-static DataBlock* get_data(PlugData* d)
+static DataBlock* get_block(PlugData* d)
 {
     for ( auto* p : s_data )
         if ( p->data == d )
@@ -93,17 +93,19 @@ void DataManager::dump_plugins()
 void DataManager::instantiate(
     const DataApi* api, Module* mod, SnortConfig*)
 {
-    DataBlock* b = get_data(api->base.name);
+    DataBlock* b = get_block(api->base.name);
     assert(b);
 
     if ( b )
         b->data = api->ctor(mod);
 }
 
-PlugData* DataManager::acquire(const char* key, SnortConfig* sc)
+PlugData* DataManager::get_data(const char* key, SnortConfig* sc)
 {
-    DataBlock* b = get_data(key);
-    assert(b);
+    DataBlock* b = get_block(key);
+
+    if ( !b )
+        return nullptr;
 
     if ( !b->data )
     {
@@ -113,15 +115,23 @@ PlugData* DataManager::acquire(const char* key, SnortConfig* sc)
         mod->end(key, 0, nullptr);
         b->data = b->api->ctor(mod);
     }
-    if ( b->data )
-        b->data->add_ref();
-
     return b->data;
+}
+
+PlugData* DataManager::acquire(const char* key, SnortConfig* sc)
+{
+    PlugData* pd = get_data(key, sc);
+    assert(pd);
+
+    if ( pd )
+        pd->add_ref();
+
+    return pd;
 }
 
 void DataManager::release(PlugData* p)
 {
-    DataBlock* b = get_data(p);
+    DataBlock* b = get_block(p);
 
     // FIXIT-H this implementation can't reload
     //assert(b && b->data);

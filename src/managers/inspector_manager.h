@@ -52,7 +52,8 @@ public:
     static void free_inspector(Inspector*);
     static InspectSsnFunc get_session(const char* key);
 
-    static Inspector* get_inspector(const char* key);
+    static InspectorType get_type(const char* key);
+    static Inspector* get_inspector(const char* key, bool dflt_only = false);
 
     static Inspector* get_binder();
     static Inspector* get_wizard();

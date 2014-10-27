@@ -25,8 +25,11 @@ using namespace std;
 #include "bind_module.h"
 #include "flow/flow.h"
 #include "framework/inspector.h"
+#include "framework/plug_data.h"
 #include "stream/stream_splitter.h"
+#include "managers/data_manager.h"
 #include "managers/inspector_manager.h"
+#include "managers/plugin_manager.h"
 #include "protocols/packet.h"
 #include "protocols/vlan.h"
 #include "protocols/layer.h"
@@ -36,8 +39,18 @@ using namespace std;
 #include "log/messages.h"
 #include "main/snort.h"
 #include "main/policy.h"
+#include "parser/parser.h"
 
 THREAD_LOCAL ProfileStats bindPerfStats;
+
+// FIXIT-P these lookups should be optimized when the dust settles
+#define INS_WIZ  "wizard"
+#define INS_STR  "stream_"
+#define INS_IP   "stream_ip"
+#define INS_ICMP "stream_icmp"
+#define INS_TCP  "stream_tcp"
+#define INS_UDP  "stream_udp"
+#define INS_NORM "normalizer"
 
 //-------------------------------------------------------------------------
 // binding
@@ -57,6 +70,9 @@ Binding::Binding()
 
     use.index = 0;
     use.action = BA_INSPECT;
+
+    use.what = BW_NONE;
+    use.object = nullptr;
 }
 
 Binding::~Binding()
@@ -135,12 +151,37 @@ bool Binding::check_service(const Flow* flow) const
     return false;
 }
 
+bool Binding::check_all(const Flow* flow) const
+{
+    if ( !check_policy(flow) )
+        return false;
+
+    if ( !check_iface(flow) )
+        return false;
+
+    if ( !check_vlan(flow) )
+        return false;
+
+    // FIXIT-H need to check role and addr/ports relative to it
+    if ( !check_addr(flow) )
+        return false;
+
+    if ( !check_proto(flow) )
+        return false;
+
+    if ( !check_port(flow) )
+        return false;
+
+    if ( !check_service(flow) )
+        return false;
+
+    return true;
+}
+
 //-------------------------------------------------------------------------
 // helpers
 //-------------------------------------------------------------------------
 
-// FIXIT-H bind this is a temporary hack. note that both ends must be set
-// independently and that we must ref count inspectors.
 static void set_session(Flow* flow, const char* key)
 {
     Inspector* pin = InspectorManager::get_inspector(key);
@@ -161,224 +202,99 @@ static void set_session(Flow* flow)
 }
 
 //-------------------------------------------------------------------------
-// class stuff
+// stuff stuff
 //-------------------------------------------------------------------------
 
-class Binder : public Inspector
+struct Stuff
 {
-public:
-    Binder(vector<Binding*>&);
-    ~Binder();
+    BindAction action;
 
-    void show(SnortConfig*) override
-    { LogMessage("Binder\n"); };
+    Inspector* client;
+    Inspector* server;
+    Inspector* wizard;
+    Inspector* gadget;
+    PlugData* data;
 
-    void eval(Packet*) override;
-    int exec(int, void*) override;
+    Stuff()
+    { 
+        action = BA_INSPECT;
+        client = server = nullptr;
+        wizard = gadget = nullptr;
+        data = nullptr;
+    };
 
-    void add(Binding* b)
-    { bindings.push_back(b); };
+    bool update(Binding*);
 
-private:
-    void init_flow(Flow*);
-    Binding* get_binding(Flow*);
-    BindAction apply(Flow*, Binding*);
-    Inspector* find_inspector(Flow*);
-
-private:
-    vector<Binding*> bindings;
+    void apply_action(Flow*);
+    void apply_session(Flow*);
+    void apply_service(Flow*);
 };
 
-Binder::Binder(vector<Binding*>& v)
+bool Stuff::update(Binding* pb)
 {
-    bindings = std::move(v);
-}
-
-Binder::~Binder()
-{
-    for ( auto* p : bindings )
-        delete p;
-}
-
-// FIXIT-M need to revisit get_binding() and apply()
-// need to bind stream*, service inspectors, and plug data
-// also need to consider binding of ips rules / policy
-// so should split bindings into these categories
-void Binder::eval(Packet* p)
-{
-    Flow* flow = p->flow;
-    flow->iface_in = p->pkth->ingress_index;
-    flow->iface_out = p->pkth->egress_index;
-
-    Binding* pb = get_binding(flow);
-    BindAction action = apply(flow, pb);
-
-    switch ( action )
-    {
-    case BA_BLOCK: flow->set_state(Flow::BLOCK); break;
-    case BA_ALLOW: flow->set_state(Flow::ALLOW); break;
-    case BA_INSPECT: flow->set_state(Flow::INSPECT); break;
-    }
-
-    ++bstats.verdicts[action];
-    ++bstats.packets;
-}
-
-Inspector* Binder::find_inspector(Flow* flow)
-{
-    Binding* pb = get_binding(flow);
-
-    if ( !pb )
-        return nullptr;
-
-    Inspector* ins = InspectorManager::get_inspector(pb->use.name.c_str());
-    return ins;
-}
-
-int Binder::exec(int, void* pv)
-{
-    Flow* flow = (Flow*)pv;
-    Inspector* ins = find_inspector(flow);
-
-    if ( ins )
-        flow->set_gadget(ins);
-
-    if ( flow->protocol != PktType::TCP )
-        return 0;
-
-    if ( ins )
-    {
-        stream.set_splitter(flow, true, ins->get_splitter(true));
-        stream.set_splitter(flow, false, ins->get_splitter(false));
-    }
-    else
-    {
-        stream.set_splitter(flow, true, new AtomSplitter(true));
-        stream.set_splitter(flow, false, new AtomSplitter(false));
-    }
-
-    return 0;
-}
-
-// FIXIT-L this is a simple linear search until functionality is nailed
-// down.  performance could be improved by breaking bindings up into
-// multiple lists by proto and service or by using a more sophisticated
-// approach like routing tables, avl or scapegoat tree, etc.
-Binding* Binder::get_binding(Flow* flow)
-{
-    Binding* pb;
-    unsigned i, sz = bindings.size();
-
-    for ( i = 0; i < sz; i++ )
-    {
-        pb = bindings[i];
-
-        if ( !pb->check_policy(flow) )
-            continue;
-
-        if ( !pb->check_iface(flow) )
-            continue;
-
-        if ( !pb->check_vlan(flow) )
-            continue;
-
-        // FIXIT-H need to check role and addr/ports relative to it
-        if ( !pb->check_addr(flow) )
-            continue;
-
-        if ( !pb->check_proto(flow) )
-            continue;
-
-        if ( !pb->check_port(flow) )
-            continue;
-
-        if ( !pb->check_service(flow) )
-            continue;
-
-        if ( !pb->use.index )
-            return pb;
-
-        set_policies(snort_conf, pb->use.index - 1);
-        flow->policy_id = pb->use.index - 1;
-
-        Binder* sub = (Binder*)InspectorManager::get_binder();
-
-        if ( sub )
-            return sub->get_binding(flow);
-    }
-
-    // absent a specific rule, we must choose a course of action
-    // so we act as if binder wasn't configured at all
-    return nullptr;
-}
-
-// FIXIT-P these lookups should be optimized when the dust settles
-#define INS_WIZ  "wizard"
-#define INS_STR  "stream_"
-#define INS_IP   "stream_ip"
-#define INS_ICMP "stream_icmp"
-#define INS_TCP  "stream_tcp"
-#define INS_UDP  "stream_udp"
-#define INS_NORM "normalizer"
-
-BindAction Binder::apply(Flow* flow, Binding* pb)
-{
-    if ( !pb )
-    {
-        init_flow(flow);
-        return BA_INSPECT;
-    }
-
     if ( pb->use.action != BA_INSPECT )
     {
-        if ( pb->use.action == BA_BLOCK )
-            stream.drop_traffic(flow, SSN_DIR_BOTH);
-        return pb->use.action;
+        action = pb->use.action;
+        return true;
     }
-
-    if ( !strncmp(pb->use.name.c_str(), INS_STR, 7) )
+    switch ( pb->use.what )
     {
-        set_session(flow, pb->use.name.c_str());
-        return BA_INSPECT;
+    case BW_NONE:
+        break;
+    case BW_DATA:
+        data = (PlugData*)pb->use.object;
+        break;
+    case BW_CLIENT:
+        client = (Inspector*)pb->use.object;
+        break;
+    case BW_SERVER:
+        server = (Inspector*)pb->use.object;
+        break;
+    case BW_STREAM:
+        client = server = (Inspector*)pb->use.object;
+        break;
+    case BW_WIZARD:
+        wizard = (Inspector*)pb->use.object;
+        return true;
+    case BW_GADGET:
+        gadget = (Inspector*)pb->use.object;
+        return true;
     }
-
-    init_flow(flow);
-    Inspector* ins;
-
-    if ( pb->use.name == INS_WIZ )
-    {
-        ins = InspectorManager::get_wizard();
-        if ( ins )
-            flow->set_clouseau(ins);
-    }
-    else if ( pb->use.name.size() )
-    {
-        ins = InspectorManager::get_inspector(pb->use.name.c_str()); 
-        if ( ins )
-            flow->set_gadget(ins);
-    }
-    else if ( pb->use.svc.size() )
-    {
-        ins = InspectorManager::get_inspector(pb->use.svc.c_str());
-        if ( ins )
-            flow->set_gadget(ins);
-    }
-    else
-    {
-        ins = InspectorManager::get_wizard();
-        if ( ins )
-            flow->set_clouseau(ins);
-    }
-    return BA_INSPECT;
+    return false;
 }
 
-void Binder::init_flow(Flow* flow)
+void Stuff::apply_action(Flow* flow)
 {
-    Inspector* ins = InspectorManager::get_inspector(INS_NORM);
+    switch ( action )
+    {
+    case BA_BLOCK:
+        stream.drop_traffic(flow, SSN_DIR_BOTH);
+        flow->set_state(Flow::BLOCK);
+        return;
 
-    if ( ins )
-        ins->exec(0, flow);
+    case BA_ALLOW:
+        flow->set_state(Flow::ALLOW);
+        return;
 
+    case BA_INSPECT:
+        flow->set_state(Flow::INSPECT);
+        break;
+    }
+}
+
+void Stuff::apply_session(Flow* flow)
+{
+    if ( server )
+    {
+        flow->set_server(server);
+
+        if ( client )
+            flow->set_client(client);
+        else
+            flow->set_client(server);
+
+        return;
+    }
     switch ( flow->protocol )
     {
     case PktType::IP:
@@ -400,6 +316,211 @@ void Binder::init_flow(Flow* flow)
     default:
         set_session(flow);
     }
+}
+
+void Stuff::apply_service(Flow* flow)
+{
+    if ( data )
+        flow->set_data(data);
+
+    if ( gadget )
+        flow->set_gadget(gadget);
+
+    else if ( wizard )
+        flow->set_clouseau(wizard);
+}
+
+//-------------------------------------------------------------------------
+// class stuff
+//-------------------------------------------------------------------------
+
+class Binder : public Inspector
+{
+public:
+    Binder(vector<Binding*>&);
+    ~Binder();
+
+    void show(SnortConfig*) override
+    { LogMessage("Binder\n"); };
+
+    bool configure(SnortConfig*) override;
+
+    void eval(Packet*) override;
+    int exec(int, void*) override;
+
+    void add(Binding* b)
+    { bindings.push_back(b); };
+
+private:
+    void apply(const Stuff&, Flow*);
+
+    void set_binding(SnortConfig*, Binding*);
+    void get_bindings(Flow*, Stuff&);
+    void apply(Flow*, Stuff&);
+    Inspector* find_gadget(Flow*);
+
+private:
+    vector<Binding*> bindings;
+};
+
+Binder::Binder(vector<Binding*>& v)
+{
+    bindings = std::move(v);
+}
+
+Binder::~Binder()
+{
+    for ( auto* p : bindings )
+        delete p;
+}
+
+bool Binder::configure(SnortConfig* sc)
+{
+    Binding* pb;
+    unsigned i, sz = bindings.size();
+
+    for ( i = 0; i < sz; i++ )
+    {
+        pb = bindings[i];
+
+        if ( !pb->use.index )
+            set_binding(sc, pb);
+    }
+    return true;
+}
+
+// FIXIT-M need to consider binding of ips rules / policy
+// possibly split bindings into these categories
+void Binder::eval(Packet* p)
+{
+    Flow* flow = p->flow;
+    flow->iface_in = p->pkth->ingress_index;
+    flow->iface_out = p->pkth->egress_index;
+
+    Stuff stuff;
+    get_bindings(flow, stuff);
+    apply(flow, stuff);
+
+    ++bstats.verdicts[stuff.action];
+    ++bstats.packets;
+}
+
+int Binder::exec(int, void* pv)
+{
+    Flow* flow = (Flow*)pv;
+    Inspector* ins = find_gadget(flow);
+
+    if ( ins )
+        flow->set_gadget(ins);
+
+    if ( flow->protocol != PktType::TCP )
+        return 0;
+
+    if ( ins )
+    {
+        stream.set_splitter(flow, true, ins->get_splitter(true));
+        stream.set_splitter(flow, false, ins->get_splitter(false));
+    }
+    else
+    {
+        stream.set_splitter(flow, true, new AtomSplitter(true));
+        stream.set_splitter(flow, false, new AtomSplitter(false));
+    }
+
+    return 0;
+}
+
+//-------------------------------------------------------------------------
+// implementation stuff
+//-------------------------------------------------------------------------
+
+void Binder::set_binding(SnortConfig* sc, Binding* pb)
+{
+    const char* key;
+    if ( pb->use.svc.empty() )
+        key = pb->use.name.c_str();
+    else
+        key = pb->use.svc.c_str();
+
+    if ( (pb->use.object = InspectorManager::get_inspector(key)) )
+    {
+        switch ( InspectorManager::get_type(key) )
+        {
+        case IT_STREAM: pb->use.what = BW_STREAM; break;
+        case IT_SERVICE: pb->use.what = BW_GADGET; break;
+        case IT_WIZARD: pb->use.what = BW_WIZARD; break;
+        default: break;
+        }
+    }
+    else if ( (pb->use.object = DataManager::get_data(key, sc)) )
+    {
+            pb->use.what = BW_DATA;
+    }
+    if ( !pb->use.object )
+        pb->use.what = BW_NONE;
+
+    if ( pb->use.what == BW_NONE )
+        ParseError("can't bind %s", key);
+}
+
+// FIXIT-P this is a simple linear search until functionality is nailed
+// down.  performance should be the focus of the next iteration.
+void Binder::get_bindings(Flow* flow, Stuff& stuff)
+{
+    Binding* pb;
+    unsigned i, sz = bindings.size();
+
+    for ( i = 0; i < sz; i++ )
+    {
+        pb = bindings[i];
+
+        if ( !pb->check_all(flow) )
+            continue;
+
+        if ( !pb->use.index )
+        {
+            if ( stuff.update(pb) )
+                return;
+            else
+                continue;
+        }
+
+        set_policies(snort_conf, pb->use.index - 1);
+        flow->policy_id = pb->use.index - 1;
+
+        Binder* sub = (Binder*)InspectorManager::get_binder();
+
+        if ( sub )
+        {
+            sub->get_bindings(flow, stuff);
+            return;
+        }
+    }
+}
+
+Inspector* Binder::find_gadget(Flow* flow)
+{
+    Stuff stuff;
+    get_bindings(flow, stuff);
+    return stuff.gadget;
+}
+
+void Binder::apply(Flow* flow, Stuff& stuff)
+{
+    // setup action
+    stuff.apply_action(flow);
+
+    // FIXIT-H move normalizer flags to policy
+    Inspector* ins = InspectorManager::get_inspector(INS_NORM);
+
+    if ( ins )
+        ins->exec(0, flow);
+
+    // setup session
+    stuff.apply_session(flow);
+
+    // setup service
+    stuff.apply_service(flow);
 }
 
 //-------------------------------------------------------------------------

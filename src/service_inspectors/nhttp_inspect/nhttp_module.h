@@ -29,7 +29,7 @@
 class NHttpModule : public Module
 {
 public:
-    NHttpModule() : Module("nhttp_inspect", NHTTP_HELP, nhttp_params) {};
+    NHttpModule() : Module("new_http_inspect", NHTTP_HELP, nhttp_params) {};
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override { return true; };
     bool set(const char*, Value&, SnortConfig*) override;

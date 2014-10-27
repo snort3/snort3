@@ -34,7 +34,6 @@ bool set_alias(const char*, const char*);
 ]]
 
 function include(file)
-    print('Loading ' .. file)
     dofile(file)
 end
 

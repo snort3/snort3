@@ -28,8 +28,13 @@
 #include "hi_ui_config.h"
 #include "hi_events.h"
 
+#ifdef REG_TEST
 #define GLOBAL_KEYWORD "http_inspect"
 #define SERVER_KEYWORD "http_server"
+#else
+#define GLOBAL_KEYWORD "http_global"
+#define SERVER_KEYWORD "http_inspect"
+#endif
 
 #define GLOBAL_HELP "shared HTTP inspector settings"
 #define SERVER_HELP "main HTTP inspector module"
