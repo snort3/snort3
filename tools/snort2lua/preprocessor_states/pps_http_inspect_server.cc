@@ -73,11 +73,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
     if(!keyword.compare("default"))
     {
         table_api.open_table("http_server");
-
-
-        // FIXIT-H  When bindings complete, remove this code
-        bind.print_binding(false);
-        // FIXIT-H  ^^^^^^^ When bindings complete, remove this coded
     }
     else
     {
