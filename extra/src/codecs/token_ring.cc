@@ -30,7 +30,7 @@
 #include "protocols/token_ring.h"
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 
 
 #ifdef DLT_IEEE802
@@ -51,10 +51,10 @@ static const RuleMap tkr_rules[] =
 };
 
 
-class TrCodecModule : public DecodeModule
+class TrCodecModule : public CodecModule
 {
 public:
-    TrCodecModule() : DecodeModule(TR_NAME, TR_HELP) {}
+    TrCodecModule() : CodecModule(TR_NAME, TR_HELP) {}
 
     const RuleMap* get_rules() const override
     { return tkr_rules; }

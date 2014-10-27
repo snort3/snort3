@@ -60,7 +60,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
     Binder bind(table_api);
 
     bind.set_when_proto("tcp");
-    bind.set_use_type("http_server");
+    bind.set_use_type("http_inspect");
 
     if(!(data_stream >> keyword) || keyword.compare("server"))
     {
@@ -72,11 +72,12 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
 
     if(!keyword.compare("default"))
     {
-        table_api.open_table("http_server");
+        table_api.open_table("http_inspect");
+        table_api.add_diff_option_comment("http_inspect_server", "http_inspect");
     }
     else
     {
-        std::string table_name = "http_server_" + std::to_string(binding_id);
+        std::string table_name = "http_inspect_" + std::to_string(binding_id);
         bind.set_use_name(table_name);
         table_api.open_table(table_name);
         binding_id++;

@@ -24,7 +24,7 @@ macro (create_pro_header txt_file hdr_file)
         COMMENT "so_rules: Building ${hdr_file}"
     )
     include_directories(${CMAKE_CURRENT_BINARY_DIR})
-endmacro (create_txt_header)
+endmacro (create_pro_header)
 
 
 create_txt_header(sid_18758.txt sid_18758.h)
