@@ -167,13 +167,11 @@ public:
 
 private:
     NormalizerConfig config;
-    bool disabled;
 };
 
 Normalizer::Normalizer(const NormalizerConfig& nc)
 {
     config = nc;
-    disabled = false;
 }
 
 void Normalizer::tinit()
@@ -187,7 +185,7 @@ void Normalizer::tinit()
     if ( get_ips_policy()->policy_mode != POLICY_MODE__INLINE )
     {
         ParseWarning("normalizations disabled because not inline.\n");
-        disabled = true;
+        config.normalizer_flags = 0;
         return;
     }
 

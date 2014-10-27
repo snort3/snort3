@@ -1601,11 +1601,18 @@ void LogNetData (TextLog* log, const uint8_t* data, const int len, Packet *p)
         pb += BYTES_PER_FRAME;
         TextLog_NewLine(log);
     }
+#ifndef REG_TEST
     TextLog_NewLine(log);
+#endif
 }
 
+#ifdef REG_TEST
+#define SEPARATOR \
+    "=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+"
+#else
 #define SEPARATOR \
     "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
+#endif
 
 static int LogObfuscatedData(TextLog* log, Packet *p)
 {
@@ -1645,6 +1652,7 @@ static int LogObfuscatedData(TextLog* log, Packet *p)
     return 0;
 }
 
+#ifndef REG_TEST
 static void LogPacketType(TextLog* log, Packet* p)
 {
     TextLog_NewLine(log);
@@ -1682,6 +1690,7 @@ static void LogPacketType(TextLog* log, Packet* p)
     } /* switch */
     TextLog_NewLine(log);
 }
+#endif
 
 /*--------------------------------------------------------------------
  * Function: LogIPPkt(TextLog*, int, Packet *)
@@ -1701,8 +1710,10 @@ static void LogPacketType(TextLog* log, Packet* p)
 
 void LogIPPkt(TextLog* log, Packet * p)
 {
+#ifndef REG_TEST
     LogPacketType(log, p);
     TextLog_Print(log, "%s\n", SEPARATOR);
+#endif
 
     /* dump the timestamp */
     LogTimeStamp(log, p);
@@ -1819,6 +1830,9 @@ void LogIPPkt(TextLog* log, Packet * p)
     {
         LogNetData(log, p->pkt, p->pkth->caplen, p);
     }
+#ifdef REG_TEST
+    TextLog_Print(log, "\n%s\n", SEPARATOR);
+#endif
 }
 
 /*--------------------------------------------------------------------
