@@ -89,14 +89,14 @@ void ArpCodec::get_protocol_ids(std::vector<uint16_t>& v)
  */
 bool ArpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
-    if(raw.len < sizeof(arp::EtherARP))
+    if(raw.len < arp::ETHERARP_HDR_LEN)
     {
         codec_events::decoder_event(codec, DECODE_ARP_TRUNCATED);
         return false;
     }
 
     codec.proto_bits |= PROTO_BIT__ARP;
-    codec.lyr_len = sizeof(arp::EtherARP);
+    codec.lyr_len = arp::ETHERARP_HDR_LEN;
     snort.set_pkt_type(PktType::ARP);
 
     return true;

@@ -248,10 +248,8 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
         key->init(ip_api.get_src(), ip_api.get_dst(), ip_api.id(),
             proto, vlanId, mplsId, addressSpaceId);
     }
-    else if (proto == IPPROTO_ICMP)
+    else if (p->type() == PktType::ICMP)
     {
-        // FIXIT-H-J segfault because p->ptrs.icmph is null
-        // shold be checking pkt type instead of ipproto?
         key->init(ip_api.get_src(), p->ptrs.icmph->type, ip_api.get_dst(), 0,
             proto, vlanId, mplsId, addressSpaceId);
     }
