@@ -35,6 +35,7 @@
 -- pulled in HI defaults patch from Bhagya
 -- refactored inspector groups
 -- moved normal_mask out of flow into inspector policy
+-- patched around flow key issue with icmp ipproto vs pkt type
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to
