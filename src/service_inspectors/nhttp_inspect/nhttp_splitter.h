@@ -22,6 +22,7 @@
 #define NHTTP_SPLITTER_H
 
 #include <assert.h>
+
 #include "nhttp_enum.h"
 
 //-------------------------------------------------------------------------

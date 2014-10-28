@@ -22,6 +22,7 @@
 #define NHTTP_STREAM_SPLITTER_H
 
 #include "stream/stream_splitter.h"
+
 #include "nhttp_flow_data.h"
 #include "nhttp_test_manager.h"
 

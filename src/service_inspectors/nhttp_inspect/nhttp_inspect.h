@@ -26,7 +26,7 @@
 //-------------------------------------------------------------------------
 
 #include "framework/inspector.h"
-#include "snort.h"
+#include "main/snort.h"
 #include "nhttp_stream_splitter.h"
 
 class NHttpApi;

@@ -21,8 +21,9 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "snort.h"
+#include "main/snort.h"
 #include "framework/module.h"
+
 #include "nhttp_enum.h"
 #include "nhttp_str_to_code.h"
 #include "nhttp_normalizers.h"

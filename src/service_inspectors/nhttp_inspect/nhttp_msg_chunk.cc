@@ -22,7 +22,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 
-#include "snort.h"
+#include "main/snort.h"
 #include "nhttp_enum.h"
 #include "nhttp_msg_chunk.h"
 
