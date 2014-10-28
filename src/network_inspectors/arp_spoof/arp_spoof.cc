@@ -307,7 +307,7 @@ static const InspectApi as_api =
         mod_ctor,
         mod_dtor
     },
-    IT_PROTOCOL, 
+    IT_NETWORK, 
     (uint16_t)PktType::ARP,
     nullptr, // buffers
     nullptr, // service

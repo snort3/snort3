@@ -33,6 +33,7 @@
 -- added missing ip|tcp|udp|icmp options to checksum_drop/eval
 -- pulled in latest from Josh
 -- pulled in HI defaults patch from Bhagya
+-- refactored inspector groups
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to

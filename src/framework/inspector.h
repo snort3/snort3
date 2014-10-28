@@ -128,10 +128,10 @@ enum InspectorType
     IT_BINDER,
     IT_WIZARD,
     IT_PACKET,
-    IT_PROTOCOL,
+    IT_NETWORK,
     IT_STREAM,
-    IT_SESSION,
     IT_SERVICE,
+    IT_PROBE,
     IT_MAX
 };
 
