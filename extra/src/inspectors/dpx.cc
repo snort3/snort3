@@ -147,7 +147,7 @@ static const InspectApi dpx_api
         nullptr,
         nullptr
     },
-    IT_PROTOCOL, 
+    IT_NETWORK, 
     PROTO_BIT__UDP,
     nullptr, // service
     nullptr, // contents
