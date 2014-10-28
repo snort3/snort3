@@ -986,6 +986,7 @@ static void make_rule(ostream& os, const Module* m, const RuleMap* r)
     os << "alert ( ";
     os << "gid:" << m->get_gid() << "; ";
     os << "sid:" << r->sid << "; ";
+    os << "rev:1; priority:3; ";
     os << "msg:\"" << "(" << m->get_name() << ") ";
     os << r->msg << "\"; )";
     os << endl;
