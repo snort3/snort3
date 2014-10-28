@@ -456,12 +456,12 @@ static THREAD_LOCAL Packet *s5_pkt = nullptr;
 static THREAD_LOCAL Packet *cleanup_pkt = nullptr;
 
 /*  F U N C T I O N S  **********************************************/
-static inline void init_flush_policy(Flow* flow, StreamTracker* trk)
+static inline void init_flush_policy(Flow*, StreamTracker* trk)
 {
     if ( !trk->splitter )
         trk->flush_policy = STREAM_FLPOLICY_IGNORE;
 
-    else if ( !flow->norm_is_enabled(NORM_TCP_IPS) )
+    else if ( !Normalize_IsEnabled(NORM_TCP_IPS) )
         trk->flush_policy = STREAM_FLPOLICY_ON_ACK;
 
     else
@@ -1021,14 +1021,9 @@ static inline void NormalDropPacket (Packet*)
     Active_DropPacket();
 }
 
-static inline bool Normalize_IsEnabled(Packet* p, NormFlags f)
-{
-    return p->flow->norm_is_enabled(f);
-}
-
 static inline int NormalDropPacketIf (Packet* p, NormFlags f)
 {
-    if ( Normalize_IsEnabled(p, f) )
+    if ( Normalize_IsEnabled(f) )
     {
         NormalDropPacket(p);
         normStats[PC_TCP_BLOCK]++;
@@ -1067,7 +1062,7 @@ static inline int NormalTrimPayloadIf (
     Packet* p, NormFlags f, uint16_t max, TcpDataBlock* tdb
 ) {
     if (
-        Normalize_IsEnabled(p, f) &&
+        Normalize_IsEnabled(f) &&
         p->dsize > max )
     {
         NormalTrimPayload(p, max, tdb);
@@ -1302,7 +1297,7 @@ static inline int ValidTimestamp(StreamTracker *talker,
 
 #if 0
     if ( p->ptrs.tcph->th_flags & TH_ACK &&
-        Normalize_IsEnabled(p, NORM_TCP_OPT) )
+        Normalize_IsEnabled(NORM_TCP_OPT) )
     {
         // FIXIT-L validate tsecr here (check that it was previously sent)
         // checking for the most recent ts is easy enough must check if
@@ -1585,7 +1580,7 @@ static inline void UpdateSsn(
          // forces seq-- on ACK of FIN.  :(
          rcv->s_mgr.state == TCP_STATE_ESTABLISHED &&
          rcv->s_mgr.state_queue == TCP_STATE_NONE &&
-         Normalize_IsEnabled(p, NORM_TCP_IPS) )
+         Normalize_IsEnabled(NORM_TCP_IPS) )
     {
         // walk the seglist until a gap or tdb->ack whichever is first
         // if a gap exists prior to ack, move ack back to start of gap
@@ -2312,7 +2307,7 @@ static inline int flush_ackd(
 static inline int flush_stream(
     TcpSession *tcpssn, StreamTracker *st, Packet *p, uint32_t dir)
 {
-    if ( Normalize_IsEnabled(p, NORM_TCP_IPS) )
+    if ( Normalize_IsEnabled(NORM_TCP_IPS) )
     {
         uint32_t bytes = get_q_sequenced(st);
         return flush_to_seq(tcpssn, st, bytes, p, dir);
@@ -2824,7 +2819,7 @@ static uint32_t Stream5GetTcpTimestamp(Packet *p, uint32_t *ts, int strip)
     {
         if(opt.code == TcpOptCode::TIMESTAMP)
         {
-            if ( strip && Normalize_IsEnabled(p, NORM_TCP_OPT) )
+            if ( strip && Normalize_IsEnabled(NORM_TCP_OPT) )
             {
                 NormalStripTimeStamp(p, &opt);
             }
@@ -3279,7 +3274,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
         int last = 0;
     );
 
-    ips_data = Normalize_IsEnabled(p, NORM_TCP_IPS);
+    ips_data = Normalize_IsEnabled(NORM_TCP_IPS);
     if ( ips_data )
         reassembly_policy = REASSEMBLY_POLICY_FIRST;
     else
@@ -5058,7 +5053,7 @@ static int ProcessTcp(
         if (StreamGetPolicy(lwssn, config, FROM_CLIENT) !=
             STREAM_POLICY_MACOS)
         {
-            if ( Normalize_IsEnabled(p, NORM_TCP_TRIM) )
+            if ( Normalize_IsEnabled(NORM_TCP_TRIM) )
             {
                 NormalTrimPayload(p, 0, tdb); // remove data on SYN
             }
@@ -5249,7 +5244,7 @@ static int ProcessTcp(
             talker->s_mgr.sub_state |= SUB_RST_SENT;
             Stream5UpdatePerfBaseState(&sfBase, lwssn, TCP_STATE_CLOSING);
 
-            if ( Normalize_IsEnabled(p, NORM_TCP_IPS) )
+            if ( Normalize_IsEnabled(NORM_TCP_IPS) )
                 listener->s_mgr.state = TCP_STATE_CLOSED;
             /* else for ids:
                 leave listener open, data may be in transit */
@@ -5581,7 +5576,7 @@ static int ProcessTcp(
             // window is zero in one direction until we've seen both sides.
             if ( !(lwssn->s5_state.session_flags & SSNFLAG_MIDSTREAM) )
             {
-                if ( Normalize_IsEnabled(p, NORM_TCP_TRIM) )
+                if ( Normalize_IsEnabled(NORM_TCP_TRIM) )
                 {
                     // sender of syn w/mss limits payloads from peer
                     // since we store mss on sender side, use listener mss
@@ -5598,7 +5593,7 @@ static int ProcessTcp(
 
                     NormalTrimPayload(p, max, tdb);
                 }
-                if ( Normalize_IsEnabled(p, NORM_TCP_ECN_STR) )
+                if ( Normalize_IsEnabled(NORM_TCP_ECN_STR) )
                     NormalCheckECN(tcpssn, p);
             }
             /*
@@ -5648,7 +5643,7 @@ static int ProcessTcp(
 
                 if ((listener->flush_policy != STREAM_FLPOLICY_ON_ACK) &&
                     (listener->flush_policy != STREAM_FLPOLICY_ON_DATA) &&
-                    Normalize_IsEnabled(p, NORM_TCP_IPS))
+                    Normalize_IsEnabled(NORM_TCP_IPS))
                 {
                     p->packet_flags |= PKT_PDU_TAIL;
                 }
