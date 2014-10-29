@@ -139,7 +139,7 @@ bool Ip4Normalizer::convert(std::istringstream& data_stream)
 static ConversionState* ip4_ctor(Converter& c)
 {
     c.get_table_api().open_table("normalizer");
-    table_api.open_table("ip4");
+    c.get_table_api().table_api.open_table("ip4");
     c.get_table_api().close_table();
     return new Ip4Normalizer(c);
 }
@@ -315,7 +315,7 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
 static ConversionState* tcp_ctor(Converter& c)
 {
     c.get_table_api().open_table("normalizer");
-    table_api.open_table("tcp");
+    c.get_table_api().table_api.open_table("tcp");
     c.get_table_api().close_table();
     return new TcpNormalizer(c);
 }
