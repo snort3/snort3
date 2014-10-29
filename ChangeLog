@@ -46,6 +46,7 @@
 -- matched up stream_tcp.policy enum with defines
 -- tweaked S5_TRACE output
 -- fixed alert_fast to default to not print payload
+-- fixed tcp options log format
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to

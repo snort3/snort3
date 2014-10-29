@@ -738,9 +738,15 @@ inline uint32_t extract_32_bits(const uint8_t* const buf)
 void LogTcpOptions(TextLog*  log, const Packet* const p)
 {
     tcp::TcpOptIterator opt_iter(p->ptrs.tcph, p);
+    unsigned c = 0;
 
+    for (const tcp::TcpOption& opt : opt_iter)
+    {
+        UNUSED(opt);
+        c++;
+    }
 
-    TextLog_Print(log, "TCP Options =>");
+    TextLog_Print(log, "TCP Options (%u) =>", c);
 
     for (const tcp::TcpOption& opt : opt_iter)
     {
@@ -756,19 +762,19 @@ void LogTcpOptions(TextLog*  log, const Packet* const p)
         switch(opt.code)
         {
         case tcp::TcpOptCode::MAXSEG:
-            TextLog_Print(log, "  MSS: %u", extract_16_bits(opt.data));
+            TextLog_Print(log, " MSS: %u", extract_16_bits(opt.data));
             break;
 
         case tcp::TcpOptCode::EOL:
-            TextLog_Puts(log, "  EOL");
+            TextLog_Puts(log, " EOL");
             break;
 
         case tcp::TcpOptCode::NOP:
-            TextLog_Puts(log, "  NOP");
+            TextLog_Puts(log, " NOP");
             break;
 
         case tcp::TcpOptCode::WSCALE:
-            TextLog_Print(log, "  WS: %u", opt.data[0]);
+            TextLog_Print(log, " WS: %u", opt.data[0]);
             break;
 
         case tcp::TcpOptCode::SACK:
@@ -792,35 +798,35 @@ void LogTcpOptions(TextLog*  log, const Packet* const p)
                 val2 = 0;
             }
 
-            TextLog_Print(log, "  Sack: %u@%u", val1, val2);
+            TextLog_Print(log, " Sack: %u@%u", val1, val2);
             break;
         }
         case tcp::TcpOptCode::SACKOK:
-            TextLog_Puts(log, "SackOK ");
+            TextLog_Puts(log, " SackOK ");
             break;
 
         case tcp::TcpOptCode::ECHO:
-            TextLog_Print(log, "Echo: %u", extract_32_bits(opt.data));
+            TextLog_Print(log, " Echo: %u", extract_32_bits(opt.data));
             break;
 
         case tcp::TcpOptCode::ECHOREPLY:
-            TextLog_Print(log, "Echo Rep: %u", extract_32_bits(opt.data));
+            TextLog_Print(log, " Echo Rep: %u", extract_32_bits(opt.data));
             break;
 
         case tcp::TcpOptCode::TIMESTAMP:
-            TextLog_Print(log, "TS: %u %u", extract_32_bits(opt.data), opt.data + 4);
+            TextLog_Print(log, " TS: %u %u", extract_32_bits(opt.data), opt.data + 4);
             break;
 
         case tcp::TcpOptCode::CC:
-            TextLog_Print(log, "CC %u", extract_32_bits(opt.data));
+            TextLog_Print(log, " CC %u", extract_32_bits(opt.data));
             break;
 
         case tcp::TcpOptCode::CC_NEW:
-            TextLog_Print(log, "CCNEW: %u", extract_32_bits(opt.data));
+            TextLog_Print(log, " CCNEW: %u", extract_32_bits(opt.data));
             break;
 
         case tcp::TcpOptCode::CC_ECHO:
-            TextLog_Print(log, "CCECHO: %u", extract_32_bits(opt.data));
+            TextLog_Print(log, " CCECHO: %u", extract_32_bits(opt.data));
             break;
 
         default:
