@@ -55,7 +55,7 @@ bool Preprocessor::convert(std::istringstream& data_stream)
             cv.set_state(map->ctor(cv));
             return true;
         }
-        data_api.failed_conversion(data_stream, keyword);
+        data_api.failed_conversion(data_stream, "preprocessor " + keyword + ":");
     }
     else
     {

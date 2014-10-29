@@ -12,6 +12,7 @@ if (STATIC_INSPECTORS)
         rpc_decode
         back_orifice
         ftp_telnet
+        nhttp_inspect
     )
 endif()
 
@@ -22,6 +23,5 @@ add_library( service_inspectors STATIC
 
 target_link_libraries( service_inspectors
     http_inspect
-    nhttp_inspect
     ${STATIC_INSECTOR_LIBS}
 )
