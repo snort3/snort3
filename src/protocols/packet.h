@@ -195,6 +195,9 @@ struct SO_PUBLIC Packet
     inline bool is_udp() const
     { return ptrs.get_pkt_type() == PktType::UDP; }
 
+    inline bool is_cooked() const
+    { return packet_flags & PKT_PSEUDO; }
+
     /* Get general, non-boolean information */
     inline PktType type() const
     { return ptrs.get_pkt_type(); } // defined in codec.h
