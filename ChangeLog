@@ -42,6 +42,8 @@
 -- tweaked alert_fast whitespace
 -- fixed stream is-paf? bug
 -- set default id and priority based on class
+-- fixed segfaults due to unitialized cleanup_pkt and unset stream_tcp
+-- matched up stream_tcp.policy enum with defines
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to

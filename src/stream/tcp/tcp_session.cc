@@ -248,36 +248,36 @@ THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 #define S5_MAX_FLUSH_FACTOR 2048
 
 /* target-based policy types */
-#define STREAM_POLICY_FIRST     1
-#define STREAM_POLICY_LINUX     2
-#define STREAM_POLICY_BSD       3
-#define STREAM_POLICY_OLD_LINUX 4
-#define STREAM_POLICY_LAST      5
-#define STREAM_POLICY_WINDOWS   6
-#define STREAM_POLICY_SOLARIS   7
-#define STREAM_POLICY_HPUX11    8
-#define STREAM_POLICY_IRIX      9
-#define STREAM_POLICY_MACOS     10
-#define STREAM_POLICY_HPUX10    11
-#define STREAM_POLICY_VISTA     12
-#define STREAM_POLICY_WINDOWS2K3 13
-#define STREAM_POLICY_IPS       14
-#define STREAM_POLICY_DEFAULT   STREAM_POLICY_BSD
+#define STREAM_POLICY_FIRST       1
+#define STREAM_POLICY_LAST        2
+#define STREAM_POLICY_LINUX       3
+#define STREAM_POLICY_OLD_LINUX   4
+#define STREAM_POLICY_BSD         5
+#define STREAM_POLICY_MACOS       6
+#define STREAM_POLICY_SOLARIS     7
+#define STREAM_POLICY_IRIX        8
+#define STREAM_POLICY_HPUX11      9
+#define STREAM_POLICY_HPUX10     10
+#define STREAM_POLICY_WINDOWS    11
+#define STREAM_POLICY_WINDOWS2K3 12
+#define STREAM_POLICY_VISTA      13
+#define STREAM_POLICY_IPS        14
+#define STREAM_POLICY_DEFAULT    STREAM_POLICY_BSD
 
-#define REASSEMBLY_POLICY_FIRST     1
-#define REASSEMBLY_POLICY_LINUX     2
-#define REASSEMBLY_POLICY_BSD       3
-#define REASSEMBLY_POLICY_OLD_LINUX 4
-#define REASSEMBLY_POLICY_LAST      5
-#define REASSEMBLY_POLICY_WINDOWS   6
-#define REASSEMBLY_POLICY_SOLARIS   7
-#define REASSEMBLY_POLICY_HPUX11    8
-#define REASSEMBLY_POLICY_IRIX      9
-#define REASSEMBLY_POLICY_MACOS     10
-#define REASSEMBLY_POLICY_HPUX10    11
-#define REASSEMBLY_POLICY_VISTA     12
-#define REASSEMBLY_POLICY_WINDOWS2K3 13
-#define REASSEMBLY_POLICY_DEFAULT   REASSEMBLY_POLICY_BSD
+#define REASSEMBLY_POLICY_FIRST       1
+#define REASSEMBLY_POLICY_LAST        2
+#define REASSEMBLY_POLICY_LINUX       3
+#define REASSEMBLY_POLICY_OLD_LINUX   4
+#define REASSEMBLY_POLICY_BSD         5
+#define REASSEMBLY_POLICY_MACOS       6
+#define REASSEMBLY_POLICY_SOLARIS     7
+#define REASSEMBLY_POLICY_IRIX        8
+#define REASSEMBLY_POLICY_HPUX11      9
+#define REASSEMBLY_POLICY_HPUX10     10
+#define REASSEMBLY_POLICY_WINDOWS    11
+#define REASSEMBLY_POLICY_WINDOWS2K3 12
+#define REASSEMBLY_POLICY_VISTA      13
+#define REASSEMBLY_POLICY_DEFAULT    REASSEMBLY_POLICY_BSD
 
 #define S5_MAX_MAX_WINDOW       0x3FFFc000 /* max window allowed by TCP */
                                            /* 65535 << 14 (max wscale) */
@@ -2495,6 +2495,8 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
         tcpStats.trackers_released++;
     else if ( tcpssn->lws_init )
         tcpStats.no_pickups++;
+    else
+        return;
 
     Stream5UpdatePerfBaseState(&sfBase, tcpssn->flow, TCP_STATE_CLOSED);
     RemoveStreamSession(&sfBase);
@@ -2545,7 +2547,6 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
 
 static void TcpSessionCleanup(Flow *lwssn, int freeApplicationData)
 {
-    DAQ_PktHdr_t* const tmp_pcap_hdr = const_cast<DAQ_PktHdr_t*>(cleanup_pkt->pkth);
     TcpSession* tcpssn = (TcpSession*)lwssn->session;
 
     /* Flush ack'd data on both sides as necessary */
@@ -2555,7 +2556,9 @@ static void TcpSessionCleanup(Flow *lwssn, int freeApplicationData)
         /* Flush the client */
         if (tcpssn->client.seglist && !(lwssn->s5_state.ignore_direction & SSN_DIR_SERVER) )
         {
+            DAQ_PktHdr_t* const tmp_pcap_hdr = const_cast<DAQ_PktHdr_t*>(cleanup_pkt->pkth);
             tcpStats.s5tcp1++;
+
             /* Do each field individually because of size differences on 64bit OS */
             tmp_pcap_hdr->ts.tv_sec = tcpssn->client.seglist->tv.tv_sec;
             tmp_pcap_hdr->ts.tv_usec = tcpssn->client.seglist->tv.tv_usec;
@@ -2585,7 +2588,9 @@ static void TcpSessionCleanup(Flow *lwssn, int freeApplicationData)
         /* Flush the server */
         if (tcpssn->server.seglist && !(lwssn->s5_state.ignore_direction & SSN_DIR_CLIENT) )
         {
+            DAQ_PktHdr_t* const tmp_pcap_hdr = const_cast<DAQ_PktHdr_t*>(cleanup_pkt->pkth);
             tcpStats.s5tcp2++;
+
             /* Do each field individually because of size differences on 64bit OS */
             tmp_pcap_hdr->ts.tv_sec = tcpssn->server.seglist->tv.tv_sec;
             tmp_pcap_hdr->ts.tv_usec = tcpssn->server.seglist->tv.tv_usec;
