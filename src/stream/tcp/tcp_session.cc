@@ -2739,11 +2739,12 @@ static void TraceState (
             RMT(a, s_mgr.transition_seq, b)
         );
     fprintf(stdout, "\n");
-    int paf = a->splitter->is_paf() ? 2 : 0;
+    unsigned paf = a->splitter->is_paf() ? 2 : 0;
+    unsigned fpt = a->flush_policy ? 192 : 0;
 
     fprintf(stdout,
-        "         FP=%s:192  SC=%-4u FL=%-4u SL=%-5u BS=%-4u",
-        flushxt[a->flush_policy+paf],
+        "         FP=%s:%-4u  SC=%-4u FL=%-4u SL=%-5u BS=%-4u",
+        flushxt[a->flush_policy+paf], fpt,
         a->seg_count, a->flush_count, a->seg_bytes_logical,
         a->seglist_base_seq - b->isn
     );
