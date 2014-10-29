@@ -84,7 +84,7 @@ static const Parameter s_params[] =
     { "file", Parameter::PT_BOOL, nullptr, "false",
       "output to " F_NAME " instead of stdout" },
 
-    { "packet", Parameter::PT_BOOL, nullptr, "true",
+    { "packet", Parameter::PT_BOOL, nullptr, "false",
       "output packet dump with alert" },
 
     { "limit", Parameter::PT_INT, "0:", "0",
@@ -140,7 +140,7 @@ bool FastModule::begin(const char*, int, SnortConfig*)
     file = false;
     limit = 0;
     units = 0;
-    packet = true;
+    packet = false;
     return true;
 }
 
@@ -300,7 +300,7 @@ void FastLogger::alert(Packet *p, const char *msg, Event *event)
         LogIpAddrs(fast_log, p);
     }
 
-    if(packet)
+    if ( packet || ScOutputAppData() )
     {
         TextLog_NewLine(fast_log);
 #ifdef REG_TEST
