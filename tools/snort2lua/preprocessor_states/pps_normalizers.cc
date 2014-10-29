@@ -141,6 +141,7 @@ static ConversionState* ip4_ctor(Converter& c)
     c.get_table_api().open_table("normalizer");
     c.get_table_api().open_table("ip4");
     c.get_table_api().close_table();
+    c.get_table_api().close_table();
     return new Ip4Normalizer(c);
 }
 
@@ -316,6 +317,7 @@ static ConversionState* tcp_ctor(Converter& c)
 {
     c.get_table_api().open_table("normalizer");
     c.get_table_api().open_table("tcp");
+    c.get_table_api().close_table();
     c.get_table_api().close_table();
     return new TcpNormalizer(c);
 }
