@@ -606,7 +606,7 @@ static const InspectApi bo_api =
         mod_ctor,
         mod_dtor
     },
-    IT_PROTOCOL, 
+    IT_NETWORK, 
     (uint16_t)PktType::UDP,
     nullptr, // buffers
     nullptr, // service

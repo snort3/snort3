@@ -84,7 +84,7 @@ static const Parameter s_params[] =
     { "file", Parameter::PT_BOOL, nullptr, "false",
       "output to " F_NAME " instead of stdout" },
 
-    { "packet", Parameter::PT_BOOL, nullptr, "true",
+    { "packet", Parameter::PT_BOOL, nullptr, "false",
       "output packet dump with alert" },
 
     { "limit", Parameter::PT_INT, "0:", "0",
@@ -140,7 +140,7 @@ bool FastModule::begin(const char*, int, SnortConfig*)
     file = false;
     limit = 0;
     units = 0;
-    packet = true;
+    packet = false;
     return true;
 }
 
@@ -201,25 +201,25 @@ static void LogReassembly(const Packet* p)
     switch ( p->pseudo_type )
     {
     case PSEUDO_PKT_SMB_SEG:
-        TextLog_Print(fast_log, "\n%s\n", "SMB desegmented packet");
+        TextLog_Print(fast_log, "%s\n", "SMB desegmented packet");
         break;
     case PSEUDO_PKT_DCE_SEG:
-        TextLog_Print(fast_log, "\n%s\n", "DCE/RPC desegmented packet");
+        TextLog_Print(fast_log, "%s\n", "DCE/RPC desegmented packet");
         break;
     case PSEUDO_PKT_DCE_FRAG:
-        TextLog_Print(fast_log, "\n%s\n", "DCE/RPC defragmented packet");
+        TextLog_Print(fast_log, "%s\n", "DCE/RPC defragmented packet");
         break;
     case PSEUDO_PKT_SMB_TRANS:
-        TextLog_Print(fast_log, "\n%s\n", "SMB Transact reassembled packet");
+        TextLog_Print(fast_log, "%s\n", "SMB Transact reassembled packet");
         break;
     case PSEUDO_PKT_DCE_RPKT:
-        TextLog_Print(fast_log, "\n%s\n", "DCE/RPC reassembled packet");
+        TextLog_Print(fast_log, "%s\n", "DCE/RPC reassembled packet");
         break;
     case PSEUDO_PKT_TCP:
-        TextLog_Print(fast_log, "\n%s\n", "Stream reassembled packet");
+        TextLog_Print(fast_log, "%s\n", "Stream reassembled packet");
         break;
     case PSEUDO_PKT_IP:
-        TextLog_Print(fast_log, "\n%s\n", "Frag reassembled packet");
+        TextLog_Print(fast_log, "%s\n", "Frag reassembled packet");
         break;
     default:
         // FIXTHIS do we get here for portscan or sdf?
@@ -300,8 +300,9 @@ void FastLogger::alert(Packet *p, const char *msg, Event *event)
         LogIpAddrs(fast_log, p);
     }
 
-    if(packet)
+    if ( packet || ScOutputAppData() )
     {
+        TextLog_NewLine(fast_log);
 #ifdef REG_TEST
         LogReassembly(p);
 #endif

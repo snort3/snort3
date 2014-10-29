@@ -89,6 +89,8 @@ static IpsOption* classtype_ctor(Module* p, OptTreeNode* otn)
 {
     ClassTypeModule* m = (ClassTypeModule*)p;
     otn->sigInfo.classType = m->type;
+    otn->sigInfo.class_id = m->type->id;
+    otn->sigInfo.priority = m->type->priority;
     return nullptr;
 }
 

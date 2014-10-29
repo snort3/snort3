@@ -147,10 +147,11 @@ struct FrameworkPolicy
 {
     PHInstanceList ilist;
 
-    PHVector session;
+    PHVector packet;
     PHVector network;
-    PHVector generic;
+    PHVector session;
     PHVector service;
+    PHVector probe;
 
     Inspector* binder;
     Inspector* wizard;
@@ -160,27 +161,27 @@ struct FrameworkPolicy
 
 void FrameworkPolicy::vectorize()
 {
-    session.alloc(ilist.size());
+    packet.alloc(ilist.size());
     network.alloc(ilist.size());
+    session.alloc(ilist.size());
     service.alloc(ilist.size());
-    generic.alloc(ilist.size());
+    probe.alloc(ilist.size());
 
     for ( auto* p : ilist )
     {
         switch ( p->pp_class.api.type )
         {
-        case IT_STREAM:
-            if ( !p->pp_class.api.ssn )
-                session.add(p);
+        case IT_PACKET:
+            packet.add(p);
             break;
 
-        case IT_PACKET:
-        case IT_PROTOCOL:
+        case IT_NETWORK:
             network.add(p);
             break;
 
-        case IT_SESSION:
-            generic.add(p);
+        case IT_STREAM:
+            if ( !p->pp_class.api.ssn )
+                session.add(p);
             break;
 
         case IT_SERVICE:
@@ -193,6 +194,10 @@ void FrameworkPolicy::vectorize()
 
         case IT_WIZARD:
             wizard = p->handler;
+            break;
+
+        case IT_PROBE:
+            probe.add(p);
             break;
 
         case IT_MAX:
@@ -604,7 +609,7 @@ static inline void execute(
         // FIXIT-P these checks can eventually be optimized
 	    // but they are required to ensure that session and app
 	    // handlers aren't called w/o a session pointer
-        if ( !p->flow && (ppc.api.type >= IT_SESSION) )
+        if ( !p->flow && (ppc.api.type == IT_SERVICE) )
             break;
 
         if ( ((unsigned)p->type() & ppc.api.proto_bits) )
@@ -638,9 +643,9 @@ void InspectorManager::execute (Packet* p)
 
     // FIXIT-M structure lists so stream, normalize, etc. aren't
     // called on reassembled packets
+    ::execute(p, fp->packet.vec, fp->packet.num);
     ::execute(p, fp->session.vec, fp->session.num);
     ::execute(p, fp->network.vec, fp->network.num);
-    ::execute(p, fp->generic.vec, fp->generic.num);
 
     Flow* flow = p->flow;
 
@@ -661,5 +666,7 @@ void InspectorManager::execute (Packet* p)
     }
     else
         DisableDetect(p);
+
+    ::execute(p, fp->probe.vec, fp->probe.num);
 }
 

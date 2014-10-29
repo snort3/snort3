@@ -508,9 +508,9 @@ static int Norm_TCP (
     if ( tcp_options_len > 0 )
     {
         const Layer& lyr = p->layers[layer];
-        uint8_t* opts = const_cast<uint8_t*>(lyr.start) + tcp::TCP_HEADER_LEN;
+        uint8_t* opts = const_cast<uint8_t*>(lyr.start) + tcp::TCP_MIN_HEADER_LEN;
         // lyr.length only includes valid tcp options
-        uint8_t valid_opts_len = lyr.length - tcp::TCP_HEADER_LEN;
+        uint8_t valid_opts_len = lyr.length - tcp::TCP_MIN_HEADER_LEN;
 
         if ( Norm_IsEnabled(c, NORM_TCP_OPT) )
         {

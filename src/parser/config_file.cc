@@ -66,6 +66,9 @@
 #define ALERT_JH    "jh"
 #define ALERT_DJR   "djr"
 #define ALERT_AJK   "ajk"
+#ifdef REG_TEST
+#define ALERT_CON   "console"
+#endif
 
 #define OUTPUT_AJK  "unified2"
 #define OUTPUT_CMG  "alert_fast"
@@ -681,9 +684,12 @@ void config_alert_mode(SnortConfig* sc, const char* val)
         sc->output_flags |= OUTPUT_FLAG__APP_DATA;
     }
     else if (strcasecmp(val, ALERT_AJK) == 0)
-    {
         sc->output = SnortStrdup(OUTPUT_AJK);
-    }
+
+#ifdef REG_TEST
+    else if (strcasecmp(val, ALERT_CON) == 0)
+        sc->output = SnortStrdup("alert_fast");
+#endif
     else
         sc->output = SnortStrdup(val);
 }

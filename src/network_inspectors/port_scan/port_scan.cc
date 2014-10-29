@@ -1002,7 +1002,7 @@ static const InspectApi sp_api =
         mod_ctor,
         mod_dtor
     },
-    IT_PROTOCOL,
+    IT_PROBE,
     (uint16_t)PktType::ANY_IP,  // FIXIT-L dynamic assign
     nullptr, // buffers
     nullptr, // service

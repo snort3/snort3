@@ -22,6 +22,7 @@
 #define NORMALIZE_H
 
 #include <stdint.h>
+#include "main/policy.h"
 
 // these control protocol specific normalizations all are enables except
 // tcp_urp which is enabled with tcp core and disabled explicitly.
@@ -48,9 +49,10 @@ typedef enum {
     NORM_ALL             = 0x0003FFFF  // all normalizations on
 } NormFlags;
 
-static inline int Normalize_IsEnabled(uint32_t mask, NormFlags nf)
+static inline int Normalize_IsEnabled(NormFlags nf)
 {
-    return ( (mask & nf) != 0 );
+    InspectionPolicy* pi = get_inspection_policy();
+    return ( (pi->normal_mask & nf) != 0 );
 }
 
 #endif

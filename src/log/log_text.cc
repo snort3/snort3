@@ -719,7 +719,12 @@ static void LogOuterIPHeader(TextLog *log, Packet *p)
         p->ptrs.dp = save_dp;
     }
     else
+    {
+        PktType tmp_type = p->type();
+        p->ptrs.set_pkt_type(PktType::IP);
         LogIPHeader(log, p);
+        p->ptrs.set_pkt_type(tmp_type);
+    }
 
     p->ptrs.ip_api = save_ip_api;
     p->packet_flags |= save_frag_flag;
@@ -738,9 +743,15 @@ inline uint32_t extract_32_bits(const uint8_t* const buf)
 void LogTcpOptions(TextLog*  log, const Packet* const p)
 {
     tcp::TcpOptIterator opt_iter(p->ptrs.tcph, p);
+    unsigned c = 0;
 
+    for (const tcp::TcpOption& opt : opt_iter)
+    {
+        UNUSED(opt);
+        c++;
+    }
 
-    TextLog_Print(log, "TCP Options =>");
+    TextLog_Print(log, "TCP Options (%u) =>", c);
 
     for (const tcp::TcpOption& opt : opt_iter)
     {
@@ -756,19 +767,19 @@ void LogTcpOptions(TextLog*  log, const Packet* const p)
         switch(opt.code)
         {
         case tcp::TcpOptCode::MAXSEG:
-            TextLog_Print(log, "  MSS: %u", extract_16_bits(opt.data));
+            TextLog_Print(log, " MSS: %u", extract_16_bits(opt.data));
             break;
 
         case tcp::TcpOptCode::EOL:
-            TextLog_Puts(log, "  EOL");
+            TextLog_Puts(log, " EOL");
             break;
 
         case tcp::TcpOptCode::NOP:
-            TextLog_Puts(log, "  NOP");
+            TextLog_Puts(log, " NOP");
             break;
 
         case tcp::TcpOptCode::WSCALE:
-            TextLog_Print(log, "  WS: %u", opt.data[0]);
+            TextLog_Print(log, " WS: %u", opt.data[0]);
             break;
 
         case tcp::TcpOptCode::SACK:
@@ -792,35 +803,36 @@ void LogTcpOptions(TextLog*  log, const Packet* const p)
                 val2 = 0;
             }
 
-            TextLog_Print(log, "  Sack: %u@%u", val1, val2);
+            TextLog_Print(log, " Sack: %u@%u", val1, val2);
             break;
         }
         case tcp::TcpOptCode::SACKOK:
-            TextLog_Puts(log, "SackOK ");
+            TextLog_Puts(log, " SackOK ");
             break;
 
         case tcp::TcpOptCode::ECHO:
-            TextLog_Print(log, "Echo: %u", extract_32_bits(opt.data));
+            TextLog_Print(log, " Echo: %u", extract_32_bits(opt.data));
             break;
 
         case tcp::TcpOptCode::ECHOREPLY:
-            TextLog_Print(log, "Echo Rep: %u", extract_32_bits(opt.data));
+            TextLog_Print(log, " Echo Rep: %u", extract_32_bits(opt.data));
             break;
 
         case tcp::TcpOptCode::TIMESTAMP:
-            TextLog_Print(log, "TS: %u %u", extract_32_bits(opt.data), opt.data + 4);
+            TextLog_Print(log, " TS: %u %u", extract_32_bits(opt.data),
+                extract_32_bits(opt.data + 4));
             break;
 
         case tcp::TcpOptCode::CC:
-            TextLog_Print(log, "CC %u", extract_32_bits(opt.data));
+            TextLog_Print(log, " CC %u", extract_32_bits(opt.data));
             break;
 
         case tcp::TcpOptCode::CC_NEW:
-            TextLog_Print(log, "CCNEW: %u", extract_32_bits(opt.data));
+            TextLog_Print(log, " CCNEW: %u", extract_32_bits(opt.data));
             break;
 
         case tcp::TcpOptCode::CC_ECHO:
-            TextLog_Print(log, "CCECHO: %u", extract_32_bits(opt.data));
+            TextLog_Print(log, " CCECHO: %u", extract_32_bits(opt.data));
             break;
 
         default:
@@ -1647,8 +1659,8 @@ static int LogObfuscatedData(TextLog* log, Packet *p)
         LogNetData(log, buf, dlen + payload_len, NULL);
     }
 
-    free(payload);
 
+    free(payload);
     return 0;
 }
 
@@ -1724,9 +1736,7 @@ void LogIPPkt(TextLog* log, Packet * p)
         Log2ndHeader(log, p);
 
         if ( p->proto_bits & PROTO_BIT__MPLS )
-        {
             LogMPLSHeader(log, p);
-        }
 
 
         // FIXIT-J --> log everything in order!!
@@ -1734,16 +1744,27 @@ void LogIPPkt(TextLog* log, Packet * p)
         int8_t num_layer = 0;
         bool first = true;
 
+
         while (layer::set_outer_ip_api(p, p->ptrs.ip_api, num_layer) &&
             tmp_api != p->ptrs.ip_api)
         {
+#ifdef REG_TEST
+            // In Snort, cooked packets should not print an outer IP Header
+            if (p->is_cooked())
+              break;
+#endif
+
             LogOuterIPHeader(log, p);
 
             if (first)
+            {
                 LogGREHeader(log, p); // checks for valid gre layer before logging
-            else
                 first = false;
+            }
 
+#ifdef REG_TEST
+            break;
+#endif
         }
 
         p->ptrs.ip_api = tmp_api;
@@ -1831,7 +1852,7 @@ void LogIPPkt(TextLog* log, Packet * p)
         LogNetData(log, p->pkt, p->pkth->caplen, p);
     }
 #ifdef REG_TEST
-    TextLog_Print(log, "\n%s\n", SEPARATOR);
+    TextLog_Print(log, "\n%s\n\n", SEPARATOR);
 #endif
 }
 
@@ -2041,7 +2062,7 @@ void PrintEapolPkt(FILE * fp, Packet * p)
         PrintNetData(fp, p->pkt, p->pkth->caplen, p);
     }
 
-    fprintf(fp, "=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+\n\n");
+    fprintf(fp, "%s\n", SEPARATOR);
 }
 
 /*

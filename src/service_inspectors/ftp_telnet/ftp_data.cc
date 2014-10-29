@@ -288,7 +288,7 @@ const InspectApi fd_api =
         mod_ctor,
         mod_dtor
     },
-    IT_SERVICE,  // FIXIT-M does this still need to be session??
+    IT_SERVICE,
     (uint16_t)PktType::TCP,
     nullptr, // buffers
     "ftp-data",

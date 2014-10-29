@@ -88,6 +88,7 @@ public:
 
 public:
     struct FrameworkPolicy* framework_policy;
+    uint32_t normal_mask;
 };
 
 //-------------------------------------------------------------------------

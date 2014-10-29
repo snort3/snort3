@@ -24,6 +24,7 @@
 #include <string.h>
 #include <string>
 #include <lua.hpp>
+#include <stdexcept>
 
 #include "framework/module.h"
 #include "managers/module_manager.h"

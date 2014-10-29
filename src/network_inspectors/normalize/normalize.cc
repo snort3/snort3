@@ -226,7 +226,8 @@ int Normalizer::exec(int, void* pv)
 {
     Flow* flow = (Flow*)pv;
     assert(flow);
-    flow->set_normalizations(config.normalizer_flags);
+    InspectionPolicy* pi = get_inspection_policy();
+    pi->normal_mask = config.normalizer_flags;
     return 0;
 }
 

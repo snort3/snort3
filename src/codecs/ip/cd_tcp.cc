@@ -149,7 +149,7 @@ void TcpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 
 bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
-    if(raw.len < tcp::TCP_HEADER_LEN)
+    if(raw.len < tcp::TCP_MIN_HEADER_LEN)
     {
         codec_events::decoder_event(codec, DECODE_TCP_DGRAM_LT_TCPHDR);
         return false;
@@ -159,7 +159,7 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     const tcp::TCPHdr* tcph = reinterpret_cast<const tcp::TCPHdr*>(raw.data);
     const uint16_t tcph_len = tcph->hdr_len();
 
-    if(tcph_len < tcp::TCP_HEADER_LEN)
+    if(tcph_len < tcp::TCP_MIN_HEADER_LEN)
     {
         codec_events::decoder_event(codec, DECODE_TCP_INVALID_OFFSET);
         return false;
@@ -283,10 +283,10 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
 
     /* if options are present, decode them */
-    uint16_t tcp_opt_len = (uint16_t)(tcph->hdr_len() - tcp::TCP_HEADER_LEN);
+    uint16_t tcp_opt_len = (uint16_t)(tcph->hdr_len() - tcp::TCP_MIN_HEADER_LEN);
 
     if(tcp_opt_len > 0)
-        DecodeTCPOptions((uint8_t *) (raw.data + tcp::TCP_HEADER_LEN), tcp_opt_len, codec);
+        DecodeTCPOptions((uint8_t *) (raw.data + tcp::TCP_MIN_HEADER_LEN), tcp_opt_len, codec);
 
 
     int dsize = raw.len - tcph->hdr_len();
@@ -381,7 +381,7 @@ void DecodeTCPOptions(const uint8_t *start, uint32_t o_len, CodecData& codec)
      * 4) increment option code ptr
      *
      * TCP_OPTLENMAX = 40 because of
-     *        (((2^4) - 1) * 4  - tcp::TCP_HEADER_LEN
+     *        (((2^4) - 1) * 4  - tcp::TCP_MIN_HEADER_LEN
      *
      */
 
@@ -616,9 +616,8 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
                         EncState& enc, Buffer& buf)
 {
     const tcp::TCPHdr* const hi = reinterpret_cast<const tcp::TCPHdr*>(raw_in);
-//    bool attach_payload = (enc->type == EncodeType::ENC_TCP_FIN ||  enc->type == EncodeType::ENC_TCP_PUSH);
 
-    if (!buf.allocate(sizeof(tcp::TCPHdr)))
+    if (!buf.allocate(tcp::TCP_MIN_HEADER_LEN))
         return false;
 
     tcp::TCPHdr* tcph_out = reinterpret_cast<tcp::TCPHdr*>(buf.base);
@@ -654,7 +653,7 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     }
 
     tcph_out->th_offx2 = 0;
-    tcph_out->set_offset(tcp::TCP_HEADER_LEN >> 2);
+    tcph_out->set_offset(tcp::TCP_MIN_HEADER_LEN >> 2);
     tcph_out->th_win = 0;
     tcph_out->th_urp = 0;
 
