@@ -176,7 +176,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     uint16_t uhlen;
     bool fragmented_udp_flag = false;
 
-    if(raw.len < sizeof(udp::UDPHdr))
+    if(raw.len < udp::UDP_HEADER_LEN)
     {
         codec_events::decoder_event(codec, DECODE_UDP_DGRAM_LT_UDPHDR);
         return false;
@@ -370,7 +370,7 @@ bool UdpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
 {   
     // If we enter this function, this packe is some sort of tunnel.
 
-    if(!buf.allocate(sizeof(udp::UDPHdr)))
+    if(!buf.allocate(udp::UDP_HEADER_LEN))
         return false;
 
     const udp::UDPHdr* const hi = reinterpret_cast<const udp::UDPHdr*>(raw_in);

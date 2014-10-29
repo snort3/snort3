@@ -616,9 +616,8 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
                         EncState& enc, Buffer& buf)
 {
     const tcp::TCPHdr* const hi = reinterpret_cast<const tcp::TCPHdr*>(raw_in);
-//    bool attach_payload = (enc->type == EncodeType::ENC_TCP_FIN ||  enc->type == EncodeType::ENC_TCP_PUSH);
 
-    if (!buf.allocate(sizeof(tcp::TCPHdr)))
+    if (!buf.allocate(tcp::TCP_HEADER_LEN))
         return false;
 
     tcp::TCPHdr* tcph_out = reinterpret_cast<tcp::TCPHdr*>(buf.base);

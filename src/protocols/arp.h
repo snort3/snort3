@@ -37,9 +37,6 @@ struct ARPHdr
     uint16_t ar_op;        /* ARP opcode (command)         */
 };
 
-
-
-
 struct EtherARP
 {
     ARPHdr ea_hdr;      /* fixed-size header */
@@ -54,6 +51,7 @@ struct EtherARP
 };
 
 
+constexpr uint16_t ETHERARP_HDR_LEN = 28; /*  sizeof EtherARP != 28 */
 
 } // namespace arp
 

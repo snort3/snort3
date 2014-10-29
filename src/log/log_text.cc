@@ -1724,9 +1724,7 @@ void LogIPPkt(TextLog* log, Packet * p)
         Log2ndHeader(log, p);
 
         if ( p->proto_bits & PROTO_BIT__MPLS )
-        {
             LogMPLSHeader(log, p);
-        }
 
 
         // FIXIT-J --> log everything in order!!
@@ -1734,16 +1732,21 @@ void LogIPPkt(TextLog* log, Packet * p)
         int8_t num_layer = 0;
         bool first = true;
 
+
         while (layer::set_outer_ip_api(p, p->ptrs.ip_api, num_layer) &&
             tmp_api != p->ptrs.ip_api)
         {
             LogOuterIPHeader(log, p);
 
             if (first)
+            {
                 LogGREHeader(log, p); // checks for valid gre layer before logging
-            else
                 first = false;
+            }
 
+#ifdef REG_TEST
+            break;
+#endif
         }
 
         p->ptrs.ip_api = tmp_api;
@@ -2041,7 +2044,7 @@ void PrintEapolPkt(FILE * fp, Packet * p)
         PrintNetData(fp, p->pkt, p->pkth->caplen, p);
     }
 
-    fprintf(fp, "=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+\n\n");
+    fprintf(fp, "%s\n", SEPARATOR);
 }
 
 /*

@@ -80,6 +80,7 @@ FragEngine::FragEngine()
 // stream_ip module
 //-------------------------------------------------------------------------
 
+// sequence must match FRAG_POLICY_* enum
 #define policies  \
     "first | linux | bsd | bsd_right | last | windows | solaris"
 

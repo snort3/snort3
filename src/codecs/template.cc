@@ -134,6 +134,7 @@ struct NameHdr
     uint16_t len;
     // additional or different data
 };
+//constexpr uint16_t NAME_HDR_LEN = 4;  sizeof may return '8' on a 64 bit system
 
 } // namespace
 
@@ -180,7 +181,7 @@ bool NameCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
         return false;
 
     // ALTERNATIVELY, if you knwo the exact length you want to add
-    // if (!buf.allocate(sizeof(NameHdr))
+    // if (!buf.allocate(NAME_HDR_LEN)   //  sizeof gives the padded result == not always accurate
     //      return nullptr;
 
     // MUST BE DONE AFTER UPDATE_BUFFER!!

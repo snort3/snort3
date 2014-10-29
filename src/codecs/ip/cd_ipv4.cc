@@ -656,7 +656,7 @@ static inline uint16_t IpId_Next ()
 bool Ipv4Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
                         EncState& enc, Buffer& buf)
 {
-    if (!buf.allocate(sizeof(IP4Hdr)))
+    if (!buf.allocate(ip::IP4_HEADER_LEN))
         return false;
 
 

@@ -70,7 +70,7 @@ add_test (
         -e ${TEST_CONF_REJ}
         -a -s -t # output everything, right rules and data to a single out file
     WORKING_DIRECTORY ${CMAKE_CURENT_BINARY_DIR})
-add_test (NAME ctest_snort_conf COMMAND $<TARGET_FILE:snort> -c ${TEST_CONF_LUA})
+add_test (NAME ctest_snort_conf COMMAND $<TARGET_FILE:snort> -c ${TEST_CONF_LUA} --pedantic)
 
 # adding dependcies
 set_tests_properties(ctest_snort2lua_conf PROPERTIES DEPENDS snort2lua )
