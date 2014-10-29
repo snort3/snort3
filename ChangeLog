@@ -38,6 +38,7 @@
 -- patched around flow key issue with icmp ipproto vs pkt type
 -- changed builtin rules to rev:1; priority:3;
 -- update from Josh to fix codec FPs
+-- added REG_TEST support for -N (ignored) and -A console (alert_fast)
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to

@@ -139,6 +139,11 @@ static const Parameter s_params[] =
     { "-m", Parameter::PT_INT, "0:", nullptr, 
       "<umask> set umask = <umask>" },
 
+#ifdef REG_TEST
+    { "-N", Parameter::PT_IMPLIED, nullptr, nullptr, 
+      "ignored for reg tests" },
+#endif
+
     { "-n", Parameter::PT_INT, "0:", nullptr, 
       "<count> stop after count packets" },
 
@@ -735,8 +740,10 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--warn-unknown") )
         sc->logging_flags |= LOGGING_FLAG__WARN_UNKNOWN;
 
-    else
+#ifdef REG_TEST
+    else if ( !v.is("-N") )
         return false;
+#endif
 
     return true;
 }
