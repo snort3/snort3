@@ -2044,7 +2044,7 @@ void PrintEapolPkt(FILE * fp, Packet * p)
         PrintNetData(fp, p->pkt, p->pkth->caplen, p);
     }
 
-    fprintf(fp, "=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+\n\n");
+    fprintf(fp, "%s\n", SEPARATOR);
 }
 
 /*

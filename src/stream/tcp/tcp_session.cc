@@ -364,7 +364,10 @@ static inline uint32_t SegsToFlush (const StreamTracker* st, unsigned max)
 
 static inline bool DataToFlush (const StreamTracker* st)
 {
-    if ( st->flush_policy )
+    if ( 
+        st->flush_policy == STREAM_FLPOLICY_ON_DATA ||
+        st->splitter->is_paf()
+    )
         return ( SegsToFlush(st, 1) > 0 );
 
     return ( SegsToFlush(st, 2) > 1 );  // FIXIT-L return false?

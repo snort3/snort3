@@ -39,6 +39,8 @@
 -- changed builtin rules to rev:1; priority:3;
 -- update from Josh to fix codec FPs
 -- added REG_TEST support for -N (ignored) and -A console (alert_fast)
+-- tweaked alert_fast whitespace
+-- fixed stream is-paf? bug
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to
