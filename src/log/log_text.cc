@@ -719,7 +719,12 @@ static void LogOuterIPHeader(TextLog *log, Packet *p)
         p->ptrs.dp = save_dp;
     }
     else
+    {
+        PktType tmp_type = p->type();
+        p->ptrs.set_pkt_type(PktType::IP);
         LogIPHeader(log, p);
+        p->ptrs.set_pkt_type(tmp_type);
+    }
 
     p->ptrs.ip_api = save_ip_api;
     p->packet_flags |= save_frag_flag;
@@ -814,7 +819,8 @@ void LogTcpOptions(TextLog*  log, const Packet* const p)
             break;
 
         case tcp::TcpOptCode::TIMESTAMP:
-            TextLog_Print(log, " TS: %u %u", extract_32_bits(opt.data), opt.data + 4);
+            TextLog_Print(log, " TS: %u %u", extract_32_bits(opt.data),
+                extract_32_bits(opt.data + 4));
             break;
 
         case tcp::TcpOptCode::CC:
@@ -1653,8 +1659,8 @@ static int LogObfuscatedData(TextLog* log, Packet *p)
         LogNetData(log, buf, dlen + payload_len, NULL);
     }
 
-    free(payload);
 
+    free(payload);
     return 0;
 }
 
@@ -1742,6 +1748,12 @@ void LogIPPkt(TextLog* log, Packet * p)
         while (layer::set_outer_ip_api(p, p->ptrs.ip_api, num_layer) &&
             tmp_api != p->ptrs.ip_api)
         {
+#ifdef REG_TEST
+            // In Snort, cooked packets should not print an outer IP Header
+            if (p->is_cooked())
+              break;
+#endif
+
             LogOuterIPHeader(log, p);
 
             if (first)
@@ -1840,7 +1852,7 @@ void LogIPPkt(TextLog* log, Packet * p)
         LogNetData(log, p->pkt, p->pkth->caplen, p);
     }
 #ifdef REG_TEST
-    TextLog_Print(log, "\n%s\n", SEPARATOR);
+    TextLog_Print(log, "\n%s\n\n", SEPARATOR);
 #endif
 }
 

@@ -66,7 +66,7 @@ namespace tcp
 {
 
 
-constexpr uint8_t TCP_HEADER_LEN = 20; // this is actually the minimal TCP header lenght
+constexpr uint8_t TCP_MIN_HEADER_LEN = 20; // this is actually the minimal TCP header lenght
 constexpr int OPT_TRUNC = -1;
 constexpr int OPT_BADLEN = -2;
 
@@ -90,7 +90,7 @@ struct TCPHdr
     { return th_offx2 >> 4; }
 
     inline uint8_t options_len() const
-    { return hdr_len() - TCP_HEADER_LEN; }
+    { return hdr_len() - TCP_MIN_HEADER_LEN; }
 
     inline uint16_t src_port() const
     { return ntohs(th_sport); }
