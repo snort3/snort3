@@ -1,3 +1,6 @@
+127
+-- REG_TEST out logging tcp options for rebuilt packets to match snort bug
+
 126
 -- pulled latest from tom
 -- added paramaters to doc reference section
@@ -45,8 +48,11 @@
 -- fixed segfaults due to unitialized cleanup_pkt and unset stream_tcp
 -- matched up stream_tcp.policy enum with defines
 -- tweaked S5_TRACE output
+-- streamlined session restart handling
+-- changed #begin & #end to have to start beginning of line
 -- fixed alert_fast to default to not print payload
 -- fixed tcp options log format
+-- fixed bogus 120:3 alerts
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to
