@@ -63,6 +63,7 @@ static TokenType get_token(
     int c, list = 0, state = 0;
     s.clear();
     bool inc = true;
+    static int pos = 1;
 
     if ( prev != EOF )
     {
@@ -83,11 +84,15 @@ static TokenType get_token(
         if ( c == '\n' )
         {
             lines++;
+            pos = 0;
+
             if ( inc )
                 inc_parse_position();
             else
                 inc = true;
         }
+        else
+            pos++;
 
         switch ( state )
         {
@@ -141,7 +146,7 @@ static TokenType get_token(
             else if ( s.size() < 6 )
             {
                 s += c;
-                if ( s == "#begin" )
+                if ( pos == 6 && !strcasecmp(s.c_str(), "#begin") )
                     state = 8;
             }
             break;
@@ -214,7 +219,7 @@ static TokenType get_token(
             else if ( s.size() < 4 )
             {
                 s += c;
-                if ( s == "#end" )
+                if ( !strcasecmp(s.c_str(), "#end") )
                     state = 1;
             }
             break;

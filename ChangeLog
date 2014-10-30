@@ -45,6 +45,8 @@
 -- fixed segfaults due to unitialized cleanup_pkt and unset stream_tcp
 -- matched up stream_tcp.policy enum with defines
 -- tweaked S5_TRACE output
+-- streamlined session restart handling
+-- changed #begin & #end to have to start beginning of line
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to

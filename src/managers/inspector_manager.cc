@@ -27,6 +27,7 @@
 
 #include "module_manager.h"
 #include "flow/flow.h"
+#include "flow/session.h"
 #include "framework/inspector.h"
 #include "detection/detection_util.h"
 #include "obfuscation.h"
@@ -630,10 +631,8 @@ void InspectorManager::bumble(Packet* p)
     if ( !flow->gadget || flow->protocol != PktType::TCP )
         return;
 
-    ins = get_inspector("stream_tcp");
-
-    if ( ins )
-        ins->exec(0, p);
+    if ( flow->session )
+        flow->session->restart(p);
 }
 
 void InspectorManager::execute (Packet* p)
@@ -645,27 +644,24 @@ void InspectorManager::execute (Packet* p)
     // called on reassembled packets
     ::execute(p, fp->packet.vec, fp->packet.num);
     ::execute(p, fp->session.vec, fp->session.num);
-    ::execute(p, fp->network.vec, fp->network.num);
 
     Flow* flow = p->flow;
 
-    if ( flow && flow->clouseau && flow->service )
+    if ( !flow || !flow->service )
+        ::execute(p, fp->network.vec, fp->network.num);
+
+    else if ( flow->clouseau )
         bumble(p);
 
-    if ( p->dsize )
-    {
-        if ( !flow )
-            return;
+    if ( !p->dsize )
+        DisableDetect(p);
 
-        // FIXIT-M need more than one service inspector?
-        // (should be daisy chained since inspector1 will generate PDUs for
-        // inspector2)
-        //::execute(p, fp->service.vec, fp->service.num);
-        if ( flow->gadget && ((unsigned)p->type() & flow->gadget->get_api()->proto_bits) )
+    // FIXIT-M need more than one service inspector?
+    else if ( flow && flow->gadget )
+    {
+        if ( ((unsigned)p->type() & flow->gadget->get_api()->proto_bits) )
             flow->gadget->eval(p);
     }
-    else
-        DisableDetect(p);
 
     ::execute(p, fp->probe.vec, fp->probe.num);
 }
