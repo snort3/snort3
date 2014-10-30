@@ -423,7 +423,7 @@ static inline void IPMiscTests(const IP4Hdr* const ip4h, const CodecData& codec,
 
     /* Alert on IP packets with either 0x07 (Record Route) or 0x44 (Timestamp)
        options that are specially crafted. */
-    ip::IpOptionIterator iter(ip4h, (uint8_t)(len - ip::IP4_HEADER_LEN));
+    ip::IpOptionIterator iter(ip4h, (uint8_t)(len));
     for (const ip::IpOptions& opt : iter)
     {
         if (opt.code == ip::IPOptionCodes::RR)
