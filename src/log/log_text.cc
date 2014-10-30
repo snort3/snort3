@@ -442,14 +442,18 @@ void Log2ndHeader(TextLog* log, Packet* p)
 
 void LogIpOptions(TextLog*  log, const IP4Hdr* ip4h, const Packet* const p)
 {
-    u_long init_offset;
-    u_long print_offset;
+    int print_offset;
+    const ip::IpOptionIterator options(ip4h, p);
+    int init_offset = TextLog_Tell(log);
+    unsigned c = 0;
 
+    for (const auto& opt : options)
+    {
+        UNUSED(opt);
+        c++;
+    }
 
-    init_offset = TextLog_Tell(log);
-    TextLog_Puts(log, "IP Options => ");
-
-    ip::IpOptionIterator options(ip4h, p);
+    TextLog_Print(log, "IP Options (%u) => ", c);
 
     for (auto op : options)
     {

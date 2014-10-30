@@ -288,12 +288,11 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
      * get the values of the reserved, more
      * fragments and don't fragment flags
      */
-
-#if 0
-     // Reserved bit currently unused
     if (frag_off & 0x8000)
-        data.decode_flags |= DECODE_RF;
-#endif
+    {
+        codec_events::decoder_event(codec, DECODE_IP_RESERVED_FRAG_BIT);
+//        data.decode_flags |= DECODE_RF;  -- flag never needed
+    }
 
     if (frag_off & 0x4000)
         codec.codec_flags |= CODEC_DF;
@@ -419,6 +418,7 @@ static inline void IPMiscTests(const IP4Hdr* const ip4h, const CodecData& codec,
 
     /* Yes, it's an ICMP-related vuln in IP options. */
     uint8_t length, pointer;
+    int cnt = 0;
 
 
     /* Alert on IP packets with either 0x07 (Record Route) or 0x44 (Timestamp)
@@ -426,6 +426,8 @@ static inline void IPMiscTests(const IP4Hdr* const ip4h, const CodecData& codec,
     ip::IpOptionIterator iter(ip4h, (uint8_t)(len));
     for (const ip::IpOptions& opt : iter)
     {
+        ++cnt;
+
         if (opt.code == ip::IPOptionCodes::RR)
         {
             length = opt.len;
@@ -466,6 +468,9 @@ static inline void IPMiscTests(const IP4Hdr* const ip4h, const CodecData& codec,
                 codec_events::decoder_event(codec, DECODE_ICMP_DOS_ATTEMPT);
         }
     }
+
+    if (cnt > 0)
+        codec_events::decoder_event(codec, DECODE_IP_OPTION_SET);
 }
 
 
