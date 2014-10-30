@@ -1,5 +1,6 @@
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug
+-- tweaked S5_TRACE output for consistency
 
 126
 -- pulled latest from tom
