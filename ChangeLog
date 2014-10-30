@@ -1,3 +1,6 @@
+127
+-- REG_TEST out logging tcp options for rebuilt packets to match snort bug
+
 126
 -- pulled latest from tom
 -- added paramaters to doc reference section
