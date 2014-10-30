@@ -39,7 +39,7 @@ const TcpOption& TcpOptIteratorIter::operator* () const
 TcpOptIterator::TcpOptIterator(const TCPHdr* const tcp_header, const Packet* const p)
 {
     const uint8_t* const hdr = (const uint8_t* const)tcp_header;
-    start_ptr = hdr + TCP_HEADER_LEN;
+    start_ptr = hdr + TCP_MIN_HEADER_LEN;
     end_ptr = start_ptr; // == begin()
 
     for (int i = p->num_layers-1; i >= 0; --i)
@@ -61,9 +61,9 @@ TcpOptIterator::TcpOptIterator(const TCPHdr* const tcp_header, const Packet* con
 TcpOptIterator::TcpOptIterator(const TCPHdr* const tcp_header, const uint32_t valid_hdr_len)
 {
     const uint8_t* const hdr = (const uint8_t* const)tcp_header;
-    start_ptr = hdr + TCP_HEADER_LEN;
+    start_ptr = hdr + TCP_MIN_HEADER_LEN;
 
-    if (valid_hdr_len < TCP_HEADER_LEN)
+    if (valid_hdr_len < TCP_MIN_HEADER_LEN)
         end_ptr = start_ptr;
     else
         end_ptr = hdr + valid_hdr_len;
