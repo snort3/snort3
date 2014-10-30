@@ -44,6 +44,7 @@
 #include "hi_paf.h"
 #include "main/thread.h"
 
+static THREAD_LOCAL bool headers = false;
 static THREAD_LOCAL bool simple_response = false;
 static THREAD_LOCAL uint8_t decompression_buffer[65535];
 static THREAD_LOCAL uint8_t dechunk_buffer[65535];
@@ -788,7 +789,8 @@ static inline int hi_server_extract_body(
             {
                 if(!(sd->resp_state.last_pkt_chunked) && !simple_response)
                 {
-                    SnortEventqAdd(GID_HTTP_SERVER, HI_SERVER_NO_CONTLEN);
+                    if ( headers )
+                        SnortEventqAdd(GID_HTTP_SERVER, HI_SERVER_NO_CONTLEN);
                 }
                 else
                     sd->resp_state.last_pkt_chunked = 0;
@@ -1207,8 +1209,9 @@ static int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned
     if(!ServerConf)
         return HI_INVALID_ARG;
 
-
     Server = &(session->server);
+    headers = false;
+
     clearHttpRespBuffer(Server);
 
     seq_num = GET_PKT_SEQ(p);
@@ -1386,6 +1389,7 @@ static int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned
         }
         else
         {
+            headers = true;
             simple_response = false;
             p->packet_flags |= PKT_HTTP_DECODE;
             /* This is a next expected packet to be decompressed but the packet is a

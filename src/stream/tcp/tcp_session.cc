@@ -2416,7 +2416,7 @@ int Stream5FlushListener(Packet *p, Flow *lwssn)
     return flushed;
 }
 
-void TcpSession::restart_paf(Packet* p)
+void TcpSession::restart(Packet* p)
 {
     StreamTracker* talker, * listener;
     TcpSession* tcpssn = (TcpSession*)p->flow->session;
