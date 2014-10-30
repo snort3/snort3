@@ -204,7 +204,7 @@ public:
     void cleanup() override;
 
     void reset();
-    void restart_paf(Packet*);
+    void restart(Packet*) override;
 
 public:
     StreamTracker client;

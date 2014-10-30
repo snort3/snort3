@@ -45,6 +45,8 @@
 -- fixed segfaults due to unitialized cleanup_pkt and unset stream_tcp
 -- matched up stream_tcp.policy enum with defines
 -- tweaked S5_TRACE output
+-- streamlined session restart handling
+-- changed #begin & #end to have to start beginning of line
 -- fixed alert_fast to default to not print payload
 -- fixed tcp options log format
 -- fixed bogus 120:3 alerts
