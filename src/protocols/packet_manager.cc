@@ -729,7 +729,7 @@ int PacketManager::encode_format(EncodeFlags f, const Packet* p, Packet* c, Pseu
 void PacketManager::encode_update (Packet* p)
 {
     int i;
-    uint32_t len = 0;
+    uint32_t len = p->dsize;
     DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)p->pkth;
 
     Layer *lyr = p->layers;

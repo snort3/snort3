@@ -32,6 +32,7 @@
 // unfortunately necessary due to use of Ipapi in struct
 #include "protocols/ip.h"
 #include "protocols/mpls.h"  // FIXIT-M remove MPLS from Convenience pointers
+#include "protocols/layer.h"
 #include "framework/decode_data.h"
 
 struct TextLog;
@@ -357,8 +358,8 @@ public:
     { return true; }
 
     // update function
-    virtual bool update(Packet*, Layer*, uint32_t* /*len*/)
-    { return true; }
+    virtual bool update(Packet*, Layer* lyr, uint32_t* len)
+    { *len += lyr->length;  return true; }
 
     // formatter
     virtual void format(EncodeFlags, const Packet* /*orig*/, Packet* /*clone*/, Layer*)

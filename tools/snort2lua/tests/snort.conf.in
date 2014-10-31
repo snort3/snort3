@@ -1295,3 +1295,5 @@ alert tcp any any -> any any ( sid:26816; msg:"tunnel"; flow:established; conten
 alert tcp any any -> any any ( sid:26817; msg:"tunnel"; flow:established; content:"250-localhost"; stream_reassemble:enable,client,fastpath,noalert; )
 alert tcp any any -> any any ( sid:26818; msg:"tunnel"; flow:established; content:"250-localhost"; stream_reassemble:enable,server,fastpath,noalert; )
 
+
+alert tcp $EXTERNAL_NET any -> $HOME_NET 2401 (msg:"MISC CVS non-relative path access attempt"; flow:to_server,established; content:"Argument"; pcre:"m?^Argument\s+/?smi"; pcre:"/^Directory/smiR"; reference:bugtraq,9178; reference:cve,2003-0977; reference:nessus,11947; classtype:misc-attack; sid:2318; rev:4;)

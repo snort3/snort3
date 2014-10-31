@@ -249,7 +249,9 @@ THREAD_LOCAL ProfileStats fragRebuildPerfStats;
 /*  P R O T O T Y P E S  ********************************************/
 static void FragRebuild(FragTracker *, Packet *);
 static inline int FragIsComplete(FragTracker *);
-static int FragHandleIPOptions(FragTracker *, const Packet* const);
+static int FragHandleIPOptions(FragTracker *,
+                               const Packet* const,
+                               const uint16_t frag_off);
 
 /* deletion funcs */
 static THREAD_LOCAL struct timeval *pkttime;    /* packet timestamp */
@@ -540,7 +542,7 @@ static inline int FragCheckFirstLast(const Packet* const p,
          * between the last sucesfully decoded layer (which is ip6_frag
          *  or ipv4) and the end of packet, */
         fragLength = p->dsize;
-        endOfThisFrag = (frag_offset << 3) + fragLength;
+        endOfThisFrag = frag_offset + fragLength;
 
         if (ft->frag_flags & FRAG_GOT_LAST)
         {
@@ -639,10 +641,10 @@ static inline int FragCheckFirstLast(const Packet* const p,
  * @retval 1 on success
  */
 static int FragHandleIPOptions(FragTracker *ft,
-                               const Packet* const p)
+                               const Packet* const p,
+                               const uint16_t frag_offset)
 {
-    // FIXIT-J pass in frag_offset as a parameter
-    const uint16_t frag_offset = p->ptrs.ip_api.off();
+    // Is this for ipv6 too?
     const uint16_t ip_options_len = p->ptrs.ip_api.get_ip_opt_len();
 
     if(frag_offset == 0)
@@ -1019,9 +1021,14 @@ static void FragRebuild(FragTracker *ft, Packet *p)
 
         /* Set the 'next' protocol */
         if (fragh != nullptr)
+        {
             fragh->ip6f_nxt = ft->protocol;
+            fragh->ip6f_offlg = 0x0000;
+        }
         else
+        {
             rawHdr->ip6_next = ft->protocol;
+        }
 
         dpkt->dsize = (uint16_t)ft->calculated_size;
         PacketManager::encode_update(dpkt);
@@ -1367,8 +1374,9 @@ void Defrag::process(Packet* p, FragTracker* ft)
      *    Disable Inspection since we'll look at the payload in
      *    a rebuilt packet later.  So don't process it further.
      */
-    if ((frag_offset != 0) ||
-        ((p->get_ip_proto_next() != IPPROTO_UDP) && (p->ptrs.decode_flags & DECODE_MF)))
+    //  FIXIT-M  Since we no longer let UDP through, does this detection still work?
+    if ((frag_offset != 0)) /* ||
+        ((p->get_ip_proto_next() != IPPROTO_UDP) && (p->ptrs.decode_flags & DECODE_MF))) */
     {
         DisableDetect(p);
     }
@@ -1571,7 +1579,7 @@ int Defrag::insert(Packet *p, FragTracker *ft, FragEngine *fe)
 
     MODULE_PROFILE_START(fragInsertPerfStats);
 
-    if (p->ptrs.ip_api.is_ip6() && (net_frag_offset == 0))
+    if (p->is_ip6() && (net_frag_offset == 0))
     {
 
         const ip::IP6Frag* const fragHdr = layer::get_inner_ip6_frag();
@@ -1601,7 +1609,7 @@ int Defrag::insert(Packet *p, FragTracker *ft, FragEngine *fe)
     /*
      * setup local variables for tracking this frag
      */
-    orig_offset = frag_offset = net_frag_offset << 3;
+    orig_offset = frag_offset = net_frag_offset;
     /* Reset the offset to handle the weird Solaris case */
     if (firstLastOk == FRAG_LAST_OFFSET_ADJUST)
         frag_offset = (uint16_t)ft->calculated_size;
@@ -1619,7 +1627,7 @@ int Defrag::insert(Packet *p, FragTracker *ft, FragEngine *fe)
         }
 
         //    ft->frag_flags |= FRAG_GOT_LAST;
-        //    ft->calculated_size = (p->frag_offset << 3) + fragLength;
+        //    ft->calculated_size = (p->frag_offset) + fragLength;
         lastfrag = 1;
     }
     else
@@ -1703,7 +1711,7 @@ int Defrag::insert(Packet *p, FragTracker *ft, FragEngine *fe)
      * This may alert on bad options, but we still want to
      * insert the packet
      */
-    FragHandleIPOptions(ft, p);
+    FragHandleIPOptions(ft, p, frag_offset);
 
     ft->frag_pkts++;
 
@@ -1919,7 +1927,7 @@ left_overlap_last:
         DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
                     "Overly large fragment %d 0x%x 0x%x %d\n",
                     fragLength, p->ptrs.ip_api.dgram_len(), p->ptrs.ip_api.off(),
-                    net_frag_offset << 3););
+                    net_frag_offset););
         MODULE_PROFILE_END(fragInsertPerfStats);
         return FRAG_INSERT_FAILED;
     }
@@ -2302,8 +2310,8 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
             "Overly large fragment length:%d(0x%x) off:0x%x(%d)\n",
-            fragLength, p->ptrs.ip_api.dgram_len(), p->ptrs.ip_api.off() << 3,
-            p->ptrs.ip_api.off() << 3););
+            fragLength, p->ptrs.ip_api.dgram_len(), p->ptrs.ip_api.off(),
+            p->ptrs.ip_api.off()););
 
         /* Ah, crap.  Return that tracker. */
         return 0;
@@ -2316,11 +2324,11 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
         ft->protocol = p->ptrs.ip_api.get_ip4h()->proto();
 
         const ip::IP4Hdr *ip4h = reinterpret_cast<const ip::IP4Hdr*>(lyr.start);
-        frag_off = ip4h->off() & 0x1FFF;
+        frag_off = ip4h->off();
     }
     else /* IPv6 */
     {
-        const ip::IP6Frag *fragHdr = reinterpret_cast<const ip::IP6Frag*>(lyr.start);
+        const ip::IP6Frag* const fragHdr = reinterpret_cast<const ip::IP6Frag*>(lyr.start);
         frag_off = fragHdr->off();
 
         if (frag_off == 0)
@@ -2375,7 +2383,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
     memcpy(f->fptr, fragStart, fragLength);
 
     f->size = f->flen = fragLength;
-    f->offset = frag_off << 3;
+    f->offset = frag_off;
     frag_end = f->offset + fragLength;
     f->ord = ft->ordinal++;
     f->data = f->fptr;     /* ptr to adjusted start position */
@@ -2421,7 +2429,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
 
     ft->frag_bytes += fragLength;
 
-    FragHandleIPOptions(ft, p);
+    FragHandleIPOptions(ft, p, frag_off);
 
     t_stats.trackers_created++;
     return 1;

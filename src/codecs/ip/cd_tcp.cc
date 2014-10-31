@@ -580,7 +580,7 @@ void TcpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
             "Win: 0x%X  TcpLen: %d",ntohs(tcph->th_sport),
             ntohs(tcph->th_dport), (u_long) ntohl(tcph->th_seq),
             (u_long) ntohl(tcph->th_ack),
-            ntohs(tcph->th_win), tcph->off() << 2);
+            ntohs(tcph->th_win), tcph->off());
 
     if((tcph->th_flags & TH_URG) != 0)
         TextLog_Print(text_log, "UrgPtr: 0x%X", tcph->urp());

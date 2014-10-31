@@ -92,8 +92,20 @@ struct IP4Hdr
     inline uint8_t proto() const
     { return ip_proto; }
 
-    inline uint16_t off() const
+    inline uint16_t off_w_flags() const
     { return ntohs(ip_off); }
+
+    inline uint16_t rb() const
+    { return ntohs(ip_off) & 0x8000; }
+
+    inline uint16_t mf() const
+    { return ntohs(ip_off) & 0x2000; }
+
+    inline uint16_t df() const
+    { return ntohs(ip_off) & 0x4000; }
+
+    inline uint16_t off() const
+    { return (ntohs(ip_off) & 0x1FFF) << 3; }
 
     inline uint16_t id() const
     { return ntohs(ip_id); }
