@@ -442,14 +442,22 @@ void Log2ndHeader(TextLog* log, Packet* p)
 
 void LogIpOptions(TextLog*  log, const IP4Hdr* ip4h, const Packet* const p)
 {
-    u_long init_offset;
-    u_long print_offset;
+    int print_offset;
+    const ip::IpOptionIterator options(ip4h, p);
+    int init_offset = TextLog_Tell(log);
+    unsigned c = 0;
 
+    for (const auto& opt : options)
+    {
+        UNUSED(opt);
+        c++;
+    }
 
-    init_offset = TextLog_Tell(log);
-    TextLog_Puts(log, "IP Options => ");
+    // can happen if hlen() > 20, but first option is invalid
+    if (c == 0)
+      return;
 
-    ip::IpOptionIterator options(ip4h, p);
+    TextLog_Print(log, "IP Options (%u) => ", c);
 
     for (auto op : options)
     {
@@ -639,15 +647,14 @@ void LogIPHeader(TextLog*  log, Packet * p)
         }
         else
         {
-            frag_off = ip6_frag->off();
 
-            if(frag_off & ip::IP6F_RES_MASK)
+            if(ip6_frag->rb())
                 TextLog_Puts(log, " RB");
 
-            if(frag_off & ip::IP6F_MF_MASK)
+            if(ip6_frag->mf())
                 TextLog_Puts(log, " MF");
 
-            frag_off = (frag_off >> 3);
+            frag_off = ip6_frag->off();
         }
     }
     else
@@ -665,14 +672,14 @@ void LogIPHeader(TextLog*  log, Packet * p)
         if (frag_off)
         {
           /* print the reserved bit if it's set */
-          if(frag_off & 0x8000)
+          if(ip4h->rb())
               TextLog_Puts(log, " RB");
 
           /* printf more frags/don't frag bits */
-          if(frag_off & 0x4000)
+          if(ip4h->df())
               TextLog_Puts(log, " DF");
 
-          if(frag_off & 0x2000)
+          if(ip4h->mf())
               TextLog_Puts(log, " MF");
 
           frag_off = (frag_off & 0x1FFF);
@@ -750,6 +757,11 @@ void LogTcpOptions(TextLog*  log, const Packet* const p)
         UNUSED(opt);
         c++;
     }
+
+    // can happen if hlen() > MIN_HEADER_LEN, but first option is invalid
+    if (c == 0)
+      return;
+
 
     TextLog_Print(log, "TCP Options (%u) =>", c);
 
@@ -894,7 +906,7 @@ void LogTCPHeader(TextLog*  log, Packet * p)
     TextLog_Print(log, " Seq: 0x%lX  Ack: 0x%lX  Win: 0x%X  TcpLen: %d",
             (u_long) ntohl(tcph->th_seq),
             (u_long) ntohl(tcph->th_ack),
-            ntohs(tcph->th_win), tcph->off() << 2);
+            ntohs(tcph->th_win), tcph->off());
 
     if((tcph->th_flags & TH_URG) != 0)
     {
@@ -906,6 +918,10 @@ void LogTCPHeader(TextLog*  log, Packet * p)
     }
 
     /* dump the TCP options */
+#ifdef REG_TEST
+    // emulate snort bug
+    if ( !PacketWasCooked(p) )
+#endif
     if(tcph->has_options())
     {
         LogTcpOptions(log, p);

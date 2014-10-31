@@ -112,6 +112,17 @@ uint16_t IpApi::off() const
     return 0;
 }
 
+uint16_t IpApi::off_w_flags() const
+{
+    if (ip4h)
+        return ip4h->off_w_flags();
+
+    const IP6Frag* const frag_hdr = layer::get_inner_ip6_frag();
+
+    if (frag_hdr)
+        return frag_hdr->off_w_flags();
+    return 0;
+}
 
 const uint8_t* IpApi::ip_data() const
 {

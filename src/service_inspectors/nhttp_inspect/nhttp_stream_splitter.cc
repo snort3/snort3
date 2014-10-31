@@ -20,6 +20,7 @@
 
 #include <assert.h>
 #include <sys/types.h>
+
 #include "nhttp_enum.h"
 #include "nhttp_test_manager.h"
 #include "nhttp_test_input.h"

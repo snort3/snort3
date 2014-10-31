@@ -19,6 +19,7 @@
 // nhttp_test_manager.cc author Tom Peters <thopeter@cisco.com>
 
 #include <stdexcept>
+
 #include "nhttp_test_manager.h"
 #include "nhttp_test_input.h"
 

@@ -47,9 +47,8 @@ bool FileData::convert(std::istringstream& data_stream)
     std::string args;
     std::string tmp;
     std::streamoff pos = data_stream.tellg();
-    bool retval = true;
 
-    retval = rule_api.add_rule_option("file_data");
+    rule_api.add_rule_option("file_data");
     args = util::get_rule_option_args(data_stream);
 
     // if there are no arguments, the option had a colon before a semicolon.
@@ -69,12 +68,12 @@ bool FileData::convert(std::istringstream& data_stream)
             std::istringstream(args) >> tmp;
 
             if (!tmp.compare("mime"))
-                rule_api.add_comment_to_rule("file_data's option 'mime' has been deleted");
+                rule_api.add_comment_to_rule("file_data's 'mime' option has been deleted");
             else
                 data_stream.seekg(pos);
         }
     }
-    return set_next_rule_state(data_stream) && retval;
+    return set_next_rule_state(data_stream);
 }
 
 /**************************

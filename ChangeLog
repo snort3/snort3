@@ -1,3 +1,15 @@
+127
+-- REG_TEST out logging tcp options for rebuilt packets to match snort bug
+-- tweaked S5_TRACE output for consistency
+-- disabled new_http_inspect from REG_TEST (accidentally enabled)
+-- squelch 129:9 and 129:10 if link addrs are swapped
+-- tweaks from Josh
+-- tweaked inspector execution
+-- fixed parsing of reference with \;
+-- fixed ips classtype segfault on ctor after parse error
+-- new_http_inspect now gid 219 and other Tom Tweaks
+-- new_http_inspect reactiveated (no longer REG_TEST only)
+
 126
 -- pulled latest from tom
 -- added paramaters to doc reference section
@@ -45,8 +57,11 @@
 -- fixed segfaults due to unitialized cleanup_pkt and unset stream_tcp
 -- matched up stream_tcp.policy enum with defines
 -- tweaked S5_TRACE output
+-- streamlined session restart handling
+-- changed #begin & #end to have to start beginning of line
 -- fixed alert_fast to default to not print payload
 -- fixed tcp options log format
+-- fixed bogus 120:3 alerts
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to

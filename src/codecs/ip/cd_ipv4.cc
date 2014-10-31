@@ -282,18 +282,17 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     ip_len -= hlen;
 
     /* check for fragmented packets */
-    uint16_t frag_off = iph->off();
+    uint16_t frag_off = iph->off_w_flags();
 
     /*
      * get the values of the reserved, more
      * fragments and don't fragment flags
      */
-
-#if 0
-     // Reserved bit currently unused
     if (frag_off & 0x8000)
-        data.decode_flags |= DECODE_RF;
-#endif
+    {
+        codec_events::decoder_event(codec, DECODE_IP_RESERVED_FRAG_BIT);
+//        data.decode_flags |= DECODE_RF;  -- flag never needed
+    }
 
     if (frag_off & 0x4000)
         codec.codec_flags |= CODEC_DF;
@@ -303,6 +302,10 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     /* mask off the high bits in the fragment offset field */
     frag_off &= 0x1FFF;
+
+    // to get the real frag_off, we need to multiply by 8. However, since
+    // the actual frag_off is never used, we can comment this out
+//    frag_off = frag_off << 3;
 
     if ((codec.codec_flags & CODEC_DF) && frag_off )
         codec_events::decoder_event(codec, DECODE_IP4_DF_OFFSET);
@@ -419,13 +422,16 @@ static inline void IPMiscTests(const IP4Hdr* const ip4h, const CodecData& codec,
 
     /* Yes, it's an ICMP-related vuln in IP options. */
     uint8_t length, pointer;
+    int cnt = 0;
 
 
     /* Alert on IP packets with either 0x07 (Record Route) or 0x44 (Timestamp)
        options that are specially crafted. */
-    ip::IpOptionIterator iter(ip4h, (uint8_t)(len - ip::IP4_HEADER_LEN));
+    ip::IpOptionIterator iter(ip4h, (uint8_t)(len));
     for (const ip::IpOptions& opt : iter)
     {
+        ++cnt;
+
         if (opt.code == ip::IPOptionCodes::RR)
         {
             length = opt.len;
@@ -466,6 +472,9 @@ static inline void IPMiscTests(const IP4Hdr* const ip4h, const CodecData& codec,
                 codec_events::decoder_event(codec, DECODE_ICMP_DOS_ATTEMPT);
         }
     }
+
+    if (cnt > 0)
+        codec_events::decoder_event(codec, DECODE_IP_OPTION_SET);
 }
 
 
@@ -594,7 +603,7 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 
     const uint16_t hlen = ip4h->hlen();
     const uint16_t len = ip4h->len();
-    const uint16_t frag_off = ip4h->off();
+    const uint16_t frag_off = ip4h->off_w_flags();
 
     TextLog_Print(text_log, "Next:0x%02X TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
             ip4h->proto(), ip4h->ttl(), ip4h->tos(),
@@ -626,7 +635,7 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
         TextLog_NewLine(text_log);
         TextLog_Putc(text_log, '\t');
         TextLog_Print(text_log, "Frag Offset: 0x%04X   Frag Size: 0x%04X\n",
-                (frag_off & 0x1FFF), (len - hlen));
+                (frag_off & 0x1FFF) * 8, (len - hlen));
     }
 }
 

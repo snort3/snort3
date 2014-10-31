@@ -45,19 +45,17 @@ public:
     
     virtual bool convert(std::istringstream& stream)
     {
-        bool retval;
-
         if (has_suboptions)
         {
             std::string val = util::get_rule_option_args(stream);
-            retval = rule_api.add_rule_option(*rule_name, val);
+            rule_api.add_rule_option(*rule_name, val);
         }
         else
         {
-            retval = rule_api.add_rule_option(*rule_name);
+            rule_api.add_rule_option(*rule_name);
         }
 
-        return set_next_rule_state(stream) && retval;
+        return set_next_rule_state(stream);
     }
 };
 

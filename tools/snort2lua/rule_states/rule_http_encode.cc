@@ -56,9 +56,7 @@ bool HttpEncode::convert(std::istringstream& data_stream)
 
 
 static ConversionState* ctor(Converter& c)
-{
-    return new HttpEncode(c);
-}
+{ return new HttpEncode(c); }
 
 static const std::string http_encode = "http_encode";
 static const ConvertMap http_encode_api =

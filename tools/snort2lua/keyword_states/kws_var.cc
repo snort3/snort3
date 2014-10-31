@@ -63,6 +63,7 @@ bool Var::convert(std::istringstream& data_stream)
         std::vector<std::string> port_list;
         bool retval = true;
 
+        // FIXIT-M J   ---  Should not be removing the '[' from a PORT_LIST
         if(ports.front() == '[')
             ports.erase(ports.begin());
         

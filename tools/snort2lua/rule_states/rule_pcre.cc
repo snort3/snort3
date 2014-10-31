@@ -48,17 +48,50 @@ bool Pcre::convert(std::istringstream& data_stream)
     bool retval = true;
     bool sticky_buffer_set = false;
 
+    char delim = '/';
     std::string pcre_str = util::get_rule_option_args(data_stream);
+    std::string pattern = "";
+    std::string new_opts = "";
+    std::string options;
 
-    std::size_t pattern_end = pcre_str.rfind("/");
-    std::string pattern = pcre_str.substr(0, pattern_end + 1);
-    std::string options = pcre_str.substr(pattern_end + 1, std::string::npos);
-    std::string new_opts = std::string();
+    if (pcre_str.front() == '!')
+    {
+        pattern += "!";
+        pcre_str.erase(pcre_str.begin());
+    }
 
-    if (options.back() == '"')
-        options.pop_back();
-    else
-        retval = false;
+    if (pcre_str.front() != '"' || pcre_str.back() != '"')
+    {
+        rule_api.bad_rule(data_stream, "pattern must be enclosed in \"");
+        return set_next_rule_state(data_stream);
+    }
+
+
+    pcre_str.erase(pcre_str.begin());
+    pattern += '"';
+
+
+    if (pcre_str.front() == 'm')
+    {
+        pcre_str.erase(pcre_str.begin());
+        pattern += 'm';
+        delim = pcre_str.front();
+    }
+
+    const std::size_t pattern_end = pcre_str.rfind(delim);
+    if ((pcre_str.front() != delim) || (pattern_end == 0))
+    {
+        std::string tmp = "Regex must be enclosed in delim '";
+        tmp.append(delim, 1);
+        rule_api.bad_rule(data_stream, tmp + "'");
+        return set_next_rule_state(data_stream);
+    }
+
+
+    pattern += pcre_str.substr(0, pattern_end + 1);
+    options = pcre_str.substr(pattern_end + 1, std::string::npos);
+    new_opts = "";
+
 
     for (char c : options )
     {
@@ -86,14 +119,15 @@ bool Pcre::convert(std::istringstream& data_stream)
             case 'G':
             case 'R':
             case 'O':
+            case '"': // end of reg_ex
                 new_opts += c;
                 break;
             default:
             {
-                std::string dlt_opt = "pcre: unknown option - '";
+                std::string dlt_opt = "unknown option - '";
                 dlt_opt.append(1, c);
                 dlt_opt += "'";
-                rule_api.add_comment_to_rule(dlt_opt);
+                rule_api.bad_rule(data_stream, dlt_opt);
                 retval = false;
                 break;
             }
@@ -104,14 +138,14 @@ bool Pcre::convert(std::istringstream& data_stream)
             rule_api.add_rule_option(sticky_buffer);
 
             if (sticky_buffer_set)
-                rule_api.add_comment_to_rule("WARNING: Two sticky buffers set for this regular expression!");
+                rule_api.bad_rule(data_stream, "Two sticky buffers set for this regular expression!");
             else
                 sticky_buffer_set = true;
         }
     }
 
-    rule_api.add_rule_option("pcre", pattern + new_opts + "\"");
-    return set_next_rule_state(data_stream) && retval;
+    rule_api.add_rule_option("pcre", pattern + new_opts);
+    return set_next_rule_state(data_stream);
 }
 
 /**************************
