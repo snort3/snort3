@@ -5,6 +5,7 @@
 -- squelch 129:9 and 129:10 if link addrs are swapped
 -- tweaks from Josh
 -- tweaked inspector execution
+-- fixed parsing of reference with \;
 
 126
 -- pulled latest from tom

@@ -49,7 +49,8 @@ enum TokenType
     TT_MAX
 };
 
-#if 0
+//#define TRACER
+#ifdef TRACER
 static const char* const toks[TT_MAX] =
 {
     "none", "punct", "string", "list", "literal"
@@ -79,7 +80,9 @@ static TokenType get_token(
 
     while ( c != EOF )
     {
-        //printf("state = %d, c = %d\n", state, c);
+#ifdef TRACER
+        printf("state = %d, c = %d\n", state, c);
+#endif
 
         if ( c == '\n' )
         {
@@ -185,7 +188,11 @@ static TokenType get_token(
             state = 0;
             break;
         case 6:  // token
-            if ( isspace(c) || strchr(punct, c) )
+            if ( esc && c == '\\' )
+            {
+                state = 9;
+            }
+            else if ( isspace(c) || strchr(punct, c) )
             {
                 prev = c;
                 return TT_LITERAL;
@@ -222,6 +229,10 @@ static TokenType get_token(
                 if ( !strcasecmp(s.c_str(), "#end") )
                     state = 1;
             }
+            break;
+        case 9:  // token escape
+            s += c;
+            state = 6;
             break;
         }
         c = is.get();
@@ -290,7 +301,7 @@ static const State fsm[] =
     {  7,  8, TT_PUNCT,   FSM_SOB, "(",        nullptr },
     {  8,  0, TT_PUNCT,   FSM_EOB, ")",        nullptr },
     {  8, 13, TT_LITERAL, FSM_KEY, "metadata", nullptr },
-    {  8, 13, TT_LITERAL, FSM_KEY, "reference",":,;"   },
+    {  8, 16, TT_LITERAL, FSM_KEY, "reference",":;"    },
     {  8,  9, TT_LITERAL, FSM_KEY, nullptr,    nullptr },
     {  9,  8, TT_PUNCT,   FSM_END, ";",        nullptr },
     {  9, 10, TT_PUNCT,   FSM_NOP, ":",        nullptr },
@@ -313,6 +324,7 @@ static const State fsm[] =
     { 14, 14, TT_NONE,    FSM_SET, ",",        nullptr },
     { 14, 14, TT_NONE,    FSM_ADD, nullptr,    nullptr },
     { 15,  0, TT_LITERAL, FSM_INC, nullptr,    nullptr },
+    { 16, 14, TT_PUNCT,   FSM_NOP, ":",        ";"     },
 };
 
 static const State* get_state(int num, TokenType type, const string& tok)
@@ -480,7 +492,7 @@ static void parse_body(const char* extra, RuleParseState& rps, struct SnortConfi
         exec(s->action, tok, rps, sc);
 
         num = s->next;
-        esc = (rps.key == "pcre");
+        esc = (rps.key == "pcre" || rps.key == "reference");
 
         if ( s->punct )
             punct = s->punct;
@@ -502,14 +514,16 @@ void parse_stream(istream& is, struct SnortConfig* sc)
         ++tokens;
         const State* s = get_state(num, type, tok);
 
-        //printf("%d: %s = '%s' -> %s\n",
-        //    num, toks[type], tok.c_str(), acts[s->action]);
+#ifdef TRACER
+        printf("%d: %s = '%s' -> %s\n",
+            num, toks[type], tok.c_str(), acts[s->action]);
+#endif
 
         if ( exec(s->action, tok, rps, sc) )
             break;
 
         num = s->next;
-        esc = (rps.key == "pcre");
+        esc = (rps.key == "pcre" || rps.key == "reference");
 
         if ( s->punct )
             punct = s->punct;
