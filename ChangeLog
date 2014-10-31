@@ -4,6 +4,7 @@
 -- disabled new_http_inspect from REG_TEST (accidentally enabled)
 -- squelch 129:9 and 129:10 if link addrs are swapped
 -- tweaks from Josh
+-- tweaked inspector execution
 
 126
 -- pulled latest from tom
