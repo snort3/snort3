@@ -46,7 +46,6 @@ bool Threshold::convert(std::istringstream& data_stream)
 {
     std::string args;
     std::string value;
-    bool retval = true;
 
     args = util::get_rule_option_args(data_stream);
     std::istringstream arg_stream(args);
@@ -64,7 +63,7 @@ bool Threshold::convert(std::istringstream& data_stream)
         std::istringstream subopt_stream(value);
 
         if (!(subopt_stream >> keyword) || !(subopt_stream >> val))
-            tmpval = false;
+            rule_api.bad_rule(data_stream, "threshold: " + keyword + " <missing_value>");
 
         else if (!(keyword.compare("count")))
             tmpval = table_api.add_option("count", std::stoi(val));
@@ -79,10 +78,7 @@ bool Threshold::convert(std::istringstream& data_stream)
             tmpval = table_api.add_option("track", val);
 
         else
-            retval = false;
-
-        if (retval && !tmpval)
-            retval = false;
+            rule_api.bad_rule(data_stream, "threshold: " + keyword);
     }
 
     // save the current position
@@ -146,7 +142,7 @@ bool Threshold::convert(std::istringstream& data_stream)
         data_stream.clear();
 
     data_stream.seekg(curr_pos);
-    return set_next_rule_state(data_stream) && retval;
+    return set_next_rule_state(data_stream);
 }
 
 /**************************

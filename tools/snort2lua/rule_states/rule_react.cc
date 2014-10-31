@@ -47,7 +47,6 @@ bool React::convert(std::istringstream& data_stream)
     std::string args;
     std::string tmp;
     std::streamoff pos = data_stream.tellg();
-    bool retval = true;
 
     args = util::get_rule_option_args(data_stream);
 
@@ -73,7 +72,7 @@ bool React::convert(std::istringstream& data_stream)
                 !tmp.compare("block") ||
                 !tmp.compare(0, 5, "proxy"))
             {
-                // Now that we have confirmed this is a vlid option, parse it!!
+                // Now that we have confirmed this is a valid option, parse it!!
                 table_api.open_table("react");
                 bool find_msg = false;
 
@@ -96,11 +95,7 @@ bool React::convert(std::istringstream& data_stream)
                         find_msg = true;
 
                     else
-                    {
                         rule_api.bad_rule(data_stream, "resp: " + tmp);
-                        retval = false;
-                    }
-
 
                 } while (util::get_string(arg_stream, tmp, ","));
 
@@ -138,7 +133,7 @@ bool React::convert(std::istringstream& data_stream)
 
     // Finally, update the rule type
     rule_api.update_rule_type("react");
-    return set_next_rule_state(data_stream) && retval;
+    return set_next_rule_state(data_stream);
 }
 
 /**************************

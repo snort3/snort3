@@ -88,20 +88,20 @@ public:
     // add a new peice of header_data to the current rule
     bool add_hdr_data(std::string data);
     // add a rule option (keyword and suboption)
-    bool add_rule_option(std::string keyword);
+    void add_rule_option(std::string keyword);
     // add a rule option (keyword and suboption)
-    bool add_rule_option(std::string keyword, std::string val);
+    void add_rule_option(std::string keyword, std::string val);
     // add a rule option (keyword and suboption)
-    bool add_rule_option_before_selected(std::string keyword, std::string val = std::string());
+    void add_rule_option_before_selected(std::string keyword, std::string val = std::string());
     // FIXIT-L J  this function should definitely be removed
     // selects the rule option with the given name.  MUST BE CALLED BEFORE ADDING A SUBOPTION.
-    bool select_option(std::string keyword);
+    void select_option(std::string keyword);
     // clear the selected option.
     void unselect_option();
     // add a rule option (keyword and suboption)
-    bool add_suboption(std::string keyword);
+    void add_suboption(std::string keyword);
     // add a rule option (keyword and suboption)
-    bool add_suboption(std::string keyword, std::string val);
+    void add_suboption(std::string keyword, std::string val);
     // add a comment to a rule
     void add_comment_to_rule(std::string coment);
     // Change the rule's type (i.e. from log to reject. Used for the 'resp' rule option.

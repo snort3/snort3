@@ -56,7 +56,6 @@ bool Resp::convert(std::istringstream& data_stream)
     std::string args;
     std::string tmp;
     std::streamoff pos = data_stream.tellg();
-    bool retval = true;
 
     args = util::get_rule_option_args(data_stream);
 
@@ -158,7 +157,6 @@ bool Resp::convert(std::istringstream& data_stream)
                     else
                     {
                         rule_api.bad_rule(data_stream, "resp: " + tmp);
-                        retval = false;
                     }
 
 
@@ -180,7 +178,7 @@ bool Resp::convert(std::istringstream& data_stream)
 
     // Finally, update the rule type
     rule_api.update_rule_type("reject");
-    return set_next_rule_state(data_stream) && retval;
+    return set_next_rule_state(data_stream);
 }
 
 /**************************
