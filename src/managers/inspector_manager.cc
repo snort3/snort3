@@ -635,19 +635,11 @@ void InspectorManager::bumble(Packet* p)
         flow->session->restart(p);
 }
 
-void InspectorManager::execute (Packet* p)
+void InspectorManager::full_inspection(FrameworkPolicy* fp, Packet* p)
 {
-    FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
-    assert(fp);
-
-    // FIXIT-M structure lists so stream, normalize, etc. aren't
-    // called on reassembled packets
-    ::execute(p, fp->packet.vec, fp->packet.num);
-    ::execute(p, fp->session.vec, fp->session.num);
-
     Flow* flow = p->flow;
 
-    if ( !flow || !flow->service )
+    if ( !flow->service )
         ::execute(p, fp->network.vec, fp->network.num);
 
     else if ( flow->clouseau )
@@ -656,12 +648,27 @@ void InspectorManager::execute (Packet* p)
     if ( !p->dsize )
         DisableDetect(p);
 
-    // FIXIT-M need more than one service inspector?
-    else if ( flow && flow->gadget )
-    {
-        if ( ((unsigned)p->type() & flow->gadget->get_api()->proto_bits) )
-            flow->gadget->eval(p);
-    }
+    // FIXIT-M need list of gadgets for ambiguous wizardry
+    else if ( flow->gadget && PacketHasPAFPayload(p) )
+        flow->gadget->eval(p);
+}
+
+void InspectorManager::execute (Packet* p)
+{
+    FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
+    assert(fp);
+
+    // FIXIT-L blocked flows should not be normalized
+    if ( !PacketWasCooked(p) )
+        ::execute(p, fp->packet.vec, fp->packet.num);
+
+    if ( !PacketHasPAFPayload(p) )
+        ::execute(p, fp->session.vec, fp->session.num);
+
+    Flow* flow = p->flow;
+
+    if ( flow && flow->full_inspection() )
+        full_inspection(fp, p);
 
     ::execute(p, fp->probe.vec, fp->probe.num);
 }

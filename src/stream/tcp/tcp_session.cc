@@ -2743,7 +2743,7 @@ static void TraceState (
     unsigned fpt = a->flush_policy ? 192 : 0;
 
     fprintf(stdout,
-        "         FP=%s:%-4u  SC=%-4u FL=%-4u SL=%-5u BS=%-4u",
+        "         FP=%s:%-4u SC=%-4u FL=%-4u SL=%-5u BS=%-4u",
         flushxt[a->flush_policy+paf], fpt,
         a->seg_count, a->flush_count, a->seg_bytes_logical,
         a->seglist_base_seq - b->isn
@@ -4218,6 +4218,17 @@ static inline int ValidMacAddress(
     {
         if (listener->mac_addr[j] != eh->ether_dst[j])
             break;
+    }
+
+    // FIXIT-L make this swap check configurable
+    if ( i < 6 && j < 6 )
+    {
+        if (
+            !memcmp(talker->mac_addr, eh->ether_dst, 6) &&   
+            !memcmp(listener->mac_addr, eh->ether_src, 6) 
+        )
+            // this is prolly a tap
+            return 0;
     }
 
     if ( i < 6 )

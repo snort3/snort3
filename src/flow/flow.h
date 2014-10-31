@@ -173,6 +173,9 @@ public:
     bool was_blocked() const
     { return (s5_state.session_flags & SSNFLAG_BLOCK) != 0; };
 
+    bool full_inspection() const
+    { return flow_state <= INSPECT; };
+
     void set_state(FlowState fs)
     { flow_state = fs; };
 

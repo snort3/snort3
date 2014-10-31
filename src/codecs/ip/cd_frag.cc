@@ -106,7 +106,6 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
 
 
     codec.lyr_len = sizeof(ip::IP6Frag);
-    codec.next_prot_id = ip6frag_hdr->ip6f_nxt;
     codec.ip6_csum_proto = ip6frag_hdr->ip6f_nxt;
     codec.proto_bits |= PROTO_BIT__IP6_EXT;
     codec.ip6_extension_count++;
@@ -114,15 +113,18 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
     // must be called AFTER setting next_prot_id
     ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_FRAGMENT);
 
-    if ( (snort.decode_flags & DECODE_FRAG) && ((frag_offset > 0) ||
-         (ip6frag_hdr->ip6f_nxt != IPPROTO_UDP)) )
+    if ( snort.decode_flags & DECODE_FRAG )
     {
         /* For non-zero offset frags, we stop decoding after the
            Frag header. According to RFC 2460, the "Next Header"
            value may differ from that of the offset zero frag,
            but only the Next Header of the original frag is used. */
         // check DecodeIP(); we handle frags the same way here
-        return false;
+        codec.next_prot_id = FINISHED_DECODE;
+    }
+    else
+    {
+        codec.next_prot_id = ip6frag_hdr->ip6f_nxt;
     }
 
     return true;

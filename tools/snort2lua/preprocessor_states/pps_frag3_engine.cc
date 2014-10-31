@@ -77,32 +77,44 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
 
     while(data_stream >> keyword)
     {
-        bool tmpval = true;
-
         if(keyword.back() == ',')
             keyword.pop_back();
         
         if(keyword.empty())
             continue;
-        
-        if(!keyword.compare("min_ttl"))
-            tmpval = parse_int_option("min_ttl", data_stream);
 
-        else if(!keyword.compare("detect_anomalies"))
+        if(!keyword.compare("detect_anomalies"))
             table_api.add_deleted_comment("detect_anomalies");
 
         else if(!keyword.compare("bind_to"))
             parse_ip_list("bind_to", data_stream);
 
+        else if(!keyword.compare("min_ttl"))
+        {
+            if (!parse_int_option("min_ttl", data_stream))
+            {
+                data_api.failed_conversion(data_stream, "min_ttl <integer>");
+                retval = false;
+            }
+        }
         else if(!keyword.compare("overlap_limit"))
         {
-            tmpval = parse_int_option("max_overlaps", data_stream);
+            if (!parse_int_option("max_overlaps", data_stream))
+            {
+                data_api.failed_conversion(data_stream, "max_overlaps <integer>");
+                retval = false;
+            }
+
             table_api.add_diff_option_comment("overlap_limit", "max_overlaps");
         }
 
         else if(!keyword.compare("min_fragment_length"))
         {
-            tmpval = parse_int_option("min_frag_length", data_stream);
+            if (!parse_int_option("min_frag_length", data_stream))
+            {
+                data_api.failed_conversion(data_stream, "min_frag_length <integer>");
+                retval = false;
+            }
             table_api.add_diff_option_comment("min_fragment_length", "min_frag_length");
         }
 
@@ -116,12 +128,12 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
                 int seconds = std::stoi(val);
                 if (seconds == 0)
                 {
-                    tmpval = table_api.add_option("session_timeout", 256);
+                    table_api.add_option("session_timeout", 256);
                     table_api.add_diff_option_comment("preprocessor frag3_engine: timeout 0", "session_timeout 256");
                 }
                 else
                 {
-                    tmpval = table_api.add_option("session_timeout", seconds);
+                    table_api.add_option("session_timeout", seconds);
                 }
             }
         }
@@ -132,43 +144,47 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
             std::string policy;
 
             if (!(data_stream >> policy))
-                tmpval = false;
+            {
+                data_api.failed_conversion(data_stream, "policy <missing_policy>");
+                retval = false;
+            }
 
             else if (!policy.compare("first"))
-                tmpval = table_api.add_option("policy", "first");
+                table_api.add_option("policy", "first");
 
             else if (!policy.compare("bsd"))
-                tmpval = table_api.add_option("policy", "bsd");
+                table_api.add_option("policy", "bsd");
 
             else if (!policy.compare("last"))
-                tmpval = table_api.add_option("policy", "last");
+                table_api.add_option("policy", "last");
 
             else if (!policy.compare("windows"))
-                tmpval = table_api.add_option("policy", "windows");
+                table_api.add_option("policy", "windows");
 
             else if (!policy.compare("linux"))
-                tmpval = table_api.add_option("policy", "linux");
+                table_api.add_option("policy", "linux");
 
             else if (!policy.compare("solaris"))
-                tmpval = table_api.add_option("policy", "solaris");
+                table_api.add_option("policy", "solaris");
 
             else if (!policy.compare("bsd-right"))
             {
                 table_api.add_diff_option_comment("policy bsd-right", "policy = bsd_right");
-                tmpval = table_api.add_option("policy", "bsd_right");
+                table_api.add_option("policy", "bsd_right");
             }
 
             else
             {
-                tmpval = false;
+                data_api.failed_conversion(data_stream, "policy '" + keyword + "'");
+                retval = false;
             }
         }
 
         else
-            tmpval = false;
-
-        if (retval)
-            retval = tmpval;
+        {
+            data_api.failed_conversion(data_stream, keyword);
+            retval = false;
+        }
     }
 
     return retval;    

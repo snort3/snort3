@@ -436,6 +436,9 @@ int Binder::exec(int, void* pv)
 
 void Binder::set_binding(SnortConfig* sc, Binding* pb)
 {
+    if ( pb->use.action != BA_INSPECT )
+        return;
+
     const char* key;
     if ( pb->use.svc.empty() )
         key = pb->use.name.c_str();
