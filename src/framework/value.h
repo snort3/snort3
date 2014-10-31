@@ -70,6 +70,9 @@ public:
     void set(const Parameter* p)
     { param = p; };
 
+    void set_enum(unsigned u)
+    { type = VT_NUM; num = u;  };
+
     void set_aux(unsigned u)
     { num = u; };
 
