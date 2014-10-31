@@ -6,6 +6,7 @@
 -- tweaks from Josh
 -- tweaked inspector execution
 -- fixed parsing of reference with \;
+-- fixed ips classtype segfault on ctor after parse error
 
 126
 -- pulled latest from tom
