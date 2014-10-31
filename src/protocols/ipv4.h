@@ -98,11 +98,11 @@ struct IP4Hdr
     inline uint16_t rb() const
     { return ntohs(ip_off) & 0x8000; }
 
-    inline uint16_t mf() const
-    { return ntohs(ip_off) & 0x2000; }
-
     inline uint16_t df() const
     { return ntohs(ip_off) & 0x4000; }
+
+    inline uint16_t mf() const
+    { return ntohs(ip_off) & 0x2000; }
 
     inline uint16_t off() const
     { return (ntohs(ip_off) & 0x1FFF) << 3; }

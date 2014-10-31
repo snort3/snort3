@@ -647,7 +647,6 @@ void LogIPHeader(TextLog*  log, Packet * p)
         }
         else
         {
-
             if(ip6_frag->rb())
                 TextLog_Puts(log, " RB");
 
@@ -667,23 +666,16 @@ void LogIPHeader(TextLog*  log, Packet * p)
                 ip4h->hlen(),
                 ip4h->len());
 
+        if(ip4h->rb())
+            TextLog_Puts(log, " RB");
+
+        if(ip4h->df())
+            TextLog_Puts(log, " DF");
+
+        if(ip4h->mf())
+            TextLog_Puts(log, " MF");
+
         frag_off = ip4h->off();
-
-        if (frag_off)
-        {
-          /* print the reserved bit if it's set */
-          if(ip4h->rb())
-              TextLog_Puts(log, " RB");
-
-          /* printf more frags/don't frag bits */
-          if(ip4h->df())
-              TextLog_Puts(log, " DF");
-
-          if(ip4h->mf())
-              TextLog_Puts(log, " MF");
-
-          frag_off = (frag_off & 0x1FFF);
-        }
     }
 
     TextLog_NewLine(log);
