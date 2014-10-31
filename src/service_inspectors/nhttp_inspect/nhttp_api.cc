@@ -21,13 +21,14 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "snort.h"
+#include "main/snort.h"
 #include "target_based/sftarget_protocol_reference.h"
+
 #include "nhttp_enum.h"
 #include "nhttp_inspect.h"
 #include "nhttp_api.h"
 
-const char* NHttpApi::nhttp_my_name = "new_http_inspect";
+const char* NHttpApi::nhttp_my_name = NHTTP_NAME;
 const char* NHttpApi::nhttp_help = "the new HTTP inspector!";
 
 Inspector* NHttpApi::nhttp_ctor(Module* mod)

@@ -27,7 +27,7 @@ namespace NHttpEnums {
 
 static const int MAXOCTETS = 63780;
 static const int DATABLOCKSIZE = 16384;
-static const uint32_t NHTTP_GID = 119;
+static const uint32_t NHTTP_GID = 219;
 
 // Field status codes for when no valid value is present in length or integer value. Positive values are actual length
 // or field value.

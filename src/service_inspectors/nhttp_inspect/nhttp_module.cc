@@ -20,7 +20,9 @@
 
 #include <string.h>
 #include <sys/types.h>
-#include "snort.h"
+
+#include "main/snort.h"
+
 #include "nhttp_module.h"
 
 const Parameter NHttpModule::nhttp_params[] =
