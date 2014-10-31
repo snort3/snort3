@@ -4220,6 +4220,17 @@ static inline int ValidMacAddress(
             break;
     }
 
+    // FIXIT-L make this swap check configurable
+    if ( i < 6 && j < 6 )
+    {
+        if (
+            !memcmp(talker->mac_addr, eh->ether_dst, 6) &&   
+            !memcmp(listener->mac_addr, eh->ether_src, 6) 
+        )
+            // this is prolly a tap
+            return 0;
+    }
+
     if ( i < 6 )
     {
         if (p->packet_flags & PKT_FROM_CLIENT)
