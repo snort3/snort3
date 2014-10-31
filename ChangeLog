@@ -7,6 +7,8 @@
 -- tweaked inspector execution
 -- fixed parsing of reference with \;
 -- fixed ips classtype segfault on ctor after parse error
+-- new_http_inspect now gid 219 and other Tom Tweaks
+-- new_http_inspect reactiveated (no longer REG_TEST only)
 
 126
 -- pulled latest from tom
