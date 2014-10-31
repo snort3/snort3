@@ -69,6 +69,7 @@ public:
 
     static void execute(Packet*);
     static void bumble(Packet*);
+    static void full_inspection(FrameworkPolicy*, Packet*);
     static void empty_trash();
 };
 
