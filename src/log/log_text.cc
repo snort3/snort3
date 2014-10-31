@@ -453,6 +453,10 @@ void LogIpOptions(TextLog*  log, const IP4Hdr* ip4h, const Packet* const p)
         c++;
     }
 
+    // can happen if hlen() > 20, but first option is invalid
+    if (c == 0)
+      return;
+
     TextLog_Print(log, "IP Options (%u) => ", c);
 
     for (auto op : options)
@@ -754,6 +758,11 @@ void LogTcpOptions(TextLog*  log, const Packet* const p)
         UNUSED(opt);
         c++;
     }
+
+    // can happen if hlen() > MIN_HEADER_LEN, but first option is invalid
+    if (c == 0)
+      return;
+
 
     TextLog_Print(log, "TCP Options (%u) =>", c);
 

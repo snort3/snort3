@@ -189,7 +189,7 @@ static bool valid_enum(Value& v, const char* r)
 
     unsigned idx = get_index(r, t);
 
-    v.set((double)idx);
+    v.set_enum(idx);
     return true;
 }
 
