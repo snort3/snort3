@@ -59,23 +59,23 @@ bool Threshold::convert(std::istringstream& data_stream)
     {
         std::string keyword;
         std::string val;
-        bool tmpval = true;
+        //bool tmpval = true;  FIXIT-H-J
         std::istringstream subopt_stream(value);
 
         if (!(subopt_stream >> keyword) || !(subopt_stream >> val))
             rule_api.bad_rule(data_stream, "threshold: " + keyword + " <missing_value>");
 
         else if (!(keyword.compare("count")))
-            tmpval = table_api.add_option("count", std::stoi(val));
+            /*tmpval =*/ table_api.add_option("count", std::stoi(val));
 
         else if (!(keyword.compare("seconds")))
-            tmpval = table_api.add_option("seconds", std::stoi(val));
+            /*tmpval =*/ table_api.add_option("seconds", std::stoi(val));
 
         else if (!(keyword.compare("type")))
-            tmpval = table_api.add_option("type", val);
+            /*tmpval =*/ table_api.add_option("type", val);
 
         else if (!(keyword.compare("track")))
-            tmpval = table_api.add_option("track", val);
+            /*tmpval =*/ table_api.add_option("track", val);
 
         else
             rule_api.bad_rule(data_stream, "threshold: " + keyword);

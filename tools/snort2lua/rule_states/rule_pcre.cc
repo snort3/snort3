@@ -45,7 +45,7 @@ public:
 bool Pcre::convert(std::istringstream& data_stream)
 {
     std::string keyword;
-    bool retval = true;
+    //bool retval = true;  FIXIT-H-J
     bool sticky_buffer_set = false;
 
     char delim = '/';
@@ -128,7 +128,7 @@ bool Pcre::convert(std::istringstream& data_stream)
                 dlt_opt.append(1, c);
                 dlt_opt += "'";
                 rule_api.bad_rule(data_stream, dlt_opt);
-                retval = false;
+                //retval = false;  FIXIT-H-J
                 break;
             }
         }
