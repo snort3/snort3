@@ -141,10 +141,10 @@ static const InspectApi tcp_api =
     },
     IT_STREAM,
     (unsigned)PktType::TCP,
-    nullptr, // buffers
-    nullptr, // service
-    nullptr, // init
-    nullptr, // term
+    nullptr,  // buffers
+    nullptr,  // service
+    nullptr,  // init
+    nullptr,  // term
     tcp_tinit,
     tcp_tterm,
     tcp_ctor,

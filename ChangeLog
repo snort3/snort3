@@ -10,6 +10,7 @@
 -- new_http_inspect now gid 219 and other Tom Tweaks
 -- new_http_inspect reactiveated (no longer REG_TEST only)
 -- ip defrag fixes from Josh
+-- added default bindings for stream only configs
 
 126
 -- pulled latest from tom

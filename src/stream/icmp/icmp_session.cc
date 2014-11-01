@@ -72,7 +72,8 @@ static void IcmpSessionCleanup(Flow *ssn)
 
     ssn->clear();
 
-    icmpStats.released++;
+    if ( ssn->s5_state.session_flags & SSNFLAG_SEEN_SENDER )
+        icmpStats.released++;
 }
 
 static int ProcessIcmpUnreach(Packet *p)
@@ -202,6 +203,7 @@ bool IcmpSession::setup(Packet*)
     ssn_time.tv_sec = 0;
     ssn_time.tv_usec = 0;
     icmpStats.created++;
+    flow->s5_state.session_flags |= SSNFLAG_SEEN_SENDER;
     return true;
 }
 
