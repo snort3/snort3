@@ -14,6 +14,8 @@
 -- added --warn-all
 -- refactored normalizer flags
 -- fixed port_scan logfile to default to off
+-- fixed flowbits init
+-- fixed byte extract var init
 
 126
 -- pulled latest from tom

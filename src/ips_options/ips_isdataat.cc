@@ -225,6 +225,7 @@ static void isdataat_parse(const char *data, IsDataAtData *idx)
             ParseError("isdataat offset greater than max IPV4 packet size");
             return;
         }
+        idx->offset_var = BYTE_EXTRACT_NO_VAR;
     }
     else
     {
