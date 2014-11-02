@@ -11,6 +11,9 @@
 -- new_http_inspect reactiveated (no longer REG_TEST only)
 -- ip defrag fixes from Josh
 -- added default bindings for stream only configs
+-- added --warn-all
+-- refactored normalizer flags
+-- fixed port_scan logfile to default to off
 
 126
 -- pulled latest from tom

@@ -71,9 +71,6 @@ unsigned get_instance_max()
     return instance_max;
 }
 
-
-
-
 bool set_cpu_affinity(SnortConfig* sc, const std::string& str, int cpu)
 {
     std::map<const std::string, int>& sa = *(sc->source_affinity);

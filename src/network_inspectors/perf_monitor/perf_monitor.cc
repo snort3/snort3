@@ -286,11 +286,7 @@ bool PerfMonitor::configure(SnortConfig*)
 
 void PerfMonitor::tinit()
 {
-    // FIXIT-H this isn't good with -z > 1
-    // need thread local per config instance or restructure
-    // (file names are ok but not hash table)
-    if ( !get_instance_id() )
-        InitPerfStats(&config);
+    InitPerfStats(&config);
 }
 
 void PerfMonitor::tterm()

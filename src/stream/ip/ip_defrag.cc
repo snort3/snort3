@@ -1301,6 +1301,8 @@ Defrag::Defrag(FragEngine& e) : engine(e), layers(DEFAULT_LAYERMAX) { }
 
 bool Defrag::configure(SnortConfig* sc)
 {
+    // FIXIT-L kinda squiffy ... set for each instance
+    // (but to same value) ... move to tinit() ?
     layers = sc->get_num_layers();
     return true;
 }

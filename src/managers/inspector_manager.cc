@@ -464,9 +464,13 @@ void InspectorManager::thread_init(SnortConfig* sc)
     Inspector::slot = get_instance_id();
 
     for ( auto* p : sc->framework_config->clist )
+    {
         if ( p->api.tinit )
             p->api.tinit();
+    }
 
+    // pin->tinit() only called for default policy
+    set_default_policy();
     InspectionPolicy* pi = get_inspection_policy();
 
     if ( pi && pi->framework_policy )
@@ -482,6 +486,8 @@ void InspectorManager::thread_init(SnortConfig* sc)
 
 void InspectorManager::thread_term(SnortConfig* sc)
 {
+    // pin->tterm() only called for default policy
+    set_default_policy();
     InspectionPolicy* pi = get_inspection_policy();
 
     if ( pi && pi->framework_policy )
@@ -495,8 +501,10 @@ void InspectorManager::thread_term(SnortConfig* sc)
     }
 
     for ( auto* p : sc->framework_config->clist )
+    {
         if ( p->api.tterm )
             p->api.tterm();
+    }
 }
 
 //-------------------------------------------------------------------------

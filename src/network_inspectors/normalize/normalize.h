@@ -49,11 +49,7 @@ typedef enum {
     NORM_ALL             = 0x0003FFFF  // all normalizations on
 } NormFlags;
 
-static inline int Normalize_IsEnabled(NormFlags nf)
-{
-    InspectionPolicy* pi = get_inspection_policy();
-    return ( (pi->normal_mask & nf) != 0 );
-}
+bool Normalize_IsEnabled(NormFlags);
 
 #endif
 

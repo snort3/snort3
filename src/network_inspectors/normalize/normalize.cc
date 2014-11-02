@@ -23,7 +23,7 @@
 #include "norm.h"
 #include "norm_module.h"
 #include "packet_io/active.h"
-#include "mstring.h"
+#include "packet_io/sfdaq.h"
 #include "parser.h"
 #include "profiler.h"
 #include "snort_types.h"
@@ -32,6 +32,7 @@
 #include "flow/flow.h"
 
 THREAD_LOCAL ProfileStats norm_perf_stats;
+static THREAD_LOCAL uint32_t t_flags = 0;
 
 //-------------------------------------------------------------------------
 // printing stuff
@@ -160,10 +161,9 @@ class Normalizer : public Inspector
 public:
     Normalizer(const NormalizerConfig&);
 
-    void tinit() override;
+    bool configure(SnortConfig*) override;
     void show(SnortConfig*) override;
     void eval(Packet*) override;
-    int exec(int, void*) override;
 
 private:
     NormalizerConfig config;
@@ -174,22 +174,21 @@ Normalizer::Normalizer(const NormalizerConfig& nc)
     config = nc;
 }
 
-void Normalizer::tinit()
+// FIXIT-L this works with one normalizer per policy
+// but would be better if binder could select
+// in which case normal_mask must be moved to flow
+bool Normalizer::configure(SnortConfig*)
 {
-    // FIXIT-H this isn't good with -z > 1
-    // this ensures we init just once but there is a race cond
-    // with other threads that won't normalize until this is done
-    if ( get_instance_id() ) 
-        return;
-
+    // FIXIT-L norm needs a nap policy mode
     if ( get_ips_policy()->policy_mode != POLICY_MODE__INLINE )
     {
-        ParseWarning("normalizations disabled because not inline.\n");
+        ParseWarning("normalizations disabled because not inline.");
         config.normalizer_flags = 0;
-        return;
+        return true;
     }
 
     NetworkPolicy* nap = get_network_policy();
+    nap->normal_mask = config.normalizer_flags;
 
     if ( nap->new_ttl && nap->new_ttl < nap->min_ttl )
     {
@@ -197,7 +196,18 @@ void Normalizer::tinit()
     }
 
     Norm_SetConfig(&config);
-    return;
+    return true;
+}
+
+// FIXIT-L norm flags check should be moved to flow
+// set flow flags once at start of flow
+bool Normalize_IsEnabled(NormFlags nf)
+{
+    if ( !(t_flags & nf) )
+        return false;
+
+    NetworkPolicy* nap = get_network_policy();
+    return ( (nap->normal_mask & nf) != 0 );
 }
 
 void Normalizer::show(SnortConfig* sc)
@@ -222,15 +232,6 @@ void Normalizer::eval(Packet *p)
     return;
 }
 
-int Normalizer::exec(int, void* pv)
-{
-    Flow* flow = (Flow*)pv;
-    assert(flow);
-    InspectionPolicy* pi = get_inspection_policy();
-    pi->normal_mask = config.normalizer_flags;
-    return 0;
-}
-
 //-------------------------------------------------------------------------
 // api stuff
 //-------------------------------------------------------------------------
@@ -252,6 +253,15 @@ static void no_dtor(Inspector* p)
     delete p;
 }
 
+static void no_tinit()
+{
+    if ( DAQ_CanReplace() )
+        t_flags = NORM_ALL;
+
+    if ( !DAQ_CanInject() )
+        t_flags &= ~NORM_IP4_TRIM;
+}
+
 static const InspectApi no_api =
 {
     {
@@ -269,7 +279,7 @@ static const InspectApi no_api =
     nullptr, // service
     nullptr, // pinit
     nullptr, // pterm
-    nullptr, // tinit
+    no_tinit,
     nullptr, // tterm
     no_ctor,
     no_dtor,
