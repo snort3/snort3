@@ -4362,9 +4362,6 @@ static void NewTcpSession(
         assert(!tmp->tcp_init);
         tmp->tcp_init = true;
 
-        for ( unsigned i = 0; i < lwssn->flowdata->boFlowbits.uiBitBufferSize; i++ )
-            assert(!lwssn->flowdata->flowb[i]);
-
         tcpStats.trackers_created++;
     }
 }
