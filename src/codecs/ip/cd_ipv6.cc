@@ -647,17 +647,13 @@ bool Ipv6Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 #endif
     )
     {
+        // FIXIT-M J  --  this worked in Snort.  In Snort++,
+        //          will this be accurate?
         *len = ntohs(h->ip6_payload_len) + sizeof(*h);
     }
     else
     {
-        if ( i + 1 == p->num_layers )
-            *len += lyr->length + p->dsize;
-
-        // w/o all extension headers, can't use just the
-        // fixed ip6 header length so we compute header delta
-        else
-            *len += lyr[1].start - lyr->start;
+        *len += lyr->length;
 
         // len includes header, remove for payload
         h->ip6_payload_len = htons((uint16_t)(*len - sizeof(*h)));

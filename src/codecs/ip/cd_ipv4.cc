@@ -714,11 +714,6 @@ bool Ipv4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
     uint16_t hlen = h->hlen();
 
     *len += hlen;
-
-    if ( i + 1 == p->num_layers )
-        *len += p->dsize;
-
-
     h->set_ip_len((uint16_t)*len);
 
 

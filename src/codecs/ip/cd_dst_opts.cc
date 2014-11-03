@@ -47,8 +47,6 @@ public:
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    bool update(Packet*, Layer*, uint32_t* len) override;
-
 };
 
 struct IP6Dest
@@ -107,15 +105,6 @@ bool Ipv6DSTOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 void Ipv6DSTOptsCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(IPPROTO_ID_DSTOPTS);
-}
-
-bool Ipv6DSTOptsCodec::update(Packet* p, Layer* lyr, uint32_t* len)
-{
-    if ( lyr == (p->layers + p->num_layers - 1) )
-        *len += p->dsize;
-
-    *len += lyr->length;
-    return true;
 }
 
 //-------------------------------------------------------------------------

@@ -47,7 +47,6 @@ public:
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    bool update(Packet*, Layer*, uint32_t* len) override;
 };
 
 
@@ -110,14 +109,6 @@ void Ipv6HopOptsCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IPPROTO_ID_HOPOPTS);
 }
 
-bool Ipv6HopOptsCodec::update(Packet* p, Layer* lyr, uint32_t* len)
-{
-    if ( lyr == (p->layers + p->num_layers - 1) )
-        *len += p->dsize;
-
-    *len += lyr->length;
-    return true;
-}
 
 //-------------------------------------------------------------------------
 // api

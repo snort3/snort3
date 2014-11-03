@@ -599,10 +599,7 @@ struct IcmpHdr {
 bool Icmp4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
     IcmpHdr* h = (IcmpHdr*)(lyr->start);
-
-    // This function will not be called if encoding unreachables
-    *len += sizeof(*h) + p->dsize;
-
+    *len += sizeof(*h);
 
     if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) ) {
         h->cksum = 0;
