@@ -228,6 +228,8 @@ static void LogReassembly(const Packet* p)
 }
 #endif
 
+#ifndef REG_TEST
+
 static const char* get_pkt_type(Packet* p)
 {
     switch ( p->ptrs.get_pkt_type() )
@@ -240,6 +242,8 @@ static const char* get_pkt_type(Packet* p)
     }
     return "error";
 }
+
+#endif
 
 void FastLogger::alert(Packet *p, const char *msg, Event *event)
 {
@@ -296,7 +300,11 @@ void FastLogger::alert(Packet *p, const char *msg, Event *event)
     if (p->has_ip())
     {
         LogPriorityData(fast_log, event, 0);
+#ifndef REG_TEST
         TextLog_Print(fast_log, "{%s} ", get_pkt_type(p));
+#else
+        TextLog_Print(fast_log, "{%s} ", protocol_names[p->get_ip_proto_next()]);
+#endif
         LogIpAddrs(fast_log, p);
     }
 

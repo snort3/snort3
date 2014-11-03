@@ -19,6 +19,8 @@
 -- changed doc to use "legacy" instead of "classic"
 -- restricted reload to basic modules and inspectors only
 -- commented out snort.process() and snort.reload_hosts() for alpha 1
+-- codec fix from Josh
+-- prevent repeated small chunk length alerts from HI
 
 126
 -- pulled latest from tom

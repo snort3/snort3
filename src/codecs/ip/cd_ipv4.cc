@@ -710,15 +710,9 @@ bool Ipv4Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
 bool Ipv4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
     IP4Hdr* h = (IP4Hdr*)(lyr->start);
-    int i = lyr - p->layers;
     uint16_t hlen = h->hlen();
 
     *len += hlen;
-
-    if ( i + 1 == p->num_layers )
-        *len += p->dsize;
-
-
     h->set_ip_len((uint16_t)*len);
 
 

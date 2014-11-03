@@ -713,7 +713,7 @@ bool TcpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
     tcp::TCPHdr* h = reinterpret_cast<tcp::TCPHdr*>(const_cast<uint8_t*>(lyr->start));
 
-    *len += h->hdr_len() + p->dsize;
+    *len += h->hdr_len();
 
     if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) )
     {
