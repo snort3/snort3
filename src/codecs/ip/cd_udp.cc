@@ -424,7 +424,7 @@ bool UdpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
     udp::UDPHdr* h = (udp::UDPHdr*)(lyr->start);
 
-    *len += sizeof(*h) + p->dsize;
+    *len += sizeof(*h);
     h->uh_len = htons((uint16_t)*len);
 
 
