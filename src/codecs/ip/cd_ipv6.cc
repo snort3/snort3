@@ -635,7 +635,6 @@ bool Ipv6Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
 bool Ipv6Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
     ip::IP6Hdr* h = (ip::IP6Hdr*)(lyr->start);
-    int i = lyr - p->layers;
 
     // if we didn't trim payload or format this packet,
     // we may not know the actual lengths because not all
