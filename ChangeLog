@@ -16,6 +16,7 @@
 -- fixed port_scan logfile to default to off
 -- fixed flowbits init
 -- fixed byte extract var init
+-- changed doc to use "legacy" instead of "classic"
 
 126
 -- pulled latest from tom

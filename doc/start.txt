@@ -83,10 +83,10 @@ Optional:
 * Or you may edit snort.lua to set the path to classification.lua and
   reference.lua.
 
-* 'Classic' rules and includes must be put in ips.include = 'filename'
+* Legacy rules and includes must be put in ips.include = 'filename'
   and/or ips.rules = 'string' or [[ multi line string ]].  
 
-* You can also use Snort2Lua to convert your Snort classic conf file into a
+* You can also use Snort2Lua to convert your legacy Snort conf file into a
   Snort++ lua file.
 
 * You can override or add to your lua config with the --lua command line
