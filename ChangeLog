@@ -16,6 +16,9 @@
 -- fixed port_scan logfile to default to off
 -- fixed flowbits init
 -- fixed byte extract var init
+-- changed doc to use "legacy" instead of "classic"
+-- restricted reload to basic modules and inspectors only
+-- commented out snort.process() and snort.reload_hosts() for alpha 1
 
 126
 -- pulled latest from tom

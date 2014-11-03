@@ -376,7 +376,7 @@ tTargetBasedConfig* SFAT_Swap()
     sfBase.iAttributeReloads++;
     proc_stats.attribute_table_reloads++;
 
-    LogMessage("Attribute Table Loaded with " STDu64 " hosts\n", sfBase.iAttributeHosts);
+    LogMessage(STDu64 " hosts loaded\n", sfBase.iAttributeHosts);
     return curr_cfg;
 }
 

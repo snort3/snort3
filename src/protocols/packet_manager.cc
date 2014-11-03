@@ -214,8 +214,8 @@ void PacketManager::decode(
 
         if (codec_data.proto_bits & (PROTO_BIT__IP | PROTO_BIT__IP6_EXT))
         {
-            fpEvalIpProtoOnlyRules(p, codec_data.next_prot_id);
             p->ip_proto_next = codec_data.next_prot_id;
+            fpEvalIpProtoOnlyRules(p, codec_data.next_prot_id);
         }
 
         // If we have reached the MAX_LAYERS, we keep decoding
@@ -686,6 +686,7 @@ int PacketManager::encode_format_with_daq_info (
 
     c->max_dsize = IP_MAXPACKET - len;
     c->proto_bits = p->proto_bits;
+    c->ip_proto_next = p->ip_proto_next;
     c->packet_flags |= PKT_PSEUDO;
     c->pseudo_type = type;
     c->user_policy_id = p->user_policy_id;  // cooked packet gets same policy as raw

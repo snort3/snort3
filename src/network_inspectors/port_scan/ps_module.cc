@@ -130,8 +130,8 @@ const RuleMap* PortScanModule::get_rules() const
 // 3.4.5.6/16 7 works but 3.4.5.6 7 does not.
 // a possible new format is:
 // CIDR[#ports][ CIDR[#ports]]*
-// also note that Snort classic address lists appear to be allowed which
-// will cause problems with Lua syntax is [[ and ]] are present.  must be
+// also note that classic Snort address lists appear to be allowed which
+// will cause problems with Lua syntax if [[ and ]] are present.  must be
 // [ [ and ] ].
 // consult RFC 5952 for ideas.
 //-------------------------------------------------------------------------

@@ -123,6 +123,7 @@ THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 static SnortConfig* snort_cmd_line_conf = nullptr;
 
 static bool snort_initializing = true;
+static bool snort_reloading = false;
 static int snort_exiting = 0;
 
 static pid_t snort_main_thread_pid = 0;
@@ -139,6 +140,9 @@ static void SnortCleanup();
 
 bool snort_is_starting()
 { return snort_initializing; }
+
+bool snort_is_reloading()
+{ return snort_reloading; }
 
 #if 0
 #ifdef HAVE_DAQ_ACQUIRE_WITH_META
@@ -573,6 +577,7 @@ void snort_cleanup()
 // instantiate things that can be reloaded
 SnortConfig* get_reload_config()
 {
+    snort_reloading = true;
     ModuleManager::reset_errors();
 
     SnortConfig *sc = ParseSnortConf(snort_cmd_line_conf);
@@ -582,6 +587,7 @@ SnortConfig* get_reload_config()
     if ( ModuleManager::get_errors() || VerifyReload(sc) == -1 )
     {
         SnortConfFree(sc);
+        snort_reloading = false;
         return NULL;
     }
 
@@ -595,6 +601,7 @@ SnortConfig* get_reload_config()
     if ( !InspectorManager::configure(sc) )
     {
         SnortConfFree(sc);
+        snort_reloading = false;
         return NULL;
     }
 
@@ -652,6 +659,7 @@ SnortConfig* get_reload_config()
     //PPM_PRINT_CFG(&sc->ppm_cfg);
 #endif
 
+    snort_reloading = false;
     return sc;
 }
 
