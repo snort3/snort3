@@ -150,7 +150,7 @@ struct SO_PUBLIC Packet
 
     uint16_t alt_dsize;         /* the dsize of a packet before munging (used for log)*/
     uint8_t num_layers;         /* index into layers for next encap */
-    uint8_t ip_proto_next; /* the protocol ID after IP and all IP6 extension */
+    uint8_t ip_proto_next;      /* the protocol ID after IP and all IP6 extension */
 
     // nothing after this point is zeroed ...
 

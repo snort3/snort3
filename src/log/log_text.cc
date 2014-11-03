@@ -634,7 +634,7 @@ void LogIPHeader(TextLog*  log, Packet * p)
             (is_ip6 ? layer::get_inner_ip6_frag() : nullptr);
 
         TextLog_Print(log, "%s TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
-                protocol_names[ip6h->next()],
+                protocol_names[p->get_ip_proto_next()],
                 ip6h->hop_lim(),
                 ip6h->tos(),
                 (ip6_frag ? ip6_frag->id() : 0),
