@@ -57,6 +57,9 @@ static const Parameter ps_params[] =
     { "include_midstream", Parameter::PT_BOOL, nullptr, "false",
       "list of CIDRs with optional ports" },
 
+    { "logfile", Parameter::PT_BOOL, nullptr, "false",
+      "write scan events to file" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -175,6 +178,9 @@ bool PortScanModule::set(const char*, Value& v, SnortConfig*)
         if ( !ips || ipset_parse(ips, v.get_string()) )
             return false;
     }
+    else if ( v.is("logfile") )
+        config->logfile = v.get_bool();
+
     else
         return false;
 

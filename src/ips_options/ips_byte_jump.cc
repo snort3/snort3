@@ -380,7 +380,9 @@ bool ByteJumpModule::begin(const char*, int, SnortConfig*)
 
 bool ByteJumpModule::end(const char*, int, SnortConfig*)
 {
-    if ( var.size() )
+    if ( var.empty() )
+        data.offset_var = BYTE_EXTRACT_NO_VAR;
+    else
     {
         data.offset_var = GetVarByName(var.c_str());
 

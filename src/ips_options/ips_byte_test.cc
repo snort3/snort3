@@ -512,7 +512,9 @@ bool ByteTestModule::begin(const char*, int, SnortConfig*)
 
 bool ByteTestModule::end(const char*, int, SnortConfig*)
 {
-    if ( off_var.size() )
+    if ( off_var.empty() )
+        data.offset_var = BYTE_EXTRACT_NO_VAR;
+    else
     {
         data.offset_var = GetVarByName(off_var.c_str());
 
@@ -522,7 +524,9 @@ bool ByteTestModule::end(const char*, int, SnortConfig*)
             return false;
         }
     }
-    if ( cmp_var.size() )
+    if ( cmp_var.empty() )
+        data.cmp_value_var = BYTE_EXTRACT_NO_VAR;
+    else
     {
         data.cmp_value_var = GetVarByName(cmp_var.c_str());
 

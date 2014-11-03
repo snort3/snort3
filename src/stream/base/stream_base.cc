@@ -158,22 +158,22 @@ void StreamBase::tinit()
 
     if ( config->tcp_cfg.max_sessions )
     {
-        if ( (f = InspectorManager::get_session("stream_tcp")) )
+        if ( (f = InspectorManager::get_session((uint16_t)PktType::TCP)) )
             flow_con->init_tcp(config->tcp_cfg, f);
     }
     if ( config->udp_cfg.max_sessions )
     {
-        if ( (f = InspectorManager::get_session("stream_udp")) )
+        if ( (f = InspectorManager::get_session((uint16_t)PktType::UDP)) )
             flow_con->init_udp(config->udp_cfg, f);
     }
     if ( config->ip_cfg.max_sessions )
     {
-        if ( (f = InspectorManager::get_session("stream_ip")) )
+        if ( (f = InspectorManager::get_session((uint16_t)PktType::IP)) )
             flow_con->init_ip(config->ip_cfg, f);
     }
     if ( config->icmp_cfg.max_sessions )
     {
-        if ( (f = InspectorManager::get_session("stream_icmp")) )
+        if ( (f = InspectorManager::get_session((uint16_t)PktType::ICMP)) )
             flow_con->init_icmp(config->icmp_cfg, f);
     }
     if ( config->tcp_cfg.max_sessions || config->udp_cfg.max_sessions )

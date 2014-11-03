@@ -47,7 +47,7 @@ struct PortscanConfig
     int proto_cnt;
     int include_midstream;
     int print_tracker;
-    char *logfile;
+    bool logfile;
 
     IPSET *ignore_scanners;
     IPSET *ignore_scanned;

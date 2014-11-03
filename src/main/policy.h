@@ -72,6 +72,7 @@ public:
 
     uint32_t checksum_eval;
     uint32_t checksum_drop;
+    uint32_t normal_mask;
 
     bool decoder_drop;
 };
@@ -88,7 +89,6 @@ public:
 
 public:
     struct FrameworkPolicy* framework_policy;
-    uint32_t normal_mask;
 };
 
 //-------------------------------------------------------------------------

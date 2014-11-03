@@ -549,6 +549,7 @@ static void parse_offset(PatternMatchData* pmd, const char *data)
     if (isdigit(data[0]) || data[0] == '-')
     {
         pmd->offset = parse_int(data, "offset");
+        pmd->offset_var = BYTE_EXTRACT_NO_VAR;
     }
     else
     {
@@ -589,6 +590,7 @@ static void parse_depth(PatternMatchData* pmd, const char *data)
                     pmd->depth, pmd->pattern_size);
             return;
         }
+        pmd->depth_var = BYTE_EXTRACT_NO_VAR;
     }
     else
     {
@@ -621,6 +623,7 @@ static void parse_distance(PatternMatchData* pmd, const char *data)
     if (isdigit(data[0]) || data[0] == '-')
     {
         pmd->offset = parse_int(data, "distance");
+        pmd->offset_var = BYTE_EXTRACT_NO_VAR;
     }
     else
     {
@@ -658,6 +661,7 @@ static void parse_within(PatternMatchData* pmd, const char *data)
             ParseError("within (%d) is smaller than size of pattern", pmd->depth);
             return;
         }
+        pmd->depth_var = BYTE_EXTRACT_NO_VAR;
     }
     else
     {

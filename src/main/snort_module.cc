@@ -391,8 +391,11 @@ static const Parameter s_params[] =
     { "--version", Parameter::PT_IMPLIED, nullptr, nullptr,
       "show version number (same as -V)" },
 
+    { "--warn-all", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "enable all warnings" },
+
     { "--warn-flowbits", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "warn about flowbits that checked but not set and vice-versa" },
+      "warn about flowbits that are checked but not set and vice-versa" },
 
     { "--warn-unknown", Parameter::PT_IMPLIED, nullptr, nullptr,
       "warn about unknown symbols in your config" },
@@ -734,6 +737,11 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--version") )
         help_version(sc, v.get_string());
 
+    else if ( v.is("--warn-all") )
+    {
+        sc->logging_flags |= LOGGING_FLAG__WARN_FLOWBITS;
+        sc->logging_flags |= LOGGING_FLAG__WARN_UNKNOWN;
+    }
     else if ( v.is("--warn-flowbits") )
         sc->logging_flags |= LOGGING_FLAG__WARN_FLOWBITS;
 
