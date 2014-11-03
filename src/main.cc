@@ -327,7 +327,7 @@ int main_reload_hosts(lua_State*)
         request.respond("== reload pending; retry\n");
         return 0;
     }
-    request.respond(".. reloading attribute table\n");
+    request.respond(".. reloading hosts table\n");
     tTargetBasedConfig* old = SFAT_GetConfig();
     tTargetBasedConfig* tc = SFAT_Swap();
 

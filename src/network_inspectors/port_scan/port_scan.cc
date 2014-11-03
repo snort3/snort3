@@ -770,8 +770,8 @@ static void PrintPortscanConf(PortscanConfig* config)
         LogMessage("    Number of Nodes:   %ld\n",
             config->common->memcap / (sizeof(PS_PROTO)*proto_cnt-1));
 
-        if (config->logfile != NULL)
-            LogMessage("    Logfile:           %s\n", config->logfile);
+        if ( config->logfile )
+            LogMessage("    Logfile:           %s\n", "yes");
 
         if(config->ignore_scanners)
         {
@@ -864,9 +864,6 @@ PortScan::~PortScan()
 
 bool PortScan::configure(SnortConfig* sc)
 {
-    // FIXIT-L use fixed base file name
-    config->logfile = SnortStrdup("portscan.log");
-
     global = (PsData*)DataManager::acquire(PSG_NAME, sc);
     config->common = global->data;
     return true;
@@ -875,22 +872,29 @@ bool PortScan::configure(SnortConfig* sc)
 void PortScan::tinit()
 {
     g_tmp_pkt = PacketManager::encode_new();
+    ps_init_hash(config->common->memcap);
+
+    if ( !config->logfile )
+        return;
 
     std::string name;
-    get_instance_file(name, config->logfile);
+    get_instance_file(name, "portscan.log");
     g_logfile = fopen(name.c_str(), "a+");
 
-    if (g_logfile == NULL)
+    if ( !g_logfile )
     {
         FatalError("Portscan log file '%s' could not be opened: %s.\n",
-            config->logfile, get_error(errno));
+            name.c_str(), get_error(errno));
     }
-    ps_init_hash(config->common->memcap);
 }
 
 void PortScan::tterm()
 {
-    fclose(g_logfile);
+    if ( g_logfile )
+    {
+        fclose(g_logfile);
+        g_logfile = nullptr;
+    }
     ps_cleanup();
     PacketManager::encode_delete(g_tmp_pkt);
     g_tmp_pkt = NULL;

@@ -66,8 +66,6 @@ void Icmp4IpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 
 bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
-    uint32_t ip_len;       /* length from the start of the ip hdr to the
-                             * pkt end */
 
     /* do a little validation */
     if(raw.len < ip::IP4_HEADER_LEN)
@@ -98,18 +96,14 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snor
     }
 
     /* set the remaining packet length */
-    ip_len = raw.len - hlen;
-
-    uint16_t orig_frag_offset = ip4h->off();
-    orig_frag_offset &= 0x1FFF;
-
-    if (orig_frag_offset == 0)
+    if (ip4h->off() == 0)
     {
+        const uint32_t ip_len = raw.len - hlen;
+
         /* Original IP payload should be 64 bits */
         if (ip_len < 8)
         {
             codec_events::decoder_event(codec, DECODE_ICMP_ORIG_PAYLOAD_LT_64);
-
             return false;
         }
         /* ICMP error packets could contain as much of original payload
@@ -193,7 +187,7 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 
     const uint16_t hlen = ip4h->hlen();
     const uint16_t len = ip4h->len();
-    const uint16_t frag_off = ip4h->off();
+    const uint16_t frag_off = ip4h->off_w_flags();
 
     TextLog_Print(text_log, "Next:%s(%02X) TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
             PacketManager::get_proto_name(ip4h->proto()),
@@ -250,7 +244,7 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
                     "Ack: 0x%lX  Win: 0x%X  TcpLen: %d",ntohs(tcph->th_sport),
                     ntohs(tcph->th_dport), (u_long) ntohl(tcph->th_seq),
                     (u_long) ntohl(tcph->th_ack),
-                    ntohs(tcph->th_win), tcph->off() << 2);
+                    ntohs(tcph->th_win), tcph->off());
 
             break;
         }

@@ -647,15 +647,13 @@ void LogIPHeader(TextLog*  log, Packet * p)
         }
         else
         {
-            frag_off = ip6_frag->off();
-
-            if(frag_off & ip::IP6F_RES_MASK)
+            if(ip6_frag->rb())
                 TextLog_Puts(log, " RB");
 
-            if(frag_off & ip::IP6F_MF_MASK)
+            if(ip6_frag->mf())
                 TextLog_Puts(log, " MF");
 
-            frag_off = (frag_off >> 3);
+            frag_off = ip6_frag->off();
         }
     }
     else
@@ -668,23 +666,16 @@ void LogIPHeader(TextLog*  log, Packet * p)
                 ip4h->hlen(),
                 ip4h->len());
 
+        if(ip4h->rb())
+            TextLog_Puts(log, " RB");
+
+        if(ip4h->df())
+            TextLog_Puts(log, " DF");
+
+        if(ip4h->mf())
+            TextLog_Puts(log, " MF");
+
         frag_off = ip4h->off();
-
-        if (frag_off)
-        {
-          /* print the reserved bit if it's set */
-          if(frag_off & 0x8000)
-              TextLog_Puts(log, " RB");
-
-          /* printf more frags/don't frag bits */
-          if(frag_off & 0x4000)
-              TextLog_Puts(log, " DF");
-
-          if(frag_off & 0x2000)
-              TextLog_Puts(log, " MF");
-
-          frag_off = (frag_off & 0x1FFF);
-        }
     }
 
     TextLog_NewLine(log);
@@ -907,7 +898,7 @@ void LogTCPHeader(TextLog*  log, Packet * p)
     TextLog_Print(log, " Seq: 0x%lX  Ack: 0x%lX  Win: 0x%X  TcpLen: %d",
             (u_long) ntohl(tcph->th_seq),
             (u_long) ntohl(tcph->th_ack),
-            ntohs(tcph->th_win), tcph->off() << 2);
+            ntohs(tcph->th_win), tcph->off());
 
     if((tcph->th_flags & TH_URG) != 0)
     {

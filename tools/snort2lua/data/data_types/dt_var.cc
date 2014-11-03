@@ -64,6 +64,7 @@ bool Variable::add_value(std::string elem)
     std::string s(elem);
     util::trim(elem);
 
+    // FIXIT-M J.  Variables do not need to start with a '$'/  for instance. !$HOME_NET
     if(s.front() == '$')
     {
         // add a space between strings

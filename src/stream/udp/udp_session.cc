@@ -69,7 +69,9 @@ static void UdpSessionCleanup(Flow *lwssn)
         CloseStreamSession(&sfBase, SESSION_CLOSED_NORMALLY);
     }
 
-    udpStats.released++;
+    if ( lwssn->s5_state.session_flags & SSNFLAG_SEEN_SENDER )
+        udpStats.released++;
+
     RemoveUDPSession(&sfBase);
 }
 

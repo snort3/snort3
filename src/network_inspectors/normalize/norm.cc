@@ -30,7 +30,6 @@
 
 #include "utils/stats.h"
 #include "perf_monitor/perf.h"
-#include "packet_io/sfdaq.h"
 #include "protocols/ipv4.h"
 #include "protocols/ipv4_options.h"
 #include "protocols/tcp.h"
@@ -550,14 +549,6 @@ void Norm_ResetStats (void)
 
 int Norm_SetConfig (NormalizerConfig* nc)
 {
-    if ( !DAQ_CanReplace() )
-    {
-        // FIXIT-L output only once
-        //LogMessage("WARNING: normalizations disabled because DAQ"
-        //    " can't replace packets.\n");
-        nc->normalizer_flags = 0x0;
-        return -1;
-    }
     if ( !nc->normalizer_flags )
     {
         return 0;
@@ -565,15 +556,6 @@ int Norm_SetConfig (NormalizerConfig* nc)
     if ( Norm_IsEnabled(nc, NORM_IP4) )
     {
         nc->normalizers[PacketManager::proto_id(ETHERTYPE_IPV4)] = Norm_IP4;
-    }
-    if ( Norm_IsEnabled(nc, NORM_IP4_TRIM) )
-    {
-        if ( !DAQ_CanInject() )
-        {
-            ParseWarning("normalize_ip4: trim disabled since DAQ "
-                "can't inject packets.\n");
-            Norm_Disable(nc, NORM_IP4_TRIM);
-        }
     }
     if ( Norm_IsEnabled(nc, NORM_ICMP4) )
     {

@@ -49,14 +49,13 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     std::string val;
-    bool retval = true;
     std::streamoff pos;
 
     if (!(*option_name).compare("protected_content"))
-        rule_api.make_rule_a_comment();
+        rule_api.bad_rule(data_stream, "protected_content is currently unsupported");
 
     val = util::get_rule_option_args(data_stream);
-    retval = rule_api.add_rule_option(*option_name, val);
+    rule_api.add_rule_option(*option_name, val);
     rule_api.select_option(*option_name);
 
     pos = data_stream.tellg();
@@ -65,7 +64,6 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
 
     while(util::get_string(subopts, keyword, ":"))
     {
-        bool tmpval = true;
         val = std::string();
         std::string tmp_str;
 
@@ -78,66 +76,66 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
         util::trim(val);
 
         if (!keyword.compare("offset"))
-            tmpval = rule_api.add_suboption("offset", val);
+            rule_api.add_suboption("offset", val);
 
         else if (!keyword.compare("distance"))
-            tmpval = rule_api.add_suboption("distance", val);
+            rule_api.add_suboption("distance", val);
 
         else if (!keyword.compare("within"))
-            tmpval = rule_api.add_suboption("within", val);
+            rule_api.add_suboption("within", val);
 
         else if (!keyword.compare("depth"))
-            tmpval = rule_api.add_suboption("depth", val);
+            rule_api.add_suboption("depth", val);
 
         else if (!keyword.compare("nocase"))
-            tmpval = rule_api.add_suboption("nocase");
+            rule_api.add_suboption("nocase");
 
         else if (!keyword.compare("rawbytes"))
-            tmpval = rule_api.add_rule_option_before_selected("pkt_data");
+            rule_api.add_rule_option_before_selected("pkt_data");
 
         else if (!keyword.compare("http_client_body"))
-            tmpval = rule_api.add_rule_option_before_selected("http_client_body");
+            rule_api.add_rule_option_before_selected("http_client_body");
 
         else if (!keyword.compare("http_cookie"))
-            tmpval = rule_api.add_rule_option_before_selected("http_cookie");
+            rule_api.add_rule_option_before_selected("http_cookie");
 
         else if (!keyword.compare("http_raw_cookie"))
-            tmpval = rule_api.add_rule_option_before_selected("http_raw_cookie");
+            rule_api.add_rule_option_before_selected("http_raw_cookie");
 
         else if (!keyword.compare("http_header"))
-            tmpval = rule_api.add_rule_option_before_selected("http_header");
+            rule_api.add_rule_option_before_selected("http_header");
 
         else if (!keyword.compare("http_raw_header"))
-            tmpval = rule_api.add_rule_option_before_selected("http_raw_header");
+            rule_api.add_rule_option_before_selected("http_raw_header");
 
         else if (!keyword.compare("http_method"))
-            tmpval = rule_api.add_rule_option_before_selected("http_method");
+            rule_api.add_rule_option_before_selected("http_method");
 
         else if (!keyword.compare("http_uri"))
-            tmpval = rule_api.add_rule_option_before_selected("http_uri");
+            rule_api.add_rule_option_before_selected("http_uri");
 
         else if (!keyword.compare("http_raw_uri"))
-            tmpval = rule_api.add_rule_option_before_selected("http_raw_uri");
+            rule_api.add_rule_option_before_selected("http_raw_uri");
 
         else if (!keyword.compare("http_stat_code"))
-            tmpval = rule_api.add_rule_option_before_selected("http_stat_code");
+            rule_api.add_rule_option_before_selected("http_stat_code");
 
         else if (!keyword.compare("http_stat_msg"))
-            tmpval = rule_api.add_rule_option_before_selected("http_stat_msg");
+            rule_api.add_rule_option_before_selected("http_stat_msg");
 
         else if (!keyword.compare("hash"))   // PROTECTED CONTENT
-            tmpval = rule_api.add_suboption("hash", val);
+            rule_api.add_suboption("hash", val);
 
         else if (!keyword.compare("length"))  // PROTECTED CONTENT
-            tmpval = rule_api.add_suboption("length", val);
+            rule_api.add_suboption("length", val);
 
         else if (!keyword.compare("fast_pattern"))
         {
             if (val.empty())
-                tmpval = rule_api.add_suboption("fast_pattern");
+                 rule_api.add_suboption("fast_pattern");
 
             else if(!val.compare("only"))
-                tmpval = true;  // deprecated.  ignore.
+                rule_api.add_comment_to_rule("content's 'only' option has been deleted");
 
             else
             {
@@ -150,16 +148,16 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
                     {
                         pos++;
                         int length = std::stoi(val.substr(pos, std::string::npos));
-                        tmpval = rule_api.add_suboption("fast_pattern");
-                        tmpval = rule_api.add_suboption("fast_pattern_offset", std::to_string(offset));
-                        tmpval = rule_api.add_suboption("fast_pattern_length", std::to_string(length));
+                        rule_api.add_suboption("fast_pattern");
+                        rule_api.add_suboption("fast_pattern_offset", std::to_string(offset));
+                        rule_api.add_suboption("fast_pattern_length", std::to_string(length));
                     }
                     else
-                        tmpval = false;
+                        rule_api.bad_rule(data_stream, "content: wxyz: fast_pattern " + val + "," + "<missing!>");
                 }
                 catch(std::exception&)
                 {
-                    tmpval = false;
+                    rule_api.bad_rule(data_stream, "content: wxyz: fast_pattern <int>,<int>");
                 }
             }
         }
@@ -170,11 +168,8 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
             rule_api.unselect_option(); // don't reference this option anymore
             data_stream.seekg(pos);
             data_stream.clear();  // Might have already hit end of stream
-            return set_next_rule_state(data_stream) && retval;
+            return set_next_rule_state(data_stream);
         }
-
-        if (retval)
-            retval = tmpval;
 
         // lets get the next keyword
         pos = data_stream.tellg();

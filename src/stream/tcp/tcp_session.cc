@@ -4361,6 +4361,7 @@ static void NewTcpSession(
         tmp->ecn = 0;
         assert(!tmp->tcp_init);
         tmp->tcp_init = true;
+
         tcpStats.trackers_created++;
     }
 }

@@ -1,6 +1,4 @@
-
-
-Snort2Lua reads your classic Snort conf file(s) and generates Snort\++ Lua
+Snort2Lua reads your legacy Snort conf file(s) and generates Snort\++ Lua
 and rules files.  When running this program, the only mandatory option is
 to provide Snort2Lua with a Snort configuration file. The default output
 file file is snort.lua, the default error file will be snort.rej, and the
@@ -35,9 +33,7 @@ comments section at the bottom of the main configuration file.  Finally,
 rules that contain unsupported options will be converted to the best of
 Snort2Lua’s capability and then printed as a comment in the rule file.
 
-
 === Snort2Lua Command Line
-
 
 By default, Snort2Lua will attempt to parse every ‘include’ file and every
 ‘binding’ file.  There is an option to change this functionality.

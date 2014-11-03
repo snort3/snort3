@@ -48,9 +48,8 @@ bool Metadata::convert(std::istringstream& data_stream)
     std::string tmp;
     std::string value;
     std::string soid_val = std::string();
-    bool retval = true;
 
-    retval = rule_api.add_rule_option("metadata");
+    rule_api.add_rule_option("metadata");
     rule_api.select_option("metadata");
 
     tmp = util::get_rule_option_args(data_stream);
@@ -59,7 +58,6 @@ bool Metadata::convert(std::istringstream& data_stream)
 
     while(metadata_stream >> keyword)
     {
-        bool tmpval = true;
         value = std::string();
 
         while (metadata_stream >> tmp &&
@@ -94,19 +92,15 @@ bool Metadata::convert(std::istringstream& data_stream)
 
         else
         {
-            tmpval = rule_api.add_suboption(keyword, value);
+            rule_api.add_suboption(keyword, value);
         }
-
-        if (retval)
-            retval = tmpval;
-
     }
 
     if (!soid_val.empty())
-        retval = rule_api.add_rule_option("soid", soid_val);
+        rule_api.add_rule_option("soid", soid_val);
 
     rule_api.unselect_option();
-    return set_next_rule_state(data_stream) && retval;
+    return set_next_rule_state(data_stream);
 }
 
 /**************************

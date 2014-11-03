@@ -60,13 +60,19 @@ static const Command snort_cmds[] =
     { "dump_stats", main_dump_stats, "show summary statistics" },
     { "rotate_stats", main_rotate_stats, "roll perfmonitor log files" },
     { "reload_config", main_reload_config, "load new configuration" },
-    { "reload_hosts", main_reload_hosts, "load a new hosts.xml" },
-    { "process", main_process, "process given pcap" },
+
+    // FIXIT-M need to load hosts from dedicated file
+    //{ "reload_hosts", main_reload_hosts, "load a new hosts table" },
+
+    // FIXIT-M rewrite trough to permit updates on the fly
+    //{ "process", main_process, "process given pcap" },
+
     { "pause", main_pause, "suspend packet processing" },
     { "resume", main_resume, "continue packet processing" },
     { "detach", main_detach, "exit shell w/o shutdown" },
     { "quit", main_quit, "shutdown and dump-stats" },
     { "help", main_help, "this output" },
+
     { nullptr, nullptr, nullptr }
 };
 #endif
@@ -391,8 +397,11 @@ static const Parameter s_params[] =
     { "--version", Parameter::PT_IMPLIED, nullptr, nullptr,
       "show version number (same as -V)" },
 
+    { "--warn-all", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "enable all warnings" },
+
     { "--warn-flowbits", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "warn about flowbits that checked but not set and vice-versa" },
+      "warn about flowbits that are checked but not set and vice-versa" },
 
     { "--warn-unknown", Parameter::PT_IMPLIED, nullptr, nullptr,
       "warn about unknown symbols in your config" },
@@ -734,6 +743,11 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--version") )
         help_version(sc, v.get_string());
 
+    else if ( v.is("--warn-all") )
+    {
+        sc->logging_flags |= LOGGING_FLAG__WARN_FLOWBITS;
+        sc->logging_flags |= LOGGING_FLAG__WARN_UNKNOWN;
+    }
     else if ( v.is("--warn-flowbits") )
         sc->logging_flags |= LOGGING_FLAG__WARN_FLOWBITS;
 

@@ -9,6 +9,16 @@
 -- fixed ips classtype segfault on ctor after parse error
 -- new_http_inspect now gid 219 and other Tom Tweaks
 -- new_http_inspect reactiveated (no longer REG_TEST only)
+-- ip defrag fixes from Josh
+-- added default bindings for stream only configs
+-- added --warn-all
+-- refactored normalizer flags
+-- fixed port_scan logfile to default to off
+-- fixed flowbits init
+-- fixed byte extract var init
+-- changed doc to use "legacy" instead of "classic"
+-- restricted reload to basic modules and inspectors only
+-- commented out snort.process() and snort.reload_hosts() for alpha 1
 
 126
 -- pulled latest from tom

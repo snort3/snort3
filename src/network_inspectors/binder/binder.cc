@@ -513,12 +513,6 @@ void Binder::apply(Flow* flow, Stuff& stuff)
     // setup action
     stuff.apply_action(flow);
 
-    // FIXIT-H move normalizer flags to policy
-    Inspector* ins = InspectorManager::get_inspector(INS_NORM);
-
-    if ( ins )
-        ins->exec(0, flow);
-
     // setup session
     stuff.apply_session(flow);
 

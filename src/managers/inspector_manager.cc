@@ -59,7 +59,7 @@ using namespace std;
 struct PHGlobal
 {
     const InspectApi& api;
-    bool init;
+    bool init;  // call api.pinit()
 
     PHGlobal(const InspectApi& p) : api(p)
     { init = true; };
@@ -71,9 +71,10 @@ struct PHGlobal
 struct PHClass
 {
     const InspectApi& api;
+    bool init;  // call pin->tinit()
 
-    PHClass(const InspectApi& p) : api(p) { };
-    ~PHClass() { };
+    PHClass(const InspectApi& p) : api(p)
+    { init = true; };
 
     static bool comp (PHClass* a, PHClass* b)
     { return ( a->api.type < b->api.type ); };
@@ -408,10 +409,14 @@ void InspectorManager::free_inspector(Inspector* p)
     p->get_api()->dtor(p);
 }
 
-InspectSsnFunc InspectorManager::get_session(const char* key)
+InspectSsnFunc InspectorManager::get_session(uint16_t proto)
 {
-    const InspectApi* api = get_plugin(key);
-    return api ? api->ssn : nullptr;
+    for ( auto* p : s_handlers )
+    {
+        if ( p->api.type == IT_STREAM && p->api.proto_bits == proto && !p->init )
+            return p->api.ssn;
+    }
+    return nullptr;
 } 
 
 //-------------------------------------------------------------------------
@@ -432,7 +437,7 @@ void InspectorManager::delete_config (SnortConfig* sc)
     sc->framework_config = nullptr;
 }
 
-static PHClass* GetClass(const char* keyword, FrameworkConfig* fc)
+static PHClass* get_class(const char* keyword, FrameworkConfig* fc)
 {
     for ( auto* p : fc->clist )
         if ( !strcmp(p->api.base.name, keyword) )
@@ -459,31 +464,47 @@ void InspectorManager::thread_init(SnortConfig* sc)
     Inspector::slot = get_instance_id();
 
     for ( auto* p : sc->framework_config->clist )
+    {
         if ( p->api.tinit )
             p->api.tinit();
+    }
 
+    // pin->tinit() only called for default policy
+    set_default_policy();
     InspectionPolicy* pi = get_inspection_policy();
 
     if ( pi && pi->framework_policy )
     {
         for ( auto* p : pi->framework_policy->ilist )
-            p->handler->tinit();
+            if ( p->pp_class.init )
+            {
+                p->handler->tinit();
+                p->pp_class.init = false;
+            }
     }
 }
 
 void InspectorManager::thread_term(SnortConfig* sc)
 {
+    // pin->tterm() only called for default policy
+    set_default_policy();
     InspectionPolicy* pi = get_inspection_policy();
 
     if ( pi && pi->framework_policy )
     {
         for ( auto* p : pi->framework_policy->ilist )
-            p->handler->tterm();
+            if ( !p->pp_class.init )
+            {
+                p->handler->tterm();
+                p->pp_class.init = true;
+            }
     }
 
     for ( auto* p : sc->framework_config->clist )
+    {
         if ( p->api.tterm )
             p->api.tterm();
+    }
 }
 
 //-------------------------------------------------------------------------
@@ -501,7 +522,7 @@ void InspectorManager::instantiate(
     // since given api and mod
     const char* keyword = api->base.name;
 
-    PHClass* ppc = GetClass(keyword, fc);
+    PHClass* ppc = get_class(keyword, fc);
 
     if ( !ppc )
         ParseError("unknown inspector: '%s'.", keyword);
@@ -560,7 +581,7 @@ static bool configure(SnortConfig* sc, FrameworkPolicy* fp)
     sort(fp->ilist.begin(), fp->ilist.end(), PHInstance::comp);
     fp->vectorize();
 
-    if ( fp->service.num && !fp->binder && InspectorManager::get_wizard() )
+    if ( fp->session.num && !fp->binder )
         instantiate_binder(sc, fp);
 
     return ok;

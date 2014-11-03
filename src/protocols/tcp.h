@@ -87,7 +87,7 @@ struct TCPHdr
     { return (th_offx2 & 0xf0) >> 2; }
 
     inline uint8_t off() const
-    { return th_offx2 >> 4; }
+    { return (th_offx2 & 0xf0) >> 2; }
 
     inline uint8_t options_len() const
     { return hdr_len() - TCP_MIN_HEADER_LEN; }

@@ -61,8 +61,13 @@ public:
     void set(const IP6Hdr* h6);
     bool set(const uint8_t* raw_ip_data);
     void reset();
-    uint32_t id() const;  // return the frag_id
-    uint16_t off() const; // return the frag_offset
+    // return the 16 bits associated with this IP layers frag_offset/flags
+    uint16_t off_w_flags() const;
+    // return the frag_offset associated with this IP layers in word size.
+    //   (the value is internally masked and multiplied)
+    uint16_t off() const;
+    // return the frag_id associated with this IP layers
+    uint32_t id() const;
     const uint8_t* ip_data() const; // return a pointer to the ip layers data
 
     // FIXIT-L J get rid of the unnecessary ones

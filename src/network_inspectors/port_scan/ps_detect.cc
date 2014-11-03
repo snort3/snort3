@@ -213,9 +213,6 @@ PortscanConfig::PortscanConfig()
 
 PortscanConfig::~PortscanConfig()
 {
-    if ( logfile )
-        free(logfile);
-
     if ( ignore_scanners )
         ipset_free(ignore_scanners);
 

@@ -51,6 +51,7 @@ void snort_setup(int argc, char* argv[]);
 void snort_cleanup();
 
 bool snort_is_starting();
+bool snort_is_reloading();
 
 void snort_thread_init(const char* intf);
 void snort_thread_term();

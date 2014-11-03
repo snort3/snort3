@@ -1103,7 +1103,7 @@ static const Parameter ips_params[] =
       "correlate unified2 events with configuration" },
 
     { "include", Parameter::PT_STRING, nullptr, nullptr,
-      "snort-classic rules and includes" },
+      "legacy snort rules and includes" },
 
     { "mode", Parameter::PT_ENUM, "tap | inline | inline-test", "tap",
       "set policy mode" },

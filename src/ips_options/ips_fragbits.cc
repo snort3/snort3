@@ -156,7 +156,7 @@ int FragBitsOption::eval(Cursor&, Packet *p)
         return rval;
     }
 
-    const uint16_t frag_offset = p->ptrs.ip_api.off();
+    const uint16_t frag_offset = p->ptrs.ip_api.off_w_flags();
     MODULE_PROFILE_START(fragBitsPerfStats);
 
     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "           <!!> CheckFragBits: ");

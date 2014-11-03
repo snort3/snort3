@@ -57,6 +57,9 @@ static const Parameter ps_params[] =
     { "include_midstream", Parameter::PT_BOOL, nullptr, "false",
       "list of CIDRs with optional ports" },
 
+    { "logfile", Parameter::PT_BOOL, nullptr, "false",
+      "write scan events to file" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -127,8 +130,8 @@ const RuleMap* PortScanModule::get_rules() const
 // 3.4.5.6/16 7 works but 3.4.5.6 7 does not.
 // a possible new format is:
 // CIDR[#ports][ CIDR[#ports]]*
-// also note that Snort classic address lists appear to be allowed which
-// will cause problems with Lua syntax is [[ and ]] are present.  must be
+// also note that classic Snort address lists appear to be allowed which
+// will cause problems with Lua syntax if [[ and ]] are present.  must be
 // [ [ and ] ].
 // consult RFC 5952 for ideas.
 //-------------------------------------------------------------------------
@@ -175,6 +178,9 @@ bool PortScanModule::set(const char*, Value& v, SnortConfig*)
         if ( !ips || ipset_parse(ips, v.get_string()) )
             return false;
     }
+    else if ( v.is("logfile") )
+        config->logfile = v.get_bool();
+
     else
         return false;
 
