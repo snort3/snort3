@@ -507,12 +507,16 @@ SO_PUBLIC bool open_table(const char* s, int idx)
     string key = fqn;
     set_top(key);
 
-    // ips option parameters only using in rules which
+    // ips option parameters only used in rules which
     // are non-lua; may be possible to allow a subtable
     // for lua config of ips option globals
     ModHook* h = get_hook(key.c_str());
 
     if ( !h || (h->api && h->api->type == PT_IPS_OPTION) )
+        return false;
+
+    // FIXIT-M only basic modules and inspectors can be reloaded at present
+    if ( snort_is_reloading() && h && h->api && h->api->type != PT_INSPECTOR )
         return false;
 
     //printf("open %s %d\n", s, idx);
