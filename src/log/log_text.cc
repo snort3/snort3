@@ -1806,6 +1806,10 @@ void LogIPPkt(TextLog* log, Packet * p)
                 break;
 
             case PktType::ICMP:
+                // FIXIT-L   log accurate ICMP6 data.
+                if (p->is_ip6())
+                    break;
+
                 if ( p->ptrs.icmph != NULL )
                     LogICMPHeader(log, p);
                 else
