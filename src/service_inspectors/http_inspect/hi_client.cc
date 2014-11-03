@@ -139,6 +139,7 @@ int CheckChunkEncoding(HI_SESSION *session, const u_char *start, const u_char *e
     uint32_t iDataLen = 0;
     uint32_t chunkBytesCopied = 0;
     uint8_t stateless_chunk_count = 0;
+    bool alerted = false;
 
     if(!start || !end)
         return HI_INVALID_ARG;
@@ -224,7 +225,11 @@ int CheckChunkEncoding(HI_SESSION *session, const u_char *start, const u_char *e
                         (*chunk_count)++;
                         if ( *chunk_count >= session->server_conf->small_chunk_length.num )
                         {
-                            SnortEventqAdd(gid, sid);
+                            if ( !alerted )
+                            {
+                                SnortEventqAdd(gid, sid);
+                                alerted = true;
+                            }
                             *chunk_count = 0;
                         }
                     }
