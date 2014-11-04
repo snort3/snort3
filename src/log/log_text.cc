@@ -1761,7 +1761,7 @@ void LogIPPkt(TextLog* log, Packet * p)
         {
 #ifdef REG_TEST
             // In Snort, cooked packets should not print an outer IP Header
-            if (p->is_cooked())
+            if (p->is_cooked() && (p->pseudo_type != PSEUDO_PKT_IP))
               break;
 #endif
             LogOuterIPHeader(log, p);
