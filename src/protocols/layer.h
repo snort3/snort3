@@ -154,6 +154,9 @@ SO_PUBLIC const icmp::ICMPHdr* get_icmp_embed_icmp(const ip::IpApi&);
  * PARAMS:
  *          Packet* = packet struct containing data
  *          ip::Api = ip api to be set
+ *          uint8_t& next_ip_proto = The ip_protocol after the current IP
+ *                              layer refer to packet get_next_ip_proto()
+ *                              for more information.
  *          int8_t curr_layer = the current, zero based layer from which to
  *                              start searching inward. After the function returs,
  *                              This field will be set to the layer before
@@ -173,17 +176,21 @@ SO_PUBLIC const icmp::ICMPHdr* get_icmp_embed_icmp(const ip::IpApi&);
  *          while (set_inner_ip_api(p, api, layer)) { ... }
  */
 SO_PUBLIC bool set_inner_ip_api(const Packet* const, ip::IpApi&, int8_t& curr_layer);
+SO_PUBLIC bool set_inner_ip_api(const Packet* const, ip::IpApi&,
+    uint8_t& next_ip_proto, int8_t& curr_layer);
 
 
 /*
  * Identical to above function except will begin searching from the
- * outermost layer until the innermost layer
+ * outermost layer until the innermost layer.
  *
  * NOTE: curr_layer is zero based.  That means to get all of the ip
  *       layers (starting from the OUTERMOST layer), during the first call
  *       'curr_layer == 0'.
  */
 SO_PUBLIC bool set_outer_ip_api(const Packet* const, ip::IpApi&, int8_t& curr_layer);
+SO_PUBLIC bool set_outer_ip_api(const Packet* const, ip::IpApi&,
+    uint8_t& next_ip_proto, int8_t& curr_layer);
 
 
 } // namespace layer

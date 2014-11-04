@@ -150,7 +150,7 @@ void Icmp4Codec::get_protocol_ids(std::vector<uint16_t> &v)
 bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
 {
 
-    if(raw.len < icmp::ICMP_HEADER_LEN)
+    if(raw.len < icmp::ICMP_BASE_LEN)
     {
         codec_events::decoder_event(codec, DECODE_ICMP4_HDR_TRUNC);
         return false;
@@ -162,46 +162,46 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
 
     switch (icmph->type)
     {
-            // fall through ...
-        case icmp::IcmpType::SOURCE_QUENCH:
-        case icmp::IcmpType::DEST_UNREACH:
-        case icmp::IcmpType::REDIRECT:
-        case icmp::IcmpType::TIME_EXCEEDED:
-        case icmp::IcmpType::PARAMETERPROB:
-        case icmp::IcmpType::ECHOREPLY:
-        case icmp::IcmpType::ECHO_4:
-        case icmp::IcmpType::ROUTER_ADVERTISE:
-        case icmp::IcmpType::ROUTER_SOLICIT:
-        case icmp::IcmpType::INFO_REQUEST:
-        case icmp::IcmpType::INFO_REPLY:
-            if (raw.len < 8)
-            {
-                codec_events::decoder_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
-                return false;
-            }
-            break;
+        // fall through ...
+    case icmp::IcmpType::SOURCE_QUENCH:
+    case icmp::IcmpType::DEST_UNREACH:
+    case icmp::IcmpType::REDIRECT:
+    case icmp::IcmpType::TIME_EXCEEDED:
+    case icmp::IcmpType::PARAMETERPROB:
+    case icmp::IcmpType::ECHOREPLY:
+    case icmp::IcmpType::ECHO_4:
+    case icmp::IcmpType::ROUTER_ADVERTISE:
+    case icmp::IcmpType::ROUTER_SOLICIT:
+    case icmp::IcmpType::INFO_REQUEST:
+    case icmp::IcmpType::INFO_REPLY:
+        if (raw.len < 8)
+        {
+            codec_events::decoder_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
+            return false;
+        }
+        break;
 
-        case icmp::IcmpType::TIMESTAMP:
-        case icmp::IcmpType::TIMESTAMPREPLY:
-            if (raw.len < 20)
-            {
-                codec_events::decoder_event(codec, DECODE_ICMP_DGRAM_LT_TIMESTAMPHDR);
-                return false;
-            }
-            break;
+    case icmp::IcmpType::TIMESTAMP:
+    case icmp::IcmpType::TIMESTAMPREPLY:
+        if (raw.len < 20)
+        {
+            codec_events::decoder_event(codec, DECODE_ICMP_DGRAM_LT_TIMESTAMPHDR);
+            return false;
+        }
+        break;
 
-        case icmp::IcmpType::ADDRESS:
-        case icmp::IcmpType::ADDRESSREPLY:
-            if (raw.len < 12)
-            {
-                codec_events::decoder_event(codec, DECODE_ICMP_DGRAM_LT_ADDRHDR);
-                return false;
-            }
-            break;
+    case icmp::IcmpType::ADDRESS:
+    case icmp::IcmpType::ADDRESSREPLY:
+        if (raw.len < 12)
+        {
+            codec_events::decoder_event(codec, DECODE_ICMP_DGRAM_LT_ADDRHDR);
+            return false;
+        }
+        break;
 
-        default:
-            codec_events::decoder_event(codec, DECODE_ICMP4_TYPE_OTHER);
-            break;
+    default:
+        codec_events::decoder_event(codec, DECODE_ICMP4_TYPE_OTHER);
+        break;
     }
 
 
@@ -220,7 +220,7 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
         }
     }
 
-    len =  icmp::ICMP_HEADER_LEN;
+    len =  icmp::ICMP_BASE_LEN;
 
     switch(icmph->type)
     {

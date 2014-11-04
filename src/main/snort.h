@@ -64,7 +64,7 @@ void DecodeRebuiltPacket (Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, Flow
 void DetectRebuiltPacket (Packet*);
 void LogRebuiltPacket (Packet*);
 
-DAQ_Verdict ProcessPacket(Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt);
+DAQ_Verdict ProcessPacket(Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, bool is_frag=false);
 
 DAQ_Verdict fail_open(void*, const DAQ_PktHdr_t*, const uint8_t*);
 DAQ_Verdict packet_callback(void*, const DAQ_PktHdr_t*, const uint8_t*);

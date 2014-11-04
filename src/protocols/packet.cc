@@ -42,6 +42,7 @@ static inline bool is_ip_protocol(const uint16_t proto)
         return false;
     }
 }
+
 #if 0
 uint8_t Packet::ip_proto_next() const
 {
@@ -80,13 +81,16 @@ uint8_t Packet::ip_proto_next() const
 }
 #endif
 
+// FIXIT-L J  --  this loop will be changed to go from the outside
+//                  to search inward. Every location which uses this
+//                  must be changed!
 bool Packet::get_ip_proto_next(int &lyr, uint8_t& proto) const
 {
     if (lyr < 0)
         return false;
 
     // lyr[0] will always return false
-    // walk past any ip6 options/IP protocols
+    // -- this logic will be updated during fix.
     while (is_ip_protocol(layers[lyr].prot_id))
         --lyr;
 
