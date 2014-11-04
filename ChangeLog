@@ -26,6 +26,8 @@
 -- added comment for binder bug
 -- fixed non-paf splitter init
 -- fixed splitter update calls
+-- fixed boyer-moore init
+-- removed content extract var cruft
 
 126
 -- pulled latest from tom

@@ -45,8 +45,6 @@ struct PatternMatchData
 
     int8_t offset_var;      /* byte_extract variable indices for offset, */
     int8_t depth_var;       /* depth, distance, within */
-    int8_t distance_var;
-    int8_t within_var;
 
     int no_case;            /* Toggle case sensitivity */
     int relative;           /* do relative pattern searching */

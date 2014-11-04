@@ -525,10 +525,7 @@ static void parse_content(PatternMatchData* ds_idx, const char* rule)
     memcpy(ds_idx->pattern_buf, tmp_buf, dummy_size);
 
     ds_idx->pattern_size = dummy_size;
-
-    make_precomp(ds_idx);
     ds_idx->negated = negated;
-
     ds_idx->match_delta = GetMaxJumpSize(ds_idx->pattern_buf, ds_idx->pattern_size);
 }
 
@@ -774,8 +771,9 @@ bool ContentModule::end(const char*, int, SnortConfig*)
     if ( pmd->no_case )
     {
         for ( unsigned i = 0; i < pmd->pattern_size; i++ )
-            pmd->pattern_buf[i] = toupper((int)pmd->pattern_buf[i]);
+            pmd->pattern_buf[i] = toupper(pmd->pattern_buf[i]);
     }
+    make_precomp(pmd);
     return true;
 }
 
