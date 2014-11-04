@@ -498,7 +498,7 @@ void Stream5SetSplitterTcp (Flow* lwssn, bool c2s, StreamSplitter* ss)
 
     trk->splitter = ss;
 
-    if ( ss && ss->is_paf() )
+    if ( ss )
         s5_paf_setup(&trk->paf_state);
 }
 
@@ -2171,12 +2171,12 @@ static inline int _flush_to_seq (
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
             "setting st->seglist_base_seq to 0x%X\n", st->seglist_base_seq););
 
+        if ( st->splitter )
+            st->splitter->update();
+
         // TBD abort should be by PAF callback only since
         // recovery may be possible in some cases
     } while ( !(st->flags & TF_MISSING_PKT) && DataToFlush(st) );
-
-    if ( st->splitter )
-        st->splitter->update();
 
     /* tell them how many bytes we processed */
     MODULE_PROFILE_END(s5TcpFlushPerfStats);
