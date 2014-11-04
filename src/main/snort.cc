@@ -742,7 +742,7 @@ void LogRebuiltPacket (Packet* p)
 }
 
 DAQ_Verdict ProcessPacket(
-    Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
+    Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt, bool is_frag)
 {
     DAQ_Verdict verdict = DAQ_VERDICT_PASS;
 
@@ -750,6 +750,12 @@ DAQ_Verdict ProcessPacket(
 
     PacketManager::decode(p, pkthdr, pkt);
     assert(p->pkth && p->pkt);
+
+    if (is_frag)
+    {
+        p->packet_flags |= (PKT_PSEUDO | PKT_REBUILT_FRAG);
+        p->pseudo_type = PSEUDO_PKT_IP;
+    }
 
     if ( !p->proto_bits )
         p->proto_bits = PROTO_BIT__OTHER;

@@ -1061,10 +1061,8 @@ static void FragRebuild(FragTracker *ft, Packet *p)
 
     encap_frag_cnt++;
     SnortEventqPush();
-    p->packet_flags |= (PKT_PSEUDO | PKT_REBUILT_FRAG);
-    p->pseudo_type = PSEUDO_PKT_IP;
     PacketManager::encode_set_pkt(p);
-    ProcessPacket(dpkt, dpkt->pkth, dpkt->pkt);
+    ProcessPacket(dpkt, dpkt->pkth, dpkt->pkt, true);
     SnortEventqPop();
     encap_frag_cnt--;
 
