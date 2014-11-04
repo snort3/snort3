@@ -690,6 +690,10 @@ void LogIPHeader(TextLog*  log, Packet * p)
     /* print fragment info if necessary */
     if(p->ptrs.decode_flags & DECODE_FRAG)
     {
+#ifdef REG_TEST
+        frag_off = (frag_off >> 3);
+#endif
+
         TextLog_Print(log, "Frag Offset: 0x%04X   Frag Size: 0x%04X\n",
                 frag_off, p->ptrs.ip_api.pay_len());
     }
