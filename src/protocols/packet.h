@@ -202,7 +202,7 @@ struct SO_PUBLIC Packet
     inline PktType type() const
     { return ptrs.get_pkt_type(); } // defined in codec.h
 
-    /* the ip_api return the protocol_ID of the protocol directly the
+    /* the ip_api return the protocol_ID of the protocol directly after the
      * innermost IP layer.  However, especially in IPv6, the next protocol
      * can frequently be an IP extension.  Therefore, this function
      * return the protocol ID of the first protocol after all the
@@ -220,9 +220,10 @@ struct SO_PUBLIC Packet
      * PARAMS:
      *          lyr - zero based layer from which to start searching outward.
      *                  will always point to an IP protocol or IP extension.
-     *          ip_proto - the ip_proto (read above) for the next, outermost IP layer
+     *          proto - the ip_proto (read above) for the next, outermost IP layer
      * EXAMPLE:
      *
+     * uint8_t ip_proto;
      * int lyr = p->num_layers - 1;
      * while ( ip_proto_next(lyr, ip_proto))
      * {

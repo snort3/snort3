@@ -30,7 +30,7 @@ namespace icmp
 {
 
 
-constexpr uint32_t ICMP_HEADER_LEN = 4;
+constexpr uint32_t ICMP_BASE_LEN = 4;
 constexpr uint8_t ICMP_UNREACH_DATA_LEN = 8;
 
 // do NOT add 'ICMP_' to the begining of these const because they 

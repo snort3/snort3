@@ -1037,6 +1037,10 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
 
     if (!layer::set_api_ip_embed_icmp(p, op.ptrs.ip_api))
     {
+        TextLog_Puts(log, "\nORIGINAL DATAGRAM TRUNCATED");
+    }
+    else
+    {
         switch(p->proto_bits & PROTO_BIT__ICMP_EMBED)
         {
         case PROTO_BIT__TCP_EMBED_ICMP:
@@ -1047,6 +1051,7 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
                 orig_p->ptrs.sp = tcph->src_port();
                 orig_p->ptrs.dp = tcph->dst_port();
                 orig_p->ptrs.tcph = tcph;
+                orig_p->ptrs.set_pkt_type(PktType::TCP);
 
                 TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
                 LogIPHeader(log, orig_p);
@@ -1065,10 +1070,10 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
                 orig_p->ptrs.sp = udph->src_port();
                 orig_p->ptrs.dp = udph->dst_port();
                 orig_p->ptrs.udph = udph;
+                orig_p->ptrs.set_pkt_type(PktType::UDP);
 
                 TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
                 LogIPHeader(log, orig_p);
-
                 TextLog_Print(log, "Len: %d  Csum: %d\n",
                         udph->len() - udp::UDP_HEADER_LEN,
                         udph->cksum());
@@ -1099,18 +1104,15 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
         } /* switch */
 
         /* if more than 8 bytes of original IP payload sent */
-        uint32_t orig_ip_hlen = p->ptrs.ip_api.hlen() << 2;
-        if (p->dsize - orig_ip_hlen > 8)
+
+        const int16_t more_bytes = p->dsize - 8;
+        if (more_bytes > 0)
         {
             TextLog_Print(log, "(%d more bytes of original packet)\n",
-                    p->dsize - orig_ip_hlen - 8);
+                    more_bytes);
         }
 
         TextLog_Puts(log, "** END OF DUMP");
-    }
-    else
-    {
-        TextLog_Puts(log, "\nORIGINAL DATAGRAM TRUNCATED");
     }
 
     PacketManager::encode_delete(orig_p);
@@ -1726,7 +1728,7 @@ static void LogPacketType(TextLog* log, Packet* p)
  */
 
 #define DATA_LEN(p) \
-    (p->ptrs.ip_api.actual_ip_len() - (p->ptrs.ip_api.hlen() << 2))
+    (p->ptrs.ip_api.actual_ip_len() - (p->ptrs.ip_api.hlen()))
 
 void LogIPPkt(TextLog* log, Packet * p)
 {
@@ -1750,10 +1752,11 @@ void LogIPPkt(TextLog* log, Packet * p)
         // FIXIT-J --> log everything in order!!
         ip::IpApi tmp_api = p->ptrs.ip_api;
         int8_t num_layer = 0;
+        uint8_t tmp_next = p->get_ip_proto_next();
         bool first = true;
 
 
-        while (layer::set_outer_ip_api(p, p->ptrs.ip_api, num_layer) &&
+        while (layer::set_outer_ip_api(p, p->ptrs.ip_api, p->ip_proto_next, num_layer) &&
             tmp_api != p->ptrs.ip_api)
         {
 #ifdef REG_TEST
@@ -1761,7 +1764,6 @@ void LogIPPkt(TextLog* log, Packet * p)
             if (p->is_cooked())
               break;
 #endif
-
             LogOuterIPHeader(log, p);
 
             if (first)
@@ -1775,6 +1777,7 @@ void LogIPPkt(TextLog* log, Packet * p)
 #endif
         }
 
+        p->ip_proto_next = tmp_next;
         p->ptrs.ip_api = tmp_api;
     }
 

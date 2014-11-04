@@ -327,8 +327,7 @@ void DataApi::print_data(std::ostream& out)
 
 void DataApi::print_comments(std::ostream& out)
 {
-    if (is_default_mode() &&
-        !comments->empty())
+    if (is_default_mode() && !comments->empty())
         out << (*comments) << "\n";
 }
 

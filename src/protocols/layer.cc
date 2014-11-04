@@ -81,6 +81,23 @@ static inline const uint8_t* find_inner_layer(const Layer* lyr,
     return nullptr;
 }
 
+static inline bool is_ip6_extension(const uint8_t proto)
+{
+    switch(proto)
+    {
+    case IPPROTO_ID_HOPOPTS:
+    case IPPROTO_ID_DSTOPTS:
+    case IPPROTO_ID_ROUTING:
+    case IPPROTO_ID_FRAGMENT:
+    case IPPROTO_ID_AUTH:
+    case IPPROTO_ID_ESP:
+    case IPPROTO_ID_MOBILITY:
+    case IPPROTO_ID_NONEXT:
+        return true;
+    default:
+        return false;
+    }
+}
 
 void set_packet_pointer(const Packet* const curr_pkt)
 { p = curr_pkt; }
@@ -241,8 +258,25 @@ bool set_inner_ip_api(const Packet* const p,
                         ip::IpApi& api,
                         int8_t& curr_layer)
 {
+    uint8_t tmp;
+    return set_inner_ip_api(p, api, tmp, curr_layer);
+}
+
+bool set_inner_ip_api(const Packet* const p,
+                        ip::IpApi& api,
+                        uint8_t& next_ip_proto,
+                        int8_t& curr_layer)
+{
     if (curr_layer < 0 || curr_layer >= p->num_layers)
         return false;
+
+    if (is_ip6_extension(p->layers[curr_layer].prot_id))
+    {
+        const ip::IP6Extension* const ip6_ext =
+            reinterpret_cast<const ip::IP6Extension*>(p->layers[curr_layer].start);
+        next_ip_proto = ip6_ext->ip6e_nxt;
+        curr_layer--;
+    }
 
     do
     {
@@ -250,26 +284,38 @@ bool set_inner_ip_api(const Packet* const p,
 
         switch (lyr.prot_id)
         {
-            case ETHERTYPE_IPV4:
-            case IPPROTO_ID_IPIP:
-            {
-                const ip::IP4Hdr* ip4h =
-                    reinterpret_cast<const ip::IP4Hdr*>(lyr.start);
-                api.set(ip4h);
-                curr_layer--;
-                return true;
-            }
-            case ETHERTYPE_IPV6:
-            case IPPROTO_ID_IPV6:
-            {
-                const ip::IP6Hdr* ip6h =
-                    reinterpret_cast<const ip::IP6Hdr*>(lyr.start);
-                api.set(ip6h);
-                curr_layer--;
-                return true;
-            }
-            //default:
-                // don't care about this layer if its not IP.
+        case ETHERTYPE_IPV4:
+        case IPPROTO_ID_IPIP:
+        {
+            const ip::IP4Hdr* ip4h =
+                reinterpret_cast<const ip::IP4Hdr*>(lyr.start);
+            api.set(ip4h);
+            curr_layer--;
+            return true;
+        }
+
+        case ETHERTYPE_IPV6:
+        case IPPROTO_ID_IPV6:
+        {
+            const ip::IP6Hdr* ip6h =
+                reinterpret_cast<const ip::IP6Hdr*>(lyr.start);
+            api.set(ip6h);
+            curr_layer--;
+            return true;
+        }
+
+        case IPPROTO_ID_HOPOPTS:
+        case IPPROTO_ID_DSTOPTS:
+        case IPPROTO_ID_ROUTING:
+        case IPPROTO_ID_FRAGMENT:
+        case IPPROTO_ID_AUTH:
+        case IPPROTO_ID_ESP:
+        case IPPROTO_ID_MOBILITY:
+        case IPPROTO_ID_NONEXT:
+            break;
+
+        default:
+            next_ip_proto = lyr.prot_id;
         }
 
     } while (--curr_layer >= 0);
@@ -279,9 +325,45 @@ bool set_inner_ip_api(const Packet* const p,
 
 bool set_outer_ip_api(const Packet* const p,
                       ip::IpApi& api,
+                      uint8_t& ip_proto_next,
                       int8_t& curr_layer)
 {
-    uint8_t num_layers = p->num_layers;
+    if (set_outer_ip_api(p, api, curr_layer))
+    {
+        if (api.is_ip6())
+        {
+            const uint8_t num_layers = p->num_layers;
+
+            while(curr_layer < num_layers &&
+                is_ip6_extension(p->layers[curr_layer].prot_id))
+            {
+                curr_layer++;
+            }
+
+            // edge case.  Final layer is an IP6 extension.
+            if (curr_layer >= num_layers  &&
+                is_ip6_extension(p->layers[curr_layer].prot_id))
+            {
+                const ip::IP6Extension* const ip6_ext =
+                    reinterpret_cast<const ip::IP6Extension*>(p->layers[curr_layer].start);
+                ip_proto_next = ip6_ext->ip6e_nxt;
+                return true;
+            }
+        }
+
+        ip_proto_next = p->layers[curr_layer].prot_id;
+        return true;
+    }
+
+    return false;
+}
+
+
+bool set_outer_ip_api(const Packet* const p,
+                      ip::IpApi& api,
+                      int8_t& curr_layer)
+{
+    const uint8_t num_layers = p->num_layers;
     if (curr_layer < 0 || curr_layer >= num_layers)
         return false;
 
@@ -319,8 +401,6 @@ bool set_outer_ip_api(const Packet* const p,
 }
 
 
-
-
 bool set_api_ip_embed_icmp(Packet* const p)
 { return set_api_ip_embed_icmp(p, p->ptrs.ip_api); }
 
@@ -351,7 +431,6 @@ bool set_api_ip_embed_icmp(const Packet* p, ip::IpApi& api)
     api.reset();
     return false;
 }
-
 
 const tcp::TCPHdr* get_tcp_embed_icmp(const ip::IpApi& api)
 { return reinterpret_cast<const tcp::TCPHdr*>(api.ip_data()); }
