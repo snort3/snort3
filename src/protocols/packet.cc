@@ -62,7 +62,7 @@ uint8_t Packet::ip_proto_next() const
 
 bool Packet::get_ip_proto_next(uint8_t &lyr, uint8_t& proto) const
 {
-    if (lyr < 0 || lyr > num_layers)
+    if (lyr > num_layers)
         return false;
 
     while (lyr < num_layers)
