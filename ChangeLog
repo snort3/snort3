@@ -21,6 +21,11 @@
 -- commented out snort.process() and snort.reload_hosts() for alpha 1
 -- codec fix from Josh
 -- prevent repeated small chunk length alerts from HI
+-- fixed normalization config init
+-- fixed block etc. rule parsing
+-- added comment for binder bug
+-- fixed non-paf splitter init
+-- fixed splitter update calls
 
 126
 -- pulled latest from tom

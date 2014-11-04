@@ -553,7 +553,7 @@ int Norm_SetConfig (NormalizerConfig* nc)
     {
         return 0;
     }
-    if ( Norm_IsEnabled(nc, NORM_IP4) )
+    if ( Norm_IsEnabled(nc, (NormFlags)NORM_IP4_ANY) )
     {
         nc->normalizers[PacketManager::proto_id(ETHERTYPE_IPV4)] = Norm_IP4;
     }
@@ -561,7 +561,7 @@ int Norm_SetConfig (NormalizerConfig* nc)
     {
         nc->normalizers[PacketManager::proto_id(IPPROTO_ID_ICMPV4)] = Norm_ICMP4;
     }
-    if ( Norm_IsEnabled(nc, NORM_IP6) )
+    if ( Norm_IsEnabled(nc, (NormFlags)NORM_IP6_ANY) )
     {
         nc->normalizers[PacketManager::proto_id(IPPROTO_ID_IPV6)] = Norm_IP6;
         nc->normalizers[PacketManager::proto_id(IPPROTO_ID_HOPOPTS)] = Norm_IP6_Opts;
@@ -571,7 +571,7 @@ int Norm_SetConfig (NormalizerConfig* nc)
     {
         nc->normalizers[PacketManager::proto_id(IPPROTO_ID_ICMPV6)] = Norm_ICMP6;
     }
-    if ( Norm_IsEnabled(nc, NORM_TCP) )
+    if ( Norm_IsEnabled(nc, (NormFlags)NORM_TCP_ANY) )
     {
         nc->normalizers[PacketManager::proto_id(IPPROTO_ID_TCP)] = Norm_TCP;
     }
