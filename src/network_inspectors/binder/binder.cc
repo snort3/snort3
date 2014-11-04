@@ -466,6 +466,7 @@ void Binder::set_binding(SnortConfig* sc, Binding* pb)
         ParseError("can't bind %s", key);
 }
 
+// FIXIT-H alerts fire on blocked and allowed flows
 // FIXIT-P this is a simple linear search until functionality is nailed
 // down.  performance should be the focus of the next iteration.
 void Binder::get_bindings(Flow* flow, Stuff& stuff)

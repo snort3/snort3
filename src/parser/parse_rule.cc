@@ -1344,7 +1344,10 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
         return;
     }
     else
+    {
+        s = get_action_string(rtn.type);
         rtn.listhead = get_rule_list(sc, s);
+    }
 
     if ( !rtn.listhead )
         ParseError("unconfigured rule action '%s'", s);
