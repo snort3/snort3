@@ -28,6 +28,7 @@
 -- fixed splitter update calls
 -- fixed boyer-moore init
 -- removed content extract var cruft
+-- latest from Josh
 
 126
 -- pulled latest from tom
