@@ -83,14 +83,14 @@ struct TCPHdr
     uint16_t th_urp;       /* urgent pointer */
 
     /* Fomatted data access and booleans */
-    inline uint8_t hdr_len() const
+    inline uint8_t hlen() const
     { return (th_offx2 & 0xf0) >> 2; }
 
     inline uint8_t off() const
     { return (th_offx2 & 0xf0) >> 2; }
 
     inline uint8_t options_len() const
-    { return hdr_len() - TCP_MIN_HEADER_LEN; }
+    { return hlen() - TCP_MIN_HEADER_LEN; }
 
     inline uint16_t src_port() const
     { return ntohs(th_sport); }
@@ -142,7 +142,7 @@ struct TCPHdr
     inline uint32_t raw_seq() const
     { return th_seq; }
 
-    inline uint8_t raw_hdr_len() const
+    inline uint8_t raw_hlen() const
     { return th_offx2 >> 4; }
 
     inline uint16_t raw_win() const

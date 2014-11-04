@@ -27,7 +27,8 @@
 // these control protocol specific normalizations all are enables except
 // tcp_urp which is enabled with tcp core and disabled explicitly.
 
-typedef enum {
+typedef enum
+{
     NORM_IP4             = 0x00000001, // core ip4 norms
   //NORM_IP4_ID          = 0x00000002, // tbd:  encrypt ip id
     NORM_IP4_DF          = 0x00000004, // clear df
@@ -50,6 +51,12 @@ typedef enum {
 } NormFlags;
 
 bool Normalize_IsEnabled(NormFlags);
+
+#define NORM_IP4_ANY (NORM_IP4|NORM_IP4_DF|NORM_IP4_RF|NORM_IP4_TTL)
+#define NORM_IP6_ANY (NORM_IP6|NORM_IP6_TTL)
+#define NORM_TCP_ANY \
+    (NORM_TCP|NORM_TCP_ECN_PKT|NORM_TCP_ECN_STR|NORM_TCP_URP| \
+     NORM_TCP_OPT|NORM_TCP_IPS|NORM_IP4_TOS|NORM_IP4_TRIM|NORM_TCP_TRIM)
 
 #endif
 

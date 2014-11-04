@@ -157,7 +157,7 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     /* lay TCP on top of the data cause there is enough of it! */
     const tcp::TCPHdr* tcph = reinterpret_cast<const tcp::TCPHdr*>(raw.data);
-    const uint16_t tcph_len = tcph->hdr_len();
+    const uint16_t tcph_len = tcph->hlen();
 
     if(tcph_len < tcp::TCP_MIN_HEADER_LEN)
     {
@@ -283,13 +283,13 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
 
     /* if options are present, decode them */
-    uint16_t tcp_opt_len = (uint16_t)(tcph->hdr_len() - tcp::TCP_MIN_HEADER_LEN);
+    uint16_t tcp_opt_len = (uint16_t)(tcph->hlen() - tcp::TCP_MIN_HEADER_LEN);
 
     if(tcp_opt_len > 0)
         DecodeTCPOptions((uint8_t *) (raw.data + tcp::TCP_MIN_HEADER_LEN), tcp_opt_len, codec);
 
 
-    int dsize = raw.len - tcph->hdr_len();
+    int dsize = raw.len - tcph->hlen();
     if (dsize < 0)
         dsize = 0;
 
@@ -713,7 +713,7 @@ bool TcpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
     tcp::TCPHdr* h = reinterpret_cast<tcp::TCPHdr*>(const_cast<uint8_t*>(lyr->start));
 
-    *len += h->hdr_len();
+    *len += h->hlen();
 
     if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) )
     {

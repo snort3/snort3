@@ -78,7 +78,7 @@ void Comments::add_sorted_text(std::string new_text)
 
 bool Comments::empty() const
 {
-    return ((comment.size() == 0) ||
+    return ((comment.empty()) ||
             (comment.size() == 1 && header));
 }
 bool Comments::size() const

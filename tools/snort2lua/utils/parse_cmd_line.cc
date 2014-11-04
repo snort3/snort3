@@ -261,7 +261,7 @@ static void parse_rule_file(const char* key, const char* val)
     else
     {
         found_rule_file = true;
-        out_file = std::string(val);
+        rule_file = std::string(val);
     }
 }
 
