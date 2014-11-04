@@ -81,24 +81,6 @@ static inline const uint8_t* find_inner_layer(const Layer* lyr,
     return nullptr;
 }
 
-static inline bool is_ip6_extension(const uint8_t proto)
-{
-    switch(proto)
-    {
-    case IPPROTO_ID_HOPOPTS:
-    case IPPROTO_ID_DSTOPTS:
-    case IPPROTO_ID_ROUTING:
-    case IPPROTO_ID_FRAGMENT:
-    case IPPROTO_ID_AUTH:
-    case IPPROTO_ID_ESP:
-    case IPPROTO_ID_MOBILITY:
-    case IPPROTO_ID_NONEXT:
-        return true;
-    default:
-        return false;
-    }
-}
-
 void set_packet_pointer(const Packet* const curr_pkt)
 { p = curr_pkt; }
 

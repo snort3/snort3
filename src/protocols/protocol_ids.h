@@ -98,4 +98,22 @@ constexpr uint16_t ETHERTYPE_PPP = 0x880B;
 constexpr uint16_t ETHERTYPE_EAPOL = 0x888e;
 
 
+static inline bool is_ip6_extension(const uint8_t proto)
+{
+    switch(proto)
+    {
+    case IPPROTO_ID_HOPOPTS:
+    case IPPROTO_ID_DSTOPTS:
+    case IPPROTO_ID_ROUTING:
+    case IPPROTO_ID_FRAGMENT:
+    case IPPROTO_ID_AUTH:
+    case IPPROTO_ID_ESP:
+    case IPPROTO_ID_MOBILITY:
+    case IPPROTO_ID_NONEXT:
+        return true;
+    default:
+        return false;
+    }
+}
+
 #endif
