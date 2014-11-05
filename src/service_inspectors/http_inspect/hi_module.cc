@@ -284,6 +284,7 @@ static const Parameter hi_server_params[] =
     { "chunk_length", Parameter::PT_INT, "1:", "500000",
       "alert on chunk lengths greater than specified" },
 
+    // FIXIT-M this is backwards: 0 should mean nothing; -1 all
     { "client_flow_depth", Parameter::PT_INT, "-1:1460", "0",
       "raw request payload to inspect" },
 

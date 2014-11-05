@@ -111,6 +111,11 @@ static TokenType get_token(
                 comments++;
                 state = 1;
             }
+            else if ( c == '/' )
+            {
+                s = c;
+                state = 10;
+            }
             else if ( c == '[' )
             {
                 s += c;
@@ -233,6 +238,52 @@ static TokenType get_token(
         case 9:  // token escape
             s += c;
             state = 6;
+            break;
+        case 10:  // start of comment?
+            if ( c == '*' )
+            {
+                s.clear();
+                state = 11;
+                break;
+            }
+            keys++;
+            // now as if state == 6
+            if ( esc && c == '\\' )
+            {
+                state = 9;
+            }
+            else if ( isspace(c) || strchr(punct, c) )
+            {
+                prev = c;
+                return TT_LITERAL;
+            }
+            else
+            {
+                s += c;
+                state = 6;
+            }
+            break;
+        case 11:  // /* comment */
+            if ( c == '*' )
+                state = 12;
+            else if ( c == '"' )
+                state = 13;
+            break;
+        case 12:  // end of comment?
+            if ( c == '/' )
+            {
+                comments++;
+                state = 0;
+            }
+            break;
+        case 13:  // quoted string in comment
+            if ( c == '"' )
+                state = 11;
+            else if ( c == '\n' )
+            {
+                ParseWarning("line break in commented string on line %d\n", lines-1);
+                state = 11;
+            }
             break;
         }
         c = is.get();

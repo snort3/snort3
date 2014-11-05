@@ -29,6 +29,7 @@
 -- fixed boyer-moore init
 -- removed content extract var cruft
 -- latest from Josh
+-- initial /* comments */ for text rules (needs to ignore \")
 
 126
 -- pulled latest from tom
