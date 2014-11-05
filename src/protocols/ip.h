@@ -121,8 +121,9 @@ public:
     inline uint8_t proto() const
     { return ip4h ? ip4h->proto() : ip6h ? ip6h->next() : 0xFF; }
 
-    // NOTE:  ipv4 len contains header, ipv6 header does not. If you
-    //        want a standard, use dgram_len() or pay_len() instead.
+    // NOTE:  ipv4 len contains header while an ipv6 header does not. If you
+    //        want a length, use 'dgram_len() == length with header' or
+    //        'pay_len() == length without header' instead.
 //    inline uint16_t len() const
 //    { return ip4h ? ip4h->len() : ip6h ? ip6h->len() : 0; }
 
@@ -142,7 +143,7 @@ public:
 
     // only relevent to IP4.
     inline const uint8_t* get_ip_opt_data() const
-    { return ip4h ? reinterpret_cast<const uint8_t*>(ip4h + IP4_HEADER_LEN) : nullptr; }
+    { return ip4h ? reinterpret_cast<const uint8_t*>(ip4h) + IP4_HEADER_LEN : nullptr; }
 
     inline const snort_in6_addr* get_ip6_src() const
     { return ip6h ? ip6h->get_src() : nullptr; }

@@ -218,19 +218,20 @@ struct SO_PUBLIC Packet
      * NOTE: Will only return protocols of validly decoded layers.
      *
      * PARAMS:
-     *          lyr - zero based layer from which to start searching outward.
-     *                  will always point to an IP protocol or IP extension.
+     *          lyr - zero based layer from which to start searching inward.
+     *                  will always point to the layer after an IP header or
+     *                  IPv6 extension.
      *          proto - the ip_proto (read above) for the next, outermost IP layer
      * EXAMPLE:
      *
      * uint8_t ip_proto;
-     * int lyr = p->num_layers - 1;
+     * int lyr = 0
      * while ( ip_proto_next(lyr, ip_proto))
      * {
      *    ....
      * }
      */
-    bool get_ip_proto_next(int &lyr, uint8_t& proto) const;
+    bool get_ip_proto_next(uint8_t &lyr, uint8_t& proto) const;
 
     inline void reset()
     {

@@ -22,27 +22,6 @@
 #include "protocols/protocol_ids.h"
 
 
-static inline bool is_ip_protocol(const uint16_t proto)
-{
-    switch(proto)
-    {
-    case IPPROTO_ID_HOPOPTS:
-    case IPPROTO_ID_DSTOPTS:
-    case IPPROTO_ID_ROUTING:
-    case IPPROTO_ID_FRAGMENT:
-    case IPPROTO_ID_AUTH:
-    case IPPROTO_ID_ESP:
-    case IPPROTO_ID_MOBILITY:
-    case IPPROTO_ID_IPIP:
-    case IPPROTO_ID_IPV6:
-    case ETHERTYPE_IPV4:
-    case ETHERTYPE_IPV6:
-        return true;
-    default:
-        return false;
-    }
-}
-
 #if 0
 uint8_t Packet::ip_proto_next() const
 {
@@ -81,27 +60,36 @@ uint8_t Packet::ip_proto_next() const
 }
 #endif
 
-// FIXIT-L J  --  this loop will be changed to go from the outside
-//                  to search inward. Every location which uses this
-//                  must be changed!
-bool Packet::get_ip_proto_next(int &lyr, uint8_t& proto) const
+bool Packet::get_ip_proto_next(uint8_t &lyr, uint8_t& proto) const
 {
-    if (lyr < 0)
+    if (lyr > num_layers)
         return false;
 
-    // lyr[0] will always return false
-    // -- this logic will be updated during fix.
-    while (is_ip_protocol(layers[lyr].prot_id))
-        --lyr;
-
-    while (lyr >= 0)
+    while (lyr < num_layers)
     {
-        if (is_ip_protocol(layers[lyr].prot_id))
-            return true;
-        else
-            proto = layers[lyr].prot_id;
+        switch(layers[lyr].prot_id)
+        {
+        case IPPROTO_ID_IPIP:
+        case IPPROTO_ID_IPV6:
+        case ETHERTYPE_IPV4:
+        case ETHERTYPE_IPV6:
+            // move past this IP layer and any IPv6 extensions.
+            while (++lyr < num_layers && is_ip6_extension(layers[lyr].prot_id));
 
-        --lyr;
+            if (lyr >= num_layers)
+            {
+                return false;
+            }
+            else
+            {
+                proto = layers[lyr].prot_id;
+                return true;
+            }
+
+        default:
+            ++lyr;
+        }
+
     }
 
     return false;
