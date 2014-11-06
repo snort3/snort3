@@ -34,6 +34,16 @@
 #include "log/messages.h"
 #include "protocols/packet.h"
 
+/* max frags in a single frag tracker */
+#define DEFAULT_MAX_FRAGS 8192
+
+/* default frag timeout, 90-120 might be better values, can we do
+ * engine-based quanta?  */
+#define FRAG_PRUNE_QUANTA  60
+
+/* min acceptable ttl */
+#define FRAG3_MIN_TTL       1
+
 //-------------------------------------------------------------------------
 // helpers
 //-------------------------------------------------------------------------
@@ -41,6 +51,14 @@
 StreamIpConfig::StreamIpConfig()
 {
     session_timeout = 60;
+
+    frag_engine.frag_policy = FRAG_POLICY_DEFAULT;
+    frag_engine.max_frags = DEFAULT_MAX_FRAGS;
+    frag_engine.frag_timeout = FRAG_PRUNE_QUANTA;
+    frag_engine.min_ttl = FRAG3_MIN_TTL;
+
+    frag_engine.max_overlaps = 0;
+    frag_engine.min_fragment_length = 0;
 }
 
 static void ip_show (StreamIpConfig* pc)
