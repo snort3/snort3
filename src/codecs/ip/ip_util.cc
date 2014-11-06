@@ -26,23 +26,6 @@
 namespace ip_util
 {
 
-
-constexpr int IPV6_ORDER_MAX = 7;
-static inline int IPV6ExtensionOrder(uint8_t type)
-{
-    switch (type)
-    {
-        case IPPROTO_ID_HOPOPTS:   return 1;
-        case IPPROTO_ID_DSTOPTS:   return 2;
-        case IPPROTO_ID_ROUTING:   return 3;
-        case IPPROTO_ID_FRAGMENT:  return 4;
-        case IPPROTO_ID_AUTH:      return 5;
-        case IPPROTO_ID_ESP:       return 6;
-        default:                   return IPV6_ORDER_MAX;
-    }
-}
-
-
 bool CheckIPV6HopOptions(const RawData& raw, const CodecData& codec)
 {
     const ip::IP6Extension* const exthdr =
@@ -98,18 +81,19 @@ bool CheckIPV6HopOptions(const RawData& raw, const CodecData& codec)
 /* Check for out-of-order IPv6 Extension Headers */
 void CheckIPv6ExtensionOrder(CodecData& codec, const uint8_t proto)
 {
-    const uint8_t current_order = IPV6ExtensionOrder(proto);
-    const uint8_t next_order = IPV6ExtensionOrder(codec.next_prot_id);
+    const uint8_t current_order = ip::IPV6ExtensionOrder(proto);
 
     if (current_order <= codec.curr_ip6_extension)
     {
+        const uint8_t next_order = ip::IPV6ExtensionOrder(codec.next_prot_id);
+
         /* A second "Destination Options" header is allowed iff:
            1) A routing header was already seen, and
            2) The second destination header is the last one before the upper layer.
         */
         if (!((codec.codec_flags & CODEC_ROUTING_SEEN) &&
               (proto == IPPROTO_ID_DSTOPTS) &&
-              (next_order == IPV6_ORDER_MAX)))
+              (next_order == ip::IPV6_ORDER_MAX)))
         {
             codec_events::decoder_event(codec, DECODE_IPV6_UNORDERED_EXTENSIONS);
         }
@@ -122,44 +106,6 @@ void CheckIPv6ExtensionOrder(CodecData& codec, const uint8_t proto)
     if (proto == IPPROTO_ID_ROUTING)
         codec.codec_flags |= CODEC_ROUTING_SEEN;
 }
-
-#if 0
-// FIXIT-M Delete after testing.  Currently comment for reference
-/* Check for out-of-order IPv6 Extension Headers */
-void CheckIPv6ExtensionOrder(Packet *p)
-{
-    int routing_seen = 0;
-    int current_type_order, next_type_order, i;
-
-    if (p->ip6_extension_count > 0)
-        current_type_order = IPV6ExtensionOrder(p->ip6_extensions[0].type);
-
-    for (i = 1; i < (p->ip6_extension_count); i++)
-    {
-        next_type_order = IPV6ExtensionOrder(p->ip6_extensions[i].type);
-
-        if (p->ip6_extensions[i].type == IPPROTO_ROUTING)
-            routing_seen = 1;
-
-        if (next_type_order <= current_type_order)
-        {
-            /* A second "Destination Options" header is allowed iff:
-               1) A routing header was already seen, and
-               2) The second destination header is the last one before the upper layer.
-            */
-            if (!routing_seen ||
-                !(p->ip6_extensions[i].type == IPPROTO_DSTOPTS) ||
-                !(i+1 == p->ip6_extension_count))
-            {
-                codec_events::decoder_event(codec, DECODE_IPV6_UNORDERED_EXTENSIONS);
-            }
-        }
-
-        current_type_order = next_type_order;
-    }
-}
-#endif
-
 
 } // namespace ipv6_util
 

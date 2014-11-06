@@ -201,7 +201,7 @@ void FullLogger::alert(Packet *p, const char *msg, Event *event)
         }
     }
 
-    if(p && p->ptrs.ip_api.is_valid())
+    if(p && p->has_ip())
     {
         LogPriorityData(full_log, event, true);
     }
@@ -210,7 +210,7 @@ void FullLogger::alert(Packet *p, const char *msg, Event *event)
 
     LogTimeStamp(full_log, p);
 
-    if(p && p->ptrs.ip_api.is_valid())
+    if(p && p->has_ip())
     {
         /* print the packet header to the alert file */
 
@@ -222,7 +222,7 @@ void FullLogger::alert(Packet *p, const char *msg, Event *event)
         LogIPHeader(full_log, p);
 
         /* if this isn't a fragment, print the other header info */
-        if(!(p->ptrs.decode_flags & DECODE_FRAG))
+        if(!(p->is_fragment()))
         {
             switch(p->type())
             {

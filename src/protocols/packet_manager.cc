@@ -167,14 +167,6 @@ void PacketManager::decode(
     uint16_t prev_prot_id = FINISHED_DECODE;
     uint8_t mapped_prot = CodecManager::grinder;
 
-    // initialize all Packet information
-    memset(p, 0, PKT_ZERO_LEN);
-    p->pkth = pkthdr;
-    p->pkt = pkt;
-    p->ptrs.reset();
-    layer::set_packet_pointer(p);
-
-
     RawData raw;
     raw.data = pkt;
     raw.len = pkthdr->caplen;
@@ -182,6 +174,15 @@ void PacketManager::decode(
 
     if (p->packet_flags & PKT_REBUILT_STREAM)
         codec_data.codec_flags |= CODEC_STREAM_REBUILT;
+
+
+    // initialize all Packet information
+    memset(p, 0, PKT_ZERO_LEN);
+    p->pkth = pkthdr;
+    p->pkt = pkt;
+    p->ptrs.reset();
+    layer::set_packet_pointer(p);
+
 
     MODULE_PROFILE_START(decodePerfStats);
     s_stats[total_processed]++;
@@ -650,8 +651,25 @@ int PacketManager::encode_format_with_daq_info (
     {
         num_layers = layer::get_inner_ip_lyr_index(p) + 1;
 
-        // TBD:  is this an extraneous check?
+        // FIXIT-L:  is this an extraneous check?
         if (num_layers == 0)
+            return -1;
+    }
+    else if ( f & ENC_FLAG_DEF )
+    {
+        /*
+         * By its definitinos, this flag means 'stop before innermost ip4
+         * opts or ip6 frag header'. So, stop after the ip4 layer IP4 will format itself, and now
+         * we ensure that the ip6_frag header is not copied too.
+         */
+
+        if ( p->is_ip4() )
+            num_layers = layer::get_inner_ip_lyr_index(p) + 1;
+        else
+            num_layers = layer::get_inner_ip6_frag_index(p);
+
+
+        if (num_layers <= 0)
             return -1;
     }
 

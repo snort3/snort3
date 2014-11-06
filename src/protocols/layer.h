@@ -26,7 +26,8 @@
 #include "main/snort_types.h"
 
 
-struct Layer {
+struct Layer
+{
     const uint8_t* start;
     uint16_t prot_id;
     uint16_t length;
@@ -123,6 +124,10 @@ SO_PUBLIC int get_inner_ip_lyr_index(const Packet* const p);
 // header will be removed once layer is a part of the Packet struct
 SO_PUBLIC const ip::IP6Frag* get_inner_ip6_frag();
 SO_PUBLIC const ip::IP6Frag* get_inner_ip6_frag(const Packet* const p);
+
+// returns -1 on failure if no frag layer exists.
+// else, returns zero based ip6 index
+SO_PUBLIC int get_inner_ip6_frag_index(const Packet* const p);
 
 
 

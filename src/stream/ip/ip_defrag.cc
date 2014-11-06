@@ -974,31 +974,29 @@ static void FragRebuild(FragTracker *ft, Packet *p)
     }
     else /* Inner/only is IP6 */
     {
-        ip::IP6Hdr* const rawHdr =
-            const_cast<ip::IP6Hdr* const>(dpkt->ptrs.ip_api.get_ip6h());
-
-        if ( !rawHdr )
+        if ( !p->is_ip6() )
         {
             /*XXX: Log message, failed to copy */
             ft->frag_flags = ft->frag_flags | FRAG_REBUILT;
             return;
         }
 
-        /* IPv6 Header is already copied over, as are all of the extensions
-         * that were not part of the fragmented piece. */
-        ip::IP6Frag* const fragh =
-            const_cast<ip::IP6Frag* const>(layer::get_inner_ip6_frag(dpkt));
+        const Layer& lyr = dpkt->layers[dpkt->num_layers-1];
 
-        /* Set the 'next' protocol */
-        if (fragh != nullptr)
+        if ((lyr.prot_id == ETHERTYPE_IPV6) || (lyr.prot_id == IPPROTO_ID_IPV6))
         {
-            fragh->ip6f_nxt = ft->protocol;
-            fragh->ip6f_offlg = 0x0000;
+            ip::IP6Hdr* const rawHdr =
+                const_cast<ip::IP6Hdr* const>(dpkt->ptrs.ip_api.get_ip6h());
+            rawHdr->ip6_next = ft->protocol;
         }
         else
         {
-            rawHdr->ip6_next = ft->protocol;
+            ip::IP6Extension* const ip6_ext = const_cast<ip::IP6Extension*>(
+                reinterpret_cast<const ip::IP6Extension*>(lyr.start));
+
+            ip6_ext->ip6e_nxt = ft->protocol;
         }
+
 
         dpkt->dsize = (uint16_t)ft->calculated_size;
         PacketManager::encode_update(dpkt);
@@ -1322,7 +1320,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
 
     // preconditions - what we registered for
     assert(p->ptrs.ip_api.is_valid() && !(p->ptrs.decode_flags & DECODE_ERR_CKSUM_IP));
-    assert(p->ptrs.decode_flags & DECODE_FRAG);
+    assert(p->is_fragment());
 
     const uint16_t frag_offset = p->ptrs.ip_api.off();
 

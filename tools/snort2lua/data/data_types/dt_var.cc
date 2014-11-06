@@ -58,13 +58,37 @@ std::string Variable::get_value(DataApi* ld)
     return variable;
 }
 
+
 // does this need a new variable?
 bool Variable::add_value(std::string elem)
 {
-    std::string s(elem);
+    std::string s;
+    std::string end;
     util::trim(elem);
 
-    // FIXIT-M J.  Variables do not need to start with a '$'/  for instance. !$HOME_NET
+
+    if (elem.size() <= 1)
+    {
+        s = elem;
+        end = "";
+    }
+    else
+    {
+        const std::size_t pos = elem.find('$', 1);
+        if (pos == std::string::npos)
+        {
+            s = elem;
+            end = "";
+        }
+        else
+        {
+            s = elem.substr(0, pos);
+            end = elem.substr(pos, std::string::npos);
+        }
+
+    }
+
+
     if(s.front() == '$')
     {
         // add a space between strings
@@ -99,6 +123,9 @@ bool Variable::add_value(std::string elem)
         vd->data = s;
         vars.push_back(vd);
     }
+
+    if (!end.empty())
+        return add_value(end);
 
     return true;
 }
