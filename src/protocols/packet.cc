@@ -72,7 +72,7 @@ bool Packet::get_ip_proto_next(uint8_t &lyr, uint8_t& proto) const
         case IPPROTO_ID_IPV6:
         case ETHERTYPE_IPV6:
             // move past this IP layer and any IPv6 extensions.
-            while ( ((lyr + 1) < num_layers) && is_ip6_extension(layers[lyr].prot_id) )
+            while ( ((lyr + 1) < num_layers) && is_ip6_extension(layers[lyr+1].prot_id) )
                 ++lyr;
 
             if ( (layers[lyr].prot_id == IPPROTO_ID_IPV6) || (layers[lyr].prot_id == ETHERTYPE_IPV6) )

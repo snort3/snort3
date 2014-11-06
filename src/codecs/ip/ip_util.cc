@@ -107,43 +107,5 @@ void CheckIPv6ExtensionOrder(CodecData& codec, const uint8_t proto)
         codec.codec_flags |= CODEC_ROUTING_SEEN;
 }
 
-#if 0
-// FIXIT-M Delete after testing.  Currently comment for reference
-/* Check for out-of-order IPv6 Extension Headers */
-void CheckIPv6ExtensionOrder(Packet *p)
-{
-    int routing_seen = 0;
-    int current_type_order, next_type_order, i;
-
-    if (p->ip6_extension_count > 0)
-        current_type_order = IPV6ExtensionOrder(p->ip6_extensions[0].type);
-
-    for (i = 1; i < (p->ip6_extension_count); i++)
-    {
-        next_type_order = IPV6ExtensionOrder(p->ip6_extensions[i].type);
-
-        if (p->ip6_extensions[i].type == IPPROTO_ROUTING)
-            routing_seen = 1;
-
-        if (next_type_order <= current_type_order)
-        {
-            /* A second "Destination Options" header is allowed iff:
-               1) A routing header was already seen, and
-               2) The second destination header is the last one before the upper layer.
-            */
-            if (!routing_seen ||
-                !(p->ip6_extensions[i].type == IPPROTO_DSTOPTS) ||
-                !(i+1 == p->ip6_extension_count))
-            {
-                codec_events::decoder_event(codec, DECODE_IPV6_UNORDERED_EXTENSIONS);
-            }
-        }
-
-        current_type_order = next_type_order;
-    }
-}
-#endif
-
-
 } // namespace ipv6_util
 
