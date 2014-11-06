@@ -761,7 +761,7 @@ DAQ_Verdict ProcessPacket(
         p->proto_bits = PROTO_BIT__OTHER;
 
 #if 0
-    // FIXIT-H-J required until decoders are fixed
+    // FIXIT-H  This should be deleted
     else if ( !p->family && (p->proto_bits & PROTO_BIT__IP) )
         p->proto_bits &= ~PROTO_BIT__IP;
 #endif

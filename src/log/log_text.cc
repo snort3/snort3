@@ -549,11 +549,10 @@ void LogIpOptions(TextLog*  log, const IP4Hdr* ip4h, const Packet* const p)
  */
 void LogIpAddrs(TextLog *log, Packet *p)
 {
-    if (!p->ptrs.ip_api.is_valid())
+    if (!p->has_ip())
         return;
 
-    if ((p->ptrs.decode_flags & DECODE_FRAG)
-           || ( !p->is_tcp() && !p->is_udp()))
+    if ( p->is_fragment() || ( !p->is_tcp() && !p->is_udp()))
     {
         const char *ip_fmt = "%s -> %s";
 
@@ -688,7 +687,7 @@ void LogIPHeader(TextLog*  log, Packet * p)
     }
 
     /* print fragment info if necessary */
-    if(p->ptrs.decode_flags & DECODE_FRAG)
+    if( p->is_fragment() )
     {
 #ifdef REG_TEST
         frag_off = (frag_off >> 3);

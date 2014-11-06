@@ -198,6 +198,9 @@ struct SO_PUBLIC Packet
     inline bool is_cooked() const
     { return packet_flags & PKT_PSEUDO; }
 
+    inline bool is_fragment() const
+    { return ptrs.decode_flags & DECODE_FRAG; }
+
     /* Get general, non-boolean information */
     inline PktType type() const
     { return ptrs.get_pkt_type(); } // defined in codec.h

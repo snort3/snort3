@@ -630,7 +630,7 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     }
 
 
-    if( p->ptrs.decode_flags & DECODE_FRAG)
+    if( p->is_fragment() )
     {
         TextLog_NewLine(text_log);
         TextLog_Putc(text_log, '\t');

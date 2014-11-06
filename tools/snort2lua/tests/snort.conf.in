@@ -6,6 +6,8 @@
 #       way since Snort2lua expect a valid snort configuration
 #
 
+alert tcp any any -> any any ( msg:"First Cookie"; content:"OvCgi",http_uri; content:"AcceptLang=en-usaAAAA",http_cookie,nocase; sid:11111111; )
+
 
 ###################################################
 # Step #1: Set the network variables.  For more information, see README.variables

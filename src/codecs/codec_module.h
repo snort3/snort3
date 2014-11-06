@@ -24,7 +24,7 @@
 
 #include "framework/module.h"
 
-const int GID_DECODE = 116;
+constexpr int GID_DECODE = 116;
 
 //-----------------------------------------------------
 // remember to add rules to preproc_rules/decoder.rules
