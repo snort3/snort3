@@ -78,6 +78,22 @@ static const Command snort_cmds[] =
 #endif
 
 //-------------------------------------------------------------------------
+// why not
+//-------------------------------------------------------------------------
+
+static void c2x(const char* s)
+{
+    printf("'%c' = 0x%2.2X (%d)\n", s[0], s[0], s[0]);
+    exit(0);
+}
+
+static void x2c(unsigned x)
+{
+    printf("0x%2.2X (%d) = '%c'\n", x, x, x);
+    exit(0);
+}
+
+//-------------------------------------------------------------------------
 // parameters
 //-------------------------------------------------------------------------
 
@@ -215,6 +231,9 @@ static const Parameter s_params[] =
 
     { "--bpf", Parameter::PT_STRING, nullptr, nullptr,
       "<filter options> are standard BPF options, as seen in TCPDump" },
+
+    { "--c2x", Parameter::PT_STRING, nullptr, nullptr,
+      "output hex for given char" },
 
     { "--create-pidfile", Parameter::PT_IMPLIED, nullptr, nullptr,
       "create PID file, even when not in Daemon mode" },
@@ -406,6 +425,9 @@ static const Parameter s_params[] =
     { "--warn-unknown", Parameter::PT_IMPLIED, nullptr, nullptr,
       "warn about unknown symbols in your config" },
 
+    { "--x2c", Parameter::PT_INT, nullptr, nullptr,
+      "output ASCII char for given hex" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -570,6 +592,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--bpf") )
         sc->bpf_filter = SnortStrdup(v.get_string());
+
+    else if ( v.is("--c2x") )
+        c2x(v.get_string());
 
     else if ( v.is("--create-pidfile") )
         ConfigCreatePidFile(sc, v.get_string());
@@ -753,6 +778,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--warn-unknown") )
         sc->logging_flags |= LOGGING_FLAG__WARN_UNKNOWN;
+
+    else if ( v.is("--x2c") )
+        x2c(v.get_long());
 
 #ifdef REG_TEST
     else if ( !v.is("-N") )
