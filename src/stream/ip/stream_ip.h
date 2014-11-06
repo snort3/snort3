@@ -31,6 +31,23 @@
 
 #include "flow/flow.h"
 
+/* engine-based defragmentation policy enums */
+// must update parameter in defrag_module.cc if this changes
+enum
+{
+    FRAG_POLICY_FIRST = 1,
+    FRAG_POLICY_LINUX,
+    FRAG_POLICY_BSD,
+    FRAG_POLICY_BSD_RIGHT,
+    FRAG_POLICY_LAST,
+/* Combo of FIRST & LAST, depending on overlap situation. */
+    FRAG_POLICY_WINDOWS,
+/* Combo of FIRST & LAST, depending on overlap situation. */
+    FRAG_POLICY_SOLARIS
+};
+
+#define FRAG_POLICY_DEFAULT FRAG_POLICY_LINUX
+
 struct FragEngine
 {
     uint32_t max_frags;

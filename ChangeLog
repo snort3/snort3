@@ -33,6 +33,7 @@
 -- latest from Josh
 -- added --c2x and --x2c since i'm tired of looking this stuff up!
 -- added hi event squelch
+-- fixed stream_ip defaults
 
 126
 -- pulled latest from tom
