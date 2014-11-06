@@ -1542,6 +1542,7 @@ int fpEvalPacket(Packet *p)
 
 }
 
+// FIXIT-M delete this - see fpAddIpProtoOnlyRule() for details
 void fpEvalIpProtoOnlyRules(Packet *p, uint8_t proto_id)
 {
     if ((p != NULL) && p->has_ip())
