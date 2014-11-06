@@ -607,28 +607,28 @@ static inline int xton (int c)
 
 static inline void hi_paf_event_post ()
 {
-    SnortEventqAdd(
+    hi_set_event(
         GID_HTTP_CLIENT,
         HI_CLIENT_UNBOUNDED_POST);
 }
 
 static inline void hi_paf_event_simple ()
 {
-    SnortEventqAdd(
+    hi_set_event(
         GID_HTTP_CLIENT,
         HI_CLIENT_SIMPLE_REQUEST);
 }
 
 static inline void hi_paf_event_msg_size ()
 {
-    SnortEventqAdd(
+    hi_set_event(
         GID_HTTP_SERVER,
         HI_CLISRV_MSG_SIZE_EXCEPTION);
 }
 
 static inline void hi_paf_event_pipe ()
 {
-    SnortEventqAdd(
+    hi_set_event(
         GID_HTTP_CLIENT,
         HI_CLIENT_PIPELINE_MAX);
 }

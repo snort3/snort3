@@ -229,7 +229,7 @@ static int UDecode(HI_SESSION *session, const u_char *start,
 
             if ( !norm_state->param )
             {
-                SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_IIS_UNICODE);
+                hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_IIS_UNICODE);
             }
             *encodeType |= HTTP_ENCODE_TYPE__IIS_UNICODE;
         }
@@ -246,7 +246,7 @@ static int UDecode(HI_SESSION *session, const u_char *start,
     */
     if( !norm_state->param )
     {
-        SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_U_ENCODE);
+        hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_U_ENCODE);
     }
 
     byte_decoded = true;
@@ -387,7 +387,7 @@ static int PercentDecode(HI_SESSION *session, const u_char *start,
 
     if( !norm_state->param )
     {
-        SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_ASCII);
+        hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_ASCII);
     }
 
     return iNorm;
@@ -456,7 +456,7 @@ static int GetChar(HI_SESSION *session, const u_char *start,
             *encodeType |= HTTP_ENCODE_TYPE__BARE_BYTE;
             if ( !norm_state->param )
             {
-                SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_BARE_BYTE);
+                hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_BARE_BYTE);
             }
 
             /*
@@ -592,7 +592,7 @@ static int UTF8Decode(HI_SESSION *session, const u_char *start,
 
             if ( !norm_state->param )
             {
-                SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_IIS_UNICODE);
+                hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_IIS_UNICODE);
             }
             *encodeType |= HTTP_ENCODE_TYPE__IIS_UNICODE;
 
@@ -611,7 +611,7 @@ static int UTF8Decode(HI_SESSION *session, const u_char *start,
 
     if ( !norm_state->param )
     {
-        SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_UTF_8);
+        hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_UTF_8);
     }
 
     return iNorm;
@@ -795,7 +795,7 @@ static int DoubleDecode(HI_SESSION *session, const u_char *start,
 
     if( !norm_state->param )
     {
-        SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_DOUBLE_DECODE);
+        hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_DOUBLE_DECODE);
     }
     byte_decoded = true;
 
@@ -857,7 +857,7 @@ static int GetDecodedByte(HI_SESSION *session, const u_char *start,
     {
         if ( !norm_state->param )
         {
-            SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_IIS_BACKSLASH);
+            hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_IIS_BACKSLASH);
         }
 
         iChar = 0x2f;
@@ -923,7 +923,7 @@ static int DirTrav(
         */
         if ( !norm_state->param )
         {
-            SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_WEBROOT_DIR);
+            hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_WEBROOT_DIR);
         }
     }
 
@@ -1048,7 +1048,7 @@ static int DirNorm(HI_SESSION *session, const u_char *start, const u_char *end,
                 hi_stats.slashes++;
                 if ( !norm_state->param )
                 {
-                    SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_MULTI_SLASH);
+                    hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_MULTI_SLASH);
                 }
 
                 continue;
@@ -1086,7 +1086,7 @@ static int DirNorm(HI_SESSION *session, const u_char *start, const u_char *end,
                                 */
                                 if ( !norm_state->param )
                                 {
-                                    SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_DIR_TRAV);
+                                    hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_DIR_TRAV);
                                 }
 
                                 *ptr = dir_ptr;
@@ -1107,7 +1107,7 @@ static int DirNorm(HI_SESSION *session, const u_char *start, const u_char *end,
                         */
                         if ( !norm_state->param )
                         {
-                            SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_SELF_DIR_TRAV);
+                            hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_SELF_DIR_TRAV);
                         }
 
                         continue;
@@ -1167,7 +1167,7 @@ static int CheckLongDir(HI_SESSION *session, URI_NORM_STATE *norm_state,
         if(iDirLen > session->server_conf->long_dir &&
            !norm_state->param)
         {
-            SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_OVERSIZE_DIR);
+            hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_OVERSIZE_DIR);
         }
     }
 
@@ -1322,7 +1322,7 @@ static inline int InspectUriChar(HI_SESSION *session, int iChar,
             {
                 if(!norm_state->param)
                 {
-                    SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_NON_RFC_CHAR);
+                    hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_NON_RFC_CHAR);
                 }
             }
 
@@ -1432,7 +1432,7 @@ int hi_norm_uri(HI_SESSION *session, u_char *uribuf, int *uribuf_size,
         {
             if(!norm_state.param)
             {
-                SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_NON_RFC_CHAR);
+                hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_NON_RFC_CHAR);
             }
         }
 

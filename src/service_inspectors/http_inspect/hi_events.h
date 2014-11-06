@@ -187,5 +187,9 @@ typedef enum _HI_EVENTS
 #define HI_SERVER_MIXED_ENCODINGS_STR                \
     "multiple encodings within javascript obfuscated data"
 
+void hi_set_event(unsigned gid, unsigned sid);
+void hi_clear_events();
+void hi_queue_events();
+
 #endif
 
