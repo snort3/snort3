@@ -915,7 +915,7 @@ void LogTCPHeader(TextLog*  log, Packet * p)
     /* dump the TCP options */
 #ifdef REG_TEST
     // emulate snort bug
-    if ( !PacketWasCooked(p) )
+    if ( !PacketWasCooked(p) || (p->pseudo_type == PSEUDO_PKT_IP) )
 #endif
     if(tcph->has_options())
     {
