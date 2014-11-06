@@ -35,6 +35,7 @@
 -- added hi event squelch
 -- fixed stream_ip defaults
 -- fixed binder[2] = { { when = { }, user = { } } } (extra { })
+-- fixed static flush points
 
 126
 -- pulled latest from tom
