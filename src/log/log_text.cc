@@ -869,6 +869,11 @@ void LogTcpOptions(TextLog*  log, const Packet* const p)
             }
         }
     }
+
+#ifdef REG_TEST
+    TextLog_Putc(log, ' ');
+#endif
+
     TextLog_NewLine(log);
 }
 
