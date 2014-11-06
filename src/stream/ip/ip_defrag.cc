@@ -97,7 +97,6 @@
 #include "network_inspectors/perf_monitor/perf.h"
 #include "utils/stats.h"
 #include "utils/snort_bounds.h"
-#include "codecs/codec_module.h"
 
 /*  D E F I N E S  **************************************************/
 
@@ -1028,16 +1027,6 @@ static void FragRebuild(FragTracker *ft, Packet *p)
             ip6_ext->ip6e_nxt = ft->protocol;
         }
 
-        /* Perform this check here because the FRAGMENT extension is
-         * removed from the rebuilt Packet. Therefore, ensure the
-         * next extension is legitimate now. */
-        if (ip::IPV6ExtensionOrder(ft->protocol) <=
-            ip::IPV6ExtensionOrder(IPPROTO_ID_FRAGMENT))
-        {
-            // FIXIT-M J   This will alert on some valid dst_opts.
-            //             Check CheckIPv6ExtensionOrder() for details
-            SnortEventqAdd(GID_DECODE, DECODE_IPV6_UNORDERED_EXTENSIONS);
-        }
 
         dpkt->dsize = (uint16_t)ft->calculated_size;
         PacketManager::encode_update(dpkt);

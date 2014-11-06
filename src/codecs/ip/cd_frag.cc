@@ -121,6 +121,9 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
            but only the Next Header of the original frag is used. */
         // check DecodeIP(); we handle frags the same way here
         codec.next_prot_id = FINISHED_DECODE;
+
+        if (frag_offset == 0)
+            ip_util::CheckIPv6ExtensionOrder(codec, ip6frag_hdr->ip6f_nxt);
     }
     else
     {
