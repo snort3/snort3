@@ -167,14 +167,6 @@ void PacketManager::decode(
     uint16_t prev_prot_id = FINISHED_DECODE;
     uint8_t mapped_prot = CodecManager::grinder;
 
-    // initialize all Packet information
-    memset(p, 0, PKT_ZERO_LEN);
-    p->pkth = pkthdr;
-    p->pkt = pkt;
-    p->ptrs.reset();
-    layer::set_packet_pointer(p);
-
-
     RawData raw;
     raw.data = pkt;
     raw.len = pkthdr->caplen;
@@ -182,6 +174,15 @@ void PacketManager::decode(
 
     if (p->packet_flags & PKT_REBUILT_STREAM)
         codec_data.codec_flags |= CODEC_STREAM_REBUILT;
+
+
+    // initialize all Packet information
+    memset(p, 0, PKT_ZERO_LEN);
+    p->pkth = pkthdr;
+    p->pkt = pkt;
+    p->ptrs.reset();
+    layer::set_packet_pointer(p);
+
 
     MODULE_PROFILE_START(decodePerfStats);
     s_stats[total_processed]++;
