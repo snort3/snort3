@@ -690,7 +690,7 @@ void LogIPHeader(TextLog*  log, Packet * p)
     if( p->is_fragment() )
     {
 #ifdef REG_TEST
-        frag_off = (frag_off >> 3);
+        frag_off >>= 3;
 #endif
 
         TextLog_Print(log, "Frag Offset: 0x%04X   Frag Size: 0x%04X\n",
@@ -1801,8 +1801,11 @@ void LogIPPkt(TextLog* log, Packet * p)
             case PktType::UDP:
                 if ( p->ptrs.udph != NULL )
                 {
+
+#ifdef REG_TEST
                     // for consistency, nothing to log (tcp doesn't log paylen)
-                    //LogUDPHeader(log, p);
+                    LogUDPHeader(log, p);
+#endif
                 }
                 else
                 {
