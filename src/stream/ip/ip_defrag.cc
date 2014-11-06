@@ -108,38 +108,8 @@
 #define FRAG_NO_BSD_VULN    0x00000010
 #define FRAG_DROP_FRAGMENTS 0x00000020
 
-/* default frag timeout, 90-120 might be better values, can we do
- * engine-based quanta?  */
-#define FRAG_PRUNE_QUANTA   60
-
 /* default 4MB memcap */
 #define FRAG_MEMCAP   4194304
-
-/* min acceptable ttl (should be 1?) */
-#define FRAG_MIN_TTL        1
-
-/* engine-based defragmentation policy enums */
-// must update parameter in defrag_module.cc if this changes
-enum
-{
-    FRAG_POLICY_FIRST = 1,
-    FRAG_POLICY_LINUX,
-    FRAG_POLICY_BSD,
-    FRAG_POLICY_BSD_RIGHT,
-    FRAG_POLICY_LAST,
-/* Combo of FIRST & LAST, depending on overlap situation. */
-    FRAG_POLICY_WINDOWS,
-/* Combo of FIRST & LAST, depending on overlap situation. */
-    FRAG_POLICY_SOLARIS
-};
-
-#define FRAG_POLICY_DEFAULT     FRAG_POLICY_LINUX
-
-/* max packet size */
-#define DATASIZE (ETHERNET_HEADER_LEN+IP_MAXPACKET)
-
-/* max frags in a single frag tracker */
-#define DEFAULT_MAX_FRAGS   8192
 
 /* return values for CheckTimeout() */
 #define FRAG_TIME_OK            0
@@ -148,7 +118,7 @@ enum
 /* return values for insert() */
 #define FRAG_INSERT_OK          0
 #define FRAG_INSERT_FAILED      1
-#define FRAG_INSERT_REJECTED    2
+//#define FRAG_INSERT_REJECTED    2
 #define FRAG_INSERT_TIMEOUT     3
 #define FRAG_INSERT_ATTACK      4
 #define FRAG_INSERT_ANOMALY     5
