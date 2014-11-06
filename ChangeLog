@@ -34,6 +34,7 @@
 -- added --c2x and --x2c since i'm tired of looking this stuff up!
 -- added hi event squelch
 -- fixed stream_ip defaults
+-- fixed binder[2] = { { when = { }, user = { } } } (extra { })
 
 126
 -- pulled latest from tom
