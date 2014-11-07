@@ -38,6 +38,7 @@
 -- fixed static flush points
 -- added stream_tcp.segs_split peg
 -- changed from 2.10 to 3.0
+-- fixed RangeCheck
 
 126
 -- pulled latest from tom
