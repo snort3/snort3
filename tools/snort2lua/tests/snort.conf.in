@@ -431,6 +431,30 @@ preprocessor frag3_engine: \
     min_ttl 2 \
     bind_to 192.1.2.7/24
 
+preprocessor frag3_engine: \
+    policy last \
+    policy bsd \
+    policy linux \
+    policy solaris \
+    detect_anomalies \
+    overlap_limit 10 \
+    min_fragment_length 100 \
+    timeout 0 \
+    timeout 180 \
+    min_ttl 2 \
+    bind_to [10.1.47.0/24,172.16.8.0/24]
+
+preprocessor frag3_engine: \
+    policy last \
+    policy bsd \
+    policy linux \
+    policy solaris \
+    detect_anomalies \
+    overlap_limit 10 \
+    min_fragment_length 100 \
+    timeout 0 \
+    timeout 180 \
+    min_ttl 2
 
 # Target-Based stateful inspection/stream reassembly.  For more inforation, see README.stream5
 preprocessor stream5_global: track_tcp yes, \

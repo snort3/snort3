@@ -60,6 +60,7 @@ protected:
     TableApi& table_api;
     RuleApi& rule_api;
 
+
 #if 0
     Forward declaration fo parsing methods. Since these are all inline,
     unable to forward declare in regular code.
