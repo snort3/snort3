@@ -47,6 +47,7 @@ bool Pcre::convert(std::istringstream& data_stream)
     std::string keyword;
     //bool retval = true;  FIXIT-H-J
     bool sticky_buffer_set = false;
+    std::string buffer = "pkt_data";
 
     char delim = '/';
     std::string pcre_str = util::get_rule_option_args(data_stream);
@@ -128,14 +129,13 @@ bool Pcre::convert(std::istringstream& data_stream)
                 dlt_opt.append(1, c);
                 dlt_opt += "'";
                 rule_api.bad_rule(data_stream, dlt_opt);
-                //retval = false;  FIXIT-H-J
                 break;
             }
         }
 
         if (!sticky_buffer.empty())
         {
-            rule_api.add_option(sticky_buffer);
+            buffer = sticky_buffer;
 
             if (sticky_buffer_set)
                 rule_api.bad_rule(data_stream, "Two sticky buffers set for this regular expression!");
@@ -144,10 +144,9 @@ bool Pcre::convert(std::istringstream& data_stream)
         }
     }
 
-    rule_api.add_option("pcre", pattern + new_opts);
-    if (!sticky_buffer_set)
-        rule_api.set_curr_options_buffer("pkt_data");
 
+    rule_api.add_option("pcre", pattern + new_opts);
+    rule_api.set_curr_options_buffer(buffer);
     return set_next_rule_state(data_stream);
 }
 
@@ -157,9 +156,7 @@ bool Pcre::convert(std::istringstream& data_stream)
 
 
 static ConversionState* ctor(Converter& c)
-{
-    return new Pcre(c);
-}
+{ return new Pcre(c); }
 
 
 static const ConvertMap pcre_api =
