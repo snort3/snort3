@@ -36,16 +36,31 @@ template<const std::string *option_name>
 class Content : public ConversionState
 {
 public:
-    Content(Converter& c) : ConversionState(c) {};
+    Content(Converter& c) : ConversionState(c), sticky_buffer_set(false) {};
     virtual ~Content() {};
     virtual bool convert(std::istringstream& data);
 
 private:
+    bool sticky_buffer_set;
     bool parse_options(std::istringstream&, std::string, std::string);
+    void add_sticky_buffer(std::istringstream&, std::string buffer);
 
 };
 
 } // namespace
+
+template<const std::string *option_name>
+void Content<option_name>::add_sticky_buffer(std::istringstream& data_stream, std::string buffer)
+{
+    if (sticky_buffer_set)
+    {
+        rule_api.bad_rule(data_stream, "< " + buffer + "> is the second sticky "
+            "buffers set for this 'content' keyword!!");
+    }
+
+    rule_api.add_rule_option_before_selected(buffer);
+    sticky_buffer_set = true;
+}
 
 template<const std::string *option_name>
 bool Content<option_name>::parse_options(
@@ -69,44 +84,44 @@ bool Content<option_name>::parse_options(
     else if (!keyword.compare("nocase"))
         rule_api.add_suboption("nocase");
 
-    else if (!keyword.compare("rawbytes"))
-        rule_api.add_rule_option_before_selected("pkt_data");
-
-    else if (!keyword.compare("http_client_body"))
-        rule_api.add_rule_option_before_selected("http_client_body");
-
-    else if (!keyword.compare("http_cookie"))
-        rule_api.add_rule_option_before_selected("http_cookie");
-
-    else if (!keyword.compare("http_raw_cookie"))
-        rule_api.add_rule_option_before_selected("http_raw_cookie");
-
-    else if (!keyword.compare("http_header"))
-        rule_api.add_rule_option_before_selected("http_header");
-
-    else if (!keyword.compare("http_raw_header"))
-        rule_api.add_rule_option_before_selected("http_raw_header");
-
-    else if (!keyword.compare("http_method"))
-        rule_api.add_rule_option_before_selected("http_method");
-
-    else if (!keyword.compare("http_uri"))
-        rule_api.add_rule_option_before_selected("http_uri");
-
-    else if (!keyword.compare("http_raw_uri"))
-        rule_api.add_rule_option_before_selected("http_raw_uri");
-
-    else if (!keyword.compare("http_stat_code"))
-        rule_api.add_rule_option_before_selected("http_stat_code");
-
-    else if (!keyword.compare("http_stat_msg"))
-        rule_api.add_rule_option_before_selected("http_stat_msg");
-
     else if (!keyword.compare("hash"))   // PROTECTED CONTENT
         rule_api.add_suboption("hash", val);
 
     else if (!keyword.compare("length"))  // PROTECTED CONTENT
         rule_api.add_suboption("length", val);
+
+    else if (!keyword.compare("rawbytes"))
+        add_sticky_buffer(data_stream, "pkt_data");
+
+    else if (!keyword.compare("http_client_body"))
+        add_sticky_buffer(data_stream, "http_client_body");
+
+    else if (!keyword.compare("http_cookie"))
+        add_sticky_buffer(data_stream, "http_cookie");
+
+    else if (!keyword.compare("http_raw_cookie"))
+        add_sticky_buffer(data_stream, "http_raw_cookie");
+
+    else if (!keyword.compare("http_header"))
+        add_sticky_buffer(data_stream, "http_header");
+
+    else if (!keyword.compare("http_raw_header"))
+        add_sticky_buffer(data_stream, "http_raw_header");
+
+    else if (!keyword.compare("http_method"))
+        add_sticky_buffer(data_stream, "http_method");
+
+    else if (!keyword.compare("http_uri"))
+        add_sticky_buffer(data_stream, "http_uri");
+
+    else if (!keyword.compare("http_raw_uri"))
+        add_sticky_buffer(data_stream, "http_raw_uri");
+
+    else if (!keyword.compare("http_stat_code"))
+        add_sticky_buffer(data_stream, "http_stat_code");
+
+    else if (!keyword.compare("http_stat_msg"))
+        add_sticky_buffer(data_stream, "http_stat_msg");
 
     else if (!keyword.compare("fast_pattern"))
     {
@@ -217,6 +232,10 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
 
         if (!parse_options(data_stream, keyword, val))
         {
+
+            if (!sticky_buffer_set)
+                add_sticky_buffer(data_stream, "pkt_data");
+
             // since this option is not an content modifier,
             // lets coninue parsing the rest of the rule.
             rule_api.unselect_option();
@@ -232,6 +251,9 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
         subopts.clear();
         subopts.str(val);
     };
+
+    if (!sticky_buffer_set)
+        add_sticky_buffer(data_stream, "pkt_data");
 
     // can only get here if we finish parsing this rule
     return true;

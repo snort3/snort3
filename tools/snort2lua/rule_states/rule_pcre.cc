@@ -144,6 +144,9 @@ bool Pcre::convert(std::istringstream& data_stream)
         }
     }
 
+    if (!sticky_buffer_set)
+        rule_api.add_rule_option("pkt_data");
+
     rule_api.add_rule_option("pcre", pattern + new_opts);
     return set_next_rule_state(data_stream);
 }
