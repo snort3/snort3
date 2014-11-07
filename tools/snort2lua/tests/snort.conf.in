@@ -1126,8 +1126,9 @@ alert tcp $EXTERNAL_NET any -> $SMTP_SERVERS 25 (msg:"BROWSER-IE Microsoft Inter
 # rawbytes
 alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"APP-DETECT GoToMyPC local service running"; \
     content:"jedi request"; nocase; offset:4; depth:20; rawbytes; \
-    content:"jedi request2"; nocase; distance:150; http_cookie; http_header; \
+    content:"jedi request2"; nocase; distance:150; http_header; \
     content:"jedi request3"; within:150; http_client_body; \
+    content:"jedi request4"; http_cookie; \
     sid:1000060; gid:1; rev:6;)
 
 
