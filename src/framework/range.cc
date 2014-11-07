@@ -50,6 +50,9 @@ static RangeCheck::Op get_op(const char* s, unsigned n)
     if ( !strncmp(s, ">", n) && n == 1 )
         return RangeCheck::GT;
 
+    if ( !strncmp(s, "!=", n) && n == 2 )
+        return RangeCheck::NOT;
+
     if ( !strncmp(s, "<=", n) && n == 2 )
         return RangeCheck::LE;
 
@@ -58,9 +61,6 @@ static RangeCheck::Op get_op(const char* s, unsigned n)
 
     if ( !strncmp(s, "<>", n) && n == 2 )
         return RangeCheck::LG;
-
-    if ( !strncmp(s, "><", n) && n == 2 )
-        return RangeCheck::GL;
 
     if ( !strncmp(s, "<=>", n) && n == 3 )
         return RangeCheck::LEG;
@@ -95,11 +95,13 @@ bool RangeCheck::parse(const char* s)
         op = get_op(so, sb-so);
     }
 
+    long a = 0, b = 0;
+
     if ( sa != so )
-        min = strtol(sa, &enda, 0);
+        a = strtol(sa, &enda, 0);
 
     if ( sb != so )
-        max = strtol(sb, &endb, 0);
+        b = strtol(sb, &endb, 0);
 
     if ( enda )
     {
@@ -117,8 +119,29 @@ bool RangeCheck::parse(const char* s)
     if ( op == MAX )
         return false;
 
-    // now validate that min and b were obtained iff expected
-    // eg a!b should not have a, <>b is missing a
+    // need to validate that min and b were obtained iff
+    // expected eg a!b should not have a, <>b is missing a
+
+    // set bounds based on op
+    switch ( op )
+    {
+    case EQ:
+    case NOT:
+    case GT:
+    case GE:
+        min = b;
+        break;
+    case LT:
+    case LE:
+        max = b;
+        break;
+    case LG:
+        min = a;
+        max = b;
+        break;
+    default:
+        break;
+    }
 
     return true;
 }
@@ -134,19 +157,22 @@ bool RangeCheck::eval(long c)
         return ( min != c );
 
     case LT:
-        return ( min < c );
+        return ( c < max );
 
     case LE:
-        return ( min <= c );
+        return ( c <= max );
 
     case GT:
-        return ( min > c );
+        return ( c > min );
 
     case GE:
-        return ( min >= c );
+        return ( c >= min );
 
     case LG:
         return ( min < c && c < max );
+
+    case LEG:
+        return ( min <= c && c <= max );
 
     default:
         break;
