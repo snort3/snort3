@@ -108,38 +108,8 @@
 #define FRAG_NO_BSD_VULN    0x00000010
 #define FRAG_DROP_FRAGMENTS 0x00000020
 
-/* default frag timeout, 90-120 might be better values, can we do
- * engine-based quanta?  */
-#define FRAG_PRUNE_QUANTA   60
-
 /* default 4MB memcap */
 #define FRAG_MEMCAP   4194304
-
-/* min acceptable ttl (should be 1?) */
-#define FRAG_MIN_TTL        1
-
-/* engine-based defragmentation policy enums */
-// must update parameter in defrag_module.cc if this changes
-enum
-{
-    FRAG_POLICY_FIRST = 1,
-    FRAG_POLICY_LINUX,
-    FRAG_POLICY_BSD,
-    FRAG_POLICY_BSD_RIGHT,
-    FRAG_POLICY_LAST,
-/* Combo of FIRST & LAST, depending on overlap situation. */
-    FRAG_POLICY_WINDOWS,
-/* Combo of FIRST & LAST, depending on overlap situation. */
-    FRAG_POLICY_SOLARIS
-};
-
-#define FRAG_POLICY_DEFAULT     FRAG_POLICY_LINUX
-
-/* max packet size */
-#define DATASIZE (ETHERNET_HEADER_LEN+IP_MAXPACKET)
-
-/* max frags in a single frag tracker */
-#define DEFAULT_MAX_FRAGS   8192
 
 /* return values for CheckTimeout() */
 #define FRAG_TIME_OK            0
@@ -148,7 +118,7 @@ enum
 /* return values for insert() */
 #define FRAG_INSERT_OK          0
 #define FRAG_INSERT_FAILED      1
-#define FRAG_INSERT_REJECTED    2
+//#define FRAG_INSERT_REJECTED    2
 #define FRAG_INSERT_TIMEOUT     3
 #define FRAG_INSERT_ATTACK      4
 #define FRAG_INSERT_ANOMALY     5
@@ -1004,31 +974,29 @@ static void FragRebuild(FragTracker *ft, Packet *p)
     }
     else /* Inner/only is IP6 */
     {
-        ip::IP6Hdr* const rawHdr =
-            const_cast<ip::IP6Hdr* const>(dpkt->ptrs.ip_api.get_ip6h());
-
-        if ( !rawHdr )
+        if ( !p->is_ip6() )
         {
             /*XXX: Log message, failed to copy */
             ft->frag_flags = ft->frag_flags | FRAG_REBUILT;
             return;
         }
 
-        /* IPv6 Header is already copied over, as are all of the extensions
-         * that were not part of the fragmented piece. */
-        ip::IP6Frag* const fragh =
-            const_cast<ip::IP6Frag* const>(layer::get_inner_ip6_frag(dpkt));
+        const Layer& lyr = dpkt->layers[dpkt->num_layers-1];
 
-        /* Set the 'next' protocol */
-        if (fragh != nullptr)
+        if ((lyr.prot_id == ETHERTYPE_IPV6) || (lyr.prot_id == IPPROTO_ID_IPV6))
         {
-            fragh->ip6f_nxt = ft->protocol;
-            fragh->ip6f_offlg = 0x0000;
+            ip::IP6Hdr* const rawHdr =
+                const_cast<ip::IP6Hdr* const>(dpkt->ptrs.ip_api.get_ip6h());
+            rawHdr->ip6_next = ft->protocol;
         }
         else
         {
-            rawHdr->ip6_next = ft->protocol;
+            ip::IP6Extension* const ip6_ext = const_cast<ip::IP6Extension*>(
+                reinterpret_cast<const ip::IP6Extension*>(lyr.start));
+
+            ip6_ext->ip6e_nxt = ft->protocol;
         }
+
 
         dpkt->dsize = (uint16_t)ft->calculated_size;
         PacketManager::encode_update(dpkt);
@@ -1352,7 +1320,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
 
     // preconditions - what we registered for
     assert(p->ptrs.ip_api.is_valid() && !(p->ptrs.decode_flags & DECODE_ERR_CKSUM_IP));
-    assert(p->ptrs.decode_flags & DECODE_FRAG);
+    assert(p->is_fragment());
 
     const uint16_t frag_offset = p->ptrs.ip_api.off();
 

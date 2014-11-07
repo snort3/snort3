@@ -323,7 +323,7 @@ bool Detect(Packet * p)
     //          Instead, we should only perform detect on that
     //          layer!!
 
-    int curr_layer = p->num_layers - 1;
+    uint8_t curr_layer = 0;
     uint8_t ip_proto; // set in function
 
     while (p->get_ip_proto_next(curr_layer, ip_proto))

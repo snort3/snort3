@@ -246,7 +246,7 @@ int hi_server_norm(HI_SESSION *session, HttpsessionData *hsd)
 
                     if (result == DECODE_UTF_FAILURE)
                     {
-                        SnortEventqAdd(GID_HTTP_SERVER, HI_SERVER_UTF_NORM_FAIL);
+                        hi_set_event(GID_HTTP_SERVER, HI_SERVER_UTF_NORM_FAIL);
                     }
                     SetHttpDecode((uint16_t)bytes_copied);
                     ServerResp->body = HttpDecodeBuf.data;
@@ -360,15 +360,15 @@ int hi_server_norm(HI_SESSION *session, HttpsessionData *hsd)
             {
                 if(js.alerts & ALERT_LEVELS_EXCEEDED) 
                 {
-                    SnortEventqAdd(GID_HTTP_SERVER, HI_SERVER_JS_OBFUSCATION_EXCD);
+                    hi_set_event(GID_HTTP_SERVER, HI_SERVER_JS_OBFUSCATION_EXCD);
                 }
                 if(js.alerts & ALERT_SPACES_EXCEEDED)
                 {
-                    SnortEventqAdd(GID_HTTP_SERVER, HI_SERVER_JS_EXCESS_WS);
+                    hi_set_event(GID_HTTP_SERVER, HI_SERVER_JS_EXCESS_WS);
                 }
                 if(js.alerts & ALERT_MIXED_ENCODINGS)
                 {
-                    SnortEventqAdd(GID_HTTP_SERVER, HI_SERVER_MIXED_ENCODINGS);
+                    hi_set_event(GID_HTTP_SERVER, HI_SERVER_MIXED_ENCODINGS);
                 }
             }
 

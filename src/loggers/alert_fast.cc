@@ -314,7 +314,7 @@ void FastLogger::alert(Packet *p, const char *msg, Event *event)
 #ifdef REG_TEST
         LogReassembly(p);
 #endif
-        if(p->ptrs.ip_api.is_valid())
+        if(p->has_ip())
             LogIPPkt(fast_log, p);
 
 #if 0

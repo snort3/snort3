@@ -127,7 +127,7 @@ uint16_t IpApi::off_w_flags() const
 const uint8_t* IpApi::ip_data() const
 {
     if (ip4h)
-        return reinterpret_cast<const uint8_t*>(ip4h) + (ip4h->hlen());
+        return reinterpret_cast<const uint8_t*>(ip4h) + ip4h->hlen();
 
     if (ip6h)
         return reinterpret_cast<const uint8_t*>(ip6h) + ip6h->hlen();

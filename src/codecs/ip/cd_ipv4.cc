@@ -421,7 +421,6 @@ static inline void IPMiscTests(const IP4Hdr* const ip4h, const CodecData& codec,
 {
 
     /* Yes, it's an ICMP-related vuln in IP options. */
-    uint8_t length, pointer;
     int cnt = 0;
 
 
@@ -432,13 +431,19 @@ static inline void IPMiscTests(const IP4Hdr* const ip4h, const CodecData& codec,
     {
         ++cnt;
 
-        if (opt.code == ip::IPOptionCodes::RR)
+        switch(opt.code)
         {
-            length = opt.len;
+        case ip::IPOptionCodes::EOL:
+            --cnt;
+            break;
+
+        case ip::IPOptionCodes::RR:
+        {
+            const uint8_t length = opt.len;
             if (length < 3)
                 continue;
 
-            pointer = opt.data[0];
+            uint8_t pointer = opt.data[0];
 
             /* If the pointer goes past the end of the data, then the data
                is full. That's okay. */
@@ -448,14 +453,16 @@ static inline void IPMiscTests(const IP4Hdr* const ip4h, const CodecData& codec,
                bytes, alert. */
             if (((length + 1) - pointer) % 4)
                 codec_events::decoder_event(codec, DECODE_ICMP_DOS_ATTEMPT);
+
+            break;
         }
-        else if (opt.code == ip::IPOptionCodes::TS)
+        case ip::IPOptionCodes::TS:
         {
-            length = opt.get_len();
+            const uint8_t length = opt.get_len();
             if (length < 2)
                 continue;
 
-            pointer = opt.data[0];
+            uint8_t pointer = opt.data[0];
 
             /* If the pointer goes past the end of the data, then the data
                is full. That's okay. */
@@ -470,6 +477,11 @@ static inline void IPMiscTests(const IP4Hdr* const ip4h, const CodecData& codec,
             if ((opt.data[1] & 0x01) && /* address flag */
                (((length + 1) - pointer) % 8))
                 codec_events::decoder_event(codec, DECODE_ICMP_DOS_ATTEMPT);
+
+            break;
+        }
+        default:
+                break;
         }
     }
 
@@ -630,7 +642,7 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     }
 
 
-    if( p->ptrs.decode_flags & DECODE_FRAG)
+    if( p->is_fragment() )
     {
         TextLog_NewLine(text_log);
         TextLog_Putc(text_log, '\t');

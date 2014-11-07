@@ -39,10 +39,112 @@ public:
     Content(Converter& c) : ConversionState(c) {};
     virtual ~Content() {};
     virtual bool convert(std::istringstream& data);
+
+private:
+    bool parse_options(std::istringstream&, std::string, std::string);
+
 };
 
 } // namespace
 
+template<const std::string *option_name>
+bool Content<option_name>::parse_options(
+    std::istringstream& data_stream,
+    std::string keyword,
+    std::string val)
+{
+
+    if (!keyword.compare("offset"))
+        rule_api.add_suboption("offset", val);
+
+    else if (!keyword.compare("distance"))
+        rule_api.add_suboption("distance", val);
+
+    else if (!keyword.compare("within"))
+        rule_api.add_suboption("within", val);
+
+    else if (!keyword.compare("depth"))
+        rule_api.add_suboption("depth", val);
+
+    else if (!keyword.compare("nocase"))
+        rule_api.add_suboption("nocase");
+
+    else if (!keyword.compare("rawbytes"))
+        rule_api.add_rule_option_before_selected("pkt_data");
+
+    else if (!keyword.compare("http_client_body"))
+        rule_api.add_rule_option_before_selected("http_client_body");
+
+    else if (!keyword.compare("http_cookie"))
+        rule_api.add_rule_option_before_selected("http_cookie");
+
+    else if (!keyword.compare("http_raw_cookie"))
+        rule_api.add_rule_option_before_selected("http_raw_cookie");
+
+    else if (!keyword.compare("http_header"))
+        rule_api.add_rule_option_before_selected("http_header");
+
+    else if (!keyword.compare("http_raw_header"))
+        rule_api.add_rule_option_before_selected("http_raw_header");
+
+    else if (!keyword.compare("http_method"))
+        rule_api.add_rule_option_before_selected("http_method");
+
+    else if (!keyword.compare("http_uri"))
+        rule_api.add_rule_option_before_selected("http_uri");
+
+    else if (!keyword.compare("http_raw_uri"))
+        rule_api.add_rule_option_before_selected("http_raw_uri");
+
+    else if (!keyword.compare("http_stat_code"))
+        rule_api.add_rule_option_before_selected("http_stat_code");
+
+    else if (!keyword.compare("http_stat_msg"))
+        rule_api.add_rule_option_before_selected("http_stat_msg");
+
+    else if (!keyword.compare("hash"))   // PROTECTED CONTENT
+        rule_api.add_suboption("hash", val);
+
+    else if (!keyword.compare("length"))  // PROTECTED CONTENT
+        rule_api.add_suboption("length", val);
+
+    else if (!keyword.compare("fast_pattern"))
+    {
+        if (val.empty())
+             rule_api.add_suboption("fast_pattern");
+
+        else if(!val.compare("only"))
+            rule_api.add_comment_to_rule("content's 'only' option has been deleted");
+
+        else
+        {
+            try
+            {
+                std::size_t pos;
+                int offset = std::stoi(val, &pos);
+                if (val[pos] == ',')
+                {
+                    pos++;
+                    int length = std::stoi(val.substr(pos, std::string::npos));
+                    rule_api.add_suboption("fast_pattern");
+                    rule_api.add_suboption("fast_pattern_offset", std::to_string(offset));
+                    rule_api.add_suboption("fast_pattern_length", std::to_string(length));
+                }
+                else
+                    rule_api.bad_rule(data_stream, "content: wxyz: fast_pattern " + val + "," + "<missing!>");
+            }
+            catch(std::exception&)
+            {
+                rule_api.bad_rule(data_stream, "content: wxyz: fast_pattern <int>,<int>");
+            }
+        }
+    }
+    else
+        return false;
+
+
+    return true;
+}
 
 template<const std::string *option_name>
 bool Content<option_name>::convert(std::istringstream& data_stream)
@@ -54,14 +156,51 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
     if (!(*option_name).compare("protected_content"))
         rule_api.bad_rule(data_stream, "protected_content is currently unsupported");
 
-    val = util::get_rule_option_args(data_stream);
+    std::string arg = util::get_rule_option_args(data_stream);
+    std::istringstream arg_stream(arg);
+
+    if (!util::get_string(arg_stream, val, ","))
+    {
+        rule_api.bad_rule(data_stream, "content: <missing_argument>");
+        return set_next_rule_state(data_stream);
+    }
+
+
     rule_api.add_rule_option(*option_name, val);
     rule_api.select_option(*option_name);
+
+    // This first loop parses all of the options between the
+    // content keyword and the first semicolon.
+    while (util::get_string(arg_stream, keyword, ","))
+    {
+        std::istringstream opts(keyword);
+        std::string tmp_str;
+        val = "";
+
+        opts >> keyword;  // gauranteed to work since get_string is true
+
+        while(opts >> tmp_str)
+            val += tmp_str + " ";
+
+        util::trim(keyword);
+        util::trim(val);
+
+        if (!parse_options(data_stream, keyword, val))
+            rule_api.bad_rule(data_stream, "content: " + keyword + " " + val);
+    }
+
 
     pos = data_stream.tellg();
     val = util::get_rule_option_args(data_stream);
     std::istringstream subopts(val);
 
+
+    // This loop parses all of the content keyword modifiers after
+    // the initial semicolon.  This loop must be performed here
+    // because any buffer modifiers (http_uri, http_cookie, etc_
+    // must be added to the rule before the above content keyword.
+    // Once we leave this method, we will have no memory of
+    // 'this' current keyword.
     while(util::get_string(subopts, keyword, ":"))
     {
         val = std::string();
@@ -75,101 +214,17 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
         util::trim(keyword);
         util::trim(val);
 
-        if (!keyword.compare("offset"))
-            rule_api.add_suboption("offset", val);
 
-        else if (!keyword.compare("distance"))
-            rule_api.add_suboption("distance", val);
-
-        else if (!keyword.compare("within"))
-            rule_api.add_suboption("within", val);
-
-        else if (!keyword.compare("depth"))
-            rule_api.add_suboption("depth", val);
-
-        else if (!keyword.compare("nocase"))
-            rule_api.add_suboption("nocase");
-
-        else if (!keyword.compare("rawbytes"))
-            rule_api.add_rule_option_before_selected("pkt_data");
-
-        else if (!keyword.compare("http_client_body"))
-            rule_api.add_rule_option_before_selected("http_client_body");
-
-        else if (!keyword.compare("http_cookie"))
-            rule_api.add_rule_option_before_selected("http_cookie");
-
-        else if (!keyword.compare("http_raw_cookie"))
-            rule_api.add_rule_option_before_selected("http_raw_cookie");
-
-        else if (!keyword.compare("http_header"))
-            rule_api.add_rule_option_before_selected("http_header");
-
-        else if (!keyword.compare("http_raw_header"))
-            rule_api.add_rule_option_before_selected("http_raw_header");
-
-        else if (!keyword.compare("http_method"))
-            rule_api.add_rule_option_before_selected("http_method");
-
-        else if (!keyword.compare("http_uri"))
-            rule_api.add_rule_option_before_selected("http_uri");
-
-        else if (!keyword.compare("http_raw_uri"))
-            rule_api.add_rule_option_before_selected("http_raw_uri");
-
-        else if (!keyword.compare("http_stat_code"))
-            rule_api.add_rule_option_before_selected("http_stat_code");
-
-        else if (!keyword.compare("http_stat_msg"))
-            rule_api.add_rule_option_before_selected("http_stat_msg");
-
-        else if (!keyword.compare("hash"))   // PROTECTED CONTENT
-            rule_api.add_suboption("hash", val);
-
-        else if (!keyword.compare("length"))  // PROTECTED CONTENT
-            rule_api.add_suboption("length", val);
-
-        else if (!keyword.compare("fast_pattern"))
+        if (!parse_options(data_stream, keyword, val))
         {
-            if (val.empty())
-                 rule_api.add_suboption("fast_pattern");
-
-            else if(!val.compare("only"))
-                rule_api.add_comment_to_rule("content's 'only' option has been deleted");
-
-            else
-            {
-                // don't let the program catch for invalid syntax.
-                try
-                {
-                    std::size_t pos;
-                    int offset = std::stoi(val, &pos);
-                    if (val[pos] == ',')
-                    {
-                        pos++;
-                        int length = std::stoi(val.substr(pos, std::string::npos));
-                        rule_api.add_suboption("fast_pattern");
-                        rule_api.add_suboption("fast_pattern_offset", std::to_string(offset));
-                        rule_api.add_suboption("fast_pattern_length", std::to_string(length));
-                    }
-                    else
-                        rule_api.bad_rule(data_stream, "content: wxyz: fast_pattern " + val + "," + "<missing!>");
-                }
-                catch(std::exception&)
-                {
-                    rule_api.bad_rule(data_stream, "content: wxyz: fast_pattern <int>,<int>");
-                }
-            }
-        }
-
-        else
-        {
-            // since we don't know this next option, check for any other options
-            rule_api.unselect_option(); // don't reference this option anymore
+            // since this option is not an content modifier,
+            // lets coninue parsing the rest of the rule.
+            rule_api.unselect_option();
             data_stream.seekg(pos);
-            data_stream.clear();  // Might have already hit end of stream
+            data_stream.clear();
             return set_next_rule_state(data_stream);
         }
+
 
         // lets get the next keyword
         pos = data_stream.tellg();

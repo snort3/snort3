@@ -29,6 +29,14 @@
 -- fixed boyer-moore init
 -- removed content extract var cruft
 -- latest from Josh
+-- initial /* comments */ for text rules (needs to ignore \")
+-- latest from Josh
+-- added --c2x and --x2c since i'm tired of looking this stuff up!
+-- added hi event squelch
+-- fixed stream_ip defaults
+-- fixed binder[2] = { { when = { }, user = { } } } (extra { })
+-- fixed static flush points
+-- added stream_tcp.segs_split peg
 
 126
 -- pulled latest from tom

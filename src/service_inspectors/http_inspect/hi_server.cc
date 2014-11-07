@@ -321,7 +321,7 @@ static inline int hi_server_extract_status_code(
         else
         {
 
-            SnortEventqAdd(GID_HTTP_SERVER, HI_SERVER_INVALID_STATCODE);
+            hi_set_event(GID_HTTP_SERVER, HI_SERVER_INVALID_STATCODE);
             ptr++;
         }
     }
@@ -379,7 +379,7 @@ static inline const u_char *extract_http_content_type_charset(
     else if ((cmplen > 0) && (*ptr == '7'))
     {
         set_decode_utf_state_charset(&(hsd->utf_state), CHARSET_UTF7);
-        SnortEventqAdd(GID_HTTP_SERVER, HI_SERVER_UTF7);
+        hi_set_event(GID_HTTP_SERVER, HI_SERVER_UTF7);
     }
     else if (cmplen >= 4)
     {
@@ -790,7 +790,7 @@ static inline int hi_server_extract_body(
                 if(!(sd->resp_state.last_pkt_chunked) && !simple_response)
                 {
                     if ( headers )
-                        SnortEventqAdd(GID_HTTP_SERVER, HI_SERVER_NO_CONTLEN);
+                        hi_set_event(GID_HTTP_SERVER, HI_SERVER_NO_CONTLEN);
                 }
                 else
                     sd->resp_state.last_pkt_chunked = 0;
@@ -1012,7 +1012,7 @@ static inline int hi_server_decompress(HI_SESSION *session, HttpsessionData *sd,
         else
         {
             /* No Content-Length or Transfer-Encoding : chunked */
-            SnortEventqAdd(GID_HTTP_SERVER, HI_SERVER_NO_CONTLEN);
+            hi_set_event(GID_HTTP_SERVER, HI_SERVER_NO_CONTLEN);
 
             zRet = uncompress_gzip(decompression_buffer, decompr_avail, ptr, compr_avail,
                     sd, &total_bytes_read, sd->decomp_state->compress_fmt);
@@ -1062,7 +1062,7 @@ static inline int hi_server_decompress(HI_SESSION *session, HttpsessionData *sd,
     {
         if(sd->decomp_state->decompr_bytes_read)
         {
-            SnortEventqAdd(GID_HTTP_SERVER, HI_SERVER_DECOMPR_FAILED);
+            hi_set_event(GID_HTTP_SERVER, HI_SERVER_DECOMPR_FAILED);
         }
     }
 

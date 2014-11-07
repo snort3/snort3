@@ -337,9 +337,11 @@ void HttpInspect::eval (Packet* p)
     assert(p->is_tcp() && p->dsize && p->data);
 
     MODULE_PROFILE_START(hiPerfStats);
+    hi_clear_events();
 
     HttpInspectMain(config, p);
 
+    hi_queue_events();
     ClearHttpBuffers();
 
     /* XXX:

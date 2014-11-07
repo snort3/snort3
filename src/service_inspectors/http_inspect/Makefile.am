@@ -8,7 +8,7 @@ hi_client.cc hi_client.h \
 hi_client_norm.cc hi_client_norm.h \
 hi_client_stateful.h \
 hi_cmd_lookup.cc hi_cmd_lookup.h \
-hi_events.h \
+hi_events.cc hi_events.h \
 hi_include.h \
 hi_mi.cc hi_mi.h \
 hi_module.cc hi_module.h \

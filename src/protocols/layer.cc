@@ -81,24 +81,6 @@ static inline const uint8_t* find_inner_layer(const Layer* lyr,
     return nullptr;
 }
 
-static inline bool is_ip6_extension(const uint8_t proto)
-{
-    switch(proto)
-    {
-    case IPPROTO_ID_HOPOPTS:
-    case IPPROTO_ID_DSTOPTS:
-    case IPPROTO_ID_ROUTING:
-    case IPPROTO_ID_FRAGMENT:
-    case IPPROTO_ID_AUTH:
-    case IPPROTO_ID_ESP:
-    case IPPROTO_ID_MOBILITY:
-    case IPPROTO_ID_NONEXT:
-        return true;
-    default:
-        return false;
-    }
-}
-
 void set_packet_pointer(const Packet* const curr_pkt)
 { p = curr_pkt; }
 
@@ -195,6 +177,26 @@ const ip::IP6Frag* get_inner_ip6_frag(const Packet* const pkt)
 }
 
 
+int get_inner_ip6_frag_index(const Packet* const pkt)
+{
+    // get_ip6h returns null if this is ipv4
+    const ip::IP6Hdr* const ip6h = pkt->ptrs.ip_api.get_ip6h();
+
+    if (ip6h && p->is_fragment())
+    {
+        const int max_layer = pkt->num_layers-1;
+        const Layer* lyr = &(pkt->layers[max_layer]);
+
+        for(int i = max_layer; i >= 0; i--)
+        {
+            if (lyr->prot_id == IPPROTO_ID_FRAGMENT)
+                return i;
+
+            lyr--;
+        }
+    }
+    return -1;
+}
 
 
 const udp::UDPHdr* get_outer_udp_lyr(const Packet* const p)
@@ -345,7 +347,7 @@ bool set_outer_ip_api(const Packet* const p,
                 is_ip6_extension(p->layers[curr_layer].prot_id))
             {
                 const ip::IP6Extension* const ip6_ext =
-                    reinterpret_cast<const ip::IP6Extension*>(p->layers[curr_layer].start);
+                    reinterpret_cast<const ip::IP6Extension*>(p->layers[curr_layer-1].start);
                 ip_proto_next = ip6_ext->ip6e_nxt;
                 return true;
             }

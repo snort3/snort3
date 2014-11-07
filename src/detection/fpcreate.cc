@@ -2586,6 +2586,8 @@ void fpShowEventStats(SnortConfig *sc)
     prmShowEventStats(sc->prmIpRTNX);
 }
 
+// FIXIT-M remove this - if we are to optimize such rules
+// we need a general solution for all header options
 static void fpAddIpProtoOnlyRule(SF_LIST **ip_proto_only_lists, OptTreeNode *otn)
 {
     unsigned int i;

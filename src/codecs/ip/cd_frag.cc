@@ -77,7 +77,7 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
         return false;
     }
 
-    // already checked for short pacekt above
+    // already checked for short packet above
     if (raw.len == sizeof(ip::IP6Frag))
     {
         codec_events::decoder_event(codec, DECODE_ZERO_LENGTH_FRAG);
@@ -113,6 +113,11 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
     // must be called AFTER setting next_prot_id
     ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_FRAGMENT);
 
+    // Since the Frag layer is removed from rebuilt packets, ensure
+    // the next layer is correctly order now.
+    if (frag_offset == 0)
+        ip_util::CheckIPv6ExtensionOrder(codec, ip6frag_hdr->ip6f_nxt);
+
     if ( snort.decode_flags & DECODE_FRAG )
     {
         /* For non-zero offset frags, we stop decoding after the
@@ -121,6 +126,7 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
            but only the Next Header of the original frag is used. */
         // check DecodeIP(); we handle frags the same way here
         codec.next_prot_id = FINISHED_DECODE;
+
     }
     else
     {

@@ -549,11 +549,10 @@ void LogIpOptions(TextLog*  log, const IP4Hdr* ip4h, const Packet* const p)
  */
 void LogIpAddrs(TextLog *log, Packet *p)
 {
-    if (!p->ptrs.ip_api.is_valid())
+    if (!p->has_ip())
         return;
 
-    if ((p->ptrs.decode_flags & DECODE_FRAG)
-           || ( !p->is_tcp() && !p->is_udp()))
+    if ( p->is_fragment() || ( !p->is_tcp() && !p->is_udp()))
     {
         const char *ip_fmt = "%s -> %s";
 
@@ -688,8 +687,12 @@ void LogIPHeader(TextLog*  log, Packet * p)
     }
 
     /* print fragment info if necessary */
-    if(p->ptrs.decode_flags & DECODE_FRAG)
+    if( p->is_fragment() )
     {
+#ifdef REG_TEST
+        frag_off = (frag_off >> 3);
+#endif
+
         TextLog_Print(log, "Frag Offset: 0x%04X   Frag Size: 0x%04X\n",
                 frag_off, p->ptrs.ip_api.pay_len());
     }
@@ -912,7 +915,7 @@ void LogTCPHeader(TextLog*  log, Packet * p)
     /* dump the TCP options */
 #ifdef REG_TEST
     // emulate snort bug
-    if ( !PacketWasCooked(p) )
+    if ( !PacketWasCooked(p) || (p->pseudo_type == PSEUDO_PKT_IP) )
 #endif
     if(tcph->has_options())
     {

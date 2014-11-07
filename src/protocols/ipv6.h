@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <arpa/inet.h>
 #include "sfip/sfip_t.h"
+#include "protocols/protocol_ids.h"
 
 #ifndef WIN32
 #include <sys/socket.h>
@@ -59,72 +60,6 @@ enum class MulticastScope : uint8_t
     SITE = 0x05,
     ORG = 0x08,
     GLOBAL = 0x0E,
-};
-
-enum class HopByHopOptions : uint8_t
-{
-    PAD1 = 0x00,
-    PADN = 0x01,
-    TUNNEL_ENCAP = 0x04,
-    RTALERT = 0x05,
-    QUICK_START = 0x06,
-    CALIPSO = 0x07,
-    HOME_ADDRESS = 0xC9,
-    JUMBO = 0xC2,
-    ENDPOINT_IDENT = 0x8A,
-};
-
-/* to store references to IP6 Extension Headers */
-struct IP6Option
-{
-    uint8_t type;
-    const uint8_t *data;
-};
-
-/* Generic Extension Header */
-struct IP6Extension
-{
-    uint8_t ip6e_nxt;
-    uint8_t ip6e_len;
-    /* options follow */
-    uint8_t ip6e_pad[6];
-} ;
-
-
-/* Fragment header */
-struct IP6Frag
-{
-    uint8_t   ip6f_nxt;     /* next header */
-    uint8_t   ip6f_reserved;    /* reserved field */
-    uint16_t  ip6f_offlg;   /* offset, reserved, and flag */
-    uint32_t  ip6f_ident;   /* identification */
-
-    inline uint16_t off_w_flags() const
-    { return ntohs(ip6f_offlg); }
-
-    inline uint16_t off() const
-    { return ntohs(ip6f_offlg) & 0xFFF8; }
-
-    inline uint16_t mf() const
-    { return ntohs(ip6f_offlg) & IP6F_MF_MASK; }
-
-    inline uint16_t rb() const
-    { return ntohs(ip6f_offlg) & IP6F_RES_MASK; }
-
-
-    inline uint32_t id() const
-    { return ntohl(ip6f_ident); }
-
-    inline uint8_t res() const
-    { return ip6f_reserved; }
-
-
-
-    inline uint16_t raw_off_w_flags() const
-    { return ip6f_offlg; }
-
-    inline uint32_t raw_id() const
-    { return ip6f_ident; }
 };
 
 
@@ -230,6 +165,91 @@ struct IP6Hdr
     { return ip6_payload_len; }
 
 };
+
+
+enum class HopByHopOptions : uint8_t
+{
+    PAD1 = 0x00,
+    PADN = 0x01,
+    TUNNEL_ENCAP = 0x04,
+    RTALERT = 0x05,
+    QUICK_START = 0x06,
+    CALIPSO = 0x07,
+    HOME_ADDRESS = 0xC9,
+    JUMBO = 0xC2,
+    ENDPOINT_IDENT = 0x8A,
+};
+
+/* to store references to IP6 Extension Headers */
+struct IP6Option
+{
+    uint8_t type;
+    const uint8_t *data;
+};
+
+/* Generic Extension Header */
+struct IP6Extension
+{
+    uint8_t ip6e_nxt;
+    uint8_t ip6e_len;
+    /* options follow */
+    uint8_t ip6e_pad[6];
+} ;
+
+
+/* Fragment header */
+struct IP6Frag
+{
+    uint8_t   ip6f_nxt;     /* next header */
+    uint8_t   ip6f_reserved;    /* reserved field */
+    uint16_t  ip6f_offlg;   /* offset, reserved, and flag */
+    uint32_t  ip6f_ident;   /* identification */
+
+    inline uint16_t off_w_flags() const
+    { return ntohs(ip6f_offlg); }
+
+    inline uint16_t off() const
+    { return ntohs(ip6f_offlg) & 0xFFF8; }
+
+    inline uint16_t mf() const
+    { return ntohs(ip6f_offlg) & IP6F_MF_MASK; }
+
+    inline uint16_t rb() const
+    { return ntohs(ip6f_offlg) & IP6F_RES_MASK; }
+
+
+    inline uint32_t id() const
+    { return ntohl(ip6f_ident); }
+
+    inline uint8_t res() const
+    { return ip6f_reserved; }
+
+
+
+    inline uint16_t raw_off_w_flags() const
+    { return ip6f_offlg; }
+
+    inline uint32_t raw_id() const
+    { return ip6f_ident; }
+};
+
+
+// Reflects the recomended IPv6 order in RFC 2460 4.1
+constexpr int IPV6_ORDER_MAX = 7;
+static inline int IPV6ExtensionOrder(uint8_t type)
+{
+    switch (type)
+    {
+        case IPPROTO_ID_HOPOPTS:   return 1;
+        case IPPROTO_ID_DSTOPTS:   return 2;
+        case IPPROTO_ID_ROUTING:   return 3;
+        case IPPROTO_ID_FRAGMENT:  return 4;
+        case IPPROTO_ID_AUTH:      return 5;
+        case IPPROTO_ID_ESP:       return 6;
+        default:                   return IPV6_ORDER_MAX;
+    }
+}
+
 
 } // namespace ipv6
 

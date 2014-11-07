@@ -20,6 +20,7 @@ set (FILE_LIST
     hi_norm.h
     hi_paf.cc 
     hi_paf.h
+    hi_events.cc
     hi_events.h
     hi_module.cc
     hi_module.h
