@@ -36,6 +36,7 @@
 -- fixed stream_ip defaults
 -- fixed binder[2] = { { when = { }, user = { } } } (extra { })
 -- fixed static flush points
+-- added stream_tcp.segs_split peg
 
 126
 -- pulled latest from tom
