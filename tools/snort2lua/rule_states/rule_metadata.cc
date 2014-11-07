@@ -47,10 +47,9 @@ bool Metadata::convert(std::istringstream& data_stream)
     std::string keyword;
     std::string tmp;
     std::string value;
-    std::string soid_val = std::string();
+    std::string soid_val = "";
 
-    rule_api.add_rule_option("metadata");
-    rule_api.select_option("metadata");
+    rule_api.add_option("metadata");
 
     tmp = util::get_rule_option_args(data_stream);
     std::istringstream metadata_stream(util::trim(tmp));
@@ -79,7 +78,7 @@ bool Metadata::convert(std::istringstream& data_stream)
             value.pop_back();
 
         if (!keyword.compare("rule-flushing"))
-            rule_api.add_comment_to_rule("metadata: rule-flushing - deprecated");
+            rule_api.add_comment("metadata: rule-flushing - deprecated");
 
         else if (!keyword.compare("soid"))
             soid_val = value;  // add this after metadata to keep ordering
@@ -87,7 +86,7 @@ bool Metadata::convert(std::istringstream& data_stream)
         else if (!keyword.compare("engine"))
         {
             rule_api.make_rule_a_comment();
-            rule_api.add_comment_to_rule("metadata: engine - deprecated");
+            rule_api.add_comment("metadata: engine - deprecated");
         }
 
         else
@@ -97,9 +96,8 @@ bool Metadata::convert(std::istringstream& data_stream)
     }
 
     if (!soid_val.empty())
-        rule_api.add_rule_option("soid", soid_val);
+        rule_api.add_option("soid", soid_val);
 
-    rule_api.unselect_option();
     return set_next_rule_state(data_stream);
 }
 

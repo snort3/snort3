@@ -58,7 +58,7 @@ void Content<option_name>::add_sticky_buffer(std::istringstream& data_stream, st
             "buffers set for this 'content' keyword!!");
     }
 
-    rule_api.add_rule_option_before_selected(buffer);
+    rule_api.set_curr_options_buffer(buffer);
     sticky_buffer_set = true;
 }
 
@@ -129,7 +129,7 @@ bool Content<option_name>::parse_options(
              rule_api.add_suboption("fast_pattern");
 
         else if(!val.compare("only"))
-            rule_api.add_comment_to_rule("content's 'only' option has been deleted");
+            rule_api.add_comment("content's 'only' option has been deleted");
 
         else
         {
@@ -181,8 +181,7 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
     }
 
 
-    rule_api.add_rule_option(*option_name, val);
-    rule_api.select_option(*option_name);
+    rule_api.add_option(*option_name, val);
 
     // This first loop parses all of the options between the
     // content keyword and the first semicolon.
@@ -238,7 +237,6 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
 
             // since this option is not an content modifier,
             // lets coninue parsing the rest of the rule.
-            rule_api.unselect_option();
             data_stream.seekg(pos);
             data_stream.clear();
             return set_next_rule_state(data_stream);
@@ -279,8 +277,8 @@ static const std::string uricontent = "uricontent";
 //  So, just add the 'http_uri' option first, then parse as if content
 static ConversionState* uricontent_ctor(Converter& c)
 {
-    c.get_rule_api().add_rule_option("http_uri");
-    c.get_rule_api().add_comment_to_rule("uricontent deprecated --> 'http_uri: content:'foo'");
+    c.get_rule_api().add_option("http_uri");
+    c.get_rule_api().add_comment("uricontent deprecated --> 'http_uri: content:'foo'");
     return new Content<&content>(c);
 }
 

@@ -51,7 +51,6 @@ RuleApi::~RuleApi()
 void RuleApi::reset_state()
 {
     curr_rule = nullptr;
-    curr_rule_opt = nullptr;
     curr_data_bad = false;
 }
 
@@ -96,16 +95,15 @@ void RuleApi::bad_rule(std::istringstream& stream, std::string bad_option)
     bad_rules->add_text("^^^^ unknown_option=" + bad_option);
 }
 
-bool RuleApi::add_hdr_data(std::string data)
+void RuleApi::add_hdr_data(std::string data)
 {
-
     if (!curr_rule)
         begin_rule();
 
-    return curr_rule->add_hdr_data(data);
+    curr_rule->add_hdr_data(data);
 }
 
-void RuleApi::update_rule_type(std::string new_type)
+void RuleApi::update_rule_action(std::string new_type)
 {
     if (!curr_rule)
     {
@@ -114,12 +112,12 @@ void RuleApi::update_rule_type(std::string new_type)
     }
     else
     {
-        curr_rule->update_rule_type(new_type);
+        curr_rule->update_rule_action(new_type);
     }
 }
 
 
-void RuleApi::add_rule_option(std::string opt_name)
+void RuleApi::add_option(std::string opt_name)
 {
     if (!curr_rule)
         begin_rule();
@@ -127,7 +125,7 @@ void RuleApi::add_rule_option(std::string opt_name)
     curr_rule->add_option(opt_name);
 }
 
-void RuleApi::add_rule_option(std::string opt_name, std::string val)
+void RuleApi::add_option(std::string opt_name, std::string val)
 {
     if (!curr_rule)
         begin_rule();
@@ -135,55 +133,32 @@ void RuleApi::add_rule_option(std::string opt_name, std::string val)
     curr_rule->add_option(opt_name, val);
 }
 
-
-void RuleApi::add_rule_option_before_selected(std::string keyword,
-                                            std::string val)
-{
-    if (!curr_rule_opt)
-        DataApi::developer_error("Select an option before placing a "
-                "new option before selected option");
-    else
-        curr_rule->add_option_before_selected(curr_rule_opt, keyword, val);
-}
-
 void RuleApi::add_suboption(std::string keyword)
 {
-    if (curr_rule_opt)
-        curr_rule_opt->add_suboption(keyword);
+    if (curr_rule)
+        curr_rule->add_suboption(keyword);
     else
-        DataApi::developer_error("Select an option before adding a suboption!!");
+        DataApi::developer_error("Add some header data before adding content!!");
 }
 
 void RuleApi::add_suboption(std::string keyword,
                             std::string val)
 {
-    if (curr_rule_opt)
-        curr_rule_opt->add_suboption(keyword, val);
-    else
-        DataApi::developer_error("Select an option before adding a suboption!!");
-}
-
-void RuleApi::select_option(std::string opt_name)
-{
-    // using add_comment here so this error is right above the failed rule
     if (curr_rule)
-    {
-        curr_rule_opt = curr_rule->select_option(opt_name);
-        if (curr_rule_opt == nullptr)
-            DataApi::developer_error("Option " + opt_name + "never created for following rule:");
-    }
+        curr_rule->add_suboption(keyword, val);
     else
-    {
-        DataApi::developer_error("Must begin a rule before selecting an option!");
-    }
+        DataApi::developer_error("Add some header data before adding content!!");
 }
 
-void RuleApi::unselect_option()
+void RuleApi::set_curr_options_buffer(std::string buffer)
 {
-    curr_rule_opt = nullptr;
+    if (curr_rule)
+        curr_rule->set_curr_options_buffer(buffer);
+    else
+        DataApi::developer_error("Add some header data before adding content!!");
 }
 
-void RuleApi::add_comment_to_rule(std::string comment)
+void RuleApi::add_comment(std::string comment)
 {
     if (!curr_rule)
         begin_rule();

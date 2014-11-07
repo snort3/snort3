@@ -78,40 +78,33 @@ public:
     // allows for easy swapping of data.  These two functions
     // swap data which will be printed in 'print_rules()' and
     // 'print_conf_options()'
-    void swap_rules(std::vector<Rule*>&);
+    void swap_rules(std::vector<Rule*>&); // FIXIT ??
 
 
-    // Comment out the current rule
-    void make_rule_a_comment();
-    // bad rules...throw an error
-    void bad_rule(std::istringstream& stream, std::string bad_option);
-    // add a new peice of header_data to the current rule
-    bool add_hdr_data(std::string data);
+    // add a new peice of header_data to the current rule. Up to size allowed
+    void add_hdr_data(std::string data);
+    // Change the rule's action
+    void update_rule_action(std::string new_type);
     // add a rule option (keyword and suboption)
-    void add_rule_option(std::string keyword);
-    // add a rule option (keyword and suboption)
-    void add_rule_option(std::string keyword, std::string val);
-    // add a rule option (keyword and suboption)
-    void add_rule_option_before_selected(std::string keyword, std::string val = std::string());
-    // FIXIT-L J  this function should definitely be removed
-    // selects the rule option with the given name.  MUST BE CALLED BEFORE ADDING A SUBOPTION.
-    void select_option(std::string keyword);
-    // clear the selected option.
-    void unselect_option();
+    void add_option(std::string keyword);
+    void add_option(std::string keyword, std::string val);
     // add a rule option (keyword and suboption)
     void add_suboption(std::string keyword);
-    // add a rule option (keyword and suboption)
     void add_suboption(std::string keyword, std::string val);
+    // set the buffer for the last option which was set.
+    void set_curr_options_buffer(std::string buffer);
     // add a comment to a rule
-    void add_comment_to_rule(std::string coment);
-    // Change the rule's type (i.e. from log to reject. Used for the 'resp' rule option.
-    void update_rule_type(std::string new_type);
+    void add_comment(std::string coment);
+    // Comment out the current rule. Useful for deleted features where
+    // rule should still be visible
+    void make_rule_a_comment();
+    // print this rule in the reject file.  Tell the user why this failed.
+    void bad_rule(std::istringstream& stream, std::string bad_option);
 
 private:
     std::vector<Rule*> rules;
     Comments* bad_rules;
     Rule* curr_rule;
-    RuleOption* curr_rule_opt;
     bool curr_data_bad;
     static std::size_t error_count;
 

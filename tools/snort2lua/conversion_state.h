@@ -271,7 +271,6 @@ protected:
             const ConvertMap* map = util::find_map(rules::rule_options_api, keyword);
             if (map)
             {
-                rule_api.unselect_option(); // reset option data...just in case.
                 cv.set_state(map->ctor(cv));
                 break;
             }
