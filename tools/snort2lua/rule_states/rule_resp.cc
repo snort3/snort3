@@ -177,7 +177,7 @@ bool Resp::convert(std::istringstream& data_stream)
     table_api.close_table();
 
     // Finally, update the rule type
-    rule_api.update_rule_type("reject");
+    rule_api.update_rule_action("reject");
     return set_next_rule_state(data_stream);
 }
 

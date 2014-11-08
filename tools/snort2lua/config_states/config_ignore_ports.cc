@@ -139,9 +139,7 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
  **************************/
 
 static ConversionState* ctor(Converter& c)
-{
-    return new IgnorePorts(c);
-}
+{ return new IgnorePorts(c); }
 
 static const ConvertMap config_ignore_ports =
 {

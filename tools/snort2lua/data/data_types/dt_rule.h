@@ -36,16 +36,16 @@ public:
     virtual ~Rule();
 
     bool add_hdr_data(std::string data);
-    bool add_option(std::string keyword);
-    bool add_option(std::string keyword, std::string data);
-    RuleOption* select_option(std::string opt_name);
-    bool add_option_before_selected(RuleOption* selected_opt,
-                                    std::string keyword,
-                                    std::string val);
+    void add_option(std::string keyword);
+    void add_option(std::string keyword, std::string data);
+    void add_suboption(std::string keyword);
+    void add_suboption(std::string keyword, std::string val);
+    void set_curr_options_buffer(std::string buffer);
+    void update_rule_action(std::string);
+
     void add_comment(std::string comment);
     void bad_rule();
     void make_comment();
-    void update_rule_type(std::string);
 
     friend std::ostream &operator<<( std::ostream&, const Rule &);
 
@@ -53,6 +53,7 @@ private:
     std::vector<std::string> comments;
     std::array<std::string, 7> hdr_data;
     std::vector<RuleOption*> options;
+    std::string sticky_buffer;
     std::size_t num_hdr_data;
     bool is_bad_rule;
     bool is_comment;

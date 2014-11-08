@@ -64,7 +64,6 @@ bool Tag::convert(std::istringstream& data_stream)
     }
     else
     {
-
         if (!value.compare("host"))
             is_host = true;
 
@@ -139,14 +138,13 @@ bool Tag::convert(std::istringstream& data_stream)
             type = "session";
 
             if (!value.compare("exclusive"))
-                rule_api.add_comment_to_rule("tag: [,exclusive] is currently unsupported");
+                rule_api.add_comment("tag: [,exclusive] is currently unsupported");
         }
 
 
         if (valid)
         {
-            rule_api.add_rule_option("tag", type);
-            rule_api.select_option("tag");
+            rule_api.add_option("tag", type);
 
             if (packets > 0)
                 rule_api.add_suboption("packets", std::to_string(packets));
@@ -156,9 +154,6 @@ bool Tag::convert(std::istringstream& data_stream)
 
             if (bytes > 0)
                 rule_api.add_suboption("bytes", std::to_string(bytes));
-
-
-            rule_api.unselect_option();
         }
     }
 
