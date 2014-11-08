@@ -57,6 +57,21 @@ static const char* const toks[TT_MAX] =
 };
 #endif
 
+static char unescape(char c)
+{
+    switch ( c )
+    {
+    case 'a': return '\a';
+    case 'b': return '\b';
+    case 'f': return '\f';
+    case 'n': return '\n';
+    case 'r': return '\r';
+    case 't': return '\t';
+    case 'v': return '\v';
+    }
+    return c;
+}
+
 static TokenType get_token(
     istream& is, string& s, const char* punct, bool esc)
 {
@@ -184,7 +199,7 @@ static TokenType get_token(
                 ParseWarning("line break in string on line %d\n", lines-1);
             break;
         case 4:  // quoted escape
-            s += c;
+            s += unescape(c);
             state = 3;
             break;
         case 5:  // unquoted escape

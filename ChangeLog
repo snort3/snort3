@@ -41,6 +41,8 @@
 -- changed from 2.10 to 3.0
 -- fixed RangeCheck
 -- doc tweaks, defined peg count
+-- ensure fp_length / fp_offset are applied correctly
+-- allow \a\b\f\n\r\t\v in content strings
 
 126
 -- pulled latest from tom

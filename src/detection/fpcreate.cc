@@ -1503,12 +1503,13 @@ static int fpGetFinalPattern(FastPatternConfig *fp, PatternMatchData *pmd,
         return 0;
     }
 
-    if (pmd->fp && (pmd->fp_length != 0))
+    if ( pmd->fp && (pmd->fp_offset || pmd->fp_length) )
     {
         /* (offset + length) potentially being larger than the pattern itself
          * is taken care of during parsing */
+        assert(pmd->fp_offset + pmd->fp_length <= pmd->pattern_size);
         pattern = pmd->pattern_buf + pmd->fp_offset;
-        bytes = pmd->fp_length;
+        bytes = pmd->fp_length ? pmd->fp_length : pmd->pattern_size - pmd->fp_length;
     }
     else
     {
