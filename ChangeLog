@@ -4,6 +4,8 @@
 -- ensure fp_length / fp_offset are applied correctly
 -- allow \a\b\f\n\r\t\v in content strings
 -- fixed capture for prune counts
+-- don't fp only when following option is relative
+-- fixed implied equal range checks (ie just a #, no op)
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug

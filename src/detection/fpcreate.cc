@@ -995,9 +995,9 @@ void set_fp_content(OptTreeNode *otn)
         best.pmd->fp = 1;
 }
 
-static PatternMatchData* get_fp_content(OptTreeNode *otn)
+static PatternMatchData* get_fp_content(OptTreeNode* otn, OptFpList*& next)
 {
-    OptFpList *ofl;
+    OptFpList* ofl;
 
     for (ofl = otn->opt_func; ofl != NULL; ofl = ofl->next)
     {
@@ -1009,6 +1009,8 @@ static PatternMatchData* get_fp_content(OptTreeNode *otn)
 
         PatternMatchData* pmd = get_pmd(ofl);
         assert(pmd);
+
+        next = ofl->next;
 
         if ( pmd->fp )
             return pmd;
@@ -1188,7 +1190,8 @@ static int fpAddPortGroupRule(
     if ( !otn->enabled )
         return -1;
 
-    pmd = get_fp_content(otn);
+    OptFpList* next = nullptr;
+    pmd = get_fp_content(otn, next);
 
     if ( pmd && pmd->fp)
     {
@@ -1196,7 +1199,8 @@ static int fpAddPortGroupRule(
             pmd->fp && !pmd->relative && !pmd->negated &&
             !pmd->offset && !pmd->depth && pmd->no_case )
         {
-            pmd->fp_only = 1;
+            if ( !next || !next->context || !((IpsOption*)next->context)->is_relative() )
+                pmd->fp_only = 1;
         }
 
         if (fpFinishPortGroupRule(sc, pg, otn, pmd, fp) == 0)

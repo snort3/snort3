@@ -126,6 +126,8 @@ bool RangeCheck::parse(const char* s)
     switch ( op )
     {
     case EQ:
+        min = sa ? a : b;
+        break;
     case NOT:
     case GT:
     case GE:
