@@ -6,6 +6,7 @@
 -- fixed capture for prune counts
 -- don't fp only when following option is relative
 -- fixed implied equal range checks (ie just a #, no op)
+-- fixed !content
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug
