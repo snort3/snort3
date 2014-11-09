@@ -259,22 +259,3 @@ void IcmpSession::update_direction(char dir, const sfip_t *ip, uint16_t)
     icmp_responder_ip = tmpIp;
 }
 
-//-------------------------------------------------------------------------
-// api related methods
-//-------------------------------------------------------------------------
-
-#if 0
-void icmp_stats()
-{
-    // FIXIT-L move these to the actual owner
-    // FIXIT-L need to get these before delete flow_con
-    //flow_con->get_prunes(IPPROTO_UDP, icmpStats.prunes);
-}
-#endif
-
-void icmp_reset()
-{
-    memset(&icmpStats, 0, sizeof(icmpStats));
-    flow_con->reset_prunes(IPPROTO_ICMP);
-}
-

@@ -1,3 +1,10 @@
+128
+-- fixed RangeCheck
+-- doc tweaks, defined peg count
+-- ensure fp_length / fp_offset are applied correctly
+-- allow \a\b\f\n\r\t\v in content strings
+-- fixed capture for prune counts
+
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug
 -- tweaked S5_TRACE output for consistency
@@ -39,10 +46,6 @@
 -- added stream_tcp.segs_split peg
 -- snort2lua patch
 -- changed from 2.10 to 3.0
--- fixed RangeCheck
--- doc tweaks, defined peg count
--- ensure fp_length / fp_offset are applied correctly
--- allow \a\b\f\n\r\t\v in content strings
 
 126
 -- pulled latest from tom

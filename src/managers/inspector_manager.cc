@@ -484,7 +484,7 @@ void InspectorManager::thread_init(SnortConfig* sc)
     }
 }
 
-void InspectorManager::thread_term(SnortConfig* sc)
+void InspectorManager::thread_stop(SnortConfig*)
 {
     // pin->tterm() only called for default policy
     set_default_policy();
@@ -499,7 +499,10 @@ void InspectorManager::thread_term(SnortConfig* sc)
                 p->pp_class.init = true;
             }
     }
+}
 
+void InspectorManager::thread_term(SnortConfig* sc)
+{
     for ( auto* p : sc->framework_config->clist )
     {
         if ( p->api.tterm )

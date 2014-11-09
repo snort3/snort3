@@ -1017,7 +1017,7 @@ static const InspectApi sp_api =
     sp_ctor,
     sp_dtor,
     nullptr, // ssn
-    sp_reset
+    sp_reset // FIXIT-L only inspector using this, eliminate?
 };
 
 #ifdef BUILDING_SO

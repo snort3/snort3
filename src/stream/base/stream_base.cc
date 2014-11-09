@@ -61,10 +61,17 @@ const unsigned session_peg_count = array_size(session_pegs);
 
 struct BaseStats
 {
-    PegCount tcp;
-    PegCount udp;
-    PegCount icmp;
-    PegCount ip;
+    PegCount tcp_flows;
+    PegCount tcp_prunes;
+
+    PegCount udp_flows;
+    PegCount udp_prunes;
+
+    PegCount icmp_flows;
+    PegCount icmp_prunes;
+
+    PegCount ip_flows;
+    PegCount ip_prunes;
 };
 
 static BaseStats g_stats;
@@ -73,17 +80,28 @@ static THREAD_LOCAL BaseStats t_stats;
 static const char* const base_pegs[] =
 {
     "tcp flows",
+    "tcp prunes",
     "udp flows",
+    "udp prunes",
     "icmp flows",
-    "ip flows"
+    "icmp prunes",
+    "ip flows",
+    "ip prunes"
 };
 
 void base_sum()
 {   
-    t_stats.tcp = flow_con->get_flow_count(IPPROTO_TCP);
-    t_stats.udp = flow_con->get_flow_count(IPPROTO_UDP);
-    t_stats.icmp = flow_con->get_flow_count(IPPROTO_ICMP);
-    t_stats.ip = flow_con->get_flow_count(IPPROTO_IP);
+    t_stats.tcp_flows = flow_con->get_flows(IPPROTO_TCP);
+    t_stats.tcp_prunes = flow_con->get_prunes(IPPROTO_TCP);
+
+    t_stats.udp_flows = flow_con->get_flows(IPPROTO_UDP);
+    t_stats.udp_prunes = flow_con->get_prunes(IPPROTO_UDP);
+
+    t_stats.icmp_flows = flow_con->get_flows(IPPROTO_ICMP);
+    t_stats.icmp_prunes = flow_con->get_prunes(IPPROTO_ICMP);
+
+    t_stats.ip_flows = flow_con->get_flows(IPPROTO_IP);
+    t_stats.ip_prunes = flow_con->get_prunes(IPPROTO_IP);
 
     sum_stats((PegCount*)&g_stats, (PegCount*)&t_stats,
         array_size(base_pegs));
@@ -97,7 +115,7 @@ void base_stats()
 
 void base_reset()
 {
-    flow_con->clear_flow_counts();
+    flow_con->clear_counts();
     memset(&t_stats, 0, sizeof(t_stats));
 }
 
@@ -188,9 +206,6 @@ void StreamBase::tterm()
     flow_con->purge_flows(IPPROTO_UDP);
     flow_con->purge_flows(IPPROTO_ICMP);
     flow_con->purge_flows(IPPROTO_IP);
-
-    delete flow_con;
-    flow_con = nullptr;
 }
 
 void StreamBase::show(SnortConfig*)
@@ -270,6 +285,12 @@ static void base_dtor(Inspector* p)
     delete p;
 }
 
+void base_tterm()
+{
+    delete flow_con;
+    flow_con = nullptr;
+}
+
 static const InspectApi base_api =
 {
     {
@@ -288,7 +309,7 @@ static const InspectApi base_api =
     nullptr, // init
     nullptr, // term
     nullptr, // tinit
-    nullptr, // tterm
+    base_tterm,
     base_ctor,
     base_dtor,
     nullptr, // ssn
