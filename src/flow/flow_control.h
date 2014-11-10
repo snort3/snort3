@@ -77,11 +77,10 @@ public:
         FlowData*);
 
     uint32_t max_flows(uint8_t proto);
-    void get_prunes(uint8_t proto, PegCount&);
-    void reset_prunes(uint8_t proto);
 
-    PegCount get_flow_count(uint8_t);
-    void clear_flow_counts();
+    PegCount get_prunes(uint8_t);
+    PegCount get_flows(uint8_t);
+    void clear_counts();
 
 private:
     class FlowCache* get_cache(uint8_t);

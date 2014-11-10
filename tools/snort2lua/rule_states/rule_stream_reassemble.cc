@@ -76,8 +76,7 @@ bool StreamReassemble::convert(std::istringstream& data_stream)
     }
 
 
-    rule_api.add_rule_option("stream_reassemble");
-    rule_api.select_option("stream_reassemble");
+    rule_api.add_option("stream_reassemble");
     rule_api.add_suboption("action", action);
     rule_api.add_suboption("direction", direction);
 
@@ -99,7 +98,6 @@ bool StreamReassemble::convert(std::istringstream& data_stream)
                 "only four options allowed.");
     }
 
-    rule_api.unselect_option();
     return set_next_rule_state(data_stream);
 }
 

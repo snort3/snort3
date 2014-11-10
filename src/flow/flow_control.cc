@@ -70,10 +70,27 @@ static THREAD_LOCAL PegCount udp_count = 0;
 static THREAD_LOCAL PegCount icmp_count = 0;
 static THREAD_LOCAL PegCount ip_count = 0;
 
-PegCount FlowControl::get_flow_count(uint8_t proto)
+uint32_t FlowControl::max_flows(uint8_t proto)
+{
+    FlowCache* cache = get_cache(proto);
+
+    if ( cache )
+        return cache->get_max_flows();
+
+    return 0;
+}
+
+PegCount FlowControl::get_prunes (uint8_t proto)
+{
+    FlowCache* cache = get_cache(proto);
+    return cache ? cache->get_prunes() : 0;
+}
+
+PegCount FlowControl::get_flows(uint8_t proto)
 {
     switch ( proto )
     {
+    // FIXIT should be using an enum for these
     case IPPROTO_TCP:  return tcp_count;
     case IPPROTO_UDP:  return udp_count;
     case IPPROTO_ICMP: return icmp_count;
@@ -82,10 +99,24 @@ PegCount FlowControl::get_flow_count(uint8_t proto)
     }
 }
 
-void FlowControl::clear_flow_counts()
+void FlowControl::clear_counts()
 {
     tcp_count = udp_count = 0;
     icmp_count = ip_count = 0;
+
+    FlowCache* cache;
+
+    if ( (cache = get_cache(IPPROTO_IP)) )
+        cache->reset_prunes();
+
+    if ( (cache = get_cache(IPPROTO_ICMP)) )
+        cache->reset_prunes();
+
+    if ( (cache = get_cache(IPPROTO_TCP)) )
+        cache->reset_prunes();
+
+    if ( (cache = get_cache(IPPROTO_UDP)) )
+        cache->reset_prunes();
 }
 
 //-------------------------------------------------------------------------
@@ -187,32 +218,6 @@ void FlowControl::timeout_flows(uint32_t flowCount, time_t cur_time)
         ip_cache->timeout(flowCount, cur_time);
 
     Active_Resume();
-}
-
-uint32_t FlowControl::max_flows(uint8_t proto)
-{
-    FlowCache* cache = get_cache(proto);
-
-    if ( cache )
-        return cache->get_max_flows();
-
-    return 0;
-}
-
-void FlowControl::get_prunes (uint8_t proto, PegCount& prunes)
-{
-    FlowCache* cache = get_cache(proto);
-
-    if ( cache )
-        prunes = cache->get_prunes();
-}
-
-void FlowControl::reset_prunes (uint8_t proto)
-{
-    FlowCache* cache = get_cache(proto);
-
-    if ( cache )
-        cache->reset_prunes();
 }
 
 //-------------------------------------------------------------------------

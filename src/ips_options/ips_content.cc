@@ -427,7 +427,7 @@ static int uniSearchReal(PatternMatchData* pmd, Cursor& c)
         return 1;
     }
 
-    return -1;
+    return 0;
 }
 
 static int CheckANDPatternMatch(PatternMatchData* idx, Cursor& c)

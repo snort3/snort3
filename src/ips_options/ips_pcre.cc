@@ -184,21 +184,11 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
         while(isspace((int)*re)) re++;
     }
 
-    /* now we wrap the RE in double quotes.  stupid snort parser.... */
-    if(*re != '"') {
-        printf("It isn't \"\n");
-        goto syntax;
-    }
-    re++;
+    if ( *re == '"')
+        re++;
 
-    if(re[strlen(re)-1] != '"')
-    {
-        printf("It isn't \"\n");
-        goto syntax;
-    }
-
-    /* remove the last quote from the string */
-    re[strlen(re) - 1] = '\0';
+    if ( re[strlen(re)-1] == '"' )
+        re[strlen(re) - 1] = '\0';
 
     /* 'm//' or just '//' */
 

@@ -431,6 +431,30 @@ preprocessor frag3_engine: \
     min_ttl 2 \
     bind_to 192.1.2.7/24
 
+preprocessor frag3_engine: \
+    policy last \
+    policy bsd \
+    policy linux \
+    policy solaris \
+    detect_anomalies \
+    overlap_limit 10 \
+    min_fragment_length 100 \
+    timeout 0 \
+    timeout 180 \
+    min_ttl 2 \
+    bind_to [10.1.47.0/24,172.16.8.0/24]
+
+preprocessor frag3_engine: \
+    policy last \
+    policy bsd \
+    policy linux \
+    policy solaris \
+    detect_anomalies \
+    overlap_limit 10 \
+    min_fragment_length 100 \
+    timeout 0 \
+    timeout 180 \
+    min_ttl 2
 
 # Target-Based stateful inspection/stream reassembly.  For more inforation, see README.stream5
 preprocessor stream5_global: track_tcp yes, \
@@ -1126,8 +1150,10 @@ alert tcp $EXTERNAL_NET any -> $SMTP_SERVERS 25 (msg:"BROWSER-IE Microsoft Inter
 # rawbytes
 alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"APP-DETECT GoToMyPC local service running"; \
     content:"jedi request"; nocase; offset:4; depth:20; rawbytes; \
-    content:"jedi request2"; nocase; distance:150; http_cookie; http_header; \
+    content:"jedi request2"; nocase; distance:150; http_header; \
     content:"jedi request3"; within:150; http_client_body; \
+    content:"jedi request4"; http_cookie; \
+    content:"jedi request5 -- containt pkt data"; \
     sid:1000060; gid:1; rev:6;)
 
 
@@ -1142,6 +1168,7 @@ alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"APP-DETECT GoToMyPC
     content:"http_raw_uri"; http_raw_uri; \
     content:"http_stat_code"; http_stat_code; \
     content:"http_stat_msg"; http_stat_msg; \
+    pcre:"/mos\s{2}\dm\s\d/"; \
     sid:7034; gid:1; rev:6;)
 
 

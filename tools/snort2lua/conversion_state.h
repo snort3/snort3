@@ -60,6 +60,7 @@ protected:
     TableApi& table_api;
     RuleApi& rule_api;
 
+
 #if 0
     Forward declaration fo parsing methods. Since these are all inline,
     unable to forward declare in regular code.
@@ -270,7 +271,6 @@ protected:
             const ConvertMap* map = util::find_map(rules::rule_options_api, keyword);
             if (map)
             {
-                rule_api.unselect_option(); // reset option data...just in case.
                 cv.set_state(map->ctor(cv));
                 break;
             }

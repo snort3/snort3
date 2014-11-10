@@ -62,6 +62,7 @@ public:
     static void print_config(SnortConfig*);
 
     static void thread_init(SnortConfig*);
+    static void thread_stop(SnortConfig*);
     static void thread_term(SnortConfig*);
 
     static void release_policy(FrameworkPolicy*);

@@ -132,7 +132,7 @@ static const InspectApi icmp_api =
     icmp_ctor,
     icmp_dtor,
     icmp_ssn,
-    icmp_reset
+    nullptr, // reset
 };
 
 const BaseApi* nin_stream_icmp = &icmp_api.base;

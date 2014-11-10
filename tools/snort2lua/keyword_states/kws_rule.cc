@@ -89,7 +89,7 @@ static ConversionState* dep_rule_ctor(Converter& c)
 {
     c.get_rule_api().add_hdr_data(*name);
     c.get_rule_api().make_rule_a_comment();
-    c.get_rule_api().add_comment_to_rule("The '" + *name + "' ruletype is no longer supported");
+    c.get_rule_api().add_comment("The '" + *name + "' ruletype is no longer supported");
     return new RuleHeader(c);
 }
 

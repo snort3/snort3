@@ -101,7 +101,6 @@ THREAD_LOCAL ProfileStats s5TcpProcessRebuiltPerfStats;
 struct TcpStats
 {
     PegCount sessions;
-    PegCount prunes;
     PegCount timeouts;
     PegCount resyns;
     PegCount discards;
@@ -130,7 +129,6 @@ struct TcpStats
 const char* tcp_pegs[] =
 {
     "sessions",
-    "prunes",
     "timeouts",
     "resyns",
     "discards",
@@ -6849,11 +6847,6 @@ midstream_pickup_allowed:
 //-------------------------------------------------------------------------
 // tcp module stuff
 //-------------------------------------------------------------------------
-
-void tcp_reset()
-{
-    flow_con->reset_prunes(IPPROTO_TCP);
-}
 
 void tcp_show(StreamTcpConfig* tcp_config)
 {
