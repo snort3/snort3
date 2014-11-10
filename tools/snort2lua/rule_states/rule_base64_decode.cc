@@ -59,6 +59,7 @@ bool Base64Decode::convert(std::istringstream& data_stream)
         if (args.find(":") != std::string::npos)
         {
             rule_api.add_option("base64_decode");
+            data_stream.clear();
             data_stream.seekg(pos);
         }
         else
@@ -76,6 +77,7 @@ bool Base64Decode::convert(std::istringstream& data_stream)
             }
             else
             {
+                data_stream.clear();
                 data_stream.seekg(pos);
                 rule_api.add_option("base64_decode");
             }
