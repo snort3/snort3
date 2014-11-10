@@ -91,6 +91,9 @@ static const char* const base_pegs[] =
 
 void base_sum()
 {   
+    if ( !flow_con )
+        return;
+
     t_stats.tcp_flows = flow_con->get_flows(IPPROTO_TCP);
     t_stats.tcp_prunes = flow_con->get_prunes(IPPROTO_TCP);
 
@@ -115,7 +118,9 @@ void base_stats()
 
 void base_reset()
 {
-    flow_con->clear_counts();
+    if ( flow_con )
+        flow_con->clear_counts();
+
     memset(&t_stats, 0, sizeof(t_stats));
 }
 

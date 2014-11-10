@@ -8,6 +8,8 @@
 -- fixed implied equal range checks (ie just a #, no op)
 -- fixed !content
 -- support \xFF style hex chars in content strings
+-- fix icmp session cleanup counting
+-- fix null flow_con in print mode
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug

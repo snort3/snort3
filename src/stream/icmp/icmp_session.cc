@@ -70,10 +70,10 @@ static void IcmpSessionCleanup(Flow *ssn)
         CloseStreamSession(&sfBase, SESSION_CLOSED_NORMALLY);
     }
 
-    ssn->clear();
-
     if ( ssn->s5_state.session_flags & SSNFLAG_SEEN_SENDER )
         icmpStats.released++;
+
+    ssn->clear();
 }
 
 static int ProcessIcmpUnreach(Packet *p)
