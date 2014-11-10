@@ -25,7 +25,7 @@
 # initialization
 #--------------------------------------------------------------------------
 
-AC_INIT([snort], [2.10.0])
+AC_INIT([snort], [3.0.0-a1])
 AC_PREREQ([2.68])
 
 AC_CONFIG_SRCDIR([src/main.h])

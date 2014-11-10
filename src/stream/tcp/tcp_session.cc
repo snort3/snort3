@@ -101,7 +101,6 @@ THREAD_LOCAL ProfileStats s5TcpProcessRebuiltPerfStats;
 struct TcpStats
 {
     PegCount sessions;
-    PegCount prunes;
     PegCount timeouts;
     PegCount resyns;
     PegCount discards;
@@ -116,6 +115,7 @@ struct TcpStats
     PegCount trackers_released;
     PegCount segs_queued;
     PegCount segs_released;
+    PegCount segs_split;
     PegCount segs_used;
     PegCount rebuilt_packets;
     PegCount rebuilt_buffers;
@@ -129,7 +129,6 @@ struct TcpStats
 const char* tcp_pegs[] =
 {
     "sessions",
-    "prunes",
     "timeouts",
     "resyns",
     "discards",
@@ -144,6 +143,7 @@ const char* tcp_pegs[] =
     "trackers released",
     "segs queued",
     "segs released",
+    "segs split",
     "segs used",
     "rebuilt packets",
     "rebuilt buffers",
@@ -3200,6 +3200,7 @@ static int DupStreamNode(Packet *p,
     if ( !ss )
         return STREAM_INSERT_FAILED;
 
+    tcpStats.segs_split++;
     ss->data = ss->pkt + (left->data - left->pkt);
     ss->orig_dsize = left->orig_dsize;
 
@@ -5905,6 +5906,13 @@ static inline uint32_t flush_pdu_ips (
         if ( flush_pt > 0 )
         {
             MODULE_PROFILE_END(s5TcpPAFPerfStats);
+#if 0
+            // for non-paf splitters, flush_pt > 0 means we reached
+            // the minimum required, but we flush what is available 
+            // instead of creating more, but smaller, packets
+            if ( !trk->splitter->is_paf() && avail > flush_pt )
+                return avail;
+#endif
             return flush_pt;
         }
         seg = seg->next;
@@ -6061,6 +6069,17 @@ static inline uint32_t flush_pdu_ackd (
         if ( flush_pt > 0 )
         {
             MODULE_PROFILE_END(s5TcpPAFPerfStats);
+#if 0
+            // for non-paf splitters, flush_pt > 0 means we reached
+            // the minimum required, but we flush what is available 
+            // instead of creating more, but smaller, packets
+            if ( !trk->splitter->is_paf() )
+            {
+                uint32_t avail = get_q_footprint(trk);
+                if ( avail > flush_pt )
+                    return avail;
+            }
+#endif
             return flush_pt;
         }
         seg = seg->next;
@@ -6828,11 +6847,6 @@ midstream_pickup_allowed:
 //-------------------------------------------------------------------------
 // tcp module stuff
 //-------------------------------------------------------------------------
-
-void tcp_reset()
-{
-    flow_con->reset_prunes(IPPROTO_TCP);
-}
 
 void tcp_show(StreamTcpConfig* tcp_config)
 {

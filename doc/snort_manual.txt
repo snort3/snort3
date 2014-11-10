@@ -20,7 +20,7 @@ include::start.txt[]
 
 == Basic Modules
 
-Internal modules which are plugins are termed "basic".  These include
+Internal modules which are not plugins are termed "basic".  These include
 configuration for core processing.
 
 include::basic.txt[]

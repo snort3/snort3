@@ -2,9 +2,9 @@
 cmake_minimum_required(VERSION 2.9)
 project (snort CXX C)
 
-set (SNORT_VERSION_MAJOR 2)
-set (SNORT_VERSION_MINOR 10)
-set (SNORT_VERSION_BUILD  0)
+set (SNORT_VERSION_MAJOR 3)
+set (SNORT_VERSION_MINOR 0)
+set (SNORT_VERSION_BUILD  0-a1)
 set (VERSION "${SNORT_VERSION_MAJOR}.${SNORT_VERSION_MINOR}.${SNORT_VERSION_BUILD}")
 
 # ensure cmake will look in the cmake directory for configuration files

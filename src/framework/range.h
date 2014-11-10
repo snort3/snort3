@@ -36,8 +36,8 @@ class SO_PUBLIC RangeCheck
 public:
     enum Op
     {
-        // =  !  <   <=  >   >=  <>  ><  <=>
-        EQ, NOT, LT, LE, GT, GE, LG, GL, LEG, MAX
+        // =  !  <   <=  >   >=  <>  <=>
+        EQ, NOT, LT, LE, GT, GE, LG, LEG, MAX
     };
 
     Op op;
