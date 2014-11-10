@@ -7,6 +7,7 @@
 -- don't fp only when following option is relative
 -- fixed implied equal range checks (ie just a #, no op)
 -- fixed !content
+-- support \xFF style hex chars in content strings
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug
