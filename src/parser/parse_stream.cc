@@ -57,6 +57,31 @@ static const char* const toks[TT_MAX] =
 };
 #endif
 
+static char unescape(char c)
+{
+    switch ( c )
+    {
+    case 'a': return '\a';
+    case 'b': return '\b';
+    case 'f': return '\f';
+    case 'n': return '\n';
+    case 'r': return '\r';
+    case 't': return '\t';
+    case 'v': return '\v';
+    }
+    return c;
+}
+
+static uint8_t to_hex(char c)
+{
+    if ( isdigit(c) )
+        return c - '0';
+    else if ( isupper(c) )
+        return 10 + c - 'A';
+    else
+        return 10 + c - 'a';
+}
+
 static TokenType get_token(
     istream& is, string& s, const char* punct, bool esc)
 {
@@ -65,6 +90,7 @@ static TokenType get_token(
     s.clear();
     bool inc = true;
     static int pos = 1;
+    uint8_t hex;
 
     if ( prev != EOF )
     {
@@ -168,24 +194,31 @@ static TokenType get_token(
                 return TT_LIST;
             break;
         case 3:  // string
-            if ( esc && c == ';' )
+            if ( esc && c == '"' )
+            {
+                s += c;
+                return TT_STRING;
+            }
+            if ( !esc && c == ';' )
             {
                 prev = c;
                 return TT_STRING;
             }
-            s += c;
-            if ( !esc && c == '"' )
-            {
-                return TT_STRING;
-            }
             else if ( c == '\\' )
-                state = 4;
+                state = esc ? 4 : 16;
             else if ( c == '\n' )
                 ParseWarning("line break in string on line %d\n", lines-1);
+            else
+                s += c;
             break;
         case 4:  // quoted escape
-            s += c;
-            state = 3;
+            if ( c == 'x' )
+                state = 14;
+            else
+            {
+                s += unescape(c);
+                state = 3;
+            }
             break;
         case 5:  // unquoted escape
             if ( c != '\n' && c != '\r' )
@@ -284,6 +317,39 @@ static TokenType get_token(
                 ParseWarning("line break in commented string on line %d\n", lines-1);
                 state = 11;
             }
+            break;
+        case 14:  // escaped hex in string - first digit
+            if ( isxdigit(c) )
+            {
+                hex = to_hex(c);
+                state = 15;
+            }
+            else
+            {
+                ParseWarning("\\x used with no following hex digits", lines-1);
+                s += c;
+                state = 3;
+            }
+            break;
+        case 15:  // escaped hex in string - second digit
+            if ( isxdigit(c) )
+            {
+                hex <<= 4;
+                hex |= to_hex(c);
+                s += hex;
+                state = 3;
+            }
+            else
+            {
+                s += hex;
+                s += c;
+                state = 3;
+            }
+            break;
+        case 16:  // string we don't unescape
+            s += '\\';
+            s += c;
+            state = 3;
             break;
         }
         c = is.get();
@@ -543,7 +609,7 @@ static void parse_body(const char* extra, RuleParseState& rps, struct SnortConfi
         exec(s->action, tok, rps, sc);
 
         num = s->next;
-        esc = (rps.key == "pcre" || rps.key == "reference");
+        esc = (rps.key == "content");
 
         if ( s->punct )
             punct = s->punct;
@@ -574,7 +640,7 @@ void parse_stream(istream& is, struct SnortConfig* sc)
             break;
 
         num = s->next;
-        esc = (rps.key == "pcre" || rps.key == "reference");
+        esc = (rps.key == "content");
 
         if ( s->punct )
             punct = s->punct;

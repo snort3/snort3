@@ -147,7 +147,7 @@ static const InspectApi udp_api =
     udp_ctor,
     udp_dtor,
     udp_ssn,
-    udp_reset
+    nullptr  // reset
 };
 
 const BaseApi* nin_stream_udp = &udp_api.base;

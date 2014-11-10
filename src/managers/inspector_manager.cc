@@ -484,7 +484,7 @@ void InspectorManager::thread_init(SnortConfig* sc)
     }
 }
 
-void InspectorManager::thread_term(SnortConfig* sc)
+void InspectorManager::thread_stop(SnortConfig*)
 {
     // pin->tterm() only called for default policy
     set_default_policy();
@@ -493,13 +493,18 @@ void InspectorManager::thread_term(SnortConfig* sc)
     if ( pi && pi->framework_policy )
     {
         for ( auto* p : pi->framework_policy->ilist )
-            if ( !p->pp_class.init )
+            // FIXIT-H init set after reload preventing call to
+            // StreamBase::tterm() which is bad, m'kay?
+            //if ( !p->pp_class.init )
             {
                 p->handler->tterm();
                 p->pp_class.init = true;
             }
     }
+}
 
+void InspectorManager::thread_term(SnortConfig* sc)
+{
     for ( auto* p : sc->framework_config->clist )
     {
         if ( p->api.tterm )

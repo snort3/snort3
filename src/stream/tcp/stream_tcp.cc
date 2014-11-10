@@ -150,7 +150,7 @@ static const InspectApi tcp_api =
     tcp_ctor,
     tcp_dtor,
     tcp_ssn,
-    tcp_reset
+    nullptr   // reset
 };
 
 const BaseApi* nin_stream_tcp = &tcp_api.base;

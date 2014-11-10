@@ -41,6 +41,8 @@
   rules, profiling statistics, peg counts, etc.  Note that not all modules
   are plugins and not all plugins have modules.
 
+* *peg count*: the number of times a given event or condition occurs.
+
 * *plugin*: one of several types of software components that can be loaded
   from a dynamic library when Snort starts up.  Some plugins are coupled
   with the main engine in such a way that they must be built statically,

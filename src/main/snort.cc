@@ -983,8 +983,9 @@ void snort_thread_term()
 #ifdef PPM_MGR
     ppm_sum_stats();
 #endif
-    InspectorManager::thread_term(snort_conf);
+    InspectorManager::thread_stop(snort_conf);
     ModuleManager::accumulate(snort_conf);
+    InspectorManager::thread_term(snort_conf);
     ActionManager::thread_term(snort_conf);
 
     IpsManager::clear_options();

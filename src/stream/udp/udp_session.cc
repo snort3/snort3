@@ -209,6 +209,7 @@ int UdpSession::process(Packet *p)
     {
         UdpSessionCleanup(flow);
         flow->restart();
+        flow->s5_state.session_flags |= SSNFLAG_SEEN_SENDER;
         udpStats.created++;
         udpStats.timeouts++;
     }
@@ -218,22 +219,5 @@ int UdpSession::process(Packet *p)
 
     MODULE_PROFILE_END(udp_perf_stats);
     return 0;
-}
-
-//-------------------------------------------------------------------------
-// api related methods
-//-------------------------------------------------------------------------
-
-#if 0
-void udp_stats()
-{
-    // FIXIT-L need to get these before delete flow_con
-    //flow_con->get_prunes(IPPROTO_UDP, udpStats.prunes);
-}
-#endif
-
-void udp_reset()
-{
-    flow_con->reset_prunes(IPPROTO_UDP);
 }
 
