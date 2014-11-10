@@ -209,6 +209,7 @@ int UdpSession::process(Packet *p)
     {
         UdpSessionCleanup(flow);
         flow->restart();
+        flow->s5_state.session_flags |= SSNFLAG_SEEN_SENDER;
         udpStats.created++;
         udpStats.timeouts++;
     }

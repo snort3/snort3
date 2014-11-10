@@ -10,6 +10,7 @@
 -- support \xFF style hex chars in content strings
 -- fix icmp session cleanup counting
 -- fix null flow_con in print mode
+-- fixed udp session timeout counting
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug
