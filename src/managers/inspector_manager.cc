@@ -493,7 +493,9 @@ void InspectorManager::thread_stop(SnortConfig*)
     if ( pi && pi->framework_policy )
     {
         for ( auto* p : pi->framework_policy->ilist )
-            if ( !p->pp_class.init )
+            // FIXIT-H init set after reload preventing call to
+            // StreamBase::tterm() which is bad, m'kay?
+            //if ( !p->pp_class.init )
             {
                 p->handler->tterm();
                 p->pp_class.init = true;
