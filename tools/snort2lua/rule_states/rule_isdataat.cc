@@ -58,8 +58,7 @@ bool IsDataAt::convert(std::istringstream& data_stream)
     }
     else
     {
-        rule_api.add_rule_option("isdataat", value);
-        rule_api.select_option("isdataat");
+        rule_api.add_option("isdataat", value);
 
         while(util::get_string(arg_stream, value, " ,"))
         {
@@ -67,14 +66,13 @@ bool IsDataAt::convert(std::istringstream& data_stream)
                 rule_api.add_suboption("relative");
 
             else if (!value.compare("rawbytes"))
-                rule_api.add_rule_option_before_selected("pkt_data");
+                rule_api.set_curr_options_buffer("pkt_data");
 
             else
                 rule_api.bad_rule(data_stream, value + " - unknown modifier!!");
         }
     }
 
-    rule_api.unselect_option();
     return set_next_rule_state(data_stream);
 }
 

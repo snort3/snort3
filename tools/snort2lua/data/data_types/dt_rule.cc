@@ -50,7 +50,7 @@ bool Rule::add_hdr_data(std::string data)
 }
 
 
-void Rule::update_rule_type(std::string new_type)
+void Rule::update_rule_action(std::string new_type)
 { hdr_data[0] = new_type; }
 
 void Rule::bad_rule()
@@ -63,47 +63,38 @@ void Rule::make_comment()
 { is_comment = true; }
 
 
-bool Rule::add_option(std::string keyword)
+void Rule::add_option(std::string keyword)
 {
     RuleOption* r = new RuleOption(keyword);
     options.push_back(r);
-    return true;
 }
 
-bool Rule::add_option(std::string keyword, std::string data)
+void Rule::add_option(std::string keyword, std::string data)
 {
     RuleOption* r = new RuleOption(keyword, data);
     options.push_back(r);
-    return true;
 }
 
-bool Rule::add_option_before_selected(RuleOption* selected_opt,
-                                        std::string keyword,
-                                        std::string val)
+void Rule::add_suboption(std::string keyword)
+{  options.back()->add_suboption(keyword); }
+
+void Rule::add_suboption(std::string keyword, std::string val)
+{ options.back()->add_suboption(keyword, val); }
+
+void Rule::set_curr_options_buffer(std::string new_buffer)
 {
-    for (auto r = options.begin(); r != options.end(); ++r)
+    /* set the buffer if
+     * 1) No buffer has been set and this is not the default "pkt_data" buffer
+     * 2) The sticky buffer is set and is not equal to the new buffer
+     */
+    if ( (sticky_buffer.empty() && new_buffer.compare("pkt_data")) ||
+         (!sticky_buffer.empty() && sticky_buffer.compare(new_buffer)) )
     {
-        if ((*r) == selected_opt)
-        {
-            RuleOption* new_opt = new RuleOption(keyword, val);
-            options.insert(r, new_opt);
-            return true;
-        }
+        RuleOption* new_opt = new RuleOption(new_buffer);
+        options.insert(options.end() - 1, new_opt);
+        sticky_buffer = new_buffer;
     }
-
-    // impossible to occur.  Since a rule is already selected, we found this rule once.
-    return false;
 }
-
-RuleOption* Rule::select_option(std::string opt_name)
-{
-    for (auto r = options.rbegin(); r != options.rend(); ++r)
-        if (!opt_name.compare((*r)->get_name()))
-            return (*r);
-    return nullptr;
-}
-
-
 
 
 std::ostream &operator<<( std::ostream& out, const Rule &rule)

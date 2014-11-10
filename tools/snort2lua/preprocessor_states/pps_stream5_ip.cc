@@ -82,9 +82,7 @@ bool StreamIp::convert(std::istringstream& data_stream)
  **************************/
 
 static ConversionState* ctor(Converter& c)
-{
-    return new StreamIp(c);
-}
+{ return new StreamIp(c); }
 
 static const ConvertMap preprocessor_stream_ip =
 {

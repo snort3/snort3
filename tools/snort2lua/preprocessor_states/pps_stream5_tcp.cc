@@ -339,30 +339,34 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
             std::string addr;
             if (arg_stream >> addr)
-                add_to_bindings(&Binder::add_when_net, addr);
-            else
-                tmpval = false;
-        }
+            {
+                std::string tmp;
+                while (arg_stream >> tmp)
+                    addr += " " + tmp;
 
+                add_to_bindings(&Binder::add_when_net, addr);
+            }
+            else
+            {
+                tmpval = false;
+            }
+        }
         else if (!keyword.compare("dont_reassemble_async"))
         {
             table_api.add_diff_option_comment("dont_reassemble_async", "reassemble_async");
             tmpval = table_api.add_option("reassemble_async", false);
         }
-
         else if (!keyword.compare("use_static_footprint_sizes"))
         {
             table_api.add_diff_option_comment("use_static_footprint_sizes", "footprint");
             table_api.add_comment("default footprint == 192");
             tmpval = table_api.add_option("footprint", 192);
         }
-
         else if (!keyword.compare("timeout"))
         {
             table_api.add_diff_option_comment("timeout", "session_timeout");
             tmpval = parse_int_option("session_timeout", arg_stream);
         }
-
         else if (!keyword.compare("max_queued_segs"))
         {
             table_api.add_diff_option_comment("max_queued_segs", "queue_limit.max_segments");
@@ -370,7 +374,6 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("max_segments", arg_stream);
             table_api.close_table();
         }
-
         else if (!keyword.compare("max_queued_bytes"))
         {
             table_api.add_diff_option_comment("max_queued_bytes", "queue_limit.max_bytes");
@@ -378,7 +381,6 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("max_bytes", arg_stream);
             table_api.close_table();
         }
-
         else if (!keyword.compare("policy"))
         {
             std::string policy;
@@ -433,31 +435,26 @@ bool StreamTcp::convert(std::istringstream& data_stream)
                 table_api.add_diff_option_comment("policy win2003", "stream_tcp.policy = win-2003");
                 table_api.add_option("policy", "win-2003");
             }
-
             else if (!policy.compare("win2k3"))
             {
                 table_api.add_diff_option_comment("policy win2k3", "stream_tcp.policy = win-2003");
                 table_api.add_option("policy", "win-2003");
             }
-
             else if (!policy.compare("hpux11"))
             {
                 table_api.add_diff_option_comment("policy hpux11", "stream_tcp.policy = hpux");
                 table_api.add_option("policy", "hpux");
             }
-
             else if (!policy.compare("grannysmith"))
             {
                 table_api.add_diff_option_comment("policy grannysmith", "stream_tcp.policy = macos");
                 table_api.add_option("policy", "macos");
             }
-
             else
             {
                 data_api.failed_conversion(data_stream, "stream5_tcp: policy " + policy);
             }
         }
-
         else
         {
             tmpval = false;

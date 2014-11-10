@@ -58,7 +58,7 @@ bool Base64Decode::convert(std::istringstream& data_stream)
         // Therefore, if a colon is present, we are in the next rule option.
         if (args.find(":") != std::string::npos)
         {
-            rule_api.add_rule_option("base64_decode");
+            rule_api.add_option("base64_decode");
             data_stream.seekg(pos);
         }
         else
@@ -72,12 +72,12 @@ bool Base64Decode::convert(std::istringstream& data_stream)
                 !tmp.compare("offset") ||
                 !tmp.compare("relative"))
             {
-                rule_api.add_rule_option("base64_decode", args);
+                rule_api.add_option("base64_decode", args);
             }
             else
             {
                 data_stream.seekg(pos);
-                rule_api.add_rule_option("base64_decode");
+                rule_api.add_option("base64_decode");
             }
         }
     }

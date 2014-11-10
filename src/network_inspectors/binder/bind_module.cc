@@ -210,6 +210,12 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
 {
     if ( idx && !strcmp(fqn, BIND_NAME) )
     {
+        if ( !work )
+        {
+            ParseError("invalid %s[%d]\n", fqn, idx);
+            return true;
+        }
+
         if ( work->use.type == FILE_KEY )
         {
             Shell* sh = new Shell(work->use.name.c_str());

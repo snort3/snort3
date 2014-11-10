@@ -24,6 +24,8 @@
 #include "conversion_state.h"
 #include "utils/converter.h"
 #include "utils/s2l_util.h"
+#include "utils/util_binder.h"
+
 
 namespace preprocessors
 {
@@ -38,42 +40,39 @@ public:
     virtual bool convert(std::istringstream& data_stream);
 
 private:
-    bool parse_ip_list(std::string, std::istringstream& data_stream);
+    std::string choose_table_name(std::istringstream& data_stream);
 };
 
 } // namespace
 
-
-bool Frag3Engine::parse_ip_list(std::string list_name, 
-                                std::istringstream& data_stream)
+std::string Frag3Engine::choose_table_name(std::istringstream& data_stream)
 {
-    std::string prev;
-    std::string elem;
+    static uint32_t binding_id = 0;
+    const std::streamoff pos = data_stream.tellg();
+    std::string keyword;
 
-    if(!(data_stream >> elem) || (elem.front() != '['))
-        return false;
+    while (data_stream >> keyword)
+    {
+        if (!keyword.compare("bind_to"))
+        {
+            data_stream.seekg(pos);
+            data_stream.clear();
+            return "stream_ip_" + std::to_string(binding_id++);
+        }
+    }
 
-    if(!(data_stream >> elem))
-        return false;
-
-    // there can be no spaces between the square bracket and string
-    prev = "[" + elem;
-
-    while (data_stream >> elem && elem.back() != ']')
-        prev = prev + ' ' + elem;
-
-    prev = prev + "]";
-    return table_api.add_option(list_name, prev);
-
+    data_stream.seekg(pos);
+    data_stream.clear();
+    return "stream_ip";
 }
 
 bool Frag3Engine::convert(std::istringstream& data_stream)
 {
-
     bool retval = true;
     std::string keyword;
 
-    table_api.open_table("stream_ip");
+    const std::string table_name = choose_table_name(data_stream);
+    table_api.open_table(table_name);
 
     while(data_stream >> keyword)
     {
@@ -87,8 +86,22 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
             table_api.add_deleted_comment("detect_anomalies");
 
         else if(!keyword.compare("bind_to"))
-            parse_ip_list("bind_to", data_stream);
+        {
+            std::string ip_list;
 
+            if ( !(data_stream >> ip_list) )
+            {
+                data_api.failed_conversion(data_stream, "bind_to <ip_list>");
+            }
+            else
+            {
+                Binder b(table_api);
+                b.set_when_proto("ip");
+                b.add_when_net(ip_list);
+                b.set_use_type("stream_ip");
+                b.set_use_name(table_name);
+            }
+        }
         else if(!keyword.compare("min_ttl"))
         {
             if (!parse_int_option("min_ttl", data_stream))

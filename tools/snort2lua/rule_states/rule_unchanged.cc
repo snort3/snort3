@@ -48,11 +48,11 @@ public:
         if (has_suboptions)
         {
             std::string val = util::get_rule_option_args(stream);
-            rule_api.add_rule_option(*rule_name, val);
+            rule_api.add_option(*rule_name, val);
         }
         else
         {
-            rule_api.add_rule_option(*rule_name);
+            rule_api.add_option(*rule_name);
         }
 
         return set_next_rule_state(stream);

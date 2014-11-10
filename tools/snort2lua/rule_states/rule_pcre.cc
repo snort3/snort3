@@ -135,7 +135,7 @@ bool Pcre::convert(std::istringstream& data_stream)
 
         if (!sticky_buffer.empty())
         {
-            rule_api.add_rule_option(sticky_buffer);
+            rule_api.add_option(sticky_buffer);
 
             if (sticky_buffer_set)
                 rule_api.bad_rule(data_stream, "Two sticky buffers set for this regular expression!");
@@ -144,7 +144,10 @@ bool Pcre::convert(std::istringstream& data_stream)
         }
     }
 
-    rule_api.add_rule_option("pcre", pattern + new_opts);
+    rule_api.add_option("pcre", pattern + new_opts);
+    if (!sticky_buffer_set)
+        rule_api.set_curr_options_buffer("pkt_data");
+
     return set_next_rule_state(data_stream);
 }
 

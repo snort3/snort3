@@ -132,7 +132,7 @@ bool React::convert(std::istringstream& data_stream)
     table_api.close_table();
 
     // Finally, update the rule type
-    rule_api.update_rule_type("react");
+    rule_api.update_rule_action("react");
     return set_next_rule_state(data_stream);
 }
 
