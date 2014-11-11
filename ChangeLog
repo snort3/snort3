@@ -12,6 +12,7 @@
 -- fix null flow_con in print mode
 -- fixed udp session timeout counting
 -- patched around shutdown issue after reload
+-- fixed calls to Inspector::tterm()
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug
