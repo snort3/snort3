@@ -17,6 +17,7 @@
 -- suppress repeated 129:20 on same session
 -- fixed legacy HI scanner events
 -- fixed whitelist / blacklist enforcement
+-- josh fixed a decoding issue affecting fragged packets
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug
