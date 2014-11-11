@@ -222,6 +222,7 @@ public:
     uint8_t ecn;
     bool lws_init;
     bool tcp_init;
+    uint32_t event_mask;
 
 private:
     int process_dis(Packet*);
