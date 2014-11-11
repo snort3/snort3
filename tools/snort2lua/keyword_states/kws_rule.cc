@@ -61,7 +61,7 @@ bool RuleHeader::convert(std::istringstream& data_stream)
 
     // Now, remove the last ')' and anything beyond. We will automatically
     // add that part back when printing each rule.
-    std::streamoff curr_pos = data_stream.tellg();
+    const std::istringstream::off_type curr_pos = data_stream.tellg();
     std::string rule_string = data_stream.str();
     std::size_t end_pos = rule_string.rfind(')');
     rule_string = rule_string.substr(0, end_pos);

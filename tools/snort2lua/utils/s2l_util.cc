@@ -243,8 +243,8 @@ std::string rule_option_find_val(std::istringstream& data_stream,
         {
             // found an option without a colon, so set stream
             // to semi-colon
-            std::streamoff off = 1 + (std::streamoff)(tmp_pos) +
-                                 (std::streamoff)(semi_colon_pos);
+            std::istringstream::off_type off = 1 +
+                (std::streamoff)(tmp_pos) + (std::streamoff)(semi_colon_pos);
             data_stream.seekg(off);
             rule_keyword = rule_keyword.substr(0, semi_colon_pos);
         }
