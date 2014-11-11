@@ -82,7 +82,7 @@ bool Threshold::convert(std::istringstream& data_stream)
     }
 
     // save the current position
-    const std::streamoff curr_pos = data_stream.tellg();
+    const std::istringstream::off_type curr_pos = data_stream.tellg();
 
     if (curr_pos == -1)
         data_stream.clear();

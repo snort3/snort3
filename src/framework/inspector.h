@@ -67,8 +67,9 @@ public:
     virtual void show(SnortConfig*) { };
 
     // packet thread functions
-    virtual void tinit() { };
-    virtual void tterm() { };
+    // tinit, tterm called on default policy instance only
+    virtual void tinit() { };  // allocate configurable thread local
+    virtual void tterm() { };  // purge only, deallocate via api
 
     virtual void eval(Packet*) = 0;
     virtual void meta(int, const uint8_t*) { };
