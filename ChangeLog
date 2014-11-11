@@ -13,6 +13,7 @@
 -- fixed udp session timeout counting
 -- patched around shutdown issue after reload
 -- fixed calls to Inspector::tterm()
+-- snort2lua updates from josh
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug
