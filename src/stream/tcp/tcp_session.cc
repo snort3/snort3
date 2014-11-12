@@ -211,20 +211,19 @@ THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 #define EVENT_DATA_ON_SYN               0x00000002
 #define EVENT_DATA_ON_CLOSED            0x00000004
 #define EVENT_BAD_TIMESTAMP             0x00000008
-#define EVENT_BAD_SEGMENT               0x00000010
-#define EVENT_WINDOW_TOO_LARGE          0x00000020
-#define EVENT_EXCESSIVE_TCP_OVERLAPS    0x00000040
-#define EVENT_DATA_AFTER_RESET          0x00000080
-#define EVENT_SESSION_HIJACK_CLIENT     0x00000100
-#define EVENT_SESSION_HIJACK_SERVER     0x00000200
-#define EVENT_DATA_WITHOUT_FLAGS        0x00000400
-#define EVENT_4WHS                      0x00000800
-#define EVENT_NO_TIMESTAMP              0x00001000
-#define EVENT_BAD_RST                   0x00002000
-#define EVENT_BAD_FIN                   0x00004000
-#define EVENT_BAD_ACK                   0x00008000
-#define EVENT_DATA_AFTER_RST_RCVD       0x00010000
-#define EVENT_WINDOW_SLAM               0x00020000
+#define EVENT_WINDOW_TOO_LARGE          0x00000010
+#define EVENT_DATA_AFTER_RESET          0x00000020
+#define EVENT_SESSION_HIJACK_CLIENT     0x00000040
+#define EVENT_SESSION_HIJACK_SERVER     0x00000080
+#define EVENT_DATA_WITHOUT_FLAGS        0x00000100
+#define EVENT_4WHS                      0x00000200
+#define EVENT_NO_TIMESTAMP              0x00000400
+#define EVENT_BAD_RST                   0x00000800
+#define EVENT_BAD_FIN                   0x00001000
+#define EVENT_BAD_ACK                   0x00002000
+#define EVENT_DATA_AFTER_RST_RCVD       0x00004000
+#define EVENT_WINDOW_SLAM               0x00008000
+#define EVENT_NO_3WHS                   0x00010000
 
 #define TF_NONE                     0x00
 #define TF_WSCALE                   0x01
@@ -4732,14 +4731,8 @@ static void LogTcpEvents(int eventcode)
     if (eventcode & EVENT_BAD_TIMESTAMP)
         EventBadTimestamp();
 
-    if (eventcode & EVENT_BAD_SEGMENT)
-        EventBadSegment();
-
     if (eventcode & EVENT_WINDOW_TOO_LARGE)
         EventWindowTooLarge();
-
-    if (eventcode & EVENT_EXCESSIVE_TCP_OVERLAPS)
-        EventExcessiveOverlap();
 
     if (eventcode & EVENT_DATA_AFTER_RESET)
         EventDataAfterReset();
@@ -4999,6 +4992,7 @@ static int ProcessTcp(
         {
             /* Listener previously issued a reset */
             /* Talker is re-SYN-ing */
+            // FIXIT-L this leads to bogus 129:20
             TcpSessionCleanup(lwssn, 1);
 
             if (p->ptrs.tcph->th_flags & TH_RST)
@@ -5660,7 +5654,15 @@ static int ProcessTcp(
                 !(talker->s_mgr.sub_state & SUB_FIN_SENT) )
             {
                 talker->l_nxt_seq++;
+
+                //--------------------------------------------------
+                // FIXIT-L don't bump r_nxt_ack unless FIN is in seq
+                // because it causes bogus 129:5 cases
+                // but doing so causes extra gaps
+                //if ( SEQ_EQ(tdb->end_seq, listener->r_nxt_ack) )
                 listener->r_nxt_ack++;
+                //--------------------------------------------------
+
                 talker->s_mgr.sub_state |= SUB_FIN_SENT;
 
                 if ((listener->flush_policy != STREAM_FLPOLICY_ON_ACK) &&
@@ -6644,6 +6646,7 @@ bool TcpSession::setup (Packet*)
     reset();
 
     lws_init = tcp_init = false;
+    event_mask = 0;
     ecn = 0;
 
     memset(&client, 0, sizeof(client));
@@ -6770,7 +6773,12 @@ int TcpSession::process(Packet *p)
                     "Handshake, but failed to retrieve session object "
                     "for non SYN packet.\n"););
 
-                EventNo3whs();
+                if ( !p->ptrs.tcph->is_rst() && !(tcpssn->event_mask & EVENT_NO_3WHS) )
+                {
+                    EventNo3whs();
+                    tcpssn->event_mask |= EVENT_NO_3WHS;
+                }
+
                 MODULE_PROFILE_END(s5TcpPerfStats);
 #ifdef REG_TEST
                 S5TraceTCP(p, flow, &tdb, 1);

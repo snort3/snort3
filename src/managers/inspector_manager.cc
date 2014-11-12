@@ -72,9 +72,10 @@ struct PHClass
 {
     const InspectApi& api;
     bool init;  // call pin->tinit()
+    bool term;  // call pin->tterm()
 
     PHClass(const InspectApi& p) : api(p)
-    { init = true; };
+    { init = term = true; };
 
     static bool comp (PHClass* a, PHClass* b)
     { return ( a->api.type < b->api.type ); };
@@ -493,12 +494,10 @@ void InspectorManager::thread_stop(SnortConfig*)
     if ( pi && pi->framework_policy )
     {
         for ( auto* p : pi->framework_policy->ilist )
-            // FIXIT-H init set after reload preventing call to
-            // StreamBase::tterm() which is bad, m'kay?
-            //if ( !p->pp_class.init )
+            if ( p->pp_class.term )
             {
                 p->handler->tterm();
-                p->pp_class.init = true;
+                p->pp_class.term = false;
             }
     }
 }

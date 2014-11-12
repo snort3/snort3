@@ -12,6 +12,11 @@
 -- fix null flow_con in print mode
 -- fixed udp session timeout counting
 -- patched around shutdown issue after reload
+-- fixed calls to Inspector::tterm()
+-- snort2lua updates from josh
+-- suppress repeated 129:20 on same session
+-- fixed legacy HI scanner events
+-- fixed whitelist / blacklist enforcement
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug

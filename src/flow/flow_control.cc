@@ -370,11 +370,14 @@ unsigned FlowControl::process(FlowCache* cache, Packet* p)
         break;
 
     case Flow::ALLOW:
+        p->ptrs.decode_flags |= DECODE_PKT_TRUST;
         stream.stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
         break;
 
     case Flow::BLOCK:
+        // FIXIT-M should not repeatedly clear session
         stream.drop_packet(p);
+        Active_DropSession();
         break;
     }
 

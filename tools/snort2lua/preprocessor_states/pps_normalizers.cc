@@ -293,6 +293,7 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
 
                 else
                 {
+                    data_stream.clear();
                     data_stream.seekg(pos);
                     break;
                 }

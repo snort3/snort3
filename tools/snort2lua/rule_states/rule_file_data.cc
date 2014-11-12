@@ -59,6 +59,7 @@ bool FileData::convert(std::istringstream& data_stream)
         // Therefore, if a colon is present, we are in the next rule option.
         if (args.find(":") != std::string::npos)
         {
+            data_stream.clear();
             data_stream.seekg(pos);
         }
         else
@@ -68,9 +69,14 @@ bool FileData::convert(std::istringstream& data_stream)
             std::istringstream(args) >> tmp;
 
             if (!tmp.compare("mime"))
+            {
                 rule_api.add_comment("file_data's 'mime' option has been deleted");
+            }
             else
+            {
+                data_stream.clear();
                 data_stream.seekg(pos);
+            }
         }
     }
     return set_next_rule_state(data_stream);

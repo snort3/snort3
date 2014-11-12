@@ -48,21 +48,21 @@ private:
 std::string Frag3Engine::choose_table_name(std::istringstream& data_stream)
 {
     static uint32_t binding_id = 0;
-    const std::streamoff pos = data_stream.tellg();
+    const std::istringstream::off_type pos = data_stream.tellg();
     std::string keyword;
 
     while (data_stream >> keyword)
     {
         if (!keyword.compare("bind_to"))
         {
-            data_stream.seekg(pos);
             data_stream.clear();
+            data_stream.seekg(pos);
             return "stream_ip_" + std::to_string(binding_id++);
         }
     }
 
-    data_stream.seekg(pos);
     data_stream.clear();
+    data_stream.seekg(pos);
     return "stream_ip";
 }
 

@@ -1275,7 +1275,7 @@ bool Defrag::configure(SnortConfig* sc)
 
 void Defrag::tinit()
 {
-    defrag_pkts = new Packet*[layers];
+    defrag_pkts = new Packet* [layers];
 
     for (int i = 1; i < layers; i++)
         defrag_pkts[i] = nullptr;

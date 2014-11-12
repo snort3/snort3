@@ -161,7 +161,7 @@ void snort_inspect(Packet* p)
     ** By checking tagging here, we make sure that we log the
     ** tagged packet whether it generates an alert or not.
     */
-    if (p->ptrs.ip_api.is_valid())
+    if ( p->has_ip() )
         CheckTagging(p);
 
 #ifdef PPM_MGR

@@ -46,7 +46,7 @@ bool React::convert(std::istringstream& data_stream)
 {
     std::string args;
     std::string tmp;
-    std::streamoff pos = data_stream.tellg();
+    std::istringstream::off_type pos = data_stream.tellg();
 
     args = util::get_rule_option_args(data_stream);
 
@@ -58,6 +58,7 @@ bool React::convert(std::istringstream& data_stream)
         // Therefore, if a colon is present, we are in the next rule option.
         if (args.find(":") != std::string::npos)
         {
+            data_stream.clear();
             data_stream.seekg(pos);
         }
         else
@@ -120,6 +121,7 @@ bool React::convert(std::istringstream& data_stream)
             }
             else
             {
+                data_stream.clear();
                 data_stream.seekg(pos);
             }
 
