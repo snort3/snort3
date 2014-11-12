@@ -137,7 +137,7 @@ int IpOptOption::eval(Cursor&, Packet *p)
     }
 
     ip::IpOptionIterator iter(ip4h, p);
-    for( ip::IpOptions opt : iter)
+    for( const ip::IpOptions& opt : iter)
     {
     	DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "testing pkt(%d):rule(%d)\n",
 				ipOptionData->ip_option,
