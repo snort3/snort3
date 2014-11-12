@@ -577,10 +577,10 @@ bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
         data.relative_flag = 1;
 
     else if ( v.is("big") )
-        data.endianess |= ENDIAN_LITTLE;
+        data.endianess |= ENDIAN_BIG;
 
     else if ( v.is("little") )
-        data.endianess |= ENDIAN_BIG;
+        data.endianess |= ENDIAN_LITTLE;
 
     else if ( v.is("dce") )
         data.endianess |= ENDIAN_FUNC;
