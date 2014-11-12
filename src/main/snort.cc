@@ -1003,6 +1003,7 @@ void snort_thread_term()
 
     DAQ_Delete();
 
+    // FIXIT-L this is kinda squiffy for multithreads
     if ( snort_conf->dirty_pig )
         return;
 

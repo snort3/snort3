@@ -23,6 +23,7 @@
 -- flush available data for non-paf splitters
 -- fixed inspector reinit
 -- fixed byte_extract and byte_jump endianisms
+-- suspend active when purging caches
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug
