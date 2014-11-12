@@ -561,7 +561,7 @@ bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
     {
         long n;
         if ( v.strtol(n) )
-            data.offset = n;
+            data.cmp_value = n;
         else
             cmp_var = v.get_string();
     }

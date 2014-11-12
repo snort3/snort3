@@ -18,6 +18,7 @@
 -- fixed legacy HI scanner events
 -- fixed whitelist / blacklist enforcement
 -- josh fixed a decoding issue affecting fragged packets
+-- fixed byte_test config of compare value
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug
