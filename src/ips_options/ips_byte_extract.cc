@@ -475,10 +475,10 @@ bool ExtractModule::set(const char*, Value& v, SnortConfig*)
         data.multiplier = v.get_long();
 
     else if ( v.is("big") )
-        data.endianess |= ENDIAN_LITTLE;
+        data.endianess |= ENDIAN_BIG;
 
     else if ( v.is("little") )
-        data.endianess |= ENDIAN_BIG;
+        data.endianess |= ENDIAN_LITTLE;
 
     else if ( v.is("dce") )
         data.endianess |= ENDIAN_FUNC;
