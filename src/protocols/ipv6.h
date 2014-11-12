@@ -205,6 +205,9 @@ struct IP6Frag
     uint16_t  ip6f_offlg;   /* offset, reserved, and flag */
     uint32_t  ip6f_ident;   /* identification */
 
+    inline uint8_t next() const
+    { return ip6f_nxt; }
+
     inline uint16_t off_w_flags() const
     { return ntohs(ip6f_offlg); }
 
@@ -216,7 +219,6 @@ struct IP6Frag
 
     inline uint16_t rb() const
     { return ntohs(ip6f_offlg) & IP6F_RES_MASK; }
-
 
     inline uint32_t id() const
     { return ntohl(ip6f_ident); }

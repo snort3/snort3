@@ -215,8 +215,26 @@ void PacketManager::decode(
 
         if (codec_data.proto_bits & (PROTO_BIT__IP | PROTO_BIT__IP6_EXT))
         {
-            p->ip_proto_next = codec_data.next_prot_id;
-            fpEvalIpProtoOnlyRules(p, codec_data.next_prot_id);
+            // FIXIT-M J  refactor when ip_proto's become an array
+            if ( p->is_fragment() )
+            {
+                if ( prev_prot_id == IPPROTO_ID_FRAGMENT )
+                {
+                    const ip::IP6Frag* const fragh =
+                        reinterpret_cast<const ip::IP6Frag*>(raw.data);
+                    p->ip_proto_next = fragh->next();
+                }
+                else
+                {
+                    p->ip_proto_next = p->ptrs.ip_api.get_ip4h()->proto();
+                }
+            }
+            else
+            {
+                p->ip_proto_next = codec_data.next_prot_id;
+            }
+
+            fpEvalIpProtoOnlyRules(p, p->ip_proto_next);
         }
 
         // If we have reached the MAX_LAYERS, we keep decoding

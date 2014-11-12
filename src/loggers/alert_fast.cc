@@ -297,7 +297,7 @@ void FastLogger::alert(Packet *p, const char *msg, Event *event)
     }
 
     /* print the packet header to the alert file */
-    if (p->has_ip())
+    if ( p->has_ip() )
     {
         LogPriorityData(fast_log, event, 0);
 #ifndef REG_TEST
