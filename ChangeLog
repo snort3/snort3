@@ -20,6 +20,7 @@
 -- josh fixed a decoding issue affecting fragged packets
 -- fixed byte_test config of compare value
 -- fixed byte_test endian
+-- flush available data for non-paf splitters
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug

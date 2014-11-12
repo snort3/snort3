@@ -291,10 +291,7 @@ uint32_t s5_paf_check (
         if ( ft != FT_NOP )
         {
             fp = s5_paf_flush(ss, ps, ft, flags);
-
-            ps->pos += fp;
-            ps->seq = ps->pos;
-
+            s5_paf_jump(ps, fp);
             return fp;
         }
         if ( !cont )
@@ -315,10 +312,7 @@ uint32_t s5_paf_check (
     if ( (ps->paf != StreamSplitter::FLUSH) && (s5_len > ss->max()+fuzz) )
     {
         uint32_t fp = s5_paf_flush(ss, ps, FT_MAX, flags);
-
-        ps->pos += fp;
-        ps->seq = ps->pos;
-
+        s5_paf_jump(ps, fp);
         return fp;
     }
     return 0;
