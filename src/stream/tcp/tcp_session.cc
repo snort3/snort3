@@ -5908,13 +5908,13 @@ static inline uint32_t flush_pdu_ips (
         if ( flush_pt > 0 )
         {
             MODULE_PROFILE_END(s5TcpPAFPerfStats);
-#if 0
-            // for non-paf splitters, flush_pt > 0 means we reached
-            // the minimum required, but we flush what is available 
-            // instead of creating more, but smaller, packets
+
+            // see flush_pdu_ackd()
             if ( !trk->splitter->is_paf() && avail > flush_pt )
+            {
+                s5_paf_jump(&trk->paf_state, avail - flush_pt);
                 return avail;
-#endif
+            }
             return flush_pt;
         }
         seg = seg->next;
@@ -6071,17 +6071,20 @@ static inline uint32_t flush_pdu_ackd (
         if ( flush_pt > 0 )
         {
             MODULE_PROFILE_END(s5TcpPAFPerfStats);
-#if 0
+
             // for non-paf splitters, flush_pt > 0 means we reached
             // the minimum required, but we flush what is available 
             // instead of creating more, but smaller, packets
             if ( !trk->splitter->is_paf() )
             {
-                uint32_t avail = get_q_footprint(trk);
+                // get_q_footprint() w/o side effects
+                uint32_t avail = (trk->r_win_base - trk->seglist_base_seq);
                 if ( avail > flush_pt )
+                {
+                    s5_paf_jump(&trk->paf_state, avail - flush_pt);
                     return avail;
+                }
             }
-#endif
             return flush_pt;
         }
         seg = seg->next;

@@ -69,6 +69,12 @@ static inline uint32_t s5_paf_active (PAF_State* ps)
     return ( ps->paf != StreamSplitter::ABORT );
 }
 
+static inline void s5_paf_jump(PAF_State* ps, uint32_t n)
+{
+    ps->pos += n;
+    ps->seq = ps->pos;
+}
+
 // called on each in order segment
 uint32_t s5_paf_check(
     StreamSplitter* paf_config, PAF_State*, Flow* ssn,
