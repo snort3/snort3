@@ -25,6 +25,7 @@
 -- fixed byte_extract and byte_jump endianisms
 -- suspend active when purging caches
 -- temporary support for legacy paf_max
+-- zero frag tweak from josh
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug
