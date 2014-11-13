@@ -282,8 +282,12 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
     }
 
     if ( !bjd->from_beginning_flag )
+    {
         jump += payload_bytes_grabbed;
+        jump += c.get_pos();
+    }
 
+    jump += offset;
     jump += bjd->post_offset;
 
     if ( !c.set_pos(jump) )
