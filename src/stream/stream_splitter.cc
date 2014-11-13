@@ -29,8 +29,13 @@
 static THREAD_LOCAL uint8_t pdu_buf[65536];
 static THREAD_LOCAL StreamBuffer str_buf;
 
+unsigned StreamSplitter::max_pdu = 16384;
+
+void StreamSplitter::set_max(unsigned m)
+{ max_pdu = m; }
+
 unsigned StreamSplitter::max()
-{ return 16384; }  // subclasses should override this
+{ return max_pdu; }
 
 const StreamBuffer* StreamSplitter::reassemble(
     Flow*, unsigned, unsigned offset, const uint8_t* p,

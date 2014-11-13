@@ -31,6 +31,7 @@
 
 #include "main/snort.h"
 #include "stream/flush_bucket.h"
+#include "stream/stream_splitter.h"
 
 //-------------------------------------------------------------------------
 // inspector stuff
@@ -43,6 +44,7 @@ public:
     ~StreamTcp();
 
     void show(SnortConfig*) override;
+    bool configure(SnortConfig*) override;
 
     void tinit() override;
     void tterm() override;
@@ -66,6 +68,12 @@ StreamTcp::~StreamTcp()
 void StreamTcp::show(SnortConfig*)
 {
     tcp_show(config);
+}
+
+bool StreamTcp::configure(SnortConfig*)
+{
+    StreamSplitter::set_max(config->paf_max);
+    return true;
 }
 
 void StreamTcp::tinit()
