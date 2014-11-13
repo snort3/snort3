@@ -244,23 +244,16 @@ int Converter::convert(std::string input,
 
     rc = parse_file(input);
 
-    bool rule_file_specified = true;
     if (rule_file.empty())
-    {
         rule_file = output_file;
-        rule_file_specified = false;
-    }
 
     if (error_file.empty())
         error_file = output_file + ".rej";
 
 
-    // If there were only rules in this file, AND no rule file was specified,
-    //      do not print lua syntax in the output_file
     if (!rule_api.empty() &&
         table_api.empty() &&
-        data_api.empty() &&
-        !rule_file_specified)
+        data_api.empty())
     {
         std::ofstream rules;
         rules.open(rule_file, std::ifstream::out);
@@ -327,7 +320,7 @@ int Converter::convert(std::string input,
             {
                 rule_api.print_rules(out, false);
 
-                std::string s = std::string("$default_rules");
+                std::string s = std::string("$local_rules");
                 table_api.open_top_level_table("ips");
                 table_api.add_option("rules", s);
                 table_api.close_table();
