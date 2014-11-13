@@ -755,17 +755,6 @@ void Ipv4Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
         lyr->length = ip::IP4_HEADER_LEN;
         ch->set_ip_len(ip::IP4_HEADER_LEN);
         ch->set_hlen(ip::IP4_HEADER_LEN >> 2);
-
-#if 0
-        // FIXIT-L - J why did Snort check for this?
-        int i = lyr - c->layers;
-        if ( i + 1 == p->num_layers )
-        {
-            lyr->length = ip::IP4_HEADER_LEN;
-            ch->set_ip_len(ip::IP4_HEADER_LEN);
-            ch->set_hlen(ip::IP4_HEADER_LEN >> 2);
-        }
-#endif
     }
 
     c->ptrs.ip_api.set(ch);

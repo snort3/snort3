@@ -481,6 +481,7 @@ void InspectorManager::thread_init(SnortConfig* sc)
             {
                 p->handler->tinit();
                 p->pp_class.init = false;
+                p->pp_class.term = true;
             }
     }
 }
@@ -498,6 +499,7 @@ void InspectorManager::thread_stop(SnortConfig*)
             {
                 p->handler->tterm();
                 p->pp_class.term = false;
+                p->pp_class.init = true;
             }
     }
 }

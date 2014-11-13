@@ -665,11 +665,15 @@ static int FragHandleIPOptions(FragTracker *ft,
 
             ip::IpOptionIterator iter(p->ptrs.ip_api.get_ip4h(), p);
 
-            for (ip::IpOptions opt : iter)
+            for (const ip::IpOptions& opt : iter)
             {
                 /* Is the high bit set?  If not, weird anomaly. */
-                if (!(static_cast<uint8_t>(opt.code) & 0x80))
+                if ( !(static_cast<uint8_t>(opt.code) & 0x80) &&
+                     (opt.code != ip::IPOptionCodes::EOL) )
+                {
                     EventAnomIpOpts(ft->engine);
+
+                }
             }
         }
     }
@@ -2262,9 +2266,6 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
     uint16_t frag_end;
     uint16_t frag_off;
 
-    // if we're here, then the last layer was a fragment.
-    const Layer& lyr = p->layers[p->num_layers-1];
-    fragStart = lyr.start + lyr.length;
 
     /* Use the actual length here because packet may have been
      * truncated.  Don't want to try to copy more than we actually
@@ -2272,6 +2273,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
      * between the last sucesfully decoded layer (which is ip6_frag
      *  or ipv4) and the end of packet, */
     fragLength = p->dsize;
+    fragStart = p->data;
 
     /* Just to double check */
     if (fragLength > pkt_snaplen)
@@ -2287,15 +2289,15 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
 
     memset(ft, 0, sizeof(*ft));
     
-    if (p->ptrs.ip_api.is_ip4())
+    if ( p->is_ip4() )
     {
-        ft->protocol = p->ptrs.ip_api.get_ip4h()->proto();
-
-        const ip::IP4Hdr *ip4h = reinterpret_cast<const ip::IP4Hdr*>(lyr.start);
+        const ip::IP4Hdr* const ip4h = p->ptrs.ip_api.get_ip4h();
+        ft->protocol = ip4h->proto();
         frag_off = ip4h->off();
     }
     else /* IPv6 */
     {
+        const Layer& lyr = p->layers[p->num_layers-1];
         const ip::IP6Frag* const fragHdr = reinterpret_cast<const ip::IP6Frag*>(lyr.start);
         frag_off = fragHdr->off();
 

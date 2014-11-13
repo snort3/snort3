@@ -313,6 +313,7 @@ int FlowCache::purge()
 {
     int retCount = 0;
 
+    Active_Suspend();
     flags |= SESSION_CACHE_FLAG_PURGING;
     Flow* flow = (Flow*)hash_table->first();
 
@@ -325,6 +326,7 @@ int FlowCache::purge()
     }
 
     flags &= ~SESSION_CACHE_FLAG_PURGING;
+    Active_Resume();
 
     return retCount;
 }
