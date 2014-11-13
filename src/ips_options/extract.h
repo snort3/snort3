@@ -25,10 +25,9 @@
 
 #include "main/snort_types.h"
 
-#define ENDIAN_NONE   0x0
-#define ENDIAN_BIG    0x1
-#define ENDIAN_LITTLE 0x2
-#define ENDIAN_FUNC   0x4
+#define ENDIAN_BIG    0x0
+#define ENDIAN_LITTLE 0x1
+#define ENDIAN_FUNC   0x2
 
 #define PARSELEN      10
 

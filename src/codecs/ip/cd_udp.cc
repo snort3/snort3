@@ -84,7 +84,7 @@ static const Parameter udp_params[] =
 static const RuleMap udp_rules[] =
 {
 
-    { DECODE_UDP_DGRAM_LT_UDPHDR, "truncated UDP Header" },
+    { DECODE_UDP_DGRAM_LT_UDPHDR, "truncated UDP header" },
     { DECODE_UDP_DGRAM_INVALID_LENGTH, "invalid UDP header, length field < 8" },
     { DECODE_UDP_DGRAM_SHORT_PACKET, "short UDP packet, length field > payload length" },
     { DECODE_UDP_DGRAM_LONG_PACKET, "long UDP packet, length field < payload length" },
