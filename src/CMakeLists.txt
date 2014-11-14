@@ -1,5 +1,4 @@
 
-
 # keeping track of external libraries seperately for use in pkg-config.
 set(EXTERNAL_LIBRARIES
     ${LUAJIT_LIBRARIES}
@@ -125,6 +124,7 @@ target_link_libraries( snort
     ${STATIC_INSPECTOR_LIBRARIES}
     ${UNIT_TESTS_LIBRARIES}
     ${EXTERNAL_LIBRARIES}
+    ${CMAKE_DL_LIBS}
 )
 
 add_subdirectory(actions)
