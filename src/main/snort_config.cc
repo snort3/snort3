@@ -36,11 +36,14 @@
 #include "parser/config_file.h"
 #include "parser/vars.h"
 #include "filters/rate_filter.h"
+#include "managers/ips_manager.h"
+#include "managers/module_manager.h"
 #include "managers/mpse_manager.h"
 #include "managers/inspector_manager.h"
 #include "filters/sfthreshold.h"
 #include "filters/detection_filter.h"
 #include "detection/fpcreate.h"
+#include "ips_options/ips_pcre.h"
 
 //-------------------------------------------------------------------------
 // private implementation
@@ -142,6 +145,22 @@ static inline const char* getProtocolName (int protocol)
 }
 #endif
 
+static void init_policy(SnortConfig* sc)
+{
+    PolicyMode pm;
+
+    if ( sc->run_flags & RUN_FLAG__INLINE )
+        pm = POLICY_MODE__INLINE;
+
+    else if ( sc->run_flags & RUN_FLAG__INLINE_TEST )
+        pm =  POLICY_MODE__INLINE_TEST;
+
+    else
+        pm = POLICY_MODE__PASSIVE;
+
+    get_ips_policy()->policy_mode = pm;
+}
+
 //-------------------------------------------------------------------------
 // public methods
 //-------------------------------------------------------------------------
@@ -204,10 +223,40 @@ SnortConfig * SnortConfNew(void)
     return sc;
 }
 
+void SnortConfSetup(SnortConfig *sc)
+{
+    if (ScOutputUseUtc())
+        snort_conf->thiszone = 0;
+#ifndef VALGRIND_TESTING
+    else
+        snort_conf->thiszone = gmt2local(0);
+#endif
+
+    init_policy(snort_conf);
+    ParseRules(sc);
+
+    // FIXIT-L see SnortInit() on config printing
+    //detection_filter_print_config(sc->detection_filter_config);
+    ////RateFilter_PrintConfig(sc->rate_filter_config);
+    //print_thresholding(sc->threshold_config, 0);
+    //PrintRuleOrder(sc->rule_lists);
+
+    SetRuleStates(sc);
+
+    /* Need to do this after dynamic detection stuff is initialized, too */
+    IpsManager::verify(sc);
+    ModuleManager::load_commands(sc);
+
+    fpCreateFastPacketDetection(sc);
+    pcre_setup(sc);
+#ifdef PPM_MGR
+    //PPM_PRINT_CFG(&sc->ppm_cfg);
+#endif
+}
+
 void SnortConfFree(SnortConfig *sc)
 {
-    if (sc == NULL)
-        return;
+    assert(sc);
 
     if (sc->log_dir != NULL)
         free(sc->log_dir);
@@ -230,6 +279,8 @@ void SnortConfFree(SnortConfig *sc)
     FreeRuleStateList(sc->rule_state_list);
     FreeClassifications(sc->classifications);
     FreeReferences(sc->references);
+
+    pcre_cleanup(sc);
 
     FreeRuleLists(sc);
     OtnLookupFree(sc->otn_map);

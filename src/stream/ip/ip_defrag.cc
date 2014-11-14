@@ -1567,16 +1567,13 @@ int Defrag::insert(Packet *p, FragTracker *ft, FragEngine *fe)
      */
     firstLastOk = FragCheckFirstLast(p, ft, net_frag_offset);
 
-    // if we're here, then the last layer was a fragment.
-    const Layer& lyr = p->layers[p->num_layers-1];
-    fragStart = lyr.start + lyr.length;
-
     /* Use the actual length here because packet may have been
      * truncated.  Don't want to try to copy more than we actually
      * captured. Use dsize as the frag length since it is distance
      * between the last sucesfully decoded layer (which is ip6_frag
      *  or ipv4) and the end of packet, */
     len = fragLength = p->dsize;
+    fragStart = p->data;
 
     /*
      * setup local variables for tracking this frag

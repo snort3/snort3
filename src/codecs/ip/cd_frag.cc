@@ -80,8 +80,10 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
     // already checked for short packet above
     if (raw.len == sizeof(ip::IP6Frag))
     {
+        // FIXIT-L  identical to DEFRAG_ANOMALY_ZERO.  Commenting
+        // 'return false' so that it has the same functionality as IPv4
         codec_events::decoder_event(codec, DECODE_ZERO_LENGTH_FRAG);
-        return false;
+//        return false;
     }
 
     /* If this is an IP Fragment, set some data... */

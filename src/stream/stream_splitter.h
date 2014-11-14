@@ -69,6 +69,11 @@ public:
     virtual bool is_paf() { return false; };
     virtual unsigned max();
 
+    // FIXIT-L this is temporary for legacy paf_max required only
+    // for HI; it is not appropriate for multiple stream_tcp with 
+    // different paf_max; the HI splitter should pull from there
+    static void set_max(unsigned);
+
     virtual void reset() { };
     virtual void update() { };
 
@@ -79,7 +84,7 @@ protected:
     StreamSplitter(bool b) { c2s = b; };
 
 private:
-    static unsigned s_max;
+    static unsigned max_pdu;
     bool c2s;
 };
 

@@ -315,16 +315,12 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     if(frag_off || (snort.decode_flags & DECODE_MF))
     {
+        // FIXIT-L identical to DEFRAG_ANOMALY_ZERO
         if ( !ip_len)
-        {
             codec_events::decoder_event(codec, DECODE_ZERO_LENGTH_FRAG);
-            snort.decode_flags &= ~DECODE_FRAG;
-        }
-        else
-        {
-            /* set the packet fragment flag */
-            snort.decode_flags |= DECODE_FRAG;
-        }
+
+        /* set the packet fragment flag */
+        snort.decode_flags |= DECODE_FRAG;
     }
     else
     {

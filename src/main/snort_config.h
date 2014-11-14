@@ -312,6 +312,7 @@ struct SnortConfig
 };
 
 SnortConfig* SnortConfNew(void);
+void SnortConfSetup(SnortConfig*);
 void SnortConfFree(SnortConfig*);
 SnortConfig * MergeSnortConfs(SnortConfig* cmd_line, SnortConfig* config_file);
 int VerifyReload(SnortConfig*);

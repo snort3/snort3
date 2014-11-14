@@ -249,7 +249,7 @@ void StreamBase::eval(Packet *p)
         break;
 
     case PktType::IP:
-        if ( p->ptrs.ip_api.is_valid() )
+        if ( p->has_ip() )
             flow_con->process_ip(p);
         break;
 
