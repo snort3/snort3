@@ -11,6 +11,7 @@ set(EXTERNAL_LIBRARIES
     ${DNET_LIBRARIES}
     ${CLANG_CXX_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT} # GCC says we must link to the threads library
+    ${CMAKE_DL_LIBS}
     CACHE INTERNAL "external libraries" FORCE
 )
 
@@ -124,7 +125,6 @@ target_link_libraries( snort
     ${STATIC_INSPECTOR_LIBRARIES}
     ${UNIT_TESTS_LIBRARIES}
     ${EXTERNAL_LIBRARIES}
-    ${CMAKE_DL_LIBS}
 )
 
 add_subdirectory(actions)

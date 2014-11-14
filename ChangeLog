@@ -29,6 +29,7 @@
 -- fix / redefine --dirty-pig - no shutdown flushes
 -- fixed pcre reload init
 -- refactored main init / reload code
+-- fixed cmake -ldl issue
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug
