@@ -65,10 +65,10 @@ using namespace std;
     "TTL value less than configured minimum, not using for reassembly"
 
 #define DEFRAG_EXCESSIVE_OVERLAP_STR \
-    ",excessive fragment overlap"
+    "excessive fragment overlap"
 
 #define DEFRAG_TINY_FRAGMENT_STR \
-    ",iny fragment"
+    "tiny fragment"
 
 FragEngine::FragEngine()
 { 
