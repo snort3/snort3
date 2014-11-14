@@ -24,7 +24,7 @@
 #include <iostream>
 #include <string>
 #include "init_state.h"
-#include "utils/s2l_util.h"
+#include "helpers/s2l_util.h"
 #include "keyword_states/keywords_api.h"
 #include "data/dt_data.h"
 

@@ -213,10 +213,7 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
         {
             stats.bad_ip4_cksum++;
             snort.decode_flags |= DECODE_ERR_CKSUM_ICMP;
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE,"ICMP Checksum: BAD\n"););
-
-            if( ScInlineMode() && ScIcmpChecksumDrops() )
-                Active_DropPacket();
+            return false;
         }
     }
 

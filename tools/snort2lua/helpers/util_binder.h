@@ -18,8 +18,8 @@
 */
 // util_binder.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef UTILS_PPS_BINDER_H
-#define UTILS_PPS_BINDER_H
+#ifndef HELPERS_PPS_BINDER_H
+#define HELPERS_PPS_BINDER_H
 
 
 #include <string>

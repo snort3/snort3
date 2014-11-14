@@ -121,6 +121,14 @@ void snort_inspect(Packet* p)
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
             "Packet errors = 0x%x, ignoring traffic!\n",
             (p->ptrs.decode_flags & DECODE_ERR_FLAGS)););
+
+
+        if( ScInlineMode() && ScChecksumDrop(p->ptrs.decode_flags & DECODE_ERR_CKSUM_ALL) )
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+                "Dropping bad packet (IP checksum)\n"););
+            Active_DropPacket();
+        }
     }
     else
     {

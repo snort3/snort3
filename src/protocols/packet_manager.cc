@@ -158,7 +158,6 @@ static_assert(CODEC_ENCAP_LAYER == (CODEC_UNSURE_ENCAP | CODEC_SAVE_LAYER),
 //-------------------------------------------------------------------------
 // Encode/Decode functions
 //-------------------------------------------------------------------------
-
 void PacketManager::decode(
     Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
@@ -183,9 +182,9 @@ void PacketManager::decode(
     p->ptrs.reset();
     layer::set_packet_pointer(p);
 
-
     MODULE_PROFILE_START(decodePerfStats);
     s_stats[total_processed]++;
+
 
     // loop until the protocol id is no longer valid
     while(CodecManager::s_protocols[mapped_prot]->decode(raw, codec_data, p->ptrs))
