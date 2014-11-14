@@ -268,22 +268,6 @@ static void register_profiles()
 // initialization
 //-------------------------------------------------------------------------
 
-static void init_policy(SnortConfig* sc)
-{
-    PolicyMode pm;
-
-    if ( sc->run_flags & RUN_FLAG__INLINE )
-        pm = POLICY_MODE__INLINE;
-
-    else if ( sc->run_flags & RUN_FLAG__INLINE_TEST )
-        pm =  POLICY_MODE__INLINE_TEST;
-
-    else
-        pm = POLICY_MODE__PASSIVE;
-
-    get_ips_policy()->policy_mode = pm;
-}
-
 static void SnortInit(int argc, char **argv)
 {
     init_signals();
@@ -324,7 +308,6 @@ static void SnortInit(int argc, char **argv)
      * command line overriding config file.
      * Set the global snort_conf that will be used during run time */
     snort_conf = MergeSnortConfs(snort_cmd_line_conf, sc);
-    init_policy(snort_conf);
     CodecManager::instantiate();
 
     if ( snort_conf->output )
@@ -342,38 +325,19 @@ static void SnortInit(int argc, char **argv)
     else if ( ScLogVerbose() )
         InspectorManager::print_config(snort_conf);
 
-    ParseRules(snort_conf);
-
-    // FIXIT-M print should be through generic module list 
-    // and only print configured / active stuff
-    //detection_filter_print_config(snort_conf->detection_filter_config);
-    //RateFilter_PrintConfig(snort_conf->rate_filter_config);
-    //print_thresholding(snort_conf->threshold_config, 0);
-    //PrintRuleOrder(snort_conf->rule_lists);
-
-    /* Check rule state lists, enable/disabled
-     * and err on 'special' GID without OTN.
-     */
-    SetRuleStates(snort_conf);
-
     if (snort_conf->file_mask != 0)
         umask(snort_conf->file_mask);
     else
         umask(077);    /* set default to be sane */
 
-    /* Need to do this after dynamic detection stuff is initialized, too */
-    IpsManager::verify(snort_conf);
-    IpsManager::global_init(snort_conf);
-    ModuleManager::load_commands(snort_conf);
+    SnortConfSetup(snort_conf);
 
-    fpCreateFastPacketDetection(snort_conf);
+    /* Need to do this after dynamic detection stuff is initialized, too */
+    IpsManager::global_init(snort_conf);
+
     MpseManager::activate_search_engine(snort_conf);
 
     SFAT_Start();
-
-#ifdef PPM_MGR
-    //PPM_PRINT_CFG(&snort_conf->ppm_cfg);
-#endif
 
     /* Finish up the pcap list and put in the queues */
     Trough_SetUp();
@@ -385,13 +349,6 @@ static void SnortInit(int argc, char **argv)
 
     if (snort_conf->bpf_filter != NULL)
         LogMessage("Snort BPF option: %s\n", snort_conf->bpf_filter);
-
-    if (ScOutputUseUtc())
-        snort_conf->thiszone = 0;
-#ifndef VALGRIND_TESTING
-    else
-        snort_conf->thiszone = gmt2local(0);
-#endif
 }
 
 // this function should only include initialization that must be done as a
@@ -582,7 +539,6 @@ SnortConfig* get_reload_config()
 
     SnortConfig *sc = ParseSnortConf(snort_cmd_line_conf);
     sc = MergeSnortConfs(snort_cmd_line_conf, sc);
-    init_policy(sc);
 
     if ( ModuleManager::get_errors() || VerifyReload(sc) == -1 )
     {
@@ -590,13 +546,6 @@ SnortConfig* get_reload_config()
         snort_reloading = false;
         return NULL;
     }
-
-    if (sc->output_flags & OUTPUT_FLAG__USE_UTC)
-        sc->thiszone = 0;
-#ifndef VALGRIND_TESTING
-    else
-        sc->thiszone = gmt2local(0);
-#endif
 
     if ( !InspectorManager::configure(sc) )
     {
@@ -606,19 +555,6 @@ SnortConfig* get_reload_config()
     }
 
     FlowbitResetCounts();  // FIXIT-L updates global hash, put in sc
-    ParseRules(sc);
-
-    // FIXIT-L see SnortInit() on config printing
-    //detection_filter_print_config(sc->detection_filter_config);
-    ////RateFilter_PrintConfig(sc->rate_filter_config);
-    //print_thresholding(sc->threshold_config, 0);
-    //PrintRuleOrder(sc->rule_lists);
-
-    SetRuleStates(sc);
-
-    /* Need to do this after dynamic detection stuff is initialized, too */
-    IpsManager::verify(sc);
-    ModuleManager::load_commands(sc);
 
     if ((sc->file_mask != 0) && (sc->file_mask != snort_conf->file_mask))
         umask(sc->file_mask);
@@ -647,17 +583,13 @@ SnortConfig* get_reload_config()
         }
     }
 
-    fpCreateFastPacketDetection(sc);
+    SnortConfSetup(sc);
 
     if ( sc->fast_pattern_config->search_api !=
             snort_conf->fast_pattern_config->search_api )
     {
         MpseManager::activate_search_engine(sc);
     }
-
-#ifdef PPM_MGR
-    //PPM_PRINT_CFG(&sc->ppm_cfg);
-#endif
 
     snort_reloading = false;
     return sc;

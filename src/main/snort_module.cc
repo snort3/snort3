@@ -261,7 +261,7 @@ static const Parameter s_params[] =
       "output stub rules for all loaded rules libraries" },
 
     { "--dirty-pig", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "don't flush packets and release memory on shutdown" },
+      "don't flush packets on shutdown" },
 
     { "--dump-defaults", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output module defaults in Lua format" },
