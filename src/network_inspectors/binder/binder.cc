@@ -44,13 +44,10 @@ using namespace std;
 THREAD_LOCAL ProfileStats bindPerfStats;
 
 // FIXIT-P these lookups should be optimized when the dust settles
-#define INS_WIZ  "wizard"
-#define INS_STR  "stream_"
 #define INS_IP   "stream_ip"
 #define INS_ICMP "stream_icmp"
 #define INS_TCP  "stream_tcp"
 #define INS_UDP  "stream_udp"
-#define INS_NORM "normalizer"
 
 //-------------------------------------------------------------------------
 // binding
