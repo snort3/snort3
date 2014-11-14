@@ -26,6 +26,7 @@
 -- suspend active when purging caches
 -- temporary support for legacy paf_max
 -- zero frag tweak from josh
+-- fix / redefine --dirty-pig - no shutdown flushes
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug
