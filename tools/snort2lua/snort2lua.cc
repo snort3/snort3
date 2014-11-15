@@ -21,10 +21,10 @@
 #include <iostream>
 #include <fstream>
 
-#include "utils/converter.h"
+#include "helpers/converter.h"
 #include "init_state.h"
-#include "utils/s2l_util.h"
-#include "utils/parse_cmd_line.h"
+#include "helpers/s2l_util.h"
+#include "helpers/parse_cmd_line.h"
 
 
 /*********************************************

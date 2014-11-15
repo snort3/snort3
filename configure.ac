@@ -863,7 +863,7 @@ tools/snort2lua/keyword_states/Makefile \
 tools/snort2lua/output_states/Makefile \
 tools/snort2lua/preprocessor_states/Makefile \
 tools/snort2lua/rule_states/Makefile \
-tools/snort2lua/utils/Makefile \
+tools/snort2lua/helpers/Makefile \
 ])
 
 AC_OUTPUT

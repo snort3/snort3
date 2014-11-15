@@ -27,10 +27,11 @@
 #include <string.h>
 #include <iomanip>
 
-#include "utils/parse_cmd_line.h"
+#include "helpers/parse_cmd_line.h"
 #include "data/dt_data.h"
-#include "utils/converter.h"
-#include "utils/s2l_util.h"
+#include "helpers/converter.h"
+#include "helpers/s2l_util.h"
+#include "helpers/markup.h"
 
 namespace parser
 {
@@ -178,10 +179,10 @@ bool ArgList::get_arg(const char*& key, const char*& val)
 
 static void help_usage()
 {
-    fprintf(stdout, "usage:\n");
-    fprintf(stdout, "    -?: list options\n");
-    fprintf(stdout, "    -V: output version\n");
-    fprintf(stdout, "    --help: help summary\n");
+    std::cout << "usage:\n";
+    std::cout << "    -?: list options\n";
+    std::cout << "    -V: output version\n";
+    std::cout << "    --help: help summary\n";
     exit(0);
 }
 
@@ -195,7 +196,7 @@ static void parse_config_file(const char* key, const char* val)
 {
     if (!conf_file.empty())
     {
-        fprintf(stdout, "ERROR: %s %s\n\tOnly one config file allowed!\n", key, val);
+        std::cout << "ERROR: " << key << " " << val << "\n\tOnly one config file allowed!\n";
         exit(-1);
     }
     else
@@ -226,7 +227,7 @@ static void parse_error_file(const char* key, const char* val)
 {
     if (found_error_file)
     {
-        fprintf(stdout, "ERROR: %s %s\n\tOnly one error file allowed!\n", key, val);
+        std::cout << "ERROR: " << key << " " << val << "\n\tOnly one error file allowed!\n";
         exit(-1);
     }
     else
@@ -241,7 +242,7 @@ static void parse_output_file(const char* key, const char* val)
 {
     if (found_out_file)
     {
-        fprintf(stdout, "ERROR: %s %s\n\tOnly one output file allowed!\n", key, val);
+        std::cout << "ERROR: " << key << " " << val << "\n\tOnly one output file allowed!\n";
         exit(-1);
     }
     else
@@ -255,7 +256,7 @@ static void parse_rule_file(const char* key, const char* val)
 {
     if (found_rule_file)
     {
-        fprintf(stdout, "ERROR: %s %s\n\tOnly one output file allowed!\n", key, val);
+        std::cout << "ERROR: " << key << " " << val << "\n\tOnly one output file allowed!\n";
         exit(-1);
     }
     else
@@ -264,6 +265,9 @@ static void parse_rule_file(const char* key, const char* val)
         rule_file = std::string(val);
     }
 }
+
+static void add_remark(const char* /*key*/, const char* val)
+{ RuleApi::set_remark(val); }
 
 static void print_all(const char* /*key*/, const char* /*val*/)
 { DataApi::set_default_print(); }
@@ -283,36 +287,42 @@ static void sing_conf_files(const char* /*key*/, const char* /*val*/)
 static void dont_parse_includes(const char* /*key*/, const char* /*val*/)
 { Converter::set_parse_includes(false); }
 
+static void enable_markup(const char* /*key*/, const char* /*val*/)
+{ Markup::enable(true); }
+
+
 static void print_version(const char* /*key*/, const char* /*val*/)
 {
-    fprintf(stdout, "Snort2Lua\t0.1.5");
+    std::cout << "Snort2Lua\t0.2.0";
 }
 
 
 
 static void help(const char* key, const char* val)
 {
-    fprintf(stdout, "Usage: [OPTIONS]... -c <snort_conf> ...\n");
-    fprintf(stdout, "\n");
-    fprintf(stdout, "Converts the Snort configuration file specified by the -c or --conf-file\n");
-    fprintf(stdout, "options into a Snort++ configuration file\n");
-    fprintf(stdout, "\n");
-    fprintf(stdout, "\n");
-    fprintf(stdout, "\n");
-    fprintf(stdout, "Options:\n");
+    std::cout << Markup::head(3) << "Usage: snort2lua [OPTIONS]... -c <snort_conf> ...\n";
+    std::cout << "\n";
+    std::cout << "Converts the Snort configuration file specified by the -c or --conf-file\n";
+    std::cout << "options into a Snort++ configuration file\n";
+    std::cout << "\n";
+    std::cout << "\n";
+    std::cout << "\n";
+    std::cout << Markup::head(4) << "Options:\n\n";
     help_args(key, val);
-    fprintf(stdout, "\n");
-    fprintf(stdout, "\n");
-    fprintf(stdout, "\n");
-    fprintf(stdout, "Required option(s):\n");
-    fprintf(stdout, "\tA Snort configuration file to convert. Set with either '-c' or '--conf-file'\n");
-    fprintf(stdout, "\n");
-    fprintf(stdout, "\n");
-    fprintf(stdout, "Default values:\n");
-    fprintf(stdout, "<out_file>   =  %s\n", out_default.c_str() );
-    fprintf(stdout, "<rule_file>  =  <out_file>.  Rules will be written to the <out_file>\n");
-    fprintf(stdout, "<error_file> =  %s.  Only occurs when not in Quiet mode.\n", error_default.c_str());
-    fprintf(stdout, "\n");
+    std::cout << "\n";
+    std::cout << "\n";
+    std::cout << "\n";
+    std::cout << Markup::head(4) << "Required option:\n\n";
+    std::cout << Markup::item() << "\tA Snort configuration file to convert. Set with either '-c' or '--conf-file'\n";
+    std::cout << "\n";
+    std::cout << "\n";
+    std::cout << Markup::head(4) << "Default values:\n";
+    std::cout << Markup::item() << "\t<out_file>   =  " << out_default << "\n";
+    std::cout << Markup::item() << "\t<rule_file>  =  <out_file> = " << out_default <<
+        ".  Rules are written to the 'local_rules' variable in the <out_file>\n";
+    std::cout << Markup::item() << "\t<error_file> =  " << error_default <<
+        ".  This file will not be created in quiet mode.\n";
+    std::cout << "\n";
     exit(0);
 }
 
@@ -346,6 +356,9 @@ static ConfigFunc basic_opts[] =
         "if <snort_conf> file contains any <include_file> or <policy_file> "
         "(i.e. 'include path/to/conf/other_conf'), do NOT parse those files"},
 
+    { "m", add_remark, "",
+        "add a remark to the end of every converted rule"},
+
     { "o", parse_output_file, "<out_file>",
         "output the new Snort++ lua configuration to <out_file>"},
 
@@ -377,11 +390,8 @@ static ConfigFunc basic_opts[] =
     { "help", help, "",
         "Same as '-h'. this overview of snort2lua"},
 
-    { "single-conf-file", sing_conf_files, "",
-        "Same as '-t'. when parsing <include_file>, write <include_file>'s information, excluding rules, to <out_file>"},
-
-    { "single-rule-file", sing_rule_files, "",
-        "Same as '-s'. when parsing <include_file>, write <include_file>'s rules to <rule_file>."},
+    { "markup", enable_markup, "",
+        "print help in asciidoc compatible format"},
 
     { "output-file", parse_output_file, "<out_file>",
         "Same as '-o'. output the new Snort++ lua configuration to <out_file>"},
@@ -395,8 +405,17 @@ static ConfigFunc basic_opts[] =
     { "quiet", print_quiet, "",
         "Same as '-q'. quiet mode. Only output valid confiration information"},
 
+    { "remark", add_remark, "",
+        "same as '-m'.  add a remark to the end of every converted rule"},
+
     { "rule-file", parse_rule_file, "<rule_file>",
         "Same as '-r'. output any converted rule to <rule_file>"},
+
+    { "single-conf-file", sing_conf_files, "",
+        "Same as '-t'. when parsing <include_file>, write <include_file>'s information, excluding rules, to <out_file>"},
+
+    { "single-rule-file", sing_rule_files, "",
+        "Same as '-s'. when parsing <include_file>, write <include_file>'s rules to <rule_file>."},
 
     { "version", print_version, "",
         "Same as '-V'. Print the current Snort2Lua version"},
@@ -457,8 +476,8 @@ static void help_args(const char* /*pfx*/, const char* /*val*/)
                 name += p->type;
             }
 
-
-            std::cout << std::left << std::setw(name_field_len) << name;
+            std::cout << Markup::item();
+            std::cout << std::left << std::setw(name_field_len) << Markup::emphasis(name);
 
             if (name.size() > name_field_len)
                 std::cout << "\n" << std::left << std::setw(name_field_len) << " ";
@@ -475,7 +494,7 @@ static void help_args(const char* /*pfx*/, const char* /*val*/)
                 else
                     std::cout << "\n" << std::setw(name_field_len) << " ";
 
-                std::cout << std::left << help.substr(0, len);
+                std::cout << std::left << Markup::escape(help.substr(0, len));
 
                 if (len < help.size())
                     help = help.substr(len + 1);
@@ -483,7 +502,7 @@ static void help_args(const char* /*pfx*/, const char* /*val*/)
                     break;
             }
 
-            std::cout << std::endl;
+            std::cout << "\n" << std::endl;
         }
         ++p;
     }

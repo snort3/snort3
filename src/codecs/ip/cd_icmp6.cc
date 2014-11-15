@@ -161,10 +161,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         {
             (*bad_cksum_cnt)++;
             snort.decode_flags |= DECODE_ERR_CKSUM_ICMP;
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE,"ICMP Checksum: BAD\n"););
-
-            if( ScInlineMode() && ScIcmpChecksumDrops() )
-                Active_DropPacket();
+            return false;
         }
     }
 

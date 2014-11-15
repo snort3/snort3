@@ -39,11 +39,11 @@ By default, Snort2Lua will attempt to parse every ‘include’ file and every
 ‘binding’ file.  There is an option to change this functionality.
 
 When specifying a rule file with one of the command line options, Snort2Lua
-will output all rules in the main configuration file to that specified rule
-file.  This is especially useful when you are only interesting in
+will output all of the converted rules to that specified rule file.
+This is especially useful when you are only interesting in
 converting rules since there is no Lua syntax in rule files.  There is also
 an option that tells Snort2Lua to output every rule for a given
-configuration into a single rule file.  Similarly, there is also an option
+configuration into a single rule file.  Similarly, there is an option
 pull all of the Lua syntax from every ‘include’ file into the output file.
 
 There are currently three output modes: default, quiet, and differences.
@@ -56,15 +56,23 @@ all errors that have occurred.  Finally, differences mode will not actually
 output a valid Snort++ configuration.  Instead, you can see the exact
 options from the input configuration that have changed.
 
+
 // FIXIT-J L include Snort2Lua commands
+:leveloffset: 1
+include::snort2lua_cmds.txt[]
+:leveloffset: 0
 
 === Known Problems
 
 *  Any Snort ‘string’ which is dependent on a variable will no longer have
 that variable in the Lua string.
 
-*  Snort2Lua currently does not handle variables very well. This will be
-changed in a future release.
+*  Snort2Lua currently does not handle variables well. First, that means
+variables will not always be parsed correctly.  Second, sometimes a
+variables value will be outoput in the lua file rather than a variable
+For instance, if Snort2Lua attempted to convert the line
+'include $RULE_PATH/example.rule', the output may ouput
+'include /etc/rules/example.rule' instead.
 
 *  When Snort2Lua parses a ‘binding’ configuration file, the rules and
 configuration will automatically be combined into the same file.  Also, the

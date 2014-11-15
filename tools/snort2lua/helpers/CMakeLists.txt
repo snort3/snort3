@@ -16,17 +16,19 @@
 ## Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-add_subdirectory (data_types)
-
-add_library( conversion_data
-    dt_data.h
-    dt_data.cc
-    dt_table_api.h
-    dt_table_api.cc
-    dt_rule_api.h
-    dt_rule_api.cc
+add_library( snort2lua_helpers
+    converter.h
+    converter.cc
+    s2l_util.h
+    s2l_util.cc
+    parse_cmd_line.h
+    parse_cmd_line.cc
+    util_binder.h
+    util_binder.cc
+    markup.h
+    markup.cc
 )
 
-target_link_libraries( conversion_data
-    data_types
+target_link_libraries( snort2lua_helpers
+    conversion_data
 )

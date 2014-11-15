@@ -210,6 +210,11 @@ static inline int ScLogQuiet(void)
 //-------------------------------------------------------------------------
 // FIXIT-L should be calling NetworkPolicy methods
 
+static inline bool ScChecksumDrop(uint16_t codec_cksum_err_flag)
+{
+    return get_network_policy()->checksum_drop & codec_cksum_err_flag;
+}
+
 static inline int ScIpChecksums(void)
 {
     return get_network_policy()->checksum_eval & CHECKSUM_FLAG__IP;

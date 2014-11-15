@@ -18,8 +18,8 @@
 */
 // s2l_util.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef S2L_UTIL_H
-#define S2L_UTIL_H
+#ifndef HELPERS_UTIL_H
+#define HELPERS_UTIL_H
 
 
 #include <string>

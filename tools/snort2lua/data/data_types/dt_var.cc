@@ -20,7 +20,7 @@
 
 #include "data/data_types/dt_var.h"
 #include "data/dt_data.h"
-#include "utils/s2l_util.h"
+#include "helpers/s2l_util.h"
 
 Variable::Variable(std::string name, int depth)
 {

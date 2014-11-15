@@ -21,16 +21,18 @@
 #include <iostream>
 #include <sstream>
 #include <cstring>
+
+#include "helpers/s2l_util.h"
 #include "data/dt_rule_api.h"
 #include "data/dt_data.h"
-
-#include "utils/s2l_util.h"
 #include "data/data_types/dt_comment.h"
 #include "data/data_types/dt_rule.h"
 #include "data/data_types/dt_rule_option.h"
 #include "data/data_types/dt_rule_suboption.h"
 
 std::size_t RuleApi::error_count = 0;
+std::string RuleApi::remark = "";
+
 
 RuleApi::RuleApi()
     :   curr_rule(nullptr),
@@ -50,6 +52,9 @@ RuleApi::~RuleApi()
 
 void RuleApi::reset_state()
 {
+    if (curr_rule && !remark.empty())
+        curr_rule->add_option("rem", remark);
+
     curr_rule = nullptr;
     curr_data_bad = false;
 }
@@ -59,6 +64,12 @@ bool RuleApi::failed_conversions() const
 
 std::size_t RuleApi::num_errors() const
 { return error_count; }
+
+bool RuleApi::empty() const
+{ return rules.empty(); }
+
+void RuleApi::set_remark(const char* s)
+{ remark = s; }
 
 void RuleApi::begin_rule()
 {
@@ -93,6 +104,21 @@ void RuleApi::bad_rule(std::istringstream& stream, std::string bad_option)
         error_count++;
     }
     bad_rules->add_text("^^^^ unknown_option=" + bad_option);
+}
+
+void RuleApi::include_rule_file(std::string file_name)
+{
+    if (curr_rule)
+    {
+        DataApi::developer_error("Attempting to include a file while buliding a rule!");
+    }
+    else
+    {
+        begin_rule();
+        curr_rule->add_hdr_data("include " + file_name);
+        curr_rule = nullptr; //  ensure nothing else gets added to this rule,
+                             //  especially remarks
+    }
 }
 
 void RuleApi::add_hdr_data(std::string data)

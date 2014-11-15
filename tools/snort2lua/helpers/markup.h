@@ -16,28 +16,30 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// markup.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef UTILS_PARSE_CMD_LINE_H
-#define UTILS_PARSE_CMD_LINE_H
+#ifndef HELPERS_MARKUP_H
+#define HELPERS_MARKUP_H
 
 #include <string>
 
-namespace parser
+class Markup
 {
+public:
+    static void enable(bool = true);
 
-/*
- * This file is directly copied (and then edited)
- * from Snrot++'s cmd_line.h
- */
+    static const char* head(unsigned level = 1);
+    static const char* item();
 
-bool parse_cmd_line(int argc, char* argv[]);
+    static const char* emphasis_on();
+    static const char* emphasis_off();
+    static const std::string& emphasis(const std::string&);
+    static const std::string& escape(const char* const);
+    static const std::string& escape(const std::string&);
 
-const std::string get_conf();
-const std::string get_conf_dir();
-const std::string get_error_file();
-const std::string get_out_file();
-const std::string get_rule_file();
-
-} // namespace parser
+private:
+    static bool enabled;
+};
 
 #endif
+

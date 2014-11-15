@@ -256,17 +256,12 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
         if(csum)
         {
-            stats.bad_cksum++;
-            snort.decode_flags |= DECODE_ERR_CKSUM_IP;
-
-            // TBD only set policy csum drop if policy inline
-            // and delete this inline mode check
-            if( ScInlineMode() && ScIpChecksumDrops() )
+            if ( !(codec.codec_flags & CODEC_UNSURE_ENCAP) )
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-                    "Dropping bad packet (IP checksum)\n"););
-                Active_DropPacket();
+                stats.bad_cksum++;
+                snort.decode_flags |= DECODE_ERR_CKSUM_IP;
             }
+            return false;
         }
     }
 

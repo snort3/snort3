@@ -289,21 +289,12 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         }
         if(csum)
         {
-            /* Don't drop the packet if this was ESP or Teredo.
-               Just stop decoding. */
-            if (codec.codec_flags & CODEC_UNSURE_ENCAP)
-                return false;
-
-            (*bad_cksum_cnt)++;
-            snort.decode_flags |= DECODE_ERR_CKSUM_UDP;
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad UDP Checksum\n"););
-
-            if( ScInlineMode() && ScUdpChecksumDrops() )
+            if ( !(codec.codec_flags & CODEC_UNSURE_ENCAP) )
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-                    "Dropping bad packet (UDP checksum)\n"););
-                Active_DropPacket();
+                (*bad_cksum_cnt)++;
+                snort.decode_flags |= DECODE_ERR_CKSUM_UDP;
             }
+            return false;
         }
     }
     const uint16_t src_port = udph->src_port();

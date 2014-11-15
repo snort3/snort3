@@ -19,7 +19,7 @@
 // dt_comment.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "data/data_types/dt_comment.h"
-#include "utils/s2l_util.h"
+#include "helpers/s2l_util.h"
 
 Comments::Comments(CommentType type)
 {
