@@ -22,7 +22,6 @@
 #define IPS_PCRE_H
 
 #include <stdint.h>
-
 #include <pcre.h>
 
 struct PcreData
@@ -35,6 +34,10 @@ struct PcreData
 
 PcreData* pcre_get_data(void*);
 bool pcre_next(PcreData*);
+
+struct SnortConfig;
+void pcre_setup(SnortConfig*);
+void pcre_cleanup(SnortConfig*);
 
 #endif
 

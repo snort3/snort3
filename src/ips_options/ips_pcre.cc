@@ -371,6 +371,7 @@ static bool pcre_search(
     *found_offset = -1;
 
     SnortState* ss = snort_conf->state + get_instance_id();
+    assert(ss->pcre_ovector);
 
     result = pcre_exec(
         pcre_data->re,  /* result of pcre_compile() */
@@ -619,6 +620,28 @@ bool pcre_next(PcreData* pcre)
     return true;  // continue
 }
 
+void pcre_setup(SnortConfig* sc)
+{
+    for ( unsigned i = 0; i < get_instance_max(); ++i )
+    {
+        SnortState* ss = sc->state + i;
+        ss->pcre_ovector = (int *) SnortAlloc(s_ovector_max*sizeof(int));
+    }
+}
+
+void pcre_cleanup(SnortConfig* sc)
+{
+    for ( unsigned i = 0; i < get_instance_max(); ++i )
+    {
+        SnortState* ss = sc->state + i;
+
+        if ( ss->pcre_ovector )
+            free(ss->pcre_ovector);
+
+        ss->pcre_ovector = nullptr;
+    }
+}
+
 //-------------------------------------------------------------------------
 // module
 //-------------------------------------------------------------------------
@@ -705,25 +728,6 @@ static void pcre_dtor(IpsOption* p)
     delete p;
 }
 
-// FIXIT-L the thread specific ovector can be allocated and deallocated 
-// from the main thread since it isn't literally thread local
-void pcre_tinit(SnortConfig* sc)
-{
-    SnortState* ss = sc->state + get_instance_id();
-    ss->pcre_ovector = (int *) SnortAlloc(s_ovector_max*sizeof(int));
-}
-
-void pcre_tterm(SnortConfig* sc)
-{
-    SnortState* ss = sc->state + get_instance_id();
-
-    if ( !ss->pcre_ovector )
-        return;
-
-    free(ss->pcre_ovector);
-    ss->pcre_ovector = nullptr;
-}
-
 static void pcre_verify(SnortConfig* sc)
 {
     /* The pcre_fullinfo() function can be used to find out how many
@@ -756,8 +760,8 @@ static const IpsApi pcre_api =
     0, 0,
     nullptr,
     nullptr,
-    pcre_tinit,
-    pcre_tterm,
+    nullptr,
+    nullptr,
     pcre_ctor,
     pcre_dtor,
     pcre_verify

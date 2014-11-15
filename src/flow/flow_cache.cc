@@ -72,8 +72,6 @@ FlowCache::FlowCache (
 
 FlowCache::~FlowCache ()
 {
-    purge();
-
     while ( Flow* flow = (Flow*)hash_table->pop() )
         delete flow;
 
