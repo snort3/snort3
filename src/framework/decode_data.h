@@ -21,8 +21,11 @@
 #ifndef FRAMEWORK_DECODE_DATA_H
 #define FRAMEWORK_DECODE_DATA_H
 
+#include <type_traits>
+
 #include "protocols/mpls.h"
 #include "protocols/ip.h"
+#include "main/policy.h"
 
 
 namespace tcp
@@ -54,25 +57,34 @@ enum class PktType : std::uint8_t
 //    FREE = 0xE0,
 };
 
+
 enum DecodeFlags : std::uint16_t
 {
     /* error flags */
-    DECODE_ERR_CKSUM_IP = 0x0001,
-    DECODE_ERR_CKSUM_TCP = 0x002,
-    DECODE_ERR_CKSUM_UDP = 0x0004,
-    DECODE_ERR_CKSUM_ICMP = 0x0008,
-    DECODE_ERR_CKSUM_ANY = 0x0010,
-    DECODE_ERR_BAD_TTL = 0x0020,
-    DECODE_ERR_FLAGS = (DECODE_ERR_CKSUM_IP | DECODE_ERR_CKSUM_TCP |
-                        DECODE_ERR_CKSUM_UDP | DECODE_ERR_CKSUM_UDP |
-                        DECODE_ERR_CKSUM_ICMP | DECODE_ERR_CKSUM_ANY |
-                        DECODE_ERR_BAD_TTL),
+    DECODE_ERR_CKSUM_IP = CHECKSUM_FLAG__IP, // == 0x0001,
+    DECODE_ERR_CKSUM_TCP = CHECKSUM_FLAG__TCP, // == 0x002,
+    DECODE_ERR_CKSUM_UDP = CHECKSUM_FLAG__UDP, // 0x0004,
+    DECODE_ERR_CKSUM_ICMP = CHECKSUM_FLAG__ICMP, // 0x0008,
+    DECODE_ERR_BAD_TTL = 0x0010,
+
+    DECODE_ERR_CKSUM_ALL = ( DECODE_ERR_CKSUM_IP | DECODE_ERR_CKSUM_TCP |
+                            DECODE_ERR_CKSUM_UDP | DECODE_ERR_CKSUM_ICMP ),
+    DECODE_ERR_FLAGS = ( DECODE_ERR_CKSUM_ALL | DECODE_ERR_BAD_TTL ),
 
 
-    DECODE_PKT_TRUST = 0x0040,    /* Tell Snort++ to whitelist this packet */
-    DECODE_FRAG = 0x0080,  /* flag to indicate a fragmented packet */
-    DECODE_MF = 0x0100,
+    DECODE_PKT_TRUST = 0x0020,    /* Tell Snort++ to whitelist this packet */
+    DECODE_FRAG = 0x0040,  /* flag to indicate a fragmented packet */
+    DECODE_MF = 0x0080,
 };
+
+static_assert(((uint16_t)DECODE_ERR_CKSUM_IP) < 0x0010,
+    "CHECKSUM_FLAG__IP must be less than 0x00100!!");
+static_assert(((uint16_t)DECODE_ERR_CKSUM_TCP) < 0x0010,
+    "DECODE_ERR_CKSUM_TCP must be less than 0x00100!!");
+static_assert(((uint16_t)DECODE_ERR_CKSUM_UDP) < 0x0010,
+    "DECODE_ERR_CKSUM_UDP must be less than 0x00100!!");
+static_assert(((uint16_t)DECODE_ERR_CKSUM_ICMP) < 0x0010,
+    "DECODE_ERR_CKSUM_ICMP must be less than 0x00100!!");
 
 
 // FIXIT-M J make this an enum!!

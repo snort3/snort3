@@ -24,7 +24,7 @@
 #include <unordered_map>
 
 #include "conversion_state.h"
-#include "utils/s2l_util.h"
+#include "helpers/s2l_util.h"
 
 
 namespace keywords

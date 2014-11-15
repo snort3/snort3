@@ -1,11 +1,13 @@
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
 
-noinst_LIBRARIES = libsnort2lua_utils.a
+noinst_LIBRARIES = libsnort2lua_helpers.a
 
-libsnort2lua_utils_a_SOURCES = \
+libsnort2lua_helpers_a_SOURCES = \
 converter.h \
 converter.cc \
+markup.h \
+markup.cc \
 parse_cmd_line.h \
 parse_cmd_line.cc \
 util_binder.h \

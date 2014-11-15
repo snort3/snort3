@@ -3659,7 +3659,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
             // Don't want to count retransmits as overlaps or do anything
             // else with them.  Account for retransmits of multiple PDUs
             // in one segment.
-            while (IsRetransmit(right, rdata, rsize, rseq))
+            if (IsRetransmit(right, rdata, rsize, rseq))
             {
                 rdata += right->size;
                 rsize -= right->size;
@@ -3674,19 +3674,9 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                     // All data was retransmitted
                     RetransmitHandle(p, tcpssn);
                     addthis = 0;
-                    break;
                 }
-                else if ((right == NULL) || (rsize < right->size))
-                {
-                    // Need to add new node or some data left to check
-                    break;
-                }
-            }
-
-            if ((rsize == 0) || (right == NULL))
-                break;
-            else if (rsize < right->size)
                 continue;
+            }
 
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                         "Got full right overlap\n"););

@@ -19,7 +19,8 @@ data.txt \
 inspector.txt \
 ips_action.txt \
 ips_option.txt \
-logger.txt 
+logger.txt  \
+snort2lua_cmds.txt
 
 # currently no modules for these
 #search_engine.txt
@@ -65,6 +66,7 @@ endif
 dist_doc_DATA += $(EXTRA_DIST)
 
 snort = $(top_builddir)/src/snort
+snort2lua = $(top_builddir)/tools/snort2lua/snort2lua
 plugin_path = $(if $(shell echo $$SNORT_PLUGIN_PATH), --plugin-path=$$SNORT_PLUGIN_PATH )
 
 $(unbuilt_sources): $(snort)
@@ -145,6 +147,9 @@ signals.txt: $(snort)
 
 version.txt: $(snort)
 	$(snort) -V 2>&1 | grep -v Using > $@
+
+snort2lua_cmds.txt: $(snort2lua)
+	$(snort2lua) --markup --help > $@
 
 pdf_args = \
     --icons --icons-dir=./images/icons \

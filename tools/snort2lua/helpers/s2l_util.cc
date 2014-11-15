@@ -29,7 +29,7 @@
 #include <cstring>
 #include <sstream>
 
-#include "utils/s2l_util.h"
+#include "helpers/s2l_util.h"
 #include "conversion_state.h"
 #include "data/dt_data.h"
 #include "data/data_types/dt_table.h"

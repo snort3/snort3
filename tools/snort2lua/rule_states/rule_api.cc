@@ -20,8 +20,8 @@
 
 #include <string>
 #include "rule_states/rule_api.h"
-#include "utils/s2l_util.h"
-#include "utils/converter.h"
+#include "helpers/s2l_util.h"
+#include "helpers/converter.h"
 
 namespace rules
 {

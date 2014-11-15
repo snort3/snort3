@@ -318,6 +318,8 @@ static void SnortInit(int argc, char **argv)
         OrderRuleLists(snort_conf, "drop sdrop reject alert pass log");
     }
 
+    SnortConfSetup(snort_conf);
+
     // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(snort_conf) )
         ParseError("can't initialize inspectors");
@@ -329,8 +331,6 @@ static void SnortInit(int argc, char **argv)
         umask(snort_conf->file_mask);
     else
         umask(077);    /* set default to be sane */
-
-    SnortConfSetup(snort_conf);
 
     /* Need to do this after dynamic detection stuff is initialized, too */
     IpsManager::global_init(snort_conf);
@@ -547,6 +547,8 @@ SnortConfig* get_reload_config()
         return NULL;
     }
 
+    SnortConfSetup(sc);
+
     if ( !InspectorManager::configure(sc) )
     {
         SnortConfFree(sc);
@@ -582,8 +584,6 @@ SnortConfig* get_reload_config()
             }
         }
     }
-
-    SnortConfSetup(sc);
 
     if ( sc->fast_pattern_config->search_api !=
             snort_conf->fast_pattern_config->search_api )

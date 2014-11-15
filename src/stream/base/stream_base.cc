@@ -130,6 +130,8 @@ void base_reset()
 
 static inline bool is_eligible(Packet* p)
 {
+    // FIXIT-M  --  extra check??   bad checksums should be removed
+    //              in detect.c snort_inspect()
     if ( p->ptrs.decode_flags & DECODE_ERR_CKSUM_IP )
         return false;
 

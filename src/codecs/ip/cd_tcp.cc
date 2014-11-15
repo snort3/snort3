@@ -214,24 +214,12 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
         if(csum)
         {
-            /* Don't drop the packet if this is encapuslated in Teredo or ESP.
-               Just get rid of the TCP header and stop decoding. */
-            if (codec.codec_flags & CODEC_UNSURE_ENCAP)
-                return false;
-
-            (*bad_cksum_cnt)++;
-            snort.decode_flags |= DECODE_ERR_CKSUM_TCP;
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad TCP checksum\n",
-                                    "0x%x versus 0x%x\n", csum,
-                                    ntohs(tcph->th_sum)););
-
-
-            if( ScInlineMode() && ScTcpChecksumDrops() )
+            if ( !(codec.codec_flags & CODEC_UNSURE_ENCAP) )
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-                    "Dropping bad packet (TCP checksum)\n"););
-                Active_DropPacket();
+                (*bad_cksum_cnt)++;
+                snort.decode_flags |= DECODE_ERR_CKSUM_TCP;
             }
+            return false;
         }
     }
 

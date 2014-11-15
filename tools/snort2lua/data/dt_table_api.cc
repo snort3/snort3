@@ -25,7 +25,7 @@
 
 #include "data/dt_table_api.h"
 #include "data/dt_data.h"
-#include "utils/s2l_util.h"
+#include "helpers/s2l_util.h"
 #include "data/data_types/dt_table.h"
 #include "data/data_types/dt_var.h"
 #include "data/data_types/dt_comment.h"
