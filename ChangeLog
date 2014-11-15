@@ -31,6 +31,7 @@
 -- refactored main init / reload code
 -- fixed cmake -ldl issue
 -- fixed normalization broke by the init/reload refactoring :(
+-- fixed 296-9 tcp segfault
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug
