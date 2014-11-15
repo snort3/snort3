@@ -196,7 +196,7 @@ static void parse_config_file(const char* key, const char* val)
 {
     if (!conf_file.empty())
     {
-        std::cout << "ERROR: %s %s\n\tOnly one config file allowed!\n", key, val;
+        std::cout << "ERROR: " << key << " " << val << "\n\tOnly one config file allowed!\n";
         exit(-1);
     }
     else
@@ -227,7 +227,7 @@ static void parse_error_file(const char* key, const char* val)
 {
     if (found_error_file)
     {
-        std::cout << "ERROR: %s %s\n\tOnly one error file allowed!\n", key, val;
+        std::cout << "ERROR: " << key << " " << val << "\n\tOnly one error file allowed!\n";
         exit(-1);
     }
     else
@@ -242,7 +242,7 @@ static void parse_output_file(const char* key, const char* val)
 {
     if (found_out_file)
     {
-        std::cout << "ERROR: %s %s\n\tOnly one output file allowed!\n", key, val;
+        std::cout << "ERROR: " << key << " " << val << "\n\tOnly one output file allowed!\n";
         exit(-1);
     }
     else
@@ -256,7 +256,7 @@ static void parse_rule_file(const char* key, const char* val)
 {
     if (found_rule_file)
     {
-        std::cout << "ERROR: %s %s\n\tOnly one output file allowed!\n", key, val;
+        std::cout << "ERROR: " << key << " " << val << "\n\tOnly one output file allowed!\n";
         exit(-1);
     }
     else
