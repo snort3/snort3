@@ -33,6 +33,7 @@
 -- fixed normalization broke by the init/reload refactoring :(
 -- fixed 296-9 tcp segfault
 -- update from josh
+-- ensure stream normalizations get proper header iff needed
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug

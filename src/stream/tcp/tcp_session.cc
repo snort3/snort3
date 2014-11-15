@@ -989,11 +989,11 @@ static PegCount gnormStats[PC_MAX];
 static THREAD_LOCAL PegCount normStats[PC_MAX];
 
 static const char* const pegName[PC_MAX] = {
-    "tcp::trim",
-    "tcp::ecn_ssn",
-    "tcp::ts_nop",
-    "tcp::ips_data",
-    "tcp::block",
+    "tcp.trim",
+    "tcp.ecn_ssn",
+    "tcp.ts_nop",
+    "tcp.ips_data",
+    "tcp.block",
 };
 
 void Stream_SumNormalizationStats()
@@ -1001,9 +1001,9 @@ void Stream_SumNormalizationStats()
     sum_stats((PegCount*)&gnormStats, (PegCount*)&normStats, array_size(pegName));
 }
 
-void Stream_PrintNormalizationStats (void)
+void Stream_PrintNormalizationStats (const char* name)
 {
-    show_stats((PegCount*)&gnormStats, pegName, PC_MAX);
+    show_stats((PegCount*)&gnormStats, pegName, PC_MAX, name);
 }
 
 void Stream_ResetNormalizationStats (void)
