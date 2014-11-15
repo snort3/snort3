@@ -27,6 +27,7 @@ set(EXTERNAL_LIBRARIES
     ${DNET_LIBRARIES}
     ${CLANG_CXX_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT} # GCC says we must link to the threads library
+    ${CMAKE_DL_LIBS}
     CACHE INTERNAL "external libraries" FORCE
 )
 
