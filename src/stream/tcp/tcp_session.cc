@@ -6075,6 +6075,8 @@ static inline uint32_t flush_pdu_ackd (
             // for non-paf splitters, flush_pt > 0 means we reached
             // the minimum required, but we flush what is available 
             // instead of creating more, but smaller, packets
+            // FIXIT-L just flush to end of segment to avoid splitting
+            // instead of all avail?
             if ( !trk->splitter->is_paf() )
             {
                 // get_q_footprint() w/o side effects
