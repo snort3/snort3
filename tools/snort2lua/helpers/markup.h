@@ -36,6 +36,7 @@ public:
     static const std::string& emphasis(const std::string&);
     static const std::string& escape(const char* const);
     static const std::string& escape(const std::string&);
+    static const char* add_newline();
 
 private:
     static bool enabled;
