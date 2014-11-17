@@ -87,3 +87,12 @@ const string& Markup::escape(const string& s)
 #endif
     return m;
 }
+
+
+const char* Markup::add_newline()
+{
+    static const char newline = '\n';
+    static const char empty = '\0';
+
+    return enabled ? &newline : &empty;
+}
