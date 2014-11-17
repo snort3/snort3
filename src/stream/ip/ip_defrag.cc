@@ -759,7 +759,7 @@ static inline int checkTinyFragments(
     return 0;
 }
 
-int  drop_all_fragments(
+int drop_all_fragments(
         Packet *p
         )
 {
@@ -1182,8 +1182,6 @@ static void release_tracker(FragTracker* ft)
     delete_tracker(ft);
     ft->engine = nullptr;
 
-    sfBase.iFragDeletes++;
-    sfBase.iCurrentFrags--;
     t_stats.trackers_released++;
 }
 
@@ -1323,7 +1321,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
     PROFILE_VARS;
 
     // preconditions - what we registered for
-    assert(p->ptrs.ip_api.is_valid() && !(p->ptrs.decode_flags & DECODE_ERR_CKSUM_IP));
+    assert(p->has_ip() && !(p->ptrs.decode_flags & DECODE_ERR_CKSUM_IP));
     assert(p->is_fragment());
 
     const uint16_t frag_offset = p->ptrs.ip_api.off();
@@ -1497,8 +1495,12 @@ void Defrag::process(Packet* p, FragTracker* ft)
         if (Active_PacketWasDropped())
         {
             ft->frag_flags |= FRAG_DROP_FRAGMENTS;
+            delete_tracker(ft);
         }
-        release_tracker(ft);
+        else
+        {
+            release_tracker(ft);
+        }
     }
 
     MODULE_PROFILE_END(fragPerfStats);
