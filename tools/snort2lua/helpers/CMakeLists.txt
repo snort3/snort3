@@ -8,8 +8,8 @@ add_library( snort2lua_helpers
     parse_cmd_line.cc
     util_binder.h
     util_binder.cc
-    markup.h
-    markup.cc
+    s2l_markup.h
+    s2l_markup.cc
 )
 
 target_link_libraries( snort2lua_helpers
