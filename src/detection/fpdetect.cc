@@ -1241,7 +1241,7 @@ static inline int fpEvalHeaderUdp(Packet *p, OTNX_MATCH_DATA *omd)
 
     {
         /* Check for a service/protocol ordinal for this packet */
-        int16_t proto_ordinal = p->flow->s5_state.application_protocol;
+        int16_t proto_ordinal = p->flow ? p->flow->s5_state.application_protocol : 0;
 
         DEBUG_WRAP( DebugMessage(DEBUG_ATTRIBUTE,"proto_ordinal=%d\n",proto_ordinal););
 
@@ -1312,7 +1312,7 @@ static inline int fpEvalHeaderTcp(Packet *p, OTNX_MATCH_DATA *omd)
     PORT_GROUP *src = NULL, *dst = NULL, *gen = NULL;
 
     {
-        int16_t proto_ordinal = p->flow->s5_state.application_protocol;
+        int16_t proto_ordinal = p->flow ? p->flow->s5_state.application_protocol : 0;
 
         DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "proto_ordinal=%d\n", proto_ordinal););
 
