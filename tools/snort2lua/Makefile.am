@@ -15,14 +15,14 @@ preprocessor_states/libpreprocessor_states.a \
 output_states/liboutput_states.a \
 config_states/libconfig_states.a \
 rule_states/librule_states.a \
-utils/libsnort2lua_utils.a \
+helpers/libsnort2lua_helpers.a \
 data/libdata.a \
 data/data_types/libdata_types.a
 
 snort2lua_CFLAGS = @CFLAGS@ $(AM_CFLAGS)
 
 SUBDIRS = \
-utils \
+helpers \
 data \
 keyword_states \
 preprocessor_states \

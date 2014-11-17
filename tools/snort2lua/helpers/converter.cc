@@ -20,10 +20,10 @@
 
 #include <stdexcept>
 
-#include "utils/converter.h"
+#include "helpers/converter.h"
 #include "conversion_state.h"
 #include "data/data_types/dt_comment.h"
-#include "utils/s2l_util.h"
+#include "helpers/s2l_util.h"
 #include "init_state.h"
 
 
@@ -138,7 +138,7 @@ int Converter::parse_include_file(std::string input_file)
         rule_api.swap_rules(rules);
 
         if (include_rules)
-            rule_api.add_hdr_data("include " + input_file + ".rules");
+            rule_api.include_rule_file(input_file + ".rules");
     }
 
     return rc;
@@ -244,23 +244,16 @@ int Converter::convert(std::string input,
 
     rc = parse_file(input);
 
-    bool rule_file_specified = true;
     if (rule_file.empty())
-    {
         rule_file = output_file;
-        rule_file_specified = false;
-    }
 
     if (error_file.empty())
         error_file = output_file + ".rej";
 
 
-    // If there were only rules in this file, AND no rule file was specified,
-    //      do not print lua syntax in the output_file
     if (!rule_api.empty() &&
         table_api.empty() &&
-        data_api.empty() &&
-        !rule_file_specified)
+        data_api.empty())
     {
         std::ofstream rules;
         rules.open(rule_file, std::ifstream::out);
@@ -327,7 +320,7 @@ int Converter::convert(std::string input,
             {
                 rule_api.print_rules(out, false);
 
-                std::string s = std::string("$default_rules");
+                std::string s = std::string("$local_rules");
                 table_api.open_top_level_table("ips");
                 table_api.add_option("rules", s);
                 table_api.close_table();

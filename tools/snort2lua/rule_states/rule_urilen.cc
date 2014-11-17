@@ -22,9 +22,9 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
+#include "helpers/converter.h"
 #include "rule_states/rule_api.h"
-#include "utils/s2l_util.h"
+#include "helpers/s2l_util.h"
 
 namespace rules
 {
@@ -69,7 +69,7 @@ bool Urilen::convert(std::istringstream& data_stream)
         }
         else
         {
-            rule_api.set_curr_options_buffer("http_uri");
+            rule_api.set_curr_options_buffer("http_raw_uri");
         }
     }
     else

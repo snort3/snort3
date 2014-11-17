@@ -32,9 +32,9 @@
 #include "data/dt_rule_api.h"
 
 // the following three files are for the function 'set_next_rule_state'
-#include "utils/s2l_util.h"
+#include "helpers/s2l_util.h"
 #include "rule_states/rule_api.h"
-#include "utils/converter.h"
+#include "helpers/converter.h"
 #include "conversion_defines.h"
 
 class DataApi;

@@ -622,7 +622,7 @@ bool pcre_next(PcreData* pcre)
 
 void pcre_setup(SnortConfig* sc)
 {
-    for ( int i = 0; i < get_instance_max(); ++i )
+    for ( unsigned i = 0; i < get_instance_max(); ++i )
     {
         SnortState* ss = sc->state + i;
         ss->pcre_ovector = (int *) SnortAlloc(s_ovector_max*sizeof(int));
@@ -631,7 +631,7 @@ void pcre_setup(SnortConfig* sc)
 
 void pcre_cleanup(SnortConfig* sc)
 {
-    for ( int i = 0; i < get_instance_max(); ++i )
+    for ( unsigned i = 0; i < get_instance_max(); ++i )
     {
         SnortState* ss = sc->state + i;
 

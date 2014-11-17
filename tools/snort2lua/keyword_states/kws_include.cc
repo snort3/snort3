@@ -22,9 +22,9 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
-#include "utils/s2l_util.h"
-#include "utils/parse_cmd_line.h"
+#include "helpers/converter.h"
+#include "helpers/s2l_util.h"
+#include "helpers/parse_cmd_line.h"
 #include "data/data_types/dt_comment.h"
 
 namespace keywords
@@ -79,7 +79,7 @@ bool Include::convert(std::istringstream& data_stream)
             "'filename' argument");
     }
 
-    rule_api.add_hdr_data("include " + file);
+    rule_api.include_rule_file(file);
     return false;
 }
 

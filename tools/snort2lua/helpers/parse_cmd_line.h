@@ -16,29 +16,28 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// converter.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include <sstream>
-#include <fstream>
-#include "conversion_state.h"
-#include "helpers/converter.h"
+#ifndef HELPERS_PARSE_CMD_LINE_H
+#define HELPERS_PARSE_CMD_LINE_H
 
-#ifndef INIT_STATE_H
-#define INIT_STATE_H
+#include <string>
 
-class InitState : public ConversionState
+namespace parser
 {
-public:
-    InitState(Converter&);
-    virtual ~InitState() {};
-    virtual bool convert(std::istringstream& data);
 
-};
+/*
+ * This file is directly copied (and then edited)
+ * from Snrot++'s cmd_line.h
+ */
 
+bool parse_cmd_line(int argc, char* argv[]);
 
-static inline ConversionState* init_state_ctor(Converter& c)
-{
-    return new InitState(c);
-}
+const std::string get_conf();
+const std::string get_conf_dir();
+const std::string get_error_file();
+const std::string get_out_file();
+const std::string get_rule_file();
+
+} // namespace parser
 
 #endif

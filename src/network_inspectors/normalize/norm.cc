@@ -533,10 +533,27 @@ void Norm_SumStats (void)
     Stream_SumNormalizationStats();
 }
 
+// need to output the label heading only if not already done
+// the label is emitted only if any counts are non-zero
+// FIXIT-L would prefer to hide this logic in the stats methods somehow
+static bool labeled()
+{
+    unsigned i = 0, max = array_size(pegName);
+
+    while ( i < max && !gnormStats[i] )
+        ++i;
+
+    return ( i < max );
+}
+
 void Norm_PrintStats (const char* name)
 {
     show_stats((PegCount*)&gnormStats, pegName, array_size(pegName), name);
-    Stream_PrintNormalizationStats();
+
+    if ( labeled() )
+        name = nullptr;
+
+    Stream_PrintNormalizationStats(name);
 }
 
 void Norm_ResetStats (void)

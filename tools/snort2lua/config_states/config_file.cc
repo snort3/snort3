@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/s2l_util.h"
+#include "helpers/s2l_util.h"
 #include "data/dt_table_api.h"
 
 

@@ -989,11 +989,11 @@ static PegCount gnormStats[PC_MAX];
 static THREAD_LOCAL PegCount normStats[PC_MAX];
 
 static const char* const pegName[PC_MAX] = {
-    "tcp::trim",
-    "tcp::ecn_ssn",
-    "tcp::ts_nop",
-    "tcp::ips_data",
-    "tcp::block",
+    "tcp.trim",
+    "tcp.ecn_ssn",
+    "tcp.ts_nop",
+    "tcp.ips_data",
+    "tcp.block",
 };
 
 void Stream_SumNormalizationStats()
@@ -1001,9 +1001,9 @@ void Stream_SumNormalizationStats()
     sum_stats((PegCount*)&gnormStats, (PegCount*)&normStats, array_size(pegName));
 }
 
-void Stream_PrintNormalizationStats (void)
+void Stream_PrintNormalizationStats (const char* name)
 {
-    show_stats((PegCount*)&gnormStats, pegName, PC_MAX);
+    show_stats((PegCount*)&gnormStats, pegName, PC_MAX, name);
 }
 
 void Stream_ResetNormalizationStats (void)
@@ -3659,7 +3659,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
             // Don't want to count retransmits as overlaps or do anything
             // else with them.  Account for retransmits of multiple PDUs
             // in one segment.
-            while (IsRetransmit(right, rdata, rsize, rseq))
+            if (IsRetransmit(right, rdata, rsize, rseq))
             {
                 rdata += right->size;
                 rsize -= right->size;
@@ -3674,19 +3674,9 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                     // All data was retransmitted
                     RetransmitHandle(p, tcpssn);
                     addthis = 0;
-                    break;
                 }
-                else if ((right == NULL) || (rsize < right->size))
-                {
-                    // Need to add new node or some data left to check
-                    break;
-                }
-            }
-
-            if ((rsize == 0) || (right == NULL))
-                break;
-            else if (rsize < right->size)
                 continue;
+            }
 
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                         "Got full right overlap\n"););
@@ -6075,6 +6065,8 @@ static inline uint32_t flush_pdu_ackd (
             // for non-paf splitters, flush_pt > 0 means we reached
             // the minimum required, but we flush what is available 
             // instead of creating more, but smaller, packets
+            // FIXIT-L just flush to end of segment to avoid splitting
+            // instead of all avail?
             if ( !trk->splitter->is_paf() )
             {
                 // get_q_footprint() w/o side effects
