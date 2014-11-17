@@ -306,9 +306,6 @@ bool StreamTcp::convert(std::istringstream& data_stream)
         else if (!keyword.compare("max_window"))
             tmpval = parse_int_option("max_window", arg_stream);
 
-        else if (!keyword.compare("require_3whs"))
-            tmpval = parse_int_option("require_3whs", arg_stream, false);
-
         else if (!keyword.compare("small_segments"))
             tmpval = parse_small_segments(arg_stream);
 
@@ -332,6 +329,16 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
         else if(!keyword.compare("protocol"))
             tmpval = parse_protocol(arg_stream);
+
+        else if (!keyword.compare("require_3whs"))
+        {
+            int val;
+
+            if ( arg_stream >> val )
+                table_api.add_option("require_3whs", val);
+            else
+                table_api.add_option("require_3whs", 0);
+        }
 
         else if (!keyword.compare("bind_to"))
         {

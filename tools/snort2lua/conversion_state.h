@@ -67,11 +67,9 @@ protected:
 
     inline bool eat_option(std::istringstream& stream);
     inline bool parse_string_option(std::string opt_name,
-                                        std::istringstream& stream
-                                        bool required = true);
+                                        std::istringstream& stream);
     inline bool parse_int_option(std::string opt_name,
-                                        std::istringstream& stream
-                                        bool required = true);
+                                        std::istringstream& stream);
     inline bool parse_curly_bracket_list(std::string list_name,
                                         std::istringstream& stream);
     inline bool parse_yn_bool_option(std::string opt_name,
@@ -81,8 +79,7 @@ protected:
     inline bool parse_bracketed_unsupported_list(std::string list_name,
                                         std::istringstream& stream);
     inline bool parse_deleted_option(std::string table_name,
-                                        std::istringstream& stream,
-                                        bool required = true);
+                                        std::istringstream& stream);
 
     //  rules have no order. Function placed here because every rule
     //  uses this.
@@ -101,8 +98,7 @@ protected:
     }
 
     inline bool parse_string_option(std::string opt_name,
-                                    std::istringstream& stream,
-                                    bool required = true)
+                                    std::istringstream& stream)
     {
         std::string val;
 
@@ -115,16 +111,12 @@ protected:
             return true;
         }
 
-        if (!required)
-            return true;
-
         table_api.add_comment("snort.conf missing argument for: " + opt_name + " <int>");
         return false;
     }
 
     inline bool parse_int_option(std::string opt_name,
-                                    std::istringstream& stream,
-                                    bool required = true)
+                                    std::istringstream& stream)
     {
         int val;
 
@@ -134,8 +126,6 @@ protected:
             return true;
         }
 
-        if (!required)
-            return true;
 
         table_api.add_comment("snort.conf missing argument for: " + opt_name + " <int>");
         return false;
@@ -233,8 +223,7 @@ protected:
 
 
     inline bool parse_deleted_option(std::string opt_name,
-                                        std::istringstream& stream,
-                                        bool required = true)
+                                        std::istringstream& stream)
     {
         std::string val;
         table_api.add_deleted_comment(opt_name);
@@ -242,8 +231,6 @@ protected:
         if(stream >> val)
             return true;
 
-        if (!required)
-            return true;
         return false;
     }
 
