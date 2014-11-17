@@ -32,9 +32,6 @@
 #include "snort.h"
 #include "parser.h"
 
-#include "target_based/sftarget_protocol_reference.h"
-#include "parser.h"
-
 /* for eval and free functions */
 #include "ips_options/ips_content.h"
 

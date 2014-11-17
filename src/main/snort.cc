@@ -106,11 +106,11 @@ using namespace std;
 #include "time/periodic.h"
 #include "parser/config_file.h"
 #include "parser/cmd_line.h"
-#include "target_based/sftarget_reader.h"
 #include "stream/stream_api.h"
 #include "stream/stream.h"
 #include "actions/act_replace.h"
 #include "filters/detection_filter.h"
+#include "target_based/sftarget_reader.h"
 
 #ifdef INTEL_SOFT_CPM
 #include "search/intel_soft_cpm.h"

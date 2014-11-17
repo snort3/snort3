@@ -258,10 +258,12 @@ public:  // FIXIT-M privatize if possible
     uint16_t client_port;
     uint16_t server_port;
 
+    uint16_t ssn_policy;
     uint16_t session_state;
-    uint8_t  handler[SE_MAX];
 
+    uint8_t  handler[SE_MAX];
     uint8_t  response_count;
+
     uint8_t  inner_client_ttl, inner_server_ttl;
     uint8_t  outer_client_ttl, outer_server_ttl;
 };

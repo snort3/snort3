@@ -680,40 +680,6 @@ static int FragHandleIPOptions(FragTracker *ft,
     return 1;
 }
 
-int FragGetPolicy(Packet *p, FragEngine *engine)
-{
-    int frag_policy;
-    /* Not caching this host_entry in the frag tracker so we can
-     * swap the table out after processing this packet if we need
-     * to.  */
-    HostAttributeEntry *host_entry;
-
-    if (!IsAdaptiveConfigured())
-        return engine->frag_policy;
-
-    host_entry = SFAT_LookupHostEntryByDst(p);
-
-    if (host_entry && (isFragPolicySet(host_entry) == POLICY_SET))
-    {
-        frag_policy = getFragPolicy(host_entry);
-
-        if (frag_policy != SFAT_UNKNOWN_FRAG_POLICY)
-        {
-            DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                "FragGetPolicy: Policy Map Entry: %d(%s)\n",
-                frag_policy, frag_policy_names[frag_policy]););
-
-            return frag_policy;
-        }
-    }
-
-    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-        "FragGetPolicy: Using configured default %d(%s)\n",
-        engine->frag_policy, frag_policy_names[engine->frag_policy]););
-
-    return engine->frag_policy;
-}
-
 /** checks for tiny fragments and raises appropriate alarm
  *
  * @param p Current packet to insert
@@ -1185,82 +1151,6 @@ static void release_tracker(FragTracker* ft)
     sfBase.iFragDeletes++;
     sfBase.iCurrentFrags--;
     t_stats.trackers_released++;
-}
-
-int fragGetApplicationProtocolId(Packet *p)
-{
-    FragTracker *ft;
-    /* Not caching this host_entry in the frag tracker so we can
-     * swap the table out after processing this packet if we need
-     * to.  */
-    HostAttributeEntry *host_entry = NULL;
-    uint16_t src_port = 0;
-    uint16_t dst_port = 0;
-
-    if ( !p->flow || p->flow->protocol != PktType::IP )
-    {
-        return 0;
-    }
-
-    /* Must be a rebuilt frag... */
-    if (!(p->packet_flags & PKT_REBUILT_FRAG))
-    {
-        return 0;
-    }
-
-    ft = &((IpSession*)p->flow->session)->tracker;
-
-    if (ft->application_protocol != 0)
-    {
-        return ft->application_protocol;
-    }
-
-    switch (p->type())
-    {
-    case PktType::TCP:
-        ft->ipprotocol = protocolReferenceTCP;
-        src_port = p->ptrs.sp;
-        dst_port = p->ptrs.dp;
-        break;
-    case PktType::UDP:
-        ft->ipprotocol = protocolReferenceUDP;
-        src_port = p->ptrs.sp;
-        dst_port = p->ptrs.dp;
-        break;
-    case PktType::ICMP:
-        ft->ipprotocol = protocolReferenceICMP;
-        break;
-    default:
-        break;
-    }
-
-    host_entry = SFAT_LookupHostEntryBySrc(p);
-    if (host_entry)
-    {
-        ft->application_protocol = getApplicationProtocolId(host_entry,
-                                    ft->ipprotocol,
-                                    src_port,
-                                    SFAT_SERVICE);
-        if (ft->application_protocol != 0)
-        {
-            return ft->application_protocol;
-        }
-    }
-
-    host_entry = SFAT_LookupHostEntryByDst(p);
-    if (host_entry)
-    {
-        ft->application_protocol = getApplicationProtocolId(host_entry,
-                                    ft->ipprotocol,
-                                    dst_port,
-                                    SFAT_SERVICE);
-        if (ft->application_protocol != 0)
-        {
-            return ft->application_protocol;
-        }
-    }
-
-    return ft->application_protocol;
 }
 
 //-------------------------------------------------------------------------
@@ -2314,7 +2204,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
     ft->ip_options_data = NULL;
     ft->copied_ip_options_len = 0;
     ft->ordinal = 0;
-    ft->frag_policy = FragGetPolicy(p, &engine);
+    ft->frag_policy = p->flow->ssn_policy ? p->flow->ssn_policy : engine.frag_policy;
     ft->engine = &engine;
 
     /*

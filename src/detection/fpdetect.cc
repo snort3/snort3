@@ -64,8 +64,6 @@
 #include "packet_io/active.h"
 #include "ips_options/ips_content.h"
 #include "stream/stream_api.h"
-#include "target_based/sftarget_protocol_reference.h"
-#include "target_based/sftarget_reader.h"
 #include "utils/sflsq.h"
 #include "ppm.h"
 #include "detection_util.h"
@@ -1241,10 +1239,9 @@ static inline int fpEvalHeaderUdp(Packet *p, OTNX_MATCH_DATA *omd)
 {
     PORT_GROUP *src = NULL, *dst = NULL, *gen = NULL;
 
-    if (IsAdaptiveConfigured())
     {
         /* Check for a service/protocol ordinal for this packet */
-        int16_t proto_ordinal = GetProtocolReference(p);
+        int16_t proto_ordinal = p->flow->s5_state.application_protocol;
 
         DEBUG_WRAP( DebugMessage(DEBUG_ATTRIBUTE,"proto_ordinal=%d\n",proto_ordinal););
 
@@ -1314,9 +1311,8 @@ static inline int fpEvalHeaderTcp(Packet *p, OTNX_MATCH_DATA *omd)
 {
     PORT_GROUP *src = NULL, *dst = NULL, *gen = NULL;
 
-    if (IsAdaptiveConfigured())
     {
-        int16_t proto_ordinal = GetProtocolReference(p);
+        int16_t proto_ordinal = p->flow->s5_state.application_protocol;
 
         DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "proto_ordinal=%d\n", proto_ordinal););
 

@@ -77,7 +77,7 @@ struct sfip_t {
 #undef inet_ntoa
 #endif
 
-SO_PUBLIC char *sfip_to_str(const sfip_t *ip);
+SO_PUBLIC char *sfip_to_str(const sfip_t*);
 #define sfip_ntoa(x) sfip_to_str(x)
 #define inet_ntoa sfip_ntoa
 

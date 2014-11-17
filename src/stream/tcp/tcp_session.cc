@@ -2415,30 +2415,6 @@ int Stream5FlushListener(Packet *p, Flow *lwssn)
     return flushed;
 }
 
-void TcpSession::restart(Packet* p)
-{
-    StreamTracker* talker, * listener;
-    TcpSession* tcpssn = (TcpSession*)p->flow->session;
-
-    if ( p->packet_flags & PKT_FROM_SERVER )
-    {
-        talker = &tcpssn->server;
-        listener = &tcpssn->client;
-    }
-    else
-    {
-        talker = &tcpssn->client;
-        listener = &tcpssn->server;
-    }
-
-    // FIXTHIS-H on data / on ack must be based on flush policy
-    if ( p->dsize > 0 )
-        CheckFlushPolicyOnData(this, talker, listener, p);
-
-    if ( p->ptrs.tcph->is_ack() )
-        CheckFlushPolicyOnAck(this, talker, listener, p);
-}
-
 int Stream5FlushTalker(Packet *p, Flow *lwssn)
 {
     StreamTracker *talker = NULL;
@@ -4116,69 +4092,24 @@ static int ProcessTcpData(
     return S5_UNALIGNED;
 }
 
-uint16_t StreamGetPolicy(
-    Flow *lwssn, StreamTcpConfig *config, int direction)
-{
-    uint16_t policy_id;
-    /* Not caching this host_entry in the frag tracker so we can
-     * swap the table out after processing this packet if we need
-     * to.  */
-    HostAttributeEntry *host_entry = NULL;
-    int ssn_dir;
-
-    if (!IsAdaptiveConfigured())
-        return config->policy;
-
-    if (direction == FROM_CLIENT)
-    {
-        host_entry = SFAT_LookupHostEntryByIP(&lwssn->server_ip);
-        ssn_dir = SSN_DIR_SERVER;
-    }
-    else
-    {
-        host_entry = SFAT_LookupHostEntryByIP(&lwssn->client_ip);
-        ssn_dir = SSN_DIR_CLIENT;
-    }
-    if (host_entry && (isStreamPolicySet(host_entry) == POLICY_SET))
-    {
-        policy_id = getStreamPolicy(host_entry);
-
-        if (policy_id != SFAT_UNKNOWN_STREAM_POLICY)
-        {
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "StreamGetPolicy: Policy Map Entry: %d(%s)\n",
-                policy_id, reassembly_policy_names[policy_id]););
-
-            /* Since we've already done the lookup, try to get the
-             * application protocol id with that host_entry. */
-            stream.set_application_protocol_id_from_host_entry(lwssn, host_entry, ssn_dir);
-            return policy_id;
-        }
-    }
-
-    STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-        "StreamGetPolicy: Using configured default %d(%s)\n",
-        config->policy, reassembly_policy_names[config->policy]););
-
-    return config->policy;
-}
-
 void SetTcpReassemblyPolicy(StreamTracker *st)
 {
     st->reassembly_policy = GetTcpReassemblyPolicy(st->os_policy);
 }
 
-static void SetOSPolicy(TcpSession *tcpssn)
+static void SetOSPolicy(Flow* flow, TcpSession *tcpssn)
 {
-    if (tcpssn->client.os_policy == 0)
+    if ( !tcpssn->client.os_policy )
     {
-        tcpssn->client.os_policy = StreamGetPolicy(tcpssn->flow, tcpssn->client.config, FROM_SERVER);
+        tcpssn->client.os_policy = flow->ssn_policy ? flow->ssn_policy :
+            tcpssn->client.config->policy;
         SetTcpReassemblyPolicy(&tcpssn->client);
     }
 
-    if (tcpssn->server.os_policy == 0)
+    if ( !tcpssn->server.os_policy )
     {
-        tcpssn->server.os_policy = StreamGetPolicy(tcpssn->flow, tcpssn->server.config, FROM_CLIENT);
+        tcpssn->server.os_policy = flow->ssn_policy ? flow->ssn_policy :
+            tcpssn->server.config->policy;
         SetTcpReassemblyPolicy(&tcpssn->server);
     }
 }
@@ -4300,7 +4231,7 @@ static void NewTcpSession(
         if (lwssn->s5_state.session_flags & SSNFLAG_RESET)
             lwssn->s5_state.session_flags &= ~SSNFLAG_RESET;
 
-        SetOSPolicy(tmp);
+        SetOSPolicy(lwssn, tmp);
 
         if ( (lwssn->s5_state.session_flags & SSNFLAG_CLIENT_SWAP) &&
             !(lwssn->s5_state.session_flags & SSNFLAG_CLIENT_SWAPPED) )
@@ -5056,8 +4987,7 @@ static int ProcessTcp(
     if ((p->dsize) && p->ptrs.tcph->is_syn())
     {
         /* MacOS accepts data on SYN, so don't alert if policy is MACOS */
-        if (StreamGetPolicy(lwssn, config, FROM_CLIENT) !=
-            STREAM_POLICY_MACOS)
+        if ( talker->os_policy != STREAM_POLICY_MACOS)
         {
             if ( Normalize_IsEnabled(NORM_TCP_TRIM) )
             {
@@ -6670,6 +6600,30 @@ void TcpSession::clear()
     if ( tcp_init )
         // this does NOT flush data
         TcpSessionClear(flow, this, 1);
+}
+
+void TcpSession::restart(Packet* p)
+{
+    StreamTracker* talker, * listener;
+    TcpSession* tcpssn = (TcpSession*)p->flow->session;
+
+    if ( p->packet_flags & PKT_FROM_SERVER )
+    {
+        talker = &tcpssn->server;
+        listener = &tcpssn->client;
+    }
+    else
+    {
+        talker = &tcpssn->client;
+        listener = &tcpssn->server;
+    }
+
+    // FIXTHIS-H on data / on ack must be based on flush policy
+    if ( p->dsize > 0 )
+        CheckFlushPolicyOnData(this, talker, listener, p);
+
+    if ( p->ptrs.tcph->is_ack() )
+        CheckFlushPolicyOnAck(this, talker, listener, p);
 }
 
 void TcpSession::update_direction(

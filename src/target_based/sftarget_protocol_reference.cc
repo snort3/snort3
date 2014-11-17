@@ -25,6 +25,10 @@
 
 #include "sftarget_protocol_reference.h"
 
+#include <string>
+#include <vector>
+using namespace std;
+
 #include "hash/sfghash.h"
 #include "util.h"
 #include "snort_debug.h"
@@ -46,6 +50,16 @@ int16_t protocolReferenceICMP;
 static SFGHASH *proto_reference_table = NULL;  // STATIC
 static int16_t protocol_number = 1;
 
+static vector<string> id_map;
+
+const char* get_protocol_name(uint16_t id)
+{
+    if ( id >= id_map.size() )
+        id = 0;
+
+    return id_map[id].c_str();
+}
+
 /* XXX XXX Probably need to do this during swap time since the
  * proto_reference_table is accessed during runtime */
 int16_t AddProtocolReference(const char *protocol)
@@ -64,6 +78,11 @@ int16_t AddProtocolReference(const char *protocol)
                 protocol, reference->ordinal););
         return reference->ordinal;
     }
+
+    if ( protocol_number == 1 )
+        id_map.push_back("unknown");
+
+    id_map.push_back(protocol);
 
     reference = (SFTargetProtocolReference*)SnortAlloc(sizeof(SFTargetProtocolReference));
     reference->ordinal = protocol_number++;

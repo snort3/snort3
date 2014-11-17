@@ -69,7 +69,6 @@
 #include "framework/ips_option.h"
 #include "config_file.h"
 #include "keywords.h"
-#include "target_based/sftarget_reader.h"
 
 //-------------------------------------------------------------------------
 // var node stuff

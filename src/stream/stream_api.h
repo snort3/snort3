@@ -300,7 +300,7 @@ public:
     void update_direction(Flow*, char dir, const sfip_t *ip, uint16_t port);
 
     static void set_application_protocol_id_from_host_entry(
-        Flow *lwssn, struct _HostAttributeEntry *host_entry, int direction);
+        Flow*, const struct HostAttributeEntry*, int direction);
 
     static uint32_t set_session_flags(Flow*, uint32_t flags);
     static uint32_t get_session_flags(Flow*);
