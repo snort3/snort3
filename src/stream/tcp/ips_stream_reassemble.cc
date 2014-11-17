@@ -117,6 +117,7 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
 
     if ( !srod.enable ) /* Turn it off */
     {
+        // FIXIT-H need to delete splitter too - need stream api methods
         if ( srod.direction & SSN_DIR_SERVER )
             tcpssn->server.flush_policy = STREAM_FLPOLICY_IGNORE;
 
@@ -201,7 +202,7 @@ bool ReassembleModule::set(const char*, Value& v, SnortConfig*)
         srod.enable = v.get_long();
 
     else if ( v.is("direction") )
-        srod.enable = v.get_long() + 1;
+        srod.direction = v.get_long() + 1;
 
     else if ( v.is("noalert") )
         srod.alert = 0;

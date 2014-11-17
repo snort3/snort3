@@ -134,7 +134,7 @@ extern const char* session_pegs[];
 extern const unsigned session_peg_count;
 
 void Stream_SumNormalizationStats(void);
-void Stream_PrintNormalizationStats(void);
+void Stream_PrintNormalizationStats(const char* name = nullptr);
 void Stream_ResetNormalizationStats(void);
 
 #endif

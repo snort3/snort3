@@ -59,20 +59,20 @@ static void Print_IP4 (SnortConfig*, const NormalizerConfig* nc)
 
     if ( Norm_IsEnabled(nc, NORM_IP4) )
     {
-        //LogFlag("ip4::id", nc, NORM_IP4_ID);
-        LogFlag("ip4::df", nc, NORM_IP4_DF);
-        LogFlag("ip4::rf", nc, NORM_IP4_RF);
-        LogFlag("ip4::tos", nc, NORM_IP4_TOS);
-        LogFlag("ip4::trim", nc, NORM_IP4_TRIM);
+        //LogFlag("ip4.id", nc, NORM_IP4_ID);
+        LogFlag("ip4.df", nc, NORM_IP4_DF);
+        LogFlag("ip4.rf", nc, NORM_IP4_RF);
+        LogFlag("ip4.tos", nc, NORM_IP4_TOS);
+        LogFlag("ip4.trim", nc, NORM_IP4_TRIM);
 
         if ( Norm_IsEnabled(nc, NORM_IP4_TTL) )
         {
             NetworkPolicy* policy = get_network_policy();
-            LogMessage("%12s: %s (min=%d, new=%d)\n", "ip4::ttl", ON, 
+            LogMessage("%12s: %s (min=%d, new=%d)\n", "ip4.ttl", ON, 
                 policy->min_ttl, policy->new_ttl);
         }
         else
-            LogConf("ip4::ttl", OFF);
+            LogConf("ip4.ttl", OFF);
     }
 }
 
@@ -90,11 +90,11 @@ static void Print_IP6 (SnortConfig*, const NormalizerConfig* nc)
         if ( Norm_IsEnabled(nc, NORM_IP6_TTL) )
         {
             NetworkPolicy* policy = get_network_policy();
-            LogMessage("%12s: %s (min=%d, new=%d)\n", "ip6::hops",
+            LogMessage("%12s: %s (min=%d, new=%d)\n", "ip6.hops",
                 ON, policy->min_ttl, policy->new_ttl);
         }
         else
-            LogConf("ip6::hops", OFF);
+            LogConf("ip6.hops", OFF);
     }
 }
 
@@ -118,8 +118,8 @@ static void Print_TCP (const NormalizerConfig* nc)
         else
             s = OFF;
 
-        LogConf("tcp::ecn", s);
-        LogFlag("tcp::urp", nc, NORM_TCP_URP);
+        LogConf("tcp.ecn", s);
+        LogFlag("tcp.urp", nc, NORM_TCP_URP);
 
         if ( Norm_IsEnabled(nc, NORM_TCP_OPT) )
         {
@@ -143,12 +143,12 @@ static void Print_TCP (const NormalizerConfig* nc)
                 snprintf(p, buf+sizeof(buf)-p, "%c", ')');
                 buf[sizeof(buf)-1] = '\0';
             }
-            LogMessage("%12s: %s %s\n", "tcp::opt", ON, buf);
+            LogMessage("%12s: %s %s\n", "tcp.opt", ON, buf);
         }
         else
-            LogConf("tcp::opt", OFF);
+            LogConf("tcp.opt", OFF);
 
-        LogFlag("tcp::ips", nc, NORM_TCP_IPS);
+        LogFlag("tcp.ips", nc, NORM_TCP_IPS);
     }
 }
 
