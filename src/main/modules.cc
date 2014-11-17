@@ -1717,11 +1717,11 @@ bool RuleStateModule::end(const char*, int idx, SnortConfig* sc)
 // FIXIT-L these are cloned from ip_module.cc and tcp_module.cc
 
 #define ip_policies \
-    "first | linux | bsd | bsd_right |last | windows | solaris"
+    "unknown | first | linux | bsd | bsd_right |last | windows | solaris"
 
 #define tcp_policies \
-    "first | last | bsd | linux | old-linux | windows | win-2003 | vista " \
-    "solaris | hpux | hpux10 | irix | macos"
+    "unknown | first | last | bsd | linux | old-linux | windows | win-2003 | " \
+    "vista | solaris | hpux | hpux10 | irix | macos"
 
 static const Parameter service_params[] =
 {
@@ -1780,15 +1780,11 @@ bool HostsModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("frag_policy") )
     {
-        strncpy(host->hostInfo.fragPolicyName, v.get_string(),
-            sizeof(host->hostInfo.fragPolicyName));
-        host->hostInfo.fragPolicy = v.get_long() + 1;
+        host->hostInfo.fragPolicy = v.get_long();
     }
     else if ( v.is("tcp_policy") )
     {
-        strncpy(host->hostInfo.streamPolicyName, v.get_string(),
-            sizeof(host->hostInfo.streamPolicyName));
-        host->hostInfo.streamPolicy = v.get_long() + 1;
+        host->hostInfo.streamPolicy = v.get_long();
     }
     else if ( v.is("name") )
         app->protocol = AddProtocolReference(v.get_string());

@@ -58,7 +58,6 @@
 #include "target_based/sftarget_protocol_reference.h"
 #include "target_based/sftarget_hostentry.h"
 
-
 Stream stream;  // FIXIT-L global for SnortContext
 
 Stream::Stream()
@@ -386,7 +385,7 @@ int Stream::set_application_protocol_id_expected(
 }
 
 void Stream::set_application_protocol_id_from_host_entry(
-    Flow* flow, HostAttributeEntry *host_entry, int direction)
+    Flow* flow, const HostAttributeEntry *host_entry, int direction)
 {
     int16_t application_protocol;
 
@@ -406,13 +405,13 @@ void Stream::set_application_protocol_id_from_host_entry(
     {
         application_protocol = getApplicationProtocolId(
             host_entry, flow->s5_state.ipprotocol,
-            ntohs(flow->server_port), SFAT_SERVICE);
+            flow->server_port, SFAT_SERVICE);
     }
     else
     {
         application_protocol = getApplicationProtocolId(
             host_entry, flow->s5_state.ipprotocol,
-            ntohs(flow->client_port), SFAT_SERVICE);
+            flow->client_port, SFAT_SERVICE);
 
         if ( application_protocol &&
             (flow->s5_state.session_flags & SSNFLAG_MIDSTREAM) )
@@ -440,9 +439,6 @@ int16_t Stream::get_application_protocol_id(Flow* flow)
         return 0;
 
     if (flow->s5_state.application_protocol != 0)
-        return flow->s5_state.application_protocol;
-
-    if (!IsAdaptiveConfigured())
         return flow->s5_state.application_protocol;
 
     if (flow->s5_state.ipprotocol == 0)
@@ -483,9 +479,6 @@ int16_t Stream::set_application_protocol_id(Flow* flow, int16_t id)
     if (!flow)
         return 0;
 
-    if (!IsAdaptiveConfigured())
-        return 0;
-
     if (flow->s5_state.application_protocol != id)
     {
         flow->s5_state.application_protocol = id;
@@ -495,7 +488,7 @@ int16_t Stream::set_application_protocol_id(Flow* flow, int16_t id)
         set_ip_protocol(flow);
 
     SFAT_UpdateApplicationProtocol(
-        &flow->server_ip, ntohs(flow->server_port),
+        &flow->server_ip, flow->server_port,
         flow->s5_state.ipprotocol, id);
 
     return id;

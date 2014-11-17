@@ -35,6 +35,7 @@
 -- update from josh
 -- ensure stream normalizations get proper header iff needed
 -- fixed stream_reassemble.direction
+-- initial integration of hosts into binder
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug

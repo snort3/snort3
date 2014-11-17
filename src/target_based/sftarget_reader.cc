@@ -183,11 +183,8 @@ int SFAT_AddApplicationData(HostAttributeEntry* host, ApplicationEntry* app)
 
     if ((app->fields & required_fields) != required_fields)
     {
-        sfip_t host_addr;
-        sfip_set_ip(&host_addr, &host->ipAddr);
-        host_addr.ip32[0] = ntohl(host_addr.ip32[0]);
         ParseError("Missing required field in Service attribute table for host %s",
-            inet_ntoa(&host_addr));
+            inet_ntoa(&host->ipAddr));
     }
     AppendApplicationData(&host->services, app);
 
@@ -199,22 +196,21 @@ void PrintHostAttributeEntry(HostAttributeEntry *host)
 {
     ApplicationEntry *app;
     int i = 0;
-    sfip_t host_addr;
 
     if (!host)
         return;
 
-    sfip_set_ip(&host_addr, &host->ipAddr);
-    host_addr.ip32[0] = ntohl(host_addr.ip32[0]);
-
     DebugMessage(DEBUG_ATTRIBUTE, "Host IP: %s/%d\n",
-            inet_ntoa(&host_addr),
-            host->ipAddr.bits
-            );
-    DebugMessage(DEBUG_ATTRIBUTE, "\tPolicy Information: frag:%s (%s %u) stream: %s (%s %u)\n",
-            host->hostInfo.fragPolicyName, host->hostInfo.fragPolicySet ? "set":"unset", host->hostInfo.fragPolicy,
-            host->hostInfo.streamPolicyName, host->hostInfo.streamPolicySet ? "set":"unset", host->hostInfo.streamPolicy);
+        inet_ntoa(&host->ipAddr),
+        host->ipAddr.bits);
+
+    DebugMessage(DEBUG_ATTRIBUTE,
+        "\tPolicy Information: frag:%s (%u) stream: %s (%u)\n",
+        "look-me-up", host->hostInfo.fragPolicy,
+        "look-me-up", host->hostInfo.streamPolicy);
+
     DebugMessage(DEBUG_ATTRIBUTE, "\tServices:\n");
+
     for (i=0, app = host->services; app; app = app->next,i++)
     {
         DebugMessage(DEBUG_ATTRIBUTE, "\tService #%d:\n", i);
@@ -293,24 +289,11 @@ int SFAT_AddHostEntryToMap(HostAttributeEntry* host)
 HostAttributeEntry *SFAT_LookupHostEntryByIP(const sfip_t *ipAddr)
 {
     HostAttributeEntry *host = NULL;
-    sfip_t local_ipAddr;
 
     if ( !curr_cfg )
         return NULL;
 
-    sfip_set_ip(&local_ipAddr, ipAddr);
-    if (local_ipAddr.family == AF_INET)
-    {
-        local_ipAddr.ip32[0] = ntohl(local_ipAddr.ip32[0]);
-    }
-
-    host = (HostAttributeEntry*)sfrt_lookup(&local_ipAddr, curr_cfg->lookupTable);
-
-    if (host)
-    {
-        /* Set the policy values for Frag & Stream if not already set */
-        //TODO: SetTargetBasedPolicy(host);
-    }
+    host = (HostAttributeEntry*)sfrt_lookup((void*)ipAddr, curr_cfg->lookupTable);
 
     return host;
 }
@@ -380,27 +363,14 @@ tTargetBasedConfig* SFAT_Swap()
     return curr_cfg;
 }
 
-int IsAdaptiveConfigured()
-{
-    if ( curr_cfg || next_cfg )
-        return 1;
-
-    return 0;
-}
-
 void SFAT_UpdateApplicationProtocol(sfip_t *ipAddr, uint16_t port, uint16_t protocol, uint16_t id)
 {
     HostAttributeEntry *host_entry;
     ApplicationEntry *service;
-    sfip_t local_ipAddr;
     unsigned service_count = 0;
     int rval;
 
-    sfip_set_ip(&local_ipAddr, ipAddr);
-    if (local_ipAddr.family == AF_INET)
-        local_ipAddr.ip32[0] = ntohl(local_ipAddr.ip32[0]);
-
-    host_entry = (HostAttributeEntry*)sfrt_lookup(&local_ipAddr, curr_cfg->lookupTable);
+    host_entry = (HostAttributeEntry*)sfrt_lookup(ipAddr, curr_cfg->lookupTable);
 
     if (!host_entry)
     {
@@ -408,9 +378,10 @@ void SFAT_UpdateApplicationProtocol(sfip_t *ipAddr, uint16_t port, uint16_t prot
             return;
 
         host_entry = (HostAttributeEntry*)SnortAlloc(sizeof(*host_entry));
-        sfip_set_ip(&host_entry->ipAddr, &local_ipAddr);
-        if ((rval = sfrt_insert(&local_ipAddr, (unsigned char)local_ipAddr.bits, host_entry,
-                                RT_FAVOR_SPECIFIC, curr_cfg->lookupTable)) != RT_SUCCESS)
+        sfip_set_ip(&host_entry->ipAddr, ipAddr);
+
+        if ((rval = sfrt_insert(ipAddr, (unsigned char)ipAddr->bits, host_entry,
+            RT_FAVOR_SPECIFIC, curr_cfg->lookupTable)) != RT_SUCCESS)
         {
             FreeHostEntry(host_entry);
             return;

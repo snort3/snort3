@@ -25,7 +25,7 @@
 
 #include "sftarget_hostentry.h"
 
-int hasService(HostAttributeEntry *host_entry,
+int hasService(const HostAttributeEntry *host_entry,
                int ipprotocol,
                int protocol,
                int application)
@@ -61,7 +61,7 @@ int hasService(HostAttributeEntry *host_entry,
     return SFTARGET_NOMATCH;
 }
 
-int hasClient(HostAttributeEntry *host_entry,
+int hasClient(const HostAttributeEntry *host_entry,
                int ipprotocol,
                int protocol,
                int application)
@@ -97,7 +97,7 @@ int hasClient(HostAttributeEntry *host_entry,
     return SFTARGET_NOMATCH;
 }
 
-int hasProtocol(HostAttributeEntry *host_entry,
+int hasProtocol(const HostAttributeEntry *host_entry,
                int ipprotocol,
                int protocol,
                int application)
@@ -115,47 +115,23 @@ int hasProtocol(HostAttributeEntry *host_entry,
     return ret;
 }
 
-char isFragPolicySet(HostAttributeEntry *host_entry)
-{
-    if (host_entry && host_entry->hostInfo.fragPolicySet)
-    {
-        return POLICY_SET;
-    }
-    return POLICY_NOT_SET;
-}
-
-char isStreamPolicySet(HostAttributeEntry *host_entry)
-{
-    if (host_entry && host_entry->hostInfo.streamPolicySet)
-    {
-        return POLICY_SET;
-    }
-    return POLICY_NOT_SET;
-}
-
-uint16_t getFragPolicy(HostAttributeEntry *host_entry)
+uint16_t getFragPolicy(const HostAttributeEntry *host_entry)
 {
     if (!host_entry)
-        return SFAT_UNKNOWN_FRAG_POLICY;
-
-    if (!host_entry->hostInfo.fragPolicySet)
         return SFAT_UNKNOWN_FRAG_POLICY;
 
     return host_entry->hostInfo.fragPolicy;
 }
 
-uint16_t getStreamPolicy(HostAttributeEntry *host_entry)
+uint16_t getStreamPolicy(const HostAttributeEntry *host_entry)
 {
     if (!host_entry)
-        return SFAT_UNKNOWN_STREAM_POLICY;
-
-    if (!host_entry->hostInfo.streamPolicySet)
         return SFAT_UNKNOWN_STREAM_POLICY;
 
     return host_entry->hostInfo.streamPolicy;
 }
 
-int getApplicationProtocolId(HostAttributeEntry *host_entry,
+int getApplicationProtocolId(const HostAttributeEntry *host_entry,
                int ipprotocol,
                uint16_t port,
                char direction)

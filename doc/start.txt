@@ -13,7 +13,7 @@ Required:
 
 * LuaJIT from http://luajit.org for configuration and scripting.
 
-* pcap from http://www.tcpdump.org for tcpdump logging.
+* pcap from http://www.tcpdump.org for tcpdump style logging.
 
 * pcre from http://www.pcre.org for regular expression pattern matching.
 
@@ -33,11 +33,12 @@ Optional:
 
 * Optionally built features are listed in the reference section.
 
-* You should build Snort++ with --prefix $install_dir where install_dir is
-  something you can easily delete.
+* You should build Snort++ with an install prefix so that you can easily
+  delete older versions.
 
 * To build with autotools, the usual ./configure, make, make install from
-  the top level directory will suffice.
+  the top level directory will suffice.  If you don't have ./configure,
+  then autoreconf -isvf must be done first.
 
 * To build with Cmake and make, first create a separate directory for the
   build and cd into that directory.  Then:
@@ -69,8 +70,8 @@ Optional:
 
 === Using Lua
 
-* Snort++ needs a lua conf.  use $install_dir/conf/snort.lua, like -c
-   $install_dir/conf/snort.lua.
+* Snort++ needs a lua conf.  You can use $install_dir/conf/snort.lua, like
+  -c $install_dir/conf/snort.lua.
 
 * lua/snort.lua is always the latest working example configuration.
 

@@ -75,7 +75,7 @@ class IpSession : public Session
 public:
     IpSession(Flow*);
 
-    bool setup (Packet*) override;
+    bool setup(Packet*) override;
     int process(Packet*) override;
     void clear() override;
 

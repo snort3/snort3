@@ -38,17 +38,9 @@
 
 #include "hash/sfghash.h"
 #include "pcrm.h"
+#include "target_based/sftarget_protocol_reference.h"
 
 struct SnortConfig;
-
-/*
- *  Max Number of Protocols Supported by Rules in fpcreate.c
- *  for tcp,udp,icmp,ip ... this is an array dimesnion used to
- *  map protocol-ordinals to port_groups ...
- */
-/* This is now defined in sftarget_protocol_refererence.h"
- * #define MAX_PROTOCOL_ORDINAL 8192 */
-#include "target_based/sftarget_protocol_reference.h"
 
 /*
  *  This controls how many fast pattern match contents may be

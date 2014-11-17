@@ -315,6 +315,8 @@ void InspectorManager::delete_policy (InspectionPolicy* pi)
     pi->framework_policy = nullptr;
 }
 
+// FIXIT-L allowing lookup by name or type or key is kinda hinky
+// would be helpful to have specific lookups
 static PHInstance* get_instance(
     FrameworkPolicy* fp, const char* keyword, bool dflt_only = false)
 {

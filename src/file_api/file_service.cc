@@ -52,9 +52,6 @@
 #include "detection_util.h"
 #include "service_inspectors/http_inspect/hi_main.h" // FIXIT-M bad dependency; use inspector::get_buf()
 
-#include "target_based/sftarget_protocol_reference.h"
-#include "target_based/sftarget_reader.h"
-
 static bool file_type_id_enabled = false;  // STATIC
 static bool file_signature_enabled = false;
 static bool file_processing_initiated = false;
@@ -1031,7 +1028,6 @@ static void print_file_stats(int exiting)
     }
     LogMessage("   %12s:           " FMTu64("-10") " \n", "Total",verdicts_total);
 
-    if (IsAdaptiveConfigured())
     {
         LogMessage("\nFiles processed by protocol IDs:\n");
         for (i = 0; i < MAX_PROTOCOL_ORDINAL; i++)

@@ -81,7 +81,6 @@
 #include "parse_rule.h"
 #include "parse_stream.h"
 #include "vars.h"
-#include "target_based/sftarget_reader.h"
 
 static unsigned parse_errors = 0;
 static unsigned parse_warnings = 0;

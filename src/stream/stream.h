@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2005-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,17 +30,14 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 
-#include "target_based/sftarget_protocol_reference.h"
 #include "framework/counts.h"
 #include "utils/bitop_funcs.h"
 #include "framework/inspector.h"
-
 #include "snort_types.h"
 #include "snort.h"
 #include "detect.h"
 #include "stream/stream_api.h"
-
-#include "target_based/sftarget_hostentry.h"
+#include "target_based/sftarget_protocol_reference.h"
 
 //#define DEBUG_STREAM5 DEBUG
 
@@ -107,7 +104,7 @@ struct Stream5Config
 };
 
 #if 0
-FIXIT-1 delete?
+FIXIT-M delete?
 typedef struct {
     PegCount  filtered;
     PegCount  inspected;
