@@ -21,21 +21,44 @@ set(ERROR_MESSAGE
 )
 
 
+# Check for libdumbnet first, then libdnet
+
 find_path(DNET_INCLUDE_DIR 
-  NAMES dnet.h dumbnet.h
+  NAMES dumbnet.h
+  HINTS ENV DNETDIR
+)
+
+# Define HAVE_DUMBNET_H for config.h generation if we found libdumnet headers.
+set_if_true(DNET_INCLUDE_DIR HAVE_DUMBNET_H)
+
+# Search for library twice.  The first time using the custom path, second time
+# using standard paths
+find_library(DNET_LIBRARIES
+    NAMES dumbnet
+    HINTS ${DNET_LIBRARIES_DIR} # user specified option in ./configure_cmake.sh
+    NO_DEFAULT_PATH
+    NO_CMAKE_ENVIRONMENT_PATH
+)
+find_library(DNET_LIBRARIES
+    NAMES dumbnet
+)
+
+
+find_path(DNET_INCLUDE_DIR 
+  NAMES dnet.h
   HINTS ENV DNETDIR
 )
 
 # Search for library twice.  The first time using the custom path, second time
 # using standard paths
 find_library(DNET_LIBRARIES
-    NAMES dnet dumbnet
+    NAMES dnet
     HINTS ${DNET_LIBRARIES_DIR} # user specified option in ./configure_cmake.sh
     NO_DEFAULT_PATH
     NO_CMAKE_ENVIRONMENT_PATH
 )
 find_library(DNET_LIBRARIES
-    NAMES dnet dumbnet
+    NAMES dnet
 )
 
 
