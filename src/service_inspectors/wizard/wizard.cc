@@ -85,7 +85,8 @@ private:
     Wand wand;
 };
 
-class Wizard : public Inspector {
+class Wizard : public Inspector
+{
 public:
     Wizard(WizardModule*);
     ~Wizard();
@@ -155,6 +156,11 @@ Wizard::Wizard(WizardModule* m)
 
 Wizard::~Wizard()
 {
+    delete c2s_hexes;
+    delete s2c_hexes;
+
+    delete c2s_spells;
+    delete s2c_spells;
 }
 
 void Wizard::reset(Wand& w, bool /*tcp*/, bool c2s)

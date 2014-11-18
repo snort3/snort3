@@ -288,14 +288,10 @@ int SFAT_AddHostEntryToMap(HostAttributeEntry* host)
 
 HostAttributeEntry *SFAT_LookupHostEntryByIP(const sfip_t *ipAddr)
 {
-    HostAttributeEntry *host = NULL;
-
     if ( !curr_cfg )
         return NULL;
 
-    host = (HostAttributeEntry*)sfrt_lookup((void*)ipAddr, curr_cfg->lookupTable);
-
-    return host;
+    return (HostAttributeEntry*)sfrt_lookup((void*)ipAddr, curr_cfg->lookupTable);
 }
 
 HostAttributeEntry *SFAT_LookupHostEntryBySrc(Packet *p)

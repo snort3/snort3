@@ -39,6 +39,7 @@
 -- don't log redecode events (from shutdown rebuilds)
 -- changed normalizer ip4.base and tcp.base to default to true
 -- session flag clean up
+-- fix wizard dtor
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug

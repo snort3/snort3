@@ -209,10 +209,34 @@ bool WizardModule::end(const char*, int idx, SnortConfig*)
 
 MagicBook* WizardModule::get_book(bool c2s, bool hex)
 {
-    if ( c2s )
-        return hex ? c2s_hexes : c2s_spells;
+    int k = c2s ? 1 : 0;
+    k |= (hex ? 2 : 0);
 
-    return hex ? s2c_hexes : s2c_spells;
+    MagicBook* b = nullptr;
+
+    switch ( k )
+    {
+    case 0:
+        b = s2c_spells;
+        s2c_spells = nullptr;
+        break;
+
+    case 1:
+        b = c2s_spells;
+        c2s_spells = nullptr;
+        break;
+
+    case 2:
+        b = s2c_hexes;
+        s2c_hexes = nullptr;
+        break;
+
+    case 3:
+        b = c2s_hexes;
+        c2s_hexes = nullptr;
+        break;
+    }
+    return b;
 }
 
 const char** WizardModule::get_pegs() const
