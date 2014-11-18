@@ -121,6 +121,8 @@ struct TcpStats
     PegCount rebuilt_buffers;
     PegCount overlaps;
     PegCount gaps;
+    PegCount max_segs;
+    PegCount max_bytes;
     PegCount internalEvents;
     PegCount s5tcp1;
     PegCount s5tcp2;
@@ -149,9 +151,11 @@ const char* tcp_pegs[] =
     "rebuilt buffers",
     "overlaps",
     "gaps",
+    "max segs",
+    "max bytes",
     "internal events",
-    "client cleanup flushes",
-    "server cleanup flushes",
+    "client cleanups",
+    "server cleanups",
     nullptr
 };
 
@@ -3875,26 +3879,14 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
     if (config->max_queued_bytes &&
         (rcv->seg_bytes_total > config->max_queued_bytes))
     {
-        if (!(tcpssn->flow->s5_state.session_flags & SSNFLAG_LOGGED_QUEUE_FULL))
-        {
-            /* only log this one per session */
-            tcpssn->flow->s5_state.session_flags |= SSNFLAG_LOGGED_QUEUE_FULL;
-        }
-        STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Ignoring segment due to too many bytes queued\n"););
+        tcpStats.max_bytes++;
         return;
     }
 
     if (config->max_queued_segs &&
         (rcv->seg_count+1 > config->max_queued_segs))
     {
-        if (!(tcpssn->flow->s5_state.session_flags & SSNFLAG_LOGGED_QUEUE_FULL))
-        {
-            /* only log this one per session */
-            tcpssn->flow->s5_state.session_flags |= SSNFLAG_LOGGED_QUEUE_FULL;
-        }
-        STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Ignoring segment due to too many bytes queued\n"););
+        tcpStats.max_segs++;
         return;
     }
 
