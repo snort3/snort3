@@ -2549,15 +2549,12 @@ static void TcpSessionCleanup(Flow *lwssn, int freeApplicationData)
             else
             {
                 tcpssn->client.flags |= TF_FORCE_FLUSH;
-                flushed = flush_stream(tcpssn, &tcpssn->client, cleanup_pkt,
-                            PKT_FROM_SERVER);
+                flushed = flush_stream(
+                    tcpssn, &tcpssn->client, cleanup_pkt, PKT_FROM_SERVER);
+                tcpssn->client.flags &= ~TF_FORCE_FLUSH;
             }
             if (flushed)
                 purge_flushed_ackd(tcpssn, &tcpssn->client);
-            else
-                LogRebuiltPacket(cleanup_pkt);
-
-            tcpssn->client.flags &= ~TF_FORCE_FLUSH;
         }
 
         /* Flush the server */
@@ -2581,15 +2578,12 @@ static void TcpSessionCleanup(Flow *lwssn, int freeApplicationData)
             else
             {
                 tcpssn->server.flags |= TF_FORCE_FLUSH;
-                flushed = flush_stream(tcpssn, &tcpssn->server, cleanup_pkt,
-                            PKT_FROM_CLIENT);
+                flushed = flush_stream(
+                    tcpssn, &tcpssn->server, cleanup_pkt, PKT_FROM_CLIENT);
+                tcpssn->server.flags &= ~TF_FORCE_FLUSH;
             }
             if (flushed)
                 purge_flushed_ackd(tcpssn, &tcpssn->server);
-            else
-                LogRebuiltPacket(cleanup_pkt);
-
-            tcpssn->server.flags &= ~TF_FORCE_FLUSH;
         }
     }
 

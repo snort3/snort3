@@ -648,6 +648,7 @@ void DecodeRebuiltPacket (
 
     set_policy(p);  // FIXIT-H rebuilt should reuse original bindings from flow
 
+    SnortEventqReset();
     SnortEventqPop();
 }
 
