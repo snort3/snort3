@@ -5081,7 +5081,7 @@ static int ProcessTcp(
                         "bad sequence number, bailing\n"););
             Discard();
             eventcode |= EVENT_BAD_RST;
-            NormalDropPacketIf(p, NORM_TCP);
+            NormalDropPacketIf(p, NORM_TCP_BASE);
             LogTcpEvents(eventcode);
             MODULE_PROFILE_END(s5TcpStatePerfStats);
             return retcode;
@@ -5188,7 +5188,7 @@ static int ProcessTcp(
                     "bad sequence number, bailing\n"););
         Discard();
         eventcode |= EVENT_BAD_RST;
-        NormalDropPacketIf(p, NORM_TCP);
+        NormalDropPacketIf(p, NORM_TCP_BASE);
         LogTcpEvents(eventcode);
         MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode | ts_action;
@@ -5251,7 +5251,7 @@ static int ProcessTcp(
     {
         int action;
         if ( !SEQ_EQ(tdb->seq, talker->isn) &&
-             NormalDropPacketIf(p, NORM_TCP) )
+             NormalDropPacketIf(p, NORM_TCP_BASE) )
             action = ACTION_BAD_PKT;
         else
         if ( talker->s_mgr.state >= TCP_STATE_ESTABLISHED )
@@ -5279,7 +5279,7 @@ static int ProcessTcp(
         /* got a window too large, alert! */
         eventcode |= EVENT_WINDOW_TOO_LARGE;
         Discard();
-        NormalDropPacketIf(p, NORM_TCP);
+        NormalDropPacketIf(p, NORM_TCP_BASE);
         LogTcpEvents(eventcode);
         MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode | ACTION_BAD_PKT;
@@ -5295,7 +5295,7 @@ static int ProcessTcp(
         eventcode |= EVENT_WINDOW_SLAM;
         Discard();
 
-        if ( NormalDropPacketIf(p, NORM_TCP) )
+        if ( NormalDropPacketIf(p, NORM_TCP_BASE) )
         {
             LogTcpEvents(eventcode);
             MODULE_PROFILE_END(s5TcpStatePerfStats);
@@ -5376,7 +5376,7 @@ static int ProcessTcp(
                         eventcode |= EVENT_WINDOW_SLAM;
                         Discard();
 
-                        if ( NormalDropPacketIf(p, NORM_TCP) )
+                        if ( NormalDropPacketIf(p, NORM_TCP_BASE) )
                         {
                             LogTcpEvents(eventcode);
                             MODULE_PROFILE_END(s5TcpStatePerfStats);
@@ -5424,7 +5424,7 @@ static int ProcessTcp(
                 {
                     eventcode |= EVENT_BAD_ACK;
                     LogTcpEvents(eventcode);
-                    NormalDropPacketIf(p, NORM_TCP);
+                    NormalDropPacketIf(p, NORM_TCP_BASE);
                     MODULE_PROFILE_END(s5TcpStatePerfStats);
                     return retcode | ACTION_BAD_PKT;
                 }
@@ -5473,7 +5473,7 @@ static int ProcessTcp(
             //EventDataOnClosed(talker->config);
             eventcode |= EVENT_DATA_ON_CLOSED;
             retcode |= ACTION_BAD_PKT;
-            NormalDropPacketIf(p, NORM_TCP);
+            NormalDropPacketIf(p, NORM_TCP_BASE);
         }
         else if (TCP_STATE_CLOSED == talker->s_mgr.state)
         {
@@ -5493,7 +5493,7 @@ static int ProcessTcp(
                 eventcode |= EVENT_DATA_ON_CLOSED;
             }
             retcode |= ACTION_BAD_PKT;
-            NormalDropPacketIf(p, NORM_TCP);
+            NormalDropPacketIf(p, NORM_TCP_BASE);
         }
         else
         {
@@ -5538,7 +5538,7 @@ static int ProcessTcp(
             else
             {
                 eventcode |= EVENT_DATA_WITHOUT_FLAGS;
-                NormalDropPacketIf(p, NORM_TCP);
+                NormalDropPacketIf(p, NORM_TCP_BASE);
             }
         }
     }
@@ -5623,7 +5623,7 @@ static int ProcessTcp(
                         "FIN beyond previous, ignoring\n"););
                     eventcode |= EVENT_BAD_FIN;
                     LogTcpEvents(eventcode);
-                    NormalDropPacketIf(p, NORM_TCP);
+                    NormalDropPacketIf(p, NORM_TCP_BASE);
                     MODULE_PROFILE_END(s5TcpStatePerfStats);
                     return retcode | ACTION_BAD_PKT;
                 }

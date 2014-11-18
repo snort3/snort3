@@ -55,25 +55,24 @@ static inline void LogFlag (
 
 static void Print_IP4 (SnortConfig*, const NormalizerConfig* nc)
 {
-    LogFlag("ip4", nc, NORM_IP4);
+    if ( !Norm_IsEnabled(nc, (NormFlags)NORM_IP4_ANY) )
+        return;
 
-    if ( Norm_IsEnabled(nc, NORM_IP4) )
+    LogFlag("ip4.base", nc, NORM_IP4_BASE);
+    //LogFlag("ip4.id", nc, NORM_IP4_ID);
+    LogFlag("ip4.df", nc, NORM_IP4_DF);
+    LogFlag("ip4.rf", nc, NORM_IP4_RF);
+    LogFlag("ip4.tos", nc, NORM_IP4_TOS);
+    LogFlag("ip4.trim", nc, NORM_IP4_TRIM);
+
+    if ( Norm_IsEnabled(nc, NORM_IP4_TTL) )
     {
-        //LogFlag("ip4.id", nc, NORM_IP4_ID);
-        LogFlag("ip4.df", nc, NORM_IP4_DF);
-        LogFlag("ip4.rf", nc, NORM_IP4_RF);
-        LogFlag("ip4.tos", nc, NORM_IP4_TOS);
-        LogFlag("ip4.trim", nc, NORM_IP4_TRIM);
-
-        if ( Norm_IsEnabled(nc, NORM_IP4_TTL) )
-        {
-            NetworkPolicy* policy = get_network_policy();
-            LogMessage("%12s: %s (min=%d, new=%d)\n", "ip4.ttl", ON, 
-                policy->min_ttl, policy->new_ttl);
-        }
-        else
-            LogConf("ip4.ttl", OFF);
+        NetworkPolicy* policy = get_network_policy();
+        LogMessage("%12s: %s (min=%d, new=%d)\n", "ip4.ttl", ON, 
+            policy->min_ttl, policy->new_ttl);
     }
+    else
+        LogConf("ip4.ttl", OFF);
 }
 
 static void Print_ICMP4 (const NormalizerConfig* nc)
@@ -83,18 +82,16 @@ static void Print_ICMP4 (const NormalizerConfig* nc)
 
 static void Print_IP6 (SnortConfig*, const NormalizerConfig* nc)
 {
-    LogFlag("ip6", nc, NORM_IP6);
+    if ( !Norm_IsEnabled(nc, (NormFlags)NORM_IP6_ANY) )
+        return;
 
-    if ( Norm_IsEnabled(nc, NORM_IP6) )
+    LogFlag("ip6.base", nc, NORM_IP6_BASE);
+
+    if ( Norm_IsEnabled(nc, NORM_IP6_TTL) )
     {
-        if ( Norm_IsEnabled(nc, NORM_IP6_TTL) )
-        {
-            NetworkPolicy* policy = get_network_policy();
-            LogMessage("%12s: %s (min=%d, new=%d)\n", "ip6.hops",
-                ON, policy->min_ttl, policy->new_ttl);
-        }
-        else
-            LogConf("ip6.hops", OFF);
+        NetworkPolicy* policy = get_network_policy();
+        LogMessage("%12s: %s (min=%d, new=%d)\n", "ip6.hops",
+            ON, policy->min_ttl, policy->new_ttl);
     }
 }
 
@@ -105,51 +102,50 @@ static void Print_ICMP6 (const NormalizerConfig* nc)
 
 static void Print_TCP (const NormalizerConfig* nc)
 {
-    LogFlag("tcp", nc, NORM_TCP);
+    if ( !Norm_IsEnabled(nc, (NormFlags)NORM_TCP_ANY) )
+        return;
 
-    if ( Norm_IsEnabled(nc, NORM_TCP) )
+    LogFlag("tcp.base", nc, NORM_TCP_BASE);
+    const char* s;
+
+    if ( Norm_IsEnabled(nc, NORM_TCP_ECN_PKT) )
+        s = "packet";
+    else if ( Norm_IsEnabled(nc, NORM_TCP_ECN_STR) )
+        s = "stream";
+    else
+        s = OFF;
+
+    LogConf("tcp.ecn", s);
+    LogFlag("tcp.urp", nc, NORM_TCP_URP);
+
+    if ( Norm_IsEnabled(nc, NORM_TCP_OPT) )
     {
-        const char* s;
+        char buf[1024] = "";
+        char* p = buf;
+        int opt;
+        size_t min;
 
-        if ( Norm_IsEnabled(nc, NORM_TCP_ECN_PKT) )
-            s = "packet";
-        else if ( Norm_IsEnabled(nc, NORM_TCP_ECN_STR) )
-            s = "stream";
-        else
-            s = OFF;
+        p += snprintf(p, buf+sizeof(buf)-p, "%s", "(allow ");
+        min = strlen(buf);
 
-        LogConf("tcp.ecn", s);
-        LogFlag("tcp.urp", nc, NORM_TCP_URP);
-
-        if ( Norm_IsEnabled(nc, NORM_TCP_OPT) )
+        // TBD translate options to keywords allowed by parser
+        for ( opt = 2; opt < 256; opt++ )
         {
-            char buf[1024] = "";
-            char* p = buf;
-            int opt;
-            size_t min;
-
-            p += snprintf(p, buf+sizeof(buf)-p, "%s", "(allow ");
-            min = strlen(buf);
-
-            // TBD translate options to keywords allowed by parser
-            for ( opt = 2; opt < 256; opt++ )
-            {
-                const char* fmt = (strlen(buf) > min) ? ",%d" : "%d";
-                if ( Norm_TcpIsOptional(nc, opt) )
-                    p += snprintf(p, buf+sizeof(buf)-p, fmt, opt);
-            }
-            if ( strlen(buf) > min )
-            {
-                snprintf(p, buf+sizeof(buf)-p, "%c", ')');
-                buf[sizeof(buf)-1] = '\0';
-            }
-            LogMessage("%12s: %s %s\n", "tcp.opt", ON, buf);
+            const char* fmt = (strlen(buf) > min) ? ",%d" : "%d";
+            if ( Norm_TcpIsOptional(nc, opt) )
+                p += snprintf(p, buf+sizeof(buf)-p, fmt, opt);
         }
-        else
-            LogConf("tcp.opt", OFF);
-
-        LogFlag("tcp.ips", nc, NORM_TCP_IPS);
+        if ( strlen(buf) > min )
+        {
+            snprintf(p, buf+sizeof(buf)-p, "%c", ')');
+            buf[sizeof(buf)-1] = '\0';
+        }
+        LogMessage("%12s: %s %s\n", "tcp.opt", ON, buf);
     }
+    else
+        LogConf("tcp.opt", OFF);
+
+    LogFlag("tcp.ips", nc, NORM_TCP_IPS);
 }
 
 //-------------------------------------------------------------------------

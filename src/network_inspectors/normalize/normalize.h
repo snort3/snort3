@@ -29,34 +29,35 @@
 
 typedef enum
 {
-    NORM_IP4             = 0x00000001, // core ip4 norms
+    NORM_IP4_BASE        = 0x00000001, // core ip4 norms
   //NORM_IP4_ID          = 0x00000002, // tbd:  encrypt ip id
     NORM_IP4_DF          = 0x00000004, // clear df
     NORM_IP4_RF          = 0x00000008, // clear rf
     NORM_IP4_TTL         = 0x00000010, // ensure min ttl
-    NORM_ICMP4           = 0x00000020, // core icmp4 norms
-    NORM_IP6             = 0x00000040, // core ip6 norms
-    NORM_IP6_TTL         = 0x00000080, // ensure min hop limit
-    NORM_ICMP6           = 0x00000100, // core icmp6 norms
-    NORM_TCP             = 0x00000200, // core tcp norms
-    NORM_TCP_ECN_PKT     = 0x00000400, // clear ece and cwr
-    NORM_TCP_ECN_STR     = 0x00000800, // clear if not negotiated (stream)
-    NORM_TCP_URP         = 0x00001000, // trim urp to dsize
-    NORM_TCP_OPT         = 0x00002000, // nop over non-essential options
-    NORM_TCP_IPS         = 0x00004000, // enable stream normalization/pre-ack flushing
-    NORM_IP4_TOS         = 0x00008000, // clear tos/diff-serv
-    NORM_IP4_TRIM        = 0x00010000, // enforce min frame
-    NORM_TCP_TRIM        = 0x00020000, // enforce min frame
-    NORM_ALL             = 0x0003FFFF  // all normalizations on
+    NORM_IP4_TOS         = 0x00000020, // clear tos/diff-serv
+    NORM_IP4_TRIM        = 0x00000040, // enforce min frame
+
+    NORM_IP6_BASE        = 0x00000100, // core ip6 norms
+    NORM_IP6_TTL         = 0x00000200, // ensure min hop limit
+    NORM_ICMP4           = 0x00000400, // core icmp4 norms
+    NORM_ICMP6           = 0x00000800, // core icmp6 norms
+
+    NORM_TCP_BASE        = 0x00001000, // core tcp norms
+    NORM_TCP_ECN_PKT     = 0x00002000, // clear ece and cwr
+    NORM_TCP_ECN_STR     = 0x00004000, // clear if not negotiated (stream)
+    NORM_TCP_URP         = 0x00008000, // trim urp to dsize
+    NORM_TCP_OPT         = 0x00010000, // nop over non-essential options
+    NORM_TCP_IPS         = 0x00020000, // enable stream normalization/pre-ack flushing
+    NORM_TCP_TRIM        = 0x00040000, // enforce min frame
+
+    NORM_ALL             = 0x000FFFFF  // all normalizations on
 } NormFlags;
 
 bool Normalize_IsEnabled(NormFlags);
 
-#define NORM_IP4_ANY (NORM_IP4|NORM_IP4_DF|NORM_IP4_RF|NORM_IP4_TTL)
-#define NORM_IP6_ANY (NORM_IP6|NORM_IP6_TTL)
-#define NORM_TCP_ANY \
-    (NORM_TCP|NORM_TCP_ECN_PKT|NORM_TCP_ECN_STR|NORM_TCP_URP| \
-     NORM_TCP_OPT|NORM_TCP_IPS|NORM_IP4_TOS|NORM_IP4_TRIM|NORM_TCP_TRIM)
+#define NORM_IP4_ANY (0xFF)
+#define NORM_IP6_ANY (NORM_IP6_BASE|NORM_IP6_TTL)
+#define NORM_TCP_ANY (0xFF000)
 
 #endif
 

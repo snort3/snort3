@@ -84,7 +84,7 @@ static bool allow_codes(NormalizerConfig* config, const char* s)
 
 static const Parameter norm_ip4_params[] =
 {
-    { "base", Parameter::PT_BOOL, nullptr, "false",
+    { "base", Parameter::PT_BOOL, nullptr, "true",
       "clear options" },
 
     { "df", Parameter::PT_BOOL, nullptr, "false",
@@ -104,7 +104,7 @@ static const Parameter norm_ip4_params[] =
 
 static const Parameter norm_tcp_params[] =
 {
-    { "base", Parameter::PT_BOOL, nullptr, "false",
+    { "base", Parameter::PT_BOOL, nullptr, "true",
       "clear reserved bits and option padding and fix urgent pointer / flags issues" },
 
     { "ips", Parameter::PT_BOOL, nullptr, "false",
@@ -169,7 +169,7 @@ ProfileStats* NormalizeModule::get_profile() const
 bool NormalizeModule::set_ip4(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("base") )
-        Norm_Set(&config, NORM_IP4, v.get_bool());
+        Norm_Set(&config, NORM_IP4_BASE, v.get_bool());
 
     else if ( v.is("df") )
         Norm_Set(&config, NORM_IP4_DF, v.get_bool());
@@ -192,7 +192,7 @@ bool NormalizeModule::set_ip4(const char*, Value& v, SnortConfig*)
 bool NormalizeModule::set_tcp(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("base") )
-        Norm_Set(&config, NORM_TCP, v.get_bool());
+        Norm_Set(&config, NORM_TCP_BASE, v.get_bool());
 
     else if ( v.is("urp") )
         Norm_Set(&config, NORM_TCP_URP, v.get_bool());
@@ -238,7 +238,7 @@ bool NormalizeModule::set(const char* fqn, Value& v, SnortConfig* sc)
         return set_tcp(fqn, v, sc);
 
     else if ( v.is("ip6") )
-        Norm_Set(&config, NORM_IP6, v.get_bool());
+        Norm_Set(&config, NORM_IP6_BASE, v.get_bool());
 
     else if ( v.is("icmp4") )
         Norm_Set(&config, NORM_ICMP4, v.get_bool());
@@ -254,26 +254,32 @@ bool NormalizeModule::set(const char* fqn, Value& v, SnortConfig* sc)
 
 bool NormalizeModule::begin(const char* fqn, int, SnortConfig*)
 {
+    if ( !strcmp(fqn, "normalizer.ip4") )
+        Norm_Set(&config, NORM_IP4_BASE, true);
+
+    else if ( !strcmp(fqn, "normalizer.tcp") )
+        Norm_Set(&config, NORM_TCP_BASE, true);
+
+    return true;
+}
+
+bool NormalizeModule::end(const char* fqn, int, SnortConfig*)
+{
     if ( !strcmp(fqn, NORM_NAME) )
     {
         NetworkPolicy* policy = get_network_policy();
 
         if ( (policy->new_ttl > 1) && (policy->new_ttl >= policy->min_ttl) )
         {
-            if ( Norm_IsEnabled(&config, NORM_IP4) )
+            if ( Norm_IsEnabled(&config, NORM_IP4_BASE) )
                 Norm_Enable(&config, NORM_IP4_TTL);
         }
         if ( (policy->new_ttl > 1) && (policy->new_ttl >= policy->min_ttl) )
         {
-            if ( Norm_IsEnabled(&config, NORM_IP6) )
+            if ( Norm_IsEnabled(&config, NORM_IP6_BASE) )
                 Norm_Enable(&config, NORM_IP6_TTL);
         }
     }
-    return true;
-}
-
-bool NormalizeModule::end(const char*, int, SnortConfig*)
-{
     return true;
 }
 
