@@ -151,9 +151,7 @@ bool Threshold::convert(std::istringstream& data_stream)
 
 
 static ConversionState* ctor(Converter& c)
-{
-    return new Threshold(c);
-}
+{ return new Threshold(c); }
 
 static const ConvertMap rule_threshold =
 {

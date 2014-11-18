@@ -49,7 +49,8 @@ extern const ConvertMap* reject_map;
 extern const ConvertMap* rule_state_map;
 extern const ConvertMap* sblock_map;
 extern const ConvertMap* sdrop_map;
-extern const ConvertMap* supress_map;
+extern const ConvertMap* suppress_map;
+extern const ConvertMap* threshold_map;
 extern const ConvertMap* var_map;
 
 
@@ -80,10 +81,18 @@ const std::vector<const ConvertMap*> keywords_api =
     rule_state_map,
     sblock_map,
     sdrop_map,
-    supress_map,
+    suppress_map,
+    threshold_map,
     var_map,
 };
 
 
 } // namespace keywords
 
+#if 0
+#define SNORT_CONF_KEYWORD__DYNAMIC_OUTPUT       "dynamicoutput"
+#define SNORT_CONF_KEYWORD__RULE_TYPE            "ruletype"
+
+# define SNORT_CONF_KEYWORD__SIDE_CHANNEL         "sidechannel"
+#define SNORT_CONF_KEYWORD__VERSION              "version"
+#endif

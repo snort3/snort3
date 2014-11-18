@@ -19,7 +19,6 @@
 // rule_tag.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
-#include <vector>
 
 #include "conversion_state.h"
 #include "helpers/converter.h"

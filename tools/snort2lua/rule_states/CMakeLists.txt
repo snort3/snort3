@@ -11,6 +11,7 @@ add_library( rule_states
     rule_resp.cc
     rule_stream_reassemble.cc
     rule_tag.cc
+    rule_ttl.cc
     rule_threshold.cc
     rule_unchanged.cc
     rule_urilen.cc

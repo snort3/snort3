@@ -134,12 +134,12 @@ bool Suppress::convert(std::istringstream& data_stream)
 static ConversionState* ctor(Converter& c)
 { return new Suppress(c); }
 
-static const ConvertMap keyword_supress =
+static const ConvertMap keyword_suppress =
 {
     "suppress",
     ctor,
 };
 
-const ConvertMap* supress_map = &keyword_supress;
+const ConvertMap* suppress_map = &keyword_suppress;
 
 } // namespace keywords
