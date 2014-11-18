@@ -87,7 +87,7 @@ static_assert(((uint16_t)DECODE_ERR_CKSUM_ICMP) < 0x0010,
     "DECODE_ERR_CKSUM_ICMP must be less than 0x00100!!");
 
 
-// FIXIT-M J make this an enum!!
+// FIXIT-L J make this an enum!!
 #define PROTO_BIT__NONE     0x0000
 #define PROTO_BIT__IP       0x0001
 #define PROTO_BIT__ARP      0x0002
@@ -102,9 +102,10 @@ static_assert(((uint16_t)DECODE_ERR_CKSUM_ICMP) < 0x0010,
 #define PROTO_BIT__TCP_EMBED_ICMP  0x0400
 #define PROTO_BIT__UDP_EMBED_ICMP  0x0800
 #define PROTO_BIT__ICMP_EMBED_ICMP 0x1000
-#define PROTO_BIT__ICMP_EMBED (PROTO_BIT__TCP_EMBED_ICMP | PROTO_BIT__UDP_EMBED_ICMP | PROTO_BIT__ICMP_EMBED_ICMP)
-#define PROTO_BIT__IP6_EXT  0x2000
-#define PROTO_BIT__FREE     0x4000
+#define PROTO_BIT__ICMP_EMBED_OTHER 0x2000
+#define PROTO_BIT__ICMP_EMBED (PROTO_BIT__TCP_EMBED_ICMP | PROTO_BIT__UDP_EMBED_ICMP | PROTO_BIT__ICMP_EMBED_ICMP | PROTO_BIT__ICMP_EMBED_OTHER)
+#define PROTO_BIT__IP6_EXT  0x4000
+#define PROTO_BIT__FREE     0x0000 /* No proto bits free */
 #define PROTO_BIT__OTHER    0x8000
 #define PROTO_BIT__ALL      0xffff
 

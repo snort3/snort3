@@ -172,9 +172,10 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     }
 
 
-    if (++codec.ip_layer_cnt > snort_conf->get_ip_maxlayers())
+    if ( codec.ip_layer_cnt == snort_conf->get_ip_maxlayers() )
         codec_events::decoder_event(codec, DECODE_IP_MULTIPLE_ENCAPSULATION);
 
+    ++codec.ip_layer_cnt;
     /* lay the IP struct over the raw data */
     const IP4Hdr* const iph = reinterpret_cast<const IP4Hdr*>(raw.data);
 
