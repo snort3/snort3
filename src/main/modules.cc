@@ -1032,13 +1032,13 @@ static const Parameter network_params[] =
     { "layers", Parameter::PT_INT, "3:255", "40",
       "The maximum number of protocols that Snort can correctly decode" },
 
-    { "max_ip6_extensions", Parameter::PT_INT, "1:255", "8",
-      "The number of IP6 options following an IPv6 layer Snort must see "
-      "before triggering 116:456" },
+    { "max_ip6_extensions", Parameter::PT_INT, "0:255", "0",
+      "The number of IP6 options Snort will process for a given IPv6 layer. "
+      "If this limit is hit, rule 116:456 may fire.  0 = unlimited" },
 
-    { "max_ip_layers", Parameter::PT_INT, "1:255", "2",
-      "The number of IPv4 and IPv6 layer Snort must see "
-      "before triggering 116:293" },
+    { "max_ip_layers", Parameter::PT_INT, "0:255", "0",
+      "The maximum number of IP layers Snort will process for a given packet "
+      "If this limit is hit, rule 116:293 may fire.  0 = unlimited" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

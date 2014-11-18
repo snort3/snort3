@@ -144,9 +144,17 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     // must be called AFTER setting next_prot_id
     if (snort.ip_api.is_ip6())
     {
+        if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
+        {
+            codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
+            return false;
+        }
+
+
         ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_ESP);
         codec.proto_bits |= PROTO_BIT__IP6_EXT;
         codec.ip6_csum_proto = codec.next_prot_id;
+        codec.ip6_extension_count++;
     }
 
 

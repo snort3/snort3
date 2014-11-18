@@ -129,8 +129,6 @@ constexpr int32_t MAX_PORTS = 65536;
 constexpr uint16_t NUM_IP_PROTOS = 256;
 constexpr int16_t SFTARGET_UNKNOWN_PROTOCOL = -1;
 constexpr uint8_t TCP_OPTLENMAX = 40; /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
-constexpr uint8_t DEFAULT_IPMAX = 2;
-constexpr uint8_t DEFAULT_IP6_EXTMAX = 8;
 constexpr uint8_t DEFAULT_LAYERMAX = 40;
 
 
