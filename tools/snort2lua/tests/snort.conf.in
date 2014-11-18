@@ -1327,3 +1327,9 @@ alert tcp $EXTERNAL_NET any -> $HOME_NET 135 ( msg:"DELETED NETBIOS DCERPC Remot
 alert tcp $EXTERNAL_NET any -> any $TEST_PORTS (msg:"MISC CVS non-relative path access attempt"; flow:to_server,established; content:"Argument"; pcre:!"m?^Argument\s+/?smi"; pcre:"m?^Argument\s+/?smi"; pcre:"/^Directory/smiR"; reference:bugtraq,9178; reference:cve,2003-0977; reference:nessus,11947; classtype:misc-attack; sid:2319; rev:4;)
 
 alert tcp any any -> any any ( msg:"First Cookie"; content:"OvCgi",http_uri; content:"AcceptLang=en-usaAAAA",http_cookie,nocase; sid:11111111; )
+
+
+threshold gen_id 1, sig_id 7037, type limit, track by_src, count 1, seconds 60
+alert ip any any -> any any (msg:"TTL RULE OPTION"; ttl:-4; sid:11111112;)
+alert ip any any -> any any (msg:"TTL RULE OPTION"; ttl:5-6; sid:11111113;)
+alert ip any any -> any any (msg:"TTL RULE OPTION"; ttl:7-; sid:11111114;)

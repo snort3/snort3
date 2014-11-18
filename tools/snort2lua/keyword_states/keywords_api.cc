@@ -49,7 +49,8 @@ extern const ConvertMap* reject_map;
 extern const ConvertMap* rule_state_map;
 extern const ConvertMap* sblock_map;
 extern const ConvertMap* sdrop_map;
-extern const ConvertMap* supress_map;
+extern const ConvertMap* suppress_map;
+extern const ConvertMap* threshold_map;
 extern const ConvertMap* var_map;
 
 
