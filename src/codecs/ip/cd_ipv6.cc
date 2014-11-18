@@ -152,10 +152,10 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             goto decodeipv6_fail;
         }
 
-        if (++codec.ip_layer_cnt > snort_conf->get_ip_maxlayers())
+        if ( codec.ip_layer_cnt == snort_conf->get_ip_maxlayers() )
             codec_events::decoder_event(codec, DECODE_IP_MULTIPLE_ENCAPSULATION);
 
-
+        codec.ip_layer_cnt++;
         const uint32_t payload_len = ntohs(ip6h->ip6_payload_len) + ip::IP6_HEADER_LEN;
 
         if(payload_len != raw.len)

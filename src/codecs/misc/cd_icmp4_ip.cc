@@ -135,6 +135,9 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snor
         case IPPROTO_ICMP:
             codec.proto_bits |= PROTO_BIT__ICMP_EMBED_ICMP;
             break;
+        default:
+            codec.proto_bits |= PROTO_BIT__ICMP_EMBED_OTHER;
+            break;
     }
 
     // If you change this, change the buffer and
