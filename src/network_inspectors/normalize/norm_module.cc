@@ -209,10 +209,10 @@ bool NormalizeModule::set_tcp(const char*, Value& v, SnortConfig*)
     else if ( v.is("ecn") )
     {
         if ( !strcmp(v.get_string(), "packet") )
-            Norm_Set(&config, NORM_TCP_ECN_PKT, v.get_bool());
+            Norm_Set(&config, NORM_TCP_ECN_PKT, true);
 
         else if ( !strcmp(v.get_string(), "stream") )
-            Norm_Set(&config, NORM_TCP_ECN_STR, v.get_bool());
+            Norm_Set(&config, NORM_TCP_ECN_STR, true);
     }
     else if ( v.is("allow_names") )
         return allow_names(&config, v.get_string());

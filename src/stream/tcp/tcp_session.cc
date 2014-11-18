@@ -4811,6 +4811,36 @@ static int ProcessTcp(
             return retcode;
         }
     }
+    else
+    {
+        /* If session is already marked as established */
+        if ( !(lwssn->session_state & STREAM5_STATE_ESTABLISHED) &&
+             (!config->require_3whs() || config->midstream_allowed(p)) )
+        {
+            /* If not requiring 3-way Handshake... */
+
+            /* TCP session created on TH_SYN above,
+             * or maybe on SYN-ACK, or anything else */
+
+            /* Need to update Lightweight session state */
+            if ( p->ptrs.tcph->is_syn_ack() )
+            {
+                /* SYN-ACK from server */
+                if (lwssn->session_state != STREAM5_STATE_NONE)
+                {
+                    lwssn->session_state |= STREAM5_STATE_SYN_ACK;
+                }
+            }
+            else if ( p->ptrs.tcph->is_ack() &&
+                (lwssn->session_state & STREAM5_STATE_SYN_ACK) )
+            {
+                lwssn->session_state |= STREAM5_STATE_ACK | STREAM5_STATE_ESTABLISHED;
+                Stream5UpdatePerfBaseState(&sfBase, lwssn, TCP_STATE_ESTABLISHED);
+            }
+        }
+        if ( p->ptrs.tcph->is_syn() )
+            NormalTrackECN(tcpssn, (TCPHdr*)p->ptrs.tcph, config->require_3whs());
+    }
 
     /* figure out direction of this packet */
     lwssn->set_direction(p);
