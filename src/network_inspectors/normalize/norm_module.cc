@@ -28,33 +28,33 @@ using namespace std;
 
 static bool allow_names(NormalizerConfig* config, const char* s)
 {
-    if ( !strstr(s, "sack") )
+    if ( strstr(s, "sack") )
     {
         Norm_TcpPassOption(config, 4);
         Norm_TcpPassOption(config, 5);
     }
-    if ( !strstr(s, "echo") )
+    if ( strstr(s, "echo") )
     {
         Norm_TcpPassOption(config, 6);
         Norm_TcpPassOption(config, 7);
     }
-    if ( !strstr(s, "partial_order") )
+    if ( strstr(s, "partial_order") )
     {
         Norm_TcpPassOption(config, 9);
         Norm_TcpPassOption(config, 10);
     }
-    if ( !strstr(s, "conn_count") )
+    if ( strstr(s, "conn_count") )
     {
         Norm_TcpPassOption(config, 11);
         Norm_TcpPassOption(config, 12);
         Norm_TcpPassOption(config, 13);
     }
-    if ( !strstr(s, "alt_checksum") )
+    if ( strstr(s, "alt_checksum") )
     {
         Norm_TcpPassOption(config, 14);
         Norm_TcpPassOption(config, 15);
     }
-    if ( !strstr(s, "md5") )
+    if ( strstr(s, "md5") )
     {
         Norm_TcpPassOption(config, 19);
     }
