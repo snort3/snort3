@@ -31,7 +31,7 @@
 #include "data/dt_data.h"
 #include "helpers/converter.h"
 #include "helpers/s2l_util.h"
-#include "helpers/markup.h"
+#include "helpers/s2l_markup.h"
 
 namespace parser
 {
@@ -502,7 +502,7 @@ static void help_args(const char* /*pfx*/, const char* /*val*/)
                     break;
             }
 
-            //std::cout << Markup::add_newline() << std::endl;  FIXIT-H-J undefined
+            std::cout << Markup::add_newline() << std::endl;
         }
         ++p;
     }
