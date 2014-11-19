@@ -304,11 +304,13 @@ struct SnortConfig
     inline uint8_t get_num_layers() const
     { return num_layers; }
 
-    inline uint8_t get_ip6_maxopts() const
-    { return max_ip6_extensions; }
+    // curr_layer is the zero based ip6 options
+    inline bool hit_ip6_maxopts(uint8_t curr_opt) const
+    { return max_ip6_extensions && (curr_opt >= max_ip6_extensions); }
 
-    inline uint8_t get_ip_maxlayers() const
-    { return max_ip_layers; }
+    // curr_ip is the zero based ip layer
+    inline bool hit_ip_maxlayers(uint8_t curr_ip) const
+    { return max_ip_layers && (curr_ip >= max_ip_layers); }
 };
 
 SnortConfig* SnortConfNew(void);

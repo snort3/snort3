@@ -65,7 +65,7 @@ public:
     // destroy all global codec related information
     static void release_plugins();
     // initialize the current threads DLT and Packet struct
-    static void thread_init();
+    static void thread_init(SnortConfig*);
     // destroy thread_local data
     static void thread_term();
     // print all of the codec plugins

@@ -1845,8 +1845,8 @@ void LogIPPkt(TextLog* log, Packet * p)
     if (ScOutputAppData() && !ScVerboseByteDump())
     {
 #ifdef REG_TEST
-        const uint8_t* tmp_data;
-        uint16_t tmp_dsize;
+        const uint8_t* tmp_data = 0;
+        uint16_t tmp_dsize = 0;
 
         if ( p->proto_bits & PROTO_BIT__ICMP_EMBED )
         {
