@@ -852,7 +852,7 @@ void PacketManager::log_protocols(TextLog* const text_log,
     if (num_layers != 0)
     {
         // Grinder is not in the layer array
-        Codec* const cd = CodecManager::s_protocols[CodecManager::grinder];
+        Codec* cd = CodecManager::s_protocols[CodecManager::grinder];
 
         TextLog_Print(text_log, "%-.6s(DLT):  ", cd->get_name());
         cd->log(text_log, lyr[0].start, p);
@@ -863,7 +863,7 @@ void PacketManager::log_protocols(TextLog* const text_log,
         {
             const uint16_t protocol = lyr[i].prot_id;
             const uint8_t codec_offset =  CodecManager::s_proto_map[protocol];
-            Codec* const cd = CodecManager::s_protocols[codec_offset];
+            cd = CodecManager::s_protocols[codec_offset];
 
 
             TextLog_NewLine(text_log);

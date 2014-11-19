@@ -1844,6 +1844,18 @@ void LogIPPkt(TextLog* log, Packet * p)
     /* dump the application layer data */
     if (ScOutputAppData() && !ScVerboseByteDump())
     {
+#ifdef REG_TEST
+        const uint8_t* tmp_data = 0;
+        uint16_t tmp_dsize = 0;
+
+        if ( p->proto_bits & PROTO_BIT__ICMP_EMBED )
+        {
+            tmp_data = p->data;
+            tmp_dsize = p->dsize;
+            p->data = p->layers[p->num_layers - 1].start;
+            p->dsize = (tmp_data - p->data) + tmp_dsize; // layers length may be layer's valid length, not actual length.
+        }
+#endif
         if (ScOutputCharData())
         {
             LogCharData(log, (char *)p->data, p->dsize);
@@ -1872,6 +1884,15 @@ void LogIPPkt(TextLog* log, Packet * p)
                 LogNetData(log, g_file_data.data, g_file_data.len, NULL);
             }
         }
+
+
+#ifdef REG_TEST
+        if ( p->proto_bits & PROTO_BIT__ICMP_EMBED )
+        {
+            p->data = tmp_data;
+            p->dsize = tmp_dsize;
+        }
+#endif
     }
     else if (ScVerboseByteDump())
     {

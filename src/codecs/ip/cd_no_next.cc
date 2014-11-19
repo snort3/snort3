@@ -60,11 +60,18 @@ bool Ipv6NoNextCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     if (raw.len < ip::MIN_EXT_LEN)
         return false;
 
+    if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
+    {
+        codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
+        return false;
+    }
+
     // The size of this packets data should be zero.  So, set this layer's
     // length and the packet's remaining length to the same number.
     const_cast<uint32_t&>(raw.len) = ip::MIN_EXT_LEN;
     codec.lyr_len = ip::MIN_EXT_LEN;
     codec.proto_bits |= PROTO_BIT__IP6_EXT; // check for any IP related rules
+    codec.ip6_extension_count++;
     return true;
 }
 
