@@ -122,6 +122,10 @@ bool Profilers<table_name>::convert(std::istringstream& data_stream)
 template<const std::string* table_name>
 static ConversionState* ctor(Converter& c)
 {
+    c.get_table_api().open_table("profile");
+    c.get_table_api().open_table(*table_name);
+    c.get_table_api().close_table();
+    c.get_table_api().close_table();
     return new Profilers<table_name>(c);
 }
 
