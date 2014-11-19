@@ -71,11 +71,21 @@ struct PHGlobal
 struct PHClass
 {
     const InspectApi& api;
-    bool init;  // call pin->tinit()
-    bool term;  // call pin->tterm()
+    bool* init;  // call pin->tinit()
+    bool* term;  // call pin->tterm()
 
     PHClass(const InspectApi& p) : api(p)
-    { init = term = true; };
+    { 
+        init = new bool[get_instance_max()];
+        term = new bool[get_instance_max()];
+        for ( unsigned i = 0; i < get_instance_max(); ++i )
+            init[i] = term[i] = true;
+    }
+    ~PHClass()
+    {
+        delete[] init;
+        delete[] term;
+    }
 
     static bool comp (PHClass* a, PHClass* b)
     { return ( a->api.type < b->api.type ); };
@@ -478,12 +488,14 @@ void InspectorManager::thread_init(SnortConfig* sc)
 
     if ( pi && pi->framework_policy )
     {
+        unsigned slot = get_instance_id();
+
         for ( auto* p : pi->framework_policy->ilist )
-            if ( p->pp_class.init )
+            if ( p->pp_class.init[slot] )
             {
                 p->handler->tinit();
-                p->pp_class.init = false;
-                p->pp_class.term = true;
+                p->pp_class.init[slot] = false;
+                p->pp_class.term[slot] = true;
             }
     }
 }
@@ -496,12 +508,14 @@ void InspectorManager::thread_stop(SnortConfig*)
 
     if ( pi && pi->framework_policy )
     {
+        unsigned slot = get_instance_id();
+
         for ( auto* p : pi->framework_policy->ilist )
             if ( p->pp_class.term )
             {
                 p->handler->tterm();
-                p->pp_class.term = false;
-                p->pp_class.init = true;
+                p->pp_class.term[slot] = false;
+                p->pp_class.init[slot] = true;
             }
     }
 }

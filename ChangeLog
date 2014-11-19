@@ -43,6 +43,7 @@
 -- fixed norm module handling of tcp opts
 -- fixed ecn normalization
 -- fixed pm backtracking
+-- gak! - fixed conf slots
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug

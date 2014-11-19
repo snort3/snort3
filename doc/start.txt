@@ -45,7 +45,7 @@ Optional:
 
     mkdir -p /path/to/my_build
     cd /path/to/my_build
-    Cmake /path/to/Snort++
+    cmake /path/to/Snort++
 
 * An alternate method for building with Cmake and make is to run the
   configure_cmake.sh script.  It will automatically create and populate
@@ -58,7 +58,7 @@ Optional:
 
     mkdir -p /path/to/my_build
     cd /path/to/my_build
-    Cmake /path/to/Snort++ -G Xcode
+    cmake /path/to/Snort++ -G Xcode
 
 * An alternate method for building with Xcode is to run the
   configure_cmake.sh script.  It will automatically create and populate
