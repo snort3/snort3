@@ -119,7 +119,28 @@ settings, etc., you can also script Loggers and IpsOptions.
 
 === New Http Inspector
 
- TBD
+The Http Inspector is being rewritten from scratch. The incomplete
+work-in-progress is included in this release as "new_http_inspect". The
+original Http Inspector remains available for regular use.
+
+The new Http Inspector is based entirely on processing HTTP messages that
+it parses from the TCP data stream. This is in contrast to its predecessor
+which frequently works directly with raw packets. The new approach makes
+the inspector much simpler, enabling easy addition of new features. It
+also renders HTTP inspection independent of how the message is subdivided
+into packets, neutralizing many potential evasions.
+
+The inspector will contain much more detailed information about HTTP
+features such as methods, header fields, and status codes, with easy
+addition of new items through tables. This information will be used to
+provide a more thorough inspection capability for incorrect or suspicious
+protocol usage. Detection will benefit from normalization of individual
+message header field values using algorithms tailored to the specific field.
+For example a field containing a date will be normalized into a standard
+date format.
+
+Long-term the goal is to implement SPDY/HTTP 2.0 and other advanced web
+protocols.
 
 === Binder
 

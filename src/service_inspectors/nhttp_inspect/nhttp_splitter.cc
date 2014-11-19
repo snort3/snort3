@@ -85,6 +85,8 @@ ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length) {
 
     // Header separators: leading \r\n, leading \n, nonleading \r\n\r\n, nonleading \n\r\n, nonleading \r\n\n, and
     // nonleading \n\n. The separator itself becomes num_excess which is discarded during reassemble().
+    // FIXIT-L There is a regression test with a rule that looks for these separators in the header buffer.
+    //         Need to resolve.
     for (uint32_t k = 0; k < length; k++) {
         if (buffer[k] == '\n') {
             num_crlf++;
