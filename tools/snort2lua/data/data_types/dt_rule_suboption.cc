@@ -22,15 +22,15 @@
 #include "data/data_types/dt_rule_suboption.h"
 
 
-RuleSubOption::RuleSubOption(std::string name)
-    :   name(name),
+RuleSubOption::RuleSubOption(std::string n)
+    :   name(n),
         value(std::string())
 {
 }
 
-RuleSubOption::RuleSubOption(std::string name, std::string value)
-    :   name(name),
-        value(value)
+RuleSubOption::RuleSubOption(std::string n, std::string v)
+    :   name(n),
+        value(v)
 {
 }
 

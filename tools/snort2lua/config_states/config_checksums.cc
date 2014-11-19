@@ -34,13 +34,13 @@ class ConfigChecksum : public ConversionState
 {
 public:
     ConfigChecksum( Converter& c,
-                    const std::string* snort_option,
-                    const std::string* lua_table,
-                    const std::string* lua_option) :
+                    const std::string* snort_opt,
+                    const std::string* table,
+                    const std::string* lua_opt) :
             ConversionState(c),
-            snort_option(snort_option),
-            lua_table(lua_table),
-            lua_option(lua_option)
+            snort_option(snort_opt),
+            lua_table(table),
+            lua_option(lua_opt)
     {
     };
 
