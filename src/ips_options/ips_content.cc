@@ -377,10 +377,13 @@ static int uniSearchReal(PatternMatchData* pmd, Cursor& c)
 
     int pos = c.get_delta();
 
-    if ( !pos && pmd->relative )
-        pos = c.get_pos();
+    if ( !pos )
+    {
+        if ( pmd->relative )
+            pos = c.get_pos();
 
-    pos += offset;
+        pos += offset;
+    }
 
     if ( pos < 0 )
         pos = 0;

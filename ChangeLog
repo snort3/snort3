@@ -42,6 +42,7 @@
 -- fix wizard dtor
 -- fixed norm module handling of tcp opts
 -- fixed ecn normalization
+-- fixed pm backtracking
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug
