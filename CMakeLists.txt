@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.9)
+cmake_minimum_required(VERSION 2.8.12.1)
 project (snort CXX C)
 
 set (SNORT_VERSION_MAJOR 3)

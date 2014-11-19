@@ -292,6 +292,8 @@
 /* Define to 1 if you have the <wchar.h> header file. */
 #cmakedefine HAVE_WCHAR_H 1
 
+/* Define to 1 if you have the <dumbnet.h> header file. */
+#cmakedefine HAVE_DUMBNET_H 1
 
 
 
