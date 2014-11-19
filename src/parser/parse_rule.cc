@@ -74,7 +74,6 @@
 #include "managers/so_manager.h"
 #include "config_file.h"
 #include "keywords.h"
-#include "target_based/sftarget_reader.h"
 
 #define SRC  0
 #define DST  1

@@ -30,24 +30,35 @@ namespace keywords
 
 namespace {
 
-class EventFilter : public ConversionState
+class Filter : public ConversionState
 {
 public:
-    EventFilter(Converter& c) : ConversionState(c) {};
-    virtual ~EventFilter() {};
+    Filter(Converter& c, std::string s) : ConversionState(c), type(s) {};
+    virtual ~Filter() {};
     virtual bool convert(std::istringstream& data_stream);
+
+private:
+    std::string type;
 };
 
 } // namespace
 
-bool EventFilter::convert(std::istringstream& data_stream)
+bool Filter::convert(std::istringstream& data_stream)
 {
     std::string args;
     bool retval = true;
+    static bool warn = true;
 
     table_api.open_table("event_filter");
-    table_api.open_table();
 
+    if ( warn && !type.compare("threshold"))
+    {
+        table_api.add_diff_option_comment("threshold", "event_filter");
+        warn = false;
+    }
+
+
+    table_api.open_table();
     while (std::getline(data_stream, args, ','))
     {
         std::string keyword;
@@ -104,15 +115,26 @@ bool EventFilter::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter& c)
-{ return new EventFilter(c); }
+static ConversionState* threshold_ctor(Converter& c)
+{ return new Filter(c, "threshold"); }
+
+static ConversionState* event_filter_ctor(Converter& c)
+{ return new Filter(c, "event_filter"); }
+
 
 static const ConvertMap event_filter_api =
 {
     "event_filter",
-    ctor,
+    event_filter_ctor,
+};
+
+static const ConvertMap threshold_api =
+{
+    "threshold",
+    threshold_ctor,
 };
 
 const ConvertMap* event_filter_map = &event_filter_api;
+const ConvertMap* threshold_map = &threshold_api;
 
 } // namespace keywords

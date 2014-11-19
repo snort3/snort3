@@ -51,7 +51,6 @@
 #include "snort.h"
 #include "stream/stream.h"
 #include "stream/stream_api.h"
-#include "target_based/sftarget_protocol_reference.h"
 
 //--------------------------------------------------------------------
 // private state

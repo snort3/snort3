@@ -35,6 +35,15 @@
 -- update from josh
 -- ensure stream normalizations get proper header iff needed
 -- fixed stream_reassemble.direction
+-- initial integration of hosts into binder
+-- don't log redecode events (from shutdown rebuilds)
+-- changed normalizer ip4.base and tcp.base to default to true
+-- session flag clean up
+-- fix wizard dtor
+-- fixed norm module handling of tcp opts
+-- fixed ecn normalization
+-- fixed pm backtracking
+-- tweaked build doc foo
 
 127
 -- REG_TEST out logging tcp options for rebuilt packets to match snort bug

@@ -218,7 +218,6 @@ const ConvertMap* flags_map = &rule_flags;
  *********  FRAGOFFSET **************
  ************************************/
 
-
 static const std::string fragoffset = "fragoffset";
 static const ConvertMap rule_fragoffset =
 {
@@ -227,20 +226,6 @@ static const ConvertMap rule_fragoffset =
 };
 
 const ConvertMap* fragoffset_map = &rule_fragoffset;
-
-/************************************
- ************* T T L ****************
- ************************************/
-
-
-static const std::string ttl = "ttl";
-static const ConvertMap rule_ttl =
-{
-    ttl,
-    unchanged_rule_ctor<&ttl>,
-};
-
-const ConvertMap* ttl_map = &rule_ttl;
 
 
 /************************************

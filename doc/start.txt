@@ -4,7 +4,7 @@ The following pointers will help you get started:
 
 Required:
 
-* autotools or Cmake to build from source.
+* autotools or cmake to build from source.
 
 * daq from http://www.snort.org for packet IO.
 
@@ -13,7 +13,7 @@ Required:
 
 * LuaJIT from http://luajit.org for configuration and scripting.
 
-* pcap from http://www.tcpdump.org for tcpdump logging.
+* pcap from http://www.tcpdump.org for tcpdump style logging.
 
 * pcre from http://www.pcre.org for regular expression pattern matching.
 
@@ -33,31 +33,34 @@ Optional:
 
 * Optionally built features are listed in the reference section.
 
-* You should build Snort++ with --prefix $install_dir where install_dir is
-  something you can easily delete.
+* You should build Snort++ with an install prefix so that you can easily
+  delete older versions.
 
 * To build with autotools, the usual ./configure, make, make install from
-  the top level directory will suffice.
+  the top level directory will suffice.  If you don't have ./configure,
+  then autoreconf -isvf must be done first.
 
-* To build with Cmake and make, first create a separate directory for the
+* To build with cmake and make, first create a separate directory for the
   build and cd into that directory.  Then:
 
     mkdir -p /path/to/my_build
     cd /path/to/my_build
-    Cmake /path/to/Snort++
+    cmake /path/to/Snort++
+    make; make install
 
-* An alternate method for building with Cmake and make is to run the
+* An alternate method for building with cmake and make is to run the
   configure_cmake.sh script.  It will automatically create and populate
   a new subdirectory named 'build'.
 
     cd /path/to/Snort++
     ./configure_cmake.sh --prefix=/home/rcombs/install
+    make; make install
 
 * Build with Xcode like this:
 
     mkdir -p /path/to/my_build
     cd /path/to/my_build
-    Cmake /path/to/Snort++ -G Xcode
+    cmake /path/to/Snort++ -G Xcode
 
 * An alternate method for building with Xcode is to run the
   configure_cmake.sh script.  It will automatically create and populate
@@ -69,8 +72,8 @@ Optional:
 
 === Using Lua
 
-* Snort++ needs a lua conf.  use $install_dir/conf/snort.lua, like -c
-   $install_dir/conf/snort.lua.
+* Snort++ needs a lua conf.  You can use $install_dir/conf/snort.lua, like
+  -c $install_dir/conf/snort.lua.
 
 * lua/snort.lua is always the latest working example configuration.
 

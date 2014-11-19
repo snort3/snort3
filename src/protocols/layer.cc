@@ -31,7 +31,7 @@
 
 namespace layer
 {
-static THREAD_LOCAL const Packet* p;
+static THREAD_LOCAL const Packet* curr_pkt;
 
 static inline const uint8_t* find_outer_layer(const Layer* lyr,
                                 uint8_t num_layers,
@@ -81,8 +81,8 @@ static inline const uint8_t* find_inner_layer(const Layer* lyr,
     return nullptr;
 }
 
-void set_packet_pointer(const Packet* const curr_pkt)
-{ p = curr_pkt; }
+void set_packet_pointer(const Packet* const p)
+{ curr_pkt = p; }
 
 const uint8_t* get_inner_layer(const Packet* p, uint16_t proto)
 { return find_inner_layer(p->layers, p->num_layers, proto); }
@@ -147,7 +147,7 @@ const eth::EtherHdr* get_eth_layer(const Packet* const p)
 
 
 const ip::IP6Frag* get_inner_ip6_frag()
-{ return get_inner_ip6_frag(p); }
+{ return get_inner_ip6_frag(curr_pkt); }
 
 
 const ip::IP6Frag* get_inner_ip6_frag(const Packet* const pkt)
@@ -182,7 +182,7 @@ int get_inner_ip6_frag_index(const Packet* const pkt)
     // get_ip6h returns null if this is ipv4
     const ip::IP6Hdr* const ip6h = pkt->ptrs.ip_api.get_ip6h();
 
-    if (ip6h && p->is_fragment())
+    if (ip6h && curr_pkt->is_fragment())
     {
         const int max_layer = pkt->num_layers-1;
         const Layer* lyr = &(pkt->layers[max_layer]);

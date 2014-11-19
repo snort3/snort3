@@ -66,30 +66,23 @@ typedef ApplicationEntry ApplicationList;
 #define HOST_INFO_VERSION 3
 #define HOST_INFO_FRAG_POLICY 4
 #define HOST_INFO_STREAM_POLICY 5
-#define POLICY_SET 1
-#define POLICY_NOT_SET 0
-typedef struct _HostInfo
+
+struct HostInfo
 {
-    char streamPolicyName[16];
-    char fragPolicyName[16];
-
-    uint16_t streamPolicy;
-    uint16_t fragPolicy;
-
-    char streamPolicySet;
-    char fragPolicySet;
-} HostInfo;
+    uint8_t streamPolicy;
+    uint8_t fragPolicy;
+};
 
 #define SFAT_SERVICE 1
 #define SFAT_CLIENT 2
-typedef struct _HostAttributeEntry
+
+struct HostAttributeEntry
 {
     sfip_t ipAddr;
-
     HostInfo hostInfo;
     ApplicationList *services;
     ApplicationList *clients;
-} HostAttributeEntry;
+};
 
 int SFAT_AddHost(HostAttributeEntry*);
 int SFAT_AddService(HostAttributeEntry*, ApplicationEntry*);

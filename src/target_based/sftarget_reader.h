@@ -63,8 +63,5 @@ tTargetBasedConfig* SFAT_GetConfig();
 void SFAT_SetConfig(tTargetBasedConfig*);
 void SFAT_Free(tTargetBasedConfig*);
 
-/* Returns whether this has been configured */
-int IsAdaptiveConfigured();
-
-#endif /* SFTARGET_READER_H */
+#endif
 

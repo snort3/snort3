@@ -198,8 +198,10 @@ void CodecManager::instantiate()
         instantiate(wrap, nullptr, nullptr);
 }
 
-void CodecManager::thread_init()
+void CodecManager::thread_init(SnortConfig* sc)
 {
+    max_layers = sc->num_layers;
+
     for ( CodecApiWrapper& wrap : s_codecs )
         if (wrap.api->tinit)
             wrap.api->tinit();

@@ -54,7 +54,6 @@
 #include "utils/stats.h"
 #include "treenodes.h"
 #include "parser.h"
-#include "target_based/sftarget_reader.h"
 #include "framework/mpse.h"
 #include "framework/ips_option.h"
 #include "managers/mpse_manager.h"
@@ -103,8 +102,6 @@ static const char* const pm_type_strings[PM_TYPE__MAX] =
 /*
 #define LOCAL_DEBUG
 */
-
-#include "target_based/sftarget_protocol_reference.h"
 
 static sopg_table_t * ServicePortGroupTableNew(void)
 {
@@ -2504,8 +2501,6 @@ int fpCreateFastPacketDetection(SnortConfig *sc)
     if (fpDetectGetDebugPrintRuleGroupBuildDetails(fp))
         LogMessage("Rule Maps Done....\n");
 
-    if (IsAdaptiveConfigured()
-            || fpDetectGetDebugPrintFastPatterns(fp))
     {
         if (fpDetectGetDebugPrintRuleGroupBuildDetails(fp))
             LogMessage("Creating Service Based Rule Maps....\n");

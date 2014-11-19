@@ -26,6 +26,7 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
+#include "main/snort.h"
 
 // yes, macros are necessary. The API and class constructor require different strings.
 #define CD_MOBILE_NAME "mobility"
@@ -55,8 +56,15 @@ void MobilityCodec::get_protocol_ids(std::vector<uint16_t>& v)
 
 bool MobilityCodec::decode(const RawData&, CodecData& codec, DecodeData&)
 {
+    if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
+    {
+        codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
+        return false;
+    }
+
     codec_events::decoder_event(codec, DECODE_IP_BAD_PROTO);
     codec.proto_bits |= PROTO_BIT__IP6_EXT; // check for any IP related rules
+    codec.ip6_extension_count++;
     return true;
 }
 

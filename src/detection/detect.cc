@@ -59,7 +59,6 @@
 #include "detection_util.h"
 #include "managers/inspector_manager.h"
 #include "managers/event_manager.h"
-#include "target_based/sftarget_protocol_reference.h"
 #include "detection_defines.h"
 #include "protocols/ip.h"
 #include "sfip/sf_ipvar.h"
@@ -126,7 +125,7 @@ void snort_inspect(Packet* p)
         if( ScInlineMode() && ScChecksumDrop(p->ptrs.decode_flags & DECODE_ERR_CKSUM_ALL) )
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-                "Dropping bad packet (IP checksum)\n"););
+                "Dropping bad packet\n"););
             Active_DropPacket();
         }
     }
@@ -468,18 +467,7 @@ bail:
 
     if (!(mode & (CHECK_SRC_PORT | CHECK_DST_PORT)))
     {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckAddrPort..."
-                "target-based-protocol=%d,ignoring ports\n",
-                GetProtocolReference(p)););
         return 1;
-    }
-    else
-    {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckAddrPort..."
-                "target-based-protocol=%d,not ignoring ports\n",
-                GetProtocolReference(p)););
     }
 
     /* check the packet port against the rule port */
@@ -691,18 +679,7 @@ int CheckSrcPortEqual(Packet *p, RuleTreeNode *rtn_idx,
     /* Check if attributes provided match earlier */
     if (check_ports == 0)
     {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckSrcPortEq..."
-                "target-based-protocol=%d,ignoring ports\n",
-                GetProtocolReference(p)););
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
-    }
-    else
-    {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckSrcPortEq..."
-                "target-based-protocol=%d,not ignoring ports\n",
-                GetProtocolReference(p)););
     }
     if( PortObjectHasPort(rtn_idx->src_portobject,p->ptrs.sp) )
     {
@@ -725,18 +702,7 @@ int CheckSrcPortNotEq(Packet *p, RuleTreeNode *rtn_idx,
     /* Check if attributes provided match earlier */
     if (check_ports == 0)
     {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckSrcPortNotEq..."
-                "target-based-protocol=%d,ignoring ports\n",
-                GetProtocolReference(p)););
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
-    }
-    else
-    {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckSrcPortNotEq..."
-                "target-based-protocol=%d,not ignoring ports\n",
-                GetProtocolReference(p)););
     }
     if( !PortObjectHasPort(rtn_idx->src_portobject,p->ptrs.sp) )
     {
@@ -759,18 +725,7 @@ int CheckDstPortEqual(Packet *p, RuleTreeNode *rtn_idx,
     /* Check if attributes provided match earlier */
     if (check_ports == 0)
     {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckDstPortEq..."
-            "target-based-protocol=%d,ignoring ports\n",
-            GetProtocolReference(p)););
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
-    }
-    else
-    {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckDstPortEq..."
-            "target-based-protocol=%d,not ignoring ports\n",
-            GetProtocolReference(p)););
     }
     if( PortObjectHasPort(rtn_idx->dst_portobject,p->ptrs.dp) )
     {
@@ -793,18 +748,7 @@ int CheckDstPortNotEq(Packet *p, RuleTreeNode *rtn_idx,
     /* Check if attributes provided match earlier */
     if (check_ports == 0)
     {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckDstPortNotEq..."
-            "target-based-protocol=%d,ignoring ports\n",
-            GetProtocolReference(p)););
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
-    }
-    else
-    {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckDstPortNotEq..."
-            "target-based-protocol=%d,not ignoring ports\n",
-            GetProtocolReference(p)););
     }
     if( !PortObjectHasPort(rtn_idx->dst_portobject,p->ptrs.dp) )
     {

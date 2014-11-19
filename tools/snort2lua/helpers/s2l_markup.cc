@@ -18,7 +18,7 @@
 */
 // markup.cc author Russ Combs <rucombs@cisco.com>
 
-#include "markup.h"
+#include "s2l_markup.h"
 #include <string.h>
 
 using namespace std;
@@ -86,4 +86,13 @@ const string& Markup::escape(const string& s)
     }
 #endif
     return m;
+}
+
+
+const char* Markup::add_newline()
+{
+    static const char newline = '\n';
+    static const char empty = '\0';
+
+    return enabled ? &newline : &empty;
 }

@@ -122,6 +122,9 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         case IPPROTO_ICMP:
             codec.proto_bits |= PROTO_BIT__ICMP_EMBED_ICMP;
             break;
+        default:
+            codec.proto_bits |= PROTO_BIT__ICMP_EMBED_OTHER;
+            break;
     }
 
     // if you changed lyr_len, you MUST change the encode()

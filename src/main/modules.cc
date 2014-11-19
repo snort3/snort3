@@ -1032,13 +1032,13 @@ static const Parameter network_params[] =
     { "layers", Parameter::PT_INT, "3:255", "40",
       "The maximum number of protocols that Snort can correctly decode" },
 
-    { "max_ip6_extensions", Parameter::PT_INT, "1:255", "8",
-      "The number of IP6 options following an IPv6 layer Snort must see "
-      "before triggering 116:456" },
+    { "max_ip6_extensions", Parameter::PT_INT, "0:255", "0",
+      "The number of IP6 options Snort will process for a given IPv6 layer. "
+      "If this limit is hit, rule 116:456 may fire.  0 = unlimited" },
 
-    { "max_ip_layers", Parameter::PT_INT, "1:255", "2",
-      "The number of IPv4 and IPv6 layer Snort must see "
-      "before triggering 116:293" },
+    { "max_ip_layers", Parameter::PT_INT, "0:255", "0",
+      "The maximum number of IP layers Snort will process for a given packet "
+      "If this limit is hit, rule 116:293 may fire.  0 = unlimited" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -1717,11 +1717,11 @@ bool RuleStateModule::end(const char*, int idx, SnortConfig* sc)
 // FIXIT-L these are cloned from ip_module.cc and tcp_module.cc
 
 #define ip_policies \
-    "first | linux | bsd | bsd_right |last | windows | solaris"
+    "unknown | first | linux | bsd | bsd_right |last | windows | solaris"
 
 #define tcp_policies \
-    "first | last | bsd | linux | old-linux | windows | win-2003 | vista " \
-    "solaris | hpux | hpux10 | irix | macos"
+    "unknown | first | last | bsd | linux | old-linux | windows | win-2003 | " \
+    "vista | solaris | hpux | hpux10 | irix | macos"
 
 static const Parameter service_params[] =
 {
@@ -1780,15 +1780,11 @@ bool HostsModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("frag_policy") )
     {
-        strncpy(host->hostInfo.fragPolicyName, v.get_string(),
-            sizeof(host->hostInfo.fragPolicyName));
-        host->hostInfo.fragPolicy = v.get_long() + 1;
+        host->hostInfo.fragPolicy = v.get_long();
     }
     else if ( v.is("tcp_policy") )
     {
-        strncpy(host->hostInfo.streamPolicyName, v.get_string(),
-            sizeof(host->hostInfo.streamPolicyName));
-        host->hostInfo.streamPolicy = v.get_long() + 1;
+        host->hostInfo.streamPolicy = v.get_long();
     }
     else if ( v.is("name") )
         app->protocol = AddProtocolReference(v.get_string());

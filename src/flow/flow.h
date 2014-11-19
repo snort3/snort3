@@ -41,29 +41,29 @@
 #define SSNFLAG_SEEN_SERVER         0x00000002
 #define SSNFLAG_SEEN_RESPONDER      0x00000002
 #define SSNFLAG_ESTABLISHED         0x00000004
-#define SSNFLAG_NMAP                0x00000008
+#define SSNFLAG_MIDSTREAM           0x00000008 /* picked up midstream */
+
 #define SSNFLAG_ECN_CLIENT_QUERY    0x00000010
 #define SSNFLAG_ECN_SERVER_REPLY    0x00000020
-#define SSNFLAG_HTTP_1_1            0x00000040 /* has stream seen HTTP 1.1? */
-#define SSNFLAG_SEEN_PMATCH         0x00000080 /* seen pattern match? */
-#define SSNFLAG_MIDSTREAM           0x00000100 /* picked up midstream */
-#define SSNFLAG_CLIENT_FIN          0x00000200 /* server sent fin */
-#define SSNFLAG_SERVER_FIN          0x00000400 /* client sent fin */
-#define SSNFLAG_CLIENT_PKT          0x00000800 /* packet is from the client */
-#define SSNFLAG_SERVER_PKT          0x00001000 /* packet is from the server */
-#define SSNFLAG_COUNTED_INITIALIZE  0x00002000
-#define SSNFLAG_COUNTED_ESTABLISH   0x00004000
-#define SSNFLAG_COUNTED_CLOSING     0x00008000
-#define SSNFLAG_TIMEDOUT            0x00010000
-#define SSNFLAG_PRUNED              0x00020000
-#define SSNFLAG_RESET               0x00040000
-#define SSNFLAG_DROP_CLIENT         0x00080000
-#define SSNFLAG_DROP_SERVER         0x00100000
-#define SSNFLAG_LOGGED_QUEUE_FULL   0x00200000
-#define SSNFLAG_STREAM_ORDER_BAD    0x00400000
-#define SSNFLAG_FORCE_BLOCK         0x00800000
-#define SSNFLAG_CLIENT_SWAP         0x01000000
-#define SSNFLAG_CLIENT_SWAPPED      0x02000000
+#define SSNFLAG_CLIENT_FIN          0x00000040 /* server sent fin */
+#define SSNFLAG_SERVER_FIN          0x00000080 /* client sent fin */
+
+#define SSNFLAG_COUNTED_INITIALIZE  0x00000100
+#define SSNFLAG_COUNTED_ESTABLISH   0x00000200
+#define SSNFLAG_COUNTED_CLOSING     0x00000400
+
+#define SSNFLAG_TIMEDOUT            0x00001000
+#define SSNFLAG_PRUNED              0x00002000
+#define SSNFLAG_RESET               0x00004000
+
+#define SSNFLAG_DROP_CLIENT         0x00010000
+#define SSNFLAG_DROP_SERVER         0x00020000
+#define SSNFLAG_FORCE_BLOCK         0x00040000
+
+#define SSNFLAG_STREAM_ORDER_BAD    0x00100000
+#define SSNFLAG_CLIENT_SWAP         0x00200000
+#define SSNFLAG_CLIENT_SWAPPED      0x00400000
+
 #define SSNFLAG_ALL                 0xFFFFFFFF /* all that and a bag of chips */
 #define SSNFLAG_NONE                0x00000000 /* nothing, an MT bag of chips */
 
@@ -258,10 +258,12 @@ public:  // FIXIT-M privatize if possible
     uint16_t client_port;
     uint16_t server_port;
 
+    uint16_t ssn_policy;
     uint16_t session_state;
-    uint8_t  handler[SE_MAX];
 
+    uint8_t  handler[SE_MAX];
     uint8_t  response_count;
+
     uint8_t  inner_client_ttl, inner_server_ttl;
     uint8_t  outer_client_ttl, outer_server_ttl;
 };

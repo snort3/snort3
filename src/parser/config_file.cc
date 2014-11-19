@@ -52,7 +52,6 @@
 #include "ips_options/ips_flowbits.h"
 #include "file_api/file_service_config.h"
 #include "packet_io/sfdaq.h"
-#include "target_based/sftarget_reader.h"
 #include "managers/event_manager.h"
 #include "detection/detect.h"
 #include "sfip/sf_ip.h"

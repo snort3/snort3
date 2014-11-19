@@ -106,11 +106,11 @@ using namespace std;
 #include "time/periodic.h"
 #include "parser/config_file.h"
 #include "parser/cmd_line.h"
-#include "target_based/sftarget_reader.h"
 #include "stream/stream_api.h"
 #include "stream/stream.h"
 #include "actions/act_replace.h"
 #include "filters/detection_filter.h"
+#include "target_based/sftarget_reader.h"
 
 #ifdef INTEL_SOFT_CPM
 #include "search/intel_soft_cpm.h"
@@ -648,6 +648,7 @@ void DecodeRebuiltPacket (
 
     set_policy(p);  // FIXIT-H rebuilt should reuse original bindings from flow
 
+    SnortEventqReset();
     SnortEventqPop();
 }
 
@@ -888,7 +889,7 @@ void snort_thread_init(const char* intf)
     DAQ_Start();
 
     s_packet = PacketManager::encode_new(false);
-    CodecManager::thread_init();
+    CodecManager::thread_init(snort_conf);
     FileAPIPostInit();
 
     // this depends on instantiated daq capabilities

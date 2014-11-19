@@ -152,10 +152,13 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             goto decodeipv6_fail;
         }
 
-        if (++codec.ip_layer_cnt > snort_conf->get_ip_maxlayers())
+        if ( snort_conf->hit_ip_maxlayers(codec.ip_layer_cnt) )
+        {
             codec_events::decoder_event(codec, DECODE_IP_MULTIPLE_ENCAPSULATION);
+            goto decodeipv6_fail;
+        }
 
-
+        codec.ip_layer_cnt++;
         const uint32_t payload_len = ntohs(ip6h->ip6_payload_len) + ip::IP6_HEADER_LEN;
 
         if(payload_len != raw.len)
@@ -673,21 +676,6 @@ void Ipv6Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
         memcpy(ch->ip6_src.u6_addr8, ph->ip6_dst.u6_addr8, sizeof(ch->ip6_src.u6_addr8));
         memcpy(ch->ip6_dst.u6_addr8, ph->ip6_src.u6_addr8, sizeof(ch->ip6_dst.u6_addr8));
     }
-
-#if 0
-
-    // FIXIT-H J -->  this is ridicuosly broken.  Move this to PacketManager
-    if ( f & ENC_FLAG_DEF )
-    {
-        int i = lyr - c->layers;
-        if ( i + 1 == p->num_layers )
-        {
-            // FIXIT-H J -->  remove ip6_frag_index when fixing format()
-            const uint8_t* b = (uint8_t*)p->layers[p->ptrs.ip6_frag_index].start;
-            if ( b ) lyr->length = b - p->layers[i].start;
-        }
-    }
-#endif
 
     // set outer to inner so this will always wind pointing to inner
     c->ptrs.ip_api.set(ch);

@@ -24,6 +24,7 @@ using namespace std;
 #include "binding.h"
 #include "bind_module.h"
 #include "flow/flow.h"
+#include "flow/session.h"
 #include "framework/inspector.h"
 #include "framework/plug_data.h"
 #include "stream/stream_splitter.h"
@@ -40,6 +41,9 @@ using namespace std;
 #include "main/snort.h"
 #include "main/policy.h"
 #include "parser/parser.h"
+#include "target_based/sftarget_data.h"
+#include "target_based/sftarget_protocol_reference.h"
+#include "target_based/sftarget_reader.h"
 
 THREAD_LOCAL ProfileStats bindPerfStats;
 
@@ -159,7 +163,7 @@ bool Binding::check_all(const Flow* flow) const
     if ( !check_vlan(flow) )
         return false;
 
-    // FIXIT-H need to check role and addr/ports relative to it
+    // FIXIT-M need to check role and addr/ports relative to it
     if ( !check_addr(flow) )
         return false;
 
@@ -185,6 +189,7 @@ static void set_session(Flow* flow, const char* key)
 
     if ( pin )
     {
+        // FIXIT-M need to set ssn client and server independently
         flow->set_client(pin);
         flow->set_server(pin);
         flow->clouseau = nullptr;
@@ -196,6 +201,18 @@ static void set_session(Flow* flow)
     flow->ssn_client = nullptr;
     flow->ssn_server = nullptr;
     flow->clouseau = nullptr;
+}
+
+static Inspector* get_gadget(Flow* flow, const HostAttributeEntry* host)
+{
+    stream.set_application_protocol_id_from_host_entry(flow, host, SSN_DIR_SERVER);
+
+    if ( !flow->s5_state.application_protocol )
+        return nullptr;
+
+    const char* s = get_protocol_name(flow->s5_state.application_protocol);
+
+    return InspectorManager::get_inspector(s);
 }
 
 //-------------------------------------------------------------------------
@@ -222,9 +239,9 @@ struct Stuff
 
     bool update(Binding*);
 
-    void apply_action(Flow*);
-    void apply_session(Flow*);
-    void apply_service(Flow*);
+    bool apply_action(Flow*);
+    void apply_session(Flow*, const HostAttributeEntry*);
+    void apply_service(Flow*, const HostAttributeEntry*);
 };
 
 bool Stuff::update(Binding* pb)
@@ -260,26 +277,27 @@ bool Stuff::update(Binding* pb)
     return false;
 }
 
-void Stuff::apply_action(Flow* flow)
+bool Stuff::apply_action(Flow* flow)
 {
     switch ( action )
     {
     case BA_BLOCK:
         stream.drop_traffic(flow, SSN_DIR_BOTH);
         flow->set_state(Flow::BLOCK);
-        return;
+        return false;
 
     case BA_ALLOW:
         flow->set_state(Flow::ALLOW);
-        return;
+        return false;
 
-    case BA_INSPECT:
-        flow->set_state(Flow::INSPECT);
+    default:
         break;
     }
+    flow->set_state(Flow::INSPECT);
+    return true;
 }
 
-void Stuff::apply_session(Flow* flow)
+void Stuff::apply_session(Flow* flow, const HostAttributeEntry* host)
 {
     if ( server )
     {
@@ -292,10 +310,12 @@ void Stuff::apply_session(Flow* flow)
 
         return;
     }
+
     switch ( flow->protocol )
     {
     case PktType::IP:
         set_session(flow, INS_IP);
+        flow->ssn_policy = host ? host->hostInfo.fragPolicy : 0;
         break;
 
     case PktType::ICMP:
@@ -304,6 +324,7 @@ void Stuff::apply_session(Flow* flow)
 
     case PktType::TCP:
         set_session(flow, INS_TCP);
+        flow->ssn_policy = host ? host->hostInfo.streamPolicy : 0;
         break;
 
     case PktType::UDP:
@@ -315,10 +336,13 @@ void Stuff::apply_session(Flow* flow)
     }
 }
 
-void Stuff::apply_service(Flow* flow)
+void Stuff::apply_service(Flow* flow, const HostAttributeEntry* host)
 {
     if ( data )
         flow->set_data(data);
+
+    if ( host && !gadget )
+        gadget = get_gadget(flow, host);
 
     if ( gadget )
         flow->set_gadget(gadget);
@@ -509,13 +533,16 @@ Inspector* Binder::find_gadget(Flow* flow)
 void Binder::apply(Flow* flow, Stuff& stuff)
 {
     // setup action
-    stuff.apply_action(flow);
+    if ( !stuff.apply_action(flow) )
+        return;
+
+    const HostAttributeEntry* host = SFAT_LookupHostEntryByIP(&flow->server_ip);
 
     // setup session
-    stuff.apply_session(flow);
+    stuff.apply_session(flow, host);
 
     // setup service
-    stuff.apply_service(flow);
+    stuff.apply_service(flow, host);
 }
 
 //-------------------------------------------------------------------------
