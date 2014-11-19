@@ -4,7 +4,7 @@ The following pointers will help you get started:
 
 Required:
 
-* autotools or Cmake to build from source.
+* autotools or cmake to build from source.
 
 * daq from http://www.snort.org for packet IO.
 
@@ -40,25 +40,27 @@ Optional:
   the top level directory will suffice.  If you don't have ./configure,
   then autoreconf -isvf must be done first.
 
-* To build with Cmake and make, first create a separate directory for the
+* To build with cmake and make, first create a separate directory for the
   build and cd into that directory.  Then:
 
     mkdir -p /path/to/my_build
     cd /path/to/my_build
-    Cmake /path/to/Snort++
+    cmake /path/to/Snort++
+    make; make install
 
-* An alternate method for building with Cmake and make is to run the
+* An alternate method for building with cmake and make is to run the
   configure_cmake.sh script.  It will automatically create and populate
   a new subdirectory named 'build'.
 
     cd /path/to/Snort++
     ./configure_cmake.sh --prefix=/home/rcombs/install
+    make; make install
 
 * Build with Xcode like this:
 
     mkdir -p /path/to/my_build
     cd /path/to/my_build
-    Cmake /path/to/Snort++ -G Xcode
+    cmake /path/to/Snort++ -G Xcode
 
 * An alternate method for building with Xcode is to run the
   configure_cmake.sh script.  It will automatically create and populate
