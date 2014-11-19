@@ -364,12 +364,12 @@ config profile_rules: print all, sort avg_ticks, filename @CMAKE_CURRENT_BINARY_
     sort nomatches, \
     sort avg_ticks_per_match, \
     sort avg_ticks_per_nomatch
-#config profile_rules: print -1, sort checks, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out append
-#config profile_rules: print 0, sort total_ticks, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out append
-#config profile_rules: print 1, sort matches, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out
-#config profile_rules: print 2, sort nomatches, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out
-#config profile_rules: print 3, sort avg_ticks_per_match, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out
-#config profile_rules: print 3, sort avg_ticks_per_nomatch, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out
+config profile_rules: print -1, sort checks, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out append
+config profile_rules: print 0, sort total_ticks, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out append
+config profile_rules: print 1, sort matches, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out
+config profile_rules: print 2, sort nomatches, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out
+config profile_rules: print 3, sort avg_ticks_per_match, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out
+config profile_rules: print 3, sort avg_ticks_per_nomatch, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out
 
 
 ###################################################

@@ -43,6 +43,7 @@
 -- fixed norm module handling of tcp opts
 -- fixed ecn normalization
 -- fixed pm backtracking
+-- tweaked build doc foo
 -- gak! - fixed conf slots
 
 127
