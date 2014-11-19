@@ -255,7 +255,7 @@ add_custom_command(OUTPUT snort_manual.tgz
         -E tar 
         zcf snort_manual.tgz
         ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked
-    DEPENDS ${ALL_SOURCES} snort_manual.html
+    DEPENDS ${ALL_SOURCES}
     COMMENT "Documents: building snort_manual.tgz"
 )
 

@@ -90,6 +90,10 @@ const std::vector<const ConvertMap*> keywords_api =
 } // namespace keywords
 
 #if 0
+
+Unconverted keyword ---
+
+
 #define SNORT_CONF_KEYWORD__DYNAMIC_OUTPUT       "dynamicoutput"
 #define SNORT_CONF_KEYWORD__RULE_TYPE            "ruletype"
 
