@@ -29,11 +29,8 @@ find_path(DNET_INCLUDE_DIR
   HINTS ENV DNETDIR
 )
 
-# If we found libdument header, define HAVE_DUMBNET_H for config.h generation.
-if (DNET_INCLUDE_DIR)
-    set(HAVE_DUMBNET_H "YES")
-endif()
-
+# Define HAVE_DUMBNET_H for config.h generation if we found libdumnet headers.
+set_if_true(DNET_INCLUDE_DIR HAVE_DUMBNET_H)
 
 # Search for library twice.  The first time using the custom path, second time
 # using standard paths
@@ -53,9 +50,11 @@ find_path(DNET_INCLUDE_DIR
   HINTS ENV DNETDIR
 )
 
+# Search for library twice.  The first time using the custom path, second time
+# using standard paths
 find_library(DNET_LIBRARIES
     NAMES dnet
-    HINTS ${DNET_LIBRARIES_DIR}
+    HINTS ${DNET_LIBRARIES_DIR} # user specified option in ./configure_cmake.sh
     NO_DEFAULT_PATH
     NO_CMAKE_ENVIRONMENT_PATH
 )

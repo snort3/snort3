@@ -519,7 +519,6 @@ int detection_option_node_evaluate(
             case RULE_OPTION_TYPE_CONTENT:
                 if (node->evaluate)
                 {
-#if 0
                     /* This will be set in the fast pattern matcher if we found
                      * a content and the rule option specifies not that
                      * content. Essentially we've already evaluated this rule
@@ -540,7 +539,6 @@ int detection_option_node_evaluate(
                             break;
                         }
                     }
-#endif
                     rval = node->evaluate(node->option_data, cursor, eval_data->p);
                 }
                 break;

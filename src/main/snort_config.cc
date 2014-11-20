@@ -208,7 +208,8 @@ SnortConfig * SnortConfNew(void)
 
     sc->var_list = NULL;
 
-    sc->state = (SnortState*)SnortAlloc(sizeof(SnortState)*get_instance_max());
+    sc->num_slots = get_instance_max();
+    sc->state = (SnortState*)SnortAlloc(sizeof(SnortState)*sc->num_slots);
 
     sc->policy_map = new PolicyMap;
 
@@ -537,8 +538,8 @@ SnortConfig* MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
     config_file->var_list = NULL;
 
     free(config_file->state);
-    config_file->state = (SnortState*)SnortAlloc(
-        sizeof(SnortState)*get_instance_max());
+    config_file->num_slots = get_instance_max();
+    config_file->state = (SnortState*)SnortAlloc(sizeof(SnortState)*config_file->num_slots);
 
     return config_file;
 }

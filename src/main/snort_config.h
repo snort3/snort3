@@ -283,6 +283,7 @@ struct SnortConfig
 #endif
 
     SnortState* state;
+    unsigned num_slots;
 
 #ifdef UNIT_TEST
     bool unit_test;

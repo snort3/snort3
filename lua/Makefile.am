@@ -6,7 +6,8 @@ x_include_HEADERS = \
 snort.lua \
 snort_defaults.lua \
 classification.lua \
-reference.lua
+reference.lua \
+sample.rules
 
 #EXTRA_DIST = \
 #snort.lua \

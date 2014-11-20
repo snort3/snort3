@@ -4,6 +4,7 @@ set (LUA_SCRIPTS
     snort_defaults.lua
     classification.lua
     reference.lua
+    sample.rules
 )
 
 install (FILES ${LUA_SCRIPTS}
