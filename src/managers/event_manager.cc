@@ -208,7 +208,9 @@ void EventManager::instantiate(
 {
     // FIXIT-L instantiate each logger from conf at most once
     Output* p = get_out(api->base.name);
-    instantiate(p, mod, sc);
+
+    if ( p && !p->handler )
+        instantiate(p, mod, sc);
 }
 
 //-------------------------------------------------------------------------
