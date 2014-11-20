@@ -97,7 +97,7 @@ struct EncState
     uint8_t next_proto; /*  set the next encoder 'proto' field to this value. */
     const uint8_t ttl;
 
-    EncState(const ip::IpApi& api, EncodeFlags f, uint16_t pr,
+    EncState(const ip::IpApi& api, EncodeFlags f, uint8_t pr,
         uint8_t t, uint16_t data_size) :
         ip_api(api),
         flags(f),

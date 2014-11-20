@@ -1853,7 +1853,9 @@ void LogIPPkt(TextLog* log, Packet * p)
             tmp_data = p->data;
             tmp_dsize = p->dsize;
             p->data = p->layers[p->num_layers - 1].start;
-            p->dsize = (tmp_data - p->data) + tmp_dsize; // layers length may be layer's valid length, not actual length.
+
+            // layer.length may be layer's length, not the actual length
+            p->dsize = (uint16_t)((tmp_data - p->data) + tmp_dsize);
         }
 #endif
         if (ScOutputCharData())

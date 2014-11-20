@@ -75,7 +75,7 @@ struct IP4Hdr
 
     /* getters */
     inline uint8_t hlen() const
-    { return (ip_verhl & 0x0f) << 2; }
+    { return (uint8_t)((ip_verhl & 0x0f) << 2); }
 
     inline uint8_t ver() const
     { return (ip_verhl >> 4); }
@@ -105,7 +105,7 @@ struct IP4Hdr
     { return ntohs(ip_off) & 0x2000; }
 
     inline uint16_t off() const
-    { return (ntohs(ip_off) & 0x1FFF) << 3; }
+    { return (uint16_t)((ntohs(ip_off) & 0x1FFF) << 3); }
 
     inline uint16_t id() const
     { return ntohs(ip_id); }

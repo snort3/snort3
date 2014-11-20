@@ -133,10 +133,10 @@ struct TCPHdr
 
 
     /*  raw data access */
-    inline uint8_t raw_src_port() const
+    inline uint16_t raw_src_port() const
     { return th_sport; }
 
-    inline uint8_t raw_dst_len() const
+    inline uint16_t raw_dst_len() const
     { return th_dport; }
 
     inline uint32_t raw_seq() const
