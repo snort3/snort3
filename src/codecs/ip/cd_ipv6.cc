@@ -209,7 +209,6 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         codec.ip6_csum_proto = ip6h->next();
         codec.codec_flags &= ~CODEC_ROUTING_SEEN;
 
-        // FIXIT-M J  tunnel-byppas is NOT checked!!
         return true;
     }
 

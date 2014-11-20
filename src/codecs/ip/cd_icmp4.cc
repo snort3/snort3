@@ -209,7 +209,7 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
     {
         uint16_t csum = checksum::cksum_add((uint16_t *)icmph, raw.len);
 
-        if(csum)
+        if(csum && !codec.is_cooked())
         {
             stats.bad_ip4_cksum++;
             snort.decode_flags |= DECODE_ERR_CKSUM_ICMP;

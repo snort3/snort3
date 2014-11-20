@@ -157,7 +157,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
             csum = checksum::icmp_cksum((uint16_t *)(icmp6h), raw.len, &ph6);
         }
-        if(csum)
+        if(csum && !codec.is_cooked())
         {
             (*bad_cksum_cnt)++;
             snort.decode_flags |= DECODE_ERR_CKSUM_ICMP;
