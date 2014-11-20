@@ -183,24 +183,19 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
            If we ever start decoding more than 2 layers of IP in a packet, this
            check against snort.proto_bits will need to be refactored. */
         if ((codec.codec_flags & CODEC_TEREDO_SEEN) && (!CheckTeredoPrefix(ip6h)))
-        {
             goto decodeipv6_fail;
-        }
 
+        if ( snort.ip_api.is_ip4() && ScTunnelBypassEnabled(TUNNEL_6IN4) )
+            Active_SetTunnelBypass();
 
-        /* set the real IP length for logging */
-        codec.proto_bits |= PROTO_BIT__IP;
-        // extra ipv6 header will be removed in PacketManager
-        const_cast<uint32_t&>(raw.len) = ip6h->len() + ip::IP6_HEADER_LEN;
-
-        // check for isatap before overwriting the ip_api.
-        IPV6CheckIsatap(ip6h, snort, codec);
+        IPV6CheckIsatap(ip6h, snort, codec); // check for isatap before overwriting the ip_api.
 
         snort.ip_api.set(ip6h);
 
         IPV6MiscTests(snort, codec);
         CheckIPV6Multicast(ip6h, codec);
 
+        const_cast<uint32_t&>(raw.len) = ip6h->len() + ip::IP6_HEADER_LEN;
         snort.set_pkt_type(PktType::IP);
         codec.next_prot_id = ip6h->next();
         codec.lyr_len = ip::IP6_HEADER_LEN;
@@ -208,6 +203,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         codec.ip6_extension_count = 0;
         codec.ip6_csum_proto = ip6h->next();
         codec.codec_flags &= ~CODEC_ROUTING_SEEN;
+        codec.proto_bits |= PROTO_BIT__IP;
 
         // FIXIT-M J  tunnel-byppas is NOT checked!!
         return true;

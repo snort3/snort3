@@ -48,6 +48,7 @@
 #include "detection/fpdetect.h"
 #include "stream/stream_api.h"
 #include "packet_io/sfdaq.h"
+#include "packet_io/active.h"
 
 #ifdef PERF_PROFILING
 THREAD_LOCAL ProfileStats decodePerfStats;
@@ -208,7 +209,6 @@ void PacketManager::decode(
         }
         else
         {
-            // faster to just get rid fo bit than test & set
             codec_data.codec_flags &= ~CODEC_UNSURE_ENCAP;
         }
 
@@ -290,6 +290,8 @@ void PacketManager::decode(
                 // layer fails, we made a mistake. Therefore,
                 // remove this bit.
                 p->proto_bits &= ~PROTO_BIT__TEREDO;
+                if ( ScTunnelBypassEnabled(TUNNEL_TEREDO) )
+                    Active_ClearTunnelBypass();
                 break;
             } /* switch */
         }
