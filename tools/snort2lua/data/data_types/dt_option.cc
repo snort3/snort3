@@ -21,26 +21,26 @@
 #include "data/data_types/dt_option.h"
 
 
-Option::Option(std::string name, int val, int depth)
+Option::Option(std::string n, int val, int d)
 {
-    this->name = name;
+    this->name = n;
     this->value = std::to_string(val);
-    this->depth = depth;
+    this->depth = d;
     this->type = OptionType::INT;
 }
 
-Option::Option(std::string name, bool val, int depth)
+Option::Option(std::string n, bool v, int d)
 {
-    this->name = name;
-    this->value = (val) ? "true" : "false";
-    this->depth = depth;
+    this->name = n;
+    this->value = (v) ? "true" : "false";
+    this->depth = d;
     this->type = OptionType::BOOL;
 }
 
-Option::Option(std::string name, std::string val, int depth)
+Option::Option(std::string opt_name, std::string val, int d)
 {
-    this->name = name;
-    this->depth = depth;
+    this->name = opt_name;
+    this->depth = d;
 
     if (val.front() == '$')
     {

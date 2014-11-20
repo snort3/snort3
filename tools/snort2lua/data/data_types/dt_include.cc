@@ -21,7 +21,7 @@
 
 #include "data/data_types/dt_include.h"
 
-Include::Include(std::string file_name) : file_name(file_name){}
+Include::Include(std::string include_name) : file_name(include_name){}
 Include::~Include(){}
 
 // overloading operators

@@ -21,28 +21,28 @@
 #include "data/data_types/dt_comment.h"
 #include "helpers/s2l_util.h"
 
-Comments::Comments(CommentType type)
+Comments::Comments(CommentType t)
 {
     this->depth = 0;
     this->prev_empty = true;
-    this->type = type;
+    this->type = t;
     this->header = false;
 }
 
-Comments::Comments(int depth, CommentType type)
+Comments::Comments(int d, CommentType t)
 {
-    this->depth = depth;
+    this->depth = d;
     this->prev_empty = true;
-    this->type = type;
+    this->type = t;
     this->header = false;
 }
 
-Comments::Comments(std::string comment, int depth, CommentType type)
+Comments::Comments(std::string c, int d, CommentType t)
 {
-    this->comment.push_back(std::string(comment));
-    this->depth = depth;
+    this->comment.push_back(std::string(c));
+    this->depth = d;
     this->prev_empty = true;
-    this->type = type;
+    this->type = t;
     this->header = true;
 }
 

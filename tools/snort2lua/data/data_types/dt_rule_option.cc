@@ -23,31 +23,31 @@
 
 
 
-RuleOption::RuleOption(std::string name) :
-        name(name),
+RuleOption::RuleOption(std::string n) :
+        name(n),
         value(std::string())
 {}
 
-RuleOption::RuleOption(std::string name, std::string value)
-    :   name(name),
-        value(value)
+RuleOption::RuleOption(std::string n, std::string v)
+    :   name(n),
+        value(v)
 {}
 
 RuleOption::~RuleOption()
 {
 }
 
-bool RuleOption::add_suboption(std::string name)
+bool RuleOption::add_suboption(std::string subopt_name)
 {
-    RuleSubOption* subopt = new RuleSubOption(name);
+    RuleSubOption* subopt = new RuleSubOption(subopt_name);
     sub_options.push_back(subopt);
     return true;
 }
 
-bool RuleOption::add_suboption(std::string name,
+bool RuleOption::add_suboption(std::string subopt_name,
                                 std::string val)
 {
-    RuleSubOption* subopt = new RuleSubOption(name, val);
+    RuleSubOption* subopt = new RuleSubOption(subopt_name, val);
     sub_options.push_back(subopt);
     return true;
 }

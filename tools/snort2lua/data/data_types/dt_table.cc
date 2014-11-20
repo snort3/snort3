@@ -36,19 +36,19 @@ static inline Table* find_table(std::vector<Table*> vec, std::string name)
     return nullptr;
 }
 
-Table::Table(int depth)
+Table::Table(int d)
 {
     this->name = "";
-    this->depth = depth;
-    this->comments = new Comments(depth + 1,
+    this->depth = d;
+    this->comments = new Comments(d + 1,
                     Comments::CommentType::SINGLE_LINE);
 }
 
-Table::Table(std::string name, int depth)
+Table::Table(std::string table_name, int d)
 {
-    this->name = name;
-    this->depth = depth;
-    this->comments = new Comments(depth + 1,
+    this->name = table_name;
+    this->depth = d;
+    this->comments = new Comments(d + 1,
                     Comments::CommentType::SINGLE_LINE);
 }
 
@@ -82,56 +82,56 @@ Table* Table::open_table()
     return t;
 }
 
-Table* Table::open_table(std::string name)
+Table* Table::open_table(std::string table_name)
 {
-    Table* t = find_table(tables, name);
+    Table* t = find_table(tables, table_name);
 
     if(t)
         return t;
 
-    t = new Table(name, depth + 1);
+    t = new Table(table_name, depth + 1);
     tables.push_back(t);
     return t;
 }
 
-bool Table::add_option(std::string name, int value)
+bool Table::add_option(std::string opt_name, int value)
 {
-    if (has_option(name, value))
+    if (has_option(opt_name, value))
         return true;
 
-    Option *o = new Option(name, value, depth + 1);
+    Option *o = new Option(opt_name, value, depth + 1);
     options.push_back(o);
     return true;
 }
 
-bool Table::add_option(std::string name, bool value)
+bool Table::add_option(std::string opt_name, bool value)
 {
-    if (has_option(name, value))
+    if (has_option(opt_name, value))
         return true;
 
-    Option *o = new Option(name, value, depth + 1);
+    Option *o = new Option(opt_name, value, depth + 1);
     options.push_back(o);
     return true;
 }
 
-bool Table::add_option(std::string name, std::string value)
+bool Table::add_option(std::string opt_name, std::string value)
 {
-    if (has_option(name, value))
+    if (has_option(opt_name, value))
         return true;
 
-    Option *o = new Option(name, value, depth + 1);
+    Option *o = new Option(opt_name, value, depth + 1);
     options.push_back(o);
     return true;
 }
 
 
-bool Table::add_list(std::string name, std::string next_elem)
+bool Table::add_list(std::string list_name, std::string next_elem)
 {
     for (auto l : lists)
-        if(l->get_name() == name)
+        if(l->get_name() == list_name)
             return l->add_value(next_elem);
 
-    Variable *var = new Variable(name, depth + 1);
+    Variable *var = new Variable(list_name, depth + 1);
     lists.push_back(var);
     return var->add_value(next_elem);
 }
@@ -155,21 +155,21 @@ bool Table::has_option(Option opt)
     return false;
 }
 
-bool Table::has_option(std::string name, int val)
+bool Table::has_option(std::string opt_name, int val)
 {
-    Option opt(name, val, depth + 1);
+    Option opt(opt_name, val, depth + 1);
     return has_option(opt);
 }
 
-bool Table::has_option(std::string name, bool val)
+bool Table::has_option(std::string opt_name, bool val)
 {
-    Option opt(name, val, depth + 1);
+    Option opt(opt_name, val, depth + 1);
     return has_option(opt);
 }
 
-bool Table::has_option(std::string name, std::string val)
+bool Table::has_option(std::string opt_name, std::string val)
 {
-    Option opt(name, val, depth + 1);
+    Option opt(opt_name, val, depth + 1);
     return has_option(opt);
 }
 
