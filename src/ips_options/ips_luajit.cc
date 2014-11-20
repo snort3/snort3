@@ -18,7 +18,7 @@
 */
 // ips_luajit.cc author Russ Combs <rucombs@cisco.com>
 
-#include <lua.hpp>
+#include <luajit-2.0/lua.hpp>
 
 #include "main/snort_types.h"
 #include "helpers/chunk.h"
