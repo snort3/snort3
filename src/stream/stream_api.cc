@@ -296,8 +296,8 @@ void Stream::drop_packet(Packet *p)
     if (!flow)
         return;
 
-    flow->set_state(Flow::BLOCK);
     flow->session->clear();
+    flow->set_state(Flow::BLOCK);
 
     if (!(p->packet_flags & PKT_STATELESS))
         drop_traffic(flow, SSN_DIR_BOTH);
