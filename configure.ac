@@ -459,9 +459,7 @@ LDFLAGS="${LDFLAGS} ${LUAJIT_LDFLAGS}"
 
 AC_LANG_PUSH([C++])
 AC_CHECK_HEADERS([lua.hpp], , [AC_MSG_ERROR("LuaJIT header not found.")])
-AC_CHECK_LIB(luajit, main, , [AC_CHECK_LIB(luajit-5.1, main, , [
-                                AC_MSG_ERROR("Linking against LuaJIT library failed.")])
-        ])
+AC_CHECK_LIB(luajit-5.1, main, , [AC_MSG_ERROR("Linking against LuaJIT library failed.")])
 AC_LANG_POP([C++])
 
 AC_ARG_WITH(pcre_includes,
