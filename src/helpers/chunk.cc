@@ -20,7 +20,7 @@
 
 #include "chunk.h"
 
-#include <lua.hpp>
+#include <luajit-2.0/lua.hpp>
 
 #include "managers/ips_manager.h"
 #include "hash/sfhashfcn.h"

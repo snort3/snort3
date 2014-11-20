@@ -25,7 +25,7 @@
 #include <mutex>
 #include <string>
 #include <sstream>
-#include <lua.hpp>
+#include <luajit-2.0/lua.hpp>
 
 #include "framework/base_api.h"
 #include "framework/module.h"

@@ -427,12 +427,19 @@ if test "x$with_libpcap_libraries" != "xno"; then
    LDFLAGS="${LDFLAGS} -L${with_libpcap_libraries}"
 fi
 
+PKG_PROG_PKG_CONFIG
+PKG_CHECK_EXISTS([luajit], [ have_luajit_pkgconfig="yes" ], [ have_luajit_pkgconfig="no" ])
+if test "${have_luajit_pkgconfig}" = "yes" ; then
+    LUAJIT_CFLAGS=`${PKG_CONFIG} --cflags luajit`
+    LUAJIT_LDFLAGS=`${PKG_CONFIG} --libs-only-L luajit`
+fi
+
 AC_ARG_WITH(luajit_includes,
     [  --with-luajit-includes=DIR      luajit include directory],
     [with_luajit_includes="$withval"],[with_luajit_includes="no"])
 
 if test "x$with_luajit_includes" != "xno"; then
-    CPPFLAGS="${CPPFLAGS} -I${with_luajit_includes}"
+    LUAJIT_CFLAGS="-I${with_luajit_includes}"
 fi
 
 AC_ARG_WITH(luajit_libraries,
@@ -440,12 +447,20 @@ AC_ARG_WITH(luajit_libraries,
     [with_luajit_libraries="$withval"],[with_luajit_libraries="no"])
 
 if test "x$with_luajit_libraries" != "xno"; then
-    LDFLAGS="${LDFLAGS} -L${with_luajit_libraries} -lluajit-5.1"
-
-    if test "x$macos" != "xno"; then
-        LDFLAGS="${LDFLAGS} -pagezero_size 10000 -image_base 100000000"
-    fi
+    LUAJIT_LDFLAGS="-L${with_luajit_libraries}"
 fi
+
+if test "x$macos" != "xno"; then
+    LUAJIT_LIBS="${LUAJIT_LDFLAGS} -pagezero_size 10000 -image_base 100000000"
+fi
+
+CPPFLAGS="${CPPFLAGS} ${LUAJIT_CFLAGS}"
+LDFLAGS="${LDFLAGS} ${LUAJIT_LDFLAGS}"
+
+AC_LANG_PUSH([C++])
+AC_CHECK_HEADERS([luajit-2.0/luajit.h], , [AC_MSG_ERROR("LuaJIT header not found.")])
+AC_CHECK_LIB(luajit-5.1, main, , [AC_MSG_ERROR("Linking against LuaJIT library failed.")])
+AC_LANG_POP([C++])
 
 AC_ARG_WITH(pcre_includes,
     [  --with-pcre-includes=DIR        libpcre include directory],
@@ -773,6 +788,7 @@ if test "x$have_daq_address_space_id" = "xyes"; then
         [DAQ version supports address space ID in header.])
 fi
 
+
 #--------------------------------------------------------------------------
 # Check for pthreads availability
 #--------------------------------------------------------------------------
@@ -781,6 +797,7 @@ AX_PTHREAD
 LIBS="$PTHREAD_LIBS $LIBS"
 CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
 LDFLAGS="$LDFLAGS $PTHREAD_LDFLAGS"
+
 
 #--------------------------------------------------------------------------
 # outputs
@@ -891,4 +908,3 @@ AC_MSG_RESULT([
     ldflags:        ${LDFLAGS}
     libs:           ${LIBS}
 ])
-

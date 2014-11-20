@@ -23,7 +23,7 @@
 
 #include <string>
 #include <vector>
-#include <lua.hpp>
+#include <luajit-2.0/lua.hpp>
 
 #include "ips_manager.h"
 #include "framework/ips_option.h"
