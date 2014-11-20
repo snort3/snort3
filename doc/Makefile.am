@@ -151,9 +151,7 @@ version.txt: $(snort)
 snort2lua_cmds.txt: $(snort2lua)
 	$(snort2lua) --markup --help > $@
 
-pdf_args = \
-    --icons --icons-dir=./images/icons \
-    -a imagesdir=./images
+pdf_args = -a imagesdir=./images
 
 html_args = \
     --copy --attribute linkcss --attribute stylesdir \
