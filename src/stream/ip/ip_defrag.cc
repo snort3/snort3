@@ -614,7 +614,6 @@ static int FragHandleIPOptions(FragTracker *ft,
                                const Packet* const p,
                                const uint16_t frag_offset)
 {
-    // Is this for ipv6 too?
     const uint16_t ip_options_len = p->ptrs.ip_api.get_ip_opt_len();
 
     if(frag_offset == 0)
@@ -1246,13 +1245,19 @@ void Defrag::process(Packet* p, FragTracker* ft)
      */
     if(p->ptrs.ip_api.ttl() < fe->min_ttl)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                "[FRAG3] Fragment discarded due to low TTL "
-                "[0x%X->0x%X], TTL: %d  " "Offset: %d Length: %d\n",
-                ntohl(p->ptrs.ip_api.get_ip4h()->get_src()),
-                ntohl(p->ptrs.ip_api.get_ip4h()->get_dst()),
-                p->ptrs.ip_api.ttl(), frag_offset,
-                p->dsize););
+
+#ifdef DEBUG
+        if ( p->is_ip4() )
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+                    "[FRAG3] Fragment discarded due to low TTL "
+                    "[0x%X->0x%X], TTL: %d  " "Offset: %d Length: %d\n",
+                    ntohl(p->ptrs.ip_api.get_ip4h()->get_src()),
+                    ntohl(p->ptrs.ip_api.get_ip4h()->get_dst()),
+                    p->ptrs.ip_api.ttl(), frag_offset,
+                    p->dsize););
+        }
+#endif
 
         EventAnomScMinTTL(fe);
         t_stats.discards++;
@@ -1317,14 +1322,20 @@ void Defrag::process(Packet* p, FragTracker* ft)
                 MODULE_PROFILE_END(fragPerfStats);
                 return;
             case FRAG_INSERT_TTL:
-                DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                        "[FRAG3] Fragment discarded due to large TTL Delta "
-                        "[0x%X->0x%X], TTL: %d  orig TTL: %d "
-                        "Offset: %d Length: %d\n",
-                        ntohl(p->ptrs.ip_api.get_ip4h()->get_src()),
-                        ntohl(p->ptrs.ip_api.get_ip4h()->get_dst()),
-                        p->ptrs.ip_api.ttl(), ft->ttl, frag_offset,
-                        p->dsize););
+
+#ifdef DEBUG
+                if ( p->is_ip4() )
+                {
+                    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+                            "[FRAG3] Fragment discarded due to large TTL Delta "
+                            "[0x%X->0x%X], TTL: %d  orig TTL: %d "
+                            "Offset: %d Length: %d\n",
+                            ntohl(p->ptrs.ip_api.get_ip4h()->get_src()),
+                            ntohl(p->ptrs.ip_api.get_ip4h()->get_dst()),
+                            p->ptrs.ip_api.ttl(), ft->ttl, frag_offset,
+                            p->dsize););
+                }
+#endif
                 t_stats.discards++;
                 MODULE_PROFILE_END(fragPerfStats);
                 return;
@@ -1572,7 +1583,8 @@ int Defrag::insert(Packet *p, FragTracker *ft, FragEngine *fe)
      * This may alert on bad options, but we still want to
      * insert the packet
      */
-    FragHandleIPOptions(ft, p, frag_offset);
+    if ( p->is_ip4() )
+        FragHandleIPOptions(ft, p, frag_offset);
 
     ft->frag_pkts++;
 
@@ -2288,7 +2300,8 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
 
     ft->frag_bytes += fragLength;
 
-    FragHandleIPOptions(ft, p, frag_off);
+    if ( p->is_ip4() )
+        FragHandleIPOptions(ft, p, frag_off);
 
     t_stats.trackers_created++;
     return 1;
