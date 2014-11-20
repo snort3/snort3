@@ -43,7 +43,7 @@ NetworkPolicy::NetworkPolicy(PolicyId id)
     new_ttl = 5;
 
     checksum_eval = CHECKSUM_FLAG__ALL | CHECKSUM_FLAG__DEF;
-    checksum_drop = 0;
+    checksum_drop = CHECKSUM_FLAG__DEF;
 }
 
 NetworkPolicy::~NetworkPolicy()
