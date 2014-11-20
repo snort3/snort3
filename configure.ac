@@ -451,7 +451,7 @@ if test "x$with_luajit_libraries" != "xno"; then
 fi
 
 if test "x$macos" != "xno"; then
-    LUAJIT_LIBS="${LUAJIT_LDFLAGS} -pagezero_size 10000 -image_base 100000000"
+    LUAJIT_LDFLAGS="${LUAJIT_LDFLAGS} -pagezero_size 10000 -image_base 100000000"
 fi
 
 CPPFLAGS="${CPPFLAGS} ${LUAJIT_CFLAGS}"
