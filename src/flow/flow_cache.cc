@@ -73,7 +73,7 @@ FlowCache::FlowCache (
 FlowCache::~FlowCache ()
 {
     while ( Flow* flow = (Flow*)hash_table->pop() )
-        delete flow;
+        flow->term();
 
     delete uni_head;
     delete uni_tail;

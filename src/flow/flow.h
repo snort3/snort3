@@ -145,8 +145,10 @@ public:
         ALLOW
     };
     Flow();
-    Flow(PktType);
     ~Flow();
+
+    void init(PktType);
+    void term();
 
     void reset();
     void restart(bool freeAppData = true);

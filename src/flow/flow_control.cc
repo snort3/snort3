@@ -50,6 +50,12 @@ FlowControl::FlowControl()
     tcp_cache = nullptr;
     udp_cache = nullptr;
     exp_cache = nullptr;
+
+    tcp_mem = udp_mem = nullptr;
+    icmp_mem = ip_mem = nullptr;
+
+    get_tcp = get_udp = nullptr;
+    get_icmp = get_ip = nullptr;
 }
 
 FlowControl::~FlowControl()
@@ -59,6 +65,11 @@ FlowControl::~FlowControl()
     delete icmp_cache;
     delete ip_cache;
     delete exp_cache;
+
+    free(tcp_mem);
+    free(udp_mem);
+    free(icmp_mem);
+    free(ip_mem);
 }
 
 //-------------------------------------------------------------------------
@@ -263,7 +274,6 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
         key->init(ip_api.get_src(), p->ptrs.sp, ip_api.get_dst(), p->ptrs.dp,
                   proto, vlanId, mplsId, addressSpaceId);
     }
-
 }
 
 static bool is_bidirectional(const Flow* flow)
@@ -327,16 +337,9 @@ static void init_roles(Packet* p, Flow* flow)
         init_roles_udp(p, flow);
 }
 
-unsigned FlowControl::process(FlowCache* cache, Packet* p)
+unsigned FlowControl::process(Flow* flow, Packet* p)
 {
     unsigned news = 0;
-    FlowKey key;
-    set_key(&key, p);
-
-    Flow* flow = cache->get(&key);
-
-    if ( !flow )
-        return 0;
 
     p->flow = flow;
 
@@ -381,9 +384,6 @@ unsigned FlowControl::process(FlowCache* cache, Packet* p)
         break;
     }
 
-    if ( flow->next && is_bidirectional(flow) )
-        cache->unlink_uni(flow);
-
     return news;
 }
 
@@ -394,21 +394,19 @@ unsigned FlowControl::process(FlowCache* cache, Packet* p)
 void FlowControl::init_tcp(
     const FlowConfig& fc, InspectSsnFunc get_ssn)
 {
-    if ( !fc.max_sessions )
-    {
-        tcp_cache = nullptr;
+    if ( !fc.max_sessions || !get_ssn )
         return;
-    }
+
     tcp_cache = new FlowCache(
         fc.max_sessions, fc.cache_pruning_timeout,
         fc.cache_nominal_timeout, 5, 0);
 
+    tcp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
+
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
-    {
-        Flow* flow = new Flow(PktType::TCP);
-        flow->session = get_ssn(flow);
-        tcp_cache->push(flow);
-    }
+        tcp_cache->push(tcp_mem + i);
+
+    get_tcp = get_ssn;
 }
 
 void FlowControl::process_tcp(Packet* p)
@@ -416,7 +414,23 @@ void FlowControl::process_tcp(Packet* p)
     if ( !tcp_cache )
         return;
 
-    tcp_count += process(tcp_cache, p);
+    FlowKey key;
+    set_key(&key, p);
+    Flow* flow = tcp_cache->get(&key);
+
+    if ( !flow )
+        return;
+
+    if ( !flow->session )
+    {
+        flow->init(PktType::TCP);
+        flow->session = get_tcp(flow);
+    }
+
+    tcp_count += process(flow, p);
+
+    if ( flow->next && is_bidirectional(flow) )
+        tcp_cache->unlink_uni(flow);
 }
 
 //-------------------------------------------------------------------------
@@ -426,21 +440,19 @@ void FlowControl::process_tcp(Packet* p)
 void FlowControl::init_udp(
     const FlowConfig& fc, InspectSsnFunc get_ssn)
 {
-    if ( !fc.max_sessions )
-    {
-        udp_cache = nullptr;
+    if ( !fc.max_sessions || !get_ssn )
         return;
-    }
+
     udp_cache = new FlowCache(
         fc.max_sessions, fc.cache_pruning_timeout,
         fc.cache_nominal_timeout, 5, 0);
 
+    udp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
+
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
-    {
-        Flow* flow = new Flow(PktType::UDP);
-        flow->session = get_ssn(flow);
-        udp_cache->push(flow);
-    }
+        udp_cache->push(udp_mem + i);
+
+    get_udp = get_ssn;
 }
 
 void FlowControl::process_udp(Packet* p)
@@ -448,7 +460,23 @@ void FlowControl::process_udp(Packet* p)
     if ( !udp_cache )
         return;
 
-    udp_count += process(udp_cache, p);
+    FlowKey key;
+    set_key(&key, p);
+    Flow* flow = udp_cache->get(&key);
+
+    if ( !flow )
+        return;
+
+    if ( !flow->session )
+    {
+        flow->init(PktType::UDP);
+        flow->session = get_udp(flow);
+    }
+
+    udp_count += process(flow, p);
+
+    if ( flow->next && is_bidirectional(flow) )
+        udp_cache->unlink_uni(flow);
 }
 
 //-------------------------------------------------------------------------
@@ -458,30 +486,46 @@ void FlowControl::process_udp(Packet* p)
 void FlowControl::init_icmp(
     const FlowConfig& fc, InspectSsnFunc get_ssn)
 {
-    if ( !fc.max_sessions )
-    {
-        icmp_cache = nullptr;
+    if ( !fc.max_sessions || !get_ssn )
         return;
-    }
+
     icmp_cache = new FlowCache(
         fc.max_sessions, fc.cache_pruning_timeout,
         fc.cache_nominal_timeout, 5, 0);
 
+    icmp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
+
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
-    {
-        Flow* flow = new Flow(PktType::ICMP);
-        flow->session = get_ssn(flow);
-        icmp_cache->push(flow);
-    }
+        icmp_cache->push(icmp_mem + i);
+
+    get_icmp = get_ssn;
 }
 
 void FlowControl::process_icmp(Packet* p)
 {
-    if ( icmp_cache )
-        icmp_count += process(icmp_cache, p);
-
-    else
+    if ( !icmp_cache )
+    {
         process_ip(p);
+        return;
+    }
+
+    FlowKey key;
+    set_key(&key, p);
+    Flow* flow = icmp_cache->get(&key);
+
+    if ( !flow )
+        return;
+
+    if ( !flow->session )
+    {
+        flow->init(PktType::ICMP);
+        flow->session = get_icmp(flow);
+    }
+
+    icmp_count += process(flow, p);
+
+    if ( flow->next && is_bidirectional(flow) )
+        icmp_cache->unlink_uni(flow);
 }
 
 //-------------------------------------------------------------------------
@@ -491,21 +535,19 @@ void FlowControl::process_icmp(Packet* p)
 void FlowControl::init_ip(
     const FlowConfig& fc, InspectSsnFunc get_ssn)
 {
-    if ( !fc.max_sessions )
-    {
-        ip_cache = nullptr;
+    if ( !fc.max_sessions || !get_ssn )
         return;
-    }
+
     ip_cache = new FlowCache(
         fc.max_sessions, fc.cache_pruning_timeout,
         fc.cache_nominal_timeout, 5, 0);
 
+    ip_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
+
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
-    {
-        Flow* flow = new Flow(PktType::IP);
-        flow->session = get_ssn(flow);
-        ip_cache->push(flow);
-    }
+        ip_cache->push(ip_mem + i);
+
+    get_ip = get_ssn;
 }
 
 void FlowControl::process_ip(Packet* p)
@@ -513,7 +555,23 @@ void FlowControl::process_ip(Packet* p)
     if ( !ip_cache )
         return;
 
-    ip_count += process(ip_cache, p);
+    FlowKey key;
+    set_key(&key, p);
+    Flow* flow = ip_cache->get(&key);
+
+    if ( !flow )
+        return;
+
+    if ( !flow->session )
+    {
+        flow->init(PktType::IP);
+        flow->session = get_ip(flow);
+    }
+
+    ip_count += process(flow, p);
+
+    if ( flow->next && is_bidirectional(flow) )
+        ip_cache->unlink_uni(flow);
 }
 
 //-------------------------------------------------------------------------

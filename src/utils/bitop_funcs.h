@@ -53,6 +53,9 @@
 **  yourself.  Just pass in the char array and the number of bytes the array
 **  is and this function sets up the structure for you.
 **
+**  You must zero the buffer before init or reset before use.  it is not
+**  cleared here.
+**
 **  @retval int
 **
 **  @return  0  successful
@@ -66,8 +69,6 @@ static inline int boInitStaticBITOP(BITOP *BitOp,int iBytes,unsigned char *buf)
     BitOp->pucBitBuffer   = buf;
     BitOp->uiBitBufferSize = (unsigned int)iBytes;
     BitOp->uiMaxBits       = (unsigned int)(iBytes << 3);
-
-    memset(buf, 0x00, iBytes);
 
     return 0;
 }

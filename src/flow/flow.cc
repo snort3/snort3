@@ -49,14 +49,16 @@ FlowData::~FlowData()
         handler->rem_ref();
 }
 
-Flow::Flow ()
+Flow::Flow()
 {
     memset(this, 0, sizeof(*this));
 }
 
-Flow::Flow (PktType proto)
+Flow::~Flow()
+{ }
+
+void Flow::init(PktType proto)
 {
-    memset(this, 0, sizeof(*this));
     protocol = proto;
 
     // FIXIT-M this should just use C++11 bitset.
@@ -64,13 +66,13 @@ Flow::Flow (PktType proto)
     /* use giFlowbitSize - 1, since there is already 1 byte in the
     * StreamFlowData structure */
     size_t sz = sizeof(StreamFlowData) + getFlowbitSizeInBytes() - 1;
-    flowdata = (StreamFlowData*)SnortAlloc(sz);
+    flowdata = (StreamFlowData*)malloc(sz);
 
     boInitStaticBITOP(
         &(flowdata->boFlowbits), getFlowbitSizeInBytes(), flowdata->flowb);
 }
 
-Flow::~Flow ()
+void Flow::term()
 {
     if ( session )
         delete session;
@@ -137,11 +139,6 @@ void Flow::restart(bool freeAppData)
     session_state = STREAM5_STATE_NONE;
     expire_time = 0;
 }
-
-//static const char* fsxlt[] =
-//{
-//    "setup", "inspect", "allow", "block"
-//};
 
 void Flow::clear(bool freeAppData)
 {

@@ -86,13 +86,23 @@ private:
     class FlowCache* get_cache(uint8_t);
     void set_key(FlowKey*, Packet*);
 
-    unsigned process(FlowCache*, Packet*);
+    unsigned process(Flow*, Packet*);
 
 private:
     FlowCache* tcp_cache;
     FlowCache* udp_cache;
     FlowCache* icmp_cache;
     FlowCache* ip_cache;
+
+    Flow* tcp_mem;
+    Flow* udp_mem;
+    Flow* icmp_mem;
+    Flow* ip_mem;
+
+    InspectSsnFunc get_tcp;
+    InspectSsnFunc get_udp;
+    InspectSsnFunc get_icmp;
+    InspectSsnFunc get_ip;
 
     class ExpectCache* exp_cache;
 };
