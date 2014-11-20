@@ -380,7 +380,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     case Flow::BLOCK:
         // FIXIT-M should not repeatedly clear session
         stream.drop_packet(p);
-        Active_DropPacket();
+        Active_DropSession();
         break;
     }
 
