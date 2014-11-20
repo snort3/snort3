@@ -511,7 +511,7 @@ void InspectorManager::thread_stop(SnortConfig*)
         unsigned slot = get_instance_id();
 
         for ( auto* p : pi->framework_policy->ilist )
-            if ( p->pp_class.term )
+            if ( p->pp_class.term[slot] )
             {
                 p->handler->tterm();
                 p->pp_class.term[slot] = false;

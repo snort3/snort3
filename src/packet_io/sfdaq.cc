@@ -396,8 +396,7 @@ static int DAQ_Config (DAQ_Config_t* cfg)
     err = daq_initialize(daq_mod, cfg, &daq_hand, buf, sizeof(buf));
 
     if ( err )
-        FatalError("Can't initialize DAQ %s (%d) - %s\n",
-            type, err, buf);
+        ErrorMessage("Can't initialize DAQ %s (%d) - %s\n", type, err, buf);
 
     return err;
 }
@@ -471,7 +470,7 @@ int DAQ_Start ()
     int err = daq_start(daq_mod, daq_hand);
 
     if ( err )
-        FatalError("Can't start DAQ (%d) - %s\n",
+        ErrorMessage("Can't start DAQ (%d) - %s\n",
             err, daq_get_error(daq_mod, daq_hand));
 
     else if ( !DAQ_UnprivilegedStart() )
