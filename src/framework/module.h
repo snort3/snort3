@@ -26,7 +26,7 @@
 #define MODULE_H
 
 #include <vector>
-#include <lua.hpp>
+#include <luajit-2.0/lua.hpp>
 
 #include "main/snort_types.h"
 #include "framework/value.h"

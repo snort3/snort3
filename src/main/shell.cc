@@ -23,7 +23,7 @@
 #include <assert.h>
 #include <string.h>
 #include <string>
-#include <lua.hpp>
+#include <luajit-2.0/lua.hpp>
 #include <stdexcept>
 
 #include "framework/module.h"
@@ -132,6 +132,10 @@ static void config_lua(
 Shell::Shell(const char* s)
 {
     lua = luaL_newstate();
+
+    if ( !lua )
+        FatalError("lua state instantiation failed\n");
+
     lua_atpanic(lua, Shell::panic);
     luaL_openlibs(lua);
 
