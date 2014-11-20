@@ -20,6 +20,7 @@
 
 #include <sstream>
 #include <vector>
+#include <string>
 
 #include "conversion_state.h"
 #include "helpers/converter.h"
@@ -44,6 +45,8 @@ private:
     bool sticky_buffer_set;
     bool parse_options(std::istringstream&, std::string, std::string);
     void add_sticky_buffer(std::istringstream&, std::string buffer);
+    bool extract_payload(std::istringstream& data_stream,
+                        std::string& option);
 
 };
 
@@ -161,6 +164,32 @@ bool Content<option_name>::parse_options(
     return true;
 }
 
+
+template<const std::string *option_name>
+bool Content<option_name>::extract_payload(std::istringstream& stream,
+                                           std::string& option)
+{
+    if ( !stream.good() )
+        return false;
+
+    std::getline(stream, option, ',');
+    if (option.empty())
+        return false;
+
+    const std::size_t quote = option.find('"');
+    if ( (quote != std::string::npos) && (quote == option.rfind('"')) )
+    {
+        std::string tmp;
+        std::getline(stream, tmp, '"');
+        option += "," + tmp + "\"";
+        std::getline(stream, tmp, ',');
+        option += tmp;
+    }
+
+    util::trim(option);
+    return true;
+}
+
 template<const std::string *option_name>
 bool Content<option_name>::convert(std::istringstream& data_stream)
 {
@@ -174,27 +203,24 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
     std::string arg = util::get_rule_option_args(data_stream);
     std::istringstream arg_stream(arg);
 
-    if (!util::get_string(arg_stream, val, ","))
+    if (!extract_payload(arg_stream, val) )
     {
         rule_api.bad_rule(data_stream, "content: <missing_argument>");
         return set_next_rule_state(data_stream);
     }
 
-
     rule_api.add_option(*option_name, val);
 
     // This first loop parses all of the options between the
     // content keyword and the first semicolon.
-    while (util::get_string(arg_stream, keyword, ","))
+    while ( extract_payload(arg_stream, keyword) )
     {
         std::istringstream opts(keyword);
         std::string tmp_str;
         val = "";
 
         opts >> keyword;  // gauranteed to work since get_string is true
-
-        while(opts >> tmp_str)
-            val += tmp_str + " ";
+        std::getline(opts, val);
 
         util::trim(keyword);
         util::trim(val);
@@ -218,11 +244,7 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
     while(util::get_string(subopts, keyword, ":"))
     {
         val = std::string();
-        std::string tmp_str;
-
-        // get the rest of this option
-        while(subopts >> tmp_str)
-            val += tmp_str + " ";
+        std::getline(subopts, val);
 
         // necessary since options contain whitespace
         util::trim(keyword);
