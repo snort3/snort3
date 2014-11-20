@@ -37,9 +37,9 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
-#include "range.h"
+#include "framework/range.h"
 
-static const char* s_name = "fragoffset";
+#define s_name "fragoffset"
 
 static THREAD_LOCAL ProfileStats fragOffsetPerfStats;
 
@@ -50,10 +50,10 @@ public:
         IpsOption(s_name)
     { config = c; };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
 private:
     RangeCheck config;
@@ -90,11 +90,11 @@ bool FragOffsetOption::operator==(const IpsOption& ips) const
 
 int FragOffsetOption::eval(Cursor&, Packet *p)
 {
-    int p_offset = p->frag_offset * 8;
+    int p_offset = p->ptrs.ip_api.off();
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    if(!IPH_IS_VALID(p))
+    if(!p->has_ip())
     {
         return rval;
     }
@@ -112,23 +112,26 @@ int FragOffsetOption::eval(Cursor&, Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter fragoff_params[] =
+static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if packet payload size is min<>max | <max | >min" },
+      "check if packet payload size is 'size | min<>max | <max | >min'" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to test IP frag offset"
+
 class FragOffsetModule : public Module
 {
 public:
-    FragOffsetModule() : Module(s_name, fragoff_params) { };
+    FragOffsetModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &fragOffsetPerfStats; };
 
     RangeCheck data;
@@ -178,13 +181,14 @@ static const IpsApi fragoffset_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    0, 0,  // FIXIT more than one fragoffset per rule?
+    1, 0,
     nullptr,
     nullptr,
     nullptr,

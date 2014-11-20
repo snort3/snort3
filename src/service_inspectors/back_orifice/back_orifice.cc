@@ -116,6 +116,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "snort.h"
 #include "snort_types.h"
 #include "detect.h"
 #include "protocols/packet.h"
@@ -124,11 +125,11 @@
 #include "snort_debug.h"
 #include "mstring.h"
 #include "util.h"
-#include "snort.h"
 #include "profiler.h"
 #include "snort_types.h"
 #include "framework/inspector.h"
 #include "framework/module.h"
+#include "protocols/udp.h"
 
 #define BO_DEFAULT_KEY     31337
 #define BO_MAGIC_SIZE      8
@@ -143,7 +144,10 @@
 #define BO_BUF_SIZE         8
 #define BO_BUF_ATTACK_SIZE  1024
 
-static const char* mod_name = "back_orifice";
+#define s_name "back_orifice"
+
+#define s_help \
+    "back orifice detection"
 
 /* global keyvalue for the BoRand() function */
 static THREAD_LOCAL long holdrand = 1L;
@@ -167,13 +171,13 @@ static THREAD_LOCAL SimpleStats bostats;
 #define BO_SNORT_BUFFER_ATTACK    4
 
 #define BO_TRAFFIC_DETECT_STR \
-    "(back_orifice) BO Traffic detected"
+    "BO traffic detected"
 #define BO_CLIENT_TRAFFIC_DETECT_STR \
-    "(back_orifice) BO Client Traffic detected"
+    "BO client traffic detected"
 #define BO_SERVER_TRAFFIC_DETECT_STR \
-    "(back_orifice) BO Server Traffic detected"
+    "BO server traffic detected"
 #define BO_SNORT_BUFFER_ATTACK_STR \
-    "(back_orifice) BO Snort buffer attack"
+    "BO Snort buffer attack"
 
 static const RuleMap bo_rules[] =
 {
@@ -188,18 +192,18 @@ static const RuleMap bo_rules[] =
 class BoModule : public Module
 {
 public:
-    BoModule() : Module(mod_name)
+    BoModule() : Module(s_name, s_help)
     { };
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return bo_rules; };
 
-    unsigned get_gid() const
+    unsigned get_gid() const override
     { return GID_BO; };
 
-    const char** get_pegs() const;
-    PegCount* get_counts() const;
-    ProfileStats* get_profile() const;
+    const char** get_pegs() const override;
+    PegCount* get_counts() const override;
+    ProfileStats* get_profile() const override;
 };
 
 const char** BoModule::get_pegs() const
@@ -330,11 +334,11 @@ static int BoGetDirection(Packet *p, char *pkt_data)
     char plaintext;
 
     /* Check for the default port on either side */
-    if ( p->dp == BO_DEFAULT_PORT )
+    if ( p->ptrs.dp == BO_DEFAULT_PORT )
     {
         return BO_FROM_CLIENT;
     }
-    else if ( p->sp == BO_DEFAULT_PORT )
+    else if ( p->ptrs.sp == BO_DEFAULT_PORT )
     {
         return BO_FROM_SERVER;
     }
@@ -452,13 +456,13 @@ class BackOrifice : public Inspector {
 public:
     BackOrifice() { };
 
-    void show(SnortConfig*);
-    void eval(Packet*);
+    void show(SnortConfig*) override;
+    void eval(Packet*) override;
 };
 
 void BackOrifice::show(SnortConfig*)
 {
-    LogMessage("%s\n", mod_name);
+    LogMessage("%s\n", s_name);
 }
 
 void BackOrifice::eval(Packet *p)
@@ -476,7 +480,7 @@ void BackOrifice::eval(Packet *p)
     PROFILE_VARS;
 
     // preconditions - what we registered for
-    assert(IsUDP(p));
+    assert(p->is_udp());
 
     /* make sure it's at least 19 bytes long */
     if(p->dsize < BO_MIN_SIZE)
@@ -595,14 +599,15 @@ static const InspectApi bo_api =
 {
     {
         PT_INSPECTOR,
-        mod_name,
+        s_name,
+        s_help,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor
     },
-    IT_PROTOCOL, 
-    PROTO_BIT__UDP,
+    IT_NETWORK, 
+    (uint16_t)PktType::UDP,
     nullptr, // buffers
     nullptr, // service
     bo_init,

@@ -1,0 +1,48 @@
+
+_FATAL: snort_config is required_
+
+* add this line near top of file:
+
+    require('snort_config')
+
+_PANIC: unprotected error in call to Lua API (cannot open
+snort_defaults.lua: No such file or directory)_
+
+* export SNORT_LUA_PATH to point to any dofiles
+
+_ERROR can't find xyz_
+
+* if xyz is the name of a module, make sure you are not assigning a scalar
+  where a table is required (e.g. xyz = 2 should be xyz = { }).
+
+_ERROR can't find x.y_
+
+* module x does not have a parameter named y.  check --help-module x for
+  available parameters.
+
+_ERROR invalid x.y = z_
+
+* the value z is out of range for x.y.  check --help-config x.y for the range
+  allowed.
+
+_ERROR: x = { y = z } is in conf but is not being applied_
+
+* make sure that x = { } isn't set later because it will override the
+  earlier setting.  same for x.y.
+
+_FATAL: can't load lua/errors.lua: lua/errors.lua:68: '=' expected near
+';'_
+
+* this is a syntax error reported by Lua to Snort on line 68 of errors.lua.
+
+_ERROR: rules(2) unknown rule keyword: find._
+
+* this was due to not including the --script-path.
+
+_WARNING: unknown symbol x_
+
+* if you any variables, you can squelch such warnings by setting them in
+  an environment variable SNORT_IGNORE.  to ignore x, y, and z:
+
+    export SNORT_IGNORE="x y z"
+

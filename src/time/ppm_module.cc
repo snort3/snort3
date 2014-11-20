@@ -34,7 +34,12 @@
 //-------------------------------------------------------------------------
 
 #ifdef PPM_MGR
-static const Parameter ppm_params[] =
+
+#define s_name "ppm"
+#define s_help \
+    "packet and rule latency monitoring and control (requires --enable-ppm)"
+
+static const Parameter s_params[] =
 {
     { "max_pkt_time", Parameter::PT_INT, "0:", "0",
       "enable packet latency thresholding (usec), 0 = off" },
@@ -71,9 +76,9 @@ static const Parameter ppm_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-#define PPM_EVENT_RULE_TREE_DISABLED_STR "(ppm) Rule Options Disabled by Rule Latency"
-#define PPM_EVENT_RULE_TREE_ENABLED_STR  "(ppm) Rule Options Re-enabled by Rule Latency"
-#define PPM_EVENT_PACKET_ABORTED_STR     "(ppm) Packet Aborted due to Latency"
+#define PPM_EVENT_RULE_TREE_DISABLED_STR "rule options disabled by rule latency"
+#define PPM_EVENT_RULE_TREE_ENABLED_STR  "rule options re-enabled by rule latency"
+#define PPM_EVENT_PACKET_ABORTED_STR     "packet aborted due to latency"
 
 static const RuleMap ppm_rules[] =
 {
@@ -88,7 +93,7 @@ static const RuleMap ppm_rules[] =
 // ppm module
 //-------------------------------------------------------------------------
 
-PpmModule::PpmModule() : Module("ppm", ppm_params) { }
+PpmModule::PpmModule() : Module(s_name, s_help, s_params) { }
 
 const RuleMap* PpmModule::get_rules() const
 { return ppm_rules; }
@@ -142,7 +147,7 @@ bool PpmModule::set(const char*, Value& v, SnortConfig* sc)
             ppm_set_rule_log(&sc->ppm_cfg, PPM_LOG_ALERT);
     }
 #ifdef DEBUG
-    else if ( v.is("debug_pkts") )
+    else if ( v.is("debug_rules") )
         ppm_set_debug_rules(&sc->ppm_cfg, 1);
 #endif
     else

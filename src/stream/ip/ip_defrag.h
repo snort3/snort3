@@ -24,7 +24,7 @@
 
 #include "fpcreate.h"
 
-// FIXIT integrate into stream api
+// FIXIT-L integrate into stream api
 //int fpAddFragAlert(Packet *p, OptTreeNode *otn);
 //int fpFragAlerted(Packet *p, OptTreeNode *otn);
 int  drop_all_fragments(Packet *p);
@@ -58,7 +58,7 @@ private:
     int new_tracker(Packet *p, FragTracker*);
 
     int add_frag_node(
-        // FIXIT too many args
+        // FIXIT-L too many args
         FragTracker *ft, Packet*, FragEngine*,
         const uint8_t *fragStart, int16_t fragLength,
         char lastfrag, int16_t len,
@@ -70,6 +70,7 @@ private:
 
 private:
     FragEngine& engine;
+    uint8_t layers;
 };
 
 #endif

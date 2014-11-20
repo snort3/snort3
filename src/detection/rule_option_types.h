@@ -21,7 +21,7 @@
 #ifndef RULE_OPTION_TYPES_H
 #define RULE_OPTION_TYPES_H
 
-typedef enum _option_type_t
+enum option_type_t
 {
     RULE_OPTION_TYPE_LEAF_NODE,
     RULE_OPTION_TYPE_CONTENT,
@@ -29,7 +29,7 @@ typedef enum _option_type_t
     RULE_OPTION_TYPE_IP_PROTO,
     RULE_OPTION_TYPE_PCRE,
     RULE_OPTION_TYPE_OTHER
-} option_type_t;
+};
 
 #endif
 

@@ -1,15 +1,41 @@
-# Enter HTTP test message text as you want it to be presented to PAF.
 #
-# The easiest way to format is to put a blank line between message sections so that each message section is its own "paragraph".
-# Within a paragraph the placement of new lines does not have any effect. Format a paragraph any way you are comfortable. Extra blank lines
-# between paragraphs also do not have any effect.
+# Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License Version 2 as
+# published by the Free Software Foundation.  You may not use, modify or
+# distribute this program under any other version of the GNU General
+# Public License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# nhttp_test_msgs.txt author Tom Peters <thopeter@cisco.com>
+
+# Enter HTTP test message text as you want it to be presented to the StreamSplitter.
+#
+# The easiest way to format is to put a blank line between message sections so that each message section is its own "paragraph". Within a paragraph
+# the placement of single new lines does not have any effect. Format a paragraph any way you are comfortable. Extra blank lines between paragraphs
+# also do not have any effect.
+#
+# Each paragraph represents a TCP segment. The splitter can be tested by putting multiple sections in the same paragraph (splitter must split)
+# or continuing a section in the next paragraph (splitter must search and reassemble).
+#
+# It is not necessary to specify complete body and chunk body sections. Specify at least one octet that will begin the section and the
+# remainder will be autofilled in 16384-octet sections up to the length flushed.
 #
 # Lines beginning with # are comments. Lines beginning with @ are commands. This does not apply to lines in the middle of a paragraph.
 #
 # Command lines are left justified, lower case, with no whitespace:
 #   @break resets HTTP Inspect data structures and begins a new test. Use it liberally to prevent unrelated tests from interfering with each other.
+#   @tcpclose simulates a half-duplex TCP close following the next paragraph of data.
 #   @request and @response set the message direction. Applies to subsequent sections until changed.
-#   @bodyend and @chunkend set the final two characters of a body or chunk to "xy" or "\r\n".
 #   @<decimal number> sets the test number and hence the test output file name. Applies to subsequent sections until changed. Don't reuse numbers.
 #
 # Escape sequences begin with '\'. They may be used within a paragraph or to begin a paragraph.
@@ -20,20 +46,20 @@
 #   \# - #
 #   \@ - @
 #   \xnn or \Xnn - where nn is a two-digit hexadecimal number. Insert an arbitrary 8-bit number as the next character. a-f and A-F are both acceptable.
-#   \/nnn/ - where nnn is a variable-length decimal number. Insert nnn octets of fill data. The fill characters are 'A' - 'Z' with the final two bytes
-#            "xy" for a normal body and "\r\n" for a chunk.
-#   \B, \C, and \T - bridge, cut, and TCP close. See below.
 
-# The default procedure for separating data into segments for presentation to PAF is 1) whenever a paragraph ends (blank line) and 2) every MSS octets,
-# where MSS is currently a source code constant set to 1460. The \C escape forces an immediate separation point even in the middle of a paragraph. It is
-# useful for testing PAF where message segments often arrive in pieces. \B causes prevents the immediately following blank line(s) from causing a
-# separation point. Data resumes with the next non-newline character as if there was no gap. This allows PAF to be tested with the end of a section and
-# the beginning of the next section or message in the same packet. Commands and comments following \B are not allowed. Data must resume immediately
-# following the blank lines.
+# Data is separated into segments for presentation to PAF whenever a paragraph ends (blank line).
 #
-# \T functions as \C but causes the TCP connection closed indication to be set. It only makes sense at the end of a paragraph. \C\T simulates a data
-# packet subsequently followed by a close with no more data.
-
+# Whenever a segment contains insufficient data to make up a body or chunk, fill data will be generated to make up the difference based on the
+# Content-Length field or chunk header. Specifically, flushing more data than in the current segment will trigger filling. The user should include at
+# least one character of body/chunk data either as part of the previous header segment or at the beginning of a new segment following the headers.
+# All data bytes included in the file will be used followed by required fill data in the pattern ABC...XYZABC...
+#
+# Fill data will not be provided for a paragraph that is preceded by tcpclose. The body or chunk will terminate at the end of the paragraph.
+#
+# This test tool does not implement the feature of being hardened against bad input. If you write a badly formatted or improper test case the
+# program may assert or crash. The responsibility is on the developer to get it right. Currently that is the best use of resources.
+#
+# Test input is currently designed for single-threaded operation only.
 
 # ***********************************************************************************************
 # Valid response start lines
@@ -79,12 +105,12 @@ HTTP/1.1 301 \r\n\r\n
 @response
 HTTP/1.1 560  \r\n\r\n
 
-@1010
+@1009
 @break
 @response
 HTTP/1.1 111     \r\n\r\n
 
-@1011
+@1010
 @break
 @response
 HTTP/1.1 234 qwertyuiopasdfghjklzxcvbnmABCDEFGHIJKLMNOPQRSTUVWXYZ qwertyuiopasdfghjklzxcvbnmABCDEFGHIJKLMNOPQRSTUVWXYZqwertyuiopasdfghjklzxcvbnmABCDE{}[]
@@ -474,7 +500,7 @@ HTTP/2.0 200 OK\r\nContent-type: text/plain\r\nTransfer-Encoding: gzip\r\nTransf
 
 # ***********************************************************************************************
 # Invalid headers without body
-@6001
+# @6001
 @break
 @request
 
@@ -483,92 +509,89 @@ HTTP/2.0 200 OK\r\nContent-type: text/plain\r\nTransfer-Encoding: gzip\r\nTransf
 # Valid Content-Length and body
 @7001
 @break
-@bodyend
 @response
 HTTP/1.1 200 OK\r\nContent-type: \ttext/plain\t\r\nContent-LENGTH: 19\r\n\r\n
-\/19/
+I'm a message body.
 
 @7002
 @break
-@bodyend
 @response
 HTTP/1.1 200 OK\r\nContent-type: \ttext/plain\t\r\nContent-LENGTH: 19\r\n\r\n
-\/10/
+12345
 
 @7003
 @break
-@bodyend
 @response
 HTTP/1.1 200 OK\r\nContent-type: \ttext/plain\t\r\nContent-LENGTH: 19\r\n\r\n
 
-\/10/
+12345678
 
 @7004
 @break
-@bodyend
 @response
 HTTP/1.1 200 OK\r\nContent-type: \ttext/plain\t\r\nContent-LENGTH: 19\r\n\r\n
 
-\/19/
+I'm a message body.
 
 @7005
 @break
-@bodyend
 @response
 HTTP/1.1 200 OK\r\n
 Transfer-Encoding: identity\r\n
 CoNtEnT-lEnGtH:16382\r\n
 Content-type: text/plain\r\n
 \r\n
-\/800/
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
 
 @7006
 @break
-@bodyend
 @request
 POST /body/in/a/request/ HTTP/1.1\r\n
 Content-Length:16383\r\n
 \r\n
 
-\/1300/
+*
 
 @7007
 @break
-@bodyend
 @request
 POST /body/in/a/request/ HTTP/1.1\r\n
 Content-Length:16384\r\n
 \r\n
-\/1/
+*
 
 @7008
 @break
-@bodyend
 @response
 HTTP/1.0 408 barely too big for one section\r\n
 Content-Length:16385\r\n
 \r\n
 
-\/1/
+*
 
 @7009
 @break
-@bodyend
 @response
 HTTP/1.1 408 barely too big for two sections\r\n
 Content-Length:32772\r\n
 \r\n
-\/2/
+**
 
 @7010
 @break
-@bodyend
 @response
 HTTP/1.1 408 more than eight sections\r\n
 Content-Length:133072\r\n
 \r\n
 
-\/2/
+********
 
 # ***********************************************************************************************
 # Invalid Content-Length
@@ -589,60 +612,59 @@ HTTP/1.1 200 Silly gigantic length\r\nContent-type: \ttext/plain\t\r\nContent-LE
 # Remember chunk lengths are required to be specified in hex
 @9001
 @break
-@chunkend
 @response
 HTTP/1.1 208 Example with chunks\r\nTransfer-Encoding: chunked\r\n\r\n
 
 64\r\n
-\/100/
+1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\r\n
 
 8A\r\n
-\/60/
 
-e6\r\n
+chunkoflength138
 
-\/1/
+\r\ne6\r\nchunkoflength230
 
-0\r\n
+\r\n0\r\n
 
 \r\n
 
 @9002
 @break
-@chunkend
 @request
 POST /request/with/chunks HTTP/1.1\r\n
 Content-Type:    text/plain\r\n
 Transfer-Encoding: compress\r\n
 Via: 1.1 proxy3.company.com\r\n
-tRaNsFeR-eNcO\CdInG: cHuNkEd   \r\n
+tRaNsFeR-eNcO
+
+dInG: cHuNkEd   \r\n
 Accept: *\r\n
 \r\n
 
 1C320\r\n
-\/1400/
+chunk1
 
-1F40; testing-the-extension-feature\r\n
-\/2/
+\r\n1F40; testing-the-extension-feature\r\n
+chunk2
 
-13FFE;  \r\n
+\r\n13FFE;  \r\n
 
-\/1460/
+chunk3
 
-4000;\r\n
-\/1460/
+\r\n4000;\r\n
+chunk4
 
-3FFF;\r\n
+\r\n3FFF;\r\n
 
-\/2/
+chunk5
 
-3FFE\r\n
-\/1454/
+\r\n3FFE\r\n
+chunk6
 
-4001;\r\n
-\/1/
+\r\n4001;\r\n
+chunk7
 
-00000;chunkextension=3\r\n
+\r\n00000;chunkextension=3\r\n
 
 date: Sun, 01 Oct 2000 23:25:17 GMT\r\n
 X-madeupdate: Mon, 02 Oct 2000 23:25:17 GMT\r\n
@@ -652,7 +674,7 @@ Accept-Language: is\r\n
 
 # ***********************************************************************************************
 # Invalid chunks
-@10001
+# @10001
 @break
 @request
 
@@ -660,7 +682,7 @@ Accept-Language: is\r\n
 
 # ***********************************************************************************************
 # Valid trailers
-@11001
+# @11001
 @break
 @request
 
@@ -668,7 +690,7 @@ Accept-Language: is\r\n
 
 # ***********************************************************************************************
 # Invalid trailers
-@12001
+# @12001
 @break
 @request
 
@@ -680,6 +702,128 @@ Accept-Language: is\r\n
 @break
 @request
 
+GET /basic/request/response/pair/with/large/body/returned HTTP/1.1\r\n
+Host: www.testcase.com\r\n
+\r\n
+
+@response
+
+HTTP/1.1 200 OK\r\n
+Content-Length: 60000\r\n
+\r\n
+body-start
+
+
+@13002
+@break
+@request
+
+POST /basic/request/response/pair/with/large/bodies/both/ways HTTP/1.1\r\n
+Host: www.testcase.com\r\n
+Content-Length: 50000\r\n
+\r\n
+
+body1-start
+
+@response
+
+HTTP/1.1 200 OK\r\n
+Content-Length: 60000\r\n
+\r\n
+body2-start
+
+
+@13003
+@break
+@request
+
+HEAD /basic/request/response/pair/using/HEAD HTTP/1.1\r\n
+Host: www.testcase.com\r\n
+\r\n
+
+@response
+
+HTTP/1.1 200 OK\r\n
+Content-Length: 60000\r\n
+\r\n
+
+HTTP/1.1 400 If we see this HEAD worked\r\n\r\n
+
+
+@13004
+@break
+@request
+
+GET /basic/request/response/pair/with/chunked/returned HTTP/1.1\r\n
+Host: www.testcase.com\r\n
+\r\n
+
+@response
+
+HTTP/1.1 200 OK\r\n
+Transfer-Encoding: chunked\r\n
+\r\n
+A000\r\n
+chunk1-start
+
+\r\nB000\r\n
+chunk2-start
+
+\r\nC000\r\n
+
+chunk3-start
+
+\r\n
+
+0\r\n
+date: Mon, 02 Oct 2000 20:25:00 GMT\r\n
+fakeheader: 1234\r\n
+\r\n
+
+
+@13005
+@break
+@request
+
+GET / HTTP/1.0\r\n
+\r\n
+
+@response
+
+HTTP/1.1 200 OK\r\n
+Content-Type: text/plain; charset=iso-8859-1\r\n
+Transfer-Encoding: chunked\r\n
+\r\n
+
+0A\r\nABCDEFGHIJ\r\n
+
+0A\r\n1234567890\r\n
+
+0A\r\nabcdefghij\r\n
+
+0A\r\n9876543210\r\n
+
+0\r\n\r\n
+
+@13006
+@break
+@request
+
+GET /wall/fruitwall_file.txt HTTP/1.1
+
+\r\nHost: www.hektik.org\r\n\r\n
+
+@response
+
+HTTP/1.1 200 OK\r\n
+Date: Fri, 01 Aug 2003 21:22:16 GMT\r\n
+Server: Apache/1.3.27 (Unix) mod_ssl/2.8.12 OpenSSL/0.9.7-beta3 PHP/4.3.0\r\n
+Last-Modified: Fri, 01 Aug 2003 18:08:10 GMT\r\n
+ETag: "295682-9-3f2aac8a"\r\n
+Accept-Ranges: bytes\r\n
+Content-Length: 9\r\n
+Content-Type: text/plain\r\n\r\n
+596254978
 
 # ***********************************************************************************************
 # Alerts
@@ -696,8 +840,351 @@ GET /trigger/basic/normalized/URI/content/match/alert HTTP/1.1\r\n\r\n
 GET /%74%72%69%67%67%65%72/encoded/normalized/URI/content/match/alert HTTP/1.1\r\n\r\n
 
 
+# ***********************************************************************************************
+# Pipelining
+@15001
+@break
+@request
+
+GET /pipeline/test/1 HTTP/1.1\r\n
+Host: www.pipeline1.com\r\n
+\r\n
+GET /pipeline/test/2 HTTP/1.1\r\n
+Host: www.pipeline2.com\r\n
+\r\n
+GET /pipeline/test/3 HTTP/1.1\r\n
+Host: www.pipeline3.com\r\n
+\r\n
+GET /pipeline/test/4 HTTP/1.1\r\n
+Host: www.pipeline4.com\r\n
+\r\n
+
+GET /pipeline/test/5 HTTP/1.1\r\n
+Host: www.pipeline5.com\r\n
+\r\n
+GET /pipeline/test/6 HTTP/1.1\r\n
+Host: www.pipeline6.com\r\n
+\r\n
+
+@response
+
+HTTP/1.1 400 Response to pipeline 1\r\n
+Content-Length: 10000\r\n
+\r\n
+Data 1 from pipeline\r\n
+
+HTTP/1.1 400 Response to pipeline 2\r\n
+Content-Length: 20000\r\n
+\r\n
+Data 2 from pipeline\r\n
+
+HTTP/1.1 400 Response to pipeline 3\r\n
+Content-Length: 30000\r\n
+\r\n
+
+Data 3 from pipeline\r\n
+
+HTTP/1.1 400 Response to pipeline 4\r\n
+Content-Length: 40000\r\n
+\r\n
+Data 4 from pipeline\r\n
+
+HTTP/1.1 400 Response to pipeline 5\r\n
+Content-Length: 50000\r\n
+\r\n
+
+Data 5 from pipeline\r\n
+
+HTTP/1.1 400 Response to pipeline 6\r\n
+Content-Length: 60000\r\n
+\r\n
+Data 6 from pipeline\r\n
 
 
+# ***********************************************************************************************
+# Section aggregation test cases
+@16001
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16002
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16003
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456
+
+789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16004
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16005
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r
+
+\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16006
+@break
+@response
+
+HTTP/1.1 200 OK
+
+ Let's pad this out 1234567890123456789012345678
+
+9012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16007
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16008
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+
+Content-type: text/plain\r\n
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16009
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16010
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r
+
+\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16011
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain
+
+\r
+
+\n
+
+\r
+
+\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
 
 
+@16012
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain
+
+\r
+
+\n
+
+\r
+
+\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxy
+
+@16013
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 
+
+12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16014
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 
+
+12345678901234567890123456789012345678901234567890\r\n
+
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16101
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
 

@@ -2,6 +2,7 @@
 set (TIME_INCLUDES
     cpuclock.h
     profiler.h
+    ppm.h
 )
 
 add_library( time  STATIC
@@ -22,5 +23,3 @@ add_library( time  STATIC
 install (FILES ${TIME_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/time"
 )
-
-

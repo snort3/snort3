@@ -26,13 +26,14 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
-
-
-namespace
-{
+#include "main/snort.h"
 
 // yes, macros are necessary. The API and class constructor require different strings.
 #define CD_MOBILE_NAME "mobility"
+#define CD_MOBILE_HELP "support for mobility"
+
+namespace
+{
 
 class MobilityCodec : public Codec
 {
@@ -41,13 +42,9 @@ public:
     ~MobilityCodec() {};
 
 
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-
+    void get_protocol_ids(std::vector<uint16_t>&) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
-
-const uint16_t IPPROTO_ID_MOBILITY = 55;
 
 } // namespace
 
@@ -57,12 +54,17 @@ void MobilityCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IPPROTO_ID_MOBILITY);
 }
 
-bool MobilityCodec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
-        Packet* p, uint16_t& /*lyr_len*/, uint16_t& /*next_prot_id*/)
+bool MobilityCodec::decode(const RawData&, CodecData& codec, DecodeData&)
 {
-    codec_events::decoder_event(p, DECODE_IP_BAD_PROTO);
-    p->data = raw_pkt;
-    p->dsize = (uint16_t)raw_len;
+    if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
+    {
+        codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
+        return false;
+    }
+
+    codec_events::decoder_event(codec, DECODE_IP_BAD_PROTO);
+    codec.proto_bits |= PROTO_BIT__IP6_EXT; // check for any IP related rules
+    codec.ip6_extension_count++;
     return true;
 }
 
@@ -72,14 +74,10 @@ bool MobilityCodec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new MobilityCodec();
-}
+{ return new MobilityCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi mobility_api =
@@ -87,6 +85,7 @@ static const CodecApi mobility_api =
     {
         PT_CODEC,
         CD_MOBILE_NAME,
+        CD_MOBILE_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

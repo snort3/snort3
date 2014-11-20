@@ -33,7 +33,7 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 
-static const char* s_name = "raw_data";
+#define s_name "raw_data"
 
 static THREAD_LOCAL ProfileStats rawDataPerfStats;
 
@@ -42,10 +42,10 @@ class RawDataOption : public IpsOption
 public:
     RawDataOption() : IpsOption(s_name) { };
 
-    CursorActionType get_cursor_type() const
+    CursorActionType get_cursor_type() const override
     { return CAT_SET_RAW; };
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 };
 
 int RawDataOption::eval(Cursor& c, Packet* p)
@@ -63,12 +63,15 @@ int RawDataOption::eval(Cursor& c, Packet* p)
 // module
 //-------------------------------------------------------------------------
 
+#define s_help \
+    "rule option to set the detection cursor to the raw packet data"
+
 class RawDataModule : public Module
 {
 public:
-    RawDataModule() : Module(s_name) { };
+    RawDataModule() : Module(s_name, s_help) { };
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &rawDataPerfStats; };
 };
 
@@ -101,6 +104,7 @@ static const IpsApi raw_data_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

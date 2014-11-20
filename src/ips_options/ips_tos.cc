@@ -31,9 +31,9 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
-#include "range.h"
+#include "framework/range.h"
 
-static const char* s_name = "tos";
+#define s_name "tos"
 
 static THREAD_LOCAL ProfileStats ipTosPerfStats;
 
@@ -44,10 +44,10 @@ public:
         IpsOption(s_name)
     { config = c; };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
 public:
     RangeCheck config;
@@ -89,12 +89,12 @@ int IpTosOption::eval(Cursor&, Packet *p)
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    if(!IPH_IS_VALID(p))
+    if(!p->ptrs.ip_api.is_valid())
         return rval;
 
     MODULE_PROFILE_START(ipTosPerfStats);
 
-    if ( config.eval(GET_IPH_TOS(p)) )
+    if ( config.eval(p->ptrs.ip_api.tos()) )
         rval = DETECTION_OPTION_MATCH;
 
     MODULE_PROFILE_END(ipTosPerfStats);
@@ -105,23 +105,26 @@ int IpTosOption::eval(Cursor&, Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter tos_params[] =
+static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if packet payload size is min<>max | <max | >min" },
+      "check if packet payload size is 'size | min<>max | <max | >min'" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to check type of service field"
+
 class TosModule : public Module
 {
 public:
-    TosModule() : Module(s_name, tos_params) { };
+    TosModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &ipTosPerfStats; };
 
     RangeCheck data;
@@ -171,6 +174,7 @@ static const IpsApi tos_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

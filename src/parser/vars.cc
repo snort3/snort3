@@ -54,11 +54,10 @@
 #include "filters/sfthreshold.h"
 #include "filters/sfthd.h"
 #include "snort.h"
-#include "asn1.h"
 #include "hash/sfghash.h"
 #include "sf_vartable.h"
-#include "ipv6_port.h"
 #include "sfip/sf_ip.h"
+#include "sfip/sf_ipvar.h"
 #include "sflsq.h"
 #include "ppm.h"
 #include "filters/rate_filter.h"
@@ -70,7 +69,6 @@
 #include "framework/ips_option.h"
 #include "config_file.h"
 #include "keywords.h"
-#include "target_based/sftarget_reader.h"
 
 //-------------------------------------------------------------------------
 // var node stuff
@@ -201,7 +199,7 @@ int PortVarDefine(SnortConfig *sc, const char *name, const char *s)
     }
     else if( rstat > 0 )
     {
-        ParseMessage("PortVar '%s', already defined.", po->name);
+        ParseWarning("PortVar '%s', already defined.", po->name);
     }
 
 #if 0
@@ -498,7 +496,7 @@ VarEntry * VarDefine(
 
     if(value == NULL)
     {
-        ParseAbort("bad value in variable definition!  Make sure you don't "
+        ParseAbort("bad value in variable definition.  Make sure you don't "
                    "have a '$' in the var name.");
     }
 
@@ -524,7 +522,7 @@ VarEntry * VarDefine(
                     break;
 
                 case SFIP_DUPLICATE:
-                    ParseMessage("Var '%s' redefined.", name);
+                    ParseWarning("Var '%s' redefined.", name);
                     break;
 
                 case SFIP_CONFLICT:
@@ -534,7 +532,7 @@ VarEntry * VarDefine(
                     break;
 
                 case SFIP_NOT_ANY:
-                    ParseAbort("!any is not allowed in %s.", name);
+                    ParseAbort("!any is not allowed in %s", name);
                     break;
 
                 default:
@@ -778,7 +776,7 @@ const char *VarGet(SnortConfig*, const char *name)
  ***************************************************************************/
 const char * ExpandVars(SnortConfig *sc, const char *string)
 {
-    static char estring[ PARSE_RULE_SIZE ];
+    static char estring[ 65536 ];  // FIXIT-L convert this foo to a std::string
 
     char rawvarname[128], varname[128], varaux[128], varbuffer[128];
     char varmodifier;
@@ -789,7 +787,7 @@ const char * ExpandVars(SnortConfig *sc, const char *string)
     if(!string || !*string || !strchr(string, '$'))
         return(string);
 
-    memset((char *) estring, 0, PARSE_RULE_SIZE);
+    memset((char *) estring, 0, sizeof(estring));
 
     i = j = 0;
     l_string = strlen(string);

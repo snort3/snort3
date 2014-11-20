@@ -33,9 +33,9 @@ static StreamConfig stream_cfg =
 {
     // bytes, #, sec, sec
     { 8*K,  16*K, 30, 180 },  // ip
-    { 8*K,  64*K, 30, 180 },  // icmp
-    { 8*K, 256*K, 30, 180 },  // tcp
-    { 8*K, 128*K, 30, 180 },  // udp
+    { 8*K,  32*K, 30, 180 },  // icmp
+    { 8*K, 128*K, 30, 180 },  // tcp
+    { 8*K,  64*K, 30, 180 },  // udp
 };
 
 //-------------------------------------------------------------------------
@@ -44,13 +44,13 @@ static StreamConfig stream_cfg =
 
 static const Parameter proto_params[] =
 {
-    { "memcap", Parameter::PT_INT, "0:", "262144",
-      "maximum simultaneous tcp sessions tracked before pruning" },
+    { "memcap", Parameter::PT_INT, "0:", nullptr,
+      "maximum cache memory" },
 
-    { "idle_timeout", Parameter::PT_INT, "1:", nullptr,
+    { "idle_timeout", Parameter::PT_INT, "1:", "60",
       "maximum inactive time before retiring session tracker" },
 
-    { "pruning_timeout", Parameter::PT_INT, "1:", nullptr,
+    { "pruning_timeout", Parameter::PT_INT, "1:", "30",
       "minimum inactive time before being eligible for pruning" },
 
     { "max_sessions", Parameter::PT_INT, "0:", "262144",
@@ -59,7 +59,7 @@ static const Parameter proto_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter stream_params[] =
+static const Parameter s_params[] =
 {
     { "icmp_cache", Parameter::PT_TABLE, proto_params, nullptr,
       "configure icmp cache limits" },
@@ -77,7 +77,7 @@ static const Parameter stream_params[] =
 };
 
 StreamModule::StreamModule() :
-    Module(MOD_NAME, stream_params)
+    Module(MOD_NAME, MOD_HELP, s_params)
 {
     proto = &stream_cfg.ip_cfg;
 }

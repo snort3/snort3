@@ -37,19 +37,20 @@ endif
 plugin_list = \
 $(acsmx_sources) \
 $(acsmx2_sources) \
-$(bnfa_sources) \
 $(intel_sources)
 
 libsearch_engines_a_SOURCES = \
 search_engines.cc \
 search_engines.h \
 str_search.cc \
-str_search.h
+str_search.h \
+pat_stats.cc \
+$(bnfa_sources)
 
 # FIXIT ideally don't include pat_stats.cc separately
 
 if STATIC_SEARCH_ENGINES
-libsearch_engines_a_SOURCES += $(plugin_list) pat_stats.cc
+libsearch_engines_a_SOURCES += $(plugin_list)
 else
 mpselibdir = $(pkglibdir)/search_engines
 
@@ -62,11 +63,6 @@ mpselib_LTLIBRARIES += libacsmx2.la
 libacsmx2_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libacsmx2_la_LDFLAGS = -export-dynamic -shared
 libacsmx2_la_SOURCES = $(acsmx2_sources) acsmx2_api.cc pat_stats.cc
-
-mpselib_LTLIBRARIES += libbnfa.la
-libbnfa_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libbnfa_la_LDFLAGS = -export-dynamic -shared
-libbnfa_la_SOURCES = $(bnfa_sources) bnfa_api.cc pat_stats.cc
 
 mpselib_LTLIBRARIES += libintel_cpm.la
 libintel_cpm_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

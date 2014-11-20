@@ -71,18 +71,10 @@ extern THREAD_LOCAL ProfileStats streamSizePerfStats;
 //-------------------------------------------------------------------------
 
 #define MOD_NAME "stream_tcp"
+#define MOD_HELP "stream inspector for TCP flow tracking and stream normalization and reassembly"
 
 struct SnortConfig;
 struct StreamTcpConfig;
-
-struct ServiceReassembly
-{
-    std::string name;
-    bool c2s;
-    bool s2c;
-
-    ServiceReassembly(std::string&, bool, bool);
-};
 
 class StreamTcpModule : public Module
 {
@@ -90,36 +82,23 @@ public:
     StreamTcpModule();
     ~StreamTcpModule();
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
-    const RuleMap* get_rules() const;
+    const RuleMap* get_rules() const override;
 
-    unsigned get_gid() const
+    unsigned get_gid() const override
     { return GID_STREAM_TCP; };
 
     StreamTcpConfig* get_data();
 
-    void get_port(Port, bool& c2s, bool& s2c);
-    const ServiceReassembly* get_proto(unsigned);
-
-    ProfileStats* get_profile(unsigned, const char*&, const char*&) const;
-    const char** get_pegs() const;
-    PegCount* get_counts() const;
-
-private:
-    void add_protos(Value&, bool, bool);
+    ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
+    const char** get_pegs() const override;
+    PegCount* get_counts() const override;
 
 private:
     StreamTcpConfig* config;
-
-    PortList ports_client;
-    PortList ports_server;
-    PortList ports_both;
-
-    std::vector<ServiceReassembly*> protos;
-    bool client_protos_set;
 };
 
 #endif

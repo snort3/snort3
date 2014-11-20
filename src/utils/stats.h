@@ -33,11 +33,8 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "main/snort_types.h"
 #include "main/thread.h"
-#include "sfip/sf_ipvar.h"
-#include "sfip/ipv6_port.h"
-#include "utils/sflsq.h"
+#include "main/snort_types.h"
 #include "framework/counts.h"
 
 struct PacketCount
@@ -55,6 +52,7 @@ struct PacketCount
     PegCount alert_limit;
     PegCount internal_blacklist;
     PegCount internal_whitelist;
+    PegCount idle;
 };
 
 struct ProcessCount
@@ -67,8 +65,8 @@ struct ProcessCount
     PegCount attribute_table_hosts;
 };
 
-extern ProcessCount proc_stats;
-extern THREAD_LOCAL PacketCount pc; 
+extern SO_PUBLIC ProcessCount proc_stats;
+extern SO_PUBLIC THREAD_LOCAL PacketCount pc;
 
 void LogLabel(const char*);
 void LogCount(const char*, uint64_t);
@@ -76,9 +74,9 @@ void LogStat(const char*, uint64_t n, uint64_t tot);
 void LogStat(const char*, double);
 
 void sum_stats(PegCount* sums, PegCount* counts, unsigned n);
-void show_stats(PegCount*, const char* names[], unsigned n,
+void show_stats(PegCount*, const char* const names[], unsigned n,
     const char* module_name = nullptr);
-void show_percent_stats(PegCount*, const char* names[], unsigned n,
+void show_percent_stats(PegCount*, const char* const names[], unsigned n,
     const char* module_name = nullptr);
 
 void sum_stats(SimpleStats* sums, SimpleStats* counts);

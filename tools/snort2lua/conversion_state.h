@@ -1,22 +1,21 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // conversion_state.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifndef CONVERSION_STATE_H
@@ -26,47 +25,41 @@
 #include <fstream>
 #include <sstream>
 #include <cctype>
+#include <iostream>
 
 #include "data/dt_data.h"
+#include "data/dt_table_api.h"
+#include "data/dt_rule_api.h"
 
 // the following three files are for the function 'set_next_rule_state'
-#include "utils/s2l_util.h"
+#include "helpers/s2l_util.h"
 #include "rule_states/rule_api.h"
-#include "utils/converter.h"
+#include "helpers/converter.h"
+#include "conversion_defines.h"
 
-class Converter;
-class ConversionState;
-typedef ConversionState* (*conv_new_f)(Converter*, LuaData* ld);
-
-struct ConvertMap
-{
-    std::string keyword;
-    conv_new_f ctor;
-};
-
-// yes, forward declaring.  Without some improvements to design, this needs to stay here.
-namespace rules
-{
-    extern const std::vector<const ConvertMap*> rule_api;
-} // namespace rules.
-
+class DataApi;
+class RuleApi;
+class TableApi;
 
 class ConversionState
 {
 
 public:
-    ConversionState(Converter* cv, LuaData* ld)
-    {
-        this->cv = cv;
-        this->ld = ld;
-    }
-
+    ConversionState(Converter& c) : cv(c),
+                                    data_api(c.get_data_api()),
+                                    table_api(c.get_table_api()),
+                                    rule_api(c.get_rule_api())
+    { }
     virtual ~ConversionState() {};
     virtual bool convert(std::istringstream& data)=0;
 
+
 protected:
-    Converter* cv;
-    LuaData* ld;
+    Converter& cv;
+    DataApi& data_api;
+    TableApi& table_api;
+    RuleApi& rule_api;
+
 
 #if 0
     Forward declaration fo parsing methods. Since these are all inline,
@@ -74,11 +67,9 @@ protected:
 
     inline bool eat_option(std::istringstream& stream);
     inline bool parse_string_option(std::string opt_name,
-                                        std::istringstream& stream
-                                        bool required = true);
+                                        std::istringstream& stream);
     inline bool parse_int_option(std::string opt_name,
-                                        std::istringstream& stream
-                                        bool required = true);
+                                        std::istringstream& stream);
     inline bool parse_curly_bracket_list(std::string list_name,
                                         std::istringstream& stream);
     inline bool parse_yn_bool_option(std::string opt_name,
@@ -88,8 +79,7 @@ protected:
     inline bool parse_bracketed_unsupported_list(std::string list_name,
                                         std::istringstream& stream);
     inline bool parse_deleted_option(std::string table_name,
-                                        std::istringstream& stream,
-                                        bool required = true);
+                                        std::istringstream& stream);
 
     //  rules have no order. Function placed here because every rule
     //  uses this.
@@ -108,8 +98,7 @@ protected:
     }
 
     inline bool parse_string_option(std::string opt_name,
-                                    std::istringstream& stream,
-                                    bool required = true)
+                                    std::istringstream& stream)
     {
         std::string val;
 
@@ -118,33 +107,27 @@ protected:
             if(val.back() == ',')
                 val.pop_back();
 
-            ld->add_option_to_table(opt_name, val);
+            table_api.add_option(opt_name, val);
             return true;
         }
 
-        if (!required)
-            return true;
-
-        ld->add_comment_to_table("snort.conf missing argument for: " + opt_name + " <int>");
+        table_api.add_comment("snort.conf missing argument for: " + opt_name + " <int>");
         return false;
     }
 
     inline bool parse_int_option(std::string opt_name,
-                                    std::istringstream& stream,
-                                    bool required = true)
+                                    std::istringstream& stream)
     {
         int val;
 
         if(stream >> val)
         {
-            ld->add_option_to_table(opt_name, val);
+            table_api.add_option(opt_name, val);
             return true;
         }
 
-        if (!required)
-            return true;
 
-        ld->add_comment_to_table("snort.conf missing argument for: " + opt_name + " <int>");
+        table_api.add_comment("snort.conf missing argument for: " + opt_name + " <int>");
         return false;
     }
 
@@ -158,7 +141,7 @@ protected:
             return false;
 
         while (stream >> elem && elem != "}")
-            retval = ld->add_list_to_table(list_name, elem) && retval;
+            retval = table_api.add_list(list_name, elem) && retval;
 
         return retval;
     }
@@ -172,12 +155,12 @@ protected:
             return false;
 
         else if(!val.compare("yes"))
-            return ld->add_option_to_table(opt_name, true);
+            return table_api.add_option(opt_name, true);
 
         else if (!val.compare("no"))
-            return ld->add_option_to_table(opt_name, false);
+            return table_api.add_option(opt_name, false);
 
-        ld->add_comment_to_table("Unable to convert_option: " + opt_name + ' ' + val);
+        table_api.add_comment("Unable to convert_option: " + opt_name + ' ' + val);
         return false;
     }
 
@@ -205,12 +188,12 @@ protected:
             {
                 std::ostringstream tmp;
                 tmp << "0x" << std::hex << dig;
-                retval = ld->add_list_to_table(list_name, tmp.str()) && retval;
+                retval = table_api.add_list(list_name, tmp.str()) && retval;
 
             }
             else
             {
-                ld->add_comment_to_table("Unable to convert " + elem +
+                table_api.add_comment("Unable to convert " + elem +
                         "!!  The element must be a single charachter or number between 0 - 255 inclusive");
                 retval = false;
             }
@@ -235,22 +218,19 @@ protected:
         if(tmp.size() > 0)
             tmp.erase(tmp.begin());
 
-        return ld->add_option_to_table("--" + list_name, tmp );
+        return table_api.add_option("--" + list_name, tmp );
     }
 
 
     inline bool parse_deleted_option(std::string opt_name,
-                                        std::istringstream& stream,
-                                        bool required = true)
+                                        std::istringstream& stream)
     {
         std::string val;
-        ld->add_deleted_comment(opt_name);
+        table_api.add_deleted_comment(opt_name);
 
         if(stream >> val)
             return true;
 
-        if (!required)
-            return true;
         return false;
     }
 
@@ -275,16 +255,15 @@ protected:
 
             // now, lets get the next option.
             util::trim(keyword);
-            const ConvertMap* map = util::find_map(rules::rule_api, keyword);
+            const ConvertMap* map = util::find_map(rules::rule_options_api, keyword);
             if (map)
             {
-                ld->unselect_option(); // reset option data...just in case.
-                cv->set_state(map->ctor(cv, ld));
+                cv.set_state(map->ctor(cv));
                 break;
             }
             else
             {
-                ld->bad_rule(stream, keyword);
+                rule_api.bad_rule(stream, keyword);
 
                 // if there is data after this keyword,
                 //    eat everything until end of keyword
@@ -295,14 +274,14 @@ protected:
             }
         }
 
-        // This is definitely a special case to always return true, I have
-        // already taken corrective action by signifyig this is a 'bad rule'.
-        // Additionally, I don't return false earlier becasue, when possible,
-        // I want to parse the entire rule. If I only return false when the
-        // last option was invalid, this would lead to an incosistant and
-        // unreliable return value.  Bottom line, I'm consistant by returning
-        // true and handling "bad" values and directly signifgying to Data
-        // classes this is a bad rule.
+        /*
+         * The reason this function always returns true is because if the
+         * function returned false, the main conversion loop would stop
+         * converting.  However, every part of the rule which can be
+         * converted, should be converted.  Therefore, this function
+         * takes its own invalid conversion action by calling bad_rule(),
+         * and then returns true.
+         */
         return true;
     }
 

@@ -90,8 +90,8 @@ typedef enum {
     ACT_UNESCAPE
 } ActionJSNorm;
 
-static int hex_lookup[256];  // FIXIT 1 / process
-static int valid_chars[256];  // FIXIT 1 / process
+static int hex_lookup[256];
+static int valid_chars[256];
 
 static THREAD_LOCAL char decoded_out[6335];
 
@@ -160,7 +160,7 @@ typedef struct {
 #define S3 S2+1
 #define S4 S3+1
 
-static const JSNorm sfcc_norm[] =   // FIXIT 1 / process
+static const JSNorm sfcc_norm[] =
 {
     { S0+0, '(', S0+1, S0+1, SFCC_ACT_NOP },
     { S0+1, '0', S0+2, S1+0, SFCC_ACT_NOP },
@@ -581,7 +581,7 @@ static int PNorm_scan_fsm(PNormState* s, int c, JSState *js)
 
 int PNormDecode(char *src, uint16_t srclen, char *dst, uint16_t dstlen, uint16_t *bytes_copied, JSState *js)
 {
-    int iRet;
+    int iRet = RET_OK;
     const char *end;
     char *ptr;
     PNormState s;
@@ -606,7 +606,7 @@ int PNormDecode(char *src, uint16_t srclen, char *dst, uint16_t dstlen, uint16_t
         ptr++;
     } 
 
-    dst = s.output.data;
+    //dst = s.output.data;  FIXIT-L dead store; should be?
     *bytes_copied = s.output.len;
 
     return iRet;
@@ -1218,7 +1218,7 @@ static int JSNorm_scan_fsm (JSNormState* s, int c, char *src, uint16_t srclen, c
 
 int JSNormalizeDecode(char *src, uint16_t srclen, char *dst, uint16_t destlen, char **ptr, int *bytes_copied, JSState *js, uint8_t* iis_unicode_map)
 {
-    int iRet;
+    int iRet = RET_OK;
     const char *start, *end;
     JSNormState s;
 
@@ -1254,7 +1254,7 @@ int JSNormalizeDecode(char *src, uint16_t srclen, char *dst, uint16_t destlen, c
         (*ptr)++;
     }
 
-    dst = s.dest.data;
+    //dst = s.dest.data; FIXIT-L dead store; should be?
     *bytes_copied = s.dest.len;
 
     return RET_OK;

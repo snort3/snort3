@@ -51,14 +51,16 @@
 
 using namespace std;
 
+#define s_name "alert_syslog"
+
 //-------------------------------------------------------------------------
 // translation stuff
 //-------------------------------------------------------------------------
 
-static const char* syslog_facilities =
-    "auth | authpriv | daemon | user | "
-    "local0 | local1 | local2 | local3 | "
-    "local4 | local5 | local6 | local7";
+#define syslog_facilities \
+    "auth | authpriv | daemon | user | " \
+    "local0 | local1 | local2 | local3 | " \
+    "local4 | local5 | local6 | local7"
 
 static int get_facility(unsigned fac)
 {
@@ -80,8 +82,8 @@ static int get_facility(unsigned fac)
     return 0;
 }
 
-static const char* syslog_levels = 
-    "emerg | alert | crit | err | warning | notice | info | debug";
+#define syslog_levels  \
+    "emerg | alert | crit | err | warning | notice | info | debug"
 
 static int get_level(unsigned lvl)
 {
@@ -99,8 +101,8 @@ static int get_level(unsigned lvl)
     return 0;
 }
 
-static const char* syslog_options =
-    "cons | ndelay | perror | pid";
+#define syslog_options \
+    "cons | ndelay | perror | pid"
 
 static int get_options(const char* s)
 {
@@ -125,7 +127,7 @@ static int get_options(const char* s)
 // module stuff
 //-------------------------------------------------------------------------
 
-static const Parameter syslog_params[] =
+static const Parameter s_params[] =
 {
     { "facility", Parameter::PT_ENUM, syslog_facilities, "auth",
       "part of priority applied to each message" },
@@ -139,13 +141,17 @@ static const Parameter syslog_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "output event to syslog"
+
 class SyslogModule : public Module
 {
 public:
-    SyslogModule() : Module("alert_syslog", syslog_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    SyslogModule() : Module(s_name, s_help, s_params) { };
+
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 public:
     int facility;
@@ -190,14 +196,14 @@ bool SyslogModule::end(const char*, int, SnortConfig*)
 // alert foo
 //-------------------------------------------------------------------------
 
-// FIXIT can't message be put in Event?
+// FIXIT-M can't message be put in Event?
 static void AlertSyslog(
     int priority, Packet *p, const char *msg, Event *event)
 {
     char event_string[STD_BUF];
     event_string[0] = '\0';
 
-    if ((p != NULL) && IPH_IS_VALID(p))
+    if ((p != NULL) && p->ptrs.ip_api.is_valid())
     {
         if (event != NULL)
         {
@@ -236,33 +242,34 @@ static void AlertSyslog(
                     "<%s> ", PRINT_INTERFACE(DAQ_GetInterfaceSpec()));
         }
 
-        if (protocol_names[GET_IPH_PROTO(p)] != NULL)
+        uint16_t proto = p->get_ip_proto_next();
+        if (protocol_names[proto] != NULL)
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
-                    "{%s} ", protocol_names[GET_IPH_PROTO(p)]);
+                    "{%s} ", protocol_names[proto]);
         }
         else
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
-                    "{%d} ", GET_IPH_PROTO(p));
+                    "{%d} ", proto);
         }
 
-        if (p->frag_flag
-                || ((GET_IPH_PROTO(p) != IPPROTO_TCP)
-                    && (GET_IPH_PROTO(p) != IPPROTO_UDP)))
+        if ((p->ptrs.decode_flags & DECODE_FRAG)
+                || ((proto != IPPROTO_TCP)
+                    && (proto != IPPROTO_UDP)))
         {
             const char *ip_fmt = "%s -> %s";
 
             if (ScObfuscate())
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                        ObfuscateIpToText(GET_SRC_ADDR(p)),
-                        ObfuscateIpToText(GET_DST_ADDR(p)));
+                        ObfuscateIpToText(p->ptrs.ip_api.get_src()),
+                        ObfuscateIpToText(p->ptrs.ip_api.get_dst()));
             }
             else
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                        inet_ntoax(GET_SRC_ADDR(p)), inet_ntoax(GET_DST_ADDR(p)));
+                        inet_ntoax(p->ptrs.ip_api.get_src()), inet_ntoax(p->ptrs.ip_api.get_dst()));
             }
         }
         else
@@ -272,14 +279,14 @@ static void AlertSyslog(
             if (ScObfuscate())
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                        ObfuscateIpToText(GET_SRC_ADDR(p)), p->sp,
-                        ObfuscateIpToText(GET_DST_ADDR(p)), p->dp);
+                        ObfuscateIpToText(p->ptrs.ip_api.get_src()), p->ptrs.sp,
+                        ObfuscateIpToText(p->ptrs.ip_api.get_dst()), p->ptrs.dp);
             }
             else
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                        inet_ntoax(GET_SRC_ADDR(p)), p->sp,
-                        inet_ntoax(GET_DST_ADDR(p)), p->dp);
+                        inet_ntoax(p->ptrs.ip_api.get_src()), p->ptrs.sp,
+                        inet_ntoax(p->ptrs.ip_api.get_dst()), p->ptrs.dp);
             }
         }
 
@@ -287,7 +294,7 @@ static void AlertSyslog(
     }
     else
     {
-        syslog(priority, "%s", msg == NULL ? "ALERT!" : msg);
+        syslog(priority, "%s", msg == NULL ? "ALERT" : msg);
     }
 }
 
@@ -300,7 +307,7 @@ public:
     SyslogLogger(SyslogModule*);
     ~SyslogLogger();
 
-    void alert(Packet*, const char* msg, Event*);
+    void alert(Packet*, const char* msg, Event*) override;
 
 private:
     int priority;
@@ -343,7 +350,8 @@ static LogApi syslog_api
 {
     {
         PT_LOGGER,
-        "alert_syslog",
+        s_name,
+        s_help,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

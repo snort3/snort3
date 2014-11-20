@@ -30,15 +30,38 @@
 #include "framework/codec.h"
 #include "protocols/packet.h"
 #include "codecs/codec_events.h"
-#include "codecs/misc/cd_gtp_module.h"
-#include "protocols/ipv4.h"
-#include "protocols/ipv6.h"
 #include "packet_io/active.h"
-#include "codecs/sf_protocols.h"
 #include "protocols/protocol_ids.h"
+#include "codecs/codec_module.h"
+
+#define CD_GTP_NAME "gtp"
+#define CD_GTP_HELP "support for general-packet-radio-service tunnelling protocol"
 
 namespace
 {
+
+static const RuleMap gtp_rules[] =
+{
+    { DECODE_GTP_MULTIPLE_ENCAPSULATION, "two or more GTP encapsulation layers present" },
+    { DECODE_GTP_BAD_LEN, "GTP header length is invalid" },
+    { 0, nullptr }
+};
+
+class GtpModule : public CodecModule
+{
+public:
+    GtpModule() : CodecModule(CD_GTP_NAME, CD_GTP_HELP) {};
+
+    const RuleMap* get_rules() const override
+    { return gtp_rules; }
+};
+
+
+//-------------------------------------------------------------------------
+// gtp module
+//-------------------------------------------------------------------------
+
+
 
 class GtpCodec : public Codec
 {
@@ -46,12 +69,11 @@ public:
     GtpCodec() : Codec(CD_GTP_NAME){};
     ~GtpCodec(){};
 
-    virtual PROTO_ID get_proto_id() { return PROTO_GTP; };
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
-    virtual bool update(Packet*, Layer*, uint32_t* len);
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&) override;
+    bool update(Packet*, Layer*, uint32_t* len) override;
 };
 
 
@@ -84,24 +106,19 @@ void GtpCodec::get_protocol_ids(std::vector<uint16_t>& v)
  *
  */
 
-bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-    Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     uint8_t  next_hdr_type;
     uint8_t  version;
     uint8_t  ip_ver;
-    const GTPHdr *hdr;
+    uint16_t len;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Start GTP decoding.\n"););
-
-    p->encapsulations++;
-
-    hdr = reinterpret_cast<const GTPHdr *>(raw_pkt);
+    const GTPHdr* const hdr = reinterpret_cast<const GTPHdr *>(raw.data);
 
 
 
     /*Check the length*/
-    if (raw_len < GTP_MIN_LEN)
+    if (raw.len < GTP_MIN_LEN)
        return false;
     /* We only care about PDU*/
     if ( hdr->type != 255)
@@ -117,22 +134,20 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     case 0: /*GTP v0*/
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "GTP v0 packets.\n"););
 
-        lyr_len = GTP_V0_HEADER_LEN;
+        len = GTP_V0_HEADER_LEN;
         /*Check header fields*/
-        if (raw_len < lyr_len)
+        if (raw.len < len)
         {
-            codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
+            codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
             return false;
         }
 
-        p->proto_bits |= PROTO_BIT__GTP;
-
         /*Check the length field. */
-        if (raw_len != ((unsigned int)ntohs(hdr->length) + lyr_len))
+        if (raw.len != ((unsigned int)ntohs(hdr->length) + len))
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Calculated length %d != %d in header.\n",
-                    raw_len - lyr_len, ntohs(hdr->length)););
-            codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
+                    raw.len - len, ntohs(hdr->length)););
+            codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
             return false;
         }
 
@@ -144,57 +159,59 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         if (hdr->flag & 0x07)
         {
 
-            lyr_len =  GTP_V1_HEADER_LEN;
+            len =  GTP_V1_HEADER_LEN;
 
             /*Check optional fields*/
-            if (raw_len < lyr_len)
+            if (raw.len < GTP_V1_HEADER_LEN)
             {
-                codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
+                codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
                 return false;
             }
-            next_hdr_type = *(raw_pkt + lyr_len - 1);
+            next_hdr_type = *(raw.data + len - 1);
 
             /*Check extension headers*/
             while (next_hdr_type)
             {
                 uint16_t ext_hdr_len;
                 /*check length before reading data*/
-                if (raw_len < (uint32_t)(lyr_len + 4))
+                if (raw.len < (uint32_t)(len + 4))
                 {
-                    codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
+                    codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
                     return false;
                 }
 
-                ext_hdr_len = *(raw_pkt + lyr_len);
+                ext_hdr_len = *(raw.data + len);
 
                 if (!ext_hdr_len)
                 {
-                    codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
+                    codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
                     return false;
                 }
                 /*Extension header length is a unit of 4 octets*/
-                lyr_len += ext_hdr_len * 4;
+                len += ext_hdr_len * 4;
 
                 /*check length before reading data*/
-                if (raw_len < lyr_len)
+                if (raw.len < len)
                 {
-                    codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
+                    codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
                     return false;
                 }
-                next_hdr_type = *(raw_pkt + lyr_len - 1);
+                next_hdr_type = *(raw.data + len - 1);
             }
         }
         else
-            lyr_len = GTP_MIN_LEN;
+            len = GTP_MIN_LEN;
 
-        p->proto_bits |= PROTO_BIT__GTP;
+
+        codec.lyr_len = len;
+        codec.proto_bits |= PROTO_BIT__GTP;
 
         /*Check the length field. */
-        if (raw_len != ((unsigned int)ntohs(hdr->length) + GTP_MIN_LEN))
+        if (raw.len != ((unsigned int)ntohs(hdr->length) + GTP_MIN_LEN))
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Calculated length %d != %d in header.\n",
-                    raw_len - GTP_MIN_LEN, ntohs(hdr->length)););
-            codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
+                    raw.len - GTP_MIN_LEN, ntohs(hdr->length)););
+            codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
             return false;
         }
 
@@ -209,57 +226,52 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Active_SetTunnelBypass();
 
 
-    if (raw_len > 0)
+    if (raw.len > 0)
     {
-        p->packet_flags |= PKT_UNSURE_ENCAP;
+        codec.codec_flags |= CODEC_ENCAP_LAYER;
 
-        ip_ver = *(raw_pkt + GTP_MIN_LEN) & 0xF0;
+        ip_ver = *(raw.data + GTP_MIN_LEN) & 0xF0;
         if (ip_ver == 0x40)
-            next_prot_id = ipv4::prot_id(); 
+            codec.next_prot_id = IPPROTO_ID_IPIP;
         else if (ip_ver == 0x60)
-            next_prot_id = ipv6::prot_id();
+            codec.next_prot_id = IPPROTO_ID_IPV6;
     }
     
     return true;
 }
 
 
-
 /******************************************************************
  ******************** E N C O D E R  ******************************
  ******************************************************************/
  
-static inline bool update_GTP_length(GTPHdr* h, int gtp_total_len )
+static inline bool update_GTP_length(GTPHdr* const gtph, int gtp_total_len )
 {
     /*The first 3 bits are version number*/
-    uint8_t version = (h->flag & 0xE0) >> 5;
+    const uint8_t version = (gtph->flag & 0xE0) >> 5;
     switch (version)
     {
     case 0: /*GTP v0*/
-        h->length = htons((uint16_t)(gtp_total_len - GTP_V0_HEADER_LEN));
+        gtph->length = htons((uint16_t)(gtp_total_len - GTP_V0_HEADER_LEN));
         break;
     case 1: /*GTP v1*/
-        h->length = htons((uint16_t)(gtp_total_len - GTP_MIN_LEN));
+        gtph->length = htons((uint16_t)(gtp_total_len - GTP_MIN_LEN));
         break;
     default:
         return false;
     }
     return false;
-
 }
 
-bool GtpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
+bool GtpCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer& buf)
 {
-    int n = enc->p->layers[enc->layer-1].length;
-
-    if (!update_buffer(out, n))
+    if (buf.allocate(raw_len))
         return false;
 
-    const GTPHdr *hi = reinterpret_cast<const GTPHdr*>(raw_in);
-    GTPHdr *ho = reinterpret_cast<GTPHdr*>(out->base);
-    memcpy(ho, hi, n);
-
-    return update_GTP_length(ho, out->end);
+    GTPHdr* const gtph = reinterpret_cast<GTPHdr*>(buf.base);
+    memcpy(gtph, raw_in, raw_len);
+    return update_GTP_length(gtph, buf.size());
 }
 
 bool GtpCodec::update (Packet*, Layer* lyr, uint32_t* len)
@@ -274,30 +286,23 @@ bool GtpCodec::update (Packet*, Layer* lyr, uint32_t* len)
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new GtpModule;
-}
+{ return new GtpModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new GtpCodec();
-}
+{ return new GtpCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi gtp_api =
 {
     {
         PT_CODEC,
         CD_GTP_NAME,
+        CD_GTP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

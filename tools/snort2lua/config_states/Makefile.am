@@ -4,6 +4,7 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 noinst_LIBRARIES = libconfig_states.a
 
 libconfig_states_a_SOURCES = \
+config_alertfile.cc \
 config_binding.cc \
 config_checksums.cc \
 config_classification.cc \
@@ -24,6 +25,7 @@ config_one_string_option.cc \
 config_order.cc \
 config_paf_max.cc \
 config_ppm.cc \
+config_policy_id.cc \
 config_profile.cc \
 config_reference.cc \
 config_response.cc \

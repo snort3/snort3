@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2005-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,10 +28,14 @@
 
 #include <string.h>
 
+#include "utils/stats.h"
 #include "perf_monitor/perf.h"
-#include "packet_io/sfdaq.h"
 #include "protocols/ipv4.h"
+#include "protocols/ipv4_options.h"
 #include "protocols/tcp.h"
+#include "protocols/tcp_options.h"
+#include "protocols/icmp4.h"
+#include "protocols/icmp6.h"
 #include "stream/stream.h"
 
 typedef enum {
@@ -57,7 +61,7 @@ typedef enum {
     PC_MAX
 } PegCounts;
 
-static const char* pegName[PC_MAX] = {
+static const char* const pegName[PC_MAX] = {
     "ip4.trim",
     "ip4.tos",
     "ip4.df",
@@ -104,9 +108,11 @@ int Norm_Packet (NormalizerConfig* c, Packet* p)
 
     while ( lyr > 0 )
     {
-        PROTO_ID proto = p->layers[--lyr].proto;
-        NormalFunc n = c->normalizers[proto];
-        if ( n ) changes = n(c, p, lyr, changes);
+        uint16_t proto = p->layers[--lyr].prot_id;
+        NormalFunc n = c->normalizers[PacketManager::proto_id(proto)];
+
+        if ( n )
+            changes = n(c, p, lyr, changes);
     }
 
     if ( changes > 0 )
@@ -128,7 +134,7 @@ int Norm_Packet (NormalizerConfig* c, Packet* p)
 // TCP options count and length are a notable exception.
 //
 // also note that checksums are not calculated here.  they are only
-// calculated once after all normalizations are done (here, stream5)
+// calculated once after all normalizations are done (here, stream)
 // and any replacements are made.
 //-----------------------------------------------------------------------
 
@@ -152,7 +158,7 @@ static int Norm_Eth (Packet * p, uint8_t layer, int changes)
 static int Norm_IP4 (
     NormalizerConfig* c, Packet * p, uint8_t layer, int changes)
 {
-    IPHdr* h = (IPHdr*)(p->layers[layer].start);
+    IP4Hdr* h = (IP4Hdr*)const_cast<uint8_t*>(p->layers[layer].start);
     uint16_t fragbits = ntohs(h->ip_off);
     uint16_t origbits = fragbits;
 
@@ -214,18 +220,18 @@ static int Norm_IP4 (
         if ( h->ip_ttl < ScMinTTL() )
         {
             h->ip_ttl = ScNewTTL();
-            p->error_flags &= ~PKT_ERR_BAD_TTL;
+            p->ptrs.decode_flags &= ~DECODE_ERR_BAD_TTL;
             normStats[PC_IP4_TTL]++;
             sfBase.iPegs[PERF_COUNT_IP4_TTL]++;
             changes++;
         }
     }
-    if ( p->layers[layer].length > IP_HEADER_LEN )
+    if ( p->layers[layer].length > ip::IP4_HEADER_LEN )
     {
-        uint8_t* opts = p->layers[layer].start + IP_HEADER_LEN;
-        uint8_t len = p->layers[layer].length - IP_HEADER_LEN;
+        uint8_t* opts = const_cast<uint8_t*>(p->layers[layer].start) + ip::IP4_HEADER_LEN;
+        uint8_t len = p->layers[layer].length - ip::IP4_HEADER_LEN;
         // expect len > 0 because IHL yields a multiple of 4
-        memset(opts, IPOPT_NOP, len);
+        memset(opts, static_cast<uint8_t>(ip::IPOptionCodes::NOP), len);
         normStats[PC_IP4_OPTS]++;
         sfBase.iPegs[PERF_COUNT_IP4_OPTS]++;
         changes++;
@@ -241,9 +247,9 @@ static int Norm_ICMP4 (
     ICMPHdr* h = (ICMPHdr*)(p->layers[layer].start);
 
     if ( (h->type == ICMP_ECHO || h->type == ICMP_ECHOREPLY) &&
-         (h->code != icmp4::IcmpCode::ECHO_CODE) )
+         (h->code != icmp::IcmpCode::ECHO_CODE) )
     {
-        h->code =  icmp4::IcmpCode::ECHO_CODE;
+        h->code =  icmp::IcmpCode::ECHO_CODE;
         normStats[PC_ICMP4_ECHO]++;
         sfBase.iPegs[PERF_COUNT_ICMP4_ECHO]++;
         changes++;
@@ -256,14 +262,14 @@ static int Norm_ICMP4 (
 static int Norm_IP6 (
     NormalizerConfig* c, Packet * p, uint8_t layer, int changes)
 {
-    ipv6::IP6RawHdr* h = (ipv6::IP6RawHdr*)(p->layers[layer].start);
+    ip::IP6Hdr* h = (ip::IP6Hdr*)(p->layers[layer].start);
 
     if ( Norm_IsEnabled(c, NORM_IP6_TTL) )
     {
-        if ( h->ip6hops < ScMinTTL() )
+        if ( h->ip6_hoplim < ScMinTTL() )
         {
-            h->ip6hops = ScNewTTL();
-            p->error_flags &= ~PKT_ERR_BAD_TTL;
+            h->ip6_hoplim = ScNewTTL();
+            p->ptrs.decode_flags &= ~DECODE_ERR_BAD_TTL;
             normStats[PC_IP6_TTL]++;
             sfBase.iPegs[PERF_COUNT_IP6_TTL]++;
             changes++;
@@ -279,11 +285,11 @@ static int Norm_ICMP6 (
 {
     ICMPHdr* h = (ICMPHdr*)(p->layers[layer].start);
 
-    if ( ((uint16_t)h->type == icmp6::Icmp6Types::ECHO ||
-          (uint16_t)h->type == icmp6::Icmp6Types::REPLY) &&
+    if ( ((uint16_t)h->type == icmp::Icmp6Types::ECHO_6 ||
+          (uint16_t)h->type == icmp::Icmp6Types::REPLY_6) &&
          (h->code != 0) )
     {
-        h->code = static_cast<icmp4::IcmpCode>(0);
+        h->code = static_cast<icmp::IcmpCode>(0);
         normStats[PC_ICMP6_ECHO]++;
         sfBase.iPegs[PERF_COUNT_ICMP6_ECHO]++;
         changes++;
@@ -308,7 +314,7 @@ typedef struct
 static int Norm_IP6_Opts (
     NormalizerConfig*, Packet * p, uint8_t layer, int changes)
 {
-    uint8_t* b = p->layers[layer].start;
+    uint8_t* b = const_cast<uint8_t*>(p->layers[layer].start);
     ExtOpt* x = (ExtOpt*)b;
 
     // whatever was here, turn it into one PADN option
@@ -336,7 +342,7 @@ static int Norm_UDP (Packet * p, uint8_t layer, int changes)
 
 static inline void NopDaOpt (uint8_t* opt, uint8_t len)
 {
-    memset(opt, TCPOPT_NOP, len);
+    memset(opt, (uint8_t)tcp::TcpOptCode::NOP , len);
 }
 
 #define TS_ECR_OFFSET 6
@@ -344,13 +350,13 @@ static inline void NopDaOpt (uint8_t* opt, uint8_t len)
 
 static inline int Norm_TCPOptions (
     NormalizerConfig* config,
-    uint8_t* opts, size_t len, const TCPHdr* h, uint8_t numOpts, int changes)
+    uint8_t* opts, size_t len, const tcp::TCPHdr* h, uint8_t validated_len, int changes)
 {
     size_t i = 0;
-    uint8_t c = 0;
 
-    while ( (i < len) && (opts[i] != TCPOPT_EOL) &&
-        (c++ < numOpts) )
+    while ( (i < len) &&
+            (opts[i] != (uint8_t)tcp::TcpOptCode::EOL) &&
+            (i < validated_len) )
     {
         uint8_t olen = ( opts[i] <= 1 ) ? 1 : opts[i+1];
 
@@ -360,13 +366,13 @@ static inline int Norm_TCPOptions (
         if ( i + olen > len)
             break;
 
-        switch ( opts[i] )
+        switch ( static_cast<tcp::TcpOptCode>(opts[i]) )
         {
-        case TCPOPT_NOP:
+        case tcp::TcpOptCode::NOP:
             break;
 
-        case TCPOPT_MAXSEG:
-        case TCPOPT_WSCALE:
+        case tcp::TcpOptCode::MAXSEG:
+        case tcp::TcpOptCode::WSCALE:
             if ( !(h->th_flags & TH_SYN) )
             {
                 NopDaOpt(opts+i, olen);
@@ -376,7 +382,7 @@ static inline int Norm_TCPOptions (
             }
             break;
 
-        case TCPOPT_TIMESTAMP:
+        case tcp::TcpOptCode::TIMESTAMP:
             if ( !(h->th_flags & TH_ACK) &&
                 // use memcmp because opts have arbitrary alignment
                 memcmp(opts+i+TS_ECR_OFFSET, MAX_EOL_PAD, TS_ECR_LENGTH) )
@@ -411,12 +417,13 @@ static inline int Norm_TCPOptions (
 }
 
 static inline int Norm_TCPPadding (
-    uint8_t* opts, size_t len, uint8_t numOpts, int changes)
+    uint8_t* opts, size_t len, uint8_t validated_len, int changes)
 {
     size_t i = 0;
-    uint8_t c = 0;
 
-    while ( (i < len) && (opts[i] != TCPOPT_EOL) && (c++ < numOpts) )
+    while ( (i < len) &&
+            (opts[i] != (uint8_t)tcp::TcpOptCode::EOL) &&
+            (i < validated_len) )
     {
         i += ( opts[i] <= 1 ) ? 1 : opts[i+1];
     }
@@ -433,7 +440,7 @@ static inline int Norm_TCPPadding (
 static int Norm_TCP (
     NormalizerConfig* c, Packet * p, uint8_t layer, int changes)
 {
-    TCPHdr* h = (TCPHdr*)(p->layers[layer].start);
+    tcp::TCPHdr* h = (tcp::TCPHdr*)(p->layers[layer].start);
 
     if ( h->th_offx2 & TH_RSV )
     {
@@ -479,9 +486,9 @@ static int Norm_TCP (
             changes++;
         }
         else if ( Norm_IsEnabled(c, NORM_TCP_URP) &&
-            (ntohs(h->th_urp) > p->dsize) )
+            (h->urp() > p->dsize) )
         {
-            h->th_urp = ntohs(p->dsize);
+            h->set_urp(p->dsize);
             normStats[PC_TCP_URP]++;
             sfBase.iPegs[PERF_COUNT_TCP_URP]++;
             changes++;
@@ -494,19 +501,25 @@ static int Norm_TCP (
         sfBase.iPegs[PERF_COUNT_TCP_URG]++;
         changes++;
     }
-    if ( p->tcp_options_len > 0 )
+
+    uint8_t tcp_options_len = h->options_len();
+
+    if ( tcp_options_len > 0 )
     {
-        uint8_t* opts = p->layers[layer].start + TCP_HEADER_LEN;
+        const Layer& lyr = p->layers[layer];
+        uint8_t* opts = const_cast<uint8_t*>(lyr.start) + tcp::TCP_MIN_HEADER_LEN;
+        // lyr.length only includes valid tcp options
+        uint8_t valid_opts_len = lyr.length - tcp::TCP_MIN_HEADER_LEN;
 
         if ( Norm_IsEnabled(c, NORM_TCP_OPT) )
         {
-            changes = Norm_TCPOptions(c, opts, p->tcp_options_len,
-                h, p->tcp_option_count, changes);
+            changes = Norm_TCPOptions(c, opts, tcp_options_len,
+                h, valid_opts_len, changes);
         }
         else
         {
-            changes = Norm_TCPPadding(opts, p->tcp_options_len,
-                p->tcp_option_count, changes);
+            changes = Norm_TCPPadding(opts, tcp_options_len,
+                valid_opts_len, changes);
         }
     }
     return changes;
@@ -520,10 +533,27 @@ void Norm_SumStats (void)
     Stream_SumNormalizationStats();
 }
 
+// need to output the label heading only if not already done
+// the label is emitted only if any counts are non-zero
+// FIXIT-L would prefer to hide this logic in the stats methods somehow
+static bool labeled()
+{
+    unsigned i = 0, max = array_size(pegName);
+
+    while ( i < max && !gnormStats[i] )
+        ++i;
+
+    return ( i < max );
+}
+
 void Norm_PrintStats (const char* name)
 {
     show_stats((PegCount*)&gnormStats, pegName, array_size(pegName), name);
-    Stream_PrintNormalizationStats();
+
+    if ( labeled() )
+        name = nullptr;
+
+    Stream_PrintNormalizationStats(name);
 }
 
 void Norm_ResetStats (void)
@@ -536,49 +566,31 @@ void Norm_ResetStats (void)
 
 int Norm_SetConfig (NormalizerConfig* nc)
 {
-    if ( !DAQ_CanReplace() )
-    {
-        // FIXIT output only once
-        //LogMessage("WARNING: normalizations disabled because DAQ"
-        //    " can't replace packets.\n");
-        nc->normalizer_flags = 0x0;
-        return -1;
-    }
     if ( !nc->normalizer_flags )
     {
         return 0;
     }
-    if ( Norm_IsEnabled(nc, NORM_IP4) )
+    if ( Norm_IsEnabled(nc, (NormFlags)NORM_IP4_ANY) )
     {
-        nc->normalizers[PROTO_IP4] = Norm_IP4;
-    }
-    if ( Norm_IsEnabled(nc, NORM_IP4_TRIM) )
-    {
-        if ( !DAQ_CanInject() )
-        {
-            LogMessage("WARNING: normalize_ip4: trim disabled since DAQ "
-                "can't inject packets.\n");
-            Norm_Disable(nc, NORM_IP4_TRIM);
-        }
+        nc->normalizers[PacketManager::proto_id(ETHERTYPE_IPV4)] = Norm_IP4;
     }
     if ( Norm_IsEnabled(nc, NORM_ICMP4) )
     {
-        nc->normalizers[PROTO_ICMP4] = Norm_ICMP4;
+        nc->normalizers[PacketManager::proto_id(IPPROTO_ID_ICMPV4)] = Norm_ICMP4;
     }
-    if ( Norm_IsEnabled(nc, NORM_IP6) )
+    if ( Norm_IsEnabled(nc, (NormFlags)NORM_IP6_ANY) )
     {
-        nc->normalizers[PROTO_IP6] = Norm_IP6;
-        nc->normalizers[PROTO_IP6_HOP_OPTS] = Norm_IP6_Opts;
-        nc->normalizers[PROTO_IP6_DST_OPTS] = Norm_IP6_Opts;
+        nc->normalizers[PacketManager::proto_id(IPPROTO_ID_IPV6)] = Norm_IP6;
+        nc->normalizers[PacketManager::proto_id(IPPROTO_ID_HOPOPTS)] = Norm_IP6_Opts;
+        nc->normalizers[PacketManager::proto_id(IPPROTO_ID_DSTOPTS)] = Norm_IP6_Opts;
     }
     if ( Norm_IsEnabled(nc, NORM_ICMP6) )
     {
-        nc->normalizers[PROTO_ICMP6] = Norm_ICMP6;
+        nc->normalizers[PacketManager::proto_id(IPPROTO_ID_ICMPV6)] = Norm_ICMP6;
     }
-    if ( Norm_IsEnabled(nc, NORM_TCP) )
+    if ( Norm_IsEnabled(nc, (NormFlags)NORM_TCP_ANY) )
     {
-        nc->normalizers[PROTO_TCP] = Norm_TCP;
+        nc->normalizers[PacketManager::proto_id(IPPROTO_ID_TCP)] = Norm_TCP;
     }
     return 0;
 }
-

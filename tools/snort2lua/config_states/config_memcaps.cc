@@ -1,30 +1,29 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // config_memcaps.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
-#include "utils/s2l_util.h"
+#include "helpers/converter.h"
+#include "helpers/s2l_util.h"
 
 namespace config
 {
@@ -38,7 +37,7 @@ template<const std::string *snort_option,
 class Memcap : public ConversionState
 {
 public:
-    Memcap(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Memcap(Converter& c) : ConversionState(c) {};
     virtual ~Memcap() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -57,10 +56,10 @@ bool Memcap<snort_option, lua_table, lua_option>::convert(std::istringstream& da
         return false;
     }
 
-    ld->open_table(*lua_table);
-    bool retval1 = ld->add_diff_option_comment("config " + *snort_option + ":", "event_filter_memcap");
+    table_api.open_table(*lua_table);
+    bool retval1 = table_api.add_diff_option_comment("config " + *snort_option + ":", "event_filter_memcap");
     bool retval2 = parse_int_option(*lua_option, data_stream);
-    ld->close_table();
+    table_api.close_table();
 
     // stop parsing, even if additional options available
     data_stream.setstate(std::ios::eofbit);
@@ -70,9 +69,9 @@ bool Memcap<snort_option, lua_table, lua_option>::convert(std::istringstream& da
 template<const std::string *snort_option,
         const std::string* lua_table,
         const std::string* lua_option>
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor(Converter& c)
 {
-    return new Memcap<snort_option, lua_table, lua_option>(cv, ld);
+    return new Memcap<snort_option, lua_table, lua_option>(c);
 }
 
 

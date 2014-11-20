@@ -23,22 +23,22 @@
 #ifndef SFTHRESHOLD_H
 #define SFTHRESHOLD_H
 
-#include "sfthd.h"
-#include "ipv6_port.h"
+struct sfip_t;
+struct THDX_STRUCT;
+struct ThresholdObjects;
 
-typedef struct _ThresholdConfig
+struct ThresholdConfig
 {
     int memcap;
     int enabled;
     ThresholdObjects *thd_objs;
-
-} ThresholdConfig;
+};
 
 ThresholdConfig * ThresholdConfigNew(void);
-void ThresholdConfigFree(ThresholdConfig *);
+void ThresholdConfigFree(ThresholdConfig*);
 void sfthreshold_reset(void);
-int sfthreshold_create(struct SnortConfig*, ThresholdConfig *, THDX_STRUCT *);
-int sfthreshold_test(unsigned int, unsigned int, snort_ip_p, snort_ip_p, long curtime);
+int sfthreshold_create(struct SnortConfig*, ThresholdConfig*, THDX_STRUCT*);
+int sfthreshold_test(unsigned int, unsigned int, const sfip_t*, const sfip_t*, long curtime);
 void print_thresholding(ThresholdConfig*, unsigned shutdown);
 void sfthreshold_reset_active(void);
 void sfthreshold_free(void);

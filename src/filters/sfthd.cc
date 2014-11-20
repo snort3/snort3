@@ -44,7 +44,8 @@
 #include <string.h>
 #include <netinet/in.h>
 
-#include "sfip/ipv6_port.h"
+#include "sfip/sfip_t.h"
+#include "sfip/sf_ipvar.h"
 #include "sflsq.h"
 #include "sfghash.h"
 #include "sfxhash.h"
@@ -453,18 +454,7 @@ static int sfthd_create_threshold_local(
     }
 
     /*
-      If sfthd_node list is empty - add as head node
-    */
-    if( !sfthd_item->sfthd_node_list->count )
-    {
-#ifdef THD_DEBUG
-            printf("Threshold node added to head of list\n");fflush(stdout);
-#endif
-        sflist_add_head(sfthd_item->sfthd_node_list,sfthd_node);
-    }
-
-    /*
-      else add the sfthd_node using priority to determine where in the list
+      add the sfthd_node using priority to determine where in the list
       it belongs
 
       3.0 we can have only 1 threshold object but several suppression objects
@@ -475,16 +465,16 @@ static int sfthd_create_threshold_local(
       list, the tail node is either a supprssion node or the only pure
       thresholding node.
     */
-    else
     {
         SF_LNODE* lnode;
+        NODE_DATA ndata;
 
         /* Walk the list and insert based on priorities if suppress */
-        for( lnode = sflist_first_node(sfthd_item->sfthd_node_list);
-             lnode;
-             lnode = sflist_next_node(sfthd_item->sfthd_node_list) )
+        for( ndata = sflist_first(sfthd_item->sfthd_node_list, &lnode);
+             ndata;
+             ndata = sflist_next(&lnode) )
         {
-            THD_NODE* sfthd_n = (THD_NODE*)lnode->ndata;
+            THD_NODE* sfthd_n = (THD_NODE*)ndata;
 
             /* check if the new node is higher priority */
             if( sfthd_node->priority > sfthd_n->priority  )
@@ -508,6 +498,17 @@ static int sfthd_create_threshold_local(
                 return 0;
             }
         }
+    }
+
+    /*
+     sfthd_node list is empty - add as head node
+     */
+    assert( !sfthd_item->sfthd_node_list->count );
+    {
+#ifdef THD_DEBUG
+        printf("Threshold node added to head of list\n");fflush(stdout);
+#endif
+        sflist_add_head(sfthd_item->sfthd_node_list,sfthd_node);
     }
 
     return 0;
@@ -627,16 +628,17 @@ the current event should be logged or dropped.
  --- Local and Global Thresholding is setup here  ---
 
 */
-int sfthd_create_threshold(SnortConfig *sc,
-                           ThresholdObjects *thd_objs,
-                           unsigned gen_id,
-                           unsigned sig_id,
-                           int tracking,
-                           int type,
-                           int priority,
-                           int count,
-                           int seconds,
-                           sfip_var_t* ip_address)
+int sfthd_create_threshold(
+    SnortConfig *sc,
+    ThresholdObjects *thd_objs,
+    unsigned gen_id,
+    unsigned sig_id,
+    int tracking,
+    int type,
+    int priority,
+    int count,
+    int seconds,
+    sfip_var_t* ip_address)
 {
     //allocate memory fpr sfthd_array if needed.
     PolicyId policyId = get_network_policy()->policy_id;
@@ -655,7 +657,7 @@ int sfthd_create_threshold(SnortConfig *sc,
     sfthd_node.seconds   = seconds;
     sfthd_node.ip_address= ip_address;
 
-    // FIXIT convert to std::vector
+    // FIXIT-L convert to std::vector
     sfDynArrayCheckBounds ((void **)&thd_objs->sfthd_garray, policyId, &thd_objs->numPoliciesAllocated);
     if (thd_objs->sfthd_garray[policyId] == NULL)
     {
@@ -687,7 +689,7 @@ static char * printIP(unsigned u )
 #endif
 
 int sfthd_test_rule(SFXHASH *rule_hash, THD_NODE *sfthd_node,
-                    snort_ip_p sip, snort_ip_p dip, long curtime)
+                    const sfip_t *sip, const sfip_t *dip, long curtime)
 {
     int status;
 
@@ -701,7 +703,7 @@ int sfthd_test_rule(SFXHASH *rule_hash, THD_NODE *sfthd_node,
 
 static inline int sfthd_test_suppress (
     THD_NODE* sfthd_node,
-    snort_ip_p ip)
+    const sfip_t *ip)
 {
     if ( !sfthd_node->ip_address ||
          sfvar_ip_in(sfthd_node->ip_address, ip) )
@@ -887,15 +889,15 @@ static inline int sfthd_test_non_suppress(
  */
 int sfthd_test_local(
     SFXHASH *local_hash,
-    THD_NODE   * sfthd_node,
-    snort_ip_p   sip,
-    snort_ip_p   dip,
-    time_t       curtime )
+    THD_NODE *sfthd_node,
+    const sfip_t *sip,
+    const sfip_t *dip,
+    time_t curtime )
 {
     THD_IP_NODE_KEY key;
-    THD_IP_NODE     data,*sfthd_ip_node;
-    int             status=0;
-    snort_ip_p      ip;
+    THD_IP_NODE data,*sfthd_ip_node;
+    int status=0;
+    const sfip_t *ip;
 
     PolicyId policy_id = get_network_policy()->policy_id;
 
@@ -942,7 +944,7 @@ int sfthd_test_local(
 
     /* Set up the key */
     key.policyId = policy_id;
-    key.ip     = IP_VAL(ip);
+    key.ip = *ip;
     key.thd_id = sfthd_node->thd_id;
 
     /* Set up a new data element */
@@ -981,16 +983,17 @@ int sfthd_test_local(
  */
 static inline int sfthd_test_global(
     SFXHASH *global_hash,
-    THD_NODE   * sfthd_node,
-    unsigned     sig_id,     /* from current event */
-    snort_ip_p   sip,        /* " */
-    snort_ip_p   dip,        /* " */
-    time_t       curtime )
+    THD_NODE *sfthd_node,
+    unsigned sig_id,     /* from current event */
+    const sfip_t *sip,        /* " */
+    const sfip_t *dip,        /* " */
+    time_t curtime )
 {
     THD_IP_GNODE_KEY key;
-    THD_IP_NODE      data, *sfthd_ip_node;
-    int              status=0;
-    snort_ip_p       ip;
+    THD_IP_NODE data;
+    THD_IP_NODE *sfthd_ip_node;
+    int status=0;
+    const sfip_t *ip;
 
     PolicyId policy_id = get_network_policy()->policy_id;
 
@@ -1032,7 +1035,7 @@ static inline int sfthd_test_global(
     */
 
     /* Set up the key */
-    key.ip     = IP_VAL(ip);
+    key.ip = *ip;
     key.gen_id = sfthd_node->gen_id;
     key.sig_id = sig_id;
     key.policyId = policy_id;
@@ -1090,15 +1093,15 @@ int sfthd_test_threshold(
     THD_STRUCT *thd,
     unsigned   gen_id,
     unsigned   sig_id,
-    snort_ip_p sip,
-    snort_ip_p dip,
+    const sfip_t *sip,
+    const sfip_t *dip,
     long       curtime )
 {
     tThdItemKey key;
-    SFGHASH  * sfthd_hash;
-    THD_ITEM * sfthd_item;
-    THD_NODE * sfthd_node;
-    THD_NODE * g_thd_node = NULL;
+    SFGHASH  *sfthd_hash;
+    THD_ITEM *sfthd_item;
+    THD_NODE *sfthd_node;
+    THD_NODE *g_thd_node = NULL;
 #ifdef THD_DEBUG
     int cnt;
 #endif
@@ -1169,9 +1172,11 @@ int sfthd_test_threshold(
 #ifdef THD_DEBUG
     cnt=0;
 #endif
-    for (sfthd_node = (THD_NODE *)sflist_first(sfthd_item->sfthd_node_list);
+    SF_LNODE* cursor;
+
+    for (sfthd_node = (THD_NODE *)sflist_first(sfthd_item->sfthd_node_list, &cursor);
          sfthd_node != NULL;
-         sfthd_node = (THD_NODE *)sflist_next(sfthd_item->sfthd_node_list))
+         sfthd_node = (THD_NODE *)sflist_next(&cursor))
     {
 #ifdef THD_DEBUG
         cnt++;
@@ -1290,10 +1295,11 @@ int sfthd_show_objects(ThresholdObjects *thd_objs)
             /* For each permanent thresholding object, test/add/update the thd object */
             /* We maintain a list of thd objects for each gen_id+sig_id */
             /* each object has it's own unique thd_id */
+            SF_LNODE* cursor;
 
-            for( sfthd_node  = (THD_NODE*)sflist_first(sfthd_item->sfthd_node_list);
+            for( sfthd_node  = (THD_NODE*)sflist_first(sfthd_item->sfthd_node_list, &cursor);
                  sfthd_node != 0;
-                 sfthd_node = (THD_NODE*)sflist_next(sfthd_item->sfthd_node_list) )
+                 sfthd_node = (THD_NODE*)sflist_next(&cursor) )
             {
                 printf(".........THD_ID  =%d\n",sfthd_node->thd_id );
 

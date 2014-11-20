@@ -1,0 +1,44 @@
+Parameters are given with this format:
+
+    type name = default: help { range }
+
+The following types are used:
+
+* *addr*: any valid IP4 or IP6 address or CIDR
+* *addr_list*: a space separated list of addr values
+* *bit_list*: a list of consecutive integer values from 1 to the range
+  maximum
+* *bool*: true or false
+* *enum*: a string selected from the given range
+* *implied*: a IPS rule option that takes no value but means true
+* *int*: a whole number in the given range
+* *ip4*: an IP4 address or CIDR
+* *mac*: an ethernet address with the form 01:02:03:04:05:06
+* *multi*: one or more space separated strings from the given range
+* *port*: an int in the range 0:65535 indicating a TCP or UDP port number
+* *real*: a real number in the given range
+* *select*: a string selected from the given range
+
+The parameter name may be adorned in various ways to indicate additional
+information about the type and use of the parameter:
+
+* For Lua configuration (not IPS rules), if the name ends with [] it is
+  a list item and can be repeated.
+* For IPS rules only, names starting with ~ indicate positional
+  parameters.  The names of such parameters do not appear in the rule.
+* IPS rules may also have a wild card parameter, which is indicated by a
+  *.  Only used for metadata that Snort ignores.
+* The snort module has command line options starting with a -.
+
+Some additional details to note:
+
+* Table and variable names are case sensitive; use lower case only.
+* String values are case sensitive too; use lower case only.
+* Numeric ranges may be of the form low:high where low and high are
+  bounds included in the range.  If either is omitted, there is no hard
+  bound. E.g. 0: means any x where x >= 0.
+* Strings may have a numeric range indicating a length limit; otherwise
+  there is no hard limit.
+* bit_list is typically used to store a set of byte, port, or VLAN ID
+  values.
+

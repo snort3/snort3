@@ -1,22 +1,21 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // kws_rule.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
@@ -24,8 +23,8 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
-#include "utils/s2l_util.h"
+#include "helpers/converter.h"
+#include "helpers/s2l_util.h"
 #include "rule_states/rule_api.h"
 
 
@@ -38,7 +37,7 @@ namespace
 class RuleHeader : public ConversionState
 {
 public:
-    explicit RuleHeader(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    explicit RuleHeader(Converter& c) : ConversionState(c) {};
     virtual ~RuleHeader() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -56,13 +55,13 @@ bool RuleHeader::convert(std::istringstream& data_stream)
 
     while (in >> hdr_data)
     {
-        ld->add_hdr_data(hdr_data);
+        rule_api.add_hdr_data(hdr_data);
     }
 
 
     // Now, remove the last ')' and anything beyond. We will automatically
     // add that part back when printing each rule.
-    std::streamoff curr_pos = data_stream.tellg();
+    const std::istringstream::off_type curr_pos = data_stream.tellg();
     std::string rule_string = data_stream.str();
     std::size_t end_pos = rule_string.rfind(')');
     rule_string = rule_string.substr(0, end_pos);
@@ -79,19 +78,19 @@ bool RuleHeader::convert(std::istringstream& data_stream)
  ********************************/
 
 template<const std::string *name>
-static ConversionState* rule_ctor(Converter* cv, LuaData* ld)
+static ConversionState* rule_ctor(Converter& c)
 {
-    ld->add_hdr_data(*name);
-    return new RuleHeader(cv, ld);
+    c.get_rule_api().add_hdr_data(*name);
+    return new RuleHeader(c);
 }
 
 template<const std::string *name>
-static ConversionState* dep_rule_ctor(Converter* cv, LuaData* ld)
+static ConversionState* dep_rule_ctor(Converter& c)
 {
-    ld->add_hdr_data(*name);
-    ld->make_rule_a_comment();
-    ld->add_comment_to_rule("The '" + *name + "' ruletype is no longer supported");
-    return new RuleHeader(cv, ld);
+    c.get_rule_api().add_hdr_data(*name);
+    c.get_rule_api().make_rule_a_comment();
+    c.get_rule_api().add_comment("The '" + *name + "' ruletype is no longer supported");
+    return new RuleHeader(c);
 }
 
 static const std::string alert = "alert";
@@ -111,7 +110,7 @@ static const ConvertMap log_api = {log, rule_ctor<&log>};
 static const ConvertMap pass_api = {pass, rule_ctor<&pass>};
 static const ConvertMap drop_api = {drop, rule_ctor<&drop>};
 static const ConvertMap reject_api = {reject, rule_ctor<&reject>};
-static const ConvertMap sblock_api = {sdrop, rule_ctor<&sblock>};
+static const ConvertMap sblock_api = {sblock, rule_ctor<&sblock>};
 static const ConvertMap sdrop_api = {sdrop, rule_ctor<&sdrop>};
 static const ConvertMap activate_api = {activate, dep_rule_ctor<&activate>};
 static const ConvertMap dynamic_api = {dynamic, dep_rule_ctor<&dynamic>};

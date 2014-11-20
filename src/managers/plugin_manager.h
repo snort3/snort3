@@ -47,12 +47,18 @@ public:
     // plugin methods
     static void load_plugins(const char* lib_paths);
     static void list_plugins();
+    static void show_plugins();
     static void dump_plugins();
     static void release_plugins();
-    static const BaseApi* get_api(PlugType, const char* name);
-    static void instantiate(const BaseApi*, Module*, SnortConfig*);
+
+    static PlugType get_type(const char*);
     static const char* get_type_name(PlugType);
+
+    static const BaseApi* get_api(PlugType, const char* name);
     static const char* get_current_plugin();
+
+    static void instantiate(const BaseApi*, Module*, SnortConfig*);
+    static void instantiate(const BaseApi*, Module*, SnortConfig*, const char* name);
 };
 
 #endif

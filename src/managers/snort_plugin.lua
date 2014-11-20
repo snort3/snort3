@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------
--- Copyright (C) 2014-2014 Sourcefire, Inc.
+-- Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 --
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License Version 2 as
@@ -20,12 +20,36 @@
 ffi = require("ffi")
 
 ffi.cdef[[
-struct Buffer
+struct SnortBuffer
 {
     const char* type;
     const uint8_t* data;
     unsigned len;
 };
-const struct Buffer* get_buffer();
+const struct SnortBuffer* get_buffer();
+
+struct SnortEvent
+{
+    unsigned gid;
+    unsigned sid;
+    unsigned rev;
+
+    uint32_t event_id;
+    uint32_t event_ref;
+
+    const char* msg;
+    const char* svc;
+    const char* os;
+};
+const struct SnortEvent* get_event();
+
+struct SnortPacket
+{
+    const char* type;
+    uint64_t num;
+    unsigned sp;
+    unsigned dp;
+};
+const struct SnortPacket* get_packet();
 ]]
 

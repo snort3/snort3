@@ -31,46 +31,59 @@
 #include "utils/bitop_funcs.h"
 #include "utils/util.h"
 #include "protocols/packet.h"
+#include "sfip/sf_ip.h"
 
 unsigned FlowData:: flow_id = 0;
 
-// FIXIT can't inline SO_PUBLIC ctor and dtor in header or we get problems:
-// ld: warning: direct access in FlowData::FlowData(unsigned int,
-// Inspector*) to global weak symbol vtable for FlowData means the weak
-// symbol cannot be overridden at runtime. This was likely caused by
-// different translation units being compiled with different visibility
-// settings.
-
-SO_PUBLIC FlowData::FlowData(unsigned u, Inspector* ph)
+FlowData::FlowData(unsigned u, Inspector* ph)
 {
     assert(u > 0);
     id = u;  handler = ph;
-    if ( handler ) handler->add_ref();
+    if ( handler ) 
+        handler->add_ref();
 }
 
-SO_PUBLIC FlowData::~FlowData()
-{ if ( handler ) handler->rem_ref(); }
+FlowData::~FlowData()
+{
+    if ( handler )
+        handler->rem_ref();
+}
 
-Flow::Flow ()
+Flow::Flow()
 {
     memset(this, 0, sizeof(*this));
 }
 
-Flow::Flow (int proto)
+Flow::~Flow()
+{ }
+
+void Flow::init(PktType proto)
 {
-    memset(this, 0, sizeof(*this));
     protocol = proto;
 
-    // FIXIT getFlowbitSizeInBytes() should be attribute of ???
+    // FIXIT-M this should just use C++11 bitset.
+    // FIXIT-M getFlowbitSizeInBytes() should be attribute of ??? (or eliminate)
     /* use giFlowbitSize - 1, since there is already 1 byte in the
     * StreamFlowData structure */
     size_t sz = sizeof(StreamFlowData) + getFlowbitSizeInBytes() - 1;
-    flowdata = (StreamFlowData*)SnortAlloc(sz);
+    flowdata = (StreamFlowData*)malloc(sz);
+
+    boInitStaticBITOP(
+        &(flowdata->boFlowbits), getFlowbitSizeInBytes(), flowdata->flowb);
 }
 
-Flow::~Flow ()
+void Flow::term()
 {
+    if ( session )
+        delete session;
+
     free_application_data();
+
+    if ( ssn_client )
+        ssn_client->rem_ref();
+
+    if ( ssn_server )
+        ssn_server->rem_ref();
 
     if ( clouseau )
         clouseau->rem_ref();
@@ -80,19 +93,16 @@ Flow::~Flow ()
 
     if ( flowdata )
         free(flowdata);
-
-    if ( session )
-        delete session;
 }
 
 void Flow::reset()
 {
-    if ( ssn_client )
-    {
+    if ( session )
         session->cleanup();
-        free_application_data();
-    }
-    // FIXIT cleanup() winds up calling clear()
+
+    free_application_data();
+
+    // FIXIT-H cleanup() winds up calling clear()
     if ( ssn_client )
     {
         ssn_client->rem_ref();
@@ -110,18 +120,30 @@ void Flow::reset()
         clear_gadget();
 
     constexpr size_t offset = offsetof(Flow, appDataList);
+    // FIXIT-L need a struct to zero here to make future proof
     memset((uint8_t*)this+offset, 0, sizeof(Flow)-offset);
 
-    boInitStaticBITOP(
-        &(flowdata->boFlowbits), getFlowbitSizeInBytes(), flowdata->flowb);
+    boResetBITOP(&(flowdata->boFlowbits));
+}
+
+void Flow::restart(bool freeAppData)
+{
+    if ( freeAppData )
+        free_application_data();
+
+    boResetBITOP(&(flowdata->boFlowbits));
+
+    s5_state.ignore_direction = 0;
+    s5_state.session_flags = SSNFLAG_NONE;
+
+    session_state = STREAM5_STATE_NONE;
+    expire_time = 0;
 }
 
 void Flow::clear(bool freeAppData)
 {
-    assert(flow_state < 3);
-
-    if ( freeAppData )
-        free_application_data();
+    restart(freeAppData);
+    set_state(SETUP);
 
     if ( ssn_client )
     {
@@ -134,18 +156,10 @@ void Flow::clear(bool freeAppData)
         ssn_server = nullptr;
     }
     if ( clouseau )
-    {
-        clouseau->rem_ref();
-        clouseau = nullptr;
-    }
+        clear_clouseau();
 
-    boResetBITOP(&(flowdata->boFlowbits));
-
-    s5_state.ignore_direction = 0;
-    s5_state.session_flags = SSNFLAG_NONE;
-
-    session_state = STREAM5_STATE_NONE;
-    expire_time = 0;
+    if ( gadget )
+        clear_gadget();
 }
 
 int Flow::set_application_data(FlowData* fd)
@@ -244,126 +258,56 @@ void Flow::markup_packet_flags(Packet* p)
 
 void Flow::set_direction(Packet* p)
 {
-    if(IS_IP4(p))
+    ip::IpApi* ip_api = &p->ptrs.ip_api;
+
+    if(ip_api->is_ip4())
     {
-        if (sfip_fast_eq4(&p->ip4h->ip_src, &client_ip))
+        if (sfip_fast_eq4(ip_api->get_src(), &client_ip))
         {
-            if (GET_IPH_PROTO(p) == IPPROTO_TCP)
-            {
-                if (p->tcph->th_sport == client_port)
-                {
-                    p->packet_flags |= PKT_FROM_CLIENT;
-                }
-                else
-                {
-                    p->packet_flags |= PKT_FROM_SERVER;
-                }
-            }
-            else if (GET_IPH_PROTO(p) == IPPROTO_UDP && p->udph )
-            {
-                if (p->udph->uh_sport == client_port)
-                {
-                    p->packet_flags |= PKT_FROM_CLIENT;
-                }
-                else
-                {
-                    p->packet_flags |= PKT_FROM_SERVER;
-                }
-            }
-            else
-            {
+            if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
                 p->packet_flags |= PKT_FROM_CLIENT;
-            }
-        }
-        else if (sfip_fast_eq4(&p->ip4h->ip_dst, &client_ip))
-        {
-            if  (GET_IPH_PROTO(p) == IPPROTO_TCP)
-            {
-                if (p->tcph->th_dport == client_port)
-                {
-                    p->packet_flags |= PKT_FROM_SERVER;
-                }
-                else
-                {
-                    p->packet_flags |= PKT_FROM_CLIENT;
-                }
-            }
-            else if (GET_IPH_PROTO(p) == IPPROTO_UDP && p->udph )
-            {
-                if (p->udph->uh_dport == client_port)
-                {
-                    p->packet_flags |= PKT_FROM_SERVER;
-                }
-                else
-                {
-                    p->packet_flags |= PKT_FROM_CLIENT;
-                }
-            }
+
+            else if (p->ptrs.sp == client_port)
+                p->packet_flags |= PKT_FROM_CLIENT;
+
             else
-            {
                 p->packet_flags |= PKT_FROM_SERVER;
-            }
+        }
+        else if (sfip_fast_eq4(ip_api->get_dst(), &client_ip))
+        {
+            if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
+                p->packet_flags |= PKT_FROM_SERVER;
+
+            else if (p->ptrs.dp == client_port)
+                p->packet_flags |= PKT_FROM_SERVER;
+
+            else
+                p->packet_flags |= PKT_FROM_CLIENT;
         }
     }
     else /* IS_IP6(p) */
     {
-        if (sfip_fast_eq6(&p->ip6h->ip_src, &client_ip))
+        if (sfip_fast_eq6(ip_api->get_src(), &client_ip))
         {
-            if (GET_IPH_PROTO(p) == IPPROTO_TCP)
-            {
-                if (p->tcph->th_sport == client_port)
-                {
-                    p->packet_flags |= PKT_FROM_CLIENT;
-                }
-                else
-                {
-                    p->packet_flags |= PKT_FROM_SERVER;
-                }
-            }
-            else if (GET_IPH_PROTO(p) == IPPROTO_UDP && p->udph )
-            {
-                if (p->udph->uh_sport == client_port)
-                {
-                    p->packet_flags |= PKT_FROM_CLIENT;
-                }
-                else
-                {
-                    p->packet_flags |= PKT_FROM_SERVER;
-                }
-            }
-            else
-            {
+            if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
                 p->packet_flags |= PKT_FROM_CLIENT;
-            }
-        }
-        else if (sfip_fast_eq6(&p->ip6h->ip_dst, &client_ip))
-        {
-            if  (GET_IPH_PROTO(p) == IPPROTO_TCP)
-            {
-                if (p->tcph->th_dport == client_port)
-                {
-                    p->packet_flags |= PKT_FROM_SERVER;
-                }
-                else
-                {
-                    p->packet_flags |= PKT_FROM_CLIENT;
-                }
-            }
-            else if (GET_IPH_PROTO(p) == IPPROTO_UDP && p->udph )
-            {
-                if (p->udph->uh_dport == client_port)
-                {
-                    p->packet_flags |= PKT_FROM_SERVER;
-                }
-                else
-                {
-                    p->packet_flags |= PKT_FROM_CLIENT;
-                }
-            }
+
+            else if (p->ptrs.sp == client_port)
+                p->packet_flags |= PKT_FROM_CLIENT;
+
             else
-            {
                 p->packet_flags |= PKT_FROM_SERVER;
-            }
+        }
+        else if (sfip_fast_eq6(ip_api->get_dst(), &client_ip))
+        {
+            if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
+                p->packet_flags |= PKT_FROM_SERVER;
+
+            else if (p->ptrs.dp == client_port)
+                p->packet_flags |= PKT_FROM_SERVER;
+
+            else
+                p->packet_flags |= PKT_FROM_CLIENT;
         }
     }
 }
@@ -408,11 +352,24 @@ void Flow::set_ttl (Packet* p, bool client)
 {
     uint8_t inner_ttl = 0, outer_ttl = 0;
 
-    if ( p->outer_iph_api )
-        outer_ttl = p->outer_iph_api->iph_ret_ttl(p);
+    ip::IpApi outer_ip_api;
+    int8_t tmp = 0;
+    layer::set_outer_ip_api(p, outer_ip_api, tmp);
 
-    if ( p->iph_api )
-        inner_ttl = p->iph_api->iph_ret_ttl(p);
+    /*
+     * If there is only one IP layer, then
+     * outer_ip == inner_ip ==> both are true.
+     *
+     * If there are no IP layers, then
+     * outer_ip.is_valid() == inner_ip.is_valid() == false
+     */
+    if (outer_ip_api.is_valid())
+    {
+        // FIXIT-J!! -- Do we want more than just the outermost
+        //            and innermost ttl()?
+        outer_ttl = outer_ip_api.ttl();
+        inner_ttl = p->ptrs.ip_api.ttl();
+    }
 
     if ( client )
     {

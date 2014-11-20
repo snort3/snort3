@@ -57,7 +57,7 @@ struct pcap_pkthdr32
 };
 
 /* this struct is for the alert socket code.... */
-// FIXIT alert unix sock supports l2-l3-l4 encapsulations
+// FIXIT-L alert unix sock supports l2-l3-l4 encapsulations
 
 const unsigned int ALERTMSG_LENGTH = 256;
 struct Alertpkt
@@ -74,7 +74,7 @@ struct Alertpkt
 #define NOPACKET_STRUCT 0x1
     /* no transport headers in packet */
 #define NO_TRANSHDR    0x2
-    uint8_t pkt[65535];       // FIXIT move to end and send actual size
+    uint8_t pkt[65535];       // FIXIT-L move to end and send actual size
 
     uint32_t gid;
     uint32_t sid;
@@ -96,22 +96,29 @@ struct UnixSock
 
 static THREAD_LOCAL UnixSock us;
 
+#define s_name "alert_unixsock"
+
 //-------------------------------------------------------------------------
 // alert_unixsock module
 //-------------------------------------------------------------------------
 
-static const Parameter unixsock_params[] =
+static const Parameter s_params[] =
 {
-    // FIXIT add name param?
+    // FIXIT-L add name param?
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "output event over unix socket"
+
 class UnixSockModule : public Module
 {
 public:
-    UnixSockModule() : Module("alert_unixsock", unixsock_params) { };
-    bool set(const char*, Value&, SnortConfig*) { return false; };
+    UnixSockModule() : Module(s_name, s_help, s_params) { };
+
+    bool set(const char*, Value&, SnortConfig*) override
+    { return false; };
 };
 
 //-------------------------------------------------------------------------
@@ -121,7 +128,7 @@ static void get_alert_pkt(
 {
     DEBUG_WRAP(DebugMessage(DEBUG_LOG, "Logging Alert data!\n"););
 
-    // FIXIT ugh ...
+    // FIXIT-L ugh ...
     memset((char *)&us.alert,0,sizeof(us.alert));
 
     us.alert.gid = event->sig_info->generator;
@@ -147,7 +154,7 @@ static void get_alert_pkt(
 
     if (msg)
     {
-        // FIXIT ugh ...
+        // FIXIT-L ugh ...
         memmove( (void *)us.alert.alertmsg, (const void *)msg,
                strlen(msg)>ALERTMSG_LENGTH-1 ? ALERTMSG_LENGTH - 1 : strlen(msg));
     }
@@ -165,38 +172,32 @@ static void get_alert_pkt(
             }
 
             /* we don't log any headers besides eth yet */
-            if (IPH_IS_VALID(p) && p->pkt && IS_IP4(p))
+            if (p->ptrs.ip_api.is_ip4() && p->pkt)
             {
-                us.alert.nethdr=(char *)p->iph-(char *)p->pkt;
+                us.alert.nethdr=(char *)p->ptrs.ip_api.get_ip4h()-(char *)p->pkt;
 
-                switch(GET_IPH_PROTO(p))
+                switch(p->type())
                 {
-                    case IPPROTO_TCP:
-                       if (p->tcph)
-                       {
-                           us.alert.transhdr=(char *)p->tcph-(char *)p->pkt;
-                       }
-                       break;
+                case PktType::TCP:
+                   if (p->ptrs.tcph)
+                       us.alert.transhdr=(char *)p->ptrs.tcph-(char *)p->pkt;
+                   break;
 
-                    case IPPROTO_UDP:
-                        if (p->udph)
-                        {
-                            us.alert.transhdr=(char *)p->udph-(char *)p->pkt;
-                        }
-                        break;
+                case PktType::UDP:
+                    if (p->ptrs.udph)
+                        us.alert.transhdr=(char *)p->ptrs.udph-(char *)p->pkt;
+                    break;
 
-                    case IPPROTO_ICMP:
-                       if (p->icmph)
-                       {
-                           us.alert.transhdr=(char *)p->icmph-(char *)p->pkt;
-                       }
-                       break;
+                case PktType::ICMP:
+                   if (p->ptrs.icmph)
+                       us.alert.transhdr=(char *)p->ptrs.icmph-(char *)p->pkt;
+                   break;
 
-                    default:
-                        /* us.alert.transhdr is null due to initial memset */
-                        us.alert.val|=NO_TRANSHDR;
-                        break;
-                }
+                default:
+                    /* us.alert.transhdr is null due to initial memset */
+                    us.alert.val|=NO_TRANSHDR;
+                    break;
+                } /* switch */
             }
 
             if (p->data && p->pkt) us.alert.data=p->data - p->pkt;
@@ -212,7 +213,7 @@ static void OpenAlertSock(void)
     get_instance_file(name, UNSOCK_FILE);
 
     if ( access(name.c_str(), W_OK) )
-       ErrorMessage("%s file doesn't exist or isn't writable!\n", name.c_str());
+       ErrorMessage("%s file doesn't exist or isn't writable\n", name.c_str());
 
     memset((char *) &us.addr, 0, sizeof(us.addr));
     us.addr.sun_family = AF_UNIX;
@@ -237,10 +238,10 @@ class UnixSockLogger : public Logger {
 public:
     UnixSockLogger() { };
 
-    void open();
-    void close();
+    void open() override;
+    void close() override;
 
-    void alert(Packet*, const char* msg, Event*);
+    void alert(Packet*, const char* msg, Event*) override;
 };
 
 void UnixSockLogger::open()
@@ -285,7 +286,8 @@ static LogApi unix_sock_api
 {
     {
         PT_LOGGER,
-        "alert_unixsock",
+        s_name,
+        s_help,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

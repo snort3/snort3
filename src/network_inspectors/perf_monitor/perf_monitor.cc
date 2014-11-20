@@ -52,10 +52,9 @@
 #include "snort.h"
 #include "profiler.h"
 #include "framework/inspector.h"
+#include "utils/stats.h"
 
-THREAD_LOCAL SFPERF *perfmon_config = NULL;
-
-static const char* mod_name = "perf_monitor";
+THREAD_LOCAL SFPERF* perfmon_config = nullptr;
 
 THREAD_LOCAL SimpleStats pmstats;
 THREAD_LOCAL ProfileStats perfmonStats;
@@ -63,7 +62,7 @@ THREAD_LOCAL ProfileStats perfmonStats;
 /* This function changes the perfmon log files permission if exists.
    It is done in the  PerfMonitorInit() before Snort changed its user & group.
  */
-// FIXIT this should be deleted; was added as 1-time workaround to
+// FIXIT-L this should be deleted; was added as 1-time workaround to
 // get around the borked perms due to a bug that has been fixed
 static void PerfMonitorChangeLogFilesPermission(void)
 {
@@ -208,14 +207,13 @@ public:
     PerfMonitor(PerfMonModule*);
     ~PerfMonitor();
 
-    bool configure(SnortConfig*);
-    void show(SnortConfig*);
+    bool configure(SnortConfig*) override;
+    void show(SnortConfig*) override;
 
-    void eval(Packet*);
+    void eval(Packet*) override;
 
-    void tinit();
-    void tterm();
-    void reset();
+    void tinit() override;
+    void tterm() override;
 
 private:
     SFPERF config;
@@ -243,7 +241,7 @@ void PerfMonitor::show(SnortConfig*)
     PrintConfig(&config);
 }
 
-// FIXIT perfmonitor should be logging to one file and writing record type and
+// FIXIT-L perfmonitor should be logging to one file and writing record type and
 // version fields immediately after timestamp like
 // seconds, usec, type, version#, data1, data2, ...
 bool PerfMonitor::configure(SnortConfig*)
@@ -344,11 +342,6 @@ void PerfMonitor::eval(Packet *p)
     MODULE_PROFILE_END(perfmonStats);
 }
 
-void PerfMonitor::reset()
-{
-    InitPerfStats(&config);
-}
-
 //-------------------------------------------------------------------------
 // api stuff
 //-------------------------------------------------------------------------
@@ -378,14 +371,15 @@ static const InspectApi pm_api =
 {
     {
         PT_INSPECTOR,
-        mod_name,
+        PERF_NAME,
+        PERF_HELP,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor
     },
-    IT_PACKET,
-    PROTO_BIT__ALL,
+    IT_PROBE,
+    (uint16_t)PktType::ANY,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

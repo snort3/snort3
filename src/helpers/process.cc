@@ -32,8 +32,11 @@ using namespace std;
 
 #include "utils/util.h"
 #include "main/analyzer.h"
+#include "main/thread.h"
 #include "snort.h"
 #include "utils/ring.h"
+#include "helpers/markup.h"
+#include "parser/parser.h"
 
 #ifndef SIGNAL_SNORT_RELOAD
 #define SIGNAL_SNORT_RELOAD        SIGHUP
@@ -54,7 +57,7 @@ using namespace std;
 #define SIGNAL_SNORT_READ_ATTR_TBL SIGURG
 #endif
 
-const char* pig_sig_names[PIG_SIG_MAX] =
+static const char* const pig_sig_names[PIG_SIG_MAX] =
 {
     "none", "quit", "term", "int",
     "reload-config", "reload-attributes",
@@ -63,6 +66,7 @@ const char* pig_sig_names[PIG_SIG_MAX] =
 
 static Ring<PigSignal> sig_ring(4);
 static volatile sig_atomic_t child_ready_signal = 0;
+static THREAD_LOCAL volatile bool is_main_thread = false;
 
 typedef void (*sighandler_t)(int);
 static int add_signal(int sig, sighandler_t, int check_needed);
@@ -71,6 +75,9 @@ static bool exit_pronto = true;
 
 void set_quick_exit(bool b)
 { exit_pronto = b; }
+
+void init_main_thread_sig()
+{ is_main_thread = true; }
 
 static void exit_handler(int signal)
 {
@@ -113,7 +120,7 @@ static void reload_config_handler(int /*signal*/)
 
 static void reload_attrib_handler(int /*signal*/)
 {
-    sig_ring.put(PIG_SIG_RELOAD_ATTRIBUTES);
+    sig_ring.put(PIG_SIG_RELOAD_HOSTS);
 }
 
 static void ignore_handler(int /*signal*/)
@@ -127,7 +134,10 @@ static void child_ready_handler(int /*signal*/)
 
 static void oops_handler(int signal)
 {
-    CapturePacket();
+    // FIXIT-L what should we capture if this is the main thread?
+    if ( !is_main_thread )
+        CapturePacket();
+
     add_signal(signal, SIG_DFL, 0);
     raise(signal);
 }
@@ -156,7 +166,7 @@ const char* get_signal_name(PigSignal s)
 // If check needed, also check whether previous signal_handler is neither
 // SIG_IGN nor SIG_DFL
 
-// FIXIT convert sigaction, etc. to c++11
+// FIXIT-L convert sigaction, etc. to c++11
 static int add_signal(int sig, sighandler_t signal_handler, int check_needed)
 {
 #ifdef VALGRIND_TESTING
@@ -183,7 +193,7 @@ static int add_signal(int sig, sighandler_t signal_handler, int check_needed)
     }
     else if (check_needed && (SIG_IGN != pre_handler) && (SIG_DFL!= pre_handler))
     {
-        ErrorMessage("WARNING: Handler is already installed for signal %d.\n", sig);
+        ParseWarning("handler is already installed for signal %d.\n", sig);
     }
     return 1;
 }
@@ -195,7 +205,7 @@ void init_signals(void)
     sigset_t set;
 
     sigemptyset(&set);
-    // FIXIT this is undefined for multithreaded apps
+    // FIXIT-L this is undefined for multithreaded apps
     sigprocmask(SIG_SETMASK, &set, NULL);
 # else
     sigsetmask(0);
@@ -222,16 +232,27 @@ void init_signals(void)
     errno = 0;
 }
 
+static void help_signal(unsigned n, const char* name, const char* h)
+{
+    cout << Markup::item();
+
+    cout << Markup::emphasis_on();
+    cout << name;
+    cout << Markup::emphasis_off();
+
+    cout << "(" << n << "): " << h << endl;
+}
+
 void help_signals()
 {
-    cout << SIGTERM << "/term: shutdown normally" << endl;
-    cout << SIGINT  << "/int: shutdown normally" << endl;
-    cout << SIGQUIT << "/quit: shutdown as if started with --dirty-pig" << endl;
+    help_signal(SIGTERM, "term", "shutdown normally");
+    help_signal(SIGINT,  "int", "shutdown normally");
+    help_signal(SIGQUIT, "quit", "shutdown as if started with --dirty-pig");
 
-    cout << SIGNAL_SNORT_DUMP_STATS  << "/stats: dump stats to stdout" << endl;
-    cout << SIGNAL_SNORT_ROTATE_STATS  << "/rotate: rotate stats files" << endl;
-    cout << SIGNAL_SNORT_RELOAD  << "/reload: reload config file" << endl;
-    cout << SIGNAL_SNORT_READ_ATTR_TBL  << "/hosts: reload hosts file" << endl;
+    help_signal(SIGNAL_SNORT_DUMP_STATS,  "stats", "dump stats to stdout");
+    help_signal(SIGNAL_SNORT_ROTATE_STATS,  "rotate", "rotate stats files");
+    help_signal(SIGNAL_SNORT_RELOAD,  "reload", "reload config file");
+    help_signal(SIGNAL_SNORT_READ_ATTR_TBL,  "hosts", "reload hosts file");
 }
 
 //-------------------------------------------------------------------------

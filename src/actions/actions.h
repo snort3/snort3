@@ -27,7 +27,6 @@
 #define ACTION_BLOCK    "block"
 #define ACTION_LOG      "log"
 #define ACTION_PASS     "pass"
-#define ACTION_REJECT   "reject"
 #define ACTION_SDROP    "sdrop"
 #define ACTION_SBLOCK   "sblock"
 
@@ -38,7 +37,6 @@ enum RuleType
     RULE_TYPE__DROP,
     RULE_TYPE__LOG,
     RULE_TYPE__PASS,
-    RULE_TYPE__REJECT,
     RULE_TYPE__SDROP,
     RULE_TYPE__MAX
 };
@@ -55,8 +53,7 @@ static inline bool pass_action(int a)
 static inline bool block_action(int a)
 {
     return ( (a == RULE_TYPE__DROP) ||
-             (a == RULE_TYPE__SDROP) ||
-             (a == RULE_TYPE__REJECT) );
+             (a == RULE_TYPE__SDROP) );
 }
 
 int AlertAction(Packet*, const OptTreeNode*);

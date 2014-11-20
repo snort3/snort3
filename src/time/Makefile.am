@@ -6,13 +6,13 @@ x_includedir = $(pkgincludedir)/time
 
 x_include_HEADERS = \
 cpuclock.h \
-profiler.h
+profiler.h \
+ppm.h
 
 libtime_a_SOURCES = \
 packet_time.cc \
 packet_time.h \
 ppm.cc \
-ppm.h \
 ppm_module.cc \
 ppm_module.h \
 profiler.cc \

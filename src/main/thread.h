@@ -22,9 +22,10 @@
 #define THREAD_H
 
 #include <string>
+#include "main/snort_types.h"
 
 #define THREAD_LOCAL_TBD
-//#define THREAD_LOCAL
+//#define THREAD_LOCAL // for single-threaded debugging
 
 // this is a gnu extension that at present is slightly faster than the 
 // c++11 form
@@ -35,9 +36,21 @@
 //#define THREAD_LOCAL thread_local
 
 void set_instance_id(unsigned);
-unsigned get_instance_id();
-unsigned get_instance_max();
-const char* get_instance_file(std::string&, const char* name);
+void set_instance_max(unsigned);
+
+
+struct SnortConfig;
+bool set_cpu_affinity(SnortConfig*, const std::string&, int cpu);
+bool set_cpu_affinity(SnortConfig*, int thread, int cpu);
+void pin_thread_to_cpu(const char* source);
+
+SO_PUBLIC unsigned get_instance_id();
+SO_PUBLIC unsigned get_instance_max();
+
+SO_PUBLIC const char* get_instance_file(std::string&, const char* name);
+
+void take_break();
+bool break_time();
 
 #endif
 

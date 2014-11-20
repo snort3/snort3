@@ -25,19 +25,18 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
-#include "protocols/ipv6.h"
-#include "codecs/ip/ipv6_util.h"
 #include "protocols/protocol_ids.h"
-#include "main/snort.h"
 #include "detection/fpdetect.h"
+#include "main/snort.h"
 
 
 namespace
 {
 
 #define CD_NO_NEXT_NAME "ipv6_no_next"
+#define CD_NO_NEXT_HELP "sentinel codec"
 
 class Ipv6NoNextCodec : public Codec
 {
@@ -46,32 +45,39 @@ public:
     ~Ipv6NoNextCodec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-    virtual void get_protocol_ids(std::vector<uint16_t>&);    
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void get_protocol_ids(std::vector<uint16_t>&) override;
 };
 
 
 } // namespace
 
 
-bool Ipv6NoNextCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& /*raw_len*/,
-        Packet *p, uint16_t& lyr_len, uint16_t& /*next_prot_id*/)
+bool Ipv6NoNextCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-    /* See if there are any ip_proto only rules that match */
-    fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_NONEXT);
-    ipv6_util::CheckIPv6ExtensionOrder(p);
+    // No need ot check IPv6 extension order since this is automatically
+    // the last extension.
+    if (raw.len < ip::MIN_EXT_LEN)
+        return false;
 
-    p->dsize = 0;
-    lyr_len = ipv6::min_ext_len();
+    if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
+    {
+        codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
+        return false;
+    }
+
+    // The size of this packets data should be zero.  So, set this layer's
+    // length and the packet's remaining length to the same number.
+    const_cast<uint32_t&>(raw.len) = ip::MIN_EXT_LEN;
+    codec.lyr_len = ip::MIN_EXT_LEN;
+    codec.proto_bits |= PROTO_BIT__IP6_EXT; // check for any IP related rules
+    codec.ip6_extension_count++;
     return true;
 }
 
 
 void Ipv6NoNextCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(IPPROTO_ID_NONEXT);
-}
+{ v.push_back(IPPROTO_ID_NONEXT); }
 
 
 
@@ -80,20 +86,17 @@ void Ipv6NoNextCodec::get_protocol_ids(std::vector<uint16_t>& v)
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new Ipv6NoNextCodec();
-}
+{ return new Ipv6NoNextCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi no_next_api =
 {
     {
         PT_CODEC,
         CD_NO_NEXT_NAME,
+        CD_NO_NEXT_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

@@ -1,32 +1,30 @@
-
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // rule_pcre.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
+#include "helpers/converter.h"
 #include "rule_states/rule_api.h"
-#include "utils/s2l_util.h"
+#include "helpers/s2l_util.h"
 
 namespace rules
 {
@@ -37,7 +35,7 @@ namespace {
 class Pcre : public ConversionState
 {
 public:
-    Pcre(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Pcre(Converter& c) : ConversionState(c) {};
     virtual ~Pcre() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -47,20 +45,54 @@ public:
 bool Pcre::convert(std::istringstream& data_stream)
 {
     std::string keyword;
-    bool retval = true;
+    //bool retval = true;  FIXIT-H-J
     bool sticky_buffer_set = false;
+    std::string buffer = "pkt_data";
 
+    char delim = '/';
     std::string pcre_str = util::get_rule_option_args(data_stream);
+    std::string pattern = "";
+    std::string new_opts = "";
+    std::string options;
 
-    std::size_t pattern_end = pcre_str.rfind("/");
-    std::string pattern = pcre_str.substr(0, pattern_end + 1);
-    std::string options = pcre_str.substr(pattern_end + 1, std::string::npos);
-    std::string new_opts = std::string();
+    if (pcre_str.front() == '!')
+    {
+        pattern += "!";
+        pcre_str.erase(pcre_str.begin());
+    }
 
-    if (options.back() == '"')
-        options.pop_back();
-    else
-        retval = false;
+    if (pcre_str.front() != '"' || pcre_str.back() != '"')
+    {
+        rule_api.bad_rule(data_stream, "pattern must be enclosed in \"");
+        return set_next_rule_state(data_stream);
+    }
+
+
+    pcre_str.erase(pcre_str.begin());
+    pattern += '"';
+
+
+    if (pcre_str.front() == 'm')
+    {
+        pcre_str.erase(pcre_str.begin());
+        pattern += 'm';
+        delim = pcre_str.front();
+    }
+
+    const std::size_t pattern_end = pcre_str.rfind(delim);
+    if ((pcre_str.front() != delim) || (pattern_end == 0))
+    {
+        std::string tmp = "Regex must be enclosed in delim '";
+        tmp.append(delim, 1);
+        rule_api.bad_rule(data_stream, tmp + "'");
+        return set_next_rule_state(data_stream);
+    }
+
+
+    pattern += pcre_str.substr(0, pattern_end + 1);
+    options = pcre_str.substr(pattern_end + 1, std::string::npos);
+    new_opts = "";
+
 
     for (char c : options )
     {
@@ -88,32 +120,34 @@ bool Pcre::convert(std::istringstream& data_stream)
             case 'G':
             case 'R':
             case 'O':
+            case '"': // end of reg_ex
                 new_opts += c;
                 break;
             default:
             {
-                std::string dlt_opt = "pcre: unkown option - '";
+                std::string dlt_opt = "unknown option - '";
                 dlt_opt.append(1, c);
                 dlt_opt += "'";
-                ld->add_comment_to_rule(dlt_opt);
-                retval = false;
+                rule_api.bad_rule(data_stream, dlt_opt);
                 break;
             }
         }
 
         if (!sticky_buffer.empty())
         {
-            ld->add_rule_option(sticky_buffer);
+            buffer = sticky_buffer;
 
             if (sticky_buffer_set)
-                ld->add_comment_to_rule("WARNING: Two sticky buffers set for this regular expression!");
+                rule_api.bad_rule(data_stream, "Two sticky buffers set for this regular expression!");
             else
                 sticky_buffer_set = true;
         }
     }
 
-    ld->add_rule_option("pcre", pattern + new_opts + "\"");
-    return set_next_rule_state(data_stream) && retval;
+
+    rule_api.add_option("pcre", pattern + new_opts);
+    rule_api.set_curr_options_buffer(buffer);
+    return set_next_rule_state(data_stream);
 }
 
 /**************************
@@ -121,10 +155,8 @@ bool Pcre::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
-{
-    return new Pcre(cv, ld);
-}
+static ConversionState* ctor(Converter& c)
+{ return new Pcre(c); }
 
 
 static const ConvertMap pcre_api =

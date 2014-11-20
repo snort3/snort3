@@ -1,31 +1,30 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // rule_content.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
+#include "helpers/converter.h"
 #include "rule_states/rule_api.h"
-#include "utils/s2l_util.h"
+#include "helpers/s2l_util.h"
 
 namespace rules
 {
@@ -41,34 +40,30 @@ template<const std::string* rule_name, bool has_suboptions>
 class UnchangedRuleOption : public ConversionState
 {
 public:
-    UnchangedRuleOption( Converter* cv, LuaData* ld)
-        :   ConversionState(cv, ld)
-    { };
+    UnchangedRuleOption(Converter& c) : ConversionState(c) {};
     virtual ~UnchangedRuleOption() {};
     
     virtual bool convert(std::istringstream& stream)
     {
-        bool retval;
-
         if (has_suboptions)
         {
             std::string val = util::get_rule_option_args(stream);
-            retval = ld->add_rule_option(*rule_name, val);
+            rule_api.add_option(*rule_name, val);
         }
         else
         {
-            retval = ld->add_rule_option(*rule_name);
+            rule_api.add_option(*rule_name);
         }
 
-        return set_next_rule_state(stream) && retval;
+        return set_next_rule_state(stream);
     }
 };
 
 
 template<const std::string *rule_name,  bool has_suboptions = true>
-static ConversionState* unchanged_rule_ctor(Converter* cv, LuaData* ld)
+static ConversionState* unchanged_rule_ctor(Converter& c)
 {
-    return new UnchangedRuleOption<rule_name, has_suboptions>(cv, ld);
+    return new UnchangedRuleOption<rule_name, has_suboptions>(c);
 }
 
 /****************************************
@@ -223,7 +218,6 @@ const ConvertMap* flags_map = &rule_flags;
  *********  FRAGOFFSET **************
  ************************************/
 
-
 static const std::string fragoffset = "fragoffset";
 static const ConvertMap rule_fragoffset =
 {
@@ -232,20 +226,6 @@ static const ConvertMap rule_fragoffset =
 };
 
 const ConvertMap* fragoffset_map = &rule_fragoffset;
-
-/************************************
- ************* T T L ****************
- ************************************/
-
-
-static const std::string ttl = "ttl";
-static const ConvertMap rule_ttl =
-{
-    ttl,
-    unchanged_rule_ctor<&ttl>,
-};
-
-const ConvertMap* ttl_map = &rule_ttl;
 
 
 /************************************
@@ -419,19 +399,6 @@ static const ConvertMap rule_sameip =
 const ConvertMap* sameip_map = &rule_sameip;
 
 /************************************
- ******  STREAM_RESSAMBLE  **********
- ************************************/
-
-static const std::string stream_reassemble = "stream_reassemble";
-static const ConvertMap rule_stream_reassemble =
-{
-    stream_reassemble,
-    unchanged_rule_ctor<&stream_reassemble>,
-};
-
-const ConvertMap* stream_reassemble_map = &rule_stream_reassemble;
-
-/************************************
  *********  STREAM_SIZE  ************
  ************************************/
 
@@ -469,45 +436,6 @@ static const ConvertMap rule_session =
 };
 
 const ConvertMap* session_map = &rule_session;
-
-/************************************
- *************** RESP  **************
- ************************************/
-
-static const std::string resp = "resp";
-static const ConvertMap rule_resp =
-{
-    resp,
-    unchanged_rule_ctor<&resp>,
-};
-
-const ConvertMap* resp_map = &rule_resp;
-
-/************************************
- **************  REACT  *************
- ************************************/
-
-static const std::string react = "react";
-static const ConvertMap rule_react =
-{
-    react,
-    unchanged_rule_ctor<&react>,
-};
-
-const ConvertMap* react_map = &rule_react;
-
-/************************************
- ***************  TAG  **************
- ************************************/
-
-static const std::string tag = "tag";
-static const ConvertMap rule_tag =
-{
-    tag,
-    unchanged_rule_ctor<&tag>,
-};
-
-const ConvertMap* tag_map = &rule_tag;
 
 /************************************
  ************* REPLACE  *************
@@ -614,19 +542,6 @@ static const ConvertMap rule_base64_data =
 };
 
 const ConvertMap* base64_data_map = &rule_base64_data;
-
-/************************************
- *********** ISDATAAT  **************
- ************************************/
-
-static const std::string isdataat = "isdataat";
-static const ConvertMap rule_isdataat =
-{
-    isdataat,
-    unchanged_rule_ctor<&isdataat>,
-};
-
-const ConvertMap* isdataat_map = &rule_isdataat;
 
 /************************************
  *************  ASN1  ***************

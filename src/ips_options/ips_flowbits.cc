@@ -58,6 +58,7 @@ using namespace std;
 #include "parser.h"
 #include "snort_debug.h"
 #include "util.h"
+#include "utils/stats.h"
 #include "snort.h"
 #include "bitop_funcs.h"
 #include "sfghash.h"
@@ -73,7 +74,7 @@ using namespace std;
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "flowbits";
+#define s_name "flowbits"
 
 static THREAD_LOCAL ProfileStats flowBitsPerfStats;
 
@@ -165,10 +166,10 @@ public:
 
     ~FlowBitsOption();
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
     bool is_set(uint8_t bits)
     { return (config->type & bits) != 0; };
@@ -190,7 +191,7 @@ FlowBitsOption::~FlowBitsOption()
     if (config->group)
         free(config->group);
 
-    delete config;
+    free(config);
 }
 
 uint32_t FlowBitsOption::hash() const
@@ -295,7 +296,7 @@ static inline int boUnSetGrpBit(BITOP *BitOp, char *group)
     if( group == NULL )
         return 0;
 
-    // FIXIT why is the hash lookup done at runtime for flowbits groups?
+    // FIXIT-M why is the hash lookup done at runtime for flowbits groups?
     // a pointer to flowbis_grp should be in flowbits config data
     // this *should* be safe but iff splay mode is disabled
     flowbits_grp = (FLOWBITS_GRP *)sfghash_find(flowbits_grp_hash, group);
@@ -1014,7 +1015,8 @@ static void FlowBitsVerify(void)
 {
     SFGHASH_NODE * n;
     FLOWBITS_OBJECT *fb;
-    int num_flowbits = 0;
+    unsigned num_flowbits = 0;
+    unsigned unchecked = 0, unset = 0;
 
     if (flowbits_hash == NULL)
         return;
@@ -1039,13 +1041,15 @@ static void FlowBitsVerify(void)
 
         if ((fb->set > 0) && (fb->isset == 0))
         {
-            ParseWarning("flowbits key '%s' is set but not checked.",
-                    (char*)n->key);
+            if ( snort_conf->logging_flags & LOGGING_FLAG__WARN_FLOWBITS )
+                ParseWarning("flowbits key '%s' is set but not checked.", (char*)n->key);
+            unchecked++;
         }
         else if ((fb->isset > 0) && (fb->set == 0))
         {
-            ParseWarning("flowbits key '%s' is checked but not ever set.",
-                    (char*)n->key);
+            if ( snort_conf->logging_flags & LOGGING_FLAG__WARN_FLOWBITS )
+                ParseWarning("flowbits key '%s' is checked but not ever set.", (char*)n->key);
+            unset++;
         }
         else if ((fb->set == 0) && (fb->isset == 0))
         {
@@ -1057,8 +1061,14 @@ static void FlowBitsVerify(void)
 
     flowbits_toggle ^= 1;
 
-    LogMessage("%d out of %d flowbits in use.\n",
-            num_flowbits, giFlowbitSize);
+    if ( !num_flowbits )
+        return;
+
+    LogLabel("flowbits");
+    LogCount("available", giFlowbitSize);
+    LogCount("used", num_flowbits);
+    LogCount("not checked", unchecked);
+    LogCount("not set", unset);
 }
 
 static void FlowItemFree(void *d)
@@ -1128,7 +1138,7 @@ static void flowbits_gterm(SnortConfig*)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter flowbits_params[] =
+static const Parameter s_params[] =
 {
     { "~command", Parameter::PT_STRING, nullptr, nullptr,
       "set|reset|isset|etc." },
@@ -1142,15 +1152,18 @@ static const Parameter flowbits_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to set and test arbitrary boolean flags"
+
 class FlowbitsModule : public Module
 {
 public:
-    FlowbitsModule() : Module(s_name, flowbits_params) { };
+    FlowbitsModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &flowBitsPerfStats; };
 
 public:
@@ -1205,14 +1218,14 @@ static void flowbits_dtor(IpsOption* p)
     delete p;
 }
 
-// FIXIT updating statics during reload is bad, mkay?
+// FIXIT-M updating statics during reload is bad, mkay?
 static void flowbits_verify(SnortConfig*)
 {
     FlowBitsVerify();
 }
 
 #if 0
-        // FIXIT if add_detection_option() finds a dup, then
+        // FIXIT-M if add_detection_option() finds a dup, then
         // we can leak the original group name if same as current
         // also, why use new group name instead of original?
         char *group_name =  ((FLOWBITS_OP *)idx_dup)->group;
@@ -1231,6 +1244,7 @@ static const IpsApi flowbits_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

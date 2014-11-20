@@ -32,7 +32,8 @@ using namespace std;
 typedef DAQ_Verdict
     (*PacketCallback)(void*, const DAQ_PktHdr_t*, const uint8_t*);
 
-static THREAD_LOCAL PacketCallback main_func = fail_open;
+// FIXIT-M add fail open capability
+static THREAD_LOCAL PacketCallback main_func = packet_callback;
 
 //-------------------------------------------------------------------------
 // analyzer
@@ -52,8 +53,8 @@ void Analyzer::operator()(unsigned id, Swapper* ps)
     set_instance_id(id);
     ps->apply();
 
+    pin_thread_to_cpu(source);
     snort_thread_init(source);
-    main_func = packet_callback;
 
     analyze();
 
@@ -63,6 +64,22 @@ void Analyzer::operator()(unsigned id, Swapper* ps)
     done = true;
 }
 
+bool Analyzer::execute(AnalyzerCommand ac)
+{
+    if ( command && command != AC_PAUSE )
+        return false;
+
+    // FIXIT-L executing a command while paused
+    // will cause a resume
+    command = ac;
+    take_break();
+    return true;
+}
+
+// clear pause in analyze() to avoid extra acquires
+// (eg stop while paused)
+// clear other commands here to avoid clearing an
+// unexecuted command received while paused
 bool Analyzer::handle(AnalyzerCommand ac)
 {
     switch ( ac )
@@ -72,16 +89,18 @@ bool Analyzer::handle(AnalyzerCommand ac)
 
     case AC_PAUSE:
         {
-            chrono::seconds sec(1);
-            this_thread::sleep_for(sec);
+            chrono::milliseconds ms(500);
+            this_thread::sleep_for(ms);
         }
         break;
 
     case AC_RESUME:
+        command = AC_NONE;
         break;
 
     case AC_ROTATE:
-        snort_rotate();
+        snort_thread_rotate();
+        command = AC_NONE;
         break;
 
     case AC_SWAP:
@@ -90,6 +109,7 @@ bool Analyzer::handle(AnalyzerCommand ac)
             swap->apply();
             swap = nullptr;
         }
+        command = AC_NONE;
         break;
 
     default:
@@ -109,11 +129,16 @@ void Analyzer::analyze()
 
             if ( command == AC_PAUSE )
                 continue;
-
-            command = AC_NONE;
         }
         if ( DAQ_Acquire(0, main_func, NULL) )
             break;
+
+        // FIXIT-L acquire(0) won't return until no packets, signal, etc.
+        // which makes this idle unlikely to execute under high traffic 
+        // conditions; that means the idle processing may not be useful
+        // or that we need a hook to do things periodically even when
+        // traffic is available
+        snort_thread_idle();
     }
 }
 

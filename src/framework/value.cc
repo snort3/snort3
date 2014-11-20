@@ -25,6 +25,7 @@
 #include <sstream>
 #include <string>
 
+#include "sfip/sfip_t.h"
 #include "sfip/sf_ip.h"
 
 using namespace std;
@@ -151,5 +152,23 @@ bool Value::strtol(long& n) const
         return false;
 
     return true;
+}
+
+const char* Value::get_as_string()
+{
+    switch ( type )
+    {
+    case VT_BOOL:
+        str = num ? "true" : "false";
+        break;
+    case VT_NUM:
+        ss = new stringstream;
+        *ss << num;
+        str = ss->str();
+        break;
+    default:
+        break;
+    }
+    return str.c_str();
 }
 

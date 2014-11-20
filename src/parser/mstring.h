@@ -23,13 +23,15 @@
 #ifndef MSTRING_H
 #define MSTRING_H
 
+#include "main/snort_types.h"
+
 /*  D E F I N E S  *******************************************************/
 #define TOKS_BUF_SIZE   100
 
 
 /*  P R O T O T Y P E S  *************************************************/
-char ** mSplit(const char *, const char *, const int, int *, const char);
-void mSplitFree(char ***toks, int numtoks);
-int mContainsSubstr(const char *, int, const char *, int);
+SO_PUBLIC char ** mSplit(const char *, const char *, const int, int *, const char);
+SO_PUBLIC void mSplitFree(char ***toks, int numtoks);
+SO_PUBLIC int mContainsSubstr(const char *, int, const char *, int);
 
 #endif  /* MSTRING_H */

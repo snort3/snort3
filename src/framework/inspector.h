@@ -42,7 +42,7 @@ struct InspectionBuffer
     enum Type
     {
         IBT_KEY, IBT_HEADER, IBT_BODY, 
-        IBT_ALT, IBT_FILE, // FIXIT alt and file data are tbd
+        IBT_ALT, IBT_FILE, // FIXIT-M alt and file data are tbd
         IBT_MAX
     };
     const uint8_t* data;
@@ -55,7 +55,7 @@ struct InspectApi;
 // api for class
 //-------------------------------------------------------------------------
 
-class Inspector
+class SO_PUBLIC Inspector
 {
 public:
     // main thread functions
@@ -67,8 +67,9 @@ public:
     virtual void show(SnortConfig*) { };
 
     // packet thread functions
-    virtual void tinit() { };
-    virtual void tterm() { };
+    // tinit, tterm called on default policy instance only
+    virtual void tinit() { };  // allocate configurable thread local
+    virtual void tterm() { };  // purge only, deallocate via api
 
     virtual void eval(Packet*) = 0;
     virtual void meta(int, const uint8_t*) { };
@@ -128,10 +129,10 @@ enum InspectorType
     IT_BINDER,
     IT_WIZARD,
     IT_PACKET,
-    IT_PROTOCOL,
+    IT_NETWORK,
     IT_STREAM,
-    IT_SESSION,
     IT_SERVICE,
+    IT_PROBE,
     IT_MAX
 };
 
@@ -140,7 +141,6 @@ typedef void (*InspectDelFunc)(Inspector*);
 typedef void (*InspectFunc)();
 typedef class Session* (*InspectSsnFunc)(class Flow*);
 
-// FIXIT ensure all provide stats
 struct InspectApi
 {
     BaseApi base;
@@ -156,7 +156,7 @@ struct InspectApi
     InspectFunc tterm;     // cleanup tinit()
     InspectNew ctor;       // instantiate inspector from Module data
     InspectDelFunc dtor;   // release inspector instance
-    InspectSsnFunc ssn;    // purge caches
+    InspectSsnFunc ssn;    // get new session tracker
     InspectFunc reset;     // clear stats
 };
 

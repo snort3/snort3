@@ -1,20 +1,20 @@
 
+
 set (LOG_INCLUDES
     messages.h
     obfuscation.h
+    text_log.h
 )
 
 add_library ( log STATIC
     ${LOG_INCLUDES}
-    log.cc 
-    log.h 
-    log_text.cc 
-    log_text.h 
+    log.cc
+    log.h
+    log_text.cc
+    log_text.h
     messages.cc
-    obfuscation.cc 
-    obfuscation.h 
-    sf_textlog.cc 
-    sf_textlog.h
+    obfuscation.cc
+    text_log.cc
 )
 
 set_default_visibility_compile_flag( log )

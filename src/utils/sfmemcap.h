@@ -26,13 +26,13 @@
 #ifndef SFMEMCAP_H
 #define SFMEMCAP_H
 
-typedef struct
+struct MEMCAP
 {
    unsigned long memused;
    unsigned long memcap;
    int      nblocks;
 
-}MEMCAP;
+};
 
 void     sfmemcap_init(MEMCAP * mc, unsigned long nbytes);
 MEMCAP * sfmemcap_new( unsigned nbytes );

@@ -17,7 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// cd_ah.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// cd_auth.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 
@@ -28,57 +28,109 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
-#include "codecs/ip/cd_auth_module.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/ipv6.h"
-#include "codecs/sf_protocols.h"
+#include "protocols/packet.h"
+#include "codecs/ip/ip_util.h"
+#include "main/snort.h"
+
+#define CD_AUTH_NAME "auth"
+#define CD_AUTH_HELP "support for IP authentication header"
 
 namespace
 {
 
-class AhCodec : public Codec
+static const RuleMap auth_rules[] =
+{
+    { DECODE_AUTH_HDR_TRUNC, "truncated authentication header"},
+    { DECODE_AUTH_HDR_BAD_LEN, "bad authentication header length"},
+    { 0, nullptr }
+};
+
+class AuthModule : public CodecModule
 {
 public:
-    AhCodec() : Codec(CD_AUTH_NAME){};
-    ~AhCodec(){};
+    AuthModule() : CodecModule(CD_AUTH_NAME, CD_AUTH_HELP) {}
 
-
-    virtual PROTO_ID get_proto_id() { return PROTO_AH; };
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    const RuleMap* get_rules() const
+    { return auth_rules; }
 };
 
 
+//-------------------------------------------------------------------------
+// auth module
+//-------------------------------------------------------------------------
+
+class AuthCodec : public Codec
+{
+public:
+    AuthCodec() : Codec(CD_AUTH_NAME){};
+    ~AuthCodec(){};
+
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+};
+
+/*  Valid for both IPv4 and IPv6 */
+struct AuthHdr
+{
+    uint8_t next;
+    uint8_t len;
+    uint16_t rsv;   /* reserved */
+    uint32_t spi;   /* Security Parameters Index */
+    uint32_t seq;   /* Sequence Number */
+    uint32_t icv[1]; /* VARIABLE LENGTH!! -- specified by len field*/
+};
+
+const uint8_t MIN_AUTH_LEN = 16; // this is in minimum number of bytes ...
+                                 // no relatino to the AuthHdr.len field.
 
 } // anonymous namespace
 
-void AhCodec::get_protocol_ids(std::vector<uint16_t>& v)
+
+void AuthCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(IPPROTO_ID_AH);
+    v.push_back(IPPROTO_ID_AUTH);
 }
 
-bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool AuthCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
 
-    IP6Extension *ah = (IP6Extension *)raw_pkt;
+    const AuthHdr* const ah = reinterpret_cast<const AuthHdr* const>(raw.data);
 
-    if (raw_len < ipv6::min_ext_len())
+    if (raw.len < MIN_AUTH_LEN)
     {
-        codec_events::decoder_event(p, DECODE_AUTH_HDR_TRUNC);
+        codec_events::decoder_event(codec, DECODE_AUTH_HDR_TRUNC);
         return false;
     }
 
-    lyr_len = sizeof(*ah) + (ah->ip6e_len << 2);
+    // 8 is the number of bytes excluded in the length. Check out IPv6 Options length
+    // fields for a better explanation
+    codec.lyr_len = 8 + (ah->len << 2);
 
-    if (lyr_len > raw_len)
+    if (codec.lyr_len > raw.len)
     {
-        codec_events::decoder_event(p, DECODE_AUTH_HDR_BAD_LEN);
+        codec_events::decoder_event(codec, DECODE_AUTH_HDR_BAD_LEN);
         return false;
     }
 
-    next_prot_id = ah->ip6e_nxt;
+    codec.next_prot_id = ah->next;
+
+
+    // must be called AFTER setting next_prot_id
+    if (snort.ip_api.is_ip6())
+    {
+        if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
+        {
+            codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
+            return false;
+        }
+
+        ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_AUTH);
+        codec.proto_bits |= PROTO_BIT__IP6_EXT;
+        codec.ip6_csum_proto = ah->next;
+        codec.ip6_extension_count++;
+    }
     return true;
 }
 
@@ -89,30 +141,23 @@ bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new AhModule;
-}
+{ return new AuthModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new AhCodec();
-}
+{ return new AuthCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi ah_api =
 {
     {
         PT_CODEC,
         CD_AUTH_NAME,
+        CD_AUTH_HELP,
         CDAPI_PLUGIN_V0, 
         0,
         mod_ctor,

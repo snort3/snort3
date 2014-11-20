@@ -1,6 +1,7 @@
 
 set (DETECTION_INCLUDES
     detection_defines.h
+    detection_options.h
     rule_option_types.h
     rules.h
     signature.h
@@ -12,14 +13,12 @@ add_library (detection STATIC
     detect.cc 
     detect.h 
     detection_options.cc
-    detection_options.h
     detection_util.cc 
     detection_util.h 
     fpcreate.cc 
     fpcreate.h 
     fpdetect.cc 
     fpdetect.h 
-    generators.h 
     pcrm.cc 
     pcrm.h 
     sfrim.cc 

@@ -23,8 +23,7 @@
 #ifndef ZHASH_H
 #define ZHASH_H
 
-#include "sfhashfcn.h"
-
+struct SFHASHFCN;
 struct ZHashNode;
 
 class ZHash {

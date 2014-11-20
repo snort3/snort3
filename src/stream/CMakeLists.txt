@@ -11,6 +11,8 @@ set (STREAM_INCLUDES
 )
 
 add_library( stream STATIC
+    flush_bucket.cc
+    flush_bucket.h
     stream.h
     stream_api.cc
     stream_inspectors.cc
@@ -30,4 +32,3 @@ target_link_libraries( stream
 install (FILES ${STREAM_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/stream"
 )
-

@@ -33,25 +33,28 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "priority";
+#define s_name "priority"
 
 //-------------------------------------------------------------------------
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter priority_params[] =
+static const Parameter s_params[] =
 {
     { "~", Parameter::PT_INT, "1:", nullptr,
-      "generator id" },
+      "relative severity level; 1 is highest priority" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option for prioritizing events"
+
 class PriorityModule : public Module
 {
 public:
-    PriorityModule() : Module(s_name, priority_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    PriorityModule() : Module(s_name, s_help, s_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
     int priority;
 };
 
@@ -90,6 +93,7 @@ static const IpsApi priority_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

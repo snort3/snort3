@@ -29,23 +29,24 @@
 // packet handler stuff
 //-------------------------------------------------------------------------
 
-SO_PUBLIC unsigned Inspector::max_slots = 1;
-SO_PUBLIC unsigned THREAD_LOCAL Inspector::slot = 0;
+unsigned THREAD_LOCAL Inspector::slot = 0;
+unsigned Inspector::max_slots = 1;
 
-SO_PUBLIC Inspector::Inspector()
+Inspector::Inspector()
 {
-    assert(slot < max_slots);
-    ref_count = new unsigned[max_slots];
+    unsigned max = get_instance_max();
+    assert(slot < max);
+    ref_count = new unsigned[max];
 
-    for ( unsigned i = 0; i < max_slots; ++i )
+    for ( unsigned i = 0; i < max; ++i )
         ref_count[i] = 0;
 }
 
-SO_PUBLIC Inspector::~Inspector()
+Inspector::~Inspector()
 {
     unsigned total = 0;
 
-    for (unsigned i = 0; i < max_slots; ++i )
+    for (unsigned i = 0; i < get_instance_max(); ++i )
         total += ref_count[i];
 
     assert(!total);
@@ -53,9 +54,9 @@ SO_PUBLIC Inspector::~Inspector()
     delete[] ref_count;
 }
 
-SO_PUBLIC bool Inspector::is_inactive()
+bool Inspector::is_inactive()
 {
-    for (unsigned i = 0; i < max_slots; ++i )
+    for (unsigned i = 0; i < get_instance_max(); ++i )
         if ( ref_count[i] )
             return false;
     

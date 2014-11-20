@@ -17,17 +17,13 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// mpls.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 
-#ifndef MPLS_H
-#define MPLS_H
+#ifndef PROTOCOLS_MPLS_H
+#define PROTOCOLS_MPLS_H
 
 namespace mpls{
-
-namespace detail{
-
-} // namespace detail
-
 
 struct MplsHdr
 {
@@ -38,17 +34,11 @@ struct MplsHdr
 } ;
 
 
-
-
-
 } // namespace mpls
 
-typedef mpls::MplsHdr MplsHdr;
-
-#define MPLS_PAYLOADTYPE_ETHERNET     1
-#define MPLS_PAYLOADTYPE_IPV4         2
-#define MPLS_PAYLOADTYPE_IPV6         3
-#define MPLS_PAYLOADTYPE_ERROR       -1
+constexpr int MPLS_PAYLOADTYPE_ETHERNET = 1;
+constexpr int MPLS_PAYLOADTYPE_IPV4 = 2;
+constexpr int MPLS_PAYLOADTYPE_IPV6 = 3;
 
 
 #endif

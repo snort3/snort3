@@ -30,13 +30,13 @@ using namespace std;
 //-------------------------------------------------------------------------
 
 #define TELNET_AYT_OVERFLOW_STR                  \
-        "(telnet) Consecutive Telnet AYT commands beyond threshold"
+        "consecutive telnet AYT commands beyond threshold"
 #define TELNET_ENCRYPTED_STR                     \
-        "(telnet) Telnet traffic encrypted"
+        "telnet traffic encrypted"
 #define TELNET_SB_NO_SE_STR                      \
-        "(telnet) Telnet Subnegotiation Begin Command without Subnegotiation End"
+        "telnet subnegotiation begin command without subnegotiation end"
 
-static const Parameter telnet_params[] =
+static const Parameter s_params[] =
 {
     { "ayt_attack_thresh", Parameter::PT_INT, "-1:", "-1",
       "alert on this number of consecutive telnet AYT commands" },
@@ -63,7 +63,7 @@ static const RuleMap telnet_rules[] =
 };
 
 TelnetModule::TelnetModule() :
-    Module("telnet", telnet_params)
+    Module(TEL_NAME, TEL_HELP, s_params)
 {
     conf = nullptr;
 }

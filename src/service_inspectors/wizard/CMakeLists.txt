@@ -10,11 +10,10 @@ set(FILE_LIST
     wiz_module.h
 )
 
-#if (STATIC_INSPECTORS)
+if (STATIC_INSPECTORS)
     add_library(wizard STATIC ${FILE_LIST})
 
-#else (STATIC_INSPECTORS)
-#    add_shared_library(wizard inspectors ${FILE_LIST})
-#    
-#endif (STATIC_INSPECTORS)
+else (STATIC_INSPECTORS)
+    add_shared_library(wizard inspectors ${FILE_LIST})
 
+endif (STATIC_INSPECTORS)

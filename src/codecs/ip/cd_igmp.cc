@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_igmp.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 
@@ -25,12 +26,34 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/ip/cd_igmp_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
+#include "protocols/packet.h"
+#include "protocols/ipv4_options.h"
 
+
+#define CD_IGMP_NAME "igmp"
+#define CD_IGMP_HELP "support for Internet group management protocol"
 
 namespace
 {
+
+static const RuleMap igmp_rules[] =
+{
+    { DECODE_IGMP_OPTIONS_DOS, "DOS IGMP IP options validation attempt" },
+    { 0, nullptr }
+};
+
+class IgmpModule : public CodecModule
+{
+public:
+    IgmpModule() : CodecModule(CD_IGMP_NAME, CD_IGMP_HELP) {}
+
+    const RuleMap* get_rules() const
+    { return igmp_rules; }
+};
+
+
 
 class IgmpCodec : public Codec
 {
@@ -39,12 +62,8 @@ public:
     ~IgmpCodec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&){};
-    
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void get_protocol_ids(std::vector<uint16_t>&) override;
 };
 
 
@@ -54,37 +73,28 @@ public:
 
 
 
-bool IgmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t& /*lyr_len*/, uint16_t& /*next_prot_id*/)
+bool IgmpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
-    int i, alert = 0;
-
-    if (raw_len >= 1 && raw_pkt[0] == 0x11)
+    if (snort.ip_api.is_ip4() && raw.len >= 1 && raw.data[0] == 0x11)
     {
-        if (p->ip_options_data != NULL) {
-            if (p->ip_options_len >= 2) {
-                if (*(p->ip_options_data) == 0 && *(p->ip_options_data+1) == 0)
+        const uint8_t* ip_opt_data = snort.ip_api.get_ip_opt_data();
+
+        if (ip_opt_data != nullptr) {
+            if (snort.ip_api.get_ip_opt_len() >= 2) {
+                if (*(ip_opt_data) == 0 && *(ip_opt_data+1) == 0)
                 {
-                    codec_events::decoder_event(p, DECODE_IGMP_OPTIONS_DOS);
+                    codec_events::decoder_event(codec, DECODE_IGMP_OPTIONS_DOS);
                     return false;
                 }
             }
         }
 
-        for(i=0; i< (int) p->ip_option_count; i++) {
-            /* All IGMPv2 packets contain IP option code 148 (router alert).
-               This vulnerability only applies to IGMPv3, so return early. */
-            if (ipv4::is_opt_rtralt(p->ip_options[i].code)) {
-                return true; /* No alert. */
-            }
 
-            if (p->ip_options[i].len == 1) {
-                alert++;
-            }
+        if ((!(codec.codec_flags & CODEC_IPOPT_RTRALT_SEEN)) &&
+            (codec.codec_flags & CODEC_IPOPT_LEN_THREE))
+        {
+            codec_events::decoder_event(codec, DECODE_IGMP_OPTIONS_DOS);
         }
-
-        if (alert > 0)
-            codec_events::decoder_event(p, DECODE_IGMP_OPTIONS_DOS);
     }
     return true;
 }
@@ -101,30 +111,23 @@ void IgmpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new IgmpModule;
-}
+{ return new IgmpModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new IgmpCodec();
-}
+{ return new IgmpCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi igmp_api =
 {
     {
         PT_CODEC,
         CD_IGMP_NAME,
+        CD_IGMP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

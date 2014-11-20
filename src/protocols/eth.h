@@ -17,37 +17,28 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// eth.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 
-#ifndef ETH_H
-#define ETH_H
+#ifndef PROTOCOLS_ETH_H
+#define PROTOCOLS_ETH_H
+
+
+#include <arpa/inet.h>
 
 
 #define ETHERNET_HEADER_LEN 14
 #define ETHERNET_MTU                  1500
 
-#define ETH_DSAP_SNA                  0x08    /* SNA */
-#define ETH_SSAP_SNA                  0x00    /* SNA */
-#define ETH_DSAP_STP                  0x42    /* Spanning Tree Protocol */
-#define ETH_SSAP_STP                  0x42    /* Spanning Tree Protocol */
-#define ETH_DSAP_IP                   0xaa    /* IP */
-#define ETH_SSAP_IP                   0xaa    /* IP */
-
-#define ETH_ORG_CODE_ETHR              0x000000    /* Encapsulated Ethernet */
-#define ETH_ORG_CODE_CDP               0x00000c    /* Cisco Discovery Proto */
 
 namespace eth
 {
 
 
-
-namespace detail
-{
-const uint16_t HEADER_LEN = 14;
-const uint16_t MTU_LEN = 1500;
-const uint16_t MAX_FRAME_LENGTH = 1500;
-const uint16_t MIN_ETHERTYPE = 1536;
-} // namespace detail
+constexpr uint16_t MTU_LEN = 1500;
+constexpr uint16_t MAX_FRAME_LENGTH = 1500;
+constexpr uint16_t MIN_ETHERTYPE = 1536;
+constexpr uint16_t ETH_HEADER_LEN = 14;
 
 struct EtherHdr
 {
@@ -55,27 +46,14 @@ struct EtherHdr
     uint8_t ether_src[6];
     uint16_t ether_type;
 
+    /* return data in byte order */
+    inline uint16_t ethertype() const
+    { return ntohs(ether_type); }
+
+    /* return data in network order */
+    inline uint16_t raw_ethertype() const
+    { return ether_type; }
 };
-
-inline uint16_t hdr_len()
-{
-    return detail::HEADER_LEN;
-} 
-
-inline uint16_t mtu_len()
-{
-    return detail::MTU_LEN;
-}
-
-inline uint16_t min_ethertype()
-{
-    return detail::MIN_ETHERTYPE;
-}
-
-inline uint16_t max_frame_length()
-{   
-    return detail::MAX_FRAME_LENGTH;
-}
 
 } // namespace eth
 

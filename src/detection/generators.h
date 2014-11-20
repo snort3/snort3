@@ -22,12 +22,9 @@
 #ifndef GENERATORS_H
 #define GENERATORS_H
 
-// FIXIT migrate all defines to respective modules and delete this file
+// FIXIT-M migrate all defines to respective modules and delete this file
 
 #define GENERATOR_SNORT_ENGINE        1
-
-#define GENERATOR_TAG                 2
-#define TAG_LOG_PKT                   1
 
 #define GENERATOR_INTERNAL          135
 #define INTERNAL_EVENT_SYN_RECEIVED   1

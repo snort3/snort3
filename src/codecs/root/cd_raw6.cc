@@ -28,11 +28,12 @@
 #include "protocols/protocol_ids.h"
 #include <pcap.h>
 
+#define CD_RAW6_NAME "raw6"
+#define CD_RAW6_HELP_STR "support for unencapsulated IPv6"
+#define CD_RAW6_HELP ADD_DLT(CD_RAW6_HELP_STR, DLT_IPV6)
 
 namespace
 {
-
-#define CD_RAW6_NAME "raw6"
 
 class Raw6Codec : public Codec
 {
@@ -40,10 +41,8 @@ public:
     Raw6Codec() : Codec(CD_RAW6_NAME){};
     ~Raw6Codec() {};
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-    virtual void get_data_link_type(std::vector<int>&);
-
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void get_data_link_type(std::vector<int>&) override;
 };
 
 
@@ -51,39 +50,33 @@ public:
 
 
 // raw packets are predetermined to be ip4 (above) or ip6 (below) by the DLT
-bool Raw6Codec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& /*raw_len*/,
-        Packet* /*p*/, uint16_t& /*lyr_len*/, uint16_t& next_prot_id)
+bool Raw6Codec::decode(const RawData&, CodecData& data, DecodeData&)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Raw IP6 Packet!\n"););
-    next_prot_id = ETHERTYPE_IPV6;
+    data.next_prot_id = ETHERTYPE_IPV6;
     return true;
 }
 
 
 void Raw6Codec::get_data_link_type(std::vector<int>&v)
-{
-    v.push_back(DLT_IPV6);
-}
+{ v.push_back(DLT_IPV6); }
+
 
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new Raw6Codec();
-}
+{ return new Raw6Codec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi raw6_api =
 {
     {
         PT_CODEC,
         CD_RAW6_NAME,
+        CD_RAW6_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

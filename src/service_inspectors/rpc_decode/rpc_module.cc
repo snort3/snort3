@@ -23,17 +23,17 @@
 #include <assert.h>
 
 #define RPC_FRAG_TRAFFIC_STR \
-    "(rpc_decode) Fragmented RPC Records"
+    "fragmented RPC records"
 #define RPC_MULTIPLE_RECORD_STR \
-    "(rpc_decode) Multiple RPC Records"
+    "multiple RPC records"
 #define RPC_LARGE_FRAGSIZE_STR  \
-    "(rpc_decode) Large RPC Record Fragment"
+    "large RPC record fragment"
 #define RPC_INCOMPLETE_SEGMENT_STR \
-    "(rpc_decode) Incomplete RPC segment"
+    "incomplete RPC segment"
 #define RPC_ZERO_LENGTH_FRAGMENT_STR \
-    "(rpc_decode) Zero-length RPC Fragment"
+    "zero-length RPC fragment"
 
-static const Parameter rpc_params[] =
+static const Parameter s_params[] =
 {
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -53,7 +53,10 @@ static const RuleMap rpc_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-RpcDecodeModule::RpcDecodeModule() : Module("rpc_decode", rpc_params)
+#define s_name "rpc_decode"
+#define s_help "RPC inspector"
+
+RpcDecodeModule::RpcDecodeModule() : Module(s_name, s_help, s_params)
 { }
 
 const RuleMap* RpcDecodeModule::get_rules() const

@@ -64,7 +64,6 @@
 #include "detect.h"
 #include "protocols/packet.h"
 #include "event.h"
-#include "generators.h"
 #include "snort_debug.h"
 #include "util.h"
 #include "stream/stream_api.h"
@@ -81,6 +80,7 @@
 #include "loggers/unified2_common.h"
 #include "file_api/file_api.h"
 #include "sf_email_attach_decode.h"
+#include "protocols/tcp.h"
 
 const HiSearchToken hi_patterns[] =
 {
@@ -96,17 +96,14 @@ const HiSearchToken html_patterns[] =
     {NULL,               0, 0}
 };
 
-// FIXIT verify these don't need to be thread local
 void *hi_javascript_search_mpse = NULL;
 void *hi_htmltype_search_mpse = NULL;
 
 static uint32_t xtra_trueip_id;
 static uint32_t xtra_uri_id;
 static uint32_t xtra_hname_id;
-#ifndef SOURCEFIRE
 static uint32_t xtra_gzip_id;
 static uint32_t xtra_jsnorm_id;
-#endif
 
 THREAD_LOCAL HISearch hi_js_search[HI_LAST];
 THREAD_LOCAL HISearch hi_html_search[HTML_LAST];
@@ -160,11 +157,8 @@ void HttpInspectRegisterXtraDataFuncs()
     xtra_trueip_id = stream.reg_xtra_data_cb(GetHttpTrueIP);
     xtra_uri_id = stream.reg_xtra_data_cb(GetHttpUriData);
     xtra_hname_id = stream.reg_xtra_data_cb(GetHttpHostnameData);
-#ifndef SOURCEFIRE
     xtra_gzip_id = stream.reg_xtra_data_cb(GetHttpGzipData);
     xtra_jsnorm_id = stream.reg_xtra_data_cb(GetHttpJSNormData);
-#endif
-
 }
 
 static int PrintConfOpt(HTTPINSPECT_CONF_OPT *ConfOpt, const char *Option)
@@ -351,10 +345,10 @@ int PrintGlobalConf(HTTPINSPECT_GLOBAL_CONF *GlobalConf)
 
 static inline int SetSiInput(HI_SI_INPUT *SiInput, Packet *p)
 {
-    IP_COPY_VALUE(SiInput->sip, GET_SRC_IP(p));
-    IP_COPY_VALUE(SiInput->dip, GET_DST_IP(p));
-    SiInput->sport = p->sp;
-    SiInput->dport = p->dp;
+    sfip_copy(SiInput->sip, p->ptrs.ip_api.get_src());
+    sfip_copy(SiInput->dip, p->ptrs.ip_api.get_dst());
+    SiInput->sport = p->ptrs.sp;
+    SiInput->dport = p->ptrs.dp;
 
     /*
     **  We now set the packet direction
@@ -429,7 +423,7 @@ static inline FilePosition getFilePoistion(Packet *p)
     return position;
 }
 
-// FIXIT extra data masks should only be updated as extra data changes state
+// FIXIT-P extra data masks should only be updated as extra data changes state
 // eg just once when captured; this function is called on every packet and 
 // repeatedly sets the flags on session
 static inline void HttpLogFuncs(
@@ -460,7 +454,6 @@ static inline void HttpLogFuncs(
         stream.set_extra_data(p->flow, p, xtra_hname_id);
     }
 
-#ifndef SOURCEFIRE
     if(hsd->log_flags & HTTP_LOG_JSNORM_DATA)
     {
         SetExtraData(p, xtra_jsnorm_id);
@@ -469,7 +462,6 @@ static inline void HttpLogFuncs(
     {
         SetExtraData(p, xtra_gzip_id);
     }
-#endif
 }
 
 static inline void setFileName(Packet *p)
@@ -505,13 +497,6 @@ static inline void setFileName(Packet *p)
 **  @retval <0 fatal error
 **  @retval >0 non-fatal error
 */
-#define HTTP_BUF_URI_FLAG           0x01
-#define HTTP_BUF_HEADER_FLAG        0x02
-#define HTTP_BUF_CLIENT_BODY_FLAG   0x04
-#define HTTP_BUF_METHOD_FLAG        0x08
-#define HTTP_BUF_COOKIE_FLAG        0x10
-#define HTTP_BUF_STAT_CODE          0x20
-#define HTTP_BUF_STAT_MSG           0x40
 int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
 {
     HI_SESSION  *session;
@@ -680,7 +665,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
         if ( iInspectMode == HI_SI_CLIENT_MODE )
         {
             const HttpBuffer* hb;
-            ClearHttpBuffers();  // FIXIT needed here and right above??
+            ClearHttpBuffers();  // FIXIT-P needed here and right above??
 
             if ( session->client.request.uri_norm )
             {
@@ -1111,7 +1096,6 @@ void FreeHttpsessionData(void *data)
     file_api->free_mime_session(hsd->mime_ssn);
 }
 
-// FIXIT this should leverage inspector get_buf()
 int GetHttpTrueIP(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
 {
     HttpsessionData* hsd = get_session_data(flow);

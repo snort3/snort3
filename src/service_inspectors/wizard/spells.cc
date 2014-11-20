@@ -114,8 +114,8 @@ bool SpellBook::add_spell(const char* key, const char* val)
     return true;
 }
 
-MagicPage* SpellBook::find_spell(
-    const uint8_t* s, unsigned n, MagicPage* p, unsigned i) const
+const MagicPage* SpellBook::find_spell(
+    const uint8_t* s, unsigned n, const MagicPage* p, unsigned i) const
 {
     while ( i < n )
     {
@@ -125,7 +125,7 @@ MagicPage* SpellBook::find_spell(
         {
             if ( p->any )
             {
-                if ( MagicPage* q = find_spell(s, n, p->next[c], i+1) )
+                if ( const MagicPage* q = find_spell(s, n, p->next[c], i+1) )
                     return q;
             }
             else
@@ -139,31 +139,30 @@ MagicPage* SpellBook::find_spell(
         {
             while ( i < n )
             {
-                if ( MagicPage* q = find_spell(s, n, p->any, i) )
+                if ( const MagicPage* q = find_spell(s, n, p->any, i) )
                     return q;
                 ++i;
             }
         }
         break;
     }
-    if ( p->key.empty() )
-        return nullptr;
-    else
-        return p;
+    return p;
 }
 
-// FIXIT make this incremental based on last position
-const char* SpellBook::find_spell(const uint8_t* data, unsigned len) const
+const char* SpellBook::find_spell(
+    const uint8_t* data, unsigned len, const MagicPage*& p) const
 {
-    // FIXIT make configurable upper bound to limit globbing
+    // FIXIT-L make configurable upper bound to limit globbing
     unsigned max = 16;
 
     if ( len > max )
         len = max;
     
-    if ( MagicPage* p = find_spell(data, len, root) )
+    p = find_spell(data, len, p, 0);
+
+    if ( !p->value.empty() )
         return p->value.c_str();
-    else
-        return nullptr;
+
+    return nullptr;
 }
  

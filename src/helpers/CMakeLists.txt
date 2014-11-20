@@ -1,6 +1,7 @@
 
-
 add_library (helpers STATIC
+    chunk.cc
+    chunk.h
     directory.cc
     directory.h
     markup.cc

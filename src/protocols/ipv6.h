@@ -17,13 +17,16 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// ipv6.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 
-#ifndef IPV6_H
-#define IPV6_H
+#ifndef PROTOCOLS_IPV6_H
+#define PROTOCOLS_IPV6_H
 
 #include <cstdint>
+#include <arpa/inet.h>
 #include "sfip/sfip_t.h"
+#include "protocols/protocol_ids.h"
 
 #ifndef WIN32
 #include <sys/socket.h>
@@ -37,54 +40,145 @@
 #endif /* !WIN32 */
 
 
-namespace ipv6
+namespace ip
 {
 
+constexpr uint8_t IP6_HEADER_LEN = 40;
+constexpr uint32_t MIN_EXT_LEN = 8;
+constexpr uint8_t IP6_MULTICAST = 0xFF;  // first/most significant octet
 
-namespace detail
+constexpr uint16_t IP6F_MF_MASK = 0x0001; /* more-fragments flag */
+constexpr uint16_t IP6F_RES_MASK = 0x0006; /* reserved bits */
+
+
+enum class MulticastScope : uint8_t
 {
-const uint16_t ETHERNET_TYPE_IPV6 = 0x86dd;
-const uint16_t IPV6_PROT_ID = 41;
-const uint8_t IP6_HEADER_LEN = 40;
-const uint8_t IP6_MULTICAST = 0xFF;  // first/most significant octet
-const uint32_t MIN_EXT_LEN = 8;
-} // namespace
-
+    RESERVED = 0x00,
+    INTERFACE = 0x01,
+    LINK = 0x02,
+    ADMIN = 0x04,
+    SITE = 0x05,
+    ORG = 0x08,
+    GLOBAL = 0x0E,
+};
 
 
 /* IPv6 address */
-#ifndef s6_addr
-struct in6_addr
+struct snort_in6_addr
 {
     union
     {
         uint8_t u6_addr8[16];
         uint16_t u6_addr16[8];
         uint32_t u6_addr32[4];
-    } in6_u;
-#define s6_addr         in6_u.u6_addr8
-#define s6_addr16       in6_u.u6_addr16
-#define s6_addr32       in6_u.u6_addr32
+    };
 };
-#endif
+
+struct IP6Hdr
+{
+    uint32_t ip6_vtf;               /* 4 bits version, 8 bits TC,len
+                                        20 bits flow-ID */
+    uint16_t ip6_payload_len;               /* payload length */
+    uint8_t  ip6_next;                /* next header */
+    uint8_t  ip6_hoplim;               /* hop limit */
+
+    snort_in6_addr ip6_src;      /* source address */
+    snort_in6_addr ip6_dst;      /* destination address */
 
 
-#define ip6flow  ip6_vtf
-#define ip6plen  ip6_payload_len
-#define ip6nxt   ip6_next
-#define ip6hlim  ip6_hoplim
-#define ip6hops  ip6_hoplim
+    inline uint16_t len() const
+    { return ntohs(ip6_payload_len); }
 
-#define IPRAW_HDR_VER(p_rawiph) \
-   (ntohl(p_rawiph->ip6_vtf) >> 28)
+    /* Same function as ipv4 */
+    inline uint8_t proto() const
+    { return ip6_next; }
+
+    inline uint8_t next() const
+    { return ip6_next; }
+
+    inline uint8_t hop_lim() const
+    { return ip6_hoplim; }
+
+    inline uint8_t ver() const
+    { return (uint8_t)(ntohl(ip6_vtf) >> 28); }
+
+    inline uint16_t tos() const
+    { return (uint16_t)((ntohl(ip6_vtf) & 0x0FF00000) >> 20); }
+
+    inline uint32_t flow() const
+    { return (uint16_t)((ntohl(ip6_vtf) & 0x000FFFFF) >> 20); }
 
 
-#define IP6F_OFFSET_MASK    0xfff8  /* mask out offset from _offlg */
-#define IP6F_MF_MASK        0x0001  /* more-fragments flag */
 
-#define IP6F_OFFSET(fh) ((ntohs((fh)->ip6f_offlg) & IP6F_OFFSET_MASK) >> 3)
-#define IP6F_RES(fh) (fh)->ip6f_reserved
-#define IP6F_MF(fh) (ntohs((fh)->ip6f_offlg) & IP6F_MF_MASK )
+    // becaise Snort expects this in terms of 32 bit words.
+    inline uint8_t hlen() const
+    { return IP6_HEADER_LEN; }
+
+    inline const snort_in6_addr* get_src() const
+    { return &ip6_src; }
+
+    inline const snort_in6_addr* get_dst() const
+    { return &ip6_dst; }
+
+    inline MulticastScope get_dst_multicast_scope() const
+    { return static_cast<MulticastScope>(ip6_dst.u6_addr8[1] & 0x0F); }
+
+
+    /* booleans */
+    inline bool is_src_multicast() const
+    { return (ip6_src.u6_addr8[0] == IP6_MULTICAST); }
+
+    inline bool is_dst_multicast() const
+    { return ip6_dst.u6_addr8[0] == IP6_MULTICAST; }
+
+    inline bool is_dst_multicast_scope_reserved() const
+    { return static_cast<MulticastScope>(ip6_dst.u6_addr8[1]) == MulticastScope::RESERVED; }
+
+    inline bool is_dst_multicast_scope_interface() const
+    { return static_cast<MulticastScope>(ip6_dst.u6_addr8[1]) == MulticastScope::INTERFACE; }
+
+    inline bool is_dst_multicast_scope_link() const
+    { return static_cast<MulticastScope>(ip6_dst.u6_addr8[1]) == MulticastScope::LINK; }
+
+    inline bool is_dst_multicast_scope_site() const
+    { return (static_cast<MulticastScope>(ip6_dst.u6_addr8[1]) == MulticastScope::SITE); }
+
+    inline bool is_dst_multicast_scope_global() const
+    { return (static_cast<MulticastScope>(ip6_dst.u6_addr8[1]) == MulticastScope::GLOBAL); }
+
+
+    /*  setters  */
+    inline void set_len(uint16_t new_len)
+    { ip6_payload_len = htons(new_len); }
+
+    inline void set_proto(uint8_t prot)
+    { ip6_next = prot; }
+
+
+    inline void set_raw_len(uint16_t new_len)
+    { ip6_payload_len = new_len; }
+
+
+    /* Access raw data */
+
+    inline uint16_t raw_len() const
+    { return ip6_payload_len; }
+
+};
+
+
+enum class HopByHopOptions : uint8_t
+{
+    PAD1 = 0x00,
+    PADN = 0x01,
+    TUNNEL_ENCAP = 0x04,
+    RTALERT = 0x05,
+    QUICK_START = 0x06,
+    CALIPSO = 0x07,
+    HOME_ADDRESS = 0xC9,
+    JUMBO = 0xC2,
+    ENDPOINT_IDENT = 0x8A,
+};
 
 /* to store references to IP6 Extension Headers */
 struct IP6Option
@@ -110,129 +204,55 @@ struct IP6Frag
     uint8_t   ip6f_reserved;    /* reserved field */
     uint16_t  ip6f_offlg;   /* offset, reserved, and flag */
     uint32_t  ip6f_ident;   /* identification */
-} ;
+
+    inline uint8_t next() const
+    { return ip6f_nxt; }
+
+    inline uint16_t off_w_flags() const
+    { return ntohs(ip6f_offlg); }
+
+    inline uint16_t off() const
+    { return ntohs(ip6f_offlg) & 0xFFF8; }
+
+    inline uint16_t mf() const
+    { return ntohs(ip6f_offlg) & IP6F_MF_MASK; }
+
+    inline uint16_t rb() const
+    { return ntohs(ip6f_offlg) & IP6F_RES_MASK; }
+
+    inline uint32_t id() const
+    { return ntohl(ip6f_ident); }
+
+    inline uint8_t res() const
+    { return ip6f_reserved; }
 
 
-struct IP6RawHdr
-{
-    uint32_t ip6_vtf;               /* 4 bits version, 8 bits TC,
-                                        20 bits flow-ID */
-    uint16_t ip6_payload_len;               /* payload length */
-    uint8_t  ip6_next;                /* next header */
-    uint8_t  ip6_hoplim;               /* hop limit */
 
-    struct in6_addr ip6_src;      /* source address */
-    struct in6_addr ip6_dst;      /* destination address */
-};
+    inline uint16_t raw_off_w_flags() const
+    { return ip6f_offlg; }
 
-struct IP6Hdr
-{
-    uint32_t vcl;      /* version, class, and label */
-    uint16_t len;      /* length of the payload */
-    uint8_t  next;     /* next header
-                         * Uses the same flags as
-                         * the IPv4 protocol field */
-    uint8_t  hop_lmt;  /* hop limit */
-    sfip_t ip_src;
-    sfip_t ip_dst;
-};
-
-enum class MulticastScope : uint8_t
-{
-    IP6_MULTICAST_SCOPE_RESERVED = 0x00,
-    IP6_MULTICAST_SCOPE_INTERFACE = 0x01,
-    IP6_MULTICAST_SCOPE_LINK = 0x02,
-    IP6_MULTICAST_SCOPE_ADMIN = 0x04,
-    IP6_MULTICAST_SCOPE_SITE = 0x05,
-    IP6_MULTICAST_SCOPE_ORG = 0x08,
-    IP6_MULTICAST_SCOPE_GLOBAL = 0x0E,
-};
-
-enum class HopByHopOptions : uint8_t 
-{
-    PAD1 = 0x00,
-    PADN = 0x01,
-    TUNNEL_ENCAP = 0x04,
-    RTALERT = 0x05,
-    QUICK_START = 0x06,
-    CALIPSO = 0x07,
-    HOME_ADDRESS = 0xC9,
-    JUMBO = 0xC2,
-    ENDPOINT_IDENT = 0x8A,
+    inline uint32_t raw_id() const
+    { return ip6f_ident; }
 };
 
 
-
-inline uint8_t hdr_len()
+// Reflects the recomended IPv6 order in RFC 2460 4.1
+constexpr int IPV6_ORDER_MAX = 7;
+static inline int IPV6ExtensionOrder(uint8_t type)
 {
-    return detail::IP6_HEADER_LEN;
+    switch (type)
+    {
+        case IPPROTO_ID_HOPOPTS:   return 1;
+        case IPPROTO_ID_DSTOPTS:   return 2;
+        case IPPROTO_ID_ROUTING:   return 3;
+        case IPPROTO_ID_FRAGMENT:  return 4;
+        case IPPROTO_ID_AUTH:      return 5;
+        case IPPROTO_ID_ESP:       return 6;
+        default:                   return IPV6_ORDER_MAX;
+    }
 }
 
-inline uint16_t ethertype()
-{
-    return detail::ETHERNET_TYPE_IPV6;
-}
 
-inline uint16_t prot_id()
-{
-    return detail::IPV6_PROT_ID;
-}
-
-inline bool is_multicast(uint8_t addr)
-{
-    return addr == detail::IP6_MULTICAST;
-}
-
-inline MulticastScope get_multicast_scope(uint8_t ch)
-{
-    return static_cast<MulticastScope>(ch & 0x0F);
-}
-
-inline bool is_multicast_scope_reserved(uint8_t ch)
-{
-    return (static_cast<MulticastScope>(ch) == MulticastScope::IP6_MULTICAST_SCOPE_RESERVED);
-}
-
-inline bool is_multicast_scope_interface(uint8_t ch)
-{
-    return (static_cast<MulticastScope>(ch) == MulticastScope::IP6_MULTICAST_SCOPE_INTERFACE);
-}
-
-inline bool is_multicast_scope_link(uint8_t ch)
-{
-    return (static_cast<MulticastScope>(ch) == MulticastScope::IP6_MULTICAST_SCOPE_LINK);
-}
-
-inline bool is_multicast_scope_site(uint8_t ch)
-{
-    return (static_cast<MulticastScope>(ch) == MulticastScope::IP6_MULTICAST_SCOPE_SITE);
-}
-
-inline bool is_multicast_scope_global(uint8_t ch)
-{
-    return (static_cast<MulticastScope>(ch) == MulticastScope::IP6_MULTICAST_SCOPE_GLOBAL);
-}
-
-inline bool is_ip6_hdr_ver(IP6RawHdr *hdr)
-{
-    return ((ntohl(hdr->ip6_vtf) >> 28) == 6);
-}
-
-inline size_t min_ext_len()
-{
-    return detail::MIN_EXT_LEN;
-}
-
-} // namespace
-
-
-
-
-
-// TODO --> delete EVERYTHING below this line!
-typedef ipv6::IP6Hdr IP6Hdr;
-typedef ipv6::IP6Option IP6Option;
-typedef ipv6::IP6Extension IP6Extension;
-typedef ipv6::IP6Frag IP6Frag;
+} // namespace ipv6
 
 #endif

@@ -1,30 +1,29 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // pps_ftp_telnet.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
-#include "utils/s2l_util.h"
+#include "helpers/converter.h"
+#include "helpers/s2l_util.h"
 
 namespace preprocessors
 {
@@ -34,7 +33,7 @@ namespace {
 class FtpTelnet : public ConversionState
 {
 public:
-    FtpTelnet(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    FtpTelnet(Converter& c) : ConversionState(c) {};
     virtual ~FtpTelnet() {};
     virtual bool convert(std::istringstream& data_stream);
 private:
@@ -48,12 +47,12 @@ bool FtpTelnet::add_ftp_n_telnet_option(std::string opt_name, bool val)
 {
     bool retval;
 
-    ld->open_top_level_table("telnet");
-    retval = ld->add_option_to_table(opt_name, val);
-    ld->close_table();
-    ld->open_top_level_table("ftp_server");
-    retval = ld->add_option_to_table(opt_name, val) && retval;
-    ld->close_table();
+    table_api.open_top_level_table("telnet");
+    retval = table_api.add_option(opt_name, val);
+    table_api.close_table();
+    table_api.open_top_level_table("ftp_server");
+    retval = table_api.add_option(opt_name, val) && retval;
+    table_api.close_table();
     return retval;
 }
 
@@ -62,12 +61,12 @@ void FtpTelnet::add_ftp_n_telnet_deprecated(std::istringstream& data_stream,
 {
     std::string tmp;
     data_stream >> tmp;  // eat the next word
-    ld->open_top_level_table("telnet");
-    ld->add_deleted_comment(opt_name);
-    ld->close_table();
-    ld->open_top_level_table("ftp_server");
-    ld->add_deleted_comment(opt_name);
-    ld->close_table();
+    table_api.open_top_level_table("telnet");
+    table_api.add_deleted_comment(opt_name);
+    table_api.close_table();
+    table_api.open_top_level_table("ftp_server");
+    table_api.add_deleted_comment(opt_name);
+    table_api.close_table();
 }
 
 bool FtpTelnet::convert(std::istringstream& data_stream)
@@ -84,7 +83,7 @@ bool FtpTelnet::convert(std::istringstream& data_stream)
     {
         if(keyword.compare("global"))
         {
-            ld->failed_conversion(data_stream, "'global' keyword required");
+            data_api.failed_conversion(data_stream, "'global' keyword required");
             return false;
         }
     }
@@ -112,11 +111,14 @@ bool FtpTelnet::convert(std::istringstream& data_stream)
 
         else
         {
-            retval = false;
+            tmpval = false;
         }
 
-        if (retval && !tmpval)
+        if (!tmpval)
+        {
+            data_api.failed_conversion(data_stream, keyword);
             retval = false;
+        }
     }
 
     return retval;    
@@ -126,9 +128,9 @@ bool FtpTelnet::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor(Converter& c)
 {
-    return new FtpTelnet(cv, ld);
+    return new FtpTelnet(c);
 }
 
 static const ConvertMap preprocessor_ftptelnet = 

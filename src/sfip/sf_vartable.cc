@@ -36,6 +36,8 @@
 #include <ctype.h>
 
 #include "snort_types.h"
+#include "sfip/sf_vartable.h"
+#include "sfip/sf_ipvar.h"
 #include "util.h"
 
 vartable_t * sfvt_alloc_table(void)
@@ -216,14 +218,15 @@ SFIP_RET sfvt_add_str(vartable_t *table, const char *str, sfip_var_t **ipret)
     sfip_var_t *swp;
     sfip_var_t *p;
     int ret;
-    SFIP_RET status;
+    SFIP_RET status = SFIP_FAILURE;
 
     if(!table || !str || !ipret) return SFIP_FAILURE;
 
     /* Creates the variable */
-    if( (var = sfvar_alloc(table, str, &status)) == NULL )
+    var = sfvar_alloc(table, str, &status);
+    if( var == NULL )
     {
-         return status;
+         return SFIP_FAILURE;
     }
 
     /* If this is an alias of another var, id will be set */

@@ -1,30 +1,29 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // out_full.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
-#include "utils/s2l_util.h"
+#include "helpers/converter.h"
+#include "helpers/s2l_util.h"
 
 namespace output
 {
@@ -34,7 +33,7 @@ namespace {
 class AlertFull : public ConversionState
 {
 public:
-    AlertFull(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    AlertFull(Converter& c) : ConversionState(c) {};
     virtual ~AlertFull() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -50,12 +49,12 @@ bool AlertFull::convert(std::istringstream& data_stream)
     std::string units = "B";
 
 
-    ld->open_top_level_table("alert_full");
+    table_api.open_top_level_table("alert_full");
 
     if (!(data_stream >> keyword))
         return true;
 
-    retval = ld->add_option_to_table("file", keyword);
+    table_api.add_deleted_comment("<filename> can no longer be specific");
 
 
     if (!(data_stream >> limit))
@@ -72,8 +71,8 @@ bool AlertFull::convert(std::istringstream& data_stream)
     }
 
 
-    retval = ld->add_option_to_table("limit", limit) && retval;
-    retval = ld->add_option_to_table("units", units) && retval;
+    retval = table_api.add_option("limit", limit) && retval;
+    retval = table_api.add_option("units", units) && retval;
 
     // If we read something, more data available and bad input
     if (data_stream >> keyword)
@@ -86,11 +85,11 @@ bool AlertFull::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor(Converter& c)
 {
-    ld->open_top_level_table("alert_full"); // in case there are no arguments
-    ld->close_table();
-    return new AlertFull(cv, ld);
+    c.get_table_api().open_top_level_table("alert_full"); // in case there are no arguments
+    c.get_table_api().close_table();
+    return new AlertFull(c);
 }
 
 static const ConvertMap alert_full_api =

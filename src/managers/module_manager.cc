@@ -27,17 +27,19 @@
 #include <sstream>
 #include <lua.hpp>
 
-#include "shell.h"
 #include "framework/base_api.h"
 #include "framework/module.h"
 #include "managers/plugin_manager.h"
 #include "main/snort_config.h"
 #include "main/modules.h"
+#include "main/shell.h"
+#include "main/snort_types.h"
 #include "parser/parser.h"
 #include "parser/parse_conf.h"
 #include "parser/vars.h"
 #include "time/profiler.h"
 #include "helpers/markup.h"
+#include "utils/stats.h"
 
 using namespace std;
 
@@ -45,7 +47,7 @@ struct ModHook
 {
     Module* mod;
     const BaseApi* api;
-    luaL_reg* reg;
+    luaL_Reg* reg;
 
     ModHook(Module*, const BaseApi*);
     ~ModHook();
@@ -56,6 +58,9 @@ struct ModHook
 typedef list<ModHook*> ModuleList;
 static ModuleList s_modules;
 static unsigned s_errors = 0;
+static string s_current;
+static string s_name;
+static string s_type;
 
 // for callbacks from Lua
 static SnortConfig* s_config = nullptr;
@@ -95,10 +100,10 @@ void ModHook::init()
         n++;
 
     // constructing reg here may seem like overkill
-    // why not just typedef Command to luaL_reg?
+    // ... why not just typedef Command to luaL_Reg?
     // because the help would not be supplied or it
-    // would be out of data, out of sync, etc. QED
-    reg = new luaL_reg[++n];
+    // would be out of date, out of sync, etc. QED
+    reg = new luaL_Reg[++n];
     unsigned k = 0;
 
     while ( k < n )
@@ -112,6 +117,19 @@ void ModHook::init()
 //-------------------------------------------------------------------------
 // helper functions
 //-------------------------------------------------------------------------
+
+static void set_type(string& fqn)
+{
+    if ( s_type.empty() )
+        return;
+
+    size_t pos = fqn.find_first_of('.');
+
+    if ( pos == fqn.npos )
+        pos = fqn.size();
+
+    fqn.replace(0, pos, s_type);
+}
 
 static void set_top(string& fqn)
 {
@@ -151,6 +169,77 @@ static ModHook* get_hook(const char* s)
 // (type, fqn, default, brief help, range)
 //-------------------------------------------------------------------------
 
+enum DumpFormat { DF_STD, DF_TAB, DF_LUA };
+static DumpFormat dump_fmt = DF_STD;
+
+static void dump_field_std(const string& key, const Parameter* p)
+{
+    cout << Markup::item();
+    cout << Markup::escape(p->get_type());
+    cout << " " << Markup::emphasis(Markup::escape(key));
+
+    if ( p->deflt )
+        cout << " = " << Markup::escape((char*)p->deflt);
+
+    cout << ": " << p->help;
+
+    if ( p->range )
+        cout << " { " << Markup::escape((char*)p->range) << " }";
+
+    cout << endl;
+}
+
+static void dump_field_tab(const string& key, const Parameter* p)
+{
+    cout << Markup::item();
+    cout << p->get_type();
+    cout << "\t" << Markup::emphasis(Markup::escape(key));
+
+    if ( p->deflt )
+        cout << "\t" << Markup::escape((char*)p->deflt);
+    else
+        cout << "\t";
+
+    cout << "\t" << p->help;
+
+    if ( p->range )
+        cout << "\t" << Markup::escape((char*)p->range);
+    else
+        cout << "\t";
+
+    cout << endl;
+}
+
+static void dump_field_lua(const string& key, const Parameter* p, bool table = false)
+{
+    // implied values (rule keywords) and command line args
+    // don't really have defaults, so skip them
+    if ( key.find('~') != string::npos || 
+         key.find('-') != string::npos ||
+         key.find('*') != string::npos )
+        return;
+
+    if ( table || p->is_table() )
+        cout << key << " = { }";
+
+    // if there is no default, emit nothing
+    else if ( !p->deflt )
+        return;
+
+    else if ( p->is_quoted() )
+    {
+        const char* s = p->deflt ? p->deflt : " ";
+        cout << key << " = '" << s << "'";
+    }
+    else
+    {
+        const char* s = p->deflt ? p->deflt : "0";
+        cout << key << " = " << s;
+    }
+
+    cout << endl;
+}
+
 static void dump_table(string&, const char* pfx, const Parameter*, bool list = false);
 
 static void dump_field(string& key, const char* pfx, const Parameter* p, bool list = false)
@@ -158,7 +247,7 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
     unsigned n = key.size();
 
     if ( list || !p->name )
-        key += "[]";
+        key += (dump_fmt == DF_LUA) ? "[1]" : "[]";
 
     if ( p->name )
     {
@@ -167,6 +256,11 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
         key += p->name;
     }
 
+    if ( pfx && strncmp(key.c_str(), pfx, strlen(pfx)) )
+    {
+        key.erase();
+        return;
+    }
     // we dump just one list entry
     if ( p->type == Parameter::PT_TABLE )
         dump_table(key, pfx, (Parameter*)p->range);
@@ -174,45 +268,32 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
     else if ( p->type == Parameter::PT_LIST )
         dump_table(key, pfx, (Parameter*)p->range, true);
 
-    else if ( !pfx || !strncmp(key.c_str(), pfx, strlen(pfx)) )
+    else
     {
-#if 1
-        cout << Markup::item();
-        cout << p->get_type();
-        cout << " " << Markup::emphasis(key);
+        if ( dump_fmt == DF_LUA )
+            dump_field_lua(key, p);
 
-        if ( p->deflt )
-            cout << " = " << (char*)p->deflt;
+        else if ( dump_fmt == DF_TAB )
+            dump_field_tab(key, p);
 
-        cout << ": " << p->help;
-
-        if ( p->range )
-            cout << " { " << (char*)p->range << " }";
-#else
-        cout << Markup::item();
-        cout << p->get_type();
-        cout << "\t" << Markup::emphasis(key);
-
-        if ( p->deflt )
-            cout << "\t" << (char*)p->deflt;
         else
-            cout << "\t";
-
-        cout << "\t" << p->help;
-
-        if ( p->range )
-            cout << "\t" << (const char*)p->range;
-        else
-            cout << "\t";
-
-#endif
-        cout << endl;
+            dump_field_std(key, p);
     }
     key.erase(n);
 }
 
 static void dump_table(string& key, const char* pfx, const Parameter* p, bool list)
 {
+    if ( dump_fmt == DF_LUA )
+    {
+        dump_field_lua(key, p, true);
+
+        if ( list )
+        {
+            string fqn = key + "[1]";
+            dump_field_lua(fqn, p, true);
+        }
+    }
     while ( p->name )
         dump_field(key, pfx, p++, list);
 }
@@ -221,16 +302,24 @@ static void dump_table(string& key, const char* pfx, const Parameter* p, bool li
 // set methods
 //-------------------------------------------------------------------------
 
-static const Parameter* get_params(string& sfx, const Parameter* p)
+static const Parameter* get_params(const string& sfx, const Parameter* p)
 {
     size_t pos = sfx.find_first_of('.');
+    std::string new_fqn;
 
     if ( pos == string::npos )
-        return p;
+    {
+        if ( p[0].name && !p[1].name )
+            return p;
+        else
+            new_fqn = sfx;
+    }
+    else
+    {
+        new_fqn = sfx.substr(pos + 1);
+    }
 
-    sfx.erase(0, pos+1);
-    string name = sfx.substr(0, sfx.find_first_of('.'));
-
+    string name = new_fqn.substr(0, new_fqn.find_first_of('.'));
     while ( p->name && name != p->name )
         ++p;
 
@@ -241,19 +330,34 @@ static const Parameter* get_params(string& sfx, const Parameter* p)
          p->type != Parameter::PT_LIST )
         return p;
 
+    if (new_fqn.find_first_of('.') == std::string::npos)
+    {
+        if (p->type == Parameter::PT_LIST)
+        {
+            const Parameter* tmp_p =
+                reinterpret_cast<const Parameter*>(p->range);
+
+            // FIXIT -- this will fail if we are opening a
+            // a list with only one Parameter
+            if ( tmp_p[0].name && !tmp_p[1].name )
+                return tmp_p;
+        }
+        return p;
+    }
+
     p = (const Parameter*)p->range;
-    return get_params(sfx,  p);
+    return get_params(new_fqn, p);
 }
 
-// FIXIT vars may have been defined on command line
+// FIXIT-M vars may have been defined on command line
 // that mechanism will be replaced with pulling a Lua
 // chunk from the command line and stuffing into L
 // before setting configs; that will overwrite
 //
-// FIXIT should only need one table with
+// FIXIT-M should only need one table with
 // dynamically typed vars
 //
-// FIXIT this is a hack to tell vars by naming
+// FIXIT-M this is a hack to tell vars by naming
 // convention; with one table this is obviated
 // but if multiple tables are kept might want
 // to change these to a module with parameters
@@ -281,7 +385,7 @@ static bool set_param(Module* mod, const char* fqn, Value& val)
 {
     if ( !mod->set(fqn, val, s_config) )
     {
-        ErrorMessage("ERROR: %s is invalid\n", fqn);
+        ParseError("%s is invalid", fqn);
         ++s_errors;
     }
 
@@ -289,15 +393,54 @@ static bool set_param(Module* mod, const char* fqn, Value& val)
     return true;
 }
 
+static bool ignored(const char* fqn)
+{
+    static const char* ignore = nullptr;
+
+    if ( !(snort_conf->logging_flags & LOGGING_FLAG__WARN_UNKNOWN) )
+        return true;
+
+    if ( !ignore )
+    {
+        ignore = getenv("SNORT_IGNORE");
+        if ( !ignore )
+            ignore = "";
+    }
+    const char* s = strstr(ignore, fqn);
+
+    if ( !s )
+        return false;
+
+    if ( s != ignore && s[-1] != ' ' )
+        return false;
+
+    s += strlen(fqn);
+
+    if ( *s && *s != ' ' )
+        return false;
+
+    return true;
+}
+
 static bool set_value(const char* fqn, Value& v)
 {
-    string mod_name = fqn;
-    set_top(mod_name);
+    string t = fqn;
+    set_type(t);
+    fqn = t.c_str();
 
-    Module* mod = ModuleManager::get_module(mod_name.c_str());
+    string key = t;
+    set_top(key);
+
+    Module* mod = ModuleManager::get_module(key.c_str());
 
     if ( !mod )
-        return set_var(fqn, v);
+    {
+        bool found = set_var(fqn, v);
+
+        if ( !found && !ignored(fqn) )
+            ParseWarning("uknown symbol %s", fqn);
+        return found;
+    }
 
     // now we must traverse the mod params to get the leaf
     string s = fqn;
@@ -305,8 +448,12 @@ static bool set_value(const char* fqn, Value& v)
  
     if ( !p )
     {
-        FatalError("can't find %s\n", fqn);
-        // error messg
+        // FIXIT-L handle things like x = { 1 }
+        // where x is a table not a list and 1 should be 
+        // considered a key not a value; ideally say
+        // can't find x.1 instead of just can't find x
+        ParseError("can't find %s", fqn);
+        ++s_errors;
         return false;
     }
 
@@ -318,11 +465,11 @@ static bool set_value(const char* fqn, Value& v)
     }
 
     if ( v.get_type() == Value::VT_STR )
-        ErrorMessage("ERROR invalid %s = %s\n", fqn, v.get_string());
+        ParseError("invalid %s = '%s'", fqn, v.get_string());
     else if ( v.get_real() == v.get_long() )
-        ErrorMessage("ERROR invalid %s = %ld\n", fqn, v.get_long());
+        ParseError("invalid %s = %ld", fqn, v.get_long());
     else
-        ErrorMessage("ERROR invalid %s = %g\n", fqn, v.get_real());
+        ParseError("invalid %s = %g", fqn, v.get_real());
 
     ++s_errors;
     return false;
@@ -340,14 +487,27 @@ extern "C"
     bool set_bool(const char* fqn, bool val);
     bool set_number(const char* fqn, double val);
     bool set_string(const char* fqn, const char* val);
+    bool set_alias(const char* from, const char* to);
 }
 
-bool open_table(const char* s, int idx)
+SO_PUBLIC bool set_alias(const char* from, const char* to)
 {
-    string key = s;
+    s_name = from;
+    s_type = to;
+    return true;
+}
+
+SO_PUBLIC bool open_table(const char* s, int idx)
+{
+    const char* orig = s;
+    string fqn = s;
+    set_type(fqn);
+    s = fqn.c_str();
+
+    string key = fqn;
     set_top(key);
 
-    // ips option parameters only using in rules which
+    // ips option parameters only used in rules which
     // are non-lua; may be possible to allow a subtable
     // for lua config of ips option globals
     ModHook* h = get_hook(key.c_str());
@@ -355,49 +515,90 @@ bool open_table(const char* s, int idx)
     if ( !h || (h->api && h->api->type == PT_IPS_OPTION) )
         return false;
 
-    Module* m = h->mod;
-    static string last;
+    // FIXIT-M only basic modules and inspectors can be reloaded at present
+    if ( snort_is_reloading() && h && h->api && h->api->type != PT_INSPECTOR )
+        return false;
 
-    if ( last != key )
+    //printf("open %s %d\n", s, idx);
+    Module* m = h->mod;
+
+    if (strcmp(m->get_name(), s))
     {
-        if ( !last.size() )
-            LogMessage("Configuring modules:\n");
-        LogMessage("\t %s\n", key.c_str());
-        last = key;
+        std::string fqn = s;
+        const Parameter* const p = get_params(fqn, m->get_parameters());
+
+        if ( !p )
+        {
+            ParseError("can't find %s", s);
+            return false;
+        }
+        else if ((idx > 0) && (p->type == Parameter::PT_TABLE))
+        {
+            ParseError("%s is a table; all elements must be named", s);
+            return false;
+        }
     }
 
-    m->begin(s, idx, s_config);
+    if ( s_current != key )
+    {
+        if ( fqn != orig )
+            LogMessage("\t%s (%s)\n", key.c_str(), orig);
+        else
+            LogMessage("\t%s\n", key.c_str());
+        s_current = key;
+    }
+
+    if ( !m->begin(s, idx, s_config) )
+    {
+        ParseError("can't open %s", m->get_name());
+        return false;
+    }
     return true;
 }
 
-void close_table(const char* s, int idx)
+SO_PUBLIC void close_table(const char* s, int idx)
 {
-    string key = s;
+    string fqn = s;
+    set_type(fqn);
+    s = fqn.c_str();
+
+    string key = fqn;
     set_top(key);
+
+    //printf("close %s %d\n", s, idx);
 
     if ( ModHook* h = get_hook(key.c_str()) )
     {
-        h->mod->end(s, idx, s_config);
+        if ( !h->mod->end(s, idx, s_config) )
+            ParseError("can't close %s", h->mod->get_name());
 
-        if ( !idx && h->api && (key == s) )
+        else if ( !s_name.empty() )
+            PluginManager::instantiate(h->api, h->mod, s_config, s_name.c_str());
+
+        else if ( !idx && h->api && (key == s) )
             PluginManager::instantiate(h->api, h->mod, s_config);
     }
+    s_name.clear();
+    s_type.clear();
 }
 
-bool set_bool(const char* fqn, bool b)
+SO_PUBLIC bool set_bool(const char* fqn, bool b)
 {
+    //printf("bool %s %d\n", fqn, b);
     Value v(b);
     return set_value(fqn, v);
 }
 
-bool set_number(const char* fqn, double d)
+SO_PUBLIC bool set_number(const char* fqn, double d)
 {
+    //printf("real %s %f\n", fqn, d);
     Value v(d);
     return set_value(fqn, v);
 }
 
-bool set_string(const char* fqn, const char* s)
+SO_PUBLIC bool set_string(const char* fqn, const char* s)
 {
+    //printf("string %s %s\n", fqn, s);
     Value v(s);
     return set_value(fqn, v);
 }
@@ -438,9 +639,6 @@ void ModuleManager::add_module(Module* m, const BaseApi* b)
     ModHook* mh = new ModHook(m, b);
     s_modules.push_back(mh);
 
-    if ( mh->reg )
-        Shell::install(m->get_name(), mh->reg);
-
 #ifdef PERF_PROFILING
     RegisterProfile(m);
 #endif
@@ -455,22 +653,54 @@ Module* ModuleManager::get_module(const char* s)
     return nullptr;
 }
 
+const char* ModuleManager::get_current_module()
+{ return s_current.c_str(); }
+
 void ModuleManager::set_config(SnortConfig* sc)
 { s_config = sc; }
 
+void ModuleManager::reset_errors()
+{ s_errors = 0; }
+
 unsigned ModuleManager::get_errors()
+{ return s_errors; }
+
+void ModuleManager::list_modules(const char* s)
 {
-    unsigned err = s_errors;
-    s_errors = 0;
-    return err;
+    PlugType pt = s ? PluginManager::get_type(s) : PT_MAX;
+    s_modules.sort(comp_mods);
+    unsigned c = 0;
+
+    for ( auto* p : s_modules )
+    {
+        if ( 
+            !s || !*s ||
+            (p->api && p->api->type == pt) ||
+            (!p->api && !strcmp(s, "basic"))
+        )
+        {
+            LogMessage("%s\n", p->mod->get_name());
+            c++;
+        }
+    }
+    if ( !c )
+        cout << "no match" << endl;
 }
 
-void ModuleManager::list_modules()
+void ModuleManager::show_modules()
 {
     s_modules.sort(comp_mods);
 
     for ( auto* p : s_modules )
-        LogMessage("%s\n", p->mod->get_name());
+    {
+        const char* t = p->api ? PluginManager::get_type_name(p->api->type) : "basic";
+
+        cout << Markup::item();
+        cout << Markup::emphasis(p->mod->get_name());
+        cout << " (" << t;
+        cout << "): " << p->mod->get_help();
+        cout << endl;
+    }
 }
 
 void ModuleManager::dump_modules()
@@ -499,6 +729,7 @@ void ModuleManager::show_module(const char* name)
         return;
     }
     s_modules.sort(comp_gids);
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
@@ -508,49 +739,62 @@ void ModuleManager::show_module(const char* name)
         if ( strcmp(m->get_name(), name) )
             continue;
 
-        cout << endl << Markup::head() << name << endl << endl;
-        cout << "Type: "  << mod_type(p->api) << endl << endl;
+        cout << endl << Markup::head(3) << Markup::escape(name) << endl << endl;
+
+        if ( const char* h = m->get_help() )
+            cout << endl << "What: " << Markup::escape(h) << endl;
+
+        cout << endl << "Type: "  << mod_type(p->api) << endl;
 
         if ( const Parameter* p = m->get_parameters() )
         {
             if ( p->type < Parameter::PT_MAX )
             {
-                cout << endl << "Configuration: "  << endl << endl;
+                cout << endl << "Configuration: " << endl << endl;
                 show_configs(name, true);
             }
         }
 
         if ( m->get_commands() )
         {
-            cout << endl << "Commands: "  << endl << endl;
+            cout << endl << "Commands: " << endl << endl;
             show_commands(name);
         }
 
         if ( m->get_rules() )
         {
-            cout << endl << "Rules: "  << endl << endl;
+            cout << endl << "Rules: " << endl << endl;
             show_rules(name);
         }
 
         if ( m->get_pegs() )
         {
-            cout << endl << "Peg counts: "  << endl << endl;
+            cout << endl << "Peg counts: " << endl << endl;
             show_pegs(name);
         }
+        c++;
     }
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::show_configs(const char* pfx, bool exact)
 {
     s_modules.sort(comp_mods);
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
         Module* m = p->mod;
         string s;
 
-        if ( exact && strcmp(m->get_name(), pfx) )
-            continue;
+        if ( pfx )
+        {
+            if ( exact && strcmp(m->get_name(), pfx) )
+                continue;
+            else if ( !exact && strncmp(m->get_name(), pfx, strlen(pfx)) )
+                continue;
+        }
 
         if ( m->is_list() )
         {
@@ -572,13 +816,25 @@ void ModuleManager::show_configs(const char* pfx, bool exact)
         }
         if ( !pfx )
             cout << endl;
+
+        c++;
     }
+    if ( !c )
+        cout << "no match" << endl;
+}
+
+void ModuleManager::dump_defaults(const char* pfx)
+{
+    dump_fmt = DF_LUA;
+    cout << "require('snort_config')" << endl;
+    show_configs(pfx);
 }
 
 void ModuleManager::show_commands(const char* pfx)
 {
     s_modules.sort(comp_mods);
     unsigned len = pfx ? strlen(pfx) : 0;
+    unsigned n = 0;
 
     for ( auto p : s_modules )
     {
@@ -596,20 +852,24 @@ void ModuleManager::show_commands(const char* pfx)
         {
             cout << Markup::item();
             cout << Markup::emphasis_on();
-            cout << p->mod->get_name();
-            cout << "." << c->name;
+            cout << Markup::escape(p->mod->get_name());
+            cout << "." << Markup::escape(c->name);
             cout << Markup::emphasis_off();
-            cout << "(): " << c->help;
+            cout << "(): " << Markup::escape(c->help);
             cout << endl;
             c++;
         }
+        n++;
     }
+    if ( !n )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::show_gids(const char* pfx)
 {
     s_modules.sort(comp_gids);
     unsigned len = pfx ? strlen(pfx) : 0;
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
@@ -627,16 +887,20 @@ void ModuleManager::show_gids(const char* pfx)
             cout << Markup::emphasis_on();
             cout << gid;
             cout << Markup::emphasis_off();
-            cout << ": " << m->get_name();
+            cout << ": " << Markup::escape(m->get_name());
             cout << endl;
         }
+        c++;
     }    
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::show_pegs(const char* pfx)
 {
     s_modules.sort(comp_gids);
     unsigned len = pfx ? strlen(pfx) : 0;
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
@@ -655,18 +919,22 @@ void ModuleManager::show_pegs(const char* pfx)
         {
             cout << Markup::item();
             cout << Markup::emphasis_on();
-            cout << *pegs;
+            cout << Markup::escape(*pegs);
             cout << Markup::emphasis_off();
             cout << endl;
             ++pegs;
         }
+        c++;
     }    
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::show_rules(const char* pfx)
 {
     s_modules.sort(comp_gids);
     unsigned len = pfx ? strlen(pfx) : 0;
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
@@ -687,23 +955,61 @@ void ModuleManager::show_rules(const char* pfx)
             cout << Markup::emphasis_on();
             cout << gid << ":" << r->sid;
             cout << Markup::emphasis_off();
-            cout << " " << r->msg;
+            cout << " (" << m->get_name() << ")";
+            cout << " " << Markup::escape(r->msg);
             cout << endl;
             r++;
         }
+        c++;
     }    
+    if ( !c )
+        cout << "no match" << endl;
 }
 
+void ModuleManager::load_commands(SnortConfig* sc)
+{
+    // FIXIT-L ideally only install commands from configured modules
+    // FIXIT-L install commands into working shell
+    Shell* sh = sc->policy_map->get_shell();
+
+    for ( auto p : s_modules )
+    {
+        if ( p->reg )
+            sh->install(p->mod->get_name(), p->reg);
+    }
+}
+
+// move builtin generation to a better home?
+// FIXIT-L builtins should allow configurable nets and ports
+// FIXIT-L builtins should have accurate proto
+//       (but ip winds up in all others)
+// FIXIT-L if msg has C escaped embedded quotes, we break
+//ss << "alert tcp any any -> any any ( ";
+static void make_rule(ostream& os, const Module* m, const RuleMap* r)
+{
+    os << "alert ( ";
+    os << "gid:" << m->get_gid() << "; ";
+    os << "sid:" << r->sid << "; ";
+    os << "rev:1; priority:3; ";
+    os << "msg:\"" << "(" << m->get_name() << ") ";
+    os << r->msg << "\"; )";
+    os << endl;
+}
+
+// FIXIT-L currently no way to know whether a module was activated or not
+// so modules with common rules will cause duplicate sid warnings
+// eg http_inspect and nhttp_inspect both have 119:1-34
+// only way to avoid that now is to not load plugins with common rules
+// (we don't want to suppress it because it could mean something is broken)
 void ModuleManager::load_rules(SnortConfig* sc)
 {
-    // FIXIT callers of ParseConfigString() should not have to push parse loc
+    s_modules.sort(comp_gids);
     push_parse_location("builtin");
 
     for ( auto p : s_modules )
     {
         const Module* m = p->mod;
         const RuleMap* r = m->get_rules();
-        unsigned gid = m->get_gid();
 
         if ( !r )
             continue;
@@ -713,16 +1019,7 @@ void ModuleManager::load_rules(SnortConfig* sc)
         while ( r->msg )
         {
             ss.str("");
-            // FIXIT move builtin generation to a better home
-            // FIXIT builtins should allow configurable nets and ports
-            // FIXIT builtins should have accurate proto
-            //       (but ip winds up in all others)
-            // FIXIT if msg has C escaped embedded quotes, we break
-            ss << "alert tcp any any -> any any ( ";
-            ss << "gid:" << gid << "; ";
-            ss << "sid:" << r->sid << "; ";
-            ss << "msg:\"" << r->msg << "\"; )";
-            ss << endl;
+            make_rule(ss, m, r);
 
             // note:  you can NOT do ss.str().c_str() here
             const string& rule = ss.str();
@@ -738,6 +1035,7 @@ void ModuleManager::dump_rules(const char* pfx)
 {
     s_modules.sort(comp_gids);
     unsigned len = pfx ? strlen(pfx) : 0;
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
@@ -747,7 +1045,6 @@ void ModuleManager::dump_rules(const char* pfx)
             continue;
 
         const RuleMap* r = m->get_rules();
-        unsigned gid = m->get_gid();
 
         if ( !r )
             continue;
@@ -756,20 +1053,13 @@ void ModuleManager::dump_rules(const char* pfx)
 
         while ( r->msg )
         {
-            // FIXIT move builtin generation to a better home
-            // FIXIT builtins should allow configurable nets and ports
-            // FIXIT builtins should have accurate proto
-            //       (but ip winds up in all others)
-            // FIXIT if msg has C escaped embedded quotes, we break
-            ss << "alert tcp any any -> any any ( ";
-            ss << "gid:" << gid << "; ";
-            ss << "sid:" << r->sid << "; ";
-            ss << "msg:\"" << r->msg << "\"; )";
-            ss << endl;
-
+            make_rule(ss, m, r);
             r++;
         }
+        c++;
     }    
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::dump_stats (SnortConfig*)

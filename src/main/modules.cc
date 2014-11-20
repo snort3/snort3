@@ -36,6 +36,7 @@ using namespace std;
 #include "main.h"
 #include "snort.h"
 #include "snort_config.h"
+#include "snort_module.h"
 #include "parser/parser.h"
 #include "parser/parse_conf.h"
 #include "parser/config_file.h"
@@ -46,10 +47,15 @@ using namespace std;
 #include "filters/sfthd.h"
 #include "filters/sfrf.h"
 #include "filters/rate_filter.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "time/ppm_module.h"
 #include "parser/parse_ip.h"
 #include "target_based/sftarget_data.h"
+#include "detection/fpcreate.h"
+#include "filters/detection_filter.h"
+#include "filters/sfthreshold.h"
+#include "sfip/sf_ip.h"
+#include "main/thread.h"
 
 #if defined(DEBUG_MSGS) || defined (REG_TEST)
 #include "file_api/file_api.h"
@@ -76,11 +82,14 @@ static const Parameter detection_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define detection_help \
+    "configure general IPS rule processing parameters"
+
 class DetectionModule : public Module
 {
 public:
-    DetectionModule() : Module("detection", detection_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    DetectionModule() : Module("detection", detection_help, detection_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
@@ -129,11 +138,14 @@ static const Parameter event_queue_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define event_queue_help \
+    "configure event queue parameters"
+
 class EventQueueModule : public Module
 {
 public:
-    EventQueueModule() : Module("event_queue", event_queue_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    EventQueueModule() : Module("event_queue", event_queue_help, event_queue_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool EventQueueModule::set(const char*, Value& v, SnortConfig* sc)
@@ -219,11 +231,14 @@ static const Parameter search_engine_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define search_engine_help \
+    "configure fast pattern matcher"
+
 class SearchEngineModule : public Module
 {
 public:
-    SearchEngineModule() : Module("search_engine", search_engine_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    SearchEngineModule() : Module("search_engine", search_engine_help, search_engine_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
@@ -236,7 +251,7 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("bleedover_warnings_enabled") )
     {
         if ( v.get_bool() )
-            fpDetectSetBleedOverWarnings(fp);  // FIXIT these should take arg
+            fpDetectSetBleedOverWarnings(fp);  // FIXIT-L these should take arg
     }
     else if ( v.is("enable_single_rule_group") )
     {
@@ -302,17 +317,6 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
 //-------------------------------------------------------------------------
 
 #ifdef PERF_PROFILING
-static const Parameter profile_file_params[] =
-{
-    { "name", Parameter::PT_STRING, "128", nullptr,
-      "output to file instead of log" },
-
-    { "append", Parameter::PT_BOOL, nullptr, "false",
-      "append or overwrite" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
 static const Parameter profile_rule_params[] =
 {
     { "count", Parameter::PT_INT, "-1:", "-1",
@@ -322,9 +326,6 @@ static const Parameter profile_rule_params[] =
       "checks | avg_ticks | total_ticks | matches | no_matches | "
       "avg_ticks_per_match | avg_ticks_per_no_match",
       "avg_ticks", "sort by given field" },
-
-    { "file", Parameter::PT_TABLE, profile_file_params, nullptr,
-      "file config" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -337,9 +338,6 @@ static const Parameter profile_module_params[] =
     { "sort", Parameter::PT_ENUM,
       "checks | avg_ticks | total_ticks", "avg_ticks",
       "sort by given field" },
-
-    { "file", Parameter::PT_TABLE, profile_file_params, nullptr,
-      "file config" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -355,12 +353,15 @@ static const Parameter profile_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define profile_help \
+    "configure profiling of rules and/or modules (requires --enable-perf-profiling)"
+
 class ProfileModule : public Module
 {
 public:
-    ProfileModule() : Module("profile", profile_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+    ProfileModule() : Module("profile", profile_help, profile_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 };
 
 bool ProfileModule::begin(const char* fqn, int, SnortConfig* sc)
@@ -395,14 +396,6 @@ bool ProfileModule::set(const char* fqn, Value& v, SnortConfig* sc)
     else if ( v.is("sort") )
         p->sort = v.get_long() + 1;
 
-    else if ( v.is("append") )
-        p->append = v.get_long() + 1;
-
-    else if ( v.is("name") )
-        p->filename = SnortStrdup(v.get_string());  // FIXIT use c++ string
-        // FIXIT do this after log dir is set
-        //p->filename = ProcessFileOption(sc, v.get_string());
-
     else
         return false;
 
@@ -413,8 +406,11 @@ bool ProfileModule::set(const char* fqn, Value& v, SnortConfig* sc)
 //-------------------------------------------------------------------------
 // classification module
 //-------------------------------------------------------------------------
-// FIXIT signature.{h,cc} has type and name confused
+// FIXIT-L signature.{h,cc} has type and name confused
 // the keys here make more sense
+
+#define classifications_help \
+    "define rule categories with priority"
 
 static const Parameter classification_params[] =
 {
@@ -434,11 +430,11 @@ class ClassificationsModule : public Module
 {
 public:
     ClassificationsModule() : 
-        Module("classifications", classification_params, true) { };
+        Module("classifications", classifications_help, classification_params, true) { };
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 private:
     string name;
@@ -481,13 +477,14 @@ bool ClassificationsModule::set(const char*, Value& v, SnortConfig*)
 //-------------------------------------------------------------------------
 // reference module
 //-------------------------------------------------------------------------
-// FIXIT signature.{h,cc} has type and name confused
-// the keys here make more sense
+
+#define reference_help \
+    "define reference systems used in rules"
 
 static const Parameter reference_params[] =
 {
     { "name", Parameter::PT_STRING, nullptr, nullptr,
-      "name used with classtype rule option" },
+      "name used with reference rule option" },
 
     { "url", Parameter::PT_STRING, nullptr, nullptr,
       "where this reference is defined" },
@@ -499,11 +496,11 @@ class ReferencesModule : public Module
 {
 public:
     ReferencesModule() : 
-        Module("references", reference_params, true) { };
+        Module("references", reference_help, reference_params, true) { };
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 private:
     string name;
@@ -544,9 +541,7 @@ bool ReferencesModule::set(const char*, Value& v, SnortConfig*)
 
 static const Parameter alerts_params[] =
 {
-    { "alert_file", Parameter::PT_STRING, nullptr, nullptr,
-      "set the alert output file name (FIXIT delete if not used)" },
-
+    // FIXIT-L move to fast, full, syslog and delete from here
     { "alert_with_interface_name", Parameter::PT_BOOL, nullptr, "false",
       "include interface in alert info (fast, full, or syslog only)" },
 
@@ -568,7 +563,7 @@ static const Parameter alerts_params[] =
     { "rate_filter_memcap", Parameter::PT_INT, "0:", "1048576",
       "set available memory for filters" },
 
-    { "reference_net", Parameter::PT_STRING, nullptr, "",
+    { "reference_net", Parameter::PT_STRING, nullptr, nullptr,
       "set the CIDR for homenet "
       "(for use with -l or -B, does NOT change $HOME_NET in IDS mode)"
     },
@@ -582,19 +577,19 @@ static const Parameter alerts_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define alerts_help \
+    "configure alerts"
+
 class AlertsModule : public Module
 {
 public:
-    AlertsModule() : Module("alerts", alerts_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    AlertsModule() : Module("alerts", alerts_help, alerts_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    if ( v.is("alert_file") )
-        sc->alert_file = SnortStrdup(v.get_string());
-
-    else if ( v.is("alert_with_interface_name") )
+    if ( v.is("alert_with_interface_name") )
         sc->output_flags |= OUTPUT_FLAG__ALERT_IFACE;
 
     else if ( v.is("default_rule_state") )
@@ -689,11 +684,14 @@ static const Parameter output_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define output_help \
+    "configure general output parameters"
+
 class OutputModule : public Module
 {
 public:
-    OutputModule() : Module("output", output_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    OutputModule() : Module("output", output_help, output_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
@@ -719,7 +717,7 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("log_ipv6_extra_data") )
     {
         if ( v.get_bool() )
-        sc->log_ipv6_extra = 1; // FIXIT move to output|logging_flags
+        sc->log_ipv6_extra = 1; // FIXIT-M move to output|logging_flags
     }
     else if ( v.is("quiet") )
     {
@@ -776,23 +774,23 @@ static const Parameter active_params[] =
     { "dst_mac", Parameter::PT_STRING, nullptr, nullptr,
       "use format '01:23:45:67:89:ab'" },
 
-    { "max_responses", Parameter::PT_INT, "0:", "255",
+    { "max_responses", Parameter::PT_INT, "0:", "0",
       "maximum number of responses" },
 
     { "min_interval", Parameter::PT_INT, "1:", "255",
       "minimum number of seconds between responses" },
 
-    { "react", Parameter::PT_STRING, nullptr, nullptr,
-      "file containing HTTP reponse (headers and body)" },
-
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
+
+#define active_help \
+    "configure responses"
 
 class ActiveModule : public Module
 {
 public:
-    ActiveModule() : Module("active", active_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    ActiveModule() : Module("active", active_help, active_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
@@ -812,9 +810,6 @@ bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("min_interval") )
         sc->min_interval = v.get_long();
 
-    else if ( v.is("react") )
-        sc->react_page = SnortStrdup(v.get_string());
-
     else
         return false;
 
@@ -828,7 +823,7 @@ bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
 static const Parameter packets_params[] =
 {
     { "address_space_agnostic", Parameter::PT_BOOL, nullptr, "false",
-      "file with BPF to select traffic for Snort" },
+      "determines whether DAQ address space info is used to track fragments and connections" },
 
     { "bpf_file", Parameter::PT_STRING, nullptr, nullptr,
       "file with BPF to select traffic for Snort" },
@@ -848,11 +843,14 @@ static const Parameter packets_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define packets_help \
+    "configure basic packet handling"
+
 class PacketsModule : public Module
 {
 public:
-    PacketsModule() : Module("packets", packets_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    PacketsModule() : Module("packets", packets_help, packets_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool PacketsModule::set(const char*, Value& v, SnortConfig* sc)
@@ -889,7 +887,7 @@ bool PacketsModule::set(const char*, Value& v, SnortConfig* sc)
 
 static const Parameter daq_params[] =
 {
-    // FIXIT should be a list?
+    // FIXIT-L should be a list?
     { "dir", Parameter::PT_STRING, nullptr, nullptr,
       "directory where to search for DAQ plugins" },
 
@@ -899,11 +897,10 @@ static const Parameter daq_params[] =
     { "no_promisc", Parameter::PT_BOOL, nullptr, "false",
       "whether to put DAQ device into promiscuous mode" },
 
-    // FIXIT range determined by available plugins
-    { "name", Parameter::PT_STRING, nullptr, "pcap",
-      "select name of DAQ" },
+    { "type", Parameter::PT_STRING, nullptr, "pcap",
+      "select type of DAQ" },
 
-    // FIXIT should be a list?
+    // FIXIT-L should be a list?
     { "var", Parameter::PT_STRING, nullptr, nullptr,
       "list of name=value DAQ-specific parameters" },
 
@@ -916,11 +913,14 @@ static const Parameter daq_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define daq_help \
+    "configure packet acquisition interface"
+
 class DaqModule : public Module
 {
 public:
-    DaqModule() : Module("daq", daq_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    DaqModule() : Module("daq", daq_help, daq_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
@@ -936,7 +936,7 @@ bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
         if ( v.get_bool() )
             sc->run_flags |= RUN_FLAG__NO_PROMISCUOUS;
     }
-    else if ( v.is("name") )
+    else if ( v.is("type") )
         ConfigDaqType(sc, v.get_string());
 
     else if ( v.is("var") )
@@ -948,7 +948,7 @@ bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
             ConfigDecodeDataLink(sc, "");
     }
     else if ( v.is("snaplen") )
-        ConfigPacketSnaplen(sc, v.get_string());
+        sc->pkt_snaplen = v.get_long();
 
     else
         return false;
@@ -962,23 +962,27 @@ bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
 
 static const Parameter attribute_table_params[] =
 {
-    { "max_hosts", Parameter::PT_INT, "32:207551", "0",
+    { "max_hosts", Parameter::PT_INT, "32:207551", "1024",
       "maximum number of hosts in attribute table" },
 
-    { "max_services_per_host", Parameter::PT_INT, "1:65535", "0",
+    { "max_services_per_host", Parameter::PT_INT, "1:65535", "8",
       "maximum number of services per host entry in attribute table" },
 
-    { "max_metadata_services", Parameter::PT_INT, "1:256", "0",
-      "max" },
+    { "max_metadata_services", Parameter::PT_INT, "1:256", "8",
+      "maximum number of services in rule metadata" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+const char* attribute_table_help = 
+    "configure hosts loading";
+
 class AttributeTableModule : public Module
 {
 public:
-    AttributeTableModule() : Module("attribute_table", attribute_table_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    AttributeTableModule() : 
+        Module("attribute_table", attribute_table_help, attribute_table_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool AttributeTableModule::set(const char*, Value& v, SnortConfig* sc)
@@ -1005,11 +1009,11 @@ bool AttributeTableModule::set(const char*, Value& v, SnortConfig* sc)
 static const Parameter network_params[] =
 {
     { "checksum_drop", Parameter::PT_MULTI,
-      "all | noip | notcp | noudp | noicmp | none", "none",
+      "all | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none", "none",
       "drop if checksum is bad" },
 
     { "checksum_eval", Parameter::PT_MULTI, 
-      "all | noip | notcp | noudp | noicmp | none", "all",
+      "all | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none", "none",
       "checksums to verify" },
 
     { "decode_drops", Parameter::PT_BOOL, nullptr, "false",
@@ -1025,17 +1029,28 @@ static const Parameter network_params[] =
     { "new_ttl", Parameter::PT_INT, "1:255", "1",
       "use this value for responses and when normalizing" },
 
-    { "max_encapsulations", Parameter::PT_INT, "-1:32", "-1",
-      "maximum number of encapsulations per packet" },
+    { "layers", Parameter::PT_INT, "3:255", "40",
+      "The maximum number of protocols that Snort can correctly decode" },
+
+    { "max_ip6_extensions", Parameter::PT_INT, "0:255", "0",
+      "The number of IP6 options Snort will process for a given IPv6 layer. "
+      "If this limit is hit, rule 116:456 may fire.  0 = unlimited" },
+
+    { "max_ip_layers", Parameter::PT_INT, "0:255", "0",
+      "The maximum number of IP layers Snort will process for a given packet "
+      "If this limit is hit, rule 116:293 may fire.  0 = unlimited" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define network_help \
+    "configure basic network parameters"
+
 class NetworkModule : public Module
 {
 public:
-    NetworkModule() : Module("network", network_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    NetworkModule() : Module("network", network_help, network_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
@@ -1060,8 +1075,14 @@ bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("new_ttl") )
         p->new_ttl = (uint8_t)v.get_long();
 
-    else if ( v.is("max_encapsulations") )
-        sc->max_encapsulations = v.get_long();
+    else if (v.is("layers"))
+        sc->num_layers = (uint8_t)v.get_long();
+
+    else if (v.is("max_ip6_extensions"))
+        sc->max_ip6_extensions = (uint8_t)v.get_long();
+
+    else if (v.is("max_ip_layers"))
+        sc->max_ip_layers = (uint8_t)v.get_long();
 
     else
         return false;
@@ -1082,7 +1103,7 @@ static const Parameter ips_params[] =
       "correlate unified2 events with configuration" },
 
     { "include", Parameter::PT_STRING, nullptr, nullptr,
-      "snort-classic rules and includes" },
+      "legacy snort rules and includes" },
 
     { "mode", Parameter::PT_ENUM, "tap | inline | inline-test", "tap",
       "set policy mode" },
@@ -1093,16 +1114,19 @@ static const Parameter ips_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define ips_help \
+    "configure IPS rule processing"
+
 class IpsModule : public Module
 {
 public:
-    IpsModule() : Module("ips", ips_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    IpsModule() : Module("ips", ips_help, ips_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool IpsModule::set(const char*, Value& v, SnortConfig*)
 {
-    IpsPolicy* p = snort_conf->get_ips_policy();
+    IpsPolicy* p = get_ips_policy();
 
     if ( v.is("enable_builtin_rules") )
         p->enable_builtin_rules = v.get_bool();
@@ -1129,10 +1153,27 @@ bool IpsModule::set(const char*, Value& v, SnortConfig*)
 // process module
 //-------------------------------------------------------------------------
 
+static const Parameter thread_pinning_params[] =
+{
+    { "cpu", Parameter::PT_INT, "0:127", "0",
+        "pin the associated source/thread to this cpu"},
+
+    { "source", Parameter::PT_STRING, nullptr, nullptr,
+        "set cpu affinity for this source (either pcap or <iface>"},
+
+    { "thread", Parameter::PT_INT, "0:", "0",
+        "set cpu affinity for the <cur_thread_num> thread that runs"},
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Parameter process_params[] =
 {
     { "chroot", Parameter::PT_STRING, nullptr, nullptr,
       "set chroot directory (same as -t)" },
+
+    { "threads", Parameter::PT_LIST, thread_pinning_params, nullptr,
+        "thread pinning parameters"},
 
     { "daemon", Parameter::PT_BOOL, nullptr, "false",
       "fork as a daemon (same as -D)" },
@@ -1146,12 +1187,6 @@ static const Parameter process_params[] =
     { "set_uid", Parameter::PT_STRING, nullptr, nullptr,
       "set user ID (same as -u)" },
 
-    { "plugin_path", Parameter::PT_STRING, nullptr, nullptr,
-      "directory containing plugins (same as --plugin-path)" },
-
-    { "script_path", Parameter::PT_STRING, nullptr, nullptr,
-      "directory containing scripts (same as --scripts-path)" },
-
     { "umask", Parameter::PT_STRING, nullptr, nullptr,
       "set process umask (same as -m)" },
 
@@ -1161,11 +1196,21 @@ static const Parameter process_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define process_help \
+    "configure basic process setup"
+
 class ProcessModule : public Module
 {
 public:
-    ProcessModule() : Module("process", process_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    ProcessModule() : Module("process", process_help, process_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
+
+private:
+    std::string source;
+    int thread;
+    int cpu;
 };
 
 bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
@@ -1189,12 +1234,6 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("set_uid") )
         ConfigSetUid(sc, v.get_string());
 
-    else if ( v.is("plugin_path") )
-        ConfigPluginPath(sc, v.get_string());
-
-    else if ( v.is("script_path") )
-        ConfigScriptPath(sc, v.get_string());
-
     else if ( v.is("umask") )
         ConfigUmask(sc, v.get_string());
 
@@ -1203,39 +1242,61 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
         if ( v.get_bool() )
             ConfigUtc(sc, "");
     }
+
+    else if (v.is("cpu"))
+        cpu = v.get_long();
+
+    else if (v.is("source"))
+        source = v.get_string();
+
+    else if (v.is("thread"))
+        thread = v.get_long();
+
     else
         return false;
 
     return true;
 }
 
-//-------------------------------------------------------------------------
-// vars module
-//-------------------------------------------------------------------------
-// FIXIT signature.{h,cc} has type and name confused
-// the keys here make more sense
-
-static const Parameter vars_params[] =
+bool ProcessModule::begin(const char*, int, SnortConfig*)
 {
-    { nullptr, Parameter::PT_STRING, nullptr, nullptr,
-      "port, ip, or path variable" },
+    source.clear();
+    thread = -1;
+    cpu = -1;
+    return true;
+}
 
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-class VarsModule : public Module
+bool ProcessModule::end(const char* fqn, int idx, SnortConfig* sc)
 {
-public:
-    VarsModule() : 
-        Module("vars", vars_params, true) { };
+    if ( !idx )
+        return true;
 
-    bool set(const char*, Value&, SnortConfig*);
-};
+    if (!strcmp(fqn, "process.threads"))
+    {
+        if (cpu == -1)
+        {
+            ParseError("%s - cpu(%d) for thread (%d) and source (%s) "
+                "must be an integer in the range of 0 < cpu < max_cpus", fqn, cpu);
+            return false;
+        }
+        else if ((source.empty()) && (thread == -1))
+        {
+            ParseError("%s - must have either a source or a thread", fqn);
+            return false;
+        }
+        else if ((!source.empty()) && (thread >= 0))
+        {
+            ParseError("%s - cannot set both thread(%d) and source(%s)",
+                fqn, thread, source.c_str());
+            return false;
+        }
 
-#include <iostream>
-bool VarsModule::set(const char* fqn, Value& v, SnortConfig*)
-{
-    cout << fqn << " = " << v.get_name() << endl;
+        else if (!source.empty())
+            set_cpu_affinity(sc, source, cpu);
+
+        else 
+            set_cpu_affinity(sc, thread, cpu);
+    }
 
     return true;
 }
@@ -1274,11 +1335,14 @@ static const Parameter file_id_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define file_id_help \
+    "configure file identification"
+
 class FileIdModule : public Module
 {
 public:
-    FileIdModule() : Module("file_id", file_id_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    FileIdModule() : Module("file_id", file_id_help, file_id_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool FileIdModule::set(const char*, Value& v, SnortConfig* sc)
@@ -1338,13 +1402,16 @@ static const Parameter suppress_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define suppress_help \
+    "configure event suppressions"
+
 class SuppressModule : public Module
 {
 public:
-    SuppressModule() : Module("suppress", suppress_params, true) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    SuppressModule() : Module("suppress", suppress_help, suppress_params, true) { };
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 private:
     THDX_STRUCT thdx;
@@ -1382,8 +1449,10 @@ bool SuppressModule::begin(const char*, int, SnortConfig*)
 bool SuppressModule::end(const char*, int idx, SnortConfig* sc)
 {
     if ( idx && sfthreshold_create(sc, sc->threshold_config, &thdx) )
+    {
+        ParseError("bad suppress configuration [%d]", idx);
         return false;
-
+    }
     return true;
 }
 
@@ -1393,10 +1462,10 @@ bool SuppressModule::end(const char*, int idx, SnortConfig* sc)
 
 static const Parameter event_filter_params[] =
 {
-    { "gid", Parameter::PT_INT, "0:", "0",
+    { "gid", Parameter::PT_INT, "0:", "1",
       "rule generator ID" },
 
-    { "sid", Parameter::PT_INT, "0:", "0",
+    { "sid", Parameter::PT_INT, "0:", "1",
       "rule signature ID" },
 
     { "type", Parameter::PT_ENUM, "limit | threshold | both", nullptr,
@@ -1417,13 +1486,17 @@ static const Parameter event_filter_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define event_filter_help \
+    "configure thresholding of events"
+
 class EventFilterModule : public Module
 {
 public:
-    EventFilterModule() : Module("event_filter", event_filter_params, true) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    EventFilterModule() : 
+        Module("event_filter", event_filter_help, event_filter_params, true) { };
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 private:
     THDX_STRUCT thdx;
@@ -1470,8 +1543,7 @@ bool EventFilterModule::end(const char*, int idx, SnortConfig* sc)
 {
     if ( idx && sfthreshold_create(sc, sc->threshold_config, &thdx) )
     {
-        LogMessage("ERROR: bad event_filter gid = %u, sid = %u",
-            thdx.gen_id, thdx.sig_id);
+        ParseError("bad event_filter configuration [%d]", idx);
         return false;
     }
     return true;
@@ -1483,25 +1555,25 @@ bool EventFilterModule::end(const char*, int idx, SnortConfig* sc)
 
 static const Parameter rate_filter_params[] =
 {
-    { "gid", Parameter::PT_INT, "0:", "0",
+    { "gid", Parameter::PT_INT, "0:", "1",
       "rule generator ID" },
 
-    { "sid", Parameter::PT_INT, "0:", "0",
+    { "sid", Parameter::PT_INT, "0:", "1",
       "rule signature ID" },
 
-    { "track", Parameter::PT_ENUM, "by_src | by_dst | by_rule", nullptr,
+    { "track", Parameter::PT_ENUM, "by_src | by_dst | by_rule", "by_src",
       "filter only matching source or destination addresses" },
 
-    { "count", Parameter::PT_INT, "0:", "0",
+    { "count", Parameter::PT_INT, "0:", "1",
       "number of events in interval before tripping" },
 
-    { "seconds", Parameter::PT_INT, "0:", "0",
+    { "seconds", Parameter::PT_INT, "0:", "1",
       "count interval" },
 
     { "new_action", Parameter::PT_SELECT,
-      // FIXIT range based on available action plugins
+      // FIXIT-L this list should be defined globally
       "alert | drop | log | pass | | reject | sdrop", "alert",
-      "restrict filter to these addresses according to track" },
+      "take this action on future hits until timeout" },
 
     { "timeout", Parameter::PT_INT, "0:", "1",
       "count interval" },
@@ -1512,13 +1584,16 @@ static const Parameter rate_filter_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define rate_filter_help \
+    "configure rate filters (which change rule actions)"
+
 class RateFilterModule : public Module
 {
 public:
-    RateFilterModule() : Module("rate_filter", rate_filter_params, true) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    RateFilterModule() : Module("rate_filter", rate_filter_help, rate_filter_params, true) { };
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 private:
     tSFRFConfigNode thdx;
@@ -1565,8 +1640,10 @@ bool RateFilterModule::begin(const char*, int, SnortConfig*)
 bool RateFilterModule::end(const char*, int idx, SnortConfig* sc)
 {
     if ( idx && RateFilter_Create(sc, sc->rate_filter_config,  &thdx) )
+    {
+        ParseError("bad rate_filter configuration [%d]", idx);
         return false;
-
+    }
     return true;
 }
 
@@ -1588,13 +1665,16 @@ static const Parameter rule_state_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define rule_state_help \
+    "enable/disable specific IPS rules"
+
 class RuleStateModule : public Module
 {
 public:
-    RuleStateModule() : Module("rule_state", rule_state_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    RuleStateModule() : Module("rule_state", rule_state_help, rule_state_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 private:
     RuleState state;
@@ -1631,44 +1711,17 @@ bool RuleStateModule::end(const char*, int idx, SnortConfig* sc)
 }
 
 //-------------------------------------------------------------------------
-// snort module
-//-------------------------------------------------------------------------
-
-static const Command snort_cmds[] =
-{
-    { "show_plugins", main_dump_plugins, "show available plugins" },
-    { "dump_stats", main_dump_stats, "show summary statistics" },
-    { "rotate_stats", main_rotate_stats, "roll perfmonitor log files" },
-    { "reload_config", main_reload_config, "load new configuration" },
-    { "reload_attributes", main_reload_attributes, "load a new hosts.xml" },
-    { "process", main_process, "process given pcap" },
-    { "pause", main_pause, "suspend packet processing" },
-    { "resume", main_resume, "continue packet processing" },
-    { "quit", main_quit, "shutdown and dump-stats" },
-    { "help", main_help, "this output" },
-    { nullptr, nullptr, nullptr }
-};
-
-class SnortModule : public Module
-{
-public:
-    SnortModule() : Module("snort") { };
-    const Command* get_commands() const { return snort_cmds; };
-    bool set(const char*, Value&, SnortConfig*) { return false; };
-};
-
-//-------------------------------------------------------------------------
 // hosts module
 //-------------------------------------------------------------------------
 
-// FIXIT these are cloned from ip_module.cc and tcp_module.cc
+// FIXIT-L these are cloned from ip_module.cc and tcp_module.cc
 
-static const char* ip_policies =
-    "first | linux | bsd | bsd_right |last | windows | solaris";
+#define ip_policies \
+    "unknown | first | linux | bsd | bsd_right |last | windows | solaris"
 
-static const char* tcp_policies =
-    "first | last | bsd | linux | old-linux | windows | win-2003 | vista "
-    "solaris | hpux | hpux10 | irix | macos";
+#define tcp_policies \
+    "unknown | first | last | bsd | linux | old-linux | windows | win-2003 | " \
+    "vista | solaris | hpux | hpux10 | irix | macos"
 
 static const Parameter service_params[] =
 {
@@ -1686,7 +1739,7 @@ static const Parameter service_params[] =
 
 static const Parameter hosts_params[] =
 {
-    { "ip", Parameter::PT_ADDR, nullptr, nullptr,
+    { "ip", Parameter::PT_ADDR, nullptr, "0.0.0.0/32",
       "hosts address / cidr" },
 
     { "frag_policy", Parameter::PT_ENUM, ip_policies, "linux",
@@ -1701,15 +1754,19 @@ static const Parameter hosts_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define hosts_help \
+    "configure hosts"
+
 class HostsModule : public Module
 {
 public:
-    HostsModule() : Module("hosts", hosts_params, true) { };
+    HostsModule() : Module("hosts", hosts_help, hosts_params, true)
+    { app = nullptr; host = nullptr; };
     ~HostsModule() { assert(!host && !app); };
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 private:
     ApplicationEntry* app;
@@ -1723,15 +1780,11 @@ bool HostsModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("frag_policy") )
     {
-        strncpy(host->hostInfo.fragPolicyName, v.get_string(),
-            sizeof(host->hostInfo.fragPolicyName));
-        host->hostInfo.fragPolicy = v.get_long() + 1;
+        host->hostInfo.fragPolicy = v.get_long();
     }
     else if ( v.is("tcp_policy") )
     {
-        strncpy(host->hostInfo.streamPolicyName, v.get_string(),
-            sizeof(host->hostInfo.streamPolicyName));
-        host->hostInfo.streamPolicy = v.get_long() + 1;
+        host->hostInfo.streamPolicy = v.get_long();
     }
     else if ( v.is("name") )
         app->protocol = AddProtocolReference(v.get_string());
@@ -1756,9 +1809,6 @@ bool HostsModule::begin(const char* fqn, int idx, SnortConfig*)
     else if ( idx && !strcmp(fqn, "hosts") )
         host = SFAT_CreateHostEntry();
 
-    else
-        return false;
-
     return true;
 }
 
@@ -1774,8 +1824,6 @@ bool HostsModule::end(const char* fqn, int idx, SnortConfig*)
         SFAT_AddHost(host);
         host = nullptr;
     }
-    else
-        return false;
 
     return true;
 }
@@ -1799,14 +1847,17 @@ static const Parameter xxx_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define xxx_help \
+    "configure "
+
 class XXXModule : public Module
 {
 public:
-    XXXModule() : Module("xxx", xxx_params) { };
+    XXXModule() : Module("xxx", xxx_help, xxx_params) { };
     const RuleMap* get_rules() { return xxx_rules; };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 };
 
 bool XXXModule::set(const char*, Value& v, SnortConfig* sc)
@@ -1829,47 +1880,19 @@ bool XXXModule::end(const char*, int, SnortConfig*)
 {
     return true;
 }
-
-static const Parameter xxx_params[] =
-{
-    { "name", Parameter::PT_INT, "range", "deflt",
-      "help" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-class XXXModule : public Module
-{
-public:
-    XXXModule() : Module("xxx", xxx_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-};
-
-bool XXXModule::set(const char*, Value& v, SnortConfig* sc)
-{
-    if ( v.is("name") )
-        sc->pkt_cnt = v.get_long();
-
-    else
-        return false;
-
-    return true;
-}
-
 #endif
+
 //-------------------------------------------------------------------------
 // module manager stuff - move to framework/module_manager.cc
 //-------------------------------------------------------------------------
 
 void module_init()
 {
-    // make sure parameters can be set regardless of sequence
+    // parameters must be settable regardless of sequence
     // since Lua calls this by table hash key traversal
     // (which is effectively random)
     // so module interdependencies must come after this phase
-    //
-    // this module is special :)
-    ModuleManager::add_module(new SnortModule);
+    ModuleManager::add_module(get_snort_module());
 
     // these modules are not policy specific
     ModuleManager::add_module(new ClassificationsModule);
@@ -1902,7 +1925,6 @@ void module_init()
     ModuleManager::add_module(new EventFilterModule);
     ModuleManager::add_module(new RateFilterModule);
     ModuleManager::add_module(new SuppressModule);
-    ModuleManager::add_module(new VarsModule);
 
     // these are preliminary policies
     ModuleManager::add_module(new NetworkModule);

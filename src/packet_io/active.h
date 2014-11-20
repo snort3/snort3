@@ -26,50 +26,46 @@
 #ifndef ACTIVE_H
 #define ACTIVE_H
 
+#include "main/snort_types.h"
 #include "protocols/packet.h"
-#include "snort.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
+#include "main/snort.h"
+#include "utils/stats.h"
+
+struct Packet;
 
 int Active_Init(SnortConfig*);
 int Active_Term(void);
 
-typedef void (*Active_ResponseFunc)(Packet*, void* data);
-
-int Active_QueueReject(void);
-int Active_QueueResponse(Active_ResponseFunc, void*);
-int Active_ResetQueue(void);
-
-// this must be called on the wire packet and not a
-// reassembled packet so that encoding is correct.
-int Active_SendResponses(Packet*);
-uint64_t Active_GetInjects(void);
+SO_PUBLIC uint64_t Active_GetInjects(void);
 
 // NULL flags implies ENC_FLAG_FWD
-void Active_KillSession(Packet*, EncodeFlags*);
+SO_PUBLIC void Active_KillSession(Packet*, EncodeFlags*);
 
-void Active_SendReset(Packet*, EncodeFlags);
-void Active_SendUnreach(Packet*, EncodeType);
-void Active_SendData(Packet*, EncodeFlags, const uint8_t* buf, uint32_t len);
-void Active_InjectData(Packet*, EncodeFlags, const uint8_t* buf, uint32_t len);
+SO_PUBLIC void Active_SendReset(Packet*, EncodeFlags);
+SO_PUBLIC void Active_SendUnreach(Packet*, UnreachResponse);
+SO_PUBLIC void Active_SendData(Packet*, EncodeFlags, const uint8_t* buf, uint32_t len);
+SO_PUBLIC void Active_InjectData(Packet*, EncodeFlags, const uint8_t* buf, uint32_t len);
 
-int Active_IsRSTCandidate(const Packet*);
-int Active_IsUNRCandidate(const Packet*);
+SO_PUBLIC int Active_IsRSTCandidate(const Packet*);
+SO_PUBLIC int Active_IsUNRCandidate(const Packet*);
 
-int Active_IsEnabled(void);
-void Active_SetEnabled(int on_off);
+SO_PUBLIC int Active_IsEnabled(void);
+SO_PUBLIC void Active_SetEnabled(int on_off);
 
-typedef enum {
+enum tActiveDrop
+{
     ACTIVE_ALLOW = 0,
     ACTIVE_DROP = 1,
     ACTIVE_WOULD_DROP = 2,
     ACTIVE_FORCE_DROP = 3
-} tActiveDrop;
+};
 
-extern THREAD_LOCAL tActiveDrop active_drop_pkt;
-extern THREAD_LOCAL int active_drop_ssn;
-extern THREAD_LOCAL int active_have_rsp;
-extern THREAD_LOCAL int active_tunnel_bypass;
-extern THREAD_LOCAL int active_suspend;
+SO_PUBLIC extern THREAD_LOCAL tActiveDrop active_drop_pkt;
+SO_PUBLIC extern THREAD_LOCAL int active_drop_ssn;
+SO_PUBLIC extern THREAD_LOCAL int active_have_rsp;
+SO_PUBLIC extern THREAD_LOCAL int active_tunnel_bypass;
+SO_PUBLIC extern THREAD_LOCAL int active_suspend;
 
 static inline void Active_Reset (void)
 {
@@ -180,19 +176,19 @@ static inline int Active_GetTunnelBypass (void)
 
 // drops current session with active response invoked
 // for rules with action = drop | sdrop | reject
-int Active_DropAction(Packet*);
+SO_PUBLIC int Active_DropAction(Packet*);
 
 // drops current session w/o active response invoked
 // for rules with custom response = resp3 | react
-int Active_IgnoreSession(Packet*);
+SO_PUBLIC int Active_IgnoreSession(Packet*);
 
 // force drops the current session w/o active response invoked
 // ignores policy/inline test mode and treat drop as alert
-int Active_ForceDropAction(Packet *p);
+SO_PUBLIC int Active_ForceDropAction(Packet *p);
 
 // force drops the current session with active response invoked
 // ignores policy/inline test mode and treat drop as alert
-int Active_ForceDropResetAction(Packet *p);
+SO_PUBLIC int Active_ForceDropResetAction(Packet *p);
 
 #endif // ACTIVE_H
 

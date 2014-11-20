@@ -1,9 +1,7 @@
-
-
 ##############################################################################
 #                                                                            #
 #  To build another .txt file, add the file to the BUILT_SOURCES variable.   #
-#  If the new file's name is new_file.txt, cmake will automatcially run the  #
+#  If the new file's name is new_file.txt, Cmake will automatcially run the  #
 #  command                                                                   #
 #                                                                            #
 #  >>  snort --help-file_name > file_name.txt                                #
@@ -14,26 +12,60 @@
 #                                                                            #
 ##############################################################################
 
-set(BUILT_SOURCES
-    builtin.txt
+# snort --help-${type}
+set(HELP_SOURCES
     commands.txt
     config.txt
+    modules.txt
+    plugins.txt
     options.txt
+    signals.txt
+    help.txt
+#   snort2lua_cmds.txt   Get Snort2Lua command line options
+)
+
+# snort --list-${type}
+set(LIST_SOURCES
+    builtin.txt
     gids.txt
-#   modules.txt         Requires Special formatting. manually added below.
-#   version.txt         Required special formatting. manually added below.
+)
+
+# snort --help-module ${module}
+set (MODULE_SOURCES
+    basic.txt
+    codec.txt
+    data.txt
+    inspector.txt
+    ips_action.txt
+    ips_option.txt
+    logger.txt
+)
+
+set(BUILT_SOURCES
+    ${HELP_SOURCES}
+    ${LIST_SOURCES}
+    ${MODULE_SOURCES}
+#   version.txt         Requires special formatting. manually added below.
 #   config_changes.txt  If ruby executable found
-    CACHE INTERNAL "sources to be built" FORCE
 )
 
 set (UNBUILT_SOURCES
-    snort_manual.txt
     differences.txt
+    errors.txt
+    enviro.txt
+    extending.txt
+    features.txt
+    overview.txt
+    params.txt
+    reference.txt
+    snort2lua.txt
+    snort_manual.txt
+    start.txt
     style.txt
-    tips.txt
-    plugins.txt
+    terms.txt
 #   config_changes.txt  If ruby executable is NOT found
 )
+
 
 if (MAKE_HTML_DOC)
     set(HTML_DOCS
@@ -42,7 +74,7 @@ if (MAKE_HTML_DOC)
         images.tgz
     )
 endif()
-  
+
 if (MAKE_PDF_DOC)
     set(PDF_DOCS snort_manual.pdf)
 endif()
@@ -70,18 +102,56 @@ if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
 
     # first, build all of the documents in the binary tree
 
-    foreach (file ${BUILT_SOURCES})
+    foreach (file ${HELP_SOURCES})
         set (output "${CMAKE_CURRENT_BINARY_DIR}/${file}")
         get_filename_component(file_name "${file}" NAME_WE)
 
         add_custom_command(
             OUTPUT ${output}
-            COMMAND $<TARGET_FILE:snort> --markup --help-${file_name} | sort > ${output}
-            DEPENDS snort
+            COMMAND ${CMAKE_COMMAND}
+                -DOUT_FILE=${output}
+                -DSNORT_EXECUTABLE=$<TARGET_FILE:snort>
+                -DHELP_TYPE=${file_name}
+                -P ${CMAKE_CURRENT_LIST_DIR}/cmake_scripts.cmake
+            DEPENDS snort cmake_scripts.cmake
             COMMENT "Documents: building ${file}"
         )
         list(APPEND ALL_SOURCES ${output})
     endforeach(file)
+
+    foreach (file ${LIST_SOURCES})
+        set (output "${CMAKE_CURRENT_BINARY_DIR}/${file}")
+        get_filename_component(file_name "${file}" NAME_WE)
+
+        add_custom_command(
+            OUTPUT ${output}
+            COMMAND ${CMAKE_COMMAND}
+                -DOUT_FILE=${output}
+                -DSNORT_EXECUTABLE=$<TARGET_FILE:snort>
+                -DLIST_TYPE=${file_name}
+                -P ${CMAKE_CURRENT_LIST_DIR}/cmake_scripts.cmake
+            DEPENDS snort cmake_scripts.cmake
+            COMMENT "Documents: building ${file}"
+        )
+        list(APPEND ALL_SOURCES ${output})
+    endforeach(file)
+
+    foreach (module ${MODULE_SOURCES})
+        set (output "${CMAKE_CURRENT_BINARY_DIR}/${module}")
+        get_filename_component(module_name "${module}" NAME_WE)
+
+        add_custom_command(
+            OUTPUT ${output}
+            COMMAND ${CMAKE_COMMAND}
+                -DOUT_FILE=${output}
+                -DSNORT_EXECUTABLE=$<TARGET_FILE:snort>
+                -DMODULE_TYPE=${module_name}
+                -P ${CMAKE_CURRENT_LIST_DIR}/cmake_scripts.cmake
+            DEPENDS snort cmake_scripts.cmake
+            COMMENT "Documents: building ${module}"
+        )
+        list(APPEND ALL_SOURCES ${output})
+    endforeach(module)
 
     # build version.txt seperately
     set (output ${CMAKE_CURRENT_BINARY_DIR}/version.txt)
@@ -92,20 +162,6 @@ if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
         COMMENT "Documents: building version.txt"
     )
     list(APPEND ALL_SOURCES ${output})
-
-    # build modules.txt seperately
-    set (output ${CMAKE_CURRENT_BINARY_DIR}/modules.txt)
-    add_custom_command(
-        OUTPUT ${output}
-        COMMAND ${CMAKE_COMMAND}
-            -DOUT_FILE=${output}
-            -DSNORT_EXECUTABLE=$<TARGET_FILE:snort>
-            -P ${CMAKE_CURRENT_LIST_DIR}/module_output.cmake
-        DEPENDS snort ${CMAKE_CURRENT_LIST_DIR}/module_output.cmake
-        COMMENT "Documents: building modules.txt"
-    )
-    list (APPEND ALL_SOURCES ${output})
-
 
     # If ruby is present, built the configuration differences
     if (RUBY_EXECUTABLE)
@@ -118,13 +174,24 @@ if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
                 ${CMAKE_SOURCE_DIR}/tools/snort2lua
                 > ${input}
             COMMAND ${CMAKE_COMMAND} -E copy ${input} ${output}
-            DEPENDS snort2lua
+            DEPENDS snort2lua ${CMAKE_CURRENT_LIST_DIR}/get_differences.rb
             COMMENT "Documents: building config_changes.txt"
         )
         list (APPEND ALL_SOURCES ${output})
     else()
         list (APPEND UNBUILT_SOURCES conf_differences.txt)
     endif()
+
+
+    set (output ${CMAKE_CURRENT_BINARY_DIR}/snort2lua_cmds.txt)
+    add_custom_command(
+        OUTPUT ${output}
+        COMMAND $<TARGET_FILE:snort2lua> --markup --help > ${output}
+        DEPENDS snort2lua
+        COMMENT "Documents: building snort2lua_cmds.txt"
+    )
+    list (APPEND ALL_SOURCES ${output})
+
 
     # next, Copy all distributed files into the binary tree (necessary for asciidocs).
     # Then create a dependency between the new and old files.
@@ -157,13 +224,14 @@ set (PDF_ARGUMENTS --icons --icons-dir=./images/icons --resource=${CMAKE_CURRENT
 set (HTML_ARGUMENTS --copy --attribute linkcss --attribute stylesdir --attribute disable-javascript --attribute quirks! ${PDF_ARGUMENTS})
 
 add_custom_command(OUTPUT snort_manual.html
-    COMMAND ${ASCIIDOC_A2X_EXE} 
-        -f xhtml 
-        ${HTML_ARGUMENTS} 
-        --resource=${CMAKE_CURRENT_BINARY_DIR}
-        --destination-dir=${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${ASCIIDOC_EXE}
+        -b xhtml11
+        -a toc2
+        -a icons
+        -a imagesdir=${CMAKE_CURRENT_SOURCE_DIR}/images
         ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt 
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/snort_manual.txt ${ALL_SOURCES}
+    DEPENDS ${ALL_SOURCES}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Documents: building snort_manual.html"
 )
 
@@ -172,7 +240,7 @@ add_custom_command(OUTPUT snort_manual.pdf
         -f pdf 
         ${PDF_ARGUMENTS} 
         ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt 
-    DEPENDS  ${ALL_SOURCES} snort_manual.html
+    DEPENDS  ${ALL_SOURCES}
     COMMENT "Documents: building snort_manual.pdf"
 )
 
@@ -192,14 +260,12 @@ add_custom_command(OUTPUT snort_manual.tgz
 )
 
 add_custom_command(OUTPUT images.tgz
-    COMMAND tar 
-        zcf images.tgz 
-        --exclude callouts 
-        --exclude README
-        -C ${CMAKE_CURRENT_SOURCE_DIR}/images
-        .
+    COMMAND
+        ${CMAKE_COMMAND}
+        -E tar zcf ${CMAKE_CURRENT_BINARY_DIR}/images.tgz .
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/images ${ALL_SOURCES}
     COMMENT "Documents: building images.tgz"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/images
 )
 
 

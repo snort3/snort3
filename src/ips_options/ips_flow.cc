@@ -46,7 +46,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "flow";
+#define s_name "flow"
 
 static THREAD_LOCAL ProfileStats flowCheckPerfStats;
 
@@ -72,10 +72,10 @@ public:
     FlowCheckOption(const FlowCheckData& c) : IpsOption(s_name)
     { config = c; };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
 private:
     FlowCheckData config;
@@ -331,7 +331,7 @@ static void flow_verify(FlowCheckData* fcd)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter flow_params[] =
+static const Parameter s_params[] =
 {
     { "to_client", Parameter::PT_IMPLIED, nullptr, nullptr,
       "match on server responses" },
@@ -369,15 +369,18 @@ static const Parameter flow_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to check session properties"
+
 class FlowModule : public Module
 {
 public:
-    FlowModule() : Module(s_name, flow_params) { };
+    FlowModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &flowCheckPerfStats; };
 
     FlowCheckData data;
@@ -480,6 +483,7 @@ static const IpsApi flow_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

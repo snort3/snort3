@@ -64,13 +64,16 @@
 #include "stream/stream_api.h"
 #include "protocols/layer.h"
 #include "protocols/vlan.h"
+#include "protocols/icmp4.h"
 
 using namespace std;
+
+#define S_NAME "unified2"
+#define F_NAME S_NAME "log.u2"
 
 /* ------------------ Data structures --------------------------*/
 typedef struct _Unified2Config
 {
-    string base_filename;
     unsigned int limit;
     int nostamp;
     int mpls_event_types;
@@ -148,7 +151,7 @@ static void AlertExtraData(Flow*, void *data, LogFunction *log_funcs, uint32_t m
 /*
  * Function: Unified2InitFile()
  *
- * Purpose: Initialize the unified2 ouput file
+ * Purpose: Initialize the unified2 output file
  *
  * Arguments: config => pointer to the plugin's reference data struct
  *
@@ -183,7 +186,7 @@ static void Unified2InitFile(Unified2Config *config)
         fname_ptr = u2.filepath;
     }
 
-    // FIXIT should use open() instead of fopen()
+    // FIXIT-L should use open() instead of fopen()
     if ((u2.stream = fopen(fname_ptr, "wb")) == NULL)
     {
         FatalError("%s(%d) Could not open %s: %s\n",
@@ -200,7 +203,7 @@ static void Unified2InitFile(Unified2Config *config)
     }
 
     /* If test mode, close and delete the file */
-    if (ScTestMode())  // FIXIT eliminate test check; should always remove if empty
+    if (ScTestMode())  // FIXIT-L eliminate test check; should always remove if empty
     {
         fclose(u2.stream);
         u2.stream = NULL;
@@ -257,32 +260,42 @@ static void _AlertIP4_v2(Packet *p, const char*, Unified2Config *config, Event *
             alertdata.blocked = U2_BLOCKED_FLAG_WDROP;
         }
 
-        if(IPH_IS_VALID(p))
+        if(p->has_ip())
         {
-            alertdata.ip_source = p->iph->ip_src.s_addr;
-            alertdata.ip_destination = p->iph->ip_dst.s_addr;
-            alertdata.protocol = GetEventProto(p);
+            const ip::IP4Hdr* const iph = p->ptrs.ip_api.get_ip4h();
+            alertdata.ip_source = iph->get_src();
+            alertdata.ip_destination = iph->get_dst();
 
-            if ((alertdata.protocol == IPPROTO_ICMP) && p->icmph)
+            if (IsPortscanPacket(p))
             {
-                alertdata.sport_itype = htons(p->icmph->type);
-                alertdata.dport_icode = htons(p->icmph->code);
+                alertdata.protocol = p->ps_proto;
             }
-            else if (!IsPortscanPacket(p))
+            else
             {
-                alertdata.sport_itype = htons(p->sp);
-                alertdata.dport_icode = htons(p->dp);
+                alertdata.protocol = p->get_ip_proto_next();
+
+                if ( p->type() == PktType::ICMP)
+                {
+                    // If PktType == ICMP, icmph is set
+                    alertdata.sport_itype = htons(p->ptrs.icmph->type);
+                    alertdata.dport_icode = htons(p->ptrs.icmph->code);
+                }
+                else if (!IsPortscanPacket(p))
+                {
+                    alertdata.sport_itype = htons(p->ptrs.sp);
+                    alertdata.dport_icode = htons(p->ptrs.dp);
+                }
             }
 
             if((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))
             {
-                alertdata.mpls_label = htonl(p->mplsHdr.label);
+                alertdata.mpls_label = htonl(p->ptrs.mplsHdr.label);
             }
             if(config->vlan_event_types)
             {
                 if(p->proto_bits & PROTO_BIT__VLAN)
                 {
-                    alertdata.vlanId = htons(vlan::vth_vlan(layer::get_vlan_layer(p)));
+                    alertdata.vlanId = htons(layer::get_vlan_layer(p)->vid());
                 }
 
                 alertdata.pad2 = htons(p->user_policy_id);
@@ -354,38 +367,46 @@ static void _AlertIP6_v2(Packet *p, const char*, Unified2Config *config, Event *
             alertdata.blocked = U2_BLOCKED_FLAG_WDROP;
         }
 
-        if(IPH_IS_VALID(p))
+        if(p->ptrs.ip_api.is_valid())
         {
-            snort_ip_p ip;
+            const sfip_t *ip;
 
-            ip = GET_SRC_IP(p);
+            ip = p->ptrs.ip_api.get_src();
             alertdata.ip_source = *(struct in6_addr*)ip->ip32;
 
-            ip = GET_DST_IP(p);
+            ip = p->ptrs.ip_api.get_dst();
             alertdata.ip_destination = *(struct in6_addr*)ip->ip32;
 
-            alertdata.protocol = GetEventProto(p);
-
-            if ((alertdata.protocol == IPPROTO_ICMP) && p->icmph)
+            if (IsPortscanPacket(p))
             {
-                alertdata.sport_itype = htons(p->icmph->type);
-                alertdata.dport_icode = htons(p->icmph->code);
+                alertdata.protocol = p->ps_proto;
             }
-            else if (!IsPortscanPacket(p))
+            else
             {
-                alertdata.sport_itype = htons(p->sp);
-                alertdata.dport_icode = htons(p->dp);
+                alertdata.protocol = p->get_ip_proto_next();
+
+                if ( p->type() == PktType::ICMP)
+                {
+                    // If PktType == ICMP, icmph is set
+                    alertdata.sport_itype = htons(p->ptrs.icmph->type);
+                    alertdata.dport_icode = htons(p->ptrs.icmph->code);
+                }
+                else if (!IsPortscanPacket(p))
+                {
+                    alertdata.sport_itype = htons(p->ptrs.sp);
+                    alertdata.dport_icode = htons(p->ptrs.dp);
+                }
             }
 
             if((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))
             {
-                alertdata.mpls_label = htonl(p->mplsHdr.label);
+                alertdata.mpls_label = htonl(p->ptrs.mplsHdr.label);
             }
             if(config->vlan_event_types)
             {
                 if(p->proto_bits & PROTO_BIT__VLAN)
                 {
-                    alertdata.vlanId = htons(vlan::vth_vlan(layer::get_vlan_layer(p)));
+                    alertdata.vlanId = htons(layer::get_vlan_layer(p)->vid());
                 }
 
                 alertdata.pad2 = htons(p->user_policy_id);
@@ -419,7 +440,12 @@ static void _AlertIP6_v2(Packet *p, const char*, Unified2Config *config, Event *
     Unified2Write(write_pkt_buffer, write_len, config);
 }
 
-void _WriteExtraData(Unified2Config *config, uint32_t event_id, uint32_t event_second, uint8_t *buffer, uint32_t len, uint32_t type )
+void _WriteExtraData(Unified2Config *config,
+                     uint32_t event_id,
+                     uint32_t event_second,
+                     const uint8_t *buffer,
+                     uint32_t len,
+                     uint32_t type )
 {
 
     Serial_Unified2_Header hdr;
@@ -915,7 +941,7 @@ static void Unified2Write(uint8_t *buf, uint32_t buf_len, Unified2Config *config
                     if (((fwcount = fwrite(buf, (size_t)buf_len, 1, u2.stream)) == 1) &&
                         ((ffstatus = fflush(u2.stream)) == 0))
                     {
-                        ErrorMessage("%s(%d) Write to unified2 file succeeded!\n",
+                        ErrorMessage("%s(%d) Write to unified2 file succeeded\n",
                                      __FILE__, __LINE__);
                         error = 0;
                         break;
@@ -923,7 +949,7 @@ static void Unified2Write(uint8_t *buf, uint32_t buf_len, Unified2Config *config
                 }
                 else if ((ffstatus = fflush(u2.stream)) == 0)
                 {
-                    ErrorMessage("%s(%d) Write to unified2 file succeeded!\n",
+                    ErrorMessage("%s(%d) Write to unified2 file succeeded\n",
                                  __FILE__, __LINE__);
                     error = 0;
                     break;
@@ -967,7 +993,7 @@ static void Unified2Write(uint8_t *buf, uint32_t buf_len, Unified2Config *config
                     if (((fwcount = fwrite(buf, (size_t)buf_len, 1, u2.stream)) == 1) &&
                         ((ffstatus = fflush(u2.stream)) == 0))
                     {
-                        ErrorMessage("%s(%d) Write to unified2 file succeeded!\n",
+                        ErrorMessage("%s(%d) Write to unified2 file succeeded\n",
                                      __FILE__, __LINE__);
                         error = 0;
                         break;
@@ -1020,11 +1046,8 @@ static void Unified2Write(uint8_t *buf, uint32_t buf_len, Unified2Config *config
 // unified2 module
 //-------------------------------------------------------------------------
 
-static const Parameter u2_params[] =
+static const Parameter s_params[] =
 {
-    { "file", Parameter::PT_STRING, nullptr, "unified2.log",
-      "name of alert file" },
-
     { "limit", Parameter::PT_INT, "0:", "0",
       "set limit (0 is unlimited)" },
 
@@ -1043,16 +1066,19 @@ static const Parameter u2_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "output event and packet in unified2 format file"
+
 class U2Module : public Module
 {
 public:
-    U2Module() : Module("unified2", u2_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    U2Module() : Module(S_NAME, s_help, s_params) { };
+
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 public:
-    string file;
     unsigned limit;
     unsigned units;
     bool nostamp;
@@ -1062,10 +1088,7 @@ public:
 
 bool U2Module::set(const char*, Value& v, SnortConfig*)
 {
-   if ( v.is("file") )
-        file = v.get_string();
-
-    else if ( v.is("limit") )
+    if ( v.is("limit") )
         limit = v.get_long();
 
     else if ( v.is("units") )
@@ -1088,7 +1111,6 @@ bool U2Module::set(const char*, Value& v, SnortConfig*)
 
 bool U2Module::begin(const char*, int, SnortConfig*)
 {
-    file = "unified2.log";
     limit = 0;
     units = 0;
     nostamp = ScNoOutputTimestamp();
@@ -1113,11 +1135,11 @@ public:
     U2Logger(U2Module*);
     ~U2Logger();
 
-    void open();
-    void close();
+    void open() override;
+    void close() override;
 
-    void alert(Packet*, const char* msg, Event*);
-    void log(Packet*, const char* msg, Event*);
+    void alert(Packet*, const char* msg, Event*) override;
+    void log(Packet*, const char* msg, Event*) override;
 
 private:
     Unified2Config config;
@@ -1125,7 +1147,6 @@ private:
 
 U2Logger::U2Logger(U2Module* m)
 {
-    config.base_filename = m->file;
     config.limit = m->limit;
     config.nostamp = m->nostamp;
     config.mpls_event_types = m->mpls;
@@ -1140,7 +1161,7 @@ void U2Logger::open()
     int status;
 
     std::string name;
-    get_instance_file(name, config.base_filename.c_str());
+    get_instance_file(name, F_NAME);
 
     status = SnortSnprintf(
         u2.filepath, sizeof(u2.filepath), "%s", name.c_str());
@@ -1165,7 +1186,7 @@ void U2Logger::close()
 
 void U2Logger::alert(Packet *p, const char *msg, Event *event)
 {
-    if(IS_IP4(p))
+    if(p->ptrs.ip_api.is_ip4())
     {
         _AlertIP4_v2(p, msg, &config, event);
     }
@@ -1173,12 +1194,12 @@ void U2Logger::alert(Packet *p, const char *msg, Event *event)
     {
         _AlertIP6_v2(p, msg, &config, event);
 
-        if(ScLogIPv6Extra() && IS_IP6(p))
+        if(ScLogIPv6Extra() && p->ptrs.ip_api.is_ip6())
         {
-            snort_ip_p ip = GET_SRC_IP(p);
+            const sfip_t *ip = p->ptrs.ip_api.get_src();
             _WriteExtraData(&config, event->event_id, event->ref_time.tv_sec,
                 &ip->ip8[0], sizeof(struct in6_addr),  EVENT_INFO_IPV6_SRC);
-            ip = GET_DST_IP(p);
+            ip = p->ptrs.ip_api.get_dst();
             _WriteExtraData(&config, event->event_id, event->ref_time.tv_sec,
                 &ip->ip8[0], sizeof(struct in6_addr),  EVENT_INFO_IPV6_DST);
         }
@@ -1239,7 +1260,8 @@ static LogApi u2_api
 {
     {
         PT_LOGGER,
-        "unified2",
+        S_NAME,
+        s_help,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

@@ -22,7 +22,6 @@
 #define ANALYZER_H
 
 #include "snort_types.h"
-#include "protocols/packet.h"
 
 enum AnalyzerCommand
 {
@@ -47,10 +46,11 @@ public:
     uint64_t get_count() { return count; };
     const char* get_source() { return source; };
 
-    // FIXIT add asynchronous response too
-    void execute(AnalyzerCommand ac) { command = ac; };
+    // FIXIT-M add asynchronous response too
+    bool execute(AnalyzerCommand);
+
     void set_config(Swapper* ps) { swap = ps; };
-    bool swap_pending() { return swap != nullptr; };
+    bool swap_pending() { return command == AC_SWAP; };
 
 private:
     void analyze();
@@ -60,7 +60,7 @@ private:
     bool done;
     uint64_t count;
     const char* source;
-    AnalyzerCommand command;
+    volatile AnalyzerCommand command;
     Swapper* swap;
 };
 

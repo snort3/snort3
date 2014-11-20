@@ -34,7 +34,9 @@
 #include <zlib.h>
 
 #include <list>
-#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
 using namespace std;
 
 #include "snort_types.h"
@@ -75,21 +77,49 @@ void SoManager::dump_plugins()
 // so rules
 //-------------------------------------------------------------------------
 
-#define GZIP_WBITS 31
+// FIXIT-L eliminate this arbitrary limit on rule text size
+const unsigned max_rule = 128000;
+static uint8_t so_buf[max_rule];
 
-// FIXIT make this into a general utility for one shot decompress
-// and add class for stream decompress
-const char*  uncompress(const uint8_t* data, unsigned len)
+static const uint8_t* compress(const string& text, unsigned& len)
 {
-    const unsigned max_rule = 65536;
-    static char buf[max_rule];
+    const char* s = text.c_str();
+    z_stream stream;
 
+    stream.next_in = (Bytef*)s;
+    stream.avail_in = text.size();
+
+    stream.next_out = so_buf;
+    stream.avail_out = max_rule;
+
+    stream.zalloc = nullptr;
+    stream.zfree = nullptr;
+
+    stream.total_in = 0;
+    stream.total_out = 0;
+
+    len = 0;
+
+    if ( deflateInit(&stream, Z_DEFAULT_COMPRESSION) != Z_OK )
+        return nullptr;
+
+    if ( deflate(&stream, Z_FINISH) == Z_STREAM_END )
+        len= stream.total_out;
+
+    deflateEnd(&stream);
+    return so_buf;
+}
+
+// FIXIT-L make this into a general utility for one shot decompress
+// and add class for stream decompress
+static const char* expand(const uint8_t* data, unsigned len)
+{
     z_stream stream;
 
     stream.next_in = (Bytef*)data;
     stream.avail_in = (uInt)len;
 
-    stream.next_out = (Bytef*)buf;
+    stream.next_out = (Bytef*)so_buf;
     stream.avail_out = (uInt)(max_rule - 1);
 
     stream.zalloc = nullptr;
@@ -98,16 +128,61 @@ const char*  uncompress(const uint8_t* data, unsigned len)
     stream.total_in = 0;
     stream.total_out = 0;
  
-    if ( inflateInit2(&stream, GZIP_WBITS) != Z_OK )
+    if ( inflateInit(&stream) != Z_OK )
         return nullptr;
 
     if ( inflate(&stream, Z_SYNC_FLUSH) != Z_STREAM_END )
         return nullptr;
 
     assert(stream.total_out < max_rule);
-    buf[stream.total_out] = '\0';
+    so_buf[stream.total_out] = '\0';
 
-    return buf;
+    return (char*)so_buf;
+}
+
+//-------------------------------------------------------------------------
+
+static void strvrt(const string& text, string& data)
+{
+    unsigned len = 0;
+    const uint8_t* d = compress(text, len);
+
+    // lose the zlib header
+    assert(len > 2 && d[0] == 0x78 && d[1] == 0x9C);
+    d += 2;
+    len -= 2;
+
+    data.assign((char*)d, len);
+
+    // generate xor key
+    // FIXIT-L there is no hard core crypto requirement here
+    // but rand() is known to be weak, especially in the lower bits
+    // nonetheless this seems to work as good as the basic
+    // C++ 11 default generator and uniform distribution
+    uint8_t key = (uint8_t)(rand() >> 16);
+    if ( !key ) key = 0xA5;
+
+    for ( unsigned i = 0; i < len; i++ )
+        data[i] ^= key;
+
+    data.append(1, (char)key);
+}
+
+static const char* revert(const uint8_t* data, unsigned len)
+{
+    if ( !len )
+        return (char*)data;
+
+    uint8_t key = data[--len];
+    string s((char*)data, len);
+
+    for ( unsigned i = 0; i < len-1; i++ )
+        s[i] ^= key;
+
+    // force the zlib header
+    s.insert(0, "\x78\x9C");
+
+    return expand((uint8_t*)s.c_str(), s.size());
 }
 
 //-------------------------------------------------------------------------
@@ -128,12 +203,15 @@ const char* SoManager::get_so_options(const char* soid)
     if ( !api )
         return nullptr;
 
-    const char* rule = uncompress(api->rule, api->length);
+    if ( !api->length )
+        return nullptr;
+
+    const char* rule = revert(api->rule, api->length);
 
     if ( !rule )
         return nullptr;
 
-    // FIXIT this approach won't tolerate spaces and might get
+    // FIXIT-L this approach won't tolerate spaces and might get
     // fooled by matching content (should it precede this)
     char opt[32];
     snprintf(opt, sizeof(opt), "soid:%s;", soid);
@@ -162,20 +240,19 @@ void SoManager::delete_so_data(const char* soid, void* pv)
 
 //-------------------------------------------------------------------------
 
-void SoManager::dump_rule_stubs(const char* path)
+void SoManager::dump_rule_stubs(const char*)
 {
     unsigned c = 0;
-    std::ofstream ofs(path);
 
     for ( auto* p : s_rules )
     {
         const char* s;
-        const char* rule = uncompress(p->rule, p->length);
+        const char* rule = revert(p->rule, p->length);
 
         if ( !rule )
             continue;
 
-        // FIXIT need to properly parse rule to avoid
+        // FIXIT-L need to properly parse rule to avoid
         // confusing other text for soid option
         if ( !(s = strstr(rule, "soid:")) )
             continue;
@@ -183,10 +260,105 @@ void SoManager::dump_rule_stubs(const char* path)
         if ( !(s = strchr(s, ';')) )
             continue;
 
-        string stub(rule, ++s-rule);
-        ofs << stub << ")" << endl;
+        // FIXIT-L strip newlines (optional?)
+        if ( !p->length )
+            cout << rule << endl;
+        else
+        {
+            string stub(rule, ++s-rule);
+            cout << stub << ")" << endl;
+        }
         ++c;
     }
-    LogMessage("%u rule stubs dumped.\n", c);
+    if ( !c )
+        cerr << "no rules to dump" << endl;
+}
+
+static void get_var(const string& s, string& v)
+{
+    v.clear();
+    size_t pos = s.find("soid");
+
+    if ( pos == string::npos )
+        return;
+
+    pos = s.find("|", pos+1);
+
+    if ( pos == string::npos )
+        return;
+
+    size_t end = s.find(";", ++pos);
+
+    if ( end == string::npos )
+        return;
+
+    v = s.substr(pos, end-pos);
+}
+
+void SoManager::rule_to_hex(const char*)
+{
+    stringstream buffer;
+    buffer << cin.rdbuf();
+    string text = buffer.str();
+
+    unsigned idx;
+    string data;
+    strvrt(text, data);
+
+    string var;
+    get_var(text, var);
+
+    cout << "const uint8_t rule_" << var;
+    cout << "[] =" << endl;
+    cout << "{" << endl;
+    cout << hex << uppercase;
+
+    for ( idx = 0; idx < data.size(); idx++ )
+    {
+        if ( idx && !(idx % 12) )
+            cout << endl;
+
+        uint8_t u = data[idx];
+        cout << "0x" << setfill('0') << setw(2) << hex << (int)u << ", ";
+    }
+    if ( idx % 16 )
+        cout << endl;
+
+    cout << dec;
+    cout << "};" << endl;
+    cout << "const unsigned rule_" << var << "_len = ";
+    cout  << data.size() << ";" << endl;
+}
+
+void SoManager::rule_to_text(const char*)
+{
+    stringstream buffer;
+    buffer << cin.rdbuf();
+    string text = buffer.str();
+
+    unsigned len = text.size(), idx;
+    const uint8_t* data = (uint8_t*)text.c_str();
+
+    string var;
+    get_var(text, var);
+
+    cout << "const uint8_t rule_" << var;
+    cout << "[] =" << endl;
+    cout << "{" << endl;
+    cout << hex << uppercase;
+
+    for ( idx = 0; idx < len; idx++ )
+    {
+        if ( idx && !(idx % 12) )
+            cout << endl;
+        cout << "0x" << setfill('0') << setw(2) << (unsigned)data[idx] << ", ";
+    }
+    if ( idx % 16 )
+        cout << endl;
+
+    cout << dec;
+    cout << "};" << endl;
+    cout << "const unsigned rule_" << var;
+    cout << "_len = 0;" << endl;
 }
 

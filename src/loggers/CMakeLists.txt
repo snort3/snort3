@@ -1,12 +1,14 @@
 
 include_directories(${LUAJIT_INCLUDE_DIR})
 
-set ( LOGGER_SOURCES
+set (LOGGER_SOURCES
+    alert_luajit.cc
+    log_codecs.cc
     loggers.cc
     loggers.h
 )
 
-set ( PLUGIN_LIST
+set (PLUGIN_LIST
     alert_csv.cc
     alert_fast.cc
     alert_full.cc
@@ -14,14 +16,14 @@ set ( PLUGIN_LIST
     alert_test.cc
     alert_unixsock.cc
     log_null.cc
-    log_tcpdump.cc
+    log_pcap.cc
     unified2.cc
     unified2_common.h
 )
 
-if( LINUX )
-    set ( PLUGIN_LIST
-        ${PLUGIN_LIST}
+if (LINUX)
+    set ( LOGGER_SOURCES
+        ${LOGGER_SOURCES}
         alert_sf_socket.cc
     )
 endif()
@@ -32,6 +34,7 @@ if (STATIC_LOGGERS)
         ${LOGGER_SOURCES}
         ${PLUGIN_LIST}
     )
+
 
 else (STATIC_LOGGERS)
 
@@ -46,7 +49,7 @@ else (STATIC_LOGGERS)
     add_shared_library(alert_test loggers alert_test.cc)
     add_shared_library(alert_unixsock loggers alert_unixsock.cc)
     add_shared_library(log_null loggers log_null.cc)
-    add_shared_library(log_tcpdump loggers log_tcpdump.cc)
+    add_shared_library(log_pcap loggers log_pcap.cc)
     add_shared_library(unified2 loggers unified2.cc unified2_common.h)
 
 endif (STATIC_LOGGERS)

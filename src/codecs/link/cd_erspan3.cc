@@ -21,14 +21,34 @@
 
 
 
+#include <arpa/inet.h>
 #include "framework/codec.h"
-#include "codecs/link/cd_erspan3_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
-#include "codecs/sf_protocols.h"
+#include "protocols/packet.h"
+
+#define CD_ERSPAN3_NAME "erspan3"
+#define CD_ERSPAN3_HELP "support for encapsulated remote switched port analyzer - type 3"
 
 namespace
 {
+
+static const RuleMap erspan3_rules[] =
+{
+    { DECODE_ERSPAN3_DGRAM_LT_HDR, "captured < ERSpan type3 header length" },
+    { 0, nullptr }
+};
+
+class Erspan3Module : public CodecModule
+{
+public:
+    Erspan3Module() : CodecModule(CD_ERSPAN3_NAME, CD_ERSPAN3_HELP) {}
+
+    const RuleMap* get_rules() const
+    { return erspan3_rules; }
+};
+
 
 class Erspan3Codec : public Codec
 {
@@ -37,11 +57,8 @@ public:
     ~Erspan3Codec(){};
 
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-    
-    virtual PROTO_ID get_proto_id() { return PROTO_ERSPAN; };
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
 
@@ -49,39 +66,27 @@ struct ERSpanType3Hdr
 {
     uint16_t ver_vlan;
     uint16_t flags_spanId;
-    uint32_t timestamp;
+    uint32_t time_stamp; // adding an underscore so function can be called timestamp()
     uint16_t pad0;
     uint16_t pad1;
     uint32_t pad2;
     uint32_t pad3;
+
+    inline uint16_t version() const
+    { return ntohs(ver_vlan) >> 12; }
+
+    inline uint16_t vlan() const
+    { return ntohs(ver_vlan) & 0xfff; }
+
+    inline uint16_t span_id() const
+    { return ntohs(flags_spanId) & 0x03ff; }
+
+    inline uint32_t timestamp() const
+    { return ntohs(time_stamp); }
 };
 
 const uint16_t ETHERTYPE_ERSPAN_TYPE3 = 0x22eb;
 } // anonymous namespace
-
-static inline uint16_t erspan_version(ERSpanType3Hdr *hdr)
-{
-    return (ntohs(hdr->ver_vlan) & 0xf000) >> 12;
-}
-
-#if 0
-// keeping these functions around for use in further development
-
-static inline uint16_t erspan_vlan(ERSpanType3Hdr *hdr)
-{
-    return ntohs(hdr->ver_vlan) & 0x0fff;
-}
-
-static inline uint16_t erspan_span_id(ERSpanType3Hdr *hdr)
-{
-    return ntohs(hdr->flags_spanId) & 0x03ff;
-}
-
-static inline uint32_t erspan3_timestamp(ERSpanType3Hdr *hdr)
-{
-    return hdr->timestamp;
-}
-#endif
 
 void Erspan3Codec::get_protocol_ids(std::vector<uint16_t>& v)
 {
@@ -102,32 +107,27 @@ void Erspan3Codec::get_protocol_ids(std::vector<uint16_t>& v)
  * Returns: void function
  *
  */
-bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool Erspan3Codec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-    lyr_len = sizeof(ERSpanType3Hdr);
-    ERSpanType3Hdr *erSpan3Hdr = (ERSpanType3Hdr *)raw_pkt;
+    const ERSpanType3Hdr* const erSpan3Hdr =
+        reinterpret_cast<const ERSpanType3Hdr*>(raw.data);
 
-    if (raw_len < sizeof(ERSpanType3Hdr))
+    if (raw.len < sizeof(ERSpanType3Hdr))
     {
-        codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN3_DGRAM_LT_HDR,
-                        raw_pkt, raw_len);
+        codec_events::decoder_event(codec, DECODE_ERSPAN3_DGRAM_LT_HDR);
         return false;
     }
-
-    p->encapsulations++;
 
     /* Check that this is in fact ERSpan Type 3.
      */
-    if (erspan_version(erSpan3Hdr) != 0x02) /* Type 3 == version 0x02 */
+    if (erSpan3Hdr->version() != 0x02) /* Type 3 == version 0x02 */
     {
-        codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
-                        raw_pkt, raw_len);
+        codec_events::decoder_event(codec, DECODE_ERSPAN_HDR_VERSION_MISMATCH);
         return false;
     }
 
-
-    next_prot_id = ETHERTYPE_TRANS_ETHER_BRIDGING;
+    codec.next_prot_id = ETHERTYPE_TRANS_ETHER_BRIDGING;
+    codec.lyr_len = sizeof(ERSpanType3Hdr);
     return true;
 }
 
@@ -136,24 +136,16 @@ bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new Erspan3Module;
-}
+{ return new Erspan3Module; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new Erspan3Codec();
-}
+{ return new Erspan3Codec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi erspan3_api =
@@ -161,6 +153,7 @@ static const CodecApi erspan3_api =
     {
         PT_CODEC,
         CD_ERSPAN3_NAME,
+        CD_ERSPAN3_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

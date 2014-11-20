@@ -28,13 +28,13 @@
 //-------------------------------------------------------------------------
 
 // order of protos and scans must match PS_* flags
-static const char* protos =
-    "tcp | udp | icmp | ip | all";
+#define protos \
+    "tcp | udp | icmp | ip | all"
 
-static const char* scans =
-    "portscan | portsweep | decoy_portscan | distributed_portscan | all";
+#define scans \
+    "portscan | portsweep | decoy_portscan | distributed_portscan | all"
 
-static const Parameter port_scan_params[] =
+static const Parameter ps_params[] =
 {
     { "protos", Parameter::PT_MULTI, protos, "all",
       "choose the protocols to monitor" },
@@ -56,6 +56,9 @@ static const Parameter port_scan_params[] =
 
     { "include_midstream", Parameter::PT_BOOL, nullptr, "false",
       "list of CIDRs with optional ports" },
+
+    { "logfile", Parameter::PT_BOOL, nullptr, "false",
+      "write scan events to file" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -103,7 +106,7 @@ static const RuleMap port_scan_rules[] =
 //-------------------------------------------------------------------------
 
 PortScanModule::PortScanModule() :
-    Module("port_scan", port_scan_params)
+    Module(PS_NAME, PS_HELP, ps_params)
 {
     config = nullptr;
 }
@@ -118,7 +121,7 @@ const RuleMap* PortScanModule::get_rules() const
 { return port_scan_rules; }
 
 //-------------------------------------------------------------------------
-// FIXIT ipset_parse() format must be changed to remove comma
+// FIXIT-L ipset_parse() format must be changed to remove comma
 // separators between tokens which means using something other than
 // space between CIDR and port.  the current format is:
 // CIDR[ ports][,CIDR[ ports]]*
@@ -127,8 +130,8 @@ const RuleMap* PortScanModule::get_rules() const
 // 3.4.5.6/16 7 works but 3.4.5.6 7 does not.
 // a possible new format is:
 // CIDR[#ports][ CIDR[#ports]]*
-// also note that Snort classic address lists appear to be allowed which
-// will cause problems with Lua syntax is [[ and ]] are present.  must be
+// also note that classic Snort address lists appear to be allowed which
+// will cause problems with Lua syntax if [[ and ]] are present.  must be
 // [ [ and ] ].
 // consult RFC 5952 for ideas.
 //-------------------------------------------------------------------------
@@ -175,6 +178,9 @@ bool PortScanModule::set(const char*, Value& v, SnortConfig*)
         if ( !ips || ipset_parse(ips, v.get_string()) )
             return false;
     }
+    else if ( v.is("logfile") )
+        config->logfile = v.get_bool();
+
     else
         return false;
 
@@ -198,16 +204,16 @@ PortscanConfig* PortScanModule::get_data()
 // port_scan module
 //-------------------------------------------------------------------------
 
-static const Parameter ps_global_params[] =
+static const Parameter psg_params[] =
 {
     { "memcap", Parameter::PT_INT, "1:", "1048576",
-      "maxium tracker memory" },
+      "maximum tracker memory" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 PortScanGlobalModule::PortScanGlobalModule() :
-    Module("port_scan_global", ps_global_params)
+    Module(PSG_NAME, PSG_HELP, psg_params)
 { 
     common = nullptr;
 }
@@ -224,6 +230,7 @@ ProfileStats* PortScanGlobalModule::get_profile() const
 bool PortScanGlobalModule::begin(const char*, int, SnortConfig*)
 {
     common = new PsCommon;
+    common->memcap = 1048576;
     return true;
 }
 

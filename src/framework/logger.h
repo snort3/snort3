@@ -44,11 +44,13 @@ struct Packet;
 
 //-------------------------------------------------------------------------
 // api for class
-// ctor, dtor, and configure are in main thread
+// ctor, dtor are in main thread
 // other methods are packet thread specific
 //-------------------------------------------------------------------------
 
-class Logger
+struct LogApi;
+
+class SO_PUBLIC Logger
 {
 public:
     virtual ~Logger() { };
@@ -60,14 +62,22 @@ public:
     virtual void alert(Packet*, const char*, Event*) { };
     virtual void log(Packet*, const char*, Event*) { };
 
+    void set_api(const LogApi* p)
+    { api = p; };
+
+    const LogApi* get_api()
+    { return api; };
+
 protected:
     Logger() { };
+
+private:
+    const LogApi* api;
 };
 
 typedef Logger* (*LogNewFunc)(struct SnortConfig*, class Module*);
 typedef void (*LogDelFunc)(Logger*);
 
-// FIXIT ensure all eh provide stats
 struct LogApi
 {
     BaseApi base;

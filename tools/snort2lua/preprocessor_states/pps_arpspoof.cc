@@ -1,29 +1,28 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // pps_arpspoof.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
-#include "utils/s2l_util.h"
+#include "helpers/converter.h"
+#include "helpers/s2l_util.h"
 
 namespace preprocessors
 {
@@ -33,7 +32,7 @@ namespace {
 class ArpSpoof : public ConversionState
 {
 public:
-    ArpSpoof(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    ArpSpoof(Converter& c) : ConversionState(c) {};
     virtual ~ArpSpoof() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -45,20 +44,23 @@ bool ArpSpoof::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
-    ld->open_table("arp_spoof");
+    table_api.open_table("arp_spoof");
 
     while(data_stream >> keyword)
     {
+        bool tmpval = true;
 
         if(!keyword.compare("-unicast"))
-        {
-            if (!ld->add_option_to_table("unicast", true))
-                retval = false;
-        }
+            table_api.add_deleted_comment("unicast");
+
         else
+            tmpval = false;
+
+
+        if (!tmpval)
         {
-            ld->failed_conversion(data_stream, keyword);
             retval = false;
+            data_api.failed_conversion(data_stream, keyword);
         }
     }
 
@@ -67,9 +69,9 @@ bool ArpSpoof::convert(std::istringstream& data_stream)
 
 /*******  A P I ***********/
 
-static ConversionState* arpspoof_ctor(Converter* cv, LuaData* ld)
+static ConversionState* arpspoof_ctor(Converter& c)
 {
-    return new ArpSpoof(cv, ld);
+    return new ArpSpoof(c);
 }
 
 static const ConvertMap preprocessor_arpspoof = 
@@ -92,7 +94,7 @@ namespace {
 class ArpSpoofHost : public ConversionState
 {
 public:
-    ArpSpoofHost(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    ArpSpoofHost(Converter& c) : ConversionState(c) {};
     virtual ~ArpSpoofHost() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -105,16 +107,16 @@ bool ArpSpoofHost::convert(std::istringstream& data_stream)
     std::string ip, mac;
 
     bool retval = true;
-    ld->open_table("arp_spoof");
-    ld->open_table("hosts");
+    table_api.open_table("arp_spoof");
+    table_api.open_table("hosts");
 
     while(data_stream >> ip &&
           data_stream >> mac)
     {
-        ld->open_table();
-        ld->add_option_to_table("ip", ip);
-        ld->add_option_to_table("mac", mac);
-        ld->close_table();
+        table_api.open_table();
+        table_api.add_option("ip", ip);
+        table_api.add_option("mac", mac);
+        table_api.close_table();
 
         ip.clear();
         mac.clear();
@@ -128,9 +130,9 @@ bool ArpSpoofHost::convert(std::istringstream& data_stream)
 
 /*******  A P I ***********/
 
-static ConversionState* arpspoof_host_ctor(Converter* cv, LuaData* ld)
+static ConversionState* arpspoof_host_ctor(Converter& c)
 {
-    return new ArpSpoofHost(cv, ld);
+    return new ArpSpoofHost(c);
 }
 
 static const ConvertMap preprocessor_arpspoof_host = 

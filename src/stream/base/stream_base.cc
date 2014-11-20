@@ -32,7 +32,6 @@
 #include "snort_debug.h"
 #include "framework/inspector.h"
 #include "framework/plug_data.h"
-#include "framework/share.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "flow/flow_control.h"
@@ -62,29 +61,50 @@ const unsigned session_peg_count = array_size(session_pegs);
 
 struct BaseStats
 {
-    PegCount tcp;
-    PegCount udp;
-    PegCount icmp;
-    PegCount ip;
+    PegCount tcp_flows;
+    PegCount tcp_prunes;
+
+    PegCount udp_flows;
+    PegCount udp_prunes;
+
+    PegCount icmp_flows;
+    PegCount icmp_prunes;
+
+    PegCount ip_flows;
+    PegCount ip_prunes;
 };
 
 static BaseStats g_stats;
 static THREAD_LOCAL BaseStats t_stats;
 
-static const char* base_pegs[] =
+static const char* const base_pegs[] =
 {
     "tcp flows",
+    "tcp prunes",
     "udp flows",
+    "udp prunes",
     "icmp flows",
-    "ip flows"
+    "icmp prunes",
+    "ip flows",
+    "ip prunes"
 };
 
 void base_sum()
 {   
-    t_stats.tcp = flow_con->get_flow_count(IPPROTO_TCP);
-    t_stats.udp = flow_con->get_flow_count(IPPROTO_UDP);
-    t_stats.icmp = flow_con->get_flow_count(IPPROTO_ICMP);
-    t_stats.ip = flow_con->get_flow_count(IPPROTO_IP);
+    if ( !flow_con )
+        return;
+
+    t_stats.tcp_flows = flow_con->get_flows(IPPROTO_TCP);
+    t_stats.tcp_prunes = flow_con->get_prunes(IPPROTO_TCP);
+
+    t_stats.udp_flows = flow_con->get_flows(IPPROTO_UDP);
+    t_stats.udp_prunes = flow_con->get_prunes(IPPROTO_UDP);
+
+    t_stats.icmp_flows = flow_con->get_flows(IPPROTO_ICMP);
+    t_stats.icmp_prunes = flow_con->get_prunes(IPPROTO_ICMP);
+
+    t_stats.ip_flows = flow_con->get_flows(IPPROTO_IP);
+    t_stats.ip_prunes = flow_con->get_prunes(IPPROTO_IP);
 
     sum_stats((PegCount*)&g_stats, (PegCount*)&t_stats,
         array_size(base_pegs));
@@ -98,7 +118,9 @@ void base_stats()
 
 void base_reset()
 {
-    flow_con->clear_flow_counts();
+    if ( flow_con )
+        flow_con->clear_counts();
+
     memset(&t_stats, 0, sizeof(t_stats));
 }
 
@@ -108,13 +130,15 @@ void base_reset()
 
 static inline bool is_eligible(Packet* p)
 {
-    if ( p->error_flags & PKT_ERR_CKSUM_IP )
+    // FIXIT-M  --  extra check??   bad checksums should be removed
+    //              in detect.c snort_inspect()
+    if ( p->ptrs.decode_flags & DECODE_ERR_CKSUM_IP )
         return false;
 
     if ( p->packet_flags & PKT_REBUILT_STREAM )
         return false;
 
-    if ( !IPH_IS_VALID(p) )
+    if ( !p->ptrs.ip_api.is_valid() )
         return false;
 
     return true;
@@ -135,12 +159,12 @@ class StreamBase : public Inspector
 public:
     StreamBase(const StreamConfig*);
 
-    void show(SnortConfig*);
+    void show(SnortConfig*) override;
 
-    void tinit();
-    void tterm();
+    void tinit() override;
+    void tterm() override;
 
-    void eval(Packet*);
+    void eval(Packet*) override;
 
 public:
     const StreamConfig* config;
@@ -154,29 +178,28 @@ StreamBase::StreamBase(const StreamConfig* c)
 void StreamBase::tinit()
 {
     assert(!flow_con);
-    Inspector* pi = InspectorManager::get_inspector("binder");
-    flow_con = new FlowControl(pi);
+    flow_con = new FlowControl;
     InspectSsnFunc f;
 
     if ( config->tcp_cfg.max_sessions )
     {
-        f = InspectorManager::get_session("stream_tcp");
-        flow_con->init_tcp(config->tcp_cfg, f);
+        if ( (f = InspectorManager::get_session((uint16_t)PktType::TCP)) )
+            flow_con->init_tcp(config->tcp_cfg, f);
     }
     if ( config->udp_cfg.max_sessions )
     {
-        f = InspectorManager::get_session("stream_udp");
-        flow_con->init_udp(config->udp_cfg, f);
+        if ( (f = InspectorManager::get_session((uint16_t)PktType::UDP)) )
+            flow_con->init_udp(config->udp_cfg, f);
     }
     if ( config->ip_cfg.max_sessions )
     {
-        f = InspectorManager::get_session("stream_ip");
-        flow_con->init_ip(config->ip_cfg, f);
+        if ( (f = InspectorManager::get_session((uint16_t)PktType::IP)) )
+            flow_con->init_ip(config->ip_cfg, f);
     }
     if ( config->icmp_cfg.max_sessions )
     {
-        f = InspectorManager::get_session("stream_icmp");
-        flow_con->init_icmp(config->icmp_cfg, f);
+        if ( (f = InspectorManager::get_session((uint16_t)PktType::ICMP)) )
+            flow_con->init_icmp(config->icmp_cfg, f);
     }
     if ( config->tcp_cfg.max_sessions || config->udp_cfg.max_sessions )
     {
@@ -190,14 +213,11 @@ void StreamBase::tterm()
     flow_con->purge_flows(IPPROTO_UDP);
     flow_con->purge_flows(IPPROTO_ICMP);
     flow_con->purge_flows(IPPROTO_IP);
-
-    delete flow_con;
-    flow_con = nullptr;
 }
 
 void StreamBase::show(SnortConfig*)
 {
-    // FIXIT SSN print 
+    // FIXIT-L SSN print 
     //Stream5PrintGlobalConfig(&config);
 }
 
@@ -210,29 +230,32 @@ void StreamBase::eval(Packet *p)
 
     MODULE_PROFILE_START(s5PerfStats);
 
-    switch ( GET_IPH_PROTO(p) )
+    switch ( p->type() )
     {
-    case IPPROTO_TCP:
-        if ( p->tcph )
+    case PktType::TCP:
+        if ( p->ptrs.tcph )
             flow_con->process_tcp(p);
         break;
 
-    case IPPROTO_UDP:
-        if ( p->frag_flag )
+    case PktType::UDP:
+        if ( p->ptrs.decode_flags & DECODE_FRAG )
             flow_con->process_ip(p);
 
-        if ( p->udph )
+        if ( p->ptrs.udph )
             flow_con->process_udp(p);
         break;
 
-    case IPPROTO_ICMP:
-        if ( p->icmph )
+    case PktType::ICMP:
+        if ( p->ptrs.icmph )
             flow_con->process_icmp(p);
         break;
 
-    case IPPROTO_IP:
-        if ( p->iph )
+    case PktType::IP:
+        if ( p->has_ip() )
             flow_con->process_ip(p);
+        break;
+
+    default:
         break;
     }
 
@@ -240,7 +263,7 @@ void StreamBase::eval(Packet *p)
 }
 
 #if 0
-    // FIXIT add method to get exp cache?
+    // FIXIT-L add method to get exp cache?
     LogMessage("            Expected Flows\n");
     LogMessage("                  Expected: %lu\n", exp_cache->get_expects());
     LogMessage("                  Realized: %lu\n", exp_cache->get_realized());
@@ -269,24 +292,31 @@ static void base_dtor(Inspector* p)
     delete p;
 }
 
+void base_tterm()
+{
+    delete flow_con;
+    flow_con = nullptr;
+}
+
 static const InspectApi base_api =
 {
     {
         PT_INSPECTOR,
         MOD_NAME,
+        MOD_HELP,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor
     },
     IT_STREAM,
-    PROTO_BIT__IP,
+    (unsigned)PktType::ANY_IP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // init
     nullptr, // term
     nullptr, // tinit
-    nullptr, // tterm
+    base_tterm,
     base_ctor,
     base_dtor,
     nullptr, // ssn

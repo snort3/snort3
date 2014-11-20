@@ -69,7 +69,8 @@ struct ProfileStats
 #define PROFILING_RULES ScProfileRules()
 #endif
 
-#define NODE_PROFILE_VARS uint64_t node_ticks_start, node_ticks_end, node_ticks_delta, node_deltas = 0
+#define NODE_PROFILE_VARS \
+    uint64_t node_ticks_start = 0, node_ticks_end, node_ticks_delta, node_deltas = 0
 
 #define NODE_PROFILE_START(node) \
     if (PROFILING_RULES) { \
@@ -159,14 +160,11 @@ struct ProfileStats
 void ShowRuleProfiles(void);
 void ResetRuleProfiling(void);
 
-typedef struct _ProfileConfig
+struct ProfileConfig
 {
     int num;
     int sort;
-    int append;
-    char *filename;
-
-} ProfileConfig;
+};
 
 // thread local access method
 typedef ProfileStats* (*get_profile_func)(const char*);

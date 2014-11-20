@@ -42,6 +42,11 @@
 #include "profiler.h"
 #include "protocols/layer.h"
 #include "protocols/vlan.h"
+#include "protocols/ip.h"
+#include "protocols/icmp4.h"
+#include "protocols/udp.h"
+#include "protocols/tcp.h"
+#include "sfip/sf_ip.h"
 
 THREAD_LOCAL SessionStats icmpStats;
 THREAD_LOCAL ProfileStats icmp_perf_stats;
@@ -65,35 +70,54 @@ static void IcmpSessionCleanup(Flow *ssn)
         CloseStreamSession(&sfBase, SESSION_CLOSED_NORMALLY);
     }
 
-    ssn->clear();
+    if ( ssn->s5_state.session_flags & SSNFLAG_SEEN_SENDER )
+        icmpStats.released++;
 
-    icmpStats.released++;
+    ssn->clear();
 }
 
 static int ProcessIcmpUnreach(Packet *p)
 {
     /* Handle ICMP unreachable */
     FlowKey skey;
-    Flow *ssn = NULL;
+    Flow* ssn = NULL;
     uint16_t sport;
     uint16_t dport;
-    sfip_t *src;
-    sfip_t *dst;
+    const sfip_t *src;
+    const sfip_t *dst;
+    ip::IpApi iph;
 
-    /* No "orig" IP Header */
-    if (!p->orig_iph)
+    /* Set the Ip API to the embedded IP Header. */
+    if (!layer::set_api_ip_embed_icmp(p, iph))
         return 0;
 
-    /* Get TCP/UDP/ICMP session from original protocol/port info
-     * embedded in the ICMP Unreach message.  This is already decoded
-     * in p->orig_foo.  TCP/UDP ports are decoded as p->orig_sp/dp.
+    /* Get IP/TCP/UDP/ICMP session from original protocol/port info
+     * embedded in the ICMP Unreach message.
      */
-    skey.protocol = GET_ORIG_IPH_PROTO(p);
-    sport = p->orig_sp;
-    dport = p->orig_dp;
+    src = iph.get_src();
+    dst = iph.get_dst();
 
-    src = GET_ORIG_SRC(p);
-    dst = GET_ORIG_DST(p);
+    skey.protocol = p->get_ip_proto_next();
+    skey.version = src->is_ip4() ? 4 : 6;
+
+    if (p->proto_bits & PROTO_BIT__TCP_EMBED_ICMP)
+    {
+        const tcp::TCPHdr* tcph = layer::get_tcp_embed_icmp(iph);
+        sport = ntohs(tcph->th_sport);
+        dport = ntohs(tcph->th_dport);
+    }
+    else if (p->proto_bits & PROTO_BIT__UDP_EMBED_ICMP)
+    {
+        const udp::UDPHdr* udph = layer::get_udp_embed_icmp(iph);
+
+        sport = ntohs(udph->uh_sport);
+        dport = ntohs(udph->uh_dport);
+    }
+    else
+    {
+        sport = 0;
+        dport = 0;
+    }
 
     if (sfip_fast_lt6(src, dst))
     {
@@ -102,7 +126,7 @@ static int ProcessIcmpUnreach(Packet *p)
         COPY4(skey.ip_h, dst->ip32);
         skey.port_h = dport;
     }
-    else if (IP_EQUALITY(GET_ORIG_SRC(p), GET_ORIG_DST(p)))
+    else if (sfip_equals(iph.get_src(), iph.get_dst()))
     {
         COPY4(skey.ip_l, src->ip32);
         COPY4(skey.ip_h, skey.ip_l);
@@ -125,24 +149,30 @@ static int ProcessIcmpUnreach(Packet *p)
         skey.port_h = sport;
     }
 
-    if (p->proto_bits & PROTO_BIT__VLAN)
-        skey.vlan_tag = vlan::vth_vlan(layer::get_vlan_layer(p));
-    else
-        skey.vlan_tag = 0;
+    uint16_t vlan = (p->proto_bits & PROTO_BIT__VLAN) ?
+        layer::get_vlan_layer(p)->vid() : 0;
 
-    switch (skey.protocol)
+    // FIXIT-L see FlowKey::init*() - call those instead
+    // or do mpls differently for ip4 and ip6
+    skey.init_vlan(vlan);
+    skey.init_address_space(0);
+    skey.init_mpls(0);
+
+    switch (p->type())
     {
-    case IPPROTO_TCP:
+    case PktType::TCP:
         /* Lookup a TCP session */
         ssn = Stream::get_session(&skey);
         break;
-    case IPPROTO_UDP:
+    case PktType::UDP:
         /* Lookup a UDP session */
         ssn = Stream::get_session(&skey);
         break;
-    case IPPROTO_ICMP:
+    case PktType::ICMP:
         /* Lookup a ICMP session */
         ssn = Stream::get_session(&skey);
+        break;
+    default:
         break;
     }
 
@@ -165,7 +195,6 @@ static int ProcessIcmpUnreach(Packet *p)
 
 IcmpSession::IcmpSession(Flow* flow) : Session(flow)
 {
-    setup(nullptr);
 }
 
 bool IcmpSession::setup(Packet*)
@@ -173,6 +202,8 @@ bool IcmpSession::setup(Packet*)
     echo_count = 0;
     ssn_time.tv_sec = 0;
     ssn_time.tv_usec = 0;
+    icmpStats.created++;
+    flow->s5_state.session_flags |= SSNFLAG_SEEN_SENDER;
     return true;
 }
 
@@ -185,14 +216,14 @@ int IcmpSession::process(Packet* p)
 {
     int status;
 
-    switch (p->icmph->type)
+    switch (p->ptrs.icmph->type)
     {
     case ICMP_DEST_UNREACH:
         status = ProcessIcmpUnreach(p);
         break;
 
     default:
-        /* We only handle the above ICMP messages with stream5 */
+        /* We only handle the above ICMP messages with stream */
         status = 0;
         break;
     }
@@ -203,9 +234,9 @@ int IcmpSession::process(Packet* p)
 #define icmp_sender_ip flow->client_ip
 #define icmp_responder_ip flow->server_ip
 
-void IcmpSession::update_direction(char dir, snort_ip* ip, uint16_t)
+void IcmpSession::update_direction(char dir, const sfip_t *ip, uint16_t)
 {
-    if (IP_EQUALITY(&icmp_sender_ip, ip))
+    if (sfip_equals(&icmp_sender_ip, ip))
     {
         if ((dir == SSN_DIR_SENDER) && (flow->s5_state.direction == SSN_DIR_SENDER))
         {
@@ -213,7 +244,7 @@ void IcmpSession::update_direction(char dir, snort_ip* ip, uint16_t)
             return;
         }
     }
-    else if (IP_EQUALITY(&icmp_responder_ip, ip))
+    else if (sfip_equals(&icmp_responder_ip, ip))
     {
         if ((dir == SSN_DIR_RESPONDER) && (flow->s5_state.direction == SSN_DIR_RESPONDER))
         {
@@ -223,27 +254,8 @@ void IcmpSession::update_direction(char dir, snort_ip* ip, uint16_t)
     }
 
     /* Swap them -- leave ssn->s5_state.direction the same */
-    snort_ip tmpIp = icmp_sender_ip;
+    sfip_t tmpIp = icmp_sender_ip;
     icmp_sender_ip = icmp_responder_ip;
     icmp_responder_ip = tmpIp;
-}
-
-//-------------------------------------------------------------------------
-// api related methods
-//-------------------------------------------------------------------------
-
-#if 0
-void icmp_stats()
-{
-    // FIXIT move these to the actual owner
-    // FIXIT need to get these before delete flow_con
-    //flow_con->get_prunes(IPPROTO_UDP, icmpStats.prunes);
-}
-#endif
-
-void icmp_reset()
-{
-    memset(&icmpStats, 0, sizeof(icmpStats));
-    flow_con->reset_prunes(IPPROTO_ICMP);
 }
 

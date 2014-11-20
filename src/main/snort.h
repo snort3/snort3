@@ -31,48 +31,49 @@
 #include <sys/types.h>
 #include <stdio.h>
 
-#include "snort_types.h"
-#include "sfip/sf_ipvar.h"
 #include "main/snort_config.h"
-#include "snort_types.h"
-#include "protocols/packet.h"
-#include "log/log.h"
+#include "events/event_queue.h"
+#include "filters/sfrf.h"
 
-SnortConfig* reload_config();
-void snort_setup(int argc, char *argv[]);
+
+struct Packet;
+class Flow;
+struct NetworkPolicy;
+struct InspectionPolicy;
+struct IpsPolicy;
+
+// defined in daq_common.h
+struct _daq_pkthdr;
+typedef _daq_pkthdr DAQ_PktHdr_t;
+
+SnortConfig* get_reload_config();
+void snort_setup(int argc, char* argv[]);
 void snort_cleanup();
+
+bool snort_is_starting();
+bool snort_is_reloading();
 
 void snort_thread_init(const char* intf);
 void snort_thread_term();
 
-void snort_rotate();
-
-// FIXIT may be inlined at some point; on lockdown for now
-NetworkPolicy* get_network_policy();
-InspectionPolicy* get_inspection_policy();
-IpsPolicy* get_ips_policy();
-
-void set_network_policy(NetworkPolicy*);
-void set_inspection_policy(InspectionPolicy*);
-void set_ips_policy(IpsPolicy*);
+void snort_thread_idle();
+void snort_thread_rotate();
 
 void CapturePacket();
 void DecodeRebuiltPacket (Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, Flow*);
 void DetectRebuiltPacket (Packet*);
 void LogRebuiltPacket (Packet*);
 
-DAQ_Verdict ProcessPacket(Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt);
+DAQ_Verdict ProcessPacket(Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, bool is_frag=false);
 
 DAQ_Verdict fail_open(void*, const DAQ_PktHdr_t*, const uint8_t*);
 DAQ_Verdict packet_callback(void*, const DAQ_PktHdr_t*, const uint8_t*);
-
-void set_default_policy();
 
 typedef void (*MainHook_f)(Packet*);
 void set_main_hook(MainHook_f);
 
 //-------------------------------------------------------------------------
-// FIXIT most of what follows belongs in snort_config.h
+// FIXIT-L most of what follows belongs in snort_config.h
 //-------------------------------------------------------------------------
 
 /*  D E F I N E S  ************************************************************/
@@ -87,7 +88,7 @@ void set_main_hook(MainHook_f);
 
 /*  D A T A  S T R U C T U R E S  *********************************************/
 
-typedef enum _RunFlag
+enum RunFlag
 {
     RUN_FLAG__READ                = 0x00000001,     /* -r --pcap-dir, etc. */
     RUN_FLAG__DAEMON              = 0x00000002,     /* -D */
@@ -114,18 +115,20 @@ typedef enum _RunFlag
     RUN_FLAG__PAUSE               = 0x00800000,     // --pause
 
     RUN_FLAG__NO_PCRE             = 0x01000000,
-    /* If stream5 is configured, the STATEFUL flag is set.  This is
+    /* If stream is configured, the STATEFUL flag is set.  This is
      * somewhat misnamed and is used to assure a session is established */
-    RUN_FLAG__ASSURE_EST          = 0x02000000      /* config stateful */
+    RUN_FLAG__ASSURE_EST          = 0x02000000,
 
-   ,RUN_FLAG__TREAT_DROP_AS_IGNORE= 0x10000000,     /* --treat-drop-as-ignore */
+    RUN_FLAG__TREAT_DROP_AS_IGNORE= 0x10000000,     /* --treat-drop-as-ignore */
     RUN_FLAG__PCAP_RELOAD         = 0x20000000,     /* --pcap-reload */
+#ifdef BUILD_SHELL
     RUN_FLAG__SHELL               = 0x40000000,     /* --shell */
+#endif
     RUN_FLAG__TEST                = 0x80000000      /* -T */
 
-} RunFlag;
+};
 
-typedef enum _OutputFlag
+enum OutputFlag
 {
     OUTPUT_FLAG__LINE_BUFFER       = 0x00000001,      /* -f */
     OUTPUT_FLAG__VERBOSE_DUMP      = 0x00000002,      /* -X */
@@ -133,9 +136,7 @@ typedef enum _OutputFlag
     OUTPUT_FLAG__APP_DATA          = 0x00000008,      /* -d */
 
     OUTPUT_FLAG__SHOW_DATA_LINK    = 0x00000010,      /* -e */
-#ifndef NO_NON_ETHER_DECODER
     OUTPUT_FLAG__SHOW_WIFI_MGMT    = 0x00000020,      /* -w */
-#endif
     OUTPUT_FLAG__USE_UTC           = 0x00000040,      /* -U */
     OUTPUT_FLAG__INCLUDE_YEAR      = 0x00000080,      /* -y */
 
@@ -147,25 +148,27 @@ typedef enum _OutputFlag
     OUTPUT_FLAG__NO_ALERT          = 0x00001000,      /* -A none */
     OUTPUT_FLAG__NO_LOG            = 0x00002000,      /* -K none */
 
-} OutputFlag;
+};
 
-typedef enum _LoggingFlag
+enum LoggingFlag
 {
     LOGGING_FLAG__VERBOSE         = 0x00000001,      /* -v */
     LOGGING_FLAG__QUIET           = 0x00000002,      /* -q */
-    LOGGING_FLAG__SYSLOG          = 0x00000004       /* -M */
+    LOGGING_FLAG__SYSLOG          = 0x00000004,      /* -M */
+    LOGGING_FLAG__SHOW_PLUGINS    = 0x00000008,      // --show-plugins
+    LOGGING_FLAG__WARN_FLOWBITS   = 0x00000010,      // --warn-flowbits
+    LOGGING_FLAG__WARN_UNKNOWN    = 0x00000020,      // --warn-unknown
+};
 
-} LoggingFlag;
-
-typedef enum {
+enum TunnelFlags{
     TUNNEL_GTP    = 0x01,
     TUNNEL_TEREDO = 0x02,
     TUNNEL_6IN4   = 0x04,
     TUNNEL_4IN6   = 0x08
-} TunnelFlags;
+};
 
 /*  E X T E R N S  ************************************************************/
-extern THREAD_LOCAL SnortConfig* snort_conf;
+SO_PUBLIC extern THREAD_LOCAL SnortConfig* snort_conf;
 
 /*  P R O T O T Y P E S  ******************************************************/
 
@@ -205,66 +208,71 @@ static inline int ScLogQuiet(void)
 }
 
 //-------------------------------------------------------------------------
-// FIXIT should be calling NetworkPolicy methods
+// FIXIT-L should be calling NetworkPolicy methods
+
+static inline bool ScChecksumDrop(uint16_t codec_cksum_err_flag)
+{
+    return get_network_policy()->checksum_drop & codec_cksum_err_flag;
+}
 
 static inline int ScIpChecksums(void)
 {
-    return snort_conf->get_network_policy()->checksum_eval & CHECKSUM_FLAG__IP;
+    return get_network_policy()->checksum_eval & CHECKSUM_FLAG__IP;
 }
 
 static inline int ScIpChecksumDrops(void)
 {
-    return snort_conf->get_network_policy()->checksum_drop & CHECKSUM_FLAG__IP;
+    return get_network_policy()->checksum_drop & CHECKSUM_FLAG__IP;
 }
 
 static inline int ScUdpChecksums(void)
 {
-    return snort_conf->get_network_policy()->checksum_eval & CHECKSUM_FLAG__UDP;
+    return get_network_policy()->checksum_eval & CHECKSUM_FLAG__UDP;
 }
 
 static inline int ScUdpChecksumDrops(void)
 {
-    return snort_conf->get_network_policy()->checksum_drop & CHECKSUM_FLAG__UDP;
+    return get_network_policy()->checksum_drop & CHECKSUM_FLAG__UDP;
 }
 
 static inline int ScTcpChecksums(void)
 {
-    return snort_conf->get_network_policy()->checksum_eval & CHECKSUM_FLAG__TCP;
+    return get_network_policy()->checksum_eval & CHECKSUM_FLAG__TCP;
 }
 
 static inline int ScTcpChecksumDrops(void)
 {
-    return snort_conf->get_network_policy()->checksum_drop & CHECKSUM_FLAG__TCP;
+    return get_network_policy()->checksum_drop & CHECKSUM_FLAG__TCP;
 }
 
 static inline int ScIcmpChecksums(void)
 {
-    return snort_conf->get_network_policy()->checksum_eval & CHECKSUM_FLAG__ICMP;
+    return get_network_policy()->checksum_eval & CHECKSUM_FLAG__ICMP;
 }
 
 static inline int ScIcmpChecksumDrops(void)
 {
-    return snort_conf->get_network_policy()->checksum_drop & CHECKSUM_FLAG__ICMP;
+    return get_network_policy()->checksum_drop & CHECKSUM_FLAG__ICMP;
 }
 
 static inline uint8_t ScMinTTL(void)
 {
-    return snort_conf->get_network_policy()->min_ttl;
+    return get_network_policy()->min_ttl;
 }
 
 static inline uint8_t ScNewTTL(void)
 {
-    return snort_conf->get_network_policy()->new_ttl;
+    return get_network_policy()->new_ttl;
 }
 
 static inline int ScInlineMode(void)
 {
-    return ((snort_conf->get_ips_policy()->policy_mode) == POLICY_MODE__INLINE );
+    return ((get_ips_policy()->policy_mode) == POLICY_MODE__INLINE );
 }
 
 static inline int ScInlineTestMode(void)
 {
-    return ((snort_conf->get_ips_policy()->policy_mode) == POLICY_MODE__INLINE_TEST );
+    return ((get_ips_policy()->policy_mode) == POLICY_MODE__INLINE_TEST );
 }
 
 //-------------------------------------------------------------------------
@@ -338,7 +346,8 @@ static inline int ScProfileRules(void)
 
 static inline int ScStaticHash(void)
 {
-    return snort_conf->run_flags & RUN_FLAG__STATIC_HASH;
+    // FIXIT-L snort_conf needed for static hash before initialized
+    return snort_conf && snort_conf->run_flags & RUN_FLAG__STATIC_HASH;
 }
 
 static inline int ScAdapterInlineTestMode(void)
@@ -431,12 +440,10 @@ static inline int ScPcapReset(void)
     return snort_conf->run_flags & RUN_FLAG__PCAP_RESET;
 }
 
-#ifndef NO_NON_ETHER_DECODER
 static inline int ScOutputWifiMgmt(void)
 {
     return snort_conf->output_flags & OUTPUT_FLAG__SHOW_WIFI_MGMT;
 }
-#endif
 
 static inline uint32_t ScMaxAttrHosts(void)
 {
@@ -483,7 +490,7 @@ static inline int ScGid(void)
     return snort_conf->group_id;
 }
 
-// use of macro avoids depending on generators.h
+// FIXIT-L this should be feature of otn
 #define EventIsInternal(gid) (gid == GENERATOR_INTERNAL)
 
 static inline void EnableInternalEvent(RateFilterConfig *config, uint32_t sid)
@@ -514,7 +521,8 @@ static inline int ScGTPDecoding(void)
 
 static inline int ScIsGTPPort(uint16_t port)
 {
-    return snort_conf->gtp_ports[port];
+    // FIXIT-H-J check for gtp_ports should not be necessary
+    return snort_conf->gtp_ports && snort_conf->gtp_ports[port];
 }
 
 static inline int ScESPDecoding(void)
@@ -545,11 +553,6 @@ static inline uint32_t ScSoRuleMemcap(void)
 static inline bool ScTunnelBypassEnabled(uint8_t proto)
 {
     return !(snort_conf->tunnel_mask & proto);
-}
-
-static inline int8_t ScMaxEncapsulations(void)
-{
-    return snort_conf->max_encapsulations;
 }
 
 #endif

@@ -49,13 +49,17 @@
 #include "parser.h"
 #include "framework/inspector.h"
 #include "framework/plug_data.h"
-#include "framework/share.h"
+#include "managers/data_manager.h"
 #include "detection/detection_util.h"
+#include "target_based/sftarget_protocol_reference.h"
 
 int16_t ftp_data_app_id = SFTARGET_UNKNOWN_PROTOCOL;
 
-static const char* client_key = "ftp_client";
-static const char* server_key = "ftp_server";
+#define client_key "ftp_client"
+#define server_key "ftp_server"
+
+#define client_help "FTP inspector client module"
+#define server_help "FTP inspector server module"
 
 THREAD_LOCAL ProfileStats ftpPerfStats;
 THREAD_LOCAL SimpleStats ftstats;
@@ -106,7 +110,7 @@ static int SnortFTP(
         DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
             "Server packet: %.*s\n", p->dsize, p->data));
 
-        // FIXIT breaks target-based non-standard ports
+        // FIXIT-L breaks target-based non-standard ports
         //if ( !ScPafEnabled() )
             /* Force flush of client side of stream  */
         stream.response_flush_stream(p);
@@ -172,8 +176,8 @@ static int snort_ftp(Packet *p)
 
     if (p->flow)
     {
-        ft_ssn = (FTP_TELNET_SESSION*)
-            p->flow->get_application_data(FtpFlowData::flow_id);
+        FtpFlowData* fd = (FtpFlowData*)p->flow->get_application_data(FtpFlowData::flow_id);
+        ft_ssn = fd ? &fd->session.ft_ssn : nullptr;
 
         if (ft_ssn != NULL)
         {
@@ -204,6 +208,7 @@ static int snort_ftp(Packet *p)
             else
             {
                 /* XXX - Not FTP or Telnet */
+                assert(false);
                 p->flow->free_application_data(FtpFlowData::flow_id);
                 return 0;
             }
@@ -284,7 +289,7 @@ static int ProcessFTPDataChanCmdsList(
 
             strcpy(FTPCmd->cmd_name, cmd);
 
-            // FIXIT make sure pulled from server conf when used if not
+            // FIXIT-L make sure pulled from server conf when used if not
             // overridden
             //FTPCmd->max_param_len = ServerConf->def_max_param_len;
 
@@ -367,14 +372,14 @@ public:
     FtpServer(FTP_SERVER_PROTO_CONF*);
     ~FtpServer();
 
-    bool configure(SnortConfig*);
-    void show(SnortConfig*);
-    void eval(Packet*);
-    StreamSplitter* get_splitter(bool);
+    bool configure(SnortConfig*) override;
+    void show(SnortConfig*) override;
+    void eval(Packet*) override;
+    StreamSplitter* get_splitter(bool) override;
 
 private:
     FTP_SERVER_PROTO_CONF* ftp_server;
-    ClientData* ftp_client;  // FIXIT delete this when bindings implemented
+    ClientData* ftp_client;  // FIXIT-H delete this when bindings implemented
 };
 
 FtpServer::FtpServer(FTP_SERVER_PROTO_CONF* server)
@@ -389,13 +394,13 @@ FtpServer::~FtpServer ()
     delete ftp_server;
 
     if ( ftp_client )
-        // FIXIT make sure CleanupFTPClientConf() is called
-        Share::release(ftp_client);
+        // FIXIT-L make sure CleanupFTPClientConf() is called
+        DataManager::release(ftp_client);
 }
 
 bool FtpServer::configure (SnortConfig* sc)
 {
-    ftp_client = (ClientData*)Share::acquire(client_key);
+    ftp_client = (ClientData*)DataManager::acquire(client_key, sc);
 
     bind_server = ftp_server;
     bind_client = ftp_client->data;
@@ -417,7 +422,7 @@ StreamSplitter* FtpServer::get_splitter(bool c2s)
 void FtpServer::eval(Packet* p)
 {
     // precondition - what we registered for
-    assert(IsTCP(p) && p->data && p->dsize);
+    assert(p->is_tcp() && p->data && p->dsize);
 
     ++ftstats.total_packets;
     snort_ftp(p);
@@ -429,7 +434,7 @@ void FtpServer::eval(Packet* p)
 // fc_ = ftp_client
 // fs_ = ftp_server
 //
-// FIXIT fc is a data module but may need to
+// FIXIT-L fc is a data module but may need to
 // be an inspector with separate bindings.
 //-------------------------------------------------------------------------
 
@@ -462,6 +467,7 @@ static const DataApi fc_api =
     {
         PT_DATA,
         client_key,
+        client_help,
         MODAPI_PLUGIN_V0,
         0,
         fc_mod_ctor,
@@ -504,14 +510,14 @@ static const InspectApi fs_api =
     {
         PT_INSPECTOR,
         server_key,
+        server_help,
         INSAPI_PLUGIN_V0,
         0,
         fs_mod_ctor,
         mod_dtor
     },
-    //IT_SESSION,  // FIXIT should be service only
     IT_SERVICE,
-    PROTO_BIT__TCP,
+    (uint16_t)PktType::TCP,
     nullptr, // buffers
     "ftp",
     fs_init,

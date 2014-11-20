@@ -32,6 +32,9 @@
 #define TELNET_ENCRYPTED      2
 #define TELNET_SB_NO_SE       3
 
+#define TEL_NAME "telnet"
+#define TEL_HELP "telnet inspection and normalization"
+
 struct SnortConfig;
 
 extern THREAD_LOCAL SimpleStats tnstats;
@@ -43,17 +46,17 @@ public:
     TelnetModule();
     ~TelnetModule();
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
-    unsigned get_gid() const
+    unsigned get_gid() const override
     { return GID_TELNET; };
 
-    const RuleMap* get_rules() const;
-    const char** get_pegs() const;
-    PegCount* get_counts() const;
-    ProfileStats* get_profile() const;
+    const RuleMap* get_rules() const override;
+    const char** get_pegs() const override;
+    PegCount* get_counts() const override;
+    ProfileStats* get_profile() const override;
 
     TELNET_PROTO_CONF* get_data();
 

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2005-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,16 +30,14 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 
+#include "framework/counts.h"
 #include "utils/bitop_funcs.h"
-#include "sfip/ipv6_port.h"
 #include "framework/inspector.h"
-
 #include "snort_types.h"
 #include "snort.h"
 #include "detect.h"
 #include "stream/stream_api.h"
-
-#include "target_based/sftarget_hostentry.h"
+#include "target_based/sftarget_protocol_reference.h"
 
 //#define DEBUG_STREAM5 DEBUG
 
@@ -50,7 +48,7 @@
 #define S5_TRACK_YES            1
 #define S5_TRACK_NO             0
 
-// FIXIT move to proto specific where possible
+// FIXIT-L move to proto specific where possible
 #define STREAM5_CONFIG_STATEFUL_INSPECTION      0x00000001
 #define STREAM5_CONFIG_LOG_STREAMS              0x00000004
 #define STREAM5_CONFIG_REASS_CLIENT             0x00000008
@@ -86,7 +84,7 @@ private:
 };
 
 /*  D A T A   S T R U C T U R E S  **********************************/
-// FIXIT some of this stuff can be better encapsulated
+// FIXIT-L some of this stuff can be better encapsulated
 
 struct Stream5GlobalConfig
 {
@@ -105,11 +103,14 @@ struct Stream5Config
     uint8_t service_filter[MAX_PROTOCOL_ORDINAL];
 };
 
+#if 0
+FIXIT-M delete?
 typedef struct {
     PegCount  filtered;
     PegCount  inspected;
     PegCount  session_tracked;
 } tPortFilterStats;
+#endif
 
 struct SessionStats
 {
@@ -130,7 +131,7 @@ extern const char* session_pegs[];
 extern const unsigned session_peg_count;
 
 void Stream_SumNormalizationStats(void);
-void Stream_PrintNormalizationStats(void);
+void Stream_PrintNormalizationStats(const char* name = nullptr);
 void Stream_ResetNormalizationStats(void);
 
 #endif

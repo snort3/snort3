@@ -56,7 +56,7 @@ public:
             acsmFree2(obj);
     };
 
-    void set_opt(int flag)
+    void set_opt(int flag) override
     {
         if (obj)
             acsmCompressStates(obj, flag);
@@ -64,7 +64,7 @@ public:
     int add_pattern(
         SnortConfig*, void* P, int m,
         unsigned noCase, unsigned offset, unsigned depth,
-        unsigned negative, void* ID, int IID)
+        unsigned negative, void* ID, int IID) override
     {
         return acsmAddPattern2(
             obj, (unsigned char *)P, m,
@@ -72,25 +72,25 @@ public:
     };
 
     int prep_patterns(
-        SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list)
+        SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
     {
         return acsmCompile2WithSnortConf(sc, obj, build_tree, neg_list);
     };
 
     int _search(
         const unsigned char* T, int n, mpse_action_f action,
-        void* data, int* current_state )
+        void* data, int* current_state ) override
     {
         return acsmSearchSparseDFA_Full(
             obj, (unsigned char *)T, n, action, data, current_state);
     };
 
-    int print_info()
+    int print_info() override
     {
         return acsmPrintDetailInfo2(obj);
     };
 
-    int get_pattern_count()
+    int get_pattern_count() override
     {
         return acsmPatternCount2(obj);
     };
@@ -132,6 +132,7 @@ static const MpseApi acf_api =
     {
         PT_SEARCH_ENGINE,
         "ac_full",
+        "Aho-Corasick Full (high memory, best performance)",
         SEAPI_PLUGIN_V0,
         0,
         nullptr,

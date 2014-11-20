@@ -79,7 +79,7 @@ int hi_server_anomaly_detection(void *S, const u_char *data, int dsize)
         if(data[0]=='H' && data[1]=='T' && data[2]=='T' && data[3]=='P' &&
            data[4]=='/')
         {
-            SnortEventqAdd(GID_HTTP_SERVER, HI_ANOM_SERVER);
+            hi_set_event(GID_HTTP_SERVER, HI_ANOM_SERVER);
         }
     }
 

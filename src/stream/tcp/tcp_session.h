@@ -136,7 +136,7 @@ struct StreamTracker
     StreamSegment *seglist;       /* first queued segment */
     StreamSegment *seglist_tail;  /* last queued segment */
 
-    // FIXIT seglist_base_seq is the sequence number to flush from
+    // FIXIT-P seglist_base_seq is the sequence number to flush from
     // and is valid even when seglist is empty.  seglist_next is
     // the segment to flush from and is set per packet.  should keep
     // up to date.
@@ -186,21 +186,25 @@ struct StreamTracker
 
 };
 
-// FIXIT ideally, session tracking would be split from reassembly 
+// FIXIT-L session tracking must be split from reassembly 
 // into a separate module a la ip_session.cc and ip_defrag.cc
 // (of course defrag should also be cleaned up)
 class TcpSession : public Session
 {
 public:
     TcpSession(Flow*);
+    ~TcpSession();
 
-    bool setup (Packet*);
-    void update_direction(char dir, snort_ip*, uint16_t port);
-    int process(Packet*);
+    bool setup (Packet*) override;
+    int process(Packet*) override;
+
+    void update_direction(char dir, const sfip_t*, uint16_t port) override;
+
+    void clear() override;
+    void cleanup() override;
 
     void reset();
-    void clear();
-    void cleanup();
+    void restart(Packet*) override;
 
 public:
     StreamTracker client;
@@ -218,6 +222,10 @@ public:
     uint8_t ecn;
     bool lws_init;
     bool tcp_init;
+    uint32_t event_mask;
+
+private:
+    int process_dis(Packet*);
 };
 
 void tcp_sum();

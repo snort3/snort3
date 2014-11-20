@@ -39,12 +39,20 @@
 #include "util.h"
 #include "log.h"
 #include "snort.h"
-#include "sf_textlog.h"
-#include "log_text.h"
+#include "log/text_log.h"
+#include "log/log_text.h"
+#include "protocols/tcp.h"
+#include "protocols/udp.h"
+#include "protocols/icmp4.h"
+#include "protocols/icmp6.h"
+#include "protocols/eth.h"
 
 #define LOG_BUFFER (4*K_BYTES)
 
 static THREAD_LOCAL TextLog* csv_log;
+
+#define S_NAME "alert_csv"
+#define F_NAME S_NAME ".txt"
 
 using namespace std;
 
@@ -52,24 +60,22 @@ using namespace std;
 // module stuff
 //-------------------------------------------------------------------------
 
-static const char* csv_range =
-    "timestamp | gid | sid | rev | msg | proto | "
-    "src_addr | dst_addr | src_port | dst_port | "
-    "eth_src | eth_dst | eth_type | eth_len | "
-    "ttl | tos | id | ip_len | dgm_len | "
-    "icmp_type | icmp_code | icmp_id | icmp_seq"
-    "tcp_flags | tcp_seq | tcp_ack | tcp_len | tcp_win | "
-    "udp_len";
+#define csv_range \
+    "timestamp | gid | sid | rev | msg | proto | " \
+    "src_addr | dst_addr | src_port | dst_port | " \
+    "eth_src | eth_dst | eth_type | eth_len | " \
+    "ttl | tos | id | ip_len | dgm_len | " \
+    "icmp_type | icmp_code | icmp_id | icmp_seq | " \
+    "tcp_flags | tcp_seq | tcp_ack | tcp_len | tcp_win | " \
+    "udp_len"
 
-static const char* csv_deflt =
-    "timestamp gid sid rev src_addr src_port dst_addr dst_port";
+#define csv_deflt \
+    "timestamp gid sid rev src_addr src_port dst_addr dst_port"
 
-static const Parameter csv_params[] =
+static const Parameter s_params[] =
 {
-    // FIXIT provide PT_FILE and PT_PATH and enforce no
-    // path chars in file (outputs file must be in instance dir)
-    { "file", Parameter::PT_STRING, nullptr, "stdout",
-      "name of alert file" },
+    { "file", Parameter::PT_BOOL, nullptr, "false",
+      "output to " F_NAME " instead of stdout" },
 
     { "csv", Parameter::PT_MULTI, csv_range, csv_deflt,
       "selected fields will be output in given order left to right" },
@@ -77,23 +83,27 @@ static const Parameter csv_params[] =
     { "limit", Parameter::PT_INT, "0:", "0",
       "set limit (0 is unlimited)" },
 
-    // FIXIT provide PT_UNITS that converts to multiplier automatically
+    // FIXIT-M provide PT_UNITS that converts to multiplier automatically
     { "units", Parameter::PT_ENUM, "B | K | M | G", "B",
       "bytes | KB | MB | GB" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "output event in csv format"
+
 class CsvModule : public Module
 {
 public:
-    CsvModule() : Module("alert_csv", csv_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    CsvModule() : Module(S_NAME, s_help, s_params) { };
+
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 public:
-    string file;
+    bool file;
     string csvargs;
     unsigned long limit;
     unsigned units;
@@ -102,7 +112,7 @@ public:
 bool CsvModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("file") )
-        file = v.get_string();
+        file = v.get_bool();
 
     else if ( v.is("csv") )
         csvargs = SnortStrdup(v.get_string());
@@ -121,7 +131,7 @@ bool CsvModule::set(const char*, Value& v, SnortConfig*)
 
 bool CsvModule::begin(const char*, int, SnortConfig*)
 {
-    file = "stdout";
+    file = false;
     limit = 0;
     units = 0;
     csvargs = csv_deflt;
@@ -145,10 +155,10 @@ public:
     CsvLogger(CsvModule*);
     ~CsvLogger();
 
-    void open();
-    void close();
+    void open() override;
+    void close() override;
 
-    void alert(Packet*, const char* msg, Event*);
+    void alert(Packet*, const char* msg, Event*) override;
 
 public:
     string file;
@@ -160,7 +170,7 @@ public:
 
 CsvLogger::CsvLogger(CsvModule* m)
 {
-    file = m->file;
+    file = m->file ? F_NAME : "stdout";
     limit = m->limit;
     args = mSplit(m->csvargs.c_str(), " \n\t", 0, &numargs, 0);
 }
@@ -223,22 +233,20 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         }
         else if (!strcasecmp("proto", type))
         {
-            if (IPH_IS_VALID(p))
+            // api returns zero if invalid
+            switch (p->type())
             {
-                switch (GET_IPH_PROTO(p))
-                {
-                    case IPPROTO_UDP:
-                        TextLog_Puts(csv_log, "UDP");
-                        break;
-                    case IPPROTO_TCP:
-                        TextLog_Puts(csv_log, "TCP");
-                        break;
-                    case IPPROTO_ICMP:
-                        TextLog_Puts(csv_log, "ICMP");
-                        break;
-                    default:
-                        break;
-                }
+                case PktType::UDP:
+                    TextLog_Puts(csv_log, "UDP");
+                    break;
+                case PktType::TCP:
+                    TextLog_Puts(csv_log, "TCP");
+                    break;
+                case PktType::ICMP:
+                    TextLog_Puts(csv_log, "ICMP");
+                    break;
+                default:
+                    break;
             }
         }
         else if (!strcasecmp("eth_src", type))
@@ -271,125 +279,117 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         }
         else if (!strcasecmp("udp_len", type))
         {
-            if (p->udph != NULL)
-                TextLog_Print(csv_log, "%d", ntohs(p->udph->uh_len));
+            if (p->ptrs.udph != NULL)
+                TextLog_Print(csv_log, "%d", ntohs(p->ptrs.udph->uh_len));
         }
         else if (!strcasecmp("src_port", type))
         {
-            if (IPH_IS_VALID(p))
+            // api return 0 if invalid
+            switch (p->type())
             {
-                switch (GET_IPH_PROTO(p))
-                {
-                    case IPPROTO_UDP:
-                    case IPPROTO_TCP:
-                        TextLog_Print(csv_log, "%d", p->sp);
-                        break;
-                    default:
-                        break;
-                }
+                case PktType::UDP:
+                case PktType::TCP:
+                    TextLog_Print(csv_log, "%d", p->ptrs.sp);
+                    break;
+                default:
+                    break;
             }
         }
         else if (!strcasecmp("dst_port", type))
         {
-            if (IPH_IS_VALID(p))
+            switch (p->type())
             {
-                switch (GET_IPH_PROTO(p))
-                {
-                    case IPPROTO_UDP:
-                    case IPPROTO_TCP:
-                        TextLog_Print(csv_log, "%d", p->dp);
-                        break;
-                    default:
-                        break;
-                }
+                case PktType::UDP:
+                case PktType::TCP:
+                    TextLog_Print(csv_log, "%d", p->ptrs.dp);
+                    break;
+                default:
+                    break;
             }
         }
         else if (!strcasecmp("src_addr", type))
         {
-            if (IPH_IS_VALID(p))
-                TextLog_Puts(csv_log, inet_ntoa(GET_SRC_ADDR(p)));
+            if (p->has_ip())
+                TextLog_Puts(csv_log, inet_ntoa(p->ptrs.ip_api.get_src()));
         }
         else if (!strcasecmp("dst_addr", type))
         {
-            if (IPH_IS_VALID(p))
-                TextLog_Puts(csv_log, inet_ntoa(GET_DST_ADDR(p)));
+            if (p->has_ip())
+                TextLog_Puts(csv_log, inet_ntoa(p->ptrs.ip_api.get_dst()));
         }
         else if (!strcasecmp("icmp_type", type))
         {
-            if (p->icmph != NULL)
-                TextLog_Print(csv_log, "%d", p->icmph->type);
+            if (p->ptrs.icmph != NULL)
+                TextLog_Print(csv_log, "%d", p->ptrs.icmph->type);
         }
         else if (!strcasecmp("icmp_code", type))
         {
-            if (p->icmph != NULL)
-                TextLog_Print(csv_log, "%d", p->icmph->code);
+            if (p->ptrs.icmph != NULL)
+                TextLog_Print(csv_log, "%d", p->ptrs.icmph->code);
         }
         else if (!strcasecmp("icmp_id", type))
         {
-            if (p->icmph != NULL)
-                TextLog_Print(csv_log, "%d", ntohs(p->icmph->s_icmp_id));
+            if (p->ptrs.icmph != NULL)
+                TextLog_Print(csv_log, "%d", ntohs(p->ptrs.icmph->s_icmp_id));
         }
         else if (!strcasecmp("icmp_seq", type))
         {
-            if (p->icmph != NULL)
-                TextLog_Print(csv_log, "%d", ntohs(p->icmph->s_icmp_seq));
+            if (p->ptrs.icmph != NULL)
+                TextLog_Print(csv_log, "%d", ntohs(p->ptrs.icmph->s_icmp_seq));
         }
         else if (!strcasecmp("ttl", type))
         {
-            if (IPH_IS_VALID(p))
-                TextLog_Print(csv_log, "%d", GET_IPH_TTL(p));
+            if (p->has_ip())
+                TextLog_Print(csv_log, "%d",p->ptrs.ip_api.ttl());
         }
         else if (!strcasecmp("tos", type))
         {
-            if (IPH_IS_VALID(p))
-                TextLog_Print(csv_log, "%d", GET_IPH_TOS(p));
+            if (p->has_ip())
+                TextLog_Print(csv_log, "%d", p->ptrs.ip_api.tos());
         }
         else if (!strcasecmp("id", type))
         {
-            if (IPH_IS_VALID(p))
-            {
-                TextLog_Print(csv_log, "%u", IS_IP6(p) ? ntohl(GET_IPH_ID(p))
-                        : ntohs((uint16_t)GET_IPH_ID(p)));
-            }
+            if (p->has_ip())
+                TextLog_Print(csv_log, "%u", p->ptrs.ip_api.id());
         }
         else if (!strcasecmp("ip_len", type))
         {
-            if (IPH_IS_VALID(p))
-                TextLog_Print(csv_log, "%d", GET_IPH_LEN(p) << 2);
+            if (p->has_ip())
+                TextLog_Print(csv_log, "%d", p->ptrs.ip_api.pay_len());
         }
         else if (!strcasecmp("dgm_len", type))
         {
-            if (IPH_IS_VALID(p))
+            if (p->has_ip())
             {
                 // XXX might cause a bug when IPv6 is printed?
-                TextLog_Print(csv_log, "%d", ntohs(GET_IPH_LEN(p)));
+                TextLog_Print(csv_log, "%d", p->ptrs.ip_api.dgram_len());
             }
         }
         else if (!strcasecmp("tcp_seq", type))
         {
-            if (p->tcph != NULL)
-                TextLog_Print(csv_log, "0x%lX", (u_long)ntohl(p->tcph->th_seq));
+            if (p->ptrs.tcph != NULL)
+                TextLog_Print(csv_log, "0x%lX", (u_long)ntohl(p->ptrs.tcph->th_seq));
         }
         else if (!strcasecmp("tcp_ack", type))
         {
-            if (p->tcph != NULL)
-                TextLog_Print(csv_log, "0x%lX", (u_long)ntohl(p->tcph->th_ack));
+            if (p->ptrs.tcph != NULL)
+                TextLog_Print(csv_log, "0x%lX", (u_long)ntohl(p->ptrs.tcph->th_ack));
         }
         else if (!strcasecmp("tcp_len", type))
         {
-            if (p->tcph != NULL)
-                TextLog_Print(csv_log, "%d", TCP_OFFSET(p->tcph) << 2);
+            if (p->ptrs.tcph != NULL)
+                TextLog_Print(csv_log, "%d", (p->ptrs.tcph->off()));
         }
         else if (!strcasecmp("tcp_win", type))
         {
-            if (p->tcph != NULL)
-                TextLog_Print(csv_log, "0x%X", ntohs(p->tcph->th_win));
+            if (p->ptrs.tcph != NULL)
+                TextLog_Print(csv_log, "0x%X", ntohs(p->ptrs.tcph->th_win));
         }
         else if (!strcasecmp("tcp_flags",type))
         {
-            if (p->tcph != NULL)
+            if (p->ptrs.tcph != NULL)
             {
-                CreateTCPFlagString(p, tcpFlags);
+                CreateTCPFlagString(p->ptrs.tcph, tcpFlags);
                 TextLog_Print(csv_log, "%s", tcpFlags);
             }
         }
@@ -422,7 +422,8 @@ static LogApi csv_api
 {
     {
         PT_LOGGER,
-        "alert_csv",
+        S_NAME,
+        s_help,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

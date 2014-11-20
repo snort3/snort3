@@ -17,21 +17,32 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// layer.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef LAYER_H 
-#define LAYER_H
+#ifndef PROTOCOLS_LAYER_H
+#define PROTOCOLS_LAYER_H
 
 #include <cstdint>
-#include "protocols/protocol_ids.h"
-#include "codecs/sf_protocols.h"
+#include "main/snort_types.h"
 
 
-
-struct Layer {
+struct Layer
+{
+    const uint8_t* start;
     uint16_t prot_id;
-    PROTO_ID proto;
     uint16_t length;
-    uint8_t* start;
+//    uint16_t invalid_bytes;  -- Commented out since nothing uses this
+                              /*
+                               * Data which should not be considered part of
+                               * this layer's valid data, but must be skipped
+                               * before the next layer. For instance, an invalid
+                               * ip option. It should not be part of length but
+                               * must be skipped before the next layer.
+                               *
+                               * Generally calculated by
+                               *    (layers_entire_length) - length;
+                               *     (ip::IP4Hdr*) ip4h->hlen()- length;
+                               */
 };
 
 
@@ -63,23 +74,129 @@ namespace eth
 struct EtherHdr;
 }
 
+namespace ip
+{
+class IpApi;
+struct IP6Frag;
+}
+
+namespace tcp
+{
+struct TCPHdr;
+}
+
+namespace udp
+{
+struct UDPHdr;
+}
+
+namespace icmp
+{
+struct ICMPHdr;
+}
+
+struct Packet;
 
 namespace layer
 {
 
-// all of these functions will begin search from layer 0,
-// and will return the first function they find.
+//  Set by PacketManager.  Ensure you can call layer:: without a packet pointers
+void set_packet_pointer(const Packet* const);
 
 
-const arp::EtherARP* get_arp_layer(const Packet*);
-const vlan::VlanTagHdr* get_vlan_layer(const Packet*);
-const gre::GREHdr* get_gre_layer(const Packet*);
-const eapol::EtherEapol* get_eapol_layer(const Packet*);
-const eth::EtherHdr* get_eth_layer(const Packet*);
-const uint8_t* get_root_layer(const Packet* const);
+SO_PUBLIC const uint8_t* get_inner_layer(const Packet*, uint16_t proto);
+SO_PUBLIC const uint8_t* get_outer_layer(const Packet*, uint16_t proto);
 
-int get_inner_ip_lyr(const Packet* const p);
-uint16_t get_outer_ip_next_proto(const Packet* const);
+
+SO_PUBLIC const arp::EtherARP* get_arp_layer(const Packet*);
+SO_PUBLIC const vlan::VlanTagHdr* get_vlan_layer(const Packet*);
+SO_PUBLIC const gre::GREHdr* get_gre_layer(const Packet*);
+SO_PUBLIC const eapol::EtherEapol* get_eapol_layer(const Packet*);
+SO_PUBLIC const eth::EtherHdr* get_eth_layer(const Packet*);
+SO_PUBLIC const uint8_t* get_root_layer(const Packet* const);
+/* return a pointer to the outermost UDP layer */
+SO_PUBLIC const udp::UDPHdr* get_outer_udp_lyr(const Packet* const);
+// return the inner ip layer's index in the p->layers array
+SO_PUBLIC int get_inner_ip_lyr_index(const Packet* const p);
+
+// Two versions of this because ip_defrag:: wants to call this on
+// its rebuilt packet, not on the current packet.  Extra function
+// header will be removed once layer is a part of the Packet struct
+SO_PUBLIC const ip::IP6Frag* get_inner_ip6_frag();
+SO_PUBLIC const ip::IP6Frag* get_inner_ip6_frag(const Packet* const p);
+
+// returns -1 on failure if no frag layer exists.
+// else, returns zero based ip6 index
+SO_PUBLIC int get_inner_ip6_frag_index(const Packet* const p);
+
+
+
+// ICMP with Embedded IP layer
+
+
+// Sets the Packet's api to be the IP layer which is
+// embedded inside an ICMP layer.
+// RETURN:
+//          true - ip layer found and api set
+//          false - ip layer NOT found, api reset
+SO_PUBLIC bool set_api_ip_embed_icmp(const Packet*, ip::IpApi& api);
+// a helper function when the api to be set is inside the packet
+SO_PUBLIC bool set_api_ip_embed_icmp(const Packet* p);
+
+/*
+ *When a protocol is embedded in ICMP, these functions
+ * will return a pointer to the layer.  Use the
+ * proto_bits before calling these function to determine
+ * what this layer is!
+ */
+SO_PUBLIC const tcp::TCPHdr* get_tcp_embed_icmp(const ip::IpApi&);
+SO_PUBLIC const udp::UDPHdr* get_udp_embed_icmp(const ip::IpApi&);
+SO_PUBLIC const icmp::ICMPHdr* get_icmp_embed_icmp(const ip::IpApi&);
+/*
+ * Starting from layer 'curr_layer', continuing looking at increasingly
+ * outermost layer for another IP protocol.  If an IP protocol is found,
+ * set the given ip_api to that layer.
+ * PARAMS:
+ *          Packet* = packet struct containing data
+ *          ip::Api = ip api to be set
+ *          uint8_t& next_ip_proto = The ip_protocol after the current IP
+ *                              layer refer to packet get_next_ip_proto()
+ *                              for more information.
+ *          int8_t curr_layer = the current, zero based layer from which to
+ *                              start searching inward. After the function returs,
+ *                              This field will be set to the layer before
+ *                              the Ip Api.  If no IP layer is found,
+ *                              it will be set to -1.
+ *
+ *                               0 <= curr_layer < p->num_layers
+ * RETURNS:
+ *          true:  if the api is set
+ *          false: if the api has NOT been set
+ *
+ * NOTE: curr_layer is zero based.  That means to get all of the ip
+ *       layers (starting from teh innermost layer), during the first call
+ *       'curr_layer == p->num_layers'.
+ *
+ * NOTE: This functions is extremely useful in a loop
+ *          while (set_inner_ip_api(p, api, layer)) { ... }
+ */
+SO_PUBLIC bool set_inner_ip_api(const Packet* const, ip::IpApi&, int8_t& curr_layer);
+SO_PUBLIC bool set_inner_ip_api(const Packet* const, ip::IpApi&,
+    uint8_t& next_ip_proto, int8_t& curr_layer);
+
+
+/*
+ * Identical to above function except will begin searching from the
+ * outermost layer until the innermost layer.
+ *
+ * NOTE: curr_layer is zero based.  That means to get all of the ip
+ *       layers (starting from the OUTERMOST layer), during the first call
+ *       'curr_layer == 0'.
+ */
+SO_PUBLIC bool set_outer_ip_api(const Packet* const, ip::IpApi&, int8_t& curr_layer);
+SO_PUBLIC bool set_outer_ip_api(const Packet* const, ip::IpApi&,
+    uint8_t& next_ip_proto, int8_t& curr_layer);
+
 
 } // namespace layer
 

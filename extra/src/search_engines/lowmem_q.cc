@@ -46,11 +46,14 @@ using namespace std;
 
 static string s_var;
 
+static const char* s_name = "lowmem_q";
+static const char* s_help = "MPSE that minimizes memory used";
+
 //-------------------------------------------------------------------------
 // module stuff
 //-------------------------------------------------------------------------
 
-static const Parameter lowmem_q_params[] =
+static const Parameter s_params[] =
 {
     { "var", Parameter::PT_STRING, nullptr, nullptr,
       "additional print text" },
@@ -61,9 +64,10 @@ static const Parameter lowmem_q_params[] =
 class LowmemQModule : public Module
 {
 public:
-    LowmemQModule() : Module("lowmem_q", lowmem_q_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+    LowmemQModule() : Module(s_name, s_help, s_params) { };
+
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 
 public:
     string var;
@@ -101,7 +105,7 @@ public:
         void (*user_free)(void*),
         void (*tree_free)(void**),
         void (*list_free)(void**))
-    : Mpse("lowmem_q", use_gc)
+    : Mpse(s_name, use_gc)
     {
         obj = KTrieNew(1, user_free, tree_free, list_free);
     };
@@ -114,7 +118,7 @@ public:
     int add_pattern(
         SnortConfig*, void* P, int m,
         unsigned noCase, unsigned, unsigned,
-        unsigned negative, void* ID, int)
+        unsigned negative, void* ID, int) override
     {
         return KTrieAddPattern(
             obj, (unsigned char *)P, m,
@@ -122,20 +126,20 @@ public:
     };
 
     int prep_patterns(
-        SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list)
+        SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
     {
         return KTrieCompileWithSnortConf(sc, obj, build_tree, neg_list);
     };
 
     int _search(
         const unsigned char* T, int n, mpse_action_f action,
-        void* data, int* current_state )
+        void* data, int* current_state ) override
     {
         *current_state = 0;
         return KTrieSearchQ(obj, (unsigned char *)T, n, action, data);
     };
 
-    int get_pattern_count()
+    int get_pattern_count() override
     {
         return KTriePatternCount(obj);
     };
@@ -194,7 +198,8 @@ static const MpseApi lmq_api =
 {
     {
         PT_SEARCH_ENGINE,
-        "lowmem_q",
+        s_name,
+        "Keyword Trie (low memory, moderate performance) MPSE with queued events",
         SEAPI_PLUGIN_V0,
         0,
         mod_ctor,

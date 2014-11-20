@@ -55,6 +55,7 @@
 #endif
 
 static const char* s_name = "dpx";
+static const char* s_help = "dynamic inspector example";
 
 static THREAD_LOCAL ProfileStats dpxPerfStats;
 
@@ -69,8 +70,8 @@ class DpxPH : public Inspector
 public:
     DpxPH();
 
-    void show(SnortConfig*);
-    void eval(Packet*);
+    void show(SnortConfig*) override;
+    void eval(Packet*) override;
 
 private:
     uint16_t port;
@@ -93,9 +94,9 @@ void DpxPH::show(SnortConfig*)
 void DpxPH::eval(Packet* p)
 {
     // precondition - what we registered for
-    assert(IsUDP(p));
+    assert(p->is_udp());
 
-    if ( p->dp == port && p->dsize > max )
+    if ( p->ptrs.dp == port && p->dsize > max )
         SnortEventqAdd(DPX_GID, DPX_SID);
 
     ++dpxstats.total_packets;
@@ -108,16 +109,16 @@ void DpxPH::eval(Packet* p)
 class DpxModule : public Module
 {
 public:
-    DpxModule() : Module(s_name)
+    DpxModule() : Module(s_name, s_help)
     { };
 
-    const char** get_pegs() const
+    const char** get_pegs() const override
     { return simple_pegs; };
 
-    PegCount* get_counts() const
+    PegCount* get_counts() const override
     { return (PegCount*)&dpxstats; };
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &dpxPerfStats; };
 };
 
@@ -140,12 +141,13 @@ static const InspectApi dpx_api
     {
         PT_INSPECTOR,
         s_name,
+        s_help,
         INSAPI_PLUGIN_V0,
         0,
         nullptr,
         nullptr
     },
-    IT_PROTOCOL, 
+    IT_NETWORK, 
     PROTO_BIT__UDP,
     nullptr, // service
     nullptr, // contents

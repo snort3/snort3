@@ -48,6 +48,8 @@
 #include "main/snort_config.h"
 #include "packet_io/sfdaq.h"
 #include "time/packet_time.h"
+#include "main/snort_debug.h"
+#include "sfip/sf_ip.h"
 
 static int already_fatal = 0;
 
@@ -244,12 +246,12 @@ NORETURN void FatalError(const char *format,...)
     }
     else
     {
-        fprintf(stderr, "ERROR: %s", buf);
+        fprintf(stderr, "FATAL: %s", buf);
         fprintf(stderr,"Fatal Error, Quitting..\n");
     }
 
 #if 0
-    // FIXIT need to stop analyzers / workers 
+    // FIXIT-M need to stop analyzers / workers 
     // and they should handle the DAQ break / abort
     if ( SnortIsInitializing() )
     {
@@ -259,8 +261,7 @@ NORETURN void FatalError(const char *format,...)
     else
 #endif
     {
-        // FIXIT this makes no sense from main thread
-        // FIXIT exit() segfaults too; looks like something borked in dylib
+        // FIXIT-M this makes no sense from main thread
         exit(EXIT_FAILURE);
     }
 }
@@ -341,7 +342,7 @@ void PrintPacketData(const uint8_t *data, const uint32_t len)
     LogMessage("\n");
 }
 
-char * ObfuscateIpToText(sfip_t *ip)
+char * ObfuscateIpToText(const sfip_t *ip)
 {
     static THREAD_LOCAL char ip_buf1[INET6_ADDRSTRLEN];
     static THREAD_LOCAL char ip_buf2[INET6_ADDRSTRLEN];
@@ -360,9 +361,9 @@ char * ObfuscateIpToText(sfip_t *ip)
     if (ip == NULL)
         return ip_buf;
 
-    if (!IP_IS_SET(snort_conf->obfuscation_net))
+    if (!sfip_is_set(snort_conf->obfuscation_net))
     {
-        if (IS_IP6(ip))
+        if (ip->is_ip6())
             SnortSnprintf(ip_buf, buf_size, "x:x:x:x::x:x:x:x");
         else
             SnortSnprintf(ip_buf, buf_size, "xxx.xxx.xxx.xxx");
@@ -372,9 +373,9 @@ char * ObfuscateIpToText(sfip_t *ip)
         sfip_t tmp;
         char *tmp_buf;
 
-        IP_COPY_VALUE(tmp, ip);
+        sfip_copy(tmp, ip);
 
-        if (IP_IS_SET(snort_conf->homenet))
+        if (sfip_is_set(snort_conf->homenet))
         {
             if (sfip_contains(&snort_conf->homenet, &tmp) == SFIP_CONTAINS)
                 sfip_obfuscate(&snort_conf->obfuscation_net, &tmp);

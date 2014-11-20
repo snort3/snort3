@@ -12,4 +12,3 @@ else (STATIC_INSPECTORS)
     add_shared_library(rpc_decode inspectors ${FILE_LIST})
 
 endif (STATIC_INSPECTORS)
-

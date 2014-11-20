@@ -1,31 +1,30 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // rule_threshold.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
+#include "helpers/converter.h"
 #include "rule_states/rule_api.h"
-#include "utils/s2l_util.h"
+#include "helpers/s2l_util.h"
 
 namespace rules
 {
@@ -36,7 +35,7 @@ namespace {
 class Threshold : public ConversionState
 {
 public:
-    Threshold(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Threshold(Converter& c) : ConversionState(c) {};
     virtual ~Threshold() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -47,47 +46,43 @@ bool Threshold::convert(std::istringstream& data_stream)
 {
     std::string args;
     std::string value;
-    bool retval = true;
 
     args = util::get_rule_option_args(data_stream);
     std::istringstream arg_stream(args);
 
 
-    ld->open_table("event_filter");
-    ld->add_diff_option_comment("ips_option: threshold", "event_filter");
-    ld->open_table();
+    table_api.open_table("event_filter");
+    table_api.add_diff_option_comment("ips_option: threshold", "event_filter");
+    table_api.open_table();
 
     while (util::get_string(arg_stream, value, ","))
     {
         std::string keyword;
         std::string val;
-        bool tmpval = true;
+        //bool tmpval = true;  FIXIT-H-J
         std::istringstream subopt_stream(value);
 
         if (!(subopt_stream >> keyword) || !(subopt_stream >> val))
-            tmpval = false;
+            rule_api.bad_rule(data_stream, "threshold: " + keyword + " <missing_value>");
 
         else if (!(keyword.compare("count")))
-            tmpval = ld->add_option_to_table("count", std::stoi(val));
+            /*tmpval =*/ table_api.add_option("count", std::stoi(val));
 
         else if (!(keyword.compare("seconds")))
-            tmpval = ld->add_option_to_table("seconds", std::stoi(val));
+            /*tmpval =*/ table_api.add_option("seconds", std::stoi(val));
 
         else if (!(keyword.compare("type")))
-            tmpval = ld->add_option_to_table("type", val);
+            /*tmpval =*/ table_api.add_option("type", val);
 
         else if (!(keyword.compare("track")))
-            tmpval = ld->add_option_to_table("track", val);
+            /*tmpval =*/ table_api.add_option("track", val);
 
         else
-            retval = false;
-
-        if (retval && !tmpval)
-            retval = false;
+            rule_api.bad_rule(data_stream, "threshold: " + keyword);
     }
 
     // save the current position
-    const std::streamoff curr_pos = data_stream.tellg();
+    const std::istringstream::off_type curr_pos = data_stream.tellg();
 
     if (curr_pos == -1)
         data_stream.clear();
@@ -118,13 +113,13 @@ bool Threshold::convert(std::istringstream& data_stream)
         if (!rule_keyword.compare("sid"))
         {
             std::string val = util::get_rule_option_args(data_stream);
-            ld->add_option_to_table("sid", std::stoi(val));
+            table_api.add_option("sid", std::stoi(val));
             found_sid = true;
         }
         else if (!rule_keyword.compare("gid"))
         {
             std::string val = util::get_rule_option_args(data_stream);
-            ld->add_option_to_table("gid", std::stoi(val));
+            table_api.add_option("gid", std::stoi(val));
             found_gid = true;
         }
         else  if (semi_colon_pos == std::string::npos)
@@ -137,14 +132,17 @@ bool Threshold::convert(std::istringstream& data_stream)
         tmp_pos = data_stream.tellg();
     }
 
+    if (!found_gid)
+        table_api.add_option("gid", 1);
 
-    ld->close_table();
-    ld->close_table();
+
+    table_api.close_table();
+    table_api.close_table();
     if (curr_pos != -1)
         data_stream.clear();
 
     data_stream.seekg(curr_pos);
-    return set_next_rule_state(data_stream) && retval;
+    return set_next_rule_state(data_stream);
 }
 
 /**************************
@@ -152,10 +150,8 @@ bool Threshold::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
-{
-    return new Threshold(cv, ld);
-}
+static ConversionState* ctor(Converter& c)
+{ return new Threshold(c); }
 
 static const ConvertMap rule_threshold =
 {

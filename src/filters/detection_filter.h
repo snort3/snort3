@@ -32,16 +32,15 @@
 // and thereby controls event generation.  event_filter is evaluated after 
 // the event is queued, and thereby controls which events get logged.
 
-#include "sfthreshold.h"
-#include "ipv6_port.h"
+struct sfip_t;
+struct THDX_STRUCT;
 
-typedef struct _DetectionFilterConfig
+struct DetectionFilterConfig
 {
     int count;
     int memcap;
     int enabled;
-
-} DetectionFilterConfig;
+};
 
 DetectionFilterConfig * DetectionFilterConfigNew(void);
 void DetectionFilterConfigFree(DetectionFilterConfig *);
@@ -52,7 +51,7 @@ void detection_filter_term( void );
 void detection_filter_print_config(DetectionFilterConfig *);
 void detection_filter_reset_active(void);
 
-int detection_filter_test(void*, snort_ip_p sip, snort_ip_p dip, long curtime); 
+int detection_filter_test(void*, const sfip_t *sip, const sfip_t *dip, long curtime);
 void * detection_filter_create(DetectionFilterConfig *, THDX_STRUCT *);
 
 #endif

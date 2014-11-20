@@ -4,26 +4,13 @@
 # into compiler flags
 #
 
-# FIX THIS!!
-# Setting visibility options.  
-#IF(UNIX)
-#    IF(CMAKE_COMPILER_IS_GNUCC)
-#         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
-#         SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
-#    ENDIF(CMAKE_COMPILER_IS_GNUCC)
-#ENDIF(UNIX)
-
-
-
 
 # convert cmake options into compiler defines
 
 set_project_compiler_defines_if_true (ENABLE_PERFPROFILING "PERF_PROFILING")
 set_project_compiler_defines_if_true (ENABLE_DEBUG_MSGS "DEBUG_MSGS")
 set_project_compiler_defines_if_true (ENABLE_DEBUG "DEBUG")
-set_project_compiler_defines_if_true (ENABLE_SOURCEFIRE "PERF_PROFILING")
 set_project_compiler_defines_if_true (BUILD_HA "ENABLE_HA")
-set_project_compiler_defines_if_false (ENABLE_NON_ETHER_DECODERS "NO_NON_ETHER_DECODER")
 set_project_compiler_defines_if_true (ENABLE_LARGE_PCAP "_LARGEFILE_SOURCE")
 set_project_compiler_defines_if_true (ENABLE_LARGE_PCAP "_LARGEFILE64_SOURCE")
 set_project_compiler_defines_if_true (ENABLE_LARGE_PCAP "_FILE_OFFSET_BITS=64")
@@ -32,9 +19,11 @@ set_project_compiler_defines_if_true (ENABLE_LARGE_PCAP "_FILE_OFFSET_BITS=64")
 
 # convert cmake options into config.h defines
 
+
 set_if_true (STATIC_INSPECTORS STATIC_INSPECTORS)
 set_if_true (STATIC_SEARCH_ENGINES STATIC_SEARCH_ENGINES)
 set_if_true (STATIC_LOGGERS STATIC_LOGGERS)
+set_if_true (STATIC_IPS_ACTIONS STATIC_IPS_ACTIONS)
 set_if_true (STATIC_IPS_OPTIONS STATIC_IPS_OPTIONS)
 set_if_true (STATIC_CODECS STATIC_CODECS)
 set_if_true (BUILD_SIDE_CHANNEL SIDE_CHANNEL)
@@ -46,14 +35,12 @@ set_if_true (BUILD_HA ENABLE_HA )
 set_if_true (ENABLE_LINUX_SMP_STATS LINUX_SMP)
 set_if_true (ENABLE_DEBUG DEBUG)
 set_if_false (ENABLE_DEBUG NDEBUG)
-set_if_true (ENABLE_SOURCEFIRE SOURCEFIRE)
-set_if_true (ENABLE_SOURCEFIRE PPM_MGR)
-set_if_true (ENABLE_SOURCEFIRE PERF_PROFILING)
 set_if_false (ENABLE_COREFILES NOCOREFILE)
-set_if_false (ENABLE_NON_ETHER_DECODERS NO_NON_ETHER_DECODER)
-set_if_true (HAVE_INTEL_SOFT_CPM INTEL_SOFT_CPM)
+set_if_true (ENABLE_INTEL_SOFT_CPM INTEL_SOFT_CPM)
 set_if_true (BUILD_UNIT_TESTS UNIT_TEST)
 set_if_true (ENABLE_PROFILE PROFILE)
+set_if_true (ENABLE_SHELL BUILD_SHELL)
+
 
 
 if(LINUX AND BUILD_CONTROL_SOCKET)
@@ -106,3 +93,6 @@ else()
     set(STATIC_DAQ_PRREVIOUSLY_ENABLED "${ENABLE_STATIC_DAQ}" CACHE INTERNAL "save daq link type" FORCE)
 endif()
 
+
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g -Wall -Wextra -pedantic -Wformat")
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wformat-security -Wno-deprecated-declarations")

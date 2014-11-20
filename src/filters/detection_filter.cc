@@ -59,7 +59,7 @@ void detection_filter_print_config(DetectionFilterConfig*)
 
 int detection_filter_test (
     void* pv,
-    snort_ip_p sip, snort_ip_p dip,
+    const sfip_t *sip, const sfip_t *dip,
     long curtime )
 {
     if (pv == NULL)
@@ -97,12 +97,15 @@ void detection_filter_init(DetectionFilterConfig* df_config)
     if ( !df_config->enabled )
         return;
 
-    if ( detection_filter_hash == NULL )
+    if ( !detection_filter_hash )
     {
         detection_filter_hash = sfthd_local_new(df_config->memcap);
 
-        if ( detection_filter_hash == NULL )
-            return;  // FIXIT this is fatal
+        if ( !detection_filter_hash )
+        {
+            FatalError("can't allocate detection filter cache\n");
+            return;
+        }
     }
 }
 

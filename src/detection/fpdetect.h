@@ -37,8 +37,8 @@
 #include "fpcreate.h"
 #include "snort_debug.h"
 #include "protocols/packet.h"
-#include "sflsq.h"
 #include "time/profiler.h"
+#include "utils/sflsq.h"
 
 #define REBUILD_FLAGS (PKT_REBUILT_FRAG | PKT_REBUILT_STREAM)
 
@@ -103,7 +103,7 @@ void otnx_match_data_init(int);
 void otnx_match_data_term();
 
 int fpAddMatch( OTNX_MATCH_DATA *omd_local, int pLen, OptTreeNode *otn);
-void fpEvalIpProtoOnlyRules(SF_LIST **, Packet *, uint8_t proto_id);
+SO_PUBLIC void fpEvalIpProtoOnlyRules(Packet *, uint8_t proto_id);
 OptTreeNode * GetOTN(uint32_t gid, uint32_t sid);
 
 #define TO_SERVER 1

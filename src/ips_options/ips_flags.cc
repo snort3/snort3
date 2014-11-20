@@ -42,6 +42,7 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
+#include "protocols/tcp.h"
 
 #define M_NORMAL  0
 #define M_ALL     1
@@ -57,7 +58,7 @@
 #define R_ECE          0x40  /* ECN echo, RFC 3168 */
 #define R_CWR          0x80  /* Congestion Window Reduced, RFC 3168 */
 
-static const char* s_name = "flags";
+#define s_name "flags"
 
 static THREAD_LOCAL ProfileStats tcpFlagsPerfStats;
 
@@ -75,10 +76,10 @@ public:
         IpsOption(s_name)
     { config = c; };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
 private:
     TcpFlagCheckData config;
@@ -131,7 +132,7 @@ int TcpFlagOption::eval(Cursor&, Packet *p)
 
     MODULE_PROFILE_START(tcpFlagsPerfStats);
 
-    if(!p->tcph)
+    if(!p->ptrs.tcph)
     {
         /* if error appeared when tcp header was processed,
          * test fails automagically */
@@ -142,7 +143,7 @@ int TcpFlagOption::eval(Cursor&, Packet *p)
     /* the flags we really want to check are all the ones
      */
 
-    tcp_flags = p->tcph->th_flags & (0xFF ^ flagptr->tcp_mask);
+    tcp_flags = p->ptrs.tcph->th_flags & (0xFF ^ flagptr->tcp_mask);
 
     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "           <!!> CheckTcpFlags: "););
 
@@ -398,7 +399,7 @@ static void flags_parse_mask(const char *rule, TcpFlagCheckData *idx)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter flags_params[] =
+static const Parameter s_params[] =
 {
     { "~test_flags", Parameter::PT_STRING, nullptr, nullptr,
       "these flags are tested" },
@@ -409,15 +410,18 @@ static const Parameter flags_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to test TCP control flags"
+
 class FlagsModule : public Module
 {
 public:
-    FlagsModule() : Module(s_name, flags_params) { };
+    FlagsModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &tcpFlagsPerfStats; };
 
     TcpFlagCheckData data;
@@ -473,6 +477,7 @@ static const IpsApi flags_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

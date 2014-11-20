@@ -17,28 +17,62 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// icmp6.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 
-#ifndef ICMP6_H
-#define ICMP6_H
+#ifndef PROTOCOLS_ICMP6_H
+#define PROTOCOLS_ICMP6_H
 
 #include <cstdint>
 
-namespace icmp6
+namespace icmp
 {
 
-namespace detail
-{
-    const uint16_t HEADER_MIN_LEN = 4;
-    const uint16_t HEADER_NORMAL_LEN = 8;
-} // namespace detail
 
-struct ICMP6Hdr
+constexpr uint16_t ICMP6_HEADER_MIN_LEN = 4;
+constexpr uint16_t ICMP6_HEADER_NORMAL_LEN = 8;
+
+
+//enum class Icmp6Types : std::uint8_t
+enum Icmp6Types : std::uint8_t
 {
-    uint8_t type;
-    uint8_t code;
+    UNREACH = 1,
+    BIG = 2,
+    TIME = 3,
+    PARAMS = 4,
+    ECHO_6 = 128,
+    REPLY_6 = 129,
+    SOLICITATION = 133,
+    ADVERTISEMENT = 134,
+    NODE_INFO_QUERY = 139,
+    NODE_INFO_RESPONSE = 140,
+};
+
+enum class Icmp6Code : std::uint8_t
+{
+    /* Type == 1 */
+    UNREACH_NET = 0x00,
+    UNREACH_FILTER_PROHIB = 0x01,
+    UNREACH_INVALID = 0x02,
+    UNREACH_HOST = 0x03,
+    UNREACH_PORT = 0x04,
+
+    /* Type == ADVERTISEMENT */
+    ADVERTISEMENT = 0X00,
+};
+
+struct Icmp6Hdr
+{
+    Icmp6Types type;
+    Icmp6Code code;
     uint16_t csum;
 
+    union
+    {
+        uint32_t opt32;
+        uint16_t opt16[2];
+        uint8_t opt8[4];
+    };
 };
 
 struct ICMP6TooBig
@@ -79,48 +113,8 @@ struct ICMP6NodeInfo
     uint64_t nonce;
 } ;
 
-//
-//enum class Icmp6Types : std::uint8_t {
-enum Icmp6Types : std::uint8_t   {
-    UNREACH = 1,
-    BIG = 2,
-    TIME = 3,
-    PARAMS = 4,
-    ECHO = 128,
-    REPLY = 129,
-    SOLICITATION = 133,
-    ADVERTISEMENT = 134,
-    NODE_INFO_QUERY = 139,
-    NODE_INFO_RESPONSE = 140,
-};
-
-inline uint16_t hdr_min_len()
-{
-    return detail::HEADER_MIN_LEN;
-}
-
-
-inline uint16_t hdr_normal_len()
-{
-    return detail::HEADER_NORMAL_LEN;
-}
 
 }  // namespace icmp6
-
-
-
-//   Things that should be deleted immediately....which I bet will manage to make it into production
-
-#if 1
-#define ICMP6_ECHO   icmp6::Icmp6Types::ECHO
-#define ICMP6_REPLY  icmp6::Icmp6Types::REPLY
-#endif
-
-typedef icmp6::ICMP6Hdr ICMP6Hdr;
-typedef icmp6::ICMP6TooBig ICMP6TooBig;
-typedef icmp6::ICMP6NodeInfo ICMP6NodeInfo;
-typedef icmp6::ICMP6RouterAdvertisement ICMP6RouterAdvertisement;
-typedef icmp6::ICMP6RouterSolicitation ICMP6RouterSolicitation;
 
 
 #endif

@@ -30,24 +30,40 @@ using namespace std;
 #include "util.h"
 #include "module_manager.h"
 #include "framework/ips_action.h"
-#include "search_engines/search_engines.h"
 #include "parser/parser.h"
 #include "log/messages.h"
+#include "actions/act_replace.h"
 
-typedef list<const ActionApi*> AList;
+struct Actor
+{
+    const ActionApi* api;
+    IpsAction* act;  // FIXIT-H must move to SnortConfig for reload?
+
+    Actor(const ActionApi* p)
+    { api = p; act = nullptr; };
+};
+
+typedef list<Actor> AList;
 static AList s_actors;
 
+static IpsAction* s_reject = nullptr;
+static THREAD_LOCAL IpsAction* s_action = nullptr;
+
 //-------------------------------------------------------------------------
-// engine plugins
+// action plugins
 //-------------------------------------------------------------------------
 
 void ActionManager::add_plugin(const ActionApi* api)
 {
-    s_actors.push_back(api);
+    Actor a(api);
+    s_actors.push_back(a);
 }
 
 void ActionManager::release_plugins()
 {
+    for ( auto& p : s_actors )
+        p.api->dtor(p.act);
+
     s_actors.clear();
 }
 
@@ -55,29 +71,89 @@ void ActionManager::dump_plugins()
 {
     Dumper d("IPS Actions");
 
-    for ( auto* p : s_actors )
-        d.dump(p->base.name, p->base.version);
+    for ( auto& p : s_actors )
+        d.dump(p.api->base.name, p.api->base.version);
+}
+
+static void store(const ActionApi* api, IpsAction* act)
+{
+    for ( auto& p : s_actors )
+        if ( p.api == api )
+        {
+            //assert(!p.act);  FIXIT-H memory leak on reload
+            p.act = act;
+            break;
+        }
 }
 
 //-------------------------------------------------------------------------
 
-void ActionManager::instantiate(const ActionApi*, Module*, SnortConfig*)
+RuleType ActionManager::get_action_type(const char* s)
 {
-    // nothing to do here 
-    // see 
+    for ( auto& p : s_actors )
+    {
+        if ( !strcmp(p.api->base.name, s) )
+            return p.api->type;
+    }
+    return RULE_TYPE__NONE;
 }
 
-#if 0
-static const ActionApi* get_api(const char* keyword)
+void ActionManager::instantiate(
+    const ActionApi* api, Module* m, SnortConfig* sc)
 {
-    for ( auto* p : s_actors )
-        if ( !strcasecmp(p->base.name, keyword) )
-            return p;
+    IpsAction* act = api->ctor(m);
 
-    return nullptr;
+    if ( act )
+    {
+        if ( !s_reject && !strcmp(act->get_name(), "reject") )
+            s_reject = act;
+
+        ListHead* lh = CreateRuleType(sc, api->base.name, api->type, 0, nullptr);
+        assert(lh);
+        lh->action = act;
+
+        store(api, act);
+    }
 }
-#endif
 
-void ActionManager::execute(Packet*)
-{ }
+void ActionManager::thread_init(SnortConfig*)
+{
+    for ( auto& p : s_actors )
+        if ( p.api->tinit )
+            p.api->tinit();
+}
+
+void ActionManager::thread_term(SnortConfig*)
+{
+    for ( auto& p : s_actors )
+        if ( p.api->tterm )
+            p.api->tterm();
+}
+
+void ActionManager::execute(Packet* p)
+{
+    if ( s_action )
+    {
+        s_action->exec(p);
+        s_action = nullptr;
+    }
+}
+
+void ActionManager::queue(IpsAction* a)
+{
+    if ( !s_action || a->get_action() > s_action->get_action() )
+        s_action = a;
+}
+
+void ActionManager::queue_reject()
+{
+    if ( s_reject )
+        queue(s_reject);
+}
+
+void ActionManager::reset_queue()
+{
+    s_action = nullptr;
+    Replace_ResetQueue();
+}
 

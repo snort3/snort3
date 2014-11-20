@@ -27,13 +27,51 @@
 
 #include "framework/codec.h"
 #include "snort.h"
-#include "codecs/ip/cd_esp_module.h"
-#include "managers/packet_manager.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
+#include "codecs/ip/ip_util.h"
+
+#define CD_ESP_NAME "esp"
+#define CD_ESP_HELP "support for encapsulating security payload"
 
 namespace
 {
+
+static const RuleMap esp_rules[] =
+{
+    { DECODE_ESP_HEADER_TRUNC, "truncated encapsulated security payload header" },
+    { 0, nullptr }
+};
+
+
+static const Parameter esp_params[] =
+{
+    { "decode_esp", Parameter::PT_BOOL, nullptr, "false",
+      "enable for inspection of esp traffic that has authentication but not encryption" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class EspModule : public CodecModule
+{
+public:
+    EspModule() : CodecModule(CD_ESP_NAME, CD_ESP_HELP, esp_params) {}
+
+    const RuleMap* get_rules() const override
+    { return esp_rules; }
+
+
+    bool set(const char*, Value& v, SnortConfig* sc) override
+    {
+        if ( v.is("decode_esp") )
+            sc->enable_esp = v.get_bool();
+        else
+            return false;
+
+        return true;
+    }
+};
+
 
 class EspCodec : public Codec
 {
@@ -42,27 +80,22 @@ public:
     ~EspCodec(){};
 
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-    
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
 
 /* ESP constants */
-const uint16_t ESP_PROT_ID = 50;
-const uint32_t ESP_HEADER_LEN = 8;
-const uint32_t ESP_AUTH_DATA_LEN = 12;
-const uint32_t ESP_TRAILER_LEN = 2;
+constexpr uint32_t ESP_HEADER_LEN = 8;
+constexpr uint32_t ESP_AUTH_DATA_LEN = 12;
+constexpr uint32_t ESP_TRAILER_LEN = 2;
 
 } // anonymous namespace
 
 
 
 void EspCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ESP_PROT_ID);
-}
+{ v.push_back(IPPROTO_ID_ESP); }
 
 
 
@@ -75,14 +108,8 @@ void EspCodec::get_protocol_ids(std::vector<uint16_t>& v)
  *          This is more of a heuristic -- there is no ESP field that specifies
  *          the encryption type (or lack thereof).
  *
- * Arguments: pkt     => ptr to the packet data
- *            raw_len => length from here to the end of the packet
- *            p       => ptr to the Packet struct being filled out
- *
- * Returns: void function
  */
-bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-    Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     const uint8_t *esp_payload;
     uint8_t pad_length;
@@ -93,12 +120,10 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     /* The ESP header contains a crypto Initialization Vector (IV) and
        a sequence number. Skip these. */
-    if (raw_len < (ESP_HEADER_LEN + ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN))
+    if (raw.len < (ESP_HEADER_LEN + ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN))
     {
         /* Truncated ESP traffic. Bail out here and inspect the rest as payload. */
-        codec_events::decoder_event(p, DECODE_ESP_HEADER_TRUNC);
-        p->data = raw_pkt;
-        p->dsize = (uint16_t) raw_len;
+        codec_events::decoder_event(codec, DECODE_ESP_HEADER_TRUNC);
         return false;
     }
 
@@ -108,46 +133,63 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
        The mandatory algorithms for Authentication are HMAC-MD5-96 and
        HMAC-SHA-1-96, so we assume a 12-byte authentication data at the end. */
-    uint32_t guessed_len = raw_len - (ESP_HEADER_LEN + ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
+    uint32_t guessed_len = raw.len - (ESP_HEADER_LEN + ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
 
-    lyr_len = ESP_HEADER_LEN;
-    esp_payload = raw_pkt + ESP_HEADER_LEN;
+    codec.lyr_len = ESP_HEADER_LEN;
+    esp_payload = raw.data + ESP_HEADER_LEN;
     pad_length = *(esp_payload + guessed_len);
-    next_prot_id = *(esp_payload + guessed_len + 1);
+    codec.next_prot_id = *(esp_payload + guessed_len + 1);
+
+
+    // must be called AFTER setting next_prot_id
+    if (snort.ip_api.is_ip6())
+    {
+        if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
+        {
+            codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
+            return false;
+        }
+
+
+        ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_ESP);
+        codec.proto_bits |= PROTO_BIT__IP6_EXT;
+        codec.ip6_csum_proto = codec.next_prot_id;
+        codec.ip6_extension_count++;
+    }
+
+
+    // TODO:  Leftover from Snort. Do we really want thsi?
+    const_cast<uint32_t&>(raw.len) -= (ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
 
     /* Adjust the packet length to account for the padding.
        If the padding length is too big, this is probably encrypted traffic. */
-    if (pad_length < raw_len)
+    if (pad_length < raw.len)
     {
-        const_cast<uint32_t&>(raw_len) -= pad_length;
+        const_cast<uint32_t&>(raw.len) -= pad_length;
     }
     else
     {
-        p->packet_flags |= PKT_TRUST;
-        lyr_len = ESP_HEADER_LEN;  // we want data to begin at (pkt + ESP_HEADER_LEN)
-        next_prot_id = FINISHED_DECODE;
+        snort.decode_flags |= DECODE_PKT_TRUST;
+        codec.lyr_len = ESP_HEADER_LEN;  // we want data to begin at (pkt + ESP_HEADER_LEN)
+        codec.next_prot_id = FINISHED_DECODE;
         return true;
     }
 
 
+    /* Attempt to decode the inner payload.
+       There is a small chance that an encrypted next_header would become a
+       different valid next_header. The DECODE_UNSURE_ENCAP flag tells the next
+       decoder stage to silently ignore invalid headers. */
 
-    if (PacketManager::has_codec(next_prot_id))
+    // highest valid protocol id == 255.
+    if (codec.next_prot_id > 0xFF)
     {
-        /* Attempt to decode the inner payload.
-           There is a small chance that an encrypted next_header would become a
-           different valid next_header. The PKT_UNSURE_ENCAP flag tells the next
-           decoder stage to silently ignore invalid headers. */
-        p->packet_flags |= PKT_UNSURE_ENCAP;
-        const_cast<uint32_t&>(raw_len) -= (ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
-        p->packet_flags |= PKT_ESP_LYR_PRESENT;
+        codec.next_prot_id = FINISHED_DECODE;
+        snort.decode_flags |= DECODE_PKT_TRUST;
     }
     else
     {
-        // If we cant' decode the packet anymore, this is probably encrypted.
-        // set the data pointers and pretend this is an ip datagram.
-        p->packet_flags |= PKT_TRUST;
-        p->data = esp_payload;
-        p->dsize = (u_short) raw_len - lyr_len;
+        codec.codec_flags |= CODEC_ENCAP_LAYER;
     }
 
     return true;
@@ -159,30 +201,23 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new EspModule;
-}
+{ return new EspModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new EspCodec();
-}
+{ return new EspCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi esp_api =
 {
     {
         PT_CODEC,
         CD_ESP_NAME,
+        CD_ESP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,
@@ -197,5 +232,12 @@ static const CodecApi esp_api =
 };
 
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &esp_api.base,
+    nullptr
+};
+#else
 const BaseApi* cd_esp = &esp_api.base;
-
+#endif

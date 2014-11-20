@@ -28,8 +28,11 @@
 #include "ps_detect.h"
 #include "main/thread.h"
 
-#define PS_MODULE "port_scan"
-#define PS_GLOBAL "port_scan_global"
+#define PS_NAME "port_scan"
+#define PS_HELP "port scan inspector; also configure port_scan_global"
+
+#define PSG_NAME "port_scan_global"
+#define PSG_HELP "shared settings for port_scan inspectors for use with port_scan"
 
 extern THREAD_LOCAL SimpleStats spstats;
 extern THREAD_LOCAL ProfileStats psPerfStats;
@@ -42,12 +45,12 @@ public:
     PortScanGlobalModule();
     ~PortScanGlobalModule();
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 
-    const char** get_pegs() const;
-    PegCount* get_counts() const;
-    ProfileStats* get_profile() const;
+    const char** get_pegs() const override;
+    PegCount* get_counts() const override;
+    ProfileStats* get_profile() const override;
     PsCommon* get_data();
 
 private:
@@ -60,12 +63,12 @@ public:
     PortScanModule();
     ~PortScanModule();
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 
-    const RuleMap* get_rules() const;
+    const RuleMap* get_rules() const override;
 
-    unsigned get_gid() const
+    unsigned get_gid() const override
     { return GID_PORT_SCAN; };
 
     PortscanConfig* get_data();

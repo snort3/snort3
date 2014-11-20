@@ -31,15 +31,23 @@ using namespace std;
 struct DataBlock
 {
     const DataApi* api;
+
+    // FIXIT-H move data to snort config for reload
     PlugData* data;
 
     DataBlock(const DataApi* p)
     { api = p; data = nullptr; };
+
+    ~DataBlock()
+    {
+        if ( data )
+            api->dtor(data);
+    }
 };
     
 static list<DataBlock*> s_data;
 
-static DataBlock* get_data(const char* keyword)
+static DataBlock* get_block(const char* keyword)
 {
     for ( auto* p : s_data )
         if ( !strcasecmp(p->api->base.name, keyword) )
@@ -48,7 +56,7 @@ static DataBlock* get_data(const char* keyword)
     return nullptr;
 }
 
-static DataBlock* get_data(PlugData* d)
+static DataBlock* get_block(PlugData* d)
 {
     for ( auto* p : s_data )
         if ( p->data == d )
@@ -85,36 +93,50 @@ void DataManager::dump_plugins()
 void DataManager::instantiate(
     const DataApi* api, Module* mod, SnortConfig*)
 {
-    DataBlock* b = get_data(api->base.name);
+    DataBlock* b = get_block(api->base.name);
     assert(b);
 
     if ( b )
         b->data = api->ctor(mod);
 }
 
-PlugData* DataManager::acquire(const char* key)
+PlugData* DataManager::get_data(const char* key, SnortConfig* sc)
 {
-    DataBlock* b = get_data(key);
-    assert(b);
+    DataBlock* b = get_block(key);
+
+    if ( !b )
+        return nullptr;
 
     if ( !b->data )
     {
         // create default instance
         Module* mod = ModuleManager::get_module(key);
-        mod->begin(key, 0, nullptr);  // FIXIT really need sc?
+        mod->begin(key, 0, sc);
         mod->end(key, 0, nullptr);
         b->data = b->api->ctor(mod);
     }
-    if ( b->data )
-        b->data->add_ref();
-
     return b->data;
+}
+
+PlugData* DataManager::acquire(const char* key, SnortConfig* sc)
+{
+    PlugData* pd = get_data(key, sc);
+    assert(pd);
+
+    if ( pd )
+        pd->add_ref();
+
+    return pd;
 }
 
 void DataManager::release(PlugData* p)
 {
-    DataBlock* b = get_data(p);
-    assert(b && b->data);
+    DataBlock* b = get_block(p);
+
+    // FIXIT-H this implementation can't reload
+    //assert(b && b->data);
+    if ( !b )
+        return;
 
     b->data->rem_ref();
 

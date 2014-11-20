@@ -44,6 +44,7 @@
 #include "hi_paf.h"
 #include "main/thread.h"
 
+static THREAD_LOCAL bool headers = false;
 static THREAD_LOCAL bool simple_response = false;
 static THREAD_LOCAL uint8_t decompression_buffer[65535];
 static THREAD_LOCAL uint8_t dechunk_buffer[65535];
@@ -55,6 +56,7 @@ static THREAD_LOCAL uint8_t dechunk_buffer[65535];
 #include "snort_bounds.h"
 #include "detection_util.h"
 #include "utils/util_unfold.h"
+#include "protocols/tcp.h"
 
 #define STAT_END 100
 #define HTTPRESP_HEADER_NAME__COOKIE "Set-Cookie"
@@ -319,7 +321,7 @@ static inline int hi_server_extract_status_code(
         else
         {
 
-            SnortEventqAdd(GID_HTTP_SERVER, HI_SERVER_INVALID_STATCODE);
+            hi_set_event(GID_HTTP_SERVER, HI_SERVER_INVALID_STATCODE);
             ptr++;
         }
     }
@@ -377,7 +379,7 @@ static inline const u_char *extract_http_content_type_charset(
     else if ((cmplen > 0) && (*ptr == '7'))
     {
         set_decode_utf_state_charset(&(hsd->utf_state), CHARSET_UTF7);
-        SnortEventqAdd(GID_HTTP_SERVER, HI_SERVER_UTF7);
+        hi_set_event(GID_HTTP_SERVER, HI_SERVER_UTF7);
     }
     else if (cmplen >= 4)
     {
@@ -618,7 +620,7 @@ static inline const u_char *extractHttpRespHeaderFieldValues(HTTPINSPECT_CONF *S
         }
 
         else if ( IsHeaderFieldName(p, end, HTTPRESP_HEADER_NAME__CONTENT_ENCODING,
-                    HTTPRESP_HEADER_LENGTH__CONTENT_ENCODING) /*&& ServerConf->extract_gzip*/ &&  // FIXIT move back to ServerConf?
+                    HTTPRESP_HEADER_LENGTH__CONTENT_ENCODING) /*&& ServerConf->extract_gzip*/ &&  // FIXIT-L move back to ServerConf?
                     parse_cont_encoding)
         {
             p = extract_http_content_encoding(ServerConf, p, start, end, header_ptr, header_field_ptr );
@@ -787,7 +789,8 @@ static inline int hi_server_extract_body(
             {
                 if(!(sd->resp_state.last_pkt_chunked) && !simple_response)
                 {
-                    SnortEventqAdd(GID_HTTP_SERVER, HI_SERVER_NO_CONTLEN);
+                    if ( headers )
+                        hi_set_event(GID_HTTP_SERVER, HI_SERVER_NO_CONTLEN);
                 }
                 else
                     sd->resp_state.last_pkt_chunked = 0;
@@ -1009,7 +1012,7 @@ static inline int hi_server_decompress(HI_SESSION *session, HttpsessionData *sd,
         else
         {
             /* No Content-Length or Transfer-Encoding : chunked */
-            SnortEventqAdd(GID_HTTP_SERVER, HI_SERVER_NO_CONTLEN);
+            hi_set_event(GID_HTTP_SERVER, HI_SERVER_NO_CONTLEN);
 
             zRet = uncompress_gzip(decompression_buffer, decompr_avail, ptr, compr_avail,
                     sd, &total_bytes_read, sd->decomp_state->compress_fmt);
@@ -1059,7 +1062,7 @@ static inline int hi_server_decompress(HI_SESSION *session, HttpsessionData *sd,
     {
         if(sd->decomp_state->decompr_bytes_read)
         {
-            SnortEventqAdd(GID_HTTP_SERVER, HI_SERVER_DECOMPR_FAILED);
+            hi_set_event(GID_HTTP_SERVER, HI_SERVER_DECOMPR_FAILED);
         }
     }
 
@@ -1173,7 +1176,7 @@ static inline void ResetState (HttpsessionData* sd)
     ResetRespState(&(sd->resp_state));
 }
 
-int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned char *data,
+static int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned char *data,
         int dsize, HttpsessionData *sd)
 {
     HTTPINSPECT_CONF *ServerConf;
@@ -1206,8 +1209,9 @@ int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned char *
     if(!ServerConf)
         return HI_INVALID_ARG;
 
-
     Server = &(session->server);
+    headers = false;
+
     clearHttpRespBuffer(Server);
 
     seq_num = GET_PKT_SEQ(p);
@@ -1385,6 +1389,7 @@ int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned char *
         }
         else
         {
+            headers = true;
             simple_response = false;
             p->packet_flags |= PKT_HTTP_DECODE;
             /* This is a next expected packet to be decompressed but the packet is a
@@ -1574,7 +1579,7 @@ int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned char *
                 alt_dsize = sizeof(HttpDecodeBuf.data);
             }
             /* not checking if sd== NULL as the body_ptr.uri = NULL when sd === NULL in hi_server_inspect_body */
-            if(sd->decomp_state && sd->decomp_state->decompress_data)
+            if(sd && sd->decomp_state && sd->decomp_state->decompress_data)
             {
                 status = SafeMemcpy(HttpDecodeBuf.data, Server->response.body,
                                             alt_dsize, HttpDecodeBuf.data, HttpDecodeBuf.data + sizeof(HttpDecodeBuf.data));
@@ -1588,7 +1593,7 @@ int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned char *
             }
             else
             {
-                if(sd->resp_state.last_pkt_chunked)
+                if(sd && sd->resp_state.last_pkt_chunked)
                 {
                     SetHttpDecode((uint16_t)alt_dsize);
                     Server->response.body = HttpDecodeBuf.data;

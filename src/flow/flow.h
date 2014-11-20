@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2013-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,39 +30,40 @@
 #endif
 
 #include "utils/bitop.h"
-#include "sfip/ipv6_port.h"
+#include "sfip/sfip_t.h"
 #include "flow/flow_key.h"
 #include "framework/inspector.h"
-#include "normalize/normalize.h"
+#include "framework/plug_data.h"
+#include "framework/codec.h"
 
 #define SSNFLAG_SEEN_CLIENT         0x00000001
 #define SSNFLAG_SEEN_SENDER         0x00000001
 #define SSNFLAG_SEEN_SERVER         0x00000002
 #define SSNFLAG_SEEN_RESPONDER      0x00000002
 #define SSNFLAG_ESTABLISHED         0x00000004
-#define SSNFLAG_NMAP                0x00000008
+#define SSNFLAG_MIDSTREAM           0x00000008 /* picked up midstream */
+
 #define SSNFLAG_ECN_CLIENT_QUERY    0x00000010
 #define SSNFLAG_ECN_SERVER_REPLY    0x00000020
-#define SSNFLAG_HTTP_1_1            0x00000040 /* has stream seen HTTP 1.1? */
-#define SSNFLAG_SEEN_PMATCH         0x00000080 /* seen pattern match? */
-#define SSNFLAG_MIDSTREAM           0x00000100 /* picked up midstream */
-#define SSNFLAG_CLIENT_FIN          0x00000200 /* server sent fin */
-#define SSNFLAG_SERVER_FIN          0x00000400 /* client sent fin */
-#define SSNFLAG_CLIENT_PKT          0x00000800 /* packet is from the client */
-#define SSNFLAG_SERVER_PKT          0x00001000 /* packet is from the server */
-#define SSNFLAG_COUNTED_INITIALIZE  0x00002000
-#define SSNFLAG_COUNTED_ESTABLISH   0x00004000
-#define SSNFLAG_COUNTED_CLOSING     0x00008000
-#define SSNFLAG_TIMEDOUT            0x00010000
-#define SSNFLAG_PRUNED              0x00020000
-#define SSNFLAG_RESET               0x00040000
-#define SSNFLAG_DROP_CLIENT         0x00080000
-#define SSNFLAG_DROP_SERVER         0x00100000
-#define SSNFLAG_LOGGED_QUEUE_FULL   0x00200000
-#define SSNFLAG_STREAM_ORDER_BAD    0x00400000
-#define SSNFLAG_FORCE_BLOCK         0x00800000
-#define SSNFLAG_CLIENT_SWAP         0x01000000
-#define SSNFLAG_CLIENT_SWAPPED      0x02000000
+#define SSNFLAG_CLIENT_FIN          0x00000040 /* server sent fin */
+#define SSNFLAG_SERVER_FIN          0x00000080 /* client sent fin */
+
+#define SSNFLAG_COUNTED_INITIALIZE  0x00000100
+#define SSNFLAG_COUNTED_ESTABLISH   0x00000200
+#define SSNFLAG_COUNTED_CLOSING     0x00000400
+
+#define SSNFLAG_TIMEDOUT            0x00001000
+#define SSNFLAG_PRUNED              0x00002000
+#define SSNFLAG_RESET               0x00004000
+
+#define SSNFLAG_DROP_CLIENT         0x00010000
+#define SSNFLAG_DROP_SERVER         0x00020000
+#define SSNFLAG_FORCE_BLOCK         0x00040000
+
+#define SSNFLAG_STREAM_ORDER_BAD    0x00100000
+#define SSNFLAG_CLIENT_SWAP         0x00200000
+#define SSNFLAG_CLIENT_SWAPPED      0x00400000
+
 #define SSNFLAG_ALL                 0xFFFFFFFF /* all that and a bag of chips */
 #define SSNFLAG_NONE                0x00000000 /* nothing, an MT bag of chips */
 
@@ -79,6 +80,8 @@
 #define STREAM5_STATE_TIMEDOUT          0x0080
 #define STREAM5_STATE_UNREACH           0x0100
 #define STREAM5_STATE_CLOSED            0x0800
+#define STREAM5_STATE_IGNORE            0x1000
+#define STREAM5_STATE_NO_PICKUP         0x2000
 
 struct Packet;
 
@@ -90,7 +93,7 @@ struct StreamFlowData
     unsigned char flowb[1];
 };
 
-class FlowData
+class SO_PUBLIC FlowData
 {
 public:
     FlowData(unsigned u, Inspector* = nullptr);
@@ -112,7 +115,7 @@ private:
     unsigned id;
 };
 
-struct FlowState
+struct LwState
 {
     uint32_t   session_flags;
 
@@ -123,21 +126,32 @@ struct FlowState
     char       ignore_direction; /* flag to ignore traffic on this session */
 };
 
-typedef enum {
+enum Stream_Event
+{
     SE_REXMIT,
     SE_EOF,
     SE_MAX
-} Stream_Event;
+};
 
 // this struct is organized by member size for compactness
 class Flow
 {
 public:
+    enum FlowState
+    {
+        SETUP,
+        INSPECT,
+        BLOCK,
+        ALLOW
+    };
     Flow();
-    Flow(int proto);
     ~Flow();
 
+    void init(PktType);
+    void term();
+
     void reset();
+    void restart(bool freeAppData = true);
     void clear(bool freeAppData = true);
 
     int set_application_data(FlowData*);
@@ -149,20 +163,23 @@ public:
     void markup_packet_flags(Packet*);
     void set_direction(Packet*);
 
-    void set_normalizations(uint32_t m)
-    { normal_mask = m; };
-
-    bool norm_is_enabled(uint32_t b)
-    { return Normalize_IsEnabled(normal_mask, (NormFlags)b); };
-
     void set_expire(Packet*, uint32_t timeout);
     int get_expire(Packet*);
     bool expired(Packet*);
 
     void set_ttl(Packet*, bool client);
 
-    bool was_blocked()
+    void block()
+    { s5_state.session_flags |= SSNFLAG_BLOCK; };
+
+    bool was_blocked() const
     { return (s5_state.session_flags & SSNFLAG_BLOCK) != 0; };
+
+    bool full_inspection() const
+    { return flow_state <= INSPECT; };
+
+    void set_state(FlowState fs)
+    { flow_state = fs; };
 
     void set_client(Inspector* ins)
     {
@@ -194,13 +211,24 @@ public:
         gadget->rem_ref();
         gadget = nullptr;
     };
+    void set_data(PlugData* pd)
+    {
+        data = pd;
+        data->add_ref();
+    };
+    void clear_data()
+    {
+        data->rem_ref();
+        data = nullptr;
+    };
 
-public:  // FIXIT privatize if possible
+public:  // FIXIT-M privatize if possible
     // these fields are const after initialization
     const FlowKey* key;
     class Session* session;
     StreamFlowData* flowdata;
-    uint8_t protocol;
+    uint8_t ip_proto; // FIXIT-M  -- do we need both of these?
+    PktType protocol; // ^^
 
     // these fields are always set; not zeroed
     Flow* prev, * next;
@@ -212,24 +240,32 @@ public:  // FIXIT privatize if possible
     FlowData* appDataList;
     Inspector* clouseau;
     Inspector* gadget;
+    PlugData* data;
     const char* service;
 
-    int flow_state;
-    FlowState s5_state;  // FIXIT rename this (s5 not appropriate)
+    unsigned policy_id;
 
-    snort_ip client_ip; // FIXIT family and bits should be changed to uint16_t
-    snort_ip server_ip; // or uint8_t to reduce sizeof from 24 to 20
+    FlowState flow_state;
+    LwState s5_state;  // FIXIT-L rename this (s5 not appropriate)
+
+    // FIXIT-L can client and server ip and port be removed from flow?
+    sfip_t client_ip; // FIXIT-L family and bits should be changed to uint16_t
+    sfip_t server_ip; // or uint8_t to reduce sizeof from 24 to 20
 
     uint64_t expire_time;
-    uint32_t normal_mask;
+
+    int32_t iface_in;
+    int32_t iface_out;
 
     uint16_t client_port;
     uint16_t server_port;
 
+    uint16_t ssn_policy;
     uint16_t session_state;
-    uint8_t  handler[SE_MAX];
 
+    uint8_t  handler[SE_MAX];
     uint8_t  response_count;
+
     uint8_t  inner_client_ttl, inner_server_ttl;
     uint8_t  outer_client_ttl, outer_server_ttl;
 };

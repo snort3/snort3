@@ -1,5 +1,4 @@
 
-
 add_library(output_states
     out_csv.cc
     out_fast.cc
@@ -15,6 +14,6 @@ add_library(output_states
 )
 
 target_link_libraries( output_states
-    util
+    snort2lua_helpers
     conversion_data
 )

@@ -1,4 +1,3 @@
-
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 ** Copyright (C) 2005-2013 Sourcefire, Inc.
@@ -29,20 +28,23 @@
 #include "protocols/packet.h"
 #include "snort.h"
 #include "utils/util.h"
+#include "sfip/sf_ip.h"
+#include "protocols/icmp4.h"
+#include "protocols/icmp6.h"
 
 //-------------------------------------------------------------------------
 // init foo
 //-------------------------------------------------------------------------
 
 inline void FlowKey::init4(
-    snort_ip_p srcIP, uint16_t srcPort,
-    snort_ip_p dstIP, uint16_t dstPort,
-    char proto, uint32_t mplsId, bool order)
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
+    uint8_t proto, uint32_t mplsId, bool order)
 {
-    uint32_t *src;
-    uint32_t *dst;
+    const uint32_t *src;
+    const uint32_t *dst;
 
-    if ( proto == IPPROTO_ICMP )
+    if ( proto ==  IPPROTO_ICMP )
     {
         if (srcPort == ICMP_ECHOREPLY)
         {
@@ -89,19 +91,19 @@ inline void FlowKey::init4(
         port_h = srcPort;
     }
     if (ScMplsOverlappingIp() &&
-        ipv4::isPrivateIP(*src) && ipv4::isPrivateIP(*dst))
+        ip::isPrivateIP(*src) && ip::isPrivateIP(*dst))
         mplsLabel = mplsId;
     else
     	mplsLabel = 0;
 }
 
 inline void FlowKey::init6(
-    snort_ip_p srcIP, uint16_t srcPort,
-    snort_ip_p dstIP, uint16_t dstPort,
-    char proto, uint32_t mplsId, bool order)
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
+    uint8_t proto, uint32_t mplsId, bool order)
 {
-    sfip_t *src;
-    sfip_t *dst;
+    const sfip_t *src;
+    const sfip_t *dst;
 
     if ( proto == IPPROTO_ICMP )
     {
@@ -117,9 +119,9 @@ inline void FlowKey::init6(
     }
     else if ( proto == IPPROTO_ICMPV6 )
     {
-        if (srcPort == icmp6::Icmp6Types::REPLY)
+        if (srcPort == icmp::Icmp6Types::REPLY_6)
         {
-            dstPort = icmp6::Icmp6Types::ECHO; /* Treat ICMPv6 echo reply the same as request */
+            dstPort = icmp::Icmp6Types::ECHO_6; /* Treat ICMPv6 echo reply the same as request */
             srcPort = 0;
         }
         else /* otherwise, every ICMP type gets different key */
@@ -167,31 +169,16 @@ inline void FlowKey::init6(
     	mplsLabel = 0;
 }
 
-void FlowKey::init(
-    snort_ip_p srcIP, uint16_t srcPort,
-    snort_ip_p dstIP, uint16_t dstPort,
-    char proto, uint16_t vlan, 
-    uint32_t mplsId, uint16_t addrSpaceId)
+void FlowKey::init_vlan(uint16_t vlan)
 {
-    /* Because the key is going to be used for hash lookups,
-     * the lower of the values of the IP address field is
-     * stored in the ip_l and the port for that ip is
-     * stored in port_l.
-     */
-    if (IS_IP4(srcIP))
-        init4(srcIP, srcPort, dstIP, dstPort, proto, mplsId);
-
-    else
-        init6(srcIP, srcPort, dstIP, dstPort, proto, mplsId);
-
-    protocol = proto;
-    version = 0;
-
     if (!ScVlanAgnostic())
         vlan_tag = vlan;
     else
         vlan_tag = 0;
+}
 
+void FlowKey::init_address_space(uint16_t addrSpaceId)
+{
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     if (!ScAddressSpaceAgnostic())
         addressSpaceId = addrSpaceId;
@@ -204,9 +191,41 @@ void FlowKey::init(
     addressSpaceIdPad1 = 0;
 }
 
+void FlowKey::init_mpls(uint32_t mplsId)
+{
+    if (ScMplsOverlappingIp())
+        mplsLabel = mplsId;
+    else
+    	mplsLabel = 0;
+}
+
 void FlowKey::init(
-    snort_ip_p srcIP, snort_ip_p dstIP, 
-    uint32_t id, char proto, uint16_t vlan, 
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
+    uint8_t proto, uint16_t vlan,
+    uint32_t mplsId, uint16_t addrSpaceId)
+{
+    /* Because the key is going to be used for hash lookups,
+     * the lower of the values of the IP address field is
+     * stored in the ip_l and the port for that ip is
+     * stored in port_l.
+     */
+    if (srcIP->is_ip4())
+        init4(srcIP, srcPort, dstIP, dstPort, proto, mplsId);
+
+    else
+        init6(srcIP, srcPort, dstIP, dstPort, proto, mplsId);
+
+    protocol = proto;
+    version = 0;
+
+    init_vlan(vlan);
+    init_address_space(addrSpaceId);
+}
+
+void FlowKey::init(
+    const sfip_t *srcIP, const sfip_t *dstIP,
+    uint32_t id, uint8_t proto, uint16_t vlan,
     uint32_t mplsId, uint16_t addrSpaceId)
 {
     // to avoid confusing 2 different datagrams or confusing a datagram
@@ -214,7 +233,7 @@ void FlowKey::init(
     uint16_t srcPort = id & 0xFFFF;
     uint16_t dstPort = id >> 16;
 
-    if (IS_IP4(srcIP))
+    if (srcIP->is_ip4())
     {
         version = 4;
         protocol = proto;
@@ -227,21 +246,8 @@ void FlowKey::init(
         init6(srcIP, srcPort, dstIP, dstPort, proto, mplsId, false);
     }
 
-    if (!ScVlanAgnostic())
-        vlan_tag = vlan;
-    else
-        vlan_tag = 0;
-
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-    if (!ScAddressSpaceAgnostic())
-        addressSpaceId = addrSpaceId;
-    else
-        addressSpaceId = 0;
-#else
-    addressSpaceId = 0;
-    UNUSED(addrSpaceId);
-#endif
-    addressSpaceIdPad1 = 0;
+    init_vlan(vlan);
+    init_address_space(addrSpaceId);
 }
 
 //-------------------------------------------------------------------------

@@ -27,7 +27,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#endif
+
 #include <check.h>
+
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #include "snort_types.h"
 #include "snort.h"
@@ -37,6 +48,7 @@
 #include "parser/parse_ip.h"
 #include "filters/sfrf.h"
 #include "utils/util.h"
+#include "hash/sfghash.h"
 
 //---------------------------------------------------------------
 
@@ -946,12 +958,12 @@ static int EventTest (EventData* p) {
     // this is the only acceptable public value for op
     SFRF_COUNT_OPERATION op = SFRF_COUNT_INCREMENT;
 
-    snort_ip sip, dip;
+    sfip_t sip, dip;
     sfip_pton(p->sip, &sip);
     sfip_pton(p->dip, &dip);
 
     status = SFRF_TestThreshold(
-        &rfc, p->gid, p->sid, IP_ARG(sip), IP_ARG(dip), curtime, op);
+        &rfc, p->gid, p->sid, &sip, &dip, curtime, op);
 
     if ( status >= RULE_TYPE__MAX ) status -= RULE_TYPE__MAX;
 

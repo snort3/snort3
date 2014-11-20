@@ -465,7 +465,7 @@ static inline int sfRotateFlowIPStatsFile(SFPERF *sfPerf)
 void sfPerformanceStats(SFPERF *sfPerf, Packet *p)
 {
     // Update stats first since other stats from various places like frag3 and
-    // stream5 have been added.
+    // stream have been added.
     UpdatePerfStats(sfPerf, p);
 
     if ((sfPerf->perf_flags & SFPERF_TIME_COUNT) && !PacketIsRebuilt(p))
@@ -479,7 +479,7 @@ void sfPerformanceStats(SFPERF *sfPerf, Packet *p)
             if (CheckSampleInterval(sfPerf, p))
             {
                 cnt = 0;
-                perfmon_config = sfPerf;  // FIXIT sfPerf isn't propagated far enough
+                perfmon_config = sfPerf;  // FIXIT-L sfPerf isn't propagated far enough
 
                 if (!(sfPerf->perf_flags & SFPERF_SUMMARY_BASE))
                 {
@@ -552,7 +552,7 @@ static bool CheckSampleInterval(SFPERF *sfPerf, Packet *p)
 
 void InitPerfStats(SFPERF *sfPerf)
 {
-    perfmon_config = sfPerf;  // FIXIT sfPerf isn't propagated far enough
+    perfmon_config = sfPerf;  // FIXIT-L sfPerf isn't propagated far enough
 
     if (sfPerf->perf_flags & SFPERF_BASE)
         InitBaseStats(&sfBase);
@@ -573,7 +573,7 @@ void InitPerfStats(SFPERF *sfPerf)
 
 static void UpdatePerfStats(SFPERF *sfPerf, Packet *p)
 {
-    perfmon_config = sfPerf;  // FIXIT sfPerf isn't propagated far enough
+    perfmon_config = sfPerf;  // FIXIT-L sfPerf isn't propagated far enough
     bool rebuilt = PacketIsRebuilt(p);
 
     if (sfPerf->perf_flags & SFPERF_BASE)
@@ -582,16 +582,16 @@ static void UpdatePerfStats(SFPERF *sfPerf, Packet *p)
     if ((sfPerf->perf_flags & SFPERF_FLOW) && !rebuilt)
         UpdateFlowStats(&sfFlow, p);
 
-    if ((sfPerf->perf_flags & SFPERF_FLOWIP) && IsIP(p) && !rebuilt)
+    if ((sfPerf->perf_flags & SFPERF_FLOWIP) && p->has_ip() && !rebuilt)
     {
         SFSType type = SFS_TYPE_OTHER;
 
-        if (p->tcph != NULL)
+        if (p->ptrs.tcph != NULL)
             type = SFS_TYPE_TCP;
-        else if (p->udph != NULL)
+        else if (p->ptrs.udph != NULL)
             type = SFS_TYPE_UDP;
 
-        UpdateFlowIPStats(&sfFlow, GET_SRC_IP(p), GET_DST_IP(p), p->pkth->caplen, type);
+        UpdateFlowIPStats(&sfFlow, p->ptrs.ip_api.get_src(), p->ptrs.ip_api.get_dst(), p->pkth->caplen, type);
     }
 }
 
@@ -671,7 +671,7 @@ void sfPerfStatsSummary(SFPERF *sfPerf)
     if (sfPerf == NULL)
         return;
 
-    perfmon_config = sfPerf;  // FIXIT sfPerf isn't propagated far enough
+    perfmon_config = sfPerf;  // FIXIT-L sfPerf isn't propagated far enough
 
     if (sfPerf->perf_flags & SFPERF_SUMMARY_BASE)
         sfProcessBaseStats(sfPerf);

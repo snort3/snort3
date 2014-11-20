@@ -26,17 +26,9 @@
 #ifndef SFTARGET_PROTOCOL_REFERENCE_H
 #define SFTARGET_PROTOCOL_REFERENCE_H
 
-#include "protocols/packet.h"
-#include "util.h"
-#include "sftarget_data.h"
+#include "snort_types.h"
 
 #define MAX_PROTOCOL_ORDINAL 8192
-
-typedef struct _SFTargetProtocolReference
-{
-    char name[SFAT_BUFSZ];
-    int16_t ordinal;
-} SFTargetProtocolReference;
 
 extern int16_t protocolReferenceTCP;
 extern int16_t protocolReferenceUDP;
@@ -44,9 +36,12 @@ extern int16_t protocolReferenceICMP;
 
 void InitializeProtocolReferenceTable(void);
 void FreeProtoocolReferenceTable(void);
+
+const char* get_protocol_name(uint16_t id);
 int16_t AddProtocolReference(const char *protocol);
-int16_t FindProtocolReference(const char *protocol);
+SO_PUBLIC int16_t FindProtocolReference(const char *protocol);
 
-int16_t GetProtocolReference(Packet *p);
+int16_t GetProtocolReference(struct Packet*);
 
-#endif /* SFTARGET_PROTOCOL_REFERENCE_H */
+#endif
+

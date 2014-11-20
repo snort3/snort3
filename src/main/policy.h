@@ -24,14 +24,17 @@
 #include <string>
 #include <vector>
 
-#include "snort_types.h"
-#include "sfip/sf_ipvar.h"
-#include "utils/sfportobject.h"
-#include "sfip/ipv6_port.h"
+#include "main/snort_types.h"
 
+struct PortTable;
+struct vartable_t;
+struct sfip_var_t;
 typedef unsigned int PolicyId;
 
-// FIXIT split into separate modules
+// defined in sfportobject.h
+typedef struct SFGHASH PortVarTable;
+
+// FIXIT-L split into separate headers
 
 //-------------------------------------------------------------------------
 // traffic stuff
@@ -52,8 +55,8 @@ enum DecodeEventFlag
     DECODE_EVENT_FLAG__DEFAULT = 0x00000001
 };
 
-// Snort ac-split creates the nap
-// Snort++ breaks that into network and inspection
+// Snort ac-split creates the nap (network analysis policy)
+// Snort++ breaks the nap into network and inspection
 struct NetworkPolicy
 {
 public:
@@ -69,6 +72,7 @@ public:
 
     uint32_t checksum_eval;
     uint32_t checksum_drop;
+    uint32_t normal_mask;
 
     bool decoder_drop;
 };
@@ -140,8 +144,10 @@ public:
 };
 
 //-------------------------------------------------------------------------
-// binding stuff - FIXIT tbd
+// binding stuff
 //-------------------------------------------------------------------------
+
+class Shell;
 
 class PolicyMap
 {
@@ -149,20 +155,34 @@ public:
     PolicyMap();
     ~PolicyMap();
 
-    InspectionPolicy* get_inspection_policy()
-    { return inspection_policy[0]; };
+    unsigned add_shell(Shell*);
 
-    IpsPolicy* get_ips_policy()
-    { return ips_policy[0]; };
-    
-    NetworkPolicy* get_network_policy()
-    { return network_policy[0]; };
+    Shell* get_shell(unsigned i = 0)
+    { return i < shells.size() ? shells[i] : nullptr; };
 
-public:
+public:  // FIXIT-H make impl private
+    std::vector<Shell*> shells;
     std::vector<InspectionPolicy*> inspection_policy;
     std::vector<IpsPolicy*> ips_policy;
     std::vector<NetworkPolicy*> network_policy;
 };
+
+//-------------------------------------------------------------------------
+// navigator stuff
+//-------------------------------------------------------------------------
+
+// FIXIT-L may be inlined at some point; on lockdown for now
+// FIXIT-L SO_PUBLIC requierd because ScInlineMode(), etc. uses the function
+SO_PUBLIC NetworkPolicy* get_network_policy();
+SO_PUBLIC InspectionPolicy* get_inspection_policy();
+SO_PUBLIC IpsPolicy* get_ips_policy();
+
+void set_network_policy(NetworkPolicy*);
+void set_inspection_policy(InspectionPolicy*);
+void set_ips_policy(IpsPolicy*);
+
+void set_policies(struct SnortConfig*, unsigned = 0);
+void set_default_policy();
 
 #endif
 

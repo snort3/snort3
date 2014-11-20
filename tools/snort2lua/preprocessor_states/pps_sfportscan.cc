@@ -1,30 +1,29 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // pps_sfportscan.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
-#include "utils/s2l_util.h"
+#include "helpers/converter.h"
+#include "helpers/s2l_util.h"
 
 namespace preprocessors
 {
@@ -34,7 +33,7 @@ namespace {
 class PortScan : public ConversionState
 {
 public:
-    PortScan(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    PortScan(Converter& c) : ConversionState(c) {};
     virtual ~PortScan() {};
     virtual bool convert(std::istringstream& data_stream);
 
@@ -67,7 +66,7 @@ bool PortScan::parse_ip_list(std::string list_name, std::istringstream& data_str
         prev = prev + ' ' + elem;
 
     prev = prev + "]";
-    return ld->add_option_to_table(list_name, prev);
+    return table_api.add_option(list_name, prev);
 }
 
 bool PortScan::parse_list(std::string list_name, std::istringstream& data_stream)
@@ -79,7 +78,7 @@ bool PortScan::parse_list(std::string list_name, std::istringstream& data_stream
         return false;
 
     while (data_stream >> elem && elem != "}")
-        retval && ld->add_list_to_table(list_name, elem) && retval;
+        retval && table_api.add_list(list_name, elem) && retval;
 
     return retval;
 }
@@ -93,7 +92,7 @@ bool PortScan::parse_option(std::string list_name, std::istringstream& data_stre
         return false;
 
     while (data_stream >> elem && elem != "}")
-        retval && ld->add_option_to_table(list_name, elem) && retval;
+        retval && table_api.add_option(list_name, elem) && retval;
 
     return retval;
 }
@@ -109,11 +108,11 @@ bool PortScan::add_portscan_global_option(std::string name, std::istringstream& 
     if (!(data_stream >> val))
         return false;
 
-    ld->close_table();
-    ld->open_table("port_scan_global");
-    bool retval = ld->add_option_to_table(name, val);
-    ld->close_table();
-    ld->open_table("port_scan");
+    table_api.close_table();
+    table_api.open_table("port_scan_global");
+    bool retval = table_api.add_option(name, val);
+    table_api.close_table();
+    table_api.open_table("port_scan");
 
     if (!(data_stream >> garbage) || (garbage != "}"))
         return false;
@@ -126,7 +125,7 @@ bool PortScan::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
-    ld->open_table("port_scan");
+    table_api.open_table("port_scan");
 
     while(data_stream >> keyword)
     {
@@ -145,19 +144,19 @@ bool PortScan::convert(std::istringstream& data_stream)
             tmpval = parse_ip_list("ignore_scanned", data_stream);
 
         else if(!keyword.compare("include_midstream"))
-            tmpval = ld->add_option_to_table("include_midstream", true);
+            tmpval = table_api.add_option("include_midstream", true);
 
         else if(!keyword.compare("disabled"))
-            ld->add_deleted_comment("disabled");
+            table_api.add_deleted_comment("disabled");
 
         else if(!keyword.compare("detect_ack_scans"))
-            ld->add_deleted_comment("detect_ack_scans");
+            table_api.add_deleted_comment("detect_ack_scans");
 
         else if(!keyword.compare("logfile"))
         {
             if (!util::get_string(data_stream, keyword, "}"))
                 tmpval = false;
-            ld->add_deleted_comment("logfile");
+            table_api.add_deleted_comment("logfile");
         }
 
         else if(!keyword.compare("memcap"))
@@ -165,13 +164,13 @@ bool PortScan::convert(std::istringstream& data_stream)
 
         else if(!keyword.compare("proto"))
         {
-            ld->add_diff_option_comment("proto", "protos");
+            table_api.add_diff_option_comment("proto", "protos");
             retval = parse_curly_bracket_list("protos", data_stream) && retval;
         }
 
         else if(!keyword.compare("scan_type"))
         {
-            ld->add_diff_option_comment("scan_type", "scan_types");
+            table_api.add_diff_option_comment("scan_type", "scan_types");
             tmpval = parse_curly_bracket_list("scan_types", data_stream) && retval;
         }
 
@@ -183,7 +182,7 @@ bool PortScan::convert(std::istringstream& data_stream)
     }
 
 
-    ld->close_table(); // unecessary since the state will be reset
+    table_api.close_table(); // unecessary since the state will be reset
     return retval;
 }
 
@@ -192,9 +191,9 @@ bool PortScan::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor(Converter& c)
 {
-    return new PortScan(cv, ld);
+    return new PortScan(c);
 }
 
 static const ConvertMap preprocessor_sfportscan = 

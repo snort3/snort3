@@ -49,7 +49,6 @@
 #include "ips_options/ips_flowbits.h"
 #include "ips_options/ips_content.h"
 #include "ips_options/ips_pcre.h"
-#include "ips_options/ips_replace.h"
 #include "fpdetect.h"
 #include "ppm.h"
 #include "profiler.h"
@@ -58,7 +57,8 @@
 #include "framework/ips_option.h"
 #include "framework/cursor.h"
 #include "managers/ips_manager.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
+#include "detection/detection_defines.h"
 
 typedef struct _detection_option_key
 {
@@ -315,7 +315,7 @@ SFXHASH * DetectionTreeHashTableNew(void)
 }
 
 #ifdef DEBUG_OPTION_TREE
-static const char *option_type_str[] =
+static const char* const option_type_str[] =
 {
     "RULE_OPTION_TYPE_LEAF_NODE",
     "RULE_OPTION_TYPE_CONTENT",
@@ -383,18 +383,22 @@ int detection_option_node_evaluate(
     detection_option_tree_node_t *node, detection_option_eval_data_t *eval_data,
     Cursor& orig_cursor)
 {
-    int i, result = 0; //, prior_result = 0;
+    int i, result = 0;
     int rval = DETECTION_OPTION_NO_MATCH;
     char tmp_noalert_flag = 0;
     Cursor cursor = orig_cursor;
-    PatternMatchData* content_data;
-    PcreData* pcre_data;
     char continue_loop = 1;
     char flowbits_setoperation = 0;
     int loop_count = 0;
     uint32_t tmp_byte_extract_vars[NUM_BYTE_EXTRACT_VARS];
-    uint64_t cur_eval_pkt_count = (rule_eval_pkt_count + (PacketManager::get_rebuilt_packet_count()));
+    uint64_t cur_eval_pkt_count = 
+        (rule_eval_pkt_count + (PacketManager::get_rebuilt_packet_count()));
     NODE_PROFILE_VARS;
+
+    // FIXIT-P these are initialized only to silence -O2 warnings
+    // they are set before use below
+    PatternMatchData* content_data = nullptr;
+    PcreData* pcre_data = nullptr;
 
     if (!node || !eval_data || !eval_data->p || !eval_data->pomd)
         return 0;
@@ -478,7 +482,8 @@ int detection_option_node_evaluate(
 
                         if (otn->sigInfo.num_services && check_ports) /* none of the services match */
                         {
-                            DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "[**] SID %d not matched because of service mismatch (%d!=%d [**]\n",
+                            DEBUG_WRAP(DebugMessage(DEBUG_DETECT, 
+                                "[**] SID %d not matched because of service mismatch (%d!=%d [**]\n",
                                 otn->sigInfo.id,
                                 eval_data->p->application_protocol_ordinal,
                                 otn->sigInfo.services[0].service_ordinal););
@@ -495,7 +500,7 @@ int detection_option_node_evaluate(
                         if ( !otn->detection_filter ||
                              !detection_filter_test(
                                  otn->detection_filter,
-                                 GET_SRC_IP(eval_data->p), GET_DST_IP(eval_data->p),
+                                 eval_data->p->ptrs.ip_api.get_src(), eval_data->p->ptrs.ip_api.get_dst(),
                                  eval_data->p->pkth->ts.tv_sec) )
                         {
 #ifdef PERF_PROFILING
@@ -514,7 +519,6 @@ int detection_option_node_evaluate(
             case RULE_OPTION_TYPE_CONTENT:
                 if (node->evaluate)
                 {
-#if 0
                     /* This will be set in the fast pattern matcher if we found
                      * a content and the rule option specifies not that
                      * content. Essentially we've already evaluated this rule
@@ -535,7 +539,6 @@ int detection_option_node_evaluate(
                             break;
                         }
                     }
-#endif
                     rval = node->evaluate(node->option_data, cursor, eval_data->p);
                 }
                 break;
@@ -723,20 +726,6 @@ int detection_option_node_evaluate(
             //    node->children[i]->result;
         }
 
-#if 0
-        // FIXIT replace is broken now :(
-        if (result - prior_result > 0
-            && node->option_type == RULE_OPTION_TYPE_CONTENT
-            && Replace_OffsetStored(content_data) && ScInlineMode())
-        {
-            // FIXIT queuing replacements here is premature
-            // should be done if / when rule actually fires
-            // and at that point, the change can be applied
-            Replace_QueueChange(content_data);
-            prior_result = result;
-        }
-#endif
-
         NODE_PROFILE_TMPSTART(node);
 
         if (rval == DETECTION_OPTION_NO_ALERT)
@@ -864,7 +853,7 @@ static void detection_option_node_update_otn_stats(
     if (node->option_type == RULE_OPTION_TYPE_LEAF_NODE)
     {
         /* Update stats for this otn */
-        // FIXIT should be sum of instances (only called from main thread)
+        // FIXIT-H should be sum of instances (only called from main thread)
         OptTreeNode *otn = (OptTreeNode *)node->option_data;
         OtnState* state = otn->state + get_instance_id();
         state->ticks += local_stats.ticks;

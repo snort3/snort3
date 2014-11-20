@@ -32,8 +32,11 @@
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+
+#ifdef BUILD_SHELL
 #include <sys/socket.h>
 #include <netinet/in.h>
+#endif
 
 #include <string>
 #include <thread>
@@ -42,11 +45,13 @@ using namespace std;
 #include "snort.h"
 #include "helpers/process.h"
 #include "main/snort_config.h"
+#include "main/snort_module.h"
+#include "main/shell.h"
+#include "main/analyzer.h"
 #include "framework/module.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/inspector_manager.h"
-#include "managers/shell.h"
 #include "util.h"
 #include "parser/parser.h"
 #include "profiler.h"
@@ -55,7 +60,6 @@ using namespace std;
 #include "control/idle_processing.h"
 #include "target_based/sftarget_reader.h"
 #include "flow/flow_control.h"
-#include "main/analyzer.h"
 #include "helpers/swapper.h"
 #include "time/periodic.h"
 
@@ -63,7 +67,7 @@ using namespace std;
 #include "test/unit_test.h"
 #endif
 
-#include "framework/so_rule.h"
+//#include "framework/so_rule.h"
 
 //-------------------------------------------------------------------------
 
@@ -72,9 +76,27 @@ static Swapper* swapper = NULL;
 static int exit_logged = 0;
 static bool paused = false;
 
+static bool pause_enabled = false;
+#ifdef BUILD_SHELL
+static bool shell_enabled = false;
+#endif
+
 const struct timespec main_sleep = { 0, 100000000 }; // 0.1 sec
 
 static const char* prompt = "o\")~ ";
+
+const char* get_prompt()
+{ return prompt; }
+
+static bool use_shell(SnortConfig* sc)
+{
+#ifdef BUILD_SHELL
+    return ( sc->run_flags & RUN_FLAG__SHELL );
+#else
+    UNUSED(sc);
+    return false;
+#endif
+}
 
 //-------------------------------------------------------------------------
 // swap foo
@@ -154,7 +176,7 @@ void Request::set(int f, const char* s)
     buf[sizeof(buf)-1] = '\0';
 }
 
-// FIXIT ignoring partial reads for now
+// FIXIT-L ignoring partial reads for now
 // using simple text for now so can use telnet as client
 // but must parse commands out of stream (ending with \n)
 void Request::read(int f)
@@ -167,8 +189,8 @@ void Request::read(int f)
     while ( n-- && isspace(buf[n]) );
 }
 
-// FIXIT supporting only simple strings for now
-// should support var args formats
+// FIXIT-L supporting only simple strings for now
+// could support var args formats
 void Request::respond(const char* s) const
 {
     if ( fd < 1 )
@@ -177,12 +199,15 @@ void Request::respond(const char* s) const
         return;
     }
     if ( write(fd, s, strlen(s)) )
-        return;  // FIXIT count errors?
+        return;  // FIXIT-L count errors?
 }
 
+// FIXIT-L would like to flush prompt w/o \n
 void Request::show_prompt() const
 {
-    respond(prompt);
+    string s = prompt;
+    s += "\n";
+    respond(s.c_str());
 }
 
 static Request request;
@@ -254,13 +279,6 @@ static void broadcast(AnalyzerCommand ac)
         pigs[idx].execute(ac);
 }
 
-int main_dump_plugins(lua_State*)
-{
-    ModuleManager::dump_modules();
-    PluginManager::dump_plugins();
-    return 0;
-}
-
 int main_dump_stats(lua_State*)
 {
     DropStats();
@@ -283,7 +301,7 @@ int main_reload_config(lua_State*)
     }
     request.respond(".. reloading configuration\n");
     SnortConfig* old = snort_conf;
-    SnortConfig* sc = reload_config();
+    SnortConfig* sc = get_reload_config();
 
     if ( !sc )
     {
@@ -291,6 +309,9 @@ int main_reload_config(lua_State*)
         return 0;
     }
     request.respond(".. swapping configuration\n");
+    snort_conf = sc;
+    proc_stats.conf_reloads++;
+
     swapper = new Swapper(old, sc);
 
     for ( unsigned idx = 0; idx < max_pigs; ++idx )
@@ -299,14 +320,14 @@ int main_reload_config(lua_State*)
     return 0;
 }
 
-int main_reload_attributes(lua_State*)
+int main_reload_hosts(lua_State*)
 {
     if ( swapper )
     {
         request.respond("== reload pending; retry\n");
         return 0;
     }
-    request.respond(".. reloading attribute table\n");
+    request.respond(".. reloading hosts table\n");
     tTargetBasedConfig* old = SFAT_GetConfig();
     tTargetBasedConfig* tc = SFAT_Swap();
 
@@ -333,8 +354,6 @@ int main_process(lua_State* L)
     }
     request.respond("== queuing pcap\n");
     Trough_Multi(SOURCE_LIST, f);
-    broadcast(AC_PAUSE);
-    paused = true;
     return 0;
 }
 
@@ -354,6 +373,22 @@ int main_resume(lua_State*)
     return 0;
 }
 
+#ifdef BUILD_SHELL
+int main_detach(lua_State*)
+{
+    shell_enabled = false;
+    request.respond("== detaching\n");
+    return 0;
+}
+
+int main_dump_plugins(lua_State*)
+{
+    ModuleManager::dump_modules();
+    PluginManager::dump_plugins();
+    return 0;
+}
+#endif
+
 int main_quit(lua_State*)
 {
     exit_logged = 1;
@@ -364,21 +399,17 @@ int main_quit(lua_State*)
 
 int main_help(lua_State*)
 {
-#if 0
-    // FIXIT this should be generic for all modules
-    RequestMap* map = cmd_set;
+    const Command* cmd = get_snort_module()->get_commands();
 
-    while ( map->name )
+    while ( cmd->name )
     {
-        string info = map->name;
+        string info = cmd->name;
         info += ": ";
-        info += map->help;
+        info += cmd->help;
         info += "\n";
         request.respond(info.c_str());
-        ++map;
+        ++cmd;
     }
-    return 0;
-#endif
     return 0;
 }
 
@@ -399,16 +430,22 @@ static int signal_check()
     {
     case PIG_SIG_QUIT:
     case PIG_SIG_TERM:
-    case PIG_SIG_INT:
         main_quit();
+        break;
+
+    case PIG_SIG_INT:
+        if ( paused )
+            main_resume(nullptr);
+        else
+            main_quit();
         break;
 
     case PIG_SIG_RELOAD_CONFIG:
         main_reload_config();
         break;
 
-    case PIG_SIG_RELOAD_ATTRIBUTES:
-        main_reload_attributes();
+    case PIG_SIG_RELOAD_HOSTS:
+        main_reload_hosts();
         break;
 
     case PIG_SIG_DUMP_STATS:
@@ -425,7 +462,7 @@ static int signal_check()
     return 1;
 }
 
-// FIXIT return true if something was done to avoid sleeping
+// FIXIT-L return true if something was done to avoid sleeping
 static bool house_keeping()
 {
     signal_check();
@@ -443,8 +480,11 @@ static bool house_keeping()
 // socket foo
 //-------------------------------------------------------------------------
 
-// FIXIT make these non-blocking
-// FIXIT allow at least 2 remote controls
+#ifdef BUILD_SHELL
+// FIXIT-M make these non-blocking
+// FIXIT-M allow at least 2 remote controls
+// FIXIT-M bind to configured ip including INADDR_ANY
+// (default is loopback if enabled)
 static int listener = -1;
 static int remote_control = -1;
 
@@ -456,21 +496,34 @@ static int socket_init()
     listener = socket(AF_INET, SOCK_STREAM, 0);
 
     if (listener < 0) 
+    {
+        FatalError("socket failed: %s\n", strerror(errno));
         return -2;
+    }
+
+    // FIXIT-M want to disable time wait
+    int on = 1;
+    setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
 
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_addr.s_addr = htonl(0x7F000001);
     addr.sin_port = htons(snort_conf->remote_control);
 
     if ( ::bind(listener, (struct sockaddr*)&addr, sizeof(addr)) < 0 ) 
+    {
+        FatalError("bind failed: %s\n", strerror(errno));
         return -3;
+    }
 
-    // FIXIT configure max conns
+    // FIXIT-M configure max conns
     if ( listen(listener, 5) < 0 )
+    {
+        FatalError("listen failed: %s\n", strerror(errno));
         return -4;
+    }
 
     return 0;
 }
@@ -498,8 +551,22 @@ static int socket_conn()
     if ( remote_control < 0 ) 
         return -1;
 
-    // FIXIT authenticate, use ssl ?
+    // FIXIT-L authenticate, use ssl ?
     return 0;
+}
+
+static void shell(int fd)
+{
+    string rsp;
+    request.read(fd);
+
+    SnortConfig* sc = snort_conf;
+    sc->policy_map->get_shell()->execute(request.get(), rsp);
+
+    if ( rsp.size() )
+        request.respond(rsp.c_str());
+
+    request.show_prompt();
 }
 
 static bool service_users()
@@ -508,7 +575,7 @@ static bool service_users()
     FD_ZERO(&inputs);
     int max_fd = -1;
 
-    if ( snort_conf->run_flags & RUN_FLAG__SHELL )
+    if ( shell_enabled )
     {
         FD_SET(STDIN_FILENO, &inputs);
         max_fd = STDIN_FILENO;
@@ -534,17 +601,13 @@ static bool service_users()
     {
         if ( FD_ISSET(STDIN_FILENO, &inputs) )
         {
-            request.read(STDIN_FILENO);
-            Shell::execute(request.get());
-            request.show_prompt();
+            shell(STDIN_FILENO);
             proc_stats.local_commands++;
             return true;
         }
         else if ( remote_control > 0 && FD_ISSET(remote_control, &inputs) )
         {
-            request.read(remote_control);
-            Shell::execute(request.get());
-            request.show_prompt();
+            shell(remote_control);
             proc_stats.remote_commands++;
             return true;
         }
@@ -560,6 +623,7 @@ static bool service_users()
     }
     return false;
 }
+#endif
 
 static bool check_response()
 {
@@ -582,8 +646,10 @@ static bool check_response()
 
 static void service_check()
 {
+#ifdef BUILD_SHELL
     if ( service_users() )
         return;
+#endif
 
     if ( check_response() )
         return;
@@ -604,48 +670,73 @@ static bool set_mode()
     if ( unit_test_enabled() )
         exit(unit_test());
 #endif
-    unsigned n = get_parse_errors();
 
-    if ( n )
+    if ( int k = get_parse_errors() )
     {
-        ParseAbort("%d config errors found", n);
+        FatalError("see prior %d errors\n", k);
         return false;
     }
-    if ( ScTestMode() ||
-        (!Trough_GetQCount() && !(snort_conf->run_flags & RUN_FLAG__SHELL)) )
+    if ( ScConfErrorOut() )
     {
-        LogMessage("\nSnort successfully validated the configuration!\n");
+        if ( int k = get_parse_warnings() )
+        {
+            FatalError("see prior %d warnings\n", k);
+            return false;
+        }
+    }
+
+    if ( ScTestMode() ||
+        (!Trough_GetQCount() && !use_shell(snort_conf)) )
+    {
+        LogMessage("\nSnort successfully validated the configuration.\n");
 
         // force test mode to exit w/o stats
         snort_conf->run_flags |= RUN_FLAG__TEST;
         return false;
     }
 
-    if ( snort_conf->run_flags & RUN_FLAG__SHELL )
+    if ( snort_conf->run_flags & RUN_FLAG__PAUSE )
+    {
+        LogMessage("Paused; resume to start packet processing\n");
+        paused = pause_enabled = true;
+    }
+    else
+        LogMessage("Commencing packet processing\n");
+
+#ifdef BUILD_SHELL
+    if ( use_shell(snort_conf) )
     {
         LogMessage("Entering command shell\n");
+        shell_enabled = true;
         request.set(STDOUT_FILENO, "");
         request.show_prompt();
     }
-
-    if ( snort_conf->run_flags & RUN_FLAG__PAUSE )
-        paused = true;
-    else
-        LogMessage("Commencing packet processing\n");
+#endif
 
     return true;
 }
 
 static inline bool dont_stop()
 {
-    return ( Trough_Next() || snort_conf->run_flags & RUN_FLAG__SHELL );
+    if ( paused || Trough_Next() )
+        return true;
+
+    if ( pause_enabled )
+    {
+        LogMessage("== pausing\n");
+        pause_enabled = false;
+        paused = true;
+        return true;
+    }
+    return false;
 }
 
 static void main_loop()
 {
     unsigned idx = max_pigs, swine = 0;
+    init_main_thread_sig();
 
-    while ( !exit_logged && (dont_stop() || swine) )
+    while ( !exit_logged && (swine || dont_stop()) )
     {
         if ( ++idx >= max_pigs )
             idx = 0;
@@ -654,12 +745,15 @@ static void main_loop()
         {
             Pig& pig = pigs[idx];
 
-            if ( pig.analyzer && pig.analyzer->is_done() )
+            if ( pig.analyzer )
             {
-                pig.stop(idx);
-                --swine;
+                if ( pig.analyzer->is_done() )
+                {
+                    pig.stop(idx);
+                    --swine;
+                }
             }
-            if ( !pig.analyzer && Trough_Next() )
+            else if ( Trough_Next() )
             {
                 Swapper* swapper = new Swapper(snort_conf, SFAT_GetConfig());
                 pig.start(idx, Trough_First(), swapper);
@@ -673,17 +767,19 @@ static void main_loop()
 
 static void snort_main()
 {
+#ifdef BUILD_SHELL
     socket_init();
+#endif
     TimeStart();
 
-    max_pigs = snort_conf->max_threads;
+    max_pigs = get_instance_max();
     assert(max_pigs > 0);
 
     pigs = new Pig[max_pigs];
 
     main_loop();
 
-    for ( unsigned idx = 0; pigs && idx < max_pigs; ++idx )
+    for ( unsigned idx = 0; idx < max_pigs; ++idx )
     {
         Pig& pig = pigs[idx];
 
@@ -694,7 +790,9 @@ static void snort_main()
     pigs = nullptr;
 
     TimeStop();
+#ifdef BUILD_SHELL
     socket_term();
+#endif
 }
 
 int main(int argc, char *argv[])

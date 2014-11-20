@@ -37,7 +37,7 @@ struct FlowConfig
 class FlowControl
 {
 public:
-    FlowControl(class Inspector*);
+    FlowControl();
     ~FlowControl();
 
 public:
@@ -57,37 +57,36 @@ public:
 
     void delete_flow(const FlowKey*);
     void delete_flow(Flow*, const char* why);
-    void purge_flows(int proto);
-    void prune_flows(int proto, Packet*);
+    void purge_flows(uint8_t proto);
+    void prune_flows(uint8_t proto, Packet*);
     void timeout_flows(uint32_t flowCount, time_t cur_time);
 
     char expected_flow (Flow*, Packet*);
     bool is_expected(Packet*);
 
     int add_expected(
-        snort_ip* srcIP, uint16_t srcPort,
-        snort_ip* dstIP, uint16_t dstPort,
+        const sfip_t *srcIP, uint16_t srcPort,
+        const sfip_t *dstIP, uint16_t dstPort,
         uint8_t protocol, char direction,
         FlowData*);
 
     int add_expected(
-        snort_ip* srcIP, uint16_t srcPort,
-        snort_ip* dstIP, uint16_t dstPort,
+        const sfip_t *srcIP, uint16_t srcPort,
+        const sfip_t *dstIP, uint16_t dstPort,
         uint8_t protocol, int16_t appId,
         FlowData*);
 
-    uint32_t max_flows(int proto);
-    void get_prunes(int proto, PegCount&);
-    void reset_prunes(int proto);
+    uint32_t max_flows(uint8_t proto);
 
-    PegCount get_flow_count(int proto);
-    void clear_flow_counts();
+    PegCount get_prunes(uint8_t);
+    PegCount get_flows(uint8_t);
+    void clear_counts();
 
 private:
-    class FlowCache* get_cache(int proto);
-    void set_key(FlowKey*, const Packet*);
+    class FlowCache* get_cache(uint8_t);
+    void set_key(FlowKey*, Packet*);
 
-    unsigned process(FlowCache*, Packet*);
+    unsigned process(Flow*, Packet*);
 
 private:
     FlowCache* tcp_cache;
@@ -95,8 +94,17 @@ private:
     FlowCache* icmp_cache;
     FlowCache* ip_cache;
 
+    Flow* tcp_mem;
+    Flow* udp_mem;
+    Flow* icmp_mem;
+    Flow* ip_mem;
+
+    InspectSsnFunc get_tcp;
+    InspectSsnFunc get_udp;
+    InspectSsnFunc get_icmp;
+    InspectSsnFunc get_ip;
+
     class ExpectCache* exp_cache;
-    class Inspector* binder;
 };
 
 #endif

@@ -26,6 +26,7 @@
 #endif
 
 #include "framework/codec.h"
+#include "framework/decode_data.h"
 #include "codecs/codec_events.h"
 
 
@@ -33,7 +34,8 @@ namespace
 {
 
 // yes, macros are necessary. The API and class constructor require different strings.
-#define CD_PIM_NAME "cd_pim"
+#define CD_PIM_NAME "pim"
+#define CD_PIM_HELP "support for protocol independent multicast"
 
 class PimCodec : public Codec
 {
@@ -42,9 +44,8 @@ public:
     ~PimCodec() {};
 
 
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    void get_protocol_ids(std::vector<uint16_t>&) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 
 };
 
@@ -57,13 +58,9 @@ void PimCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(IPPROTO_ID_PIM);
 }
-
-bool PimCodec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len, 
-        Packet* p, uint16_t& /*lyr_len*/, uint16_t& /*next_prot_id*/)
+bool PimCodec::decode(const RawData&, CodecData& codec, DecodeData&)
 {
-    codec_events::decoder_event(p, DECODE_IP_BAD_PROTO);
-    p->data = raw_pkt;
-    p->dsize = (uint16_t)raw_len;
+    codec_events::decoder_event(codec, DECODE_IP_BAD_PROTO);
     return true;
 }
 
@@ -73,14 +70,10 @@ bool PimCodec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new PimCodec();
-}
+{ return new PimCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi pim_api =
@@ -88,6 +81,7 @@ static const CodecApi pim_api =
     {
         PT_CODEC,
         CD_PIM_NAME,
+        CD_PIM_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

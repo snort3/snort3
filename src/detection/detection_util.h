@@ -75,12 +75,12 @@ struct DataBuffer
     unsigned len;
 };
 
-extern THREAD_LOCAL uint32_t http_mask;
-extern THREAD_LOCAL HttpBuffer http_buffer[HTTP_BUFFER_MAX];
-extern const char* http_buffer_name[HTTP_BUFFER_MAX];
+extern SO_PUBLIC THREAD_LOCAL uint32_t http_mask;
+extern SO_PUBLIC THREAD_LOCAL HttpBuffer http_buffer[HTTP_BUFFER_MAX];
+extern SO_PUBLIC const char* http_buffer_name[HTTP_BUFFER_MAX];
 
-extern THREAD_LOCAL DataPointer g_alt_data;
-extern THREAD_LOCAL DataPointer g_file_data;
+extern SO_PUBLIC THREAD_LOCAL DataPointer g_alt_data;
+extern SO_PUBLIC THREAD_LOCAL DataPointer g_file_data;
 
 static inline void ClearHttpBuffers (void)
 {
@@ -152,9 +152,6 @@ static inline void DetectReset()
     g_file_data.len = 0;
     ClearHttpBuffers();
 }
-
-int IsGzipData(Flow*);  // FIXIT these from HI
-int IsJSNormData(Flow*);
 
 #endif
 

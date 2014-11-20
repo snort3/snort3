@@ -1,22 +1,21 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // keywords_api.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "keyword_states/keywords_api.h"
@@ -50,7 +49,8 @@ extern const ConvertMap* reject_map;
 extern const ConvertMap* rule_state_map;
 extern const ConvertMap* sblock_map;
 extern const ConvertMap* sdrop_map;
-extern const ConvertMap* supress_map;
+extern const ConvertMap* suppress_map;
+extern const ConvertMap* threshold_map;
 extern const ConvertMap* var_map;
 
 
@@ -81,10 +81,22 @@ const std::vector<const ConvertMap*> keywords_api =
     rule_state_map,
     sblock_map,
     sdrop_map,
-    supress_map,
+    suppress_map,
+    threshold_map,
     var_map,
 };
 
 
 } // namespace keywords
 
+#if 0
+
+Unconverted keyword ---
+
+
+#define SNORT_CONF_KEYWORD__DYNAMIC_OUTPUT       "dynamicoutput"
+#define SNORT_CONF_KEYWORD__RULE_TYPE            "ruletype"
+
+# define SNORT_CONF_KEYWORD__SIDE_CHANNEL         "sidechannel"
+#define SNORT_CONF_KEYWORD__VERSION              "version"
+#endif

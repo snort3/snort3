@@ -17,10 +17,13 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// token_ring.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 
-#ifndef TOKEN_RING_H
-#define TOKEN_RING_H
+#ifndef PROTOCOLS_TOKEN_RING_H
+#define PROTOCOLS_TOKEN_RING_H
+
+#include <cstdint>
 
 namespace token_ring{
 

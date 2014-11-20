@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_null.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 
@@ -30,10 +31,12 @@
 #include <pcap.h>
 
 
+#define CD_NULL_NAME "null"
+#define CD_NULL_HELP_STR "support for null encapsulation"
+#define CD_NULL_HELP ADD_DLT(CD_NULL_HELP_STR, DLT_NULL)
+
 namespace
 {
-
-#define CD_NULL_NAME "null"
 
 class NullCodec : public Codec
 {
@@ -41,12 +44,8 @@ public:
     NullCodec() : Codec(CD_NULL_NAME){};
     ~NullCodec() {};
 
-
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-
-    virtual void get_data_link_type(std::vector<int>&);
-
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void get_data_link_type(std::vector<int>&) override;
 };
 
 
@@ -67,24 +66,14 @@ static const uint16_t NULL_HDRLEN = 4;
  *
  * Returns: void function
  */
-bool NullCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& raw_len,
-        Packet* /*p*/, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool NullCodec::decode(const RawData& raw, CodecData& data, DecodeData&)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "NULL Packet!\n"); );
-
     /* do a little validation */
-    if(raw_len < NULL_HDRLEN)
-    {
-        if (ScLogVerbose())
-        {
-            ErrorMessage("NULL header length < captured len! (%d bytes)\n",
-                    raw_len);
-        }
+    if(raw.len < NULL_HDRLEN)
         return false;
-    }
 
-    lyr_len = NULL_HDRLEN;
-    next_prot_id = ETHERTYPE_IPV4;
+    data.lyr_len = NULL_HDRLEN;
+    data.next_prot_id = ETHERTYPE_IPV4;
     return true;
 }
 
@@ -98,20 +87,17 @@ void NullCodec::get_data_link_type(std::vector<int>&v)
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new NullCodec();
-}
+{ return new NullCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi null_api =
 {
     {
         PT_CODEC,
         CD_NULL_NAME,
+        CD_NULL_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

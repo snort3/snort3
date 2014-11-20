@@ -29,6 +29,10 @@
 #include "tcp_module.h"
 #include "tcp_session.h"
 
+#include "main/snort.h"
+#include "stream/flush_bucket.h"
+#include "stream/stream_splitter.h"
+
 //-------------------------------------------------------------------------
 // inspector stuff
 //-------------------------------------------------------------------------
@@ -39,10 +43,13 @@ public:
     StreamTcp(StreamTcpConfig*);
     ~StreamTcp();
 
-    int verify_config(SnortConfig*);
-    void show(SnortConfig*);
+    void show(SnortConfig*) override;
+    bool configure(SnortConfig*) override;
 
-    void eval(Packet*);
+    void tinit() override;
+    void tterm() override;
+
+    void eval(Packet*) override;
 
 public:
     StreamTcpConfig* config;
@@ -58,15 +65,26 @@ StreamTcp::~StreamTcp()
     delete config;
 }
 
-int StreamTcp::verify_config(SnortConfig* sc)
-{
-    return Stream5VerifyTcpConfig(sc, config);
-}
-
 void StreamTcp::show(SnortConfig*)
 {
-    if ( config )
-        tcp_show(config);
+    tcp_show(config);
+}
+
+bool StreamTcp::configure(SnortConfig*)
+{
+    StreamSplitter::set_max(config->paf_max);
+    return true;
+}
+
+void StreamTcp::tinit()
+{
+    FlushBucket::set(config->footprint);
+}
+
+void StreamTcp::tterm()
+{
+    // must be done after StreamBase::tterm(); see tcp_tterm()
+    //FlushBucket::clear();
 }
 
 void StreamTcp::eval(Packet*)
@@ -115,6 +133,7 @@ void tcp_tinit()
 void tcp_tterm()
 {
     tcp_sterm();
+    FlushBucket::clear();
 }
 
 static const InspectApi tcp_api =
@@ -122,23 +141,24 @@ static const InspectApi tcp_api =
     {
         PT_INSPECTOR,
         MOD_NAME,
+        MOD_HELP,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor
     },
     IT_STREAM,
-    PROTO_BIT__TCP,
-    nullptr, // buffers
-    nullptr, // service
-    nullptr, // init
-    nullptr, // term
+    (unsigned)PktType::TCP,
+    nullptr,  // buffers
+    nullptr,  // service
+    nullptr,  // init
+    nullptr,  // term
     tcp_tinit,
     tcp_tterm,
     tcp_ctor,
     tcp_dtor,
     tcp_ssn,
-    tcp_reset
+    nullptr   // reset
 };
 
 const BaseApi* nin_stream_tcp = &tcp_api.base;

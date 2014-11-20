@@ -39,7 +39,7 @@
 #include <fnmatch.h>
 
 #include "snort_bounds.h"
-#include "rules.h"
+#include "detection/rules.h"
 #include "treenodes.h"
 #include "parser.h"
 #include "cmd_line.h"
@@ -50,19 +50,17 @@
 #include "detect.h"
 #include "protocols/packet.h"
 #include "fpcreate.h"
-#include "generators.h"
 #include "tag.h"
 #include "signature.h"
 #include "filters/sfthreshold.h"
 #include "filters/sfthd.h"
 #include "snort.h"
-#include "asn1.h"
 #include "hash/sfghash.h"
 #include "ips_options/ips_ip_proto.h"
 #include "ips_options/ips_content.h"
 #include "sf_vartable.h"
-#include "ipv6_port.h"
 #include "sfip/sf_ip.h"
+#include "sfip/sf_ipvar.h"
 #include "sflsq.h"
 #include "ppm.h"
 #include "filters/rate_filter.h"
@@ -76,7 +74,6 @@
 #include "managers/so_manager.h"
 #include "config_file.h"
 #include "keywords.h"
-#include "target_based/sftarget_reader.h"
 
 #define SRC  0
 #define DST  1
@@ -121,6 +118,7 @@ static int builtin_rule_count = 0;
 static int so_rule_count = 0;
 static int head_count = 0;          /* number of header blocks (chain heads?) */
 static int otn_count = 0;           /* number of chains */
+static int rule_proto = 0;
 
 static rule_count_t tcpCnt;
 static rule_count_t udpCnt;
@@ -128,6 +126,8 @@ static rule_count_t icmpCnt;
 static rule_count_t ipCnt;
 
 static port_list_t port_list;
+
+static bool s_ignore = false;  // for skipping drop rules when not inline, etc.
 
 static int port_list_add_entry( port_list_t * plist, port_entry_t * pentry)
 {
@@ -891,7 +891,9 @@ static void XferHeader(RuleTreeNode *test_node, RuleTreeNode *rtn)
  * Returns: void function
  *
  ***************************************************************************/
-void AddRuleFuncToList(int (*rfunc) (Packet *, RuleTreeNode *, struct _RuleFpList *, int), RuleTreeNode * rtn)
+void AddRuleFuncToList(
+    int (*rfunc) (Packet *, RuleTreeNode *, struct RuleFpList *, int),
+    RuleTreeNode * rtn)
 {
     RuleFpList *idx;
 
@@ -1273,6 +1275,7 @@ void parse_rule_init()
     so_rule_count = 0;
     head_count = 0;
     otn_count = 0;
+    rule_proto = 0;
 
     port_list_free(&port_list);
     memset(&port_list, 0, sizeof(port_list));
@@ -1291,22 +1294,18 @@ void parse_rule_term()
 
 void parse_rule_print()
 {
-    LogMessage("%s\n", LOG_DIV);
-    LogMessage("rule counts\n");
-
-    LogMessage("%25.25s: %-12u\n", "total rules loaded", rule_count);
-
     if ( !rule_count )
         return;
 
-    LogMessage("%25.25s: %-12u\n", "text rules", detect_rule_count);
-    LogMessage("%25.25s: %-12u\n", "builtin rules", builtin_rule_count);
-    LogMessage("%25.25s: %-12u\n", "so rules", so_rule_count);
-    LogMessage("%25.25s: %-12u\n", "option chains", otn_count);
-    LogMessage("%25.25s: %-12u\n", "chain headers", head_count);
+    LogLabel("rule counts");
+    LogCount("total rules loaded", rule_count);
+    LogCount("text rules", detect_rule_count);
+    LogCount("builtin rules", builtin_rule_count);
+    LogCount("so rules", so_rule_count);
+    LogCount("option chains", otn_count);
+    LogCount("chain headers", head_count);
 
-    LogMessage("%s\n", LOG_DIV);
-    LogMessage("rule port counts\n");
+    LogLabel("rule port counts");
     LogMessage("%8s%8s%8s%8s%8s\n", " ", "tcp", "udp", "icmp", "ip");
 
     if ( tcpCnt.src || udpCnt.src || icmpCnt.src || ipCnt.src )
@@ -1337,52 +1336,81 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
 {
     memset(&rtn, 0, sizeof(rtn));
     rtn.type = get_rule_type(s);
-    rtn.listhead = get_rule_list(sc, (RuleType)rtn.type);
+
+    if ( rtn.type == RULE_TYPE__NONE )
+    {
+        s_ignore = true;
+        return;
+    }
+    else
+    {
+        s = get_action_string(rtn.type);
+        rtn.listhead = get_rule_list(sc, s);
+    }
+
+    if ( !rtn.listhead )
+        ParseError("unconfigured rule action '%s'", s);
 }
 
 void parse_rule_proto(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
 {
-    rtn.proto = GetRuleProtocol(s);
+    if ( s_ignore )
+        return;
 
-    switch (rtn.proto)
+    if ( !strcmp(s, "tcp") )
     {
-    case IPPROTO_TCP:
+        rtn.proto = IPPROTO_TCP;
         sc->ip_proto_array[IPPROTO_TCP] = 1;
-        break;
-
-    case IPPROTO_UDP:
+        rule_proto = PROTO_BIT__TCP;
+    }
+    else if ( !strcmp(s, "udp") )
+    {
+        rtn.proto = IPPROTO_UDP;
         sc->ip_proto_array[IPPROTO_UDP] = 1;
-        break;
-
-    case IPPROTO_ICMP:
+        rule_proto = PROTO_BIT__UDP;
+    }
+    else if ( !strcmp(s, "icmp") )
+    {
+        rtn.proto = IPPROTO_ICMP;
         sc->ip_proto_array[IPPROTO_ICMP] = 1;
         sc->ip_proto_array[IPPROTO_ICMPV6] = 1;
-        break;
+        rule_proto = PROTO_BIT__ICMP;
+    }
+    else if ( !strcmp(s, "ip") )
+    {
+        rtn.proto = ETHERNET_TYPE_IP;
 
-    case ETHERNET_TYPE_IP:
         /* This will be set via ip_protos */
-        // FIXIT need to add these for a single ip any any rule?
+        // FIXIT-L need to add these for a single ip any any rule?
         sc->ip_proto_array[IPPROTO_TCP] = 1;
         sc->ip_proto_array[IPPROTO_UDP] = 1;
         sc->ip_proto_array[IPPROTO_ICMP] = 1;
         sc->ip_proto_array[IPPROTO_ICMPV6] = 1;
-        break;
 
-    default:
+        rule_proto = PROTO_BIT__IP;
+    }
+    else
+    {
         ParseError("bad protocol: %s", s);
-        break;
+        rule_proto = 0;
     }
 }
 
 void parse_rule_nets(
     SnortConfig* sc, const char* s, bool src, RuleTreeNode& rtn)
 {
+    if ( s_ignore )
+        return;
+
     ProcessIP(sc, s, &rtn, src ? SRC : DST, 0);
 }
 
 void parse_rule_ports(
     SnortConfig*, const char* s, bool src, RuleTreeNode& rtn)
 {
+    if ( s_ignore )
+        return;
+
     IpsPolicy* p = get_ips_policy();
 
     if ( ParsePortList(&rtn, p->portVarTable, p->nonamePortVarTable,
@@ -1394,6 +1422,9 @@ void parse_rule_ports(
 
 void parse_rule_dir(SnortConfig*, const char* s, RuleTreeNode& rtn)
 {
+    if ( s_ignore )
+        return;
+
     if (strcmp(s, RULE_DIR_OPT__BIDIRECTIONAL) == 0)
         rtn.flags |= BIDIRECTIONAL;
 
@@ -1403,23 +1434,26 @@ void parse_rule_dir(SnortConfig*, const char* s, RuleTreeNode& rtn)
 
 void parse_rule_opt_begin(SnortConfig* sc, const char* key)
 {
-    if ( !IpsManager::option_begin(sc, key) )
-    {
-        ParseError("unknown rule keyword: %s.", key);
-    }
+    if ( s_ignore )
+        return;
+
+    IpsManager::option_begin(sc, key, rule_proto);
 }
 
 void parse_rule_opt_set(
     SnortConfig* sc, const char* key, const char* opt, const char* val)
 {
-    if ( !IpsManager::option_set(sc, key, opt, val) )
-    {
-        ParseError("unknown rule option: %s:%s.", key, opt);
-    }
+    if ( s_ignore )
+        return;
+
+    IpsManager::option_set(sc, key, opt, val);
 }
 
 void parse_rule_opt_end(SnortConfig* sc, const char* key, OptTreeNode* otn)
 {
+    if ( s_ignore )
+        return;
+
     RuleOptType type = OPT_TYPE_MAX;
     IpsManager::option_end(sc, otn, otn->proto, key, type);
 
@@ -1427,21 +1461,46 @@ void parse_rule_opt_end(SnortConfig* sc, const char* key, OptTreeNode* otn)
         otn->num_detection_opts++;
 }
 
-OptTreeNode* parse_rule_open(SnortConfig*, RuleTreeNode& rtn)
+OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
 {
+    if ( s_ignore )
+        return nullptr;
+
+    if ( stub )
+    {
+        parse_rule_proto(sc, "tcp", rtn);
+        parse_rule_nets(sc, "any", true, rtn);
+        parse_rule_ports(sc, "any", true, rtn);
+        parse_rule_dir(sc, "->", rtn);
+        parse_rule_nets(sc, "any", false, rtn);
+        parse_rule_ports(sc, "any", false, rtn);
+    }
     OptTreeNode* otn = (OptTreeNode *)SnortAlloc(sizeof(OptTreeNode));
     otn->state = (OtnState*)SnortAlloc(sizeof(OtnState)*get_instance_max());
 
+    if ( !stub )
+        otn->sigInfo.generator = GENERATOR_SNORT_ENGINE;
+
     otn->chain_node_number = otn_count;
-    otn->sigInfo.generator = GENERATOR_SNORT_ENGINE;
     otn->proto = rtn.proto;
     otn->enabled = ScDefaultRuleState();
+
+    IpsManager::reset_options();
 
     return otn;
 }
 
+// return nullptr if nothing left to do
+// for so rules, return the detection options and continue parsing
+// but if already entered, don't recurse again
 const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
 {
+    if ( s_ignore )
+    {
+        s_ignore = false;
+        return nullptr;
+    }
+
     static bool entered = false;
     const char* so_opts = nullptr;
 
@@ -1456,12 +1515,15 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
             ParseError("SO rule %s not loaded.", otn->soid);
         else
         {
-            otn->sigInfo.generator = 3;  // FIXIT why isn't this set already? (don't hardcode)
+            // FIXIT-L gid may be overwritten here
+            otn->sigInfo.generator = GENERATOR_SNORT_SHARED;
             entered = true;
             return so_opts;
         }
     }
     
+    set_fp_content(otn);
+
     /* The IPs in the test node get free'd in ProcessHeadNode if there is
      * already a matching RTN.  The portobjects will get free'd when the
      * port var table is free'd */
@@ -1486,22 +1548,27 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
     otn_count++;
     rule_count++;
 
-    // FIXIT need more reliable way of knowing type of rule instead of hard
+    // FIXIT-L need more reliable way of knowing type of rule instead of hard
     // coding these gids
-    if ( otn->sigInfo.generator == 1 )
+    // do GIDs actually matter anymore (w/o conflict with builtins)?
+    if ( otn->sigInfo.generator == GENERATOR_SNORT_ENGINE )
     {
         otn->sigInfo.text_rule = true;
         detect_rule_count++;
     }
-    else if ( otn->sigInfo.generator == 3 )
+    else if ( otn->sigInfo.generator == GENERATOR_SNORT_SHARED )
     {
         otn->sigInfo.text_rule = true;
         so_rule_count++;
     }
     else
     {
+        if ( !otn->sigInfo.generator )
+            ParseError("gid must set in builtin rules");
+
         if ( otn->num_detection_opts )
-            ParseError("builtin rules do not support detection options");
+            ParseError("%d:%d builtin rules do not support detection options",
+                        otn->sigInfo.generator, otn->sigInfo.id);
 
         otn->sigInfo.text_rule = false;
         builtin_rule_count++;

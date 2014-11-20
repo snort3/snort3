@@ -36,13 +36,13 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "soid";
+#define s_name "soid"
 
 //-------------------------------------------------------------------------
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter soid_params[] =
+static const Parameter s_params[] =
 {
     { "~", Parameter::PT_STRING, nullptr, nullptr,
       "SO rule ID has <gid>|<sid> format, like 3|12345" },
@@ -50,11 +50,14 @@ static const Parameter soid_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to specify a shared object rule ID"
+
 class SoidModule : public Module
 {
 public:
-    SoidModule() : Module(s_name, soid_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    SoidModule() : Module(s_name, s_help, s_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
     std::string soid;
 };
 
@@ -93,6 +96,7 @@ static const IpsApi soid_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

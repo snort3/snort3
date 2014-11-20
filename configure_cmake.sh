@@ -16,104 +16,67 @@ use this configure script to access CMake equivalent functionality.\
 usage="\
 Usage: $0 [OPTION]... [VAR=VALUE]...
 
-  Build Options:
-    --builddir=DIR         place build files in directory [build]
-    --generator=GENERATOR  CMake generator to use (see cmake --help)
+        --builddir=   The build directory
+        --generator=  run cmake --help for a list of generators
+        --prefix=     Snort++ installation prefix
 
-  Installation Directories:
-    --prefix=PREFIX        installation directory [/usr/local/bro]
-    --conf-files-dir=PATH  config files installation directory [PREFIX/etc]
+Optional Features:
+    --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+    --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+    --disable-static-ips-actions    do not include ips actions in binary
+    --disable-static-inspectors    do not include inspectors in binary
+    --disable-static-loggers    do not include loggers in binary
+    --disable-static-ips-options    do not include ips options in binary
+    --disable-static-search-engines    do not include search engines in binary
+    --disable-static-codecs    do not include codecs in binary
+    --enable-valgrind        Only use if you are testing with valgrind.
+    --enable-ppm            Enable packet/rule performance monitor
+    --enable-ppm-test        Enable packet/rule performance monitor for readback
+    --enable-perfprofiling  Enable preprocessor and rule performance profiling
+    --enable-linux-smp-stats Enable statistics reporting through proc
+    --enable-debug-msgs      Enable debug printing options (bugreports and developers only)
+    --enable-debug           Enable debugging options (bugreports and developers only)
+    --enable-gdb             Enable gdb debugging information
+    --enable-profile         Enable profiling options (developers only)
+    --disable-corefiles      Prevent Snort from generating core files
+    --enable-intel-soft-cpm  Enable Intel Soft CPM support
+    --enable-unit-tests      Build unit tests
+    --enable-large-pcap      Enable support for pcaps larger than 2 GB
+    --disable-static-daq     Link static DAQ modules.
+    --enable-shell           enable command line shell support
 
-    Optional Features:
-      --disable-option-checking  ignore unrecognized --enable/--with options
-      --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
-      --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-      --enable-silent-rules   less verbose build output (undo: \"make V=1\")
-      --disable-silent-rules  verbose build output (undo: \"make V=0\")
-      --enable-shared[=PKGS]  build shared libraries [default=yes]
-      --enable-static[=PKGS]  build static libraries [default=yes]
-      --enable-fast-install[=PKGS]
-                              optimize for fast installation [default=yes]
-      --enable-dependency-tracking
-                              do not reject slow dependency extractors
-      --disable-dependency-tracking
-                              speeds up one-time build
-      --disable-libtool-lock  avoid locking (might break parallel builds)
-      --disable-static-inspectors    do not include inspectors in binary
-      --disable-static-loggers    do not include loggers in binary
-      --disable-static-ips-options    do not include ips options in binary
-      --disable-static-search-engines    do not include search engines in binary
-      --disable-static-codecs  do not include codecs in binary
-      --enable-control-socket  Enable the control socket (Linux only)
-      --enable-side-channel    Enable the side channel (Linux only)
-      --enable-valgrind        Only use if you are testing with valgrind.
-      --disable-ppm            Disable packet/rule performance monitor
-      --enable-ppm-test        Enable packet/rule performance monitor for readback
-      --disable-perfprofiling  Disable preprocessor and rule performance profiling
-      --enable-linux-smp-stats Enable statistics reporting through proc
-      --enable-inline-init-failopen  Enable Fail Open during initialization for Inline Mode (adds pthread support implicitly)
-      --disable-pthread        Disable pthread support
-      --enable-debug-msgs      Enable debug printing options (bugreports and developers only)
-      --enable-debug           Enable debugging options (bugreports and developers only)
-      --enable-gdb             Enable gdb debugging information
-      --enable-profile         Enable profiling options (developers only)
-      --enable-sourcefire      Enable Sourcefire specific build options, encompasing --enable-perfprofiling and --enable-ppm
-      --disable-corefiles      Prevent Snort from generating core files
-      --enable-ha              Enable high-availability state sharing
-      --enable-non-ether-decoders  Enable non Ethernet decoders.
-      --enable-intel-soft-cpm  Enable Intel Soft CPM support
-      --enable-unit-tests      Build unit tests
-      --enable-large-pcap      Enable support for pcaps larger than 2 GB
-      --disable-static-daq     Link static DAQ modules.
 
     Optional Packages:
-      --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
-      --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-      --with-pic[=PKGS]       try to use only PIC/non-PIC objects [default=use
-                              both]
-      --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
-      --with-sysroot=DIR Search for dependent libraries within DIR
-                            (or the compiler's sysroot if not specified).
-      --with-pcap-includes=DIR    libpcap include directory
-      --with-pcap-libraries=DIR   libpcap library directory
-      --with-luajit-includes=DIR    luajit include directory
-      --with-luajit-libraries=DIR   luajit library directory
-      --with-pcre-includes=DIR    libpcre include directory
-      --with-pcre-libraries=DIR   libpcre library directory
-      --with-openssl-includes=DIR    openssl include directory
-      --with-openssl-libraries=DIR   openssl library directory
-      --with-dnet-includes=DIR       libdnet include directory
-      --with-dnet-libraries=DIR      libdnet library directory
-      --with-daq-includes=DIR        DAQ include directory
-      --with-daq-libraries=DIR       DAQ library directory
-      --with-intel-soft-cpm-includes=DIR      Intel Soft CPM include directory
-      --with-intel-soft-cpm-libraries=DIR     Intel Soft CPM library directory
+    --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+    --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+    --with-pic[=PKGS]       try to use only PIC/non-PIC objects [default=use
+                            both]
+    --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
+    --with-sysroot=DIR Search for dependent libraries within DIR
+                          (or the compiler's sysroot if not specified).
+    --with-pcap-includes=DIR    libpcap include directory
+    --with-pcap-libraries=DIR   libpcap library directory
+    --with-luajit-includes=DIR    luajit include directory
+    --with-luajit-libraries=DIR   luajit library directory
+    --with-pcre-includes=DIR    libpcre include directory
+    --with-pcre-libraries=DIR   libpcre library directory
+    --with-openssl-includes=DIR    openssl include directory
+    --with-openssl-library=LIB   openssl library library - NOT THE DIRECTORY
+    --with-crypto-library=LIB   openssl crypto library - NOT THE DIRECTORY
+    --with-dnet-includes=DIR       libdnet include directory
+    --with-dnet-libraries=DIR      libdnet library directory
+    --with-daq-includes=DIR        DAQ include directory
+    --with-daq-libraries=DIR       DAQ library directory
 
-    Some influential environment variables:
-      CC          C compiler command
-      CFLAGS      C compiler flags
-      LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
-                  nonstandard directory <lib dir>
-      LIBS        libraries to pass to the linker, e.g. -l<library>
-      CPPFLAGS    (Objective) C/C++ preprocessor flags, e.g. -I<include dir> if
-                  you have headers in a nonstandard directory <include dir>
-      CPP         C preprocessor
-      CXX         C++ compiler command
-      CXXFLAGS    C++ compiler flags
-      CXXCPP      C++ preprocessor
-      SIGNAL_SNORT_RELOAD
-                  set the SIGNAL_SNORT_RELOAD value
-      SIGNAL_SNORT_DUMP_STATS
-                  set the SIGNAL_SNORT_DUMP_STATS value
-      SIGNAL_SNORT_ROTATE_STATS
-                  set the SIGNAL_SNORT_ROTATE_STATS value
-      SIGNAL_SNORT_READ_ATTR_TBL
-                  set the SIGNAL_SNORT_READ_ATTR_TBL value
 
-    Use these variables to override the choices made by \`configure' or to help
-    it to find libraries and programs with nonstandard names/locations.
-
-    Report bugs to the package provider.
+    SIGNAL_SNORT_RELOAD=<value>
+                set the SIGNAL_SNORT_RELOAD value
+    SIGNAL_SNORT_DUMP_STATS<value>
+                set the SIGNAL_SNORT_DUMP_STATS value
+    SIGNAL_SNORT_ROTATE_STATS<value>
+                set the SIGNAL_SNORT_ROTATE_STATS value
+    SIGNAL_SNORT_READ_ATTR_TBL<value>
+                set the SIGNAL_SNORT_READ_ATTR_TBL value
 "
 
 sourcedir="$( cd "$( dirname "$0" )" && pwd )"
@@ -188,10 +151,16 @@ while [ $# -ne 0 ]; do
         --enable-static-loggers)
             append_cache_entry STATIC_LOGGERS       BOOL   true
             ;;
-        --disable-static-ips-option)
+        --disable-static-ips-options)
             append_cache_entry STATIC_IPS_OPTIONS    BOOL   false
             ;;
-        --enable-static-ips-option)
+        --enable-static-ips-actions)
+            append_cache_entry STATIC_IPS_ACTIONS    BOOL   true
+            ;;
+        --disable-static-ips-actions)
+            append_cache_entry STATIC_IPS_ACTIONS    BOOL   false
+            ;;
+        --enable-static-ips-options)
             append_cache_entry STATIC_IPS_OPTIONS    BOOL   true
             ;;
         --disable-static-search-engines)
@@ -231,10 +200,10 @@ while [ $# -ne 0 ]; do
             append_cache_entry ENABLE_PPM    BOOL   true
             ;;
         --disable-ppm-test)
-            append_cache_entry ENABLE_PPM    BOOL   false
+            append_cache_entry ENABLE_PPM_TEST    BOOL   false
             ;;
         --enable-ppm-test)
-            append_cache_entry ENABLE_PPM    BOOL   true
+            append_cache_entry ENABLE_PPM_TEST    BOOL   true
             ;;
         --disable-perfprofiling)
             append_cache_entry ENABLE_PERFPROFILING    BOOL   false
@@ -243,10 +212,10 @@ while [ $# -ne 0 ]; do
             append_cache_entry ENABLE_PERFPROFILING    BOOL   true
             ;;
         --disable-linux-smp-stats)
-            append_cache_entry ENABLE_INLINE_INIT_FAILOPEN    BOOL   false
+            append_cache_entry ENABLE_LINUX_SMP_STATS    BOOL   false
             ;;
         --enable-linux-smp-stats)
-            append_cache_entry ENABLE_INLINE_INIT_FAILOPEN    BOOL   true
+            append_cache_entry ENABLE_LINUX_SMP_STATS    BOOL   true
             ;;
         --disable-pthread)
             append_cache_entry ENABLE_PTHREAD    BOOL   false
@@ -254,10 +223,10 @@ while [ $# -ne 0 ]; do
         --enable-pthread)
             append_cache_entry ENABLE_PTHREAD    BOOL   true
             ;;
-        --disable-debug_msgs)
+        --disable-debug-msgs)
             append_cache_entry ENABLE_DEBUG_MSGS    BOOL   false
             ;;
-        --enable-debug_msgs)
+        --enable-debug-msgs)
             append_cache_entry ENABLE_DEBUG_MSGS    BOOL   true
             ;;
         --disable-gdb)
@@ -272,17 +241,11 @@ while [ $# -ne 0 ]; do
         --enable-profile)
             append_cache_entry ENABLE_PROFILE    BOOL   true
             ;;
-        --disable-sourcefire)
-            append_cache_entry ENABLE_SOURCEFIRE    BOOL   false
-            ;;
-        --enable-sourcefire)
-            append_cache_entry ENABLE_SOURCEFIRE    BOOL   true
-            ;;
         --disable-debug)
-            append_cache_entry ENABLE_COREFILES    BOOL   false
+            append_cache_entry ENABLE_DEBUG    BOOL   false
             ;;
         --enable-debug)
-            append_cache_entry ENABLE_COREFILES    BOOL   true
+            append_cache_entry ENABLE_DEBUG    BOOL   true
             ;;
         --disable-ha)
             append_cache_entry BUILD_HA    BOOL   false
@@ -290,11 +253,11 @@ while [ $# -ne 0 ]; do
         --enable-ha)
             append_cache_entry BUILD_HA    BOOL   true
             ;;
-        --disable-non-ether-decoders)
-            append_cache_entry ENABLE_NON_ETHER_DECODERS    BOOL   false
+        --disable-corefiles)
+            append_cache_entry ENABLE_COREFILES    BOOL   false
             ;;
-        --enable-non-ether-decoders)
-            append_cache_entry ENABLE_NON_ETHER_DECODERS    BOOL   true
+        --enable-corefiles)
+            append_cache_entry ENABLE_COREFILES    BOOL   true
             ;;
         --disable-large-pcap)
             append_cache_entry ENABLE_LARGE_PCAP    BOOL   false
@@ -303,10 +266,16 @@ while [ $# -ne 0 ]; do
             append_cache_entry ENABLE_LARGE_PCAP    BOOL   true
             ;;
         --disable-intel-soft-cpm)
-            append_cache_entry HAVE_INTEL_SOFT_CPM    BOOL   false
+            append_cache_entry ENABLE_INTEL_SOFT_CPM    BOOL   false
             ;;
         --enable-intel-soft-cpm)
-            append_cache_entry HAVE_INTEL_SOFT_CPM    BOOL   true
+            append_cache_entry ENABLE_INTEL_SOFT_CPM    BOOL   true
+            ;;
+        --enable-shell)
+            append_cache_entry ENABLE_SHELL    BOOL   true
+            ;;
+        --disable-shell)
+            append_cache_entry ENABLE_SHELL    BOOL   false
             ;;
         --disable-side-channel)
             append_cache_entry BUILD_SIDE_CHANNEL    BOOL   false
@@ -335,10 +304,10 @@ while [ $# -ne 0 ]; do
         --with-openssl-includes=*)
             append_cache_entry OPENSSL_INCLUDE_DIR PATH $optarg
             ;;
-        --with-openssl-libraries=*)
+        --with-openssl-library=*)
             check_and_append_cache_entry OPENSSL_SSL_LIBRARY FILEPATH $optarg
             ;;
-        --with-crypto-libraries=*)
+        --with-crypto-library=*)
             check_and_append_cache_entry OPENSSL_CRYPTO_LIBRARY FILEPATH $optarg
             ;;
         --with-pcap-includes=*)
@@ -403,7 +372,6 @@ while [ $# -ne 0 ]; do
     esac
     shift
 done
-
 
 if [ -d $builddir ]; then
     # If build directory exists, check if it has a CMake cache

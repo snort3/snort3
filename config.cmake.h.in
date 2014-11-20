@@ -31,6 +31,9 @@
 /* include internal loggers in binary */
 #cmakedefine STATIC_LOGGERS 1
 
+/* include internal ips actions in binary */
+#cmakedefine STATIC_IPS_ACTIONS 1
+
 /* include internal ips options in binary */
 #cmakedefine STATIC_IPS_OPTIONS 1
 
@@ -85,9 +88,6 @@
 /* enable ha capable build */
 #cmakedefine ENABLE_HA 1
 
-/* do not build non-ethernet decoders */
-#cmakedefine NO_NON_ETHER_DECODER 1
-
 /* enable intel cpm support in build */
 #cmakedefine INTEL_SOFT_CPM 1
 
@@ -105,6 +105,9 @@
 
 /* Set by user */
 #cmakedefine SIGNAL_SNORT_ROTATE_STATS @SIGNAL_SNORT_ROTATE_STATS@
+
+/* enable ha capable build */
+#cmakedefine BUILD_SHELL 1
 
 
 
@@ -289,6 +292,8 @@
 /* Define to 1 if you have the <wchar.h> header file. */
 #cmakedefine HAVE_WCHAR_H 1
 
+/* Define to 1 if you have the <dumbnet.h> header file. */
+#cmakedefine HAVE_DUMBNET_H 1
 
 
 

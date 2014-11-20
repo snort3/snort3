@@ -54,15 +54,14 @@
 #include "stream/stream_api.h"
 #include "packet_io/active.h"
 #include "signature.h"
-#include "ipv6_port.h"
 #include "ppm.h"
 #include "snort_types.h"
 #include "detection_util.h"
-#include "generators.h"
 #include "managers/inspector_manager.h"
 #include "managers/event_manager.h"
-#include "target_based/sftarget_protocol_reference.h"
 #include "detection_defines.h"
+#include "protocols/ip.h"
+#include "sfip/sf_ipvar.h"
 
 #ifdef PORTLISTS
 #include "utils/sfportobject.h"
@@ -90,12 +89,11 @@ void snort_ignore(Packet*) { }
 
 void snort_inspect(Packet* p)
 {
-#ifdef PPM_MGR
-    uint64_t pktcnt=0;
-#endif
     PROFILE_VARS;
 
 #ifdef PPM_MGR
+    uint64_t pktcnt=0;
+
     /* Begin Packet Performance Monitoring  */
     if( PPM_PKTS_ENABLED() )
     {
@@ -117,10 +115,19 @@ void snort_inspect(Packet* p)
 #endif
 
     // If the packet has errors, we won't analyze it.
-    if ( p->error_flags )
+    if ( p->ptrs.decode_flags & DECODE_ERR_FLAGS )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-            "Packet errors = 0x%x, ignoring traffic!\n", p->error_flags););
+            "Packet errors = 0x%x, ignoring traffic!\n",
+            (p->ptrs.decode_flags & DECODE_ERR_FLAGS)););
+
+
+        if( ScInlineMode() && ScChecksumDrop(p->ptrs.decode_flags & DECODE_ERR_CKSUM_ALL) )
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+                "Dropping bad packet\n"););
+            Active_DropPacket();
+        }
     }
     else
     {
@@ -140,7 +147,6 @@ void snort_inspect(Packet* p)
         **  Reset the appropriate application-layer protocol fields
         */
         p->alt_dsize = 0;
-        DetectReset();
 
         InspectorManager::execute(p);
 
@@ -162,7 +168,7 @@ void snort_inspect(Packet* p)
     ** By checking tagging here, we make sure that we log the
     ** tagged packet whether it generates an alert or not.
     */
-    if (IPH_IS_VALID(p))
+    if ( p->has_ip() )
         CheckTagging(p);
 
 #ifdef PPM_MGR
@@ -238,11 +244,14 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
 
     pc.total_alert_pkts++;
 
+#if 0
+    // FIXIT-M this should be a generic feature of otn
     if ( otn->sigInfo.generator != GENERATOR_SPP_REPUTATION )
     {
         /* Don't include IP Reputation events in count */
         pc.alert_pkts++;
     }
+#endif
 
     OutputSet *idx = head ? head->AlertList : NULL;
     EventManager::call_alerters(idx, p, otn->sigInfo.message, &event);
@@ -298,34 +307,14 @@ int CheckTagging(Packet *p)
  *          0 == no detection
  *
  ***************************************************************************/
-int Detect(Packet * p)
+bool Detect(Packet * p)
 {
     int detected = 0;
     PROFILE_VARS;
 
-    if ((p == NULL) || !IPH_IS_VALID(p))
+    if ((p == NULL) || !p->ptrs.ip_api.is_valid())
     {
-        return 0;
-    }
-
-
-    if (!snort_conf->ip_proto_array[GET_IPH_PROTO(p)])
-    {
-        switch (p->outer_family)
-        {
-            case AF_INET:
-                if (!snort_conf->ip_proto_array[p->outer_ip4h.ip_proto])
-                    return 0;
-                break;
-
-            case AF_INET6:
-                if (!snort_conf->ip_proto_array[p->outer_ip6h.next])
-                    return 0;
-                break;
-
-            default:
-                return 0;
-        }
+        return false;
     }
 
     if (p->packet_flags & PKT_PASS_RULE)
@@ -333,33 +322,49 @@ int Detect(Packet * p)
         /* If we've already seen a pass rule on this,
          * no need to continue do inspection.
          */
-        return 0;
+        return false;
     }
 
-#ifdef PPM_MGR
-    /*
-     * Packet Performance Monitoring
-     * (see if preprocessing took too long)
-     */
-    if( PPM_PKTS_ENABLED() )
+    // FIXIT-M:  Curently, if a rule is found on any IP layer, we
+    //          perform the detect routine on the entire packet.
+    //          Instead, we should only perform detect on that
+    //          layer!!
+
+    uint8_t curr_layer = 0;
+    uint8_t ip_proto; // set in function
+
+    while (p->get_ip_proto_next(curr_layer, ip_proto))
     {
-        PPM_GET_TIME();
-        PPM_PACKET_TEST();
+        if (snort_conf->ip_proto_array[ip_proto])
+        {
+#           ifdef PPM_MGR
+                /*
+                 * Packet Performance Monitoring
+                 * (see if preprocessing took too long)
+                 */
+                if( PPM_PKTS_ENABLED() )
+                {
+                    PPM_GET_TIME();
+                    PPM_PACKET_TEST();
 
-        if( PPM_PACKET_ABORT_FLAG() )
-            return 0;
+                    if( PPM_PACKET_ABORT_FLAG() )
+                        return false;
+                }
+#           endif /* PPM_MGR */
+
+            /*
+            **  This is where we short circuit so
+            **  that we can do IP checks.
+            */
+            MODULE_PROFILE_START(detectPerfStats);
+            detected = fpEvalPacket(p);
+            MODULE_PROFILE_END(detectPerfStats);
+
+            return detected;
+        }
     }
-#endif
 
-    /*
-    **  This is where we short circuit so
-    **  that we can do IP checks.
-    */
-    MODULE_PROFILE_START(detectPerfStats);
-    detected = fpEvalPacket(p);
-    MODULE_PROFILE_END(detectPerfStats);
-
-    return detected;
+    return false;
 }
 
 int CheckAddrPort(
@@ -368,8 +373,8 @@ int CheckAddrPort(
                 Packet *p,
                 uint32_t flags, int mode)
 {
-    snort_ip_p pkt_addr;              /* packet IP address */
-    u_short pkt_port;           /* packet port */
+    const sfip_t *pkt_addr;          /* packet IP address */
+    u_short pkt_port;                /* packet port */
     int global_except_addr_flag = 0; /* global exception flag is set */
     int any_port_flag = 0;           /* any port flag set */
     int except_port_flag = 0;        /* port exception flag set */
@@ -379,8 +384,8 @@ int CheckAddrPort(
     /* set up the packet particulars */
     if(mode & CHECK_SRC_IP)
     {
-        pkt_addr = GET_SRC_IP(p);
-        pkt_port = p->sp;
+        pkt_addr = p->ptrs.ip_api.get_src();
+        pkt_port = p->ptrs.sp;
 
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"SRC "););
 
@@ -399,8 +404,8 @@ int CheckAddrPort(
     }
     else
     {
-        pkt_addr = GET_DST_IP(p);
-        pkt_port = p->dp;
+        pkt_addr = p->ptrs.ip_api.get_dst();
+        pkt_port = p->ptrs.dp;
 
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "DST "););
 
@@ -462,18 +467,7 @@ bail:
 
     if (!(mode & (CHECK_SRC_PORT | CHECK_DST_PORT)))
     {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckAddrPort..."
-                "target-based-protocol=%d,ignoring ports\n",
-                GetProtocolReference(p)););
         return 1;
-    }
-    else
-    {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckAddrPort..."
-                "target-based-protocol=%d,not ignoring ports\n",
-                GetProtocolReference(p)););
     }
 
     /* check the packet port against the rule port */
@@ -609,7 +603,7 @@ int CheckSrcIP(Packet * p, RuleTreeNode * rtn_idx, RuleFpList * fp_list, int che
 
     if(!(rtn_idx->flags & EXCEPT_SRC_IP))
     {
-        if( sfvar_ip_in(rtn_idx->sip, GET_SRC_IP(p)) )
+        if( sfvar_ip_in(rtn_idx->sip, p->ptrs.ip_api.get_src()) )
         {
             /* the packet matches this test, proceed to the next test */
             return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
@@ -622,7 +616,7 @@ int CheckSrcIP(Packet * p, RuleTreeNode * rtn_idx, RuleFpList * fp_list, int che
          */
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"  global exception flag, \n"););
 
-        if( sfvar_ip_in(rtn_idx->sip, GET_SRC_IP(p)) ) return 0;
+        if( sfvar_ip_in(rtn_idx->sip, p->ptrs.ip_api.get_src()) ) return 0;
 
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
     }
@@ -656,7 +650,7 @@ int CheckDstIP(Packet *p, RuleTreeNode *rtn_idx, RuleFpList *fp_list, int check_
 
     if(!(rtn_idx->flags & EXCEPT_DST_IP))
     {
-        if( sfvar_ip_in(rtn_idx->dip, GET_DST_IP(p)) )
+        if( sfvar_ip_in(rtn_idx->dip, p->ptrs.ip_api.get_dst()) )
         {
             /* the packet matches this test, proceed to the next test */
             return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
@@ -668,7 +662,7 @@ int CheckDstIP(Packet *p, RuleTreeNode *rtn_idx, RuleFpList *fp_list, int check_
          * of the source addresses */
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"  global exception flag, \n"););
 
-        if( sfvar_ip_in(rtn_idx->dip, GET_DST_IP(p)) ) return 0;
+        if( sfvar_ip_in(rtn_idx->dip, p->ptrs.ip_api.get_dst()) ) return 0;
 
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
     }
@@ -685,20 +679,9 @@ int CheckSrcPortEqual(Packet *p, RuleTreeNode *rtn_idx,
     /* Check if attributes provided match earlier */
     if (check_ports == 0)
     {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckSrcPortEq..."
-                "target-based-protocol=%d,ignoring ports\n",
-                GetProtocolReference(p)););
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
     }
-    else
-    {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckSrcPortEq..."
-                "target-based-protocol=%d,not ignoring ports\n",
-                GetProtocolReference(p)););
-    }
-    if( PortObjectHasPort(rtn_idx->src_portobject,p->sp) )
+    if( PortObjectHasPort(rtn_idx->src_portobject,p->ptrs.sp) )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "  SP match!\n"););
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
@@ -719,20 +702,9 @@ int CheckSrcPortNotEq(Packet *p, RuleTreeNode *rtn_idx,
     /* Check if attributes provided match earlier */
     if (check_ports == 0)
     {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckSrcPortNotEq..."
-                "target-based-protocol=%d,ignoring ports\n",
-                GetProtocolReference(p)););
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
     }
-    else
-    {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckSrcPortNotEq..."
-                "target-based-protocol=%d,not ignoring ports\n",
-                GetProtocolReference(p)););
-    }
-    if( !PortObjectHasPort(rtn_idx->src_portobject,p->sp) )
+    if( !PortObjectHasPort(rtn_idx->src_portobject,p->ptrs.sp) )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "  !SP match!\n"););
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
@@ -753,20 +725,9 @@ int CheckDstPortEqual(Packet *p, RuleTreeNode *rtn_idx,
     /* Check if attributes provided match earlier */
     if (check_ports == 0)
     {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckDstPortEq..."
-            "target-based-protocol=%d,ignoring ports\n",
-            GetProtocolReference(p)););
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
     }
-    else
-    {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckDstPortEq..."
-            "target-based-protocol=%d,not ignoring ports\n",
-            GetProtocolReference(p)););
-    }
-    if( PortObjectHasPort(rtn_idx->dst_portobject,p->dp) )
+    if( PortObjectHasPort(rtn_idx->dst_portobject,p->ptrs.dp) )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT, " DP match!\n"););
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
@@ -787,20 +748,9 @@ int CheckDstPortNotEq(Packet *p, RuleTreeNode *rtn_idx,
     /* Check if attributes provided match earlier */
     if (check_ports == 0)
     {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckDstPortNotEq..."
-            "target-based-protocol=%d,ignoring ports\n",
-            GetProtocolReference(p)););
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
     }
-    else
-    {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE, "detect.c: CheckDstPortNotEq..."
-            "target-based-protocol=%d,not ignoring ports\n",
-            GetProtocolReference(p)););
-    }
-    if( !PortObjectHasPort(rtn_idx->dst_portobject,p->dp) )
+    if( !PortObjectHasPort(rtn_idx->dst_portobject,p->ptrs.dp) )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT, " !DP match!\n"););
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);

@@ -1,30 +1,29 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // out_csv.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
-#include "utils/s2l_util.h"
+#include "helpers/converter.h"
+#include "helpers/s2l_util.h"
 
 namespace output
 {
@@ -34,7 +33,7 @@ namespace {
 class AlertCsv : public ConversionState
 {
 public:
-    AlertCsv(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    AlertCsv(Converter& c) : ConversionState(c) {};
     virtual ~AlertCsv() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -51,17 +50,16 @@ bool AlertCsv::convert(std::istringstream& data_stream)
     std::string units = "B";
 
 
-    ld->open_top_level_table("alert_csv");
+    table_api.open_top_level_table("alert_csv");
 
     if (!(data_stream >> keyword))
         return true;
 
-    retval = ld->add_option_to_table("file", keyword);
+    table_api.add_deleted_comment("<filename> can no longer be specific");
 
 
     if (!(data_stream >> keyword))
         return retval;
-
 
     // parsing the format list.
     std::istringstream format(keyword);
@@ -70,154 +68,178 @@ bool AlertCsv::convert(std::istringstream& data_stream)
         bool tmpval = true;
 
         if (!val.compare("default"))
-            ld->add_deleted_comment("default");
+            table_api.add_deleted_comment("default");
 
         else if (!val.compare("timestamp"))
-            tmpval = ld->add_list_to_table("csv", "timestamp");
+            tmpval = table_api.add_list("csv", "timestamp");
 
         else if (!val.compare("msg"))
-            tmpval = ld->add_list_to_table("csv", "msg");
+            tmpval = table_api.add_list("csv", "msg");
 
         else if (!val.compare("proto"))
-            tmpval = ld->add_list_to_table("csv", "proto");
-
-        else if (!val.compare("dst"))
-            tmpval = ld->add_list_to_table("csv", "dst");
-
-        else if (!val.compare("src"))
-            tmpval = ld->add_list_to_table("csv", "src");
+            tmpval = table_api.add_list("csv", "proto");
 
         else if (!val.compare("ttl"))
-            tmpval = ld->add_list_to_table("csv", "ttl");
+            tmpval = table_api.add_list("csv", "ttl");
 
         else if (!val.compare("id"))
-            tmpval = ld->add_list_to_table("csv", "id");
+            tmpval = table_api.add_list("csv", "id");
 
         else if (!val.compare("tos"))
-            tmpval = ld->add_list_to_table("csv", "tos");
+            tmpval = table_api.add_list("csv", "tos");
+
+        else if (!val.compare("trheader"))
+            tmpval = table_api.add_deleted_comment("trheader");
+
+        else if (!val.compare("dst"))
+        {
+            table_api.add_diff_option_comment("dst", "dst_addr");
+            tmpval = table_api.add_list("csv", "dst_addr");
+        }
+
+        else if (!val.compare("src"))
+        {
+            table_api.add_diff_option_comment("src", "src_addr");
+            tmpval = table_api.add_list("csv", "src_addr");
+        }
 
         else if (!val.compare("sig_generator"))
         {
-            ld->add_diff_option_comment("sig_generator", "gid");
-            tmpval = ld->add_list_to_table("csv", "gid");
+            table_api.add_diff_option_comment("sig_generator", "gid");
+            tmpval = table_api.add_list("csv", "gid");
         }
 
-        else if (!val.compare("sid_id"))
+        else if (!val.compare("sig_id"))
         {
-            ld->add_diff_option_comment("sid_id", "sid");
-            tmpval = ld->add_list_to_table("csv", "sid");
+            table_api.add_diff_option_comment("sig_id", "sid");
+            tmpval = table_api.add_list("csv", "sid");
         }
 
         else if (!val.compare("sig_rev"))
         {
-            ld->add_diff_option_comment("sig_rev", "rev");
-            tmpval = ld->add_list_to_table("csv", "rev");
+            table_api.add_diff_option_comment("sig_rev", "rev");
+            tmpval = table_api.add_list("csv", "rev");
         }
 
         else if (!val.compare("srcport"))
         {
-            ld->add_diff_option_comment("srcport", "src_port");
-            tmpval = ld->add_list_to_table("csv", "src_port");
+            table_api.add_diff_option_comment("srcport", "src_port");
+            tmpval = table_api.add_list("csv", "src_port");
         }
 
         else if (!val.compare("dstport"))
         {
-            ld->add_diff_option_comment("dstport", "dst_port");
-            tmpval = ld->add_list_to_table("csv", "dst_port");
+            table_api.add_diff_option_comment("dstport", "dst_port");
+            tmpval = table_api.add_list("csv", "dst_port");
         }
 
         else if (!val.compare("ethsrc"))
         {
-            ld->add_diff_option_comment("ethsrc", "eth_src");
-            tmpval = ld->add_list_to_table("csv", "eth_src");
+            table_api.add_diff_option_comment("ethsrc", "eth_src");
+            tmpval = table_api.add_list("csv", "eth_src");
         }
 
         else if (!val.compare("ethdst"))
         {
-            ld->add_diff_option_comment("ethdst", "eth_dst");
-            tmpval = ld->add_list_to_table("csv", "eth_dst");
+            table_api.add_diff_option_comment("ethdst", "eth_dst");
+            tmpval = table_api.add_list("csv", "eth_dst");
         }
 
         else if (!val.compare("ethlen"))
         {
-            ld->add_diff_option_comment("ethlen", "eth_len");
-            tmpval = ld->add_list_to_table("csv", "eth_len");
+            table_api.add_diff_option_comment("ethlen", "eth_len");
+            tmpval = table_api.add_list("csv", "eth_len");
         }
+
+        else if (!val.compare("ethtype"))
+        {
+            table_api.add_diff_option_comment("ethtype", "eth_type");
+            tmpval = table_api.add_list("csv", "eth_type");
+        }
+
 
         else if (!val.compare("tcpflags"))
         {
-            ld->add_diff_option_comment("tcpflags", "tcp_flags");
-            tmpval = ld->add_list_to_table("csv", "tcp_flags");
+            table_api.add_diff_option_comment("tcpflags", "tcp_flags");
+            tmpval = table_api.add_list("csv", "tcp_flags");
         }
 
         else if (!val.compare("tcpseq"))
         {
-            ld->add_diff_option_comment("tcpseq", "tcp_seq");
-            tmpval = ld->add_list_to_table("csv", "tcp_seq");
+            table_api.add_diff_option_comment("tcpseq", "tcp_seq");
+            tmpval = table_api.add_list("csv", "tcp_seq");
         }
 
         else if (!val.compare("tcpack"))
         {
-            ld->add_diff_option_comment("tcpack", "tcp_ack");
-            tmpval = ld->add_list_to_table("csv", "tcp_ack");
+            table_api.add_diff_option_comment("tcpack", "tcp_ack");
+            tmpval = table_api.add_list("csv", "tcp_ack");
         }
 
         else if (!val.compare("tcplen"))
         {
-            ld->add_diff_option_comment("tcplen", "tcp_len");
-            tmpval = ld->add_list_to_table("csv", "tcp_len");
+            table_api.add_diff_option_comment("tcplen", "tcp_len");
+            tmpval = table_api.add_list("csv", "tcp_len");
         }
 
         else if (!val.compare("tcpwindow"))
         {
-            ld->add_diff_option_comment("tcpwindow", "tcp_win");
-            tmpval = ld->add_list_to_table("csv", "tcp_win");
+            table_api.add_diff_option_comment("tcpwindow", "tcp_win");
+            tmpval = table_api.add_list("csv", "tcp_win");
         }
 
         else if (!val.compare("dgmlen"))
         {
-            ld->add_diff_option_comment("dgmlen", "dgm_len");
-            tmpval = ld->add_list_to_table("csv", "dgm_len");
+            table_api.add_diff_option_comment("dgmlen", "dgm_len");
+            tmpval = table_api.add_list("csv", "dgm_len");
         }
 
         else if (!val.compare("iplen"))
         {
-            ld->add_diff_option_comment("iplen", "ip_len");
-            tmpval = ld->add_list_to_table("csv", "ip_len");
+            table_api.add_diff_option_comment("iplen", "ip_len");
+            tmpval = table_api.add_list("csv", "ip_len");
         }
 
         else if (!val.compare("icmptype"))
         {
-            ld->add_diff_option_comment("icmptype", "icmp_type");
-            tmpval = ld->add_list_to_table("csv", "icmp_type");
+            table_api.add_diff_option_comment("icmptype", "icmp_type");
+            tmpval = table_api.add_list("csv", "icmp_type");
         }
 
         else if (!val.compare("icmpcode"))
         {
-            ld->add_diff_option_comment("icmpcode", "icmp_code");
-            tmpval = ld->add_list_to_table("csv", "icmp_code");
+            table_api.add_diff_option_comment("icmpcode", "icmp_code");
+            tmpval = table_api.add_list("csv", "icmp_code");
         }
 
         else if (!val.compare("icmpid"))
         {
-            ld->add_diff_option_comment("icmpid", "icmp_id");
-            tmpval = ld->add_list_to_table("csv", "icmp_id");
+            table_api.add_diff_option_comment("icmpid", "icmp_id");
+            tmpval = table_api.add_list("csv", "icmp_id");
         }
 
         else if (!val.compare("icmpseq"))
         {
-            ld->add_diff_option_comment("icmpseq", "icmp_seq");
-            tmpval = ld->add_list_to_table("csv", "icmp_seq");
+            table_api.add_diff_option_comment("icmpseq", "icmp_seq");
+            tmpval = table_api.add_list("csv", "icmp_seq");
+        }
+
+        else if (!val.compare("udplength"))
+        {
+            table_api.add_diff_option_comment("udplength", "udp_len");
+            tmpval = table_api.add_list("csv", "udp_len");
         }
 
         else
         {
-            ld->add_comment_to_table("unkown format option: " + val);
-            retval = false;
+            tmpval = false;
         }
 
-        if (retval && !tmpval)
+        if (!tmpval)
+        {
+            data_api.failed_conversion(data_stream, val);
             retval = false;
+        }
     }
 
     if (!(data_stream >> limit))
@@ -235,8 +257,8 @@ bool AlertCsv::convert(std::istringstream& data_stream)
     }
 
 
-    retval = ld->add_option_to_table("limit", limit) && retval;
-    retval = ld->add_option_to_table("units", units) && retval;
+    retval = table_api.add_option("limit", limit) && retval;
+    retval = table_api.add_option("units", units) && retval;
     return retval;
 }
 
@@ -244,11 +266,11 @@ bool AlertCsv::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor(Converter& c)
 {
-    ld->open_top_level_table("alert_csv"); // in case there are no arguments
-    ld->close_table();
-    return new AlertCsv(cv, ld);
+    c.get_table_api().open_top_level_table("alert_csv"); // in case there are no arguments
+    c.get_table_api().close_table();
+    return new AlertCsv(c);
 }
 
 static const ConvertMap alert_csv_api =

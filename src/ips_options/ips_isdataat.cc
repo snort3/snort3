@@ -63,7 +63,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "isdataat";
+#define s_name "isdataat"
 
 static THREAD_LOCAL ProfileStats isDataAtPerfStats;
 
@@ -84,15 +84,15 @@ public:
         IpsOption(s_name)
     { config = c; };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
     IsDataAtData* get_data() 
     { return &config; };
 
-    bool is_relative()
+    bool is_relative() override
     { return (config.flags & ISDATAAT_RELATIVE_FLAG) != 0; };
 
 private:
@@ -225,6 +225,7 @@ static void isdataat_parse(const char *data, IsDataAtData *idx)
             ParseError("isdataat offset greater than max IPV4 packet size");
             return;
         }
+        idx->offset_var = BYTE_EXTRACT_NO_VAR;
     }
     else
     {
@@ -243,26 +244,29 @@ static void isdataat_parse(const char *data, IsDataAtData *idx)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter isdataat_params[] =
+static const Parameter s_params[] =
 {
     { "~length", Parameter::PT_STRING, nullptr, nullptr,
       "num | !num" },
 
     { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "num | !num" },
+      "offset from cursor instead of start of buffer" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to check for the presence of payload data"
+
 class IsDataAtModule : public Module
 {
 public:
-    IsDataAtModule() : Module(s_name, isdataat_params) { };
+    IsDataAtModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &isDataAtPerfStats; };
 
     IsDataAtData data;
@@ -318,6 +322,7 @@ static const IpsApi isdataat_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

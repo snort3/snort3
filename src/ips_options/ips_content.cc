@@ -38,6 +38,7 @@
 #include "utils/boyer_moore.h"
 #include "util.h"
 #include "parser/parser.h"
+#include "parser/parse_byte_code.h"
 #include "sfhashfcn.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
@@ -53,7 +54,7 @@
 
 #define MAX_PATTERN_SIZE 2048
 
-static const char* s_name = "content";
+#define s_name "content"
 
 static THREAD_LOCAL ProfileStats contentPerfStats;
 
@@ -69,13 +70,13 @@ public:
 
     ~ContentOption();
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    CursorActionType get_cursor_type() const
+    CursorActionType get_cursor_type() const override
     { return CAT_ADJUST; };
 
-    bool is_relative()
+    bool is_relative() override
     { return (config->relative == 1); };
 
     PatternMatchData* get_data()
@@ -84,7 +85,7 @@ public:
     void set_data(PatternMatchData* pmd)
     { config = pmd; };
 
-    int eval(Cursor& c, Packet*)
+    int eval(Cursor& c, Packet*) override
     { return CheckANDPatternMatch(config, c); };
 
 protected:
@@ -226,28 +227,6 @@ static PatternMatchData* new_pmd()
     return pmd;
 }
 
-// FIXIT must ensure that fast_pattern is applied to 
-// a fast_pattern inspection buffer
-static int fast_pattern_count(OptTreeNode *otn, int list_type)
-{
-    OptFpList* fpl = otn ? otn->opt_func : nullptr;
-    int c = 0;
-
-    while ( fpl )
-    {
-        if ( fpl->type == list_type )
-        {
-            ContentOption* opt = (ContentOption*)fpl->context;
-            PatternMatchData* pmd = opt->get_data();
-
-            if ( pmd->fp )
-                c++;
-        }
-        fpl = fpl->next;
-    }
-    return c;
-}
-
 static int32_t parse_int(
     const char* data, const char* tag, int low = -65535, int high = 65535)
 {
@@ -277,17 +256,11 @@ static int32_t parse_int(
     return value;
 }
 
-static void validate_content(
-    PatternMatchData* pmd, OptTreeNode* otn)
+static void finalize_content(PatternMatchData* pmd, OptTreeNode*)
 {
-    if ( fast_pattern_count(otn, RULE_OPTION_TYPE_CONTENT) > 1 )
-    {
-        ParseError("only one content per rule may be used for fast pattern matching.");
-        return;
-    }
-
     if ( pmd->negated )
-        pmd->last_check = (PmdLastCheck*)SnortAlloc(get_instance_max() * sizeof(*pmd->last_check));
+        pmd->last_check = (PmdLastCheck*)SnortAlloc(
+            get_instance_max() * sizeof(*pmd->last_check));
 }
 
 static void make_precomp(PatternMatchData * idx)
@@ -404,10 +377,13 @@ static int uniSearchReal(PatternMatchData* pmd, Cursor& c)
 
     int pos = c.get_delta();
 
-    if ( !pos && pmd->relative )
-        pos = c.get_pos();
+    if ( !pos )
+    {
+        if ( pmd->relative )
+            pos = c.get_pos();
 
-    pos += offset;
+        pos += offset;
+    }
 
     if ( pos < 0 )
         pos = 0;
@@ -454,7 +430,7 @@ static int uniSearchReal(PatternMatchData* pmd, Cursor& c)
         return 1;
     }
 
-    return -1;
+    return 0;
 }
 
 static int CheckANDPatternMatch(PatternMatchData* idx, Cursor& c)
@@ -539,306 +515,20 @@ static unsigned GetCMF (PatternMatchData* pmd)
 
 static void parse_content(PatternMatchData* ds_idx, const char* rule)
 {
-    char tmp_buf[MAX_PATTERN_SIZE];
+    bool negated;
+    std::string buf;
 
-    /* got enough ptrs for you? */
-    const char *start_ptr;
-    const char *end_ptr;
-    const char *idx;
-    const char *dummy_idx;
-    const char *dummy_end;
-    const char *tmp;
-    char hex_buf[3];
-    u_int dummy_size = 0;
-    int size;
-    int hexmode = 0;
-    int hexsize = 0;
-    int pending = 0;
-    int cnt = 0;
-    int literal = 0;
-    int negated = 0;
-
-    /* clear out the temp buffer */
-    memset(tmp_buf, 0, MAX_PATTERN_SIZE);
-
-    if (rule == NULL)
-    {
-        ParseError("content_parse Got Null enclosed in quotation marks (\")");
+    if ( !parse_byte_code(rule, negated, buf) )
         return;
-    }
 
-    while(isspace((int)*rule))
-        rule++;
-
-    if(*rule == '!')
-    {
-        negated = 1;
-        while(isspace((int)*++rule));
-    }
-
-    /* find the start of the data */
-    start_ptr = strchr(rule, '"');
-
-    if (start_ptr != rule)
-    {
-        ParseError("content data needs to be enclosed in quotation marks (\")");
-        return;
-    }
-
-    /* move the start up from the beggining quotes */
-    start_ptr++;
-
-    /* find the end of the data */
-    end_ptr = strrchr(start_ptr, '"');
-
-    if (end_ptr == NULL)
-    {
-        ParseError("content data needs to be enclosed in quotation marks (\")");
-        return;
-    }
-
-    /* Is there anything other than whitespace after the trailing
-     * double quote? */
-    tmp = end_ptr + 1;
-    while (*tmp != '\0' && isspace ((int)*tmp))
-        tmp++;
-
-    if (strlen (tmp) > 0)
-    {
-        ParseError("bad data (possibly due to missing semicolon) after "
-                "trailing double quote.");
-        return;
-    }
-
-    /* how big is it?? */
-    size = end_ptr - start_ptr;
-
-    /* uh, this shouldn't happen */
-    if (size <= 0)
-    {
-        ParseError("bad pattern length");
-        return;
-    }
-
-    /* set all the pointers to the appropriate places... */
-    idx = start_ptr;
-
-    /* set the indexes into the temp buffer */
-    dummy_idx = tmp_buf;
-    dummy_end = (dummy_idx + size);
-
-    /* why is this buffer so small? */
-    memset(hex_buf, '0', 2);
-    hex_buf[2] = '\0';
-
-    /* BEGIN BAD JUJU..... */
-    while(idx < end_ptr)
-    {
-        if (dummy_size >= MAX_PATTERN_SIZE-1)
-        {
-            /* Have more data to parse and pattern is about to go beyond end of buffer */
-            ParseError("content_parse() dummy buffer overflow, make a smaller "
-                    "pattern please! (Max size = %d)", MAX_PATTERN_SIZE-1);
-            return;
-        }
-
-        DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "processing char: %c\n", *idx););
-        switch(*idx)
-        {
-            case '|':
-                DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "Got bar... "););
-                if(!literal)
-                {
-                    DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "not in literal mode... "););
-                    if(!hexmode)
-                    {
-                        DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "Entering hexmode\n"););
-                        hexmode = 1;
-                    }
-                    else
-                    {
-                        DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "Exiting hexmode\n"););
-
-                        /*
-                        **  Hexmode is not even.
-                        */
-                        if(!hexsize || hexsize % 2)
-                        {
-                            ParseError("content hexmode argument has invalid "
-                                    "number of hex digits.  The argument '%s' "
-                                    "must contain a full even byte string.", start_ptr);
-                            return;
-                        }
-
-                        hexmode = 0;
-                        pending = 0;
-                    }
-
-                    if(hexmode)
-                        hexsize = 0;
-                }
-                else
-                {
-                    DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "literal set, Clearing\n"););
-                    literal = 0;
-                    tmp_buf[dummy_size] = start_ptr[cnt];
-                    dummy_size++;
-                }
-
-                break;
-
-            case '\\':
-                DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "Got literal char... "););
-
-                if(!literal)
-                {
-                    /* Make sure the next char makes this a valid
-                     * escape sequence.
-                     */
-                    if (idx [1] != '\0' && strchr ("\\\":;", idx [1]) == NULL)
-                    {
-                        ParseError("bad escape sequence starting with '%s'.", idx);
-                        return;
-                    }
-
-                    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "Setting literal\n"););
-
-                    literal = 1;
-                }
-                else
-                {
-                    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "Clearing literal\n"););
-                    tmp_buf[dummy_size] = start_ptr[cnt];
-                    literal = 0;
-                    dummy_size++;
-                }
-
-                break;
-            case '"':
-                if (!literal)
-                {
-                    ParseError("non-escaped '\"' character!");
-                    return;
-                }
-                /* otherwise process the character as default */
-            default:
-                if(hexmode)
-                {
-                    if(isxdigit((int) *idx))
-                    {
-                        hexsize++;
-
-                        if(!pending)
-                        {
-                            hex_buf[0] = *idx;
-                            pending++;
-                        }
-                        else
-                        {
-                            hex_buf[1] = *idx;
-                            pending--;
-
-                            if(dummy_idx < dummy_end)
-                            {
-                                tmp_buf[dummy_size] = (u_char)
-                                    strtol(hex_buf, (char **) NULL, 16)&0xFF;
-
-                                dummy_size++;
-                                memset(hex_buf, '0', 2);
-                                hex_buf[2] = '\0';
-                            }
-                            else
-                            {
-                                ParseError("content_parse() dummy buffer "
-                                        "overflow, make a smaller pattern "
-                                        "please! (Max size = %d)", MAX_PATTERN_SIZE-1);
-                                return;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if(*idx != ' ')
-                        {
-                            ParseError("what is this '%c'(0x%X) doing in "
-                                    "your binary buffer?  Valid hex values "
-                                    "only please! (0x0 - 0xF) Position: %d",
-                                    (char) *idx, (char) *idx, cnt);
-                            return;
-                        }
-                    }
-                }
-                else
-                {
-                    if(*idx >= 0x1F && *idx <= 0x7e)
-                    {
-                        if(dummy_idx < dummy_end)
-                        {
-                            tmp_buf[dummy_size] = start_ptr[cnt];
-                            dummy_size++;
-                        }
-                        else
-                        {
-                            ParseError("content_parse() dummy buffer "
-                                    "overflow, make a smaller pattern "
-                                    "please! (Max size = %d)", MAX_PATTERN_SIZE-1);
-                            return;
-                        }
-
-                        if(literal)
-                        {
-                            literal = 0;
-                        }
-                    }
-                    else
-                    {
-                        if(literal)
-                        {
-                            tmp_buf[dummy_size] = start_ptr[cnt];
-                            dummy_size++;
-                            DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "Clearing literal\n"););
-                            literal = 0;
-                        }
-                        else
-                        {
-                            ParseError("character value out of range, try a "
-                                    "binary buffer.");
-                            return;
-                        }
-                    }
-                }
-
-                break;
-        }
-
-        dummy_idx++;
-        idx++;
-        cnt++;
-    }
-    /* ...END BAD JUJU */
-
-    /* error prunning */
-
-    if (literal)
-    {
-        ParseError("backslash escape is not completed.");
-        return;
-    }
-
-    if (hexmode)
-    {
-        ParseError("hexmode is not completed.");
-        return;
-    }
+    const char* tmp_buf = buf.c_str();
+    unsigned dummy_size = buf.size();
 
     ds_idx->pattern_buf = (char *)SnortAlloc(dummy_size+1);
     memcpy(ds_idx->pattern_buf, tmp_buf, dummy_size);
 
     ds_idx->pattern_size = dummy_size;
-
-    make_precomp(ds_idx);
     ds_idx->negated = negated;
-
     ds_idx->match_delta = GetMaxJumpSize(ds_idx->pattern_buf, ds_idx->pattern_size);
 }
 
@@ -859,6 +549,7 @@ static void parse_offset(PatternMatchData* pmd, const char *data)
     if (isdigit(data[0]) || data[0] == '-')
     {
         pmd->offset = parse_int(data, "offset");
+        pmd->offset_var = BYTE_EXTRACT_NO_VAR;
     }
     else
     {
@@ -895,10 +586,11 @@ static void parse_depth(PatternMatchData* pmd, const char *data)
         /* check to make sure that this the depth allows this rule to fire */
         if (pmd->depth < (int)pmd->pattern_size)
         {
-            ParseError("the depth (%d) is less than the size of the content(%u)!",
+            ParseError("the depth (%d) is less than the size of the content(%u)",
                     pmd->depth, pmd->pattern_size);
             return;
         }
+        pmd->depth_var = BYTE_EXTRACT_NO_VAR;
     }
     else
     {
@@ -931,6 +623,7 @@ static void parse_distance(PatternMatchData* pmd, const char *data)
     if (isdigit(data[0]) || data[0] == '-')
     {
         pmd->offset = parse_int(data, "distance");
+        pmd->offset_var = BYTE_EXTRACT_NO_VAR;
     }
     else
     {
@@ -968,6 +661,7 @@ static void parse_within(PatternMatchData* pmd, const char *data)
             ParseError("within (%d) is smaller than size of pattern", pmd->depth);
             return;
         }
+        pmd->depth_var = BYTE_EXTRACT_NO_VAR;
     }
     else
     {
@@ -985,55 +679,11 @@ static void parse_within(PatternMatchData* pmd, const char *data)
     pmd->relative = 1;
 }
 
-static const char* error_str = 
-    "fast_pattern_offset + fast_pattern_length must be less "
-    "than or equal to the actual pattern length which is %u.";
-
-static void parse_fast_pattern_offset(PatternMatchData* pmd, const char *data)
-{
-    if (data == NULL)
-    {
-        ParseError("missing argument to 'fast_pattern_offset' option");
-        return;
-    }
-
-    long offset = parse_int(data, "fast_pattern_offset", 0, UINT16_MAX);
-
-    if ((int)pmd->pattern_size < (offset + pmd->fp_length))
-    {
-        ParseError(error_str, data, pmd->pattern_size);
-        return;
-    }
-
-    pmd->fp_offset = offset;
-    pmd->fp = 1;  // FIXIT must ensure current buffer is fp compatible
-}
-
-static void parse_fast_pattern_length(PatternMatchData* pmd, const char *data)
-{
-    if (data == NULL)
-    {
-        ParseError("missing argument to 'fast_pattern_length' option");
-        return;
-    }
-
-    long length = parse_int(data, "fast_pattern_length", 0, UINT16_MAX);
-
-    if ((int)pmd->pattern_size < (pmd->fp_offset + length))
-    {
-        ParseError(error_str, data, pmd->pattern_size);
-        return;
-    }
-
-    pmd->fp_length = length;
-    pmd->fp = 1;  // FIXIT must ensure current buffer is fp compatible
-}
-
 //-------------------------------------------------------------------------
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter content_params[] =
+static const Parameter s_params[] =
 {
     { "~data", Parameter::PT_STRING, nullptr, nullptr,
       "data to match" },
@@ -1065,20 +715,23 @@ static const Parameter content_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "payload rule option for basic pattern matching"
+
 class ContentModule : public Module
 {
 public:
-    ContentModule() : Module(s_name, content_params)
+    ContentModule() : Module(s_name, s_help, s_params)
     { pmd = nullptr; };
 
     ~ContentModule()
     { delete pmd; };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &contentPerfStats; };
 
     PatternMatchData* get_data();
@@ -1102,11 +755,28 @@ bool ContentModule::begin(const char*, int, SnortConfig*)
 
 bool ContentModule::end(const char*, int, SnortConfig*)
 {
+    if ( (int)pmd->pattern_size <= pmd->fp_offset )
+    {
+        ParseError(
+            "fast_pattern_offset must be less "
+            "than the actual pattern length which is %u.",
+            pmd->pattern_size);
+        return false;
+    }
+    if ( (int)pmd->pattern_size < (pmd->fp_offset + pmd->fp_length) )
+    {
+        ParseError(
+            "fast_pattern_offset + fast_pattern_length must be less "
+            "than or equal to the actual pattern length which is %u.",
+            pmd->pattern_size);
+        return false;
+    }
     if ( pmd->no_case )
     {
         for ( unsigned i = 0; i < pmd->pattern_size; i++ )
-            pmd->pattern_buf[i] = toupper((int)pmd->pattern_buf[i]);
+            pmd->pattern_buf[i] = toupper(pmd->pattern_buf[i]);
     }
+    make_precomp(pmd);
     return true;
 }
 
@@ -1131,14 +801,18 @@ bool ContentModule::set(const char*, Value& v, SnortConfig*)
         pmd->no_case = 1;
 
     else if ( v.is("fast_pattern") )
-        pmd->fp = 1;  // FIXIT must ensure current buffer is fp compatible
+        pmd->fp = 1;
 
     else if ( v.is("fast_pattern_offset") )
-        parse_fast_pattern_offset(pmd, v.get_string());
-
+    {
+        pmd->fp_offset = v.get_long();
+        pmd->fp = 1;
+    }
     else if ( v.is("fast_pattern_length") )
-        parse_fast_pattern_length(pmd, v.get_string());
-
+    {
+        pmd->fp_length = v.get_long();
+        pmd->fp = 1;
+    }
     else
         return false;
 
@@ -1163,7 +837,7 @@ static IpsOption* content_ctor(Module* p, OptTreeNode * otn)
 {
     ContentModule* m = (ContentModule*)p;
     PatternMatchData* pmd = m->get_data();
-    validate_content(pmd, otn);
+    finalize_content(pmd, otn);
     return new ContentOption(pmd);
 }
 
@@ -1177,6 +851,7 @@ static const IpsApi content_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

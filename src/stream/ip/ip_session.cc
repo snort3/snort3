@@ -32,6 +32,7 @@
 #include "stream/stream.h"
 #include "perf_monitor/perf.h"
 #include "flow/flow_control.h"
+#include "sfip/sf_ip.h"
 
 THREAD_LOCAL SessionStats ipStats;
 THREAD_LOCAL ProfileStats ip_perf_stats;
@@ -61,7 +62,7 @@ void IpSessionCleanup (Flow* lws, FragTracker* tracker)
         CloseStreamSession(&sfBase, SESSION_CLOSED_NORMALLY);
     }
 
-    lws->clear();
+    lws->restart();
 }
 
 //-------------------------------------------------------------------------
@@ -115,7 +116,6 @@ static inline void UpdateSession (Packet* p, Flow* lws)
 
 IpSession::IpSession(Flow* flow) : Session(flow)
 {
-    memset(&tracker, 0, sizeof(tracker));
 }
 
 void IpSession::clear()
@@ -128,10 +128,11 @@ bool IpSession::setup (Packet* p)
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM,
         "Stream IP session created!\n"););
 
+    memset(&tracker, 0, sizeof(tracker));
     ipStats.sessions++;
 
-    IP_COPY_VALUE(flow->client_ip, GET_SRC_IP(p));
-    IP_COPY_VALUE(flow->server_ip, GET_DST_IP(p));
+    sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
+    sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
 
 #ifdef ENABLE_EXPECTED_IP
     if ( flow_con->expected_session(flow, p))
@@ -170,7 +171,7 @@ int IpSession::process(Packet* p)
         return 0;
     }
 
-    if ( p->frag_flag )
+    if ( p->ptrs.decode_flags & DECODE_FRAG )
     {
         Defrag* d = get_defrag(flow->ssn_server);
         d->process(p, &tracker);

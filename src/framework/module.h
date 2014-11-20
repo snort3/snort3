@@ -18,10 +18,9 @@
 */
 // module.h author Russ Combs <rucombs@cisco.com>
 
-// FIXIT 
-// -- add set_default method
-// -- add trace param(s)
-// -- add memcap related
+// FIXIT-M add trace param(s)
+// FIXIT-M add memcap related
+// FIXIT-L add set_default method
 
 #ifndef MODULE_H
 #define MODULE_H
@@ -29,6 +28,7 @@
 #include <vector>
 #include <lua.hpp>
 
+#include "main/snort_types.h"
 #include "framework/value.h"
 #include "framework/parameter.h"
 #include "framework/counts.h"
@@ -50,8 +50,7 @@ struct RuleMap
 
 struct ProfileStats;
 
-// FIXIT add brief help string to modules
-class Module
+class SO_PUBLIC Module
 {
 public:
     virtual ~Module() { };
@@ -92,6 +91,9 @@ public:
             return params->type;
     };
 
+    const char* get_help() const
+    { return help; };
+
     const Parameter* get_parameters() const
     { return params; };
 
@@ -116,23 +118,30 @@ public:
         unsigned /*index*/, const char*& /*name*/, const char*& /*parent*/) const
     { return nullptr; };
 
+    virtual const char* get_defaults() const
+    { return nullptr; };
+
     virtual void sum_stats();
     virtual void show_stats();
     virtual void reset_stats();
 
 protected:
-    Module(const char* s);
-    Module(const char* s, const Parameter* p, bool is_list = false);
+    Module(const char* name, const char* help);
+    Module(const char* name, const char* help, const Parameter*, bool is_list = false);
 
 private:
     friend class ModuleManager;
-    void init(const char* s);
+    void init(const char*, const char* = nullptr);
 
-    bool list;
     const char* name;
+    const char* help;
+
     const Parameter* params;
+    bool list;
+
     const Command* cmds;
     const RuleMap* rules;
+
     std::vector<PegCount> counts;
     int num_counts;
 };

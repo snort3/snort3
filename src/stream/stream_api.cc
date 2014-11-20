@@ -47,11 +47,9 @@
 #include "mstring.h"
 #include "protocols/packet.h"
 #include "detect.h"
-#include "generators.h"
 #include "perf_monitor/perf.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
-#include "ipv6_port.h"
 #include "ips_options/ips_flowbits.h"
 #include "snort_debug.h"
 #include "protocols/layer.h"
@@ -60,11 +58,7 @@
 #include "target_based/sftarget_protocol_reference.h"
 #include "target_based/sftarget_hostentry.h"
 
-//-------------------------------------------------------------------------
-// public methods other than ctor / dtor must all be declared SO_PUBLIC
-//-------------------------------------------------------------------------
-
-Stream stream;  // FIXIT global for SnortContext
+Stream stream;  // FIXIT-L global for SnortContext
 
 Stream::Stream()
 {
@@ -94,9 +88,9 @@ void Stream::delete_session(const FlowKey* key)
 //-------------------------------------------------------------------------
 
 Flow* Stream::get_session_ptr_from_ip_port(
-    snort_ip_p srcIP, uint16_t srcPort,
-    snort_ip_p dstIP, uint16_t dstPort,
-    char ip_protocol, uint16_t vlan, uint32_t mplsId,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
+    uint8_t ip_protocol, uint16_t vlan, uint32_t mplsId,
     uint16_t addressSpaceId)
 {
     FlowKey key;
@@ -118,12 +112,12 @@ void Stream::populate_session_key(Packet *p, FlowKey *key)
 #endif
 
     key->init(
-        GET_SRC_IP(p), p->sp,
-        GET_DST_IP(p), p->dp,
-        GET_IPH_PROTO(p),
+        p->ptrs.ip_api.get_src(), p->ptrs.sp,
+        p->ptrs.ip_api.get_dst(), p->ptrs.dp,
+        p->get_ip_proto_next(),
         // if the vlan protocol bit is defined, vlan layer gauranteed to exist
-        (p->proto_bits & PROTO_BIT__VLAN) ? vlan::vth_vlan(layer::get_vlan_layer(p)) : 0,
-        (p->proto_bits & PROTO_BIT__MPLS) ? p->mplsHdr.label : 0,
+        (p->proto_bits & PROTO_BIT__VLAN) ? layer::get_vlan_layer(p)->vid() : 0,
+        (p->proto_bits & PROTO_BIT__MPLS) ? p->ptrs.mplsHdr.label : 0,
         addressSpaceId);
 }
 
@@ -151,9 +145,9 @@ FlowData* Stream::get_application_data_from_key(
 }
 
 FlowData* Stream::get_application_data_from_ip_port(
-    snort_ip_p srcIP, uint16_t srcPort,
-    snort_ip_p dstIP, uint16_t dstPort,
-    char ip_protocol, uint16_t vlan, uint32_t mplsId,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
+    uint8_t ip_protocol, uint16_t vlan, uint32_t mplsId,
     uint16_t addressSpaceID, unsigned flow_id)
 {
     Flow* flow;
@@ -185,9 +179,9 @@ void Stream::check_session_closed(Packet* p)
 }
 
 int Stream::ignore_session(
-    snort_ip_p srcIP, uint16_t srcPort,
-    snort_ip_p dstIP, uint16_t dstPort,
-    uint8_t protocol, char direction, 
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
+    uint8_t protocol, char direction,
     uint32_t flow_id)
 {
     assert(flow_con);
@@ -199,7 +193,7 @@ int Stream::ignore_session(
 }
 
 void Stream::stop_inspection(
-    Flow*  flow, Packet *p, char dir,
+    Flow *flow, Packet *p, char dir,
     int32_t /*bytes*/, int /*response*/)
 {
     if (!flow)
@@ -218,7 +212,7 @@ void Stream::stop_inspection(
     }
 
     /* Flush any queued data on the client and/or server */
-    if (flow->protocol == IPPROTO_TCP)
+    if (flow->protocol == PktType::TCP)
     {
         if (flow->s5_state.ignore_direction & SSN_DIR_CLIENT)
         {
@@ -234,7 +228,7 @@ void Stream::stop_inspection(
     /* TODO: Handle bytes/response parameters */
 
     DisableInspection(p);
-    flow->flow_state = 2;
+    flow->set_state(Flow::ALLOW);
 }
 
 void Stream::resume_inspection(Flow* flow, char dir)
@@ -257,7 +251,7 @@ void Stream::resume_inspection(Flow* flow, char dir)
 }
 
 void Stream::update_direction(
-    Flow*  flow, char dir, snort_ip_p ip, uint16_t port)
+    Flow*  flow, char dir, const sfip_t *ip, uint16_t port)
 {
     if (!flow)
         return;
@@ -275,8 +269,7 @@ uint32_t Stream::get_packet_direction(Packet *p)
     return (p->packet_flags & (PKT_FROM_SERVER|PKT_FROM_CLIENT));
 }
 
-void Stream::drop_traffic(
-    Packet*, Flow* flow, char dir)
+void Stream::drop_traffic(Flow* flow, char dir)
 {
     if (!flow)
         return;
@@ -303,11 +296,11 @@ void Stream::drop_packet(Packet *p)
     if (!flow)
         return;
 
-    flow->flow_state = 1;
+    flow->set_state(Flow::BLOCK);
     flow->session->clear();
 
     if (!(p->packet_flags & PKT_STATELESS))
-        drop_traffic(p, flow, SSN_DIR_BOTH);
+        drop_traffic(flow, SSN_DIR_BOTH);
 }
 
 uint32_t Stream::set_session_flags(Flow* flow, uint32_t flags)
@@ -380,8 +373,8 @@ void Stream::init_active_response(Packet* p, Flow* flow)
 //-------------------------------------------------------------------------
 
 int Stream::set_application_protocol_id_expected(
-    snort_ip_p srcIP, uint16_t srcPort,
-    snort_ip_p dstIP, uint16_t dstPort,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
     uint8_t protocol, int16_t appId,
     FlowData* fd) 
 {
@@ -392,7 +385,7 @@ int Stream::set_application_protocol_id_expected(
 }
 
 void Stream::set_application_protocol_id_from_host_entry(
-    Flow* flow, HostAttributeEntry *host_entry, int direction)
+    Flow* flow, const HostAttributeEntry *host_entry, int direction)
 {
     int16_t application_protocol;
 
@@ -412,13 +405,13 @@ void Stream::set_application_protocol_id_from_host_entry(
     {
         application_protocol = getApplicationProtocolId(
             host_entry, flow->s5_state.ipprotocol,
-            ntohs(flow->server_port), SFAT_SERVICE);
+            flow->server_port, SFAT_SERVICE);
     }
     else
     {
         application_protocol = getApplicationProtocolId(
             host_entry, flow->s5_state.ipprotocol,
-            ntohs(flow->client_port), SFAT_SERVICE);
+            flow->client_port, SFAT_SERVICE);
 
         if ( application_protocol &&
             (flow->s5_state.session_flags & SSNFLAG_MIDSTREAM) )
@@ -448,15 +441,12 @@ int16_t Stream::get_application_protocol_id(Flow* flow)
     if (flow->s5_state.application_protocol != 0)
         return flow->s5_state.application_protocol;
 
-    if (!IsAdaptiveConfigured())
-        return flow->s5_state.application_protocol;
-
     if (flow->s5_state.ipprotocol == 0)
     {
         set_ip_protocol(flow);
     }
 
-    host_entry = SFAT_LookupHostEntryByIP(IP_ARG(flow->server_ip));
+    host_entry = SFAT_LookupHostEntryByIP(&flow->server_ip);
     if (host_entry)
     {
         set_application_protocol_id_from_host_entry(flow, host_entry, SSN_DIR_SERVER);
@@ -467,7 +457,7 @@ int16_t Stream::get_application_protocol_id(Flow* flow)
         }
     }
 
-    host_entry = SFAT_LookupHostEntryByIP(IP_ARG(flow->client_ip));
+    host_entry = SFAT_LookupHostEntryByIP(&flow->client_ip);
 
     if (host_entry)
     {
@@ -489,9 +479,6 @@ int16_t Stream::set_application_protocol_id(Flow* flow, int16_t id)
     if (!flow)
         return 0;
 
-    if (!IsAdaptiveConfigured())
-        return 0;
-
     if (flow->s5_state.application_protocol != id)
     {
         flow->s5_state.application_protocol = id;
@@ -501,7 +488,7 @@ int16_t Stream::set_application_protocol_id(Flow* flow, int16_t id)
         set_ip_protocol(flow);
 
     SFAT_UpdateApplicationProtocol(
-        IP_ARG(flow->server_ip), ntohs(flow->server_port),
+        &flow->server_ip, flow->server_port,
         flow->s5_state.ipprotocol, id);
 
     return id;
@@ -616,7 +603,7 @@ void Stream::call_handler (Packet* p, unsigned id)
 // other foo
 //-------------------------------------------------------------------------
 
-uint8_t Stream::get_session_ttl(Flow* flow, char dir, int outer)
+uint8_t Stream::get_session_ttl(Flow* flow, char dir, bool outer)
 {
     if ( !flow )
         return 0;
@@ -744,16 +731,19 @@ void Stream::set_ip_protocol(Flow* flow)
 {
     switch (flow->protocol)
     {
-    case IPPROTO_TCP:
+    case PktType::TCP:
         flow->s5_state.ipprotocol = protocolReferenceTCP;
         break;
 
-    case IPPROTO_UDP:
+    case PktType::UDP:
         flow->s5_state.ipprotocol = protocolReferenceUDP;
         break;
 
-    case IPPROTO_ICMP:
+    case PktType::ICMP:
         flow->s5_state.ipprotocol = protocolReferenceICMP;
+        break;
+
+    default:
         break;
     }
 }
@@ -775,7 +765,7 @@ int Stream::response_flush_stream(Packet *p)
 
     flow = p->flow;
 
-    if ((flow->protocol != IPPROTO_TCP) ||
+    if ((flow->protocol != PktType::TCP) ||
         (p->packet_flags & PKT_REBUILT_STREAM))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
@@ -791,14 +781,14 @@ int Stream::response_flush_stream(Packet *p)
 }
 
 int Stream::add_session_alert(
-    Flow* flow, Packet *p, uint32_t gid, uint32_t sid)
+    Flow *flow, Packet *p, uint32_t gid, uint32_t sid)
 {
     if ( !flow )
         return 0;
 
     /* Don't need to do this for other protos because they don't
        do any reassembly. */
-    if ( GET_IPH_PROTO(p) != IPPROTO_TCP )
+    if ( p->type() != PktType::TCP )
         return 0;
 
     return Stream5AddSessionAlertTcp(flow, p, gid, sid);
@@ -806,21 +796,21 @@ int Stream::add_session_alert(
 
 /* return non-zero if gid/sid have already been seen */
 int Stream::check_session_alerted(
-    Flow* flow, Packet *p, uint32_t gid, uint32_t sid)
+    Flow *flow, Packet *p, uint32_t gid, uint32_t sid)
 {
     if ( !flow )
         return 0;
 
     /* Don't need to do this for other protos because they don't
        do any reassembly. */
-    if ( GET_IPH_PROTO(p) != IPPROTO_TCP )
+    if ( p->type() != PktType::TCP )
         return 0;
 
     return Stream5CheckSessionAlertTcp(flow, p, gid, sid);
 }
 
 int Stream::update_session_alert(
-    Flow* flow, Packet *p,
+    Flow *flow, Packet *p,
     uint32_t gid, uint32_t sid,
     uint32_t event_id, uint32_t event_second)
 {
@@ -829,7 +819,7 @@ int Stream::update_session_alert(
 
     /* Don't need to do this for other protos because they don't
        do any reassembly. */
-    if ( GET_IPH_PROTO(p) != IPPROTO_TCP )
+    if ( p->type() != PktType::TCP )
         return 0;
 
     return Stream5UpdateSessionAlertTcp(flow, p, gid, sid, event_id, event_second);
@@ -846,7 +836,7 @@ void Stream::set_extra_data(
     Stream5SetExtraDataTcp(flow, p, flag);
 }
 
-// FIXIT get pv/flow from packet directly?
+// FIXIT-L get pv/flow from packet directly?
 void Stream::clear_extra_data(
     Flow* pv, Packet* p, uint32_t flag)
 {
@@ -863,7 +853,7 @@ int Stream::traverse_reassembled(
 {
     Flow* flow = p->flow;
 
-    if (!flow || flow->protocol != IPPROTO_TCP)
+    if (!flow || flow->protocol != PktType::TCP)
         return 0;
 
     /* Only if this is a rebuilt packet */
@@ -878,7 +868,7 @@ int Stream::traverse_stream_segments(
 {
     Flow* flow = p->flow;
 
-    if ((flow == NULL) || (flow->protocol != IPPROTO_TCP))
+    if ((flow == NULL) || (flow->protocol != PktType::TCP))
         return -1;
 
     /* Only if this is a rebuilt packet */
@@ -890,7 +880,7 @@ int Stream::traverse_stream_segments(
 
 char Stream::get_reassembly_direction(Flow* flow)
 {
-    if (!flow || flow->protocol != IPPROTO_TCP)
+    if (!flow || flow->protocol != PktType::TCP)
         return SSN_DIR_NONE;
 
     return Stream5GetReassemblyDirectionTcp(flow);
@@ -898,7 +888,7 @@ char Stream::get_reassembly_direction(Flow* flow)
 
 char Stream::is_stream_sequenced(Flow* flow, char dir)
 {
-    if (!flow || flow->protocol != IPPROTO_TCP)
+    if (!flow || flow->protocol != PktType::TCP)
         return 1;
 
     return Stream5IsStreamSequencedTcp(flow, dir);
@@ -906,7 +896,7 @@ char Stream::is_stream_sequenced(Flow* flow, char dir)
 
 int Stream::missing_in_reassembled(Flow* flow, char dir)
 {
-    if (!flow || flow->protocol != IPPROTO_TCP)
+    if (!flow || flow->protocol != PktType::TCP)
         return SSN_MISSING_NONE;
 
     return Stream5MissingInReassembledTcp(flow, dir);
@@ -914,7 +904,7 @@ int Stream::missing_in_reassembled(Flow* flow, char dir)
 
 char Stream::missed_packets(Flow* flow, char dir)
 {
-    if (!flow || flow->protocol != IPPROTO_TCP)
+    if (!flow || flow->protocol != PktType::TCP)
         return 1;
 
     return Stream5PacketsMissingTcp(flow, dir);

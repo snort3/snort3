@@ -1,5 +1,4 @@
 
-
 set (FILE_LIST
     http_inspect.cc
     hi_main.cc
@@ -20,6 +19,7 @@ set (FILE_LIST
     hi_norm.h
     hi_paf.cc 
     hi_paf.h
+    hi_events.cc
     hi_events.h
     hi_module.cc
     hi_module.h
@@ -44,13 +44,11 @@ set (FILE_LIST
     hi_util_xmalloc.h
 )
 
-if (STATIC_INSPECTORS)
+# Can'be be dynamic yet
+#if (STATIC_INSPECTORS)
     add_library(http_inspect STATIC ${FILE_LIST})
 
-else (STATIC_INSPECTORS)
-    add_shared_library(http_inspect inspectors ${FILE_LIST})
+#else (STATIC_INSPECTORS)
+#    add_shared_library(http_inspect inspectors ${FILE_LIST})
 
-endif (STATIC_INSPECTORS)
-
-
-
+#endif (STATIC_INSPECTORS)

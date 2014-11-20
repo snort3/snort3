@@ -56,7 +56,7 @@
 
 static void KTrieFree(KTRIENODE *n);
 
-static unsigned int mtot = 0;  // FIXIT 1 / process
+static unsigned int mtot = 0;
 
 unsigned int KTrieMemUsed(void)
 {

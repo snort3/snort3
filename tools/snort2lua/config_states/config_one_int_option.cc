@@ -1,22 +1,21 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // config_one_int_option.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
@@ -24,8 +23,8 @@
 #include <string>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
-#include "utils/s2l_util.h"
+#include "helpers/converter.h"
+#include "helpers/s2l_util.h"
 
 
 namespace config
@@ -41,14 +40,14 @@ namespace
 class ConfigIntOption : public ConversionState
 {
 public:
-    ConfigIntOption(Converter* cv, LuaData* ld,
-                        const std::string* snort_option,
-                        const std::string* lua_table,
-                        const std::string* lua_option) :
-            ConversionState(cv, ld),
-            snort_option(snort_option),
-            lua_table(lua_table),
-            lua_option(lua_option)
+    ConfigIntOption(Converter& c,
+                    const std::string* snort_opt,
+                    const std::string* table,
+                    const std::string* lua_opt) :
+            ConversionState(c),
+            snort_option(snort_opt),
+            lua_table(table),
+            lua_option(lua_opt)
     {
     }
     virtual ~ConfigIntOption() {};
@@ -60,19 +59,19 @@ public:
             (lua_table == nullptr)||
             (lua_table->empty()))
         {
-            ld->developer_error("Invalid Option!!  Missing either the Snort Option"
+            DataApi::developer_error("Invalid Option!!  Missing either the Snort Option"
                 " or the corresponding lua table!!");
             return false;
         }
 
-        ld->open_table(*lua_table);
+        table_api.open_table(*lua_table);
         bool retval;
 
         // if the two names are not equal ...
         if ((lua_option != nullptr) && snort_option->compare(*lua_option))
         {
             retval = parse_int_option(*lua_option, stream);
-            ld->add_diff_option_comment("config " + *snort_option +
+            table_api.add_diff_option_comment("config " + *snort_option +
                     ":", *lua_option);
         }
         else
@@ -80,7 +79,7 @@ public:
             retval = parse_int_option(*snort_option, stream);
         }
 
-        ld->close_table();
+        table_api.close_table();
         stream.setstate(std::ios::eofbit); // not interested in any additional arguments
         return retval;
     }
@@ -95,9 +94,10 @@ private:
 template<const std::string *snort_option,
         const std::string *lua_table,
         const std::string *lua_option = nullptr>
-static ConversionState* config_int_ctor(Converter* cv, LuaData* ld)
+static ConversionState* config_int_ctor(Converter& c)
 {
-    return new ConfigIntOption(cv, ld, snort_option,
+    return new ConfigIntOption( c,
+                                snort_option,
                                 lua_table,
                                 lua_option);
 }

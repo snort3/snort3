@@ -32,7 +32,6 @@
 #include "zhash.h"
 
 #define SESSION_CACHE_FLAG_PURGING  0x01
-#define SESSION_CACHE_FLAG_PRUNING  0x02  // FIXIT not used?
 
 //-------------------------------------------------------------------------
 // FlowCache stuff
@@ -73,10 +72,8 @@ FlowCache::FlowCache (
 
 FlowCache::~FlowCache ()
 {
-    purge();
-
     while ( Flow* flow = (Flow*)hash_table->pop() )
-        delete flow;
+        flow->term();
 
     delete uni_head;
     delete uni_tail;
@@ -183,7 +180,7 @@ uint32_t FlowCache::prune_stale(uint32_t thetime, Flow *save_me)
 
     while ( flow )
     {
-        // FIXIT this loops forever if 1 flow in cache
+        // FIXIT-L this loops forever if 1 flow in cache
         if(flow == save_me)
             hash_table->touch();
 
@@ -211,7 +208,7 @@ uint32_t FlowCache::prune_stale(uint32_t thetime, Flow *save_me)
 uint32_t FlowCache::prune_unis()
 {
     // we may have many or few unis; need to find reasonable ratio
-    // FIXIT max_uni should be based on typical ratios seen in perfmon
+    // FIXIT-L max_uni should be based on typical ratios seen in perfmon
     const uint32_t max_uni = (max_flows >> 2) + 1;
 
     Flow* curr = uni_tail->prev;
@@ -247,7 +244,7 @@ uint32_t FlowCache::prune_excess(bool memCheck, Flow *save_me)
     while (
         (hash_table->get_count() > 1) &&
         ((!memCheck && ((hash_table->get_count() > max_cap) || !pruned)) ||
-         (memCheck && tcp_memcap->at_max()) )) // FIXIT remove explicit dependence on tcp_memcap
+         (memCheck && tcp_memcap->at_max()) )) // FIXIT-M remove explicit dependence on tcp_memcap
     {
         unsigned int blocks = 0;
         Flow* flow = (Flow*)hash_table->first();
@@ -263,7 +260,7 @@ uint32_t FlowCache::prune_excess(bool memCheck, Flow *save_me)
             }
             else
             {
-                if ( flow->was_blocked() )
+                if ( flow && flow->was_blocked() )
                     blocks++;
 
                 if ( !hash_table->touch() )
@@ -314,6 +311,7 @@ int FlowCache::purge()
 {
     int retCount = 0;
 
+    Active_Suspend();
     flags |= SESSION_CACHE_FLAG_PURGING;
     Flow* flow = (Flow*)hash_table->first();
 
@@ -326,6 +324,7 @@ int FlowCache::purge()
     }
 
     flags &= ~SESSION_CACHE_FLAG_PURGING;
+    Active_Resume();
 
     return retCount;
 }

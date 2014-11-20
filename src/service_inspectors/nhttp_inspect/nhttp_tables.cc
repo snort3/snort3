@@ -1,52 +1,42 @@
-/****************************************************************************
- *
+/*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2003-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
-
-//
-//  @author     Tom Peters <thopeter@cisco.com>
-//
-//  @brief      Static constant tables for various conversions and normalizations
-//
-//  Note: protocol correctness is not the decisive criterion for inclusion in the following tables. Just because something is "wrong" per RFC does
-//        not mean that it cannot appear here. The goal is to recognize and inspect things that actually happen or might happen regardless of
-//        whether they should happen.
-//
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+// nhttp_tables.cc author Tom Peters <thopeter@cisco.com>
 
 #include <string.h>
 #include <sys/types.h>
 
-#include "snort.h"
+#include "main/snort.h"
 #include "framework/module.h"
+
 #include "nhttp_enum.h"
 #include "nhttp_str_to_code.h"
 #include "nhttp_normalizers.h"
 #include "nhttp_head_norm.h"
 #include "nhttp_msg_request.h"
-#include "nhttp_msg_head.h"
+#include "nhttp_msg_header.h"
 #include "nhttp_module.h"
 #include "nhttp_uri_norm.h"
+#include "nhttp_splitter.h"
 
 using namespace NHttpEnums;
 
-const StrCode NHttpMsgRequest::methodList[] =
+const StrCode NHttpMsgRequest::method_list[] =
    {{ METH_OPTIONS,            "OPTIONS"},
     { METH_GET,                "GET"},
     { METH_HEAD,               "HEAD"},
@@ -97,7 +87,7 @@ const StrCode NHttpMsgRequest::methodList[] =
     { METH_UPDATEREDIRECTREF,  "UPDATEREDIRECTREF"},
     { 0,                       nullptr} };
 
-const StrCode NHttpUri::schemeList[] =
+const StrCode NHttpUri::scheme_list[] =
    {{ SCH_HTTP,                "http"},
     { SCH_HTTPS,               "https"},
     { SCH_FTP,                 "ftp"},
@@ -105,7 +95,7 @@ const StrCode NHttpUri::schemeList[] =
     { SCH_FILE,                "file"},
     { 0,                       nullptr} };
 
-const StrCode NHttpMsgHeadShared::headerList[] =
+const StrCode NHttpMsgHeadShared::header_list[] =
    {{ HEAD_CACHE_CONTROL,        "cache-control"},
     { HEAD_CONNECTION,           "connection"},
     { HEAD_DATE,                 "date"},
@@ -159,7 +149,7 @@ const StrCode NHttpMsgHeadShared::headerList[] =
     { HEAD_TRUE_CLIENT_IP,       "true-client-ip"},
     { 0,                         nullptr} };
 
-const StrCode NHttpMsgHeadShared::transCodeList[] =
+const StrCode NHttpMsgHeadShared::trans_code_list[] =
    {{ TRANSCODE_CHUNKED,         "chunked"},
     { TRANSCODE_IDENTITY,        "identity"},
     { TRANSCODE_GZIP,            "gzip"},
@@ -167,13 +157,25 @@ const StrCode NHttpMsgHeadShared::transCodeList[] =
     { TRANSCODE_DEFLATE,         "deflate"},
     { 0,                         nullptr} };
 
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_NIL {NORM_NULL, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_BASIC {NORM_FIELD, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_CAT {NORM_FIELD, true, normRemoveLws, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_DECIMAL {NORM_INT64, false, normDecimalInteger, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_TRANSCODE {NORM_ENUM64, true, normRemoveLws, nullptr, norm2Lower, nullptr, normSeqStrCode, NHttpMsgHeadShared::transCodeList};
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_NIL {NORM_NULL, false, nullptr, nullptr, nullptr, nullptr,
+   nullptr, nullptr};
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_BASIC {NORM_FIELD, false, nullptr, nullptr, nullptr, nullptr,
+   nullptr, nullptr};
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_CAT {NORM_FIELD, true, norm_remove_lws, nullptr, nullptr,
+   nullptr, nullptr, nullptr};
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_DECIMAL {NORM_INT64, false, norm_decimal_integer, nullptr,
+   nullptr, nullptr, nullptr, nullptr};
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_TRANSCODE {NORM_ENUM64, true, norm_remove_lws, nullptr,
+   norm_to_lower, nullptr, norm_seq_str_code, NHttpMsgHeadShared::trans_code_list};
 
-const HeaderNormalizer* const NHttpMsgHeadShared::headerNorms[HEAD__MAXVALUE] = { [0] = &NORMALIZER_NIL,
+#if defined(__clang__)
+// designated initializers are not supported in C++11.  However,
+// but we're going to play compilation roulette and hopes this works.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc99-extensions"
+#endif
+
+const HeaderNormalizer* const NHttpMsgHeadShared::header_norms[HEAD__MAXVALUE] = { [0] = &NORMALIZER_NIL,
     [HEAD__OTHER] = &NORMALIZER_BASIC,
     [HEAD_CACHE_CONTROL] = &NORMALIZER_BASIC,
     [HEAD_CONNECTION] = &NORMALIZER_BASIC,
@@ -228,81 +230,90 @@ const HeaderNormalizer* const NHttpMsgHeadShared::headerNorms[HEAD__MAXVALUE] = 
     [HEAD_TRUE_CLIENT_IP] = &NORMALIZER_BASIC
 };
 
-const int32_t NHttpMsgHeadShared::numNorms = HEAD__MAXVALUE-1;
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
-const RuleMap NHttpModule::nhttpEvents[] =
+const RuleMap NHttpModule::nhttp_events[] =
 {
-    { EVENT_ASCII,                           "(nhttp_inspect) ascii encoding" },
-    { EVENT_DOUBLE_DECODE,                   "(nhttp_inspect) double decoding attack" },
-    { EVENT_U_ENCODE,                        "(nhttp_inspect) u encoding" },
-    { EVENT_BARE_BYTE,                       "(nhttp_inspect) bare byte unicode encoding" },
-    { EVENT_OBSOLETE_1,                      "(nhttp_inspect) obsolete event--should not appear" },
-    { EVENT_UTF_8,                           "(nhttp_inspect) utf-8 encoding" },
-    { EVENT_IIS_UNICODE,                     "(nhttp_inspect) iis unicode codepoint encoding" },
-    { EVENT_MULTI_SLASH,                     "(nhttp_inspect) multi_slash encoding" },
-    { EVENT_IIS_BACKSLASH,                   "(nhttp_inspect) iis backslash evasion" },
-    { EVENT_SELF_DIR_TRAV,                   "(nhttp_inspect) self directory traversal" },
-    { EVENT_DIR_TRAV,                        "(nhttp_inspect) directory traversal" },
-    { EVENT_APACHE_WS,                       "(nhttp_inspect) apache whitespace (tab)" },
-    { EVENT_IIS_DELIMITER,                   "(nhttp_inspect) non-rfc http delimiter" },
-    { EVENT_NON_RFC_CHAR,                    "(nhttp_inspect) non-rfc defined char" },
-    { EVENT_OVERSIZE_DIR,                    "(nhttp_inspect) oversize request-uri directory" },
-    { EVENT_LARGE_CHUNK,                     "(nhttp_inspect) oversize chunk encoding" },
-    { EVENT_PROXY_USE,                       "(nhttp_inspect) unauthorized proxy use detected" },
-    { EVENT_WEBROOT_DIR,                     "(nhttp_inspect) webroot directory traversal" },
-    { EVENT_LONG_HDR,                        "(nhttp_inspect) long header" },
-    { EVENT_MAX_HEADERS,                     "(nhttp_inspect) max header fields" },
-    { EVENT_MULTIPLE_CONTLEN,                "(nhttp_inspect) multiple content length" },
-    { EVENT_CHUNK_SIZE_MISMATCH,             "(nhttp_inspect) chunk size mismatch detected" },
-    { EVENT_INVALID_TRUEIP,                  "(nhttp_inspect) invalid ip in true-client-ip/xff header" },
-    { EVENT_MULTIPLE_HOST_HDRS,              "(nhttp_inspect) multiple host hdrs detected" },
-    { EVENT_LONG_HOSTNAME,                   "(nhttp_inspect) hostname exceeds 255 characters" },
-    { EVENT_EXCEEDS_SPACES,                  "(nhttp_inspect) header parsing space saturation" },
-    { EVENT_CONSECUTIVE_SMALL_CHUNKS,        "(nhttp_inspect) client consecutive small chunk sizes" },
-    { EVENT_UNBOUNDED_POST,                  "(nhttp_inspect) post w/o content-length or chunks" },
-    { EVENT_MULTIPLE_TRUEIP_IN_SESSION,      "(nhttp_inspect) multiple true ips in a session" },
-    { EVENT_BOTH_TRUEIP_XFF_HDRS,            "(nhttp_inspect) both true_client_ip and xff hdrs present" },
-    { EVENT_UNKNOWN_METHOD,                  "(nhttp_inspect) unknown method" },
-    { EVENT_SIMPLE_REQUEST,                  "(nhttp_inspect) simple request" },
-    { EVENT_UNESCAPED_SPACE_URI,             "(nhttp_inspect) unescaped space in http uri" },
-    { EVENT_PIPELINE_MAX,                    "(nhttp_inspect) too many pipelined requests" },
-    { EVENT_ANOM_SERVER,                     "(nhttp_inspect) anomalous http server on undefined http port" },
-    { EVENT_INVALID_STATCODE,                "(nhttp_inspect) invalid status code in http response" },
-    { EVENT_NO_CONTLEN,                      "(nhttp_inspect) no content-length or transfer-encoding in http response" },
-    { EVENT_UTF_NORM_FAIL,                   "(nhttp_inspect) http response has utf charset which failed to normalize" },
-    { EVENT_UTF7,                            "(nhttp_inspect) http response has utf-7 charset" },
-    { EVENT_DECOMPR_FAILED,                  "(nhttp_inspect) http response gzip decompression failed" },
-    { EVENT_CONSECUTIVE_SMALL_CHUNKS_S,      "(nhttp_inspect) server consecutive small chunk sizes" },
-    { EVENT_MSG_SIZE_EXCEPTION,              "(nhttp_inspect) invalid content-length or chunk size" },
-    { EVENT_JS_OBFUSCATION_EXCD,             "(nhttp_inspect) javascript obfuscation levels exceeds 1" },
-    { EVENT_JS_EXCESS_WS,                    "(nhttp_inspect) javascript whitespaces exceeds max allowed" },
-    { EVENT_MIXED_ENCODINGS,                 "(nhttp_inspect) multiple encodings within javascript obfuscated data" },
-    { EVENT_SWF_ZLIB_FAILURE,                "(nhttp_inspect) SWF file zlib decompression failure" },
-    { EVENT_SWF_LZMA_FAILURE,                "(nhttp_inspect) SWF file LZMA decompression failure" },
-    { EVENT_PDF_DEFL_FAILURE,                "(nhttp_inspect) PDF file deflate decompression failure" },
-    { EVENT_PDF_UNSUP_COMP_TYPE,             "(nhttp_inspect) PDF file unsupported compression type" },
-    { EVENT_PDF_CASC_COMP,                   "(nhttp_inspect) PDF file cascaded compression" },
-    { EVENT_PDF_PARSE_FAILURE,               "(nhttp_inspect) PDF file parse failure" },
+    { EVENT_ASCII,                           "ascii encoding" },
+    { EVENT_DOUBLE_DECODE,                   "double decoding attack" },
+    { EVENT_U_ENCODE,                        "u encoding" },
+    { EVENT_BARE_BYTE,                       "bare byte unicode encoding" },
+    { EVENT_OBSOLETE_1,                      "obsolete event--should not appear" },
+    { EVENT_UTF_8,                           "UTF-8 encoding" },
+    { EVENT_IIS_UNICODE,                     "IIS unicode codepoint encoding" },
+    { EVENT_MULTI_SLASH,                     "multi_slash encoding" },
+    { EVENT_IIS_BACKSLASH,                   "IIS backslash evasion" },
+    { EVENT_SELF_DIR_TRAV,                   "self directory traversal" },
+    { EVENT_DIR_TRAV,                        "directory traversal" },
+    { EVENT_APACHE_WS,                       "apache whitespace (tab)" },
+    { EVENT_IIS_DELIMITER,                   "non-RFC http delimiter" },
+    { EVENT_NON_RFC_CHAR,                    "non-RFC defined char" },
+    { EVENT_OVERSIZE_DIR,                    "oversize request-uri directory" },
+    { EVENT_LARGE_CHUNK,                     "oversize chunk encoding" },
+    { EVENT_PROXY_USE,                       "unauthorized proxy use detected" },
+    { EVENT_WEBROOT_DIR,                     "webroot directory traversal" },
+    { EVENT_LONG_HDR,                        "long header" },
+    { EVENT_MAX_HEADERS,                     "max header fields" },
+    { EVENT_MULTIPLE_CONTLEN,                "multiple content length" },
+    { EVENT_CHUNK_SIZE_MISMATCH,             "chunk size mismatch detected" },
+    { EVENT_INVALID_TRUEIP,                  "invalid IP in true-client-IP/XFF header" },
+    { EVENT_MULTIPLE_HOST_HDRS,              "multiple host hdrs detected" },
+    { EVENT_LONG_HOSTNAME,                   "hostname exceeds 255 characters" },
+    { EVENT_EXCEEDS_SPACES,                  "header parsing space saturation" },
+    { EVENT_CONSECUTIVE_SMALL_CHUNKS,        "client consecutive small chunk sizes" },
+    { EVENT_UNBOUNDED_POST,                  "post w/o content-length or chunks" },
+    { EVENT_MULTIPLE_TRUEIP_IN_SESSION,      "multiple true ips in a session" },
+    { EVENT_BOTH_TRUEIP_XFF_HDRS,            "both true-client-IP and XFF hdrs present" },
+    { EVENT_UNKNOWN_METHOD,                  "unknown method" },
+    { EVENT_SIMPLE_REQUEST,                  "simple request" },
+    { EVENT_UNESCAPED_SPACE_URI,             "unescaped space in HTTP URI" },
+    { EVENT_PIPELINE_MAX,                    "too many pipelined requests" },
+    { EVENT_ANOM_SERVER,                     "anomalous http server on undefined HTTP port" },
+    { EVENT_INVALID_STATCODE,                "invalid status code in HTTP response" },
+    { EVENT_NO_CONTLEN,                      "no content-length or transfer-encoding in HTTP response" },
+    { EVENT_UTF_NORM_FAIL,                   "HTTP response has UTF charset which failed to normalize" },
+    { EVENT_UTF7,                            "HTTP response has UTF-7 charset" },
+    { EVENT_DECOMPR_FAILED,                  "HTTP response gzip decompression failed" },
+    { EVENT_CONSECUTIVE_SMALL_CHUNKS_S,      "server consecutive small chunk sizes" },
+    { EVENT_MSG_SIZE_EXCEPTION,              "invalid content-length or chunk size" },
+    { EVENT_JS_OBFUSCATION_EXCD,             "javascript obfuscation levels exceeds 1" },
+    { EVENT_JS_EXCESS_WS,                    "javascript whitespaces exceeds max allowed" },
+    { EVENT_MIXED_ENCODINGS,                 "multiple encodings within javascript obfuscated data" },
+    { EVENT_SWF_ZLIB_FAILURE,                "SWF file zlib decompression failure" },
+    { EVENT_SWF_LZMA_FAILURE,                "SWF file LZMA decompression failure" },
+    { EVENT_PDF_DEFL_FAILURE,                "PDF file deflate decompression failure" },
+    { EVENT_PDF_UNSUP_COMP_TYPE,             "PDF file unsupported compression type" },
+    { EVENT_PDF_CASC_COMP,                   "PDF file cascaded compression" },
+    { EVENT_PDF_PARSE_FAILURE,               "PDF file parse failure" },
 
     { 0, nullptr }
 };
 
+const int8_t NHttpEnums::as_hex[256] = {
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1,
 
+   -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
+   -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
-
-
-
-
-
-
-
-
-
-
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  };
 
 

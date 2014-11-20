@@ -28,36 +28,33 @@
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
 
-namespace{
-
 #define CD_SWIPE_NAME "swipe"
+#define CD_SWIPE_HELP "support for Swipe"
 
+namespace{
 
 class SwipeCodec : public Codec
 {
 public:
     SwipeCodec() : Codec(CD_SWIPE_NAME){};
-    virtual ~SwipeCodec(){};
+    ~SwipeCodec(){};
     
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t* raw_packet, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &);
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
+
 } // namespace
 
 static const uint16_t SWIPE_PROT_ID = 53;
 
 void SwipeCodec::get_protocol_ids(std::vector<uint16_t> &proto_ids)
-{
-    proto_ids.push_back(SWIPE_PROT_ID);
-}
+{ proto_ids.push_back(SWIPE_PROT_ID); }
 
 
-bool SwipeCodec::decode(const uint8_t* /*raw_packet*/, const uint32_t& /*raw_len*/,
-        Packet *p, uint16_t& /*lyr_len*/, uint16_t& /*next_prot_id*/)
+bool SwipeCodec::decode(const RawData&, CodecData& codec, DecodeData&)
 {
     // currently unsupported
-    codec_events::decoder_event(p, DECODE_IP_BAD_PROTO);
+    codec_events::decoder_event(codec, DECODE_IP_BAD_PROTO);
     return true;
 }
 
@@ -66,20 +63,17 @@ bool SwipeCodec::decode(const uint8_t* /*raw_packet*/, const uint32_t& /*raw_len
 //-------------------------------------------------------------------------
 
 static Codec *ctor(Module*)
-{
-    return new SwipeCodec();
-}
+{ return new SwipeCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi swipe_api =
 {
     {
         PT_CODEC,
         CD_SWIPE_NAME,
+        CD_SWIPE_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

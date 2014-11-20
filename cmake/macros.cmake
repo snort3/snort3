@@ -2,7 +2,6 @@
 
 macro (add_compile_flags library flags)
 
-
     get_target_property(TEMP ${library} COMPILE_FLAGS)
 
     if(TEMP STREQUAL "TEMP-NOTFOUND")
@@ -41,7 +40,6 @@ endmacro (add_link_flags)
 #       additional args : the library's sources.  Must have at least one source
 macro (add_shared_library libname install_path)
 
-
     set (sources ${ARGN})
 
     # Did we get any sources?
@@ -53,10 +51,9 @@ macro (add_shared_library libname install_path)
         set_target_properties ( ${libname} 
             PROPERTIES
             COMPILE_FLAGS "-DBUILDING_SO"
-            LINK_FLAGS "-export-dynamic -shared"
+#            LINK_FLAGS "-export-dynamic -shared"
         )
-        #INSTALL INTO STATIC LIBRARY
-        
+
         install (TARGETS ${libname}
             LIBRARY DESTINATION "lib/${CMAKE_PROJECT_NAME}/${install_path}"
         )
@@ -99,11 +96,13 @@ macro (set_project_compiler_defines_if_true var flag)
     endif(${var})
 endmacro (set_project_compiler_defines_if_true)
 
+
 macro (set_project_compiler_defines_if_false var flag)
     if (NOT ${var})
         add_definitions("-D${flag}")
     endif()
 endmacro (set_project_compiler_defines_if_false)
+
 
 macro (set_if_true value var)
     if (${value})
@@ -111,11 +110,13 @@ macro (set_if_true value var)
     endif()
 endmacro ()
 
+
 macro (set_if_false value var)
     if(NOT ${value})
         set(${var} "YES")
     endif()
 endmacro ()
+
 
 macro (append_to_cache_variable cache_var)
 
@@ -129,19 +130,3 @@ macro (append_to_cache_variable cache_var)
 
     message(STATUS ${cache_var} " ${tmp} " CACHE " " ${cache_type} " ${cache_help_string}")
 endmacro ()
-
-
-macro (set_cache_variable cache_var)
-
-    get_property(cache_value CACHE ${cache_var} PROPERTY VALUE)
-    get_property(cache_type CACHE ${cache_var} PROPERTY TYPE)
-    get_property(cache_help_string CACHE ${cache_var} PROPERTY HELPSTRING)
-    
-    set (tmp ${cache_value} ${ARGN})
-    set(${cache_var} "${tmp}" CACHE ${cache_type} "${cache_help_string}")
-
-
-    message(STATUS ${cache_var} " ${tmp}" CACHE " " ${cache_type} " ${cache_help_string}")
-endmacro ()
-
-

@@ -25,24 +25,85 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
-
 #include "framework/codec.h"
-#include "snort.h"
+#include "main/snort.h"
 #include "protocols/icmp4.h"
 #include "codecs/codec_events.h"
-#include "codecs/checksum.h"
+#include "codecs/ip/checksum.h"
+#include "codecs/codec_module.h"
+#include "codecs/ip/ip_util.h"
 #include "protocols/protocol_ids.h"
-#include "codecs/ip/cd_icmp4_module.h"
-#include "codecs/sf_protocols.h"
+#include "protocols/packet.h"
+#include "protocols/ipv4_options.h"
+#include "packet_io/active.h"
+#include "log/text_log.h"
+#include "main/snort_debug.h"
+#include "sfip/sf_ip.h"
 
+#define CD_ICMP4_NAME "icmp4"
+#define CD_ICMP4_HELP "support for Internet control message protocol v4"
 
 namespace{
 
+
+const char* pegs[]
+{
+    "bad checksum",
+    nullptr
+};
+
+struct Stats
+{
+    PegCount bad_ip4_cksum;
+};
+
+static THREAD_LOCAL Stats stats;
+
+
+static const RuleMap icmp4_rules[] =
+{
+    { DECODE_ICMP_DGRAM_LT_ICMPHDR, "ICMP header truncated" },
+    { DECODE_ICMP_DGRAM_LT_TIMESTAMPHDR, "ICMP timestamp header truncated" },
+    { DECODE_ICMP_DGRAM_LT_ADDRHDR, "ICMP address header truncated" },
+    { DECODE_ICMP_ORIG_IP_TRUNCATED, "ICMP original IP header truncated" },
+    { DECODE_ICMP_ORIG_IP_VER_MISMATCH, "ICMP version and original IP header versions differ" },
+    { DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP, "ICMP original datagram length < original IP header length" },
+    { DECODE_ICMP_ORIG_PAYLOAD_LT_64, "ICMP original IP payload < 64 bits" },
+    { DECODE_ICMP_ORIG_PAYLOAD_GT_576, "ICMP original IP payload > 576 bytes" },
+    { DECODE_ICMP_ORIG_IP_WITH_FRAGOFFSET, "ICMP original IP fragmented and offset not 0" },
+    { DECODE_ICMP4_DST_MULTICAST, "ICMP4 packet to multicast dest address" },
+    { DECODE_ICMP4_DST_BROADCAST, "ICMP4 packet to broadcast dest address" },
+    { DECODE_ICMP4_TYPE_OTHER, "ICMP4 type other" },
+    { DECODE_ICMP_PING_NMAP, "ICMP ping NMAP" },
+    { DECODE_ICMP_ICMPENUM, "ICMP icmpenum v1.1.1" },
+    { DECODE_ICMP_REDIRECT_HOST, "ICMP redirect host" },
+    { DECODE_ICMP_REDIRECT_NET, "ICMP redirect net" },
+    { DECODE_ICMP_TRACEROUTE_IPOPTS, "ICMP traceroute ipopts" },
+    { DECODE_ICMP_SOURCE_QUENCH, "ICMP source quench" },
+    { DECODE_ICMP_BROADSCAN_SMURF_SCANNER, "broadscan smurf scanner" },
+    { DECODE_ICMP_DST_UNREACH_ADMIN_PROHIBITED, "ICMP destination unreachable communication administratively prohibited" },
+    { DECODE_ICMP_DST_UNREACH_DST_HOST_PROHIBITED, "ICMP destination unreachable communication with destination host is administratively prohibited" },
+    { DECODE_ICMP_DST_UNREACH_DST_NET_PROHIBITED, "ICMP destination unreachable communication with destination network is administratively prohibited" },
+    { DECODE_ICMP_PATH_MTU_DOS, "ICMP path MTU denial of service attempt" },
+    { DECODE_ICMP_DOS_ATTEMPT, "BAD-TRAFFIC Linux ICMP header DOS attempt" },
+    { DECODE_ICMP4_HDR_TRUNC, "truncated ICMP4 header" },
+    { 0, nullptr }
+};
+
+class Icmp4Module : public CodecModule
+{
+public:
+    Icmp4Module() : CodecModule(CD_ICMP4_NAME, CD_ICMP4_HELP) {}
+
+    const RuleMap* get_rules() const override
+    { return icmp4_rules; }
+
+    const char** get_pegs() const override
+    { return pegs; }
+
+    PegCount* get_counts() const override
+    { return (PegCount*)&stats; }
+};
 
 class Icmp4Codec : public Codec{
 
@@ -50,27 +111,23 @@ public:
     Icmp4Codec() : Codec(CD_ICMP4_NAME){};
     ~Icmp4Codec() {};
     
-    virtual PROTO_ID get_proto_id() { return PROTO_ICMP4; };
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual bool decode(const uint8_t* raw_packet, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id);
-    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
-    virtual bool update(Packet*, Layer*, uint32_t* len);
-    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
-private:
+    void get_protocol_ids(std::vector<uint16_t>&) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    bool update(Packet*, Layer*, uint32_t* len) override;
+    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
+    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+                    const Packet* const) override;
 
-    void DecodeICMPEmbeddedIP(const uint8_t *pkt, const uint32_t len, Packet *p);
-    void ICMP4AddrTests (Packet* );
-    void ICMP4MiscTests (Packet *);
+private:
+    void ICMP4AddrTests(const DecodeData& snort, const CodecData& codec);
+    void ICMP4MiscTests(const ICMPHdr* const, const CodecData&, const uint16_t);
 
 };
 
 } // namespace
 
 void Icmp4Codec::get_protocol_ids(std::vector<uint16_t> &v)
-{
-    v.push_back(IPPROTO_ID_ICMPV4);
-}
+{ v.push_back(IPPROTO_ID_ICMPV4); }
 
 
 
@@ -90,132 +147,107 @@ void Icmp4Codec::get_protocol_ids(std::vector<uint16_t> &v)
  *
  * Returns: void function
  */
-bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t& /*next_prot_id*/)
+bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
 {
-    if(raw_len < icmp4::hdr_len())
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "WARNING: Truncated ICMP4 header (%d bytes).\n", raw_len););
 
-        codec_events::decoder_event(p, DECODE_ICMP4_HDR_TRUNC);
-        p->icmph = NULL;
+    if(raw.len < icmp::ICMP_BASE_LEN)
+    {
+        codec_events::decoder_event(codec, DECODE_ICMP4_HDR_TRUNC);
         return false;
     }
 
     /* set the header ptr first */
+    const ICMPHdr* const icmph = reinterpret_cast<const ICMPHdr *>(raw.data);
+    uint16_t len = 0;
 
-    p->icmph = reinterpret_cast<ICMPHdr *>(const_cast<uint8_t *> (raw_pkt));
-
-    switch (p->icmph->type)
+    switch (icmph->type)
     {
-            // fall through ...
-        case icmp4::IcmpType::SOURCE_QUENCH:
-        case icmp4::IcmpType::DEST_UNREACH:
-        case icmp4::IcmpType::REDIRECT:
-        case icmp4::IcmpType::TIME_EXCEEDED:
-        case icmp4::IcmpType::PARAMETERPROB:
-        case icmp4::IcmpType::ECHOREPLY:
-        case icmp4::IcmpType::ECHO:
-        case icmp4::IcmpType::ROUTER_ADVERTISE:
-        case icmp4::IcmpType::ROUTER_SOLICIT:
-        case icmp4::IcmpType::INFO_REQUEST:
-        case icmp4::IcmpType::INFO_REPLY:
-            if (raw_len < 8)
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-                    "Truncated ICMP header(%d bytes)\n", raw_len););
+        // fall through ...
+    case icmp::IcmpType::SOURCE_QUENCH:
+    case icmp::IcmpType::DEST_UNREACH:
+    case icmp::IcmpType::REDIRECT:
+    case icmp::IcmpType::TIME_EXCEEDED:
+    case icmp::IcmpType::PARAMETERPROB:
+    case icmp::IcmpType::ECHOREPLY:
+    case icmp::IcmpType::ECHO_4:
+    case icmp::IcmpType::ROUTER_ADVERTISE:
+    case icmp::IcmpType::ROUTER_SOLICIT:
+    case icmp::IcmpType::INFO_REQUEST:
+    case icmp::IcmpType::INFO_REPLY:
+        if (raw.len < 8)
+        {
+            codec_events::decoder_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
+            return false;
+        }
+        break;
 
-                codec_events::decoder_event(p, DECODE_ICMP_DGRAM_LT_ICMPHDR);
+    case icmp::IcmpType::TIMESTAMP:
+    case icmp::IcmpType::TIMESTAMPREPLY:
+        if (raw.len < 20)
+        {
+            codec_events::decoder_event(codec, DECODE_ICMP_DGRAM_LT_TIMESTAMPHDR);
+            return false;
+        }
+        break;
 
-                p->icmph = NULL;
-                return false;
-            }
-            break;
+    case icmp::IcmpType::ADDRESS:
+    case icmp::IcmpType::ADDRESSREPLY:
+        if (raw.len < 12)
+        {
+            codec_events::decoder_event(codec, DECODE_ICMP_DGRAM_LT_ADDRHDR);
+            return false;
+        }
+        break;
 
-        case icmp4::IcmpType::TIMESTAMP:
-        case icmp4::IcmpType::TIMESTAMPREPLY:
-            if (raw_len < 20)
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-                    "Truncated ICMP header(%d bytes)\n", raw_len););
-
-                codec_events::decoder_event(p, DECODE_ICMP_DGRAM_LT_TIMESTAMPHDR);
-
-                p->icmph = NULL;
-                return false;
-            }
-            break;
-
-        case icmp4::IcmpType::ADDRESS:
-        case icmp4::IcmpType::ADDRESSREPLY:
-            if (raw_len < 12)
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-                    "Truncated ICMP header(%d bytes)\n", raw_len););
-
-                codec_events::decoder_event(p, DECODE_ICMP_DGRAM_LT_ADDRHDR);
-                p->icmph = NULL;
-                return false;
-            }
-            break;
-
-        default:
-            codec_events::decoder_event(p, DECODE_ICMP4_TYPE_OTHER);
-            break;
+    default:
+        codec_events::decoder_event(codec, DECODE_ICMP4_TYPE_OTHER);
+        break;
     }
 
 
     if (ScIcmpChecksums())
     {
-        uint16_t csum = checksum::cksum_add((uint16_t *)p->icmph, raw_len);
+        uint16_t csum = checksum::cksum_add((uint16_t *)icmph, raw.len);
 
         if(csum)
         {
-            p->error_flags |= PKT_ERR_CKSUM_ICMP;
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad ICMP Checksum\n"););
-            codec_events::exec_icmp_chksm_drop(p);
-        }
-        else
-        {
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE,"ICMP Checksum: OK\n"););
+            stats.bad_ip4_cksum++;
+            snort.decode_flags |= DECODE_ERR_CKSUM_ICMP;
+            return false;
         }
     }
 
-    lyr_len =  icmp4::hdr_len();
+    len =  icmp::ICMP_BASE_LEN;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP type: %d   code: %d\n",
-                p->icmph->type, p->icmph->code););
-
-    switch(p->icmph->type)
+    switch(icmph->type)
     {
-        case icmp4::IcmpType::ECHO:
-            ICMP4AddrTests(p);
+        case icmp::IcmpType::ECHO_4:
+            ICMP4AddrTests(snort, codec);
         // fall through ...
 
-        case icmp4::IcmpType::ECHOREPLY:
+        case icmp::IcmpType::ECHOREPLY:
             /* setup the pkt id and seq numbers */
             /* add the size of the echo ext to the data
              * ptr and subtract it from the data size */
-            lyr_len += sizeof(ICMPHdr::icmp_hun.idseq);
+            len += sizeof(ICMPHdr::icmp_hun.idseq);
             break;
 
-        case icmp4::IcmpType::DEST_UNREACH:
-            if ((p->icmph->code == icmp4::IcmpCode::FRAG_NEEDED)
-                    && (ntohs(p->icmph->s_icmp_nextmtu) < 576))
+        case icmp::IcmpType::DEST_UNREACH:
+            if ((icmph->code == icmp::IcmpCode::FRAG_NEEDED)
+                    && (ntohs(icmph->s_icmp_nextmtu) < 576))
             {
-                codec_events::decoder_event(p, DECODE_ICMP_PATH_MTU_DOS);
+                codec_events::decoder_event(codec, DECODE_ICMP_PATH_MTU_DOS);
             }
 
             /* Fall through */
 
-        case icmp4::IcmpType::SOURCE_QUENCH:
-        case icmp4::IcmpType::REDIRECT:
-        case icmp4::IcmpType::TIME_EXCEEDED:
-        case icmp4::IcmpType::PARAMETERPROB:
+        case icmp::IcmpType::SOURCE_QUENCH:
+        case icmp::IcmpType::REDIRECT:
+        case icmp::IcmpType::TIME_EXCEEDED:
+        case icmp::IcmpType::PARAMETERPROB:
             /* account for extra 4 bytes in header */
-            lyr_len += 4;
-            DecodeICMPEmbeddedIP(raw_pkt + lyr_len,  raw_len - lyr_len, p);
+            len += 4;
+            codec.next_prot_id = IP_EMBEDDED_IN_ICMP4;
             break;
 
         default:
@@ -224,226 +256,324 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
 
 
     /* Run a bunch of ICMP decoder rules */
-    p->dsize = (u_short)(raw_len - lyr_len); // setting for use in ICMP4MiscTests
-    ICMP4MiscTests(p);
+    ICMP4MiscTests(icmph, codec, (uint16_t)raw.len - len);
 
-    p->proto_bits |= PROTO_BIT__ICMP;
-    p->proto_bits &= ~(PROTO_BIT__UDP | PROTO_BIT__TCP);
+    snort.set_pkt_type(PktType::ICMP);
+    snort.icmph = icmph;
+    codec.proto_bits |= PROTO_BIT__ICMP;
+    codec.lyr_len = len;
     return true;
 }
 
-
-/*
- * Function: DecodeICMPEmbeddedIP(uint8_t *, const uint32_t, Packet *)
- *
- * Purpose: Decode the ICMP embedded IP header + 64 bits payload
- *
- * Arguments: pkt => ptr to the packet data
- *            len => length from here to the end of the packet
- *            p   => pointer to dummy packet decode struct
- *
- * Returns: void function
- */
-void Icmp4Codec::DecodeICMPEmbeddedIP(const uint8_t *pkt, const uint32_t len, Packet *p)
+void Icmp4Codec::ICMP4AddrTests(const DecodeData& snort, const CodecData& codec)
 {
-    uint32_t ip_len;       /* length from the start of the ip hdr to the
-                             * pkt end */
-    uint32_t hlen;             /* ip header length */
-    uint16_t orig_frag_offset;
-
-    /* do a little validation */
-    if(len < ipv4::hdr_len())
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP: IP short header (%d bytes)\n", len););
-
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_TRUNCATED);
-
-        p->orig_family = NO_IP;
-        p->orig_iph = NULL;
-        return;
-    }
-
-    /* lay the IP struct over the raw data */
-    sfiph_orig_build(p, pkt, AF_INET);
-    p->orig_iph = (IPHdr *) pkt;
-
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "DecodeICMPEmbeddedIP: ip header"
-                    " starts at: %p, length is %lu\n", p->orig_iph,
-                    (unsigned long) len););
-    /*
-     * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
-     * So we are just ignoring non IP datagrams
-     */
-    if((GET_ORIG_IPH_VER(p) != 4) && !IS_IP6(p))
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP: not IPv4 datagram ([ver: 0x%x][len: 0x%x])\n",
-            GET_ORIG_IPH_VER(p), GET_ORIG_IPH_LEN(p)););
-
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
-
-        p->orig_family = NO_IP;
-        p->orig_iph = NULL;
-        return;
-    }
-
-    /* set the IP datagram length */
-    ip_len = ntohs(GET_ORIG_IPH_LEN(p));
-
-    /* set the IP header length */
-    hlen = (p->orig_iph->ip_verhl & 0x0f) << 2;
-
-    if(len < hlen)
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP: IP len (%d bytes) < IP hdr len (%d bytes), packet discarded\n",
-            ip_len, hlen););
-
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
-
-        p->orig_family = NO_IP;
-        p->orig_iph = NULL;
-        return;
-    }
-
-    /* set the remaining packet length */
-    ip_len = len - hlen;
-
-    orig_frag_offset = ntohs(GET_ORIG_IPH_OFF(p));
-    orig_frag_offset &= 0x1FFF;
-
-    if (orig_frag_offset == 0)
-    {
-        /* Original IP payload should be 64 bits */
-        if (ip_len < 8)
-        {
-            codec_events::decoder_event(p, DECODE_ICMP_ORIG_PAYLOAD_LT_64);
-
-            return;
-        }
-        /* ICMP error packets could contain as much of original payload
-         * as possible, but not exceed 576 bytes
-         */
-        else if (ntohs(GET_IPH_LEN(p)) > 576)
-        {
-            codec_events::decoder_event(p, DECODE_ICMP_ORIG_PAYLOAD_GT_576);
-        }
-    }
-    else
-    {
-        /* RFC states that only first frag will get an ICMP response */
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_WITH_FRAGOFFSET);
-        return;
-    }
-
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP Unreachable IP header length: "
-                            "%lu\n", (unsigned long)hlen););
-
-    switch(GET_ORIG_IPH_PROTO(p))
-    {
-        case IPPROTO_TCP: /* decode the interesting part of the header */
-            p->orig_tcph = (TCPHdr *)(pkt + hlen);
-
-            /* stuff more data into the printout data struct */
-            p->orig_sp = ntohs(p->orig_tcph->th_sport);
-            p->orig_dp = ntohs(p->orig_tcph->th_dport);
-
-            break;
-
-        case IPPROTO_UDP:
-            p->orig_udph = (udp::UDPHdr *)(pkt + hlen);
-
-            /* fill in the printout data structs */
-            p->orig_sp = ntohs(p->orig_udph->uh_sport);
-            p->orig_dp = ntohs(p->orig_udph->uh_dport);
-
-            break;
-
-        case IPPROTO_ICMP:
-            p->orig_icmph = (ICMPHdr *)(pkt + hlen);
-            break;
-    }
-
-    return;
-}
-
-
-void Icmp4Codec::ICMP4AddrTests (Packet* p)
-{
-    uint8_t msb_dst;
-
-    uint32_t dst = GET_DST_IP(p)->ip32[0];
+    uint32_t dst = snort.ip_api.get_dst()->ip32[0];
 
     // check all 32 bits; all set so byte order is irrelevant ...
-    if ( ipv4::is_broadcast(dst) )
-        codec_events::decoder_event(p, DECODE_ICMP4_DST_BROADCAST);
+    if ( dst == ip::IP4_BROADCAST )
+        codec_events::decoder_event(codec, DECODE_ICMP4_DST_BROADCAST);
 
     /* - don't use htonl for speed reasons -
      * s_addr is always in network order */
 #ifdef WORDS_BIGENDIAN
-    msb_dst = (uint8_t)(dst >> 24);
+    uint8_t msb_dst = (uint8_t)(dst >> 24);
 #else
-    msb_dst = (uint8_t)(dst & 0xff);
+    uint8_t msb_dst = (uint8_t)(dst & 0xff);
 #endif
 
     // check the 'msn' (most significant nibble) ...
     msb_dst >>= 4;
 
-    if( ipv4::is_multicast(msb_dst) )
-        codec_events::decoder_event(p, DECODE_ICMP4_DST_MULTICAST);
+    if( msb_dst == ip::IP4_MULTICAST )
+        codec_events::decoder_event(codec, DECODE_ICMP4_DST_MULTICAST);
 }
 
 
-void Icmp4Codec::ICMP4MiscTests (Packet *p)
+void Icmp4Codec::ICMP4MiscTests(const ICMPHdr* const icmph,
+                                const CodecData& codec,
+                                const uint16_t dsize)
 {
-    if ((p->dsize == 0) &&
-        (p->icmph->type == icmp4::IcmpType::ECHO))
-        codec_events::decoder_event(p, DECODE_ICMP_PING_NMAP);
+    if ((dsize == 0) &&
+        (icmph->type == icmp::IcmpType::ECHO_4))
+        codec_events::decoder_event(codec, DECODE_ICMP_PING_NMAP);
 
-    if ((p->dsize == 0) &&
-        (p->icmph->s_icmp_seq == 666))
-        codec_events::decoder_event(p, DECODE_ICMP_ICMPENUM);
+    if ((dsize == 0) &&
+        (icmph->s_icmp_seq == 666))
+        codec_events::decoder_event(codec, DECODE_ICMP_ICMPENUM);
 
-    if ((p->icmph->type == icmp4::IcmpType::REDIRECT) &&
-        (p->icmph->code == icmp4::IcmpCode::REDIR_HOST))
-        codec_events::decoder_event(p, DECODE_ICMP_REDIRECT_HOST);
+    if ((icmph->type == icmp::IcmpType::REDIRECT) &&
+        (icmph->code == icmp::IcmpCode::REDIR_HOST))
+        codec_events::decoder_event(codec, DECODE_ICMP_REDIRECT_HOST);
 
-    if ((p->icmph->type == icmp4::IcmpType::REDIRECT) &&
-        (p->icmph->code == icmp4::IcmpCode::REDIR_NET))
-        codec_events::decoder_event(p, DECODE_ICMP_REDIRECT_NET);
+    if ((icmph->type == icmp::IcmpType::REDIRECT) &&
+        (icmph->code == icmp::IcmpCode::REDIR_NET))
+        codec_events::decoder_event(codec, DECODE_ICMP_REDIRECT_NET);
 
-    if (p->icmph->type == icmp4::IcmpType::ECHOREPLY)
+    if ((icmph->type == icmp::IcmpType::ECHOREPLY) &&
+        (codec.codec_flags & CODEC_IPOPT_RR_SEEN))
+        codec_events::decoder_event(codec, DECODE_ICMP_TRACEROUTE_IPOPTS);
+
+    if ((icmph->type == icmp::IcmpType::SOURCE_QUENCH) &&
+        (icmph->code == icmp::IcmpCode::SOURCE_QUENCH_CODE))
+        codec_events::decoder_event(codec, DECODE_ICMP_SOURCE_QUENCH);
+
+    if ((dsize == 4) &&
+        (icmph->type == icmp::IcmpType::ECHO_4) &&
+        (icmph->s_icmp_seq == 0) &&
+        (icmph->code == icmp::IcmpCode::ECHO_CODE))
+        codec_events::decoder_event(codec, DECODE_ICMP_BROADSCAN_SMURF_SCANNER);
+
+    if ((icmph->type == icmp::IcmpType::DEST_UNREACH) &&
+        (icmph->code == icmp::IcmpCode::PKT_FILTERED))
+        codec_events::decoder_event(codec, DECODE_ICMP_DST_UNREACH_ADMIN_PROHIBITED);
+
+    if ((icmph->type == icmp::IcmpType::DEST_UNREACH) &&
+        (icmph->code == icmp::IcmpCode::PKT_FILTERED_HOST))
+        codec_events::decoder_event(codec, DECODE_ICMP_DST_UNREACH_DST_HOST_PROHIBITED);
+
+    if ((icmph->type == icmp::IcmpType::DEST_UNREACH) &&
+        (icmph->code == icmp::IcmpCode::PKT_FILTERED_NET))
+        codec_events::decoder_event(codec, DECODE_ICMP_DST_UNREACH_DST_NET_PROHIBITED);
+}
+
+/******************************************************************
+ *************************  L O G G E R  **************************
+ ******************************************************************/
+
+void Icmp4Codec::log(TextLog* const log, const uint8_t* raw_pkt,
+                    const Packet* const)
+{
+
+    const icmp::ICMPHdr* const icmph = reinterpret_cast<const ICMPHdr *>(raw_pkt);
+
+    /* 32 digits plus 7 colons and a NULL byte */
+    char buf[8*4 + 7 + 1];
+    TextLog_Print(log, "Type:%d  Code:%d  ", icmph->type, icmph->code);
+    TextLog_Puts(log, "\n\t");
+
+
+    switch(icmph->type)
     {
-        int i;
-        for (i = 0; i < p->ip_option_count; i++)
-        {
-            if ( ipv4::is_opt_rr(p->ip_options[i].code) )
-                codec_events::decoder_event(p, DECODE_ICMP_TRACEROUTE_IPOPTS);
-        }
+        case icmp::IcmpType::ECHOREPLY:
+            TextLog_Print(log, "ID:%d  Seq:%d  ", ntohs(icmph->s_icmp_id),
+                    ntohs(icmph->s_icmp_seq));
+            TextLog_Puts(log, "ECHO REPLY");
+            break;
+
+        case icmp::IcmpType::DEST_UNREACH:
+            TextLog_Puts(log, "DESTINATION UNREACHABLE: ");
+            switch(icmph->code)
+            {
+                case icmp::IcmpCode::NET_UNREACH:
+                    TextLog_Puts(log, "NET UNREACHABLE");
+                    break;
+
+                case icmp::IcmpCode::HOST_UNREACH:
+                    TextLog_Puts(log, "HOST UNREACHABLE");
+                    break;
+
+                case icmp::IcmpCode::PROT_UNREACH:
+                    TextLog_Puts(log, "PROTOCOL UNREACHABLE");
+                    break;
+
+                case icmp::IcmpCode::PORT_UNREACH:
+                    TextLog_Puts(log, "PORT UNREACHABLE");
+                    break;
+
+                case icmp::IcmpCode::FRAG_NEEDED:
+                    TextLog_Print(log, "FRAGMENTATION NEEDED, DF SET,"
+                            " NEXT LINK MTU: %u",
+                            ntohs(icmph->s_icmp_nextmtu));
+                    break;
+
+                case icmp::IcmpCode::SR_FAILED:
+                    TextLog_Puts(log, "SOURCE ROUTE FAILED");
+                    break;
+
+                case icmp::IcmpCode::NET_UNKNOWN:
+                    TextLog_Puts(log, "NET UNKNOWN");
+                    break;
+
+                case icmp::IcmpCode::HOST_UNKNOWN:
+                    TextLog_Puts(log, "HOST UNKNOWN");
+                    break;
+
+                case icmp::IcmpCode::HOST_ISOLATED:
+                    TextLog_Puts(log, "HOST ISOLATED");
+                    break;
+
+                case icmp::IcmpCode::PKT_FILTERED_NET:
+                    TextLog_Puts(log, "ADMINISTRATIVELY PROHIBITED NETWORK FILTERED");
+                    break;
+
+                case icmp::IcmpCode::PKT_FILTERED_HOST:
+                    TextLog_Puts(log, "ADMINISTRATIVELY PROHIBITED HOST FILTERED");
+                    break;
+
+                case icmp::IcmpCode::NET_UNR_TOS:
+                    TextLog_Puts(log, "NET UNREACHABLE FOR TOS");
+                    break;
+
+                case icmp::IcmpCode::HOST_UNR_TOS:
+                    TextLog_Puts(log, "HOST UNREACHABLE FOR TOS");
+                    break;
+
+                case icmp::IcmpCode::PKT_FILTERED:
+                    TextLog_Puts(log, "ADMINISTRATIVELY PROHIBITED, PACKET FILTERED");
+                    break;
+
+                case icmp::IcmpCode::PREC_VIOLATION:
+                    TextLog_Puts(log, "PREC VIOLATION");
+                    break;
+
+                case icmp::IcmpCode::PREC_CUTOFF:
+                    TextLog_Puts(log, "PREC CUTOFF");
+                    break;
+
+                default:
+                    TextLog_Puts(log, "UNKNOWN");
+                    break;
+
+            }
+            break;
+
+        case icmp::IcmpType::SOURCE_QUENCH:
+            TextLog_Puts(log, "SOURCE QUENCH");
+            break;
+
+        case icmp::IcmpType::REDIRECT:
+            TextLog_Puts(log, "REDIRECT");
+            switch(icmph->code)
+            {
+                case icmp::IcmpCode::REDIR_NET:
+                    TextLog_Puts(log, " NET");
+                    break;
+
+                case icmp::IcmpCode::REDIR_HOST:
+                    TextLog_Puts(log, " HOST");
+                    break;
+
+                case icmp::IcmpCode::REDIR_TOS_NET:
+                    TextLog_Puts(log, " TOS NET");
+                    break;
+
+                case icmp::IcmpCode::REDIR_TOS_HOST:
+                    TextLog_Puts(log, " TOS HOST");
+                    break;
+
+                default:
+                    break;
+            }
+
+/* written this way since inet_ntoa was typedef'ed to use sfip_ntoa
+ * which requires sfip_t instead of inaddr's.  This call to inet_ntoa
+ * is a rare case that doesn't use sfip_t's. */
+
+// XXX-IPv6 NOT YET IMPLEMENTED - IPV6 addresses technically not supported - need to change ICMP
+
+            /* no inet_ntop in Windows */
+            sfip_raw_ntop(AF_INET, (const void *)(&icmph->s_icmp_gwaddr.s_addr),
+                          buf, sizeof(buf));
+            TextLog_Print(log, " NEW GW: %s", buf);
+            break;
+
+        case icmp::IcmpType::ECHO_4:
+            TextLog_Print(log, "ID:%d   Seq:%d  ", ntohs(icmph->s_icmp_id),
+                    ntohs(icmph->s_icmp_seq));
+            TextLog_Puts(log, "ECHO");
+            break;
+
+        case icmp::IcmpType::ROUTER_ADVERTISE:
+            TextLog_Print(log, "ROUTER ADVERTISMENT: "
+                    "Num addrs: %d Addr entry size: %d Lifetime: %u",
+                    icmph->s_icmp_num_addrs, icmph->s_icmp_wpa,
+                    ntohs(icmph->s_icmp_lifetime));
+            break;
+
+        case icmp::IcmpType::ROUTER_SOLICIT:
+            TextLog_Puts(log, "ROUTER SOLICITATION");
+            break;
+
+        case icmp::IcmpType::TIME_EXCEEDED:
+            TextLog_Puts(log, "TTL EXCEEDED");
+            switch(icmph->code)
+            {
+                case icmp::IcmpCode::TIMEOUT_TRANSIT:
+                    TextLog_Puts(log, " IN TRANSIT");
+                    break;
+
+                case icmp::IcmpCode::TIMEOUT_REASSY:
+                    TextLog_Puts(log, " TIME EXCEEDED IN FRAG REASSEMBLY");
+                    break;
+
+                default:
+                    break;
+            }
+
+            break;
+
+        case icmp::IcmpType::PARAMETERPROB:
+            TextLog_Puts(log, "PARAMETER PROBLEM");
+            switch(icmph->code)
+            {
+                case icmp::IcmpCode::PARAM_BADIPHDR:
+                    TextLog_Print(log, ": BAD IP HEADER BYTE %u",
+                            icmph->s_icmp_pptr);
+                    break;
+
+                case icmp::IcmpCode::PARAM_OPTMISSING:
+                    TextLog_Puts(log, ": OPTION MISSING");
+                    break;
+
+                case icmp::IcmpCode::PARAM_BAD_LENGTH:
+                    TextLog_Puts(log, ": BAD LENGTH");
+                    break;
+
+                default:
+                    break;
+            }
+
+            break;
+
+        case icmp::IcmpType::TIMESTAMP:
+            TextLog_Print(log, "ID: %u  Seq: %u  TIMESTAMP REQUEST",
+                    ntohs(icmph->s_icmp_id), ntohs(icmph->s_icmp_seq));
+            break;
+
+        case icmp::IcmpType::TIMESTAMPREPLY:
+            TextLog_Print(log, "ID: %u  Seq: %u  TIMESTAMP REPLY: "
+                    "Orig: %u Rtime: %u  Ttime: %u",
+                    ntohs(icmph->s_icmp_id), ntohs(icmph->s_icmp_seq),
+                    icmph->s_icmp_otime, icmph->s_icmp_rtime,
+                    icmph->s_icmp_ttime);
+            break;
+
+        case icmp::IcmpType::INFO_REQUEST:
+            TextLog_Print(log, "ID: %u  Seq: %u  INFO REQUEST",
+                    ntohs(icmph->s_icmp_id), ntohs(icmph->s_icmp_seq));
+            break;
+
+        case icmp::IcmpType::INFO_REPLY:
+            TextLog_Print(log, "ID: %u  Seq: %u  INFO REPLY",
+                    ntohs(icmph->s_icmp_id), ntohs(icmph->s_icmp_seq));
+            break;
+
+        case icmp::IcmpType::ADDRESS:
+            TextLog_Print(log, "ID: %u  Seq: %u  ADDRESS REQUEST",
+                    ntohs(icmph->s_icmp_id), ntohs(icmph->s_icmp_seq));
+            break;
+
+        case icmp::IcmpType::ADDRESSREPLY:
+            TextLog_Print(log, "ID: %u  Seq: %u  ADDRESS REPLY: 0x%08X",
+                    ntohs(icmph->s_icmp_id), ntohs(icmph->s_icmp_seq),
+                    (u_int) ntohl(icmph->s_icmp_mask));
+            break;
+
+        default:
+            TextLog_Puts(log, "UNKNOWN");
+
+            break;
     }
-
-    if ((p->icmph->type == icmp4::IcmpType::SOURCE_QUENCH) &&
-        (p->icmph->code == icmp4::IcmpCode::SOURCE_QUENCH_CODE))
-        codec_events::decoder_event(p, DECODE_ICMP_SOURCE_QUENCH);
-
-    if ((p->dsize == 4) &&
-        (p->icmph->type == icmp4::IcmpType::ECHO) &&
-        (p->icmph->s_icmp_seq == 0) &&
-        (p->icmph->code == icmp4::IcmpCode::ECHO_CODE))
-        codec_events::decoder_event(p, DECODE_ICMP_BROADSCAN_SMURF_SCANNER);
-
-    if ((p->icmph->type == icmp4::IcmpType::DEST_UNREACH) &&
-        (p->icmph->code == icmp4::IcmpCode::PKT_FILTERED))
-        codec_events::decoder_event(p, DECODE_ICMP_DST_UNREACH_ADMIN_PROHIBITED);
-
-    if ((p->icmph->type == icmp4::IcmpType::DEST_UNREACH) &&
-        (p->icmph->code == icmp4::IcmpCode::PKT_FILTERED_HOST))
-        codec_events::decoder_event(p, DECODE_ICMP_DST_UNREACH_DST_HOST_PROHIBITED);
-
-    if ((p->icmph->type == icmp4::IcmpType::DEST_UNREACH) &&
-        (p->icmph->code == icmp4::IcmpCode::PKT_FILTERED_NET))
-        codec_events::decoder_event(p, DECODE_ICMP_DST_UNREACH_DST_NET_PROHIBITED);
 }
 
 /******************************************************************
@@ -463,43 +593,10 @@ struct IcmpHdr {
 } // namespace
 
 
-
-bool Icmp4Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
-{
-    uint8_t* p;
-    IcmpHdr* ho;
-
-    if (!update_buffer(out, sizeof(*ho) + enc->ip_len + icmp4::unreach_data()))
-        return false;
-
-    const uint16_t *hi = reinterpret_cast<const uint16_t*>(raw_in);
-    ho = reinterpret_cast<IcmpHdr*>(out->base);
-
-    enc->proto = IPPROTO_ID_ICMPV4;
-    ho->type = icmp4::IcmpType::DEST_UNREACH;
-    ho->code = get_icmp_code(enc->type);
-    ho->cksum = 0;
-    ho->unused = 0;
-
-    // copy original ip header
-    p = out->base + sizeof(IcmpHdr);
-    memcpy(p, enc->ip_hdr, enc->ip_len);
-
-    // copy first 8 octets of original ip data (ie udp header)
-    p += enc->ip_len;
-    memcpy(p, hi, icmp4::unreach_data());
-
-    ho->cksum = checksum::icmp_cksum((uint16_t *)ho, buff_diff(out, (uint8_t *)ho));
-
-    return true;
-}
-
 bool Icmp4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
     IcmpHdr* h = (IcmpHdr*)(lyr->start);
-
-    *len += sizeof(*h) + p->dsize;
-
+    *len += sizeof(*h);
 
     if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) ) {
         h->cksum = 0;
@@ -512,7 +609,8 @@ bool Icmp4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 void Icmp4Codec::format(EncodeFlags, const Packet*, Packet* c, Layer* lyr)
 {
     // TBD handle nested icmp4 layers
-    c->icmph = (ICMPHdr*)lyr->start;
+    c->ptrs.icmph = (ICMPHdr*)lyr->start;
+    c->ptrs.set_pkt_type(PktType::ICMP);
 }
 
 
@@ -522,30 +620,23 @@ void Icmp4Codec::format(EncodeFlags, const Packet*, Packet* c, Layer* lyr)
 
 
 static Module* mod_ctor()
-{
-    return new Icmp4Module;
-}
+{ return new Icmp4Module; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec *ctor(Module*)
-{
-    return new Icmp4Codec();
-}
+{ return new Icmp4Codec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi icmp4_api =
 {
     {
         PT_CODEC,
         CD_ICMP4_NAME,
+        CD_ICMP4_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,
@@ -560,5 +651,12 @@ static const CodecApi icmp4_api =
 };
 
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &icmp4_api.base,
+    nullptr
+};
+#else
 const BaseApi* cd_icmp4 = &icmp4_api.base;
-
+#endif

@@ -2,6 +2,8 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libloggers.a
 libloggers_a_SOURCES = \
+alert_luajit.cc \
+log_codecs.cc \
 loggers.cc \
 loggers.h
 
@@ -13,16 +15,17 @@ alert_syslog.cc \
 alert_test.cc \
 alert_unixsock.cc \
 log_null.cc \
-log_tcpdump.cc \
+log_pcap.cc \
 unified2.cc \
 unified2_common.h
-
-if STATIC_LOGGERS
-libloggers_a_SOURCES += $(plugin_list)
 
 if LINUX
 libloggers_a_SOURCES += alert_sf_socket.cc
 endif
+
+
+if STATIC_LOGGERS
+libloggers_a_SOURCES += $(plugin_list)
 
 else
 ehlibdir = $(pkglibdir)/loggers
@@ -41,13 +44,6 @@ ehlib_LTLIBRARIES += libalert_full.la
 libalert_full_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libalert_full_la_LDFLAGS = -export-dynamic -shared
 libalert_full_la_SOURCES = alert_full.cc
-
-if LINUX
-ehlib_LTLIBRARIES += libalert_sf_socket.la
-libalert_sf_socket_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libalert_sf_socket_la_LDFLAGS = -export-dynamic -shared
-libalert_sf_socket_la_SOURCES = alert_sf_socket.cc
-endif
 
 ehlib_LTLIBRARIES += libalert_syslog.la
 libalert_syslog_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
@@ -69,10 +65,10 @@ liblog_null_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 liblog_null_la_LDFLAGS = -export-dynamic -shared
 liblog_null_la_SOURCES = log_null.cc
 
-ehlib_LTLIBRARIES += liblog_tcpdump.la
-liblog_tcpdump_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-liblog_tcpdump_la_LDFLAGS = -export-dynamic -shared
-liblog_tcpdump_la_SOURCES = log_tcpdump.cc
+ehlib_LTLIBRARIES += liblog_pcap.la
+liblog_pcap_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+liblog_pcap_la_LDFLAGS = -export-dynamic -shared
+liblog_pcap_la_SOURCES = log_pcap.cc
 
 ehlib_LTLIBRARIES += libunified2.la
 libunified2_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

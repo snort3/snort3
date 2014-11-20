@@ -34,6 +34,7 @@
 #include "config.h"
 #endif
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,9 +46,7 @@
 #include "sfrf.h"
 #include "snort.h"
 #include "sfthd.h"
-
-#include <errno.h>
-#include "generators.h"
+#include "sfip/sf_ip.h"
 
 //static int _printThresholdContext(RateFilterConfig*);
 
@@ -130,20 +129,20 @@ int RateFilter_Test(
     unsigned gid = otn->sigInfo.generator;
     unsigned sid = otn->sigInfo.id;
 
-    snort_ip_p sip;
-    snort_ip_p dip;
-    snort_ip cleared;
+    const sfip_t *sip;
+    const sfip_t *dip;
+    sfip_t cleared;
 
-    if ( IPH_IS_VALID(p) )
+    if ( p->ptrs.ip_api.is_valid() )
     {
-        sip = GET_SRC_IP(p);
-        dip = GET_DST_IP(p);
+        sip = p->ptrs.ip_api.get_src();
+        dip = p->ptrs.ip_api.get_dst();
     }
     else
     {
-        IP_CLEAR(cleared);
-        sip = IP_ARG(cleared);
-        dip = IP_ARG(cleared);
+        sfip_clear(cleared);
+        sip = &cleared;
+        dip = &cleared;
     }
 
     if ((snort_conf == NULL) || (snort_conf->rate_filter_config == NULL))
@@ -154,7 +153,7 @@ int RateFilter_Test(
 
     if ( EventIsInternal(gid) )
     {
-        // at present stream5 connection events are the only internal
+        // at present stream connection events are the only internal
         // events and these require: src -> client, dst -> server.
         if ( p->packet_flags & PKT_FROM_SERVER )
         {
@@ -177,7 +176,7 @@ void RateFilter_ResetActive (void)
 
 void RateFilter_PrintConfig(RateFilterConfig*)
 {
-    // FIXIT print from module
+    // FIXIT-L print from module
     //_printThresholdContext(config);
 }
 
@@ -251,12 +250,13 @@ static int _printThresholdContext(RateFilterConfig *config)
 
             /* Check for any Permanent sid objects for this gid */
             sfrf_item = (tSFRFSidNode*)item_hash_node->data;
+            SF_LNODE* cursor;
 
             for ( sfrf_node  =
-                      (tSFRFConfigNode*)sflist_first(sfrf_item->configNodeList);
+                      (tSFRFConfigNode*)sflist_first(sfrf_item->configNodeList, &cursor);
                   sfrf_node != 0;
                   sfrf_node =
-                      (tSFRFConfigNode*)sflist_next(sfrf_item->configNodeList) )
+                      (tSFRFConfigNode*)sflist_next(&cursor) )
             {
                 if ( _logConfigNode( sfrf_node) != 0 )
                     lcnt++;

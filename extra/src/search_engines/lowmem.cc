@@ -64,27 +64,27 @@ public:
     int add_pattern(
         SnortConfig*, void* P, int m,
         unsigned noCase, unsigned, unsigned,
-        unsigned negative, void* ID, int)
+        unsigned negative, void* ID, int) override
     {
         return KTrieAddPattern(
             obj, (unsigned char *)P, m, noCase, negative, ID );
     };
 
     int prep_patterns(
-        SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list)
+        SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
     {
         return KTrieCompileWithSnortConf(sc, obj, build_tree, neg_list );
     };
 
     int _search(
         const unsigned char* T, int n, mpse_action_f action,
-        void* data, int* current_state )
+        void* data, int* current_state ) override
     {
         *current_state = 0;
         return KTrieSearch(obj, (unsigned char *)T, n, action, data);
     };
 
-    int get_pattern_count()
+    int get_pattern_count() override
     { return KTriePatternCount(obj); };
 };
 
@@ -131,6 +131,7 @@ static const MpseApi lm_api =
     {
         PT_SEARCH_ENGINE,
         "lowmem",
+        "Keyword Trie (low memory, moderate performance) MPSE",
         SEAPI_PLUGIN_V0,
         0,
         nullptr,

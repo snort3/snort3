@@ -1,7 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2005-2013 Sourcefire, Inc.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License Version 2 as
@@ -19,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  ****************************************************************************/
+// stream_icmp.cc author Russ Combs <rucombs@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -58,8 +58,8 @@ public:
     StreamIcmp(StreamIcmpConfig*);
     ~StreamIcmp();
 
-    void show(SnortConfig*);
-    void eval(Packet*);
+    void show(SnortConfig*) override;
+    void eval(Packet*) override;
 
 private:
     StreamIcmpConfig* config;
@@ -115,13 +115,14 @@ static const InspectApi icmp_api =
     {
         PT_INSPECTOR,
         MOD_NAME,
+        MOD_HELP,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor
     },
     IT_STREAM,
-    PROTO_BIT__ICMP,
+    (unsigned)PktType::ICMP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // init
@@ -131,7 +132,7 @@ static const InspectApi icmp_api =
     icmp_ctor,
     icmp_dtor,
     icmp_ssn,
-    icmp_reset
+    nullptr, // reset
 };
 
 const BaseApi* nin_stream_icmp = &icmp_api.base;

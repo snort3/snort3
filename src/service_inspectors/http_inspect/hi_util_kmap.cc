@@ -47,6 +47,8 @@
 #include "config.h"
 #endif
 
+#include <string>
+#include <limits>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,10 +56,8 @@
 
 #include "hi_util_xmalloc.h"
 
-//#define MEMASSERT(p) if(!p){printf("KMAP-No Memory: File: %s Line:%d!\n",__FILE__,__LINE__);exit(0);}
-
+//#define MEMASSERT(p) if(!p){printf("KMAP-No Memory: File: %s Line:%d\n",__FILE__,__LINE__);exit(0);}
 #define MEMASSERT(p)
-#define LOWERCASE tolower
 
 /*
 *
@@ -241,22 +241,27 @@ int KMapAdd( KMAP *km, void * key, int n, void * userdata )
 {
     int            i,ksize;
     int            type = 0;
-    unsigned char *P = (unsigned char *)key;
+    const unsigned char *P = (unsigned char *)key;
     KMAPNODE      *root;
-    unsigned char  xkey[256];
+    std::string xkey;
 
     if( n <= 0 )
     {
-        n = strlen( (char*) key );
-        if( n > (int)sizeof(xkey) )
+        const std::size_t tmp_len = strlen( (char*) key);
+        if (tmp_len > std::numeric_limits<int>::max())
             return -99;
+
+        n = (int) tmp_len;
     }
 
     if( km->nocase )
     {
+        xkey.resize(n);
+
         for(i=0;i<n;i++)
-            xkey[i] = LOWERCASE( P[i] );
-        P = xkey;
+            xkey[i] = std::tolower( P[i] );
+
+        P = (const unsigned char*)xkey.c_str();
     }
 
     /* Save key size */
@@ -383,24 +388,27 @@ int KMapAdd( KMAP *km, void * key, int n, void * userdata )
 */
 void *  KMapFind( KMAP * ks, void * key, int n )
 {
-    unsigned char * T = (unsigned char *)key;
-    KMAPNODE      * root;
-    unsigned char   xkey[256];
-    int             i;
+    const unsigned char * T = (unsigned char *)key;
+    KMAPNODE * root;
+    int i;
+    std::string xkey;
 
     if( n <= 0 )
     {
-        n = strlen( (char*)key );
-        if( n > (int)sizeof(xkey) )
-            return 0;
+        const std::size_t tmp_len = strlen( (char*) key);
+        if (tmp_len > std::numeric_limits<int>::max())
+            return nullptr;
 
+        n = (int) tmp_len;
     }
+
     if( ks->nocase )
     {
+        xkey.resize(n);
         for(i=0;i<n;i++)
-            xkey[i] = LOWERCASE( T[i] );
+            xkey[i] = std::tolower( T[i] );
 
-        T = xkey;
+        T = (const unsigned char*)xkey.c_str();
     }
     //printf("finding key='%.*s'\n",n,T);
 

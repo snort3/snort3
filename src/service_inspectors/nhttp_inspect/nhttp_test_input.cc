@@ -1,295 +1,247 @@
-/****************************************************************************
- *
+/*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2003-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
-
-//
-//  @author     Tom Peters <thopeter@cisco.com>
-//
-//  @brief      Interface to file of test messages
-//
-
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+// nhttp_test_input.cc author Tom Peters <thopeter@cisco.com>
 
 #include <assert.h>
-#include <string.h>
-#include <stdio.h>
 #include <stdexcept>
-#include <stdint.h>
 
-#include "nhttp_enum.h"
+#include "nhttp_test_manager.h"
 #include "nhttp_test_input.h"
 
 using namespace NHttpEnums;
 
-bool NHttpTestInput::test_input = false;
-NHttpTestInput *NHttpTestInput::testInput = nullptr;
-
-NHttpTestInput::NHttpTestInput(const char *fileName) {
-    if ((testDataFile = fopen(fileName, "r")) == nullptr) throw std::runtime_error("Cannot open test input file");
+NHttpTestInput::NHttpTestInput(const char* file_name) {
+    if ((test_data_file = fopen(file_name, "r")) == nullptr) throw std::runtime_error("Cannot open test input file");
 }
 
 NHttpTestInput::~NHttpTestInput() {
-    fclose(testDataFile);
+    fclose(test_data_file);
 }
 
-// Read from the test data file and present to PAF.
+// Read from the test data file and present to StreamSplitter.
 // In the process we may need to skip comments, execute simple commands, and handle escape sequences.
 // The best way to understand this function is to read the comments at the top of the file of test cases.
-void NHttpTestInput::toPaf(uint8_t*& data, uint32_t &length, SourceId &sourceId, bool &tcpClose, bool &needBreak) {
-    // No new data presented to PAF while the last section is still being flushed.
+void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id, bool &tcp_close, bool &need_break) {
     if (flushed) {
+        // Previously flushed data not reassembled yet
         length = 0;
         return;
     }
 
-    sourceId = lastSourceId;
-    tcpClose = false;
-    needBreak = false;
+    source_id = last_source_id;
+    tcp_close = false;
+    need_break = false;
 
-    if (justFlushed) {
-        // PAF just flushed. There may or may not be leftover data in our buffer.
-        justFlushed = false;
-        data = msgBuf;
-        length = endOffset - flushOffset;  // this is the leftover data
-        previousOffset = 0;
-        endOffset = length;
+    if (just_flushed) {
+        // StreamSplitter just flushed and it has all been sent by reassemble. There may or may not be leftover data
+        // from the last paragraph that was not flushed.
+        just_flushed = false;
+        data = msg_buf;
+        length = end_offset - flush_octets;  // this is the leftover data
+        previous_offset = 0;
+        end_offset = length;
         if (length > 0) {
-            // Must present unflushed leftovers to PAF again.
-            // If we don't take this opportunity to left justify our data in the buffer we may "walk" to the right until we run out of buffer space
-            memmove(msgBuf, msgBuf+flushOffset, length);
-            tcpClose = tcpAlreadyClosed;
+            // Must present unflushed leftovers to StreamSplitter again. If we don't take this opportunity to left
+            // justify our data in the buffer we may "walk" to the right until we run out of buffer space.
+            memmove(msg_buf, msg_buf+flush_octets, length);
+            tcp_close = tcp_closed;
+            flush_octets = 0;
             return;
         }
-        // If we reach here then PAF has already flushed all the data we have read so far.
-        tcpAlreadyClosed = false;
+        // If we reach here then StreamSplitter has already flushed all the data we have read so far.
+        tcp_closed = false;
+        flush_octets = 0;
     }
     else {
-        // The data we gave PAF last time was not flushed
+        // The data we gave StreamSplitter last time was not flushed
         length = 0;
-        previousOffset = endOffset;
-        data = msgBuf + previousOffset;
+        previous_offset = end_offset;
+        data = msg_buf + previous_offset;
     }
 
     // Now we need to move forward by reading more data from the file
-    int newChar;
-    typedef enum { WAITING, COMMENT, COMMAND, SECTION, ESCAPE, HEXVAL, FILLNUM, BRIDGE } State;
+    int new_char;
+    typedef enum { WAITING, COMMENT, COMMAND, PARAGRAPH, ESCAPE, HEXVAL } State;
     State state = WAITING;
-    bool ending;
-    int commandLength;
-    const int MaxCommand = 100;
-    char commandValue[MaxCommand];
-    uint8_t hexVal;
-    int numDigits;
-    uint32_t fillLength;
+    bool ending = false;
+    int command_length = 0;
+    const int max_command = 100;
+    char command_value[max_command];
+    uint8_t hex_val = 0;
+    int num_digits = 0;
 
-    while ((newChar = getc(testDataFile)) != EOF) {
+    while ((new_char = getc(test_data_file)) != EOF) {
         switch (state) {
           case WAITING:
-            if (newChar == '#') state = COMMENT;
-            else if (newChar == '@') {
-                state = COMMAND;
-                commandLength = 0;
+            if (new_char == '#') {
+                state = COMMENT;
             }
-            else if (newChar == '\\') {
+            else if (new_char == '@') {
+                state = COMMAND;
+                command_length = 0;
+            }
+            else if (new_char == '\\') {
                 state = ESCAPE;
                 ending = false;
             }
-            else if (newChar != '\n') {
-                state = SECTION;
+            else if (new_char != '\n') {
+                state = PARAGRAPH;
                 ending = false;
-                data[length++] = (uint8_t) newChar;
+                data[length++] = (uint8_t) new_char;
             }
             break;
           case COMMENT:
-            if (newChar == '\n') state = WAITING;
+            if (new_char == '\n') {
+                state = WAITING;
+            }
             break;
           case COMMAND:
-            if (newChar == '\n') {
+            if (new_char == '\n') {
                 state = WAITING;
-                if ((commandLength == strlen("request")) && !memcmp(commandValue, "request", strlen("request"))) sourceId = lastSourceId = SRC_CLIENT;
-                else if ((commandLength == strlen("response")) && !memcmp(commandValue, "response", strlen("response"))) sourceId = lastSourceId = SRC_SERVER;
-                else if ((commandLength == strlen("break")) && !memcmp(commandValue, "break", strlen("break"))) needBreak = true;
-                else if ((commandLength == strlen("bodyend")) && !memcmp(commandValue, "bodyend", strlen("bodyend"))) {
-                    termBytes[0] = 'x';
-                    termBytes[1] = 'y';
+                // FIXIT-L should not change direction with unflushed data remaining from previous paragraph. At the
+                // minimum need to test for this and assert.
+                if ((command_length == strlen("request")) && !memcmp(command_value, "request", strlen("request"))) {
+                    source_id = last_source_id = SRC_CLIENT;
                 }
-                else if ((commandLength == strlen("chunkend")) && !memcmp(commandValue, "chunkend", strlen("chunkend"))) {
-                    termBytes[0] = '\r';
-                    termBytes[1] = '\n';
+                else if ((command_length == strlen("response")) && !memcmp(command_value, "response", strlen("response"))) {
+                    source_id = last_source_id = SRC_SERVER;
                 }
-                else if (commandLength > 0) {
+                else if ((command_length == strlen("break")) && !memcmp(command_value, "break", strlen("break"))) {
+                    need_break = true;
+                }
+                else if ((command_length == strlen("tcpclose")) && !memcmp(command_value, "tcpclose", strlen("tcpclose"))) {
+                    tcp_close = true;
+                    tcp_closed = true;
+                }
+                else if (command_length > 0) {
                     // Look for a test number
-                    bool isNumber = true;
-                    for (int k=0; (k < commandLength) && isNumber; k++) {
-                        isNumber = (commandValue[k] >= '0') && (commandValue[k] <= '9');
+                    bool is_number = true;
+                    for (int k=0; (k < command_length) && is_number; k++) {
+                        is_number = (command_value[k] >= '0') && (command_value[k] <= '9');
                     }
-                    if (isNumber) {
-                        testNumber = 0;
-                        for (int j=0; j < commandLength; j++) {
-                            testNumber = testNumber * 10 + (commandValue[j] - '0');
+                    if (is_number) {
+                        int64_t test_number = 0;
+                        for (int j=0; j < command_length; j++) {
+                            test_number = test_number * 10 + (command_value[j] - '0');
                         }
+                        NHttpTestManager::update_test_number(test_number);
+                    }
+                    else {
+                        // Bad command in test file
+                        assert(0);
                     }
                 }
             }
             else {
-                if (commandLength < MaxCommand) commandValue[commandLength++] = newChar;
-                else assert(0);
+                if (command_length < max_command) {
+                     command_value[command_length++] = new_char;
+                }
+                else {
+                    assert(0);
+                }
             }
             break;
-          case SECTION:
-            if (newChar == '\\') {
+          case PARAGRAPH:
+            if (new_char == '\\') {
                 state = ESCAPE;
                 ending = false;
             }
-            else if (newChar == '\n') {
+            else if (new_char == '\n') {
                 if (ending) {
-                    // Found the blank line that ends the section.
-                    endOffset = previousOffset + length;
+                    // Found the second consecutive blank line that ends the paragraph.
+                    end_offset = previous_offset + length;
                     return;
                 }
                 ending = true;
             }
             else {
                 ending = false;
-                data[length++] = (uint8_t) newChar;
+                data[length++] = (uint8_t) new_char;
             }
             break;
           case ESCAPE:
-            switch (newChar) {
-              case 'n':  state = SECTION; data[length++] = '\n'; break;
-              case 'r':  state = SECTION; data[length++] = '\r'; break;
-              case 't':  state = SECTION; data[length++] = '\t'; break;
-              case 'B':  state = BRIDGE; break;
-              case 'C':  endOffset = previousOffset + length; return;
-              case 'T':  tcpClose = tcpAlreadyClosed = true; endOffset = previousOffset + length; return;
-              case '#':  state = SECTION; data[length++] = '#';  break;
-              case '@':  state = SECTION; data[length++] = '@';  break;
-              case '\\': state = SECTION; data[length++] = '\\'; break;
+            switch (new_char) {
+              case 'n':  state = PARAGRAPH; data[length++] = '\n'; break;
+              case 'r':  state = PARAGRAPH; data[length++] = '\r'; break;
+              case 't':  state = PARAGRAPH; data[length++] = '\t'; break;
+              case '#':  state = PARAGRAPH; data[length++] = '#';  break;
+              case '@':  state = PARAGRAPH; data[length++] = '@';  break;
+              case '\\': state = PARAGRAPH; data[length++] = '\\'; break;
               case 'x':
-              case 'X':  state = HEXVAL; hexVal = 0; numDigits = 0; break;
-              case '/':  state = FILLNUM; fillLength = 0; break;
-              default:   assert(0); state = SECTION; break;
-            }
-            break;
-          case BRIDGE:
-            if (newChar != '\n') {
-                state = SECTION;
-                data[length++] = (uint8_t) newChar;
+              case 'X':  state = HEXVAL; hex_val = 0; num_digits = 0; break;
+              default:   assert(0); state = PARAGRAPH; break;
             }
             break;
           case HEXVAL:
-            if ((newChar >= '0') && (newChar <= '9')) hexVal = hexVal * 16 + (newChar - '0');
-            else if ((newChar >= 'a') && (newChar <= 'f')) hexVal = hexVal * 16 + 10 + (newChar - 'a');
-            else if ((newChar >= 'A') && (newChar <= 'F')) hexVal = hexVal * 16 + 10 + (newChar - 'A');
+            if ((new_char >= '0') && (new_char <= '9')) hex_val = hex_val * 16 + (new_char - '0');
+            else if ((new_char >= 'a') && (new_char <= 'f')) hex_val = hex_val * 16 + 10 + (new_char - 'a');
+            else if ((new_char >= 'A') && (new_char <= 'F')) hex_val = hex_val * 16 + 10 + (new_char - 'A');
             else assert(0);
-            if (++numDigits == 2) {
-                data[length++] = hexVal;
-                state = SECTION;
+            if (++num_digits == 2) {
+                data[length++] = hex_val;
+                state = PARAGRAPH;
             }
             break;
-          case FILLNUM:
-            if (newChar != '/') {
-                assert((newChar >= '0') && (newChar <= '9'));
-                fillLength = fillLength * 10 + (newChar - '0');
-                assert(fillLength <= sizeof(msgBuf));  
-                break;
-            }
-            else {
-                bodyData = true;
-                // Add the specified number of fill characters to the buffer and cut.
-                // Simulates body data at the end of a header segment or the first segment containing body data
-                // Don't allow a buffer overrun.
-                if (previousOffset + length + fillLength > sizeof(msgBuf)) assert(0);
-                for (uint32_t k=0; k < fillLength; k++) {
-                    data[length++] = 'x';
-                }
-                endOffset = previousOffset + length;
-                return;
-            }
-        }
-        // If we have reached the configured maximum segment size automatically cut the data.
-        if (length >= mssLength) {
-            endOffset = previousOffset + length;
-            return;
         }
         // Don't allow a buffer overrun.
-        if (previousOffset + length >= sizeof(msgBuf)) assert(0);
+        assert(previous_offset + length < sizeof(msg_buf));
     }
     // End-of-file. Return everything we have so far.
-    endOffset = previousOffset + length;
+    end_offset = previous_offset + length;
     return;
 }
 
-void NHttpTestInput::pafFlush(uint32_t length) {
-    assert(!flushed);
+void NHttpTestInput::flush(uint32_t length) {
+    flush_octets = previous_offset + length;
     flushed = true;
-    if (bodyData && (previousOffset + length >= endOffset)) {
-        fillOctets = length;
-        bodyData = false;
-        previousOffset = 0;
-        endOffset = 0;
-        flushOffset = 0;
+}
+
+void NHttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId source_id, const NHttpFlowData* session_data,
+   bool& tcp_close) {
+    if (!flushed || (source_id != last_source_id)) {
+        *buffer = nullptr;
+        return;
+    }
+    *buffer = msg_buf;
+
+    if (flush_octets <= end_offset) {
+        // All the data we need comes from the file
+        tcp_close = tcp_closed && (flush_octets == end_offset);
+        length = flush_octets;
+        just_flushed = true;
+        flushed = false;
     }
     else {
-        flushOffset = previousOffset + length;
-    }
-}
-
-
-uint16_t NHttpTestInput::toEval(uint8_t **buffer, int64_t &testNumber_, SourceId &sourceId) {
-    if (!flushed) return 0;
-    testNumber_ = testNumber;
-    sourceId = lastSourceId;
-    *buffer = msgBuf;
-    if (fillOctets > 0) {
-        uint32_t fillOut = (fillOctets <= 16384) ? fillOctets : 16384;
-        for (uint32_t k = 0; k < fillOut; k++) {
-            msgBuf[k] = 'A' + k % 26;
+        // We need to generate additional data to fill out the body or chunk section. We may come through here
+        // multiple times as we generate all the maximum size body sections needed for a single flush.
+        tcp_close = false;
+        const unsigned paf_max = DATABLOCKSIZE - session_data->chunk_buffer_length[source_id];
+        length = (flush_octets <= paf_max) ? flush_octets : paf_max;
+        for (uint32_t k = end_offset; k < length; k++) {
+            msg_buf[k] = 'A' + k % 26;
         }
-        fillOctets -= fillOut;
-        if (fillOctets == 0) {
-            if (fillOut > 1) msgBuf[fillOut-2] = termBytes[0];
-            msgBuf[fillOut-1] = termBytes[1];
+        flush_octets -= length;
+        end_offset = 0;
+        if (flush_octets == 0) {
+            just_flushed = true;
             flushed = false;
-            justFlushed = true;
         }
-        else if (fillOctets == 1) {
-            msgBuf[fillOut-1] = termBytes[0];
-        }
-        return (uint16_t)fillOut;
     }
-    flushed = false;
-    justFlushed = true;
-    return (uint16_t)flushOffset;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 

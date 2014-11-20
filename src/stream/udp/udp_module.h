@@ -40,6 +40,7 @@ extern THREAD_LOCAL ProfileStats udp_perf_stats;
 //-------------------------------------------------------------------------
 
 #define MOD_NAME "stream_udp"
+#define MOD_HELP "stream inspector for UDP flow tracking"
 
 struct StreamUdpConfig;
 
@@ -47,13 +48,13 @@ class StreamUdpModule : public Module
 {
 public:
     StreamUdpModule();
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
-    ProfileStats* get_profile() const;
-    const char** get_pegs() const;
-    PegCount* get_counts() const;
+    ProfileStats* get_profile() const override;
+    const char** get_pegs() const override;
+    PegCount* get_counts() const override;
     StreamUdpConfig* get_data();
 
 private:

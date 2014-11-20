@@ -55,11 +55,9 @@ struct FragTracker
     int fraglist_count;       /* handy dandy counter */
 
     uint32_t ip_options_len;  /* length of ip options for this set of frags */
-    uint32_t ip_option_count; /* number of ip options for this set of frags */
     uint8_t *ip_options_data; /* ip options from offset 0 packet */
 
     uint32_t copied_ip_options_len;  /* length of 'copied' ip options */
-    uint32_t copied_ip_option_count; /* number of 'copied' ip options */
 
     FragEngine *engine;
 
@@ -77,9 +75,9 @@ class IpSession : public Session
 public:
     IpSession(Flow*);
 
-    bool setup (Packet*);
-    int process(Packet*);
-    void clear();
+    bool setup(Packet*) override;
+    int process(Packet*) override;
+    void clear() override;
 
 public:
     FragTracker tracker;

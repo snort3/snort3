@@ -139,6 +139,7 @@ int CheckChunkEncoding(HI_SESSION *session, const u_char *start, const u_char *e
     uint32_t iDataLen = 0;
     uint32_t chunkBytesCopied = 0;
     uint8_t stateless_chunk_count = 0;
+    bool alerted = false;
 
     if(!start || !end)
         return HI_INVALID_ARG;
@@ -192,7 +193,7 @@ int CheckChunkEncoding(HI_SESSION *session, const u_char *start, const u_char *e
                      && (iInspectMode == HI_SI_CLIENT_MODE)
                      && (session->server_conf->chunk_length < iChunkLen) )
                 {
-                    SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_LARGE_CHUNK);
+                    hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_LARGE_CHUNK);
                 }
 
                 if (session->server_conf->small_chunk_length.size != 0)
@@ -224,7 +225,11 @@ int CheckChunkEncoding(HI_SESSION *session, const u_char *start, const u_char *e
                         (*chunk_count)++;
                         if ( *chunk_count >= session->server_conf->small_chunk_length.num )
                         {
-                            SnortEventqAdd(gid, sid);
+                            if ( !alerted )
+                            {
+                                hi_set_event(gid, sid);
+                                alerted = true;
+                            }
                             *chunk_count = 0;
                         }
                     }
@@ -297,7 +302,7 @@ int CheckChunkEncoding(HI_SESSION *session, const u_char *start, const u_char *e
                             (*ptr != '\n') && (*ptr != '\r')
                             && ((ptr + 1) < end) && (*(ptr + 1) != '\n') )
                     {
-                        SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_CHUNK_SIZE_MISMATCH);
+                        hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_CHUNK_SIZE_MISMATCH);
                     }
                 }
                 else
@@ -368,7 +373,7 @@ int CheckChunkEncoding(HI_SESSION *session, const u_char *start, const u_char *e
                          && (iInspectMode == HI_SI_CLIENT_MODE)
                          && (session->server_conf->chunk_length < iChunkLen) )
                     {
-                        SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_LARGE_CHUNK);
+                        hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_LARGE_CHUNK);
                     }
 
                     iCheckChunk = 0;
@@ -460,7 +465,7 @@ static inline const u_char *FindPipelineReq(HI_SESSION *session,
             if ( session->server_conf->max_hdr_len &&
                 (p - offset) >= session->server_conf->max_hdr_len )
             {
-                SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_LONG_HDR);
+                hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_LONG_HDR);
             }
 
             p++;
@@ -492,7 +497,7 @@ static inline const u_char *FindPipelineReq(HI_SESSION *session,
     if ( session->server_conf->max_hdr_len &&
         (p - start) >= session->server_conf->max_hdr_len )
     {
-        SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_LONG_HDR);
+        hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_LONG_HDR);
     }
 
     return NULL;
@@ -657,7 +662,7 @@ int NextNonWhiteSpace(HI_SESSION *session, const u_char *start,
         {
             if(ServerConf->apache_whitespace.on)
             {
-                SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_APACHE_WS);
+                hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_APACHE_WS);
             }
             (*ptr)++;
             continue;
@@ -958,7 +963,7 @@ int find_non_rfc_delimiter(
     */
     if(ServerConf->iis_delimiter.on)
     {
-        SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_IIS_DELIMITER);
+        hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_IIS_DELIMITER);
 
         uri_ptr->delimiter = *ptr;
 
@@ -1052,7 +1057,7 @@ static inline int CheckLongDir(HI_SESSION *session, URI_PTR *uri_ptr,
 
         if ( iDirLen > session->server_conf->long_dir )
         {
-            SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_OVERSIZE_DIR);
+            hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_OVERSIZE_DIR);
         }
     }
 
@@ -1519,7 +1524,7 @@ static inline void HTTP_CopyUri(
 
     cur_ptr = start;
 
-    if(/*ServerConf->log_uri &&*/ !stream_ins && hsd)  // FIXIT move back to ServerConf?
+    if(/*ServerConf->log_uri &&*/ !stream_ins && hsd)  // FIXIT-L move back to ServerConf?
     {
         SkipBlankSpace(start,end,&cur_ptr);
 
@@ -1796,7 +1801,7 @@ const u_char *extract_http_xff(HI_SESSION *session, const u_char *p, const u_cha
 
     if( (hdrs_args->true_clnt_xff & HDRS_BOTH) == HDRS_BOTH)
     {
-        SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_BOTH_TRUEIP_XFF_HDRS);
+        hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_BOTH_TRUEIP_XFF_HDRS);
     }
 
     SkipBlankSpace(start,end,&p);
@@ -1816,7 +1821,7 @@ const u_char *extract_http_xff(HI_SESSION *session, const u_char *p, const u_cha
         if ( session->server_conf->max_spaces &&
             num_spaces >= session->server_conf->max_spaces )
         {
-            SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_EXCEEDS_SPACES);
+            hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_EXCEEDS_SPACES);
         }
 
         p = p + unfold_size;
@@ -1856,26 +1861,26 @@ const u_char *extract_http_xff(HI_SESSION *session, const u_char *p, const u_cha
                     {
                         if((status != SFIP_ARG_ERR) && (status !=SFIP_ALLOC_ERR))
                         {
-                            SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_INVALID_TRUEIP);
+                            hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_INVALID_TRUEIP);
                             return p;
                         }
                     }
                 }
                 else if((status != SFIP_ARG_ERR) && (status !=SFIP_ALLOC_ERR))
                 {
-                    SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_INVALID_TRUEIP);
+                    hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_INVALID_TRUEIP);
                     free(ipAddr);
                     return p;
                 }
             }
             if(*true_ip)
             {
-                if(!IP_EQUALITY(*true_ip, tmp))
+                if(!sfip_equals(*true_ip, tmp))
                 {
                     sfip_free(*true_ip);
                     *true_ip = tmp;
 
-                    SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_MULTIPLE_TRUEIP_IN_SESSION);
+                    hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_MULTIPLE_TRUEIP_IN_SESSION);
                 }
                 else
                     sfip_free(tmp);
@@ -1925,7 +1930,7 @@ const u_char *extract_http_hostname(HI_SESSION *session, const u_char *p, const 
         if ( session->server_conf->max_spaces &&
             num_spaces >= session->server_conf->max_spaces )
         {
-            SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_EXCEEDS_SPACES);
+            hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_EXCEEDS_SPACES);
         }
         p = p + unfold_size;
 
@@ -1938,7 +1943,7 @@ const u_char *extract_http_hostname(HI_SESSION *session, const u_char *p, const 
 
         if((end_ptr - start_ptr) >= MAX_HOSTNAME)
         {
-            SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_LONG_HOSTNAME);
+            hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_LONG_HOSTNAME);
         }
 
         iRet = HTTP_CopyExtraDataTosession((uint8_t *)start_ptr, (end_ptr - start_ptr), COPY_HOSTNAME, hsd->log_state);
@@ -1966,7 +1971,7 @@ const u_char *extract_http_content_length(HI_SESSION *session,
     int space_present = 0;
     if (header_ptr->content_len.cont_len_start)
     {
-        SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_MULTIPLE_CONTLEN);
+        hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_MULTIPLE_CONTLEN);
         header_ptr->header.uri_end = p;
         header_ptr->content_len.len = 0;
         return p;
@@ -2012,7 +2017,7 @@ const u_char *extract_http_content_length(HI_SESSION *session,
                                 if ( session->server_conf->max_spaces &&
                                     num_spaces >= session->server_conf->max_spaces )
                                 {
-                                    SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_EXCEEDS_SPACES);
+                                    hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_EXCEEDS_SPACES);
                                 }
                                 if ( isdigit((int)*p))
                                     break;
@@ -2220,13 +2225,13 @@ static inline const u_char *extractHeaderFieldValues(HI_SESSION *session,
             /* Alert when there are multiple host headers in one request */
             if(hdrs_args->hst_name_hdr)
             {
-                SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_MULTIPLE_HOST_HDRS);
+                hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_MULTIPLE_HOST_HDRS);
                 return p;
             }
             else
             {
                 hdrs_args->hst_name_hdr = 1;
-                if ( hsd && !(hdrs_args->strm_ins) /*&& (ServerConf->log_hostname)*/)  // FIXIT move back to ServerConf?
+                if ( hsd && !(hdrs_args->strm_ins) /*&& (ServerConf->log_hostname)*/)  // FIXIT-L move back to ServerConf?
                 {
                     if(!SetLogBuffers(hsd))
                     {
@@ -2355,7 +2360,7 @@ static inline const u_char *hi_client_extract_header(
                         if ( session->server_conf->max_spaces &&
                             num_spaces >= session->server_conf->max_spaces )
                         {
-                            SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_EXCEEDS_SPACES);
+                            hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_EXCEEDS_SPACES);
                         }
                     }
                     break;
@@ -2378,7 +2383,7 @@ static inline const u_char *hi_client_extract_header(
     }
     else
     {
-        SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_UNESCAPED_SPACE_URI);
+        hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_UNESCAPED_SPACE_URI);
         if(p < end)
         {
             crlf = (u_char *)SnortStrnStr((const char *)p, end - p, "\n");
@@ -2408,13 +2413,13 @@ static inline const u_char *hi_client_extract_header(
             if ( session->server_conf->max_hdr_len &&
                 (p - offset) >= session->server_conf->max_hdr_len )
             {
-                SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_LONG_HDR);
+                hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_LONG_HDR);
             }
 
             if (session->server_conf->max_headers &&
                 (header_count > session->server_conf->max_headers))
             {
-                SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_MAX_HEADERS);
+                hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_MAX_HEADERS);
             }
 
             p++;
@@ -2424,7 +2429,7 @@ static inline const u_char *hi_client_extract_header(
             if ( session->server_conf->max_spaces &&
                 num_spaces >= session->server_conf->max_spaces )
             {
-                SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_EXCEEDS_SPACES);
+                hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_EXCEEDS_SPACES);
             }
 
             offset = (u_char*)p;
@@ -2484,7 +2489,7 @@ static inline const u_char *hi_client_extract_header(
     if ( session->server_conf->max_hdr_len &&
         (p - start) >= session->server_conf->max_hdr_len )
     {
-        SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_LONG_HDR);
+        hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_LONG_HDR);
     }
 
     header_ptr->header.uri_end = p;
@@ -2694,7 +2699,7 @@ int StatelessInspection(Packet *p, HI_SESSION *session, HttpsessionData *hsd, in
 
         if(iRet == -1 || (CmdConf == NULL))
         {
-            SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_UNKNOWN_METHOD);
+            hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_UNKNOWN_METHOD);
             Client->request.method = HI_UNKNOWN_METHOD;
         }
     }
@@ -2706,7 +2711,7 @@ int StatelessInspection(Packet *p, HI_SESSION *session, HttpsessionData *hsd, in
              * so we know we're looking for a method and not guessing that we're in
              * the body or somewhere else because we found a non-ascii character */
             if ( !stream_ins )
-                SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_UNKNOWN_METHOD);
+                hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_UNKNOWN_METHOD);
             Client->request.method = HI_UNKNOWN_METHOD;
         }
     }
@@ -2728,7 +2733,7 @@ int StatelessInspection(Packet *p, HI_SESSION *session, HttpsessionData *hsd, in
     if ( iRet == URI_END && ServerConf->max_hdr_len &&
          ((uri_ptr.uri_end - uri_ptr.uri) >= ServerConf->max_hdr_len) )
     {
-        SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_LONG_HDR);
+        hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_LONG_HDR);
     }
 
     if(iRet == URI_END &&
@@ -2901,7 +2906,7 @@ int StatelessInspection(Packet *p, HI_SESSION *session, HttpsessionData *hsd, in
     if(uri_ptr.proxy && session->global_conf->proxy_alert &&
        (!ServerConf->allow_proxy && !ClientConf->allow_proxy))
     {
-        SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_PROXY_USE);
+        hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_PROXY_USE);
     }
 
     return HI_SUCCESS;

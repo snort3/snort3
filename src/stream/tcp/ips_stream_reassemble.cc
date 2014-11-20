@@ -37,7 +37,9 @@
 // stream_reassemble
 //-------------------------------------------------------------------------
 
-#define IPS_REASS "stream_reassemble"
+#define s_name "stream_reassemble"
+#define s_help \
+    "detection option for stream reassembly control"
 
 static THREAD_LOCAL ProfileStats streamReassembleRuleOptionPerfStats;
 
@@ -53,13 +55,13 @@ class ReassembleOption : public IpsOption
 {
 public:
     ReassembleOption(const StreamReassembleRuleOptionData& c) :
-        IpsOption(IPS_REASS)
+        IpsOption(s_name)
     { srod = c; };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
 private:
     StreamReassembleRuleOptionData srod;
@@ -104,7 +106,7 @@ bool ReassembleOption::operator==(const IpsOption& ips) const
 
 int ReassembleOption::eval(Cursor&, Packet* pkt)
 {
-    if (!pkt->flow || !pkt->tcph)
+    if (!pkt->flow || !pkt->ptrs.tcph)
         return 0;
 
     PROFILE_VARS;
@@ -115,6 +117,7 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
 
     if ( !srod.enable ) /* Turn it off */
     {
+        // FIXIT-H need to delete splitter too - need stream api methods
         if ( srod.direction & SSN_DIR_SERVER )
             tcpssn->server.flush_policy = STREAM_FLPOLICY_IGNORE;
 
@@ -123,8 +126,8 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
     }
     else
     {
-        // FIXIT PAF need to instantiate atom splitter?
-        // FIXIT PAF need to check for ips / on-data
+        // FIXIT-H PAF need to instantiate atom splitter?
+        // FIXIT-H PAF need to check for ips / on-data
         if ( srod.direction & SSN_DIR_SERVER )
             tcpssn->server.flush_policy = STREAM_FLPOLICY_ON_ACK;
 
@@ -153,12 +156,12 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
 // stream_reassemble module
 //-------------------------------------------------------------------------
 
-static const Parameter reassemble_params[] =
+static const Parameter s_params[] =
 {
-    { "*action", Parameter::PT_ENUM, "disable|enable", nullptr,
+    { "action", Parameter::PT_ENUM, "disable|enable", nullptr,
       "stop or start stream reassembly" },
 
-    { "*direction", Parameter::PT_ENUM, "client|server|both", nullptr,
+    { "direction", Parameter::PT_ENUM, "client|server|both", nullptr,
       "action applies to the given direction(s)" },
 
     { "noalert", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -173,12 +176,12 @@ static const Parameter reassemble_params[] =
 class ReassembleModule : public Module
 {
 public:
-    ReassembleModule() : Module(IPS_REASS, reassemble_params) { };
+    ReassembleModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &streamReassembleRuleOptionPerfStats; };
 
     StreamReassembleRuleOptionData srod;
@@ -195,11 +198,11 @@ bool ReassembleModule::begin(const char*, int, SnortConfig*)
 
 bool ReassembleModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*action") )
+    if ( v.is("action") )
         srod.enable = v.get_long();
 
-    else if ( v.is("*direction") )
-        srod.enable = v.get_long() + 1;
+    else if ( v.is("direction") )
+        srod.direction = v.get_long() + 1;
 
     else if ( v.is("noalert") )
         srod.alert = 0;
@@ -242,7 +245,8 @@ static const IpsApi reassemble_api =
 {
     {
         PT_IPS_OPTION,
-        IPS_REASS,
+        s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         reassemble_mod_ctor,

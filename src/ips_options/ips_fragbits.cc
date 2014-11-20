@@ -79,7 +79,7 @@
 #define FB_DF  0x4000
 #define FB_MF  0x2000
 
-static const char* s_name = "fragbits";
+#define s_name "fragbits"
 
 static THREAD_LOCAL ProfileStats fragBitsPerfStats;
 
@@ -97,10 +97,10 @@ public:
         IpsOption(s_name)
     { config = c; };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
 private:
     FragBitsData config;
@@ -151,22 +151,23 @@ int FragBitsOption::eval(Cursor&, Packet *p)
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    if(!IPH_IS_VALID(p))
+    if(!p->ptrs.ip_api.is_valid())
     {
         return rval;
     }
 
+    const uint16_t frag_offset = p->ptrs.ip_api.off_w_flags();
     MODULE_PROFILE_START(fragBitsPerfStats);
 
     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "           <!!> CheckFragBits: ");
            DebugMessage(DEBUG_PLUGIN, "[rule: 0x%X:%d   pkt: 0x%X] ",
-                fb->frag_bits, fb->mode, (GET_IPH_OFF(p)&bitmask)););
+                fb->frag_bits, fb->mode, frag_offset & bitmask););
 
     switch(fb->mode)
     {
         case FB_NORMAL:
             /* check if the rule bits match the bits in the packet */
-            if(fb->frag_bits == (GET_IPH_OFF(p)&bitmask))
+            if(fb->frag_bits == (frag_offset & bitmask))
             {
                 DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got Normal bits match\n"););
                 rval = DETECTION_OPTION_MATCH;
@@ -179,7 +180,7 @@ int FragBitsOption::eval(Cursor&, Packet *p)
 
         case FB_NOT:
             /* check if the rule bits don't match the bits in the packet */
-            if((fb->frag_bits & (GET_IPH_OFF(p)&bitmask)) == 0)
+            if((fb->frag_bits & (frag_offset & bitmask)) == 0)
             {
                 DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got NOT bits match\n"););
                 rval = DETECTION_OPTION_MATCH;
@@ -192,7 +193,7 @@ int FragBitsOption::eval(Cursor&, Packet *p)
 
         case FB_ALL:
             /* check if the rule bits are present in the packet */
-            if((fb->frag_bits & (GET_IPH_OFF(p)&bitmask)) == fb->frag_bits)
+            if((fb->frag_bits & (frag_offset & bitmask)) == fb->frag_bits)
             {
                 DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got ALL bits match\n"););
                 rval = DETECTION_OPTION_MATCH;
@@ -205,7 +206,7 @@ int FragBitsOption::eval(Cursor&, Packet *p)
 
         case FB_ANY:
             /* check if any of the rule bits match the bits in the packet */
-            if((fb->frag_bits & (GET_IPH_OFF(p)&bitmask)) != 0)
+            if((fb->frag_bits & (frag_offset & bitmask)) != 0)
             {
                 DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got ANY bits match\n"););
                 rval = DETECTION_OPTION_MATCH;
@@ -299,7 +300,7 @@ void fragbits_parse(const char *data, FragBitsData *ds_ptr)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter fragbits_params[] =
+static const Parameter s_params[] =
 {
     { "~flags", Parameter::PT_STRING, nullptr, nullptr,
       "these flags are tested" },
@@ -307,15 +308,18 @@ static const Parameter fragbits_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to test IP frag flags"
+
 class FragBitsModule : public Module
 {
 public:
-    FragBitsModule() : Module(s_name, fragbits_params) { };
+    FragBitsModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &fragBitsPerfStats; };
 
     FragBitsData data;
@@ -374,6 +378,7 @@ static const IpsApi fragbits_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

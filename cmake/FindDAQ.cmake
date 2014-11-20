@@ -23,8 +23,8 @@ set (ERROR_MESSAGE
 
 
 find_path(DAQ_INCLUDE_DIR
-    NAMES  daq.h 
-    HINTS  ENV DAQ_DIR
+    NAMES daq.h
+    HINTS ENV DAQ_DIR
     PATH_SUFFIXES daq
 )
 
@@ -58,9 +58,10 @@ endif()
 
 find_library(DAQ_LIBRARY
     NAMES  ${DAQ_LIB}
-    PATHS ${DAQ_LIBRARIES_DIR}
+    HINTS ${DAQ_LIBRARIES_DIR} # user specified path in ./configure_cmake.sh
     DOC "DAQ library directory"
     NO_DEFAULT_PATH
+    NO_CMAKE_ENVIRONMENT_PATH
 )
 
 find_library(DAQ_LIBRARY

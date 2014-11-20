@@ -1,5 +1,4 @@
 
-
 if( BUILD_PROCPIDSTATS )
     set (PROCPIDSTATS_SOURCE
         sfprocpidstats.cc 

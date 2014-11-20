@@ -30,8 +30,6 @@ using namespace std;
 #include "wizard.h"
 #include "magic.h"
 
-static const char* s_name = "wizard";
-
 //-------------------------------------------------------------------------
 // wizard module
 //-------------------------------------------------------------------------
@@ -92,7 +90,7 @@ static const Parameter wizard_spells_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter wizard_params[] =
+static const Parameter s_params[] =
 {
     { "hexes", Parameter::PT_LIST, wizard_hexes_params, nullptr,
       "criteria for binary service identification" },
@@ -103,7 +101,7 @@ static const Parameter wizard_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-WizardModule::WizardModule() : Module(s_name, wizard_params)
+WizardModule::WizardModule() : Module(WIZ_NAME, WIZ_HELP, s_params)
 {
     c2s_hexes = nullptr;
     s2c_hexes = nullptr;
@@ -128,6 +126,7 @@ bool WizardModule::set(const char*, Value& v, SnortConfig*)
     if ( v.is("service") )
         service = v.get_string();
 
+    // FIXIT-L implement proto and client_first
     else if ( v.is("proto") )
         return true;
 
@@ -210,10 +209,34 @@ bool WizardModule::end(const char*, int idx, SnortConfig*)
 
 MagicBook* WizardModule::get_book(bool c2s, bool hex)
 {
-    if ( c2s )
-        return hex ? c2s_hexes : c2s_spells;
+    int k = c2s ? 1 : 0;
+    k |= (hex ? 2 : 0);
 
-    return hex ? s2c_hexes : s2c_spells;
+    MagicBook* b = nullptr;
+
+    switch ( k )
+    {
+    case 0:
+        b = s2c_spells;
+        s2c_spells = nullptr;
+        break;
+
+    case 1:
+        b = c2s_spells;
+        c2s_spells = nullptr;
+        break;
+
+    case 2:
+        b = s2c_hexes;
+        s2c_hexes = nullptr;
+        break;
+
+    case 3:
+        b = c2s_hexes;
+        c2s_hexes = nullptr;
+        break;
+    }
+    return b;
 }
 
 const char** WizardModule::get_pegs() const

@@ -37,7 +37,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "hash/sfhashfcn.h"
+struct SFHASHFCN;
 
 /*
 *   ERROR DEFINES
@@ -56,19 +56,19 @@
 /*
 *   Generic HASH NODE
 */
-typedef struct _sfghash_node
+struct SFGHASH_NODE
 {
-  struct _sfghash_node * next, * prev;
+  struct SFGHASH_NODE * next, * prev;
 
   void * key;   /* Copy of, or Pointer to, the Users key */
   void * data;  /* Pointer to the users data, this is never copied! */
      
-} SFGHASH_NODE;
+} ;
 
 /*
 *    Generic HASH table
 */
-typedef struct _sfghash
+struct SFGHASH
 {
   SFHASHFCN    * sfhashfcn;
   int          keysize;   /* bytes in key, if < 0 -> keys are strings */
@@ -86,7 +86,7 @@ typedef struct _sfghash
 
   int splay;
 
-} SFGHASH, SFDICT;
+};
 
 
 /*

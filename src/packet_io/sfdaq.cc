@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2005-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@ extern "C" {
 #include "snort.h"
 #include "util.h"
 #include "utils/strvec.h"
+#include "parser/parser.h"
 
 #define PKT_SNAPLEN  1514
 
@@ -162,11 +163,11 @@ DAQ_Mode DAQ_GetMode (const SnortConfig* sc)
             if ( !strcasecmp(daq_mode_string((DAQ_Mode)i), sc->daq_mode) )
             {
                 if ( ScAdapterInlineMode() && (i != DAQ_MODE_INLINE) )
-                    FatalError("DAQ '%s' mode incompatible with -Q!\n", sc->daq_mode);
+                    FatalError("DAQ '%s' mode incompatible with -Q\n", sc->daq_mode);
                 return (DAQ_Mode)i;
             }
         }
-        FatalError("Bad DAQ mode '%s'!\n", sc->daq_mode);
+        FatalError("Bad DAQ mode '%s'\n", sc->daq_mode);
     }
     if ( ScAdapterInlineMode() )
         return DAQ_MODE_INLINE;
@@ -204,22 +205,21 @@ static int DAQ_ValidateInstance ()
         return 1;
 
     if ( !(caps & DAQ_CAPA_BLOCK) )
-        LogMessage("WARNING: inline mode configured but DAQ can't "
-            "block packets.\n");
+        ParseWarning("inline mode configured but DAQ can't block packets.\n");
 
 #if 0
     // this is checked in normalize.c and sp_respond.c
     // and warned/disabled only if it was configured
     if ( !(caps & DAQ_CAPA_REPLACE) )
     {
-        LogMessage("WARNING: normalizations/replacements disabled "
+        ParseWarning("normalizations/replacements disabled "
             " because DAQ can't replace packets.\n");
     }
 
-    // this is checked in spp_stream5.c and active.c
+    // this is checked in spp_stream.c and active.c
     // and warned/disabled only if it was configured
     if ( !(caps & DAQ_CAPA_INJECT) )
-        LogMessage("WARNING: inline mode configured but DAQ can't "
+        ParseWarning("inline mode configured but DAQ can't "
             "inject packets.\n");
 #endif
 
@@ -240,7 +240,7 @@ void DAQ_Init (const SnortConfig* sc)
     daq_mod = daq_find_module(type);
 
     if ( !daq_mod )
-        FatalError("Can't find %s DAQ!\n", type);
+        FatalError("Can't find %s DAQ\n", type);
 
     snap = ( sc->pkt_snaplen > 0 ) ? sc->pkt_snaplen : PKT_SNAPLEN;
     daq_mode = DAQ_GetMode(sc);
@@ -268,7 +268,7 @@ void DAQ_Abort ()
         DAQ_Stop();
 
     DAQ_Delete();
-    //DAQ_Term();  FIXIT this must be called from main thread on abort
+    //DAQ_Term();  FIXIT-J this must be called from main thread on abort
 }
 
 //--------------------------------------------------------------------
@@ -350,7 +350,7 @@ int DAQ_SetFilter(const char* bpf)
     bpf_gate.unlock();
 
     if ( err )
-        FatalError("Can't set DAQ BPF filter to '%s' (%s)!\n",
+        FatalError("Can't set DAQ BPF filter to '%s' (%s)\n",
             bpf, daq_get_error(daq_mod, daq_hand));
 
     return err;
@@ -396,8 +396,7 @@ static int DAQ_Config (DAQ_Config_t* cfg)
     err = daq_initialize(daq_mod, cfg, &daq_hand, buf, sizeof(buf));
 
     if ( err )
-        FatalError("Can't initialize DAQ %s (%d) - %s\n",
-            type, err, buf);
+        ErrorMessage("Can't initialize DAQ %s (%d) - %s\n", type, err, buf);
 
     return err;
 }
@@ -409,7 +408,7 @@ int DAQ_New (const SnortConfig* sc, const char* intf)
     DAQ_Config_t cfg;
 
     if ( !daq_mod )
-        FatalError("DAQ_Init not called!\n");
+        FatalError("DAQ_Init not called\n");
 
     if ( intf )
         interface_spec = SnortStrdup(intf);
@@ -471,7 +470,7 @@ int DAQ_Start ()
     int err = daq_start(daq_mod, daq_hand);
 
     if ( err )
-        FatalError("Can't start DAQ (%d) - %s!\n",
+        ErrorMessage("Can't start DAQ (%d) - %s\n",
             err, daq_get_error(daq_mod, daq_hand));
 
     else if ( !DAQ_UnprivilegedStart() )
@@ -497,7 +496,7 @@ int DAQ_Stop ()
     int err = daq_stop(daq_mod, daq_hand);
 
     if ( err )
-        LogMessage("Can't stop DAQ (%d) - %s!\n",
+        LogMessage("Can't stop DAQ (%d) - %s\n",
             err, daq_get_error(daq_mod, daq_hand));
 
     return err;
@@ -522,7 +521,7 @@ int DAQ_Acquire (int max, DAQ_Analysis_Func_t callback, uint8_t* user)
 #endif
 
     if ( err && err != DAQ_READFILE_EOF )
-        LogMessage("Can't acquire (%d) - %s!\n",
+        LogMessage("Can't acquire (%d) - %s\n",
             err, daq_get_error(daq_mod, daq_hand));
 
     if ( s_error != DAQ_SUCCESS )
@@ -538,7 +537,7 @@ int DAQ_Inject(const DAQ_PktHdr_t* h, int rev, const uint8_t* buf, uint32_t len)
     int err = daq_inject(daq_mod, daq_hand, (DAQ_PktHdr_t*)h, buf, len, rev);
 #ifdef DEBUG
     if ( err )
-        LogMessage("Can't inject (%d) - %s!\n",
+        LogMessage("Can't inject (%d) - %s\n",
             err, daq_get_error(daq_mod, daq_hand));
 #endif
     return err;
@@ -581,7 +580,7 @@ const DAQ_Stats_t* DAQ_GetStats (void)
     err = daq_get_stats(daq_mod, daq_hand, &daq_stats);
 
     if ( err )
-        LogMessage("Can't get DAQ stats (%d) - %s!\n",
+        LogMessage("Can't get DAQ stats (%d) - %s\n",
             err, daq_get_error(daq_mod, daq_hand));
 
     if ( !daq_stats.hw_packets_received )

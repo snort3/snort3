@@ -40,9 +40,13 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
-#include "range.h"
+#include "framework/range.h"
+#include "protocols/tcp.h"
 
-static const char* s_name = "ack";
+#define s_name "ack"
+
+#define s_help \
+    "rule option to match on TCP ack numbers"
 
 static THREAD_LOCAL ProfileStats tcpAckPerfStats;
 
@@ -53,10 +57,10 @@ public:
         IpsOption(s_name)
     { config = c; };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
 private:
     RangeCheck config;
@@ -96,7 +100,7 @@ int TcpAckOption::eval(Cursor&, Packet *p)
 
     int rval;
 
-    if ( p->tcph && config.eval(p->tcph->th_ack) )
+    if ( p->ptrs.tcph && config.eval(p->ptrs.tcph->th_ack) )
         rval = DETECTION_OPTION_MATCH;
 
     else
@@ -110,10 +114,10 @@ int TcpAckOption::eval(Cursor&, Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter ack_params[] =
+static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if packet payload size is min<>max | <max | >min" },
+      "check if packet payload size is 'size | min<>max | <max | >min'" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -121,12 +125,12 @@ static const Parameter ack_params[] =
 class AckModule : public Module
 {
 public:
-    AckModule() : Module(s_name, ack_params) { };
+    AckModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &tcpAckPerfStats; };
 
     RangeCheck data;
@@ -176,6 +180,7 @@ static const IpsApi ack_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

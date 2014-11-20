@@ -40,7 +40,7 @@
  * Warning, this plugin may slow Snort *way* down!
  *
  */
-// FIXIT delete this (sp_session) and use session tag instead
+// FIXIT-L delete this (sp_session) and use session tag instead
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -69,8 +69,9 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
+#include "sfip/sf_ip.h"
 
-static const char* s_name = "session";
+#define s_name "session"
 
 static THREAD_LOCAL ProfileStats sessionPerfStats;
 
@@ -90,10 +91,10 @@ public:
         IpsOption(s_name)
     { config = c; };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
 private:
     SessionData config;
@@ -149,7 +150,7 @@ int SessionOption::eval(Cursor&, Packet *p)
     /* if there's data in this packet */
     if(p != NULL)
     {
-        if((p->dsize != 0 && p->data != NULL) || p->frag_flag != 1)
+        if((p->dsize != 0 && p->data != NULL) || (!(p->ptrs.decode_flags & DECODE_FRAG)))
         {
              session = OpenSessionFile(p);
 
@@ -177,11 +178,11 @@ static FILE *OpenSessionFile(Packet *p)
 {
     char filename[STD_BUF];
     char session_file[STD_BUF]; /* name of session file */
-    sfip_t *dst, *src;
+    const sfip_t *dst, *src;
 
     FILE *ret;
 
-    if(p->frag_flag)
+    if(p->ptrs.decode_flags & DECODE_FRAG)
     {
         return NULL;
     }
@@ -189,25 +190,25 @@ static FILE *OpenSessionFile(Packet *p)
     memset((char *)session_file, 0, STD_BUF);
 
     /* figure out which way this packet is headed in relation to the homenet */
-    dst = GET_DST_IP(p);
-    src = GET_SRC_IP(p);
+    dst = p->ptrs.ip_api.get_dst();
+    src = p->ptrs.ip_api.get_src();
 
     const char* addr;
 
     if(sfip_contains(&snort_conf->homenet, dst) == SFIP_CONTAINS) {
         if(sfip_contains(&snort_conf->homenet, src) == SFIP_NOT_CONTAINS)
         {
-            addr = inet_ntoa(GET_SRC_ADDR(p));
+            addr = inet_ntoa(p->ptrs.ip_api.get_src());
         }
         else
         {
-            if(p->sp >= p->dp)
+            if(p->ptrs.sp >= p->ptrs.dp)
             {
-                addr = inet_ntoa(GET_SRC_ADDR(p));
+                addr = inet_ntoa(p->ptrs.ip_api.get_src());
             }
             else
             {
-                addr = inet_ntoa(GET_DST_ADDR(p));
+                addr = inet_ntoa(p->ptrs.ip_api.get_dst());
             }
         }
     }
@@ -215,17 +216,17 @@ static FILE *OpenSessionFile(Packet *p)
     {
         if(sfip_contains(&snort_conf->homenet, src) == SFIP_CONTAINS)
         {
-            addr = inet_ntoa(GET_DST_ADDR(p));
+            addr = inet_ntoa(p->ptrs.ip_api.get_dst());
         }
         else
         {
-            if(p->sp >= p->dp)
+            if(p->ptrs.sp >= p->ptrs.dp)
             {
-                addr = inet_ntoa(GET_SRC_ADDR(p));
+                addr = inet_ntoa(p->ptrs.ip_api.get_src());
             }
             else
             {
-                addr = inet_ntoa(GET_DST_ADDR(p));
+                addr = inet_ntoa(p->ptrs.ip_api.get_dst());
             }
         }
     }
@@ -242,11 +243,11 @@ static FILE *OpenSessionFile(Packet *p)
         }
     }
 
-    if(p->sp >= p->dp)
-        SnortSnprintf(session_file, STD_BUF, "%s/SESSION:%d-%d", log_path, p->sp, p->dp);
+    if(p->ptrs.sp >= p->ptrs.dp)
+        SnortSnprintf(session_file, STD_BUF, "%s/SESSION:%d-%d", log_path, p->ptrs.sp, p->ptrs.dp);
 
     else
-        SnortSnprintf(session_file, STD_BUF, "%s/SESSION:%d-%d", log_path, p->dp, p->sp);
+        SnortSnprintf(session_file, STD_BUF, "%s/SESSION:%d-%d", log_path, p->ptrs.dp, p->ptrs.sp);
 
 
     strncpy(filename, session_file, STD_BUF - 1);
@@ -270,7 +271,7 @@ static void DumpSessionData(FILE *fp, Packet *p, SessionData *sessionData)
     const u_char *end;
     char conv[] = "0123456789ABCDEF"; /* xlation lookup table */
 
-    if(p->dsize == 0 || p->data == NULL || p->frag_flag)
+    if(p->dsize == 0 || p->data == NULL || (p->ptrs.decode_flags & DECODE_FRAG))
         return;
 
     idx = p->data;
@@ -318,7 +319,7 @@ static void DumpSessionData(FILE *fp, Packet *p, SessionData *sessionData)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter ssn_params[] =
+static const Parameter s_params[] =
 {
     { "~mode", Parameter::PT_ENUM, "printable|binary|all", nullptr,
       "output format" },
@@ -326,15 +327,18 @@ static const Parameter ssn_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to check user data from TCP sessions"
+
 class SsnModule : public Module
 {
 public:
-    SsnModule() : Module(s_name, ssn_params) { };
+    SsnModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &sessionPerfStats; };
 
     SessionData data;
@@ -387,6 +391,7 @@ static const IpsApi session_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

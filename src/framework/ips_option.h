@@ -53,7 +53,7 @@ enum CursorActionType
     CAT_SET_COMMAND,
 };
 
-class IpsOption
+class SO_PUBLIC IpsOption
 {
 public:
     virtual ~IpsOption() { };
@@ -98,9 +98,8 @@ private:
     option_type_t type;
 };
 
-enum RuleOptType // FIXIT is this still useful?
+enum RuleOptType
 {
-    OPT_TYPE_ACTION = 0,
     OPT_TYPE_LOGGING,
     OPT_TYPE_DETECTION,
     OPT_TYPE_META,
@@ -116,7 +115,8 @@ struct IpsApi
 {
     BaseApi base;
     RuleOptType type;
-    unsigned max_per_rule;  // FIXIT this must be enforced
+
+    unsigned max_per_rule;
     unsigned protos;
 
     IpsOptFunc pinit;

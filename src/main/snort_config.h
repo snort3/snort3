@@ -25,41 +25,63 @@
 #include "config.h"
 #endif
 
-#include "snort_types.h"
-#include "detection/fpcreate.h"
-#include "detection/pcrm.h"
-#include "events/event_queue.h"
-#include "events/sfeventq.h"
-#include "filters/sfthreshold.h"
-#include "filters/sfrf.h"
-#include "filters/detection_filter.h"
-#include "sfip/sf_ipvar.h"
-#include "sfip/sfip_t.h"
+#include <vector>
+#include <map>
+#include <sys/stat.h>
 #include "detection/rules.h"
-#include "detection/signature.h"
+#include "sfip/sfip_t.h"
 #include "time/ppm.h"
-#include "time/profiler.h"
-#include "utils/sflsq.h"
-#include "hash/sfxhash.h"
-#include "utils/sfportobject.h"
-#include "hash/sfghash.h"
 #include "main/policy.h"
+#include "utils/util.h"
+#include "protocols/packet.h"
+#include "main/thread.h"
 
-#define MAX_PIDFILE_SUFFIX 11 /* uniqueness extension to PID file, see '-R' */
 
 #define DEFAULT_LOG_DIR "."
 
 #ifdef INTEL_SOFT_CPM
 struct _IntelPmHandles;
 #endif
-struct FrameworkConfig;
 
+#ifdef PERF_PROFILING
+#include "time/profiler.h"
+#endif
+
+struct FrameworkConfig;
+struct FastPatternConfig;
+struct EventQueueConfig;
+struct ThresholdConfig;
+struct RateFilterConfig;
+struct RuleState;
+struct ClassType;
+struct ReferenceSystemNode;
+struct SFGHASH;
+struct DetectionFilterConfig;
+struct RuleListNode;
+struct PORT_RULE_MAP;
+struct SFGHASH;
+struct SFXHASH;
+struct srmm_table_t;
+struct sopg_table_t;
+
+// defined in sfghash.h  forward declared here
+struct sf_list;
+typedef sf_list SF_LIST;
+
+// defined in sfportobject.h. forward declared here
+struct RulePortTables;
+typedef RulePortTables rule_port_tables_t;
+
+#if 0
+FIXIT-L
 typedef enum _PathType
 {
     PATH_TYPE__FILE,
     PATH_TYPE__DIRECTORY
 
 } PathType;
+
+#endif
 
 // SnortState members are updated during runtime
 // an array in SnortConfig is used instead of thread_locals because these
@@ -73,7 +95,6 @@ struct SnortConfig
 {
     //------------------------------------------------------
     // alert module stuff
-    char *alert_file;
     int default_rule_state;
 
     uint16_t flowbit_size;
@@ -137,8 +158,10 @@ struct SnortConfig
     uint8_t enable_gtp;
     char *gtp_ports;
     uint8_t enable_esp;
-    int8_t max_encapsulations;
 
+    uint8_t num_layers;
+    uint8_t max_ip6_extensions;
+    uint8_t max_ip_layers;
     int pkt_snaplen;
 
     //------------------------------------------------------
@@ -149,8 +172,7 @@ struct SnortConfig
     char* respond_device;
     uint8_t *eth_dst;
 
-    char* react_page;
-    const char* output;
+    char* output;
 
     //------------------------------------------------------
     // attribute tables stuff
@@ -183,14 +205,19 @@ struct SnortConfig
 #endif
 
     //------------------------------------------------------
-    // FIXIT command line only stuff, add to conf / module
+    // FIXIT-L command line only stuff, add to conf / module
 
     uint32_t event_log_id;      /* -G */
     sfip_t obfuscation_net;  // -B
     char *bpf_filter;        // --bpf
 
     //------------------------------------------------------
-    // FIXIT non-module stuff - separate config from derived state?
+    // FIXIT-L non-module stuff - separate config from derived state?
+    char* run_prefix;
+    bool id_subdir;
+    bool id_zero;
+
+    bool stdin_rules;
 
     char pid_filename[STD_BUF];
     char *orig_log_dir;      /* set in case of chroot */
@@ -216,7 +243,6 @@ struct SnortConfig
     ListHead Pass;
     ListHead Drop;
     ListHead SDrop;
-    ListHead Reject;
 
     struct FrameworkConfig* framework_config;
 
@@ -252,26 +278,44 @@ struct SnortConfig
 
     struct VarNode* var_list;
 
-    int max_threads;
+#ifdef BUILD_SHELL
     unsigned remote_control;
+#endif
 
     SnortState* state;
+    unsigned num_slots;
 
 #ifdef UNIT_TEST
     bool unit_test;
 #endif
 
+
+    std::map<const std::string, int>* source_affinity;
+    std::vector<int>* thread_affinity;
+
     InspectionPolicy* get_inspection_policy()
-    { return policy_map->get_inspection_policy(); };
+    { return policy_map->inspection_policy[0]; };
 
     IpsPolicy* get_ips_policy()
-    { return policy_map->get_ips_policy(); };
+    { return policy_map->ips_policy[0]; };
 
     NetworkPolicy* get_network_policy()
-    { return policy_map->get_network_policy(); };
+    { return policy_map->network_policy[0]; };
+
+    inline uint8_t get_num_layers() const
+    { return num_layers; }
+
+    // curr_layer is the zero based ip6 options
+    inline bool hit_ip6_maxopts(uint8_t curr_opt) const
+    { return max_ip6_extensions && (curr_opt >= max_ip6_extensions); }
+
+    // curr_ip is the zero based ip layer
+    inline bool hit_ip_maxlayers(uint8_t curr_ip) const
+    { return max_ip_layers && (curr_ip >= max_ip_layers); }
 };
 
 SnortConfig* SnortConfNew(void);
+void SnortConfSetup(SnortConfig*);
 void SnortConfFree(SnortConfig*);
 SnortConfig * MergeSnortConfs(SnortConfig* cmd_line, SnortConfig* config_file);
 int VerifyReload(SnortConfig*);

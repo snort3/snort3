@@ -32,9 +32,10 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
-#include "range.h"
+#include "framework/range.h"
+#include "protocols/tcp.h"
 
-static const char* s_name = "window";
+#define s_name "window"
 
 static THREAD_LOCAL ProfileStats tcpWinPerfStats;
 
@@ -45,10 +46,10 @@ public:
         IpsOption(s_name)
     { config = c; };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
 private:
     RangeCheck config;
@@ -86,12 +87,12 @@ int TcpWinOption::eval(Cursor&, Packet *p)
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    if(!p->tcph)
+    if(!p->ptrs.tcph)
         return rval;
 
     MODULE_PROFILE_START(tcpWinPerfStats);
 
-    if ( config.eval(p->tcph->th_win) )
+    if ( config.eval(p->ptrs.tcph->th_win) )
         rval = DETECTION_OPTION_MATCH;
 
     MODULE_PROFILE_END(tcpWinPerfStats);
@@ -102,23 +103,26 @@ int TcpWinOption::eval(Cursor&, Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter window[] =
+static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if packet payload size is min<>max | <max | >min" },
+      "check if packet payload size is 'size | min<>max | <max | >min'" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to check TCP window field"
+
 class WindowModule : public Module
 {
 public:
-    WindowModule() : Module(s_name, window) { };
+    WindowModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &tcpWinPerfStats; };
 
     RangeCheck data;
@@ -168,6 +172,7 @@ static const IpsApi window_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

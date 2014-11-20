@@ -41,8 +41,8 @@
 #include "snort.h"
 
 #ifdef DEBUG_MSGS
-SO_PUBLIC const char *DebugMessageFile = NULL;  // FIXIT use access methods
-SO_PUBLIC int DebugMessageLine = 0;  // FIXIT use access methods
+const char *DebugMessageFile = NULL;  // FIXIT-M use access methods
+int DebugMessageLine = 0;  // FIXIT-M use access methods
 
 int DebugThis(uint64_t level)
 {
@@ -79,7 +79,7 @@ uint64_t GetDebugLevel(void)
     return debug_level;
 }
 
-SO_PUBLIC void DebugMessageFunc(uint64_t level, const char *fmt, ...)
+void DebugMessageFunc(uint64_t level, const char *fmt, ...)
 {
     va_list ap;
 

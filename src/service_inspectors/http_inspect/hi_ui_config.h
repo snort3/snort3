@@ -39,7 +39,6 @@
 #include "hi_include.h"
 #include "snort_bounds.h"
 #include "sfrt/sfrt.h"
-#include "ipv6_port.h"
 #include "sf_ip.h"
 #include "hi_util_kmap.h"
 #include "file_api/file_api.h"
@@ -63,23 +62,23 @@
 **  This structure simply holds a value for on/off and whether
 **  alert is on/off.  Should be used for many configure options.
 */
-typedef struct s_HTTPINSPECT_CONF_OPT
+struct HTTPINSPECT_CONF_OPT
 {
 
     int on;     /**< if true, configuration option is on */
 
-}  HTTPINSPECT_CONF_OPT;
+} ;
 
 /* The following are used to delineate server profiles for user output
  * and debugging information. */
-typedef enum e_PROFILES
+enum PROFILES
 {
     HI_ALL,
     HI_APACHE,
     HI_IIS,
     HI_IIS4,
     HI_IIS5
-} PROFILES;
+};
 
 typedef KMAP CMD_LOOKUP;
 
@@ -132,7 +131,6 @@ struct HTTPINSPECT_CONF
 {
     HTTPINSPECT_GLOBAL_CONF* global;
 
-    int  port_count;
     int  server_flow_depth;
     int  client_flow_depth;
     int  post_depth;

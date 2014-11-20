@@ -31,10 +31,10 @@ class UdpSession : public Session
 public:
     UdpSession(Flow*);
 
-    bool setup (Packet*);
-    void update_direction(char dir, snort_ip*, uint16_t port);
-    int process(Packet*);
-    void clear();
+    bool setup(Packet*) override;
+    void update_direction(char dir, const sfip_t*, uint16_t port) override;
+    int process(Packet*) override;
+    void clear() override;
 
 public:
     struct timeval ssn_time;

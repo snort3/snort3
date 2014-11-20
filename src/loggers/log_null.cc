@@ -34,6 +34,9 @@
 #include "framework/module.h"
 #include "snort.h"
 
+#define s_name "log_null"
+#define s_help "support for null encapsulation"
+
 //-------------------------------------------------------------------------
 // log_null module
 //-------------------------------------------------------------------------
@@ -53,7 +56,8 @@ static LogApi null_api
 {
     {
         PT_LOGGER,
-        "log_null",
+        s_name,
+        s_help,
         LOGAPI_PLUGIN_V0,
         0,
         nullptr, // mod_ctor,

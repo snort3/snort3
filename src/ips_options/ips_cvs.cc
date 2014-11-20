@@ -65,7 +65,7 @@
 
 static THREAD_LOCAL ProfileStats cvsPerfStats;
 
-static const char* s_name = "cvs";
+#define s_name "cvs"
 
 #define CVS_CONFIG_DELIMITERS  " \t\n"
 
@@ -119,10 +119,10 @@ public:
         IpsOption(s_name)
     { config = c; };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
 private:
     CvsRuleOption config;
@@ -176,7 +176,7 @@ int CvsOption::eval(Cursor&, Packet *p)
         return rval;
     }
 
-    if ((p->tcph == NULL) || (p->data == NULL) || (p->dsize == 0))
+    if ((p->ptrs.tcph == NULL) || (p->data == NULL) || (p->dsize == 0))
     {
         return rval;
     }
@@ -429,7 +429,7 @@ static void CvsGetEOL(const uint8_t *ptr, const uint8_t *end,
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter cvs_params[] =
+static const Parameter s_params[] =
 {
     { CVS_CONF_INVALID_ENTRY_STR, Parameter::PT_IMPLIED, nullptr, nullptr,
       "looks for an invalid Entry string" },
@@ -437,15 +437,18 @@ static const Parameter cvs_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "payload rule option for detecting specific attacks"
+
 class CvsModule : public Module
 {
 public:
-    CvsModule() : Module(s_name, cvs_params) { };
+    CvsModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &cvsPerfStats; };
 
     CvsRuleOption data;
@@ -496,6 +499,7 @@ static const IpsApi cvs_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

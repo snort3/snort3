@@ -22,14 +22,15 @@
 
 // zhash is based on sfxhash - see sfxhash.cc for details
 
-#include "zhash.h"
 
 #include <assert.h>
 #include <stdlib.h>
 
+#include "zhash.h"
 #include "snort_types.h"
 #include "snort_debug.h"
 #include "util.h"
+#include "hash/sfhashfcn.h"
 
 //-------------------------------------------------------------------------
 // private stuff
@@ -243,7 +244,10 @@ ZHash::ZHash(int rows, int keysz)
     sfhashfcn = sfhashfcn_new(rows);
 
     if ( !sfhashfcn )
-        return;  // FIXIT can't just return
+    {
+        FatalError("can't allocate hash table\n");
+        return;
+    }
 
     /* Allocate the array of node ptrs */
     table = new ZHashNode*[rows];

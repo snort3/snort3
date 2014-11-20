@@ -17,7 +17,6 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 // stream_splitter.h author Russ Combs <rucombs@cisco.com>
-// for protocol aware flushing (PAF)
 
 #ifndef TCP_SPLITTER_H
 #define TCP_SPLITTER_H
@@ -27,15 +26,6 @@
 
 class Flow;
 
-enum PAF_Status // FIXIT move inside StreamSplitter
-{
-    PAF_ABORT,   // non-paf operation
-    PAF_START,   // internal use only
-    PAF_SEARCH,  // searching for next flush point
-    PAF_FLUSH,   // flush at given offset
-    PAF_SKIP     // skip ahead to given offset
-};
-
 struct StreamBuffer
 {
     const uint8_t* data;
@@ -44,12 +34,21 @@ struct StreamBuffer
 
 //-------------------------------------------------------------------------
 
-class StreamSplitter
+class SO_PUBLIC StreamSplitter
 {
 public:
     virtual ~StreamSplitter() { };
 
-    virtual PAF_Status scan(
+    enum Status
+    {
+        ABORT,  // non-paf operation
+        START,  // internal use only
+        SEARCH, // searching for next flush point
+        FLUSH,  // flush at given offset
+        SKIP    // skip ahead to given offset
+    };
+
+    virtual Status scan(
         Flow*,
         const uint8_t* data,   // in order segment data as it arrives
         uint32_t len,          // length of data
@@ -59,15 +58,21 @@ public:
 
     virtual const StreamBuffer* reassemble(
         Flow*,
+        unsigned total,        // total amount to flush (sum of iterations)
         unsigned offset,       // data offset from start of reassembly
         const uint8_t* data,   // data to reassemble
-        unsigned len,          // length of data
+        unsigned len,          // length of data to process this iteration
         uint32_t flags,        // packet flags indicating pdu head and/or tail
         unsigned& copied       // actual data copied (1 <= copied <= len)
     );
 
     virtual bool is_paf() { return false; };
-    virtual uint32_t max();
+    virtual unsigned max();
+
+    // FIXIT-L this is temporary for legacy paf_max required only
+    // for HI; it is not appropriate for multiple stream_tcp with 
+    // different paf_max; the HI splitter should pull from there
+    static void set_max(unsigned);
 
     virtual void reset() { };
     virtual void update() { };
@@ -79,6 +84,7 @@ protected:
     StreamSplitter(bool b) { c2s = b; };
 
 private:
+    static unsigned max_pdu;
     bool c2s;
 };
 
@@ -91,17 +97,18 @@ public:
     AtomSplitter(bool, uint32_t size = 0);
     ~AtomSplitter();
 
-    PAF_Status scan(
+    Status scan(
         Flow*,
         const uint8_t* data,
         uint32_t len,
         uint32_t flags,
         uint32_t* fp
-    );
-    void reset();
-    void update();
+    ) override;
+    void reset() override;
+    void update() override;
 
 private:
+    uint16_t base;
     uint16_t min;
     uint16_t segs;
     uint16_t bytes;

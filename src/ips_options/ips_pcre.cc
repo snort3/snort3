@@ -53,7 +53,22 @@
 #define PCRE_STUDY_JIT_COMPILE 0
 #endif
 
-static const char* s_name = "pcre";
+#define NO_JIT // uncomment to disable JIT for Xcode
+
+#ifdef NO_JIT
+#define PCRE_STUDY_FLAGS 0
+#define pcre_release(x) pcre_free(x)
+#else
+#define PCRE_STUDY_FLAGS PCRE_STUDY_JIT_COMPILE
+#define pcre_release(x) pcre_free_study(x)
+#endif
+
+#define SNORT_PCRE_RELATIVE         0x00010 // relative to the end of the last match
+#define SNORT_PCRE_INVERT           0x00020 // invert detect
+#define SNORT_PCRE_ANCHORED         0x00040
+#define SNORT_OVERRIDE_MATCH_LIMIT  0x00080 // Override default limits on match & match recursion
+
+#define s_name "pcre"
 
 /*
  * we need to specify the vector length for our pcre_exec call.  we only care
@@ -169,21 +184,11 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
         while(isspace((int)*re)) re++;
     }
 
-    /* now we wrap the RE in double quotes.  stupid snort parser.... */
-    if(*re != '"') {
-        printf("It isn't \"\n");
-        goto syntax;
-    }
-    re++;
+    if ( *re == '"')
+        re++;
 
-    if(re[strlen(re)-1] != '"')
-    {
-        printf("It isn't \"\n");
-        goto syntax;
-    }
-
-    /* remove the last quote from the string */
-    re[strlen(re) - 1] = '\0';
+    if ( re[strlen(re)-1] == '"' )
+        re[strlen(re) - 1] = '\0';
 
     /* 'm//' or just '//' */
 
@@ -255,7 +260,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     }
 
     /* now study it... */
-    pcre_data->pe = pcre_study(pcre_data->re, PCRE_STUDY_JIT_COMPILE, &error);
+    pcre_data->pe = pcre_study(pcre_data->re, PCRE_STUDY_FLAGS, &error);
 
     if (pcre_data->pe)
     {
@@ -324,6 +329,10 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
  syntax:
     free(free_me);
 
+    // ensure integrity from parse error to fatal error
+    if ( !pcre_data->expression )
+        pcre_data->expression = SnortStrdup("");
+
     ParseError("unable to parse pcre regex %s", data);
 }
 
@@ -362,6 +371,7 @@ static bool pcre_search(
     *found_offset = -1;
 
     SnortState* ss = snort_conf->state + get_instance_id();
+    assert(ss->pcre_ovector);
 
     result = pcre_exec(
         pcre_data->re,  /* result of pcre_compile() */
@@ -430,13 +440,13 @@ public:
 
     ~PcreOption();
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    bool is_relative()
+    bool is_relative() override
     { return (config->options & SNORT_PCRE_RELATIVE) != 0; };
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
     PcreData* get_data()
     { return config; };
@@ -457,11 +467,7 @@ PcreOption::~PcreOption()
         free(config->expression);
 
     if (config->pe)
-#ifdef PCRE_CONFIG_JIT
-        pcre_free_study(config->pe);
-#else
-        pcre_free(config->pe);
-#endif
+        pcre_release(config->pe);
 
     if (config->re)
         free(config->re);
@@ -614,11 +620,33 @@ bool pcre_next(PcreData* pcre)
     return true;  // continue
 }
 
+void pcre_setup(SnortConfig* sc)
+{
+    for ( unsigned i = 0; i < sc->num_slots; ++i )
+    {
+        SnortState* ss = sc->state + i;
+        ss->pcre_ovector = (int *) SnortAlloc(s_ovector_max*sizeof(int));
+    }
+}
+
+void pcre_cleanup(SnortConfig* sc)
+{
+    for ( unsigned i = 0; i < sc->num_slots; ++i )
+    {
+        SnortState* ss = sc->state + i;
+
+        if ( ss->pcre_ovector )
+            free(ss->pcre_ovector);
+
+        ss->pcre_ovector = nullptr;
+    }
+}
+
 //-------------------------------------------------------------------------
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter pcre_params[] =
+static const Parameter s_params[] =
 {
     { "~regex", Parameter::PT_STRING, nullptr, nullptr,
       "Snort regular expression" },
@@ -626,19 +654,22 @@ static const Parameter pcre_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option for matching payload data with regex"
+
 class PcreModule : public Module
 {
 public:
-    PcreModule() : Module(s_name, pcre_params)
+    PcreModule() : Module(s_name, s_help, s_params)
     { data = nullptr; };
 
     ~PcreModule()
     { delete data; };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &pcrePerfStats; };
 
     PcreData* get_data();
@@ -697,25 +728,6 @@ static void pcre_dtor(IpsOption* p)
     delete p;
 }
 
-// FIXIT the thread specific ovector can be allocated and deallocated 
-// from the main thread since it isn't literally thread local
-void pcre_tinit(SnortConfig* sc)
-{
-    SnortState* ss = sc->state + get_instance_id();
-    ss->pcre_ovector = (int *) SnortAlloc(s_ovector_max*sizeof(int));
-}
-
-void pcre_tterm(SnortConfig* sc)
-{
-    SnortState* ss = sc->state + get_instance_id();
-
-    if ( !ss->pcre_ovector )
-        return;
-
-    free(ss->pcre_ovector);
-    ss->pcre_ovector = nullptr;
-}
-
 static void pcre_verify(SnortConfig* sc)
 {
     /* The pcre_fullinfo() function can be used to find out how many
@@ -738,6 +750,7 @@ static const IpsApi pcre_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,
@@ -747,8 +760,8 @@ static const IpsApi pcre_api =
     0, 0,
     nullptr,
     nullptr,
-    pcre_tinit,
-    pcre_tterm,
+    nullptr,
+    nullptr,
     pcre_ctor,
     pcre_dtor,
     pcre_verify

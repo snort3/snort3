@@ -23,10 +23,23 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#endif
+
 #include <check.h>
+
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #include "snort_types.h"
 #include "sfrt/sfrt.h"
+#include "sfip/sf_ip.h"
 
 #define NUM_IPS 32
 #define NUM_DATA 4

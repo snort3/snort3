@@ -85,9 +85,12 @@
 #define DEBUG_SMTP            0x0001000000000000LL
 #define DEBUG_PP_EXP          0x8000000000000000LL
 
-void DebugMessageFunc(uint64_t dbg, const char *fmt, ...);
+#if 0
+// FIXIT delete duplicate declarations
+SO_PUBLIC void DebugMessageFunc(uint64_t dbg, const char *fmt, ...);
 #ifdef SF_WCHAR
 void DebugWideMessageFunc(uint64_t dbg, const wchar_t *fmt, ...);
+#endif
 #endif
 
 #ifdef DEBUG_MSGS
@@ -105,9 +108,9 @@ int DebugThis(uint64_t level);
 
 #ifdef DEBUG_MSGS
 #define DEBUG_WRAP(code) code
-void DebugMessageFunc(uint64_t dbg, const char *fmt, ...);
+SO_PUBLIC void DebugMessageFunc(uint64_t dbg, const char *fmt, ...);
 #ifdef SF_WCHAR
-void DebugWideMessageFunc(uint64_t dbg, const wchar_t *fmt, ...);
+SO_PUBLIC void DebugWideMessageFunc(uint64_t dbg, const wchar_t *fmt, ...);
 #endif
 #else /* DEBUG_MSGS */
 #define DEBUG_WRAP(code)

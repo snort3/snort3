@@ -56,7 +56,8 @@
 
 #include "main/analyzer.h"
 #include "protocols/packet.h"
-#include "managers/packet_manager.h"
+#include "managers/data_manager.h"
+#include "protocols/packet_manager.h"
 #include "event.h"
 #include "event_wrapper.h"
 #include "util.h"
@@ -65,12 +66,11 @@
 #include "snort.h"
 #include "filters/sfthreshold.h"
 #include "sfsnprintfappend.h"
-#include "sf_iph.h"
 #include "framework/inspector.h"
-#include "framework/share.h"
 #include "framework/plug_data.h"
 #include "profiler.h"
 #include "detection/detect.h"
+#include "network_inspectors/port_scan/ipobj.h"
 
 #define DELIMITERS " \t\n"
 #define TOKEN_ARG_BEGIN "{"
@@ -190,15 +190,15 @@ static int LogPortscanAlert(Packet *p, uint32_t event_id,
         uint32_t event_ref, uint32_t gen_id, uint32_t sig_id)
 {
     char timebuf[TIMEBUF_SIZE];
-    snort_ip_p src_addr;
-    snort_ip_p dst_addr;
+    const sfip_t *src_addr;
+    const sfip_t *dst_addr;
 
-    if(!p->iph_api)
+    if(!p->ptrs.ip_api.is_valid())
         return -1;
 
     /* Do not log if being suppressed */
-    src_addr = GET_SRC_IP(p);
-    dst_addr = GET_DST_IP(p);
+    src_addr = p->ptrs.ip_api.get_src();
+    dst_addr = p->ptrs.ip_api.get_dst();
 
     if( sfthreshold_test(gen_id, sig_id, src_addr, dst_addr, p->pkth->ts.tv_sec) )
     {
@@ -214,8 +214,8 @@ static int LogPortscanAlert(Packet *p, uint32_t event_id,
     else
         fprintf(g_logfile, "event_ref: %u\n", event_ref);
 
-    fprintf(g_logfile, "%s ", inet_ntoa(GET_SRC_ADDR(p)));
-    fprintf(g_logfile, "-> %s\n", inet_ntoa(GET_DST_ADDR(p)));
+    fprintf(g_logfile, "%s ", inet_ntoa(p->ptrs.ip_api.get_src()));
+    fprintf(g_logfile, "-> %s\n", inet_ntoa(p->ptrs.ip_api.get_dst()));
     fprintf(g_logfile, "%.*s\n", p->dsize, p->data);
 
     fflush(g_logfile);
@@ -277,8 +277,8 @@ static int GenerateOpenPortEvent(Packet *p, uint32_t gen_id, uint32_t sig_id,
          * here since these are tagged packets, which aren't subject to thresholding,
          * but we want to do it for open port events.
          */
-        if( sfthreshold_test(gen_id, sig_id, GET_SRC_IP(p),
-                            GET_DST_IP(p), p->pkth->ts.tv_sec) )
+        if( sfthreshold_test(gen_id, sig_id, p->ptrs.ip_api.get_src(),
+                            p->ptrs.ip_api.get_dst(), p->pkth->ts.tv_sec) )
         {
             return 0;
         }
@@ -351,7 +351,7 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
     Packet* p = (Packet *)ps_pkt->pkt;
     EncodeFlags flags = ENC_FLAG_NET;
 
-    if (!IsIP(p))
+    if (!p->has_ip())
         return -1;
 
     if ( !ps_pkt->reverse_pkt )
@@ -377,23 +377,20 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
             g_tmp_pkt->ps_proto = IPPROTO_IP;
             break;
         case PS_PROTO_OPEN_PORT:
-            g_tmp_pkt->ps_proto = GET_IPH_PROTO(p);
+            g_tmp_pkt->ps_proto = p->get_ip_proto_next();
             break;
         default:
             return -1;
     }
 
-    if(IS_IP4(p))
+    if(g_tmp_pkt->is_ip4())
     {
-        ((IPHdr*)g_tmp_pkt->iph)->ip_proto = IPPROTO_PS;
-        g_tmp_pkt->inner_ip4h.ip_proto = IPPROTO_PS;
+        ((IP4Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip4h())->set_proto(IPPROTO_PS);
     }
     else
     {
-        if ( g_tmp_pkt->raw_ip6h )
-            ((ipv6::IP6RawHdr*)g_tmp_pkt->raw_ip6h)->ip6nxt = IPPROTO_PS;
-        g_tmp_pkt->inner_ip6h.next = IPPROTO_PS;
-        g_tmp_pkt->ip6h = &g_tmp_pkt->inner_ip6h;
+        // since ip_api.is_valid() && !ip4h, this is automatically ip6h
+        ((ip::IP6Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip6h())->set_proto(IPPROTO_PS);
     }
 
     switch(proto_type)
@@ -422,14 +419,10 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
     */
     PacketManager::encode_update(g_tmp_pkt);
 
-    if(IS_IP4(g_tmp_pkt))
-    {
-        g_tmp_pkt->inner_ip4h.ip_len = ((IPHdr *)g_tmp_pkt->iph)->ip_len;
-    }
-    else if (IS_IP6(g_tmp_pkt))
-    {
-        g_tmp_pkt->inner_ip6h.len = htons((uint16_t)ip_size);
-    }
+    // FIXIT-L: IP4 is gauranteed to have been set in update().  Is IP6()
+    //        also gauranteed?
+    if(g_tmp_pkt->ptrs.ip_api.is_ip6())
+        ((ip::IP6Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip6h())->set_len((uint16_t)ip_size);
 
     return 0;
 }
@@ -646,7 +639,7 @@ static int PortscanAlert(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type)
 
     if(proto->alerts == PS_ALERT_OPEN_PORT)
     {
-        if(MakePortscanPkt(ps_pkt, proto, PS_PROTO_OPEN_PORT, (void *)&p->sp))
+        if(MakePortscanPkt(ps_pkt, proto, PS_PROTO_OPEN_PORT, (void *)&p->ptrs.sp))
             return -1;
 
         GenerateOpenPortEvent(g_tmp_pkt,GID_PORT_SCAN,PSNG_OPEN_PORT,0,0,3,
@@ -698,11 +691,14 @@ static void PrintIPPortSet(IP_PORT *p)
         ((p->ip.family == AF_INET ) && (p->ip.bits != 32 )))
         SnortSnprintfAppend(output_str, sizeof(output_str), "/%d", p->ip.bits);
 
-    pr=(PORTRANGE*)sflist_first(&p->portset.port_list);
+    SF_LNODE* cursor;
+    pr=(PORTRANGE*)sflist_first(&p->portset.port_list, &cursor);
+
     if ( pr && pr->port_lo != 0 )
         SnortSnprintfAppend(output_str, sizeof(output_str), " : ");
+
     for( ; pr != 0;
-        pr=(PORTRANGE*)sflist_next(&p->portset.port_list) )
+        pr=(PORTRANGE*)sflist_next(&cursor) )
     {
         if ( pr->port_lo != 0)
         {
@@ -774,15 +770,17 @@ static void PrintPortscanConf(PortscanConfig* config)
         LogMessage("    Number of Nodes:   %ld\n",
             config->common->memcap / (sizeof(PS_PROTO)*proto_cnt-1));
 
-        if (config->logfile != NULL)
-            LogMessage("    Logfile:           %s\n", config->logfile);
+        if ( config->logfile )
+            LogMessage("    Logfile:           %s\n", "yes");
 
         if(config->ignore_scanners)
         {
             LogMessage("    Ignore Scanner IP List:\n");
-            for(p = (IP_PORT*)sflist_first(&config->ignore_scanners->ip_list);
+            SF_LNODE* cursor;
+
+            for(p = (IP_PORT*)sflist_first(&config->ignore_scanners->ip_list, &cursor);
                 p;
-                p = (IP_PORT*)sflist_next(&config->ignore_scanners->ip_list))
+                p = (IP_PORT*)sflist_next(&cursor))
             {
                 PrintIPPortSet(p);
             }
@@ -791,9 +789,11 @@ static void PrintPortscanConf(PortscanConfig* config)
         if(config->ignore_scanned)
         {
             LogMessage("    Ignore Scanned IP List:\n");
-            for(p = (IP_PORT*)sflist_first(&config->ignore_scanned->ip_list);
+            SF_LNODE* cursor;
+
+            for(p = (IP_PORT*)sflist_first(&config->ignore_scanned->ip_list, &cursor);
                 p;
-                p = (IP_PORT*)sflist_next(&config->ignore_scanned->ip_list))
+                p = (IP_PORT*)sflist_next(&cursor))
             {
                 PrintIPPortSet(p);
             }
@@ -802,9 +802,11 @@ static void PrintPortscanConf(PortscanConfig* config)
         if(config->watch_ip)
         {
             LogMessage("    Watch IP List:\n");
-            for(p = (IP_PORT*)sflist_first(&config->watch_ip->ip_list);
+            SF_LNODE* cursor;
+
+            for(p = (IP_PORT*)sflist_first(&config->watch_ip->ip_list, &cursor);
                 p;
-                p = (IP_PORT*)sflist_next(&config->watch_ip->ip_list))
+                p = (IP_PORT*)sflist_next(&cursor))
             {
                 PrintIPPortSet(p);
             }
@@ -815,26 +817,26 @@ static void PrintPortscanConf(PortscanConfig* config)
 #if 0
 static int PortscanGetProtoBits(int detect_scans)
 {
-    int proto_bits = PROTO_BIT__IP;
+    unsigned proto_bits = PktType::IP;
 
     if (detect_scans & PS_PROTO_IP)
     {
-        proto_bits |= PROTO_BIT__ICMP;
+        proto_bits |= PktType::ICMP;
     }
 
     if (detect_scans & PS_PROTO_UDP)
     {
-        proto_bits |= PROTO_BIT__ICMP;
-        proto_bits |= PROTO_BIT__UDP;
+        proto_bits |= PktType::ICMP;
+        proto_bits |= PktType::UDP;
     }
 
     if (detect_scans & PS_PROTO_ICMP)
-        proto_bits |= PROTO_BIT__ICMP;
+        proto_bits |= PktType::ICMP;
 
     if (detect_scans & PS_PROTO_TCP)
     {
-        proto_bits |= PROTO_BIT__ICMP;
-        proto_bits |= PROTO_BIT__TCP;
+        proto_bits |= PktType::ICMP;
+        proto_bits |= PktType::TCP;
     }
 
     return proto_bits;
@@ -857,15 +859,12 @@ PortScan::~PortScan()
         delete config;
 
     if ( global )
-        Share::release(global);
+        DataManager::release(global);
 }
 
-bool PortScan::configure(SnortConfig*)
+bool PortScan::configure(SnortConfig* sc)
 {
-    // FIXIT use fixed base file name
-    config->logfile = SnortStrdup("portscan.log");
-
-    global = (PsData*)Share::acquire(PS_GLOBAL);
+    global = (PsData*)DataManager::acquire(PSG_NAME, sc);
     config->common = global->data;
     return true;
 }
@@ -873,22 +872,29 @@ bool PortScan::configure(SnortConfig*)
 void PortScan::tinit()
 {
     g_tmp_pkt = PacketManager::encode_new();
+    ps_init_hash(config->common->memcap);
+
+    if ( !config->logfile )
+        return;
 
     std::string name;
-    get_instance_file(name, config->logfile);
+    get_instance_file(name, "portscan.log");
     g_logfile = fopen(name.c_str(), "a+");
 
-    if (g_logfile == NULL)
+    if ( !g_logfile )
     {
         FatalError("Portscan log file '%s' could not be opened: %s.\n",
-            config->logfile, get_error(errno));
+            name.c_str(), get_error(errno));
     }
-    ps_init_hash(config->common->memcap);
 }
 
 void PortScan::tterm()
 {
-    fclose(g_logfile);
+    if ( g_logfile )
+    {
+        fclose(g_logfile);
+        g_logfile = nullptr;
+    }
     ps_cleanup();
     PacketManager::encode_delete(g_tmp_pkt);
     g_tmp_pkt = NULL;
@@ -904,7 +910,7 @@ void PortScan::eval(Packet *p)
     PS_PKT ps_pkt;
     PROFILE_VARS;
 
-    assert(IPH_IS_VALID(p));
+    assert(p->ptrs.ip_api.is_valid());
 
     if ( p->packet_flags & PKT_REBUILT_STREAM )
         return;
@@ -912,7 +918,7 @@ void PortScan::eval(Packet *p)
     MODULE_PROFILE_START(psPerfStats);
     ++spstats.total_packets;
 
-    memset(&ps_pkt, 0x00, sizeof(PS_PKT)); // FIXIT don't zap unless necessary
+    memset(&ps_pkt, 0x00, sizeof(PS_PKT)); // FIXIT-P don't zap unless necessary
     ps_pkt.pkt = (void *)p;
 
     /* See if there is already an exisiting node in the hash table */
@@ -958,7 +964,8 @@ static const DataApi sd_api =
 {
     {
         PT_DATA,
-        PS_GLOBAL,
+        PSG_NAME,
+        PSG_HELP,
         PDAPI_PLUGIN_V0,
         0,
         gmod_ctor,
@@ -992,14 +999,15 @@ static const InspectApi sp_api =
 {
     {
         PT_INSPECTOR,
-        PS_MODULE,
+        PS_NAME,
+        PS_HELP,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor
     },
-    IT_PROTOCOL,
-    PROTO_BIT__IP|PROTO_BIT__ICMP|PROTO_BIT__TCP|PROTO_BIT__UDP,  // FIXIT dynamic assign
+    IT_PROBE,
+    (uint16_t)PktType::ANY_IP,  // FIXIT-L dynamic assign
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit
@@ -1009,7 +1017,7 @@ static const InspectApi sp_api =
     sp_ctor,
     sp_dtor,
     nullptr, // ssn
-    sp_reset
+    sp_reset // FIXIT-L only inspector using this, eliminate?
 };
 
 #ifdef BUILDING_SO

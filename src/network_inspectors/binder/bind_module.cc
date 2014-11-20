@@ -27,9 +27,27 @@
 #include <string>
 using namespace std;
 
-#include "binder.h"
+#include "binding.h"
+#include "protocols/packet.h"
+#include "parser/parse_ip.h"
+#include "main/policy.h"
+#include "main/snort_config.h"
+#include "main/shell.h"
+#include "managers/module_manager.h"
+#include "parser/parser.h"
 
-THREAD_LOCAL SimpleStats bstats;
+#define FILE_KEY ".file"
+
+THREAD_LOCAL BindStats bstats;
+
+static const char* bind_pegs[] =
+{
+    "packets",
+    "blocks",
+    "allows",
+    "inspects",
+    nullptr
+};
 
 //-------------------------------------------------------------------------
 // binder module
@@ -37,8 +55,13 @@ THREAD_LOCAL SimpleStats bstats;
 
 static const Parameter binder_when_params[] =
 {
-    { "policy_id", Parameter::PT_STRING, nullptr, nullptr,
+    // FIXIT when.policy_id should be an arbitrary string auto converted
+    // into index for binder matching and lookups
+    { "policy_id", Parameter::PT_INT, "0:", nullptr,
       "unique ID for selection of this config by external logic" },
+
+    { "ifaces", Parameter::PT_BIT_LIST, "255", nullptr,
+      "list of interface indices" },
 
     { "vlans", Parameter::PT_BIT_LIST, "4095", nullptr,
       "list of VLAN IDs" },
@@ -63,14 +86,11 @@ static const Parameter binder_when_params[] =
 
 static const Parameter binder_use_params[] =
 {
-    { "action", Parameter::PT_ENUM, "inspect | allow | block", "inspect",
+    { "action", Parameter::PT_ENUM, "block | allow | inspect", "inspect",
       "what to do with matching traffic" },
 
     { "file", Parameter::PT_STRING, nullptr, nullptr,
       "use configuration in given file" },
-
-    { "policy_id", Parameter::PT_STRING, nullptr, nullptr,
-      "use configuration in given policy" },
 
     { "service", Parameter::PT_STRING, nullptr, nullptr,
       "override automatic service identification" },
@@ -84,7 +104,7 @@ static const Parameter binder_use_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter binder_params[] =
+static const Parameter s_params[] =
 {
     { "when", Parameter::PT_TABLE, binder_when_params, nullptr,
       "match criteria" },
@@ -95,7 +115,7 @@ static const Parameter binder_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-BinderModule::BinderModule() : Module("binder", binder_params)
+BinderModule::BinderModule() : Module(BIND_NAME, BIND_HELP, s_params, true)
 { work = nullptr; }
 
 BinderModule::~BinderModule()
@@ -109,48 +129,69 @@ ProfileStats* BinderModule::get_profile() const
 
 bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
 {
+    if ( !work )
+        return false;
+
     // both
-    if ( !strcmp(fqn, "binder.when.policy_id") )
-        work->when_id = v.get_string();
-
-    else if ( !strcmp(fqn, "binder.use.policy_id") )
-        work->use_id = v.get_string();
-
     else if ( !strcmp(fqn, "binder.when.service") )
-        work->when_svc = v.get_string();
+        work->when.svc = v.get_string();
 
     else if ( !strcmp(fqn, "binder.use.service") )
-        work->use_svc = v.get_string();
+        work->use.svc = v.get_string();
 
     // when
+    else if ( v.is("ifaces") )
+        v.get_bits(work->when.ifaces);
+
     else if ( v.is("nets") )
-        work->nets = v.get_string();
+        work->when.nets = sfip_var_from_string(v.get_string());
+
+    else if ( v.is("policy_id") )
+        work->when.id = v.get_long();
 
     else if ( v.is("proto") )
-        work->proto = (BindProto)v.get_long();
-
+    {
+        const PktType mask[] =
+        { 
+            PktType::ANY, PktType::IP, PktType::ICMP, PktType::TCP, PktType::UDP
+        };
+        work->when.protos = (unsigned)mask[v.get_long()];
+    }
     else if ( v.is("ports") )
-        v.get_bits(work->ports);
+        v.get_bits(work->when.ports);
 
     else if ( v.is("role") )
-        work->role = (BindRole)v.get_long();
+        work->when.role = (BindRole)v.get_long();
 
     else if ( v.is("vlans") )
-        v.get_bits(work->vlans);
+        v.get_bits(work->when.vlans);
 
     // use
     else if ( v.is("action") )
-        work->action = (BindAction)v.get_long();
+        work->use.action = (BindAction)(v.get_long());
 
     else if ( v.is("file") )
-        work->file = v.get_string();
+    {
+        if ( !work->use.name.empty() || !work->use.type.empty() )
+            ParseError("you can't set binder.use.file with type or name");
 
+        work->use.name = v.get_string();
+        work->use.type = FILE_KEY;
+    }
     else if ( v.is("name") )
-        work->name = v.get_string();
+    {
+        if ( !work->use.name.empty() )
+            ParseError("you can't set binder.use.file with type or name");
 
+        work->use.name = v.get_string();
+    }
     else if ( v.is("type") )
-        work->type = v.get_string();
+    {
+        if ( !work->use.type.empty() )
+            ParseError("you can't set binder.use.file with type or name");
 
+        work->use.type = v.get_string();
+    }
     else
         return false;
 
@@ -159,29 +200,61 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
 
 bool BinderModule::begin(const char* fqn, int idx, SnortConfig*)
 {
-    if ( idx && !strcmp(fqn, "binder") )
+    if ( idx && !strcmp(fqn, BIND_NAME) )
         work = new Binding;
 
     return true;
 }
 
-bool BinderModule::end(const char* fqn, int idx, SnortConfig*)
+bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
 {
-    if ( idx && !strcmp(fqn, "binder") )
+    if ( idx && !strcmp(fqn, BIND_NAME) )
     {
+        if ( !work )
+        {
+            ParseError("invalid %s[%d]\n", fqn, idx);
+            return true;
+        }
+
+        if ( work->use.type == FILE_KEY )
+        {
+            Shell* sh = new Shell(work->use.name.c_str());
+            work->use.index = sc->policy_map->add_shell(sh) + 1;
+        }
+        if ( !work->use.name.size() )
+            work->use.name = work->use.type;
+
         bindings.push_back(work);
         work = nullptr;
     }
     return true;
 }
 
-vector<Binding*> BinderModule::get_data()
+void BinderModule::add(const char* svc, const char* type)
+{
+    Binding* b = new Binding;
+    b->when.svc = svc;
+    b->use.type = type;
+    b->use.name = type;
+    bindings.push_back(b);
+}
+
+void BinderModule::add(unsigned proto, const char* type)
+{
+    Binding* b = new Binding;
+    b->when.protos = proto;
+    b->use.type = type;
+    b->use.name = type;
+    bindings.push_back(b);
+}
+
+vector<Binding*>& BinderModule::get_data()
 {
     return bindings;  // move semantics
 }
 
 const char** BinderModule::get_pegs() const
-{ return simple_pegs; }
+{ return bind_pegs; }
 
 PegCount* BinderModule::get_counts() const
 { return (PegCount*)&bstats; }

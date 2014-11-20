@@ -28,12 +28,14 @@ class Markup
 public:
     static void enable(bool = true);
 
-    static const char* head();
+    static const char* head(unsigned level = 1);
     static const char* item();
 
     static const char* emphasis_on();
     static const char* emphasis_off();
     static const std::string& emphasis(const std::string&);
+    static const std::string& escape(const char* const);
+    static const std::string& escape(const std::string&);
 
 private:
     static bool enabled;

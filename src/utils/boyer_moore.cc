@@ -178,7 +178,7 @@ int *make_shift(char *ptrn, int plen)
  *      -1 if not found or offset >= 0 if found
  *
  ****************************************************************/
-SO_PUBLIC int mSearch(
+int mSearch(
     const char *buf, int blen, const char *ptrn, int plen, int *skip, int *shift)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,"buf: %p  blen: %d  ptrn: %p  "
@@ -227,7 +227,7 @@ SO_PUBLIC int mSearch(
  *      -1 if not found or offset >= 0 if found
  *
  ****************************************************************/
-SO_PUBLIC int mSearchCI(
+int mSearchCI(
     const char *buf, int blen, const char *ptrn, int plen, int *skip, int *shift)
 {
     int b_idx = plen;
@@ -273,7 +273,7 @@ SO_PUBLIC int mSearchCI(
  *      1 = found, 0 = not found
  *
  ****************************************************************/
-SO_PUBLIC int mSearchREG(
+int mSearchREG(
     const char *buf, int blen, const char *ptrn, int plen, int *skip, int *shift)
 {
     int b_idx = plen;
@@ -337,7 +337,9 @@ SO_PUBLIC int mSearchREG(
                     }
                 }
 
-		DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "got wildcard final char match! (b[%d]: %c -> p[%d]: %c\n", b_idx, buf[b_idx], p_idx, ptrn[p_idx]););
+		DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, 
+            "got wildcard final char match! (b[%d]: %c -> p[%d]: %c\n",
+            b_idx, buf[b_idx], p_idx, ptrn[p_idx]););
             }
 
             if(p_idx == 0)

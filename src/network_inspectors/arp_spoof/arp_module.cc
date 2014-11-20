@@ -21,16 +21,14 @@
 
 #include "arp_module.h"
 
-static const char* mod_name = "arp_spoof";
-
 #define ARPSPOOF_UNICAST_ARP_REQUEST_STR \
-    "(arp_spoof) Unicast ARP request"
+    "unicast ARP request"
 #define ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC_STR \
-    "(arp_spoof) Ethernet/ARP Mismatch request for Source"
+    "ethernet/ARP mismatch request for source"
 #define ARPSPOOF_ETHERFRAME_ARP_MISMATCH_DST_STR \
-    "(arp_spoof) Ethernet/ARP Mismatch request for Destination"
+    "ethernet/ARP mismatch request for destination"
 #define ARPSPOOF_ARP_CACHE_OVERWRITE_ATTACK_STR \
-    "(arp_spoof) Attempted ARP cache overwrite attack"
+    "attempted ARP cache overwrite attack"
 
 THREAD_LOCAL SimpleStats asstats;
 
@@ -49,7 +47,7 @@ static const Parameter arp_spoof_hosts_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter arp_spoof_params[] =
+static const Parameter s_params[] =
 {
     { "hosts", Parameter::PT_LIST, arp_spoof_hosts_params, nullptr,
       "configure ARP cache overwrite attacks" },
@@ -57,7 +55,7 @@ static const Parameter arp_spoof_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const RuleMap arp_spoof_rules[] =
+static const RuleMap s_rules[] =
 {
     { ARPSPOOF_UNICAST_ARP_REQUEST,
         ARPSPOOF_UNICAST_ARP_REQUEST_STR },
@@ -79,10 +77,9 @@ static const RuleMap arp_spoof_rules[] =
 //-------------------------------------------------------------------------
 
 ArpSpoofModule::ArpSpoofModule() : 
-    Module(mod_name, arp_spoof_params)
+    Module(MOD_NAME, MOD_HELP, s_params)
 {
-    config = new ArpSpoofConfig;
-    config->check_overwrite = false;
+    config = nullptr;
 }
 
 ArpSpoofModule::~ArpSpoofModule()
@@ -92,7 +89,7 @@ ArpSpoofModule::~ArpSpoofModule()
 }
 
 const RuleMap* ArpSpoofModule::get_rules() const
-{ return arp_spoof_rules; }
+{ return s_rules; }
 
 ProfileStats* ArpSpoofModule::get_profile() const
 { return &arpPerfStats; }
@@ -111,8 +108,20 @@ bool ArpSpoofModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
+ArpSpoofConfig* ArpSpoofModule::get_config()
+{
+    ArpSpoofConfig* temp = config;
+    config = nullptr;
+    return temp;
+}
+
 bool ArpSpoofModule::begin(const char*, int, SnortConfig*)
 {
+    if ( !config )
+    {
+        config = new ArpSpoofConfig;
+        config->check_overwrite = false;
+    }
     memset(&host, 0, sizeof(host));
     return true;
 }

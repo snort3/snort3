@@ -23,7 +23,20 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#endif
+
 #include <check.h>
+
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #include "snort_types.h"
 #include "sfip/sf_ip.h"
@@ -32,7 +45,7 @@
 
 static int s_debug = 0;
 
-static const char* codes[] = {
+static const char* const codes[] = {
     "success",
     "failure",
     "lesser",

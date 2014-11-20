@@ -1,0 +1,73 @@
+* *basic module*: a module integrated into Snort that does not come from a
+  plugin.
+
+* *binder*: inspector that maps configuration to traffic
+
+* *builtin rules*: codec and inspector rules for anomalies detected
+  internally.
+
+* *codec*: short for coder / decoder.  These plugins are used for basic
+   protocol decoding, anomaly detection, and construction of active responses.
+
+* *data module*: an adjunct configuration plugin for use with certain inspectors.
+
+* *dynamic rules*: plugin rules loaded at runtime.  See SO rules.
+
+* *fast pattern*: the content in an IPS rule that must be found by the
+  search engine in order for a rule to be evaluated.
+
+* *fast pattern matcher*: see search engine.
+
+* *hex*: a type of protocol magic that the wizard uses to identify binary
+  protocols.
+
+* *inspector*: plugin that processes packets (similar to the legacy Snort 
+  preprocessor)
+
+* *IPS*:  intrusion prevention system, like Snort.
+
+* *IPS action*: plugin that allows you to perform custom actions when
+  events are generated.  Unlike loggers, these are invoked before
+  thresholding and can be used to control external agents or send active
+  responses.
+
+* *IPS option*: this plugin is the building blocks of IPS rules.
+
+* *logger*: a plugin that performs output of events and packets.  Events
+  are thresholded before reaching loggers.
+
+* *module*: the user facing portion of a Snort component.  Modules chiefly
+  provide configuration parameters, but may also provide commands, builtin
+  rules, profiling statistics, peg counts, etc.  Note that not all modules
+  are plugins and not all plugins have modules.
+
+* *peg count*: the number of times a given event or condition occurs.
+
+* *plugin*: one of several types of software components that can be loaded
+  from a dynamic library when Snort starts up.  Some plugins are coupled
+  with the main engine in such a way that they must be built statically,
+  but a newer version can be loaded dynamically.
+
+* *search engine*: a plugin that performs multipattern searching of packets
+  and payload to find rules that should be evaluated.  There are currently
+  no specific modules, although there are several search engine plugins.
+  Related configuration is done with the basic detection module.  Aka fast
+  pattern matcher.
+
+* *SO rule*: a IPS rule plugin that performs custom detection that can't
+  be done by a text rule.  These rules typically do not have associated
+  modules.  SO comes from shared object, meaning dynamic library.
+
+* *spell*: a type of protocol magic that the wizard uses to identify ASCII
+  protocols.
+
+* *text rule*: a rule loaded from the configuration that has a header and
+  body.  The header specifies action, protocol, source and destination IP
+  addresses and ports, and direction.  The body specifies detection and
+  non-detection options.
+
+* *wizard*: inspector that applies protocol magic to determine which
+  inspectors should be bound to traffic absent a port specific binding.
+  See hex and spell.
+
+

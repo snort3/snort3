@@ -50,6 +50,7 @@
 HTTPINSPECT_GLOBAL_CONF::HTTPINSPECT_GLOBAL_CONF()
 {
     memset(this, 0, sizeof(*this));
+    hi_ui_config_init_global_conf(this);
 }
 
 HTTPINSPECT_GLOBAL_CONF::~HTTPINSPECT_GLOBAL_CONF()
@@ -64,26 +65,31 @@ HTTPINSPECT_GLOBAL_CONF::~HTTPINSPECT_GLOBAL_CONF()
 HTTPINSPECT_CONF::HTTPINSPECT_CONF()
 {
     // can't just zero the whole thing because of embedded objects
-    // FIXIT really need explicit assignments or refactor into substruct(s)
+    // FIXIT-L really need explicit assignments or refactor into substruct(s)
     // that can simply be zeroed
     uint8_t* end = (uint8_t*)&whitespace;
     unsigned len = end - (uint8_t*)this;
     memset(this, 0, len);
 
+    hi_ui_config_default(this);
     http_cmd_lookup_init(&cmd_lookup);
 }
 
 HTTPINSPECT_CONF::~HTTPINSPECT_CONF()
 {
-    // FIXIT xfree() etc should go
+    // FIXIT-L xfree() etc should go
     xfree(iis_unicode_map_filename);
     xfree(iis_unicode_map);
 
     http_cmd_lookup_cleanup(&cmd_lookup);
 }
 
-int hi_ui_config_init_global_conf(HTTPINSPECT_GLOBAL_CONF*)
+int hi_ui_config_init_global_conf(HTTPINSPECT_GLOBAL_CONF* gc)
 {
+    gc->compr_depth = 65535;
+    gc->decompr_depth = 65535;
+    gc->memcap = 150994944;
+    gc->max_gzip_mem = 838860;
     return HI_SUCCESS;
 }
 
@@ -106,67 +112,35 @@ int hi_ui_config_init_global_conf(HTTPINSPECT_GLOBAL_CONF*)
 */
 int hi_ui_config_default(HTTPINSPECT_CONF *global_server)
 {
-    if (global_server == NULL)
-    {
-        return HI_INVALID_ARG;
-    }
+    global_server->extract_gzip = 1;
+    global_server->unlimited_decompress = 1;
+    global_server->inspect_response = 1;
+    global_server->enable_cookie = 1;
+    global_server->normalize_utf = 1;
+    global_server->normalize_javascript = 1;
+    global_server->non_strict = 1;
 
-    /*
-    **  Set Global Server Configurations
-    */
-    global_server->server_flow_depth = 300;
-    global_server->client_flow_depth = 300;
-
-    global_server->post_depth = -1;
+    global_server->server_flow_depth = 0;
+    global_server->client_flow_depth = 0;
+    global_server->post_depth = 65495;
 
     global_server->chunk_length = 500000;
 
-    global_server->ascii.on = 1;
-
-    global_server->utf_8.on = 1;
-
-    global_server->multiple_slash.on = 1;
-
-    global_server->directory.on = 1;
-
-    global_server->webroot.on = 1;
-
-    global_server->apache_whitespace.on = 1;
-
-    global_server->iis_delimiter.on = 1;
-
-    global_server->non_strict = 1;
+    global_server->u_encoding.on = 1;
 
     global_server->whitespace[9] = HI_UI_CONFIG_WS_BEFORE_URI | HI_UI_CONFIG_WS_AFTER_URI;   /* horizontal tab */
     global_server->whitespace[11] = HI_UI_CONFIG_WS_BEFORE_URI;  /* vertical tab */
     global_server->whitespace[12] = HI_UI_CONFIG_WS_BEFORE_URI;  /* form feed */
     global_server->whitespace[13] = HI_UI_CONFIG_WS_BEFORE_URI;  /* carriage return */
 
-    global_server->max_hdr_len = HI_UI_CONFIG_MAX_HDR_DEFAULT;
-    global_server->max_headers = HI_UI_CONFIG_MAX_HEADERS_DEFAULT;
-    global_server->max_spaces = HI_UI_CONFIG_MAX_SPACES_DEFAULT;
-    global_server->max_js_ws = HI_UI_CONFIG_MAX_SPACES_DEFAULT;
+    global_server->max_hdr_len = 750;
+    global_server->max_headers = 100;
+    global_server->max_spaces = 200;
+    global_server->max_js_ws = 200;
+    global_server->long_dir = 500;
 
-    return HI_SUCCESS;
-}
-
-/*
-**  NAME
-**    hi_ui_config_reset_global::
-*/
-/**
-**  This function resets the global parameters, THIS IS NOT THE GLOBAL
-**  SERVER CONFIGURATION.
-**
-**  @param GlobalConf pointer to the global configuration structure
-**
-**  @return integer
-**
-**  @return HI_SUCCESS function successful
-*/
-int hi_ui_config_reset_global(HTTPINSPECT_GLOBAL_CONF *GlobalConf)
-{
-    GlobalConf->iis_unicode_map = 0;
+    global_server->small_chunk_length.size = 10;
+    global_server->small_chunk_length.num = 5;
 
     return HI_SUCCESS;
 }

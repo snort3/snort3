@@ -34,33 +34,32 @@
 
 /* API for HostAttributeEntry 'class' */
 
-int hasService(HostAttributeEntry *hostEntry,
+int hasService(const HostAttributeEntry *hostEntry,
                int ipprotocol,
                int protocol,
                int application);
-int hasClient(HostAttributeEntry *hostEntry,
+int hasClient(const HostAttributeEntry *hostEntry,
                int ipprotocol,
                int protocol,
                int application);
-int hasProtocol(HostAttributeEntry *hostEntry,
+int hasProtocol(const HostAttributeEntry *hostEntry,
                int ipprotocol,
                int protocol,
                int application);
 
-int getProtocol(HostAttributeEntry *hostEntry,
+int getProtocol(const HostAttributeEntry *hostEntry,
                int ipprotocol,
                uint16_t port);
 
-int getApplicationProtocolId(HostAttributeEntry *host_entry,
+int getApplicationProtocolId(const HostAttributeEntry *host_entry,
                int ipprotocol,
                uint16_t port,
                char direction);
 
 #define SFAT_UNKNOWN_STREAM_POLICY 0
-uint16_t getStreamPolicy(HostAttributeEntry *host_entry);
-char isStreamPolicySet(HostAttributeEntry *host_entry);
+uint16_t getStreamPolicy(const HostAttributeEntry *host_entry);
 #define SFAT_UNKNOWN_FRAG_POLICY 0
-uint16_t getFragPolicy(HostAttributeEntry *host_entry);
-char isFragPolicySet(HostAttributeEntry *host_entry);
+uint16_t getFragPolicy(const HostAttributeEntry *host_entry);
 
-#endif /* SFTARGET_HOSTENTRY_H */
+#endif
+

@@ -10,47 +10,87 @@ include::version.txt[]
 
 toc::[]
 
+== Overview
+
+include::overview.txt[]
+
 == Getting Started
 
-include::tips.txt[]
+include::start.txt[]
+
+== Basic Modules
+
+Internal modules which are not plugins are termed "basic".  These include
+configuration for core processing.
+
+include::basic.txt[]
+
+== Codec Modules
+
+Codec is short for coder / decoder.  These modules are used for basic
+protocol decoding, anomaly detection, and construction of active responses.
+
+include::codec.txt[]
+
+== Data Modules
+
+Data modules are adjunct configurations for use with certain inspectors.
+
+include::data.txt[]
+
+== Inspector Modules
+
+These modules perform a variety of functions, including analysis of
+protocols beyond basic decoding.
+
+include::inspector.txt[]
+
+== IPS Action Modules
+
+IPS actions allow you to perform custom actions when events are generated.
+Unlike loggers, these are invoked before thresholding and can be used to
+control external agents.
+
+include::ips_action.txt[]
+
+== IPS Option Modules
+
+IPS options are the building blocks of IPS rules.
+
+include::ips_option.txt[]
+
+== Search Engine Modules
+
+Search engines perform multipattern searching of packets and payload to find
+rules that should be evaluated.  There are currently no specific modules,
+although there are several search engine plugins.  Related configuration
+is done with the basic detection module.
+
+== SO Rule Modules
+
+SO rules are dynamic rules that require custom coding to perform detection
+not possible with the existing rule options.  These rules typically do not
+have associated modules.
+
+== Logger Modules
+
+All output of events and packets is done by Loggers.
+
+include::logger.txt[]
 
 == Snort++ vs Snort
 
 include::differences.txt[]
 
-=== Configuration Changes
+== Snort2Lua
 
-include::config_changes.txt
+include::snort2lua.txt[]
 
-== Modules
+== Reference
 
-include::modules.txt[]
+include::reference.txt[]
 
-== Command Line Options
+== Extending Snort++
 
-include::options.txt[]
-
-== Configuration
-
-include::config.txt[]
-
-== Generators
-
-include::gids.txt[]
-
-== Builtin Rules
-
-include::builtin.txt[]
-
-== Command Set
-
-include::commands.txt[]
-
-== Plugins
-
-include::plugins.txt[]
-
-== Coding Style
-
-include::style.txt[]
+include::extending.txt[]
 

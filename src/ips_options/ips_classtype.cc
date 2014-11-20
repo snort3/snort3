@@ -36,13 +36,13 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "classtype";
+#define s_name "classtype"
 
 //-------------------------------------------------------------------------
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter classtype_params[] =
+static const Parameter s_params[] =
 {
     { "~", Parameter::PT_STRING, nullptr, nullptr,
       "classification for this rule" },
@@ -50,11 +50,14 @@ static const Parameter classtype_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "general rule option for rule classification"
+
 class ClassTypeModule : public Module
 {
 public:
-    ClassTypeModule() : Module(s_name, classtype_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    ClassTypeModule() : Module(s_name, s_help, s_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
     ClassType* type;
 };
 
@@ -86,6 +89,12 @@ static IpsOption* classtype_ctor(Module* p, OptTreeNode* otn)
 {
     ClassTypeModule* m = (ClassTypeModule*)p;
     otn->sigInfo.classType = m->type;
+
+    if ( m->type )
+    {
+        otn->sigInfo.class_id = m->type->id;
+        otn->sigInfo.priority = m->type->priority;
+    }
     return nullptr;
 }
 
@@ -94,6 +103,7 @@ static const IpsApi classtype_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,
@@ -110,13 +120,4 @@ static const IpsApi classtype_api =
     nullptr
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &classtype_api.base,
-    nullptr
-};
-#else
 const BaseApi* ips_classtype = &classtype_api.base;
-#endif
-

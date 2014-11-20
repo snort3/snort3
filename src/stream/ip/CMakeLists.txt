@@ -9,4 +9,3 @@ add_library( stream_ip STATIC
     stream_ip.cc
     stream_ip.h
 )
-

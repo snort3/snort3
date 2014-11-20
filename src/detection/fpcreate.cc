@@ -51,13 +51,14 @@
 #include "ips_options/ips_ip_proto.h"
 #include "ips_options/ips_flow.h"
 #include "util.h"
+#include "utils/stats.h"
 #include "treenodes.h"
 #include "parser.h"
-#include "target_based/sftarget_reader.h"
 #include "framework/mpse.h"
 #include "framework/ips_option.h"
 #include "managers/mpse_manager.h"
 #include "bitop_funcs.h"
+#include "detection/detection_defines.h"
 
 #ifdef INTEL_SOFT_CPM
 #include "search/intel_soft_cpm.h"
@@ -90,7 +91,7 @@ static int fpAddPortGroupPrmx(PORT_GROUP *pg, OptTreeNode *otn, int cflag);
 static void PrintFastPatternInfo(OptTreeNode *otn, PatternMatchData *pmd,
         const char *pattern, int pattern_length);
 
-static const char *pm_type_strings[PM_TYPE__MAX] =
+static const char* const pm_type_strings[PM_TYPE__MAX] =
 {
     "Normal Content",
     "HTTP Uri content",
@@ -101,8 +102,6 @@ static const char *pm_type_strings[PM_TYPE__MAX] =
 /*
 #define LOCAL_DEBUG
 */
-
-#include "target_based/sftarget_protocol_reference.h"
 
 static sopg_table_t * ServicePortGroupTableNew(void)
 {
@@ -815,7 +814,8 @@ void fpSetMaxQueueEvents(FastPatternConfig *fp, unsigned int num_events)
 void fpSetMaxPatternLen(FastPatternConfig *fp, unsigned int max_len)
 {
     if (fp->max_pattern_len != 0)
-        LogMessage("WARNING: Maximum pattern length redefined.\n");
+        ParseWarning("maximum pattern length redefined from %d to %d.\n",
+            fp->max_pattern_len, max_len);
 
     fp->max_pattern_len = max_len;
 }
@@ -860,9 +860,6 @@ static int FLP_Trim( char * p, int plen, char ** buff )
 static bool pmd_can_be_fp(PatternMatchData* pmd, CursorActionType cat)
 {
     if ( !pmd->pattern_buf || !pmd->pattern_size )
-        return false;
-
-    if ( pmd->relative )
         return false;
 
     if ( cat <= CAT_SET_OTHER )
@@ -946,11 +943,12 @@ static PmType get_pm_type(CursorActionType cat)
     return PM_TYPE__MAX;
 }
 
-static PatternMatchData * get_fp_content(OptTreeNode *otn)
+void set_fp_content(OptTreeNode *otn)
 {
     OptFpList *ofl;
     CursorActionType curr_cat = CAT_SET_RAW;
     FpFoo best;
+    PatternMatchData* pmd = nullptr;
 
     for (ofl = otn->opt_func; ofl != NULL; ofl = ofl->next)
     {
@@ -970,8 +968,17 @@ static PatternMatchData * get_fp_content(OptTreeNode *otn)
 
         tmp->pm_type = get_pm_type(curr_cat);
 
-        if (tmp->fp)
-            return tmp;
+        if ( tmp->fp )
+        {
+            if ( pmd )
+                ParseWarning("only one fast_pattern content per rule allowed - ignored");
+
+            else if ( !pmd_can_be_fp(tmp, curr_cat) )
+                ParseWarning("content ineligible for fast_pattern matcher - ignored");
+
+            else
+                pmd = tmp;
+        }
 
         if ( !pmd_can_be_fp(tmp, curr_cat) )
             continue;
@@ -981,7 +988,31 @@ static PatternMatchData * get_fp_content(OptTreeNode *otn)
         if ( curr.is_better(best) )
             best = curr;
     }
-    return best.pmd;
+    if ( !pmd && best.pmd )
+        best.pmd->fp = 1;
+}
+
+static PatternMatchData* get_fp_content(OptTreeNode* otn, OptFpList*& next)
+{
+    OptFpList* ofl;
+
+    for (ofl = otn->opt_func; ofl != NULL; ofl = ofl->next)
+    {
+        if ( !ofl->context )
+            continue;
+
+        if ( ofl->type != RULE_OPTION_TYPE_CONTENT )
+            continue;
+
+        PatternMatchData* pmd = get_pmd(ofl);
+        assert(pmd);
+
+        next = ofl->next;
+
+        if ( pmd->fp )
+            return pmd;
+    }
+    return nullptr;
 }
 
 static int fpFinishPortGroupRule(
@@ -1148,7 +1179,7 @@ static int fpAddPortGroupRule(
     if ( !pg || !otn )
         return -1;
 
-    // skip builtin rules
+    // skip builtin rules, continue for text and so rules
     if ( !otn->sigInfo.text_rule )
         return -1;
 
@@ -1156,7 +1187,8 @@ static int fpAddPortGroupRule(
     if ( !otn->enabled )
         return -1;
 
-    pmd = get_fp_content(otn);
+    OptFpList* next = nullptr;
+    pmd = get_fp_content(otn, next);
 
     if ( pmd && pmd->fp)
     {
@@ -1164,7 +1196,8 @@ static int fpAddPortGroupRule(
             pmd->fp && !pmd->relative && !pmd->negated &&
             !pmd->offset && !pmd->depth && pmd->no_case )
         {
-            pmd->fp_only = 1;
+            if ( !next || !next->context || !((IpsOption*)next->context)->is_relative() )
+                pmd->fp_only = 1;
         }
 
         if (fpFinishPortGroupRule(sc, pg, otn, pmd, fp) == 0)
@@ -1295,9 +1328,11 @@ static int fpCreateInitRuleMap(
         prm->prmNumSrcGroups++;
 
         /* Add this port group to the src table at each port that uses it */
-        for( poi = (PortObjectItem*)sflist_first(po->item_list);
+        SF_LNODE* cursor;
+
+        for( poi = (PortObjectItem*)sflist_first(po->item_list, &cursor);
              poi;
-             poi = (PortObjectItem*)sflist_next(po->item_list) )
+             poi = (PortObjectItem*)sflist_next(&cursor) )
         {
              switch(poi->type)
              {
@@ -1341,9 +1376,11 @@ static int fpCreateInitRuleMap(
         prm->prmNumDstGroups++;
 
         /* Add this port group to the src table at each port that uses it */
-        for( poi = (PortObjectItem*)sflist_first(po->item_list);
+        SF_LNODE* cursor;
+
+        for( poi = (PortObjectItem*)sflist_first(po->item_list, &cursor);
              poi;
-             poi = (PortObjectItem*)sflist_next(po->item_list) )
+             poi = (PortObjectItem*)sflist_next(&cursor) )
         {
              switch(poi->type)
              {
@@ -1467,12 +1504,13 @@ static int fpGetFinalPattern(FastPatternConfig *fp, PatternMatchData *pmd,
         return 0;
     }
 
-    if (pmd->fp && (pmd->fp_length != 0))
+    if ( pmd->fp && (pmd->fp_offset || pmd->fp_length) )
     {
         /* (offset + length) potentially being larger than the pattern itself
          * is taken care of during parsing */
+        assert(pmd->fp_offset + pmd->fp_length <= pmd->pattern_size);
         pattern = pmd->pattern_buf + pmd->fp_offset;
-        bytes = pmd->fp_length;
+        bytes = pmd->fp_length ? pmd->fp_length : pmd->pattern_size - pmd->fp_length;
     }
     else
     {
@@ -1822,7 +1860,7 @@ static int fpCreatePortGroups(
     /* convert the tcp-any-any to a PortObject2 creature */
     po2 = PortObject2Dup(p->tcp_anyany);
     if (po2 == NULL)
-        FatalError("Could not create a PortObject version 2 for tcp-any-any rules\n!");
+        FatalError("Could not create a PortObject version 2 for tcp-any-any rules\n");
 
     if (!fpDetectSplitAnyAny(fp))
         add_any_any = po2;
@@ -1865,7 +1903,7 @@ static int fpCreatePortGroups(
     /* UDP */
     po2 = PortObject2Dup(p->udp_anyany);
     if (po2 == NULL )
-        FatalError("Could not create a PortObject version 2 for udp-any-any rules\n!");
+        FatalError("Could not create a PortObject version 2 for udp-any-any rules\n");
 
     if (!fpDetectSplitAnyAny(fp))
         add_any_any = po2;
@@ -1906,7 +1944,7 @@ static int fpCreatePortGroups(
     /* ICMP */
     po2 = PortObject2Dup(p->icmp_anyany);
     if (po2 == NULL)
-        FatalError("Could not create a PortObject version 2 for icmp-any-any rules\n!");
+        FatalError("Could not create a PortObject version 2 for icmp-any-any rules\n");
 
     if (!fpDetectSplitAnyAny(fp))
         add_any_any = po2;
@@ -1947,7 +1985,7 @@ static int fpCreatePortGroups(
     /* IP */
     po2 = PortObject2Dup(p->ip_anyany);
     if (po2 == NULL)
-        FatalError("Could not create a PortObject version 2 for ip-any-any rules\n!");
+        FatalError("Could not create a PortObject version 2 for ip-any-any rules\n");
 
     if (!fpDetectSplitAnyAny(fp))
         add_any_any = po2;
@@ -2109,9 +2147,11 @@ void fpBuildServicePortGroupByServiceOtnList(
      * add each rule to the port group pattern matchers,
      * or to the no-content rule list
      */
-    for (otn = (OptTreeNode*)sflist_first(list);
+    SF_LNODE* cursor;
+
+    for (otn = (OptTreeNode*)sflist_first(list, &cursor);
             otn;
-            otn = (OptTreeNode*)sflist_next(list))
+            otn = (OptTreeNode*)sflist_next(&cursor))
     {
         if (otn->proto == ETHERNET_TYPE_IP)
         {
@@ -2181,32 +2221,32 @@ void fpBuildServicePortGroups(
                 id = AddProtocolReference(srvc);
 
                 if(id <=0 )
-                    FatalError("Could not AddProtocolReference!\n");
+                    FatalError("Could not AddProtocolReference\n");
 
                 else if( id >= MAX_PROTOCOL_ORDINAL )
-                    LogMessage("protocol-ordinal=%d exceeds "
+                    ParseWarning("protocol-ordinal=%d exceeds "
                         "limit of %d for service=%s\n",id,MAX_PROTOCOL_ORDINAL,srvc);
             }
             else if( id > 0 )
             {
                 if( id < MAX_PROTOCOL_ORDINAL )
                 {
-                    LogMessage("adding protocol-ordinal=%d as service=%s\n",id,srvc);
+                    //LogMessage("adding protocol-ordinal=%d as service=%s\n",id,srvc);
                     sopg[ id ] = pg;
                 }
                 else
-                    LogMessage("protocol-ordinal=%d exceeds "
+                    ParseError("protocol-ordinal=%d exceeds "
                         "limit of %d for service=%s\n",id,MAX_PROTOCOL_ORDINAL,srvc);
             }
             else /* id < 0 */
             {
-                LogMessage("adding protocol-ordinal=%d for "
-                    "service=%s, can't use that !!!\n",id,srvc);
+                ParseError("adding protocol-ordinal=%d for "
+                    "service=%s, can't use that\n",id,srvc);
             }
         }
         else
         {
-            LogMessage("*** failed to create and find a port group for '%s' !!! \n",srvc );
+            ParseError("*** failed to create and find a port group for '%s'\n",srvc );
         }
     }
 }
@@ -2301,10 +2341,11 @@ PORT_GROUP * fpGetServicePortGroupByOrdinal(sopg_table_t *sopg, int proto, int d
 void fpPrintRuleList( SF_LIST * list )
 {
     OptTreeNode * otn;
+    SF_LNODE* cursor;
 
-    for( otn=(OptTreeNode*)sflist_first(list);
+    for( otn=(OptTreeNode*)sflist_first(list, &cursor);
          otn;
-         otn=(OptTreeNode*)sflist_next(list) )
+         otn=(OptTreeNode*)sflist_next(&cursor) )
     {
          LogMessage("|   %u:%u\n",otn->sigInfo.generator,otn->sigInfo.id);
     }
@@ -2460,8 +2501,6 @@ int fpCreateFastPacketDetection(SnortConfig *sc)
     if (fpDetectGetDebugPrintRuleGroupBuildDetails(fp))
         LogMessage("Rule Maps Done....\n");
 
-    if (IsAdaptiveConfigured()
-            || fpDetectGetDebugPrintFastPatterns(fp))
     {
         if (fpDetectGetDebugPrintRuleGroupBuildDetails(fp))
             LogMessage("Creating Service Based Rule Maps....\n");
@@ -2477,10 +2516,14 @@ int fpCreateFastPacketDetection(SnortConfig *sc)
         if (fpDetectGetDebugPrintRuleGroupBuildDetails(fp))
             LogMessage("Service Based Rule Maps Done....\n");
 
-        LogMessage("\n");
-        LogMessage("[ Port and Service Based Pattern Matching Memory ]\n" );
+        // FIXIT-L cleanup the mpse startup output
+        //LogMessage("\n");
+        //LogMessage("[ Port and Service Based Pattern Matching Memory ]\n" );
     }
 
+#if 0
+    // FIXIT-L update format of search engine startup foo
+    LogLabel("search engine");
     MpseManager::print_mpse_summary(fp->search_api);
 
     if ( fp->max_pattern_len )
@@ -2490,6 +2533,7 @@ int fpCreateFastPacketDetection(SnortConfig *sc)
     }
     if ( fp->num_patterns_trimmed )
         LogMessage("%25.25s: %-12u\n", "prefix trims", fp->num_patterns_trimmed);
+#endif
 
     MpseManager::setup_search_engine(fp->search_api, sc);
 
@@ -2542,6 +2586,8 @@ void fpShowEventStats(SnortConfig *sc)
     prmShowEventStats(sc->prmIpRTNX);
 }
 
+// FIXIT-M remove this - if we are to optimize such rules
+// we need a general solution for all header options
 static void fpAddIpProtoOnlyRule(SF_LIST **ip_proto_only_lists, OptTreeNode *otn)
 {
     unsigned int i;
@@ -2569,9 +2615,11 @@ static void fpAddIpProtoOnlyRule(SF_LIST **ip_proto_only_lists, OptTreeNode *otn
             }
 
             /* Search for dups */
-            for (dup = (OptTreeNode *)sflist_first(ip_proto_only_lists[i]);
+            SF_LNODE* cursor;
+
+            for (dup = (OptTreeNode *)sflist_first(ip_proto_only_lists[i], &cursor);
                  dup != NULL;
-                 dup = (OptTreeNode *)sflist_next(ip_proto_only_lists[i]))
+                 dup = (OptTreeNode *)sflist_next(&cursor))
             {
                 if (dup == otn)
                     return;

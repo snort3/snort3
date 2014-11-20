@@ -37,9 +37,10 @@
 #include "parser.h"
 #include "util.h"
 #include "log/log_text.h"
-#include "log/sf_textlog.h"
+#include "log/text_log.h"
 #include "mstring.h"
 #include "snort.h"
+#include "utils/stats.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,19 +52,23 @@
 #define TEST_FLAG_MSG      0x01
 #define TEST_FLAG_SESSION  0x02
 #define TEST_FLAG_REBUILT  0x04
+#define TEST_FLAG_FILE     0x08
 
 static THREAD_LOCAL TextLog* test_file = nullptr;
 
 using namespace std;
 
+#define S_NAME "alert_test"
+#define F_NAME S_NAME ".txt"
+
 //-------------------------------------------------------------------------
 // alert_test module
 //-------------------------------------------------------------------------
 
-static const Parameter test_params[] =
+static const Parameter s_params[] =
 {
-    { "file", Parameter::PT_STRING, nullptr, "stdout",
-      "name of tsv alert file or 'stdout'" },
+    { "file", Parameter::PT_BOOL, nullptr, "false",
+      "output to " F_NAME " instead of stdout" },
 
     { "rebuilt", Parameter::PT_BOOL, nullptr, "false",
       "include type:count where type is S for stream and F for frag" },
@@ -77,24 +82,28 @@ static const Parameter test_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "output event in custom tsv format"
+
 class TestModule : public Module
 {
 public:
-    TestModule() : Module("alert_test", test_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    TestModule() : Module(S_NAME, s_help, s_params) { };
+
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 
 public:
-    string file;
     unsigned flags;
 };
 
 bool TestModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("file") )
-        file = v.get_string();
-
+    {
+        if ( v.get_bool() )
+            flags |= TEST_FLAG_FILE;
+    }
     else if ( v.is("rebuilt") )
     {
         if ( v.get_bool() )
@@ -118,13 +127,7 @@ bool TestModule::set(const char*, Value& v, SnortConfig*)
 
 bool TestModule::begin(const char*, int, SnortConfig*)
 {
-    file = "stdout";
     flags = 0;
-    return true;
-}
-
-bool TestModule::end(const char*, int, SnortConfig*)
-{
     return true;
 }
 
@@ -134,25 +137,24 @@ class TestLogger : public Logger {
 public:
     TestLogger(TestModule*);
 
-    void open();
-    void close();
+    void open() override;
+    void close() override;
 
-    void alert(Packet*, const char* msg, Event*);
+    void alert(Packet*, const char* msg, Event*) override;
 
 private:
-    string file;
     unsigned flags;
 };
 
 TestLogger::TestLogger(TestModule* m)
 {
-    file = m->file;
     flags = m->flags;
 }
 
 void TestLogger::open()
 {
-    test_file = TextLog_Init(file.c_str());
+    const char* f =  (flags & TEST_FLAG_FILE) ? F_NAME : "stdout";
+    test_file = TextLog_Init(f);
 }
 
 void TestLogger::close()
@@ -181,16 +183,24 @@ void TestLogger::alert(Packet *p, const char *msg, Event *event)
     if (flags & TEST_FLAG_SESSION)
         LogIpAddrs(test_file, p);
 
-#if 0
-    if (flags & TEST_FLAG_REBUILT)
+    if ( (flags & TEST_FLAG_REBUILT) && (p->packet_flags & PKT_PSEUDO) )
     {
-        if (p->packet_flags & PKT_REBUILT_FRAG)
-            //TextLog_Print(test_file, "F:" STDu64 "\t", pc.rebuilt_frags);  FIXIT count in f3
-            //
-        else if (p->packet_flags & PKT_REBUILT_STREAM)
-            //TextLog_Print(test_file, "S:" STDu64 "\t", pc.rebuilt_tcp);  FIXIT count in s5
+        const char* s;
+        switch ( p->pseudo_type )
+        {
+        case PSEUDO_PKT_IP: s = "ip-defrag"; break;
+        case PSEUDO_PKT_TCP: s = "tcp-deseg"; break;
+        case PSEUDO_PKT_DCE_RPKT: s = "dce-pkt"; break;
+        case PSEUDO_PKT_DCE_SEG: s = "dce-deseg"; break;
+        case PSEUDO_PKT_DCE_FRAG: s = "dec-defrag"; break;
+        case PSEUDO_PKT_SMB_SEG: s = "smb-deseg"; break;
+        case PSEUDO_PKT_SMB_TRANS: s = "smb-trans"; break;
+        case PSEUDO_PKT_PS: s = "port_scan"; break;
+        case PSEUDO_PKT_SDF: s = "sdf"; break;
+        default: s = "pseudo pkt"; break;
+        }
+        TextLog_Print(test_file, "%s", s);
     }
-#endif
     TextLog_Print(test_file, "\n");
     TextLog_Flush(test_file);
 }
@@ -213,7 +223,8 @@ static LogApi test_api
 {
     {
         PT_LOGGER,
-        "alert_test",
+        S_NAME,
+        s_help,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

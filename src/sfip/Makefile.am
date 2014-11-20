@@ -5,15 +5,13 @@ noinst_LIBRARIES = libsfip.a
 x_includedir = $(pkgincludedir)/sfip
 
 x_include_HEADERS = \
-ipv6_port.h \
+sf_returns.h \
 sf_ip.h \
-sf_iph.h \
 sf_ipvar.h \
 sfip_t.h
 
 libsfip_a_SOURCES = \
 sf_ip.cc \
-sf_iph.cc \
 sf_ipvar.cc \
 sf_vartable.cc \
 sf_vartable.h
@@ -21,4 +19,3 @@ sf_vartable.h
 libsfip_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
-

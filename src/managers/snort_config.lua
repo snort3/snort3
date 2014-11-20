@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------
--- Copyright (C) 2014-2014 Sourcefire, Inc.
+-- Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 --
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License Version 2 as
@@ -16,6 +16,7 @@
 -- along with this program; if not, write to the Free Software
 -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ---------------------------------------------------------------------------
+-- snort_config.lua author Russ Combs <rucombs@cisco.com>
 
 ---------------------------------------------------------------------------
 -- Snort uses this to configure Lua settings into C++
@@ -29,10 +30,10 @@ void close_table(const char*, int);
 bool set_bool(const char*, bool);
 bool set_number(const char*, double);
 bool set_string(const char*, const char*);
+bool set_alias(const char*, const char*);
 ]]
 
 function include(file)
-    print('Loading ' .. file)
     dofile(file)
 end
 
@@ -50,17 +51,18 @@ end
 function snort_set(fqn, key, val)
     local name
     local idx = 0
+    local what = type(val)
         
     if ( not fqn ) then
         name = key
+
     elseif ( type(key) == 'number' ) then
         name = fqn
         idx = key
+
     else
         name = fqn .. '.' .. key
     end
-
-    local what = type(val)
 
     if ( what == 'boolean' ) then
         ffi.C.set_bool(name, val)
@@ -79,7 +81,26 @@ function snort_set(fqn, key, val)
     end
 end
 
-function snort_config()
-    snort_traverse(_G)
+function load_aliases()
+    for i,v in ipairs(binder) do
+        if ( v.use and type(v.use) == "table" ) then
+            if ( v.use.name and v.use.type ) then
+                ffi.C.set_alias(v.use.name, v.use.type)
+                tab = _G[v.use.name]
+
+                if ( tab ) then
+                    snort_set(nil, v.use.name, _G[v.use.name])
+                end
+            end
+        end
+    end
+end
+
+function snort_config(tab)
+    snort_traverse(tab)
+
+    if ( binder and type(binder) == 'table' ) then
+        load_aliases()
+    end
 end
 

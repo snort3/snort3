@@ -33,13 +33,13 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "reference";
+#define s_name "reference"
 
 //-------------------------------------------------------------------------
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter reference_params[] =
+static const Parameter s_params[] =
 {
     { "~scheme", Parameter::PT_STRING, nullptr, nullptr,
       "reference scheme" },
@@ -50,12 +50,15 @@ static const Parameter reference_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to indicate relevant attack identification system"
+
 class ReferenceModule : public Module
 {
 public:
-    ReferenceModule() : Module(s_name, reference_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+    ReferenceModule() : Module(s_name, s_help, s_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 
     std::string scheme;
     std::string id;
@@ -112,6 +115,7 @@ static const IpsApi reference_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,
@@ -128,13 +132,4 @@ static const IpsApi reference_api =
     nullptr
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &reference_api.base,
-    nullptr
-};
-#else
 const BaseApi* ips_reference = &reference_api.base;
-#endif
-

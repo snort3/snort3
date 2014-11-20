@@ -48,7 +48,7 @@ public:
             SnortConfig*, struct OptTreeNode*, int proto,
         const char* keyword, char* args, RuleOptType&);
 
-    static bool option_begin(SnortConfig*, const char* key);
+    static bool option_begin(SnortConfig*, const char* key, int proto);
     static bool option_set(
         SnortConfig*, const char* key, const char* opt, const char* val);
     static bool option_end(
@@ -60,6 +60,7 @@ public:
     static void global_init(SnortConfig*);
     static void global_term(SnortConfig*);
 
+    static void reset_options();
     static void setup_options();
     static void clear_options();
     static bool verify(SnortConfig*);

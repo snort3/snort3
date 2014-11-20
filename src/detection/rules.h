@@ -40,11 +40,17 @@
 #define ANY_SRC_IP      0x0100
 #define ANY_DST_IP      0x0200
 
-#define PARSE_RULE_SIZE  65535
+#define GENERATOR_SNORT_ENGINE        1
+#define GENERATOR_SNORT_SHARED        3
+
+#define GENERATOR_INTERNAL          135
+#define INTERNAL_EVENT_SYN_RECEIVED   1
+#define INTERNAL_EVENT_SESSION_ADD    2
+#define INTERNAL_EVENT_SESSION_DEL    3
 
 /*  D A T A  S T R U C T U R E S  *********************************************/
 
-typedef struct _TagData
+struct TagData
 {
     int tag_type;       /* tag type (session/host) */
     int tag_seconds;    /* number of "seconds" units to tag for */
@@ -52,35 +58,35 @@ typedef struct _TagData
     int tag_bytes;      /* number of "type" units to tag for */
     int tag_metric;     /* (packets | seconds | bytes) units */
     int tag_direction;  /* source or dest, used for host tagging */
-} TagData;
+};
 
-struct _RuleListNode;
 struct OutputSet;
 
-typedef struct _ListHead
+struct ListHead
 {
-    OutputSet *LogList;
-    OutputSet *AlertList;
-    struct _RuleListNode *ruleListNode;
-} ListHead; 
+    OutputSet* LogList;
+    OutputSet* AlertList;
+    class IpsAction* action;
+    struct RuleListNode* ruleListNode;
+}; 
 
-typedef struct _RuleListNode
+struct RuleListNode
 {
-    ListHead *RuleList;         /* The rule list associated with this node */
-    RuleType mode;              /* the rule mode */
-    int rval;                   /* 0 == no detection, 1 == detection event */
-    int evalIndex;              /* eval index for this rule set */
-    char *name;                 /* name of this rule list (for debugging)  */
-    struct _RuleListNode *next; /* the next RuleListNode */
-} RuleListNode;
+    ListHead *RuleList;   /* The rule list associated with this node */
+    RuleType mode;        /* the rule mode */
+    int rval;             /* 0 == no detection, 1 == detection event */
+    int evalIndex;        /* eval index for this rule set */
+    char* name;           /* name of this rule list */
+    RuleListNode* next;   /* the next RuleListNode */
+};
 
-typedef struct _RuleState
+struct RuleState
 {
     uint32_t sid;
     uint32_t gid;
     int state;
-    struct _RuleState *next;
+    RuleState *next;
+};
 
-} RuleState;
+#endif
 
-#endif /* RULES_H */

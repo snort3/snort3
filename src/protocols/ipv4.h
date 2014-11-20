@@ -17,12 +17,13 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// ipv4.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-#ifndef IPV4_H
-#define IPV4_H
+#ifndef PROTOCOLS_IPV4_H
+#define PROTOCOLS_IPV4_H
 
 #include <cstdint>
+#include <arpa/inet.h>
 
 
 #ifndef WIN32
@@ -36,8 +37,8 @@
 #endif /* !IFNAMSIZ */
 #endif /* !WIN32 */
 
-#include "sfip/sfip_t.h"
 #include "protocols/protocol_ids.h" // include ipv4 protocol numbers
+
 
 #define ETHERNET_TYPE_IP 0x0800
 
@@ -46,60 +47,19 @@
 #endif /* IP_MAXPACKET */
 
 
-namespace ipv4
+namespace ip
 {
 
-namespace detail
-{
-/* ip option type codes */
-const uint32_t IP4_THIS_NET  = 0x00;  // msb
-const uint32_t IP4_MULTICAST = 0x0E;  // ms nibble
-const uint32_t IP4_RESERVED = 0x0F;  // ms nibble
-const uint32_t IP4_LOOPBACK = 0x7F;  // msb
-const uint32_t IP4_BROADCAST = 0xffffffff;
-const uint8_t IP_HEADER_LEN = 20;
-} // namespace detail
+constexpr uint32_t IP4_BROADCAST = 0xffffffff;
+constexpr uint8_t IP4_HEADER_LEN = 20;
+constexpr uint8_t IP4_THIS_NET  = 0x00;  // msb
+constexpr uint8_t IP4_MULTICAST = 0x0E;  // ms nibble
+constexpr uint8_t IP4_RESERVED = 0x0F;  // ms nibble
+constexpr uint8_t IP4_LOOPBACK = 0x7F;  // msb
 
 
 
-enum class IPOptionCodes : std::uint8_t {
-    EOL = 0x00,
-    NOP = 0x01,
-    RR = 0x07,
-    TS = 0x44,
-    SECURITY = 0x82,
-    LSRR = 0x83,
-    LSRR_E = 0x84,
-    ESEC = 0x85,
-    SATID = 0x88,
-    SSRR = 0x89,
-    RTRALT = 0x94,
-    ANY = 0xff,
-};
-
-
-struct IpOptions
-{
-    uint8_t code;
-    uint8_t len; /* length of the data section */
-    const uint8_t *data;
-};
-
-struct IPHdr
-{
-    uint8_t ip_verhl;      /* version & header length */
-    uint8_t ip_tos;        /* type of service */
-    uint16_t ip_len;       /* datagram length */
-    uint16_t ip_id;        /* identification  */
-    uint16_t ip_off;       /* fragment offset */
-    uint8_t ip_ttl;        /* time to live field */
-    uint8_t ip_proto;      /* datagram protocol */
-    uint16_t ip_csum;      /* checksum */
-    struct in_addr ip_src;  /* source IP */
-    struct in_addr ip_dst;  /* dest IP */
-} ;
-
-
+// This must be a standard layour struct!
 struct IP4Hdr
 {
     uint8_t ip_verhl;      /* version & header length */
@@ -110,11 +70,96 @@ struct IP4Hdr
     uint8_t ip_ttl;        /* time to live field */
     uint8_t ip_proto;      /* datagram protocol */
     uint16_t ip_csum;      /* checksum */
-    sfip_t ip_src;          /* source IP */
-    sfip_t ip_dst;          /* dest IP */
-};
+    uint32_t ip_src;  /* source IP */
+    uint32_t ip_dst;  /* dest IP */
+
+    /* getters */
+    inline uint8_t hlen() const
+    { return (ip_verhl & 0x0f) << 2; }
+
+    inline uint8_t ver() const
+    { return (ip_verhl >> 4); }
+
+    inline uint8_t tos() const
+    { return ip_tos; };
+
+    inline uint16_t len() const
+    { return ntohs(ip_len); }
+
+    inline uint8_t ttl() const
+    { return ip_ttl; }
+
+    inline uint8_t proto() const
+    { return ip_proto; }
+
+    inline uint16_t off_w_flags() const
+    { return ntohs(ip_off); }
+
+    inline uint16_t rb() const
+    { return ntohs(ip_off) & 0x8000; }
+
+    inline uint16_t df() const
+    { return ntohs(ip_off) & 0x4000; }
+
+    inline uint16_t mf() const
+    { return ntohs(ip_off) & 0x2000; }
+
+    inline uint16_t off() const
+    { return (ntohs(ip_off) & 0x1FFF) << 3; }
+
+    inline uint16_t id() const
+    { return ntohs(ip_id); }
+
+    inline uint8_t get_opt_len() const
+    { return hlen() - IP4_HEADER_LEN; }
+
+    inline uint16_t csum() const
+    { return ntohs(ip_csum); }
 
 
+    /* booleans */
+    inline bool is_src_broadcast() const
+    { return ip_src == IP4_BROADCAST; }
+
+    inline bool is_dst_broadcast() const
+    { return ip_dst == IP4_BROADCAST; }
+
+    inline bool has_options() const
+    { return hlen() > 20; }
+
+
+    /* Access raw data */
+    inline uint16_t raw_len() const
+    { return ip_len; }
+
+    inline uint16_t raw_id() const
+    { return ip_id; }
+
+    inline uint16_t raw_off() const
+    { return ip_off; }
+
+    inline uint16_t raw_csum() const
+    { return ip_csum; }
+
+    inline uint32_t get_src() const
+    { return ip_src; }
+
+    inline uint32_t get_dst() const
+    { return ip_dst; }
+
+
+
+    /*  setters  */
+    inline void set_hlen(uint8_t value)
+    { ip_verhl = (ip_verhl & 0xf0) | (value & 0x0f); }
+
+    inline void set_proto(uint8_t prot)
+    { ip_proto = prot; }
+
+    inline void set_ip_len(uint16_t new_len)
+    { ip_len = htons(new_len); }
+
+} ;
 
 
 
@@ -138,161 +183,18 @@ static inline bool isPrivateIP(uint32_t addr)
 }
 
 
-static inline uint16_t prot_id()
-{
-    return IPPROTO_ID_IPIP;
-}
+} /* namespace ip */
 
-static inline int ethertype_ip()
-{
-    return ETHERTYPE_IPV4;
-}
 
-static inline bool is_broadcast(uint32_t addr)
-{ 
-    return (addr == detail::IP4_BROADCAST);
-}
-
-static inline bool is_multicast(uint8_t addr)
-{
-    return (addr == detail::IP4_MULTICAST);
-}
-
-static inline bool is_opt_rr(IPOptionCodes code)
-{
-    return (code == IPOptionCodes::RR);
-}
-
-static inline bool is_opt_rr(uint8_t code)
-{
-    return (static_cast<IPOptionCodes>(code) == IPOptionCodes::RR);
-}
-
-static inline bool is_opt_rtralt(IPOptionCodes code)
-{
-    return (code == IPOptionCodes::RTRALT);
-}
-
-static inline bool is_opt_rtralt(uint8_t code)
-{
-    return (static_cast<IPOptionCodes>(code) == IPOptionCodes::RTRALT);
-}
-
-static inline bool is_opt_ts(IPOptionCodes code)
-{
-    return (code == IPOptionCodes::TS);
-}
-
-static inline bool is_opt_ts(uint8_t code)
-{
-    return (static_cast<IPOptionCodes>(code) == IPOptionCodes::TS);
-}
-
-static inline bool is_ethertype_ip(int proto)
-{
-    return (proto == ETHERTYPE_IPV4);
-}
-
-static inline bool is_ipv4(IPHdr* p)
-{
-    return (p->ip_verhl >> 4) == 4;
-}
-
-static inline bool is_ipv4(const IP4Hdr* p)
-{
-    return (p->ip_verhl >> 4)  == 4;
-}
-
-static inline bool is_ipv4(uint8_t ch)
-{
-    return (ch >> 4)  == 4;
-}
-
-static inline uint8_t get_pkt_len(const IP4Hdr* p)
-{
-    return (uint8_t)((p->ip_verhl & 0x0f) << 2);
-}
-
-static inline uint8_t get_pkt_len(const IPHdr* p)
-{
-    return (uint8_t)((p->ip_verhl & 0x0f) << 2);
-}
-
-static inline uint8_t get_version(IPHdr* p)
-{
-    return (p->ip_verhl & 0xf0) >> 4;
-}
-
-static inline uint8_t get_version(IP4Hdr* p)
-{
-    return (p->ip_verhl & 0xf0) >> 4;
-}
-
-static inline uint8_t hdr_len()
-{
-    return detail::IP_HEADER_LEN;
-}
-
-static inline bool is_loopback(uint8_t addr)
-{
-    return addr == detail::IP4_LOOPBACK;
-}
-
-static inline bool is_this_net(uint8_t addr)
-{
-    return addr == detail::IP4_THIS_NET;
-}
-
-static inline bool is_reserved(uint8_t addr)
-{
-    return addr == detail::IP4_RESERVED;
-}
-
-static inline void set_version(IPHdr* p, uint8_t value)
-{
-    p->ip_verhl = (unsigned char)((p->ip_verhl & 0x0f) | (value << 4));
-}
-
-static inline void set_version(IP4Hdr* p, uint8_t value)
-{
-    p->ip_verhl = (unsigned char)((p->ip_verhl & 0x0f) | (value << 4));
-}
-
-static inline void set_hlen(IPHdr* p, uint8_t value)
-{
-    p->ip_verhl = (unsigned char)(((p)->ip_verhl & 0xf0) | (value & 0x0f));
-}
-
-static inline void set_hlen(IP4Hdr* p, uint8_t value)
-{
-    p->ip_verhl = (unsigned char)(((p)->ip_verhl & 0xf0) | (value & 0x0f));
-}
-
-} /* namespace ipv4 */
 
 /* tcpdump shows us the way to cross platform compatibility */
 
 /* we need to change them as well as get them */
 // TYPEDEF WHICH NEED TO BE DELETED
-
-typedef ipv4::IPHdr IPHdr;
-typedef ipv4::IP4Hdr IP4Hdr;
+typedef ip::IP4Hdr IP4Hdr;
 
 
-const uint8_t IPOPT_EOL = 0x00;
-const uint8_t IPOPT_NOP = 0x01;
-const uint8_t IPOPT_RR = 0x07;
-const uint8_t IPOPT_TS = 0x44;
-const uint8_t IPOPT_SECURITY = 0x82;
-const uint8_t IPOPT_LSRR = 0x83;
-const uint8_t IPOPT_LSRR_E = 0x84;
-const uint8_t IPOPT_ESEC = 0x85;
-const uint8_t IPOPT_SATID = 0x88;
-const uint8_t IPOPT_SSRR = 0x89;
-const uint8_t IPOPT_RTRALT = 0x94;
-const uint8_t IPOPT_ANY = 0xff;
-
-#define IP_HEADER_LEN ipv4::hdr_len()
+/* #define IP_HEADER_LEN ip::ip4_hdr_len() */
 
 
 #endif

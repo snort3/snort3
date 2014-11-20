@@ -7,18 +7,42 @@ builtin.txt \
 commands.txt \
 config.txt \
 gids.txt \
+help.txt \
 modules.txt \
 options.txt \
-version.txt
+plugins.txt \
+signals.txt \
+version.txt \
+basic.txt \
+codec.txt \
+data.txt \
+inspector.txt \
+ips_action.txt \
+ips_option.txt \
+logger.txt  \
+snort2lua_cmds.txt
+
+# currently no modules for these
+#search_engine.txt
+#so_rule.txt
 
 unbuilt_sources = \
 snort_manual.txt \
 config_changes.txt \
 differences.txt \
-plugins.txt \
+enviro.txt \
+errors.txt \
+extending.txt \
+features.txt \
+overview.txt \
+params.txt \
+reference.txt \
+snort2lua.txt \
+start.txt \
 style.txt \
-tips.txt \
+terms.txt \
 images/snort.png
+
 
 all_sources = \
 $(unbuilt_sources) \
@@ -41,30 +65,91 @@ endif
 
 dist_doc_DATA += $(EXTRA_DIST)
 
-snort = $(top_srcdir)/src/snort
+snort = $(top_builddir)/src/snort
+snort2lua = $(top_builddir)/tools/snort2lua/snort2lua
+plugin_path = $(if $(shell echo $$SNORT_PLUGIN_PATH), --plugin-path=$$SNORT_PLUGIN_PATH )
+
+$(unbuilt_sources): $(snort)
+	mkdir -p images
+	[ -a $(builddir)/$@ ] || cp $(srcdir)/$@ $(builddir)/$@
 
 builtin.txt: $(snort)
-	$(snort) --markup --help-builtin | sort -n -t : -k 1.4 -k 2 > $@
+	$(snort) $(plugin_path) --markup --list-builtin | sort -n -t : -k 1.4 -k 2 > $@
 
 commands.txt: $(snort)
-	$(snort) --markup --help-commands | sort > $@
+	$(snort) $(plugin_path) --markup --help-commands | sort > $@
 
 config.txt: $(snort)
-	$(snort) --markup --help-config | sort -k 3 > $@
+	$(snort) $(plugin_path) --markup --help-config | sort -k 3 > $@
 
 gids.txt: $(snort)
-	$(snort) --markup --help-gids | sort -n  -k 1.4 > $@
+	$(snort) $(plugin_path) --markup --list-gids | sort -n  -k 1.4 > $@
 
 modules.txt: $(snort)
-	for m in `$(snort) --list-modules` ; do \
+	$(snort) $(plugin_path) --markup --help-modules > $@
+
+plugins.txt: $(snort)
+	$(snort) $(plugin_path) --markup --help-plugins > $@
+
+help.txt: $(snort)
+	$(snort) --help > $@
+
+basic.txt: $(snort)
+	for m in `$(snort) --list-modules basic` ; do \
 		$(snort) --markup --help-module $$m ; \
 	done > $@
+
+codec.txt: $(snort)
+	for m in `$(snort) --list-modules codec` ; do \
+		$(snort) $(plugin_path)  --markup --help-module $$m ; \
+	done > $@
+
+data.txt: $(snort)
+	for m in `$(snort) --list-modules data` ; do \
+		$(snort) $(plugin_path) --markup --help-module $$m ; \
+	done > $@
+
+inspector.txt: $(snort)
+	for m in `$(snort) --list-modules inspector` ; do \
+		$(snort) $(plugin_path) --markup --help-module $$m ; \
+	done > $@
+
+ips_action.txt: $(snort)
+	for m in `$(snort) --list-modules ips_action` ; do \
+		$(snort) $(plugin_path) --markup --help-module $$m ; \
+	done > $@
+
+ips_option.txt: $(snort)
+	for m in `$(snort) --list-modules ips_option` ; do \
+		$(snort) $(plugin_path) --markup --help-module $$m ; \
+	done > $@
+
+logger.txt: $(snort)
+	for m in `$(snort) --list-modules logger` ; do \
+		$(snort) $(plugin_path) --markup --help-module $$m ; \
+	done > $@
+
+#search_engine.txt: $(snort)
+#	for m in `$(snort) --list-modules search_engine` ; do \
+#		$(snort) $(plugin_path) --markup --help-module $$m ; \
+#	done > $@
+
+#so_rule.txt: $(snort)
+#	for m in `$(snort) --list-modules so_rule` ; do \
+#		$(snort) $(plugin_path) --markup --help-module $$m ; \
+#	done > $@
 
 options.txt: $(snort)
 	$(snort) --markup --help-options | sort > $@
 
+signals.txt: $(snort)
+	$(snort) --markup --help-signals > $@
+
 version.txt: $(snort)
 	$(snort) -V 2>&1 | grep -v Using > $@
+
+snort2lua_cmds.txt: $(snort2lua)
+	$(snort2lua) --markup --help > $@
 
 pdf_args = \
     --icons --icons-dir=./images/icons \
@@ -99,10 +184,13 @@ images.tgz: images/
         --exclude README \
         .
 
+
+delete_unbuilt = $(if $(and $(findstring $(builddir),$(srcdir)),$(findstring $(srcdir),$(builddir))), ,$(unbuilt_sources))
+
 clean-local:
 	rm -f $(BUILT_SOURCES)
+	rm -f $(delete_unbuilt)
 	rm -f *.tgz
 	rm -f snort_manual.{fo,xml,html,pdf}
 	rm -rf snort_manual.chunked/
 	rm -f *.css
-

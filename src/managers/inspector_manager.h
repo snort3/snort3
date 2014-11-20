@@ -46,15 +46,23 @@ public:
     static void new_config(SnortConfig*);
     static void delete_config(SnortConfig*);
 
-    static void instantiate(const InspectApi*, Module*, SnortConfig*);
-    static Inspector* get_inspector(const char* key);
+    static void instantiate(
+        const InspectApi*, Module*, SnortConfig*, const char* name = nullptr);
+
     static void free_inspector(Inspector*);
-    static InspectSsnFunc get_session(const char* key);
+    static InspectSsnFunc get_session(uint16_t proto);
+
+    static InspectorType get_type(const char* key);
+    static Inspector* get_inspector(const char* key, bool dflt_only = false);
+
+    static Inspector* get_binder();
+    static Inspector* get_wizard();
 
     static bool configure(SnortConfig*);
     static void print_config(SnortConfig*);
 
     static void thread_init(SnortConfig*);
+    static void thread_stop(SnortConfig*);
     static void thread_term(SnortConfig*);
 
     static void release_policy(FrameworkPolicy*);
@@ -62,6 +70,7 @@ public:
 
     static void execute(Packet*);
     static void bumble(Packet*);
+    static void full_inspection(FrameworkPolicy*, Packet*);
     static void empty_trash();
 };
 

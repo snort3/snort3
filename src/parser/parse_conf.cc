@@ -47,6 +47,7 @@
 
 #include "snort_bounds.h"
 #include "rules.h"
+#include "actions/actions.h"
 #include "treenodes.h"
 #include "parser.h"
 #include "parse_stream.h"
@@ -60,12 +61,12 @@
 #include "snort.h"
 #include "hash/sfghash.h"
 #include "sf_vartable.h"
-#include "ipv6_port.h"
 #include "sfip/sf_ip.h"
 #include "utils/sfportobject.h"
 #include "packet_io/active.h"
 #include "file_api/libs/file_config.h"
 #include "framework/ips_option.h"
+#include "managers/action_manager.h"
 #include "actions/actions.h"
 #include "config_file.h"
 #include "keywords.h"
@@ -111,12 +112,17 @@ void push_parse_location(const char* file, unsigned line)
 
     Location loc(file, line);
     files.push(loc);
+    LogMessage("Loading %s:\n", file);
 }
 
 void pop_parse_location()
 {
     if ( !files.empty() )
+    {
+        Location& loc = files.top();
+        LogMessage("Finished %s.\n", loc.file.c_str());
         files.pop();
+    }
 }
 
 void inc_parse_position()
@@ -152,7 +158,7 @@ void parse_include(SnortConfig *sc, const char *arg)
 void ParseIpVar(SnortConfig *sc, const char* var, const char* val)
 {
     int ret;
-    IpsPolicy* p = get_ips_policy(); // FIXIT double check, see below
+    IpsPolicy* p = get_ips_policy(); // FIXIT-M double check, see below
     DisallowCrossTableDuplicateVars(sc, var, VAR_TYPE__IPVAR);
 
     if((ret = sfvt_define(p->ip_vartable, var, val)) != SFIP_SUCCESS)
@@ -163,7 +169,7 @@ void ParseIpVar(SnortConfig *sc, const char* var, const char* val)
                 return;
 
             case SFIP_DUPLICATE:
-                ParseMessage("Var '%s' redefined.", var);
+                ParseWarning("Var '%s' redefined.", var);
                 break;
 
             case SFIP_CONFLICT:
@@ -230,76 +236,52 @@ static inline int ScLoadAsDropRules (void)
 
 RuleType get_rule_type(const char* s)
 {
-    if ( !strcmp(s, "alert") )
-        return RULE_TYPE__ALERT;
+    RuleType rt = get_action_type(s);
 
-    if ( !strcmp(s, "drop") || !strcmp(s, "block") )
+    if ( rt == RULE_TYPE__NONE )
+        rt = ActionManager::get_action_type(s);
+
+    switch ( rt )
     {
+    case RULE_TYPE__DROP:
         if ( ScTreatDropAsAlert() )
             return RULE_TYPE__ALERT;
 
-        else if ( ScKeepDropRules() || ScLoadAsDropRules() )
+        if ( ScKeepDropRules() || ScLoadAsDropRules() )
             return RULE_TYPE__DROP;
 
-        else
-            return RULE_TYPE__NONE;
-    }
-    if ( !strcmp(s, "sdrop") )
-    {
+        return RULE_TYPE__NONE;
+
+    case RULE_TYPE__SDROP:
         if ( ScKeepDropRules() && !ScTreatDropAsAlert() )
             return RULE_TYPE__SDROP;
 
-        else if ( ScLoadAsDropRules() )
+        if ( ScLoadAsDropRules() )
             return RULE_TYPE__DROP;
 
-        else
-            return RULE_TYPE__NONE;
-    }
+        return RULE_TYPE__NONE;
 
-    if ( !strcmp(s, "log") )
-        return RULE_TYPE__LOG;
-
-    if ( !strcmp(s, "pass") )
-        return RULE_TYPE__PASS;
-
-    if ( !strcmp(s, "reject") )
-    {
-        Active_SetEnabled(1);
-        return RULE_TYPE__REJECT;
-    }
-
-    return RULE_TYPE__NONE;
-}
-
-ListHead* get_rule_list(SnortConfig* sc, RuleType type)
-{
-    switch ( type )
-    {
-    case RULE_TYPE__ALERT:
-        return &sc->Alert;
-
-    case RULE_TYPE__LOG:
-        return &sc->Log;
-
-    case RULE_TYPE__PASS:
-        return &sc->Pass;
-
-    case RULE_TYPE__DROP:
-        return &sc->Drop; 
-
-    case RULE_TYPE__SDROP:
-        return &sc->SDrop;
-
-    case RULE_TYPE__REJECT:
-        return &sc->Reject;
+    case RULE_TYPE__NONE:
+        ParseError("unknown rule type '%s'", s);
+        break;
 
     default:
         break;
     }
-    return nullptr;
+    return rt;
 }
 
-// FIXIT find this a better home
+ListHead* get_rule_list(SnortConfig* sc, const char* s)
+{
+    const RuleListNode* p = sc->rule_lists;
+
+    while ( p && strcmp(p->name, s) )
+        p = p->next;
+    
+    return p ? p->RuleList : nullptr;
+}
+
+// FIXIT-L find this a better home
 void AddRuleState(SnortConfig* sc, const RuleState& rs)
 {
     if (sc == NULL)
@@ -328,7 +310,7 @@ void ParseConfigFile(SnortConfig *sc, const char *fname)
 
     if ( !fs )
     {
-        ParseError("unable to open rules file '%s': %s.\n",
+        ParseError("unable to open rules file '%s': %s",
             fname, get_error(errno));
         return;
     }

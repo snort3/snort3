@@ -1,5 +1,5 @@
 /*
-**  Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -41,7 +41,7 @@ using namespace std;
 #include "ips_manager.h"
 #include "module_manager.h"
 #include "mpse_manager.h"
-#include "packet_manager.h"
+#include "codec_manager.h"
 #include "script_manager.h"
 #include "so_manager.h"
 
@@ -68,9 +68,9 @@ using namespace std;
 #include "parser/parser.h"
 
 #if defined(LINUX)
-static const char* lib_ext = ".so";
+#define lib_ext ".so"
 #else
-static const char* lib_ext = ".dylib";
+#define lib_ext ".dylib"
 #endif
 
 struct Symbol
@@ -79,9 +79,11 @@ struct Symbol
     unsigned version;
 };
 
+#if 1
+// sequence must match PlugType definition
+// compiler catches too many but not too few
 static Symbol symbols[PT_MAX] =
 {
-    // sequence must match PlugType definition
     { "data", 0 },
     { "codec", CDAPI_VERSION },
     { "inspector", INSAPI_VERSION },
@@ -91,7 +93,32 @@ static Symbol symbols[PT_MAX] =
     { "so_rule", SOAPI_VERSION },
     { "logger", LOGAPI_VERSION }
 };
- 
+#else 
+// this gets around the sequence issue with some compilers
+// but does not fail if we are missing an entry :(
+#define stringify(name) # name
+static Symbol symbols[PT_MAX] =
+{
+    [PT_DATA] = { stringify(PT_DATA), 0 },
+    [PT_CODEC] = { stringify(PT_CODEC), CDAPI_VERSION },
+    [PT_INSPECTOR] = { stringify(PT_INSPECTOR), INSAPI_VERSION },
+    [PT_IPS_ACTION] = { stringify(PT_IPS_ACTION), ACTAPI_VERSION },
+    [PT_IPS_OPTION] = { stringify(PT_IPS_OPTION), IPSAPI_VERSION },
+    [PT_SEARCH_ENGINE] = { stringify(PT_SEARCH_ENGINE), SEAPI_VERSION },
+    [PT_SO_RULE] = { stringify(PT_SO_RULE), SOAPI_VERSION },
+    [PT_LOGGER] = { stringify(PT_LOGGER), LOGAPI_VERSION }
+};
+#endif
+
+PlugType PluginManager::get_type(const char* s)
+{
+    for ( int i = 0; i < PT_MAX; i++ )
+        if ( !strcmp(s, symbols[i].name) )
+            return (PlugType)i;
+
+    return PT_MAX;
+}
+
 const char* PluginManager::get_type_name(PlugType pt)
 {
     if ( pt >= PT_MAX )
@@ -107,7 +134,9 @@ const char* PluginManager::get_current_plugin()
 
 struct Plugin
 {
+    string source;
     string key;
+
     const BaseApi* api;
     void* handle;
 
@@ -115,7 +144,7 @@ struct Plugin
     { clear(); };
 
     void clear()
-    { key.clear(); api = nullptr; handle = nullptr; };
+    { source.clear(); key.clear(); api = nullptr; handle = nullptr; };
 };
 
 typedef map<string, Plugin> PlugMap;
@@ -127,7 +156,7 @@ struct RefCount
 
     RefCount() { count = 0; };
 
-    // FIXIT fails on fatal error
+    // FIXIT-L fails on fatal error
     //~RefCount() { assert(!count); };
 };
 
@@ -142,7 +171,7 @@ static void set_key(string& key, Symbol* sym, const char* name)
 }
 
 static bool register_plugin(
-    const BaseApi* api, void* handle = nullptr)
+    const BaseApi* api, void* handle, const char* file)
 {
     if ( api->type >= PT_MAX )
         return false;
@@ -171,6 +200,7 @@ static bool register_plugin(
     p.key = key;
     p.api = api;
     p.handle = handle;
+    p.source = file;
 
     if ( handle )
         ++ref_map[handle].count;
@@ -178,13 +208,14 @@ static bool register_plugin(
     return true;
 }
 
-static void load_list(const BaseApi** api, void* handle = nullptr)
+static void load_list(
+    const BaseApi** api, void* handle = nullptr, const char* file = "static")
 {
     bool keep = false;
 
     while ( *api )
     {
-        keep = register_plugin(*api, handle) || keep;
+        keep = register_plugin(*api, handle, file) || keep;
         ++api;
     }
     if ( handle && !keep )
@@ -211,7 +242,7 @@ static bool load_lib(const char* file)
         dlclose(handle);
         return false;
     }
-    load_list(api, handle);
+    load_list(api, handle, file);
     return true;
 }
 
@@ -230,31 +261,31 @@ static void add_plugin(Plugin& p)
         break;
 
     case PT_CODEC:
-        PacketManager::add_plugin((CodecApi*)p.api);
-        break;
-
-    case PT_LOGGER:
-        EventManager::add_plugin((LogApi*)p.api);
-        break;
-
-    case PT_IPS_OPTION:
-        IpsManager::add_plugin((IpsApi*)p.api);
-        break;
-
-    case PT_SO_RULE:
-        SoManager::add_plugin((SoApi*)p.api);
+        CodecManager::add_plugin((CodecApi*)p.api);
         break;
 
     case PT_INSPECTOR:
         InspectorManager::add_plugin((InspectApi*)p.api);
         break;
 
+    case PT_IPS_ACTION:
+        ActionManager::add_plugin((ActionApi*)p.api);
+        break;
+
+    case PT_IPS_OPTION:
+        IpsManager::add_plugin((IpsApi*)p.api);
+        break;
+
     case PT_SEARCH_ENGINE:
         MpseManager::add_plugin((MpseApi*)p.api);
         break;
 
-    case PT_IPS_ACTION:
-        ActionManager::add_plugin((ActionApi*)p.api);
+    case PT_SO_RULE:
+        SoManager::add_plugin((SoApi*)p.api);
+        break;
+
+    case PT_LOGGER:
+        EventManager::add_plugin((LogApi*)p.api);
         break;
 
     default:
@@ -315,6 +346,7 @@ static void unload_plugins()
 
 void PluginManager::load_plugins(const char* paths)
 {
+    // builtins
     load_list(codecs);
     load_list(ips_actions);
     load_list(ips_options);
@@ -323,13 +355,17 @@ void PluginManager::load_plugins(const char* paths)
     load_list(service_inspectors);
     load_list(search_engines);
     load_list(loggers);
+
+    // plugins
     ::load_plugins(paths);
-    load_list(ScriptManager::get_ips_options());
+
+    // scripts
+    // FIXIT-L need path to script for --list-plugins
+    load_list(ScriptManager::get_plugins());
+
     add_plugins();
 }
 
-// FIXIT some plugins don't have modules; consider adding them
-// for stray parameters, perfstats, documentation, etc.
 void PluginManager::list_plugins()
 {
     PlugMap::iterator it;
@@ -338,17 +374,31 @@ void PluginManager::list_plugins()
     {
         Plugin& p = it->second;
         cout << Markup::item();
-        cout << p.key;
-        if ( p.api->mod_ctor )
-            cout << " (module)";
+        cout << Markup::escape(p.key);
+        cout << " v" << p.api->version;
+        cout << " " << p.source;
         cout << endl;
+    }
+}
+
+void PluginManager::show_plugins()
+{
+    PlugMap::iterator it;
+
+    for ( it = plug_map.begin(); it != plug_map.end(); ++it )
+    {
+        Plugin& p = it->second;
+
+        cout << Markup::item();
+        cout << Markup::emphasis(p.key);
+        cout << ": " << p.api->help << endl;
     }
 }
 
 void PluginManager::dump_plugins()
 {
     DataManager::dump_plugins();
-    PacketManager::dump_plugins();
+    CodecManager::dump_plugins();
     InspectorManager::dump_plugins();
     MpseManager::dump_plugins();
     IpsManager::dump_plugins();
@@ -365,7 +415,7 @@ void PluginManager::release_plugins ()
     IpsManager::release_plugins();
     SoManager::release_plugins();
     MpseManager::release_plugins();
-    PacketManager::release_plugins();
+    CodecManager::release_plugins();
 
     // must follow the above
     DataManager::release_plugins();
@@ -399,7 +449,7 @@ void PluginManager::instantiate(
         break;
 
     case PT_CODEC:
-        PacketManager::instantiate((CodecApi*)api, mod, sc);
+        CodecManager::instantiate((CodecApi*)api, mod, sc);
         break;
 
     case PT_INSPECTOR:
@@ -411,6 +461,7 @@ void PluginManager::instantiate(
         break;
 
     case PT_IPS_OPTION:
+        // do not instantiate here; done later
         //IpsManager::instantiate((IpsApi*)api, mod, sc);
         break;
 
@@ -419,6 +470,7 @@ void PluginManager::instantiate(
         break;
 
     case PT_SO_RULE:
+        // do not instantiate here; done later
         //IpsManager::instantiate((SoApi*)api, mod, sc);
         break;
 
@@ -430,5 +482,19 @@ void PluginManager::instantiate(
         assert(false);
         break;
     }
+}
+
+void PluginManager::instantiate(
+    const BaseApi* api, Module* mod, SnortConfig* sc, const char* name)
+{
+    if ( api->type == PT_INSPECTOR )
+        InspectorManager::instantiate((InspectApi*)api, mod, sc, name);
+
+    else if ( api->type == PT_DATA )
+        // FIXIT-H instantiate PT_DATA with name
+        DataManager::instantiate((DataApi*)api, mod, sc/*, name*/);
+
+    else
+        assert(false);
 }
 

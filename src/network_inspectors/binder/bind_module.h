@@ -27,7 +27,16 @@
 #include "framework/module.h"
 #include "main/thread.h"
 
-extern THREAD_LOCAL SimpleStats bstats;
+#define BIND_NAME "binder"
+#define BIND_HELP "configure processing based on CIDRs, ports, services, etc."
+
+struct BindStats
+{
+    PegCount packets;
+    PegCount verdicts[3];
+};
+
+extern THREAD_LOCAL BindStats bstats;
 extern THREAD_LOCAL ProfileStats bindPerfStats;
 struct Binding;
 
@@ -37,15 +46,18 @@ public:
     BinderModule();
     ~BinderModule();
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
-    const char** get_pegs() const;
-    PegCount* get_counts() const;
-    ProfileStats* get_profile() const;
+    void add(const char* service, const char* type);
+    void add(unsigned proto, const char* type);
 
-    std::vector<Binding*> get_data();
+    const char** get_pegs() const override;
+    PegCount* get_counts() const override;
+    ProfileStats* get_profile() const override;
+
+    std::vector<Binding*>& get_data();
 private:
     Binding* work;
     std::vector<Binding*> bindings;

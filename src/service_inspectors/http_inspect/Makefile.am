@@ -8,7 +8,7 @@ hi_client.cc hi_client.h \
 hi_client_norm.cc hi_client_norm.h \
 hi_client_stateful.h \
 hi_cmd_lookup.cc hi_cmd_lookup.h \
-hi_events.h \
+hi_events.cc hi_events.h \
 hi_include.h \
 hi_mi.cc hi_mi.h \
 hi_module.cc hi_module.h \
@@ -27,16 +27,17 @@ hi_util_hbm.cc hi_util_hbm.h \
 hi_util_kmap.cc hi_util_kmap.h \
 hi_util_xmalloc.cc hi_util_xmalloc.h
 
-if STATIC_INSPECTORS
+# can't be dynamic yet
+#if STATIC_INSPECTORS
 noinst_LIBRARIES = libhttp_inspect.a
 libhttp_inspect_a_SOURCES = $(file_list)
-else
-shlibdir = $(pkglibdir)/inspectors
-shlib_LTLIBRARIES = libhttp_inspect.la
-libhttp_inspect_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libhttp_inspect_la_LDFLAGS = -export-dynamic -shared
-libhttp_inspect_la_SOURCES = $(file_list)
-endif
+#else
+#shlibdir = $(pkglibdir)/inspectors
+#shlib_LTLIBRARIES = libhttp_inspect.la
+#libhttp_inspect_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+#libhttp_inspect_la_LDFLAGS = -export-dynamic -shared
+#libhttp_inspect_la_SOURCES = $(file_list)
+#endif
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

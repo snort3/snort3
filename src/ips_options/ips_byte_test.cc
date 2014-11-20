@@ -122,9 +122,8 @@ using namespace std;
 
 static THREAD_LOCAL ProfileStats byteTestPerfStats;
 
-static const char* s_name = "byte_test";
+#define s_name "byte_test"
 
-// FIXIT cloned from sf_snort_plugin_api.h
 #define CHECK_EQ            0
 #define CHECK_NEQ           1
 #define CHECK_LT            2
@@ -134,19 +133,8 @@ static const char* s_name = "byte_test";
 #define CHECK_AND           6
 #define CHECK_XOR           7
 #define CHECK_ALL           8
-#define CHECK_ATLEASTONE    9
+#define CHECK_GT0    9
 #define CHECK_NONE          10
-
-#define BT_LESS_THAN            CHECK_LT
-#define BT_EQUALS               CHECK_EQ
-#define BT_GREATER_THAN         CHECK_GT
-#define BT_AND                  CHECK_AND
-#define BT_XOR                  CHECK_XOR
-#define BT_GREATER_THAN_EQUAL   CHECK_GTE
-#define BT_LESS_THAN_EQUAL      CHECK_LTE
-#define BT_CHECK_ALL            CHECK_ALL
-#define BT_CHECK_ATLEASTONE     CHECK_ATLEASTONE
-#define BT_CHECK_NONE           CHECK_NONE
 
 #define BIG    0
 #define LITTLE 1
@@ -174,13 +162,13 @@ public:
 
     ~ByteTestOption() { };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    bool is_relative()
+    bool is_relative() override
     { return ( config.relative_flag == 1 ); };
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
 private:
     ByteTestData config;
@@ -335,45 +323,45 @@ int ByteTestOption::eval(Cursor& c, Packet*)
 
     switch(btd->opcode)
     {
-        case BT_LESS_THAN: if(value < cmp_value)
-                               success = 1;
-                           break;
+    case CHECK_LT:
+        success = (value < cmp_value);
+        break;
 
-        case BT_EQUALS: if(value == cmp_value)
-                            success = 1;
-                        break;
+    case CHECK_EQ:
+        success = (value == cmp_value);
+        break;
 
-        case BT_GREATER_THAN: if(value > cmp_value)
-                                  success = 1;
-                              break;
+    case CHECK_GT:
+        success = (value > cmp_value);
+        break;
 
-        case BT_AND: if ((value & cmp_value) > 0)
-                         success = 1;
-                     break;
+    case CHECK_AND:
+        success =  ((value & cmp_value) > 0);
+        break;
 
-        case BT_XOR: if ((value ^ cmp_value) > 0)
-                        success = 1;
-                    break;
+    case CHECK_XOR:
+        success =  ((value ^ cmp_value) > 0);
+        break;
 
-        case BT_GREATER_THAN_EQUAL: if (value >= cmp_value)
-                                        success = 1;
-                                    break;
+    case CHECK_GTE:
+        success =  (value >= cmp_value);
+        break;
 
-        case BT_LESS_THAN_EQUAL: if (value <= cmp_value)
-                                        success = 1;
-                                 break;
+    case CHECK_LTE:
+        success =  (value <= cmp_value);
+        break;
 
-        case BT_CHECK_ALL: if ((value & cmp_value) == cmp_value)
-                               success = 1;
-                           break;
+    case CHECK_ALL:
+        success =  ((value & cmp_value) == cmp_value);
+        break;
 
-        case BT_CHECK_ATLEASTONE: if ((value & cmp_value) != 0)
-                                      success = 1;
-                                  break;
+    case CHECK_GT0:
+        success =  ((value & cmp_value) != 0);
+        break;
 
-        case BT_CHECK_NONE: if ((value & cmp_value) == 0)
-                                success = 1;
-                            break;
+    case CHECK_NONE:
+        success =  ((value & cmp_value) == 0);
+        break;
     }
 
     if (btd->not_flag)
@@ -411,36 +399,36 @@ static void parse_operator(const char* cptr, ByteTestData& idx)
 
     if (idx.not_flag && strlen(cptr) == 0)
     {
-        idx.opcode = BT_EQUALS;
+        idx.opcode = CHECK_EQ;
     }
     else
     {
         /* set the opcode */
         switch(*cptr)
         {
-            case '<': idx.opcode = BT_LESS_THAN;
+            case '<': idx.opcode = CHECK_LT;
                       cptr++;
                       if (*cptr == '=')
-                          idx.opcode = BT_LESS_THAN_EQUAL;
+                          idx.opcode = CHECK_LTE;
                       else
                           cptr--;
                       break;
 
-            case '=': idx.opcode = BT_EQUALS;
+            case '=': idx.opcode = CHECK_EQ;
                       break;
 
-            case '>': idx.opcode = BT_GREATER_THAN;
+            case '>': idx.opcode = CHECK_GT;
                       cptr++;
                       if (*cptr == '=')
-                          idx.opcode = BT_GREATER_THAN_EQUAL;
+                          idx.opcode = CHECK_GTE;
                       else
                           cptr--;
                       break;
 
-            case '&': idx.opcode = BT_AND;
+            case '&': idx.opcode = CHECK_AND;
                       break;
 
-            case '^': idx.opcode = BT_XOR;
+            case '^': idx.opcode = CHECK_XOR;
                       break;
 
             default: ParseError(
@@ -453,7 +441,7 @@ static void parse_operator(const char* cptr, ByteTestData& idx)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter jump_params[] =
+static const Parameter s_params[] =
 {
     { "~count", Parameter::PT_INT, "1:10", nullptr,
       "number of bytes to pick up from the buffer" },
@@ -494,16 +482,19 @@ static const Parameter jump_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to convert data to integer and compare"
+
 class ByteTestModule : public Module
 {
 public:
-    ByteTestModule() : Module(s_name, jump_params) { };
+    ByteTestModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &byteTestPerfStats; };
 
     ByteTestData data;
@@ -521,7 +512,9 @@ bool ByteTestModule::begin(const char*, int, SnortConfig*)
 
 bool ByteTestModule::end(const char*, int, SnortConfig*)
 {
-    if ( off_var.size() )
+    if ( off_var.empty() )
+        data.offset_var = BYTE_EXTRACT_NO_VAR;
+    else
     {
         data.offset_var = GetVarByName(off_var.c_str());
 
@@ -531,7 +524,9 @@ bool ByteTestModule::end(const char*, int, SnortConfig*)
             return false;
         }
     }
-    if ( cmp_var.size() )
+    if ( cmp_var.empty() )
+        data.cmp_value_var = BYTE_EXTRACT_NO_VAR;
+    else
     {
         data.cmp_value_var = GetVarByName(cmp_var.c_str());
 
@@ -566,7 +561,7 @@ bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
     {
         long n;
         if ( v.strtol(n) )
-            data.offset = n;
+            data.cmp_value = n;
         else
             cmp_var = v.get_string();
     }
@@ -582,10 +577,10 @@ bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
         data.relative_flag = 1;
 
     else if ( v.is("big") )
-        data.endianess |= ENDIAN_LITTLE;
+        data.endianess |= ENDIAN_BIG;
 
     else if ( v.is("little") )
-        data.endianess |= ENDIAN_BIG;
+        data.endianess |= ENDIAN_LITTLE;
 
     else if ( v.is("dce") )
         data.endianess |= ENDIAN_FUNC;
@@ -640,6 +635,7 @@ static const IpsApi byte_test_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

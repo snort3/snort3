@@ -1,95 +1,130 @@
-/****************************************************************************
- *
- * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2003-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
+/*
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+// nhttp_msg_section.cc author Tom Peters <thopeter@cisco.com>
 
-//
-//  @author     Tom Peters <thopeter@cisco.com>
-//
-//  @brief      NHttpMsgSection class is virtual parent for classes that analyze individual HTTP message sections.
-//
-
-#include <assert.h>
 #include <string.h>
 #include <sys/types.h>
 #include <stdio.h>
 
-#include "snort.h"
+#include "main/snort.h"
+#include "detection/detection_util.h"
+
 #include "nhttp_enum.h"
+#include "nhttp_transaction.h"
 #include "nhttp_msg_section.h"
+#include "nhttp_msg_request.h"
+#include "nhttp_msg_status.h"
+#include "nhttp_msg_head_shared.h"
 
 using namespace NHttpEnums;
 
-NHttpMsgSection::NHttpMsgSection(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
-   sessionData(sessionData_), sourceId(sourceId_), tcpClose(sessionData->tcpClose[sourceId]), scratchPad(2*bufSize+500),
-   infractions(sessionData->infractions[sourceId]), eventsGenerated(sessionData->eventsGenerated[sourceId]),
-   versionId(sessionData->versionId[sourceId]), methodId(sessionData->methodId[sourceId]), statusCodeNum(sessionData->statusCodeNum[sourceId])
-{
-    rawBuf = new uint8_t[bufSize];
-    memcpy(rawBuf, buffer, bufSize);
-    msgText.start = rawBuf;
-    msgText.length = bufSize;
-}
+NHttpMsgSection::NHttpMsgSection(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+     SourceId source_id_, bool buf_owner) :
+   msg_text(buf_size, buffer),
+   session_data(session_data_),
+   source_id(source_id_),
+   transaction(NHttpTransaction::attach_my_transaction(session_data, source_id)),
+   tcp_close(session_data->tcp_close[source_id]),
+   scratch_pad(2*buf_size+500),
+   infractions(session_data->infractions[source_id]),
+   version_id(session_data->version_id[source_id]),
+   method_id((source_id == SRC_CLIENT) ? session_data->method_id : METH__NOTPRESENT),
+   status_code_num((source_id == SRC_SERVER) ? session_data->status_code_num : STAT_NOTPRESENT),
+   delete_msg_on_destruct(buf_owner)
+{}
 
-// Return the number of octets before the first CRLF. Return length if CRLF not present.
-//
-// wrappable: CRLF does not count in a header field when immediately followed by <SP> or <LF>. These whitespace characters
-// at the beginning of the next line indicate that the previous header has wrapped and is continuing on the next line.
-uint32_t NHttpMsgSection::findCrlf(const uint8_t* buffer, int32_t length, bool wrappable) {
-    for (int32_t k=0; k < length-1; k++) {
-        if ((buffer[k] == '\r') && (buffer[k+1] == '\n'))
-            if (!wrappable || (k+2 >= length) || ((buffer[k+2] != ' ') && (buffer[k+2] != '\t'))) return k;
-    }
-    return length;
-}
-
-void NHttpMsgSection::printMessageTitle(FILE *output, const char *title) const {
+void NHttpMsgSection::print_message_title(FILE *output, const char *title) const {
     fprintf(output, "HTTP message %s:\n", title);
-    msgText.print(output, "Input");
+    msg_text.print(output, "Input");
 }
 
-void NHttpMsgSection::printMessageWrapup(FILE *output) const {
-    fprintf(output, "Infractions: %" PRIx64 ", Events: %" PRIx64 ", TCP Close: %s\n", infractions, eventsGenerated,
-       tcpClose ? "True" : "False");
+void NHttpMsgSection::print_message_wrapup(FILE *output) const {
+    fprintf(output, "Infractions: %" PRIx64 ", Events: %" PRIx64 ", TCP Close: %s\n", infractions, events_generated,
+       tcp_close ? "True" : "False");
     fprintf(output, "Interface to old clients. http_mask = %x.\n", http_mask);
     for (int i=0; i < HTTP_BUFFER_MAX; i++) {
         if ((1 << i) & http_mask) Field(http_buffer[i].length, http_buffer[i].buf).print(output, http_buffer_name[i]);
     }
     fprintf(output, "\n");
+    session_data->show(output);
+    fprintf(output, "\n");
 }
 
-void NHttpMsgSection::createEvent(EventSid sid) {
-    const uint32_t NHTTP_GID = 119;
+void NHttpMsgSection::create_event(EventSid sid) {
     SnortEventqAdd(NHTTP_GID, (uint32_t)sid);
-    eventsGenerated |= (1 << (sid-1));
+    events_generated |= (1 << (sid-1));
 }
 
+void NHttpMsgSection::legacy_request() {
+    NHttpMsgRequest* const request = transaction->get_request();
+    if (request == nullptr) return;
+    if (request->get_method().length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_METHOD, request->get_method().start, (unsigned)request->get_method().length);
+    }
+    if (request->get_uri().length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_RAW_URI, request->get_uri().start, (unsigned)request->get_uri().length);
+    }
+    if (request->get_uri_norm_legacy().length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_URI, request->get_uri_norm_legacy().start, (unsigned)request->get_uri_norm_legacy().length);
+    }
+}
 
+void NHttpMsgSection::legacy_status() {
+    NHttpMsgStatus* const status = transaction->get_status();
+    if (status == nullptr) return;
+    if (status->get_status_code().length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_STAT_CODE, status->get_status_code().start, (unsigned)status->get_status_code().length);
+    }
+    if (status->get_reason_phrase().length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_STAT_MSG, status->get_reason_phrase().start, (unsigned)status->get_reason_phrase().length);
+    }
+}
 
+void NHttpMsgSection::legacy_header(bool use_trailer) {
+    NHttpMsgHeadShared* const header = use_trailer ?
+      (NHttpMsgHeadShared*)transaction->get_trailer(source_id) :
+      (NHttpMsgHeadShared*)transaction->get_header(source_id);
+    if (header == nullptr) return;
 
+    if (header->get_headers().length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_RAW_HEADER, header->get_headers().start, (unsigned)header->get_headers().length);
+        SetHttpBuffer(HTTP_BUFFER_HEADER, header->get_headers().start, (unsigned)header->get_headers().length);
+    }
 
+    legacy_cookie(header, source_id);
+ }
 
+// FIXIT-M there can be multiple cookie headers in one message.
+void NHttpMsgSection::legacy_cookie(NHttpMsgHeadShared* header, SourceId source_id) {
+    HeaderId cookie_head = (source_id == SRC_CLIENT) ? HEAD_COOKIE : HEAD_SET_COOKIE;
 
+    for (int k=0; k < header->get_num_headers(); k++) {
+        if (header->get_header_name_id(k) == cookie_head) {
+            if (header->get_header_value(k).length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_COOKIE, header->get_header_value(k).start, (unsigned)header->get_header_value(k).length);
+            break;
+        }
+    }
 
-
-
+    if (header->get_header_value_norm(cookie_head).length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_COOKIE, header->get_header_value_norm(cookie_head).start, (unsigned)header->get_header_value_norm(cookie_head).length);
+    }
+}
 
 
 

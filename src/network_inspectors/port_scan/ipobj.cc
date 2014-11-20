@@ -42,6 +42,7 @@
 
 #include "util.h"
 #include "snort_bounds.h"
+#include "sfip/sf_ip.h"
 
 /*
    IP COLLECTION INTERFACE
@@ -72,10 +73,11 @@ IPSET * ipset_copy( IPSET *ipsp )
 {
     IPSET * newset = ipset_new();
     IP_PORT *ip_port;
+    SF_LNODE* cursor;
 
-    for(ip_port =(IP_PORT*)sflist_first( &ipsp->ip_list );
+    for(ip_port =(IP_PORT*)sflist_first( &ipsp->ip_list, &cursor );
         ip_port !=NULL;
-        ip_port =(IP_PORT*)sflist_next( &ipsp->ip_list ) )
+        ip_port =(IP_PORT*)sflist_next( &cursor ) )
     {
         ipset_add(newset, &ip_port->ip, &ip_port->portset, ip_port->notflag);
     }
@@ -86,19 +88,20 @@ void ipset_free( IPSET * ipc )
 {
     if (ipc)
     {
+        SF_LNODE* cursor;
+        IP_PORT *p = (IP_PORT *) sflist_first(&ipc->ip_list, &cursor);
 
-        IP_PORT *p = (IP_PORT *) sflist_first(&ipc->ip_list);
         while ( p )
         {
             sflist_static_free_all(&p->portset.port_list, free);
-            p = (IP_PORT *) sflist_next(&ipc->ip_list);
+            p = (IP_PORT *) sflist_next(&cursor);
         }
         sflist_static_free_all(&ipc->ip_list, free);
         free( ipc );
     }
 }
 
-int     ipset_add     ( IPSET * ipset, sfip_t *ip, void * vport, int notflag)
+int ipset_add (IPSET * ipset, sfip_t *ip, void * vport, int notflag)
 {
     if( !ipset ) return -1;
 
@@ -118,7 +121,7 @@ int     ipset_add     ( IPSET * ipset, sfip_t *ip, void * vport, int notflag)
     return 0;
 }
 
-int ipset_contains( IPSET * ipc, sfip_t * ip, void *port)
+int ipset_contains( IPSET *ipc, const sfip_t *ip, void *port)
 {
     PORTRANGE *pr;
     unsigned short portu;
@@ -131,16 +134,19 @@ int ipset_contains( IPSET * ipc, sfip_t * ip, void *port)
     else
         portu = 0;
 
+    SF_LNODE* cur_ip;
 
-    for(p =(IP_PORT*)sflist_first( &ipc->ip_list );
+    for(p =(IP_PORT*)sflist_first( &ipc->ip_list, &cur_ip );
         p!=0;
-        p =(IP_PORT*)sflist_next( &ipc->ip_list ) )
+        p =(IP_PORT*)sflist_next( &cur_ip ) )
     {
         if( sfip_contains(&p->ip, ip) == SFIP_CONTAINS)
         {
-            for( pr=(PORTRANGE*)sflist_first(&p->portset.port_list);
+            SF_LNODE* cur_port;
+
+            for( pr=(PORTRANGE*)sflist_first(&p->portset.port_list, &cur_port);
                  pr != 0;
-                 pr=(PORTRANGE*)sflist_next(&p->portset.port_list) )
+                 pr=(PORTRANGE*)sflist_next(&cur_port) )
             {
                 /*
                  * If the matching IP has a wildcard port (pr->port_hi == 0 )
@@ -168,20 +174,20 @@ int ipset_print( IPSET * ipc )
 
     {
         IP_PORT * p;
-
         printf("IPSET\n");
+        SF_LNODE* cur_ip;
 
-        for( p =(IP_PORT*)sflist_first( &ipc->ip_list );
+        for( p =(IP_PORT*)sflist_first( &ipc->ip_list, &cur_ip );
              p!=0;
-             p =(IP_PORT*)sflist_next( &ipc->ip_list ) )
+             p =(IP_PORT*)sflist_next( &cur_ip ) )
         {
             SnortSnprintf(ip_str, 80, "%s", sfip_to_str(&p->ip));
-
             printf("CIDR BLOCK: %c%s", p->notflag ? '!' : ' ', ip_str);
+            SF_LNODE* cur_port;
 
-            for( pr=(PORTRANGE*)sflist_first(&p->portset.port_list);
+            for( pr=(PORTRANGE*)sflist_first(&p->portset.port_list, &cur_port);
                  pr != 0;
-                 pr=(PORTRANGE*)sflist_next(&p->portset.port_list) )
+                 pr=(PORTRANGE*)sflist_next(&cur_port) )
             {
                 printf("  %d", pr->port_lo);
                 if ( pr->port_hi != pr->port_lo )
@@ -489,7 +495,7 @@ void test_ip4_parsing(void)
             printf("%c", not_flag ? '!' : ' ');
             printf("%s/", inet_ntoa(*(struct in_addr *) &host));
             printf("%s", inet_ntoa(*(struct in_addr *) &mask));
-            printf(" parsed successfully!\n");
+            printf(" parsed successfully\n");
         }
 
         /* host byte order stuff */

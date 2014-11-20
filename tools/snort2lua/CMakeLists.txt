@@ -1,5 +1,4 @@
 
-
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_subdirectory(data)
@@ -8,7 +7,7 @@ add_subdirectory(preprocessor_states)
 add_subdirectory(output_states)
 add_subdirectory(config_states)
 add_subdirectory(rule_states)
-add_subdirectory(utils)
+add_subdirectory(helpers)
 
 if (BUILD_UNIT_TESTS)
 if (0)
@@ -18,7 +17,7 @@ endif()
 
 add_executable( snort2lua
     conversion_state.h
-    option_parser.h
+    conversion_defines.h
     init_state.h
     snort2lua.cc
     init_state.cc
@@ -26,7 +25,7 @@ add_executable( snort2lua
 
 target_link_libraries( snort2lua
     conversion_data
-    snort2lua_utils
+    snort2lua_helpers
     keyword_states
     output_states
     preprocessor_states

@@ -17,12 +17,11 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "actions.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+#include "actions/actions.h"
 #include "snort.h"
 #include "snort_types.h"
 #include "snort_debug.h"
@@ -53,7 +52,7 @@ int AlertAction(Packet* p, const OptTreeNode* otn)
     /* Call OptTreeNode specific output functions */
     if(otn->outputFuncs)
     {
-        ListHead lh;  // FIXIT "kinda hackish"
+        ListHead lh;  // FIXIT-L "kinda hackish"
         lh.LogList = otn->outputFuncs;
         CallLogFuncs(p, otn, &lh);
     }
@@ -121,10 +120,10 @@ static int LogAction(Packet* p, const OptTreeNode* otn)
     return 1;
 }
 
-static const char* rule_type[RULE_TYPE__MAX] =
+static const char* const rule_type[RULE_TYPE__MAX] =
 {
     "none", "alert", "drop", 
-    "log", "pass", "reject", "sdrop"
+    "log", "pass", "sdrop"
 };
 
 const char* get_action_string(int action)
@@ -154,9 +153,6 @@ RuleType get_action_type(const char* s)
 
     else if ( !strcasecmp(s, ACTION_PASS) )
         return RULE_TYPE__PASS;
-
-    else if ( !strcasecmp(s, ACTION_REJECT) )
-        return RULE_TYPE__REJECT;
 
     else if ( !strcasecmp(s, ACTION_SDROP) )
         return RULE_TYPE__SDROP;
@@ -192,12 +188,6 @@ void action_execute(int action, Packet* p, OptTreeNode* otn, uint16_t event_id)
 
         case RULE_TYPE__SDROP:
             SDropAction(p, otn);
-            break;
-
-        case RULE_TYPE__REJECT:
-            DropAction(p, otn);
-            Active_QueueReject();
-            SetTags(p, otn, event_id);
             break;
 
         default:

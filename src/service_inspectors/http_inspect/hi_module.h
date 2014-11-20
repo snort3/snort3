@@ -22,12 +22,17 @@
 #ifndef HI_MODULE_H
 #define HI_MODULE_H
 
+#include <string>
+
 #include "framework/module.h"
 #include "hi_ui_config.h"
 #include "hi_events.h"
 
-#define GLOBAL_KEYWORD "http_inspect"
-#define SERVER_KEYWORD "http_server"
+#define GLOBAL_KEYWORD "http_global"
+#define SERVER_KEYWORD "http_inspect"
+
+#define GLOBAL_HELP "shared HTTP inspector settings"
+#define SERVER_HELP "main HTTP inspector module"
 
 extern THREAD_LOCAL ProfileStats hiPerfStats;
 
@@ -37,17 +42,17 @@ public:
     HttpInspectModule();
     ~HttpInspectModule();
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
-    unsigned get_gid() const
+    unsigned get_gid() const override
     { return GID_HTTP_CLIENT; };
 
-    const RuleMap* get_rules() const;
-    const char** get_pegs() const;
-    PegCount* get_counts() const;
-    ProfileStats* get_profile() const;
+    const RuleMap* get_rules() const override;
+    const char** get_pegs() const override;
+    PegCount* get_counts() const override;
+    ProfileStats* get_profile() const override;
 
     HTTPINSPECT_GLOBAL_CONF* get_data();
 
@@ -61,19 +66,20 @@ public:
     HttpServerModule();
     ~HttpServerModule();
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
-    const RuleMap* get_rules() const;
+    const RuleMap* get_rules() const override;
 
-    unsigned get_gid() const
+    unsigned get_gid() const override
     { return GID_HTTP_SERVER; };
 
     HTTPINSPECT_CONF* get_data();
 
 private:
     HTTPINSPECT_CONF* server;
+    std::string methods;
 };
 
 #endif

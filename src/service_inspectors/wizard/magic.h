@@ -48,7 +48,7 @@ public:
     virtual ~MagicBook();
 
     virtual bool add_spell(const char* key, const char* val) = 0;
-    virtual const char* find_spell(const uint8_t*, unsigned len) const = 0;
+    virtual const char* find_spell(const uint8_t*, unsigned len, const MagicPage*&) const = 0;
 
     const MagicPage* page1()
     { return root; };
@@ -70,12 +70,12 @@ public:
     ~SpellBook() { };
 
     bool add_spell(const char*, const char*);
-    const char* find_spell(const uint8_t*, unsigned len) const;
+    const char* find_spell(const uint8_t*, unsigned len, const MagicPage*&) const;
 
 private:
     bool translate(const char*, HexVector&);
     void add_spell(const char*, const char*, HexVector&, unsigned, MagicPage*);
-    MagicPage* find_spell(const uint8_t*, unsigned, MagicPage*, unsigned = 0) const;
+    const MagicPage* find_spell(const uint8_t*, unsigned, const MagicPage*, unsigned) const;
 };
 
 //-------------------------------------------------------------------------
@@ -90,12 +90,12 @@ public:
     ~HexBook() { };
 
     bool add_spell(const char*, const char*);
-    const char* find_spell(const uint8_t*, unsigned len) const;
+    const char* find_spell(const uint8_t*, unsigned len, const MagicPage*&) const;
 
 private:
     bool translate(const char*, HexVector&);
     void add_spell(const char*, const char*, HexVector&, unsigned, MagicPage*);
-    MagicPage* find_spell(const uint8_t*, unsigned, MagicPage*, unsigned = 0) const;
+    const MagicPage* find_spell(const uint8_t*, unsigned, const MagicPage*, unsigned) const;
 };
 
 #endif

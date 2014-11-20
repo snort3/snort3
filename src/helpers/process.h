@@ -34,7 +34,7 @@ enum PigSignal
     PIG_SIG_TERM,
     PIG_SIG_INT,
     PIG_SIG_RELOAD_CONFIG,
-    PIG_SIG_RELOAD_ATTRIBUTES,
+    PIG_SIG_RELOAD_HOSTS,
     PIG_SIG_DUMP_STATS,
     PIG_SIG_ROTATE_STATS,
     PIG_SIG_MAX
@@ -48,6 +48,7 @@ void help_signals();
 
 void daemonize();
 void set_quick_exit(bool);
+void init_main_thread_sig();
 
 #endif
 

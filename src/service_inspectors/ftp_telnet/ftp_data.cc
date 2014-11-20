@@ -49,10 +49,13 @@
 #include "parser.h"
 #include "framework/inspector.h"
 #include "framework/plug_data.h"
-#include "framework/share.h"
 #include "detection/detection_util.h"
+#include "protocols/tcp.h"
 
-static const char* data_key = "ftp_data";
+#define s_name "ftp_data"
+
+#define s_help \
+    "FTP data channel handler"
 
 static THREAD_LOCAL ProfileStats ftpdataPerfStats;
 static THREAD_LOCAL SimpleStats fdstats;
@@ -88,19 +91,18 @@ static void FTPDataProcess(Packet *p, FTP_DATA_SESSION *data_ssn)
 
 static int SnortFTPData(Packet *p)
 {
-    FTP_DATA_SESSION *data_ssn;
-
     if (!p->flow)
         return -1;
 
-    data_ssn = (FTP_DATA_SESSION *)
+    FtpDataFlowData* fd = (FtpDataFlowData*)
         p->flow->get_application_data(FtpFlowData::flow_id);
 
-    if (!PROTO_IS_FTP_DATA(data_ssn))
-        return -2;
+    FTP_DATA_SESSION* data_ssn = fd ? &fd->session : nullptr;
+
+    assert(PROTO_IS_FTP_DATA(data_ssn));
 
     /* Do this now before splitting the work for rebuilt and raw packets. */
-    if ((p->packet_flags & PKT_PDU_TAIL) || (p->tcph->th_flags & TH_FIN))
+    if ((p->packet_flags & PKT_PDU_TAIL) || (p->ptrs.tcph->th_flags & TH_FIN))
         SetFTPDataEOFDirection(p, data_ssn);
 
     /*
@@ -207,24 +209,19 @@ public:
     FtpData() { };
     ~FtpData() { };
 
-    void eval(Packet*);
-};
-
-static const Parameter fd_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+    void eval(Packet*) override;
 };
 
 class FtpDataModule : public Module
 {
 public:
-    FtpDataModule() : Module(data_key, fd_params) { };
+    FtpDataModule() : Module(s_name, s_help) { };
 
-    const char** get_pegs() const;
-    PegCount* get_counts() const;
-    ProfileStats* get_profile() const;
+    const char** get_pegs() const override;
+    PegCount* get_counts() const override;
+    ProfileStats* get_profile() const override;
 
-    bool set(const char*, Value&, SnortConfig*)
+    bool set(const char*, Value&, SnortConfig*) override
     { return false; };
 };
 
@@ -240,7 +237,7 @@ ProfileStats* FtpDataModule::get_profile() const
 void FtpData::eval(Packet* p)
 {
     // precondition - what we registered for
-    assert(IsTCP(p));
+    assert(p->is_tcp());
 
     if ( file_api->get_max_file_depth() < 0 )
         return;
@@ -284,14 +281,15 @@ const InspectApi fd_api =
 {
     {
         PT_INSPECTOR,
-        data_key,
+        s_name,
+        s_help,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor
     },
-    IT_SERVICE,  // FIXIT does this still need to be session??
-    PROTO_BIT__TCP,
+    IT_SERVICE,
+    (uint16_t)PktType::TCP,
     nullptr, // buffers
     "ftp-data",
     fd_init,

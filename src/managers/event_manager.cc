@@ -69,9 +69,7 @@ struct OutputSet
     EHList outputs;
 };
 
-static OutputSet s_alerters;
 static OutputSet s_loggers;
-static OutputSet s_unified;
 
 bool EventManager::alert_enabled = true;
 bool EventManager::log_enabled = true;
@@ -82,14 +80,14 @@ bool EventManager::log_enabled = true;
 
 void EventManager::add_plugin(const LogApi* api)
 {
+    // can't assert - alert_sf_socket operates differently
+    //assert(api->flags & (OUTPUT_TYPE_FLAG__ALERT | OUTPUT_TYPE_FLAG__LOG));
     s_outputs.push_back(new Output(api));
 }
 
 void EventManager::release_plugins()
 {
-    s_alerters.outputs.clear();
     s_loggers.outputs.clear();
-    s_unified.outputs.clear();
 
     for ( auto* p : s_outputs )
         delete p;
@@ -108,18 +106,18 @@ void EventManager::dump_plugins()
 //-------------------------------------------------------------------------
 // lookups
 
-static Output* get_out(const char *keyword)
+static Output* get_out(const char* key)
 {
     for ( auto* p : s_outputs )
-        if ( !strcasecmp(p->api->base.name, keyword) )
+        if ( !strcasecmp(p->api->base.name, key) )
             return p;
 
     return NULL;
 }
 
-unsigned EventManager::get_output_type_flags(char *keyword)
+unsigned EventManager::get_output_type_flags(char* key)
 {
-    Output* p = get_out(keyword);
+    Output* p = get_out(key);
 
     if ( p )
         return p->api->flags;
@@ -154,52 +152,53 @@ void EventManager::copy_outputs(OutputSet* dst, OutputSet* src)
 void EventManager::instantiate(
     Output* p, Module* mod, SnortConfig* sc)
 {
+    bool enabled = false;
+
+    if ( (p->api->flags & OUTPUT_TYPE_FLAG__ALERT) && alert_enabled )
+        enabled = true;
+
+    if ( (p->api->flags & OUTPUT_TYPE_FLAG__LOG) && log_enabled )
+        enabled = true;
+
+    if ( !enabled )
+        return;
+
     p->handler = p->api->ctor(sc, mod);
+    assert(p->handler);
 
-    if ( (p->api->flags & OUTPUT_TYPE_FLAG__ALERT) &&
-        (p->api->flags & OUTPUT_TYPE_FLAG__LOG) )
-    {
-        if ( alert_enabled && log_enabled )
-            s_unified.outputs.push_back(p->handler);
-    }
-    else if ( p->api->flags & OUTPUT_TYPE_FLAG__ALERT )
-    {
-        if ( alert_enabled )
-            s_alerters.outputs.push_back(p->handler);
-    }
-
-    else if ( p->api->flags & OUTPUT_TYPE_FLAG__LOG )
-    {
-        if ( log_enabled )
-            s_loggers.outputs.push_back(p->handler);
-    }
-    else
-        FatalError("logger has no type %s\n", p->api->base.name);
+    p->handler->set_api(p->api);
+    s_loggers.outputs.push_back(p->handler);
 }
 
 // command line outputs
 void EventManager::instantiate(
     const char* name, SnortConfig* sc)
 {
-    Module* mod = ModuleManager::get_module(name);
-    Output* p = get_out(name);
-
-    if ( !mod || !p )
-    {
-        FatalError("unknown logger %s\n", name);
-        return;
-    }
-
-    // emulate a config like name = { }
-    mod->begin(name, 0, sc);
-    mod->end(name, 0, sc);
-
     // override prior outputs
     // (last cmdline option wins)
-    s_alerters.outputs.clear();
     s_loggers.outputs.clear();
-    s_unified.outputs.clear();
 
+    Output* p = get_out(name);
+
+    if ( !p )
+    {
+        ParseError("unknown logger %s\n", name);
+        return;
+    }
+    else if ( p->handler )
+    {
+        // configured by conf
+        s_loggers.outputs.push_back(p->handler);
+        return;
+    }
+    Module* mod = ModuleManager::get_module(name);
+
+    if ( mod )
+    {
+        // emulate a config like name = { }
+        mod->begin(name, 0, sc);
+        mod->end(name, 0, sc);
+    }
     instantiate(p, mod, sc);
 }
 
@@ -207,33 +206,11 @@ void EventManager::instantiate(
 void EventManager::instantiate(
     const LogApi* api, Module* mod, SnortConfig* sc)
 {
+    // FIXIT-L instantiate each logger from conf at most once
     Output* p = get_out(api->base.name);
-    instantiate(p, mod, sc);
-}
 
-void EventManager::configure_outputs(SnortConfig*)
-{
-#if 0
-    // FIXIT for reference only; need to convert ruletype foo
-    // to action plugins
-    OutputConfig *config;
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Output Plugin\n"););
-
-    /* Configure output plugins for user defined rule types */
-    for (config = sc->rule_type_output_configs; config != NULL; config = config->next)
-    {
-        push_parse_location(config->file_name, config->file_line);
-        Output* p = get_out(config->keyword);
-
-        if ( !p )
-            ParseError("unknown output plugin: '%s'", config->keyword);
-
-        /* Each user defined rule type has it's own rule list
-         * and the output plugin attaches to it here */
-        p->handler->configure(sc, config->opts);
-        pop_parse_location();
-    }
-#endif
+    if ( p && !p->handler )
+        instantiate(p, mod, sc);
 }
 
 //-------------------------------------------------------------------------
@@ -241,25 +218,13 @@ void EventManager::configure_outputs(SnortConfig*)
 
 void EventManager::open_outputs()
 {
-    for ( auto p : s_alerters.outputs )
-        p->open();
-
     for ( auto p : s_loggers.outputs )
-        p->open();
-
-    for ( auto p : s_unified.outputs )
         p->open();
 }
 
 void EventManager::close_outputs()
 {
-    for ( auto p : s_alerters.outputs )
-        p->close();
-
     for ( auto p : s_loggers.outputs )
-        p->close();
-
-    for ( auto p : s_unified.outputs )
         p->close();
 }
 
@@ -272,10 +237,7 @@ void EventManager::call_alerters(
             p->alert(pkt, message, event);
         return;
     }
-    for ( auto p : s_alerters.outputs )
-        p->alert(pkt, message, event);
-
-    for ( auto p : s_unified.outputs )
+    for ( auto p : s_loggers.outputs )
         p->alert(pkt, message, event);
 }
 
@@ -289,9 +251,6 @@ void EventManager::call_loggers(
         return;
     }
     for ( auto p : s_loggers.outputs )
-        p->log(pkt, message, event);
-
-    for ( auto p : s_unified.outputs )
         p->log(pkt, message, event);
 }
 

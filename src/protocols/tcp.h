@@ -16,13 +16,14 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// tcp.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 
-#ifndef TCP_H 
-#define TCP_H
+#ifndef PROTOCOLS_TCP_H
+#define PROTOCOLS_TCP_H
 
 #include <cstdint>
-
+#include <arpa/inet.h>
 
 // these are bits in th_flags:
 #define TH_FIN  0x01
@@ -40,12 +41,6 @@
 // these are bits in th_offx2:
 #define TH_RSV  0x0E  // reserved bits
 #define TH_NS   0x01  // ECN nonce bit
-
-
-/* Why are these lil buggers here? Never Used. -- cmg */
-#define TCPOLEN_TSTAMP_APPA     (TCPOLEN_TIMESTAMP+2)    /* appendix A / rfc 1323 */
-#define TCPOPT_TSTAMP_HDR    \
-    (TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_TIMESTAMP<<8|TCPOLEN_TIMESTAMP)
 
 /*
  * Default maximum segment size for TCP.
@@ -65,24 +60,15 @@
 #define TCP_MAXSEG    0x02    /* set maximum segment size */
 #define SOL_TCP        6    /* TCP level */
 
-
-/* tcp option codes */
-#define TOPT_EOL                0x00
-#define TOPT_NOP                0x01
-#define TOPT_MSS                0x02
-#define TOPT_WS                 0x03
-#define TOPT_TS                 0x08
+#define GET_PKT_SEQ(p) (ntohl(p->ptrs.tcph->th_seq))
 
 namespace tcp
 {
 
-namespace detail
-{
 
-const uint8_t TCP_HEADER_LEN = 20;
-
-} // namespace detail
-
+constexpr uint8_t TCP_MIN_HEADER_LEN = 20; // this is actually the minimal TCP header lenght
+constexpr int OPT_TRUNC = -1;
+constexpr int OPT_BADLEN = -2;
 
 struct TCPHdr
 {
@@ -95,173 +81,91 @@ struct TCPHdr
     uint16_t th_win;       /* window */
     uint16_t th_sum;       /* checksum */
     uint16_t th_urp;       /* urgent pointer */
+
+    /* Fomatted data access and booleans */
+    inline uint8_t hlen() const
+    { return (th_offx2 & 0xf0) >> 2; }
+
+    inline uint8_t off() const
+    { return (th_offx2 & 0xf0) >> 2; }
+
+    inline uint8_t options_len() const
+    { return hlen() - TCP_MIN_HEADER_LEN; }
+
+    inline uint16_t src_port() const
+    { return ntohs(th_sport); }
+
+    inline uint16_t dst_port() const
+    { return ntohs(th_dport); }
+
+    inline uint16_t win() const
+    { return ntohs(th_win); }
+
+    inline uint16_t cksum() const
+    { return ntohs(th_sum); }
+
+    inline uint16_t urp() const
+    { return ntohs(th_urp); }
+
+    inline uint32_t seq() const
+    { return ntohl(th_seq); }
+
+    inline bool has_options() const
+    { return ((th_offx2 & 0xf0) > 0x50); }
+
+    inline bool are_flags_set(uint8_t flags) const
+    { return (th_flags & flags) == flags; }
+
+    inline bool is_syn() const
+    { return (th_flags & TH_SYN); }
+
+    inline bool is_syn_only() const
+    { return (th_flags & (TH_SYN|TH_ACK)) == TH_SYN; }
+
+    inline bool is_syn_ack() const
+    { return are_flags_set(TH_SYN|TH_ACK); }
+
+    inline bool is_ack() const
+    { return (th_flags & TH_ACK); }
+
+    inline bool is_rst() const
+    { return (th_flags & TH_RST); }
+
+
+    /*  raw data access */
+    inline uint8_t raw_src_port() const
+    { return th_sport; }
+
+    inline uint8_t raw_dst_len() const
+    { return th_dport; }
+
+    inline uint32_t raw_seq() const
+    { return th_seq; }
+
+    inline uint8_t raw_hlen() const
+    { return th_offx2 >> 4; }
+
+    inline uint16_t raw_win() const
+    { return th_win; }
+
+    inline uint16_t raw_cksum() const
+    { return th_sum; }
+
+    inline uint16_t raw_urp() const
+    { return th_urp; }
+
+
+    // setters
+    inline void set_offset(uint8_t val)
+    { th_offx2 = (uint8_t)((th_offx2 & 0x0f) | (val << 4)); }
+
+    inline void set_urp(uint16_t new_urp)
+    { th_urp = htons(new_urp); }
+
+    inline void set_raw_urp(uint16_t new_urp)
+    { th_urp = new_urp; }
 };
 
-const int OPT_TRUNC = -1;
-const int OPT_BADLEN = -2;
-
-inline uint8_t hdr_len()
-{
-    return detail::TCP_HEADER_LEN;
-}
-
-inline uint8_t get_tcp_hdr_len(const TCPHdr *h)
-{
-    return ((h->th_offx2 & 0xf0) >> 2);
-}
-
-/* http://www.iana.org/assignments/tcp-parameters
- *
- * tcp options stuff. used to be in <netinet/tcp.h> but it breaks
- * things on AIX
- */
-
-// enum class TcpOpt{
-enum TcpOpt{
-    EOL = 0,   /* End of Option List [RFC793] */
-    NOP = 1,   /* No-Option [RFC793] */
-    MAXSEG = 2,   /* Maximum Segment Size [RFC793] */
-    WSCALE = 3,   /* Window scaling option [RFC1323] */
-    SACKOK = 4,    /* Experimental [RFC2018]*/
-    SACK = 5,    /* Experimental [RFC2018] variable length */
-    ECHO = 6,    /* Echo (obsoleted by option 8)      [RFC1072] */
-    ECHOREPLY = 7,    /* Echo Reply (obsoleted by option 8)[RFC1072] */
-    TIMESTAMP = 8,   /* Timestamp [RFC1323], 10 bytes */
-    PARTIAL_PERM = 9,   /* Partial Order Permitted/ Experimental [RFC1693] */
-    PARTIAL_SVC = 10,  /*  Partial Order Profile [RFC1693] */
-    CC = 11,  /*  T/TCP Connection count  [RFC1644] */
-    CC_NEW = 12,  /*  CC.NEW [RFC1644] */
-    CC_ECHO = 13,  /*  CC.ECHO [RFC1644] */
-
-    ALTCSUM = 15,  /* TCP Alternate Checksum Data [RFC1146], variable length */
-    SKEETER = 16,  /* Skeeter [Knowles] */
-    BUBBA = 17,  /* Bubba   [Knowles] */
-    TRAILER_CSUM = 18,  /* Trailer Checksum Option [Subbu & Monroe] */
-    MD5SIG = 19,  /* MD5 Signature Option [RFC2385] */
-
-
-    /* Space Communications Protocol Standardization */
-    SCPS = 20,  /* Capabilities [Scott] */
-    SELNEGACK = 21,  /* Selective Negative Acknowledgements [Scott] */
-    RECORDBOUND = 22,  /* Record Boundaries [Scott] */
-    CORRUPTION = 23,  /* Corruption experienced [Scott] */
-    SNAP = 24,  /* SNAP [Sukonnik] -- anyone have info?*/
-    UNASSIGNED = 25,  /* Unassigned (released 12/18/00) */
-    COMPRESSION = 26,  /* TCP Compression Filter [Bellovin] */
-    /* http://www.research.att.com/~smb/papers/draft-bellovin-tcpcomp-00.txt*/
-
-    AUTH = 29,  /* [RFC5925] - The TCP Authentication Option
-                             Intended to replace MD5 Signature Option [RFC2385] */
-};
-
-inline void set_tcp_offset(TCPHdr *tcph, uint8_t value)
-{
-    tcph->th_offx2 = (uint8_t)((tcph->th_offx2 & 0x0f) | (value << 4));
-}
-
-inline void set_tcp_x2(TCPHdr* tcph, uint8_t value)
-{
-    tcph->th_offx2 = (tcph->th_offx2 & 0xf0) | (value & 0x0f);
-}
-
-#define TCPOLEN_EOL             1   /* Always one byte */
-#define TCPOLEN_NOP             1   /* Always one byte */
-#define TCPOLEN_MAXSEG          4   /* Always 4 bytes */
-#define TCPOLEN_WSCALE          3   /* 1 byte with logarithmic values */
-#define TCPOLEN_SACKOK          2
-#define TCPOLEN_ECHO            6    /* 6 bytes  */
-#define TCPOLEN_ECHOREPLY       6    /* 6 bytes  */
-#define TCPOLEN_TIMESTAMP       10
-#define TCPOLEN_PARTIAL_PERM    2   /* Partial Order Permitted/ Experimental [RFC1693] */
-#define TCPOLEN_PARTIAL_SVC     3   /*  3 bytes long -- Experimental */
-
-/* atleast decode T/TCP options... */
-#define TCPOLEN_CC             6  /* page 17 of rfc1644 */
-#define TCPOLEN_CC_NEW         6  /* page 17 of rfc1644 */
-#define TCPOLEN_CC_ECHO        6  /* page 17 of rfc1644 */
-#define TCPOLEN_TRAILER_CSUM  3
-#define TCPOLEN_MD5SIG        18
-
-/* more macros for TCP offset */
-#define TCP_OFFSET(tcph)        (((tcph)->th_offx2 & 0xf0) >> 4)
-#define TCP_X2(tcph)            ((tcph)->th_offx2 & 0x0f)
-
-#define TCP_ISFLAGSET(tcph, flags) (((tcph)->th_flags & (flags)) == (flags))
-
-
-}  // namespace Tcp
-
-
-
-/* delete everything from here to the end of the file (excluding the #endif of course) */
-
-#define TCPOPT_EOL              0   /* End of Option List [RFC793] */
-#define TCPOLEN_EOL             1   /* Always one byte */
-
-#define TCPOPT_NOP              1   /* No-Option [RFC793] */
-#define TCPOLEN_NOP             1   /* Always one byte */
-
-#define TCPOPT_MAXSEG           2   /* Maximum Segment Size [RFC793] */
-#define TCPOLEN_MAXSEG          4   /* Always 4 bytes */
-
-#define TCPOPT_WSCALE           3   /* Window scaling option [RFC1323] */
-#define TCPOLEN_WSCALE          3   /* 1 byte with logarithmic values */
-
-#define TCPOPT_SACKOK           4    /* Experimental [RFC2018]*/
-#define TCPOLEN_SACKOK          2
-
-#define TCPOPT_SACK             5    /* Experimental [RFC2018] variable length */
-
-#define TCPOPT_ECHO             6    /* Echo (obsoleted by option 8)      [RFC1072] */
-#define TCPOLEN_ECHO            6    /* 6 bytes  */
-
-#define TCPOPT_ECHOREPLY        7    /* Echo Reply (obsoleted by option 8)[RFC1072] */
-#define TCPOLEN_ECHOREPLY       6    /* 6 bytes  */
-
-#define TCPOPT_TIMESTAMP        8   /* Timestamp [RFC1323], 10 bytes */
-#define TCPOLEN_TIMESTAMP       10
-
-#define TCPOPT_PARTIAL_PERM     9   /* Partial Order Permitted/ Experimental [RFC1693] */
-#define TCPOLEN_PARTIAL_PERM    2   /* Partial Order Permitted/ Experimental [RFC1693] */
-
-#define TCPOPT_PARTIAL_SVC      10  /*  Partial Order Profile [RFC1693] */
-#define TCPOLEN_PARTIAL_SVC     3   /*  3 bytes long -- Experimental */
-
-/* atleast decode T/TCP options... */
-#define TCPOPT_CC               11  /*  T/TCP Connection count  [RFC1644] */
-#define TCPOPT_CC_NEW           12  /*  CC.NEW [RFC1644] */
-#define TCPOPT_CC_ECHO          13  /*  CC.ECHO [RFC1644] */
-#define TCPOLEN_CC             6  /* page 17 of rfc1644 */
-#define TCPOLEN_CC_NEW         6  /* page 17 of rfc1644 */
-#define TCPOLEN_CC_ECHO        6  /* page 17 of rfc1644 */
-
-#define TCPOPT_ALTCSUM          15  /* TCP Alternate Checksum Data [RFC1146], variable length */
-#define TCPOPT_SKEETER          16  /* Skeeter [Knowles] */
-#define TCPOPT_BUBBA            17  /* Bubba   [Knowles] */
-
-#define TCPOPT_TRAILER_CSUM     18  /* Trailer Checksum Option [Subbu & Monroe] */
-#define TCPOLEN_TRAILER_CSUM  3
-
-#define TCPOPT_MD5SIG           19  /* MD5 Signature Option [RFC2385] */
-#define TCPOLEN_MD5SIG        18
-
-/* Space Communications Protocol Standardization */
-#define TCPOPT_SCPS             20  /* Capabilities [Scott] */
-#define TCPOPT_SELNEGACK        21  /* Selective Negative Acknowledgements [Scott] */
-#define TCPOPT_RECORDBOUND         22  /* Record Boundaries [Scott] */
-#define TCPOPT_CORRUPTION          23  /* Corruption experienced [Scott] */
-
-#define TCPOPT_SNAP                24  /* SNAP [Sukonnik] -- anyone have info?*/
-#define TCPOPT_UNASSIGNED          25  /* Unassigned (released 12/18/00) */
-#define TCPOPT_COMPRESSION         26  /* TCP Compression Filter [Bellovin] */
-/* http://www.research.att.com/~smb/papers/draft-bellovin-tcpcomp-00.txt*/
-
-#define TCPOPT_AUTH   29  /* [RFC5925] - The TCP Authentication Option
-                             Intended to replace MD5 Signature Option [RFC2385] */
-
-#define TCP_HEADER_LEN tcp::hdr_len()
-
-#define TCPHdr tcp::TCPHdr
-
+}  // namespace tcp
 
 #endif /* TCP_H */

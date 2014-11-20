@@ -33,13 +33,13 @@
 #include "treenodes.h"
 #include "snort_debug.h"
 #include "util.h"
-#include "generators.h"
 #include "log.h"
 #include "snort.h"
+#include "event.h"
 
 #include "sfxhash.h"
-
-#include "ipv6_port.h"
+#include "sfip/sfip_t.h"
+#include "sfip/sf_ip.h"
 
 /*  D E F I N E S  **************************************************/
 #define MAX_TAG_NODES   256
@@ -51,29 +51,29 @@
 #define TAG_PRUNE_QUANTUM   300
 #define TAG_MEMCAP          4194304  /* 4MB */
 
+#define GENERATOR_TAG       2
+#define TAG_LOG_PKT         1
+
 /*  D A T A   S T R U C T U R E S  **********************************/
 /**Key used for identifying a session or host.
  */
-typedef struct _tagFlowKey
+struct tTagFlowKey
 {
-    snort_ip sip;  ///source IP address
-    snort_ip dip;  ///destination IP address
+    sfip_t sip;  ///source IP address
+    sfip_t dip;  ///destination IP address
 
     /* ports */
     uint16_t sp; ///source port
     uint16_t dp; ///destination port
 
-} tTagFlowKey;
+};
 
 /**Node identifying a session or host based tagging.
  */
-typedef struct _TagNode
+struct TagNode
 {
     /**key identifying a session or host. */
     tTagFlowKey key;
-
-    /** transport proto */
-    uint8_t proto;
 
     /** number of packets/seconds/bytes to tag for */
     int seconds;
@@ -100,15 +100,13 @@ typedef struct _TagNode
     /** for later expansion... */
     OptTreeNode *otn;
 
-} TagNode;
+};
 
 /*  G L O B A L S  **************************************************/
-/**host tag cache */
-static THREAD_LOCAL SFXHASH *host_tag_cache_ptr = nullptr;  // FIXIT packet thread init
+static THREAD_LOCAL SFXHASH *host_tag_cache_ptr = nullptr;
 
-/**session tag cache */
-// FIXIT utilize Flow instead of separate cache
-static THREAD_LOCAL SFXHASH *ssn_tag_cache_ptr = nullptr;  // FIXIT packet thread init
+// FIXIT-M utilize Flow instead of separate cache
+static THREAD_LOCAL SFXHASH *ssn_tag_cache_ptr = nullptr;
 
 static THREAD_LOCAL uint32_t last_prune_time = 0;
 static THREAD_LOCAL uint32_t tag_alloc_faults = 0;
@@ -144,7 +142,7 @@ static inline unsigned int memory_per_node(
     }
     else if (hash == host_tag_cache_ptr)
     {
-        return sizeof(snort_ip)+sizeof(SFXHASH_NODE)+sizeof(TagNode);
+        return sizeof(sfip_t)+sizeof(SFXHASH_NODE)+sizeof(TagNode);
     }
 
     return 0;
@@ -256,7 +254,7 @@ void TagCacheReset(void)
  */
 static inline void SwapTag(TagNode *np)
 {
-    snort_ip tip;
+    sfip_t tip;
     uint16_t tport;
 
     tip = np->key.sip;
@@ -284,7 +282,7 @@ void InitTag(void)
 
     host_tag_cache_ptr = sfxhash_new(
                 hashTableSize,       /* number of hash buckets */
-                sizeof(snort_ip),    /* size of the key we're going to use */
+                sizeof(sfip_t),    /* size of the key we're going to use */
                 0,                   /* size of the storage node */
                 0,                   /* disable memcap*/
                 0,                   /* use auto node recovery */
@@ -367,11 +365,10 @@ static void AddTagNode(Packet *p, TagData *tag, int mode, uint32_t now,
         return;
     }
 
-    IP_COPY_VALUE(idx->key.sip, GET_SRC_IP(p));
-    IP_COPY_VALUE(idx->key.dip, GET_DST_IP(p));
-    idx->key.sp = p->sp;
-    idx->key.dp = p->dp;
-    idx->proto = GET_IPH_PROTO(p);
+    sfip_copy(idx->key.sip, p->ptrs.ip_api.get_src());
+    sfip_copy(idx->key.dip, p->ptrs.ip_api.get_dst());
+    idx->key.sp = p->ptrs.sp;
+    idx->key.dp = p->ptrs.dp;
     idx->metric = tag->tag_metric;
     idx->last_access = now;
     idx->event_id = event_id;
@@ -457,7 +454,7 @@ int CheckTagList(Packet *p, Event *event)
         return 0;
     }
 
-    if(p == NULL || !IPH_IS_VALID(p))
+    if(p == NULL || !p->ptrs.ip_api.is_valid())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "bailing from CheckTagList, p->iph == NULL\n"););
         return 0;
@@ -468,20 +465,20 @@ int CheckTagList(Packet *p, Event *event)
 
     DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "[*] Checking session tag list (forward)...\n"););
 
-    IP_COPY_VALUE(idx.key.sip, GET_SRC_IP(p));
-    IP_COPY_VALUE(idx.key.dip, GET_DST_IP(p));
-    idx.key.sp = p->sp;
-    idx.key.dp = p->dp;
+    sfip_copy(idx.key.sip, p->ptrs.ip_api.get_src());
+    sfip_copy(idx.key.dip, p->ptrs.ip_api.get_dst());
+    idx.key.sp = p->ptrs.sp;
+    idx.key.dp = p->ptrs.dp;
 
     /* check for session tags... */
     returned = (TagNode *) sfxhash_find(ssn_tag_cache_ptr, &idx);
 
     if(returned == NULL)
     {
-        IP_COPY_VALUE(idx.key.dip, GET_SRC_IP(p));
-        IP_COPY_VALUE(idx.key.sip, GET_DST_IP(p));
-        idx.key.dp = p->sp;
-        idx.key.sp = p->dp;
+        sfip_copy(idx.key.dip, p->ptrs.ip_api.get_src());
+        sfip_copy(idx.key.sip, p->ptrs.ip_api.get_dst());
+        idx.key.dp = p->ptrs.sp;
+        idx.key.sp = p->ptrs.dp;
 
         DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "   Checking session tag list (reverse)...\n"););
         returned = (TagNode *) sfxhash_find(ssn_tag_cache_ptr, &idx);
@@ -499,7 +496,7 @@ int CheckTagList(Packet *p, Event *event)
                 **  Only switch sip, because that's all we check for
                 **  the host tags.
                 */
-                IP_COPY_VALUE(idx.key.sip, GET_SRC_IP(p));
+                sfip_copy(idx.key.sip, p->ptrs.ip_api.get_src());
 
                 returned = (TagNode *) sfxhash_find(host_tag_cache_ptr, &idx);
             }
@@ -550,7 +547,7 @@ int CheckTagList(Packet *p, Event *event)
 
         if(returned->metric & TAG_METRIC_BYTES)
         {
-            returned->bytes -= (int) ntohs(GET_IPH_LEN(p));
+            returned->bytes -= (int) p->ptrs.ip_api.dgram_len();
 
             if(returned->bytes < 0)
             {
@@ -697,17 +694,17 @@ void SetTags(Packet *p, OptTreeNode *otn, uint16_t event_id)
                 case TAG_SESSION:
                     DEBUG_WRAP(DebugMessage(DEBUG_FLOW,"Setting session tag:\n");
 			            DebugMessage(DEBUG_FLOW,"SIP: %s  SP: %d   ",
-                            sfip_ntoa(GET_SRC_IP(p)), p->sp);
+                            sfip_ntoa(p->ptrs.ip_api.get_src()), p->ptrs.sp);
                         DebugMessage(DEBUG_FLOW,"DIP: %s  DP: %d\n",
-					        sfip_ntoa(GET_DST_IP(p)),p->dp););
+					        sfip_ntoa(p->ptrs.ip_api.get_dst()),p->ptrs.dp););
                     TagSession(p, otn->tag, p->pkth->ts.tv_sec, event_id);
                     break;
                 case TAG_HOST:
                     DEBUG_WRAP(DebugMessage(DEBUG_FLOW,"Setting host tag:\n");
     			        DebugMessage(DEBUG_FLOW,"SIP: %s  SP: %d   ",
-	    			        sfip_ntoa(GET_SRC_IP(p)),p->sp);
+				        sfip_ntoa(p->ptrs.ip_api.get_src()),p->ptrs.sp);
                         DebugMessage(DEBUG_FLOW, "DIP: %s  DP: %d\n",
-                            sfip_ntoa(GET_DST_IP(p)),p->dp););
+                            sfip_ntoa(p->ptrs.ip_api.get_dst()),p->ptrs.dp););
                     TagHost(p, otn->tag, p->pkth->ts.tv_sec, event_id);
                     break;
 

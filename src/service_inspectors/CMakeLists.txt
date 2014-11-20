@@ -8,9 +8,11 @@ add_subdirectory(wizard)
 
 if (STATIC_INSPECTORS)
     set (STATIC_INSECTOR_LIBS
+        wizard
         rpc_decode
         back_orifice
         ftp_telnet
+        nhttp_inspect
     )
 endif()
 
@@ -21,7 +23,5 @@ add_library( service_inspectors STATIC
 
 target_link_libraries( service_inspectors
     http_inspect
-    nhttp_inspect
-    wizard
     ${STATIC_INSECTOR_LIBS}
 )

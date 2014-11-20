@@ -15,19 +15,19 @@ endif ( BUILD_SNPRINTF )
 set( UTIL_INCLUDES
     bitop.h
     bitop_funcs.h
+    dnet_header.h
     segment_mem.h
     sflsq.h
     sfmemcap.h
     sfportobject.h
     snort_bounds.h
     stats.h
+    util.h
 )
 
 ADD_LIBRARY( utils STATIC
     ${UTIL_INCLUDES}
     ${SNPRINTF_SOURCES}
-    asn1.cc 
-    asn1.h
     boyer_moore.cc 
     boyer_moore.h
     dyn_array.cc
@@ -48,7 +48,6 @@ ADD_LIBRARY( utils STATIC
     strvec.h
     stats.cc 
     util.cc 
-    util.h
     util_jsnorm.cc 
     util_jsnorm.h
     util_math.cc 
@@ -63,23 +62,10 @@ ADD_LIBRARY( utils STATIC
     util_unfold.h
 )
 
-
-set_default_visibility_compile_flag(utils)
-
 target_link_libraries(utils
     log
-    ${CMAKE_THREAD_LIBS_INIT}
-)
-
-set_target_properties( utils PROPERTIES
-    COMPILE_FLAGS "-std=c++11 -DHAVE_PTHREADS  -pthread"
-    LINK_FLAGS "-pthread -lpthread pthreads -lpthreads"
 )
 
 install (FILES ${UTIL_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/utils"
 )
-
-
-
-

@@ -43,7 +43,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "rpc";
+#define s_name "rpc"
 
 static THREAD_LOCAL ProfileStats rpcCheckPerfStats;
 
@@ -72,10 +72,10 @@ public:
         IpsOption(s_name)
     { config = c; };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
 private:
     RpcCheckData config;
@@ -136,14 +136,13 @@ int RpcOption::eval(Cursor&, Packet *p)
 #endif
     PROFILE_VARS;
 
-    if(!p->iph_api || (IsTCP(p) && !p->tcph)
-       || (IsUDP(p) && !p->udph))
+    if (!(p->is_tcp() || p->is_udp()))
         return 0; /* if error occured while ip header
                    * was processed, return 0 automagically.  */
 
     MODULE_PROFILE_START(rpcCheckPerfStats);
 
-    if( IsTCP(p) )
+    if( p->is_tcp() )
     {
         /* offset to rpc_msg */
         c+=4;
@@ -245,7 +244,7 @@ int RpcOption::eval(Cursor&, Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter rpc_params[] =
+static const Parameter s_params[] =
 {
     { "~app", Parameter::PT_STRING, nullptr, nullptr,
       "application number" },
@@ -259,15 +258,18 @@ static const Parameter rpc_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to check SUNRPC CALL parameters"
+
 class RpcModule : public Module
 {
 public:
-    RpcModule() : Module(s_name, rpc_params) { };
+    RpcModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &rpcCheckPerfStats; };
 
     RpcCheckData data;
@@ -334,6 +336,7 @@ static const IpsApi rpc_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

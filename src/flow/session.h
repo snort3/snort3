@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2013-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
 #ifndef SESSION_H
 #define SESSION_H
 
-#include "sfip/ipv6_port.h"
+#include "sfip/sfip_t.h"
 
 struct Packet;
 class Flow;
@@ -34,8 +34,9 @@ public:
     virtual ~Session() { };
 
     virtual bool setup(Packet*) { return true; };
-    virtual void update_direction(char /*dir*/, snort_ip*, uint16_t /*port*/) { };
+    virtual void update_direction(char /*dir*/, const sfip_t*, uint16_t /*port*/) { };
     virtual int process(Packet*) { return 0; };
+    virtual void restart(Packet*) { };
     virtual void clear() = 0;
     virtual void cleanup() { clear(); };
 
@@ -43,7 +44,7 @@ protected:
     Session(Flow* f) { flow = f; };
 
 public:
-    Flow* flow;  // FIXIT use reference?
+    Flow* flow;  // FIXIT-L use reference?
 };
 
 #endif

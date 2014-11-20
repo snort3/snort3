@@ -25,20 +25,22 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/ipv6.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 #include "detection/fpdetect.h"
-#include "codecs/ip/ipv6_util.h"
+#include "codecs/ip/ip_util.h"
 #include "protocols/packet.h"
+#include "log/text_log.h"
+#include "protocols/packet_manager.h"
 
+#define CD_IPV6_FRAG_NAME "ipv6_frag"
+#define CD_IPV6_FRAG_HELP "support for IPv6 fragment decoding"
 
 namespace
 {
-
-#define CD_IPV6_FRAG_NAME "ipv6_frag"
 
 class Ipv6FragCodec : public Codec
 {
@@ -47,10 +49,11 @@ public:
     ~Ipv6FragCodec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
+    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+                    const Packet* const) override;
+    void get_protocol_ids(std::vector<uint16_t>&) override;
     
 };
 
@@ -58,113 +61,122 @@ public:
 } // namespace
 
 
-bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
-    const IP6Frag *ip6frag_hdr = reinterpret_cast<const IP6Frag *>(raw_pkt);
+    const ip::IP6Frag* const ip6frag_hdr = reinterpret_cast<const ip::IP6Frag*>(raw.data);
 
-    fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_FRAGMENT);
-    ipv6_util::CheckIPv6ExtensionOrder(p);
-
-    if(raw_len < ipv6::min_ext_len() )
+    if(raw.len < ip::MIN_EXT_LEN )
     {
-        codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
+        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
-    if ( p->ip6_extension_count >= IP6_EXTMAX )
+    if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
     {
-        codec_events::decoder_event(p, DECODE_IP6_EXCESS_EXT_HDR);
+        codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
         return false;
     }
 
-    // already checked for short pacekt above
-    if (raw_len == sizeof(IP6Frag))
+    // already checked for short packet above
+    if (raw.len == sizeof(ip::IP6Frag))
     {
-        codec_events::decoder_event(p, DECODE_ZERO_LENGTH_FRAG);
-        return false;
+        // FIXIT-L  identical to DEFRAG_ANOMALY_ZERO.  Commenting
+        // 'return false' so that it has the same functionality as IPv4
+        codec_events::decoder_event(codec, DECODE_ZERO_LENGTH_FRAG);
+//        return false;
     }
 
     /* If this is an IP Fragment, set some data... */
-    p->ip6_frag_index = p->ip6_extension_count;
-    p->ip_frag_start = raw_pkt + sizeof(IP6Frag);
+    codec.codec_flags &= ~CODEC_DF;
 
-    p->df = 0;
-    p->rf = IP6F_RES(ip6frag_hdr);
-    p->mf = IP6F_MF(ip6frag_hdr);
-    p->frag_offset = IP6F_OFFSET(ip6frag_hdr);
+    if (ip6frag_hdr->mf())
+        snort.decode_flags |= DECODE_MF;
 
-    if ( p->frag_offset || p->mf )
-    {
-        p->frag_flag = 1;
-    }
+#if 0
+    // reserved flag currently not used
+    if (ip6frag_hdr->get_res() != 0)))
+        data.decode_flags |= DECODE_RF;
+#endif
+
+    // three least signifigant bits are all flags
+    const uint16_t frag_offset = ip6frag_hdr->off();
+
+    if (frag_offset || (snort.decode_flags & DECODE_MF))
+        snort.decode_flags |= DECODE_FRAG;
     else
-    {
-        codec_events::decoder_event(p, DECODE_IPV6_BAD_FRAG_PKT);
-    }
-    if (!(p->frag_offset))
-    {
-        // check header ordering of fragged (next) header
-        if ( ipv6_util::IPV6ExtensionOrder(ip6frag_hdr->ip6f_nxt) <
-             ipv6_util::IPV6ExtensionOrder(IPPROTO_FRAGMENT) )
-            codec_events::decoder_event(p, DECODE_IPV6_UNORDERED_EXTENSIONS);
-    }
+        codec_events::decoder_event(codec, DECODE_IPV6_BAD_FRAG_PKT);
 
-    // check header ordering up thru frag header
-    ipv6_util::CheckIPv6ExtensionOrder(p);
 
-    lyr_len = sizeof(IP6Frag);
-    p->ip_frag_len = (uint16_t)(raw_len - lyr_len);
+    codec.lyr_len = sizeof(ip::IP6Frag);
+    codec.ip6_csum_proto = ip6frag_hdr->ip6f_nxt;
+    codec.proto_bits |= PROTO_BIT__IP6_EXT;
+    codec.ip6_extension_count++;
 
-    if ( p->frag_flag && ((p->frag_offset > 0) ||
-         (ip6frag_hdr->ip6f_nxt != IPPROTO_UDP)) )
+    // must be called AFTER setting next_prot_id
+    ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_FRAGMENT);
+
+    // Since the Frag layer is removed from rebuilt packets, ensure
+    // the next layer is correctly order now.
+    if (frag_offset == 0)
+        ip_util::CheckIPv6ExtensionOrder(codec, ip6frag_hdr->ip6f_nxt);
+
+    if ( snort.decode_flags & DECODE_FRAG )
     {
         /* For non-zero offset frags, we stop decoding after the
            Frag header. According to RFC 2460, the "Next Header"
            value may differ from that of the offset zero frag,
            but only the Next Header of the original frag is used. */
         // check DecodeIP(); we handle frags the same way here
-        p->ip6_extension_count++;
-        return false;
+        codec.next_prot_id = FINISHED_DECODE;
+
+    }
+    else
+    {
+        codec.next_prot_id = ip6frag_hdr->ip6f_nxt;
     }
 
-
-    p->ip6_extensions[p->ip6_extension_count].type = IPPROTO_ID_FRAGMENT;
-    p->ip6_extensions[p->ip6_extension_count].data = raw_pkt;
-    p->ip6_extension_count++;
-
-    next_prot_id = ip6frag_hdr->ip6f_nxt;
     return true;
 }
 
 
 
 void Ipv6FragCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{ v.push_back(IPPROTO_ID_FRAGMENT); }
+
+
+void Ipv6FragCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+                    const Packet* const)
 {
-    v.push_back(IPPROTO_ID_FRAGMENT);
+    const ip::IP6Frag* fragh = reinterpret_cast<const ip::IP6Frag*>(raw_pkt);
+    const uint16_t offlg = fragh->off();
+
+
+    TextLog_Print(text_log, "Next:0x%02X Off:%u ID:%u",
+            fragh->ip6f_nxt, offlg, fragh->id());
+
+    if (fragh->mf())
+        TextLog_Puts(text_log, " MF");
+
+    if (fragh->rb())
+        TextLog_Puts(text_log, " RB");
 }
-
-
 
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new Ipv6FragCodec();
-}
+{ return new Ipv6FragCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi ipv6_frag_api =
 {
     {
         PT_CODEC,
         CD_IPV6_FRAG_NAME,
+        CD_IPV6_FRAG_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

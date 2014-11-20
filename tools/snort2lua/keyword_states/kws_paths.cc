@@ -1,30 +1,29 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // kws_paths.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
-#include "utils/s2l_util.h"
+#include "helpers/converter.h"
+#include "helpers/s2l_util.h"
 
 
 namespace keywords
@@ -36,10 +35,7 @@ template<const std::string *snort_option>
 class Paths : public ConversionState
 {
 public:
-    Paths( Converter* cv, LuaData* ld)
-                            : ConversionState(cv, ld)
-    {
-    };
+    Paths(Converter& c) : ConversionState(c) {};
 
     virtual ~Paths() {};
     virtual bool convert(std::istringstream& data_stream)
@@ -47,9 +43,9 @@ public:
         std::string arg1;
         std::string arg2;
 
-        ld->open_table("process");
-        ld->add_diff_option_comment(*snort_option, "plugin_path");
-        ld->add_comment_to_table("Since paths have changed between Snort and"
+        table_api.open_table("process");
+        table_api.add_diff_option_comment(*snort_option, "plugin_path");
+        table_api.add_comment("Since paths have changed between Snort and"
             "  Snort++, commenting out any plugin paths.  You must manually"
             " add them");
 
@@ -61,17 +57,17 @@ public:
 
         if (arg2.empty())
         {
-            ld->add_comment_to_table("Cannot add specific files to Snort++"
+            table_api.add_comment("Cannot add specific files to Snort++"
                 " plugin path.  Use 'plugin_path = "
                 "<dir>' instead of adding specific file: " + arg1);
         }
         else
         {
             if (!arg1.compare("directory"))
-                ld->add_option_to_table("--plugin_path", arg2);
+                table_api.add_option("--plugin_path", arg2);
 
             else if (!arg1.compare("file"))
-                ld->add_comment_to_table("Cannot add specific files to Snort++"
+                table_api.add_comment("Cannot add specific files to Snort++"
                 " plugin path.  Use 'plugin_path = "
                 "<dir>' instead of adding specific file: " + arg1);
 
@@ -85,10 +81,8 @@ public:
 
 
 template<const std::string *snort_option>
-static ConversionState* paths_ctor(Converter* cv, LuaData* ld)
-{
-    return new Paths<snort_option>(cv, ld);
-}
+static ConversionState* paths_ctor(Converter& c)
+{ return new Paths<snort_option>(c); }
 
 } // namespace
 

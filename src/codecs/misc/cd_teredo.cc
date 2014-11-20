@@ -28,19 +28,20 @@
 
 //#include "prot_ipv6.h"
 
+#include "framework/codec.h"
+#include "packet_io/active.h"
 #include "snort_types.h"
 #include "protocols/packet.h"
 #include "snort.h"
 #include "main/snort_config.h"
-#include "packet_io/active.h"
-#include "protocols/ipv6.h"
 #include "protocols/teredo.h"
 #include "protocols/protocol_ids.h"
 
+#define CD_TEREDO_NAME "teredo"
+#define CD_TEREDO_HELP "support for teredo"
+
 namespace
 {
-
-#define CD_TEREDO_NAME "teredo"
 
 class TeredoCodec : public Codec
 {
@@ -48,9 +49,8 @@ public:
     TeredoCodec() : Codec(CD_TEREDO_NAME){};
     ~TeredoCodec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
 } // anonymous namespace
@@ -61,10 +61,11 @@ void TeredoCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(PROTOCOL_TEREDO);
 }
 
-bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool TeredoCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
-    if (raw_len < teredo::min_hdr_len())
+    const uint8_t* raw_pkt = raw.data;
+
+    if (raw.len < teredo::min_hdr_len())
         return false;
 
     /* Decode indicators. If both are present, Auth always comes before Origin. */
@@ -72,40 +73,43 @@ bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     {
         uint8_t client_id_length, auth_data_length;
 
-        if (raw_len < teredo::min_indicator_auth_len())
+        if (raw.len < teredo::min_indicator_auth_len())
             return false;
 
         client_id_length = *(raw_pkt + 2);
         auth_data_length = *(raw_pkt + 3);
 
-        if (raw_len < (uint32_t)(teredo::min_indicator_auth_len() + client_id_length + auth_data_length))
+        if (raw.len < (uint32_t)(teredo::min_indicator_auth_len() + client_id_length + auth_data_length))
             return false;
 
         raw_pkt += (teredo::min_indicator_auth_len() + client_id_length + auth_data_length);
-        lyr_len = (teredo::min_indicator_auth_len() + client_id_length + auth_data_length);
+        codec.lyr_len = (teredo::min_indicator_auth_len() + client_id_length + auth_data_length);
     }
 
     if (ntohs(*(uint16_t *)raw_pkt) == teredo::indicator_origin())
     {
-        if (raw_len < teredo::indicator_origin_len())
+        if (raw.len < teredo::indicator_origin_len())
             return false;
 
         raw_pkt += teredo::indicator_origin_len();
-        lyr_len += teredo::indicator_origin_len();
+        codec.lyr_len += teredo::indicator_origin_len();
     }
 
     /* If this is an IPv6 datagram, the first 4 bits will be the number 6. */
     if (( (*raw_pkt & 0xF0) >> 4) == 6)
     {
-        p->proto_bits |= PROTO_BIT__TEREDO;
+        codec.proto_bits |= PROTO_BIT__TEREDO;
+        codec.codec_flags |= CODEC_TEREDO_SEEN;  // for ipv6 codec
 
         if ( ScTunnelBypassEnabled(TUNNEL_TEREDO) )
             Active_SetTunnelBypass();
 
-        if ((!teredo::is_teredo_port(p->sp)) && (!teredo::is_teredo_port(p->dp)))
-            p->packet_flags |= PKT_UNSURE_ENCAP;
+        if ((!teredo::is_teredo_port(snort.sp)) && (!teredo::is_teredo_port(snort.dp)))
+        {
+            codec.codec_flags |= CODEC_ENCAP_LAYER;
+        }
 
-        next_prot_id = IPPROTO_IPV6;
+        codec.next_prot_id = IPPROTO_IPV6;
         return true;
     }
 
@@ -117,20 +121,17 @@ bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new TeredoCodec();
-}
+{ return new TeredoCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi teredo_api =
 {
     {
         PT_CODEC,
         CD_TEREDO_NAME,
+        CD_TEREDO_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,
@@ -154,8 +155,3 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_teredo = &teredo_api.base;
 #endif
-
-
-
-
-

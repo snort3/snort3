@@ -75,6 +75,7 @@
 #include "actions/actions.h"
 #include "protocols/packet.h"
 #include "utils/stats.h"
+#include "sfip/sf_ip.h"
 
 #ifdef PPM_MGR
 
@@ -114,7 +115,7 @@ typedef struct
 } ppm_rules_t;
 
 /* suspended rules */
-// FIXIT storing rule tree pointers is a bad idea
+// FIXIT-L storing rule tree pointers is a bad idea
 // - no accommodation for reload
 // - really not used except to log
 // - should be deleted
@@ -122,7 +123,7 @@ static THREAD_LOCAL ppm_rules_t ppm_rules[MAX_DP_NRULES];
 static THREAD_LOCAL int ppm_n_rules;
 
 /* cleared rules - re-enabled */
-// FIXIT see above re storing rule tree pointers
+// FIXIT-L see above re storing rule tree pointers
 static THREAD_LOCAL detection_option_tree_root_t * ppm_crules[MAX_DP_NRULES];
 static THREAD_LOCAL int ppm_n_crules;
 
@@ -238,8 +239,8 @@ static int print_rule( int, RuleTreeNode*, OptTreeNode * o )
     return 0;
 }
 
-// FIXIT ppm_stats should be rolled into ppm module
-// (need module support)
+// FIXIT-L ppm_stats should be rolled into ppm module
+// (not just peg counts; need module support)
 
 void ppm_sum_stats()
 {
@@ -346,56 +347,23 @@ void ppm_init(ppm_cfg_t *ppm_cfg)
 
 void ppm_pkt_log(ppm_cfg_t *ppm_cfg, Packet* p)
 {
-    int filterEvent = 0;
     if (!ppm_cfg->max_pkt_ticks)
         return;
 
     ppm_stats.pkt_event_cnt++;
 
     if (ppm_cfg->pkt_log & PPM_LOG_ALERT)
-    {
-        OptTreeNode* potn;
-
-        /* make sure we have an otn already in our table for this event */
-        // FIXIT should be able to remove this custom event processing
-        potn = OtnLookup(snort_conf->otn_map, GID_PPM, PPM_EVENT_PACKET_ABORTED);
-
-        if (potn == NULL)
-            return;
-
-        if ( IPH_IS_VALID(p) )
-        {
-            filterEvent = sfthreshold_test(
-                        potn->sigInfo.generator,
-                        potn->sigInfo.id,
-                        GET_SRC_IP(p), GET_DST_IP(p),
-                        p->pkth->ts.tv_sec);
-        }
-        else
-        {
-            snort_ip cleared;
-            IP_CLEAR(cleared);
-
-            filterEvent = sfthreshold_test(
-                        potn->sigInfo.generator,
-                        potn->sigInfo.id,
-                        IP_ARG(cleared), IP_ARG(cleared),
-                        p->pkth->ts.tv_sec);
-        }
-
-        if(filterEvent >= 0)
-            AlertAction(p, potn);
-    }
+        SnortEventqAdd(GID_PPM, PPM_EVENT_PACKET_ABORTED);
 
     if (ppm_cfg->pkt_log & PPM_LOG_MESSAGE)
     {
         char src[INET6_ADDRSTRLEN];
         char dst[INET6_ADDRSTRLEN];
 
-        sfip_t* addr = GET_SRC_IP(p);
+        const sfip_t *addr = p->ptrs.ip_api.get_src();
         sfip_ntop(addr, src, sizeof(src));
 
-        addr = GET_DST_IP(p);
+        addr = p->ptrs.ip_api.get_dst();
         sfip_ntop(addr, dst, sizeof(dst));
 
         if (ppm_abort_this_pkt)
@@ -404,7 +372,7 @@ void ppm_pkt_log(ppm_cfg_t *ppm_cfg, Packet* p)
                        ppm_pt->pktcnt,
                        ppm_ticks_to_usecs((PPM_TICKS)ppm_pt->tot),
                        ppm_pt->rule_tests, ppm_pt->nc_rule_tests,
-                       src, p->sp, dst, p->dp);
+                       src, p->ptrs.sp, dst, p->ptrs.dp);
         }
         else
         {
@@ -412,7 +380,7 @@ void ppm_pkt_log(ppm_cfg_t *ppm_cfg, Packet* p)
                        ppm_pt->pktcnt,
                        ppm_ticks_to_usecs((PPM_TICKS)ppm_pt->tot),
                        ppm_pt->rule_tests, ppm_pt->nc_rule_tests,
-                       src, p->sp, dst, p->dp);
+                       src, p->ptrs.sp, dst, p->ptrs.dp);
         }
     }
 }
@@ -424,9 +392,7 @@ void ppm_pkt_log(ppm_cfg_t *ppm_cfg, Packet* p)
 void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
 {
     detection_option_tree_root_t *proot;
-    OptTreeNode *otn;
     char timestamp[TIMEBUF_SIZE];
-    int filterEvent = 0;
     *timestamp = '\0';
 
     if (!ppm_cfg->max_rule_ticks)
@@ -435,36 +401,7 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
     if (ppm_n_crules)
     {
         if (ppm_cfg->rule_log & PPM_LOG_ALERT)
-        {
-            // FIXIT should be able to remove this custom event processing
-            otn = GetOTN(GID_PPM, PPM_EVENT_RULE_TREE_ENABLED);
-
-            if (otn != NULL)
-            {
-                if ( IPH_IS_VALID(p) )
-                {
-                    filterEvent = sfthreshold_test(
-                                otn->sigInfo.generator,
-                                otn->sigInfo.id,
-                                GET_SRC_IP(p), GET_DST_IP(p),
-                                p->pkth->ts.tv_sec);
-                }
-                else
-                {
-                    snort_ip cleared;
-                    IP_CLEAR(cleared);
-
-                    filterEvent = sfthreshold_test(
-                                otn->sigInfo.generator,
-                                otn->sigInfo.id,
-                                IP_ARG(cleared), IP_ARG(cleared),
-                                p->pkth->ts.tv_sec);
-                }
-
-                if(filterEvent >= 0)
-                    AlertAction(p, otn);
-            }
-        }
+            SnortEventqAdd(GID_PPM, PPM_EVENT_RULE_TREE_ENABLED);
 
         if (ppm_cfg->rule_log & PPM_LOG_MESSAGE)
         {
@@ -488,37 +425,7 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
     if (ppm_n_rules)
     {
         if (ppm_cfg->rule_log & PPM_LOG_ALERT)
-        {
-            // FIXIT should be able to remove this custom event processing
-            otn = GetOTN(GID_PPM, PPM_EVENT_RULE_TREE_DISABLED);
-
-            if (otn != NULL)
-            {
-                // FIXIT why was this done specially?
-                if ( IPH_IS_VALID(p) )
-                {
-                    filterEvent = sfthreshold_test(
-                                otn->sigInfo.generator,
-                                otn->sigInfo.id,
-                                GET_SRC_IP(p), GET_DST_IP(p),
-                                p->pkth->ts.tv_sec);
-                }
-                else
-                {
-                    snort_ip cleared;
-                    IP_CLEAR(cleared);
-
-                    filterEvent = sfthreshold_test(
-                                otn->sigInfo.generator,
-                                otn->sigInfo.id,
-                                IP_ARG(cleared), IP_ARG(cleared),
-                                p->pkth->ts.tv_sec);
-                }
-
-                if(filterEvent >= 0)
-                    AlertAction(p, otn);
-            }
-        }
+            SnortEventqAdd(GID_PPM, PPM_EVENT_RULE_TREE_DISABLED);
 
         if (ppm_cfg->rule_log & PPM_LOG_MESSAGE)
         {
@@ -526,13 +433,13 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
             char src[INET6_ADDRSTRLEN];
             char dst[INET6_ADDRSTRLEN];
 
-            sfip_t* addr = GET_SRC_IP(p);
+            const sfip_t *addr = p->ptrs.ip_api.get_src();
             sfip_ntop(addr, src, sizeof(src));
 
-            addr = GET_DST_IP(p);
+            addr = p->ptrs.ip_api.get_dst();
             sfip_ntop(addr, dst, sizeof(dst));
 
-            LogMessage(PPM_FMT_SUS_PKT, pktcnt, src, p->sp, dst, p->dp);
+            LogMessage(PPM_FMT_SUS_PKT, pktcnt, src, p->ptrs.sp, dst, p->ptrs.dp);
 
             if(!*timestamp)
                 ts_print((struct timeval*)&p->pkth->ts, timestamp);

@@ -17,7 +17,7 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 // ips_tag.cc author Russ Combs <rucombs@cisco.com>
-// FIXIT add TagOption::eval() instead of special case
+// FIXIT-L add TagOption::eval() instead of special case
 
 #include <sys/types.h>
 
@@ -35,13 +35,13 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "tag";
+#define s_name "tag"
 
 //-------------------------------------------------------------------------
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter tag_params[] =
+static const Parameter s_params[] =
 {
     { "~", Parameter::PT_ENUM, "session|host_src|host_dst", nullptr,
       "log all packets in session or all packets to or from host" },
@@ -58,15 +58,18 @@ static const Parameter tag_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to log additional packets"
+
 class TagModule : public Module
 {
 public:
-    TagModule() : Module(s_name, tag_params)
+    TagModule() : Module(s_name, s_help, s_params)
     { tag = nullptr; };
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
     TagData* get_data();
     TagData* tag;
@@ -95,24 +98,29 @@ bool TagModule::end(const char*, int, SnortConfig*)
     return true;
 }
 
-// FIXIT error if named option is set multiple times (general problem)
+// FIXIT-L error if named option is set multiple times (general problem)
 // eg: tag:session, packets 10, packets 20;
 bool TagModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~") )
     {
-        if ( v == "session" )
-            tag->tag_type = TAG_SESSION;
-
-        else if ( v == "host_src" )
+        // FIXIT-M -- confusing
+        switch(v.get_long())
         {
+        case 0:
+            tag->tag_type = TAG_SESSION;
+            break;
+        case 1:
             tag->tag_type = TAG_HOST;
             tag->tag_direction = TAG_HOST_SRC;
-        }
-        else
-        {
+            break;
+        case 2:
             tag->tag_type = TAG_HOST;
             tag->tag_direction = TAG_HOST_DST;
+            break;
+        default:
+            return false;
+
         }
     }
     else if ( v.is("packets") )
@@ -162,6 +170,7 @@ static const IpsApi tag_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

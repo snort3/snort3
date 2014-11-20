@@ -1,21 +1,21 @@
 
-
 # keeping track of external libraries seperately for use in pkg-config.
 set(EXTERNAL_LIBRARIES
+    ${LUAJIT_LIBRARIES}
     ${PCRE_LIBRARIES}
     ${PCAP_LIBRARIES}
     ${OPENSSL_LIBRARIES}
     ${ZLIB_LIBRARIES}
 #    ${OPENSSL_CRYPTO_LIBRARY}  -- part of OPENSSL_LIBRARIES
-    ${LUAJIT_LIBRARIES}
     ${DAQ_LIBRARIES}
     ${DNET_LIBRARIES}
     ${CLANG_CXX_LIBRARY}
+    ${CMAKE_THREAD_LIBS_INIT} # GCC says we must link to the threads library
+    ${CMAKE_DL_LIBS}
     CACHE INTERNAL "external libraries" FORCE
 )
 
 set(EXTERNAL_INCLUDES
-    ${LUAJIT_INCLUDE_DIR}
     ${DAQ_INCLUDE_DIR}
     ${PCAP_INCLUDE_DIR}
     ${PCRE_INCLUDE_DIR}
@@ -24,7 +24,8 @@ set(EXTERNAL_INCLUDES
     ${ZLIB_INCLUDE_DIRS}
     CACHE INTERNAL "external INCLUDES" FORCE
 )
-include_directories(${EXTERNAL_INCLUDES})
+include_directories(BEFORE ${LUAJIT_INCLUDE_DIR})
+include_directories(SYSTEM ${EXTERNAL_INCLUDES})
 
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -50,17 +51,26 @@ include_directories(utils)
 if (STATIC_INSPECTORS)
     set (STATIC_INSPECTOR_LIBRARIES
         arp_spoof
-        port_scan
         back_orifice
         ftp_telnet
+        nhttp_inspect
         rpc_decode
+        wizard
+    )
+endif()
+
+
+if (STATIC_CODECS)
+    set (STATIC_CODEC_LIBRARIES
+        link_codecs
+        root_codecs
     )
 endif()
 
 if (BUILD_UNIT_TESTS)
     set( UNIT_TESTS_LIBRARIES unit_tests)
     add_subdirectory(test)
-endif( BUILD_UNIT_TESTS)
+endif (BUILD_UNIT_TESTS)
 
 
 #  The main Snort executableRA
@@ -84,7 +94,6 @@ target_link_libraries( snort
     stream_tcp
     stream_udp
     http_inspect
-    nhttp_inspect
     flow
     parser
     file_api
@@ -106,13 +115,13 @@ target_link_libraries( snort
     loggers
     service_inspectors
     stream
-    actions
+    ips_actions
+    port_scan
     managers
     codecs
-    root_codecs
-    link_codecs
     ip_codecs
     misc_codecs
+    ${STATIC_CODEC_LIBRARIES}
     ${STATIC_INSPECTOR_LIBRARIES}
     ${UNIT_TESTS_LIBRARIES}
     ${EXTERNAL_LIBRARIES}
@@ -148,6 +157,13 @@ add_subdirectory(network_inspectors)
 add_subdirectory(search_engines)
 
 
-install(TARGETS snort
+install (TARGETS snort
+    EXPORT snortexe
     RUNTIME DESTINATION bin
+    INCLUDES DESTINATION "${INCLUDE_INSTALL_PATH}"
+)
+
+install (EXPORT snortexe
+    DESTINATION lib/snort
+    FILE snort.cmake
 )

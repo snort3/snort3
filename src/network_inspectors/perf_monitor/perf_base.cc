@@ -64,6 +64,8 @@
 #include "snort_bounds.h"
 #include "perf.h"
 #include "stream/stream_api.h"
+#include "utils/stats.h"
+#include "protocols/tcp.h"
 
 static void GetPktDropStats(SFBASE *, SFBASE_STATS *);
 static void DisplayBasePerfStatsConsole(SFBASE_STATS *, int);
@@ -252,9 +254,9 @@ void UpdateBaseStats(SFBASE *sfBase, Packet *p, bool rebuilt)
     if (!rebuilt)
     {
         // For SYN to SYN/ACK counts to help determine if traffic is asynchronous
-        if ((p->tcph != NULL) && (p->tcph->th_flags & TH_SYN))
+        if ((p->ptrs.tcph != NULL) && (p->ptrs.tcph->th_flags & TH_SYN))
         {
-            if (p->tcph->th_flags & TH_ACK)
+            if (p->ptrs.tcph->th_flags & TH_ACK)
                 sfBase->iSynAcks++;
             else
                 sfBase->iSyns++;
@@ -1415,7 +1417,7 @@ static void LogBasePerfStats(SFBASE_STATS *sfBaseStats,  FILE * fh )
     fflush(fh);
 }
 
-static const char* iNames[PERF_COUNT_MAX] = {
+static const char* const iNames[PERF_COUNT_MAX] = {
     "ip4::trim",
     "ip4::tos",
     "ip4::df",
@@ -1425,7 +1427,7 @@ static const char* iNames[PERF_COUNT_MAX] = {
     "icmp4::echo",
     "ip6::ttl",
     "ip6::opts",
-    "icmp6::echo",
+    "icmp::echo",
     "tcp::syn_opt",
     "tcp::opt",
     "tcp::pad",

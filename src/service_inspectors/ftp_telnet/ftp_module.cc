@@ -21,12 +21,20 @@
 
 #include "ftp_module.h"
 #include <sstream>
+
 #include "main/snort_config.h"
+#include "parser/parser.h"
 
 using namespace std;
 
 #define FTP_CLIENT "ftp_client"
 #define FTP_SERVER "ftp_server"
+
+#define ftp_client_help \
+    "FTP client configuration module for use with ftp_server"
+
+#define ftp_server_help \
+    "main FTP module; ftp_client should also be configured"
 
 //-------------------------------------------------------------------------
 // client stuff
@@ -34,11 +42,11 @@ using namespace std;
 
 static const Parameter client_bounce_params[] =
 {
-    { "address", Parameter::PT_ADDR, nullptr, nullptr,
+    { "address", Parameter::PT_ADDR, nullptr, "1.0.0.0/32",
       "allowed ip address in CIDR format" },
 
-    // FIXIT port and last_port should be replaced with a port list
-    { "port", Parameter::PT_PORT, "1:", nullptr,
+    // FIXIT-L port and last_port should be replaced with a port list
+    { "port", Parameter::PT_PORT, "1:", "20",
       "allowed port" },
 
     { "last_port", Parameter::PT_PORT, "0:", nullptr,
@@ -52,7 +60,7 @@ static const Parameter ftp_client_params[] =
     { "bounce", Parameter::PT_BOOL, nullptr, "false",
       "check for bounces" },
 
-    { "bounce_to", Parameter::PT_TABLE, client_bounce_params, nullptr,
+    { "bounce_to", Parameter::PT_LIST, client_bounce_params, nullptr,
       "allow bounces to CIDRs / ports" },
 
     { "ignore_telnet_erase_cmds", Parameter::PT_BOOL, nullptr, "false",
@@ -68,7 +76,7 @@ static const Parameter ftp_client_params[] =
 };
 
 FtpClientModule::FtpClientModule() :
-    Module(FTP_CLIENT, ftp_client_params)
+    Module(FTP_CLIENT, ftp_client_help, ftp_client_params)
 {
     conf = nullptr;
 }
@@ -163,12 +171,13 @@ bool FtpClientModule::end(const char* fqn, int idx, SnortConfig*)
 
     if ( idx && !strcmp(fqn, "ftp_client.bounce_to") )
     {
-        if ( !address.size() )
+        // FIXIT-H 0.0.0.0/32 is not captured correctly 
+        // see parameter.cc::valid_addr()
+        if ( /*!address.size() ||*/ (last_port && (port > last_port)) )
+        {
+            ParseError("bad ftp_client.bounce_to [%d]", idx);
             return false;
-
-        if ( last_port && (port > last_port) )
-            return false;
-
+        }
         bounce_to.push_back(new BounceTo(address, port, last_port));
     }
     return true;
@@ -203,61 +212,23 @@ FtpCmd::FtpCmd(std::string& key, std::string& fmt, int num)
 //-------------------------------------------------------------------------
 
 #define FTP_TELNET_CMD_STR                       \
-        "(ftp) TELNET CMD on FTP Command Channel"
+        "TELNET cmd on FTP command channel"
 #define FTP_INVALID_CMD_STR                      \
-        "(ftp) Invalid FTP Command"
+        "invalid FTP command"
 #define FTP_PARAMETER_LENGTH_OVERFLOW_STR        \
-        "(ftp) FTP command parameters were too long"
+        "FTP command parameters were too long"
 #define FTP_MALFORMED_PARAMETER_STR              \
-        "(ftp) FTP command parameters were malformed"
+        "FTP command parameters were malformed"
 #define FTP_PARAMETER_STR_FORMAT_STR             \
-        "(ftp) FTP command parameters contained potential string format"
+        "FTP command parameters contained potential string format"
 #define FTP_RESPONSE_LENGTH_OVERFLOW_STR         \
-        "(ftp) FTP response message was too long"
+        "FTP response message was too long"
 #define FTP_ENCRYPTED_STR                        \
-        "(ftp) FTP traffic encrypted"
+        "FTP traffic encrypted"
 #define FTP_BOUNCE_STR                           \
-        "(ftp) FTP bounce attempt"
+        "FTP bounce attempt"
 #define FTP_EVASIVE_TELNET_CMD_STR               \
-        "(ftp) Evasive (incomplete) TELNET CMD on FTP Command Channel"
-
-// FIXIT convert to Lua and use as module default settings
-#if 0
-static const char* DEFAULT_FTP_CONF[] =
-{
-    "hardcoded_config "
-    "def_max_param_len 100 "
-
-    // FIXIT should not have to list commands more than once
-    // eg must appear in at least one *_cmds parameter
-    "ftp_cmds { USER PASS ACCT CWD CDUP SMNT QUIT REIN TYPE STRU"
-              " MODE RETR STOR STOU APPE ALLO REST RNFR RNTO ABOR"
-              " DELE RMD MKD PWD LIST NLST SITE SYST STAT HELP NOOP } "
-    "ftp_cmds { AUTH ADAT PROT PBSZ CONF ENC } "
-    "ftp_cmds { PORT PASV LPRT LPSV EPRT EPSV } "
-    "ftp_cmds { FEAT OPTS } "
-    "ftp_cmds { MDTM REST SIZE MLST MLSD } "
-
-    "alt_max_param_len 0 { CDUP QUIT REIN PASV STOU ABOR PWD SYST NOOP } ",
-
-    "cmd_validity MODE < char SBC > "
-    "cmd_validity STRU < char FRPO [ string ] > "
-    "cmd_validity ALLO < int [ char R int ] > "
-    "cmd_validity TYPE < { char AE [ char NTC ] | char I | char L [ number ] } > "
-    "cmd_validity PORT < host_port > "
-    "cmd_validity LPRT < long_host_port > "
-    "cmd_validity EPRT < extd_host_port > "
-    "cmd_validity EPSV < [ { '1' | '2' | 'ALL' } ] > ",
-
-    "data_chan_cmds { PORT PASV LPRT LPSV EPRT EPSV } "
-    "data_xfer_cmds { RETR STOR STOU APPE LIST NLST } "
-    "file_put_cmds { STOR STOU } "
-    "file_get_cmds { RETR } "
-    "login_cmds { USER PASS } "
-    "dir_cmds { CWD 250 CDUP 250 PWD 257 } "
-    "encr_cmds { AUTH } "
-};
-#endif
+        "evasive (incomplete) TELNET cmd on FTP command channel"
 
 //-------------------------------------------------------------------------
 
@@ -280,7 +251,7 @@ static const Parameter ftp_directory_params[] =
     { "dir_cmd", Parameter::PT_STRING, nullptr, nullptr,
       "directory command" },
 
-    { "rsp_code", Parameter::PT_INT, "200:", "0",
+    { "rsp_code", Parameter::PT_INT, "200:", "200",
       "expected successful response code for command" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -362,7 +333,7 @@ static const RuleMap ftp_server_rules[] =
 //-------------------------------------------------------------------------
 
 FtpServerModule::FtpServerModule() :
-    Module(FTP_SERVER, ftp_server_params)
+    Module(FTP_SERVER, ftp_server_help, ftp_server_params)
 {
     conf = nullptr;
 }

@@ -29,17 +29,17 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
 
+#include "utils/dnet_header.h"
 #include "stream/stream_api.h"
 #include "snort.h"
 
-#include "managers/packet_manager.h"
+#include "managers/action_manager.h"
+#include "protocols/packet_manager.h"
 #include "packet_io/sfdaq.h"
+#include "protocols/tcp.h"
+#include "protocols/protocol_ids.h"
+#include "parser/parser.h"
 
 #define MAX_ATTEMPTS 20
 
@@ -56,9 +56,6 @@ THREAD_LOCAL int active_suspend = 0;
 
 THREAD_LOCAL int active_have_rsp = 0;
 
-static THREAD_LOCAL void* s_rejData, *s_rspData;
-static THREAD_LOCAL Active_ResponseFunc s_rejFunc = NULL, s_rspFunc = NULL;
-
 static THREAD_LOCAL uint64_t s_injects = 0;
 
 typedef int (*send_t) (
@@ -68,86 +65,22 @@ static THREAD_LOCAL eth_t* s_link = NULL;
 static THREAD_LOCAL ip_t* s_ipnet = NULL;
 static THREAD_LOCAL send_t s_send = DAQ_Inject;
 
+// FIXIT-L these should not have to be thread local
+static THREAD_LOCAL uint8_t s_attempts = 0;
+static THREAD_LOCAL int s_enabled = 0;
+
 static int Active_Open(const char*);
 static int Active_Close(void);
 
 static int Active_SendEth(const DAQ_PktHdr_t*, int, const uint8_t*, uint32_t);
 static int Active_SendIp(const DAQ_PktHdr_t*, int, const uint8_t*, uint32_t);
 
-static uint8_t s_attempts = 0;
-static int s_enabled = 0;
-
-static inline PROTO_ID GetInnerProto (const Packet* p)
+static inline uint16_t GetInnerProto (const Packet* p)
 {
-    if ( !p->num_layers ) return PROTO_MAX;
-    return ( p->layers[p->num_layers-1].proto );
-}
+    if ( !p->num_layers )
+        return FINISHED_DECODE;
 
-//--------------------------------------------------------------------
-// this implementation ensures that flexible responses
-// take precedence over active responses.
-
-int Active_QueueReject (void)
-{
-    if ( Active_Suspended() )
-        return 0;
-
-    if ( !s_rejFunc )
-    {
-        s_rejFunc = (Active_ResponseFunc)Active_KillSession;
-        s_rejData = NULL;
-        active_have_rsp = 1;
-    }
-    return 0;
-}
-
-int Active_QueueResponse (Active_ResponseFunc f, void* pv)
-{
-    if ( Active_Suspended() )
-        return 0;
-
-    if ( !s_rspFunc )
-    {
-        s_rspFunc = f;
-        s_rspData = pv;
-        active_have_rsp = 1;
-    }
-    return 0;
-}
-
-// helper function
-static inline void Active_ClearQueue (void)
-{
-    s_rejFunc = s_rspFunc = NULL;
-    s_rejData = s_rspData = NULL;
-}
-
-int Active_ResetQueue ()
-{
-    Active_ClearQueue();
-    return 0;
-}
-
-int Active_SendResponses (Packet* p)
-{
-    if ( s_rspFunc )
-    {
-        s_rspFunc(p, s_rspData);
-    }
-    else if ( s_rejFunc )
-    {
-        s_rejFunc(p, s_rejData);
-    }
-    else
-    {
-        return 0;
-    }
-    if ( p->flow )
-    {
-        stream.init_active_response(p, p->flow);
-    }
-    Active_ClearQueue();
-    return 1;
+    return ( p->layers[p->num_layers-1].prot_id );
 }
 
 //--------------------------------------------------------------------
@@ -156,23 +89,24 @@ void Active_KillSession (Packet* p, EncodeFlags* pf)
 {
     EncodeFlags flags = pf ? *pf : ENC_FLAG_FWD;
 
-    if ( !IsIP(p) )
+    switch ( p->type() )
+    {
+    case PktType::UNKNOWN:
+        // Can only occur if we have never seen IP
         return;
 
-    switch ( GET_IPH_PROTO(p) )
-    {
-        case IPPROTO_TCP:
-            Active_SendReset(p, 0);
-            if ( flags & ENC_FLAG_FWD )
-                Active_SendReset(p, ENC_FLAG_FWD);
-            break;
+    case PktType::TCP:
+        Active_SendReset(p, 0);
+        if ( flags & ENC_FLAG_FWD )
+            Active_SendReset(p, ENC_FLAG_FWD);
+        break;
 
-        default:
-            if ( Active_PacketForceDropped() )
-                Active_SendUnreach(p, ENC_UNR_FW);
-            else
-                Active_SendUnreach(p, ENC_UNR_PORT);
-            break;
+    default:
+        if ( Active_PacketForceDropped() )
+            Active_SendUnreach(p, UnreachResponse::FWD);
+        else
+            Active_SendUnreach(p, UnreachResponse::PORT);
+        break;
     }
 }
 
@@ -189,8 +123,8 @@ int Active_Init (SnortConfig* sc)
 
         if ( ScReadMode() || Active_Open(sc->respond_device) )
         {
-            LogMessage("WARNING: active responses disabled since DAQ "
-                "can't inject packets.\n");
+            ParseWarning("active responses disabled since DAQ "
+                "can't inject packets.");
 #ifndef REG_TEST
             s_attempts = 0;
 #endif
@@ -216,9 +150,9 @@ void Active_SetEnabled (int on_off)
         s_enabled = on_off;
 }
 
-static inline uint32_t GetFlags (void)
+static inline EncodeFlags GetFlags (void)
 {
-    uint32_t flags = ENC_FLAG_ID;
+    EncodeFlags flags = ENC_FLAG_ID;
     if ( DAQ_RawInjection() || s_ipnet ) flags |= ENC_FLAG_RAW;
     return flags;
 }
@@ -230,33 +164,33 @@ static uint32_t Strafe(int, uint32_t, const Packet*);
 void Active_SendReset(Packet* p, EncodeFlags ef)
 {
     int i;
-    uint32_t flags = (GetFlags() | ef) & ~ENC_FLAG_VAL;
-    uint32_t value = ef & ENC_FLAG_VAL;
+    EncodeFlags flags = (GetFlags() | ef) & ~ENC_FLAG_VAL;
+    EncodeFlags value = ef & ENC_FLAG_VAL;
 
     for ( i = 0; i < s_attempts; i++ )
     {
-        uint32_t len = 0;
+        uint32_t len;
         const uint8_t* rej;
 
         value = Strafe(i, value, p);
 
-        rej = PacketManager::encode_reject(ENC_TCP_RST, flags|value, p, &len);
+        rej = PacketManager::encode_response(TcpResponse::RST, flags|value, p, len);
         if ( !rej ) return;
 
         s_send(p->pkth, !(ef & ENC_FLAG_FWD), rej, len);
     }
 }
 
-void Active_SendUnreach(Packet* p, EncodeType type)
+void Active_SendUnreach(Packet* p, UnreachResponse type)
 {
     uint32_t len;
     const uint8_t* rej;
-    uint32_t flags = GetFlags();
+    EncodeFlags flags = GetFlags();
 
     if ( !s_attempts )
         return;
 
-    rej = PacketManager::encode_reject(type, flags, p, &len);
+    rej = PacketManager::encode_reject(type, flags, p, len);
     if ( !rej ) return;
 
     s_send(p->pkth, 1, rej, len);
@@ -270,13 +204,13 @@ void Active_SendData (
 
     for ( i = 0; i < s_attempts; i++ )
     {
-        uint32_t plen = 0;
+        uint32_t plen;
         const uint8_t* seg;
 
         flags &= ~ENC_FLAG_VAL;
         flags |= (i & ENC_FLAG_VAL);
 
-        seg = PacketManager::encode_response(ENC_TCP_FIN, flags, p, &plen, buf, blen);
+        seg = PacketManager::encode_response(TcpResponse::FIN, flags, p, plen, buf, blen);
 
         if ( !seg ) return;
         s_send(p->pkth, !(flags & ENC_FLAG_FWD), seg, plen);
@@ -286,7 +220,7 @@ void Active_SendData (
 void Active_InjectData (
     Packet* p, EncodeFlags flags, const uint8_t* buf, uint32_t blen)
 {
-    uint32_t plen = 0;
+    uint32_t plen;
     const uint8_t* seg;
 
     if ( !s_attempts )
@@ -295,7 +229,7 @@ void Active_InjectData (
     flags |= GetFlags();
     flags &= ~ENC_FLAG_VAL;
 
-    seg = PacketManager::encode_response(ENC_TCP_PUSH, flags, p, &plen, buf, blen);
+    seg = PacketManager::encode_response(TcpResponse::PUSH, flags, p, plen, buf, blen);
     if ( !seg )
         return;
 
@@ -306,10 +240,10 @@ void Active_InjectData (
 
 int Active_IsRSTCandidate(const Packet* p)
 {
-    if ( GetInnerProto(p) != PROTO_TCP )
+    if ( GetInnerProto(p) != IPPROTO_ID_TCP )
         return 0;
 
-    if ( !p->tcph )
+    if ( !p->ptrs.tcph )
         return 0;
 
     /*
@@ -317,17 +251,20 @@ int Active_IsRSTCandidate(const Packet* p)
     **  spoofed ourselves, thus inflicting a self-induced DOS
     **  attack.
     */
-    return ( !(p->tcph->th_flags & TH_RST) );
+    return ( !(p->ptrs.tcph->th_flags & TH_RST) );
 }
 
 int Active_IsUNRCandidate(const Packet* p)
 {
-    // FIXIT allow unr to tcp/udp/icmp4/icmp6 only or for all
-    switch ( GetInnerProto(p) ) {
-    case PROTO_UDP:
-    case PROTO_TCP:
-    case PROTO_ICMP4:
-    case PROTO_ICMP6:
+    switch ( GetInnerProto(p) )
+    {
+    case IPPROTO_ID_UDP:
+    case IPPROTO_ID_TCP:
+        return 1;
+
+    case IPPROTO_ID_ICMPV4:
+    case IPPROTO_ID_ICMPV6:
+        // FIXIT-L return false for icmp unreachables
         return 1;
 
     default:
@@ -369,7 +306,7 @@ static uint32_t Strafe (int i, uint32_t flags, const Packet* p)
         break;
 
     default:
-        flags += (ntohs(p->tcph->th_win) >> 1);
+        flags += (ntohs(p->ptrs.tcph->th_win) >> 1);
         flags &= ENC_FLAG_VAL;
         flags |= ENC_FLAG_SEQ;
         break;
@@ -404,18 +341,20 @@ int Active_IgnoreSession (Packet* p)
 
 int Active_ForceDropAction(Packet *p)
 {
-    if ( !IsIP(p) )
+    if ( p->has_ip() )
         return 0;
 
     // explicitly drop packet
     Active_ForceDropPacket();
 
-    switch ( GET_IPH_PROTO(p) )
+    switch ( p->type() )
     {
-        case IPPROTO_TCP:
-        case IPPROTO_UDP:
-            Active_DropSession();
-            _Active_ForceIgnoreSession(p);
+    case PktType::TCP:
+    case PktType::UDP:
+        Active_DropSession();
+        _Active_ForceIgnoreSession(p);
+    default:
+        break;
     }
     return 0;
 }
@@ -428,23 +367,25 @@ static inline int _Active_DoReset(Packet *p)
     if ( Active_PacketWouldBeDropped() )
         return 0;
 
-    if ( !IPH_IS_VALID(p) )
+    if ( !p->ptrs.ip_api.is_valid() )
         return 0;
 
-    switch ( GET_IPH_PROTO(p) )
+    switch ( p->type() )
     {
-        case IPPROTO_TCP:
-            if ( Active_IsRSTCandidate(p) )
-                Active_QueueReject();
-            break;
+    case PktType::TCP:
+        if ( Active_IsRSTCandidate(p) )
+            ActionManager::queue_reject();
+        break;
 
-        // FIXIT send unr to udp/icmp4/icmp6 only or for all non-tcp?
-        case IPPROTO_UDP:
-        case IPPROTO_ICMP:
-        case IPPROTO_ICMPV6:
-            if ( Active_IsUNRCandidate(p) )
-                Active_QueueReject();
-            break;
+    case PktType::UDP:
+    case PktType::ICMP:
+    case PktType::IP:
+        if ( Active_IsUNRCandidate(p) )
+            ActionManager::queue_reject();
+        break;
+
+    default:
+        break;
     }
 
     return 0;
@@ -477,7 +418,7 @@ static int Active_Open (const char* dev)
         s_link = eth_open(dev);
 
         if ( !s_link )
-            FatalError("%s: can't open %s!\n",
+            FatalError("%s: can't open %s\n",
                 "Active response", dev);
         s_send = Active_SendEth;
     }
@@ -486,7 +427,7 @@ static int Active_Open (const char* dev)
         s_ipnet = ip_open();
 
         if ( !s_ipnet )
-            FatalError("%s: can't open ip!\n",
+            FatalError("%s: can't open ip\n",
                 "Active response");
         s_send = Active_SendIp;
     }

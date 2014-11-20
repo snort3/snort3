@@ -27,7 +27,7 @@
 
 #include "stream_udp.h"
 #include "udp_module.h"
-#include "udp_session.h"
+#include "stream/udp/udp_session.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
 
@@ -130,13 +130,14 @@ static const InspectApi udp_api =
     {
         PT_INSPECTOR,
         MOD_NAME,
+        MOD_HELP,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor
     },
     IT_STREAM,
-    PROTO_BIT__UDP,
+    (unsigned)PktType::UDP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // init
@@ -146,7 +147,7 @@ static const InspectApi udp_api =
     udp_ctor,
     udp_dtor,
     udp_ssn,
-    udp_reset
+    nullptr  // reset
 };
 
 const BaseApi* nin_stream_udp = &udp_api.base;

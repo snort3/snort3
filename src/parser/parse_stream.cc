@@ -18,6 +18,8 @@
 */
 // parse_stream.cc author Russ Combs <rucombs@cisco.com>
 
+#include "parse_stream.h"
+
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -47,24 +49,54 @@ enum TokenType
     TT_MAX
 };
 
-#if 0
-static const char* toks[TT_MAX] =
+//#define TRACER
+#ifdef TRACER
+static const char* const toks[TT_MAX] =
 {
     "none", "punct", "string", "list", "literal"
 };
 #endif
 
+static char unescape(char c)
+{
+    switch ( c )
+    {
+    case 'a': return '\a';
+    case 'b': return '\b';
+    case 'f': return '\f';
+    case 'n': return '\n';
+    case 'r': return '\r';
+    case 't': return '\t';
+    case 'v': return '\v';
+    }
+    return c;
+}
+
+static uint8_t to_hex(char c)
+{
+    if ( isdigit(c) )
+        return c - '0';
+    else if ( isupper(c) )
+        return 10 + c - 'A';
+    else
+        return 10 + c - 'a';
+}
+
 static TokenType get_token(
     istream& is, string& s, const char* punct, bool esc)
 {
     static int prev = EOF;
-    int c, list, state = 0;
+    int c, list = 0, state = 0;
     s.clear();
+    bool inc = true;
+    static int pos = 1;
+    uint8_t hex;
 
     if ( prev != EOF )
     {
         c = prev;
         prev = EOF;
+        inc = ( c != '\n' );
     }
     else
     {
@@ -74,26 +106,41 @@ static TokenType get_token(
 
     while ( c != EOF )
     {
-        //printf("state = %d, c = %d\n", state, c);
+#ifdef TRACER
+        printf("state = %d, c = %d\n", state, c);
+#endif
 
         if ( c == '\n' )
         {
             lines++;
-            inc_parse_position();
+            pos = 0;
+
+            if ( inc )
+                inc_parse_position();
+            else
+                inc = true;
         }
+        else
+            pos++;
 
         switch ( state )
         {
         case 0:  // idle
             if ( strchr(punct, c) )
             {
-                s += c;
+                s = c;
                 return TT_PUNCT;
             }
             else if ( c == '#' )
             {
+                s = c;
                 comments++;
                 state = 1;
+            }
+            else if ( c == '/' )
+            {
+                s = c;
+                state = 10;
             }
             else if ( c == '[' )
             {
@@ -127,7 +174,14 @@ static TokenType get_token(
         case 1:  // comment
             if ( c == '\n' )
             {
+                s.clear();
                 state = 0;
+            }
+            else if ( s.size() < 6 )
+            {
+                s += c;
+                if ( pos == 6 && !strcasecmp(s.c_str(), "#begin") )
+                    state = 8;
             }
             break;
         case 2:  // list
@@ -140,34 +194,43 @@ static TokenType get_token(
                 return TT_LIST;
             break;
         case 3:  // string
-            if ( esc && c == ';' )
+            if ( esc && c == '"' )
+            {
+                s += c;
+                return TT_STRING;
+            }
+            if ( !esc && c == ';' )
             {
                 prev = c;
                 return TT_STRING;
             }
-            s += c;
-            if ( !esc && c == '"' )
-            {
-                return TT_STRING;
-            }
             else if ( c == '\\' )
-                state = 4;
+                state = esc ? 4 : 16;
             else if ( c == '\n' )
-                printf("warning: line break in string on line %d\n", lines-1);
+                ParseWarning("line break in string on line %d\n", lines-1);
+            else
+                s += c;
             break;
         case 4:  // quoted escape
-            s += c;
-            state = 3;
+            if ( c == 'x' )
+                state = 14;
+            else
+            {
+                s += unescape(c);
+                state = 3;
+            }
             break;
         case 5:  // unquoted escape
-            if ( c == '\n' )
-                state = 0;
-            else if ( c != '\r' )
-                printf("error: invalid escape on line %d\n", lines);
+            if ( c != '\n' && c != '\r' )
+                ParseWarning("invalid escape on line %d\n", lines);
             state = 0;
             break;
         case 6:  // token
-            if ( isspace(c) || strchr(punct, c) )
+            if ( esc && c == '\\' )
+            {
+                state = 9;
+            }
+            else if ( isspace(c) || strchr(punct, c) )
             {
                 prev = c;
                 return TT_LITERAL;
@@ -192,6 +255,102 @@ static TokenType get_token(
                 s += c;
                 state = 6;
             }
+            break;
+        case 8:
+            if ( c == '\n' )
+            {
+                s.clear();
+            }
+            else if ( s.size() < 4 )
+            {
+                s += c;
+                if ( !strcasecmp(s.c_str(), "#end") )
+                    state = 1;
+            }
+            break;
+        case 9:  // token escape
+            s += c;
+            state = 6;
+            break;
+        case 10:  // start of comment?
+            if ( c == '*' )
+            {
+                s.clear();
+                state = 11;
+                break;
+            }
+            keys++;
+            // now as if state == 6
+            if ( esc && c == '\\' )
+            {
+                state = 9;
+            }
+            else if ( isspace(c) || strchr(punct, c) )
+            {
+                prev = c;
+                return TT_LITERAL;
+            }
+            else
+            {
+                s += c;
+                state = 6;
+            }
+            break;
+        case 11:  // /* comment */
+            if ( c == '*' )
+                state = 12;
+            else if ( c == '"' )
+                state = 13;
+            break;
+        case 12:  // end of comment?
+            if ( c == '/' )
+            {
+                comments++;
+                state = 0;
+            }
+            break;
+        case 13:  // quoted string in comment
+            if ( c == '"' )
+                state = 11;
+            else if ( c == '\n' )
+            {
+                ParseWarning("line break in commented string on line %d\n", lines-1);
+                state = 11;
+            }
+            break;
+        case 14:  // escaped hex in string - first digit
+            if ( isxdigit(c) )
+            {
+                hex = to_hex(c);
+                state = 15;
+            }
+            else
+            {
+                ParseWarning("\\x used with no following hex digits", lines-1);
+                s += c;
+                state = 3;
+            }
+            break;
+        case 15:  // escaped hex in string - second digit
+            if ( isxdigit(c) )
+            {
+                hex <<= 4;
+                hex |= to_hex(c);
+                s += hex;
+                state = 3;
+            }
+            else
+            {
+                s += hex;
+                s += c;
+                state = 3;
+            }
+            break;
+        case 16:  // string we don't unescape
+            s += '\\';
+            s += c;
+            state = 3;
+            break;
         }
         c = is.get();
         chars++;
@@ -205,7 +364,8 @@ enum FsmAction
     FSM_SIP, FSM_SP, 
     FSM_DIR, 
     FSM_DIP, FSM_DP,
-    FSM_SOB, FSM_EOB, 
+    FSM_STB, FSM_SOB,
+    FSM_EOB, 
     FSM_KEY, FSM_OPT,
     FSM_VAL, FSM_SET,
     FSM_ADD, FSM_INC,
@@ -220,7 +380,8 @@ const char* acts[FSM_MAX] =
     "sip", "sp",
     "dir",
     "dip", "dp",
-    "sob", "eob",
+    "stb", "sob",
+    "eob",
     "key", "opt",
     "val", "set",
     "add", "inc",
@@ -242,8 +403,9 @@ static const State fsm[] =
 {
     { -1,  0, TT_NONE,    FSM_ERR, nullptr,    ""      },
     {  0, 15, TT_LITERAL, FSM_KEY, "include",  ""      },
-    {  0,  1, TT_LITERAL, FSM_ACT, nullptr,    ""      },
-    {  1,  2, TT_LITERAL, FSM_PRO, nullptr,    nullptr },
+    {  0,  1, TT_LITERAL, FSM_ACT, nullptr,    "("     },
+    {  1,  8, TT_PUNCT,   FSM_STB, "(",        "(:,;)" },
+    {  1,  2, TT_LITERAL, FSM_PRO, nullptr,    ""      },
     {  2,  3, TT_LIST,    FSM_SIP, nullptr,    nullptr },
     {  2,  3, TT_LITERAL, FSM_SIP, nullptr,    nullptr },
     {  3,  4, TT_LIST,    FSM_SP,  nullptr,    nullptr },
@@ -255,24 +417,31 @@ static const State fsm[] =
     {  6,  7, TT_LITERAL, FSM_DP,  nullptr,    "(:,;)" },
     {  7,  8, TT_PUNCT,   FSM_SOB, "(",        nullptr },
     {  8,  0, TT_PUNCT,   FSM_EOB, ")",        nullptr },
-    {  8, 13, TT_LITERAL, FSM_KEY, "metadata", ":,;"   },
-    {  8, 13, TT_LITERAL, FSM_KEY, "reference",":,;"   },
+    {  8, 13, TT_LITERAL, FSM_KEY, "metadata", nullptr },
+    {  8, 16, TT_LITERAL, FSM_KEY, "reference",":;"    },
     {  8,  9, TT_LITERAL, FSM_KEY, nullptr,    nullptr },
     {  9,  8, TT_PUNCT,   FSM_END, ";",        nullptr },
     {  9, 10, TT_PUNCT,   FSM_NOP, ":",        nullptr },
+    // we can't allow this because the syntax is squiffy
+    // would prefer to require a ; after the last option
+    // (and delete all the other cases like this too)
+    //{  9,  0, TT_PUNCT,   FSM_EOB, ")",        ""      },
     { 10, 12, TT_STRING,  FSM_OPT, nullptr,    nullptr },
     { 10, 11, TT_LITERAL, FSM_OPT, nullptr,    nullptr },
     { 11, 12, TT_STRING,  FSM_VAL, nullptr,    nullptr },
     { 11, 12, TT_LITERAL, FSM_VAL, nullptr,    nullptr },
     { 11,  8, TT_PUNCT,   FSM_END, ";",        nullptr },
+    { 11,  0, TT_PUNCT,   FSM_EOB, ")",        ""      },
     { 11, 10, TT_PUNCT,   FSM_SET, ",",        nullptr },
     { 12,  8, TT_PUNCT,   FSM_END, ";",        nullptr },
+    { 12,  0, TT_PUNCT,   FSM_EOB, ")",        ""      },
     { 12, 10, TT_PUNCT,   FSM_SET, ",",        nullptr },
     { 13, 14, TT_PUNCT,   FSM_NOP, ":",        nullptr },
     { 14,  8, TT_PUNCT,   FSM_END, ";",        "(:,;)" },
     { 14, 14, TT_NONE,    FSM_SET, ",",        nullptr },
     { 14, 14, TT_NONE,    FSM_ADD, nullptr,    nullptr },
     { 15,  0, TT_LITERAL, FSM_INC, nullptr,    nullptr },
+    { 16, 14, TT_PUNCT,   FSM_NOP, ":",        ";"     },
 };
 
 static const State* get_state(int num, TokenType type, const string& tok)
@@ -291,6 +460,7 @@ static const State* get_state(int num, TokenType type, const string& tok)
             return fsm + i;
         }
     }
+    ParseError("syntax error");
     return fsm;
 }
 
@@ -303,51 +473,55 @@ struct RuleParseState
     string opt;
     string val;
 
+    bool tbd;
+
     RuleParseState()
     { otn = nullptr; };
 };
 
 static void parse_body(const char*, RuleParseState&, struct SnortConfig*);
 
-static void exec(
+static bool exec(
     FsmAction act, string& tok,
     RuleParseState& rps, SnortConfig* sc)
 {
     switch ( act )
     {
     case FSM_ACT:
-        //printf("\nparse act = %s\n", tok.c_str());
+        // FIXIT-L if non-rule tok != "END", parsing goes bad
+        // (need ctl-D to terminate)
+        if ( tok == "END" )
+            return true;
         parse_rule_type(sc, tok.c_str(), rps.rtn);
         break;
     case FSM_PRO:
-        //printf("parse pro = %s\n", tok.c_str());
         parse_rule_proto(sc, tok.c_str(), rps.rtn);
         break;
     case FSM_SIP:
-        //printf("parse sip = %s\n", tok.c_str());
         parse_rule_nets(sc, tok.c_str(), true, rps.rtn);
         break;
     case FSM_SP:
-        //printf("parse sp = %s\n", tok.c_str());
         parse_rule_ports(sc, tok.c_str(), true, rps.rtn);
         break;
     case FSM_DIR:
-        //printf("parse dir = %s\n", tok.c_str());
         parse_rule_dir(sc, tok.c_str(), rps.rtn);
         break;
     case FSM_DIP:
-        //printf("parse dip = %s\n", tok.c_str());
         parse_rule_nets(sc, tok.c_str(), false, rps.rtn);
         break;
     case FSM_DP:
-        //printf("parse dp = %s\n", tok.c_str());
         parse_rule_ports(sc, tok.c_str(), false, rps.rtn);
+        break;
+    case FSM_STB:
+        rps.otn = parse_rule_open(sc, rps.rtn, true);
         break;
     case FSM_SOB:
         rps.otn = parse_rule_open(sc, rps.rtn);
         break;
     case FSM_EOB:
     {
+        if ( rps.tbd )
+            exec(FSM_END, tok, rps, sc);
         const char* extra = parse_rule_close(sc, rps.rtn, rps.otn);
         if ( extra )
             parse_body(extra, rps, sc);
@@ -364,27 +538,30 @@ static void exec(
         rps.key = tok;
         rps.opt.clear();
         rps.val.clear();
+        rps.tbd = true;
         break;
     case FSM_OPT:
         rps.opt = tok;
         rps.val.clear();
+        rps.tbd = true;
         break;
     case FSM_VAL:
         rps.val = tok;
+        rps.tbd = true;
         break;
     case FSM_SET:
-        //printf("parse %s:%s = %s\n", rps.key.c_str(), rps.opt.c_str(), rps.val.c_str());
         parse_rule_opt_set(sc, rps.key.c_str(), rps.opt.c_str(), rps.val.c_str());
         rps.opt.clear();
         rps.val.clear();
+        rps.tbd = false;
         break;
     case FSM_END:
-        //printf("parse %s:%s = %s\n", rps.key.c_str(), rps.opt.c_str(), rps.val.c_str());
         if ( rps.opt.size() )
             parse_rule_opt_set(sc, rps.key.c_str(), rps.opt.c_str(), rps.val.c_str());
         parse_rule_opt_end(sc, rps.key.c_str(), rps.otn);
         rps.opt.clear();
         rps.val.clear();
+        rps.tbd = false;
         break;
     case FSM_ADD:
         // adding another state would eliminate this if
@@ -396,18 +573,18 @@ static void exec(
                 rps.val += " ";
             rps.val += tok;
         }
+        rps.tbd = true;
         break;
     case FSM_INC:
-        //printf("\nparse %s = %s\n", rps.key.c_str(), tok.c_str());
         parse_include(sc, tok.c_str());
         break;
     case FSM_NOP:
         break;
     case FSM_ERR:
-        //printf("error\n");
     default:
         break;
     }
+    return false;
 }
 
 // parse_body() is called at the end of a stub rule to parse the detection
@@ -430,8 +607,9 @@ static void parse_body(const char* extra, RuleParseState& rps, struct SnortConfi
         const State* s = get_state(num, type, tok);
 
         exec(s->action, tok, rps, sc);
+
         num = s->next;
-        esc = (rps.key == "pcre");
+        esc = (rps.key == "content");
 
         if ( s->punct )
             punct = s->punct;
@@ -453,16 +631,23 @@ void parse_stream(istream& is, struct SnortConfig* sc)
         ++tokens;
         const State* s = get_state(num, type, tok);
 
-        //printf("%d: %s = '%s' -> %s\n",
-        //    num, toks[type], tok.c_str(), acts[s->action]);
+#ifdef TRACER
+        printf("%d: %s = '%s' -> %s\n",
+            num, toks[type], tok.c_str(), acts[s->action]);
+#endif
 
-        exec(s->action, tok, rps, sc);
+        if ( exec(s->action, tok, rps, sc) )
+            break;
+
         num = s->next;
-        esc = (rps.key == "pcre");
+        esc = (rps.key == "content");
 
         if ( s->punct )
             punct = s->punct;
     }
+    if ( num )
+        ParseError("incomplete rule");
+
     //printf("chars = %d, tokens = %d\n", chars, tokens);
     //printf("lines = %d, comments = %d\n", lines, comments);
     //printf("rules = %d, keys = %d\n", rules, keys);

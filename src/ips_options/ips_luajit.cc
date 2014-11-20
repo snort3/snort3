@@ -18,29 +18,30 @@
 */
 // ips_luajit.cc author Russ Combs <rucombs@cisco.com>
 
-#include "ips_luajit.h"
-
 #include <lua.hpp>
 
+#include "main/snort_types.h"
+#include "helpers/chunk.h"
 #include "managers/ips_manager.h"
+#include "managers/plugin_manager.h"
+#include "managers/script_manager.h"
 #include "hash/sfhashfcn.h"
 #include "parser/parser.h"
 #include "framework/cursor.h"
+#include "framework/module.h"
+#include "framework/parameter.h"
 #include "time/profiler.h"
+#include "detection/detection_defines.h"
 
-using namespace std;
+static THREAD_LOCAL ProfileStats luaIpsPerfStats;
 
-// FIXIT need to register these perf stats
-static THREAD_LOCAL ProfileStats luajitPerfStats;
-
-static const char* opt_init = "init";
-static const char* opt_eval = "eval";
+#define opt_eval "eval"
 
 //-------------------------------------------------------------------------
-// luajit ffi stuff
+// ffi stuff
 //-------------------------------------------------------------------------
 
-struct Buffer
+struct SnortBuffer
 {
     const char* type;
     const uint8_t* data;
@@ -49,15 +50,13 @@ struct Buffer
 
 extern "C" {
 // ensure Lua can link with this
-const Buffer* get_buffer();
+const SnortBuffer* get_buffer();
 }
 
 static THREAD_LOCAL Cursor* cursor;
-static THREAD_LOCAL Buffer buf;
+static THREAD_LOCAL SnortBuffer buf;
 
-//namespace snort_ffi
-//{
-const Buffer* get_buffer()
+SO_PUBLIC const SnortBuffer* get_buffer()
 {
     assert(cursor);
     buf.type = cursor->get_name();
@@ -65,120 +64,37 @@ const Buffer* get_buffer()
     buf.len = cursor->length();
     return &buf;
 }
-//};
 
 //-------------------------------------------------------------------------
-// lua implementation stuff
+// module stuff
 //-------------------------------------------------------------------------
 
-struct Loader
-{
-    Loader(string& s) : chunk(s) { done = false; };
-    string& chunk;
-    bool done;
-};
-
-const char* load(lua_State*, void* ud, size_t* size)
-{
-    Loader* ldr = (Loader*)ud;
-
-    if ( ldr->done )
-    {
-        *size = 0;
-        return nullptr;
-    }
-    ldr->done = true;
-    *size = ldr->chunk.size();
-    return ldr->chunk.c_str();
-}
-
-static void init_lua(
-    lua_State*& L, string& chunk, const char* name, string& args)
-{
-    L = luaL_newstate();
-    luaL_openlibs(L);
-
-    Loader ldr(chunk);
-
-    // first load the chunk
-    if ( lua_load(L, load, &ldr, name) )
-    {
-        ParseError("%s luajit failed to load chunk %s", name, lua_tostring(L, -1));
-        return;
-    }
-
-    // now exec the chunk to define functions etc in L
-    if ( lua_pcall(L, 0, 0, 0) )
-    {
-        ParseError("%s luajit failed to init chunk %s", name, lua_tostring(L, -1));
-        return;
-    }
-
-    // load the args table 
-    if ( luaL_loadstring(L, args.c_str()) )
-    {
-        ParseError("%s luajit failed to load args %s", name, lua_tostring(L, -1));
-        return;
-    }
-
-    // exec the args table to define it in L
-    if ( lua_pcall(L, 0, 0, 0) )
-    {
-        ParseError("%s luajit failed to init args %s", name, lua_tostring(L, -1));
-        return;
-    }
-
-    // exec the init func if defined
-    lua_getglobal(L, opt_init);
-
-    if ( !lua_isfunction(L, -1) )
-        return;
-
-    if ( lua_pcall(L, 0, 1, 0) )
-    {
-        const char* err = lua_tostring(L, -1);
-        ParseError("%s %s", name, err);
-        return;
-    }
-    // string is an error message
-    if ( lua_isstring(L, -1) )
-    {
-        const char* err = lua_tostring(L, -1);
-        ParseError("%s %s", name, err);
-        return;
-    }
-    // bool is the result
-    if ( !lua_toboolean(L, -1) )
-    {
-        ParseError("%s init() returned false", name);
-        return;
-    }
-    // initialization complete
-    lua_pop(L, 1);
-}
-
-static void term_lua(lua_State*& L)
-{
-    lua_close(L);
-}
-
-//-------------------------------------------------------------------------
-// module
-//-------------------------------------------------------------------------
-
-static const Parameter luajit_params[] =
+static const Parameter s_params[] =
 {
     { "~", Parameter::PT_STRING, nullptr, nullptr,
-      "luajit arguments" },
+      "LuaJIT arguments" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-LuaJitModule::LuaJitModule(const char* name) : Module(name, luajit_params)
-{ }
+#define s_help \
+    "rule option for detecting with Lua scripts"
 
-ProfileStats* LuaJitModule::get_profile() const
-{ return &luajitPerfStats; }
+class LuaJitModule : public Module
+{
+public:
+    LuaJitModule(const char* name) : Module(name, s_help, s_params)
+    { };
+
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
+
+    ProfileStats* get_profile() const override
+    { return &luaIpsPerfStats; };
+
+public:
+    std::string args;
+};
 
 bool LuaJitModule::begin(const char*, int, SnortConfig*)
 {
@@ -189,18 +105,6 @@ bool LuaJitModule::begin(const char*, int, SnortConfig*)
 bool LuaJitModule::set(const char*, Value& v, SnortConfig*)
 {
     args = v.get_string();
-    return true;
-}
-
-//-------------------------------------------------------------------------
-// option stuff
-//-------------------------------------------------------------------------
-
-LuaJitOption::LuaJitOption(
-    const char* name, string& chunk, LuaJitModule* mod)
-    : IpsOption(name)
-{
-    string args = mod->args;
 
     // if args not empty, it has to be a quoted string
     // so remove enclosing quotes
@@ -210,9 +114,38 @@ LuaJitOption::LuaJitOption(
         args.erase(args.size()-1);
     }
 
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// option stuff
+//-------------------------------------------------------------------------
+
+class LuaJitOption : public IpsOption
+{
+public:
+    LuaJitOption(const char* name, std::string& chunk, LuaJitModule*);
+    ~LuaJitOption();
+
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
+
+    int eval(Cursor&, Packet*) override;
+
+private:
+    void init(const char*, const char*);
+
+    std::string config;
+    struct lua_State** lua;
+};
+
+LuaJitOption::LuaJitOption(
+    const char* name, std::string& chunk, LuaJitModule* mod)
+    : IpsOption(name)
+{
     // create an args table with any rule options
     config = "args = { ";
-    config += args;
+    config += mod->args;
     config += "}";
 
     unsigned max = get_instance_max();
@@ -220,7 +153,7 @@ LuaJitOption::LuaJitOption(
     lua = new lua_State*[max];
 
     for ( unsigned i = 0; i < max; ++i )
-        init_lua(lua[i], chunk, name, config);
+        init_chunk(lua[i], chunk, name, config);
 }
 
 LuaJitOption::~LuaJitOption()
@@ -228,7 +161,7 @@ LuaJitOption::~LuaJitOption()
     unsigned max = get_instance_max();
 
     for ( unsigned i = 0; i < max; ++i )
-        term_lua(lua[i]);
+        term_chunk(lua[i]);
 
     delete[] lua;
 }
@@ -258,7 +191,7 @@ bool LuaJitOption::operator==(const IpsOption& ips) const
 int LuaJitOption::eval(Cursor& c, Packet*)
 {
     PROFILE_VARS;
-    MODULE_PROFILE_START(luajitPerfStats);
+    MODULE_PROFILE_START(luaIpsPerfStats);
 
     cursor = &c;
 
@@ -269,15 +202,71 @@ int LuaJitOption::eval(Cursor& c, Packet*)
     {
         const char* err = lua_tostring(L, -1);
         ErrorMessage("%s\n", err);
-        MODULE_PROFILE_END(luajitPerfStats);
+        MODULE_PROFILE_END(luaIpsPerfStats);
         return DETECTION_OPTION_NO_MATCH;
     }
     bool result = lua_toboolean(L, -1);
     lua_pop(L, 1);
 
     int ret = result ? DETECTION_OPTION_MATCH : DETECTION_OPTION_NO_MATCH;
-    MODULE_PROFILE_END(luajitPerfStats);
+    MODULE_PROFILE_END(luaIpsPerfStats);
 
     return ret;
 }
+
+//-------------------------------------------------------------------------
+// api stuff
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    const char* key = PluginManager::get_current_plugin();
+    return new LuaJitModule(key);
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsOption* opt_ctor(Module* m, struct OptTreeNode*)
+{
+    const char* key = IpsManager::get_option_keyword();
+    std::string* chunk = ScriptManager::get_chunk(key);
+
+    if ( !chunk )
+        return nullptr;
+
+    LuaJitModule* mod = (LuaJitModule*)m;
+    return new LuaJitOption(key, *chunk, mod);
+}
+
+static void opt_dtor(IpsOption* p)
+{
+    delete p;
+}
+
+const IpsApi ips_lua_api =
+{
+    {
+        PT_IPS_OPTION,
+        "tbd",
+        "Lua JIT script for IPS rule option",
+        IPSAPI_PLUGIN_V0,
+        0,
+        mod_ctor,
+        mod_dtor
+    },
+    OPT_TYPE_DETECTION,
+    1, PROTO_BIT__TCP,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    opt_ctor,
+    opt_dtor,
+    nullptr
+};
+
+const IpsApi* ips_luajit = &ips_lua_api;
 

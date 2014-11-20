@@ -1,6 +1,5 @@
 /*
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,10 +16,11 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// protocol_ids.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 
-#ifndef PROTOCOL_IDS_H
-#define PROTOCOL_IDS_H
+#ifndef PROTOCOLS_PROTOCOL_IDS_H
+#define PROTOCOLS_PROTOCOL_IDS_H
 
 /*****************************************************************
  *****  NOTE:   Protocols are only included in this file when ****
@@ -47,28 +47,34 @@
  * http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
  */
 
-const uint16_t IPPROTO_ID_HOPOPTS = 0;
-const uint16_t IPPROTO_ID_ICMPV4 = 1;
-const uint16_t IPPROTO_ID_IPIP = 4;
-const uint16_t IPPROTO_ID_IPV6 = 41;
-const uint16_t IPPROTO_ID_ROUTING = 43;
-const uint16_t IPPROTO_ID_FRAGMENT = 44;
-const uint16_t IPPROTO_ID_GRE = 47;
-const uint16_t IPPROTO_ID_ESP = 50;
-const uint16_t IPPROTO_ID_AH = 51; // RFC 4302
-const uint16_t IPPROTO_ID_ICMPV6 = 58;
-const uint16_t IPPROTO_ID_NONEXT = 59;
-const uint16_t IPPROTO_ID_DSTOPTS = 60;
-
+constexpr uint16_t IPPROTO_ID_HOPOPTS = 0;
+constexpr uint16_t IPPROTO_ID_ICMPV4 = 1;
+constexpr uint16_t IPPROTO_ID_IPIP = 4;
+constexpr uint16_t IPPROTO_ID_TCP = 6;
+constexpr uint16_t IPPROTO_ID_UDP = 17;
+constexpr uint16_t IPPROTO_ID_IPV6 = 41;
+constexpr uint16_t IPPROTO_ID_ROUTING = 43;
+constexpr uint16_t IPPROTO_ID_FRAGMENT = 44;
+constexpr uint16_t IPPROTO_ID_GRE = 47;
+constexpr uint16_t IPPROTO_ID_ESP = 50;
+constexpr uint16_t IPPROTO_ID_AUTH = 51; // RFC 4302
+constexpr uint16_t IPPROTO_ID_MOBILITY = 55;
+constexpr uint16_t IPPROTO_ID_ICMPV6 = 58;
+constexpr uint16_t IPPROTO_ID_NONEXT = 59;
+constexpr uint16_t IPPROTO_ID_DSTOPTS = 60;
+constexpr uint16_t IPPROTO_ID_RESERVED = 255; // == 0xFF
 
 /*
  *  Undefined Protocol!
  */
 
-const uint16_t FINISHED_DECODE = 0x0100;  // Indicates Codecs have succesfully decoded packet
-const uint16_t PROTOCOL_TEREDO = 0x0101;
-const uint16_t PROTOCOL_GTP = 0x0102;
-
+constexpr uint16_t FINISHED_DECODE = 0x0100;  // Indicates Codecs have succesfully decoded packet
+constexpr uint16_t PROTOCOL_TEREDO = 0x0101;
+constexpr uint16_t PROTOCOL_GTP = 0x0102;
+constexpr uint16_t IP_EMBEDDED_IN_ICMP4 = 0x0103;
+constexpr uint16_t IP_EMBEDDED_IN_ICMP6 = 0x0104;
+constexpr uint16_t ETHERNET_802_3 = 0x0105;  // CAPWAP sends data back to eth layer
+constexpr uint16_t ETHERNET_LLC = 0x0106;
 
 
 
@@ -81,17 +87,33 @@ const uint16_t PROTOCOL_GTP = 0x0102;
  */
 
 
-const uint16_t ETHERTYPE_TRANS_ETHER_BRIDGING = 0x6558;
-const uint16_t ETHERTYPE_IPV4 = 0x0800;
-const uint16_t ETHERTYPE_REVARP = 0x8035;
-const uint16_t ETHERTYPE_ARP = 0x0806;
-const uint16_t ETHERTYPE_8021Q = 0x8100;
-const uint16_t ETHERTYPE_IPX = 0x8137;
-const uint16_t ETHERTYPE_IPV6 = 0x86dd;
-const uint16_t ETHERTYPE_PPP = 0x880B;
-const uint16_t ETHERTYPE_EAPOL = 0x888e;
+constexpr uint16_t ETHERTYPE_TRANS_ETHER_BRIDGING = 0x6558;
+constexpr uint16_t ETHERTYPE_IPV4 = 0x0800;
+constexpr uint16_t ETHERTYPE_REVARP = 0x8035;
+constexpr uint16_t ETHERTYPE_ARP = 0x0806;
+constexpr uint16_t ETHERTYPE_8021Q = 0x8100;
+constexpr uint16_t ETHERTYPE_IPX = 0x8137;
+constexpr uint16_t ETHERTYPE_IPV6 = 0x86dd;
+constexpr uint16_t ETHERTYPE_PPP = 0x880B;
+constexpr uint16_t ETHERTYPE_EAPOL = 0x888e;
 
+
+static inline bool is_ip6_extension(const uint8_t proto)
+{
+    switch(proto)
+    {
+    case IPPROTO_ID_HOPOPTS:
+    case IPPROTO_ID_DSTOPTS:
+    case IPPROTO_ID_ROUTING:
+    case IPPROTO_ID_FRAGMENT:
+    case IPPROTO_ID_AUTH:
+    case IPPROTO_ID_ESP:
+    case IPPROTO_ID_MOBILITY:
+    case IPPROTO_ID_NONEXT:
+        return true;
+    default:
+        return false;
+    }
+}
 
 #endif
-
-

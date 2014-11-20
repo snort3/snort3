@@ -40,7 +40,9 @@
 #include <arpa/inet.h>
 
 #include "sfip/sfip_t.h"
+#include "sfip/sf_returns.h"
 #include "main/snort_debug.h"
+#include "main/snort_types.h"
 
 /* define SFIP_ROBUST to check pointers passed into the sfip libs.
  * Robustification should not be enabled if the client code is trustworthy.
@@ -70,32 +72,12 @@
 
 #endif
 
-typedef enum _return_values {
-    SFIP_SUCCESS=0,
-    SFIP_FAILURE,
-    SFIP_LESSER,
-    SFIP_GREATER,
-    SFIP_EQUAL,
-    SFIP_ARG_ERR,
-    SFIP_CIDR_ERR,
-    SFIP_INET_PARSE_ERR,
-    SFIP_INVALID_MASK,
-    SFIP_ALLOC_ERR,
-    SFIP_CONTAINS,
-    SFIP_NOT_CONTAINS,
-    SFIP_DUPLICATE,         /* Tried to add a duplicate variable name to table */
-    SFIP_LOOKUP_FAILURE,    /* Failed to lookup a variable from the table */
-    SFIP_UNMATCHED_BRACKET, /* IP lists that are missing a closing bracket */
-    SFIP_NOT_ANY,           /* For !any */
-    SFIP_CONFLICT           /* For IP conflicts in IP lists */
-} SFIP_RET;
-
 
 /* IP allocations and setting ******************************************/
 
 /* Parses "src" and stores results in "dst" */
 /* If the conversion is invalid, returns SFIP_FAILURE */
-SFIP_RET sfip_pton(const char *src, sfip_t *dst);
+SO_PUBLIC SFIP_RET sfip_pton(const char *src, sfip_t *dst);
 
 /* Allocate IP address from a character array describing the IP */
 sfip_t *sfip_alloc(const char *ip, SFIP_RET *status);
@@ -109,7 +91,7 @@ sfip_t *sfip_alloc_raw(void *ip, int family, SFIP_RET *status);
 
 /* Sets existing IP, "dst", to a raw source IP (4 or 16 bytes,
  * according to family) */
-SFIP_RET sfip_set_raw(sfip_t *dst, const void *src, int src_family);
+SO_PUBLIC SFIP_RET sfip_set_raw(sfip_t *dst, const void *src, int src_family);
 
 /* Sets existing IP, "dst", to be source IP, "src" */
 SFIP_RET sfip_set_ip(sfip_t *dst, const sfip_t *src);
@@ -119,10 +101,10 @@ void sfip_obfuscate(sfip_t *ob, sfip_t *ip);
 
 /* return required size (eg for hashing)
  * requires that address bytes be the last field in sfip_t */
-static inline unsigned int sfip_size(sfip_t* ipt)
+static inline unsigned int sfip_size(const sfip_t *ipt)
 {
     if ( ipt->family == AF_INET6 ) return sizeof(*ipt);
-    return (unsigned int)((ipt->ip.u6_addr8+4) - (u_int8_t*)ipt);
+    return (unsigned int)((ipt->ip8+4) - (u_int8_t*)ipt);
 }
 
 /* Member-access *******************************************************/
@@ -156,13 +138,25 @@ static inline void sfip_set_bits(sfip_t *p, int bits) {
 
 /* IP Comparisons ******************************************************/
 
+// Functions which will be defined below.
+static inline int sfip_is_set(const sfip_t& ip);
+static inline int sfip_is_set(const sfip_t* const ip);
+static inline bool sfip_equals(const sfip_t* const lhs, const sfip_t* const rhs);
+static inline bool sfip_unset_equals(const sfip_t* const lhs, const sfip_t* const rhs);
+static inline bool sfip_not_equals(const sfip_t* const lhs, const sfip_t* const rhs);
+static inline bool sfip_lesser(const sfip_t* const lhs, const sfip_t* const rhs);
+static inline bool sfip_greater(const sfip_t* const lhs, const sfip_t* const rhs);
+static inline void sfip_clear(sfip_t& x);
+static inline void sfip_copy(sfip_t& lhs, const sfip_t* const rhs);
+
 /* Check if ip is contained within the network specified by net */
 /* Returns SFIP_EQUAL if so */
-SFIP_RET sfip_contains(const sfip_t *net, const sfip_t *ip);
+SO_PUBLIC SFIP_RET sfip_contains(const sfip_t *net, const sfip_t *ip);
 
+#if 0
 /* Returns 1 if the IP is non-zero. 0 otherwise */
 /* XXX This is a performance critical function, \
- *  need to determine if it's safe to not check these pointers */\
+ *  need to determine if it's safe to not check these pointers */
 static inline int sfip_is_set(const sfip_t *ip) {
 //    ARG_CHECK1(ip, -1);
     return ip->ip32[0] ||
@@ -171,10 +165,40 @@ static inline int sfip_is_set(const sfip_t *ip) {
               ip->ip32[2] ||
               ip->ip32[3] || ip->bits != 128)) || ((ip->family == AF_INET) && ip->bits != 32)  ;
 }
+#endif
 
 /* Return 1 if the IP is a loopback IP */
-int sfip_is_loopback(const sfip_t *ip);
 
+/* Returns 1 if the IP is non-zero. 0 otherwise */
+inline int sfip_is_loopback(const sfip_t *ip) {
+    const unsigned int *p;
+
+    ARG_CHECK1(ip, 0);
+
+    if(sfip_family(ip) == AF_INET) {
+        // 127.0.0.0/8 is IPv4 loopback
+        return (ip->ip8[0] == 0x7f);
+    }
+
+    p = ip->ip32;
+
+    /* Check the first 64 bits in an IPv6 address, and */
+    /* verify they're zero.  If not, it's not a loopback */
+    if(p[0] || p[1]) return 0;
+
+    /* Check if the 3rd 32-bit int is zero */
+    if ( p[2] == 0 ) {
+        /* ::7f00:0/104 is ipv4 compatible ipv6 */
+        /* ::1 is the IPv6 loopback */
+        return ( (ip->ip8[12] == 0x7f) || (ntohl(p[3]) == 0x1) );
+    }
+    /* Check the 3rd 32-bit int for a mapped IPv4 address */
+    if ( ntohl(p[2]) == 0xffff ) {
+        /* ::ffff:127.0.0.0/104 is IPv4 loopback mapped over IPv6 */
+        return ( ip->ip8[12] == 0x7f );
+    }
+    return 0;
+}
 /* Returns 1 if the IPv6 address appears mapped. 0 otherwise. */
 int sfip_ismapped(const sfip_t *ip);
 
@@ -214,7 +238,7 @@ static inline SFIP_RET _ip6_cmp(const sfip_t *ip1, const sfip_t *ip2) {
  * or greater than ip2 In the case of mismatched families, the IPv4 address
  * is converted to an IPv6 representation. */
 /* XXX-IPv6 Should add version of sfip_compare that just tests equality */
-static inline SFIP_RET sfip_compare(const sfip_t *ip1, const sfip_t *ip2) {
+static inline SFIP_RET sfip_compare(const sfip_t* const ip1, const sfip_t* const ip2) {
     int f1,f2;
 
     ARG_CHECK2(ip1, ip2, SFIP_ARG_ERR);
@@ -255,7 +279,7 @@ static inline SFIP_RET sfip_compare(const sfip_t *ip1, const sfip_t *ip2) {
  * or greater than ip2 In the case of mismatched families, the IPv4 address
  * is converted to an IPv6 representation. */
 /* XXX-IPv6 Should add version of sfip_compare that just tests equality */
-static inline SFIP_RET sfip_compare_unset(const sfip_t *ip1, const sfip_t *ip2) {
+static inline SFIP_RET sfip_compare_unset(const sfip_t* const ip1, const sfip_t* const ip2) {
     int f1,f2;
 
     ARG_CHECK2(ip1, ip2, SFIP_ARG_ERR);
@@ -292,17 +316,17 @@ static inline SFIP_RET sfip_compare_unset(const sfip_t *ip1, const sfip_t *ip2) 
     return SFIP_FAILURE;
 }
 
-static inline int sfip_fast_lt4(const sfip_t *ip1, const sfip_t *ip2) {
+static inline int sfip_fast_lt4(const sfip_t* const ip1, const sfip_t* const ip2) {
     return *ip1->ip32 < *ip2->ip32;
 }
-static inline int sfip_fast_gt4(const sfip_t *ip1, const sfip_t *ip2) {
+static inline int sfip_fast_gt4(const sfip_t* const ip1, const sfip_t* const ip2) {
     return *ip1->ip32 > *ip2->ip32;
 }
-static inline int sfip_fast_eq4(const sfip_t *ip1, const sfip_t *ip2) {
+static inline int sfip_fast_eq4(const sfip_t* const ip1, const sfip_t* const ip2) {
     return *ip1->ip32 == *ip2->ip32;
 }
 
-static inline int sfip_fast_lt6(const sfip_t *ip1, const sfip_t *ip2) {
+static inline int sfip_fast_lt6(const sfip_t* const ip1, const sfip_t* const ip2) {
     const u_int32_t *p1, *p2;
 
     p1 = ip1->ip32;
@@ -323,7 +347,7 @@ static inline int sfip_fast_lt6(const sfip_t *ip1, const sfip_t *ip2) {
     return 0;
 }
 
-static inline int sfip_fast_gt6(const sfip_t *ip1, const sfip_t *ip2) {
+static inline int sfip_fast_gt6(const sfip_t* const ip1, const sfip_t* const ip2) {
     const u_int32_t *p1, *p2;
 
     p1 = ip1->ip32;
@@ -477,16 +501,150 @@ static inline int sfip_is_private(const sfip_t *ip)
 
 }
 
+
+
+
+/* Returns 1 if the IP is non-zero. 0 otherwise *
+ * XXX This is a performance critical function,
+ *  need to determine if it's safe to not check these pointers
+ *
+ * SNORT RELIC
+ */
+static inline int sfip_is_set(const sfip_t* const ip) {
+//    ARG_CHECK1(ip, -1);
+    return ip->ip32[0] ||
+            ( (ip->family == AF_INET6) &&
+              (ip->ip32[1] ||
+              ip->ip32[2] ||
+              ip->ip32[3] || ip->bits != 128)) || ((ip->family == AF_INET) && ip->bits != 32)  ;
+}
+
+static inline int sfip_is_set(const sfip_t& ip) {
+//    ARG_CHECK1(ip, -1);
+    return ip.ip32[0] ||
+            ( (ip.family == AF_INET6) &&
+              (ip.ip32[1] ||
+              ip.ip32[2] ||
+              ip.ip32[3] || ip.bits != 128)) || ((ip.family == AF_INET) && ip.bits != 32)  ;
+}
+
+
+
+static inline bool _is_sfip_equals(const sfip_t* const lhs, const sfip_t* const rhs)
+{
+    if (lhs->is_ip4())
+    {
+        return  (rhs->is_ip4()) &&
+                (lhs->ip32[0] == rhs->ip32[0]);
+    }
+    else if (lhs->is_ip6())
+    {
+        return  (rhs->is_ip6()) &&
+                (lhs->ip32[0] == rhs->ip32[0]) &&
+                (lhs->ip32[1] == rhs->ip32[1]) &&
+                (lhs->ip32[2] == rhs->ip32[2]) &&
+                (lhs->ip32[3] == rhs->ip32[3]);
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+static inline bool _is_sfip_lesser(const sfip_t* const lhs, const sfip_t* const rhs)
+{
+    if (lhs->is_ip4())
+    {
+        return (rhs->is_ip4() &&
+               (htonl(lhs->ip32[0]) < htonl(rhs->ip32[0])));
+    }
+    else if (lhs->is_ip6())
+    {
+        return (rhs->is_ip6() &&
+               (htonl(lhs->ip32[0]) < htonl(rhs->ip32[0])) &&
+               (htonl(lhs->ip32[1]) < htonl(rhs->ip32[1])) &&
+               (htonl(lhs->ip32[2]) < htonl(rhs->ip32[2])) &&
+               (htonl(lhs->ip32[3]) < htonl(rhs->ip32[3])));
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+static inline bool sfip_equals(const sfip_t* const lhs, const sfip_t* const rhs)
+{
+    if(!sfip_is_set(lhs) || !sfip_is_set(rhs))
+        return true;
+
+    return _is_sfip_equals(lhs, rhs);
+}
+
+
+static inline bool sfip_not_equals(const sfip_t* const lhs, const sfip_t* const rhs)
+{ return !sfip_equals(lhs,rhs); }
+
+
+static inline bool sfip_unset_equals(const sfip_t* const lhs, const sfip_t* const rhs)
+{
+    if(!sfip_is_set(lhs) || !sfip_is_set(rhs))
+        return false;
+
+    return _is_sfip_equals(lhs, rhs);
+}
+
+
+static inline bool sfip_lesser(const sfip_t* const lhs, const sfip_t* const rhs)
+{
+    // I'm copying and pasting.  Don't ask me why this is different then sfip_equals
+    if(!sfip_is_set(lhs) || !sfip_is_set(rhs))
+        return false;
+
+    return _is_sfip_lesser(lhs, rhs);
+}
+
+
+static inline bool sfip_greater(const sfip_t* const lhs, const sfip_t* const rhs)
+{
+    // I'm copying and pasting.  Don't ask me why this is different then sfip_equals
+    if(!sfip_is_set(lhs) || !sfip_is_set(rhs))
+        return false;
+
+    return _is_sfip_lesser(rhs, lhs);
+}
+
+
+static inline void sfip_clear(sfip_t& x)
+{
+    x.family = 0;
+    x.bits = 0;
+    x.ip32[0] = 0;
+    x.ip32[1] = 0;
+    x.ip32[2] = 0;
+    x.ip32[3] = 0;
+}
+
+/*
+ * This is the former macro IP_COPY_VALUE(x, y).  No need to assign
+ * specific operator since the default equals operator will
+ * correctly assign values
+ */
+static inline void sfip_copy(sfip_t& lhs, const sfip_t* const rhs)
+{ lhs = *rhs; }
+
+
+#if 0
 #define sfip_equals(x,y) (sfip_compare(&x, &y) == SFIP_EQUAL)
 #define sfip_not_equals !sfip_equals
 #define sfip_clear(x) memset(x, 0, 16)
+#endif
 
 /* Printing ************************************************************/
 
 /* Uses a static buffer to return a string representation of the IP */
-char *sfip_to_str(const sfip_t *ip);
-#define sfip_ntoa(x) sfip_to_str(x)
-void sfip_raw_ntop(int family, const void *ip_raw, char *buf, int bufsize);
+SO_PUBLIC void sfip_raw_ntop(int family, const void *ip_raw, char *buf, int bufsize);
 void sfip_ntop(const sfip_t *ip, char *buf, int bufsize);
 
 #endif // SF_IP_H

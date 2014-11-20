@@ -26,18 +26,19 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 #include "detection/fpdetect.h"
 #include "protocols/ipv6.h"
-#include "codecs/ip/ipv6_util.h"
+#include "codecs/ip/ip_util.h"
+
+#define CD_IPV6_ROUTING_NAME "ipv6_routing"
+#define CD_IPV6_ROUTING_HELP "support for IPv6 routing extension"
 
 namespace
 {
-
-#define CD_IPV6_ROUTING_NAME "ipv6_routing"
 
 class Ipv6RoutingCodec : public Codec
 {
@@ -46,10 +47,9 @@ public:
     ~Ipv6RoutingCodec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 
-    virtual void get_protocol_ids(std::vector<uint16_t>&);    
+    void get_protocol_ids(std::vector<uint16_t>&) override;
 };
 
 struct IP6Route
@@ -78,61 +78,55 @@ struct IP6Route0
 } // namespace
 
 
-bool Ipv6RoutingCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool Ipv6RoutingCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-    const IP6Route *rte = reinterpret_cast<const IP6Route *>(raw_pkt);
-
-    fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_ROUTING);
-    ipv6_util::CheckIPv6ExtensionOrder(p);
+    const IP6Route* const rte = reinterpret_cast<const IP6Route *>(raw.data);
 
 
-    if(raw_len < ipv6::min_ext_len())
+    if(raw.len < ip::MIN_EXT_LEN)
     {
-        codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
+        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
-    if ( p->ip6_extension_count >= IP6_EXTMAX)
+    if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
     {
-        codec_events::decoder_event(p, DECODE_IP6_EXCESS_EXT_HDR);
+        codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
         return false;
     }
 
-    if (raw_len < sizeof(IP6Route))
+    if (raw.len < sizeof(IP6Route))
     {
-        codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
+        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
     /* Routing type 0 extension headers are evil creatures. */
     if (rte->ip6rte_type == 0)
-    {
-        codec_events::decoder_event(p, DECODE_IPV6_ROUTE_ZERO);
-    }
+        codec_events::decoder_event(codec, DECODE_IPV6_ROUTE_ZERO);
 
     if (rte->ip6rte_nxt == IPPROTO_ID_HOPOPTS)
-    {
-        codec_events::decoder_event(p, DECODE_IPV6_ROUTE_AND_HOPBYHOP);
-    }
+        codec_events::decoder_event(codec, DECODE_IPV6_ROUTE_AND_HOPBYHOP);
+
     if (rte->ip6rte_nxt == IPPROTO_ID_ROUTING)
-    {
-        codec_events::decoder_event(p, DECODE_IPV6_TWO_ROUTE_HEADERS);
-    }
+        codec_events::decoder_event(codec, DECODE_IPV6_TWO_ROUTE_HEADERS);
+
     
-    lyr_len = ipv6::min_ext_len() + (rte->ip6rte_len << 3);
-    if(lyr_len > raw_len)
+    codec.lyr_len = ip::MIN_EXT_LEN + (rte->ip6rte_len << 3);
+    if(codec.lyr_len > raw.len)
     {
-        codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
+        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
 
-    p->ip6_extensions[p->ip6_extension_count].type = IPPROTO_ID_ROUTING;
-    p->ip6_extensions[p->ip6_extension_count].data = raw_pkt;
-    p->ip6_extension_count++;
-    next_prot_id = rte->ip6rte_nxt;
+    codec.proto_bits |= PROTO_BIT__IP6_EXT; // check ip proto rules against this layer
+    codec.ip6_extension_count++;
+    codec.next_prot_id = rte->ip6rte_nxt;
+    codec.ip6_csum_proto = rte->ip6rte_nxt;
 
+    // must be called AFTER setting next_prot_id
+    ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_ROUTING);
     return true;
 }
 
@@ -148,20 +142,17 @@ void Ipv6RoutingCodec::get_protocol_ids(std::vector<uint16_t>& v)
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new Ipv6RoutingCodec();
-}
+{ return new Ipv6RoutingCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi ipv6_routing_api =
 {
     {
         PT_CODEC,
         CD_IPV6_ROUTING_NAME,
+        CD_IPV6_ROUTING_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

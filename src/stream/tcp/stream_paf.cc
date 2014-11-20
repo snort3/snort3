@@ -51,7 +51,6 @@
 #include "snort.h"
 #include "stream/stream.h"
 #include "stream/stream_api.h"
-#include "target_based/sftarget_protocol_reference.h"
 
 //--------------------------------------------------------------------
 // private state
@@ -69,7 +68,7 @@ static THREAD_LOCAL uint64_t prep_bytes = 0;
 
 // s5_len and s5_idx are used only during the
 // lifetime of s5_paf_check()
-// FIXIT these thread local should be moved into thread context
+// FIXIT-L these thread local should be moved into thread context
 static THREAD_LOCAL uint32_t s5_len;  // total bytes queued
 static THREAD_LOCAL uint32_t s5_idx;  // offset from start of queued bytes
 
@@ -132,7 +131,7 @@ static uint32_t s5_paf_flush (
 }
 
 //--------------------------------------------------------------------
-// FIXIT PAF support multiple scanners
+// FIXIT-L PAF support multiple scanners
 
 static bool s5_paf_callback (
     StreamSplitter* ss, PAF_State* ps, Flow* ssn,
@@ -140,7 +139,18 @@ static bool s5_paf_callback (
 {
     ps->paf = ss->scan(ssn, data, len, flags, &ps->fpt);
 
-    if ( ps->paf != PAF_SEARCH )
+#if 0
+    if ( ps->paf == StreamSplitter::SEARCH )
+        ps->fpt = 0;
+
+    if ( ssn->gadget )
+    printf(
+        "%s scan[%d] '%-8.8s' -> %d, %d\n", 
+        ss->to_server() ? "c2s" : "s2c", len, (char*)data,
+        ps->paf, ps->fpt);
+#endif
+
+    if ( ps->paf != StreamSplitter::SEARCH )
     {
         ps->fpt += s5_idx;
 
@@ -158,29 +168,28 @@ static bool s5_paf_callback (
 
 static inline bool s5_paf_eval (
     StreamSplitter* ss, PAF_State* ps, Flow* ssn,
-    uint16_t, uint32_t flags, 
-    const uint8_t* data, uint32_t len, FlushType* ft)
+    uint32_t flags, const uint8_t* data, uint32_t len, FlushType* ft)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
         "%s: paf=%d, idx=%u, len=%u, fpt=%u\n",
         __FUNCTION__, ps->paf, s5_idx, s5_len, ps->fpt);)
 
-    uint16_t fuzz = 0; // FIXIT PAF add a little zippedy-do-dah
+    uint16_t fuzz = 0; // FIXIT-L PAF add a little zippedy-do-dah
 
     switch ( ps->paf )
     {
-    case PAF_SEARCH:
+        case StreamSplitter::SEARCH:
         if ( s5_len > s5_idx )
         {
             return s5_paf_callback(ss, ps, ssn, data, len, flags);
         }
         return false;
 
-    case PAF_FLUSH:
+        case StreamSplitter::FLUSH:
         if ( s5_len >= ps->fpt )
         {
             *ft = FT_PAF;
-            ps->paf = PAF_SEARCH;
+            ps->paf = StreamSplitter::SEARCH;
             return true;
         }
         if ( s5_len >= ss->max() + fuzz )
@@ -190,7 +199,7 @@ static inline bool s5_paf_eval (
         }
         return false;
 
-    case PAF_SKIP:
+        case StreamSplitter::SKIP:
         if ( s5_len > ps->fpt )
         {
             if ( ps->fpt > s5_idx )
@@ -207,7 +216,7 @@ static inline bool s5_paf_eval (
         return false;
 
     default:
-        // PAF_ABORT || PAF_START
+        // StreamSplitter::ABORT || StreamSplitter::START
         break;
     }
 
@@ -223,12 +232,12 @@ void s5_paf_setup (PAF_State* ps)
 {
     // this is already cleared when instantiated
     //memset(ps, 0, sizeof(*ps));
-    ps->paf = PAF_START;
+    ps->paf = StreamSplitter::START;
 }
 
 void s5_paf_clear (PAF_State* ps)
 {
-    ps->paf = PAF_ABORT;
+    ps->paf = StreamSplitter::ABORT;
 }
 
 //--------------------------------------------------------------------
@@ -236,7 +245,7 @@ void s5_paf_clear (PAF_State* ps)
 uint32_t s5_paf_check (
     StreamSplitter* ss, PAF_State* ps, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t total,
-    uint32_t seq, uint16_t port, uint32_t* flags)
+    uint32_t seq, uint32_t* flags)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
         "%s: len=%u, amt=%u, seq=%u, cur=%u, pos=%u, fpt=%u, tot=%u, paf=%d\n",
@@ -245,7 +254,7 @@ uint32_t s5_paf_check (
     if ( !s5_paf_initialized(ps) )
     {
         ps->seq = ps->pos = seq;
-        ps->paf = PAF_SEARCH;
+        ps->paf = StreamSplitter::SEARCH;
     }
     else if ( SEQ_GT(seq, ps->seq) )
     {
@@ -276,15 +285,12 @@ uint32_t s5_paf_check (
         uint32_t idx = s5_idx;
         uint32_t shift, fp;
 
-        bool cont = s5_paf_eval(ss, ps, ssn, port, *flags, data, len, &ft);
+        bool cont = s5_paf_eval(ss, ps, ssn, *flags, data, len, &ft);
 
         if ( ft != FT_NOP )
         {
             fp = s5_paf_flush(ss, ps, ft, flags);
-
-            ps->pos += fp;
-            ps->seq = ps->pos;
-
+            s5_paf_jump(ps, fp);
             return fp;
         }
         if ( !cont )
@@ -301,14 +307,11 @@ uint32_t s5_paf_check (
 
     } while ( 1 );
 
-    uint16_t fuzz = 0; // FIXIT PAF add a little zippedy-do-dah
-    if ( (ps->paf != PAF_FLUSH) && (s5_len > ss->max()+fuzz) )
+    uint16_t fuzz = 0; // FIXIT-L PAF add a little zippedy-do-dah
+    if ( (ps->paf != StreamSplitter::FLUSH) && (s5_len > ss->max()+fuzz) )
     {
         uint32_t fp = s5_paf_flush(ss, ps, FT_MAX, flags);
-
-        ps->pos += fp;
-        ps->seq = ps->pos;
-
+        s5_paf_jump(ps, fp);
         return fp;
     }
     return 0;

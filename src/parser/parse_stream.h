@@ -23,7 +23,7 @@
 
 #include <istream>
 
-int parse_stream(std::istream&, struct SnortConfig*);
+void parse_stream(std::istream&, struct SnortConfig*);
 
 #endif
 

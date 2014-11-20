@@ -1,5 +1,5 @@
 /*
-**  Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -27,94 +27,95 @@
 
 #include "ips_manager.h"
 #include "framework/ips_option.h"
+#include "framework/logger.h"
 #include "managers/plugin_manager.h"
-#include "ips_options/ips_luajit.h"
 #include "parser/parser.h"
 #include "helpers/directory.h"
 
-// FIXIT this approach results in N * K lua states where
+// FIXIT-P this approach results in N * K lua states where
 // N ::= number of instances of script + args and
 // K ::= number of threads
 // change to create K lua states here for each script + args
-// and change LuaJitOption() to get reference to thread states
+// and change LuaJit*() to get reference to thread states
 // ultimately should look into changing detection engine to 
 // keep just one copy of rule option + args
 
 using namespace std;
-static const char* script_ext = ".lua";
+#define script_ext ".lua"
 
-class LuaIpsApi
+//-------------------------------------------------------------------------
+// lua api stuff
+//-------------------------------------------------------------------------
+
+class LuaApi
 {
-public:
-    LuaIpsApi(string& name, unsigned ver, string& chunk);
+protected:
+    LuaApi(string& t, string& s, string& c)
+    {
+        type = t;
+        name = s;
+        chunk = c;
+    };
 
 public:
+    virtual ~LuaApi() { };
+    virtual const BaseApi* get_base() const = 0;
+
+public:
+    string type;
     string name;
     string chunk;
+};
+
+static vector<const BaseApi*> base_api;
+static vector<LuaApi*> lua_api;
+
+//-------------------------------------------------------------------------
+// ips option stuff
+//-------------------------------------------------------------------------
+
+class IpsLuaApi : public LuaApi
+{
+public:
+    IpsLuaApi(string& t, string& n, string& c, unsigned v);
+
+    const BaseApi* get_base() const
+    { return &api.base; };
+
+public:
     IpsApi api;
 };
 
-static vector<BaseApi*> ips_api;
-static vector<LuaIpsApi*> ips_options;
-
-//-------------------------------------------------------------------------
-// api stuff
-//-------------------------------------------------------------------------
-
-static Module* mod_ctor()
+IpsLuaApi::IpsLuaApi(string& t, string& s, string& c, unsigned v) : LuaApi(t, s, c)
 {
-    const char* key = PluginManager::get_current_plugin();
-    return new LuaJitModule(key);
-}
-
-static void mod_dtor(Module* m)
-{
-    delete m;
-}
-
-static LuaIpsApi* find_api(const char* key)
-{
-    for ( auto p : ips_options )
-        if ( p->name == key )
-            return p;
-
-    return nullptr;
-}
-
-static IpsOption* ctor(Module* m, struct OptTreeNode*)
-{
-    const char* key = IpsManager::get_option_keyword();
-    LuaIpsApi* api = find_api(key);
-
-    if ( !api )
-        return nullptr;
-
-    LuaJitModule* mod = (LuaJitModule*)m;
-    return new LuaJitOption(key, api->chunk, mod);
-}
-
-static void dtor(IpsOption* p)
-{
-    delete p;
-}
-
-LuaIpsApi::LuaIpsApi(string& s, unsigned ver, string& c)
-{
-    name = s;
-    chunk = c;
-
-    memset(&api, 0, sizeof(api));
-
-    api.base.type = PT_IPS_OPTION;
+    extern const IpsApi* ips_luajit;
+    api = *ips_luajit;
     api.base.name = name.c_str();
-    api.base.version = ver;
-    api.base.api_version = IPSAPI_VERSION;
+    api.base.version = v;
+}
 
-    api.base.mod_ctor = mod_ctor;
-    api.base.mod_dtor = mod_dtor;
+//-------------------------------------------------------------------------
+// log api stuff
+//-------------------------------------------------------------------------
 
-    api.ctor = ctor;
-    api.dtor = dtor;
+class LogLuaApi : public LuaApi
+{
+public:
+    LogLuaApi(string& t, string& n, string& c, unsigned v);
+
+    const BaseApi* get_base() const
+    { return &api.base; };
+
+public:
+    LogApi api;
+};
+
+LogLuaApi::LogLuaApi(string& t, string& s, string& c, unsigned v) : LuaApi(t, s, c)
+{
+    extern const LogApi* log_luajit;
+    api = *log_luajit;
+    api.base.name = name.c_str();
+    api.base.version = v;
 }
 
 //-------------------------------------------------------------------------
@@ -196,7 +197,13 @@ static void load_script(const char* f)
     int ver = -1;
     string type, name, chunk;
 
-    if ( !get_field(L, "type", type) || type != "ips_option" )
+    if ( !get_field(L, "type", type) )
+    {
+        ParseError("missing plugin type %s = '%s'", f, type.c_str());
+        return;
+    }
+
+    if ( type != "ips_option" && type != "logger" )
     {
         ParseError("unknown plugin type in %s = '%s'", f, type.c_str());
         return;
@@ -219,8 +226,11 @@ static void load_script(const char* f)
         return;
     }
 
-    LuaIpsApi* lapi = new LuaIpsApi(name, ver, chunk);
-    ips_options.push_back(lapi);
+    if ( type == "ips_option" )
+        lua_api.push_back(new IpsLuaApi(type, name, chunk, ver));
+    else
+        lua_api.push_back(new LogLuaApi(type, name, chunk, ver));
+
     lua_close(L);
 }
 
@@ -250,25 +260,34 @@ void ScriptManager::load_scripts(const char* s)
     }
 }
 
-const BaseApi** ScriptManager::get_ips_options()
+const BaseApi** ScriptManager::get_plugins()
 {
-    ips_api.clear();
+    base_api.clear();
 
-    for ( auto p : ips_options )
-        ips_api.push_back(&p->api.base);
+    for ( auto p : lua_api )
+        base_api.push_back(p->get_base());
 
-    ips_api.push_back(nullptr);
+    base_api.push_back(nullptr);
 
-    return (const BaseApi**)&ips_api[0];
+    return (const BaseApi**)&base_api[0];
 }
 
 void ScriptManager::release_scripts()
 {
-    for ( auto p : ips_options )
+    for ( auto p : lua_api )
         if ( p )
             delete p;
 
-    ips_options.clear();
-    ips_api.clear();
+    lua_api.clear();
+    base_api.clear();
+}
+
+string* ScriptManager::get_chunk(const char* key)
+{
+    for ( auto p : lua_api )
+        if ( p->name == key )
+            return &p->chunk;
+
+    return nullptr;
 }
 

@@ -41,10 +41,10 @@
 
 #include "ftpp_include.h"
 #include "hi_util_kmap.h"
-#include "ipv6_port.h"
 #include "sfrt/sfrt.h"
 #include "snort_bounds.h"
 #include "framework/bits.h"
+#include "sfip/sfip_t.h"
 
 /*
  * Defines
@@ -203,7 +203,7 @@ struct FTP_SERVER_PROTO_CONF
 
 typedef struct s_FTP_BOUNCE_TO
 {
-    snort_ip ip;
+    sfip_t ip;
     int relevant_bits;
     unsigned short portlo;
     unsigned short porthi;

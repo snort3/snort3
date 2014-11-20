@@ -22,15 +22,16 @@
 #ifndef NORM_H
 #define NORM_H
 
-#include "protocols/packet.h"
 #include "snort.h"
 #include "normalize.h"
+#include "protocols/packet_manager.h"
 
 struct NormalizerConfig;
+struct Packet;
 
 // all normalizers look like this:
 // the return is 1 if packet was changed, else 0
-typedef int (*NormalFunc)(  // FIXIT why is this exposed?
+typedef int (*NormalFunc)(  // FIXIT-L why is this exposed?
     struct NormalizerConfig*, Packet*, uint8_t layer, int changes);
 
 struct NormalizerConfig
@@ -40,7 +41,7 @@ struct NormalizerConfig
 
     // these must be in the same order PROTO_IDs are defined!
     // if entry is NULL, proto doesn't have normalization or it is disabled
-    NormalFunc normalizers[PROTO_MAX];
+    NormalFunc normalizers[PacketManager::max_protocols()];
 };
 
 int Norm_SetConfig(NormalizerConfig*);

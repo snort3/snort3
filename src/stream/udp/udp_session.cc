@@ -44,12 +44,10 @@
 #include "packet_io/active.h"
 #include "perf_monitor/perf.h"
 #include "profiler.h"
+#include "sfip/sf_ip.h"
 
-/* sender/responder ip/port dereference */
-#define udp_sender_ip flow->client_ip
-#define udp_sender_port flow->client_port
-#define udp_responder_ip flow->server_ip
-#define udp_responder_port flow->server_port
+// NOTE:  sender is assumed to be client
+//        responder is assumed to be server
 
 THREAD_LOCAL SessionStats udpStats;
 THREAD_LOCAL ProfileStats udp_perf_stats;
@@ -71,23 +69,16 @@ static void UdpSessionCleanup(Flow *lwssn)
         CloseStreamSession(&sfBase, SESSION_CLOSED_NORMALLY);
     }
 
-    lwssn->flow_state = 0;
-    lwssn->clear();
+    if ( lwssn->s5_state.session_flags & SSNFLAG_SEEN_SENDER )
+        udpStats.released++;
 
-    udpStats.released++;
     RemoveUDPSession(&sfBase);
 }
 
 static int ProcessUdp(
     Flow *lwssn, Packet *p, StreamUdpConfig*, SFXHASH_NODE*)
 {
-    if (lwssn->protocol != IPPROTO_UDP)  // FIXIT checked by tcp, icmp, and ip too?
-    // FIXIT need to free lwssn and get a new one
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Lightweight session not UDP on UDP packet\n"););
-        return 0;
-    }
+    assert(lwssn->protocol == PktType::UDP);
 
     if ( stream.blocked_session(lwssn, p) )
         return 0;
@@ -123,6 +114,9 @@ static int ProcessUdp(
         }
     }
 
+    if ( lwssn->clouseau )
+        lwssn->clouseau->eval(p);
+
     return 0;
 }
 
@@ -132,8 +126,6 @@ static int ProcessUdp(
 
 UdpSession::UdpSession(Flow* flow) : Session(flow)
 {
-    ssn_time.tv_sec = 0;
-    ssn_time.tv_usec = 0;
 }
 
 bool UdpSession::setup(Packet* p)
@@ -142,7 +134,7 @@ bool UdpSession::setup(Packet* p)
     ssn_time.tv_usec = p->pkth->ts.tv_usec;
     flow->s5_state.session_flags |= SSNFLAG_SEEN_SENDER;
 
-    flow->protocol = GET_IPH_PROTO(p);
+    flow->protocol = p->type();
     flow->s5_state.direction = FROM_SENDER;
 
     StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
@@ -152,14 +144,10 @@ bool UdpSession::setup(Packet* p)
     AddUDPSession(&sfBase);
 
     if (perfmon_config && (perfmon_config->perf_flags & SFPERF_FLOWIP))
-        UpdateFlowIPState(&sfFlow, IP_ARG(flow->client_ip),
-            IP_ARG(flow->server_ip), SFS_STATE_UDP_CREATED);
-
-    flow->s5_state.direction = FROM_SENDER;
-    IP_COPY_VALUE(flow->client_ip, GET_SRC_IP(p));
-    flow->client_port = p->udph->uh_sport;
-    IP_COPY_VALUE(flow->server_ip, GET_DST_IP(p));
-    flow->server_port = p->udph->uh_dport;
+    {
+        UpdateFlowIPState(&sfFlow, &flow->client_ip,
+            &flow->server_ip, SFS_STATE_UDP_CREATED);
+    }
 
     if ( flow_con->expected_flow(flow, p) )
         return false;
@@ -171,15 +159,16 @@ bool UdpSession::setup(Packet* p)
 void UdpSession::clear()
 {
     UdpSessionCleanup(flow);
+    flow->clear();
 }
 
 void UdpSession::update_direction(
-    char dir, snort_ip_p ip, uint16_t port)
+    char dir, const sfip_t *ip, uint16_t port)
 {
-    snort_ip tmpIp;
+    sfip_t tmpIp;
     uint16_t tmpPort;
 
-    if (IP_EQUALITY(&udp_sender_ip, ip) && (udp_sender_port == port))
+    if (sfip_equals(&flow->client_ip, ip) && (flow->client_port == port))
     {
         if ((dir == SSN_DIR_SENDER) && (flow->s5_state.direction == SSN_DIR_SENDER))
         {
@@ -187,7 +176,7 @@ void UdpSession::update_direction(
             return;
         }
     }
-    else if (IP_EQUALITY(&udp_responder_ip, ip) && (udp_responder_port == port))
+    else if (sfip_equals(&flow->server_ip, ip) && (flow->server_port == port))
     {
         if ((dir == SSN_DIR_RESPONDER) && (flow->s5_state.direction == SSN_DIR_RESPONDER))
         {
@@ -197,12 +186,12 @@ void UdpSession::update_direction(
     }
 
     /* Swap them -- leave flow->s5_state.direction the same */
-    tmpIp = udp_sender_ip;
-    tmpPort = udp_sender_port;
-    udp_sender_ip = udp_responder_ip;
-    udp_sender_port = udp_responder_port;
-    udp_responder_ip = tmpIp;
-    udp_responder_port = tmpPort;
+    tmpIp = flow->client_ip;
+    tmpPort = flow->client_port;
+    flow->client_ip = flow->server_ip;
+    flow->client_port = flow->server_port;
+    flow->server_ip = tmpIp;
+    flow->server_port = tmpPort;
 }
 
 int UdpSession::process(Packet *p)
@@ -219,6 +208,9 @@ int UdpSession::process(Packet *p)
     if ( stream.expired_session(flow, p) )
     {
         UdpSessionCleanup(flow);
+        flow->restart();
+        flow->s5_state.session_flags |= SSNFLAG_SEEN_SENDER;
+        udpStats.created++;
         udpStats.timeouts++;
     }
     ProcessUdp(flow, p, pc, hash_node);
@@ -227,22 +219,5 @@ int UdpSession::process(Packet *p)
 
     MODULE_PROFILE_END(udp_perf_stats);
     return 0;
-}
-
-//-------------------------------------------------------------------------
-// api related methods
-//-------------------------------------------------------------------------
-
-#if 0
-void udp_stats()
-{
-    // FIXIT need to get these before delete flow_con
-    //flow_con->get_prunes(IPPROTO_UDP, udpStats.prunes);
-}
-#endif
-
-void udp_reset()
-{
-    flow_con->reset_prunes(IPPROTO_UDP);
 }
 

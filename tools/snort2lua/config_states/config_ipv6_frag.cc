@@ -1,30 +1,29 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // config_ipv6_frag.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
-#include "utils/s2l_util.h"
+#include "helpers/converter.h"
+#include "helpers/s2l_util.h"
 
 namespace config
 {
@@ -34,7 +33,7 @@ namespace {
 class Ipv6Frag : public ConversionState
 {
 public:
-    Ipv6Frag(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Ipv6Frag(Converter& c) : ConversionState(c) {};
     virtual ~Ipv6Frag() {};
     virtual bool convert(std::istringstream& data_stream);
 
@@ -47,8 +46,8 @@ private:
 void Ipv6Frag::add_deleted_option(std::string dlt_opt)
 {
     // see comment in Ipv6Frag::convert
-    if (!ld->is_quiet_mode())
-        ld->add_deleted_comment("config ipv6_frag: " + dlt_opt);
+    if (!DataApi::is_quiet_mode())
+        table_api.add_deleted_comment("config ipv6_frag: " + dlt_opt);
 }
 
 bool Ipv6Frag::convert(std::istringstream& data_stream)
@@ -58,8 +57,8 @@ bool Ipv6Frag::convert(std::istringstream& data_stream)
 
     // I'm checking here because I do not want to create this
     // table in quiet mode
-    if (!ld->is_quiet_mode())
-        ld->open_table("deleted_snort_config_options");
+    if (!DataApi::is_quiet_mode())
+        table_api.open_table("deleted_snort_config_options");
 
     while (util::get_string(data_stream, arg, ","))
     {
@@ -84,9 +83,9 @@ bool Ipv6Frag::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("frag_timeout"))
         {
-            ld->open_top_level_table("ip_stream");
+            table_api.open_top_level_table("ip_stream");
             tmpval = parse_int_option("session_timeout", arg_stream);
-            ld->close_table();
+            table_api.close_table();
         }
 
         else
@@ -105,9 +104,9 @@ bool Ipv6Frag::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor(Converter& c)
 {
-    return new Ipv6Frag(cv, ld);
+    return new Ipv6Frag(c);
 }
 
 static const ConvertMap ipv6_frag_api =

@@ -34,7 +34,7 @@
 #endif
 
 #ifdef PPM_MGR
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "main/thread.h"
 #include "cpuclock.h"
 #include "detection/detection_options.h"
@@ -139,10 +139,17 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
 #define PPM_PKT_CNT()             ppm_pt->pktcnt 
 #define PPM_PKT_LOG(p)            if (ppm_abort_this_pkt) ppm_pkt_log(&snort_conf->ppm_cfg,p)
 #define PPM_RULE_LOG(cnt,p)       ppm_rule_log(&snort_conf->ppm_cfg,cnt,p)
-#define PPM_ACCUM_PKT_TIME()      ppm_stats.tot_pkt_time += ppm_pt->tot;
+#define PPM_ACCUM_PKT_TIME() \
+if ( ppm_pt ) \
+{ \
+    ppm_stats.tot_pkt_time += ppm_pt->tot; \
+}
 #define PPM_ACCUM_RULE_TIME() \
-    ppm_stats.tot_rule_time += ppm_rt->tot; \
-    ppm_stats.tot_rules++;
+if ( ppm_rt ) \
+{ \
+        ppm_stats.tot_rule_time += ppm_rt->tot; \
+        ppm_stats.tot_rules++; \
+}
 #define PPM_ACCUM_NC_RULE_TIME() \
     ppm_stats.tot_nc_rule_time += ppm_rt->tot; \
     ppm_stats.tot_nc_rules++;

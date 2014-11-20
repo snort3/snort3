@@ -35,15 +35,13 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <ctype.h>
 
 #ifdef LINUX
 #include <sys/syscall.h>
 #endif
 
-#include "snort_types.h"
-#include "sfip/sf_ipvar.h"
-#include "sfip/ipv6_port.h"
-#include "utils/stats.h"
+#include "main/snort_types.h"
 #include "log/messages.h"
 
 /* Macros *********************************************************************/
@@ -74,7 +72,7 @@
     x[12] = y[12]; x[13] = y[13]; x[14] = y[14]; x[15] = y[15];
 
 /* Externs ********************************************************************/
-extern char **protocol_names;
+SO_PUBLIC extern char **protocol_names;
 
 /* Public function prototypes *************************************************/
 void StoreSnortInfoStrings(void);
@@ -83,7 +81,7 @@ int gmt2local(time_t);
 void ts_print(register const struct timeval *, char *);
 void strip(char *);
 void CheckLogDir(void);
-char *read_infile(char *);
+char *read_infile(const char* key, const char* fname);
 void CleanupProtoNames(void);
 void CreatePidFile(pid_t);
 void ClosePidFile(void);
@@ -92,10 +90,10 @@ void InitGroups(int, int);
 void SetChroot(char *, char **);
 void InitProtoNames(void);
 
-int SnortSnprintf(char *, size_t, const char *, ...) __attribute__((format (printf, 3, 4)));
-int SnortSnprintfAppend(char *, size_t, const char *, ...) __attribute__((format (printf, 3, 4)));
+SO_PUBLIC int SnortSnprintf(char *, size_t, const char *, ...) __attribute__((format (printf, 3, 4)));
+SO_PUBLIC int SnortSnprintfAppend(char *, size_t, const char *, ...) __attribute__((format (printf, 3, 4)));
 
-char *SnortStrdup(const char *);
+SO_PUBLIC char *SnortStrdup(const char *);
 int SnortStrncpy(char *, const char *, size_t);
 char *SnortStrndup(const char *, size_t);
 int SnortStrnlen(const char *, int);
@@ -105,7 +103,6 @@ const char *SnortStrcasestr(const char *s, int slen, const char *substr);
 int CheckValueInRange(const char *value_str, const char *option,
         unsigned long lo, unsigned long hi, unsigned long *value);
 
-void *SnortAlloc2(size_t, const char *, ...);
 char *CurrentWorkingDir(void);
 char *GetAbsolutePath(char *dir);
 char *StripPrefixDir(char *prefix, char *dir);
@@ -124,9 +121,6 @@ void SetNoCores(void);
 ***********************************************************/
 char *hex(const u_char *, int);
 char *fasthex(const u_char *, int);
-long int xatol(const char *, const char *);
-unsigned long int xatou(const char *, const char *);
-unsigned long int xatoup(const char *, const char *); // return > 0
 
 static inline void* SnortAlloc (unsigned long size)
 {
@@ -135,8 +129,8 @@ static inline void* SnortAlloc (unsigned long size)
     if ( pv )
         return pv;
 
-    // FIXIT do not FatalError() on runtime allocation failures
-    FatalError("Unable to allocate memory!  (%lu requested)\n", size);
+    // FIXIT-M do not FatalError() on runtime allocation failures
+    FatalError("Unable to allocate memory (%lu requested)\n", size);
 
     return NULL;
 }
@@ -263,18 +257,12 @@ static inline pid_t gettid(void)
 #endif
 }
 
-const char* get_error(int errnum);
+SO_PUBLIC const char* get_error(int errnum);
 
 // get_tok() provided to retrofit distributed calls to
 // strtok() to use strtok_r().  use strtok_r() directly
 // for new code.  get_tok() is thread safe but not
 // reentrant.
 char* get_tok(char* s, const char* delim);
-
-/* for getopt */
-extern char *optarg;  // FIXIT add header
-extern int optind;
-extern int opterr;
-extern int optopt;
 
 #endif /*__UTIL_H__*/

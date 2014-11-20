@@ -25,16 +25,15 @@
 #include "flow/flow.h"
 #include "stream/stream_api.h"
 #include "protocols/packet.h"
-#include "target_based/sftarget_protocol_reference.h"
 #include "framework/bits.h"
 
 struct StreamTcpConfig
 {
     uint16_t policy;
     uint16_t reassembly_policy;
+
     uint16_t flags;
     uint16_t flush_factor;
-    uint16_t session_on_syn;
 
     uint32_t session_timeout;
     uint32_t max_window;
@@ -54,14 +53,11 @@ struct StreamTcpConfig
 
     StreamTcpConfig();
 
-    void set_port(Port port, bool c2s, bool s2c);
-    void set_proto(unsigned proto_ordinal, bool c2s, bool s2c);
-    void add_proto(const char* svc, bool c2s, bool s2c);
+    bool require_3whs();
+    bool midstream_allowed(Packet*);
 };
 
 // misc stuff
-int Stream5VerifyTcpConfig(SnortConfig*, StreamTcpConfig *);
-
 Session* get_tcp_session(Flow*);
 StreamTcpConfig* get_tcp_cfg(Inspector*);
 
@@ -88,9 +84,6 @@ int Stream5UpdateSessionAlertTcp(
 void Stream5SetExtraDataTcp(Flow*, Packet*, uint32_t flag);
 void Stream5ClearExtraDataTcp(Flow*, Packet*, uint32_t flag);
 
-uint32_t Stream5GetFlushPointTcp(Flow*, char dir);
-void Stream5SetFlushPointTcp(Flow*, char dir, uint32_t flush_point);
-
 bool Stream5GetReassemblyFlushPolicyTcp(Flow*, char dir);
 
 char Stream5IsStreamSequencedTcp(Flow*, char dir);
@@ -106,9 +99,6 @@ StreamSplitter* Stream5GetSplitterTcp(Flow*, bool c2s);
 
 int GetTcpRebuiltPackets(Packet*, Flow*, PacketIterator, void *userdata);
 int GetTcpStreamSegments(Packet*, Flow*, StreamSegmentIterator, void *userdata);
-
-void s5TcpSetSynSessionStatus(SnortConfig*, uint16_t status);
-void s5TcpUnsetSynSessionStatus(SnortConfig*, uint16_t status);
 
 #endif
 

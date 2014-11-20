@@ -54,12 +54,12 @@
 #include "util.h"
 #include "mstring.h"
 #include "packet_io/active.h"
-#include "sf_textlog.h"
-#include "log_text.h"
-#include "sf_textlog.h"
+#include "log/text_log.h"
+#include "log/log_text.h"
 #include "snort.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/intf.h"
+#include "events/event.h"
 
 /* full buf was chosen to allow printing max size packets
  * in hex/ascii mode:
@@ -72,16 +72,19 @@ static THREAD_LOCAL TextLog* fast_log = nullptr;
 
 using namespace std;
 
+#define S_NAME "alert_fast"
+#define F_NAME S_NAME ".txt"
+
 //-------------------------------------------------------------------------
 // module stuff
 //-------------------------------------------------------------------------
 
-static const Parameter fast_params[] =
+static const Parameter s_params[] =
 {
-    { "file", Parameter::PT_STRING, nullptr, "stdout",
-      "name of alert file" },
+    { "file", Parameter::PT_BOOL, nullptr, "false",
+      "output to " F_NAME " instead of stdout" },
 
-    { "packet", Parameter::PT_BOOL, nullptr, "true",
+    { "packet", Parameter::PT_BOOL, nullptr, "false",
       "output packet dump with alert" },
 
     { "limit", Parameter::PT_INT, "0:", "0",
@@ -93,16 +96,20 @@ static const Parameter fast_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "output event with brief text format"
+
 class FastModule : public Module
 {
 public:
-    FastModule() : Module("alert_fast", fast_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    FastModule() : Module(S_NAME, s_help, s_params) { };
+
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 public:
-    string file;
+    bool file;
     unsigned long limit;
     unsigned units;
     bool packet;
@@ -111,7 +118,7 @@ public:
 bool FastModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("file") )
-        file = v.get_string();
+        file = v.get_bool();
 
     else if ( v.is("packet") )
         packet = v.get_bool();
@@ -130,10 +137,10 @@ bool FastModule::set(const char*, Value& v, SnortConfig*)
 
 bool FastModule::begin(const char*, int, SnortConfig*)
 {
-    file = "stdout";
+    file = false;
     limit = 0;
     units = 0;
-    packet = true;
+    packet = false;
     return true;
 }
 
@@ -153,10 +160,10 @@ class FastLogger : public Logger {
 public:
     FastLogger(FastModule*);
 
-    void open();
-    void close();
+    void open() override;
+    void close() override;
 
-    void alert(Packet*, const char* msg, Event*);
+    void alert(Packet*, const char* msg, Event*) override;
 
 private:
     string file;
@@ -166,7 +173,7 @@ private:
 
 FastLogger::FastLogger(FastModule* m)
 {
-    file = m->file;
+    file = m->file ? F_NAME : "stdout";
     limit = m->limit;
     packet = m->packet;
 }
@@ -182,6 +189,61 @@ void FastLogger::close()
     if ( fast_log )
         TextLog_Term(fast_log);
 }
+
+#ifdef REG_TEST
+static void LogReassembly(const Packet* p)
+{
+    /* Log whether or not this is reassembled data - only indicate
+     * if we're actually going to show any of the payload */
+    if ( !ScOutputAppData() || !p->dsize || !PacketWasCooked(p) )
+        return;
+
+    switch ( p->pseudo_type )
+    {
+    case PSEUDO_PKT_SMB_SEG:
+        TextLog_Print(fast_log, "%s\n", "SMB desegmented packet");
+        break;
+    case PSEUDO_PKT_DCE_SEG:
+        TextLog_Print(fast_log, "%s\n", "DCE/RPC desegmented packet");
+        break;
+    case PSEUDO_PKT_DCE_FRAG:
+        TextLog_Print(fast_log, "%s\n", "DCE/RPC defragmented packet");
+        break;
+    case PSEUDO_PKT_SMB_TRANS:
+        TextLog_Print(fast_log, "%s\n", "SMB Transact reassembled packet");
+        break;
+    case PSEUDO_PKT_DCE_RPKT:
+        TextLog_Print(fast_log, "%s\n", "DCE/RPC reassembled packet");
+        break;
+    case PSEUDO_PKT_TCP:
+        TextLog_Print(fast_log, "%s\n", "Stream reassembled packet");
+        break;
+    case PSEUDO_PKT_IP:
+        TextLog_Print(fast_log, "%s\n", "Frag reassembled packet");
+        break;
+    default:
+        // FIXTHIS do we get here for portscan or sdf?
+        break;
+    }
+}
+#endif
+
+#ifndef REG_TEST
+
+static const char* get_pkt_type(Packet* p)
+{
+    switch ( p->ptrs.get_pkt_type() )
+    {
+    case PktType::IP:   return "IP";
+    case PktType::ICMP: return "ICMP";
+    case PktType::TCP:  return "TCP";
+    case PktType::UDP:  return "UDP";
+    default: break;
+    }
+    return "error";
+}
+
+#endif
 
 void FastLogger::alert(Packet *p, const char *msg, Event *event)
 {
@@ -223,28 +285,40 @@ void FastLogger::alert(Packet *p, const char *msg, Event *event)
 
         if (msg != NULL)
         {
+#ifdef REG_TEST
+            string tmp = msg + 1;
+            tmp.pop_back();
+            TextLog_Puts(fast_log, tmp.c_str());
+#else
             TextLog_Puts(fast_log, msg);
-            TextLog_Puts(fast_log, " [**] ");
+#endif
         }
-        else
-        {
-            TextLog_Puts(fast_log, "[**] ");
-        }
+        TextLog_Puts(fast_log, " [**] ");
     }
 
     /* print the packet header to the alert file */
-    if (IPH_IS_VALID(p))
+    if ( p->has_ip() )
     {
         LogPriorityData(fast_log, event, 0);
-        TextLog_Print(fast_log, "{%s} ", protocol_names[GET_IPH_PROTO(p)]);
+#ifndef REG_TEST
+        TextLog_Print(fast_log, "{%s} ", get_pkt_type(p));
+#else
+        TextLog_Print(fast_log, "{%s} ", protocol_names[p->get_ip_proto_next()]);
+#endif
         LogIpAddrs(fast_log, p);
     }
 
-    if(packet)
+    if ( packet || ScOutputAppData() )
     {
-        if(IPH_IS_VALID(p))
-            LogIPPkt(fast_log, GET_IPH_PROTO(p), p);
-#ifndef NO_NON_ETHER_DECODER
+        TextLog_NewLine(fast_log);
+#ifdef REG_TEST
+        LogReassembly(p);
+#endif
+        if(p->has_ip())
+            LogIPPkt(fast_log, p);
+
+#if 0
+        // FIXIT-L -J LogArpHeader unimplemented
         else if(p->proto_bits & PROTO_BIT__ARP)
             LogArpHeader(fast_log, p);
 #endif
@@ -273,7 +347,8 @@ static LogApi fast_api
 {
     {
         PT_LOGGER,
-        "alert_fast",
+        S_NAME,
+        s_help,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

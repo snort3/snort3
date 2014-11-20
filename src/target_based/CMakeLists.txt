@@ -8,4 +8,3 @@ add_library( target_based STATIC
     sftarget_protocol_reference.cc
     sftarget_protocol_reference.h
 )
-

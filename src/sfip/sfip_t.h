@@ -28,14 +28,25 @@
  * 11/17/06
 */
 
-#ifndef SFIP_T_H
-#define SFIP_T_H
+#ifndef SFIP_SFIP_T_H
+#define SFIP_SFIP_T_H
 
+#include <cstddef>
 #include <stdint.h>
+#include <arpa/inet.h>
+
+#ifndef WIN32
+#include <netinet/in.h>
+#else
+#include <winsock2.h>
+#endif
+
+#include "main/snort_types.h"
+
 
 /* factored out for attribute table */
 
-typedef struct _ip {
+struct sfip_t {
     int16_t family;
     int16_t bits;
 
@@ -43,16 +54,32 @@ typedef struct _ip {
      * must be the last field in this struct */
     union
     {
-        uint8_t  u6_addr8[16];
-        uint16_t u6_addr16[8];
-        uint32_t u6_addr32[4];
-/*      uint64_t    u6_addr64[2]; */
-    } ip;
-    #define ip8  ip.u6_addr8
-    #define ip16 ip.u6_addr16
-    #define ip32 ip.u6_addr32
-/*    #define ip64 ip.u6_addr64 */
-} sfip_t;
+        uint8_t  ip8[16];
+        uint16_t ip16[8];
+        uint32_t ip32[4];
+/*      uint64_t    ip64[2]; */
+    };
+
+    inline bool is_ip6() const
+    { return family == AF_INET6; }
+
+    inline bool is_ip4() const
+    { return family == AF_INET; }
+
+    // the '+ 4' is the int32_t IPv4 address
+    inline std::size_t sfip_size() const
+    { return is_ip6() ? sizeof(sfip_t) : offsetof(sfip_t, ip8) + 4; }
+
+};
+
+// This is leftover from Snort which we're stuck with
+#ifdef inet_ntoa
+#undef inet_ntoa
+#endif
+
+SO_PUBLIC char *sfip_to_str(const sfip_t*);
+#define sfip_ntoa(x) sfip_to_str(x)
+#define inet_ntoa sfip_ntoa
 
 #endif
 

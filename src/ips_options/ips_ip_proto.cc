@@ -46,7 +46,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "ip_proto";
+#define s_name "ip_proto"
 
 static THREAD_LOCAL ProfileStats ipProtoPerfStats;
 
@@ -69,10 +69,10 @@ public:
         IpsOption(s_name, RULE_OPTION_TYPE_IP_PROTO)
     { config = c; };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
     IpProtoData* get_data() 
     { return &config; };
@@ -124,7 +124,7 @@ int IpProtoOption::eval(Cursor&, Packet *p)
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    if(!IPH_IS_VALID(p))
+    if (!p->has_ip())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Not IP\n"););
         return rval;
@@ -132,32 +132,34 @@ int IpProtoOption::eval(Cursor&, Packet *p)
 
     MODULE_PROFILE_START(ipProtoPerfStats);
 
+    const uint8_t ip_proto = p->get_ip_proto_next();
+
     switch (ipd->comparison_flag)
     {
-        case IP_PROTO__EQUAL:
-            if (GET_IPH_PROTO(p) == ipd->protocol)
-                rval = DETECTION_OPTION_MATCH;
-            break;
+    case IP_PROTO__EQUAL:
+        if (ip_proto == ipd->protocol)
+            rval = DETECTION_OPTION_MATCH;
+        break;
 
-        case IP_PROTO__NOT_EQUAL:
-            if (GET_IPH_PROTO(p) != ipd->protocol)
-                rval = DETECTION_OPTION_MATCH;
-            break;
+    case IP_PROTO__NOT_EQUAL:
+        if (ip_proto != ipd->protocol)
+            rval = DETECTION_OPTION_MATCH;
+        break;
 
-        case IP_PROTO__GREATER_THAN:
-            if (GET_IPH_PROTO(p) > ipd->protocol)
-                rval = DETECTION_OPTION_MATCH;
-            break;
+    case IP_PROTO__GREATER_THAN:
+        if (ip_proto > ipd->protocol)
+            rval = DETECTION_OPTION_MATCH;
+        break;
 
-        case IP_PROTO__LESS_THAN:
-            if (GET_IPH_PROTO(p) < ipd->protocol)
-                rval = DETECTION_OPTION_MATCH;
-            break;
+    case IP_PROTO__LESS_THAN:
+        if (ip_proto < ipd->protocol)
+            rval = DETECTION_OPTION_MATCH;
+        break;
 
-        default:
-            ErrorMessage("%s(%d) Invalid comparison flag.\n",
-                         __FILE__, __LINE__);
-            break;
+    default:
+        ErrorMessage("%s(%d) Invalid comparison flag.\n",
+                     __FILE__, __LINE__);
+        break;
     }
 
     /* if the test isn't successful, this function *must* return 0 */
@@ -284,7 +286,7 @@ static void ip_proto_parse(const char* data, IpProtoData* ds_ptr)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter ip_proto_params[] =
+static const Parameter s_params[] =
 {
     { "~proto", Parameter::PT_STRING, nullptr, nullptr, 
       "[!|>|<] name or number" },
@@ -292,15 +294,18 @@ static const Parameter ip_proto_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to check the IP protocol number"
+
 class IpProtoModule : public Module
 {
 public:
-    IpProtoModule() : Module(s_name, ip_proto_params) { };
+    IpProtoModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &ipProtoPerfStats; };
 
     IpProtoData data;
@@ -353,6 +358,7 @@ static const IpsApi ip_proto_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

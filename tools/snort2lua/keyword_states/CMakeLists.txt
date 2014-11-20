@@ -18,7 +18,7 @@ add_library( keyword_states
 )
 
 target_link_libraries( keyword_states
-    util
+    snort2lua_helpers
     conversion_data
     output_states
     preprocessor_states

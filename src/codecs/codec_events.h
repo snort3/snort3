@@ -21,20 +21,21 @@
 #ifndef CODEC_EVENTS_H
 #define CODEC_EVENTS_H
 
-#include "protocols/packet.h"
-#include "codecs/decode_module.h"
+#include "framework/codec.h"
+#include "codecs/codec_module.h"
+#include "events/event_queue.h"
+
 
 namespace codec_events
 {
 
-void exec_ip_chksm_drop(Packet*);
-void exec_udp_chksm_drop (Packet*);
-void exec_tcp_chksm_drop (Packet*);
-void exec_icmp_chksm_drop (Packet*);
-void decoder_event(Packet* p, CodecSid);
-void decoder_alert_encapsulated(
-    Packet*, CodecSid, const uint8_t* pkt, uint32_t len);
+inline void decoder_event(const CodecData& codec, CodecSid const sid)
+{
+    if ( codec.codec_flags & CODEC_STREAM_REBUILT )
+        return;
 
+    SnortEventqAdd(GID_DECODE, sid);
+}
 
 } //namespace codec_events
 

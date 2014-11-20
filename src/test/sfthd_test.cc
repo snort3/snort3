@@ -24,7 +24,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#endif
+
 #include <check.h>
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #include "snort.h"
 #include "sfip/sf_ip.h"
@@ -797,19 +808,19 @@ static int EventTest (EventData* p, void* rule) {
     long curtime = (long)p->now;
     int status;
 
-    snort_ip sip, dip;
+    sfip_t sip, dip;
     sfip_pton(p->sip, &sip);
     sfip_pton(p->dip, &dip);
 
     if ( rule )
     {
         status = sfthd_test_rule(
-            dThd, (THD_NODE *)rule, IP_ARG(sip), IP_ARG(dip), curtime);
+            dThd, (THD_NODE *)rule, &sip, &dip, curtime);
     }
     else
     {
         status = sfthd_test_threshold(
-            pThdObjs, pThd, p->gid, p->sid, IP_ARG(sip), IP_ARG(dip), curtime);
+            pThdObjs, pThd, p->gid, p->sid, &sip, &dip, curtime);
     }
 
     return status;

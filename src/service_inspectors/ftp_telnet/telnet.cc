@@ -46,8 +46,6 @@
 #include "framework/inspector.h"
 #include "utils/sfsnprintfappend.h"
 
-static const char* tn_name = "telnet";
-
 THREAD_LOCAL ProfileStats telnetPerfStats;
 THREAD_LOCAL SimpleStats tnstats;
 
@@ -62,16 +60,15 @@ static int TelnetCheckConfigs(SnortConfig*, void* pData)
     if ((telnet_config->ayt_threshold > 0) &&
             !telnet_config->normalize)
     {
-         ErrorMessage("WARNING: Telnet Configuration Check: using an "
+         ParseWarning("telnet configuration check: using an "
                  "AreYouThere threshold requires telnet normalization to be "
                  "turned on.\n");
     }
     if ( telnet_config->detect_encrypted &&
             !telnet_config->normalize)
     {
-        ErrorMessage("WARNING: Telnet Configuration Check: checking for "
-                "encrypted traffic requires telnet normalization to be turned "
-                "on.\n");
+        ParseWarning("telnet configuration check: checking for "
+                "encrypted traffic requires telnet normalization to be turned on.\n");
     }
 
     return 0;
@@ -132,8 +129,10 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet *p)
 
     if (p->flow)
     {
-        ft_ssn = (FTP_TELNET_SESSION *)
+        TelnetFlowData* fd = (TelnetFlowData*)
             p->flow->get_application_data(FtpFlowData::flow_id);
+
+        ft_ssn = fd ? &fd->session.ft_ssn : nullptr;
 
         if (ft_ssn != NULL)
         {
@@ -159,6 +158,7 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet *p)
             }
             else
             {
+                assert(false);
                 p->flow->free_application_data(FtpFlowData::flow_id);
                 return 0;
             }
@@ -232,9 +232,9 @@ public:
     Telnet(TELNET_PROTO_CONF*);
     ~Telnet();
 
-    bool configure(SnortConfig*);
-    void show(SnortConfig*);
-    void eval(Packet*);
+    bool configure(SnortConfig*) override;
+    void show(SnortConfig*) override;
+    void eval(Packet*) override;
 
 private:
     TELNET_PROTO_CONF* config;
@@ -264,7 +264,7 @@ void Telnet::show(SnortConfig*)
 void Telnet::eval(Packet* p)
 {
     // precondition - what we registered for
-    assert(IsTCP(p) && p->dsize && p->data);
+    assert(p->is_tcp() && p->dsize && p->data);
 
     ++tnstats.total_packets;
     snort_telnet(config, p);
@@ -301,14 +301,15 @@ const InspectApi tn_api =
 {
     {
         PT_INSPECTOR,
-        tn_name,
+        TEL_NAME,
+        TEL_HELP,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor
     },
     IT_SERVICE,
-    PROTO_BIT__TCP,
+    (uint16_t)PktType::TCP,
     nullptr, // buffers
     "telnet",
     tn_init,

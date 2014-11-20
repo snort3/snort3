@@ -62,6 +62,7 @@
 #include "filters/sfthreshold.h"
 #include "sfeventq.h"
 #include "parser/parser.h"
+#include "utils/stats.h"
 
 typedef struct s_SNORT_EVENTQ_USER
 {
@@ -157,7 +158,7 @@ int SnortEventqAdd(uint32_t gid, uint32_t sid, RuleType type)
 
     EventNode* en = (EventNode*)sfeventq_event_alloc(event_queue[qIndex]);
 
-    if ( en )
+    if ( !en )
         return -1;
 
     en->otn = otn;

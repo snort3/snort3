@@ -50,7 +50,7 @@ void FreeHostEntry(HostAttributeEntry *host);
 uint32_t SFAT_NumberOfHosts(void);
 
 /* API Lookup functions, to be called by Stream & Frag */
-HostAttributeEntry *SFAT_LookupHostEntryByIP(sfip_t *ipAddr);
+HostAttributeEntry *SFAT_LookupHostEntryByIP(const sfip_t *ipAddr);
 HostAttributeEntry *SFAT_LookupHostEntryBySrc(Packet *p);
 HostAttributeEntry *SFAT_LookupHostEntryByDst(Packet *p);
 void SFAT_UpdateApplicationProtocol(
@@ -63,8 +63,5 @@ tTargetBasedConfig* SFAT_GetConfig();
 void SFAT_SetConfig(tTargetBasedConfig*);
 void SFAT_Free(tTargetBasedConfig*);
 
-/* Returns whether this has been configured */
-int IsAdaptiveConfigured();
-
-#endif /* SFTARGET_READER_H */
+#endif
 

@@ -1,5 +1,4 @@
 
-
 add_library( normalize STATIC
     normalize.cc
     normalize.h

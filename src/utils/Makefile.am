@@ -7,6 +7,7 @@ x_includedir = $(pkgincludedir)/utils
 x_include_HEADERS = \
 bitop.h \
 bitop_funcs.h \
+dnet_header.h \
 segment_mem.h \
 sflsq.h \
 sfmemcap.h \
@@ -15,7 +16,6 @@ snort_bounds.h \
 stats.h
 
 libutils_a_SOURCES = \
-asn1.cc asn1.h \
 boyer_moore.cc boyer_moore.h \
 dyn_array.cc dyn_array.h \
 ring.h ring_logic.h \

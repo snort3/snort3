@@ -57,6 +57,8 @@
 #include "util.h"
 #include "snort_types.h"
 #include "perf.h"
+#include "sfip/sf_ip.h"
+#include "protocols/icmp4.h"
 
 static void DisplayFlowStats(SFFLOW_STATS *sfFlowStats);
 static void WriteFlowStats(SFFLOW_STATS *, FILE *);
@@ -65,8 +67,8 @@ static void WriteFlowIPStats(SFFLOW *sfFlow, FILE *fp);
 
 typedef struct _sfSingleFlowStatsKey
 {
-    snort_ip ipA;
-    snort_ip ipB;
+    sfip_t ipA;
+    sfip_t ipB;
 } sfSFSKey;
 
 typedef struct _sfBidirectionalTrafficStats
@@ -282,22 +284,22 @@ int UpdateICMPFlowStats(SFFLOW *sfFlow, int type, int len)
     return 0;
 }
 
-static sfSFSValue *findFlowIPStats(SFFLOW *sfFlow, snort_ip_p src_addr, snort_ip_p dst_addr, int *swapped)
+static sfSFSValue *findFlowIPStats(SFFLOW *sfFlow, const sfip_t *src_addr, const sfip_t *dst_addr, int *swapped)
 {
     SFXHASH_NODE *node;
     sfSFSKey key;
     sfSFSValue *value;
 
-    if (IP_LESSER(src_addr, dst_addr))
+    if (sfip_lesser(src_addr, dst_addr))
     {
-        IP_COPY_VALUE(key.ipA, src_addr);
-        IP_COPY_VALUE(key.ipB, dst_addr);
+        sfip_copy(key.ipA, src_addr);
+        sfip_copy(key.ipB, dst_addr);
         *swapped = 0;
     }
     else
     {
-        IP_COPY_VALUE(key.ipA, dst_addr);
-        IP_COPY_VALUE(key.ipB, src_addr);
+        sfip_copy(key.ipA, dst_addr);
+        sfip_copy(key.ipB, src_addr);
         *swapped = 1;
     }
 
@@ -317,7 +319,7 @@ static sfSFSValue *findFlowIPStats(SFFLOW *sfFlow, snort_ip_p src_addr, snort_ip
     return value;
 }
 
-int UpdateFlowIPStats(SFFLOW *sfFlow, snort_ip_p src_addr, snort_ip_p dst_addr, int len, SFSType type)
+int UpdateFlowIPStats(SFFLOW *sfFlow, const sfip_t *src_addr, const sfip_t *dst_addr, int len, SFSType type)
 {
     sfSFSValue *value;
     sfBTStats *stats;
@@ -345,7 +347,10 @@ int UpdateFlowIPStats(SFFLOW *sfFlow, snort_ip_p src_addr, snort_ip_p dst_addr, 
     return 0;
 }
 
-int UpdateFlowIPState(SFFLOW *sfFlow, snort_ip_p src_addr, snort_ip_p dst_addr, SFSState state)
+int UpdateFlowIPState(SFFLOW *sfFlow,
+                        const sfip_t *src_addr,
+                        const sfip_t *dst_addr,
+                        SFSState state)
 {
     sfSFSValue *value;
     int swapped;
@@ -368,12 +373,12 @@ void UpdateFlowStats(SFFLOW *sfFlow, Packet *p)
 {
     uint32_t len = p->pkth->caplen;
 
-    if (p->tcph != NULL)
-        UpdateTCPFlowStats(sfFlow, p->sp, p->dp, len);
-    else if (p->udph != NULL)
-        UpdateUDPFlowStats(sfFlow, p->sp, p->dp, len);
-    else if (p->icmph != NULL)
-        UpdateICMPFlowStats(sfFlow, p->icmph->type, len);
+    if (p->ptrs.tcph != NULL)
+        UpdateTCPFlowStats(sfFlow, p->ptrs.sp, p->ptrs.dp, len);
+    else if (p->ptrs.udph != NULL)
+        UpdateUDPFlowStats(sfFlow, p->ptrs.sp, p->ptrs.dp, len);
+    else if (p->ptrs.icmph != NULL)
+        UpdateICMPFlowStats(sfFlow, p->ptrs.icmph->type, len);
 
     // Track how many packets of each length
     if (len <= SF_MAX_PKT_LEN)

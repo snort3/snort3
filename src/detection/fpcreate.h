@@ -38,17 +38,9 @@
 
 #include "hash/sfghash.h"
 #include "pcrm.h"
+#include "target_based/sftarget_protocol_reference.h"
 
 struct SnortConfig;
-
-/*
- *  Max Number of Protocols Supported by Rules in fpcreate.c
- *  for tcp,udp,icmp,ip ... this is an array dimesnion used to
- *  map protocol-ordinals to port_groups ...
- */
-/* This is now defined in sftarget_protocol_refererence.h"
- * #define MAX_PROTOCOL_ORDINAL 8192 */
-#include "target_based/sftarget_protocol_reference.h"
 
 /*
  *  This controls how many fast pattern match contents may be
@@ -82,7 +74,7 @@ typedef struct _NCListNode
 **  This structure holds configuration options for the
 **  detection engine.
 */
-typedef struct _FastPatternConfig
+struct FastPatternConfig
 {
     const struct MpseApi* search_api;
     int inspect_stream_insert;
@@ -92,20 +84,18 @@ typedef struct _FastPatternConfig
     bool trim;
     unsigned int max_queue_events;
     unsigned int bleedover_port_limit;
-    int configured;
     int portlists_flags;
     int split_any_any;
     int max_pattern_len;
     int num_patterns_truncated;  /* due to max_pattern_len */
     int num_patterns_trimmed;    /* due to zero byte prefix */
     int debug_print_fast_pattern;
-
-} FastPatternConfig;
+};
 
 /*
  *  Service Rule Map Master Table
  */
-typedef struct
+struct srmm_table_t
 {
   SFGHASH * tcp_to_srv;
   SFGHASH * tcp_to_cli;
@@ -119,12 +109,12 @@ typedef struct
   SFGHASH * ip_to_srv;
   SFGHASH * ip_to_cli;
 
-} srmm_table_t;
+};
 
 /*
  *  Service/Protocol Oridinal To PORT_GROUP table
  */
-typedef struct
+struct sopg_table_t
 {
   PORT_GROUP *tcp_to_srv[MAX_PROTOCOL_ORDINAL];
   PORT_GROUP *tcp_to_cli[MAX_PROTOCOL_ORDINAL];
@@ -138,7 +128,7 @@ typedef struct
   PORT_GROUP *ip_to_srv[MAX_PROTOCOL_ORDINAL];
   PORT_GROUP *ip_to_cli[MAX_PROTOCOL_ORDINAL];
 
-} sopg_table_t;
+};
 
 /*
 **  This function initializes the detection engine configuration
@@ -201,9 +191,11 @@ PORT_GROUP * fpGetServicePortGroupByOrdinal(sopg_table_t *, int, int, int16_t);
 **  Shows the event stats for the created FastPacketDetection
 */
 void fpShowEventStats(SnortConfig*);
-typedef int (*OtnWalkFcn)(int, struct RuleTreeNode *, struct OptTreeNode *);
+typedef int (*OtnWalkFcn)(int, struct RuleTreeNode *, struct OptTreeNode*);
 void fpWalkOtns(int, OtnWalkFcn);
 void fpDynamicDataFree(void *);
+
+void set_fp_content(struct OptTreeNode*);
 
 const char * PatternRawToContent(const char *pattern, int pattern_len);
 

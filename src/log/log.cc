@@ -38,23 +38,25 @@ using namespace std;
 #include "log_text.h"
 #include "main/analyzer.h"
 #include "snort.h"
+#include "protocols/tcp.h"
+#include "main/snort_debug.h"
 
 #define DEFAULT_DAEMON_ALERT_FILE  "alert"
 
 /* Input is packet and an nine-byte (including NULL) character array.  Results
  * are put into the character array.
  */
-void CreateTCPFlagString(Packet * p, char *flagBuffer)
+void CreateTCPFlagString(const tcp::TCPHdr* const tcph, char *flagBuffer)
 {
     /* parse TCP flags */
-    *flagBuffer++ = (char) ((p->tcph->th_flags & TH_RES1) ? '1' : '*');
-    *flagBuffer++ = (char) ((p->tcph->th_flags & TH_RES2) ? '2' : '*');
-    *flagBuffer++ = (char) ((p->tcph->th_flags & TH_URG)  ? 'U' : '*');
-    *flagBuffer++ = (char) ((p->tcph->th_flags & TH_ACK)  ? 'A' : '*');
-    *flagBuffer++ = (char) ((p->tcph->th_flags & TH_PUSH) ? 'P' : '*');
-    *flagBuffer++ = (char) ((p->tcph->th_flags & TH_RST)  ? 'R' : '*');
-    *flagBuffer++ = (char) ((p->tcph->th_flags & TH_SYN)  ? 'S' : '*');
-    *flagBuffer++ = (char) ((p->tcph->th_flags & TH_FIN)  ? 'F' : '*');
+    *flagBuffer++ = (char) ((tcph->th_flags & TH_RES1) ? '1' : '*');
+    *flagBuffer++ = (char) ((tcph->th_flags & TH_RES2) ? '2' : '*');
+    *flagBuffer++ = (char) ((tcph->th_flags & TH_URG)  ? 'U' : '*');
+    *flagBuffer++ = (char) ((tcph->th_flags & TH_ACK)  ? 'A' : '*');
+    *flagBuffer++ = (char) ((tcph->th_flags & TH_PUSH) ? 'P' : '*');
+    *flagBuffer++ = (char) ((tcph->th_flags & TH_RST)  ? 'R' : '*');
+    *flagBuffer++ = (char) ((tcph->th_flags & TH_SYN)  ? 'S' : '*');
+    *flagBuffer++ = (char) ((tcph->th_flags & TH_FIN)  ? 'F' : '*');
     *flagBuffer = '\0';
 
 }
@@ -145,28 +147,31 @@ void CloseLogger()
     TextLog_Term(text_log);
 }
 
-void LogIPPkt(int type, Packet* p)
+void LogIPPkt(Packet* p)
 {
     log_mutex.lock();
-    LogIPPkt(text_log, type, p);
+    LogIPPkt(text_log, p);
     TextLog_Flush(text_log);
     log_mutex.unlock();
 }
 
 void snort_print(Packet* p)
 {
-    if (p->iph != NULL)
+    if (p->ptrs.ip_api.is_valid())
     {
-        LogIPPkt(text_log, GET_IPH_PROTO((p)), p);
+        LogIPPkt(text_log, p);
     }
-#ifndef NO_NON_ETHER_DECODER
+#if 0
+    // FIXIT-L ARP logging not impelemted
     else if (p->proto_bits & PROTO_BIT__ARP)
     {
+
         log_mutex.lock();
         LogArpHeader(text_log, p);
         TextLog_Flush(text_log);
         log_mutex.unlock();
     }
+#endif
 #if 0
     else if (p->eplh != NULL)
     {
@@ -176,7 +181,6 @@ void snort_print(Packet* p)
     {
         LogWifiPkt(text_log, p);
     }
-#endif
 #endif
 }
 

@@ -26,11 +26,13 @@
 #include <algorithm>
 #include <string>
 
+#include "main/snort_types.h"
 #include "framework/bits.h"
 #include "framework/parameter.h"
-#include "sfip/sfip_t.h"
 
-class Value
+struct sfip_t;
+
+class SO_PUBLIC Value
 {
 public:
     static const unsigned mask_bits = 52; // ieee 754 significand
@@ -68,6 +70,9 @@ public:
     void set(const Parameter* p)
     { param = p; };
 
+    void set_enum(unsigned u)
+    { type = VT_NUM; num = u;  };
+
     void set_aux(unsigned u)
     { num = u; };
 
@@ -88,6 +93,8 @@ public:
 
     const char* get_string() const
     { return str.c_str(); };
+
+    const char* get_as_string();
 
     bool strtol(long&) const;
 

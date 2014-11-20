@@ -56,7 +56,7 @@ typedef struct _ip_node {
 } sfip_node_t;
 
 /* An IP variable onkect */
-typedef struct _var_t {
+struct sfip_var_t {
     /* Selects whether or not to use the list, the table,
      * or any other method added later */
     MODES mode;
@@ -70,19 +70,19 @@ typedef struct _var_t {
 //    sfrt rt;
 
     /* Linked list of IP variables for the variable table */
-    struct _var_t *next;
+    sfip_var_t *next;
 
     uint32_t id;
     char *name;
     char *value;
-} sfip_var_t;
+};
 
 /* A variable table for storing and looking up variables */
 /* Expand later to use a faster data structure */
-typedef struct _vartable_t {
+struct vartable_t {
     sfip_var_t *head;
     uint32_t id;
-} vartable_t;
+};
 
 /* Creates a new variable that is an alias of another variable
  * Does a "deep" copy so it owns it's own pointers */
@@ -125,7 +125,7 @@ void sfvar_free(sfip_var_t *var);
 
 /* Returns non-zero if ip is contained in 'var', 0 otherwise */
 /* If either argument is NULL, 0 is returned. */
-int sfvar_ip_in(sfip_var_t *var, sfip_t *ip);
+int sfvar_ip_in(sfip_var_t *var, const sfip_t *ip);
 
 /* Prints the variable "var" to the file descriptor 'f' */
 void sfvar_print(const char *prefix, sfip_var_t *var);

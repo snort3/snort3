@@ -22,20 +22,24 @@
 #ifndef TREENODES_H
 #define TREENODES_H
 
-#include "main/snort_types.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "sfip/ipv6_port.h"
-#include "detection/rule_option_types.h"
-#include "detection/rules.h"
+
+#include "main/snort_types.h"
+
 #include "detection/signature.h"
-#include "utils/sfportobject.h"
+#include "detection/rule_option_types.h"
+#include "actions/actions.h"
+
 
 class IpsOption;
 struct Packet;
 struct RuleTreeNode;
+struct PortObject;
+struct OutputSet;
+struct TagData;
+struct sfip_var_t;
 
 /* same as the rule header FP list */
 struct OptFpList
@@ -118,17 +122,17 @@ struct OptTreeNode
 };
 
 /* function pointer list for rule head nodes */
-typedef struct _RuleFpList
+struct RuleFpList
 {
     /* context data for this test */
     void *context;
 
     /* rule check function pointer */
-    int (*RuleHeadFunc)(Packet *, RuleTreeNode *, struct _RuleFpList *, int);
+    int (*RuleHeadFunc)(Packet *, RuleTreeNode *, RuleFpList *, int);
 
     /* pointer to the next rule function node */
-    struct _RuleFpList *next;
-} RuleFpList;
+    RuleFpList *next;
+};
 
 struct RuleTreeNode
 {
@@ -140,7 +144,7 @@ struct RuleTreeNode
     PortObject * src_portobject;
     PortObject * dst_portobject;
 
-    struct _ListHead *listhead;
+    struct ListHead* listhead;
 
     int proto;
     int head_node_number;
@@ -160,8 +164,8 @@ OptFpList * AddOptFuncToList(RuleOptEvalFunc, OptTreeNode *);
         
 void* get_rule_type_data(OptTreeNode*, const char* name);
 void* get_rule_type_data(OptTreeNode*, option_type_t);
-            
-bool otn_has_plugin(OptTreeNode* otn, const char* name);
+
+SO_PUBLIC bool otn_has_plugin(OptTreeNode* otn, const char* name);
 
 static inline bool otn_has_plugin(OptTreeNode* otn, int id)
 { return (otn->plugins & (0x1 << id)) != 0; }

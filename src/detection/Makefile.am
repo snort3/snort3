@@ -6,6 +6,7 @@ x_includedir = $(pkgincludedir)/detection
 
 x_include_HEADERS = \
 detection_defines.h \
+detection_options.h \
 rule_option_types.h \
 rules.h \
 signature.h \
@@ -15,14 +16,12 @@ libdetection_a_SOURCES = \
 detect.cc \
 detect.h \
 detection_options.cc \
-detection_options.h \
 detection_util.cc \
 detection_util.h \
 fpcreate.cc \
 fpcreate.h \
 fpdetect.cc \
 fpdetect.h \
-generators.h \
 pcrm.cc \
 pcrm.h \
 sfrim.cc \

@@ -37,7 +37,7 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 
-static const char* s_name = "file_data";
+#define s_name "file_data"
 
 static THREAD_LOCAL ProfileStats fileDataPerfStats;
 
@@ -47,10 +47,10 @@ public:
     FileDataOption() : IpsOption(s_name) { };
     ~FileDataOption() { };
 
-    CursorActionType get_cursor_type() const
+    CursorActionType get_cursor_type() const override
     { return CAT_SET_FILE; };
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 };
 
 //-------------------------------------------------------------------------
@@ -86,12 +86,15 @@ int FileDataOption::eval(Cursor& c, Packet*)
 // module
 //-------------------------------------------------------------------------
 
+#define s_help \
+    "rule option to set detection cursor to file data"
+
 class FileDataModule : public Module
 {
 public:
-    FileDataModule() : Module(s_name) { };
+    FileDataModule() : Module(s_name, s_help) { };
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &fileDataPerfStats; };
 };
 
@@ -124,6 +127,7 @@ static const IpsApi file_data_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

@@ -48,7 +48,7 @@ struct PAF_State     // per session direction
     uint32_t fpt;    // current flush point
     uint32_t tot;    // total bytes flushed
 
-    PAF_Status paf;  // current scan state
+    StreamSplitter::Status paf;  // current scan state
 };
 
 void s5_paf_setup(PAF_State*);  // called at session start
@@ -61,19 +61,25 @@ static inline uint32_t s5_paf_position (PAF_State* ps)
 
 static inline uint32_t s5_paf_initialized (PAF_State* ps)
 {
-    return ( ps->paf != PAF_START );
+    return ( ps->paf != StreamSplitter::START );
 }
 
 static inline uint32_t s5_paf_active (PAF_State* ps)
 {
-    return ( ps->paf != PAF_ABORT );
+    return ( ps->paf != StreamSplitter::ABORT );
+}
+
+static inline void s5_paf_jump(PAF_State* ps, uint32_t n)
+{
+    ps->pos += n;
+    ps->seq = ps->pos;
 }
 
 // called on each in order segment
 uint32_t s5_paf_check(
     StreamSplitter* paf_config, PAF_State*, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t total,
-    uint32_t seq, uint16_t port, uint32_t* flags);
+    uint32_t seq, uint32_t* flags);
 
 #endif
 

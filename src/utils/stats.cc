@@ -33,7 +33,10 @@
 #include "packet_io/trough.h"
 #include "target_based/sftarget_reader.h"
 #include "managers/module_manager.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
+#include "managers/codec_manager.h"
+#include "detection/fpcreate.h"
+#include "filters/sfthreshold.h"
 
 #define STATS_SEPARATOR \
     "--------------------------------------------------"
@@ -79,13 +82,14 @@ void LogLabel(const char* s)
     else
     {
         LogSeparator();
-        LogMessage("%s statistics\n", s);
+        LogMessage("%s\n", s);
     }
 }
 
 void LogCount (const char* s, uint64_t c)
 {
-    LogMessage("%25.25s: " STDu64 "\n", s, c);
+    if ( c )
+        LogMessage("%25.25s: " STDu64 "\n", s, c);
 }
 
 void LogStat (const char* s, uint64_t n, uint64_t tot)
@@ -168,12 +172,12 @@ struct DAQVerdicts
 
 //-------------------------------------------------------------------------
 
-static const char* simple_names[] =
+static const char* const simple_names[] =
 {
     "packets"
 };
 
-static const char* daq_names[] =
+static const char* const daq_names[] =
 {
     "received",
     "analyzed",
@@ -186,7 +190,7 @@ static const char* daq_names[] =
 #endif
 };
 
-const char* verdict_names[] =
+const char* const verdict_names[] =
 {
     "allow",
     "block",
@@ -198,7 +202,7 @@ const char* verdict_names[] =
     "internal whitelist"
 };
 
-static const char* pc_names[] =
+static const char* const pc_names[] =
 {
     "analyzed",
     "fail open",
@@ -213,9 +217,10 @@ static const char* pc_names[] =
     "alert limit",
     "internal blacklist",
     "internal whitelist",
+    "idle"
 };
 
-static const char* proc_names[] =
+static const char* const proc_names[] =
 {
     "local commands",
     "remote commands",
@@ -251,7 +256,7 @@ void DropStats()
 {
     const DAQ_Stats_t* pkt_stats = &g_daq_stats;
 
-    LogLabel("Basic");
+    LogLabel("Packet Statistics");
 
     {
         uint64_t pkts_out, pkts_inj;
@@ -280,7 +285,9 @@ void DropStats()
         daq_stats.skipped = snort_conf->pkt_skip; 
 #endif
 
-        LogLabel("daq");
+        if ( pkts_recv )
+            LogLabel("daq");
+
         PegCount pcaps = Trough_GetFileCount();
         if ( pcaps )
             LogCount("pcaps", pcaps);
@@ -300,17 +307,17 @@ void DropStats()
     PacketManager::dump_stats();
     //mpse_print_qinfo();
 
-    LogLabel("Modules");
+    LogLabel("Module Statistics");
     ModuleManager::dump_stats(snort_conf);
 
     // ensure proper counting of log_limit
     SnortEventqResetCounts();
 
-    // FIXIT alert_pkts excludes rep hits
+    // FIXIT-L alert_pkts excludes rep hits
     if ( gpc.total_alert_pkts == gpc.alert_pkts )
         gpc.total_alert_pkts = 0;
 
-    LogLabel("Summary");
+    LogLabel("Summary Statistics");
     show_stats((PegCount*)&gpc, pc_names, array_size(pc_names), "detection");
 
 #ifdef PPM_MGR
@@ -327,7 +334,7 @@ void PrintStatistics (void)
     DropStats();
     timing_stats();
 
-    // FIXIT below stats need to be made consistent with above
+    // FIXIT-L below stats need to be made consistent with above
     fpShowEventStats(snort_conf);
     print_thresholding(snort_conf->threshold_config, 1);
 
@@ -357,38 +364,47 @@ void sum_stats(
 }
 
 void show_stats(
-    PegCount* pegs, const char* names[], unsigned n, const char* module_name)
+    PegCount* pegs, const char* const names[], unsigned n, const char* module_name)
 {
-    if ( module_name )
-        LogLabel(module_name);
+    bool head = false;
 
     for ( unsigned i = 0; i < n; ++i )
     {
         PegCount c = pegs[i];
         const char* s = names[i];
 
-        if ( (!module_name || i) && !c )
+        if ( !c )
             continue;
 
+        if ( module_name && !head )
+        {
+            LogLabel(module_name);
+            head = true;
+        }
+
         LogCount(s, c);
-        // FIXIT this has alignment issues for structs cast as arrays?
-        //LogCount(names[i], pegs[i]);
     }
 }
 
 void show_percent_stats(
-    PegCount* pegs, const char* names[], unsigned n, const char* module_name)
+    PegCount* pegs, const char* const names[], unsigned n, const char* module_name)
 {
-    if ( module_name )
-        LogLabel(module_name);
+    bool head = false;
+
 
     for ( unsigned i = 0; i < n; ++i )
     {
         PegCount c = pegs[i];
         const char* s = names[i];
 
-        if ( i && !c )
+        if ( !c )
             continue;
+
+        if ( module_name && !head )
+        {
+            LogLabel(module_name);
+            head = true;
+        }
 
         LogStat(s, c, pegs[0]);
     }

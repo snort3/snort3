@@ -31,13 +31,13 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "sid";
+#define s_name "sid"
 
 //-------------------------------------------------------------------------
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter sid_params[] =
+static const Parameter s_params[] =
 {
     { "~", Parameter::PT_INT, "1:", nullptr,
       "signature id" },
@@ -45,11 +45,14 @@ static const Parameter sid_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to indicate signature number"
+
 class SidModule : public Module
 {
 public:
-    SidModule() : Module(s_name, sid_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    SidModule() : Module(s_name, s_help, s_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
     int sid;
 };
 
@@ -88,6 +91,7 @@ static const IpsApi sid_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

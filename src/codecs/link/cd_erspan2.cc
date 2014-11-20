@@ -21,13 +21,33 @@
 
 
 #include "framework/codec.h"
-#include "codecs/link/cd_erspan2_module.h"
+#include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
-#include "codecs/sf_protocols.h"
+#include "protocols/packet.h"
+
+#define CD_ERSPAN2_NAME "erspan2"
+#define CD_ERSPAN2_HELP "support for encapsulated remote switched port analyzer - type 2"
 
 namespace
 {
+
+static const RuleMap erspan2_rules[] =
+{
+    { DECODE_ERSPAN_HDR_VERSION_MISMATCH, "ERSpan header version mismatch" },
+    { DECODE_ERSPAN2_DGRAM_LT_HDR, "captured < ERSpan type2 header length" },
+    { 0, nullptr }
+};
+
+class Erspan2Module : public CodecModule
+{
+public:
+    Erspan2Module() : CodecModule(CD_ERSPAN2_NAME, CD_ERSPAN2_HELP) {}
+
+    const RuleMap* get_rules() const override
+    { return erspan2_rules; }
+};
+
 
 class Erspan2Codec : public Codec
 {
@@ -35,10 +55,8 @@ public:
     Erspan2Codec() : Codec(CD_ERSPAN2_NAME){};
     ~Erspan2Codec(){};
 
-    virtual PROTO_ID get_proto_id() { return PROTO_ERSPAN; };
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
     
 };
 
@@ -48,16 +66,15 @@ struct ERSpanType2Hdr
     uint16_t ver_vlan;
     uint16_t flags_spanId;
     uint32_t pad;
+
+    uint16_t version() const
+    { return ntohs(ver_vlan) >> 12; }
 } ;
 
 const uint16_t ETHERTYPE_ERSPAN_TYPE2 = 0x88be;
 } // namespace
 
 
-static inline uint16_t erspan_version(ERSpanType2Hdr *hdr)
-{
-    return (ntohs(hdr->ver_vlan) & 0xf000) >> 12;
-}
 
 void Erspan2Codec::get_protocol_ids(std::vector<uint16_t>& v)
 {
@@ -78,32 +95,27 @@ void Erspan2Codec::get_protocol_ids(std::vector<uint16_t>& v)
  * Returns: void function
  *
  */
-bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool Erspan2Codec::decode(const RawData& raw, CodecData& codec, DecodeData& )
 {
-    lyr_len = sizeof(ERSpanType2Hdr);
-    ERSpanType2Hdr *erSpan2Hdr = (ERSpanType2Hdr *)raw_pkt;
+    const ERSpanType2Hdr* const erSpan2Hdr =
+        reinterpret_cast<const ERSpanType2Hdr*>(raw.data);
 
-    if (raw_len < sizeof(ERSpanType2Hdr))
+    if (raw.len < sizeof(ERSpanType2Hdr))
     {
-        codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN2_DGRAM_LT_HDR,
-                        raw_pkt, raw_len);
+        codec_events::decoder_event(codec, DECODE_ERSPAN2_DGRAM_LT_HDR);
         return false;
     }
-
-    p->encapsulations++;
-
 
     /* Check that this is in fact ERSpan Type 2.
      */
-    if (erspan_version(erSpan2Hdr) != 0x01) /* Type 2 == version 0x01 */
+    if (erSpan2Hdr->version() != 0x01) /* Type 2 == version 0x01 */
     {
-        codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
-                        raw_pkt, raw_len);
+        codec_events::decoder_event(codec, DECODE_ERSPAN_HDR_VERSION_MISMATCH);
         return false;
     }
 
-    next_prot_id = ETHERTYPE_TRANS_ETHER_BRIDGING;
+    codec.lyr_len = sizeof(ERSpanType2Hdr);
+    codec.next_prot_id = ETHERTYPE_TRANS_ETHER_BRIDGING;
     return true;
 }
 
@@ -113,24 +125,16 @@ bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new Erspan2Module;
-}
+{ return new Erspan2Module; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new Erspan2Codec();
-}
+{ return new Erspan2Codec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi erspan2_api =
@@ -138,6 +142,7 @@ static const CodecApi erspan2_api =
     {
         PT_CODEC,
         CD_ERSPAN2_NAME,
+        CD_ERSPAN2_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

@@ -1,75 +1,52 @@
-/****************************************************************************
- *
+/*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2003-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
-
-//
-//  @author     Tom Peters <thopeter@cisco.com>
-//
-//  @brief      NHttp Inspector class.
-//
-
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+// nhttp_inspect.cc author Tom Peters <thopeter@cisco.com>
 
 #include <assert.h>
-#include <string.h>
-#include <sys/types.h>
 #include <stdio.h>
-#include <stdexcept>
 
-#include "snort.h"
 #include "stream/stream_api.h"
+#include "detection/detection_util.h"
+
 #include "nhttp_enum.h"
-#include "nhttp_stream_splitter.h"
-#include "nhttp_api.h"
+#include "nhttp_msg_request.h"
+#include "nhttp_msg_status.h"
+#include "nhttp_msg_header.h"
+#include "nhttp_msg_body.h"
+#include "nhttp_msg_chunk.h"
+#include "nhttp_msg_trailer.h"
+#include "nhttp_test_manager.h"
 #include "nhttp_inspect.h"
 
 using namespace NHttpEnums;
 
-NHttpInspect::NHttpInspect(bool test_input, bool _test_output) : test_output(_test_output)
+NHttpInspect::NHttpInspect(bool test_input, bool test_output)
 {
-    NHttpTestInput::test_input = test_input;
-    if (NHttpTestInput::test_input) {
-        NHttpTestInput::testInput = new NHttpTestInput(testInputFile);
+    if (test_input) {
+        NHttpTestManager::activate_test_input();
+    }
+    if (test_output) {
+        NHttpTestManager::activate_test_output();
     }
 }
 
-NHttpInspect::~NHttpInspect ()
-{
-    if (NHttpTestInput::test_input) {
-        delete NHttpTestInput::testInput;
-        if (testOut) fclose(testOut);
-    }
-}
-
-bool NHttpInspect::enabled ()
-{
-    return true;
-}
-
-bool NHttpInspect::configure (SnortConfig *)
-{
-    return true;
-}
-
-bool NHttpInspect::get_buf(
-    InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
+bool NHttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
     switch ( ibt )
     {
@@ -91,102 +68,54 @@ bool NHttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
 {
     const HttpBuffer* h = GetHttpBuffer((HTTP_BUFFER)id);
 
-    if ( !h )
+    if (!h) {
         return false;
+    }
 
     b.data = h->buf;
     b.len = h->length;
     return true;
 }
 
-int NHttpInspect::verify(SnortConfig*)
+ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId source_id,
+   bool buf_owner)
 {
-    return 0; // 0 = good, -1 = bad
-}
+    NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
+    assert(session_data != nullptr);
 
-void NHttpInspect::tinit()
-{
-}
+    NHttpMsgSection *msg_section = nullptr;
 
-void NHttpInspect::tterm()
-{
-}
-
-void NHttpInspect::show(SnortConfig*)
-{
-    LogMessage("NHttpInspect\n");
-}
-
-void NHttpInspect::eval(Packet* p)
-{
-    // Only packets from the StreamSplitter can be processed
-    if (!PacketHasPAFPayload(p)) return;
-
-    process(p->data, p->dsize, p->flow, (p->packet_flags & PKT_FROM_CLIENT) ? SRC_CLIENT : SRC_SERVER);
-}
-
-void NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId sourceId)
-{
-    NHttpFlowData* sessionData = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
-    assert(sessionData);
-
-    NHttpMsgSection *msgSection = nullptr;
-
-    if (!NHttpTestInput::test_input) {
-        switch (sessionData->sectionType[sourceId]) {
-          case SEC_REQUEST: msgSection = new NHttpMsgRequest(data, dsize, sessionData, sourceId); break;
-          case SEC_STATUS: msgSection = new NHttpMsgStatus(data, dsize, sessionData, sourceId); break;
-          case SEC_HEADER: msgSection = new NHttpMsgHeader(data, dsize, sessionData, sourceId); break;
-          case SEC_BODY: msgSection = new NHttpMsgBody(data, dsize, sessionData, sourceId); break;
-          case SEC_CHUNKHEAD: msgSection = new NHttpMsgChunkHead(data, dsize, sessionData, sourceId); break;
-          case SEC_CHUNKBODY: msgSection = new NHttpMsgChunkBody(data, dsize, sessionData, sourceId); break;
-          case SEC_TRAILER: msgSection = new NHttpMsgTrailer(data, dsize, sessionData, sourceId); break;
-          case SEC_DISCARD: return;
-          default: assert(0); return;
-        }
+    switch (session_data->section_type[source_id]) {
+      case SEC_REQUEST: msg_section = new NHttpMsgRequest(data, dsize, session_data, source_id, buf_owner); break;
+      case SEC_STATUS: msg_section = new NHttpMsgStatus(data, dsize, session_data, source_id, buf_owner); break;
+      case SEC_HEADER: msg_section = new NHttpMsgHeader(data, dsize, session_data, source_id, buf_owner); break;
+      case SEC_BODY: msg_section = new NHttpMsgBody(data, dsize, session_data, source_id, buf_owner); break;
+      case SEC_CHUNK: msg_section = new NHttpMsgChunk(data, dsize, session_data, source_id, buf_owner); break;
+      case SEC_TRAILER: msg_section = new NHttpMsgTrailer(data, dsize, session_data, source_id, buf_owner); break;
+      default: assert(0); if (buf_owner) delete[] data; return RES_IGNORE;
     }
-    else {
-        uint8_t *testBuffer;
-        uint16_t testLength;
-        if ((testLength = NHttpTestInput::testInput->toEval(&testBuffer, testNumber, sourceId)) > 0) {
-            switch (sessionData->sectionType[sourceId]) {
-              case SEC_REQUEST: msgSection = new NHttpMsgRequest(testBuffer, testLength, sessionData, sourceId); break;
-              case SEC_STATUS: msgSection = new NHttpMsgStatus(testBuffer, testLength, sessionData, sourceId); break;
-              case SEC_HEADER: msgSection = new NHttpMsgHeader(testBuffer, testLength, sessionData, sourceId); break;
-              case SEC_BODY: msgSection = new NHttpMsgBody(testBuffer, testLength, sessionData, sourceId); break;
-              case SEC_CHUNKHEAD: msgSection = new NHttpMsgChunkHead(testBuffer, testLength, sessionData, sourceId); break;
-              case SEC_CHUNKBODY: msgSection = new NHttpMsgChunkBody(testBuffer, testLength, sessionData, sourceId); break;
-              case SEC_TRAILER: msgSection = new NHttpMsgTrailer(testBuffer, testLength, sessionData, sourceId); break;
-              case SEC_DISCARD: return;
-              default: assert(0); return;
-            }
+
+    msg_section->analyze();
+    msg_section->update_flow();
+    msg_section->gen_events();
+
+    ProcessResult return_value = msg_section->worth_detection();
+    if (return_value == RES_INSPECT) {
+        msg_section->legacy_clients();
+    }
+
+    if (NHttpTestManager::use_test_output()) {
+        msg_section->print_section(NHttpTestManager::get_output_file());
+        fflush(NHttpTestManager::get_output_file());
+        if (NHttpTestManager::use_test_input()) {
+            printf("Finished processing section from test %" PRIi64 "\n", NHttpTestManager::get_test_number());
         }
         else {
-            printf("Zero length test data.\n");
-            return;
+            printf("Finished processing section from flow %p\n", (void*)session_data);
         }
+        fflush(stdout);
     }
-    msgSection->analyze();
-    msgSection->updateFlow();
-    msgSection->genEvents();
-    msgSection->legacyClients();
 
-    if (test_output) {
-        if (!NHttpTestInput::test_input) msgSection->printSection(stdout);
-        else {
-            if (testNumber != fileTestNumber) {
-                if (testOut) fclose (testOut);
-                fileTestNumber = testNumber;
-                char fileName[100];
-                snprintf(fileName, sizeof(fileName), "%s%" PRIi64 ".txt", testOutputPrefix, testNumber);
-                if ((testOut = fopen(fileName, "w+")) == nullptr) throw std::runtime_error("Cannot open test output file");
-            }
-            msgSection->printSection(testOut);
-            printf("Finished processing section from test %" PRIi64 "\n", testNumber);
-        }
-    }
+    return return_value;
 }
-
-
-
 

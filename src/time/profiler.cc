@@ -47,7 +47,6 @@ using namespace std;
 #include "treenodes.h"
 #include "treenodes.h"
 #include "snort_types.h"
-#include "sf_textlog.h"
 #include "detection_options.h"
 #include "fpdetect.h"
 #include "framework/module.h"
@@ -210,10 +209,6 @@ void PrintWorstRules(int numToPrint)
     OptTreeNode *otn;
     OTN_WorstPerformer *node, *tmp;
     int num = 0;
-    TextLog *log = NULL;
-    time_t cur_time;
-    char fullname[STD_BUF];
-    int ret;
     SnortConfig *sc = snort_conf;
 
     if (sc == NULL)
@@ -221,149 +216,59 @@ void PrintWorstRules(int numToPrint)
 
     getTicksPerMicrosec();
 
-    cur_time = time(NULL);
-
-    if (sc->profile_rules.filename != NULL)
-    {
-        if (sc->profile_rules.append)
-        {
-            log = TextLog_Init(sc->profile_rules.filename, 512*1024, 512*1024);
-
-            if (log != NULL)
-                TextLog_Print(log, "\ntimestamp: %u\n", cur_time);
-        }
-        else
-        {
-            ret = SnortSnprintf(fullname, STD_BUF, "%s.%u", sc->profile_rules.filename, (uint32_t)cur_time);
-            if(ret != SNORT_SNPRINTF_SUCCESS)
-                FatalError("profiler: file path+name too long\n");
-            log = TextLog_Init(fullname, 512*1024, 512*1024);
-        }
-    }
-
     if ( !worstPerformers )
-    {
-        if ( log )
-            TextLog_Term(log);
         return;
-    }
 
-    if ( log )
-        TextLog_Print(log, "--------------------------------------------------\n");
-    else
-        LogMessage("--------------------------------------------------\n");
+    LogMessage("--------------------------------------------------\n");
 
     if (numToPrint != -1)
     {
-        // FIXIT this is fugly; should have a LogMessage() type "file" within
-        // TextLog so this if (log) TextLog_Print() else LogMessage() isn't
-        // necessary.
-        if(log)
-        {
-            TextLog_Print(log, "Rule Profile Statistics (worst %d rules)\n", numToPrint);
-        } else {
-            LogMessage("Rule Profile Statistics (worst %d rules)\n", numToPrint);
-        }
+        LogMessage("Rule Profile Statistics (worst %d rules)\n", numToPrint);
     }
     else
     {
-        if(log)
-        {
-            TextLog_Print(log, "Rule Profile Statistics (all rules)\n");
-        } else {
-            LogMessage("Rule Profile Statistics (all rules)\n");
-        }
+        LogMessage("Rule Profile Statistics (all rules)\n");
     }
 
-    if(log)
-    {
-        TextLog_Print(log,
+    LogMessage(
 #ifdef PPM_MGR
-            "%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
+        "%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
 #else
-            "%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
+        "%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
 #endif
-             6, "Num",
-             9, "SID", 4, "GID", 4, "Rev",
-            11, "Checks",
-            10, "Matches",
-            10, "Alerts",
-            20, "Microsecs",
-            11, "Avg/Check",
-            11, "Avg/Match",
-            13, "Avg/Nonmatch"
+         6, "Num",
+         9, "SID", 4, "GID", 4, "Rev",
+        11, "Checks",
+        10, "Matches",
+        10, "Alerts",
+        20, "Microsecs",
+        11, "Avg/Check",
+        11, "Avg/Match",
+        13, "Avg/Nonmatch"
 #ifdef PPM_MGR
-            , 11, "Disabled"
+        , 11, "Disabled"
 #endif
-            );
-    }
-    else
-    {
-        LogMessage(
-#ifdef PPM_MGR
-            "%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
-#else
-            "%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
-#endif
-             6, "Num",
-             9, "SID", 4, "GID", 4, "Rev",
-            11, "Checks",
-            10, "Matches",
-            10, "Alerts",
-            20, "Microsecs",
-            11, "Avg/Check",
-            11, "Avg/Match",
-            13, "Avg/Nonmatch"
-#ifdef PPM_MGR
-            , 11, "Disabled"
-#endif
-            );
-    }
+        );
 
-    if(log)
-    {
-        TextLog_Print(log,
+    LogMessage(
 #ifdef PPM_MGR
-            "%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
+        "%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
 #else
-            "%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
+        "%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
 #endif
-            6, "===",
-            9, "===", 4, "===", 4, "===",
-            11, "======",
-            10, "=======",
-            10, "======",
-            20, "=========",
-            11, "=========",
-            11, "=========",
-            13, "============"
+        6, "===",
+        9, "===", 4, "===", 4, "===",
+        11, "======",
+        10, "=======",
+        10, "======",
+        20, "=========",
+        11, "=========",
+        11, "=========",
+        13, "============"
 #ifdef PPM_MGR
-            , 11, "========"
+        , 11, "========"
 #endif
-            );
-    }
-    else
-    {
-        LogMessage(
-#ifdef PPM_MGR
-            "%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
-#else
-            "%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
-#endif
-            6, "===",
-            9, "===", 4, "===", 4, "===",
-            11, "======",
-            10, "=======",
-            10, "======",
-            20, "=========",
-            11, "=========",
-            11, "=========",
-            13, "============"
-#ifdef PPM_MGR
-            , 11, "========"
-#endif
-            );
-    }
+        );
 
     for (node = worstPerformers, num=1;
          node && ((numToPrint < 0) ? 1 : (num <= numToPrint));
@@ -374,48 +279,24 @@ void PrintWorstRules(int numToPrint)
         otn = node->otn;
         OtnState* state = otn->state;
 
-        if(log)
-        {
-            TextLog_Print(log,
+        LogMessage(
 #ifdef PPM_MGR
-                "%*d%*d%*d%*d" FMTu64("*") FMTu64("*") FMTu64("*") FMTu64("*") "%*.1f%*.1f%*.1f" FMTu64("*") "\n",
+            "%*d%*d%*d%*d" FMTu64("*") FMTu64("*") FMTu64("*") FMTu64("*") "%*.1f%*.1f%*.1f" FMTu64("*") "\n",
 #else
-                "%*d%*d%*d%*d" FMTu64("*") FMTu64("*") FMTu64("*") FMTu64("*") "%*.1f%*.1f%*.1f" "\n",
+            "%*d%*d%*d%*d" FMTu64("*") FMTu64("*") FMTu64("*") FMTu64("*") "%*.1f%*.1f%*.1f" "\n",
 #endif
-                6, num, 9, otn->sigInfo.id, 4, otn->sigInfo.generator, 4, otn->sigInfo.rev,
-                11, state->checks,
-                10, state->matches,
-                10, state->alerts,
-                20, (uint64_t)(state->ticks/ticks_per_microsec),
-                11, node->ticks_per_check/ticks_per_microsec,
-                11, node->ticks_per_match/ticks_per_microsec,
-                13, node->ticks_per_nomatch/ticks_per_microsec
+            6, num, 9, otn->sigInfo.id, 4, otn->sigInfo.generator, 4, otn->sigInfo.rev,
+            11, state->checks,
+            10, state->matches,
+            10, state->alerts,
+            20, (uint64_t)(state->ticks/ticks_per_microsec),
+            11, node->ticks_per_check/ticks_per_microsec,
+            11, node->ticks_per_match/ticks_per_microsec,
+            13, node->ticks_per_nomatch/ticks_per_microsec
 #ifdef PPM_MGR
-                , 11, state->ppm_disable_cnt
+            , 11, state->ppm_disable_cnt
 #endif
-                );
-        }
-        else
-        {
-            LogMessage(
-#ifdef PPM_MGR
-                "%*d%*d%*d%*d" FMTu64("*") FMTu64("*") FMTu64("*") FMTu64("*") "%*.1f%*.1f%*.1f" FMTu64("*") "\n",
-#else
-                "%*d%*d%*d%*d" FMTu64("*") FMTu64("*") FMTu64("*") FMTu64("*") "%*.1f%*.1f%*.1f" "\n",
-#endif
-                6, num, 9, otn->sigInfo.id, 4, otn->sigInfo.generator, 4, otn->sigInfo.rev,
-                11, state->checks,
-                10, state->matches,
-                10, state->alerts,
-                20, (uint64_t)(state->ticks/ticks_per_microsec),
-                11, node->ticks_per_check/ticks_per_microsec,
-                11, node->ticks_per_match/ticks_per_microsec,
-                13, node->ticks_per_nomatch/ticks_per_microsec
-#ifdef PPM_MGR
-                , 11, state->ppm_disable_cnt
-#endif
-                );
-        }
+            );
     }
 
     /* Do some cleanup */
@@ -426,8 +307,6 @@ void PrintWorstRules(int numToPrint)
         node = tmp;
     }
 
-    if(log)
-        TextLog_Term(log);
     worstPerformers = NULL;
 }
 
@@ -701,7 +580,7 @@ void FreePreprocPerformance(Preproc_WorstPerformer *idx)
     }
 }
 
-void PrintPreprocPerformance(TextLog *log, int num, Preproc_WorstPerformer *idx)
+void PrintPreprocPerformance(int num, Preproc_WorstPerformer *idx)
 {
     Preproc_WorstPerformer *child;
     int i;
@@ -711,20 +590,6 @@ void PrintPreprocPerformance(TextLog *log, int num, Preproc_WorstPerformer *idx)
     if (num != 0)
     {
         indent += 2;
-        if(log)
-        {
-            TextLog_Print(log, "%*d%*s%*d" FMTu64("*") FMTu64("*") FMTu64("*") "%*.2f%*.2f%*.2f\n",
-                   indent, num,
-                   28 - indent, idx->node->name, 6, idx->node->layer,
-                   11, idx->node->stats.checks,
-                   11, idx->node->stats.exits,
-                   20, (uint64_t)(idx->node->stats.ticks/ticks_per_microsec),
-                   11, idx->ticks_per_check/ticks_per_microsec,
-                   14, idx->pct_of_parent,
-                   13, idx->pct_of_total);
-        }
-        else
-        {
             LogMessage("%*d%*s%*d" FMTu64("*") FMTu64("*") FMTu64("*") "%*.2f%*.2f%*.2f\n",
         	                   indent, num,
         	                   28 - indent, idx->node->name, 6, idx->node->layer,
@@ -734,27 +599,12 @@ void PrintPreprocPerformance(TextLog *log, int num, Preproc_WorstPerformer *idx)
         	                   11, idx->ticks_per_check/ticks_per_microsec,
         	                   14, idx->pct_of_parent,
         	                   13, idx->pct_of_total);
-        }
     }
     else
     {
         /* The totals */
         indent += strlen(idx->node->name);
 
-        if(log)
-        {
-            TextLog_Print(log, "%*s%*s%*d" FMTu64("*") FMTu64("*") FMTu64("*") "%*.2f%*.2f%*.2f\n",
-                   indent, idx->node->name,
-                   28 - indent, idx->node->name, 6, idx->node->layer,
-                   11, idx->node->stats.checks,
-                   11, idx->node->stats.exits,
-                   20, (uint64_t)(idx->node->stats.ticks/ticks_per_microsec),
-                   11, idx->ticks_per_check/ticks_per_microsec,
-                   14, idx->pct_of_parent,
-                   13, idx->pct_of_parent);
-        }
-        else
-        {
             LogMessage("%*s%*s%*d" FMTu64("*") FMTu64("*") FMTu64("*") "%*.2f%*.2f%*.2f\n",
         	                   indent, idx->node->name,
         	                   28 - indent, idx->node->name, 6, idx->node->layer,
@@ -764,7 +614,6 @@ void PrintPreprocPerformance(TextLog *log, int num, Preproc_WorstPerformer *idx)
         	                   11, idx->ticks_per_check/ticks_per_microsec,
         	                   14, idx->pct_of_parent,
         	                   13, idx->pct_of_parent);
-        }
     }
 
     child = idx->children;
@@ -772,7 +621,7 @@ void PrintPreprocPerformance(TextLog *log, int num, Preproc_WorstPerformer *idx)
     i = 1;
     while (child)
     {
-        PrintPreprocPerformance(log, i++, child);
+        PrintPreprocPerformance(i++, child);
         child = child->next;
     }
 }
@@ -845,121 +694,40 @@ void PrintWorstPreprocs(int numToPrint)
     Preproc_WorstPerformer *idx;
     Preproc_WorstPerformer *total = NULL;
     int num = 0;
-    TextLog *log = NULL;
-    time_t cur_time;
-    char fullname[STD_BUF];
-    int ret;
-    SnortConfig *sc = snort_conf;
 
     getTicksPerMicrosec();
 
-    cur_time = time(NULL);
-    if (sc->profile_preprocs.filename != NULL)
-    {
-        if (sc->profile_preprocs.append)
-        {
-            log = TextLog_Init(sc->profile_preprocs.filename, 512*1024, 512*1024);
-
-            if (log != NULL)
-                TextLog_Print(log, "\ntimestamp: %u\n", cur_time);
-        }
-        else
-        {
-            ret = SnortSnprintf(fullname, STD_BUF, "%s.%u", sc->profile_preprocs.filename, (uint32_t)cur_time);
-            if(ret != SNORT_SNPRINTF_SUCCESS)
-                FatalError("profiler: file path+name too long\n");
-            log = TextLog_Init(fullname, 512*1024, 512*1024);
-        }
-    }
-
     if ( !worstPreprocPerformers )
-    {
-        if ( log )
-            TextLog_Term(log);
         return;
-    }
 
-    if ( log )
-        TextLog_Print(log, "--------------------------------------------------\n");
-    else
-        LogMessage("--------------------------------------------------\n");
+    LogMessage("--------------------------------------------------\n");
 
     if (numToPrint != -1)
-    {
-        if(log)
-        {
-            TextLog_Print(log, "Module Profile Statistics (worst %d)\n", numToPrint);
-        }
-        else
-        {
-            LogMessage("Module Profile Statistics (worst %d)\n", numToPrint);
-        }
-    }
+        LogMessage("Module Profile Statistics (worst %d)\n", numToPrint);
     else
-    {
-        if(log)
-        {
-            TextLog_Print(log, "Module Profile Statistics (all)\n");
-        }
-        else
-        {
-            LogMessage("Module Profile Statistics (all)\n");
-        }
-    }
+        LogMessage("Module Profile Statistics (all)\n");
 
-    if(log)
-    {
-        TextLog_Print(log, "%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
-            4, "Num",
-            24, "Preprocessor",
-            6, "Layer",
-            11, "Checks",
-            11, "Exits",
-            20, "Microsecs",
-            11, "Avg/Check",
-            14, "Pct of Caller",
-            13, "Pct of Total");
-    }
-    else
-    {
-        LogMessage("%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
-    	            4, "Num",
-    	            24, "Preprocessor",
-    	            6, "Layer",
-    	            11, "Checks",
-    	            11, "Exits",
-    	            20, "Microsecs",
-    	            11, "Avg/Check",
-    	            14, "Pct of Caller",
-    	            13, "Pct of Total");
-    }
+    LogMessage("%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
+        4, "Num",
+       24, "Preprocessor",
+        6, "Layer",
+       11, "Checks",
+       11, "Exits",
+       20, "Microsecs",
+       11, "Avg/Check",
+       14, "Pct of Caller",
+       13, "Pct of Total");
 
-    if(log)
-    {
-        TextLog_Print(log, "%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
-            4, "===",
-            24, "============",
-            6, "=====",
-            11, "======",
-            11, "=====",
-            20, "=========",
-            11, "=========",
-            14, "=============",
-            13, "============");
-    }
-    else
-    {
-        LogMessage("%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
-    	            4, "===",
-    	            24, "============",
-    	            6, "=====",
-    	            11, "======",
-    	            11, "=====",
-    	            20, "=========",
-    	            11, "=========",
-    	            14, "=============",
-    	            13, "============");
-    }
+    LogMessage("%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
+        4, "===",
+       24, "============",
+        6, "=====",
+       11, "======",
+       11, "=====",
+       20, "=========",
+       11, "=========",
+       14, "=============",
+       13, "============");
 
     for (idx = worstPreprocPerformers, num=1;
          idx && ((numToPrint < 0) ? 1 : (num <= numToPrint));
@@ -972,23 +740,11 @@ void PrintWorstPreprocs(int numToPrint)
             total = idx;
             continue;
         }
-        //if (!idx)
-        //    break;
-        PrintPreprocPerformance(log, num, idx);
-        //LogMessage("%*d%*s%*d%*d" FMTu64("*") "%*.1f%*.1f\n",
-        //    6, num, 20, idx->node->name, 6, idx->node->layer,
-        //    11, idx->node->stats.checks,
-        //    11, idx->node->stats.exits,
-        //    20, idx->node->stats.ticks,
-        //    11, idx->ticks_per_check,
-        //    14, idx->pct_of_parent,
-        //    14, idx->pct_of_total);
+        PrintPreprocPerformance(num, idx);
     }
     if (total)
-        PrintPreprocPerformance(log, 0, total);
+        PrintPreprocPerformance(0, total);
 
-    if(log)
-        TextLog_Term(log);
     CleanupPreprocPerformance(worstPreprocPerformers);
     worstPreprocPerformers = NULL;
 }

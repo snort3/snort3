@@ -1,22 +1,21 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // kws_attribute_tables.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
@@ -25,7 +24,7 @@
 #include <unordered_map>
 
 #include "conversion_state.h"
-#include "utils/s2l_util.h"
+#include "helpers/s2l_util.h"
 
 
 namespace keywords
@@ -36,12 +35,12 @@ namespace {
 class AttributeTable : public ConversionState
 {
 public:
-    AttributeTable(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    AttributeTable(Converter& c) : ConversionState(c) {};
     virtual ~AttributeTable() {};
     virtual bool convert(std::istringstream& data);
 
 private:
-    std::istringstream* stream; // so I can caldd ld->failed_conversion
+    std::istringstream* stream; // so I can call ld->failed_conversion
     std::unordered_map<std::string, std::string> attr_map;
     std::ifstream attr_file;
 
@@ -86,8 +85,8 @@ void AttributeTable::parse_service()
 {
     std::string elem;
 
-    ld->open_table("services");
-    ld->open_table();
+    table_api.open_table("services");
+    table_api.open_table();
 
     while(get_next_element(elem) &&
           elem.compare("/SERVICE"))
@@ -100,12 +99,12 @@ void AttributeTable::parse_service()
                 if (!elem.compare("ATTRIBUTE_VALUE"))
                 {
                     get_next_element(elem);
-                    ld->add_option_to_table("name", elem);
+                    table_api.add_option("name", elem);
                 }
                 else if (!elem.compare("ATTRIBUTE_ID"))
                 {
                     get_next_element(elem);
-                    ld->add_option_to_table("name", attr_map[elem]);
+                    table_api.add_option("name", attr_map[elem]);
                 }
             } // while("/PROTOCOL")
         }
@@ -117,12 +116,12 @@ void AttributeTable::parse_service()
                 if (!elem.compare("ATTRIBUTE_VALUE"))
                 {
                     get_next_element(elem);
-                    ld->add_option_to_table("proto", elem);
+                    table_api.add_option("proto", elem);
                 }
                 else if (!elem.compare("ATTRIBUTE_ID"))
                 {
                     get_next_element(elem);
-                    ld->add_option_to_table("proto", attr_map[elem]);
+                    table_api.add_option("proto", attr_map[elem]);
                 }
             } // while("/IPPROTO")
         }
@@ -134,19 +133,19 @@ void AttributeTable::parse_service()
                 if (!elem.compare("ATTRIBUTE_VALUE"))
                 {
                     get_next_element(elem);
-                    ld->add_option_to_table("proto", std::stoi(elem));
+                    table_api.add_option("port", std::stoi(elem));
                 }
                 else if (!elem.compare("ATTRIBUTE_ID"))
                 {
                     get_next_element(elem);
-                    ld->add_option_to_table("proto", std::stoi(attr_map[elem]));
+                    table_api.add_option("port", std::stoi(attr_map[elem]));
                 }
             } // while("/IPPROTO")
         }
     } // while ("/SERVICE")
 
-    ld->close_table();
-    ld->close_table();
+    table_api.close_table();
+    table_api.close_table();
 }
 
 
@@ -164,7 +163,7 @@ void AttributeTable::parse_services()
         if (!elem.compare("SERVICE"))
             parse_service();
         else
-            ld->failed_conversion(*stream, "AttributeTable: <SERVICES>"
+            data_api.failed_conversion(*stream, "AttributeTable: <SERVICES>"
                                   " should only contain <SERVICE> elements!");
     }
 }
@@ -182,49 +181,49 @@ void AttributeTable::parse_os()
             std::string policy;
 
             if (!get_next_element(policy))
-                ld->failed_conversion(*stream,  "AttributeTable:"
+                data_api.failed_conversion(*stream,  "AttributeTable:"
                     " <FRAG_POLICY>**missing policy**</FRAG_POLICY>");
 
             else if (!policy.compare("unknown"))
-                    ld->add_deleted_comment("Attribute_table: <FRAG_POLICY>unkown</FRAG_POLICY>");
+                    table_api.add_deleted_comment("<FRAG_POLICY>unknown</FRAG_POLICY>");
 
             else if (!policy.compare("hpux"))
-                ld->add_deleted_comment("Attribute_table: <FRAG_POLICY>hpux</FRAG_POLICY>");
+                table_api.add_deleted_comment("<FRAG_POLICY>hpux</FRAG_POLICY>");
 
             else if (!policy.compare("irix"))
-                ld->add_deleted_comment("Attribute_table: <FRAG_POLICY>irix</FRAG_POLICY>");
+                table_api.add_deleted_comment("<FRAG_POLICY>irix</FRAG_POLICY>");
 
             else if (!policy.compare("old-linux"))
-                ld->add_deleted_comment("Attribute_table: <FRAG_POLICY>old-linux</FRAG_POLICY>");
+                table_api.add_deleted_comment("<FRAG_POLICY>old-linux</FRAG_POLICY>");
 
             else if (!policy.compare("bsd"))
-                ld->add_option_to_table("frag_policy", "bsd");
+                table_api.add_option("frag_policy", "bsd");
 
             else if (!policy.compare("first"))
-                ld->add_option_to_table("frag_policy", "first");
+                table_api.add_option("frag_policy", "first");
 
             else if (!policy.compare("last"))
-                ld->add_option_to_table("frag_policy", "last");
+                table_api.add_option("frag_policy", "last");
 
             else if (!policy.compare("linux"))
-                ld->add_option_to_table("frag_policy", "linux");
+                table_api.add_option("frag_policy", "linux");
 
             else if (!policy.compare("solaris"))
-                ld->add_option_to_table("frag_policy", "solaris");
+                table_api.add_option("frag_policy", "solaris");
 
             else if (!policy.compare("windows"))
-                ld->add_option_to_table("frag_policy", "windows");
+                table_api.add_option("frag_policy", "windows");
 
             else if (!policy.compare("bsd-right"))
             {
                 // keep this on one line so data miner can find it
-                ld->add_diff_option_comment("Attribute_table: <FRAG_POLICY>bsd-right</FRAG_POLICY>", "hosts.frag_policy = bsd_right");
-                ld->add_option_to_table("frag_policy", "bsd_right");
+                table_api.add_diff_option_comment("<FRAG_POLICY>bsd-right</FRAG_POLICY>", "hosts.frag_policy = bsd_right");
+                table_api.add_option("frag_policy", "bsd_right");
             }
 
             else
             {
-                ld->failed_conversion(*stream, "Attribute_Table: <FRAG_POLICY>" +
+                data_api.failed_conversion(*stream, "<FRAG_POLICY>" +
                     policy + "</FRAG_POLICY>");
             }
         }
@@ -235,74 +234,98 @@ void AttributeTable::parse_os()
 
 
             if (!get_next_element(policy))
-                ld->failed_conversion(*stream,  "AttributeTable:"
+                data_api.failed_conversion(*stream,  "AttributeTable:"
                     " <STREAM_POLICY>**missing policy**</STREAM_POLICY>");
 
             else if (!policy.compare("bsd"))
-                    ld->add_option_to_table("tcp_policy", "bsd");
+                    table_api.add_option("tcp_policy", "bsd");
 
             else if (!policy.compare("first"))
-                ld->add_option_to_table("tcp_policy", "first");
+                table_api.add_option("tcp_policy", "first");
 
             else if (!policy.compare("irix"))
-                ld->add_option_to_table("tcp_policy", "irix");
+                table_api.add_option("tcp_policy", "irix");
 
             else if (!policy.compare("last"))
-                ld->add_option_to_table("tcp_policy", "last");
+                table_api.add_option("tcp_policy", "last");
 
             else if (!policy.compare("linux"))
-                ld->add_option_to_table("tcp_policy", "linux");
+                table_api.add_option("tcp_policy", "linux");
 
             else if (!policy.compare("macos"))
-                ld->add_option_to_table("tcp_policy", "macos");
+                table_api.add_option("tcp_policy", "macos");
 
             else if (!policy.compare("old-linux"))
-                ld->add_option_to_table("tcp_policy", "old-linux");
+                table_api.add_option("tcp_policy", "old-linux");
 
             else if (!policy.compare("solaris"))
-                ld->add_option_to_table("tcp_policy", "solaris");
+                table_api.add_option("tcp_policy", "solaris");
 
             else if (!policy.compare("windows"))
-                ld->add_option_to_table("tcp_policy", "windows");
+                table_api.add_option("tcp_policy", "windows");
 
             else if (!policy.compare("win-2003"))
-                ld->add_option_to_table("tcp_policy", "win-2003");
+                table_api.add_option("tcp_policy", "win-2003");
 
             else if (!policy.compare("vista"))
-                ld->add_option_to_table("tcp_policy", "vista");
+                table_api.add_option("tcp_policy", "vista");
 
-            else if (!policy.compare("unknown"))
-                ld->add_deleted_comment("Attribute_table: <FRAG_POLICY>unkown</FRAG_POLICY>");
+            else if (!policy.compare("hpux10"))
+                table_api.add_option("tcp_policy", "hpux10");
 
             else if (!policy.compare("hpux"))
-            {
-                ld->add_diff_option_comment("Attribute_table: <FRAG_POLICY>hpux</FRAG_POLICY>", "hosts.tcp_policy = hpux10");
-                ld->add_option_to_table("tcp_policy", "hpux10");
-            }
+                table_api.add_option("tcp_policy", "hpux");
+
+            else if (!policy.compare("macos"))
+                table_api.add_option("tcp_policy", "macos");
+
+            else if (!policy.compare("unknown"))
+                table_api.add_deleted_comment("<STREAM_POLICY>unknown</STREAM_POLICY>");
+
+            else if (!policy.compare("noack"))
+                table_api.add_deleted_comment("<STREAM_POLICY>noack</STREAM_POLICY>");
 
             else if (!policy.compare("hpux11"))
             {
-                ld->add_diff_option_comment("Attribute_table: <FRAG_POLICY>hpux11</FRAG_POLICY>", "hosts.tcp_policy = hpux");
-                ld->add_option_to_table("tcp_policy", "hpux");
+                table_api.add_diff_option_comment("<STREAM_POLICY>hpux11</STREAM_POLICY>", "hosts.tcp_policy = hpux");
+                table_api.add_option("tcp_policy", "hpux");
+            }
+
+            else if (!policy.compare("win2003"))
+            {
+                table_api.add_diff_option_comment("<STREAM_POLICY>win2003</STREAM_POLICY>", "hosts.tcp_policy = win-2003");
+                table_api.add_option("tcp_policy", "win-2003");
+            }
+
+            else if (!policy.compare("win2k3"))
+            {
+                table_api.add_diff_option_comment("<STREAM_POLICY>win2k3</STREAM_POLICY>", "hosts.tcp_policy = win-2003");
+                table_api.add_option("tcp_policy", "win-2003");
+            }
+
+            else if (!policy.compare("grannysmith"))
+            {
+                table_api.add_diff_option_comment("<STREAM_POLICY>grannysmith</STREAM_POLICY>", "hosts.tcp_policy = macos");
+                table_api.add_option("tcp_policy", "macos");
             }
 
             else
             {
-                ld->failed_conversion(*stream, "Attribute_Table: <STREAM_POLICY>" +
-                    policy + "</STREAM_POLICY>");                }
+                data_api.failed_conversion(*stream, "<STREAM_POLICY>" +
+                    policy + "</STREAM_POLICY>");
+            }
         }
     }
 }
-
 
 /*
  * Parse the 'HOST' element and add elements to Lua configuration
  */
 void AttributeTable::parse_host()
 {
-    ld->open_table("hosts");
-    ld->add_diff_option_comment("Attribute_table: STREAM_POLICY", "hosts: tcp_policy");
-    ld->open_table();
+    table_api.open_table("hosts");
+    table_api.add_diff_option_comment("STREAM_POLICY", "hosts: tcp_policy");
+    table_api.open_table();
 
     std::string elem;
 
@@ -322,15 +345,15 @@ void AttributeTable::parse_host()
         {
             std::string ip;
             if (get_next_element(ip))
-                ld->add_option_to_table("ip", ip);
+                table_api.add_option("ip", ip);
             else
-                ld->failed_conversion(*stream,  "AttributeTable:"
+                data_api.failed_conversion(*stream,  "AttributeTable:"
                     " <IP>**missing ip**</IP>");
         }
     }
 
-    ld->close_table();
-    ld->close_table();
+    table_api.close_table();
+    table_api.close_table();
 }
 
 void AttributeTable::parse_attr_table()
@@ -342,7 +365,7 @@ void AttributeTable::parse_attr_table()
     {
         // every element in an attribute table should be a host
         if (elem.compare("HOST"))
-            ld->failed_conversion(*stream, "AttributeTable: <ATTRIBUTE_TABLE>"
+            data_api.failed_conversion(*stream, "AttributeTable: <ATTRIBUTE_TABLE>"
                     " should only contain <HOST> elements!");
         else
             parse_host();
@@ -364,13 +387,13 @@ void AttributeTable::parse_entry()
         if (!elem.compare("ID"))
         {
             if (!get_next_element(id))
-                ld->failed_conversion(*stream, "AttributeTable:"
+                data_api.failed_conversion(*stream, "AttributeTable:"
                     " <ID>**missing option**</ID>");
         }
         else if (!elem.compare("VALUE"))
         {
             if (!get_next_element(value))
-                ld->failed_conversion(*stream, "AttributeTable:"
+                data_api.failed_conversion(*stream, "AttributeTable:"
                     " <VALUE>**missing option**</VALUE>");
         }
     }
@@ -411,15 +434,20 @@ bool AttributeTable::convert(std::istringstream& data_stream)
 
     // setting class variables
     stream = &data_stream;
-    file = ld->expand_vars(file);
+    file = data_api.expand_vars(file);
 
 
     if (!util::file_exists(file))
     {
-        ld->open_table("hosts");
-        ld->add_comment_to_table("unable to open the attribute file: " + file);
+        table_api.open_table("hosts");
+        table_api.add_comment("unable to open the attribute file: " + file);
+        table_api.close_table();
         return false;
     }
+
+    table_api.open_table("hosts");
+    table_api.add_diff_option_comment("filename <file_name>", "hosts[]");
+    table_api.close_table();
 
     attr_file.open(file, std::ifstream::in);
     std::string elem;
@@ -445,10 +473,8 @@ bool AttributeTable::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
-{
-    return new AttributeTable(cv, ld);
-}
+static ConversionState* ctor(Converter& c)
+{ return new AttributeTable(c); }
 
 static const ConvertMap attribute_table_api =
 {

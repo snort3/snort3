@@ -36,8 +36,6 @@ using namespace std;
 #include "utils/stats.h"
 #include "log/messages.h"
 
-static const char* mod_name = "wizard";
-
 THREAD_LOCAL ProfileStats wizPerfStats;
 
 struct WizStats
@@ -77,31 +75,32 @@ public:
     MagicSplitter(bool, class Wizard*);
     ~MagicSplitter();
 
-    PAF_Status scan(Flow*, const uint8_t* data, uint32_t len,
-        uint32_t flags, uint32_t* fp);
+    Status scan(Flow*, const uint8_t* data, uint32_t len,
+        uint32_t flags, uint32_t* fp) override;
 
-    bool is_paf() { return true; };
+    bool is_paf() override { return true; };
 
 private:
     Wizard* wizard;
     Wand wand;
 };
 
-class Wizard : public Inspector {
+class Wizard : public Inspector
+{
 public:
     Wizard(WizardModule*);
     ~Wizard();
 
-    void show(SnortConfig*)
+    void show(SnortConfig*) override
     { LogMessage("Wizard\n"); };
 
-    void eval(Packet*);
+    void eval(Packet*) override;
 
-    StreamSplitter* get_splitter(bool);
+    StreamSplitter* get_splitter(bool) override;
 
     void reset(Wand&, bool tcp, bool c2s);
     bool cast_spell(Wand&, Flow*, const uint8_t*, unsigned);
-    bool spellbind(const MagicPage*, Flow*, const uint8_t*, unsigned);
+    bool spellbind(const MagicPage*&, Flow*, const uint8_t*, unsigned);
 
 public:
     MagicBook* c2s_hexes;
@@ -130,7 +129,7 @@ MagicSplitter::~MagicSplitter()
     wizard->rem_ref();
 }
 
-PAF_Status MagicSplitter::scan (
+StreamSplitter::Status MagicSplitter::scan (
     Flow* f, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t*)
 {
@@ -139,7 +138,7 @@ PAF_Status MagicSplitter::scan (
     if ( wizard->cast_spell(wand, f, data, len) )
         ++tstats.tcp_hits;
 
-    return PAF_SEARCH;
+    return SEARCH;
 }
 
 //-------------------------------------------------------------------------
@@ -157,6 +156,11 @@ Wizard::Wizard(WizardModule* m)
 
 Wizard::~Wizard()
 {
+    delete c2s_hexes;
+    delete s2c_hexes;
+
+    delete c2s_spells;
+    delete s2c_spells;
 }
 
 void Wizard::reset(Wand& w, bool /*tcp*/, bool c2s)
@@ -175,7 +179,7 @@ void Wizard::reset(Wand& w, bool /*tcp*/, bool c2s)
 
 void Wizard::eval(Packet* p)
 {
-    if ( !IsUDP(p) )
+    if ( !p->is_udp() )
         return;
 
     if ( !p->data || !p->dsize )
@@ -196,10 +200,9 @@ StreamSplitter* Wizard::get_splitter(bool c2s)
 }
 
 bool Wizard::spellbind(
-    const MagicPage* m, Flow* f, const uint8_t* data, unsigned len)
+    const MagicPage*& m, Flow* f, const uint8_t* data, unsigned len)
 {
-    // FIXIT convert to stateful find
-    f->service = m->book.find_spell(data, len);
+    f->service = m->book.find_spell(data, len, m);
     return f->service != nullptr;
 }
 
@@ -241,14 +244,15 @@ static const InspectApi wiz_api =
 {
     {
         PT_INSPECTOR,
-        mod_name,
+        WIZ_NAME,
+        WIZ_HELP,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor
     },
     IT_WIZARD, 
-    PROTO_BIT__TCP | PROTO_BIT__UDP,
+    (uint16_t)PktType::TCP | (uint16_t)PktType::UDP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // init

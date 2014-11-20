@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_linux_sll.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 
@@ -29,31 +30,21 @@
 #include "protocols/linux_sll.h"
 #include "main/snort.h"
 
+#define CD_LINUX_SLL_NAME "linux_sll"
+#define CD_LINUX_SLL_HELP_STR "support for Linux SLL"
+#define CD_LINUX_SLL_HELP ADD_DLT(CD_LINUX_SLL_HELP_STR, DLT_LINUX_SLL)
 
 namespace
 {
 
-#define CD_LINUX_SSL_NAME "linux_sll"
-
 class LinuxSllCodec : public Codec
 {
 public:
-    LinuxSllCodec() : Codec(CD_LINUX_SSL_NAME){};
+    LinuxSllCodec() : Codec(CD_LINUX_SLL_NAME){};
     ~LinuxSllCodec() {};
 
-
-    virtual void get_data_link_type(std::vector<int>&);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-};
-
-// Create your own Hdr Struct for this layer!
-struct NameHdr
-{
-    uint8_t ver;
-    uint8_t next_protocol;
-    uint16_t len;
-    // additional or different data
+    void get_data_link_type(std::vector<int>&) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
 } // namespace
@@ -66,25 +57,18 @@ void LinuxSllCodec::get_data_link_type(std::vector<int>&v)
 #endif
 }
 
-bool LinuxSllCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
-        Packet* /*p*/, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool LinuxSllCodec::decode(const RawData& raw, CodecData& data, DecodeData&)
 {
     /* do a little validation */
-    if(raw_len < linux_sll::SLL_HDR_LEN)
-    {
-        if (ScLogVerbose())
-        {
-            ErrorMessage("Captured data length < SLL header length (your "
-                         "libpcap is broken?)! (%d bytes)\n", raw_len);
-        }
+    if(raw.len < linux_sll::SLL_HDR_LEN)
         return false;
-    }
+
     /* lay the ethernet structure over the packet data */
-    const linux_sll::SLLHdr* sllh = reinterpret_cast<const linux_sll::SLLHdr*>(raw_pkt);
+    const linux_sll::SLLHdr* const sllh = reinterpret_cast<const linux_sll::SLLHdr*>(raw.data);
 
     /* grab out the network type */
-    next_prot_id = ntohs(sllh->sll_protocol);
-    lyr_len = linux_sll::SLL_HDR_LEN;
+    data.next_prot_id = ntohs(sllh->sll_protocol);
+    data.lyr_len = linux_sll::SLL_HDR_LEN;
     return true;
 }
 
@@ -95,21 +79,18 @@ bool LinuxSllCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new LinuxSllCodec();
-}
+{ return new LinuxSllCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi linux_ssl_api =
 {
     {
         PT_CODEC,
-        CD_LINUX_SSL_NAME,
+        CD_LINUX_SLL_NAME,
+        CD_LINUX_SLL_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

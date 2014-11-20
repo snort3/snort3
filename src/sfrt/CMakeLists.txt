@@ -10,4 +10,3 @@ add_library ( sfrt STATIC
     sfrt_flat_dir.cc
     sfrt_flat_dir.h
 )
-

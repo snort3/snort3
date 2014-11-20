@@ -1102,22 +1102,22 @@ static void PrintObfuscationEntry(const ObfuscationEntry *entry,
 #define PAYLOAD_ALLOC_SIZE  1024
 
 /* Used for standalone testing */
-typedef struct _Segment
+struct Segment
 {
     DAQ_PktHdr_t *pkth;
     uint8_t *data;
     uint16_t size;
-    struct _Segment *next;
+    Segment *next;
 
-} Segment;
+} ;
 
 /* Used for standalone testing */
-typedef struct _ObPacket
+struct ObPacket
 {
-    struct Packet p;
+    Packet p;
     Segment *seglist;
 
-} ObPacket;
+};
 
 static uint8_t *ob_payload = NULL;
 static void ObTestAlloc(void **, int, int);
@@ -1358,7 +1358,8 @@ int main(int argc, char *argv[])
     ob_size_t payload_bytes = 0;
     ob_size_t offset = 0;
     DAQ_PktHdr_t pkth, *pkthtmp;
-    Packet packet;
+    Packet *tmp = PacketManager::encode_new();
+    Packet& packet = *tmp;
 
     while ((c = getopt(argc, argv, "ac:l:o:p:rsh")) != -1)
     {
@@ -1456,7 +1457,13 @@ int main(int argc, char *argv[])
 
     obApi->resetObfuscationEntries();
 
-    memset(&packet, 0, sizeof(packet));
+    packet.reset();
+    packet.pseudo_type = 0;
+    packet.max_dsize = 0;
+    packet.user_policy_id = 0;
+    packet.iplist_id = 0;
+    packeet.ps_proto = 0;
+
     pkthtmp = (DAQ_PktHdr_t *)&packet.pkth;
     pkthtmp = &pkth;
     pkthtmp->caplen = payload_bytes;

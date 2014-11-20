@@ -34,16 +34,17 @@
 #ifndef DETECTION_OPTIONS_H
 #define DETECTION_OPTIONS_H
 
-#include "snort_types.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "protocols/packet.h"
-#include "hash/sfxhash.h"
+
+#include <sys/time.h>
+#include "main/snort_types.h"
 #include "detection/rule_option_types.h"
-#include "detection/detection_defines.h"
-#include "hash/sfhashfcn.h"
+
+struct Packet;
+struct SFXHASH;
 
 typedef int (*eval_func_t)(void* option_data, class Cursor&, Packet*);
 
@@ -72,7 +73,7 @@ struct dot_node_state_t
 #endif
 };
 
-typedef struct _detection_option_tree_node
+struct detection_option_tree_node_t
 {
     eval_func_t evaluate;
     int is_relative;
@@ -80,9 +81,9 @@ typedef struct _detection_option_tree_node
     int relative_children;
     void *option_data;
     option_type_t option_type;
-    struct _detection_option_tree_node **children;
+    detection_option_tree_node_t **children;
     dot_node_state_t* state;
-} detection_option_tree_node_t;
+};
 
 #ifdef PPM_MGR
 struct dot_root_state_t
@@ -93,23 +94,23 @@ struct dot_root_state_t
 };
 #endif
 
-typedef struct _detection_option_tree_root
+struct detection_option_tree_root_t
 {
     int num_children;
     detection_option_tree_node_t **children;
 #ifdef PPM_MGR
     dot_root_state_t* state;
 #endif
-} detection_option_tree_root_t;
+};
 
-typedef struct _detection_option_eval_data
+struct detection_option_eval_data_t
 {
     void *pomd;
     void *pmd;
     Packet *p;
     char flowbit_failed;
     char flowbit_noalert;
-} detection_option_eval_data_t;
+};
 
 int add_detection_option(
     struct SnortConfig*, option_type_t type, void *option_data, void **existing_data);

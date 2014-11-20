@@ -62,6 +62,7 @@
 #include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
 #include "target_based/sftarget_protocol_reference.h"
+#include "protocols/tcp.h"
 
 #define RPC_MAX_BUF_SIZE   256
 #define RPC_FRAG_HDR_SIZE  sizeof(uint32_t)
@@ -122,7 +123,8 @@ static THREAD_LOCAL const uint32_t flush_size = 28;
 static THREAD_LOCAL const uint32_t rpc_memcap = 1048510;
 static THREAD_LOCAL uint32_t rpc_memory = 0;
 
-static const char* mod_name = "rpc_decode";
+#define mod_name "rpc_decode"
+#define mod_help "RPC inspector"
 
 THREAD_LOCAL ProfileStats rpcdecodePerfStats;
 THREAD_LOCAL SimpleStats rdstats;
@@ -195,7 +197,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig *rconfig,
 {
     const uint8_t *data = p->data;
     uint16_t dsize = p->dsize;
-    uint32_t seq = ntohl(p->tcph->th_seq);
+    uint32_t seq = ntohl(p->ptrs.tcph->th_seq);
     int need;
     RpcStatus status;
 
@@ -975,11 +977,11 @@ public:
     RpcSplitter(bool c2s) : StreamSplitter(c2s) { };
     ~RpcSplitter() { };
 
-    PAF_Status scan(Flow*, const uint8_t*, uint32_t,
-        uint32_t, uint32_t*)
-    { return PAF_SEARCH; };
+    Status scan(Flow*, const uint8_t*, uint32_t,
+        uint32_t, uint32_t*) override
+    { return SEARCH; };
 
-    uint32_t max() { return MIN_CALL_BODY_SZ; };
+    unsigned max() override { return MIN_CALL_BODY_SZ; };
 };
 
 //-------------------------------------------------------------------------
@@ -990,10 +992,10 @@ class RpcDecode : public Inspector {
 public:
     RpcDecode(RpcDecodeModule*);
 
-    void show(SnortConfig*);
-    void eval(Packet*);
+    void show(SnortConfig*) override;
+    void eval(Packet*) override;
 
-    StreamSplitter* get_splitter(bool c2s)
+    StreamSplitter* get_splitter(bool c2s) override
     { return c2s ? new RpcSplitter(c2s) : nullptr; };
 
 private:
@@ -1019,7 +1021,7 @@ void RpcDecode::eval(Packet *p)
     PROFILE_VARS;
 
     // preconditions - what we registered for
-    assert(IsTCP(p) && p->dsize);
+    assert(p->is_tcp() && p->dsize);
 
     /* If we're stateful that means stream5 has been configured.
      * In this case we don't look at server packets.
@@ -1103,13 +1105,14 @@ static const InspectApi rd_api =
     {
         PT_INSPECTOR,
         mod_name,
+        mod_help,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor
     },
     IT_SERVICE,
-    PROTO_BIT__TCP,
+    (uint16_t)PktType::TCP,
     nullptr, // buffers
     "sunrpc",
     rd_init,

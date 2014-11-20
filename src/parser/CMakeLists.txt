@@ -1,8 +1,11 @@
 
-
 add_library (parser STATIC 
+    arg_list.cc 
+    arg_list.h 
     parser.cc 
     parser.h 
+    parse_byte_code.cc 
+    parse_byte_code.h 
     parse_conf.cc 
     parse_conf.h 
     parse_ip.cc 
@@ -28,4 +31,3 @@ target_link_libraries(parser
     stream
     codecs
 )
-

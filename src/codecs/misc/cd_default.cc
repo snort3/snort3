@@ -17,22 +17,17 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// cd_null.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// cd_default.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
+
+#define CD_DEFAULT_NAME "unknown"
+#define CD_DEFAULT_HELP "support for unkown protocols"
 
 namespace
 {
-
-#define CD_DEFAULT_NAME "default_codec"
 
 class DefaultCodec : public Codec
 {
@@ -40,19 +35,14 @@ public:
     DefaultCodec() : Codec(CD_DEFAULT_NAME){};
     ~DefaultCodec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t*, const uint32_t&,
-        Packet*, uint16_t&, uint16_t&) { return false; };
+    void get_protocol_ids(std::vector<uint16_t>& v) override
+    { v.push_back(FINISHED_DECODE); }
+
+    bool decode(const RawData&, CodecData&, DecodeData&) override
+    { return false; };
 };
 
 } // namespace
-
-
-void DefaultCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(FINISHED_DECODE);
-}
-
 
 
 //-------------------------------------------------------------------------
@@ -61,14 +51,10 @@ void DefaultCodec::get_protocol_ids(std::vector<uint16_t>& v)
 
 
 static Codec* ctor(Module*)
-{
-    return new DefaultCodec();
-}
+{ return new DefaultCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi default_api =
@@ -76,6 +62,7 @@ static const CodecApi default_api =
     {
         PT_CODEC,
         CD_DEFAULT_NAME,
+        CD_DEFAULT_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

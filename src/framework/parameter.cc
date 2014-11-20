@@ -22,7 +22,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include <dnet.h>
+#include "utils/dnet_header.h"
 
 #include <string>
 #include <iomanip>
@@ -35,9 +35,15 @@ static bool valid_bool(Value& v, const char*)
     return v.get_type() == Value::VT_BOOL;
 }
 
-// FIXIT allow multiple , separated ranges
+// FIXIT-L allow multiple , separated ranges
 static bool valid_int(Value& v, const char* r)
 {
+    if ( v.get_type() != Value::VT_NUM )
+        return false;
+
+    if ( v.get_real() != v.get_long() )
+        return false;
+
     if ( !r )
         return true;
 
@@ -67,9 +73,12 @@ static bool valid_int(Value& v, const char* r)
     return true;
 }
 
-// FIXIT allow multiple , separated ranges
+// FIXIT-L allow multiple , separated ranges
 static bool valid_real(Value& v, const char* r)
 {
+    if ( v.get_type() != Value::VT_NUM )
+        return false;
+
     if ( !r )
         return true;
 
@@ -101,6 +110,12 @@ static bool valid_real(Value& v, const char* r)
 
 static bool valid_string(Value& v, const char* r)
 {
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
+    if ( r && !strcmp(r, "(optional)") )
+        return true;
+
     unsigned len = strlen(v.get_string());
 
     if ( !r )
@@ -110,13 +125,34 @@ static bool valid_string(Value& v, const char* r)
     return len <= max;
 }
 
+static bool is_sep(char c)
+{ return !c || c == '|' || isspace(c); }
+
+static const char* find(const char* r, const char* s)
+{
+    const char* t = strstr(r, s);
+    unsigned n = strlen(s);
+
+    while ( t )
+    {
+        if ( (t == r || is_sep(t[-1])) && is_sep(t[n]) )
+            return t;
+
+        t = strstr(t+n, s);
+    }
+    return nullptr;
+}
+
 static bool valid_select(Value& v, const char* r)
 {
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
     if ( !r )
         return false;
 
     const char* s = v.get_string();
-    const char* t = strstr(r, s);
+    const char* t = find(r, s);
 
     if ( !t )
         return false;
@@ -139,24 +175,28 @@ static unsigned get_index(const char* r, const char* t)
 
 static bool valid_enum(Value& v, const char* r)
 {
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
     if ( !r )
         return false;
 
     const char* s = v.get_string();
-    const char* t = strstr(r, s);
+    const char* t = find(r, s);
 
     if ( !t )
         return false;
 
     unsigned idx = get_index(r, t);
 
-    v.set((double)idx);
+    v.set_enum(idx);
     return true;
 }
 
+#define delim " \t\n"
+
 static unsigned split(const string& txt, vector<string>& strs)
 {
-    static const char* delim = " \t\n";
     size_t last = txt.find_first_not_of(delim);
     size_t pos = txt.find_first_of(delim, last);
     strs.clear();
@@ -179,6 +219,9 @@ static unsigned split(const string& txt, vector<string>& strs)
 
 static bool valid_multi(Value& v, const char* r)
 {
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
     if ( !r )
         return false;
 
@@ -190,7 +233,7 @@ static bool valid_multi(Value& v, const char* r)
 
     for ( auto p : list )
     {
-        const char* t = strstr(r, p.c_str());
+        const char* t = find(r, p.c_str());
         if ( !t )
             return false;
 
@@ -205,6 +248,9 @@ static bool valid_multi(Value& v, const char* r)
 
 static bool valid_mac(Value& v, const char*)
 {
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
     struct addr a;
 
     if ( addr_pton(v.get_string(), &a) )
@@ -221,6 +267,9 @@ static bool valid_mac(Value& v, const char*)
 
 static bool valid_ip4(Value& v, const char*)
 {
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
     uint32_t ip4 = inet_addr(v.get_string());
 
     if ( ip4 == INADDR_NONE )
@@ -232,11 +281,15 @@ static bool valid_ip4(Value& v, const char*)
 
 static bool valid_addr(Value& v, const char*)
 {
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
     struct addr a;
 
     if ( addr_pton(v.get_string(), &a) )
         return false;
     
+    // FIXIT-H \0 x 4 does not get set
     if ( a.addr_type == ADDR_TYPE_IP )
         v.set(a.addr_data8, 4);
 
@@ -251,6 +304,9 @@ static bool valid_addr(Value& v, const char*)
 
 static bool valid_bit_list(Value& v, const char* r)
 {
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
     string pl = v.get_string();
     string bs;
 
@@ -333,7 +389,7 @@ bool Parameter::validate(Value& v) const
     return false;
 }
 
-static const char* pt2str[Parameter::PT_MAX] =
+static const char* const pt2str[Parameter::PT_MAX] =
 {
     "table", "list",
     "bool", "int", "real", "port",
@@ -346,5 +402,16 @@ const char* Parameter::get_type() const
 {
     assert(type < Parameter::PT_MAX);
     return pt2str[type];
+}
+
+const Parameter* Parameter::find(const Parameter* p, const char* s)
+{
+    while ( p->name )
+    {
+        if ( !strcmp(p->name, s) || !strcmp(p->name, "*") )
+            return p;
+        ++p;
+    }
+    return nullptr;
 }
 

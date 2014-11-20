@@ -37,11 +37,11 @@ using namespace std;
 #include "framework/inspector.h"
 #include "framework/module.h"
 
-static const char* s_name = "http_header";
+#define s_name "http_header"
 
 static THREAD_LOCAL ProfileStats httpHeaderPerfStats;
 
-static const Parameter hh_params[] =
+static const Parameter s_params[] =
 {
     { "~name", Parameter::PT_STRING, nullptr, nullptr,
       "restrict to given header" },
@@ -53,15 +53,18 @@ static const Parameter hh_params[] =
 // module
 //-------------------------------------------------------------------------
 
+#define s_help \
+    "rule option to set the detection cursor to the normalized header(s)"
+
 class HttpHeaderModule : public Module
 {
 public:
-    HttpHeaderModule() : Module(s_name, hh_params) { };
+    HttpHeaderModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &httpHeaderPerfStats; };
 
 public:
@@ -95,10 +98,10 @@ public:
     HttpHeaderOption(string& s) : IpsOption(s_name)
     { name = s; };
 
-    CursorActionType get_cursor_type() const
-    { return CAT_SET_OTHER; };
+    CursorActionType get_cursor_type() const override
+    { return CAT_SET_HEADER; };
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
 private:
     string name;
@@ -159,7 +162,7 @@ int HttpHeaderOption::eval(Cursor& c, Packet* p)
     if ( !p->flow || !p->flow->gadget )
         rval = DETECTION_OPTION_NO_MATCH;
 
-    // FIXIT cache id at parse time for runtime use
+    // FIXIT-P cache id at parse time for runtime use
     else if ( !p->flow->gadget->get_buf(s_name, p, hb) )
         rval = DETECTION_OPTION_NO_MATCH;
 
@@ -208,13 +211,14 @@ static const IpsApi header_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, PROTO_BIT__TCP,
+    0, PROTO_BIT__TCP,
     nullptr,
     nullptr,
     nullptr,

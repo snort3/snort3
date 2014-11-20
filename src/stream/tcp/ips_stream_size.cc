@@ -32,6 +32,7 @@
 #include "detection/detection_defines.h"
 #include "hash/sfhashfcn.h"
 #include "time/profiler.h"
+#include "sfip/sf_ip.h"
 
 enum SsodOp
 {
@@ -85,7 +86,9 @@ bool StreamSizeOptionData::compare(uint32_t size1, uint32_t size2)
 // stream_size
 //-------------------------------------------------------------------------
 
-#define IPS_SIZE "stream_size"
+#define s_name "stream_size"
+#define s_help \
+    "detection option for stream size checking"
 
 static THREAD_LOCAL ProfileStats streamSizePerfStats;
 
@@ -93,13 +96,13 @@ class SizeOption : public IpsOption
 {
 public:
     SizeOption(const StreamSizeOptionData& c) :
-        IpsOption(IPS_SIZE)
+        IpsOption(s_name)
     { ssod = c; };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
 private:
     StreamSizeOptionData ssod;
@@ -141,7 +144,7 @@ bool SizeOption::operator==(const IpsOption& ips) const
 
 int SizeOption::eval(Cursor&, Packet* pkt)
 {
-    if (!pkt->flow || !pkt->tcph)
+    if (!pkt->flow || !pkt->ptrs.tcph)
         return DETECTION_OPTION_NO_MATCH;
 
     PROFILE_VARS;
@@ -215,15 +218,15 @@ int SizeOption::eval(Cursor&, Packet* pkt)
 // stream_size module
 //-------------------------------------------------------------------------
 
-static const Parameter size_params[] =
+static const Parameter s_params[] =
 {
-    { "*direction", Parameter::PT_ENUM, "either|client|server|both", nullptr,
+    { "direction", Parameter::PT_ENUM, "either|client|server|both", nullptr,
       "compare applies to the given direction(s)" },
 
-    { "*operator", Parameter::PT_ENUM, "= | != | < | > | <= | >=", nullptr,
+    { "operator", Parameter::PT_ENUM, "= | != | < | > | <= | >=", nullptr,
       "how to compare" },
 
-    { "*size", Parameter::PT_INT, nullptr, nullptr,
+    { "size", Parameter::PT_INT, nullptr, nullptr,
       "size for comparison" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -232,12 +235,12 @@ static const Parameter size_params[] =
 class SizeModule : public Module
 {
 public:
-    SizeModule() : Module(IPS_SIZE, size_params) { };
+    SizeModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &streamSizePerfStats; };
 
     StreamSizeOptionData ssod;
@@ -297,7 +300,8 @@ static const IpsApi size_api =
 {
     {
         PT_IPS_OPTION,
-        IPS_SIZE,
+        s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         size_mod_ctor,

@@ -93,6 +93,8 @@
 #include "framework/inspector.h"
 #include "protocols/layer.h"
 #include "protocols/arp.h"
+#include "sfip/sf_ip.h"
+#include "protocols/eth.h"
 
 static const uint8_t bcast[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
@@ -124,10 +126,10 @@ static void PrintIPMacEntryList(IPMacEntryList& ipmel)
 
     for ( auto p : ipmel )
     {
-        snort_ip in;
+        sfip_t in;
         sfip_set_raw(&in, &p.ipv4_addr, AF_INET);
-        // FIXIT replace all inet_ntoa() with thread safe
-        LogMessage("    %s -> ", inet_ntoa(IP_ARG(in)));
+        // FIXIT-L replace all inet_ntoa() with thread safe
+        LogMessage("    %s -> ", inet_ntoa(&in));
 
         for (int i = 0; i < 6; i++)
         {
@@ -149,8 +151,8 @@ public:
     ArpSpoof(ArpSpoofModule*);
     ~ArpSpoof();
 
-    void show(SnortConfig*);
-    void eval(Packet*);
+    void show(SnortConfig*) override;
+    void eval(Packet*) override;
 
 private:
     ArpSpoofConfig* config;
@@ -183,7 +185,8 @@ void ArpSpoof::eval(Packet *p)
     const eth::EtherHdr *eh;
 
     // preconditions - what we registered for
-    assert((p->proto_bits & PROTO_BIT__ETH) && (p->proto_bits & PROTO_BIT__ARP));
+    assert(p->type() == PktType::ARP);
+    assert(p->proto_bits & PROTO_BIT__ETH);
 
     ah = layer::get_arp_layer(p);
     eh = layer::get_eth_layer(p);
@@ -245,7 +248,7 @@ void ArpSpoof::eval(Packet *p)
         return;
 
     if ((ipme = LookupIPMacEntryByIP(config->ipmel,
-                                     *(uint32_t *)&ah->arp_spa)) == NULL)
+                                     ah->arp_spa32)) == NULL)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
                 "MODNAME: LookupIPMacEntryByIp returned NULL\n"););
@@ -298,13 +301,14 @@ static const InspectApi as_api =
     {
         PT_INSPECTOR,
         MOD_NAME,
+        MOD_HELP,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor
     },
-    IT_PROTOCOL, 
-    PROTO_BIT__ARP,
+    IT_NETWORK, 
+    (uint16_t)PktType::ARP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

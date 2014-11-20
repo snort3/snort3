@@ -1,10 +1,9 @@
-
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.12.1)
 project (snort CXX C)
 
-set (SNORT_VERSION_MAJOR 2)
-set (SNORT_VERSION_MINOR 10)
-set (SNORT_VERSION_BUILD  108)
+set (SNORT_VERSION_MAJOR 3)
+set (SNORT_VERSION_MINOR 0)
+set (SNORT_VERSION_BUILD  0-a1)
 set (VERSION "${SNORT_VERSION_MAJOR}.${SNORT_VERSION_MINOR}.${SNORT_VERSION_BUILD}")
 
 # ensure cmake will look in the cmake directory for configuration files
@@ -21,24 +20,19 @@ include (cmake/CheckCXX11Features.cmake)
 include (cmake/sanity_checks.cmake)
 
 
-include(GenerateExportHeader)
-#add_compiler_export_flags ()  # hidden visiblity - TODO --> PLAY WITH THESE FLAGS!!
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_COMPILER_FLAGS}") # c++11 flag
 
 
 # include this directory for the config.h file. created in sanityChecks.cmake
 include_directories(${PROJECT_BINARY_DIR})
 
-add_subdirectory (etc)
 add_subdirectory (src)
 add_subdirectory (tools)
 add_subdirectory (lua)
 add_subdirectory (doc)
 
 
-
 # Miscelaneous stuff.  Does NOT directly effect snort's building environment
-
 include (cmake/packaging_data.cmake)
 include (cmake/create_pkg_config.cmake)
 
@@ -52,3 +46,10 @@ configure_file(
 add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
+
+# Test plugins in the 'Extra' directory!!
+if (BUILD_EXTRA_PLUGINS)
+    if (${CMAKE_GENERATOR} MATCHES "Make")
+        add_subdirectory(extra)
+    endif()
+endif (BUILD_EXTRA_PLUGINS)

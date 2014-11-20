@@ -33,7 +33,7 @@
 #include "framework/module.h"
 #include "detection/detection_defines.h"
 
-static const char* s_name = "pkt_data";
+#define s_name "pkt_data"
 
 static THREAD_LOCAL ProfileStats pktDataPerfStats;
 
@@ -42,10 +42,10 @@ class PktDataOption : public IpsOption
 public:
     PktDataOption() : IpsOption(s_name) { };
 
-    CursorActionType get_cursor_type() const
+    CursorActionType get_cursor_type() const override
     { return CAT_SET_RAW; };
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 };
 
 int PktDataOption::eval(Cursor& c, Packet* p)
@@ -63,12 +63,15 @@ int PktDataOption::eval(Cursor& c, Packet* p)
 // module
 //-------------------------------------------------------------------------
 
+#define s_help \
+    "rule option to set the detection cursor to the normalized packet data"
+
 class PktDataModule : public Module
 {
 public:
-    PktDataModule() : Module(s_name) { };
+    PktDataModule() : Module(s_name, s_help) { };
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &pktDataPerfStats; };
 };
 
@@ -101,6 +104,7 @@ static const IpsApi pkt_data_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,
@@ -117,13 +121,4 @@ static const IpsApi pkt_data_api =
     nullptr
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &pkt_data_api.base,
-    nullptr
-};
-#else
 const BaseApi* ips_pkt_data = &pkt_data_api.base;
-#endif
-

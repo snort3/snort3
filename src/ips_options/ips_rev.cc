@@ -31,13 +31,13 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "rev";
+#define s_name "rev"
 
 //-------------------------------------------------------------------------
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter rev_params[] =
+static const Parameter s_params[] =
 {
     { "~", Parameter::PT_INT, "1:", nullptr,
       "revision" },
@@ -45,11 +45,14 @@ static const Parameter rev_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to indicate current revision of signature"
+
 class RevModule : public Module
 {
 public:
-    RevModule() : Module(s_name, rev_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    RevModule() : Module(s_name, s_help, s_params) { };
+    bool set(const char*, Value&, SnortConfig*) override;
     int rev;
 };
 
@@ -88,6 +91,7 @@ static const IpsApi rev_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

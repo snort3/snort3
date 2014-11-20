@@ -38,6 +38,7 @@
 #include <pwd.h>
 #include <fnmatch.h>
 
+#include <iostream>
 #include <string>
 
 #include "snort_bounds.h"
@@ -55,14 +56,13 @@
 #include "filters/sfthreshold.h"
 #include "filters/sfthd.h"
 #include "snort.h"
-#include "asn1.h"
 #include "hash/sfghash.h"
 #include "ips_options/ips_ip_proto.h"
 #include "ips_options/ips_content.h"
 #include "ips_options/ips_flowbits.h"
 #include "sf_vartable.h"
-#include "ipv6_port.h"
 #include "sfip/sf_ip.h"
+#include "sfip/sf_ipvar.h"
 #include "sflsq.h"
 #include "ppm.h"
 #include "filters/rate_filter.h"
@@ -74,22 +74,16 @@
 #include "actions/actions.h"
 #include "managers/event_manager.h"
 #include "managers/module_manager.h"
-#include "managers/shell.h"
+#include "main/shell.h"
 #include "config_file.h"
 #include "keywords.h"
 #include "parse_conf.h"
 #include "parse_rule.h"
+#include "parse_stream.h"
 #include "vars.h"
-#include "target_based/sftarget_reader.h"
-#include "events/event_wrapper.h"  // see s_hack
-
-// FIXIT without s_hack, we get this error on Mac:
-// Symbol not found: __Z18GenerateSnortEventP6Packetjj
-// Referenced from: /Users/rucombs/install/lib/snort/inspectors/libport_scan.0.dylib
-// Expected in: flat namespace
-static uint32_t (*s_hack)(Packet*, uint32_t, uint32_t) = GenerateSnortEvent;
 
 static unsigned parse_errors = 0;
+static unsigned parse_warnings = 0;
 
 rule_index_map_t *ruleIndexMap = NULL;   /* rule index -> sid:gid map */
 
@@ -108,16 +102,19 @@ unsigned get_parse_errors()
     return tmp;
 }
 
+unsigned get_parse_warnings()
+{
+    unsigned tmp = parse_warnings;
+    parse_warnings = 0;
+    return tmp;
+}
+
 //-------------------------------------------------------------------------
 // private / implementation methods
 //-------------------------------------------------------------------------
 
 static void InitParser(void)
 {
-    if ( !s_hack )
-        LogMessage("This is an ineffective hack to make snort export "
-            "GenerateSnortEvent() for use by port_scan dynamic lib");
-
     parse_rule_init();
 
     if (ruleIndexMap != NULL)
@@ -139,7 +136,6 @@ static void CreateDefaultRules(SnortConfig *sc)
     CreateRuleType(sc, ACTION_PASS, RULE_TYPE__PASS, 0, &sc->Pass);
     CreateRuleType(sc, ACTION_DROP, RULE_TYPE__DROP, 1, &sc->Drop);
     CreateRuleType(sc, ACTION_SDROP, RULE_TYPE__SDROP, 0, &sc->SDrop);
-    CreateRuleType(sc, ACTION_REJECT, RULE_TYPE__REJECT, 1, &sc->Reject);
     CreateRuleType(sc, ACTION_ALERT, RULE_TYPE__ALERT, 1, &sc->Alert);
     CreateRuleType(sc, ACTION_LOG, RULE_TYPE__LOG, 1, &sc->Log);
 }
@@ -422,7 +418,7 @@ static void DefineIfaceVar(SnortConfig *sc, char *iname, uint8_t *network, uint8
  ****************************************************************************/
 static void DefineAllIfaceVars(SnortConfig *sc)
 {
-    // FIXIT don't come back here on reload unless we are going to find
+    // FIXIT-L don't come back here on reload unless we are going to find
     // new ifaces.
     /* Cache retrieved devs so if user is running with dropped privs and
      * does a reload, we can use previous values */
@@ -576,6 +572,18 @@ static void IntegrityCheckRules(SnortConfig *sc)
     //DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "OK\n"););
 }
 
+static void parse_file(SnortConfig* sc, Shell* sh)
+{
+    const char* fname = sh->get_file();
+
+    if ( !fname || !*fname )
+        return;
+
+    push_parse_location(fname);
+    sh->configure(sc);
+    pop_parse_location();
+}
+
 //-------------------------------------------------------------------------
 // public methods
 //-------------------------------------------------------------------------
@@ -596,17 +604,18 @@ static void IntegrityCheckRules(SnortConfig *sc)
  *      configuration file to parse the rules.
  *
  ***************************************************************************/
-SnortConfig * ParseSnortConf(VarNode* tmp)
+SnortConfig * ParseSnortConf(const SnortConfig* boot_conf)
 {
     SnortConfig *sc = SnortConfNew();
-    snort_conf = sc;
+
+    sc->logging_flags = boot_conf->logging_flags;
+    VarNode* tmp = boot_conf->var_list;
 
     const char* fname = get_snort_conf();
 
     if ( !fname )
         fname = "";
 
-    push_parse_location(fname);
     InitParser();
 
     /* Setup the default rule action anchor points
@@ -617,16 +626,12 @@ SnortConfig * ParseSnortConf(VarNode* tmp)
 
     OtnInit(sc);
 
-    InitVarTables(sc->policy_map->ips_policy[0]);
-
     sc->fast_pattern_config = FastPatternConfigNew();
     sc->event_queue_config = EventQueueConfigNew();
     sc->threshold_config = ThresholdConfigNew();
     sc->rate_filter_config = RateFilter_ConfigNew();
     sc->detection_filter_config = DetectionFilterConfigNew();
     sc->ip_proto_only_lists = (SF_LIST **)SnortAlloc(NUM_IP_PROTOS * sizeof(SF_LIST *));
-
-    InitVarTables(get_ips_policy());
 
     /* If snort is not run with root privileges, no interfaces will be defined,
      * so user beware if an iface_ADDRESS variable is used in snort.conf and
@@ -641,10 +646,27 @@ SnortConfig * ParseSnortConf(VarNode* tmp)
         tmp = tmp->next;
     }
 
-    if ( *fname )
-        Shell::configure(sc, fname);
+    // get overrides from cmd line
+    Shell* sh = boot_conf->policy_map->get_shell();
+    sc->policy_map->get_shell()->set_overrides(sh);
 
-    pop_parse_location();
+    if ( *fname )
+    {
+        Shell* sh = sc->policy_map->get_shell();
+        sh->set_file(fname);
+    }
+
+    for ( unsigned i = 0; true; i++ )
+    {
+        Shell* sh = sc->policy_map->get_shell(i);
+
+        if ( !sh )
+            break;
+
+        set_policies(sc, i);
+        parse_file(sc, sh);
+    }
+    set_policies(sc);
     return sc;
 }
 
@@ -775,11 +797,11 @@ void ParserCleanup(void)
 
 void ParseRules(SnortConfig *sc)
 {
-    std::string& s = sc->policy_map->ips_policy[0]->rules;
-    s += s_aux_rules;
-
-    for ( auto p : sc->policy_map->ips_policy )
+    for ( unsigned idx = 0; idx < sc->policy_map->ips_policy.size(); ++idx )
     {
+        set_policies(sc, idx);
+        IpsPolicy* p = sc->policy_map->ips_policy[idx];
+
         if ( p->enable_builtin_rules )
             ModuleManager::load_rules(sc);
 
@@ -792,10 +814,20 @@ void ParseRules(SnortConfig *sc)
             pop_parse_location();
         }
 
+        if ( !idx )
+            p->rules += s_aux_rules;
+
         if ( !p->rules.empty() )
         {
             push_parse_location("rules");
             ParseConfigString(sc, p->rules.c_str());
+            pop_parse_location();
+        }
+        if ( !idx && sc->stdin_rules )
+        {
+            LogMessage("Reading rules until EOF or a line starting with END\n");
+            push_parse_location("stdin");
+            parse_stream(std::cin, sc);
             pop_parse_location();
         }
     }
@@ -885,45 +917,6 @@ ListHead * CreateRuleType(SnortConfig *sc, const char *name,
     return node->RuleList;
 }
 
-/****************************************************************************
- *
- * Function: GetRuleProtocol(char *)
- *
- * Purpose: Figure out which protocol the current rule is talking about
- *
- * Arguments: proto_str => the protocol string
- *
- * Returns: The integer value of the protocol
- *
- ***************************************************************************/
-int GetRuleProtocol(const char *proto_str)
-{
-    if (strcasecmp(proto_str, RULE_PROTO_OPT__TCP) == 0)
-    {
-        return IPPROTO_TCP;
-    }
-    else if (strcasecmp(proto_str, RULE_PROTO_OPT__UDP) == 0)
-    {
-        return IPPROTO_UDP;
-    }
-    else if (strcasecmp(proto_str, RULE_PROTO_OPT__ICMP) == 0)
-    {
-        return IPPROTO_ICMP;
-    }
-    else if (strcasecmp(proto_str, RULE_PROTO_OPT__IP) == 0)
-    {
-        return ETHERNET_TYPE_IP;
-    }
-    else
-    {
-        /* If we've gotten here, we have a protocol string we didn't recognize
-         * and should exit */
-        ParseError("bad protocol: %s.", proto_str);
-    }
-
-    return -1;
-}
-
 void FreeRuleLists(SnortConfig *sc)
 {
     if (sc == NULL)
@@ -933,7 +926,6 @@ void FreeRuleLists(SnortConfig *sc)
 
     FreeOutputLists(&sc->Drop);
     FreeOutputLists(&sc->SDrop);
-    FreeOutputLists(&sc->Reject);
     FreeOutputLists(&sc->Alert);
     FreeOutputLists(&sc->Log);
     FreeOutputLists(&sc->Pass);
@@ -950,7 +942,6 @@ void FreeRuleLists(SnortConfig *sc)
 
             if ( (tmp->RuleList != &sc->Drop) &&
                 (tmp->RuleList != &sc->SDrop) &&
-                (tmp->RuleList != &sc->Reject) &&
                 (tmp->RuleList != &sc->Alert) &&
                 (tmp->RuleList != &sc->Log) &&
                 (tmp->RuleList != &sc->Pass) )
@@ -1089,7 +1080,7 @@ void OrderRuleLists(SnortConfig *sc, const char *order)
     sc->rule_lists = ordered_list;
 }
 
-SO_PUBLIC NORETURN void ParseAbort(const char *format, ...)
+NORETURN void ParseAbort(const char *format, ...)
 {
     char buf[STD_BUF+1];
     va_list ap;
@@ -1110,7 +1101,7 @@ SO_PUBLIC NORETURN void ParseAbort(const char *format, ...)
         FatalError("%s\n", buf);
 }
 
-SO_PUBLIC void ParseError(const char *format, ...)
+void ParseError(const char *format, ...)
 {
     char buf[STD_BUF+1];
     va_list ap;
@@ -1125,15 +1116,15 @@ SO_PUBLIC void ParseError(const char *format, ...)
     unsigned file_line;
     get_parse_location(file_name, file_line);
 
-    if (file_name != NULL)
-        LogMessage("ERROR: %s(%d) %s\n", file_name, file_line, buf);
+    if (file_line )
+        LogMessage("ERROR: %s:%d %s\n", file_name, file_line, buf);
     else
         LogMessage("ERROR: %s\n", buf);
 
     parse_errors++;
 }
 
-SO_PUBLIC void ParseWarning(const char *format, ...)
+void ParseWarning(const char *format, ...)
 {
     char buf[STD_BUF+1];
     va_list ap;
@@ -1148,13 +1139,15 @@ SO_PUBLIC void ParseWarning(const char *format, ...)
     unsigned file_line;
     get_parse_location(file_name, file_line);
 
-    if (file_name != NULL)
-        LogMessage("WARNING: %s(%d) %s\n", file_name, file_line, buf);
+    if ( file_line )
+        LogMessage("WARNING: %s:%d %s\n", file_name, file_line, buf);
     else
-        LogMessage("%s\n", buf);
+        LogMessage("WARNING: %s\n", buf);
+
+    parse_warnings++;
 }
 
-SO_PUBLIC void ParseMessage(const char *format, ...)
+void ParseMessage(const char *format, ...)
 {
     char buf[STD_BUF+1];
     va_list ap;

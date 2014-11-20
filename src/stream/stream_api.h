@@ -26,7 +26,7 @@
  *          preprocessors and detection plugins.
  */
 
-// FIXIT stream_api should not be tied to a particular version of stream
+// FIXIT-L stream_api should not be tied to a particular version of stream
 
 #ifndef STREAM_API_H
 #define STREAM_API_H
@@ -37,9 +37,10 @@
 
 #include <sys/types.h>
 
-#include "sfip/ipv6_port.h"
+#include "sfip/sfip_t.h"
 #include "protocols/packet.h"
 #include "flow/flow.h"
+#include "main/snort_types.h"
 
 #define SSN_MISSING_NONE   0x00
 #define SSN_MISSING_BEFORE 0x01
@@ -80,11 +81,15 @@ typedef void (*Stream_Callback)(Packet *);
 #define MAX_EVT_CB 32
 #define MAX_LOG_FN 32
 
-class Stream
+//-------------------------------------------------------------------------
+// public methods other than ctor / dtor must all be declared SO_PUBLIC
+//-------------------------------------------------------------------------
+
+class SO_PUBLIC Stream
 {
 public:
-    Stream();
-    ~Stream();
+    SO_PRIVATE Stream();
+    SO_PRIVATE ~Stream();
 
     static Flow* get_session(const FlowKey*);
     static Flow* new_session(const FlowKey*);
@@ -107,7 +112,7 @@ public:
      * TCP only.
      */
     int ignore_session(
-        snort_ip_p addr1, uint16_t p1, snort_ip_p addr2, uint16_t p2,
+        const sfip_t *addr1, uint16_t p1, const sfip_t *addr2, uint16_t p2,
         uint8_t proto, char dir, uint32_t ppId);
 
     /* Resume inspection for session.
@@ -116,7 +121,7 @@ public:
 
     /* Drop traffic arriving on session.
      */
-    static void drop_traffic(Packet*, Flow*, char dir);
+    static void drop_traffic(Flow*, char dir);
 
     /* Drop retransmitted packet arriving on session.
      */
@@ -236,7 +241,7 @@ public:
      *     -1 on failure
      */
     int set_application_protocol_id_expected(
-        snort_ip_p a1, uint16_t p1, snort_ip_p a2, uint16_t p2, uint8_t proto,
+        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2, uint8_t proto,
         int16_t appId, FlowData*);
 
     /** Retrieve application session data based on the lookup tuples for
@@ -247,7 +252,7 @@ public:
      *     Application Data reference (pointer)
      */
     static FlowData* get_application_data_from_ip_port(
-        snort_ip_p a1, uint16_t p1, snort_ip_p a2, uint16_t p2, char proto,
+        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2, uint8_t    proto,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId, unsigned flow_id);
 
     /*  Get the application data from the session key
@@ -271,7 +276,7 @@ public:
      *     Stream session pointer
      */
     static Flow* get_session_ptr_from_ip_port(
-        snort_ip_p a1, uint16_t p1, snort_ip_p a2, uint16_t p2, char proto,
+        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2, uint8_t proto,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
 
     /* Delete the session if it is in the closed session state.
@@ -292,10 +297,10 @@ public:
 
     void call_handler(Packet* p, unsigned id);
 
-    void update_direction(Flow*, char dir, snort_ip_p ip, uint16_t port);
+    void update_direction(Flow*, char dir, const sfip_t *ip, uint16_t port);
 
     static void set_application_protocol_id_from_host_entry(
-        Flow *lwssn, struct _HostAttributeEntry *host_entry, int direction);
+        Flow*, const struct HostAttributeEntry*, int direction);
 
     static uint32_t set_session_flags(Flow*, uint32_t flags);
     static uint32_t get_session_flags(Flow*);
@@ -307,8 +312,8 @@ public:
     static int set_ignore_direction(Flow*, int ignore_direction);
 
     // Get the TTL value used at session setup
-    // outer=0 to get inner ip ttl for ip in ip; else outer=1
-    static uint8_t get_session_ttl(Flow*, char dir, int outer);
+    // outer=false to get inner ip ttl for ip in ip; else outer=true
+    static uint8_t get_session_ttl(Flow*, char dir, bool outer);
 
     static bool expired_session (Flow*, Packet*);
     static bool ignored_session (Flow*, Packet*);
@@ -327,7 +332,7 @@ private:
     unsigned stream_cb_idx;
 };
 
-extern Stream stream;
+SO_PUBLIC extern Stream stream;
 
 #endif
 

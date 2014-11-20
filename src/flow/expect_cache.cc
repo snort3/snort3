@@ -23,11 +23,12 @@
 #include <assert.h>
 
 #include "time/packet_time.h"
-#include "stream/stream_api.h"  // FIXIT bad dependency
+#include "stream/stream_api.h"  // FIXIT-M bad dependency
 #include "zhash.h"
+#include "sfip/sf_ip.h"
 
 /* Reasonably small, and prime */
-// FIXIT size based on max_tcp + max_udp?
+// FIXIT-L size based on max_tcp + max_udp?
 #define MAX_HASH 1021
 #define MAX_LIST    8
 #define MAX_DATA    4
@@ -64,8 +65,7 @@
 // -- matching expected sessions are pulled off from the head of the node's
 //    list struct chain
 //
-// FIXIT
-// -- expiration is by node struct but should be by list struct, ie 
+// FIXIT-M expiration is by node struct but should be by list struct, ie 
 //    individual sessions, not all sessions to a given 3-tuple
 //    (this would make pruning a little harder unless we add linkage
 //    a la FlowCache)
@@ -120,21 +120,21 @@ void ExpectNode::clear(ExpectFlow*& list)
 
 struct ExpectKey
 {
-    snort_ip ip1;
-    snort_ip ip2;
+    sfip_t ip1;
+    sfip_t ip2;
     uint16_t port1;
     uint16_t port2;
     uint32_t protocol;
 
     bool set(
-        snort_ip_p cliIP, uint16_t cliPort,
-        snort_ip_p srvIP, uint16_t srvPort,
+        const sfip_t *cliIP, uint16_t cliPort,
+        const sfip_t *srvIP, uint16_t srvPort,
         uint8_t proto);
 };
 
 inline bool ExpectKey::set(
-    snort_ip_p cliIP, uint16_t cliPort,
-    snort_ip_p srvIP, uint16_t srvPort,
+    const sfip_t *cliIP, uint16_t cliPort,
+    const sfip_t *srvIP, uint16_t srvPort,
     uint8_t proto )
 {
     bool reverse;
@@ -142,21 +142,21 @@ inline bool ExpectKey::set(
 
     if (rval == SFIP_LESSER || (rval == SFIP_EQUAL && cliPort < srvPort))
     {
-        IP_COPY_VALUE(ip1, cliIP);
+        sfip_copy(ip1, cliIP);
         port1 = cliPort;
-        IP_COPY_VALUE(ip2, srvIP);
+        sfip_copy(ip2, srvIP);
         port2 = srvPort;
         reverse = false;
     }
     else
     {
-        IP_COPY_VALUE(ip1, srvIP);
+        sfip_copy(ip1, srvIP);
         port1 = srvPort;
-        IP_COPY_VALUE(ip2, cliIP);
+        sfip_copy(ip2, cliIP);
         port2 = cliPort;
         reverse = true;
     }
-    protocol = (uint32_t)proto;
+    protocol = static_cast<uint32_t>(proto);
     return reverse;
 }
 
@@ -344,8 +344,8 @@ ExpectCache::~ExpectCache ()
  * session expiry in seconds.
  */
 int ExpectCache::add_flow(
-    snort_ip_p cliIP, uint16_t cliPort,
-    snort_ip_p srvIP, uint16_t srvPort,
+    const sfip_t *cliIP, uint16_t cliPort,
+    const sfip_t *srvIP, uint16_t srvPort,
     uint8_t protocol, char direction,
     FlowData* fd, int16_t appId)
 {
@@ -388,11 +388,11 @@ bool ExpectCache::is_expected(Packet* p)
     if ( !hash_table->get_count() )
         return false;
 
-    snort_ip* srcIP = GET_SRC_IP(p);
-    snort_ip* dstIP = GET_DST_IP(p);
+    const sfip_t *srcIP = p->ptrs.ip_api.get_src();
+    const sfip_t *dstIP = p->ptrs.ip_api.get_dst();
 
     ExpectKey key;
-    bool reversed_key = key.set(dstIP, p->dp, srcIP, p->sp, GET_IPH_PROTO(p));
+    bool reversed_key = key.set(dstIP, p->ptrs.dp, srcIP, p->ptrs.sp, p->get_ip_proto_next());
 
     uint16_t port1;
     uint16_t port2;
@@ -401,12 +401,12 @@ bool ExpectCache::is_expected(Packet* p)
     {
         key.port2 = 0;
         port1 = 0;
-        port2 = p->sp;
+        port2 = p->ptrs.sp;
     }
     else
     {
         key.port1 = 0;
-        port1 = p->sp;
+        port1 = p->ptrs.sp;
         port2 = 0;
     }
 

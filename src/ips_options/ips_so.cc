@@ -34,7 +34,7 @@ using namespace std;
 #include "parser/parser.h"
 #include "time/profiler.h"
 
-static const char* s_name = "so";
+#define s_name "so"
 
 static THREAD_LOCAL ProfileStats soPerfStats;
 
@@ -44,10 +44,10 @@ public:
     SoOption(const char*, const char*, SoEvalFunc f, void* v);
     ~SoOption();
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
 private:
     const char* soid;
@@ -94,12 +94,12 @@ bool SoOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-int SoOption::eval(Cursor&, Packet* p)
+int SoOption::eval(Cursor& c, Packet* p)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(soPerfStats);
 
-    int ret = func(data, p);
+    int ret = func(data, c, p);
 
     MODULE_PROFILE_END(soPerfStats);
     return ret;
@@ -109,7 +109,7 @@ int SoOption::eval(Cursor&, Packet* p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter so_params[] =
+static const Parameter s_params[] =
 {
     { "~func", Parameter::PT_STRING, nullptr, nullptr,
       "name of eval function" },
@@ -117,15 +117,18 @@ static const Parameter so_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+#define s_help \
+    "rule option to call custom eval function"
+
 class SoModule : public Module
 {
 public:
-    SoModule() : Module(s_name, so_params) { };
+    SoModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &soPerfStats; };
 
     string name;
@@ -188,6 +191,7 @@ static const IpsApi so_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,
