@@ -22,6 +22,8 @@ codecs/root/libroot_codecs.a \
 codecs/link/liblink_codecs.a
 endif
 
+snort_LDFLAGS = -export-dynamic
+
 # order libs to avoid undefined symbols
 # from gnu linker
 snort_LDADD = \
