@@ -429,7 +429,7 @@ SnortConfig* MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
             p->checksum_eval = cl_chk;
 
         if ( !(cl_drop & CHECKSUM_FLAG__DEF) )
-            p->checksum_eval = cl_drop;
+            p->checksum_drop = cl_drop;
     }
 
     /* FIXIT-L J do these belong in network policy? */

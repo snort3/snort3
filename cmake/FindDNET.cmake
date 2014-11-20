@@ -23,6 +23,7 @@ set(ERROR_MESSAGE
 
 
 # Check for libdumbnet first, then libdnet
+unset (DNET_INCLUDE_DIR CACHE)
 
 find_path(DNET_INCLUDE_DIR
   NAMES dumbnet.h
