@@ -642,7 +642,7 @@ void DecodeRebuiltPacket (
     Flow* lws)
 {
     SnortEventqPush();
-    PacketManager::decode(p, pkthdr, pkt);
+    PacketManager::decode(p, pkthdr, pkt, true);
 
     p->flow = lws;
 

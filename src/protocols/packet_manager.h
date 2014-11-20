@@ -58,7 +58,7 @@ class SO_PUBLIC PacketManager
 public:
 
     // decode this packet and set all relevent packet fields.
-    static void decode(Packet*, const struct _daq_pkthdr*, const uint8_t*);
+    static void decode(Packet*, const struct _daq_pkthdr*, const uint8_t*, bool cooked = false);
 
     // allocate a Packet for later formatting (cloning)
     static Packet* encode_new(bool allocate_packet_data = true);

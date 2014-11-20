@@ -160,7 +160,7 @@ static_assert(CODEC_ENCAP_LAYER == (CODEC_UNSURE_ENCAP | CODEC_SAVE_LAYER),
 // Encode/Decode functions
 //-------------------------------------------------------------------------
 void PacketManager::decode(
-    Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
+    Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt, bool cooked)
 {
     PROFILE_VARS;
     DecodeData unsure_encap_ptrs;
@@ -172,9 +172,8 @@ void PacketManager::decode(
     raw.len = pkthdr->caplen;
     CodecData codec_data(FINISHED_DECODE);
 
-    if (p->packet_flags & PKT_REBUILT_STREAM)
+    if ( cooked )
         codec_data.codec_flags |= CODEC_STREAM_REBUILT;
-
 
     // initialize all Packet information
     memset(p, 0, PKT_ZERO_LEN);
@@ -186,7 +185,6 @@ void PacketManager::decode(
     MODULE_PROFILE_START(decodePerfStats);
     s_stats[total_processed]++;
 
-
     // loop until the protocol id is no longer valid
     while(CodecManager::s_protocols[mapped_prot]->decode(raw, codec_data, p->ptrs))
     {
@@ -194,7 +192,6 @@ void PacketManager::decode(
                 "ip header starts at: %p, length is %lu\n",
                 CodecManager::s_protocols[mapped_prot]->get_name(),
                 codec_data.next_prot_id, pkt, codec_data.lyr_len););
-
 
         /*
          * We only want the layer immediately following SAVE_LAYER to have the

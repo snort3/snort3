@@ -197,39 +197,6 @@ struct RawData
     uint32_t len;
 };
 
-// FIXIT-M J  get rid of invaild bytes. Only needed for TCP options and IP options
-struct CodecData
-{
-    /* This section will get reset before every decode() function call */
-    uint16_t next_prot_id;      /* protocol type of the next layer */
-    uint16_t lyr_len;           /* The length of the valid part layer */
-    uint16_t invalid_bytes;     /* the length of the INVALID part of this layer */
-
-    /* Reset before each decode of packet begins */
-
-    /*  Codec specific fields.  These fields are only relevent to codecs. */
-    uint16_t proto_bits;    /* protocols contained within this packet */
-                            /*   -- will be propogated to Snort++ Packet struct*/
-    uint16_t codec_flags;   /* flags used while decoding */
-    uint8_t ip_layer_cnt;
-
-    /*  The following values have junk values after initialization */
-    uint8_t ip6_extension_count; /* initialized in cd_ipv6.cc */
-    uint8_t curr_ip6_extension;  /* initialized in cd_ipv6.cc */
-    uint8_t ip6_csum_proto;      /* initalized in cd_ipv6.cc.  Used for IPv6 checksums */
-
-    // FIXIT-H-J - most of these don't needs to be zeroed
-    CodecData(uint16_t init_prot) : lyr_len(0),
-                                    invalid_bytes(0),
-                                    proto_bits(0),
-                                    codec_flags(0),
-                                    ip_layer_cnt(0)
-    { next_prot_id = init_prot; }
-};
-
-
-
-
 /*  Decode Flags */
 constexpr uint16_t CODEC_DF = 0x0001;    /* don't fragment flag */
 constexpr uint16_t CODEC_UNSURE_ENCAP = 0x0002; /* packet may have incorrect encapsulation layer.
@@ -259,6 +226,45 @@ constexpr uint16_t CODEC_STREAM_REBUILT = 0x0100; /* Set by PacketManager. used 
 constexpr uint16_t CODEC_IPOPT_FLAGS = (CODEC_IPOPT_RR_SEEN |
                                         CODEC_IPOPT_RTRALT_SEEN |
                                         CODEC_IPOPT_LEN_THREE);
+
+
+// FIXIT-M J  get rid of invaild bytes. Only needed for TCP options and IP options
+struct CodecData
+{
+    /* This section will get reset before every decode() function call */
+    uint16_t next_prot_id;      /* protocol type of the next layer */
+    uint16_t lyr_len;           /* The length of the valid part layer */
+    uint16_t invalid_bytes;     /* the length of the INVALID part of this layer */
+
+    /* Reset before each decode of packet begins */
+
+    /*  Codec specific fields.  These fields are only relevent to codecs. */
+    uint16_t proto_bits;    /* protocols contained within this packet */
+                            /*   -- will be propogated to Snort++ Packet struct*/
+    uint16_t codec_flags;   /* flags used while decoding */
+    uint8_t ip_layer_cnt;
+
+    /*  The following values have junk values after initialization */
+    uint8_t ip6_extension_count; /* initialized in cd_ipv6.cc */
+    uint8_t curr_ip6_extension;  /* initialized in cd_ipv6.cc */
+    uint8_t ip6_csum_proto;      /* initalized in cd_ipv6.cc.  Used for IPv6 checksums */
+
+    // FIXIT-H-J - most of these don't needs to be zeroed
+    CodecData(uint16_t init_prot) : lyr_len(0),
+                                    invalid_bytes(0),
+                                    proto_bits(0),
+                                    codec_flags(0),
+                                    ip_layer_cnt(0)
+    { next_prot_id = init_prot; }
+
+
+    bool inline is_cooked() const
+    { return codec_flags & CODEC_STREAM_REBUILT; }
+};
+
+
+
+
 
 /*  Codec Class */
 

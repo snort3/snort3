@@ -261,7 +261,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
          */
         int16_t csum = checksum::ip_cksum((uint16_t *)iph, hlen);
 
-        if(csum)
+        if(csum && !codec.is_cooked())
         {
             if ( !(codec.codec_flags & CODEC_UNSURE_ENCAP) )
             {
