@@ -212,7 +212,7 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             csum = checksum::tcp_cksum((uint16_t *)(tcph), raw.len, &ph6);
         }
 
-        if(csum)
+        if(csum && !codec.is_cooked())
         {
             if ( !(codec.codec_flags & CODEC_UNSURE_ENCAP) )
             {

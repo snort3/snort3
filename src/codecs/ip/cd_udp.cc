@@ -287,7 +287,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                 csum = 0;
             }
         }
-        if(csum)
+        if(csum && !codec.is_cooked())
         {
             if ( !(codec.codec_flags & CODEC_UNSURE_ENCAP) )
             {
