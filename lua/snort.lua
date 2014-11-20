@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------
--- Snort++ prototype configuration
+-- Snort++ configuration
 ---------------------------------------------------------------------------
 
 ---------------------------------------------------------------------------
@@ -28,15 +28,15 @@ HOME_NET = 'any'
 -- (leave as "any" in most situations)
 EXTERNAL_NET = 'any'
 
-dir = os.getenv('SNORT_LUA_PATH')
+conf_dir = os.getenv('SNORT_LUA_PATH')
 
-if ( not dir ) then
-    dir = ''
+if ( not conf_dir ) then
+    conf_dir = '.'
 end
 
-dofile(dir .. 'snort_defaults.lua')
-dofile(dir .. 'classification.lua')
-dofile(dir .. 'reference.lua')
+dofile(conf_dir .. '/snort_defaults.lua')
+dofile(conf_dir .. '/classification.lua')
+dofile(conf_dir .. '/reference.lua')
 
 ---------------------------------------------------------------------------
 -- configure modules
@@ -89,15 +89,14 @@ wizard = default_wizard
 local_rules =
 [[
 # snort-classic comments, includes, and rules with $VARIABLES
-
-alert tcp any any -> any [80 81] ( sid:1; msg:"test"; http_method; content:"GE", offset 0, depth 2; content:"T", distance 0, within 1; )
-
+#
+# this rule works the the extra luajit rule plugin 'find':
 #alert tcp any any -> any [80 81] ( sid:1; msg:"test"; http_method; find:"pat = 'GET'"; )
 ]]
 
 ips =
 {
-    --include = '../rules/active.rules',
+    include = conf_dir .. '/sample.rules',
     --rules = local_rules,
     --enable_builtin_rules = true
 }
@@ -106,5 +105,5 @@ ips =
 -- set up any custom loggers
 ---------------------------------------------------------------------------
 
-alert_test = { file = false }
+--alert_test = { file = false }
 

@@ -260,8 +260,8 @@ bool HttpInspectModule::end(const char* fqn, int, SnortConfig*)
     "RPC_CONNECT PROXY_SUCCESS BITS_POST CCM_POST SMS_POST RPC_IN_DATA " \
     "RPC_OUT_DATA RPC_ECHO_DATA"
 
-#define default_chars \
-    "0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07"
+// You must make a parallel change in Http_Server_Module::Begin().
+#define default_non_rfc_chars "0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07"
 
 // FIXIT-L refactor params to create a profile table so that user can define
 // different profiles (like above) and use those.  rename existing profile
@@ -348,7 +348,7 @@ static const Parameter hi_server_params[] =
     { "no_pipeline_req", Parameter::PT_BOOL, nullptr, "false",
       "don't inspect pipelined requests after first (still does general detection)" },
 
-    { "non_rfc_chars", Parameter::PT_BIT_LIST, "255", default_chars,
+    { "non_rfc_chars", Parameter::PT_BIT_LIST, "255", default_non_rfc_chars,
       "alert on given non-RFC chars being present in the URI" },
 
     { "non_strict", Parameter::PT_BOOL, nullptr, "true",
@@ -603,9 +603,11 @@ bool HttpServerModule::begin(const char*, int, SnortConfig*)
         server->inspect_response = true;
         methods = default_methods;
 
-        const char* s = default_chars;
-        while ( *s )
-            server->non_rfc_chars.set(*s++);
+        // This sets the default non-RFC characters to 0x00 through 0x07
+        // You must make a parallel change to the default_non_rfc_chars macro in this file
+        for (int i = 0; i <= 7; i++) {
+            server->non_rfc_chars.set(i);
+        }
     }
     return true;
 }

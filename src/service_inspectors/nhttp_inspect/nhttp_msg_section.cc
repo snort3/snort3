@@ -110,6 +110,7 @@ void NHttpMsgSection::legacy_header(bool use_trailer) {
     legacy_cookie(header, source_id);
  }
 
+// FIXIT-M there can be multiple cookie headers in one message.
 void NHttpMsgSection::legacy_cookie(NHttpMsgHeadShared* header, SourceId source_id) {
     HeaderId cookie_head = (source_id == SRC_CLIENT) ? HEAD_COOKIE : HEAD_SET_COOKIE;
 
