@@ -87,7 +87,7 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snor
         return false;
     }
 
-    const uint32_t hlen = ip4h->hlen();    /* set the IP header length */
+    const uint16_t hlen = ip4h->hlen();    /* set the IP header length */
 
     if(raw.len < hlen)
     {

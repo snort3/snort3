@@ -29,10 +29,11 @@ void Markup::enable(bool e)
 { enabled = e; }
 
 const char hn[] = "========== ";
+const std::string t = "========== ";
 
 const char* Markup::head(unsigned level)
 {
-    unsigned max = strlen(hn);
+    std::size_t max = strlen(hn);
 
     if ( level >= max )
         level = max - 1;

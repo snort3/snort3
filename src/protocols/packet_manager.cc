@@ -48,6 +48,7 @@
 #include "detection/fpdetect.h"
 #include "stream/stream_api.h"
 #include "packet_io/sfdaq.h"
+#include "packet_io/active.h"
 
 #ifdef PERF_PROFILING
 THREAD_LOCAL ProfileStats decodePerfStats;
@@ -205,7 +206,6 @@ void PacketManager::decode(
         }
         else
         {
-            // faster to just get rid fo bit than test & set
             codec_data.codec_flags &= ~CODEC_UNSURE_ENCAP;
         }
 
@@ -227,7 +227,7 @@ void PacketManager::decode(
             }
             else
             {
-                p->ip_proto_next = codec_data.next_prot_id;
+                p->ip_proto_next = (uint8_t)codec_data.next_prot_id;
             }
 
             fpEvalIpProtoOnlyRules(p, p->ip_proto_next);
@@ -287,6 +287,8 @@ void PacketManager::decode(
                 // layer fails, we made a mistake. Therefore,
                 // remove this bit.
                 p->proto_bits &= ~PROTO_BIT__TEREDO;
+                if ( ScTunnelBypassEnabled(TUNNEL_TEREDO) )
+                    Active_ClearTunnelBypass();
                 break;
             } /* switch */
         }
@@ -386,7 +388,7 @@ bool PacketManager::encode(const Packet* p,
         flags |= ENC_FLAG_INLINE;
 
     ip::IpApi tmp_api;
-    EncState enc(tmp_api, flags, (uint16_t) next_prot, ttl, p->dsize);
+    EncState enc(tmp_api, flags, next_prot, ttl, p->dsize);
 
 
     const Layer* const lyrs = p->layers;
@@ -636,7 +638,7 @@ int PacketManager::encode_format_with_daq_info (
     int i;
     Layer* lyr;
     int len;
-    int num_layers = p->num_layers;
+    uint8_t num_layers = p->num_layers;
     DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
 
     if ( num_layers <= 0 )

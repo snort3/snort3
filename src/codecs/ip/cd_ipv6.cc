@@ -126,103 +126,84 @@ void Ipv6Codec::get_protocol_ids(std::vector<uint16_t>& v)
 
 bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
-    // FIXIT-L -J necessary for scoping until the 'goto' statements are deleted
+    /* lay the IP struct over the raw data */
+    const ip::IP6Hdr* const ip6h =
+        reinterpret_cast<const ip::IP6Hdr*>(raw.data);
+
+    if(raw.len < ip::IP6_HEADER_LEN)
     {
-        /* lay the IP struct over the raw data */
-        const ip::IP6Hdr* const ip6h =
-            reinterpret_cast<const ip::IP6Hdr*>(raw.data);
+        if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
+            codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED);
 
-        if(raw.len < ip::IP6_HEADER_LEN)
-        {
-            if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
-                codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED);
-
-            // Taken from prot_ipv4.cc
-            codec_events::decoder_event(codec, DECODE_IPV6_TUNNELED_IPV4_TRUNCATED);
-            goto decodeipv6_fail;
-        }
-
-
-        /* Verify version in IP6 Header agrees */
-        if(ip6h->ver() != 6)
-        {
-            if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
-                codec_events::decoder_event(codec, DECODE_IPV6_IS_NOT);
-
-            goto decodeipv6_fail;
-        }
-
-        if ( snort_conf->hit_ip_maxlayers(codec.ip_layer_cnt) )
-        {
-            codec_events::decoder_event(codec, DECODE_IP_MULTIPLE_ENCAPSULATION);
-            goto decodeipv6_fail;
-        }
-
-        codec.ip_layer_cnt++;
-        const uint32_t payload_len = ntohs(ip6h->ip6_payload_len) + ip::IP6_HEADER_LEN;
-
-        if(payload_len != raw.len)
-        {
-            if (payload_len > raw.len)
-            {
-                if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
-                    codec_events::decoder_event(codec, DECODE_IPV6_DGRAM_GT_CAPLEN);
-
-                goto decodeipv6_fail;
-            }
-        }
-
-        /* Teredo packets should always use the 2001:0000::/32 prefix, or in some
-           cases the link-local prefix fe80::/64.
-           Source: RFC 4380, section 2.6 & section 5.2.1
-
-           Checking the addresses will save us from numerous false positives
-           when UDP clients use 3544 as their ephemeral port, or "Deep Teredo
-           Inspection" is turned on.
-
-           If we ever start decoding more than 2 layers of IP in a packet, this
-           check against snort.proto_bits will need to be refactored. */
-        if ((codec.codec_flags & CODEC_TEREDO_SEEN) && (!CheckTeredoPrefix(ip6h)))
-        {
-            goto decodeipv6_fail;
-        }
-
-
-        /* set the real IP length for logging */
-        codec.proto_bits |= PROTO_BIT__IP;
-        // extra ipv6 header will be removed in PacketManager
-        const_cast<uint32_t&>(raw.len) = ip6h->len() + ip::IP6_HEADER_LEN;
-
-        // check for isatap before overwriting the ip_api.
-        IPV6CheckIsatap(ip6h, snort, codec);
-
-        snort.ip_api.set(ip6h);
-
-        IPV6MiscTests(snort, codec);
-        CheckIPV6Multicast(ip6h, codec);
-
-        snort.set_pkt_type(PktType::IP);
-        codec.next_prot_id = ip6h->next();
-        codec.lyr_len = ip::IP6_HEADER_LEN;
-        codec.curr_ip6_extension = 0;
-        codec.ip6_extension_count = 0;
-        codec.ip6_csum_proto = ip6h->next();
-        codec.codec_flags &= ~CODEC_ROUTING_SEEN;
-
-        return true;
+        // Taken from prot_ipv4.cc
+        codec_events::decoder_event(codec, DECODE_IPV6_TUNNELED_IPV4_TRUNCATED);
+        return false;
     }
 
-decodeipv6_fail:
-    /* If this was Teredo, back up and treat the packet as normal UDP. */
 
-    // FIXIT-L  handle active bypass without a global variable
-    if (codec.codec_flags & CODEC_TEREDO_SEEN)
+    /* Verify version in IP6 Header agrees */
+    if(ip6h->ver() != 6)
     {
-        if ( ScTunnelBypassEnabled(TUNNEL_TEREDO) )
-            Active_ClearTunnelBypass();
+        if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
+            codec_events::decoder_event(codec, DECODE_IPV6_IS_NOT);
+
+        return false;
     }
 
-    return false;
+    if ( snort_conf->hit_ip_maxlayers(codec.ip_layer_cnt) )
+    {
+        codec_events::decoder_event(codec, DECODE_IP_MULTIPLE_ENCAPSULATION);
+        return false;
+    }
+
+    codec.ip_layer_cnt++;
+    const uint32_t payload_len = ntohs(ip6h->ip6_payload_len) + ip::IP6_HEADER_LEN;
+
+    if(payload_len != raw.len)
+    {
+        if (payload_len > raw.len)
+        {
+            if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
+                codec_events::decoder_event(codec, DECODE_IPV6_DGRAM_GT_CAPLEN);
+
+            return false;
+        }
+    }
+
+    /* Teredo packets should always use the 2001:0000::/32 prefix, or in some
+       cases the link-local prefix fe80::/64.
+       Source: RFC 4380, section 2.6 & section 5.2.1
+
+       Checking the addresses will save us from numerous false positives
+       when UDP clients use 3544 as their ephemeral port, or "Deep Teredo
+       Inspection" is turned on.
+
+       If we ever start decoding more than 2 layers of IP in a packet, this
+       check against snort.proto_bits will need to be refactored. */
+    if ((codec.codec_flags & CODEC_TEREDO_SEEN) && (!CheckTeredoPrefix(ip6h)))
+        return false;
+
+    if ( snort.ip_api.is_ip4() && ScTunnelBypassEnabled(TUNNEL_6IN4) )
+        Active_SetTunnelBypass();
+
+    IPV6CheckIsatap(ip6h, snort, codec); // check for isatap before overwriting the ip_api.
+
+    snort.ip_api.set(ip6h);
+
+    IPV6MiscTests(snort, codec);
+    CheckIPV6Multicast(ip6h, codec);
+
+    const_cast<uint32_t&>(raw.len) = ip6h->len() + ip::IP6_HEADER_LEN;
+    snort.set_pkt_type(PktType::IP);
+    codec.next_prot_id = ip6h->next();
+    codec.lyr_len = ip::IP6_HEADER_LEN;
+    codec.curr_ip6_extension = 0;
+    codec.ip6_extension_count = 0;
+    codec.ip6_csum_proto = ip6h->next();
+    codec.codec_flags &= ~CODEC_ROUTING_SEEN;
+    codec.proto_bits |= PROTO_BIT__IP;
+
+    return true;
 }
 
 static inline void IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
