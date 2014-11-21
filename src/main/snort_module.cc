@@ -178,6 +178,9 @@ static const Parameter s_params[] =
     { "-q", Parameter::PT_IMPLIED, nullptr, nullptr,
       "quiet mode - Don't show banner and status report" },
 
+    { "-R", Parameter::PT_STRING, nullptr, nullptr, 
+      "<rules> include this rules file in the default policy" },
+
     { "-r", Parameter::PT_STRING, nullptr, nullptr, 
       "<pcap>... (same as --pcap-list)" },
 
@@ -538,6 +541,12 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("-q") )
         ConfigQuiet(sc, v.get_string());
 
+    else if ( v.is("-R") )
+    {
+        string s = "include ";
+        s += v.get_string();
+        parser_append_rules(s.c_str());
+    }
     else if ( v.is("-r") || v.is("--pcap-list") )
     {
         Trough_Multi(SOURCE_LIST, v.get_string());
