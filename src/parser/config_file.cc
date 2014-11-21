@@ -256,30 +256,6 @@ void ConfigDumpPayloadVerbose(SnortConfig *sc, const char*)
     sc->output_flags |= OUTPUT_FLAG__VERBOSE_DUMP;
 }
 
-#define GTP_U_PORT 2152
-#define GTP_U_PORT_V0 3386
-void ConfigGTPDecoding(SnortConfig *sc, const char*)
-{
-    PortObject *portObject;
-    int numberOfPorts = 0;
-
-    /*Set the ports*/
-    portObject = PortVarTableFind(get_ips_policy()->portVarTable, "GTP_PORTS");
-
-    if (portObject)
-    {
-       sc->gtp_ports = PortObjectCharPortArray(sc->gtp_ports,portObject, &numberOfPorts);
-    }
-
-    if (!sc->gtp_ports || (0 == numberOfPorts))
-    {
-        /*No ports defined, use default GTP ports*/
-        sc->gtp_ports = (char *)SnortAlloc(UINT16_MAX);
-        sc->gtp_ports[GTP_U_PORT] = 1;
-        sc->gtp_ports[GTP_U_PORT_V0] = 1;
-    }
-}
-
 void ConfigDstMac(SnortConfig* sc, const char* s)
 {
     eth_addr_t dst;

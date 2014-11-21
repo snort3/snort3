@@ -198,6 +198,7 @@ const char* const verdict_names[] =
     "whitelist",
     "blacklist",
     "ignore",
+    "retry",
     "internal blacklist",
     "internal whitelist"
 };
@@ -298,8 +299,8 @@ void DropStats()
         for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
             daq_verdicts.verdicts[i] = pkt_stats->verdicts[i];
 
-        daq_verdicts.internal_blacklist = pc.internal_blacklist;
-        daq_verdicts.internal_whitelist = pc.internal_whitelist;
+        daq_verdicts.internal_blacklist = gpc.internal_blacklist;
+        daq_verdicts.internal_whitelist = gpc.internal_whitelist;
 
         show_stats((PegCount*)&daq_verdicts, verdict_names, array_size(verdict_names));
     }

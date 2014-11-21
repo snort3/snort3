@@ -94,10 +94,13 @@ static const RuleMap udp_rules[] =
     { 0, nullptr }
 };
 
+constexpr uint16_t GTP_U_PORT = 2152;
+constexpr uint16_t GTP_U_PORT_V0 = 3386;
+
 class UdpModule : public CodecModule
 {
 public:
-    UdpModule() : CodecModule(CD_UDP_NAME, CD_UDP_HELP, udp_params) {}
+    UdpModule() : CodecModule(CD_UDP_NAME, CD_UDP_HELP, udp_params), gtp_ports_set(false) {}
 
     const RuleMap* get_rules() const override
     { return udp_rules; }
@@ -116,12 +119,25 @@ public:
         }
         else if ( v.is("gtp_ports") )
         {
-            ConfigGTPDecoding(sc, v.get_string());
+            if ( !gtp_ports_set )
+            {
+                gtp_ports_set = true;
+                sc->gtp_ports.reset(GTP_U_PORT);
+                sc->gtp_ports.reset(GTP_U_PORT_V0);
+            }
+            v.get_bits(sc->gtp_ports);
         }
         else if ( v.is("enable_gtp") )
         {
             if ( v.get_bool() )
+            {
+                if ( !gtp_ports_set )
+                {
+                    sc->gtp_ports.set(GTP_U_PORT);
+                    sc->gtp_ports.set(GTP_U_PORT_V0);
+                }
                 sc->enable_gtp = 1;  // FIXIT-L move to existing bitfield
+            }
         }
         else
         {
@@ -130,6 +146,9 @@ public:
 
         return true;
     }
+
+private:
+    bool gtp_ports_set;
 };
 
 
