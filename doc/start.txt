@@ -1,5 +1,6 @@
 The following pointers will help you get started:
 
+
 === Dependencies
 
 Required:
@@ -29,62 +30,80 @@ Optional:
 
 * check from http://check.sourceforge.net to build unit tests.
 
+
 === Building
 
 * Optionally built features are listed in the reference section.
 
-* You should build Snort++ with an install prefix so that you can easily
-  delete older versions.
+* Create an install path:
 
-* To build with autotools, the usual ./configure, make, make install from
-  the top level directory will suffice.  If you don't have ./configure,
-  then autoreconf -isvf must be done first.
+    export my_path=/path/to/snorty
+    mkdir -p $my_path
 
-* To build with cmake and make, first create a separate directory for the
-  build and cd into that directory.  Then:
+* Do one of the following:
 
-    mkdir -p /path/to/my_build
-    cd /path/to/my_build
-    cmake /path/to/Snort++
-    make; make install
+a. To build with autotools, simply do the usual from the top level directory:
 
-* An alternate method for building with cmake and make is to run the
-  configure_cmake.sh script.  It will automatically create and populate
-  a new subdirectory named 'build'.
+    ./configure --prefix=$my_path
+    make -j 8
+    make install
 
-    cd /path/to/Snort++
-    ./configure_cmake.sh --prefix=/home/rcombs/install
-    make; make install
+b. To build with cmake and make, run configure_cmake.sh.  It will
+   automatically create and populate a new subdirectory named 'build'.
 
-* Build with Xcode like this:
+    ./configure_cmake.sh --prefix=$my_path
+    cd build
+    make -j 8
+    make install
+    ln -s $my_path/conf $my_path/etc
 
-    mkdir -p /path/to/my_build
-    cd /path/to/my_build
-    cmake /path/to/Snort++ -G Xcode
+c. You can also specify a cmake project generator or use ccmake:
 
-* An alternate method for building with Xcode is to run the
-  configure_cmake.sh script.  It will automatically create and populate
-  a new directory named 'build'.
-
-    cd /path/to/Snort++
-    ./configure_cmake --generator=Xcode --prefix=/home/rcombs/install
+    ./configure_cmake --generator=Xcode --prefix=$my_path
 
 
-=== Using Lua
+=== Run
 
-* Snort++ needs a lua conf.  You can use $install_dir/conf/snort.lua, like
-  -c $install_dir/conf/snort.lua.
+First set up the environment:
 
-* lua/snort.lua is always the latest working example configuration.
+    export LUA_PATH=$my_path/include/snort/lua/?.lua\;\;
+    export SNORT_LUA_PATH=$my_path/etc
 
-* You need to export LUA_PATH=$install_dir/include/snort/lua/?.lua\;\;
+Then give it a go:
 
-* In addition to LUA_PATH which is required to get to the load scripts,
-  you can export SNORT_LUA_PATH to allow dofile() loading of
-  classification.lua etc. w/o hard coding the path in snort.lua.
+* Get some help:
 
-* Or you may edit snort.lua to set the path to classification.lua and
-  reference.lua.
+    $my_path/bin/snort --help
+    $my_path/bin/snort --help-module suppress
+    $my_path/bin/snort --help-config | grep thread
+
+* Examine and dump a pcap:
+
+    $my_path/bin/snort -r <pcap>
+    $my_path/bin/snort -K text -d -e -q -r <pcap>
+
+* Verify config, with or w/o rules:
+
+    $my_path/bin/snort -c $my_path/etc/snort.lua
+    $my_path/bin/snort -c $my_path/etc/snort.lua -R $my_path/etc/sample.rules
+
+* Run IDS mode.  To keep it brief, look at the first n packets in each file:
+
+    $my_path/bin/snort -c $my_path/etc/snort.lua -R $my_path/etc/sample.rules \
+        -r <pcap> -A alert_test -n 100000
+
+* Let's suppress 1:2123.  We could edit the conf or just do this:
+
+    $my_path/bin/snort -c $my_path/etc/snort.lua -R $my_path/etc/sample.rules \
+        -r <pcap> -A alert_test -n 100000 --lua "suppress = { { gid = 1, sid = 2123 } }"
+
+* Go whole hog on a directory with multiple packet threads:
+
+    $my_path/bin/snort -c $my_path/etc/snort.lua -R $my_path/etc/sample.rules \
+        --pcap-filter \*.pcap --pcap-dir <dir> -A alert_fast -n 1000 --max-packet-threads 8
+
+
+=== Tips
 
 * Legacy rules and includes must be put in ips.include = 'filename'
   and/or ips.rules = 'string' or [[ multi line string ]].  
@@ -106,10 +125,6 @@ Optional:
 * You can also rename symbols that you want to disable.  For example,
   changing normalizer to Xnormalizer will disable the normalizer.  This can
   be easier than commenting in some cases.
-
-=== Running
-
-* Use snort --help for an overview of the help available.
 
 * Load plugins from the command line with --plugin-path /path/to/install/lib.
 

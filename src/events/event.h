@@ -25,10 +25,6 @@
 
 #include <sys/types.h>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "main/snort_types.h"
 #include "main/thread.h"
 
@@ -58,5 +54,5 @@ struct Event
 void SetEvent(
     Event *, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
 
-#endif /* EVENT_H */
+#endif
 
