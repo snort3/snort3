@@ -180,7 +180,7 @@ SnortConfig * SnortConfNew(void)
     sc->num_layers = DEFAULT_LAYERMAX;
     sc->max_ip6_extensions = 0;
     sc->max_ip_layers = 0;
-    sc->gtp_ports.reset();
+    sc->gtp_ports = nullptr;
 
     /*user_id and group_id should be initialized to -1 by default, because
      * chown() use this later, -1 means no change to user_id/group_id*/
@@ -352,6 +352,9 @@ void SnortConfFree(SnortConfig *sc)
 
     if (sc->thread_affinity)
         delete sc->thread_affinity;
+
+    if (sc->gtp_ports)
+        delete sc->gtp_ports;
 
     free(sc);
 }

@@ -165,7 +165,7 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
                       EncState& enc, Buffer& buf)
 {
     // not raw ip -> encode layer 2
-    int raw = ( enc.flags & ENC_FLAG_RAW );
+    bool raw = ( enc.flags & ENC_FLAG_RAW );
     const eth::EtherHdr* hi = reinterpret_cast<const eth::EtherHdr*>(raw_in);
     eth::EtherHdr* ho;
 

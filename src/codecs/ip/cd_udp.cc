@@ -74,7 +74,7 @@ static const Parameter udp_params[] =
       "decode GTP encapsulations" },
 
     // FIXIT-L use PT_BIT_LIST
-    { "gtp_ports", Parameter::PT_STRING, nullptr,
+    { "gtp_ports", Parameter::PT_BIT_LIST, "65535",
       "2152 3386", "set GTP ports" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -100,7 +100,7 @@ constexpr uint16_t GTP_U_PORT_V0 = 3386;
 class UdpModule : public CodecModule
 {
 public:
-    UdpModule() : CodecModule(CD_UDP_NAME, CD_UDP_HELP, udp_params), gtp_ports_set(false) {}
+    UdpModule() : CodecModule(CD_UDP_NAME, CD_UDP_HELP, udp_params) {}
 
     const RuleMap* get_rules() const override
     { return udp_rules; }
@@ -119,24 +119,23 @@ public:
         }
         else if ( v.is("gtp_ports") )
         {
-            if ( !gtp_ports_set )
-            {
-                gtp_ports_set = true;
-                sc->gtp_ports.reset(GTP_U_PORT);
-                sc->gtp_ports.reset(GTP_U_PORT_V0);
-            }
-            v.get_bits(sc->gtp_ports);
+            if ( sc->gtp_ports == nullptr )
+                sc->gtp_ports = new PortList;
+
+//            sc->gtp_ports->reset(); // called in v.get_bits();
+            v.get_bits(*(sc->gtp_ports));
         }
         else if ( v.is("enable_gtp") )
         {
             if ( v.get_bool() )
             {
-                if ( !gtp_ports_set )
+                if ( sc->gtp_ports == nullptr )
                 {
-                    sc->gtp_ports.set(GTP_U_PORT);
-                    sc->gtp_ports.set(GTP_U_PORT_V0);
+                    sc->gtp_ports = new PortList;
+                    sc->gtp_ports->reset();
+                    sc->gtp_ports->set(GTP_U_PORT);
+                    sc->gtp_ports->set(GTP_U_PORT_V0);
                 }
-                sc->enable_gtp = 1;  // FIXIT-L move to existing bitfield
             }
         }
         else
@@ -146,9 +145,6 @@ public:
 
         return true;
     }
-
-private:
-    bool gtp_ports_set;
 };
 
 
@@ -340,8 +336,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         teredo::is_teredo_port(dst_port) ||
         ScDeepTeredoInspection())
     {
-        if ( !(snort.decode_flags & DECODE_FRAG) )
-            codec.next_prot_id = PROTOCOL_TEREDO;
+        codec.next_prot_id = PROTOCOL_TEREDO;
     }
 
     
@@ -476,7 +471,7 @@ void UdpCodec::format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 
     if ( reverse(f) )
     {
-        int i = lyr - c->layers;
+        int i = (int)(lyr - c->layers);
         udp::UDPHdr* ph = (udp::UDPHdr*)p->layers[i].start;
 
         ch->uh_sport = ph->uh_dport;

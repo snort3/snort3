@@ -514,14 +514,14 @@ static inline int ScDeepTeredoInspection(void)
     return snort_conf->enable_teredo;
 }
 
-static inline int ScGTPDecoding(void)
+static inline bool ScGTPDecoding(void)
 {
-    return snort_conf->enable_gtp;
+    return snort_conf->gtp_ports;
 }
 
 static inline int ScIsGTPPort(uint16_t port)
 {
-    return snort_conf->gtp_ports.test(port);
+    return snort_conf->gtp_ports->test(port);
 }
 
 static inline int ScESPDecoding(void)

@@ -156,9 +156,8 @@ struct SnortConfig
     long int mpls_stack_depth;
 
     uint8_t enable_teredo;
-    uint8_t enable_gtp;
-    PortList gtp_ports;
     uint8_t enable_esp;
+    PortList *gtp_ports;
 
     uint8_t num_layers;
     uint8_t max_ip6_extensions;
