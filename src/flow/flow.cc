@@ -66,7 +66,7 @@ void Flow::init(PktType proto)
     /* use giFlowbitSize - 1, since there is already 1 byte in the
     * StreamFlowData structure */
     size_t sz = sizeof(StreamFlowData) + getFlowbitSizeInBytes() - 1;
-    flowdata = (StreamFlowData*)malloc(sz);
+    flowdata = (StreamFlowData*)calloc(sz, 1);
 
     boInitStaticBITOP(
         &(flowdata->boFlowbits), getFlowbitSizeInBytes(), flowdata->flowb);
