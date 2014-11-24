@@ -1,7 +1,7 @@
 AUTOMAKE_OPTIONS=foreign
 bin_PROGRAMS = u2boat
 
-docdir = ${datadir}/doc/${PACKAGE}
+docdir = ${datadir}/${PACKAGE}/doc
 
 u2boat_SOURCES = u2boat.cc u2boat.h
 u2boat_CFLAGS = @CFLAGS@ $(AM_CFLAGS)

@@ -22,7 +22,6 @@ set( UTIL_INCLUDES
     sfportobject.h
     snort_bounds.h
     stats.h
-    util.h
 )
 
 ADD_LIBRARY( utils STATIC
@@ -46,8 +45,9 @@ ADD_LIBRARY( utils STATIC
     sfsnprintfappend.h
     strvec.cc 
     strvec.h
-    stats.cc 
-    util.cc 
+    stats.cc
+    util.cc
+    util.h
     util_jsnorm.cc 
     util_jsnorm.h
     util_math.cc 
