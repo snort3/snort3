@@ -285,7 +285,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             // small chunks are aggregated before processing and are kept here until the buffer is full (paf_max)
             // all the chunks in the buffer go to the inspector together. Zero-length chunk (len == 1, num_excess == 1)
             // flushes accumulated chunks.
-            int32_t total_chunk_len = chunk_buffer_length + offset + len - num_excess;
+            const int32_t total_chunk_len = chunk_buffer_length + offset + len - num_excess;
             if ((total_chunk_len < DATABLOCKSIZE) && (num_excess == 0) && !tcp_close) {
                 chunk_buffer_length = total_chunk_len;
                 return nullptr;
