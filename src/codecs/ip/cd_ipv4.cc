@@ -242,8 +242,14 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         return false;
     }
 
-    if ( snort.ip_api.is_ip6() && ScTunnelBypassEnabled(TUNNEL_4IN6) )
-        Active_SetTunnelBypass();
+    if ( snort.ip_api.is_ip6() )
+    {
+        /*  If Teredo or GRE seen, this is not an 4in6 tunnel */
+        if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
+            codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
+        else if ( ScTunnelBypassEnabled(TUNNEL_4IN6) )
+            Active_SetTunnelBypass();
+    }
 
     // set the api now since this layer has been verified as valid
     snort.ip_api.set(iph);

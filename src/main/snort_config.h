@@ -35,6 +35,7 @@
 #include "utils/util.h"
 #include "protocols/packet.h"
 #include "main/thread.h"
+#include "framework/bits.h"
 
 
 #define DEFAULT_LOG_DIR "."
@@ -155,9 +156,8 @@ struct SnortConfig
     long int mpls_stack_depth;
 
     uint8_t enable_teredo;
-    uint8_t enable_gtp;
-    char *gtp_ports;
     uint8_t enable_esp;
+    PortList *gtp_ports;
 
     uint8_t num_layers;
     uint8_t max_ip6_extensions;

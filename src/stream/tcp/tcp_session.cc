@@ -430,7 +430,7 @@ static const char* const reassembly_policy_names[] = {
     "MACOS",
     "HPUX10",
     "WINDOWS VISTA",
-    "WINDOWS 2003"
+    "WINDOWS 2003",
     "IPS"
 };
 

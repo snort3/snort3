@@ -88,10 +88,10 @@ void Value::get_addr(sfip_t& addr) const
 void Value::get_bits(PortList& list) const
 {
     list.reset();
-    unsigned len = str.size();
+    std::size_t len = str.size();
     assert(len == list.size());
 
-    for ( unsigned n = 0; n < len; ++n )
+    for ( std::size_t n = 0; n < len; ++n )
     {
         if ( str[n] == '1' )
             list.set(n);
@@ -101,10 +101,10 @@ void Value::get_bits(PortList& list) const
 void Value::get_bits(VlanList& list) const
 {
     list.reset();
-    unsigned len = str.size();
+    std::size_t len = str.size();
     assert(len == list.size());
 
-    for ( unsigned n = 0; n < len; ++n )
+    for ( std::size_t n = 0; n < len; ++n )
     {   
         if ( str[n] == '1' )
             list.set(n);
@@ -114,10 +114,10 @@ void Value::get_bits(VlanList& list) const
 void Value::get_bits(ByteList& list) const
 {
     list.reset();
-    unsigned len = str.size();
+    std::size_t len = str.size();
     assert(len == list.size());
 
-    for ( unsigned n = 0; n < len; ++n )
+    for ( std::size_t n = 0; n < len; ++n )
     {
         if ( str[n] == '1' )
             list.set(n);

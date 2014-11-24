@@ -183,8 +183,14 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     if ((codec.codec_flags & CODEC_TEREDO_SEEN) && (!CheckTeredoPrefix(ip6h)))
         return false;
 
-    if ( snort.ip_api.is_ip4() && ScTunnelBypassEnabled(TUNNEL_6IN4) )
-        Active_SetTunnelBypass();
+    if ( snort.ip_api.is_ip4() )
+    {
+        /*  If Teredo or GRE seen, this is not an 4in6 tunnel */
+        if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
+            codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
+        else if ( ScTunnelBypassEnabled(TUNNEL_6IN4) )
+            Active_SetTunnelBypass();
+    }
 
     IPV6CheckIsatap(ip6h, snort, codec); // check for isatap before overwriting the ip_api.
 

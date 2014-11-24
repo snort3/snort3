@@ -221,7 +221,8 @@ constexpr uint16_t CODEC_IPOPT_RR_SEEN = 0x0010; /* used by icmp4 for alerting *
 constexpr uint16_t CODEC_IPOPT_RTRALT_SEEN = 0x0020;  /* used by IGMP for alerting */
 constexpr uint16_t CODEC_IPOPT_LEN_THREE = 0x0040; /* used by IGMP for alerting */
 constexpr uint16_t CODEC_TEREDO_SEEN = 0x0080; /* used in IPv6 Codec */
-constexpr uint16_t CODEC_STREAM_REBUILT = 0x0100; /* Set by PacketManager. used by codec_event */
+constexpr uint16_t CODEC_STREAM_REBUILT = 0x0100;
+constexpr uint16_t CODEC_NON_IP_TUNNEL = 0x0200;
 
 constexpr uint16_t CODEC_IPOPT_FLAGS = (CODEC_IPOPT_RR_SEEN |
                                         CODEC_IPOPT_RTRALT_SEEN |
