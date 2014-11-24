@@ -1,6 +1,5 @@
 /*
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -82,16 +81,14 @@ struct AuthHdr
     uint32_t icv[1]; /* VARIABLE LENGTH!! -- specified by len field*/
 };
 
-const uint8_t MIN_AUTH_LEN = 16; // this is in minimum number of bytes ...
+constexpr uint8_t MIN_AUTH_LEN = 16; // this is in minimum number of bytes ...
                                  // no relatino to the AuthHdr.len field.
 
 } // anonymous namespace
 
 
 void AuthCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(IPPROTO_ID_AUTH);
-}
+{ v.push_back(IPPROTO_ID_AUTH); }
 
 bool AuthCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {

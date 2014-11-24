@@ -1,8 +1,5 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -19,6 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_ppp.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -58,9 +56,7 @@ static constexpr uint8_t CHDLC_ADDR_BROADCAST = 0xff;
 static constexpr uint8_t CHDLC_CTRL_UNNUMBERED = 0x03;
 
 void PPPCodec::get_data_link_type(std::vector<int>& v)
-{
-    v.push_back(DLT_PPP);
-}
+{ v.push_back(DLT_PPP); }
 
 
 bool PPPCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
