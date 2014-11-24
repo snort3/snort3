@@ -96,28 +96,26 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
     // here.
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
     if (session_data == nullptr) {
-        assert(!flow_data_exists);
         flow->set_application_data(session_data = new NHttpFlowData);
     }
     assert(session_data != nullptr);
-    flow_data_exists = true;
-    SourceId source_id = to_server() ? SRC_CLIENT : SRC_SERVER;
+    const SourceId source_id = to_server() ? SRC_CLIENT : SRC_SERVER;
 
     if (NHttpTestManager::use_test_input()) {
         // This block substitutes a completely new data buffer supplied by the test tool in place of the "real" data.
-        // It also rewrites the buffer length, source ID, and TCP close indicator.
+        // It also rewrites the buffer length and TCP close indicator.
         *flush_offset = length;
         bool need_break;
         uint8_t* test_data = nullptr;
         NHttpTestManager::get_test_input_source()->scan(test_data, length, source_id, tcp_close, need_break);
-        if (length == 0) {
-            return StreamSplitter::FLUSH;
-        }
-        data = test_data;
         if (need_break) {
             session_data = new NHttpFlowData;
             flow->set_application_data(session_data);
         }
+        if (length == 0) {
+            return StreamSplitter::FLUSH;
+        }
+        data = test_data;
         assert(session_data->type_expected[source_id] != SEC_ABORT);
         assert(session_data->type_expected[source_id] != SEC_CLOSED);
     }

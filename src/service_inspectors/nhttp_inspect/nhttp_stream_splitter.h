@@ -45,9 +45,6 @@ private:
        const NHttpFlowData* session_data) const;
     NHttpInspect* const my_inspector;
     unsigned paf_max = NHttpEnums::MAXOCTETS;
-
-    // FIXIT-P a precaution we may wish to remove later
-    bool flow_data_exists = false;
 };
 
 #endif
