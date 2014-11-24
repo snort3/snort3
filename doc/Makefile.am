@@ -1,7 +1,5 @@
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
-docdir = ${datadir}/snort/doc
-
 BUILT_SOURCES = \
 builtin.txt \
 commands.txt \

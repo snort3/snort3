@@ -283,5 +283,5 @@ add_custom_target(snort_manuals ALL
 #add_dependencies(snort_manuals snort ${ALL_SOURCES})
 
 
-install (FILES ${EXTRA_DIST_BINARY_PATH} DESTINATION "${SNORT_DATA_DIR}/doc")
-install (FILES ${UNBUILT_SOURCES} DESTINATION "${SNORT_DATA_DIR}/doc")
+install (FILES ${EXTRA_DIST_BINARY_PATH} DESTINATION "${SNORT_DATA_DIR}")
+install (FILES ${UNBUILT_SOURCES} DESTINATION "${SNORT_DATA_DIR}")

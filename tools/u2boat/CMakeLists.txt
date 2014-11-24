@@ -16,5 +16,5 @@ install (TARGETS u2boat
 )
 
 install(FILES README.u2boat
-    DESTINATION "${SNORT_DATA_DIR}/doc"
+    DESTINATION "${SNORT_DATA_DIR}"
 )
