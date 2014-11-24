@@ -152,6 +152,10 @@ static void timing_stats()
 }
 
 //-------------------------------------------------------------------------
+// FIXIT-L 2.0.4 introduces the retry verdict
+// no way to reliably optionally leverage this with dynamic loaded daqs
+
+#define MAX_SFDAQ_VERDICT 6
 
 struct DAQStats
 {
@@ -162,7 +166,7 @@ struct DAQStats
     PegCount filtered;
     PegCount outstanding;
     PegCount injected;
-    PegCount verdicts[MAX_DAQ_VERDICT];
+    PegCount verdicts[MAX_SFDAQ_VERDICT];
     PegCount internal_blacklist;
     PegCount internal_whitelist;
 #ifdef REG_TEST
@@ -241,7 +245,7 @@ void pc_sum()
     g_daq_stats.packets_filtered += daq_stats->packets_filtered;
     g_daq_stats.packets_injected += daq_stats->packets_injected;
 
-    for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
+    for ( unsigned i = 0; i < MAX_SFDAQ_VERDICT; i++ )
         g_daq_stats.verdicts[i] += daq_stats->verdicts[i];
 
     sum_stats((PegCount*)&gpc, (PegCount*)&pc, array_size(pc_names));
@@ -272,7 +276,7 @@ static void get_daq_stats(DAQStats& daq_stats)
     daq_stats.outstanding =  pkts_out;
     daq_stats.injected =  pkts_inj;
 
-    for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
+    for ( unsigned i = 0; i < MAX_SFDAQ_VERDICT; i++ )
         daq_stats.verdicts[i] = g_daq_stats.verdicts[i];
 
     daq_stats.internal_blacklist = gaux.internal_blacklist;
