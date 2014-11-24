@@ -8,5 +8,5 @@ set (LUA_SCRIPTS
 )
 
 install (FILES ${LUA_SCRIPTS}
-    DESTINATION "${SNORT_DATA_DIR}/lua"
+    DESTINATION "etc/snort"
 )
