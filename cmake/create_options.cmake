@@ -43,5 +43,5 @@ set (SIGNAL_SNORT_READ_ATTR_TBL "" CACHE STRING "set the SIGNAL_SNORT_READ_ATTR_
 
 
 #Setting default directories...appended to INSTALL_PREFIX unless a full path is provided
-set (SNORT_DATA_DIR share/doc/${CMAKE_PROJECT_NAME})
+set (SNORT_DATA_DIR share/${CMAKE_PROJECT_NAME})
 

@@ -5,7 +5,6 @@ set (INCLUDES
     snort_types.h
     snort.h
     snort_config.h
-    policy.h
 )
 
 add_library (main STATIC
@@ -17,6 +16,7 @@ add_library (main STATIC
     modules.cc
     modules.h
     policy.cc
+    policy.h
     shell.h
     shell.cc
     snort.h

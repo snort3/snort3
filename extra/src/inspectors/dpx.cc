@@ -112,7 +112,7 @@ public:
     DpxModule() : Module(s_name, s_help)
     { };
 
-    const char** get_pegs() const override
+    const PegInfo* get_pegs() const
     { return simple_pegs; };
 
     PegCount* get_counts() const override
