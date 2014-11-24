@@ -44,6 +44,7 @@ using namespace std;
 #include "parser/parser.h"
 #include "parser/vars.h"
 #include "packet_io/trough.h"
+#include "utils/stats.h"
 
 #ifdef UNIT_TEST
 #include "test/unit_test.h"
@@ -178,6 +179,9 @@ static const Parameter s_params[] =
     { "-q", Parameter::PT_IMPLIED, nullptr, nullptr,
       "quiet mode - Don't show banner and status report" },
 
+    { "-R", Parameter::PT_STRING, nullptr, nullptr, 
+      "<rules> include this rules file in the default policy" },
+
     { "-r", Parameter::PT_STRING, nullptr, nullptr, 
       "<pcap>... (same as --pcap-list)" },
 
@@ -277,6 +281,9 @@ static const Parameter s_params[] =
 
     { "--help-config", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output matching config options" },
+
+    { "--help-counts", Parameter::PT_STRING, "(optional)", nullptr,
+      "[<module prefix>] output matching peg counts" },
 
     { "--help-module", Parameter::PT_STRING, nullptr, nullptr,
       "<module> output description of given module" },
@@ -457,6 +464,7 @@ public:
 #endif
 
     bool set(const char*, Value&, SnortConfig*) override;
+    const PegInfo* get_pegs() const override { return proc_names; };
 };
 
 bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
@@ -538,6 +546,12 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("-q") )
         ConfigQuiet(sc, v.get_string());
 
+    else if ( v.is("-R") )
+    {
+        string s = "include ";
+        s += v.get_string();
+        parser_append_rules(s.c_str());
+    }
     else if ( v.is("-r") || v.is("--pcap-list") )
     {
         Trough_Multi(SOURCE_LIST, v.get_string());
@@ -637,6 +651,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--help-config") )
         help_config(sc, v.get_string());
+
+    else if ( v.is("--help-counts") )
+        help_counts(sc, v.get_string());
 
     else if ( v.is("--help-module") )
         help_module(sc, v.get_string());

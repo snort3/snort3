@@ -67,7 +67,7 @@ public:
 
     ArpSpoofConfig* get_config();
 
-    const char** get_pegs() const override;
+    const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
 
     unsigned get_gid() const override

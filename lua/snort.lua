@@ -82,28 +82,3 @@ ftp_data = { }
 
 wizard = default_wizard
 
----------------------------------------------------------------------------
--- define / load rules and filters
----------------------------------------------------------------------------
-
-local_rules =
-[[
-# snort-classic comments, includes, and rules with $VARIABLES
-#
-# this rule works the the extra luajit rule plugin 'find':
-#alert tcp any any -> any [80 81] ( sid:1; msg:"test"; http_method; find:"pat = 'GET'"; )
-]]
-
-ips =
-{
-    include = conf_dir .. '/sample.rules',
-    --rules = local_rules,
-    --enable_builtin_rules = true
-}
-
----------------------------------------------------------------------------
--- set up any custom loggers
----------------------------------------------------------------------------
-
---alert_test = { file = false }
-

@@ -74,12 +74,12 @@ void Module::show_stats()
 void Module::reset_stats()
 {
     num_counts = 0;
-    const char** pegs = get_pegs();
+    const PegInfo* pegs = get_pegs();
 
     if ( !pegs )
         return;
 
-    while ( pegs[num_counts] )
+    while ( pegs[num_counts].name )
         ++num_counts;
 
     counts.resize(num_counts);
@@ -88,9 +88,9 @@ void Module::reset_stats()
         counts[i] = 0;
 }
 
-const char* simple_pegs[] =
+const PegInfo simple_pegs[] =
 {
-    "packets",
-    nullptr
+    { "packets", "total packets" },
+    { nullptr, nullptr }
 };
 

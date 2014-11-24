@@ -758,24 +758,38 @@ void ModuleManager::show_module(const char* name)
         if ( m->get_commands() )
         {
             cout << endl << "Commands: " << endl << endl;
-            show_commands(name);
+            show_commands(name, true);
         }
 
         if ( m->get_rules() )
         {
             cout << endl << "Rules: " << endl << endl;
-            show_rules(name);
+            show_rules(name, true);
         }
 
         if ( m->get_pegs() )
         {
             cout << endl << "Peg counts: " << endl << endl;
-            show_pegs(name);
+            show_pegs(name, true);
         }
         c++;
     }
     if ( !c )
         cout << "no match" << endl;
+}
+
+static bool selected(const Module* m, const char* pfx, bool exact)
+{
+    if ( !pfx )
+        return true;
+
+    if ( exact && strcmp(m->get_name(), pfx) )
+        return false;
+
+    else if ( !exact && strncmp(m->get_name(), pfx, strlen(pfx)) )
+        return false;
+
+    return true;
 }
 
 void ModuleManager::show_configs(const char* pfx, bool exact)
@@ -788,13 +802,8 @@ void ModuleManager::show_configs(const char* pfx, bool exact)
         Module* m = p->mod;
         string s;
 
-        if ( pfx )
-        {
-            if ( exact && strcmp(m->get_name(), pfx) )
-                continue;
-            else if ( !exact && strncmp(m->get_name(), pfx, strlen(pfx)) )
-                continue;
-        }
+        if ( !selected(m, pfx, exact) )
+            continue;
 
         if ( m->is_list() )
         {
@@ -830,17 +839,16 @@ void ModuleManager::dump_defaults(const char* pfx)
     show_configs(pfx);
 }
 
-void ModuleManager::show_commands(const char* pfx)
+void ModuleManager::show_commands(const char* pfx, bool exact)
 {
     s_modules.sort(comp_mods);
-    unsigned len = pfx ? strlen(pfx) : 0;
     unsigned n = 0;
 
     for ( auto p : s_modules )
     {
         const Module* m = p->mod;
 
-        if ( pfx && strncmp(m->get_name(), pfx, len) )
+        if ( !selected(m, pfx, exact) )
             continue;
 
         const Command* c = m->get_commands();
@@ -865,10 +873,9 @@ void ModuleManager::show_commands(const char* pfx)
         cout << "no match" << endl;
 }
 
-void ModuleManager::show_gids(const char* pfx)
+void ModuleManager::show_gids(const char* pfx, bool exact)
 {
     s_modules.sort(comp_gids);
-    unsigned len = pfx ? strlen(pfx) : 0;
     unsigned c = 0;
 
     for ( auto p : s_modules )
@@ -876,7 +883,7 @@ void ModuleManager::show_gids(const char* pfx)
         const Module* m = p->mod;
         assert(m);
 
-        if ( pfx && strncmp(m->get_name(), pfx, len) )
+        if ( !selected(m, pfx, exact) )
             continue;
 
         unsigned gid = m->get_gid();
@@ -896,10 +903,9 @@ void ModuleManager::show_gids(const char* pfx)
         cout << "no match" << endl;
 }
 
-void ModuleManager::show_pegs(const char* pfx)
+void ModuleManager::show_pegs(const char* pfx, bool exact)
 {
     s_modules.sort(comp_gids);
-    unsigned len = pfx ? strlen(pfx) : 0;
     unsigned c = 0;
 
     for ( auto p : s_modules )
@@ -907,20 +913,22 @@ void ModuleManager::show_pegs(const char* pfx)
         const Module* m = p->mod;
         assert(m);
 
-        if ( pfx && strncmp(m->get_name(), pfx, len) )
+        if ( !selected(m, pfx, exact) )
             continue;
 
-        const char** pegs = m->get_pegs();
+        const PegInfo* pegs = m->get_pegs();
 
         if ( !pegs )
             continue;
 
-        while ( *pegs )
+        while ( pegs->name )
         {
             cout << Markup::item();
             cout << Markup::emphasis_on();
-            cout << Markup::escape(*pegs);
+            cout << Markup::escape(p->mod->get_name());
+            cout << "." << Markup::escape(pegs->name);
             cout << Markup::emphasis_off();
+            cout << ": " << Markup::escape(pegs->help);
             cout << endl;
             ++pegs;
         }
@@ -930,17 +938,16 @@ void ModuleManager::show_pegs(const char* pfx)
         cout << "no match" << endl;
 }
 
-void ModuleManager::show_rules(const char* pfx)
+void ModuleManager::show_rules(const char* pfx, bool exact)
 {
     s_modules.sort(comp_gids);
-    unsigned len = pfx ? strlen(pfx) : 0;
     unsigned c = 0;
 
     for ( auto p : s_modules )
     {
         const Module* m = p->mod;
 
-        if ( pfx && strncmp(m->get_name(), pfx, len) )
+        if ( !selected(m, pfx, exact) )
             continue;
 
         const RuleMap* r = m->get_rules();
@@ -1062,10 +1069,13 @@ void ModuleManager::dump_rules(const char* pfx)
         cout << "no match" << endl;
 }
 
-void ModuleManager::dump_stats (SnortConfig*)
+void ModuleManager::dump_stats (SnortConfig*, const char* skip)
 {
     for ( auto p : s_modules )
-        p->mod->show_stats();
+    {
+        if ( !skip || !strstr(skip, p->mod->get_name()) )
+            p->mod->show_stats();
+    }
 }
 
 void ModuleManager::accumulate (SnortConfig*)

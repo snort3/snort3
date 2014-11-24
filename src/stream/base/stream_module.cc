@@ -82,6 +82,9 @@ StreamModule::StreamModule() :
     proto = &stream_cfg.ip_cfg;
 }
 
+const PegInfo* StreamModule::get_pegs() const
+{ return base_pegs; }
+
 ProfileStats* StreamModule::get_profile() const
 { return &s5PerfStats; }
 

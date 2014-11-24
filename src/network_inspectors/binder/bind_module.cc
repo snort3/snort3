@@ -40,13 +40,13 @@ using namespace std;
 
 THREAD_LOCAL BindStats bstats;
 
-static const char* bind_pegs[] =
+static const PegInfo bind_pegs[] =
 {
-    "packets",
-    "blocks",
-    "allows",
-    "inspects",
-    nullptr
+    { "packets", "initial bindings" },
+    { "blocks", "block bindings" },
+    { "allows", "allow bindings" },
+    { "inspects", "inspect bindings" },
+    { nullptr, nullptr }
 };
 
 //-------------------------------------------------------------------------
@@ -253,7 +253,7 @@ vector<Binding*>& BinderModule::get_data()
     return bindings;  // move semantics
 }
 
-const char** BinderModule::get_pegs() const
+const PegInfo* BinderModule::get_pegs() const
 { return bind_pegs; }
 
 PegCount* BinderModule::get_counts() const

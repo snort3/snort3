@@ -62,7 +62,7 @@ RpcDecodeModule::RpcDecodeModule() : Module(s_name, s_help, s_params)
 const RuleMap* RpcDecodeModule::get_rules() const
 { return rpc_rules; }
 
-const char** RpcDecodeModule::get_pegs() const
+const PegInfo* RpcDecodeModule::get_pegs() const
 { return simple_pegs; }
 
 PegCount* RpcDecodeModule::get_counts() const

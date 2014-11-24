@@ -53,7 +53,7 @@
 #define STREAM_TCP_WINDOW_SLAM                    19
 #define STREAM_TCP_NO_3WHS                        20
 
-extern const char* tcp_pegs[];
+extern const PegInfo tcp_pegs[];
 extern THREAD_LOCAL struct TcpStats tcpStats;
 extern THREAD_LOCAL ProfileStats s5TcpPerfStats;
 extern THREAD_LOCAL ProfileStats s5TcpNewSessPerfStats;
@@ -94,7 +94,7 @@ public:
     StreamTcpConfig* get_data();
 
     ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
-    const char** get_pegs() const override;
+    const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
 
 private:

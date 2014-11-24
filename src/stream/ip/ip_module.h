@@ -55,7 +55,8 @@ struct SnortConfig;
 #define DEFRAG_EXCESSIVE_OVERLAP  12
 #define DEFRAG_TINY_FRAGMENT      13
 
-extern THREAD_LOCAL SessionStats ipStats;
+extern const PegInfo ip_pegs[];
+extern THREAD_LOCAL struct IpStats ip_stats;
 extern THREAD_LOCAL ProfileStats ip_perf_stats;
 extern THREAD_LOCAL ProfileStats fragPerfStats;
 extern THREAD_LOCAL ProfileStats fragInsertPerfStats;
@@ -82,16 +83,12 @@ public:
 
     const RuleMap* get_rules() const override;
     ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
-    const char** get_pegs() const override;
+    const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     StreamIpConfig* get_data();
 
     unsigned get_gid() const override
     { return GID_DEFRAG; };
-
-    void sum_stats() override;
-    void show_stats() override;
-    void reset_stats() override;
 
 private:
     StreamIpConfig* config;

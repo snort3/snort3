@@ -50,11 +50,11 @@
 namespace
 {
 
-const char* pegs[]
+const PegInfo pegs[]
 {
-    "bad checksum (ip4)",
-    "bad checksum (ip6)",
-    nullptr
+    { "bad checksum (ip4)", "nonzero udp over ipv4 checksums" },
+    { "bad checksum (ip6)", "nonzero udp over ipv6 checksums" },
+    { nullptr, nullptr }
 };
 
 struct Stats
@@ -105,7 +105,7 @@ public:
     const RuleMap* get_rules() const override
     { return udp_rules; }
 
-    const char** get_pegs() const override
+    const PegInfo* get_pegs() const override
     { return pegs; }
 
     PegCount* get_counts() const override

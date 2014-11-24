@@ -201,12 +201,12 @@ public:
     unsigned get_gid() const override
     { return GID_BO; };
 
-    const char** get_pegs() const override;
+    const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     ProfileStats* get_profile() const override;
 };
 
-const char** BoModule::get_pegs() const
+const PegInfo* BoModule::get_pegs() const
 { return simple_pegs; }
 
 PegCount* BoModule::get_counts() const

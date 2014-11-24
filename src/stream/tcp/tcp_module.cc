@@ -332,7 +332,7 @@ bool StreamTcpModule::end(const char*, int, SnortConfig*)
     return true;
 }
 
-const char** StreamTcpModule::get_pegs() const
+const PegInfo* StreamTcpModule::get_pegs() const
 { return tcp_pegs; }
 
 PegCount* StreamTcpModule::get_counts() const
