@@ -186,6 +186,7 @@ const PegInfo ip_pegs[] =
     { "trackers freed", "datagram trackers released" },
     { "nodes inserted", "fragments added to tracker" },
     { "nodes deleted", "fragments deleted from tracker" },
+    { nullptr },
 };
 
 /*  G L O B A L S  **************************************************/
