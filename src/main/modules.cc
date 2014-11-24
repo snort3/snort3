@@ -56,6 +56,7 @@ using namespace std;
 #include "filters/sfthreshold.h"
 #include "sfip/sf_ip.h"
 #include "main/thread.h"
+#include "utils/stats.h"
 
 #if defined(DEBUG_MSGS) || defined (REG_TEST)
 #include "file_api/file_api.h"
@@ -90,6 +91,7 @@ class DetectionModule : public Module
 public:
     DetectionModule() : Module("detection", detection_help, detection_params) { };
     bool set(const char*, Value&, SnortConfig*) override;
+    const PegInfo* get_pegs() const override { return pc_names; };
 };
 
 bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
@@ -921,6 +923,7 @@ class DaqModule : public Module
 public:
     DaqModule() : Module("daq", daq_help, daq_params) { };
     bool set(const char*, Value&, SnortConfig*) override;
+    const PegInfo* get_pegs() const override { return daq_names; };
 };
 
 bool DaqModule::set(const char*, Value& v, SnortConfig* sc)

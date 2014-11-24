@@ -49,9 +49,6 @@ public:
     void tterm();
 
     static void init();
-    static void sum();
-    static void stats();
-    static void reset();
 
 private:
     int insert(Packet*, FragTracker*, FragEngine*);

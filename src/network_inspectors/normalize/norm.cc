@@ -61,26 +61,28 @@ typedef enum {
     PC_MAX
 } PegCounts;
 
-static const char* const pegName[PC_MAX] = {
-    "ip4.trim",
-    "ip4.tos",
-    "ip4.df",
-    "ip4.rf",
-    "ip4.ttl",
-    "ip4.opts",
-    "icmp4.echo",
-    "ip6.ttl",
-    "ip6.opts",
-    "icmp6.echo",
-    "tcp.syn_opt",
-    "tcp.ts_ecr",
-    "tcp.opt",
-    "tcp.pad",
-    "tcp.rsv",
-    "tcp.ecn_pkt",
-    "tcp.ns",
-    "tcp.urg",
-    "tcp.urp"
+const PegInfo norm_names[] =
+{
+    { "ip4.trim", "eth packets trimmed to datagram size" },
+    { "ip4.tos", "type of service normalizations" },
+    { "ip4.df", "don't frag bit normalizations" },
+    { "ip4.rf", "reserved flag bit clears" },
+    { "ip4.ttl", "time-to-live normalizations" },
+    { "ip4.opts", "ip4 options cleared" },
+    { "icmp4.echo", "icmp4 ping normalizations" },
+    { "ip6.ttl", "ip6 hop limit normalizations" },
+    { "ip6.opts", "ip6 options cleared" },
+    { "icmp6.echo", "icmp6 echo normalizations" },
+    { "tcp.syn_opt", "SYN only options cleared from non-SYN packets" },
+    { "tcp.ts_ecr", "timestamp cleared on non-ACKs" },
+    { "tcp.opt", "packetw with options cleared" },
+    { "tcp.pad", "packetw with padding cleared" },
+    { "tcp.rsv", "packets with reserved bits cleared" },
+    { "tcp.ecn_pkt", "packets with ECN bits cleared" },
+    { "tcp.ns", "packets with nonce bit cleared" },
+    { "tcp.urg", "packets with urgent flag with urgent pointer cleared" },
+    { "tcp.urp", "packets without data with urgent poniter cleared" },
+    { nullptr, nullptr }
 };
 
 static THREAD_LOCAL PegCount normStats[PC_MAX];
@@ -529,7 +531,7 @@ static int Norm_TCP (
 
 void Norm_SumStats (void)
 {
-    sum_stats((PegCount*)&gnormStats, (PegCount*)&normStats, array_size(pegName));
+    sum_stats((PegCount*)&gnormStats, (PegCount*)&normStats, array_size(norm_names));
     Stream_SumNormalizationStats();
 }
 
@@ -538,7 +540,7 @@ void Norm_SumStats (void)
 // FIXIT-L would prefer to hide this logic in the stats methods somehow
 static bool labeled()
 {
-    unsigned i = 0, max = array_size(pegName);
+    unsigned i = 0, max = array_size(norm_names);
 
     while ( i < max && !gnormStats[i] )
         ++i;
@@ -548,7 +550,7 @@ static bool labeled()
 
 void Norm_PrintStats (const char* name)
 {
-    show_stats((PegCount*)&gnormStats, pegName, array_size(pegName), name);
+    show_stats((PegCount*)&gnormStats, norm_names, array_size(norm_names), name);
 
     if ( labeled() )
         name = nullptr;

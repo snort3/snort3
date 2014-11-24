@@ -154,7 +154,7 @@ struct Fragment
 };
 
 /* statistics tracking struct */
-struct FragStats
+struct IpStats
 {
     PegCount  total;
     PegCount  reassembles;
@@ -169,24 +169,23 @@ struct FragStats
     PegCount  trackers_released;
     PegCount  nodes_created;
     PegCount  nodes_released;
-
 };
 
-static const char* const peg_names[] =
+const PegInfo ip_pegs[] =
 {
-    "fragments",
-    "reassembled",
-    "discards",
-    "memory faults",
-    "frag timeouts",
-    "overlaps",
-    "anomalies",
-    "alerts",
-    "drops",
-    "trackers added",
-    "trackers freed",
-    "nodes inserted",
-    "nodes deleted"
+    { "fragments", "total fragments" },
+    { "reassembled", "reassembled datagrams" },
+    { "discards", "fragments discarded" },
+    { "memory faults", "memory faults" },
+    { "frag timeouts", "datagrams abandoned" },
+    { "overlaps", "overlapping fragments" },
+    { "anomalies", "anomalies detected" },
+    { "alerts", "alerts generated" },
+    { "drops", "fragments dropped" },
+    { "trackers added", "datagram trackers created" },
+    { "trackers freed", "datagram trackers released" },
+    { "nodes inserted", "fragments added to tracker" },
+    { "nodes deleted", "fragments deleted from tracker" },
 };
 
 /*  G L O B A L S  **************************************************/
@@ -194,8 +193,7 @@ static const char* const peg_names[] =
 // FIXIT-M convert to session memcap
 static THREAD_LOCAL unsigned long mem_in_use = 0; /* memory in use, used for self pres */
 
-static THREAD_LOCAL FragStats t_stats;
-static FragStats g_stats;
+THREAD_LOCAL IpStats ip_stats;
 
 static THREAD_LOCAL uint32_t pkt_snaplen = 0;
 static THREAD_LOCAL Packet** defrag_pkts;  // An array of Packet pointers
@@ -268,7 +266,7 @@ static void FragPrintEngineConfig(FragEngine* engine)
 static inline void EventAnomIpOpts(FragEngine*)
 {
     SnortEventqAdd(GID_DEFRAG, DEFRAG_IPOPTIONS);
-    t_stats.alerts++;
+    ip_stats.alerts++;
 }
 
 /**
@@ -281,7 +279,7 @@ static inline void EventAnomIpOpts(FragEngine*)
 static inline void EventAttackTeardrop(FragEngine*)
 {
     SnortEventqAdd(GID_DEFRAG, DEFRAG_TEARDROP);
-    t_stats.alerts++;
+    ip_stats.alerts++;
 }
 
 /**
@@ -294,7 +292,7 @@ static inline void EventAttackTeardrop(FragEngine*)
 static inline void EventTinyFragments(FragEngine*)
 {
     SnortEventqAdd(GID_DEFRAG, DEFRAG_TINY_FRAGMENT);
-    t_stats.alerts++;
+    ip_stats.alerts++;
 }
 
 /**
@@ -307,7 +305,7 @@ static inline void EventTinyFragments(FragEngine*)
 static inline void EventExcessiveOverlap(FragEngine*)
 {
     SnortEventqAdd(GID_DEFRAG, DEFRAG_EXCESSIVE_OVERLAP);
-    t_stats.alerts++;
+    ip_stats.alerts++;
 }
 
 /**
@@ -321,8 +319,8 @@ static inline void EventExcessiveOverlap(FragEngine*)
 static inline void EventAnomShortFrag(FragEngine*)
 {
     SnortEventqAdd(GID_DEFRAG, DEFRAG_SHORT_FRAG);
-    t_stats.alerts++;
-    t_stats.anomalies++;
+    ip_stats.alerts++;
+    ip_stats.anomalies++;
 }
 
 /**
@@ -336,8 +334,8 @@ static inline void EventAnomShortFrag(FragEngine*)
 static inline void EventAnomOversize(FragEngine*)
 {
     SnortEventqAdd(GID_DEFRAG, DEFRAG_ANOMALY_OVERSIZE);
-    t_stats.alerts++;
-    t_stats.anomalies++;
+    ip_stats.alerts++;
+    ip_stats.anomalies++;
 }
 
 /**
@@ -351,8 +349,8 @@ static inline void EventAnomOversize(FragEngine*)
 static inline void EventAnomZeroFrag(FragEngine*)
 {
     SnortEventqAdd(GID_DEFRAG, DEFRAG_ANOMALY_ZERO);
-    t_stats.alerts++;
-    t_stats.anomalies++;
+    ip_stats.alerts++;
+    ip_stats.anomalies++;
 }
 
 /**
@@ -365,8 +363,8 @@ static inline void EventAnomZeroFrag(FragEngine*)
 static inline void EventAnomBadsizeLg(FragEngine*)
 {
     SnortEventqAdd(GID_DEFRAG, DEFRAG_ANOMALY_BADSIZE_LG);
-    t_stats.alerts++;
-    t_stats.anomalies++;
+    ip_stats.alerts++;
+    ip_stats.anomalies++;
 }
 
 /**
@@ -379,8 +377,8 @@ static inline void EventAnomBadsizeLg(FragEngine*)
 static inline void EventAnomBadsizeSm(FragEngine*)
 {
     SnortEventqAdd(GID_DEFRAG, DEFRAG_ANOMALY_BADSIZE_SM);
-    t_stats.alerts++;
-    t_stats.anomalies++;
+    ip_stats.alerts++;
+    ip_stats.anomalies++;
 }
 
 /**
@@ -393,8 +391,8 @@ static inline void EventAnomBadsizeSm(FragEngine*)
 static inline void EventAnomOverlap(FragEngine*)
 {
     SnortEventqAdd(GID_DEFRAG, DEFRAG_ANOMALY_OVLP);
-    t_stats.alerts++;
-    t_stats.anomalies++;
+    ip_stats.alerts++;
+    ip_stats.anomalies++;
 }
 
 /**
@@ -407,7 +405,7 @@ static inline void EventAnomOverlap(FragEngine*)
 static inline void EventAnomScMinTTL(FragEngine*)
 {
     SnortEventqAdd(GID_DEFRAG, DEFRAG_MIN_TTL_EVASION);
-    t_stats.alerts++;
+    ip_stats.alerts++;
 }
 
 #if 0
@@ -982,7 +980,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
     DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
                 "Processing rebuilt packet:\n"););
 
-    t_stats.reassembles++;
+    ip_stats.reassembles++;
 
     UpdateIPReassStats(&sfBase, dpkt->pkth->caplen);
 
@@ -1068,7 +1066,7 @@ static void delete_frag(Fragment *frag)
         sfBase.frag3_mem_in_use = mem_in_use;
     }
 
-    t_stats.nodes_released++;
+    ip_stats.nodes_released++;
 }
 
 /**
@@ -1147,7 +1145,7 @@ static void release_tracker(FragTracker* ft)
     delete_tracker(ft);
     ft->engine = nullptr;
 
-    t_stats.trackers_released++;
+    ip_stats.trackers_released++;
 }
 
 //-------------------------------------------------------------------------
@@ -1260,11 +1258,11 @@ void Defrag::process(Packet* p, FragTracker* ft)
 #endif
 
         EventAnomScMinTTL(fe);
-        t_stats.discards++;
+        ip_stats.discards++;
         return;
     }
 
-    t_stats.total++;
+    ip_stats.total++;
     UpdateIPFragStats(&sfBase, p->pkth->caplen);
 
     MODULE_PROFILE_START(fragPerfStats);
@@ -1300,7 +1298,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
     {
         DisableDetect(p);
         Active_DropPacket();
-        t_stats.drops++;
+        ip_stats.drops++;
     }
 
     /*
@@ -1336,12 +1334,12 @@ void Defrag::process(Packet* p, FragTracker* ft)
                             p->dsize););
                 }
 #endif
-                t_stats.discards++;
+                ip_stats.discards++;
                 MODULE_PROFILE_END(fragPerfStats);
                 return;
             case FRAG_INSERT_ATTACK:
             case FRAG_INSERT_ANOMALY:
-                t_stats.discards++;
+                ip_stats.discards++;
                 MODULE_PROFILE_END(fragPerfStats);
                 return;
             case FRAG_INSERT_TIMEOUT:
@@ -1358,7 +1356,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
                            (p->ptrs.decode_flags & DECODE_MF),
                            (frag_offset << 3), p->dsize);
 #endif
-                t_stats.discards++;
+                ip_stats.discards++;
                 MODULE_PROFILE_END(fragPerfStats);
                 return;
             default:
@@ -1639,7 +1637,7 @@ int Defrag::insert(Packet *p, FragTracker *ft, FragEngine *fe)
 
         if(overlap > 0)
         {
-            t_stats.overlaps++;
+            ip_stats.overlaps++;
             ft->overlap_count++;
 
             if(frag_end < ft->calculated_size ||
@@ -1849,7 +1847,7 @@ left_overlap_last:
          */
         if(overlap < right->size)
         {
-            t_stats.overlaps++;
+            ip_stats.overlaps++;
             ft->overlap_count++;
 
             DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
@@ -1932,7 +1930,7 @@ left_overlap_last:
                  */
                 EventAnomOverlap(fe);
                 alerted_overlap = 1;
-                t_stats.overlaps++;
+                ip_stats.overlaps++;
                 ft->overlap_count++;
             }
 
@@ -2020,7 +2018,7 @@ left_overlap_last:
                                     "zero size frag (len: %d  overlap: %d)\n",
                                     fragLength, overlap););
 
-                        t_stats.discards++;
+                        ip_stats.discards++;
 
                         MODULE_PROFILE_END(fragInsertPerfStats);
                         return FRAG_INSERT_ANOMALY;
@@ -2239,7 +2237,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
         sfBase.frag3_mem_in_use = mem_in_use;
     }
 
-    t_stats.nodes_created++;
+    ip_stats.nodes_created++;
     sfBase.iFragCreates++;
     sfBase.iCurrentFrags++;
     if (sfBase.iCurrentFrags > sfBase.iMaxFrags)
@@ -2303,7 +2301,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
     if ( p->is_ip4() )
         FragHandleIPOptions(ft, p, frag_off);
 
-    t_stats.trackers_created++;
+    ip_stats.trackers_created++;
     return 1;
 }
 
@@ -2351,7 +2349,7 @@ int Defrag::add_frag_node(FragTracker *ft,
             "(len: %d  slide: %d  trunc: %d)\n",
             len, slide, trunc););
 
-        t_stats.discards++;
+        ip_stats.discards++;
 
 #ifdef DEBUG_MSGS
         newfrag = ft->fraglist;
@@ -2395,7 +2393,7 @@ int Defrag::add_frag_node(FragTracker *ft,
         sfBase.frag3_mem_in_use = mem_in_use;
     }
 
-    t_stats.nodes_created++;
+    ip_stats.nodes_created++;
 
     newfrag->flen = fragLength;
     memcpy(newfrag->fptr, fragStart, fragLength);
@@ -2482,7 +2480,7 @@ int Defrag::dup_frag_node(
         sfBase.frag3_mem_in_use = mem_in_use;
     }
 
-    t_stats.nodes_created++;
+    ip_stats.nodes_created++;
 
     newfrag->ord = ft->ordinal++;
     /*
@@ -2550,31 +2548,12 @@ inline int Defrag::expire(Packet*, FragTracker *ft, FragEngine *fe)
          */
         delete_tracker(ft);
 
-        t_stats.timeouts++;
+        ip_stats.timeouts++;
         sfBase.iFragTimeouts++;
 
         return FRAG_TRACKER_TIMEOUT;
     }
 
     return FRAG_OK;
-}
-
-//-------------------------------------------------------------------------
-// static methods
-//-------------------------------------------------------------------------
-
-void Defrag::sum()
-{
-    sum_stats((PegCount*)&g_stats, (PegCount*)&t_stats, array_size(peg_names));
-}
-
-void Defrag::stats()
-{
-    show_stats((PegCount*)&g_stats, peg_names, array_size(peg_names), nullptr);
-}
-
-void Defrag::reset()
-{
-    memset(&g_stats, 0, sizeof(g_stats));
 }
 

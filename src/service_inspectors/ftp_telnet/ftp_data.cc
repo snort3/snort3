@@ -217,7 +217,7 @@ class FtpDataModule : public Module
 public:
     FtpDataModule() : Module(s_name, s_help) { };
 
-    const char** get_pegs() const override;
+    const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     ProfileStats* get_profile() const override;
 
@@ -225,7 +225,7 @@ public:
     { return false; };
 };
 
-const char** FtpDataModule::get_pegs() const
+const PegInfo* FtpDataModule::get_pegs() const
 { return simple_pegs; }
 
 PegCount* FtpDataModule::get_counts() const

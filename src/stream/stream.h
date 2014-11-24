@@ -112,23 +112,10 @@ typedef struct {
 } tPortFilterStats;
 #endif
 
-struct SessionStats
-{
-    PegCount sessions;
-    PegCount prunes;
-    PegCount timeouts;
-    PegCount created;
-    PegCount released;
-    PegCount discards;
-    PegCount events;
-};
-
 // shared stream state
 extern THREAD_LOCAL Memcap* tcp_memcap;
 extern THREAD_LOCAL class FlowControl* flow_con;
-
-extern const char* session_pegs[];
-extern const unsigned session_peg_count;
+extern const PegInfo base_pegs[];
 
 void Stream_SumNormalizationStats(void);
 void Stream_PrintNormalizationStats(const char* name = nullptr);

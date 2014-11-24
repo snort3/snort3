@@ -103,7 +103,7 @@ public:
     virtual const RuleMap* get_rules() const
     { return nullptr; };
 
-    virtual const char** get_pegs() const
+    virtual const PegInfo* get_pegs() const
     { return nullptr; };
 
     // counts and profile are thread local

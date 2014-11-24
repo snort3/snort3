@@ -48,7 +48,20 @@
 #include "protocols/tcp.h"
 #include "sfip/sf_ip.h"
 
-THREAD_LOCAL SessionStats icmpStats;
+struct IcmpStats
+{
+    PegCount created;
+    PegCount released;
+};
+
+const PegInfo icmp_pegs[] =
+{
+    { "created", "icmp session trackers created" },
+    { "released", "icmp session trackers released" },
+    { nullptr, nullptr }
+};
+
+THREAD_LOCAL IcmpStats icmpStats;
 THREAD_LOCAL ProfileStats icmp_perf_stats;
 
 //------------------------------------------------------------------------

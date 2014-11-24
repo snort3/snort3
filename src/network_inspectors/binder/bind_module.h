@@ -53,7 +53,7 @@ public:
     void add(const char* service, const char* type);
     void add(unsigned proto, const char* type);
 
-    const char** get_pegs() const override;
+    const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     ProfileStats* get_profile() const override;
 

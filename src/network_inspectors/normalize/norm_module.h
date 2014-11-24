@@ -44,6 +44,7 @@ public:
     bool end(const char*, int, SnortConfig*) override;
 
     ProfileStats* get_profile() const override;
+    const PegInfo* get_pegs() const override { return norm_names; };
 
     const NormalizerConfig* get_config()
     { return &config; };

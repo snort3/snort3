@@ -27,7 +27,8 @@
 #include "main/thread.h"
 #include "stream/stream.h"
 
-extern THREAD_LOCAL SessionStats icmpStats;
+extern const PegInfo icmp_pegs[];
+extern THREAD_LOCAL struct IcmpStats icmpStats;
 extern THREAD_LOCAL ProfileStats icmp_perf_stats;
 
 struct SnortConfig;
@@ -50,7 +51,7 @@ public:
     bool end(const char*, int, SnortConfig*) override;
 
     ProfileStats* get_profile() const override;
-    const char** get_pegs() const override;
+    const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
 
     StreamIcmpConfig* get_data();

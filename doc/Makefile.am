@@ -6,6 +6,7 @@ BUILT_SOURCES = \
 builtin.txt \
 commands.txt \
 config.txt \
+counts.txt \
 gids.txt \
 help.txt \
 modules.txt \
@@ -81,6 +82,9 @@ commands.txt: $(snort)
 
 config.txt: $(snort)
 	$(snort) $(plugin_path) --markup --help-config | sort -k 3 > $@
+
+counts.txt: $(snort)
+	$(snort) $(plugin_path) --markup --help-counts | sort -k 2 > $@
 
 gids.txt: $(snort)
 	$(snort) $(plugin_path) --markup --list-gids | sort -n  -k 1.4 > $@

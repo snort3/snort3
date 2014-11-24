@@ -43,7 +43,10 @@
 
 static DAQ_Stats_t g_daq_stats;
 static PacketCount gpc;
+static AuxCount gaux;
+
 THREAD_LOCAL PacketCount pc;
+THREAD_LOCAL AuxCount aux_counts;
 ProcessCount proc_stats;
 
 //-------------------------------------------------------------------------
@@ -152,82 +155,73 @@ static void timing_stats()
 
 struct DAQStats
 {
+    PegCount pcaps;
     PegCount received;
     PegCount analyzed;
     PegCount dropped;
     PegCount filtered;
     PegCount outstanding;
     PegCount injected;
+    PegCount verdicts[MAX_DAQ_VERDICT];
 #ifdef REG_TEST
     PegCount skipped;
 #endif
-};
-
-struct DAQVerdicts
-{
-    PegCount verdicts[MAX_DAQ_VERDICT];
-    PegCount internal_blacklist;
-    PegCount internal_whitelist;
+    PegCount fail_open;
+    PegCount idle;
 };
 
 //-------------------------------------------------------------------------
+// FIXIT-L need better encapsulation of these counts by their modules
 
-static const char* const simple_names[] =
+const PegInfo daq_names[] =
 {
-    "packets"
-};
-
-static const char* const daq_names[] =
-{
-    "received",
-    "analyzed",
-    "dropped",
-    "filtered",
-    "outstanding",
-    "injected"
+    { "pcaps", "total files processed" },
+    { "received", "total packets received from DAQ" },
+    { "analyzed", "total packets analyzed from DAQ" },
+    { "dropped", "packets dropped" },
+    { "filtered", "packets filtered out" },
+    { "outstanding", "packets unprocessed" },
+    { "injected", "active responses or replacements" },
+    { "allow", "total allow verdicts" },
+    { "block", "total block verdicts" },
+    { "replace", "total replace verdicts" },
+    { "whitelist", "total whitelist verdicts" },
+    { "blacklist", "total blacklist verdicts" },
+    { "ignore", "total ignore verdicts" },
 #ifdef REG_TEST
-    , "skipped"
+    { "skipped", "packets skipped at startup" },
 #endif
+    { "fail open", "packets passed during initialization" },
+    { "idle", "attempts to acquire from DAQ without available packets" },
+    { nullptr, nullptr }
 };
 
-const char* const verdict_names[] =
+const PegInfo pc_names[] =
 {
-    "allow",
-    "block",
-    "replace",
-    "whitelist",
-    "blacklist",
-    "ignore",
-    "internal blacklist",
-    "internal whitelist"
+    { "analyzed", "packets sent to detection" },
+    { "alerts", "alerts not including IP reputation" },
+    { "total alerts", "alerts including IP reputation" },
+    { "logged", "logged packets" },
+    { "passed", "passed packets" },
+    { "match limit", "fast pattern matches not processed" },
+    { "queue limit", "events not queued because queue full" },
+    { "log limit", "events queued but not logged" },
+    { "event limit", "events filtered" },
+    { "alert limit", "events previously triggered on same PDU" },
+    { "internal blacklist", "packets blacklisted internally due to lack of DAQ support" },
+    { "internal whitelist", "packets whitelisted internally due to lack of DAQ support" },
+    { nullptr, nullptr }
 };
 
-static const char* const pc_names[] =
+const PegInfo proc_names[] =
 {
-    "analyzed",
-    "fail open",
-    "alerts",
-    "total alerts",
-    "logged",
-    "passed",
-    "match limit",
-    "queue limit",
-    "log limit",
-    "event limit",
-    "alert limit",
-    "internal blacklist",
-    "internal whitelist",
-    "idle"
-};
-
-static const char* const proc_names[] =
-{
-    "local commands",
-    "remote commands",
-    "signals",
-    "conf reloads",
-    "attribute table reloads",
-    "attribute table hosts"
+    { "local commands", "total local commands processed" },
+    { "remote commands", "total remote commands processed" },
+    { "signals", "total signals processed" },
+    { "conf reloads", "number of times configuration was reloaded" },
+    { "attribute table reloads", "number of times hosts table was reloaded" },
+    { "attribute table hosts", "total number of hosts in table" },
+    { nullptr, nullptr }
 };
 
 //-------------------------------------------------------------------------
@@ -248,67 +242,56 @@ void pc_sum()
 
     sum_stats((PegCount*)&gpc, (PegCount*)&pc, array_size(pc_names));
     memset(&pc, 0, sizeof(pc));
+
+    sum_stats((PegCount*)&gaux, (PegCount*)&aux_counts, sizeof(aux_counts)/sizeof(PegCount));
+    memset(&aux_counts, 0, sizeof(aux_counts));
 }
 
 //-------------------------------------------------------------------------
 
+static void get_daq_stats(DAQStats& daq_stats)
+{
+    uint64_t pkts_recv = g_daq_stats.hw_packets_received;
+    uint64_t pkts_drop = g_daq_stats.hw_packets_dropped;
+    uint64_t pkts_inj = g_daq_stats.packets_injected + Active_GetInjects();
+
+    uint64_t pkts_out = 0;
+
+    if ( pkts_recv > g_daq_stats.packets_filtered + g_daq_stats.packets_received )
+        pkts_out = pkts_recv - g_daq_stats.packets_filtered - g_daq_stats.packets_received;
+
+    daq_stats.pcaps = Trough_GetFileCount();
+    daq_stats.received = pkts_recv;
+    daq_stats.analyzed = g_daq_stats.packets_received;
+    daq_stats.dropped =  pkts_drop;
+    daq_stats.filtered =  g_daq_stats.packets_filtered;
+    daq_stats.outstanding =  pkts_out;
+    daq_stats.injected =  pkts_inj;
+
+    for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
+        daq_stats.verdicts[i] = g_daq_stats.verdicts[i];
+
+#ifdef REG_TEST
+    daq_stats.skipped = snort_conf->pkt_skip; 
+#endif
+    daq_stats.fail_open = gaux.total_fail_open;
+    daq_stats.idle = gaux.idle;
+}
+
 void DropStats()
 {
-    const DAQ_Stats_t* pkt_stats = &g_daq_stats;
-
     LogLabel("Packet Statistics");
 
-    {
-        uint64_t pkts_out, pkts_inj;
-
-        uint64_t pkts_recv = pkt_stats->hw_packets_received;
-        uint64_t pkts_drop = pkt_stats->hw_packets_dropped;
-
-        if ( pkts_recv > pkt_stats->packets_filtered
-                       + pkt_stats->packets_received )
-            pkts_out = pkts_recv - pkt_stats->packets_filtered
-                     - pkt_stats->packets_received;
-        else
-            pkts_out = 0;
-
-        pkts_inj = pkt_stats->packets_injected;
-        pkts_inj += Active_GetInjects();
-
-        DAQStats daq_stats;
-        daq_stats.received = pkts_recv;
-        daq_stats.analyzed = pkt_stats->packets_received;
-        daq_stats.dropped =  pkts_drop;
-        daq_stats.filtered =  pkt_stats->packets_filtered;
-        daq_stats.outstanding =  pkts_out;
-        daq_stats.injected =  pkts_inj;
-#ifdef REG_TEST
-        daq_stats.skipped = snort_conf->pkt_skip; 
-#endif
-
-        if ( pkts_recv )
-            LogLabel("daq");
-
-        PegCount pcaps = Trough_GetFileCount();
-        if ( pcaps )
-            LogCount("pcaps", pcaps);
-        show_stats((PegCount*)&daq_stats, daq_names, array_size(daq_names));
-
-        DAQVerdicts daq_verdicts;
-
-        for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
-            daq_verdicts.verdicts[i] = pkt_stats->verdicts[i];
-
-        daq_verdicts.internal_blacklist = pc.internal_blacklist;
-        daq_verdicts.internal_whitelist = pc.internal_whitelist;
-
-        show_stats((PegCount*)&daq_verdicts, verdict_names, array_size(verdict_names));
-    }
+    DAQStats daq_stats;
+    get_daq_stats(daq_stats);
+    show_stats((PegCount*)&daq_stats, daq_names, array_size(daq_names)-1, "daq");
 
     PacketManager::dump_stats();
     //mpse_print_qinfo();
 
     LogLabel("Module Statistics");
-    ModuleManager::dump_stats(snort_conf);
+    const char* exclude = "daq detection snort";
+    ModuleManager::dump_stats(snort_conf, exclude);
 
     // ensure proper counting of log_limit
     SnortEventqResetCounts();
@@ -318,13 +301,13 @@ void DropStats()
         gpc.total_alert_pkts = 0;
 
     LogLabel("Summary Statistics");
-    show_stats((PegCount*)&gpc, pc_names, array_size(pc_names), "detection");
+    show_stats((PegCount*)&gpc, pc_names, array_size(pc_names)-1, "detection");
 
 #ifdef PPM_MGR
     PPM_PRINT_SUMMARY(&snort_conf->ppm_cfg);
 #endif
     proc_stats.attribute_table_hosts = SFAT_NumberOfHosts();
-    show_stats((PegCount*)&proc_stats, proc_names, array_size(proc_names), "process");
+    show_stats((PegCount*)&proc_stats, proc_names, array_size(proc_names)-1, "process");
 }
 
 //-------------------------------------------------------------------------
@@ -364,14 +347,14 @@ void sum_stats(
 }
 
 void show_stats(
-    PegCount* pegs, const char* const names[], unsigned n, const char* module_name)
+    PegCount* pegs, const PegInfo* info, unsigned n, const char* module_name)
 {
     bool head = false;
 
     for ( unsigned i = 0; i < n; ++i )
     {
         PegCount c = pegs[i];
-        const char* s = names[i];
+        const char* s = info[i].name;
 
         if ( !c )
             continue;
@@ -387,7 +370,7 @@ void show_stats(
 }
 
 void show_percent_stats(
-    PegCount* pegs, const char* const names[], unsigned n, const char* module_name)
+    PegCount* pegs, const char* names[], unsigned n, const char* module_name)
 {
     bool head = false;
 
@@ -408,17 +391,5 @@ void show_percent_stats(
 
         LogStat(s, c, pegs[0]);
     }
-}
-
-//-------------------------------------------------------------------------
-
-void sum_stats(SimpleStats* sums, SimpleStats* counts)
-{
-    sum_stats((PegCount*)sums, (PegCount*)counts, array_size(simple_names));
-}
-
-void show_stats(SimpleStats* sums, const char* module_name)
-{
-    show_stats((PegCount*)sums, simple_names, array_size(simple_names), module_name);
 }
 

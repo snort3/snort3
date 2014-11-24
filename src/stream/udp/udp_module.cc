@@ -87,8 +87,8 @@ bool StreamUdpModule::end(const char*, int, SnortConfig*)
     return true;
 }
 
-const char** StreamUdpModule::get_pegs() const
-{ return session_pegs; }
+const PegInfo* StreamUdpModule::get_pegs() const
+{ return udp_pegs; }
 
 PegCount* StreamUdpModule::get_counts() const
 { return (PegCount*)&udpStats; }

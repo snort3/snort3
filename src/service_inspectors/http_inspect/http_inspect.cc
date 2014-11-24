@@ -83,29 +83,30 @@ int valid_lookup[256];
 THREAD_LOCAL ProfileStats hiPerfStats;
 THREAD_LOCAL ProfileStats hiDetectPerfStats;
 
-const char* peg_names[] =
+const PegInfo peg_names[] =
 {
-    "packets",
-    "gets",
-    "posts",
+    { "packets", "total packets processed" },
+    { "gets", "GET requests" },
+    { "posts", "POST requests" },
 
-    "request headers",
-    "response headers",
-    "request cookies",
-    "response cookies",
-    "post params",
+    { "request headers", "total requests" },
+    { "response headers", "total responses" },
+    { "request cookies", "requests with Cookie" },
+    { "response cookies", "responses with Set-Cookie" },
+    { "post params", "POST parameters extracted" },
 
-    "unicode",
-    "double unicode",
-    "non-ascii",
-    "paths with ../",
-    "paths with //",
-    "paths with ./",
+    { "unicode", "unicode normalizations" },
+    { "double unicode", "double unicode normalizations" },
+    { "non-ascii", "non-ascii normalizations" },
+    { "paths with ../", "directory traversal normalizations" },
+    { "paths with //", "double slash normalizations" },
+    { "paths with ./", "relative directory normalizations" },
 
-    "gzip packets",
-    "compressed bytes",
-    "decompressed bytes",
-    nullptr,
+    { "gzip packets", "packets with gzip compression" },
+    { "compressed bytes", "total comparessed bytes processed" },
+    { "decompressed bytes", "total bytes decompressed" },
+
+    { nullptr, nullptr }
 };
 
 THREAD_LOCAL int hiDetectCalled = 0;
