@@ -220,7 +220,7 @@ endif()
 #  create the recipes for building the files
 
 
-set (PDF_ARGUMENTS --icons --icons-dir=./images/icons --resource=${CMAKE_CURRENT_SOURCE_DIR}/images )
+set (PDF_ARGUMENTS --resource=${CMAKE_CURRENT_SOURCE_DIR}/images )
 set (HTML_ARGUMENTS --copy --attribute linkcss --attribute stylesdir --attribute disable-javascript --attribute quirks! ${PDF_ARGUMENTS})
 
 add_custom_command(OUTPUT snort_manual.html
