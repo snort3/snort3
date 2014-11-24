@@ -163,6 +163,8 @@ struct DAQStats
     PegCount outstanding;
     PegCount injected;
     PegCount verdicts[MAX_DAQ_VERDICT];
+    PegCount internal_blacklist;
+    PegCount internal_whitelist;
 #ifdef REG_TEST
     PegCount skipped;
 #endif
@@ -273,6 +275,8 @@ static void get_daq_stats(DAQStats& daq_stats)
     for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
         daq_stats.verdicts[i] = g_daq_stats.verdicts[i];
 
+    daq_stats.internal_blacklist = gaux.internal_blacklist;
+    daq_stats.internal_whitelist = gaux.internal_whitelist;
 #ifdef REG_TEST
     daq_stats.skipped = snort_conf->pkt_skip; 
 #endif

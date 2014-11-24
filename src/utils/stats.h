@@ -69,9 +69,9 @@ struct AuxCount
     PegCount idle;
 };
 
-extern SO_PUBLIC ProcessCount proc_stats;
+extern ProcessCount proc_stats;
+extern THREAD_LOCAL AuxCount aux_counts;
 extern SO_PUBLIC THREAD_LOCAL PacketCount pc;
-extern SO_PUBLIC THREAD_LOCAL AuxCount aux_counts;
 
 extern const PegInfo daq_names[];
 extern const PegInfo pc_names[];
