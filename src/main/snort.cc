@@ -717,7 +717,7 @@ DAQ_Verdict ProcessPacket(
 
         if ( Active_GetTunnelBypass() )
         {
-            pc.internal_blacklist++;
+            aux_counts.internal_blacklist++;
             return verdict;
         }
 
@@ -809,7 +809,7 @@ DAQ_Verdict packet_callback(
                 else
                 {
                     verdict = DAQ_VERDICT_PASS;
-                    pc.internal_whitelist++;
+                    aux_counts.internal_whitelist++;
                 }
             }
             else if ( s_packet->ptrs.decode_flags & DECODE_PKT_TRUST )

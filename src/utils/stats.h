@@ -49,8 +49,6 @@ struct PacketCount
     PegCount log_limit;
     PegCount event_limit;
     PegCount alert_limit;
-    PegCount internal_blacklist;
-    PegCount internal_whitelist;
 };
 
 struct ProcessCount
@@ -65,13 +63,15 @@ struct ProcessCount
 
 struct AuxCount
 {
+    PegCount internal_blacklist;
+    PegCount internal_whitelist;
     PegCount total_fail_open;
     PegCount idle;
 };
 
-extern SO_PUBLIC ProcessCount proc_stats;
+extern ProcessCount proc_stats;
+extern THREAD_LOCAL AuxCount aux_counts;
 extern SO_PUBLIC THREAD_LOCAL PacketCount pc;
-extern SO_PUBLIC THREAD_LOCAL AuxCount aux_counts;
 
 extern const PegInfo daq_names[];
 extern const PegInfo pc_names[];
