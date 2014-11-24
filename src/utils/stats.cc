@@ -188,6 +188,10 @@ const PegInfo daq_names[] =
     { "whitelist", "total whitelist verdicts" },
     { "blacklist", "total blacklist verdicts" },
     { "ignore", "total ignore verdicts" },
+
+    // FIXIT-L thise are not exactly DAQ counts - but they are related
+    { "internal blacklist", "packets blacklisted internally due to lack of DAQ support" },
+    { "internal whitelist", "packets whitelisted internally due to lack of DAQ support" },
 #ifdef REG_TEST
     { "skipped", "packets skipped at startup" },
 #endif
@@ -208,8 +212,6 @@ const PegInfo pc_names[] =
     { "log limit", "events queued but not logged" },
     { "event limit", "events filtered" },
     { "alert limit", "events previously triggered on same PDU" },
-    { "internal blacklist", "packets blacklisted internally due to lack of DAQ support" },
-    { "internal whitelist", "packets whitelisted internally due to lack of DAQ support" },
     { nullptr, nullptr }
 };
 

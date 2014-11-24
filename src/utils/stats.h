@@ -49,8 +49,6 @@ struct PacketCount
     PegCount log_limit;
     PegCount event_limit;
     PegCount alert_limit;
-    PegCount internal_blacklist;
-    PegCount internal_whitelist;
 };
 
 struct ProcessCount
@@ -65,6 +63,8 @@ struct ProcessCount
 
 struct AuxCount
 {
+    PegCount internal_blacklist;
+    PegCount internal_whitelist;
     PegCount total_fail_open;
     PegCount idle;
 };
