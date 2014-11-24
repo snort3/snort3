@@ -1,6 +1,5 @@
 /*
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -63,44 +62,27 @@ public:
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_protocol_ids(std::vector<uint16_t>&) override;
+
+private:
+    void DecodeEAP(const RawData&, const CodecData&);
+    void DecodeEapolKey(const RawData&, const CodecData&);
 };
 
 } // namespace
 
-/*************************************************
- ***************  private codecs  ****************
- *************************************************/
 
-/*
- * Function: DecodeEAP(uint8_t *, uint32_t, Packet *)
- *
- * Purpose: Decode Extensible Authentication Protocol
- *
- * Arguments: pkt => ptr to the packet data
- *            len => length from here to the end of the packet
- *            p   => pointer to decoded packet struct
- *
- * Returns: void function
- */
-void DecodeEAP(const RawData& raw, const CodecData& codec)
+void EapolCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{ v.push_back(ETHERTYPE_EAPOL); }
+
+
+void EapolCodec::DecodeEAP(const RawData& raw, const CodecData& codec)
 {
     if(raw.len < sizeof(eapol::EAPHdr))
         codec_events::decoder_event(codec, DECODE_EAP_TRUNCATED);
 }
 
 
-/*
- * Function: DecodeEapolKey(uint8_t *, uint32_t, Packet *)
- *
- * Purpose: Decode 1x key setup
- *
- * Arguments: pkt => ptr to the packet data
- *            len => length from here to the end of the packet
- *            p   => pointer to decoded packet struct
- *
- * Returns: void function
- */
-void DecodeEapolKey(const RawData& raw, const CodecData& codec)
+void EapolCodec::DecodeEapolKey(const RawData& raw, const CodecData& codec)
 {
     if(raw.len < sizeof(eapol::EapolKey))
         codec_events::decoder_event(codec, DECODE_EAPKEY_TRUNCATED);
@@ -129,12 +111,6 @@ bool EapolCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         DecodeEapolKey(raw, codec);
 
     return true;
-}
-
-
-void EapolCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ETHERTYPE_EAPOL);
 }
 
 

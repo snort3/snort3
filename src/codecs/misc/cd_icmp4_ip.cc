@@ -1,6 +1,5 @@
 /*
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// cd_ip4_embedded_in_icmp.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// cd_icmp4_ip.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 
@@ -60,9 +59,7 @@ public:
 
 
 void Icmp4IpCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(IP_EMBEDDED_IN_ICMP4);
-}
+{ v.push_back(IP_EMBEDDED_IN_ICMP4); }
 
 bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {

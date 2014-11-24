@@ -16,11 +16,11 @@
 ** along with this program, if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-
 // codec_module.h author Russ Combs <rucombs@cisco.com>
+// codec_module.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef CODECS_CODEC_MODULE
-#define CODECS_CODEC_MODULE
+#ifndef CODECS_CODEC_MODULE_H
+#define CODECS_CODEC_MODULE_H
 
 #include "framework/module.h"
 
@@ -31,7 +31,8 @@ constexpr int GID_DECODE = 116;
 // add the new decoder rules to the following enum.
 
 
-enum CodecSid {
+enum CodecSid
+{
 
     DECODE_NOT_IPV4_DGRAM = 1,
     DECODE_IPV4_INVALID_HEADER_LEN = 2,
