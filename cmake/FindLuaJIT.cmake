@@ -1,6 +1,4 @@
 #
-#  FILE TAKEN FROM https://github.com/msva/lua-curl/blob/master/cmake/Modules/FindLuaJIT.cmake
-#
 # Locate LuaJIT library
 # This module defines
 #  LUAJIT_FOUND, if false, do not try to link to Lua

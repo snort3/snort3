@@ -333,8 +333,7 @@ foreach (file ${EXTRA_DIST})
     list(APPEND EXTRA_DIST_BUILT "${CMAKE_CURRENT_BINARY_DIR}/${file}")
 endforeach(file)
 
-
-add_custom_target(snort_manuals ALL DEPENDS ${EXTRA_DIST})
+add_custom_target(snort_manuals ALL DEPENDS ${EXTRA_DIST_BUILT})
 install (FILES ${EXTRA_DIST_BUILT} DESTINATION "${SNORT_DATA_DIR}")
 install (FILES ${EXTRA_DIST_PACKAGED} DESTINATION "${SNORT_DATA_DIR}")
 install (FILES ${UNBUILT_SOURCES} DESTINATION "${SNORT_DATA_DIR}")

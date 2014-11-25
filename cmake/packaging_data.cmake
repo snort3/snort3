@@ -1,4 +1,5 @@
 
+# use this target instead of 'make package_source'
 add_custom_target(dist
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target copy_manuals_to_source
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target package_source
