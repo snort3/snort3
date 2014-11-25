@@ -989,32 +989,25 @@ typedef enum {
     PC_MAX
 } PegCounts;
 
-static PegCount gnormStats[PC_MAX];
 static THREAD_LOCAL PegCount normStats[PC_MAX];
 
 static const PegInfo pegName[] =
 {
-    { "tcp.trim", "tcp segments trimmed to correct size" },
-    { "tcp.ecn_ssn", "ECN bits cleared" },
-    { "tcp.ts_nop", "timestamp options cleared" },
-    { "tcp.ips_data", "normalized segments" },
-    { "tcp.block", "blocked segments" },
+    { "tcp trim", "tcp segments trimmed to correct size" },
+    { "tcp ecn session", "ECN bits cleared" },
+    { "tcp ts nop", "timestamp options cleared" },
+    { "tcp ips data", "normalized segments" },
+    { "tcp block", "blocked segments" },
     { nullptr, nullptr }
 };
 
-void Stream_SumNormalizationStats()
-{
-    sum_stats((PegCount*)&gnormStats, (PegCount*)&normStats, array_size(pegName));
-}
+const PegInfo* Stream_GetNormPegs()
+{ return pegName; }
 
-void Stream_PrintNormalizationStats (const char* name)
-{
-    show_stats((PegCount*)&gnormStats, pegName, PC_MAX, name);
-}
-
-void Stream_ResetNormalizationStats (void)
-{
-    memset(gnormStats, 0, sizeof(gnormStats));
+PegCount* Stream_GetNormCounts(unsigned& c)
+{ 
+    c = PC_MAX;
+    return normStats;
 }
 
 //-----------------------------------------------------------------------

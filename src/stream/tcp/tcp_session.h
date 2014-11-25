@@ -228,9 +228,6 @@ private:
     int process_dis(Packet*);
 };
 
-void tcp_sum();
-void tcp_stats();
-void tcp_reset();
 void tcp_show(StreamTcpConfig*);
 
 #endif
