@@ -90,9 +90,8 @@ static inline int Norm_TcpIsOptional(const NormalizerConfig* nc, uint8_t opt)
     return ( (nc->normalizer_options[byte] & bit) != 0 );
 }
 
-void Norm_SumStats(void);
-void Norm_PrintStats(const char*);
-void Norm_ResetStats(void);
+const PegInfo* Norm_GetPegs();
+PegCount* Norm_GetCounts(unsigned&);
 
 #endif
 

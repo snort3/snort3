@@ -117,9 +117,8 @@ extern THREAD_LOCAL Memcap* tcp_memcap;
 extern THREAD_LOCAL class FlowControl* flow_con;
 extern const PegInfo base_pegs[];
 
-void Stream_SumNormalizationStats(void);
-void Stream_PrintNormalizationStats(const char* name = nullptr);
-void Stream_ResetNormalizationStats(void);
+const PegInfo* Stream_GetNormPegs();
+PegCount* Stream_GetNormCounts(unsigned&);
 
 #endif
 
