@@ -1,7 +1,4 @@
 
-include_directories (${PCAP_INCLUDE_DIR})
-
-
 if (STATIC_CODECS)
     set (PLUGIN_LIST
         cd_eth.cc
@@ -12,16 +9,16 @@ if (STATIC_CODECS)
         cd_raw6.cc
         cd_slip.cc
         cd_wlan.cc
-#        root_fddi.cc
-#        root_i4lrawip.cc
-#        root_oldpflog.cc
-#        root_enc.cc
-#        root_pflog.cc
-#        root_pppserial.cc
-#        root_chdlc.cc
-#        root_i4lciscoip.cc
-#        prot_ipx.cc
-#        prot_eap.cc
+#        cd_fddi.cc
+#        cd_i4lrawip.cc
+#        cd_oldpflog.cc
+#        cd_enc.cc
+#        cd_pflog.cc
+#        cd_pppserial.cc
+#        cd_chdlc.cc
+#        cd_i4lciscoip.cc
+#        cd_ipx.cc
+#        cd_eap.cc
     )
 
 

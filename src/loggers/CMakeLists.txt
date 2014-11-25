@@ -1,6 +1,4 @@
 
-include_directories(${LUAJIT_INCLUDE_DIR})
-
 set (LOGGER_SOURCES
     alert_luajit.cc
     log_codecs.cc

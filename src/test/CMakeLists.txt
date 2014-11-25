@@ -2,8 +2,8 @@
 if ( BUILD_UNIT_TESTS )
 
 find_package(CHECK REQUIRED)
-include_directories(${CHECK_INCLUDE_DIR})
-include_directories(${CMAKE_CURRENT_BINARY_DIR})  # for generated files
+include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})  # for generated files
+include_directories(AFTER ${CHECK_INCLUDE_DIR})
 
 
 #  Generating build_decl.h  Will rebuild every time 'make' is run

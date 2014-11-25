@@ -1,6 +1,4 @@
 
-include_directories(${LUAJIT_INCLUDE_DIR})
-
 SET( PLUGIN_LIST
     ips_ack.cc
     ips_asn1.cc

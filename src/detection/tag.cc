@@ -35,7 +35,7 @@
 #include "util.h"
 #include "log.h"
 #include "snort.h"
-#include "event.h"
+#include "events/event.h"
 
 #include "sfxhash.h"
 #include "sfip/sfip_t.h"

@@ -25,7 +25,7 @@ set(EXTERNAL_INCLUDES
     CACHE INTERNAL "external INCLUDES" FORCE
 )
 include_directories(BEFORE ${LUAJIT_INCLUDE_DIR})
-include_directories(${EXTERNAL_INCLUDES})
+include_directories(AFTER ${EXTERNAL_INCLUDES})
 
 # prepending all of these to ensure they are included before External Libs
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
