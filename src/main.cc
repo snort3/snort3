@@ -81,7 +81,7 @@ static bool pause_enabled = false;
 static bool shell_enabled = false;
 #endif
 
-const struct timespec main_sleep = { 0, 100000000 }; // 0.1 sec
+const struct timespec main_sleep = { 0, 1000000 }; // 0.001 sec
 
 static const char* prompt = "o\")~ ";
 
