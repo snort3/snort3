@@ -292,15 +292,18 @@ const PegInfo* NormalizeModule::get_pegs() const
     pegs.clear();
 
     const PegInfo* p = Norm_GetPegs();
+    assert(p);
 
-    while ( p && p->name )
+    while ( p->name )
         pegs.push_back(*p++);
 
     p = Stream_GetNormPegs();
+    assert(p);
 
-    while ( p && p->name )
+    while ( p->name )
         pegs.push_back(*p++);
 
+    pegs.push_back(*p);
     return &pegs[0];
 }
 
