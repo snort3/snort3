@@ -200,3 +200,7 @@ yet firm so feedback is welcome to get something we can live with.
 
 * Then Fix All Warnings.  None Allowed.
 
+==== Other
+
+* Prefer 'and' over && and 'or' over || for new source files.
+

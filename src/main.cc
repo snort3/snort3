@@ -186,7 +186,7 @@ void Request::read(int f)
     unsigned n = ::read(fd, buf, sizeof(buf)-1);
 
     do buf[n] = '\0';
-    while ( n-- && isspace(buf[n]) );
+    while ( n-- and isspace(buf[n]) );
 }
 
 // FIXIT-L supporting only simple strings for now
@@ -421,7 +421,7 @@ static int signal_check()
 {
     PigSignal s = get_pending_signal();
 
-    if ( s == PIG_SIG_NONE || s >= PIG_SIG_MAX )
+    if ( s == PIG_SIG_NONE or s >= PIG_SIG_MAX )
         return 0;
 
     LogMessage("** caught %s signal\n", get_signal_name(s));
@@ -605,13 +605,13 @@ static bool service_users()
             proc_stats.local_commands++;
             return true;
         }
-        else if ( remote_control > 0 && FD_ISSET(remote_control, &inputs) )
+        else if ( remote_control > 0 and FD_ISSET(remote_control, &inputs) )
         {
             shell(remote_control);
             proc_stats.remote_commands++;
             return true;
         }
-        else if ( listener > 0 && FD_ISSET(listener, &inputs) )
+        else if ( listener > 0 and FD_ISSET(listener, &inputs) )
         {
             if ( !socket_conn() )
             {
@@ -632,8 +632,7 @@ static bool check_response()
 
     for ( unsigned idx = 0; idx < max_pigs; ++idx )
     {
-        if ( pigs[idx].analyzer &&
-            pigs[idx].analyzer->swap_pending() )
+        if ( pigs[idx].analyzer and pigs[idx].analyzer->swap_pending() )
             return false;
     }
 
@@ -685,8 +684,7 @@ static bool set_mode()
         }
     }
 
-    if ( ScTestMode() ||
-        (!Trough_GetQCount() && !use_shell(snort_conf)) )
+    if ( ScTestMode() or (!Trough_GetQCount() and !use_shell(snort_conf)) )
     {
         LogMessage("\nSnort successfully validated the configuration.\n");
 
@@ -718,7 +716,7 @@ static bool set_mode()
 
 static inline bool dont_stop()
 {
-    if ( paused || Trough_Next() )
+    if ( paused or Trough_Next() )
         return true;
 
     if ( pause_enabled )
@@ -736,7 +734,7 @@ static void main_loop()
     unsigned idx = max_pigs, swine = 0;
     init_main_thread_sig();
 
-    while ( !exit_logged && (swine || dont_stop()) )
+    while ( !exit_logged and (swine or dont_stop()) )
     {
         if ( ++idx >= max_pigs )
             idx = 0;
