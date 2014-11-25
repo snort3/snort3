@@ -74,11 +74,67 @@ if (MAKE_HTML_DOC)
         snort_manual.tgz
         images.tgz
     )
+
+else ()
+    # resetting to avoid the edge case of someone deleting there source
+    # tree manuals
+    set (SNORT_MANUAL_HTML_FOUND "SNORT_MANUAL_HTML_FOUND-NOTFOUND"
+        CACHE FILEPATH "contains a pre-built snort_manual.html" FORCE)
+    set (SNORT_MANUAL_TGZ_FOUND "SNORT_MANUAL_TGZ_FOUND-NOTFOUND"
+        CACHE FILEPATH "contains a pre-built snort_manual.tgz" FORCE)
+    set (IMAGES_TGZ_FOUND "IMAGES_TGZ_FOUND-NOTFOUND"
+        CACHE FILEPATH "contains a pre-built images.tgz" FORCE)
+
+
+    find_file ( SNORT_MANUAL_HTML_FOUND
+        "snort_manual.html"
+        PATHS "${CMAKE_CURRENT_LIST_DIR}"
+        DOC "contains a pre-built snort_manual.html"
+        NO_DEFAULT_PATH
+    )
+    find_file (
+        SNORT_MANUAL_TGZ_FOUND
+        "snort_manual.tgz"
+        PATHS "${CMAKE_CURRENT_LIST_DIR}"
+        DOC "contains a pre-built snort_manual.tgz"
+        NO_DEFAULT_PATH
+    )
+    find_file (
+        IMAGES_TGZ_FOUND
+        "images.tgz"
+        PATHS "${CMAKE_CURRENT_LIST_DIR}"
+        DOC "contains a pre-built images.tgz"
+        NO_DEFAULT_PATH
+    )
+
+    add_to_list_if_true(EXTRA_DIST_PACKAGED SNORT_MANUAL_HTML_FOUND "snort_manual.html")
+    add_to_list_if_true(EXTRA_DIST_PACKAGED SNORT_MANUAL_TGZ_FOUND "snort_manual.tgz")
+    add_to_list_if_true(EXTRA_DIST_PACKAGED IMAGES_TGZ_FOUND "images.tgz")
+    mark_as_advanced (SNORT_MANUAL_HTML_FOUND)
+    mark_as_advanced (SNORT_MANUAL_TGZ_FOUND)
+    mark_as_advanced (IMAGES_TGZ_FOUND)
 endif()
+
 
 if (MAKE_PDF_DOC)
     set(PDF_DOCS snort_manual.pdf)
-endif()
+
+else ()
+    set (SNORT_MANUAL_PDF_FOUND "SNORT_MANUAL_PDF_FOUND-NOTFOUND"
+        CACHE FILEPATH "contains a pre-built snort_manual.pdf" FORCE)
+
+    find_file (
+        SNORT_MANUAL_PDF_FOUND
+        snort_manual.pdf
+        PATHS "${CMAKE_CURRENT_LIST_DIR}"
+        DOC "contains a pre-built snort_manual.pdf"
+        NO_DEFAULT_PATH
+    )
+
+    add_to_list_if_true(EXTRA_DIST_PACKAGED SNORT_MANUAL_PDF_FOUND "snort_manual.pdf")
+    mark_as_advanced (SNORT_MANUAL_PDF_FOUND)
+endif ()
+
 
 # Docuements to be built
 set (EXTRA_DIST ${HTML_DOCS} ${PDF_DOCS})
@@ -209,10 +265,6 @@ if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
         list(APPEND ALL_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/${file}")
     endforeach(file)
 
-    foreach (file ${EXTRA_DIST})
-        list(APPEND EXTRA_DIST_BINARY_PATH "${CMAKE_CURRENT_BINARY_DIR}/${file}")
-    endforeach(file)
-
 endif()
 
 ###############################################################################
@@ -276,9 +328,15 @@ add_custom_command(OUTPUT images.tgz
 # Finally, the commands to set the manual dependencies and install the
 # built documents
 
+# Specify binary path so we install the build manuals, not packaged manuals
+foreach (file ${EXTRA_DIST})
+    list(APPEND EXTRA_DIST_BUILT "${CMAKE_CURRENT_BINARY_DIR}/${file}")
+endforeach(file)
+
 
 add_custom_target(snort_manuals ALL DEPENDS ${EXTRA_DIST})
-install (FILES ${EXTRA_DIST_BINARY_PATH} DESTINATION "${SNORT_DATA_DIR}")
+install (FILES ${EXTRA_DIST_BUILT} DESTINATION "${SNORT_DATA_DIR}")
+install (FILES ${EXTRA_DIST_PACKAGED} DESTINATION "${SNORT_DATA_DIR}")
 install (FILES ${UNBUILT_SOURCES} DESTINATION "${SNORT_DATA_DIR}")
 
 

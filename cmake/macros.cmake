@@ -117,6 +117,11 @@ macro (set_if_false value var)
     endif()
 endmacro ()
 
+macro (add_to_list_if_true list value var)
+    if (${value})
+        list(APPEND ${list} ${var})
+    endif()
+endmacro ()
 
 macro (append_to_cache_variable cache_var)
 
