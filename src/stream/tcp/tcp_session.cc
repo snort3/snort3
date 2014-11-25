@@ -992,13 +992,14 @@ typedef enum {
 static PegCount gnormStats[PC_MAX];
 static THREAD_LOCAL PegCount normStats[PC_MAX];
 
-static const PegInfo pegName[PC_MAX] =
+static const PegInfo pegName[] =
 {
     { "tcp.trim", "tcp segments trimmed to correct size" },
     { "tcp.ecn_ssn", "ECN bits cleared" },
     { "tcp.ts_nop", "timestamp options cleared" },
     { "tcp.ips_data", "normalized segments" },
     { "tcp.block", "blocked segments" },
+    { nullptr, nullptr }
 };
 
 void Stream_SumNormalizationStats()
