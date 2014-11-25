@@ -1,6 +1,5 @@
 /*
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -71,15 +70,13 @@ struct ERSpanType2Hdr
     { return ntohs(ver_vlan) >> 12; }
 } ;
 
-const uint16_t ETHERTYPE_ERSPAN_TYPE2 = 0x88be;
+constexpr uint16_t ETHERTYPE_ERSPAN_TYPE2 = 0x88be;
 } // namespace
 
 
 
 void Erspan2Codec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ETHERTYPE_ERSPAN_TYPE2);
-}
+{ v.push_back(ETHERTYPE_ERSPAN_TYPE2); }
 
 
 /*

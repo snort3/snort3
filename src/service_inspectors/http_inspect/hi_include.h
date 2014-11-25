@@ -56,7 +56,7 @@ struct HIStats {
 };
 
 extern THREAD_LOCAL HIStats hi_stats;
-extern const char* peg_names[];
+extern const PegInfo peg_names[];
 
 #endif
 

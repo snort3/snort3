@@ -22,10 +22,6 @@
 #ifndef NORM_MODULE_H
 #define NORM_MODULE_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "framework/module.h"
 #include "norm.h"
 
@@ -44,13 +40,11 @@ public:
     bool end(const char*, int, SnortConfig*) override;
 
     ProfileStats* get_profile() const override;
+    const PegInfo* get_pegs() const override;
+    PegCount* get_counts() const override;
 
     const NormalizerConfig* get_config()
     { return &config; };
-
-    void sum_stats() override;
-    void show_stats() override;
-    void reset_stats() override;
 
 private:
     bool set_ip4(const char*, Value&, SnortConfig*);

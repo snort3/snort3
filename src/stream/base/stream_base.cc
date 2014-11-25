@@ -45,20 +45,6 @@
 THREAD_LOCAL ProfileStats s5PerfStats;
 THREAD_LOCAL FlowControl* flow_con = nullptr;
 
-const char* session_pegs[] =
-{
-    "sessions",
-    "prunes",
-    "timeouts",
-    "created",
-    "released",
-    "discards",
-    "events",
-    nullptr
-};
-
-const unsigned session_peg_count = array_size(session_pegs);
-
 struct BaseStats
 {
     PegCount tcp_flows;
@@ -77,16 +63,17 @@ struct BaseStats
 static BaseStats g_stats;
 static THREAD_LOCAL BaseStats t_stats;
 
-static const char* const base_pegs[] =
+const PegInfo base_pegs[] =
 {
-    "tcp flows",
-    "tcp prunes",
-    "udp flows",
-    "udp prunes",
-    "icmp flows",
-    "icmp prunes",
-    "ip flows",
-    "ip prunes"
+    { "tcp flows", "total tcp sessions" },
+    { "tcp prunes", "tcp sessions pruned" },
+    { "udp flows", "total udp sessions" },
+    { "udp prunes", "udp sessions pruned" },
+    { "icmp flows", "total icmp sessions" },
+    { "icmp prunes", "icmp sessions pruned" },
+    { "ip flows", "total ip sessions" },
+    { "ip prunes", "ip sessions pruned" },
+    { nullptr, nullptr }
 };
 
 void base_sum()
@@ -107,13 +94,12 @@ void base_sum()
     t_stats.ip_prunes = flow_con->get_prunes(IPPROTO_IP);
 
     sum_stats((PegCount*)&g_stats, (PegCount*)&t_stats,
-        array_size(base_pegs));
+        array_size(base_pegs)-1);
 }   
     
 void base_stats()
 {   
-    show_stats((PegCount*)&g_stats, base_pegs, array_size(base_pegs),
-        MOD_NAME);
+    show_stats((PegCount*)&g_stats, base_pegs, array_size(base_pegs)-1, MOD_NAME);
 }
 
 void base_reset()

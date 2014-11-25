@@ -22,6 +22,10 @@ include::params.txt[]
 
 include::config.txt[]
 
+=== Counts
+
+include::counts.txt[]
+
 === Generators
 
 include::gids.txt[]

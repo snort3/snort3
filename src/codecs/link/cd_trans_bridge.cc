@@ -1,6 +1,5 @@
 /*
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// cd_transbridge.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// cd_trans_bridge.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 
@@ -55,9 +54,7 @@ public:
 
 
 void TransbridgeCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ETHERTYPE_TRANS_ETHER_BRIDGING); // defined in ethertypes.h"
-}
+{ v.push_back(ETHERTYPE_TRANS_ETHER_BRIDGING); }
 
 
 /*

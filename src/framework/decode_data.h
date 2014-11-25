@@ -25,7 +25,6 @@
 
 #include "protocols/mpls.h"
 #include "protocols/ip.h"
-#include "main/policy.h"
 
 
 namespace tcp
@@ -61,10 +60,10 @@ enum class PktType : std::uint8_t
 enum DecodeFlags : std::uint16_t
 {
     /* error flags */
-    DECODE_ERR_CKSUM_IP = CHECKSUM_FLAG__IP, // == 0x0001,
-    DECODE_ERR_CKSUM_TCP = CHECKSUM_FLAG__TCP, // == 0x002,
-    DECODE_ERR_CKSUM_UDP = CHECKSUM_FLAG__UDP, // 0x0004,
-    DECODE_ERR_CKSUM_ICMP = CHECKSUM_FLAG__ICMP, // 0x0008,
+    DECODE_ERR_CKSUM_IP = 0x0001,
+    DECODE_ERR_CKSUM_TCP = 0x0002,
+    DECODE_ERR_CKSUM_UDP = 0x0004,
+    DECODE_ERR_CKSUM_ICMP = 0x0008,
     DECODE_ERR_BAD_TTL = 0x0010,
 
     DECODE_ERR_CKSUM_ALL = ( DECODE_ERR_CKSUM_IP | DECODE_ERR_CKSUM_TCP |
@@ -76,15 +75,6 @@ enum DecodeFlags : std::uint16_t
     DECODE_FRAG = 0x0040,  /* flag to indicate a fragmented packet */
     DECODE_MF = 0x0080,
 };
-
-static_assert(((uint16_t)DECODE_ERR_CKSUM_IP) < 0x0010,
-    "CHECKSUM_FLAG__IP must be less than 0x00100!!");
-static_assert(((uint16_t)DECODE_ERR_CKSUM_TCP) < 0x0010,
-    "DECODE_ERR_CKSUM_TCP must be less than 0x00100!!");
-static_assert(((uint16_t)DECODE_ERR_CKSUM_UDP) < 0x0010,
-    "DECODE_ERR_CKSUM_UDP must be less than 0x00100!!");
-static_assert(((uint16_t)DECODE_ERR_CKSUM_ICMP) < 0x0010,
-    "DECODE_ERR_CKSUM_ICMP must be less than 0x00100!!");
 
 
 // FIXIT-L J make this an enum!!

@@ -55,6 +55,7 @@ using namespace std;
 "--help this overview of help\n" \
 "--help-commands [<module prefix>] output matching commands\n" \
 "--help-config [<module prefix>] output matching config options\n" \
+"--help-counts [<module prefix>] output matching peg counts\n" \
 "--help-module <module> output description of given module\n" \
 "--help-modules list all available modules with brief help\n" \
 "--help-plugins list all available plugins with brief help\n" \
@@ -140,7 +141,7 @@ void help_signals(SnortConfig*, const char*)
 enum HelpType {
     HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD,
     HT_BUF, HT_LST, HT_PLG, HT_DDR, HT_DBR,
-    HT_HMO, HT_HPL, HT_DFL
+    HT_HMO, HT_HPL, HT_DFL, HT_PEG
 };
 
 static void show_help(SnortConfig* sc, const char* val, HelpType ht)
@@ -190,6 +191,9 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
         break;
     case HT_DFL:
         ModuleManager::dump_defaults(val);
+        break;
+    case HT_PEG:
+        ModuleManager::show_pegs(val);
         break;
     }
     ModuleManager::term();
@@ -266,6 +270,11 @@ void dump_builtin_rules(SnortConfig* sc, const char* val)
 void dump_dynamic_rules(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_DDR);
+}
+
+void help_counts(SnortConfig* sc, const char* val)
+{
+    show_help(sc, val, HT_PEG);
 }
 
 void dump_rule_hex(SnortConfig*, const char* val)

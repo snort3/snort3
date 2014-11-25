@@ -30,7 +30,7 @@
 #define WIZ_NAME "wizard"
 #define WIZ_HELP "inspector that implements port-independent protocol identification"
 
-extern const char* wiz_pegs[];
+extern const PegInfo wiz_pegs[];
 extern THREAD_LOCAL struct WizStats tstats;
 extern THREAD_LOCAL ProfileStats wizPerfStats;
 
@@ -46,7 +46,7 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
-    const char** get_pegs() const override;
+    const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     ProfileStats* get_profile() const override;
 

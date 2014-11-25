@@ -46,13 +46,13 @@ struct WizStats
     PegCount udp_hits;
 };
 
-const char* wiz_pegs[] =
+const PegInfo wiz_pegs[] =
 {
-    "tcp scans",
-    "tcp hits",
-    "udp scans",
-    "udp hits",
-    nullptr
+    { "tcp scans", "tcp payload scans" },
+    { "tcp hits", "tcp identifications" },
+    { "udp scans", "udp payload scans" },
+    { "udp hits", "udp identifications" },
+    { nullptr, nullptr }
 };
 
 THREAD_LOCAL WizStats tstats;

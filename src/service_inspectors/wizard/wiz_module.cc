@@ -239,7 +239,7 @@ MagicBook* WizardModule::get_book(bool c2s, bool hex)
     return b;
 }
 
-const char** WizardModule::get_pegs() const
+const PegInfo* WizardModule::get_pegs() const
 { return wiz_pegs; }
 
 PegCount* WizardModule::get_counts() const

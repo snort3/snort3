@@ -1,11 +1,10 @@
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
-docdir = ${prefix}/doc
-
 BUILT_SOURCES = \
 builtin.txt \
 commands.txt \
 config.txt \
+counts.txt \
 gids.txt \
 help.txt \
 modules.txt \
@@ -42,7 +41,6 @@ start.txt \
 style.txt \
 terms.txt \
 images/snort.png
-
 
 all_sources = \
 $(unbuilt_sources) \
@@ -81,6 +79,9 @@ commands.txt: $(snort)
 
 config.txt: $(snort)
 	$(snort) $(plugin_path) --markup --help-config | sort -k 3 > $@
+
+counts.txt: $(snort)
+	$(snort) $(plugin_path) --markup --help-counts | sort -k 2 > $@
 
 gids.txt: $(snort)
 	$(snort) $(plugin_path) --markup --list-gids | sort -n  -k 1.4 > $@

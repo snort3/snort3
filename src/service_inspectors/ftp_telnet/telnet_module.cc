@@ -118,7 +118,7 @@ bool TelnetModule::end(const char*, int, SnortConfig*)
     return true;
 }
 
-const char** TelnetModule::get_pegs() const
+const PegInfo* TelnetModule::get_pegs() const
 { return simple_pegs; }
 
 PegCount* TelnetModule::get_counts() const

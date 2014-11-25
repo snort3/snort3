@@ -59,7 +59,6 @@ void ConfigPluginPath(SnortConfig*, const char*);
 void ConfigScriptPath(SnortConfig*, const char*);
 void ConfigDstMac(SnortConfig*, const char*);
 
-SO_PUBLIC void ConfigGTPDecoding(SnortConfig*sc, const char*args);
 void ConfigSetGid(SnortConfig*, const char*);
 void ConfigSetUid(SnortConfig*, const char*);
 void ConfigUmask(SnortConfig*, const char*);

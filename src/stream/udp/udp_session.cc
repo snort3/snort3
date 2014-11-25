@@ -49,7 +49,24 @@
 // NOTE:  sender is assumed to be client
 //        responder is assumed to be server
 
-THREAD_LOCAL SessionStats udpStats;
+struct UdpStats
+{
+    PegCount sessions;
+    PegCount created;
+    PegCount released;
+    PegCount timeouts;
+};
+
+const PegInfo udp_pegs[] =
+{
+    { "sessions", "total udp sessions" },
+    { "created", "udp session trackers created" },
+    { "released", "udp session trackers released" },
+    { "timeouts", "udp session timeouts" },
+    { nullptr, nullptr }
+};
+
+THREAD_LOCAL UdpStats udpStats;
 THREAD_LOCAL ProfileStats udp_perf_stats;
 
 //-------------------------------------------------------------------------

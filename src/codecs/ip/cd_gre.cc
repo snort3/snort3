@@ -1,4 +1,5 @@
 /*
+** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
@@ -228,6 +229,7 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     codec.lyr_len = len;
     codec.next_prot_id = greh->proto();
+    codec.codec_flags |= CODEC_NON_IP_TUNNEL;
     return true;
 }
 

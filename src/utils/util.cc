@@ -42,6 +42,7 @@
 #include <limits.h>
 #include <fcntl.h>
 #include <zlib.h>
+#include <luajit-2.0/luajit.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -98,17 +99,14 @@ void StoreSnortInfoStrings( void )
  ****************************************************************************/
 int DisplayBanner(void)
 {
-    const char * info;
-    const char * pcre_ver;
-    const char * zlib_ver;
-
-    info = getenv("HOSTTYPE");
+    const char* info = getenv("HOSTTYPE");
 
     if( !info )
         info="from 2.9.6-9";  // last sync with head
 
-    pcre_ver = pcre_version();
-    zlib_ver = zlib_version;
+    const char* ljv = LUAJIT_VERSION;
+    while ( *ljv && !isdigit(*ljv) )
+        ++ljv;
 
     LogMessage("\n");
     LogMessage("   ,,_     -*> Snort++ <*-\n");
@@ -121,8 +119,9 @@ int DisplayBanner(void)
 #ifdef HAVE_PCAP_LIB_VERSION
     LogMessage("           Using %s\n", pcap_lib_version());
 #endif
-    LogMessage("           Using PCRE version: %s\n", pcre_ver);
-    LogMessage("           Using ZLIB version: %s\n", zlib_ver);
+    LogMessage("           Using LuaJIT version %s\n", ljv);
+    LogMessage("           Using PCRE version %s\n", pcre_version());
+    LogMessage("           Using ZLIB version %s\n", zlib_version);
     LogMessage("\n");
 
     return 0;

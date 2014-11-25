@@ -22,9 +22,9 @@
 #ifndef NORM_H
 #define NORM_H
 
-#include "snort.h"
 #include "normalize.h"
 #include "protocols/packet_manager.h"
+#include "utils/stats.h"
 
 struct NormalizerConfig;
 struct Packet;
@@ -33,6 +33,8 @@ struct Packet;
 // the return is 1 if packet was changed, else 0
 typedef int (*NormalFunc)(  // FIXIT-L why is this exposed?
     struct NormalizerConfig*, Packet*, uint8_t layer, int changes);
+
+extern const PegInfo norm_names[];
 
 struct NormalizerConfig
 {
@@ -88,9 +90,8 @@ static inline int Norm_TcpIsOptional(const NormalizerConfig* nc, uint8_t opt)
     return ( (nc->normalizer_options[byte] & bit) != 0 );
 }
 
-void Norm_SumStats(void);
-void Norm_PrintStats(const char*);
-void Norm_ResetStats(void);
+const PegInfo* Norm_GetPegs();
+PegCount* Norm_GetCounts(unsigned&);
 
 #endif
 

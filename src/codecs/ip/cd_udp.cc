@@ -1,6 +1,6 @@
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_udp.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 
@@ -50,11 +51,11 @@
 namespace
 {
 
-const char* pegs[]
+const PegInfo pegs[]
 {
-    "bad checksum (ip4)",
-    "bad checksum (ip6)",
-    nullptr
+    { "bad checksum (ip4)", "nonzero udp over ipv4 checksums" },
+    { "bad checksum (ip6)", "nonzero udp over ipv6 checksums" },
+    { nullptr, nullptr }
 };
 
 struct Stats
@@ -74,7 +75,7 @@ static const Parameter udp_params[] =
       "decode GTP encapsulations" },
 
     // FIXIT-L use PT_BIT_LIST
-    { "gtp_ports", Parameter::PT_STRING, nullptr,
+    { "gtp_ports", Parameter::PT_BIT_LIST, "65535",
       "2152 3386", "set GTP ports" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -94,6 +95,9 @@ static const RuleMap udp_rules[] =
     { 0, nullptr }
 };
 
+constexpr uint16_t GTP_U_PORT = 2152;
+constexpr uint16_t GTP_U_PORT_V0 = 3386;
+
 class UdpModule : public CodecModule
 {
 public:
@@ -102,7 +106,7 @@ public:
     const RuleMap* get_rules() const override
     { return udp_rules; }
 
-    const char** get_pegs() const override
+    const PegInfo* get_pegs() const override
     { return pegs; }
 
     PegCount* get_counts() const override
@@ -116,12 +120,24 @@ public:
         }
         else if ( v.is("gtp_ports") )
         {
-            ConfigGTPDecoding(sc, v.get_string());
+            if ( sc->gtp_ports == nullptr )
+                sc->gtp_ports = new PortList;
+
+//            sc->gtp_ports->reset(); // called in v.get_bits();
+            v.get_bits(*(sc->gtp_ports));
         }
         else if ( v.is("enable_gtp") )
         {
             if ( v.get_bool() )
-                sc->enable_gtp = 1;  // FIXIT-L move to existing bitfield
+            {
+                if ( sc->gtp_ports == nullptr )
+                {
+                    sc->gtp_ports = new PortList;
+                    sc->gtp_ports->reset();
+                    sc->gtp_ports->set(GTP_U_PORT);
+                    sc->gtp_ports->set(GTP_U_PORT_V0);
+                }
+            }
         }
         else
         {
@@ -321,8 +337,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         teredo::is_teredo_port(dst_port) ||
         ScDeepTeredoInspection())
     {
-        if ( !(snort.decode_flags & DECODE_FRAG) )
-            codec.next_prot_id = PROTOCOL_TEREDO;
+        codec.next_prot_id = PROTOCOL_TEREDO;
     }
 
     
@@ -457,7 +472,7 @@ void UdpCodec::format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 
     if ( reverse(f) )
     {
-        int i = lyr - c->layers;
+        int i = (int)(lyr - c->layers);
         udp::UDPHdr* ph = (udp::UDPHdr*)p->layers[i].start;
 
         ch->uh_sport = ph->uh_dport;

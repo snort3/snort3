@@ -54,7 +54,7 @@ public:
     { return GID_TELNET; };
 
     const RuleMap* get_rules() const override;
-    const char** get_pegs() const override;
+    const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     ProfileStats* get_profile() const override;
 

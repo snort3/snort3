@@ -34,7 +34,6 @@
 #include "flow/flow_control.h"
 #include "sfip/sf_ip.h"
 
-THREAD_LOCAL SessionStats ipStats;
 THREAD_LOCAL ProfileStats ip_perf_stats;
 
 //-------------------------------------------------------------------------
@@ -129,7 +128,7 @@ bool IpSession::setup (Packet* p)
         "Stream IP session created!\n"););
 
     memset(&tracker, 0, sizeof(tracker));
-    ipStats.sessions++;
+    // FIXIT count ip session creates here
 
     sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
     sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
@@ -152,7 +151,7 @@ int IpSession::process(Packet* p)
     if ( stream.expired_session(flow, p) )
     {
         IpSessionCleanup(flow, &tracker);
-        ipStats.timeouts++;
+        // FIXIT count ip sessiont imeouts here
 
 #ifdef ENABLE_EXPECTED_IP
         if ( flow_con->expected_session(flow, p))

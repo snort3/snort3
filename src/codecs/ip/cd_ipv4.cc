@@ -1,6 +1,6 @@
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -52,10 +52,10 @@
 
 namespace{
 
-const char* pegs[]
+const PegInfo pegs[]
 {
-    "bad checksum",
-    nullptr
+    { "bad checksum", "nonzero ip checksums" },
+    { nullptr, nullptr }
 };
 
 struct Stats
@@ -106,7 +106,7 @@ public:
     const RuleMap* get_rules() const override
     { return ipv4_rules; }
 
-    const char** get_pegs() const override
+    const PegInfo* get_pegs() const override
     { return pegs; }
 
     PegCount* get_counts() const override
@@ -242,8 +242,14 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         return false;
     }
 
-    if ( snort.ip_api.is_ip6() && ScTunnelBypassEnabled(TUNNEL_4IN6) )
-        Active_SetTunnelBypass();
+    if ( snort.ip_api.is_ip6() )
+    {
+        /*  If Teredo or GRE seen, this is not an 4in6 tunnel */
+        if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
+            codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
+        else if ( ScTunnelBypassEnabled(TUNNEL_4IN6) )
+            Active_SetTunnelBypass();
+    }
 
     // set the api now since this layer has been verified as valid
     snort.ip_api.set(iph);

@@ -1,6 +1,6 @@
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -65,38 +65,36 @@ bool TeredoCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort
 {
     const uint8_t* raw_pkt = raw.data;
 
-    if (raw.len < teredo::min_hdr_len())
+    if ( raw.len < teredo::MIN_HDR_LEN )
         return false;
 
     /* Decode indicators. If both are present, Auth always comes before Origin. */
-    if (ntohs(*(uint16_t *)raw_pkt) == teredo::inidicator_auth())
+    if ( ntohs(*(uint16_t *)raw_pkt) == teredo::INDICATOR_AUTH )
     {
-        uint8_t client_id_length, auth_data_length;
-
-        if (raw.len < teredo::min_indicator_auth_len())
+        if ( raw.len < teredo::INDICATOR_AUTH_MIN_LEN )
             return false;
 
-        client_id_length = *(raw_pkt + 2);
-        auth_data_length = *(raw_pkt + 3);
+        uint8_t client_id_length = *(raw_pkt + 2);
+        uint8_t auth_data_length = *(raw_pkt + 3);
 
-        if (raw.len < (uint32_t)(teredo::min_indicator_auth_len() + client_id_length + auth_data_length))
+        if (raw.len < (uint32_t)(teredo::INDICATOR_AUTH_MIN_LEN + client_id_length + auth_data_length))
             return false;
 
-        raw_pkt += (teredo::min_indicator_auth_len() + client_id_length + auth_data_length);
-        codec.lyr_len = (teredo::min_indicator_auth_len() + client_id_length + auth_data_length);
+        raw_pkt += (teredo::INDICATOR_AUTH_MIN_LEN + client_id_length + auth_data_length);
+        codec.lyr_len = (teredo::INDICATOR_AUTH_MIN_LEN + client_id_length + auth_data_length);
     }
 
-    if (ntohs(*(uint16_t *)raw_pkt) == teredo::indicator_origin())
+    if ( ntohs(*(uint16_t *)raw_pkt) == teredo::INDICATOR_ORIGIN )
     {
-        if (raw.len < teredo::indicator_origin_len())
+        if ( raw.len < teredo::INDICATOR_ORIGIN_LEN )
             return false;
 
-        raw_pkt += teredo::indicator_origin_len();
-        codec.lyr_len += teredo::indicator_origin_len();
+        raw_pkt += teredo::INDICATOR_ORIGIN_LEN;
+        codec.lyr_len += teredo::INDICATOR_ORIGIN_LEN;
     }
 
     /* If this is an IPv6 datagram, the first 4 bits will be the number 6. */
-    if (( (*raw_pkt & 0xF0) >> 4) == 6)
+    if ( ((*raw_pkt & 0xF0) >> 4) == 6 )
     {
         codec.proto_bits |= PROTO_BIT__TEREDO;
         codec.codec_flags |= CODEC_TEREDO_SEEN;  // for ipv6 codec
@@ -104,12 +102,11 @@ bool TeredoCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort
         if ( ScTunnelBypassEnabled(TUNNEL_TEREDO) )
             Active_SetTunnelBypass();
 
-        if ((!teredo::is_teredo_port(snort.sp)) && (!teredo::is_teredo_port(snort.dp)))
-        {
+        if ( (!teredo::is_teredo_port(snort.sp)) && (!teredo::is_teredo_port(snort.dp)) )
             codec.codec_flags |= CODEC_ENCAP_LAYER;
-        }
 
         codec.next_prot_id = IPPROTO_IPV6;
+        codec.codec_flags |= CODEC_NON_IP_TUNNEL;
         return true;
     }
 

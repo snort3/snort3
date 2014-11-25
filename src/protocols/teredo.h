@@ -1,6 +1,5 @@
 /*
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -30,50 +29,16 @@
 namespace teredo
 {
 
-namespace detail
-{
-
-const uint32_t TEREDO_PORT = 3544;
-const uint32_t TEREDO_INDICATOR_ORIGIN = 0x00;
-const uint32_t TEREDO_INDICATOR_ORIGIN_LEN = 8;
-const uint32_t TEREDO_INDICATOR_AUTH = 0x01;
-const uint32_t TEREDO_INDICATOR_AUTH_MIN_LEN = 13;
-const uint32_t TEREDO_MIN_LEN = 2;
-
-
-} // namespace detail
-
-
+constexpr uint16_t TEREDO_PORT = 3544;
+constexpr uint16_t INDICATOR_ORIGIN = 0x00;
+constexpr uint16_t INDICATOR_ORIGIN_LEN = 8;
+constexpr uint16_t INDICATOR_AUTH = 0x01;
+constexpr uint16_t INDICATOR_AUTH_MIN_LEN = 13;
+constexpr uint16_t MIN_HDR_LEN = 2;
 
 inline bool is_teredo_port(uint16_t port)
-{
-    return port == (detail::TEREDO_PORT);
-}
+{ return port == TEREDO_PORT; }
 
-inline uint32_t min_hdr_len()
-{
-    return detail::TEREDO_MIN_LEN;
-}
-
-inline uint32_t indicator_origin()
-{
-    return detail::TEREDO_INDICATOR_ORIGIN;
-}
-
-inline uint32_t indicator_origin_len()
-{
-    return detail::TEREDO_INDICATOR_ORIGIN_LEN;
-}
-
-inline uint32_t inidicator_auth()
-{
-    return detail::TEREDO_INDICATOR_AUTH;
-}
-
-inline uint32_t min_indicator_auth_len()
-{
-    return detail::TEREDO_INDICATOR_AUTH_MIN_LEN;
-}
 
 } // namespace teredo
 

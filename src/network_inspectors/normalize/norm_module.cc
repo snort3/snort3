@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  ** Copyright (C) 2010-2013 Sourcefire, Inc.
  **
  ** This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,9 @@
 #include <string.h>
 #include <string>
 #include <sstream>
+#include <vector>
+
+#include "stream/stream.h"
 
 using namespace std;
 
@@ -283,12 +286,43 @@ bool NormalizeModule::end(const char* fqn, int, SnortConfig*)
     return true;
 }
 
-void NormalizeModule::sum_stats()
-{ Norm_SumStats(); }
+const PegInfo* NormalizeModule::get_pegs() const
+{
+    static vector<PegInfo> pegs;
+    pegs.clear();
 
-void NormalizeModule::show_stats()
-{ Norm_PrintStats(get_name()); }
+    const PegInfo* p = Norm_GetPegs();
+    assert(p);
 
-void NormalizeModule::reset_stats()
-{ Norm_ResetStats(); }
+    while ( p->name )
+        pegs.push_back(*p++);
+
+    p = Stream_GetNormPegs();
+    assert(p);
+
+    while ( p->name )
+        pegs.push_back(*p++);
+
+    pegs.push_back(*p);
+    return &pegs[0];
+}
+
+PegCount* NormalizeModule::get_counts() const
+{
+    static vector<PegCount> counts;
+    counts.clear();
+    unsigned c = 0;
+
+    PegCount* p = Norm_GetCounts(c);
+
+    for ( unsigned i = 0; i < c; ++i )
+        counts.push_back(p[i]);
+
+    p = Stream_GetNormCounts(c);
+
+    for ( unsigned i = 0; i < c; ++i )
+        counts.push_back(p[i]);
+
+    return &counts[0];
+}
 

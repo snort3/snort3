@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
-x_includedir = $(sysconfdir)
+x_includedir = $(sysconfdir)/snort
 
 x_include_HEADERS = \
 snort.lua \
@@ -8,10 +8,3 @@ snort_defaults.lua \
 classification.lua \
 reference.lua \
 sample.rules
-
-#EXTRA_DIST = \
-#snort.lua \
-#snort_defaults.lua \
-#classification.lua \
-#reference.lua
-

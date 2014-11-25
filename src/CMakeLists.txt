@@ -25,25 +25,25 @@ set(EXTERNAL_INCLUDES
     CACHE INTERNAL "external INCLUDES" FORCE
 )
 include_directories(BEFORE ${LUAJIT_INCLUDE_DIR})
-include_directories(SYSTEM ${EXTERNAL_INCLUDES})
+include_directories(${EXTERNAL_INCLUDES})
 
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(detection)
-include_directories(events)
-include_directories(framework)
-include_directories(hash)
-include_directories(log)
-include_directories(loggers)
-include_directories(main)
-include_directories(network_inspectors)
-include_directories(parser)
-include_directories(protocols)
-include_directories(sfip)
-include_directories(stream)
-include_directories(target_based)
-include_directories(time)
-include_directories(utils)
+# prepending all of these to ensure they are included before External Libs
+include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(BEFORE detection)
+include_directories(BEFORE events)
+include_directories(BEFORE framework)
+include_directories(BEFORE hash)
+include_directories(BEFORE log)
+include_directories(BEFORE loggers)
+include_directories(BEFORE main)
+include_directories(BEFORE network_inspectors)
+include_directories(BEFORE parser)
+include_directories(BEFORE protocols)
+include_directories(BEFORE sfip)
+include_directories(BEFORE stream)
+include_directories(BEFORE target_based)
+include_directories(BEFORE time)
+include_directories(BEFORE utils)
 
 
 

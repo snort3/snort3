@@ -217,27 +217,9 @@ bool StreamIpModule::end(const char*, int, SnortConfig*)
     return true;
 }
 
-const char** StreamIpModule::get_pegs() const
-{ return session_pegs; }
+const PegInfo* StreamIpModule::get_pegs() const
+{ return ip_pegs; }
 
 PegCount* StreamIpModule::get_counts() const
-{ return (PegCount*)&ipStats; }
-
-void StreamIpModule::sum_stats()
-{
-    Module::sum_stats();
-    Defrag::sum();
-}
-
-void StreamIpModule::show_stats()
-{
-    Module::show_stats();
-    Defrag::stats();
-}
-
-void StreamIpModule::reset_stats()
-{
-    Module::reset_stats();
-    Defrag::reset();
-}
+{ return (PegCount*)&ip_stats; }
 

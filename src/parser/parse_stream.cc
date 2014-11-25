@@ -90,7 +90,7 @@ static TokenType get_token(
     s.clear();
     bool inc = true;
     static int pos = 1;
-    uint8_t hex;
+    uint8_t hex = 0;
 
     if ( prev != EOF )
     {

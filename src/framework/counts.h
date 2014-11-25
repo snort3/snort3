@@ -31,7 +31,13 @@ struct SimpleStats
     PegCount total_packets;
 };
 
-SO_PUBLIC extern const char* simple_pegs[];
+struct PegInfo
+{
+    const char* name;
+    const char* help;
+};
+
+SO_PUBLIC extern const struct PegInfo simple_pegs[];
 
 #define array_size(a) (sizeof(a)/sizeof(a[0]))
 

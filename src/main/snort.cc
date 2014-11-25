@@ -717,7 +717,7 @@ DAQ_Verdict ProcessPacket(
 
         if ( Active_GetTunnelBypass() )
         {
-            pc.internal_blacklist++;
+            aux_counts.internal_blacklist++;
             return verdict;
         }
 
@@ -733,7 +733,7 @@ DAQ_Verdict ProcessPacket(
 DAQ_Verdict fail_open(
     void*, const DAQ_PktHdr_t*, const uint8_t*)
 {
-    pc.total_fail_open++;
+    aux_counts.total_fail_open++;
     return DAQ_VERDICT_PASS;
 }
 
@@ -809,7 +809,7 @@ DAQ_Verdict packet_callback(
                 else
                 {
                     verdict = DAQ_VERDICT_PASS;
-                    pc.internal_whitelist++;
+                    aux_counts.internal_whitelist++;
                 }
             }
             else if ( s_packet->ptrs.decode_flags & DECODE_PKT_TRUST )
@@ -851,7 +851,7 @@ void snort_thread_idle()
 {
     if ( flow_con )
         flow_con->timeout_flows(16384, time(NULL));
-    pc.idle++;
+    aux_counts.idle++;
 }
 
 void snort_thread_rotate()
