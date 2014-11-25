@@ -8,7 +8,5 @@ set (LUA_SCRIPTS
 )
 
 install (FILES ${LUA_SCRIPTS}
-    DESTINATION "conf"
+    DESTINATION "etc/snort"
 )
-
-set(ENV{LUA_PATH} "${CMAKE_INSTALL_PREFIX}/include/snort/lua/?.lua\;\;")

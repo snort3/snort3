@@ -1,7 +1,5 @@
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
-docdir = ${prefix}/doc
-
 BUILT_SOURCES = \
 builtin.txt \
 commands.txt \
@@ -43,7 +41,6 @@ start.txt \
 style.txt \
 terms.txt \
 images/snort.png
-
 
 all_sources = \
 $(unbuilt_sources) \

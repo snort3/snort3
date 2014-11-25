@@ -16,6 +16,7 @@
 set(HELP_SOURCES
     commands.txt
     config.txt
+    counts.txt
     modules.txt
     plugins.txt
     options.txt
@@ -282,7 +283,5 @@ add_custom_target(snort_manuals ALL
 #add_dependencies(snort_manuals snort ${ALL_SOURCES})
 
 
-
-install (FILES ${EXTRA_DIST_BINARY_PATH}
-    DESTINATION "doc"
-)
+install (FILES ${EXTRA_DIST_BINARY_PATH} DESTINATION "${SNORT_DATA_DIR}")
+install (FILES ${UNBUILT_SOURCES} DESTINATION "${SNORT_DATA_DIR}")
