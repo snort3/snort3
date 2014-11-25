@@ -109,8 +109,8 @@ if (BUILD_EXTRA_PLUGINS)
     #       only cleans extra plugins.  Also, we check in the top
     #       level cmake file to ensure that Makefiles have been
     #       generated. So, the command is definitely valid.
-    #  3) Ensure we don't recursively build this directly. Also,
-    #       make sure we install into a temporary directory
+    #  3) Ensure we don't recursively build this directly. Also
+    #       ensures we install into a temporary directory
     #  4) build snort. Can technically be combined with 'make install'
     #       but lets keep them seperate for clarity.
     #  5) install snort into the temp install directory.

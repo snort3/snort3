@@ -241,7 +241,7 @@ add_custom_command(OUTPUT snort_manual.pdf
         -f pdf 
         ${PDF_ARGUMENTS} 
         ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt 
-    DEPENDS  ${ALL_SOURCES}
+    DEPENDS ${ALL_SOURCES}
     COMMENT "Documents: building snort_manual.pdf"
 )
 
@@ -277,11 +277,41 @@ add_custom_command(OUTPUT images.tgz
 # built documents
 
 
-add_custom_target(snort_manuals ALL
-    DEPENDS ${EXTRA_DIST}
-)
-#add_dependencies(snort_manuals snort ${ALL_SOURCES})
-
-
+add_custom_target(snort_manuals ALL DEPENDS ${EXTRA_DIST})
 install (FILES ${EXTRA_DIST_BINARY_PATH} DESTINATION "${SNORT_DATA_DIR}")
 install (FILES ${UNBUILT_SOURCES} DESTINATION "${SNORT_DATA_DIR}")
+
+
+
+
+###############################################################################
+###############################################################################
+
+# Packaging commands.  Used by cpack to move manuals to/from source tree
+
+add_custom_target (delete_manuals_in_source)
+set (COPY_MANUALS)
+
+foreach (manual ${EXTRA_DIST})
+    set (output "${CMAKE_CURRENT_LIST_DIR}/${manual}")
+
+    list(APPEND COPY_MANUALS ${output})
+    add_custom_command(
+        OUTPUT "${output}"
+        COMMAND ${CMAKE_COMMAND} -E copy ${manual} ${CMAKE_CURRENT_LIST_DIR}/${manual}
+        DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${manual}"
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+        COMMENT "Documents: copying ${manual} into source directory"
+        VERBATIM
+    )
+
+    add_custom_command(
+        TARGET delete_manuals_in_source
+        PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_LIST_DIR}/${manual}
+        COMMENT "Documents: deleting ${manual} from source directory"
+        VERBATIM
+    )
+endforeach (manual)
+
+add_custom_target (copy_manuals_to_source DEPENDS ${COPY_MANUALS})
