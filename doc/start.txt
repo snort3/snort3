@@ -66,7 +66,7 @@ c. You can also specify a cmake project generator or use ccmake:
 
 First set up the environment:
 
-    export LUA_PATH=$my_path/include/snort/lua/?.lua\;\;
+    export LUA_PATH=$my_path/include/snort/lua/\?.lua\;\;
     export SNORT_LUA_PATH=$my_path/etc
 
 Then give it a go:

@@ -4,7 +4,7 @@
 * *LUA_PATH*: you must export as follows so LuaJIT can find required
   files.
 
-    LUA_PATH=$install_dir/include/snort/lua/?.lua\;\;
+    LUA_PATH=$install_dir/include/snort/lua/\?.lua\;\;
 
 * *SNORT_IGNORE*: the list of symbols Snort should ignore when parsing the
   Lua conf.  Unknown symbols not in SNORT_IGNORE will cause warnings with
