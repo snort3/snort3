@@ -44,6 +44,7 @@ using namespace std;
 #include "target_based/sftarget_data.h"
 #include "target_based/sftarget_protocol_reference.h"
 #include "target_based/sftarget_reader.h"
+#include "packet_io/active.h"
 
 THREAD_LOCAL ProfileStats bindPerfStats;
 
