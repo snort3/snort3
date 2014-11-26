@@ -109,23 +109,19 @@ enum RunFlag
     RUN_FLAG__PROCESS_ALL_EVENTS  = 0x00002000,
     RUN_FLAG__INLINE_TEST         = 0x00004000,     /* --enable-inline-test*/
 
-    RUN_FLAG__DISABLE_FAILOPEN    = 0x00100000,     /* --disable-inline-init-failopen */
-    RUN_FLAG__PCAP_RESET          = 0x00200000,
-    RUN_FLAG__PCAP_SHOW           = 0x00400000,
-    RUN_FLAG__PAUSE               = 0x00800000,     // --pause
-
-    RUN_FLAG__NO_PCRE             = 0x01000000,
+    RUN_FLAG__DISABLE_FAILOPEN    = 0x00010000,     /* --disable-inline-init-failopen */
+    RUN_FLAG__PAUSE               = 0x00020000,     // --pause
+    RUN_FLAG__NO_PCRE             = 0x00040000,
     /* If stream is configured, the STATEFUL flag is set.  This is
      * somewhat misnamed and is used to assure a session is established */
-    RUN_FLAG__ASSURE_EST          = 0x02000000,
+    RUN_FLAG__ASSURE_EST          = 0x00080000,
 
-    RUN_FLAG__TREAT_DROP_AS_IGNORE= 0x10000000,     /* --treat-drop-as-ignore */
-    RUN_FLAG__PCAP_RELOAD         = 0x20000000,     /* --pcap-reload */
+    RUN_FLAG__TREAT_DROP_AS_IGNORE= 0x00100000,     /* --treat-drop-as-ignore */
+    RUN_FLAG__PCAP_RELOAD         = 0x00200000,     /* --pcap-reload */
 #ifdef BUILD_SHELL
-    RUN_FLAG__SHELL               = 0x40000000,     /* --shell */
+    RUN_FLAG__SHELL               = 0x00400000,     /* --shell */
 #endif
-    RUN_FLAG__TEST                = 0x80000000      /* -T */
-
+    RUN_FLAG__TEST                = 0x00800000      /* -T */
 };
 
 enum OutputFlag
@@ -428,16 +424,6 @@ static inline long int ScTaggedPacketLimit(void)
 static inline int ScCreatePidFile(void)
 {
     return snort_conf->run_flags & RUN_FLAG__CREATE_PID_FILE;
-}
-
-static inline int ScPcapShow(void)
-{
-    return snort_conf->run_flags & RUN_FLAG__PCAP_SHOW;
-}
-
-static inline int ScPcapReset(void)
-{
-    return snort_conf->run_flags & RUN_FLAG__PCAP_RESET;
 }
 
 static inline int ScOutputWifiMgmt(void)

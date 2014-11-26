@@ -231,11 +231,6 @@ void CodecManager::thread_init(SnortConfig* sc)
     if(!grinder)
         ParseError("PacketManager: Unable to find a Codec with data link type %d\n", daq_dlt);
 
-    if ( !ScReadMode() || ScPcapShow() )
-        LogMessage("Decoding with %s\n", s_protocols[grinder]->get_name());
-
-    // ENCODER initialization
-
 #ifndef VALGRIND_TESTING
     if ( s_rand ) rand_close(s_rand);
 

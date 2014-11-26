@@ -859,31 +859,8 @@ void snort_thread_rotate()
     SetRotatePerfFileFlag();
 }
 
-#ifdef REG_TEST
-static void PQ_Show (const char* pcap)
-{
-    if ( !ScPcapShow() )
-        return;
-
-    if ( !strcmp(pcap, "-") ) pcap = "stdin";
-
-    static bool first = true;
-    if ( first )
-        first = false;
-    else
-        fprintf(stdout, "%s", "\n");
-
-    fprintf(stdout,
-        "Reading network traffic from \"%s\" with snaplen = %d\n",
-        pcap, DAQ_GetSnapLen());
-}
-#endif
-
 void snort_thread_init(const char* intf)
 {
-#ifdef REG_TEST
-    PQ_Show(intf);
-#endif
     // FIXIT-J the start-up sequence is a little off due to dropping privs
     DAQ_New(snort_conf, intf);
     DAQ_Start();

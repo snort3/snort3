@@ -578,11 +578,8 @@ const DAQ_Stats_t* DAQ_GetStats (void)
 {
     int err = 0;
 
-    if ( !daq_hand && !ScPcapReset() )
-        return &tot_stats;
-
     if ( !daq_hand )
-        return &daq_stats;
+        return &tot_stats;
 
     err = daq_get_stats(daq_mod, daq_hand, &daq_stats);
 
