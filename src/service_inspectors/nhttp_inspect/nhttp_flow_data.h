@@ -69,6 +69,7 @@ private:
     // 0 element refers to client request, 1 element refers to server response
     NHttpEnums::SectionType section_type[2] = { NHttpEnums::SEC__NOTCOMPUTE, NHttpEnums::SEC__NOTCOMPUTE };
     uint32_t num_excess[2] = { 0, 0 };
+    bool zero_chunk[2] = { false, false };
     bool tcp_close[2] = { false, false };
     uint64_t infractions[2] = { 0, 0 };
 

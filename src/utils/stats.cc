@@ -248,7 +248,7 @@ void pc_sum()
     for ( unsigned i = 0; i < MAX_SFDAQ_VERDICT; i++ )
         g_daq_stats.verdicts[i] += daq_stats->verdicts[i];
 
-    sum_stats((PegCount*)&gpc, (PegCount*)&pc, array_size(pc_names));
+    sum_stats((PegCount*)&gpc, (PegCount*)&pc, array_size(pc_names)-1);
     memset(&pc, 0, sizeof(pc));
 
     sum_stats((PegCount*)&gaux, (PegCount*)&aux_counts, sizeof(aux_counts)/sizeof(PegCount));

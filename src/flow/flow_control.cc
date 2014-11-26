@@ -354,7 +354,8 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         if ( b )
             b->eval(p);
 
-        if ( !flow->ssn_client || !flow->session->setup(p) )
+        if ( !b || (flow->flow_state == Flow::INSPECT && 
+            (!flow->ssn_client || !flow->session->setup(p))) )
             flow->set_state(Flow::ALLOW);
 
         ++news;
@@ -378,9 +379,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         break;
 
     case Flow::BLOCK:
-        // FIXIT-M should not repeatedly clear session
-        stream.drop_packet(p);
-        Active_DropSession();
+        Active_DropPacket();
         break;
     }
 
