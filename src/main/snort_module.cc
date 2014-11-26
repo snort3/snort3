@@ -99,7 +99,7 @@ static void x2c(unsigned x)
 //-------------------------------------------------------------------------
 
 #ifdef REG_TEST
-#define REG_TEST_IGNORE " -N --pcap-reset --pcap-show "
+#define REG_TEST_IGNORE " -N --pcap-reset "
 #endif
 
 static const Parameter s_params[] =
@@ -370,10 +370,10 @@ static const Parameter s_params[] =
 #ifdef REG_TEST
     { "--pcap-reset", Parameter::PT_IMPLIED, nullptr, nullptr,
       "ignored - for REG_TEST only" },
+#endif
 
     { "--pcap-show", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "ignored - for REG_TEST only" },
-#endif
+      "print a line saying what pcap is currently being read" },
 
     { "--pedantic", Parameter::PT_IMPLIED, nullptr, nullptr, 
       "warnings are fatal" },
@@ -733,6 +733,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--pcap-reload") )
         sc->run_flags |= RUN_FLAG__PCAP_RELOAD;
+
+    else if ( v.is("--pcap-show") )
+        sc->run_flags |= RUN_FLAG__PCAP_SHOW;
 
     else if ( v.is("--plugin-path") )
         ConfigPluginPath(sc, v.get_string());

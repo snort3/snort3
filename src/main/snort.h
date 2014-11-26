@@ -108,6 +108,7 @@ enum RunFlag
     RUN_FLAG__MPLS_OVERLAPPING_IP = 0x00001000,     /* --enable_mpls_overlapping_ip */
     RUN_FLAG__PROCESS_ALL_EVENTS  = 0x00002000,
     RUN_FLAG__INLINE_TEST         = 0x00004000,     /* --enable-inline-test*/
+    RUN_FLAG__PCAP_SHOW           = 0x00008000,
 
     RUN_FLAG__DISABLE_FAILOPEN    = 0x00010000,     /* --disable-inline-init-failopen */
     RUN_FLAG__PAUSE               = 0x00020000,     // --pause
@@ -424,6 +425,11 @@ static inline long int ScTaggedPacketLimit(void)
 static inline int ScCreatePidFile(void)
 {
     return snort_conf->run_flags & RUN_FLAG__CREATE_PID_FILE;
+}
+
+static inline int ScPcapShow(void)
+{
+    return snort_conf->run_flags & RUN_FLAG__PCAP_SHOW;
 }
 
 static inline int ScOutputWifiMgmt(void)
