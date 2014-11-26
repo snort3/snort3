@@ -30,7 +30,7 @@ class NHttpTestInput {
 public:
     NHttpTestInput(const char *fileName);
     ~NHttpTestInput();
-    void scan(uint8_t*& data, uint32_t& length, NHttpEnums::SourceId& source_id, bool& tcp_close, bool& need_break);
+    void scan(uint8_t*& data, uint32_t& length, NHttpEnums::SourceId source_id, bool& tcp_close, bool& need_break);
     void flush(uint32_t length);
     void reassemble(uint8_t** buffer, unsigned& length, NHttpEnums::SourceId source_id, const NHttpFlowData* session_data,
        bool& tcp_close);

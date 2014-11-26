@@ -37,6 +37,7 @@ public:
     uint32_t get_num_flush() const { return num_flush; };
     virtual uint32_t get_octets_seen() const { return octets_seen; };
     virtual uint32_t get_num_excess() const { return 0; };
+    virtual bool get_zero_chunk() const { return false; };
     virtual bool partial_ok() const { return true; };
 
 protected:
@@ -72,7 +73,7 @@ private:
 class NHttpChunkSplitter : public NHttpSplitter {
 public:
     NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length) override;
-    uint32_t get_num_excess() const override { return zero_chunk ? 1 : 0; };
+    bool get_zero_chunk() const override { return zero_chunk; };
     void conditional_reset() override;
     bool partial_ok() const override { return false; };
 private:

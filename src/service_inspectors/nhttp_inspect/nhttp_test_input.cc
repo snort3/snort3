@@ -37,15 +37,15 @@ NHttpTestInput::~NHttpTestInput() {
 // Read from the test data file and present to StreamSplitter.
 // In the process we may need to skip comments, execute simple commands, and handle escape sequences.
 // The best way to understand this function is to read the comments at the top of the file of test cases.
-void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id, bool &tcp_close, bool &need_break) {
-    if (flushed) {
-        // Previously flushed data not reassembled yet
+void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId source_id, bool &tcp_close, bool &need_break) {
+    // Don't proceed if we have previously flushed data not reassembled yet.
+    // Piggyback on traffic moving in the correct direction.
+    if (flushed || (source_id != last_source_id)) {
         length = 0;
         return;
     }
 
-    source_id = last_source_id;
-    tcp_close = false;
+    tcp_close = tcp_closed;
     need_break = false;
 
     if (just_flushed) {
@@ -60,12 +60,12 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
             // Must present unflushed leftovers to StreamSplitter again. If we don't take this opportunity to left
             // justify our data in the buffer we may "walk" to the right until we run out of buffer space.
             memmove(msg_buf, msg_buf+flush_octets, length);
-            tcp_close = tcp_closed;
             flush_octets = 0;
             return;
         }
         // If we reach here then StreamSplitter has already flushed all the data we have read so far.
         tcp_closed = false;
+        tcp_close = tcp_closed;
         flush_octets = 0;
     }
     else {
@@ -117,17 +117,25 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
                 // FIXIT-L should not change direction with unflushed data remaining from previous paragraph. At the
                 // minimum need to test for this and assert.
                 if ((command_length == strlen("request")) && !memcmp(command_value, "request", strlen("request"))) {
-                    source_id = last_source_id = SRC_CLIENT;
+                    last_source_id = SRC_CLIENT;
+                    if (source_id != last_source_id) {
+                        length = 0;
+                        return;
+                    }
                 }
                 else if ((command_length == strlen("response")) && !memcmp(command_value, "response", strlen("response"))) {
-                    source_id = last_source_id = SRC_SERVER;
+                    last_source_id = SRC_SERVER;
+                    if (source_id != last_source_id) {
+                        length = 0;
+                        return;
+                    }
                 }
                 else if ((command_length == strlen("break")) && !memcmp(command_value, "break", strlen("break"))) {
                     need_break = true;
                 }
                 else if ((command_length == strlen("tcpclose")) && !memcmp(command_value, "tcpclose", strlen("tcpclose"))) {
-                    tcp_close = true;
                     tcp_closed = true;
+                    tcp_close = tcp_closed;
                 }
                 else if (command_length > 0) {
                     // Look for a test number
