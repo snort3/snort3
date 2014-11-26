@@ -840,7 +840,7 @@ DAQ_Verdict packet_callback(
     if ( snort_conf->pkt_cnt && pc.total_from_daq >= snort_conf->pkt_cnt )
         DAQ_BreakLoop(-1);
 
-    if ( break_time() )
+    else if ( break_time() )
         DAQ_BreakLoop(0);
 
     MODULE_PROFILE_END(totalPerfStats);

@@ -62,6 +62,7 @@ private:
     const char* source;
     volatile AnalyzerCommand command;
     Swapper* swap;
+    void* daqh;
 };
 
 #endif
