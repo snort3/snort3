@@ -631,7 +631,7 @@ void CapturePacket()
     }
 }
 
-static void set_policy(Packet* p)  // FIXIT-H delete this?
+static void set_policy(Packet* p)  // FIXIT-M delete this?
 {
     set_default_policy();
     p->user_policy_id = get_ips_policy()->user_policy_id;
@@ -646,7 +646,7 @@ void DecodeRebuiltPacket (
 
     p->flow = lws;
 
-    set_policy(p);  // FIXIT-H rebuilt should reuse original bindings from flow
+    set_policy(p);  // FIXIT-M rebuilt should reuse original bindings from flow
 
     SnortEventqReset();
     SnortEventqPop();
@@ -693,13 +693,7 @@ DAQ_Verdict ProcessPacket(
     if ( !p->proto_bits )
         p->proto_bits = PROTO_BIT__OTHER;
 
-#if 0
-    // FIXIT-H  This should be deleted
-    else if ( !p->family && (p->proto_bits & PROTO_BIT__IP) )
-        p->proto_bits &= ~PROTO_BIT__IP;
-#endif
-
-    set_policy(p);  // FIXIT-H should not need this here
+    set_policy(p);  // FIXIT-M should not need this here
 
     /* just throw away the packet if we are configured to ignore this port */
     if ( !(p->packet_flags & PKT_IGNORE) )
@@ -830,7 +824,7 @@ DAQ_Verdict packet_callback(
     Active_Reset();
     PacketManager::encode_reset();
 
-    if ( flow_con ) // FIXIT-H always instantiate
+    if ( flow_con ) // FIXIT-M always instantiate
     {
         flow_con->timeout_flows(4, pkthdr->ts.tv_sec);
     }
