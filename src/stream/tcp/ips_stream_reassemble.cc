@@ -132,8 +132,8 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
     }
     else
     {
-        // FIXIT-H PAF need to instantiate service splitter?
-        // FIXIT-H PAF need to check for ips / on-data
+        // FIXIT-M PAF need to instantiate service splitter?
+        // FIXIT-M PAF need to check for ips / on-data
         if ( srod.direction & SSN_DIR_SERVER )
         {
             tcpssn->server.flush_policy = STREAM_FLPOLICY_ON_ACK;

@@ -75,7 +75,7 @@ uint32_t GenerateSnortEvent(Packet *p, uint32_t gid, uint32_t sid)
 
     fpLogEvent(rtn, otn, p);
 
-    return 0;  //otn->event_data.event_id; // FIXIT-H EVENT
+    return 0;  //otn->event_data.event_id; // FIXIT-M EVENT
 }
 
 /**
