@@ -367,6 +367,11 @@ static inline uint32_t SegsToFlush (const StreamTracker* st, unsigned max)
 
 static inline bool DataToFlush (const StreamTracker* st)
 {
+    // needed by stream_reassemble:action disable; can fire on rebuilt
+    // packets, yanking the splitter out from under us :(
+    if ( !st->flush_policy )  
+        return false;
+
     if ( 
         st->flush_policy == STREAM_FLPOLICY_ON_DATA ||
         st->splitter->is_paf()
@@ -2308,6 +2313,10 @@ static inline int flush_ackd(
 static inline int flush_stream(
     TcpSession *tcpssn, StreamTracker *st, Packet *p, uint32_t dir)
 {
+    // this is not always redundant; stream_reassemble rule option causes trouble
+    if ( !st->flush_policy )
+        return 0;
+
     if ( Normalize_IsEnabled(NORM_TCP_IPS) )
     {
         uint32_t bytes = get_q_sequenced(st);

@@ -25,6 +25,7 @@
 #endif
 
 #include "tcp_session.h"
+#include "stream/stream_splitter.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
@@ -117,22 +118,33 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
 
     if ( !srod.enable ) /* Turn it off */
     {
-        // FIXIT-H need to delete splitter too - need stream api methods
         if ( srod.direction & SSN_DIR_SERVER )
+        {
             tcpssn->server.flush_policy = STREAM_FLPOLICY_IGNORE;
+            stream.set_splitter(lwssn, true);
+        }   
 
         if ( srod.direction & SSN_DIR_CLIENT )
+        {
             tcpssn->client.flush_policy = STREAM_FLPOLICY_IGNORE;
+            stream.set_splitter(lwssn, false);
+        }   
     }
     else
     {
-        // FIXIT-H PAF need to instantiate atom splitter?
+        // FIXIT-H PAF need to instantiate service splitter?
         // FIXIT-H PAF need to check for ips / on-data
         if ( srod.direction & SSN_DIR_SERVER )
+        {
             tcpssn->server.flush_policy = STREAM_FLPOLICY_ON_ACK;
+            stream.set_splitter(lwssn, true, new AtomSplitter(true));
+        }   
 
         if ( srod.direction & SSN_DIR_CLIENT )
+        {
             tcpssn->client.flush_policy = STREAM_FLPOLICY_ON_ACK;
+            stream.set_splitter(lwssn, false, new AtomSplitter(false));
+        }   
     }
 
     if (srod.fastpath)
