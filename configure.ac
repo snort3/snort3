@@ -104,7 +104,7 @@ esac
 # Checks for programs.
 #--------------------------------------------------------------------------
 
-# FIXIT-L` should not need AM_CONDITIONAL() here
+# FIXIT-L should not need AM_CONDITIONAL() here
 AC_CHECK_PROG(have_asciidoc,asciidoc,yes,no)
 
 AM_CONDITIONAL(MAKE_HTML_DOC, [test "x$have_asciidoc" = "xyes"])
@@ -114,10 +114,17 @@ AC_CHECK_PROG(have_dblatex,dblatex,yes,no)
 
 AM_CONDITIONAL(MAKE_PDF_DOC, [test "x$have_dblatex" = "xyes"])
 
-AC_CHECK_FILE($srcdir/doc/snort_manual.html, have_html_manual="yes", [ AC_CHECK_FILE($ac_confdir/doc/snort_manual.html, have_html_manual="yes") ] )
-AC_CHECK_FILE($srcdir/doc/snort_manual.pdf, have_pdf_manual="yes", [ AC_CHECK_FILE($ac_confdir/doc/snort_manual.pdf, have_pdf_manual="yes") ] )
-AC_CHECK_FILE($srcdir/doc/snort_manual.tgz, have_chunked_manual="yes", [ AC_CHECK_FILE($ac_confdir/doc/snort_manual.tgz, have_chunked_manual="yes") ] )
-AC_CHECK_FILE($srcdir/doc/images.tgz, have_images_manual="yes", [ AC_CHECK_FILE($ac_confdir/doc/images.tgz, have_images_manual="yes") ] )
+AC_CHECK_FILE($srcdir/doc/snort_manual.html, have_html_manual="yes", [
+    AC_CHECK_FILE($ac_confdir/doc/snort_manual.html, have_html_manual="yes") ] )
+
+AC_CHECK_FILE($srcdir/doc/snort_manual.pdf, have_pdf_manual="yes", [
+    AC_CHECK_FILE($ac_confdir/doc/snort_manual.pdf, have_pdf_manual="yes") ] )
+
+AC_CHECK_FILE($srcdir/doc/snort_manual.tgz, have_chunked_manual="yes", [ 
+    AC_CHECK_FILE($ac_confdir/doc/snort_manual.tgz, have_chunked_manual="yes") ] )
+
+AC_CHECK_FILE($srcdir/doc/images.tgz, have_images_manual="yes", [
+    AC_CHECK_FILE($ac_confdir/doc/images.tgz, have_images_manual="yes") ] )
 
 AM_CONDITIONAL(HAVE_HTML_DOC, [test "x$have_html_manual" = "xyes"])
 AM_CONDITIONAL(HAVE_PDF_DOC, [test "x$have_pdf_manual" = "xyes"])

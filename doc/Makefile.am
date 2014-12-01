@@ -63,7 +63,6 @@ snort_manual.pdf
 endif
 
 else
-
 if HAVE_HTML_DOC
 MANUALS += snort_manual.html
 endif
@@ -80,7 +79,6 @@ if HAVE_IMAGES_DOC
 MANUALS += images.tgz
 endif
 endif
-
 
 doc_DATA = $(MANUALS)
 dist_doc_DATA += $(EXTRA_DIST)
@@ -181,7 +179,6 @@ html_args = \
     --attribute disable-javascript --attribute quirks! \
 	$(pdf_args)
 
-
 if MAKE_HTML_DOC
 # this is the docbook approach to html
 #snort_manual.html: snort_manual.txt $(all_sources)
@@ -205,25 +202,26 @@ images.tgz: images/
         .
 
 if MAKE_PDF_DOC
-
 snort_manual.pdf: snort_manual.txt $(all_sources)
 	a2x -f pdf $(pdf_args) $<
-
 endif
 endif
 
 if MAKE_HTML_DOC
-
 install-data-hook:
-	tar -xvf $(docdir)/snort_manual.tgz && mv snort_manual.chunked $(docdir)
+	mkdir $(DESTDIR)$(docdir)/snort_manual && \
+		tar zxvf $(srcdir)/snort_manual.tgz -C $(DESTDIR)$(docdir)/snort_manual
 
 else
 if HAVE_CHUNKED_DOC
 install-data-hook:
-	tar -xf $(docdir)/snort_manual.tgz && mv snort_manual.chunked $(docdir)
+	mkdir $(DESTDIR)$(docdir)/snort_manual && \
+		tar zxvf $(srcdir)/snort_manual.tgz -C $(DESTDIR)$(docdir)/snort_manual
+endif
+endif
 
-endif
-endif
+uninstall-hook:
+	rm -rf $(DESTDIR)$(docdir)/snort_manual
 
 delete_unbuilt = $(if $(and $(findstring $(builddir),$(srcdir)),$(findstring $(srcdir),$(builddir))), ,$(unbuilt_sources))
 
@@ -234,3 +232,4 @@ clean-local:
 	rm -f snort_manual.{fo,xml,html,pdf}
 	rm -rf snort_manual.chunked/
 	rm -f *.css
+
