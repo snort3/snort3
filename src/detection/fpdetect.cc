@@ -851,7 +851,6 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA *o, Packet *p)
 **          1 if flagged
 **
 */
-// FIXIT-H this should include frags now that they are in session
 static inline int fpAddSessionAlert(Packet *p, OptTreeNode *otn)
 {
     if ( !p->flow )
@@ -882,7 +881,6 @@ static inline int fpAddSessionAlert(Packet *p, OptTreeNode *otn)
 **          1 if alert previously generated
 **
 */
-// FIXIT-H this should include frags now that they are in session
 static inline int fpSessionAlerted(Packet *p, OptTreeNode *otn)
 {
     SigInfo *si = &otn->sigInfo;
@@ -1080,7 +1078,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
              **  payload, in case any of the rules have the
              **  'rawbytes' option.
              */
-            // FIXIT-H alt buf and file data should be obtained from 
+            // FIXIT-M alt buf and file data should be obtained from 
             // inspector gadget as an extension of above
             so = port_group->pgPms[PM_TYPE__CONTENT];
 

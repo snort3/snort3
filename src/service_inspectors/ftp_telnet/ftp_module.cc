@@ -93,8 +93,11 @@ FtpClientModule::~FtpClientModule()
 bool FtpClientModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("address") )
-        address = v.get_string();
-
+    {
+        unsigned n;
+        const uint8_t* b = v.get_buffer(n);
+        address.assign((char*)b, n);
+    }
     else if ( v.is("bounce") )
         conf->bounce = v.get_bool();
 
@@ -171,9 +174,7 @@ bool FtpClientModule::end(const char* fqn, int idx, SnortConfig*)
 
     if ( idx && !strcmp(fqn, "ftp_client.bounce_to") )
     {
-        // FIXIT-H 0.0.0.0/32 is not captured correctly 
-        // see parameter.cc::valid_addr()
-        if ( /*!address.size() ||*/ (last_port && (port > last_port)) )
+        if ( !address.size() || (last_port && (port > last_port)) )
         {
             ParseError("bad ftp_client.bounce_to [%d]", idx);
             return false;

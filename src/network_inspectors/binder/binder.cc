@@ -283,7 +283,6 @@ bool Stuff::apply_action(Flow* flow)
     switch ( action )
     {
     case BA_BLOCK:
-        stream.drop_traffic(flow, SSN_DIR_BOTH);
         flow->set_state(Flow::BLOCK);
         return false;
 
