@@ -374,11 +374,17 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         break;
 
     case Flow::ALLOW:
+        if ( news )
+            stream.stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
+        else
+            DisableInspection(p);
         p->ptrs.decode_flags |= DECODE_PKT_TRUST;
-        stream.stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
         break;
 
     case Flow::BLOCK:
+        if ( news )
+            stream.drop_traffic(flow, SSN_DIR_BOTH);
+        DisableInspection(p);
         Active_DropPacket();
         break;
     }
