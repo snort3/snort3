@@ -45,7 +45,6 @@ public:
 bool Pcre::convert(std::istringstream& data_stream)
 {
     std::string keyword;
-    //bool retval = true;  FIXIT-H-J
     bool sticky_buffer_set = false;
     std::string buffer = "pkt_data";
 

@@ -72,4 +72,6 @@ else (BUILD_EXTRA_PLUGINS)
     add_custom_target(uninstall
         COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
+    include (packaging_data.cmake)
+
 endif (BUILD_EXTRA_PLUGINS)
