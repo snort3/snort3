@@ -13,7 +13,6 @@ add_library( codecs STATIC
     ${CODEC_INCLUDES}
     codec_api.h
     codec_api.cc
-    template.cc   # for development purposes.  Keep the template up to date
 )
 
 

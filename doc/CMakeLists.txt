@@ -107,9 +107,21 @@ else ()
         NO_DEFAULT_PATH
     )
 
-    add_to_list_if_true(EXTRA_DIST_PACKAGED SNORT_MANUAL_HTML_FOUND "snort_manual.html")
-    add_to_list_if_true(EXTRA_DIST_PACKAGED SNORT_MANUAL_TGZ_FOUND "snort_manual.tgz")
-    add_to_list_if_true(EXTRA_DIST_PACKAGED IMAGES_TGZ_FOUND "images.tgz")
+    if (SNORT_MANUAL_TGZ_FOUND)
+
+        message(STATUS "unpacking Snort Manual")
+
+        execute_process (
+            COMMAND ${CMAKE_COMMAND}
+            -E tar xf ${CMAKE_CURRENT_LIST_DIR}/snort_manual.tgz
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
+        set (SNORT_MANUAL_CHUNKED ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked)
+    endif()
+
+    add_to_list_if_true(PACKAGED_DIST SNORT_MANUAL_TGZ_FOUND "snort_manual.tgz")
+    add_to_list_if_true(PACKAGED_DIST IMAGES_TGZ_FOUND "images.tgz")
+    add_to_list_if_true(PACKAGED_DIST SNORT_MANUAL_HTML_FOUND "snort_manual.html")
     mark_as_advanced (SNORT_MANUAL_HTML_FOUND)
     mark_as_advanced (SNORT_MANUAL_TGZ_FOUND)
     mark_as_advanced (IMAGES_TGZ_FOUND)
@@ -131,7 +143,7 @@ else ()
         NO_DEFAULT_PATH
     )
 
-    add_to_list_if_true(EXTRA_DIST_PACKAGED SNORT_MANUAL_PDF_FOUND "snort_manual.pdf")
+    add_to_list_if_true(PACKAGED_DIST SNORT_MANUAL_PDF_FOUND "snort_manual.pdf")
     mark_as_advanced (SNORT_MANUAL_PDF_FOUND)
 endif ()
 
@@ -259,7 +271,7 @@ if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
             OUTPUT ${output}
             COMMAND ${CMAKE_COMMAND} -E copy ${input} ${output}
             DEPENDS ${input}
-            COMMENT "Copying ${file} into binary directory"
+            COMMENT "Documents: Copying ${file} into binary directory"
         )
 
         list(APPEND ALL_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/${file}")
@@ -305,8 +317,7 @@ add_custom_command(OUTPUT snort_manual.tgz
         --destination-dir=${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt 
     COMMAND ${CMAKE_COMMAND} 
-        -E tar 
-        zcf snort_manual.tgz
+        -E tar zcf snort_manual.tgz
         ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked
     DEPENDS ${ALL_SOURCES}
     COMMENT "Documents: building snort_manual.tgz"
@@ -330,15 +341,20 @@ add_custom_command(OUTPUT images.tgz
 
 # Specify binary path so we install the build manuals, not packaged manuals
 foreach (file ${EXTRA_DIST})
-    list(APPEND EXTRA_DIST_BUILT "${CMAKE_CURRENT_BINARY_DIR}/${file}")
+    list(APPEND BUILT_DIST "${CMAKE_CURRENT_BINARY_DIR}/${file}")
 endforeach(file)
 
-add_custom_target(snort_manuals ALL DEPENDS ${EXTRA_DIST_BUILT})
-install (FILES ${EXTRA_DIST_BUILT} DESTINATION "${SNORT_DATA_DIR}")
-install (FILES ${EXTRA_DIST_PACKAGED} DESTINATION "${SNORT_DATA_DIR}")
+add_custom_target(snort_manuals ALL DEPENDS ${BUILT_DIST})
+install (FILES ${BUILT_DIST} DESTINATION "${SNORT_DATA_DIR}")
+install (FILES ${PACKAGED_DIST} DESTINATION "${SNORT_DATA_DIR}")
 install (FILES ${UNBUILT_SOURCES} DESTINATION "${SNORT_DATA_DIR}")
+install (DIRECTORY ${SNORT_MANUAL_CHUNKED} DESTINATION "${SNORT_DATA_DIR}")
 
-
+set_property(
+    DIRECTORY
+    PROPERTY
+    ADDITIONAL_MAKE_CLEAN_FILES ${UNBUILT_SOURCES} snort_manual.chunked
+)
 
 
 ###############################################################################

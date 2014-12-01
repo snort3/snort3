@@ -49,6 +49,8 @@ $(BUILT_SOURCES)
 dist_doc_DATA = \
 $(unbuilt_sources)
 
+MANUALS =
+
 if MAKE_HTML_DOC
 EXTRA_DIST = \
 snort_manual.html \
@@ -59,8 +61,28 @@ if MAKE_PDF_DOC
 EXTRA_DIST += \
 snort_manual.pdf
 endif
+
+else
+
+if HAVE_HTML_DOC
+MANUALS += snort_manual.html
 endif
 
+if HAVE_PDF_DOC
+MANUALS += snort_manual.pdf
+endif
+
+if HAVE_CHUNKED_DOC
+MANUALS += snort_manual.tgz
+endif
+
+if HAVE_IMAGES_DOC
+MANUALS += images.tgz
+endif
+endif
+
+
+doc_DATA = $(MANUALS)
 dist_doc_DATA += $(EXTRA_DIST)
 
 snort = $(top_builddir)/src/snort
@@ -159,6 +181,8 @@ html_args = \
     --attribute disable-javascript --attribute quirks! \
 	$(pdf_args)
 
+
+if MAKE_HTML_DOC
 # this is the docbook approach to html
 #snort_manual.html: snort_manual.txt $(all_sources)
 #	a2x -f xhtml $(html_args) $<
@@ -168,9 +192,6 @@ html_args = \
 # extracted asciidoc.css doesn't seem to work with -a linkcss
 snort_manual.html: snort_manual.txt $(all_sources)
 	asciidoc -b xhtml11 -a toc2 -a icons -a imagesdir=./images $<
-
-snort_manual.pdf: snort_manual.txt $(all_sources)
-	a2x -f pdf $(pdf_args) $<
 
 snort_manual.tgz: snort_manual.txt $(all_sources)
 	a2x -f chunked $(html_args) $<
@@ -183,6 +204,26 @@ images.tgz: images/
         --exclude README \
         .
 
+if MAKE_PDF_DOC
+
+snort_manual.pdf: snort_manual.txt $(all_sources)
+	a2x -f pdf $(pdf_args) $<
+
+endif
+endif
+
+if MAKE_HTML_DOC
+
+install-data-hook:
+	tar -xvf $(docdir)/snort_manual.tgz && mv snort_manual.chunked $(docdir)
+
+else
+if HAVE_CHUNKED_DOC
+install-data-hook:
+	tar -xf $(docdir)/snort_manual.tgz && mv snort_manual.chunked $(docdir)
+
+endif
+endif
 
 delete_unbuilt = $(if $(and $(findstring $(builddir),$(srcdir)),$(findstring $(srcdir),$(builddir))), ,$(unbuilt_sources))
 
