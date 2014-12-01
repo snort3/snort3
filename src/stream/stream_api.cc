@@ -780,33 +780,24 @@ int Stream::response_flush_stream(Packet *p)
     return 0;
 }
 
-int Stream::add_session_alert(
+// return true if added
+bool Stream::add_session_alert(
     Flow *flow, Packet *p, uint32_t gid, uint32_t sid)
 {
     if ( !flow )
-        return 0;
+        return false;
 
-    /* Don't need to do this for other protos because they don't
-       do any reassembly. */
-    if ( p->type() != PktType::TCP )
-        return 0;
-
-    return Stream5AddSessionAlertTcp(flow, p, gid, sid);
+    return flow->session->add_alert(p, gid, sid);
 }
 
-/* return non-zero if gid/sid have already been seen */
-int Stream::check_session_alerted(
+// return true if gid/sid have already been seen
+bool Stream::check_session_alerted(
     Flow *flow, Packet *p, uint32_t gid, uint32_t sid)
 {
     if ( !flow )
-        return 0;
+        return false;
 
-    /* Don't need to do this for other protos because they don't
-       do any reassembly. */
-    if ( p->type() != PktType::TCP )
-        return 0;
-
-    return Stream5CheckSessionAlertTcp(flow, p, gid, sid);
+    return flow->session->check_alerted(p, gid, sid);
 }
 
 int Stream::update_session_alert(

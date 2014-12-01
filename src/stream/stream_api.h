@@ -148,17 +148,13 @@ public:
      */
     static int traverse_stream_segments(Packet*, StreamSegmentIterator, void* userdata);  // PKT
 
-    /* Add session alert
+    /* Add session alert - true if added
      */
-    static int add_session_alert(Flow*, Packet*, uint32_t gid, uint32_t sid);
+    static bool add_session_alert(Flow*, Packet*, uint32_t gid, uint32_t sid);
 
-    /* Check session alert
-     *
-     * Returns
-     *     0 if not previously alerted
-     *     !0 if previously alerted
+    /* Check session alert - true if previously alerted
      */
-    static int check_session_alerted(Flow*, Packet *p, uint32_t gid, uint32_t sid);
+    static bool check_session_alerted(Flow*, Packet *p, uint32_t gid, uint32_t sid);
 
     /* Set Extra Data Logging
      *

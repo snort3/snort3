@@ -182,3 +182,37 @@ int IpSession::process(Packet* p)
     return 0;
 }
 
+bool IpSession::add_alert(Packet*, uint32_t gid, uint32_t sid)
+{
+    FragTracker* ft = &tracker;
+
+    /* Only track a certain number of alerts per session */
+    if ( ft->alert_count >= MAX_FRAG_ALERTS )
+        return false;
+
+    ft->alert_gid[ft->alert_count] = gid;
+    ft->alert_sid[ft->alert_count] = sid;
+    ft->alert_count++;
+
+    return true;
+}
+
+bool IpSession::check_alerted(Packet* p, uint32_t gid, uint32_t sid)
+{
+    FragTracker* ft = &tracker;
+
+    for ( unsigned i = 0; i < ft->alert_count; i++ )
+    {
+        /*  If this is a rebuilt packet and we've seen this alert before, return
+         *  that we have previously alerted on a non-rebuilt packet.
+         */
+        if ( (p->packet_flags & PKT_REBUILT_FRAG)
+                && ft->alert_gid[i] == gid && ft->alert_sid[i] == sid )
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+

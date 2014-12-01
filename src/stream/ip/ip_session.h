@@ -29,6 +29,9 @@
 struct Fragment;
 struct FragEngine;
 
+/* Only track a certain number of alerts per session */
+#define MAX_FRAG_ALERTS 8
+
 /* tracker for a fragmented packet set */
 struct FragTracker
 {
@@ -54,6 +57,10 @@ struct FragTracker
     Fragment *fraglist_tail; /* tail ptr for easy appending */
     int fraglist_count;       /* handy dandy counter */
 
+    uint32_t alert_gid[MAX_FRAG_ALERTS]; /* flag alerts seen in a frag list  */
+    uint32_t alert_sid[MAX_FRAG_ALERTS]; /* flag alerts seen in a frag list  */
+    uint8_t  alert_count;                /* count alerts seen in a frag list */
+
     uint8_t ip_options_len;  /* length of ip options for this set of frags */
     uint8_t *ip_options_data; /* ip options from offset 0 packet */
     uint8_t copied_ip_options_len;  /* length of 'copied' ip options */
@@ -77,6 +84,9 @@ public:
     bool setup(Packet*) override;
     int process(Packet*) override;
     void clear() override;
+
+    bool add_alert(Packet*, uint32_t gid, uint32_t sid) override;
+    bool check_alerted(Packet*, uint32_t gid, uint32_t sid) override;
 
 public:
     FragTracker tracker;

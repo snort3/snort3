@@ -2213,6 +2213,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
     ft->frag_pkts = 0;
     ft->frag_time.tv_sec = p->pkth->ts.tv_sec;
     ft->frag_time.tv_usec = p->pkth->ts.tv_usec;
+    ft->alert_count = 0;
     ft->ip_options_len = 0;
     ft->ip_options_data = NULL;
     ft->copied_ip_options_len = 0;
