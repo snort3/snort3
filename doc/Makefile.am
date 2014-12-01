@@ -209,13 +209,13 @@ endif
 
 if MAKE_HTML_DOC
 install-data-hook:
-	mkdir $(DESTDIR)$(docdir)/snort_manual && \
+	mkdir -p $(DESTDIR)$(docdir)/snort_manual && \
 		tar zxvf $(srcdir)/snort_manual.tgz -C $(DESTDIR)$(docdir)/snort_manual
 
 else
 if HAVE_CHUNKED_DOC
 install-data-hook:
-	mkdir $(DESTDIR)$(docdir)/snort_manual && \
+	mkdir -p $(DESTDIR)$(docdir)/snort_manual && \
 		tar zxvf $(srcdir)/snort_manual.tgz -C $(DESTDIR)$(docdir)/snort_manual
 endif
 endif

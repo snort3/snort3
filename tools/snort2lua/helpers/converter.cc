@@ -305,10 +305,10 @@ int Converter::convert(std::string input,
         out << "dir = os.getenv('SNORT_LUA_PATH')\n";
         out << "\n";
         out << "if ( not dir ) then\n";
-        out << "    dir = ''\n";
+        out << "    dir = '.'\n";
         out << "end\n";
         out << "\n";
-        out << "dofile(dir .. 'snort_defaults.lua')\n";
+        out << "dofile(dir .. '/snort_defaults.lua')\n";
         out << "\n";
         out << "\n";
         data_api.print_data(out);
