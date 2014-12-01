@@ -136,9 +136,9 @@ void parse_include(SnortConfig *sc, const char *arg)
     struct stat file_stat;  /* for include path testing */
     char* fname = SnortStrdup(arg);
 
-    /* Stat the file.  If that fails, stat it relative to the directory
+    /* Stat the file.  If that fails, make it relative to the directory
      * that the top level snort configuration file was in */
-    if (stat(fname, &file_stat) == -1)
+    if ( stat(fname, &file_stat) == -1 && fname[0] != '/' )
     {
         const char* snort_conf_dir = get_snort_conf_dir();
 

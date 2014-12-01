@@ -93,8 +93,11 @@ FtpClientModule::~FtpClientModule()
 bool FtpClientModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("address") )
-        address = v.get_string();
-
+    {
+        unsigned n;
+        const uint8_t* b = v.get_buffer(n);
+        address.assign((char*)b, n);
+    }
     else if ( v.is("bounce") )
         conf->bounce = v.get_bool();
 
