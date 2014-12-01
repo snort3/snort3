@@ -1,4 +1,7 @@
 if (BUILD_EXTRA_PLUGINS)
+    #  This condition is only true if this directory is included as
+    #  a subdirectory of the top level source directory.
+
     set(SNORT_EXECUTABLE $<TARGET_FILE:snort> CACHE INTERNAL "Snort binary" FORCE)
     add_subdirectory(src)
 

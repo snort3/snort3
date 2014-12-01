@@ -50,6 +50,8 @@ add_custom_target(uninstall
 # Test plugins in the 'Extra' directory!!
 if (BUILD_EXTRA_PLUGINS)
     if (${CMAKE_GENERATOR} MATCHES "Make")
-        add_subdirectory(extra)
+        if (0)   #the extra directory is not distributed in the main tarball
+            add_subdirectory(extra)
+        endif()
     endif()
 endif (BUILD_EXTRA_PLUGINS)
