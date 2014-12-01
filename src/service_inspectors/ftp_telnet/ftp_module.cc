@@ -174,9 +174,7 @@ bool FtpClientModule::end(const char* fqn, int idx, SnortConfig*)
 
     if ( idx && !strcmp(fqn, "ftp_client.bounce_to") )
     {
-        // FIXIT-H 0.0.0.0/32 is not captured correctly 
-        // see parameter.cc::valid_addr()
-        if ( /*!address.size() ||*/ (last_port && (port > last_port)) )
+        if ( !address.size() || (last_port && (port > last_port)) )
         {
             ParseError("bad ftp_client.bounce_to [%d]", idx);
             return false;
