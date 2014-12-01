@@ -46,6 +46,7 @@ Analyzer::Analyzer(const char* s)
     source = s;
     command = AC_NONE;
     swap = nullptr;
+    daqh = nullptr;
 }
 
 void Analyzer::operator()(unsigned id, Swapper* ps)
@@ -55,6 +56,7 @@ void Analyzer::operator()(unsigned id, Swapper* ps)
 
     pin_thread_to_cpu(source);
     snort_thread_init(source);
+    daqh = DAQ_GetHandle();
 
     analyze();
 
@@ -69,10 +71,14 @@ bool Analyzer::execute(AnalyzerCommand ac)
     if ( command && command != AC_PAUSE )
         return false;
 
+    if ( ac == AC_STOP )
+        DAQ_BreakLoop(-1, daqh);
+
     // FIXIT-L executing a command while paused
     // will cause a resume
     command = ac;
     take_break();
+
     return true;
 }
 

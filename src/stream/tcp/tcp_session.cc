@@ -367,6 +367,11 @@ static inline uint32_t SegsToFlush (const StreamTracker* st, unsigned max)
 
 static inline bool DataToFlush (const StreamTracker* st)
 {
+    // needed by stream_reassemble:action disable; can fire on rebuilt
+    // packets, yanking the splitter out from under us :(
+    if ( !st->flush_policy )  
+        return false;
+
     if ( 
         st->flush_policy == STREAM_FLPOLICY_ON_DATA ||
         st->splitter->is_paf()
@@ -1961,7 +1966,7 @@ static int FlushStream(
 
         const StreamBuffer* sb = nullptr;
 
-        // FIXIT-H force handling to work around nhttp
+        // FIXIT-M force handling to work around nhttp
         if ( st->flags & TF_FORCE_FLUSH )
         {
             memcpy(flushbuf, ss->payload, bytes_to_copy);
@@ -1980,7 +1985,7 @@ static int FlushStream(
         {
             s5_pkt->data = sb->data;
             s5_pkt->dsize = sb->length;
-            assert(sb->length < 65536); // FIXIT-H should be < s5_pkt->max_dsize);
+            assert(sb->length < 65536); // FIXIT-M should be < s5_pkt->max_dsize);
 
             // FIXIT-M flushbuf should be eliminated from this function
             // since we are actually using the stream splitter buffer
@@ -2308,6 +2313,10 @@ static inline int flush_ackd(
 static inline int flush_stream(
     TcpSession *tcpssn, StreamTracker *st, Packet *p, uint32_t dir)
 {
+    // this is not always redundant; stream_reassemble rule option causes trouble
+    if ( !st->flush_policy )
+        return 0;
+
     if ( Normalize_IsEnabled(NORM_TCP_IPS) )
     {
         uint32_t bytes = get_q_sequenced(st);
@@ -4315,7 +4324,7 @@ static void NewTcpSessionOnSyn(
 
 
         /* Set the StreamTcpConfig for each direction (pkt from client) */
-        tmp->client.config = dstPolicy;  // FIXIT-H use external binding for both dirs
+        tmp->client.config = dstPolicy;  // FIXIT-M use external binding for both dirs
         tmp->server.config = dstPolicy;  // (applies to all the blocks in this funk)
 
         CopyMacAddr(p, tmp, FROM_CLIENT);
@@ -4790,17 +4799,6 @@ static int ProcessTcp(
         }
         else if ( !p->dsize )
         {
-#if 0
-            // FIXIT-H delete this?
-            if ( p->dsize || p->ptrs.tcph->is_syn_ack() )
-            {
-                lwssn->session_state |= STREAM5_STATE_IGNORE;
-                tcpStats.sessions_ignored++;
-            }
-#endif
-            //else if ( !(lwssn->session_state & STREAM5_STATE_NO_PICKUP) )
-            //    lwssn->session_state |= STREAM5_STATE_NO_PICKUP;
-
             /* Do nothing. */
             MODULE_PROFILE_END(s5TcpStatePerfStats);
             return retcode;

@@ -98,6 +98,10 @@ static void x2c(unsigned x)
 // parameters
 //-------------------------------------------------------------------------
 
+#ifdef REG_TEST
+#define REG_TEST_IGNORE " -N --pcap-reset "
+#endif
+
 static const Parameter s_params[] =
 {
     { "-?", Parameter::PT_STRING, "(optional)", nullptr,
@@ -164,7 +168,7 @@ static const Parameter s_params[] =
 
 #ifdef REG_TEST
     { "-N", Parameter::PT_IMPLIED, nullptr, nullptr, 
-      "ignored for reg tests" },
+      "ignored - for REG_TEST only" },
 #endif
 
     { "-n", Parameter::PT_INT, "0:", nullptr, 
@@ -363,8 +367,10 @@ static const Parameter s_params[] =
     { "--pcap-reload", Parameter::PT_IMPLIED, nullptr, nullptr,
       "if reading multiple pcaps, reload snort config between pcaps" },
 
+#ifdef REG_TEST
     { "--pcap-reset", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "reset Snort after each pcap" },
+      "ignored - for REG_TEST only" },
+#endif
 
     { "--pcap-show", Parameter::PT_IMPLIED, nullptr, nullptr,
       "print a line saying what pcap is currently being read" },
@@ -728,9 +734,6 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--pcap-reload") )
         sc->run_flags |= RUN_FLAG__PCAP_RELOAD;
 
-    else if ( v.is("--pcap-reset") )
-        sc->run_flags |= RUN_FLAG__PCAP_RESET;
-
     else if ( v.is("--pcap-show") )
         sc->run_flags |= RUN_FLAG__PCAP_SHOW;
 
@@ -800,7 +803,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         x2c(v.get_long());
 
 #ifdef REG_TEST
-    else if ( !v.is("-N") )
+    else if ( !strstr(REG_TEST_IGNORE, v.get_name()) )
         return false;
 #endif
 

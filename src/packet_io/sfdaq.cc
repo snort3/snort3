@@ -543,10 +543,17 @@ int DAQ_Inject(const DAQ_PktHdr_t* h, int rev, const uint8_t* buf, uint32_t len)
     return err;
 }
 
-int DAQ_BreakLoop (int error)
+//--------------------------------------------------------------------
+
+void* DAQ_GetHandle()
+{ return daq_hand; }
+
+int DAQ_BreakLoop (int error, void* hand)
 {
+    if ( !hand )
+        hand = daq_hand;
     s_error = error;
-    return ( daq_breakloop(daq_mod, daq_hand) == DAQ_SUCCESS );
+    return ( daq_breakloop(daq_mod, hand) == DAQ_SUCCESS );
 }
 
 //--------------------------------------------------------------------
@@ -571,11 +578,8 @@ const DAQ_Stats_t* DAQ_GetStats (void)
 {
     int err = 0;
 
-    if ( !daq_hand && !ScPcapReset() )
-        return &tot_stats;
-
     if ( !daq_hand )
-        return &daq_stats;
+        return &tot_stats;
 
     err = daq_get_stats(daq_mod, daq_hand, &daq_stats);
 

@@ -76,7 +76,10 @@ int DAQ_Stop(void);
 // (but only where performance justifies exposing implementation!)
 int DAQ_Acquire(int max, DAQ_Analysis_Func_t, uint8_t* user);
 int DAQ_Inject(const DAQ_PktHdr_t*, int rev, const uint8_t* buf, uint32_t len);
-int DAQ_BreakLoop(int error);
+
+void* DAQ_GetHandle();
+int DAQ_BreakLoop(int error, void* handle = nullptr);
+
 #ifdef HAVE_DAQ_ACQUIRE_WITH_META
 void DAQ_Set_MetaCallback(DAQ_Meta_Func_t meta_callback);
 #endif

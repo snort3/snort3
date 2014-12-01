@@ -130,7 +130,7 @@ unsigned PolicyMap::add_shell(Shell* sh)
 { 
     unsigned idx = shells.size();
     shells.push_back(sh);
-    inspection_policy.push_back(new InspectionPolicy);  // FIXIT-H need id?
+    inspection_policy.push_back(new InspectionPolicy);  // FIXIT-M need id?
     ips_policy.push_back(new IpsPolicy(idx));
     network_policy.push_back(new NetworkPolicy(idx));
     return idx;

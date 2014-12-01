@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 #include <iostream>
 using namespace std;
@@ -30,10 +31,11 @@ using namespace std;
 #include "config.h"
 #endif
 
-#include "utils/util.h"
+#include "main.h"
 #include "main/analyzer.h"
 #include "main/thread.h"
-#include "snort.h"
+#include "main/snort.h"
+#include "utils/util.h"
 #include "utils/ring.h"
 #include "helpers/markup.h"
 #include "parser/parser.h"
@@ -79,20 +81,37 @@ void set_quick_exit(bool b)
 void init_main_thread_sig()
 { is_main_thread = true; }
 
+static void exit_log(const char* why)
+{
+    // printf() etc not allowed here
+    char buf[256] = "\n\0";
+
+    strncat(buf, get_prompt(), sizeof(buf)-strlen(buf)-1);
+    strncat(buf, " caught ", sizeof(buf)-strlen(buf)-1);
+    strncat(buf, why, sizeof(buf)-strlen(buf)-1);
+    strncat(buf, " signal, exiting\n", sizeof(buf)-strlen(buf)-1);
+
+    write(STDOUT_FILENO, buf, strlen(buf));
+}
+
 static void exit_handler(int signal)
 {
     PigSignal s;
+    const char* t;
 
     switch ( signal )
     {
-    case SIGTERM: s = PIG_SIG_TERM; break;
-    case SIGQUIT: s = PIG_SIG_QUIT; break;
-    case SIGINT : s = PIG_SIG_INT;  break;
+    case SIGTERM: s = PIG_SIG_TERM; t = "term"; break;
+    case SIGQUIT: s = PIG_SIG_QUIT; t = "quit"; break;
+    case SIGINT : s = PIG_SIG_INT;  t = "int";  break;
     default: return;
     }
 
     if ( exit_pronto )
+    {
+        exit_log(t);
         _exit(0);
+    }
 
     sig_ring.put(s);
 }
