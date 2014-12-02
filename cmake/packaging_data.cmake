@@ -8,7 +8,7 @@ add_custom_target( autotools
 add_custom_target( copy_symlinks
     COMMAND
         ${CMAKE_COMMAND} -DSOURCE_DIRECTORY=${CMAKE_SOURCE_DIR}
-        -P ${CMAKE_CURRENT_LIST_FILE}/copy_symlinks.cmake
+        -P ${CMAKE_CURRENT_LIST_DIR}/copy_symlinks.cmake
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
@@ -16,7 +16,7 @@ add_custom_target( copy_m4_symlinks
     COMMAND
         ${CMAKE_COMMAND}
         -DSOURCE_DIRECTORY=${CMAKE_SOURCE_DIR}/m4
-        -P ${CMAKE_CURRENT_LIST_FILE}/copy_symlinks.cmake
+        -P ${CMAKE_CURRENT_LIST_DIR}/copy_symlinks.cmake
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/m4
 )
 
