@@ -79,10 +79,6 @@ bool React::convert(std::istringstream& data_stream)
 
                 do
                 {
-                    // FIXIT-1J If reject params are legitimately strings, these MUST
-                    //          change so users don't think 'reset_dest=false' turns
-                    //          the option off
-
                     if (!tmp.compare("warn"))
                         table_api.add_deleted_comment("warn");
 

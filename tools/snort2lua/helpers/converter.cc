@@ -195,7 +195,6 @@ int Converter::parse_file(std::string input_file)
             {
                 while(data_stream.peek() != EOF)
                 {
-                    //FIXIT-M J place this in a try catch
                     if ((state == nullptr) || !state->convert(data_stream))
                     {
                         data_api.failed_conversion(data_stream);

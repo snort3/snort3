@@ -1,4 +1,7 @@
 if (BUILD_EXTRA_PLUGINS)
+    #  This condition is only true if this directory is included as
+    #  a subdirectory of the top level source directory.
+
     set(SNORT_EXECUTABLE $<TARGET_FILE:snort> CACHE INTERNAL "Snort binary" FORCE)
     add_subdirectory(src)
 
@@ -68,5 +71,7 @@ else (BUILD_EXTRA_PLUGINS)
 
     add_custom_target(uninstall
         COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+
+    include (packaging_data.cmake)
 
 endif (BUILD_EXTRA_PLUGINS)

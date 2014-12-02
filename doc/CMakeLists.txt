@@ -74,6 +74,7 @@ if (MAKE_HTML_DOC)
         snort_manual.tgz
         images.tgz
     )
+    set (SNORT_MANUAL_CHUNKED ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked)
 
 else ()
     # resetting to avoid the edge case of someone deleting there source
@@ -348,7 +349,7 @@ add_custom_target(snort_manuals ALL DEPENDS ${BUILT_DIST})
 install (FILES ${BUILT_DIST} DESTINATION "${SNORT_DATA_DIR}")
 install (FILES ${PACKAGED_DIST} DESTINATION "${SNORT_DATA_DIR}")
 install (FILES ${UNBUILT_SOURCES} DESTINATION "${SNORT_DATA_DIR}")
-install (DIRECTORY ${SNORT_MANUAL_CHUNKED} DESTINATION "${SNORT_DATA_DIR}")
+install (DIRECTORY ${SNORT_MANUAL_CHUNKED}/ DESTINATION "${SNORT_DATA_DIR}/snort_manual")
 
 set_property(
     DIRECTORY
