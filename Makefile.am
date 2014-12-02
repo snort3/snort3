@@ -4,7 +4,8 @@ SUBDIRS = \
 src \
 lua \
 tools \
-doc
+doc \
+m4
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

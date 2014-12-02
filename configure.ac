@@ -51,6 +51,16 @@ AC_C_INLINE
 AM_CXXFLAGS="-std=c++11"
 AX_CXX_COMPILE_STDCXX_11
 
+# g++ 4.7 passes the c++11 check but is not sufficient
+if test "x$CXX" = "xg++"; then
+    if `g++ -dumpversion | awk '{exit $1<4.8?0:1}'` ; then
+       echo
+       echo "   ERROR:  g++ >= 4.8 is required"
+       echo
+       exit 1
+    fi
+fi
+
 #--------------------------------------------------------------------------
 # host magic :(
 #--------------------------------------------------------------------------
@@ -597,7 +607,7 @@ AC_CHECK_HEADERS(dumbnet.h,,DUMBNET_H="no")
 
 if test "x$DNET_H" = "xno" -a "x$DUMBNET_H" = "xno"; then
     echo
-    echo "   ERROR!  dnet header not found, go get it from"
+    echo "   ERROR:  dnet header not found, go get it from"
     echo "   http://code.google.com/p/libdnet/ or use the --with-dnet-*"
     echo "   options, if you have it installed in an unusual place"
     exit
@@ -614,7 +624,7 @@ AC_CHECK_LIB(pcap, pcap_datalink,, LPCAP="no")
 if test "x$LPCAP" = "xno"; then
   if test "x$LPFRING_PCAP" = "xno"; then
     echo
-    echo "   ERROR!  Libpcap library/headers (libpcap.a (or .so)/pcap.h)"
+    echo "   ERROR:  Libpcap library/headers (libpcap.a (or .so)/pcap.h)"
     echo "   not found, go get it from http://www.tcpdump.org"
     echo "   or use the --with-pcap-* options, if you have it installed"
     echo "   in unusual place.  Also check if your libpcap depends on another"
@@ -661,7 +671,7 @@ PCRE_H=""
 AC_CHECK_HEADERS(pcre.h,, PCRE_H="no")
 if test "x$PCRE_H" = "xno"; then
   echo
-  echo "   ERROR!  Libpcre header not found."
+  echo "   ERROR:  Libpcre header not found."
   echo "   Get it from http://www.pcre.org"
   exit 1
 fi
@@ -672,7 +682,7 @@ pcre_version_six=""
 AC_CHECK_LIB(pcre, pcre_compile, ,PCRE_L="no")
 if test "x$PCRE_L" = "xno"; then
     echo
-    echo "   ERROR!  Libpcre library not found."
+    echo "   ERROR:  Libpcre library not found."
     echo "   Get it from http://www.pcre.org"
     echo
     exit 1
@@ -692,7 +702,7 @@ fi
 if test "x$pcre_version_six" != "xyes"; then
     AC_MSG_RESULT(no)
     echo
-    echo "    ERROR!  Libpcre library version >= 6.0 not found."
+    echo "    ERROR:  Libpcre library version >= 6.0 not found."
     echo "    Get it from http://www.pcre.org"
     echo
     exit 1
@@ -705,7 +715,7 @@ AC_CHECK_LIB(dumbnet, eth_set,,[DUMBNET="no"])
 
 if test "x$DNET" = "xno" -a "x$DUMBNET" = "xno"; then
     echo
-    echo "   ERROR!  dnet library not found, go get it from"
+    echo "   ERROR:  dnet library not found, go get it from"
     echo "   http://code.google.com/p/libdnet/ or use the --with-dnet-*"
     echo "   options, if you have it installed in an unusual place"
     exit
@@ -715,7 +725,7 @@ Z_LIB=""
 AC_CHECK_HEADERS(zlib.h,, Z_LIB="no")
 if test "x$Z_LIB" = "xno"; then
     echo
-    echo "   ERROR!  zlib header not found, go get it from"
+    echo "   ERROR:  zlib header not found, go get it from"
     echo "   http://www.zlib.net"
     exit
 fi
@@ -724,7 +734,7 @@ Z_LIB=""
 AC_CHECK_LIB(z, inflate,, Z_LIB="no")
 if test "x$Z_LIB" = "xno"; then
     echo
-    echo "   ERROR!  zlib library not found, go get it from"
+    echo "   ERROR:  zlib library not found, go get it from"
     echo "   http://www.zlib.net"
     exit
 fi
@@ -750,7 +760,7 @@ else
     AC_CHECK_LIB(c, dlsym, DLLIB="yes", DLLIB="no")
     if test "$DLLIB" = "no"; then
        echo
-       echo "   ERROR!  programmatic interface to dynamic link loader"
+       echo "   ERROR:  programmatic interface to dynamic link loader"
        echo "   not found.  Cannot build Snort."
        echo
        exit 1
@@ -765,7 +775,7 @@ if test "x$enable_static_daq" = "xyes"; then
 
     if test "x$LDAQ" = "xno"; then
         echo
-        echo "   ERROR!  daq_static library not found, go get it from"
+        echo "   ERROR:  daq_static library not found, go get it from"
         echo "   http://www.snort.org/."
         #AC_MSG_ERROR("Fatal!")  # FIXTHIS switch over to this macro
         exit 1                   # instead of raw exits!
@@ -777,7 +787,7 @@ else
 
     if test "x$LDAQ" = "xno"; then
         echo
-        echo "   ERROR!  daq library not found, go get it from"
+        echo "   ERROR:  daq library not found, go get it from"
         echo "   http://www.snort.org/."
         #AC_MSG_ERROR("Fatal!")
         exit 1
@@ -895,6 +905,7 @@ src/time/Makefile \
 src/utils/Makefile \
 lua/Makefile \
 doc/Makefile \
+m4/Makefile \
 tools/Makefile \
 tools/u2boat/Makefile \
 tools/u2spewfoo/Makefile \
