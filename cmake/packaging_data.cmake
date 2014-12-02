@@ -12,28 +12,9 @@ add_custom_target( autotools_symlinks
     COMMENT "recreating autotools symlinks"
 )
 
-add_custom_target( copy_symlinks
-    COMMAND
-        ${CMAKE_COMMAND} -DSOURCE_DIRECTORY=${CMAKE_SOURCE_DIR}
-        -P ${CMAKE_CURRENT_LIST_DIR}/copy_symlinks.cmake
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "converting top level symlinks to binaries"
-)
-
-add_custom_target( copy_m4_symlinks
-    COMMAND
-        ${CMAKE_COMMAND}
-        -DSOURCE_DIRECTORY=${CMAKE_SOURCE_DIR}/m4
-        -P ${CMAKE_CURRENT_LIST_DIR}/copy_symlinks.cmake
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/m4
-    COMMENT "converting m4 symlinks to binaries"
-)
-
 add_custom_target( dist
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target copy_manuals_to_source
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target autotools_binaries
-#    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target copy_symlinks
-#    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target copy_m4_symlinks
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target package_source
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target delete_manuals_in_source
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target autotools_symlinks  # recreate autotool links.
