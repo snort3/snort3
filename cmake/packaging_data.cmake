@@ -1,8 +1,15 @@
 
 # use this target instead of 'make package_source'
-add_custom_target( autotools
-    COMMAND autoreconf -isvf #  FIXIT-L J  --  should check for autotools the CMake way
+add_custom_target( autotools_binaries
+    COMMAND autoreconf -ivf #  FIXIT-L J  --  should check for autotools the CMake way
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "reconfiguring all autotools files"
+)
+
+add_custom_target( autotools_symlinks
+    COMMAND autoreconf -isvf
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "recreating autotools symlinks"
 )
 
 add_custom_target( copy_symlinks
@@ -10,6 +17,7 @@ add_custom_target( copy_symlinks
         ${CMAKE_COMMAND} -DSOURCE_DIRECTORY=${CMAKE_SOURCE_DIR}
         -P ${CMAKE_CURRENT_LIST_DIR}/copy_symlinks.cmake
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "converting top level symlinks to binaries"
 )
 
 add_custom_target( copy_m4_symlinks
@@ -18,16 +26,17 @@ add_custom_target( copy_m4_symlinks
         -DSOURCE_DIRECTORY=${CMAKE_SOURCE_DIR}/m4
         -P ${CMAKE_CURRENT_LIST_DIR}/copy_symlinks.cmake
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/m4
+    COMMENT "converting m4 symlinks to binaries"
 )
 
 add_custom_target( dist
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target copy_manuals_to_source
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target autotools
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target copy_symlinks
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target copy_m4_symlinks
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target autotools_binaries
+#    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target copy_symlinks
+#    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target copy_m4_symlinks
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target package_source
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target delete_manuals_in_source
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target autotools  # recreate autotool links.
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target autotools_symlinks  # recreate autotool links.
 )
 
 
