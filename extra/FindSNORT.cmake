@@ -62,12 +62,12 @@ if (SNORT_IMPORT_FILE)
 
     if (NOT SNORT_EXECUTABLE)
         get_target_property(tmp_exe snort LOCATION)
-        set(SNORT_EXECUTABLE "${tmp_exe}" CACHE FILEPATH "Snort executable")
+        set(SNORT_EXECUTABLE "${tmp_exe}" CACHE FILEPATH "Snort executable" FORCE)
     endif()
 
     if (NOT SNORT_INCLUDE_DIR)
         get_target_property(tmp_exe snort  INTERFACE_INCLUDE_DIRECTORIES)
-        set(SNORT_INCLUDE_DIR "${tmp_exe}" CACHE FILEPATH "Snort executable")
+        set(SNORT_INCLUDE_DIR "${tmp_exe}" CACHE FILEPATH "Snort executable" FORCE)
     endif()
 endif(SNORT_IMPORT_FILE)
 

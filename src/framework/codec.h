@@ -229,7 +229,6 @@ constexpr uint16_t CODEC_IPOPT_FLAGS = (CODEC_IPOPT_RR_SEEN |
                                         CODEC_IPOPT_LEN_THREE);
 
 
-// FIXIT-M J  get rid of invaild bytes. Only needed for TCP options and IP options
 struct CodecData
 {
     /* This section will get reset before every decode() function call */
@@ -250,13 +249,13 @@ struct CodecData
     uint8_t curr_ip6_extension;  /* initialized in cd_ipv6.cc */
     uint8_t ip6_csum_proto;      /* initalized in cd_ipv6.cc.  Used for IPv6 checksums */
 
-    // FIXIT-H-J - most of these don't needs to be zeroed
-    CodecData(uint16_t init_prot) : lyr_len(0),
+    CodecData(uint16_t init_prot) : next_prot_id(init_prot),
+                                    lyr_len(0),
                                     invalid_bytes(0),
                                     proto_bits(0),
                                     codec_flags(0),
                                     ip_layer_cnt(0)
-    { next_prot_id = init_prot; }
+    { }
 
 
     bool inline is_cooked() const

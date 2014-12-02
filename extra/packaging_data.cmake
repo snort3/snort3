@@ -1,13 +1,20 @@
 
 # use this target instead of 'make package_source'
-add_custom_target(autotools
-    COMMAND autoreconf -isvf #  FIXIT-L J  --  should check for autotools the CMake way
+add_custom_target( autotools_binaries
+    COMMAND autoreconf -ivf #  FIXIT-L J  --  should check for autotools the CMake way
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
+add_custom_target( autotools_symlinks
+    COMMAND autoreconf -isvf
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+
 add_custom_target(dist
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target autotools
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target autotools_binaries
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target package_source
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target autotools_symlinks
 )
 
 set (CPACK_GENERATOR TGZ)
@@ -20,7 +27,7 @@ set (CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/doc/images/snort.png")
 set (CPACK_PACKAGE_INSTALL_DIRECTORY "snort")
 set (CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING")
 set (CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README")
-set (CPACK_SOURCE_IGNORE_FILES "${CMAKE_BINARY_DIR}/;m4/;aclocal.m4;ylwrap;")
+set (CPACK_SOURCE_IGNORE_FILES "${CMAKE_BINARY_DIR}/;autom4e.cache;")
 set (CPACK_SOURCE_GENERATOR TGZ)
 
 include(CPack)

@@ -16,3 +16,6 @@
 * *SNORT_PROMPT*: the character sequence that is printed at startup,
   shutdown, and in the shell.  The default is the mini-pig: o")~ .
 
+* *SNORT_PLUGIN_PATH*: an optional path where Snort can find supplemental
+  shared libraries.  This is only used when Snort is building manuals.
+  Modules in supplemental shared libraries will be added to the manuals.
