@@ -22,6 +22,7 @@
 #define KEYWORD_STATES_KEYWORDS_API_H
 
 #include <vector>
+#include <memory>
 #include "conversion_defines.h"
 
 
@@ -29,6 +30,9 @@ namespace keywords
 {
 
 extern const std::vector<const ConvertMap*> keywords_api;
+
+// instantiated in kws_ruletype.cc
+extern const std::vector<std::unique_ptr<const ConvertMap> > ruletype_api;
 
 
 }  // namespace keywords

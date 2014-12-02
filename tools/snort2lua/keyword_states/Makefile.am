@@ -14,6 +14,7 @@ kws_paths.cc \
 kws_preprocessor.cc \
 kws_rule.cc \
 kws_rule_state.cc \
+kws_ruletype.cc \
 kws_rate_filter.cc \
 kws_var.cc \
 kws_suppress.cc \

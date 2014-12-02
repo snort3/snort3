@@ -45,6 +45,7 @@ public:
     // tells this class whether to convert a file inline or pull all data into one file.
     inline static void create_mult_rule_files(bool var)
     { convert_rules_mult_files = var; }
+
     inline static bool include_create_rule()
     { return convert_rules_mult_files; }
 
@@ -76,6 +77,12 @@ public:
     { return data_api.failed_conversions() || rule_api.failed_conversions(); }
 
 
+    inline void start_multiline_parsing()
+    { multiline_state = true; }
+
+    inline void end_multiline_parsing()
+    { multiline_state = false; }
+
     inline DataApi& get_data_api()
     { return data_api; }
 
@@ -98,6 +105,7 @@ private:
     // the current parsing state.
     ConversionState* state;
     bool error;
+    bool multiline_state;
 
 
     // initialize data class

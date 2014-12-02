@@ -8,9 +8,10 @@ add_library( keyword_states
     kws_output.cc
     kws_paths.cc
     kws_preprocessor.cc
+    kws_rate_filter.cc
     kws_rule.cc
     kws_rule_state.cc
-    kws_rate_filter.cc
+    kws_ruletype.cc
     kws_var.cc
     kws_suppress.cc
     keywords_api.h

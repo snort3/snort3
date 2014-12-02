@@ -53,7 +53,9 @@ std::vector<std::string> &split(const std::string &s,
     return elems;
 }
 
-const ConvertMap* find_map(const std::vector<const ConvertMap*> map, std::string keyword)
+const ConvertMap* find_map(
+    const std::vector<const ConvertMap*>& map,
+    const std::string& keyword)
 {
     for (const ConvertMap *p : map)
         if (p->keyword.compare(0, p->keyword.size(), keyword) == 0)
@@ -62,7 +64,20 @@ const ConvertMap* find_map(const std::vector<const ConvertMap*> map, std::string
     return nullptr;
 }
 
-Table* find_table(std::vector<Table*> vec, std::string name)
+const std::unique_ptr<const ConvertMap>& find_map(
+    const std::vector<std::unique_ptr<const ConvertMap> >& map,
+    const std::string& keyword)
+{
+    for (auto& p : map)
+        if (p->keyword.compare(0, p->keyword.size(), keyword) == 0)
+            return p;
+
+    static std::unique_ptr<const ConvertMap> np(nullptr);
+    return np;
+}
+
+
+Table* find_table(const std::vector<Table*>& vec, const std::string& name)
 {
     if(name.empty())
         return nullptr;

@@ -44,6 +44,14 @@ bool InitState::convert(std::istringstream& data_stream)
             return true;
         }
 
+        const std::unique_ptr<const ConvertMap>& ruletype =
+            util::find_map(keywords::ruletype_api, keyword);
+        if ( ruletype != nullptr )
+        {
+            cv.set_state(ruletype->ctor(cv));
+            return true;
+        }
+
         data_api.failed_conversion(data_stream, keyword);
     }
     else

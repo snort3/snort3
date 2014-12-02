@@ -47,6 +47,7 @@ extern const ConvertMap* preprocessor_map;
 extern const ConvertMap* rate_filter_map;
 extern const ConvertMap* reject_map;
 extern const ConvertMap* rule_state_map;
+extern const ConvertMap* ruletype_map;
 extern const ConvertMap* sblock_map;
 extern const ConvertMap* sdrop_map;
 extern const ConvertMap* suppress_map;
@@ -79,6 +80,7 @@ const std::vector<const ConvertMap*> keywords_api =
     rate_filter_map,
     reject_map,
     rule_state_map,
+    ruletype_map,
     sblock_map,
     sdrop_map,
     suppress_map,

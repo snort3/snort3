@@ -1335,3 +1335,24 @@ alert ip any any -> any any (msg:"TTL RULE OPTION"; ttl:5-6; sid:11111113;)
 alert ip any any -> any any (msg:"TTL RULE OPTION"; ttl:7-; sid:11111114;)
 
 alert tcp $EXTERNAL_NET $HTTP_PORTS -> $HOME_NET any (content:"fe, fe, fe, fe, fe, fe, fe,"; msg:"BROWSER-FIREFOX Mozilla Firefox Javascript engine function arguments memory corruption attempt"; flow:to_client,established; file_data; content:"|3B|i<25|3B|i++|29| fe += fe|3B|"; fast_pattern:only; content:"fu=new Function|28 0A|"; content:"fe, fe, fe, fe, fe, fe, fe,"; within:30; metadata:policy balanced-ips drop, policy security-ips drop, service http; reference:bugtraq,19181; reference:cve,2006-3806; classtype:attempted-user; sid:18262; rev:3;)
+
+
+ruletype suspicious
+{
+    type log
+}
+ruletype suspicious1
+{
+    type log
+    output log_tcpdump: suspicious.log
+}
+ruletype suspicious2
+{
+    type log
+    output log_tcpdump: suspicious.log
+    output unified2: filename merged.log
+}
+
+suspicious tcp any any -> any any (msg:"SUSPICIOUS ruletype"; sid:11111115;)
+suspicious1 tcp any any -> any any (msg:"SUSPICIOUS ruletype"; sid:11111116;)
+suspicious2 tcp any any -> any any (msg:"SUSPICIOUS ruletype"; sid:111111167;)
