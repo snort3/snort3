@@ -74,44 +74,15 @@ void NHttpMsgBody::update_flow() {
     }
 }
 
-
 // Legacy support function. Puts message fields into the buffers used by old Snort.
 void NHttpMsgBody::legacy_clients() {
     ClearHttpBuffers();
     legacy_request();
     legacy_status();
     legacy_header(false);
-    if (data.length > 0) SetHttpBuffer(HTTP_BUFFER_CLIENT_BODY, data.start, (unsigned)data.length);
+    if (data.length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_CLIENT_BODY, data.start, (unsigned)data.length);
+        set_file_data((uint8_t*)data.start, (unsigned)data.length);
+    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
