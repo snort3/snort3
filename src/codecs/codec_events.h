@@ -29,7 +29,7 @@
 namespace codec_events
 {
 
-inline void decoder_event(const CodecData& codec, CodecSid const sid)
+inline void decoder_event(const CodecData& codec, const CodecSid sid)
 {
     if ( codec.codec_flags & CODEC_STREAM_REBUILT )
         return;

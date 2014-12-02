@@ -30,18 +30,6 @@ struct Layer
     const uint8_t* start;
     uint16_t prot_id;
     uint16_t length;
-//    uint16_t invalid_bytes;  -- Commented out since nothing uses this
-                              /*
-                               * Data which should not be considered part of
-                               * this layer's valid data, but must be skipped
-                               * before the next layer. For instance, an invalid
-                               * ip option. It should not be part of length but
-                               * must be skipped before the next layer.
-                               *
-                               * Generally calculated by
-                               *    (layers_entire_length) - length;
-                               *     (ip::IP4Hdr*) ip4h->hlen()- length;
-                               */
 };
 
 
