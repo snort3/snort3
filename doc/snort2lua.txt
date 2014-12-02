@@ -78,7 +78,7 @@ configuration will automatically be combined into the same file.  Also, the
 new files name will automatically become the old file’s name with a .lua
 extension.  There is currently no way to specify or change that files name.
 
-*  If a rule's action is a custom ruletype, that rule will silently be
+*  If a rule's action is a custom ruletype, that rule action will be silently
 converted to the rultype's 'type'. No warnings or errors are currently
 emmitted. Additionally, the custom ruletypes outputs will be silently
 discarded.
