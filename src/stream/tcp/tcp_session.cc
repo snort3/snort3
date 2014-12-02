@@ -6317,7 +6317,7 @@ int Stream5AddSessionAlertTcp(
 
     st->alert_count++;
 
-    return 0;
+    return 1;
 }
 
 int Stream5CheckSessionAlertTcp(Flow *lwssn, Packet *p, uint32_t gid, uint32_t sid)
@@ -6808,6 +6808,16 @@ midstream_pickup_allowed:
     MODULE_PROFILE_END(s5TcpPerfStats);
     S5TraceTCP(p, flow, &tdb, 0);
     return 0;
+}
+
+bool TcpSession::add_alert(Packet* p, uint32_t gid, uint32_t sid)
+{
+    return Stream5AddSessionAlertTcp(p->flow, p, gid, sid) != 0;
+}
+
+bool TcpSession::check_alerted(Packet* p, uint32_t gid, uint32_t sid)
+{
+    return Stream5CheckSessionAlertTcp(p->flow, p, gid, sid) != 0;
 }
 
 //-------------------------------------------------------------------------

@@ -283,7 +283,6 @@ bool Stuff::apply_action(Flow* flow)
     switch ( action )
     {
     case BA_BLOCK:
-        stream.drop_traffic(flow, SSN_DIR_BOTH);
         flow->set_state(Flow::BLOCK);
         return false;
 
@@ -488,7 +487,6 @@ void Binder::set_binding(SnortConfig* sc, Binding* pb)
         ParseError("can't bind %s", key);
 }
 
-// FIXIT-H alerts fire on blocked and allowed flows
 // FIXIT-P this is a simple linear search until functionality is nailed
 // down.  performance should be the focus of the next iteration.
 void Binder::get_bindings(Flow* flow, Stuff& stuff)

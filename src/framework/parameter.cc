@@ -289,7 +289,6 @@ static bool valid_addr(Value& v, const char*)
     if ( addr_pton(v.get_string(), &a) )
         return false;
     
-    // FIXIT-H \0 x 4 does not get set
     if ( a.addr_type == ADDR_TYPE_IP )
         v.set(a.addr_data8, 4);
 

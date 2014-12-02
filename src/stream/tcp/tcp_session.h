@@ -206,6 +206,9 @@ public:
     void reset();
     void restart(Packet*) override;
 
+    bool add_alert(Packet*, uint32_t gid, uint32_t sid) override;
+    bool check_alerted(Packet*, uint32_t gid, uint32_t sid) override;
+
 public:
     StreamTracker client;
     StreamTracker server;

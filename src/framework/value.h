@@ -91,6 +91,9 @@ public:
     double get_real() const
     { return num; };
 
+    const uint8_t* get_buffer(unsigned& n) const
+    { n = str.size(); return (uint8_t*)str.data(); };
+
     const char* get_string() const
     { return str.c_str(); };
 
