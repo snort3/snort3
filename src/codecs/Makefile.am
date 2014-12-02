@@ -10,7 +10,8 @@ codec_module.h
 
 libcodecs_a_SOURCES = \
 codec_api.cc \
-codec_api.h
+codec_api.h \
+codec_module.cc
 
 
 SUBDIRS = \

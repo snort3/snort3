@@ -222,6 +222,8 @@ public:
 
     unsigned get_gid() const override
     { return GID_DECODE; };
+
+    const RuleMap* get_rules() const override;
 };
 
 #endif

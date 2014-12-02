@@ -88,13 +88,8 @@ static const RuleMap ipv4_rules[] =
     { DECODE_IP4_DF_OFFSET, "IPV4 packet both DF and offset set" },
     { DECODE_IP_RESERVED_FRAG_BIT, "BAD-TRAFFIC IP reserved bit set" },
     { DECODE_IP_UNASSIGNED_PROTO, "BAD-TRAFFIC unassigned/reserved IP protocol" },
-    { DECODE_IP_BAD_PROTO, "BAD-TRAFFIC bad IP protocol" },
     { DECODE_IP_OPTION_SET, "MISC IP option set" },
-    { DECODE_IP_MULTIPLE_ENCAPSULATION, "two or more IP (v4 and/or v6) encapsulation layers present" },
-    { DECODE_ZERO_LENGTH_FRAG, "fragment with zero length" },
     { DECODE_IP4_HDR_TRUNC, "truncated IP4 header" },
-    { DECODE_BAD_TRAFFIC_LOOPBACK, "bad traffic loopback IP" },
-    { DECODE_BAD_TRAFFIC_SAME_SRCDST, "bad traffic same src/dst IP" },
     { 0, nullptr }
 };
 
