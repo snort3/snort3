@@ -31,7 +31,7 @@ set (CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/doc/images/snort.png")
 set (CPACK_PACKAGE_INSTALL_DIRECTORY "snort")
 set (CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING")
 set (CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/doc/start.txt")
-set (CPACK_SOURCE_IGNORE_FILES "${CMAKE_BINARY_DIR}/;tools/snort2lua/tests/;\\\\.git/;\\\\.gitignore;extra/;autom4e.cache")
+set (CPACK_SOURCE_IGNORE_FILES "${CMAKE_BINARY_DIR}/;tools/snort2lua/tests/;\\\\.git/;\\\\.gitignore;extra/;autom4te.cache")
 set (CPACK_SOURCE_GENERATOR TGZ)
 
 include(CPack)
