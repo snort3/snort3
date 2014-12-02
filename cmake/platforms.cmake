@@ -62,15 +62,14 @@ if (APPLE)
 endif()
 
 
-include(CheckCXXCompilerFlag)
-
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8")
+        message(FATAL_ERROR "G++ version 4.8 or greater required")
+    endif()
+endif()
 
 # the Clang compiler on MacOS X may need the c++ library explicityly specified
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-
-
-
-
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 
@@ -79,6 +78,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         )
     endif()
 endif()
+
+include(CheckCXXCompilerFlag)
 
 # More MacOS X fun
 set(CMAKE_REQUIRED_FLAGS "-Wl,-undefined,dynamic_lookup")
