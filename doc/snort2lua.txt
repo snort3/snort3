@@ -57,7 +57,6 @@ output a valid Snort++ configuration.  Instead, you can see the exact
 options from the input configuration that have changed.
 
 
-// FIXIT-J L include Snort2Lua commands
 :leveloffset: 1
 include::snort2lua_cmds.txt[]
 :leveloffset: 0
@@ -79,3 +78,7 @@ configuration will automatically be combined into the same file.  Also, the
 new files name will automatically become the old file’s name with a .lua
 extension.  There is currently no way to specify or change that files name.
 
+*  If a rule's action is a custom ruletype, that rule action will be silently
+converted to the rultype's 'type'. No warnings or errors are currently
+emmitted. Additionally, the custom ruletypes outputs will be silently
+discarded.

@@ -36,7 +36,7 @@ const char* Markup::head(unsigned level)
     std::size_t max = strlen(hn);
 
     if ( level >= max )
-        level = max - 1;
+        level = (unsigned)max - 1;
 
     return enabled ? hn+max-level-1 : "";
 }

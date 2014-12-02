@@ -35,7 +35,8 @@ bool Converter::convert_conf_mult_files = true;
 
 Converter::Converter()
     :   state(nullptr),
-        error(false)
+        error(false),
+        multiline_state(false)
 {
 }
 
@@ -212,7 +213,9 @@ int Converter::parse_file(std::string input_file)
             }
 
             orig_text.clear();
-            reset_state();
+
+            if ( !multiline_state )
+                reset_state();
         }
     }
 

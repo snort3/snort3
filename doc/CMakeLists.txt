@@ -272,7 +272,7 @@ if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
             OUTPUT ${output}
             COMMAND ${CMAKE_COMMAND} -E copy ${input} ${output}
             DEPENDS ${input}
-            COMMENT "Documents: Copying ${file} into binary directory"
+            COMMENT "Documents: copying ${file} into binary directory"
         )
 
         list(APPEND ALL_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/${file}")

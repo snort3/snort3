@@ -24,43 +24,153 @@
 #include "conversion_state.h"
 #include "helpers/converter.h"
 #include "config_states/config_api.h"
+#include "keyword_states/keywords_api.h"
 
 
 namespace keywords
 {
 
+const std::vector<std::unique_ptr<const ConvertMap> > ruletype_api;
+
 namespace {
+
+enum class ParseState
+{
+    NAME,
+    OPEN_BRACKET,
+    TYPE_KEYWORD,
+    TYPE_NAME,
+    OUTPUT_OR_BRACKET,
+    OUTPUT_ARGS
+};
 
 class RuleType : public ConversionState
 {
 public:
-    RuleType(Converter& c) : ConversionState(c) {};
+    RuleType(Converter& c) : ConversionState(c),
+                             state(ParseState::NAME),
+                             entire_line("ruletype")
+    {}
+
     virtual ~RuleType() {};
     virtual bool convert(std::istringstream& data);
+
+private:
+    ParseState state;
+    std::string name;
+    std::string type;
+    std::string entire_line;
 };
 
 } // namespace
 
 
-bool RuleType::convert(std::istringstream& data_stream)
+bool RuleType::convert(std::istringstream& stream)
 {
-    std::string keyword;
-#if 0
-    if(data_stream >> keyword)
+    std::string val;
+
+    if ( !entire_line.empty() )
+        entire_line += "\n";
+
+    while ( stream >> val)
     {
+        entire_line += " " + val;
 
-        if(keyword.back() == ':')
-            keyword.pop_back();
-
-        const ConvertMap* map = util::find_map(rules::rule_api, keyword);
-        if (map)
+        switch (state)
         {
-            cv.set_state(map->ctor());
-            return true;
-        }
+        case ParseState::NAME:
+            cv.start_multiline_parsing();
+            name = val;
+            state = ParseState::OPEN_BRACKET;
+            break;
+
+        case ParseState::OPEN_BRACKET:
+            if ( val.compare("{") )
+            {
+                std::istringstream tmp(entire_line);
+                data_api.failed_conversion(tmp, val);
+                return false;   
+            }
+            state = ParseState::TYPE_KEYWORD;
+            break;
+
+        case ParseState::TYPE_KEYWORD:
+            if ( val.compare("type") )
+            {
+                std::istringstream tmp(entire_line);
+                data_api.failed_conversion(tmp, val);
+                return false;   
+            }
+            state = ParseState::TYPE_NAME;
+            break;
+
+        case ParseState::TYPE_NAME:
+            type = val;
+            state = ParseState::OUTPUT_OR_BRACKET;
+            break;
+
+        case ParseState::OUTPUT_OR_BRACKET:
+            if ( !val.compare("}") )
+            {
+                cv.end_multiline_parsing();
+
+                if ( util::find_map(ruletype_api, name) != nullptr )
+                {
+                    std::istringstream tmp(entire_line);
+                    data_api.failed_conversion(tmp, name + " -- defined multiple times in configuration file");
+                    return false;
+                }
+
+                const ConvertMap* map = util::find_map(keywords_api, type);
+
+                if (map)
+                {
+
+                    // using smart pointer to gaurantee new Map is deleted
+                    const std::vector<std::unique_ptr<const ConvertMap> >& ruletype_map = ruletype_api;
+                    std::unique_ptr<ConvertMap> new_map(new ConvertMap());
+                    new_map->keyword = name;
+                    new_map->ctor = map->ctor;
+                    const_cast<std::vector<std::unique_ptr<const ConvertMap> >&>(
+                        ruletype_map).push_back(std::move(new_map));
+                    return true;
+                }
+                else
+                {
+                    std::istringstream tmp(entire_line);
+                    data_api.failed_conversion(tmp, "type " + type);
+                    return false;
+                }
+            }
+            else if (!val.compare("output") )
+            {
+                state = ParseState::OUTPUT_ARGS;
+            }
+            else
+            {
+                std::istringstream tmp(entire_line);
+                data_api.failed_conversion(tmp, "type " + type);
+                return false;
+            }
+
+            break;
+
+        case ParseState::OUTPUT_ARGS:
+            // eat this argument.  Do nothing.
+            break;
+        }   
     }
-#endif
-    return false;
+
+
+    // OUTPUT_ARGS ate up the rest of the line.
+    // Now, start a new line.
+    if ( state == ParseState::OUTPUT_ARGS )
+        state = ParseState::OUTPUT_OR_BRACKET;
+
+    else if ( state == ParseState::TYPE_NAME )
+        return false;
+
+    return true;
 }
 
 /**************************
@@ -68,7 +178,7 @@ bool RuleType::convert(std::istringstream& data_stream)
  **************************/
 
 static ConversionState* ctor(Converter& c)
-{ return new RuleType(); }
+{ return new RuleType(c); }
 
 static const ConvertMap keyword_ruletype = 
 {
