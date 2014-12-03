@@ -540,7 +540,7 @@ void InspectorManager::instantiate(
     FrameworkConfig* fc = sc->framework_config;
     FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
 
-    // FIXIT-H should not need to lookup inspector etc
+    // FIXIT-L should not need to lookup inspector etc
     // since given api and mod
     const char* keyword = api->base.name;
 

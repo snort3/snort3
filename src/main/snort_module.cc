@@ -261,6 +261,9 @@ static const Parameter s_params[] =
     { "--daq-var", Parameter::PT_STRING, nullptr, nullptr,
       "<name=value> specify extra DAQ configuration variable" },
 
+    { "--dirty-pig", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "don't flush packets on shutdown" },
+
     { "--dump-builtin-rules", Parameter::PT_IMPLIED, nullptr, nullptr,
       "[<module prefix>] output stub rules for selected modules" },
 
@@ -268,11 +271,11 @@ static const Parameter s_params[] =
     { "--dump-dynamic-rules", Parameter::PT_IMPLIED, nullptr, nullptr,
       "output stub rules for all loaded rules libraries" },
 
-    { "--dirty-pig", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "don't flush packets on shutdown" },
-
     { "--dump-defaults", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output module defaults in Lua format" },
+
+    { "--dump-version", Parameter::PT_STRING, "(optional)", nullptr,
+      "output the version, the whole version, and only the version" },
 
     { "--enable-inline-test", Parameter::PT_IMPLIED, nullptr, nullptr,
       "enable Inline-Test Mode Operation" },
@@ -634,17 +637,20 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--daq-var") )
         ConfigDaqVar(sc, v.get_string());
 
+    else if ( v.is("--dirty-pig") )
+        ConfigDirtyPig(sc, v.get_string());
+
     else if ( v.is("--dump-builtin-rules") )
         dump_builtin_rules(sc, v.get_string());
 
     else if ( v.is("--dump-dynamic-rules") )
         dump_dynamic_rules(sc, v.get_string());
 
-    else if ( v.is("--dirty-pig") )
-        ConfigDirtyPig(sc, v.get_string());
-
     else if ( v.is("--dump-defaults") )
         dump_defaults(sc, v.get_string());
+
+    else if ( v.is("--dump-version") )
+        dump_version(sc, v.get_string());
 
     else if ( v.is("--enable-inline-test") )
         sc->run_flags |= RUN_FLAG__INLINE_TEST;

@@ -102,7 +102,7 @@ void Flow::reset()
 
     free_application_data();
 
-    // FIXIT-H cleanup() winds up calling clear()
+    // FIXIT-M cleanup() winds up calling clear()
     if ( ssn_client )
     {
         ssn_client->rem_ref();
