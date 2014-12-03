@@ -10,6 +10,10 @@ else (BUILD_EXTRA_PLUGINS)
     cmake_minimum_required(VERSION 2.8.8)
     project(snort_extra CXX C)
 
+    set (EXTRA_VERSION_MAJOR 1)
+    set (EXTRA_VERSION_MINOR 0)
+    set (EXTRA_VERSION_BUILD 0-a1)
+    set (VERSION "${EXTRA_VERSION_MAJOR}.${EXTRA_VERSION_MINOR}.${EXTRA_VERSION_BUILD}")
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
     set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}")

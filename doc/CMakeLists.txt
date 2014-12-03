@@ -77,7 +77,7 @@ if (MAKE_HTML_DOC)
     set (SNORT_MANUAL_CHUNKED ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked)
 
 else ()
-    # resetting to avoid the edge case of someone deleting there source
+    # resetting to avoid the edge case of someone deleting their source
     # tree manuals
     set (SNORT_MANUAL_HTML_FOUND "SNORT_MANUAL_HTML_FOUND-NOTFOUND"
         CACHE FILEPATH "contains a pre-built snort_manual.html" FORCE)
