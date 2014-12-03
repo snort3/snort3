@@ -289,6 +289,12 @@ void dump_rule_text(SnortConfig*, const char* val)
     exit(0);
 }
 
+void dump_version(SnortConfig*, const char*)
+{
+    cout << VERSION << endl;
+    exit(0);
+}
+
 void help_version(SnortConfig*, const char*)
 {
     DisplayBanner();
