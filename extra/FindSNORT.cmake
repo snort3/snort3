@@ -72,32 +72,39 @@ if (SNORT_IMPORT_FILE)
 endif(SNORT_IMPORT_FILE)
 
 
+
+find_package(PkgConfig QUIET)
+
+if (PKG_CONFIG_FOUND)
+    pkg_check_modules(SNORT_PKG snort)
+
+    if (SNORT_PKG_FOUND)
+
+        #  add Snort link flags
+        string(REPLACE ";" " " tmp_cflags "${SNORT_PKG_CFLAGS}")
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${tmp_cflags}" CACHE STRING
+            "Flags used by the compiler during all build types." FORCE)
+
+        #  add Snort link flags
+        string(REPLACE ";" " " tmp_lflags "${SNORT_PKG_LDFLAGS}")
+        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${tmp_lflags}"
+            CACHE STRING "Flags used by the linker." FORCE)
+
+    endif (SNORT_PKG_FOUND)
+endif (PKG_CONFIG_FOUND)
+
+
 find_path (SNORT_INCLUDE_DIR
     NAMES main/snort_types.h
-    HINTS ENV SNORT_DIR
+    HINTS ${SNORT_PKG_INCLUDE_DIRS} ENV SNORT_DIR
     PATH_SUFFIXES snort include/snort
 )
 
 find_program (SNORT_EXECUTABLE
     NAMES snort
-    HINTS ENV SNORT_DIR
+    HINTS ${SNORT_PKG_PREFIX} ENV SNORT_DIR
     PATH_SUFFIXES bin   # necessary when SNORT_DIR is set
 )
-
-
-
-# If we still can't find Snort include directory, try pkg-config
-if (NOT SNORT_INCLUDE_DIR)
-    find_package(PkgConfig QUIET)
-
-    if (PKG_CONFIG_FOUND)
-        pkg_check_modules(SNORT_PKG_MODULE snort)
-
-        if (SNORT_PKG_MODULE_FOUND)
-            set(SNORT_INCLUDE_DIR "${SNORT_PKG_MODULE_INCLUDE_DIRS}")
-        endif (SNORT_PKG_MODULE_FOUND)
-    endif (PKG_CONFIG_FOUND)
-endif (NOT SNORT_INCLUDE_DIR)
 
 
 
