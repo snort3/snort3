@@ -41,7 +41,7 @@ set(ERROR_MESSAGE
 
     4)  Find the file snort.cmake.  Manually set set the
         variable SNORT_IMPORT_FILE using either ccmake or the
-        command line (-DSNORT_IMPORT_FILE=/full/path/to/snort.cmake)
+        command line (-DSNORT_IMPORT_FILE=/full/install/path/lib/snort/snort.cmake)
 
     5)  install pkg-config and add snort.pc to the PKG_CONFIG_PATH
             environment variable.
