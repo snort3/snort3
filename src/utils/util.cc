@@ -1192,7 +1192,7 @@ void SetNoCores(void)
 const char* get_error(int errnum)
 {
     static THREAD_LOCAL char buf[128];
-    strerror_r(errnum, buf, sizeof(buf));
+    (void)strerror_r(errnum, buf, sizeof(buf));
     return buf;
 }
 
