@@ -90,8 +90,11 @@ if (PKG_CONFIG_FOUND)
         set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${tmp_lflags}"
             CACHE STRING "Flags used by the linker." FORCE)
 
-        set (CMAKE_INSTALL_PREFIX "${SNORT_PKG_PREFIX}" CACHE PATH
-            "Install path prefix, prepended onto install directories.")
+        if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+            set (CMAKE_INSTALL_PREFIX "${SNORT_PKG_PREFIX}" CACHE PATH
+                "Install path prefix, prepended onto install directories." FORCE)
+        endif (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+
 
     endif (SNORT_PKG_FOUND)
 endif (PKG_CONFIG_FOUND)
