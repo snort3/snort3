@@ -35,6 +35,7 @@ codecs/libcodecs.a \
 codecs/ip/libip_codecs.a \
 codecs/misc/libmisc_codecs.a \
 ${codec_list} \
+codecs/libcodec_module.a \
 network_inspectors/libnetwork_inspectors.a \
 network_inspectors/binder/libbinder.a \
 network_inspectors/normalize/libnormalize.a \
