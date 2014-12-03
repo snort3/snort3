@@ -82,11 +82,13 @@ if (PKG_CONFIG_FOUND)
 
         #  add Snort link flags
         string(REPLACE ";" " " tmp_cflags "${SNORT_PKG_CFLAGS}")
-        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${tmp_cflags}")
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${tmp_cflags}" CACHE STRING
+            "Flags used by the compiler during all build types." FORCE)
 
         #  add Snort link flags
         string(REPLACE ";" " " tmp_lflags "${SNORT_PKG_LDFLAGS}")
-        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${tmp_lflags}")
+        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${tmp_lflags}"
+            CACHE STRING "Flags used by the linker." FORCE)
 
     endif (SNORT_PKG_FOUND)
 endif (PKG_CONFIG_FOUND)
