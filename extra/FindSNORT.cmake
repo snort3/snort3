@@ -94,7 +94,7 @@ if (NOT SNORT_INCLUDE_DIR)
         pkg_check_modules(SNORT_PKG_MODULE snort)
 
         if (SNORT_PKG_MODULE_FOUND)
-            set(SNORT_INCLUDE_DIR "${SNORT_PKG_MODULE_INCLUDE_DIRS}")
+            set(SNORT_INCLUDE_DIR "${SNORT_PKG_MODULE_INCLUDE_DIRS}" CACHE PATH "Snort include PATH" FORCE)
         endif (SNORT_PKG_MODULE_FOUND)
     endif (PKG_CONFIG_FOUND)
 endif (NOT SNORT_INCLUDE_DIR)
