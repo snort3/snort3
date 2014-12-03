@@ -33,7 +33,6 @@ constexpr int GID_DECODE = 116;
 
 enum CodecSid
 {
-
     DECODE_NOT_IPV4_DGRAM = 1,
     DECODE_IPV4_INVALID_HEADER_LEN = 2,
     DECODE_IPV4_DGRAM_LT_IPHDR = 3,
@@ -215,13 +214,13 @@ class CodecModule : public Module
 {
 public:
     CodecModule(const char* s, const char* h) : Module(s, h)
-    { };
+    { }
 
     CodecModule(const char* s, const char* h, const Parameter* p, bool is_list = false)
-    : Module(s, h, p, is_list) { };
+    : Module(s, h, p, is_list) { }
 
     unsigned get_gid() const override
-    { return GID_DECODE; };
+    { return GID_DECODE; }
 
     const RuleMap* get_rules() const override;
 };

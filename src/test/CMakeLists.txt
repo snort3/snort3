@@ -5,6 +5,13 @@ find_package(CHECK REQUIRED)
 include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})  # for generated files
 include_directories(AFTER ${CHECK_INCLUDE_DIR})
 
+if ( LINUX )
+    find_library(LIBRT rt)
+
+    if ( NOT LIBRT )
+        message(FATAL_ERROR "librt required. Specicy it by user ")
+    endif()
+endif()
 
 #  Generating build_decl.h  Will rebuild every time 'make' is run
 add_custom_target(build_suit_decl ALL
@@ -40,6 +47,7 @@ add_library(unit_tests STATIC
 
 target_link_libraries(unit_tests
     ${CHECK_LIBRARIES}
+    ${LIBRT}
 )
 
 set_source_files_properties( unit_test.cc PROPERTIES
