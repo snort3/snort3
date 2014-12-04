@@ -15,7 +15,7 @@ add_library (codecs STATIC
     codec_api.cc
 )
 
-add_library (codec_module
+add_library (codec_module STATIC
     codec_module.cc
 )
 
@@ -26,7 +26,7 @@ if (STATIC_CODECS)
     )
 endif(STATIC_CODECS)
 
-target_link_libraries( codecs
+target_link_libraries (codecs
     ${CODEC_PLUGIN_LIBRARIES}
     ip_codecs
     misc_codecs
