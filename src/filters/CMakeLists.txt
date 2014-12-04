@@ -3,7 +3,7 @@ set (FILTER_INCLUDES
     sfrf.h 
 )
 
-add_library ( filter STATIC
+add_library (filter STATIC
     detection_filter.cc
     detection_filter.h
     rate_filter.cc

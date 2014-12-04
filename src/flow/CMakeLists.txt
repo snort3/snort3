@@ -5,7 +5,7 @@ set (FLOW_INCLUDES
     flow_key.h
 )
 
-add_library ( flow STATIC
+add_library (flow STATIC
     ${FLOW_INCLUDES}
     flow.cc 
     flow_key.cc 
