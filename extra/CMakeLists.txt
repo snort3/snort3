@@ -38,8 +38,15 @@ else (BUILD_EXTRA_PLUGINS)
     message(STATUS "${CMAKE_CXX_FLAGS}")
 
 
-    # Some shared library flags for the two platforms which I am using
     include(CheckCXXCompilerFlag)
+    set (CMAKE_REQUIRED_FLAGS "-fvisibility=hidden")
+    check_cxx_compiler_flag ("" HAVE_VISIBILITY)
+    if (HAVE_VISIBILITY)
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_VISIBILITY")
+    endif ()
+    unset(CMAKE_REQUIRED_FLAGS)
+
+    # Some shared library flags for the two platforms which I am using
     set(CMAKE_REQUIRED_FLAGS "-Wl,-undefined,dynamic_lookup")
     check_cxx_compiler_flag("" HAVE_DYNAMIC_LOOKUP)
     if(HAVE_DYNAMIC_LOOKUP)
