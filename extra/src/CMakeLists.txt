@@ -66,7 +66,7 @@ if (BUILD_EXTRA_PLUGINS)
 
 else (BUILD_EXTRA_PLUGINS)
     include_directories (${SNORT_INCLUDE_DIR})
-    set (EX_INSTALL_PATH "lib/snort_examples")
+    set (EX_INSTALL_PATH "lib/snort_extra")
 
 endif (BUILD_EXTRA_PLUGINS)
 
