@@ -62,7 +62,7 @@ AC_DEFUN([CC_VISIBILITY],
     AC_MSG_RESULT([$gl_cv_cc_visibility])
     CFLAGS="$gl_save_CFLAGS"
     if test "x$gl_cv_cc_visibility" = "xyes"; then
-        AM_CXXFLAGS="$AM_CXXFLAGS -fvisibility=default"
+        AM_CXXFLAGS="$AM_CXXFLAGS -fvisibility=hidden"
         AC_DEFINE([HAVE_VISIBILITY],[1],
             [Define if the compiler supports visibility declarations.])
     fi
