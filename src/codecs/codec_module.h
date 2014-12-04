@@ -23,6 +23,7 @@
 #define CODECS_CODEC_MODULE_H
 
 #include "framework/module.h"
+#include "main/snort_types.h"
 
 constexpr int GID_DECODE = 116;
 
