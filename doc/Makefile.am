@@ -210,26 +210,22 @@ endif
 if MAKE_HTML_DOC
 install-data-hook:
 	mkdir -p $(DESTDIR)$(docdir)/snort_manual && \
-		tar zxvf $(srcdir)/snort_manual.tgz -C $(DESTDIR)$(docdir)/snort_manual
+		tar zxvf $(builddir)/snort_manual.tgz -C $(DESTDIR)$(docdir)/snort_manual
 
 else
 if HAVE_CHUNKED_DOC
 install-data-hook:
 	mkdir -p $(DESTDIR)$(docdir)/snort_manual && \
-		tar zxvf $(srcdir)/snort_manual.tgz -C $(DESTDIR)$(docdir)/snort_manual
+		tar zxvf $(builddir)/snort_manual.tgz -C $(DESTDIR)$(docdir)/snort_manual
 endif
 endif
 
 uninstall-hook:
 	rm -rf $(DESTDIR)$(docdir)/snort_manual
 
-delete_unbuilt = $(if $(and $(findstring $(builddir),$(srcdir)),$(findstring $(srcdir),$(builddir))), ,$(unbuilt_sources))
-
 clean-local:
 	rm -f $(BUILT_SOURCES)
-	rm -f $(delete_unbuilt)
-	rm -f *.tgz
-	rm -f snort_manual.{fo,xml,html,pdf}
-	rm -rf snort_manual.chunked/
+	rm -f snort_manual.{fo,xml,html,pdf,tgz}
+	rm -rf snort_manual.chunked
 	rm -f *.css
 
