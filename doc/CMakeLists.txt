@@ -85,7 +85,6 @@ else ()
         CACHE FILEPATH "contains a pre-built snort_manual.tgz" FORCE)
     set (IMAGES_TGZ_FOUND "IMAGES_TGZ_FOUND-NOTFOUND"
         CACHE FILEPATH "contains a pre-built images.tgz" FORCE)
-    set (SNORT_MANUAL_CHUNKED "")
 
 
     find_file ( SNORT_MANUAL_HTML_FOUND
@@ -347,22 +346,10 @@ foreach (file ${EXTRA_DIST})
 endforeach(file)
 
 add_custom_target(snort_manuals ALL DEPENDS ${BUILT_DIST})
-
-if ("${BUILT_DIST}" )
-    install (FILES ${BUILT_DIST} DESTINATION "${SNORT_DATA_DIR}")
-endif()
-
-if ("${PACKAGED_DIST}")
-    install (FILES ${PACKAGED_DIST} DESTINATION "${SNORT_DATA_DIR}")
-endif()
-
-if ("${UNBUILT_SOURCES}")
-    install (FILES ${UNBUILT_SOURCES} DESTINATION "${SNORT_DATA_DIR}")
-endif()
-
-if ("${SNORT_MANUAL_CHUNKED}")
-    install (DIRECTORY ${SNORT_MANUAL_CHUNKED}/ DESTINATION "${SNORT_DATA_DIR}/snort_manual")
-endif()
+install (FILES ${BUILT_DIST} DESTINATION "${SNORT_DATA_DIR}")
+install (FILES ${PACKAGED_DIST} DESTINATION "${SNORT_DATA_DIR}")
+install (FILES ${UNBUILT_SOURCES} DESTINATION "${SNORT_DATA_DIR}")
+install (DIRECTORY ${SNORT_MANUAL_CHUNKED}/ DESTINATION "${SNORT_DATA_DIR}/snort_manual")
 
 set_property(
     DIRECTORY
