@@ -41,6 +41,7 @@ if(STATIC_CODECS)
     target_link_libraries( link_codecs
         events
         managers
+        codec_module
     )
 
 endif(STATIC_CODECS)

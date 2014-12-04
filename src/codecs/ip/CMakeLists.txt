@@ -59,4 +59,5 @@ target_link_libraries( ip_codecs
     events
     main
     managers
+    codec_module
 )

@@ -4,18 +4,20 @@ add_subdirectory(link)
 add_subdirectory(ip)
 add_subdirectory(misc)
 
-set(CODEC_INCLUDES
+set (CODEC_INCLUDES
     codec_module.h
     codec_events.h
 )
 
-add_library( codecs STATIC
+add_library (codecs STATIC
     ${CODEC_INCLUDES}
     codec_api.h
     codec_api.cc
-    codec_module.cc
 )
 
+add_library (codec_module
+    codec_module.cc
+)
 
 if (STATIC_CODECS)
     set (CODEC_PLUGIN_LIBRARIES

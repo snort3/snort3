@@ -29,7 +29,7 @@
 #include "main/snort.h"
 
 // yes, macros are necessary. The API and class constructor require different strings.
-#define CD_MOBILE_NAME "mobility"
+#define CD_MOBILE_NAME "ipv6_mobility"
 #define CD_MOBILE_HELP "support for mobility"
 
 namespace

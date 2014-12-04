@@ -210,7 +210,7 @@ enum CodecSid
 // module
 //-------------------------------------------------------------------------
 
-class CodecModule : public Module
+class SO_PUBLIC CodecModule : public Module
 {
 public:
     CodecModule(const char* s, const char* h) : Module(s, h)

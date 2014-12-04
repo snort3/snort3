@@ -24,4 +24,5 @@ add_library( misc_codecs STATIC
 
 target_link_libraries( misc_codecs
     protocols
+    codec_module
 )

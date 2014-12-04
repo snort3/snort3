@@ -41,4 +41,8 @@ if (STATIC_CODECS)
         ${PCAP_INCLUDE_DIR}/pcap.h  # rebuild if a new libpcap is installed
     )
 
+    target_link_libraries( root_codecs
+        codec_module
+    )
+
 endif (STATIC_CODECS)
