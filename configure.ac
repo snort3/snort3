@@ -813,7 +813,6 @@ if test "x$have_daq_address_space_id" = "xyes"; then
         [DAQ version supports address space ID in header.])
 fi
 
-
 #--------------------------------------------------------------------------
 # Check for pthreads availability
 #--------------------------------------------------------------------------
@@ -822,7 +821,6 @@ AX_PTHREAD
 LIBS="$PTHREAD_LIBS $LIBS"
 CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
 LDFLAGS="$LDFLAGS $PTHREAD_LDFLAGS"
-
 
 #--------------------------------------------------------------------------
 # outputs
