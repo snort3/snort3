@@ -196,7 +196,7 @@ snort_manual.tgz: snort_manual.txt $(all_sources)
 
 images.tgz: images/
 	tar zcf $@ \
-        -C images \
+        -C ./images \
         --exclude callouts \
         --exclude README \
         .
@@ -223,9 +223,12 @@ endif
 uninstall-hook:
 	rm -rf $(DESTDIR)$(docdir)/snort_manual
 
+delete_unbuilt = $(if $(and $(findstring $(builddir),$(srcdir)),$(findstring $(srcdir),$(builddir))), ,$(unbuilt_sources))
+
 clean-local:
 	rm -f $(BUILT_SOURCES)
-	rm -f snort_manual.{fo,xml,html,pdf,tgz}
+	rm -f $(delete_unbuilt)
+	rm -f snort_manual.{fo,xml,html,pdf}
 	rm -rf snort_manual.chunked
-	rm -f *.css
+	rm -f *.css *.tgz
 
