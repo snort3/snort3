@@ -348,19 +348,19 @@ endforeach(file)
 
 add_custom_target(snort_manuals ALL DEPENDS ${BUILT_DIST})
 
-if ("${BUILT_DIST}" )
+if (BUILT_DIST)
     install (FILES ${BUILT_DIST} DESTINATION "${SNORT_DATA_DIR}")
 endif()
 
-if ("${PACKAGED_DIST}")
+if (PACKAGED_DIST)
     install (FILES ${PACKAGED_DIST} DESTINATION "${SNORT_DATA_DIR}")
 endif()
 
-if ("${UNBUILT_SOURCES}")
+if (UNBUILT_SOURCES)
     install (FILES ${UNBUILT_SOURCES} DESTINATION "${SNORT_DATA_DIR}")
 endif()
 
-if ("${SNORT_MANUAL_CHUNKED}")
+if (SNORT_MANUAL_CHUNKED)
     install (DIRECTORY ${SNORT_MANUAL_CHUNKED}/ DESTINATION "${SNORT_DATA_DIR}/snort_manual")
 endif()
 
@@ -369,7 +369,6 @@ set_property(
     PROPERTY
     ADDITIONAL_MAKE_CLEAN_FILES ${UNBUILT_SOURCES} snort_manual.chunked
 )
-
 
 ###############################################################################
 ###############################################################################
