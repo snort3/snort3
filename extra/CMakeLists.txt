@@ -26,6 +26,7 @@ else (BUILD_EXTRA_PLUGINS)
 
     find_package(DAQ REQUIRED)
     find_package(SNORT REQUIRED)
+    find_package(LuaJIT REQUIRED)
 
 
     if ((NOT SNORT_FOUND) AND (NOT SNORT_PKG_MODULE_FOUND))

@@ -64,6 +64,7 @@ set (UNBUILT_SOURCES
     start.txt
     style.txt
     terms.txt
+    images/snort.png
 #   config_changes.txt  If ruby executable is NOT found
 )
 
@@ -286,54 +287,56 @@ endif()
 
 #  create the recipes for building the files
 
-
-set (PDF_ARGUMENTS --resource=${CMAKE_CURRENT_SOURCE_DIR}/images )
+set (PDF_ARGUMENTS -a imagesdir=./images)
 set (HTML_ARGUMENTS --copy --attribute linkcss --attribute stylesdir --attribute disable-javascript --attribute quirks! ${PDF_ARGUMENTS})
 
-add_custom_command(OUTPUT snort_manual.html
-    COMMAND ${ASCIIDOC_EXE}
-        -b xhtml11
-        -a toc2
-        -a icons
-        -a imagesdir=${CMAKE_CURRENT_SOURCE_DIR}/images
-        ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt 
-    DEPENDS ${ALL_SOURCES}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Documents: building snort_manual.html"
-)
+if (MAKE_HTML_DOC)
+    add_custom_command(OUTPUT snort_manual.html
+        COMMAND ${ASCIIDOC_EXE}
+            -b xhtml11
+            -a toc2
+            -a icons
+            -a imagesdir=./images
+            ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt
+        DEPENDS ${ALL_SOURCES}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Documents: building snort_manual.html"
+    )
 
-add_custom_command(OUTPUT snort_manual.pdf
-    COMMAND ${ASCIIDOC_A2X_EXE}  
-        -f pdf 
-        ${PDF_ARGUMENTS} 
-        ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt 
-    DEPENDS ${ALL_SOURCES}
-    COMMENT "Documents: building snort_manual.pdf"
-)
+    add_custom_command(OUTPUT snort_manual.tgz
+        COMMAND ${ASCIIDOC_A2X_EXE}
+            -f chunked
+            ${HTML_ARGUMENTS}
+            --resource=${CMAKE_CURRENT_BINARY_DIR}
+            --destination-dir=${CMAKE_CURRENT_BINARY_DIR}
+            ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt
+        COMMAND ${CMAKE_COMMAND}
+            -E tar zcf snort_manual.tgz
+            ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked
+        DEPENDS ${ALL_SOURCES}
+        COMMENT "Documents: building snort_manual.tgz"
+    )
 
-add_custom_command(OUTPUT snort_manual.tgz
-    COMMAND ${ASCIIDOC_A2X_EXE} 
-        -f chunked 
-        ${HTML_ARGUMENTS} 
-        --resource=${CMAKE_CURRENT_BINARY_DIR} 
-        --destination-dir=${CMAKE_CURRENT_BINARY_DIR}
-        ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt 
-    COMMAND ${CMAKE_COMMAND} 
-        -E tar zcf snort_manual.tgz
-        ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked
-    DEPENDS ${ALL_SOURCES}
-    COMMENT "Documents: building snort_manual.tgz"
-)
+    add_custom_command(OUTPUT images.tgz
+        COMMAND
+            ${CMAKE_COMMAND}
+            -E tar zcf ${CMAKE_CURRENT_BINARY_DIR}/images.tgz .
+        DEPENDS ${ALL_SOURCES}
+        COMMENT "Documents: building images.tgz"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/images
+    )
+endif (MAKE_HTML_DOC)
 
-add_custom_command(OUTPUT images.tgz
-    COMMAND
-        ${CMAKE_COMMAND}
-        -E tar zcf ${CMAKE_CURRENT_BINARY_DIR}/images.tgz .
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/images ${ALL_SOURCES}
-    COMMENT "Documents: building images.tgz"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/images
-)
-
+if (MAKE_PDF_DOC)
+    add_custom_command(OUTPUT snort_manual.pdf
+        COMMAND ${ASCIIDOC_A2X_EXE}
+            -f pdf
+            ${PDF_ARGUMENTS}
+            ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt
+        DEPENDS ${ALL_SOURCES}
+        COMMENT "Documents: building snort_manual.pdf"
+    )
+endif (MAKE_PDF_DOC)
 
 ###############################################################################
 ###############################################################################
