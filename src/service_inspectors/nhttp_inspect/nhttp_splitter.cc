@@ -144,6 +144,7 @@ ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length) {
         return SCAN_FOUND;
     }
     for (uint32_t k = 0; k < length; k++) {
+    // FIXIT-M learn to support white space before chunk header extension semicolon
         if (buffer[k] == '\n') {
             if (octets_seen + k == num_crlf) {
                 // \r\n or \n leftover from previous chunk

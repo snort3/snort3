@@ -187,7 +187,7 @@ bool IpSession::add_alert(Packet*, uint32_t gid, uint32_t sid)
     FragTracker* ft = &tracker;
 
     /* Only track a certain number of alerts per session */
-    if ( ft->alert_count >= MAX_FRAG_ALERTS )
+    if ( !ft->engine || ft->alert_count >= MAX_FRAG_ALERTS )
         return false;
 
     ft->alert_gid[ft->alert_count] = gid;
@@ -200,6 +200,9 @@ bool IpSession::add_alert(Packet*, uint32_t gid, uint32_t sid)
 bool IpSession::check_alerted(Packet* p, uint32_t gid, uint32_t sid)
 {
     FragTracker* ft = &tracker;
+
+    if ( !ft->engine )
+        return false;
 
     for ( unsigned i = 0; i < ft->alert_count; i++ )
     {
