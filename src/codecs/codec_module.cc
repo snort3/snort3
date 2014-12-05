@@ -20,6 +20,11 @@
 
 #include "codecs/codec_module.h"
 
+#define codec_module_help \
+    "general decoder rules"
+
+CodecModule::CodecModule() : Module("codec_module", codec_module_help)
+{ }
 
 static const RuleMap general_decode_rules[] =
 {

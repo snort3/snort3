@@ -1909,6 +1909,7 @@ void module_init()
     ModuleManager::add_module(new ReferencesModule);
     ModuleManager::add_module(new RuleStateModule);
     ModuleManager::add_module(new SearchEngineModule);
+    ModuleManager::add_module(new CodecModule);
 
     // these could but prolly shouldn't be policy specific
     // or should be broken into policy and non-policy parts
