@@ -1,20 +1,6 @@
 
-# use this target instead of 'make package_source'
-add_custom_target( autotools_binaries
-    COMMAND autoreconf -ivf #  FIXIT-L J  --  should check for autotools the CMake way
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
-
-add_custom_target( autotools_symlinks
-    COMMAND autoreconf -isvf
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
-
-
 add_custom_target(dist
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target autotools_binaries
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target package_source
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target autotools_symlinks
 )
 
 set (CPACK_GENERATOR TGZ)
