@@ -61,6 +61,9 @@ void NHttpMsgSection::print_message_wrapup(FILE *output) const {
     for (int i=0; i < HTTP_BUFFER_MAX; i++) {
         if ((1 << i) & http_mask) Field(http_buffer[i].length, http_buffer[i].buf).print(output, http_buffer_name[i]);
     }
+    if (g_file_data.len > 0) {
+        Field(g_file_data.len, g_file_data.data).print(output, "file_data");
+    }
     fprintf(output, "\n");
     session_data->show(output);
     fprintf(output, "\n");
@@ -125,10 +128,4 @@ void NHttpMsgSection::legacy_cookie(NHttpMsgHeadShared* header, SourceId source_
         SetHttpBuffer(HTTP_BUFFER_COOKIE, header->get_header_value_norm(cookie_head).start, (unsigned)header->get_header_value_norm(cookie_head).length);
     }
 }
-
-
-
-
-
-
 

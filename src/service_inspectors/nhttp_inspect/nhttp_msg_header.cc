@@ -77,6 +77,7 @@ void NHttpMsgHeader::update_flow() {
         session_data->half_reset(SRC_SERVER);
     }
     // If there is a Transfer-Encoding header, see if the last of the encoded values is "chunked".
+    // FIXIT-L do something with Transfer-Encoding header with chunked present but not last.
     else if ((get_header_value_norm(HEAD_TRANSFER_ENCODING).length > 0)                     &&
              ((*(int64_t *)(get_header_value_norm(HEAD_TRANSFER_ENCODING).start + 
              (get_header_value_norm(HEAD_TRANSFER_ENCODING).length - 8))) == TRANSCODE_CHUNKED) ) {
