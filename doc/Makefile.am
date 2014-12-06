@@ -40,56 +40,30 @@ snort2lua.txt \
 start.txt \
 style.txt \
 terms.txt \
-images/snort.png
+snorty.png
 
 all_sources = \
 $(unbuilt_sources) \
 $(BUILT_SOURCES)
 
-dist_doc_DATA = \
-$(unbuilt_sources)
-
-MANUALS =
-
-if MAKE_HTML_DOC
 EXTRA_DIST = \
+default_snort_manual.html \
+default_snort_manual.pdf
+
+doc_DATA = \
 snort_manual.html \
-snort_manual.tgz \
-images.tgz
-
-if MAKE_PDF_DOC
-EXTRA_DIST += \
 snort_manual.pdf
-endif
 
-else
-if HAVE_HTML_DOC
-MANUALS += snort_manual.html
-endif
-
-if HAVE_PDF_DOC
-MANUALS += snort_manual.pdf
-endif
-
-if HAVE_CHUNKED_DOC
-MANUALS += snort_manual.tgz
-endif
-
-if HAVE_IMAGES_DOC
-MANUALS += images.tgz
-endif
-endif
-
-doc_DATA = $(MANUALS)
-dist_doc_DATA += $(EXTRA_DIST)
+dist_doc_DATA = \
+$(all_sources)
 
 snort = $(top_builddir)/src/snort
 snort2lua = $(top_builddir)/tools/snort2lua/snort2lua
 plugin_path = $(if $(shell echo $$SNORT_PLUGIN_PATH), --plugin-path=$$SNORT_PLUGIN_PATH )
 
-$(unbuilt_sources): $(snort)
-	mkdir -p images
-	[ -a $(builddir)/$@ ] || cp $(srcdir)/$@ $(builddir)/$@
+FORCE:
+$(unbuilt_sources): FORCE
+	[ $(srcdir)/$@ -ot $(builddir)/$@ ] || cp $(srcdir)/$@ $(builddir)/$@
 
 builtin.txt: $(snort)
 	$(snort) $(plugin_path) --markup --list-builtin | sort -n -t : -k 1.4 -k 2 > $@
@@ -172,7 +146,7 @@ version.txt: $(snort)
 snort2lua_cmds.txt: $(snort2lua)
 	$(snort2lua) --markup --help > $@
 
-pdf_args = -a imagesdir=./images
+pdf_args = -a imagesdir=.
 
 html_args = \
     --copy --attribute linkcss --attribute stylesdir \
@@ -180,48 +154,31 @@ html_args = \
 	$(pdf_args)
 
 if MAKE_HTML_DOC
-# this is the docbook approach to html
-#snort_manual.html: snort_manual.txt $(all_sources)
-#	a2x -f xhtml $(html_args) $<
-
-# this is the asciidoc direct approach to hmtl
 # FIXIT no fuschia for visited; all should be sans serif
 # extracted asciidoc.css doesn't seem to work with -a linkcss
-snort_manual.html: snort_manual.txt $(all_sources)
-	asciidoc -b xhtml11 -a toc2 -a icons -a imagesdir=./images $<
-
-snort_manual.tgz: snort_manual.txt $(all_sources)
+snort_manual.html: $(all_sources)
+	asciidoc -b xhtml11 -a toc2 -a icons -a imagesdir=. $<
 	a2x -f chunked $(html_args) $<
-	tar zcf $@ -C snort_manual.chunked .
-
-images.tgz: images/
-	tar zcf $@ \
-        -C ./images \
-        --exclude callouts \
-        --exclude README \
-        .
+else
+snort_manual.html: default_snort_manual.html
+	cp $< $@
+endif
 
 if MAKE_PDF_DOC
 snort_manual.pdf: snort_manual.txt $(all_sources)
 	a2x -f pdf $(pdf_args) $<
-endif
+else
+snort_manual.pdf: default_snort_manual.pdf
+	cp $< $@
 endif
 
 if MAKE_HTML_DOC
 install-data-hook:
-	mkdir -p $(DESTDIR)$(docdir)/snort_manual && \
-		tar zxvf $(builddir)/snort_manual.tgz -C $(DESTDIR)$(docdir)/snort_manual
-
-else
-if HAVE_CHUNKED_DOC
-install-data-hook:
-	mkdir -p $(DESTDIR)$(docdir)/snort_manual && \
-		tar zxvf $(builddir)/snort_manual.tgz -C $(DESTDIR)$(docdir)/snort_manual
-endif
-endif
+	cp -R $(builddir)/snort_manual.chunked $(DESTDIR)$(docdir)/
 
 uninstall-hook:
-	rm -rf $(DESTDIR)$(docdir)/snort_manual
+	rm -rf $(DESTDIR)$(docdir)/snort_manual.chunked
+endif
 
 delete_unbuilt = $(if $(and $(findstring $(builddir),$(srcdir)),$(findstring $(srcdir),$(builddir))), ,$(unbuilt_sources))
 
