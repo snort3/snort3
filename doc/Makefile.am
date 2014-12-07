@@ -151,6 +151,7 @@ pdf_args = -a imagesdir=.
 html_args = \
     --copy --attribute linkcss --attribute stylesdir \
     --attribute disable-javascript --attribute quirks! \
+	--xsltproc-opts="--stringparam chunk.tocs.and.lots 1" \
 	$(pdf_args)
 
 if MAKE_HTML_DOC
