@@ -87,7 +87,7 @@ snort = $(top_builddir)/src/snort
 snort2lua = $(top_builddir)/tools/snort2lua/snort2lua
 plugin_path = $(if $(shell echo $$SNORT_PLUGIN_PATH), --plugin-path=$$SNORT_PLUGIN_PATH )
 
-$(unbuilt_sources): $(snort)
+$(unbuilt_sources): $(srcdir)/$@
 	mkdir -p images
 	[ -a $(builddir)/$@ ] || cp $(srcdir)/$@ $(builddir)/$@
 
@@ -228,7 +228,7 @@ delete_unbuilt = $(if $(and $(findstring $(builddir),$(srcdir)),$(findstring $(s
 clean-local:
 	rm -f $(BUILT_SOURCES)
 	rm -f $(delete_unbuilt)
-	rm -f snort_manual.{fo,xml,html,pdf}
-	rm -rf snort_manual.chunked
-	rm -f *.css *.tgz
+	rm -f snort_manual.{fo,xml} $(EXTRA_DIST)
+	rm -rf snort_manual.chunked images
+	rm -f *.css
 
