@@ -124,7 +124,6 @@ struct DecodeData
         ip_api.reset();
     }
 
-    // FIXIT-L J   set these types directly in Codecs
     inline void set_pkt_type(PktType pkt_type)
     { type = pkt_type; }
 

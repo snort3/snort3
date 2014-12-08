@@ -26,12 +26,6 @@
 #include <arpa/inet.h>
 
 
-/* otherwise defined in /usr/include/ppp_defs.h */
-// FIXIT-J udph should not be set for udp tunnel
-// (only if innermost layer == udp)
-#define IsUDP(p) (IsIP(p) && !IsTCP(p) && p->ptrs.udph)
-
-
 namespace udp
 {
 

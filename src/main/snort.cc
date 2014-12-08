@@ -613,20 +613,25 @@ void set_main_hook(MainHook_f f)
 Packet* get_current_packet()
 { return s_packet; }
 
-// FIXIT-J for multiple packet threads
-// using thread locals for s_pkth and s_data won't work
-// will need array of s_packet, s_pkth, and s_data and 
-// capture all if it is not clear which thread crashed
 void CapturePacket()
 {
-    if ( s_packet && s_packet->pkth )
+    if ( snort_main_thread_pid == gettid() )
     {
-        s_pkth = *(s_packet->pkth);
-
-        if ( s_packet->pkt )
+        // FIXIT-J.  main thread crashed.  Do anything?
+    }
+    else
+    {
+        // Copy the crashed threads data.  C++11 specs ensure the
+        // thread that segfaulted will still be running.
+        if ( s_packet && s_packet->pkth )
         {
-            memcpy(s_data, s_packet->pkt, 0xFFFF & s_packet->pkth->caplen);
-            s_packet->pkt = s_data;
+            s_pkth = *(s_packet->pkth);
+
+            if ( s_packet->pkt )
+            {
+                memcpy(s_data, s_packet->pkt, 0xFFFF & s_packet->pkth->caplen);
+                s_packet->pkt = s_data;
+            }
         }
     }
 }

@@ -74,7 +74,6 @@ static const Parameter udp_params[] =
     { "enable_gtp", Parameter::PT_BOOL, nullptr, "false",
       "decode GTP encapsulations" },
 
-    // FIXIT-L use PT_BIT_LIST
     { "gtp_ports", Parameter::PT_BIT_LIST, "65535",
       "2152 3386", "set GTP ports" },
 

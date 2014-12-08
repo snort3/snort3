@@ -352,8 +352,6 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             codec.next_prot_id = iph->proto();
     }
 
-    // FIXIT-M J  tunnel-byppas is NOT checked!!
-
     return true;
 }
 

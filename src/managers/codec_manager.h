@@ -42,8 +42,6 @@ struct ProfileStats;
 extern THREAD_LOCAL ProfileStats decodePerfStats;
 #endif
 
-// FIXIT-H J add configurable layers. configurable ipv6 extension. Move relevent
-//              decode rules into the revived DecodeModule.
 
 static const uint16_t max_protocol_id = 65535;
 
