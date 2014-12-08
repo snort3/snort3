@@ -22,14 +22,14 @@ build_decl = \
     for f in `grep -whoR --include \*.cc 'TEST_SUITE[^(]*' $(top_srcdir)/src` ; do \
 	    echo "extern Suite* $$f();" >> suite_decl.h ; \
     done ; \
-	touch unit_test.cc
+	touch $(srcdir)/unit_test.cc
 
 build_list = \
     rm -f suite_list.h ; \
     for f in `grep -whoR --include \*.cc 'TEST_SUITE[^(]*' $(top_srcdir)/src` ; do \
         echo "$$f," >> suite_list.h ; \
     done ; \
-	touch unit_test.cc
+	touch $(srcdir)/unit_test.cc
 
 suite_decl.h:
 	$(build_decl)

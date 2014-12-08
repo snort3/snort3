@@ -105,7 +105,7 @@ utils
 AM_CXXFLAGS = @AM_CXXFLAGS@
 
 if BUILD_UNIT_TESTS
-snort_LDADD += test/libtest.a
+snort_LDADD += test/libtest.a -lcheck -lrt -lpthread
 SUBDIRS += test
 endif
 
