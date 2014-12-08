@@ -198,7 +198,7 @@ if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
 
     # next, Copy all distributed files into the binary tree (necessary for asciidocs).
     # Then create a dependency between the new and old files.
-    if (NOT (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR__))
+    if (NOT (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR) )
         foreach (file ${UNBUILT_SOURCES})
             set (input  "${CMAKE_CURRENT_SOURCE_DIR}/${file}")
             set (output "${CMAKE_CURRENT_BINARY_DIR}/${file}")
@@ -315,6 +315,6 @@ if (EXTRA_CLEAN)
     set_property(
         DIRECTORY
         PROPERTY
-        ADDITIONAL_MAKE_CLEAN_FILES ${UNBUILT_SOURCES} snort_manual.chunked
+        ADDITIONAL_MAKE_CLEAN_FILES ${EXTRA_CLEAN}
     )
 endif()
