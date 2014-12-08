@@ -4,7 +4,7 @@
 :toc-placement: manual
 :toc-title: Contents
 
-image::snort.png["Snorty",width="480"]
+image::snorty.png["Snorty",width="480"]
 
 include::version.txt[]
 
