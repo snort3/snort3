@@ -174,6 +174,19 @@ static const ConvertMap max_attribute_services_per_host_api =
 const ConvertMap* max_attribute_services_per_host_map = &max_attribute_services_per_host_api;
 
 /*************************************************
+ *************  max_ip6_extensions  **************
+ *************************************************/
+
+static const std::string max_ip6_extensions = "max_ip6_extensions";
+static const ConvertMap max_ip6_extensions_api =
+{
+    max_ip6_extensions,
+    config_int_ctor<&max_ip6_extensions, &network>,
+};
+
+const ConvertMap* max_ip6_extensions_map = &max_ip6_extensions_api;
+
+/*************************************************
  *************  max_attribute_hosts  *************
  *************************************************/
 

@@ -95,6 +95,7 @@ extern const ConvertMap* log_ipv6_extra_data_map;
 extern const ConvertMap* logdir_map;
 extern const ConvertMap* max_attribute_hosts_map;
 extern const ConvertMap* max_attribute_services_per_host_map;
+extern const ConvertMap* max_ip6_extensions_map;
 extern const ConvertMap* max_metadata_services_map;
 extern const ConvertMap* max_mpls_labelchain_len_map;
 extern const ConvertMap* mpls_payload_type_map;
@@ -212,6 +213,7 @@ const std::vector<const ConvertMap*> config_api =
     min_ttl_map,
     max_attribute_hosts_map,
     max_attribute_services_per_host_map,
+    max_ip6_extensions_map,
     max_metadata_services_map,
     max_mpls_labelchain_len_map,
     mpls_payload_type_map,

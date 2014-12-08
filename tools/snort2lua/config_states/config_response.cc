@@ -80,9 +80,7 @@ bool Response::convert(std::istringstream& data_stream)
  **************************/
 
 static ConversionState* ctor(Converter& c)
-{
-    return new Response(c);
-}
+{ return new Response(c); }
 
 static const ConvertMap response_api =
 {

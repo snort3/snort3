@@ -246,6 +246,8 @@ config dirty_pig:
 config enable_gtp
 config vlan_agnostic
 config file: type_id,  signature,  file_type_depth   104800,  file_signature_depth  0  , show_data_depth 1,  file_block_timeout 60, file_lookup_timeout 30
+config max_ip6_extensions:  3
+config max_ip6_extensions:9
 #config file: file_capture_memcap 1024, file_capture_max 2048, file_capture_min 512,file_capture_block_size 8192
 
 config policy_mode: tap

@@ -167,9 +167,7 @@ bool Ppm::convert(std::istringstream& data_stream)
  **************************/
 
 static ConversionState* ctor(Converter& c)
-{
-    return new Ppm(c);
-}
+{ return new Ppm(c); }
 
 static const ConvertMap config_ppm_api =
 {
