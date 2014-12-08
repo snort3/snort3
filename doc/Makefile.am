@@ -63,7 +63,8 @@ plugin_path = $(if $(shell echo $$SNORT_PLUGIN_PATH), --plugin-path=$$SNORT_PLUG
 
 FORCE:
 $(unbuilt_sources): FORCE
-	[ $(srcdir)/$@ -ot $(builddir)/$@ ] || cp $(srcdir)/$@ $(builddir)/$@
+	[ "$(srcdir)/$@" = "$(builddir)/$@" -o $(srcdir)/$@ -ot $(builddir)/$@ ] || \
+		cp $(srcdir)/$@ $(builddir)/$@
 
 builtin.txt: $(snort)
 	$(snort) $(plugin_path) --markup --list-builtin | sort -n -t : -k 1.4 -k 2 > $@

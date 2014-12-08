@@ -5,7 +5,9 @@
 :toc-title: Contents
 
 image::snorty.png["Snorty",width="480"]
+
 include::version.txt[]
+
 toc::[]
 
 == Overview
