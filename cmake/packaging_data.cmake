@@ -1,8 +1,6 @@
 
 add_custom_target( dist
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target copy_manuals_to_source
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target package_source
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target delete_manuals_in_source
 )
 
 set (AUTOTOOL_FILES "autom4te.cache;m4;configure.ac;Makefile.am")

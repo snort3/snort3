@@ -64,90 +64,21 @@ set (UNBUILT_SOURCES
     start.txt
     style.txt
     terms.txt
-    images/snort.png
+    snorty.png
 #   config_changes.txt  If ruby executable is NOT found
 )
 
 
 if (MAKE_HTML_DOC)
-    set(HTML_DOCS
-        snort_manual.html
-        snort_manual.tgz
-        images.tgz
-    )
-    set (SNORT_MANUAL_CHUNKED ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked)
-
+    set(HTML_DOCS snort_manual.html)
 else ()
-    # resetting to avoid the edge case of someone deleting their source
-    # tree manuals
-    set (SNORT_MANUAL_HTML_FOUND "SNORT_MANUAL_HTML_FOUND-NOTFOUND"
-        CACHE FILEPATH "contains a pre-built snort_manual.html" FORCE)
-    set (SNORT_MANUAL_TGZ_FOUND "SNORT_MANUAL_TGZ_FOUND-NOTFOUND"
-        CACHE FILEPATH "contains a pre-built snort_manual.tgz" FORCE)
-    set (IMAGES_TGZ_FOUND "IMAGES_TGZ_FOUND-NOTFOUND"
-        CACHE FILEPATH "contains a pre-built images.tgz" FORCE)
-    set (SNORT_MANUAL_CHUNKED "")
-
-
-    find_file ( SNORT_MANUAL_HTML_FOUND
-        "snort_manual.html"
-        PATHS "${CMAKE_CURRENT_LIST_DIR}"
-        DOC "contains a pre-built snort_manual.html"
-        NO_DEFAULT_PATH
-    )
-    find_file (
-        SNORT_MANUAL_TGZ_FOUND
-        "snort_manual.tgz"
-        PATHS "${CMAKE_CURRENT_LIST_DIR}"
-        DOC "contains a pre-built snort_manual.tgz"
-        NO_DEFAULT_PATH
-    )
-    find_file (
-        IMAGES_TGZ_FOUND
-        "images.tgz"
-        PATHS "${CMAKE_CURRENT_LIST_DIR}"
-        DOC "contains a pre-built images.tgz"
-        NO_DEFAULT_PATH
-    )
-
-    if (SNORT_MANUAL_TGZ_FOUND)
-
-        message(STATUS "unpacking Snort Manual")
-
-        execute_process (
-            COMMAND ${CMAKE_COMMAND}
-            -E tar xf ${CMAKE_CURRENT_LIST_DIR}/snort_manual.tgz
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        )
-        set (SNORT_MANUAL_CHUNKED ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked)
-    endif()
-
-    add_to_list_if_true(PACKAGED_DIST SNORT_MANUAL_TGZ_FOUND "snort_manual.tgz")
-    add_to_list_if_true(PACKAGED_DIST IMAGES_TGZ_FOUND "images.tgz")
-    add_to_list_if_true(PACKAGED_DIST SNORT_MANUAL_HTML_FOUND "snort_manual.html")
-    mark_as_advanced (SNORT_MANUAL_HTML_FOUND)
-    mark_as_advanced (SNORT_MANUAL_TGZ_FOUND)
-    mark_as_advanced (IMAGES_TGZ_FOUND)
+    list(APPEND PACKAGED_DIST "default_snort_manual.html")
 endif()
-
 
 if (MAKE_PDF_DOC)
     set(PDF_DOCS snort_manual.pdf)
-
 else ()
-    set (SNORT_MANUAL_PDF_FOUND "SNORT_MANUAL_PDF_FOUND-NOTFOUND"
-        CACHE FILEPATH "contains a pre-built snort_manual.pdf" FORCE)
-
-    find_file (
-        SNORT_MANUAL_PDF_FOUND
-        snort_manual.pdf
-        PATHS "${CMAKE_CURRENT_LIST_DIR}"
-        DOC "contains a pre-built snort_manual.pdf"
-        NO_DEFAULT_PATH
-    )
-
-    add_to_list_if_true(PACKAGED_DIST SNORT_MANUAL_PDF_FOUND "snort_manual.pdf")
-    mark_as_advanced (SNORT_MANUAL_PDF_FOUND)
+    list(APPEND PACKAGED_DIST "default_snort_manual.pdf")
 endif ()
 
 
@@ -267,18 +198,21 @@ if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
 
     # next, Copy all distributed files into the binary tree (necessary for asciidocs).
     # Then create a dependency between the new and old files.
-    foreach (file ${UNBUILT_SOURCES})
-        set (input  "${CMAKE_CURRENT_SOURCE_DIR}/${file}")
-        set (output "${CMAKE_CURRENT_BINARY_DIR}/${file}")
-        add_custom_command(
-            OUTPUT ${output}
-            COMMAND ${CMAKE_COMMAND} -E copy ${input} ${output}
-            DEPENDS ${input}
-            COMMENT "Documents: copying ${file} into binary directory"
-        )
+    if (NOT (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR__))
+        foreach (file ${UNBUILT_SOURCES})
+            set (input  "${CMAKE_CURRENT_SOURCE_DIR}/${file}")
+            set (output "${CMAKE_CURRENT_BINARY_DIR}/${file}")
+            add_custom_command(
+                OUTPUT ${output}
+                COMMAND ${CMAKE_COMMAND} -E copy ${input} ${output}
+                DEPENDS ${input}
+                COMMENT "Documents: copying ${file} into binary directory"
+            )
 
-        list(APPEND ALL_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/${file}")
-    endforeach(file)
+            list(APPEND ALL_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/${file}")
+            list(APPEND EXTRA_CLEAN "${CMAKE_CURRENT_BINARY_DIR}/${file}")
+        endforeach(file)
+    endif()
 
 endif()
 
@@ -287,8 +221,10 @@ endif()
 
 #  create the recipes for building the files
 
-set (PDF_ARGUMENTS -a imagesdir=./images)
-set (HTML_ARGUMENTS --copy --attribute linkcss --attribute stylesdir --attribute disable-javascript --attribute quirks! ${PDF_ARGUMENTS})
+set (PDF_ARGUMENTS -a imagesdir=.)
+set (HTML_ARGUMENTS --copy --attribute linkcss --attribute stylesdir --attribute disable-javascript)
+set (HTML_ARGUMENTS ${HTML_ARGUMENTS} --xsltproc-opts=\"--stringparam chunk.tocs.and.lots 1\")
+set (HTML_ARGUMENTS ${HTML_ARGUMENTS} --attribute quirks! ${PDF_ARGUMENTS})
 
 if (MAKE_HTML_DOC)
     add_custom_command(OUTPUT snort_manual.html
@@ -296,7 +232,13 @@ if (MAKE_HTML_DOC)
             -b xhtml11
             -a toc2
             -a icons
-            -a imagesdir=./images
+            -a imagesdir=.
+            ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt
+        COMMAND ${ASCIIDOC_A2X_EXE}
+            -f chunked
+            ${HTML_ARGUMENTS}
+            --resource=${CMAKE_CURRENT_BINARY_DIR}
+            --destination-dir=${CMAKE_CURRENT_BINARY_DIR}
             ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt
         DEPENDS ${ALL_SOURCES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -363,44 +305,16 @@ if (UNBUILT_SOURCES)
     install (FILES ${UNBUILT_SOURCES} DESTINATION "${SNORT_DATA_DIR}")
 endif()
 
-if (SNORT_MANUAL_CHUNKED)
-    install (DIRECTORY ${SNORT_MANUAL_CHUNKED}/ DESTINATION "${SNORT_DATA_DIR}/snort_manual")
+if (MAKE_HTML_DOC)
+    set (HTML_CHUNKED "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked")
+    install (DIRECTORY ${HTML_CHUNKED}/ DESTINATION "${SNORT_DATA_DIR}/snort_manual")
+    list(APPEND EXTRA_CLEAN "${HTML_CHUNKED}")
 endif()
 
-set_property(
-    DIRECTORY
-    PROPERTY
-    ADDITIONAL_MAKE_CLEAN_FILES ${UNBUILT_SOURCES} snort_manual.chunked
-)
-
-###############################################################################
-###############################################################################
-
-# Packaging commands.  Used by cpack to move manuals to/from source tree
-
-add_custom_target (delete_manuals_in_source)
-set (COPY_MANUALS)
-
-foreach (manual ${EXTRA_DIST})
-    set (output "${CMAKE_CURRENT_LIST_DIR}/${manual}")
-
-    list(APPEND COPY_MANUALS ${output})
-    add_custom_command(
-        OUTPUT "${output}"
-        COMMAND ${CMAKE_COMMAND} -E copy ${manual} ${CMAKE_CURRENT_LIST_DIR}/${manual}
-        DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${manual}"
-        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-        COMMENT "Documents: copying ${manual} into source directory"
-        VERBATIM
+if (EXTRA_CLEAN)
+    set_property(
+        DIRECTORY
+        PROPERTY
+        ADDITIONAL_MAKE_CLEAN_FILES ${UNBUILT_SOURCES} snort_manual.chunked
     )
-
-    add_custom_command(
-        TARGET delete_manuals_in_source
-        PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_LIST_DIR}/${manual}
-        COMMENT "Documents: deleting ${manual} from source directory"
-        VERBATIM
-    )
-endforeach (manual)
-
-add_custom_target (copy_manuals_to_source DEPENDS ${COPY_MANUALS})
+endif()
