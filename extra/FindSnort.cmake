@@ -115,7 +115,7 @@ find_program (SNORT_EXECUTABLE
 
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(SNORT
+find_package_handle_standard_args( Snort
     REQUIRED_VARS SNORT_INCLUDE_DIR SNORT_EXECUTABLE
     FAIL_MESSAGE "${ERROR_MESSAGE}"
 )
