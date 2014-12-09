@@ -244,29 +244,6 @@ if (MAKE_HTML_DOC)
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         COMMENT "Documents: building snort_manual.html"
     )
-
-    add_custom_command(OUTPUT snort_manual.tgz
-        COMMAND ${ASCIIDOC_A2X_EXE}
-            -f chunked
-            ${HTML_ARGUMENTS}
-            --resource=${CMAKE_CURRENT_BINARY_DIR}
-            --destination-dir=${CMAKE_CURRENT_BINARY_DIR}
-            ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt
-        COMMAND ${CMAKE_COMMAND}
-            -E tar zcf snort_manual.tgz
-            ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked
-        DEPENDS ${ALL_SOURCES}
-        COMMENT "Documents: building snort_manual.tgz"
-    )
-
-    add_custom_command(OUTPUT images.tgz
-        COMMAND
-            ${CMAKE_COMMAND}
-            -E tar zcf ${CMAKE_CURRENT_BINARY_DIR}/images.tgz .
-        DEPENDS ${ALL_SOURCES}
-        COMMENT "Documents: building images.tgz"
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/images
-    )
 endif (MAKE_HTML_DOC)
 
 if (MAKE_PDF_DOC)
@@ -275,7 +252,7 @@ if (MAKE_PDF_DOC)
             -f pdf
             ${PDF_ARGUMENTS}
             ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt
-        DEPENDS ${ALL_SOURCES}
+        DEPENDS ${ALL_SOURCES} ${HTML_DOCS} # adding HTML dependency to ensure documents build sequentially
         COMMENT "Documents: building snort_manual.pdf"
     )
 endif (MAKE_PDF_DOC)
