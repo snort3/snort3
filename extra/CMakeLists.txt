@@ -25,7 +25,7 @@ else (BUILD_EXTRA_PLUGINS)
     endif(APPLE)
 
     find_package(DAQ REQUIRED)
-    find_package(SNORT REQUIRED)
+    find_package(Snort REQUIRED)
     find_package(LuaJIT REQUIRED)
 
 
