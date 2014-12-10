@@ -35,7 +35,7 @@
 
 set(ERROR_MESSAGE
     "
-    Unable to find Snort!!! Either
+    Unable to find Snort! Either
     
     1)  Using ccmake, manually set the cmake variables
         SNORT_INCLUDE_DIR and SNORT_EXECUTABLE.
@@ -51,7 +51,7 @@ set(ERROR_MESSAGE
         variable SNORT_IMPORT_FILE using either ccmake or the
         command line (-DSNORT_IMPORT_FILE=/full/install/path/lib/snort/snort.cmake)
 
-    5)  install pkg-config and add snort.pc to the PKG_CONFIG_PATH
+    5)  install pkg-config and add the path to snort.pc to the PKG_CONFIG_PATH
             environment variable.
 
     "
@@ -95,11 +95,16 @@ if (PKG_CONFIG_FOUND)
 
         #  CMake file takes precedence over pkg-config file
         if (NOT SNORT_INTERFACE_COMPILE_OPTIONS)
-            string(REPLACE ";" " " tmp_cflags "${SNORT_PKG_CFLAGS}")
+            string(REPLACE ";" " " tmp_cflags "${SNORT_PKG_CFLAGS_OTHER}")
             set (SNORT_INTERFACE_COMPILE_OPTIONS "${tmp_cflags}" CACHE STRING
                 "The compile options with which Snort was linked" FORCE)
         endif()
 
+        if (NOT SNORT_INTERFACE_INCLUDE_DIRECTORIES)
+            string(REPLACE ";" " " tmp_includes "${SNORT_PKG_CFLAGS_OTHER}")
+            set (SNORT_INTERFACE_INCLUDE_DIRECTORIES "${tmp_includes}" CACHE STRING
+                "The compile options with which Snort was linked" FORCE)
+        endif()
 
         #  add Snort link flags
         string(REPLACE ";" " " tmp_lflags "${SNORT_PKG_LDFLAGS}")
@@ -127,7 +132,6 @@ find_program (SNORT_EXECUTABLE
     HINTS ${SNORT_PKG_PREFIX} ENV SNORT_DIR
     PATH_SUFFIXES bin   # necessary when SNORT_DIR is set
 )
-
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args( Snort
