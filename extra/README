@@ -1,6 +1,10 @@
 Snort++ Extras
 
-Snort++ is all about plugins.  It has over 140 by default and makes it easy to add more in C++ or LuaJIT.  This post will walk you through building and running a set of extra example plugins.  If you haven't installed and verified Snort++, you will need to do that first.  We will cover the following topics:
+Snort++ is all about plugins.  It has over 140 by default and makes it easy
+to add more in C++ or LuaJIT.  This post will walk you through building and
+running a set of extra example plugins.  If you haven't installed and
+verified Snort++, you will need to do that first.  We will cover the
+following topics:
 
 * Overview
 * Download
@@ -69,5 +73,9 @@ The last example demonstrates a LuaJIT rule option called find.  The rule, suppl
 
 NEXT STEPS o")~
 
-There is no design guide yet but you can develop your own plugins in C++ by using the examples as a starting point.  In addition, IPS options and loggers can also be written in LuaJIT.  The API may change going forward, but you are encouraged to roll your own now and let us know how it goes so we can incorporate any suggestions in the final design.
+There is no design guide yet but you can develop your own plugins in C++ by
+using the examples as a starting point.  In addition, IPS options and
+loggers can also be written in LuaJIT.  The API may change going forward,
+but you are encouraged to roll your own now and let us know how it goes so
+we can incorporate any suggestions in the final design.
 
