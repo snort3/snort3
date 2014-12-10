@@ -101,7 +101,7 @@ if (PKG_CONFIG_FOUND)
         endif()
 
         if (NOT SNORT_INTERFACE_INCLUDE_DIRECTORIES)
-            string(REPLACE ";" " " tmp_includes "${SNORT_PKG_CFLAGS_OTHER}")
+            string(REPLACE ";" " " tmp_includes "${SNORT_PKG_INCLUDE_DIRS}")
             set (SNORT_INTERFACE_INCLUDE_DIRECTORIES "${tmp_includes}" CACHE STRING
                 "The compile options with which Snort was linked" FORCE)
         endif()
