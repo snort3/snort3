@@ -141,6 +141,7 @@ static int get_record(u2iterator *it, u2record *record) {
     {
         puts("get_record: (2) Failed to allocate memory.");
         free(record->data);
+        record->data = nullptr;
         return FAILURE;
     }
 
