@@ -24,18 +24,10 @@
 #  SNORT_EXECUTABLE - The Snort++ executable
 #  SNORT_INCLUDE_DIR - Snort include directory
 #
-#
-#  SNORT_INTERFACE_COMPILE_OPTIONS -  Snort++'s compile options.  If snort.cmake found,
-#                                       use those compile flags.  Else, use
-#                                       `pkg-config snort` compile flags
-#  SNORT_INTERFACE_INCLUDE_DIRECTORIES - The directories that Snort++ includes
-#                                       when building. retrieved from snort.cmake
-#  SNORT_INTERFACE_LINK_FLAGS  -  Snort++ link flags.  retrived from `pkg-config`
-#
 
 set(ERROR_MESSAGE
     "
-    Unable to find Snort!!! Either
+    Unable to find Snort.  Either
     
     1)  Using ccmake, manually set the cmake variables
         SNORT_INCLUDE_DIR and SNORT_EXECUTABLE.
@@ -73,15 +65,10 @@ if (SNORT_IMPORT_FILE)
         set(SNORT_EXECUTABLE "${tmp_exe}" CACHE FILEPATH "Snort executable" FORCE)
     endif()
 
-    get_target_property(tmp_cflags snort  INTERFACE_COMPILE_OPTIONS)
-        set (SNORT_INTERFACE_COMPILE_OPTIONS "${tmp_cflags}" CACHE STRING
-            "The compile options with which Snort was linked" FORCE)
-
-    get_target_property(tmp_int_dir snort  INTERFACE_INCLUDE_DIRECTORIES)
-    set(SNORT_INTERFACE_INCLUDE_DIRECTORIES "${tmp_int_dir}" CACHE FILEPATH
-        "The directories that Snort include's when building" FORCE)
-
-
+    if (NOT SNORT_INCLUDE_DIR)
+        get_target_property(tmp_exe snort  INTERFACE_INCLUDE_DIRECTORIES)
+        set(SNORT_INCLUDE_DIR "${tmp_exe}" CACHE FILEPATH "Snort executable" FORCE)
+    endif()
 endif(SNORT_IMPORT_FILE)
 
 
@@ -93,24 +80,21 @@ if (PKG_CONFIG_FOUND)
 
     if (SNORT_PKG_FOUND)
 
-        #  CMake file takes precedence over pkg-config file
-        if (NOT SNORT_INTERFACE_COMPILE_OPTIONS)
-            string(REPLACE ";" " " tmp_cflags "${SNORT_PKG_CFLAGS}")
-            set (SNORT_INTERFACE_COMPILE_OPTIONS "${tmp_cflags}" CACHE STRING
-                "The compile options with which Snort was linked" FORCE)
-        endif()
-
+        #  add Snort link flags
+        string(REPLACE ";" " " tmp_cflags "${SNORT_PKG_CFLAGS}")
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${tmp_cflags}" CACHE STRING
+            "Flags used by the compiler during all build types." FORCE)
 
         #  add Snort link flags
         string(REPLACE ";" " " tmp_lflags "${SNORT_PKG_LDFLAGS}")
-        set (SNORT_INTERFACE_LINK_FLAGS "${tmp_lflags}"
-            CACHE STRING "The link flags with which the Snort++ binary was linked" FORCE)
-
+        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${tmp_lflags}"
+            CACHE STRING "Flags used by the linker." FORCE)
 
         if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
             set (CMAKE_INSTALL_PREFIX "${SNORT_PKG_PREFIX}" CACHE PATH
                 "Install path prefix, prepended onto install directories." FORCE)
         endif (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+
 
     endif (SNORT_PKG_FOUND)
 endif (PKG_CONFIG_FOUND)
@@ -118,7 +102,7 @@ endif (PKG_CONFIG_FOUND)
 
 find_path (SNORT_INCLUDE_DIR
     NAMES main/snort_types.h
-    HINTS ${SNORT_INTERFACE_INCLUDE_DIRECTORIES} ENV SNORT_DIR
+    HINTS ${SNORT_PKG_INCLUDE_DIRS} ENV SNORT_DIR
     PATH_SUFFIXES snort include/snort
 )
 
@@ -129,8 +113,9 @@ find_program (SNORT_EXECUTABLE
 )
 
 
+
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args( Snort
+find_package_handle_standard_args(SNORT
     REQUIRED_VARS SNORT_INCLUDE_DIR SNORT_EXECUTABLE
     FAIL_MESSAGE "${ERROR_MESSAGE}"
 )
@@ -140,9 +125,6 @@ mark_as_advanced(
     SNORT_INCLUDE_DIR
     SNORT_EXECUTABLE
     SNORT_IMPORT_FILE
-    SNORT_INTERFACE_COMPILE_OPTIONS
-    SNORT_INTERFACE_INCLUDE_DIRECTORIES
-    SNORT_INTERFACE_LINK_FLAGS
 )
 
 
