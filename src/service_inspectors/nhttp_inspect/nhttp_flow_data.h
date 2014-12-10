@@ -56,8 +56,6 @@ private:
     NHttpStartSplitter start_splitter[2];
     NHttpHeaderSplitter header_splitter[2];
     NHttpChunkSplitter chunk_splitter[2];
-    uint32_t unused_octets_visible[2] = { 0, 0 };
-    uint32_t header_octets_visible[2] = { 0, 0 };
     uint8_t *section_buffer[2] = { nullptr, nullptr };
     int32_t section_buffer_length[2] = { 0, 0 };
     bool section_buffer_owned[2] = { true, true };
@@ -72,17 +70,19 @@ private:
     bool zero_chunk[2] = { false, false };
     bool tcp_close[2] = { false, false };
     uint64_t infractions[2] = { 0, 0 };
+    uint32_t unused_octets_visible[2] = { 0, 0 };
+    uint32_t header_octets_visible[2] = { 0, 0 };
 
     // Inspector => StreamSplitter (facts about the message section that is coming next)
     NHttpEnums::SectionType type_expected[2] = { NHttpEnums::SEC_REQUEST, NHttpEnums::SEC_STATUS };
-    int64_t data_length[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };   // length of the data from Content-Length field      
+    int64_t data_length[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT }; // length of the data from Content-Length field      
 
     // Inspector's internal data about the current message
     NHttpEnums::VersionId version_id[2] = { NHttpEnums::VERS__NOTPRESENT, NHttpEnums::VERS__NOTPRESENT };
     NHttpEnums::MethodId method_id = NHttpEnums::METH__NOTPRESENT;
     int32_t status_code_num = NHttpEnums::STAT_NOTPRESENT;
 
-    int64_t body_octets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };   // number of user data octets seen so far (regular body or chunks)
+    int64_t body_octets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT }; // number of user data octets seen so far (regular body or chunks)
 
     // Transaction management including pipelining
     NHttpTransaction* transaction[2] = { nullptr, nullptr };
