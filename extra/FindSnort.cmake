@@ -25,12 +25,12 @@
 #  SNORT_INCLUDE_DIR - Snort include directory
 #
 #
-#  SNORT_INTERFACE_COMPILE_OPTIONS -  Snort++'s compile options.  If snort.cmake found,
-#                                       use those compile flags.  Else, use
-#                                       `pkg-config snort` compile flags
+#  These varaibles are all lists whose variables are retrieved from either
+#  snort.cmake or pkg-config.  snort.cmake will always take precendence over pkg-config.
+#  SNORT_INTERFACE_COMPILE_OPTIONS -  a list of Snort++'s compile options.
 #  SNORT_INTERFACE_INCLUDE_DIRECTORIES - The directories that Snort++ includes
-#                                       when building. retrieved from snort.cmake
-#  SNORT_INTERFACE_LINK_FLAGS  -  Snort++ link flags.  retrived from `pkg-config`
+#                                       when building.
+#  SNORT_INTERFACE_LINK_FLAGS  -  Snort++ link flags.  only available with `pkg-config`
 #
 
 set(ERROR_MESSAGE
@@ -95,20 +95,17 @@ if (PKG_CONFIG_FOUND)
 
         #  CMake file takes precedence over pkg-config file
         if (NOT SNORT_INTERFACE_COMPILE_OPTIONS)
-            string(REPLACE ";" " " tmp_cflags "${SNORT_PKG_CFLAGS_OTHER}")
-            set (SNORT_INTERFACE_COMPILE_OPTIONS "${tmp_cflags}" CACHE STRING
+            set (SNORT_INTERFACE_COMPILE_OPTIONS "${SNORT_PKG_CFLAGS_OTHER}" CACHE STRING
                 "The compile options with which Snort was linked" FORCE)
         endif()
 
         if (NOT SNORT_INTERFACE_INCLUDE_DIRECTORIES)
-            string(REPLACE ";" " " tmp_includes "${SNORT_PKG_INCLUDE_DIRS}")
-            set (SNORT_INTERFACE_INCLUDE_DIRECTORIES "${tmp_includes}" CACHE STRING
+            set (SNORT_INTERFACE_INCLUDE_DIRECTORIES "${SNORT_PKG_INCLUDE_DIRS}" CACHE STRING
                 "The compile options with which Snort was linked" FORCE)
         endif()
 
         #  add Snort link flags
-        string(REPLACE ";" " " tmp_lflags "${SNORT_PKG_LDFLAGS}")
-        set (SNORT_INTERFACE_LINK_FLAGS "${tmp_lflags}"
+        set (SNORT_INTERFACE_LINK_FLAGS "${SNORT_PKG_LDFLAGS}"
             CACHE STRING "The link flags with which the Snort++ binary was linked" FORCE)
 
 
