@@ -157,6 +157,16 @@ add_subdirectory(network_inspectors)
 add_subdirectory(search_engines)
 
 
+#  setting export properties
+set_property(TARGET snort APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+    ${LUAJIT_INCLUDE_DIR}
+    ${EXTERNAL_INCLUDES}
+    # The installed path '${INCLUDE_INSTALL_PATH}'' is added below with 'install (... snort ...)'
+)
+
+set_property(TARGET snort APPEND PROPERTY INTERFACE_COMPILE_OPTIONS "${CMAKE_CXX_FLAGS}")
+
+
 install (TARGETS snort
     EXPORT snortexe
     RUNTIME DESTINATION bin
