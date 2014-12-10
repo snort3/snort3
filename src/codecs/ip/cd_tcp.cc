@@ -608,7 +608,7 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     if (!buf.allocate(tcp::TCP_MIN_HEADER_LEN))
         return false;
 
-    tcp::TCPHdr* tcph_out = reinterpret_cast<tcp::TCPHdr*>(buf.base);
+    tcp::TCPHdr* tcph_out = reinterpret_cast<tcp::TCPHdr*>(buf.data());
     const int ctl = (hi->th_flags & TH_SYN) ? 1 : 0;
 
     if ( forward(enc.flags) )

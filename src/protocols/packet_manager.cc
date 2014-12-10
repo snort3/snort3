@@ -445,7 +445,7 @@ const uint8_t* PacketManager::encode_response(
                 if (!buf.allocate(payload_len))
                     return nullptr;
 
-                memcpy(buf.base, payload, payload_len);
+                memcpy(buf.data(), payload, payload_len);
                 flags |= ENC_FLAG_PAY;
             }
             flags |= ENC_FLAG_FIN;
@@ -457,7 +457,7 @@ const uint8_t* PacketManager::encode_response(
                 if (!buf.allocate(payload_len))
                     return nullptr;
 
-                memcpy(buf.base, payload, payload_len);
+                memcpy(buf.data(), payload, payload_len);
                 flags |= ENC_FLAG_PAY;
             }
             flags |= ENC_FLAG_PSH;
@@ -474,7 +474,7 @@ const uint8_t* PacketManager::encode_response(
     if (encode(p, flags, p->num_layers-1, ENC_PROTO_UNSET   , buf))
     {
         len = buf.size();
-        return buf.base + buf.off;
+        return buf.data() + buf.off;
     }
 
     len = 0;
@@ -497,7 +497,7 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
         if (!buf.allocate(icmp::ICMP_UNREACH_DATA_LEN))
             return nullptr;
 
-        memcpy(buf.base, p->layers[inner_ip_index+1].start, icmp::ICMP_UNREACH_DATA_LEN);
+        memcpy(buf.data(), p->layers[inner_ip_index+1].start, icmp::ICMP_UNREACH_DATA_LEN);
 
 
         const ip::IP4Hdr* const ip4h =
@@ -506,14 +506,14 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
 
         if (!buf.allocate(ip_len))
             return nullptr;
-        memcpy(buf.base, ip4h, ip_len);
+        memcpy(buf.data(), ip4h, ip_len);
 
 
         // If this returns false, we're down pig creek.
         if (!buf.allocate(sizeof(icmp::Icmp4Base)))
             return nullptr;
 
-        icmp::Icmp4Base* const icmph = reinterpret_cast<icmp::Icmp4Base*>(buf.base);
+        icmp::Icmp4Base* const icmph = reinterpret_cast<icmp::Icmp4Base*>(buf.data());
         icmph->type = icmp::IcmpType::DEST_UNREACH;
         icmph->csum = 0;
         icmph->opt32 = 0;
@@ -536,13 +536,13 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
                 icmph->code = icmp::IcmpCode::PORT_UNREACH;
         }
 
-        icmph->csum = checksum::icmp_cksum((uint16_t *)buf.base, buf.size());
+        icmph->csum = checksum::icmp_cksum((uint16_t *)buf.data(), buf.size());
 
 
         if (encode(p, flags, p->num_layers-1, IPPROTO_ID_ICMPV4, buf))
         {
             len = buf.size();
-            return buf.base + buf.off;
+            return buf.data() + buf.off;
         }
 
         len = 0;
@@ -559,19 +559,19 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
 
         if (!buf.allocate(icmp::ICMP_UNREACH_DATA_LEN))
             return nullptr;
-        memcpy(buf.base, p->layers[inner_ip_index+1].start, icmp::ICMP_UNREACH_DATA_LEN);
+        memcpy(buf.data(), p->layers[inner_ip_index+1].start, icmp::ICMP_UNREACH_DATA_LEN);
 
 
         // copy original ip header
         if (!buf.allocate(ip::IP6_HEADER_LEN))
             return nullptr;
         const ip::IP6Hdr* const ip6h = p->ptrs.ip_api.get_ip6h();
-        memcpy(buf.base, ip6h, ip::IP6_HEADER_LEN);
+        memcpy(buf.data(), ip6h, ip::IP6_HEADER_LEN);
 
         if (!buf.allocate(sizeof(icmp::Icmp6Hdr)))
             return nullptr;
 
-        icmp::Icmp6Hdr* const icmph = reinterpret_cast<icmp::Icmp6Hdr*>(buf.base);
+        icmp::Icmp6Hdr* const icmph = reinterpret_cast<icmp::Icmp6Hdr*>(buf.data());
         icmph->type = icmp::Icmp6Types::UNREACH;
         icmph->csum = 0;
         icmph->opt32 = 0;
@@ -604,13 +604,13 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
         ps6.protocol = IPPROTO_ICMPV6;
         ps6.len = htons((uint16_t)(ip_len));
 
-        icmph->csum = checksum::icmp_cksum((uint16_t *)buf.base, ip_len, &ps6);
+        icmph->csum = checksum::icmp_cksum((uint16_t *)buf.data(), ip_len, &ps6);
 
 
         if (encode(p, flags, p->num_layers-1, IPPROTO_ICMPV6, buf))
         {
             len = buf.size();
-            return buf.base + buf.off;
+            return buf.data() + buf.off;
         }
 
         len = 0;

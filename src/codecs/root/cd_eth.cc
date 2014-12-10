@@ -187,7 +187,7 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         if (!buf.allocate(sizeof(*ho)))
             return false;
 
-        ho = reinterpret_cast<eth::EtherHdr*>(buf.base);
+        ho = reinterpret_cast<eth::EtherHdr*>(buf.data());
 
         if (enc.ethertype_set())
             ho->ether_type = enc.next_ethertype;

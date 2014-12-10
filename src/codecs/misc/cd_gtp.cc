@@ -269,7 +269,7 @@ bool GtpCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
     if (buf.allocate(raw_len))
         return false;
 
-    GTPHdr* const gtph = reinterpret_cast<GTPHdr*>(buf.base);
+    GTPHdr* const gtph = reinterpret_cast<GTPHdr*>(buf.data());
     memcpy(gtph, raw_in, raw_len);
     return update_GTP_length(gtph, buf.size());
 }

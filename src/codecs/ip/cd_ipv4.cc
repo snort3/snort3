@@ -679,7 +679,7 @@ bool Ipv4Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
 
 
     const ip::IP4Hdr* const ip4h_in = reinterpret_cast<const IP4Hdr*>(raw_in);
-    ip::IP4Hdr* const ip4h_out = reinterpret_cast<IP4Hdr*>(buf.base);
+    ip::IP4Hdr* const ip4h_out = reinterpret_cast<IP4Hdr*>(buf.data());
 
     /* IPv4 encoded header is hardcoded 20 bytes */
     ip4h_out->ip_verhl = 0x45;

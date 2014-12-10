@@ -379,7 +379,7 @@ bool UdpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         return false;
 
     const udp::UDPHdr* const hi = reinterpret_cast<const udp::UDPHdr*>(raw_in);
-    udp::UDPHdr* const udph_out = reinterpret_cast<udp::UDPHdr*>(buf.base);
+    udp::UDPHdr* const udph_out = reinterpret_cast<udp::UDPHdr*>(buf.data());
 
     if ( forward(enc.flags) )
     {

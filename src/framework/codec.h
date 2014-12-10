@@ -147,13 +147,7 @@ struct EncState
 // * base+size-1 is last byte of packet (in) / buffer (out)
 struct Buffer
 {
-    uint8_t* base; /* start of data */ /* FIXIT-L J - make this private. Ppl should be to access, not manipulate */
-    uint32_t off;       /* offset into data */
-private:
-    uint32_t end;       /* end of data */
-    const uint32_t max_len;   /* size of allocation */
 public:
-
     /* Logic behind 'buf + size + 1' -- we're encoding the
      * packet from the inside out.  So, whenever we add
      * data, 'allocating' N bytes means moving the pointer
@@ -164,10 +158,13 @@ public:
      */
     Buffer(uint8_t* buf, uint32_t size) :
         base(buf + size + 1),
-        off(0),
         end(0),
-        max_len(size)
+        max_len(size),
+        off(0)
     { }
+
+    inline uint8_t* data() const
+    { return base; }
 
     uint32_t size() const
     { return end; }
@@ -188,6 +185,15 @@ public:
         end = 0;
         off = 0;
     }
+
+
+private:
+    uint8_t* base; /* start of data */
+    uint32_t end;       /* end of data */
+    const uint32_t max_len;   /* size of allocation */
+
+public:
+    uint32_t off;       /* offset into data */
 };
 
 
@@ -355,7 +361,7 @@ public:
      *              be set.
      *
      * NOTE:  all funtions MUST call the Buffer.allocate() function before
-     *          memory.
+     *          manipulating memory.
      */
     virtual bool encode(const uint8_t* const /*raw_in */,
                         const uint16_t /*raw_len*/,
