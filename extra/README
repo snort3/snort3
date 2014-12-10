@@ -25,8 +25,8 @@ DOWNLOAD
 
 There are two extra tarballs, once for autotools and one for cmake:
 
-    snort_extra-1.0.0-a1-129-auto.tar.gz
-    snort_extra-1.0.0-a1-129-cmake.tar.gz
+    snort_extra-1.0.0-a1-130-auto.tar.gz
+    snort_extra-1.0.0-a1-130-cmake.tar.gz
 
 BUILD EXTRAS
 
@@ -45,7 +45,7 @@ To build with autotools, simply do the usual from the top level directory:
 
 To build with cmake, do the following:
 
-    mkdir build &amp;&amp; cd build
+    mkdir build && cd build
     cmake ..
     make -j 8 install
 
@@ -63,7 +63,7 @@ You can edit $my_path/lib/snort_extra/loggers/alert.lua to tweak the output form
 
 The last example demonstrates a LuaJIT rule option called find.  The rule, supplied on stdin, uses the Lua [[ multiline string ]] delimiters to avoid shell escape issues:
 
-    echo 'alert tcp any any -&gt; any 80 ( sid:1; msg:"test"; http_method; find:"pat = [[GET]]"; )' | \
+    echo 'alert tcp any any -> any 80 ( sid:1; msg:"test"; http_method; find:"pat = [[GET]]"; )' | \
         $my_path/bin/snort -c $my_path/etc/snort/snort.lua -r pcap \
             -A cmg --script-path $my_path/lib/snort_extra --stdin-rules
 

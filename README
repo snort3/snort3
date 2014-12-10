@@ -45,7 +45,7 @@ DEPENDENCIES
 If you already build Snort, you may have everything you need.  If not, grab the latest:
 
 * autotools or cmake to build from source
-* g++ &gt;= 4.8 or other C++11 compiler
+* g++ >= 4.8 or other C++11 compiler
 * daq from http://www.snort.org for packet IO
 * dnet from http://code.google.com/p/libdnet/ for network utility functions
 * LuaJIT from http://luajit.org for configuration and scripting
@@ -58,8 +58,8 @@ DOWNLOAD
 
 There are two sets of source tarballs, once for autotools and one for cmake.  snort-3 contains the base program and snort_extra has example plugins.
 
-    snort-3.0.0-a1-129-auto.tar.gz
-    snort-3.0.0-a1-129-cmake.tar.gz
+    snort-3.0.0-a1-130-auto.tar.gz
+    snort-3.0.0-a1-130-cmake.tar.gz
 
 BUILD SNORT
 
