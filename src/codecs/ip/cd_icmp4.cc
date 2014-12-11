@@ -247,7 +247,7 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
         case icmp::IcmpType::PARAMETERPROB:
             /* account for extra 4 bytes in header */
             len += 4;
-            codec.next_prot_id = IP_EMBEDDED_IN_ICMP4;
+            codec.next_prot_id = PROTO_IP_EMBEDDED_IN_ICMP4;
             break;
 
         default:

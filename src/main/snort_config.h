@@ -158,6 +158,7 @@ struct SnortConfig
     uint8_t enable_teredo;
     uint8_t enable_esp;
     PortList *gtp_ports;
+    PortList *capwap_ports;
 
     uint8_t num_layers;
     uint8_t max_ip6_extensions;
@@ -312,6 +313,9 @@ struct SnortConfig
     // curr_ip is the zero based ip layer
     inline bool hit_ip_maxlayers(uint8_t curr_ip) const
     { return max_ip_layers && (curr_ip >= max_ip_layers); }
+
+    inline bool is_capwap_port(uint16_t port) const
+    { return capwap_ports->test(port); }
 };
 
 SnortConfig* SnortConfNew(void);

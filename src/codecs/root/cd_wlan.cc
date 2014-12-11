@@ -33,6 +33,10 @@
 #include "main/snort.h"
 #include "log/text_log.h"
 
+#ifndef DLT_IEEE802_11
+#define DLT_IEEE802_11 105
+#endif
+
 #define CD_WLAN_NAME "wlan"
 #define CD_WLAN_HELP_STR "support for wireless local area network protocol"
 #define CD_WLAN_HELP ADD_DLT(CD_WLAN_HELP_STR, DLT_IEEE802_11)
@@ -66,6 +70,7 @@ public:
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_data_link_type(std::vector<int>&) override;
+    void get_protocol_ids(std::vector<uint16_t>&v) override;
     void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const) override;
 };
@@ -77,11 +82,10 @@ public:
 
 
 void WlanCodec::get_data_link_type(std::vector<int>&v)
-{
-#ifdef DLT_IEEE802_11
-    v.push_back(DLT_IEEE802_11);
-#endif
-}
+{ v.push_back(DLT_IEEE802_11); }
+
+void WlanCodec::get_protocol_ids(std::vector<uint16_t>&v)
+{ v.push_back(PROTO_ETHERNET_802_11); }
 
 bool WlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
@@ -131,7 +135,7 @@ bool WlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         case WLAN_TYPE_DATA_DATA:
         {
             codec.lyr_len = IEEE802_11_DATA_HDR_LEN;
-            codec.next_prot_id = ETHERNET_LLC;
+            codec.next_prot_id = PROTO_ETHERNET_LLC;
 
             break;
         }

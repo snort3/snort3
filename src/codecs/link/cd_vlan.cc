@@ -100,7 +100,7 @@ bool VlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
      * http://www.geocities.com/billalexander/ethernet.html
      */
     if(proto <= ETHERNET_MAX_LEN_ENCAP)
-        codec.next_prot_id = ETHERNET_LLC;
+        codec.next_prot_id = PROTO_ETHERNET_LLC;
     else
         codec.next_prot_id = proto;
 

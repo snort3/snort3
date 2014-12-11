@@ -26,8 +26,6 @@
 #include "config.h"
 #endif
 
-//#include "prot_ipv6.h"
-
 #include "framework/codec.h"
 #include "packet_io/active.h"
 #include "snort_types.h"
@@ -58,7 +56,7 @@ public:
 
 void TeredoCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(PROTOCOL_TEREDO);
+    v.push_back(PROTO_TEREDO);
 }
 
 bool TeredoCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)

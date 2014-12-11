@@ -195,7 +195,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                     codec_events::decoder_event(codec, DECODE_ICMPV6_TOO_BIG_BAD_MTU);
 
                 len = icmp::ICMP6_HEADER_NORMAL_LEN;
-                codec.next_prot_id = IP_EMBEDDED_IN_ICMP6;
+                codec.next_prot_id = PROTO_IP_EMBEDDED_IN_ICMP6;
             }
             else
             {
@@ -218,7 +218,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                         codec_events::decoder_event(codec, DECODE_ICMPV6_UNREACHABLE_NON_RFC_4443_CODE);
                 }
                 len = icmp::ICMP6_HEADER_NORMAL_LEN;
-                codec.next_prot_id = IP_EMBEDDED_IN_ICMP6;
+                codec.next_prot_id = PROTO_IP_EMBEDDED_IN_ICMP6;
             }
             else
             {

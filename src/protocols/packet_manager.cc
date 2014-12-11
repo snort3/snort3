@@ -282,7 +282,7 @@ void PacketManager::decode(
                 p->ptrs.decode_flags |= DECODE_PKT_TRUST;
                 break;
 
-            case PROTOCOL_TEREDO:
+            case PROTO_TEREDO:
                 // if we just decoded teredo and the next
                 // layer fails, we made a mistake. Therefore,
                 // remove this bit.

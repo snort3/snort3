@@ -88,7 +88,7 @@ void EthCodec::get_data_link_type(std::vector<int>&v)
 
 void EthCodec::get_protocol_ids(std::vector<uint16_t>&v)
 {
-    v.push_back(ETHERNET_802_3);
+    v.push_back(PROTO_ETHERNET_802_3);
 }
 
 
@@ -126,7 +126,7 @@ bool EthCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     if (next_prot > eth::MIN_ETHERTYPE )
         codec.proto_bits |= PROTO_BIT__ETH;
     else
-        next_prot = ETHERNET_LLC;
+        next_prot = PROTO_ETHERNET_LLC;
 
     codec.next_prot_id = next_prot;
     codec.lyr_len = eth::ETH_HEADER_LEN;

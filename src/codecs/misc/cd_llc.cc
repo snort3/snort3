@@ -32,10 +32,7 @@
 #include "log/text_log.h"
 #include "protocols/packet_manager.h"
 
-// yes, macros are necessary. The API and class constructor require different strings.
-//
-// this macros is defined in the module to ensure identical names. However,
-// if you don't want a module, define the name here.
+
 #define LLC_NAME "llc"
 #define LLC_HELP "support for logical link control"
 
@@ -67,7 +64,10 @@ struct EthLlc
 struct EthLlcOther
 {
     uint8_t org_code[3];
-    uint16_t proto_id;
+    uint8_t proto_id[2];
+
+    uint16_t proto() const
+    { return ntohs(*((uint16_t*)(&proto_id[0]))); }
 };
 
 #define ETH_DSAP_SNA                  0x08    /* SNA */
@@ -84,9 +84,7 @@ struct EthLlcOther
 
 
 void LlcCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ETHERNET_LLC);
-}
+{ v.push_back(PROTO_ETHERNET_LLC); }
 
 bool LlcCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
@@ -117,7 +115,7 @@ bool LlcCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
             ehllcother->org_code[2] == 0)
         {
             codec.lyr_len = sizeof(EthLlc) + sizeof(EthLlcOther);
-            codec.next_prot_id = ntohs(ehllcother->proto_id);
+            codec.next_prot_id = ehllcother->proto();
         }
     }
 
@@ -138,7 +136,7 @@ void LlcCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     {
 
         const EthLlcOther *other = reinterpret_cast<const EthLlcOther *>(raw_pkt + sizeof(EthLlc));
-        const uint16_t proto = ntohs(other->proto_id);
+        const uint16_t proto = other->proto();
 
         TextLog_Print(text_log, " ORG:0x%02X%02X%02X PROTO:0x%04X",
             other->org_code[0], other->org_code[1], other->org_code[2],
