@@ -31,11 +31,15 @@ else (BUILD_EXTRA_PLUGINS)
 
     #  add Snort++ properties to the current build
     string (REPLACE "-DHAVE_CONFIG_H" " " tmp_cmp_flags  "${SNORT_INTERFACE_COMPILE_OPTIONS}")
+    string (REPLACE ";" " " tmp_cmp_flags "${tmp_cmp_flags}")
     string (STRIP "${CMAKE_CXX_FLAGS} ${tmp_cmp_flags}" tmp_cmp_flags)
     set (CMAKE_CXX_FLAGS "${tmp_cmp_flags}" CACHE STRING
         "Flags used by the compiler during all build types." FORCE)
+
     include_directories(${SNORT_INTERFACE_INCLUDE_DIRECTORIES})
-    string (STRIP "${CMAKE_EXE_LINKER_FLAGS} ${SNORT_INTERFACE_LINK_FLAGS}" tmp_link_flags)
+
+    string(REPLACE ";" " " tmp_link_flags "${SNORT_INTERFACE_LINK_FLAGS}")
+    string (STRIP "${CMAKE_EXE_LINKER_FLAGS} ${tmp_link_flags}" tmp_link_flags)
     set (CMAKE_EXE_LINKER_FLAGS "${tmp_link_flags}" CACHE STRING
         "Flags used by the linker. " FORCE)
 
@@ -71,7 +75,6 @@ else (BUILD_EXTRA_PLUGINS)
         set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-shared")
     endif ()
     unset(CMAKE_REQUIRED_FLAGS)
-
 
     add_subdirectory(src)
 

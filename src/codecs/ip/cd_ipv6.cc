@@ -588,7 +588,7 @@ bool Ipv6Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         return false;
 
     const ip::IP6Hdr* const hi = reinterpret_cast<const ip::IP6Hdr*>(raw_in);
-    ip::IP6Hdr* const ipvh_out = reinterpret_cast<ip::IP6Hdr*>(buf.base);
+    ip::IP6Hdr* const ipvh_out = reinterpret_cast<ip::IP6Hdr*>(buf.data());
 
 
 
