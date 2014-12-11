@@ -31,10 +31,10 @@
 using namespace NHttpEnums;
 
 // Convenience function. All the housekeeping that must be done before we can return FLUSH to stream.
-void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset,
-      SectionType section_type, bool tcp_close, uint64_t infractions, uint32_t num_octets, uint32_t length,
-      uint32_t num_excess, bool zero_chunk) {
-    SourceId source_id = to_server() ? SRC_CLIENT : SRC_SERVER;
+void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, SectionType section_type,
+      bool tcp_close, uint64_t infractions, uint32_t num_octets, uint32_t length, uint32_t num_excess,
+      bool zero_chunk) {
+    const SourceId source_id = to_server() ? SRC_CLIENT : SRC_SERVER;
     session_data->section_type[source_id] = section_type;
     session_data->num_excess[source_id] = num_excess;
     session_data->zero_chunk[source_id] = zero_chunk;
@@ -204,8 +204,8 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
       }
       case SEC_BODY: {
         prepare_flush(session_data, flush_offset, SEC_BODY,
-           tcp_close && (length <= session_data->data_length[source_id]),
-           0, session_data->data_length[source_id], length, 0, false);
+           tcp_close && (length <= session_data->data_length[source_id]), 0,
+           session_data->data_length[source_id], length, 0, false);
         return StreamSplitter::FLUSH;
       }
       case SEC_ABORT:
@@ -233,7 +233,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
 
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
     assert(session_data != nullptr);
-    SourceId source_id = to_server() ? SRC_CLIENT : SRC_SERVER;
+    const SourceId source_id = to_server() ? SRC_CLIENT : SRC_SERVER;
     copied = len;
 
     if (NHttpTestManager::use_test_input()) {
