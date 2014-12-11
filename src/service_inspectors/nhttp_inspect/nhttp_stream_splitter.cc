@@ -174,7 +174,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
                flush_octets, length, splitter->get_num_excess(), splitter->get_zero_chunk());
             if ((type == SEC_REQUEST) || (type == SEC_STATUS)) {
                 // Look ahead to see if entire header section is already here so we can aggregate it for detection.
-                 if (session_data->header_splitter[source_id].peek(data + flush_octets, length - flush_octets) == SCAN_FOUND) {
+                if (session_data->header_splitter[source_id].peek(data + flush_octets, length - flush_octets) == SCAN_FOUND) {
                     session_data->header_octets_visible[source_id] = session_data->header_splitter[source_id].get_num_flush();
                 }
             }
@@ -285,6 +285,8 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             // small chunks are aggregated before processing and are kept here until the buffer is full (paf_max)
             // all the chunks in the buffer go to the inspector together. Zero-length chunk (len == 1,
             // zero_chunk == true) flushes accumulated chunks.
+            // FIXIT-M this implementation of the zero-length chunk is temporary until stream can support a zero-
+            // octet flush.
             const int32_t total_chunk_len = chunk_buffer_length + offset + len - session_data->zero_chunk[source_id];
             if ((total_chunk_len < DATABLOCKSIZE) && (!session_data->zero_chunk[source_id]) && !tcp_close) {
                 chunk_buffer_length = total_chunk_len;

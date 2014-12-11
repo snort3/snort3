@@ -62,12 +62,12 @@ private:
     uint8_t *chunk_buffer[2] = { nullptr, nullptr };
     int32_t chunk_buffer_length[2] = { 0, 0 };
     bool chunk_buffer_owned[2] = { true, true }; // never actually false and not checked, just here to simplify code
+    bool zero_chunk[2] = { false, false };
     
     // StreamSplitter => Inspector (facts about the most recent message section)
     // 0 element refers to client request, 1 element refers to server response
     NHttpEnums::SectionType section_type[2] = { NHttpEnums::SEC__NOTCOMPUTE, NHttpEnums::SEC__NOTCOMPUTE };
     uint32_t num_excess[2] = { 0, 0 };
-    bool zero_chunk[2] = { false, false };
     bool tcp_close[2] = { false, false };
     uint64_t infractions[2] = { 0, 0 };
     uint32_t unused_octets_visible[2] = { 0, 0 };
@@ -75,7 +75,7 @@ private:
 
     // Inspector => StreamSplitter (facts about the message section that is coming next)
     NHttpEnums::SectionType type_expected[2] = { NHttpEnums::SEC_REQUEST, NHttpEnums::SEC_STATUS };
-    int64_t data_length[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT }; // length of the data from Content-Length field      
+    int64_t data_length[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT }; // length of the data from Content-Length field
 
     // Inspector's internal data about the current message
     NHttpEnums::VersionId version_id[2] = { NHttpEnums::VERS__NOTPRESENT, NHttpEnums::VERS__NOTPRESENT };
