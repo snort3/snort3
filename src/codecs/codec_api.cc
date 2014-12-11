@@ -70,14 +70,17 @@ extern const BaseApi* cd_transbridge;
 extern const BaseApi* cd_udp;
 extern const BaseApi* cd_vlan;
 
+
 //  Root codecs
+extern const BaseApi* cd_eapol;
 extern const BaseApi* cd_eth;
+extern const BaseApi* cd_i4l_rawip;
+extern const BaseApi* cd_linux_sll;
+extern const BaseApi* cd_null;
+extern const BaseApi* cd_pflog;
+extern const BaseApi* cd_ppp;
 extern const BaseApi* cd_raw4;
 extern const BaseApi* cd_raw6;
-extern const BaseApi* cd_null;
-extern const BaseApi* cd_eapol;
-extern const BaseApi* cd_linux_sll;
-extern const BaseApi* cd_ppp;
 extern const BaseApi* cd_wlan;
 
 #endif
@@ -124,13 +127,15 @@ const BaseApi* codecs[] =
     cd_vlan,
 
     /* root codecs */
+    cd_eapol,
     cd_eth,
+    cd_i4l_rawip,
+    cd_linux_sll,
+    cd_null,
+    cd_pflog,
+    cd_ppp,
     cd_raw4,
     cd_raw6,
-    cd_null,
-    cd_eapol,
-    cd_linux_sll,
-    cd_ppp,
     cd_wlan,
 #endif
 
