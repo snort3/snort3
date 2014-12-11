@@ -63,7 +63,8 @@ private:
     int32_t chunk_buffer_length[2] = { 0, 0 };
     bool chunk_buffer_owned[2] = { true, true }; // never actually false and not checked, just here to simplify code
     bool zero_chunk[2] = { false, false };
-    
+    uint64_t chunk_infractions[2] = { 0, 0 };
+
     // StreamSplitter => Inspector (facts about the most recent message section)
     // 0 element refers to client request, 1 element refers to server response
     NHttpEnums::SectionType section_type[2] = { NHttpEnums::SEC__NOTCOMPUTE, NHttpEnums::SEC__NOTCOMPUTE };

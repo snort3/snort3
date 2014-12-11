@@ -141,7 +141,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
           case SCAN_NOTFOUND:
             if (splitter->get_octets_seen() == MAXOCTETS) {
                 // FIXIT-H need to process this data (except chunk header) not just discard it.
-                prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, tcp_close, 0, length, length, 0, 0);
+                prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, tcp_close, 0, length, length, 0, false);
                 session_data->type_expected[source_id] = SEC_ABORT;
                 return StreamSplitter::FLUSH;
             }
@@ -152,20 +152,20 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
                     return StreamSplitter::FLUSH;
                 }
                 else {
-                    prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, true, 0, length, length, 0, 0);
+                    prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, true, 0, length, length, 0, false);
                     return StreamSplitter::FLUSH;
                 }
             }
             // Incomplete headers wait patiently for more data
             return NHttpTestManager::use_test_input() ? StreamSplitter::FLUSH : StreamSplitter::SEARCH;
           case SCAN_ABORT:
-            prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, tcp_close, 0, length, length, 0, 0);
+            prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, tcp_close, 0, length, length, 0, false);
             session_data->type_expected[source_id] = SEC_ABORT;
             return StreamSplitter::FLUSH;
           case SCAN_DISCARD: {
             const uint32_t flush_octets = splitter->get_num_flush();
             prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, tcp_close && (flush_octets >= length), 0,
-               flush_octets, length, 0, 0);
+               flush_octets, length, 0, false);
             return StreamSplitter::FLUSH;
           }
           case SCAN_FOUND: {
@@ -185,7 +185,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
       case SEC_BODY: {
         prepare_flush(session_data, flush_offset, source_id, SEC_BODY,
            tcp_close && (length <= session_data->data_length[source_id]),
-           0, session_data->data_length[source_id], length, 0, 0);
+           0, session_data->data_length[source_id], length, 0, false);
         return StreamSplitter::FLUSH;
       }
       case SEC_ABORT:
@@ -285,6 +285,10 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             // small chunks are aggregated before processing and are kept here until the buffer is full (paf_max)
             // all the chunks in the buffer go to the inspector together. Zero-length chunk (len == 1,
             // zero_chunk == true) flushes accumulated chunks.
+
+            // infractions for each aggregated small chunk are accumulated here and then restored before processing
+            session_data->chunk_infractions[source_id] |= session_data->infractions[source_id];
+
             // FIXIT-M this implementation of the zero-length chunk is temporary until stream can support a zero-
             // octet flush.
             const int32_t total_chunk_len = chunk_buffer_length + offset + len - session_data->zero_chunk[source_id];
@@ -303,6 +307,8 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
                 return nullptr;
             }
             paf_max = DATABLOCKSIZE;
+            session_data->infractions[source_id] = session_data->chunk_infractions[source_id];
+            session_data->chunk_infractions[source_id] = 0;
             send_to_detection = my_inspector->process(chunk_buffer, total_chunk_len, flow, source_id, true);
             if (session_data->zero_chunk[source_id]) {
                 // zero-length chunk is not visible to inspector. Transition to trailer must be handled here.
