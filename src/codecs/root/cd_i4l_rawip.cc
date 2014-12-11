@@ -55,15 +55,14 @@ public:
 
 } // namespace
 
+void I4LRawIpCodec::get_data_link_type(std::vector<int>& v)
+{
 #ifdef DLT_I4L_RAWIP
-void I4LRawIpCodec::get_data_link_type(std::vector<int>& v)
-{ v.push_back(DLT_I4L_RAWIP); }
-
+    v.push_back(DLT_I4L_RAWIP);
 #else
-void I4LRawIpCodec::get_data_link_type(std::vector<int>& v)
-{ }
-
+    UNUSED(v);
 #endif
+}
 
 
 bool I4LRawIpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
