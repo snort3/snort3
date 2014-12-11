@@ -76,7 +76,6 @@ else (BUILD_EXTRA_PLUGINS)
     endif ()
     unset(CMAKE_REQUIRED_FLAGS)
 
-
     add_subdirectory(src)
 
 
