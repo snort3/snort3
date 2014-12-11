@@ -53,13 +53,11 @@ private:
     void half_reset(NHttpEnums::SourceId source_id);
 
     // StreamSplitter internal data
-    NHttpStartSplitter start_splitter[2];
-    NHttpHeaderSplitter header_splitter[2];
-    NHttpChunkSplitter chunk_splitter[2];
-    uint8_t *section_buffer[2] = { nullptr, nullptr };
+    NHttpSplitter* splitter[2] = { nullptr, nullptr };
+    uint8_t* section_buffer[2] = { nullptr, nullptr };
     int32_t section_buffer_length[2] = { 0, 0 };
     bool section_buffer_owned[2] = { true, true };
-    uint8_t *chunk_buffer[2] = { nullptr, nullptr };
+    uint8_t* chunk_buffer[2] = { nullptr, nullptr };
     int32_t chunk_buffer_length[2] = { 0, 0 };
     bool chunk_buffer_owned[2] = { true, true }; // never actually false and not checked, just here to simplify code
     bool zero_chunk[2] = { false, false };

@@ -47,6 +47,7 @@ NHttpFlowData::~NHttpFlowData() {
         }
         delete[] chunk_buffer[k];
         delete transaction[k];
+        delete splitter[k];
     }
     delete_pipeline();
 }

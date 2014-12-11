@@ -42,7 +42,7 @@ typedef enum { SEC_DISCARD = -10, SEC_CLOSED = -9, SEC_ABORT = -8, SEC__NOTCOMPU
    SEC_REQUEST = 2, SEC_STATUS, SEC_HEADER, SEC_BODY, SEC_CHUNK, SEC_TRAILER } SectionType;
 
 // Result of scanning by splitter
-typedef enum { SCAN_NOTFOUND, SCAN_FOUND, SCAN_DISCARD, SCAN_ABORT } ScanResult;
+typedef enum { SCAN_NOTFOUND, SCAN_FOUND, SCAN_DISCARD, SCAN_DISCARD_CONTINUE, SCAN_ABORT } ScanResult;
 
 // Result of processing a message section--what needs to happen next
 typedef enum { RES_INSPECT, RES_IGNORE, RES_AGGREGATE } ProcessResult;

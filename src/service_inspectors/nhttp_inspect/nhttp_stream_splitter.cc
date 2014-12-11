@@ -54,7 +54,7 @@ void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* f
         session_data->type_expected[source_id] = SEC_CLOSED;
     }
 
-    // when TCP connection closes do not flush octets that have not arrived yet
+    // When TCP connection closes do not flush octets that have not arrived yet
     uint32_t flush_amount = (!tcp_close || (num_octets <= length)) ? num_octets : length;
     if (!NHttpTestManager::use_test_input()) {
         *flush_offset = flush_amount;
@@ -66,14 +66,13 @@ void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* f
     session_data->header_octets_visible[source_id] = 0;
 }
 
-NHttpSplitter* NHttpStreamSplitter::choose_splitter(SectionType type, SourceId source_id,
-   const NHttpFlowData* session_data) const {
+NHttpSplitter* NHttpStreamSplitter::get_splitter(SectionType type) const {
     switch (type) {
       case SEC_REQUEST:
-      case SEC_STATUS: return (NHttpSplitter*)&session_data->start_splitter[source_id];
-      case SEC_CHUNK: return (NHttpSplitter*)&session_data->chunk_splitter[source_id];
+      case SEC_STATUS: return (NHttpSplitter*) new NHttpStartSplitter;
+      case SEC_CHUNK: return (NHttpSplitter*) new NHttpChunkSplitter;
       case SEC_HEADER:
-      case SEC_TRAILER: return (NHttpSplitter*)&session_data->header_splitter[source_id];
+      case SEC_TRAILER: return (NHttpSplitter*) new NHttpHeaderSplitter;
       default: assert(0); return nullptr;
     }
 }
@@ -125,7 +124,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
         fflush(stdout);
     }
 
-    SectionType type = session_data->type_expected[source_id];
+    const SectionType type = session_data->type_expected[source_id];
 
     switch (type) {
       case SEC_REQUEST:
@@ -134,7 +133,11 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
       case SEC_HEADER:
       case SEC_TRAILER:
       {
-        NHttpSplitter* const splitter = choose_splitter(type, source_id, session_data);
+        NHttpSplitter*& splitter = session_data->splitter[source_id];
+        if (splitter == nullptr) {
+            splitter = get_splitter(type);
+            assert(splitter != nullptr);
+        }
         const uint32_t max_length = MAXOCTETS - splitter->get_octets_seen();
         const ScanResult split_result = splitter->split(data, (length <= max_length) ? length : max_length);
         switch (split_result) {
@@ -143,16 +146,22 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
                 // FIXIT-H need to process this data (except chunk header) not just discard it.
                 prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, tcp_close, 0, length, length, 0, false);
                 session_data->type_expected[source_id] = SEC_ABORT;
+                delete splitter;
+                splitter = nullptr;
                 return StreamSplitter::FLUSH;
             }
             if (tcp_close) {
                 if (splitter->partial_ok()) {
                     prepare_flush(session_data, flush_offset, source_id, type, true, INF_TRUNCATED, length, length,
                        splitter->get_num_excess(), splitter->get_zero_chunk());
+                    delete splitter;
+                    splitter = nullptr;
                     return StreamSplitter::FLUSH;
                 }
                 else {
                     prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, true, 0, length, length, 0, false);
+                    delete splitter;
+                    splitter = nullptr;
                     return StreamSplitter::FLUSH;
                 }
             }
@@ -161,21 +170,31 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
           case SCAN_ABORT:
             prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, tcp_close, 0, length, length, 0, false);
             session_data->type_expected[source_id] = SEC_ABORT;
+            delete splitter;
+            splitter = nullptr;
             return StreamSplitter::FLUSH;
-          case SCAN_DISCARD: {
+          case SCAN_DISCARD:
+          case SCAN_DISCARD_CONTINUE: {
             const uint32_t flush_octets = splitter->get_num_flush();
             prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, tcp_close && (flush_octets >= length), 0,
                flush_octets, length, 0, false);
+            if (split_result == SCAN_DISCARD) {
+                delete splitter;
+                splitter = nullptr;
+            }
             return StreamSplitter::FLUSH;
           }
           case SCAN_FOUND: {
             const uint32_t flush_octets = splitter->get_num_flush();
             prepare_flush(session_data, flush_offset, source_id, type, tcp_close && (flush_octets == length), 0,
                flush_octets, length, splitter->get_num_excess(), splitter->get_zero_chunk());
+            delete splitter;
+            splitter = nullptr;
             if ((type == SEC_REQUEST) || (type == SEC_STATUS)) {
                 // Look ahead to see if entire header section is already here so we can aggregate it for detection.
-                if (session_data->header_splitter[source_id].peek(data + flush_octets, length - flush_octets) == SCAN_FOUND) {
-                    session_data->header_octets_visible[source_id] = session_data->header_splitter[source_id].get_num_flush();
+                splitter = get_splitter(SEC_HEADER);
+                if (splitter->peek(data + flush_octets, length - flush_octets) == SCAN_FOUND) {
+                    session_data->header_octets_visible[source_id] = splitter->get_num_flush();
                 }
             }
             return StreamSplitter::FLUSH;

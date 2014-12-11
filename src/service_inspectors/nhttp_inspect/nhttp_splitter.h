@@ -44,9 +44,6 @@ protected:
     uint32_t octets_seen = 0; // number of octets processed by previous split() calls that returned NOTFOUND
     uint32_t num_crlf = 0;
     uint32_t num_flush = 0;
-    bool complete = false;
-
-    virtual void conditional_reset();
 };
 
 class NHttpStartSplitter : public NHttpSplitter {
@@ -61,7 +58,6 @@ class NHttpHeaderSplitter : public NHttpSplitter {
 public:
     NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length) override;
     NHttpEnums::ScanResult peek(const uint8_t* buffer, uint32_t length) override;
-    void conditional_reset() override;
     uint32_t get_octets_seen() const override { return octets_seen - peek_octets; };
     uint32_t get_num_excess() const override { return num_crlf; };
 private:
@@ -74,7 +70,6 @@ class NHttpChunkSplitter : public NHttpSplitter {
 public:
     NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length) override;
     bool get_zero_chunk() const override { return zero_chunk; };
-    void conditional_reset() override;
     bool partial_ok() const override { return false; };
 private:
     uint32_t expected_length = 0;

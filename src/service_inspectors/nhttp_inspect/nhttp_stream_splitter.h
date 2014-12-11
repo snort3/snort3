@@ -41,8 +41,7 @@ private:
     void prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, NHttpEnums::SourceId source_id,
        NHttpEnums::SectionType section_type, bool tcp_close, uint64_t infractions, uint32_t num_octets, uint32_t length,
        uint32_t num_excess, bool zero_chunk);
-    NHttpSplitter* choose_splitter(NHttpEnums::SectionType type, NHttpEnums::SourceId source_id,
-       const NHttpFlowData* session_data) const;
+    NHttpSplitter* get_splitter(NHttpEnums::SectionType type) const;
     NHttpInspect* const my_inspector;
     unsigned paf_max = NHttpEnums::MAXOCTETS;
 };
