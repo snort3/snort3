@@ -64,8 +64,7 @@ public:
 
     void get_protocol_ids(std::vector<uint16_t>&) override;
     void get_data_link_type(std::vector<int>&) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-        const Packet*const ) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&) override;
@@ -135,7 +134,7 @@ bool EthCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
 
 void EthCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
-                    const Packet* const)
+    const uint16_t /*len*/)
 {
     const eth::EtherHdr *eh = reinterpret_cast<const eth::EtherHdr *>(raw_pkt);
 

@@ -71,8 +71,7 @@ public:
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_data_link_type(std::vector<int>&) override;
     void get_protocol_ids(std::vector<uint16_t>&v) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-                    const Packet* const) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
 
 #define MINIMAL_IEEE80211_HEADER_LEN    10    /* Ack frames and others */
@@ -147,7 +146,7 @@ bool WlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 }
 
 void WlanCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
-                    const Packet* const)
+    const uint16_t /*lyr_len*/)
 {
     const wlan::WifiHdr *wifih = reinterpret_cast<const wlan::WifiHdr *>(raw_pkt);
 

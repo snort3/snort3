@@ -440,10 +440,9 @@ void Log2ndHeader(TextLog* log, Packet* p)
  *-------------------------------------------------------------------
  */
 
-void LogIpOptions(TextLog*  log, const IP4Hdr* ip4h, const Packet* const p)
+static void LogIpOptions(TextLog* log, const ip::IpOptionIterator& options)
 {
     int print_offset;
-    const ip::IpOptionIterator options(ip4h, p);
     int init_offset = TextLog_Tell(log);
     unsigned c = 0;
 
@@ -533,6 +532,18 @@ void LogIpOptions(TextLog*  log, const IP4Hdr* ip4h, const Packet* const p)
         }
     }
     TextLog_NewLine(log);
+}
+
+void LogIpOptions(TextLog* log, const IP4Hdr* ip4h, uint16_t valid_ip4_len)
+{
+    const ip::IpOptionIterator options(ip4h, valid_ip4_len);
+    LogIpOptions(log, options);
+}
+
+void LogIpOptions(TextLog*  log, const IP4Hdr* ip4h, const Packet* const p)
+{
+    const ip::IpOptionIterator options(ip4h, p);
+    LogIpOptions(log, options);
 }
 
 /*--------------------------------------------------------------------
@@ -742,9 +753,9 @@ inline uint16_t extract_16_bits(const uint8_t* const buf)
 inline uint32_t extract_32_bits(const uint8_t* const buf)
 { return ntohl(* ((uint32_t*)(buf)) ); }
 
-void LogTcpOptions(TextLog*  log, const Packet* const p)
+
+static void LogTcpOptions(TextLog* log, const tcp::TcpOptIterator& opt_iter)
 {
-    tcp::TcpOptIterator opt_iter(p->ptrs.tcph, p);
     unsigned c = 0;
 
     for (const tcp::TcpOption& opt : opt_iter)
@@ -875,6 +886,20 @@ void LogTcpOptions(TextLog*  log, const Packet* const p)
 #endif
 
     TextLog_NewLine(log);
+
+}
+
+void LogTcpOptions(TextLog* log,  const tcp::TCPHdr* tcph, uint16_t valid_tcp_len)
+{
+    const tcp::TcpOptIterator opt_iter(tcph, valid_tcp_len);
+    LogTcpOptions(log, opt_iter);
+}
+
+
+void LogTcpOptions(TextLog*  log, const Packet* const p)
+{
+    tcp::TcpOptIterator opt_iter(p->ptrs.tcph, p);
+    LogTcpOptions(log, opt_iter);
 }
 
 

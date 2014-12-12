@@ -159,7 +159,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         if (hdr->flag & 0x07)
         {
 
-            len =  GTP_V1_HEADER_LEN;
+            len = GTP_V1_HEADER_LEN;
 
             /*Check optional fields*/
             if (raw.len < GTP_V1_HEADER_LEN)

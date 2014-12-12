@@ -115,8 +115,7 @@ public:
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool update(Packet*, Layer*, uint32_t* len) override;
     void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-                    const Packet* const) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 
 private:
     void ICMP4AddrTests(const DecodeData& snort, const CodecData& codec);
@@ -341,7 +340,7 @@ void Icmp4Codec::ICMP4MiscTests(const ICMPHdr* const icmph,
  ******************************************************************/
 
 void Icmp4Codec::log(TextLog* const log, const uint8_t* raw_pkt,
-                    const Packet* const)
+    const uint16_t lyr_len)
 {
 
     const icmp::ICMPHdr* const icmph = reinterpret_cast<const ICMPHdr *>(raw_pkt);
@@ -598,7 +597,8 @@ bool Icmp4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
     IcmpHdr* h = (IcmpHdr*)(lyr->start);
     *len += sizeof(*h);
 
-    if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) ) {
+    if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) )
+    {
         h->cksum = 0;
         h->cksum = checksum::icmp_cksum((uint16_t *)h, *len);
     }

@@ -116,8 +116,7 @@ public:
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-        const Packet* const) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&) override;
     bool update(Packet*, Layer*, uint32_t* len) override;
@@ -310,13 +309,13 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     // the actual frag_off is never used, we can comment this out
 //    frag_off = frag_off << 3;
 
-    if ((codec.codec_flags & CODEC_DF) && frag_off )
+    if ( (codec.codec_flags & CODEC_DF) && frag_off )
         codec_events::decoder_event(codec, DECODE_IP4_DF_OFFSET);
 
     if ( frag_off + ip_len > IP_MAXPACKET )
         codec_events::decoder_event(codec, DECODE_IP4_LEN_OFFSET);
 
-    if(frag_off || (snort.decode_flags & DECODE_MF))
+    if( frag_off || (snort.decode_flags & DECODE_MF))
     {
         // FIXIT-L identical to DEFRAG_ANOMALY_ZERO
         if ( !ip_len)
@@ -584,7 +583,7 @@ struct ip4_addr
 };
 
 void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
-    const Packet* const p)
+    const uint16_t lyr_len)
 {
     const IP4Hdr* const ip4h = reinterpret_cast<const IP4Hdr*>(raw_pkt);
 
@@ -613,6 +612,7 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const uint16_t hlen = ip4h->hlen();
     const uint16_t len = ip4h->len();
     const uint16_t frag_off = ip4h->off_w_flags();
+    bool mf_set = false;
 
     TextLog_Print(text_log, "Next:0x%02X TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
             ip4h->proto(), ip4h->ttl(), ip4h->tos(),
@@ -628,18 +628,21 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
         TextLog_Puts(text_log, " DF");
 
     if(frag_off & 0x2000)
+    {
         TextLog_Puts(text_log, " MF");
+        mf_set = true;
+    }
 
     /* print IP options */
     if (ip4h->has_options())
     {
         TextLog_Putc(text_log, '\t');
         TextLog_NewLine(text_log);
-        LogIpOptions(text_log, ip4h, p);
+        LogIpOptions(text_log, ip4h, lyr_len);
     }
 
 
-    if( p->is_fragment() )
+    if( mf_set || (frag_off & 0x1FFF) )
     {
         TextLog_NewLine(text_log);
         TextLog_Putc(text_log, '\t');

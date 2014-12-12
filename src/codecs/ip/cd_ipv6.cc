@@ -98,8 +98,7 @@ public:
                         EncState&, Buffer&) override;
     bool update(Packet*, Layer*, uint32_t* len) override;
     void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-                    const Packet* const)  override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
 
 
@@ -536,7 +535,7 @@ static inline bool CheckTeredoPrefix(const ip::IP6Hdr* const hdr)
 *******************************************************************/
 
 void Ipv6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
-                    const Packet* const)
+    const uint16_t /*lyr_len*/)
 {
     const ip::IP6Hdr* const ip6h = reinterpret_cast<const ip::IP6Hdr*>(raw_pkt);
 

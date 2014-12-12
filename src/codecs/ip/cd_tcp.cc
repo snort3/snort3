@@ -117,8 +117,7 @@ public:
     ~TcpCodec(){};
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-                    const Packet* const) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&) override;
@@ -553,7 +552,7 @@ static inline void TCPMiscTests(const tcp::TCPHdr* const tcph,
 
 
 void TcpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
-                    const Packet* const p)
+    const uint16_t lyr_len)
 {
     char tcpFlags[9];
 
@@ -578,7 +577,7 @@ void TcpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     if(tcph->has_options())
     {
         TextLog_Puts(text_log, "\n\t");
-        LogTcpOptions(text_log, p);
+        LogTcpOptions(text_log, tcph, lyr_len);
     }
 }
 

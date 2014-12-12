@@ -846,7 +846,6 @@ void PacketManager::log_protocols(TextLog* const text_log,
 {
     uint8_t num_layers = p->num_layers;
     const Layer* const lyr = p->layers;
-//    int pos = TextLog_Tell(text_log);
 
     if (num_layers != 0)
     {
@@ -854,7 +853,7 @@ void PacketManager::log_protocols(TextLog* const text_log,
         Codec* cd = CodecManager::s_protocols[CodecManager::grinder];
 
         TextLog_Print(text_log, "%-.6s(DLT):  ", cd->get_name());
-        cd->log(text_log, lyr[0].start, p);
+        cd->log(text_log, lyr[0].start, lyr[0].length);
 
 
 
@@ -876,7 +875,7 @@ void PacketManager::log_protocols(TextLog* const text_log,
                 TextLog_Print(text_log, "(0x%04x)", protocol);
 
             TextLog_Puts(text_log, ":  ");
-            cd->log(text_log, lyr[i].start, p);
+            cd->log(text_log, lyr[i].start, lyr[i].length);
         }
     }
 }

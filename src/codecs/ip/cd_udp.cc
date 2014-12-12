@@ -169,8 +169,7 @@ public:
                         EncState&, Buffer&) override;
     bool update(Packet*, Layer*, uint32_t* len) override;
     void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-        const Packet* const) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     
 };
 
@@ -368,7 +367,8 @@ static inline void UDPMiscTests(const DecodeData& snort,
         codec_events::decoder_event(codec, DECODE_UDP_PORT_ZERO);
 }
 
-void UdpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt, const Packet* const)
+void UdpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+    const uint16_t /*lyr_len*/)
 {
     const udp::UDPHdr* udph = reinterpret_cast<const udp::UDPHdr*>(raw_pkt);
 

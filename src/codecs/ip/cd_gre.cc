@@ -66,8 +66,7 @@ public:
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-     void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-                    const Packet* const) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
 
 static const uint32_t GRE_HEADER_LEN = 4;
@@ -235,7 +234,7 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
 
 void GreCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
-                    const Packet* const)
+    const uint16_t /*lyr_len*/)
 {
     const gre::GREHdr *greh = reinterpret_cast<const gre::GREHdr *>(raw_pkt);
 

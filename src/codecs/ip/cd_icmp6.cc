@@ -104,8 +104,7 @@ public:
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool update(Packet*, Layer*, uint32_t* len) override;
     void format(EncodeFlags, const Packet*, Packet*, Layer*) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-        const Packet* const) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
 
 
@@ -305,7 +304,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
  ******************************************************************/
 
 void Icmp6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
-                const Packet* const)
+    const uint16_t /*lyr_len*/)
 {
     const icmp::Icmp6Hdr* const icmph = reinterpret_cast<const icmp::Icmp6Hdr*>(raw_pkt);
     TextLog_Print(text_log, "sType:%d  Code:%d  ", icmph->type, icmph->code);

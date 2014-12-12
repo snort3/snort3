@@ -66,8 +66,7 @@ public:
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-        const Packet* const) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
 
 
@@ -117,7 +116,7 @@ bool VlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 }
 
 void VlanCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
-                    const Packet* const)
+    const uint16_t /*lyr_len*/ )
 {
     const vlan::VlanTagHdr* const vh = reinterpret_cast<const vlan::VlanTagHdr *>(raw_pkt);
     const uint16_t proto = ntohs(vh->vth_proto);

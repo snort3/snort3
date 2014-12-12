@@ -334,10 +334,10 @@ public:
      *  PARAMS:
      *          TextLog* = the logger. Defined in "text_log.h"
      *          const uint8_t *raw_pkt = the same data seen during decode
-     *          Packet *p = pointer to the packet struct.
+     *          const uint16_t lyr_len = This layer's validated length ==
+     *                                   lyr_len set during decode.
      */
-    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-                    const Packet* const)
+    virtual void log(TextLog* const, const uint8_t* raw_pkt, const uint16_t lyr_len)
     { }
 
 
