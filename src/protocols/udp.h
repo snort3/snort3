@@ -31,9 +31,6 @@ namespace udp
 
 constexpr uint8_t UDP_HEADER_LEN = 8;
 
-constexpr uint16_t CAPWAP_CONTROL_CHANNEL_PORT = 5246;
-constexpr uint16_t CAPWAP_DATA_CHANNEL_PORT = 5247;
-
 struct UDPHdr
 {
     uint16_t uh_sport;

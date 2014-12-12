@@ -19,7 +19,6 @@ endif(STATIC_CODECS)
 
 add_library( misc_codecs STATIC
     cd_default.cc
-    cd_capwap.cc
     ${PLUGIN_LIST}
 )
 

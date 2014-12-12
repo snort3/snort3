@@ -182,9 +182,6 @@ SnortConfig * SnortConfNew(void)
     sc->max_ip6_extensions = 0;
     sc->max_ip_layers = 0;
     sc->gtp_ports = nullptr;
-    sc->capwap_ports = new PortList;
-    sc->capwap_ports->set(udp::CAPWAP_CONTROL_CHANNEL_PORT);
-    sc->capwap_ports->set(udp::CAPWAP_DATA_CHANNEL_PORT);
 
     /*user_id and group_id should be initialized to -1 by default, because
      * chown() use this later, -1 means no change to user_id/group_id*/
@@ -359,9 +356,6 @@ void SnortConfFree(SnortConfig *sc)
 
     if (sc->gtp_ports)
         delete sc->gtp_ports;
-
-    if (sc->capwap_ports)
-        delete sc->capwap_ports;
 
     free(sc);
 }

@@ -76,7 +76,6 @@ constexpr uint16_t PROTO_IP_EMBEDDED_IN_ICMP6 = 0x0104;
 constexpr uint16_t PROTO_ETHERNET_802_3 = 0x0105;
 constexpr uint16_t PROTO_ETHERNET_802_11 = 0x0106;
 constexpr uint16_t PROTO_ETHERNET_LLC = 0x0107;
-constexpr uint16_t PROTO_CAPWAP = 0x0108;
 
 
 

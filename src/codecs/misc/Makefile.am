@@ -9,8 +9,7 @@ cd_gtp.cc \
 cd_icmp4_ip.cc \
 cd_icmp6_ip.cc \
 cd_llc.cc \
-cd_teredo.cc \
-cd_capwap.cc
+cd_teredo.cc
 
 if STATIC_CODECS
 libmisc_codecs_a_SOURCES += $(plugin_list)

@@ -77,9 +77,6 @@ static const Parameter udp_params[] =
     { "gtp_ports", Parameter::PT_BIT_LIST, "65535",
       "2152 3386", "set GTP ports" },
 
-    { "capwap_ports", Parameter::PT_BIT_LIST, "65535",
-      "5246 5247", "customize capwap_ports" },
-
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -140,10 +137,6 @@ public:
                     sc->gtp_ports->set(GTP_U_PORT_V0);
                 }
             }
-        }
-        else if ( v.is("capwap_ports") )
-        {
-            v.get_bits(*(sc->capwap_ports));
         }
         else
         {
@@ -343,11 +336,6 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         ScDeepTeredoInspection())
     {
         codec.next_prot_id = PROTO_TEREDO;
-    }
-    else if (snort_conf->is_capwap_port(dst_port) ||
-        snort_conf->is_capwap_port(src_port))
-    {
-        codec.next_prot_id = PROTO_CAPWAP;
     }
 
     
