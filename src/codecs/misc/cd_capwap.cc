@@ -34,6 +34,7 @@
 #include "protocols/protocol_ids.h"
 #include "codecs/codec_module.h"
 #include "codecs/codec_events.h"
+#include "log/text_log.h"
 
 #define CD_CAPWAP_NAME "capwap"
 #define CD_CAPWAP_HELP "support for capwap"
@@ -65,6 +66,7 @@ public:
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
 
 
@@ -100,19 +102,19 @@ struct Capwap
     uint16_t frag_off; // last 3 bits are reserved.
 
     // returns the number of bytes in this header.
-    uint8_t get_version() const
+    uint8_t version() const
     { return (ntohl(preamble_hlen_flags) & MASK_PRE_VER) >> 28; }
 
-    uint8_t get_preamble_type() const
+    uint8_t preamble_type() const
     { return (ntohl(preamble_hlen_flags) & MASK_PRE_TYPE) >> 24; }
 
-    uint8_t get_hlen() const
+    uint8_t hlen() const
     { return (ntohl(preamble_hlen_flags) & MASK_HLEN) >> 17; }
 
-    uint8_t get_rid() const
+    uint8_t rid() const
     { return (ntohl(preamble_hlen_flags) & MASK_RID) >> 14; }
 
-    uint8_t get_wbid() const
+    uint8_t wbid() const
     { return (ntohl(preamble_hlen_flags) & MASK_WBID) >> 9; }
 
     bool is_type_set() const
@@ -133,13 +135,16 @@ struct Capwap
     bool is_keep_alive_set() const
     { return ntohl(preamble_hlen_flags) & MASK_KEEP_ALIVE; }
 
-    uint8_t get_res_flags() const
+    uint8_t res_flags() const
     { return ntohl(preamble_hlen_flags) & MASK_FLAGS; }
 
-    uint16_t get_frag_off() const
+    uint16_t id() const
+    { return ntohs(frag_id); }
+
+    uint16_t off() const
     { return ntohs(frag_off) & MASK_FRAG_OFFSET; }
 
-    uint16_t get_reserved() const
+    uint16_t reserved() const
     { return ntohs(frag_off) & MASK_RESERVED; }
 
 };
@@ -173,21 +178,31 @@ bool CapwapCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     const Capwap* const capwaph = reinterpret_cast<const Capwap*>(raw.data);
 
-    const uint8_t hlen = capwaph->get_hlen();
+    const uint8_t hlen = capwaph->hlen();
     if ( hlen < MIN_HDR_LEN )
     {
         codec_events::decoder_event(codec, DECODE_CAPWAP_TRUNC);
         return false;
     }
 
-    if ( capwaph->get_version() != 0 )
+    if ( capwaph->version() != 0 )
         return false; // unsupported version
 
-    if ( capwaph->get_preamble_type() != 0)
+    if ( capwaph->preamble_type() != 0)
         return false; // don't support DTL
 
     if ( capwaph->is_fragment() )
         return false; // don't support fragments
+
+    const uint8_t* ptr = raw.data + MIN_HDR_LEN;
+    if ( capwaph->is_radio_mac_set() )
+    {
+        const RadioMacAddr* mac = reinterpret_cast<const RadioMacAddr*>(ptr);
+
+        if ( (MIN_HDR_LEN + mac->len) > hlen)
+            return false;
+        ptr += mac->len;
+    }
 
     if ( !capwaph->is_type_set() )
     {
@@ -195,7 +210,7 @@ bool CapwapCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     }
     else
     {
-        const uint8_t wbid = capwaph->get_wbid();
+        const uint8_t wbid = capwaph->wbid();
 
         if ( wbid == WBID_IEEE_802_11 )
             codec.next_prot_id = PROTO_ETHERNET_802_11;
@@ -205,6 +220,71 @@ bool CapwapCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     codec.lyr_len = hlen;
     return true;
+}
+
+#if 0
+        TextLog_Puts(text_log, " RB");
+        TextLog_Putc(text_log, '\t');
+        TextLog_NewLine(text_log);
+        TextLog_Print(text_log, "xxx.xxx.xxx.xxx -> xxx.xxx.xxx.xxx");
+    TextLog_Print(text_log, "Next:0x%02X TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
+#endif
+
+static inline void addFlag(TextLog* const log, bool set, char flag)
+{
+    if ( set )
+        TextLog_Putc(log, flag);
+    else
+        TextLog_Putc(log, 'X');
+}
+
+void CapwapCodec::log(TextLog* const log, const uint8_t* raw_pkt,
+    const uint16_t /*lyr_len*/)
+{
+    const Capwap* const capwaph = reinterpret_cast<const Capwap*>(raw_pkt);
+
+    uint32_t preamble_hlen_flags;
+    uint16_t frag_id;
+    uint16_t frag_off; // last 3 bits are reserved.
+
+    TextLog_Print(log, "Version:%01X  Type:%01X  hlen:d  RID:%02X "
+        "WBID:%02X  ", capwaph->version(), capwaph->preamble_type(),
+        capwaph->hlen(), capwaph->rid(), capwaph->wbid());
+
+    addFlag(log, capwaph->is_type_set(), 'T');
+    addFlag(log, capwaph->is_fragment(), 'F');
+    addFlag(log, capwaph->is_last_set(), 'L');
+    addFlag(log, capwaph->is_wireless_set(), 'W');
+    addFlag(log, capwaph->is_radio_mac_set(), 'M');
+    addFlag(log, capwaph->is_keep_alive_set(), 'K');
+
+    const uint8_t reserved = capwaph->res_flags();
+    if ( !reserved )
+        TextLog_Print(log, "xxx");
+    else
+    {
+        addFlag(log, reserved & 0x4, 'R');
+        addFlag(log, reserved & 0x2, 'R');
+        addFlag(log, reserved & 0x1, 'R');
+    }
+
+    TextLog_NewLine(log);
+    TextLog_Putc(log, '\t');
+
+    if ( capwaph->is_fragment() )
+    {
+        TextLog_Print(log, "Frag ID:%04X  Frag Off:%04x",
+            capwaph->id(), capwaph->off());
+    }
+
+
+    if ( capwaph->is_radio_mac_set() )
+    {
+        const uint8_t len = capwaph->hlen();
+        TextLog_Print(log, "MAC length:%d  Frag Off:%04x",
+            capwaph->id(), capwaph->off());
+    }
+
 }
 
 //-------------------------------------------------------------------------

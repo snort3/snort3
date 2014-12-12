@@ -103,7 +103,7 @@ void RuleApi::bad_rule(std::istringstream& stream, std::string bad_option)
         curr_data_bad = true;
         error_count++;
     }
-    bad_rules->add_text("^^^^ unknown_option=" + bad_option);
+    bad_rules->add_text("^^^^ invalid_syntax=" + bad_option);
 }
 
 void RuleApi::include_rule_file(std::string file_name)
