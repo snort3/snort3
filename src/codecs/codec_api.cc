@@ -39,7 +39,6 @@ extern const BaseApi* cd_tcp;  // static because only file that specific functio
 #ifdef STATIC_CODECS
 extern const BaseApi* cd_ah;
 extern const BaseApi* cd_arp;
-extern const BaseApi* cd_capwap;
 extern const BaseApi* cd_dstopts;
 extern const BaseApi* cd_erspan2;
 extern const BaseApi* cd_erspan3;
@@ -95,7 +94,6 @@ const BaseApi* codecs[] =
 #ifdef STATIC_CODECS
     cd_ah,
     cd_arp,
-    cd_capwap,
     cd_dstopts,
     cd_erspan2,
     cd_erspan3,
