@@ -10,7 +10,10 @@ m4
 AM_CXXFLAGS = @AM_CXXFLAGS@
 
 EXTRA_DIST = \
-snort.pc.in
+snort.pc.in \
+README \
+COPYING \
+LICENSE
 
 DISTCLEANFILES = \
 stamp-h.in \

@@ -1,6 +1,7 @@
 
 find_package(Threads REQUIRED)
 
+# FIXIT-M  remove.
 add_definitions(" -std=c++11  -DHAVE_PTHREADS  ")
 
 if ( BUILD_SNPRINTF )

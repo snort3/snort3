@@ -167,7 +167,7 @@ snort_manual.html: default_snort_manual.html
 endif
 
 if MAKE_PDF_DOC
-snort_manual.pdf: snort_manual.txt $(all_sources)
+snort_manual.pdf: snort_manual.txt $(all_sources) snort_manual.html
 	a2x -f pdf $(pdf_args) $<
 else
 snort_manual.pdf: default_snort_manual.pdf
