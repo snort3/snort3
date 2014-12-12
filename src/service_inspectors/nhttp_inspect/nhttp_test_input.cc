@@ -38,15 +38,14 @@ NHttpTestInput::~NHttpTestInput() {
 // In the process we may need to skip comments, execute simple commands, and handle escape sequences.
 // The best way to understand this function is to read the comments at the top of the file of test cases.
 void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId source_id, bool &tcp_close, bool &need_break) {
+    need_break = false;
     // Don't proceed if we have previously flushed data not reassembled yet.
     // Piggyback on traffic moving in the correct direction.
     if (flushed || (source_id != last_source_id)) {
         length = 0;
         return;
     }
-
     tcp_close = tcp_closed;
-    need_break = false;
 
     if (just_flushed) {
         // StreamSplitter just flushed and it has all been sent by reassemble. There may or may not be leftover data
