@@ -65,9 +65,7 @@ the latest:
 
 DOWNLOAD
 
-There are two sets of source tarballs, once for autotools and one for
-cmake.  snort-3 contains the base program and snort_extra has example
-plugins.
+There are two source tarballs, once for autotools and one for cmake:
 
     snort-3.0.0-a1-130-auto.tar.gz
     snort-3.0.0-a1-130-cmake.tar.gz
@@ -117,10 +115,11 @@ Snort++ provides lots of help from the command line.  Here are some examples:
     $my_path/bin/snort --help-module suppress
     $my_path/bin/snort --help-config | grep thread
 
-Examine and dump a pcap:
+Examine and dump a pcap.  In the following, replace a.pcap with your
+favorite:
 
-    $my_path/bin/snort -r pcap
-    $my_path/bin/snort -K text -d -e -q -r pcap
+    $my_path/bin/snort -r a.pcap
+    $my_path/bin/snort -K text -d -e -q -r a.pcap
 
 Verify a config, with or w/o rules:
 
@@ -128,8 +127,8 @@ Verify a config, with or w/o rules:
     $my_path/bin/snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules
 
 
-Run IDS mode.  In the following, replace a.pcap with your favorite.  pcaps/
-is a directory with one or more *.pcap files:
+Run IDS mode.  In the following, replace pcaps/ with a path to a directory
+with one or more *.pcap files:
 
     $my_path/bin/snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules \
         -r a.pcap -A alert_test -n 100000

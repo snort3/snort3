@@ -158,6 +158,7 @@ html_args = \
 if MAKE_HTML_DOC
 # FIXIT no fuschia for visited; all should be sans serif
 # extracted asciidoc.css doesn't seem to work with -a linkcss
+# asciidoc native html generation; buggy passthru of base64 data
 snort_manual.html: $(all_sources)
 	asciidoc -b xhtml11 -a toc2 -a icons -a imagesdir=. $<
 	a2x -f chunked $(html_args) $<
