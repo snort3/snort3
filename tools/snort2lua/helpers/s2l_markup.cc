@@ -23,13 +23,15 @@
 
 using namespace std;
 
+namespace parser
+{
+
 bool Markup::enabled = false;
 
 void Markup::enable(bool e)
 { enabled = e; }
 
 const char hn[] = "========== ";
-const std::string t = "========== ";
 
 const char* Markup::head(unsigned level)
 {
@@ -92,8 +94,10 @@ const string& Markup::escape(const string& s)
 
 const char* Markup::add_newline()
 {
-    static const char newline = '\n';
-    static const char empty = '\0';
+    static const char* const newline = "\n\0";
+    static const char* const empty = "\0";
 
-    return enabled ? &newline : &empty;
+    return enabled ? newline : empty;
+}
+
 }

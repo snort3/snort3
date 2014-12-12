@@ -341,13 +341,14 @@ static ConfigFunc basic_opts[] =
         "this overview of snort2lua"},
 
     { "a", print_all, "",
-        "print all data, including errors and Snort - Snort++ configuration differences."},
+        "default option.  print all data"},
 
     { "c", parse_config_file, "<snort_conf>",
         "The Snort <snort_conf> file to convert"},
 
     { "d", print_differences, "",
-        "print the differences, and only the differences, between the Snort and Snort++ configurations"},
+        "print the differences, and only the differences, between the Snort "
+        "and Snort++ configurations to the <out_file>"},
 
     { "e", parse_error_file, "<error_file>",
         "output all errors to <error_file>"},
@@ -363,16 +364,18 @@ static ConfigFunc basic_opts[] =
         "output the new Snort++ lua configuration to <out_file>"},
 
     { "q", print_quiet, "",
-        "quiet mode. Only output valid confiration information"},
+        "quiet mode. Only output valid confiration information to the <out_file>"},
 
     { "r", parse_rule_file, "<rule_file>",
         "output any converted rule to <rule_file>"},
 
     { "s", sing_rule_files, "",
-        "when parsing <include_file>, write <include_file>'s rules to <rule_file>. Meaningles if '-i' provided"},
+        "when parsing <include_file>, write <include_file>'s rules to "
+        "<rule_file>. Meaningles if '-i' provided"},
 
     { "t", sing_conf_files, "",
-        "when parsing <include_file>, write <include_file>'s information, excluding rules, to <out_file>. Meaningles if '-i' provided"},
+        "when parsing <include_file>, write <include_file>'s information, "
+        "excluding rules, to <out_file>. Meaningles if '-i' provided"},
 
     { "V", print_version, "",
         "Print the current Snort2Lua version"},
@@ -397,13 +400,14 @@ static ConfigFunc basic_opts[] =
         "Same as '-o'. output the new Snort++ lua configuration to <out_file>"},
 
     { "print-all", print_all, "",
-        "Same as '-a'. print all data, including errors, Snort - Snort++ configuration differences, and developer warnings."},
+        "Same as '-a'. default option.  print all data"},
 
     { "print-differences", print_differences, "",
-        "Same as '-d'. print the differences, and only the differences, between the Snort and Snort++ configurations"},
+        "Same as '-d'. output the differences, and only the differences, "
+        "between the Snort and Snort++ configurations to the <out_file>"},
 
     { "quiet", print_quiet, "",
-        "Same as '-q'. quiet mode. Only output valid confiration information"},
+        "Same as '-q'. quiet mode. Only output valid confiration information to the <out_file>"},
 
     { "remark", add_remark, "",
         "same as '-m'.  add a remark to the end of every converted rule"},
@@ -502,7 +506,7 @@ static void help_args(const char* /*pfx*/, const char* /*val*/)
                     break;
             }
 
-            std::cout << Markup::add_newline() << std::endl;
+            std::cout << *(Markup::add_newline()) << std::endl;
         }
         ++p;
     }

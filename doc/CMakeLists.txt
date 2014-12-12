@@ -53,7 +53,7 @@ set (UNBUILT_SOURCES
     style.txt
     terms.txt
     snorty.png
-#   config_changes.txt  If ruby executable is nor found
+#   config_changes.txt  If ruby executable is not found
 )
 
 
