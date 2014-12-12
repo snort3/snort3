@@ -94,7 +94,7 @@ constexpr uint8_t WBID_IEEE_802_11 = 1;
 // constexpr uint8_t WBID_EPCGLOBAL = 3;  // currently unused
 
 
-constexpr uint16_t MIN_HDR_LEN = 8;
+constexpr uint16_t CAPWAP_MIN_HDR_LEN = 8;
 struct Capwap
 {
     uint32_t preamble_hlen_flags;
@@ -169,17 +169,16 @@ void CapwapCodec::get_protocol_ids(std::vector<uint16_t>& v)
 
 bool CapwapCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-    if ( raw.len < MIN_HDR_LEN )
+    if ( raw.len < CAPWAP_MIN_HDR_LEN )
     {
         codec_events::decoder_event(codec, DECODE_CAPWAP_TRUNC);
         return false;
     }
 
-
     const Capwap* const capwaph = reinterpret_cast<const Capwap*>(raw.data);
 
     const uint8_t hlen = capwaph->hlen();
-    if ( hlen < MIN_HDR_LEN )
+    if ( hlen < CAPWAP_MIN_HDR_LEN )
     {
         codec_events::decoder_event(codec, DECODE_CAPWAP_TRUNC);
         return false;
@@ -194,12 +193,12 @@ bool CapwapCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     if ( capwaph->is_fragment() )
         return false; // don't support fragments
 
-    const uint8_t* ptr = raw.data + MIN_HDR_LEN;
+    const uint8_t* ptr = raw.data + CAPWAP_MIN_HDR_LEN;
     if ( capwaph->is_radio_mac_set() )
     {
         const RadioMacAddr* mac = reinterpret_cast<const RadioMacAddr*>(ptr);
 
-        if ( (MIN_HDR_LEN + mac->len) > hlen)
+        if ( (CAPWAP_MIN_HDR_LEN + mac->len) > hlen)
             return false;
         ptr += mac->len;
     }
@@ -221,14 +220,6 @@ bool CapwapCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     codec.lyr_len = hlen;
     return true;
 }
-
-#if 0
-        TextLog_Puts(text_log, " RB");
-        TextLog_Putc(text_log, '\t');
-        TextLog_NewLine(text_log);
-        TextLog_Print(text_log, "xxx.xxx.xxx.xxx -> xxx.xxx.xxx.xxx");
-    TextLog_Print(text_log, "Next:0x%02X TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
-#endif
 
 static inline void addFlag(TextLog* const log, bool set, char flag)
 {
@@ -278,13 +269,24 @@ void CapwapCodec::log(TextLog* const log, const uint8_t* raw_pkt,
     }
 
 
+    const uint8_t* ptr = raw_pkt + CAPWAP_MIN_HDR_LEN;
     if ( capwaph->is_radio_mac_set() )
     {
-        const uint8_t len = capwaph->hlen();
-        TextLog_Print(log, "MAC length:%d  Frag Off:%04x",
-            capwaph->id(), capwaph->off());
+        const uint8_t len = *ptr;
+        ++ptr;
+
+        TextLog_NewLine(log);
+        TextLog_Putc(log, '\t');
+        TextLog_Print(log, "Raido MAC: len:%02X  MAC:", len);
+
+        for (int i = 0; i < len; ++i)
+        {
+            TextLog_Print(log, "%02X", *ptr);
+            ++ptr;
+        }
     }
 
+    // FIXIT-L print wireless information
 }
 
 //-------------------------------------------------------------------------
