@@ -1408,9 +1408,7 @@ static void LogBasePerfStats(SFBASE_STATS *sfBaseStats,  FILE * fh )
         WarningMessage("Failed to write stats: %s\n", strerror(errno));
 
         // fseek to adjust offset; ftruncate doesn't do that for us.
-        fseek(fh, start, SEEK_SET);
-        
-        if ( ftruncate(fileno(fh), start) )
+        if ( fseek(fh, start, SEEK_SET) || ftruncate(fileno(fh), start) )
             WarningMessage("Failed to truncate stats: %s\n", strerror(errno));
     }
 

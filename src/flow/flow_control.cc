@@ -408,6 +408,9 @@ void FlowControl::init_tcp(
 
     tcp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 
+    if ( !tcp_mem )
+        return;
+
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
         tcp_cache->push(tcp_mem + i);
 
@@ -454,6 +457,9 @@ void FlowControl::init_udp(
 
     udp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 
+    if ( !udp_mem )
+        return;
+
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
         udp_cache->push(udp_mem + i);
 
@@ -499,6 +505,9 @@ void FlowControl::init_icmp(
         fc.cache_nominal_timeout, 5, 0);
 
     icmp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
+
+    if ( !icmp_mem )
+        return;
 
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
         icmp_cache->push(icmp_mem + i);
@@ -548,6 +557,9 @@ void FlowControl::init_ip(
         fc.cache_nominal_timeout, 5, 0);
 
     ip_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
+
+    if ( !ip_mem )
+        return;
 
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
         ip_cache->push(ip_mem + i);
