@@ -101,6 +101,9 @@ public:
     CursorActionType get_cursor_type() const override
     { return CAT_SET_HEADER; };
 
+    bool is_relative() override
+    { return name.size() != 0; };
+
     int eval(Cursor&, Packet*) override;
 
 private:
