@@ -68,6 +68,7 @@ public:
     // packet threads
     virtual void config(SnortConfig*) { };
     virtual bool is_relative() { return false; };
+    virtual bool fp_research() { return false; };
     virtual int eval(class Cursor&, Packet*) { return true; };
     virtual void action(Packet*) { };
 
@@ -87,6 +88,12 @@ public:
     {
         IpsOption* opt = (IpsOption*)v;
         return opt->get_cursor_type();
+    };
+
+    static bool get_fp_only(void* v)
+    {
+        IpsOption* opt = (IpsOption*)v;
+        return !opt->fp_research();
     };
 
 protected:
