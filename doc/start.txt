@@ -5,30 +5,33 @@ The following pointers will help you get started:
 
 Required:
 
-* autotools or cmake to build from source.
+* autotools or cmake to build from source
 
-* daq from http://www.snort.org for packet IO.
+* g++ >= 4.8 or other C++11 compiler
 
-* dnet from http://code.google.com/p/libdnet/ for network utility
-  functions.
+* daq from http://www.snort.org for packet IO
 
-* LuaJIT from http://luajit.org for configuration and scripting.
+* dnet from http://code.google.com/p/libdnet/ for network utility functions
 
-* pcap from http://www.tcpdump.org for tcpdump style logging.
+* LuaJIT from http://luajit.org for configuration and scripting
 
-* pcre from http://www.pcre.org for regular expression pattern matching.
+* pcap from http://www.tcpdump.org for tcpdump style logging
 
-* zlib from http://www.zlib.net for decompression.
+* pcre from http://www.pcre.org for regular expression pattern matching
+
+* zlib from http://www.zlib.net for decompression
+
+* pkgconfig from http://www.freedesktop.org to build the example plugins
 
 Optional:
 
 * asciidoc from http://www.methods.co.nz/asciidoc/ to build the HTML
-  manual.
+  manual
 
 * dblatex from http://dblatex.sourceforge.net to build the pdf manual (in
-  addition to asciidoc).
+  addition to asciidoc)
 
-* check from http://check.sourceforge.net to build unit tests.
+* check from http://check.sourceforge.net to build unit tests
 
 
 === Building
