@@ -7,7 +7,7 @@ Required:
 
 * autotools or cmake to build from source
 
-* g++ >= 4.8 or other C++11 compiler
+* g\++ >= 4.8 or other recent C++11 compiler
 
 * daq from http://www.snort.org for packet IO
 
