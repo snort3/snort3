@@ -32,7 +32,7 @@ Optional Features:
     --enable-valgrind        Only use if you are testing with valgrind.
     --enable-ppm            Enable packet/rule performance monitor
     --enable-ppm-test        Enable packet/rule performance monitor for readback
-    --enable-perfprofiling  Enable preprocessor and rule performance profiling
+    --enable-perf-profiling  Enable preprocessor and rule performance profiling
     --enable-linux-smp-stats Enable statistics reporting through proc
     --enable-debug-msgs      Enable debug printing options (bugreports and developers only)
     --enable-debug           Enable debugging options (bugreports and developers only)
@@ -205,10 +205,10 @@ while [ $# -ne 0 ]; do
         --enable-ppm-test)
             append_cache_entry ENABLE_PPM_TEST    BOOL   true
             ;;
-        --disable-perfprofiling)
+        --disable-perf-profiling)
             append_cache_entry ENABLE_PERFPROFILING    BOOL   false
             ;;
-        --enable-perfprofiling)
+        --enable-perf-profiling)
             append_cache_entry ENABLE_PERFPROFILING    BOOL   true
             ;;
         --disable-linux-smp-stats)
