@@ -4,7 +4,7 @@ to provide Snort2Lua with a Snort configuration file. The default output
 file file is snort.lua, the default error file will be snort.rej, and the
 default rule file is the output file (default is snort.lua).  When
 Snort2Lua finishes running, the resulting configuration file can be
-successfully run as the Snort++ configuration file.  The sole exception to
+successfully run as the Snort3.0 configuration file.  The sole exception to
 this rule is when Snort2Lua cannot find an included file.  If that occurs,
 the file will still be included in the output file and you will need to
 manually adjust or comment the file name. Additionally, if the exit code is
@@ -15,16 +15,17 @@ Those errors can occur for a multitude of reasons and are not necessarily
 bad.  For instance, Snort2Lua will only convert preprocessors that are
 currently supported. Therefore, any unsupported preprocessors or
 configuration options including DCERP, SIP, and SMTP, will cause an error
-in Snort2Lua since Snort++ does not support those preprocessors.
+in Snort2Lua since Snort3.0 does not support those preprocessors.
 Additionally, any rule options associated with those preprocessors are also
 not supported.  Finally, Snort2Lua expects a valid Snort configuration.
 Therefore, if the configuration is invalid or has questionable syntax,
-Snort2Lua may find those errors and fail to parse the configuration file.
+Snort2Lua may fail to parse the configuration file or create an invalid
+Snort3.0 configuration file.
 
 There are a also few peculiarities of Snort2Lua that may be confusing to a
 first time user. Specifically, aside from an initial configuration file
 (which is specified from the command line or as the file in ‘config
-binding’), every file that is included into Snort++ must be either a Lua
+binding’), every file that is included into Snort3.0 must be either a Lua
 file or a rule file; the file cannot contain both rules and Lua syntax.
 Therefore, when parsing a file specified with the ‘include’ command,
 Snort2Lua will output both a Lua file and a rule file.  Additionally, any
@@ -53,7 +54,7 @@ from the final output file.  Default mode will print everything. That mean
 you will be able to see exactly what changes have occurred between Snort and
 Snort\++ in addition to the new syntax, the original file's comments, and
 all errors that have occurred.  Finally, differences mode will not actually
-output a valid Snort++ configuration.  Instead, you can see the exact
+output a valid Snort3.0 configuration.  Instead, you can see the exact
 options from the input configuration that have changed.
 
 
@@ -82,3 +83,9 @@ extension.  There is currently no way to specify or change that files name.
 converted to the rultype's 'type'. No warnings or errors are currently
 emmitted. Additionally, the custom ruletypes outputs will be silently
 discarded.
+
+*  If the original configuration contains a binding that points to another
+file and the binding file contains an error, Snort2Lua will output the
+number of rejects for the binding file in addition to the number of
+rejects in the main file.  The two numbers will eventually be combined into
+one output.
