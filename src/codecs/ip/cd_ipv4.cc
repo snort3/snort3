@@ -119,7 +119,8 @@ public:
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&) override;
-    bool update(Packet*, Layer*, uint32_t* len) override;
+    void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
+        uint16_t lyr_len, uint32_t& updated_len) override;
     void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
 
 };
@@ -718,23 +719,21 @@ bool Ipv4Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     return true;
 }
 
-
-bool Ipv4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
+void Ipv4Codec::update(const ip::IpApi&, const EncodeFlags flags,
+    uint8_t* raw_pkt, uint16_t lyr_len, uint32_t& updated_len)
 {
-    IP4Hdr* h = (IP4Hdr*)(lyr->start);
+    IP4Hdr* h = reinterpret_cast<IP4Hdr*>(raw_pkt);
     uint16_t hlen = h->hlen();
 
-    *len += hlen;
-    h->set_ip_len((uint16_t)*len);
+    updated_len += hlen;
+    h->set_ip_len((uint16_t)updated_len);
 
 
-    if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) )
+    if ( !(flags & UPD_COOKED) || (flags & UPD_REBUILT_FRAG) )
     {
         h->ip_csum = 0;
         h->ip_csum = checksum::ip_cksum((uint16_t *)h, hlen);
     }
-
-    return true;
 }
 
 void Ipv4Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)

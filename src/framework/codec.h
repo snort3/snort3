@@ -66,142 +66,13 @@ constexpr uint8_t MIN_TTL = 64;
 constexpr uint8_t MAX_TTL = 255;
 
 
-typedef uint64_t EncodeFlags;
-constexpr EncodeFlags ENC_FLAG_FWD = 0x8000000000000000;  // send in forward direction
-constexpr EncodeFlags ENC_FLAG_SEQ = 0x4000000000000000;  // VAL bits contain seq adj
-constexpr EncodeFlags ENC_FLAG_ID  = 0x2000000000000000;  // use randomized IP ID
-constexpr EncodeFlags ENC_FLAG_NET = 0x1000000000000000;  // stop after innermost network (ip4/6) layer
-constexpr EncodeFlags ENC_FLAG_DEF = 0x0800000000000000;  // stop before innermost ip4 opts or ip6 frag header
-constexpr EncodeFlags ENC_FLAG_RAW = 0x0400000000000000;  // don't encode outer eth header (this is raw ip)
-constexpr EncodeFlags ENC_FLAG_PAY = 0x0200000000000000;  // set to when a TCP payload is attached
-constexpr EncodeFlags ENC_FLAG_PSH = 0x0100000000000000;  // set by PacketManager when TCP should set PUSH flag
-constexpr EncodeFlags ENC_FLAG_FIN = 0x0080000000000000;  // set by PacketManager when TCP should set FIN flag
-constexpr EncodeFlags ENC_FLAG_TTL = 0x0040000000000000;  // set by PacketManager when TCP should set FIN flag
-constexpr EncodeFlags ENC_FLAG_INLINE = 0x0020000000000000;  // set by PacketManager when TCP should set FIN flag
-constexpr EncodeFlags ENC_FLAG_VAL = 0x00000000FFFFFFFF;  // bits for adjusting seq and/or ack
-
-
-static inline bool forward (const EncodeFlags f)
-{ return f & ENC_FLAG_FWD; }
-
-static inline bool reverse (const EncodeFlags f)
-{ return !forward(f); }
-
-constexpr uint8_t ENC_PROTO_UNSET = 0xFF;
-struct EncState
-{
-    const ip::IpApi& ip_api; /* IP related information. Good for checksums */
-    EncodeFlags flags;
-    const uint16_t dsize; /* for non-inline, TCP sequence numbers */
-    uint16_t next_ethertype; /*  set the next encoder 'proto' field to this value. */
-    uint8_t next_proto; /*  set the next encoder 'proto' field to this value. */
-    const uint8_t ttl;
-
-    EncState(const ip::IpApi& api, EncodeFlags f, uint8_t pr,
-        uint8_t t, uint16_t data_size) :
-        ip_api(api),
-        flags(f),
-        dsize(data_size),
-        next_ethertype(0),
-        next_proto(pr),
-        ttl(t)
-
-    { }
-
-    inline bool next_proto_set() const
-    { return (next_proto != ENC_PROTO_UNSET); }
-
-    inline bool ethertype_set() const
-    { return next_ethertype != 0; }
-
-    inline uint8_t get_ttl(uint8_t lyr_ttl) const
-    {
-        if (forward(flags))
-        {
-            if (flags & ENC_FLAG_TTL)
-                return ttl;
-            else
-                return lyr_ttl;
-        }
-        else
-        {
-            uint8_t new_ttl;
-
-            if (flags & ENC_FLAG_TTL)
-                new_ttl = ttl;
-            else
-                new_ttl = MAX_TTL - lyr_ttl;
-
-            if (new_ttl < MIN_TTL)
-                new_ttl = MIN_TTL;
-
-            return new_ttl;
-        }
-    }
-};
-
-
-// Copied from dnet/blob.h
-// * base+off is start of packet
-// * base+end is start of current layer
-// * base+size-1 is last byte of packet (in) / buffer (out)
-struct Buffer
-{
-public:
-    /* Logic behind 'buf + size + 1' -- we're encoding the
-     * packet from the inside out.  So, whenever we add
-     * data, 'allocating' N bytes means moving the pointer
-     * N characters farther from the end. For this scheme
-     * to work, an empty Buffer means the data pointer is
-     * invalid and is actually one byte past the end of the
-     * array
-     */
-    Buffer(uint8_t* buf, uint32_t size) :
-        base(buf + size + 1),
-        end(0),
-        max_len(size),
-        off(0)
-    { }
-
-    inline uint8_t* data() const
-    { return base; }
-
-    uint32_t size() const
-    { return end; }
-
-    inline bool allocate(uint32_t len)
-    {
-        if ( (end + len) > max_len )
-            return false;
-
-        end += len;
-        base -= len;
-        return true;
-    }
-
-    inline void clear()
-    {
-        base = base + end;
-        end = 0;
-        off = 0;
-    }
-
-
-private:
-    uint8_t* base; /* start of data */
-    uint32_t end;       /* end of data */
-    const uint32_t max_len;   /* size of allocation */
-
-public:
-    uint32_t off;       /* offset into data */
-};
-
-
 struct RawData
 {
     const uint8_t* data;
     uint32_t len;
 };
+
+
 
 /*  Decode Flags */
 constexpr uint16_t CODEC_DF = 0x0001;    /* don't fragment flag */
@@ -255,20 +126,99 @@ struct CodecData
     uint8_t curr_ip6_extension;  /* initialized in cd_ipv6.cc */
     uint8_t ip6_csum_proto;      /* initalized in cd_ipv6.cc.  Used for IPv6 checksums */
 
-    CodecData(uint16_t init_prot) : next_prot_id(init_prot),
-                                    lyr_len(0),
-                                    invalid_bytes(0),
-                                    proto_bits(0),
-                                    codec_flags(0),
-                                    ip_layer_cnt(0)
+    CodecData(uint16_t init_prot) : next_prot_id(init_prot), lyr_len(0),
+        invalid_bytes(0), proto_bits(0), codec_flags(0), ip_layer_cnt(0)
     { }
-
 
     bool inline is_cooked() const
     { return codec_flags & CODEC_STREAM_REBUILT; }
 };
 
 
+
+typedef uint64_t EncodeFlags;
+constexpr EncodeFlags ENC_FLAG_FWD = 0x8000000000000000;  // send in forward direction
+constexpr EncodeFlags ENC_FLAG_SEQ = 0x4000000000000000;  // VAL bits contain seq adj
+constexpr EncodeFlags ENC_FLAG_ID  = 0x2000000000000000;  // use randomized IP ID
+constexpr EncodeFlags ENC_FLAG_NET = 0x1000000000000000;  // stop after innermost network (ip4/6) layer
+constexpr EncodeFlags ENC_FLAG_DEF = 0x0800000000000000;  // stop before innermost ip4 opts or ip6 frag header
+constexpr EncodeFlags ENC_FLAG_RAW = 0x0400000000000000;  // don't encode outer eth header (this is raw ip)
+constexpr EncodeFlags ENC_FLAG_PAY = 0x0200000000000000;  // set to when a TCP payload is attached
+constexpr EncodeFlags ENC_FLAG_PSH = 0x0100000000000000;  // set by PacketManager when TCP should set PUSH flag
+constexpr EncodeFlags ENC_FLAG_FIN = 0x0080000000000000;  // set by PacketManager when TCP should set FIN flag
+constexpr EncodeFlags ENC_FLAG_TTL = 0x0040000000000000;  // set by PacketManager when TCP should set FIN flag
+constexpr EncodeFlags ENC_FLAG_INLINE = 0x0020000000000000;  // set by PacketManager when TCP should set FIN flag
+constexpr EncodeFlags ENC_FLAG_VAL = 0x00000000FFFFFFFF;  // bits for adjusting seq and/or ack
+
+
+static inline bool forward (const EncodeFlags f)
+{ return f & ENC_FLAG_FWD; }
+
+static inline bool reverse (const EncodeFlags f)
+{ return !forward(f); }
+
+constexpr uint8_t ENC_PROTO_UNSET = 0xFF;
+struct SO_PUBLIC EncState
+{
+    const ip::IpApi& ip_api; /* IP related information. Good for checksums */
+    EncodeFlags flags;
+    const uint16_t dsize; /* for non-inline, TCP sequence numbers */
+    uint16_t next_ethertype; /*  set the next encoder 'proto' field to this value. */
+    uint8_t next_proto; /*  set the next encoder 'proto' field to this value. */
+    const uint8_t ttl;
+
+    EncState(const ip::IpApi& api, EncodeFlags f, uint8_t pr,
+        uint8_t t, uint16_t data_size);
+
+    inline bool next_proto_set() const
+    { return (next_proto != ENC_PROTO_UNSET); }
+
+    inline bool ethertype_set() const
+    { return next_ethertype != 0; }
+
+    uint8_t get_ttl(uint8_t lyr_ttl) const;
+};
+
+
+struct SO_PUBLIC Buffer
+{
+public:
+    Buffer(uint8_t* buf, uint32_t size);
+
+    inline uint8_t* data() const
+    { return base; }
+
+    uint32_t size() const
+    { return end; }
+
+    inline bool allocate(uint32_t len)
+    {
+        if ( (end + len) > max_len )
+            return false;
+
+        end += len;
+        base -= len;
+        return true;
+    }
+
+    inline void clear()
+    { base = base + end; end = 0; off = 0; }
+
+private:
+    uint8_t* base; /* start of data */
+    uint32_t end;       /* end of data */
+    const uint32_t max_len;   /* size of allocation */
+
+public:
+    uint32_t off;       /* offset into data */
+};
+
+
+typedef uint8_t UpdateFlags;
+constexpr UpdateFlags UPD_COOKED = 0x01;
+constexpr UpdateFlags UPD_MODIFIED = 0x02;
+constexpr UpdateFlags UPD_RESIZED = 0x04;
+constexpr UpdateFlags UPD_REBUILT_FRAG = 0x08;
 
 
 
@@ -364,14 +314,24 @@ public:
      *          manipulating memory.
      */
     virtual bool encode(const uint8_t* const /*raw_in */,
-                        const uint16_t /*raw_len*/,
-                        EncState&,
-                        Buffer&)
+        const uint16_t /*raw_len*/,
+        EncState&,
+        Buffer&)
     { return true; }
 
-    // update function
-    virtual bool update(Packet*, Layer* lyr, uint32_t* len)
-    { *len += lyr->length;  return true; }
+    /*
+     * Update this layers checksums and length fields.  Used
+     * when rebuilding packets and Snort is in inline mode.
+     *
+     *  updated_len MUST be set to this layers updated length.
+     */
+    virtual void update(
+        const ip::IpApi&,
+        const EncodeFlags /*flags*/,
+        uint8_t* /*raw_pkt*/,  /* The data associated with the current layer */
+        uint16_t lyr_len,  /* This layers previously calculated length */
+        uint32_t& updated_len) /* Update!  The length to end of packet */
+    { updated_len += lyr_len; }
 
     // formatter
     virtual void format(EncodeFlags, const Packet* /*orig*/, Packet* /*clone*/, Layer*)

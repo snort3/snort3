@@ -113,7 +113,8 @@ public:
     
     void get_protocol_ids(std::vector<uint16_t>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    bool update(Packet*, Layer*, uint32_t* len) override;
+    void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
+        uint16_t lyr_len, uint32_t& updated_len) override;
     void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 
@@ -591,19 +592,17 @@ struct IcmpHdr {
 
 } // namespace
 
-
-bool Icmp4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
+void Icmp4Codec::update(const ip::IpApi&, const EncodeFlags flags,
+    uint8_t* raw_pkt, uint16_t lyr_len, uint32_t& updated_len)
 {
-    IcmpHdr* h = (IcmpHdr*)(lyr->start);
-    *len += sizeof(*h);
+    IcmpHdr* h = reinterpret_cast<IcmpHdr*>(raw_pkt);
+    updated_len += sizeof(*h);
 
-    if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) )
+    if ( !(flags & UPD_COOKED) || (flags & UPD_REBUILT_FRAG) )
     {
         h->cksum = 0;
-        h->cksum = checksum::icmp_cksum((uint16_t *)h, *len);
+        h->cksum = checksum::icmp_cksum((uint16_t *)h, updated_len);
     }
-
-    return true;
 }
 
 void Icmp4Codec::format(EncodeFlags, const Packet*, Packet* c, Layer* lyr)

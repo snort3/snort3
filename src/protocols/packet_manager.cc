@@ -761,21 +761,59 @@ int PacketManager::encode_format(EncodeFlags f, const Packet* p, Packet* c, Pseu
 // checking each time if needed.
 //-------------------------------------------------------------------------
 
+static inline void add_flag (UpdateFlags& flags,
+    UpdateFlags flag_to_add,
+    const Packet* const p,
+    decltype(Packet::packet_flags) pkt_flag) // future proofing.
+{
+    if ( p->packet_flags & pkt_flag )
+        flags |= flag_to_add;
+}
+
 void PacketManager::encode_update (Packet* p)
 {
-    int i;
     uint32_t len = p->dsize;
-    DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)p->pkth;
 
-    Layer *lyr = p->layers;
+    UpdateFlags flags = 0;
+    add_flag(flags, UPD_COOKED, p, PKT_PSEUDO);
+    add_flag(flags, UPD_MODIFIED, p, PKT_MODIFIED);
+    add_flag(flags, UPD_RESIZED, p, PKT_RESIZED);
+    add_flag(flags, UPD_REBUILT_FRAG, p, PKT_REBUILT_FRAG);
 
-    for ( i = p->num_layers - 1; i >= 0; i-- )
+
+    int8_t outer_layer = p->num_layers-1;
+    int8_t inner_layer = p->num_layers-1;
+    const Layer* const lyr = p->layers;
+    ip::IpApi tmp_api;
+
+
+
+    // update the rest of the ip layers with the correct IP reference.
+    while (layer::set_inner_ip_api(p, tmp_api, inner_layer))
     {
-        Layer *l = lyr + i;
+        for (int i = outer_layer; i > inner_layer; --i)
+        {
+            const Layer& l = lyr[i];
+            uint8_t mapped_prot = i ?
+                CodecManager::s_proto_map[l.prot_id] : CodecManager::grinder;
 
-        uint8_t mapped_prot = i ? CodecManager::s_proto_map[l->prot_id] : CodecManager::grinder;
-        CodecManager::s_protocols[mapped_prot]->update(p, l, &len);
+            CodecManager::s_protocols[mapped_prot]->update(
+                tmp_api, flags, const_cast<uint8_t*>(l.start), l.length, len);
+        }
+        outer_layer = inner_layer;
+        // inner_layer is set in 'layer::set_inner_ip_api'
     }
+
+    tmp_api.reset();
+    for (int i = outer_layer; i >= 0; --i)
+    {
+        const Layer& l = lyr[i];
+        uint8_t mapped_prot = CodecManager::s_proto_map[l.prot_id];
+        CodecManager::s_protocols[mapped_prot]->update(
+            tmp_api, flags, const_cast<uint8_t*>(l.start), l.length, len);
+    }
+
+
     // see IP6_Update() for an explanation of this ...
     // FIXIT-L J   is this second statement really necessary?
     // PKT_RESIZED include PKT_MODIFIED ... so get rid of that extra flag
@@ -783,7 +821,9 @@ void PacketManager::encode_update (Packet* p)
         || (p->packet_flags & (PKT_RESIZED & ~PKT_MODIFIED))
     )
     {
-        pkth->caplen = pkth->pktlen = len;
+        DAQ_PktHdr_t* pkth = const_cast<DAQ_PktHdr_t*>(p->pkth);
+        pkth->caplen = len;
+        pkth->pktlen = len;
     }
 }
 

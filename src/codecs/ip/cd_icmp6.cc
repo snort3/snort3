@@ -102,7 +102,8 @@ public:
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    bool update(Packet*, Layer*, uint32_t* len) override;
+    void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
+        uint16_t lyr_len, uint32_t& updated_len) override;
     void format(EncodeFlags, const Packet*, Packet*, Layer*) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
@@ -328,24 +329,23 @@ typedef struct {
 } // namespace
 
 
-bool Icmp6Codec::update (Packet* p, Layer* lyr, uint32_t* len)
+void Icmp6Codec::update(const ip::IpApi& api, const EncodeFlags flags,
+    uint8_t* raw_pkt, uint16_t lyr_len, uint32_t& updated_len)
 {
-    IcmpHdr* h = (IcmpHdr*)(lyr->start);
-     *len += sizeof(*h);
+    IcmpHdr* h = reinterpret_cast<IcmpHdr*>(raw_pkt);
+    updated_len += sizeof(*h);
 
-    if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) ) {
+    if ( !(flags & UPD_COOKED) || (flags & UPD_REBUILT_FRAG) ) {
         checksum::Pseudoheader6 ps6;
         h->cksum = 0;
 
-        memcpy(ps6.sip, &p->ptrs.ip_api.get_src()->ip32, sizeof(ps6.sip));
-        memcpy(ps6.dip, &p->ptrs.ip_api.get_dst()->ip32, sizeof(ps6.dip));
+        memcpy(ps6.sip, &api.get_src()->ip32, sizeof(ps6.sip));
+        memcpy(ps6.dip, &api.get_dst()->ip32, sizeof(ps6.dip));
         ps6.zero = 0;
         ps6.protocol = IPPROTO_ICMPV6;
-        ps6.len = htons((uint16_t)*len);
-        h->cksum = checksum::icmp_cksum((uint16_t *)h, *len, &ps6);
+        ps6.len = htons((uint16_t)updated_len);
+        h->cksum = checksum::icmp_cksum((uint16_t *)h, updated_len, &ps6);
     }
-
-    return true;
 }
 
 

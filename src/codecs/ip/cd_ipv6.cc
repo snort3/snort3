@@ -96,7 +96,8 @@ public:
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&) override;
-    bool update(Packet*, Layer*, uint32_t* len) override;
+    void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
+        uint16_t lyr_len, uint32_t& updated_len) override;
     void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
@@ -620,32 +621,32 @@ bool Ipv6Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     return true;
 }
 
-bool Ipv6Codec::update(Packet* p, Layer* lyr, uint32_t* len)
+void Ipv6Codec::update(const ip::IpApi&, const EncodeFlags flags,
+    uint8_t* raw_pkt, uint16_t lyr_len, uint32_t& updated_len)
 {
-    ip::IP6Hdr* h = (ip::IP6Hdr*)(lyr->start);
+    ip::IP6Hdr* h = reinterpret_cast<ip::IP6Hdr*>(raw_pkt);
 
     // if we didn't trim payload or format this packet,
     // we may not know the actual lengths because not all
     // extension headers are decoded and we stop at frag6.
     // in such case we do not modify the packet length.
-    if ( (p->packet_flags & PKT_MODIFIED)
+    if ( (flags & UPD_MODIFIED)
 #ifdef NORMALIZER
-        && !(p->packet_flags & PKT_RESIZED)
+        && !(flags & UPD_RESIZED)
 #endif
     )
     {
         // FIXIT-M J  --  this worked in Snort.  In Snort++,
         //          will this be accurate?
-        *len = ntohs(h->ip6_payload_len) + sizeof(*h);
+        updated_len = ntohs(h->ip6_payload_len) + ip::IP6_HEADER_LEN;
     }
     else
     {
-        *len += lyr->length;
+        updated_len += lyr_len;
 
         // len includes header, remove for payload
-        h->ip6_payload_len = htons((uint16_t)(*len - sizeof(*h)));
+        h->ip6_payload_len = htons((uint16_t)(updated_len - ip::IP6_HEADER_LEN));
     }
-    return true;
 }
 
 void Ipv6Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)

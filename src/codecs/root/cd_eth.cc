@@ -68,7 +68,6 @@ public:
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&) override;
-    bool update(Packet*, Layer*, uint32_t* len) override;
     void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
 };
 
@@ -217,12 +216,6 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
 
     enc.next_ethertype = 0;
     enc.next_proto = ENC_PROTO_UNSET;
-    return true;
-}
-
-bool EthCodec::update (Packet*, Layer* lyr, uint32_t* len)
-{
-    *len += lyr->length;
     return true;
 }
 

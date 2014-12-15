@@ -24,6 +24,7 @@ so_rule.h \
 value.h
 
 libframework_a_SOURCES = \
+codec.cc \
 cursor.cc \
 inspector.cc \
 ips_option.cc \

@@ -72,10 +72,10 @@ public:
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                        EncState&, Buffer&) override;
-    bool update(Packet*, Layer*, uint32_t* len) override;
+        EncState&, Buffer&) override;
+    void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
+        uint16_t lyr_len, uint32_t& updated_len) override;
 };
-
 
 /* GTP basic Header  */
 struct GTPHdr
@@ -274,11 +274,12 @@ bool GtpCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
     return update_GTP_length(gtph, buf.size());
 }
 
-bool GtpCodec::update (Packet*, Layer* lyr, uint32_t* len)
+void GtpCodec::update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
+        uint16_t lyr_len, uint32_t& updated_len)
 {
-    GTPHdr* h = (GTPHdr*)(lyr->start);
-    *len += lyr->length;
-    return( update_GTP_length(h,*len));
+    GTPHdr* const h = reinterpret_cast<GTPHdr*>(raw_pkt);
+    updated_len += lyr_len;
+    update_GTP_length(h, updated_len);
 }
 
 //-------------------------------------------------------------------------
