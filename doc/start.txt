@@ -43,7 +43,11 @@ Optional:
     export my_path=/path/to/snorty
     mkdir -p $my_path
 
-* Do one of the following:
+* If you are using a github clone with autotools, do this:
+
+    autoreconf -isvf
+
+* Now do one of the following:
 
 a. To build with autotools, simply do the usual from the top level directory:
 
