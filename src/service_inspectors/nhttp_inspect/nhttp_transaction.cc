@@ -92,6 +92,7 @@ NHttpTransaction* NHttpTransaction::attach_my_transaction(NHttpFlowData* session
         }
     }
 
+    assert((source_id == SRC_SERVER) || (session_data->transaction[source_id] != nullptr));
     return session_data->transaction[source_id];
 }
 
