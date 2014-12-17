@@ -257,7 +257,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
         // a session. In any event it doesn't belong here because we cannot process it. Forward it to our parent class
         // for processing. There should be no more calls to scan() for this session but tell it to abort just in case.
 
-        // session_data->type_expected[source_id] = SEC_ABORT; /* FIXIT-M this statement breaks the test tool */
+        session_data->type_expected[source_id] = SEC_ABORT;
         return StreamSplitter::reassemble(flow, total, offset, data, len, flags, copied);
     }
 

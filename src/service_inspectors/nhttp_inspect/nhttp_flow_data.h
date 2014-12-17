@@ -52,8 +52,10 @@ public:
 private:
     void half_reset(NHttpEnums::SourceId source_id);
 
-    // StreamSplitter internal data
+    // StreamSplitter internal data - scan()
     NHttpSplitter* splitter[2] = { nullptr, nullptr };
+
+    // StreamSplitter internal data - reassemble()
     uint8_t* section_buffer[2] = { nullptr, nullptr };
     int32_t section_buffer_length[2] = { 0, 0 };
     bool section_buffer_owned[2] = { true, true };
