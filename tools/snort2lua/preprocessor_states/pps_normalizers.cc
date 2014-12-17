@@ -101,37 +101,31 @@ public:
 bool Ip4Normalizer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
-    bool retval = true;
 
     table_api.open_table("normalizer");
     table_api.open_table("ip4");
 
     while (util::get_string(data_stream, keyword, " ,"))
     {
-        bool tmpval = true;
-
         if(!keyword.compare("df"))
-            tmpval = table_api.add_option("df", true);
+            table_api.add_option("df", true);
 
         else if(!keyword.compare("rf"))
-            tmpval = table_api.add_option("rf", true);
+            table_api.add_option("rf", true);
         
         else if(!keyword.compare("tos"))
-            tmpval = table_api.add_option("tos", true);
+            table_api.add_option("tos", true);
         
         else if(!keyword.compare("trim"))
-            tmpval = table_api.add_option("trim", true);
+            table_api.add_option("trim", true);
 
         else
-            tmpval = false;
-
-        if (retval && !tmpval)
-            retval = false;
+            data_api.failed_conversion(data_stream, keyword);
     }
 
     table_api.close_table();
     table_api.close_table();
-    return retval;    
+    return true;
 }
 
 /*******  A P I ***********/
@@ -181,19 +175,17 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
 
     while (util::get_string(data_stream, keyword, " ,"))
     {
-        bool tmpval = true;
-
         if(!keyword.compare("ips"))
-            tmpval = table_api.add_option("ips", true);
+            table_api.add_option("ips", true);
         
         else if(!keyword.compare("trim"))
-            tmpval = table_api.add_option("trim", true);
+            table_api.add_option("trim", true);
 
         else if(!keyword.compare("opts"))
-            tmpval = table_api.add_option("opts", true);
+            table_api.add_option("opts", true);
 
         else if(!keyword.compare("urp"))
-            tmpval = table_api.add_option("urp", true);
+            table_api.add_option("urp", true);
 
         else if(!keyword.compare("rsv"))
         {
@@ -234,25 +226,25 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
         else if(!keyword.compare("trim_syn"))
         {
             table_api.add_diff_option_comment("trim_syn", "trim");
-            tmpval = table_api.add_option("trim", true);
+            table_api.add_option("trim", true);
         }
         
         else if(!keyword.compare("trim_rst"))
         {
             table_api.add_diff_option_comment("trim_rst", "trim");
-            tmpval = table_api.add_option("trim", true);
+            table_api.add_option("trim", true);
         }
         
         else if(!keyword.compare("trim_win"))
         {
             table_api.add_diff_option_comment("trim_win", "trim");
-            tmpval = table_api.add_option("trim", true);
+            table_api.add_option("trim", true);
         }
         
         else if(!keyword.compare("trim_mss"))
         {
             table_api.add_diff_option_comment("trim_mss", "trim");
-            tmpval = table_api.add_option("trim", true);
+            table_api.add_option("trim", true);
         }
 
         else if(!keyword.compare("ecn"))
@@ -260,7 +252,7 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
             if (util::get_string(data_stream, value, " ,"))
                 table_api.add_option("ecn", value);
             else
-                tmpval = false;
+                data_api.failed_conversion(data_stream, "ecn[, ]missing_argument");
         }
 
         else if (!keyword.compare("allow"))
@@ -301,10 +293,10 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
         }
 
         else
+        {
+            data_api.failed_conversion(data_stream, keyword);
             retval = false;
-
-        if (retval && !tmpval)
-            retval = false;
+        }
     }
 
     table_api.close_table();

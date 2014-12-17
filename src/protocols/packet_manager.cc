@@ -638,6 +638,7 @@ int PacketManager::encode_format_with_daq_info (
     int i;
     Layer* lyr;
     int len;
+    bool update_ip4_len = false;
     uint8_t num_layers = p->num_layers;
     DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
 
@@ -679,10 +680,15 @@ int PacketManager::encode_format_with_daq_info (
          * we ensure that the ip6_frag header is not copied too.
          */
 
-        if ( p->is_ip4() )
-            num_layers = layer::get_inner_ip_lyr_index(p) + 1;
-        else
+        if ( p->is_ip6() )
+        {
             num_layers = layer::get_inner_ip6_frag_index(p);
+        }
+        else
+        {
+            num_layers = layer::get_inner_ip_lyr_index(p) + 1;
+            update_ip4_len = true;
+        }
 
 
         if (num_layers <= 0)
@@ -693,6 +699,16 @@ int PacketManager::encode_format_with_daq_info (
     lyr = (Layer*)p->layers + num_layers - 1;
     len = lyr->start - p->pkt + lyr->length;
     memcpy((void*)c->pkt, p->pkt, len);
+
+    if ( update_ip4_len )
+    {
+        ip::IP4Hdr* ip4h = reinterpret_cast<ip::IP4Hdr*>(const_cast<uint8_t *>(lyr->start));
+        lyr->length = ip::IP4_HEADER_LEN;
+        ip4h->set_ip_len(ip::IP4_HEADER_LEN);
+        ip4h->set_hlen(ip::IP4_HEADER_LEN >> 2);
+    }
+
+    const bool reverse = !(f & ENC_FLAG_FWD);
 
     // set up and format layers
     for ( i = 0; i < num_layers; i++ )
@@ -707,7 +723,9 @@ int PacketManager::encode_format_with_daq_info (
         // NOTE: this must always go from outer to inner
         //       to ensure a valid ip header
         uint8_t mapped_prot = i ? CodecManager::s_proto_map[lyr->prot_id] : CodecManager::grinder;
-        CodecManager::s_protocols[mapped_prot]->format(f, p, c, lyr);
+
+        CodecManager::s_protocols[mapped_prot]->format(
+            reverse, const_cast<uint8_t*>(lyr->start), c->ptrs);
     }
 
     // setup payload info

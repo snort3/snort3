@@ -334,7 +334,7 @@ public:
     { updated_len += lyr_len; }
 
     // formatter
-    virtual void format(EncodeFlags, const Packet* /*orig*/, Packet* /*clone*/, Layer*)
+    virtual void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort)
     { }
 
 

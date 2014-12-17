@@ -98,7 +98,7 @@ public:
                         EncState&, Buffer&) override;
     void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
         uint16_t lyr_len, uint32_t& updated_len) override;
-    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
+    void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
 
@@ -649,23 +649,22 @@ void Ipv6Codec::update(const ip::IpApi&, const EncodeFlags flags,
     }
 }
 
-void Ipv6Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
+void Ipv6Codec::format(bool reverse, uint8_t* raw_pkt, DecodeData& snort)
 {
-    ip::IP6Hdr* ch = reinterpret_cast<ip::IP6Hdr*>(
-                            const_cast<uint8_t*>(lyr->start));
+    ip::IP6Hdr* ip6h = reinterpret_cast<ip::IP6Hdr*>(raw_pkt);
 
-    if ( reverse(f) )
+    if ( reverse )
     {
-        int i = lyr - c->layers;
-        ip::IP6Hdr* ph = (ip::IP6Hdr*)p->layers[i].start;
+        ip::snort_in6_addr tmp_addr;
 
-        memcpy(ch->ip6_src.u6_addr8, ph->ip6_dst.u6_addr8, sizeof(ch->ip6_src.u6_addr8));
-        memcpy(ch->ip6_dst.u6_addr8, ph->ip6_src.u6_addr8, sizeof(ch->ip6_dst.u6_addr8));
+        memcpy(&tmp_addr, ip6h->ip6_dst.u6_addr8, sizeof(ip6h->ip6_src.u6_addr8));
+        memcpy(ip6h->ip6_dst.u6_addr8, ip6h->ip6_src.u6_addr8, sizeof(ip6h->ip6_src.u6_addr8));
+        memcpy(ip6h->ip6_src.u6_addr8, &tmp_addr, sizeof(ip6h->ip6_dst.u6_addr8));
     }
 
     // set outer to inner so this will always wind pointing to inner
-    c->ptrs.ip_api.set(ch);
-    c->ptrs.set_pkt_type(PktType::IP);
+    snort.ip_api.set(ip6h);
+    snort.set_pkt_type(PktType::IP);
 }
 
 //-------------------------------------------------------------------------

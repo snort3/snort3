@@ -123,7 +123,7 @@ public:
                         EncState&, Buffer&) override;
     void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
         uint16_t lyr_len, uint32_t& updated_len) override;
-    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
+    void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
 };
 
 static sfip_var_t *SynToMulticastDstIp = NULL;
@@ -733,22 +733,21 @@ void TcpCodec::update(const ip::IpApi& api, const EncodeFlags flags, uint8_t* ra
     }
 }
 
-void TcpCodec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
+void TcpCodec::format(bool reverse, uint8_t* raw_pkt, DecodeData& snort)
 {
-    tcp::TCPHdr* ch = (tcp::TCPHdr*)lyr->start;
-    c->ptrs.tcph = ch;
+    tcp::TCPHdr* tcph = reinterpret_cast<tcp::TCPHdr*>(raw_pkt);
 
-    if ( reverse(f) )
+    if ( reverse )
     {
-        int i = lyr - c->layers;
-        tcp::TCPHdr* ph = (tcp::TCPHdr*)p->layers[i].start;
-
-        ch->th_sport = ph->th_dport;
-        ch->th_dport = ph->th_sport;
+        uint16_t tmp_port = tcph->th_sport;
+        tcph->th_sport = tcph->th_dport;
+        tcph->th_dport = tmp_port;
     }
-    c->ptrs.sp = ch->src_port();
-    c->ptrs.dp = ch->dst_port();
-    c->ptrs.set_pkt_type(PktType::TCP);
+
+    snort.tcph = tcph;
+    snort.sp = tcph->src_port();
+    snort.dp = tcph->dst_port();
+    snort.set_pkt_type(PktType::TCP);
 }
 
 

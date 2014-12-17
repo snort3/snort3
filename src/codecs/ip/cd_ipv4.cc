@@ -121,7 +121,7 @@ public:
                         EncState&, Buffer&) override;
     void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
         uint16_t lyr_len, uint32_t& updated_len) override;
-    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
+    void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
 
 };
 
@@ -736,28 +736,20 @@ void Ipv4Codec::update(const ip::IpApi&, const EncodeFlags flags,
     }
 }
 
-void Ipv4Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
+void Ipv4Codec::format(bool reverse, uint8_t* raw_pkt, DecodeData& snort)
 {
-    // TBD handle nested ip layers
-    IP4Hdr* ch = (IP4Hdr*)lyr->start;
+    IP4Hdr* ip4h = reinterpret_cast<IP4Hdr*>(raw_pkt);
 
-    if ( reverse(f) )
+    if ( reverse )
     {
-        int i = lyr - c->layers;
-        IP4Hdr* ph = (IP4Hdr*)p->layers[i].start;
 
-        ch->ip_src = ph->ip_dst;
-        ch->ip_dst = ph->ip_src;
-    }
-    if ( f & ENC_FLAG_DEF )
-    {
-        lyr->length = ip::IP4_HEADER_LEN;
-        ch->set_ip_len(ip::IP4_HEADER_LEN);
-        ch->set_hlen(ip::IP4_HEADER_LEN >> 2);
+        uint32_t tmp_ip = ip4h->ip_src;
+        ip4h->ip_src = ip4h->ip_dst;
+        ip4h->ip_dst = tmp_ip;
     }
 
-    c->ptrs.ip_api.set(ch);
-    c->ptrs.set_pkt_type(PktType::IP);
+    snort.ip_api.set(ip4h);
+    snort.set_pkt_type(PktType::IP);
 }
 
 //-------------------------------------------------------------------------

@@ -104,7 +104,7 @@ public:
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
         uint16_t lyr_len, uint32_t& updated_len) override;
-    void format(EncodeFlags, const Packet*, Packet*, Layer*) override;
+    void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
 
@@ -350,10 +350,10 @@ void Icmp6Codec::update(const ip::IpApi& api, const EncodeFlags flags,
 
 
 
-void Icmp6Codec::format(EncodeFlags, const Packet*, Packet* c, Layer* lyr)
+void Icmp6Codec::format(bool /*reverse*/, uint8_t* raw_pkt, DecodeData& snort)
 {
-    c->ptrs.icmph = (ICMPHdr*)lyr->start;
-    c->ptrs.set_pkt_type(PktType::ICMP);
+    snort.icmph = reinterpret_cast<ICMPHdr*>(raw_pkt);
+    snort.set_pkt_type(PktType::ICMP);
 }
 
 //-------------------------------------------------------------------------

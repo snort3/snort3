@@ -115,7 +115,7 @@ public:
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
         uint16_t lyr_len, uint32_t& updated_len) override;
-    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
+    void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 
 private:
@@ -605,11 +605,11 @@ void Icmp4Codec::update(const ip::IpApi&, const EncodeFlags flags,
     }
 }
 
-void Icmp4Codec::format(EncodeFlags, const Packet*, Packet* c, Layer* lyr)
+void Icmp4Codec::format(bool /*reverse*/, uint8_t* raw_pkt, DecodeData& snort)
 {
     // TBD handle nested icmp4 layers
-    c->ptrs.icmph = (ICMPHdr*)lyr->start;
-    c->ptrs.set_pkt_type(PktType::ICMP);
+    snort.icmph = reinterpret_cast<ICMPHdr*>(raw_pkt);
+    snort.set_pkt_type(PktType::ICMP);
 }
 
 

@@ -68,7 +68,7 @@ public:
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&) override;
-    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
+    void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
 };
 
 } // namespace
@@ -219,17 +219,18 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     return true;
 }
 
-void EthCodec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
+
+void EthCodec::format(bool reverse, uint8_t* raw_pkt, DecodeData&)
 {
-    eth::EtherHdr* ch = (eth::EtherHdr*)lyr->start;
+    eth::EtherHdr* ch = reinterpret_cast<eth::EtherHdr*>(raw_pkt);
 
-    if ( reverse(f) )
+    if ( reverse )
     {
-        int i = lyr - c->layers;
-        eth::EtherHdr* ph = (eth::EtherHdr*)p->layers[i].start;
+        uint8_t tmp_addr[6];
 
-        memcpy(ch->ether_dst, ph->ether_src, sizeof(ch->ether_dst));
-        memcpy(ch->ether_src, ph->ether_dst, sizeof(ch->ether_src));
+        memcpy(tmp_addr, ch->ether_dst, sizeof(ch->ether_dst));
+        memcpy(ch->ether_dst, ch->ether_src, sizeof(ch->ether_src));
+        memcpy(ch->ether_src, tmp_addr, sizeof(ch->ether_src));
     }
 }
 

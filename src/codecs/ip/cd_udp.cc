@@ -162,7 +162,7 @@ public:
                         EncState&, Buffer&) override;
     void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
         uint16_t lyr_len, uint32_t& updated_len) override;
-    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
+    void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     
 };
@@ -463,22 +463,21 @@ void UdpCodec::update(const ip::IpApi& ip_api, const EncodeFlags flags,
     }
 }
 
-void UdpCodec::format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
+void UdpCodec::format(bool reverse, uint8_t* raw_pkt, DecodeData& snort)
 {
-    udp::UDPHdr* ch = (udp::UDPHdr*)lyr->start;
-    c->ptrs.udph = ch;
+    udp::UDPHdr* udph = reinterpret_cast<udp::UDPHdr*>(raw_pkt);
 
-    if ( reverse(f) )
+    if ( reverse )
     {
-        int i = (int)(lyr - c->layers);
-        udp::UDPHdr* ph = (udp::UDPHdr*)p->layers[i].start;
-
-        ch->uh_sport = ph->uh_dport;
-        ch->uh_dport = ph->uh_sport;
+        uint16_t tmp_port = udph->uh_sport;
+        udph->uh_sport = udph->uh_dport;
+        udph->uh_dport = tmp_port;
     }
-    c->ptrs.sp = ntohs(ch->uh_sport);
-    c->ptrs.dp = ntohs(ch->uh_dport);
-    c->ptrs.set_pkt_type(PktType::UDP);
+
+    snort.udph = udph;
+    snort.sp = udph->src_port();
+    snort.dp = udph->dst_port();
+    snort.set_pkt_type(PktType::UDP);
 }
 
 //-------------------------------------------------------------------------
