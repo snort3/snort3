@@ -62,7 +62,7 @@ struct PatternMatchData
 
     /* For fast_pattern arguments */
     uint8_t fp;
-    uint8_t fp_only;
+    int8_t fp_only;
     uint16_t fp_offset;
     uint16_t fp_length;
 

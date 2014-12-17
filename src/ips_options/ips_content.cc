@@ -323,14 +323,14 @@ bool is_fast_pattern_only(OptFpList* ofl)
     if ( !pmd )
         return false;
 
-    return pmd->fp_only != 0;
+    return pmd->fp_only > 0;
 }
 
 void clear_fast_pattern_only(OptFpList* ofl)
 {
     PatternMatchData* pmd = get_pmd(ofl);
 
-    if ( pmd )
+    if ( pmd && pmd->fp_only > 0 )
         pmd->fp_only = 0;
 }
 

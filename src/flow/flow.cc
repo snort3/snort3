@@ -68,8 +68,8 @@ void Flow::init(PktType proto)
     size_t sz = sizeof(StreamFlowData) + getFlowbitSizeInBytes() - 1;
     flowdata = (StreamFlowData*)calloc(sz, 1);
 
-    boInitStaticBITOP(
-        &(flowdata->boFlowbits), getFlowbitSizeInBytes(), flowdata->flowb);
+    if ( flowdata )
+        boInitStaticBITOP(&(flowdata->boFlowbits), getFlowbitSizeInBytes(), flowdata->flowb);
 }
 
 void Flow::term()

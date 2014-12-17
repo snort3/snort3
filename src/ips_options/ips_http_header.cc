@@ -101,6 +101,9 @@ public:
     CursorActionType get_cursor_type() const override
     { return CAT_SET_HEADER; };
 
+    bool fp_research() override
+    { return name.size() != 0; };
+
     int eval(Cursor&, Packet*) override;
 
 private:
@@ -122,8 +125,7 @@ static bool find(
         if ( n < k )
             return false;
 
-        if ( !strncasecmp(h, (char*)t, k) &&
-             !strncmp((char*)t+k, ": ", 2) )
+        if ( !strncasecmp(h, (char*)t, k) )
             break;
 
         t = (uint8_t*)memchr(t, '\n', n);
@@ -135,8 +137,14 @@ static bool find(
     }
     while ( true );
 
-    // skip over the keyword to the data
-    t += k + 2;
+    // skip over the keyword and : to the data
+    // (skip space before and after :)
+    t += k;
+
+    while ( isspace(*t) ) ++t;
+
+    if ( *t == ':' )
+        do ++t; while ( isspace(*t) );
 
     // now find the end of header
     const uint8_t* z = (uint8_t*)memchr(t, '\n', n);

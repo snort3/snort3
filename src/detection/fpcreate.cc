@@ -949,6 +949,7 @@ void set_fp_content(OptTreeNode *otn)
     CursorActionType curr_cat = CAT_SET_RAW;
     FpFoo best;
     PatternMatchData* pmd = nullptr;
+    bool fp_only = true;
 
     for (ofl = otn->opt_func; ofl != NULL; ofl = ofl->next)
     {
@@ -958,13 +959,19 @@ void set_fp_content(OptTreeNode *otn)
         CursorActionType cat = IpsOption::get_cat(ofl->context);
 
         if ( cat > CAT_ADJUST )
+        {
             curr_cat = cat;
+            fp_only = IpsOption::get_fp_only(ofl->context);
+        }
 
         if ( ofl->type != RULE_OPTION_TYPE_CONTENT )
             continue;
 
         PatternMatchData* tmp = get_pmd(ofl);
         assert(tmp);
+
+        if ( !fp_only )
+            tmp->fp_only = -1;
 
         tmp->pm_type = get_pm_type(curr_cat);
 
@@ -1193,7 +1200,7 @@ static int fpAddPortGroupRule(
     if ( pmd && pmd->fp)
     {
         if (
-            pmd->fp && !pmd->relative && !pmd->negated &&
+            pmd->fp && !pmd->relative && !pmd->negated && pmd->fp_only >= 0 &&
             !pmd->offset && !pmd->depth && pmd->no_case )
         {
             if ( !next || !next->context || !((IpsOption*)next->context)->is_relative() )
@@ -1496,7 +1503,7 @@ static int fpGetFinalPattern(FastPatternConfig *fp, PatternMatchData *pmd,
      * inadvertantly disable evaluation of a rule - the shorter pattern
      * may be found, while the unaltered pattern may not be found,
      * disabling inspection of a rule we should inspect */
-    if (pmd->fp_only || pmd->negated)
+    if (pmd->fp_only > 0 || pmd->negated)
     {
         *ret_pattern = pattern;
         *ret_bytes = bytes;
@@ -2725,11 +2732,11 @@ static void PrintFastPatternInfo(OptTreeNode *otn, PatternMatchData *pmd,
     LogMessage("%u:%u\n", otn->sigInfo.generator, otn->sigInfo.id);
     LogMessage("  Fast pattern matcher: %s\n", pm_type_strings[pmd->pm_type]);
     LogMessage("  Fast pattern set: %s\n", pmd->fp ? "yes" : "no");
-    LogMessage("  Fast pattern only: %s\n", pmd->fp_only ? "yes" : "no");
+    LogMessage("  Fast pattern only: %d\n", pmd->fp_only);
     LogMessage("  Negated: %s\n", pmd->negated ? "yes" : "no");
 
     /* Fast pattern only patterns don't use offset and length */
-    if ((pmd->fp_length != 0) && !pmd->fp_only)
+    if ((pmd->fp_length != 0) && pmd->fp_only <= 0)
     {
         LogMessage("  Pattern <offset,length>: %d,%d\n",
                 pmd->fp_offset, pmd->fp_length);
@@ -2743,9 +2750,9 @@ static void PrintFastPatternInfo(OptTreeNode *otn, PatternMatchData *pmd,
     }
 
     /* Fast pattern only patterns don't get truncated */
-    if (!pmd->fp_only
-            && (((pmd->fp_length != 0) && (pmd->fp_length > pattern_length))
-                || ((pmd->fp_length == 0) && ((int)pmd->pattern_size > pattern_length))))
+    if ( pmd->fp_only <= 0 &&
+        (((pmd->fp_length != 0) && (pmd->fp_length > pattern_length)) ||
+        ((pmd->fp_length == 0) && ((int)pmd->pattern_size > pattern_length))) )
     {
         LogMessage("  Pattern truncated: %d to %d bytes\n",
                 pmd->fp_length ? pmd->fp_length : pmd->pattern_size,
