@@ -28,6 +28,7 @@
 
 #include "snort.h"
 #include "util.h"
+#include "helpers/process.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/active.h"
 #include "packet_io/trough.h"
@@ -318,6 +319,7 @@ void DropStats()
 #endif
     proc_stats.attribute_table_hosts = SFAT_NumberOfHosts();
     show_stats((PegCount*)&proc_stats, proc_names, array_size(proc_names)-1, "process");
+    log_malloc_info();
 }
 
 //-------------------------------------------------------------------------

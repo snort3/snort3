@@ -158,6 +158,10 @@ static FuncTest ftests[] = {
       "6543:21ff:ffff:ffff:ffff:ffff:ffff:ffff ffff:ff00::", SFIP_GREATER },
     { "sfip_compare", "1.2.3.4", "0.0.0.0", SFIP_EQUAL },
     { "sfip_compare", "1:2:3:4:5:6:7:8", "::", SFIP_EQUAL },
+    { "sfip_compare", "10.10.1.0/16", "10.10.24.14/24", SFIP_LESSER },
+    { "sfip_compare", "10.10.1.0/24", "10.10.1.0/16", SFIP_GREATER },
+    { "sfip_compare", "10.10.1.0/16", "10.10.2.1/8", SFIP_GREATER },
+    { "sfip_compare", "10.10.1.8/32", "10.10.1.8", SFIP_EQUAL },
 
     { "sfip_compare_unset", "1.2.3.4", "1.2.3.4", SFIP_EQUAL },
     { "sfip_compare_unset", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", SFIP_EQUAL },
@@ -197,6 +201,10 @@ static FuncTest ftests[] = {
     { "sfip_contains", "192.168.0.1", "255.255.255.255/21", SFIP_NOT_CONTAINS },
     { "sfip_contains", "255.255.255.255/21", "255.255.255.255", SFIP_CONTAINS },
     { "sfip_contains", "255.255.255.255", "255.255.255.255/21", SFIP_NOT_CONTAINS },
+    { "sfip_contains", "10.10.1.0/16", "10.10.24.14/24", SFIP_CONTAINS },
+    { "sfip_contains", "10.10.1.0/16", "10.10.1.0/24", SFIP_CONTAINS },
+    { "sfip_contains", "10.10.1.0/16", "10.10.2.1/8", SFIP_NOT_CONTAINS },
+    { "sfip_contains", "10.10.1.8/32", "10.10.1.8", SFIP_CONTAINS },
 
     { "sfip_fast_cont6", "ffff:ffff::1", "ffff::ffff:1/8", SFIP_FAILURE },
     { "sfip_fast_cont6", "ffff::ffff:1/8", "ffff:ffff::1", SFIP_SUCCESS },

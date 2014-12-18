@@ -160,7 +160,9 @@ void ReactAction::send (Packet* p)
 
     Active_IgnoreSession(p);
 
-    Active_SendData(p, df, (uint8_t*)config->resp_buf, config->buf_len);
+    if ( p->packet_flags & PKT_STREAM_EST )
+        Active_SendData(p, df, (uint8_t*)config->resp_buf, config->buf_len);
+
     Active_SendReset(p, rf);
     Active_SendReset(p, ENC_FLAG_FWD);
 }

@@ -37,6 +37,7 @@ using namespace std;
 #include "main/snort.h"
 #include "utils/util.h"
 #include "utils/ring.h"
+#include "utils/stats.h"
 #include "helpers/markup.h"
 #include "parser/parser.h"
 
@@ -417,5 +418,31 @@ void daemonize()
         perror("daemonization errors");
 
     signal_waiting_parent();
+}
+
+//-------------------------------------------------------------------------
+// heap stats
+//-------------------------------------------------------------------------
+
+void log_malloc_info()
+{
+#ifdef HAVE_MALLINFO
+    mi = mallinfo();
+
+    LogLabel("heap usage");
+    LogCount("total non-mmapped bytes (arena)", mi.arena);
+    LogCount("bytes in mapped regions (hblkhd)", mi.hblkhd);
+    LogCount("total allocated space (uordblks)", mi.uordblks);
+    LogCount("total free space (fordblks)", mi.fordblks);
+    LogCount("topmost releasable block (keepcost)", mi.keepcost);
+
+#ifdef DEBUG
+    LogCount("number of free chunks (ordblks)", mi.ordblks);
+    LogCount("number of free fastbin blocks (smblks)", mi.smblks);
+    LogCount("number of mapped regions (hblks)", mi.hblks);
+    LogCount("max total allocated space (usmblks)", mi.usmblks);
+    LogCount("free bytes held in fastbins (fsmblks)", mi.fsmblks);
+#endif
+#endif
 }
 

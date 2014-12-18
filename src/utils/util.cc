@@ -113,7 +113,7 @@ int DisplayBanner(void)
     LogMessage("  o\"  )~   Version %s (Build %s) %s\n",
                VERSION, BUILD, info);
     LogMessage("   ''''    By Martin Roesch & The Snort Team\n");
-    LogMessage("           http://snort.org/snort/snort-team\n");
+    LogMessage("           http://snort.org/contact#team\n");
     LogMessage("           Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.\n");
     LogMessage("           Copyright (C) 1998-2013 Sourcefire, Inc., et al.\n");
 #ifdef HAVE_PCAP_LIB_VERSION
@@ -126,8 +126,6 @@ int DisplayBanner(void)
 
     return 0;
 }
-
-
 
 /****************************************************************************
  *
@@ -177,9 +175,11 @@ void ts_print(const struct timeval *tvp, char *timebuf)
 
     if (ScOutputIncludeYear())
     {
+        int year = (lt->tm_year >= 100) ? (lt->tm_year - 100) : lt->tm_year;
+
         (void) SnortSnprintf(timebuf, TIMEBUF_SIZE,
                         "%02d/%02d/%02d-%02d:%02d:%02d.%06u ",
-                        lt->tm_mon + 1, lt->tm_mday, lt->tm_year - 100,
+                        lt->tm_mon + 1, lt->tm_mday, year,
                         s / 3600, (s % 3600) / 60, s % 60,
                         (u_int) tvp->tv_usec);
     }

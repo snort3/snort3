@@ -556,7 +556,7 @@ static void parse_offset(PatternMatchData* pmd, const char *data)
         pmd->offset_var = GetVarByName(data);
         if (pmd->offset_var == BYTE_EXTRACT_NO_VAR)
         {
-            ParseError(BYTE_EXTRACT_INVALID_ERR_STR);
+            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "content offset", data);
             return;
         }
     }
@@ -597,7 +597,7 @@ static void parse_depth(PatternMatchData* pmd, const char *data)
         pmd->depth_var = GetVarByName(data);
         if (pmd->depth_var == BYTE_EXTRACT_NO_VAR)
         {
-            ParseError(BYTE_EXTRACT_INVALID_ERR_STR);
+            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "content depth", data);
             return;
         }
     }
@@ -630,7 +630,7 @@ static void parse_distance(PatternMatchData* pmd, const char *data)
         pmd->offset_var = GetVarByName(data);
         if (pmd->offset_var == BYTE_EXTRACT_NO_VAR)
         {
-            ParseError(BYTE_EXTRACT_INVALID_ERR_STR);
+            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "content distance", data);
             return;
         }
     }
@@ -668,7 +668,7 @@ static void parse_within(PatternMatchData* pmd, const char *data)
         pmd->depth_var = GetVarByName(data);
         if (pmd->depth_var == BYTE_EXTRACT_NO_VAR)
         {
-            ParseError(BYTE_EXTRACT_INVALID_ERR_STR);
+            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "content within", data);
             return;
         }
     }

@@ -142,7 +142,7 @@ int IsDataAtOption::eval(Cursor& c, Packet*)
 {
     IsDataAtData *isdata = &config;
     int rval = DETECTION_OPTION_NO_MATCH;
-    const uint8_t *base_ptr, *end_ptr, *start_ptr;
+    const uint8_t* start_ptr;
     int offset;
 
     PROFILE_VARS;
@@ -161,16 +161,14 @@ int IsDataAtOption::eval(Cursor& c, Packet*)
     if ( isdata->flags & ISDATAAT_RELATIVE_FLAG )
     {
         start_ptr = c.start();
-        end_ptr = start_ptr + c.length();
     }
     else
     {
         start_ptr = c.buffer();
-        end_ptr = start_ptr + c.size();
     }
-    base_ptr = start_ptr + offset;
+    start_ptr += offset;
 
-    if(inBounds(start_ptr, end_ptr, base_ptr))
+    if(inBounds(c.buffer(), c.endo(), start_ptr))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
                     "[*] IsDataAt succeeded!  there is data...\n"););
@@ -232,7 +230,7 @@ static void isdataat_parse(const char *data, IsDataAtData *idx)
         idx->offset_var = GetVarByName(offset);
         if (idx->offset_var == BYTE_EXTRACT_NO_VAR)
         {
-            ParseError("%s", BYTE_EXTRACT_INVALID_ERR_STR);
+            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "isdataat offset", offset);
             return;
         }
     }

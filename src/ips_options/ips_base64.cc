@@ -18,9 +18,7 @@
  ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-/* sp_base64_decode
- *
- */
+/* ips_base64.cc */
 
 #include <sys/types.h>
 
@@ -154,7 +152,7 @@ int Base64DecodeOption::eval(Cursor& c, Packet*)
         size = c.size();
     }
 
-    if ( idx->offset > size )
+    if ( idx->offset >= size )
     {
         MODULE_PROFILE_END(base64PerfStats);
         return rval;

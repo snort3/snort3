@@ -43,7 +43,7 @@ StreamUdpConfig::StreamUdpConfig()
 
 void udp_show(StreamUdpConfig*pc)
 {
-    LogMessage("Stream5 UDP config:\n");
+    LogMessage("Stream UDP config:\n");
     LogMessage("    Timeout: %d seconds\n", pc->session_timeout);
 
     const char* opt = (pc->ignore_any) ? "YES" : "NO";

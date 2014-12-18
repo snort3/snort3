@@ -117,12 +117,12 @@ typedef struct _SFBASE
     uint64_t   iStreamFaults;  /* # of times we run out of memory */
     uint64_t   iStreamTimeouts; /* # of timeouts we get in this quanta */
 
-    uint64_t   iFragCreates;    /* # of times we call Frag3NewTracker() */
+    uint64_t   iFragCreates;    /* # of times we call FragNewTracker() */
     uint64_t   iFragCompletes;  /* # of times we call FragIsComplete() */
     uint64_t   iFragInserts;    /* # of fraginserts */
-    uint64_t   iFragDeletes;    /* # of times we call Frag3RemoveTracker() */
+    uint64_t   iFragDeletes;    /* # of times we call FragRemoveTracker() */
     uint64_t   iFragAutoFrees;  /* # of times we auto free a FragTracker */
-    uint64_t   iFragFlushes;    /* # of times we call Frag3Rebuild() */
+    uint64_t   iFragFlushes;    /* # of times we call FragRebuild() */
     uint64_t   iMaxFrags;
     uint64_t   iCurrentFrags;
     uint64_t   iFragTimeouts;   /* # of times we've reached timeout */
@@ -161,8 +161,8 @@ typedef struct _SFBASE
     /**UDP packets ignored due to port/service filtering.*/
     uint64_t   total_udp_filtered_packets;
 
-    uint64_t   frag3_mem_in_use;
-    uint64_t   stream5_mem_in_use;
+    uint64_t   frag_mem_in_use;
+    uint64_t   stream_mem_in_use;
     uint64_t   total_iAlerts;
 }  SFBASE;
 
@@ -265,8 +265,8 @@ typedef struct _SFBASE_STATS {
     /**UDP packets ignored due to port/service filtering.*/
     uint64_t   total_udp_filtered_packets;
 
-    uint64_t   frag3_mem_in_use;
-    uint64_t   stream5_mem_in_use;
+    uint64_t   frag_mem_in_use;
+    uint64_t   stream_mem_in_use;
     double     total_alerts_per_second;
 }  SFBASE_STATS;
 

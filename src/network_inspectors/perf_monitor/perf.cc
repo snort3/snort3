@@ -464,7 +464,7 @@ static inline int sfRotateFlowIPStatsFile(SFPERF *sfPerf)
 
 void sfPerformanceStats(SFPERF *sfPerf, Packet *p)
 {
-    // Update stats first since other stats from various places like frag3 and
+    // Update stats first since other stats from various places like frag and
     // stream have been added.
     UpdatePerfStats(sfPerf, p);
 

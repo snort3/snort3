@@ -47,12 +47,12 @@
 #define SSN_MISSING_AFTER  0x02
 #define SSN_MISSING_BOTH   (SSN_MISSING_BEFORE | SSN_MISSING_AFTER)
 
-#define SSN_DIR_NONE 0x0
-#define SSN_DIR_CLIENT 0x1
-#define SSN_DIR_SENDER 0x1
-#define SSN_DIR_SERVER 0x2
-#define SSN_DIR_RESPONDER 0x2
-#define SSN_DIR_BOTH 0x03
+#define SSN_DIR_NONE           0x00
+#define SSN_DIR_FROM_CLIENT    0x01
+#define SSN_DIR_FROM_SENDER    0x01
+#define SSN_DIR_FROM_SERVER    0x02
+#define SSN_DIR_FROM_RESPONDER 0x02
+#define SSN_DIR_BOTH           0x03
 
 class Flow;
 

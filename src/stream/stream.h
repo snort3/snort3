@@ -39,27 +39,27 @@
 #include "stream/stream_api.h"
 #include "target_based/sftarget_protocol_reference.h"
 
-//#define DEBUG_STREAM5 DEBUG
+//#define DEBUG_STREAM DEBUG
 
-#define S5_DEFAULT_SSN_TIMEOUT  30        /* seconds to timeout a session */
-#define S5_MAX_SSN_TIMEOUT      3600*24   /* max timeout (approx 1 day) */
-#define S5_MIN_SSN_TIMEOUT      1         /* min timeout (1 second) */
+#define STREAM_DEFAULT_SSN_TIMEOUT  30        /* seconds to timeout a session */
+#define STREAM_MAX_SSN_TIMEOUT      3600*24   /* max timeout (approx 1 day) */
+#define STREAM_MIN_SSN_TIMEOUT      1         /* min timeout (1 second) */
 
-#define S5_TRACK_YES            1
-#define S5_TRACK_NO             0
+#define STREAM_TRACK_YES            1
+#define STREAM_TRACK_NO             0
 
 // FIXIT-L move to proto specific where possible
-#define STREAM5_CONFIG_STATEFUL_INSPECTION      0x00000001
-#define STREAM5_CONFIG_LOG_STREAMS              0x00000004
-#define STREAM5_CONFIG_REASS_CLIENT             0x00000008
-#define STREAM5_CONFIG_REASS_SERVER             0x00000010
-#define STREAM5_CONFIG_ASYNC                    0x00000020
-#define STREAM5_CONFIG_SHOW_PACKETS             0x00000040
-#define STREAM5_CONFIG_MIDSTREAM_DROP_NOALERT   0x00000080
-#define STREAM5_CONFIG_IGNORE_ANY               0x00000100
-#define STREAM5_CONFIG_STATIC_FLUSHPOINTS       0x00000200
-#define STREAM5_CONFIG_IPS                      0x00000400
-#define STREAM5_CONFIG_NO_ASYNC_REASSEMBLY      0x00000800
+#define STREAM_CONFIG_STATEFUL_INSPECTION      0x00000001
+#define STREAM_CONFIG_LOG_STREAMS              0x00000004
+#define STREAM_CONFIG_REASS_CLIENT             0x00000008
+#define STREAM_CONFIG_REASS_SERVER             0x00000010
+#define STREAM_CONFIG_ASYNC                    0x00000020
+#define STREAM_CONFIG_SHOW_PACKETS             0x00000040
+#define STREAM_CONFIG_MIDSTREAM_DROP_NOALERT   0x00000080
+#define STREAM_CONFIG_IGNORE_ANY               0x00000100
+#define STREAM_CONFIG_STATIC_FLUSHPOINTS       0x00000200
+#define STREAM_CONFIG_IPS                      0x00000400
+#define STREAM_CONFIG_NO_ASYNC_REASSEMBLY      0x00000800
 
 /* traffic direction identification */
 #define FROM_SERVER     0
@@ -86,20 +86,20 @@ private:
 /*  D A T A   S T R U C T U R E S  **********************************/
 // FIXIT-L some of this stuff can be better encapsulated
 
-struct Stream5GlobalConfig
+struct StreamGlobalConfig
 {
     uint32_t prune_log_max;
     uint32_t flags;
 
-    Stream5GlobalConfig();
+    StreamGlobalConfig();
 };
 
-struct Stream5Config
+struct StreamConfig
 {
     class FlowControl* fc;
     class Stream* stream;
 
-    struct Stream5GlobalConfig *global_config;
+    struct StreamGlobalConfig *global_config;
     uint8_t service_filter[MAX_PROTOCOL_ORDINAL];
 };
 

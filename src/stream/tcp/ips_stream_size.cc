@@ -181,12 +181,12 @@ int SizeOption::eval(Cursor&, Packet* pkt)
 
     switch (ssod.direction)
     {
-    case SSN_DIR_CLIENT:
+    case SSN_DIR_FROM_CLIENT:
         if ( ssod.compare(client_size, ssod.size) )
             result = DETECTION_OPTION_MATCH;
         break;
 
-    case SSN_DIR_SERVER:
+    case SSN_DIR_FROM_SERVER:
         if ( ssod.compare(server_size, ssod.size) )
             result = DETECTION_OPTION_MATCH;
         break;

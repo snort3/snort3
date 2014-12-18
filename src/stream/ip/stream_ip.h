@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef STREAM5_IP_H
-#define STREAM5_IP_H
+#ifndef STREAM_IP_H
+#define STREAM_IP_H
 
 #include "flow/flow.h"
 

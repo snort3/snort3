@@ -29,7 +29,7 @@ using namespace std;
 
 static constexpr unsigned K = 1024;
 
-static StreamConfig stream_cfg = 
+static StreamModuleConfig stream_cfg = 
 {
     // bytes, #, sec, sec
     { 8*K,  16*K, 30, 180 },  // ip
@@ -88,7 +88,7 @@ const PegInfo* StreamModule::get_pegs() const
 ProfileStats* StreamModule::get_profile() const
 { return &s5PerfStats; }
 
-const StreamConfig* StreamModule::get_data()
+const StreamModuleConfig* StreamModule::get_data()
 {
     return &stream_cfg;
 }

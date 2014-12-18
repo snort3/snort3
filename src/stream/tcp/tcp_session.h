@@ -57,12 +57,12 @@ struct StateMgr
 //
 // -- event id and second are added to the session alert trackers so that
 //    the extra data can be correlated with events
-// -- event id and second are not available when Stream5AddSessionAlertTcp
-//    is called; u2 calls Stream5UpdateSessionAlertTcp as events are logged
+// -- event id and second are not available when StreamAddSessionAlertTcp
+//    is called; u2 calls StreamUpdateSessionAlertTcp as events are logged
 //    to set these fields
 //-------------------------------------------------------------------------
 
-struct Stream5AlertInfo
+struct StreamAlertInfo
 {
     /* For storing alerts that have already been seen on the session */
     uint32_t sid;
@@ -130,7 +130,7 @@ struct StreamTracker
     // manipulate within this module.
     PAF_State paf_state;    // for tracking protocol aware flushing
 
-    Stream5AlertInfo alerts[MAX_SESSION_ALERTS]; /* history of alerts */
+    StreamAlertInfo alerts[MAX_SESSION_ALERTS]; /* history of alerts */
 
     StreamTcpConfig* config;
     StreamSegment *seglist;       /* first queued segment */

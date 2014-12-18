@@ -19,8 +19,8 @@
  *
  ****************************************************************************/
 
-#ifndef STREAM5_UDP_H
-#define STREAM5_UDP_H
+#ifndef STREAM_UDP_H
+#define STREAM_UDP_H
 
 #include "flow/flow.h"
 

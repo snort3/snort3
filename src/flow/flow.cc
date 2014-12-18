@@ -136,7 +136,7 @@ void Flow::restart(bool freeAppData)
     s5_state.ignore_direction = 0;
     s5_state.session_flags = SSNFLAG_NONE;
 
-    session_state = STREAM5_STATE_NONE;
+    session_state = STREAM_STATE_NONE;
     expire_time = 0;
 }
 

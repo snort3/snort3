@@ -20,8 +20,8 @@
  *
  ****************************************************************************/
  
-#ifndef STREAM5_ICMP_H
-#define STREAM5_ICMP_H
+#ifndef STREAM_ICMP_H
+#define STREAM_ICMP_H
 
 #include "main/snort_types.h"
 

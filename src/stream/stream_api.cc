@@ -170,7 +170,7 @@ void Stream::check_session_closed(Packet* p)
     if (!p || !flow)
         return;
 
-    if (flow->session_state & STREAM5_STATE_CLOSED)
+    if (flow->session_state & STREAM_STATE_CLOSED)
     {
         assert(flow_con);
         flow_con->delete_flow(flow, "closed");
@@ -202,8 +202,8 @@ void Stream::stop_inspection(
     switch (dir)
     {
         case SSN_DIR_BOTH:
-        case SSN_DIR_CLIENT:
-        case SSN_DIR_SERVER:
+        case SSN_DIR_FROM_CLIENT:
+        case SSN_DIR_FROM_SERVER:
             if (flow->s5_state.ignore_direction != dir)
             {
                 flow->s5_state.ignore_direction = dir;
@@ -214,14 +214,14 @@ void Stream::stop_inspection(
     /* Flush any queued data on the client and/or server */
     if (flow->protocol == PktType::TCP)
     {
-        if (flow->s5_state.ignore_direction & SSN_DIR_CLIENT)
+        if (flow->s5_state.ignore_direction & SSN_DIR_FROM_CLIENT)
         {
-            Stream5FlushClient(p, flow);
+            StreamFlushClient(p, flow);
         }
 
-        if (flow->s5_state.ignore_direction & SSN_DIR_SERVER)
+        if (flow->s5_state.ignore_direction & SSN_DIR_FROM_SERVER)
         {
-            Stream5FlushServer(p, flow);
+            StreamFlushServer(p, flow);
         }
     }
 
@@ -239,8 +239,8 @@ void Stream::resume_inspection(Flow* flow, char dir)
     switch (dir)
     {
         case SSN_DIR_BOTH:
-        case SSN_DIR_CLIENT:
-        case SSN_DIR_SERVER:
+        case SSN_DIR_FROM_CLIENT:
+        case SSN_DIR_FROM_SERVER:
             if (flow->s5_state.ignore_direction & dir)
             {
                 flow->s5_state.ignore_direction &= ~dir;
@@ -274,14 +274,14 @@ void Stream::drop_traffic(Flow* flow, char dir)
     if (!flow)
         return;
 
-    if ((dir & SSN_DIR_CLIENT) && !(flow->s5_state.session_flags & SSNFLAG_DROP_CLIENT))
+    if ((dir & SSN_DIR_FROM_CLIENT) && !(flow->s5_state.session_flags & SSNFLAG_DROP_CLIENT))
     {
         flow->s5_state.session_flags |= SSNFLAG_DROP_CLIENT;
         if ( Active_PacketForceDropped() )
             flow->s5_state.session_flags |= SSNFLAG_FORCE_BLOCK;
     }
 
-    if ((dir & SSN_DIR_SERVER) && !(flow->s5_state.session_flags & SSNFLAG_DROP_SERVER))
+    if ((dir & SSN_DIR_FROM_SERVER) && !(flow->s5_state.session_flags & SSNFLAG_DROP_SERVER))
     {
         flow->s5_state.session_flags |= SSNFLAG_DROP_SERVER;
         if ( Active_PacketForceDropped() )
@@ -401,7 +401,7 @@ void Stream::set_application_protocol_id_from_host_entry(
         set_ip_protocol(flow);
     }
 
-    if (direction == SSN_DIR_SERVER)
+    if (direction == SSN_DIR_FROM_SERVER)
     {
         application_protocol = getApplicationProtocolId(
             host_entry, flow->s5_state.ipprotocol,
@@ -449,7 +449,7 @@ int16_t Stream::get_application_protocol_id(Flow* flow)
     host_entry = SFAT_LookupHostEntryByIP(&flow->server_ip);
     if (host_entry)
     {
-        set_application_protocol_id_from_host_entry(flow, host_entry, SSN_DIR_SERVER);
+        set_application_protocol_id_from_host_entry(flow, host_entry, SSN_DIR_FROM_SERVER);
 
         if (flow->s5_state.application_protocol != 0)
         {
@@ -461,7 +461,7 @@ int16_t Stream::get_application_protocol_id(Flow* flow)
 
     if (host_entry)
     {
-        set_application_protocol_id_from_host_entry(flow, host_entry, SSN_DIR_CLIENT);
+        set_application_protocol_id_from_host_entry(flow, host_entry, SSN_DIR_FROM_CLIENT);
 
         if (flow->s5_state.application_protocol != 0)
         {
@@ -500,17 +500,17 @@ int16_t Stream::set_application_protocol_id(Flow* flow, int16_t id)
 
 bool Stream::is_paf_active(Flow* flow, bool to_server)
 {
-    return Stream5IsPafActiveTcp(flow, to_server);
+    return StreamIsPafActiveTcp(flow, to_server);
 }
 
 void Stream::set_splitter(Flow* flow, bool to_server, StreamSplitter* ss)
 {
-    return Stream5SetSplitterTcp(flow, to_server, ss);
+    return StreamSetSplitterTcp(flow, to_server, ss);
 }
 
 StreamSplitter* Stream::get_splitter(Flow* flow, bool to_server)
 {
-    return Stream5GetSplitterTcp(flow, to_server);
+    return StreamGetSplitterTcp(flow, to_server);
 }
 
 //-------------------------------------------------------------------------
@@ -608,7 +608,7 @@ uint8_t Stream::get_session_ttl(Flow* flow, char dir, bool outer)
     if ( !flow )
         return 0;
 
-    if ( SSN_DIR_CLIENT == dir )
+    if ( SSN_DIR_FROM_CLIENT == dir )
         return outer ? flow->outer_client_ttl : flow->inner_client_ttl;
 
     return outer ? flow->outer_server_ttl : flow->inner_server_ttl;
@@ -626,23 +626,23 @@ static void active_response(Packet* p, Flow *lwssn)
     uint8_t max = snort_conf->max_responses;
 
     if ( p->packet_flags & PKT_FROM_CLIENT )
-        lwssn->session_state |= STREAM5_STATE_DROP_CLIENT;
+        lwssn->session_state |= STREAM_STATE_DROP_CLIENT;
     else
-        lwssn->session_state |= STREAM5_STATE_DROP_SERVER;
+        lwssn->session_state |= STREAM_STATE_DROP_SERVER;
 
     if ( (lwssn->response_count < max) && lwssn->get_expire(p) )
     {
         uint32_t delay = snort_conf->min_interval;
         EncodeFlags flags =
-            ( (lwssn->session_state & STREAM5_STATE_DROP_CLIENT) &&
-              (lwssn->session_state & STREAM5_STATE_DROP_SERVER) ) ?
+            ( (lwssn->session_state & STREAM_STATE_DROP_CLIENT) &&
+              (lwssn->session_state & STREAM_STATE_DROP_SERVER) ) ?
             ENC_FLAG_FWD : 0;  // reverse dir is always true
 
         Active_KillSession(p, &flags);
         ++lwssn->response_count;
         lwssn->set_expire(p, delay);
 
-        lwssn->session_state &= ~(STREAM5_STATE_DROP_CLIENT|STREAM5_STATE_DROP_SERVER);
+        lwssn->session_state &= ~(STREAM_STATE_DROP_CLIENT|STREAM_STATE_DROP_SERVER);
     }
 }
 
@@ -674,13 +674,13 @@ bool Stream::ignored_session (Flow* flow, Packet* p)
 {
     if (
         ((p->packet_flags & PKT_FROM_SERVER) &&
-            (flow->s5_state.ignore_direction & SSN_DIR_CLIENT)) ||
+            (flow->s5_state.ignore_direction & SSN_DIR_FROM_CLIENT)) ||
 
         ((p->packet_flags & PKT_FROM_CLIENT) &&
-            (flow->s5_state.ignore_direction & SSN_DIR_SERVER)) )
+            (flow->s5_state.ignore_direction & SSN_DIR_FROM_SERVER)) )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-            "Stream5 Ignoring packet from %d. Session marked as ignore\n",
+            "Stream Ignoring packet from %d. Session marked as ignore\n",
             p->packet_flags & PKT_FROM_CLIENT? "sender" : "responder"););
 
         DisableInspection(p);
@@ -690,21 +690,21 @@ bool Stream::ignored_session (Flow* flow, Packet* p)
     return false;
 }
 
-static int Stream5ExpireSession(Flow *lwssn)
+static int StreamExpireSession(Flow *lwssn)
 {
     sfBase.iStreamTimeouts++;
     lwssn->s5_state.session_flags |= SSNFLAG_TIMEDOUT;
-    lwssn->session_state |= STREAM5_STATE_TIMEDOUT;
+    lwssn->session_state |= STREAM_STATE_TIMEDOUT;
 
     return 1;
 }
 
-static int Stream5Expire(Packet *p, Flow *lwssn)
+static int StreamExpire(Packet *p, Flow *lwssn)
 {
     if ( lwssn->expired(p) )
     {
         /* Expiration time has passed. */
-        return Stream5ExpireSession(lwssn);
+        return StreamExpireSession(lwssn);
     }
 
     return 0;
@@ -712,10 +712,10 @@ static int Stream5Expire(Packet *p, Flow *lwssn)
 
 bool Stream::expired_session (Flow* flow, Packet* p)
 {
-    if ( (flow->session_state & STREAM5_STATE_TIMEDOUT)
-        || Stream5Expire(p, flow) )
+    if ( (flow->session_state & STREAM_STATE_TIMEDOUT)
+        || StreamExpire(p, flow) )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "Stream5 IP session timeout!\n"););
+        DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "Stream IP session timeout!\n"););
         flow->s5_state.session_flags |= SSNFLAG_TIMEDOUT;
         return true;
     }
@@ -775,7 +775,7 @@ int Stream::response_flush_stream(Packet *p)
 
     /* Flush the talker queue -- this is the opposite side that
      * the packet gets inserted into */
-    Stream5FlushTalker(p, flow);
+    StreamFlushTalker(p, flow);
 
     return 0;
 }
@@ -813,7 +813,7 @@ int Stream::update_session_alert(
     if ( p->type() != PktType::TCP )
         return 0;
 
-    return Stream5UpdateSessionAlertTcp(flow, p, gid, sid, event_id, event_second);
+    return StreamUpdateSessionAlertTcp(flow, p, gid, sid, event_id, event_second);
 }
 
 void Stream::set_extra_data(
@@ -824,7 +824,7 @@ void Stream::set_extra_data(
     if ( !flow )
         return;
 
-    Stream5SetExtraDataTcp(flow, p, flag);
+    StreamSetExtraDataTcp(flow, p, flag);
 }
 
 // FIXIT-L get pv/flow from packet directly?
@@ -836,7 +836,7 @@ void Stream::clear_extra_data(
     if ( !flow )
         return;
 
-    Stream5ClearExtraDataTcp(flow, p, flag);
+    StreamClearExtraDataTcp(flow, p, flag);
 }
 
 int Stream::traverse_reassembled(
@@ -874,7 +874,7 @@ char Stream::get_reassembly_direction(Flow* flow)
     if (!flow || flow->protocol != PktType::TCP)
         return SSN_DIR_NONE;
 
-    return Stream5GetReassemblyDirectionTcp(flow);
+    return StreamGetReassemblyDirectionTcp(flow);
 }
 
 char Stream::is_stream_sequenced(Flow* flow, char dir)
@@ -882,7 +882,7 @@ char Stream::is_stream_sequenced(Flow* flow, char dir)
     if (!flow || flow->protocol != PktType::TCP)
         return 1;
 
-    return Stream5IsStreamSequencedTcp(flow, dir);
+    return StreamIsStreamSequencedTcp(flow, dir);
 }
 
 int Stream::missing_in_reassembled(Flow* flow, char dir)
@@ -890,7 +890,7 @@ int Stream::missing_in_reassembled(Flow* flow, char dir)
     if (!flow || flow->protocol != PktType::TCP)
         return SSN_MISSING_NONE;
 
-    return Stream5MissingInReassembledTcp(flow, dir);
+    return StreamMissingInReassembledTcp(flow, dir);
 }
 
 char Stream::missed_packets(Flow* flow, char dir)
@@ -898,6 +898,6 @@ char Stream::missed_packets(Flow* flow, char dir)
     if (!flow || flow->protocol != PktType::TCP)
         return 1;
 
-    return Stream5PacketsMissingTcp(flow, dir);
+    return StreamPacketsMissingTcp(flow, dir);
 }
 

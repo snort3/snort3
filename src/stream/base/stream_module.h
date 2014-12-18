@@ -36,7 +36,7 @@ struct SnortConfig;
 #define MOD_NAME "stream"
 #define MOD_HELP "common flow tracking"
 
-struct StreamConfig
+struct StreamModuleConfig
 {
     FlowConfig ip_cfg;
     FlowConfig icmp_cfg;
@@ -54,7 +54,7 @@ public:
 
     const PegInfo* get_pegs() const override;
     ProfileStats* get_profile() const override;
-    const StreamConfig* get_data();
+    const StreamModuleConfig* get_data();
 
     void sum_stats() override;
     void show_stats() override;

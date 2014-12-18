@@ -103,6 +103,8 @@ static inline int SafeMemCheck(const void *dst, size_t n,
  */
 static inline int SafeMemcpy(void *dst, const void *src, size_t n, const void *start, const void *end)
 {
+    if ( !n )
+        return SAFEMEM_SUCCESS;
     if (SafeMemCheck(dst, n, start, end) != SAFEMEM_SUCCESS)
         ERRORRET;
     if (src == NULL)

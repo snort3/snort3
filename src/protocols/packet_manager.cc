@@ -352,9 +352,9 @@ static inline uint8_t GetTTL(const Packet* const p, EncodeFlags flags)
         return 0;
 
     if ( p->packet_flags & PKT_FROM_CLIENT )
-        dir = forward(flags) ? SSN_DIR_CLIENT : SSN_DIR_SERVER;
+        dir = forward(flags) ? SSN_DIR_FROM_CLIENT : SSN_DIR_FROM_SERVER;
     else
-        dir = forward(flags) ? SSN_DIR_SERVER : SSN_DIR_CLIENT;
+        dir = forward(flags) ? SSN_DIR_FROM_SERVER : SSN_DIR_FROM_CLIENT;
 
     // outermost ip is considered to be outer here,
     // even if it is the only ip layer ...
@@ -626,8 +626,8 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
 //-------------------------------------------------------------------------
 // formatters:
 // - these packets undergo detection
-// - need to set Packet stuff except for frag3 which calls grinder
-// - include original options except for frag3 inner ip
+// - need to set Packet stuff except for frag which calls grinder
+// - include original options except for frag inner ip
 // - inner layer header is very similar but payload differs
 // - original ttl is always used
 //-------------------------------------------------------------------------

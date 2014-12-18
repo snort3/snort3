@@ -192,8 +192,8 @@ int InitBaseStats(SFBASE *sfBase)
     sfBase->total_tcp_filtered_packets = 0;
     sfBase->total_udp_filtered_packets = 0;
 
-    sfBase->frag3_mem_in_use = 0;
-    sfBase->stream5_mem_in_use = 0;
+    sfBase->frag_mem_in_use = 0;
+    sfBase->stream_mem_in_use = 0;
     sfBase->total_iAlerts = 0;
 
     return 0;
@@ -1079,8 +1079,8 @@ static int CalculateBasePerfStats(SFBASE *sfBase, SFBASE_STATS *sfBaseStats, int
     sfBaseStats->current_attribute_hosts = sfBase->iAttributeHosts;
     sfBaseStats->attribute_table_reloads = sfBase->iAttributeReloads;
 
-    sfBaseStats->frag3_mem_in_use = sfBase->frag3_mem_in_use;
-    sfBaseStats->stream5_mem_in_use = sfBase->stream5_mem_in_use;
+    sfBaseStats->frag_mem_in_use = sfBase->frag_mem_in_use;
+    sfBaseStats->stream_mem_in_use = sfBase->stream_mem_in_use;
 
     /*
     **  Set the date string for print out
@@ -1391,9 +1391,9 @@ static void LogBasePerfStats(SFBASE_STATS *sfBaseStats,  FILE * fh )
     size += SafeSnprintf(buff + size, sizeof(buff) - size, 
         CSVu64, sfBaseStats->total_injected_packets);
     size += SafeSnprintf(buff + size, sizeof(buff) - size, 
-        CSVu64, sfBaseStats->frag3_mem_in_use);
+        CSVu64, sfBaseStats->frag_mem_in_use);
     size += SafeSnprintf(buff + size, sizeof(buff) - size, 
-        CSVu64, sfBaseStats->stream5_mem_in_use);
+        CSVu64, sfBaseStats->stream_mem_in_use);
 
     size += SafeSnprintf(buff + size, sizeof(buff) - size, 
         "%.3f", sfBaseStats->total_alerts_per_second);
@@ -1579,8 +1579,8 @@ void LogBasePerfHeader (FILE* fh)
     fprintf(fh,
         ",%s,%s,%s",
         "total_injected_packets",
-        "frag3_mem_in_use",
-        "stream5_mem_in_use");
+        "frag_mem_in_use",
+        "stream_mem_in_use");
 
     fprintf(fh, ",%s",
         "total_alerts_per_second");

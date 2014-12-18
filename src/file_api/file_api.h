@@ -203,7 +203,7 @@ typedef struct _file_api
     Render_block_verdict_func render_block_verdict;
 } FileAPI;
 
-/* To be set by Stream5 */
+/* To be set by Stream */
 SO_PUBLIC extern FileAPI *file_api;
 extern File_type_done_func file_type_done;
 extern File_signature_done_func file_signature_done;

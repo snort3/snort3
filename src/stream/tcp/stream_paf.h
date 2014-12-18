@@ -27,8 +27,8 @@
 // @author  Russ Combs <rcombs@sourcefire.com>
 //--------------------------------------------------------------------
 
-#ifndef STREAM5_PAF_H
-#define STREAM5_PAF_H
+#ifndef STREAM_PAF_H
+#define STREAM_PAF_H
 
 #include <stdint.h>
 #include "snort_types.h"

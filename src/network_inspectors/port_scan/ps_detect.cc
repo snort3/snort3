@@ -841,8 +841,8 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
     **  we will use the available stream4 information.  Otherwise, we
     **  can just revert to flow and look for initiators and responders.
     **
-    **  For Stream5, depending on the configuration, there might not
-    **  be a session created only based on the SYN packet.  Stream5
+    **  For Stream, depending on the configuration, there might not
+    **  be a session created only based on the SYN packet.  Stream
     **  by default has code that helps deal with SYN flood attacks,
     **  and may simply ignore the SYN.  In this case, we fall through
     **  to the checks for specific TCP header files (SYN, SYN-ACK, RST).
