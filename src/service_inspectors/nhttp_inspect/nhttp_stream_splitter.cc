@@ -143,11 +143,16 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
           case SCAN_NOTFOUND:
             if (splitter->get_octets_seen() == MAXOCTETS) {
                 // FIXIT-H need to process this data (except chunk header) not just discard it.
-                prepare_flush(session_data, flush_offset, SEC_DISCARD, tcp_close, 0, length, length, 0, false);
                 session_data->type_expected[source_id] = SEC_ABORT;
                 delete splitter;
                 splitter = nullptr;
-                return StreamSplitter::FLUSH;
+                if (!NHttpTestManager::use_test_input()) {
+                    return StreamSplitter::ABORT;
+                }
+                else {
+                    NHttpTestManager::get_test_input_source()->discard(length);
+                    return StreamSplitter::FLUSH;
+                }
             }
             if (tcp_close) {
                 if (splitter->partial_ok()) {
@@ -167,11 +172,16 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
             // Incomplete headers wait patiently for more data
             return NHttpTestManager::use_test_input() ? StreamSplitter::FLUSH : StreamSplitter::SEARCH;
           case SCAN_ABORT:
-            prepare_flush(session_data, flush_offset, SEC_DISCARD, tcp_close, 0, length, length, 0, false);
             session_data->type_expected[source_id] = SEC_ABORT;
             delete splitter;
             splitter = nullptr;
-            return StreamSplitter::FLUSH;
+            if (!NHttpTestManager::use_test_input()) {
+                return StreamSplitter::ABORT;
+            }
+            else {
+                NHttpTestManager::get_test_input_source()->discard(length);
+                return StreamSplitter::FLUSH;
+            }
           case SCAN_DISCARD:
           case SCAN_DISCARD_CONTINUE: {
             const uint32_t flush_octets = splitter->get_num_flush();
@@ -241,7 +251,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
         uint8_t* test_buffer;
         NHttpTestManager::get_test_input_source()->reassemble(&test_buffer, len, source_id, session_data, tcp_close);
         if (test_buffer == nullptr) {
-            // Source ID does not match test data or there is no more test data
+            // Source ID does not match test data, no test data was flushed, or there is no more test data
             return nullptr;
         }
         data = test_buffer;
@@ -255,9 +265,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
     if (session_data->section_type[source_id] == SEC__NOTCOMPUTE) {
         // FIXIT-M Apparently scan() did not flush this data. Probably Stream is flushing excess data while it prunes
         // a session. In any event it doesn't belong here because we cannot process it. Forward it to our parent class
-        // for processing. There should be no more calls to scan() for this session but tell it to abort just in case.
-
-        session_data->type_expected[source_id] = SEC_ABORT;
+        // for processing.
         return StreamSplitter::reassemble(flow, total, offset, data, len, flags, copied);
     }
 
