@@ -28,7 +28,8 @@ nhttp_splitter.cc nhttp_splitter.h \
 nhttp_scratch_pad.h \
 nhttp_enum.h \
 nhttp_test_manager.cc nhttp_test_manager.h \
-nhttp_field.cc nhttp_field.h
+nhttp_field.cc nhttp_field.h \
+nhttp_infractions.h
 
 if STATIC_INSPECTORS
 noinst_LIBRARIES = libnhttp_inspect.a

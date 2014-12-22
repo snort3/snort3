@@ -43,13 +43,13 @@ void NHttpMsgStart::derive_version_id() {
     }
     if (version.length != 8) {
         version_id = VERS__PROBLEMATIC;
-        infractions |= INF_BADVERSION;
+        infractions += INF_BADVERSION;
         return;
     }
 
     if (memcmp(version.start, "HTTP/", 5) || (version.start[6] != '.')) {
         version_id = VERS__PROBLEMATIC;
-        infractions |= INF_BADVERSION;
+        infractions += INF_BADVERSION;
     }
     else if ((version.start[5] == '1') && (version.start[7] == '1')) {
         version_id = VERS_1_1;
@@ -63,11 +63,11 @@ void NHttpMsgStart::derive_version_id() {
     else if ((version.start[5] >= '0') && (version.start[5] <= '9') &&
              (version.start[7] >= '0') && (version.start[7] <= '9')) {
         version_id = VERS__OTHER;
-        infractions |= INF_UNKNOWNVERSION;
+        infractions += INF_UNKNOWNVERSION;
     }
     else {
         version_id = VERS__PROBLEMATIC;
-        infractions |= INF_BADVERSION;
+        infractions += INF_BADVERSION;
     }
 }
 

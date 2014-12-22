@@ -51,6 +51,7 @@ set (FILE_LIST
     nhttp_stream_splitter.h
     nhttp_splitter.cc
     nhttp_splitter.h
+    nhttp_infractions.h
 )
 
 if (STATIC_INSPECTORS)

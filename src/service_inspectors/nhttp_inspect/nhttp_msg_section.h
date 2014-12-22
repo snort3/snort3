@@ -25,6 +25,7 @@
 #include "nhttp_field.h"
 #include "nhttp_flow_data.h"
 #include "nhttp_transaction.h"
+#include "nhttp_infractions.h"
 
 //-------------------------------------------------------------------------
 // NHttpMsgSection class
@@ -66,7 +67,7 @@ protected:
     const bool tcp_close;
     ScratchPad scratch_pad;
 
-    uint64_t infractions;
+    NHttpInfractions infractions;
     uint64_t events_generated = 0;
     NHttpEnums::VersionId version_id;
     NHttpEnums::MethodId method_id;

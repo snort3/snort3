@@ -25,6 +25,7 @@
 #include "stream/stream_api.h"
 
 #include "nhttp_splitter.h"
+#include "nhttp_infractions.h"
 
 class NHttpTransaction;
 
@@ -63,14 +64,14 @@ private:
     int32_t chunk_buffer_length[2] = { 0, 0 };
     bool chunk_buffer_owned[2] = { true, true }; // never actually false and not checked, just here to simplify code
     bool zero_chunk[2] = { false, false };
-    uint64_t chunk_infractions[2] = { 0, 0 };
+    NHttpInfractions chunk_infractions[2];
 
     // StreamSplitter => Inspector (facts about the most recent message section)
     // 0 element refers to client request, 1 element refers to server response
     NHttpEnums::SectionType section_type[2] = { NHttpEnums::SEC__NOTCOMPUTE, NHttpEnums::SEC__NOTCOMPUTE };
     uint32_t num_excess[2] = { 0, 0 };
     bool tcp_close[2] = { false, false };
-    uint64_t infractions[2] = { 0, 0 };
+    NHttpInfractions infractions[2];
     uint32_t unused_octets_visible[2] = { 0, 0 };
     uint32_t header_octets_visible[2] = { 0, 0 };
 

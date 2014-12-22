@@ -24,6 +24,7 @@
 #include <assert.h>
 
 #include "nhttp_enum.h"
+#include "nhttp_infractions.h"
 
 //-------------------------------------------------------------------------
 // NHttpSplitter class
@@ -39,11 +40,12 @@ public:
     virtual uint32_t get_num_excess() const { return 0; };
     virtual bool get_zero_chunk() const { return false; };
     virtual bool partial_ok() const { return true; };
-
+    NHttpInfractions get_infractions() const { return infractions; }
 protected:
     uint32_t octets_seen = 0; // number of octets processed by previous split() calls that returned NOTFOUND
     uint32_t num_crlf = 0;
     uint32_t num_flush = 0;
+    NHttpInfractions infractions;
 };
 
 class NHttpStartSplitter : public NHttpSplitter {

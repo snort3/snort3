@@ -32,7 +32,8 @@ ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length) {
                     num_crlf++;
                     continue;
                 }
-                else { // FIXIT-M there needs to be an event for this
+                else {
+                    infractions += INF_TOOMUCHLEADINGWS;
                     return SCAN_ABORT;
                 }
             }

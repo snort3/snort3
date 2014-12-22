@@ -55,7 +55,7 @@ void NHttpMsgHeadShared::parse_header_block() {
         }
     }
     if (bytes_used < msg_text.length) {
-        infractions |= INF_TOOMANYHEADERS;
+        infractions += INF_TOOMANYHEADERS;
     }
 }
 
@@ -99,7 +99,7 @@ void NHttpMsgHeadShared::parse_header_lines() {
             header_value[k].length = header_line[k].length - colon - 1;
         }
         else {
-            infractions |= INF_BADHEADER;
+            infractions += INF_BADHEADER;
         }
     }
 }
@@ -108,7 +108,7 @@ void NHttpMsgHeadShared::derive_header_name_id(int index) {
     // Normalize header field name to lower case for matching purposes
     uint8_t *lower_name;
     if ((lower_name = scratch_pad.request(header_name[index].length)) == nullptr) {
-        infractions |= INF_NOSCRATCH;
+        infractions += INF_NOSCRATCH;
         header_name_id[index] = HEAD__INSUFMEMORY;
         return;
     }
@@ -123,7 +123,7 @@ const Field& NHttpMsgHeadShared::get_header_value_norm(NHttpEnums::HeaderId head
 }
 
 void NHttpMsgHeadShared::gen_events() {
-    if (infractions & INF_TOOMANYHEADERS) create_event(EVENT_MAX_HEADERS);
+    if (infractions && INF_TOOMANYHEADERS) create_event(EVENT_MAX_HEADERS);
 }
 
 void NHttpMsgHeadShared::print_headers(FILE *output) {

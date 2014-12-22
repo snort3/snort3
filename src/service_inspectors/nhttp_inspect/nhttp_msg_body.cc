@@ -43,7 +43,7 @@ void NHttpMsgBody::analyze() {
     data.start = msg_text.start;
     data.length = msg_text.length;
 
-    if (tcp_close && (body_octets < data_length)) infractions |= INF_TRUNCATED;
+    if (tcp_close && (body_octets < data_length)) infractions += INF_TRUNCATED;
 }
 
 void NHttpMsgBody::gen_events() {

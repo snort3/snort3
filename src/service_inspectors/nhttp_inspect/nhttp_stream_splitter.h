@@ -40,7 +40,7 @@ public:
     unsigned max() override { return NHttpTestManager::use_test_input() ? NHttpEnums::DATABLOCKSIZE : paf_max; };
 private:
     void prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, NHttpEnums::SectionType section_type,
-       bool tcp_close, uint64_t infractions, uint32_t num_octets, uint32_t length, uint32_t num_excess,
+       bool tcp_close, const NHttpInfractions& infractions, uint32_t num_octets, uint32_t length, uint32_t num_excess,
        bool zero_chunk);
     NHttpSplitter* get_splitter(NHttpEnums::SectionType type) const;
 

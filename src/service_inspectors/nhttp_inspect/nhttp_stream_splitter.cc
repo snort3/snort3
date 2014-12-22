@@ -32,7 +32,7 @@ using namespace NHttpEnums;
 
 // Convenience function. All the housekeeping that must be done before we can return FLUSH to stream.
 void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, SectionType section_type,
-      bool tcp_close, uint64_t infractions, uint32_t num_octets, uint32_t length, uint32_t num_excess,
+      bool tcp_close, const NHttpInfractions& infractions, uint32_t num_octets, uint32_t length, uint32_t num_excess,
       bool zero_chunk) {
     session_data->section_type[source_id] = section_type;
     session_data->num_excess[source_id] = num_excess;
@@ -156,14 +156,15 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
             }
             if (tcp_close) {
                 if (splitter->partial_ok()) {
-                    prepare_flush(session_data, flush_offset, type, true, INF_TRUNCATED, length, length,
-                       splitter->get_num_excess(), splitter->get_zero_chunk());
+                    prepare_flush(session_data, flush_offset, type, true, splitter->get_infractions() += INF_TRUNCATED,
+                       length, length, splitter->get_num_excess(), splitter->get_zero_chunk());
                     delete splitter;
                     splitter = nullptr;
                     return StreamSplitter::FLUSH;
                 }
                 else {
-                    prepare_flush(session_data, flush_offset, SEC_DISCARD, true, 0, length, length, 0, false);
+                    prepare_flush(session_data, flush_offset, SEC_DISCARD, true, splitter->get_infractions(), length,
+                       length, 0, false);
                     delete splitter;
                     splitter = nullptr;
                     return StreamSplitter::FLUSH;
@@ -185,8 +186,8 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
           case SCAN_DISCARD:
           case SCAN_DISCARD_CONTINUE: {
             const uint32_t flush_octets = splitter->get_num_flush();
-            prepare_flush(session_data, flush_offset, SEC_DISCARD, tcp_close && (flush_octets >= length), 0,
-               flush_octets, length, 0, false);
+            prepare_flush(session_data, flush_offset, SEC_DISCARD, tcp_close && (flush_octets >= length),
+               splitter->get_infractions(), flush_octets, length, 0, false);
             if (split_result == SCAN_DISCARD) {
                 delete splitter;
                 splitter = nullptr;
@@ -195,8 +196,9 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
           }
           case SCAN_FOUND: {
             const uint32_t flush_octets = splitter->get_num_flush();
-            prepare_flush(session_data, flush_offset, type, tcp_close && (flush_octets == length), 0,
-               flush_octets, length, splitter->get_num_excess(), splitter->get_zero_chunk());
+            prepare_flush(session_data, flush_offset, type, tcp_close && (flush_octets == length),
+               splitter->get_infractions(), flush_octets, length, splitter->get_num_excess(),
+               splitter->get_zero_chunk());
             delete splitter;
             splitter = nullptr;
             if ((type == SEC_REQUEST) || (type == SEC_STATUS)) {
@@ -212,7 +214,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
       }
       case SEC_BODY: {
         prepare_flush(session_data, flush_offset, SEC_BODY,
-           tcp_close && (length <= session_data->data_length[source_id]), 0,
+           tcp_close && (length <= session_data->data_length[source_id]), NHttpInfractions(),
            session_data->data_length[source_id], length, 0, false);
         return StreamSplitter::FLUSH;
       }
@@ -312,7 +314,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             // zero_chunk == true) flushes accumulated chunks.
 
             // infractions for each aggregated small chunk are accumulated here and then restored before processing
-            session_data->chunk_infractions[source_id] |= session_data->infractions[source_id];
+            session_data->chunk_infractions[source_id] += session_data->infractions[source_id];
 
             // FIXIT-M this implementation of the zero-length chunk is temporary until stream can support a zero-
             // octet flush.
@@ -333,7 +335,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             }
             paf_max = DATABLOCKSIZE;
             session_data->infractions[source_id] = session_data->chunk_infractions[source_id];
-            session_data->chunk_infractions[source_id] = 0;
+            session_data->chunk_infractions[source_id] = NHttpInfractions();
             send_to_detection = my_inspector->process(chunk_buffer, total_chunk_len, flow, source_id, true);
             if (session_data->zero_chunk[source_id]) {
                 // zero-length chunk is not visible to inspector. Transition to trailer must be handled here.

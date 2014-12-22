@@ -60,7 +60,7 @@ void NHttpMsgHeader::update_flow() {
         session_data->type_expected[source_id] = SEC_CLOSED;
         session_data->half_reset(source_id);
     }
-    else if (infractions & disaster_mask) {
+    else if (infractions && disaster_mask) {
         session_data->type_expected[source_id] = SEC_ABORT;
         session_data->half_reset(source_id);
     }
