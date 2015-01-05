@@ -1,7 +1,7 @@
 /*
 ** Copyright (C) 2003 Brian Caswell <bmc@snort.org>
 ** Copyright (C) 2003 Michael J. Pomraning <mjp@securepipe.com>
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+** Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
 ** Copyright (C) 2003-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify

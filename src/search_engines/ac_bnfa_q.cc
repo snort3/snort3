@@ -2,7 +2,7 @@
 *   An abstracted interface to the Multi-Pattern Matching routines,
 *   thats why we're passing 'void *' objects around.
 *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+** Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
 *   Copyright (C) 2002-2013 Sourcefire, Inc.
 *   Marc A Norton <mnorton@sourcefire.com>
 *

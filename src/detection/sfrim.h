@@ -4,7 +4,7 @@
  *   Rule Index Map
  *   
  *   author: marc norton
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+** Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
  *   Copyright (C) 2005-2013 Sourcefire, Inc.
  */
 #ifndef SFRIM_H

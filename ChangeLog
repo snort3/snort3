@@ -1,0 +1,21 @@
+15/01/05 - build 132
+
+-- initial partial sync with Snort 297 including bug fixes and variable
+   renaming
+-- malloc info added with -v
+-- updated source copyrights for 2015
+
+14/12/16 - build 131
+-- updates to doc to better explain github builds
+-- fix default init for new_http_inspect
+-- fix cmake issues reported by Y M, bump build #, update default manuals
+-- fix asciidoc formatting
+-- add missing g++ dependency to doc reported by Bill Parker
+-- add general fp re-search solution for fp buffers further restricted
+   during rule eval; fixes issue reported by @rmkml
+-- add missing sanity checks reported by bill parker
+-- tweak READMEs
+
+14/12/11 - build 130
+-- alpha 1 release
+
