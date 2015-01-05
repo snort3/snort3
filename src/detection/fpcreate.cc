@@ -308,7 +308,7 @@ static int ServiceMapAddOtn(srmm_table_t *srmm, int proto, char *servicename, Op
     }
     else if( proto ==  ETHERNET_TYPE_IP )
     {
-        to_srv = srmm->tcp_to_srv;
+        to_srv = srmm->ip_to_srv;
         to_cli = srmm->ip_to_cli;
     }
     else

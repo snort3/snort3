@@ -196,7 +196,7 @@ static int ProcessIcmpUnreach(Packet *p)
             "Marking session as dead, per ICMP Unreachable!\n"););
         ssn->ssn_state.session_flags |= SSNFLAG_DROP_CLIENT;
         ssn->ssn_state.session_flags |= SSNFLAG_DROP_SERVER;
-        ssn->session_state |= STREAM5_STATE_UNREACH;
+        ssn->session_state |= STREAM_STATE_UNREACH;
     }
 
     return 0;
@@ -251,7 +251,7 @@ void IcmpSession::update_direction(char dir, const sfip_t *ip, uint16_t)
 {
     if (sfip_equals(&icmp_sender_ip, ip))
     {
-        if ((dir == SSN_DIR_SENDER) && (flow->ssn_state.direction == SSN_DIR_SENDER))
+        if ((dir == SSN_DIR_FROM_SENDER) && (flow->ssn_state.direction == SSN_DIR_FROM_SENDER))
         {
             /* Direction already set as SENDER */
             return;
@@ -259,7 +259,8 @@ void IcmpSession::update_direction(char dir, const sfip_t *ip, uint16_t)
     }
     else if (sfip_equals(&icmp_responder_ip, ip))
     {
-        if ((dir == SSN_DIR_RESPONDER) && (flow->ssn_state.direction == SSN_DIR_RESPONDER))
+        if ((dir == SSN_DIR_FROM_RESPONDER) && 
+            (flow->ssn_state.direction == SSN_DIR_FROM_RESPONDER))
         {
             /* Direction already set as RESPONDER */
             return;

@@ -69,19 +69,19 @@
 
 #define SSNFLAG_BLOCK (SSNFLAG_DROP_CLIENT|SSNFLAG_DROP_SERVER)
 
-#define STREAM5_STATE_NONE              0x0000
-#define STREAM5_STATE_SYN               0x0001
-#define STREAM5_STATE_SYN_ACK           0x0002
-#define STREAM5_STATE_ACK               0x0004
-#define STREAM5_STATE_ESTABLISHED       0x0008
-#define STREAM5_STATE_DROP_CLIENT       0x0010
-#define STREAM5_STATE_DROP_SERVER       0x0020
-#define STREAM5_STATE_MIDSTREAM         0x0040
-#define STREAM5_STATE_TIMEDOUT          0x0080
-#define STREAM5_STATE_UNREACH           0x0100
-#define STREAM5_STATE_CLOSED            0x0800
-#define STREAM5_STATE_IGNORE            0x1000
-#define STREAM5_STATE_NO_PICKUP         0x2000
+#define STREAM_STATE_NONE              0x0000
+#define STREAM_STATE_SYN               0x0001
+#define STREAM_STATE_SYN_ACK           0x0002
+#define STREAM_STATE_ACK               0x0004
+#define STREAM_STATE_ESTABLISHED       0x0008
+#define STREAM_STATE_DROP_CLIENT       0x0010
+#define STREAM_STATE_DROP_SERVER       0x0020
+#define STREAM_STATE_MIDSTREAM         0x0040
+#define STREAM_STATE_TIMEDOUT          0x0080
+#define STREAM_STATE_UNREACH           0x0100
+#define STREAM_STATE_CLOSED            0x0800
+#define STREAM_STATE_IGNORE            0x1000
+#define STREAM_STATE_NO_PICKUP         0x2000
 
 struct Packet;
 

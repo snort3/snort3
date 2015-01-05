@@ -110,14 +110,14 @@ static int ProcessUdp(
     if(p->packet_flags & PKT_FROM_SERVER)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Stream5: Updating on packet from responder\n"););
+                    "Stream: Updating on packet from responder\n"););
         lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_RESPONDER;
         lwssn->set_ttl(p, false);
     }
     else
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-            "Stream5: Updating on packet from client\n"););
+            "Stream: Updating on packet from client\n"););
         lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
         lwssn->set_ttl(p, true);
     }
@@ -187,7 +187,7 @@ void UdpSession::update_direction(
 
     if (sfip_equals(&flow->client_ip, ip) && (flow->client_port == port))
     {
-        if ((dir == SSN_DIR_SENDER) && (flow->ssn_state.direction == SSN_DIR_SENDER))
+        if ((dir == SSN_DIR_FROM_SENDER) && (flow->ssn_state.direction == SSN_DIR_FROM_SENDER))
         {
             /* Direction already set as SENDER */
             return;
@@ -195,7 +195,8 @@ void UdpSession::update_direction(
     }
     else if (sfip_equals(&flow->server_ip, ip) && (flow->server_port == port))
     {
-        if ((dir == SSN_DIR_RESPONDER) && (flow->ssn_state.direction == SSN_DIR_RESPONDER))
+        if ((dir == SSN_DIR_FROM_RESPONDER) && 
+            (flow->ssn_state.direction == SSN_DIR_FROM_RESPONDER))
         {
             /* Direction already set as RESPONDER */
             return;

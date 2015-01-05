@@ -28,7 +28,7 @@
 
 #define NUM_BYTE_EXTRACT_VARS 2
 #define BYTE_EXTRACT_NO_VAR -1
-#define BYTE_EXTRACT_INVALID_ERR_STR "Rule option uses an undefined byte_extract variable name."
+#define BYTE_EXTRACT_INVALID_ERR_STR "%s uses an undefined byte_extract variable (%s)"
 
 SO_PUBLIC int8_t GetVarByName(const char *name);
 

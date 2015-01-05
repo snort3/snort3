@@ -433,8 +433,8 @@ bool ExpectCache::is_expected(Packet* p)
     {
         case SSN_DIR_BOTH:
             break;
-        case SSN_DIR_CLIENT:
-        case SSN_DIR_SERVER:
+        case SSN_DIR_FROM_CLIENT:
+        case SSN_DIR_FROM_SERVER:
             if (node->reversed_key != reversed_key)
                 return false;
             break;

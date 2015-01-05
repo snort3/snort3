@@ -1023,9 +1023,9 @@ void RpcDecode::eval(Packet *p)
     // preconditions - what we registered for
     assert(p->is_tcp() && p->dsize);
 
-    /* If we're stateful that means stream5 has been configured.
+    /* If we're stateful that means stream has been configured.
      * In this case we don't look at server packets.
-     * There is the case were stream5 configuration requires a 3 way handshake.
+     * There is the case were stream configuration requires a 3 way handshake.
      * If no 3 way, then the packet flags won't be set, so don't look at it
      * since we won't be able to determeine who's the client and who's the server. */
     if ( !(p->packet_flags & PKT_FROM_CLIENT) )

@@ -52,6 +52,11 @@ public:
     unsigned size() const
     { return sz; };
 
+    // the NEXT octect after last in buffer
+    // (this pointer is out of bounds)
+    const uint8_t* endo() const
+    { return data + sz; };
+
     const uint8_t* start() const
     { return data + pos; };
 

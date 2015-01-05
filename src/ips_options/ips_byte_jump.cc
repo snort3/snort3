@@ -392,7 +392,7 @@ bool ByteJumpModule::end(const char*, int, SnortConfig*)
 
         if (data.offset_var == BYTE_EXTRACT_NO_VAR)
         {
-            ParseError("%s", BYTE_EXTRACT_INVALID_ERR_STR);
+            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "byte_jump", var.c_str());
             return false;
         }
     }
@@ -401,7 +401,7 @@ bool ByteJumpModule::end(const char*, int, SnortConfig*)
     
     if ( e1 && e2 )
     {
-        ParseError("byte_extract rule option has multiple arguments "
+        ParseError("byte_jump has multiple arguments "
             "specifying the type of string conversion. Use only "
             "one of 'dec', 'hex', or 'oct'.");
         return false;

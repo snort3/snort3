@@ -330,7 +330,6 @@ void CollectRTNProfile(void)
     OTN_WorstPerformer *owp, *node, *last = NULL;
     char got_position;
     SFGHASH_NODE *hashNode;
-    PolicyId policyId = 0;
     SnortConfig *sc = snort_conf;
 
     if (sc == NULL)
@@ -345,9 +344,6 @@ void CollectRTNProfile(void)
 
         sum_otn_profile_data(state);
 
-        for ( policyId = 0;
-              policyId < otn->proto_node_num;
-              policyId++ )
         {
             /* Only log info if OTN has actually been eval'd */
             if (state->checks > 0 && state->ticks > 0)

@@ -264,7 +264,7 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
         config->footprint = v.get_long();
 
     else if ( v.is("ignore_any_rules") )
-        config->flags |= STREAM5_CONFIG_IGNORE_ANY;
+        config->flags |= STREAM_CONFIG_IGNORE_ANY;
 
     else if ( v.is("max_bytes") )
         config->max_queued_bytes = v.get_long();
@@ -290,9 +290,9 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("reassemble_async") )
     {
         if ( v.get_bool() )
-            config->flags &= ~STREAM5_CONFIG_NO_ASYNC_REASSEMBLY;
+            config->flags &= ~STREAM_CONFIG_NO_ASYNC_REASSEMBLY;
         else
-            config->flags |= STREAM5_CONFIG_NO_ASYNC_REASSEMBLY;
+            config->flags |= STREAM_CONFIG_NO_ASYNC_REASSEMBLY;
     }
     else if ( v.is("require_3whs") )
     {
@@ -301,9 +301,9 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("show_rebuilt_packets") )
     {
         if ( v.get_bool() )
-            config->flags |= STREAM5_CONFIG_SHOW_PACKETS;
+            config->flags |= STREAM_CONFIG_SHOW_PACKETS;
         else
-            config->flags &= ~STREAM5_CONFIG_SHOW_PACKETS;
+            config->flags &= ~STREAM_CONFIG_SHOW_PACKETS;
     }
 
     else
