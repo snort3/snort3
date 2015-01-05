@@ -48,11 +48,11 @@ void IpSessionCleanup (Flow* lws, FragTracker* tracker)
         d->cleanup(tracker);
     }
 
-    if (lws->s5_state.session_flags & SSNFLAG_PRUNED)
+    if (lws->ssn_state.session_flags & SSNFLAG_PRUNED)
     {
         CloseStreamSession(&sfBase, SESSION_CLOSED_PRUNED);
     }
-    else if (lws->s5_state.session_flags & SSNFLAG_TIMEDOUT)
+    else if (lws->ssn_state.session_flags & SSNFLAG_TIMEDOUT)
     {
         CloseStreamSession(&sfBase, SESSION_CLOSED_TIMEDOUT);
     }
@@ -72,7 +72,7 @@ static inline void UpdateSession (Packet* p, Flow* lws)
 {
     lws->markup_packet_flags(p);
 
-    if ( !(lws->s5_state.session_flags & SSNFLAG_ESTABLISHED) )
+    if ( !(lws->ssn_state.session_flags & SSNFLAG_ESTABLISHED) )
     {
 
         if ( p->packet_flags & PKT_FROM_CLIENT )
@@ -80,23 +80,23 @@ static inline void UpdateSession (Packet* p, Flow* lws)
             DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Stream: Updating on packet from client\n"););
 
-            lws->s5_state.session_flags |= SSNFLAG_SEEN_CLIENT;
+            lws->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
         }
         else
         {
             DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Stream: Updating on packet from server\n"););
 
-            lws->s5_state.session_flags |= SSNFLAG_SEEN_SERVER;
+            lws->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
         }
 
-        if ( (lws->s5_state.session_flags & SSNFLAG_SEEN_CLIENT) &&
-             (lws->s5_state.session_flags & SSNFLAG_SEEN_SERVER) )
+        if ( (lws->ssn_state.session_flags & SSNFLAG_SEEN_CLIENT) &&
+             (lws->ssn_state.session_flags & SSNFLAG_SEEN_SERVER) )
         {
             DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Stream: session established!\n"););
 
-            lws->s5_state.session_flags |= SSNFLAG_ESTABLISHED;
+            lws->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
 
             lws->set_ttl(p, false);
         }

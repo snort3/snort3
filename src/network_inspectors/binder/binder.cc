@@ -208,10 +208,10 @@ static Inspector* get_gadget(Flow* flow, const HostAttributeEntry* host)
 {
     stream.set_application_protocol_id_from_host_entry(flow, host, SSN_DIR_SERVER);
 
-    if ( !flow->s5_state.application_protocol )
+    if ( !flow->ssn_state.application_protocol )
         return nullptr;
 
-    const char* s = get_protocol_name(flow->s5_state.application_protocol);
+    const char* s = get_protocol_name(flow->ssn_state.application_protocol);
 
     return InspectorManager::get_inspector(s);
 }

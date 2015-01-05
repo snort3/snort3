@@ -187,7 +187,7 @@ uint32_t FlowCache::prune_stale(uint32_t thetime, Flow *save_me)
         else if((flow->last_data_seen + timeoutAggressive) < thetime)
         {
             DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "pruning stale flow\n"););
-            flow->s5_state.session_flags |= SSNFLAG_TIMEDOUT;
+            flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
             release(flow, "stale/timeout");
             pruned++;
         }
@@ -254,7 +254,7 @@ uint32_t FlowCache::prune_excess(bool memCheck, Flow *save_me)
         {
             if ( (flow != save_me) && (!memCheck || !flow->was_blocked()) )
             {
-                flow->s5_state.session_flags |= SSNFLAG_PRUNED;
+                flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
                 release(flow, memCheck ? "memcap/check" : "memcap/stale");
                 pruned++;
             }
@@ -298,7 +298,7 @@ void FlowCache::timeout(uint32_t flowCount, time_t cur_time)
         flowExaminedCount++;
 
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "retiring stale flow\n"););
-        flow->s5_state.session_flags |= SSNFLAG_TIMEDOUT;
+        flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
         release(flow, "stale/timeout");
 
         flowRetiredCount++;
@@ -317,7 +317,7 @@ int FlowCache::purge()
 
     while ( flow )
     {
-        flow->s5_state.session_flags |= SSNFLAG_PRUNED;
+        flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
         release(flow, "purge whole cache");
         retCount++;
         flow = (Flow*)hash_table->first();

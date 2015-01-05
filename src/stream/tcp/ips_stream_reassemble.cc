@@ -150,7 +150,7 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
     if (srod.fastpath)
     {
         /* Turn off inspection */
-        lwssn->s5_state.ignore_direction |= srod.direction;
+        lwssn->ssn_state.ignore_direction |= srod.direction;
         DisableInspection(pkt);
 
         /* TBD: Set TF_FORCE_FLUSH ? */

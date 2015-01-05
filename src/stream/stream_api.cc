@@ -204,9 +204,9 @@ void Stream::stop_inspection(
         case SSN_DIR_BOTH:
         case SSN_DIR_CLIENT:
         case SSN_DIR_SERVER:
-            if (flow->s5_state.ignore_direction != dir)
+            if (flow->ssn_state.ignore_direction != dir)
             {
-                flow->s5_state.ignore_direction = dir;
+                flow->ssn_state.ignore_direction = dir;
             }
             break;
     }
@@ -214,12 +214,12 @@ void Stream::stop_inspection(
     /* Flush any queued data on the client and/or server */
     if (flow->protocol == PktType::TCP)
     {
-        if (flow->s5_state.ignore_direction & SSN_DIR_CLIENT)
+        if (flow->ssn_state.ignore_direction & SSN_DIR_CLIENT)
         {
             Stream5FlushClient(p, flow);
         }
 
-        if (flow->s5_state.ignore_direction & SSN_DIR_SERVER)
+        if (flow->ssn_state.ignore_direction & SSN_DIR_SERVER)
         {
             Stream5FlushServer(p, flow);
         }
@@ -241,9 +241,9 @@ void Stream::resume_inspection(Flow* flow, char dir)
         case SSN_DIR_BOTH:
         case SSN_DIR_CLIENT:
         case SSN_DIR_SERVER:
-            if (flow->s5_state.ignore_direction & dir)
+            if (flow->ssn_state.ignore_direction & dir)
             {
-                flow->s5_state.ignore_direction &= ~dir;
+                flow->ssn_state.ignore_direction &= ~dir;
             }
             break;
     }
@@ -274,18 +274,18 @@ void Stream::drop_traffic(Flow* flow, char dir)
     if (!flow)
         return;
 
-    if ((dir & SSN_DIR_CLIENT) && !(flow->s5_state.session_flags & SSNFLAG_DROP_CLIENT))
+    if ((dir & SSN_DIR_CLIENT) && !(flow->ssn_state.session_flags & SSNFLAG_DROP_CLIENT))
     {
-        flow->s5_state.session_flags |= SSNFLAG_DROP_CLIENT;
+        flow->ssn_state.session_flags |= SSNFLAG_DROP_CLIENT;
         if ( Active_PacketForceDropped() )
-            flow->s5_state.session_flags |= SSNFLAG_FORCE_BLOCK;
+            flow->ssn_state.session_flags |= SSNFLAG_FORCE_BLOCK;
     }
 
-    if ((dir & SSN_DIR_SERVER) && !(flow->s5_state.session_flags & SSNFLAG_DROP_SERVER))
+    if ((dir & SSN_DIR_SERVER) && !(flow->ssn_state.session_flags & SSNFLAG_DROP_SERVER))
     {
-        flow->s5_state.session_flags |= SSNFLAG_DROP_SERVER;
+        flow->ssn_state.session_flags |= SSNFLAG_DROP_SERVER;
         if ( Active_PacketForceDropped() )
-            flow->s5_state.session_flags |= SSNFLAG_FORCE_BLOCK;
+            flow->ssn_state.session_flags |= SSNFLAG_FORCE_BLOCK;
     }
 }
 
@@ -308,11 +308,11 @@ uint32_t Stream::set_session_flags(Flow* flow, uint32_t flags)
     if ( !flow )
         return 0;
 
-    if ((flow->s5_state.session_flags & flags) != flags)
+    if ((flow->ssn_state.session_flags & flags) != flags)
     {
-        flow->s5_state.session_flags |= flags;
+        flow->ssn_state.session_flags |= flags;
     }
-    return flow->s5_state.session_flags;
+    return flow->ssn_state.session_flags;
 }
 
 uint32_t Stream::get_session_flags(Flow* flow)
@@ -320,7 +320,7 @@ uint32_t Stream::get_session_flags(Flow* flow)
     if ( !flow )
         return 0;
 
-    return flow->s5_state.session_flags;
+    return flow->ssn_state.session_flags;
 }
 
 int Stream::get_ignore_direction(Flow* flow)
@@ -328,7 +328,7 @@ int Stream::get_ignore_direction(Flow* flow)
     if ( !flow )
         return 0;
 
-    return flow->s5_state.ignore_direction;
+    return flow->ssn_state.ignore_direction;
 }
 
 int Stream::set_ignore_direction(Flow* flow, int ignore_direction)
@@ -336,12 +336,12 @@ int Stream::set_ignore_direction(Flow* flow, int ignore_direction)
     if ( !flow )
         return 0;
 
-    if (flow->s5_state.ignore_direction != ignore_direction)
+    if (flow->ssn_state.ignore_direction != ignore_direction)
     {
-        flow->s5_state.ignore_direction = ignore_direction;
+        flow->ssn_state.ignore_direction = ignore_direction;
     }
 
-    return flow->s5_state.ignore_direction;
+    return flow->ssn_state.ignore_direction;
 }
 
 //-------------------------------------------------------------------------
@@ -393,10 +393,10 @@ void Stream::set_application_protocol_id_from_host_entry(
         return;
 
     /* Cool, its already set! */
-    if (flow->s5_state.application_protocol != 0)
+    if (flow->ssn_state.application_protocol != 0)
         return;
 
-    if (flow->s5_state.ipprotocol == 0)
+    if (flow->ssn_state.ipprotocol == 0)
     {
         set_ip_protocol(flow);
     }
@@ -404,23 +404,23 @@ void Stream::set_application_protocol_id_from_host_entry(
     if (direction == SSN_DIR_SERVER)
     {
         application_protocol = getApplicationProtocolId(
-            host_entry, flow->s5_state.ipprotocol,
+            host_entry, flow->ssn_state.ipprotocol,
             flow->server_port, SFAT_SERVICE);
     }
     else
     {
         application_protocol = getApplicationProtocolId(
-            host_entry, flow->s5_state.ipprotocol,
+            host_entry, flow->ssn_state.ipprotocol,
             flow->client_port, SFAT_SERVICE);
 
         if ( application_protocol &&
-            (flow->s5_state.session_flags & SSNFLAG_MIDSTREAM) )
-            flow->s5_state.session_flags |= SSNFLAG_CLIENT_SWAP;
+            (flow->ssn_state.session_flags & SSNFLAG_MIDSTREAM) )
+            flow->ssn_state.session_flags |= SSNFLAG_CLIENT_SWAP;
     }
 
-    if (flow->s5_state.application_protocol != application_protocol)
+    if (flow->ssn_state.application_protocol != application_protocol)
     {
-        flow->s5_state.application_protocol = application_protocol;
+        flow->ssn_state.application_protocol = application_protocol;
     }
 }
 
@@ -435,13 +435,13 @@ int16_t Stream::get_application_protocol_id(Flow* flow)
     if (!flow)
         return protocol;
 
-    if ( flow->s5_state.application_protocol == -1 )
+    if ( flow->ssn_state.application_protocol == -1 )
         return 0;
 
-    if (flow->s5_state.application_protocol != 0)
-        return flow->s5_state.application_protocol;
+    if (flow->ssn_state.application_protocol != 0)
+        return flow->ssn_state.application_protocol;
 
-    if (flow->s5_state.ipprotocol == 0)
+    if (flow->ssn_state.ipprotocol == 0)
     {
         set_ip_protocol(flow);
     }
@@ -451,9 +451,9 @@ int16_t Stream::get_application_protocol_id(Flow* flow)
     {
         set_application_protocol_id_from_host_entry(flow, host_entry, SSN_DIR_SERVER);
 
-        if (flow->s5_state.application_protocol != 0)
+        if (flow->ssn_state.application_protocol != 0)
         {
-            return flow->s5_state.application_protocol;
+            return flow->ssn_state.application_protocol;
         }
     }
 
@@ -463,13 +463,13 @@ int16_t Stream::get_application_protocol_id(Flow* flow)
     {
         set_application_protocol_id_from_host_entry(flow, host_entry, SSN_DIR_CLIENT);
 
-        if (flow->s5_state.application_protocol != 0)
+        if (flow->ssn_state.application_protocol != 0)
         {
-            return flow->s5_state.application_protocol;
+            return flow->ssn_state.application_protocol;
         }
     }
 
-    flow->s5_state.application_protocol = -1;
+    flow->ssn_state.application_protocol = -1;
 
     return 0;
 }
@@ -479,17 +479,17 @@ int16_t Stream::set_application_protocol_id(Flow* flow, int16_t id)
     if (!flow)
         return 0;
 
-    if (flow->s5_state.application_protocol != id)
+    if (flow->ssn_state.application_protocol != id)
     {
-        flow->s5_state.application_protocol = id;
+        flow->ssn_state.application_protocol = id;
     }
 
-    if (!flow->s5_state.ipprotocol)
+    if (!flow->ssn_state.ipprotocol)
         set_ip_protocol(flow);
 
     SFAT_UpdateApplicationProtocol(
         &flow->server_ip, flow->server_port,
-        flow->s5_state.ipprotocol, id);
+        flow->ssn_state.ipprotocol, id);
 
     return id;
 }
@@ -648,15 +648,15 @@ static void active_response(Packet* p, Flow *lwssn)
 
 bool Stream::blocked_session (Flow* flow, Packet* p)
 {
-    if ( !(flow->s5_state.session_flags & (SSNFLAG_DROP_CLIENT|SSNFLAG_DROP_SERVER)) )
+    if ( !(flow->ssn_state.session_flags & (SSNFLAG_DROP_CLIENT|SSNFLAG_DROP_SERVER)) )
         return false;
 
     if (
         ((p->packet_flags & PKT_FROM_SERVER) &&
-            (flow->s5_state.session_flags & SSNFLAG_DROP_SERVER)) ||
+            (flow->ssn_state.session_flags & SSNFLAG_DROP_SERVER)) ||
 
         ((p->packet_flags & PKT_FROM_CLIENT) &&
-            (flow->s5_state.session_flags & SSNFLAG_DROP_CLIENT)) )
+            (flow->ssn_state.session_flags & SSNFLAG_DROP_CLIENT)) )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
             "Blocking %s packet as session was blocked\n",
@@ -674,10 +674,10 @@ bool Stream::ignored_session (Flow* flow, Packet* p)
 {
     if (
         ((p->packet_flags & PKT_FROM_SERVER) &&
-            (flow->s5_state.ignore_direction & SSN_DIR_CLIENT)) ||
+            (flow->ssn_state.ignore_direction & SSN_DIR_CLIENT)) ||
 
         ((p->packet_flags & PKT_FROM_CLIENT) &&
-            (flow->s5_state.ignore_direction & SSN_DIR_SERVER)) )
+            (flow->ssn_state.ignore_direction & SSN_DIR_SERVER)) )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
             "Stream5 Ignoring packet from %d. Session marked as ignore\n",
@@ -693,7 +693,7 @@ bool Stream::ignored_session (Flow* flow, Packet* p)
 static int Stream5ExpireSession(Flow *lwssn)
 {
     sfBase.iStreamTimeouts++;
-    lwssn->s5_state.session_flags |= SSNFLAG_TIMEDOUT;
+    lwssn->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
     lwssn->session_state |= STREAM5_STATE_TIMEDOUT;
 
     return 1;
@@ -716,7 +716,7 @@ bool Stream::expired_session (Flow* flow, Packet* p)
         || Stream5Expire(p, flow) )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "Stream5 IP session timeout!\n"););
-        flow->s5_state.session_flags |= SSNFLAG_TIMEDOUT;
+        flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
         return true;
     }
     return false;
@@ -732,15 +732,15 @@ void Stream::set_ip_protocol(Flow* flow)
     switch (flow->protocol)
     {
     case PktType::TCP:
-        flow->s5_state.ipprotocol = protocolReferenceTCP;
+        flow->ssn_state.ipprotocol = protocolReferenceTCP;
         break;
 
     case PktType::UDP:
-        flow->s5_state.ipprotocol = protocolReferenceUDP;
+        flow->ssn_state.ipprotocol = protocolReferenceUDP;
         break;
 
     case PktType::ICMP:
-        flow->s5_state.ipprotocol = protocolReferenceICMP;
+        flow->ssn_state.ipprotocol = protocolReferenceICMP;
         break;
 
     default:

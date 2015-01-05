@@ -477,9 +477,9 @@ char ExpectCache::process_expected(Packet*, Flow* lws)
     if ( !node->appId )
         retVal = node->direction;
 
-    else if ( lws->s5_state.application_protocol != node->appId )
+    else if ( lws->ssn_state.application_protocol != node->appId )
     {
-        lws->s5_state.application_protocol = node->appId;
+        lws->ssn_state.application_protocol = node->appId;
     }
 
     if ( !node->count )

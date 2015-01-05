@@ -302,7 +302,7 @@ public:
     static uint32_t get_session_flags(Flow*);
 
     static bool is_midstream(Flow* flow)
-        { return flow->s5_state.session_flags & SSNFLAG_MIDSTREAM; };
+        { return flow->ssn_state.session_flags & SSNFLAG_MIDSTREAM; };
 
     static int get_ignore_direction(Flow*);
     static int set_ignore_direction(Flow*, int ignore_direction);

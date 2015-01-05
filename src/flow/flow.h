@@ -170,10 +170,10 @@ public:
     void set_ttl(Packet*, bool client);
 
     void block()
-    { s5_state.session_flags |= SSNFLAG_BLOCK; };
+    { ssn_state.session_flags |= SSNFLAG_BLOCK; };
 
     bool was_blocked() const
-    { return (s5_state.session_flags & SSNFLAG_BLOCK) != 0; };
+    { return (ssn_state.session_flags & SSNFLAG_BLOCK) != 0; };
 
     bool full_inspection() const
     { return flow_state <= INSPECT; };
@@ -246,7 +246,7 @@ public:  // FIXIT-M privatize if possible
     unsigned policy_id;
 
     FlowState flow_state;
-    LwState s5_state;  // FIXIT-L rename this (s5 not appropriate)
+    LwState ssn_state;  // FIXIT-L rename this (s5 not appropriate)
 
     // FIXIT-L can client and server ip and port be removed from flow?
     sfip_t client_ip; // FIXIT-L family and bits should be changed to uint16_t

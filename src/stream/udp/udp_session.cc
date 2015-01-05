@@ -73,11 +73,11 @@ THREAD_LOCAL ProfileStats udp_perf_stats;
 
 static void UdpSessionCleanup(Flow *lwssn)
 {
-    if (lwssn->s5_state.session_flags & SSNFLAG_PRUNED)
+    if (lwssn->ssn_state.session_flags & SSNFLAG_PRUNED)
     {
         CloseStreamSession(&sfBase, SESSION_CLOSED_PRUNED);
     }
-    else if (lwssn->s5_state.session_flags & SSNFLAG_TIMEDOUT)
+    else if (lwssn->ssn_state.session_flags & SSNFLAG_TIMEDOUT)
     {
         CloseStreamSession(&sfBase, SESSION_CLOSED_TIMEDOUT);
     }
@@ -86,7 +86,7 @@ static void UdpSessionCleanup(Flow *lwssn)
         CloseStreamSession(&sfBase, SESSION_CLOSED_NORMALLY);
     }
 
-    if ( lwssn->s5_state.session_flags & SSNFLAG_SEEN_SENDER )
+    if ( lwssn->ssn_state.session_flags & SSNFLAG_SEEN_SENDER )
         udpStats.released++;
 
     RemoveUDPSession(&sfBase);
@@ -111,23 +111,23 @@ static int ProcessUdp(
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Stream5: Updating on packet from responder\n"););
-        lwssn->s5_state.session_flags |= SSNFLAG_SEEN_RESPONDER;
+        lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_RESPONDER;
         lwssn->set_ttl(p, false);
     }
     else
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
             "Stream5: Updating on packet from client\n"););
-        lwssn->s5_state.session_flags |= SSNFLAG_SEEN_SENDER;
+        lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
         lwssn->set_ttl(p, true);
     }
 
-    if (!(lwssn->s5_state.session_flags & SSNFLAG_ESTABLISHED))
+    if (!(lwssn->ssn_state.session_flags & SSNFLAG_ESTABLISHED))
     {
-        if ((lwssn->s5_state.session_flags & SSNFLAG_SEEN_SENDER) &&
-            (lwssn->s5_state.session_flags & SSNFLAG_SEEN_RESPONDER))
+        if ((lwssn->ssn_state.session_flags & SSNFLAG_SEEN_SENDER) &&
+            (lwssn->ssn_state.session_flags & SSNFLAG_SEEN_RESPONDER))
         {
-            lwssn->s5_state.session_flags |= SSNFLAG_ESTABLISHED;
+            lwssn->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
         }
     }
 
@@ -149,10 +149,10 @@ bool UdpSession::setup(Packet* p)
 {
     ssn_time.tv_sec = p->pkth->ts.tv_sec;
     ssn_time.tv_usec = p->pkth->ts.tv_usec;
-    flow->s5_state.session_flags |= SSNFLAG_SEEN_SENDER;
+    flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
 
     flow->protocol = p->type();
-    flow->s5_state.direction = FROM_SENDER;
+    flow->ssn_state.direction = FROM_SENDER;
 
     StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
     flow->set_expire(p, pc->session_timeout);
@@ -187,7 +187,7 @@ void UdpSession::update_direction(
 
     if (sfip_equals(&flow->client_ip, ip) && (flow->client_port == port))
     {
-        if ((dir == SSN_DIR_SENDER) && (flow->s5_state.direction == SSN_DIR_SENDER))
+        if ((dir == SSN_DIR_SENDER) && (flow->ssn_state.direction == SSN_DIR_SENDER))
         {
             /* Direction already set as SENDER */
             return;
@@ -195,14 +195,14 @@ void UdpSession::update_direction(
     }
     else if (sfip_equals(&flow->server_ip, ip) && (flow->server_port == port))
     {
-        if ((dir == SSN_DIR_RESPONDER) && (flow->s5_state.direction == SSN_DIR_RESPONDER))
+        if ((dir == SSN_DIR_RESPONDER) && (flow->ssn_state.direction == SSN_DIR_RESPONDER))
         {
             /* Direction already set as RESPONDER */
             return;
         }
     }
 
-    /* Swap them -- leave flow->s5_state.direction the same */
+    /* Swap them -- leave flow->ssn_state.direction the same */
     tmpIp = flow->client_ip;
     tmpPort = flow->client_port;
     flow->client_ip = flow->server_ip;
@@ -226,7 +226,7 @@ int UdpSession::process(Packet *p)
     {
         UdpSessionCleanup(flow);
         flow->restart();
-        flow->s5_state.session_flags |= SSNFLAG_SEEN_SENDER;
+        flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
         udpStats.created++;
         udpStats.timeouts++;
     }

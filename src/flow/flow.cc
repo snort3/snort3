@@ -133,8 +133,8 @@ void Flow::restart(bool freeAppData)
 
     boResetBITOP(&(flowdata->boFlowbits));
 
-    s5_state.ignore_direction = 0;
-    s5_state.session_flags = SSNFLAG_NONE;
+    ssn_state.ignore_direction = 0;
+    ssn_state.session_flags = SSNFLAG_NONE;
 
     session_state = STREAM5_STATE_NONE;
     expire_time = 0;
@@ -237,9 +237,9 @@ void Flow::free_application_data()
 
 void Flow::markup_packet_flags(Packet* p)
 {
-    if ( (s5_state.session_flags & SSNFLAG_ESTABLISHED) != SSNFLAG_ESTABLISHED )
+    if ( (ssn_state.session_flags & SSNFLAG_ESTABLISHED) != SSNFLAG_ESTABLISHED )
     {
-        if ( (s5_state.session_flags & (SSNFLAG_SEEN_SERVER|SSNFLAG_SEEN_CLIENT)) !=
+        if ( (ssn_state.session_flags & (SSNFLAG_SEEN_SERVER|SSNFLAG_SEEN_CLIENT)) !=
             (SSNFLAG_SEEN_SERVER|SSNFLAG_SEEN_CLIENT) )
         {
             p->packet_flags |= PKT_STREAM_UNEST_UNI;
@@ -252,7 +252,7 @@ void Flow::markup_packet_flags(Packet* p)
         if ( p->packet_flags & PKT_STREAM_UNEST_UNI )
             p->packet_flags ^= PKT_STREAM_UNEST_UNI;
     }
-    if ( s5_state.session_flags & SSNFLAG_STREAM_ORDER_BAD )
+    if ( ssn_state.session_flags & SSNFLAG_STREAM_ORDER_BAD )
         p->packet_flags |= PKT_STREAM_ORDER_BAD;
 }
 

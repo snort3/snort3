@@ -539,24 +539,24 @@ void Stream5UpdatePerfBaseState(SFBASE *sf_base,
     switch (newState)
     {
     case TCP_STATE_SYN_SENT:
-        if (!(lwssn->s5_state.session_flags & SSNFLAG_COUNTED_INITIALIZE))
+        if (!(lwssn->ssn_state.session_flags & SSNFLAG_COUNTED_INITIALIZE))
         {
             sf_base->iSessionsInitializing++;
-            lwssn->s5_state.session_flags |= SSNFLAG_COUNTED_INITIALIZE;
+            lwssn->ssn_state.session_flags |= SSNFLAG_COUNTED_INITIALIZE;
         }
         break;
     case TCP_STATE_ESTABLISHED:
-        if (!(lwssn->s5_state.session_flags & SSNFLAG_COUNTED_ESTABLISH))
+        if (!(lwssn->ssn_state.session_flags & SSNFLAG_COUNTED_ESTABLISH))
         {
             sf_base->iSessionsEstablished++;
 
             if (perfmon_config && (perfmon_config->perf_flags & SFPERF_FLOWIP))
                 UpdateFlowIPState(&sfFlow, &lwssn->client_ip, &lwssn->server_ip, SFS_STATE_TCP_ESTABLISHED);
 
-            lwssn->s5_state.session_flags |= SSNFLAG_COUNTED_ESTABLISH;
+            lwssn->ssn_state.session_flags |= SSNFLAG_COUNTED_ESTABLISH;
 
-            if ((lwssn->s5_state.session_flags & SSNFLAG_COUNTED_INITIALIZE) && 
-                !(lwssn->s5_state.session_flags & SSNFLAG_COUNTED_CLOSING))
+            if ((lwssn->ssn_state.session_flags & SSNFLAG_COUNTED_INITIALIZE) && 
+                !(lwssn->ssn_state.session_flags & SSNFLAG_COUNTED_CLOSING))
             {
                 assert(sf_base->iSessionsInitializing);
                 sf_base->iSessionsInitializing--;
@@ -564,11 +564,11 @@ void Stream5UpdatePerfBaseState(SFBASE *sf_base,
         }
         break;
     case TCP_STATE_CLOSING:
-        if (!(lwssn->s5_state.session_flags & SSNFLAG_COUNTED_CLOSING))
+        if (!(lwssn->ssn_state.session_flags & SSNFLAG_COUNTED_CLOSING))
         {
             sf_base->iSessionsClosing++;
-            lwssn->s5_state.session_flags |= SSNFLAG_COUNTED_CLOSING;
-            if (lwssn->s5_state.session_flags & SSNFLAG_COUNTED_ESTABLISH)
+            lwssn->ssn_state.session_flags |= SSNFLAG_COUNTED_CLOSING;
+            if (lwssn->ssn_state.session_flags & SSNFLAG_COUNTED_ESTABLISH)
             {
                 assert(sf_base->iSessionsEstablished);
                 sf_base->iSessionsEstablished--;
@@ -576,7 +576,7 @@ void Stream5UpdatePerfBaseState(SFBASE *sf_base,
                 if (perfmon_config && (perfmon_config->perf_flags & SFPERF_FLOWIP))
                     UpdateFlowIPState(&sfFlow, &lwssn->client_ip, &lwssn->server_ip, SFS_STATE_TCP_CLOSED);
             }
-            else if (lwssn->s5_state.session_flags & SSNFLAG_COUNTED_INITIALIZE)
+            else if (lwssn->ssn_state.session_flags & SSNFLAG_COUNTED_INITIALIZE)
             {
                 assert(sf_base->iSessionsInitializing);
                 sf_base->iSessionsInitializing--;
@@ -584,12 +584,12 @@ void Stream5UpdatePerfBaseState(SFBASE *sf_base,
         }
         break;
     case TCP_STATE_CLOSED:
-        if (lwssn->s5_state.session_flags & SSNFLAG_COUNTED_CLOSING)
+        if (lwssn->ssn_state.session_flags & SSNFLAG_COUNTED_CLOSING)
         {
             assert(sf_base->iSessionsClosing);
             sf_base->iSessionsClosing--;
         }
-        else if (lwssn->s5_state.session_flags & SSNFLAG_COUNTED_ESTABLISH)
+        else if (lwssn->ssn_state.session_flags & SSNFLAG_COUNTED_ESTABLISH)
         {
             assert(sf_base->iSessionsEstablished);
             sf_base->iSessionsEstablished--;
@@ -597,7 +597,7 @@ void Stream5UpdatePerfBaseState(SFBASE *sf_base,
             if (perfmon_config && (perfmon_config->perf_flags & SFPERF_FLOWIP))
                 UpdateFlowIPState(&sfFlow, &lwssn->client_ip, &lwssn->server_ip, SFS_STATE_TCP_CLOSED);
         }
-        else if (lwssn->s5_state.session_flags & SSNFLAG_COUNTED_INITIALIZE)
+        else if (lwssn->ssn_state.session_flags & SSNFLAG_COUNTED_INITIALIZE)
         {
             assert(sf_base->iSessionsInitializing);
             sf_base->iSessionsInitializing--;
@@ -801,7 +801,7 @@ static void PrintTcpSession(TcpSession *ts)
     LogMessage("    server port:        %d\n", ts->flow->server_port);
     LogMessage("    client port:        %d\n", ts->flow->client_port);
 
-    LogMessage("    flags:              0x%X\n", ts->flow->s5_state.session_flags);
+    LogMessage("    flags:              0x%X\n", ts->flow->ssn_state.session_flags);
 
     LogMessage("Client Tracker:\n");
     PrintStreamTracker(&ts->client);
@@ -1187,7 +1187,7 @@ static inline int IsBetween(uint32_t low, uint32_t high, uint32_t cur)
 #define SSNFLAG_SEEN_BOTH (SSNFLAG_SEEN_SERVER | SSNFLAG_SEEN_CLIENT)
 static inline bool TwoWayTraffic (Flow* lwssn)
 {
-    return ( (lwssn->s5_state.session_flags & SSNFLAG_SEEN_BOTH) == SSNFLAG_SEEN_BOTH );
+    return ( (lwssn->ssn_state.session_flags & SSNFLAG_SEEN_BOTH) == SSNFLAG_SEEN_BOTH );
 }
 
 static inline uint32_t Stream5GetWindow(
@@ -2484,11 +2484,11 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
     Stream5UpdatePerfBaseState(&sfBase, tcpssn->flow, TCP_STATE_CLOSED);
     RemoveStreamSession(&sfBase);
 
-    if (lwssn->s5_state.session_flags & SSNFLAG_PRUNED)
+    if (lwssn->ssn_state.session_flags & SSNFLAG_PRUNED)
     {
         CloseStreamSession(&sfBase, SESSION_CLOSED_PRUNED);
     }
-    else if (lwssn->s5_state.session_flags & SSNFLAG_TIMEDOUT)
+    else if (lwssn->ssn_state.session_flags & SSNFLAG_TIMEDOUT)
     {
         CloseStreamSession(&sfBase, SESSION_CLOSED_TIMEDOUT);
     }
@@ -2537,7 +2537,7 @@ static void TcpSessionCleanup(Flow *lwssn, int freeApplicationData)
         int flushed;
 
         /* Flush the client */
-        if (tcpssn->client.seglist && !(lwssn->s5_state.ignore_direction & SSN_DIR_SERVER) )
+        if (tcpssn->client.seglist && !(lwssn->ssn_state.ignore_direction & SSN_DIR_SERVER) )
         {
             DAQ_PktHdr_t* const tmp_pcap_hdr = const_cast<DAQ_PktHdr_t*>(cleanup_pkt->pkth);
             tcpStats.s5tcp1++;
@@ -2566,7 +2566,7 @@ static void TcpSessionCleanup(Flow *lwssn, int freeApplicationData)
         }
 
         /* Flush the server */
-        if (tcpssn->server.seglist && !(lwssn->s5_state.ignore_direction & SSN_DIR_CLIENT) )
+        if (tcpssn->server.seglist && !(lwssn->ssn_state.ignore_direction & SSN_DIR_CLIENT) )
         {
             DAQ_PktHdr_t* const tmp_pcap_hdr = const_cast<DAQ_PktHdr_t*>(cleanup_pkt->pkth);
             tcpStats.s5tcp2++;
@@ -2659,7 +2659,7 @@ static void TraceEvent (
 static void TraceSession (const Flow* lws)
 {
     fprintf(stdout, "    LWS: ST=0x%x SF=0x%x CP=%u SP=%u\n",
-        (unsigned)lws->session_state, lws->s5_state.session_flags,
+        (unsigned)lws->session_state, lws->ssn_state.session_flags,
         lws->client_port, lws->server_port
     );
 }
@@ -4016,7 +4016,7 @@ static int ProcessTcpData(
 
         if(p->dsize != 0)
         {
-            if ( !(tcpssn->flow->s5_state.session_flags & SSNFLAG_STREAM_ORDER_BAD) )
+            if ( !(tcpssn->flow->ssn_state.session_flags & SSNFLAG_STREAM_ORDER_BAD) )
                 p->packet_flags |= PKT_STREAM_ORDER_OK;
 
             ProcessTcpStream(listener, tcpssn, p, tdb, config);
@@ -4069,10 +4069,10 @@ static int ProcessTcpData(
 
         if(p->dsize != 0)
         {
-            if ( !(tcpssn->flow->s5_state.session_flags & SSNFLAG_STREAM_ORDER_BAD) )
+            if ( !(tcpssn->flow->ssn_state.session_flags & SSNFLAG_STREAM_ORDER_BAD) )
             {
                 if ( !SEQ_LEQ((tdb->seq + p->dsize), listener->r_nxt_ack) )
-                    tcpssn->flow->s5_state.session_flags |= SSNFLAG_STREAM_ORDER_BAD;
+                    tcpssn->flow->ssn_state.session_flags |= SSNFLAG_STREAM_ORDER_BAD;
             }
             ProcessTcpStream(listener, tcpssn, p, tdb, config);
         }
@@ -4218,13 +4218,13 @@ static void NewTcpSession(
 
         /* New session, previous was marked as reset.  Clear the
          * reset flag. */
-        if (lwssn->s5_state.session_flags & SSNFLAG_RESET)
-            lwssn->s5_state.session_flags &= ~SSNFLAG_RESET;
+        if (lwssn->ssn_state.session_flags & SSNFLAG_RESET)
+            lwssn->ssn_state.session_flags &= ~SSNFLAG_RESET;
 
         SetOSPolicy(lwssn, tmp);
 
-        if ( (lwssn->s5_state.session_flags & SSNFLAG_CLIENT_SWAP) &&
-            !(lwssn->s5_state.session_flags & SSNFLAG_CLIENT_SWAPPED) )
+        if ( (lwssn->ssn_state.session_flags & SSNFLAG_CLIENT_SWAP) &&
+            !(lwssn->ssn_state.session_flags & SSNFLAG_CLIENT_SWAPPED) )
         {
             StreamTracker trk = tmp->client;
             sfip_t ip = lwssn->client_ip;
@@ -4241,18 +4241,18 @@ static void NewTcpSession(
 
             if ( !TwoWayTraffic(lwssn) )
             {
-                if ( lwssn->s5_state.session_flags & SSNFLAG_SEEN_CLIENT )
+                if ( lwssn->ssn_state.session_flags & SSNFLAG_SEEN_CLIENT )
                 {
-                    lwssn->s5_state.session_flags ^= SSNFLAG_SEEN_CLIENT;
-                    lwssn->s5_state.session_flags |= SSNFLAG_SEEN_SERVER;
+                    lwssn->ssn_state.session_flags ^= SSNFLAG_SEEN_CLIENT;
+                    lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
                 }
-                else if ( lwssn->s5_state.session_flags & SSNFLAG_SEEN_SERVER )
+                else if ( lwssn->ssn_state.session_flags & SSNFLAG_SEEN_SERVER )
                 {
-                    lwssn->s5_state.session_flags ^= SSNFLAG_SEEN_SERVER;
-                    lwssn->s5_state.session_flags |= SSNFLAG_SEEN_CLIENT;
+                    lwssn->ssn_state.session_flags ^= SSNFLAG_SEEN_SERVER;
+                    lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
                 }
             }
-            lwssn->s5_state.session_flags |= SSNFLAG_CLIENT_SWAPPED;
+            lwssn->ssn_state.session_flags |= SSNFLAG_CLIENT_SWAPPED;
         }
         init_flush_policy(lwssn, &tmp->server);
         init_flush_policy(lwssn, &tmp->client);
@@ -4292,11 +4292,11 @@ static void NewTcpSessionOnSyn(
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Creating new session tracker on SYN!\n"););
 
-        lwssn->s5_state.session_flags |= SSNFLAG_SEEN_CLIENT;
+        lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
 
         if(p->ptrs.tcph->are_flags_set(TH_CWR|TH_ECE))
         {
-            lwssn->s5_state.session_flags |= SSNFLAG_ECN_CLIENT_QUERY;
+            lwssn->ssn_state.session_flags |= SSNFLAG_ECN_CLIENT_QUERY;
         }
 
         /* setup the stream trackers */
@@ -4346,11 +4346,11 @@ static void NewTcpSessionOnSynAck(
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Creating new session tracker on SYN_ACK!\n"););
 
-        lwssn->s5_state.session_flags |= SSNFLAG_SEEN_SERVER;
+        lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
 
         if(p->ptrs.tcph->are_flags_set(TH_CWR|TH_ECE))
         {
-            lwssn->s5_state.session_flags |= SSNFLAG_ECN_SERVER_REPLY;
+            lwssn->ssn_state.session_flags |= SSNFLAG_ECN_SERVER_REPLY;
         }
 
         /* setup the stream trackers */
@@ -4407,11 +4407,11 @@ static void NewTcpSessionOn3Way(
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Creating new session tracker on ACK!\n"););
 
-        lwssn->s5_state.session_flags |= SSNFLAG_SEEN_CLIENT;
+        lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
 
         if(p->ptrs.tcph->are_flags_set(TH_CWR|TH_ECE))
         {
-            lwssn->s5_state.session_flags |= SSNFLAG_ECN_CLIENT_QUERY;
+            lwssn->ssn_state.session_flags |= SSNFLAG_ECN_CLIENT_QUERY;
         }
 
         /* setup the stream trackers */
@@ -4460,17 +4460,17 @@ static void NewTcpSessionOnData(
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Creating new session tracker on data packet (ACK|PSH)!\n"););
 
-        if (lwssn->s5_state.direction == FROM_CLIENT)
+        if (lwssn->ssn_state.direction == FROM_CLIENT)
         {
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                         "Session direction is FROM_CLIENT\n"););
 
             /* Sender is client (src port is higher) */
-            lwssn->s5_state.session_flags |= SSNFLAG_SEEN_CLIENT;
+            lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
 
             if(p->ptrs.tcph->are_flags_set(TH_CWR|TH_ECE))
             {
-                lwssn->s5_state.session_flags |= SSNFLAG_ECN_CLIENT_QUERY;
+                lwssn->ssn_state.session_flags |= SSNFLAG_ECN_CLIENT_QUERY;
             }
 
             /* setup the stream trackers */
@@ -4513,7 +4513,7 @@ static void NewTcpSessionOnData(
                         "Session direction is FROM_SERVER\n"););
 
             /* Sender is server (src port is lower) */
-            lwssn->s5_state.session_flags |= SSNFLAG_SEEN_SERVER;
+            lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
 
             /* setup the stream trackers */
             tmp->server.s_mgr.state = TCP_STATE_ESTABLISHED;
@@ -4573,7 +4573,7 @@ static int RepeatedSyn(
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Got syn on established windows ssn, which causes Reset,"
                 "bailing\n"););
-            tcpssn->flow->s5_state.session_flags |= SSNFLAG_RESET;
+            tcpssn->flow->ssn_state.session_flags |= SSNFLAG_RESET;
             talker->s_mgr.state = TCP_STATE_CLOSED;
             return ACTION_RST;
         }
@@ -4608,7 +4608,7 @@ static int RepeatedSyn(
         {
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Got syn on established ssn, which causes Reset, bailing\n"););
-            tcpssn->flow->s5_state.session_flags |= SSNFLAG_RESET;
+            tcpssn->flow->ssn_state.session_flags |= SSNFLAG_RESET;
             talker->s_mgr.state = TCP_STATE_CLOSED;
             return ACTION_RST;
         }
@@ -4728,7 +4728,7 @@ static int ProcessTcp(
                     "Stream5 SYN PACKET, establishing lightweight"
                     "session direction.\n"););
             /* SYN packet from client */
-            lwssn->s5_state.direction = FROM_CLIENT;
+            lwssn->ssn_state.direction = FROM_CLIENT;
             lwssn->session_state |= STREAM5_STATE_SYN;
 
             if ( require3Way || (Stream5PacketHasWscale(p) & TF_WSCALE) ||
@@ -4750,12 +4750,12 @@ static int ProcessTcp(
         {
             /* SYN-ACK from server */
             if ((lwssn->session_state == STREAM5_STATE_NONE) ||
-                (lwssn->s5_state.session_flags & SSNFLAG_RESET))
+                (lwssn->ssn_state.session_flags & SSNFLAG_RESET))
             {
                 STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                         "Stream5 SYN|ACK PACKET, establishing lightweight"
                         "session direction.\n"););
-                lwssn->s5_state.direction = FROM_SERVER;
+                lwssn->ssn_state.direction = FROM_SERVER;
             }
             lwssn->session_state |= STREAM5_STATE_SYN_ACK;
 
@@ -4783,12 +4783,12 @@ static int ProcessTcp(
             /* create session on data, need to figure out direction, etc */
             /* Assume from client, can update later */
             if (p->ptrs.sp > p->ptrs.dp)
-                lwssn->s5_state.direction = FROM_CLIENT;
+                lwssn->ssn_state.direction = FROM_CLIENT;
             else
-                lwssn->s5_state.direction = FROM_SERVER;
+                lwssn->ssn_state.direction = FROM_SERVER;
 
             lwssn->session_state |= STREAM5_STATE_MIDSTREAM;
-            lwssn->s5_state.session_flags |= SSNFLAG_MIDSTREAM;
+            lwssn->ssn_state.session_flags |= SSNFLAG_MIDSTREAM;
 
             NewTcpSessionOnData(p, lwssn, tdb, config);
             new_ssn = 1;
@@ -4842,7 +4842,7 @@ static int ProcessTcp(
     {
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Stream5: Updating on packet from server\n"););
-        lwssn->s5_state.session_flags |= SSNFLAG_SEEN_SERVER;
+        lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
         if (tcpssn->tcp_init)
         {
             talker = &tcpssn->server;
@@ -4864,16 +4864,16 @@ static int ProcessTcp(
         {
             FinishServerInit(p, tdb, tcpssn);
             if((p->ptrs.tcph->th_flags & TH_ECE) &&
-                lwssn->s5_state.session_flags & SSNFLAG_ECN_CLIENT_QUERY)
+                lwssn->ssn_state.session_flags & SSNFLAG_ECN_CLIENT_QUERY)
             {
-                lwssn->s5_state.session_flags |= SSNFLAG_ECN_SERVER_REPLY;
+                lwssn->ssn_state.session_flags |= SSNFLAG_ECN_SERVER_REPLY;
             }
 
-            if (lwssn->s5_state.session_flags & SSNFLAG_SEEN_CLIENT)
+            if (lwssn->ssn_state.session_flags & SSNFLAG_SEEN_CLIENT)
             {
                 // should TCP state go to established too?
                 lwssn->session_state |= STREAM5_STATE_ESTABLISHED;
-                lwssn->s5_state.session_flags |= SSNFLAG_ESTABLISHED;
+                lwssn->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
                 Stream5UpdatePerfBaseState(&sfBase, lwssn, TCP_STATE_ESTABLISHED);
             }
         }
@@ -4885,7 +4885,7 @@ static int ProcessTcp(
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Stream5: Updating on packet from client\n"););
         /* if we got here we had to see the SYN already... */
-        lwssn->s5_state.session_flags |= SSNFLAG_SEEN_CLIENT;
+        lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
         if (tcpssn->tcp_init)
         {
             talker = &tcpssn->client;
@@ -4900,10 +4900,10 @@ static int ProcessTcp(
             !(lwssn->session_state & STREAM5_STATE_ESTABLISHED))
         {
             /* Midstream and seen server. */
-            if (lwssn->s5_state.session_flags & SSNFLAG_SEEN_SERVER)
+            if (lwssn->ssn_state.session_flags & SSNFLAG_SEEN_SERVER)
             {
                 lwssn->session_state |= STREAM5_STATE_ESTABLISHED;
-                lwssn->s5_state.session_flags |= SSNFLAG_ESTABLISHED;
+                lwssn->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
             }
         }
         if ( !lwssn->inner_client_ttl )
@@ -4913,7 +4913,7 @@ static int ProcessTcp(
     /*
      * check for SYN on reset session
      */
-    if ((lwssn->s5_state.session_flags & SSNFLAG_RESET) &&
+    if ((lwssn->ssn_state.session_flags & SSNFLAG_RESET) &&
         (p->ptrs.tcph->th_flags & TH_SYN))
     {
         if ( !tcpssn->tcp_init ||
@@ -4934,7 +4934,7 @@ static int ProcessTcp(
             }
             else if ( p->ptrs.tcph->is_syn_only() )
             {
-                lwssn->s5_state.direction = FROM_CLIENT;
+                lwssn->ssn_state.direction = FROM_CLIENT;
                 lwssn->session_state = STREAM5_STATE_SYN;
                 lwssn->set_ttl(p, true);
                 NewTcpSessionOnSyn(p, lwssn, tdb, config);
@@ -4948,11 +4948,11 @@ static int ProcessTcp(
                     listener = &tcpssn->server;
                     talker = &tcpssn->client;
                 }
-                lwssn->s5_state.session_flags = SSNFLAG_SEEN_CLIENT;
+                lwssn->ssn_state.session_flags = SSNFLAG_SEEN_CLIENT;
             }
             else if ( p->ptrs.tcph->is_syn_ack() )
             {
-                lwssn->s5_state.direction = FROM_SERVER;
+                lwssn->ssn_state.direction = FROM_SERVER;
                 lwssn->session_state = STREAM5_STATE_SYN_ACK;
                 lwssn->set_ttl(p, false);
                 NewTcpSessionOnSynAck(p, lwssn, tdb, config);
@@ -4967,7 +4967,7 @@ static int ProcessTcp(
                     listener = &tcpssn->client;
                     talker = &tcpssn->server;
                 }
-                lwssn->s5_state.session_flags = SSNFLAG_SEEN_SERVER;
+                lwssn->ssn_state.session_flags = SSNFLAG_SEEN_SERVER;
             }
         }
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
@@ -5083,7 +5083,7 @@ static int ProcessTcp(
                  * additional data sent from one side or the other isn't
                  * processed (and is dropped in inline mode).
                  */
-                lwssn->s5_state.session_flags |= SSNFLAG_RESET;
+                lwssn->ssn_state.session_flags |= SSNFLAG_RESET;
                 talker->s_mgr.state = TCP_STATE_CLOSED;
                 Stream5UpdatePerfBaseState(&sfBase, lwssn, TCP_STATE_CLOSING);
                 /* Leave listener open, data may be in transit */
@@ -5123,9 +5123,9 @@ static int ProcessTcp(
         }
 
         if((p->ptrs.tcph->th_flags & TH_ECE) &&
-            lwssn->s5_state.session_flags & SSNFLAG_ECN_CLIENT_QUERY)
+            lwssn->ssn_state.session_flags & SSNFLAG_ECN_CLIENT_QUERY)
         {
-            lwssn->s5_state.session_flags |= SSNFLAG_ECN_SERVER_REPLY;
+            lwssn->ssn_state.session_flags |= SSNFLAG_ECN_SERVER_REPLY;
         }
 
         /*
@@ -5184,7 +5184,7 @@ static int ProcessTcp(
                 Stream5FlushListener(p, lwssn);
                 lwssn->free_application_data();
             }
-            lwssn->s5_state.session_flags |= SSNFLAG_RESET;
+            lwssn->ssn_state.session_flags |= SSNFLAG_RESET;
             talker->s_mgr.state = TCP_STATE_CLOSED;
             talker->s_mgr.sub_state |= SUB_RST_SENT;
             Stream5UpdatePerfBaseState(&sfBase, lwssn, TCP_STATE_CLOSING);
@@ -5302,7 +5302,7 @@ static int ProcessTcp(
     else if ((p->packet_flags & PKT_FROM_CLIENT)
             && (tdb->win <= SLAM_MAX) && (tdb->ack == listener->isn + 1)
             && !(p->ptrs.tcph->th_flags & (TH_FIN|TH_RST))
-            && !(lwssn->s5_state.session_flags & SSNFLAG_MIDSTREAM))
+            && !(lwssn->ssn_state.session_flags & SSNFLAG_MIDSTREAM))
     {
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
             "Window slammed shut!\n"););
@@ -5354,7 +5354,7 @@ static int ProcessTcp(
                 if ( IsBetween(listener->l_unackd, listener->l_nxt_seq, tdb->ack) )
                 {
                     UpdateSsn(p, listener, talker, tdb);
-                    lwssn->s5_state.session_flags |= SSNFLAG_ESTABLISHED;
+                    lwssn->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
                     lwssn->session_state |= STREAM5_STATE_ESTABLISHED;
                     listener->s_mgr.state = TCP_STATE_ESTABLISHED;
                     talker->s_mgr.state = TCP_STATE_ESTABLISHED;
@@ -5410,7 +5410,7 @@ static int ProcessTcp(
                         {
                             talker->s_mgr.state = TCP_STATE_LAST_ACK;
                         }
-                        if ( lwssn->s5_state.session_flags & SSNFLAG_MIDSTREAM )
+                        if ( lwssn->ssn_state.session_flags & SSNFLAG_MIDSTREAM )
                         {
                             // FIXIT-L this should be handled below in fin section
                             // but midstream sessions fail the seq test
@@ -5494,7 +5494,7 @@ static int ProcessTcp(
         {
             /* data on a segment when we're not accepting data any more */
             /* alert! */
-            if (lwssn->s5_state.session_flags & SSNFLAG_RESET)
+            if (lwssn->ssn_state.session_flags & SSNFLAG_RESET)
             {
                 //EventDataAfterReset(listener->config);
                 if ( talker->s_mgr.sub_state & SUB_RST_SENT )
@@ -5519,7 +5519,7 @@ static int ProcessTcp(
 
             // these normalizations can't be done if we missed setup. and
             // window is zero in one direction until we've seen both sides.
-            if ( !(lwssn->s5_state.session_flags & SSNFLAG_MIDSTREAM) )
+            if ( !(lwssn->ssn_state.session_flags & SSNFLAG_MIDSTREAM) )
             {
                 if ( Normalize_IsEnabled(NORM_TCP_TRIM) )
                 {
@@ -5628,7 +5628,7 @@ static int ProcessTcp(
             if ( (talker->s_mgr.state == TCP_STATE_FIN_WAIT_1) ||
                       (talker->s_mgr.state == TCP_STATE_LAST_ACK) )
             {
-                uint32_t end_seq = ( lwssn->s5_state.session_flags & SSNFLAG_MIDSTREAM ) ?
+                uint32_t end_seq = ( lwssn->ssn_state.session_flags & SSNFLAG_MIDSTREAM ) ?
                       tdb->end_seq-1 : tdb->end_seq;
 
                 if ( (listener->s_mgr.expected_flags == TH_ACK) &&
@@ -6644,7 +6644,7 @@ void TcpSession::update_direction(
 
     if (sfip_equals(&flow->client_ip, ip) && (flow->client_port == port))
     {
-        if ((dir == SSN_DIR_CLIENT) && (flow->s5_state.direction == SSN_DIR_CLIENT))
+        if ((dir == SSN_DIR_CLIENT) && (flow->ssn_state.direction == SSN_DIR_CLIENT))
         {
             /* Direction already set as client */
             return;
@@ -6652,14 +6652,14 @@ void TcpSession::update_direction(
     }
     else if (sfip_equals(&flow->server_ip, ip) && (flow->server_port == port))
     {
-        if ((dir == SSN_DIR_SERVER) && (flow->s5_state.direction == SSN_DIR_SERVER))
+        if ((dir == SSN_DIR_SERVER) && (flow->ssn_state.direction == SSN_DIR_SERVER))
         {
             /* Direction already set as server */
             return;
         }
     }
 
-    /* Swap them -- leave flow->s5_state.direction the same */
+    /* Swap them -- leave flow->ssn_state.direction the same */
 
     /* XXX: Gotta be a more efficient way to do this without the memcpy */
     tmpIp = flow->client_ip;
@@ -6769,7 +6769,7 @@ midstream_pickup_allowed:
     if ( stream.expired_session(flow, p) )
     {
         /* Session is timed out */
-        if (flow->s5_state.session_flags & SSNFLAG_RESET)
+        if (flow->ssn_state.session_flags & SSNFLAG_RESET)
         {
             /* If this one has been reset, delete the TCP
              * portion, and start a new. */

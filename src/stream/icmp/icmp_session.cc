@@ -70,11 +70,11 @@ THREAD_LOCAL ProfileStats icmp_perf_stats;
 
 static void IcmpSessionCleanup(Flow *ssn)
 {
-    if (ssn->s5_state.session_flags & SSNFLAG_PRUNED)
+    if (ssn->ssn_state.session_flags & SSNFLAG_PRUNED)
     {
         CloseStreamSession(&sfBase, SESSION_CLOSED_PRUNED);
     }
-    else if (ssn->s5_state.session_flags & SSNFLAG_TIMEDOUT)
+    else if (ssn->ssn_state.session_flags & SSNFLAG_TIMEDOUT)
     {
         CloseStreamSession(&sfBase, SESSION_CLOSED_TIMEDOUT);
     }
@@ -83,7 +83,7 @@ static void IcmpSessionCleanup(Flow *ssn)
         CloseStreamSession(&sfBase, SESSION_CLOSED_NORMALLY);
     }
 
-    if ( ssn->s5_state.session_flags & SSNFLAG_SEEN_SENDER )
+    if ( ssn->ssn_state.session_flags & SSNFLAG_SEEN_SENDER )
         icmpStats.released++;
 
     ssn->clear();
@@ -194,8 +194,8 @@ static int ProcessIcmpUnreach(Packet *p)
         /* Mark this session as dead. */
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
             "Marking session as dead, per ICMP Unreachable!\n"););
-        ssn->s5_state.session_flags |= SSNFLAG_DROP_CLIENT;
-        ssn->s5_state.session_flags |= SSNFLAG_DROP_SERVER;
+        ssn->ssn_state.session_flags |= SSNFLAG_DROP_CLIENT;
+        ssn->ssn_state.session_flags |= SSNFLAG_DROP_SERVER;
         ssn->session_state |= STREAM5_STATE_UNREACH;
     }
 
@@ -216,7 +216,7 @@ bool IcmpSession::setup(Packet*)
     ssn_time.tv_sec = 0;
     ssn_time.tv_usec = 0;
     icmpStats.created++;
-    flow->s5_state.session_flags |= SSNFLAG_SEEN_SENDER;
+    flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
     return true;
 }
 
@@ -251,7 +251,7 @@ void IcmpSession::update_direction(char dir, const sfip_t *ip, uint16_t)
 {
     if (sfip_equals(&icmp_sender_ip, ip))
     {
-        if ((dir == SSN_DIR_SENDER) && (flow->s5_state.direction == SSN_DIR_SENDER))
+        if ((dir == SSN_DIR_SENDER) && (flow->ssn_state.direction == SSN_DIR_SENDER))
         {
             /* Direction already set as SENDER */
             return;
@@ -259,14 +259,14 @@ void IcmpSession::update_direction(char dir, const sfip_t *ip, uint16_t)
     }
     else if (sfip_equals(&icmp_responder_ip, ip))
     {
-        if ((dir == SSN_DIR_RESPONDER) && (flow->s5_state.direction == SSN_DIR_RESPONDER))
+        if ((dir == SSN_DIR_RESPONDER) && (flow->ssn_state.direction == SSN_DIR_RESPONDER))
         {
             /* Direction already set as RESPONDER */
             return;
         }
     }
 
-    /* Swap them -- leave ssn->s5_state.direction the same */
+    /* Swap them -- leave ssn->ssn_state.direction the same */
     sfip_t tmpIp = icmp_sender_ip;
     icmp_sender_ip = icmp_responder_ip;
     icmp_responder_ip = tmpIp;

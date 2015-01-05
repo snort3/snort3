@@ -279,7 +279,7 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
 static bool is_bidirectional(const Flow* flow)
 {
     constexpr unsigned bidir = SSNFLAG_SEEN_CLIENT | SSNFLAG_SEEN_SERVER;
-    return (flow->s5_state.session_flags & bidir) == bidir;
+    return (flow->ssn_state.session_flags & bidir) == bidir;
 }
 
 // FIXIT-L init_roles* should take const Packet*
@@ -287,7 +287,7 @@ static void init_roles_tcp(Packet* p, Flow* flow)
 {
     if ( p->ptrs.tcph->is_syn_only() )
     {
-        flow->s5_state.direction = FROM_CLIENT;
+        flow->ssn_state.direction = FROM_CLIENT;
         sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
         flow->client_port = ntohs(p->ptrs.tcph->th_sport);
         sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
@@ -295,7 +295,7 @@ static void init_roles_tcp(Packet* p, Flow* flow)
     }
     else if ( p->ptrs.tcph->is_syn_ack() )
     {
-        flow->s5_state.direction = FROM_SERVER;
+        flow->ssn_state.direction = FROM_SERVER;
         sfip_copy(flow->client_ip, p->ptrs.ip_api.get_dst());
         flow->client_port = ntohs(p->ptrs.tcph->th_dport);
         sfip_copy(flow->server_ip, p->ptrs.ip_api.get_src());
@@ -303,7 +303,7 @@ static void init_roles_tcp(Packet* p, Flow* flow)
     }
     else if (p->ptrs.sp > p->ptrs.dp)
     {
-        flow->s5_state.direction = FROM_CLIENT;
+        flow->ssn_state.direction = FROM_CLIENT;
         sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
         flow->client_port = ntohs(p->ptrs.tcph->th_sport);
         sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
@@ -311,7 +311,7 @@ static void init_roles_tcp(Packet* p, Flow* flow)
     }
     else
     {
-        flow->s5_state.direction = FROM_SERVER;
+        flow->ssn_state.direction = FROM_SERVER;
         sfip_copy(flow->client_ip, p->ptrs.ip_api.get_dst());
         flow->client_port = ntohs(p->ptrs.tcph->th_dport);
         sfip_copy(flow->server_ip, p->ptrs.ip_api.get_src());
@@ -321,7 +321,7 @@ static void init_roles_tcp(Packet* p, Flow* flow)
 
 static void init_roles_udp(Packet* p, Flow* flow)
 {
-    flow->s5_state.direction = FROM_SENDER;
+    flow->ssn_state.direction = FROM_SENDER;
     sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
     flow->client_port = ntohs(p->ptrs.udph->uh_sport);
     sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
@@ -617,7 +617,7 @@ char FlowControl::expected_flow (Flow* flow, Packet* p)
             "Stream5: Ignoring packet from %d. Marking flow marked as ignore.\n",
             p->packet_flags & PKT_FROM_CLIENT? "sender" : "responder"););
 
-        flow->s5_state.ignore_direction = ignore;
+        flow->ssn_state.ignore_direction = ignore;
         DisableInspection(p);
     }
 
