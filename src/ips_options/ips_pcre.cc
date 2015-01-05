@@ -566,7 +566,7 @@ int PcreOption::eval(Cursor& c, Packet*)
 
     unsigned pos = c.get_delta();
 
-    if ( !pos && (pcre_data->options & SNORT_PCRE_RELATIVE) )
+    if ( !pos && is_relative() )
         pos = c.get_pos();
 
     if ( pos > c.size() )
