@@ -1,13 +1,6 @@
 /*
-*   An abstracted interface to the Multi-Pattern Matching routines,
-*   thats why we're passing 'void *' objects around.
-*
 ** Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-*   Copyright (C) 2002-2013 Sourcefire, Inc.
-*   Marc A Norton <mnorton@sourcefire.com>
-*
-*   Updates:
-*   3/06 - Added AC_BNFA search
+** Copyright (C) 2002-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -23,9 +16,17 @@
 ** You should have received a copy of the GNU General Public License
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-**
 */
 
+/*
+*   An abstracted interface to the Multi-Pattern Matching routines,
+*   thats why we're passing 'void *' objects around.
+*
+*   Marc A Norton <mnorton@sourcefire.com>
+*
+*   Updates:
+*   3/06 - Added AC_BNFA search
+*/
 // lowmem.cc author Russ Combs <rucombs@cisco.com>
 
 #ifdef HAVE_CONFIG_H

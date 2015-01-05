@@ -1,16 +1,5 @@
 /*
-*  ksearch.c
-*
-*  Basic Keyword Search Trie - uses linked lists to build the finite automata
-*
-*  Keyword-Match: Performs the equivalent of a multi-string strcmp()
-*     - use for token testing after parsing the language tokens using lex or the like.
-*
-*  Keyword-Search: searches the input text for one of multiple keywords,
-*  and supports case sensitivite and case insensitive patterns.
-*
-*
-**  Copyright (C) 2001 Marc Norton
+** Copyright (C) 2001 Marc Norton
 ** Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
 ** Copyright (C) 2003-2013 Sourcefire, Inc.
 **
@@ -28,8 +17,17 @@
 ** You should have received a copy of the GNU General Public License
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+/*
+*  ksearch.c
 *
+*  Basic Keyword Search Trie - uses linked lists to build the finite automata
 *
+*  Keyword-Match: Performs the equivalent of a multi-string strcmp()
+*     - use for token testing after parsing the language tokens using lex or the like.
+*
+*  Keyword-Search: searches the input text for one of multiple keywords,
+*  and supports case sensitivite and case insensitive patterns.
 */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

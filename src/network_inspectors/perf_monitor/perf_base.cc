@@ -1,11 +1,6 @@
 /*
-**
-** perf-base.c
-**
 ** Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Dan Roelker <droelker@sourcefire.com>
-** Marc Norton <mnorton@sourcefire.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -21,6 +16,11 @@
 ** You should have received a copy of the GNU General Public License
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+/*
+** authors:
+** Dan Roelker <droelker@sourcefire.com>
+** Marc Norton <mnorton@sourcefire.com>
 **
 **  DESCRIPTION
 **    The following subroutines are concerned with getting
