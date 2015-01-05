@@ -20,6 +20,7 @@
 #include "process.h"
 
 #include <fcntl.h>
+#include <malloc.h>
 #include <stdio.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -427,21 +428,21 @@ void daemonize()
 void log_malloc_info()
 {
 #ifdef HAVE_MALLINFO
-    mi = mallinfo();
+    struct mallinfo mi = mallinfo();
 
     LogLabel("heap usage");
-    LogCount("total non-mmapped bytes (arena)", mi.arena);
-    LogCount("bytes in mapped regions (hblkhd)", mi.hblkhd);
-    LogCount("total allocated space (uordblks)", mi.uordblks);
-    LogCount("total free space (fordblks)", mi.fordblks);
-    LogCount("topmost releasable block (keepcost)", mi.keepcost);
+    LogCount("total non-mmapped bytes", mi.arena);
+    LogCount("bytes in mapped regions", mi.hblkhd);
+    LogCount("total allocated space", mi.uordblks);
+    LogCount("total free space", mi.fordblks);
+    LogCount("topmost releasable block", mi.keepcost);
 
 #ifdef DEBUG
-    LogCount("number of free chunks (ordblks)", mi.ordblks);
-    LogCount("number of free fastbin blocks (smblks)", mi.smblks);
-    LogCount("number of mapped regions (hblks)", mi.hblks);
-    LogCount("max total allocated space (usmblks)", mi.usmblks);
-    LogCount("free bytes held in fastbins (fsmblks)", mi.fsmblks);
+    LogCount("free chunks", mi.ordblks);
+    LogCount("free fastbin blocks", mi.smblks);
+    LogCount("mapped regions", mi.hblks);
+    LogCount("max total alloc space", mi.usmblks);
+    LogCount("free bytes in fastbins", mi.fsmblks);
 #endif
 #endif
 }
