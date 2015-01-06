@@ -1,24 +1,21 @@
-/****************************************************************************
- *
- *  Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- *  Copyright (C) 2005-2013 Sourcefire, Inc.
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License Version 2 as
- *  published by the Free Software Foundation.  You may not use, modify or
- *  distribute this program under any other version of the GNU General
- *  Public License.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- *****************************************************************************/
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2005-2013 Sourcefire, Inc.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
 #include "ip_session.h"
 
@@ -48,11 +45,11 @@ void IpSessionCleanup (Flow* lws, FragTracker* tracker)
         d->cleanup(tracker);
     }
 
-    if (lws->s5_state.session_flags & SSNFLAG_PRUNED)
+    if (lws->ssn_state.session_flags & SSNFLAG_PRUNED)
     {
         CloseStreamSession(&sfBase, SESSION_CLOSED_PRUNED);
     }
-    else if (lws->s5_state.session_flags & SSNFLAG_TIMEDOUT)
+    else if (lws->ssn_state.session_flags & SSNFLAG_TIMEDOUT)
     {
         CloseStreamSession(&sfBase, SESSION_CLOSED_TIMEDOUT);
     }
@@ -72,7 +69,7 @@ static inline void UpdateSession (Packet* p, Flow* lws)
 {
     lws->markup_packet_flags(p);
 
-    if ( !(lws->s5_state.session_flags & SSNFLAG_ESTABLISHED) )
+    if ( !(lws->ssn_state.session_flags & SSNFLAG_ESTABLISHED) )
     {
 
         if ( p->packet_flags & PKT_FROM_CLIENT )
@@ -80,23 +77,23 @@ static inline void UpdateSession (Packet* p, Flow* lws)
             DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Stream: Updating on packet from client\n"););
 
-            lws->s5_state.session_flags |= SSNFLAG_SEEN_CLIENT;
+            lws->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
         }
         else
         {
             DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Stream: Updating on packet from server\n"););
 
-            lws->s5_state.session_flags |= SSNFLAG_SEEN_SERVER;
+            lws->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
         }
 
-        if ( (lws->s5_state.session_flags & SSNFLAG_SEEN_CLIENT) &&
-             (lws->s5_state.session_flags & SSNFLAG_SEEN_SERVER) )
+        if ( (lws->ssn_state.session_flags & SSNFLAG_SEEN_CLIENT) &&
+             (lws->ssn_state.session_flags & SSNFLAG_SEEN_SERVER) )
         {
             DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Stream: session established!\n"););
 
-            lws->s5_state.session_flags |= SSNFLAG_ESTABLISHED;
+            lws->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
 
             lws->set_ttl(p, false);
         }

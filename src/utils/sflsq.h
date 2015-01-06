@@ -1,24 +1,21 @@
-/****************************************************************************
- *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2003-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2003-2013 Sourcefire, Inc.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
  
 //---------------------------------------------------------------
 // if you are thinking to use these for new code, please consider
@@ -94,58 +91,58 @@ SF_QUEUE,SF_STACK,SF_LIST;
 /*
 *  Linked List Interface
 */ 
-SF_LIST * sflist_new ( void ); 
-void      sflist_init ( SF_LIST * s); 
-int       sflist_add_tail ( SF_LIST* s, NODE_DATA ndata );
-int       sflist_add_head ( SF_LIST* s, NODE_DATA ndata );
-int       sflist_add_before ( SF_LIST* s, SF_LNODE * lnode, NODE_DATA ndata );
-int       sflist_add_after ( SF_LIST* s, SF_LNODE * lnode, NODE_DATA ndata );
-NODE_DATA sflist_remove_head ( SF_LIST * s);
-NODE_DATA sflist_remove_tail ( SF_LIST * s); 
-void      sflist_remove_node (SF_LIST * s, SF_LNODE * n, void (*free)(void*) );
-int       sflist_count ( SF_LIST* s); 
+SF_LIST * sflist_new(void); 
+void      sflist_init(SF_LIST*); 
+int       sflist_add_tail(SF_LIST*, NODE_DATA);
+int       sflist_add_head(SF_LIST*, NODE_DATA);
+int       sflist_add_before(SF_LIST*, SF_LNODE*, NODE_DATA);
+int       sflist_add_after(SF_LIST*, SF_LNODE*, NODE_DATA);
+NODE_DATA sflist_remove_head(SF_LIST*);
+NODE_DATA sflist_remove_tail(SF_LIST*); 
+void      sflist_remove_node(SF_LIST*, SF_LNODE*);
+int       sflist_count(SF_LIST*); 
 NODE_DATA sflist_first(SF_LIST*, SF_LNODE**);
 NODE_DATA sflist_next(SF_LNODE**);
-void      sflist_free ( SF_LIST * s); 
-void      sflist_free_all( SF_LIST * s, void (*free)(void*) ); 
-void      sflist_static_free_all(SF_LIST *, void(*nfree)(void *));
-void      sflist_static_free(SF_LIST *);
+void      sflist_free(SF_LIST*); 
+void      sflist_free_all(SF_LIST*, void (*free)(void*) ); 
+void      sflist_static_free_all(SF_LIST*, void(*nfree)(void *));
+void      sflist_static_free(SF_LIST*);
 
 /*
 *   Stack Interface ( LIFO - Last in, First out ) 
 */
-SF_STACK *sfstack_new ( void ); 
-int       sfstack_add( SF_STACK* s, NODE_DATA ndata ); 
-NODE_DATA sfstack_remove ( SF_STACK * s);
-int       sfstack_count ( SF_STACK * s); 
-void      sfstack_free ( SF_STACK * s); 
-void      sfstack_free_all( SF_STACK* s, void (*free)(void*) ); 
-void sfstack_static_free_all(SF_STACK *,void (*nfree)(void *));
-void sfstack_static_free(SF_STACK *);
+SF_STACK *sfstack_new(void); 
+int       sfstack_add(SF_STACK*, NODE_DATA); 
+NODE_DATA sfstack_remove(SF_STACK*);
+int       sfstack_count(SF_STACK*); 
+void      sfstack_free(SF_STACK*); 
+void      sfstack_free_all(SF_STACK*, void (*free)(void*) ); 
+void sfstack_static_free_all(SF_STACK*, void (*nfree)(void *));
+void sfstack_static_free(SF_STACK*);
 
 /*
 *   Queue Interface ( FIFO - First in, First out ) 
 */
-SF_QUEUE *sfqueue_new ( void ); 
-int       sfqueue_add( SF_QUEUE * s, NODE_DATA ndata ); 
-NODE_DATA sfqueue_remove ( SF_QUEUE * s);
-int       sfqueue_count ( SF_QUEUE * s); 
-void      sfqueue_free ( SF_QUEUE * s); 
-void      sfqueue_free_all( SF_QUEUE* s, void (*free)(void*) ); 
-void sfqueue_static_free_all(SF_QUEUE *,void (*nfree)(void *));
-void sfqueue_static_free(SF_QUEUE *);
+SF_QUEUE *sfqueue_new(void); 
+int       sfqueue_add(SF_QUEUE*, NODE_DATA); 
+NODE_DATA sfqueue_remove(SF_QUEUE*);
+int       sfqueue_count(SF_QUEUE*); 
+void      sfqueue_free(SF_QUEUE*); 
+void      sfqueue_free_all(SF_QUEUE*, void (*free)(void*) ); 
+void sfqueue_static_free_all(SF_QUEUE*,void (*nfree)(void *));
+void sfqueue_static_free(SF_QUEUE*);
 
 /*
 * Performance Stack functions for Integer/Unsigned and Pointers, uses
 * user provided array storage, perhaps from the program stack or a global.
 * These are efficient, and use no memory functions.
 */
-int sfistack_init( SF_ISTACK * s, unsigned * a,  unsigned n  );
-int sfistack_push( SF_ISTACK *s, unsigned value);
-int sfistack_pop(  SF_ISTACK *s, unsigned * value);
+int sfistack_init(SF_ISTACK*, unsigned * a,  unsigned n  );
+int sfistack_push(SF_ISTACK*, unsigned value);
+int sfistack_pop( SF_ISTACK*, unsigned * value);
 
-int sfpstack_init( SF_PSTACK * s, void ** a,  unsigned n  );
-int sfpstack_push( SF_PSTACK *s, void * value);
-int sfpstack_pop(  SF_PSTACK *s, void ** value);
+int sfpstack_init(SF_PSTACK*, void ** a,  unsigned n  );
+int sfpstack_push(SF_PSTACK*, void * value);
+int sfpstack_pop( SF_PSTACK*, void ** value);
 
 #endif

@@ -5,30 +5,33 @@ The following pointers will help you get started:
 
 Required:
 
-* autotools or cmake to build from source.
+* autotools or cmake to build from source
 
-* daq from http://www.snort.org for packet IO.
+* g\++ >= 4.8 or other recent C++11 compiler
 
-* dnet from http://code.google.com/p/libdnet/ for network utility
-  functions.
+* daq from http://www.snort.org for packet IO
 
-* LuaJIT from http://luajit.org for configuration and scripting.
+* dnet from http://code.google.com/p/libdnet/ for network utility functions
 
-* pcap from http://www.tcpdump.org for tcpdump style logging.
+* LuaJIT from http://luajit.org for configuration and scripting
 
-* pcre from http://www.pcre.org for regular expression pattern matching.
+* pcap from http://www.tcpdump.org for tcpdump style logging
 
-* zlib from http://www.zlib.net for decompression.
+* pcre from http://www.pcre.org for regular expression pattern matching
+
+* zlib from http://www.zlib.net for decompression
+
+* pkgconfig from http://www.freedesktop.org to build the example plugins
 
 Optional:
 
 * asciidoc from http://www.methods.co.nz/asciidoc/ to build the HTML
-  manual.
+  manual
 
 * dblatex from http://dblatex.sourceforge.net to build the pdf manual (in
-  addition to asciidoc).
+  addition to asciidoc)
 
-* check from http://check.sourceforge.net to build unit tests.
+* check from http://check.sourceforge.net to build unit tests
 
 
 === Building
@@ -40,7 +43,11 @@ Optional:
     export my_path=/path/to/snorty
     mkdir -p $my_path
 
-* Do one of the following:
+* If you are using a github clone with autotools, do this:
+
+    autoreconf -isvf
+
+* Now do one of the following:
 
 a. To build with autotools, simply do the usual from the top level directory:
 
@@ -59,7 +66,7 @@ b. To build with cmake and make, run configure_cmake.sh.  It will
 
 c. You can also specify a cmake project generator or use ccmake:
 
-    ./configure_cmake --generator=Xcode --prefix=$my_path
+    ./configure_cmake.sh --generator=Xcode --prefix=$my_path
 
 
 === Run

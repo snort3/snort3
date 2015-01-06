@@ -1,32 +1,29 @@
-/*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * ** Copyright (C) 2005-2013 Sourcefire, Inc.
- * ** AUTHOR: Steven Sturges
- * **
- * ** This program is free software; you can redistribute it and/or modify
- * ** it under the terms of the GNU General Public License Version 2 as
- * ** published by the Free Software Foundation.  You may not use, modify or
- * ** distribute this program under any other version of the GNU General
- * ** Public License.
- * **
- * ** This program is distributed in the hope that it will be useful,
- * ** but WITHOUT ANY WARRANTY; without even the implied warranty of
- * ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * ** GNU General Public License for more details.
- * **
- * ** You should have received a copy of the GNU General Public License
- * ** along with this program; if not, write to the Free Software
- * ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- * */
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2005-2013 Sourcefire, Inc.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
 /* stream_api.h
+ * AUTHOR: Steven Sturges
  *
  * Purpose: Definition of the StreamAPI.  To be used as a common interface
  *          for TCP (and later UDP & ICMP) Stream access for other
  *          preprocessors and detection plugins.
  */
-
-// FIXIT-L stream_api should not be tied to a particular version of stream
 
 #ifndef STREAM_API_H
 #define STREAM_API_H
@@ -47,12 +44,12 @@
 #define SSN_MISSING_AFTER  0x02
 #define SSN_MISSING_BOTH   (SSN_MISSING_BEFORE | SSN_MISSING_AFTER)
 
-#define SSN_DIR_NONE 0x0
-#define SSN_DIR_CLIENT 0x1
-#define SSN_DIR_SENDER 0x1
-#define SSN_DIR_SERVER 0x2
-#define SSN_DIR_RESPONDER 0x2
-#define SSN_DIR_BOTH 0x03
+#define SSN_DIR_NONE           0x00
+#define SSN_DIR_FROM_CLIENT    0x01
+#define SSN_DIR_FROM_SENDER    0x01
+#define SSN_DIR_FROM_SERVER    0x02
+#define SSN_DIR_FROM_RESPONDER 0x02
+#define SSN_DIR_BOTH           0x03
 
 class Flow;
 
@@ -302,7 +299,7 @@ public:
     static uint32_t get_session_flags(Flow*);
 
     static bool is_midstream(Flow* flow)
-        { return flow->s5_state.session_flags & SSNFLAG_MIDSTREAM; };
+        { return flow->ssn_state.session_flags & SSNFLAG_MIDSTREAM; };
 
     static int get_ignore_direction(Flow*);
     static int set_ignore_direction(Flow*, int ignore_direction);

@@ -12,14 +12,11 @@
 #  HAS_CXX11_DECLTYPE           - decltype keyword
 #  HAS_CXX11_FUNC               - __func__ preprocessor constant
 #  HAS_CXX11_INITIALIZER_LIST   - initializer list
-#  HAS_CXX11_LAMBDA             - lambdas
-#  HAS_CXX11_LIB_REGEX          - regex library
 #  HAS_CXX11_LONG_LONG          - long long signed & unsigned types
 #  HAS_CXX11_NULLPTR            - nullptr
 #  HAS_CXX11_RVALUE_REFERENCES  - rvalue references
 #  HAS_CXX11_SIZEOF_MEMBER      - sizeof() non-static members
 #  HAS_CXX11_STATIC_ASSERT      - static_assert()
-#  HAS_CXX11_VARIADIC_TEMPLATES - variadic templates
 
 #=============================================================================
 # Copyright 2011,2012 Rolf Eike Beer <eike@sf-mail.de>
@@ -122,11 +119,8 @@ cxx11_check_feature("constexpr" HAS_CXX11_CONSTEXPR)
 cxx11_check_feature("cstdint" HAS_CXX11_CSTDINT_H)
 cxx11_check_feature("decltype" HAS_CXX11_DECLTYPE)
 cxx11_check_feature("initializer_list" HAS_CXX11_INITIALIZER_LIST)
-cxx11_check_feature("lambda" HAS_CXX11_LAMBDA)
 cxx11_check_feature("long_long" HAS_CXX11_LONG_LONG)
 cxx11_check_feature("nullptr" HAS_CXX11_NULLPTR)
-cxx11_check_feature("regex" HAS_CXX11_LIB_REGEX)
 cxx11_check_feature("rvalue-references" HAS_CXX11_RVALUE_REFERENCES)
 cxx11_check_feature("sizeof_member" HAS_CXX11_SIZEOF_MEMBER)
 cxx11_check_feature("static_assert" HAS_CXX11_STATIC_ASSERT)
-cxx11_check_feature("variadic_templates" HAS_CXX11_VARIADIC_TEMPLATES)

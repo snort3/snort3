@@ -1,21 +1,20 @@
-/*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-**
-** This program is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License Version 2 as
-** published by the Free Software Foundation.  You may not use, modify or
-** distribute this program under any other version of the GNU General
-** Public License.
-**
-** This program is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
-** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-*/
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
 // tcp_module.cc author Russ Combs <rucombs@cisco.com>
 
@@ -264,7 +263,7 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
         config->footprint = v.get_long();
 
     else if ( v.is("ignore_any_rules") )
-        config->flags |= STREAM5_CONFIG_IGNORE_ANY;
+        config->flags |= STREAM_CONFIG_IGNORE_ANY;
 
     else if ( v.is("max_bytes") )
         config->max_queued_bytes = v.get_long();
@@ -290,9 +289,9 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("reassemble_async") )
     {
         if ( v.get_bool() )
-            config->flags &= ~STREAM5_CONFIG_NO_ASYNC_REASSEMBLY;
+            config->flags &= ~STREAM_CONFIG_NO_ASYNC_REASSEMBLY;
         else
-            config->flags |= STREAM5_CONFIG_NO_ASYNC_REASSEMBLY;
+            config->flags |= STREAM_CONFIG_NO_ASYNC_REASSEMBLY;
     }
     else if ( v.is("require_3whs") )
     {
@@ -301,9 +300,9 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("show_rebuilt_packets") )
     {
         if ( v.get_bool() )
-            config->flags |= STREAM5_CONFIG_SHOW_PACKETS;
+            config->flags |= STREAM_CONFIG_SHOW_PACKETS;
         else
-            config->flags &= ~STREAM5_CONFIG_SHOW_PACKETS;
+            config->flags &= ~STREAM_CONFIG_SHOW_PACKETS;
     }
 
     else

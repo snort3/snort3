@@ -1,6 +1,11 @@
 Snort++
 
-The Snort++ project has been hard at work for a while now and we are finally ready to release the first alpha of the next generation Snort IPS (Intrusion Prevention System).  This post will show you what Snort++ has to offer and guide you through the steps from download to demo.  If you are unfamiliar with Snort you should take a look at the Snort documentation first.  We will cover the following topics:
+The Snort++ project has been hard at work for a while now and we are
+finally ready to release the first alpha of the next generation Snort IPS
+(Intrusion Prevention System).  This file will show you what Snort++ has to
+offer and guide you through the steps from download to demo.  If you are
+unfamiliar with Snort you should take a look at the Snort documentation
+first.  We will cover the following topics:
 
 * Overview
 * Dependencies
@@ -12,7 +17,10 @@ The Snort++ project has been hard at work for a while now and we are finally rea
 
 OVERVIEW
 
-This first alpha release is based on Snort 2.9.6-9 and excludes all but one of Snort's dynamic preprocessors (ftp_telnet).  Work is underway to port that functionality and sync with 2.9.7; those updates will be rolled out as they become available.
+This first alpha release is based on early Snort 2.9.6 and excludes all but
+one of Snort's dynamic preprocessors (ftp_telnet).  Work is underway to
+port that functionality and sync with 2.9.7; those updates will be rolled
+out as they become available.
 
     Project = Snort++
     Binary = snort
@@ -42,10 +50,11 @@ Additional features on the roadmap include:
 
 DEPENDENCIES
 
-If you already build Snort, you may have everything you need.  If not, grab the latest:
+If you already build Snort, you may have everything you need.  If not, grab
+the latest:
 
 * autotools or cmake to build from source
-* g++ &gt;= 4.8 or other C++11 compiler
+* g++ >= 4.8 or other C++11 compiler
 * daq from http://www.snort.org for packet IO
 * dnet from http://code.google.com/p/libdnet/ for network utility functions
 * LuaJIT from http://luajit.org for configuration and scripting
@@ -56,27 +65,43 @@ If you already build Snort, you may have everything you need.  If not, grab the 
 
 DOWNLOAD
 
-There are two sets of source tarballs, once for autotools and one for cmake.  snort-3 contains the base program and snort_extra has example plugins.
+There are two source tarballs, once for autotools and one for cmake:
 
-    snort-3.0.0-a1-129-auto.tar.gz
-    snort-3.0.0-a1-129-cmake.tar.gz
+    snort-3.0.0-a1-130-auto.tar.gz
+    snort-3.0.0-a1-130-cmake.tar.gz
+
+You can also git the code with:
+
+    git clone git://github.com/snortadmin/snort3.git
 
 BUILD SNORT
 
-First do these setup steps:
+Follow these steps:
 
-    export my_path=/path/to/snorty
+1.  Set up source directory:
+
+* If you are using a github clone:
+
+    cd snort3/
+
+* Otherwise, do this:
+
     tar zxf snort-tarball
     cd snort-3.0.0*
 
-Then do one of the following:
+2.  Setup install path:
 
-To build with autotools, simply do the usual from the top level directory:
+    export my_path=/path/to/snorty
+
+3.  Compile and install:
+
+* To build with autotools, simply do the usual from the top level directory:
 
     ./configure --prefix=$my_path
     make -j 8 install
 
-To build with cmake and make, run configure_cmake.sh.  It will automatically create and populate a new subdirectory named 'build'.
+* To build with cmake and make, run configure_cmake.sh.  It will
+  automatically create and populate a new subdirectory named 'build'.
 
     ./configure_cmake.sh --prefix=$my_path
     cd build
@@ -84,9 +109,12 @@ To build with cmake and make, run configure_cmake.sh.  It will automatically cre
 
 Note:
 
+* If you are using autotools with a github clone, first do autoreconf -isvf.
 * If you can do src/snort -V you built successfully.
-* If you are familiar with cmake, you can run cmake/ccmake instead of configure_cmake.sh.
-* cmake --help will list any available generators, such as Xcode.  Feel free to use one, however help with those will be provided in a later post.
+* If you are familiar with cmake, you can run cmake/ccmake instead of
+  configure_cmake.sh.
+* cmake --help will list any available generators, such as Xcode.  Feel
+  free to use one, however help with those will be provided separately.
 
 RUN SNORT
 
@@ -97,47 +125,50 @@ First set up the environment:
 
 Then give it a go:
 
-Snort++ provides lots of help from the command line.  Here are some examples:
+* Snort++ provides lots of help from the command line.  Here are some examples:
 
     $my_path/bin/snort --help
     $my_path/bin/snort --help-module suppress
     $my_path/bin/snort --help-config | grep thread
 
-Examine and dump a pcap:
+* Examine and dump a pcap.  In the following, replace a.pcap with your
+  favorite:
 
-    $my_path/bin/snort -r pcap
-    $my_path/bin/snort -K text -d -e -q -r pcap
+    $my_path/bin/snort -r a.pcap
+    $my_path/bin/snort -K text -d -e -q -r a.pcap
 
-Verify a config, with or w/o rules:
+* Verify a config, with or w/o rules:
 
     $my_path/bin/snort -c $my_path/etc/snort/snort.lua
     $my_path/bin/snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules
 
-
-Run IDS mode.  In the following, replace a.pcap with your favorite.  pcaps/ is a directory with one or more *.pcap files:
+* Run IDS mode.  In the following, replace pcaps/ with a path to a directory
+  with one or more *.pcap files:
 
     $my_path/bin/snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules \
         -r a.pcap -A alert_test -n 100000
 
-Let's suppress 1:2123.  We could edit the conf or just do this:
+* Let's suppress 1:2123.  We could edit the conf or just do this:
 
     $my_path/bin/snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules \
         -r a.pcap -A alert_test -n 100000 --lua "suppress = { { gid = 1, sid = 2123 } }"
 
-Go whole hog on a directory with multiple packet threads:
+* Go whole hog on a directory with multiple packet threads:
 
     $my_path/bin/snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules \
         --pcap-filter \*.pcap --pcap-dir pcaps/ -A alert_fast --max-packet-threads 8
 
 DOCUMENTATION
 
-Take a look at the manual, parts of which are generated by the code so it stays up to date:
+Take a look at the manual, parts of which are generated by the code so it
+stays up to date:
 
     $my_path/share/doc/snort/snort_manual.pdf
     $my_path/share/doc/snort/snort_manual.html
     $my_path/share/doc/snort/snort_manual/index.html
 
-It does not yet have much on the how and why, but it does have all the currently available configuration, etc.  Some key changes to rules:
+It does not yet have much on the how and why, but it does have all the
+currently available configuration, etc.  Some key changes to rules:
 
 * you must use comma separated content sub options like this:  content:"foo", nocase;
 * buffer selectors must appear before the content and remain in effect until changed
@@ -156,5 +187,8 @@ It also covers new features not demonstrated here:
 
 SQUEAL o")~
 
-We hope you are as excited about Snort++ as we are.  Although a lot of work remains, we wanted to give you a chance to try it out and let us know what you think on the snort-users list.  In the meantime, we'll keep our snout to the grindstone.
+We hope you are as excited about Snort++ as we are.  Although a lot of work
+remains, we wanted to give you a chance to try it out and let us know what
+you think on the snort-users list.  In the meantime, we'll keep our snout
+to the grindstone.
 

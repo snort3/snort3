@@ -1,24 +1,22 @@
-/*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- ** Copyright (C) 1998-2013 Sourcefire, Inc.
- **
- ** Author: Bhagyashree Bantwal <bbantwal@sourcefire.com>
- **
- ** This program is free software; you can redistribute it and/or modify
- ** it under the terms of the GNU General Public License Version 2 as
- ** published by the Free Software Foundation.  You may not use, modify or
- ** distribute this program under any other version of the GNU General
- ** Public License.
- **
- ** This program is distributed in the hope that it will be useful,
- ** but WITHOUT ANY WARRANTY; without even the implied warranty of
- ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- ** GNU General Public License for more details.
- **
- ** You should have received a copy of the GNU General Public License
- ** along with this program; if not, write to the Free Software
- ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 1998-2013 Sourcefire, Inc.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
+// Author: Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
 #include "sf_email_attach_decode.h"
 
@@ -91,11 +89,10 @@ int sf_qpdecode(char *src, uint32_t slen, char *dst, uint32_t dlen, uint32_t *by
                 return 0;
             }
         }
-        else
+        else if (isprint(ch) || isblank(ch))
         {
             dst[*bytes_copied] = ch;
             *bytes_copied +=1;
-
         }
     }
 
@@ -509,9 +506,7 @@ int UUDecode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds)
     {
         ds->uu_state.end_found = 0;
         ds->uu_state.begin_found = 0;
-        ds->decode_type = DECODE_NONE;
     }
-
 
     if(bytes_read < act_encode_size)
     {
@@ -563,10 +558,7 @@ int BitEncExtract(const uint8_t *start, const uint8_t *end, Email_DecodeState *d
 
     if( (uint32_t)(end-start) < bytes_avail )
     {
-        if ((end > start) && (*(end-1) == '\r'))
-            act_size = ( end - start) - 1;
-        else
-            act_size = ( end - start);
+        act_size = ( end - start);
     }
     else
     {

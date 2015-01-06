@@ -35,14 +35,22 @@ yet firm so feedback is welcome to get something we can live with.
   med, or low priority.  For now, H, M, or L can indicate alpha 1, 2, or 3.
   Perf changes fall between alpha 1 and 2.
 
+* Put the copyright(s) and license in a comment block at the top of each
+  source file (.h and .cc).  Don't bother with trivial scripts and make
+  foo.  Some interesting Lua code should get a comment block too.  Copy and
+  paste exactly from src/main.h (don't reformat).
+
+* Put author, description, etc. in separate comment(s) following the
+  license.  Do not put such comments in the middle of the license foo.
+
 ==== Logging
 
-* Messages intended for the user should not look like debug messages. In,
-  other words, the function name should not be included.
+* Messages intended for the user should not look like debug messages. Eg,
+  the function name should not be included.
 
 * Most debug messages should just be deleted.
 
-* Don't bang your messages (no !).  The user feels bad enough about the
+* Don't bang your error messages (no !).  The user feels bad enough about the
   problem already w/o you shouting at him.
 
 ==== Types

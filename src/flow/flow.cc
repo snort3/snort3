@@ -1,24 +1,21 @@
-/****************************************************************************
- *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2013-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2013-2013 Sourcefire, Inc.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
 #include "flow.h"
 
@@ -68,8 +65,8 @@ void Flow::init(PktType proto)
     size_t sz = sizeof(StreamFlowData) + getFlowbitSizeInBytes() - 1;
     flowdata = (StreamFlowData*)calloc(sz, 1);
 
-    boInitStaticBITOP(
-        &(flowdata->boFlowbits), getFlowbitSizeInBytes(), flowdata->flowb);
+    if ( flowdata )
+        boInitStaticBITOP(&(flowdata->boFlowbits), getFlowbitSizeInBytes(), flowdata->flowb);
 }
 
 void Flow::term()
@@ -133,10 +130,10 @@ void Flow::restart(bool freeAppData)
 
     boResetBITOP(&(flowdata->boFlowbits));
 
-    s5_state.ignore_direction = 0;
-    s5_state.session_flags = SSNFLAG_NONE;
+    ssn_state.ignore_direction = 0;
+    ssn_state.session_flags = SSNFLAG_NONE;
 
-    session_state = STREAM5_STATE_NONE;
+    session_state = STREAM_STATE_NONE;
     expire_time = 0;
 }
 
@@ -237,9 +234,9 @@ void Flow::free_application_data()
 
 void Flow::markup_packet_flags(Packet* p)
 {
-    if ( (s5_state.session_flags & SSNFLAG_ESTABLISHED) != SSNFLAG_ESTABLISHED )
+    if ( (ssn_state.session_flags & SSNFLAG_ESTABLISHED) != SSNFLAG_ESTABLISHED )
     {
-        if ( (s5_state.session_flags & (SSNFLAG_SEEN_SERVER|SSNFLAG_SEEN_CLIENT)) !=
+        if ( (ssn_state.session_flags & (SSNFLAG_SEEN_SERVER|SSNFLAG_SEEN_CLIENT)) !=
             (SSNFLAG_SEEN_SERVER|SSNFLAG_SEEN_CLIENT) )
         {
             p->packet_flags |= PKT_STREAM_UNEST_UNI;
@@ -252,7 +249,7 @@ void Flow::markup_packet_flags(Packet* p)
         if ( p->packet_flags & PKT_STREAM_UNEST_UNI )
             p->packet_flags ^= PKT_STREAM_UNEST_UNI;
     }
-    if ( s5_state.session_flags & SSNFLAG_STREAM_ORDER_BAD )
+    if ( ssn_state.session_flags & SSNFLAG_STREAM_ORDER_BAD )
         p->packet_flags |= PKT_STREAM_ORDER_BAD;
 }
 
