@@ -74,19 +74,56 @@ bool StreamSize::convert(std::istringstream& data_stream)
         // checking that this is a valid unsigned integer.
         char* end;
         std::strtoul(size.c_str(), &end, 10);
+        rule_api.add_option("stream_size", op + size);
     }
     catch (const std::invalid_argument& e)
     {
         rule_api.bad_rule(data_stream, "stream_size <size> '" + size + "' is too large.");
+        rule_api.add_option("stream_size", op + size);
     }
     catch (const std::out_of_range& e)
     {
         rule_api.bad_rule(data_stream, "stream_size <size> '" + size + "' is too large.");
+        rule_api.add_option("stream_size", op + size);
     }
 
 
-    rule_api.add_option("stream_size", dir);
-    rule_api.add_suboption(op + size);
+    if (!dir.compare("either"))
+        rule_api.add_suboption("either");
+
+    else if (!dir.compare("both"))
+        rule_api.add_suboption("both");
+
+    else if (!dir.compare("client"))
+    {
+        rule_api.add_suboption("to_client");
+
+        static bool printed_client = false;
+        if (!printed_client)
+        {
+            printed_client = true;
+            rule_api.add_comment("stream_size: option change: 'client'"
+                " --> 'to_client'");
+        }
+    }
+    else if (!dir.compare("server"))
+    {
+        rule_api.add_suboption("to_server");
+
+        static bool printed_server = false;
+        if (!printed_server)
+        {
+            printed_server = true;
+            rule_api.add_comment("stream_size: option change: 'server'"
+                " --> 'to_server'");
+        }
+    }
+    else
+    {
+        rule_api.bad_rule(data_stream, "stream_size: '" + dir + "' is invalid."
+            "  Snort3.0 option ust be { either|to_server|to_client|both }");
+    }
+
     return set_next_rule_state(data_stream);
 }
 

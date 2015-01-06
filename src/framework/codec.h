@@ -336,7 +336,7 @@ public:
      *          const uint16_t lyr_len = This layer's validated length ==
      *                                   lyr_len set during decode.
      */
-    virtual void log(TextLog* const, const uint8_t* raw_pkt, const uint16_t lyr_len)
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/, const uint16_t /*lyr_len*/)
     { }
 
 

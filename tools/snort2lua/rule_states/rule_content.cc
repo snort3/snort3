@@ -130,9 +130,15 @@ bool Content<option_name>::parse_options(
         if (val.empty())
              rule_api.add_suboption("fast_pattern");
 
-        else if(!val.compare("only"))
-            rule_api.add_comment("content's 'only' option has been deleted");
-
+        else if (!val.compare("only"))
+        {
+            static bool printed = false;
+            if (!printed)
+            {
+                printed = true;
+                rule_api.add_comment("content's 'only' option has been deleted");
+            }
+        }
         else
         {
             try
