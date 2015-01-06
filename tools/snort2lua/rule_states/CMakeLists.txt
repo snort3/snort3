@@ -10,6 +10,7 @@ add_library( rule_states
     rule_react.cc
     rule_resp.cc
     rule_stream_reassemble.cc
+    rule_stream_size.cc
     rule_tag.cc
     rule_ttl.cc
     rule_threshold.cc
