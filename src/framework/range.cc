@@ -137,6 +137,7 @@ bool RangeCheck::parse(const char* s)
         max = b;
         break;
     case LG:
+    case LEG:
         min = a;
         max = b;
         break;
