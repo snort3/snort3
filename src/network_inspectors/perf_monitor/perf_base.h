@@ -1,27 +1,25 @@
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2002-2013 Sourcefire, Inc.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 /*
-** perf_base.h
-**
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Dan Roelker (droelker@sourcefire.com)
 ** Marc Norton (mnorton@sourcefire.com)
 ** Chris Green (stream4 instrumentation)
-**
-**
-** This program is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License Version 2 as
-** published by the Free Software Foundation.  You may not use, modify or
-** distribute this program under any other version of the GNU General
-** Public License.
-**
-** This program is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
-** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 **
 ** 9.1.04  : Added SFBASE iReset (MAN)
 **	     This is set by perfmonitor 'accrure' and 'reset' commands
@@ -117,12 +115,12 @@ typedef struct _SFBASE
     uint64_t   iStreamFaults;  /* # of times we run out of memory */
     uint64_t   iStreamTimeouts; /* # of timeouts we get in this quanta */
 
-    uint64_t   iFragCreates;    /* # of times we call Frag3NewTracker() */
+    uint64_t   iFragCreates;    /* # of times we call FragNewTracker() */
     uint64_t   iFragCompletes;  /* # of times we call FragIsComplete() */
     uint64_t   iFragInserts;    /* # of fraginserts */
-    uint64_t   iFragDeletes;    /* # of times we call Frag3RemoveTracker() */
+    uint64_t   iFragDeletes;    /* # of times we call FragRemoveTracker() */
     uint64_t   iFragAutoFrees;  /* # of times we auto free a FragTracker */
-    uint64_t   iFragFlushes;    /* # of times we call Frag3Rebuild() */
+    uint64_t   iFragFlushes;    /* # of times we call FragRebuild() */
     uint64_t   iMaxFrags;
     uint64_t   iCurrentFrags;
     uint64_t   iFragTimeouts;   /* # of times we've reached timeout */
@@ -161,8 +159,8 @@ typedef struct _SFBASE
     /**UDP packets ignored due to port/service filtering.*/
     uint64_t   total_udp_filtered_packets;
 
-    uint64_t   frag3_mem_in_use;
-    uint64_t   stream5_mem_in_use;
+    uint64_t   frag_mem_in_use;
+    uint64_t   stream_mem_in_use;
     uint64_t   total_iAlerts;
 }  SFBASE;
 
@@ -265,8 +263,8 @@ typedef struct _SFBASE_STATS {
     /**UDP packets ignored due to port/service filtering.*/
     uint64_t   total_udp_filtered_packets;
 
-    uint64_t   frag3_mem_in_use;
-    uint64_t   stream5_mem_in_use;
+    uint64_t   frag_mem_in_use;
+    uint64_t   stream_mem_in_use;
     double     total_alerts_per_second;
 }  SFBASE_STATS;
 

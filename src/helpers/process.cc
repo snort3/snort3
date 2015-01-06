@@ -1,21 +1,20 @@
-/*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-**
-** This program is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License Version 2 as
-** published by the Free Software Foundation.  You may not use, modify or
-** distribute this program under any other version of the GNU General
-** Public License.
-**
-** This program is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
-** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-*/
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
 #include "process.h"
 
@@ -23,6 +22,10 @@
 #include <stdio.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#ifdef HAVE_MALLINFO
+#include <malloc.h>
+#endif
 
 #include <iostream>
 using namespace std;
@@ -37,6 +40,7 @@ using namespace std;
 #include "main/snort.h"
 #include "utils/util.h"
 #include "utils/ring.h"
+#include "utils/stats.h"
 #include "helpers/markup.h"
 #include "parser/parser.h"
 
@@ -417,5 +421,31 @@ void daemonize()
         perror("daemonization errors");
 
     signal_waiting_parent();
+}
+
+//-------------------------------------------------------------------------
+// heap stats
+//-------------------------------------------------------------------------
+
+void log_malloc_info()
+{
+#ifdef HAVE_MALLINFO
+    struct mallinfo mi = mallinfo();
+
+    LogLabel("heap usage");
+    LogCount("total non-mmapped bytes", mi.arena);
+    LogCount("bytes in mapped regions", mi.hblkhd);
+    LogCount("total allocated space", mi.uordblks);
+    LogCount("total free space", mi.fordblks);
+    LogCount("topmost releasable block", mi.keepcost);
+
+#ifdef DEBUG
+    LogCount("free chunks", mi.ordblks);
+    LogCount("free fastbin blocks", mi.smblks);
+    LogCount("mapped regions", mi.hblks);
+    LogCount("max total alloc space", mi.usmblks);
+    LogCount("free bytes in fastbins", mi.fsmblks);
+#endif
+#endif
 }
 

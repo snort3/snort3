@@ -1,23 +1,20 @@
-/****************************************************************************
- * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
-
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 // ips_stream_size.cc author Russ Combs <rucombs@cisco.com>
 
 #ifdef HAVE_CONFIG_H
@@ -28,59 +25,12 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
+#include "framework/range.h"
 #include "detection/detect.h"
 #include "detection/detection_defines.h"
 #include "hash/sfhashfcn.h"
 #include "time/profiler.h"
 #include "sfip/sf_ip.h"
-
-enum SsodOp
-{
-    SSOD_EQ = 1,
-    SSOD_NE,
-    SSOD_LT,
-    SSOD_GT,
-    SSOD_LE,
-    SSOD_GE,
-    SSOD_MAX
-};
-
-struct StreamSizeOptionData
-{
-    SsodOp opcode;
-    uint32_t size;
-    char direction;
-
-    bool compare(uint32_t, uint32_t);
-};
-
-bool StreamSizeOptionData::compare(uint32_t size1, uint32_t size2)
-{
-    switch (opcode)
-    {
-    case SSOD_EQ:
-        return (size1 == size2);
-
-    case SSOD_NE:
-        return (size1 != size2);
-
-    case SSOD_LT:
-        return (size1 < size2);
-
-    case SSOD_GT:
-        return (size1 > size2);
-
-    case SSOD_LE:
-        return (size1 <= size2);
-
-    case SSOD_GE:
-        return (size1 >= size2);
-
-    default:
-        break;
-    }
-    return false;
-}
 
 //-------------------------------------------------------------------------
 // stream_size
@@ -95,9 +45,9 @@ static THREAD_LOCAL ProfileStats streamSizePerfStats;
 class SizeOption : public IpsOption
 {
 public:
-    SizeOption(const StreamSizeOptionData& c) :
+    SizeOption(const RangeCheck& c, int dir) :
         IpsOption(s_name)
-    { ssod = c; };
+    { ssod = c; direction = dir; };
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -105,7 +55,8 @@ public:
     int eval(Cursor&, Packet*) override;
 
 private:
-    StreamSizeOptionData ssod;
+    RangeCheck ssod;
+    int direction;
 };
 
 //-------------------------------------------------------------------------
@@ -116,11 +67,14 @@ uint32_t SizeOption::hash() const
 {
     uint32_t a,b,c;
 
-    a = ssod.direction;
-    b = ssod.opcode;
-    c = ssod.size;
+    a = ssod.op;
+    b = ssod.min;
+    c = ssod.max;
 
     mix(a,b,c);
+
+    a = direction;
+
     mix_str(a,b,c,get_name());
     final(a,b,c);
 
@@ -134,9 +88,7 @@ bool SizeOption::operator==(const IpsOption& ips) const
 
     const SizeOption& rhs = (SizeOption&)ips;
 
-    if ( (ssod.direction == rhs.ssod.direction) &&
-         (ssod.opcode == rhs.ssod.opcode) &&
-         (ssod.size == rhs.ssod.size) )
+    if ( (direction == rhs.direction) && (ssod == rhs.ssod) )
         return true;
 
     return false;
@@ -179,32 +131,26 @@ int SizeOption::eval(Cursor&, Packet* pkt)
 
     int result = DETECTION_OPTION_NO_MATCH;
 
-    switch (ssod.direction)
+    switch ( direction )
     {
-    case SSN_DIR_CLIENT:
-        if ( ssod.compare(client_size, ssod.size) )
+    case SSN_DIR_FROM_CLIENT:
+        if ( ssod.eval(client_size) )
             result = DETECTION_OPTION_MATCH;
         break;
 
-    case SSN_DIR_SERVER:
-        if ( ssod.compare(server_size, ssod.size) )
+    case SSN_DIR_FROM_SERVER:
+        if ( ssod.eval(server_size) )
             result = DETECTION_OPTION_MATCH;
         break;
 
     case SSN_DIR_NONE: /* overloaded.  really, its an 'either' */
-        if ( ssod.compare(client_size, ssod.size) ||
-             ssod.compare(server_size, ssod.size) )
-        {
+        if ( ssod.eval(client_size) || ssod.eval(server_size) )
             result = DETECTION_OPTION_MATCH;
-        }
         break;
 
     case SSN_DIR_BOTH:
-        if ( ssod.compare(client_size, ssod.size) &&
-             ssod.compare(server_size, ssod.size) )
-        {
+        if ( ssod.eval(client_size) && ssod.eval(server_size) )
             result = DETECTION_OPTION_MATCH;
-        }
         break;
 
     default:
@@ -220,14 +166,11 @@ int SizeOption::eval(Cursor&, Packet* pkt)
 
 static const Parameter s_params[] =
 {
-    { "direction", Parameter::PT_ENUM, "either|client|server|both", nullptr,
-      "compare applies to the given direction(s)" },
-
-    { "operator", Parameter::PT_ENUM, "= | != | < | > | <= | >=", nullptr,
-      "how to compare" },
-
-    { "size", Parameter::PT_INT, nullptr, nullptr,
+    { "~range", Parameter::PT_STRING, nullptr, nullptr,
       "size for comparison" },
+
+    { "~direction", Parameter::PT_ENUM, "either|to_server|to_client|both", nullptr,
+      "compare applies to the given direction(s)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -243,27 +186,24 @@ public:
     ProfileStats* get_profile() const override
     { return &streamSizePerfStats; };
 
-    StreamSizeOptionData ssod;
+    RangeCheck ssod;
+    int direction;
 };
 
 bool SizeModule::begin(const char*, int, SnortConfig*)
 {
-    ssod.direction = 0;
-    ssod.opcode = SSOD_EQ;
-    ssod.size = 0;
+    ssod.init();
+    direction = 0;
     return true;
 }
 
 bool SizeModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*direction") )
-        ssod.direction = v.get_long();
+    if ( v.is("~range") )
+        ssod.parse(v.get_string());
 
-    else if ( v.is("*operator") )
-        ssod.opcode = (SsodOp)(v.get_long() + 1);
-
-    else if ( v.is("*size") )
-        ssod.size = 0;
+    else if ( v.is("~direction") )
+        direction = v.get_long();
 
     else
         return false;
@@ -288,7 +228,7 @@ static void mod_dtor(Module* m)
 static IpsOption* size_ctor(Module* p, OptTreeNode*)
 {
     SizeModule* m = (SizeModule*)p;
-    return new SizeOption(m->ssod);
+    return new SizeOption(m->ssod, m->direction);
 }
 
 static void opt_dtor(IpsOption* p)

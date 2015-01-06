@@ -1,26 +1,25 @@
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2002-2013 Sourcefire, Inc.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 /*
-**
-** perf-base.c
-**
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2002-2013 Sourcefire, Inc.
+** authors:
 ** Dan Roelker <droelker@sourcefire.com>
 ** Marc Norton <mnorton@sourcefire.com>
-**
-** This program is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License Version 2 as
-** published by the Free Software Foundation.  You may not use, modify or
-** distribute this program under any other version of the GNU General
-** Public License.
-**
-** This program is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
-** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 **
 **  DESCRIPTION
 **    The following subroutines are concerned with getting
@@ -192,8 +191,8 @@ int InitBaseStats(SFBASE *sfBase)
     sfBase->total_tcp_filtered_packets = 0;
     sfBase->total_udp_filtered_packets = 0;
 
-    sfBase->frag3_mem_in_use = 0;
-    sfBase->stream5_mem_in_use = 0;
+    sfBase->frag_mem_in_use = 0;
+    sfBase->stream_mem_in_use = 0;
     sfBase->total_iAlerts = 0;
 
     return 0;
@@ -1079,8 +1078,8 @@ static int CalculateBasePerfStats(SFBASE *sfBase, SFBASE_STATS *sfBaseStats, int
     sfBaseStats->current_attribute_hosts = sfBase->iAttributeHosts;
     sfBaseStats->attribute_table_reloads = sfBase->iAttributeReloads;
 
-    sfBaseStats->frag3_mem_in_use = sfBase->frag3_mem_in_use;
-    sfBaseStats->stream5_mem_in_use = sfBase->stream5_mem_in_use;
+    sfBaseStats->frag_mem_in_use = sfBase->frag_mem_in_use;
+    sfBaseStats->stream_mem_in_use = sfBase->stream_mem_in_use;
 
     /*
     **  Set the date string for print out
@@ -1391,9 +1390,9 @@ static void LogBasePerfStats(SFBASE_STATS *sfBaseStats,  FILE * fh )
     size += SafeSnprintf(buff + size, sizeof(buff) - size, 
         CSVu64, sfBaseStats->total_injected_packets);
     size += SafeSnprintf(buff + size, sizeof(buff) - size, 
-        CSVu64, sfBaseStats->frag3_mem_in_use);
+        CSVu64, sfBaseStats->frag_mem_in_use);
     size += SafeSnprintf(buff + size, sizeof(buff) - size, 
-        CSVu64, sfBaseStats->stream5_mem_in_use);
+        CSVu64, sfBaseStats->stream_mem_in_use);
 
     size += SafeSnprintf(buff + size, sizeof(buff) - size, 
         "%.3f", sfBaseStats->total_alerts_per_second);
@@ -1579,8 +1578,8 @@ void LogBasePerfHeader (FILE* fh)
     fprintf(fh,
         ",%s,%s,%s",
         "total_injected_packets",
-        "frag3_mem_in_use",
-        "stream5_mem_in_use");
+        "frag_mem_in_use",
+        "stream_mem_in_use");
 
     fprintf(fh, ",%s",
         "total_alerts_per_second");
