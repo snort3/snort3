@@ -340,7 +340,7 @@ void Icmp4Codec::ICMP4MiscTests(const ICMPHdr* const icmph,
  ******************************************************************/
 
 void Icmp4Codec::log(TextLog* const log, const uint8_t* raw_pkt,
-    const uint16_t lyr_len)
+    const uint16_t)
 {
 
     const icmp::ICMPHdr* const icmph = reinterpret_cast<const ICMPHdr *>(raw_pkt);

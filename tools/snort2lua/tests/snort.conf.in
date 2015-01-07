@@ -1339,6 +1339,18 @@ alert ip any any -> any any (msg:"TTL RULE OPTION"; ttl:7-; sid:11111114;)
 alert tcp $EXTERNAL_NET $HTTP_PORTS -> $HOME_NET any (content:"fe, fe, fe, fe, fe, fe, fe,"; msg:"BROWSER-FIREFOX Mozilla Firefox Javascript engine function arguments memory corruption attempt"; flow:to_client,established; file_data; content:"|3B|i<25|3B|i++|29| fe += fe|3B|"; fast_pattern:only; content:"fu=new Function|28 0A|"; content:"fe, fe, fe, fe, fe, fe, fe,"; within:30; metadata:policy balanced-ips drop, policy security-ips drop, service http; reference:bugtraq,19181; reference:cve,2006-3806; classtype:attempted-user; sid:18262; rev:3;)
 
 
+alert tcp any any -> any 20031 (msg:"SERVER-OTHER BakBone NetVault server heap overflow attempt"; flow:to_server,established; stream_size:client,>,32784; byte_test:4,>,32784,0,little; sid:12081; rev:6;)
+
+alert tcp $EXTERNAL_NET [20,1024:] -> $HOME_NET [20,1024:] (msg:"PROTOCOL-FTP Computer Associates eTrust Secure Content Manager LIST stack overflow attempt"; flow:established; stream_size:either,<,12800; content:"4096"; fast_pattern:only; pcre:"/[D\x2D][RWX\x2D]{9}\s+\w+\s+\w+\s+\w+\s+4096/i"; metadata:service ftp; reference:bugtraq,29528; reference:cve,2008-2541; reference:url,osvdb.org/show/osvdb/46012; reference:url,osvdb.org/show/osvdb/46013;  sid:18575; rev:4;)
+
+alert tcp any any -> any 20031 (msg:"SERVER-OTHER BakBone NetVault server heap overflow attempt"; flow:to_server,established; stream_size:server,=,32784; byte_test:4,>,32784,0,little; sid:12082; rev:7;)
+
+alert tcp any any -> any 20031 (msg:"SERVER-OTHER BakBone NetVault server heap overflow attempt"; flow:to_server,established; stream_size:both,!=,32784; byte_test:4,>,32784,0,little; sid:12083; rev:8;)
+
+alert tcp any any -> any 20031 (msg:"SERVER-OTHER BakBone NetVault server heap overflow attempt"; flow:to_server,established; stream_size:client,<=,32784; byte_test:4,>,32784,0,little; sid:12084; rev:9;)
+
+alert tcp any any -> any 20031 (msg:"SERVER-OTHER BakBone NetVault server heap overflow attempt"; flow:to_server,established; stream_size:client,>=,32784; byte_test:4,>,32784,0,little; sid:12085; rev:10;)
+
 ruletype suspicious
 {
     type log

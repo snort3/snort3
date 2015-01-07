@@ -305,7 +305,7 @@ static int checkMplsHdr(const CodecData& codec, uint32_t label, uint8_t bos)
     return iRet;
 }
 
-void MplsCodec::log(TextLog* const text_log, const uint8_t* /*raw_pkt*/,
+void MplsCodec::log(TextLog* const /*text_log*/, const uint8_t* /*raw_pkt*/,
     const uint16_t /*lyr_len*/)
 {
     // FIXIT-L  MPLS needs to be updated throughout Snort++
