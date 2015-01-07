@@ -1,22 +1,21 @@
-/*
- ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- ** Copyright (C) 2004-2013 Sourcefire, Inc.
- **
- ** This program is free software; you can redistribute it and/or modify
- ** it under the terms of the GNU General Public License Version 2 as
- ** published by the Free Software Foundation.  You may not use, modify or
- ** distribute this program under any other version of the GNU General
- ** Public License.
- **
- ** This program is distributed in the hope that it will be useful,
- ** but WITHOUT ANY WARRANTY; without even the implied warranty of
- ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- ** GNU General Public License for more details.
- **
- ** You should have received a copy of the GNU General Public License
- ** along with this program; if not, write to the Free Software
- ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2004-2013 Sourcefire, Inc.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
 /*
  * ip_defrag.cc is derived from frag3.c by Martin Roesch <roesch@sourcefire.com>
@@ -702,7 +701,7 @@ static inline int checkTinyFragments(
             if (p->dsize <= engine->min_fragment_length)
             {
                 DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                            "Frag3: Received fragment size(%d) is not more than configured min_fragment_length (%d)\n",
+                            "Frag: Received fragment size(%d) is not more than configured min_fragment_length (%d)\n",
                             p->dsize, engine->min_fragment_length););
                 EventTinyFragments(engine);
                 return 1;
@@ -712,7 +711,7 @@ static inline int checkTinyFragments(
             if (trimmedLength <= engine->min_fragment_length)
             {
                 DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                            "Frag3: # of New octets in Received fragment(%d) is not more than configured min_fragment_length (%d)\n",
+                            "Frag: # of New octets in Received fragment(%d) is not more than configured min_fragment_length (%d)\n",
                             trimmedLength, engine->min_fragment_length););
                 EventTinyFragments(engine);
                 return 1;
@@ -736,7 +735,7 @@ int drop_all_fragments(
     if (ft && !(ft->frag_flags & FRAG_DROP_FRAGMENTS))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                        "Frag3: Will drop all fragments on this packet\n"););
+                        "Frag: Will drop all fragments on this packet\n"););
         ft->frag_flags |= FRAG_DROP_FRAGMENTS;
     }
 
@@ -985,13 +984,13 @@ static void FragRebuild(FragTracker *ft, Packet *p)
 
     UpdateIPReassStats(&sfBase, dpkt->pkth->caplen);
 
-#if defined(DEBUG_FRAG3) && defined(DEBUG)
+#if defined(DEBUG_FRAG_EX) && defined(DEBUG)
     /*
      * Note, that this won't print out the IP Options or any other
      * data that is established when the packet is decoded.
      */
     if (DEBUG_FRAG & GetDebugLevel())
-        LogIPPkt(&dpkt);
+        LogIPPkt(dpkt);
 
 #endif
 
@@ -1064,7 +1063,7 @@ static void delete_frag(Fragment *frag)
         free(frag);
         mem_in_use -= sizeof(Fragment);
 
-        sfBase.frag3_mem_in_use = mem_in_use;
+        sfBase.frag_mem_in_use = mem_in_use;
     }
 
     ip_stats.nodes_released++;
@@ -1249,7 +1248,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
         if ( p->is_ip4() )
         {
             DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                    "[FRAG3] Fragment discarded due to low TTL "
+                    "[FRAG] Fragment discarded due to low TTL "
                     "[0x%X->0x%X], TTL: %d  " "Offset: %d Length: %d\n",
                     ntohl(p->ptrs.ip_api.get_ip4h()->get_src()),
                     ntohl(p->ptrs.ip_api.get_ip4h()->get_dst()),
@@ -1326,7 +1325,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
                 if ( p->is_ip4() )
                 {
                     DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                            "[FRAG3] Fragment discarded due to large TTL Delta "
+                            "[FRAG] Fragment discarded due to large TTL Delta "
                             "[0x%X->0x%X], TTL: %d  orig TTL: %d "
                             "Offset: %d Length: %d\n",
                             ntohl(p->ptrs.ip_api.get_ip4h()->get_src()),
@@ -2236,7 +2235,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
         f->fptr = (uint8_t *) SnortAlloc(fragLength);
         mem_in_use += fragLength;
 
-        sfBase.frag3_mem_in_use = mem_in_use;
+        sfBase.frag_mem_in_use = mem_in_use;
     }
 
     ip_stats.nodes_created++;
@@ -2392,7 +2391,7 @@ int Defrag::add_frag_node(FragTracker *ft,
         newfrag->fptr = (uint8_t*)SnortAlloc(fragLength);
         mem_in_use += fragLength;
 
-        sfBase.frag3_mem_in_use = mem_in_use;
+        sfBase.frag_mem_in_use = mem_in_use;
     }
 
     ip_stats.nodes_created++;
@@ -2479,7 +2478,7 @@ int Defrag::dup_frag_node(
         newfrag->fptr = (uint8_t*)SnortAlloc(left->flen);
         mem_in_use += left->flen;
 
-        sfBase.frag3_mem_in_use = mem_in_use;
+        sfBase.frag_mem_in_use = mem_in_use;
     }
 
     ip_stats.nodes_created++;

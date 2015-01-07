@@ -1,23 +1,20 @@
-/****************************************************************************
- *
- * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
 #include "flow/flow_control.h"
 
@@ -279,7 +276,7 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
 static bool is_bidirectional(const Flow* flow)
 {
     constexpr unsigned bidir = SSNFLAG_SEEN_CLIENT | SSNFLAG_SEEN_SERVER;
-    return (flow->s5_state.session_flags & bidir) == bidir;
+    return (flow->ssn_state.session_flags & bidir) == bidir;
 }
 
 // FIXIT-L init_roles* should take const Packet*
@@ -287,7 +284,7 @@ static void init_roles_tcp(Packet* p, Flow* flow)
 {
     if ( p->ptrs.tcph->is_syn_only() )
     {
-        flow->s5_state.direction = FROM_CLIENT;
+        flow->ssn_state.direction = FROM_CLIENT;
         sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
         flow->client_port = ntohs(p->ptrs.tcph->th_sport);
         sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
@@ -295,7 +292,7 @@ static void init_roles_tcp(Packet* p, Flow* flow)
     }
     else if ( p->ptrs.tcph->is_syn_ack() )
     {
-        flow->s5_state.direction = FROM_SERVER;
+        flow->ssn_state.direction = FROM_SERVER;
         sfip_copy(flow->client_ip, p->ptrs.ip_api.get_dst());
         flow->client_port = ntohs(p->ptrs.tcph->th_dport);
         sfip_copy(flow->server_ip, p->ptrs.ip_api.get_src());
@@ -303,7 +300,7 @@ static void init_roles_tcp(Packet* p, Flow* flow)
     }
     else if (p->ptrs.sp > p->ptrs.dp)
     {
-        flow->s5_state.direction = FROM_CLIENT;
+        flow->ssn_state.direction = FROM_CLIENT;
         sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
         flow->client_port = ntohs(p->ptrs.tcph->th_sport);
         sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
@@ -311,7 +308,7 @@ static void init_roles_tcp(Packet* p, Flow* flow)
     }
     else
     {
-        flow->s5_state.direction = FROM_SERVER;
+        flow->ssn_state.direction = FROM_SERVER;
         sfip_copy(flow->client_ip, p->ptrs.ip_api.get_dst());
         flow->client_port = ntohs(p->ptrs.tcph->th_dport);
         sfip_copy(flow->server_ip, p->ptrs.ip_api.get_src());
@@ -321,7 +318,7 @@ static void init_roles_tcp(Packet* p, Flow* flow)
 
 static void init_roles_udp(Packet* p, Flow* flow)
 {
-    flow->s5_state.direction = FROM_SENDER;
+    flow->ssn_state.direction = FROM_SENDER;
     sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
     flow->client_port = ntohs(p->ptrs.udph->uh_sport);
     sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
@@ -408,6 +405,9 @@ void FlowControl::init_tcp(
 
     tcp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 
+    if ( !tcp_mem )
+        return;
+
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
         tcp_cache->push(tcp_mem + i);
 
@@ -454,6 +454,9 @@ void FlowControl::init_udp(
 
     udp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 
+    if ( !udp_mem )
+        return;
+
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
         udp_cache->push(udp_mem + i);
 
@@ -499,6 +502,9 @@ void FlowControl::init_icmp(
         fc.cache_nominal_timeout, 5, 0);
 
     icmp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
+
+    if ( !icmp_mem )
+        return;
 
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
         icmp_cache->push(icmp_mem + i);
@@ -548,6 +554,9 @@ void FlowControl::init_ip(
         fc.cache_nominal_timeout, 5, 0);
 
     ip_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
+
+    if ( !ip_mem )
+        return;
 
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
         ip_cache->push(ip_mem + i);
@@ -602,10 +611,10 @@ char FlowControl::expected_flow (Flow* flow, Packet* p)
     if ( ignore )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-            "Stream5: Ignoring packet from %d. Marking flow marked as ignore.\n",
+            "Stream: Ignoring packet from %d. Marking flow marked as ignore.\n",
             p->packet_flags & PKT_FROM_CLIENT? "sender" : "responder"););
 
-        flow->s5_state.ignore_direction = ignore;
+        flow->ssn_state.ignore_direction = ignore;
         DisableInspection(p);
     }
 

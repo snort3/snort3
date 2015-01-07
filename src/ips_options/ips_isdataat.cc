@@ -1,22 +1,21 @@
-/*
- ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- ** Copyright (C) 1998-2013 Sourcefire, Inc.
- **
- ** This program is free software; you can redistribute it and/or modify
- ** it under the terms of the GNU General Public License Version 2 as
- ** published by the Free Software Foundation.  You may not use, modify or
- ** distribute this program under any other version of the GNU General
- ** Public License.
- **
- ** This program is distributed in the hope that it will be useful,
- ** but WITHOUT ANY WARRANTY; without even the implied warranty of
- ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- ** GNU General Public License for more details.
- **
- ** You should have received a copy of the GNU General Public License
- ** along with this program; if not, write to the Free Software
- ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 1998-2013 Sourcefire, Inc.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
 /* sp_isdataat
  *
@@ -142,7 +141,7 @@ int IsDataAtOption::eval(Cursor& c, Packet*)
 {
     IsDataAtData *isdata = &config;
     int rval = DETECTION_OPTION_NO_MATCH;
-    const uint8_t *base_ptr, *end_ptr, *start_ptr;
+    const uint8_t* start_ptr;
     int offset;
 
     PROFILE_VARS;
@@ -161,16 +160,14 @@ int IsDataAtOption::eval(Cursor& c, Packet*)
     if ( isdata->flags & ISDATAAT_RELATIVE_FLAG )
     {
         start_ptr = c.start();
-        end_ptr = start_ptr + c.length();
     }
     else
     {
         start_ptr = c.buffer();
-        end_ptr = start_ptr + c.size();
     }
-    base_ptr = start_ptr + offset;
+    start_ptr += offset;
 
-    if(inBounds(start_ptr, end_ptr, base_ptr))
+    if(inBounds(c.buffer(), c.endo(), start_ptr))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
                     "[*] IsDataAt succeeded!  there is data...\n"););
@@ -232,7 +229,7 @@ static void isdataat_parse(const char *data, IsDataAtData *idx)
         idx->offset_var = GetVarByName(offset);
         if (idx->offset_var == BYTE_EXTRACT_NO_VAR)
         {
-            ParseError("%s", BYTE_EXTRACT_INVALID_ERR_STR);
+            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "isdataat offset", offset);
             return;
         }
     }

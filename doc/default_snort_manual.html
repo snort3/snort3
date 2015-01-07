@@ -781,7 +781,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0-a1 (Build 129) from 2.9.6-9
+o"  )~   Version 3.0.0-a1 (Build 131) from 2.9.6-9
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/snort/snort-team
          Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
@@ -1080,38 +1080,47 @@ defaults please let us know.</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-autotools or cmake to build from source.
+autotools or cmake to build from source
 </p>
 </li>
 <li>
 <p>
-daq from <a href="http://www.snort.org">http://www.snort.org</a> for packet IO.
+g++ &gt;= 4.8 or other recent C++11 compiler
 </p>
 </li>
 <li>
 <p>
-dnet from <a href="http://code.google.com/p/libdnet/">http://code.google.com/p/libdnet/</a> for network utility
-  functions.
+daq from <a href="http://www.snort.org">http://www.snort.org</a> for packet IO
 </p>
 </li>
 <li>
 <p>
-LuaJIT from <a href="http://luajit.org">http://luajit.org</a> for configuration and scripting.
+dnet from <a href="http://code.google.com/p/libdnet/">http://code.google.com/p/libdnet/</a> for network utility functions
 </p>
 </li>
 <li>
 <p>
-pcap from <a href="http://www.tcpdump.org">http://www.tcpdump.org</a> for tcpdump style logging.
+LuaJIT from <a href="http://luajit.org">http://luajit.org</a> for configuration and scripting
 </p>
 </li>
 <li>
 <p>
-pcre from <a href="http://www.pcre.org">http://www.pcre.org</a> for regular expression pattern matching.
+pcap from <a href="http://www.tcpdump.org">http://www.tcpdump.org</a> for tcpdump style logging
 </p>
 </li>
 <li>
 <p>
-zlib from <a href="http://www.zlib.net">http://www.zlib.net</a> for decompression.
+pcre from <a href="http://www.pcre.org">http://www.pcre.org</a> for regular expression pattern matching
+</p>
+</li>
+<li>
+<p>
+zlib from <a href="http://www.zlib.net">http://www.zlib.net</a> for decompression
+</p>
+</li>
+<li>
+<p>
+pkgconfig from <a href="http://www.freedesktop.org">http://www.freedesktop.org</a> to build the example plugins
 </p>
 </li>
 </ul></div>
@@ -1120,18 +1129,18 @@ zlib from <a href="http://www.zlib.net">http://www.zlib.net</a> for decompressio
 <li>
 <p>
 asciidoc from <a href="http://www.methods.co.nz/asciidoc/">http://www.methods.co.nz/asciidoc/</a> to build the HTML
-  manual.
+  manual
 </p>
 </li>
 <li>
 <p>
 dblatex from <a href="http://dblatex.sourceforge.net">http://dblatex.sourceforge.net</a> to build the pdf manual (in
-  addition to asciidoc).
+  addition to asciidoc)
 </p>
 </li>
 <li>
 <p>
-check from <a href="http://check.sourceforge.net">http://check.sourceforge.net</a> to build unit tests.
+check from <a href="http://check.sourceforge.net">http://check.sourceforge.net</a> to build unit tests
 </p>
 </li>
 </ul></div>
@@ -17926,7 +17935,7 @@ Prefer <em>and</em> over &amp;&amp; and <em>or</em> over || for new source files
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-12-09 07:08:41 EST
+Last updated 2014-12-15 12:42:35 EST
 </div>
 </div>
 </body>

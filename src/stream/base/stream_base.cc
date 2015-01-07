@@ -1,23 +1,20 @@
-/****************************************************************************
- *
- * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
 #include "stream/stream.h"
 
@@ -130,7 +127,7 @@ static inline bool is_eligible(Packet* p)
     return true;
 }
 
-Stream5GlobalConfig::Stream5GlobalConfig()
+StreamGlobalConfig::StreamGlobalConfig()
 {
     flags = 0;
     prune_log_max = 1048576;
@@ -143,7 +140,7 @@ Stream5GlobalConfig::Stream5GlobalConfig()
 class StreamBase : public Inspector
 {
 public:
-    StreamBase(const StreamConfig*);
+    StreamBase(const StreamModuleConfig*);
 
     void show(SnortConfig*) override;
 
@@ -153,10 +150,10 @@ public:
     void eval(Packet*) override;
 
 public:
-    const StreamConfig* config;
+    const StreamModuleConfig* config;
 };
 
-StreamBase::StreamBase(const StreamConfig* c)
+StreamBase::StreamBase(const StreamModuleConfig* c)
 {
     config = c;
 }
@@ -204,7 +201,7 @@ void StreamBase::tterm()
 void StreamBase::show(SnortConfig*)
 {
     // FIXIT-L SSN print 
-    //Stream5PrintGlobalConfig(&config);
+    //StreamPrintGlobalConfig(&config);
 }
 
 void StreamBase::eval(Packet *p)

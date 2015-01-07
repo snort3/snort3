@@ -1,26 +1,23 @@
-/****************************************************************************
- *
- * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
-#ifndef STREAM5_TCP_H
-#define STREAM5_TCP_H
+#ifndef STREAM_TCP_H
+#define STREAM_TCP_H
 
 #include "flow/flow.h"
 #include "stream/stream_api.h"
@@ -69,33 +66,33 @@ void tcp_reset_stats();
 void tcp_show(StreamTcpConfig*);
 
 // Stream support
-int Stream5FlushListener(Packet*, Flow*);
-int Stream5FlushTalker(Packet*, Flow*);
-int Stream5FlushClient(Packet*, Flow*);
-int Stream5FlushServer(Packet*, Flow*);
-void Stream5TcpSessionClear(Flow*);
-char Stream5GetReassemblyDirectionTcp(Flow*);
+int StreamFlushListener(Packet*, Flow*);
+int StreamFlushTalker(Packet*, Flow*);
+int StreamFlushClient(Packet*, Flow*);
+int StreamFlushServer(Packet*, Flow*);
+void StreamTcpSessionClear(Flow*);
+char StreamGetReassemblyDirectionTcp(Flow*);
 
-int Stream5AddSessionAlertTcp(Flow*, Packet*, uint32_t gid, uint32_t sid);
-int Stream5CheckSessionAlertTcp(Flow*, Packet*, uint32_t gid, uint32_t sid);
-int Stream5UpdateSessionAlertTcp(
+int StreamAddSessionAlertTcp(Flow*, Packet*, uint32_t gid, uint32_t sid);
+int StreamCheckSessionAlertTcp(Flow*, Packet*, uint32_t gid, uint32_t sid);
+int StreamUpdateSessionAlertTcp(
     Flow*, Packet*, uint32_t gid, uint32_t sid, uint32_t event_id, uint32_t event_second);
 
-void Stream5SetExtraDataTcp(Flow*, Packet*, uint32_t flag);
-void Stream5ClearExtraDataTcp(Flow*, Packet*, uint32_t flag);
+void StreamSetExtraDataTcp(Flow*, Packet*, uint32_t flag);
+void StreamClearExtraDataTcp(Flow*, Packet*, uint32_t flag);
 
-bool Stream5GetReassemblyFlushPolicyTcp(Flow*, char dir);
+bool StreamGetReassemblyFlushPolicyTcp(Flow*, char dir);
 
-char Stream5IsStreamSequencedTcp(Flow*, char dir);
-int Stream5MissingInReassembledTcp(Flow*, char dir);
-char Stream5PacketsMissingTcp(Flow*, char dir);
+char StreamIsStreamSequencedTcp(Flow*, char dir);
+int StreamMissingInReassembledTcp(Flow*, char dir);
+char StreamPacketsMissingTcp(Flow*, char dir);
 
 void* get_paf_config(StreamTcpConfig*);
-void** Stream5GetPAFUserDataTcp(Flow*, bool to_server);
-bool Stream5IsPafActiveTcp(Flow*, bool to_server);
+void** StreamGetPAFUserDataTcp(Flow*, bool to_server);
+bool StreamIsPafActiveTcp(Flow*, bool to_server);
 
-void Stream5SetSplitterTcp(Flow*, bool c2s, StreamSplitter*);
-StreamSplitter* Stream5GetSplitterTcp(Flow*, bool c2s);
+void StreamSetSplitterTcp(Flow*, bool c2s, StreamSplitter*);
+StreamSplitter* StreamGetSplitterTcp(Flow*, bool c2s);
 
 int GetTcpRebuiltPackets(Packet*, Flow*, PacketIterator, void *userdata);
 int GetTcpStreamSegments(Packet*, Flow*, StreamSegmentIterator, void *userdata);

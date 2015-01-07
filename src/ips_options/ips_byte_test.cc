@@ -1,25 +1,24 @@
-/*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- ** Copyright (C) 2002-2013 Sourcefire, Inc.
- ** Author: Martin Roesch
- **
- ** This program is free software; you can redistribute it and/or modify
- ** it under the terms of the GNU General Public License Version 2 as
- ** published by the Free Software Foundation.  You may not use, modify or
- ** distribute this program under any other version of the GNU General
- ** Public License.
- **
- ** This program is distributed in the hope that it will be useful,
- ** but WITHOUT ANY WARRANTY; without even the implied warranty of
- ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- ** GNU General Public License for more details.
- **
- ** You should have received a copy of the GNU General Public License
- ** along with this program; if not, write to the Free Software
- ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2002-2013 Sourcefire, Inc.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
 /* byte_test
+ * Author: Martin Roesch
  *
  * Purpose:
  *      Test a byte field against a specific value (with opcode).  Capable
@@ -241,7 +240,7 @@ int ByteTestOption::eval(Cursor& c, Packet*)
     int rval = DETECTION_OPTION_NO_MATCH;
     uint32_t value = 0;
     int success = 0;
-    const uint8_t *base_ptr, *end_ptr, *start_ptr;
+    const uint8_t* start_ptr;
     int payload_bytes_grabbed;
     int offset;
     uint32_t cmp_value;
@@ -269,16 +268,11 @@ int ByteTestOption::eval(Cursor& c, Packet*)
         offset = btd->offset;
 
     if ( btd->relative_flag )
-    {
         start_ptr = c.start();
-        end_ptr = start_ptr + c.length();
-    }
     else
-    {
         start_ptr = c.buffer();
-        end_ptr = start_ptr + c.size();
-    }
-    base_ptr = start_ptr + offset;
+
+    start_ptr += offset;
 
     /* both of these functions below perform their own bounds checking within
      * byte_extract.c
@@ -288,10 +282,7 @@ int ByteTestOption::eval(Cursor& c, Packet*)
     {
         if ( byte_extract(
             btd->endianess, btd->bytes_to_compare,
-            (const uint8_t *)base_ptr,
-            (const uint8_t *)start_ptr,
-            (const uint8_t *)end_ptr,
-            &value))
+            start_ptr, c.buffer(), c.endo(), &value))
         {
             MODULE_PROFILE_END(byteTestPerfStats);
             return rval;
@@ -302,10 +293,7 @@ int ByteTestOption::eval(Cursor& c, Packet*)
     {
         payload_bytes_grabbed = string_extract(
             btd->bytes_to_compare, btd->base,
-            (const uint8_t *)base_ptr,
-            (const uint8_t *)start_ptr,
-            (const uint8_t *)end_ptr,
-            &value);
+            start_ptr, c.buffer(), c.endo(), &value);
 
         if ( payload_bytes_grabbed < 0 )
         {
@@ -520,7 +508,7 @@ bool ByteTestModule::end(const char*, int, SnortConfig*)
 
         if (data.offset_var == BYTE_EXTRACT_NO_VAR)
         {
-            ParseError("%s", BYTE_EXTRACT_INVALID_ERR_STR);
+            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "byte_test", off_var.c_str());
             return false;
         }
     }
@@ -532,7 +520,7 @@ bool ByteTestModule::end(const char*, int, SnortConfig*)
 
         if (data.cmp_value_var == BYTE_EXTRACT_NO_VAR)
         {
-            ParseError("%s", BYTE_EXTRACT_INVALID_ERR_STR);
+            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "byte_test", cmp_var.c_str());
             return false;
         }
     }
@@ -541,7 +529,7 @@ bool ByteTestModule::end(const char*, int, SnortConfig*)
     
     if ( e1 && e2 )
     {
-        ParseError("byte_extract rule option has multiple arguments "
+        ParseError("byte_test has multiple arguments "
             "specifying the type of string conversion. Use only "
             "one of 'dec', 'hex', or 'oct'.");
         return false;

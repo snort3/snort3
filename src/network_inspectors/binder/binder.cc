@@ -1,21 +1,20 @@
-/*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-**
-** This program is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License Version 2 as
-** published by the Free Software Foundation.  You may not use, modify or
-** distribute this program under any other version of the GNU General
-** Public License.
-**
-** This program is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
-** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-*/
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 // binder.cc author Russ Combs <rucombs@cisco.com>
 
 #include <vector>
@@ -206,12 +205,12 @@ static void set_session(Flow* flow)
 
 static Inspector* get_gadget(Flow* flow, const HostAttributeEntry* host)
 {
-    stream.set_application_protocol_id_from_host_entry(flow, host, SSN_DIR_SERVER);
+    stream.set_application_protocol_id_from_host_entry(flow, host, SSN_DIR_FROM_SERVER);
 
-    if ( !flow->s5_state.application_protocol )
+    if ( !flow->ssn_state.application_protocol )
         return nullptr;
 
-    const char* s = get_protocol_name(flow->s5_state.application_protocol);
+    const char* s = get_protocol_name(flow->ssn_state.application_protocol);
 
     return InspectorManager::get_inspector(s);
 }
