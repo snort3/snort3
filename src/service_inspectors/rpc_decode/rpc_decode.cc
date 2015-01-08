@@ -1,23 +1,22 @@
-/*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
-**
-** This program is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License Version 2 as
-** published by the Free Software Foundation.  You may not use, modify or
-** distribute this program under any other version of the GNU General
-** Public License.
-**
-** This program is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
-** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-*/
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2002-2013 Sourcefire, Inc.
+// Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
 /* rpc_decode
  *
@@ -1023,9 +1022,9 @@ void RpcDecode::eval(Packet *p)
     // preconditions - what we registered for
     assert(p->is_tcp() && p->dsize);
 
-    /* If we're stateful that means stream5 has been configured.
+    /* If we're stateful that means stream has been configured.
      * In this case we don't look at server packets.
-     * There is the case were stream5 configuration requires a 3 way handshake.
+     * There is the case were stream configuration requires a 3 way handshake.
      * If no 3 way, then the packet flags won't be set, so don't look at it
      * since we won't be able to determeine who's the client and who's the server. */
     if ( !(p->packet_flags & PKT_FROM_CLIENT) )

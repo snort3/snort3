@@ -1,7 +1,9 @@
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
 EXTRA_DIST = \
-README
+README \
+COPYING \
+LICENSE
 
 SUBDIRS = \
 src

@@ -27,7 +27,7 @@
 
 set(ERROR_MESSAGE
     "
-    Unable to find Snort!!! Either
+    Unable to find Snort.  Either
     
     1)  Using ccmake, manually set the cmake variables
         SNORT_INCLUDE_DIR and SNORT_EXECUTABLE.

@@ -1,24 +1,21 @@
-/****************************************************************************
- *
- * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2005-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2005-2013 Sourcefire, Inc.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
 #include "udp_session.h"
 
@@ -73,11 +70,11 @@ THREAD_LOCAL ProfileStats udp_perf_stats;
 
 static void UdpSessionCleanup(Flow *lwssn)
 {
-    if (lwssn->s5_state.session_flags & SSNFLAG_PRUNED)
+    if (lwssn->ssn_state.session_flags & SSNFLAG_PRUNED)
     {
         CloseStreamSession(&sfBase, SESSION_CLOSED_PRUNED);
     }
-    else if (lwssn->s5_state.session_flags & SSNFLAG_TIMEDOUT)
+    else if (lwssn->ssn_state.session_flags & SSNFLAG_TIMEDOUT)
     {
         CloseStreamSession(&sfBase, SESSION_CLOSED_TIMEDOUT);
     }
@@ -86,7 +83,7 @@ static void UdpSessionCleanup(Flow *lwssn)
         CloseStreamSession(&sfBase, SESSION_CLOSED_NORMALLY);
     }
 
-    if ( lwssn->s5_state.session_flags & SSNFLAG_SEEN_SENDER )
+    if ( lwssn->ssn_state.session_flags & SSNFLAG_SEEN_SENDER )
         udpStats.released++;
 
     RemoveUDPSession(&sfBase);
@@ -110,24 +107,24 @@ static int ProcessUdp(
     if(p->packet_flags & PKT_FROM_SERVER)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Stream5: Updating on packet from responder\n"););
-        lwssn->s5_state.session_flags |= SSNFLAG_SEEN_RESPONDER;
+                    "Stream: Updating on packet from responder\n"););
+        lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_RESPONDER;
         lwssn->set_ttl(p, false);
     }
     else
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-            "Stream5: Updating on packet from client\n"););
-        lwssn->s5_state.session_flags |= SSNFLAG_SEEN_SENDER;
+            "Stream: Updating on packet from client\n"););
+        lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
         lwssn->set_ttl(p, true);
     }
 
-    if (!(lwssn->s5_state.session_flags & SSNFLAG_ESTABLISHED))
+    if (!(lwssn->ssn_state.session_flags & SSNFLAG_ESTABLISHED))
     {
-        if ((lwssn->s5_state.session_flags & SSNFLAG_SEEN_SENDER) &&
-            (lwssn->s5_state.session_flags & SSNFLAG_SEEN_RESPONDER))
+        if ((lwssn->ssn_state.session_flags & SSNFLAG_SEEN_SENDER) &&
+            (lwssn->ssn_state.session_flags & SSNFLAG_SEEN_RESPONDER))
         {
-            lwssn->s5_state.session_flags |= SSNFLAG_ESTABLISHED;
+            lwssn->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
         }
     }
 
@@ -149,10 +146,10 @@ bool UdpSession::setup(Packet* p)
 {
     ssn_time.tv_sec = p->pkth->ts.tv_sec;
     ssn_time.tv_usec = p->pkth->ts.tv_usec;
-    flow->s5_state.session_flags |= SSNFLAG_SEEN_SENDER;
+    flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
 
     flow->protocol = p->type();
-    flow->s5_state.direction = FROM_SENDER;
+    flow->ssn_state.direction = FROM_SENDER;
 
     StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
     flow->set_expire(p, pc->session_timeout);
@@ -187,7 +184,7 @@ void UdpSession::update_direction(
 
     if (sfip_equals(&flow->client_ip, ip) && (flow->client_port == port))
     {
-        if ((dir == SSN_DIR_SENDER) && (flow->s5_state.direction == SSN_DIR_SENDER))
+        if ((dir == SSN_DIR_FROM_SENDER) && (flow->ssn_state.direction == SSN_DIR_FROM_SENDER))
         {
             /* Direction already set as SENDER */
             return;
@@ -195,14 +192,15 @@ void UdpSession::update_direction(
     }
     else if (sfip_equals(&flow->server_ip, ip) && (flow->server_port == port))
     {
-        if ((dir == SSN_DIR_RESPONDER) && (flow->s5_state.direction == SSN_DIR_RESPONDER))
+        if ((dir == SSN_DIR_FROM_RESPONDER) && 
+            (flow->ssn_state.direction == SSN_DIR_FROM_RESPONDER))
         {
             /* Direction already set as RESPONDER */
             return;
         }
     }
 
-    /* Swap them -- leave flow->s5_state.direction the same */
+    /* Swap them -- leave flow->ssn_state.direction the same */
     tmpIp = flow->client_ip;
     tmpPort = flow->client_port;
     flow->client_ip = flow->server_ip;
@@ -226,7 +224,7 @@ int UdpSession::process(Packet *p)
     {
         UdpSessionCleanup(flow);
         flow->restart();
-        flow->s5_state.session_flags |= SSNFLAG_SEEN_SENDER;
+        flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
         udpStats.created++;
         udpStats.timeouts++;
     }

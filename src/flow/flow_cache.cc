@@ -1,23 +1,22 @@
-/*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2013-2013 Sourcefire, Inc.
-** AUTHOR: Steven Sturges <ssturges@sourcefire.com>
-**
-** This program is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License Version 2 as
-** published by the Free Software Foundation.  You may not use, modify or
-** distribute this program under any other version of the GNU General
-** Public License.
-**
-** This program is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
-** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-*/
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2013-2013 Sourcefire, Inc.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
+// flow_cache.cc author Russ Combs <rucombs@cisco.com>
 
 #include "flow/flow_cache.h"
 
@@ -187,7 +186,7 @@ uint32_t FlowCache::prune_stale(uint32_t thetime, Flow *save_me)
         else if((flow->last_data_seen + timeoutAggressive) < thetime)
         {
             DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "pruning stale flow\n"););
-            flow->s5_state.session_flags |= SSNFLAG_TIMEDOUT;
+            flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
             release(flow, "stale/timeout");
             pruned++;
         }
@@ -254,7 +253,7 @@ uint32_t FlowCache::prune_excess(bool memCheck, Flow *save_me)
         {
             if ( (flow != save_me) && (!memCheck || !flow->was_blocked()) )
             {
-                flow->s5_state.session_flags |= SSNFLAG_PRUNED;
+                flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
                 release(flow, memCheck ? "memcap/check" : "memcap/stale");
                 pruned++;
             }
@@ -298,7 +297,7 @@ void FlowCache::timeout(uint32_t flowCount, time_t cur_time)
         flowExaminedCount++;
 
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "retiring stale flow\n"););
-        flow->s5_state.session_flags |= SSNFLAG_TIMEDOUT;
+        flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
         release(flow, "stale/timeout");
 
         flowRetiredCount++;
@@ -317,7 +316,7 @@ int FlowCache::purge()
 
     while ( flow )
     {
-        flow->s5_state.session_flags |= SSNFLAG_PRUNED;
+        flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
         release(flow, "purge whole cache");
         retCount++;
         flow = (Flow*)hash_table->first();

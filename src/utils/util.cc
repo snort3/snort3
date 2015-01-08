@@ -1,23 +1,22 @@
-/*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 2002 Martin Roesch <roesch@sourcefire.com>
-**
-** This program is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License Version 2 as
-** published by the Free Software Foundation.  You may not use, modify or
-** distribute this program under any other version of the GNU General
-** Public License.
-**
-** This program is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
-** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-*/
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2002-2013 Sourcefire, Inc.
+// Copyright (C) 2002 Martin Roesch <roesch@sourcefire.com>
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
 #include "util.h"
 
@@ -113,8 +112,8 @@ int DisplayBanner(void)
     LogMessage("  o\"  )~   Version %s (Build %s) %s\n",
                VERSION, BUILD, info);
     LogMessage("   ''''    By Martin Roesch & The Snort Team\n");
-    LogMessage("           http://snort.org/snort/snort-team\n");
-    LogMessage("           Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.\n");
+    LogMessage("           http://snort.org/contact#team\n");
+    LogMessage("           Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.\n");
     LogMessage("           Copyright (C) 1998-2013 Sourcefire, Inc., et al.\n");
 #ifdef HAVE_PCAP_LIB_VERSION
     LogMessage("           Using %s\n", pcap_lib_version());
@@ -126,8 +125,6 @@ int DisplayBanner(void)
 
     return 0;
 }
-
-
 
 /****************************************************************************
  *
@@ -177,9 +174,11 @@ void ts_print(const struct timeval *tvp, char *timebuf)
 
     if (ScOutputIncludeYear())
     {
+        int year = (lt->tm_year >= 100) ? (lt->tm_year - 100) : lt->tm_year;
+
         (void) SnortSnprintf(timebuf, TIMEBUF_SIZE,
                         "%02d/%02d/%02d-%02d:%02d:%02d.%06u ",
-                        lt->tm_mon + 1, lt->tm_mday, lt->tm_year - 100,
+                        lt->tm_mon + 1, lt->tm_mday, year,
                         s / 3600, (s % 3600) / 60, s % 60,
                         (u_int) tvp->tv_usec);
     }

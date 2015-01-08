@@ -1,24 +1,21 @@
-/****************************************************************************
- *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2003-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2003-2013 Sourcefire, Inc.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
 /*
 *   sflsq.c
@@ -235,11 +232,12 @@ NODE_DATA sflist_remove_head (SF_LIST * s)
       ndata = q->ndata;
       s->head = s->head->next;
       s->count--;
-      if( !s->head  )
-	  {
-	    s->tail = 0;
-	    s->count = 0;
-	  }
+
+      if ( !s->head  )
+	    s->tail = nullptr;
+      else
+          s->head->prev = nullptr;
+
       s_free( q );
     }
   return (NODE_DATA)ndata;
@@ -259,36 +257,31 @@ NODE_DATA sflist_remove_tail (SF_LIST * s)
       ndata = q->ndata;
       s->count--;
       s->tail = q->prev;
+
       if (!s->tail)
-      {
-	s->tail = 0;
-        s->head = 0;
-	s->count = 0;
-      }
+          s->head = nullptr;
       else
-      {
-        if( q->prev ) q->prev->next = 0;
-      }
+          s->tail->next = nullptr;
+
       s_free (q);
     }
   return (NODE_DATA)ndata;
 }
 
-void sflist_remove_node (SF_LIST * s, SF_LNODE * n, void(*nfree)(void*) )
+void sflist_remove_node (SF_LIST* s, SF_LNODE* n)
 {
- // NODE_DATA ndata = 0;
   SF_LNODE * cur;
 
   if( n == s->head )
   {
         s->head = s->head->next;
         s->count--;
+
         if (!s->head)
-	    {
-	      s->tail = 0;
-	      s->count = 0;
-	    }
-        if( nfree ) nfree( n->ndata );
+	      s->tail = nullptr;
+        else
+            s->head->prev = nullptr;
+
         s_free( n );
         return ;
   }
@@ -296,12 +289,12 @@ void sflist_remove_node (SF_LIST * s, SF_LNODE * n, void(*nfree)(void*) )
   {
         s->tail = s->tail->prev;
         s->count--;
+
         if (!s->tail )
-	    {
 	      s->head = 0;
-	      s->count = 0;
-	    }
-        if( nfree ) nfree( n->ndata );
+        else
+            s->tail->next = nullptr;
+
         s_free( n );
         return ;
   }
@@ -316,7 +309,6 @@ void sflist_remove_node (SF_LIST * s, SF_LNODE * n, void(*nfree)(void*) )
        n->next->prev = n->prev;
        n->prev->next = n->next;
 	   s->count--;
-       if( nfree ) nfree( n->ndata );
        s_free(n);
        return ;
      }

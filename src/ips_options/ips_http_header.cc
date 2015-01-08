@@ -1,21 +1,20 @@
-/*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-**
-** This program is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License Version 2 as
-** published by the Free Software Foundation.  You may not use, modify or
-** distribute this program under any other version of the GNU General
-** Public License.
-**
-** This program is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
-** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-*/
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 // ips_http_header.cc author Russ Combs <rucombs@cisco.com>
 
 #ifdef HAVE_CONFIG_H
@@ -101,6 +100,9 @@ public:
     CursorActionType get_cursor_type() const override
     { return CAT_SET_HEADER; };
 
+    bool fp_research() override
+    { return name.size() != 0; };
+
     int eval(Cursor&, Packet*) override;
 
 private:
@@ -122,8 +124,7 @@ static bool find(
         if ( n < k )
             return false;
 
-        if ( !strncasecmp(h, (char*)t, k) &&
-             !strncmp((char*)t+k, ": ", 2) )
+        if ( !strncasecmp(h, (char*)t, k) )
             break;
 
         t = (uint8_t*)memchr(t, '\n', n);
@@ -135,8 +136,14 @@ static bool find(
     }
     while ( true );
 
-    // skip over the keyword to the data
-    t += k + 2;
+    // skip over the keyword and : to the data
+    // (skip space before and after :)
+    t += k;
+
+    while ( isspace(*t) ) ++t;
+
+    if ( *t == ':' )
+        do ++t; while ( isspace(*t) );
 
     // now find the end of header
     const uint8_t* z = (uint8_t*)memchr(t, '\n', n);

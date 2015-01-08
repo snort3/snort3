@@ -1,23 +1,20 @@
-/****************************************************************************
- * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
-
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 // ips_stream_reassemble.cc author Russ Combs <rucombs@cisco.com>
 
 #ifdef HAVE_CONFIG_H
@@ -118,13 +115,13 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
 
     if ( !srod.enable ) /* Turn it off */
     {
-        if ( srod.direction & SSN_DIR_SERVER )
+        if ( srod.direction & SSN_DIR_FROM_SERVER )
         {
             tcpssn->server.flush_policy = STREAM_FLPOLICY_IGNORE;
             stream.set_splitter(lwssn, true);
         }   
 
-        if ( srod.direction & SSN_DIR_CLIENT )
+        if ( srod.direction & SSN_DIR_FROM_CLIENT )
         {
             tcpssn->client.flush_policy = STREAM_FLPOLICY_IGNORE;
             stream.set_splitter(lwssn, false);
@@ -134,13 +131,13 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
     {
         // FIXIT-M PAF need to instantiate service splitter?
         // FIXIT-M PAF need to check for ips / on-data
-        if ( srod.direction & SSN_DIR_SERVER )
+        if ( srod.direction & SSN_DIR_FROM_SERVER )
         {
             tcpssn->server.flush_policy = STREAM_FLPOLICY_ON_ACK;
             stream.set_splitter(lwssn, true, new AtomSplitter(true));
         }   
 
-        if ( srod.direction & SSN_DIR_CLIENT )
+        if ( srod.direction & SSN_DIR_FROM_CLIENT )
         {
             tcpssn->client.flush_policy = STREAM_FLPOLICY_ON_ACK;
             stream.set_splitter(lwssn, false, new AtomSplitter(false));
@@ -150,7 +147,7 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
     if (srod.fastpath)
     {
         /* Turn off inspection */
-        lwssn->s5_state.ignore_direction |= srod.direction;
+        lwssn->ssn_state.ignore_direction |= srod.direction;
         DisableInspection(pkt);
 
         /* TBD: Set TF_FORCE_FLUSH ? */

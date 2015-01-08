@@ -1,21 +1,20 @@
-/*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-**
-** This program is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License Version 2 as
-** published by the Free Software Foundation.  You may not use, modify or
-** distribute this program under any other version of the GNU General
-** Public License.
-**
-** This program is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
-** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-*/
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 // packet_manager.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <vector>
@@ -352,9 +351,9 @@ static inline uint8_t GetTTL(const Packet* const p, EncodeFlags flags)
         return 0;
 
     if ( p->packet_flags & PKT_FROM_CLIENT )
-        dir = forward(flags) ? SSN_DIR_CLIENT : SSN_DIR_SERVER;
+        dir = forward(flags) ? SSN_DIR_FROM_CLIENT : SSN_DIR_FROM_SERVER;
     else
-        dir = forward(flags) ? SSN_DIR_SERVER : SSN_DIR_CLIENT;
+        dir = forward(flags) ? SSN_DIR_FROM_SERVER : SSN_DIR_FROM_CLIENT;
 
     // outermost ip is considered to be outer here,
     // even if it is the only ip layer ...
@@ -626,8 +625,8 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
 //-------------------------------------------------------------------------
 // formatters:
 // - these packets undergo detection
-// - need to set Packet stuff except for frag3 which calls grinder
-// - include original options except for frag3 inner ip
+// - need to set Packet stuff except for frag which calls grinder
+// - include original options except for frag inner ip
 // - inner layer header is very similar but payload differs
 // - original ttl is always used
 //-------------------------------------------------------------------------
