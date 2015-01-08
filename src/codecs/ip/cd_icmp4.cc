@@ -592,7 +592,7 @@ struct IcmpHdr {
 } // namespace
 
 void Icmp4Codec::update(const ip::IpApi&, const EncodeFlags flags,
-    uint8_t* raw_pkt, uint16_t lyr_len, uint32_t& updated_len)
+    uint8_t* raw_pkt, uint16_t /*lyr_len*/, uint32_t& updated_len)
 {
     IcmpHdr* h = reinterpret_cast<IcmpHdr*>(raw_pkt);
     updated_len += sizeof(*h);

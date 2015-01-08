@@ -719,7 +719,7 @@ bool Ipv4Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
 }
 
 void Ipv4Codec::update(const ip::IpApi&, const EncodeFlags flags,
-    uint8_t* raw_pkt, uint16_t lyr_len, uint32_t& updated_len)
+    uint8_t* raw_pkt, uint16_t /*lyr_len*/, uint32_t& updated_len)
 {
     IP4Hdr* h = reinterpret_cast<IP4Hdr*>(raw_pkt);
     uint16_t hlen = h->hlen();

@@ -697,7 +697,7 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
 }
 
 void TcpCodec::update(const ip::IpApi& api, const EncodeFlags flags, uint8_t* raw_pkt,
-    uint16_t lyr_len, uint32_t& updated_len)
+    uint16_t /*lyr_len*/, uint32_t& updated_len)
 {
     tcp::TCPHdr* const h = reinterpret_cast<tcp::TCPHdr*>(raw_pkt);
 
