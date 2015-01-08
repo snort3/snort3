@@ -139,7 +139,7 @@ options.txt: $(snort)
 	$(snort) --markup --help-options | sort > $@
 
 signals.txt: $(snort)
-	$(snort) --markup --help-signals > $@
+	$(snort) --markup --help-signals | sort > $@
 
 version.txt: $(snort)
 	$(snort) -V 2>&1 | grep -v Using > $@

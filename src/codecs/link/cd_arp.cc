@@ -56,7 +56,7 @@ public:
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    void format(EncodeFlags, const Packet*, Packet*, Layer*) override;
+    void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
 };
 
 
@@ -101,9 +101,9 @@ bool ArpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     return true;
 }
 
-void ArpCodec::format(EncodeFlags, const Packet*, Packet* c, Layer*)
+void ArpCodec::format(bool /*reverse*/, uint8_t* /*raw_pkt*/, DecodeData& snort)
 {
-    c->ptrs.set_pkt_type(PktType::ARP);
+    snort.set_pkt_type(PktType::ARP);
 }
 
 //-------------------------------------------------------------------------

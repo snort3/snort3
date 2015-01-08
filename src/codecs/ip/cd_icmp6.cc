@@ -101,10 +101,10 @@ public:
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    bool update(Packet*, Layer*, uint32_t* len) override;
-    void format(EncodeFlags, const Packet*, Packet*, Layer*) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-        const Packet* const) override;
+    void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
+        uint16_t lyr_len, uint32_t& updated_len) override;
+    void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
 
 
@@ -194,7 +194,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                     codec_events::decoder_event(codec, DECODE_ICMPV6_TOO_BIG_BAD_MTU);
 
                 len = icmp::ICMP6_HEADER_NORMAL_LEN;
-                codec.next_prot_id = IP_EMBEDDED_IN_ICMP6;
+                codec.next_prot_id = PROTO_IP_EMBEDDED_IN_ICMP6;
             }
             else
             {
@@ -217,7 +217,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                         codec_events::decoder_event(codec, DECODE_ICMPV6_UNREACHABLE_NON_RFC_4443_CODE);
                 }
                 len = icmp::ICMP6_HEADER_NORMAL_LEN;
-                codec.next_prot_id = IP_EMBEDDED_IN_ICMP6;
+                codec.next_prot_id = PROTO_IP_EMBEDDED_IN_ICMP6;
             }
             else
             {
@@ -304,7 +304,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
  ******************************************************************/
 
 void Icmp6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
-                const Packet* const)
+    const uint16_t /*lyr_len*/)
 {
     const icmp::Icmp6Hdr* const icmph = reinterpret_cast<const icmp::Icmp6Hdr*>(raw_pkt);
     TextLog_Print(text_log, "sType:%d  Code:%d  ", icmph->type, icmph->code);
@@ -328,32 +328,31 @@ typedef struct {
 } // namespace
 
 
-bool Icmp6Codec::update (Packet* p, Layer* lyr, uint32_t* len)
+void Icmp6Codec::update(const ip::IpApi& api, const EncodeFlags flags,
+    uint8_t* raw_pkt, uint16_t /*lyr_len*/, uint32_t& updated_len)
 {
-    IcmpHdr* h = (IcmpHdr*)(lyr->start);
-     *len += sizeof(*h);
+    IcmpHdr* h = reinterpret_cast<IcmpHdr*>(raw_pkt);
+    updated_len += sizeof(*h);
 
-    if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) ) {
+    if ( !(flags & UPD_COOKED) || (flags & UPD_REBUILT_FRAG) ) {
         checksum::Pseudoheader6 ps6;
         h->cksum = 0;
 
-        memcpy(ps6.sip, &p->ptrs.ip_api.get_src()->ip32, sizeof(ps6.sip));
-        memcpy(ps6.dip, &p->ptrs.ip_api.get_dst()->ip32, sizeof(ps6.dip));
+        memcpy(ps6.sip, &api.get_src()->ip32, sizeof(ps6.sip));
+        memcpy(ps6.dip, &api.get_dst()->ip32, sizeof(ps6.dip));
         ps6.zero = 0;
         ps6.protocol = IPPROTO_ICMPV6;
-        ps6.len = htons((uint16_t)*len);
-        h->cksum = checksum::icmp_cksum((uint16_t *)h, *len, &ps6);
+        ps6.len = htons((uint16_t)updated_len);
+        h->cksum = checksum::icmp_cksum((uint16_t *)h, updated_len, &ps6);
     }
-
-    return true;
 }
 
 
 
-void Icmp6Codec::format(EncodeFlags, const Packet*, Packet* c, Layer* lyr)
+void Icmp6Codec::format(bool /*reverse*/, uint8_t* raw_pkt, DecodeData& snort)
 {
-    c->ptrs.icmph = (ICMPHdr*)lyr->start;
-    c->ptrs.set_pkt_type(PktType::ICMP);
+    snort.icmph = reinterpret_cast<ICMPHdr*>(raw_pkt);
+    snort.set_pkt_type(PktType::ICMP);
 }
 
 //-------------------------------------------------------------------------

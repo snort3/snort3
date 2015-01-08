@@ -1,16 +1,4 @@
-##############################################################################
-#                                                                            #
-#  To build another .txt file, add the file to the BUILT_SOURCES variable.   #
-#  If the new file's name is new_file.txt, Cmake will automatcially run the  #
-#  command                                                                   #
-#                                                                            #
-#  >>  snort --help-file_name > file_name.txt                                #
-#                                                                            #
-#  to creat the new file. Notice that the extension is missing in the help   #
-#  command. If the command does not exist, the behavior is undefined althogh #
-#  an error will definitely occur.                                           #
-#                                                                            #
-##############################################################################
+
 
 # snort --help-${type}
 set(HELP_SOURCES
@@ -65,7 +53,7 @@ set (UNBUILT_SOURCES
     style.txt
     terms.txt
     snorty.png
-#   config_changes.txt  If ruby executable is NOT found
+#   config_changes.txt  If ruby executable is not found
 )
 
 

@@ -43,6 +43,7 @@
 #include "filters/detection_filter.h"
 #include "detection/fpcreate.h"
 #include "ips_options/ips_pcre.h"
+#include "protocols/udp.h"
 
 //-------------------------------------------------------------------------
 // private implementation

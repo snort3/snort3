@@ -95,10 +95,10 @@ public:
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&) override;
-    bool update(Packet*, Layer*, uint32_t* len) override;
-    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-                    const Packet* const)  override;
+    void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
+        uint16_t lyr_len, uint32_t& updated_len) override;
+    void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
 
 
@@ -535,7 +535,7 @@ static inline bool CheckTeredoPrefix(const ip::IP6Hdr* const hdr)
 *******************************************************************/
 
 void Ipv6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
-                    const Packet* const)
+    const uint16_t /*lyr_len*/)
 {
     const ip::IP6Hdr* const ip6h = reinterpret_cast<const ip::IP6Hdr*>(raw_pkt);
 
@@ -587,7 +587,7 @@ bool Ipv6Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         return false;
 
     const ip::IP6Hdr* const hi = reinterpret_cast<const ip::IP6Hdr*>(raw_in);
-    ip::IP6Hdr* const ipvh_out = reinterpret_cast<ip::IP6Hdr*>(buf.base);
+    ip::IP6Hdr* const ipvh_out = reinterpret_cast<ip::IP6Hdr*>(buf.data());
 
 
 
@@ -620,51 +620,50 @@ bool Ipv6Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     return true;
 }
 
-bool Ipv6Codec::update(Packet* p, Layer* lyr, uint32_t* len)
+void Ipv6Codec::update(const ip::IpApi&, const EncodeFlags flags,
+    uint8_t* raw_pkt, uint16_t lyr_len, uint32_t& updated_len)
 {
-    ip::IP6Hdr* h = (ip::IP6Hdr*)(lyr->start);
+    ip::IP6Hdr* h = reinterpret_cast<ip::IP6Hdr*>(raw_pkt);
 
     // if we didn't trim payload or format this packet,
     // we may not know the actual lengths because not all
     // extension headers are decoded and we stop at frag6.
     // in such case we do not modify the packet length.
-    if ( (p->packet_flags & PKT_MODIFIED)
+    if ( (flags & UPD_MODIFIED)
 #ifdef NORMALIZER
-        && !(p->packet_flags & PKT_RESIZED)
+        && !(flags & UPD_RESIZED)
 #endif
     )
     {
         // FIXIT-M J  --  this worked in Snort.  In Snort++,
         //          will this be accurate?
-        *len = ntohs(h->ip6_payload_len) + sizeof(*h);
+        updated_len = ntohs(h->ip6_payload_len) + ip::IP6_HEADER_LEN;
     }
     else
     {
-        *len += lyr->length;
+        updated_len += lyr_len;
 
         // len includes header, remove for payload
-        h->ip6_payload_len = htons((uint16_t)(*len - sizeof(*h)));
+        h->ip6_payload_len = htons((uint16_t)(updated_len - ip::IP6_HEADER_LEN));
     }
-    return true;
 }
 
-void Ipv6Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
+void Ipv6Codec::format(bool reverse, uint8_t* raw_pkt, DecodeData& snort)
 {
-    ip::IP6Hdr* ch = reinterpret_cast<ip::IP6Hdr*>(
-                            const_cast<uint8_t*>(lyr->start));
+    ip::IP6Hdr* ip6h = reinterpret_cast<ip::IP6Hdr*>(raw_pkt);
 
-    if ( reverse(f) )
+    if ( reverse )
     {
-        int i = lyr - c->layers;
-        ip::IP6Hdr* ph = (ip::IP6Hdr*)p->layers[i].start;
+        ip::snort_in6_addr tmp_addr;
 
-        memcpy(ch->ip6_src.u6_addr8, ph->ip6_dst.u6_addr8, sizeof(ch->ip6_src.u6_addr8));
-        memcpy(ch->ip6_dst.u6_addr8, ph->ip6_src.u6_addr8, sizeof(ch->ip6_dst.u6_addr8));
+        memcpy(&tmp_addr, ip6h->ip6_dst.u6_addr8, sizeof(ip6h->ip6_src.u6_addr8));
+        memcpy(ip6h->ip6_dst.u6_addr8, ip6h->ip6_src.u6_addr8, sizeof(ip6h->ip6_src.u6_addr8));
+        memcpy(ip6h->ip6_src.u6_addr8, &tmp_addr, sizeof(ip6h->ip6_dst.u6_addr8));
     }
 
     // set outer to inner so this will always wind pointing to inner
-    c->ptrs.ip_api.set(ch);
-    c->ptrs.set_pkt_type(PktType::IP);
+    snort.ip_api.set(ip6h);
+    snort.set_pkt_type(PktType::IP);
 }
 
 //-------------------------------------------------------------------------

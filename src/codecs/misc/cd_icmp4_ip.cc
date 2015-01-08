@@ -50,15 +50,14 @@ public:
 
     void get_protocol_ids(std::vector<uint16_t>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-                    const Packet* const) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
 
 } // namespace
 
 
 void Icmp4IpCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(IP_EMBEDDED_IN_ICMP4); }
+{ v.push_back(PROTO_IP_EMBEDDED_IN_ICMP4); }
 
 bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
@@ -153,7 +152,7 @@ struct ip4_addr
 };
 
 void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
-                    const Packet* const)
+    const uint16_t /*lyr_len*/)
 {
     const IP4Hdr* const ip4h = reinterpret_cast<const IP4Hdr*>(raw_pkt);
     TextLog_Puts(text_log, "\n\t**** ORIGINAL DATAGRAM DUMP: ****");

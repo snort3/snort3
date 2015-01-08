@@ -63,13 +63,11 @@ public:
 
     void get_protocol_ids(std::vector<uint16_t>&) override;
     void get_data_link_type(std::vector<int>&) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-        const Packet*const ) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&) override;
-    bool update(Packet*, Layer*, uint32_t* len) override;
-    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
+    void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
 };
 
 } // namespace
@@ -87,7 +85,7 @@ void EthCodec::get_data_link_type(std::vector<int>&v)
 
 void EthCodec::get_protocol_ids(std::vector<uint16_t>&v)
 {
-    v.push_back(ETHERNET_802_3);
+    v.push_back(PROTO_ETHERNET_802_3);
 }
 
 
@@ -125,7 +123,7 @@ bool EthCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     if (next_prot > eth::MIN_ETHERTYPE )
         codec.proto_bits |= PROTO_BIT__ETH;
     else
-        next_prot = ETHERNET_LLC;
+        next_prot = PROTO_ETHERNET_LLC;
 
     codec.next_prot_id = next_prot;
     codec.lyr_len = eth::ETH_HEADER_LEN;
@@ -134,7 +132,7 @@ bool EthCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
 
 void EthCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
-                    const Packet* const)
+    const uint16_t /*len*/)
 {
     const eth::EtherHdr *eh = reinterpret_cast<const eth::EtherHdr *>(raw_pkt);
 
@@ -186,7 +184,7 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         if (!buf.allocate(sizeof(*ho)))
             return false;
 
-        ho = reinterpret_cast<eth::EtherHdr*>(buf.base);
+        ho = reinterpret_cast<eth::EtherHdr*>(buf.data());
 
         if (enc.ethertype_set())
             ho->ether_type = enc.next_ethertype;
@@ -220,23 +218,18 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     return true;
 }
 
-bool EthCodec::update (Packet*, Layer* lyr, uint32_t* len)
-{
-    *len += lyr->length;
-    return true;
-}
 
-void EthCodec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
+void EthCodec::format(bool reverse, uint8_t* raw_pkt, DecodeData&)
 {
-    eth::EtherHdr* ch = (eth::EtherHdr*)lyr->start;
+    eth::EtherHdr* ch = reinterpret_cast<eth::EtherHdr*>(raw_pkt);
 
-    if ( reverse(f) )
+    if ( reverse )
     {
-        int i = lyr - c->layers;
-        eth::EtherHdr* ph = (eth::EtherHdr*)p->layers[i].start;
+        uint8_t tmp_addr[6];
 
-        memcpy(ch->ether_dst, ph->ether_src, sizeof(ch->ether_dst));
-        memcpy(ch->ether_src, ph->ether_dst, sizeof(ch->ether_src));
+        memcpy(tmp_addr, ch->ether_dst, sizeof(ch->ether_dst));
+        memcpy(ch->ether_dst, ch->ether_src, sizeof(ch->ether_src));
+        memcpy(ch->ether_src, tmp_addr, sizeof(ch->ether_src));
     }
 }
 

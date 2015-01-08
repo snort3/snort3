@@ -71,10 +71,10 @@ public:
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                        EncState&, Buffer&) override;
-    bool update(Packet*, Layer*, uint32_t* len) override;
+        EncState&, Buffer&) override;
+    void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
+        uint16_t lyr_len, uint32_t& updated_len) override;
 };
-
 
 /* GTP basic Header  */
 struct GTPHdr
@@ -95,7 +95,7 @@ static const uint32_t GTP_V1_HEADER_LEN = 12;
 
 void GtpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(PROTOCOL_GTP);
+    v.push_back(PROTO_GTP);
 }
 
 /* Function: DecodeGTP(uint8_t *, uint32_t, Packet *)
@@ -158,7 +158,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         if (hdr->flag & 0x07)
         {
 
-            len =  GTP_V1_HEADER_LEN;
+            len = GTP_V1_HEADER_LEN;
 
             /*Check optional fields*/
             if (raw.len < GTP_V1_HEADER_LEN)
@@ -268,16 +268,17 @@ bool GtpCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
     if (buf.allocate(raw_len))
         return false;
 
-    GTPHdr* const gtph = reinterpret_cast<GTPHdr*>(buf.base);
+    GTPHdr* const gtph = reinterpret_cast<GTPHdr*>(buf.data());
     memcpy(gtph, raw_in, raw_len);
     return update_GTP_length(gtph, buf.size());
 }
 
-bool GtpCodec::update (Packet*, Layer* lyr, uint32_t* len)
+void GtpCodec::update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
+        uint16_t lyr_len, uint32_t& updated_len)
 {
-    GTPHdr* h = (GTPHdr*)(lyr->start);
-    *len += lyr->length;
-    return( update_GTP_length(h,*len));
+    GTPHdr* const h = reinterpret_cast<GTPHdr*>(raw_pkt);
+    updated_len += lyr_len;
+    update_GTP_length(h, updated_len);
 }
 
 //-------------------------------------------------------------------------

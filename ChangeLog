@@ -1,3 +1,5 @@
+-- additional codec refactoring
+-- added pflog codecs
 -- fixed stream_size rule option
 
 15/01/05 - build 132

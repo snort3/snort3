@@ -413,14 +413,14 @@ bool set_api_ip_embed_icmp(const Packet* p, ip::IpApi& api)
     {
         const Layer& lyr = p->layers[i];
 
-        if (lyr.prot_id == IP_EMBEDDED_IN_ICMP4)
+        if (lyr.prot_id == PROTO_IP_EMBEDDED_IN_ICMP4)
         {
             const ip::IP4Hdr* ip4h =
                 reinterpret_cast<const ip::IP4Hdr*>(lyr.start);
             api.set(ip4h);
             return true;
         }
-        else if (lyr.prot_id == IP_EMBEDDED_IN_ICMP6)
+        else if (lyr.prot_id == PROTO_IP_EMBEDDED_IN_ICMP6)
         {
             const ip::IP6Hdr* ip6h =
                 reinterpret_cast<const ip::IP6Hdr*>(lyr.start);

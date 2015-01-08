@@ -43,7 +43,7 @@ if (SNORT_EXECUTABLE AND OUT_FILE)
     elseif (HELP_TYPE)
 
 
-        if (${HELP_TYPE} MATCHES "help")
+        if (HELP_TYPE MATCHES "help")
             execute_process (
                 COMMAND
                     ${SNORT_EXECUTABLE}
@@ -53,45 +53,67 @@ if (SNORT_EXECUTABLE AND OUT_FILE)
                 OUTPUT_FILE ${OUT_FILE}
             )
         else()
+            if (${HELP_TYPE} STREQUAL "config")
+                set (SORT_OPTIONS "-k 3")
+            elseif (${HELP_TYPE} STREQUAL "counts")
+                set (SORT_OPTIONS "-k 2")
+            endif(${HELP_TYPE} STREQUAL "config")
+
+
             execute_process (
                 COMMAND
                     ${SNORT_EXECUTABLE}
                     ${PLUGIN}
                     --markup
                     --help-${HELP_TYPE}
-                COMMAND sort
+                COMMAND sort ${SORT_OPTIONS}
                 OUTPUT_FILE ${OUT_FILE}
             )
         endif()
 
     elseif (LIST_TYPE)
+        if (LIST_TYPE STREQUAL "gids")
+            execute_process (
+                COMMAND
+                    ${SNORT_EXECUTABLE}
+                    ${PLUGIN}
+                    --markup
+                    --list-${LIST_TYPE}
+                COMMAND sort -n -k 1.4
+                OUTPUT_FILE ${OUT_FILE}
+            )
+        elseif (${LIST_TYPE} STREQUAL "builtin")
+            execute_process (
+                COMMAND
+                    ${SNORT_EXECUTABLE}
+                    ${PLUGIN}
+                    --markup
+                    --list-${LIST_TYPE}
+                COMMAND sort -n -t : -k 1.4 -k 2
+                OUTPUT_FILE ${OUT_FILE}
+            )
+        else()
+            execute_process (
+                COMMAND
+                    ${SNORT_EXECUTABLE}
+                    ${PLUGIN}
+                    --markup
+                    --list-${LIST_TYPE}
+                COMMAND sort ${SORT_OPTIONS}
+                OUTPUT_FILE ${OUT_FILE}
+            )
 
-        execute_process (
-            COMMAND
-                ${SNORT_EXECUTABLE}
-                ${PLUGIN}
-                --markup
-                --list-${LIST_TYPE}
-            COMMAND sort
-            OUTPUT_FILE ${OUT_FILE}
-        )
+        endif(LIST_TYPE STREQUAL "gids")
 
     else()
-        message (FATAL_ERROR "either MODULE_TYPE, ASCIIDOC_CMD, LIST_TYPE must be defined!")
+        message (FATAL_ERROR "either MODULE_TYPE, HELP_TYPE, LIST_TYPE must be defined!")
     endif()
 
 
 else()
-    set (HELP_STR "help")
-
-    if (HELP_STR MATCHES "help")
-        message(STATUS "${HELP_STR} MATCHES help")
-    else ()
-        message(STATUS "${HELP_STR} does NOT match help")
-    endif()
-
-    message (FATAL_ERROR "The command \${SNORT_EXECUTABLE} --markup --help-module \${module}"
-            " requires a valid options 'SNORT_EXECUTABLE' and 'OUT_FILE'\n"
-            " \tSNORT_EXECUTABLE == ${SNORT_EXECUTABLE}\n"
-            " \tOUT_FILE == ${OUT_FILE}")
+    message (FATAL_ERROR "This script requires valid 'SNORT_EXECUTABLE' and\n"
+            "'OUT_FILE' variables.  Run this script with the command"
+            "    cmake -DSNORT_EXECUTABLE=/path/to/snort -DOUT_FILE=/path/to/outfile"
+            "        -P ${CMAKE_CURRENT_LIST_FILE}"
+            )
 endif()

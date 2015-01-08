@@ -112,10 +112,10 @@ public:
     
     void get_protocol_ids(std::vector<uint16_t>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    bool update(Packet*, Layer*, uint32_t* len) override;
-    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-                    const Packet* const) override;
+    void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
+        uint16_t lyr_len, uint32_t& updated_len) override;
+    void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 
 private:
     void ICMP4AddrTests(const DecodeData& snort, const CodecData& codec);
@@ -246,7 +246,7 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
         case icmp::IcmpType::PARAMETERPROB:
             /* account for extra 4 bytes in header */
             len += 4;
-            codec.next_prot_id = IP_EMBEDDED_IN_ICMP4;
+            codec.next_prot_id = PROTO_IP_EMBEDDED_IN_ICMP4;
             break;
 
         default:
@@ -340,7 +340,7 @@ void Icmp4Codec::ICMP4MiscTests(const ICMPHdr* const icmph,
  ******************************************************************/
 
 void Icmp4Codec::log(TextLog* const log, const uint8_t* raw_pkt,
-                    const Packet* const)
+    const uint16_t)
 {
 
     const icmp::ICMPHdr* const icmph = reinterpret_cast<const ICMPHdr *>(raw_pkt);
@@ -591,25 +591,24 @@ struct IcmpHdr {
 
 } // namespace
 
-
-bool Icmp4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
+void Icmp4Codec::update(const ip::IpApi&, const EncodeFlags flags,
+    uint8_t* raw_pkt, uint16_t /*lyr_len*/, uint32_t& updated_len)
 {
-    IcmpHdr* h = (IcmpHdr*)(lyr->start);
-    *len += sizeof(*h);
+    IcmpHdr* h = reinterpret_cast<IcmpHdr*>(raw_pkt);
+    updated_len += sizeof(*h);
 
-    if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) ) {
+    if ( !(flags & UPD_COOKED) || (flags & UPD_REBUILT_FRAG) )
+    {
         h->cksum = 0;
-        h->cksum = checksum::icmp_cksum((uint16_t *)h, *len);
+        h->cksum = checksum::icmp_cksum((uint16_t *)h, updated_len);
     }
-
-    return true;
 }
 
-void Icmp4Codec::format(EncodeFlags, const Packet*, Packet* c, Layer* lyr)
+void Icmp4Codec::format(bool /*reverse*/, uint8_t* raw_pkt, DecodeData& snort)
 {
     // TBD handle nested icmp4 layers
-    c->ptrs.icmph = (ICMPHdr*)lyr->start;
-    c->ptrs.set_pkt_type(PktType::ICMP);
+    snort.icmph = reinterpret_cast<ICMPHdr*>(raw_pkt);
+    snort.set_pkt_type(PktType::ICMP);
 }
 
 

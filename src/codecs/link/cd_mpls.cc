@@ -114,8 +114,7 @@ public:
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-        const Packet* const) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
 
 
@@ -306,11 +305,12 @@ static int checkMplsHdr(const CodecData& codec, uint32_t label, uint8_t bos)
     return iRet;
 }
 
-void MplsCodec::log(TextLog* const text_log, const uint8_t* /*raw_pkt*/,
-        const Packet* const p)
+void MplsCodec::log(TextLog* const /*text_log*/, const uint8_t* /*raw_pkt*/,
+    const uint16_t /*lyr_len*/)
 {
-    TextLog_Print(text_log,"label:0x%05X exp:0x%X bos:0x%X ttl:0x%X\n",
-        p->ptrs.mplsHdr.label, p->ptrs.mplsHdr.exp, p->ptrs.mplsHdr.bos, p->ptrs.mplsHdr.ttl);
+    // FIXIT-L  MPLS needs to be updated throughout Snort++
+//    TextLog_Print(text_log,"label:0x%05X exp:0x%X bos:0x%X ttl:0x%X\n",
+//        p->ptrs.mplsHdr.label, p->ptrs.mplsHdr.exp, p->ptrs.mplsHdr.bos, p->ptrs.mplsHdr.ttl);
 }
 
 //-------------------------------------------------------------------------

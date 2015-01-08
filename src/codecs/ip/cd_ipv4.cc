@@ -115,12 +115,12 @@ public:
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-        const Packet* const) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&) override;
-    bool update(Packet*, Layer*, uint32_t* len) override;
-    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
+    void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
+        uint16_t lyr_len, uint32_t& updated_len) override;
+    void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
 
 };
 
@@ -309,13 +309,13 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     // the actual frag_off is never used, we can comment this out
 //    frag_off = frag_off << 3;
 
-    if ((codec.codec_flags & CODEC_DF) && frag_off )
+    if ( (codec.codec_flags & CODEC_DF) && frag_off )
         codec_events::decoder_event(codec, DECODE_IP4_DF_OFFSET);
 
     if ( frag_off + ip_len > IP_MAXPACKET )
         codec_events::decoder_event(codec, DECODE_IP4_LEN_OFFSET);
 
-    if(frag_off || (snort.decode_flags & DECODE_MF))
+    if( frag_off || (snort.decode_flags & DECODE_MF))
     {
         // FIXIT-L identical to DEFRAG_ANOMALY_ZERO
         if ( !ip_len)
@@ -583,7 +583,7 @@ struct ip4_addr
 };
 
 void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
-    const Packet* const p)
+    const uint16_t lyr_len)
 {
     const IP4Hdr* const ip4h = reinterpret_cast<const IP4Hdr*>(raw_pkt);
 
@@ -612,6 +612,7 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const uint16_t hlen = ip4h->hlen();
     const uint16_t len = ip4h->len();
     const uint16_t frag_off = ip4h->off_w_flags();
+    bool mf_set = false;
 
     TextLog_Print(text_log, "Next:0x%02X TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
             ip4h->proto(), ip4h->ttl(), ip4h->tos(),
@@ -627,18 +628,21 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
         TextLog_Puts(text_log, " DF");
 
     if(frag_off & 0x2000)
+    {
         TextLog_Puts(text_log, " MF");
+        mf_set = true;
+    }
 
     /* print IP options */
     if (ip4h->has_options())
     {
         TextLog_Putc(text_log, '\t');
         TextLog_NewLine(text_log);
-        LogIpOptions(text_log, ip4h, p);
+        LogIpOptions(text_log, ip4h, lyr_len);
     }
 
 
-    if( p->is_fragment() )
+    if( mf_set || (frag_off & 0x1FFF) )
     {
         TextLog_NewLine(text_log);
         TextLog_Putc(text_log, '\t');
@@ -678,7 +682,7 @@ bool Ipv4Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
 
 
     const ip::IP4Hdr* const ip4h_in = reinterpret_cast<const IP4Hdr*>(raw_in);
-    ip::IP4Hdr* const ip4h_out = reinterpret_cast<IP4Hdr*>(buf.base);
+    ip::IP4Hdr* const ip4h_out = reinterpret_cast<IP4Hdr*>(buf.data());
 
     /* IPv4 encoded header is hardcoded 20 bytes */
     ip4h_out->ip_verhl = 0x45;
@@ -714,47 +718,37 @@ bool Ipv4Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     return true;
 }
 
-
-bool Ipv4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
+void Ipv4Codec::update(const ip::IpApi&, const EncodeFlags flags,
+    uint8_t* raw_pkt, uint16_t /*lyr_len*/, uint32_t& updated_len)
 {
-    IP4Hdr* h = (IP4Hdr*)(lyr->start);
+    IP4Hdr* h = reinterpret_cast<IP4Hdr*>(raw_pkt);
     uint16_t hlen = h->hlen();
 
-    *len += hlen;
-    h->set_ip_len((uint16_t)*len);
+    updated_len += hlen;
+    h->set_ip_len((uint16_t)updated_len);
 
 
-    if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) )
+    if ( !(flags & UPD_COOKED) || (flags & UPD_REBUILT_FRAG) )
     {
         h->ip_csum = 0;
         h->ip_csum = checksum::ip_cksum((uint16_t *)h, hlen);
     }
-
-    return true;
 }
 
-void Ipv4Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
+void Ipv4Codec::format(bool reverse, uint8_t* raw_pkt, DecodeData& snort)
 {
-    // TBD handle nested ip layers
-    IP4Hdr* ch = (IP4Hdr*)lyr->start;
+    IP4Hdr* ip4h = reinterpret_cast<IP4Hdr*>(raw_pkt);
 
-    if ( reverse(f) )
+    if ( reverse )
     {
-        int i = lyr - c->layers;
-        IP4Hdr* ph = (IP4Hdr*)p->layers[i].start;
 
-        ch->ip_src = ph->ip_dst;
-        ch->ip_dst = ph->ip_src;
-    }
-    if ( f & ENC_FLAG_DEF )
-    {
-        lyr->length = ip::IP4_HEADER_LEN;
-        ch->set_ip_len(ip::IP4_HEADER_LEN);
-        ch->set_hlen(ip::IP4_HEADER_LEN >> 2);
+        uint32_t tmp_ip = ip4h->ip_src;
+        ip4h->ip_src = ip4h->ip_dst;
+        ip4h->ip_dst = tmp_ip;
     }
 
-    c->ptrs.ip_api.set(ch);
-    c->ptrs.set_pkt_type(PktType::IP);
+    snort.ip_api.set(ip4h);
+    snort.set_pkt_type(PktType::IP);
 }
 
 //-------------------------------------------------------------------------

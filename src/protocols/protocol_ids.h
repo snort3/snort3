@@ -68,12 +68,13 @@ constexpr uint16_t IPPROTO_ID_RESERVED = 255; // == 0xFF
  */
 
 constexpr uint16_t FINISHED_DECODE = 0x0100;  // Indicates Codecs have succesfully decoded packet
-constexpr uint16_t PROTOCOL_TEREDO = 0x0101;
-constexpr uint16_t PROTOCOL_GTP = 0x0102;
-constexpr uint16_t IP_EMBEDDED_IN_ICMP4 = 0x0103;
-constexpr uint16_t IP_EMBEDDED_IN_ICMP6 = 0x0104;
-constexpr uint16_t ETHERNET_802_3 = 0x0105;  // CAPWAP sends data back to eth layer
-constexpr uint16_t ETHERNET_LLC = 0x0106;
+constexpr uint16_t PROTO_TEREDO = 0x0101;
+constexpr uint16_t PROTO_GTP = 0x0102;
+constexpr uint16_t PROTO_IP_EMBEDDED_IN_ICMP4 = 0x0103;
+constexpr uint16_t PROTO_IP_EMBEDDED_IN_ICMP6 = 0x0104;
+constexpr uint16_t PROTO_ETHERNET_802_3 = 0x0105;
+constexpr uint16_t PROTO_ETHERNET_802_11 = 0x0106;
+constexpr uint16_t PROTO_ETHERNET_LLC = 0x0107;
 
 
 

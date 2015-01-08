@@ -65,8 +65,9 @@ if (BUILD_EXTRA_PLUGINS)
 
 
 else (BUILD_EXTRA_PLUGINS)
+    include_directories (AFTER ${DAQ_INCLUDE_DIR})
     include_directories (BEFORE ${LUAJIT_INCLUDE_DIR})
-    include_directories (${SNORT_INCLUDE_DIR})
+    include_directories (BEFORE ${SNORT_INCLUDE_DIR})
     set (EX_INSTALL_PATH "lib/snort_extra")
 
 endif (BUILD_EXTRA_PLUGINS)

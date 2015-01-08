@@ -159,10 +159,10 @@ public:
 
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&) override;
-    bool update(Packet*, Layer*, uint32_t* len) override;
-    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-        const Packet* const) override;
+    void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
+        uint16_t lyr_len, uint32_t& updated_len) override;
+    void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     
 };
 
@@ -329,13 +329,13 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
          (ScIsGTPPort(src_port)||ScIsGTPPort(dst_port)))
     {
         if ( !(snort.decode_flags & DECODE_FRAG) )
-            codec.next_prot_id = PROTOCOL_GTP;
+            codec.next_prot_id = PROTO_GTP;
     }
     else if (teredo::is_teredo_port(src_port) ||
         teredo::is_teredo_port(dst_port) ||
         ScDeepTeredoInspection())
     {
-        codec.next_prot_id = PROTOCOL_TEREDO;
+        codec.next_prot_id = PROTO_TEREDO;
     }
 
     
@@ -355,7 +355,8 @@ static inline void UDPMiscTests(const DecodeData& snort,
         codec_events::decoder_event(codec, DECODE_UDP_PORT_ZERO);
 }
 
-void UdpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt, const Packet* const)
+void UdpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+    const uint16_t /*lyr_len*/)
 {
     const udp::UDPHdr* udph = reinterpret_cast<const udp::UDPHdr*>(raw_pkt);
 
@@ -378,7 +379,7 @@ bool UdpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         return false;
 
     const udp::UDPHdr* const hi = reinterpret_cast<const udp::UDPHdr*>(raw_in);
-    udp::UDPHdr* const udph_out = reinterpret_cast<udp::UDPHdr*>(buf.base);
+    udp::UDPHdr* const udph_out = reinterpret_cast<udp::UDPHdr*>(buf.data());
 
     if ( forward(enc.flags) )
     {
@@ -424,17 +425,17 @@ bool UdpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     return true;
 }
 
-bool UdpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
+void UdpCodec::update(const ip::IpApi& ip_api, const EncodeFlags flags,
+    uint8_t* raw_pkt, uint16_t /*lyr_len*/, uint32_t& updated_len)
 {
-    udp::UDPHdr* h = (udp::UDPHdr*)(lyr->start);
+    udp::UDPHdr* h = reinterpret_cast<udp::UDPHdr*>(raw_pkt);
 
-    *len += sizeof(*h);
-    h->uh_len = htons((uint16_t)*len);
+    updated_len += sizeof(*h);
+    h->uh_len = htons((uint16_t)updated_len);
 
 
-    if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) )
+    if ( !(flags & UPD_COOKED) || (flags & UPD_REBUILT_FRAG) )
     {
-        const ip::IpApi& ip_api = p->ptrs.ip_api;
         h->uh_chk = 0;
 
         if (ip_api.is_ip4()) {
@@ -444,8 +445,8 @@ bool UdpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
             ps.dip = ip4h->get_dst();
             ps.zero = 0;
             ps.protocol = IPPROTO_ID_UDP;
-            ps.len = htons((uint16_t)*len);
-            h->uh_chk = checksum::udp_cksum((uint16_t *)h, *len, &ps);
+            ps.len = htons((uint16_t)updated_len);
+            h->uh_chk = checksum::udp_cksum((uint16_t *)h, updated_len, &ps);
         }
         else
         {
@@ -455,30 +456,27 @@ bool UdpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
             memcpy(ps6.dip, &ip6h->ip6_dst.u6_addr32, sizeof(ps6.dip));
             ps6.zero = 0;
             ps6.protocol = IPPROTO_ID_UDP;
-            ps6.len = htons((uint16_t)*len);
-            h->uh_chk = checksum::udp_cksum((uint16_t *)h, *len, &ps6);
+            ps6.len = htons((uint16_t)updated_len);
+            h->uh_chk = checksum::udp_cksum((uint16_t *)h, updated_len, &ps6);
         }
     }
-
-    return true;
 }
 
-void UdpCodec::format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
+void UdpCodec::format(bool reverse, uint8_t* raw_pkt, DecodeData& snort)
 {
-    udp::UDPHdr* ch = (udp::UDPHdr*)lyr->start;
-    c->ptrs.udph = ch;
+    udp::UDPHdr* udph = reinterpret_cast<udp::UDPHdr*>(raw_pkt);
 
-    if ( reverse(f) )
+    if ( reverse )
     {
-        int i = (int)(lyr - c->layers);
-        udp::UDPHdr* ph = (udp::UDPHdr*)p->layers[i].start;
-
-        ch->uh_sport = ph->uh_dport;
-        ch->uh_dport = ph->uh_sport;
+        uint16_t tmp_port = udph->uh_sport;
+        udph->uh_sport = udph->uh_dport;
+        udph->uh_dport = tmp_port;
     }
-    c->ptrs.sp = ntohs(ch->uh_sport);
-    c->ptrs.dp = ntohs(ch->uh_dport);
-    c->ptrs.set_pkt_type(PktType::UDP);
+
+    snort.udph = udph;
+    snort.sp = udph->src_port();
+    snort.dp = udph->dst_port();
+    snort.set_pkt_type(PktType::UDP);
 }
 
 //-------------------------------------------------------------------------

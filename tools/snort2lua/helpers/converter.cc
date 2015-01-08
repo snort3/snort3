@@ -376,7 +376,7 @@ int Converter::convert(std::string input,
     if (failed_conversions())
     {
         std::size_t errors = data_api.num_errors() + rule_api.num_errors();
-        std::cerr << "ERROR: " << errors << " errors occured during conversion\n";
+        std::cerr << "ERROR: " << errors << " errors occurred while converting\n";
         std::cerr << "ERROR: see " << error_file << " for details" << std::endl;
     }
 

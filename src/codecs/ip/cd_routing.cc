@@ -70,7 +70,7 @@ struct IP6Route0
     uint8_t ip6rte0_seg_left;
     uint8_t ip6rte0_reserved;
     uint8_t ip6rte0_bitmap[3];
-    struct in6_addr ip6rte0_addr[1];  /* Up to 23 IP6 addresses */
+    struct snort_in6_addr ip6rte0_addr[1];  /* Up to 23 IP6 addresses */
 } ;
 #endif
 

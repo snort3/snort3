@@ -266,8 +266,8 @@ static inline bool pppoepkt_encode(const uint8_t* const raw_in,
     if (!buf.allocate(raw_len))
         return false;
 
-    memcpy(buf.base, raw_in, raw_len);
-    PPPoEHdr* const ppph = reinterpret_cast<PPPoEHdr*>(buf.base);
+    memcpy(buf.data(), raw_in, raw_len);
+    PPPoEHdr* const ppph = reinterpret_cast<PPPoEHdr*>(buf.data());
     ppph->length = htons((uint16_t)buf.size());
 
     return true;

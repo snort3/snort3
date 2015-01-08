@@ -45,6 +45,10 @@ namespace ip
 {
 struct IP4Hdr;
 }
+namespace tcp
+{
+struct TCPHdr;
+}
 typedef ip::IP4Hdr IP4Hdr;
 
 void LogPriorityData(TextLog*, const Event*, bool doNewLine);
@@ -57,10 +61,10 @@ void LogTimeStamp(TextLog*, Packet*);
 void LogTrHeader(TextLog*, Packet*);
 void Log2ndHeader(TextLog*, Packet*);
 void LogIpAddrs(TextLog*, Packet*);
-void SO_PUBLIC LogIpOptions(TextLog*, const IP4Hdr*, const Packet* const);
+SO_PUBLIC void LogIpOptions(TextLog*, const IP4Hdr*, uint16_t valid_ip4_len);
+SO_PUBLIC void LogTcpOptions(TextLog*, const tcp::TCPHdr*, uint16_t valid_tcp_len);
 void LogIPHeader(TextLog*, Packet*);
 void LogTCPHeader(TextLog*, Packet*);
-SO_PUBLIC void LogTcpOptions(TextLog*,  const Packet* const);
 void LogUDPHeader(TextLog*, Packet*);
 void LogICMPHeader(TextLog*, Packet*);
 

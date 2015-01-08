@@ -54,12 +54,14 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "tru64")
     set(OSF1 "1")
 endif ()
 
-
 # APPLE is defined by Cmake
 if (APPLE)
     set(MACOS 1)
     set(CMAKE_MACOSX_RPATH OFF)
 endif()
+
+
+set (CMAKE_SKIP_RPATH ON)
 
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")

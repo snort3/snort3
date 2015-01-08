@@ -398,19 +398,6 @@ static const ConvertMap rule_sameip =
 const ConvertMap* sameip_map = &rule_sameip;
 
 /************************************
- *********  STREAM_SIZE  ************
- ************************************/
-
-static const std::string stream_size = "stream_size";
-static const ConvertMap rule_stream_size =
-{
-    stream_size,
-    unchanged_rule_ctor<&stream_size>,
-};
-
-const ConvertMap* stream_size_map = &rule_stream_size;
-
-/************************************
  ************  LOG TO  **************
  ************************************/
 

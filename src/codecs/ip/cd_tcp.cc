@@ -116,13 +116,13 @@ public:
     ~TcpCodec(){};
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-                    const Packet* const) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&) override;
-    bool update(Packet*, Layer*, uint32_t* len) override;
-    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
+    void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
+        uint16_t lyr_len, uint32_t& updated_len) override;
+    void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
 };
 
 static sfip_var_t *SynToMulticastDstIp = NULL;
@@ -552,7 +552,7 @@ static inline void TCPMiscTests(const tcp::TCPHdr* const tcph,
 
 
 void TcpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
-                    const Packet* const p)
+    const uint16_t lyr_len)
 {
     char tcpFlags[9];
 
@@ -577,7 +577,7 @@ void TcpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     if(tcph->has_options())
     {
         TextLog_Puts(text_log, "\n\t");
-        LogTcpOptions(text_log, p);
+        LogTcpOptions(text_log, tcph, lyr_len);
     }
 }
 
@@ -607,7 +607,7 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     if (!buf.allocate(tcp::TCP_MIN_HEADER_LEN))
         return false;
 
-    tcp::TCPHdr* tcph_out = reinterpret_cast<tcp::TCPHdr*>(buf.base);
+    tcp::TCPHdr* tcph_out = reinterpret_cast<tcp::TCPHdr*>(buf.data());
     const int ctl = (hi->th_flags & TH_SYN) ? 1 : 0;
 
     if ( forward(enc.flags) )
@@ -696,59 +696,57 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     return true;
 }
 
-bool TcpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
+void TcpCodec::update(const ip::IpApi& api, const EncodeFlags flags, uint8_t* raw_pkt,
+    uint16_t /*lyr_len*/, uint32_t& updated_len)
 {
-    tcp::TCPHdr* h = reinterpret_cast<tcp::TCPHdr*>(const_cast<uint8_t*>(lyr->start));
+    tcp::TCPHdr* const h = reinterpret_cast<tcp::TCPHdr*>(raw_pkt);
 
-    *len += h->hlen();
+    updated_len += h->hlen();
 
-    if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) )
+    if ( !(flags & UPD_COOKED) || (flags & UPD_REBUILT_FRAG) )
     {
         h->th_sum = 0;
 
-        if (p->ptrs.ip_api.is_ip4())
+        if ( api.is_ip4() )
         {
             checksum::Pseudoheader ps;
-            const ip::IP4Hdr* const ip4h = p->ptrs.ip_api.get_ip4h();
+            const ip::IP4Hdr* const ip4h = api.get_ip4h();
             ps.sip = ip4h->get_src();
             ps.dip = ip4h->get_dst();;
             ps.zero = 0;
             ps.protocol = IPPROTO_TCP;
-            ps.len = htons((uint16_t)*len);
-            h->th_sum = checksum::tcp_cksum((uint16_t *)h, *len, &ps);
+            ps.len = htons((uint16_t)updated_len);
+            h->th_sum = checksum::tcp_cksum((uint16_t *)h, updated_len, &ps);
         }
         else
         {
             checksum::Pseudoheader6 ps6;
-            const ip::IP6Hdr* const ip6h = p->ptrs.ip_api.get_ip6h();
+            const ip::IP6Hdr* const ip6h = api.get_ip6h();
             memcpy(ps6.sip, ip6h->get_src()->u6_addr32, sizeof(ps6.sip));
             memcpy(ps6.dip, ip6h->get_dst()->u6_addr32, sizeof(ps6.dip));
             ps6.zero = 0;
             ps6.protocol = IPPROTO_TCP;
-            ps6.len = htons((uint16_t)*len);
-            h->th_sum = checksum::tcp_cksum((uint16_t *)h, *len, &ps6);
+            ps6.len = htons((uint16_t)updated_len);
+            h->th_sum = checksum::tcp_cksum((uint16_t *)h, updated_len, &ps6);
         }
     }
-
-    return true;
 }
 
-void TcpCodec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
+void TcpCodec::format(bool reverse, uint8_t* raw_pkt, DecodeData& snort)
 {
-    tcp::TCPHdr* ch = (tcp::TCPHdr*)lyr->start;
-    c->ptrs.tcph = ch;
+    tcp::TCPHdr* tcph = reinterpret_cast<tcp::TCPHdr*>(raw_pkt);
 
-    if ( reverse(f) )
+    if ( reverse )
     {
-        int i = lyr - c->layers;
-        tcp::TCPHdr* ph = (tcp::TCPHdr*)p->layers[i].start;
-
-        ch->th_sport = ph->th_dport;
-        ch->th_dport = ph->th_sport;
+        uint16_t tmp_port = tcph->th_sport;
+        tcph->th_sport = tcph->th_dport;
+        tcph->th_dport = tmp_port;
     }
-    c->ptrs.sp = ch->src_port();
-    c->ptrs.dp = ch->dst_port();
-    c->ptrs.set_pkt_type(PktType::TCP);
+
+    snort.tcph = tcph;
+    snort.sp = tcph->src_port();
+    snort.dp = tcph->dst_port();
+    snort.set_pkt_type(PktType::TCP);
 }
 
 

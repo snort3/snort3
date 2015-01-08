@@ -29,14 +29,19 @@ else (BUILD_EXTRA_PLUGINS)
     find_package(LuaJIT REQUIRED)
 
 
-    if ((NOT SNORT_FOUND) AND (NOT SNORT_PKG_MODULE_FOUND))
-        find_package(SNORT REQUIRED) # to print the helpful Snort message
-        message(FATAL_ERROR "Unable to find Snort includes!!")
-    endif()
+    #  add Snort++ properties to the current build
+    string (REPLACE "-DHAVE_CONFIG_H" " " tmp_cmp_flags  "${SNORT_INTERFACE_COMPILE_OPTIONS}")
+    string (REPLACE ";" " " tmp_cmp_flags "${tmp_cmp_flags}")
+    string (STRIP "${CMAKE_CXX_FLAGS} ${tmp_cmp_flags}" tmp_cmp_flags)
+    set (CMAKE_CXX_FLAGS "${tmp_cmp_flags}" CACHE STRING
+        "Flags used by the compiler during all build types." FORCE)
 
-    string (REPLACE ";" " " CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS}")
-    string (REPLACE "-DHAVE_CONFIG_H" " " CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS}")
-    message(STATUS "${CMAKE_CXX_FLAGS}")
+    include_directories(${SNORT_INTERFACE_INCLUDE_DIRECTORIES})
+
+    string(REPLACE ";" " " tmp_link_flags "${SNORT_INTERFACE_LINK_FLAGS}")
+    string (STRIP "${CMAKE_EXE_LINKER_FLAGS} ${tmp_link_flags}" tmp_link_flags)
+    set (CMAKE_EXE_LINKER_FLAGS "${tmp_link_flags}" CACHE STRING
+        "Flags used by the linker. " FORCE)
 
 
     include(CheckCXXCompilerFlag)
@@ -72,7 +77,6 @@ else (BUILD_EXTRA_PLUGINS)
     unset(CMAKE_REQUIRED_FLAGS)
 
     add_subdirectory(src)
-
 
 
     # adding make unisntall

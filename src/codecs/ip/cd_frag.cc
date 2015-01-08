@@ -49,8 +49,7 @@ public:
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 
-    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-                    const Packet* const) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     void get_protocol_ids(std::vector<uint16_t>&) override;
     
 };
@@ -143,7 +142,7 @@ void Ipv6FragCodec::get_protocol_ids(std::vector<uint16_t>& v)
 
 
 void Ipv6FragCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
-                    const Packet* const)
+    const uint16_t /*lyr_len*/)
 {
     const ip::IP6Frag* fragh = reinterpret_cast<const ip::IP6Frag*>(raw_pkt);
     const uint16_t offlg = fragh->off();

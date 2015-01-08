@@ -21,6 +21,7 @@ set (FRAMEWORK_INCLUDES
 
 add_library ( framework STATIC
     ${FRAMEWORK_INCLUDES}
+    codec.cc
     cursor.cc
     inspector.cc
     ips_option.cc
