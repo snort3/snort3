@@ -70,6 +70,7 @@ struct HTTPINSPECT_CONF_OPT
  * and debugging information. */
 enum PROFILES
 {
+    HI_NONE,
     HI_ALL,
     HI_APACHE,
     HI_IIS,

@@ -116,7 +116,12 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = table_api.add_option("unlimited_decompress", true);
 
         else if (!keyword.compare("normalize_javascript"))
+        {
+            table_api.add_diff_option_comment("normalize_javascript", "profile.normalize_javascript");
+            table_api.open_table("profile");
             tmpval = table_api.add_option("normalize_javascript", true);
+            table_api.close_table();
+        }
 
         else if (!keyword.compare("enable_xff"))
             tmpval = table_api.add_option("enable_xff", true);
@@ -423,6 +428,8 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("profile"))
         {
+            table_api.open_table("profile");
+
             if (data_stream >> keyword)
             {
                 tmpval = table_api.add_option("profile", keyword);
@@ -432,6 +439,8 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
                 data_api.failed_conversion(data_stream, "profile <string>");
                 retval = false;
             }
+
+            table_api.close_table();
         }
 
         else

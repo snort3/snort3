@@ -323,6 +323,9 @@ static const Parameter hi_profile_server_params[] =
     { "normalize_utf", Parameter::PT_BOOL, nullptr, "true",
       "normalize response bodies with UTF content-types" },
 
+    { "normalize_javascript", Parameter::PT_BOOL, nullptr, "true",
+      "normalize javascript between <script> tags" },
+
     { "post_depth", Parameter::PT_INT, "-1:65535", "65495",
       "amount of POST data to inspect" },
 
@@ -391,9 +394,6 @@ static const Parameter hi_server_params[] =
 
     { "normalize_headers", Parameter::PT_BOOL, nullptr, "false",
       "normalize headers other than cookie similar to URI" },
-
-    { "normalize_javascript", Parameter::PT_BOOL, nullptr, "true",
-      "normalize javascript between <script> tags" },
 
     { "oversize_dir_length", Parameter::PT_INT, "0:", "500",
       "alert if a URL has a directory longer than this limit" },
