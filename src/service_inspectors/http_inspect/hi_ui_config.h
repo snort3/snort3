@@ -250,10 +250,6 @@ int hi_ui_config_init_global_conf(HTTPINSPECT_GLOBAL_CONF *GlobalConf);
 int hi_ui_config_default(HTTPINSPECT_CONF *GlobalConf);
 int hi_ui_config_reset_global(HTTPINSPECT_GLOBAL_CONF *GlobalConf);
 
-int hi_ui_config_set_profile_apache(HTTPINSPECT_CONF *GlobalConf);
-int hi_ui_config_set_profile_iis(HTTPINSPECT_CONF *GlobalConf, uint8_t*);
-int hi_ui_config_set_profile_iis_4or5(HTTPINSPECT_CONF *GlobalConf, uint8_t*);
-int hi_ui_config_set_profile_all(HTTPINSPECT_CONF *GlobalConf, uint8_t*);
 void HttpInspectCleanupHttpMethodsConf(void *);
 
 extern int hex_lookup[256];

@@ -211,6 +211,136 @@ http_methods =  -- build from default_http_methods
     'RPC_IN_DATA', 'RPC_OUT_DATA', 'RPC_ECHO_DATA'
 }
 
+all = 
+{
+    profile_value = 'all',
+    server_flow_depth = 300,
+    client_flow_depth = 300,
+    post_depth = -1,
+    chunk_length = 500000,
+    ascii = true,
+    multiple_slash = true,
+    directory = true,
+    webroot = true,
+    double_decoding = true,
+    u_encoding = true,
+    bare_byte = true,
+    iis_unicode = true,
+    iis_backslash = true,
+    iis_delimiter = true,
+    apache_whitespace = true,
+    non_strict = true,
+    normalize_utf = true,
+    normalize_javascript = false,
+    max_hdr_len = 0,
+    max_headers = 0,
+    max_spaces = 200,
+    max_javascript_whitespaces = 200
+}
+
+apache = 
+{
+    profile_value = 'apache',
+    server_flow_depth = 300,
+    client_flow_depth = 300,
+    post_depth = -1,
+    chunk_length = 500000,
+    ascii = true,
+    multiple_slash = true,
+    directory = true,
+    webroot = true,
+    utf_8 = true,
+    apache_whitespace = true,
+    non_strict = true,
+    normalize_utf = true,
+    normalize_javascript = false,
+    max_hdr_len = 0,
+    max_headers = 0,
+    max_spaces = 200,
+    max_javascript_whitespaces = 200
+}
+
+iis = 
+{
+    profile_value = 'iis',
+    server_flow_depth = 300,
+    client_flow_depth = 300,
+    post_depth = -1,
+    chunk_length = 500000,
+    ascii = true,
+    multiple_slash = true,
+    directory = true,
+    webroot = true,
+    double_decoding = false,
+    u_encoding = true,
+    bare_byte = true,
+    iis_unicode = true,
+    iis_backslash = true,
+    iis_delimiter = true,
+    apache_whitespace = true,
+    non_strict = true,
+    normalize_utf = true,
+    normalize_javascript = false,
+    max_hdr_len = 0,
+    max_headers = 0,
+    max_spaces = 200,
+    max_javascript_whitespaces = 200
+}
+
+iis_40 = 
+{
+    profile_value = 'iis_40',
+    server_flow_depth = 300,
+    client_flow_depth = 300,
+    post_depth = -1,
+    chunk_length = 500000,
+    ascii = true,
+    multiple_slash = true,
+    directory = true,
+    webroot = true,
+    double_decoding = true,
+    u_encoding = true,
+    bare_byte = true,
+    iis_unicode = true,
+    iis_backslash = true,
+    iis_delimiter = true,
+    apache_whitespace = true,
+    non_strict = true,
+    normalize_utf = true,
+    normalize_javascript = false,
+    max_hdr_len = 0,
+    max_headers = 0,
+    max_spaces = 200,
+    max_javascript_whitespaces = 200
+}
+
+iis_50 = 
+{
+    profile_value = 'iis_50',
+    server_flow_depth = 300,
+    client_flow_depth = 300,
+    post_depth = -1,
+    chunk_length = 500000,
+    ascii = true,
+    multiple_slash = true,
+    directory = true,
+    webroot = true,
+    double_decoding = true,
+    u_encoding = true,
+    bare_byte = true,
+    iis_unicode = true,
+    iis_backslash = true,
+    iis_delimiter = true,
+    apache_whitespace = true,
+    non_strict = true,
+    normalize_utf = true,
+    normalize_javascript = false,
+    max_hdr_len = 0,
+    max_headers = 0,
+    max_spaces = 200,
+    max_javascript_whitespaces = 200
+}
+
 ftp_commands =  -- build from ftp_default_commands
 {
     'ABOR', 'ACCT', 'ADAT', 'ALLO', 'APPE', 'AUTH', 'CCC', 'CDUP', 'CEL',
