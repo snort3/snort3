@@ -48,6 +48,8 @@ void TableApi::reset_state()
 {
     std::stack<Table*> empty;
     open_tables.swap(empty);
+    std::stack<unsigned> empty_two;
+    top_level_tables.swap(empty_two);
     curr_data_bad = false;
 }
 
@@ -62,6 +64,10 @@ void TableApi::open_top_level_table(std::string table_name)
     }
 
     open_tables.push(t);
+
+    // ignore the initial table
+    if(open_tables.size() > 1)
+        top_level_tables.push(open_tables.size());
 }
 
 void TableApi::open_table(std::string table_name)
@@ -106,7 +112,14 @@ void TableApi::close_table()
     if (open_tables.size() == 0)
         DataApi::developer_error("No open tables to close!!");
     else
+    {
+        if ( !top_level_tables.empty() )
+            if ( open_tables.size() == top_level_tables.top() )
+                top_level_tables.pop();
+
         open_tables.pop();
+    }
+
 }
 
 
@@ -156,6 +169,92 @@ bool TableApi::add_option(const std::string option_name, const bool val)
 // sent here rather to become a bool
 bool TableApi::add_option(const std::string name, const char* const v)
 { return add_option(name, std::string(v)); }
+
+void TableApi::create_append_data(std::string& fqn, Table* &t)
+{
+    unsigned start = 0;
+
+    if (!top_level_tables.empty())
+        start = top_level_tables.top();
+
+    // I need to iterate over the stack of open tables.  However,
+    // stack's don't allow iteration without popping.  So, rather
+    // than change the underlying stack data structure, I am going
+    // to just copy the entire data structure.  Innedficciant, but
+    // not pressed for speed here.
+    std::stack<Table*> copy(open_tables);
+
+    while(!copy.empty() && copy.size() >= start)
+    {
+        fqn = copy.top()->get_name() + "." + fqn;
+        t = copy.top();
+        copy.pop();
+    }
+}
+
+void TableApi::append_option(const std::string option_name, const std::string val)
+{
+    if(open_tables.size() == 0)
+    {
+        DataApi::developer_error("Must open table before adding an option!!: " +
+            option_name + " = " + val);
+        return;
+    }
+
+    Table* t = nullptr;
+    std::string opt_name = option_name;
+    create_append_data(opt_name, t);
+
+    if ( t != nullptr)
+        t->append_option(opt_name, val);
+    else
+        DataApi::developer_error("Snort2lua cannot find a Table to append the option: "
+                                 + option_name + " = " + val);
+}
+
+void TableApi::append_option(const std::string option_name, const int val)
+{
+    if(open_tables.size() == 0)
+    {
+        DataApi::developer_error("Must open table before adding an option!!: " +
+            option_name + " = " + std::to_string(val));
+        return;
+    }
+
+    Table* t = nullptr;
+    std::string opt_name = option_name;
+    create_append_data(opt_name, t);
+
+    if ( t != nullptr)
+        t->append_option(opt_name, val);
+    else
+        DataApi::developer_error("Snort2lua cannot find a Table to append the option: "
+                                 + opt_name + " = " + std::to_string(val));
+}
+
+void TableApi::append_option(const std::string option_name, const bool val)
+{
+    if(open_tables.size() == 0)
+    {
+        DataApi::developer_error("Must open table before adding an option!!: " +
+            option_name + " = " + std::to_string(val));
+        return;
+    }
+
+    Table* t = nullptr;
+    std::string opt_name = option_name;
+    create_append_data(opt_name, t);
+
+    if ( t != nullptr)
+        t->append_option(opt_name, val);
+    else
+        DataApi::developer_error("Snort2lua cannot find a Table to append the option: "
+                                 + opt_name + " = " + std::to_string(val));
+}
+
+void TableApi::append_option(const std::string name, const char* const v)
+{ append_option(name, std::string(v)); }
+
 
 bool TableApi::add_list(std::string list_name, std::string next_elem)
 {

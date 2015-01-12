@@ -25,11 +25,11 @@
 
 static inline Table* find_table(std::vector<Table*> vec, std::string name)
 {
-    if(name.empty())
+    if (name.empty())
         return nullptr;
 
     for( auto *t : vec)
-        if(!name.compare(t->get_name()))
+        if (!name.compare(t->get_name()))
             return t;
 
     return nullptr;
@@ -59,6 +59,9 @@ Table::~Table()
     for( Option* o : options)
         delete o;
 
+    for( Option* a : append_options)
+        delete a;
+
     delete comments;
 }
 
@@ -85,7 +88,7 @@ Table* Table::open_table(std::string table_name)
 {
     Table* t = find_table(tables, table_name);
 
-    if(t)
+    if (t)
         return t;
 
     t = new Table(table_name, depth + 1);
@@ -123,11 +126,37 @@ bool Table::add_option(std::string opt_name, std::string value)
     return true;
 }
 
+void Table::append_option(std::string opt_name, int value)
+{
+    if (!has_option(opt_name, value))
+    {
+        Option *a = new Option(opt_name, value, 0);
+        append_options.push_back(a);
+    }
+}
+
+void Table::append_option(std::string opt_name, bool value)
+{
+    if (!has_option(opt_name, value))
+    {
+        Option *a = new Option(opt_name, value, 0);
+        append_options.push_back(a);
+    }
+}
+
+void Table::append_option(std::string opt_name, std::string value)
+{
+    if (!has_option(opt_name, value))
+    {
+        Option *a = new Option(opt_name, value, 0);
+        append_options.push_back(a);
+    }
+}
 
 bool Table::add_list(std::string list_name, std::string next_elem)
 {
     for (auto l : lists)
-        if(l->get_name() == list_name)
+        if (l->get_name() == list_name)
             return l->add_value(next_elem);
 
     Variable *var = new Variable(list_name, depth + 1);
@@ -141,6 +170,10 @@ bool Table::has_option(const std::string opt_name)
         if (!opt_name.compare(o->get_name()))
             return true;
 
+    for (Option* a : append_options)
+        if (!opt_name.compare(a->get_name()))
+            return true;
+
     return false;
 }
 
@@ -149,6 +182,10 @@ bool Table::has_option(Option opt)
 {
     for (Option* o : options)
         if ( (*o) == opt)
+            return true;
+
+    for (Option* a : append_options)
+        if ( (*a) == opt)
             return true;
 
     return false;
@@ -185,7 +222,7 @@ std::ostream &operator<<( std::ostream& out, const Table &t)
     for(int i = 0; i < t.depth; i++)
         whitespace += "    ";
 
-    if(!t.name.empty())
+    if (!t.name.empty())
         out << whitespace << t.name << " =" << std::endl;
     out << whitespace << '{' << std::endl;
 
@@ -211,12 +248,16 @@ std::ostream &operator<<( std::ostream& out, const Table &t)
                 out << (*sub_t) << ",\n";
     }
 
+    out << whitespace << "}";
 
-    // don't add a comma if the depth is zero
-    if(t.depth == 0)
-        out << "}";
-    else
-        out << whitespace << "}";
-    
+    // Now, print all options which need to be appended/overwrite earlier options
+    if (!t.append_options.empty())
+    {
+        out << "\n";
+
+        for (Option* a : t.append_options)
+            out << (*a) << "\n";
+    }
+
     return out;
 }
