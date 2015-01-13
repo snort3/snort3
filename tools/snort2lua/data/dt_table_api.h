@@ -87,10 +87,20 @@ void swap_tables(std::vector<Table*>& new_tables);
  */
 
 // add an string, bool, or int option to the table. --> table = { name = var |'var'};
-bool add_option(const std::string name, const std::string val);
-bool add_option(const std::string name, const int val);
-bool add_option(const std::string name, const bool val);
-bool add_option(const std::string name, const char* const v);
+bool add_option(const std::string opt_name, const std::string val);
+bool add_option(const std::string opt_name, const int val);
+bool add_option(const std::string opt_name, const bool val);
+bool add_option(const std::string opt_name, const char* const v);
+
+// sometimes, you may need to create a default option, before overwriting that
+// option later. For instance, if you have a default table, and then you
+// need to overwrite a single option in that default table, you can use these
+// methods to overwrite that option.
+void append_option(const std::string opt_name, const std::string val);
+void append_option(const std::string opt_name, const int val);
+void append_option(const std::string opt_name, const bool val);
+void append_option(const std::string opt_name, const char* const v);
+
 // add an option with a list of variables -->  table = { name = 'elem1 elem2 ...' }
 // corresponds to Parameter::PT_MULTI
 bool add_list(std::string list_name, std::string next_elem);
@@ -107,13 +117,16 @@ bool add_unsupported_comment(std::string unsupported_var);
 // return true if this name exists as an option name for the selected table
 bool option_exists(const std::string name);
 
-
 private:
-std::vector<Table*> tables;
+void create_append_data(std::string& fqn, Table* &t);
 
-// various convenience pointers and holders
+// Data
+std::vector<Table*> tables;
 std::stack<Table*> open_tables;
+std::stack<unsigned> top_level_tables;
 bool curr_data_bad;
+
+
 };
 
 

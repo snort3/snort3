@@ -47,6 +47,13 @@ public:
     void add_comment(std::string comment);
     bool has_option(const std::string);
 
+    /*  emit options after table has finished printing. */
+    /*  These options will be appended to the previous table as supposed */
+    /*  to overwriting the entire table */
+    void append_option(std::string opt_name, int val);
+    void append_option(std::string opt_name, bool val);
+    void append_option(std::string opt_name, std::string val);
+
     friend std::ostream &operator<<( std::ostream&, const Table &);
 
 private:
@@ -56,6 +63,7 @@ private:
     std::vector<Table*> tables;
     std::vector<Option*> options;
     std::vector<Variable*> lists;
+    std::vector<Option*> append_options;
 
 
     bool has_option(std::string name, int val);
