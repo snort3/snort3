@@ -22,6 +22,7 @@
 
 #include "nhttp_scratch_pad.h"
 #include "nhttp_field.h"
+#include "nhttp_infractions.h"
 
 //-------------------------------------------------------------------------
 // HeaderNormalizer class
@@ -38,19 +39,19 @@ public:
     constexpr HeaderNormalizer(
        NHttpEnums::NormFormat _format,
        bool _concatenate_repeats,
-       int32_t (*f1)(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void*),
+       int32_t (*f1)(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const void*),
        const void *f1_arg,
-       int32_t (*f2)(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void*),
+       int32_t (*f2)(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const void*),
        const void *f2_arg,
-       int32_t (*f3)(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void*),
+       int32_t (*f3)(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const void*),
        const void *f3_arg)
        : format(_format), concatenate_repeats(_concatenate_repeats), normalizer { f1, f2, f3 },
          norm_arg { f1_arg, f2_arg, f3_arg },
          num_normalizers((f1 != nullptr) + (f1 != nullptr)*(f2 != nullptr) + (f1 != nullptr)*(f2 != nullptr)*(f3 != nullptr))
        {};
-    int32_t normalize(const NHttpEnums::HeaderId head_id, const int count, ScratchPad &scratch_pad, uint64_t &infractions,
-       const NHttpEnums::HeaderId header_name_id[], const Field header_value[], const int32_t num_headers,
-       Field &result_field) const;
+    int32_t normalize(const NHttpEnums::HeaderId head_id, const int count, ScratchPad &scratch_pad,
+       NHttpInfractions &infractions, const NHttpEnums::HeaderId header_name_id[], const Field header_value[],
+       const int32_t num_headers, Field &result_field) const;
     NHttpEnums::NormFormat get_format() const { return format; };
 
 private:
@@ -58,7 +59,7 @@ private:
 
     const NHttpEnums::NormFormat format;
     const bool concatenate_repeats;
-    int32_t (* const normalizer[3])(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void*);
+    int32_t (* const normalizer[3])(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const void*);
     const void * norm_arg[3];
     const int num_normalizers;
 };

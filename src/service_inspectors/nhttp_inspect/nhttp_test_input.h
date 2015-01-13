@@ -30,9 +30,10 @@ public:
     NHttpTestInput(const char *fileName);
     ~NHttpTestInput();
     void scan(uint8_t*& data, uint32_t& length, NHttpEnums::SourceId source_id, bool& tcp_close, bool& need_break);
-    void flush(uint32_t length);
-    void reassemble(uint8_t** buffer, unsigned& length, NHttpEnums::SourceId source_id, const NHttpFlowData* session_data,
-       bool& tcp_close);
+    void flush(uint32_t num_octets);
+    void discard(uint32_t num_octets);
+    void reassemble(uint8_t** buffer, unsigned& length, NHttpEnums::SourceId source_id,
+       const NHttpFlowData* session_data, bool& tcp_close);
 
 private:
     FILE* test_data_file;

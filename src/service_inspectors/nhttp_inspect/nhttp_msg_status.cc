@@ -50,7 +50,7 @@ void NHttpMsgStatus::parse_start_line() {
     // Eventually we may need to cater to certain format errors, but for now exact match or treat as error.
     // HTTP/X.Y<SP>###<SP><text>
     if ((start_line.length < 13) || (start_line.start[8] != ' ') || (start_line.start[12] != ' ')) {
-        infractions |= INF_BADSTATLINE;
+        infractions += INF_BADSTATLINE;
         return;
     }
     version.start = start_line.start;
@@ -62,7 +62,7 @@ void NHttpMsgStatus::parse_start_line() {
     for (int32_t k = 0; k < reason_phrase.length; k++) {
         if ((reason_phrase.start[k] <= 31) || (reason_phrase.start[k] >= 127)) {
             // Illegal character in reason phrase
-            infractions |= INF_BADPHRASE;
+            infractions += INF_BADPHRASE;
             break;
         }
     }
@@ -81,13 +81,13 @@ void NHttpMsgStatus::derive_status_code_num() {
 
     if ((status_code.start[0] < '0') || (status_code.start[0] > '9') || (status_code.start[1] < '0') || (status_code.start[1] > '9') ||
        (status_code.start[2] < '0') || (status_code.start[2] > '9')) {
-        infractions |= INF_BADSTATCODE;
+        infractions += INF_BADSTATCODE;
         status_code_num = STAT_PROBLEMATIC;
         return;
     }
     status_code_num = (status_code.start[0] - '0') * 100 + (status_code.start[1] - '0') * 10 + (status_code.start[2] - '0');
     if ((status_code_num < 100) || (status_code_num > 599)) {
-        infractions |= INF_BADSTATCODE;
+        infractions += INF_BADSTATCODE;
     }
 }
 
@@ -109,7 +109,7 @@ void NHttpMsgStatus::update_flow() {
         session_data->type_expected[source_id] = SEC_CLOSED;
         session_data->half_reset(source_id);
     }
-    else if (infractions & disaster_mask) {
+    else if (infractions && disaster_mask) {
         session_data->type_expected[source_id] = SEC_ABORT;
         session_data->half_reset(source_id);
     }

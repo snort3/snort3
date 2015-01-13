@@ -47,7 +47,7 @@ void NHttpMsgRequest::parse_start_line() {
     // <method><SP><URI><SP>HTTP/X.Y
     if (start_line.start[start_line.length-9] != ' ') {
         // space before "HTTP" missing or in wrong place
-        infractions |= INF_BADREQLINE;
+        infractions += INF_BADREQLINE;
         return;
     }
 
@@ -57,7 +57,7 @@ void NHttpMsgRequest::parse_start_line() {
     }
     if (space >= start_line.length-9) {
         // leading space or no space
-        infractions |= INF_BADREQLINE;
+        infractions += INF_BADREQLINE;
         return;
     }
 
@@ -96,18 +96,18 @@ void NHttpMsgRequest::gen_events() {
     if (method_id == METH__OTHER) create_event(EVENT_UNKNOWN_METHOD);
 
     // URI character encoding events
-    if (uri && (uri->get_uri_infractions() & INF_URIPERCENTASCII)) create_event(EVENT_ASCII);
-    if (uri && (uri->get_uri_infractions() & INF_URIPERCENTUCODE)) create_event(EVENT_U_ENCODE);
-    if (uri && (uri->get_uri_infractions() & INF_URI8BITCHAR)) create_event(EVENT_BARE_BYTE);
-    if (uri && (uri->get_uri_infractions() & INF_URIPERCENTUTF8)) create_event(EVENT_UTF_8);
-    if (uri && (uri->get_uri_infractions() & INF_URIBADCHAR)) create_event(EVENT_NON_RFC_CHAR);
+    if (uri && (uri->get_uri_infractions() && INF_URIPERCENTASCII)) create_event(EVENT_ASCII);
+    if (uri && (uri->get_uri_infractions() && INF_URIPERCENTUCODE)) create_event(EVENT_U_ENCODE);
+    if (uri && (uri->get_uri_infractions() && INF_URI8BITCHAR)) create_event(EVENT_BARE_BYTE);
+    if (uri && (uri->get_uri_infractions() && INF_URIPERCENTUTF8)) create_event(EVENT_UTF_8);
+    if (uri && (uri->get_uri_infractions() && INF_URIBADCHAR)) create_event(EVENT_NON_RFC_CHAR);
 
     // URI path events
-    if (uri && (uri->get_path_infractions() & INF_URIMULTISLASH)) create_event(EVENT_MULTI_SLASH);
-    if (uri && (uri->get_path_infractions() & INF_URIBACKSLASH)) create_event(EVENT_IIS_BACKSLASH);
-    if (uri && (uri->get_path_infractions() & INF_URISLASHDOT)) create_event(EVENT_SELF_DIR_TRAV);
-    if (uri && (uri->get_path_infractions() & INF_URISLASHDOTDOT)) create_event(EVENT_DIR_TRAV);
-    if (uri && (uri->get_path_infractions() & INF_URIROOTTRAV)) create_event(EVENT_WEBROOT_DIR);
+    if (uri && (uri->get_path_infractions() && INF_URIMULTISLASH)) create_event(EVENT_MULTI_SLASH);
+    if (uri && (uri->get_path_infractions() && INF_URIBACKSLASH)) create_event(EVENT_IIS_BACKSLASH);
+    if (uri && (uri->get_path_infractions() && INF_URISLASHDOT)) create_event(EVENT_SELF_DIR_TRAV);
+    if (uri && (uri->get_path_infractions() && INF_URISLASHDOTDOT)) create_event(EVENT_DIR_TRAV);
+    if (uri && (uri->get_path_infractions() && INF_URIROOTTRAV)) create_event(EVENT_WEBROOT_DIR);
 
 }
 
@@ -134,8 +134,10 @@ void NHttpMsgRequest::print_section(FILE *output) {
         uri->get_norm_fragment().print(output, "Normalized Fragment");
         fprintf(output, "URI infractions: overall %" PRIx64 ", format %" PRIx64 ", scheme %" PRIx64 ", host %" PRIx64 ", port %" PRIx64 ", path %"
            PRIx64 ", query %" PRIx64 ", fragment %" PRIx64 "\n",
-           uri->get_uri_infractions(), uri->get_format_infractions(), uri->get_scheme_infractions(), uri->get_host_infractions(),
-           uri->get_port_infractions(), uri->get_path_infractions(), uri->get_query_infractions(), uri->get_fragment_infractions());
+           uri->get_uri_infractions().get_raw(), uri->get_format_infractions().get_raw(),
+           uri->get_scheme_infractions().get_raw(), uri->get_host_infractions().get_raw(),
+           uri->get_port_infractions().get_raw(), uri->get_path_infractions().get_raw(),
+           uri->get_query_infractions().get_raw(), uri->get_fragment_infractions().get_raw());
     }
     NHttpMsgSection::print_message_wrapup(output);
  }
@@ -148,7 +150,7 @@ void NHttpMsgRequest::update_flow() {
         session_data->type_expected[source_id] = SEC_CLOSED;
         session_data->half_reset(source_id);
     }
-    else if (infractions & disaster_mask) {
+    else if (infractions && disaster_mask) {
         session_data->type_expected[source_id] = SEC_ABORT;
         session_data->half_reset(source_id);
     }

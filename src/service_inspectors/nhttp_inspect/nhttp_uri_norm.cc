@@ -25,7 +25,8 @@
 
 using namespace NHttpEnums;
 
-void UriNormalizer::normalize(const Field &input, Field &result, bool do_path, ScratchPad &scratch_pad, uint64_t &infractions) {
+void UriNormalizer::normalize(const Field &input, Field &result, bool do_path, ScratchPad &scratch_pad,
+   NHttpInfractions &infractions) {
     if (result.length != STAT_NOTCOMPUTE) return;
     assert (input.length >= 0);
 
@@ -64,27 +65,28 @@ void UriNormalizer::normalize(const Field &input, Field &result, bool do_path, S
     result.length = data_length;
 }
 
-bool UriNormalizer::no_path_check(const uint8_t* in_buf, int32_t in_length, uint64_t& infractions) {
+bool UriNormalizer::no_path_check(const uint8_t* in_buf, int32_t in_length, NHttpInfractions& infractions) {
     for (int32_t k = 0; k < in_length; k++) {
         if ((uri_char[in_buf[k]] == CHAR_NORMAL) || (uri_char[in_buf[k]] == CHAR_PATH)) continue;
-        infractions |= INF_URINEEDNORM;
+        infractions += INF_URINEEDNORM;
         return false;
     }
     return true;
 }
 
-bool UriNormalizer::path_check(const uint8_t* in_buf, int32_t in_length, uint64_t& infractions) {
+bool UriNormalizer::path_check(const uint8_t* in_buf, int32_t in_length, NHttpInfractions& infractions) {
     for (int32_t k = 0; k < in_length; k++) {
         // FIXIT-P Periods are common and most don't need to be normalized. Need a better test.
         if (uri_char[in_buf[k]] == CHAR_NORMAL) continue;
         if ((in_buf[k] == '/') && ((k == 0) || (in_buf[k-1] != '/'))) continue;
-        infractions |= INF_URINEEDNORM;
+        infractions += INF_URINEEDNORM;
         return false;
     }
     return true;
 }
 
-int32_t UriNormalizer::norm_char_clean(const uint8_t* in_buf, int32_t in_length, uint8_t *out_buf, uint64_t& infractions, const void *) {
+int32_t UriNormalizer::norm_char_clean(const uint8_t* in_buf, int32_t in_length, uint8_t *out_buf,
+   NHttpInfractions& infractions, const void *) {
     int32_t length = 0;
     for (int32_t k = 0; k < in_length; k++) {
         switch (uri_char[in_buf[k]]) {
@@ -93,11 +95,11 @@ int32_t UriNormalizer::norm_char_clean(const uint8_t* in_buf, int32_t in_length,
             out_buf[length++] = in_buf[k];
             break;
           case CHAR_INVALID:
-            infractions |= INF_URIBADCHAR;
+            infractions += INF_URIBADCHAR;
             out_buf[length++] = in_buf[k];
             break;
           case CHAR_EIGHTBIT:
-            infractions |= INF_URI8BITCHAR;
+            infractions += INF_URI8BITCHAR;
             out_buf[length++] = in_buf[k];
             break;
           case CHAR_PERCENT:
@@ -106,32 +108,32 @@ int32_t UriNormalizer::norm_char_clean(const uint8_t* in_buf, int32_t in_length,
                     uint8_t value = as_hex[in_buf[k+1]] * 16 + as_hex[in_buf[k+2]];
                     if (good_percent[value]) {
                         // Normal % escape of an ASCII special character that is supposed to be escaped
-                        infractions |= INF_URIPERCENTNORMAL;
+                        infractions += INF_URIPERCENTNORMAL;
                         out_buf[length++] = '%';
                     }
                     else {
                         // Suspicious % escape of an ASCII character that does not need to be escaped
-                        infractions |= INF_URIPERCENTASCII;
-                        if (uri_char[value] == CHAR_INVALID) infractions |= INF_URIBADCHAR;
+                        infractions += INF_URIPERCENTASCII;
+                        if (uri_char[value] == CHAR_INVALID) infractions += INF_URIBADCHAR;
                         out_buf[length++] = value;
                         k += 2;
                     }
                 }
                 else {
                     // UTF-8 decoding not implemented yet
-                    infractions |= INF_URIPERCENTUTF8;
+                    infractions += INF_URIPERCENTUTF8;
                     out_buf[length++] = '%';
                 }
             }
             else if ((k+5 < in_length) && (in_buf[k+1] == 'u') && (as_hex[in_buf[k+2]] != -1) && (as_hex[in_buf[k+3]] != -1)
                && (as_hex[in_buf[k+4]] != -1) && (as_hex[in_buf[k+5]] != -1)) {
                 // 'u' UTF-16 decoding not implemented yet
-                infractions |= INF_URIPERCENTUCODE;
+                infractions += INF_URIPERCENTUCODE;
                 out_buf[length++] = '%';
             }
             else {
                 // Don't recognize it
-                infractions |= INF_URIPERCENTOTHER;
+                infractions += INF_URIPERCENTOTHER;
                 out_buf[length++] = '%';
             }
             break;
@@ -141,19 +143,21 @@ int32_t UriNormalizer::norm_char_clean(const uint8_t* in_buf, int32_t in_length,
 }
 
 // Convert URI backslashes to slashes
-int32_t UriNormalizer::norm_backslash(const uint8_t* in_buf, int32_t in_length, uint8_t *out_buf, uint64_t& infractions, const void *) {
+int32_t UriNormalizer::norm_backslash(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
+   NHttpInfractions& infractions, const void*) {
     for (int32_t k = 0; k < in_length; k++) {
         if (in_buf[k] != '\\') out_buf[k] = in_buf[k];
         else {
             out_buf[k] = '/';
-            infractions |= INF_URIBACKSLASH;
+            infractions += INF_URIBACKSLASH;
         }
     }
     return in_length;
 }
 
 // Caution: worst case output length is one greater than input length
-int32_t UriNormalizer::norm_path_clean(const uint8_t* in_buf, int32_t in_length, uint8_t *out_buf, uint64_t& infractions, const void *) {
+int32_t UriNormalizer::norm_path_clean(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
+   NHttpInfractions& infractions, const void*) {
     int32_t length = 0;
     // It simplifies the code that handles /./ and /../ to pretend there is an extra '/' after the buffer.
     // Avoids making a special case of URIs that end in . or ..
@@ -165,17 +169,17 @@ int32_t UriNormalizer::norm_path_clean(const uint8_t* in_buf, int32_t in_length,
         }
         // Ignore this slash if it directly follows another slash
         else if ((k < in_length) && (length >= 1) && (out_buf[length-1] == '/')) {
-            infractions |= INF_URIMULTISLASH;
+            infractions += INF_URIMULTISLASH;
         }
         // This slash is the end of a /./ pattern, ignore this slash and remove the period from the output
         else if ((length >= 2) && (out_buf[length-1] == '.') && (out_buf[length-2] == '/')) {
-            infractions |= INF_URISLASHDOT;
+            infractions += INF_URISLASHDOT;
             length -= 1;
         }
         // This slash is the end of a /../ pattern, normalization depends on whether there is a previous directory that
         // we can remove
         else if ((length >= 3) && (out_buf[length-1] == '.') && (out_buf[length-2] == '.') && (out_buf[length-3] == '/')) {
-            infractions |= INF_URISLASHDOTDOT;
+            infractions += INF_URISLASHDOTDOT;
             // Traversing above the root of the absolute path. A path of the form /../../../foo/bar/whatever cannot be
             // further normalized. Instead of taking away a directory we leave the .. and write out the new slash.
             // This code can write out the pretend slash after the end of the buffer. That is intentional so that the
@@ -183,7 +187,7 @@ int32_t UriNormalizer::norm_path_clean(const uint8_t* in_buf, int32_t in_length,
             if ( (length == 3) ||
                 ((length >= 6) && (out_buf[length-4] == '.') && (out_buf[length-5] == '.') && (out_buf[length-6] == '/')))
             {
-                infractions |= INF_URIROOTTRAV;
+                infractions += INF_URIROOTTRAV;
                 out_buf[length++] = '/';
             }
             // Remove the previous directory from the output. "/foo/bar/../" becomes "/foo/"

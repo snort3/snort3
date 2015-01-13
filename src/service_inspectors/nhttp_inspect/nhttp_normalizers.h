@@ -20,11 +20,13 @@
 #ifndef NHTTP_NORMALIZERS_H
 #define NHTTP_NORMALIZERS_H
 
-int32_t norm_decimal_integer(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void* not_used);
-int32_t norm_to_lower(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void* not_used);
-int32_t norm_str_code(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void*);
-int32_t norm_seq_str_code(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void*);
-int32_t norm_remove_lws(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void* not_used);
+#include "nhttp_infractions.h"
+
+int32_t norm_decimal_integer(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const void* not_used);
+int32_t norm_to_lower(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const void* not_used);
+int32_t norm_str_code(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const void*);
+int32_t norm_seq_str_code(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const void*);
+int32_t norm_remove_lws(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const void* not_used);
 
 #endif
 
