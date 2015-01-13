@@ -603,7 +603,7 @@ bool HttpServerModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-bool HttpServerModule::begin(const char*fqn, int, SnortConfig*)
+bool HttpServerModule::begin(const char*, int, SnortConfig*)
 {
     if ( !server )
     {
