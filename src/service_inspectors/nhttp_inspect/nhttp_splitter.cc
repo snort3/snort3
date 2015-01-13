@@ -21,17 +21,7 @@
 
 using namespace NHttpEnums;
 
-void NHttpSplitter::conditional_reset() {
-    if (complete) {
-        octets_seen = 0;
-        num_crlf = 0;
-        num_flush = 0;
-        complete = false;
-    }
-}
-
 ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length) {
-    conditional_reset();
     for (uint32_t k = 0; k < length; k++) {
         // Discard magic six white space characters CR, LF, Tab, VT, FF, and SP when they occur before the start line.
         // If we have seen nothing but white space so far ...
@@ -41,14 +31,13 @@ ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length) {
                     num_crlf++;
                     continue;
                 }
-                else { // FIXIT-M there needs to be an event for this
-                    complete = true;
+                else {
+                    infractions += INF_TOOMUCHLEADINGWS;
                     return SCAN_ABORT;
                 }
             }
             if (num_crlf > 0) {
-                num_flush = k;           // current octet not flushed with white space
-                complete = true;
+                num_flush = k;     // current octet not flushed with white space
                 return SCAN_DISCARD;
             }
         }
@@ -57,12 +46,10 @@ ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length) {
         if (buffer[k] == '\n') {
             num_crlf++;
             num_flush = k+1;
-            complete = true;
             return SCAN_FOUND;
         }
         if (num_crlf == 1) { // FIXIT-M there needs to be an event for this
             // CR not followed by LF
-            complete = true;
             return SCAN_ABORT;
         }
         if (buffer[k] == '\r') {
@@ -74,9 +61,7 @@ ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length) {
 }
 
 ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length) {
-    conditional_reset();
     if (peek_status == SCAN_FOUND) {
-        complete = true;
         return SCAN_FOUND;
     }
     buffer += peek_octets;
@@ -94,7 +79,6 @@ ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length) {
             }
             else {
                 num_flush = k + 1 + peek_octets;
-                complete = true;
                 return SCAN_FOUND;
             }
         }
@@ -120,26 +104,14 @@ ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length) {
 ScanResult NHttpHeaderSplitter::peek(const uint8_t* buffer, uint32_t length) {
     peek_status = split(buffer, length);
     peek_octets = length;
-    complete = false;
     return peek_status;
-}
-
-void NHttpHeaderSplitter::conditional_reset() {
-    if (complete) {
-        peek_octets = 0;
-        first_lf = 0;
-        peek_status = SCAN_NOTFOUND;
-    }
-    NHttpSplitter::conditional_reset();
 }
 
 ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length) {
     // FIXIT-M when things go wrong and we must abort we need to flush partial chunk buffer
-    conditional_reset();
     if (header_complete) {
         // Previously read the chunk header. Now just flush the length.
         num_flush = expected_length;
-        complete = true;
         return SCAN_FOUND;
     }
     for (uint32_t k = 0; k < length; k++) {
@@ -147,13 +119,11 @@ ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length) {
         if (buffer[k] == '\n') {
             if (octets_seen + k == num_crlf) {
                 // \r\n or \n leftover from previous chunk
-                complete = true;
                 num_flush = k+1;
                 return SCAN_DISCARD;
             }
             if (!length_started) {
                 // chunk header specifies no length
-                complete = true;
                 return SCAN_ABORT;
             }
             if (expected_length == 0) {
@@ -169,11 +139,10 @@ ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length) {
             }
             // flush completed chunk header
             header_complete = true;
-            return SCAN_DISCARD;
+            return SCAN_DISCARD_CONTINUE;
         }
         if (num_crlf == 1) {
             // CR not followed by LF
-            complete = true;
             return SCAN_ABORT;
         }
         if (buffer[k] == '\r') {
@@ -189,13 +158,11 @@ ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length) {
         }
         if (as_hex[buffer[k]] == -1) {
             // illegal character present in chunk length
-            complete = true;
             return SCAN_ABORT;
         }
         length_started = true;
         if (digits_seen >= 8) {
             // overflow protection: must fit into 32 bits
-            complete = true;
             return SCAN_ABORT;
         }
         expected_length = expected_length * 16 + as_hex[buffer[k]];
@@ -206,17 +173,5 @@ ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length) {
     }
     octets_seen += length;
     return SCAN_NOTFOUND;
-}
-
-void NHttpChunkSplitter::conditional_reset() {
-    if (complete) {
-        expected_length = 0;
-        length_started = false;
-        digits_seen = 0;
-        semicolon = false;
-        header_complete = false;
-        zero_chunk = false;
-    }
-    NHttpSplitter::conditional_reset();
 }
 

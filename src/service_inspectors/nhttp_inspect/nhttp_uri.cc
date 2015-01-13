@@ -83,7 +83,7 @@ void NHttpUri::parse_uri() {
             abs_path.start = uri.start + k;
         }
         else {
-            format_infractions |= INF_BADURI;
+            format_infractions += INF_BADURI;
             uri_type = URI__PROBLEMATIC;
             scheme.length = STAT_PROBLEMATIC;
             authority.length = STAT_PROBLEMATIC;
@@ -104,7 +104,7 @@ SchemeId NHttpUri::get_scheme_id() {
     // Normalize scheme name to lower case for matching purposes
     uint8_t *lower_scheme;
     if ((lower_scheme = scratch_pad.request(scheme.length)) == nullptr) {
-        scheme_infractions |= INF_NOSCRATCH;
+        scheme_infractions += INF_NOSCRATCH;
         scheme_id = SCH__INSUFMEMORY;
         return scheme_id;
     }
@@ -174,7 +174,7 @@ int32_t NHttpUri::get_port_value() {
         port_value = port_value * 10 + (port.start[k] - '0');
         if ((port.start[k] < '0') || (port.start[k] > '9') || (port_value > 65535))
         {
-            port_infractions |= INF_BADPORT;
+            port_infractions += INF_BADPORT;
             port_value = STAT_PROBLEMATIC;
             break;
         }
@@ -247,7 +247,8 @@ const Field& NHttpUri::get_norm_legacy() {
     }
 
     // We can reuse the raw URI for the normalized URI unless at least one part of the URI has been normalized
-    if ((host_infractions == 0) && (path_infractions == 0) && (query_infractions == 0) && (fragment_infractions == 0)) {
+    if ((host_infractions.none_found()) && (path_infractions.none_found()) && (query_infractions.none_found()) &&
+       (fragment_infractions.none_found())) {
         legacy_norm.start = uri.start;
         legacy_norm.length = uri.length;
         return legacy_norm;

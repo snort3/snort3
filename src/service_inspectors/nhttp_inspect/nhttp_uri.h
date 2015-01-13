@@ -24,6 +24,7 @@
 #include "nhttp_str_to_code.h"
 #include "nhttp_uri_norm.h"
 #include "nhttp_field.h"
+#include "nhttp_infractions.h"
 
 //-------------------------------------------------------------------------
 // NHttpUri class
@@ -44,15 +45,15 @@ public:
     const Field& get_query() { parse_abs_path(); return query; };
     const Field& get_fragment() { parse_abs_path(); return fragment; };
 
-    uint64_t get_format_infractions() { parse_uri(); return format_infractions; };
-    uint64_t get_scheme_infractions() { get_scheme_id(); return scheme_infractions; };
-    uint64_t get_host_infractions() { get_norm_host(); return host_infractions; };
-    uint64_t get_port_infractions() { get_port_value(); return port_infractions; };
-    uint64_t get_path_infractions() { get_norm_path(); return path_infractions; };
-    uint64_t get_query_infractions() { get_norm_query(); return query_infractions; };
-    uint64_t get_fragment_infractions() { get_norm_fragment(); return fragment_infractions; };
-    uint64_t get_uri_infractions() { return get_format_infractions() | get_scheme_infractions() | get_host_infractions() |
-       get_port_infractions() | get_path_infractions() | get_query_infractions() | get_fragment_infractions(); };
+    NHttpInfractions get_format_infractions() { parse_uri(); return format_infractions; };
+    NHttpInfractions get_scheme_infractions() { get_scheme_id(); return scheme_infractions; };
+    NHttpInfractions get_host_infractions() { get_norm_host(); return host_infractions; };
+    NHttpInfractions get_port_infractions() { get_port_value(); return port_infractions; };
+    NHttpInfractions get_path_infractions() { get_norm_path(); return path_infractions; };
+    NHttpInfractions get_query_infractions() { get_norm_query(); return query_infractions; };
+    NHttpInfractions get_fragment_infractions() { get_norm_fragment(); return fragment_infractions; };
+    NHttpInfractions get_uri_infractions() { return get_format_infractions() + get_scheme_infractions() + get_host_infractions() +
+       get_port_infractions() + get_path_infractions() + get_query_infractions() + get_fragment_infractions(); };
 
     NHttpEnums::SchemeId get_scheme_id();
     const Field& get_norm_host();
@@ -77,13 +78,13 @@ private:
     Field query;
     Field fragment;
 
-    uint64_t format_infractions = 0;
-    uint64_t scheme_infractions = 0;
-    uint64_t host_infractions = 0;
-    uint64_t port_infractions = 0;
-    uint64_t path_infractions = 0;
-    uint64_t query_infractions = 0;
-    uint64_t fragment_infractions = 0;
+    NHttpInfractions format_infractions;
+    NHttpInfractions scheme_infractions;
+    NHttpInfractions host_infractions;
+    NHttpInfractions port_infractions;
+    NHttpInfractions path_infractions;
+    NHttpInfractions query_infractions;
+    NHttpInfractions fragment_infractions;
 
     NHttpEnums::UriType uri_type = NHttpEnums::URI__NOTCOMPUTE;
     NHttpEnums::SchemeId scheme_id = NHttpEnums::SCH__NOTCOMPUTE;

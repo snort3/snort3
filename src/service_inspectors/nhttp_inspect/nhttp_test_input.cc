@@ -213,9 +213,14 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId source_id, 
     return;
 }
 
-void NHttpTestInput::flush(uint32_t length) {
-    flush_octets = previous_offset + length;
+void NHttpTestInput::flush(uint32_t num_octets) {
+    flush_octets = previous_offset + num_octets;
     flushed = true;
+}
+
+void NHttpTestInput::discard(uint32_t num_octets) {
+    flush_octets = previous_offset + num_octets;
+    just_flushed = true;
 }
 
 void NHttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId source_id, const NHttpFlowData* session_data,
