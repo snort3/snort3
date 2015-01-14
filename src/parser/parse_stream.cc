@@ -88,7 +88,7 @@ static TokenType get_token(
     int c, list = 0, state = 0;
     s.clear();
     bool inc = true;
-    static int pos = 1;
+    static int pos = 0;
     uint8_t hex = 0;
 
     if ( prev != EOF )
