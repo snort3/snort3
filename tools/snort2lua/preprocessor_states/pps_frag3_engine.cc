@@ -103,7 +103,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
         }
         else if(!keyword.compare("min_ttl"))
         {
-            if (!parse_int_option("min_ttl", data_stream))
+            if (!parse_int_option("min_ttl", data_stream, false))
             {
                 data_api.failed_conversion(data_stream, "min_ttl <integer>");
                 retval = false;
@@ -111,7 +111,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
         }
         else if(!keyword.compare("overlap_limit"))
         {
-            if (!parse_int_option("max_overlaps", data_stream))
+            if (!parse_int_option("max_overlaps", data_stream, false))
             {
                 data_api.failed_conversion(data_stream, "max_overlaps <integer>");
                 retval = false;
@@ -122,7 +122,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
 
         else if(!keyword.compare("min_fragment_length"))
         {
-            if (!parse_int_option("min_frag_length", data_stream))
+            if (!parse_int_option("min_frag_length", data_stream, false))
             {
                 data_api.failed_conversion(data_stream, "min_frag_length <integer>");
                 retval = false;

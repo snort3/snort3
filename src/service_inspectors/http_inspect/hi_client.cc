@@ -2710,6 +2710,7 @@ int StatelessInspection(Packet *p, HI_SESSION *session, HttpsessionData *hsd, in
             if ( !stream_ins )
                 hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_UNKNOWN_METHOD);
             Client->request.method = HI_UNKNOWN_METHOD;
+            sans_uri = 1;
         }
     }
 

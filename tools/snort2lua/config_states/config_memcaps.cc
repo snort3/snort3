@@ -57,7 +57,7 @@ bool Memcap<snort_option, lua_table, lua_option>::convert(std::istringstream& da
 
     table_api.open_table(*lua_table);
     bool retval1 = table_api.add_diff_option_comment("config " + *snort_option + ":", "event_filter_memcap");
-    bool retval2 = parse_int_option(*lua_option, data_stream);
+    bool retval2 = parse_int_option(*lua_option, data_stream, false);
     table_api.close_table();
 
     // stop parsing, even if additional options available

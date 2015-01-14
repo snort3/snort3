@@ -68,11 +68,11 @@ protected:
     inline bool parse_string_option(std::string opt_name,
                                         std::istringstream& stream);
     inline bool parse_int_option(std::string opt_name,
-                                        std::istringstream& stream);
+                                        std::istringstream& stream, bool append);
     inline bool parse_curly_bracket_list(std::string list_name,
                                         std::istringstream& stream);
     inline bool parse_yn_bool_option(std::string opt_name,
-                                        std::istringstream& stream);
+                                        std::istringstream& stream, bool append);
     inline bool parse_bracketed_byte_list(std::string list_name,
                                         std::istringstream& stream);
     inline bool parse_bracketed_unsupported_list(std::string list_name,
@@ -115,13 +115,16 @@ protected:
     }
 
     inline bool parse_int_option(std::string opt_name,
-                                    std::istringstream& stream)
+                                    std::istringstream& stream, bool append)
     {
         int val;
 
         if(stream >> val)
         {
-            table_api.add_option(opt_name, val);
+            if(append)
+                table_api.append_option(opt_name, val);
+            else
+                table_api.add_option(opt_name, val);
             return true;
         }
 
@@ -146,7 +149,7 @@ protected:
     }
 
     // parse and add a yes/no boolean option.
-    inline bool parse_yn_bool_option(std::string opt_name, std::istringstream& stream)
+    inline bool parse_yn_bool_option(std::string opt_name, std::istringstream& stream, bool append)
     {
         std::string val;
 
@@ -154,10 +157,26 @@ protected:
             return false;
 
         else if(!val.compare("yes"))
-            return table_api.add_option(opt_name, true);
+        {
+            if(append)
+            {
+                table_api.append_option(opt_name, true);
+                return true;
+            }
+            else
+                return table_api.add_option(opt_name, true);
+        }
 
         else if (!val.compare("no"))
-            return table_api.add_option(opt_name, false);
+        {
+            if(append)
+            {
+                table_api.append_option(opt_name, false);
+                return true;
+            }
+            else
+                return table_api.add_option(opt_name, false);
+        }
 
         table_api.add_comment("Unable to convert_option: " + opt_name + ' ' + val);
         return false;

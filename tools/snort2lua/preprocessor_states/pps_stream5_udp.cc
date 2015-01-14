@@ -63,7 +63,7 @@ bool StreamUdp::convert(std::istringstream& data_stream)
         else if(!keyword.compare("timeout"))
         {
             table_api.add_diff_option_comment("timeout", "session_timeout");
-            tmpval = parse_int_option("session_timeout", data_stream);
+            tmpval = parse_int_option("session_timeout", data_stream, false);
         }
 
         else

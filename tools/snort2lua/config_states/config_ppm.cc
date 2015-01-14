@@ -66,7 +66,7 @@ bool Ppm::convert(std::istringstream& data_stream)
             continue;
         
         if(!keyword.compare("threshold"))
-            tmpval = parse_int_option("threshold", data_stream);
+            tmpval = parse_int_option("threshold", data_stream, false);
 
         else if(!keyword.compare("fastpath-expensive-packets"))
         {
@@ -77,7 +77,7 @@ bool Ppm::convert(std::istringstream& data_stream)
         else if(!keyword.compare("max-pkt-time"))
         {
             table_api.add_diff_option_comment("max-pkt-time", "max_pkt_time");
-            tmpval = parse_int_option("max_pkt_time", data_stream);
+            tmpval = parse_int_option("max_pkt_time", data_stream, false);
         }
         
         else if(!keyword.compare("debug-pkts"))
@@ -89,7 +89,7 @@ bool Ppm::convert(std::istringstream& data_stream)
         else if(!keyword.compare("max-rule-time"))
         {
             table_api.add_diff_option_comment("max-rule-time", "max_rule_time");
-            tmpval = parse_int_option("max_rule_time", data_stream);
+            tmpval = parse_int_option("max_rule_time", data_stream, false);
         }
         
         else if(!keyword.compare("suspend-expensive-rules"))
@@ -101,7 +101,7 @@ bool Ppm::convert(std::istringstream& data_stream)
         else if(!keyword.compare("suspend-timeout"))
         {
             table_api.add_diff_option_comment("suspend-timeout", "suspend_timeout");
-            tmpval = parse_int_option("suspend_timeout", data_stream);
+            tmpval = parse_int_option("suspend_timeout", data_stream, false);
         }
         
         else if(!keyword.compare("pkt-log"))

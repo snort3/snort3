@@ -119,7 +119,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("normalize_javascript", "profile.normalize_javascript");
             table_api.open_table("profile");
-            tmpval = table_api.add_option("normalize_javascript", true);
+            table_api.append_option("normalize_javascript", true);
             table_api.close_table();
         }
 
@@ -133,7 +133,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("non_strict", "profile.non_strict");
             table_api.open_table("profile");
-            tmpval = table_api.add_option("non_strict", true);
+            table_api.append_option("non_strict", true);
             table_api.close_table();
         }
 
@@ -150,7 +150,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("normalize_utf", "profile.normalize_utf");
             table_api.open_table("profile");
-            tmpval = table_api.add_option("normalize_utf", true);
+            table_api.append_option("normalize_utf", true);
             table_api.close_table();
         }
 
@@ -170,7 +170,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("ascii", "profile.ascii");
             table_api.open_table("profile");
-            tmpval = parse_yn_bool_option("ascii", data_stream);
+            tmpval = parse_yn_bool_option("ascii", data_stream, true);
             table_api.close_table();
         }
 
@@ -178,7 +178,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("utf_8", "profile.utf_8");
             table_api.open_table("profile");
-            tmpval = parse_yn_bool_option("utf_8", data_stream);
+            tmpval = parse_yn_bool_option("utf_8", data_stream, true);
             table_api.close_table();
         }
 
@@ -186,7 +186,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("u_encode", "profile.u_encode");
             table_api.open_table("profile");
-            tmpval = parse_yn_bool_option("u_encode", data_stream);
+            tmpval = parse_yn_bool_option("u_encode", data_stream, true);
             table_api.close_table();
         }
 
@@ -194,7 +194,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("bare_byte", "profile.bare_byte");
             table_api.open_table("profile");
-            tmpval = parse_yn_bool_option("bare_byte", data_stream);
+            tmpval = parse_yn_bool_option("bare_byte", data_stream, true);
             table_api.close_table();
         }
 
@@ -202,7 +202,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("iis_unicode", "profile.iis_unicode");
             table_api.open_table("profile");
-            tmpval = parse_yn_bool_option("iis_unicode", data_stream);
+            tmpval = parse_yn_bool_option("iis_unicode", data_stream, true);
             table_api.close_table();
         }
 
@@ -210,7 +210,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("double_decode", "profile.double_decode");
             table_api.open_table("profile");
-            tmpval = parse_yn_bool_option("double_decode", data_stream);
+            tmpval = parse_yn_bool_option("double_decode", data_stream, true);
             table_api.close_table();
         }
 
@@ -218,7 +218,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("multi_slash", "profile.multi_slash");
             table_api.open_table("profile");
-            tmpval = parse_yn_bool_option("multi_slash", data_stream);
+            tmpval = parse_yn_bool_option("multi_slash", data_stream, true);
             table_api.close_table();
         }
 
@@ -226,14 +226,14 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("iis_backslash", "profile.iis_backslash");
             table_api.open_table("profile");
-            tmpval = parse_yn_bool_option("iis_backslash", data_stream);
+            tmpval = parse_yn_bool_option("iis_backslash", data_stream, true);
             table_api.close_table();
         }
         else if (!keyword.compare("directory"))
         {
             table_api.add_diff_option_comment("directory", "profile.directory");
             table_api.open_table("profile");
-            tmpval = parse_yn_bool_option("directory", data_stream);
+            tmpval = parse_yn_bool_option("directory", data_stream, true);
             table_api.close_table();
         }
 
@@ -241,18 +241,23 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("apache_whitespace", "profile.apache_whitespace");
             table_api.open_table("profile");
-            tmpval = parse_yn_bool_option("apache_whitespace", data_stream);
+            tmpval = parse_yn_bool_option("apache_whitespace", data_stream, true);
             table_api.close_table();
         }
 
         else if (!keyword.compare("iis_delimiter"))
-            tmpval = parse_yn_bool_option("iis_delimiter", data_stream);
+        {
+            table_api.add_diff_option_comment("iis_delimiter", "profile.iis_delimiter");
+            table_api.open_table("profile");
+            tmpval = parse_yn_bool_option("iis_delimiter", data_stream, true);
+            table_api.close_table();
+        }
 
         else if (!keyword.compare("webroot"))
         {
             table_api.add_diff_option_comment("webroot", "profile.webroot");
             table_api.open_table("profile");
-            tmpval = parse_yn_bool_option("webroot", data_stream);
+            tmpval = parse_yn_bool_option("webroot", data_stream, true);
             table_api.close_table();
         }
 
@@ -260,7 +265,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("max_javascript_whitespaces", "profile.max_javascript_whitespaces");
             table_api.open_table("profile");
-            tmpval = parse_int_option("max_javascript_whitespaces", data_stream);
+            tmpval = parse_int_option("max_javascript_whitespaces", data_stream, true);
             table_api.close_table();
         }
 
@@ -268,7 +273,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("server_flow_depth [-1:65495]", "profile.server_flow_depth [-1:65535]");
             table_api.open_table("profile");
-            tmpval = parse_int_option("server_flow_depth", data_stream);
+            tmpval = parse_int_option("server_flow_depth", data_stream, true);
             table_api.close_table();
         }
 
@@ -276,7 +281,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("client_flow_depth", "profile.client_flow_depth");
             table_api.open_table("profile");
-            tmpval = parse_int_option("client_flow_depth", data_stream);
+            tmpval = parse_int_option("client_flow_depth", data_stream, true);
             table_api.close_table();
         }
 
@@ -284,18 +289,18 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("chunk_length", "profile.chunk_length");
             table_api.open_table("profile");
-            tmpval = parse_int_option("chunk_length", data_stream);
+            tmpval = parse_int_option("chunk_length", data_stream, true);
             table_api.close_table();
         }
 
         else if (!keyword.compare("oversize_dir_length"))
-            tmpval = parse_int_option("oversize_dir_length", data_stream);
+            tmpval = parse_int_option("oversize_dir_length", data_stream, false);
 
         else if (!keyword.compare("max_header_length"))
         {
             table_api.add_diff_option_comment("max_header_length", "profile.max_header_length");
             table_api.open_table("profile");
-            tmpval = parse_int_option("max_header_length", data_stream);
+            tmpval = parse_int_option("max_header_length", data_stream, true);
             table_api.close_table();
         }
 
@@ -303,7 +308,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("max_spaces", "profile.max_spaces");
             table_api.open_table("profile");
-            tmpval = parse_int_option("max_spaces", data_stream);
+            tmpval = parse_int_option("max_spaces", data_stream, true);
             table_api.close_table();
         }
 
@@ -311,7 +316,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("max_headers", "profile.max_headers");
             table_api.open_table("profile");
-            tmpval = parse_int_option("max_headers", data_stream);
+            tmpval = parse_int_option("max_headers", data_stream, true);
             table_api.close_table();
         }
 
@@ -342,7 +347,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("post_depth [-1:65495]", "profile.post_depth [-1:65535]");
             table_api.open_table("profile");
-            tmpval = parse_int_option("post_depth", data_stream);
+            tmpval = parse_int_option("post_depth", data_stream, true);
             table_api.close_table();
         }
 
@@ -360,8 +365,11 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("flow_depth"))
         {
+            table_api.add_diff_option_comment("flow_depth_depth [-1:65495]", "profile.flow_depth [-1:65535]");
+            table_api.open_table("profile");
             table_api.add_diff_option_comment("flow_depth", "server_flow_depth");
-            tmpval = parse_int_option("server_flow_depth", data_stream);
+            tmpval = parse_int_option("server_flow_depth", data_stream, true);
+            table_api.close_table();
         }
 
         else if (!keyword.compare("ports"))
@@ -428,11 +436,10 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("profile"))
         {
-            table_api.open_table("profile");
-
             if (data_stream >> keyword)
             {
-                tmpval = table_api.add_option("profile", keyword);
+                std::string profile_name = "http_profile_" + keyword;
+                tmpval = table_api.add_option("profile", "$" + profile_name);
             }
             else
             {
@@ -440,7 +447,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
                 retval = false;
             }
 
-            table_api.close_table();
         }
 
         else

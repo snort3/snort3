@@ -91,14 +91,14 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
         {
             table_api.open_table("tcp_cache");
             table_api.add_diff_option_comment("max_tcp", "max_sessions");
-            tmpval = parse_int_option("max_sessions", arg_stream);
+            tmpval = parse_int_option("max_sessions", arg_stream, false);
             table_api.close_table();
         }
 
         else if (!keyword.compare("max_tcp"))
         {
             table_api.open_table("tcp_cache");
-            tmpval = parse_int_option("max_sessions", arg_stream);
+            tmpval = parse_int_option("max_sessions", arg_stream, false);
             table_api.close_table();
         }
 
@@ -106,7 +106,7 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
         {
             table_api.open_table("tcp_cache");
             table_api.add_diff_option_comment("tcp_cache_nominal_timeout", "pruning_timeout");
-            tmpval = parse_int_option("pruning_timeout", arg_stream);
+            tmpval = parse_int_option("pruning_timeout", arg_stream, false);
             table_api.close_table();
         }
 
@@ -114,14 +114,14 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
         {
             table_api.open_table("tcp_cache");
             table_api.add_diff_option_comment("tcp_cache_pruning_timeout", "idle_timeout");
-            tmpval = parse_int_option("idle_timeout", arg_stream);
+            tmpval = parse_int_option("idle_timeout", arg_stream, false);
             table_api.close_table();
         }
 
         else if (!keyword.compare("memcap"))
         {
             table_api.open_table("tcp_cache");
-            tmpval = parse_int_option("memcap", arg_stream);
+            tmpval = parse_int_option("memcap", arg_stream, false);
             table_api.close_table();
         }
 
@@ -129,7 +129,7 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
         {
             table_api.open_table("udp_cache");
             table_api.add_diff_option_comment("max_udp","max_sessions");
-            tmpval = parse_int_option("max_sessions", arg_stream);
+            tmpval = parse_int_option("max_sessions", arg_stream, false);
             table_api.close_table();
         }
 
@@ -137,7 +137,7 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
         {
             table_api.open_table("udp_cache");
             table_api.add_diff_option_comment("udp_cache_pruning_timeout","pruning_timeout");
-            tmpval = parse_int_option("pruning_timeout", arg_stream);
+            tmpval = parse_int_option("pruning_timeout", arg_stream, false);
             table_api.close_table();
         }
 
@@ -145,7 +145,7 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
         {
             table_api.open_table("udp_cache");
             table_api.add_diff_option_comment("udp_cache_nominal_timeout","idle_timeout");
-            tmpval = parse_int_option("idle_timeout", arg_stream);
+            tmpval = parse_int_option("idle_timeout", arg_stream, false);
             table_api.close_table();
         }
 
@@ -153,7 +153,7 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
         {
             table_api.open_table("icmp_cache");
             table_api.add_diff_option_comment("max_icmp","max_sessions");
-            tmpval = parse_int_option("max_sessions", arg_stream);
+            tmpval = parse_int_option("max_sessions", arg_stream, false);
             table_api.close_table();
         }
 
@@ -161,7 +161,7 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
         {
             table_api.open_table("ip_cache");
             table_api.add_diff_option_comment("max_ip","max_sessions");
-            tmpval = parse_int_option("max_sessions", arg_stream);
+            tmpval = parse_int_option("max_sessions", arg_stream, false);
             table_api.close_table();
         }
 
@@ -176,7 +176,7 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
         {
             table_api.open_top_level_table("active");
             table_api.add_diff_option_comment("min_response_seconds","min_interval");
-            tmpval = parse_int_option("min_interval", arg_stream);
+            tmpval = parse_int_option("min_interval", arg_stream, false);
             table_api.close_table();
         }
 
@@ -184,7 +184,7 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
         {
             table_api.open_top_level_table("active");
             table_api.add_diff_option_comment("max_active_responses","max_responses");
-            tmpval = parse_int_option("max_responses", arg_stream);
+            tmpval = parse_int_option("max_responses", arg_stream, false);
             table_api.close_table();
         }
 

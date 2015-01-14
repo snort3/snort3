@@ -83,7 +83,7 @@ bool Ipv6Frag::convert(std::istringstream& data_stream)
         else if (!keyword.compare("frag_timeout"))
         {
             table_api.open_top_level_table("ip_stream");
-            tmpval = parse_int_option("session_timeout", arg_stream);
+            tmpval = parse_int_option("session_timeout", arg_stream, false);
             table_api.close_table();
         }
 
