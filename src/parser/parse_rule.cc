@@ -1343,7 +1343,6 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
     }
     else
     {
-        s = get_action_string(rtn.type);
         rtn.listhead = get_rule_list(sc, s);
     }
 
