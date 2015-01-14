@@ -59,7 +59,7 @@ bool Frag3Global::convert(std::istringstream& data_stream)
             table_api.add_deleted_comment("disabled");
 
         else if(!keyword.compare("max_frags"))
-            tmpval = parse_int_option("max_frags", args_stream);
+            tmpval = parse_int_option("max_frags", args_stream, false);
         
         else if(!keyword.compare("memcap"))
             tmpval = parse_deleted_option("memcap", args_stream);

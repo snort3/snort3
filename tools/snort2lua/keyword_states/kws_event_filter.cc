@@ -71,10 +71,10 @@ bool Filter::convert(std::istringstream& data_stream)
             continue;
 
         else if (!keyword.compare("count"))
-            tmpval = parse_int_option("count", arg_stream);
+            tmpval = parse_int_option("count", arg_stream, false);
 
         else if (!keyword.compare("seconds"))
-            tmpval = parse_int_option("seconds", arg_stream);
+            tmpval = parse_int_option("seconds", arg_stream, false);
 
         else if (!keyword.compare("type"))
             tmpval = parse_string_option("type", arg_stream);
@@ -85,13 +85,13 @@ bool Filter::convert(std::istringstream& data_stream)
         else if (!keyword.compare("gen_id"))
         {
             table_api.add_diff_option_comment("gen_id", "gid");
-            tmpval = parse_int_option("gid", arg_stream);
+            tmpval = parse_int_option("gid", arg_stream, false);
         }
 
         else if (!keyword.compare("sig_id"))
         {
             table_api.add_diff_option_comment("sig_id", "sid");
-            tmpval = parse_int_option("sid", arg_stream);
+            tmpval = parse_int_option("sid", arg_stream, false);
         }
 
         else

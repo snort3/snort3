@@ -104,7 +104,7 @@ bool PerfMonitor::convert(std::istringstream& data_stream)
             table_api.add_deleted_comment("atexitonly: events-stats");
 
         else if (!keyword.compare("max_file_size"))
-            tmpval = parse_int_option("max_file_size", data_stream);
+            tmpval = parse_int_option("max_file_size", data_stream, false);
 
         else if (!keyword.compare("file"))
             parse_file_option(data_stream, "file",
@@ -146,13 +146,13 @@ bool PerfMonitor::convert(std::istringstream& data_stream)
         else if (!keyword.compare("flow-ports"))
         {
             table_api.add_diff_option_comment("flow-ports", "flow_ports");
-            tmpval = parse_int_option("flow_ports", data_stream);            
+            tmpval = parse_int_option("flow_ports", data_stream, false);            
         }
 
         else if (!keyword.compare("time"))
         {
             table_api.add_diff_option_comment("time", "seconds");
-            tmpval = parse_int_option("seconds", data_stream);
+            tmpval = parse_int_option("seconds", data_stream, false);
         }
 
         else if (!keyword.compare("flow-ip-memcap"))
@@ -164,7 +164,7 @@ bool PerfMonitor::convert(std::istringstream& data_stream)
         else if (!keyword.compare("pktcnt"))
         {
             table_api.add_diff_option_comment("pktcnt", "packets");
-            tmpval = parse_int_option("packets", data_stream);
+            tmpval = parse_int_option("packets", data_stream, false);
         }
 
         else

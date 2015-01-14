@@ -420,7 +420,7 @@ static inline const u_char *extract_http_content_encoding(HTTPINSPECT_CONF *Serv
         p++;
         if (  hi_util_in_bounds(start, end, p) )
         {
-            if ( ServerConf->profile == HI_APACHE || ServerConf->profile == HI_ALL)
+            if ( ServerConf->profile == HI_APACHE || ServerConf->profile == HI_DEFAULT)
             {
                 SkipWhiteSpace(start,end,&p);
             }
@@ -446,7 +446,7 @@ static inline const u_char *extract_http_content_encoding(HTTPINSPECT_CONF *Serv
                             {
                                 if ( isalpha((int)*p))
                                     break;
-                                else if(isspace((int)*p) && (ServerConf->profile == HI_APACHE || ServerConf->profile == HI_ALL) )
+                                else if(isspace((int)*p) && (ServerConf->profile == HI_APACHE || ServerConf->profile == HI_DEFAULT) )
                                 {
                                     SkipWhiteSpace(start,end,&p);
                                 }

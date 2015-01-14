@@ -211,9 +211,9 @@ http_methods =  -- build from default_http_methods
     'RPC_IN_DATA', 'RPC_OUT_DATA', 'RPC_ECHO_DATA'
 }
 
-all = 
+http_profile_default = 
 {
-    profile_value = 'all',
+    profile_type = 'default',
     server_flow_depth = 300,
     client_flow_depth = 300,
     post_depth = -1,
@@ -239,9 +239,9 @@ all =
     whitespace_chars ='0x9 0xb 0xc 0xd'
 }
 
-apache = 
+http_profile_apache = 
 {
-    profile_value = 'apache',
+    profile_type = 'apache',
     server_flow_depth = 300,
     client_flow_depth = 300,
     post_depth = -1,
@@ -262,9 +262,9 @@ apache =
     whitespace_chars ='0x9 0xb 0xc 0xd'
 }
 
-iis = 
+http_profile_iis = 
 {
-    profile_value = 'iis',
+    profile_type = 'iis',
     server_flow_depth = 300,
     client_flow_depth = 300,
     post_depth = -1,
@@ -290,9 +290,9 @@ iis =
     whitespace_chars ='0x9 0xb 0xc 0xd'
 }
 
-iis_40 = 
+http_profile_iis_40 = 
 {
-    profile_value = 'iis_40',
+    profile_type = 'iis_40',
     server_flow_depth = 300,
     client_flow_depth = 300,
     post_depth = -1,
@@ -318,9 +318,9 @@ iis_40 =
     whitespace_chars ='0x9 0xb 0xc 0xd'
 }
 
-iis_50 = 
+http_profile_iis_50 = 
 {
-    profile_value = 'iis_50',
+    profile_type = 'iis_50',
     server_flow_depth = 300,
     client_flow_depth = 300,
     post_depth = -1,

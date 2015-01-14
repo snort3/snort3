@@ -250,7 +250,7 @@ bool HttpInspectModule::end(const char* fqn, int, SnortConfig*)
 // http_server module
 //-------------------------------------------------------------------------
 
-#define profiles "none | all | apache | iis | iis_40 | iis_50"
+#define profiles "default | apache | iis | iis_40 | iis_50"
 
 #define default_methods \
     "GET POST PUT SEARCH MKCOL COPY MOVE LOCK UNLOCK NOTIFY POLL BCOPY " \
@@ -329,7 +329,7 @@ static const Parameter hi_profile_server_params[] =
     { "post_depth", Parameter::PT_INT, "-1:65535", "65495",
       "amount of POST data to inspect" },
 
-    { "profile_value", Parameter::PT_ENUM, profiles, "none",
+    { "profile_type", Parameter::PT_ENUM, profiles, "default",
       "set defaults appropriate for selected server" },
 
     { "server_flow_depth", Parameter::PT_INT, "-1:65535", "0",
@@ -567,7 +567,7 @@ bool HttpServerModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("post_depth") )
         server->post_depth = v.get_long();
 
-    else if ( v.is("profile_value") )
+    else if ( v.is("profile_type") )
         server->profile = (PROFILES)v.get_long();
 
     else if ( v.is("server_flow_depth") )

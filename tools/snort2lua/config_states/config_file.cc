@@ -70,7 +70,7 @@ bool File::convert(std::istringstream& data_stream)
         // ^^^^^^^^^ -- UNSUPPORTED OPTIONS.  these options were added after 2.9.6
 
         else if (!keyword.compare("show_data_depth"))
-            tmpval = parse_int_option("show_data_depth", arg_stream);
+            tmpval = parse_int_option("show_data_depth", arg_stream, false);
 
         else if (!keyword.compare("type_id"))
         {
@@ -87,25 +87,25 @@ bool File::convert(std::istringstream& data_stream)
         else if (!keyword.compare("file_type_depth"))
         {
             table_api.add_diff_option_comment("config file: file_type_depth", "type_depth");
-            tmpval = parse_int_option("type_depth", arg_stream);
+            tmpval = parse_int_option("type_depth", arg_stream, false);
         }
 
         else if (!keyword.compare("file_signature_depth"))
         {
             table_api.add_diff_option_comment("config file: file_signature_depth", "signature_depth");
-            tmpval = parse_int_option("signature_depth", arg_stream);
+            tmpval = parse_int_option("signature_depth", arg_stream, false);
         }
 
         else if (!keyword.compare("file_block_timeout"))
         {
             table_api.add_diff_option_comment("config file: file_block_timeout", "block_timeout");
-            tmpval = parse_int_option("block_timeout", arg_stream);
+            tmpval = parse_int_option("block_timeout", arg_stream, false);
         }
 
         else if (!keyword.compare("file_lookup_timeout"))
         {
             table_api.add_diff_option_comment("config file: file_lookup_timeout", "lookup_timeout");
-            tmpval = parse_int_option("lookup_timeout", arg_stream);
+            tmpval = parse_int_option("lookup_timeout", arg_stream, false);
         }
 
         else

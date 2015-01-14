@@ -72,7 +72,7 @@ public:
 
             else if (!keyword.compare("limit"))
             {
-                tmpval = parse_int_option("limit", arg_stream);
+                tmpval = parse_int_option("limit", arg_stream, false);
                 tmpval = table_api.add_option("units", "M") && tmpval;
             }
 

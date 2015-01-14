@@ -231,16 +231,16 @@ bool FtpServer::convert(std::istringstream& data_stream)
             tmpval = table_api.add_option("print_cmds", true);
 
         else if(!keyword.compare("def_max_param_len"))
-            tmpval = parse_int_option("def_max_param_len", data_stream);
+            tmpval = parse_int_option("def_max_param_len", data_stream, false);
 
         else if(!keyword.compare("telnet_cmds"))
-            tmpval = parse_yn_bool_option("telnet_cmds", data_stream);
+            tmpval = parse_yn_bool_option("telnet_cmds", data_stream, false);
         
         else if(!keyword.compare("ignore_telnet_erase_cmds"))
-            tmpval = parse_yn_bool_option("ignore_telnet_erase_cmds", data_stream);
+            tmpval = parse_yn_bool_option("ignore_telnet_erase_cmds", data_stream, false);
 
         else if(!keyword.compare("ignore_data_chan"))
-            tmpval = parse_yn_bool_option("ignore_data_chan", data_stream);
+            tmpval = parse_yn_bool_option("ignore_data_chan", data_stream, false);
 
         else if(!keyword.compare("ftp_cmds"))
             tmpval = parse_curly_bracket_list("ftp_cmds", data_stream);
@@ -410,16 +410,16 @@ bool FtpClient::convert(std::istringstream& data_stream)
 
 
         if(!keyword.compare("telnet_cmds"))
-            tmpval = parse_yn_bool_option("telnet_cmds", data_stream);
+            tmpval = parse_yn_bool_option("telnet_cmds", data_stream, false);
 
         else if(!keyword.compare("ignore_telnet_erase_cmds"))
-            tmpval = parse_yn_bool_option("ignore_telnet_erase_cmds", data_stream);
+            tmpval = parse_yn_bool_option("ignore_telnet_erase_cmds", data_stream, false);
 
         else if(!keyword.compare("max_resp_len"))
-            tmpval = parse_int_option("max_resp_len", data_stream);
+            tmpval = parse_int_option("max_resp_len", data_stream, false);
 
         else if(!keyword.compare("bounce"))
-            tmpval = parse_yn_bool_option("bounce", data_stream);
+            tmpval = parse_yn_bool_option("bounce", data_stream, false);
 
         // add bounce_to as a commented list
         else if(!keyword.compare("bounce_to"))

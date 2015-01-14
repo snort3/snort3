@@ -300,10 +300,10 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             tmpval = false;
 
         if (!keyword.compare("overlap_limit"))
-            tmpval = parse_int_option("overlap_limit", arg_stream);
+            tmpval = parse_int_option("overlap_limit", arg_stream, false);
 
         else if (!keyword.compare("max_window"))
-            tmpval = parse_int_option("max_window", arg_stream);
+            tmpval = parse_int_option("max_window", arg_stream, false);
 
         else if (!keyword.compare("small_segments"))
             tmpval = parse_small_segments(arg_stream);
@@ -324,7 +324,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             table_api.add_deleted_comment("check_session_hijacking");
 
         else if (!keyword.compare("flush_factor"))
-            tmpval = parse_int_option("flush_factor", arg_stream);
+            tmpval = parse_int_option("flush_factor", arg_stream, false);
 
         else if(!keyword.compare("protocol"))
             tmpval = parse_protocol(arg_stream);
@@ -371,20 +371,20 @@ bool StreamTcp::convert(std::istringstream& data_stream)
         else if (!keyword.compare("timeout"))
         {
             table_api.add_diff_option_comment("timeout", "session_timeout");
-            tmpval = parse_int_option("session_timeout", arg_stream);
+            tmpval = parse_int_option("session_timeout", arg_stream, false);
         }
         else if (!keyword.compare("max_queued_segs"))
         {
             table_api.add_diff_option_comment("max_queued_segs", "queue_limit.max_segments");
             table_api.open_table("queue_limit");
-            tmpval = parse_int_option("max_segments", arg_stream);
+            tmpval = parse_int_option("max_segments", arg_stream, false);
             table_api.close_table();
         }
         else if (!keyword.compare("max_queued_bytes"))
         {
             table_api.add_diff_option_comment("max_queued_bytes", "queue_limit.max_bytes");
             table_api.open_table("queue_limit");
-            tmpval = parse_int_option("max_bytes", arg_stream);
+            tmpval = parse_int_option("max_bytes", arg_stream, false);
             table_api.close_table();
         }
         else if (!keyword.compare("policy"))

@@ -69,10 +69,10 @@ bool HttpInspect::convert(std::istringstream& data_stream)
         bool tmpval = true;
 
         if(!keyword.compare("compress_depth"))
-            tmpval = parse_int_option("compress_depth", data_stream);
+            tmpval = parse_int_option("compress_depth", data_stream, false);
 
         else if(!keyword.compare("decompress_depth")) 
-            tmpval = parse_int_option("decompress_depth", data_stream);
+            tmpval = parse_int_option("decompress_depth", data_stream, false);
 
         else if(!keyword.compare("detect_anomalous_servers"))
             tmpval = table_api.add_option("detect_anomalous_servers", true);
@@ -81,13 +81,13 @@ bool HttpInspect::convert(std::istringstream& data_stream)
             tmpval = table_api.add_option("proxy_alert", true);
 
         else if(!keyword.compare("max_gzip_mem"))
-            tmpval = parse_int_option("max_gzip_mem", data_stream);
+            tmpval = parse_int_option("max_gzip_mem", data_stream, false);
         
         else if(!keyword.compare("memcap"))
-            tmpval = parse_int_option("memcap", data_stream);
+            tmpval = parse_int_option("memcap", data_stream, false);
 
         else if(!keyword.compare("chunk_length"))
-            tmpval = parse_int_option("chunk_length", data_stream);
+            tmpval = parse_int_option("chunk_length", data_stream, false);
         
         else if(!keyword.compare("disabled"))
             table_api.add_deleted_comment("disabled");

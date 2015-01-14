@@ -102,10 +102,10 @@ bool Suppress::convert(std::istringstream& data_stream)
             tmpval = parse_string_option("track", arg_stream);
 
         else if(!keyword.compare("gen_id"))
-            tmpval = parse_int_option("gid", arg_stream);
+            tmpval = parse_int_option("gid", arg_stream, false);
 
         else if (!keyword.compare("sig_id"))
-            tmpval = parse_int_option("sid", arg_stream);
+            tmpval = parse_int_option("sid", arg_stream, false);
 
         else if (!keyword.compare("ip"))
         {
