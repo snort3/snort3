@@ -211,9 +211,9 @@ http_methods =  -- build from default_http_methods
     'RPC_IN_DATA', 'RPC_OUT_DATA', 'RPC_ECHO_DATA'
 }
 
-http_profile_all = 
+http_profile_default = 
 {
-    profile_type = 'all',
+    profile_type = 'default',
     server_flow_depth = 300,
     client_flow_depth = 300,
     post_depth = -1,

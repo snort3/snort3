@@ -1986,7 +1986,7 @@ const u_char *extract_http_content_length(HI_SESSION *session,
         p++;
         if (  hi_util_in_bounds(start, end, p) )
         {
-            if ( ServerConf->profile == HI_APACHE || ServerConf->profile == HI_ALL)
+            if ( ServerConf->profile == HI_APACHE || ServerConf->profile == HI_DEFAULT)
             {
                 SkipWhiteSpace(start,end,&p);
             }
@@ -2019,7 +2019,7 @@ const u_char *extract_http_content_length(HI_SESSION *session,
                                 if ( isdigit((int)*p))
                                     break;
                                 else if(isspace((int)*p) &&
-                                        (ServerConf->profile == HI_APACHE || ServerConf->profile == HI_ALL) )
+                                        (ServerConf->profile == HI_APACHE || ServerConf->profile == HI_DEFAULT) )
                                 {
                                     SkipWhiteSpace(start,end,&p);
                                 }
@@ -2085,7 +2085,7 @@ const u_char *extract_http_content_length(HI_SESSION *session,
                         }
                         else
                         {
-                            if (ServerConf->profile == HI_APACHE || ServerConf->profile == HI_ALL)
+                            if (ServerConf->profile == HI_APACHE || ServerConf->profile == HI_DEFAULT)
                             {
                                 SkipWhiteSpace(start,end,&p);
                             }

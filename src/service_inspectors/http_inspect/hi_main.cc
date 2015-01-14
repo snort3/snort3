@@ -188,7 +188,7 @@ int PrintServerConf(HTTPINSPECT_CONF *ServerConf)
 
     prof = ServerConf->profile;
     LogMessage("      Server profile: %s\n",
-        prof==HI_ALL?"All":
+        prof==HI_DEFAULT?"Default":
         prof==HI_APACHE?"Apache":
         prof==HI_IIS?"IIS":
         prof==HI_IIS4?"IIS4":"IIS5");
