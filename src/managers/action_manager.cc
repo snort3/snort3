@@ -54,14 +54,22 @@ static THREAD_LOCAL IpsAction* s_action = nullptr;
 void ActionManager::add_plugin(const ActionApi* api)
 {
     Actor a(api);
+
+    if ( api->pinit )
+        api->pinit();
+
     s_actors.push_back(a);
 }
 
 void ActionManager::release_plugins()
 {
     for ( auto& p : s_actors )
+    {
         p.api->dtor(p.act);
 
+        if ( p.api->pterm )
+            p.api->pterm();
+    }
     s_actors.clear();
 }
 

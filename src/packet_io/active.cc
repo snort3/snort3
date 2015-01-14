@@ -50,10 +50,7 @@ THREAD_LOCAL int active_drop_ssn = 0;
 
 THREAD_LOCAL int active_tunnel_bypass = 0;
 THREAD_LOCAL int active_suspend = 0;
-
 THREAD_LOCAL int active_have_rsp = 0;
-
-static THREAD_LOCAL uint64_t s_injects = 0;
 
 typedef int (*send_t) (
     const DAQ_PktHdr_t* h, int rev, const uint8_t* buf, uint32_t len);
@@ -62,9 +59,10 @@ static THREAD_LOCAL eth_t* s_link = NULL;
 static THREAD_LOCAL ip_t* s_ipnet = NULL;
 static THREAD_LOCAL send_t s_send = DAQ_Inject;
 
-// FIXIT-L these should not have to be thread local
 static THREAD_LOCAL uint8_t s_attempts = 0;
-static THREAD_LOCAL int s_enabled = 0;
+static THREAD_LOCAL uint64_t s_injects = 0;
+
+static int s_enabled = 0;
 
 static int Active_Open(const char*);
 static int Active_Close(void);
