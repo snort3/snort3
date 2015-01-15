@@ -206,40 +206,31 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
     int rval = DETECTION_OPTION_NO_MATCH;
     uint32_t jump = 0;
     uint32_t payload_bytes_grabbed = 0;
-    uint32_t extract_offset;
     int32_t offset;
 
     PROFILE_VARS;
     MODULE_PROFILE_START(byteJumpPerfStats);
 
-    const uint8_t *base_ptr, *end_ptr, *start_ptr;
-    int dsize;
-
     /* Get values from byte_extract variables, if present. */
     if (bjd->offset_var >= 0 && bjd->offset_var < NUM_BYTE_EXTRACT_VARS)
     {
+        uint32_t extract_offset;
         GetByteExtractValue(&extract_offset, bjd->offset_var);
         offset = (int32_t) extract_offset;
     }
     else
+    {
         offset = bjd->offset;
-
-    start_ptr = c.buffer();
-    dsize = c.size();
-    end_ptr = start_ptr + dsize;
-
-    if( bjd->relative_flag )
-    {
-        base_ptr = c.start() + offset;
     }
-    else
-    {
-        base_ptr = c.buffer() + offset;
-    }
+
+    const uint8_t* const start_ptr = c.buffer();
+    const int dsize = c.size();
+    const uint8_t* const end_ptr = start_ptr + dsize;
+    const uint8_t* const base_ptr = offset +
+       ((bjd->relative_flag) ? c.start() : start_ptr);
 
     /* Both of the extraction functions contain checks to ensure the data
-     * is always inbounds */
-
+     * is inbounds and will return no match if it isn't */
     if ( !bjd->data_string_convert_flag )
     {
         if ( byte_extract(
@@ -265,6 +256,8 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
         }
         payload_bytes_grabbed = tmp;
     }
+    // Negative offsets that put us outside the buffer should have been caught in the extraction routines
+    assert(base_ptr >= c.buffer());
 
     if (bjd->multiplier)
         jump *= bjd->multiplier;
