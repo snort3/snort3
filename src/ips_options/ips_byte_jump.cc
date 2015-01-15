@@ -256,7 +256,8 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
         }
         payload_bytes_grabbed = tmp;
     }
-    // Negative offsets that put us outside the buffer should have been caught in the extraction routines
+    // Negative offsets that put us outside the buffer should have been caught
+    // in the extraction routines
     assert(base_ptr >= c.buffer());
 
     if (bjd->multiplier)
