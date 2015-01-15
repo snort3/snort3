@@ -1,3 +1,6 @@
+build 133
+
+-- fixed active rule actions (react, reject, rewrite)
 -- moved http_inspect profile defaults to snort_defaults.lua
 -- add generalized infractions tracking to new_http_inspect
 -- updated snort2lua to override default tables (x = { t = v }; x.t.a = 1)
