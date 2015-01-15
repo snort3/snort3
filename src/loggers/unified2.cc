@@ -68,7 +68,7 @@
 using namespace std;
 
 #define S_NAME "unified2"
-#define F_NAME S_NAME "log.u2"
+#define F_NAME S_NAME ".log"
 
 /* ------------------ Data structures --------------------------*/
 typedef struct _Unified2Config

@@ -112,31 +112,27 @@ Then give it a go:
 
 === Tips
 
-* Legacy rules and includes must be put in ips.include = 'filename'
-  and/or ips.rules = 'string' or [[ multi line string ]].  
+One of the goals of Snort++ is to make it easier to configure your sensor.
+Here is a summary of tips and tricks you may find useful.
 
-* You can also use snort2lua to convert your legacy Snort conf file into a
-  Snort++ lua file.
+General Use
 
-* You can override or add to your lua config with the --lua command line
-  option.  You can even add rules to your config via the command line.
+* Snort tries hard not to error out too quickly.  It will report multiple
+  semantic errors.
 
-* The Lua config is a 'live' script that is executed when loaded.  You can
-  add functions, grab environment variables, compute values, etc.
-  
-* By default, symbols unknown to Snort++ are silently ignored.  You can
-  generate warnings for with --warn-unknown.  Adding --pedantic makes them
-  fatal.  To ignore such symbols, export them in the environment variable
-  SNORT_IGNORE.
+* Snort always assumes the simplest mode of operation.  Eg, you can omit the -T
+  option to validate the conf if you don't provide a packet source.
 
-* You can also rename symbols that you want to disable.  For example,
-  changing normalizer to Xnormalizer will disable the normalizer.  This can
-  be easier than commenting in some cases.
+* Warnings are not emitted unless --warn-* is specified.  --warn-all enables all
+  warnings, and --pedantic makes such warnings fatal.
+
+* You can process multiple sources at one time by using the -z or --max-threads
+  option.
+
+* To make it easy to find the important data, zero counts are not output at
+  shutdown.
 
 * Load plugins from the command line with --plugin-path /path/to/install/lib.
-
-* Snort++ tries hard not to error out too quickly.  It will report multiple
-  semantic errors.  It always assumes the simplest mode of operation.
 
 * You can process multiple sources at one time by using the -z or
   --max-threads option.
@@ -144,6 +140,72 @@ Then give it a go:
 * Unit tests are configured with --enable-unit-tests (libcheck is
   required).  They can then be run with snort --unit-test [<mode>] where mode
   is a libcheck print_mode (silent, minimal, normal, etc.).
+
+Lua Configuration
+
+* Configure the wizard and default bindings will be created based on configured
+  inspectors.  No need to explicitly bind ports in this case.
+
+* You can override or add to your Lua conf with the --lua command line option.
+
+* The Lua conf is a live script that is executed when loaded.  You can add
+  functions, grab environment variables, compute values, etc.
+
+* You can also rename symbols that you want to disable.  For example, changing
+  normalizer to  Xnormalizer will disable the normalizer.  This can be easier
+  than commenting in some cases.
+
+* By default, symbols unknown to Snort++ are silently ignored.  You can generate
+  warnings for them  with --warn-unknown.  Adding --pedantic makes them fatal.
+  To ignore such symbols, export them in the environment variable SNORT_IGNORE.
+
+Writing and Loading Rules
+
+Snort++ rules allow arbitrary whitespace.  Multi-line rules make it easier to
+structure your rule  for clarity.  There are multiple ways to add comments to
+your rules:
+
+* Like Snort, the # character starts a comment to end of line.  In addition, all
+  lines between #begin and #end are comments.
+
+* The rem option allows you to write a comment that is conveyed with the rule.
+
+* C style multi-line comments are allowed, which means you can comment out
+  portions of a rule while  testing it out by putting the options between /* and
+  */.
+
+There are multiple ways to load rules too:
+
+* Set ips.rules or ips.include.
+
+* Snort2 include statements can be used in rules files.
+
+* Use -R to load a rules file.
+
+* Use --stdin-rules with command line redirection.
+
+* Use --lua to specify one or more rules as a command line argument.
+
+Output Files
+
+To make it simple to configure outputs when you run with multiple packet
+threads, output files are not explicitly configured.  Instead, you can use the
+options below to format the paths:
+
+    <logdir>/[<run_prefix>][<id#>][<X>]<name>
+
+* logdir is set with -l and defaults to ./
+
+* run_prefix is set with --run-prefix else not used
+
+* id# is the packet thread number that writes the file; with one packet thread,
+  id# (zero) is omitted without --id-zero
+
+* X is / if you use --id-subdir, else _ if id# is used
+
+* name is based on module name that writes the file
+
+* all text mode outputs default to stdout
 
 
 === Help

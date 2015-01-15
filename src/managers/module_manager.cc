@@ -360,6 +360,10 @@ static const Parameter* get_params(const string& sfx, const Parameter* p)
 // convention; with one table this is obviated
 // but if multiple tables are kept might want
 // to change these to a module with parameters
+//
+// FIXIT-L presently no way to catch errors like:
+//     EXTERNAL_NET = not HOME_NET
+// which becomes a bool var and is ignored.
 static bool set_var(const char* fqn, Value& val)
 {
     if ( val.get_type() != Value::VT_STR )

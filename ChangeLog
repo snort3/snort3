@@ -1,5 +1,7 @@
 build 133
 
+-- changed u2 base file name to unified2.log
+-- updated doc based on tips/tricks blog
 -- fixed active rule actions (react, reject, rewrite)
 -- moved http_inspect profile defaults to snort_defaults.lua
 -- add generalized infractions tracking to new_http_inspect
