@@ -319,7 +319,7 @@ if test "x$enable_ppm_test" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(perf-profiling,
-    [  --enable-perf-profiling    enable module and rule performance profiling],
+    [  --enable-perf-profiling   enable module and rule performance profiling],
        enable_perf_profiling="$enableval", enable_perf_profiling="no")
 
 if test "x$enable_perf_profiling" = "xyes"; then
@@ -328,7 +328,7 @@ if test "x$enable_perf_profiling" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(shell,
-    [  --enable-shell              enable command line shell support],
+    [  --enable-shell            enable command line shell support],
        enable_shell="$enableval", enable_shell="no")
 
 if test "x$enable_shell" = "xyes"; then
@@ -343,6 +343,14 @@ AM_CONDITIONAL(BUILD_PROCPIDSTATS, test "x$enable_linux_smp_stats" = "xyes")
 
 if test "x$enable_linux_smp_stats" = "xyes"; then
     AC_DEFINE(LINUX_SMP, [1], [enable proc stats])
+fi
+
+AC_ARG_ENABLE(large-pcap,
+    [  --enable-large-pcap       enable support for pcaps larger than 2 GB],
+        enable_large_pcap="$enableval", enable_large_pcap="no")
+
+if test "x$enable_large_pcap" = "xyes"; then
+    CPPFLAGS="${CPPFLAGS} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
 fi
 
 AC_ARG_ENABLE(debug-msgs,
@@ -376,7 +384,7 @@ if test "x$enable_gdb" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(gprof-profile,
-    [  --enable-gprof-profile          enable gprof profiling output (developers only)],
+    [  --enable-gprof-profile    enable gprof profiling output (developers only)],
        enable_gprof_profile="$enableval", enable_gprof_profile="no")
 
 # FIXIT-L need to check for g++ not gcc

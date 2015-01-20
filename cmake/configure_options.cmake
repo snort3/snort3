@@ -12,7 +12,6 @@ set_project_compiler_defines_if_true (ENABLE_DEBUG_MSGS "DEBUG_MSGS")
 set_project_compiler_defines_if_true (ENABLE_DEBUG "DEBUG")
 set_project_compiler_defines_if_true (BUILD_HA "ENABLE_HA")
 set_project_compiler_defines_if_true (ENABLE_LARGE_PCAP "_LARGEFILE_SOURCE")
-set_project_compiler_defines_if_true (ENABLE_LARGE_PCAP "_LARGEFILE64_SOURCE")
 set_project_compiler_defines_if_true (ENABLE_LARGE_PCAP "_FILE_OFFSET_BITS=64")
 
 
