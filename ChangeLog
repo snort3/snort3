@@ -1,6 +1,6 @@
 14/01/20 - build 133
 
--- fixes for large file support on 32-bit Linux systems
+-- fixes for large file support on 32-bit Linux systems (reported by Y M)
 -- changed u2 base file name to unified2.log
 -- updated doc based on tips/tricks blog
 -- fixed active rule actions (react, reject, rewrite)
