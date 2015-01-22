@@ -15,9 +15,9 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// parse_byte_code.cc author Russ Combs <rucombs@cisco.com>
+// parse_uitls.cc author Russ Combs <rucombs@cisco.com>
 
-#include "parse_byte_code.h"
+#include "parse_utils.h"
 
 #include <assert.h>
 #include <ctype.h>
@@ -99,8 +99,9 @@ bool parse_byte_code(const char* in, bool& negate, std::string& out)
             {
                 if ( nx >= 2 )
                 {
-                    ok = false;
-                    break;
+                    out += (char)hex;
+                    hex = 0;
+                    nx = 0;
                 }
                 hex = (hex << 4) + xton(c);
                 nx++;
@@ -126,5 +127,33 @@ bool parse_byte_code(const char* in, bool& negate, std::string& out)
         ParseError("invalid byte code at %d", idx);
 
     return ok;
+}
+
+int parse_int(const char* data, const char* tag, int low, int high)
+{
+    int32_t value = 0;
+    char *endptr = NULL;
+
+    value = SnortStrtol(data, &endptr, 10);
+
+    if (*endptr)
+    {
+        ParseError("invalid '%s' format.", tag);
+        return value;
+    }
+
+    if (errno == ERANGE)
+    {
+        ParseError("range problem on '%s' value.", tag);
+        return value;
+    }
+
+    if ((value > high) || (value < low))
+    {
+        ParseError("'%s' must in %d:%d", tag, low, high);
+        return value;
+    }
+
+    return value;
 }
 

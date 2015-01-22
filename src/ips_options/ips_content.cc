@@ -37,7 +37,7 @@
 #include "utils/boyer_moore.h"
 #include "util.h"
 #include "parser/parser.h"
-#include "parser/parse_byte_code.h"
+#include "parser/parse_utils.h"
 #include "sfhashfcn.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
@@ -224,35 +224,6 @@ static PatternMatchData* new_pmd()
     pmd->depth_var = BYTE_EXTRACT_NO_VAR;
 
     return pmd;
-}
-
-static int32_t parse_int(
-    const char* data, const char* tag, int low = -65535, int high = 65535)
-{
-    int32_t value = 0;
-    char *endptr = NULL;
-
-    value = SnortStrtol(data, &endptr, 10);
-
-    if (*endptr)
-    {
-        ParseError("invalid '%s' format.", tag);
-        return value;
-    }
-
-    if (errno == ERANGE)
-    {
-        ParseError("range problem on '%s' value.", tag);
-        return value;
-    }
-
-    if ((value > high) || (value < low))
-    {
-        ParseError("'%s' must in %d:%d", tag, low, high);
-        return value;
-    }
-
-    return value;
 }
 
 static void finalize_content(PatternMatchData* pmd, OptTreeNode*)

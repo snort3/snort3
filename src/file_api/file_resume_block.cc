@@ -34,7 +34,7 @@
 #include "util.h"
 #include "protocols/packet.h"
 #include "packet_io/active.h"
-#include "libs/file_sha256.h"
+#include "hash/hashes.h"
 #include "managers/action_manager.h"
 #include "sfip/sf_ip.h"
 

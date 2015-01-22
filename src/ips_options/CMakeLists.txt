@@ -15,6 +15,7 @@ SET( PLUGIN_LIST
     ips_fragbits.cc
     ips_fragoffset.cc
     ips_gid.cc
+    ips_hash.cc 
     ips_http.cc
     ips_http_header.cc
     ips_icmp_id.cc
@@ -95,6 +96,7 @@ else (STATIC_IPS_OPTIONS)
     add_shared_library(ips_fragbits ips_options ips_fragbits.cc)
     add_shared_library(ips_fragoffset ips_options ips_fragoffset.cc)
     add_shared_library(ips_gid ips_options ips_gid.cc)
+    add_shared_library(ips_hash ips_options ips_hash.cc)
     add_shared_library(ips_http ips_options ips_http.cc)
     add_shared_library(ips_http_header ips_options ips_http_header.cc)
     add_shared_library(ips_icode ips_options ips_icode.cc)
@@ -124,4 +126,5 @@ endif (STATIC_IPS_OPTIONS)
 target_link_libraries(ips_options
     framework
     helpers
+    hash
 )

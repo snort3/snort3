@@ -37,10 +37,6 @@ check_include_file_cxx("wchar.h" HAVE_WCHAR_H)
 
 
 
-
-# Checks for library functions.  -- REVISITED
-
-
 # UNCONVERTED AUTOTOOL OPTIONS
 
 #AC_FUNC_MALLOC
@@ -188,10 +184,12 @@ endif()
 
 # set library variables
 
-
+if (DEFINED OPENSSL_CRYPTO_LIBRARIES)
+    check_library_exists (${OPENSSL_CRYPTO_LIBRARIES} SHA256_Init "" HAVE_OPENSSL_SHA)
+    check_library_exists (${OPENSSL_CRYPTO_LIBRARIES} MD5_Init "" HAVE_OPENSSL_MD5)
+endif()
 
 set_if_true (HAS_CXX11_FUNC HAVE___FUNCTION__)
-set_if_false (OPENSSL_CRYPTO_LIBRARY HAVE_OPENSSL_SHA)
 check_library_exists (pcap pcap_lib_version "${PCAP_LIBRARIES}" HAVE_PCAP_LIB_VERSION)
 check_library_exists (pcap pcap_lex_destroy "${PCAP_LIBRARIES}" HAVE_PCAP_LEX_DESTROY)
 

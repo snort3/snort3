@@ -1,3 +1,8 @@
+pending - build 134
+
+-- added md5, sha256, and sha512 rule options based on Snort 2.X
+   protected_content
+
 14/01/20 - build 133
 
 -- fixes for large file support on 32-bit Linux systems (reported by Y M)
@@ -21,6 +26,7 @@
    consistency
 
 14/12/16 - build 131
+
 -- fix asciidoc formatting and update default manuals
 -- updates to doc to better explain github builds
 -- fix default init for new_http_inspect
@@ -32,5 +38,6 @@
 -- tweak READMEs
 
 14/12/11 - build 130
+
 -- alpha 1 release
 

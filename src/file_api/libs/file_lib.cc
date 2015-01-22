@@ -37,8 +37,14 @@
 #include "snort_types.h"
 #include "file_identifier.h"
 #include "file_config.h"
-#include "file_sha256.h"
+#include "hash/hashes.h"
 #include "util.h"
+
+// FIXIT-L these are no longer needed
+#define SHA256CONTEXT SHA256_CTX
+#define SHA256INIT    SHA256_Init
+#define SHA256UPDATE  SHA256_Update
+#define SHA256FINAL   SHA256_Final
 
 static inline int get_data_size_from_depth_limit(FileContext* context, FileProcessType type, int data_size)
 {

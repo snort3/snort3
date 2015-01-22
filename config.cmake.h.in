@@ -302,6 +302,7 @@
 /* openssl SHA available */
 #cmakedefine HAVE_OPENSSL_SHA 1
 
+#cmakedefine HAVE_OPENSSL_MD5 1
 
 
 

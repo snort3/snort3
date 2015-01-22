@@ -16,6 +16,7 @@ ips_flags.cc \
 ips_fragbits.cc \
 ips_fragoffset.cc \
 ips_gid.cc \
+ips_hash.cc \
 ips_http.cc \
 ips_http_header.cc \
 ips_icmp_id.cc \
@@ -125,6 +126,11 @@ optlib_LTLIBRARIES += libips_gid.la
 libips_gid_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_gid_la_LDFLAGS = -export-dynamic -shared
 libips_gid_la_SOURCES = ips_gid.cc
+
+optlib_LTLIBRARIES += libips_hash.la
+libips_hash_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libips_hash_la_LDFLAGS = -export-dynamic -shared
+libips_hash_la_SOURCES = ips_hash.cc
 
 optlib_LTLIBRARIES += libips_http.la
 libips_http_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

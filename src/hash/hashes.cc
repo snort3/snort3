@@ -15,14 +15,31 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// parse_byte_code.h author Russ Combs <rucombs@cisco.com>
+// hashes.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef PARSE_STREAM_H
-#define PARSE_STREAM_H
+#include "hashes.h"
 
-#include <string>
+void sha256(const unsigned char* data, size_t size, unsigned char* digest)
+{
+    SHA256_CTX c;
+    SHA256_Init(&c);
+    SHA256_Update(&c, data, size);
+    SHA256_Final(digest, &c);
+}
 
-bool parse_byte_code(const char*, bool& negate, std::string&);
+void sha512(const unsigned char* data, size_t size, unsigned char* digest)
+{
+    SHA512_CTX c;
+    SHA512_Init(&c);
+    SHA512_Update(&c, data, size);
+    SHA512_Final(digest, &c);
+}
 
-#endif
+void md5(const unsigned char* data, size_t size, unsigned char* digest)
+{
+    MD5_CTX c;
+    MD5_Init(&c);
+    MD5_Update(&c, data, size);
+    MD5_Final(digest, &c);
+}
 

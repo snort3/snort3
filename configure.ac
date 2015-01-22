@@ -579,18 +579,6 @@ fi
 AC_FUNC_ALLOCA
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h inttypes.h libintl.h limits.h malloc.h netdb.h netinet/in.h stddef.h stdint.h stdlib.h string.h strings.h sys/socket.h sys/time.h syslog.h unistd.h wchar.h])
 
-# Verify that we have the headers
-SHA_H=""
-OPENSSL_SHA_L=""
-AC_CHECK_HEADERS([openssl/sha.h],, SHA_H="no")
-
-if test "x$SHA_H" != "xno"; then
-    AC_CHECK_LIB(crypto, [SHA256_Init],, OPENSSL_SHA_L="no")
-    if test "x$OPENSSL_SHA_L" != "xno"; then
-        AC_DEFINE([HAVE_OPENSSL_SHA],[1], [openssl SHA available])
-    fi
-fi
-
 AC_CHECK_HEADERS(dnet.h,,DNET_H="no")
 AC_CHECK_HEADERS(dumbnet.h,,DUMBNET_H="no")
 
@@ -733,6 +721,16 @@ AC_CHECK_LIB(dl, dlsym, DLLIB="yes", DLLIB="no")
 
 if test "x$enable_unit_tests" = "xyes"; then
     AC_CHECK_LIB(check,srunner_create)
+fi
+
+AC_CHECK_LIB([crypto],[SHA256_Init],AC_DEFINE([HAVE_OPENSSL_SHA],[1],openssl SHA available),)
+AC_CHECK_LIB([crypto],[MD5_Init],AC_DEFINE([HAVE_OPENSSL_MD5],[1],openssl MD5 available),)
+
+AM_CONDITIONAL([BUILD_SSL_MD5], test "x$ac_cv_lib_crypto_MD5_Init" != "xyes" )
+AM_CONDITIONAL([BUILD_SSL_SHA], test "x$ac_cv_lib_crypto_SHA256_Init" != "xyes" )
+
+if test "x$ac_cv_lib_crypto_MD5_Init" = "xyes"; then
+    LIBS="${LIBS} -lcrypto"
 fi
 
 #--------------------------------------------------------------------------

@@ -69,6 +69,7 @@ extern const BaseApi* ips_id;
 extern const BaseApi* ips_ipopts;
 extern const BaseApi* ips_isdataat;
 extern const BaseApi* ips_itype;
+extern const BaseApi* ips_md5;
 extern const BaseApi* ips_msg;
 extern const BaseApi* ips_priority;
 extern const BaseApi* ips_raw_data;
@@ -77,6 +78,8 @@ extern const BaseApi* ips_rev;
 extern const BaseApi* ips_rpc;
 extern const BaseApi* ips_seq;
 extern const BaseApi* ips_session;
+extern const BaseApi* ips_sha256;
+extern const BaseApi* ips_sha512;
 extern const BaseApi* ips_sid;
 extern const BaseApi* ips_soid;
 extern const BaseApi* ips_tag;
@@ -132,6 +135,7 @@ const BaseApi* ips_options[] =
     ips_ipopts,
     ips_isdataat,
     ips_itype,
+    ips_md5,
     ips_msg,
     ips_priority,
     ips_raw_data,
@@ -140,6 +144,8 @@ const BaseApi* ips_options[] =
     ips_rpc,
     ips_seq,
     ips_session,
+    ips_sha256,
+    ips_sha512,
     ips_sid,
     ips_soid,
     ips_tag,

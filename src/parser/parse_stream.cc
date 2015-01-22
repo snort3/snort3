@@ -595,7 +595,7 @@ static void parse_body(const char* extra, RuleParseState& rps, struct SnortConfi
 
     string tok;
     TokenType type;
-    bool esc = false;
+    bool esc = true;
 
     int num = 8;
     const char* punct = "(:,;)";
@@ -608,7 +608,7 @@ static void parse_body(const char* extra, RuleParseState& rps, struct SnortConfi
         exec(s->action, tok, rps, sc);
 
         num = s->next;
-        esc = (rps.key == "content");
+        esc = (rps.key != "pcre");
 
         if ( s->punct )
             punct = s->punct;
@@ -619,7 +619,7 @@ void parse_stream(istream& is, struct SnortConfig* sc)
 {
     string tok;
     TokenType type;
-    bool esc = false;
+    bool esc = true;
 
     int num = 0;
     const char* punct = fsm[0].punct;
@@ -639,7 +639,7 @@ void parse_stream(istream& is, struct SnortConfig* sc)
             break;
 
         num = s->next;
-        esc = (rps.key == "content");
+        esc = (rps.key != "pcre");
 
         if ( s->punct )
             punct = s->punct;

@@ -151,13 +151,13 @@ Lua Configuration
 * The Lua conf is a live script that is executed when loaded.  You can add
   functions, grab environment variables, compute values, etc.
 
-* You can also rename symbols that you want to disable.  For example, changing
-  normalizer to  Xnormalizer will disable the normalizer.  This can be easier
-  than commenting in some cases.
+* You can also rename symbols that you want to disable.  For example,
+  changing normalizer to  Xnormalizer (an unknown symbol) will disable the
+  normalizer.  This can be easier than commenting in some cases.
 
-* By default, symbols unknown to Snort++ are silently ignored.  You can generate
-  warnings for them  with --warn-unknown.  Adding --pedantic makes them fatal.
-  To ignore such symbols, export them in the environment variable SNORT_IGNORE.
+* By default, symbols unknown to Snort++ are silently ignored.  You can
+  generate warnings for them  with --warn-unknown.  To ignore such symbols,
+  export them in the environment variable SNORT_IGNORE.
 
 Writing and Loading Rules
 
@@ -178,7 +178,7 @@ There are multiple ways to load rules too:
 
 * Set ips.rules or ips.include.
 
-* Snort2 include statements can be used in rules files.
+* Snort 2.X include statements can be used in rules files.
 
 * Use -R to load a rules file.
 

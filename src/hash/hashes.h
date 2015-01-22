@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2012-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,46 +15,54 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-** The code is based on DotGNU Portable.NET GPL
-** 5/1/2012 - Initial implementation ... Hui Cao <hcao@sourcefire.com>
-*/
+// hashes.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef FILE_SHA256_H
-#define FILE_SHA256_H
-
-#include <sys/types.h>
+#ifndef HASHES_H
+#define HASHES_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "snort_types.h"
 
-#define SHA256_HASH_SIZE  64
+#include <stdlib.h>
 
 #ifdef HAVE_OPENSSL_SHA
 #include <openssl/sha.h>
-#define SHA256CONTEXT SHA256_CTX
-#define SHA256INIT    SHA256_Init  // FIXIT-M these are deprecated
-#define SHA256UPDATE  SHA256_Update
-#define SHA256FINAL   SHA256_Final
 #else
-typedef struct _Sha256Context
-{
-    uint32_t inputLen;
-    uint32_t A, B, C, D, E, F, G, H;
-    uint8_t input[64];
-    uint64_t totalLen;
-}Sha256Context;
-void SHA256Init(Sha256Context *sha);
-void SHA256ProcessData(Sha256Context *sha, const void *buffer, unsigned long len);
-void SHA256Final(unsigned char *hash, Sha256Context *sha);
-
-#define SHA256CONTEXT Sha256Context
-#define SHA256INIT    SHA256Init
-#define SHA256UPDATE  SHA256ProcessData
-#define SHA256FINAL   SHA256Final
+#include "hash/sha2.h"
 #endif
 
-#endif /* SFSHA256_H */
+#ifdef HAVE_OPENSSL_MD5
+#include <openssl/md5.h>
+#else
+#include <cstdint>
+extern "C"
+{
+typedef uint32_t __u32;
+#include "hash/md5.h"
+}
+
+typedef MD5Context MD5_CTX;
+
+static inline int MD5_Init(MD5_CTX* c)
+{ MD5Init(c); return 0; }
+
+static inline int MD5_Update(MD5_CTX* c, const unsigned char* data, unsigned long len)
+{ MD5Update(c, data, len); return 0; }
+
+static inline int MD5_Final(unsigned char* md, MD5_CTX* c)
+{ MD5Final(md, c); return 0; }
+#endif
+
+#define MD5_HASH_SIZE    16
+#define SHA256_HASH_SIZE 32
+#define SHA512_HASH_SIZE 64
+#define MAX_HASH_SIZE    64
+
+// digest must be buffer of size given above
+void md5(const unsigned char* data, size_t size, unsigned char* digest);
+void sha256(const unsigned char* data, size_t size, unsigned char* digest);
+void sha512(const unsigned char* data, size_t size, unsigned char* digest);
+
+#endif
 
