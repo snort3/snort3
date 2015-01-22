@@ -24,6 +24,7 @@
 
 #include "conversion_state.h"
 #include "helpers/s2l_util.h"
+#include "helpers/parse_cmd_line.h"
 
 
 namespace keywords
@@ -438,10 +439,20 @@ bool AttributeTable::convert(std::istringstream& data_stream)
 
     if (!util::file_exists(file))
     {
-        table_api.open_table("hosts");
-        table_api.add_comment("unable to open the attribute file: " + file);
-        table_api.close_table();
-        return false;
+        std::string full_file = parser::get_conf_dir() + file;
+
+        if (!util::file_exists(full_file))
+        {
+            table_api.open_table("hosts");
+            table_api.add_comment("unable to open the attribute file: " + file);
+            table_api.close_table();
+
+            std::string error_string = "Can't find file " + file + ".  "
+                "  Searched locations: " + file + ",  " + full_file;
+            data_api.failed_conversion(data_stream, error_string);
+            return false;
+        }
+        file = full_file;
     }
 
     table_api.open_table("hosts");

@@ -56,6 +56,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
+    bool ports_set = false;
     Binder bind(table_api);
 
     bind.set_when_proto("tcp");
@@ -380,7 +381,10 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             if ((data_stream >> keyword) && !keyword.compare("{"))
             {
                 while (data_stream >> keyword && keyword.compare("}"))
+                {
+                    ports_set = true;
                     bind.add_when_port(keyword);
+                }
             }
             else
             {
@@ -460,6 +464,9 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             retval = false;
         }
     }
+
+    if (!ports_set)
+        bind.add_when_port("80");
 
     return retval;
 }

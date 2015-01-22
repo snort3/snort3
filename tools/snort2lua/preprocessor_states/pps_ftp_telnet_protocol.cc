@@ -184,6 +184,7 @@ bool FtpServer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
+    bool ports_set = false;
     Binder bind(table_api);
     bind.set_use_type("ftp_server");
     bind.set_when_proto("tcp");
@@ -276,12 +277,14 @@ bool FtpServer::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("ports", "bindings");
             table_api.add_comment("check bindings table for port information");
-            // add commented list for now
-            std::string tmp = "";
+
             if ((data_stream >> keyword) && !keyword.compare("{"))
             {
                 while (data_stream >> keyword && keyword.compare("}"))
+                {
                     bind.add_when_port(keyword);
+                    ports_set = true;
+                }
             }
             else
             {
@@ -336,6 +339,9 @@ bool FtpServer::convert(std::istringstream& data_stream)
         table_api.close_table();
     }
 
+    if (!ports_set)
+        bind.add_when_port("21");
+
     return retval;
 }
 
@@ -373,6 +379,7 @@ bool FtpClient::convert(std::istringstream& data_stream)
     {
         if(!keyword.compare("default"))
         {
+            bind.add_when_service("ftp");
             table_api.open_table("ftp_client");
         }
         else
@@ -500,7 +507,7 @@ public:
 bool Telnet::convert(std::istringstream& data_stream)
 {
     std::string keyword;
-    int i_val;
+    bool ports_set = false;
     bool retval = true;
     Binder bind(table_api);
 
@@ -511,17 +518,22 @@ bool Telnet::convert(std::istringstream& data_stream)
     while(data_stream >> keyword)
     {
         bool tmpval = true;
-        if(!keyword.compare("ayt_attack_thresh"))
+
+        if(!keyword.compare("normalize"))
+            tmpval = table_api.add_option("normalize", true);
+
+        else if(!keyword.compare("detect_anomalies"))
+            table_api.add_deleted_comment("detect_anomalies");
+
+        else if(!keyword.compare("ayt_attack_thresh"))
         {
+            int i_val;
+
             if(data_stream >> i_val)
                 tmpval = table_api.add_option("ayt_attack_thresh", i_val);
             else
                 tmpval = false;
         }
-
-        else  if(!keyword.compare("normalize"))
-            tmpval = table_api.add_option("normalize", true);
-
         else  if(!keyword.compare("ports"))
         {
             table_api.add_diff_option_comment("ports", "bindings");
@@ -531,22 +543,33 @@ bool Telnet::convert(std::istringstream& data_stream)
             if ((data_stream >> keyword) && !keyword.compare("{"))
             {
                 while (data_stream >> keyword && keyword != "}")
+                {
+                    ports_set = true;
                     bind.add_when_port(keyword);
+                }
             }
             else
             {
-                tmpval = false;
+                data_api.failed_conversion(data_stream, "ports - invalid port list");
+                retval = false;
             }
         }
-
-        else if(!keyword.compare("detect_anomalies"))
-            table_api.add_deleted_comment("detect_anomalies");
-
         else
+        {
             tmpval = false;
+        }
 
-        retval = tmpval && retval;
+
+        if (!tmpval)
+        {
+            data_api.failed_conversion(data_stream, keyword);
+            retval = false;
+        }
     }
+
+    // adding the defualt port.
+    if (!ports_set)
+        bind.add_when_port("23");
 
     return retval;
 }

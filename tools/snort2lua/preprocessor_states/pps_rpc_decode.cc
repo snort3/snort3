@@ -33,31 +33,51 @@ namespace {
 class RpcDecode : public ConversionState
 {
 public:
-    RpcDecode(Converter& c) : ConversionState(c) {};
-    virtual ~RpcDecode() {};
+    RpcDecode(Converter& c);
+    virtual ~RpcDecode();
     virtual bool convert(std::istringstream& data_stream);
+
+private:
+    bool converted_args;
 };
 
 } // namespace
 
+RpcDecode::RpcDecode(Converter& c) : ConversionState(c)
+{
+    converted_args = false;
+}
+
+RpcDecode::~RpcDecode()
+{
+    if (!converted_args)
+    {
+        Binder bind(table_api);
+        bind.set_when_proto("tcp");
+        bind.add_when_port("111");
+        bind.add_when_port("32271");
+        bind.set_use_type("rpc_decode");
+
+        table_api.open_table("rpc_decode");
+        table_api.close_table();
+    }
+}
+
 bool RpcDecode::convert(std::istringstream& data_stream)
 {
-
     bool retval = true;
+    bool ports_set = false;
     std::string keyword;
 
     // adding the binder entry
     Binder bind(table_api);
     bind.set_when_proto("tcp");
     bind.set_use_type("rpc_decode");
-    std::string port_list = std::string();
 
     table_api.open_table("rpc_decode");
     
     while(data_stream >> keyword)
     {
-        bool tmpval = true;
-
         if(!keyword.compare("no_alert_multiple_requests"))
             table_api.add_deleted_comment("no_alert_multiple_requests");
 
@@ -71,18 +91,25 @@ bool RpcDecode::convert(std::istringstream& data_stream)
             table_api.add_deleted_comment("no_alert_incomplete");
 
         else if (isdigit(keyword[0]))
+        {
             bind.add_when_port(keyword);
-
+            ports_set = true;
+        }
         else
-            tmpval = false;
-
-        if (!tmpval)
         {
             data_api.failed_conversion(data_stream, keyword);
             retval = false;
+
         }
     }
 
+    if (!ports_set)
+    {
+        bind.add_when_port("111");
+        bind.add_when_port("32271");
+    }
+
+    converted_args = true;
     return retval;   
 }
 
@@ -91,9 +118,7 @@ bool RpcDecode::convert(std::istringstream& data_stream)
  **************************/
 
 static ConversionState* ctor(Converter& c)
-{
-    return new RpcDecode(c);
-}
+{ return new RpcDecode(c); }
 
 static const ConvertMap preprocessor_rpc_decode =
 {

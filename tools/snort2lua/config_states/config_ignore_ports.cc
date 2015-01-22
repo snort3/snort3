@@ -47,7 +47,6 @@ public:
 
 bool IgnorePorts::convert(std::istringstream& data_stream)
 {
-    Binder bind(table_api);
     bool retval = true;
     std::string keyword;
     std::string port;
@@ -67,6 +66,8 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
         return false;
     }
 
+    // Only add to the binder once we have validated the configuration.
+    Binder bind(table_api);
     bind.set_when_proto(keyword);
 
     while (data_stream >> port)
@@ -121,11 +122,13 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
         {
             data_api.failed_conversion(data_stream, "can't convert " + port);
             retval = false;
+            bind.print_binding(false); // don't print the binding if an error occured
         }
         catch(std::out_of_range)
         {
             data_api.failed_conversion(data_stream, "Port" + port + " must be <= 65535");
             retval = false;
+            bind.print_binding(false); // don't print the binding if an error occured
         }
     }
 

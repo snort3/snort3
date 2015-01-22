@@ -26,14 +26,18 @@
 
 class TableApi;
 
-// If the user never adds add_to_configuration,
-//  the destructor will call the method
+// The Binders destrutor will add the Objects configuration to the
+//   table_api.
 class Binder
 {
 public:
     Binder(TableApi&);
     ~Binder();
 
+    //  By calling add_to_configuration(), you are adding this Binder Object
+    //  "as is" to the table_api.  Additionally, after calling
+    //  add_to_configuration(), the destructor will NOT add the object to the
+    //  table_api unless 'print_binding(true)' is called.
     void add_to_configuration();
     void print_binding(bool should_print)
     { printed = !should_print; }

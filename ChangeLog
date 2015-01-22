@@ -1,5 +1,7 @@
 pending - build 134
 
+-- snort2lua changed to add bindings for default ports if not explicitly
+   configured
 -- added md5, sha256, and sha512 rule options based on Snort 2.X
    protected_content
 

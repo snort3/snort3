@@ -42,7 +42,10 @@ private:
     Binder* bind_client;
     Binder* bind_server;
     Binder* bind_any;
+    Binder* bind_default;
     bool binding_chosen;
+    bool ports_set;
+    bool protos_set;
     std::vector<std::string> client_protocols;
     std::vector<std::string> server_protocols;
     std::vector<std::string> any_protocols;
@@ -60,7 +63,10 @@ StreamTcp::StreamTcp(Converter& c) : ConversionState(c)
     bind_client = nullptr;
     bind_server = nullptr;
     bind_any = nullptr;
+    bind_default = nullptr;
     binding_chosen = false;
+    ports_set = false;
+    protos_set = false;
 }
 
 void StreamTcp::add_to_bindings(binder_func func, std::string param)
@@ -154,11 +160,14 @@ bool StreamTcp::parse_ports(std::istringstream& arg_stream)
         bind_client->set_when_role("client");
     }
     bind->print_binding(true);
+    bind_default = bind;
 
     // do nothing if no ports provided
     if (arg_stream >> port )
     {
-        // for all, don't set the ports variable
+        ports_set = true;
+
+        // don't set the ports variable for "all"
         if (!port.compare("all"))
             void(0);
 
@@ -226,11 +235,14 @@ bool StreamTcp::parse_protocol(std::istringstream& arg_stream)
         bind_client->set_when_role("client");
     }
     bind->print_binding(true);
+    bind_default = bind;
 
     // do nothing if no ports provided
     if (arg_stream >> protocol )
     {
-        // for all, don't set the ports variable
+        protos_set = true;
+
+        // for all, don't set the protos variable
         if (!protocol.compare("all"))
             void(0);
 
@@ -283,6 +295,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
     bind_client = &client;
     bind_server = &server;
     bind_any = &any;
+    bind_default = bind_client;
 
     add_to_bindings(&Binder::set_when_proto, "tcp");
     add_to_bindings(&Binder::set_use_type, "stream_tcp");
@@ -473,6 +486,30 @@ bool StreamTcp::convert(std::istringstream& data_stream)
         }
     }
 
+    if (!ports_set)
+    {
+        const std::vector<std::string> default_ports = {"21", "23", "25", "42",
+            "53", "80", "110", "111", "135", "136", "137", "139", "143", "445",
+            "513", "514", "1433", "1521", "2401", "3306"};
+
+        for (const std::string& s : default_ports)
+            bind_default->add_when_port(s);
+    }
+
+    if (!protos_set)
+    {
+        const std::vector<std::string> default_protos = {"ftp", "telnet",
+            "smtp", "nameserver", "dns", "http", "pop3", "sunrpc", "dcerpc",
+            "netbios-ssn", "imap", "login", "shell", "mssql", "oracle", "cvs",
+            "mysql"};
+
+        for (const std::string& s : default_protos)
+        {
+            Binder b = *bind_default;
+            b.set_when_service(s);
+        }
+        bind_default->print_binding(false); // Binder was added in the for loop
+    }
 
 
     if (!client_protocols.empty())
@@ -481,9 +518,8 @@ bool StreamTcp::convert(std::istringstream& data_stream)
         {
             Binder b = client;
             b.set_when_service(s);
-            b.add_to_configuration();
         }
-        client.print_binding(false); // we just printed
+        client.print_binding(false); // Binder was added in the for loop
     }
 
     if (!server_protocols.empty())
@@ -492,9 +528,8 @@ bool StreamTcp::convert(std::istringstream& data_stream)
         {
             Binder b = server;
             b.set_when_service(s);
-            b.add_to_configuration();
         }
-        server.print_binding(false); // we just printed
+        server.print_binding(false); // Binder was added in the for loop
     }
 
     if (!any_protocols.empty())
@@ -503,9 +538,8 @@ bool StreamTcp::convert(std::istringstream& data_stream)
         {
             Binder b = any;
             b.set_when_service(s);
-            b.add_to_configuration();
         }
-        any.print_binding(false); // we just printed
+        any.print_binding(false); // Binder was added in the for loop
     }
 
     table_api.close_table(); // "tcp_stream"
