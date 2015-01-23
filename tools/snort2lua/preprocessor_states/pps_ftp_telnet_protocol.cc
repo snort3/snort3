@@ -379,7 +379,7 @@ bool FtpClient::convert(std::istringstream& data_stream)
     {
         if(!keyword.compare("default"))
         {
-            bind.add_when_service("ftp");
+            bind.set_when_service("ftp");
             table_api.open_table("ftp_client");
         }
         else
