@@ -94,8 +94,8 @@ const HiSearchToken html_patterns[] =
     {NULL,               0, 0}
 };
 
-void *hi_javascript_search_mpse = NULL;
-void *hi_htmltype_search_mpse = NULL;
+SearchTool* hi_javascript_search_mpse = nullptr;
+SearchTool* hi_htmltype_search_mpse = nullptr;
 
 static uint32_t xtra_trueip_id;
 static uint32_t xtra_uri_id;
@@ -1232,7 +1232,7 @@ int GetHttpHostnameData(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type
 void HI_SearchInit(void)
 {
     const HiSearchToken *tmp;
-    hi_javascript_search_mpse = search_api->search_instance_new();
+    hi_javascript_search_mpse = new SearchTool();
     if (hi_javascript_search_mpse == NULL)
     {
         FatalError("%s(%d) Could not allocate memory for HTTP <script> tag search.\n",
@@ -1242,11 +1242,11 @@ void HI_SearchInit(void)
     {
         hi_js_search[tmp->search_id].name = tmp->name;
         hi_js_search[tmp->search_id].name_len = tmp->name_len;
-        search_api->search_instance_add(hi_javascript_search_mpse, tmp->name, tmp->name_len, tmp->search_id);
+        hi_javascript_search_mpse->add(tmp->name, tmp->name_len, tmp->search_id);
     }
-    search_api->search_instance_prep(hi_javascript_search_mpse);
+    hi_javascript_search_mpse->prep();
 
-    hi_htmltype_search_mpse = search_api->search_instance_new();
+    hi_htmltype_search_mpse = new SearchTool();
     if (hi_htmltype_search_mpse == NULL)
     {
         FatalError("%s(%d) Could not allocate memory for HTTP <script> type search.\n",
@@ -1256,18 +1256,18 @@ void HI_SearchInit(void)
     {
         hi_html_search[tmp->search_id].name = tmp->name;
         hi_html_search[tmp->search_id].name_len = tmp->name_len;
-        search_api->search_instance_add(hi_htmltype_search_mpse, tmp->name, tmp->name_len, tmp->search_id);
+        hi_htmltype_search_mpse->add(tmp->name, tmp->name_len, tmp->search_id);
     }
-    search_api->search_instance_prep(hi_htmltype_search_mpse);
+    hi_htmltype_search_mpse->prep();
 }
 
 void HI_SearchFree(void)
 {
     if (hi_javascript_search_mpse != NULL)
-        search_api->search_instance_free(hi_javascript_search_mpse);
+        delete hi_javascript_search_mpse;
 
     if (hi_htmltype_search_mpse != NULL)
-        search_api->search_instance_free(hi_htmltype_search_mpse);
+        delete hi_htmltype_search_mpse;
 }
 
 int HI_SearchStrFound(void* id, void*, int index, void*, void*)

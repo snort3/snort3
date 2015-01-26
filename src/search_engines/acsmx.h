@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "search_common.h"
 
 #ifndef ACSMX_H
 #define ACSMX_H
@@ -60,11 +61,9 @@ typedef struct _acsm_pattern {
     unsigned char         *casepatrn;
     int      n;
     int      nocase;
-    int      offset;
-    int      depth;
     int      negative;
-    ACSM_USERDATA *udata;
     int      iid;
+    ACSM_USERDATA *udata;
     void   * rule_option_tree;
     void   * neg_list;
 
@@ -115,8 +114,8 @@ ACSM_STRUCT * acsmNew (void (*userfree)(void *p),
                        void (*optiontreefree)(void **p),
                        void (*neg_list_free)(void **p));
 
-int acsmAddPattern( ACSM_STRUCT * p, unsigned char * pat, int n,
-          int nocase, int offset, int depth, int negative, void * id, int iid );
+int acsmAddPattern( ACSM_STRUCT * p, const uint8_t * pat, unsigned n,
+          bool nocase, bool negative, void * id, int iid );
 
 int acsmCompile ( ACSM_STRUCT * acsm,
              int (*build_tree)(void * id, void **existing_tree),
@@ -124,15 +123,14 @@ int acsmCompile ( ACSM_STRUCT * acsm,
 
 struct SnortConfig;
 
-int acsmCompileWithSnortConf (
+int acsmCompile(
     SnortConfig*,
     ACSM_STRUCT * acsm,
     int (*build_tree)(SnortConfig*, void * id, void **existing_tree),
     int (*neg_list_func)(void *id, void **list));
 
 int acsmSearch (
-    ACSM_STRUCT * acsm,unsigned char * T, int n,
-    int (*Match)(void * id, void *tree, int index, void *data, void *neg_list),
+    ACSM_STRUCT * acsm,unsigned char * T, int n, MpseCallback,
     void * data, int* current_state );
 
 void acsmFree ( ACSM_STRUCT * acsm );

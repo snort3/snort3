@@ -60,19 +60,16 @@ public:
             acsmCompressStates(obj, flag);
     };
     int add_pattern(
-        SnortConfig*, void* P, int m,
-        unsigned noCase, unsigned offset, unsigned depth,
-        unsigned negative, void* ID, int IID) override
+        SnortConfig*, const uint8_t* P, unsigned m,
+        bool noCase, bool negative, void* ID, int IID) override
     {
-        return acsmAddPattern2(
-            obj, (unsigned char *)P, m,
-            noCase, offset, depth, negative, ID, IID );
+        return acsmAddPattern2(obj, P, m, noCase, negative, ID, IID);
     };
 
     int prep_patterns(
         SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
     {
-        return acsmCompile2WithSnortConf(sc, obj, build_tree, neg_list);
+        return acsmCompile2(sc, obj, build_tree, neg_list);
     };
 
     int _search(
@@ -80,6 +77,14 @@ public:
         void* data, int* current_state ) override
     {
         return acsmSearchSparseDFA_Full_q(
+            obj, (unsigned char *)T, n, action, data, current_state);
+    };
+
+    int search_all(
+        const unsigned char* T, int n, mpse_action_f action,
+        void* data, int* current_state ) override
+    {
+        return acsmSearchSparseDFA_Full_q_all(
             obj, (unsigned char *)T, n, action, data, current_state);
     };
 
@@ -130,7 +135,8 @@ static const MpseApi acfq_api =
     {
         PT_SEARCH_ENGINE,
         "ac_full_q",
-        "Aho-Corasick Full (high memory, best performance) with queued events",
+        "Aho-Corasick Full (high memory, best performance) with queued events,"
+        " implements search_all()",
         SEAPI_PLUGIN_V0,
         0,
         nullptr,

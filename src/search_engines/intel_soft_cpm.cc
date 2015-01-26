@@ -72,12 +72,8 @@ typedef struct _IntelPmHandles
 
 } IntelPmHandles;
 
-typedef int (*MatchFunc)(void * id, void *tree, int index, void *data, void *neg_list);
-
-
 /* GLOBALS ********************************************************************/
 static CpaInstanceHandle ipm_instance = NULL;  /* instance handle */
-static IntelPmHandles *ipm_handles = NULL;
 
 /* XXX Temporary stat for Intel */
 //static uint64_t intel_pm_search_buf_sizes[65536];
@@ -141,8 +137,8 @@ static inline int IntelPmAddQueue(IntelPmMatchQueue *q, void *p)
     return 0;
 }
 
-static inline unsigned int IntelPmProcessQueue(IntelPmMatchQueue *q,
-        MatchFunc match, void *data)
+static inline unsigned int IntelPmProcessQueue(
+    IntelPmMatchQueue *q, MatchFunc match, void *data)
 {
     unsigned int i;
 
@@ -204,7 +200,7 @@ void * IntelPmNew(
     CpaStatus status;
     IntelPm *ipm = (IntelPm *)SnortAlloc(sizeof(IntelPm));
 
-    if (ipm_handles == NULL)
+    if (sc->ipm_handles == NULL)
     {
         CpaPmPdbPatternSetHandle patternSetHandle;
 
@@ -212,11 +208,12 @@ void * IntelPmNew(
         if (status != CPA_STATUS_SUCCESS)
             FatalError("cpaPmPdbCreatePatternSet() failed: %s\n", GetCpaStatusStr(status));
 
-        ipm_handles = (IntelPmHandles *)SnortAlloc(sizeof(IntelPmHandles));
-        ipm_handles->psh = patternSetHandle;
-        ipm_handles->pdbh = NULL;
-        ipm_handles->pgids = 1;
-        ipm_handles->pids = 0;
+        sc->ipm_handles = (IntelPmHandles *)SnortAlloc(sizeof(IntelPmHandles));
+        sc->ipm_handles->psh = patternSetHandle;
+        sc->ipm_handles->pdbh = NULL;
+        sc->ipm_handles->pgids = 1;
+        sc->ipm_handles->pids = 0;
+        sc->ipm_handles->refs = 1;  //sc has a reference
 
         //memset(intel_pm_search_buf_sizes, 0, sizeof(intel_pm_search_buf_sizes));
     }
@@ -226,15 +223,14 @@ void * IntelPmNew(
     ipm->neg_list_free = neg_list_free;
     ipm->match_queue = SnortAlloc(sizeof(IntelPmMatchQueue));
 
-    ipm->handles = ipm_handles;
-    ipm_handles->refs++;
+    ipm->handles = sc->ipm_handles;
+    sc->ipm_handles->refs++;
 
     return (void *)ipm;
 }
 
 void IntelPmDelete(IntelPm *ipm)
 {
-    IntelPmHandles *handles;
     int i;
 
     if (ipm == NULL)
@@ -258,22 +254,21 @@ void IntelPmDelete(IntelPm *ipm)
     }
 
     free(ipm->pattern_array);
-
-    handles = (IntelPmHandles *)ipm->handles;
-    handles->refs--;
-    if (handles->refs == 0)
-        IntelPmRelease(handles);
-
+    IntelPmRelease(ipm->handles);
     free(ipm);
 }
 
-static void IntelPmRelease(IntelPmHandles *handles)
+int IntelPmRelease(IntelPmHandles *handles)
 {
     CpaStatus status;
     int i;
 
     if (handles == NULL)
-        return;
+        return -1;
+
+    handles->refs--;
+    if (handles->refs != 0)
+        return handles->refs;
 
     for (i = 0; i < handles->pm_mtchs_len; i++)
     {
@@ -304,17 +299,16 @@ static void IntelPmRelease(IntelPmHandles *handles)
     free(handles->pm_mtchs);
     free(handles);
 
-    if ( handles == ipm_handles )
-        ipm_handles = NULL;
+    return 0;
 }
 
 int IntelPmAddPattern(
     SnortConfig *sc,
     IntelPm *ipm,
-    unsigned char *pat,
-    int pat_len,
-    unsigned no_case,
-    unsigned negative,
+    const uint8_t *pat,
+    unsigned pat_len,
+    bool no_case,
+    bool negative,
     void *pat_data,
     int pat_id)
 {
@@ -323,18 +317,18 @@ int IntelPmAddPattern(
     CpaStatus status;
     IntelPmPattern *ipp;
 
-    if ((ipm == NULL) || (ipm_handles == NULL))
+    if ((ipm == NULL) || (sc->ipm_handles == NULL))
         return -1;
 
     if (!ipm->patternGroupId)
     {
-        ipm->patternGroupId = ipm_handles->pgids++;
+        ipm->patternGroupId = sc->ipm_handles->pgids++;
         ipm->patternIds = 1;
     }
 
     status = cpaPmPdbAddPattern(
             ipm_instance,
-            ipm_handles->psh,
+            sc->ipm_handles->psh,
             ipm->patternIds,
             patternOptions,
             pat_len,
@@ -373,8 +367,8 @@ int IntelPmAddPattern(
     ipp->id = pat_id;
     ipp->patternId = ipm->patternIds++;
 
-    ipm_handles->pids++;
-    ipm_handles->pcs += pat_len;
+    sc->ipm_handles->pids++;
+    sc->ipm_handles->pcs += pat_len;
 
     return 0;
 }
@@ -411,66 +405,66 @@ int IntelPmFinishGroup(
     if (status != CPA_STATUS_SUCCESS)
         FatalError("cpaPmCreateSessionCtx() failed: %s\n", GetCpaStatusStr(status));
 
-    if (ipm_handles->ipms == NULL)
+    if (sc->ipm_handles->ipms == NULL)
     {
-        ipm_handles->ipms = (IntelPm **)SnortAlloc(
+        sc->ipm_handles->ipms = (IntelPm **)SnortAlloc(
                 sizeof(IntelPm *) * GROUP_ARRAY_ALLOC_SIZE);
-        ipm_handles->ipms_len = GROUP_ARRAY_ALLOC_SIZE;
+        sc->ipm_handles->ipms_len = GROUP_ARRAY_ALLOC_SIZE;
     }
-    else if (ipm->patternGroupId >= ipm_handles->ipms_len)
+    else if (ipm->patternGroupId >= sc->ipm_handles->ipms_len)
     {
         IntelPm **tmp = (IntelPm **)SnortAlloc(
                 sizeof(IntelPm *) * (ipm->patternGroupId + GROUP_ARRAY_ALLOC_SIZE));
-        memcpy((void *)tmp, ipm_handles->ipms, ipm_handles->ipms_len * sizeof(IntelPm *));
-        free(ipm_handles->ipms);
-        ipm_handles->ipms = tmp;
-        ipm_handles->ipms_len = ipm->patternGroupId + GROUP_ARRAY_ALLOC_SIZE;
+        memcpy((void *)tmp, sc->ipm_handles->ipms, sc->ipm_handles->ipms_len * sizeof(IntelPm *));
+        free(sc->ipm_handles->ipms);
+        sc->ipm_handles->ipms = tmp;
+        sc->ipm_handles->ipms_len = ipm->patternGroupId + GROUP_ARRAY_ALLOC_SIZE;
     }
 
-    ipm_handles->ipms[ipm->patternGroupId] = ipm;
+    sc->ipm_handles->ipms[ipm->patternGroupId] = ipm;
 
     return 0;
 }
 
 void IntelPmCompile(SnortConfig *sc)
 {
-    if ((ipm_instance == NULL) || (ipm_handles == NULL)
-            || (ipm_handles->psh == NULL))
+    if ((ipm_instance == NULL) || (sc->ipm_handles == NULL)
+            || (sc->ipm_handles->psh == NULL))
     {
         return;
     }
 
-    if (ipm_handles->pdbh == NULL)
+    if (sc->ipm_handles->pdbh == NULL)
     {
         CpaStatus status;
         Cpa16U patternGroup;
         Cpa32U numMatchStates;
 
-        status = cpaPmPdbCompile(ipm_instance, ipm_handles->psh,
-                CPA_PM_COMPILE_OPTION_CONSOLIDATE, NULL, &ipm_handles->pdbh);
+        status = cpaPmPdbCompile(ipm_instance, sc->ipm_handles->psh,
+                CPA_PM_COMPILE_OPTION_CONSOLIDATE, NULL, &sc->ipm_handles->pdbh);
         if (status != CPA_STATUS_SUCCESS)
             FatalError("cpaPmPdbCompile() failed: %s\n", GetCpaStatusStr(status));
 
-        status = cpaPmMsoGetNumMatchStates(ipm_instance, ipm_handles->pdbh, &numMatchStates);
+        status = cpaPmMsoGetNumMatchStates(ipm_instance, sc->ipm_handles->pdbh, &numMatchStates);
         if (status != CPA_STATUS_SUCCESS)
             FatalError("cpaPmMsoGetNumMatchStates() failed: %s\n", GetCpaStatusStr(status));
 
         /* Hack because the last match state is returned instead of the
          * number of match states */
         numMatchStates += 1;
-        ipm_handles->pm_mtchs = (IntelPmMatchState *)SnortAlloc(numMatchStates * sizeof(IntelPmMatchState));
-        ipm_handles->pm_mtchs_len = numMatchStates;
+        sc->ipm_handles->pm_mtchs = (IntelPmMatchState *)SnortAlloc(numMatchStates * sizeof(IntelPmMatchState));
+        sc->ipm_handles->pm_mtchs_len = numMatchStates;
 
-        for (patternGroup = 1; patternGroup < ipm_handles->pgids; patternGroup++)
+        for (patternGroup = 1; patternGroup < sc->ipm_handles->pgids; patternGroup++)
         {
             CpaPmMsoMatchStateIter matchStateIter = NULL;
             Cpa32U matchStateId;
-            IntelPm *ipm = ipm_handles->ipms[patternGroup];
+            IntelPm *ipm = sc->ipm_handles->ipms[patternGroup];
 
             if (ipm == NULL)
                 continue;
 
-            status = cpaPmMsoGetFirstMatchState(ipm_instance, ipm_handles->pdbh,
+            status = cpaPmMsoGetFirstMatchState(ipm_instance, sc->ipm_handles->pdbh,
                     patternGroup, &matchStateIter, &matchStateId);
 
             if (status != CPA_STATUS_SUCCESS)
@@ -485,7 +479,7 @@ void IntelPmCompile(SnortConfig *sc)
                 void *neg_list = NULL;
                 void *user_data = NULL;
 
-                status = cpaPmMsoGetFirstPatternId(ipm_instance, ipm_handles->pdbh,
+                status = cpaPmMsoGetFirstPatternId(ipm_instance, sc->ipm_handles->pdbh,
                         matchStateIter, &patternIdIter, &patternID);
 
                 if (status != CPA_STATUS_SUCCESS)
@@ -502,7 +496,7 @@ void IntelPmCompile(SnortConfig *sc)
                     else
                         ipm->build_tree(sc, ipp->user_data, &rule_option_tree);
 
-                    status = cpaPmMsoGetNextPatternId(ipm_instance, ipm_handles->pdbh,
+                    status = cpaPmMsoGetNextPatternId(ipm_instance, sc->ipm_handles->pdbh,
                             &patternIdIter, &patternID);
 
                     if (status != CPA_STATUS_SUCCESS)
@@ -513,16 +507,16 @@ void IntelPmCompile(SnortConfig *sc)
                 {
                     ipm->build_tree(sc, NULL, &rule_option_tree);
 
-                    ipm_handles->pm_mtchs[matchStateId].user_data = user_data;
-                    ipm_handles->pm_mtchs[matchStateId].neg_list = neg_list;
-                    ipm_handles->pm_mtchs[matchStateId].rule_option_tree = rule_option_tree;
+                    sc->ipm_handles->pm_mtchs[matchStateId].user_data = user_data;
+                    sc->ipm_handles->pm_mtchs[matchStateId].neg_list = neg_list;
+                    sc->ipm_handles->pm_mtchs[matchStateId].rule_option_tree = rule_option_tree;
 
-                    ipm_handles->pm_mtchs[matchStateId].user_free = ipm->user_free;
-                    ipm_handles->pm_mtchs[matchStateId].option_tree_free = ipm->option_tree_free;
-                    ipm_handles->pm_mtchs[matchStateId].neg_list_free = ipm->neg_list_free;
+                    sc->ipm_handles->pm_mtchs[matchStateId].user_free = ipm->user_free;
+                    sc->ipm_handles->pm_mtchs[matchStateId].option_tree_free = ipm->option_tree_free;
+                    sc->ipm_handles->pm_mtchs[matchStateId].neg_list_free = ipm->neg_list_free;
                 }
 
-                status = cpaPmMsoGetNextMatchState(ipm_instance, ipm_handles->pdbh,
+                status = cpaPmMsoGetNextMatchState(ipm_instance, sc->ipm_handles->pdbh,
                         patternGroup, &matchStateIter, &matchStateId);
 
                 if (status != CPA_STATUS_SUCCESS)
@@ -536,15 +530,15 @@ void IntelPmActivate(SnortConfig *sc)
 {
     CpaStatus status;
 
-    if ((ipm_instance == NULL) || (ipm_handles == NULL))
+    if ((ipm_instance == NULL) || (sc->ipm_handles == NULL))
         return;
 
-    status = cpaPmActivatePdb(ipm_instance, ipm_handles->pdbh, NULL);
+    status = cpaPmActivatePdb(ipm_instance, sc->ipm_handles->pdbh, NULL);
     if (status != CPA_STATUS_SUCCESS)
         FatalError("cpaPmPdbActivate() failed: %s\n", GetCpaStatusStr(status));
 
     /* All ipms should have a reference to this now.  Need this for reloading */
-    ipm_handles = NULL;
+    sc->ipm_handles = NULL;
 }
 
 static void IntelPmSearchCallback(const CpaInstanceHandle instanceHandle,
@@ -575,8 +569,9 @@ static void IntelPmSearchCallback(const CpaInstanceHandle instanceHandle,
     }
 }
 
-int IntelPmSearch(IntelPm *ipm, unsigned char *buffer, int buffer_len,
-        MatchFunc match, void *data)
+int IntelPmSearch(
+    IntelPm *ipm, unsigned char *buffer, int buffer_len,
+    MatchFunc match, void *data)
 {
     CpaFlatBuffer flat_buffer = {buffer_len, buffer};
     CpaBufferList buffer_list = {1, &flat_buffer, NULL, NULL};
@@ -629,13 +624,13 @@ int IntelPmPrintInfo(IntelPm *ipm)
 
 void IntelPmPrintSummary(SnortConfig *sc)
 {
-    if (ipm_handles == NULL)
+    if (sc->ipm_handles == NULL)
         return;
 
     LogMessage("+-[Intel PM Search Info Summary]------------------\n");
-    LogMessage("| Instances        : %u\n", ipm_handles->pgids - 1);  /* pattern groups start at 1 */
-    LogMessage("| Patterns         : %u\n", ipm_handles->pids);
-    LogMessage("| Pattern Chars    : %u\n", ipm_handles->pcs);
+    LogMessage("| Instances        : %u\n", sc->ipm_handles->pgids - 1);  /* pattern groups start at 1 */
+    LogMessage("| Patterns         : %u\n", sc->ipm_handles->pids);
+    LogMessage("| Pattern Chars    : %u\n", sc->ipm_handles->pcs);
     LogMessage("+-------------------------------------------------\n");
 }
 

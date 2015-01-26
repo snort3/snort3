@@ -71,19 +71,16 @@ public:
             bnfaSetOpt(obj, flag);
     };
     int add_pattern(
-        SnortConfig*, void* P, int m,
-        unsigned noCase, unsigned, unsigned,
-        unsigned negative, void* ID, int) override
+        SnortConfig*, const uint8_t* P, unsigned m,
+        bool noCase, bool negative, void* ID, int) override
     {
-        return bnfaAddPattern(
-            obj, (unsigned char *)P, m,
-            noCase, negative, ID );
+        return bnfaAddPattern(obj, P, m, noCase, negative, ID);
     };
 
     int prep_patterns(
         SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
     {
-        return bnfaCompileWithSnortConf(sc, obj, build_tree, neg_list);
+        return bnfaCompile(sc, obj, build_tree, neg_list);
     };
 
     int _search(

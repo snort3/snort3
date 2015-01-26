@@ -117,7 +117,7 @@ void KTrie_init_xlatcase(void)
 /*
 *
 */
-static inline void ConvertCaseEx( unsigned char * d, unsigned char *s, int m )
+static inline void ConvertCaseEx( unsigned char * d, const uint8_t* s, int m )
 {
     int i;
     for( i=0; i < m; i++ ) {
@@ -218,7 +218,7 @@ static void KTrieFree(KTRIENODE *n)
 /*
 *
 */
-static KTRIEPATTERN * KTrieNewPattern(unsigned char * P, int n)
+static KTRIEPATTERN * KTrieNewPattern(const uint8_t* P, unsigned n)
 {
     KTRIEPATTERN *p;
     int ret;
@@ -265,8 +265,9 @@ static KTRIEPATTERN * KTrieNewPattern(unsigned char * P, int n)
 /*
 *  Add Pattern info to the list of patterns
 */
-int KTrieAddPattern( KTRIE_STRUCT * ts, unsigned char * P, int n,
-                     int nocase, int negative, void * id )
+int KTrieAddPattern(
+    KTRIE_STRUCT * ts, const uint8_t* P, unsigned n,
+    bool nocase, bool negative, void * id)
 {
     KTRIEPATTERN  *pnew;
 
@@ -989,7 +990,7 @@ int main( int argc, char ** argv )
         if( argv[i][0]=='-' )
             continue;
 
-        KTrieAddPattern( ts, (unsigned char *)argv[i], strlen(argv[i]), nocase, i );
+        KTrieAddPattern(ts, (uint8_t*)argv[i], strlen(argv[i]), nocase, i);
     }
 
     printf("Patterns added \n");

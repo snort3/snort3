@@ -29,7 +29,7 @@
 #include "hi_ui_config.h"
 #include "util_utf.h"
 #include "detection_util.h"
-#include "search_engines/str_search.h"
+#include "search_engines/search_tool.h"
 #include "util_jsnorm.h"
 #include "profiler.h"
 
@@ -173,8 +173,8 @@ typedef enum _HtmlSearchIdEnum
     HTML_LAST
 } HtmlSearchId;
 
-extern void *hi_javascript_search_mpse;
-extern void *hi_htmltype_search_mpse;
+extern class SearchTool* hi_javascript_search_mpse;
+extern class SearchTool* hi_htmltype_search_mpse;
 
 extern THREAD_LOCAL HISearch hi_js_search[HI_LAST];
 extern THREAD_LOCAL HISearch hi_html_search[HTML_LAST];

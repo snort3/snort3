@@ -58,7 +58,7 @@ typedef struct _IntelPm
 
     /* Temporary data for match callback */
     void *data;
-    int (*match)(void *id, void *tree, int index, void *data, void *neg_list);
+    MpseCallback match;
 
     void (*user_free)(void *);
     void (*option_tree_free)(void **);
@@ -88,10 +88,10 @@ void IntelPmDelete(IntelPm *ipm);
 int IntelPmAddPattern(
     SnortConfig* sc,
     IntelPm *ipm,
-    unsigned char *pat,
-    int pat_len,
-    unsigned no_case,
-    unsigned negative,
+    const uint8_t *pat,
+    unsigned pat_len,
+    bool no_case,
+    bool negative,
     void *pat_data,
     int pat_id);
 
@@ -105,13 +105,13 @@ void IntelPmCompile(SnortConfig*);
 void IntelPmActivate(SnortConfig*);
 void IntelPmDeactivate(void);
 
-int IntelPmSearch(IntelPm *ipm, unsigned char *buffer, int buffer_len,
-        int (*match)(void * id, void *tree, int index, void *data, void *neg_list),
-        void *data);
+int IntelPmSearch(
+    IntelPm *ipm, unsigned char *buffer, int buffer_len, MpseCallback, void *data);
 
 int IntelGetPatternCount(IntelPm *ipm);
 int IntelPmPrintInfo(IntelPm *ipm);
 void IntelPmPrintSummary(SnortConfig*);
 void IntelPmPrintBufferStats(void);
+int IntelPmRelease(struct _IntelPmHandles*);
 
 #endif  /* INTEL_SOFT_CPM_H */

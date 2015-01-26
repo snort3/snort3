@@ -68,13 +68,10 @@ public:
     };
 
     int add_pattern(
-        SnortConfig* sc, void* P, int m,
-        unsigned noCase, unsigned offset, unsigned depth,
-        unsigned negative, void* ID, int IID) override
+        SnortConfig* sc, const uint8_t* P, unsigned m,
+        bool noCase, bool negative, void* ID, int IID) override
     {
-        return IntelPmAddPattern(
-            sc, obj, (unsigned char *)P, m,
-            noCase, negative, ID, IID);
+        return IntelPmAddPattern(sc, obj, P, m, noCase, negative, ID, IID);
     };
 
     int prep_patterns(

@@ -29,6 +29,7 @@
 */
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -69,7 +70,7 @@ typedef struct bnfa_pattern
     struct bnfa_pattern * next;
 
     unsigned char       * casepatrn;   /* case specific */
-    int                   n;           /* pattern len */
+    unsigned              n;           /* pattern len */
     int                   nocase;      /* nocase flag */
     int                   negative;    /* pattern is negated */
     void                * userdata;    /* ptr to users pattern data/info  */
@@ -170,30 +171,25 @@ void bnfaSetOpt(bnfa_struct_t  * p, int flag);
 void bnfaSetCase(bnfa_struct_t  * p, int flag);
 void bnfaFree( bnfa_struct_t  * pstruct );
 
-int bnfaAddPattern( bnfa_struct_t * pstruct,
-					unsigned char * pat, int patlen, int nocase,
-					int negative, void * userdata);
+int bnfaAddPattern(
+    bnfa_struct_t * pstruct, const uint8_t* pat, unsigned patlen,
+    bool nocase, bool negative, void * userdata);
 
 int bnfaCompile( bnfa_struct_t * pstruct,
 			     int (*build_tree)(void * id, void **existing_tree),
                  int (*neg_list_func)(void *id, void **list));
 struct SnortConfig;
-int bnfaCompileWithSnortConf(
+int bnfaCompile(
     SnortConfig*, 
     bnfa_struct_t * pstruct,
     int (*build_tree)(SnortConfig*, void * id, void **existing_tree),
     int (*neg_list_func)(void *id, void **list));
 
-unsigned bnfaSearch(
-    bnfa_struct_t * pstruct, unsigned char * t, int tlen,
-    int (*match)(void * id, void *tree, int index, void *data, void *neg_list),
-    void * sdata, unsigned sindex, int* current_state );
-
 typedef int (*bnfa_match_f)(
-    bnfa_pattern_t*, void *tree, int index, void *data, void *neg_list);
+    bnfa_pattern_t*, void* tree, int index, void* data, void* neg_list);
 
 unsigned _bnfa_search_csparse_nfa(
-    bnfa_struct_t * pstruct, unsigned char * t, int tlen, bnfa_match_f,
+    bnfa_struct_t * pstruct, const uint8_t* t, int tlen, bnfa_match_f,
     void * sdata, unsigned sindex, int* current_state );
 
 unsigned _bnfa_search_csparse_nfa_q(

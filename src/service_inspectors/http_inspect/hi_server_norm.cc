@@ -277,8 +277,10 @@ int hi_server_norm(HI_SESSION *session, HttpsessionData *hsd)
             bytes_copied = 0;
             type_js = 0;
             hi_current_search = &hi_js_search[0];
-            script_found = search_api->search_instance_find(hi_javascript_search_mpse, (const char *)ptr,
-                                            (end-ptr), 0 , HI_SearchStrFound);
+
+            script_found = hi_javascript_search_mpse->find(
+                (const char *)ptr, (end-ptr), HI_SearchStrFound);
+
             if (script_found > 0)
             {
                 js_start = ptr + hi_search_info.index;
@@ -288,8 +290,9 @@ int hi_server_norm(HI_SESSION *session, HttpsessionData *hsd)
 
                 if(angle_bracket > js_start)
                 {
-                    script_found = search_api->search_instance_find(hi_htmltype_search_mpse, (const char *)js_start,
-                                                               (angle_bracket-js_start), 0 , HI_SearchStrFound); 
+                    script_found = hi_htmltype_search_mpse->find(
+                        (const char *)js_start, (angle_bracket-js_start), HI_SearchStrFound);
+
                     js_start = angle_bracket;
                     if(script_found > 0)
                     {

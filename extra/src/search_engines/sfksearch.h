@@ -31,6 +31,8 @@
 #include "config.h"
 #endif
 
+#include <stdint.h>
+
 #define ALPHABET_SIZE 256
 
 #define KTRIEMETHOD_STD 0
@@ -115,8 +117,8 @@ KTRIE_STRUCT* KTrieNew(
     void (*neg_list_free)(void**p));
 
 int KTrieAddPattern(
-    KTRIE_STRUCT*ts, unsigned char* P, int n,
-    int nocase, int negative, void* id );
+    KTRIE_STRUCT* ts, const uint8_t* P, unsigned n,
+    bool nocase, bool negative, void* id );
 
 int KTrieCompile(
     KTRIE_STRUCT* ts,

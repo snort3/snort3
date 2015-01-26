@@ -23,6 +23,10 @@
 # include "config.h"
 #endif
 
+#ifdef HAVE_MALLOC_TRIM
+#include <malloc.h>
+#endif
+
 #include <mutex>
 #include <string>
 using namespace std;
@@ -535,6 +539,7 @@ SnortConfig* get_reload_config()
 {
     snort_reloading = true;
     ModuleManager::reset_errors();
+    trim_heap();
 
     SnortConfig *sc = ParseSnortConf(snort_cmd_line_conf);
     sc = MergeSnortConfs(snort_cmd_line_conf, sc);

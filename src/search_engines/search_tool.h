@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,42 +15,37 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// search_tool.h author Russ Combs <rucombs@cicso.com>
 
-#ifndef PROCESS_H
-#define PROCESS_H
+#ifndef SEARCH_TOOL_H
+#define SEARCH_TOOL_H
 
-#include <signal.h>
+#include "framework/mpse.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include <stdint.h>
-
-enum PigSignal
+class SearchTool
 {
-    PIG_SIG_NONE,
-    PIG_SIG_QUIT,
-    PIG_SIG_TERM,
-    PIG_SIG_INT,
-    PIG_SIG_RELOAD_CONFIG,
-    PIG_SIG_RELOAD_HOSTS,
-    PIG_SIG_DUMP_STATS,
-    PIG_SIG_ROTATE_STATS,
-    PIG_SIG_MAX
+public:
+    SearchTool();
+    ~SearchTool();
+
+    void add(const char* pattern, unsigned len, int s_id, bool no_case = true);
+    void add(const uint8_t* pattern, unsigned len, int s_id, bool no_case = true);
+
+    void prep();
+
+    // set state to zero on first call
+    int find(const char* s, unsigned s_len, mpse_action_f, int& state,
+        bool confine = false, void* user_data = nullptr);
+
+    int find(const char* s, unsigned s_len, mpse_action_f,
+        bool confine = false, void* user_data = nullptr);
+
+    int find_all(const char* s, unsigned s_len, mpse_action_f,
+        bool confine = false, void* user_data = nullptr);
+
+private:
+    class Mpse* mpse;
+    unsigned max_len;
 };
 
-PigSignal get_pending_signal();
-const char* get_signal_name(PigSignal);
-
-void init_signals();
-void help_signals();
-
-void daemonize();
-void set_quick_exit(bool);
-void init_main_thread_sig();
-
-void trim_heap();
-void log_malloc_info();
-
 #endif
-

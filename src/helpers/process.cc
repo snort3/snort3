@@ -18,6 +18,10 @@
 
 #include "process.h"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/wait.h>
@@ -27,12 +31,12 @@
 #include <malloc.h>
 #endif
 
+#ifdef HAVE_MALLOC_TRIM
+#include <malloc.h>
+#endif
+
 #include <iostream>
 using namespace std;
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include "main.h"
 #include "main/analyzer.h"
@@ -426,6 +430,13 @@ void daemonize()
 //-------------------------------------------------------------------------
 // heap stats
 //-------------------------------------------------------------------------
+
+void trim_heap()
+{
+#ifdef HAVE_MALLOC_TRIM
+    malloc_trim(0);
+#endif
+}
 
 void log_malloc_info()
 {

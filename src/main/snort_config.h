@@ -203,6 +203,10 @@ struct SnortConfig
     ppm_cfg_t ppm_cfg;
 #endif
 
+#ifdef INTEL_SOFT_CPM
+    struct _IntelPmHandles *ipm_handles;
+#endif
+
     //------------------------------------------------------
     // FIXIT-L command line only stuff, add to conf / module
 

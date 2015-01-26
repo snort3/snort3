@@ -1,5 +1,6 @@
-pending - build 134
+15/01/26 - build 134
 
+-- sync Mpse to 297, add SearchTool
 -- 297 sync for sfghash, sfxhash, tag, u2spewfoo, profiler and target based
 -- addition of mime decoding stats and updates to mime detection limits
 -- snort2lua changed to add bindings for default ports if not explicitly

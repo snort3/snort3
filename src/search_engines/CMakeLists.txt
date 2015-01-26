@@ -44,10 +44,11 @@ set (PLUGIN_LIST
 
 
 set (SEARCH_ENGINE_SOURCES
+    search_common.h
     search_engines.cc
     search_engines.h
-    str_search.cc
-    str_search.h
+    search_tool.cc
+    search_tool.h
     ${BNFA_SOURCES}
 )
 

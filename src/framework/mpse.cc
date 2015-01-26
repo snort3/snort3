@@ -28,9 +28,8 @@ using namespace std;
 #include "snort_types.h"
 #include "snort.h"
 
-// this is accumulated only for fast pattern searches
-// for the detection engine; str_search based stuff
-// is not tallied here.
+// this is accumulated only for fast pattern
+// searches for the detection engine
 static THREAD_LOCAL uint64_t s_bcnt=0;
 
 #ifdef PERF_PROFILING
@@ -62,6 +61,13 @@ int Mpse::search(
 
     MODULE_PROFILE_END(mpsePerfStats);
     return ret;
+}
+
+int Mpse::search_all(
+    const unsigned char * T, int n, mpse_action_f action,
+    void * data, int* current_state )
+{
+    return _search(T, n, action, data, current_state);
 }
 
 uint64_t Mpse::get_pattern_byte_count()

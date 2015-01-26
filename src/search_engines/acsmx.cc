@@ -219,7 +219,7 @@ void acsmx_init_xlatcase ()
 /*
 *
 */
-static inline void ConvertCaseEx (unsigned char *d, unsigned char *s, int m)
+static inline void ConvertCaseEx (unsigned char *d, const uint8_t* s, int m)
 {
   int i;
   for (i = 0; i < m; i++)
@@ -449,8 +449,9 @@ ACSM_STRUCT * acsmNew (void (*userfree)(void *p),
 *   Add a pattern to the list of patterns for this state machine
 */
 int
-acsmAddPattern (ACSM_STRUCT * p, unsigned char *pat, int n, int nocase,
-            int offset, int depth, int negative, void * id, int iid)
+acsmAddPattern(
+    ACSM_STRUCT * p, const uint8_t *pat, unsigned n, bool nocase,
+    bool negative, void * id, int iid)
 {
   ACSM_PATTERN * plist;
   plist = (ACSM_PATTERN *) AC_MALLOC (sizeof (ACSM_PATTERN));
@@ -468,8 +469,6 @@ acsmAddPattern (ACSM_STRUCT * p, unsigned char *pat, int n, int nocase,
   plist->n = n;
   plist->nocase = nocase;
   plist->negative = negative;
-  plist->offset = offset;
-  plist->depth = depth;
   plist->iid = iid;
   plist->next = p->acsmPatterns;
   p->acsmPatterns = plist;
@@ -477,46 +476,7 @@ acsmAddPattern (ACSM_STRUCT * p, unsigned char *pat, int n, int nocase,
   return 0;
 }
 
-static int acsmBuildMatchStateTrees( ACSM_STRUCT * acsm,
-                                     int (*build_tree)(void * id, void **existing_tree),
-                                     int (*neg_list_func)(void *id, void **list) )
-{
-    int i, cnt = 0;
-    ACSM_PATTERN * mlist;
-
-    /* Find the states that have a MatchList */
-    for (i = 0; i < acsm->acsmMaxStates; i++)
-    {
-        for ( mlist=acsm->acsmStateTable[i].MatchList;
-              mlist!=NULL;
-              mlist=mlist->next )
-        {
-            if (mlist->udata->id)
-            {
-                if (mlist->negative)
-                {
-                    neg_list_func(mlist->udata->id, &acsm->acsmStateTable[i].MatchList->neg_list);
-                }
-                else
-                {
-                    build_tree(mlist->udata->id, &acsm->acsmStateTable[i].MatchList->rule_option_tree);
-                }
-            }
-
-            cnt++;
-        }
-
-        if (acsm->acsmStateTable[i].MatchList)
-        {
-            /* Last call to finalize the tree */
-            build_tree(NULL, &acsm->acsmStateTable[i].MatchList->rule_option_tree);
-        }
-    }
-
-    return cnt;
-}
-
-static int acsmBuildMatchStateTreesWithSnortConf(
+static int acsmBuildMatchStateTrees(
     SnortConfig* sc,
     ACSM_STRUCT * acsm,
     int (*build_tree)(SnortConfig*, void * id, void **existing_tree),
@@ -575,7 +535,7 @@ static inline int _acsmCompile (ACSM_STRUCT * acsm)
     acsm->acsmStateTable =
         (ACSM_STATETABLE *) AC_MALLOC (sizeof (ACSM_STATETABLE) *
                                         acsm->acsmMaxStates);
-    MEMASSERT (acsm->acsmStateTable, "acsmCompile");
+    MEMASSERT (acsm->acsmStateTable, "_acsmCompile");
     memset (acsm->acsmStateTable, 0,
         sizeof (ACSM_STATETABLE) * acsm->acsmMaxStates);
 
@@ -622,24 +582,7 @@ static inline int _acsmCompile (ACSM_STRUCT * acsm)
     return 0;
 }
 
-int acsmCompile (ACSM_STRUCT * acsm,
-             int (*build_tree)(void * id, void **existing_tree),
-             int (*neg_list_func)(void *id, void **list))
-{
-    int rval;
-
-    if ((rval = _acsmCompile (acsm)))
-        return rval;
-
-    if (build_tree && neg_list_func)
-    {
-        acsmBuildMatchStateTrees(acsm, build_tree, neg_list_func);
-    }
-
-    return 0;
-}
-
-int acsmCompileWithSnortConf (
+int acsmCompile(
     SnortConfig* sc,
     ACSM_STRUCT * acsm,
     int (*build_tree)(SnortConfig*, void * id, void **existing_tree),
@@ -652,7 +595,7 @@ int acsmCompileWithSnortConf (
 
     if (build_tree && neg_list_func)
     {
-        acsmBuildMatchStateTreesWithSnortConf(sc, acsm, build_tree, neg_list_func);
+        acsmBuildMatchStateTrees(sc, acsm, build_tree, neg_list_func);
     }
 
     return 0;
@@ -663,9 +606,9 @@ static THREAD_LOCAL unsigned char Tc[64*1024];
 /*
 *   Search Text or Binary Data for Pattern matches
 */
-int acsmSearch (ACSM_STRUCT * acsm, unsigned char *Tx, int n,
-            int (*Match)(void * id, void *tree, int index, void *data, void *neg_list),
-            void *data, int* current_state )
+int acsmSearch (
+    ACSM_STRUCT * acsm, unsigned char *Tx, int n, MpseCallback Match,
+    void *data, int* current_state )
 {
     int state = 0;
     ACSM_PATTERN * mlist;
@@ -873,7 +816,7 @@ int main (int argc, char **argv)
     {
       if (argv[i][0] == '-')
     continue;
-      acsmAddPattern (acsm, argv[i], strlen (argv[i]), nocase, 0, 0,
+      acsmAddPattern (acsm, (uint8_t*)argv[i], strlen (argv[i]), nocase, 0, 0,
             argv[i], i - 2);
     }
   acsmCompile (acsm);

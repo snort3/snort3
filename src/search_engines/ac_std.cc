@@ -57,20 +57,16 @@ public:
     };
 
     int add_pattern(
-        SnortConfig*, void* P, int m,
-        unsigned noCase, unsigned offset, unsigned depth,
-        unsigned negative, void* ID, int IID) override
+        SnortConfig*, const uint8_t* P, unsigned m,
+        bool noCase, bool negative, void* ID, int IID) override
     {
-        return acsmAddPattern(
-            obj, (unsigned char *)P, m,
-            noCase, offset, depth, negative, ID, IID );
+        return acsmAddPattern(obj, P, m, noCase, negative, ID, IID);
     };
 
     int prep_patterns(
         SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
     {
-        return acsmCompileWithSnortConf(
-            sc, obj, build_tree, neg_list);
+        return acsmCompile(sc, obj, build_tree, neg_list);
     };
 
     int _search(

@@ -30,8 +30,10 @@
 #endif
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include "search_common.h"
 
 #ifndef ACSMX2_H
 #define ACSMX2_H
@@ -74,11 +76,9 @@ struct _acsm_pattern2
     unsigned char         *casepatrn;
     int      n;
     int      nocase;
-    int      offset;
-    int      depth;
     int      negative;
-    void *udata;
     int      iid;
+    void *udata;
     void   * rule_option_tree;
     void   * neg_list;
 
@@ -177,8 +177,8 @@ ACSM_STRUCT2* acsmNew2(
     void (*neg_list_free)(void **p));
 
 int acsmAddPattern2(
-    ACSM_STRUCT2 * p, unsigned char * pat, int n,
-    int nocase, int offset, int depth, int negative, void * id, int iid );
+    ACSM_STRUCT2 * p, const uint8_t* pat, unsigned n,
+    bool nocase, bool negative, void * id, int iid );
 
 int acsmCompile2(
     ACSM_STRUCT2 * acsm,
@@ -187,41 +187,39 @@ int acsmCompile2(
 
 struct SnortConfig;
 
-int acsmCompile2WithSnortConf(
+int acsmCompile2(
     SnortConfig*,
     ACSM_STRUCT2 * acsm,
     int (*build_tree)(SnortConfig*, void * id, void **existing_tree),
     int (*neg_list_func)(void *id, void **list));
 
-int acsmSearch2(
-    ACSM_STRUCT2 * acsm,unsigned char * T, int n,
-    int (*Match)(void * id, void *tree, int index, void *data, void *neg_list),
-    void * data, int* current_state );
-
 int acsmSearchSparseDFA_Full(
-    ACSM_STRUCT2 * acsm,unsigned char * T, int n,
-    int (*Match)(void * id, void *tree, int index, void *data, void *neg_list),
+    ACSM_STRUCT2 * acsm,unsigned char * T, int n, MpseCallback Match,
     void * data, int* current_state );
 
 int acsmSearchSparseDFA_Full_q(
-    ACSM_STRUCT2 * acsm,unsigned char * T, int n,
-    int (*Match)(void * id, void *tree, int index, void *data, void *neg_list),
+    ACSM_STRUCT2 * acsm,unsigned char * T, int n, MpseCallback Match,
     void * data, int* current_state );
 
 int acsmSearchSparseDFA_Banded(
-    ACSM_STRUCT2 * acsm,unsigned char * T, int n,
-    int (*Match)(void * id, void *tree, int index, void *data, void *neg_list),
+    ACSM_STRUCT2 * acsm,unsigned char * T, int n, MpseCallback Match,
     void * data, int* current_state );
 
 int acsmSearchSparseDFA(
-    ACSM_STRUCT2 * acsm,unsigned char * T, int n,
-    int (*Match)(void * id, void *tree, int index, void *data, void *neg_list),
+    ACSM_STRUCT2 * acsm,unsigned char * T, int n, MpseCallback Match,
     void * data, int* current_state );
 
 int acsmSearchSparseNFA(
-    ACSM_STRUCT2 * acsm,unsigned char * T, int n,
-    int (*Match)(void * id, void *tree, int index, void *data, void *neg_list),
+    ACSM_STRUCT2 * acsm,unsigned char * T, int n, MpseCallback Match,
     void * data, int* current_state );
+
+int acsmSearchSparseDFA_Full_All(
+    ACSM_STRUCT2 *acsm, const unsigned char *Tx, int n, MpseCallback Match,
+    void *data, int *current_state);
+
+int acsmSearchSparseDFA_Full_q_all(
+    ACSM_STRUCT2 *acsm, const unsigned char *T, int n, MpseCallback Match,
+    void *data, int *current_state);
 
 void acsmFree2( ACSM_STRUCT2 * acsm );
 int acsmPatternCount2 ( ACSM_STRUCT2 * acsm );

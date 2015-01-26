@@ -116,13 +116,10 @@ public:
     };
 
     int add_pattern(
-        SnortConfig*, void* P, int m,
-        unsigned noCase, unsigned, unsigned,
-        unsigned negative, void* ID, int) override
+        SnortConfig*, const uint8_t* P, unsigned m,
+        bool noCase, bool negative, void* ID, int) override
     {
-        return KTrieAddPattern(
-            obj, (unsigned char *)P, m,
-            noCase, negative, ID );
+        return KTrieAddPattern(obj, P, m, noCase, negative, ID);
     };
 
     int prep_patterns(

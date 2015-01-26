@@ -70,28 +70,25 @@ public:
     };
 
     int add_pattern(
-        SnortConfig*, void* P, int m,
-        unsigned noCase, unsigned, unsigned,
-        unsigned negative, void* ID, int) override
+        SnortConfig*, const uint8_t* P, unsigned m,
+        bool noCase, bool negative, void* ID, int) override
     {
-        return bnfaAddPattern(
-            obj, (unsigned char *)P, m,
-            noCase, negative, ID );
+        return bnfaAddPattern(obj, P, m, noCase, negative, ID);
     };
 
     int prep_patterns(
         SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
     {
-        return bnfaCompileWithSnortConf(sc, obj, build_tree, neg_list);
+        return bnfaCompile(sc, obj, build_tree, neg_list);
     };
 
     int _search(
-        const unsigned char* T, int n, mpse_action_f action,
+        const uint8_t* T, int n, mpse_action_f action,
         void* data, int* current_state ) override
     {
       /* return is actually the state */
         return _bnfa_search_csparse_nfa(
-            obj, (unsigned char *)T, n, (bnfa_match_f)action,
+            obj, T, n, (bnfa_match_f)action,
             data, 0 /* start-state */, current_state);
     };
 

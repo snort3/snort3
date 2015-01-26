@@ -612,7 +612,7 @@ static void neg_list_free(void **list)
     *list = NULL;
 }
 
-int pmx_create_tree(SnortConfig* sc, void *id, void **existing_tree){
+static int pmx_create_tree(SnortConfig* sc, void *id, void **existing_tree){
     PMX              *pmx    = NULL;
     RULE_NODE        *rnNode = NULL;
     OptTreeNode      *otn    = NULL;
@@ -1066,16 +1066,8 @@ static int fpFinishPortGroupRule(
             PrintFastPatternInfo(otn, pmd, pattern, pattern_length);
 
         pg->pgPms[pmd->pm_type]->add_pattern(
-                sc,
-                pattern,
-                pattern_length,
-                pmd->no_case,
-                pmd->offset,
-                pmd->depth,
-                (unsigned)pmd->negated,
-                pmx,
-                rn->iRuleNodeID
-                );
+            sc, (uint8_t*)pattern, pattern_length, pmd->no_case, pmd->negated,
+            pmx, rn->iRuleNodeID);
     }
 
     return 0;

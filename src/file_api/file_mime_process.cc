@@ -33,7 +33,7 @@
 #include "file_api.h"
 #include "snort_bounds.h"
 #include "util.h"
-#include "search_engines/str_search.h"
+#include "search_engines/search_tool.h"
 #include "protocols/packet.h"
 #include "detection_util.h"
 
@@ -81,7 +81,7 @@ typedef struct _MIMESearchInfo
 
 MIMESearchInfo mime_search_info;
 
-void *mime_hdr_search_mpse = NULL;
+SearchTool* mime_hdr_search_mpse = nullptr;
 MIMESearch mime_hdr_search[HDR_LAST];
 MIMESearch *mime_current_search = NULL;
 
@@ -269,18 +269,17 @@ static void set_mime_buffers(MimeState *ssn)
 static int init_boundary_search(MimeBoundary *mime_boundary )
 {
     if (mime_boundary->boundary_search != NULL)
-        search_api->search_instance_free(mime_boundary->boundary_search);
+        delete mime_boundary->boundary_search;
 
-    mime_boundary->boundary_search = search_api->search_instance_new();
+    mime_boundary->boundary_search = new SearchTool;
 
     if (mime_boundary->boundary_search == NULL)
         return -1;
 
-    search_api->search_instance_add(mime_boundary->boundary_search,
-            mime_boundary->boundary,
-            mime_boundary->boundary_len, BOUNDARY);
+    mime_boundary->boundary_search->add(
+        mime_boundary->boundary, mime_boundary->boundary_len, BOUNDARY);
 
-    search_api->search_instance_prep(mime_boundary->boundary_search);
+    mime_boundary->boundary_search->prep();
 
     return 0;
 }
@@ -599,9 +598,8 @@ static const uint8_t * process_mime_header(
             if(tolower((int)*ptr) == 'c')
             {
                 mime_current_search = &mime_hdr_search[0];
-                header_found =search_api->search_instance_find
-                        (mime_hdr_search_mpse, (const char *)ptr,
-                                eolm - ptr, 1, search_str_found);
+                header_found = mime_hdr_search_mpse->find(
+                    (const char *)ptr, eolm - ptr, search_str_found, true);
 
                 /* Headers must start at beginning of line */
                 if ((header_found > 0) && (mime_search_info.index == 0))
@@ -760,9 +758,8 @@ static const uint8_t * process_mime_body(
     /* look for boundary */
     if (mime_ssn->state_flags & MIME_FLAG_GOT_BOUNDARY)
     {
-        boundary_found = search_api->search_instance_find
-                (mime_ssn->mime_boundary.boundary_search, (const char *)ptr,
-                        data_end_marker - ptr, 0, boundary_str_found);
+        boundary_found = mime_ssn->mime_boundary.boundary_search->find(
+            (const char *)ptr, data_end_marker - ptr, boundary_str_found);
 
         mime_search_info.length = mime_ssn->mime_boundary.boundary_len;
 
@@ -803,7 +800,7 @@ static const uint8_t * process_mime_body(
                     mime_ssn->state_flags |= MIME_FLAG_MIME_END;
 
                     /* free boundary search */
-                    search_api->search_instance_free(mime_ssn->mime_boundary.boundary_search);
+                    delete mime_ssn->mime_boundary.boundary_search;
                     mime_ssn->mime_boundary.boundary_search = NULL;
                 }
                 else
@@ -846,7 +843,7 @@ static void reset_mime_state(MimeState *mime_ssn)
 
     if (mime_ssn->mime_boundary.boundary_search != NULL)
     {
-        search_api->search_instance_free(mime_ssn->mime_boundary.boundary_search);
+        delete mime_ssn->mime_boundary.boundary_search;
         mime_ssn->mime_boundary.boundary_search = NULL;
     }
 
@@ -929,9 +926,8 @@ const uint8_t * process_mime_data(void *packet, const uint8_t *start, const uint
      * TODO check last bytes of previous packet to see if we had a partial
      * end of data */
     /* mime_current_search = &mime_data_end_search[0];
-    data_end_found = search_api->search_instance_find
-        (mime_data_search_mpse, (const char *)start, end - start,
-         0, search_str_found);
+    data_end_found = mime_data_search_mpse->find(
+        (const char *)start, end - start, search_str_found);
 
     if (data_end_found > 0)
     {
@@ -1060,7 +1056,7 @@ void init_mime(void)
     const MimeToken *tmp;
 
     /* Header search */
-    mime_hdr_search_mpse = search_api->search_instance_new();
+    mime_hdr_search_mpse = new SearchTool();
     if (mime_hdr_search_mpse == NULL)
     {
         // FIXIT-M make configurable or at least fall back to any
@@ -1073,11 +1069,10 @@ void init_mime(void)
         mime_hdr_search[tmp->search_id].name = tmp->name;
         mime_hdr_search[tmp->search_id].name_len = tmp->name_len;
 
-        search_api->search_instance_add(mime_hdr_search_mpse, tmp->name,
-                tmp->name_len, tmp->search_id);
+        mime_hdr_search_mpse->add(tmp->name, tmp->name_len, tmp->search_id);
     }
 
-    search_api->search_instance_prep(mime_hdr_search_mpse);
+    mime_hdr_search_mpse->prep();
 
     /* create regex for finding boundary string - since it can be cut across multiple
      * lines, a straight search won't do. Shouldn't be too slow since it will most
@@ -1111,7 +1106,7 @@ void free_mime(void)
 {
 
     if (mime_hdr_search_mpse != NULL)
-        search_api->search_instance_free(mime_hdr_search_mpse);
+        delete mime_hdr_search_mpse;
 
     if (mime_boundary_pcre.re )
         pcre_free(mime_boundary_pcre.re);
@@ -1127,7 +1122,7 @@ void free_mime_session(MimeState *mime_ssn)
 
     if (mime_ssn->mime_boundary.boundary_search != NULL)
     {
-        search_api->search_instance_free(mime_ssn->mime_boundary.boundary_search);
+        delete mime_ssn->mime_boundary.boundary_search;
         mime_ssn->mime_boundary.boundary_search = NULL;
     }
 

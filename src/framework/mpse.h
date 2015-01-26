@@ -56,32 +56,24 @@ typedef int (*mpse_action_f)(void* id, void* tree, int index, void *data, void *
 class SO_PUBLIC Mpse
 {
 public:
-    static Mpse* instantiate(
-        SnortConfig* sc,
-        const char* method, bool use_global_counter_flag,
-        void (*userfree)(void *p),
-        void (*optiontreefree)(void **p),
-        void (*neg_list_free)(void **p));
-
     static uint64_t get_pattern_byte_count();
     static void reset_pattern_byte_count();
-
-    static int print_summary(SnortConfig*, const char* method);
-    static void init_summary();
-    static void print_qinfo();
 
 public:
     virtual ~Mpse() { };
 
     virtual int add_pattern(
-        SnortConfig* sc, void* P, int m,
-        unsigned noCase, unsigned offset, unsigned depth,
-        unsigned negative, void* ID, int IID ) = 0;
+        SnortConfig* sc, const uint8_t* pat, unsigned len,
+        bool noCase, bool negate, void* ID, int IID) = 0;
 
     virtual int prep_patterns(
         SnortConfig*, mpse_build_f, mpse_negate_f) = 0;
 
     int search(
+        const unsigned char* T, int n, mpse_action_f,
+        void* data, int* current_state );
+
+    virtual int search_all(
         const unsigned char* T, int n, mpse_action_f,
         void* data, int* current_state );
 

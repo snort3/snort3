@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2005-2013 Sourcefire, Inc.
+// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -17,23 +16,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef STR_SEARCH_H
-#define STR_SEARCH_H
+#ifndef SEARCH_COMMON_H
+#define SEARCH_COMMON_H
 
-typedef int (*MatchFunction)(void *, void *, int, void *, void *);
-
-typedef struct _search_api
-{
-    void * (*search_instance_new)(void);
-    void   (*search_instance_free)(void * instance);
-    void   (*search_instance_add) (void * instance, const char *s, unsigned int s_len, int s_id);
-    void   (*search_instance_prep)(void * instance );
-    int    (*search_instance_find)(void * instance, const char *s, unsigned int s_len, int confine, MatchFunction); 
-    
-} SearchAPI;
-
-// FIXIT-L search_api should be turned into a class
-// (constructed of an Mpse, not subclassed)
-extern SearchAPI *search_api;
+typedef int (*MpseCallback)(void* id, void* tree, int index, void* data, void* neg_list);
 
 #endif
+

@@ -23,6 +23,10 @@
 #include "config.h"
 #endif
 
+#ifdef HAVE_MALLOC_TRIM
+#include <malloc.h>
+#endif
+
 #include "snort_types.h"
 #include "detection/treenodes.h"
 #include "events/event_queue.h"
@@ -34,6 +38,7 @@
 #include "parser/parser.h"
 #include "parser/config_file.h"
 #include "parser/vars.h"
+#include "helpers/process.h"
 #include "filters/rate_filter.h"
 #include "managers/ips_manager.h"
 #include "managers/module_manager.h"
@@ -356,7 +361,12 @@ void SnortConfFree(SnortConfig *sc)
     if (sc->gtp_ports)
         delete sc->gtp_ports;
 
+#ifdef INTEL_SOFT_CPM
+    IntelPmRelease(sc->ipm_handles);
+#endif
+
     free(sc);
+    trim_heap();
 }
 
 SnortConfig* MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)

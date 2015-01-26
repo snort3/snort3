@@ -83,7 +83,7 @@ struct MimeBoundary
 {
     char   boundary[2 + MAX_MIME_BOUNDARY_LEN + 1];  /* '--' + MIME boundary string + '\0' */
     int    boundary_len;
-    void  *boundary_search;
+    class SearchTool* boundary_search;
 
 };
 

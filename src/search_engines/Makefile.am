@@ -40,10 +40,11 @@ $(acsmx2_sources) \
 $(intel_sources)
 
 libsearch_engines_a_SOURCES = \
+search_common.h \
 search_engines.cc \
 search_engines.h \
-str_search.cc \
-str_search.h \
+search_tool.cc \
+search_tool.h \
 pat_stats.cc \
 $(bnfa_sources)
 
