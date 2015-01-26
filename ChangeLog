@@ -5,7 +5,7 @@ pending - build 134
 -- added md5, sha256, and sha512 rule options based on Snort 2.X
    protected_content
 
-14/01/20 - build 133
+15/01/20 - build 133
 
 -- fixes for large file support on 32-bit Linux systems (reported by Y M)
 -- changed u2 base file name to unified2.log
