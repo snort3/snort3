@@ -111,8 +111,8 @@ static THREAD_LOCAL uint32_t last_prune_time = 0;
 static THREAD_LOCAL uint32_t tag_alloc_faults = 0;
 static THREAD_LOCAL uint32_t tag_memory_usage = 0;
 
-static bool s_exclusive = false;
-static unsigned s_sessions = 0;
+static THREAD_LOCAL bool s_exclusive = false;
+static THREAD_LOCAL unsigned s_sessions = 0;
 
 // TBD when tags leverage sessions, tag nodes can be freed at end
 // of session.  then we can configure this to allow multiple

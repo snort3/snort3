@@ -168,7 +168,7 @@ void ResetRuleProfiling(void)
     {
         otn = (OptTreeNode *)hashNode->data;
         {
-            rtn = getRtnFromOtn(otn, policyId);
+            rtn = getRtnFromOtn(otn);
             if (rtn == NULL)
                 continue;
 

@@ -124,6 +124,20 @@ AC_CHECK_PROG(have_dblatex,dblatex,yes,no)
 
 AM_CONDITIONAL(MAKE_PDF_DOC, [test "x$have_dblatex" = "xyes" -a "x$have_asciidoc" = "xyes"])
 
+AC_MSG_CHECKING(for sparc)
+if eval "echo $host_cpu|grep -i sparc >/dev/null"; then
+    AC_DEFINE([WORDS_MUSTALIGN],[1],[Define if words must align])
+    AC_MSG_RESULT(yes)
+
+    # gcc, sparc and optimization not so good
+    if test -n "$GCC"; then
+        NO_OPTIMIZE="yes"
+    fi
+else
+    AC_MSG_RESULT(no)
+fi
+
+
 #--------------------------------------------------------------------------
 # visibility foo
 #--------------------------------------------------------------------------

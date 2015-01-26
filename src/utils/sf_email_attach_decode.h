@@ -42,23 +42,23 @@ typedef enum {
 
 } DecodeType;
 
-typedef struct s_Base64_DecodeState
+struct Base64_DecodeState
 {
     uint32_t encode_bytes_read;
     uint32_t decode_bytes_read;
     int encode_depth;
     int decode_depth;
-} Base64_DecodeState;
+};
 
-typedef struct s_QP_DecodeState
+struct QP_DecodeState
 {
     uint32_t encode_bytes_read;
     uint32_t decode_bytes_read;
     int encode_depth;
     int decode_depth;
-} QP_DecodeState;
+};
 
-typedef struct s_UU_DecodeState
+struct UU_DecodeState
 {
     uint32_t encode_bytes_read;
     uint32_t decode_bytes_read;
@@ -66,15 +66,15 @@ typedef struct s_UU_DecodeState
     int decode_depth;
     uint8_t begin_found;
     uint8_t end_found;
-} UU_DecodeState;
+};
 
-typedef struct s_BitEnc_DecodeState
+struct BitEnc_DecodeState
 {
     uint32_t bytes_read;
     int depth;
-} BitEnc_DecodeState;
+};
 
-typedef struct s_Email_DecodeState
+struct Email_DecodeState
 {
     DecodeType decode_type;
     uint8_t decode_present;
@@ -89,7 +89,14 @@ typedef struct s_Email_DecodeState
     UU_DecodeState uu_state;
     BitEnc_DecodeState bitenc_state;
 
-} Email_DecodeState;
+};
+
+struct MimeStats
+{
+    uint64_t memcap_exceeded;
+    uint64_t attachments[DECODE_ALL];
+    uint64_t decoded_bytes[DECODE_ALL];
+};
 
 typedef struct _MimeStats
 {
