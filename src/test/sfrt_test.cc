@@ -91,22 +91,54 @@ START_TEST (test_sfrt_remove_after_insert)
     for(index=0; index<num_entries; index++)
     {
         sfip_t ip;
+        sfip_t ip2;
         int val;
         int *result = NULL;
 
         IP_entry *ip_entry =  &(ip_lists[index]);
         /*Parse IP*/
         if (ip_entry->ip_str)
+        {
+            char *p;
+            char *ip2_str;
+
             sfip_pton(ip_entry->ip_str, &ip);
 
+            ip2_str = strdup(ip_entry->ip_str);
+            p = strchr(ip2_str, '/');
+            if (p)
+            {
+                *p = 0;
+            }
+            sfip_pton(ip2_str, &ip2);
+            free(ip2_str);
+        }
+
+        if ( s_debug )
+        {
+            printf("Insert IP addr: %s, family: %d\n", sfip_to_str(&ip), ip.family );
+        }
         fail_unless(sfrt_insert(&ip, ip.bits, &(ip_entry->value), RT_FAVOR_TIME, dir) == RT_SUCCESS,"sfrt_insert()");
 
-        val = *(int*)sfrt_lookup(&ip, dir);
+        if ( s_debug )
+        {
+            printf("Lookup IP addr: %s, family: %d\n", sfip_to_str(&ip2), ip2.family );
+        }
+        result = (int*)sfrt_lookup(&ip2, dir);
+        if ( s_debug )
+        {
+            if (result)
+                printf("value input: %d, output: %d\n", ip_entry->value, *result);
+            else
+                printf("value input: %d, output: NULL\n", ip_entry->value);
+        }
+
+        fail_unless(result != NULL, "sfrt_lookup()");
 
         if ( s_debug )
         {
             printf("IP addr: %s, family: %d\n", sfip_to_str(&ip), ip.family );
-            printf("value input: %d, output: %d\n", ip_entry->value, val);
+            printf("value input: %d, output: %d\n", ip_entry->value, *result);
         }
 
         fail_unless(sfrt_remove(&ip, ip.bits, (void**)&result, RT_FAVOR_TIME, dir) == RT_SUCCESS,"sfrt_remove()");
@@ -151,20 +183,36 @@ START_TEST (test_sfrt_remove_after_insert_all)
     for(index=0; index<num_entries; index++)
     {
         sfip_t ip;
-        int val;
+        sfip_t ip2;
+        int *result;
 
         IP_entry *ip_entry =  &(ip_lists[index]);
         /*Parse IP*/
         if (ip_entry->ip_str)
+        {
+            char *p;
+            char *ip2_str;
+
             sfip_pton(ip_entry->ip_str, &ip);
+
+            ip2_str = strdup(ip_entry->ip_str);
+            p = strchr(ip2_str, '/');
+            if (p)
+            {
+                *p = 0;
+            }
+            sfip_pton(ip2_str, &ip2);
+            free(ip2_str);
+        }
 
         fail_unless(sfrt_insert(&ip, ip.bits, &(ip_entry->value), RT_FAVOR_TIME, dir) == RT_SUCCESS,"sfrt_insert()");
 
-        val = *(int*)sfrt_lookup(&ip, dir);
+        result = (int*)sfrt_lookup(&ip, dir);
 
         if ( s_debug )
-            printf("value input: %d, output: %d\n", ip_entry->value, val);
+            printf("value input: %d, output: %d\n", ip_entry->value, result ? *result : -1);
 
+        fail_unless(result != NULL, "sfrt_lookup()");
     }
 
 

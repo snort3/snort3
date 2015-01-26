@@ -63,6 +63,7 @@ struct SFXHASH_NODE
 
 };
 
+typedef int (*SFXHASH_FREE_FCN)( void * key, void * data );
 /**
 *    SFGX HASH Table
 */
@@ -76,6 +77,7 @@ struct SFXHASH
   unsigned        count;     /// total # nodes in table
 
   unsigned        crow;    /// findfirst/next row in table
+  unsigned        pad;
   SFXHASH_NODE  * cnode;   /// findfirst/next node ptr
   int             splay;   /// whether to splay nodes with same hash bucket
 
@@ -89,6 +91,7 @@ struct SFXHASH
   SFXHASH_NODE  * ghead, * gtail;  /// global - root of all nodes allocated in table
 
   SFXHASH_NODE  * fhead, * ftail;  /// list of free nodes, which are recyled
+  SFXHASH_NODE  * gnode;   /* gfirst/gnext node ptr */
   int             recycle_nodes;   /// recycle nodes. Nodes are not freed, but are used for subsequent new nodes
 
   /**Automatic Node Recover (ANR): When number of nodes in hash is equal to max_nodes, remove the least recently
@@ -97,8 +100,8 @@ struct SFXHASH
   unsigned        anr_count; /// # ANR ops performaed
   int             anr_flag;  /// 0=off, !0=on
 
-  int (*anrfree)( void * key, void * data );
-  int (*usrfree)( void * key, void * data );
+  SFXHASH_FREE_FCN anrfree;
+  SFXHASH_FREE_FCN usrfree;
 };
 
 
@@ -108,8 +111,8 @@ struct SFXHASH
 SO_PUBLIC int             sfxhash_calcrows(int num);
 SO_PUBLIC SFXHASH       * sfxhash_new( int nrows, int keysize, int datasize, unsigned long memcap,
                              int anr_flag,
-                             int (*anrfunc)(void *key, void * data),
-                             int (*usrfunc)(void *key, void * data),
+                             SFXHASH_FREE_FCN anrfunc,
+                             SFXHASH_FREE_FCN usrfunc,
                              int recycle_flag );
 
 SO_PUBLIC void            sfxhash_set_max_nodes( SFXHASH *h, int max_nodes );
@@ -230,6 +233,10 @@ SO_PUBLIC int sfxhash_set_keyops( SFXHASH *h ,
                                            const void *s2,
                                            size_t n));
 
+
+SFXHASH_NODE *sfxhash_gfindfirst( SFXHASH * t );
+SFXHASH_NODE *sfxhash_gfindnext( SFXHASH * t );
+int sfxhash_add_return_data_ptr( SFXHASH * t, const void * key, void **data );
 
 #endif
 

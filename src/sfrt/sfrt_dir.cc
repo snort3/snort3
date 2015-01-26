@@ -38,12 +38,6 @@
 #include <string.h> /* For memset   */
 #include "snort_types.h"
 
-#if SIZEOF_UNSIGNED_LONG_INT == 8
-#define ARCH_WIDTH 64
-#else
-#define ARCH_WIDTH 32
-#endif
-
 typedef struct {
     IP ip;
     int bits;
@@ -441,7 +435,7 @@ static int _dir_sub_insert(IPLOOKUP *ip, int length, int cur_len, GENERIC ptr,
             return RT_INSERT_FAILURE;
         }
         local_index = ip->ip->ip32[i] << (ip->bits %32);
-        index = local_index >> (ARCH_WIDTH - sub_table->width);
+        index = local_index >> (sizeof(local_index)*8 - sub_table->width);
     }
 
     /* Check if this is the last table to traverse to */
@@ -525,14 +519,36 @@ int sfrt_dir_insert(IP ip, int len, word data_index,
                     int behavior, void *table)
 {
     dir_table_t *root = (dir_table_t*)table;
+    sfip_t h_ip;
     IPLOOKUP iplu;
-    iplu.ip = ip;
+    iplu.ip = &h_ip;
     iplu.bits = 0;
 
     /* Validate arguments */
     if(!root || !root->sub_table)
     {
         return DIR_INSERT_FAILURE;
+    }
+
+    h_ip.family = ip->family;
+    h_ip.ip32[0] = ntohl(ip->ip32[0]);
+    if (ip->family != AF_INET)
+    {
+        if (len > 96)
+        {
+            h_ip.ip32[1] = ntohl(ip->ip32[1]);
+            h_ip.ip32[2] = ntohl(ip->ip32[2]);
+            h_ip.ip32[3] = ntohl(ip->ip32[3]);
+        }
+        else if (len > 64)
+        {
+            h_ip.ip32[1] = ntohl(ip->ip32[1]);
+            h_ip.ip32[2] = ntohl(ip->ip32[2]);
+        }
+        else if (len > 32)
+        {
+            h_ip.ip32[1] = ntohl(ip->ip32[1]);
+        }
     }
 
     /* Find the sub table in which to insert */
@@ -577,7 +593,7 @@ static tuple_t _dir_sub_lookup(IPLOOKUP *ip, dir_sub_table_t *table)
             return ret;
         }
         local_index = ip->ip->ip32[i] << (ip->bits %32);
-        index = local_index >> (ARCH_WIDTH - table->width);
+        index = local_index >> (sizeof(local_index)*8 - table->width);
     }
 
     if( !table->entries[index] || table->lengths[index] )
@@ -597,8 +613,9 @@ static tuple_t _dir_sub_lookup(IPLOOKUP *ip, dir_sub_table_t *table)
 tuple_t sfrt_dir_lookup(IP ip, void *tbl)
 {
     dir_table_t *root = (dir_table_t*)tbl;
+    sfip_t h_ip;
     IPLOOKUP iplu;
-    iplu.ip = ip;
+    iplu.ip = &h_ip;
     iplu.bits = 0;
 
     if(!root || !root->sub_table)
@@ -606,6 +623,15 @@ tuple_t sfrt_dir_lookup(IP ip, void *tbl)
         tuple_t ret = { 0, 0 };
 
         return ret;
+    }
+
+    h_ip.family = ip->family;
+    h_ip.ip32[0] = ntohl(ip->ip32[0]);
+    if (ip->family != AF_INET)
+    {
+        h_ip.ip32[1] = ntohl(ip->ip32[1]);
+        h_ip.ip32[2] = ntohl(ip->ip32[2]);
+        h_ip.ip32[3] = ntohl(ip->ip32[3]);
     }
 
     return _dir_sub_lookup(&iplu, root->sub_table);
@@ -711,7 +737,7 @@ static int _dir_sub_remove(IPLOOKUP *ip, int length, int cur_len,
             return 0;
         }
         local_index = ip->ip->ip32[i] << (ip->bits %32);
-        index = local_index >> (ARCH_WIDTH - sub_table->width);
+        index = local_index >> (sizeof(local_index)*8 - sub_table->width);
     }
 
     /* Check if this is the last table to traverse to */
@@ -780,14 +806,45 @@ static int _dir_sub_remove(IPLOOKUP *ip, int length, int cur_len,
 word sfrt_dir_remove(IP ip, int len, int behavior, void *table)
 {
     dir_table_t *root = (dir_table_t*)table;
+    sfip_t h_ip;
     IPLOOKUP iplu;
-    iplu.ip = ip;
+    iplu.ip = &h_ip;
     iplu.bits = 0;
 
     /* Validate arguments */
     if(!root || !root->sub_table)
     {
         return 0;
+    }
+
+    h_ip.family = ip->family;
+    h_ip.ip32[0] = ntohl(ip->ip32[0]);
+    if (ip->family != AF_INET)
+    {
+        if (len > 96)
+        {
+            h_ip.ip32[1] = ntohl(ip->ip32[1]);
+            h_ip.ip32[2] = ntohl(ip->ip32[2]);
+            h_ip.ip32[3] = ntohl(ip->ip32[3]);
+        }
+        else if (len > 64)
+        {
+            h_ip.ip32[1] = ntohl(ip->ip32[1]);
+            h_ip.ip32[2] = ntohl(ip->ip32[2]);
+            h_ip.ip32[3] = 0;
+        }
+        else if (len > 32)
+        {
+            h_ip.ip32[1] = ntohl(ip->ip32[1]);
+            h_ip.ip32[2] = 0;
+            h_ip.ip32[3] = 0;
+        }
+        else
+        {
+            h_ip.ip32[1] = 0;
+            h_ip.ip32[2] = 0;
+            h_ip.ip32[3] = 0;
+        }
     }
 
     /* Find the sub table in which to remove */

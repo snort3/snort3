@@ -290,7 +290,7 @@ HostAttributeEntry *SFAT_LookupHostEntryByIP(const sfip_t *ipAddr)
     if ( !curr_cfg )
         return NULL;
 
-    return (HostAttributeEntry*)sfrt_lookup((void*)ipAddr, curr_cfg->lookupTable);
+    return (HostAttributeEntry*)sfrt_lookup((sfip_t*)ipAddr, curr_cfg->lookupTable);
 }
 
 HostAttributeEntry *SFAT_LookupHostEntryBySrc(Packet *p)

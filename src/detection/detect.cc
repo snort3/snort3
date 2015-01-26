@@ -204,14 +204,15 @@ void snort_log(Packet *p)
     EventManager::call_loggers(NULL, p, NULL, NULL);
 }
 
-void CallLogFuncs(Packet* p, Event* event, const char* msg)
+void CallLogFuncs(Packet* p, ListHead *head, Event* event, const char* msg)
 {
     event->event_id = event_id | ScEventLogId();
 
     check_tags_flag = 0;
     pc.log_pkts++;
 
-    EventManager::call_loggers(NULL, p, msg, event);
+    OutputSet *idx = head ? head->LogList : NULL;
+    EventManager::call_loggers(idx, p, msg, event);
 }
 
 void CallLogFuncs(Packet *p, const OptTreeNode* otn, ListHead *head)
@@ -277,9 +278,10 @@ int CheckTagging(Packet *p)
 
     if(check_tags_flag == 1 && !(p->packet_flags & PKT_REBUILT_STREAM))
     {
+        void* listhead = NULL;
         DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "calling CheckTagList\n"););
 
-        if(CheckTagList(p, &event))
+        if(CheckTagList(p, &event, &listhead))
         {
             DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "Matching tag node found, "
                         "calling log functions\n"););
@@ -287,7 +289,7 @@ int CheckTagging(Packet *p)
             /* if we find a match, we want to send the packet to the
              * logging mechanism
              */
-            CallLogFuncs(p, &event, "Tagged Packet");
+            CallLogFuncs(p, (ListHead *)listhead, &event, "Tagged Packet");
         }
     }
 

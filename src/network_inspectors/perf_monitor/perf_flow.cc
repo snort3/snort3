@@ -132,6 +132,8 @@ int InitFlowIPStats(SFFLOW *sfFlow)
     {
         sfFlow->ipMap = sfxhash_new(1021, sizeof(sfSFSKey), sizeof(sfSFSValue),
                 perfmon_config->flowip_memcap, 1, NULL, NULL, 1);
+        if(!sfFlow->ipMap)
+            FatalError("Unable to allocate memory for FlowIP stats\n");
 
         first = 0;
     }

@@ -193,8 +193,8 @@ typedef struct
 /* Abstracted routing table API */
 table_t * sfrt_new(char type, char ip_type, long data_size, uint32_t mem_cap);
 void      sfrt_free(table_t *table);
-GENERIC sfrt_lookup(void *adr, table_t* table);
-GENERIC sfrt_search(void *adr, unsigned char len, table_t *table);
+GENERIC sfrt_lookup(sfip_t* ip, table_t* table);
+GENERIC sfrt_search(sfip_t* ip, unsigned char len, table_t *table);
 typedef void (*sfrt_iterator_callback)(void *);
 struct SnortConfig;
 typedef void (*sfrt_sc_iterator_callback)(SnortConfig*, void *);
@@ -207,9 +207,9 @@ int     sfrt_iterate2(table_t* table, sfrt_iterator_callback3 userfunc);
 int     sfrt_iterate2_with_snort_config(SnortConfig* sc, table_t* table, sfrt_sc_iterator_callback3 userfunc);
 void    sfrt_cleanup(table_t* table, sfrt_iterator_callback userfunc);
 void    sfrt_cleanup2(table_t*, sfrt_iterator_callback2, void *);
-int     sfrt_insert(void *adr, unsigned char len, GENERIC ptr,
+int     sfrt_insert(sfip_t* ip, unsigned char len, GENERIC ptr,
                         int behavior, table_t *table);
-int     sfrt_remove(void *adr, unsigned char len, GENERIC *ptr,
+int     sfrt_remove(sfip_t* ip, unsigned char len, GENERIC *ptr,
                         int behavior, table_t *table);
 uint32_t     sfrt_usage(table_t *table);
 void    sfrt_print(table_t *table);

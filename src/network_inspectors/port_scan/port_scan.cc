@@ -281,7 +281,7 @@ static int GenerateOpenPortEvent(Packet *p, uint32_t gen_id, uint32_t sig_id,
             return 0;
         }
 
-        CallLogFuncs(p, &event, msg);
+        CallLogFuncs(p, NULL, &event, msg);
     }
     else
     {

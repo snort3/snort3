@@ -57,8 +57,8 @@ struct SFGHASH_NODE
 {
   struct SFGHASH_NODE * next, * prev;
 
-  void * key;   /* Copy of, or Pointer to, the Users key */
-  void * data;  /* Pointer to the users data, this is never copied! */
+  const void * key;   /* Copy of, or Pointer to, the Users key */
+  void *data;  /* The users data, this is never copied! */
      
 } ;
 
@@ -78,8 +78,8 @@ struct SFGHASH
 
   void         (*userfree)( void * );  
 
-  int            crow;    // findfirst/next row in table
-  SFGHASH_NODE * cnode; // findfirst/next node ptr
+  int            crow;    /* findfirst/next row in table */
+  SFGHASH_NODE * cnode; /* findfirst/next node ptr */
 
   int splay;
 
@@ -91,14 +91,13 @@ struct SFGHASH
 */
 SFGHASH * sfghash_new( int nrows, int keysize, int userkeys, void (*userfree)(void*p) );
 void      sfghash_delete( SFGHASH * h );
-int       sfghash_add ( SFGHASH * h, void * key, void * data );
-int       sfghash_remove( SFGHASH * h, void * key);
+int       sfghash_add( SFGHASH * t, const void * const key, void * const data );
+int       sfghash_remove( SFGHASH * h, const void * const key);
 int       sfghash_count( SFGHASH * h);
-void    * sfghash_find( SFGHASH * h, const void * key );
+void    * sfghash_find( SFGHASH * h, const void * const key );
 int       sfghash_find2(SFGHASH *, const void *, void **);
 SFGHASH_NODE * sfghash_findfirst( SFGHASH * h );
 SFGHASH_NODE * sfghash_findnext ( SFGHASH * h );
-void sfghash_splaymode( SFGHASH * t, int n );
 
 int sfghash_set_keyops( SFGHASH *h ,
                         unsigned (*hash_fcn)( SFHASHFCN * p,

@@ -111,6 +111,11 @@ static int get_record(u2iterator *it, u2record *record) {
     if ( s_off )
     {
         fseek(it->file, s_pos+s_off, SEEK_SET);
+        if (fseek(it->file, s_pos+s_off, SEEK_SET)) 
+        {
+            puts("Unable to SEEK on current file .. and this is not being handled yet.");
+            return FAILURE;
+        }
         s_off = 0;
     }
 

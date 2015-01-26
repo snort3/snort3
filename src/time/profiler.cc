@@ -157,7 +157,6 @@ void ResetRuleProfiling(void)
     RuleTreeNode *rtn;
     SFGHASH_NODE *hashNode;
     OptTreeNode *otn  = NULL;
-    PolicyId policyId = 0;
     SnortConfig *sc = snort_conf;
 
     if ((sc == NULL) || (sc->profile_rules.num == 0))
@@ -168,9 +167,6 @@ void ResetRuleProfiling(void)
             hashNode = sfghash_findnext(sc->otn_map))
     {
         otn = (OptTreeNode *)hashNode->data;
-        for ( policyId = 0;
-              policyId < otn->proto_node_num;
-              policyId++ )
         {
             rtn = getRtnFromOtn(otn, policyId);
             if (rtn == NULL)

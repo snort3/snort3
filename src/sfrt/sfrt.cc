@@ -316,13 +316,12 @@ void sfrt_free(table_t *table)
 }
 
 /* Perform a lookup on value contained in "ip" */
-GENERIC sfrt_lookup(void *adr, table_t* table)
+GENERIC sfrt_lookup(sfip_t* ip, table_t* table)
 {
     tuple_t tuple;
-    sfip_t *ip;
     void *rt = NULL;
 
-    if(!adr)
+    if(!ip)
     {
         return NULL;
     }
@@ -332,7 +331,6 @@ GENERIC sfrt_lookup(void *adr, table_t* table)
         return NULL;
     }
 
-    ip = (sfip_t*)adr;
     if (ip->family == AF_INET)
     {
         rt = table->rt;
@@ -499,16 +497,14 @@ void sfrt_cleanup(table_t* table, sfrt_iterator_callback cleanup_func)
     return;
 }
 
-GENERIC sfrt_search(void *adr, unsigned char len, table_t *table)
+GENERIC sfrt_search(sfip_t* ip, unsigned char len, table_t *table)
 {
-    sfip_t *ip;
     tuple_t tuple;
     void *rt = NULL;
 
-    if ((adr == NULL) || (table == NULL) || (len == 0))
+    if ((ip == NULL) || (table == NULL) || (len == 0))
         return NULL;
 
-    ip = (sfip_t*)adr;
     if (ip->family == AF_INET)
     {
         rt = table->rt;
@@ -527,8 +523,6 @@ GENERIC sfrt_search(void *adr, unsigned char len, table_t *table)
         return NULL;
     }
 
-    ip = (sfip_t*)adr;
-
     tuple = table->lookup(ip, rt);
 
     if (tuple.length != len)
@@ -539,17 +533,16 @@ GENERIC sfrt_search(void *adr, unsigned char len, table_t *table)
 
 /* Insert "ip", of length "len", into "table", and have it point to "ptr" */
 /* Insert "ip", of length "len", into "table", and have it point to "ptr" */
-int sfrt_insert(void *adr, unsigned char len, GENERIC ptr,
+int sfrt_insert(sfip_t* ip, unsigned char len, GENERIC ptr,
 					   int behavior, table_t *table)
 {
     int index;
     int newIndex = 0;
     int res;
-    sfip_t *ip;
     tuple_t tuple;
     void *rt = NULL;
 
-    if(!adr)
+    if(!ip)
     {
         return RT_INSERT_FAILURE;
     }
@@ -567,8 +560,6 @@ int sfrt_insert(void *adr, unsigned char len, GENERIC ptr,
     {
         return RT_INSERT_FAILURE;
     }
-
-    ip = (sfip_t*)adr;
 
     /* Check if we can reuse an existing data table entry by
      * seeing if there is an existing entry with the same length. */
@@ -591,7 +582,7 @@ int sfrt_insert(void *adr, unsigned char len, GENERIC ptr,
             return RT_INSERT_FAILURE;
         }
 
-        tuple = table->lookup(ip, table->rt);
+        tuple = table->lookup(ip, rt);
 
 #ifdef SUPPORT_LCTRIE
     }
@@ -678,7 +669,7 @@ uint32_t sfrt_usage(table_t *table)
 
 /** Remove subnet from sfrt table.
  * Remove subnet identified by ip/len and return associated data.
- * @param adr - IP address
+ * @param ip - IP address
  * @param len - length of netmask
  * @param ptr - void ** that is set to value associated with subnet
  * @param behavior - RT_FAVOR_SPECIFIC or RT_FAVOR_TIME
@@ -686,14 +677,13 @@ uint32_t sfrt_usage(table_t *table)
  * will then point to null data. This can cause hung or crosslinked data. RT_FAVOR_SPECIFIC does not have this drawback.
  * hung or crosslinked entries.
  */
-int sfrt_remove(void *adr, unsigned char len, GENERIC *ptr,
+int sfrt_remove(sfip_t* ip, unsigned char len, GENERIC *ptr,
 					   int behavior, table_t *table)
 {
     int index;
-    sfip_t *ip;
     void *rt = NULL;
 
-    if(!adr)
+    if(!ip)
     {
         return RT_REMOVE_FAILURE;
     }
@@ -712,8 +702,6 @@ int sfrt_remove(void *adr, unsigned char len, GENERIC *ptr,
     {
         return RT_REMOVE_FAILURE;
     }
-
-    ip = (sfip_t*)adr;
 
 #ifdef SUPPORT_LCTRIE
     if(table->table_type != LCT)

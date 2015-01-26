@@ -277,6 +277,8 @@ static void SnortInit(int argc, char **argv)
     StoreSnortInfoStrings();
 #endif
 
+    InitProtoNames();
+    SFAT_Init();
     /* chew up the command line */
     snort_cmd_line_conf = parse_cmd_line(argc, argv);
     snort_conf = snort_cmd_line_conf;
@@ -285,8 +287,6 @@ static void SnortInit(int argc, char **argv)
     LogMessage("%s  Snort++ %s-%s\n", get_prompt(), VERSION, BUILD);
     LogMessage("--------------------------------------------------\n");
 
-    InitProtoNames();
-    SFAT_Init();
 
     ModuleManager::init();
     ScriptManager::load_scripts(snort_cmd_line_conf->script_path);

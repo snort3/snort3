@@ -73,7 +73,7 @@ int RuleListEnd(Packet *, RuleTreeNode *, RuleFpList *, int);
 int OptListEnd(void* option_data, class Cursor&, Packet*);
 
 void snort_log(Packet*);
-void CallLogFuncs(Packet*, Event*, const char*);
+void CallLogFuncs(Packet*, ListHead *, Event* , const char* );
 void CallLogFuncs(Packet*, const OptTreeNode*, ListHead*);
 void CallAlertFuncs(Packet*, const OptTreeNode*, ListHead*);
 
