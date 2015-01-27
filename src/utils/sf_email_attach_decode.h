@@ -98,16 +98,8 @@ struct MimeStats
     uint64_t decoded_bytes[DECODE_ALL];
 };
 
-typedef struct _MimeStats
-{
-    uint64_t memcap_exceeded;
-    uint64_t attachments[DECODE_ALL];
-    uint64_t decoded_bytes[DECODE_ALL];
-} MimeStats;
-
 // end :: start + length
 int EmailDecode(const uint8_t *start, const uint8_t *end, Email_DecodeState *);
-
 
 static inline int getCodeDepth(int code_depth, int64_t file_depth)
 {
