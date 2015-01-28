@@ -442,8 +442,16 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         {
             if (data_stream >> keyword)
             {
-                std::string profile_name = "http_profile_" + keyword;
-                tmpval = table_api.add_option("profile", "$" + profile_name);
+                if(!keyword.compare("all"))
+                {
+                    std::string profile_name = "http_profile_default";
+                    tmpval = table_api.add_option("profile", "$" + profile_name);
+                }
+                else
+                {
+                    std::string profile_name = "http_profile_" + keyword;
+                    tmpval = table_api.add_option("profile", "$" + profile_name);
+                }
             }
             else
             {
