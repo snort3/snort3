@@ -781,10 +781,10 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0-a1 (Build 131) from 2.9.6-9
+o"  )~   Version 3.0.0-a1 (Build 135) from 2.9.6-9
  ''''    By Martin Roesch &amp; The Snort Team
-         http://snort.org/snort/snort-team
-         Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+         http://snort.org/contact#team
+         Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
          Copyright (C) 1998-2013 Sourcefire, Inc., et al.</code></pre>
 </div></div>
 <div id="toc">
@@ -1165,7 +1165,16 @@ mkdir -p $my_path</code></pre>
 </li>
 <li>
 <p>
-Do one of the following:
+If you are using a github clone with autotools, do this:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>autoreconf -isvf</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+Now do one of the following:
 </p>
 <div class="olist loweralpha"><ol class="loweralpha">
 <li>
@@ -1199,7 +1208,7 @@ You can also specify a cmake project generator or use ccmake:
 </p>
 <div class="literalblock">
 <div class="content">
-<pre><code>./configure_cmake --generator=Xcode --prefix=$my_path</code></pre>
+<pre><code>./configure_cmake.sh --generator=Xcode --prefix=$my_path</code></pre>
 </div></div>
 </li>
 </ol></div>
@@ -1281,55 +1290,43 @@ Go whole hog on a directory with multiple packet threads:
 </div>
 <div class="sect2">
 <h3 id="_tips">Tips</h3>
+<div class="paragraph"><p>One of the goals of Snort++ is to make it easier to configure your sensor.
+Here is a summary of tips and tricks you may find useful.</p></div>
+<div class="paragraph"><p>General Use</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-Legacy rules and includes must be put in ips.include = <em>filename</em>
-  and/or ips.rules = <em>string</em> or [[ multi line string ]].
+Snort tries hard not to error out too quickly.  It will report multiple
+  semantic errors.
 </p>
 </li>
 <li>
 <p>
-You can also use snort2lua to convert your legacy Snort conf file into a
-  Snort++ lua file.
+Snort always assumes the simplest mode of operation.  Eg, you can omit the -T
+  option to validate the conf if you don&#8217;t provide a packet source.
 </p>
 </li>
 <li>
 <p>
-You can override or add to your lua config with the --lua command line
-  option.  You can even add rules to your config via the command line.
+Warnings are not emitted unless --warn-* is specified.  --warn-all enables all
+  warnings, and --pedantic makes such warnings fatal.
 </p>
 </li>
 <li>
 <p>
-The Lua config is a <em>live</em> script that is executed when loaded.  You can
-  add functions, grab environment variables, compute values, etc.
+You can process multiple sources at one time by using the -z or --max-threads
+  option.
 </p>
 </li>
 <li>
 <p>
-By default, symbols unknown to Snort++ are silently ignored.  You can
-  generate warnings for with --warn-unknown.  Adding --pedantic makes them
-  fatal.  To ignore such symbols, export them in the environment variable
-  SNORT_IGNORE.
-</p>
-</li>
-<li>
-<p>
-You can also rename symbols that you want to disable.  For example,
-  changing normalizer to Xnormalizer will disable the normalizer.  This can
-  be easier than commenting in some cases.
+To make it easy to find the important data, zero counts are not output at
+  shutdown.
 </p>
 </li>
 <li>
 <p>
 Load plugins from the command line with --plugin-path /path/to/install/lib.
-</p>
-</li>
-<li>
-<p>
-Snort++ tries hard not to error out too quickly.  It will report multiple
-  semantic errors.  It always assumes the simplest mode of operation.
 </p>
 </li>
 <li>
@@ -1343,6 +1340,133 @@ You can process multiple sources at one time by using the -z or
 Unit tests are configured with --enable-unit-tests (libcheck is
   required).  They can then be run with snort --unit-test [&lt;mode&gt;] where mode
   is a libcheck print_mode (silent, minimal, normal, etc.).
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Lua Configuration</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Configure the wizard and default bindings will be created based on configured
+  inspectors.  No need to explicitly bind ports in this case.
+</p>
+</li>
+<li>
+<p>
+You can override or add to your Lua conf with the --lua command line option.
+</p>
+</li>
+<li>
+<p>
+The Lua conf is a live script that is executed when loaded.  You can add
+  functions, grab environment variables, compute values, etc.
+</p>
+</li>
+<li>
+<p>
+You can also rename symbols that you want to disable.  For example,
+  changing normalizer to  Xnormalizer (an unknown symbol) will disable the
+  normalizer.  This can be easier than commenting in some cases.
+</p>
+</li>
+<li>
+<p>
+By default, symbols unknown to Snort++ are silently ignored.  You can
+  generate warnings for them  with --warn-unknown.  To ignore such symbols,
+  export them in the environment variable SNORT_IGNORE.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Writing and Loading Rules</p></div>
+<div class="paragraph"><p>Snort++ rules allow arbitrary whitespace.  Multi-line rules make it easier to
+structure your rule  for clarity.  There are multiple ways to add comments to
+your rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Like Snort, the # character starts a comment to end of line.  In addition, all
+  lines between #begin and #end are comments.
+</p>
+</li>
+<li>
+<p>
+The rem option allows you to write a comment that is conveyed with the rule.
+</p>
+</li>
+<li>
+<p>
+C style multi-line comments are allowed, which means you can comment out
+  portions of a rule while  testing it out by putting the options between /* and
+  */.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>There are multiple ways to load rules too:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Set ips.rules or ips.include.
+</p>
+</li>
+<li>
+<p>
+Snort 2.X include statements can be used in rules files.
+</p>
+</li>
+<li>
+<p>
+Use -R to load a rules file.
+</p>
+</li>
+<li>
+<p>
+Use --stdin-rules with command line redirection.
+</p>
+</li>
+<li>
+<p>
+Use --lua to specify one or more rules as a command line argument.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Output Files</p></div>
+<div class="paragraph"><p>To make it simple to configure outputs when you run with multiple packet
+threads, output files are not explicitly configured.  Instead, you can use the
+options below to format the paths:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>&lt;logdir&gt;/[&lt;run_prefix&gt;][&lt;id#&gt;][&lt;X&gt;]&lt;name&gt;</code></pre>
+</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+logdir is set with -l and defaults to ./
+</p>
+</li>
+<li>
+<p>
+run_prefix is set with --run-prefix else not used
+</p>
+</li>
+<li>
+<p>
+id# is the packet thread number that writes the file; with one packet thread,
+  id# (zero) is omitted without --id-zero
+</p>
+</li>
+<li>
+<p>
+X is / if you use --id-subdir, else _ if id# is used
+</p>
+</li>
+<li>
+<p>
+name is based on module name that writes the file
+</p>
+</li>
+<li>
+<p>
+all text mode outputs default to stdout
 </p>
 </li>
 </ul></div>
@@ -5032,41 +5156,6 @@ bool <strong>http_inspect.allow_proxy_use</strong> = false: don&#8217;t alert on
 </li>
 <li>
 <p>
-bool <strong>http_inspect.apache_whitespace</strong> = false: don&#8217;t alert if tab is used in lieu of space characters
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.ascii</strong> = false: enable decoding ASCII like %2f to /
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.bare_byte</strong> = false: decode non-standard, non-ASCII character encodings
-</p>
-</li>
-<li>
-<p>
-int <strong>http_inspect.chunk_length</strong> = 500000: alert on chunk lengths greater than specified { 1: }
-</p>
-</li>
-<li>
-<p>
-int <strong>http_inspect.client_flow_depth</strong> = 0: raw request payload to inspect { -1:1460 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.directory</strong> = false: normalize . and .. sequences out of URI
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.double_decode</strong> = false: iis specific extra decoding
-</p>
-</li>
-<li>
-<p>
 bool <strong>http_inspect.enable_cookies</strong> = true: extract cookies
 </p>
 </li>
@@ -5092,31 +5181,6 @@ string <strong>http_inspect.http_methods</strong> = GET POST PUT SEARCH MKCOL CO
 </li>
 <li>
 <p>
-bool <strong>http_inspect.iis_backslash</strong> = false: normalize directory slashes
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.iis_delimiter</strong> = false: allow use of non-standard delimiter
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.iis_unicode</strong> = false: enable unicode code point mapping using unicode_map settings
-</p>
-</li>
-<li>
-<p>
-int <strong>http_inspect.iis_unicode_map.code_page</strong> = 1252: select code page in map file { 0: }
-</p>
-</li>
-<li>
-<p>
-string <strong>http_inspect.iis_unicode_map.map_file</strong>: unicode map file
-</p>
-</li>
-<li>
-<p>
 bool <strong>http_inspect.inspect_gzip</strong> = true: enable gzip decompression of compressed bodies
 </p>
 </li>
@@ -5137,37 +5201,12 @@ bool <strong>http_inspect.log_uri</strong> = false: enable logging of URI with u
 </li>
 <li>
 <p>
-int <strong>http_inspect.max_header_length</strong> = 750: maximum allowed client request header field { 0:65535 }
-</p>
-</li>
-<li>
-<p>
-int <strong>http_inspect.max_headers</strong> = 100: maximum allowed client request headers { 0:1024 }
-</p>
-</li>
-<li>
-<p>
-int <strong>http_inspect.max_spaces</strong> = 200: maximum allowed whitespaces when folding { 0:65535 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.multi_slash</strong> = false: normalize out consecutive slashes in URI
-</p>
-</li>
-<li>
-<p>
 bool <strong>http_inspect.no_pipeline_req</strong> = false: don&#8217;t inspect pipelined requests after first (still does general detection)
 </p>
 </li>
 <li>
 <p>
 bit_list <strong>http_inspect.non_rfc_chars</strong> = 0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07: alert on given non-RFC chars being present in the URI { 255 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.non_strict</strong> = true: allows HTTP 0.9 processing
 </p>
 </li>
 <li>
@@ -5182,37 +5221,142 @@ bool <strong>http_inspect.normalize_headers</strong> = false: normalize headers 
 </li>
 <li>
 <p>
-bool <strong>http_inspect.normalize_javascript</strong> = true: normalize javascript between &lt;script&gt; tags
-</p>
-</li>
-<li>
-<p>
-int <strong>http_inspect.max_javascript_whitespaces</strong> = 200: maximum number of consecutive whitespaces { 0: }
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.normalize_utf</strong> = true: normalize response bodies with UTF content-types
-</p>
-</li>
-<li>
-<p>
 int <strong>http_inspect.oversize_dir_length</strong> = 500: alert if a URL has a directory longer than this limit { 0: }
 </p>
 </li>
 <li>
 <p>
-int <strong>http_inspect.post_depth</strong> = 65495: amount of POST data to inspect { -1:65535 }
+bool <strong>http_inspect.profile.apache_whitespace</strong> = false: don&#8217;t alert if tab is used in lieu of space characters
 </p>
 </li>
 <li>
 <p>
-enum <strong>http_inspect.profile</strong> = none: set defaults appropriate for selected server { none | all | apache | iis | iis_40 | iis_50 }
+bool <strong>http_inspect.profile.ascii</strong> = false: enable decoding ASCII like %2f to /
 </p>
 </li>
 <li>
 <p>
-int <strong>http_inspect.server_flow_depth</strong> = 0: response payload to inspect; includes headers with extended_response_inspection { -1:65535 }
+bool <strong>http_inspect.profile.bare_byte</strong> = false: decode non-standard, non-ASCII character encodings
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.chunk_length</strong> = 500000: alert on chunk lengths greater than specified { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.client_flow_depth</strong> = 0: raw request payload to inspect { -1:1460 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.directory</strong> = false: normalize . and .. sequences out of URI
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.double_decode</strong> = false: iis specific extra decoding
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.iis_backslash</strong> = false: normalize directory slashes
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.iis_delimiter</strong> = false: allow use of non-standard delimiter
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.iis_unicode</strong> = false: enable unicode code point mapping using unicode_map settings
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.iis_unicode_map.code_page</strong> = 1252: select code page in map file { 0: }
+</p>
+</li>
+<li>
+<p>
+string <strong>http_inspect.profile.iis_unicode_map.map_file</strong>: unicode map file
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.max_header_length</strong> = 750: maximum allowed client request header field { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.max_headers</strong> = 100: maximum allowed client request headers { 0:1024 }
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.max_spaces</strong> = 200: maximum allowed whitespaces when folding { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.multi_slash</strong> = false: normalize out consecutive slashes in URI
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.non_strict</strong> = true: allows HTTP 0.9 processing
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.max_javascript_whitespaces</strong> = 200: maximum number of consecutive whitespaces { 0: }
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.normalize_utf</strong> = true: normalize response bodies with UTF content-types
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.normalize_javascript</strong> = true: normalize javascript between &lt;script&gt; tags
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.post_depth</strong> = 65495: amount of POST data to inspect { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+enum <strong>http_inspect.profile.profile_type</strong> = default: set defaults appropriate for selected server { default | apache | iis | iis_40 | iis_50 }
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.server_flow_depth</strong> = 0: response payload to inspect; includes headers with extended_response_inspection { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.u_encode</strong> = true: decode %uXXXX character sequences
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.utf_8</strong> = false: decode UTF-8 unicode sequences in URI
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.webroot</strong> = false: alert on directory traversals past the top level (web server root)
+</p>
+</li>
+<li>
+<p>
+bit_list <strong>http_inspect.profile.whitespace_chars</strong>: allowed white space characters { 255 }
 </p>
 </li>
 <li>
@@ -5232,27 +5376,7 @@ bool <strong>http_inspect.tab_uri_delimiter</strong> = false: whether a tab not 
 </li>
 <li>
 <p>
-bool <strong>http_inspect.u_encode</strong> = true: decode %uXXXX character sequences
-</p>
-</li>
-<li>
-<p>
 bool <strong>http_inspect.unlimited_decompress</strong> = true: decompress across multiple packets
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.utf_8</strong> = false: decode UTF-8 unicode sequences in URI
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.webroot</strong> = false: alert on directory traversals past the top level (web server root)
-</p>
-</li>
-<li>
-<p>
-bit_list <strong>http_inspect.whitespace_chars</strong>: allowed white space characters { 255 }
 </p>
 </li>
 </ul></div>
@@ -5820,7 +5944,7 @@ int <strong>perf_monitor.seconds</strong> = 60: report interval; 0 means report 
 </li>
 <li>
 <p>
-int <strong>perf_monitor.flow_ip_memcap</strong> = 52428800: maximum memory for flow tracking { 0: }
+int <strong>perf_monitor.flow_ip_memcap</strong> = 52428800: maximum memory for flow tracking { 8200: }
 </p>
 </li>
 <li>
@@ -7728,6 +7852,34 @@ string <strong>itype.~range</strong>: check if icmp type is <em>type | min&lt;&g
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_md5">md5</h3>
+<div class="paragraph"><p>What: payload rule option for hash matching</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+string <strong>md5.~hash</strong>: data to match
+</p>
+</li>
+<li>
+<p>
+int <strong>md5.length</strong>: number of octets in plain text { 1:65535 }
+</p>
+</li>
+<li>
+<p>
+string <strong>md5.offset</strong>: var or number of bytes from start of buffer to start search
+</p>
+</li>
+<li>
+<p>
+implied <strong>md5.relative</strong> = false: offset from cursor instead of start of buffer
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_metadata">metadata</h3>
 <div class="paragraph"><p>What: rule option for conveying arbitrary name, value data within the rule text</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
@@ -7901,6 +8053,62 @@ enum <strong>session.~mode</strong>: output format { printable|binary|all }
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_sha256">sha256</h3>
+<div class="paragraph"><p>What: payload rule option for hash matching</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+string <strong>sha256.~hash</strong>: data to match
+</p>
+</li>
+<li>
+<p>
+int <strong>sha256.length</strong>: number of octets in plain text { 1:65535 }
+</p>
+</li>
+<li>
+<p>
+string <strong>sha256.offset</strong>: var or number of bytes from start of buffer to start search
+</p>
+</li>
+<li>
+<p>
+implied <strong>sha256.relative</strong> = false: offset from cursor instead of start of buffer
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_sha512">sha512</h3>
+<div class="paragraph"><p>What: payload rule option for hash matching</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+string <strong>sha512.~hash</strong>: data to match
+</p>
+</li>
+<li>
+<p>
+int <strong>sha512.length</strong>: number of octets in plain text { 1:65535 }
+</p>
+</li>
+<li>
+<p>
+string <strong>sha512.offset</strong>: var or number of bytes from start of buffer to start search
+</p>
+</li>
+<li>
+<p>
+implied <strong>sha512.relative</strong> = false: offset from cursor instead of start of buffer
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_sid">sid</h3>
 <div class="paragraph"><p>What: rule option to indicate signature number</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
@@ -7975,17 +8183,12 @@ implied <strong>stream_reassemble.fastpath</strong>: optionally whitelist the re
 <div class="ulist"><ul>
 <li>
 <p>
-enum <strong>stream_size.direction</strong>: compare applies to the given direction(s) { either|client|server|both }
+string <strong>stream_size.~range</strong>: size for comparison
 </p>
 </li>
 <li>
 <p>
-enum <strong>stream_size.operator</strong>: how to compare { = | != | &lt; | &gt; | &#8656; | &gt;= }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream_size.size</strong>: size for comparison
+enum <strong>stream_size.~direction</strong>: compare applies to the given direction(s) { either|to_server|to_client|both }
 </p>
 </li>
 </ul></div>
@@ -8764,13 +8967,13 @@ alert_unified2 and log_unified2 have been deleted
 <div class="sect1">
 <h2 id="_snort2lua">Snort2Lua</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Snort2Lua reads your legacy Snort conf file(s) and generates Snort++ Lua
+<div class="paragraph"><p>Snort2Lua reads your legacy Snort conf file(s) and generates Snort\++ Lua
 and rules files.  When running this program, the only mandatory option is
 to provide Snort2Lua with a Snort configuration file. The default output
 file file is snort.lua, the default error file will be snort.rej, and the
 default rule file is the output file (default is snort.lua).  When
 Snort2Lua finishes running, the resulting configuration file can be
-successfully run as the Snort++ configuration file.  The sole exception to
+successfully run as the Snort3.0 configuration file.  The sole exception to
 this rule is when Snort2Lua cannot find an included file.  If that occurs,
 the file will still be included in the output file and you will need to
 manually adjust or comment the file name. Additionally, if the exit code is
@@ -8780,15 +8983,16 @@ the error file for all of the conversion problems.</p></div>
 bad.  For instance, Snort2Lua will only convert preprocessors that are
 currently supported. Therefore, any unsupported preprocessors or
 configuration options including DCERP, SIP, and SMTP, will cause an error
-in Snort2Lua since Snort++ does not support those preprocessors.
+in Snort2Lua since Snort3.0 does not support those preprocessors.
 Additionally, any rule options associated with those preprocessors are also
 not supported.  Finally, Snort2Lua expects a valid Snort configuration.
 Therefore, if the configuration is invalid or has questionable syntax,
-Snort2Lua may find those errors and fail to parse the configuration file.</p></div>
+Snort2Lua may fail to parse the configuration file or create an invalid
+Snort3.0 configuration file.</p></div>
 <div class="paragraph"><p>There are a also few peculiarities of Snort2Lua that may be confusing to a
 first time user. Specifically, aside from an initial configuration file
 (which is specified from the command line or as the file in ‘config
-binding’), every file that is included into Snort++ must be either a Lua
+binding’), every file that is included into Snort3.0 must be either a Lua
 file or a rule file; the file cannot contain both rules and Lua syntax.
 Therefore, when parsing a file specified with the ‘include’ command,
 Snort2Lua will output both a Lua file and a rule file.  Additionally, any
@@ -8812,9 +9016,9 @@ As expected, quiet mode produces a Snort++ configuration.  All errors
 (aside from Fatal Snort2Lua errors), differences, and comments will omitted
 from the final output file.  Default mode will print everything. That mean
 you will be able to see exactly what changes have occurred between Snort and
-Snort++ in addition to the new syntax, the original file&#8217;s comments, and
+Snort\++ in addition to the new syntax, the original file&#8217;s comments, and
 all errors that have occurred.  Finally, differences mode will not actually
-output a valid Snort++ configuration.  Instead, you can see the exact
+output a valid Snort3.0 configuration.  Instead, you can see the exact
 options from the input configuration that have changed.</p></div>
 <div class="sect3">
 <h4 id="_usage_snort2lua_options_8230_c_lt_snort_conf_gt_8230">Usage: snort2lua [OPTIONS]&#8230; -c &lt;snort_conf&gt; &#8230;</h4>
@@ -8835,8 +9039,7 @@ options into a Snort++ configuration file</p></div>
 </li>
 <li>
 <p>
-<strong>-a</strong>                print all data, including errors and Snort - Snort++
-                    configuration differences.
+<strong>-a</strong>                default option.  print all data
 </p>
 </li>
 <li>
@@ -8847,7 +9050,7 @@ options into a Snort++ configuration file</p></div>
 <li>
 <p>
 <strong>-d</strong>                print the differences, and only the differences, between the
-                    Snort and Snort++ configurations
+                    Snort and Snort++ configurations to the &lt;out_file&gt;
 </p>
 </li>
 <li>
@@ -8874,7 +9077,8 @@ options into a Snort++ configuration file</p></div>
 </li>
 <li>
 <p>
-<strong>-q</strong>                quiet mode. Only output valid confiration information
+<strong>-q</strong>                quiet mode. Only output valid confiration information to the
+                    &lt;out_file&gt;
 </p>
 </li>
 <li>
@@ -8939,20 +9143,20 @@ options into a Snort++ configuration file</p></div>
 </li>
 <li>
 <p>
-<strong>--print-all</strong>       Same as <em>-a</em>. print all data, including errors, Snort -
-                    Snort++ configuration differences, and developer warnings.
+<strong>--print-all</strong>       Same as <em>-a</em>. default option.  print all data
 </p>
 </li>
 <li>
 <p>
-<strong>--print-differences</strong>  Same as <em>-d</em>. print the differences, and only the
-                    differences, between the Snort and Snort++ configurations
+<strong>--print-differences</strong>  Same as <em>-d</em>. output the differences, and only the
+                    differences, between the Snort and Snort++ configurations to
+                    the &lt;out_file&gt;
 </p>
 </li>
 <li>
 <p>
 <strong>--quiet</strong>           Same as <em>-q</em>. quiet mode. Only output valid confiration
-                    information
+                    information to the &lt;out_file&gt;
 </p>
 </li>
 <li>
@@ -9052,6 +9256,15 @@ If a rule&#8217;s action is a custom ruletype, that rule action will be silently
 converted to the rultype&#8217;s <em>type</em>. No warnings or errors are currently
 emmitted. Additionally, the custom ruletypes outputs will be silently
 discarded.
+</p>
+</li>
+<li>
+<p>
+If the original configuration contains a binding that points to another
+file and the binding file contains an error, Snort2Lua will output the
+number of rejects for the binding file in addition to the number of
+rejects in the main file.  The two numbers will eventually be combined into
+one output.
 </p>
 </li>
 </ul></div>
@@ -11046,41 +11259,6 @@ bool <strong>http_inspect.allow_proxy_use</strong> = false: don&#8217;t alert on
 </li>
 <li>
 <p>
-bool <strong>http_inspect.apache_whitespace</strong> = false: don&#8217;t alert if tab is used in lieu of space characters
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.ascii</strong> = false: enable decoding ASCII like %2f to /
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.bare_byte</strong> = false: decode non-standard, non-ASCII character encodings
-</p>
-</li>
-<li>
-<p>
-int <strong>http_inspect.chunk_length</strong> = 500000: alert on chunk lengths greater than specified { 1: }
-</p>
-</li>
-<li>
-<p>
-int <strong>http_inspect.client_flow_depth</strong> = 0: raw request payload to inspect { -1:1460 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.directory</strong> = false: normalize . and .. sequences out of URI
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.double_decode</strong> = false: iis specific extra decoding
-</p>
-</li>
-<li>
-<p>
 bool <strong>http_inspect.enable_cookies</strong> = true: extract cookies
 </p>
 </li>
@@ -11106,31 +11284,6 @@ string <strong>http_inspect.http_methods</strong> = GET POST PUT SEARCH MKCOL CO
 </li>
 <li>
 <p>
-bool <strong>http_inspect.iis_backslash</strong> = false: normalize directory slashes
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.iis_delimiter</strong> = false: allow use of non-standard delimiter
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.iis_unicode</strong> = false: enable unicode code point mapping using unicode_map settings
-</p>
-</li>
-<li>
-<p>
-int <strong>http_inspect.iis_unicode_map.code_page</strong> = 1252: select code page in map file { 0: }
-</p>
-</li>
-<li>
-<p>
-string <strong>http_inspect.iis_unicode_map.map_file</strong>: unicode map file
-</p>
-</li>
-<li>
-<p>
 bool <strong>http_inspect.inspect_gzip</strong> = true: enable gzip decompression of compressed bodies
 </p>
 </li>
@@ -11151,42 +11304,12 @@ bool <strong>http_inspect.log_uri</strong> = false: enable logging of URI with u
 </li>
 <li>
 <p>
-int <strong>http_inspect.max_header_length</strong> = 750: maximum allowed client request header field { 0:65535 }
-</p>
-</li>
-<li>
-<p>
-int <strong>http_inspect.max_headers</strong> = 100: maximum allowed client request headers { 0:1024 }
-</p>
-</li>
-<li>
-<p>
-int <strong>http_inspect.max_javascript_whitespaces</strong> = 200: maximum number of consecutive whitespaces { 0: }
-</p>
-</li>
-<li>
-<p>
-int <strong>http_inspect.max_spaces</strong> = 200: maximum allowed whitespaces when folding { 0:65535 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.multi_slash</strong> = false: normalize out consecutive slashes in URI
-</p>
-</li>
-<li>
-<p>
 bool <strong>http_inspect.no_pipeline_req</strong> = false: don&#8217;t inspect pipelined requests after first (still does general detection)
 </p>
 </li>
 <li>
 <p>
 bit_list <strong>http_inspect.non_rfc_chars</strong> = 0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07: alert on given non-RFC chars being present in the URI { 255 }
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.non_strict</strong> = true: allows HTTP 0.9 processing
 </p>
 </li>
 <li>
@@ -11201,32 +11324,142 @@ bool <strong>http_inspect.normalize_headers</strong> = false: normalize headers 
 </li>
 <li>
 <p>
-bool <strong>http_inspect.normalize_javascript</strong> = true: normalize javascript between &lt;script&gt; tags
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.normalize_utf</strong> = true: normalize response bodies with UTF content-types
-</p>
-</li>
-<li>
-<p>
 int <strong>http_inspect.oversize_dir_length</strong> = 500: alert if a URL has a directory longer than this limit { 0: }
 </p>
 </li>
 <li>
 <p>
-int <strong>http_inspect.post_depth</strong> = 65495: amount of POST data to inspect { -1:65535 }
+bool <strong>http_inspect.profile.apache_whitespace</strong> = false: don&#8217;t alert if tab is used in lieu of space characters
 </p>
 </li>
 <li>
 <p>
-enum <strong>http_inspect.profile</strong> = none: set defaults appropriate for selected server { none | all | apache | iis | iis_40 | iis_50 }
+bool <strong>http_inspect.profile.ascii</strong> = false: enable decoding ASCII like %2f to /
 </p>
 </li>
 <li>
 <p>
-int <strong>http_inspect.server_flow_depth</strong> = 0: response payload to inspect; includes headers with extended_response_inspection { -1:65535 }
+bool <strong>http_inspect.profile.bare_byte</strong> = false: decode non-standard, non-ASCII character encodings
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.chunk_length</strong> = 500000: alert on chunk lengths greater than specified { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.client_flow_depth</strong> = 0: raw request payload to inspect { -1:1460 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.directory</strong> = false: normalize . and .. sequences out of URI
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.double_decode</strong> = false: iis specific extra decoding
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.iis_backslash</strong> = false: normalize directory slashes
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.iis_delimiter</strong> = false: allow use of non-standard delimiter
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.iis_unicode</strong> = false: enable unicode code point mapping using unicode_map settings
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.iis_unicode_map.code_page</strong> = 1252: select code page in map file { 0: }
+</p>
+</li>
+<li>
+<p>
+string <strong>http_inspect.profile.iis_unicode_map.map_file</strong>: unicode map file
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.max_header_length</strong> = 750: maximum allowed client request header field { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.max_headers</strong> = 100: maximum allowed client request headers { 0:1024 }
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.max_javascript_whitespaces</strong> = 200: maximum number of consecutive whitespaces { 0: }
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.max_spaces</strong> = 200: maximum allowed whitespaces when folding { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.multi_slash</strong> = false: normalize out consecutive slashes in URI
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.non_strict</strong> = true: allows HTTP 0.9 processing
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.normalize_javascript</strong> = true: normalize javascript between &lt;script&gt; tags
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.normalize_utf</strong> = true: normalize response bodies with UTF content-types
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.post_depth</strong> = 65495: amount of POST data to inspect { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+enum <strong>http_inspect.profile.profile_type</strong> = default: set defaults appropriate for selected server { default | apache | iis | iis_40 | iis_50 }
+</p>
+</li>
+<li>
+<p>
+int <strong>http_inspect.profile.server_flow_depth</strong> = 0: response payload to inspect; includes headers with extended_response_inspection { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.u_encode</strong> = true: decode %uXXXX character sequences
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.utf_8</strong> = false: decode UTF-8 unicode sequences in URI
+</p>
+</li>
+<li>
+<p>
+bool <strong>http_inspect.profile.webroot</strong> = false: alert on directory traversals past the top level (web server root)
+</p>
+</li>
+<li>
+<p>
+bit_list <strong>http_inspect.profile.whitespace_chars</strong>: allowed white space characters { 255 }
 </p>
 </li>
 <li>
@@ -11246,27 +11479,7 @@ bool <strong>http_inspect.tab_uri_delimiter</strong> = false: whether a tab not 
 </li>
 <li>
 <p>
-bool <strong>http_inspect.u_encode</strong> = true: decode %uXXXX character sequences
-</p>
-</li>
-<li>
-<p>
 bool <strong>http_inspect.unlimited_decompress</strong> = true: decompress across multiple packets
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.utf_8</strong> = false: decode UTF-8 unicode sequences in URI
-</p>
-</li>
-<li>
-<p>
-bool <strong>http_inspect.webroot</strong> = false: alert on directory traversals past the top level (web server root)
-</p>
-</li>
-<li>
-<p>
-bit_list <strong>http_inspect.whitespace_chars</strong>: allowed white space characters { 255 }
 </p>
 </li>
 <li>
@@ -11357,6 +11570,26 @@ int <strong>log_pcap.limit</strong> = 0: set limit (0 is unlimited) { 0: }
 <li>
 <p>
 enum <strong>log_pcap.units</strong> = B: bytes | KB | MB | GB { B | K | M | G }
+</p>
+</li>
+<li>
+<p>
+int <strong>md5.length</strong>: number of octets in plain text { 1:65535 }
+</p>
+</li>
+<li>
+<p>
+string <strong>md5.offset</strong>: var or number of bytes from start of buffer to start search
+</p>
+</li>
+<li>
+<p>
+implied <strong>md5.relative</strong> = false: offset from cursor instead of start of buffer
+</p>
+</li>
+<li>
+<p>
+string <strong>md5.~hash</strong>: data to match
 </p>
 </li>
 <li>
@@ -11666,7 +11899,7 @@ bool <strong>perf_monitor.flow_ip_file</strong> = false: output host pair statis
 </li>
 <li>
 <p>
-int <strong>perf_monitor.flow_ip_memcap</strong> = 52428800: maximum memory for flow tracking { 0: }
+int <strong>perf_monitor.flow_ip_memcap</strong> = 52428800: maximum memory for flow tracking { 8200: }
 </p>
 </li>
 <li>
@@ -12077,6 +12310,46 @@ string <strong>seq.~range</strong>: check if packet payload size is <em>size | m
 <li>
 <p>
 enum <strong>session.~mode</strong>: output format { printable|binary|all }
+</p>
+</li>
+<li>
+<p>
+int <strong>sha256.length</strong>: number of octets in plain text { 1:65535 }
+</p>
+</li>
+<li>
+<p>
+string <strong>sha256.offset</strong>: var or number of bytes from start of buffer to start search
+</p>
+</li>
+<li>
+<p>
+implied <strong>sha256.relative</strong> = false: offset from cursor instead of start of buffer
+</p>
+</li>
+<li>
+<p>
+string <strong>sha256.~hash</strong>: data to match
+</p>
+</li>
+<li>
+<p>
+int <strong>sha512.length</strong>: number of octets in plain text { 1:65535 }
+</p>
+</li>
+<li>
+<p>
+string <strong>sha512.offset</strong>: var or number of bytes from start of buffer to start search
+</p>
+</li>
+<li>
+<p>
+implied <strong>sha512.relative</strong> = false: offset from cursor instead of start of buffer
+</p>
+</li>
+<li>
+<p>
+string <strong>sha512.~hash</strong>: data to match
 </p>
 </li>
 <li>
@@ -12771,17 +13044,12 @@ implied <strong>stream_reassemble.noalert</strong>: don&#8217;t alert when rule 
 </li>
 <li>
 <p>
-enum <strong>stream_size.direction</strong>: compare applies to the given direction(s) { either|client|server|both }
+enum <strong>stream_size.~direction</strong>: compare applies to the given direction(s) { either|to_server|to_client|both }
 </p>
 </li>
 <li>
 <p>
-enum <strong>stream_size.operator</strong>: how to compare { = | != | &lt; | &gt; | &#8656; | &gt;= }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream_size.size</strong>: size for comparison
+string <strong>stream_size.~range</strong>: size for comparison
 </p>
 </li>
 <li>
@@ -15700,7 +15968,7 @@ documentation and are not applicable elsewhere.</td>
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>term</strong>(15): shutdown normally
+<strong>hosts</strong>(16): reload hosts file
 </p>
 </li>
 <li>
@@ -15715,7 +15983,7 @@ documentation and are not applicable elsewhere.</td>
 </li>
 <li>
 <p>
-<strong>stats</strong>(30): dump stats to stdout
+<strong>reload</strong>(1): reload config file
 </p>
 </li>
 <li>
@@ -15725,12 +15993,12 @@ documentation and are not applicable elsewhere.</td>
 </li>
 <li>
 <p>
-<strong>reload</strong>(1): reload config file
+<strong>stats</strong>(30): dump stats to stdout
 </p>
 </li>
 <li>
 <p>
-<strong>hosts</strong>(16): reload hosts file
+<strong>term</strong>(15): shutdown normally
 </p>
 </li>
 </ul></div>
@@ -15841,12 +16109,36 @@ change -&gt; ftp_telnet_protocol: 'data_chan' ==&gt; 'ignore_data_chan'
 change -&gt; ftp_telnet_protocol: 'ports' ==&gt; 'bindings'
 change -&gt; gtp: 'ports' ==&gt; 'gtp_ports'
 change -&gt; http_inspect: 'http_inspect' ==&gt; 'http_global'
+change -&gt; http_inspect_server: 'apache_whitespace' ==&gt; 'profile.apache_whitespace'
+change -&gt; http_inspect_server: 'ascii' ==&gt; 'profile.ascii'
+change -&gt; http_inspect_server: 'bare_byte' ==&gt; 'profile.bare_byte'
+change -&gt; http_inspect_server: 'chunk_length' ==&gt; 'profile.chunk_length'
+change -&gt; http_inspect_server: 'client_flow_depth' ==&gt; 'profile.client_flow_depth'
+change -&gt; http_inspect_server: 'directory' ==&gt; 'profile.directory'
+change -&gt; http_inspect_server: 'double_decode' ==&gt; 'profile.double_decode'
 change -&gt; http_inspect_server: 'enable_cookie' ==&gt; 'enable_cookies'
 change -&gt; http_inspect_server: 'flow_depth' ==&gt; 'server_flow_depth'
+change -&gt; http_inspect_server: 'flow_depth_depth [-1:65495]' ==&gt; 'profile.flow_depth [-1:65535]'
 change -&gt; http_inspect_server: 'http_inspect_server' ==&gt; 'http_inspect'
+change -&gt; http_inspect_server: 'iis_backslash' ==&gt; 'profile.iis_backslash'
+change -&gt; http_inspect_server: 'iis_delimiter' ==&gt; 'profile.iis_delimiter'
+change -&gt; http_inspect_server: 'iis_unicode' ==&gt; 'profile.iis_unicode'
+change -&gt; http_inspect_server: 'max_header_length' ==&gt; 'profile.max_header_length'
+change -&gt; http_inspect_server: 'max_headers' ==&gt; 'profile.max_headers'
+change -&gt; http_inspect_server: 'max_javascript_whitespaces' ==&gt; 'profile.max_javascript_whitespaces'
+change -&gt; http_inspect_server: 'max_spaces' ==&gt; 'profile.max_spaces'
+change -&gt; http_inspect_server: 'multi_slash' ==&gt; 'profile.multi_slash'
 change -&gt; http_inspect_server: 'non_rfc_char' ==&gt; 'non_rfc_chars'
+change -&gt; http_inspect_server: 'non_strict' ==&gt; 'profile.non_strict'
+change -&gt; http_inspect_server: 'normalize_javascript' ==&gt; 'profile.normalize_javascript'
+change -&gt; http_inspect_server: 'normalize_utf' ==&gt; 'profile.normalize_utf'
 change -&gt; http_inspect_server: 'ports' ==&gt; 'bindings'
-change -&gt; http_inspect_server: 'post_depth [-1:65495]' ==&gt; 'post_depth [-1:65535]'
+change -&gt; http_inspect_server: 'post_depth [-1:65495]' ==&gt; 'profile.post_depth [-1:65535]'
+change -&gt; http_inspect_server: 'server_flow_depth [-1:65495]' ==&gt; 'profile.server_flow_depth [-1:65535]'
+change -&gt; http_inspect_server: 'u_encode' ==&gt; 'profile.u_encode'
+change -&gt; http_inspect_server: 'utf_8' ==&gt; 'profile.utf_8'
+change -&gt; http_inspect_server: 'webroot' ==&gt; 'profile.webroot'
+change -&gt; http_inspect_server: 'whitespace_chars' ==&gt; 'profile.whitespace_chars'
 change -&gt; mpls_payload_type: 'config mpls_payload_type: ethernet' ==&gt; 'mpls_payload_type = eth'
 change -&gt; mpls_payload_type: 'config mpls_payload_type: ipv4' ==&gt; 'mpls_payload_type = ip4'
 change -&gt; mpls_payload_type: 'config mpls_payload_type: ipv6' ==&gt; 'mpls_payload_type = ip6'
@@ -16429,6 +16721,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>md5</strong> (ips_option): payload rule option for hash matching
+</p>
+</li>
+<li>
+<p>
 <strong>metadata</strong> (ips_option): rule option for conveying arbitrary name, value data within the rule text
 </p>
 </li>
@@ -16604,6 +16901,16 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>sha256</strong> (ips_option): payload rule option for hash matching
+</p>
+</li>
+<li>
+<p>
+<strong>sha512</strong> (ips_option): payload rule option for hash matching
+</p>
+</li>
+<li>
+<p>
 <strong>sid</strong> (ips_option): rule option to indicate signature number
 </p>
 </li>
@@ -16769,6 +17076,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>codec::i4l_rawip</strong>: support for I4L IP
+</p>
+</li>
+<li>
+<p>
 <strong>codec::icmp4</strong>: support for Internet control message protocol v4
 </p>
 </li>
@@ -16850,6 +17162,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>codec::null</strong>: support for null encapsulation (DLT 0)
+</p>
+</li>
+<li>
+<p>
+<strong>codec::pflog</strong>: support for OpenBSD PF log (DLT 117)
 </p>
 </li>
 <li>
@@ -17239,6 +17556,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>ips_option::md5</strong>: payload rule option for hash matching
+</p>
+</li>
+<li>
+<p>
 <strong>ips_option::metadata</strong>: rule option for conveying arbitrary name, value data within the rule text
 </p>
 </li>
@@ -17300,6 +17622,16 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>ips_option::session</strong>: rule option to check user data from TCP sessions
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::sha256</strong>: payload rule option for hash matching
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::sha512</strong>: payload rule option for hash matching
 </p>
 </li>
 <li>
@@ -17414,12 +17746,12 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>search_engine::ac_full</strong>: Aho-Corasick Full (high memory, best performance)
+<strong>search_engine::ac_full</strong>: Aho-Corasick Full (high memory, best performance), implements search_all()
 </p>
 </li>
 <li>
 <p>
-<strong>search_engine::ac_full_q</strong>: Aho-Corasick Full (high memory, best performance) with queued events
+<strong>search_engine::ac_full_q</strong>: Aho-Corasick Full (high memory, best performance) with queued events, implements search_all()
 </p>
 </li>
 <li>
@@ -17613,6 +17945,20 @@ Presently using FIXIT-X where X = P | H | M | L, indicating perf, high,
   Perf changes fall between alpha 1 and 2.
 </p>
 </li>
+<li>
+<p>
+Put the copyright(s) and license in a comment block at the top of each
+  source file (.h and .cc).  Don&#8217;t bother with trivial scripts and make
+  foo.  Some interesting Lua code should get a comment block too.  Copy and
+  paste exactly from src/main.h (don&#8217;t reformat).
+</p>
+</li>
+<li>
+<p>
+Put author, description, etc. in separate comment(s) following the
+  license.  Do not put such comments in the middle of the license foo.
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect4">
@@ -17620,8 +17966,8 @@ Presently using FIXIT-X where X = P | H | M | L, indicating perf, high,
 <div class="ulist"><ul>
 <li>
 <p>
-Messages intended for the user should not look like debug messages. In,
-  other words, the function name should not be included.
+Messages intended for the user should not look like debug messages. Eg,
+  the function name should not be included.
 </p>
 </li>
 <li>
@@ -17631,7 +17977,7 @@ Most debug messages should just be deleted.
 </li>
 <li>
 <p>
-Don&#8217;t bang your messages (no !).  The user feels bad enough about the
+Don&#8217;t bang your error messages (no !).  The user feels bad enough about the
   problem already w/o you shouting at him.
 </p>
 </li>
@@ -17935,7 +18281,7 @@ Prefer <em>and</em> over &amp;&amp; and <em>or</em> over || for new source files
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-12-15 12:42:35 EST
+Last updated 2015-01-29 11:10:26 EST
 </div>
 </div>
 </body>

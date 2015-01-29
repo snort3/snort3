@@ -1,3 +1,9 @@
+15/01/29 - build 135
+
+-- fixed freebsd build error
+-- fix default hi profile name
+-- updated default snort manuals
+
 15/01/26 - build 134
 
 -- sync Mpse to 297, add SearchTool
