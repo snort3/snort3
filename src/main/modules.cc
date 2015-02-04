@@ -1126,6 +1126,7 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
 };
 
+
 bool IpsModule::set(const char*, Value& v, SnortConfig*)
 {
     IpsPolicy* p = get_ips_policy();
@@ -1140,7 +1141,7 @@ bool IpsModule::set(const char*, Value& v, SnortConfig*)
         p->include = v.get_string();
 
     else if ( v.is("mode") )
-        p->policy_mode = GetPolicyMode((PolicyMode)v.get_long());
+        p->policy_mode = (PolicyMode)v.get_long();
 
     else if ( v.is("rules") )
         p->rules = v.get_string();

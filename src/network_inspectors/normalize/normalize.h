@@ -20,13 +20,13 @@
 #ifndef NORMALIZE_H
 #define NORMALIZE_H
 
+#include <cstdint>
 #include <stdint.h>
 #include "main/policy.h"
+#include "framework/counts.h"
 
-// these control protocol specific normalizations all are enables except
-// tcp_urp which is enabled with tcp core and disabled explicitly.
-
-typedef enum
+// these control protocol specific normalizations
+enum NormFlags
 {
     NORM_IP4_BASE        = 0x00000001, // core ip4 norms
   //NORM_IP4_ID          = 0x00000002, // tbd:  encrypt ip id
@@ -41,18 +41,40 @@ typedef enum
     NORM_ICMP4           = 0x00000400, // core icmp4 norms
     NORM_ICMP6           = 0x00000800, // core icmp6 norms
 
-    NORM_TCP_BASE        = 0x00001000, // core tcp norms
-    NORM_TCP_ECN_PKT     = 0x00002000, // clear ece and cwr
-    NORM_TCP_ECN_STR     = 0x00004000, // clear if not negotiated (stream)
-    NORM_TCP_URP         = 0x00008000, // trim urp to dsize
-    NORM_TCP_OPT         = 0x00010000, // nop over non-essential options
-    NORM_TCP_IPS         = 0x00020000, // enable stream normalization/pre-ack flushing
-    NORM_TCP_TRIM        = 0x00040000, // enforce min frame
+    NORM_TCP_ECN_PKT     = 0x00001000, // clear ece and cwr
+    NORM_TCP_ECN_STR     = 0x00002000, // clear if not negotiated (stream)
+    NORM_TCP_URP         = 0x00004000, // trim urp to dsize
+    NORM_TCP_OPT         = 0x00008000, // nop over non-essential options
+    NORM_TCP_IPS         = 0x00010000, // enable stream normalization/pre-ack flushing
 
-    NORM_ALL             = 0x000FFFFF  // all normalizations on
-} NormFlags;
+    NORM_TCP_TRIM_SYN    = 0x00020000, // strip data from syn
+    NORM_TCP_TRIM_RST    = 0x00040000, // strip data from rst
+    NORM_TCP_TRIM_WIN    = 0x00080000, // trim to window
+    NORM_TCP_TRIM_MSS    = 0x00100000, // trim to mss
+
+    NORM_TCP_BLOCK       = 0x00200000, // enable tcp norms (used for normalizer indexing)
+    NORM_TCP_RSV         = 0x00400000, // clear reserved bits
+    NORM_TCP_PAD         = 0x00800000, // clear option padding bytes
+    NORM_TCP_REQ_URG     = 0x01000000, // clear URP if URG = 0
+    NORM_TCP_REQ_PAY     = 0x02000000, // clear URP/URG on no payload
+    NORM_TCP_REQ_URP     = 0x04000000, // clear URG if URP is not set
+    NORM_ALL             = 0xFFFFFFFF,  // all normalizations on
+};
+
+
+enum NormMode : int8_t
+{
+    NORM_MODE_OFF = -1,
+    NORM_MODE_ON = 0,
+    NORM_MODE_TEST = 1,
+    NORM_MODE_MAX = 2
+};
+
+typedef PegCount (*NormPegs)[NORM_MODE_MAX];
+struct SnortConfig;
 
 bool Normalize_IsEnabled(NormFlags);
+NormMode Normalize_GetMode(NormFlags);
 
 #define NORM_IP4_ANY (0xFF)
 #define NORM_IP6_ANY (NORM_IP6_BASE|NORM_IP6_TTL)

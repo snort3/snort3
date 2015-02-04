@@ -35,6 +35,7 @@
 #include "detect.h"
 #include "stream/stream_api.h"
 #include "target_based/sftarget_protocol_reference.h"
+#include "network_inspectors/normalize/norm.h"
 
 //#define DEBUG_STREAM DEBUG
 
@@ -115,7 +116,7 @@ extern THREAD_LOCAL class FlowControl* flow_con;
 extern const PegInfo base_pegs[];
 
 const PegInfo* Stream_GetNormPegs();
-PegCount* Stream_GetNormCounts(unsigned&);
+NormPegs Stream_GetNormCounts(unsigned&);
 
 #endif
 

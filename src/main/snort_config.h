@@ -292,7 +292,6 @@ struct SnortConfig
     bool unit_test;
 #endif
 
-
     std::map<const std::string, int>* source_affinity;
     std::vector<int>* thread_affinity;
 

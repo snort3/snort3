@@ -15,12 +15,13 @@ add_library( config_states
     config_ipv6_frag.cc
     config_memcaps.cc
     config_mpls_payload_type.cc
-    config_policy_id.cc
     config_no_option.cc
     config_one_int_option.cc
     config_one_string_option.cc
     config_order.cc
     config_paf_max.cc
+    config_policy_id.cc
+    config_policy_mode.cc
     config_ppm.cc
     config_profile.cc
     config_reference.cc

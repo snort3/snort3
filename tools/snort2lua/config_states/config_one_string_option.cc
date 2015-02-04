@@ -212,19 +212,6 @@ static const ConvertMap logdir_api =
 const ConvertMap* logdir_map = &logdir_api;
 
 /*************************************************
- *****************  policy_mode  *****************
- *************************************************/
-
-static const std::string policy_mode = "policy_mode";
-static const ConvertMap policy_mode_api =
-{
-    policy_mode,
-    config_string_ctor<&policy_mode, &ips, &mode>,
-};
-
-const ConvertMap* policy_mode_map = &policy_mode_api;
-
-/*************************************************
  ********************  react  ********************
  *************************************************/
 

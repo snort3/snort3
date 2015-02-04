@@ -82,6 +82,7 @@
 #include "sfip/sf_ip.h"
 #include "protocols/tcp.h"
 #include "protocols/eth.h"
+#include "network_inspectors/normalize/normalize.h"
 
 using namespace tcp;
 
@@ -980,20 +981,27 @@ static inline void EventNo3whs()
 /*
  *  Utility functions for TCP stuff
  */
-typedef enum {
-    PC_TCP_TRIM,
+enum PegCounts
+{
+    PC_TCP_TRIM_SYN,
+    PC_TCP_TRIM_RST,
+    PC_TCP_TRIM_WIN,
+    PC_TCP_TRIM_MSS,
     PC_TCP_ECN_SSN,
     PC_TCP_TS_NOP,
     PC_TCP_IPS_DATA,
     PC_TCP_BLOCK,
     PC_MAX
-} PegCounts;
+};
 
-static THREAD_LOCAL PegCount normStats[PC_MAX];
+static THREAD_LOCAL PegCount normStats[PC_MAX][NORM_MODE_MAX];
 
 static const PegInfo pegName[] =
 {
-    { "tcp trim", "tcp segments trimmed to correct size" },
+    { "tcp trim syn", "tcp segments trimmed on SYN" },
+    { "tcp trim rst", "RST packets with data trimmed" },
+    { "tcp trim win", "data trimed to window" },
+    { "tcp trim mss", "data trimmed to MSS" },
     { "tcp ecn session", "ECN bits cleared" },
     { "tcp ts nop", "timestamp options cleared" },
     { "tcp ips data", "normalized segments" },
@@ -1004,7 +1012,7 @@ static const PegInfo pegName[] =
 const PegInfo* Stream_GetNormPegs()
 { return pegName; }
 
-PegCount* Stream_GetNormCounts(unsigned& c)
+NormPegs Stream_GetNormCounts(unsigned& c)
 { 
     c = PC_MAX;
     return normStats;
@@ -1024,52 +1032,112 @@ static inline void NormalDropPacket (Packet*)
 
 static inline int NormalDropPacketIf (Packet* p, NormFlags f)
 {
-    if ( Normalize_IsEnabled(f) )
+    const NormMode mode = Normalize_GetMode(f);
+
+    if ( mode != NORM_MODE_OFF )
     {
         NormalDropPacket(p);
-        normStats[PC_TCP_BLOCK]++;
-        sfBase.iPegs[PERF_COUNT_TCP_BLOCK]++;
+        normStats[PC_TCP_BLOCK][mode]++;
+        sfBase.iPegs[PERF_COUNT_TCP_BLOCK][mode]++;
         return 1;
     }
     return 0;
 }
 
-static inline void NormalStripTimeStamp (Packet* p, const TcpOption* opt)
+static inline bool NormalStripTimeStamp (Packet* p, const TcpOption* opt, NormMode mode)
 {
-    // set raw option bytes to nops
-    memset((uint8_t*)(opt), (uint8_t)tcp::TcpOptCode::NOP, TCPOLEN_TIMESTAMP);
+    if ( mode != NORM_MODE_OFF )
+    {
+        normStats[PC_TCP_TS_NOP][mode]++;
+        sfBase.iPegs[PERF_COUNT_TCP_TS_NOP][mode]++;
 
+        if ( mode == NORM_MODE_ON )
+        {
+            // set raw option bytes to nops
+            memset((uint8_t*)(opt), (uint8_t)tcp::TcpOptCode::NOP, TCPOLEN_TIMESTAMP);
+            p->packet_flags |= PKT_MODIFIED;
+        }
 
-    p->packet_flags |= PKT_MODIFIED;
-    normStats[PC_TCP_TS_NOP]++;
-    sfBase.iPegs[PERF_COUNT_TCP_TS_NOP]++;
+        return true;
+    }
+    return false;
 }
 
 static inline void NormalTrimPayload (
-    Packet* p, uint16_t max, TcpDataBlock* tdb
-) {
-    if ( p->dsize > max )
-    {
+    Packet* p, uint16_t max, TcpDataBlock* tdb )
+{
         uint16_t fat = p->dsize - max;
         p->dsize = max;
         p->packet_flags |= (PKT_MODIFIED|PKT_RESIZED);
         tdb->end_seq -= fat;
-        normStats[PC_TCP_TRIM]++;
-        sfBase.iPegs[PERF_COUNT_TCP_TRIM]++;
-    }
 }
 
-static inline int NormalTrimPayloadIf (
-    Packet* p, NormFlags f, uint16_t max, TcpDataBlock* tdb
-) {
-    if (
-        Normalize_IsEnabled(f) &&
-        p->dsize > max )
+static inline bool NormalTrimPayloadIfSyn (
+    Packet *p, uint32_t max, TcpDataBlock *tdb )
+{
+    const NormMode mode = Normalize_GetMode(NORM_TCP_TRIM_SYN);
+    if ( mode != NORM_MODE_OFF && p->dsize > max )
     {
-        NormalTrimPayload(p, max, tdb);
-        return 1;
+        normStats[PC_TCP_TRIM_SYN][mode]++;
+        sfBase.iPegs[PERF_COUNT_TCP_TRIM_SYN][mode]++;
+        if( mode == NORM_MODE_ON )
+        {
+            NormalTrimPayload(p, max, tdb);
+            return true;
+        }
     }
-    return 0;
+    return false;
+}
+
+static inline bool NormalTrimPayloadIfRst (
+    Packet *p, uint32_t max, TcpDataBlock *tdb )
+{
+    const NormMode mode = Normalize_GetMode(NORM_TCP_TRIM_RST);
+    if ( mode != NORM_MODE_OFF && p->dsize > max )
+    {
+        normStats[PC_TCP_TRIM_RST][mode]++;
+        sfBase.iPegs[PERF_COUNT_TCP_TRIM_RST][mode]++;
+        if( mode == NORM_MODE_ON )
+        {
+            NormalTrimPayload(p, max, tdb);
+            return true;
+        }
+    }
+    return false;
+}
+
+static inline bool NormalTrimPayloadIfWin (
+    Packet *p, uint32_t max, TcpDataBlock *tdb )
+{
+    const NormMode mode = Normalize_GetMode(NORM_TCP_TRIM_WIN);
+    if ( mode != NORM_MODE_OFF && p->dsize > max )
+    {
+        normStats[PC_TCP_TRIM_WIN][mode]++;
+        sfBase.iPegs[PERF_COUNT_TCP_TRIM_WIN][mode]++;
+        if( mode == NORM_MODE_ON )
+        {
+            NormalTrimPayload(p, max, tdb);
+            return true;
+        }
+    }
+    return false;
+}
+
+static inline bool NormalTrimPayloadIfMss (
+    Packet *p, uint32_t max, TcpDataBlock *tdb )
+{
+    const NormMode mode = Normalize_GetMode(NORM_TCP_TRIM_MSS);
+    if ( mode != NORM_MODE_OFF && p->dsize > max )
+    {
+        normStats[PC_TCP_TRIM_MSS][mode]++;
+        sfBase.iPegs[PERF_COUNT_TCP_TRIM_MSS][mode]++;
+        if( mode == NORM_MODE_ON )
+        {
+            NormalTrimPayload(p, max, tdb);
+            return true;
+        }
+    }
+    return false;
 }
 
 static inline void NormalTrackECN (TcpSession* s, TCPHdr* tcph, int req3way)
@@ -1088,14 +1156,24 @@ static inline void NormalTrackECN (TcpSession* s, TCPHdr* tcph, int req3way)
 
 static inline void NormalCheckECN (TcpSession* s, Packet* p)
 {
-    if ( !s->ecn && (p->ptrs.tcph->th_flags & (TH_ECE|TH_CWR)) )
+    const NormMode mode = Normalize_GetMode(NORM_TCP_ECN_STR);
+
+    if ( mode != NORM_MODE_OFF )
     {
-        ((TCPHdr*)p->ptrs.tcph)->th_flags &= ~(TH_ECE|TH_CWR);
-        p->packet_flags |= PKT_MODIFIED;
-        normStats[PC_TCP_ECN_SSN]++;
-        sfBase.iPegs[PERF_COUNT_TCP_ECN_SSN]++;
+        if ( !s->ecn && (p->ptrs.tcph->th_flags & (TH_ECE|TH_CWR)) )
+        {
+            normStats[PC_TCP_ECN_SSN][mode]++;
+            sfBase.iPegs[PERF_COUNT_TCP_ECN_SSN][mode]++;
+
+            if ( mode == NORM_MODE_ON )
+            {
+                ((TCPHdr*)p->ptrs.tcph)->th_flags &= ~(TH_ECE|TH_CWR);
+                p->packet_flags |= PKT_MODIFIED;
+            }
+        }
     }
 }
+
 
 //-------------------------------------------------------------------------
 // ssn ingress is client; ssn egress is server
@@ -2793,6 +2871,7 @@ static uint32_t StreamGetTcpTimestamp(Packet *p, uint32_t *ts, int strip)
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Getting timestamp...\n"););
 
+    const NormMode mode = Normalize_GetMode(NORM_TCP_OPT);
     TcpOptIterator iter(p->ptrs.tcph, p);
 
     // using const because non-const is not supported
@@ -2800,11 +2879,11 @@ static uint32_t StreamGetTcpTimestamp(Packet *p, uint32_t *ts, int strip)
     {
         if(opt.code == TcpOptCode::TIMESTAMP)
         {
-            if ( strip && Normalize_IsEnabled(NORM_TCP_OPT) )
+            if ( strip )
             {
-                NormalStripTimeStamp(p, &opt);
+                NormalStripTimeStamp(p, &opt, mode);
             }
-            else
+            else if ( !strip || !NormalStripTimeStamp(p, &opt, mode) )
             {
                 *ts = EXTRACT_32BITS(opt.data);
                 STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
@@ -3067,7 +3146,7 @@ static int AddStreamNode(
                     "(len: %d slide: %d trunc: %d)\n",
                     len, slide, trunc););
         Discard();
-        NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
+        NormalTrimPayloadIfWin(p, 0, tdb);
 
 #ifdef DEBUG_STREAM_EX
         {
@@ -3244,7 +3323,6 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
     int32_t dist_head;
     int32_t dist_tail;
     uint16_t reassembly_policy;
-    int ips_data;
     // To check for retransmitted data
     const uint8_t *rdata = p->data;
     uint16_t rsize = p->dsize;
@@ -3256,11 +3334,12 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
         int last = 0;
     );
 
-    ips_data = Normalize_IsEnabled(NORM_TCP_IPS);
-    if ( ips_data )
+    const NormMode ips_data = Normalize_GetMode(NORM_TCP_IPS);
+    if ( ips_data == NORM_MODE_ON )
         reassembly_policy = REASSEMBLY_POLICY_FIRST;
     else
         reassembly_policy = st->reassembly_policy;
+
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Queuing %d bytes on stream!\n"
@@ -3385,7 +3464,6 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "left: %p:0x%X  right: %p:0x%X\n", left,
                 left?left->seq:0, right, right?right->seq:0););
-
     /*
      * handle left overlaps
      */
@@ -3421,24 +3499,27 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                 case REASSEMBLY_POLICY_MACOS:
                     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                                 "left overlap, honoring old data\n"););
-                    if ( ips_data )
+                    if ( ips_data != NORM_MODE_OFF )
                     {
                         if (SEQ_LT(left->seq,tdb->seq) && SEQ_GT(left->seq + left->size, tdb->seq + p->dsize))
                         {
                             unsigned offset = tdb->seq - left->seq;
                             memcpy((uint8_t*)p->data, left->payload+offset, p->dsize);
                             p->packet_flags |= PKT_MODIFIED;
-                            normStats[PC_TCP_IPS_DATA]++;
-                            sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA]++;
+                            normStats[PC_TCP_IPS_DATA][ips_data]++;
+                            sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA][ips_data]++;
                         }
                         else if (SEQ_LT(left->seq, tdb->seq))
                         {
-                            unsigned offset = tdb->seq - left->seq;
-                            unsigned length = left->seq + left->size - tdb->seq;
-                            memcpy((uint8_t*)p->data, left->payload+offset, length);
-                            p->packet_flags |= PKT_MODIFIED;
-                            normStats[PC_TCP_IPS_DATA]++;
-                            sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA]++;
+                            if ( ips_data == NORM_MODE_ON )
+                            {
+                                unsigned offset = tdb->seq - left->seq;
+                                unsigned length = left->seq + left->size - tdb->seq;
+                                memcpy((uint8_t*)p->data, left->payload+offset, length);
+                                p->packet_flags |= PKT_MODIFIED;
+                                normStats[PC_TCP_IPS_DATA][ips_data]++;
+                                sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA][ips_data]++;
+                            }
                         }
                     }
                     seq += overlap;
@@ -3611,14 +3692,14 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                 case REASSEMBLY_POLICY_VISTA:
                 case REASSEMBLY_POLICY_SOLARIS:
                 case REASSEMBLY_POLICY_HPUX11:
-                    if ( ips_data )
+                    if ( ips_data == NORM_MODE_ON )
                     {
                         unsigned offset = right->seq - tdb->seq;
                         unsigned length = tdb->seq + p->dsize - right->seq;
                         memcpy((uint8_t*)p->data+offset, right->payload, length);
                         p->packet_flags |= PKT_MODIFIED;
-                        normStats[PC_TCP_IPS_DATA]++;
-                        sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA]++;
+                        normStats[PC_TCP_IPS_DATA][ips_data]++;
+                        sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA][ips_data]++;
                     }
                     trunc = overlap;
                     break;
@@ -3708,13 +3789,13 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                 case REASSEMBLY_POLICY_VISTA:
                     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                                 "Got full right overlap, truncating new\n"););
-                    if ( ips_data )
+                    if ( ips_data == NORM_MODE_ON )
                     {
                         unsigned offset = right->seq - tdb->seq;
                         memcpy((uint8_t*)p->data+offset, right->payload, right->size);
                         p->packet_flags |= PKT_MODIFIED;
-                        normStats[PC_TCP_IPS_DATA]++;
-                        sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA]++;
+                        normStats[PC_TCP_IPS_DATA][ips_data]++;
+                        sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA][ips_data]++;
                     }
                     if (SEQ_EQ(right->seq, seq))
                     {
@@ -3986,7 +4067,7 @@ static int ProcessTcpData(
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Bailing, data on SYN, not MAC Policy!\n"););
-        NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
+        NormalTrimPayloadIfSyn(p, 0, tdb);
         MODULE_PROFILE_END(s5TcpDataPerfStats);
         return STREAM_UNALIGNED;
     }
@@ -3999,7 +4080,7 @@ static int ProcessTcpData(
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                         "Bailing, we're out of the window!\n"););
-            NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
+            NormalTrimPayloadIfWin(p, 0, tdb);
             MODULE_PROFILE_END(s5TcpDataPerfStats);
             return STREAM_UNALIGNED;
         }
@@ -4044,7 +4125,7 @@ static int ProcessTcpData(
             {
                 STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                             "Bailing, we're out of the window!\n"););
-                NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
+                NormalTrimPayloadIfWin(p, 0, tdb);
                 MODULE_PROFILE_END(s5TcpDataPerfStats);
                 return STREAM_UNALIGNED;
             }
@@ -4923,8 +5004,20 @@ static int ProcessTcp(
 
             if (p->ptrs.tcph->th_flags & TH_RST)
             {
+                /* FIXIT-M  In inline mode, only one of the normalizations
+                *           can occur.  If the first normalization
+                *           fires, there is nothing for the second normalization
+                *           to do.  However, in inline-test mode, since
+                *           nothing is actually normalized, both of the
+                *           following functions report that they 'would'
+                *           normalize. i.e., both functions increment their
+                *           count even though only one function can ever
+                *           perform a normalization.
+                */
+
                 /* Got SYN/RST.  We're done. */
-                NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
+                NormalTrimPayloadIfSyn(p, 0, tdb);
+                NormalTrimPayloadIfRst(p, 0, tdb);
                 MODULE_PROFILE_END(s5TcpStatePerfStats);
                 return retcode | ACTION_RST;
             }
@@ -4994,11 +5087,9 @@ static int ProcessTcp(
         /* MacOS accepts data on SYN, so don't alert if policy is MACOS */
         if ( talker->os_policy != STREAM_POLICY_MACOS)
         {
-            if ( Normalize_IsEnabled(NORM_TCP_TRIM) )
-            {
-                NormalTrimPayload(p, 0, tdb); // remove data on SYN
-            }
-            else
+            // remove data on SYN
+            NormalTrimPayloadIfSyn(p, 0, tdb);
+            if ( Normalize_GetMode(NORM_TCP_TRIM_SYN) == NORM_MODE_OFF )
             {
                 STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Got data on SYN packet, not processing it\n"););
@@ -5046,7 +5137,7 @@ static int ProcessTcp(
                 STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                             "Pkt ack is out of bounds, bailing!\n"););
                 Discard();
-                NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
+                NormalTrimPayloadIfWin(p, 0, tdb);
                 LogTcpEvents(eventcode);
                 MODULE_PROFILE_END(s5TcpStatePerfStats);
                 return retcode | ACTION_BAD_PKT;
@@ -5065,7 +5156,7 @@ static int ProcessTcp(
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                         "got RST\n"););
 
-            NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
+            NormalTrimPayloadIfRst(p, 0, tdb);
 
             /* Reset is valid when in SYN_SENT if the
              * ack field ACKs the SYN.
@@ -5092,7 +5183,7 @@ static int ProcessTcp(
                         "bad sequence number, bailing\n"););
             Discard();
             eventcode |= EVENT_BAD_RST;
-            NormalDropPacketIf(p, NORM_TCP_BASE);
+            NormalDropPacketIf(p, NORM_TCP_BLOCK);
             LogTcpEvents(eventcode);
             MODULE_PROFILE_END(s5TcpStatePerfStats);
             return retcode;
@@ -5163,7 +5254,7 @@ static int ProcessTcp(
      */
     if(p->ptrs.tcph->th_flags & TH_RST)
     {
-        NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
+        NormalTrimPayloadIfRst(p, 0, tdb);
 
         if(ValidRst(lwssn, listener, tdb))
         {
@@ -5199,7 +5290,7 @@ static int ProcessTcp(
                     "bad sequence number, bailing\n"););
         Discard();
         eventcode |= EVENT_BAD_RST;
-        NormalDropPacketIf(p, NORM_TCP_BASE);
+        NormalDropPacketIf(p, NORM_TCP_BLOCK);
         LogTcpEvents(eventcode);
         MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode | ts_action;
@@ -5213,7 +5304,7 @@ static int ProcessTcp(
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                         "bad sequence number, bailing\n"););
             Discard();
-            NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
+            NormalTrimPayloadIfWin(p, 0, tdb);
             LogTcpEvents(eventcode);
             MODULE_PROFILE_END(s5TcpStatePerfStats);
             return retcode | ts_action;
@@ -5262,7 +5353,7 @@ static int ProcessTcp(
     {
         int action;
         if ( !SEQ_EQ(tdb->seq, talker->isn) &&
-             NormalDropPacketIf(p, NORM_TCP_BASE) )
+             NormalDropPacketIf(p, NORM_TCP_BLOCK) )
             action = ACTION_BAD_PKT;
         else
         if ( talker->s_mgr.state >= TCP_STATE_ESTABLISHED )
@@ -5290,7 +5381,7 @@ static int ProcessTcp(
         /* got a window too large, alert! */
         eventcode |= EVENT_WINDOW_TOO_LARGE;
         Discard();
-        NormalDropPacketIf(p, NORM_TCP_BASE);
+        NormalDropPacketIf(p, NORM_TCP_BLOCK);
         LogTcpEvents(eventcode);
         MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode | ACTION_BAD_PKT;
@@ -5306,7 +5397,7 @@ static int ProcessTcp(
         eventcode |= EVENT_WINDOW_SLAM;
         Discard();
 
-        if ( NormalDropPacketIf(p, NORM_TCP_BASE) )
+        if ( NormalDropPacketIf(p, NORM_TCP_BLOCK) )
         {
             LogTcpEvents(eventcode);
             MODULE_PROFILE_END(s5TcpStatePerfStats);
@@ -5387,7 +5478,7 @@ static int ProcessTcp(
                         eventcode |= EVENT_WINDOW_SLAM;
                         Discard();
 
-                        if ( NormalDropPacketIf(p, NORM_TCP_BASE) )
+                        if ( NormalDropPacketIf(p, NORM_TCP_BLOCK) )
                         {
                             LogTcpEvents(eventcode);
                             MODULE_PROFILE_END(s5TcpStatePerfStats);
@@ -5435,7 +5526,7 @@ static int ProcessTcp(
                 {
                     eventcode |= EVENT_BAD_ACK;
                     LogTcpEvents(eventcode);
-                    NormalDropPacketIf(p, NORM_TCP_BASE);
+                    NormalDropPacketIf(p, NORM_TCP_BLOCK);
                     MODULE_PROFILE_END(s5TcpStatePerfStats);
                     return retcode | ACTION_BAD_PKT;
                 }
@@ -5484,7 +5575,7 @@ static int ProcessTcp(
             //EventDataOnClosed(talker->config);
             eventcode |= EVENT_DATA_ON_CLOSED;
             retcode |= ACTION_BAD_PKT;
-            NormalDropPacketIf(p, NORM_TCP_BASE);
+            NormalDropPacketIf(p, NORM_TCP_BLOCK);
         }
         else if (TCP_STATE_CLOSED == talker->s_mgr.state)
         {
@@ -5504,7 +5595,7 @@ static int ProcessTcp(
                 eventcode |= EVENT_DATA_ON_CLOSED;
             }
             retcode |= ACTION_BAD_PKT;
-            NormalDropPacketIf(p, NORM_TCP_BASE);
+            NormalDropPacketIf(p, NORM_TCP_BLOCK);
         }
         else
         {
@@ -5517,25 +5608,17 @@ static int ProcessTcp(
             // window is zero in one direction until we've seen both sides.
             if ( !(lwssn->ssn_state.session_flags & SSNFLAG_MIDSTREAM) )
             {
-                if ( Normalize_IsEnabled(NORM_TCP_TRIM) )
-                {
-                    // sender of syn w/mss limits payloads from peer
-                    // since we store mss on sender side, use listener mss
-                    // same reasoning for window size
-                    StreamTracker* st = listener;
+                // sender of syn w/mss limits payloads from peer
+                // since we store mss on sender side, use listener mss
+                // same reasoning for window size
+                StreamTracker* st = listener;
 
-                    // get the current window size
-                    uint32_t max = (st->r_win_base + st->l_window) - st->r_nxt_ack;
+                // trim to fit in window and mss as needed
+                NormalTrimPayloadIfWin(p, (st->r_win_base + st->l_window) - st->r_nxt_ack, tdb);
+                if ( st->mss )
+                    NormalTrimPayloadIfMss(p, st->mss, tdb);
 
-                    // get lesser of current window or mss but
-                    // if mss is zero it is unset so don't use it
-                    if ( st->mss && st->mss < max )
-                        max = st->mss;
-
-                    NormalTrimPayload(p, max, tdb);
-                }
-                if ( Normalize_IsEnabled(NORM_TCP_ECN_STR) )
-                    NormalCheckECN(tcpssn, p);
+                NormalCheckECN(tcpssn, p);
             }
             /*
              * dunno if this is RFC but fragroute testing expects it
@@ -5549,7 +5632,7 @@ static int ProcessTcp(
             else
             {
                 eventcode |= EVENT_DATA_WITHOUT_FLAGS;
-                NormalDropPacketIf(p, NORM_TCP_BASE);
+                NormalDropPacketIf(p, NORM_TCP_BLOCK);
             }
         }
     }
@@ -5557,7 +5640,7 @@ static int ProcessTcp(
     if(p->ptrs.tcph->th_flags & TH_FIN)
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Got an FIN...\n"););
+                    "Got a FIN...\n"););
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "   %s state: %s(%d)\n", l,
                     state_names[talker->s_mgr.state],
@@ -5634,7 +5717,7 @@ static int ProcessTcp(
                         "FIN beyond previous, ignoring\n"););
                     eventcode |= EVENT_BAD_FIN;
                     LogTcpEvents(eventcode);
-                    NormalDropPacketIf(p, NORM_TCP_BASE);
+                    NormalDropPacketIf(p, NORM_TCP_BLOCK);
                     MODULE_PROFILE_END(s5TcpStatePerfStats);
                     return retcode | ACTION_BAD_PKT;
                 }
@@ -5858,7 +5941,7 @@ static inline void fallback(
     a->splitter = new AtomSplitter(c2s, a->config->paf_max);
     a->paf_state.paf = StreamSplitter::SEARCH;
 
-#if 1  // FIXIT-M abort both sides ?
+#if 1  /* FIXIT-M abort both sides ? */
     delete b->splitter;
     b->splitter = new AtomSplitter(!c2s, b->config->paf_max);
     b->paf_state.paf = StreamSplitter::SEARCH;

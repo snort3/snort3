@@ -31,10 +31,11 @@
 # include "config.h"
 #endif
 
-#include "sfprocpidstats.h"
-#include "snort_types.h"
-#include "snort_debug.h"
+#include "network_inspectors/perf_monitor/sfprocpidstats.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "protocols/packet.h"
+#include "network_inspectors/normalize/normalize.h"
 
 #include <time.h>
 #include <stdio.h>
@@ -46,7 +47,9 @@ typedef struct _PKTSTATS
 
 }  PKTSTATS;
 
-typedef enum {
+
+enum PerfCounts
+{
     PERF_COUNT_IP4_TRIM,
     PERF_COUNT_IP4_TOS,
     PERF_COUNT_IP4_DF,
@@ -64,7 +67,13 @@ typedef enum {
     PERF_COUNT_TCP_NS,
     PERF_COUNT_TCP_URG,
     PERF_COUNT_TCP_URP,
-    PERF_COUNT_TCP_TRIM,
+    PERF_COUNT_TCP_REQ_URG,
+    PERF_COUNT_TCP_REQ_PAY,
+    PERF_COUNT_TCP_REQ_URP,
+    PERF_COUNT_TCP_TRIM_SYN,
+    PERF_COUNT_TCP_TRIM_RST,
+    PERF_COUNT_TCP_TRIM_WIN,
+    PERF_COUNT_TCP_TRIM_MSS,
     PERF_COUNT_TCP_ECN_PKT,
     PERF_COUNT_TCP_ECN_SSN,
     PERF_COUNT_TCP_TS_ECR,
@@ -72,9 +81,9 @@ typedef enum {
     PERF_COUNT_TCP_IPS_DATA,
     PERF_COUNT_TCP_BLOCK,
     PERF_COUNT_MAX
-} PerfCounts;
+};
 
-typedef struct _SFBASE
+struct SFBASE
 {
     uint64_t   total_wire_packets;
     uint64_t   total_ipfragmented_packets;
@@ -126,7 +135,7 @@ typedef struct _SFBASE
     uint64_t   iFragTimeouts;   /* # of times we've reached timeout */
     uint64_t   iFragFaults;     /* # of times we've run out of memory */
 
-    uint64_t   iPegs[PERF_COUNT_MAX];
+    uint64_t   iPegs[PERF_COUNT_MAX][NORM_MODE_MAX]; // normalizer
 
 #ifdef LINUX_SMP
     SFPROCPIDSTATS sfProcPidStats;
@@ -162,19 +171,19 @@ typedef struct _SFBASE
     uint64_t   frag_mem_in_use;
     uint64_t   stream_mem_in_use;
     uint64_t   total_iAlerts;
-}  SFBASE;
+};
 
-typedef struct _SYSTIMES {
+struct SYSTIMES {
 
     double usertime;
     double systemtime;
     double totaltime;
     double realtime;
 
-}  SYSTIMES;
+};
 
-typedef struct _SFBASE_STATS {
-
+struct SFBASE_STATS
+{
     uint64_t   total_packets;
     uint64_t   total_sessions;
     uint64_t   max_sessions;
@@ -223,7 +232,7 @@ typedef struct _SFBASE_STATS {
     double   patmatch_percent;
     time_t   time;
 
-    uint64_t   pegs[PERF_COUNT_MAX];
+    uint64_t   pegs[PERF_COUNT_MAX][NORM_MODE_MAX];
 
 #ifdef LINUX_SMP
     SFPROCPIDSTATS *sfProcPidStats;
@@ -266,7 +275,7 @@ typedef struct _SFBASE_STATS {
     uint64_t   frag_mem_in_use;
     uint64_t   stream_mem_in_use;
     double     total_alerts_per_second;
-}  SFBASE_STATS;
+};
 
 int InitBaseStats(SFBASE *sfBase);
 void UpdateBaseStats(SFBASE *, Packet *, bool);

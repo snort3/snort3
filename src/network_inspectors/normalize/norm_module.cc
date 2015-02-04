@@ -84,6 +84,7 @@ static bool allow_codes(NormalizerConfig* config, const char* s)
 // normalize parameters
 //-------------------------------------------------------------------------
 
+
 static const Parameter norm_ip4_params[] =
 {
     { "base", Parameter::PT_BOOL, nullptr, "true",
@@ -104,25 +105,56 @@ static const Parameter norm_ip4_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+
 static const Parameter norm_tcp_params[] =
 {
     { "base", Parameter::PT_BOOL, nullptr, "true",
       "clear reserved bits and option padding and fix urgent pointer / flags issues" },
 
-    { "ips", Parameter::PT_BOOL, nullptr, "false",
-      "ensure consistency in retransmitted data" },
+    { "block", Parameter::PT_BOOL, nullptr, "true",
+      "allow packet drops during TCP normalization" },
 
     { "urp", Parameter::PT_BOOL, nullptr, "true",
       "adjust urgent pointer if beyond segment length" },
 
+    { "ips", Parameter::PT_BOOL, nullptr, "false",
+      "ensure consistency in retransmitted data" },
+
     { "ecn", Parameter::PT_SELECT, "off | packet | stream", "off",
       "clear ecn for all packets | sessions w/o ecn setup" },
 
-    { "trim", Parameter::PT_BOOL, nullptr, "false",
-      "trim data on syn and reset and any outside window or past mss, " },
+    { "pad", Parameter::PT_BOOL, nullptr, "true",
+      "clear any option padding bytes" },
 
-    { "opts", Parameter::PT_BOOL, nullptr, "false",
+    { "trim_syn", Parameter::PT_BOOL, nullptr, "false",
+      "remove data on SYN" },
+
+    { "trim_rst", Parameter::PT_BOOL, nullptr, "false",
+      "remove any data from RST packet" },
+
+    { "trim_win", Parameter::PT_BOOL, nullptr, "false",
+      "trim data to window" },
+
+    { "trim_mss", Parameter::PT_BOOL, nullptr, "false",
+      "trim data to MSS" },
+
+    { "trim", Parameter::PT_BOOL, nullptr, "false",
+      "enable all of the TCP trim options" },
+
+    { "opts", Parameter::PT_BOOL, nullptr, "true",
       "clear all options except mss, wscale, timestamp, and any explicitly allowed" },
+
+    { "req_urg", Parameter::PT_BOOL, nullptr, "true",
+      "clear the urgent pointer if the urgent flag is not set" },
+
+    { "req_pay", Parameter::PT_BOOL, nullptr, "true",
+      "clear the urgent pointer and the urgent flag if there is no payload" },
+
+    { "rsv", Parameter::PT_BOOL, nullptr, "true",
+      "clear the reserved bits in the TCP header" },
+
+    { "req_urp", Parameter::PT_BOOL, nullptr, "true",
+      "clear the urgent flag if the urgent pointer is not set" },
 
     { "allow_names", Parameter::PT_MULTI, 
       "sack | echo | partial_order | conn_count | alt_checksum | md5", nullptr,
@@ -134,6 +166,8 @@ static const Parameter norm_tcp_params[] =
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
+
+
 
 static const Parameter s_params[] =
 {
@@ -191,13 +225,34 @@ bool NormalizeModule::set_ip4(const char*, Value& v, SnortConfig*)
     return true;
 }
 
+
 bool NormalizeModule::set_tcp(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("base") )
-        Norm_Set(&config, NORM_TCP_BASE, v.get_bool());
+    {
+        Norm_Set(&config, NORM_TCP_BLOCK, v.get_bool());
+        Norm_Set(&config, NORM_TCP_PAD, v.get_bool());
+        Norm_Set(&config, NORM_TCP_OPT, v.get_bool());
+        Norm_Set(&config, NORM_TCP_RSV, v.get_bool());
+    }
+
+    else if ( v.is("block") )
+        Norm_Set(&config, NORM_TCP_BLOCK, v.get_bool());
 
     else if ( v.is("urp") )
         Norm_Set(&config, NORM_TCP_URP, v.get_bool());
+
+    else if ( v.is("pad") )
+        Norm_Set(&config, NORM_TCP_PAD, v.get_bool());
+
+    else if ( v.is("req_urg") )
+        Norm_Set(&config, NORM_TCP_REQ_URG, v.get_bool());
+
+    else if ( v.is("req_pay") )
+        Norm_Set(&config, NORM_TCP_REQ_PAY, v.get_bool());
+
+    else if ( v.is("req_urp") )
+        Norm_Set(&config, NORM_TCP_REQ_URP, v.get_bool());
 
     else if ( v.is("opts") )
         Norm_Set(&config, NORM_TCP_OPT, v.get_bool());
@@ -205,8 +260,28 @@ bool NormalizeModule::set_tcp(const char*, Value& v, SnortConfig*)
     else if ( v.is("ips") )
         Norm_Set(&config, NORM_TCP_IPS, v.get_bool());
 
+    else if ( v.is("rsv") )
+        Norm_Set(&config, NORM_TCP_RSV, v.get_bool());
+
+    else if ( v.is("trim_syn") )
+        Norm_Set(&config, NORM_TCP_TRIM_SYN, v.get_bool());
+
+    else if ( v.is("trim_rst") )
+        Norm_Set(&config, NORM_TCP_TRIM_RST, v.get_bool());
+
+    else if ( v.is("trim_win") )
+        Norm_Set(&config, NORM_TCP_TRIM_WIN, v.get_bool());
+
+    else if ( v.is("trim_mss") )
+        Norm_Set(&config, NORM_TCP_TRIM_MSS, v.get_bool());
+
     else if ( v.is("trim") )
-        Norm_Set(&config, NORM_TCP_TRIM, v.get_bool());
+    {
+        Norm_Set(&config, NORM_TCP_TRIM_SYN, v.get_bool());
+        Norm_Set(&config, NORM_TCP_TRIM_RST, v.get_bool());
+        Norm_Set(&config, NORM_TCP_TRIM_WIN, v.get_bool());
+        Norm_Set(&config, NORM_TCP_TRIM_MSS, v.get_bool());
+    }
 
     else if ( v.is("ecn") )
     {
@@ -257,10 +332,16 @@ bool NormalizeModule::set(const char* fqn, Value& v, SnortConfig* sc)
 bool NormalizeModule::begin(const char* fqn, int, SnortConfig*)
 {
     if ( !strcmp(fqn, "normalizer.ip4") )
+    {
         Norm_Set(&config, NORM_IP4_BASE, true);
-
+    }
     else if ( !strcmp(fqn, "normalizer.tcp") )
-        Norm_Set(&config, NORM_TCP_BASE, true);
+    {
+        Norm_Set(&config, NORM_TCP_BLOCK, true);
+        Norm_Set(&config, NORM_TCP_PAD, true);
+        Norm_Set(&config, NORM_TCP_OPT, true);
+        Norm_Set(&config, NORM_TCP_RSV, true);
+    }
 
     return true;
 }
@@ -285,6 +366,26 @@ bool NormalizeModule::end(const char* fqn, int, SnortConfig*)
     return true;
 }
 
+static inline PegInfo createTestPeg(const PegInfo p)
+{
+    // using a static vector to ensure the char* referred to in the PegInfo
+    // are valid after this function returns
+    static vector<std::string> test_pegs;
+    PegInfo test_peg;
+
+    std::string test_name("test ");
+    test_name.append(p.name);
+    test_pegs.push_back(test_name);
+    test_peg.name = test_pegs.back().c_str();
+
+    std::string test_info("During inline mode, would have ");
+    test_info.append(p.help);
+    test_pegs.push_back(test_info);
+    test_peg.help = test_pegs.back().c_str();
+
+    return test_peg;
+}
+
 const PegInfo* NormalizeModule::get_pegs() const
 {
     static vector<PegInfo> pegs;
@@ -294,13 +395,21 @@ const PegInfo* NormalizeModule::get_pegs() const
     assert(p);
 
     while ( p->name )
-        pegs.push_back(*p++);
+    {
+        pegs.push_back(*p);
+        pegs.push_back(createTestPeg(*p));
+        p++;
+    }
 
     p = Stream_GetNormPegs();
     assert(p);
 
     while ( p->name )
-        pegs.push_back(*p++);
+    {
+        pegs.push_back(*p);
+        pegs.push_back(createTestPeg(*p));
+        p++;
+    }
 
     pegs.push_back(*p);
     return &pegs[0];
@@ -312,15 +421,21 @@ PegCount* NormalizeModule::get_counts() const
     counts.clear();
     unsigned c = 0;
 
-    PegCount* p = Norm_GetCounts(c);
+    NormPegs p = Norm_GetCounts(c);
 
     for ( unsigned i = 0; i < c; ++i )
-        counts.push_back(p[i]);
+    {
+        counts.push_back(p[i][NORM_MODE_ON]);
+        counts.push_back(p[i][NORM_MODE_TEST]);
+    }
 
     p = Stream_GetNormCounts(c);
 
     for ( unsigned i = 0; i < c; ++i )
-        counts.push_back(p[i]);
+    {
+        counts.push_back(p[i][NORM_MODE_ON]);
+        counts.push_back(p[i][NORM_MODE_TEST]);
+    }
 
     return &counts[0];
 }

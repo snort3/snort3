@@ -102,68 +102,35 @@ static void FreeReferences(ReferenceSystemNode *head)
     }
 }
 
-typedef struct _IgnoredRuleList
+static void init_policy_mode(IpsPolicy* p)
 {
-    OptTreeNode *otn;
-    struct _IgnoredRuleList *next;
-} IgnoredRuleList;
-
-#if 0
-/** Get rule list for a specific protocol
- *
- * @param rule
- * @param ptocool protocol type
- * @returns RuleTreeNode* rule list for specific protocol
- */
-static inline RuleTreeNode * protocolRuleList(RuleListNode *rule, int protocol)
-{
-    switch (protocol)
+    switch ( p->policy_mode )
     {
-        case IPPROTO_TCP:
-            return rule->RuleList->TcpList;
-        case IPPROTO_UDP:
-            return rule->RuleList->UdpList;
-        case IPPROTO_ICMP:
-            break;
-        default:
-            break;
+    case POLICY_MODE__PASSIVE:
+        if ( ScAdapterInlineTestMode() )
+            p->policy_mode = POLICY_MODE__INLINE_TEST;
+        break;
+
+    case POLICY_MODE__INLINE:
+        if( ScAdapterInlineTestMode() )
+            p->policy_mode = POLICY_MODE__INLINE_TEST;
+
+        else if (!ScAdapterInlineMode())
+        {
+           ParseWarning("adapter is in passive mode; switching policy mode to tap.");
+           p->policy_mode = POLICY_MODE__PASSIVE;
+        }
+        break;
+
+    case POLICY_MODE__INLINE_TEST:
+        break;
     }
-    return NULL;
 }
 
-static inline const char* getProtocolName (int protocol)
+static void init_policies(SnortConfig* sc)
 {
-    static const char* const protocolName[] = {"TCP", "UDP", "ICMP"};
-    switch (protocol)
-    {
-        case IPPROTO_TCP:
-            return protocolName[0];
-        case IPPROTO_UDP:
-            return protocolName[1];
-        case IPPROTO_ICMP:
-            return protocolName[2];
-            break;
-        default:
-            break;
-    }
-    return NULL;
-}
-#endif
-
-static void init_policy(SnortConfig* sc)
-{
-    PolicyMode pm;
-
-    if ( sc->run_flags & RUN_FLAG__INLINE )
-        pm = POLICY_MODE__INLINE;
-
-    else if ( sc->run_flags & RUN_FLAG__INLINE_TEST )
-        pm =  POLICY_MODE__INLINE_TEST;
-
-    else
-        pm = POLICY_MODE__PASSIVE;
-
-    get_ips_policy()->policy_mode = pm;
+    for ( auto p : sc->policy_map->ips_policy )
+        init_policy_mode(p);
 }
 
 //-------------------------------------------------------------------------
@@ -223,7 +190,6 @@ SnortConfig * SnortConfNew(void)
     set_ips_policy(sc->get_ips_policy());
     set_network_policy(sc->get_network_policy());
 
-
     sc->source_affinity = new std::map<const std::string, int>;
     sc->thread_affinity = new std::vector<int>(32, -1);
 
@@ -239,7 +205,7 @@ void SnortConfSetup(SnortConfig *sc)
         snort_conf->thiszone = gmt2local(0);
 #endif
 
-    init_policy(snort_conf);
+    init_policies(sc);
     ParseRules(sc);
 
     // FIXIT-L see SnortInit() on config printing

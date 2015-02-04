@@ -62,7 +62,6 @@ void ConfigSetGid(SnortConfig*, const char*);
 void ConfigSetUid(SnortConfig*, const char*);
 void ConfigUmask(SnortConfig*, const char*);
 void ConfigTunnelVerdicts(SnortConfig*, const char*);
-PolicyMode GetPolicyMode(PolicyMode);
 void config_syslog(SnortConfig* sc, const char*);
 void config_daemon(SnortConfig* sc, const char*);
 void config_alert_mode(SnortConfig* sc, const char*);

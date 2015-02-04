@@ -175,7 +175,10 @@ int InitBaseStats(SFBASE *sfBase)
     {
         int i = 0;
         for ( i = 0; i < PERF_COUNT_MAX; i++ )
-            sfBase->iPegs[i] = 0;
+        {
+            sfBase->iPegs[i][NORM_MODE_ON] = 0;
+            sfBase->iPegs[i][NORM_MODE_TEST] = 0;
+        }
     }
 
     sfBase->iNewUDPSessions = 0;
@@ -524,15 +527,17 @@ void ProcessBaseStats(SFBASE *sfBase, FILE *fh, int console, int max_stats)
 {
     SFBASE_STATS sfBaseStats;
 
-    if ((fh  || console) &&
-        CalculateBasePerfStats(sfBase, &sfBaseStats, max_stats))
-        return;
+    if (fh  || console)
+    {
+        if (CalculateBasePerfStats(sfBase, &sfBaseStats, max_stats))
+            return;
 
-    if (console)
-        DisplayBasePerfStatsConsole(&sfBaseStats, max_stats);
+        if (console)
+            DisplayBasePerfStatsConsole(&sfBaseStats, max_stats);
 
-    if (fh != NULL)
-        LogBasePerfStats(&sfBaseStats, fh);
+        if (fh)
+            LogBasePerfStats(&sfBaseStats, fh);
+    }
 }
 
 static int GetProcessingTime(SYSTIMES *Systimes, SFBASE *sfBase)
@@ -676,7 +681,10 @@ static void GetEventsPerSecond(SFBASE *sfBase, SFBASE_STATS *sfBaseStats,
     {
         int i = 0;
         for ( i = 0; i < PERF_COUNT_MAX; i++ )
-            sfBase->iPegs[i] = 0;
+        {
+            sfBase->iPegs[i][NORM_MODE_ON] = 0;
+            sfBase->iPegs[i][NORM_MODE_TEST] = 0;
+        }
     }
 
     sfBaseStats->total_udp_sessions = sfBase->iTotalUDPSessions;
@@ -972,7 +980,10 @@ static int CalculateBasePerfStats(SFBASE *sfBase, SFBASE_STATS *sfBaseStats, int
     {
         int iCtr;
         for ( iCtr = 0; iCtr < PERF_COUNT_MAX; iCtr++ )
-            sfBaseStats->pegs[iCtr] = sfBase->iPegs[iCtr];
+        {
+            sfBaseStats->pegs[iCtr][NORM_MODE_ON] = sfBase->iPegs[iCtr][NORM_MODE_ON];
+            sfBaseStats->pegs[iCtr][NORM_MODE_TEST] = sfBase->iPegs[iCtr][NORM_MODE_TEST];
+        }
     }
 
     /*
@@ -1125,6 +1136,15 @@ static void GetPktDropStats(SFBASE *sfBase, SFBASE_STATS *sfBaseStats)
         const DAQ_Stats_t* ps = DAQ_GetStats();
         recv = ps->packets_received;
         drop = ps->hw_packets_dropped;
+
+        if (perfmon_config->base_reset)
+        {
+            if (recv < sfBase->pkt_stats.pkts_recv)
+                sfBase->pkt_stats.pkts_recv = 0;
+
+            if (drop < sfBase->pkt_stats.pkts_drop)
+                sfBase->pkt_stats.pkts_drop = 0;
+        }
     }
 
     if (perfmon_config->base_reset)
@@ -1383,9 +1403,14 @@ static void LogBasePerfStats(SFBASE_STATS *sfBaseStats,  FILE * fh )
         sfBaseStats->total_tcp_filtered_packets,
         sfBaseStats->total_udp_filtered_packets);
 
+    size += SafeSnprintf(buff + size, sizeof(buff) - size,
+        "%d,", PERF_COUNT_MAX);
     for ( iCtr = 0; iCtr < PERF_COUNT_MAX; iCtr++ )
         size += SafeSnprintf(buff + size, sizeof(buff) - size, 
-            CSVu64, sfBaseStats->pegs[iCtr]);
+            CSVu64, sfBaseStats->pegs[iCtr][NORM_MODE_ON]);
+    for ( iCtr = 0; iCtr < PERF_COUNT_MAX; iCtr++ )
+        size += SafeSnprintf(buff + size, sizeof(buff) - size,
+            CSVu64, sfBaseStats->pegs[iCtr][NORM_MODE_TEST]);
 
     size += SafeSnprintf(buff + size, sizeof(buff) - size, 
         CSVu64, sfBaseStats->total_injected_packets);
@@ -1430,15 +1455,20 @@ static const char* const iNames[PERF_COUNT_MAX] = {
     "tcp::pad",
     "tcp::rsv",
     "tcp::ns",
-    "tcp::urg",
     "tcp::urp",
-    "tcp::trim",
     "tcp::ecn_pkt",
     "tcp::ecn_ssn",
     "tcp::ts_ecr",
     "tcp::ts_nop",
     "tcp::ips_data",
-    "tcp::block"
+    "tcp::block",
+    "tcp::req_urg",
+    "tcp::req_pay",
+    "tcp::req_urp",
+    "tcp::trim_syn",
+    "tcp::trim_rst",
+    "tcp::trim_win",
+    "tcp::trim_mss",
 };
 
 // IMPORTANT - whatever changes you make here, please be sure
@@ -1536,7 +1566,7 @@ void LogBasePerfHeader (FILE* fh)
         ",%s,%s,%s",
         "pkt_stats.pkts_recv",
         "pkt_stats.pkts_drop",
-        "total_blocked_packets");
+        "total_blocked_verdicts");
 
     fprintf(fh,
         ",%s,%s,%s,%s",
@@ -1572,8 +1602,11 @@ void LogBasePerfHeader (FILE* fh)
         "total_tcp_filtered_packets",
         "total_udp_filtered_packets");
 
+    fprintf(fh, ",num_normalizations");
     for ( iCtr = 0; iCtr < PERF_COUNT_MAX; iCtr++ )
         fprintf(fh, ",%s", iNames[iCtr]);
+    for ( iCtr = 0; iCtr < PERF_COUNT_MAX; iCtr++ )
+        fprintf(fh, ",test_%s", iNames[iCtr]);
 
     fprintf(fh,
         ",%s,%s,%s",
@@ -1623,7 +1656,7 @@ static void DisplayBasePerfStatsConsole(SFBASE_STATS *sfBaseStats, int max_stats
 
     LogMessage("%% Dropped:   %.3f%%\n", sfBaseStats->pkt_drop_percent);
 
-    LogMessage("Blocked:     " STDu64 "\n", sfBaseStats->total_blocked_packets);
+    LogMessage("Block Verdict:     " STDu64 "\n", sfBaseStats->total_blocked_packets);
     LogMessage("Injected:    " STDu64 "\n", sfBaseStats->total_injected_packets);
     LogMessage("Pkts Filtered TCP:     " STDu64 "\n", sfBaseStats->total_tcp_filtered_packets);
     LogMessage("Pkts Filtered UDP:     " STDu64 "\n\n", sfBaseStats->total_udp_filtered_packets);
@@ -1746,9 +1779,14 @@ static void DisplayBasePerfStatsConsole(SFBASE_STATS *sfBaseStats, int max_stats
     LogMessage("Attribute Table Hosts  :  " STDu64 "\n", sfBaseStats->current_attribute_hosts);
     LogMessage("Attribute Table Reloads:  " STDu64 "\n\n", sfBaseStats->attribute_table_reloads);
 
+    LogMessage("Number of Normalizations  :  %d\n", PERF_COUNT_MAX);
     for ( iCtr = 0; iCtr < PERF_COUNT_MAX; iCtr++ )
+    {
         LogMessage("%-26s:  " STDu64 "\n",
-            iNames[iCtr], sfBaseStats->pegs[iCtr]);
+            iNames[iCtr], sfBaseStats->pegs[iCtr][NORM_MODE_ON]);
+        LogMessage("Test %-20s:  " STDu64 "\n",
+            iNames[iCtr], sfBaseStats->pegs[iCtr][NORM_MODE_TEST]);
+    }
     LogMessage("\n");
 
     /*

@@ -371,38 +371,6 @@ void ConfigObfuscationMask(SnortConfig *sc, const char *args)
     sfip_pton(args, &sc->obfuscation_net);
 }
 
-PolicyMode GetPolicyMode(PolicyMode mode)
-{
-    switch ( mode )
-    {
-    case POLICY_MODE__PASSIVE:
-        if ( ScAdapterInlineTestMode() )
-            mode = POLICY_MODE__INLINE_TEST;
-        break;
-
-    case POLICY_MODE__INLINE:
-        /* If --enable-inline-test is specified it overwrites
-         * policy_mode: inline */
-        if( ScAdapterInlineTestMode() )
-            mode = POLICY_MODE__INLINE_TEST;
-
-        else if (!ScAdapterInlineMode())
-        {
-           ParseWarning("Adapter is in Passive Mode. Hence switching "
-                   "policy mode to tap.");
-           mode = POLICY_MODE__PASSIVE;
-        }
-        break;
-
-    case POLICY_MODE__INLINE_TEST:
-        break;
-
-    default:
-        ParseError("unknown command line policy mode option: %d.", mode);
-    }
-    return mode;
-}
-
 void ConfigQuiet(SnortConfig *sc, const char*)
 {
     sc->logging_flags |= LOGGING_FLAG__QUIET;

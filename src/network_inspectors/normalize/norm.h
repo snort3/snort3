@@ -42,7 +42,9 @@ struct NormalizerConfig
     // these must be in the same order PROTO_IDs are defined!
     // if entry is NULL, proto doesn't have normalization or it is disabled
     NormalFunc normalizers[PacketManager::max_protocols()];
+    NormMode norm_mode;
 };
+
 
 int Norm_SetConfig(NormalizerConfig*);
 int Norm_Packet(NormalizerConfig*, Packet*);
@@ -89,7 +91,7 @@ static inline int Norm_TcpIsOptional(const NormalizerConfig* nc, uint8_t opt)
 }
 
 const PegInfo* Norm_GetPegs();
-PegCount* Norm_GetCounts(unsigned&);
+NormPegs Norm_GetCounts(unsigned&);
 
 #endif
 

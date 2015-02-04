@@ -104,7 +104,6 @@ static void Print_TCP (const NormalizerConfig* nc)
     if ( !Norm_IsEnabled(nc, (NormFlags)NORM_TCP_ANY) )
         return;
 
-    LogFlag("tcp.base", nc, NORM_TCP_BASE);
     const char* s;
 
     if ( Norm_IsEnabled(nc, NORM_TCP_ECN_PKT) )
@@ -115,6 +114,12 @@ static void Print_TCP (const NormalizerConfig* nc)
         s = OFF;
 
     LogConf("tcp.ecn", s);
+    LogFlag("tcp.block", nc, NORM_TCP_BLOCK);
+    LogFlag("tcp.rsv", nc, NORM_TCP_RSV);
+    LogFlag("tcp.pad", nc, NORM_TCP_PAD);
+    LogFlag("tcp.req_urg", nc, NORM_TCP_REQ_URG);
+    LogFlag("tcp.req_pay", nc, NORM_TCP_REQ_PAY);
+    LogFlag("tcp.req_urp", nc, NORM_TCP_REQ_URP);
     LogFlag("tcp.urp", nc, NORM_TCP_URP);
 
     if ( Norm_IsEnabled(nc, NORM_TCP_OPT) )
@@ -145,6 +150,10 @@ static void Print_TCP (const NormalizerConfig* nc)
         LogConf("tcp.opt", OFF);
 
     LogFlag("tcp.ips", nc, NORM_TCP_IPS);
+    LogFlag("tcp.trim_syn", nc, NORM_TCP_TRIM_SYN);
+    LogFlag("tcp.trim_rst", nc, NORM_TCP_TRIM_RST);
+    LogFlag("tcp.trim_win", nc, NORM_TCP_TRIM_WIN);
+    LogFlag("tcp.trim_mss", nc, NORM_TCP_TRIM_MSS);
 }
 
 //-------------------------------------------------------------------------
@@ -174,8 +183,9 @@ Normalizer::Normalizer(const NormalizerConfig& nc)
 // in which case normal_mask must be moved to flow
 bool Normalizer::configure(SnortConfig*)
 {
+    PolicyMode mode = get_ips_policy()->policy_mode;
     // FIXIT-L norm needs a nap policy mode
-    if ( get_ips_policy()->policy_mode != POLICY_MODE__INLINE )
+    if ( mode == POLICY_MODE__PASSIVE )
     {
         ParseWarning("normalizations disabled because not inline.");
         config.normalizer_flags = 0;
@@ -190,6 +200,7 @@ bool Normalizer::configure(SnortConfig*)
         nap->new_ttl = nap->min_ttl;
     }
 
+    config.norm_mode = (mode == POLICY_MODE__INLINE) ? NORM_MODE_ON : NORM_MODE_TEST;
     Norm_SetConfig(&config);
     return true;
 }
@@ -203,6 +214,22 @@ bool Normalize_IsEnabled(NormFlags nf)
 
     NetworkPolicy* nap = get_network_policy();
     return ( (nap->normal_mask & nf) != 0 );
+}
+
+NormMode Normalize_GetMode(NormFlags nf)
+{
+    if (Normalize_IsEnabled(nf))
+    {
+        const PolicyMode mode = get_ips_policy()->policy_mode;
+
+        if ( mode == POLICY_MODE__INLINE )
+            return NORM_MODE_ON;
+
+        else if ( mode == POLICY_MODE__INLINE_TEST )
+            return NORM_MODE_TEST;
+    }
+
+    return NORM_MODE_OFF;
 }
 
 void Normalizer::show(SnortConfig* sc)

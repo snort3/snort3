@@ -187,64 +187,34 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
             table_api.add_option("urp", true);
 
         else if(!keyword.compare("rsv"))
-        {
-            table_api.add_diff_option_comment("rsv", "base");
-            table_api.add_option("base", true);
-        }
+            table_api.add_option("rsv", true);
 
         else if(!keyword.compare("pad"))
-        {
-            table_api.add_diff_option_comment("pad", "base");
-            table_api.add_option("base", true);
-        }
+            table_api.add_option("pad", true);
 
         else if(!keyword.compare("block"))
-        {
-            table_api.add_diff_option_comment("block", "base");
-            table_api.add_option("base", true);
-        }
+            table_api.add_option("block", true);
 
         else if(!keyword.compare("req_urg"))
-        {
-            table_api.add_diff_option_comment("req_urg", "base");
-            table_api.add_option("base", true);
-        }
+            table_api.add_option("req_urg", true);
 
         else if(!keyword.compare("req_pay"))
-        {
-            table_api.add_diff_option_comment("req_pay", "base");
-            table_api.add_option("base", true);
-        }
+            table_api.add_option("req_pay", true);
 
         else if(!keyword.compare("req_urp"))
-        {
-            table_api.add_diff_option_comment("req_urp", "base");
-            table_api.add_option("base", true);
-        }
+            table_api.add_option("req_urp", true);
         
         else if(!keyword.compare("trim_syn"))
-        {
-            table_api.add_diff_option_comment("trim_syn", "trim");
-            table_api.add_option("trim", true);
-        }
+            table_api.add_option("trim_syn", true);
         
         else if(!keyword.compare("trim_rst"))
-        {
-            table_api.add_diff_option_comment("trim_rst", "trim");
-            table_api.add_option("trim", true);
-        }
+            table_api.add_option("trim_rst", true);
         
         else if(!keyword.compare("trim_win"))
-        {
-            table_api.add_diff_option_comment("trim_win", "trim");
-            table_api.add_option("trim", true);
-        }
+            table_api.add_option("trim_win", true);
         
         else if(!keyword.compare("trim_mss"))
-        {
-            table_api.add_diff_option_comment("trim_mss", "trim");
-            table_api.add_option("trim", true);
-        }
+            table_api.add_option("trim_mss", true);
 
         else if(!keyword.compare("ecn"))
         {
