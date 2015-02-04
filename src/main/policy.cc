@@ -73,7 +73,7 @@ IpsPolicy::IpsPolicy(PolicyId id)
 {
     policy_id = id;
     user_policy_id = 0;
-    policy_mode = POLICY_MODE__PASSIVE;
+    policy_mode = POLICY_MODE__MAX;
 
     var_table = nullptr;
     var_id = 0;

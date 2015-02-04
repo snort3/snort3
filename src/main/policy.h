@@ -112,7 +112,8 @@ enum PolicyMode
 {
     POLICY_MODE__PASSIVE,
     POLICY_MODE__INLINE,
-    POLICY_MODE__INLINE_TEST
+    POLICY_MODE__INLINE_TEST,
+    POLICY_MODE__MAX
 };
 
 // this is the ips policy post ac-split

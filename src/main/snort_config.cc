@@ -124,6 +124,13 @@ static void init_policy_mode(IpsPolicy* p)
 
     case POLICY_MODE__INLINE_TEST:
         break;
+
+    case POLICY_MODE__MAX:
+        if ( ScAdapterInlineMode() )
+            p->policy_mode = POLICY_MODE__INLINE;
+        else
+            p->policy_mode = POLICY_MODE__PASSIVE;
+        break;
     }
 }
 
