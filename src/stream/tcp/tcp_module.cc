@@ -75,7 +75,7 @@ using namespace std;
 // sequence must match STREAM_POLICY_* and REASSEMBLY_POLICY_* defines
 #define policies \
     "first | last | linux | old-linux | bsd | macos | solaris | irix | " \
-    "hpux | hpux10 | windows | win-2003 | vista"
+    "hpux | hpux10 | windows | win-2003 | vista | proxy"
 
 static const Parameter stream_tcp_small_params[] =
 {

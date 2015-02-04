@@ -21,9 +21,8 @@
 #define EXPECT_CACHE_H
 
 #include "sfip/sfip_t.h"
+#include "flow/flow.h"
 
-class FlowData;
-class Flow;
 struct Packet;
 
 class ExpectCache {
@@ -35,7 +34,8 @@ public:
         const sfip_t *cliIP, uint16_t cliPort,
         const sfip_t *srvIP, uint16_t srvPort,
         uint8_t protocol, char direction,
-        FlowData*, int16_t appId = 0);
+        FlowData*, int16_t appId = 0,
+        unsigned stream_callback_id = 0, Stream_Event = SE_MAX);
 
     bool is_expected(Packet*);
     char process_expected(Packet*, Flow*);
@@ -51,7 +51,7 @@ private:
 
     struct ExpectNode* get_node(struct ExpectKey&, bool&);
     struct ExpectFlow* get_flow(ExpectNode*, uint32_t, int16_t);
-    bool set_data(ExpectNode*, ExpectFlow*, FlowData*);
+    bool set_data(ExpectNode*, ExpectFlow*&, FlowData*);
 
 private:
     class ZHash* hash_table;

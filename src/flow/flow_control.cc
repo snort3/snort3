@@ -381,8 +381,12 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     case Flow::BLOCK:
         if ( news )
             stream.drop_traffic(flow, SSN_DIR_BOTH);
+
+        if ( flow->ssn_state.session_flags & SSNFLAG_FORCE_BLOCK )
+            Active_ForceDropSessionWithoutReset();
+        else
+            Active_DropSessionWithoutReset(p);
         DisableInspection(p);
-        Active_DropPacket();
         break;
     }
 
@@ -634,11 +638,11 @@ int FlowControl::add_expected(
 int FlowControl::add_expected(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    uint8_t protocol, int16_t appId,
-    FlowData* fd)
+    uint8_t protocol, int16_t appId, FlowData* fd,
+    unsigned cb, Stream_Event se)
 {
     return exp_cache->add_flow(
-        srcIP, srcPort, dstIP, dstPort, protocol, SSN_DIR_BOTH, fd, appId);
+        srcIP, srcPort, dstIP, dstPort, protocol, SSN_DIR_BOTH, fd, appId, cb, se);
 }
 
 bool FlowControl::is_expected(Packet* p)

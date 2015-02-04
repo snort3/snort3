@@ -94,6 +94,8 @@ public:
 
     static uint32_t get_packet_direction(Packet*);
 
+    static void decryption_started(Flow*, unsigned dir);
+
     /* Stop inspection for session, up to count bytes (-1 to ignore
      * for life or until resume).
      *
@@ -235,7 +237,7 @@ public:
      */
     int set_application_protocol_id_expected(
         const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2, uint8_t proto,
-        int16_t appId, FlowData*);
+        int16_t appId, FlowData*, unsigned stream_callback_id = 0, Stream_Event = SE_MAX);
 
     /** Retrieve application session data based on the lookup tuples for
      *  cases where Snort does not have an active packet that is

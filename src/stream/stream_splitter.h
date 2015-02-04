@@ -44,7 +44,9 @@ public:
         START,  // internal use only
         SEARCH, // searching for next flush point
         FLUSH,  // flush at given offset
-        SKIP    // skip ahead to given offset
+        LIMIT,  // flush to given offset upon reaching paf_max
+        SKIP,   // skip ahead to given offset
+        LIMITED // previously did limit flush
     };
 
     virtual Status scan(
@@ -111,6 +113,23 @@ private:
     uint16_t min;
     uint16_t segs;
     uint16_t bytes;
+};
+
+//-------------------------------------------------------------------------
+// length of given segment splitter (pass-thru)
+
+class LogSplitter : public StreamSplitter
+{
+public:
+    LogSplitter(bool);
+
+    Status scan(
+        Flow*,
+        const uint8_t* data,
+        uint32_t len,
+        uint32_t flags,
+        uint32_t* fp
+    ) override;
 };
 
 #endif

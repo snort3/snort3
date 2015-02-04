@@ -74,6 +74,8 @@ struct ExpectFlow
 {
     struct ExpectFlow* next;
     FlowData* data;
+    unsigned cb_id;
+    Stream_Event event;
 
     void clear();
 };
@@ -249,7 +251,7 @@ inline ExpectFlow* ExpectCache::get_flow(
 }
 
 inline bool ExpectCache::set_data(
-    ExpectNode* node, ExpectFlow* last, FlowData* fd)
+    ExpectNode* node, ExpectFlow*& last, FlowData* fd)
 {
     if ( !last )
     {
@@ -346,7 +348,8 @@ int ExpectCache::add_flow(
     const sfip_t *cliIP, uint16_t cliPort,
     const sfip_t *srvIP, uint16_t srvPort,
     uint8_t protocol, char direction,
-    FlowData* fd, int16_t appId)
+    FlowData* fd, int16_t appId,
+    unsigned cb, Stream_Event se)
 {
     assert( !cliPort || !srvPort );
 
@@ -375,6 +378,9 @@ int ExpectCache::add_flow(
     }
     if ( !set_data(node, last, fd) )
         return -1;
+
+    last->cb_id = cb;
+    last->event = se;
 
     node->expires = packet_time() + MAX_WAIT;
     ++expects;
@@ -466,6 +472,9 @@ char ExpectCache::process_expected(Packet*, Flow* lws)
             delete fd;
         else
             ++realized;
+
+        if( head->cb_id )
+            stream.set_event_handler(lws, head->cb_id, head->event);
 
         fd = next;
     }

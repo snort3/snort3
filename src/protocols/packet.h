@@ -90,7 +90,7 @@ extern "C" {
 
 #define PKT_FILE_EVENT_SET   0x00400000
 #define PKT_IGNORE           0x00800000  /* this packet should be ignored, based on port */
-#define PKT_UNUSED_FLAGS     0xff000000
+#define PKT_UNUSED_FLAGS     0xfe000000
 
 // 0x40000000 are available
 #define PKT_PDU_FULL (PKT_PDU_HEAD | PKT_PDU_TAIL)

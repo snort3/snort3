@@ -131,6 +131,18 @@ static inline void Active_ForceDropSession (void)
     Active_ForceDropPacket();
 }
 
+static inline void Active_DropSessionWithoutReset (const Packet*)
+{
+    //_Active_DropSession(p, ACTIVE_SSN_DROP_WITHOUT_RESET);  FIXIT-H
+    Active_DropPacket();
+}
+
+static inline void Active_ForceDropSessionWithoutReset (void)
+{
+    //_Active_ForceDropSession(ACTIVE_SSN_DROP_WITHOUT_RESET);  FIXIT-H
+    Active_DropPacket();
+}
+
 static inline int Active_PacketWouldBeDropped (void)
 {
     return (active_drop_pkt == ACTIVE_WOULD_DROP );

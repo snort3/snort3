@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2013-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -61,7 +60,7 @@
 #define SSNFLAG_CLIENT_SWAP         0x00200000
 #define SSNFLAG_CLIENT_SWAPPED      0x00400000
 
-#define SSNFLAG_ALL                 0xFFFFFFFF /* all that and a bag of chips */
+#define SSNFLAG_DECRYPTED           0x01000000
 #define SSNFLAG_NONE                0x00000000 /* nothing, an MT bag of chips */
 
 #define SSNFLAG_BLOCK (SSNFLAG_DROP_CLIENT|SSNFLAG_DROP_SERVER)
@@ -114,13 +113,13 @@ private:
 
 struct LwState
 {
-    uint32_t   session_flags;
+    uint32_t session_flags;
 
-    int16_t    ipprotocol;
-    int16_t    application_protocol;
+    int16_t ipprotocol;
+    int16_t application_protocol;
 
-    char       direction;
-    char       ignore_direction; /* flag to ignore traffic on this session */
+    char direction;
+    char ignore_direction;
 };
 
 enum Stream_Event
@@ -165,6 +164,12 @@ public:
     bool expired(Packet*);
 
     void set_ttl(Packet*, bool client);
+
+    void set_decrypted()
+    { ssn_state.session_flags |= SSNFLAG_DECRYPTED; };
+
+    bool is_decrypted()
+    { return (ssn_state.session_flags & SSNFLAG_DECRYPTED) != 0; };
 
     void block()
     { ssn_state.session_flags |= SSNFLAG_BLOCK; };

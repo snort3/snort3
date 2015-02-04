@@ -53,6 +53,10 @@ const StreamBuffer* StreamSplitter::reassemble(
     return nullptr;
 }
 
+//--------------------------------------------------------------------------
+// atom splitter
+//--------------------------------------------------------------------------
+
 AtomSplitter::AtomSplitter(bool b, uint32_t sz) : StreamSplitter(b)
 {
     reset();
@@ -111,4 +115,17 @@ static inline int CheckFlushCoercion (
     return 0;
 }
 #endif
+
+//--------------------------------------------------------------------------
+// log splitter
+//--------------------------------------------------------------------------
+
+LogSplitter::LogSplitter(bool b) : StreamSplitter(b) { }
+
+StreamSplitter::Status LogSplitter::scan(
+    Flow*, const uint8_t*, uint32_t len, uint32_t, uint32_t* fp
+) {
+    *fp = len;
+    return FLUSH;
+}
 

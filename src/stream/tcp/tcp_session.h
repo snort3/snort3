@@ -207,6 +207,9 @@ public:
     bool add_alert(Packet*, uint32_t gid, uint32_t sid) override;
     bool check_alerted(Packet*, uint32_t gid, uint32_t sid) override;
 
+    void flush();
+    void start_proxy();
+
 public:
     StreamTracker client;
     StreamTracker server;

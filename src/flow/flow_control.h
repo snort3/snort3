@@ -70,8 +70,8 @@ public:
     int add_expected(
         const sfip_t *srcIP, uint16_t srcPort,
         const sfip_t *dstIP, uint16_t dstPort,
-        uint8_t protocol, int16_t appId,
-        FlowData*);
+        uint8_t protocol, int16_t appId, FlowData*,
+        unsigned stream_callback_id = 0, Stream_Event = SE_MAX);
 
     uint32_t max_flows(uint8_t proto);
 

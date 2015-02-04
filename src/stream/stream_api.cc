@@ -25,8 +25,8 @@
 
 #include <assert.h>
 #include <stdio.h>
-#include <sys/time.h>       /* struct timeval */
-#include <sys/types.h>      /* u_int*_t */
+#include <sys/time.h>
+#include <sys/types.h>
 
 #include "snort.h"
 #include "snort_bounds.h"
@@ -51,6 +51,7 @@
 #include "snort_debug.h"
 #include "protocols/layer.h"
 #include "protocols/vlan.h"
+#include "tcp/tcp_session.h"
 
 #include "target_based/sftarget_protocol_reference.h"
 #include "target_based/sftarget_hostentry.h"
@@ -187,6 +188,24 @@ int Stream::ignore_session(
 
     return flow_con->add_expected(
         srcIP, srcPort, dstIP, dstPort, protocol, direction, fd);
+}
+
+void Stream::decryption_started(Flow* flow, unsigned dir)
+{
+    if (!flow)
+        return;
+
+    TcpSession* tcpssn = (TcpSession*)flow->session;
+    tcpssn->flush();
+
+    if ( dir & SSN_DIR_FROM_SERVER )
+        stream.set_splitter(flow, true, new LogSplitter(true));
+
+    if ( dir & SSN_DIR_FROM_CLIENT )
+        stream.set_splitter(flow, false, new LogSplitter(false));
+
+    flow->set_decrypted();
+    tcpssn->start_proxy();
 }
 
 void Stream::stop_inspection(
@@ -373,12 +392,12 @@ int Stream::set_application_protocol_id_expected(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
     uint8_t protocol, int16_t appId,
-    FlowData* fd) 
+    FlowData* fd, unsigned cb, Stream_Event evt)
 {
     assert(flow_con);
 
     return flow_con->add_expected(
-        srcIP, srcPort, dstIP, dstPort, protocol, appId, fd);
+        srcIP, srcPort, dstIP, dstPort, protocol, appId, fd, cb, evt);
 }
 
 void Stream::set_application_protocol_id_from_host_entry(
@@ -484,10 +503,12 @@ int16_t Stream::set_application_protocol_id(Flow* flow, int16_t id)
     if (!flow->ssn_state.ipprotocol)
         set_ip_protocol(flow);
 
-    SFAT_UpdateApplicationProtocol(
-        &flow->server_ip, flow->server_port,
-        flow->ssn_state.ipprotocol, id);
-
+    if ( !flow->is_decrypted() )
+    {
+        SFAT_UpdateApplicationProtocol(
+            &flow->server_ip, flow->server_port,
+            flow->ssn_state.ipprotocol, id);
+    }
     return id;
 }
 
