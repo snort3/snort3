@@ -1,5 +1,6 @@
 Pending - build 136
 
+-- fix encoder check for ip6 extensions
 -- sync normalizatons with 297
 
 15/01/29 - build 135
