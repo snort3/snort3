@@ -124,10 +124,6 @@ public:
 
 };
 
-/* Last updated 5/2/2014.
-   Source: http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml */
-const uint16_t MIN_UNASSIGNED_IP_PROTO = 143;
-
 const uint16_t IP_ID_COUNT = 8192;
 static THREAD_LOCAL rand_t* s_rand = 0;
 static THREAD_LOCAL uint16_t s_id_index = 0;
@@ -345,10 +341,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         ((frag_off == 0) &&  // FIXIT-M this forces flow to udp instead of ip
          (iph->proto() == IPPROTO_UDP))*/)
     {
-        if (iph->proto() >= MIN_UNASSIGNED_IP_PROTO)
-            codec_events::decoder_event(codec, DECODE_IP_UNASSIGNED_PROTO);
-        else
-            codec.next_prot_id = iph->proto();
+        codec.next_prot_id = iph->proto();
     }
 
     return true;

@@ -613,7 +613,7 @@ bool Ipv6Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
 
     
     ipvh_out->ip6_vtf = htonl(ntohl(hi->ip6_vtf) & 0xFFF00000);
-    ipvh_out->ip6_payload_len = htons(buf.size());
+    ipvh_out->ip6_payload_len = htons(buf.size() - sizeof(ip::IP6Hdr));
 
     enc.next_proto = IPPROTO_ID_IPV6;
     enc.next_ethertype = ETHERTYPE_IPV6;

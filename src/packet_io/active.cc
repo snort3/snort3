@@ -70,13 +70,6 @@ static int Active_Close(void);
 static int Active_SendEth(const DAQ_PktHdr_t*, int, const uint8_t*, uint32_t);
 static int Active_SendIp(const DAQ_PktHdr_t*, int, const uint8_t*, uint32_t);
 
-static inline uint16_t GetInnerProto (const Packet* p)
-{
-    if ( !p->num_layers )
-        return FINISHED_DECODE;
-
-    return ( p->layers[p->num_layers-1].prot_id );
-}
 
 //--------------------------------------------------------------------
 
@@ -235,7 +228,7 @@ void Active_InjectData (
 
 int Active_IsRSTCandidate(const Packet* p)
 {
-    if ( GetInnerProto(p) != IPPROTO_ID_TCP )
+    if ( !p->is_tcp() )
         return 0;
 
     if ( !p->ptrs.tcph )
@@ -251,22 +244,24 @@ int Active_IsRSTCandidate(const Packet* p)
 
 int Active_IsUNRCandidate(const Packet* p)
 {
-    switch ( GetInnerProto(p) )
+    // FIXIT allow unr to tcp/udp/icmp4/icmp6 only or for all
+    switch ( p->type() )
     {
-    case IPPROTO_ID_UDP:
-    case IPPROTO_ID_TCP:
+    case PktType::TCP:
+    case PktType::UDP:
         return 1;
 
-    case IPPROTO_ID_ICMPV4:
-    case IPPROTO_ID_ICMPV6:
+    case PktType::ICMP:
         // FIXIT-L return false for icmp unreachables
         return 1;
 
     default:
-        break;
+        return 0;
     }
+
     return 0;
 }
+
 
 //--------------------------------------------------------------------
 // TBD strafed sequence numbers could be divided by window

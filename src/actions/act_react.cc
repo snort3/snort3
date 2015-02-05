@@ -255,7 +255,7 @@ static void react_config (ReactData* rd)
 
 static const Parameter s_params[] =
 {
-    { "msg", Parameter::PT_IMPLIED, nullptr, nullptr,
+    { "msg", Parameter::PT_BOOL, nullptr, nullptr,
       " use rule message in response page" },
 
     { "page", Parameter::PT_STRING, nullptr, nullptr,
@@ -319,7 +319,7 @@ static IpsAction* react_ctor(Module* p)
     ReactModule* m = (ReactModule*)p;
     rd->rule_msg = m->msg;
 
-    react_config(rd);
+    react_config(rd); // FIXIT-L this must be done per response
 
     return new ReactAction(rd);
 }

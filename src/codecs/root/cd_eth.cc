@@ -187,7 +187,7 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         ho = reinterpret_cast<eth::EtherHdr*>(buf.data());
 
         if (enc.ethertype_set())
-            ho->ether_type = enc.next_ethertype;
+            ho->ether_type = htons(enc.next_ethertype);
         else
             ho->ether_type = hi->ether_type;
 

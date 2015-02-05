@@ -21,6 +21,7 @@
 #include <cstring>
 #include <mutex>
 #include <algorithm>
+#include <limits>
 #include <type_traits> // static_assert
 
 #include "framework/codec.h"
@@ -295,9 +296,20 @@ void PacketManager::decode(
         {
             // if the codec exists, it failed
             if(CodecManager::s_proto_map[prev_prot_id])
+            {
                 s_stats[discards]++;
+            }
             else
+            {
                 s_stats[other_codecs]++;
+
+                if ( (MIN_UNASSIGNED_IP_PROTO <= prev_prot_id) &&
+                    (prev_prot_id <= std::numeric_limits<uint8_t>::max()) &&
+                    !(codec_data.codec_flags & CODEC_STREAM_REBUILT) )
+                {
+                    SnortEventqAdd(GID_DECODE, DECODE_IP_UNASSIGNED_PROTO);
+                }
+            }
         }
     }
 
@@ -538,7 +550,7 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
         icmph->csum = checksum::icmp_cksum((uint16_t *)buf.data(), buf.size());
 
 
-        if (encode(p, flags, p->num_layers-1, IPPROTO_ID_ICMPV4, buf))
+        if (encode(p, flags, inner_ip_index, IPPROTO_ID_ICMPV4, buf))
         {
             len = buf.size();
             return buf.data() + buf.off;
@@ -606,7 +618,7 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
         icmph->csum = checksum::icmp_cksum((uint16_t *)buf.data(), ip_len, &ps6);
 
 
-        if (encode(p, flags, p->num_layers-1, IPPROTO_ICMPV6, buf))
+        if (encode(p, flags, inner_ip_index, IPPROTO_ICMPV6, buf))
         {
             len = buf.size();
             return buf.data() + buf.off;

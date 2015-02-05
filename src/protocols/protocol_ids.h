@@ -63,6 +63,10 @@ constexpr uint16_t IPPROTO_ID_NONEXT = 59;
 constexpr uint16_t IPPROTO_ID_DSTOPTS = 60;
 constexpr uint16_t IPPROTO_ID_RESERVED = 255; // == 0xFF
 
+/* Last updated 2/4/2015.
+   Source: http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml */
+constexpr uint16_t MIN_UNASSIGNED_IP_PROTO = 143;
+
 /*
  *  Undefined Protocol!
  */
