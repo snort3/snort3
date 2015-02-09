@@ -94,7 +94,7 @@ public:
 
     static uint32_t get_packet_direction(Packet*);
 
-    static void decryption_started(Flow*, unsigned dir);
+    static void proxy_started(Flow*, unsigned dir);
 
     /* Stop inspection for session, up to count bytes (-1 to ignore
      * for life or until resume).

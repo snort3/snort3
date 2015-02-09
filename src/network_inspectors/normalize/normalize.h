@@ -64,10 +64,10 @@ enum NormFlags
 
 enum NormMode : int8_t
 {
-    NORM_MODE_OFF = -1,
-    NORM_MODE_ON = 0,
-    NORM_MODE_TEST = 1,
-    NORM_MODE_MAX = 2
+    NORM_MODE_OFF,
+    NORM_MODE_TEST,
+    NORM_MODE_ON,
+    NORM_MODE_MAX
 };
 
 typedef PegCount (*NormPegs)[NORM_MODE_MAX];

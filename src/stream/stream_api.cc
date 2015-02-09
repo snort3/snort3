@@ -190,7 +190,7 @@ int Stream::ignore_session(
         srcIP, srcPort, dstIP, dstPort, protocol, direction, fd);
 }
 
-void Stream::decryption_started(Flow* flow, unsigned dir)
+void Stream::proxy_started(Flow* flow, unsigned dir)
 {
     if (!flow)
         return;
@@ -204,8 +204,8 @@ void Stream::decryption_started(Flow* flow, unsigned dir)
     if ( dir & SSN_DIR_FROM_CLIENT )
         stream.set_splitter(flow, false, new LogSplitter(false));
 
-    flow->set_decrypted();
     tcpssn->start_proxy();
+    flow->set_proxied();
 }
 
 void Stream::stop_inspection(
@@ -503,7 +503,7 @@ int16_t Stream::set_application_protocol_id(Flow* flow, int16_t id)
     if (!flow->ssn_state.ipprotocol)
         set_ip_protocol(flow);
 
-    if ( !flow->is_decrypted() )
+    if ( !flow->is_proxied() )
     {
         SFAT_UpdateApplicationProtocol(
             &flow->server_ip, flow->server_port,

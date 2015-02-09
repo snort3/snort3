@@ -537,10 +537,13 @@ static int Norm_TCP (
         }
         if ( h->th_offx2 & TH_NS )
         {
-            h->th_offx2 &= ~TH_NS;
+            if ( mode == NORM_MODE_ON )
+            {
+                h->th_offx2 &= ~TH_NS;
+                changes++;
+            }
             normStats[PC_TCP_NS][mode]++;
             sfBase.iPegs[PERF_COUNT_TCP_NS][mode]++;
-            changes++;
         }
     }
     if ( h->th_urp )

@@ -60,7 +60,7 @@
 #define SSNFLAG_CLIENT_SWAP         0x00200000
 #define SSNFLAG_CLIENT_SWAPPED      0x00400000
 
-#define SSNFLAG_DECRYPTED           0x01000000
+#define SSNFLAG_PROXIED             0x01000000
 #define SSNFLAG_NONE                0x00000000 /* nothing, an MT bag of chips */
 
 #define SSNFLAG_BLOCK (SSNFLAG_DROP_CLIENT|SSNFLAG_DROP_SERVER)
@@ -165,11 +165,11 @@ public:
 
     void set_ttl(Packet*, bool client);
 
-    void set_decrypted()
-    { ssn_state.session_flags |= SSNFLAG_DECRYPTED; };
+    void set_proxied()
+    { ssn_state.session_flags |= SSNFLAG_PROXIED; };
 
-    bool is_decrypted()
-    { return (ssn_state.session_flags & SSNFLAG_DECRYPTED) != 0; };
+    bool is_proxied()
+    { return (ssn_state.session_flags & SSNFLAG_PROXIED) != 0; };
 
     void block()
     { ssn_state.session_flags |= SSNFLAG_BLOCK; };
