@@ -192,6 +192,9 @@ struct SO_PUBLIC Packet
     inline bool is_udp() const
     { return ptrs.get_pkt_type() == PktType::UDP; }
 
+    inline bool is_icmp() const
+    { return ptrs.get_pkt_type() == PktType::ICMP; }
+
     inline bool is_cooked() const
     { return packet_flags & PKT_PSEUDO; }
 

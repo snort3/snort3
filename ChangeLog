@@ -1,5 +1,6 @@
 Pending - build 137
 
+-- fixed icmp4 encoding
 -- methods in codec_events and ip_util namespaces are now protected
    Codec methods
 -- 297 sync of active and codecs

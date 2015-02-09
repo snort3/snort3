@@ -87,7 +87,6 @@ static const RuleMap ipv4_rules[] =
     { DECODE_IP4_MIN_TTL, "IPV4 packet below TTL limit" },
     { DECODE_IP4_DF_OFFSET, "IPV4 packet both DF and offset set" },
     { DECODE_IP_RESERVED_FRAG_BIT, "BAD-TRAFFIC IP reserved bit set" },
-    { DECODE_IP_UNASSIGNED_PROTO, "BAD-TRAFFIC unassigned/reserved IP protocol" },
     { DECODE_IP_OPTION_SET, "MISC IP option set" },
     { DECODE_IP4_HDR_TRUNC, "truncated IP4 header" },
     { 0, nullptr }

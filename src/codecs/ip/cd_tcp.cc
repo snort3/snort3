@@ -175,7 +175,7 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     /* Checksum code moved in front of the other decoder alerts.
        If it's a bad checksum (maybe due to encrypted ESP traffic), the other
        alerts could be false positives. */
-    if (ScTcpChecksums())
+    if ( ScTcpChecksums() )
     {
         uint16_t csum;
         PegCount* bad_cksum_cnt;

@@ -98,6 +98,22 @@ static inline void push_layer(Packet *p,
 //    lyr.invalid_bits = p->byte_skip;  -- currently unused
 }
 
+void PacketManager::pop_teredo(Packet* p, RawData& raw)
+{
+    p->proto_bits &= ~PROTO_BIT__TEREDO;
+    if ( ScTunnelBypassEnabled(TUNNEL_TEREDO) )
+        Active_ClearTunnelBypass();
+
+    const uint8_t mapped_prot = CodecManager::s_proto_map[PROTO_TEREDO];
+    s_stats[mapped_prot + stat_offset]--;
+    p->num_layers--;
+
+    const Layer& lyr = p->layers[p->num_layers];
+    const uint16_t lyr_len = raw.data - lyr.start;
+    raw.data = lyr.start;
+    raw.len += lyr_len;
+}
+
 //-------------------------------------------------------------------------
 // Initialization and setup
 //-------------------------------------------------------------------------
@@ -273,7 +289,7 @@ void PacketManager::decode(
         {
             p->ptrs = unsure_encap_ptrs;
 
-            switch (p->layers[p->num_layers].prot_id)
+            switch (p->layers[p->num_layers-1].prot_id)
             {
             case IPPROTO_ID_ESP:
                 // Hardcoding ESP because we trust iff the layer
@@ -285,14 +301,18 @@ void PacketManager::decode(
                 // if we just decoded teredo and the next
                 // layer fails, we made a mistake. Therefore,
                 // remove this bit.
-                p->proto_bits &= ~PROTO_BIT__TEREDO;
-                if ( ScTunnelBypassEnabled(TUNNEL_TEREDO) )
-                    Active_ClearTunnelBypass();
+                pop_teredo(p, raw);
                 break;
             } /* switch */
         }
         else
         {
+            if ( (p->layers[p->num_layers-1].prot_id == PROTO_TEREDO) &&
+                 (prev_prot_id == IPPROTO_IPV6) )
+            {
+                pop_teredo(p, raw);
+            }
+
             // if the codec exists, it failed
             if(CodecManager::s_proto_map[prev_prot_id])
             {

@@ -32,6 +32,7 @@ static const RuleMap general_decode_rules[] =
     { DECODE_ZERO_LENGTH_FRAG, "fragment with zero length" },
     { DECODE_BAD_TRAFFIC_LOOPBACK, "bad traffic loopback IP" },
     { DECODE_BAD_TRAFFIC_SAME_SRCDST, "bad traffic same src/dst IP" },
+    { DECODE_IP_UNASSIGNED_PROTO, "BAD-TRAFFIC unassigned/reserved IP protocol" },
 
     { DECODE_TOO_MANY_LAYERS, "too many protocols present"},
     { 0, nullptr },

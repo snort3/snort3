@@ -145,6 +145,7 @@ private:
     // The only time we should accumulate is when CodecManager tells us too
     friend void CodecManager::thread_term();
     static void accumulate();
+    static void pop_teredo(Packet*, RawData&);
     static bool encode(const Packet* p, EncodeFlags,
         uint8_t lyr_start, uint8_t next_prot, Buffer& buf);
 
