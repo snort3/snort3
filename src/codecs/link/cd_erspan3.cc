@@ -22,7 +22,6 @@
 #include <arpa/inet.h>
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet.h"
 
@@ -110,7 +109,7 @@ bool Erspan3Codec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     if (raw.len < sizeof(ERSpanType3Hdr))
     {
-        codec_events::decoder_event(codec, DECODE_ERSPAN3_DGRAM_LT_HDR);
+        codec_event(codec, DECODE_ERSPAN3_DGRAM_LT_HDR);
         return false;
     }
 
@@ -118,7 +117,7 @@ bool Erspan3Codec::decode(const RawData& raw, CodecData& codec, DecodeData&)
      */
     if (erSpan3Hdr->version() != 0x02) /* Type 3 == version 0x02 */
     {
-        codec_events::decoder_event(codec, DECODE_ERSPAN_HDR_VERSION_MISMATCH);
+        codec_event(codec, DECODE_ERSPAN_HDR_VERSION_MISMATCH);
         return false;
     }
 

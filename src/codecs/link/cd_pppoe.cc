@@ -22,7 +22,6 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "codecs/codec_events.h"
 #include "protocols/packet.h"
 #include "protocols/layer.h"
 #include "main/snort_debug.h"
@@ -75,6 +74,29 @@ public:
     { return pppoe_rules; }
 };
 
+
+
+
+class PPPoECodec : public Codec
+{
+public:
+    ~PPPoECodec() {};
+
+    bool decode(const RawData&, CodecData&, DecodeData&) override final;
+    bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&) override final;
+
+protected:
+    PPPoECodec(const char* s, PppoepktType type) :
+        Codec(s),
+        ppp_type(type)
+    { }
+
+private:
+    PppoepktType ppp_type;
+};
+
+
 } // namespace
 
 
@@ -103,15 +125,14 @@ constexpr uint16_t PPPoE_TAG_GENERIC_ERROR = 0x0203;
 #endif
 
 
-static inline bool pppoepkt_decode(const RawData& raw,
+bool PPPoECodec::decode(const RawData& raw,
                                     CodecData& codec,
-                                    DecodeData&,
-                                    PppoepktType ppp_type)
+                                    DecodeData&)
 {
     /* do a little validation */
     if(raw.len < PPPOE_HEADER_LEN)
     {
-        codec_events::decoder_event(codec, DECODE_BAD_PPPOE);
+        codec_event(codec, DECODE_BAD_PPPOE);
         return false;
     }
 
@@ -260,8 +281,8 @@ static inline bool pppoepkt_decode(const RawData& raw,
  ******************** E N C O D E R  ******************************
  ******************************************************************/
 
-static inline bool pppoepkt_encode(const uint8_t* const raw_in,
-        const uint16_t raw_len, Buffer& buf)
+bool PPPoECodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer& buf)
 {
     if (!buf.allocate(raw_len))
         return false;
@@ -285,51 +306,49 @@ namespace
 {
 
 const uint16_t ETHERNET_TYPE_PPPoE_DISC =  0x8863; /* discovery stage */
+const uint16_t ETHERNET_TYPE_PPPoE_SESS =  0x8864; /* session stage */
+
 #define CD_PPPOEPKT_DISC_NAME "pppoe_disc"
 #define CD_PPPOEPKT_DISC_HELP "support for point-to-point discovery"
 
-class PPPoEDiscCodec : public Codec
+#define CD_PPPOEPKT_SESS_NAME "pppoe_sess"
+#define CD_PPPOEPKT_SESS_HELP "support for point-to-point session"
+
+
+/*  'decode' and 'encode' functions are in the PPPoECodec */
+class PPPoEDiscCodec : public PPPoECodec
 {
 public:
-    PPPoEDiscCodec() : Codec(CD_PPPOEPKT_DISC_NAME){};
+    PPPoEDiscCodec() : PPPoECodec(CD_PPPOEPKT_DISC_NAME, PppoepktType::DISCOVERY){};
     ~PPPoEDiscCodec() {};
 
+    void get_protocol_ids(std::vector<uint16_t>& v) override
+    { v.push_back(ETHERNET_TYPE_PPPoE_DISC); }
+};
 
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
-    bool decode(const RawData&, CodecData&, DecodeData&) override;
-    bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                        EncState&, Buffer&) override;
+
+class PPPoESessCodec : public PPPoECodec
+{
+public:
+    PPPoESessCodec() : PPPoECodec(CD_PPPOEPKT_SESS_NAME, PppoepktType::SESSION) { }
+    ~PPPoESessCodec() {}
+
+    void get_protocol_ids(std::vector<uint16_t>& v) override
+    { v.push_back(ETHERNET_TYPE_PPPoE_SESS); }
 };
 
 
 } // namespace
-
-void PPPoEDiscCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ETHERNET_TYPE_PPPoE_DISC);
-}
-
-
-bool PPPoEDiscCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
-{
-    return pppoepkt_decode(raw, codec, snort, PppoepktType::DISCOVERY);
-}
-
-bool PPPoEDiscCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                            EncState&, Buffer& buf)
-{
-    return pppoepkt_encode(raw_in, raw_len, buf);
-}
-
 
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
 
-// ***  NOTE: THE CODEC HAS A DIFFERENT NAME!
-// However, since the module is creating a rule stub and is NOT
-// used for configurtion, it doesn't matter.  If you want to use the module
+
+// ***  NOTE: THE CODEC AND MODULE HAVE A DIFFERENT NAME!
+// since the module is only creating a rule stub and is NOT
+// used for configurtion, it doesn't matter. However, if you want to use the module
 // for configuration, ensure the names are identical before continuing!
 static Module* mod_ctor()
 { return new PPPoEModule; }
@@ -340,7 +359,10 @@ static void mod_dtor(Module* m)
 static Codec* disc_ctor(Module*)
 { return new PPPoEDiscCodec(); }
 
-static void disc_dtor(Codec *cd)
+static Codec* sess_ctor(Module*)
+{ return new PPPoESessCodec(); }
+
+static void pppoe_dtor(Codec *cd)
 { delete cd; }
 
 
@@ -360,69 +382,8 @@ static const CodecApi pppoepkt_disc_api =
     nullptr,
     nullptr,
     disc_ctor,
-    disc_dtor,
+    pppoe_dtor,
 };
-
-
-
-
-/*******************************************************************
- *******************************************************************
- *******************************************************************
- *******************************************************************/
-
-
-
-
-namespace
-{
-
-
-#define CD_PPPOEPKT_SESS_NAME "pppoe_sess"
-#define CD_PPPOEPKT_SESS_HELP "support for point-to-point session"
-
-const uint16_t ETHERNET_TYPE_PPPoE_SESS =  0x8864; /* session stage */
-
-class PPPoESessCodec : public Codec
-{
-public:
-    PPPoESessCodec() : Codec(CD_PPPOEPKT_SESS_NAME){};
-    ~PPPoESessCodec() {};
-
-
-    void get_protocol_ids(std::vector<uint16_t>& v) override;
-    bool decode(const RawData&, CodecData&, DecodeData&) override;
-    bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                        EncState&, Buffer&) override;
-};
-
-
-} // namespace
-
-void PPPoESessCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(ETHERNET_TYPE_PPPoE_SESS); }
-
-
-bool PPPoESessCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
-{ return pppoepkt_decode(raw, codec, snort, PppoepktType::SESSION); }
-
-
-
-bool PPPoESessCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                            EncState&, Buffer& buf)
-{ return pppoepkt_encode(raw_in, raw_len, buf); }
-
-
-//-------------------------------------------------------------------------
-// api
-//-------------------------------------------------------------------------
-
-
-static Codec* sess_ctor(Module*)
-{ return new PPPoESessCodec(); }
-
-static void sess_dtor(Codec *cd)
-{ delete cd; }
 
 
 static const CodecApi pppoepkt_sess_api =
@@ -441,7 +402,7 @@ static const CodecApi pppoepkt_sess_api =
     nullptr,
     nullptr,
     sess_ctor,
-    sess_dtor,
+    pppoe_dtor,
 };
 
 

@@ -24,12 +24,12 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "protocols/packet.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/gre.h"
 #include "log/text_log.h"
 #include "protocols/packet_manager.h"
+#include "codecs/codec_module.h"
 
 #define CD_GRE_NAME "gre"
 #define CD_GRE_HELP "support for generic routing encapsulation"
@@ -114,7 +114,7 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if (raw.len < GRE_HEADER_LEN)
     {
-        codec_events::decoder_event(codec, DECODE_GRE_DGRAM_LT_GREHDR);
+        codec_event(codec, DECODE_GRE_DGRAM_LT_GREHDR);
         return false;
     }
 
@@ -132,7 +132,7 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
             /* these must not be set */
             if (GRE_RECUR(greh) || GRE_FLAGS(greh))
             {
-                codec_events::decoder_event(codec, DECODE_GRE_INVALID_HEADER);
+                codec_event(codec, DECODE_GRE_INVALID_HEADER);
                 return false;
             }
 
@@ -186,21 +186,21 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
             if (GRE_CHKSUM(greh) || GRE_ROUTE(greh) || GRE_SSR(greh) ||
                 GRE_RECUR(greh) || GRE_V1_FLAGS(greh))
             {
-                codec_events::decoder_event(codec, DECODE_GRE_V1_INVALID_HEADER);
+                codec_event(codec, DECODE_GRE_V1_INVALID_HEADER);
                 return false;
             }
 
             /* protocol must be 0x880B - PPP */
             if (greh->proto() != ETHERTYPE_PPP)
             {
-                codec_events::decoder_event(codec, DECODE_GRE_V1_INVALID_HEADER);
+                codec_event(codec, DECODE_GRE_V1_INVALID_HEADER);
                 return false;
             }
 
             /* this flag should always be present */
             if (!(GRE_KEY(greh)))
             {
-                codec_events::decoder_event(codec, DECODE_GRE_V1_INVALID_HEADER);
+                codec_event(codec, DECODE_GRE_V1_INVALID_HEADER);
                 return false;
             }
 
@@ -215,13 +215,13 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
             break;
 
         default:
-            codec_events::decoder_event(codec, DECODE_GRE_INVALID_VERSION);
+            codec_event(codec, DECODE_GRE_INVALID_VERSION);
             return false;
     }
 
     if (len > raw.len)
     {
-        codec_events::decoder_event(codec, DECODE_GRE_DGRAM_LT_GREHDR);
+        codec_event(codec, DECODE_GRE_DGRAM_LT_GREHDR);
         return false;
     }
 

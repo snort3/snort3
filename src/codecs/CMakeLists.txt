@@ -6,7 +6,6 @@ add_subdirectory(misc)
 
 set (CODEC_INCLUDES
     codec_module.h
-    codec_events.h
 )
 
 add_library (codecs STATIC

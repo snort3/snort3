@@ -25,11 +25,10 @@
 
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/ipv6.h"
 #include "protocols/packet.h"
-#include "codecs/ip/ip_util.h"
+#include "codecs/codec_module.h"
 #include "main/snort.h"
 
 #define CD_AUTH_NAME "auth"
@@ -96,7 +95,7 @@ bool AuthCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     if (raw.len < MIN_AUTH_LEN)
     {
-        codec_events::decoder_event(codec, DECODE_AUTH_HDR_TRUNC);
+        codec_event(codec, DECODE_AUTH_HDR_TRUNC);
         return false;
     }
 
@@ -106,7 +105,7 @@ bool AuthCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     if (codec.lyr_len > raw.len)
     {
-        codec_events::decoder_event(codec, DECODE_AUTH_HDR_BAD_LEN);
+        codec_event(codec, DECODE_AUTH_HDR_BAD_LEN);
         return false;
     }
 
@@ -118,11 +117,11 @@ bool AuthCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     {
         if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
         {
-            codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
+            codec_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
             return false;
         }
 
-        ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_AUTH);
+        CheckIPv6ExtensionOrder(codec, IPPROTO_ID_AUTH);
         codec.proto_bits |= PROTO_BIT__IP6_EXT;
         codec.ip6_csum_proto = ah->next;
         codec.ip6_extension_count++;

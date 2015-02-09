@@ -26,9 +26,8 @@
 
 #include "framework/codec.h"
 #include "snort.h"
-#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
-#include "codecs/ip/ip_util.h"
+#include "codecs/codec_module.h"
 
 #define CD_ESP_NAME "esp"
 #define CD_ESP_HELP "support for encapsulating security payload"
@@ -122,7 +121,7 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     if (raw.len < (ESP_HEADER_LEN + ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN))
     {
         /* Truncated ESP traffic. Bail out here and inspect the rest as payload. */
-        codec_events::decoder_event(codec, DECODE_ESP_HEADER_TRUNC);
+        codec_event(codec, DECODE_ESP_HEADER_TRUNC);
         return false;
     }
 
@@ -145,12 +144,12 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     {
         if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
         {
-            codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
+            codec_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
             return false;
         }
 
 
-        ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_ESP);
+        CheckIPv6ExtensionOrder(codec, IPPROTO_ID_ESP);
         codec.proto_bits |= PROTO_BIT__IP6_EXT;
         codec.ip6_csum_proto = codec.next_prot_id;
         codec.ip6_extension_count++;

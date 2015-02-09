@@ -26,7 +26,6 @@
 #include "codecs/codec_module.h"
 #include "protocols/packet.h"
 #include "framework/module.h"
-#include "codecs/codec_events.h"
 #include "codecs/codec_module.h"
 #include "log/text_log.h"
 #include "protocols/packet_manager.h"
@@ -97,7 +96,7 @@ bool LlcCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     if(raw.len < sizeof(EthLlc))
     {
         // FIXIT-L - J - Need a better alert
-        codec_events::decoder_event(codec, DECODE_BAD_VLAN_ETHLLC);
+        codec_event(codec, DECODE_BAD_VLAN_ETHLLC);
         return false;
     }
 
@@ -110,7 +109,7 @@ bool LlcCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     {
         if (raw.len <  sizeof(EthLlc) + sizeof(EthLlcOther))
         {
-            codec_events::decoder_event(codec, DECODE_BAD_VLAN_ETHLLC);
+            codec_event(codec, DECODE_BAD_VLAN_ETHLLC);
             return false;
         }
 

@@ -950,7 +950,6 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
     Mpse* so;
     int start_state;
     const uint8_t *tmp_payload;
-    ip::IpApi tmp_api;
     int8_t curr_ip_layer = 0;
     bool repeat = false;
     uint16_t tmp_dsize;
@@ -959,12 +958,6 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
 
     if (ip_rule)
     {
-        // FIXIT-J -- Copying p->ip_data may be unnecessary because when
-        //          finished evaluating, ip_api will be the innermost
-        //          layer. Right now, ip_api should already be the
-        //          innermost layer
-        tmp_api = p->ptrs.ip_api;
-
         tmp_payload = p->data;
         tmp_dsize = p->dsize;
 

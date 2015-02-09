@@ -29,9 +29,11 @@
 
 
 // ip codecs
-extern const BaseApi* cd_ipv4; // static due to dependence on fpdetect
-extern const BaseApi* cd_tcp;  // static because only file that specific functions
-                               //     (symbols will be removed from final executabel)
+extern const BaseApi* cd_ipv4;    // static due to dependence on fpdetect
+extern const BaseApi* cd_hopopts; // static to ensure the symbols CheckIPV6HopOptions
+                                  // and CheckIPv6ExtensionOrder the final executuable.
+extern const BaseApi* cd_tcp;     // static because only file that specific functions
+                                  //    (symbols will be removed from final executabel)
 
 // link codecs
 
@@ -46,7 +48,6 @@ extern const BaseApi* cd_fabricpath;
 extern const BaseApi* cd_frag;
 extern const BaseApi* cd_gre;
 extern const BaseApi* cd_gtp;
-extern const BaseApi* cd_hopopts;
 extern const BaseApi* cd_icmp4;
 extern const BaseApi* cd_icmp4_ip;
 extern const BaseApi* cd_icmp6;
@@ -90,6 +91,7 @@ const BaseApi* codecs[] =
     // non root codecs
     cd_ipv4,
     cd_tcp,
+    cd_hopopts,
 
 #ifdef STATIC_CODECS
     cd_ah,
@@ -102,7 +104,6 @@ const BaseApi* codecs[] =
     cd_frag,
     cd_gre,
     cd_gtp,
-    cd_hopopts,
     cd_icmp4,
     cd_icmp4_ip,
     cd_icmp6,

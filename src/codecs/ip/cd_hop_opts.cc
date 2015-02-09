@@ -24,9 +24,8 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "protocols/ipv6.h"
-#include "codecs/ip/ip_util.h"
+#include "codecs/codec_module.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 #include "detection/fpdetect.h"
@@ -71,13 +70,13 @@ bool Ipv6HopOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     if (raw.len < sizeof(IP6HopByHop))
     {
-        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
+        codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
     if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
     {
-        codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
+        codec_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
         return false;
     }
 
@@ -85,7 +84,7 @@ bool Ipv6HopOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     codec.lyr_len = sizeof(IP6HopByHop) + (hbh_hdr->ip6hbh_len << 3);
     if(codec.lyr_len > raw.len)
     {
-        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
+        codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
@@ -95,8 +94,8 @@ bool Ipv6HopOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     codec.proto_bits |= PROTO_BIT__IP6_EXT;
 
     // must be called AFTER setting next_prot_id
-    ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_HOPOPTS);
-    if ( ip_util::CheckIPV6HopOptions(raw, codec))
+    CheckIPv6ExtensionOrder(codec, IPPROTO_ID_HOPOPTS);
+    if ( CheckIPV6HopOptions(raw, codec))
         return true;
 
     return false;
@@ -118,6 +117,7 @@ static Codec* ctor(Module*)
 static void dtor(Codec *cd)
 { delete cd; }
 
+
 static const CodecApi ipv6_hopopts_api =
 {
     {
@@ -137,6 +137,13 @@ static const CodecApi ipv6_hopopts_api =
     dtor, // dtor
 };
 
+/*  This codec is static to ensure the symbols CheckIPV6HopOptions
+ *  and CheckIPv6ExtensionOrder are included in the binary.
+ *
+ *  If this Codec is no longer static, also edit the file codec_api.cc
+ */
+#if 0
+
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -147,5 +154,9 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 const BaseApi* cd_hopopts = &ipv6_hopopts_api.base;
 #endif
 
+#else /* 0 */
+const BaseApi* cd_hopopts = &ipv6_hopopts_api.base;
+
+#endif /* 0 */
 
 

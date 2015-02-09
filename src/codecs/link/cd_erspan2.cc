@@ -20,7 +20,6 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet.h"
 
@@ -98,7 +97,7 @@ bool Erspan2Codec::decode(const RawData& raw, CodecData& codec, DecodeData& )
 
     if (raw.len < sizeof(ERSpanType2Hdr))
     {
-        codec_events::decoder_event(codec, DECODE_ERSPAN2_DGRAM_LT_HDR);
+        codec_event(codec, DECODE_ERSPAN2_DGRAM_LT_HDR);
         return false;
     }
 
@@ -106,7 +105,7 @@ bool Erspan2Codec::decode(const RawData& raw, CodecData& codec, DecodeData& )
      */
     if (erSpan2Hdr->version() != 0x01) /* Type 2 == version 0x01 */
     {
-        codec_events::decoder_event(codec, DECODE_ERSPAN_HDR_VERSION_MISMATCH);
+        codec_event(codec, DECODE_ERSPAN_HDR_VERSION_MISMATCH);
         return false;
     }
 

@@ -26,7 +26,6 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "codecs/codec_events.h"
 #include "codecs/ip/checksum.h"
 #include "protocols/packet.h"
 
@@ -153,7 +152,7 @@ static inline int pgm_nak_detect (const RawData& raw)
 bool PgmCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if ( pgm_nak_detect(raw) == PGM_NAK_VULN )
-        codec_events::decoder_event(codec, DECODE_PGM_NAK_OVERFLOW);
+        codec_event(codec, DECODE_PGM_NAK_OVERFLOW);
     return true;
 }
 

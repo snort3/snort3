@@ -24,12 +24,10 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "codecs/codec_events.h"
 #include "protocols/ipv6.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 #include "detection/fpdetect.h"
-#include "codecs/ip/ip_util.h"
 #include "protocols/packet.h"
 #include "log/text_log.h"
 #include "protocols/packet_manager.h"
@@ -64,13 +62,13 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
 
     if(raw.len < ip::MIN_EXT_LEN )
     {
-        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
+        codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
     if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
     {
-        codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
+        codec_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
         return false;
     }
 
@@ -79,7 +77,7 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
     {
         // FIXIT-L  identical to DEFRAG_ANOMALY_ZERO.  Commenting
         // 'return false' so that it has the same functionality as IPv4
-        codec_events::decoder_event(codec, DECODE_ZERO_LENGTH_FRAG);
+        codec_event(codec, DECODE_ZERO_LENGTH_FRAG);
 //        return false;
     }
 
@@ -101,7 +99,7 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
     if (frag_offset || (snort.decode_flags & DECODE_MF))
         snort.decode_flags |= DECODE_FRAG;
     else
-        codec_events::decoder_event(codec, DECODE_IPV6_BAD_FRAG_PKT);
+        codec_event(codec, DECODE_IPV6_BAD_FRAG_PKT);
 
 
     codec.lyr_len = sizeof(ip::IP6Frag);
@@ -110,12 +108,12 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
     codec.ip6_extension_count++;
 
     // must be called AFTER setting next_prot_id
-    ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_FRAGMENT);
+    CheckIPv6ExtensionOrder(codec, IPPROTO_ID_FRAGMENT);
 
     // Since the Frag layer is removed from rebuilt packets, ensure
     // the next layer is correctly order now.
     if (frag_offset == 0)
-        ip_util::CheckIPv6ExtensionOrder(codec, ip6frag_hdr->ip6f_nxt);
+        CheckIPv6ExtensionOrder(codec, ip6frag_hdr->ip6f_nxt);
 
     if ( snort.decode_flags & DECODE_FRAG )
     {

@@ -26,12 +26,10 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 #include "detection/fpdetect.h"
 #include "protocols/ipv6.h"
-#include "codecs/ip/ip_util.h"
 
 #define CD_IPV6_ROUTING_NAME "ipv6_routing"
 #define CD_IPV6_ROUTING_HELP "support for IPv6 routing extension"
@@ -88,37 +86,37 @@ bool Ipv6RoutingCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     if(raw.len < ip::MIN_EXT_LEN)
     {
-        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
+        codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
     if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
     {
-        codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
+        codec_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
         return false;
     }
 
     if (raw.len < sizeof(IP6Route))
     {
-        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
+        codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
     /* Routing type 0 extension headers are evil creatures. */
     if (rte->ip6rte_type == 0)
-        codec_events::decoder_event(codec, DECODE_IPV6_ROUTE_ZERO);
+        codec_event(codec, DECODE_IPV6_ROUTE_ZERO);
 
     if (rte->ip6rte_nxt == IPPROTO_ID_HOPOPTS)
-        codec_events::decoder_event(codec, DECODE_IPV6_ROUTE_AND_HOPBYHOP);
+        codec_event(codec, DECODE_IPV6_ROUTE_AND_HOPBYHOP);
 
     if (rte->ip6rte_nxt == IPPROTO_ID_ROUTING)
-        codec_events::decoder_event(codec, DECODE_IPV6_TWO_ROUTE_HEADERS);
+        codec_event(codec, DECODE_IPV6_TWO_ROUTE_HEADERS);
 
     
     codec.lyr_len = ip::MIN_EXT_LEN + (rte->ip6rte_len << 3);
     if(codec.lyr_len > raw.len)
     {
-        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
+        codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
@@ -129,7 +127,7 @@ bool Ipv6RoutingCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     codec.ip6_csum_proto = rte->ip6rte_nxt;
 
     // must be called AFTER setting next_prot_id
-    ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_ROUTING);
+    CheckIPv6ExtensionOrder(codec, IPPROTO_ID_ROUTING);
     return true;
 }
 

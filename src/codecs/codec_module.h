@@ -21,6 +21,8 @@
 #ifndef CODECS_CODEC_MODULE_H
 #define CODECS_CODEC_MODULE_H
 
+#include <cstdint>
+
 #include "framework/module.h"
 #include "main/snort_types.h"
 
@@ -31,7 +33,7 @@ constexpr int GID_DECODE = 116;
 // add the new decoder rules to the following enum.
 
 
-enum CodecSid
+enum CodecSid : uint32_t
 {
     DECODE_NOT_IPV4_DGRAM = 1,
     DECODE_IPV4_INVALID_HEADER_LEN = 2,

@@ -27,8 +27,7 @@
 #include "framework/codec.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet.h"
-#include "codecs/codec_events.h"
-#include "codecs/ip/ip_util.h"
+#include "codecs/codec_module.h"
 
 #define CD_DSTOPTS_NAME "ipv6_dst_opts"
 #define CD_DSTOPTS_HELP "support for ipv6 destination options"
@@ -64,24 +63,24 @@ bool Ipv6DSTOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     if(raw.len < sizeof(IP6Dest))
     {
-        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
+        codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
     if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
     {
-        codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
+        codec_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
         return false;
     }
 
     if (dsthdr->ip6dest_nxt == IPPROTO_ROUTING)
-        codec_events::decoder_event(codec, DECODE_IPV6_DSTOPTS_WITH_ROUTING);
+        codec_event(codec, DECODE_IPV6_DSTOPTS_WITH_ROUTING);
 
 
     codec.lyr_len = sizeof(IP6Dest) + (dsthdr->ip6dest_len << 3);
     if(codec.lyr_len > raw.len)
     {
-        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
+        codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
@@ -92,9 +91,9 @@ bool Ipv6DSTOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
 
     // must be called AFTER setting next_prot_id
-    ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_DSTOPTS);
+    CheckIPv6ExtensionOrder(codec, IPPROTO_ID_DSTOPTS);
 
-    if ( ip_util::CheckIPV6HopOptions(raw, codec))
+    if ( CheckIPV6HopOptions(raw, codec))
         return true;
     return false;
 }

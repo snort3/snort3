@@ -37,6 +37,7 @@
 struct TextLog;
 struct Packet;
 struct Layer;
+enum CodecSid : uint32_t;
 
 namespace ip
 {
@@ -339,6 +340,13 @@ public:
 protected:
     Codec(const char* s)
     { name = s; }
+
+    // Create an event with the Codec GID
+    void codec_event(const CodecData&, CodecSid);
+    // Check the Hop and DST IPv6 extension
+    bool CheckIPV6HopOptions(const RawData&, const CodecData&);
+    // NOTE:: data.next_prot_id MUST be set before calling this!!
+    void CheckIPv6ExtensionOrder(CodecData&, const uint8_t proto);
 
 private:
     const char* name;

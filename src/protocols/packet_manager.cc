@@ -39,7 +39,6 @@
 #include "time/profiler.h"
 #include "parser/parser.h"
 
-#include "codecs/codec_events.h"
 #include "codecs/codec_module.h"
 #include "codecs/ip/checksum.h" /* FIXIT */
 #include "utils/stats.h"

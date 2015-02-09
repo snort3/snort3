@@ -24,7 +24,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
+#include "codecs/codec_module.h"
 
 
 namespace
@@ -58,7 +58,7 @@ void SunNdCodec::get_protocol_ids(std::vector<uint16_t>& v)
 
 bool SunNdCodec::decode(const RawData&, CodecData& codec, DecodeData&)
 {
-    codec_events::decoder_event(codec, DECODE_IP_BAD_PROTO);
+    codec_event(codec, DECODE_IP_BAD_PROTO);
     return true;
 }
 

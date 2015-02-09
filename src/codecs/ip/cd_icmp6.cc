@@ -31,9 +31,7 @@
 #include "protocols/icmp4.h"
 #include "codecs/codec_module.h"
 #include "codecs/codec_module.h"
-#include "codecs/codec_events.h"
 #include "codecs/ip/checksum.h"
-#include "codecs/ip/ip_util.h"
 #include "packet_io/active.h"
 #include "log/text_log.h"
 #include "main/snort_debug.h"
@@ -125,7 +123,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "WARNING: Truncated ICMP6 header (%d bytes).\n", raw.len););
 
-        codec_events::decoder_event(codec, DECODE_ICMP6_HDR_TRUNC);
+        codec_event(codec, DECODE_ICMP6_HDR_TRUNC);
         return false;
     }
 
@@ -176,11 +174,11 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                 len = icmp::ICMP6_HEADER_NORMAL_LEN;
 
                 if ( snort.ip_api.get_ip6h()->is_dst_multicast() )
-                    codec_events::decoder_event(codec, DECODE_ICMP6_DST_MULTICAST);
+                    codec_event(codec, DECODE_ICMP6_DST_MULTICAST);
             }
             else
             {
-                codec_events::decoder_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
+                codec_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
                 return false;
             }
             break;
@@ -191,14 +189,14 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                 icmp::ICMP6TooBig *too_big = (icmp::ICMP6TooBig *)raw.data;
 
                 if (ntohl(too_big->mtu) < 1280)
-                    codec_events::decoder_event(codec, DECODE_ICMPV6_TOO_BIG_BAD_MTU);
+                    codec_event(codec, DECODE_ICMPV6_TOO_BIG_BAD_MTU);
 
                 len = icmp::ICMP6_HEADER_NORMAL_LEN;
                 codec.next_prot_id = PROTO_IP_EMBEDDED_IN_ICMP6;
             }
             else
             {
-                codec_events::decoder_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
+                codec_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
                 return false;
             }
             break;
@@ -211,17 +209,17 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                 if (icmp6h->type == icmp::Icmp6Types::UNREACH)
                 {
                     if (icmp6h->code == icmp::Icmp6Code::UNREACH_INVALID) // UNREACH_INVALID == 2
-                        codec_events::decoder_event(codec, DECODE_ICMPV6_UNREACHABLE_NON_RFC_2463_CODE);
+                        codec_event(codec, DECODE_ICMPV6_UNREACHABLE_NON_RFC_2463_CODE);
 
                     else if (static_cast<uint8_t>(icmp6h->code) > 6)
-                        codec_events::decoder_event(codec, DECODE_ICMPV6_UNREACHABLE_NON_RFC_4443_CODE);
+                        codec_event(codec, DECODE_ICMPV6_UNREACHABLE_NON_RFC_4443_CODE);
                 }
                 len = icmp::ICMP6_HEADER_NORMAL_LEN;
                 codec.next_prot_id = PROTO_IP_EMBEDDED_IN_ICMP6;
             }
             else
             {
-                codec_events::decoder_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
+                codec_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
                 return false;
             }
             break;
@@ -232,16 +230,16 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                 icmp::ICMP6RouterAdvertisement *ra = (icmp::ICMP6RouterAdvertisement *)raw.data;
 
                 if (icmp6h->code != icmp::Icmp6Code::ADVERTISEMENT)
-                    codec_events::decoder_event(codec, DECODE_ICMPV6_ADVERT_BAD_CODE);
+                    codec_event(codec, DECODE_ICMPV6_ADVERT_BAD_CODE);
 
                 if (ntohl(ra->reachable_time) > 3600000)
-                    codec_events::decoder_event(codec, DECODE_ICMPV6_ADVERT_BAD_REACHABLE);
+                    codec_event(codec, DECODE_ICMPV6_ADVERT_BAD_REACHABLE);
 
                 len = icmp::ICMP6_HEADER_MIN_LEN;
             }
             else
             {
-                codec_events::decoder_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
+                codec_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
                 return false;
             }
             break;
@@ -251,16 +249,16 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             {
                 icmp::ICMP6RouterSolicitation *rs = (icmp::ICMP6RouterSolicitation *)raw.data;
                 if (rs->code != 0)
-                    codec_events::decoder_event(codec, DECODE_ICMPV6_SOLICITATION_BAD_CODE);
+                    codec_event(codec, DECODE_ICMPV6_SOLICITATION_BAD_CODE);
 
                 if (ntohl(rs->reserved) != 0)
-                    codec_events::decoder_event(codec, DECODE_ICMPV6_SOLICITATION_BAD_RESERVED);
+                    codec_event(codec, DECODE_ICMPV6_SOLICITATION_BAD_RESERVED);
 
                 len = icmp::ICMP6_HEADER_MIN_LEN;
             }
             else
             {
-                codec_events::decoder_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
+                codec_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
                 return false;
             }
             break;
@@ -271,7 +269,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             {
                 icmp::ICMP6NodeInfo *ni = (icmp::ICMP6NodeInfo *)raw.data;
                 if (ni->code > 2)
-                    codec_events::decoder_event(codec, DECODE_ICMPV6_NODE_INFO_BAD_CODE);
+                    codec_event(codec, DECODE_ICMPV6_NODE_INFO_BAD_CODE);
 
                 /* TODO: Add alert for INFO Response, code == 1 || code == 2)
                  * and there is data.
@@ -280,13 +278,13 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             }
             else
             {
-                codec_events::decoder_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
+                codec_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
                 return false;
             }
             break;
 
         default:
-            codec_events::decoder_event(codec, DECODE_ICMP6_TYPE_OTHER);
+            codec_event(codec, DECODE_ICMP6_TYPE_OTHER);
             len = icmp::ICMP6_HEADER_MIN_LEN;
             break;
     }

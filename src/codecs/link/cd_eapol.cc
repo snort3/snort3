@@ -25,7 +25,6 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/eapol.h"
 
@@ -77,14 +76,14 @@ void EapolCodec::get_protocol_ids(std::vector<uint16_t>& v)
 void EapolCodec::DecodeEAP(const RawData& raw, const CodecData& codec)
 {
     if(raw.len < sizeof(eapol::EAPHdr))
-        codec_events::decoder_event(codec, DECODE_EAP_TRUNCATED);
+        codec_event(codec, DECODE_EAP_TRUNCATED);
 }
 
 
 void EapolCodec::DecodeEapolKey(const RawData& raw, const CodecData& codec)
 {
     if(raw.len < sizeof(eapol::EapolKey))
-        codec_events::decoder_event(codec, DECODE_EAPKEY_TRUNCATED);
+        codec_event(codec, DECODE_EAPKEY_TRUNCATED);
 }
 
 
@@ -99,7 +98,7 @@ bool EapolCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     if(raw.len < sizeof(eapol::EtherEapol))
     {
-        codec_events::decoder_event(codec, DECODE_EAPOL_TRUNCATED);
+        codec_event(codec, DECODE_EAPOL_TRUNCATED);
         return false;
     }
 

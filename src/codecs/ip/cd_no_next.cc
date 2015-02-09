@@ -25,7 +25,6 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "detection/fpdetect.h"
 #include "main/snort.h"
@@ -61,7 +60,7 @@ bool Ipv6NoNextCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
     {
-        codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
+        codec_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
         return false;
     }
 

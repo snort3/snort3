@@ -28,7 +28,6 @@
 #include "protocols/ipv6.h"
 #include "protocols/packet.h"
 #include "codecs/codec_module.h"
-#include "codecs/codec_events.h"
 
 
 // yes, macros are necessary. The API and class constructor require different strings.
@@ -71,7 +70,7 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     /* do a little validation */
     if ( raw.len < ip::IP6_HEADER_LEN )
     {
-        codec_events::decoder_event(codec, DECODE_ICMP_ORIG_IP_TRUNCATED);
+        codec_event(codec, DECODE_ICMP_ORIG_IP_TRUNCATED);
         return false;
     }
 
@@ -81,13 +80,13 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
      */
     if(ip6h->ver() != 6)
     {
-        codec_events::decoder_event(codec, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
+        codec_event(codec, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
         return false;
     }
 
     if ( raw.len < ip::IP6_HEADER_LEN )
     {
-        codec_events::decoder_event(codec, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
+        codec_event(codec, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
         return false;
     }
 

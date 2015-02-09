@@ -27,13 +27,13 @@
 #include "protocols/ipv4.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
-#include "codecs/codec_events.h"
 #include "log/text_log.h"
 #include "main/snort.h"
 #include "log/messages.h"
 #include "protocols/packet_manager.h"
 #include "protocols/icmp4.h"
 #include "protocols/udp.h"
+#include "codecs/codec_module.h"
 
 namespace
 {
@@ -65,7 +65,7 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snor
     /* do a little validation */
     if(raw.len < ip::IP4_HEADER_LEN)
     {
-        codec_events::decoder_event(codec, DECODE_ICMP_ORIG_IP_TRUNCATED);
+        codec_event(codec, DECODE_ICMP_ORIG_IP_TRUNCATED);
         return false;
     }
 
@@ -78,7 +78,7 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snor
      */
     if((ip4h->ver() != 4) && !snort.ip_api.is_ip6())
     {
-        codec_events::decoder_event(codec, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
+        codec_event(codec, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
         return false;
     }
 
@@ -86,7 +86,7 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snor
 
     if(raw.len < hlen)
     {
-        codec_events::decoder_event(codec, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
+        codec_event(codec, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
         return false;
     }
 
@@ -98,7 +98,7 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snor
         /* Original IP payload should be 64 bits */
         if (ip_len < 8)
         {
-            codec_events::decoder_event(codec, DECODE_ICMP_ORIG_PAYLOAD_LT_64);
+            codec_event(codec, DECODE_ICMP_ORIG_PAYLOAD_LT_64);
             return false;
         }
         /* ICMP error packets could contain as much of original payload
@@ -106,13 +106,13 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snor
          */
         else if (snort.ip_api.dgram_len() > 576)
         {
-            codec_events::decoder_event(codec, DECODE_ICMP_ORIG_PAYLOAD_GT_576);
+            codec_event(codec, DECODE_ICMP_ORIG_PAYLOAD_GT_576);
         }
     }
     else
     {
         /* RFC states that only first frag will get an ICMP response */
-        codec_events::decoder_event(codec, DECODE_ICMP_ORIG_IP_WITH_FRAGOFFSET);
+        codec_event(codec, DECODE_ICMP_ORIG_IP_WITH_FRAGOFFSET);
         return false;
     }
 

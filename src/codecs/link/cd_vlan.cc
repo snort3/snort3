@@ -26,7 +26,6 @@
 #include "protocols/packet.h"
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "codecs/codec_events.h"
 #include "protocols/vlan.h"
 #include "protocols/eth.h"
 #include "protocols/protocol_ids.h"
@@ -84,7 +83,7 @@ bool VlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if(raw.len < sizeof(vlan::VlanTagHdr))
     {
-        codec_events::decoder_event(codec, DECODE_BAD_VLAN);
+        codec_event(codec, DECODE_BAD_VLAN);
         return false;
     }
 
@@ -106,7 +105,7 @@ bool VlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     // Vlan IDs 0 and 4095 are reserved.
     const uint16_t vid = vh->vid();
     if (vid == 0 || vid == 4095)
-        codec_events::decoder_event(codec, DECODE_BAD_VLAN);
+        codec_event(codec, DECODE_BAD_VLAN);
 
 
     codec.lyr_len = sizeof(vlan::VlanTagHdr);

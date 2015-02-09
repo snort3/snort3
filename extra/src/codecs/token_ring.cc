@@ -29,7 +29,6 @@
 #include <pcap.h>
 #include "protocols/token_ring.h"
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "codecs/codec_module.h"
 
 
@@ -113,7 +112,7 @@ bool TrCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     if(cap_len < sizeof(token_ring::Trh_hdr))
     {
-        codec_events::decoder_event(codec, DECODE_BAD_TRH);
+        codec_event(codec, DECODE_BAD_TRH);
         return false;
     }
 
@@ -139,7 +138,7 @@ bool TrCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
      */
     if(cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc)))
     {
-        codec_events::decoder_event(codec, DECODE_BAD_TR_ETHLLC);
+        codec_event(codec, DECODE_BAD_TR_ETHLLC);
         return false;
     }
 
@@ -156,7 +155,7 @@ bool TrCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
         if(cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc) + sizeof(token_ring::Trh_mr)))
         {
-            codec_events::decoder_event(codec, DECODE_BAD_TRHMR);
+            codec_event(codec, DECODE_BAD_TRHMR);
             return false;
         }
 
@@ -167,7 +166,7 @@ bool TrCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         if(cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc) +
                       sizeof(token_ring::Trh_mr) + TRH_MR_LEN(trhmr)))
         {
-            codec_events::decoder_event(codec, DECODE_BAD_TR_MR_LEN);
+            codec_event(codec, DECODE_BAD_TR_MR_LEN);
             return false;
         }
 

@@ -27,7 +27,7 @@
 
 #include "framework/codec.h"
 #include "framework/decode_data.h"
-#include "codecs/codec_events.h"
+#include "codecs/codec_module.h"
 
 
 namespace
@@ -60,7 +60,7 @@ void PimCodec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 bool PimCodec::decode(const RawData&, CodecData& codec, DecodeData&)
 {
-    codec_events::decoder_event(codec, DECODE_IP_BAD_PROTO);
+    codec_event(codec, DECODE_IP_BAD_PROTO);
     return true;
 }
 

@@ -28,7 +28,6 @@
 #include "framework/codec.h"
 #include "protocols/packet.h"
 #include "protocols/eth.h"
-#include "codecs/codec_events.h"
 #include "protocols/packet_manager.h"
 #include "log/text_log.h"
 
@@ -113,7 +112,7 @@ bool EthCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     /* do a little validation */
     if(raw.len < eth::ETH_HEADER_LEN)
     {
-        codec_events::decoder_event(codec, DECODE_ETH_HDR_TRUNC);
+        codec_event(codec, DECODE_ETH_HDR_TRUNC);
         return false;
     }
 

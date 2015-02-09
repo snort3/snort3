@@ -18,6 +18,9 @@
 // codec.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "framework/codec.h"
+#include "events/event_queue.h"
+#include "codecs/codec_module.h"
+#include "protocols/ipv6.h"
 
 EncState::EncState(const ip::IpApi& api, EncodeFlags f, uint8_t pr,
         uint8_t t, uint16_t data_size) :
@@ -72,3 +75,92 @@ Buffer::Buffer(uint8_t* buf, uint32_t size) :
     off(0)
 { }
 
+
+void Codec::codec_event(const CodecData& codec, CodecSid sid)
+{
+    if ( codec.codec_flags & CODEC_STREAM_REBUILT )
+        return;
+
+    SnortEventqAdd(GID_DECODE, sid);
+}
+
+
+bool Codec::CheckIPV6HopOptions(const RawData& raw, const CodecData& codec)
+{
+    const ip::IP6Extension* const exthdr =
+        reinterpret_cast<const ip::IP6Extension*>(raw.data);
+
+    const uint8_t* pkt =
+        reinterpret_cast<const uint8_t*>(raw.data);
+
+    const uint32_t total_octets = (exthdr->ip6e_len * 8) + 8;
+    const uint8_t *hdr_end = pkt + total_octets;
+    uint8_t oplen;
+
+    if (raw.len < total_octets)
+        codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
+
+    /* Skip to the options */
+    pkt += 2;
+
+    /* Iterate through the options, check for bad ones */
+    while (pkt < hdr_end)
+    {
+        const ip::HopByHopOptions type = static_cast<ip::HopByHopOptions>(*pkt);
+        switch (type)
+        {
+            case ip::HopByHopOptions::PAD1:
+                pkt++;
+                break;
+            case ip::HopByHopOptions::PADN:
+            case ip::HopByHopOptions::JUMBO:
+            case ip::HopByHopOptions::RTALERT:
+            case ip::HopByHopOptions::TUNNEL_ENCAP:
+            case ip::HopByHopOptions::QUICK_START:
+            case ip::HopByHopOptions::CALIPSO:
+            case ip::HopByHopOptions::HOME_ADDRESS:
+            case ip::HopByHopOptions::ENDPOINT_IDENT:
+                oplen = *(++pkt);
+                if ((pkt + oplen + 1) > hdr_end)
+                {
+                    codec_event(codec, DECODE_IPV6_BAD_OPT_LEN);
+                    return false;
+                }
+                pkt += oplen + 1;
+                break;
+            default:
+                codec_event(codec, DECODE_IPV6_BAD_OPT_TYPE);
+                return false;
+        }
+    }
+
+    return true;
+}
+
+void Codec::CheckIPv6ExtensionOrder(CodecData& codec, const uint8_t proto)
+{
+    const uint8_t current_order = ip::IPV6ExtensionOrder(proto);
+
+    if (current_order <= codec.curr_ip6_extension)
+    {
+        const uint8_t next_order = ip::IPV6ExtensionOrder(codec.next_prot_id);
+
+        /* A second "Destination Options" header is allowed iff:
+           1) A routing header was already seen, and
+           2) The second destination header is the last one before the upper layer.
+        */
+        if (!((codec.codec_flags & CODEC_ROUTING_SEEN) &&
+              (proto == IPPROTO_ID_DSTOPTS) &&
+              (next_order == ip::IPV6_ORDER_MAX)))
+        {
+            codec_event(codec, DECODE_IPV6_UNORDERED_EXTENSIONS);
+        }
+    }
+    else
+    {
+        codec.curr_ip6_extension = current_order;
+    }
+
+    if (proto == IPPROTO_ID_ROUTING)
+        codec.codec_flags |= CODEC_ROUTING_SEEN;
+}

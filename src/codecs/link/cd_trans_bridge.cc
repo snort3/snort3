@@ -26,7 +26,6 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "codecs/codec_events.h"
 
 #include "protocols/eth.h"
 #include "protocols/protocol_ids.h"
@@ -76,7 +75,7 @@ bool TransbridgeCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if(raw.len < eth::ETH_HEADER_LEN)
     {
-        codec_events::decoder_event(codec, DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR);
+        codec_event(codec, DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR);
         return false;
     }
 

@@ -20,7 +20,6 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/arp.h"
 #include "protocols/packet.h"
@@ -90,7 +89,7 @@ bool ArpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     if(raw.len < arp::ETHERARP_HDR_LEN)
     {
-        codec_events::decoder_event(codec, DECODE_ARP_TRUNCATED);
+        codec_event(codec, DECODE_ARP_TRUNCATED);
         return false;
     }
 

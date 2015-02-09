@@ -38,10 +38,8 @@
 
 #include "framework/codec.h"
 #include "packet_io/active.h"
-#include "codecs/codec_events.h"
 #include "snort_config.h"
 #include "parser/config_file.h"
-#include "codecs/ip/ip_util.h"
 #include "main/snort_debug.h"
 
 #define CD_UDP_NAME "udp"
@@ -163,7 +161,11 @@ public:
         uint16_t lyr_len, uint32_t& updated_len) override;
     void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
-    
+
+private:
+
+    void UDPMiscTests(const DecodeData&, const CodecData&, uint32_t pay_len);
+
 };
 
 } // anonymous namespace
@@ -171,10 +173,6 @@ public:
 
 
 
-
-static inline void UDPMiscTests(const DecodeData&,
-                                const CodecData&,
-                                uint32_t pay_len);
 
 
 
@@ -192,7 +190,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     if(raw.len < udp::UDP_HEADER_LEN)
     {
-        codec_events::decoder_event(codec, DECODE_UDP_DGRAM_LT_UDPHDR);
+        codec_event(codec, DECODE_UDP_DGRAM_LT_UDPHDR);
         return false;
     }
 
@@ -223,19 +221,19 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     /* verify that the header raw.len is a valid value */
     if(uhlen < udp::UDP_HEADER_LEN)
     {
-        codec_events::decoder_event(codec, DECODE_UDP_DGRAM_INVALID_LENGTH);
+        codec_event(codec, DECODE_UDP_DGRAM_INVALID_LENGTH);
         return false;
     }
 
     /* make sure there are enough bytes as designated by length field */
     if(uhlen > raw.len)
     {
-        codec_events::decoder_event(codec, DECODE_UDP_DGRAM_SHORT_PACKET);
+        codec_event(codec, DECODE_UDP_DGRAM_SHORT_PACKET);
         return false;
     }
     else if(uhlen < raw.len)
     {
-        codec_events::decoder_event(codec, DECODE_UDP_DGRAM_LONG_PACKET);
+        codec_event(codec, DECODE_UDP_DGRAM_LONG_PACKET);
         return false;
     }
 
@@ -278,7 +276,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             if(!udph->uh_chk)
             {
                 csum = 1;
-                codec_events::decoder_event(codec, DECODE_UDP_IPV6_ZERO_CHECKSUM);
+                codec_event(codec, DECODE_UDP_IPV6_ZERO_CHECKSUM);
             }
             /* Don't do checksum calculation if
              * 1) Fragmented
@@ -344,15 +342,15 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
 
 /* UDP-layer decoder alerts */
-static inline void UDPMiscTests(const DecodeData& snort,
-                                const CodecData& codec,
-                                uint32_t pay_len)
+void UdpCodec::UDPMiscTests(const DecodeData& snort,
+                            const CodecData& codec,
+                            uint32_t pay_len)
 {
     if (pay_len > 4000)
-        codec_events::decoder_event(codec, DECODE_UDP_LARGE_PACKET);
+        codec_event(codec, DECODE_UDP_LARGE_PACKET);
 
     if (snort.sp == 0 || snort.dp == 0)
-        codec_events::decoder_event(codec, DECODE_UDP_PORT_ZERO);
+        codec_event(codec, DECODE_UDP_PORT_ZERO);
 }
 
 void UdpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,

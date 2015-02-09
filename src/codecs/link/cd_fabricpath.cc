@@ -21,7 +21,7 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "codecs/codec_events.h"
+//#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet.h"
 
@@ -80,7 +80,7 @@ bool FabricPathCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if ( raw.len < FABRICPATH_HEADER_LEN )
     {
-        codec_events::decoder_event(codec, DECODE_FPATH_HDR_TRUNC);
+        codec_event(codec, DECODE_FPATH_HDR_TRUNC);
         return false;
     }
 

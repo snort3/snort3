@@ -27,7 +27,6 @@
 #include "protocols/wlan.h"
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 #include "log/text_log.h"

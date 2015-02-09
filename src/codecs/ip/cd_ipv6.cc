@@ -29,13 +29,10 @@
 
 #include "protocols/ipv6.h"
 #include "codecs/codec_module.h"
-#include "codecs/codec_events.h"
-#include "codecs/ip/ip_util.h"
 #include "framework/codec.h"
 #include "stream/stream_api.h"
 #include "main/snort.h"
 #include "packet_io/active.h"
-#include "codecs/codec_module.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet_manager.h"
 #include "log/text_log.h"
@@ -99,18 +96,20 @@ public:
         uint16_t lyr_len, uint32_t& updated_len) override;
     void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
+
+private:
+    void IPV6CheckIsatap(const ip::IP6Hdr* const,
+                                    const DecodeData&,
+                                    const CodecData&);
+    void IPV6MiscTests(const DecodeData&, const CodecData&);
+    void CheckIPV6Multicast(const ip::IP6Hdr* const, const CodecData&);
+    bool CheckTeredoPrefix(const ip::IP6Hdr* const hdr);
 };
 
 
 } // namespace
 
 
-static inline void IPV6CheckIsatap(const ip::IP6Hdr* const,
-                                    const DecodeData&,
-                                    const CodecData&);
-static inline void IPV6MiscTests(const DecodeData&, const CodecData&);
-static void CheckIPV6Multicast(const ip::IP6Hdr* const, const CodecData&);
-static inline bool CheckTeredoPrefix(const ip::IP6Hdr* const hdr);
 
 /********************************************************************
  *************************   CLASS FUNCTIONS ************************
@@ -132,10 +131,10 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     if(raw.len < ip::IP6_HEADER_LEN)
     {
         if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
-            codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED);
+            codec_event(codec, DECODE_IPV6_TRUNCATED);
 
         // Taken from prot_ipv4.cc
-        codec_events::decoder_event(codec, DECODE_IPV6_TUNNELED_IPV4_TRUNCATED);
+        codec_event(codec, DECODE_IPV6_TUNNELED_IPV4_TRUNCATED);
         return false;
     }
 
@@ -144,14 +143,14 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     if(ip6h->ver() != 6)
     {
         if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
-            codec_events::decoder_event(codec, DECODE_IPV6_IS_NOT);
+            codec_event(codec, DECODE_IPV6_IS_NOT);
 
         return false;
     }
 
     if ( snort_conf->hit_ip_maxlayers(codec.ip_layer_cnt) )
     {
-        codec_events::decoder_event(codec, DECODE_IP_MULTIPLE_ENCAPSULATION);
+        codec_event(codec, DECODE_IP_MULTIPLE_ENCAPSULATION);
         return false;
     }
 
@@ -163,7 +162,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         if (payload_len > raw.len)
         {
             if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
-                codec_events::decoder_event(codec, DECODE_IPV6_DGRAM_GT_CAPLEN);
+                codec_event(codec, DECODE_IPV6_DGRAM_GT_CAPLEN);
 
             return false;
         }
@@ -211,7 +210,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     return true;
 }
 
-static inline void IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
+void Ipv6Codec::IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
                                     const DecodeData& snort,
                                     const CodecData& codec)
 {
@@ -225,7 +224,7 @@ static inline void IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
         if (isatap_interface_id == 0x00005EFE)
         {
             if (snort.ip_api.get_src()->ip32[0] != ip6h->ip6_src.u6_addr32[3])
-                codec_events::decoder_event(codec, DECODE_IPV6_ISATAP_SPOOF);
+                codec_event(codec, DECODE_IPV6_ISATAP_SPOOF);
         }
     }
 }
@@ -238,7 +237,7 @@ static inline void IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
  *
  * Returns: void function
  */
-static inline void IPV6MiscTests(const DecodeData& snort, const CodecData& codec)
+void Ipv6Codec::IPV6MiscTests(const DecodeData& snort, const CodecData& codec)
 {
     const sfip_t *ip_src = snort.ip_api.get_src();
     const sfip_t *ip_dst = snort.ip_api.get_dst();
@@ -254,32 +253,32 @@ static inline void IPV6MiscTests(const DecodeData& snort, const CodecData& codec
      * is used here in the interrim. */
     if( sfip_contains(ip_src, ip_dst) == SFIP_CONTAINS)
     {
-        codec_events::decoder_event(codec, DECODE_BAD_TRAFFIC_SAME_SRCDST);
+        codec_event(codec, DECODE_BAD_TRAFFIC_SAME_SRCDST);
     }
 
     if(sfip_is_loopback(ip_src) || sfip_is_loopback(ip_dst))
     {
-        codec_events::decoder_event(codec, DECODE_BAD_TRAFFIC_LOOPBACK);
+        codec_event(codec, DECODE_BAD_TRAFFIC_LOOPBACK);
     }
 
     /* Other decoder alerts for IPv6 addresses
        Added: 5/24/10 (Snort 2.9.0) */
     if (!sfip_is_set(ip_dst))
     {
-        codec_events::decoder_event(codec, DECODE_IPV6_DST_ZERO);
+        codec_event(codec, DECODE_IPV6_DST_ZERO);
     }
 }
 
 
 
 /* Check for multiple IPv6 Multicast-related alerts */
-static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData& codec)
+void Ipv6Codec::CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData& codec)
 {
     ip::MulticastScope multicast_scope;
 
     if (ip6h->is_src_multicast())
     {
-        codec_events::decoder_event(codec, DECODE_IPV6_SRC_MULTICAST);
+        codec_event(codec, DECODE_IPV6_SRC_MULTICAST);
     }
     if (!ip6h->is_dst_multicast())
     {
@@ -299,7 +298,7 @@ static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData& co
             break;
 
         default:
-            codec_events::decoder_event(codec, DECODE_IPV6_BAD_MULTICAST_SCOPE);
+            codec_event(codec, DECODE_IPV6_BAD_MULTICAST_SCOPE);
     }
 
     /* Check against assigned multicast addresses. These are listed at:
@@ -313,7 +312,7 @@ static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData& co
         (ip6h->ip6_dst.u6_addr16[4] != 0) ||
         (ip6h->ip6_dst.u6_addr8[10] != 0))
     {
-        codec_events::decoder_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
+        codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
         return;
     }
 
@@ -328,7 +327,7 @@ static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData& co
             (ip6h->ip6_dst.u6_addr16[6] != 0))
         {
 
-            codec_events::decoder_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
+            codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
         }
         else
         {
@@ -339,7 +338,7 @@ static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData& co
                 case 0x000000FB: // mDNSv6
                     break;
                 default:
-                    codec_events::decoder_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
+                    codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
             }
         }
     }
@@ -387,7 +386,7 @@ static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData& co
                 {
                     break; // Node Information Queries
                 }
-                codec_events::decoder_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
+                codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
         }
     }
     else if (ip6h->is_dst_multicast_scope_site())
@@ -402,7 +401,7 @@ static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData& co
             case 0x00010005: // SL-MANET-ROUTERS
                 break;
             default:
-                codec_events::decoder_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
+                codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
         }
     }
     else if ((ip6h->ip6_dst.u6_addr8[1] & 0xF0) == 0)
@@ -455,7 +454,7 @@ static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData& co
                     break; // SAP Dynamic Assignments
                 }
 
-                codec_events::decoder_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
+                codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
         }
     }
     else if ((ip6h->ip6_dst.u6_addr8[1] & 0xF0) == 0x30)
@@ -474,20 +473,20 @@ static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData& co
         else
         {
             // Other addresses in this block are reserved.
-            codec_events::decoder_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
+            codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
         }
     }
     else
     {
         /* Addresses not listed above are reserved. */
-        codec_events::decoder_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
+        codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
     }
 }
 
 
 /* Teredo packets need to have one of their IPs use either the Teredo prefix,
    or a link-local prefix (in the case of Router Solicitation messages) */
-static inline bool CheckTeredoPrefix(const ip::IP6Hdr* const hdr)
+bool Ipv6Codec::CheckTeredoPrefix(const ip::IP6Hdr* const hdr)
 {
     /* Check if src address matches 2001::/32 */
     if ((hdr->ip6_src.u6_addr8[0] == 0x20) &&

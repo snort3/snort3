@@ -24,7 +24,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
+#include "codecs/codec_module.h"
 
 #define CD_SWIPE_NAME "swipe"
 #define CD_SWIPE_HELP "support for Swipe"
@@ -52,7 +52,7 @@ void SwipeCodec::get_protocol_ids(std::vector<uint16_t> &proto_ids)
 bool SwipeCodec::decode(const RawData&, CodecData& codec, DecodeData&)
 {
     // currently unsupported
-    codec_events::decoder_event(codec, DECODE_IP_BAD_PROTO);
+    codec_event(codec, DECODE_IP_BAD_PROTO);
     return true;
 }
 

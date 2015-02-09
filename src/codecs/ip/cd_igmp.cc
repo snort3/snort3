@@ -25,7 +25,6 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "codecs/codec_events.h"
 #include "protocols/packet.h"
 #include "protocols/ipv4_options.h"
 
@@ -81,7 +80,7 @@ bool IgmpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             if (snort.ip_api.get_ip_opt_len() >= 2) {
                 if (*(ip_opt_data) == 0 && *(ip_opt_data+1) == 0)
                 {
-                    codec_events::decoder_event(codec, DECODE_IGMP_OPTIONS_DOS);
+                    codec_event(codec, DECODE_IGMP_OPTIONS_DOS);
                     return false;
                 }
             }
@@ -91,7 +90,7 @@ bool IgmpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         if ((!(codec.codec_flags & CODEC_IPOPT_RTRALT_SEEN)) &&
             (codec.codec_flags & CODEC_IPOPT_LEN_THREE))
         {
-            codec_events::decoder_event(codec, DECODE_IGMP_OPTIONS_DOS);
+            codec_event(codec, DECODE_IGMP_OPTIONS_DOS);
         }
     }
     return true;

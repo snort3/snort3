@@ -5,7 +5,6 @@ x_includedir = $(pkgincludedir)/codecs
 noinst_LIBRARIES = libcodecs.a libcodec_module.a
 
 x_include_HEADERS = \
-codec_events.h \
 codec_module.h
 
 libcodecs_a_SOURCES = \

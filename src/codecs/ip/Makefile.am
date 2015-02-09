@@ -4,9 +4,8 @@ noinst_LIBRARIES = libip_codecs.a
 
 libip_codecs_a_SOURCES = \
 cd_ipv4.cc \
-cd_tcp.cc \
-ip_util.h \
-ip_util.cc
+cd_hop_opts.cc \
+cd_tcp.cc
 
 
 plugin_list = \
@@ -15,7 +14,6 @@ cd_dst_opts.cc \
 cd_esp.cc \
 cd_frag.cc \
 cd_gre.cc \
-cd_hop_opts.cc \
 cd_icmp4.cc \
 cd_icmp6.cc \
 cd_igmp.cc \
@@ -40,12 +38,12 @@ ehlibdir = $(pkglibdir)/codecs
 ehlib_LTLIBRARIES = libcd_auth.la
 libcd_auth_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_auth_la_LDFLAGS = -export-dynamic -shared
-libcd_auth_la_SOURCES = cd_auth.cc ip_util.h ip_util.cc
+libcd_auth_la_SOURCES = cd_auth.cc
 
 ehlib_LTLIBRARIES += libcd_esp.la
 libcd_esp_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_esp_la_LDFLAGS = -export-dynamic -shared
-libcd_esp_la_SOURCES = cd_esp.cc ip_util.h ip_util.cc
+libcd_esp_la_SOURCES = cd_esp.cc
 
 ehlib_LTLIBRARIES += libcd_gre.la
 libcd_gre_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
@@ -90,27 +88,22 @@ libcd_sun_nd_la_SOURCES = cd_sun_nd.cc
 ehlib_LTLIBRARIES += libcd_dst_opts.la
 libcd_dst_opts_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_dst_opts_la_LDFLAGS = -export-dynamic -shared
-libcd_dst_opts_la_SOURCES = cd_dst_opts.cc ip_util.h ip_util.cc
+libcd_dst_opts_la_SOURCES = cd_dst_opts.cc
 
 ehlib_LTLIBRARIES += libcd_frag.la
 libcd_frag_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_frag_la_LDFLAGS = -export-dynamic -shared
-libcd_frag_la_SOURCES = cd_frag.cc ip_util.h ip_util.cc
-
-ehlib_LTLIBRARIES += libcd_hop_opts.la
-libcd_hop_opts_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libcd_hop_opts_la_LDFLAGS = -export-dynamic -shared
-libcd_hop_opts_la_SOURCES = cd_hop_opts.cc ip_util.h ip_util.cc
+libcd_frag_la_SOURCES = cd_frag.cc
 
 ehlib_LTLIBRARIES += libcd_no_next.la
 libcd_no_next_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_no_next_la_LDFLAGS = -export-dynamic -shared
-libcd_no_next_la_SOURCES = cd_no_next.cc ip_util.h ip_util.cc
+libcd_no_next_la_SOURCES = cd_no_next.cc
 
 ehlib_LTLIBRARIES += libcd_routing.la
 libcd_routing_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_routing_la_LDFLAGS = -export-dynamic -shared
-libcd_routing_la_SOURCES = cd_routing.cc ip_util.h ip_util.cc
+libcd_routing_la_SOURCES = cd_routing.cc
 
 ehlib_LTLIBRARIES += libcd_swipe.la
 libcd_swipe_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
