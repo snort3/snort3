@@ -193,7 +193,7 @@ int fpLogEvent(RuleTreeNode *rtn, OptTreeNode *otn, Packet *p)
         // We still want to drop packets that are drop rules.
         // We just don't want to see the alert.
         if ( block_action(rtn->type) )
-            Active_DropSession();
+            Active_DropSession(p);
 
         fpLogOther(p, rtn, otn, rtn->type);
         return 1;
@@ -240,7 +240,7 @@ int fpLogEvent(RuleTreeNode *rtn, OptTreeNode *otn, Packet *p)
         **  that are drop rules.  We just don't want to see the alert.
         */
         if ( block_action(rtn->type) )
-            Active_DropSession();
+            Active_DropSession(p);
 
         pc.event_limit++;
         fpLogOther(p, rtn, otn, action);
@@ -1243,7 +1243,7 @@ static inline int fpEvalHeaderUdp(Packet *p, OTNX_MATCH_DATA *omd)
         if (proto_ordinal > 0)
         {
             /* Grab the generic group -- the any-any rules */
-            prmFindGenericRuleGroup(snort_conf->prmTcpRTNX, &gen);
+            prmFindGenericRuleGroup(snort_conf->prmUdpRTNX, &gen);
 
             /* TODO:  To From Server ?, else we apply  */
             dst = fpGetServicePortGroupByOrdinal(snort_conf->sopgTable, IPPROTO_UDP,

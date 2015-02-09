@@ -64,18 +64,27 @@ struct EthLlcOther
     uint8_t proto_id[2];
 
     uint16_t proto() const
-    { return ntohs(*((uint16_t*)(&proto_id[0]))); }
+    {
+#       if defined(__GNUC__)
+            // fixing the type_punned pointer problem
+            const uint8_t* tmp1 = &proto_id[0];
+            const uint16_t* const tmp2 = reinterpret_cast<const uint16_t*>(tmp1);
+            return ntohs(*tmp2);
+#       else
+            return ntohs(*((uint16_t*)(&proto_id[0])));
+#       endif
+    }
 };
 
-#define ETH_DSAP_SNA                  0x08    /* SNA */
-#define ETH_SSAP_SNA                  0x00    /* SNA */
-#define ETH_DSAP_STP                  0x42    /* Spanning Tree Protocol */
-#define ETH_SSAP_STP                  0x42    /* Spanning Tree Protocol */
-#define ETH_DSAP_IP                   0xaa    /* IP */
-#define ETH_SSAP_IP                   0xaa    /* IP */
+#define ETH_DSAP_SNA 0x08    /* SNA */
+#define ETH_SSAP_SNA 0x00    /* SNA */
+#define ETH_DSAP_STP 0x42    /* Spanning Tree Protocol */
+#define ETH_SSAP_STP 0x42    /* Spanning Tree Protocol */
+#define ETH_DSAP_IP  0xaa    /* IP */
+#define ETH_SSAP_IP  0xaa    /* IP */
 
-#define ETH_ORG_CODE_ETHR              0x000000    /* Encapsulated Ethernet */
-#define ETH_ORG_CODE_CDP               0x00000c    /* Cisco Discovery Proto */
+#define ETH_ORG_CODE_ETHR 0x000000    /* Encapsulated Ethernet */
+#define ETH_ORG_CODE_CDP  0x00000c    /* Cisco Discovery Proto */
 
 } // namespace
 

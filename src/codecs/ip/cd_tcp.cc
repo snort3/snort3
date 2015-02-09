@@ -610,7 +610,7 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     tcp::TCPHdr* tcph_out = reinterpret_cast<tcp::TCPHdr*>(buf.data());
     const int ctl = (hi->th_flags & TH_SYN) ? 1 : 0;
 
-    if ( forward(enc.flags) )
+    if ( enc.forward() )
     {
         tcph_out->th_sport = hi->th_sport;
         tcph_out->th_dport = hi->th_dport;
@@ -667,7 +667,8 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     tcph_out->th_sum = 0;
     const ip::IpApi& ip_api = enc.ip_api;
 
-    if (ip_api.is_ip4()) {
+    if (ip_api.is_ip4())
+    {
         checksum::Pseudoheader ps;
         int len = buf.size();
 
@@ -685,8 +686,8 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         int len = buf.size();
 
         const ip::IP6Hdr* const ip6h = ip_api.get_ip6h();
-        memcpy(ps6.sip, ip6h->get_src()->u6_addr8, sizeof(ps6.sip));
-        memcpy(ps6.dip, ip6h->get_dst()->u6_addr8, sizeof(ps6.dip));
+        memcpy(&ps6.sip, ip6h->get_src()->u6_addr8, sizeof(ps6.sip));
+        memcpy(&ps6.dip, ip6h->get_dst()->u6_addr8, sizeof(ps6.dip));
         ps6.zero = 0;
         ps6.protocol = IPPROTO_ID_TCP;
         ps6.len = htons((uint16_t)len);
@@ -767,8 +768,8 @@ static void mod_dtor(Module* m)
 
 static void tcp_codec_ginit()
 {
-    SynToMulticastDstIp = sfip_var_from_string(
-        "[232.0.0.0/8,233.0.0.0/8,239.0.0.0/8]");
+    // Multicast addresses pursuant to RFC 5771
+    SynToMulticastDstIp = sfip_var_from_string("[224.0.0.0/4]");
 
     if( SynToMulticastDstIp == NULL )
         FatalError("Could not initialize SynToMulticastDstIp\n");

@@ -1026,9 +1026,9 @@ NormPegs Stream_GetNormCounts(unsigned& c)
 // fewer total checks.  however, it is best to minimize
 // configuration checks on a per packet basis so there is
 // still room for improvement.
-static inline void NormalDropPacket (Packet*)
+static inline void NormalDropPacket (Packet* p)
 {
-    Active_DropPacket();
+    Active_DropPacket(p);
 }
 
 static inline int NormalDropPacketIf (Packet* p, NormFlags f)

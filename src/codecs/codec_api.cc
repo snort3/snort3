@@ -42,7 +42,8 @@ extern const BaseApi* cd_dstopts;
 extern const BaseApi* cd_erspan2;
 extern const BaseApi* cd_erspan3;
 extern const BaseApi* cd_esp;
-extern const BaseApi* cd_frag; 
+extern const BaseApi* cd_fabricpath;
+extern const BaseApi* cd_frag;
 extern const BaseApi* cd_gre;
 extern const BaseApi* cd_gtp;
 extern const BaseApi* cd_hopopts;
@@ -97,6 +98,7 @@ const BaseApi* codecs[] =
     cd_erspan2,
     cd_erspan3,
     cd_esp,
+    cd_fabricpath,
     cd_frag,
     cd_gre,
     cd_gtp,

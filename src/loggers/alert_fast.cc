@@ -154,6 +154,7 @@ bool FastModule::end(const char*, int, SnortConfig*)
 //-------------------------------------------------------------------------
 // logger stuff
 //-------------------------------------------------------------------------
+static const char* s_dispos[] = { " [Allow]", " [CDrop]", " [WDrop]", " [Drop]", " [FDrop]" };
 
 class FastLogger : public Logger {
 public:
@@ -246,15 +247,16 @@ static const char* get_pkt_type(Packet* p)
 
 void FastLogger::alert(Packet *p, const char *msg, Event *event)
 {
+    tActiveDrop dispos = Active_GetDisposition();
     LogTimeStamp(fast_log, p);
 
-    if( Active_PacketWasDropped() )
+
+    if( dispos > ACTIVE_ALLOW )
     {
-        TextLog_Puts(fast_log, " [Drop]");
-    }
-    else if( Active_PacketWouldBeDropped() )
-    {
-        TextLog_Puts(fast_log, " [WDrop]");
+        if ( dispos > ACTIVE_DROP )
+            dispos = ACTIVE_DROP;
+
+        TextLog_Puts(fast_log, s_dispos[dispos]);
     }
 
     {

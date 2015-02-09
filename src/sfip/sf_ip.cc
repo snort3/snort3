@@ -108,6 +108,42 @@ static inline int sfip_cidr_mask(sfip_t *ip, int val) {
     return SFIP_SUCCESS;
 }
 
+/* Converts string IP format to an array of values. Also checks IP address format.
+   Specifically look for issues that inet_pton either overlooks or is inconsistent
+   about.  */
+static inline SFIP_RET sfip_convert_ip_text_to_binary(const int family, const char *ip, void *dst)
+{
+    const char *my_ip = ip;
+
+    if( my_ip == NULL )
+        return( SFIP_FAILURE );
+
+    /* Across platforms, inet_pton() is inconsistent about leading 0's in
+       AF_INET (ie IPv4 addresses. */
+    if( family == AF_INET ) {
+        char chr;
+        bool new_octet;
+
+        new_octet = true;
+        while( (chr = *my_ip++) != '\0') {
+
+        /* If we are at the first char of a new octet, look for a leading zero
+           followed by another digit */
+        if( new_octet && (chr == '0') && isdigit(*my_ip))
+            return( SFIP_INET_PARSE_ERR );
+
+        /* when we see an octet separator, set the flag to start looking for a
+           leading zero. */
+        new_octet = (chr == '.');
+        }
+    }
+
+    if( inet_pton(family, ip, dst) < 1 )
+        return( SFIP_INET_PARSE_ERR );
+
+    return( SFIP_SUCCESS );  /* Otherwise, ip is OK */
+}
+
 /* Allocate IP address from a character array describing the IP */
 sfip_t *sfip_alloc(const char *ip, SFIP_RET *status) {
     SFIP_RET tmp;
@@ -296,7 +332,8 @@ SFIP_RET sfip_pton(const char *src, sfip_t *dst) {
         else bits = 128;
     }
 
-    if(inet_pton(dst->family, ip, dst->ip8) < 1) {
+    if(sfip_convert_ip_text_to_binary(dst->family, ip, dst->ip8) != SFIP_SUCCESS)
+    {
         free(sfip_buf);
         return SFIP_INET_PARSE_ERR;
     }

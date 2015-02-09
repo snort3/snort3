@@ -190,7 +190,7 @@ static inline File_Verdict checkVerdict(Packet *p, FileNode *node, SFXHASH_NODE 
     else if (verdict == FILE_VERDICT_BLOCK)
     {
         Active_ForceDropPacket();
-        Active_DropSession();
+        Active_DropSession(p);
         if (log_file_action)
         {
             log_file_action(p->flow, FILE_RESUME_BLOCK);
@@ -200,7 +200,7 @@ static inline File_Verdict checkVerdict(Packet *p, FileNode *node, SFXHASH_NODE 
     else if (verdict == FILE_VERDICT_REJECT)
     {
         Active_ForceDropPacket();
-        Active_DropSession();
+        Active_DropSession(p);
         ActionManager::queue_reject();
         if (log_file_action)
         {
@@ -212,7 +212,7 @@ static inline File_Verdict checkVerdict(Packet *p, FileNode *node, SFXHASH_NODE 
     {
         /*Take the cached verdict*/
         Active_ForceDropPacket();
-        Active_DropSession();
+        Active_DropSession(p);
         if (FILE_VERDICT_REJECT == node->verdict)
             ActionManager::queue_reject();
         if (log_file_action)

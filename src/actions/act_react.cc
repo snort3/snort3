@@ -147,7 +147,7 @@ void ReactAction::exec(Packet* p)
     if ( Active_IsRSTCandidate(p) )
         send(p);
 
-    Active_DropSession();
+    Active_DropSession(p);
     MODULE_PROFILE_END(reactPerfStats);
 }
 

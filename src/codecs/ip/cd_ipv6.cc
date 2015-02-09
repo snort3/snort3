@@ -598,7 +598,7 @@ bool Ipv6Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         ipvh_out->ip6_next = hi->ip6_next;
 
 
-    if ( forward(enc.flags) )
+    if ( enc.forward() )
     {
         memcpy(ipvh_out->ip6_src.u6_addr8, hi->ip6_src.u6_addr8, sizeof(ipvh_out->ip6_src.u6_addr8));
         memcpy(ipvh_out->ip6_dst.u6_addr8, hi->ip6_dst.u6_addr8, sizeof(ipvh_out->ip6_dst.u6_addr8));

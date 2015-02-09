@@ -86,7 +86,12 @@ void swap_tables(std::vector<Table*>& new_tables);
  * selecting a table!
  */
 
-// add an string, bool, or int option to the table. --> table = { name = var |'var'};
+/*
+ * add a string, bool, or int option to the table. --> table = { name = var |'var'};
+ * NOTE:  if val is a string/char* and starts with a '$', Snort2lua assumes that val
+ *        is a Snort/Lua variable. Therefore, if val starts with $, Snort2Lua will not
+ *        place quotes around the string
+ */
 bool add_option(const std::string opt_name, const std::string val);
 bool add_option(const std::string opt_name, const int val);
 bool add_option(const std::string opt_name, const bool val);

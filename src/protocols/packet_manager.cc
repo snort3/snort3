@@ -353,7 +353,7 @@ void PacketManager::decode(
 // * if next layer is tcp, it becomes a tcp rst or tcp fin w/opt data
 //-------------------------------------------------------------------------
 
-static inline uint8_t GetTTL(const Packet* const p, EncodeFlags flags)
+static inline uint8_t GetTTL(const Packet* const p, bool forward)
 {
     char dir;
     uint8_t ttl;
@@ -363,9 +363,9 @@ static inline uint8_t GetTTL(const Packet* const p, EncodeFlags flags)
         return 0;
 
     if ( p->packet_flags & PKT_FROM_CLIENT )
-        dir = forward(flags) ? SSN_DIR_FROM_CLIENT : SSN_DIR_FROM_SERVER;
+        dir = forward ? SSN_DIR_FROM_CLIENT : SSN_DIR_FROM_SERVER;
     else
-        dir = forward(flags) ? SSN_DIR_FROM_SERVER : SSN_DIR_FROM_CLIENT;
+        dir = forward ? SSN_DIR_FROM_SERVER : SSN_DIR_FROM_CLIENT;
 
     // outermost ip is considered to be outer here,
     // even if it is the only ip layer ...
@@ -388,7 +388,7 @@ bool PacketManager::encode(const Packet* p,
     if ( encode_pkt )
         p = encode_pkt;
 
-    uint8_t ttl = GetTTL(p, flags);
+    uint8_t ttl = GetTTL(p, (flags & ENC_FLAG_FWD));
     if ( ttl )
         flags |=  ENC_FLAG_TTL;
     else
@@ -404,7 +404,7 @@ bool PacketManager::encode(const Packet* p,
 
     const Layer* const lyrs = p->layers;
     int8_t outer_layer = lyr_start;
-    int8_t inner_layer = lyr_start - 1;
+    int8_t inner_layer = lyr_start;
 
     // We need the IP layer associated with every protocol
     // so checksums can be computed.
@@ -482,7 +482,7 @@ const uint8_t* PacketManager::encode_response(
 
 
     // FIXIT-M  -- check flags if we should skip something
-    if (encode(p, flags, p->num_layers-1, ENC_PROTO_UNSET   , buf))
+    if (encode(p, flags, p->num_layers-1, ENC_PROTO_UNSET, buf))
     {
         len = buf.size();
         return buf.data() + buf.off;
@@ -561,13 +561,14 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
     }
     else if (p->is_ip6())
     {
-        // TODO: copy up to minimum MTU worth of data
 
         // FIXIT-M  -- check flags if we should skip ip6_options
         const int inner_ip_index = layer::get_inner_ip_lyr_index(p);
         assert(inner_ip_index >= 0);
         assert(inner_ip_index+1 < p->num_layers);
 
+        // FIXIT-L: copy up to minimum MTU worth of data
+        // FIXIT-L  check if we have the full 8 bytes of data.
         if (!buf.allocate(icmp::ICMP_UNREACH_DATA_LEN))
             return nullptr;
         memcpy(buf.data(), p->layers[inner_ip_index+1].start, icmp::ICMP_UNREACH_DATA_LEN);
@@ -647,7 +648,6 @@ int PacketManager::encode_format_with_daq_info (
     const DAQ_PktHdr_t* phdr, uint32_t opaque)
 {
     int i;
-    Layer* lyr;
     int len;
     bool update_ip4_len = false;
     uint8_t num_layers = p->num_layers;
@@ -673,7 +673,7 @@ int PacketManager::encode_format_with_daq_info (
 #else
     UNUSED(phdr);
     UNUSED(opaque);
-#endif
+#endif /* HAVE_DAQ_ADDRESS_SPACE_ID */
 
     if ( f & ENC_FLAG_NET )
     {
@@ -707,7 +707,7 @@ int PacketManager::encode_format_with_daq_info (
     }
 
     // copy raw packet data to clone
-    lyr = (Layer*)p->layers + num_layers - 1;
+    Layer* lyr = (Layer*)p->layers + num_layers - 1;
     len = lyr->start - p->pkt + lyr->length;
     memcpy((void*)c->pkt, p->pkt, len);
 
@@ -873,6 +873,14 @@ uint64_t PacketManager::get_rebuilt_packet_count(void)
 void PacketManager::encode_set_pkt(Packet* p)
 { encode_pkt = p; }
 
+uint16_t PacketManager::encode_get_max_payload(const Packet* p)
+{
+    if ( !p->num_layers )
+        return 0;
+
+    const Layer& l = p->layers[p->num_layers - 1];
+    return ETHERNET_MTU - (l.start - p->layers[0].start) - l.length;
+}
 
 void PacketManager::dump_stats()
 {

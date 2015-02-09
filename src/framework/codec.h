@@ -147,16 +147,12 @@ constexpr EncodeFlags ENC_FLAG_PSH = 0x0100000000000000;  // set by PacketManage
 constexpr EncodeFlags ENC_FLAG_FIN = 0x0080000000000000;  // set by PacketManager when TCP should set FIN flag
 constexpr EncodeFlags ENC_FLAG_TTL = 0x0040000000000000;  // set by PacketManager when TCP should set FIN flag
 constexpr EncodeFlags ENC_FLAG_INLINE = 0x0020000000000000;  // set by PacketManager when TCP should set FIN flag
+constexpr EncodeFlags ENC_FLAG_RST_CLNT = 0x0010000000000000;  // finish with a client RST packet
+constexpr EncodeFlags ENC_FLAG_RST_SRVR = 0x0008000000000000;  // finish with a server RST packet
 constexpr EncodeFlags ENC_FLAG_VAL = 0x00000000FFFFFFFF;  // bits for adjusting seq and/or ack
 
-
-static inline bool forward (const EncodeFlags f)
-{ return f & ENC_FLAG_FWD; }
-
-static inline bool reverse (const EncodeFlags f)
-{ return !forward(f); }
-
 constexpr uint8_t ENC_PROTO_UNSET = 0xFF;
+
 struct SO_PUBLIC EncState
 {
     const ip::IpApi& ip_api; /* IP related information. Good for checksums */
@@ -174,6 +170,9 @@ struct SO_PUBLIC EncState
 
     inline bool ethertype_set() const
     { return next_ethertype != 0; }
+
+    inline bool forward() const
+    { return flags & ENC_FLAG_FWD; }
 
     uint8_t get_ttl(uint8_t lyr_ttl) const;
 };

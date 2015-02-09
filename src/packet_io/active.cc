@@ -31,6 +31,7 @@
 #include "stream/stream_api.h"
 #include "snort.h"
 
+#include "framework/codec.h"
 #include "managers/action_manager.h"
 #include "protocols/packet_manager.h"
 #include "packet_io/sfdaq.h"
@@ -44,7 +45,7 @@
 // of these flags following all processing and the drop
 // or response may have been produced by a pseudopacket.
 THREAD_LOCAL tActiveDrop active_drop_pkt = ACTIVE_ALLOW;
-THREAD_LOCAL int active_drop_ssn = 0;
+THREAD_LOCAL tActiveSsnDrop active_drop_ssn = ACTIVE_SSN_ALLOW;
 // TBD consider performance of replacing active_drop_pkt/ssn
 // with a active_verdict.  change over if it is a wash or better.
 
@@ -184,25 +185,58 @@ void Active_SendUnreach(Packet* p, UnreachResponse type)
     s_send(p->pkth, 1, rej, len);
 }
 
-void Active_SendData (
+bool Active_SendData (
     Packet* p, EncodeFlags flags, const uint8_t* buf, uint32_t blen)
 {
-    int i;
+    uint16_t toSend;
+    const uint8_t* seg;
+
     flags |= GetFlags();
+    flags &= ~ENC_FLAG_VAL;
 
-    for ( i = 0; i < s_attempts; i++ )
+    if ( flags & ENC_FLAG_RST_SRVR )
     {
-        uint32_t plen;
-        const uint8_t* seg;
+        uint32_t plen = 0;
+        EncodeFlags tmp_flags = flags ^ ENC_FLAG_FWD;
+        seg = PacketManager::encode_response(TcpResponse::RST, tmp_flags, p, plen);
 
-        flags &= ~ENC_FLAG_VAL;
-        flags |= (i & ENC_FLAG_VAL);
+        if ( seg )
+            s_send(p->pkth, !(tmp_flags & ENC_FLAG_FWD), seg, plen);
+    }
+    flags |= ENC_FLAG_SEQ;
 
-        seg = PacketManager::encode_response(TcpResponse::FIN, flags, p, plen, buf, blen);
+    uint32_t sent = 0;
+    const uint16_t maxPayload = PacketManager::encode_get_max_payload(p);
 
-        if ( !seg ) return;
+    if(!maxPayload)
+        return false;
+
+    do{
+        uint32_t plen = 0;
+        toSend = blen > maxPayload ? maxPayload : blen;
+        flags = (flags & ~ENC_FLAG_VAL) | sent;
+        seg = PacketManager::encode_response(TcpResponse::PUSH, flags, p, plen, buf, toSend);
+
+        if ( !seg )
+            return false;
+
+        s_send(p->pkth, !(flags & ENC_FLAG_FWD), seg, plen);
+
+        buf += toSend;
+        sent += toSend;
+    } while(blen -= toSend);
+
+    if (flags & ENC_FLAG_RST_CLNT)
+    {
+        uint32_t plen = 0;
+        flags = (flags & ~ENC_FLAG_VAL) | sent;
+        seg = PacketManager::encode_response(TcpResponse::RST, flags, p, plen);
+
+        if ( seg )
         s_send(p->pkth, !(flags & ENC_FLAG_FWD), seg, plen);
     }
+
+    return true;
 }
 
 void Active_InjectData (
@@ -322,10 +356,8 @@ static inline void _Active_DoIgnoreSession(Packet *p)
 
 int Active_IgnoreSession (Packet* p)
 {
-    Active_DropPacket();
-
+    Active_DropPacket(p);
     _Active_DoIgnoreSession(p);
-
     return 0;
 }
 
@@ -341,7 +373,7 @@ int Active_ForceDropAction(Packet *p)
     {
     case PktType::TCP:
     case PktType::UDP:
-        Active_DropSession();
+        Active_DropSession(p);
         _Active_ForceIgnoreSession(p);
     default:
         break;
@@ -352,9 +384,6 @@ int Active_ForceDropAction(Packet *p)
 static inline int _Active_DoReset(Packet *p)
 {
     if ( !Active_IsEnabled() )
-        return 0;
-
-    if ( Active_PacketWouldBeDropped() )
         return 0;
 
     if ( !p->ptrs.ip_api.is_valid() )
@@ -385,7 +414,7 @@ int Active_DropAction (Packet* p)
 {
     Active_IgnoreSession(p);
 
-    if ( !s_attempts || s_enabled < 2 )
+    if ( !s_attempts || s_enabled < 2 || active_drop_ssn == ACTIVE_SSN_DROP_WITHOUT_RESET )
         return 0;
 
     return _Active_DoReset(p);

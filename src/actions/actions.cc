@@ -78,7 +78,7 @@ static int DropAction(Packet* p, const OptTreeNode* otn)
     **  Set packet flag so output plugins will know we dropped the
     **  packet we just logged.
     */
-    Active_DropSession();
+    Active_DropSession(p);
 
     CallAlertFuncs(p, otn, rtn->listhead);
 
@@ -87,7 +87,7 @@ static int DropAction(Packet* p, const OptTreeNode* otn)
     return 1;
 }
 
-static int SDropAction(Packet*, const OptTreeNode* otn)
+static int SDropAction(Packet* p, const OptTreeNode* otn)
 {
 #ifdef DEBUG_MSGS
     DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
@@ -95,9 +95,10 @@ static int SDropAction(Packet*, const OptTreeNode* otn)
                otn->sigInfo.message););
 
     // Let's silently drop the packet
-    Active_DropSession();
+    Active_DropSession(p);
 #else
     UNUSED(otn);
+    UNUSED(p);
 #endif
     return 1;
 }
@@ -167,6 +168,7 @@ void action_execute(int action, Packet* p, OptTreeNode* otn, uint16_t event_id)
     switch (action)
     {
         case RULE_TYPE__PASS:
+            SetTags(p, otn, event_id);
             PassAction();
             break;
 

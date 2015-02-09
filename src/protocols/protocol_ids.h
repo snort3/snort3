@@ -45,7 +45,6 @@
  *  Defined at:
  * http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
  */
-
 constexpr uint16_t IPPROTO_ID_HOPOPTS = 0;
 constexpr uint16_t IPPROTO_ID_ICMPV4 = 1;
 constexpr uint16_t IPPROTO_ID_IPIP = 4;
@@ -70,7 +69,6 @@ constexpr uint16_t MIN_UNASSIGNED_IP_PROTO = 143;
 /*
  *  Undefined Protocol!
  */
-
 constexpr uint16_t FINISHED_DECODE = 0x0100;  // Indicates Codecs have succesfully decoded packet
 constexpr uint16_t PROTO_TEREDO = 0x0101;
 constexpr uint16_t PROTO_GTP = 0x0102;
@@ -81,7 +79,6 @@ constexpr uint16_t PROTO_ETHERNET_802_11 = 0x0106;
 constexpr uint16_t PROTO_ETHERNET_LLC = 0x0107;
 
 
-
 /*
  * Below is a partial list of ethertypes.
  *  Defined at:
@@ -89,8 +86,6 @@ constexpr uint16_t PROTO_ETHERNET_LLC = 0x0107;
  *  Defined at:
  * http://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
  */
-
-
 constexpr uint16_t ETHERTYPE_TRANS_ETHER_BRIDGING = 0x6558;
 constexpr uint16_t ETHERTYPE_IPV4 = 0x0800;
 constexpr uint16_t ETHERTYPE_REVARP = 0x8035;
@@ -100,7 +95,7 @@ constexpr uint16_t ETHERTYPE_IPX = 0x8137;
 constexpr uint16_t ETHERTYPE_IPV6 = 0x86dd;
 constexpr uint16_t ETHERTYPE_PPP = 0x880B;
 constexpr uint16_t ETHERTYPE_EAPOL = 0x888e;
-
+constexpr uint16_t ETHERTYPE_FPATH = 0x8903;
 
 static inline bool is_ip6_extension(const uint8_t proto)
 {

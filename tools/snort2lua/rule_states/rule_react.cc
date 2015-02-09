@@ -119,17 +119,8 @@ bool React::convert(std::istringstream& data_stream)
                 data_stream.clear();
                 data_stream.seekg(pos);
             }
-
-
         }
     }
-
-    // create this table to ensure reject is instatiated
-    table_api.open_table("react");
-    table_api.close_table();
-
-    // Finally, update the rule type
-    rule_api.update_rule_action("react");
     return set_next_rule_state(data_stream);
 }
 
@@ -139,7 +130,18 @@ bool React::convert(std::istringstream& data_stream)
 
 
 static ConversionState* ctor(Converter& c)
-{ return new React(c); }
+{
+    // react may not have arguments. So, set this information now.
+
+    // create this table to ensure react is instatiated
+    c.get_table_api().open_table("react");
+    c.get_table_api().close_table();
+
+    // update the rule type.
+    c.get_rule_api().update_rule_action("react");
+
+    return new React(c);
+}
 
 static const ConvertMap rule_react =
 {

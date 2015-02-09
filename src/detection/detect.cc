@@ -125,7 +125,7 @@ void snort_inspect(Packet* p)
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
                 "Dropping bad packet\n"););
-            Active_DropPacket();
+            Active_DropPacket(p);
         }
     }
     else

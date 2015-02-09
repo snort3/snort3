@@ -9,6 +9,7 @@ cd_arp.cc \
 cd_eapol.cc \
 cd_erspan2.cc \
 cd_erspan3.cc \
+cd_fabricpath.cc \
 cd_mpls.cc \
 cd_ppp_encap.cc \
 cd_pppoe.cc \
@@ -33,6 +34,11 @@ ehlib_LTLIBRARIES += libcd_erspan3.la
 libcd_erspan3_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_erspan3_la_LDFLAGS = -export-dynamic -shared
 libcd_erspan3_la_SOURCES = cd_erspan3.cc
+
+ehlib_LTLIBRARIES += libcd_fabricpath.la
+libcd_fabricpath_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_fabricpath_la_LDFLAGS = -export-dynamic -shared
+libcd_fabricpath_la_SOURCES = cd_fabricpath.cc
 
 ehlib_LTLIBRARIES += libcd_mpls.la
 libcd_mpls_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

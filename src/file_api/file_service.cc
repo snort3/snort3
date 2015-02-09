@@ -485,7 +485,7 @@ static inline void _file_signature_lookup(FileContext* context,
             /*Drop packets if not timeout*/
             if (pkt->pkth->ts.tv_sec <= context->expires)
             {
-                Active_DropPacket();
+                Active_DropPacket(pkt);
                 return;
             }
             /*Timeout, let packet go through OR block based on config*/
@@ -503,7 +503,7 @@ static inline void _file_signature_lookup(FileContext* context,
             FileConfig *file_config =  (FileConfig *)context->file_config;
             if (file_config)
                 context->expires = (time_t)(file_config->file_lookup_timeout + pkt->pkth->ts.tv_sec);
-            Active_DropPacket();
+            Active_DropPacket(pkt);
 	    stream.set_event_handler(pkt->flow, s_cb_id, SE_REXMIT);
             return;
         }

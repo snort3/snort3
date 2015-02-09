@@ -19,7 +19,6 @@
 // cd_ipv4.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -45,6 +44,9 @@
 #include "protocols/ipv4_options.h"
 #include "log/text_log.h"
 #include "log/log_text.h"
+#include "sfip/sf_ipvar.h"
+#include "parser/parse_ip.h"
+#include "log/messages.h"
 
 #define CD_IPV4_NAME "ipv4"
 #define CD_IPV4_HELP "support for Internet protocol v4"
@@ -63,6 +65,7 @@ struct Stats
 };
 
 static THREAD_LOCAL Stats stats;
+static sfip_var_t *MulticastReservedIp = nullptr;
 
 
 static const RuleMap ipv4_rules[] =
@@ -132,7 +135,7 @@ static THREAD_LOCAL std::array<uint16_t, IP_ID_COUNT> s_id_pool{{0}};
 }  // namespace
 
 
-static inline void IP4AddrTests(const IP4Hdr*, const CodecData&);
+static inline void IP4AddrTests(const IP4Hdr*, const CodecData&, DecodeData&);
 static inline void IPMiscTests(const IP4Hdr* const ip4h, const CodecData& codec, uint16_t len);
 static void DecodeIPOptions(const uint8_t *start, uint8_t& o_len, CodecData& data);
 
@@ -247,7 +250,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     /*
      * IP Header tests: Land attack, and Loop back test
      */
-    IP4AddrTests(iph, codec);
+    IP4AddrTests(iph, codec, snort);
 
     if (ScIpChecksums())
     {
@@ -352,7 +355,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 //--------------------------------------------------------------------
 
 
-static inline void IP4AddrTests(const IP4Hdr* iph, const CodecData& codec)
+static inline void IP4AddrTests(const IP4Hdr* iph, const CodecData& codec, DecodeData& snort)
 {
     uint8_t msb_src, msb_dst;
 
@@ -397,10 +400,10 @@ static inline void IP4AddrTests(const IP4Hdr* iph, const CodecData& codec)
     if ( msb_src == ip::IP4_MULTICAST )
         codec_events::decoder_event(codec, DECODE_IP4_SRC_MULTICAST);
 
-    if ( msb_src == ip::IP4_RESERVED )
+    if ( msb_src == ip::IP4_RESERVED || sfvar_ip_in(MulticastReservedIp, snort.ip_api.get_src()) )
         codec_events::decoder_event(codec, DECODE_IP4_SRC_RESERVED);
 
-    if ( msb_dst == ip::IP4_RESERVED )
+    if ( msb_dst == ip::IP4_RESERVED || sfvar_ip_in(MulticastReservedIp, snort.ip_api.get_dst()) )
         codec_events::decoder_event(codec, DECODE_IP4_DST_RESERVED);
 }
 
@@ -686,7 +689,7 @@ bool Ipv4Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     ip4h_out->ip_len = htons((uint16_t)buf.size());
     ip4h_out->ip_csum = 0;
 
-    if ( forward(enc.flags) )
+    if ( enc.forward() )
     {
         ip4h_out->ip_src = ip4h_in->ip_src;
         ip4h_out->ip_dst = ip4h_in->ip_dst;
@@ -776,13 +779,28 @@ static void ipv4_codec_ginit()
 
     rand_get(s_rand, &s_id_pool[0], sizeof(s_id_pool));
 #endif
+
+    // Reserved addresses within multicast address space (See RFC 5771)
+    MulticastReservedIp = sfip_var_from_string(
+            "[224.1.0.0/16,224.5.0.0/16,224.6.0.0/15,224.8.0.0/13,224.16.0.0/12,"
+             "224.32.0.0/11,224.64.0.0/10,224.128.0.0/9,225.0.0.0/8,226.0.0.0/7,"
+             "228.0.0.0/6,234.0.0.0/7,236.0.0.0/7,238.0.0.0/8]");
+
+    if( MulticastReservedIp == nullptr )
+        FatalError("Could not initialize IPv4 MulticastReservedIp\n");
 }
 
 
 static void ipv4_codec_gterm()
 {
-    if ( s_rand ) rand_close(s_rand);
-    s_rand = NULL;
+    if ( s_rand )
+        rand_close(s_rand);
+
+    if ( MulticastReservedIp )
+        sfvar_free(MulticastReservedIp);
+
+    s_rand = nullptr;
+    MulticastReservedIp = nullptr;
 }
 
 

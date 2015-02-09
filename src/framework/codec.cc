@@ -32,7 +32,7 @@ EncState::EncState(const ip::IpApi& api, EncodeFlags f, uint8_t pr,
 
 uint8_t EncState::get_ttl(uint8_t lyr_ttl) const
 {
-    if (forward(flags))
+    if ( forward() )
     {
         if (flags & ENC_FLAG_TTL)
             return ttl;

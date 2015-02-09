@@ -1297,7 +1297,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
     if ( ft->frag_flags & FRAG_DROP_FRAGMENTS )
     {
         DisableDetect(p);
-        Active_DropPacket();
+        Active_DAQDropPacket(p);
         ip_stats.drops++;
     }
 

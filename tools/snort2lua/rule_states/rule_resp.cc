@@ -171,12 +171,6 @@ bool Resp::convert(std::istringstream& data_stream)
         }
     }
 
-    // create this table to ensure reject is instatiated
-    table_api.open_table("reject");
-    table_api.close_table();
-
-    // Finally, update the rule type
-    rule_api.update_rule_action("reject");
     return set_next_rule_state(data_stream);
 }
 
@@ -186,7 +180,18 @@ bool Resp::convert(std::istringstream& data_stream)
 
 
 static ConversionState* ctor(Converter& c)
-{ return new Resp(c); }
+{
+    // reject may not have arguments. So, set this information now.
+
+    // create this table to ensure reject is instatiated
+    c.get_table_api().open_table("reject");
+    c.get_table_api().close_table();
+
+    // update the rule type
+    c.get_rule_api().update_rule_action("reject");
+
+    return new Resp(c);
+}
 
 static const ConvertMap rule_resp =
 {

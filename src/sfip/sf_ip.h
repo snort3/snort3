@@ -378,7 +378,7 @@ static inline int sfip_fast_eq6(const sfip_t *ip1, const sfip_t *ip2) {
 }
 
 /* Checks if ip2 is equal to ip1 or contained within the CIDR ip1 */
-static inline int sfip_fast_cont4(const sfip_t *ip1, const sfip_t *ip2) {
+static inline bool sfip_fast_cont4(const sfip_t *ip1, const sfip_t *ip2) {
     u_int32_t shift = 32 - sfip_bits(ip1);
     u_int32_t ip = ntohl(*ip2->ip32);
 

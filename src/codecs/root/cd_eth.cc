@@ -68,6 +68,8 @@ public:
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&) override;
     void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
+    void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
+        uint16_t lyr_len, uint32_t& updated_len) override;
 };
 
 } // namespace
@@ -119,14 +121,29 @@ bool EthCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     const eth::EtherHdr *eh = reinterpret_cast<const eth::EtherHdr *>(raw.data);
 
 
-    uint16_t next_prot = ntohs(eh->ether_type);
-    if (next_prot > eth::MIN_ETHERTYPE )
-        codec.proto_bits |= PROTO_BIT__ETH;
+    uint16_t next_prot = eh->ethertype();
+    if ( next_prot <= eth::MIN_ETHERTYPE )
+    {
+        codec.next_prot_id = PROTO_ETHERNET_LLC;
+        codec.lyr_len = eth::ETH_HEADER_LEN;
+    }
+    else if ( next_prot == ETHERTYPE_FPATH )
+    {
+        /*  If this is FabricPath, the first 16 bytes are FabricPath data
+         *  rather than Ethernet data.  So, set the length to zero and
+         *  and decode this FabricPath data. Then, FabricPath will send the decoder
+         *  right back to this Ethernet function.
+         */
+        codec.next_prot_id = next_prot;
+        codec.lyr_len = 0;
+    }
     else
-        next_prot = PROTO_ETHERNET_LLC;
+    {
+        codec.proto_bits |= PROTO_BIT__ETH;
+        codec.lyr_len = eth::ETH_HEADER_LEN;
+        codec.next_prot_id = next_prot;
+    }
 
-    codec.next_prot_id = next_prot;
-    codec.lyr_len = eth::ETH_HEADER_LEN;
     return true;
 }
 
@@ -161,10 +178,13 @@ void EthCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
                       EncState& enc, Buffer& buf)
 {
+    const eth::EtherHdr* hi = reinterpret_cast<const eth::EtherHdr*>(raw_in);
+
+    if (hi->ethertype() == ETHERTYPE_FPATH)
+        return true;
+
     // not raw ip -> encode layer 2
     bool raw = ( enc.flags & ENC_FLAG_RAW );
-    const eth::EtherHdr* hi = reinterpret_cast<const eth::EtherHdr*>(raw_in);
-    eth::EtherHdr* ho;
 
     // if not raw ip AND out buf is empty
     if ( !raw && (buf.size() == 0) )
@@ -181,19 +201,16 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     {
         // we get here for outer-most layer when not raw ip
         // we also get here for any encapsulated ethernet layer.
-        if (!buf.allocate(sizeof(*ho)))
+        if ( !buf.allocate(eth::ETH_HEADER_LEN) )
             return false;
 
-        ho = reinterpret_cast<eth::EtherHdr*>(buf.data());
+        eth::EtherHdr* ho = reinterpret_cast<eth::EtherHdr*>(buf.data());
+        ho->ether_type = enc.ethertype_set() ? ntohs(enc.next_ethertype) : hi->ether_type;
 
-        if (enc.ethertype_set())
-            ho->ether_type = htons(enc.next_ethertype);
-        else
-            ho->ether_type = hi->ether_type;
 
         uint8_t *dst_mac = PacketManager::encode_get_dst_mac();
         
-        if ( forward(enc.flags) )
+        if ( enc.forward() )
         {
             memcpy(ho->ether_src, hi->ether_src, sizeof(ho->ether_src));
             /*If user configured remote MAC address, use it*/
@@ -223,7 +240,8 @@ void EthCodec::format(bool reverse, uint8_t* raw_pkt, DecodeData&)
 {
     eth::EtherHdr* ch = reinterpret_cast<eth::EtherHdr*>(raw_pkt);
 
-    if ( reverse )
+    // If the ethertype is FabricPath, then this is not Ethernet Data.
+    if ( reverse &&  (ch->ethertype() != ETHERTYPE_FPATH) )
     {
         uint8_t tmp_addr[6];
 
@@ -233,6 +251,15 @@ void EthCodec::format(bool reverse, uint8_t* raw_pkt, DecodeData&)
     }
 }
 
+
+void EthCodec::update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
+        uint16_t lyr_len, uint32_t& updated_len)
+{
+    const eth::EtherHdr* const eth = reinterpret_cast<eth::EtherHdr*>(raw_pkt);
+
+    if ( eth->ethertype() != ETHERTYPE_FPATH )
+        updated_len += lyr_len;
+}
 
 //-------------------------------------------------------------------------
 // api

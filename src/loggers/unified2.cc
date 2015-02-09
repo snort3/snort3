@@ -144,8 +144,33 @@ static void AlertExtraData(Flow*, void *data, LogFunction *log_funcs, uint32_t m
 /* Obsolete flag as UI wont check the impact_flag field anymore.*/
 #define U2_FLAG_BLOCKED 0x20
 /* New flags to set the pad field (corresponds to blocked column in UI) with packet action*/
-#define U2_BLOCKED_FLAG_BLOCKED 0x01
-#define U2_BLOCKED_FLAG_WDROP 0x02
+#define U2_BLOCKED_FLAG_ALLOW 0x00
+#define U2_BLOCKED_FLAG_BLOCK 0x01
+#define U2_BLOCKED_FLAG_WOULD 0x02
+#define U2_BLOCKED_FLAG_CANT  0x03
+
+
+static int s_blocked_flag[] =
+{
+    U2_BLOCKED_FLAG_ALLOW,
+    U2_BLOCKED_FLAG_CANT,
+    U2_BLOCKED_FLAG_WOULD,
+    U2_BLOCKED_FLAG_BLOCK,
+    U2_BLOCKED_FLAG_BLOCK
+};
+
+static int GetU2Flags(const Packet*, uint8_t* pimpact)
+{
+    tActiveDrop dispos = Active_GetDisposition();
+
+    if ( dispos >= ACTIVE_DROP )
+    {
+        *pimpact = U2_FLAG_BLOCKED;
+        return U2_BLOCKED_FLAG_BLOCK;
+    }
+    return s_blocked_flag[dispos];
+}
+
 
 /*
  * Function: Unified2InitFile()
@@ -241,23 +266,7 @@ static void _AlertIP4_v2(Packet *p, const char*, Unified2Config *config, Event *
 
     if(p)
     {
-        if ( Active_PacketWasDropped() )
-        {
-            if (DAQ_GetInterfaceMode(p->pkth) == DAQ_MODE_INLINE)
-            {
-                alertdata.impact_flag = U2_FLAG_BLOCKED;
-                alertdata.blocked = U2_BLOCKED_FLAG_BLOCKED;
-            }
-            else
-            {
-                // Set would be dropped if not inline interface
-                alertdata.blocked = U2_BLOCKED_FLAG_WDROP;
-            }
-        }
-        else if ( Active_PacketWouldBeDropped() )
-        {
-            alertdata.blocked = U2_BLOCKED_FLAG_WDROP;
-        }
+        alertdata.blocked = GetU2Flags(p, &alertdata.impact_flag);
 
         if(p->has_ip())
         {
@@ -348,23 +357,7 @@ static void _AlertIP6_v2(Packet *p, const char*, Unified2Config *config, Event *
 
     if(p)
     {
-        if ( Active_PacketWasDropped() )
-        {
-            if (DAQ_GetInterfaceMode(p->pkth) == DAQ_MODE_INLINE)
-            {
-                alertdata.impact_flag = U2_FLAG_BLOCKED;
-                alertdata.blocked = U2_BLOCKED_FLAG_BLOCKED;
-            }
-            else
-            {
-                // Set would be dropped if not inline interface
-                alertdata.blocked = U2_BLOCKED_FLAG_WDROP;
-            }
-        }
-        else if ( Active_PacketWouldBeDropped() )
-        {
-            alertdata.blocked = U2_BLOCKED_FLAG_WDROP;
-        }
+        alertdata.blocked = GetU2Flags(p, &alertdata.impact_flag);
 
         if(p->ptrs.ip_api.is_valid())
         {

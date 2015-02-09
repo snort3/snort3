@@ -5,6 +5,7 @@ if(STATIC_CODECS)
         cd_eapol.cc
         cd_erspan2.cc
         cd_erspan3.cc
+        cd_fabricpath.cc
         cd_mpls.cc
         cd_ppp_encap.cc
         cd_pppoe.cc
@@ -17,6 +18,7 @@ else(STATIC_CODECS)
     add_shared_library(cd_arp codecs cd_arp.cc)
     add_shared_library(cd_erspan2 codecs cd_erspan2.cc)
     add_shared_library(cd_erspan3 codecs cd_erspan3.cc)
+    add_shared_library(cd_fabricpath codecs cd_fabricpath.cc)
     add_shared_library(cd_mpls codecs cd_mpls.cc)
     add_shared_library(cd_ppp_encap codecs cd_ppp_encap.cc)
     add_shared_library(cd_pppoe codecs cd_pppoe.cc)

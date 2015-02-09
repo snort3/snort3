@@ -681,7 +681,7 @@ bool Stream::blocked_session (Flow* flow, Packet* p)
             p->packet_flags & PKT_FROM_SERVER ?  "server" : "client"););
 
         DisableDetect(p);
-        Active_DropPacket();
+        Active_DropPacket(p);
         active_response(p, flow);
         return true;
     }

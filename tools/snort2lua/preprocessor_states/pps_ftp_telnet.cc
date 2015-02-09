@@ -101,13 +101,12 @@ bool FtpTelnet::convert(std::istringstream& data_stream)
         {
             data_stream >> s_value;
 
-            if(s_value.compare("yes"))
+            if(!s_value.compare("yes"))
                 tmpval = add_ftp_n_telnet_option("encrypted_traffic", true);
             else
                 tmpval = add_ftp_n_telnet_option("encrypted_traffic", false);
             
         }
-
         else
         {
             tmpval = false;

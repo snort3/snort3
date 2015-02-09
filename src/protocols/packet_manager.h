@@ -106,6 +106,8 @@ public:
     static PegCount get_rebuilt_packet_count(void);
     // set the packet to be encoded.
     static void encode_set_pkt(Packet* p);
+    // get the max payload for the current packet
+    static uint16_t encode_get_max_payload(const Packet*);
     // reset the current 'clone' packet
     static inline void encode_reset(void)
     { encode_set_pkt(NULL); }
