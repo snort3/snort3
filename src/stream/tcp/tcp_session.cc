@@ -1026,7 +1026,7 @@ NormPegs Stream_GetNormCounts(unsigned& c)
 // fewer total checks.  however, it is best to minimize
 // configuration checks on a per packet basis so there is
 // still room for improvement.
-static inline bool NormalDropPacketIf (Packet*, NormFlags f)
+static inline bool NormalDropPacketIf(Packet* p, NormFlags f)
 {
     const NormMode mode = Normalize_GetMode(f);
 
@@ -1035,13 +1035,13 @@ static inline bool NormalDropPacketIf (Packet*, NormFlags f)
 
     if ( mode == NORM_MODE_ON )
     {
-        Active_DropPacket();
+        Active_DropPacket(p);
         return true;
     }
     return false;
 }
 
-static inline bool NormalStripTimeStamp (Packet* p, const TcpOption* opt, NormMode mode)
+static inline bool NormalStripTimeStamp(Packet* p, const TcpOption* opt, NormMode mode)
 {
     normStats[PC_TCP_TS_NOP][mode]++;
     sfBase.iPegs[PERF_COUNT_TCP_TS_NOP][mode]++;
@@ -1056,7 +1056,7 @@ static inline bool NormalStripTimeStamp (Packet* p, const TcpOption* opt, NormMo
     return false;
 }
 
-static inline void NormalTrimPayload (
+static inline void NormalTrimPayload(
     Packet* p, uint16_t max, TcpDataBlock* tdb )
 {
     uint16_t fat = p->dsize - max;
@@ -1078,7 +1078,7 @@ static inline void NormalTrimPayloadIf(
     sfBase.iPegs[perf][mode]++;
 }
 
-static inline void NormalTrimPayloadIfSyn (
+static inline void NormalTrimPayloadIfSyn(
     Packet *p, uint32_t max, TcpDataBlock *tdb )
 {
     if ( p->dsize > max )
@@ -1086,7 +1086,7 @@ static inline void NormalTrimPayloadIfSyn (
             NORM_TCP_TRIM_SYN, PC_TCP_TRIM_SYN, PERF_COUNT_TCP_TRIM_SYN);
 }
 
-static inline void NormalTrimPayloadIfRst (
+static inline void NormalTrimPayloadIfRst(
     Packet *p, uint32_t max, TcpDataBlock *tdb )
 {
     if ( p->dsize > max )
@@ -1094,7 +1094,7 @@ static inline void NormalTrimPayloadIfRst (
             NORM_TCP_TRIM_RST, PC_TCP_TRIM_RST, PERF_COUNT_TCP_TRIM_RST);
 }
 
-static inline void NormalTrimPayloadIfWin (
+static inline void NormalTrimPayloadIfWin(
     Packet *p, uint32_t max, TcpDataBlock *tdb )
 {
     if ( p->dsize > max )
@@ -1102,7 +1102,7 @@ static inline void NormalTrimPayloadIfWin (
             NORM_TCP_TRIM_WIN, PC_TCP_TRIM_WIN, PERF_COUNT_TCP_TRIM_WIN);
 }
 
-static inline void NormalTrimPayloadIfMss (
+static inline void NormalTrimPayloadIfMss(
     Packet *p, uint32_t max, TcpDataBlock *tdb )
 {
     if ( p->dsize > max )
@@ -1170,7 +1170,7 @@ static inline void SetPacketHeaderFoo (TcpSession* tcpssn, const Packet* p)
     tcpssn->address_space_id = p->pkth->address_space_id;
 }
 
-static inline void GetPacketHeaderFoo (
+static inline void GetPacketHeaderFoo(
     const TcpSession* tcpssn, DAQ_PktHdr_t* pkth, uint32_t dir)
 {
     if ( (dir & PKT_FROM_CLIENT) || (tcpssn->daq_flags & DAQ_PKT_FLAG_NOT_FORWARDING) )
@@ -2085,7 +2085,7 @@ static int FlushStream(
     return bytes_flushed;
 }
 
-static inline int _flush_to_seq (
+static inline int _flush_to_seq(
     TcpSession *tcpssn, StreamTracker *st, uint32_t bytes, Packet *p, uint32_t dir)
 {
     uint32_t stop_seq;
@@ -2677,7 +2677,7 @@ static void CheckSegments (const StreamTracker* a)
 // FIXIT-L this should not be thread specific
 static THREAD_LOCAL int s5_trace_enabled = -1;
 
-static void TraceEvent (
+static void TraceEvent(
     const Packet* p, TcpDataBlock*, uint32_t txd, uint32_t rxd
 ) {
     int i;
@@ -2751,7 +2751,7 @@ static void TraceSegments (const StreamTracker* a)
     assert(a->seg_bytes_logical == bytes);
 }
 
-static void TraceState (
+static void TraceState(
     const StreamTracker* a, const StreamTracker* b, const char* s)
 {
     uint32_t why = a->l_nxt_seq ? LCL(a, l_nxt_seq) : 0;
@@ -2784,7 +2784,7 @@ static void TraceState (
     fprintf(stdout, "\n");
 }
 
-static void TraceTCP (
+static void TraceTCP(
     const Packet* p, const Flow* lws, TcpDataBlock* tdb, int event
 ) {
     const TcpSession* ssn = (TcpSession*)lws->session;
@@ -2823,7 +2823,7 @@ static void TraceTCP (
     }
 }
 
-static inline void S5TraceTCP (
+static inline void S5TraceTCP(
     const Packet* p, const Flow* lws, TcpDataBlock* tdb, int event
 ) {
     if ( !s5_trace_enabled )
@@ -3067,7 +3067,7 @@ static inline int SegmentFastTrack(StreamSegment *tail, TcpDataBlock *tdb)
     return 0;
 }
 
-static inline StreamSegment* SegmentAlloc (
+static inline StreamSegment* SegmentAlloc(
     Packet* p, const struct timeval* tv, uint32_t caplen, uint32_t pktlen, const uint8_t* pkt)
 {
     StreamSegment* ss;
@@ -5919,7 +5919,7 @@ static inline uint32_t GetForwardDir (const Packet* p)
 // see flush_pdu_ackd() for details
 // the key difference is that we operate on forward moving data
 // because we don't wait until it is acknowledged
-static inline uint32_t flush_pdu_ips (
+static inline uint32_t flush_pdu_ips(
     TcpSession* ssn, StreamTracker* trk, uint32_t* flags)
 {
     uint32_t total = 0, avail;
@@ -6079,7 +6079,7 @@ static inline int CheckFlushPolicyOnData(
 // - if we partially scan a segment we must save state so we
 //   know where we left off and can resume scanning the remainder
 
-static inline uint32_t flush_pdu_ackd (
+static inline uint32_t flush_pdu_ackd(
     TcpSession* ssn, StreamTracker* trk, uint32_t* flags)
 {
     uint32_t total = 0;
@@ -6284,7 +6284,7 @@ static int StreamSeglistDeleteNode (StreamTracker* st, StreamSegment* seg)
     return ret;
 }
 
-static int StreamSeglistDeleteNodeTrim (
+static int StreamSeglistDeleteNodeTrim(
     StreamTracker* st, StreamSegment* seg, uint32_t flush_seq)
 {
     assert(st && seg);
@@ -6474,7 +6474,7 @@ int StreamCheckSessionAlertTcp(Flow *lwssn, Packet *p, uint32_t gid, uint32_t si
     return iRet;
 }
 
-int StreamUpdateSessionAlertTcp (
+int StreamUpdateSessionAlertTcp(
     Flow *lwssn, Packet *p,
     uint32_t gid, uint32_t sid,
     uint32_t event_id, uint32_t event_second)
