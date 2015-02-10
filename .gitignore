@@ -61,8 +61,6 @@ snort
 snort.pc
 src/snort
 src/tags
-src/target_based/sf_attribute_table.h
-src/target_based/y.tab.c
 src/test/suite_decl.h
 src/test/suite_list.h
 stamp-h1
@@ -70,4 +68,3 @@ tools/snort2lua/snort2lua
 tools/snort2lua/tags
 tools/u2boat/u2boat
 tools/u2spewfoo/u2spewfoo
-ylwrap
