@@ -119,4 +119,86 @@ Snort++ differs from Snort in the following ways:
 * deleted the intermediate http and ftp_telnet event queues
 * alert_unified2 and log_unified2 have been deleted
 
+=== HTTP Profiles
+
+This section describes the changes to the Http Inspect config option "profile".
+
+Snort 2.X allows users to select pre-defined HTTP server profiles using the
+config option "profile". The user can choose one of five predefined profiles.
+When defined, this option will set defaults for other config options within
+Http Inspect.
+
+With Snort++, the user has the flexibility of defining and fine tuning custom
+profiles along with the five predefined profiles. 
+
+Snort 2.X conf
+
+    preprocessor http_inspect_server: server default \
+        profile apache ports { 80 3128 } max_headers 200
+
+Snort 3.0 conf
+
+    http_inspect = { profile = http_profile_apache }
+    http_inspect.profile.max_headers = 200 
+
+    binder =
+    {
+        {
+            when = { proto = 'tcp', ports = '80 3128', },
+            use = { type = 'http_inspect' },
+        },
+    } 
+
+NOTE: The "profile" option now that points to a table "http_profile_apache"
+which is defined in "snort_defaults.lua" (as follows).
+
+    http_profile_apache =
+    {
+        profile_type = 'apache',
+        server_flow_depth = 300,
+        client_flow_depth = 300,
+        post_depth = -1,
+        chunk_length = 500000,
+        ascii = true,
+        multi_slash = true,
+        directory = true,
+        webroot = true,
+        utf_8 = true,
+        apache_whitespace = true,
+        non_strict = true,
+        normalize_utf = true,
+        normalize_javascript = false,
+        max_header_length = 0,
+        max_headers = 0,
+        max_spaces = 200,
+        max_javascript_whitespaces = 200,
+        whitespace_chars ='0x9 0xb 0xc 0xd'
+    }
+
+NOTE: The config option "max_headers" is set to 0 in the profile, but
+overwritten by "http_inspect.profile.max_headers = 200".
+
+Conversion
+
+Snort2lua can convert the existing snort.conf with the "profile" option to
+Snort3.0 compatible "profile". Please refer to the Snort2Lua post for more
+details.
+
+Examples
+
+    "profile all" ==> "profile = http_profile_default"
+    "profile apache" ==> "profile = http_profile_apache"
+    "profile iis" ==> "profile = http_profile_iis"
+    "profile iis_40" ==> "profile = http_profile_iis_40"
+    "profile iis_50" ==> "profile = http_profile_iis_50"
+
+Defining custom profiles
+
+The complete set of Http Inspect config options that a custom profile can
+configure can be found by running the following command:
+
+    snort --help-config http_inspect | grep http_inspect.profile
+
+The new Http Inspect (new_http_inspect) implementation of config options is
+still under development.
 

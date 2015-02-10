@@ -49,6 +49,10 @@ IPS actions allow you to perform custom actions when events are generated.
 Unlike loggers, these are invoked before thresholding and can be used to
 control external agents.
 
+Externally defined actions must be configured to become available to the
+parser.  For the reject rule, you can set reject = { } to get the rule to
+parse.
+
 include::ips_action.txt[]
 
 == IPS Option Modules

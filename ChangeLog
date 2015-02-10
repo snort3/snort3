@@ -1,5 +1,6 @@
 Pending - build 137
 
+-- updated manual from blog posts and emails
 -- normalization refactoring, renaming
 -- fixed icmp4 encoding
 -- methods in codec_events and ip_util namespaces are now protected

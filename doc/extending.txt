@@ -20,6 +20,9 @@ The BaseApi includes type, name, API version, plugin version, and function
 pointers for constructing and destructing a Module.  The specific API add
 various other data and functions for their given roles.
 
+
+=== Modules
+
 The Module is pervasive in Snort++.  It is how everything, including
 plugins, are configured.  It also provides access to builtin rules.  And as
 the glue that binds functionality to Snort++, the capabilities of a Module
@@ -64,6 +67,214 @@ the plugin instance which takes ownership.
 Note that there is at most one instance of a given Module, even if multiple
 plugin instances are created which use that Module.  (Multiple instances
 require Snort++ binding configuration.)
+
+
+=== Inspectors
+
+There are several types of inspector, which determines which inspectors are
+executed when:
+
+* IT_BINDER - determines which inspectors apply to given flows
+
+* IT_WIZARD - determines which service inspector to use if none explicitly
+  bound
+
+* IT_PACKET - used to process all packets before session and service processing
+  (e.g. normalize)
+
+* IT_NETWORK - processes packets w/o service (e.g. arp_spoof, back_orifice)
+
+* IT_STREAM - for flow tracking, ip defrag, and tcp reassembly
+
+* IT_SERVICE - for http, ftp, telnet, etc.
+
+* IT_PROBE - process all packets after all the above (e.g. perf_monitor,
+  port_scan)
+
+
+=== Codecs
+
+The Snort3.0 Codecs decipher raw packets. These Codecs are now completely
+pluggable; almost every Snort3.0 Codec can be built dynamically and replaced
+with an alternative, customized Codec. The pluggable nature has also made it
+easier to build new Codecs for protocols without having to touch the Snort3.0
+code base. 
+
+The first step in creating a Codec is defining its class and protocol. Every
+Codec must inherit from the Snort3.0 Codec class defined in
+"framework/codec.h". The following is an example Codec named "example" and has
+an associated struct that is 14 bytes long.
+
+    #include <cstdint>
+    #include <arpa/inet.h>
+    #include “framework/codec.h”
+    #include "main/snort_types.h"
+
+    #define EX_NAME “example”
+    #define EX_HELP “example codec help string”
+
+    struct Example
+    {
+        uint8_t dst[6];
+        uint8_t src[6];
+        uint16_t ethertype;
+
+        static inline uint8_t size()
+        { return 14; }
+    }
+
+    class ExCodec : public Codec
+    {
+    public:
+        ExCodec() : Codec(EX_NAME) { }
+        ~ExCodec() { }
+
+        bool decode(const RawData&, CodecData&, DecodeData&) override;
+        void get_protocol_ids(std::vector<uint16_t>&) override;
+    };
+
+After defining ExCodec, the next step is adding the Codec's decode
+functionality. The function below does this by implementing a valid decode
+function. The first parameter, which is the RawData struct, provides both a
+pointer to the raw data that has come from a wire and the length of that raw
+data. The function takes this information and validates that there are enough
+bytes for this protocol. If the raw data's length is less than 14 bytes, the
+function returns false and Snort3.0 discards the packet; the packet is neither
+inspected nor processed. If the length is greater than 14 bytes, the function
+populates two fields in the CodecData struct, next_prot_id and lyr_len. The
+lyr_len field tells Snort3.0 the number of bytes that this layer contains. The
+next_prot_id field provides Snort3.0 the value of the next EtherType or IP
+protocol number.
+
+    bool ExCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
+    {
+       if ( raw.len < Example::size() )
+           return false;
+
+        const Example* const ex = reinterpret_cast<const Example*>(raw.data);
+        codec.next_prot_id = ntohs(ex->ethertype);
+        codec.lyr_len = ex->size();
+        return true;
+    }
+
+For instance, assume this decode function receives the following raw data with
+a validated length of 32 bytes:
+
+    00 11 22 33 44 55 66 77    88 99 aa bb 08 00 45 00
+    00 38 00 01 00 00 40 06    5c ac 0a 01 02 03 0a 09
+
+The Example struct's EtherType field is the 13 and 14 bytes. Therefore, this
+function tells Snort that the next protocol has an EtherType of 0x0800.
+Additionally, since the lyr_len is set to 14, Snort knows that the next
+protocol begins 14 bytes after the beginning of this protocol. The Codec with
+EtherType 0x0800, which happens to be the IPv4 Codec, will receive the
+following data with a validated length of 18 ( == 32 – 14):
+
+    45 00 00 38 00 01 00 00    40 06 5c ac 0a 01 02 03
+    0a 09
+
+How does Snort3.0 know that the IPv4 Codec has an EtherType of 0x0800? The
+Codec class has a second virtual function named get_protocol_ids(). When
+implementing the function, a Codec can register for any number of values
+between 0x0000 - 0xFFFF. Then, if the next_proto_id is set to a value for which
+this Codec has registered, this Codec's decode function will be called. As a
+general note, the protocol ids between [0, 0x00FF] are IP protocol numbers,
+[0x0100, 0x05FF] are custom types, and [0x0600, 0xFFFF] are EtherTypes.
+
+For example, in the get_protocol_ids function below, the ExCodec registers for
+the protocols numbers 17, 787, and 2054. 17 happens to be the protocol number
+for UDP while 2054 is ARP's EtherType. Therefore, this Codec will now attempt
+to decode UDP and ARP data. Additionally, if any Codec sets the
+next_protocol_id to 787, ExCodec's decode function will be called. Some custom
+protocols are already defined in the file "protocols/protocol_ids.h" 
+
+    void ExCodec::get_protocol_ids(std::vector<uint16_t>&v)
+    {
+        v.push_back(0x0011); // == 17  == UDP
+        v.push_back(0x1313); // == 787  == custom
+        v.push_back(0x0806); // == 2054  == ARP
+    }
+
+To register a Codec for Data Link Type's rather than protocols, the function
+get_data_link_type() can be similarly implemented.
+
+The final step to creating a pluggable Codec is the snort_plugins array. This
+array is important because when Snort3.0 loads a dynamic library, the program
+only find plugins that are inside the snort_plugins array. In other words, if a
+plugin has not been added to the snort_plugins array, that plugin will not be
+loaded into Snort3.0.
+
+Although the details will not be covered in this post, the following code
+snippet is a basic CodecApi that Snort3.0 can load. This snippet can be copied
+and used with only three minor changes. First, in the function ctor, ExCodec
+should be replaced with the name of the Codec that is being built. Second,
+EX_NAME must match the Codec's name or Snort will be unable to load this Codec.
+Third, EX_HELP should be replaced with the general description of this Codec.
+Once this code snippet has been added, ExCodec is ready to be compiled and
+plugged into Snort3.0.
+
+    static Codec* ctor(Module*)
+    { return new ExCodec; }
+
+    static void dtor(Codec *cd)
+    { delete cd; }
+
+    static const CodecApi ex_api =
+    {
+        {
+            PT_CODEC,
+            EX_NAME,
+            EX_HELP,
+            CDAPI_PLUGIN_V0,
+            0,
+            nullptr,
+            nullptr,
+        },
+        nullptr, // pointer to a function called during Snort's startup.
+        nullptr, // pointer to a function called during Snort's exit.
+        nullptr, // pointer to a function called during thread's startup.
+        nullptr, // pointer to a function called during thread's destruction.
+        ctor, // pointer to the codec constructor.
+        dtor, // pointer to the codec destructor.
+    };
+
+    SO_PUBLIC const BaseApi* snort_plugins[] =
+    {
+        &ex_api.base,
+        nullptr
+    };
+
+Two example Codecs are available in the extra directory on git and the extra
+tarball on the Snort3.0 page. One of those examples is the Token Ring Codec
+while the other example is the PIM Codec.
+
+As a final note, there are four more virtual functions that a Codec should
+implement: encode, format, update, and log. If the functions are not
+implemented Snort will not throw any errors. However, Snort may also be unable
+to accomplish some of its basic functionality.
+
+* encode is called whenever Snort actively responds and needs to builds a
+  packet, i.e. whenever a rule using an IPS ACTION like react, reject, or rewrite
+  is triggered. This function is used to build the response packet protocol by
+  protocol.
+
+* format is called when Snort is rebuilding a packet. For instance, every time
+  Snort reassembles a TCP stream or IP fragment, format is called. Generally,
+  this function either swaps any source and destination fields in the protocol or
+  does nothing.
+
+* update is similar to format in that it is called when Snort is reassembling a
+  packet. Unlike format, this function only sets length fields.
+
+* log is called when either the log_codecs logger or a custom logger that calls
+  PacketManager::log_protocols is used when running Snort3.0.
+
+
+=== IPS Actions
+
+Action plugins specify a builtin action in the API which is used to
+determine verdict.  (Conversely, builtin actions don't have an associated
+plugin function.)
 
 
 === Coding Style
