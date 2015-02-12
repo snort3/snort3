@@ -160,7 +160,7 @@ struct FTP_SESSION
     int data_chan_state;
     int data_chan_index;
     int data_xfer_index;
-    int data_xfer_dir;
+    bool data_xfer_dir;
     sfip_t      clientIP;
     uint16_t clientPort;
     sfip_t      serverIP;
@@ -208,7 +208,7 @@ struct FTP_DATA_SESSION
     int data_chan;
     int file_xfer_info;
     FilePosition position;
-    unsigned char direction;
+    bool direction;
     unsigned char mode;
     unsigned char packet_flags;
 };
@@ -222,15 +222,16 @@ public:
     static void init()
     { flow_id = FlowData::get_flow_id(); };
 
+    void handle_eof(Packet*) override;
+
 public:
     static unsigned flow_id;
     FTP_DATA_SESSION session;
 };
 
 #define FTPDATA_FLG_REASSEMBLY_SET  (1<<0)
-#define FTPDATA_FLG_CLIENT_EOF      (1<<1)
-#define FTPDATA_FLG_SERVER_EOF      (1<<2)
-#define FTPDATA_FLG_FILENAME_SET    (1<<3)
+#define FTPDATA_FLG_FILENAME_SET    (1<<1)
+#define FTPDATA_FLG_STOP            (1<<2)
 
 /*
  * The FTPP_SI_INPUT structure holds the information that the session
@@ -259,11 +260,7 @@ int FTPGetPacketDir(Packet *);
 FTP_DATA_SESSION * FTPDatasessionNew(Packet *p);
 void FTPDatasessionFree(void *p_ssn);
 
-void SetFTPDataEOFDirection(Packet *p, FTP_DATA_SESSION *ftpdata);
-
 bool FTPDataDirection(Packet *p, FTP_DATA_SESSION *ftpdata);
-bool FTPDataEOFDirection(Packet *p, FTP_DATA_SESSION *ftpdata);
-bool FTPDataEOF(FTP_DATA_SESSION *ftpdata);
 
 int TelnetsessionInspection(
     Packet*, TELNET_PROTO_CONF*, TELNET_SESSION**, FTPP_SI_INPUT*, int *piInspectMode);

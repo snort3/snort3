@@ -86,7 +86,6 @@ static void set_file_name_from_log(FILE_LogState *log_state, void *ssn);
 static uint32_t str_to_hash(uint8_t *str, int length );
 
 static void file_signature_lookup(void* p, bool is_retransmit);
-static void file_signature_callback(Packet* p);
 
 //static void print_file_stats(int exiting);
 
@@ -96,8 +95,6 @@ static void render_block_verdict(void *ctx, void *p);
 
 FileAPI fileAPI;
 FileAPI* file_api = NULL;
-
-static unsigned s_cb_id = 0;  // STATIC
 
 typedef struct _File_Stats {
 
@@ -115,6 +112,9 @@ static THREAD_LOCAL_TBD FileStats file_stats;
 
 static void cleanDynamicContext(FileContext*);
 
+static void _file_signature_lookup(FileContext* context,
+        void* p, bool is_retransmit, bool suspend_block_verdict);
+
 class FileFlowData : public FlowData
 {
 public:
@@ -127,12 +127,19 @@ public:
     static void init()
     { flow_id = FlowData::get_flow_id(); };
 
+    void handle_retransmit(Packet*) override;
+
 public:
     static unsigned flow_id;
     FileContext context;
 };
 
 unsigned FileFlowData::flow_id = 0;
+
+void FileFlowData::handle_retransmit(Packet* p)
+{
+    _file_signature_lookup(&context, p, true, false);
+}
 
 void FileAPIInit(void)
 {
@@ -171,12 +178,6 @@ void FileAPIInit(void)
     file_api = &fileAPI;
     init_mime();
     FileFlowData::init();
-}
-
-void FileAPIPostInit (void)
-{
-    if ( file_signature_enabled )
-        s_cb_id = stream.register_event_handler(file_signature_callback);
 }
 
 static void start_file_processing(void)
@@ -450,7 +451,7 @@ static inline int check_http_partial_content(Packet *p)
     return 1;
 }
 
-static inline void _file_signature_lookup(FileContext* context,
+static void _file_signature_lookup(FileContext* context,
         void* p, bool is_retransmit, bool suspend_block_verdict)
 {
     File_Verdict verdict = FILE_VERDICT_UNKNOWN;
@@ -504,7 +505,6 @@ static inline void _file_signature_lookup(FileContext* context,
             if (file_config)
                 context->expires = (time_t)(file_config->file_lookup_timeout + pkt->pkth->ts.tv_sec);
             Active_DropPacket(pkt);
-	    stream.set_event_handler(pkt->flow, s_cb_id, SE_REXMIT);
             return;
         }
     }
@@ -584,16 +584,6 @@ static void file_signature_lookup(void* p, bool is_retransmit)
     if (!context)
         return;
     _file_signature_lookup(context, p, is_retransmit, false);
-}
-
-static void file_signature_callback(Packet* p)
-{
-    FileContext* context = get_file_context(p->flow);
-
-    if (!context)
-        return;
-
-    _file_signature_lookup(context, p, 1, false);
 }
 
 /*

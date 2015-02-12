@@ -252,7 +252,7 @@ int PrintFTPServerConf(FTP_SERVER_PROTO_CONF *ServerConf)
 
     PrintConfOpt(ServerConf->telnet_cmds, "Check for Telnet Cmds");
     PrintConfOpt(ServerConf->ignore_telnet_erase_cmds, "Ignore Telnet Cmd Operations");
-    LogMessage("    Identify open data channels: %s\n",
+    LogMessage("    Ignore open data channels: %s\n",
         ServerConf->data_chan ? "YES" : "NO");
     PrintConfOpt(ServerConf->detect_encrypted, "Check for Encrypted Traffic");
     LogMessage("    Continue to check encrypted data: %s\n",

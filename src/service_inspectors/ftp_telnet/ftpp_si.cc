@@ -339,22 +339,6 @@ void FTPFreesession(FTP_SESSION* ssn)
         free(ssn->filename);
 }
 
-unsigned FtpDataFlowData::flow_id = 0;
-
-FtpDataFlowData::FtpDataFlowData(Packet* p) : FlowData(flow_id)
-{
-    memset(&session, 0, sizeof(session));
-
-    session.ft_ssn.proto = FTPP_SI_PROTO_FTP_DATA;
-    stream.populate_session_key(p, &session.ftp_key);
-}
-
-FtpDataFlowData::~FtpDataFlowData()
-{
-    if (session.filename)
-        free(session.filename);
-}
-
 /* Function: FTPDataDirection
  *
  * Return true if packet is from the "sending" host
@@ -371,81 +355,6 @@ bool FTPDataDirection(Packet *p, FTP_DATA_SESSION *ftpdata)
         direction = ftpdata->direction ?  PKT_FROM_CLIENT : PKT_FROM_SERVER;
 
     return (pktdir == direction);
-}
-
-/* Function: SetFTPDataEOFDirection
- *
- * Set EOF in the direction of Packet "p".
- */
-void SetFTPDataEOFDirection(Packet *p, FTP_DATA_SESSION *ftpdata)
-{
-    uint32_t direction = stream.get_packet_direction(p);
-
-    /* Active transfers are backwards */
-    if (ftpdata->mode == FTPP_XFER_ACTIVE)
-    {
-        if (direction == PKT_FROM_SERVER)
-        {
-            ftpdata->packet_flags |= FTPDATA_FLG_CLIENT_EOF;
-        }
-        else
-        {
-            ftpdata->packet_flags |= FTPDATA_FLG_SERVER_EOF;
-        }
-    }
-    else
-    {
-        if (direction == PKT_FROM_SERVER)
-        {
-            ftpdata->packet_flags |= FTPDATA_FLG_SERVER_EOF;
-        }
-        else
-        {
-            ftpdata->packet_flags |= FTPDATA_FLG_CLIENT_EOF;
-        }
-    }
-}
-
-/* Function: FTPDataEOFDirection
- *
- * Return true if we've seen EOF in the direction of Packet "p".
- * Return false otherwise
- */
-bool FTPDataEOFDirection(Packet *p, FTP_DATA_SESSION *ftpdata)
-{
-    uint32_t direction = stream.get_packet_direction(p);
-    uint32_t eof = 0;
-
-    /* Then return which directions are set */
-    if (ftpdata->mode == FTPP_XFER_ACTIVE)
-    {
-        if (ftpdata->packet_flags & FTPDATA_FLG_CLIENT_EOF)
-            eof |= PKT_FROM_SERVER;
-
-        if (ftpdata->packet_flags & FTPDATA_FLG_SERVER_EOF)
-            eof |= PKT_FROM_CLIENT;
-    }
-    else
-    {
-        if (ftpdata->packet_flags & FTPDATA_FLG_CLIENT_EOF)
-            eof |= PKT_FROM_CLIENT;
-
-        if (ftpdata->packet_flags & FTPDATA_FLG_SERVER_EOF)
-            eof |= PKT_FROM_SERVER;
-    }
-
-    return ( (direction & eof) != 0 );
-}
-
-/* Function: FTPDataEOF
- *
- * Return true if we've seen EOF from both sides of the connection.
- * Return false otherwise.
- */
-bool FTPDataEOF(FTP_DATA_SESSION *ftpdata)
-{
-    unsigned char mask = FTPDATA_FLG_SERVER_EOF|FTPDATA_FLG_CLIENT_EOF;
-    return ((ftpdata->packet_flags & mask) == mask);
 }
 
 /*

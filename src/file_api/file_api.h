@@ -232,5 +232,11 @@ static inline bool isFileStart( FilePosition position)
 {
    return ((position == SNORT_FILE_START)|| (position == SNORT_FILE_FULL));
 }
+
+static inline bool isFileEnd(FilePosition position)
+{
+    return ((position == SNORT_FILE_END) || (position == SNORT_FILE_FULL));
+}
+
 #endif /* FILE_API_H */
 

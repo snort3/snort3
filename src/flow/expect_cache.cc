@@ -74,8 +74,6 @@ struct ExpectFlow
 {
     struct ExpectFlow* next;
     FlowData* data;
-    unsigned cb_id;
-    Stream_Event event;
 
     void clear();
 };
@@ -348,8 +346,7 @@ int ExpectCache::add_flow(
     const sfip_t *cliIP, uint16_t cliPort,
     const sfip_t *srvIP, uint16_t srvPort,
     uint8_t protocol, char direction,
-    FlowData* fd, int16_t appId,
-    unsigned cb, Stream_Event se)
+    FlowData* fd, int16_t appId)
 {
     assert( !cliPort || !srvPort );
 
@@ -378,9 +375,6 @@ int ExpectCache::add_flow(
     }
     if ( !set_data(node, last, fd) )
         return -1;
-
-    last->cb_id = cb;
-    last->event = se;
 
     node->expires = packet_time() + MAX_WAIT;
     ++expects;
@@ -447,7 +441,7 @@ bool ExpectCache::is_expected(Packet* p)
     return true;
 }
 
-char ExpectCache::process_expected(Packet*, Flow* lws)
+char ExpectCache::process_expected(Packet* p, Flow* lws)
 {
     int retVal = SSN_DIR_NONE;
 
@@ -466,17 +460,11 @@ char ExpectCache::process_expected(Packet*, Flow* lws)
 
     while ( fd )
     {
-        FlowData* next = fd->next;
+        lws->set_application_data(fd);
+        ++realized;
 
-        if ( lws->set_application_data(fd) )
-            delete fd;
-        else
-            ++realized;
-
-        if( head->cb_id )
-            stream.set_event_handler(lws, head->cb_id, head->event);
-
-        fd = next;
+        fd->handle_expected(p);
+        fd = fd->next;
     }
     head->next = list;
     list = head;

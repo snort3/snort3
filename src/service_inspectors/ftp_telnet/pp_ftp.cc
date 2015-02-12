@@ -69,83 +69,6 @@ static THREAD_LOCAL DataBuffer DecodeBuffer;
  */
 static THREAD_LOCAL int ftp_cmd_pipe_index = 0;
 
-#if 0
-/*
- * Function: getIP(char **ip_start,
- *                 char *last_char,
- *                 char term_char,
- *                 uint32_t *ipRet,
- *                 uint16_t *portRet)
- *
- * Purpose: Returns a 32bit IP address and port from an FTP-style
- *          string -- ie, a,b,c,d,p1,p2.  Stops checking when term_char
- *          is seen.  Used to get address and port information from FTP
- *          PORT command and server response to PASV command.
- *
- * Arguments ip_start        => Pointer to pointer to the start of string.
- *                              Updated to end of IP address if successful.
- *           last_char       => End of string
- *           term_char       => Character delimiting the end of the address.
- *           ipRet           => Return pointer to 32bit address on success
- *           portRet         => Return pointer to 16bit port on success
- *
- * Returns: int => return code indicating error or success
- *
- */
-int getIP(const int type, const char **ip_start, const char *last_char, char *term_char,
-          sfip_t *ipRet, uint16_t *portRet)
-{
-    uint32_t ip=0;
-    uint16_t port=0;
-    int octet=0;
-    const char *this_param = *ip_start;
-
-    do
-    {
-        int value = 0;
-        do
-        {
-            if (!isdigit((int)(*this_param)))
-            {
-                return FTPP_NON_DIGIT;
-            }
-            value = value * 10 + (*this_param - '0');
-            this_param++;
-        } while ((this_param < last_char) &&
-                 (*this_param != ',') &&
-                 (*this_param != term_char));
-        if (value > 0xFF)
-        {
-            return FTPP_INVALID_ARG;
-        }
-        if (octet  < 4)
-        {
-            ip = (ip << 8) + value;
-        }
-        else
-        {
-            port = (port << 8) + value;
-        }
-
-        if (*this_param != term_char)
-            this_param++;
-        octet++;
-    } while ((this_param < last_char) && (*this_param != term_char) );
-
-    if (octet != 6)
-    {
-        return FTPP_MALFORMED_IP_PORT;
-    }
-
-// XXX-IPv6 NOT YET IMPLEMENTED - IPv4 only at the moment
-    sfip_set_raw(ipRet, &ip, AF_INET);
-    *portRet = port;
-    *ip_start = this_param;
-
-    return FTPP_SUCCESS;
-}
-#endif
-
 /*
  * Function: getIP959(char **ip_start,
  *                 char *last_char,
@@ -1767,7 +1690,6 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                         "parameter length overrun %d > %d \n",
                         req->cmd_size, req->cmd_begin, req->param_size, max));
                     iRet = FTPP_ALERT;
-                    break;
                 }
 
                 if (CmdConf->data_chan_cmd)
@@ -1815,7 +1737,7 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                             }
 
                             // 0 for Download, 1 for Upload
-                            ftpssn->data_xfer_dir = CmdConf->file_get_cmd ? 0 : 1;
+                            ftpssn->data_xfer_dir = CmdConf->file_get_cmd ? false : true;
                         }
                         else
                         {

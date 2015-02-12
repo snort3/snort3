@@ -63,14 +63,17 @@ static THREAD_LOCAL SimpleStats fdstats;
 // implementation stuff
 //-------------------------------------------------------------------------
 
-static void FTPDataProcess(Packet *p, FTP_DATA_SESSION *data_ssn)
+// FIXIT-L seems like file_data should be const pointer.
+// Need to root this out and eliminate const-removing casts.
+static void FTPDataProcess(
+    Packet *p, FTP_DATA_SESSION *data_ssn, uint8_t *file_data, uint16_t data_length)
 {
     int status;
 
     set_file_data((uint8_t *)p->data, p->dsize);
 
-    status = file_api->file_process(p, (uint8_t *)p->data,
-        (uint16_t)p->dsize, data_ssn->position, data_ssn->direction, false);
+    status = file_api->file_process(p, file_data, data_length,
+       data_ssn->position, data_ssn->direction, false);
 
     /* Filename needs to be set AFTER the first call to file_process( ) */
     if (data_ssn->filename && !(data_ssn->packet_flags & FTPDATA_FLG_FILENAME_SET))
@@ -100,46 +103,12 @@ static int SnortFTPData(Packet *p)
 
     assert(PROTO_IS_FTP_DATA(data_ssn));
 
-    /* Do this now before splitting the work for rebuilt and raw packets. */
-    if ((p->packet_flags & PKT_PDU_TAIL) || (p->ptrs.tcph->th_flags & TH_FIN))
-        SetFTPDataEOFDirection(p, data_ssn);
-
-    /*
-     * Raw Packet Processing
-     */
-    if (!(p->packet_flags & PKT_REBUILT_STREAM))
-    {
-        if (!(data_ssn->packet_flags & FTPDATA_FLG_REASSEMBLY_SET))
-        {
-            /* Enable Reassembly */
-            stream.set_splitter(p->flow, true);
-            stream.set_splitter(p->flow, false);
-
-            data_ssn->packet_flags |= FTPDATA_FLG_REASSEMBLY_SET;
-        }
-
-        if (data_ssn->file_xfer_info == FTPP_FILE_UNKNOWN)
-            return 0;
-
-        if (!FTPDataDirection(p, data_ssn) && FTPDataEOF(data_ssn))
-        {
-            /* flush any remaining data from transmitter. */
-            stream.response_flush_stream(p);
-
-            /* If position is not set to END then no data has been flushed */
-            if ((data_ssn->position != SNORT_FILE_END) ||
-                (data_ssn->position != SNORT_FILE_FULL))
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                  "FTP-DATA Processing Raw Packet\n"););
-
-                finalFilePosition(&data_ssn->position);
-                FTPDataProcess(p, data_ssn);
-            }
-        }
-
+    if (data_ssn->packet_flags & FTPDATA_FLG_STOP)
         return 0;
-    }
+
+    //  bail if we have not rebuilt the stream yet.
+    if (!(p->packet_flags & PKT_REBUILT_STREAM))
+        return 0;
 
     if (data_ssn->file_xfer_info == FTPP_FILE_UNKNOWN)
     {
@@ -188,14 +157,57 @@ static int SnortFTPData(Packet *p)
     if (!FTPDataDirection(p, data_ssn))
         return 0;
 
-    if (FTPDataEOFDirection(p, data_ssn))
-        finalFilePosition(&data_ssn->position);
+    if (isFileEnd(data_ssn->position))
+    {
+        data_ssn->packet_flags |= FTPDATA_FLG_STOP;
+    }
     else
+    {
         initFilePosition(&data_ssn->position,
-          file_api->get_file_processed_size(p->flow));
+           file_api->get_file_processed_size(p->flow));
+    }
 
-    FTPDataProcess(p, data_ssn);
+    FTPDataProcess(p, data_ssn, (uint8_t *)p->data, p->dsize);
     return 0;
+}
+
+//-------------------------------------------------------------------------
+// flow data stuff
+//-------------------------------------------------------------------------
+
+unsigned FtpDataFlowData::flow_id = 0;
+
+FtpDataFlowData::FtpDataFlowData(Packet* p) : FlowData(flow_id)
+{
+    memset(&session, 0, sizeof(session));
+
+    session.ft_ssn.proto = FTPP_SI_PROTO_FTP_DATA;
+    stream.populate_session_key(p, &session.ftp_key);
+}
+
+FtpDataFlowData::~FtpDataFlowData()
+{
+    if (session.filename)
+        free(session.filename);
+}
+
+void FtpDataFlowData::handle_eof(Packet *p)
+{
+    FTP_DATA_SESSION* data_ssn = &session;
+
+    if (!PROTO_IS_FTP_DATA(data_ssn) || !FTPDataDirection(p, data_ssn))
+        return;
+
+    initFilePosition(&data_ssn->position, file_api->get_file_processed_size(p->flow));
+    finalFilePosition(&data_ssn->position);
+
+    stream.flush_request(p);
+
+    if (!(data_ssn->packet_flags & FTPDATA_FLG_STOP))
+    {
+        data_ssn->packet_flags |= FTPDATA_FLG_STOP;
+        FTPDataProcess(p, data_ssn, (uint8_t *)p->data, p->dsize);
+    }
 }
 
 //-------------------------------------------------------------------------

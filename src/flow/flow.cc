@@ -232,6 +232,21 @@ void Flow::free_application_data()
     appDataList = nullptr;
 }
 
+void Flow::call_handlers(Packet* p, bool eof)
+{
+    FlowData* appData = appDataList;
+
+    while (appData)
+    {
+        if ( eof )
+            appData->handle_eof(p);
+        else
+            appData->handle_retransmit(p);
+
+        appData = appData->next;
+    }
+}
+
 void Flow::markup_packet_flags(Packet* p)
 {
     if ( (ssn_state.session_flags & SSNFLAG_ESTABLISHED) != SSNFLAG_ESTABLISHED )

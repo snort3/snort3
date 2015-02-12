@@ -1,3 +1,7 @@
+Pending - build 138
+
+-- sync ftp with 297; replace stream event callbacks with FlowData virtuals
+
 15/02/12 - build 137
 
 -- updated manual from blog posts and emails

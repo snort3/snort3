@@ -890,7 +890,6 @@ void snort_thread_init(const char* intf)
 
     s_packet = PacketManager::encode_new(false);
     CodecManager::thread_init(snort_conf);
-    FileAPIPostInit();
 
     // this depends on instantiated daq capabilities
     // so it is done here instead of SnortInit()

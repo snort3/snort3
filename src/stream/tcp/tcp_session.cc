@@ -3283,19 +3283,14 @@ static inline void RetransmitProcess(Packet* p, TcpSession*)
 
 static inline void RetransmitHandle(Packet* p, TcpSession* tcpssn)
 {
-
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "Calling SE_REXMIT Handler\n"););
-
-    if ( tcpssn->flow->handler[SE_REXMIT] )
-        stream.call_handler(p, tcpssn->flow->handler[SE_REXMIT]);
+    tcpssn->flow->call_handlers(p, false);
 }
 
 static inline void EndOfFileHandle(Packet* p, TcpSession* tcpssn)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "Calling SE_EOF Handler\n"););
-
-    if ( tcpssn->flow->handler[SE_EOF] )
-        stream.call_handler(p, tcpssn->flow->handler[SE_EOF]);
+    tcpssn->flow->call_handlers(p, true);
 }
 
 static inline NormMode get_norm_ips(StreamTracker* st)

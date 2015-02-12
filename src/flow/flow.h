@@ -101,7 +101,11 @@ public:
     static unsigned get_flow_id()
     { return ++flow_id; };
 
-public:
+    virtual void handle_expected(Packet*) { };
+    virtual void handle_retransmit(Packet*) { };
+    virtual void handle_eof(Packet*) { };
+
+public:  // FIXIT-L privatize
     FlowData* next;
     FlowData* prev;
 
@@ -155,6 +159,8 @@ public:
     void free_application_data(uint32_t proto);
     void free_application_data(FlowData*);
     void free_application_data();
+
+    void call_handlers(Packet* p, bool eof = false);
 
     void markup_packet_flags(Packet*);
     void set_direction(Packet*);

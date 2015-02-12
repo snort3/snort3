@@ -73,9 +73,6 @@ typedef int (*StreamSegmentIterator)
      void *      /* user-defined data pointer */
     );
 
-typedef void (*Stream_Callback)(Packet *);
-
-#define MAX_EVT_CB 32
 #define MAX_LOG_FN 32
 
 //-------------------------------------------------------------------------
@@ -126,10 +123,9 @@ public:
      */
     static void drop_packet(Packet*);  // PKT
 
-    /* Flushes the stream on arrival of another packet
-     * Side that is flushed is the opposite of the packet.
-     */
-    static int response_flush_stream(Packet*);  // PKT
+    // FIXIT-L these are misnomers in ips mode and may be used incorrectly
+    static void flush_request(Packet*);  // flush listener
+    static void flush_response(Packet*);  // flush talker
 
     /* Calls user-provided callback function for each packet of
      * a reassembled stream.  If the callback function returns non-zero,
@@ -237,7 +233,7 @@ public:
      */
     int set_application_protocol_id_expected(
         const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2, uint8_t proto,
-        int16_t appId, FlowData*, unsigned stream_callback_id = 0, Stream_Event = SE_MAX);
+        int16_t appId, FlowData*);
 
     /** Retrieve application session data based on the lookup tuples for
      *  cases where Snort does not have an active packet that is
@@ -286,12 +282,6 @@ public:
      */
     static void populate_session_key(Packet*, FlowKey*);
 
-    // register returns a non-zero id for use with set; zero is error
-    unsigned register_event_handler(Stream_Callback);
-    static bool set_event_handler(Flow*, unsigned id, Stream_Event);
-
-    void call_handler(Packet* p, unsigned id);
-
     void update_direction(Flow*, char dir, const sfip_t *ip, uint16_t port);
 
     static void set_application_protocol_id_from_host_entry(
@@ -322,9 +312,6 @@ private:
     LogFunction xtradata_map[MAX_LOG_FN];
     LogExtraData extra_data_log = NULL;
     void *extra_data_config = NULL;
-
-    Stream_Callback stream_cb[MAX_EVT_CB];
-    unsigned stream_cb_idx;
 };
 
 SO_PUBLIC extern Stream stream;

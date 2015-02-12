@@ -638,11 +638,10 @@ int FlowControl::add_expected(
 int FlowControl::add_expected(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    uint8_t protocol, int16_t appId, FlowData* fd,
-    unsigned cb, Stream_Event se)
+    uint8_t protocol, int16_t appId, FlowData* fd)
 {
     return exp_cache->add_flow(
-        srcIP, srcPort, dstIP, dstPort, protocol, SSN_DIR_BOTH, fd, appId, cb, se);
+        srcIP, srcPort, dstIP, dstPort, protocol, SSN_DIR_BOTH, fd, appId);
 }
 
 bool FlowControl::is_expected(Packet* p)

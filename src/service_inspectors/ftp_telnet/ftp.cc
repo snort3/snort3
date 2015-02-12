@@ -112,7 +112,7 @@ static int SnortFTP(
         // FIXIT-L breaks target-based non-standard ports
         //if ( !ScPafEnabled() )
             /* Force flush of client side of stream  */
-        stream.response_flush_stream(p);
+        stream.flush_response(p);
     }
     else
     {

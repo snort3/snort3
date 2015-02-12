@@ -63,7 +63,6 @@ Stream::Stream()
     xtradata_func_count = 0;
     extra_data_log = NULL;
     extra_data_config = NULL;
-    stream_cb_idx = 1;
 }
 
 Stream::~Stream() { }
@@ -391,13 +390,12 @@ void Stream::init_active_response(Packet* p, Flow* flow)
 int Stream::set_application_protocol_id_expected(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    uint8_t protocol, int16_t appId,
-    FlowData* fd, unsigned cb, Stream_Event evt)
+    uint8_t protocol, int16_t appId, FlowData* fd)
 {
     assert(flow_con);
 
     return flow_con->add_expected(
-        srcIP, srcPort, dstIP, dstPort, protocol, appId, fd, cb, evt);
+        srcIP, srcPort, dstIP, dstPort, protocol, appId, fd);
 }
 
 void Stream::set_application_protocol_id_from_host_entry(
@@ -580,44 +578,6 @@ void Stream::reg_xtra_data_log(LogExtraData f, void *config)
 }
 
 //-------------------------------------------------------------------------
-// event foo
-//-------------------------------------------------------------------------
-
-unsigned Stream::register_event_handler(Stream_Callback cb)
-{
-    unsigned id;
-
-    for ( id = 1; id < stream_cb_idx; id++ )
-    {
-        if ( stream_cb[id] == cb )
-            break;
-    }
-    if ( id == MAX_EVT_CB )
-        return 0;
-
-    if ( id == stream_cb_idx )
-        stream_cb[stream_cb_idx++] = cb;
-
-    return id;
-}
-
-bool Stream::set_event_handler(
-    Flow* flow, unsigned id, Stream_Event se)
-{
-    if ( se >= SE_MAX || flow->handler[se] )
-        return false;
-
-    flow->handler[se] = id;
-    return true;
-}
-
-void Stream::call_handler (Packet* p, unsigned id)
-{
-    assert(id && id < stream_cb_idx && stream_cb[id]);
-    stream_cb[id](p);
-}
-
-//-------------------------------------------------------------------------
 // other foo
 //-------------------------------------------------------------------------
 
@@ -770,7 +730,7 @@ void Stream::set_ip_protocol(Flow* flow)
 // TCP only
 //-------------------------------------------------------------------------
 
-int Stream::response_flush_stream(Packet *p)
+static bool ok_to_flush(Packet *p)
 {
     Flow* flow;
 
@@ -778,7 +738,7 @@ int Stream::response_flush_stream(Packet *p)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Don't flush NULL packet or session\n"););
-        return 0;
+        return false;
     }
 
     flow = p->flow;
@@ -788,14 +748,29 @@ int Stream::response_flush_stream(Packet *p)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Don't flush on rebuilt packets\n"););
-        return 0;
+        return false;
     }
+    return true;
+}
+
+void Stream::flush_request(Packet *p)
+{
+    if ( !ok_to_flush(p) )
+        return;
+
+    /* Flush the listener queue -- this is the same side that
+     * the packet gets inserted into */
+    StreamFlushListener(p, p->flow);
+}
+
+void Stream::flush_response(Packet *p)
+{
+    if ( !ok_to_flush(p) )
+        return;
 
     /* Flush the talker queue -- this is the opposite side that
      * the packet gets inserted into */
-    StreamFlushTalker(p, flow);
-
-    return 0;
+    StreamFlushTalker(p, p->flow);
 }
 
 // return true if added
