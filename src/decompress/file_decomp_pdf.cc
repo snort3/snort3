@@ -20,14 +20,13 @@
 #include "config.h"
 #endif
 
-#include <zlib.h>
+#include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+#include <zlib.h>
 
 #include "file_decomp.h"
 #include "file_decomp_pdf.h"
-#include "mstring.h"
-#include "service_inspectors/http_inspect/hi_events.h"
 
 /* Define characters and tokens in PDF grammar */
 #define TOK_STRM_OPEN      "stream"
@@ -607,7 +606,6 @@ static inline fd_status_t Handle_State_IND_OBJ( fd_session_p_t SessionPtr, uint8
         {
             if( IS_EOL(c) )
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_HTTPINSPECT, "Indirect Object: objnum: %u\n", p->Obj_Number););
                 p->Sub_State = P_ENDOBJ_TOKEN;
                 /* Save our place in the IND_OBJ and go process an OBJECT */
                 if( Push_State( p ) != File_Decomp_OK )
@@ -967,7 +965,6 @@ static fd_status_t Decomp_Stream( fd_session_p_t SessionPtr )
 
             if( z_ret != Z_OK )
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_HTTPINSPECT, "Decompression Error: objnum: %u\n", StPtr->Parse.Obj_Number););
                 File_Decomp_Alert( SessionPtr, FILE_DECOMP_ERR_PDF_DEFL_FAILURE );
                 return( File_Decomp_Error );
             }
@@ -1072,7 +1069,7 @@ fd_status_t File_Decomp_PDF( fd_session_p_t SessionPtr )
                    stream is located.  Decomp_Type will be set. The parsing will be suspended.  */
                 if( (Ret_Code = Locate_Stream_Beginning( SessionPtr ) ) == File_Decomp_Error)
                 {
-                    SessionPtr->Error_Event = HI_SERVER_PDF_PARSE_FAILURE;
+                    SessionPtr->Error_Event = FILE_DECOMP_ERR_PDF_PARSE_FAILURE;
                     return( File_Decomp_DecompError );
                 }
 
@@ -1088,7 +1085,6 @@ fd_status_t File_Decomp_PDF( fd_session_p_t SessionPtr )
                 }
                 else
                 {
-                    DEBUG_WRAP(DebugMessage(DEBUG_HTTPINSPECT, "Compressed stream of type: %u\n", SessionPtr->Decomp_Type););
                     SessionPtr->Decomp_State.PDF.State = PDF_STATE_INIT_STREAM;
                     /* If we've located the beginning of stream, set new state
                        and fall into next state */

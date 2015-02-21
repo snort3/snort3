@@ -29,7 +29,6 @@
 
 #include "file_decomp.h"
 #include "file_decomp_swf.h"
-//#include "service_inspectors/http_inspect/hi_events.h"
 
 #ifdef LZMA
 #define LZMA_HEADER_LEN  (13)
