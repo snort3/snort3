@@ -17,8 +17,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef HI_FILE_DECOMP_PDF_H
-#define HI_FILE_DECOMP_PDF_H
+#ifndef FILE_DECOMP_PDF_H
+#define FILE_DECOMP_PDF_H
 
 #include <zlib.h>
 

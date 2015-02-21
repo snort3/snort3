@@ -27,9 +27,9 @@
 #include <lzma.h>
 #endif
 
-#include "hi_file_decomp.h"
-#include "hi_file_decomp_swf.h"
-#include "hi_events.h"
+#include "file_decomp.h"
+#include "file_decomp_swf.h"
+//#include "service_inspectors/http_inspect/hi_events.h"
 
 #ifdef LZMA
 #define LZMA_HEADER_LEN  (13)
@@ -58,7 +58,7 @@ static fd_status_t File_Decomp_Process_LZMA_Header( fd_session_p_t SessionPtr )
 
     if( SWF_Uncomp_Len < SWF_HDR_LEN )
     {
-        SessionPtr->Error_Event = HI_SERVER_SWF_LZMA_FAILURE;
+        SessionPtr->Error_Event = FILE_DECOMP_ERR_SWF_LZMA_FAILURE;
         return( File_Decomp_DecompError );
     }
     
@@ -90,7 +90,7 @@ static fd_status_t File_Decomp_Process_LZMA_Header( fd_session_p_t SessionPtr )
 
     if( l_ret != LZMA_OK )
     {
-        SessionPtr->Error_Event = HI_SERVER_SWF_LZMA_FAILURE;
+        SessionPtr->Error_Event = FILE_DECOMP_ERR_SWF_LZMA_FAILURE;
         return( File_Decomp_DecompError );
     }
 
@@ -120,7 +120,7 @@ static fd_status_t Decomp( fd_session_p_t SessionPtr )
 
             if( z_ret != Z_OK )
             {
-                SessionPtr->Error_Event = HI_SERVER_SWF_ZLIB_FAILURE;
+                SessionPtr->Error_Event = FILE_DECOMP_ERR_SWF_ZLIB_FAILURE;
                 return( File_Decomp_DecompError );
             }
 
@@ -146,7 +146,7 @@ static fd_status_t Decomp( fd_session_p_t SessionPtr )
 
             if( l_ret != LZMA_OK )
             {
-                SessionPtr->Error_Event = HI_SERVER_SWF_LZMA_FAILURE;
+                SessionPtr->Error_Event = FILE_DECOMP_ERR_SWF_LZMA_FAILURE;
                 return( File_Decomp_DecompError );
             }
 
@@ -176,7 +176,7 @@ fd_status_t File_Decomp_End_SWF( fd_session_p_t SessionPtr )
 
             if( z_ret != Z_OK )
             {
-                SessionPtr->Error_Event = HI_SERVER_SWF_ZLIB_FAILURE;
+                SessionPtr->Error_Event = FILE_DECOMP_ERR_SWF_ZLIB_FAILURE;
                 return( File_Decomp_DecompError );
             }
 
@@ -232,7 +232,7 @@ fd_status_t File_Decomp_Init_SWF( fd_session_p_t SessionPtr )
 
             if( z_ret != Z_OK )
             {
-                SessionPtr->Error_Event = HI_SERVER_SWF_ZLIB_FAILURE;
+                SessionPtr->Error_Event = FILE_DECOMP_ERR_SWF_ZLIB_FAILURE;
                 return( File_Decomp_DecompError );
             }
 
@@ -257,7 +257,7 @@ fd_status_t File_Decomp_Init_SWF( fd_session_p_t SessionPtr )
 
             if( l_ret != LZMA_OK )
             {
-                SessionPtr->Error_Event = HI_SERVER_SWF_LZMA_FAILURE;
+                SessionPtr->Error_Event = FILE_DECOMP_ERR_SWF_LZMA_FAILURE;
                 return( File_Decomp_DecompError );
             }
 

@@ -39,7 +39,7 @@
 #include "sf_ip.h"
 #include "hi_util_kmap.h"
 #include "file_api/file_api.h"
-#include "hi_file_decomp.h"
+#include "decompress/file_decomp.h"
 #include "framework/bits.h"
 
 /*

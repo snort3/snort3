@@ -24,10 +24,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "hi_file_decomp.h"
-#include "hi_file_decomp_pdf.h"
-#include "hi_events.h"
+#include "file_decomp.h"
+#include "file_decomp_pdf.h"
 #include "mstring.h"
+#include "service_inspectors/http_inspect/hi_events.h"
 
 /* Define characters and tokens in PDF grammar */
 #define TOK_STRM_OPEN      "stream"
@@ -158,7 +158,7 @@ static inline void Process_One_Filter( fd_session_p_t SessionPtr, uint8_t *Token
         /* Check if we've found one already.  Indicate cascading if we did. */
         if( SessionPtr->Decomp_Type != FILE_COMPRESSION_TYPE_NONE )
         {
-            File_Decomp_Alert( SessionPtr, HI_SERVER_PDF_CASC_COMP );
+            File_Decomp_Alert( SessionPtr, FILE_DECOMP_ERR_PDF_CASC_COMP );
             SessionPtr->Decomp_Type = FILE_COMPRESSION_TYPE_NONE;
         }
         else
@@ -170,7 +170,7 @@ static inline void Process_One_Filter( fd_session_p_t SessionPtr, uint8_t *Token
     }
     else
     {
-        File_Decomp_Alert( SessionPtr, HI_SERVER_PDF_UNSUP_COMP_TYPE );
+        File_Decomp_Alert( SessionPtr, FILE_DECOMP_ERR_PDF_UNSUP_COMP_TYPE );
         SessionPtr->Decomp_Type = FILE_COMPRESSION_TYPE_NONE;
     }
 }
@@ -923,7 +923,7 @@ static fd_status_t Init_Stream( fd_session_p_t SessionPtr )
 
             if( z_ret != Z_OK )
             {
-                File_Decomp_Alert( SessionPtr, HI_SERVER_PDF_DEFL_FAILURE );
+                File_Decomp_Alert( SessionPtr, FILE_DECOMP_ERR_PDF_DEFL_FAILURE );
                 return( File_Decomp_Error );
             }
 
@@ -968,7 +968,7 @@ static fd_status_t Decomp_Stream( fd_session_p_t SessionPtr )
             if( z_ret != Z_OK )
             {
                 DEBUG_WRAP(DebugMessage(DEBUG_HTTPINSPECT, "Decompression Error: objnum: %u\n", StPtr->Parse.Obj_Number););
-                File_Decomp_Alert( SessionPtr, HI_SERVER_PDF_DEFL_FAILURE );
+                File_Decomp_Alert( SessionPtr, FILE_DECOMP_ERR_PDF_DEFL_FAILURE );
                 return( File_Decomp_Error );
             }
 
@@ -1019,7 +1019,7 @@ fd_status_t File_Decomp_End_PDF( fd_session_p_t SessionPtr )
 
             if( z_ret != Z_OK )
             {
-                File_Decomp_Alert( SessionPtr, HI_SERVER_PDF_DEFL_FAILURE );
+                File_Decomp_Alert( SessionPtr, FILE_DECOMP_ERR_PDF_DEFL_FAILURE );
                 return( File_Decomp_Error );
             }
 
@@ -1104,7 +1104,7 @@ fd_status_t File_Decomp_PDF( fd_session_p_t SessionPtr )
                     Ret_Code = File_Decomp_End_PDF( SessionPtr );
                     if( Close_Stream( SessionPtr ) != File_Decomp_OK )
                         return( File_Decomp_Error );
-                    File_Decomp_Alert( SessionPtr, HI_SERVER_PDF_DEFL_FAILURE );
+                    File_Decomp_Alert( SessionPtr, FILE_DECOMP_ERR_PDF_DEFL_FAILURE );
                     break;
                 }
 
@@ -1121,7 +1121,7 @@ fd_status_t File_Decomp_PDF( fd_session_p_t SessionPtr )
                     Ret_Code = File_Decomp_End_PDF( SessionPtr );
                     if( Close_Stream( SessionPtr ) != File_Decomp_OK )
                         return( File_Decomp_Error );
-                    File_Decomp_Alert( SessionPtr, HI_SERVER_PDF_DEFL_FAILURE );
+                    File_Decomp_Alert( SessionPtr, FILE_DECOMP_ERR_PDF_DEFL_FAILURE );
                     break;
                 }
                 /* OK -> circle back for more input */

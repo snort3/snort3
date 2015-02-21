@@ -8,9 +8,6 @@ hi_client.cc hi_client.h \
 hi_client_norm.cc hi_client_norm.h \
 hi_cmd_lookup.cc hi_cmd_lookup.h \
 hi_events.cc hi_events.h \
-hi_file_decomp.cc hi_file_decomp.h \
-hi_file_decomp_pdf.cc hi_file_decomp_pdf.h \
-hi_file_decomp_swf.cc hi_file_decomp_swf.h \
 hi_include.h \
 hi_mi.cc hi_mi.h \
 hi_module.cc hi_module.h \

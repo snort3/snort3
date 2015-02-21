@@ -17,8 +17,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef HI_FILE_DECOMP_SWF_H
-#define HI_FILE_DECOMP_SWF_H
+#ifndef FILE_DECOMP_SWF_H
+#define FILE_DECOMP_SWF_H
 
 #include <zlib.h>
 #ifdef LZMA

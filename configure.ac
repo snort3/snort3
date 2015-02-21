@@ -137,7 +137,6 @@ else
     AC_MSG_RESULT(no)
 fi
 
-
 #--------------------------------------------------------------------------
 # visibility foo
 #--------------------------------------------------------------------------
@@ -859,6 +858,7 @@ src/codecs/link/Makefile \
 src/codecs/ip/Makefile \
 src/codecs/misc/Makefile \
 src/control/Makefile \
+src/decompress/Makefile \
 src/detection/Makefile \
 src/events/Makefile \
 src/file_api/Makefile \

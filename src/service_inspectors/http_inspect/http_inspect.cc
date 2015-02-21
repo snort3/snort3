@@ -47,7 +47,7 @@
 #include "snort_debug.h"
 #include "util.h"
 #include "parser.h"
-#include "hi_file_decomp.h"
+#include "decompress/file_decomp.h"
 
 #include "hi_client.h"
 #include "hi_ui_config.h"

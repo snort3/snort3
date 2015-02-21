@@ -17,11 +17,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef HI_FILE_DECOMP_H
-#define HI_FILE_DECOMP_H
-
-// FIXIT-H temporary for development convenience
-//#define LZMA 1
+#ifndef FILE_DECOMP_H
+#define FILE_DECOMP_H
 
 #include <stdint.h>
 #include <string.h>
@@ -50,8 +47,8 @@ typedef enum file_compression_type
 
 typedef struct fd_session_s *fd_session_p_t, fd_session_t;
 
-#include "hi_file_decomp_pdf.h"
-#include "hi_file_decomp_swf.h"
+#include "file_decomp_pdf.h"
+#include "file_decomp_swf.h"
 #include <zlib.h>
 
 #ifdef LZMA
@@ -67,6 +64,16 @@ typedef struct fd_session_s *fd_session_p_t, fd_session_t;
 
 #define FILE_PDF_ANY         (FILE_PDF_DEFL_BIT)
 #define FILE_SWF_ANY         (FILE_SWF_LZMA_BIT | FILE_SWF_ZLIB_BIT)
+
+enum FileDecompError
+{
+    FILE_DECOMP_ERR_SWF_ZLIB_FAILURE,
+    FILE_DECOMP_ERR_SWF_LZMA_FAILURE,
+    FILE_DECOMP_ERR_PDF_DEFL_FAILURE,
+    FILE_DECOMP_ERR_PDF_UNSUP_COMP_TYPE,
+    FILE_DECOMP_ERR_PDF_CASC_COMP,
+    FILE_DECOMP_ERR_PDF_PARSE_FAILURE
+};
 
 /* Private Types */
 typedef enum file_type

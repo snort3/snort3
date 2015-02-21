@@ -67,6 +67,7 @@ hash/libhash.a \
 log/liblog.a \
 packet_io/libpacket_io.a \
 helpers/libhelpers.a \
+decompress/libdecompress.a \
 sfip/libsfip.a \
 sfrt/libsfrt.a \
 protocols/libprotocols.a \
@@ -76,6 +77,7 @@ SUBDIRS = \
 actions \
 codecs \
 control \
+decompress \
 detection \
 events \
 file_api \

@@ -20,12 +20,12 @@
 #include "config.h"
 #endif
 
-#include "util.h"
-#include "hi_file_decomp.h"
+#include "utils/util.h"
+#include "file_decomp.h"
 #include "snort_types.h"
 #include "detection_util.h"
-#include "hi_file_decomp_pdf.h"
-#include "hi_file_decomp_swf.h"
+#include "file_decomp_pdf.h"
+#include "file_decomp_swf.h"
 
 static const char PDF_Sig[5] = { '%', 'P', 'D', 'F', '-' };
 static const char SWF_ZLIB_Sig[3] = { 'C', 'W', 'S' };
@@ -415,3 +415,4 @@ void File_Decomp_Alert( fd_session_p_t SessionPtr, int Event )
     if( (SessionPtr != NULL) && (SessionPtr->Alert_Callback != NULL) && (SessionPtr->Alert_Context) )
         (SessionPtr->Alert_Callback)(SessionPtr->Alert_Context, Event);
 }
+

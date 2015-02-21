@@ -819,8 +819,27 @@ static inline int hi_server_extract_body(
 
 static void LogFileDecomp(void*, int event)
 {
-    // FIXIT-H first argument is supposed to be pointer to session which may be needed to
-    // generate the event correctly.
+    switch ( event )
+    {
+    case FILE_DECOMP_ERR_SWF_ZLIB_FAILURE:
+        event = HI_SERVER_SWF_ZLIB_FAILURE;
+        break;
+    case FILE_DECOMP_ERR_SWF_LZMA_FAILURE:
+        event = HI_SERVER_SWF_LZMA_FAILURE;
+        break;
+    case FILE_DECOMP_ERR_PDF_DEFL_FAILURE:
+        event = HI_SERVER_PDF_DEFL_FAILURE;
+        break;
+    case FILE_DECOMP_ERR_PDF_UNSUP_COMP_TYPE:
+        event = HI_SERVER_PDF_UNSUP_COMP_TYPE;
+        break;
+    case FILE_DECOMP_ERR_PDF_CASC_COMP:
+        event = HI_SERVER_PDF_CASC_COMP;
+        break;
+    case FILE_DECOMP_ERR_PDF_PARSE_FAILURE:
+        event = HI_SERVER_PDF_PARSE_FAILURE;
+        break;
+    }
     hi_set_event(GID_HTTP_SERVER, event);
 }
 
