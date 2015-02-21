@@ -37,7 +37,6 @@
 #include "treenodes.h"
 #include "snort_debug.h"
 #include "parser.h"
-#include "mstring.h"
 #include "util.h"
 #include "util_net.h"
 #include "snort.h"

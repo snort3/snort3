@@ -33,7 +33,6 @@
 #include "snort_bounds.h"
 #include "detection/treenodes.h"
 #include "snort_debug.h"
-#include "parser/mstring.h"
 #include "utils/boyer_moore.h"
 #include "util.h"
 #include "parser/parser.h"

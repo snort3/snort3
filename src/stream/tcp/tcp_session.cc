@@ -57,7 +57,6 @@
 #include "snort_types.h"
 #include "snort_debug.h"
 #include "detect.h"
-#include "mstring.h"
 #include "sfxhash.h"
 #include "util.h"
 #include "sflsq.h"

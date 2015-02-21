@@ -64,7 +64,6 @@
 #include "profiler.h"
 #include "detection_util.h"
 #include "parser.h"
-#include "mstring.h"
 #include "sfsnprintfappend.h"
 
 #ifdef PERF_PROFILING

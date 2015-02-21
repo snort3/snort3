@@ -41,7 +41,6 @@
 #include "udp/stream_udp.h"
 #include "icmp/stream_icmp.h"
 #include "ip/stream_ip.h"
-#include "mstring.h"
 #include "protocols/packet.h"
 #include "detect.h"
 #include "perf_monitor/perf.h"

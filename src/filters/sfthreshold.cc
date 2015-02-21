@@ -43,7 +43,6 @@
 #include <string.h>
 
 #include "main/analyzer.h"
-#include "mstring.h"
 #include "util.h"
 #include "parser.h"
 

@@ -50,7 +50,6 @@
 #include "util.h"
 #include "parser.h"
 #include "snort_debug.h"
-#include "mstring.h"
 #include "event.h"
 #include "snort_debug.h"
 #include "snort_bounds.h"

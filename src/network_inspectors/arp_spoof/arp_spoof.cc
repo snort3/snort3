@@ -82,7 +82,6 @@
 #include "protocols/packet.h"
 #include "event.h"
 #include "parser.h"
-#include "mstring.h"
 #include "util.h"
 
 #include "snort.h"

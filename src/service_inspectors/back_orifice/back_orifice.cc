@@ -122,7 +122,6 @@
 #include "event.h"
 #include "parser.h"
 #include "snort_debug.h"
-#include "mstring.h"
 #include "util.h"
 #include "profiler.h"
 #include "snort_types.h"

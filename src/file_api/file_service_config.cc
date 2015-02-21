@@ -31,7 +31,6 @@
 
 #include "snort_types.h"
 #include "util.h"
-#include "mstring.h"
 #include "parser.h"
 
 #include "libs/file_config.h"

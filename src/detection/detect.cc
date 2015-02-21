@@ -40,7 +40,6 @@
 #include "main/analyzer.h"
 #include "snort.h"
 #include "util.h"
-#include "mstring.h"
 #include "tag.h"
 #include "pcrm.h"
 #include "fpcreate.h"

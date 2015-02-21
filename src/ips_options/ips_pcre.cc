@@ -35,7 +35,6 @@
 #include "protocols/packet.h"
 #include "parser.h"
 #include "util.h"
-#include "mstring.h"
 #include "sfhashfcn.h"
 #include "snort.h"
 #include "profiler.h"

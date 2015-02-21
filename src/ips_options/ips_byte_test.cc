@@ -102,7 +102,6 @@ using namespace std;
 #include "parser.h"
 #include "snort_debug.h"
 #include "util.h"
-#include "mstring.h"
 #include "sfhashfcn.h"
 #include "ips_byte_extract.h"
 #include "snort.h"

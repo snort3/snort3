@@ -69,7 +69,6 @@ using namespace std;
 #include "packet_io/trough.h"
 #include "tag.h"
 #include "detect.h"
-#include "mstring.h"
 #include "fpcreate.h"
 #include "fpdetect.h"
 #include "filters/sfthreshold.h"

@@ -36,7 +36,6 @@
 #include <unistd.h>
 #include <time.h>
 
-#include "mstring.h"
 #include "util.h"
 #include "parser.h"
 #include "sftarget_protocol_reference.h"

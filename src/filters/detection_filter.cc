@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mstring.h"
 #include "util.h"
 #include "parser.h"
 

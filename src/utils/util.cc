@@ -48,7 +48,6 @@
 #include <sys/resource.h>
 
 #include "snort.h"
-#include "mstring.h"
 #include "snort_debug.h"
 #include "parser.h"
 #include "packet_io/sfdaq.h"

@@ -54,7 +54,6 @@
 #include "parse_rule.h"
 #include "snort_debug.h"
 #include "util.h"
-#include "mstring.h"
 #include "fpcreate.h"
 #include "signature.h"
 #include "snort.h"

@@ -37,7 +37,6 @@
 #include "snort_debug.h"
 #include "parser.h"
 #include "util.h"
-#include "mstring.h"
 #include "sfghash.h"
 #include "file_config.h"
 

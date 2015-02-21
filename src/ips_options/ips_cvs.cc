@@ -52,7 +52,6 @@
 #include "parser.h"
 #include "snort_debug.h"
 #include "util.h"
-#include "mstring.h"
 #include "snort_bounds.h"
 #include "profiler.h"
 #include "fpdetect.h"

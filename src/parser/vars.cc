@@ -44,7 +44,6 @@
 #include "parser/cmd_line.h"
 #include "snort_debug.h"
 #include "util.h"
-#include "mstring.h"
 #include "detect.h"
 #include "protocols/packet.h"
 #include "fpcreate.h"

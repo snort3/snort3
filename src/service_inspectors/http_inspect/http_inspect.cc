@@ -61,7 +61,6 @@
 
 #include "snort.h"
 #include "profiler.h"
-#include "mstring.h"
 #include "detection_util.h"
 
 #include "stream/stream_api.h"

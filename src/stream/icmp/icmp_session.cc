@@ -28,7 +28,6 @@
 #include "snort_types.h"
 #include "snort_debug.h"
 #include "protocols/packet.h"
-#include "mstring.h"
 #include "sfxhash.h"
 #include "util.h"
 #include "stream/stream.h"

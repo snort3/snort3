@@ -51,7 +51,6 @@
 #include "profiler.h"
 #include "detection_util.h"
 #include "parser.h"
-#include "mstring.h"
 #include "sfsnprintfappend.h"
 
 int PrintConfOpt(bool on, const char* Option)

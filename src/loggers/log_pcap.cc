@@ -41,7 +41,6 @@ extern "C" {
 #include "framework/module.h"
 #include "protocols/packet.h"
 #include "event.h"
-#include "mstring.h"
 #include "parser.h"
 #include "snort_debug.h"
 #include "util.h"

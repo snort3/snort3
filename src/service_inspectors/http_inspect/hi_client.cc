@@ -61,7 +61,6 @@
 #include "hi_util_hbm.h"
 #include "hi_return_codes.h"
 #include "util.h"
-#include "mstring.h"
 #include "utils/util_unfold.h"
 #include "hi_cmd_lookup.h"
 #include "detection_util.h"

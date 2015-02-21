@@ -26,7 +26,6 @@
 #include "util.h"
 #include "rules.h"
 #include "treenodes.h"
-#include "mstring.h"
 #include "hash/sfghash.h"
 #include "snort.h"
 #include "parser.h"
