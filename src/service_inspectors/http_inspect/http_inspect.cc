@@ -47,6 +47,7 @@
 #include "snort_debug.h"
 #include "util.h"
 #include "parser.h"
+#include "hi_file_decomp.h"
 
 #include "hi_client.h"
 #include "hi_ui_config.h"
@@ -69,8 +70,6 @@
 #include "sf_email_attach_decode.h"
 #include "framework/inspector.h"
 #include "managers/data_manager.h"
-
-#define ERRSTRLEN 1000
 
 int hex_lookup[256];
 int valid_lookup[256];
@@ -127,7 +126,7 @@ static void CheckGzipConfig(HTTPINSPECT_GLOBAL_CONF *pPolicyConfig)
         pPolicyConfig->decompr_depth = DEFAULT_DECOMP_DEPTH;
 
     pPolicyConfig->max_gzip_sessions =
-        pPolicyConfig->max_gzip_mem / sizeof(DECOMPRESS_STATE);
+        pPolicyConfig->max_gzip_mem / (sizeof(DECOMPRESS_STATE) + sizeof(fd_session_t));
 }
 
 static void CheckMemcap(HTTPINSPECT_GLOBAL_CONF *pPolicyConfig)

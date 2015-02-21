@@ -132,17 +132,17 @@ HttpFlowData::HttpFlowData() : FlowData(flow_id)
 
 HttpFlowData::~HttpFlowData()
 {
-    FreeHttpsessionData(&session);
+    FreeHttpSessionData(&session);
 }
 
-HttpsessionData* SetNewHttpsessionData(Packet *p, void*)
+HttpSessionData* SetNewHttpSessionData(Packet *p, void*)
 {
     HttpFlowData* fd = new HttpFlowData;
     p->flow->set_application_data(fd);
     return &fd->session;
 }
 
-static HttpsessionData* get_session_data(Flow* flow)
+static HttpSessionData* get_session_data(Flow* flow)
 {
     HttpFlowData* fd = (HttpFlowData*)flow->get_application_data(
         HttpFlowData::flow_id);
@@ -157,6 +157,14 @@ void HttpInspectRegisterXtraDataFuncs()
     xtra_hname_id = stream.reg_xtra_data_cb(GetHttpHostnameData);
     xtra_gzip_id = stream.reg_xtra_data_cb(GetHttpGzipData);
     xtra_jsnorm_id = stream.reg_xtra_data_cb(GetHttpJSNormData);
+}
+
+static void PrintFileDecompOpt(HTTPINSPECT_CONF *ServerConf)
+{
+    LogMessage("      Decompress response files: %s %s %s\n",
+               ((ServerConf->file_decomp_modes & FILE_SWF_ZLIB_BIT) != 0) ? "SWF-ZLIB" : "",
+               ((ServerConf->file_decomp_modes & FILE_SWF_LZMA_BIT) != 0) ? "SWF-LZMA" : "",
+               ((ServerConf->file_decomp_modes & FILE_PDF_DEFL_BIT) != 0) ? "PDF-DEFL" : "");
 }
 
 static int PrintConfOpt(HTTPINSPECT_CONF_OPT *ConfOpt, const char *Option)
@@ -239,6 +247,7 @@ int PrintServerConf(HTTPINSPECT_CONF *ServerConf)
                ServerConf->log_hostname ? "YES"  :  "NO");
     LogMessage("      Extract Gzip from responses: %s\n",
                ServerConf->extract_gzip ? "YES" : "NO");
+    PrintFileDecompOpt(ServerConf);
 
     PrintConfOpt(&ServerConf->ascii, "Ascii");
     PrintConfOpt(&ServerConf->double_decoding, "Double Decoding");
@@ -425,7 +434,7 @@ static inline FilePosition getFilePoistion(Packet *p)
 // eg just once when captured; this function is called on every packet and 
 // repeatedly sets the flags on session
 static inline void HttpLogFuncs(
-    HttpsessionData *hsd, Packet *p, int iCallDetect )
+    HttpSessionData *hsd, Packet *p, int iCallDetect )
 {
     if(!hsd)
         return;
@@ -502,7 +511,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
     int iInspectMode = 0;
     int iRet;
     int iCallDetect = 1;
-    HttpsessionData *hsd = NULL;
+    HttpSessionData *hsd = NULL;
 
     PROFILE_VARS;
 
@@ -600,7 +609,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
     }
 
     if (hsd == NULL)
-        hsd = SetNewHttpsessionData(p, (void *)session);
+        hsd = SetNewHttpSessionData(p, (void *)session);
     else
     {
         /* Gzip data should not be logged with all the packets of the session.*/
@@ -1000,7 +1009,50 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
                      detect_data_size = 0;
                  }
 
-                 set_file_data((uint8_t *)session->server.response.body, detect_data_size);
+                 /* Do we have a file decompression object? */
+                 if( hsd->fd_state != 0 )
+                 {
+                     fd_status_t Ret_Code;
+
+                     uint16_t Data_Len;
+                     const uint8_t *Data;
+
+                     hsd->fd_state->Next_In = (uint8_t*)(Data = session->server.response.body);
+                     hsd->fd_state->Avail_In = (Data_Len = (uint16_t)detect_data_size);
+
+                     (void)File_Decomp_SetBuf( hsd->fd_state );
+
+                     Ret_Code = File_Decomp( hsd->fd_state );
+
+                     if( Ret_Code == File_Decomp_DecompError )
+                     {
+                         session->server.response.body = Data;
+                         session->server.response.body_size = Data_Len;
+
+                         hi_set_event(GID_HTTP_SERVER, hsd->fd_state->Error_Event);
+                         File_Decomp_StopFree( hsd->fd_state );
+                         hsd->fd_state = NULL;
+                      }
+                     /* If we didn't find a Sig, then clear the File_Decomp state
+                        and don't keep looking. */
+                     else if( Ret_Code == File_Decomp_NoSig )
+                     {
+                         File_Decomp_StopFree( hsd->fd_state );
+                         hsd->fd_state = NULL;
+                     }
+                     else
+                     {
+                         session->server.response.body = hsd->fd_state->Buffer;
+                         session->server.response.body_size = hsd->fd_state->Total_Out;
+                     }
+
+                     set_file_data((uint8_t *)session->server.response.body, (uint16_t)session->server.response.body_size);
+                 }
+
+                 else
+                 {
+                     set_file_data((uint8_t *)session->server.response.body, detect_data_size);
+                 }
 
                  if (PacketHasPAFPayload(p)
                      && file_api->file_process(p,(uint8_t *)session->server.response.body, (uint16_t)session->server.response.body_size,
@@ -1065,7 +1117,7 @@ int HttpInspectInitializeGlobalConfig(HTTPINSPECT_GLOBAL_CONF* config)
     if (iRet)
         return iRet;
 
-    iRet = hi_client_init(config);
+    iRet = hi_client_init();
     if (iRet)
         return iRet;
 
@@ -1075,9 +1127,9 @@ int HttpInspectInitializeGlobalConfig(HTTPINSPECT_GLOBAL_CONF* config)
     return 0;
 }
 
-void FreeHttpsessionData(void *data)
+void FreeHttpSessionData(void *data)
 {
-    HttpsessionData *hsd = (HttpsessionData *)data;
+    HttpSessionData *hsd = (HttpSessionData *)data;
 
     if (hsd->decomp_state != NULL)
     {
@@ -1092,11 +1144,17 @@ void FreeHttpsessionData(void *data)
         sfip_free(hsd->true_ip);
 
     file_api->free_mime_session(hsd->mime_ssn);
+
+    if( hsd->fd_state != 0 )
+    {
+        File_Decomp_StopFree(hsd->fd_state);   // Stop & Stop &  Free fd session object
+        hsd->fd_state = NULL;                  // ...just for good measure
+    }
 }
 
 int GetHttpTrueIP(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
 {
-    HttpsessionData* hsd = get_session_data(flow);
+    HttpSessionData* hsd = get_session_data(flow);
 
     if(!hsd->true_ip)
         return 0;
@@ -1119,7 +1177,7 @@ int GetHttpTrueIP(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
 
 int IsGzipData(Flow* flow)
 {
-    HttpsessionData *hsd = NULL;
+    HttpSessionData *hsd = NULL;
 
     if (flow == NULL)
         return -1;
@@ -1152,7 +1210,7 @@ int GetHttpGzipData(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
 
 int IsJSNormData(Flow* flow)
 {
-    HttpsessionData *hsd = NULL;
+    HttpSessionData *hsd = NULL;
 
     if (flow == NULL)
         return -1;
@@ -1184,7 +1242,7 @@ int GetHttpJSNormData(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
 
 int GetHttpUriData(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
 {
-    HttpsessionData *hsd = NULL;
+    HttpSessionData *hsd = NULL;
         
     if (flow == NULL)
         return 0;
@@ -1208,7 +1266,7 @@ int GetHttpUriData(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
 
 int GetHttpHostnameData(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
 {
-    HttpsessionData *hsd = NULL;
+    HttpSessionData *hsd = NULL;
         
     if (flow == NULL)
         return 0;

@@ -81,8 +81,14 @@ typedef enum _HI_EVENTS
     HI_SERVER_JS_OBFUSCATION_EXCD,
     HI_SERVER_JS_EXCESS_WS,
     HI_SERVER_MIXED_ENCODINGS,
+    HI_SERVER_SWF_ZLIB_FAILURE,
+    HI_SERVER_SWF_LZMA_FAILURE,
+    HI_SERVER_PDF_DEFL_FAILURE,
+    HI_SERVER_PDF_UNSUP_COMP_TYPE,
+    HI_SERVER_PDF_CASC_COMP,
+    HI_SERVER_PDF_PARSE_FAILURE,
     HI_SERVER_EVENT_NUM
-}HI_EVENTS;
+} HI_EVENTS;
 
 /*
 **  These defines are the alert names for each event
@@ -183,6 +189,18 @@ typedef enum _HI_EVENTS
     "javascript whitespaces exceeds max allowed"
 #define HI_SERVER_MIXED_ENCODINGS_STR                \
     "multiple encodings within javascript obfuscated data"
+#define HI_SERVER_SWF_ZLIB_FAILURE_STR               \
+    "HTTP response SWF file zlib decompression failure"
+#define HI_SERVER_SWF_LZMA_FAILURE_STR               \
+    "HTTP response SWF file LZMA decompression failure"
+#define HI_SERVER_PDF_DEFL_FAILURE_STR               \
+    "HTTP response PDF file deflate decompression failure"
+#define HI_SERVER_PDF_UNSUP_COMP_TYPE_STR            \
+    "HTTP response PDF file unsupported compression type"
+#define HI_SERVER_PDF_CASC_COMP_STR                  \
+    "HTTP response PDF file cascaded compression"
+#define HI_SERVER_PDF_PARSE_FAILURE_STR              \
+    "HTTP response PDF file parse failure"
 
 void hi_set_event(unsigned gid, unsigned sid);
 void hi_clear_events();

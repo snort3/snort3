@@ -350,11 +350,16 @@ static const Parameter hi_profile_server_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-
 static const Parameter hi_server_params[] =
 {
     { "allow_proxy_use", Parameter::PT_BOOL, nullptr, "false",
       "don't alert on proxy use for this server" },
+
+    { "decompress_pdf", Parameter::PT_BOOL, nullptr, "false",
+      "????" }, // FIXIT-M need to figure out this parameter format and implement it
+
+    { "decompress_swf", Parameter::PT_BOOL, nullptr, "false",
+      "????" }, // FIXIT-M need to figure out this parameter format and implement it with deflate and lzma
 
     { "enable_cookies", Parameter::PT_BOOL, nullptr, "true",
       "extract cookies" },
@@ -413,6 +418,9 @@ static const Parameter hi_server_params[] =
     { "unlimited_decompress", Parameter::PT_BOOL, nullptr, "true",
       "decompress across multiple packets" },
 
+    { "xff_headers", Parameter::PT_BOOL, nullptr, "false",
+      "????" }, // FIXIT-M need to figure out this parameter format and implement it
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -429,6 +437,12 @@ static const RuleMap hi_server_rules[] =
     { HI_SERVER_JS_OBFUSCATION_EXCD, HI_SERVER_JS_OBFUSCATION_EXCD_STR },
     { HI_SERVER_JS_EXCESS_WS, HI_SERVER_JS_EXCESS_WS_STR },
     { HI_SERVER_MIXED_ENCODINGS, HI_SERVER_MIXED_ENCODINGS_STR },
+    { HI_SERVER_SWF_ZLIB_FAILURE, HI_SERVER_SWF_ZLIB_FAILURE_STR },
+    { HI_SERVER_SWF_LZMA_FAILURE, HI_SERVER_SWF_LZMA_FAILURE_STR },
+    { HI_SERVER_PDF_DEFL_FAILURE, HI_SERVER_PDF_DEFL_FAILURE_STR },
+    { HI_SERVER_PDF_UNSUP_COMP_TYPE, HI_SERVER_PDF_UNSUP_COMP_TYPE_STR },
+    { HI_SERVER_PDF_CASC_COMP, HI_SERVER_PDF_CASC_COMP_STR },
+    { HI_SERVER_PDF_PARSE_FAILURE, HI_SERVER_PDF_PARSE_FAILURE_STR },
     { 0, nullptr }
 };
 
@@ -479,6 +493,12 @@ bool HttpServerModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("code_page") )
         server->iis_unicode_codepage = v.get_long();
+
+    else if ( v.is("decompress_pdf") ); // FIXIT-M need to figure this out and implement it
+
+    else if ( v.is("decompress_swf") ); // FIXIT-M need to figure this out and implement it
+                                        // including #define DECOMPRESS_DEFLATE "deflate" and
+                                        // including #define DECOMPRESS_LZMA "lzma"
 
     else if ( v.is("directory") )
         server->directory.on = v.get_bool();
@@ -596,6 +616,8 @@ bool HttpServerModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("whitespace_chars") )
         v.get_bits(server->whitespace);
+
+    else if ( v.is("xff_headers") ); // FIXIT-M need to figure this out and implement it
 
     else
         return false;

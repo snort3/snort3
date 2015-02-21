@@ -61,7 +61,7 @@
 */
 
 int hi_mi_mode_inspection(HI_SESSION *session, int iInspectMode,
-        Packet *p, HttpsessionData *hsd)
+        Packet *p, HttpSessionData *hsd)
 {
     int iRet;
     if (!session || !p->data || (p->dsize == 0))

@@ -40,7 +40,7 @@
 
 #define MAX_URI 8192
 
-int hi_normalization(HI_SESSION *session, int iInspectMode, HttpsessionData *hsd);
+int hi_normalization(HI_SESSION *session, int iInspectMode, HttpSessionData *hsd);
 int hi_norm_uri(HI_SESSION *session, u_char *uribuf,int *uribuf_size,
                 const u_char *uri, int uri_size, uint16_t *encodeType);
 

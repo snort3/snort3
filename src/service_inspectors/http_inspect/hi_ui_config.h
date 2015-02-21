@@ -39,6 +39,7 @@
 #include "sf_ip.h"
 #include "hi_util_kmap.h"
 #include "file_api/file_api.h"
+#include "hi_file_decomp.h"
 #include "framework/bits.h"
 
 /*
@@ -47,6 +48,7 @@
 #define HI_UI_CONFIG_MAX_HDR_DEFAULT 0
 #define HI_UI_CONFIG_MAX_HEADERS_DEFAULT 0
 #define HI_UI_CONFIG_MAX_SPACES_DEFAULT 200 
+#define HI_UI_CONFIG_MAX_XFF_FIELD_NAMES 8
 
 /*
 **  Special characters treated as whitespace before or after URI
@@ -152,11 +154,20 @@ struct HTTPINSPECT_CONF
     char uri_only;
     char enable_cookie;
     char inspect_response;
+    uint8_t *xff_headers[HI_UI_CONFIG_MAX_XFF_FIELD_NAMES];
+    uint8_t xff_header_lengths[HI_UI_CONFIG_MAX_XFF_FIELD_NAMES];
     char enable_xff;
     char log_uri;
     char log_hostname;
     bool unlimited_decompress;
     char extract_gzip;
+    unsigned long file_decomp_modes;
+
+/* NOTE:  The XFF_BUILTING_NAMES value must match the code in snort_httpinspect.c that
+          adds the builtin names to the list. */
+#define HI_UI_CONFIG_XFF_FIELD_NAME  "X-Forwarded-For"
+#define HI_UI_CONFIG_TCI_FIELD_NAME  "True-Client-IP"
+#define XFF_BUILTIN_NAMES            (2)
 
    /* Support Extended ascii codes in the URI */
     char extended_ascii_uri;

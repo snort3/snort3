@@ -102,9 +102,8 @@ typedef struct s_HTTP_LOG_STATE
     uint8_t hostname_extracted[MAX_HOSTNAME];
 }HTTP_LOG_STATE;
 
-typedef struct _HttpsessionData
+typedef struct _HttpSessionData
 {
-    uint32_t event_flags;
     HTTP_RESP_STATE resp_state;
     DECOMPRESS_STATE *decomp_state;
     HTTP_LOG_STATE *log_state;
@@ -114,7 +113,8 @@ typedef struct _HttpsessionData
     uint8_t cli_small_chunk_count;
     uint8_t srv_small_chunk_count;
     MimeState *mime_ssn;
-} HttpsessionData;
+    fd_session_p_t fd_state;
+} HttpSessionData;
 
 class HttpFlowData : public FlowData
 {
@@ -126,7 +126,7 @@ public:
 
 public:
     static unsigned flow_id;
-    HttpsessionData session;
+    HttpSessionData session;
 };
 
 typedef struct _HISearch
@@ -181,7 +181,7 @@ extern THREAD_LOCAL HISearch hi_html_search[HTML_LAST];
 extern THREAD_LOCAL HISearch *hi_current_search;
 extern THREAD_LOCAL HISearchInfo hi_search_info;
 
-void ApplyFlowDepth(HTTPINSPECT_CONF *, Packet *, HttpsessionData *, int, int, uint32_t);
+void ApplyFlowDepth(HTTPINSPECT_CONF *, Packet *, HttpSessionData *, int, int, uint32_t);
 void HttpInspectRegisterXtraDataFuncs();
 
 int HttpInspectMain(HTTPINSPECT_CONF *GlobalConf, Packet *p);
@@ -189,8 +189,8 @@ int ProcessGlobalConf(HTTPINSPECT_GLOBAL_CONF *, char *, int);
 int PrintGlobalConf(HTTPINSPECT_GLOBAL_CONF *);
 int PrintServerConf(HTTPINSPECT_CONF*);
 int HttpInspectInitializeGlobalConfig(HTTPINSPECT_GLOBAL_CONF*);
-HttpsessionData * SetNewHttpsessionData(Packet *, void *);
-void FreeHttpsessionData(void *data);
+HttpSessionData * SetNewHttpSessionData(Packet *, void *);
+void FreeHttpSessionData(void *data);
 int GetHttpTrueIP(Flow*, uint8_t **buf, uint32_t *len, uint32_t *type);
 int GetHttpGzipData(Flow*, uint8_t **buf, uint32_t *len, uint32_t *type);
 int GetHttpJSNormData(Flow*, uint8_t **buf, uint32_t *len, uint32_t *type);
@@ -230,7 +230,7 @@ static inline void ResetRespState(HTTP_RESP_STATE *ds)
     ds->max_seq = 0;
 }
 
-static inline int SetLogBuffers(HttpsessionData *hsd)
+static inline int SetLogBuffers(HttpSessionData *hsd)
 {
     int iRet = 0;
 

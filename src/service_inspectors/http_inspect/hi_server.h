@@ -66,7 +66,7 @@ typedef struct s_HI_SERVER
     HI_SERVER_RESP response;
 } HI_SERVER;
 
-int hi_server_inspection(void *, Packet *, HttpsessionData *);
+int hi_server_inspection(void *, Packet *, HttpSessionData *);
 
 #endif
 

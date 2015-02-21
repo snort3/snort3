@@ -57,7 +57,7 @@
 #include "detection_util.h"
 
 
-int hi_server_norm(HI_SESSION *session, HttpsessionData *hsd)
+int hi_server_norm(HI_SESSION *session, HttpSessionData *hsd)
 {
     static THREAD_LOCAL u_char HeaderBuf[MAX_URI];
     static THREAD_LOCAL u_char CookieBuf[MAX_URI];

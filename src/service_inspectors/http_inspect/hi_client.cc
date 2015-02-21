@@ -70,10 +70,10 @@
 #define HEADER_LENGTH__COOKIE 6
 #define HEADER_NAME__CONTENT_LENGTH "Content-length"
 #define HEADER_LENGTH__CONTENT_LENGTH 14
-#define HEADER_NAME__XFF "X-Forwarded-For"
-#define HEADER_LENGTH__XFF 15
-#define HEADER_NAME__TRUE_IP "True-Client-IP"
-#define HEADER_LENGTH__TRUE_IP 14
+#define HEADER_NAME__XFF HI_UI_CONFIG_XFF_FIELD_NAME
+#define HEADER_LENGTH__XFF (sizeof(HEADER_NAME__XFF)-1)
+#define HEADER_NAME__TRUE_IP HI_UI_CONFIG_TCI_FIELD_NAME
+#define HEADER_LENGTH__TRUE_IP (sizeof(HEADER_NAME__TRUE_IP)-1)
 #define HEADER_NAME__HOSTNAME "Host"
 #define HEADER_LENGTH__HOSTNAME 4
 #define HEADER_NAME__TRANSFER_ENCODING "Transfer-encoding"
@@ -83,6 +83,19 @@
 
 const u_char *proxy_start = NULL;
 const u_char *proxy_end = NULL;
+
+// FIXIT-L for 2.9.7 code not yet ported in
+/*static const char *g_field_names[] =
+{
+    HEADER_NAME__COOKIE,
+    HEADER_NAME__CONTENT_LENGTH,
+    HEADER_NAME__XFF,
+    HEADER_NAME__TRUE_IP,
+    HEADER_NAME__HOSTNAME,
+    HEADER_NAME__TRANSFER_ENCODING,
+    HEADER_NAME__CONTENT_TYPE,
+    NULL
+};*/
 
 /**  This makes passing function arguments much more readable and easier
 **  to follow.
@@ -124,7 +137,7 @@ LOOKUP_FCN lookup_table[256];
 */
 int CheckChunkEncoding(HI_SESSION *session, const u_char *start, const u_char *end,
         const u_char **post_end, u_char *iChunkBuf, uint32_t max_size,
-        uint32_t chunk_remainder, uint32_t *updated_chunk_remainder, uint32_t *chunkRead, HttpsessionData *hsd,
+        uint32_t chunk_remainder, uint32_t *updated_chunk_remainder, uint32_t *chunkRead, HttpSessionData *hsd,
         int iInspectMode)
 {
     uint32_t iChunkLen   = 0;
@@ -1371,7 +1384,6 @@ static int SetClientVars(HI_CLIENT *Client, URI_PTR *uri_ptr, u_int dsize)
         printf("** second_end   = %c\n", *uri_ptr->second_sp_end);
     if(uri_ptr->delimiter)
         printf("** delimiter    = %c\n", *uri_ptr->delimiter);
-
     if(uri_ptr->uri)
         printf("** uri          = %c\n", *uri_ptr->uri);
     if(uri_ptr->norm)
@@ -1404,11 +1416,8 @@ static int SetClientVars(HI_CLIENT *Client, URI_PTR *uri_ptr, u_int dsize)
     **  This is one of the last checks we do to make sure that we didn't
     **  mess up or anything.
     */
-    if(Client->request.uri_size < 1 || Client->request.uri_size > dsize)
+    if(Client->request.uri_size > dsize)
     {
-        /*
-        **  Bad stuff, let's just bail.
-        */
         return HI_NONFATAL_ERR;
     }
 
@@ -1424,7 +1433,7 @@ static int SetClientVars(HI_CLIENT *Client, URI_PTR *uri_ptr, u_int dsize)
 static inline int hi_client_extract_post(
     HI_SESSION *session, HTTPINSPECT_CONF *ServerConf,
     const u_char *ptr, const u_char *end, URI_PTR *result,
-    int content_length, bool is_chunked, HttpsessionData *hsd)
+    int content_length, bool is_chunked, HttpSessionData *hsd)
 {
     const u_char *start = ptr;
     const u_char *post_end = end;
@@ -1514,7 +1523,7 @@ static inline int HTTP_CopyExtraDataTosession(const uint8_t *start, int length, 
 
 static inline void HTTP_CopyUri(
     HTTPINSPECT_CONF* /*ServerConf*/, const u_char *start, const u_char *end,
-    HttpsessionData *hsd, int stream_ins)
+    HttpSessionData *hsd, int stream_ins)
 {
     int iRet = 0;
     const u_char *cur_ptr;
@@ -1536,7 +1545,7 @@ static inline void HTTP_CopyUri(
 }
 
 
-static inline int unfold_http_uri(HTTPINSPECT_CONF *ServerConf, const u_char *end, URI_PTR *uri_ptr, HttpsessionData *hsd, int stream_ins)
+static inline int unfold_http_uri(HTTPINSPECT_CONF *ServerConf, const u_char *end, URI_PTR *uri_ptr, HttpSessionData *hsd, int stream_ins)
 {
     uint8_t unfold_buf[DECODE_BLEN];
     uint32_t unfold_size =0;
@@ -1576,14 +1585,13 @@ static inline int unfold_http_uri(HTTPINSPECT_CONF *ServerConf, const u_char *en
 static inline int hi_client_extract_uri(
     HI_SESSION *session, HTTPINSPECT_CONF *ServerConf,
     HI_CLIENT * Client, const u_char *start, const u_char *end,
-    const u_char *ptr, URI_PTR *uri_ptr, HttpsessionData *hsd, int stream_ins)
+    const u_char *ptr, URI_PTR *uri_ptr, HttpSessionData *hsd, int stream_ins)
 {
     int iRet = HI_SUCCESS;
     const u_char *tmp;
     int uri_copied = 0;
 
     session->norm_flags &= ~HI_BODY;
-
 
     /*
     **  This loop compares each char to an array of functions
@@ -1714,6 +1722,9 @@ static inline int hi_client_extract_uri(
 
         ptr++;
     }
+    /* No uri in this request. We shouldn't process this request */
+    if(uri_ptr->uri == uri_ptr->uri_end)
+        return HI_NONFATAL_ERR;
     return iRet;
 }
 
@@ -1796,7 +1807,7 @@ const u_char *extract_http_xff(HI_SESSION *session, const u_char *p, const u_cha
     if(!true_ip)
         return p;
 
-    if( (hdrs_args->true_clnt_xff & HDRS_BOTH) == HDRS_BOTH)
+    if( (hdrs_args->true_clnt_xff & (HDRS_BOTH | XFF_HEADERS)) == HDRS_BOTH)
     {
         hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_BOTH_TRUEIP_XFF_HDRS);
     }
@@ -1870,6 +1881,29 @@ const u_char *extract_http_xff(HI_SESSION *session, const u_char *p, const u_cha
                     return p;
                 }
             }
+            /* At this point we have a new/valid IP from the header being processed.
+               If we are using custom xff headers, check the precedence ranking. */
+            if( (hdrs_args->true_clnt_xff & XFF_HEADERS) != 0 )
+            {
+                /* Have we located any others? */
+                if( (hdrs_args->top_precedence > 0) &&
+                    (hdrs_args->new_precedence >= hdrs_args->top_precedence) )
+                    {
+                        sfip_free( tmp );
+                        free( ipAddr );
+                        return( p );
+                    }
+
+                hdrs_args->top_precedence = hdrs_args->new_precedence;
+
+                /* if we find the top precedence, no need to continue
+                   looking so clear the XFF_HEADERS_ACTIVE flag. */
+                if( hdrs_args->top_precedence == XFF_TOP_PRECEDENCE )
+                    hdrs_args->true_clnt_xff &= (~XFF_HEADERS_ACTIVE);
+            }
+
+            /* If we have already set a 'true_ip' for the session, look to see if the
+               new IP differs from the current IP. If so, replace it and post an alert. */
             if(*true_ip)
             {
                 if(!sfip_equals(*true_ip, tmp))
@@ -1877,7 +1911,8 @@ const u_char *extract_http_xff(HI_SESSION *session, const u_char *p, const u_cha
                     sfip_free(*true_ip);
                     *true_ip = tmp;
 
-                    hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_MULTIPLE_TRUEIP_IN_SESSION);
+                    if ((hdrs_args->true_clnt_xff & XFF_HEADERS) == 0)
+                        hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_MULTIPLE_TRUEIP_IN_SESSION);
                 }
                 else
                     sfip_free(tmp);
@@ -1901,7 +1936,7 @@ const u_char *extract_http_xff(HI_SESSION *session, const u_char *p, const u_cha
 
 
 const u_char *extract_http_hostname(HI_SESSION *session, const u_char *p, const u_char *start,
-        const u_char *end, HEADER_PTR *header_ptr, HttpsessionData *hsd)
+        const u_char *end, HEADER_PTR *header_ptr, HttpSessionData *hsd)
 {
     int num_spaces = 0;
     uint8_t unfold_buf[DECODE_BLEN];
@@ -2166,14 +2201,94 @@ const u_char *extract_http_content_length(HI_SESSION *session,
     return p;
 }
 
+static inline bool IsXFFFieldName( HI_CLIENT_HDR_ARGS *hdrs_args,
+                                   u_char **pp, const u_char *end,
+                                   uint8_t **Field_Names, uint8_t *Field_Length )
+{
+    int i;
+    int len;
+    uint8_t *header_ptr;
+    uint8_t *field_ptr;
+
+    i = 0;        // index into the list of XFF field names
+    field_ptr = NULL; // pointer into the active Field_Name entry
+    header_ptr = *pp;  // pointer into the header, will not step past 'end'
+    len = 0;      // len of the matched name entry
+
+    while( true )
+    {
+        /* If we run off the end of the active table, or table is truncated then
+           we can stop.  We didn't locate a match. */
+        if( (i >= (HI_UI_CONFIG_MAX_XFF_FIELD_NAMES)) || (Field_Names[i] == NULL) )
+            break;
+
+        if( field_ptr == NULL )  // didn't start to match any entry
+        {
+            /* If the length doesn't permit a match, move on.  */
+            if( (end - *pp) < Field_Length[i] )
+            {
+                i += 1;
+                continue;
+            }
+
+            if( toupper(*header_ptr) == *Field_Names[i] )  // does the first char match?
+            {
+                /* set our working pointer to the field name */
+                field_ptr = (Field_Names[i] + 1);
+                header_ptr += 1;
+                len = 1;   // We matched one character
+                continue;
+            }
+            i += 1;
+        }
+        else
+        {
+            /* If we are still matching and we get to the end
+               of the field name, then we've located a name match */
+            if( *field_ptr == 0 )  // End of the field name
+            {
+                *pp += len;  // Step input pointer over what we found
+                hdrs_args->new_precedence = (i+1);  // Precedence started with one
+                return( true );
+            }
+            else
+            {
+                /* check for another matching character */
+                if( toupper(*header_ptr) == *field_ptr )
+                {
+                    header_ptr += 1;
+                    field_ptr += 1;
+                    len += 1;
+                }
+                else
+                {
+                    header_ptr = *pp;  // Back to the start for the name
+                    field_ptr = NULL;  // No longer a match
+                    len = 0;
+                    i += 1;
+                }
+            }
+        }
+    }
+
+    return( false );
+}
+
 static inline const u_char *extractHeaderFieldValues(HI_SESSION *session,
         HTTPINSPECT_CONF *ServerConf, const u_char *p, const u_char *offset,
         const u_char *start, const u_char *end, HI_CLIENT_HDR_ARGS *hdrs_args)
 {
-    HttpsessionData *hsd;
+    HttpSessionData *hsd;
 
     hsd = hdrs_args->sd;
-    if (((p - offset) == 0) && ((*p == 'C') || (*p == 'c')))
+    if (((p - offset) == 0) && (ServerConf->enable_xff != 0) &&
+        ((hdrs_args->true_clnt_xff & XFF_HEADERS_ACTIVE) != 0) && (hsd) &&
+        IsXFFFieldName(hdrs_args, (u_char **)&p, (const u_char *)end,
+                       ServerConf->xff_headers, ServerConf->xff_header_lengths))
+    {
+        p = extract_http_xff(session, p, start, end, hdrs_args);
+    }
+    else if (((p - offset) == 0) && ((*p == 'C') || (*p == 'c')))
     {
         /* Search for 'Cookie' at beginning, starting from current *p */
         if ( ServerConf->enable_cookie &&
@@ -2193,7 +2308,8 @@ static inline const u_char *extractHeaderFieldValues(HI_SESSION *session,
     }
     else if (((p - offset) == 0) && ((*p == 'x') || (*p == 'X') || (*p == 't') || (*p == 'T')))
     {
-        if ( (ServerConf->enable_xff) && hsd )
+        //* The default/legacy behavior with two builtin XFF field names */
+        if ( (ServerConf->enable_xff) && hsd && ((hdrs_args->true_clnt_xff & XFF_HEADERS) == 0) )
         {
             if(IsHeaderFieldName(p, end, HEADER_NAME__XFF, HEADER_LENGTH__XFF))
             {
@@ -2274,7 +2390,7 @@ static inline const u_char *extractHeaderFieldValues(HI_SESSION *session,
 static inline const u_char *hi_client_extract_header(
     HI_SESSION *session, HTTPINSPECT_CONF *ServerConf,
     HEADER_PTR *header_ptr, const u_char *start,
-    const u_char *end, HttpsessionData *hsd, int stream_ins)
+    const u_char *end, HttpSessionData *hsd, int stream_ins)
 {
     int iRet = HI_SUCCESS;
     const u_char *p;
@@ -2315,7 +2431,7 @@ static inline const u_char *hi_client_extract_header(
     hdrs_args.sd = hsd;
     hdrs_args.strm_ins = stream_ins;
     hdrs_args.hst_name_hdr = 0;
-    hdrs_args.true_clnt_xff = 0;
+    hdrs_args.true_clnt_xff = (ServerConf->xff_headers[0] != NULL) ? XFF_INIT : 0;
 
     SkipBlankSpace(start,end,&p);
 
@@ -2505,10 +2621,20 @@ static inline const u_char *hi_client_extract_header(
                 Client->request.header_raw = NULL;\
                 Client->request.header_raw_size = 0;\
                 Client->request.header_norm = NULL; \
+                Client->request.header_norm_size = 0 ;\
                 Client->request.cookie.cookie = NULL;\
                 Client->request.cookie.cookie_end = NULL;\
+                if(Client->request.cookie.next) { \
+                    COOKIE_PTR *cookie = Client->request.cookie.next; \
+                    do { \
+                        Client->request.cookie.next = Client->request.cookie.next->next; \
+                        free(cookie); \
+                        cookie = Client->request.cookie.next; \
+                    } while(cookie); \
+                }\
                 Client->request.cookie.next = NULL;\
                 Client->request.cookie_norm = NULL;\
+                Client->request.cookie_norm_size = 0;\
     } while(0);
 
 #define CLR_METHOD(Client) \
@@ -2567,7 +2693,7 @@ static inline const u_char *hi_client_extract_header(
 **  @retval HI_SUCCESS      URI detected and session pointers updated
 */
 
-int StatelessInspection(Packet *p, HI_SESSION *session, HttpsessionData *hsd, int stream_ins)
+int StatelessInspection(Packet *p, HI_SESSION *session, HttpSessionData *hsd, int stream_ins)
 {
     HTTPINSPECT_CONF *ServerConf;
     HTTPINSPECT_CONF *ClientConf;
@@ -2583,7 +2709,7 @@ int StatelessInspection(Packet *p, HI_SESSION *session, HttpsessionData *hsd, in
     const u_char *method_end = NULL;
     int method_len;
     int iRet=0;
-    char sans_uri = 0;
+    bool sans_uri = false;
     const unsigned char *data = p->data;
     int dsize = p->dsize;
 
@@ -2710,19 +2836,19 @@ int StatelessInspection(Packet *p, HI_SESSION *session, HttpsessionData *hsd, in
             if ( !stream_ins )
                 hi_set_event(GID_HTTP_CLIENT, HI_CLIENT_UNKNOWN_METHOD);
             Client->request.method = HI_UNKNOWN_METHOD;
-            sans_uri = 1;
+            sans_uri = true;
         }
     }
 
     if (!sans_uri )
     {
-        uri_ptr.uri = ptr;
+        uri_ptr.uri = method_ptr.uri_end;
         uri_ptr.uri_end = end;
 
         /* This will set up the URI pointers - effectively extracting
          * the URI. */
         iRet = hi_client_extract_uri(
-             session, ServerConf, Client, start, end, ptr, &uri_ptr, hsd, stream_ins);
+             session, ServerConf, Client, start, end, uri_ptr.uri, &uri_ptr, hsd, stream_ins);
     }
 
     /* Check if the URI exceeds the max header field length */
@@ -2880,6 +3006,9 @@ int StatelessInspection(Packet *p, HI_SESSION *session, HttpsessionData *hsd, in
     iRet = SetClientVars(Client, &uri_ptr, dsize);
     if (iRet)
     {
+        CLR_HEADER(Client);
+        CLR_POST(Client);
+        CLR_METHOD(Client);
         return iRet;
     }
     /*
@@ -2910,36 +3039,21 @@ int StatelessInspection(Packet *p, HI_SESSION *session, HttpsessionData *hsd, in
     return HI_SUCCESS;
 }
 
-int hi_client_inspection(Packet *p, void *S, HttpsessionData *hsd, int stream_ins)
+int hi_client_inspection(Packet *p, void *S, HttpSessionData *hsd, int stream_ins)
 {
-    HI_SESSION *session;
-
-    int iRet;
-
     if(!S || !(p->data) || (p->dsize < 1))
     {
         return HI_INVALID_ARG;
     }
 
-    session = (HI_SESSION *)S;
+    HI_SESSION* session = (HI_SESSION*) S;
 
     if(!session->global_conf)
     {
         return HI_INVALID_ARG;
     }
 
-    {
-        /*
-        **  Otherwise we assume stateless inspection
-        */
-        iRet = StatelessInspection(p, session, hsd, stream_ins);
-        if (iRet)
-        {
-            return iRet;
-        }
-    }
-
-    return HI_SUCCESS;
+    return StatelessInspection(p, session, hsd, stream_ins);
 }
 
 /*
@@ -2950,66 +3064,45 @@ int hi_client_inspection(Packet *p, void *S, HttpsessionData *hsd, int stream_in
 **  Initializes arrays and search algorithms depending on the type of
 **  inspection that we are doing.
 **
-**  @param GlobalConf pointer to the global configuration
-**
-**  @return integer
-**
 **  @retval HI_SUCCESS function successful.
 */
-int hi_client_init(HTTPINSPECT_GLOBAL_CONF*)
+int hi_client_init()
 {
     int iCtr;
 
+    memset(lookup_table, 0x00, sizeof(lookup_table));
+
+    // Set up the non-ASCII register for processing.
+    for(iCtr = 0x80; iCtr <= 0xff; iCtr++)
     {
-        memset(lookup_table, 0x00, sizeof(lookup_table));
-
-        /*
-        **  Set up the non-ASCII register for processing.
-        */
-        for(iCtr = 0x80; iCtr <= 0xff; iCtr++)
-        {
-            lookup_table[iCtr] = SetBinaryNorm;
-        }
-        lookup_table[0x00] = SetBinaryNorm;
-
-        lookup_table[(uint8_t)' ']  = NextNonWhiteSpace;
-        lookup_table[(uint8_t)'\r'] = find_rfc_delimiter;
-        lookup_table[(uint8_t)'\n'] = find_non_rfc_delimiter;
-
-        /*
-        **  ASCII encoding
-        */
-        lookup_table[(uint8_t)'%']  = SetPercentNorm;
-
-        /*
-        **  Looking for multiple slashes
-        */
-        lookup_table[(uint8_t)'/']  = SetSlashNorm;
-
-        /*
-        **  Looking for backslashs
-        */
-        lookup_table[(uint8_t)'\\'] = SetBackSlashNorm;
-
-        lookup_table[(uint8_t)'+'] = SetPlusNorm;
-
-
-        /*
-        **  Look up parameter field, so we don't alert on long directory
-        **  strings, when the next slash in the parameter field.
-        */
-        lookup_table[(uint8_t)'?'] = SetParamField;
-
-        /*
-        **  Look for absolute URI and proxy communication.
-        */
-        lookup_table[(uint8_t)':'] = SetProxy;
-
+        lookup_table[iCtr] = SetBinaryNorm;
     }
+    lookup_table[0x00] = SetBinaryNorm;
+
+    lookup_table[(uint8_t)' ']  = NextNonWhiteSpace;
+    lookup_table[(uint8_t)'\r'] = find_rfc_delimiter;
+    lookup_table[(uint8_t)'\n'] = find_non_rfc_delimiter;
+
+    // ASCII encoding
+    lookup_table[(uint8_t)'%']  = SetPercentNorm;
+
+    // Looking for multiple slashes
+    lookup_table[(uint8_t)'/']  = SetSlashNorm;
+
+    // Looking for backslashs
+    lookup_table[(uint8_t)'\\'] = SetBackSlashNorm;
+
+    lookup_table[(uint8_t)'+'] = SetPlusNorm;
+
+    //  Look up parameter field, so we don't alert on long directory
+    //  strings, when the next slash in the parameter field.
+    lookup_table[(uint8_t)'?'] = SetParamField;
+
+    //  Look for absolute URI and proxy communication.
+    lookup_table[(uint8_t)':'] = SetProxy;
 
     return HI_SUCCESS;
 }
-
 
 
 /**
@@ -3040,7 +3133,7 @@ int main(int argc, char **argv)
 
     hi_ui_config_print_config(&GlobalConf);
 
-    if((iRet = hi_client_init(&GlobalConf)))
+    if((iRet = hi_client_init()))
     {
         printf("** error client init\n");
         return iRet;

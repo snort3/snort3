@@ -87,8 +87,8 @@ typedef struct s_URI_NORM_STATE
 typedef int (*DECODE_FUNC)(HI_SESSION *, const u_char *,
                           const u_char *, const u_char **, URI_NORM_STATE *, uint16_t *);
 
+static THREAD_LOCAL bool byte_decoded=false;
 
-bool byte_decoded=false;
 /*
 **  NAME
 **    GetPtr::
@@ -1173,6 +1173,18 @@ static int CheckLongDir(HI_SESSION *session, URI_NORM_STATE *norm_state,
 
 /*
 **  NAME
+**    EndPathField::
+*/
+/* This function determines whether a character marks the end of the URI path field.
+** It recognizes the query field '?' and fragment field '#' delimiters.
+** It will not accept a percent-encoded character as a valid delimiter.
+*/
+static inline bool EndPathField (bool percent_encoded, u_char uri_character) {
+    return ((uri_character == '?') || (uri_character == '#')) && !percent_encoded;
+}
+
+/*
+**  NAME
 **    InspectUriChar::
 */
 /**
@@ -1323,6 +1335,14 @@ static inline int InspectUriChar(HI_SESSION *session, int iChar,
                 }
             }
 
+            // This block is necessary to detect '?' and '#' delimiters that immediately follow a '/'.
+            if(EndPathField(byte_decoded, (u_char)iDir))
+            {
+                //  This is the end of the path field. Check for a long directory following.
+                CheckLongDir(session, norm_state, *ub_ptr);
+                norm_state->param = *ub_ptr;
+            }
+
             **ub_ptr = (u_char)iDir;
             (*ub_ptr)++;
         }
@@ -1330,14 +1350,9 @@ static inline int InspectUriChar(HI_SESSION *session, int iChar,
         return HI_SUCCESS;
     }
 
-    if((!byte_decoded && (u_char)iChar == '?'))
+    if(EndPathField(byte_decoded, (u_char)iChar))
     {
-        /*
-        **  We assume that this is the beginning of the parameter field,
-        **  and check for a long directory following.  Event though seeing
-        **  a question mark does not guarantee the parameter field, thanks
-        **  IIS.
-        */
+        // This is the end of the path field. Check for a long directory following.
         CheckLongDir(session, norm_state, *ub_ptr);
         norm_state->param = *ub_ptr;
     }
@@ -1485,7 +1500,7 @@ int hi_norm_uri(HI_SESSION *session, u_char *uribuf, int *uribuf_size,
 **  @retval HI_SUCCESS      function successful
 **  @retval HI_INVALID_ARG  invalid argument
 */
-int hi_normalization(HI_SESSION *session, int iInspectMode, HttpsessionData *hsd)
+int hi_normalization(HI_SESSION *session, int iInspectMode, HttpSessionData *hsd)
 {
     int iRet;
 

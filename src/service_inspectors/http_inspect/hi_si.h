@@ -121,12 +121,12 @@ int hi_si_session_inspection(HTTPINSPECT_CONF *GlobalConf,
         Packet *p);
 
 extern int CheckChunkEncoding(HI_SESSION *, const u_char *, const u_char *, const u_char **, u_char *,
-                              uint32_t , uint32_t, uint32_t *, uint32_t *, HttpsessionData *, int);
+                              uint32_t , uint32_t, uint32_t *, uint32_t *, HttpSessionData *, int);
 extern int IsHttpVersion(const u_char **, const u_char *);
 extern const u_char *extract_http_cookie(const u_char *p, const u_char *end, HEADER_PTR *, HEADER_FIELD_PTR *);
 extern const u_char *extract_http_content_length(HI_SESSION *, HTTPINSPECT_CONF *, const u_char *, const u_char *, const u_char *, HEADER_PTR *, HEADER_FIELD_PTR *) ;
 
-extern const u_char *extract_http_transfer_encoding(HI_SESSION *, HttpsessionData *,
+extern const u_char *extract_http_transfer_encoding(HI_SESSION *, HttpSessionData *,
         const u_char *, const u_char *, const u_char *, HEADER_PTR *, int);
 #endif
 

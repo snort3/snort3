@@ -36,7 +36,7 @@
 #include "hi_include.h"
 #include "hi_main.h"
 
-int hi_mi_mode_inspection(HI_SESSION *session, int iInspectMode, Packet *p, HttpsessionData *);
+int hi_mi_mode_inspection(HI_SESSION *session, int iInspectMode, Packet *p, HttpSessionData *);
 
 #endif
 

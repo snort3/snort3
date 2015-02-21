@@ -1,3 +1,7 @@
+Pending - build 139
+
+-- sync 297 http xff, swf, and pdf updates
+
 15/02/20 - build 138
 
 -- sync ftp with 297; replace stream event callbacks with FlowData virtuals

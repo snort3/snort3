@@ -35,6 +35,6 @@
 #include "hi_include.h"
 #include "hi_si.h"
 
-int hi_server_norm(HI_SESSION *session, HttpsessionData *hsd);
+int hi_server_norm(HI_SESSION *session, HttpSessionData *hsd);
 
 #endif
