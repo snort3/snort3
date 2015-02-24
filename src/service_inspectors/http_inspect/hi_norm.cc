@@ -73,15 +73,10 @@
 
 typedef struct s_URI_NORM_STATE
 {
-    u_char *abs_uri;
-    u_char *param;
-
-    /*
-    **  Directory tracking
-    */
+    bool param;
+    // Directory tracking
     u_int   dir_count;
     u_char *dir_track[MAX_DIRS];
-
 }  URI_NORM_STATE;
 
 typedef int (*DECODE_FUNC)(HI_SESSION *, const u_char *,
@@ -1340,7 +1335,7 @@ static inline int InspectUriChar(HI_SESSION *session, int iChar,
             {
                 //  This is the end of the path field. Check for a long directory following.
                 CheckLongDir(session, norm_state, *ub_ptr);
-                norm_state->param = *ub_ptr;
+                norm_state->param = (*ub_ptr != NULL);
             }
 
             **ub_ptr = (u_char)iDir;
@@ -1354,7 +1349,7 @@ static inline int InspectUriChar(HI_SESSION *session, int iChar,
     {
         // This is the end of the path field. Check for a long directory following.
         CheckLongDir(session, norm_state, *ub_ptr);
-        norm_state->param = *ub_ptr;
+        norm_state->param = (*ub_ptr != NULL);
     }
 
     /*
@@ -1426,7 +1421,7 @@ int hi_norm_uri(HI_SESSION *session, u_char *uribuf, int *uribuf_size,
     **  Initialize the URI directory normalization state
     */
     norm_state.dir_count = 0;
-    norm_state.param     = NULL;
+    norm_state.param     = false;
 
     while(hi_util_in_bounds(ub_start, ub_end, ub_ptr))
     {
