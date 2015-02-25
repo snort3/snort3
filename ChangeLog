@@ -1,5 +1,6 @@
 Pending - build 139
 
+-- documented gotcha regarding rule variable definitions in Lua
 -- sync 297 http xff, swf, and pdf updates
 
 15/02/20 - build 138

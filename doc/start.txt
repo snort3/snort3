@@ -246,3 +246,16 @@ include::errors.txt[]
   file=/dev/null.  This will be fixed in at some point to use the Snort log
   directory, etc.
 
+* Variables are currently processed in an order determined by the Lua hash
+  table which is effectively random.  That means you will need to use Lua
+  string concatenation to ensure Snort doesn't try to use a variable before
+  it is defined (even when it is defined ahead of use in the file):
+
+  -- this may fail:
+  MY_SERVERS = [[ 172.20.0.0/16 172.21.0.0/16 ]]
+  EXTERNAL_NET = '!$MY_SERVERS'
+
+  -- this will work:
+  MY_SERVERS = [[ 172.20.0.0/16 172.21.0.0/16 ]]
+  EXTERNAL_NET = '!' .. MY_SERVERS
+
