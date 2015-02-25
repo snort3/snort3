@@ -1147,7 +1147,7 @@ void FreeHttpSessionData(void *data)
 
     if( hsd->fd_state != 0 )
     {
-        File_Decomp_StopFree(hsd->fd_state);   // Stop & Stop &  Free fd session object
+        File_Decomp_StopFree(hsd->fd_state);
         hsd->fd_state = NULL;                  // ...just for good measure
     }
 }

@@ -163,8 +163,6 @@ struct HTTPINSPECT_CONF
     char extract_gzip;
     unsigned long file_decomp_modes;
 
-/* NOTE:  The XFF_BUILTING_NAMES value must match the code in snort_httpinspect.c that
-          adds the builtin names to the list. */
 #define HI_UI_CONFIG_XFF_FIELD_NAME  "X-Forwarded-For"
 #define HI_UI_CONFIG_TCI_FIELD_NAME  "True-Client-IP"
 #define XFF_BUILTIN_NAMES            (2)

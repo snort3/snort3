@@ -1,5 +1,6 @@
 Pending - build 139
 
+-- additional http_inspect cleanup
 -- documented gotcha regarding rule variable definitions in Lua
 -- sync 297 http xff, swf, and pdf updates
 
