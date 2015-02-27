@@ -212,3 +212,13 @@ yet firm so feedback is welcome to get something we can live with.
 
 * Prefer 'and' over && and 'or' over || for new source files.
 
+==== Uncrustify
+
+Currently using uncrustify from at https://github.com/bengardner/uncrustify
+to reformat legacy code and anything that happens to need a makeover at
+some point.
+
+The working config is crusty.cfg in the top level directory.  It does well,
+but will munge some things.  Specially formatted INDENT-OFF comments were
+added in 2 places to avoid a real mess.
+

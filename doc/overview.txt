@@ -88,7 +88,7 @@ If we also wanted to limit retries to at least 5 seconds, we could do:
 
     active = { max_responses = 1, min_interval = 5 }
 
-=== Plugins
+=== Plugins and Scripts
 
 There are several plugin types:
 
@@ -111,55 +111,154 @@ created with relative ease.  For example, you can extend the rule language
 by writing your own IpsOption and it will plug in and function just like
 existing options.  The extra directory has examples of each type of plugin.
 
-=== Scripts
-
 Some things just need to be tweaked or prototyped quickly.  In addition to
 the Lua conf, which is a script that can contain functions to compute
 settings, etc., you can also script Loggers and IpsOptions.
 
 === New Http Inspector
 
-The Http Inspector is being rewritten from scratch. The incomplete
-work-in-progress is included in this release as "new_http_inspect". The
-original Http Inspector remains available for regular use.
+One of the major undertakings for Snort 3.0 is developing a completely new
+HTTP inspector. It is incomplete right now but you can examine the
+work-in-progress. You can configure it by adding:
 
-The new Http Inspector is based entirely on processing HTTP messages that
-it parses from the TCP data stream. This is in contrast to its predecessor
-which frequently works directly with raw packets. The new approach makes
-the inspector much simpler, enabling easy addition of new features. It
-also renders HTTP inspection independent of how the message is subdivided
-into packets, neutralizing many potential evasions.
+    new_http_inspect = {}
 
-The inspector will contain much more detailed information about HTTP
-features such as methods, header fields, and status codes, with easy
-addition of new items through tables. This information will be used to
-provide a more thorough inspection capability for incorrect or suspicious
-protocol usage. Detection will benefit from normalization of individual
-message header field values using algorithms tailored to the specific field.
-For example a field containing a date will be normalized into a standard
-date format.
+to your snort.lua configuration file. Or you can read it in the source code
+under src/service_inspectors/nhttp_inspect.
 
-Long-term the goal is to implement SPDY/HTTP 2.0 and other advanced web
-protocols.
+The classic HTTP preprocessor is still available in the alpha release as
+http_inspect. It’s probably the better choice for now if you just want to
+do some work and do not feel like experimenting. Be sure not to configure
+    both old and new HTTP inspectors at the same time.
 
-=== Binder
+So why a new HTTP inspector?
 
-The binder collects all the legacy Snort preprocessor network and port
-settings and config binding settings into one table within each policy.
-You can now bind by both VLANs and CIDRs instead of one or the other.  The
-criteria are given by binder.when and include policy ID, interfaces, VLANs,
-networks, protocol, ports, role, and service.
+For starters it is object-oriented. That’s good for us because we maintain
+this software. But it should also be really nice for open-source
+developers. You can make meaningful changes and additions to HTTP
+processing without having to understand the whole thing. In fact much of
+the new HTTP inspector’s knowledge of HTTP is centralized in a series of
+tables where it can be easily reviewed and modified. Many significant
+changes can be made just by updating these tables.
 
-If service inspectors and wizard are configured but no binder is
-configured, a default binder is created that binds based on the wizard.
+New_http_inspect is the first inspector written specifically for the new
+Snort 3.0 architecture. That provides access to one of the very best
+features of Snort 3.0: purely PDU-based inspection. Classic http_inspect
+processes HTTP messages, but even while doing so it is constantly aware of
+IP packets and how they divide up the TCP data stream. The same HTTP
+message might be processed differently depending on how the sender (bad
+guy) divided it up into IP packets.
 
-=== Wizard
+New_http_inspect is free of this burden and can focus exclusively on HTTP.
+That makes it much more simple, easier to test, and less prone to false
+positives. It also greatly reduces the opportunity for adversaries to probe
+the inspector for weak spots by adjusting packet boundaries to disguise bad
+behavior.
 
-The wizard examines the initial payload of TCP and UDP sessions and
-attempts to determine which service inspector if any should examine the
-traffic.  Use the wizard for portless configurations or to augment
-port-based configurations to catch otherwise unknown traffic, including
-command and control channels.  The wizard is still under development and
-should be considered experimental.  If you find you need to tweak the
-defaults please let us know.
+Dealing solely with HTTP messages also opens the door for developing major
+new features. The new_http_inspect design supports true stateful
+processing. Want to ask questions that involve both the client request and
+the server response? Or different requests in the same session? These
+things are possible.
+
+Another new feature on the horizon is HTTP/2 analysis. HTTP/2 derives from
+Google’s SPDY project and is in the process of being standardized. Despite
+the name, it is better to think of HTTP/2 not as a newer version of
+HTTP/1.1, but rather a separate protocol layer that runs under HTTP/1.1 and
+on top of TLS or TCP. It’s a perfect fit for the new Snort 3.0 architecture
+because a new HTTP/2 inspector would naturally output HTTP/1.1 messages but
+not any underlying packets. Exactly what the new_http_inspect wants to
+input.
+
+New_http_inspect is taking a very different approach to HTTP header fields.
+Classic http_inspect divides all the HTTP headers following the start line
+into cookies and everything else. It normalizes the two pieces using a
+generic process and puts them in buffers that one can write rules against.
+There is some limited support for examining individual headers within the
+inspector but it is very specific.
+
+The new concept is that every header should be normalized in an appropriate
+and specific way and individually made available for the user to write
+rules against it. If for example a header is supposed to be a date then
+normalization means put that date in a standard format.
+
+=== Binder and Wizard
+
+One of the fundamental differences between Snort and Snort++ concerns configuration related to networks and ports.  Here is a brief review of Snort's configuration for network and service related components:
+
+* Snort's configuration has a default policy and optional policies selected by
+  VLAN or network (with config binding).
+
+* Each policy contains a user defined set of preprocessor configurations.
+
+* Each preprocessor has a default configuration and some support non-default
+  configurations selected by network.
+
+* Most preprocessors have port configurations.
+
+* The default policy may also contain a list of ports to ignore.
+
+In Snort++, the above configurations are done in a single module called the binder.  Here is an example:
+
+    binder =
+    {
+        -- allow all tcp port 22:
+        -- (similar to snort 2.X config ignore_ports)
+        { when = { proto = 'tcp', ports = '22' }, use = { action = 'allow' } },
+
+        -- select a config file by vlan
+        -- (similar to snort 2.X config binding by vlan)
+        { when = { vlans = '1024' }, use = { file = 'vlan.lua' } },
+
+        -- use a non-default HTTP inspector for port 8080:
+        -- (similar to a snort 2.X targeted preprocessor config)
+        { when = { nets = '192.168.0.0/16', proto = 'tcp', ports = '8080' },
+          use = { name = 'alt_http', type = 'http_inspect' } },
+
+        -- use the default inspectors:
+        -- (similar to a snort 2.X default preprocessor config)
+        { when = { proto = 'tcp' }, use = { type = 'stream_tcp' } },
+        { when = { service = 'http' }, use = { type = 'http_inspect' } },
+
+        -- figure out which inspector to run automatically:
+        { use = { type = 'wizard' } }
+    }
+
+Bindings are evaluated when a session starts and again if and when service is
+identified on the session.  Essentially, the bindings are a list of when-use
+rules evaluated from top to bottom.  The first matching network and service
+configurations are applied.  binder.when can contain any combination of
+criteria and binder.use can specify an action, config file, or inspector
+configuration.
+
+Using the wizard enables port-independent configuration and the detection of
+malware command and control channels.  If the wizard is bound to a session, it
+peeks at the initial payload to determine the service.  For example, 'GET'
+would indicate HTTP and 'HELO' would indicate SMTP.  Upon finding a match, the
+service bindings are reevaluated so the session can be handed off to the
+appropriate inspector.  The wizard is still under development; if you find you
+need to tweak the defaults please let us know.
+
+Additional Details:
+
+* If the wizard and one or more service inspectors are configured w/o
+  explicitly configuring the binder, default bindings will be generated which
+  should work for most common cases.
+
+* Also note that while Snort 2.X bindings can only be configured in the
+  default policy, each Snort 3.0 policy can contain a binder leading to an
+  arbitrary hierarchy.
+
+* The entire configuration can be reloaded and hot-swapped during run-time
+  via signal or command in both Snort 2.X and 3.0.  Ultimately, Snort 3.0
+  will support commands to update the binder on the fly, thus enabling
+  incremental reloads of individual inspectors.
+
+* Both Snort 2.X and 3.0 support server specific configurations via a hosts
+  table (XML in Snort 2.X and Lua in Snort 3.0).  The table allows you to
+  map network, protocol, and port to a service and policy.  This table can
+  be reloaded and hot-swapped separately from the config file.
+
+* You can find the specifics on the binder, wizard, and hosts tables in the
+  manual or command line like this:  snort --help-module binder, etc.
 
