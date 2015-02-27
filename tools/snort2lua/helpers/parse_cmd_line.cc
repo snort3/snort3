@@ -34,18 +34,14 @@
 
 namespace parser
 {
-
-typedef void (*ParseConfigFunc)(const char*, const char* val);
+typedef void (* ParseConfigFunc)(const char*, const char* val);
 struct ConfigFunc
 {
-    const char *name;
+    const char* name;
     ParseConfigFunc parse_func;
     std::string type;
     const char* help;
 };
-
-
-
 
 static const std::string out_default = "snort.lua";
 static const std::string error_default = "snort.rej";
@@ -74,7 +70,6 @@ const std::string get_out_file()
 const std::string get_rule_file()
 { return rule_file.empty() ? get_out_file() : rule_file; }
 
-
 static void help_args(const char* pfx, const char* /*val*/);
 static void print_args(const char* pfx, const char* /*val*/);
 
@@ -82,15 +77,14 @@ static void print_args(const char* pfx, const char* /*val*/);
 // arg foo
 //-------------------------------------------------------------------------
 
-
 class ArgList
 {
 public:
     ArgList(int c, char* v[])
-    { argc = c; argv = v; reset(); };
+    { argc = c; argv = v; reset(); }
 
     void reset()
-    { idx = 0; arg = nullptr; };
+    { idx = 0; arg = nullptr; }
 
     bool get_arg(const char*& key, const char*& val);
     void dump();
@@ -221,7 +215,6 @@ static void parse_config_file(const char* key, const char* val)
     }
 }
 
-
 static void parse_error_file(const char* key, const char* val)
 {
     if (found_error_file)
@@ -235,7 +228,6 @@ static void parse_error_file(const char* key, const char* val)
         found_error_file = true;
     }
 }
-
 
 static void parse_output_file(const char* key, const char* val)
 {
@@ -289,13 +281,10 @@ static void dont_parse_includes(const char* /*key*/, const char* /*val*/)
 static void enable_markup(const char* /*key*/, const char* /*val*/)
 { Markup::enable(true); }
 
-
 static void print_version(const char* /*key*/, const char* /*val*/)
 {
     std::cout << "Snort2Lua\t0.2.0";
 }
-
-
 
 static void help(const char* key, const char* val)
 {
@@ -312,7 +301,8 @@ static void help(const char* key, const char* val)
     std::cout << "\n";
     std::cout << "\n";
     std::cout << Markup::head(4) << "Required option:\n\n";
-    std::cout << Markup::item() << "\tA Snort configuration file to convert. Set with either '-c' or '--conf-file'\n";
+    std::cout << Markup::item() <<
+            "\tA Snort configuration file to convert. Set with either '-c' or '--conf-file'\n";
     std::cout << "\n";
     std::cout << "\n";
     std::cout << Markup::head(4) << "Default values:\n";
@@ -337,100 +327,99 @@ static ConfigFunc basic_opts[] =
       "show usage" },
 
     { "h", help, "",
-        "this overview of snort2lua"},
+      "this overview of snort2lua" },
 
     { "a", print_all, "",
-        "default option.  print all data"},
+      "default option.  print all data" },
 
     { "c", parse_config_file, "<snort_conf>",
-        "The Snort <snort_conf> file to convert"},
+      "The Snort <snort_conf> file to convert" },
 
     { "d", print_differences, "",
-        "print the differences, and only the differences, between the Snort "
-        "and Snort++ configurations to the <out_file>"},
+      "print the differences, and only the differences, between the Snort "
+      "and Snort++ configurations to the <out_file>" },
 
     { "e", parse_error_file, "<error_file>",
-        "output all errors to <error_file>"},
+      "output all errors to <error_file>" },
 
     { "i", dont_parse_includes, "",
-        "if <snort_conf> file contains any <include_file> or <policy_file> "
-        "(i.e. 'include path/to/conf/other_conf'), do NOT parse those files"},
+      "if <snort_conf> file contains any <include_file> or <policy_file> "
+      "(i.e. 'include path/to/conf/other_conf'), do NOT parse those files" },
 
     { "m", add_remark, "",
-        "add a remark to the end of every converted rule"},
+      "add a remark to the end of every converted rule" },
 
     { "o", parse_output_file, "<out_file>",
-        "output the new Snort++ lua configuration to <out_file>"},
+      "output the new Snort++ lua configuration to <out_file>" },
 
     { "q", print_quiet, "",
-        "quiet mode. Only output valid confiration information to the <out_file>"},
+      "quiet mode. Only output valid confiration information to the <out_file>" },
 
     { "r", parse_rule_file, "<rule_file>",
-        "output any converted rule to <rule_file>"},
+      "output any converted rule to <rule_file>" },
 
     { "s", sing_rule_files, "",
-        "when parsing <include_file>, write <include_file>'s rules to "
-        "<rule_file>. Meaningles if '-i' provided"},
+      "when parsing <include_file>, write <include_file>'s rules to "
+      "<rule_file>. Meaningles if '-i' provided" },
 
     { "t", sing_conf_files, "",
-        "when parsing <include_file>, write <include_file>'s information, "
-        "excluding rules, to <out_file>. Meaningles if '-i' provided"},
+      "when parsing <include_file>, write <include_file>'s information, "
+      "excluding rules, to <out_file>. Meaningles if '-i' provided" },
 
     { "V", print_version, "",
-        "Print the current Snort2Lua version"},
+      "Print the current Snort2Lua version" },
 
     { "conf-file", parse_config_file, "",
-        "Same as '-c'. A Snort <snort_conf> file which will be converted"},
+      "Same as '-c'. A Snort <snort_conf> file which will be converted" },
 
     { "dont-parse-includes", dont_parse_includes, "",
-        "Same as '-p'. if <snort_conf> file contains any <include_file> or <policy_file> "
-        "(i.e. 'include path/to/conf/other_conf'), do NOT parse those files"},
+      "Same as '-p'. if <snort_conf> file contains any <include_file> or <policy_file> "
+      "(i.e. 'include path/to/conf/other_conf'), do NOT parse those files" },
 
     { "error-file", parse_error_file, "<error_file>",
-        "Same as '-e'. output all errors to <error_file>"},
+      "Same as '-e'. output all errors to <error_file>" },
 
     { "help", help, "",
-        "Same as '-h'. this overview of snort2lua"},
+      "Same as '-h'. this overview of snort2lua" },
 
     { "markup", enable_markup, "",
-        "print help in asciidoc compatible format"},
+      "print help in asciidoc compatible format" },
 
     { "output-file", parse_output_file, "<out_file>",
-        "Same as '-o'. output the new Snort++ lua configuration to <out_file>"},
+      "Same as '-o'. output the new Snort++ lua configuration to <out_file>" },
 
     { "print-all", print_all, "",
-        "Same as '-a'. default option.  print all data"},
+      "Same as '-a'. default option.  print all data" },
 
     { "print-differences", print_differences, "",
-        "Same as '-d'. output the differences, and only the differences, "
-        "between the Snort and Snort++ configurations to the <out_file>"},
+      "Same as '-d'. output the differences, and only the differences, "
+      "between the Snort and Snort++ configurations to the <out_file>" },
 
     { "quiet", print_quiet, "",
-        "Same as '-q'. quiet mode. Only output valid confiration information to the <out_file>"},
+      "Same as '-q'. quiet mode. Only output valid confiration information to the <out_file>" },
 
     { "remark", add_remark, "",
-        "same as '-m'.  add a remark to the end of every converted rule"},
+      "same as '-m'.  add a remark to the end of every converted rule" },
 
     { "rule-file", parse_rule_file, "<rule_file>",
-        "Same as '-r'. output any converted rule to <rule_file>"},
+      "Same as '-r'. output any converted rule to <rule_file>" },
 
     { "single-conf-file", sing_conf_files, "",
-        "Same as '-t'. when parsing <include_file>, write <include_file>'s information, excluding rules, to <out_file>"},
+      "Same as '-t'. when parsing <include_file>, write <include_file>'s information, excluding rules, to <out_file>" },
 
     { "single-rule-file", sing_rule_files, "",
-        "Same as '-s'. when parsing <include_file>, write <include_file>'s rules to <rule_file>."},
+      "Same as '-s'. when parsing <include_file>, write <include_file>'s rules to <rule_file>." },
 
     { "version", print_version, "",
-        "Same as '-V'. Print the current Snort2Lua version"},
+      "Same as '-V'. Print the current Snort2Lua version" },
 
     { nullptr, nullptr, "", nullptr, }
 };
 
-
 bool parse_cmd_line(int argc, char* argv[])
 {
     ArgList al(argc, argv);
-    const char *key, *val;
+    const char* key, * val;
     bool found_opt = false;
 
     while ( al.get_arg(key, val) )
@@ -457,7 +446,6 @@ bool parse_cmd_line(int argc, char* argv[])
 
     return true;
 }
-
 
 static void help_args(const char* /*pfx*/, const char* /*val*/)
 {
@@ -488,7 +476,7 @@ static void help_args(const char* /*pfx*/, const char* /*val*/)
             std::string help = p->help;
             bool first_line = true;
 
-            while(!help.empty())
+            while (!help.empty())
             {
                 std::size_t len = util::get_substr_length(help, data_field_len);
 
@@ -510,5 +498,5 @@ static void help_args(const char* /*pfx*/, const char* /*val*/)
         ++p;
     }
 }
-
 } // namespace parser
+

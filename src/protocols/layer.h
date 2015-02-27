@@ -23,14 +23,12 @@
 #include <cstdint>
 #include "main/snort_types.h"
 
-
 struct Layer
 {
     const uint8_t* start;
     uint16_t prot_id;
     uint16_t length;
 };
-
 
 // forward declaring relevent structs. Since we're only return a pointer,
 // there is no need for the actual header files
@@ -85,14 +83,11 @@ struct Packet;
 
 namespace layer
 {
-
 //  Set by PacketManager.  Ensure you can call layer:: without a packet pointers
 void set_packet_pointer(const Packet* const);
 
-
 SO_PUBLIC const uint8_t* get_inner_layer(const Packet*, uint16_t proto);
 SO_PUBLIC const uint8_t* get_outer_layer(const Packet*, uint16_t proto);
-
 
 SO_PUBLIC const arp::EtherARP* get_arp_layer(const Packet*);
 SO_PUBLIC const vlan::VlanTagHdr* get_vlan_layer(const Packet*);
@@ -115,10 +110,7 @@ SO_PUBLIC const ip::IP6Frag* get_inner_ip6_frag(const Packet* const p);
 // else, returns zero based ip6 index
 SO_PUBLIC int get_inner_ip6_frag_index(const Packet* const p);
 
-
-
 // ICMP with Embedded IP layer
-
 
 // Sets the Packet's api to be the IP layer which is
 // embedded inside an ICMP layer.
@@ -170,7 +162,6 @@ SO_PUBLIC bool set_inner_ip_api(const Packet* const, ip::IpApi&, int8_t& curr_la
 SO_PUBLIC bool set_inner_ip_api(const Packet* const, ip::IpApi&,
     uint8_t& next_ip_proto, int8_t& curr_layer);
 
-
 /*
  * Identical to above function except will begin searching from the
  * outermost layer until the innermost layer.
@@ -182,8 +173,7 @@ SO_PUBLIC bool set_inner_ip_api(const Packet* const, ip::IpApi&,
 SO_PUBLIC bool set_outer_ip_api(const Packet* const, ip::IpApi&, int8_t& curr_layer);
 SO_PUBLIC bool set_outer_ip_api(const Packet* const, ip::IpApi&,
     uint8_t& next_ip_proto, int8_t& curr_layer);
-
-
 } // namespace layer
 
 #endif
+

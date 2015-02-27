@@ -17,8 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_dst_opts.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -34,13 +32,11 @@
 
 namespace
 {
-
 class Ipv6DSTOptsCodec : public Codec
 {
 public:
-    Ipv6DSTOptsCodec() : Codec(CD_DSTOPTS_NAME){};
-    ~Ipv6DSTOptsCodec() {};
-
+    Ipv6DSTOptsCodec() : Codec(CD_DSTOPTS_NAME) { }
+    ~Ipv6DSTOptsCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
@@ -52,16 +48,14 @@ struct IP6Dest
     uint8_t ip6dest_len;
     /* options follow */
     uint8_t ip6dest_pad[6];
-} ;
-
+};
 } // anonymous namespace
-
 
 bool Ipv6DSTOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-    const IP6Dest* const dsthdr = reinterpret_cast<const IP6Dest *>(raw.data);
+    const IP6Dest* const dsthdr = reinterpret_cast<const IP6Dest*>(raw.data);
 
-    if(raw.len < sizeof(IP6Dest))
+    if (raw.len < sizeof(IP6Dest))
     {
         codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
@@ -76,9 +70,8 @@ bool Ipv6DSTOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     if (dsthdr->ip6dest_nxt == IPPROTO_ROUTING)
         codec_event(codec, DECODE_IPV6_DSTOPTS_WITH_ROUTING);
 
-
     codec.lyr_len = sizeof(IP6Dest) + (dsthdr->ip6dest_len << 3);
-    if(codec.lyr_len > raw.len)
+    if (codec.lyr_len > raw.len)
     {
         codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
@@ -89,7 +82,6 @@ bool Ipv6DSTOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     codec.next_prot_id = dsthdr->ip6dest_nxt;
     codec.ip6_csum_proto = dsthdr->ip6dest_nxt;
 
-
     // must be called AFTER setting next_prot_id
     CheckIPv6ExtensionOrder(codec, IPPROTO_ID_DSTOPTS);
 
@@ -97,7 +89,6 @@ bool Ipv6DSTOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return true;
     return false;
 }
-
 
 void Ipv6DSTOptsCodec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(IPPROTO_ID_DSTOPTS); }
@@ -109,7 +100,7 @@ void Ipv6DSTOptsCodec::get_protocol_ids(std::vector<uint16_t>& v)
 static Codec* ctor(Module*)
 { return new Ipv6DSTOptsCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi ipv6_dstopts_api =
@@ -140,3 +131,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_dstopts = &ipv6_dstopts_api.base;
 #endif
+

@@ -69,8 +69,8 @@ extern "C" {
 #define PKT_PDU_TAIL         0x00000200  /* end of PDU */
 #define PKT_HTTP_DECODE      0x00000400  /* this packet has normalized http */
 
-#define PKT_ALLOW_MULTIPLE_DETECT 0x00000800  /* packet has either pipelined mime attachements */
-                                              /* or pipeline http requests */
+#define PKT_ALLOW_MULTIPLE_DETECT 0x00000800  /* packet has either pipelined mime attachements
+                                                 or pipeline http requests */
 #define PKT_PAYLOAD_OBFUSCATE     0x00001000
 
 #define PKT_STATELESS        0x00002000  /* Packet has matched a stateless rule */
@@ -95,8 +95,8 @@ extern "C" {
 // 0x40000000 are available
 #define PKT_PDU_FULL (PKT_PDU_HEAD | PKT_PDU_TAIL)
 
-
-enum PseudoPacketType{
+enum PseudoPacketType
+{
     PSEUDO_PKT_IP,
     PSEUDO_PKT_TCP,
     PSEUDO_PKT_DCE_RPKT,
@@ -107,18 +107,17 @@ enum PseudoPacketType{
     PSEUDO_PKT_PS,
     PSEUDO_PKT_SDF,
     PSEUDO_PKT_MAX
-} ;
-
+};
 
 /* We must twiddle to align the offset the ethernet header and align
  * the IP header on solaris -- maybe this will work on HPUX too.
  */
-#if defined (SOLARIS) || defined (SUNOS) || defined (__sparc__) || defined(__sparc64__) || defined (HPUX)
+#if defined (SOLARIS) || defined (SUNOS) || defined (__sparc__) || defined(__sparc64__) || \
+    defined (HPUX)
 #define SPARC_TWIDDLE       2
 #else
 #define SPARC_TWIDDLE       0
 #endif
-
 
 /* default mpls flags */
 #define DEFAULT_MPLS_PAYLOADTYPE      MPLS_PAYLOADTYPE_IPV4
@@ -130,11 +129,8 @@ constexpr int16_t SFTARGET_UNKNOWN_PROTOCOL = -1;
 constexpr uint8_t TCP_OPTLENMAX = 40; /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
 constexpr uint8_t DEFAULT_LAYERMAX = 40;
 
-
-
 /*  D A T A  S T R U C T U R E S  *********************************************/
 class Flow;
-
 
 struct SO_PUBLIC Packet
 {
@@ -152,8 +148,8 @@ struct SO_PUBLIC Packet
     // nothing after this point is zeroed ...
 
     // Everything beyond this point is set by PacketManager::decode()
-    const DAQ_PktHdr_t *pkth;    // packet meta data
-    const uint8_t *pkt;         // raw packet data
+    const DAQ_PktHdr_t* pkth;    // packet meta data
+    const uint8_t* pkt;         // raw packet data
 
     // These are both set before PacketManager::decode() returns
     const uint8_t* data;        /* packet payload pointer */
@@ -234,7 +230,7 @@ struct SO_PUBLIC Packet
      *    ....
      * }
      */
-    bool get_ip_proto_next(uint8_t &lyr, uint8_t& proto) const;
+    bool get_ip_proto_next(uint8_t& lyr, uint8_t& proto) const;
 
     inline void reset()
     {
@@ -244,8 +240,6 @@ struct SO_PUBLIC Packet
 };
 
 #define PKT_ZERO_LEN offsetof(Packet, pkth)
-
-
 
 /* Macros to deal with sequence numbers - p810 TCP Illustrated vol 2 */
 #define SEQ_LT(a,b)  ((int)((a) - (b)) <  0)
@@ -262,19 +256,19 @@ static inline int PacketWasCooked(const Packet* const p)
 static inline bool IsPortscanPacket(const Packet* const p)
 { return ( PacketWasCooked(p) && (p->pseudo_type == PSEUDO_PKT_PS)); }
 
-static inline bool PacketHasFullPDU (const Packet* const p)
+static inline bool PacketHasFullPDU(const Packet* const p)
 { return ( (p->packet_flags & PKT_PDU_FULL) == PKT_PDU_FULL ); }
 
-static inline bool PacketHasStartOfPDU (const Packet* const p)
+static inline bool PacketHasStartOfPDU(const Packet* const p)
 { return ( (p->packet_flags & PKT_PDU_HEAD) != 0 ); }
 
-static inline bool PacketHasPAFPayload (const Packet* const p)
+static inline bool PacketHasPAFPayload(const Packet* const p)
 { return ( (p->packet_flags & PKT_REBUILT_STREAM) || PacketHasFullPDU(p) ); }
 
-static inline bool PacketIsRebuilt (const Packet* const p)
+static inline bool PacketIsRebuilt(const Packet* const p)
 { return ( (p->packet_flags & (PKT_REBUILT_STREAM|PKT_REBUILT_FRAG)) != 0 ); }
 
-static inline void SetExtraData (Packet* p, const uint32_t xid)
+static inline void SetExtraData(Packet* p, const uint32_t xid)
 { p->xtradata_mask |= BIT(xid); }
 
 static inline uint16_t EXTRACT_16BITS(const uint8_t* const p)
@@ -284,19 +278,21 @@ static inline uint16_t EXTRACT_16BITS(const uint8_t* const p)
 
 #if defined(__GNUC__)
 /* force word-aligned ntohl parameter */
-    static inline uint32_t EXTRACT_32BITS(const uint8_t* p)
-    {
-        uint32_t tmp;
-        memmove(&tmp, p, sizeof(uint32_t));
-        return ntohl(tmp);
-    }
+static inline uint32_t EXTRACT_32BITS(const uint8_t* p)
+{
+    uint32_t tmp;
+    memmove(&tmp, p, sizeof(uint32_t));
+    return ntohl(tmp);
+}
+
 #endif /* __GNUC__ */
 
 #else
 
 /* allows unaligned ntohl parameter - dies w/SIGBUS on SPARCs */
-    static inline uint32_t EXTRACT_32BITS(const uint8_t* p)
-    { return ntohl(*(uint32_t *)p); }
+static inline uint32_t EXTRACT_32BITS(const uint8_t* p)
+{ return ntohl(*(uint32_t*)p); }
 #endif /* WORDS_MUSTALIGN */
 
 #endif
+

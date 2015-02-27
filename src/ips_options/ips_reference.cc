@@ -55,7 +55,7 @@ static const Parameter s_params[] =
 class ReferenceModule : public Module
 {
 public:
-    ReferenceModule() : Module(s_name, s_help, s_params) { };
+    ReferenceModule() : Module(s_name, s_help, s_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
 
@@ -132,3 +132,4 @@ static const IpsApi reference_api =
 };
 
 const BaseApi* ips_reference = &reference_api.base;
+

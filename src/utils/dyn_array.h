@@ -32,8 +32,8 @@
  *     0 value means no elements are allocated
  *     and therefore dynArray[0] will cause memory allocation.
  */
-int sfDynArrayCheckBounds (
-    void** dynArray, unsigned int index, unsigned int *maxElements);
+int sfDynArrayCheckBounds(
+    void** dynArray, unsigned int index, unsigned int* maxElements);
 
 #endif
 

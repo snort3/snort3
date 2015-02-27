@@ -24,7 +24,6 @@ using namespace std;
 
 namespace parser
 {
-
 bool Markup::enabled = false;
 
 void Markup::enable(bool e)
@@ -79,8 +78,8 @@ const string& Markup::escape(const string& s)
     if (enabled)
     {
         for (size_t found = m.find_first_of(asciidoc_chars, 0);
-             found != string::npos;
-             found = m.find_first_of(asciidoc_chars, found))
+            found != string::npos;
+            found = m.find_first_of(asciidoc_chars, found))
         {
             m.insert(found, "\\");
             found +=2;
@@ -90,7 +89,6 @@ const string& Markup::escape(const string& s)
     return m;
 }
 
-
 const char* Markup::add_newline()
 {
     static const char* const newline = "\n\0";
@@ -98,5 +96,5 @@ const char* Markup::add_newline()
 
     return enabled ? newline : empty;
 }
-
 }
+

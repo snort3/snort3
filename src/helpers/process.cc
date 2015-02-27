@@ -78,7 +78,7 @@ static Ring<PigSignal> sig_ring(4);
 static volatile sig_atomic_t child_ready_signal = 0;
 static THREAD_LOCAL volatile bool is_main_thread = false;
 
-typedef void (*sighandler_t)(int);
+typedef void (* sighandler_t)(int);
 static int add_signal(int sig, sighandler_t, int check_needed);
 
 static bool exit_pronto = true;
@@ -111,7 +111,7 @@ static void exit_handler(int signal)
     {
     case SIGTERM: s = PIG_SIG_TERM; t = "term"; break;
     case SIGQUIT: s = PIG_SIG_QUIT; t = "quit"; break;
-    case SIGINT : s = PIG_SIG_INT;  t = "int";  break;
+    case SIGINT: s = PIG_SIG_INT;  t = "int";  break;
     default: return;
     }
 
@@ -228,7 +228,7 @@ static int add_signal(int sig, sighandler_t signal_handler, int check_needed)
 void init_signals(void)
 {
 # if defined(LINUX) || defined(FREEBSD) || defined(OPENBSD) || \
-     defined(SOLARIS) || defined(BSD) || defined(MACOS)
+    defined(SOLARIS) || defined(BSD) || defined(MACOS)
     sigset_t set;
 
     sigemptyset(&set);
@@ -321,7 +321,7 @@ void daemonize()
 
     /* Don't daemonize if we've already daemonized and
      * received a SIGNAL_SNORT_RELOAD. */
-    if(getppid() != 1)
+    if (getppid() != 1)
     {
         /* Register signal handler that parent can trap signal */
         add_signal(SIGNAL_SNORT_CHILD_READY, child_ready_handler, 1);
@@ -333,7 +333,7 @@ void daemonize()
         printf("Spawning daemon child...\n");
         cpid = fork();
 
-        if(cpid > 0)
+        if (cpid > 0)
         {
             /* Continue waiting until receiving signal from child */
             int status;
@@ -350,8 +350,8 @@ void daemonize()
                 printf("Parent waiting for child...\n");
 #endif
                 sleep(1);
-
-            } while ( !child_ready_signal );
+            }
+            while ( !child_ready_signal );
 
             if (waitpid(cpid, &status, WNOHANG) == cpid)
             {
@@ -360,7 +360,6 @@ void daemonize()
                     LogMessage("Child exited unexpectedly\n");
                     exit_val = -1;
                 }
-
                 else if (WIFSIGNALED(status))
                 {
                     LogMessage("Child terminated unexpectedly\n");
@@ -375,7 +374,7 @@ void daemonize()
             exit(exit_val);                /* parent */
         }
 
-        if(cpid < 0)
+        if (cpid < 0)
         {
             /* Daemonizing failed... */
             perror("fork");
@@ -396,7 +395,7 @@ void daemonize()
     /* redirect stdin/stdout/stderr to a file */
     const int mode = S_IWUSR | S_IRUSR | S_IRGRP;
     const char* file = "/tmp/snort.debug";
-    
+
     err = open(file, O_CREAT | O_RDWR, mode) || err;  /* stdin, fd 0 */
 
     /* Change ownership to that which we will drop privileges to */

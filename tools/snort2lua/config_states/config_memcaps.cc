@@ -26,28 +26,25 @@
 
 namespace config
 {
-
-namespace {
-
-
-template<const std::string *snort_option,
-        const std::string* lua_table,
-        const std::string* lua_option>
+namespace
+{
+template<const std::string* snort_option,
+const std::string* lua_table,
+const std::string* lua_option>
 class Memcap : public ConversionState
 {
 public:
-    Memcap(Converter& c) : ConversionState(c) {};
-    virtual ~Memcap() {};
+    Memcap(Converter& c) : ConversionState(c) { }
+    virtual ~Memcap() { }
     virtual bool convert(std::istringstream& data_stream);
 };
 
 template<const std::string* snort_option,
-        const std::string* lua_table,
-        const std::string* lua_option>
+const std::string* lua_table,
+const std::string* lua_option>
 bool Memcap<snort_option, lua_table, lua_option>::convert(std::istringstream& data_stream)
 {
     std::string memcap;
-
 
     if ((!(data_stream >> memcap)) ||
         (memcap.compare("memcap")))
@@ -56,7 +53,8 @@ bool Memcap<snort_option, lua_table, lua_option>::convert(std::istringstream& da
     }
 
     table_api.open_table(*lua_table);
-    bool retval1 = table_api.add_diff_option_comment("config " + *snort_option + ":", "event_filter_memcap");
+    bool retval1 = table_api.add_diff_option_comment("config " + *snort_option + ":",
+        "event_filter_memcap");
     bool retval2 = parse_int_option(*lua_option, data_stream, false);
     table_api.close_table();
 
@@ -65,22 +63,18 @@ bool Memcap<snort_option, lua_table, lua_option>::convert(std::istringstream& da
     return retval1 && retval2;
 }
 
-template<const std::string *snort_option,
-        const std::string* lua_table,
-        const std::string* lua_option>
+template<const std::string* snort_option,
+const std::string* lua_table,
+const std::string* lua_option>
 static ConversionState* ctor(Converter& c)
 {
     return new Memcap<snort_option, lua_table, lua_option>(c);
 }
-
-
 } // namespace
 
 /**************************
  *******  A P I ***********
  **************************/
-
-
 
 static const std::string alerts = "alerts";
 static const std::string detection_filter = "detection_filter";
@@ -94,30 +88,30 @@ static const std::string threshold = "threshold";
 static const ConvertMap detection_filter_api =
 {
     detection_filter,
-    ctor<&detection_filter, &alerts, &detection_filter_memcap>,
+    ctor<& detection_filter, & alerts, & detection_filter_memcap>,
 };
 
 static const ConvertMap event_filter_api =
 {
     event_filter,
-    ctor<&event_filter, &alerts, &event_filter_memcap>,
+    ctor<& event_filter, & alerts, & event_filter_memcap>,
 };
 
 static const ConvertMap rate_filter_api =
 {
     rate_filter,
-    ctor<&rate_filter, &alerts, &rate_filter_memcap>,
+    ctor<& rate_filter, & alerts, & rate_filter_memcap>,
 };
 
 static const ConvertMap threshold_api =
 {
     threshold,
-    ctor<&threshold, &alerts, &event_filter_memcap>,
+    ctor<& threshold, & alerts, & event_filter_memcap>,
 };
 
 const ConvertMap* detection_filter_map = &detection_filter_api;
 const ConvertMap* event_filter_map = &event_filter_api;
 const ConvertMap* rate_filter_map = &rate_filter_api;
 const ConvertMap* threshold_map = &threshold_api;
-
 } // namespace config
+

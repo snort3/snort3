@@ -71,7 +71,7 @@ unsigned TelnetFlowData::flow_id = 0;
  * Returns: int => return code indicating error or success
  *
  */
-static inline int TelnetResetsession(TELNET_SESSION *session)
+static inline int TelnetResetsession(TELNET_SESSION* session)
 {
     session->ft_ssn.proto = FTPP_SI_PROTO_TELNET;
     session->telnet_conf = NULL;
@@ -89,10 +89,10 @@ static inline int TelnetResetsession(TELNET_SESSION *session)
  *          The actual processing to find which IP is the server and
  *          which is the client, is done in the InitServerConf() function.
  */
-static int TelnetStatefulsessionInspection(Packet *p,
-        TELNET_PROTO_CONF* GlobalConf,
-        TELNET_SESSION **Telnetsession,
-        FTPP_SI_INPUT *SiInput)
+static int TelnetStatefulsessionInspection(Packet* p,
+    TELNET_PROTO_CONF* GlobalConf,
+    TELNET_SESSION** Telnetsession,
+    FTPP_SI_INPUT* SiInput)
 {
     if (p->flow)
     {
@@ -140,8 +140,8 @@ static int TelnetStatefulsessionInspection(Packet *p,
  * Returns: int => return code indicating error or success
  *
  */
-int TelnetsessionInspection(Packet *p, TELNET_PROTO_CONF* GlobalConf,
-        TELNET_SESSION **Telnetsession, FTPP_SI_INPUT *SiInput, int *piInspectMode)
+int TelnetsessionInspection(Packet* p, TELNET_PROTO_CONF* GlobalConf,
+    TELNET_SESSION** Telnetsession, FTPP_SI_INPUT* SiInput, int* piInspectMode)
 {
     int iRet;
 
@@ -178,7 +178,7 @@ int TelnetsessionInspection(Packet *p, TELNET_PROTO_CONF* GlobalConf,
  * Returns: int => return code indicating the mode
  *
  */
-int FTPGetPacketDir(Packet *p)
+int FTPGetPacketDir(Packet* p)
 {
     if (p->dsize >= 3)
     {
@@ -197,18 +197,18 @@ int FTPGetPacketDir(Packet *p)
 }
 
 static int FTPInitConf(
-    Packet *p, 
-    FTP_CLIENT_PROTO_CONF **ClientConf,
-    FTP_SERVER_PROTO_CONF **ServerConf,
-    FTPP_SI_INPUT *SiInput, int *piInspectMode)
+    Packet* p,
+    FTP_CLIENT_PROTO_CONF** ClientConf,
+    FTP_SERVER_PROTO_CONF** ServerConf,
+    FTPP_SI_INPUT* SiInput, int* piInspectMode)
 {
     // FIXIT-H BINDING ftp client and server must set by external bindings
     // at that point these get deleted
-    FTP_CLIENT_PROTO_CONF *ClientConfSip = get_default_ftp_client();
-    FTP_CLIENT_PROTO_CONF *ClientConfDip = get_default_ftp_client();
+    FTP_CLIENT_PROTO_CONF* ClientConfSip = get_default_ftp_client();
+    FTP_CLIENT_PROTO_CONF* ClientConfDip = get_default_ftp_client();
 
-    FTP_SERVER_PROTO_CONF *ServerConfSip = get_default_ftp_server();
-    FTP_SERVER_PROTO_CONF *ServerConfDip = get_default_ftp_server();
+    FTP_SERVER_PROTO_CONF* ServerConfSip = get_default_ftp_server();
+    FTP_SERVER_PROTO_CONF* ServerConfDip = get_default_ftp_server();
 
     int iServerSip;
     int iServerDip;
@@ -239,86 +239,85 @@ static int FTPInitConf(
      * Depending on the type of packet direction we get from the
      * state machine, we evaluate client/server differently.
      */
-    switch(SiInput->pdir)
+    switch (SiInput->pdir)
     {
-        case FTPP_SI_NO_MODE:
+    case FTPP_SI_NO_MODE:
+    {
+        /*
+         * We check for the case where both SIP and DIP
+         * appear to be servers.  In this case, we assume server
+         * and process that way.
+         */
+        if (iServerSip && iServerDip)
         {
             /*
              * We check for the case where both SIP and DIP
-             * appear to be servers.  In this case, we assume server
-             * and process that way.
+             * appear to be servers.  In this case, we look at
+             * the first few bytes of the packet to try to
+             * determine direction -- 3 digits indicate server
+             * response.
              */
-            if(iServerSip && iServerDip)
-            {
-                /*
-                 * We check for the case where both SIP and DIP
-                 * appear to be servers.  In this case, we look at
-                 * the first few bytes of the packet to try to
-                 * determine direction -- 3 digits indicate server
-                 * response.
-                 */
 
-                /* look at the first few bytes of the packet.  We might
-                 * be wrong if this is a reassembled packet and we catch
-                 * a server response mid-stream.
-                 */
-                *piInspectMode = FTPGetPacketDir(p);
-                if (*piInspectMode == FTPP_SI_SERVER_MODE)
-                {
-                    /* Packet is from server --> src is Server */
-                    *ClientConf = ClientConfDip;
-                    *ServerConf = ServerConfSip;
-                }
-                else /* Assume client */
-                {
-                    /* Packet is from client --> dest is Server */
-                    *piInspectMode = FTPP_SI_CLIENT_MODE;
-                    *ClientConf = ClientConfSip;
-                    *ServerConf = ServerConfDip;
-                }
-                SiInput->pproto = FTPP_SI_PROTO_FTP;
+            /* look at the first few bytes of the packet.  We might
+             * be wrong if this is a reassembled packet and we catch
+             * a server response mid-stream.
+             */
+            *piInspectMode = FTPGetPacketDir(p);
+            if (*piInspectMode == FTPP_SI_SERVER_MODE)
+            {
+                /* Packet is from server --> src is Server */
+                *ClientConf = ClientConfDip;
+                *ServerConf = ServerConfSip;
             }
-            else if(iServerDip)
+            else     /* Assume client */
             {
                 /* Packet is from client --> dest is Server */
                 *piInspectMode = FTPP_SI_CLIENT_MODE;
                 *ClientConf = ClientConfSip;
                 *ServerConf = ServerConfDip;
-                SiInput->pproto = FTPP_SI_PROTO_FTP;
             }
-            else if(iServerSip)
-            {
-                /* Packet is from server --> src is Server */
-                *piInspectMode = FTPP_SI_SERVER_MODE;
-                *ClientConf = ClientConfDip;
-                *ServerConf = ServerConfSip;
-                SiInput->pproto = FTPP_SI_PROTO_FTP;
-            }
-            break;
-
+            SiInput->pproto = FTPP_SI_PROTO_FTP;
         }
-
-        case FTPP_SI_CLIENT_MODE:
+        else if (iServerDip)
+        {
             /* Packet is from client --> dest is Server */
             *piInspectMode = FTPP_SI_CLIENT_MODE;
             *ClientConf = ClientConfSip;
             *ServerConf = ServerConfDip;
             SiInput->pproto = FTPP_SI_PROTO_FTP;
-            break;
-
-        case FTPP_SI_SERVER_MODE:
+        }
+        else if (iServerSip)
+        {
             /* Packet is from server --> src is Server */
             *piInspectMode = FTPP_SI_SERVER_MODE;
             *ClientConf = ClientConfDip;
             *ServerConf = ServerConfSip;
             SiInput->pproto = FTPP_SI_PROTO_FTP;
-            break;
+        }
+        break;
+    }
 
-        default:
-            *piInspectMode = FTPP_SI_NO_MODE;
-            *ClientConf = NULL;
-            *ServerConf = NULL;
-            break;
+    case FTPP_SI_CLIENT_MODE:
+        /* Packet is from client --> dest is Server */
+        *piInspectMode = FTPP_SI_CLIENT_MODE;
+        *ClientConf = ClientConfSip;
+        *ServerConf = ServerConfDip;
+        SiInput->pproto = FTPP_SI_PROTO_FTP;
+        break;
+
+    case FTPP_SI_SERVER_MODE:
+        /* Packet is from server --> src is Server */
+        *piInspectMode = FTPP_SI_SERVER_MODE;
+        *ClientConf = ClientConfDip;
+        *ServerConf = ServerConfSip;
+        SiInput->pproto = FTPP_SI_PROTO_FTP;
+        break;
+
+    default:
+        *piInspectMode = FTPP_SI_NO_MODE;
+        *ClientConf = NULL;
+        *ServerConf = NULL;
+        break;
     }
 
     return iRet;
@@ -344,10 +343,10 @@ void FTPFreesession(FTP_SESSION* ssn)
  * Return true if packet is from the "sending" host
  * Return false if packet is from the "receiving" host
  */
-bool FTPDataDirection(Packet *p, FTP_DATA_SESSION *ftpdata)
+bool FTPDataDirection(Packet* p, FTP_DATA_SESSION* ftpdata)
 {
     uint32_t direction;
-    uint32_t pktdir = stream.get_packet_direction(p); 
+    uint32_t pktdir = stream.get_packet_direction(p);
 
     if (ftpdata->mode == FTPP_XFER_ACTIVE)
         direction = ftpdata->direction ?  PKT_FROM_SERVER : PKT_FROM_CLIENT;
@@ -371,7 +370,7 @@ bool FTPDataDirection(Packet *p, FTP_DATA_SESSION *ftpdata)
  * Returns: int => return code indicating error or success
  *
  */
-static inline int FTPResetsession(FTP_SESSION *Ftpsession)
+static inline int FTPResetsession(FTP_SESSION* Ftpsession)
 {
     Ftpsession->ft_ssn.proto = FTPP_SI_PROTO_FTP;
 
@@ -403,14 +402,14 @@ static inline int FTPResetsession(FTP_SESSION *Ftpsession)
  *          client, is done in the InitServerConf() function.
  */
 static int FTPStatefulsessionInspection(
-    Packet *p,
-    FTP_SESSION **Ftpsession,
-    FTPP_SI_INPUT *SiInput, int *piInspectMode)
+    Packet* p,
+    FTP_SESSION** Ftpsession,
+    FTPP_SI_INPUT* SiInput, int* piInspectMode)
 {
     if (p->flow)
     {
-        FTP_CLIENT_PROTO_CONF *ClientConf;
-        FTP_SERVER_PROTO_CONF *ServerConf;
+        FTP_CLIENT_PROTO_CONF* ClientConf;
+        FTP_SERVER_PROTO_CONF* ServerConf;
         int iRet;
 
         iRet = FTPInitConf(p, &ClientConf, &ServerConf, SiInput, piInspectMode);
@@ -456,8 +455,8 @@ static int FTPStatefulsessionInspection(
  *          The inspection mode can be either client or server.
  */
 int FTPsessionInspection(
-    Packet *p, FTP_SESSION **Ftpsession,
-    FTPP_SI_INPUT *SiInput, int *piInspectMode)
+    Packet* p, FTP_SESSION** Ftpsession,
+    FTPP_SI_INPUT* SiInput, int* piInspectMode)
 {
     int iRet;
 
@@ -478,46 +477,45 @@ int FTPsessionInspection(
 
 /*
  * Function: SetSiInput(FTPP_SI_INPUT *SiInput, Packet *p)
- *      
+ *
  * Purpose: This is the routine sets the source and destination IP
  *          address and port pairs so as to determine the direction
  *          of the FTP or telnet connection.
  *
  * Arguments: SiInput       => pointer the session input structure
  *            p             => pointer to the packet structure
- *      
+ *
  * Returns: int     => an error code integer (0 = success,
  *                     >0 = non-fatal error, <0 = fatal error)
- *  
+ *
  */
-int SetSiInput(FTPP_SI_INPUT *SiInput, Packet *p)
-{   
+int SetSiInput(FTPP_SI_INPUT* SiInput, Packet* p)
+{
     sfip_copy(SiInput->sip, p->ptrs.ip_api.get_src());
     sfip_copy(SiInput->dip, p->ptrs.ip_api.get_dst());
     SiInput->sport = p->ptrs.sp;
     SiInput->dport = p->ptrs.dp;
-        
-    /* 
+
+    /*
      * We now set the packet direction
      */
-    if(p->flow && stream.is_midstream(p->flow))
+    if (p->flow && stream.is_midstream(p->flow))
     {
         SiInput->pdir = FTPP_SI_NO_MODE;
     }
-    else if(p->packet_flags & PKT_FROM_SERVER)
+    else if (p->packet_flags & PKT_FROM_SERVER)
     {
         SiInput->pdir = FTPP_SI_SERVER_MODE;
     }
-    else if(p->packet_flags & PKT_FROM_CLIENT)
+    else if (p->packet_flags & PKT_FROM_CLIENT)
     {
         SiInput->pdir = FTPP_SI_CLIENT_MODE;
     }
     else
-    {       
+    {
         SiInput->pdir = FTPP_SI_NO_MODE;
     }
 
     return FTPP_SUCCESS;
-
 }
 

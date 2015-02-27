@@ -18,7 +18,6 @@
 //--------------------------------------------------------------------------
 // cd_ppp_encap.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -33,12 +32,11 @@
 
 namespace
 {
-
 class PppEncap : public Codec
 {
 public:
-    PppEncap() : Codec(CD_PPPENCAP_NAME){};
-    ~PppEncap(){};
+    PppEncap() : Codec(CD_PPPENCAP_NAME) { }
+    ~PppEncap() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
@@ -49,13 +47,10 @@ const static uint16_t PPP_IPV6 = 0x0057;        /* Internet Protocol v6 */
 const static uint16_t PPP_VJ_COMP = 0x002d;        /* VJ compressed TCP/IP */
 const static uint16_t PPP_VJ_UCOMP = 0x002f;        /* VJ uncompressed TCP/IP */
 const static uint16_t PPP_IPX = 0x002b;        /* Novell IPX Protocol */
-
 } // namespace
-
 
 void PppEncap::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(ETHERTYPE_PPP); }
-
 
 /*
  * Function: DecodePppPktEncapsulated(Packet *, const uint32_t len, uint8_t*)
@@ -73,26 +68,24 @@ bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
     static THREAD_LOCAL bool had_vj = false;
     uint16_t protocol;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "PPP Packet!\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "PPP Packet!\n"); );
 
 #ifdef WORDS_MUSTALIGN
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet with PPP header.  "
-                            "PPP is only 1 or 2 bytes and will throw off "
-                            "alignment on this architecture when decoding IP, "
-                            "causing a bus error - stop decoding packet.\n"););
+        "PPP is only 1 or 2 bytes and will throw off "
+        "alignment on this architecture when decoding IP, "
+        "causing a bus error - stop decoding packet.\n"); );
     return true;
 
 #endif  /* WORDS_MUSTALIGN */
 
-
     /* do a little validation:
      *
      */
-    if(raw.len < 2)
+    if (raw.len < 2)
         return false;
 
-
-    if(raw.data[0] & 0x01)
+    if (raw.data[0] & 0x01)
     {
         /* Check for protocol compression rfc1661 section 5
          *
@@ -102,7 +95,7 @@ bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
     }
     else
     {
-        protocol = ntohs(*((uint16_t *)raw.data));
+        protocol = ntohs(*((uint16_t*)raw.data));
         codec.lyr_len = 2;
     }
 
@@ -112,44 +105,43 @@ bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
      */
     switch (protocol)
     {
-        case PPP_VJ_COMP:
-            if (!had_vj)
-                ErrorMessage("PPP link seems to use VJ compression, "
-                        "cannot handle compressed packets\n");
-            had_vj = true;
+    case PPP_VJ_COMP:
+        if (!had_vj)
+            ErrorMessage("PPP link seems to use VJ compression, "
+                "cannot handle compressed packets\n");
+        had_vj = true;
+        return false;
+    case PPP_VJ_UCOMP:
+        /* VJ compression modifies the protocol field. It must be set
+         * to tcp (only TCP packets can be VJ compressed) */
+        if (raw.len < (uint32_t)(codec.lyr_len + ip::IP4_HEADER_LEN))
+        {
+            if (ScLogVerbose())
+                ErrorMessage("PPP VJ min packet length > captured len"
+                    "(%d bytes)\n", raw.len);
             return false;
-        case PPP_VJ_UCOMP:
-            /* VJ compression modifies the protocol field. It must be set
-             * to tcp (only TCP packets can be VJ compressed) */
-            if(raw.len < (uint32_t)(codec.lyr_len + ip::IP4_HEADER_LEN))
-            {
-                if (ScLogVerbose())
-                    ErrorMessage("PPP VJ min packet length > captured len"
-                                 "(%d bytes)\n", raw.len);
-                return false;
-            }
+        }
 
-            ((IP4Hdr *)(raw.data + codec.lyr_len))->set_proto(IPPROTO_TCP);
-            /* fall through */
+        ((IP4Hdr*)(raw.data + codec.lyr_len))->set_proto(IPPROTO_TCP);
+    /* fall through */
 
-        case PPP_IP:
-            codec.next_prot_id = ETHERTYPE_IPV4;
-            break;
+    case PPP_IP:
+        codec.next_prot_id = ETHERTYPE_IPV4;
+        break;
 
-        case PPP_IPV6:
-            codec.next_prot_id = ETHERTYPE_IPV6;
-            break;
+    case PPP_IPV6:
+        codec.next_prot_id = ETHERTYPE_IPV6;
+        break;
 
-        case PPP_IPX:
-            codec.next_prot_id = ETHERTYPE_IPX;
-            break;
+    case PPP_IPX:
+        codec.next_prot_id = ETHERTYPE_IPX;
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
     return true;
 }
-
 
 //-------------------------------------------------------------------------
 // api
@@ -158,7 +150,7 @@ bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
 static Codec* ctor(Module*)
 { return new PppEncap(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi pppencap_api =
@@ -189,7 +181,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_pppencap = &pppencap_api.base;
 #endif
-
-
-
 

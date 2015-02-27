@@ -41,10 +41,10 @@ extern "C" {
 # endif
 # define TraverseReassembled  stream.traverse_stream_segments
 static int TraverseReassembled(
-        Packet *,
-        int (*)(DAQ_PktHdr_t *, uint8_t *, uint8_t *, uint32_t, void *),
-        void *
-        );
+Packet*,
+int (*)(DAQ_PktHdr_t*, uint8_t*, uint8_t*, uint32_t, void*),
+void*
+);
 #endif
 
 /*******************************************************************************
@@ -54,17 +54,15 @@ static int TraverseReassembled(
 #define OBFUSCATE_MAXLEN_ENTRIES    8
 #define OBFUSCATE_SLICE_ENTRIES   (OBFUSCATE_ENTRIES - OBFUSCATE_MAXLEN_ENTRIES)
 
-
 /*******************************************************************************
  * Data structures
  ******************************************************************************/
 typedef struct _ObfuscationEntry
 {
-    Packet *p;
+    Packet* p;
     ob_size_t offset;
     ob_size_t length;
     ob_char_t ob_char;
-
 } ObfuscationEntry;
 
 typedef struct _ObfuscationStruct
@@ -73,43 +71,37 @@ typedef struct _ObfuscationStruct
     int num_maxlen_entries;
     int sorted;
     ObfuscationEntry entries[OBFUSCATE_ENTRIES];
-    ObfuscationEntry *sort_entries[OBFUSCATE_ENTRIES];
-    ObfuscationEntry *maxlen_entries[OBFUSCATE_MAXLEN_ENTRIES];
-
+    ObfuscationEntry* sort_entries[OBFUSCATE_ENTRIES];
+    ObfuscationEntry* maxlen_entries[OBFUSCATE_MAXLEN_ENTRIES];
 } ObfuscationStruct;
 
 typedef struct _ObfuscationCallbackData
 {
-    const Packet *packet;
+    const Packet* packet;
     ObfuscationCallback user_callback;
-    void *user_data;
+    void* user_data;
     int entry_index;
     ob_size_t total_offset;
-
 } ObfuscationCallbackData;
 
 typedef struct _ObfuscationStreamCallbackData
 {
-    ObfuscationCallbackData *data;
+    ObfuscationCallbackData* data;
     uint32_t next_seq;
     int last_entry_index;
-
 } ObfuscationStreamCallbackData;
 
 typedef struct _ObfuscatedPayload
 {
-    uint8_t **payload;
-    ob_size_t *payload_len;
+    uint8_t** payload;
+    ob_size_t* payload_len;
     ob_size_t payload_size;
-
 } ObfuscatedPayload;
-
 
 /*******************************************************************************
  * Globals
  ******************************************************************************/
 static THREAD_LOCAL ObfuscationStruct ob_struct;
-
 
 /*******************************************************************************
  * Private function prototypes
@@ -117,38 +109,37 @@ static THREAD_LOCAL ObfuscationStruct ob_struct;
 static inline int NumObfuscateMaxLenEntries(void);
 static inline int NumObfuscateSliceEntries(void);
 static inline ObRet ObfuscationEntryOverflow(ob_size_t);
-static inline int PayloadObfuscationRequired(Packet *);
-static inline void SetObfuscationEntry(ObfuscationEntry *, Packet *,
-        ob_size_t, ob_size_t, ob_char_t);
+static inline int PayloadObfuscationRequired(Packet*);
+static inline void SetObfuscationEntry(ObfuscationEntry*, Packet*,
+ob_size_t, ob_size_t, ob_char_t);
 static inline void SortObfuscationEntries(void);
 static inline void SetObfuscationCallbackData(
-        ObfuscationCallbackData *, Packet *, ObfuscationCallback, void *);
+ObfuscationCallbackData*, Packet*, ObfuscationCallback, void*);
 static inline void SetObfuscationStreamCallbackData(
-        ObfuscationStreamCallbackData *, ObfuscationCallbackData *,
-        Packet *, ObfuscationCallback, void *);
+ObfuscationStreamCallbackData*, ObfuscationCallbackData*,
+Packet*, ObfuscationCallback, void*);
 
-static ObRet AddObfuscationEntry(Packet *, ob_size_t, ob_size_t, ob_char_t);
-static int ObfuscationEntrySort(const void *, const void *);
-static ObRet TraverseObfuscationList(ObfuscationCallbackData *,
-        const DAQ_PktHdr_t *, const uint8_t *, ob_size_t);
-static int ObfuscateStreamSegmentsCallback(DAQ_PktHdr_t *,
-        uint8_t *, uint8_t *, uint32_t, void *);
-static ObRet GetObfuscatedPayloadCallback(const DAQ_PktHdr_t *,
-     const uint8_t *, ob_size_t, ob_char_t, void *);
-static void PrintObfuscationEntry(const ObfuscationEntry *, int);
-
+static ObRet AddObfuscationEntry(Packet*, ob_size_t, ob_size_t, ob_char_t);
+static int ObfuscationEntrySort(const void*, const void*);
+static ObRet TraverseObfuscationList(ObfuscationCallbackData*,
+const DAQ_PktHdr_t*, const uint8_t*, ob_size_t);
+static int ObfuscateStreamSegmentsCallback(DAQ_PktHdr_t*,
+uint8_t*, uint8_t*, uint32_t, void*);
+static ObRet GetObfuscatedPayloadCallback(const DAQ_PktHdr_t*,
+const uint8_t*, ob_size_t, ob_char_t, void*);
+static void PrintObfuscationEntry(const ObfuscationEntry*, int);
 
 /*******************************************************************************
  * API prototypes
  ******************************************************************************/
 static void OB_API_ResetObfuscationEntries(void);
-static ObRet OB_API_AddObfuscationEntry(Packet *, ob_size_t,
-        ob_size_t, ob_char_t);
-static int OB_API_PayloadObfuscationRequired(Packet *);
-static ObRet OB_API_ObfuscatePacket(Packet *, ObfuscationCallback, void *);
-static ObRet OB_API_ObfuscatePacketStreamSegments(Packet *,
-        ObfuscationCallback, void *);
-static ObRet OB_API_GetObfuscatedPayload(Packet *, uint8_t **, ob_size_t *);
+static ObRet OB_API_AddObfuscationEntry(Packet*, ob_size_t,
+ob_size_t, ob_char_t);
+static int OB_API_PayloadObfuscationRequired(Packet*);
+static ObRet OB_API_ObfuscatePacket(Packet*, ObfuscationCallback, void*);
+static ObRet OB_API_ObfuscatePacketStreamSegments(Packet*,
+ObfuscationCallback, void*);
+static ObRet OB_API_GetObfuscatedPayload(Packet*, uint8_t**, ob_size_t*);
 static void OB_API_PrintObfuscationEntries(int);
 
 /* API accessor */
@@ -163,8 +154,7 @@ ObfuscationApi obfuscationApi =
     OB_API_PrintObfuscationEntries         // printObfuscationEntries
 };
 
-ObfuscationApi *obApi = &obfuscationApi;
-
+ObfuscationApi* obApi = &obfuscationApi;
 
 /*******************************************************************************
  * API Function definitions
@@ -178,8 +168,8 @@ void OB_API_ResetObfuscationEntries(void)
 }
 
 // addObfuscationEntry
-static ObRet OB_API_AddObfuscationEntry(Packet *p, ob_size_t offset,
-        ob_size_t length, ob_char_t ob_char)
+static ObRet OB_API_AddObfuscationEntry(Packet* p, ob_size_t offset,
+    ob_size_t length, ob_char_t ob_char)
 {
     if (p == NULL)
         return OB_RET_ERROR;
@@ -190,14 +180,14 @@ static ObRet OB_API_AddObfuscationEntry(Packet *p, ob_size_t offset,
 }
 
 // payloadObfuscationRequired
-static int OB_API_PayloadObfuscationRequired(Packet *p)
+static int OB_API_PayloadObfuscationRequired(Packet* p)
 {
     return PayloadObfuscationRequired(p);
 }
 
 // obfuscatePacket
-static ObRet OB_API_ObfuscatePacket(Packet *p,
-        ObfuscationCallback user_callback, void *user_data)
+static ObRet OB_API_ObfuscatePacket(Packet* p,
+    ObfuscationCallback user_callback, void* user_data)
 {
     ObfuscationCallbackData callback_data;
 
@@ -209,13 +199,13 @@ static ObRet OB_API_ObfuscatePacket(Packet *p,
 
     /* Send header information first - isn't obfuscated */
     if (user_callback(p->pkth, p->pkt, (ob_size_t)(p->data - p->pkt),
-                0, user_data) != OB_RET_SUCCESS)
+        0, user_data) != OB_RET_SUCCESS)
     {
         return OB_RET_ERROR;
     }
 
     if (TraverseObfuscationList(&callback_data, NULL, p->data,
-                (ob_size_t)(p->pkth->caplen - (p->data - p->pkt))) != OB_RET_SUCCESS)
+        (ob_size_t)(p->pkth->caplen - (p->data - p->pkt))) != OB_RET_SUCCESS)
     {
         return OB_RET_ERROR;
     }
@@ -224,8 +214,8 @@ static ObRet OB_API_ObfuscatePacket(Packet *p,
 }
 
 // obfuscatePacketStreamSegments
-static ObRet OB_API_ObfuscatePacketStreamSegments(Packet *p,
-        ObfuscationCallback user_callback, void *user_data)
+static ObRet OB_API_ObfuscatePacketStreamSegments(Packet* p,
+    ObfuscationCallback user_callback, void* user_data)
 {
     ObfuscationStreamCallbackData stream_callback_data;
     ObfuscationCallbackData callback_data;
@@ -235,10 +225,10 @@ static ObRet OB_API_ObfuscatePacketStreamSegments(Packet *p,
 
     SortObfuscationEntries();
     SetObfuscationStreamCallbackData(&stream_callback_data, &callback_data,
-            p, user_callback, user_data);
+        p, user_callback, user_data);
 
     if (stream.traverse_stream_segments(p, ObfuscateStreamSegmentsCallback,
-                (void *)&stream_callback_data) == -1)
+        (void*)&stream_callback_data) == -1)
     {
         return OB_RET_ERROR;
     }
@@ -247,8 +237,8 @@ static ObRet OB_API_ObfuscatePacketStreamSegments(Packet *p,
 }
 
 // getObfuscatedPayload
-static ObRet OB_API_GetObfuscatedPayload(Packet *p,
-        uint8_t **payload, ob_size_t *payload_len)
+static ObRet OB_API_GetObfuscatedPayload(Packet* p,
+    uint8_t** payload, ob_size_t* payload_len)
 {
     ObfuscationCallbackData callback_data;
     ObfuscatedPayload user_data;
@@ -268,10 +258,10 @@ static ObRet OB_API_GetObfuscatedPayload(Packet *p,
 
     SortObfuscationEntries();
     SetObfuscationCallbackData(&callback_data, p,
-            GetObfuscatedPayloadCallback, (void *)&user_data);
+        GetObfuscatedPayloadCallback, (void*)&user_data);
 
     if (TraverseObfuscationList(&callback_data, NULL, p->data,
-                (ob_size_t)(p->pkth->caplen - (p->data - p->pkt))) != OB_RET_SUCCESS)
+        (ob_size_t)(p->pkth->caplen - (p->data - p->pkt))) != OB_RET_SUCCESS)
     {
         return OB_RET_ERROR;
     }
@@ -283,7 +273,7 @@ static ObRet OB_API_GetObfuscatedPayload(Packet *p,
 static void OB_API_PrintObfuscationEntries(int sorted)
 {
     int i;
-    ObfuscationEntry *entry;
+    ObfuscationEntry* entry;
 
     if (sorted)
         SortObfuscationEntries();
@@ -300,7 +290,6 @@ static void OB_API_PrintObfuscationEntries(int sorted)
         PrintObfuscationEntry(entry, 2);
     }
 }
-
 
 /*******************************************************************************
  * Private function definitions
@@ -389,18 +378,18 @@ static inline ObRet ObfuscationEntryOverflow(ob_size_t length)
  *  1  if the packet has been flagged for obfuscation.
  *
  ******************************************************************************/
-static inline int PayloadObfuscationRequired(Packet *p)
+static inline int PayloadObfuscationRequired(Packet* p)
 {
     if ((p == NULL) || (p->pkth == NULL)
-            || (p->pkt == NULL) || (p->data == NULL)
-            || (p->pkt >= p->data)
-            || ((ob_size_t)(p->data - p->pkt) > p->pkth->caplen))
+        || (p->pkt == NULL) || (p->data == NULL)
+        || (p->pkt >= p->data)
+        || ((ob_size_t)(p->data - p->pkt) > p->pkth->caplen))
     {
         return 0;
     }
 
     if (!(p->packet_flags & PKT_PAYLOAD_OBFUSCATE)
-            || (ob_struct.num_entries == 0))
+        || (ob_struct.num_entries == 0))
     {
         return 0;
     }
@@ -429,8 +418,8 @@ static inline int PayloadObfuscationRequired(Packet *p)
  *  None
  *
  ******************************************************************************/
-static inline void SetObfuscationEntry(ObfuscationEntry *entry,
-        Packet *p, ob_size_t offset, ob_size_t length, ob_char_t ob_char)
+static inline void SetObfuscationEntry(ObfuscationEntry* entry,
+    Packet* p, ob_size_t offset, ob_size_t length, ob_char_t ob_char)
 {
     if (entry == NULL)
         return;
@@ -463,8 +452,8 @@ static inline void SetObfuscationEntry(ObfuscationEntry *entry,
  *
  ******************************************************************************/
 static inline void SetObfuscationCallbackData(
-        ObfuscationCallbackData *callback_data, Packet *packet,
-        ObfuscationCallback user_callback, void *user_data)
+    ObfuscationCallbackData* callback_data, Packet* packet,
+    ObfuscationCallback user_callback, void* user_data)
 {
     if (callback_data == NULL)
         return;
@@ -500,9 +489,9 @@ static inline void SetObfuscationCallbackData(
  *
  ******************************************************************************/
 static inline void SetObfuscationStreamCallbackData(
-        ObfuscationStreamCallbackData *stream_callback_data,
-        ObfuscationCallbackData *callback_data, Packet *packet,
-        ObfuscationCallback user_callback, void *user_data)
+    ObfuscationStreamCallbackData* stream_callback_data,
+    ObfuscationCallbackData* callback_data, Packet* packet,
+    ObfuscationCallback user_callback, void* user_data)
 {
     if ((stream_callback_data == NULL) || (callback_data == NULL))
         return;
@@ -531,8 +520,8 @@ static inline void SortObfuscationEntries(void)
 {
     if (!ob_struct.sorted)
     {
-        qsort((void *)ob_struct.sort_entries, ob_struct.num_entries,
-                sizeof(ObfuscationEntry *), ObfuscationEntrySort);
+        qsort((void*)ob_struct.sort_entries, ob_struct.num_entries,
+            sizeof(ObfuscationEntry*), ObfuscationEntrySort);
         ob_struct.sorted = 1;
     }
 }
@@ -560,10 +549,10 @@ static inline void SortObfuscationEntries(void)
  *  OB_RET_OVERFLOW  if there is no room left to store the entry
  *
  ******************************************************************************/
-static ObRet AddObfuscationEntry(Packet *p, ob_size_t offset,
-        ob_size_t length, ob_char_t ob_char)
+static ObRet AddObfuscationEntry(Packet* p, ob_size_t offset,
+    ob_size_t length, ob_char_t ob_char)
 {
-    ObfuscationEntry *entry;
+    ObfuscationEntry* entry;
     int entry_index = ob_struct.num_entries;
 
     if (length == OB_LENGTH_MAX)
@@ -630,10 +619,10 @@ static ObRet AddObfuscationEntry(Packet *p, ob_size_t offset,
  *   0  if both offset and length are equal
  *
  ******************************************************************************/
-static int ObfuscationEntrySort(const void *data1, const void *data2)
+static int ObfuscationEntrySort(const void* data1, const void* data2)
 {
-    ObfuscationEntry *ob1 = *((ObfuscationEntry **)data1);
-    ObfuscationEntry *ob2 = *((ObfuscationEntry **)data2);
+    ObfuscationEntry* ob1 = *((ObfuscationEntry**)data1);
+    ObfuscationEntry* ob2 = *((ObfuscationEntry**)data2);
 
     if (ob1->offset < ob2->offset)
         return -1;
@@ -674,14 +663,14 @@ static int ObfuscationEntrySort(const void *data1, const void *data2)
  *  OB_RET_ERROR  if the user callback doesn't return OB_RET_SUCCESS
  *
  ******************************************************************************/
-static ObRet TraverseObfuscationList(ObfuscationCallbackData *data,
-        const DAQ_PktHdr_t *pkth, const uint8_t *payload_data,
-        ob_size_t payload_size)
+static ObRet TraverseObfuscationList(ObfuscationCallbackData* data,
+    const DAQ_PktHdr_t* pkth, const uint8_t* payload_data,
+    ob_size_t payload_size)
 {
     int i;
     ob_size_t total_offset = data->total_offset;
     ob_size_t payload_offset = 0;
-    const DAQ_PktHdr_t *pkth_tmp = pkth;
+    const DAQ_PktHdr_t* pkth_tmp = pkth;
 #ifdef OBFUSCATION_TEST
     uint8_t print_array[OB_LENGTH_MAX];
     ob_size_t start_total_offset = 0;
@@ -694,14 +683,14 @@ static ObRet TraverseObfuscationList(ObfuscationCallbackData *data,
 #ifdef OBFUSCATION_TEST
     LogMessage("Payload data: %u bytes\n", payload_size);
     LogMessage("==============================================================="
-            "=================\n");
+        "=================\n");
 #endif
 
     /* Start from current saved obfuscation entry index */
     for (i = data->entry_index; i < ob_struct.num_entries; i++)
     {
         /* Get the entry from the sorted array */
-        const ObfuscationEntry *entry = ob_struct.sort_entries[i];
+        const ObfuscationEntry* entry = ob_struct.sort_entries[i];
         ob_size_t ob_offset = entry->offset;
         ob_size_t ob_length = entry->length;
 
@@ -709,7 +698,8 @@ static ObRet TraverseObfuscationList(ObfuscationCallbackData *data,
         if (entry->p != data->packet)
         {
 #ifdef OBFUSCATION_TEST
-            LogMessage("flags1: %08x, flags2: %08x\n", entry->p->packet_flags, data->packet->packet_flags);
+            LogMessage("flags1: %08x, flags2: %08x\n", entry->p->packet_flags,
+                data->packet->packet_flags);
 #endif
             continue;
         }
@@ -717,7 +707,7 @@ static ObRet TraverseObfuscationList(ObfuscationCallbackData *data,
         /* We've already obfuscated this part of the packet payload
          * Account for overflow */
         if (((ob_offset + ob_length) <= total_offset)
-                && ((ob_offset + ob_length) > ob_offset))
+            && ((ob_offset + ob_length) > ob_offset))
         {
             continue;
         }
@@ -747,14 +737,14 @@ static ObRet TraverseObfuscationList(ObfuscationCallbackData *data,
             /* Call the user callback and tell it not to obfuscate the data
              * by passing in a non-NULL packet pointer */
             if (data->user_callback(pkth_tmp, payload_data + payload_offset,
-                        length, 0, data->user_data) != OB_RET_SUCCESS)
+                length, 0, data->user_data) != OB_RET_SUCCESS)
             {
                 return OB_RET_ERROR;
             }
 
 #ifdef OBFUSCATION_TEST
             SafeMemcpy(print_array + payload_offset, payload_data + payload_offset,
-                    length, print_array, print_array + sizeof(print_array));
+                length, print_array, print_array + sizeof(print_array));
 #endif
             /* Only the first payload call sends the pcap_pkthdr */
             pkth_tmp = NULL;
@@ -783,7 +773,7 @@ static ObRet TraverseObfuscationList(ObfuscationCallbackData *data,
         /* Adjust the amount of data to obfuscate if it exceeds the amount of
          * data left in the packet.  Account for overflow */
         if (((payload_offset + ob_length) > payload_size)
-                || ((payload_offset + ob_length) <= payload_offset))
+            || ((payload_offset + ob_length) <= payload_offset))
         {
             ob_length = payload_size - payload_offset;
         }
@@ -791,7 +781,7 @@ static ObRet TraverseObfuscationList(ObfuscationCallbackData *data,
         /* Call the user callback and tell it to obfuscate the data by passing
          * in a NULL packet pointer */
         if (data->user_callback(pkth_tmp, NULL, ob_length,
-                    entry->ob_char, data->user_data) != OB_RET_SUCCESS)
+            entry->ob_char, data->user_data) != OB_RET_SUCCESS)
         {
             return OB_RET_ERROR;
         }
@@ -803,7 +793,7 @@ static ObRet TraverseObfuscationList(ObfuscationCallbackData *data,
         LogMessage("\n");
 
         SafeMemset(print_array + payload_offset, entry->ob_char,
-                ob_length, print_array, print_array + sizeof(print_array));
+            ob_length, print_array, print_array + sizeof(print_array));
 
         if (ob_length < entry->length)
         {
@@ -812,20 +802,20 @@ static ObRet TraverseObfuscationList(ObfuscationCallbackData *data,
                 if (payload_offset + ob_length == payload_size)
                 {
                     LogMessage("  Obfuscating beyond already obfuscated "
-                            "(%u bytes) and to end of payload: %u bytes\n\n",
-                            (start_total_offset - ob_offset), ob_length);
+                        "(%u bytes) and to end of payload: %u bytes\n\n",
+                        (start_total_offset - ob_offset), ob_length);
                 }
                 else
                 {
                     LogMessage("  Obfuscating beyond already obfuscated "
-                            "(%u bytes): %u bytes\n\n",
-                            (start_total_offset - ob_offset), ob_length);
+                        "(%u bytes): %u bytes\n\n",
+                        (start_total_offset - ob_offset), ob_length);
                 }
             }
             else
             {
                 LogMessage("  Obfuscating to end of payload: "
-                        "%u bytes\n\n", ob_length);
+                    "%u bytes\n\n", ob_length);
             }
         }
         else
@@ -834,12 +824,12 @@ static ObRet TraverseObfuscationList(ObfuscationCallbackData *data,
         }
 
         PrintPacketData(print_array + start_payload_offset,
-                (payload_offset - start_payload_offset) + ob_length);
+            (payload_offset - start_payload_offset) + ob_length);
 
         if (((entry->offset + entry->length) - (total_offset + ob_length)) > 0)
         {
             LogMessage("\n  Remaining amount to obfuscate: %u bytes\n",
-                    (entry->offset + entry->length) - (total_offset + ob_length));
+                (entry->offset + entry->length) - (total_offset + ob_length));
         }
 
         LogMessage("\n");
@@ -866,14 +856,14 @@ static ObRet TraverseObfuscationList(ObfuscationCallbackData *data,
         /* Call the user callback and tell it not to obfuscate the data
          * by passing in a non-NULL packet pointer */
         if (data->user_callback(pkth_tmp, payload_data + payload_offset,
-                    length, 0, data->user_data) != OB_RET_SUCCESS)
+            length, 0, data->user_data) != OB_RET_SUCCESS)
         {
             return OB_RET_ERROR;
         }
 
 #ifdef OBFUSCATION_TEST
         SafeMemcpy(print_array + payload_offset, payload_data + payload_offset,
-                length, print_array, print_array + sizeof(print_array));
+            length, print_array, print_array + sizeof(print_array));
 #endif
 
         /* Adjust offsets - don't need to adjust packet offset since
@@ -884,7 +874,7 @@ static ObRet TraverseObfuscationList(ObfuscationCallbackData *data,
 #ifdef OBFUSCATION_TEST
     LogMessage("Obfuscated payload\n");
     LogMessage("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-            "~~~~~~~~~~\n");
+        "~~~~~~~~~~\n");
     PrintPacketData(print_array, payload_size);
     LogMessage("\n\n");
 #endif
@@ -922,18 +912,18 @@ static ObRet TraverseObfuscationList(ObfuscationCallbackData *data,
  *      traversing and not call this anymore.
  *
  ******************************************************************************/
-static int ObfuscateStreamSegmentsCallback(DAQ_PktHdr_t *pkth,
-        uint8_t *pkt, uint8_t *payload, uint32_t seq_num, void *data)
+static int ObfuscateStreamSegmentsCallback(DAQ_PktHdr_t* pkth,
+    uint8_t* pkt, uint8_t* payload, uint32_t seq_num, void* data)
 {
-    ObfuscationStreamCallbackData *callback_data =
-        (ObfuscationStreamCallbackData *)data;
+    ObfuscationStreamCallbackData* callback_data =
+        (ObfuscationStreamCallbackData*)data;
     ob_size_t payload_size = (uint16_t)(pkth->caplen - (payload - pkt));
 
     if ((pkt >= payload) || ((ob_size_t)(payload - pkt) > pkth->caplen))
         return -1;
 
     if (callback_data->data->user_callback(pkth, pkt, (ob_size_t)(payload - pkt),
-                0, callback_data->data->user_data) != OB_RET_SUCCESS)
+        0, callback_data->data->user_data) != OB_RET_SUCCESS)
     {
         return -1;
     }
@@ -953,7 +943,7 @@ static int ObfuscateStreamSegmentsCallback(DAQ_PktHdr_t *pkth,
     }
 
     if (TraverseObfuscationList(callback_data->data, NULL,
-                payload, payload_size) != OB_RET_SUCCESS)
+        payload, payload_size) != OB_RET_SUCCESS)
     {
         return -1;
     }
@@ -988,11 +978,11 @@ static int ObfuscateStreamSegmentsCallback(DAQ_PktHdr_t *pkth,
  *
  ******************************************************************************/
 static ObRet GetObfuscatedPayloadCallback(
-    const DAQ_PktHdr_t*, const uint8_t *packet_data,
-    ob_size_t length, ob_char_t ob_char, void *user_data)
+    const DAQ_PktHdr_t*, const uint8_t* packet_data,
+    ob_size_t length, ob_char_t ob_char, void* user_data)
 {
-    ObfuscatedPayload *ob_payload = (ObfuscatedPayload *)user_data;
-    uint8_t *payload;
+    ObfuscatedPayload* ob_payload = (ObfuscatedPayload*)user_data;
+    uint8_t* payload;
     ob_size_t payload_len, payload_size;
 
     if (ob_payload == NULL)
@@ -1009,12 +999,12 @@ static ObRet GetObfuscatedPayloadCallback(
     {
         /* Allocate extra so we don't have to reallocate every time in */
         ob_size_t new_size = payload_len + length + 100;
-        uint8_t *tmp = (uint8_t *)SnortAlloc(new_size);
+        uint8_t* tmp = (uint8_t*)SnortAlloc(new_size);
 
         if (payload != NULL)
         {
             if (SafeMemcpy(tmp, payload, payload_len,
-                        tmp, tmp + new_size) != SAFEMEM_SUCCESS)
+                tmp, tmp + new_size) != SAFEMEM_SUCCESS)
             {
                 free(tmp);
                 free(payload);
@@ -1034,7 +1024,7 @@ static ObRet GetObfuscatedPayloadCallback(
     if (packet_data != NULL)
     {
         if (SafeMemcpy(payload + payload_len, packet_data, length,
-                    payload, payload + payload_size) != SAFEMEM_SUCCESS)
+            payload, payload + payload_size) != SAFEMEM_SUCCESS)
         {
             free(payload);
             return OB_RET_ERROR;
@@ -1043,7 +1033,7 @@ static ObRet GetObfuscatedPayloadCallback(
     else
     {
         if (SafeMemset(payload + payload_len, (uint8_t)ob_char, length,
-                    payload, payload + payload_size) != SAFEMEM_SUCCESS)
+            payload, payload + payload_size) != SAFEMEM_SUCCESS)
         {
             free(payload);
             return OB_RET_ERROR;
@@ -1069,8 +1059,8 @@ static ObRet GetObfuscatedPayloadCallback(
  *  None
  *
  ******************************************************************************/
-static void PrintObfuscationEntry(const ObfuscationEntry *entry,
-        int leading_space)
+static void PrintObfuscationEntry(const ObfuscationEntry* entry,
+    int leading_space)
 {
     if (entry == NULL)
         return;
@@ -1083,7 +1073,6 @@ static void PrintObfuscationEntry(const ObfuscationEntry *entry,
     else
         LogMessage("%*sOb char: 0x%02x\n", leading_space, "", entry->ob_char);
 }
-
 
 /******************************************************************************
  * Testing
@@ -1102,38 +1091,36 @@ static void PrintObfuscationEntry(const ObfuscationEntry *entry,
 /* Used for standalone testing */
 struct Segment
 {
-    DAQ_PktHdr_t *pkth;
-    uint8_t *data;
+    DAQ_PktHdr_t* pkth;
+    uint8_t* data;
     uint16_t size;
-    Segment *next;
-
-} ;
+    Segment* next;
+};
 
 /* Used for standalone testing */
 struct ObPacket
 {
     Packet p;
-    Segment *seglist;
-
+    Segment* seglist;
 };
 
-static uint8_t *ob_payload = NULL;
-static void ObTestAlloc(void **, int, int);
-static void CreateObEntries(Packet *, ob_char_t, ob_size_t,
-        ob_size_t, int, int);
-static ObRet ObCallback(DAQ_PktHdr_t *, uint8_t *, ob_char_t,
-        ob_size_t, void *);
-static uint8_t * GetPayloadFromFile(char *, ob_size_t *);
+static uint8_t* ob_payload = NULL;
+static void ObTestAlloc(void**, int, int);
+static void CreateObEntries(Packet*, ob_char_t, ob_size_t,
+ob_size_t, int, int);
+static ObRet ObCallback(DAQ_PktHdr_t*, uint8_t*, ob_char_t,
+ob_size_t, void*);
+static uint8_t* GetPayloadFromFile(char*, ob_size_t*);
 
-static int TraverseReassembled(Packet *p,
-        int (*callback)(DAQ_PktHdr_t *, uint8_t *, void *),
-        void *user_data)
+static int TraverseReassembled(Packet* p,
+    int (* callback)(DAQ_PktHdr_t*, uint8_t*, void*),
+    void* user_data)
 {
-    ObfuscationCallbackData *callback_data =
-        (ObfuscationCallbackData *)user_data;
+    ObfuscationCallbackData* callback_data =
+        (ObfuscationCallbackData*)user_data;
     int segments = 0;
-    Segment *seg;
-    ObPacket *op = (ObPacket *)p;
+    Segment* seg;
+    ObPacket* op = (ObPacket*)p;
 
     for (seg = op->seglist; seg != NULL; seg = seg->next)
     {
@@ -1145,7 +1132,7 @@ static int TraverseReassembled(Packet *p,
     return segments;
 }
 
-static void ObTestAlloc(void **ptr, int ptr_size, int this_size)
+static void ObTestAlloc(void** ptr, int ptr_size, int this_size)
 {
     if (ptr == NULL)
         return;
@@ -1173,14 +1160,14 @@ static void ObTestAlloc(void **ptr, int ptr_size, int this_size)
     }
 }
 
-static void CreateObEntries(Packet *p, ob_char_t ob_char,
-        ob_size_t ob_offset, ob_size_t ob_length, int reverse, int add_maxlen)
+static void CreateObEntries(Packet* p, ob_char_t ob_char,
+    ob_size_t ob_offset, ob_size_t ob_length, int reverse, int add_maxlen)
 {
     typedef struct _ob_tmp_struct
-        { ob_size_t offset; ob_size_t length; } ob_tmp_struct_t;
+    { ob_size_t offset; ob_size_t length; } ob_tmp_struct_t;
 
     ob_size_t offset;
-    ob_tmp_struct_t *tmp_struct = NULL;
+    ob_tmp_struct_t* tmp_struct = NULL;
     int num_tmps = 0;
     int i;
 
@@ -1188,13 +1175,13 @@ static void CreateObEntries(Packet *p, ob_char_t ob_char,
         return;
 
     for (offset = (rand() % ob_offset) + 1;
-            offset < (p->dsize - ob_offset);
-            offset += (rand() % ob_offset) + 1)
+        offset < (p->dsize - ob_offset);
+        offset += (rand() % ob_offset) + 1)
     {
         ob_size_t length = rand() % ob_length + 1;
 
-        ObTestAlloc((void **)&tmp_struct, sizeof(ob_tmp_struct_t) * num_tmps,
-                sizeof(ob_tmp_struct_t) * (num_tmps + 1));
+        ObTestAlloc((void**)&tmp_struct, sizeof(ob_tmp_struct_t) * num_tmps,
+            sizeof(ob_tmp_struct_t) * (num_tmps + 1));
         tmp_struct[num_tmps].offset = offset;
         tmp_struct[num_tmps].length = length;
         num_tmps++;
@@ -1211,7 +1198,7 @@ static void CreateObEntries(Packet *p, ob_char_t ob_char,
         for (i = num_tmps - 1; i >= 0; i--)
         {
             obApi->addObfuscationEntry(p, tmp_struct[i].offset,
-                    tmp_struct[i].length, ob_char);
+                tmp_struct[i].length, ob_char);
         }
     }
     else
@@ -1219,15 +1206,15 @@ static void CreateObEntries(Packet *p, ob_char_t ob_char,
         for (i = 0; i < num_tmps; i++)
         {
             obApi->addObfuscationEntry(p, tmp_struct[i].offset,
-                    tmp_struct[i].length, ob_char);
+                tmp_struct[i].length, ob_char);
         }
     }
 }
 
-static ObRet ObCallback(DAQ_PktHdr_t *pkth, uint8_t *packet_data,
-        ob_char_t ob_char, ob_size_t length, void *user_data)
+static ObRet ObCallback(DAQ_PktHdr_t* pkth, uint8_t* packet_data,
+    ob_char_t ob_char, ob_size_t length, void* user_data)
 {
-    ob_size_t *offset = (ob_size_t *)user_data;
+    ob_size_t* offset = (ob_size_t*)user_data;
 
     if (packet_data != NULL)
         memcpy(ob_payload + *offset, packet_data, length);
@@ -1238,10 +1225,10 @@ static ObRet ObCallback(DAQ_PktHdr_t *pkth, uint8_t *packet_data,
     return OB_RET_SUCCESS;
 }
 
-static uint8_t * GetPayloadFromFile(char *payload_file, ob_size_t *payload_bytes)
+static uint8_t* GetPayloadFromFile(char* payload_file, ob_size_t* payload_bytes)
 {
-    uint8_t *payload = NULL;
-    FILE *fp;
+    uint8_t* payload = NULL;
+    FILE* fp;
     ob_size_t bytes;
 
     if (payload_bytes == NULL)
@@ -1253,16 +1240,16 @@ static uint8_t * GetPayloadFromFile(char *payload_file, ob_size_t *payload_bytes
     if (fp == NULL)
     {
         fprintf(stderr, "Could not open payload file \"%s\": %s\n",
-                payload_file, get_error(errno));
+            payload_file, get_error(errno));
         exit(1);
     }
 
-    ObTestAlloc((void **)&payload, 0, PAYLOAD_ALLOC_SIZE);
+    ObTestAlloc((void**)&payload, 0, PAYLOAD_ALLOC_SIZE);
     while ((bytes = fread(payload + *payload_bytes, sizeof(char),
-                    PAYLOAD_ALLOC_SIZE, fp)) == PAYLOAD_ALLOC_SIZE)
+            PAYLOAD_ALLOC_SIZE, fp)) == PAYLOAD_ALLOC_SIZE)
     {
-        ObTestAlloc((void **)&payload, *payload_bytes + bytes,
-                *payload_bytes + bytes + bytes);
+        ObTestAlloc((void**)&payload, *payload_bytes + bytes,
+            *payload_bytes + bytes + bytes);
         *payload_bytes += bytes;
     }
 
@@ -1273,9 +1260,9 @@ static uint8_t * GetPayloadFromFile(char *payload_file, ob_size_t *payload_bytes
     return payload;
 }
 
-static uint8_t * GetStaticPayload(ob_char_t ob_char, ob_size_t *payload_bytes)
+static uint8_t* GetStaticPayload(ob_char_t ob_char, ob_size_t* payload_bytes)
 {
-    uint8_t *payload = NULL;
+    uint8_t* payload = NULL;
     ob_size_t alloc_size = 1000;
     ob_char_t char1 = 0x00;
     ob_char_t char2 = 0x01;
@@ -1284,31 +1271,31 @@ static uint8_t * GetStaticPayload(ob_char_t ob_char, ob_size_t *payload_bytes)
     if (c == ob_char)
         c = char2;
 
-    ObTestAlloc((void **)&payload, 0, alloc_size);
+    ObTestAlloc((void**)&payload, 0, alloc_size);
     memset(payload, c, alloc_size);
 
     *payload_bytes = alloc_size;
     return payload;
 }
 
-static void SegmentPayload(Packet *p)
+static void SegmentPayload(Packet* p)
 {
     ob_size_t length;
     ob_size_t i;
-    Segment *last;
-    ObPacket *op = (ObPacket *)p;
+    Segment* last;
+    ObPacket* op = (ObPacket*)p;
 
     for (i = 0; i < p->dsize; i += length)
     {
-        Segment *seg = NULL;
+        Segment* seg = NULL;
 
         length = rand() % 20 + 1;
         if (i + length > p->dsize)
             length = p->dsize - i;
 
-        ObTestAlloc((void **)&seg, 0, sizeof(Segment));
-        ObTestAlloc((void **)&seg->data, 0, length);
-        ObTestAlloc((void **)&seg->pkth, 0, sizeof(DAQ_PktHdr_t));
+        ObTestAlloc((void**)&seg, 0, sizeof(Segment));
+        ObTestAlloc((void**)&seg->data, 0, length);
+        ObTestAlloc((void**)&seg->pkth, 0, sizeof(DAQ_PktHdr_t));
 
         memcpy(seg->data, p->data + i, length);
         seg->size = length;
@@ -1330,7 +1317,7 @@ static void SegmentPayload(Packet *p)
     }
 }
 
-void PrintUsage(char *prog)
+void PrintUsage(char* prog)
 {
     fprintf(stderr, "Usage: %s [options]\n", prog);
     fprintf(stderr, "  -a (add max length entry)\n");
@@ -1342,96 +1329,97 @@ void PrintUsage(char *prog)
     fprintf(stderr, "  -r (reverse entries before sorting)\n");
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     char c;
-    char *payload_file = NULL;
+    char* payload_file = NULL;
     ob_char_t ob_char = 'X';
     int segment = 0;
     int reverse = 0;
     int add_maxlen = 0;
     ob_size_t ob_offset = 50;
     ob_size_t ob_length = 16;
-    uint8_t *payload = NULL;
+    uint8_t* payload = NULL;
     ob_size_t payload_bytes = 0;
     ob_size_t offset = 0;
-    DAQ_PktHdr_t pkth, *pkthtmp;
-    Packet *tmp = PacketManager::encode_new();
+    DAQ_PktHdr_t pkth, * pkthtmp;
+    Packet* tmp = PacketManager::encode_new();
     Packet& packet = *tmp;
 
     while ((c = getopt(argc, argv, "ac:l:o:p:rsh")) != -1)
     {
-        switch (c) {
-            case 'a':
-                add_maxlen = 1;
-                break;
-            case 'c':
-                ob_char = (ob_char_t)strtol(optarg, NULL, 0);
-                break;
-            case 'l':
-                {
-                    int value;
-                    if (!isdigit(optarg[0]))
-                    {
-                        PrintUsage(argv[0]);
-                        fprintf(stderr, "Obfuscation max length must be a "
-                                "positive integer.\n");
-                        exit(1);
-                    }
-                    value = atoi(optarg);
-                    if (value > UINT16_MAX)
-                    {
-                        PrintUsage(argv[0]);
-                        fprintf(stderr, "Obfuscation max length must be "
-                                "less than 65535.\n");
-                        exit(1);
-                    }
-                    ob_length = (ob_size_t)value;
-                }
-                break;
-            case 'o':
-                {
-                    int value;
-                    if (!isdigit(optarg[0]))
-                    {
-                        PrintUsage(argv[0]);
-                        fprintf(stderr, "Obfuscation offset must be a "
-                                "positive integer.\n");
-                        exit(1);
-                    }
-                    value = atoi(optarg);
-                    if (value > UINT16_MAX)
-                    {
-                        PrintUsage(argv[0]);
-                        fprintf(stderr, "Obfuscation max offset must "
-                                "be less than 65535.\n");
-                        exit(1);
-                    }
-                    ob_offset = (ob_size_t)value;
-                }
-                break;
-            case 'p':
-                payload_file = strdup(optarg);
-                if (payload_file == NULL)
-                {
-                    PrintUsage(argv[0]);
-                    fprintf(stderr, "Failed to copy payload file.\n");
-                    exit(1);
-                }
-                break;
-            case 'r':
-                reverse = 1;
-                break;
-            case 's':
-                segment = 1;
-                break;
-            case 'h':
+        switch (c)
+        {
+        case 'a':
+            add_maxlen = 1;
+            break;
+        case 'c':
+            ob_char = (ob_char_t)strtol(optarg, NULL, 0);
+            break;
+        case 'l':
+        {
+            int value;
+            if (!isdigit(optarg[0]))
+            {
                 PrintUsage(argv[0]);
-                exit(0);
-            default:
-                PrintUsage(argv[0]);
-                fprintf(stderr, "Invalid option. Use -h for usage.\n");
+                fprintf(stderr, "Obfuscation max length must be a "
+                    "positive integer.\n");
                 exit(1);
+            }
+            value = atoi(optarg);
+            if (value > UINT16_MAX)
+            {
+                PrintUsage(argv[0]);
+                fprintf(stderr, "Obfuscation max length must be "
+                    "less than 65535.\n");
+                exit(1);
+            }
+            ob_length = (ob_size_t)value;
+        }
+        break;
+        case 'o':
+        {
+            int value;
+            if (!isdigit(optarg[0]))
+            {
+                PrintUsage(argv[0]);
+                fprintf(stderr, "Obfuscation offset must be a "
+                    "positive integer.\n");
+                exit(1);
+            }
+            value = atoi(optarg);
+            if (value > UINT16_MAX)
+            {
+                PrintUsage(argv[0]);
+                fprintf(stderr, "Obfuscation max offset must "
+                    "be less than 65535.\n");
+                exit(1);
+            }
+            ob_offset = (ob_size_t)value;
+        }
+        break;
+        case 'p':
+            payload_file = strdup(optarg);
+            if (payload_file == NULL)
+            {
+                PrintUsage(argv[0]);
+                fprintf(stderr, "Failed to copy payload file.\n");
+                exit(1);
+            }
+            break;
+        case 'r':
+            reverse = 1;
+            break;
+        case 's':
+            segment = 1;
+            break;
+        case 'h':
+            PrintUsage(argv[0]);
+            exit(0);
+        default:
+            PrintUsage(argv[0]);
+            fprintf(stderr, "Invalid option. Use -h for usage.\n");
+            exit(1);
         }
     }
 
@@ -1451,7 +1439,7 @@ int main(int argc, char *argv[])
         payload = GetStaticPayload(ob_char, &payload_bytes);
     }
 
-    ObTestAlloc((void **)&ob_payload, 0, payload_bytes);
+    ObTestAlloc((void**)&ob_payload, 0, payload_bytes);
 
     obApi->resetObfuscationEntries();
 
@@ -1462,7 +1450,7 @@ int main(int argc, char *argv[])
     packet.iplist_id = 0;
     packeet.ps_proto = 0;
 
-    pkthtmp = (DAQ_PktHdr_t *)&packet.pkth;
+    pkthtmp = (DAQ_PktHdr_t*)&packet.pkth;
     pkthtmp = &pkth;
     pkthtmp->caplen = payload_bytes;
     pkthtmp->ts.tv_sec = 0;
@@ -1472,7 +1460,7 @@ int main(int argc, char *argv[])
     packet.dsize = payload_bytes;
 
     CreateObEntries(&packet, ob_char, ob_offset, ob_length,
-            reverse, add_maxlen);
+        reverse, add_maxlen);
     //obApi->printObfuscationEntries();
 
     if (segment)
@@ -1496,3 +1484,4 @@ int main(int argc, char *argv[])
 }
 
 #endif /* OBFUSCATION_TEST_STANDALONE */
+

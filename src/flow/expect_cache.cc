@@ -31,7 +31,7 @@
 #define MAX_HASH 1021
 #define MAX_LIST    8
 #define MAX_DATA    4
-#define MAX_WAIT  300 
+#define MAX_WAIT  300
 #define MAX_PRUNE   5
 
 //-------------------------------------------------------------------------
@@ -64,7 +64,7 @@
 // -- matching expected sessions are pulled off from the head of the node's
 //    list struct chain
 //
-// FIXIT-M expiration is by node struct but should be by list struct, ie 
+// FIXIT-M expiration is by node struct but should be by list struct, ie
 //    individual sessions, not all sessions to a given 3-tuple
 //    (this would make pruning a little harder unless we add linkage
 //    a la FlowCache)
@@ -126,15 +126,15 @@ struct ExpectKey
     uint32_t protocol;
 
     bool set(
-        const sfip_t *cliIP, uint16_t cliPort,
-        const sfip_t *srvIP, uint16_t srvPort,
+        const sfip_t* cliIP, uint16_t cliPort,
+        const sfip_t* srvIP, uint16_t srvPort,
         uint8_t proto);
 };
 
 inline bool ExpectKey::set(
-    const sfip_t *cliIP, uint16_t cliPort,
-    const sfip_t *srvIP, uint16_t srvPort,
-    uint8_t proto )
+    const sfip_t* cliIP, uint16_t cliPort,
+    const sfip_t* srvIP, uint16_t srvPort,
+    uint8_t proto)
 {
     bool reverse;
     SFIP_RET rval = sfip_compare(cliIP, srvIP);
@@ -164,7 +164,7 @@ inline bool ExpectKey::set(
 //-------------------------------------------------------------------------
 
 // Clean the hash table of at most MAX_PRUNE expired nodes
-void ExpectCache::prune ()
+void ExpectCache::prune()
 {
     time_t now = packet_time();
 
@@ -293,7 +293,7 @@ ExpectCache::ExpectCache (uint32_t max)
         hash_table->push(nodes+i);
 
     max *= MAX_LIST;
-    
+
     pool = new ExpectFlow[max];
     list = nullptr;
 
@@ -343,12 +343,12 @@ ExpectCache::~ExpectCache ()
  * session expiry in seconds.
  */
 int ExpectCache::add_flow(
-    const sfip_t *cliIP, uint16_t cliPort,
-    const sfip_t *srvIP, uint16_t srvPort,
+    const sfip_t* cliIP, uint16_t cliPort,
+    const sfip_t* srvIP, uint16_t srvPort,
     uint8_t protocol, char direction,
     FlowData* fd, int16_t appId)
 {
-    assert( !cliPort || !srvPort );
+    assert(!cliPort || !srvPort);
 
     ExpectKey hashKey;
     int reversed_key = hashKey.set(cliIP, cliPort, srvIP, srvPort, protocol);
@@ -387,8 +387,8 @@ bool ExpectCache::is_expected(Packet* p)
     if ( !hash_table->get_count() )
         return false;
 
-    const sfip_t *srcIP = p->ptrs.ip_api.get_src();
-    const sfip_t *dstIP = p->ptrs.ip_api.get_dst();
+    const sfip_t* srcIP = p->ptrs.ip_api.get_src();
+    const sfip_t* dstIP = p->ptrs.ip_api.get_dst();
 
     ExpectKey key;
     bool reversed_key = key.set(dstIP, p->ptrs.dp, srcIP, p->ptrs.sp, p->get_ip_proto_next());
@@ -430,13 +430,13 @@ bool ExpectCache::is_expected(Packet* p)
     /* Make sure the packet direction is correct */
     switch (node->direction)
     {
-        case SSN_DIR_BOTH:
-            break;
-        case SSN_DIR_FROM_CLIENT:
-        case SSN_DIR_FROM_SERVER:
-            if (node->reversed_key != reversed_key)
-                return false;
-            break;
+    case SSN_DIR_BOTH:
+        break;
+    case SSN_DIR_FROM_CLIENT:
+    case SSN_DIR_FROM_SERVER:
+        if (node->reversed_key != reversed_key)
+            return false;
+        break;
     }
     return true;
 }

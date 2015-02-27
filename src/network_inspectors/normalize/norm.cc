@@ -59,8 +59,7 @@ enum PegCounts
     PC_TCP_REQ_PAY,
     PC_TCP_REQ_URP,
     PC_MAX
-} ;
-
+};
 
 const PegInfo norm_names[] =
 {
@@ -82,9 +81,9 @@ const PegInfo norm_names[] =
     { "tcp urgent ptr", "packets without data with urgent pointer cleared" },
     { "tcp ecn pkt", "packets with ECN bits cleared" },
     { "tcp ts ecr", "timestamp cleared on non-ACKs" },
-    { "tcp req urg", "cleared urgent pointer when urgent flag is not set"},
-    { "tcp req pay", "cleared urgent pointer and urgent flag when there is no payload"},
-    { "tcp req urp", "cleared the urgent flag if the urgent pointer is not set"},
+    { "tcp req urg", "cleared urgent pointer when urgent flag is not set" },
+    { "tcp req pay", "cleared urgent pointer and urgent flag when there is no payload" },
+    { "tcp req urp", "cleared the urgent flag if the urgent pointer is not set" },
     { nullptr, nullptr }
 };
 
@@ -99,13 +98,14 @@ static int Norm_IP6_Opts(NormalizerConfig*, Packet*, uint8_t layer, int changes)
 //static int Norm_UDP(NormalizerConfig*, Packet*, uint8_t layer, int changes);
 static int Norm_TCP(NormalizerConfig*, Packet*, uint8_t layer, int changes);
 
-static const uint8_t MAX_EOL_PAD[TCP_OPTLENMAX] = {
+static const uint8_t MAX_EOL_PAD[TCP_OPTLENMAX] =
+{
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
 // go from inner to outer
-int Norm_Packet (NormalizerConfig* c, Packet* p)
+int Norm_Packet(NormalizerConfig* c, Packet* p)
 {
     uint8_t lyr = p->num_layers;
     int changes = 0;
@@ -143,10 +143,11 @@ int Norm_Packet (NormalizerConfig* c, Packet* p)
 //-----------------------------------------------------------------------
 
 #if 0
-static int Norm_Eth (Packet * p, uint8_t layer, int changes)
+static int Norm_Eth(Packet* p, uint8_t layer, int changes)
 {
     return 0;
 }
+
 #endif
 
 //-----------------------------------------------------------------------
@@ -162,24 +163,22 @@ static int Norm_Eth (Packet * p, uint8_t layer, int changes)
 static inline NormMode get_norm_mode(const NormalizerConfig* const c)
 { return c->norm_mode; }
 
-static int Norm_IP4 (
-    NormalizerConfig* c, Packet * p, uint8_t layer, int changes)
+static int Norm_IP4(
+    NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
 {
     IP4Hdr* h = (IP4Hdr*)const_cast<uint8_t*>(p->layers[layer].start);
     uint16_t fragbits = ntohs(h->ip_off);
     uint16_t origbits = fragbits;
     const NormMode mode = get_norm_mode(c);
 
-
     if ( Norm_IsEnabled(c, NORM_IP4_TRIM) && (layer == 1) )
     {
         uint32_t len = p->layers[0].length + ntohs(h->ip_len);
 
-        if ( (len < p->pkth->pktlen) && 
-           ( (len >= ETH_MIN_LEN) || (p->pkth->pktlen > ETH_MIN_LEN) )
-        )
+        if ( (len < p->pkth->pktlen) &&
+            ( (len >= ETH_MIN_LEN) || (p->pkth->pktlen > ETH_MIN_LEN) )
+            )
         {
-
             if ( mode == NORM_MODE_ON )
             {
                 ((DAQ_PktHdr_t*)p->pkth)->pktlen = (len < ETH_MIN_LEN) ? ETH_MIN_LEN : len;
@@ -271,14 +270,14 @@ static int Norm_IP4 (
 
 //-----------------------------------------------------------------------
 
-static int Norm_ICMP4 (
+static int Norm_ICMP4(
     NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
 {
     ICMPHdr* h = (ICMPHdr*)(p->layers[layer].start);
     const NormMode mode = get_norm_mode(c);
 
     if ( (h->type == ICMP_ECHO || h->type == ICMP_ECHOREPLY) &&
-         (h->code != icmp::IcmpCode::ECHO_CODE) )
+        (h->code != icmp::IcmpCode::ECHO_CODE) )
     {
         if ( mode == NORM_MODE_ON )
         {
@@ -293,12 +292,13 @@ static int Norm_ICMP4 (
 
 //-----------------------------------------------------------------------
 
-static int Norm_IP6 (
-    NormalizerConfig* c, Packet * p, uint8_t layer, int changes)
+static int Norm_IP6(
+    NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
 {
     if ( Norm_IsEnabled(c, NORM_IP6_TTL) )
     {
-        ip::IP6Hdr* h = reinterpret_cast<ip::IP6Hdr*>(const_cast<uint8_t*>(p->layers[layer].start));
+        ip::IP6Hdr* h =
+            reinterpret_cast<ip::IP6Hdr*>(const_cast<uint8_t*>(p->layers[layer].start));
 
         if ( h->ip6_hoplim < ScMinTTL() )
         {
@@ -319,14 +319,14 @@ static int Norm_IP6 (
 
 //-----------------------------------------------------------------------
 
-static int Norm_ICMP6 (
-    NormalizerConfig* c, Packet * p, uint8_t layer, int changes)
+static int Norm_ICMP6(
+    NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
 {
     ICMPHdr* h = reinterpret_cast<ICMPHdr*>(const_cast<uint8_t*>(p->layers[layer].start));
 
     if ( ((uint16_t)h->type == icmp::Icmp6Types::ECHO_6 ||
-          (uint16_t)h->type == icmp::Icmp6Types::REPLY_6) &&
-         (h->code != 0) )
+        (uint16_t)h->type == icmp::Icmp6Types::REPLY_6) &&
+        (h->code != 0) )
     {
         const NormMode mode = get_norm_mode(c);
 
@@ -355,8 +355,8 @@ struct ExtOpt
 
 #define IP6_OPT_PAD_N 1
 
-static int Norm_IP6_Opts (
-    NormalizerConfig* c, Packet * p, uint8_t layer, int changes)
+static int Norm_IP6_Opts(
+    NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
 {
     NormMode mode = get_norm_mode(c);
 
@@ -380,23 +380,24 @@ static int Norm_IP6_Opts (
 //-----------------------------------------------------------------------
 
 #if 0
-static int Norm_UDP (Packet * p, uint8_t layer, int changes)
+static int Norm_UDP(Packet* p, uint8_t layer, int changes)
 {
     return 0;
 }
+
 #endif
 
 //-----------------------------------------------------------------------
 
-static inline void NopDaOpt (uint8_t* opt, uint8_t len)
+static inline void NopDaOpt(uint8_t* opt, uint8_t len)
 {
-    memset(opt, (uint8_t)tcp::TcpOptCode::NOP , len);
+    memset(opt, (uint8_t)tcp::TcpOptCode::NOP, len);
 }
 
 #define TS_ECR_OFFSET 6
 #define TS_ECR_LENGTH 4
 
-static inline int Norm_TCPOptions (
+static inline int Norm_TCPOptions(
     NormalizerConfig* config,
     uint8_t* opts, size_t len, const tcp::TCPHdr* h, uint8_t validated_len, int changes)
 {
@@ -404,8 +405,8 @@ static inline int Norm_TCPOptions (
     const NormMode mode = get_norm_mode(config);
 
     while ( (i < len) &&
-            (opts[i] != (uint8_t)tcp::TcpOptCode::EOL) &&
-            (i < validated_len) )
+        (opts[i] != (uint8_t)tcp::TcpOptCode::EOL) &&
+        (i < validated_len) )
     {
         uint8_t olen = ( opts[i] <= 1 ) ? 1 : opts[i+1];
 
@@ -477,16 +478,15 @@ static inline int Norm_TCPOptions (
     return changes;
 }
 
-static inline int Norm_TCPPadding ( NormalizerConfig* config, uint8_t* opts,
+static inline int Norm_TCPPadding(NormalizerConfig* config, uint8_t* opts,
     size_t len, uint8_t validated_len, int changes)
 {
     size_t i = 0;
     const NormMode mode = get_norm_mode(config);
 
-
     while ( (i < len) &&
-            (opts[i] != (uint8_t)tcp::TcpOptCode::EOL) &&
-            (i < validated_len) )
+        (opts[i] != (uint8_t)tcp::TcpOptCode::EOL) &&
+        (i < validated_len) )
     {
         i += ( opts[i] <= 1 ) ? 1 : opts[i+1];
     }
@@ -503,8 +503,8 @@ static inline int Norm_TCPPadding ( NormalizerConfig* config, uint8_t* opts,
     return changes;
 }
 
-static int Norm_TCP (
-    NormalizerConfig* c, Packet * p, uint8_t layer, int changes)
+static int Norm_TCP(
+    NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
 {
     tcp::TCPHdr* h = reinterpret_cast<tcp::TCPHdr*>(const_cast<uint8_t*>(p->layers[layer].start));
     const NormMode mode = get_norm_mode(c);
@@ -513,7 +513,6 @@ static int Norm_TCP (
     {
         if ( h->th_offx2 & TH_RSV )
         {
-
             if ( mode == NORM_MODE_ON )
             {
                 h->th_offx2 &= ~TH_RSV;
@@ -639,7 +638,7 @@ NormPegs Norm_GetCounts(unsigned& c)
 
 //-----------------------------------------------------------------------
 
-int Norm_SetConfig (NormalizerConfig* nc)
+int Norm_SetConfig(NormalizerConfig* nc)
 {
     if ( !nc->normalizer_flags )
     {
@@ -669,3 +668,4 @@ int Norm_SetConfig (NormalizerConfig* nc)
     }
     return 0;
 }
+

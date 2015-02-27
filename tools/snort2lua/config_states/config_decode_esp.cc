@@ -26,20 +26,16 @@
 
 namespace config
 {
-
-namespace {
-
-
+namespace
+{
 class DecodeEsp : public ConversionState
 {
 public:
-    DecodeEsp(Converter& c) : ConversionState(c) {};
-    virtual ~DecodeEsp() {};
+    DecodeEsp(Converter& c) : ConversionState(c) { }
+    virtual ~DecodeEsp() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
-
 
 bool DecodeEsp::convert(std::istringstream& data_stream)
 {
@@ -48,7 +44,6 @@ bool DecodeEsp::convert(std::istringstream& data_stream)
 
     if (!(data_stream >> type))
         return false;
-
 
     table_api.open_table("esp");
 
@@ -82,7 +77,6 @@ bool DecodeEsp::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-
 static ConversionState* ctor(Converter& c)
 {
     return new DecodeEsp(c);
@@ -95,5 +89,5 @@ static const ConvertMap decode_esp_api =
 };
 
 const ConvertMap* decode_esp_map = &decode_esp_api;
-
 } // namespace config
+

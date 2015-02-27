@@ -35,15 +35,15 @@
 
 typedef struct _IdentifierMemoryBlock
 {
-    void *mem_block;  /*the node that is shared*/
-    struct _IdentifierMemoryBlock *next;  /*next node*/
+    void* mem_block;  /*the node that is shared*/
+    struct _IdentifierMemoryBlock* next;  /*next node*/
 }IdentifierMemoryBlock;
 
 typedef struct _fileConfig
 {
-    IdentifierNode *identifier_root; /*Root of magic tries*/
-    IdentifierMemoryBlock *id_memory_root; /*root of memory used*/
-    RuleInfo *FileRules[FILE_ID_MAX + 1];
+    IdentifierNode* identifier_root; /*Root of magic tries*/
+    IdentifierMemoryBlock* id_memory_root; /*root of memory used*/
+    RuleInfo* FileRules[FILE_ID_MAX + 1];
     int64_t file_type_depth;
     int64_t file_signature_depth;
     int64_t file_block_timeout;
@@ -54,9 +54,9 @@ typedef struct _fileConfig
     int64_t show_data_depth;
 #endif
 } FileConfig;
-FileConfig *get_file_config(void **file_config);
-void parse_file_rule(const char *args, void **file_config);
-RuleInfo *get_rule_from_id(void *conf, uint32_t);
+FileConfig* get_file_config(void** file_config);
+void parse_file_rule(const char* args, void** file_config);
+RuleInfo* get_rule_from_id(void* conf, uint32_t);
 void free_file_rules(void*);
 #endif
 

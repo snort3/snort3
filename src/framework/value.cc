@@ -104,7 +104,7 @@ void Value::get_bits(VlanList& list) const
     assert(len == list.size());
 
     for ( std::size_t n = 0; n < len; ++n )
-    {   
+    {
         if ( str[n] == '1' )
             list.set(n);
     }

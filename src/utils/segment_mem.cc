@@ -33,12 +33,13 @@
 /*point to the start of the unused memory*/
 static MEM_OFFSET unused_ptr = 0;
 static size_t unused_mem = 0;
-static void *base_ptr = NULL;
+static void* base_ptr = NULL;
 
 size_t segment_unusedmem(void)
 {
     return unused_mem;
 }
+
 /***************************************************************************
  *  Initialize the segment memory
  * Return values:
@@ -61,7 +62,7 @@ int segment_meminit(uint8_t* buff, size_t mem_cap)
  *    0: fail
  *    other: the offset of the allocated memory block
  **************************************************************************/
-MEM_OFFSET segment_malloc ( size_t size )
+MEM_OFFSET segment_malloc(size_t size)
 {
     MEM_OFFSET current_ptr = unused_ptr;
 
@@ -80,9 +81,8 @@ MEM_OFFSET segment_malloc ( size_t size )
  *       future.
  **************************************************************************/
 
-void segment_free ( MEM_OFFSET )
+void segment_free(MEM_OFFSET)
 {
-    return;
 }
 
 /***************************************************************************
@@ -95,7 +95,7 @@ void segment_free ( MEM_OFFSET )
  *    other: the offset of the allocated memory block
  **************************************************************************/
 
-MEM_OFFSET segment_calloc ( size_t num, size_t size )
+MEM_OFFSET segment_calloc(size_t num, size_t size)
 {
     MEM_OFFSET current_ptr;
     size_t total;
@@ -108,12 +108,13 @@ MEM_OFFSET segment_calloc ( size_t num, size_t size )
     total = num * size;
     current_ptr = segment_malloc(total);
     if (0 != current_ptr)
-        memset((uint8_t *)base_ptr + current_ptr, 0, total);
+        memset((uint8_t*)base_ptr + current_ptr, 0, total);
 
     return current_ptr;
 }
 
-void * segment_basePtr()
+void* segment_basePtr()
 {
     return base_ptr;
 }
+

@@ -18,8 +18,6 @@
 //--------------------------------------------------------------------------
 // cd_routing.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -36,13 +34,11 @@
 
 namespace
 {
-
 class Ipv6RoutingCodec : public Codec
 {
 public:
-    Ipv6RoutingCodec() : Codec(CD_IPV6_ROUTING_NAME){};
-    ~Ipv6RoutingCodec() {};
-
+    Ipv6RoutingCodec() : Codec(CD_IPV6_ROUTING_NAME) { }
+    ~Ipv6RoutingCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 
@@ -56,7 +52,7 @@ struct IP6Route
     uint8_t ip6rte_type;
     uint8_t ip6rte_seg_left;
     /* type specific data follows */
-} ;
+};
 
 #if 0
 // Keeping this around for future development
@@ -69,22 +65,18 @@ struct IP6Route0
     uint8_t ip6rte0_reserved;
     uint8_t ip6rte0_bitmap[3];
     struct snort_in6_addr ip6rte0_addr[1];  /* Up to 23 IP6 addresses */
-} ;
+};
 #endif
-
 } // namespace
-
 
 void Ipv6RoutingCodec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(IPPROTO_ID_ROUTING); }
 
-
 bool Ipv6RoutingCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-    const IP6Route* const rte = reinterpret_cast<const IP6Route *>(raw.data);
+    const IP6Route* const rte = reinterpret_cast<const IP6Route*>(raw.data);
 
-
-    if(raw.len < ip::MIN_EXT_LEN)
+    if (raw.len < ip::MIN_EXT_LEN)
     {
         codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
@@ -112,14 +104,12 @@ bool Ipv6RoutingCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     if (rte->ip6rte_nxt == IPPROTO_ID_ROUTING)
         codec_event(codec, DECODE_IPV6_TWO_ROUTE_HEADERS);
 
-    
     codec.lyr_len = ip::MIN_EXT_LEN + (rte->ip6rte_len << 3);
-    if(codec.lyr_len > raw.len)
+    if (codec.lyr_len > raw.len)
     {
         codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
-
 
     codec.proto_bits |= PROTO_BIT__IP6_EXT; // check ip proto rules against this layer
     codec.ip6_extension_count++;
@@ -131,7 +121,6 @@ bool Ipv6RoutingCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     return true;
 }
 
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
@@ -139,7 +128,7 @@ bool Ipv6RoutingCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 static Codec* ctor(Module*)
 { return new Ipv6RoutingCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi ipv6_routing_api =
@@ -161,7 +150,6 @@ static const CodecApi ipv6_routing_api =
     dtor, // dtor
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -171,3 +159,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_routing = &ipv6_routing_api.base;
 #endif
+

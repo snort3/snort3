@@ -17,8 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_eapol.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -33,7 +31,6 @@
 
 namespace
 {
-
 static const RuleMap eapol_rules[] =
 {
     { DECODE_EAPOL_TRUNCATED, "truncated EAP header" },
@@ -45,7 +42,7 @@ static const RuleMap eapol_rules[] =
 class EapolModule : public CodecModule
 {
 public:
-    EapolModule() : CodecModule(CD_EAPOL_NAME, CD_EAPOL_HELP) {}
+    EapolModule() : CodecModule(CD_EAPOL_NAME, CD_EAPOL_HELP) { }
 
     const RuleMap* get_rules() const override
     { return eapol_rules; }
@@ -54,9 +51,8 @@ public:
 class EapolCodec : public Codec
 {
 public:
-    EapolCodec() : Codec(CD_EAPOL_NAME){};
-    ~EapolCodec() {};
-
+    EapolCodec() : Codec(CD_EAPOL_NAME) { }
+    ~EapolCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_protocol_ids(std::vector<uint16_t>&) override;
@@ -65,27 +61,22 @@ private:
     void DecodeEAP(const RawData&, const CodecData&);
     void DecodeEapolKey(const RawData&, const CodecData&);
 };
-
 } // namespace
-
 
 void EapolCodec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(ETHERTYPE_EAPOL); }
 
-
 void EapolCodec::DecodeEAP(const RawData& raw, const CodecData& codec)
 {
-    if(raw.len < sizeof(eapol::EAPHdr))
+    if (raw.len < sizeof(eapol::EAPHdr))
         codec_event(codec, DECODE_EAP_TRUNCATED);
 }
 
-
 void EapolCodec::DecodeEapolKey(const RawData& raw, const CodecData& codec)
 {
-    if(raw.len < sizeof(eapol::EapolKey))
+    if (raw.len < sizeof(eapol::EapolKey))
         codec_event(codec, DECODE_EAPKEY_TRUNCATED);
 }
-
 
 /*************************************************
  ************** main codec functions  ************
@@ -96,7 +87,7 @@ bool EapolCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     const eapol::EtherEapol* const eplh =
         reinterpret_cast<const eapol::EtherEapol*>(raw.data);
 
-    if(raw.len < sizeof(eapol::EtherEapol))
+    if (raw.len < sizeof(eapol::EtherEapol))
     {
         codec_event(codec, DECODE_EAPOL_TRUNCATED);
         return false;
@@ -105,13 +96,11 @@ bool EapolCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     if (eplh->eaptype == EAPOL_TYPE_EAP)
         DecodeEAP(raw, codec);
 
-    else if(eplh->eaptype == EAPOL_TYPE_KEY)
+    else if (eplh->eaptype == EAPOL_TYPE_KEY)
         DecodeEapolKey(raw, codec);
 
     return true;
 }
-
-
 
 //-------------------------------------------------------------------------
 // api
@@ -126,9 +115,8 @@ static void mod_dtor(Module* m)
 static Codec* ctor(Module*)
 { return new EapolCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi eapol_api =
 {
@@ -149,7 +137,6 @@ static const CodecApi eapol_api =
     dtor, // dtor
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -159,3 +146,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_eapol = &eapol_api.base;
 #endif
+

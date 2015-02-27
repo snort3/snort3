@@ -32,11 +32,11 @@
 // interface stuff
 //------------------------------------------------------------------------------
 
-void PrintAllInterfaces (void)
+void PrintAllInterfaces(void)
 {
     char errorbuf[PCAP_ERRBUF_SIZE];
-    pcap_if_t *alldevs;
-    pcap_if_t *dev;
+    pcap_if_t* alldevs;
+    pcap_if_t* dev;
     int j = 1;
 
     if (pcap_findalldevs(&alldevs, errorbuf) == -1)
@@ -67,30 +67,29 @@ void PrintAllInterfaces (void)
             printf("\tdisabled");
 
         printf("\t%s\n", dev->description);
-
     }
     pcap_freealldevs(alldevs);
 }
 
-char* GetFirstInterface (void)
+char* GetFirstInterface(void)
 {
-    char *iface = NULL;
+    char* iface = NULL;
     char errorbuf[PCAP_ERRBUF_SIZE];
 
     DEBUG_WRAP(DebugMessage(
-        DEBUG_INIT, "interface is NULL, looking up interface...."););
+        DEBUG_INIT, "interface is NULL, looking up interface...."); );
 
     /* look up the device and get the handle */
     iface = pcap_lookupdev(errorbuf);
 
     if ( !iface )
     {
-        FatalError( "Failed to lookup interface: %s. "
+        FatalError("Failed to lookup interface: %s. "
             "Please specify one with -i switch\n", errorbuf);
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_INIT, "found interface %s\n",
-                            PRINT_INTERFACE(iface)););
+        PRINT_INTERFACE(iface)); );
 
     iface = SnortStrdup(iface);
     return iface;

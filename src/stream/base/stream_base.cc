@@ -74,7 +74,7 @@ const PegInfo base_pegs[] =
 };
 
 void base_sum()
-{   
+{
     if ( !flow_con )
         return;
 
@@ -92,10 +92,10 @@ void base_sum()
 
     sum_stats((PegCount*)&g_stats, (PegCount*)&t_stats,
         array_size(base_pegs)-1);
-}   
-    
+}
+
 void base_stats()
-{   
+{
     show_stats((PegCount*)&g_stats, base_pegs, array_size(base_pegs)-1, MOD_NAME);
 }
 
@@ -200,11 +200,11 @@ void StreamBase::tterm()
 
 void StreamBase::show(SnortConfig*)
 {
-    // FIXIT-L SSN print 
+    // FIXIT-L SSN print
     //StreamPrintGlobalConfig(&config);
 }
 
-void StreamBase::eval(Packet *p)
+void StreamBase::eval(Packet* p)
 {
     PROFILE_VARS;
 
@@ -246,12 +246,12 @@ void StreamBase::eval(Packet *p)
 }
 
 #if 0
-    // FIXIT-L add method to get exp cache?
-    LogMessage("            Expected Flows\n");
-    LogMessage("                  Expected: %lu\n", exp_cache->get_expects());
-    LogMessage("                  Realized: %lu\n", exp_cache->get_realized());
-    LogMessage("                    Pruned: %lu\n", exp_cache->get_prunes());
-    LogMessage("                 Overflows: %lu\n", exp_cache->get_overflows());
+// FIXIT-L add method to get exp cache?
+LogMessage("            Expected Flows\n");
+LogMessage("                  Expected: %lu\n", exp_cache->get_expects());
+LogMessage("                  Realized: %lu\n", exp_cache->get_realized());
+LogMessage("                    Pruned: %lu\n", exp_cache->get_prunes());
+LogMessage("                 Overflows: %lu\n", exp_cache->get_overflows());
 #endif
 
 //-------------------------------------------------------------------------

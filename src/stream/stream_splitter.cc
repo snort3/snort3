@@ -39,7 +39,7 @@ unsigned StreamSplitter::max()
 const StreamBuffer* StreamSplitter::reassemble(
     Flow*, unsigned, unsigned offset, const uint8_t* p,
     unsigned n, uint32_t flags, unsigned& copied)
-{ 
+{
     assert(offset + n < sizeof(pdu_buf));
     memcpy(pdu_buf+offset, p, n);
     copied = n;
@@ -68,10 +68,11 @@ AtomSplitter::~AtomSplitter() { }
 
 StreamSplitter::Status AtomSplitter::scan(
     Flow*, const uint8_t*, uint32_t len, uint32_t, uint32_t* fp
-) {
+    )
+{
     bytes += len;
     segs++;
-    
+
     if ( segs >= 2 && bytes >= min )
     {
         *fp = len;
@@ -93,9 +94,10 @@ void AtomSplitter::update()
 
 #if 0
 // FIXIT-M this should be part of a new splitter
-static inline int CheckFlushCoercion (
+static inline int CheckFlushCoercion(
     Packet* p, FlushMgr* fm, uint16_t flush_factor
-) {
+    )
+{
     if ( !flush_factor )
         return 0;
 
@@ -114,6 +116,7 @@ static inline int CheckFlushCoercion (
     fm->last_count++;
     return 0;
 }
+
 #endif
 
 //--------------------------------------------------------------------------
@@ -124,7 +127,8 @@ LogSplitter::LogSplitter(bool b) : StreamSplitter(b) { }
 
 StreamSplitter::Status LogSplitter::scan(
     Flow*, const uint8_t*, uint32_t len, uint32_t, uint32_t* fp
-) {
+    )
+{
     *fp = len;
     return FLUSH;
 }

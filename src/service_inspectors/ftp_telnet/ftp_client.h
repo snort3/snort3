@@ -20,10 +20,10 @@
  * Description:
  *
  * Header file for FTPTelnet FTP Client Module
- * 
+ *
  * This file defines the client reqest structure and functions
  * to access client inspection.
- * 
+ *
  * NOTES:
  * - 16.09.04:  Initial Development.  SAS
  *
@@ -33,7 +33,6 @@
  */
 #ifndef FTP_CLIENT_H
 #define FTP_CLIENT_H
-
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -45,27 +44,27 @@
 
 struct FTP_CLIENT_REQ
 {
-    const char *cmd_line;
-    unsigned int  cmd_line_size;
+    const char* cmd_line;
+    unsigned int cmd_line_size;
 
-    const char *cmd_begin;
-    const char *cmd_end;
-    unsigned int  cmd_size;
+    const char* cmd_begin;
+    const char* cmd_end;
+    unsigned int cmd_size;
 
-    const char *param_begin;
-    const char *param_end;
+    const char* param_begin;
+    const char* param_end;
     unsigned int param_size;
 
-    const char *pipeline_req;
-
+    const char* pipeline_req;
 };
 
 struct FTP_CLIENT
 {
     FTP_CLIENT_REQ request;
-    int (*state)(void *, unsigned char, int);
+    int (* state)(void*, unsigned char, int);
 };
 
-int ftp_client_inspection(void *session, unsigned char *data, int dsize);
+int ftp_client_inspection(void* session, unsigned char* data, int dsize);
 
-#endif 
+#endif
+

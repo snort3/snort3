@@ -24,25 +24,21 @@
 #include "helpers/converter.h"
 #include "helpers/s2l_util.h"
 
-
 namespace keywords
 {
-
-namespace {
-
+namespace
+{
 class Suppress : public ConversionState
 {
 public:
-    Suppress(Converter& c) : ConversionState(c) {};
-    virtual ~Suppress() {};
+    Suppress(Converter& c) : ConversionState(c) { }
+    virtual ~Suppress() { }
     virtual bool convert(std::istringstream& data);
 
 private:
     void fix_separators(std::istringstream& stream);
 };
-
 } // namespace
-
 
 void Suppress::fix_separators(std::istringstream& stream)
 {
@@ -53,7 +49,7 @@ void Suppress::fix_separators(std::istringstream& stream)
 
     while ( (curr = s.find_first_of("[],", curr)) != std::string::npos )
     {
-        switch(s[curr])
+        switch (s[curr])
         {
         case '[':
             cnt++;
@@ -86,7 +82,7 @@ bool Suppress::convert(std::istringstream& data_stream)
 
     fix_separators(data_stream);
 
-    while(std::getline(data_stream, args, ';'))
+    while (std::getline(data_stream, args, ';'))
     {
         std::string keyword;
         std::istringstream arg_stream(args);
@@ -94,14 +90,13 @@ bool Suppress::convert(std::istringstream& data_stream)
 
         arg_stream >> keyword;
 
-
-        if(keyword.empty())
+        if (keyword.empty())
             continue;
 
         else if (!keyword.compare("track"))
             tmpval = parse_string_option("track", arg_stream);
 
-        else if(!keyword.compare("gen_id"))
+        else if (!keyword.compare("gen_id"))
             tmpval = parse_int_option("gid", arg_stream, false);
 
         else if (!keyword.compare("sig_id"))
@@ -140,5 +135,5 @@ static const ConvertMap keyword_suppress =
 };
 
 const ConvertMap* suppress_map = &keyword_suppress;
-
 } // namespace keywords
+

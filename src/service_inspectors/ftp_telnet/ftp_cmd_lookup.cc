@@ -57,11 +57,11 @@
  * Returns: int => return code indicating error or success
  *
  */
-int ftp_cmd_lookup_init(CMD_LOOKUP **CmdLookup)
+int ftp_cmd_lookup_init(CMD_LOOKUP** CmdLookup)
 {
-    KMAP *km = KMapNew((KMapUserFreeFunc)CleanupFTPCMDConf);
+    KMAP* km = KMapNew((KMapUserFreeFunc)CleanupFTPCMDConf);
     *CmdLookup = km;
-    if(*CmdLookup == NULL)
+    if (*CmdLookup == NULL)
     {
         return FTPP_MEM_ALLOC_FAIL;
     }
@@ -83,9 +83,9 @@ int ftp_cmd_lookup_init(CMD_LOOKUP **CmdLookup)
  * Returns: int => return code indicating error or success
  *
  */
-int ftp_cmd_lookup_cleanup(CMD_LOOKUP **CmdLookup)
+int ftp_cmd_lookup_cleanup(CMD_LOOKUP** CmdLookup)
 {
-    KMAP *km;
+    KMAP* km;
 
     if (CmdLookup == NULL)
         return FTPP_INVALID_ARG;
@@ -121,23 +121,23 @@ int ftp_cmd_lookup_cleanup(CMD_LOOKUP **CmdLookup)
  * Returns: int => return code indicating error or success
  *
  */
-int ftp_cmd_lookup_add(CMD_LOOKUP *CmdLookup, const char *cmd, int len,
-                            FTP_CMD_CONF *FTPCmd)
+int ftp_cmd_lookup_add(CMD_LOOKUP* CmdLookup, const char* cmd, int len,
+    FTP_CMD_CONF* FTPCmd)
 {
     int iRet;
 
-    if(!CmdLookup || !FTPCmd)
+    if (!CmdLookup || !FTPCmd)
     {
         return FTPP_INVALID_ARG;
     }
 
-    iRet = KMapAdd(CmdLookup, (void *)cmd, len, (void *)FTPCmd);
+    iRet = KMapAdd(CmdLookup, (void*)cmd, len, (void*)FTPCmd);
     if (iRet)
     {
         /*
          * This means the key has already been added.
          */
-        if(iRet == 1)
+        if (iRet == 1)
         {
             return FTPP_NONFATAL_ERR;
         }
@@ -170,17 +170,17 @@ int ftp_cmd_lookup_add(CMD_LOOKUP *CmdLookup, const char *cmd, int len,
  *                            matching IP if found, NULL otherwise.
  *
  */
-FTP_CMD_CONF  *ftp_cmd_lookup_find(CMD_LOOKUP *CmdLookup,
-                                            const char *cmd, int len, int *iError)
+FTP_CMD_CONF* ftp_cmd_lookup_find(CMD_LOOKUP* CmdLookup,
+    const char* cmd, int len, int* iError)
 {
-    FTP_CMD_CONF *FTPCmd = NULL;
+    FTP_CMD_CONF* FTPCmd = NULL;
 
-    if(!iError)
+    if (!iError)
     {
         return NULL;
     }
 
-    if(!CmdLookup)
+    if (!CmdLookup)
     {
         *iError = FTPP_INVALID_ARG;
         return NULL;
@@ -188,7 +188,7 @@ FTP_CMD_CONF  *ftp_cmd_lookup_find(CMD_LOOKUP *CmdLookup,
 
     *iError = FTPP_SUCCESS;
 
-    FTPCmd = (FTP_CMD_CONF *)KMapFind(CmdLookup,(void *)cmd,len);
+    FTPCmd = (FTP_CMD_CONF*)KMapFind(CmdLookup,(void*)cmd,len);
     if (!FTPCmd)
     {
         *iError = FTPP_NOT_FOUND;
@@ -210,17 +210,17 @@ FTP_CMD_CONF  *ftp_cmd_lookup_find(CMD_LOOKUP *CmdLookup,
  * Returns: FTP_CMD_CONF* => Pointer to first cmd configuration structure
  *
  */
-FTP_CMD_CONF *ftp_cmd_lookup_first(CMD_LOOKUP *CmdLookup,
-                                            int *iError)
+FTP_CMD_CONF* ftp_cmd_lookup_first(CMD_LOOKUP* CmdLookup,
+    int* iError)
 {
-    FTP_CMD_CONF *FTPCmd;
+    FTP_CMD_CONF* FTPCmd;
 
-    if(!iError)
+    if (!iError)
     {
         return NULL;
     }
 
-    if(!CmdLookup)
+    if (!CmdLookup)
     {
         *iError = FTPP_INVALID_ARG;
         return NULL;
@@ -228,7 +228,7 @@ FTP_CMD_CONF *ftp_cmd_lookup_first(CMD_LOOKUP *CmdLookup,
 
     *iError = FTPP_SUCCESS;
 
-    FTPCmd = (FTP_CMD_CONF *)KMapFindFirst(CmdLookup);
+    FTPCmd = (FTP_CMD_CONF*)KMapFindFirst(CmdLookup);
     if (!FTPCmd)
     {
         *iError = FTPP_NOT_FOUND;
@@ -253,17 +253,17 @@ FTP_CMD_CONF *ftp_cmd_lookup_first(CMD_LOOKUP *CmdLookup,
  * Returns: FTP_CMD_CONF*  => Pointer to next cmd configuration structure
  *
  */
-FTP_CMD_CONF *ftp_cmd_lookup_next(CMD_LOOKUP *CmdLookup,
-                                           int *iError)
+FTP_CMD_CONF* ftp_cmd_lookup_next(CMD_LOOKUP* CmdLookup,
+    int* iError)
 {
-    FTP_CMD_CONF *FTPCmd;
+    FTP_CMD_CONF* FTPCmd;
 
-    if(!iError)
+    if (!iError)
     {
         return NULL;
     }
 
-    if(!CmdLookup)
+    if (!CmdLookup)
     {
         *iError = FTPP_INVALID_ARG;
         return NULL;
@@ -271,7 +271,7 @@ FTP_CMD_CONF *ftp_cmd_lookup_next(CMD_LOOKUP *CmdLookup,
 
     *iError = FTPP_SUCCESS;
 
-    FTPCmd = (FTP_CMD_CONF *)KMapFindNext(CmdLookup);
+    FTPCmd = (FTP_CMD_CONF*)KMapFindNext(CmdLookup);
     if (!FTPCmd)
     {
         *iError = FTPP_NOT_FOUND;
@@ -279,3 +279,4 @@ FTP_CMD_CONF *ftp_cmd_lookup_next(CMD_LOOKUP *CmdLookup,
 
     return FTPCmd;
 }
+

@@ -29,7 +29,7 @@
 enum NormFlags
 {
     NORM_IP4_BASE        = 0x00000001, // core ip4 norms
-  //NORM_IP4_ID          = 0x00000002, // tbd:  encrypt ip id
+    //NORM_IP4_ID          = 0x00000002, // tbd:  encrypt ip id
     NORM_IP4_DF          = 0x00000004, // clear df
     NORM_IP4_RF          = 0x00000008, // clear rf
     NORM_IP4_TTL         = 0x00000010, // ensure min ttl
@@ -61,7 +61,6 @@ enum NormFlags
     NORM_ALL             = 0xFFFFFFFF,  // all normalizations on
 };
 
-
 enum NormMode : int8_t
 {
     NORM_MODE_OFF,
@@ -70,7 +69,7 @@ enum NormMode : int8_t
     NORM_MODE_MAX
 };
 
-typedef PegCount (*NormPegs)[NORM_MODE_MAX];
+typedef PegCount (* NormPegs)[NORM_MODE_MAX];
 struct SnortConfig;
 
 bool Normalize_IsEnabled(NormFlags);

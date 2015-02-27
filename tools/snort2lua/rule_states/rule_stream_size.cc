@@ -28,18 +28,15 @@
 
 namespace rules
 {
-
-namespace {
-
-
+namespace
+{
 class StreamSize : public ConversionState
 {
 public:
-    StreamSize(Converter& c) : ConversionState(c) {};
-    virtual ~StreamSize() {};
+    StreamSize(Converter& c) : ConversionState(c) { }
+    virtual ~StreamSize() { }
     virtual bool convert(std::istringstream& data);
 };
-
 } // namespace
 
 bool StreamSize::convert(std::istringstream& data_stream)
@@ -57,14 +54,13 @@ bool StreamSize::convert(std::istringstream& data_stream)
         !util::get_string(arg_stream, op, ",") ||
         !util::get_string(arg_stream, size, ","))
     {
-        rule_api.bad_rule(data_stream, "stream_size requires 3 arguments.  '<direction>,<operator>,<size>'");
+        rule_api.bad_rule(data_stream,
+            "stream_size requires 3 arguments.  '<direction>,<operator>,<size>'");
         return set_next_rule_state(data_stream);
     }
 
-
-
     if (!(!op.compare("=")  || !op.compare("<")  || !op.compare(">") ||
-          !op.compare("!=") || !op.compare("<=") || !op.compare(">=")))
+        !op.compare("!=") || !op.compare("<=") || !op.compare(">=")))
     {
         rule_api.bad_rule(data_stream, "'" + op + "' in an invalid stream_size operator.");
     }
@@ -86,7 +82,6 @@ bool StreamSize::convert(std::istringstream& data_stream)
         rule_api.bad_rule(data_stream, "stream_size <size> '" + size + "' is too large.");
         rule_api.add_option("stream_size", op + size);
     }
-
 
     if (!dir.compare("either"))
         rule_api.add_suboption("either");
@@ -141,5 +136,5 @@ static const ConvertMap rule_stream_size =
 };
 
 const ConvertMap* stream_size_map = &rule_stream_size;
-
 } // namespace rules
+

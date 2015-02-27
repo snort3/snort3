@@ -36,55 +36,54 @@ struct SFGHASH;
 /* this contains a list of the URLs for various reference systems */
 struct ReferenceSystemNode
 {
-    char *name;
-    char *url;
-    ReferenceSystemNode *next;
+    char* name;
+    char* url;
+    ReferenceSystemNode* next;
 };
 
-ReferenceSystemNode * ReferenceSystemAdd(SnortConfig*, const char*, const char*);
-ReferenceSystemNode * ReferenceSystemLookup(ReferenceSystemNode *, const char *);
-void ParseReferenceSystemConfig(char *args);
-
+ReferenceSystemNode* ReferenceSystemAdd(SnortConfig*, const char*, const char*);
+ReferenceSystemNode* ReferenceSystemLookup(ReferenceSystemNode*, const char*);
+void ParseReferenceSystemConfig(char* args);
 
 /* XXX: update to point to the ReferenceURLNode in the referenceURL list */
 struct ReferenceNode
 {
-    char *id;
-    ReferenceSystemNode *system;
-    ReferenceNode *next;
+    char* id;
+    ReferenceSystemNode* system;
+    ReferenceNode* next;
 };
 
-ReferenceNode * AddReference(SnortConfig*, ReferenceNode**, const char*, const char*);
-void FPrintReference(FILE *, ReferenceNode *);
+ReferenceNode* AddReference(SnortConfig*, ReferenceNode**, const char*, const char*);
+void FPrintReference(FILE*, ReferenceNode*);
 
 /* struct for rule classification */
 struct ClassType
 {
     // FIXIT-L type and name are backwards (name -> text, type -> name)
-    char *type;      /* classification type */
+    char* type;      /* classification type */
     int id;          /* classification id */
-    char *name;      /* "pretty" classification name */
+    char* name;      /* "pretty" classification name */
     int priority;    /* priority */
-    ClassType *next;
+    ClassType* next;
 };
 
 /* NOTE:  These methods can only be used during parse time */
 void AddClassification(
     SnortConfig* sc, const char* type, const char* name, int priority);
 
-ClassType * ClassTypeLookupByType(SnortConfig*, const char *);
-ClassType * ClassTypeLookupById(SnortConfig*, int);
+ClassType* ClassTypeLookupByType(SnortConfig*, const char*);
+ClassType* ClassTypeLookupById(SnortConfig*, int);
 
 struct ServiceInfo
 {
-    char *service;
+    char* service;
     int16_t service_ordinal;
 };
 
 struct OtnKey
 {
-   uint32_t gid;
-   uint32_t sid;
+    uint32_t gid;
+    uint32_t sid;
 };
 
 struct SigInfo
@@ -93,23 +92,24 @@ struct SigInfo
     uint32_t id;
     uint32_t rev;
     uint32_t class_id;
-    ClassType *classType;
+    ClassType* classType;
     uint32_t priority;
-    char *message;
-    ReferenceNode *refs;
+    char* message;
+    ReferenceNode* refs;
     bool text_rule;
     unsigned int num_services;
-    ServiceInfo *services;
-    const char *os;
+    ServiceInfo* services;
+    const char* os;
 };
 
-SFGHASH * OtnLookupNew(void);
-void OtnLookupAdd(SFGHASH *, OptTreeNode *);
-OptTreeNode * OtnLookup(SFGHASH *, uint32_t gid, uint32_t sid);
-void OtnLookupFree(SFGHASH *);
-void OtnRemove(SFGHASH *, OptTreeNode *);
+SFGHASH* OtnLookupNew(void);
+void OtnLookupAdd(SFGHASH*, OptTreeNode*);
+OptTreeNode* OtnLookup(SFGHASH*, uint32_t gid, uint32_t sid);
+void OtnLookupFree(SFGHASH*);
+void OtnRemove(SFGHASH*, OptTreeNode*);
 
-void OtnDeleteData(void *data);
-void OtnFree(void *data);
+void OtnDeleteData(void* data);
+void OtnFree(void* data);
 
 #endif /* SIGNATURE */
+

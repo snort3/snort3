@@ -58,11 +58,11 @@
  * Returns: int => return code indicating error or success
  *
  */
-int ftp_bounce_lookup_init(BOUNCE_LOOKUP **BounceLookup)
+int ftp_bounce_lookup_init(BOUNCE_LOOKUP** BounceLookup)
 {
-    KMAP *km = KMapNew((KMapUserFreeFunc)CleanupFTPBounceTo);
+    KMAP* km = KMapNew((KMapUserFreeFunc)CleanupFTPBounceTo);
     *BounceLookup = km;
-    if(*BounceLookup == NULL)
+    if (*BounceLookup == NULL)
     {
         return FTPP_MEM_ALLOC_FAIL;
     }
@@ -84,9 +84,9 @@ int ftp_bounce_lookup_init(BOUNCE_LOOKUP **BounceLookup)
  * Returns: int => return code indicating error or success
  *
  */
-int ftp_bounce_lookup_cleanup(BOUNCE_LOOKUP **BounceLookup)
+int ftp_bounce_lookup_cleanup(BOUNCE_LOOKUP** BounceLookup)
 {
-    KMAP *km;
+    KMAP* km;
 
     if (BounceLookup == NULL)
         return FTPP_INVALID_ARG;
@@ -118,12 +118,12 @@ int ftp_bounce_lookup_cleanup(BOUNCE_LOOKUP **BounceLookup)
  * Returns: int => return code indicating error or success
  *
  */
-int ftp_bounce_lookup_add(BOUNCE_LOOKUP *BounceLookup,
-		const sfip_t *Ip, FTP_BOUNCE_TO *BounceTo)
+int ftp_bounce_lookup_add(BOUNCE_LOOKUP* BounceLookup,
+    const sfip_t* Ip, FTP_BOUNCE_TO* BounceTo)
 {
     int iRet;
 
-    if(!BounceLookup || !BounceTo)
+    if (!BounceLookup || !BounceTo)
     {
         return FTPP_INVALID_ARG;
     }
@@ -135,7 +135,7 @@ int ftp_bounce_lookup_add(BOUNCE_LOOKUP *BounceLookup,
         /*
          * This means the key has already been added.
         */
-        if(iRet == 1)
+        if (iRet == 1)
         {
             return FTPP_NONFATAL_ERR;
         }
@@ -166,17 +166,17 @@ int ftp_bounce_lookup_add(BOUNCE_LOOKUP *BounceLookup,
  *                            matching IP if found, NULL otherwise.
  *
  */
-FTP_BOUNCE_TO  *ftp_bounce_lookup_find(
-        BOUNCE_LOOKUP *BounceLookup, const sfip_t *Ip, int *iError )
+FTP_BOUNCE_TO* ftp_bounce_lookup_find(
+    BOUNCE_LOOKUP* BounceLookup, const sfip_t* Ip, int* iError)
 {
-    FTP_BOUNCE_TO *BounceTo = NULL;
+    FTP_BOUNCE_TO* BounceTo = NULL;
 
-    if(!iError)
+    if (!iError)
     {
         return NULL;
     }
 
-    if(!BounceLookup)
+    if (!BounceLookup)
     {
         *iError = FTPP_INVALID_ARG;
         return NULL;
@@ -184,7 +184,7 @@ FTP_BOUNCE_TO  *ftp_bounce_lookup_find(
 
     *iError = FTPP_SUCCESS;
 
-    BounceTo = (FTP_BOUNCE_TO *)KMapFind(BounceLookup, (void*)Ip, Ip->sfip_size());
+    BounceTo = (FTP_BOUNCE_TO*)KMapFind(BounceLookup, (void*)Ip, Ip->sfip_size());
     if (!BounceTo)
     {
         *iError = FTPP_NOT_FOUND;
@@ -206,17 +206,17 @@ FTP_BOUNCE_TO  *ftp_bounce_lookup_find(
  * Returns: FTP_BOUNCE_TO* => Pointer to first bounce configuration structure
  *
  */
-FTP_BOUNCE_TO *ftp_bounce_lookup_first(BOUNCE_LOOKUP *BounceLookup,
-                                            int *iError)
+FTP_BOUNCE_TO* ftp_bounce_lookup_first(BOUNCE_LOOKUP* BounceLookup,
+    int* iError)
 {
-    FTP_BOUNCE_TO *BounceTo;
+    FTP_BOUNCE_TO* BounceTo;
 
-    if(!iError)
+    if (!iError)
     {
         return NULL;
     }
 
-    if(!BounceLookup)
+    if (!BounceLookup)
     {
         *iError = FTPP_INVALID_ARG;
         return NULL;
@@ -224,7 +224,7 @@ FTP_BOUNCE_TO *ftp_bounce_lookup_first(BOUNCE_LOOKUP *BounceLookup,
 
     *iError = FTPP_SUCCESS;
 
-    BounceTo = (FTP_BOUNCE_TO *)KMapFindFirst(BounceLookup);
+    BounceTo = (FTP_BOUNCE_TO*)KMapFindFirst(BounceLookup);
     if (!BounceTo)
     {
         *iError = FTPP_NOT_FOUND;
@@ -249,17 +249,17 @@ FTP_BOUNCE_TO *ftp_bounce_lookup_first(BOUNCE_LOOKUP *BounceLookup,
  * Returns: FTP_BOUNCE_TO*  => Pointer to next bounce configuration structure
  *
  */
-FTP_BOUNCE_TO *ftp_bounce_lookup_next(BOUNCE_LOOKUP *BounceLookup,
-                                           int *iError)
+FTP_BOUNCE_TO* ftp_bounce_lookup_next(BOUNCE_LOOKUP* BounceLookup,
+    int* iError)
 {
-    FTP_BOUNCE_TO *BounceTo;
+    FTP_BOUNCE_TO* BounceTo;
 
-    if(!iError)
+    if (!iError)
     {
         return NULL;
     }
 
-    if(!BounceLookup)
+    if (!BounceLookup)
     {
         *iError = FTPP_INVALID_ARG;
         return NULL;
@@ -267,7 +267,7 @@ FTP_BOUNCE_TO *ftp_bounce_lookup_next(BOUNCE_LOOKUP *BounceLookup,
 
     *iError = FTPP_SUCCESS;
 
-    BounceTo = (FTP_BOUNCE_TO *)KMapFindNext(BounceLookup);
+    BounceTo = (FTP_BOUNCE_TO*)KMapFindNext(BounceLookup);
     if (!BounceTo)
     {
         *iError = FTPP_NOT_FOUND;

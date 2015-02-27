@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 // tcp.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifndef PROTOCOLS_TCP_H
 #define PROTOCOLS_TCP_H
 
@@ -63,8 +62,6 @@
 
 namespace tcp
 {
-
-
 constexpr uint8_t TCP_MIN_HEADER_LEN = 20; // this is actually the minimal TCP header lenght
 constexpr int OPT_TRUNC = -1;
 constexpr int OPT_BADLEN = -2;
@@ -130,7 +127,6 @@ struct TCPHdr
     inline bool is_rst() const
     { return (th_flags & TH_RST); }
 
-
     /*  raw data access */
     inline uint16_t raw_src_port() const
     { return th_sport; }
@@ -153,7 +149,6 @@ struct TCPHdr
     inline uint16_t raw_urp() const
     { return th_urp; }
 
-
     // setters
     inline void set_offset(uint8_t val)
     { th_offx2 = (uint8_t)((th_offx2 & 0x0f) | (val << 4)); }
@@ -164,7 +159,7 @@ struct TCPHdr
     inline void set_raw_urp(uint16_t new_urp)
     { th_urp = new_urp; }
 };
-
 }  // namespace tcp
 
 #endif /* TCP_H */
+

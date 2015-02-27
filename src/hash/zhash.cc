@@ -19,7 +19,6 @@
 
 // zhash is based on sfxhash - see sfxhash.cc for details
 
-
 #include <assert.h>
 #include <stdlib.h>
 
@@ -35,13 +34,13 @@
 
 struct ZHashNode
 {
-  ZHashNode* gnext, * gprev; // global list
-  ZHashNode* next,  * prev;  // row list
+    ZHashNode* gnext, * gprev; // global list
+    ZHashNode* next,  * prev; // row list
 
-  int rindex;
+    int rindex;
 
-  void* key;
-  void* data;
+    void* key;
+    void* data;
 };
 
 void ZHash::delete_free_list()
@@ -225,7 +224,7 @@ ZHash::ZHash(int rows, int keysz)
 {
     if ( rows > 0 )
     {
-        // make sure we have a prime number 
+        // make sure we have a prime number
         // rows = sf_nearest_prime(rows);
 
         /* If rows is not a power of two, need to find the
@@ -341,7 +340,6 @@ void* ZHash::find(const void* key)
     return nullptr;
 }
 
-
 void* ZHash::first()
 {
     cursor = gtail;
@@ -409,8 +407,8 @@ bool ZHash::remove(const void* key)
 }
 
 int ZHash::set_keyops(
-    unsigned (*hash_fcn)(SFHASHFCN* p, unsigned char*d, int n),
-    int (*keycmp_fcn)(const void* s1, const void* s2, size_t n))
+    unsigned (* hash_fcn)(SFHASHFCN* p, unsigned char* d, int n),
+    int (* keycmp_fcn)(const void* s1, const void* s2, size_t n))
 {
     if ( hash_fcn && keycmp_fcn )
         return sfhashfcn_set_keyops(sfhashfcn, hash_fcn, keycmp_fcn);

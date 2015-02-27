@@ -25,28 +25,24 @@
 #include "helpers/s2l_util.h"
 #include "preprocessor_states/preprocessor_api.h"
 
-
 namespace keywords
 {
-
-namespace {
-
+namespace
+{
 class Preprocessor : public ConversionState
 {
 public:
-    Preprocessor(Converter& c) : ConversionState(c) {};
-    virtual ~Preprocessor() {};
+    Preprocessor(Converter& c) : ConversionState(c) { }
+    virtual ~Preprocessor() { }
     virtual bool convert(std::istringstream& data);
 };
-
 } // namespace
-
 
 bool Preprocessor::convert(std::istringstream& data_stream)
 {
     std::string keyword;
 
-    if(util::get_string(data_stream, keyword, ":"))
+    if (util::get_string(data_stream, keyword, ":"))
     {
         const ConvertMap* map = util::find_map(preprocessors::preprocessor_api, keyword);
         if (map)
@@ -61,7 +57,7 @@ bool Preprocessor::convert(std::istringstream& data_stream)
         data_api.failed_conversion(data_stream);
     }
 
-    return false;    
+    return false;
 }
 
 /**************************
@@ -71,12 +67,12 @@ bool Preprocessor::convert(std::istringstream& data_stream)
 static ConversionState* ctor(Converter& c)
 { return new Preprocessor(c); }
 
-static const ConvertMap keyword_preprocessor = 
+static const ConvertMap keyword_preprocessor =
 {
     "preprocessor",
     ctor,
 };
 
 const ConvertMap* preprocessor_map = &keyword_preprocessor;
-
 } // namespace keywords
+

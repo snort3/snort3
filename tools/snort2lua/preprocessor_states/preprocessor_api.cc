@@ -21,31 +21,30 @@
 
 namespace preprocessors
 {
+extern const ConvertMap* arpspoof_map;
+extern const ConvertMap* arpspoof_host_map;
+extern const ConvertMap* bo_map;
+extern const ConvertMap* frag3_engine_map;
+extern const ConvertMap* frag3_global_map;
+extern const ConvertMap* ftptelnet_map;
+extern const ConvertMap* ftptelnet_protocol_map;
+extern const ConvertMap* gtp_map;
+extern const ConvertMap* httpinspect_map;
+extern const ConvertMap* httpinspect_server_map;
+extern const ConvertMap* normalizer_icmp4_map;
+extern const ConvertMap* normalizer_icmp6_map;
+extern const ConvertMap* normalizer_ip4_map;
+extern const ConvertMap* normalizer_ip6_map;
+extern const ConvertMap* normalizer_tcp_map;
+extern const ConvertMap* perfmonitor_map;
+extern const ConvertMap* rpc_decode_map;
+extern const ConvertMap* sfportscan_map;
+extern const ConvertMap* stream_ip_map;
+extern const ConvertMap* stream_global_map;
+extern const ConvertMap* stream_tcp_map;
+extern const ConvertMap* stream_udp_map;
 
-extern const ConvertMap *arpspoof_map;
-extern const ConvertMap *arpspoof_host_map;
-extern const ConvertMap *bo_map;
-extern const ConvertMap *frag3_engine_map;
-extern const ConvertMap *frag3_global_map;
-extern const ConvertMap *ftptelnet_map;
-extern const ConvertMap *ftptelnet_protocol_map;
-extern const ConvertMap *gtp_map;
-extern const ConvertMap *httpinspect_map;
-extern const ConvertMap *httpinspect_server_map;
-extern const ConvertMap *normalizer_icmp4_map;
-extern const ConvertMap *normalizer_icmp6_map;
-extern const ConvertMap *normalizer_ip4_map;
-extern const ConvertMap *normalizer_ip6_map;
-extern const ConvertMap *normalizer_tcp_map;
-extern const ConvertMap *perfmonitor_map;
-extern const ConvertMap *rpc_decode_map;
-extern const ConvertMap *sfportscan_map;
-extern const ConvertMap *stream_ip_map;
-extern const ConvertMap *stream_global_map;
-extern const ConvertMap *stream_tcp_map;
-extern const ConvertMap *stream_udp_map;
-
-const std::vector<const ConvertMap*> preprocessor_api = 
+const std::vector<const ConvertMap*> preprocessor_api =
 {
     arpspoof_map,
     arpspoof_host_map,
@@ -71,5 +70,5 @@ const std::vector<const ConvertMap*> preprocessor_api =
     stream_udp_map,
 //    nullptr,
 };
-
 } // namespace preprocessors
+

@@ -76,28 +76,28 @@ FTP_SERVER_PROTO_CONF* get_default_ftp_server()
 // implementation stuff
 //-------------------------------------------------------------------------
 
-static inline int InspectClientPacket (Packet* p)
+static inline int InspectClientPacket(Packet* p)
 {
     return PacketHasPAFPayload(p);
 }
 
 static int SnortFTP(
-    FTP_SESSION *FTPsession, Packet *p, int iInspectMode)
+    FTP_SESSION* FTPsession, Packet* p, int iInspectMode)
 {
     int iRet;
     PROFILE_VARS;
 
     if (!FTPsession ||
-         FTPsession->server_conf == NULL ||
-         FTPsession->client_conf == NULL)
+        FTPsession->server_conf == NULL ||
+        FTPsession->client_conf == NULL)
     {
         return FTPP_INVALID_SESSION;
     }
 
     if (!FTPsession->server_conf->check_encrypted_data &&
         ((FTPsession->encr_state == AUTH_TLS_ENCRYPTED) ||
-         (FTPsession->encr_state == AUTH_SSL_ENCRYPTED) ||
-         (FTPsession->encr_state == AUTH_UNKNOWN_ENCRYPTED)) )
+        (FTPsession->encr_state == AUTH_SSL_ENCRYPTED) ||
+        (FTPsession->encr_state == AUTH_UNKNOWN_ENCRYPTED)) )
     {
         return FTPP_SUCCESS;
     }
@@ -111,7 +111,7 @@ static int SnortFTP(
 
         // FIXIT-L breaks target-based non-standard ports
         //if ( !ScPafEnabled() )
-            /* Force flush of client side of stream  */
+        /* Force flush of client side of stream  */
         stream.flush_response(p);
     }
     else
@@ -160,11 +160,11 @@ static int SnortFTP(
     return iRet;
 }
 
-static int snort_ftp(Packet *p)
+static int snort_ftp(Packet* p)
 {
     FTPP_SI_INPUT SiInput;
     int iInspectMode = FTPP_SI_NO_MODE;
-    FTP_TELNET_SESSION *ft_ssn = NULL;
+    FTP_TELNET_SESSION* ft_ssn = NULL;
 
     /*
      * Set up the FTPP_SI_INPUT pointer.  This is what the session_inspection()
@@ -229,9 +229,9 @@ static int snort_ftp(Packet *p)
     {
         switch (SiInput.pproto)
         {
-            case FTPP_SI_PROTO_FTP:
-                return SnortFTP((FTP_SESSION *)ft_ssn, p, iInspectMode);
-                break;
+        case FTPP_SI_PROTO_FTP:
+            return SnortFTP((FTP_SESSION*)ft_ssn, p, iInspectMode);
+            break;
         }
     }
 
@@ -250,7 +250,7 @@ static int snort_ftp(Packet *p)
  * Returns: None
  *
  */
-static void ResetStringFormat (FTP_PARAM_FMT *Fmt)
+static void ResetStringFormat(FTP_PARAM_FMT* Fmt)
 {
     int i;
     if (!Fmt)
@@ -260,7 +260,7 @@ static void ResetStringFormat (FTP_PARAM_FMT *Fmt)
         Fmt->type = e_strformat;
 
     ResetStringFormat(Fmt->optional_fmt);
-    for (i=0;i<Fmt->numChoices;i++)
+    for (i=0; i<Fmt->numChoices; i++)
     {
         ResetStringFormat(Fmt->choices[i]);
     }
@@ -268,94 +268,94 @@ static void ResetStringFormat (FTP_PARAM_FMT *Fmt)
 }
 
 static int ProcessFTPDataChanCmdsList(
-    FTP_SERVER_PROTO_CONF *ServerConf, const FtpCmd* fc)
+    FTP_SERVER_PROTO_CONF* ServerConf, const FtpCmd* fc)
 {
     const char* cmd = fc->name.c_str();
     int iRet;
 
-    FTP_CMD_CONF* FTPCmd = 
+    FTP_CMD_CONF* FTPCmd =
         ftp_cmd_lookup_find(ServerConf->cmd_lookup, cmd, strlen(cmd), &iRet);
 
+    if (FTPCmd == NULL)
+    {
+        /* Add it to the list */
+        // note that struct includes 1 byte for null, so just add len
+        FTPCmd = (FTP_CMD_CONF*)calloc(1, sizeof(FTP_CMD_CONF)+strlen(cmd));
         if (FTPCmd == NULL)
         {
-            /* Add it to the list */
-            // note that struct includes 1 byte for null, so just add len
-            FTPCmd = (FTP_CMD_CONF *)calloc(1, sizeof(FTP_CMD_CONF)+strlen(cmd));
-            if (FTPCmd == NULL)
+            ParseAbort("failed to allocate memory");
+        }
+
+        strcpy(FTPCmd->cmd_name, cmd);
+
+        // FIXIT-L make sure pulled from server conf when used if not
+        // overridden
+        //FTPCmd->max_param_len = ServerConf->def_max_param_len;
+
+        ftp_cmd_lookup_add(ServerConf->cmd_lookup, cmd,
+            strlen(cmd), FTPCmd);
+    }
+    if ( fc->flags & CMD_DIR )
+        FTPCmd->dir_response = fc->number;
+
+    if ( fc->flags & CMD_LEN )
+    {
+        FTPCmd->max_param_len = fc->number;
+        FTPCmd->max_param_len_overridden = 1;
+    }
+    if ( fc->flags & CMD_DATA )
+        FTPCmd->data_chan_cmd = 1;
+
+    if ( fc->flags & CMD_XFER )
+        FTPCmd->data_xfer_cmd = 1;
+
+    if ( fc->flags & CMD_PUT )
+        FTPCmd->file_put_cmd = 1;
+
+    if ( fc->flags & CMD_GET )
+        FTPCmd->data_xfer_cmd = 1;
+
+    if ( fc->flags & CMD_CHECK )
+    {
+        FTP_PARAM_FMT* Fmt = FTPCmd->param_format;
+        if (Fmt)
+        {
+            ResetStringFormat(Fmt);
+        }
+        else
+        {
+            Fmt = (FTP_PARAM_FMT*)calloc(1, sizeof(FTP_PARAM_FMT));
+            if (Fmt == NULL)
             {
-                ParseAbort("failed to allocate memory");
+                ParseAbort("Failed to allocate memory");
             }
 
-            strcpy(FTPCmd->cmd_name, cmd);
+            Fmt->type = e_head;
+            FTPCmd->param_format = Fmt;
 
-            // FIXIT-L make sure pulled from server conf when used if not
-            // overridden
-            //FTPCmd->max_param_len = ServerConf->def_max_param_len;
-
-            ftp_cmd_lookup_add(ServerConf->cmd_lookup, cmd,
-                               strlen(cmd), FTPCmd);
-        }
-        if ( fc->flags & CMD_DIR )
-            FTPCmd->dir_response = fc->number;
-
-        if ( fc->flags & CMD_LEN )
-        {
-            FTPCmd->max_param_len = fc->number;
-            FTPCmd->max_param_len_overridden = 1;
-        }
-        if ( fc->flags & CMD_DATA )
-            FTPCmd->data_chan_cmd = 1;
-
-        if ( fc->flags & CMD_XFER )
-            FTPCmd->data_xfer_cmd = 1;
-
-        if ( fc->flags & CMD_PUT )
-            FTPCmd->file_put_cmd = 1;
-
-        if ( fc->flags & CMD_GET )
-            FTPCmd->data_xfer_cmd = 1;
-
-        if ( fc->flags & CMD_CHECK )
-        {
-            FTP_PARAM_FMT *Fmt = FTPCmd->param_format;
-            if (Fmt)
+            Fmt = (FTP_PARAM_FMT*)calloc(1, sizeof(FTP_PARAM_FMT));
+            if (Fmt == NULL)
             {
-                ResetStringFormat(Fmt);
+                ParseAbort("Failed to allocate memory");
             }
-            else
-            {
-                Fmt = (FTP_PARAM_FMT *)calloc(1, sizeof(FTP_PARAM_FMT));
-                if (Fmt == NULL)
-                {
-                    ParseAbort("Failed to allocate memory");
-                }
 
-                Fmt->type = e_head;
-                FTPCmd->param_format = Fmt;
-
-                Fmt = (FTP_PARAM_FMT *)calloc(1, sizeof(FTP_PARAM_FMT));
-                if (Fmt == NULL)
-                {
-                    ParseAbort("Failed to allocate memory");
-                }
-
-                Fmt->type = e_strformat;
-                FTPCmd->param_format->next_param_fmt = Fmt;
-                Fmt->prev_param_fmt = FTPCmd->param_format;
-            }
-            FTPCmd->check_validity = 1;
+            Fmt->type = e_strformat;
+            FTPCmd->param_format->next_param_fmt = Fmt;
+            Fmt->prev_param_fmt = FTPCmd->param_format;
         }
-        if ( fc->flags & CMD_VALID )
-        {
-            char err[1024];
-            ProcessFTPCmdValidity(
-                ServerConf, cmd, fc->format.c_str(), err, sizeof(err));
-        }
-        if ( fc->flags & CMD_ENCR )
-            FTPCmd->encr_cmd = 1;
+        FTPCmd->check_validity = 1;
+    }
+    if ( fc->flags & CMD_VALID )
+    {
+        char err[1024];
+        ProcessFTPCmdValidity(
+            ServerConf, cmd, fc->format.c_str(), err, sizeof(err));
+    }
+    if ( fc->flags & CMD_ENCR )
+        FTPCmd->encr_cmd = 1;
 
-        if ( fc->flags & CMD_LOGIN )
-            FTPCmd->login_cmd = 1;
+    if ( fc->flags & CMD_LOGIN )
+        FTPCmd->login_cmd = 1;
 
     return 0;
 }
@@ -366,7 +366,8 @@ static int ProcessFTPDataChanCmdsList(
 
 typedef PlugDataType<FTP_CLIENT_PROTO_CONF> ClientData;
 
-class FtpServer : public Inspector {
+class FtpServer : public Inspector
+{
 public:
     FtpServer(FTP_SERVER_PROTO_CONF*);
     ~FtpServer();
@@ -397,7 +398,7 @@ FtpServer::~FtpServer ()
         DataManager::release(ftp_client);
 }
 
-bool FtpServer::configure (SnortConfig* sc)
+bool FtpServer::configure(SnortConfig* sc)
 {
     ftp_client = (ClientData*)DataManager::acquire(client_key, sc);
 

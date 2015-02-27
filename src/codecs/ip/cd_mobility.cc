@@ -17,8 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_mobility.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -33,20 +31,16 @@
 
 namespace
 {
-
 class MobilityCodec : public Codec
 {
 public:
-    MobilityCodec() : Codec(CD_MOBILE_NAME){};
-    ~MobilityCodec() {};
-
+    MobilityCodec() : Codec(CD_MOBILE_NAME) { }
+    ~MobilityCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
-
 } // namespace
-
 
 void MobilityCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
@@ -67,7 +61,6 @@ bool MobilityCodec::decode(const RawData&, CodecData& codec, DecodeData&)
     return true;
 }
 
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
@@ -75,9 +68,8 @@ bool MobilityCodec::decode(const RawData&, CodecData& codec, DecodeData&)
 static Codec* ctor(Module*)
 { return new MobilityCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi mobility_api =
 {
@@ -98,7 +90,6 @@ static const CodecApi mobility_api =
     dtor,
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -108,3 +99,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_mobility = &mobility_api.base;
 #endif
+

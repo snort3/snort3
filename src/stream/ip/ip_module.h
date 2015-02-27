@@ -87,7 +87,7 @@ public:
     StreamIpConfig* get_data();
 
     unsigned get_gid() const override
-    { return GID_DEFRAG; };
+    { return GID_DEFRAG; }
 
 private:
     StreamIpConfig* config;

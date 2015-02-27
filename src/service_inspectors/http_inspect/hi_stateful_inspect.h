@@ -28,66 +28,66 @@
 #define HI_STATEFUL_INSPECT_H
 
 /*
- * Flags modifying stateful inspection's behavior 
- * 
+ * Flags modifying stateful inspection's behavior
+ *
  * HI_ST_FLG_CLEAR:		No flags set
- * HI_ST_FLG_CRLF_EOM:		Found a CRLF at the end of 
+ * HI_ST_FLG_CRLF_EOM:		Found a CRLF at the end of
  *				the previous pkt.
  * HI_ST_FLG_POSTPARM:		Request contains post parameters.
  */
-#define HI_ST_FLG_CLEAR		(0x0)
-#define HI_ST_FLG_CRLF_EOM	(0x1)
-#define HI_ST_FLG_POSTPARM	(0x2)
+#define HI_ST_FLG_CLEAR     (0x0)
+#define HI_ST_FLG_CRLF_EOM  (0x1)
+#define HI_ST_FLG_POSTPARM  (0x2)
 
 /*
  * States into which the HTTP request
  * stateful processing can enter.
  *
- * HI_ST_STATE_URI_KEY: HTTP Inspect is searching for 
+ * HI_ST_STATE_URI_KEY: HTTP Inspect is searching for
  *			request method keyword which
  *			signifies URI.
  * HI_ST_STATE_URI_CONT: HTTP Inspect is building the
  *			contents of the URI.
  * HI_ST_STATE_HDR_KEY: HTTP Inspect is searching for
  *			a header keyword.
- * HI_ST_STATE_HDR_CT: HTTP Inspect is processing a 
+ * HI_ST_STATE_HDR_CT: HTTP Inspect is processing a
  *			content-type header.
- * HI_ST_STATE_HDR_PA: HTTP Inspect is processing a 
+ * HI_ST_STATE_HDR_PA: HTTP Inspect is processing a
  *			proxy-authenticate header.
- * HI_ST_STATE_HDR_CONT: HTTP Inspect is examining the 
+ * HI_ST_STATE_HDR_CONT: HTTP Inspect is examining the
  *			contents of a header.
  * HI_ST_STATE_BDY_POST: HTTP Inspect is treating body
  *			as a set of post parameters.
- * HI_ST_STATE_BDY_PIPE: HTTP Inspect is searching for 
+ * HI_ST_STATE_BDY_PIPE: HTTP Inspect is searching for
  *			 a pipelined request.
- * HI_ST_STATE_MSG_DONE: A complete HTTP request has 
+ * HI_ST_STATE_MSG_DONE: A complete HTTP request has
  *			been seen and processed.
  */
-#define HI_ST_STATE_URI_KEY	(0x1)
-#define HI_ST_STATE_URI_CONT	(0x2)
-#define HI_ST_STATE_HDR_KEY	(0x3)
-#define HI_ST_STATE_HDR_CT	(0x4)
-#define HI_ST_STATE_HDR_PA	(0x5)
-#define HI_ST_STATE_HDR_CONT	(0x6)
-#define HI_ST_STATE_BDY_POST	(0x7)
-#define HI_ST_STATE_BDY_PIPE	(0x8)
-#define HI_ST_STATE_MSG_DONE	(0x9)
-#define HI_ST_NUM_STATES	(8)
+#define HI_ST_STATE_URI_KEY (0x1)
+#define HI_ST_STATE_URI_CONT    (0x2)
+#define HI_ST_STATE_HDR_KEY (0x3)
+#define HI_ST_STATE_HDR_CT  (0x4)
+#define HI_ST_STATE_HDR_PA  (0x5)
+#define HI_ST_STATE_HDR_CONT    (0x6)
+#define HI_ST_STATE_BDY_POST    (0x7)
+#define HI_ST_STATE_BDY_PIPE    (0x8)
+#define HI_ST_STATE_MSG_DONE    (0x9)
+#define HI_ST_NUM_STATES    (8)
 
 /*
  *
  */
-#define HI_ST_MAXBUFLEN		10400
+#define HI_ST_MAXBUFLEN     10400
 
 /*
  * Recognized delimiter types.
  */
-#define HI_ST_DELIM_NONE	(0x0)
-#define HI_ST_DELIM_CRLF	(0x1)
-#define HI_ST_DELIM_AHF		(0x2)
+#define HI_ST_DELIM_NONE    (0x0)
+#define HI_ST_DELIM_CRLF    (0x1)
+#define HI_ST_DELIM_AHF     (0x2)
 
-#define HI_ST_SUCCESS	(0x1)
-#define HI_ST_FAILURE	(0x0)
+#define HI_ST_SUCCESS   (0x1)
+#define HI_ST_FAILURE   (0x0)
 
 /*
  * Flag values for BUFFER::buf_flags. These
@@ -95,19 +95,19 @@
  * that may be needed/pending.
  *
  * HI_ST_BUFFLGS_NONE:		No flags.
- * HI_ST_BUFFLGS_COMPACT: 	Buffer "compacting" is required
+ * HI_ST_BUFFLGS_COMPACT:   Buffer "compacting" is required
  */
-#define HI_ST_BUFFLGS_NONE	(0x0)
-#define HI_ST_BUFFLGS_COMPACT 	(0x1)
+#define HI_ST_BUFFLGS_NONE  (0x0)
+#define HI_ST_BUFFLGS_COMPACT   (0x1)
 
 #define HI_ST_MAX_BYTES_WO_HEADER 10
 
 /*
- * Default value for max header bytes. Used for 
+ * Default value for max header bytes. Used for
  * header folding detection, etc. to alert on
  * suspiciously long header fields.
  */
-#define HI_ST_MAX_HEADER_BYTES	8190
+#define HI_ST_MAX_HEADER_BYTES  8190
 
 /* Buffer structure used in stateful inspection
  * packet processing.
@@ -120,14 +120,14 @@
  */
 typedef struct _BUF
 {
-	unsigned char* startp;
-	unsigned char* endp;
-	unsigned char* curp;
-	unsigned char* bufendp;
-	unsigned int buf_flags;
+    unsigned char* startp;
+    unsigned char* endp;
+    unsigned char* curp;
+    unsigned char* bufendp;
+    unsigned int buf_flags;
 } BUFFER;
 
-/* Structure containing current state regarding headers for 
+/* Structure containing current state regarding headers for
  * a request.
  *
  * num_headers:	Number of headers seen in the current request.
@@ -143,13 +143,13 @@ typedef struct _BUF
  */
 typedef struct _HEADER_STATE
 {
-	int num_headers;
-	int bytes_wo_header;
-	int hf_bytes;
-	unsigned char* startp;
-	unsigned char* endp;
-	unsigned char* base64startp;
-	unsigned char* base64endp;
+    int num_headers;
+    int bytes_wo_header;
+    int hf_bytes;
+    unsigned char* startp;
+    unsigned char* endp;
+    unsigned char* base64startp;
+    unsigned char* base64endp;
 } HEADER_STATE;
 
 /*
@@ -157,9 +157,9 @@ typedef struct _HEADER_STATE
  * tracked by HTTP inspect.
  *
  * request_buffer:
- * mpse_state:    Saved MPSE state from searches started in 
+ * mpse_state:    Saved MPSE state from searches started in
  *                      previous packet
- * flags: 	  State flags
+ * flags:     State flags
  * state:	  Current state of the inspectin state machine.
  * request_type:  Discovered method type for current request.
  * uristate:	  State block containing discovered info about
@@ -171,15 +171,15 @@ typedef struct _HEADER_STATE
  */
 typedef struct _HI_SI_STATE
 {
-	BUFFER request_buffer;
-	int mpse_state;
-	int flags;
-	int state;
-	int request_type;
-	URI_PTR uristate;
-	HEADER_STATE headerstate;
-	unsigned char* bodyp;
-	unsigned char* body_endp;
+    BUFFER request_buffer;
+    int mpse_state;
+    int flags;
+    int state;
+    int request_type;
+    URI_PTR uristate;
+    HEADER_STATE headerstate;
+    unsigned char* bodyp;
+    unsigned char* body_endp;
 } HI_SI_STATE;
 
 /*
@@ -192,12 +192,12 @@ typedef struct _HI_SI_STATE
  * HI_ST_MATCHTYPE_POSTPARMCT:	The post-param content-type has been found.
  * HI_ST_MATCHTYPE_BASE64:	A keyword indicating base64 enc. has been found.
  */
-#define HI_ST_MATCHTYPE_NONE		(0x0)
-#define HI_ST_MATCHTYPE_REQMETHOD	(0x1)
-#define HI_ST_MATCHTYPE_HEADER		(0x2)
-#define HI_ST_MATCHTYPE_CRLF		(0x3)
-#define HI_ST_MATCHTYPE_POSTPARMCT	(0x4)
-#define HI_ST_MATCHTYPE_BASE64		(0x5)
+#define HI_ST_MATCHTYPE_NONE        (0x0)
+#define HI_ST_MATCHTYPE_REQMETHOD   (0x1)
+#define HI_ST_MATCHTYPE_HEADER      (0x2)
+#define HI_ST_MATCHTYPE_CRLF        (0x3)
+#define HI_ST_MATCHTYPE_POSTPARMCT  (0x4)
+#define HI_ST_MATCHTYPE_BASE64      (0x5)
 
 #define HI_ST_CT_KEYWORD "Content-Type:"
 #define HI_ST_PA_KEYWORD "Proxy-Authorization:"
@@ -205,20 +205,20 @@ typedef struct _HI_SI_STATE
 /*
  * Request method types
  */
-#define HI_ST_METHOD_GET	(0x1)
-#define HI_ST_METHOD_HEAD	(0x2)
-#define HI_ST_METHOD_POST	(0x3)
-#define HI_ST_METHOD_PUT	(0x4)
-#define HI_ST_METHOD_DELETE	(0x5)
-#define HI_ST_METHOD_TRACE	(0x6)
-#define HI_ST_METHOD_CONNECT	(0x7)
+#define HI_ST_METHOD_GET    (0x1)
+#define HI_ST_METHOD_HEAD   (0x2)
+#define HI_ST_METHOD_POST   (0x3)
+#define HI_ST_METHOD_PUT    (0x4)
+#define HI_ST_METHOD_DELETE (0x5)
+#define HI_ST_METHOD_TRACE  (0x6)
+#define HI_ST_METHOD_CONNECT    (0x7)
 
 /* One of these structs is passed into the MPSE search
  * to be filled in by the match callback.
  *
- * index: The index of the match, in bytes, 
+ * index: The index of the match, in bytes,
  *			into the searched string
- * type:  The type of keyword found 
+ * type:  The type of keyword found
  *			(e.g. request method or header )
  * data:  Type-specific data.
  *
@@ -226,10 +226,11 @@ typedef struct _HI_SI_STATE
  */
 typedef struct _HI_SI_MATCHDATA
 {
-	int index;
-	int type;
-	int data;
-	unsigned char* keywordp;
+    int index;
+    int type;
+    int data;
+    unsigned char* keywordp;
 } HI_SI_MATCHDATA;
 
 #endif /* HI_STATEFUL_INSPECT_H */
+

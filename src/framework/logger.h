@@ -52,30 +52,30 @@ struct LogApi;
 class SO_PUBLIC Logger
 {
 public:
-    virtual ~Logger() { };
+    virtual ~Logger() { }
 
-    virtual void open() { };
-    virtual void close() { };
-    virtual void reset() { };
+    virtual void open() { }
+    virtual void close() { }
+    virtual void reset() { }
 
-    virtual void alert(Packet*, const char*, Event*) { };
-    virtual void log(Packet*, const char*, Event*) { };
+    virtual void alert(Packet*, const char*, Event*) { }
+    virtual void log(Packet*, const char*, Event*) { }
 
     void set_api(const LogApi* p)
-    { api = p; };
+    { api = p; }
 
     const LogApi* get_api()
-    { return api; };
+    { return api; }
 
 protected:
-    Logger() { };
+    Logger() { }
 
 private:
     const LogApi* api;
 };
 
-typedef Logger* (*LogNewFunc)(struct SnortConfig*, class Module*);
-typedef void (*LogDelFunc)(Logger*);
+typedef Logger* (* LogNewFunc)(struct SnortConfig*, class Module*);
+typedef void (* LogDelFunc)(Logger*);
 
 struct LogApi
 {

@@ -28,7 +28,7 @@ using namespace std;
 
 static constexpr unsigned K = 1024;
 
-static StreamModuleConfig stream_cfg = 
+static StreamModuleConfig stream_cfg =
 {
     // bytes, #, sec, sec
     { 8*K,  16*K, 30, 180 },  // ip

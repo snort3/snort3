@@ -16,7 +16,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 #ifndef EVENT_QUEUE_H
 #define EVENT_QUEUE_H
 
@@ -35,7 +35,6 @@ struct EventQueueConfig
     int log_events;
     int order;
     int process_all_events;
-
 };
 
 struct EventNode
@@ -46,7 +45,7 @@ struct EventNode
 };
 
 EventQueueConfig* EventQueueConfigNew(void);
-void EventQueueConfigFree(EventQueueConfig *);
+void EventQueueConfigFree(EventQueueConfig*);
 
 void SnortEventqNew(EventQueueConfig*);
 void SnortEventqFree();
@@ -62,3 +61,4 @@ void SnortEventqPush(void);
 void SnortEventqPop(void);
 
 #endif
+

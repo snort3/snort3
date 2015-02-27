@@ -39,10 +39,10 @@ static THREAD_LOCAL ProfileStats rawDataPerfStats;
 class RawDataOption : public IpsOption
 {
 public:
-    RawDataOption() : IpsOption(s_name) { };
+    RawDataOption() : IpsOption(s_name) { }
 
     CursorActionType get_cursor_type() const override
-    { return CAT_SET_RAW; };
+    { return CAT_SET_RAW; }
 
     int eval(Cursor&, Packet*) override;
 };
@@ -68,10 +68,10 @@ int RawDataOption::eval(Cursor& c, Packet* p)
 class RawDataModule : public Module
 {
 public:
-    RawDataModule() : Module(s_name, s_help) { };
+    RawDataModule() : Module(s_name, s_help) { }
 
     ProfileStats* get_profile() const override
-    { return &rawDataPerfStats; };
+    { return &rawDataPerfStats; }
 };
 
 //-------------------------------------------------------------------------

@@ -24,31 +24,28 @@
 #include "helpers/converter.h"
 #include "helpers/s2l_util.h"
 
-
 namespace keywords
 {
-
-namespace {
-
+namespace
+{
 class Var : public ConversionState
 {
 public:
-    Var(Converter& c) : ConversionState(c){}
-    virtual ~Var() {};
+    Var(Converter& c) : ConversionState(c) { }
+    virtual ~Var() { }
     virtual bool convert(std::istringstream& data);
 };
-
 } // namespace
 
 bool Var::convert(std::istringstream& data_stream)
 {
-    std::string ports;//    cv.print_line(data_stream);
+    std::string ports; //    cv.print_line(data_stream);
     std::string keyword;
 
     if (!(data_stream >> keyword))
         return false;
 
-    if(!(data_stream >> ports))
+    if (!(data_stream >> ports))
         return false;
 
     if (isdigit(keyword.front()))
@@ -57,21 +54,21 @@ bool Var::convert(std::istringstream& data_stream)
             " - " + keyword + " begins with a number!");
         return false;
     }
-    else if(ports.front() == '[')
+    else if (ports.front() == '[')
     {
         std::vector<std::string> port_list;
         bool retval = true;
 
         // FIXIT-M J   ---  Should not be removing the '[' from a PORT_LIST
-        if(ports.front() == '[')
+        if (ports.front() == '[')
             ports.erase(ports.begin());
-        
-        if(ports.back() == ']')
+
+        if (ports.back() == ']')
             ports.pop_back();
-    
+
         util::split(ports, ',', port_list);
 
-        for(std::string elem : port_list)
+        for (std::string elem : port_list)
             retval = data_api.add_variable(keyword, elem) && retval;
 
         return retval;
@@ -89,7 +86,7 @@ bool Var::convert(std::istringstream& data_stream)
 static ConversionState* ctor(Converter& c)
 { return new Var(c); }
 
-static const ConvertMap keyword_portvar = 
+static const ConvertMap keyword_portvar =
 {
     "portvar",
     ctor,
@@ -110,5 +107,5 @@ static const ConvertMap keyword_var =
 const ConvertMap* portvar_map = &keyword_portvar;
 const ConvertMap* ipvar_map = &keyword_ipvar;
 const ConvertMap* var_map = &keyword_var;
-
 } // namespace keywords
+

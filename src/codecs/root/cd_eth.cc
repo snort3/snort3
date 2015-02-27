@@ -18,7 +18,6 @@
 //--------------------------------------------------------------------------
 // cd_eth.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -37,7 +36,6 @@
 
 namespace
 {
-
 static const RuleMap eth_rules[] =
 {
     { DECODE_ETH_HDR_TRUNC, "truncated eth header" },
@@ -47,30 +45,28 @@ static const RuleMap eth_rules[] =
 class EthModule : public CodecModule
 {
 public:
-    EthModule() : CodecModule(CD_ETH_NAME, CD_ETH_HELP) {}
+    EthModule() : CodecModule(CD_ETH_NAME, CD_ETH_HELP) { }
 
     const RuleMap* get_rules() const
     { return eth_rules; }
 };
 
-
 class EthCodec : public Codec
 {
 public:
-    EthCodec() : Codec(CD_ETH_NAME){};
-    ~EthCodec(){};
+    EthCodec() : Codec(CD_ETH_NAME) { }
+    ~EthCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>&) override;
     void get_data_link_type(std::vector<int>&) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                        EncState&, Buffer&) override;
+        EncState&, Buffer&) override;
     void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
     void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
         uint16_t lyr_len, uint32_t& updated_len) override;
 };
-
 } // namespace
 
 #ifndef DLT_PPP_ETHER
@@ -78,17 +74,16 @@ public:
 constexpr int DLT_PPP_ETHER = 51;
 #endif
 
-void EthCodec::get_data_link_type(std::vector<int>&v)
+void EthCodec::get_data_link_type(std::vector<int>& v)
 {
     v.push_back(DLT_PPP_ETHER);
     v.push_back(DLT_EN10MB);
 }
 
-void EthCodec::get_protocol_ids(std::vector<uint16_t>&v)
+void EthCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(PROTO_ETHERNET_802_3);
 }
-
 
 //--------------------------------------------------------------------
 // decode.c::Ethernet
@@ -108,17 +103,15 @@ void EthCodec::get_protocol_ids(std::vector<uint16_t>&v)
  */
 bool EthCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-
     /* do a little validation */
-    if(raw.len < eth::ETH_HEADER_LEN)
+    if (raw.len < eth::ETH_HEADER_LEN)
     {
         codec_event(codec, DECODE_ETH_HDR_TRUNC);
         return false;
     }
 
     /* lay the ethernet structure over the packet data */
-    const eth::EtherHdr *eh = reinterpret_cast<const eth::EtherHdr *>(raw.data);
-
+    const eth::EtherHdr* eh = reinterpret_cast<const eth::EtherHdr*>(raw.data);
 
     uint16_t next_prot = eh->ethertype();
     if ( next_prot <= eth::MIN_ETHERTYPE )
@@ -146,11 +139,10 @@ bool EthCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     return true;
 }
 
-
 void EthCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const uint16_t /*len*/)
 {
-    const eth::EtherHdr *eh = reinterpret_cast<const eth::EtherHdr *>(raw_pkt);
+    const eth::EtherHdr* eh = reinterpret_cast<const eth::EtherHdr*>(raw_pkt);
 
     /* src addr */
     TextLog_Print(text_log, "%02X:%02X:%02X:%02X:%02X:%02X -> ", eh->ether_src[0],
@@ -175,7 +167,7 @@ void EthCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 //-------------------------------------------------------------------------
 
 bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
-                      EncState& enc, Buffer& buf)
+    EncState& enc, Buffer& buf)
 {
     const eth::EtherHdr* hi = reinterpret_cast<const eth::EtherHdr*>(raw_in);
 
@@ -206,9 +198,8 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         eth::EtherHdr* ho = reinterpret_cast<eth::EtherHdr*>(buf.data());
         ho->ether_type = enc.ethertype_set() ? ntohs(enc.next_ethertype) : hi->ether_type;
 
+        uint8_t* dst_mac = PacketManager::encode_get_dst_mac();
 
-        uint8_t *dst_mac = PacketManager::encode_get_dst_mac();
-        
         if ( enc.forward() )
         {
             memcpy(ho->ether_src, hi->ether_src, sizeof(ho->ether_src));
@@ -234,7 +225,6 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     return true;
 }
 
-
 void EthCodec::format(bool reverse, uint8_t* raw_pkt, DecodeData&)
 {
     eth::EtherHdr* ch = reinterpret_cast<eth::EtherHdr*>(raw_pkt);
@@ -250,9 +240,8 @@ void EthCodec::format(bool reverse, uint8_t* raw_pkt, DecodeData&)
     }
 }
 
-
 void EthCodec::update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
-        uint16_t lyr_len, uint32_t& updated_len)
+    uint16_t lyr_len, uint32_t& updated_len)
 {
     const eth::EtherHdr* const eth = reinterpret_cast<eth::EtherHdr*>(raw_pkt);
 
@@ -273,12 +262,12 @@ static void mod_dtor(Module* m)
 static Codec* ctor(Module*)
 { return new EthCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi eth_api =
 {
-    { 
+    {
         PT_CODEC,
         CD_ETH_NAME,
         CD_ETH_HELP,
@@ -295,8 +284,6 @@ static const CodecApi eth_api =
     dtor, // dtor
 };
 
-
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -306,3 +293,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_eth = &eth_api.base;
 #endif
+

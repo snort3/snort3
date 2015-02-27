@@ -94,7 +94,7 @@
 #include "sfip/sf_ip.h"
 #include "protocols/eth.h"
 
-static const uint8_t bcast[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+static const uint8_t bcast[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
 THREAD_LOCAL ProfileStats arpPerfStats;
 
@@ -138,13 +138,15 @@ static void PrintIPMacEntryList(IPMacEntryList& ipmel)
         LogMessage("\n");
     }
 }
+
 #endif
 
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
 
-class ArpSpoof : public Inspector {
+class ArpSpoof : public Inspector
+{
 public:
     ArpSpoof(ArpSpoofModule*);
     ~ArpSpoof();
@@ -175,12 +177,12 @@ void ArpSpoof::show(SnortConfig*)
 #endif
 }
 
-void ArpSpoof::eval(Packet *p)
+void ArpSpoof::eval(Packet* p)
 {
-    IPMacEntry *ipme;
+    IPMacEntry* ipme;
     PROFILE_VARS;
-    const arp::EtherARP *ah;
-    const eth::EtherHdr *eh;
+    const arp::EtherARP* ah;
+    const eth::EtherHdr* eh;
 
     // preconditions - what we registered for
     assert(p->type() == PktType::ARP);
@@ -191,53 +193,53 @@ void ArpSpoof::eval(Packet *p)
 
     /* is the ARP protocol type IP and the ARP hardware type Ethernet? */
     if ((ntohs(ah->ea_hdr.ar_hrd) != 0x0001) ||
-            (ntohs(ah->ea_hdr.ar_pro) != ETHERNET_TYPE_IP))
+        (ntohs(ah->ea_hdr.ar_pro) != ETHERNET_TYPE_IP))
         return;
 
     MODULE_PROFILE_START(arpPerfStats);
     ++asstats.total_packets;
 
-    switch(ntohs(ah->ea_hdr.ar_op))
+    switch (ntohs(ah->ea_hdr.ar_op))
     {
-        case ARPOP_REQUEST:
-            if (memcmp((u_char *)eh->ether_dst, (u_char *)bcast, 6) != 0)
-            {
-                SnortEventqAdd(GID_ARP_SPOOF,
-                    ARPSPOOF_UNICAST_ARP_REQUEST);
+    case ARPOP_REQUEST:
+        if (memcmp((u_char*)eh->ether_dst, (u_char*)bcast, 6) != 0)
+        {
+            SnortEventqAdd(GID_ARP_SPOOF,
+                ARPSPOOF_UNICAST_ARP_REQUEST);
 
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-                        "MODNAME: Unicast request\n"););
-            }
-            else if (memcmp((u_char *)eh->ether_src,
-                    (u_char *)ah->arp_sha, 6) != 0)
-            {
-                SnortEventqAdd(GID_ARP_SPOOF,
-                        ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
+                "MODNAME: Unicast request\n"); );
+        }
+        else if (memcmp((u_char*)eh->ether_src,
+            (u_char*)ah->arp_sha, 6) != 0)
+        {
+            SnortEventqAdd(GID_ARP_SPOOF,
+                ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
 
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-                            "MODNAME: Ethernet/ARP mismatch request\n"););
-            }
-            break;
-        case ARPOP_REPLY:
-            if (memcmp((u_char *)eh->ether_src,
-                    (u_char *)ah->arp_sha, 6) != 0)
-            {
-                SnortEventqAdd(GID_ARP_SPOOF,
-                        ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
+                "MODNAME: Ethernet/ARP mismatch request\n"); );
+        }
+        break;
+    case ARPOP_REPLY:
+        if (memcmp((u_char*)eh->ether_src,
+            (u_char*)ah->arp_sha, 6) != 0)
+        {
+            SnortEventqAdd(GID_ARP_SPOOF,
+                ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
 
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-                        "MODNAME: Ethernet/ARP mismatch reply src\n"););
-            }
-            else if (memcmp((u_char *)eh->ether_dst,
-                    (u_char *)ah->arp_tha, 6) != 0)
-            {
-                SnortEventqAdd(GID_ARP_SPOOF,
-                        ARPSPOOF_ETHERFRAME_ARP_MISMATCH_DST);
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
+                "MODNAME: Ethernet/ARP mismatch reply src\n"); );
+        }
+        else if (memcmp((u_char*)eh->ether_dst,
+            (u_char*)ah->arp_tha, 6) != 0)
+        {
+            SnortEventqAdd(GID_ARP_SPOOF,
+                ARPSPOOF_ETHERFRAME_ARP_MISMATCH_DST);
 
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-                        "MODNAME: Ethernet/ARP mismatch reply dst\n"););
-            }
-            break;
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
+                "MODNAME: Ethernet/ARP mismatch reply dst\n"); );
+        }
+        break;
     }
     MODULE_PROFILE_END(arpPerfStats);
 
@@ -246,30 +248,30 @@ void ArpSpoof::eval(Packet *p)
         return;
 
     if ((ipme = LookupIPMacEntryByIP(config->ipmel,
-                                     ah->arp_spa32)) == NULL)
+            ah->arp_spa32)) == NULL)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-                "MODNAME: LookupIPMacEntryByIp returned NULL\n"););
+            "MODNAME: LookupIPMacEntryByIp returned NULL\n"); );
         return;
     }
     else
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-                "MODNAME: LookupIPMacEntryByIP returned %p\n", ipme););
+            "MODNAME: LookupIPMacEntryByIP returned %p\n", ipme); );
 
         /* If the Ethernet source address or the ARP source hardware address
          * in p doesn't match the MAC address in ipme, then generate an alert
          */
-        if ((memcmp((uint8_t *)eh->ether_src,
-                (uint8_t *)ipme->mac_addr, 6)) ||
-                (memcmp((uint8_t *)ah->arp_sha,
-                (uint8_t *)ipme->mac_addr, 6)))
+        if ((memcmp((uint8_t*)eh->ether_src,
+            (uint8_t*)ipme->mac_addr, 6)) ||
+            (memcmp((uint8_t*)ah->arp_sha,
+            (uint8_t*)ipme->mac_addr, 6)))
         {
             SnortEventqAdd(GID_ARP_SPOOF,
-                    ARPSPOOF_ARP_CACHE_OVERWRITE_ATTACK);
+                ARPSPOOF_ARP_CACHE_OVERWRITE_ATTACK);
 
             DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-                    "MODNAME: Attempted ARP cache overwrite attack\n"););
+                "MODNAME: Attempted ARP cache overwrite attack\n"); );
 
             return;
         }
@@ -287,7 +289,7 @@ static void mod_dtor(Module* m)
 { delete m; }
 
 static Inspector* as_ctor(Module* m)
-{ 
+{
     return new ArpSpoof((ArpSpoofModule*)m);
 }
 
@@ -305,7 +307,7 @@ static const InspectApi as_api =
         mod_ctor,
         mod_dtor
     },
-    IT_NETWORK, 
+    IT_NETWORK,
     (uint16_t)PktType::ARP,
     nullptr, // buffers
     nullptr, // service

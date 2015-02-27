@@ -28,84 +28,74 @@
 
 using namespace NHttpEnums;
 
-void NHttpMsgStart::analyze() {
+void NHttpMsgStart::analyze()
+{
     start_line.start = msg_text.start;
     start_line.length = msg_text.length;
     parse_start_line();
     derive_version_id();
 }
 
-void NHttpMsgStart::derive_version_id() {
-    if (version.length <= 0) {
+void NHttpMsgStart::derive_version_id()
+{
+    if (version.length <= 0)
+    {
         version_id = VERS__NOSOURCE;
         return;
     }
-    if (version.length != 8) {
+    if (version.length != 8)
+    {
         version_id = VERS__PROBLEMATIC;
         infractions += INF_BADVERSION;
         return;
     }
 
-    if (memcmp(version.start, "HTTP/", 5) || (version.start[6] != '.')) {
+    if (memcmp(version.start, "HTTP/", 5) || (version.start[6] != '.'))
+    {
         version_id = VERS__PROBLEMATIC;
         infractions += INF_BADVERSION;
     }
-    else if ((version.start[5] == '1') && (version.start[7] == '1')) {
+    else if ((version.start[5] == '1') && (version.start[7] == '1'))
+    {
         version_id = VERS_1_1;
     }
-    else if ((version.start[5] == '1') && (version.start[7] == '0')) {
+    else if ((version.start[5] == '1') && (version.start[7] == '0'))
+    {
         version_id = VERS_1_0;
     }
-    else if ((version.start[5] == '2') && (version.start[7] == '0')) {
+    else if ((version.start[5] == '2') && (version.start[7] == '0'))
+    {
         version_id = VERS_2_0;
     }
     else if ((version.start[5] >= '0') && (version.start[5] <= '9') &&
-             (version.start[7] >= '0') && (version.start[7] <= '9')) {
+        (version.start[7] >= '0') && (version.start[7] <= '9'))
+    {
         version_id = VERS__OTHER;
         infractions += INF_UNKNOWNVERSION;
     }
-    else {
+    else
+    {
         version_id = VERS__PROBLEMATIC;
         infractions += INF_BADVERSION;
     }
 }
 
-void NHttpMsgStart::gen_events() {}
+void NHttpMsgStart::gen_events() { }
 
-ProcessResult NHttpMsgStart::worth_detection() {
-    // We combine the start line with the headers for sending to detection if they are already available and we will
+ProcessResult NHttpMsgStart::worth_detection()
+{
+    // We combine the start line with the headers for sending to detection if they are already
+    // available and we will
     // not exceed maximum size.
     if ((session_data->header_octets_visible[source_id] > 0) &&
         (session_data->type_expected[source_id] == SEC_HEADER) &&
-        (msg_text.length + session_data->header_octets_visible[source_id]) <= MAXOCTETS) {
+        (msg_text.length + session_data->header_octets_visible[source_id]) <= MAXOCTETS)
+    {
         return RES_AGGREGATE;
     }
-    else {
+    else
+    {
         return RES_INSPECT;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

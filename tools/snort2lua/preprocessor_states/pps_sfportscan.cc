@@ -26,14 +26,13 @@
 
 namespace preprocessors
 {
-
-namespace {
-
+namespace
+{
 class PortScan : public ConversionState
 {
 public:
-    PortScan(Converter& c) : ConversionState(c) {};
-    virtual ~PortScan() {};
+    PortScan(Converter& c) : ConversionState(c) { }
+    virtual ~PortScan() { }
     virtual bool convert(std::istringstream& data_stream);
 
 private:
@@ -43,19 +42,17 @@ private:
     // a wrapper for parse_list.  adds an addition '[..]' around the string
     bool parse_ip_list(std::string table_name, std::istringstream& data_stream);
 };
-
 } // namespace
-
 
 bool PortScan::parse_ip_list(std::string list_name, std::istringstream& data_stream)
 {
     std::string prev;
     std::string elem;
 
-    if(!(data_stream >> elem) || (elem != "{"))
+    if (!(data_stream >> elem) || (elem != "{"))
         return false;
 
-    if(!(data_stream >> elem))
+    if (!(data_stream >> elem))
         return false;
 
     // there can be no spaces between the square bracket and string
@@ -73,7 +70,7 @@ bool PortScan::parse_list(std::string list_name, std::istringstream& data_stream
     std::string elem;
     bool retval = true;
 
-    if(!(data_stream >> elem) || (elem != "{"))
+    if (!(data_stream >> elem) || (elem != "{"))
         return false;
 
     while (data_stream >> elem && elem != "}")
@@ -87,7 +84,7 @@ bool PortScan::parse_option(std::string list_name, std::istringstream& data_stre
     std::string elem;
     bool retval = true;
 
-    if(!(data_stream >> elem) || (elem != "{"))
+    if (!(data_stream >> elem) || (elem != "{"))
         return false;
 
     while (data_stream >> elem && elem != "}")
@@ -119,60 +116,56 @@ bool PortScan::add_portscan_global_option(std::string name, std::istringstream& 
     return retval;
 }
 
-
 bool PortScan::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
     table_api.open_table("port_scan");
 
-    while(data_stream >> keyword)
+    while (data_stream >> keyword)
     {
         bool tmpval = true;
 
-        if(!keyword.compare("sense_level"))
+        if (!keyword.compare("sense_level"))
             tmpval = parse_option("sense_level", data_stream);
 
-        else if(!keyword.compare("watch_ip"))
+        else if (!keyword.compare("watch_ip"))
             tmpval = parse_ip_list("watch_ip", data_stream);
 
-        else if(!keyword.compare("ignore_scanned"))
+        else if (!keyword.compare("ignore_scanned"))
             tmpval = parse_ip_list("ignore_scanners", data_stream);
 
-        else if(!keyword.compare("ignore_scanners"))
+        else if (!keyword.compare("ignore_scanners"))
             tmpval = parse_ip_list("ignore_scanned", data_stream);
 
-        else if(!keyword.compare("include_midstream"))
+        else if (!keyword.compare("include_midstream"))
             tmpval = table_api.add_option("include_midstream", true);
 
-        else if(!keyword.compare("disabled"))
+        else if (!keyword.compare("disabled"))
             table_api.add_deleted_comment("disabled");
 
-        else if(!keyword.compare("detect_ack_scans"))
+        else if (!keyword.compare("detect_ack_scans"))
             table_api.add_deleted_comment("detect_ack_scans");
 
-        else if(!keyword.compare("logfile"))
+        else if (!keyword.compare("logfile"))
         {
             if (!util::get_string(data_stream, keyword, "}"))
                 tmpval = false;
             table_api.add_deleted_comment("logfile");
         }
-
-        else if(!keyword.compare("memcap"))
+        else if (!keyword.compare("memcap"))
             tmpval = add_portscan_global_option("memcap", data_stream);
 
-        else if(!keyword.compare("proto"))
+        else if (!keyword.compare("proto"))
         {
             table_api.add_diff_option_comment("proto", "protos");
             retval = parse_curly_bracket_list("protos", data_stream) && retval;
         }
-
-        else if(!keyword.compare("scan_type"))
+        else if (!keyword.compare("scan_type"))
         {
             table_api.add_diff_option_comment("scan_type", "scan_types");
             tmpval = parse_curly_bracket_list("scan_types", data_stream) && retval;
         }
-
         else
             tmpval = false;
 
@@ -180,11 +173,9 @@ bool PortScan::convert(std::istringstream& data_stream)
             retval = tmpval;
     }
 
-
     table_api.close_table(); // unecessary since the state will be reset
     return retval;
 }
-
 
 /**************************
  *******  A P I ***********
@@ -195,12 +186,12 @@ static ConversionState* ctor(Converter& c)
     return new PortScan(c);
 }
 
-static const ConvertMap preprocessor_sfportscan = 
+static const ConvertMap preprocessor_sfportscan =
 {
     "sfportscan",
     ctor,
 };
 
 const ConvertMap* sfportscan_map = &preprocessor_sfportscan;
-
 } // namespace preprocessors
+

@@ -33,23 +33,21 @@ public:
     virtual ~Option();
 
     inline std::string get_name()
-    { return name; };
- 
+    { return name; }
+
     // overloading operators
-    friend std::ostream &operator<<( std::ostream&, const Option &);
+    friend std::ostream& operator<<(std::ostream&, const Option&);
     friend bool operator!=(const Option& lhs, const Option& rhs);
     friend bool operator==(const Option& lhs, const Option& rhs);
 
 private:
-    enum class OptionType{ STRING, VAR, BOOL, INT};
+    enum class OptionType { STRING, VAR, BOOL, INT };
 
     std::string name;
     std::string value;
     int depth;
     OptionType type;
-
-
 };
 
-
 #endif
+

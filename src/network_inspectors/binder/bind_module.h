@@ -57,6 +57,7 @@ public:
     ProfileStats* get_profile() const override;
 
     std::vector<Binding*>& get_data();
+
 private:
     Binding* work;
     std::vector<Binding*> bindings;

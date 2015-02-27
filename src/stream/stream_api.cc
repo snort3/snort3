@@ -71,21 +71,21 @@ Stream::~Stream() { }
 //-------------------------------------------------------------------------
 
 Flow* Stream::get_session(const FlowKey* key)
-    { return flow_con->find_flow(key); }
+{ return flow_con->find_flow(key); }
 
 Flow* Stream::new_session(const FlowKey* key)
-    { return flow_con->new_flow(key); }
+{ return flow_con->new_flow(key); }
 
 void Stream::delete_session(const FlowKey* key)
-    { flow_con->delete_flow(key); }
+{ flow_con->delete_flow(key); }
 
 //-------------------------------------------------------------------------
 // key foo
 //-------------------------------------------------------------------------
 
 Flow* Stream::get_session_ptr_from_ip_port(
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const sfip_t* srcIP, uint16_t srcPort,
+    const sfip_t* dstIP, uint16_t dstPort,
     uint8_t ip_protocol, uint16_t vlan, uint32_t mplsId,
     uint16_t addressSpaceId)
 {
@@ -96,7 +96,7 @@ Flow* Stream::get_session_ptr_from_ip_port(
     return get_session(&key);
 }
 
-void Stream::populate_session_key(Packet *p, FlowKey *key)
+void Stream::populate_session_key(Packet* p, FlowKey* key)
 {
     uint16_t addressSpaceId = 0;
 
@@ -117,9 +117,9 @@ void Stream::populate_session_key(Packet *p, FlowKey *key)
         addressSpaceId);
 }
 
-FlowKey * Stream::get_session_key(Packet *p)
+FlowKey* Stream::get_session_key(Packet* p)
 {
-    FlowKey *key = (FlowKey*)calloc(1, sizeof(*key));
+    FlowKey* key = (FlowKey*)calloc(1, sizeof(*key));
 
     if (!key)
         return NULL;
@@ -134,15 +134,15 @@ FlowKey * Stream::get_session_key(Packet *p)
 //-------------------------------------------------------------------------
 
 FlowData* Stream::get_application_data_from_key(
-    const FlowKey *key, unsigned flow_id)
+    const FlowKey* key, unsigned flow_id)
 {
     Flow* flow = get_session(key);
     return flow->get_application_data(flow_id);
 }
 
 FlowData* Stream::get_application_data_from_ip_port(
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const sfip_t* srcIP, uint16_t srcPort,
+    const sfip_t* dstIP, uint16_t dstPort,
     uint8_t ip_protocol, uint16_t vlan, uint32_t mplsId,
     uint16_t addressSpaceID, unsigned flow_id)
 {
@@ -175,8 +175,8 @@ void Stream::check_session_closed(Packet* p)
 }
 
 int Stream::ignore_session(
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const sfip_t* srcIP, uint16_t srcPort,
+    const sfip_t* dstIP, uint16_t dstPort,
     uint8_t protocol, char direction,
     uint32_t flow_id)
 {
@@ -207,7 +207,7 @@ void Stream::proxy_started(Flow* flow, unsigned dir)
 }
 
 void Stream::stop_inspection(
-    Flow *flow, Packet *p, char dir,
+    Flow* flow, Packet* p, char dir,
     int32_t /*bytes*/, int /*response*/)
 {
     if (!flow)
@@ -215,14 +215,14 @@ void Stream::stop_inspection(
 
     switch (dir)
     {
-        case SSN_DIR_BOTH:
-        case SSN_DIR_FROM_CLIENT:
-        case SSN_DIR_FROM_SERVER:
-            if (flow->ssn_state.ignore_direction != dir)
-            {
-                flow->ssn_state.ignore_direction = dir;
-            }
-            break;
+    case SSN_DIR_BOTH:
+    case SSN_DIR_FROM_CLIENT:
+    case SSN_DIR_FROM_SERVER:
+        if (flow->ssn_state.ignore_direction != dir)
+        {
+            flow->ssn_state.ignore_direction = dir;
+        }
+        break;
     }
 
     /* Flush any queued data on the client and/or server */
@@ -252,20 +252,19 @@ void Stream::resume_inspection(Flow* flow, char dir)
 
     switch (dir)
     {
-        case SSN_DIR_BOTH:
-        case SSN_DIR_FROM_CLIENT:
-        case SSN_DIR_FROM_SERVER:
-            if (flow->ssn_state.ignore_direction & dir)
-            {
-                flow->ssn_state.ignore_direction &= ~dir;
-            }
-            break;
+    case SSN_DIR_BOTH:
+    case SSN_DIR_FROM_CLIENT:
+    case SSN_DIR_FROM_SERVER:
+        if (flow->ssn_state.ignore_direction & dir)
+        {
+            flow->ssn_state.ignore_direction &= ~dir;
+        }
+        break;
     }
-
 }
 
 void Stream::update_direction(
-    Flow*  flow, char dir, const sfip_t *ip, uint16_t port)
+    Flow* flow, char dir, const sfip_t* ip, uint16_t port)
 {
     if (!flow)
         return;
@@ -273,7 +272,7 @@ void Stream::update_direction(
     flow->session->update_direction(dir, ip, port);
 }
 
-uint32_t Stream::get_packet_direction(Packet *p)
+uint32_t Stream::get_packet_direction(Packet* p)
 {
     if (!p || !(p->flow))
         return 0;
@@ -303,7 +302,7 @@ void Stream::drop_traffic(Flow* flow, char dir)
     }
 }
 
-void Stream::drop_packet(Packet *p)
+void Stream::drop_packet(Packet* p)
 {
     Flow* flow = p->flow;
 
@@ -362,7 +361,7 @@ int Stream::set_ignore_direction(Flow* flow, int ignore_direction)
 // misc support
 //-------------------------------------------------------------------------
 
-StreamFlowData *Stream::get_flow_data(Packet *p)
+StreamFlowData* Stream::get_flow_data(Packet* p)
 {
     Flow* flow = p->flow;
 
@@ -374,7 +373,8 @@ StreamFlowData *Stream::get_flow_data(Packet *p)
 
 void Stream::init_active_response(Packet* p, Flow* flow)
 {
-    if ( !flow ) return;
+    if ( !flow )
+        return;
 
     flow->response_count = 1;
 
@@ -387,8 +387,8 @@ void Stream::init_active_response(Packet* p, Flow* flow)
 //-------------------------------------------------------------------------
 
 int Stream::set_application_protocol_id_expected(
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const sfip_t* srcIP, uint16_t srcPort,
+    const sfip_t* dstIP, uint16_t dstPort,
     uint8_t protocol, int16_t appId, FlowData* fd)
 {
     assert(flow_con);
@@ -398,7 +398,7 @@ int Stream::set_application_protocol_id_expected(
 }
 
 void Stream::set_application_protocol_id_from_host_entry(
-    Flow* flow, const HostAttributeEntry *host_entry, int direction)
+    Flow* flow, const HostAttributeEntry* host_entry, int direction)
 {
     int16_t application_protocol;
 
@@ -442,7 +442,7 @@ int16_t Stream::get_application_protocol_id(Flow* flow)
     /* Not caching the source and dest host_entry in the session so we can
      * swap the table out after processing this packet if we need
      * to.  */
-    HostAttributeEntry *host_entry = NULL;
+    HostAttributeEntry* host_entry = NULL;
     int16_t protocol = 0;
 
     if (!flow)
@@ -546,9 +546,9 @@ void Stream::log_extra_data(
 uint32_t Stream::reg_xtra_data_cb(LogFunction f)
 {
     uint32_t i = 0;
-    while(i < xtradata_func_count)
+    while (i < xtradata_func_count)
     {
-        if(xtradata_map[i++] == f)
+        if (xtradata_map[i++] == f)
         {
             return i;
         }
@@ -559,9 +559,9 @@ uint32_t Stream::reg_xtra_data_cb(LogFunction f)
     return xtradata_func_count;
 }
 
-uint32_t Stream::get_xtra_data_map(LogFunction **f)
+uint32_t Stream::get_xtra_data_map(LogFunction** f)
 {
-    if(f)
+    if (f)
     {
         *f = xtradata_map;
         return xtradata_func_count;
@@ -570,7 +570,7 @@ uint32_t Stream::get_xtra_data_map(LogFunction **f)
         return 0;
 }
 
-void Stream::reg_xtra_data_log(LogExtraData f, void *config)
+void Stream::reg_xtra_data_log(LogExtraData f, void* config)
 {
     extra_data_log = f;
     extra_data_config = config;
@@ -598,7 +598,7 @@ uint8_t Stream::get_session_ttl(Flow* flow, char dir, bool outer)
 // *DROP* flags are set to mark the direction(s) for which traffic was
 // seen since last reset and then cleared after sending new attempt so
 // that we only send in the still active direction(s).
-static void active_response(Packet* p, Flow *lwssn)
+static void active_response(Packet* p, Flow* lwssn)
 {
     uint8_t max = snort_conf->max_responses;
 
@@ -612,7 +612,7 @@ static void active_response(Packet* p, Flow *lwssn)
         uint32_t delay = snort_conf->min_interval;
         EncodeFlags flags =
             ( (lwssn->session_state & STREAM_STATE_DROP_CLIENT) &&
-              (lwssn->session_state & STREAM_STATE_DROP_SERVER) ) ?
+            (lwssn->session_state & STREAM_STATE_DROP_SERVER) ) ?
             ENC_FLAG_FWD : 0;  // reverse dir is always true
 
         Active_KillSession(p, &flags);
@@ -623,21 +623,21 @@ static void active_response(Packet* p, Flow *lwssn)
     }
 }
 
-bool Stream::blocked_session (Flow* flow, Packet* p)
+bool Stream::blocked_session(Flow* flow, Packet* p)
 {
     if ( !(flow->ssn_state.session_flags & (SSNFLAG_DROP_CLIENT|SSNFLAG_DROP_SERVER)) )
         return false;
 
     if (
         ((p->packet_flags & PKT_FROM_SERVER) &&
-            (flow->ssn_state.session_flags & SSNFLAG_DROP_SERVER)) ||
+        (flow->ssn_state.session_flags & SSNFLAG_DROP_SERVER)) ||
 
         ((p->packet_flags & PKT_FROM_CLIENT) &&
-            (flow->ssn_state.session_flags & SSNFLAG_DROP_CLIENT)) )
+        (flow->ssn_state.session_flags & SSNFLAG_DROP_CLIENT)) )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
             "Blocking %s packet as session was blocked\n",
-            p->packet_flags & PKT_FROM_SERVER ?  "server" : "client"););
+            p->packet_flags & PKT_FROM_SERVER ?  "server" : "client"); );
 
         DisableDetect(p);
         Active_DropPacket(p);
@@ -647,18 +647,18 @@ bool Stream::blocked_session (Flow* flow, Packet* p)
     return false;
 }
 
-bool Stream::ignored_session (Flow* flow, Packet* p)
+bool Stream::ignored_session(Flow* flow, Packet* p)
 {
     if (
         ((p->packet_flags & PKT_FROM_SERVER) &&
-            (flow->ssn_state.ignore_direction & SSN_DIR_FROM_CLIENT)) ||
+        (flow->ssn_state.ignore_direction & SSN_DIR_FROM_CLIENT)) ||
 
         ((p->packet_flags & PKT_FROM_CLIENT) &&
-            (flow->ssn_state.ignore_direction & SSN_DIR_FROM_SERVER)) )
+        (flow->ssn_state.ignore_direction & SSN_DIR_FROM_SERVER)) )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
             "Stream Ignoring packet from %d. Session marked as ignore\n",
-            p->packet_flags & PKT_FROM_CLIENT? "sender" : "responder"););
+            p->packet_flags & PKT_FROM_CLIENT ? "sender" : "responder"); );
 
         DisableInspection(p);
         return true;
@@ -667,7 +667,7 @@ bool Stream::ignored_session (Flow* flow, Packet* p)
     return false;
 }
 
-static int StreamExpireSession(Flow *lwssn)
+static int StreamExpireSession(Flow* lwssn)
 {
     sfBase.iStreamTimeouts++;
     lwssn->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
@@ -676,7 +676,7 @@ static int StreamExpireSession(Flow *lwssn)
     return 1;
 }
 
-static int StreamExpire(Packet *p, Flow *lwssn)
+static int StreamExpire(Packet* p, Flow* lwssn)
 {
     if ( lwssn->expired(p) )
     {
@@ -687,12 +687,12 @@ static int StreamExpire(Packet *p, Flow *lwssn)
     return 0;
 }
 
-bool Stream::expired_session (Flow* flow, Packet* p)
+bool Stream::expired_session(Flow* flow, Packet* p)
 {
     if ( (flow->session_state & STREAM_STATE_TIMEDOUT)
         || StreamExpire(p, flow) )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "Stream IP session timeout!\n"););
+        DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "Stream IP session timeout!\n"); );
         flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
         return true;
     }
@@ -729,14 +729,14 @@ void Stream::set_ip_protocol(Flow* flow)
 // TCP only
 //-------------------------------------------------------------------------
 
-static bool ok_to_flush(Packet *p)
+static bool ok_to_flush(Packet* p)
 {
     Flow* flow;
 
     if ((p == NULL) || (p->flow == NULL))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Don't flush NULL packet or session\n"););
+            "Don't flush NULL packet or session\n"); );
         return false;
     }
 
@@ -746,13 +746,13 @@ static bool ok_to_flush(Packet *p)
         (p->packet_flags & PKT_REBUILT_STREAM))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Don't flush on rebuilt packets\n"););
+            "Don't flush on rebuilt packets\n"); );
         return false;
     }
     return true;
 }
 
-void Stream::flush_request(Packet *p)
+void Stream::flush_request(Packet* p)
 {
     if ( !ok_to_flush(p) )
         return;
@@ -762,7 +762,7 @@ void Stream::flush_request(Packet *p)
     StreamFlushListener(p, p->flow);
 }
 
-void Stream::flush_response(Packet *p)
+void Stream::flush_response(Packet* p)
 {
     if ( !ok_to_flush(p) )
         return;
@@ -774,7 +774,7 @@ void Stream::flush_response(Packet *p)
 
 // return true if added
 bool Stream::add_session_alert(
-    Flow *flow, Packet *p, uint32_t gid, uint32_t sid)
+    Flow* flow, Packet* p, uint32_t gid, uint32_t sid)
 {
     if ( !flow )
         return false;
@@ -784,7 +784,7 @@ bool Stream::add_session_alert(
 
 // return true if gid/sid have already been seen
 bool Stream::check_session_alerted(
-    Flow *flow, Packet *p, uint32_t gid, uint32_t sid)
+    Flow* flow, Packet* p, uint32_t gid, uint32_t sid)
 {
     if ( !flow )
         return false;
@@ -793,7 +793,7 @@ bool Stream::check_session_alerted(
 }
 
 int Stream::update_session_alert(
-    Flow *flow, Packet *p,
+    Flow* flow, Packet* p,
     uint32_t gid, uint32_t sid,
     uint32_t event_id, uint32_t event_second)
 {
@@ -832,7 +832,7 @@ void Stream::clear_extra_data(
 }
 
 int Stream::traverse_reassembled(
-    Packet *p, PacketIterator callback, void *userdata)
+    Packet* p, PacketIterator callback, void* userdata)
 {
     Flow* flow = p->flow;
 
@@ -847,7 +847,7 @@ int Stream::traverse_reassembled(
 }
 
 int Stream::traverse_stream_segments(
-    Packet *p, StreamSegmentIterator callback, void *userdata)
+    Packet* p, StreamSegmentIterator callback, void* userdata)
 {
     Flow* flow = p->flow;
 

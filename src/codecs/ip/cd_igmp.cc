@@ -17,8 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_igmp.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -28,13 +26,11 @@
 #include "protocols/packet.h"
 #include "protocols/ipv4_options.h"
 
-
 #define CD_IGMP_NAME "igmp"
 #define CD_IGMP_HELP "support for Internet group management protocol"
 
 namespace
 {
-
 static const RuleMap igmp_rules[] =
 {
     { DECODE_IGMP_OPTIONS_DOS, "DOS IGMP IP options validation attempt" },
@@ -44,31 +40,22 @@ static const RuleMap igmp_rules[] =
 class IgmpModule : public CodecModule
 {
 public:
-    IgmpModule() : CodecModule(CD_IGMP_NAME, CD_IGMP_HELP) {}
+    IgmpModule() : CodecModule(CD_IGMP_NAME, CD_IGMP_HELP) { }
 
     const RuleMap* get_rules() const
     { return igmp_rules; }
 };
 
-
-
 class IgmpCodec : public Codec
 {
 public:
-    IgmpCodec() : Codec(CD_IGMP_NAME){};
-    ~IgmpCodec() {};
-
+    IgmpCodec() : Codec(CD_IGMP_NAME) { }
+    ~IgmpCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_protocol_ids(std::vector<uint16_t>&) override;
 };
-
-
 } // namespace
-
-
-
-
 
 bool IgmpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
@@ -76,8 +63,10 @@ bool IgmpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     {
         const uint8_t* ip_opt_data = snort.ip_api.get_ip_opt_data();
 
-        if (ip_opt_data != nullptr) {
-            if (snort.ip_api.get_ip_opt_len() >= 2) {
+        if (ip_opt_data != nullptr)
+        {
+            if (snort.ip_api.get_ip_opt_len() >= 2)
+            {
                 if (*(ip_opt_data) == 0 && *(ip_opt_data+1) == 0)
                 {
                     codec_event(codec, DECODE_IGMP_OPTIONS_DOS);
@@ -85,7 +74,6 @@ bool IgmpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                 }
             }
         }
-
 
         if ((!(codec.codec_flags & CODEC_IPOPT_RTRALT_SEEN)) &&
             (codec.codec_flags & CODEC_IPOPT_LEN_THREE))
@@ -101,8 +89,6 @@ void IgmpCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IPPROTO_IGMP);
 }
 
-
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
@@ -116,7 +102,7 @@ static void mod_dtor(Module* m)
 static Codec* ctor(Module*)
 { return new IgmpCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi igmp_api =
@@ -138,7 +124,6 @@ static const CodecApi igmp_api =
     dtor, // dtor
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -148,3 +133,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_igmp = &igmp_api.base;
 #endif
+

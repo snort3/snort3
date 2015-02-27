@@ -40,49 +40,51 @@ public:
     AcbMpse(
         SnortConfig*,
         bool use_gc,
-        void (*user_free)(void*),
-        void (*tree_free)(void**),
-        void (*list_free)(void**))
-    : Mpse("ac_banded", use_gc)
+        void (* user_free)(void*),
+        void (* tree_free)(void**),
+        void (* list_free)(void**))
+        : Mpse("ac_banded", use_gc)
     {
         obj = acsmNew2(user_free, tree_free, list_free);
         if ( obj ) acsmSelectFormat2(obj, ACF_BANDED);
-    };
+    }
+
     ~AcbMpse()
     {
         if (obj)
             acsmFree2(obj);
-    };
+    }
 
     int add_pattern(
         SnortConfig*, const uint8_t* P, unsigned m,
         bool noCase, bool negative, void* ID, int IID) override
     {
         return acsmAddPattern2(obj, P, m, noCase, negative, ID, IID);
-    };
+    }
 
     int prep_patterns(
         SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
     {
         return acsmCompile2(sc, obj, build_tree, neg_list);
-    };
+    }
 
     int _search(
         const unsigned char* T, int n, mpse_action_f action,
-        void* data, int* current_state ) override
+        void* data, int* current_state) override
     {
         return acsmSearchSparseDFA_Banded(
-            obj, (unsigned char *)T, n, action, data, current_state);
-    };
+            obj, (unsigned char*)T, n, action, data, current_state);
+    }
 
     int print_info() override
     {
         return acsmPrintDetailInfo2(obj);
-    };
+    }
+
     int get_pattern_count() override
     {
         return acsmPatternCount2(obj);
-    };
+    }
 };
 
 //-------------------------------------------------------------------------
@@ -93,9 +95,9 @@ static Mpse* acb_ctor(
     SnortConfig* sc,
     class Module*,
     bool use_gc,
-    void (*user_free)(void*),
-    void (*tree_free)(void**),
-    void (*list_free)(void**))
+    void (* user_free)(void*),
+    void (* tree_free)(void**),
+    void (* list_free)(void**))
 {
     return new AcbMpse(sc, use_gc, user_free, tree_free, list_free);
 }

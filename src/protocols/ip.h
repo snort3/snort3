@@ -38,7 +38,6 @@
 #include "sfip/sfip_t.h"
 #include "main/snort_types.h"
 
-
 struct Packet;
 
 // FIXIT-J : can I assume api si always valid?  i.e. if not ip4, then ipv6?
@@ -46,14 +45,13 @@ struct Packet;
 
 namespace ip
 {
-
 // keeping this as a class to avoid confusion.
 class SO_PUBLIC IpApi
 {
 public:
 //    IpApi();   constructor and destructor MUST remain a trivial. Adding
 //    ~IpApi();  any non-trivial code will cause a compilation failure.
-    IpApi() = default ;
+    IpApi() = default;
 
     void set(const IP4Hdr* h4);
     void set(const IP6Hdr* h6);
@@ -83,7 +81,6 @@ public:
     friend bool operator==(const IpApi& lhs, const IpApi& rhs);
     friend bool operator!=(const IpApi& lhs, const IpApi& rhs);
 
-
     // returns true if this api is set.
     inline bool is_valid() const
     { return (ip4h || ip6h); }
@@ -100,10 +97,10 @@ public:
     inline const IP6Hdr* get_ip6h() const
     { return ip6h; }
 
-    inline const sfip_t *get_src() const
+    inline const sfip_t* get_src() const
     { return src_p; }
 
-    inline const sfip_t *get_dst() const
+    inline const sfip_t* get_dst() const
     { return dst_p; }
 
     inline uint16_t tos() const
@@ -134,7 +131,6 @@ public:
     inline uint8_t ver() const
     { return ip4h ? ip4h->ver() : ip6h ? ip6h->ver() : 0; }
 
-
     // only relevent to IP4.
     inline uint8_t get_ip_opt_len() const
     { return ip4h ? ip4h->get_opt_len() : 0; }
@@ -152,20 +148,18 @@ public:
 private:
     sfip_t src;
     sfip_t dst;
-    const sfip_t *src_p;
-    const sfip_t *dst_p;
+    const sfip_t* src_p;
+    const sfip_t* dst_p;
     const IP4Hdr* ip4h;
     const IP6Hdr* ip6h;
 };
-
 
 inline bool operator==(const IpApi& lhs, const IpApi& rhs)
 { return (lhs.ip4h == rhs.ip4h) && (lhs.ip6h == rhs.ip6h); }
 
 inline bool operator!=(const IpApi& lhs, const IpApi& rhs)
 { return !(lhs == rhs); }
-
-
 } // namespace ip
 
 #endif
+

@@ -26,7 +26,7 @@
 class FlushBucket
 {
 public:
-    virtual ~FlushBucket() { };
+    virtual ~FlushBucket() { }
     virtual uint16_t get_next() = 0;
 
     static uint16_t get_size();
@@ -34,17 +34,17 @@ public:
     static void clear();
 
 protected:
-    FlushBucket() { };
+    FlushBucket() { }
 };
 
 class ConstFlushBucket : public FlushBucket
 {
 public:
     ConstFlushBucket(uint16_t sz)
-    { size = sz; };
+    { size = sz; }
 
     uint16_t get_next()
-    { return size; };
+    { return size; }
 
 private:
     uint16_t size;

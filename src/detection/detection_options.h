@@ -29,7 +29,6 @@
 #ifndef DETECTION_OPTIONS_H
 #define DETECTION_OPTIONS_H
 
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -41,7 +40,7 @@
 struct Packet;
 struct SFXHASH;
 
-typedef int (*eval_func_t)(void* option_data, class Cursor&, Packet*);
+typedef int (* eval_func_t)(void* option_data, class Cursor&, Packet*);
 
 struct dot_node_state_t
 {
@@ -74,9 +73,9 @@ struct detection_option_tree_node_t
     int is_relative;
     int num_children;
     int relative_children;
-    void *option_data;
+    void* option_data;
     option_type_t option_type;
-    detection_option_tree_node_t **children;
+    detection_option_tree_node_t** children;
     dot_node_state_t* state;
 };
 
@@ -92,7 +91,7 @@ struct dot_root_state_t
 struct detection_option_tree_root_t
 {
     int num_children;
-    detection_option_tree_node_t **children;
+    detection_option_tree_node_t** children;
 #ifdef PPM_MGR
     dot_root_state_t* state;
 #endif
@@ -100,36 +99,36 @@ struct detection_option_tree_root_t
 
 struct detection_option_eval_data_t
 {
-    void *pomd;
-    void *pmd;
-    Packet *p;
+    void* pomd;
+    void* pmd;
+    Packet* p;
     char flowbit_failed;
     char flowbit_noalert;
 };
 
 int add_detection_option(
-    struct SnortConfig*, option_type_t type, void *option_data, void **existing_data);
+    struct SnortConfig*, option_type_t type, void* option_data, void** existing_data);
 
 int add_detection_option_tree(
-    struct SnortConfig*, detection_option_tree_node_t *option_tree, void **existing_data);
+    struct SnortConfig*, detection_option_tree_node_t* option_tree, void** existing_data);
 
 int detection_option_node_evaluate(
-    detection_option_tree_node_t*, detection_option_eval_data_t*, class Cursor&);
+detection_option_tree_node_t*, detection_option_eval_data_t*, class Cursor&);
 
-void DetectionHashTableFree(SFXHASH *);
-void DetectionTreeHashTableFree(SFXHASH *);
+void DetectionHashTableFree(SFXHASH*);
+void DetectionTreeHashTableFree(SFXHASH*);
 #ifdef DEBUG_OPTION_TREE
-void print_option_tree(detection_option_tree_node_t *node, int level);
+void print_option_tree(detection_option_tree_node_t* node, int level);
 #endif
 #ifdef PERF_PROFILING
-void detection_option_tree_update_otn_stats(SFXHASH *);
+void detection_option_tree_update_otn_stats(SFXHASH*);
 #endif
 
 detection_option_tree_root_t* new_root();
-void free_detection_option_root(void **existing_tree);
+void free_detection_option_root(void** existing_tree);
 
 detection_option_tree_node_t* new_node(option_type_t type, void* data);
-void free_detection_option_tree(detection_option_tree_node_t *node);
+void free_detection_option_tree(detection_option_tree_node_t* node);
 
 #endif /* DETECTION_OPTIONS_H */
 

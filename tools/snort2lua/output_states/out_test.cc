@@ -26,17 +26,15 @@
 
 namespace output
 {
-
-namespace {
-
+namespace
+{
 class AlertTest : public ConversionState
 {
 public:
-    AlertTest(Converter& c) : ConversionState(c) {};
-    virtual ~AlertTest() {};
+    AlertTest(Converter& c) : ConversionState(c) { }
+    virtual ~AlertTest() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool AlertTest::convert(std::istringstream& data_stream)
@@ -48,8 +46,6 @@ bool AlertTest::convert(std::istringstream& data_stream)
 
     table_api.open_top_level_table("alert_test");
 
-
-
     // re-using
     while (std::getline(data_stream, args, ','))
     {
@@ -57,13 +53,11 @@ bool AlertTest::convert(std::istringstream& data_stream)
 
         std::istringstream arg_stream(args);
 
-        if(!(arg_stream >> keyword))
+        if (!(arg_stream >> keyword))
         {
             retval = false;
             continue;
         }
-
-
 
         if (!keyword.compare("stdout"))
             tmpval = table_api.add_deleted_comment("stdout");
@@ -85,9 +79,7 @@ bool AlertTest::convert(std::istringstream& data_stream)
 
         if (retval)
             retval = tmpval;
-
     }
-
 
     return retval;
 }
@@ -110,5 +102,5 @@ static const ConvertMap alert_test_api =
 };
 
 const ConvertMap* alert_test_map = &alert_test_api;
-
 } // namespace output
+

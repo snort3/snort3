@@ -57,16 +57,16 @@ static const Parameter s_params[] =
 static const RuleMap s_rules[] =
 {
     { ARPSPOOF_UNICAST_ARP_REQUEST,
-        ARPSPOOF_UNICAST_ARP_REQUEST_STR },
+      ARPSPOOF_UNICAST_ARP_REQUEST_STR },
 
     { ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC,
-        ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC_STR },
+      ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC_STR },
 
     { ARPSPOOF_ETHERFRAME_ARP_MISMATCH_DST,
-        ARPSPOOF_ETHERFRAME_ARP_MISMATCH_DST_STR },
+      ARPSPOOF_ETHERFRAME_ARP_MISMATCH_DST_STR },
 
     { ARPSPOOF_ARP_CACHE_OVERWRITE_ATTACK,
-        ARPSPOOF_ARP_CACHE_OVERWRITE_ATTACK_STR },
+      ARPSPOOF_ARP_CACHE_OVERWRITE_ATTACK_STR },
 
     { 0, nullptr }
 };
@@ -75,7 +75,7 @@ static const RuleMap s_rules[] =
 // arp_spoof module
 //-------------------------------------------------------------------------
 
-ArpSpoofModule::ArpSpoofModule() : 
+ArpSpoofModule::ArpSpoofModule() :
     Module(MOD_NAME, MOD_HELP, s_params)
 {
     config = nullptr;
@@ -140,5 +140,4 @@ const PegInfo* ArpSpoofModule::get_pegs() const
 
 PegCount* ArpSpoofModule::get_counts() const
 { return (PegCount*)&asstats; }
-
 

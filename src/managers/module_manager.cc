@@ -91,7 +91,7 @@ void ModHook::init()
 {
     const Command* c = mod->get_commands();
 
-    if( !c )
+    if ( !c )
         return;
 
     unsigned n = 0;
@@ -213,9 +213,9 @@ static void dump_field_lua(const string& key, const Parameter* p, bool table = f
 {
     // implied values (rule keywords) and command line args
     // don't really have defaults, so skip them
-    if ( key.find('~') != string::npos || 
-         key.find('-') != string::npos ||
-         key.find('*') != string::npos )
+    if ( key.find('~') != string::npos ||
+        key.find('-') != string::npos ||
+        key.find('*') != string::npos )
         return;
 
     if ( table || p->is_table() )
@@ -326,7 +326,7 @@ static const Parameter* get_params(const string& sfx, const Parameter* p)
         return nullptr;
 
     if ( p->type != Parameter::PT_TABLE &&
-         p->type != Parameter::PT_LIST )
+        p->type != Parameter::PT_LIST )
         return p;
 
     if (new_fqn.find_first_of('.') == std::string::npos)
@@ -448,11 +448,11 @@ static bool set_value(const char* fqn, Value& v)
     // now we must traverse the mod params to get the leaf
     string s = fqn;
     const Parameter* p = get_params(s, mod->get_parameters());
- 
+
     if ( !p )
     {
         // FIXIT-L handle things like x = { 1 }
-        // where x is a table not a list and 1 should be 
+        // where x is a table not a list and 1 should be
         // considered a key not a value; ideally say
         // can't find x.1 instead of just can't find x
         ParseError("can't find %s", fqn);
@@ -676,11 +676,11 @@ void ModuleManager::list_modules(const char* s)
 
     for ( auto* p : s_modules )
     {
-        if ( 
+        if (
             !s || !*s ||
             (p->api && p->api->type == pt) ||
             (!p->api && !strcmp(s, "basic"))
-        )
+            )
         {
             LogMessage("%s\n", p->mod->get_name());
             c++;
@@ -858,7 +858,7 @@ void ModuleManager::show_commands(const char* pfx, bool exact)
 
         if ( !c )
             continue;
-        
+
         while ( c->name )
         {
             cout << Markup::item();
@@ -901,7 +901,7 @@ void ModuleManager::show_gids(const char* pfx, bool exact)
             cout << endl;
         }
         c++;
-    }    
+    }
     if ( !c )
         cout << "no match" << endl;
 }
@@ -936,7 +936,7 @@ void ModuleManager::show_pegs(const char* pfx, bool exact)
             ++pegs;
         }
         c++;
-    }    
+    }
     if ( !c )
         cout << "no match" << endl;
 }
@@ -971,7 +971,7 @@ void ModuleManager::show_rules(const char* pfx, bool exact)
             r++;
         }
         c++;
-    }    
+    }
     if ( !c )
         cout << "no match" << endl;
 }
@@ -1037,7 +1037,7 @@ void ModuleManager::load_rules(SnortConfig* sc)
 
             r++;
         }
-    }    
+    }
     pop_parse_location();
 }
 
@@ -1067,12 +1067,12 @@ void ModuleManager::dump_rules(const char* pfx)
             r++;
         }
         c++;
-    }    
+    }
     if ( !c )
         cout << "no match" << endl;
 }
 
-void ModuleManager::dump_stats (SnortConfig*, const char* skip)
+void ModuleManager::dump_stats(SnortConfig*, const char* skip)
 {
     for ( auto p : s_modules )
     {
@@ -1081,7 +1081,7 @@ void ModuleManager::dump_stats (SnortConfig*, const char* skip)
     }
 }
 
-void ModuleManager::accumulate (SnortConfig*)
+void ModuleManager::accumulate(SnortConfig*)
 {
     static mutex stats_mutex;
     stats_mutex.lock();
@@ -1093,7 +1093,7 @@ void ModuleManager::accumulate (SnortConfig*)
     stats_mutex.unlock();
 }
 
-void ModuleManager::reset_stats (SnortConfig*)
+void ModuleManager::reset_stats(SnortConfig*)
 {
     for ( auto p : s_modules )
         p->mod->reset_stats();

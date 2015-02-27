@@ -46,7 +46,7 @@ int16_t protocolReferenceTCP;
 int16_t protocolReferenceUDP;
 int16_t protocolReferenceICMP;
 
-static SFGHASH *proto_reference_table = NULL;  // STATIC
+static SFGHASH* proto_reference_table = NULL;  // STATIC
 static int16_t protocol_number = 1;
 
 static vector<string> id_map;
@@ -61,20 +61,20 @@ const char* get_protocol_name(uint16_t id)
 
 /* XXX XXX Probably need to do this during swap time since the
  * proto_reference_table is accessed during runtime */
-int16_t AddProtocolReference(const char *protocol)
+int16_t AddProtocolReference(const char* protocol)
 {
-    SFTargetProtocolReference *reference;
+    SFTargetProtocolReference* reference;
 
     if (!protocol)
         return SFTARGET_UNKNOWN_PROTOCOL;
 
-    reference = (SFTargetProtocolReference*)sfghash_find(proto_reference_table, (void *)protocol);
+    reference = (SFTargetProtocolReference*)sfghash_find(proto_reference_table, (void*)protocol);
     if (reference)
     {
         DEBUG_WRAP(
             DebugMessage(DEBUG_ATTRIBUTE,
-                "Protocol Reference for %s exists as %d\n",
-                protocol, reference->ordinal););
+            "Protocol Reference for %s exists as %d\n",
+            protocol, reference->ordinal); );
         return reference->ordinal;
     }
 
@@ -94,11 +94,11 @@ int16_t AddProtocolReference(const char *protocol)
         * defined as 8192.
         */
         LogMessage("WARNING: protocol_number wrapped.   This may result"
-                   "in odd behavior and potential false positives.\n");
+            "in odd behavior and potential false positives.\n");
 
-        /* 1 is the first protocol id we use. */
-        /* 0 is not used */
-        /* -1 means unknwon */
+        /* 1 is the first protocol id we use.
+           0 is not used
+           -1 means unknwon */
         protocol_number = 1;
     }
     SnortStrncpy(reference->name, protocol, SFAT_BUFSZ);
@@ -106,21 +106,21 @@ int16_t AddProtocolReference(const char *protocol)
     sfghash_add(proto_reference_table, reference->name, reference);
 
     DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE,
-                "Added Protocol Reference for %s as %d\n",
-            protocol, reference->ordinal););
+        DebugMessage(DEBUG_ATTRIBUTE,
+        "Added Protocol Reference for %s as %d\n",
+        protocol, reference->ordinal); );
 
     return reference->ordinal;
 }
 
-int16_t FindProtocolReference(const char *protocol)
+int16_t FindProtocolReference(const char* protocol)
 {
-    SFTargetProtocolReference *reference;
+    SFTargetProtocolReference* reference;
 
     if (!protocol)
         return SFTARGET_UNKNOWN_PROTOCOL;
 
-    reference = (SFTargetProtocolReference*)sfghash_find(proto_reference_table, (void *)protocol);
+    reference = (SFTargetProtocolReference*)sfghash_find(proto_reference_table, (void*)protocol);
 
     if (reference)
         return reference->ordinal;
@@ -154,7 +154,7 @@ void FreeProtoocolReferenceTable(void)
     proto_reference_table = NULL;
 }
 
-int16_t GetProtocolReference(Packet *p)
+int16_t GetProtocolReference(Packet* p)
 {
     int16_t protocol = 0;
     int16_t ipprotocol = 0;
@@ -167,7 +167,7 @@ int16_t GetProtocolReference(Packet *p)
 
     do /* Simple do loop to break out of quickly, not really a loop */
     {
-        HostAttributeEntry *host_entry;
+        HostAttributeEntry* host_entry;
         if ( p->flow )
         {
             /* Use session information via Stream API */
@@ -200,14 +200,13 @@ int16_t GetProtocolReference(Packet *p)
         if (host_entry)
         {
             protocol = getApplicationProtocolId(host_entry,
-                            ipprotocol,
-                            p->ptrs.dp,
-                            SFAT_SERVICE);
+                ipprotocol,
+                p->ptrs.dp,
+                SFAT_SERVICE);
         }
 
         if (protocol != 0)
         {
-
             break;
         }
 
@@ -216,16 +215,16 @@ int16_t GetProtocolReference(Packet *p)
         if (host_entry)
         {
             protocol = getApplicationProtocolId(host_entry,
-                            ipprotocol,
-                            p->ptrs.sp,
-                            SFAT_SERVICE);
+                ipprotocol,
+                p->ptrs.sp,
+                SFAT_SERVICE);
         }
         if (protocol != 0)
         {
             break;
         }
-
-    } while (0); /* Simple do loop to break out of quickly, not really a loop */
+    }
+    while (0);   /* Simple do loop to break out of quickly, not really a loop */
 
     /* Store it to alleviate future lookups */
     p->application_protocol_ordinal = protocol;

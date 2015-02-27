@@ -67,7 +67,7 @@ THREAD_LOCAL ProfileStats udp_perf_stats;
 
 //-------------------------------------------------------------------------
 
-static void UdpSessionCleanup(Flow *lwssn)
+static void UdpSessionCleanup(Flow* lwssn)
 {
     if (lwssn->ssn_state.session_flags & SSNFLAG_PRUNED)
     {
@@ -89,7 +89,7 @@ static void UdpSessionCleanup(Flow *lwssn)
 }
 
 static int ProcessUdp(
-    Flow *lwssn, Packet *p, StreamUdpConfig*, SFXHASH_NODE*)
+    Flow* lwssn, Packet* p, StreamUdpConfig*, SFXHASH_NODE*)
 {
     assert(lwssn->protocol == PktType::UDP);
 
@@ -103,17 +103,17 @@ static int ProcessUdp(
         return 0;
 
     /* if both seen, mark established */
-    if(p->packet_flags & PKT_FROM_SERVER)
+    if (p->packet_flags & PKT_FROM_SERVER)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Stream: Updating on packet from responder\n"););
+            "Stream: Updating on packet from responder\n"); );
         lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_RESPONDER;
         lwssn->set_ttl(p, false);
     }
     else
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-            "Stream: Updating on packet from client\n"););
+            "Stream: Updating on packet from client\n"); );
         lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
         lwssn->set_ttl(p, true);
     }
@@ -176,7 +176,7 @@ void UdpSession::clear()
 }
 
 void UdpSession::update_direction(
-    char dir, const sfip_t *ip, uint16_t port)
+    char dir, const sfip_t* ip, uint16_t port)
 {
     sfip_t tmpIp;
     uint16_t tmpPort;
@@ -191,7 +191,7 @@ void UdpSession::update_direction(
     }
     else if (sfip_equals(&flow->server_ip, ip) && (flow->server_port == port))
     {
-        if ((dir == SSN_DIR_FROM_RESPONDER) && 
+        if ((dir == SSN_DIR_FROM_RESPONDER) &&
             (flow->ssn_state.direction == SSN_DIR_FROM_RESPONDER))
         {
             /* Direction already set as RESPONDER */
@@ -208,10 +208,10 @@ void UdpSession::update_direction(
     flow->server_port = tmpPort;
 }
 
-int UdpSession::process(Packet *p)
+int UdpSession::process(Packet* p)
 {
     StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
-    SFXHASH_NODE *hash_node = NULL;
+    SFXHASH_NODE* hash_node = NULL;
 
     PROFILE_VARS;
     MODULE_PROFILE_START(udp_perf_stats);

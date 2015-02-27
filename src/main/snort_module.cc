@@ -106,43 +106,43 @@ static const Parameter s_params[] =
     { "-?", Parameter::PT_STRING, "(optional)", nullptr,
       "<option prefix> output matching command line option quick help (same as --help-options)" },
 
-    { "-A", Parameter::PT_STRING, nullptr, nullptr, 
+    { "-A", Parameter::PT_STRING, nullptr, nullptr,
       "<mode> set alert mode: none, cmg, or alert_*" },
 
-    { "-B", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-B", Parameter::PT_IMPLIED, nullptr, nullptr,
       "<mask> obfuscated IP addresses in alerts and packet dumps using CIDR mask" },
 
-    { "-C", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-C", Parameter::PT_IMPLIED, nullptr, nullptr,
       "print out payloads with character data only (no hex)" },
 
-    { "-c", Parameter::PT_STRING, nullptr, nullptr, 
+    { "-c", Parameter::PT_STRING, nullptr, nullptr,
       "<conf> use this configuration" },
 
     { "-D", Parameter::PT_IMPLIED, nullptr, nullptr,
       "run Snort in background (daemon) mode" },
 
-    { "-d", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-d", Parameter::PT_IMPLIED, nullptr, nullptr,
       "dump the Application Layer" },
 
-    { "-E", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-E", Parameter::PT_IMPLIED, nullptr, nullptr,
       "enable daemon restart" },
 
-    { "-e", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-e", Parameter::PT_IMPLIED, nullptr, nullptr,
       "display the second layer header info" },
 
-    { "-f", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-f", Parameter::PT_IMPLIED, nullptr, nullptr,
       "turn off fflush() calls after binary log writes" },
 
-    { "-G", Parameter::PT_INT, "0:65535", nullptr, 
+    { "-G", Parameter::PT_INT, "0:65535", nullptr,
       "<0xid> (same as --logid)" },
 
-    { "-g", Parameter::PT_STRING, nullptr, nullptr, 
+    { "-g", Parameter::PT_STRING, nullptr, nullptr,
       "<gname> run snort gid as <gname> group (or gid) after initialization" },
 
-    { "-H", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-H", Parameter::PT_IMPLIED, nullptr, nullptr,
       "make hash tables deterministic" },
 
-    { "-i", Parameter::PT_STRING, nullptr, nullptr, 
+    { "-i", Parameter::PT_STRING, nullptr, nullptr,
       "<iface>... list of interfaces" },
 
 #ifdef BUILD_SHELL
@@ -150,83 +150,83 @@ static const Parameter s_params[] =
       "<port> to listen for telnet connections" },
 #endif
 
-    { "-K", Parameter::PT_SELECT, "none|text|pcap", "none", 
+    { "-K", Parameter::PT_SELECT, "none|text|pcap", "none",
       "<mode> logging mode" },
 
-    { "-k", Parameter::PT_ENUM, "all|noip|notcp|noudp|noicmp|none", "all", 
+    { "-k", Parameter::PT_ENUM, "all|noip|notcp|noudp|noicmp|none", "all",
       "<mode> checksum mode (all,noip,notcp,noudp,noicmp,none)" },
 
-    { "-l", Parameter::PT_STRING, nullptr, nullptr, 
+    { "-l", Parameter::PT_STRING, nullptr, nullptr,
       "<logdir> log to this directory instead of current directory" },
 
     { "-M", Parameter::PT_IMPLIED, nullptr, nullptr,
       "log messages to syslog (not alerts)" },
 
-    { "-m", Parameter::PT_INT, "0:", nullptr, 
+    { "-m", Parameter::PT_INT, "0:", nullptr,
       "<umask> set umask = <umask>" },
 
 #ifdef REG_TEST
-    { "-N", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-N", Parameter::PT_IMPLIED, nullptr, nullptr,
       "ignored - for REG_TEST only" },
 #endif
 
-    { "-n", Parameter::PT_INT, "0:", nullptr, 
+    { "-n", Parameter::PT_INT, "0:", nullptr,
       "<count> stop after count packets" },
 
-    { "-O", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-O", Parameter::PT_IMPLIED, nullptr, nullptr,
       "obfuscate the logged IP addresses" },
 
-    { "-Q", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-Q", Parameter::PT_IMPLIED, nullptr, nullptr,
       "enable inline mode operation" },
 
     { "-q", Parameter::PT_IMPLIED, nullptr, nullptr,
       "quiet mode - Don't show banner and status report" },
 
-    { "-R", Parameter::PT_STRING, nullptr, nullptr, 
+    { "-R", Parameter::PT_STRING, nullptr, nullptr,
       "<rules> include this rules file in the default policy" },
 
-    { "-r", Parameter::PT_STRING, nullptr, nullptr, 
+    { "-r", Parameter::PT_STRING, nullptr, nullptr,
       "<pcap>... (same as --pcap-list)" },
 
-    { "-S", Parameter::PT_STRING, nullptr, nullptr, 
+    { "-S", Parameter::PT_STRING, nullptr, nullptr,
       "<n=v> set rules file variable n equal to value v" },
 
-    { "-s", Parameter::PT_INT, "68:65535", nullptr, 
+    { "-s", Parameter::PT_INT, "68:65535", nullptr,
       "<snap> (same as --snaplen)" },
 
-    { "-T", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-T", Parameter::PT_IMPLIED, nullptr, nullptr,
       "test and report on the current Snort configuration" },
 
-    { "-t", Parameter::PT_STRING, nullptr, nullptr, 
+    { "-t", Parameter::PT_STRING, nullptr, nullptr,
       "<dir> chroots process to <dir> after initialization" },
 
-    { "-U", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-U", Parameter::PT_IMPLIED, nullptr, nullptr,
       "use UTC for timestamps" },
 
-    { "-u", Parameter::PT_STRING, nullptr, nullptr, 
+    { "-u", Parameter::PT_STRING, nullptr, nullptr,
       "<uname> run snort as <uname> or <uid> after initialization" },
 
-    { "-V", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-V", Parameter::PT_IMPLIED, nullptr, nullptr,
       "(same as --version)" },
 
-    { "-v", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-v", Parameter::PT_IMPLIED, nullptr, nullptr,
       "be verbose" },
 
     { "-W", Parameter::PT_IMPLIED, nullptr, nullptr,
       "lists available interfaces" },
 
 #if defined(DLT_IEEE802_11)
-    { "-w", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-w", Parameter::PT_IMPLIED, nullptr, nullptr,
       "dump 802.11 management and control frames" },
 #endif
 
-    { "-X", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-X", Parameter::PT_IMPLIED, nullptr, nullptr,
       "dump the raw packet data starting at the link layer" },
 
-    { "-x", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-x", Parameter::PT_IMPLIED, nullptr, nullptr,
       "same as --pedantic" },
 
-    { "-y", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "-y", Parameter::PT_IMPLIED, nullptr, nullptr,
       "include year in timestamp in the alert and log files" },
 
     { "-z", Parameter::PT_INT, "1:", nullptr,
@@ -234,7 +234,7 @@ static const Parameter s_params[] =
 
     { "--alert-before-pass", Parameter::PT_IMPLIED, nullptr, nullptr,
       "process alert, drop, sdrop, or reject before pass; "
-       "default is pass before alert, drop,..." },
+      "default is pass before alert, drop,..." },
 
     { "--bpf", Parameter::PT_STRING, nullptr, nullptr,
       "<filter options> are standard BPF options, as seen in TCPDump" },
@@ -377,7 +377,7 @@ static const Parameter s_params[] =
     { "--pcap-show", Parameter::PT_IMPLIED, nullptr, nullptr,
       "print a line saying what pcap is currently being read" },
 
-    { "--pedantic", Parameter::PT_IMPLIED, nullptr, nullptr, 
+    { "--pedantic", Parameter::PT_IMPLIED, nullptr, nullptr,
       "warnings are fatal" },
 
     { "--plugin-path", Parameter::PT_STRING, nullptr, nullptr,
@@ -464,15 +464,15 @@ class SnortModule : public Module
 {
 public:
     SnortModule() : Module(s_name, s_help, s_params)
-    { };
+    { }
 
 #ifdef BUILD_SHELL
     const Command* get_commands() const override
-    { return snort_cmds; };
+    { return snort_cmds; }
 #endif
 
     bool set(const char*, Value&, SnortConfig*) override;
-    const PegInfo* get_pegs() const override { return proc_names; };
+    const PegInfo* get_pegs() const override { return proc_names; }
 };
 
 bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
@@ -503,7 +503,6 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__DAEMON_RESTART;
         config_daemon(sc, v.get_string());
     }
-
     else if ( v.is("-e") )
         ConfigDecodeDataLink(sc, v.get_string());
 
@@ -828,5 +827,4 @@ Module* get_snort_module()
 
     return snort_module;
 }
-
 

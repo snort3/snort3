@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 // icmp6.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifndef PROTOCOLS_ICMP6_H
 #define PROTOCOLS_ICMP6_H
 
@@ -25,11 +24,8 @@
 
 namespace icmp
 {
-
-
 constexpr uint16_t ICMP6_HEADER_MIN_LEN = 4;
 constexpr uint16_t ICMP6_HEADER_NORMAL_LEN = 8;
-
 
 //enum class Icmp6Types : std::uint8_t
 enum Icmp6Types : std::uint8_t
@@ -79,7 +75,7 @@ struct ICMP6TooBig
     uint8_t code;
     uint16_t csum;
     uint32_t mtu;
-} ;
+};
 
 struct ICMP6RouterAdvertisement
 {
@@ -99,7 +95,7 @@ struct ICMP6RouterSolicitation
     uint8_t code;
     uint16_t csum;
     uint32_t reserved;
-} ;
+};
 
 struct ICMP6NodeInfo
 {
@@ -109,11 +105,8 @@ struct ICMP6NodeInfo
     uint16_t qtype;
     uint16_t flags;
     uint64_t nonce;
-} ;
-
-
+};
 }  // namespace icmp6
-
 
 #endif
 

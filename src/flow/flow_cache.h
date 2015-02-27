@@ -23,7 +23,8 @@
 #include "flow/flow_key.h"
 #include "stream/stream.h"
 
-class FlowCache {
+class FlowCache
+{
 public:
     FlowCache(
         int max_flows,
@@ -39,7 +40,7 @@ public:
     Flow* find(const FlowKey*);
     Flow* get(const FlowKey*);
 
-    int release(Flow *, const char *reason);
+    int release(Flow*, const char* reason);
 
     uint32_t prune_unis();
     uint32_t prune_stale(uint32_t thetime, Flow* save_me);
@@ -49,9 +50,9 @@ public:
     int purge();
     int get_count();
 
-    uint32_t get_max_flows() { return max_flows; };
-    uint32_t get_prunes() { return prunes; };
-    void reset_prunes() { prunes = 0; };
+    uint32_t get_max_flows() { return max_flows; }
+    uint32_t get_prunes() { return prunes; }
+    void reset_prunes() { prunes = 0; }
 
     void unlink_uni(Flow*);
 
@@ -73,5 +74,4 @@ private:
 };
 
 #endif
-
 

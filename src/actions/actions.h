@@ -52,7 +52,7 @@ static inline bool pass_action(int a)
 static inline bool block_action(int a)
 {
     return ( (a == RULE_TYPE__DROP) ||
-             (a == RULE_TYPE__SDROP) );
+           (a == RULE_TYPE__SDROP) );
 }
 
 int AlertAction(Packet*, const OptTreeNode*);

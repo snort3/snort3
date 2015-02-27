@@ -18,7 +18,6 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-
 #ifndef PROFILER_H
 #define PROFILER_H
 
@@ -51,14 +50,14 @@ struct ProfileStats
 #define PROFILE_SORT_TOTAL_TICKS 7
 
 /* MACROS that handle profiling of rules and preprocessors */
-#define PROFILE_VARS_NAMED(name) uint64_t name##_ticks_start, name##_ticks_end
+#define PROFILE_VARS_NAMED(name) uint64_t name ## _ticks_start, name ## _ticks_end
 #define PROFILE_VARS PROFILE_VARS_NAMED(snort)
 
 #define PROFILE_START_NAMED(name) \
-    get_clockticks(name##_ticks_start)
+    get_clockticks(name ## _ticks_start)
 
 #define PROFILE_END_NAMED(name) \
-    get_clockticks(name##_ticks_end)
+    get_clockticks(name ## _ticks_end)
 
 #define NODE_PROFILE_END \
     PROFILE_END_NAMED(node); \
@@ -115,21 +114,21 @@ struct ProfileStats
     if (PROFILING_MODULES) { \
         ppstat.checks++; \
         PROFILE_START_NAMED(name); \
-        ppstat.ticks_start = name##_ticks_start; \
+        ppstat.ticks_start = name ## _ticks_start; \
     }
 #define MODULE_PROFILE_START(ppstat) MODULE_PROFILE_START_NAMED(snort, ppstat)
 
 #define MODULE_PROFILE_REENTER_START_NAMED(name, ppstat) \
     if (PROFILING_MODULES) { \
         PROFILE_START_NAMED(name); \
-        ppstat.ticks_start = name##_ticks_start; \
+        ppstat.ticks_start = name ## _ticks_start; \
     }
 #define MODULE_PROFILE_REENTER_START(ppstat) MODULE_PROFILE_REENTER_START_NAMED(snort, ppstat)
 
 #define MODULE_PROFILE_TMPSTART_NAMED(name, ppstat) \
     if (PROFILING_MODULES) { \
         PROFILE_START_NAMED(name); \
-        ppstat.ticks_start = name##_ticks_start; \
+        ppstat.ticks_start = name ## _ticks_start; \
     }
 #define MODULE_PROFILE_TMPSTART(ppstat) MODULE_PROFILE_TMPSTART_NAMED(snort, ppstat)
 
@@ -137,21 +136,21 @@ struct ProfileStats
     if (PROFILING_MODULES) { \
         PROFILE_END_NAMED(name); \
         ppstat.exits++; \
-        ppstat.ticks += name##_ticks_end - ppstat.ticks_start; \
+        ppstat.ticks += name ## _ticks_end - ppstat.ticks_start; \
     }
 #define MODULE_PROFILE_END(ppstat) MODULE_PROFILE_END_NAMED(snort, ppstat)
 
 #define MODULE_PROFILE_REENTER_END_NAMED(name, ppstat) \
     if (PROFILING_MODULES) { \
         PROFILE_END_NAMED(name); \
-        ppstat.ticks += name##_ticks_end - ppstat.ticks_start; \
+        ppstat.ticks += name ## _ticks_end - ppstat.ticks_start; \
     }
 #define MODULE_PROFILE_REENTER_END(ppstat) MODULE_PROFILE_REENTER_END_NAMED(snort, ppstat)
 
 #define MODULE_PROFILE_TMPEND_NAMED(name, ppstat) \
     if (PROFILING_MODULES) { \
         PROFILE_END_NAMED(name); \
-        ppstat.ticks += name##_ticks_end - ppstat.ticks_start; \
+        ppstat.ticks += name ## _ticks_end - ppstat.ticks_start; \
     }
 #define MODULE_PROFILE_TMPEND(ppstat) MODULE_PROFILE_TMPEND_NAMED(snort, ppstat)
 
@@ -166,11 +165,11 @@ struct ProfileConfig
 };
 
 // thread local access method
-typedef ProfileStats* (*get_profile_func)(const char*);
+typedef ProfileStats* (* get_profile_func)(const char*);
 
 void RegisterProfile(
-    const char* keyword, const char* parent,
-    get_profile_func, class Module* owner = nullptr);
+const char* keyword, const char* parent,
+get_profile_func, class Module* owner = nullptr);
 
 void RegisterProfile(class Module*);
 

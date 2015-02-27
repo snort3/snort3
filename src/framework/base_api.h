@@ -42,8 +42,8 @@ enum PlugType
 };
 
 class Module;
-typedef Module* (*ModNewFunc)();
-typedef void (*ModDelFunc)(Module*);
+typedef Module* (* ModNewFunc)();
+typedef void (* ModDelFunc)(Module*);
 
 // if we inherit this we can't use a static initializer list :(
 // so BaseApi must be the prefix (ie 1st member) of all plugin api

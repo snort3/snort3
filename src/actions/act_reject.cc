@@ -79,7 +79,7 @@ class RejectAction : public IpsAction
 {
 public:
     RejectAction(uint32_t f) : IpsAction(s_name, ACT_RESET)
-    { mask = f; };
+    { mask = f; }
 
     void exec(Packet*) override;
 
@@ -150,13 +150,13 @@ static const Parameter s_params[] =
 class RejectModule : public Module
 {
 public:
-    RejectModule() : Module(s_name, s_help, s_params) { };
+    RejectModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &rejPerfStats; };
+    { return &rejPerfStats; }
 
     uint32_t flags;
 };

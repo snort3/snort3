@@ -17,8 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_raw6.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -33,20 +31,16 @@
 
 namespace
 {
-
 class Raw6Codec : public Codec
 {
 public:
-    Raw6Codec() : Codec(CD_RAW6_NAME){};
-    ~Raw6Codec() {};
+    Raw6Codec() : Codec(CD_RAW6_NAME) { }
+    ~Raw6Codec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_data_link_type(std::vector<int>&) override;
 };
-
-
 } // namespace
-
 
 // raw packets are predetermined to be ip4 (above) or ip6 (below) by the DLT
 bool Raw6Codec::decode(const RawData&, CodecData& data, DecodeData&)
@@ -55,10 +49,8 @@ bool Raw6Codec::decode(const RawData&, CodecData& data, DecodeData&)
     return true;
 }
 
-
-void Raw6Codec::get_data_link_type(std::vector<int>&v)
+void Raw6Codec::get_data_link_type(std::vector<int>& v)
 { v.push_back(DLT_IPV6); }
-
 
 //-------------------------------------------------------------------------
 // api
@@ -67,7 +59,7 @@ void Raw6Codec::get_data_link_type(std::vector<int>&v)
 static Codec* ctor(Module*)
 { return new Raw6Codec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi raw6_api =
@@ -89,7 +81,6 @@ static const CodecApi raw6_api =
     dtor, // dtor
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -99,7 +90,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_raw6 = &raw6_api.base;
 #endif
-
-
-
 

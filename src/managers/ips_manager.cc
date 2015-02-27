@@ -57,7 +57,7 @@ struct Option
     unsigned count;
 
     Option(const IpsApi* p)
-    { api = p; init = false; count = 0; };
+    { api = p; init = false; count = 0; }
 };
 
 typedef list<Option*> OptionList;
@@ -108,7 +108,7 @@ void IpsManager::delete_option(IpsOption* ips)
 //-------------------------------------------------------------------------
 
 static bool set_arg(
-    Module* m, const Parameter* p, 
+    Module* m, const Parameter* p,
     const char* opt, const char* val, SnortConfig* sc)
 {
     if ( !p->is_positional() )
@@ -148,7 +148,7 @@ static bool set_arg(
 
 //-------------------------------------------------------------------------
 
-static Option* get_opt(const char *keyword)
+static Option* get_opt(const char* keyword)
 {
     for ( auto* p : s_options )
         if ( !strcasecmp(p->api->base.name, keyword) )
@@ -254,7 +254,7 @@ bool IpsManager::option_end(
         current_keyword.clear();
         return false;
     }
-    
+
     Option* opt = get_opt(key);
     assert(opt);
 

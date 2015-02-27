@@ -54,23 +54,22 @@
 #include "hi_return_codes.h"
 #include "snort_bounds.h"
 
-
 int hi_split_header_cookie(
-    HI_SESSION*, u_char *header, int *i_header_len,
-    u_char *cookie_header, int *i_cookie_len,
-    const u_char *raw_header, int i_raw_header_len,
-    COOKIE_PTR *cookie)
+    HI_SESSION*, u_char* header, int* i_header_len,
+    u_char* cookie_header, int* i_cookie_len,
+    const u_char* raw_header, int i_raw_header_len,
+    COOKIE_PTR* cookie)
 {
     int iRet = HI_SUCCESS;
-    COOKIE_PTR *last_cookie = NULL;
-    COOKIE_PTR *first_cookie = cookie;
-    const u_char *raw_header_end = raw_header + i_raw_header_len;
+    COOKIE_PTR* last_cookie = NULL;
+    COOKIE_PTR* first_cookie = cookie;
+    const u_char* raw_header_end = raw_header + i_raw_header_len;
     int this_cookie_len = 0;
-    const u_char *this_header_start = raw_header;
-    const u_char *this_header_end;
+    const u_char* this_header_start = raw_header;
+    const u_char* this_header_end;
     int this_header_len = 0;
-    const u_char *header_end;
-    const u_char *cookie_end;
+    const u_char* header_end;
+    const u_char* cookie_end;
 
     if (!cookie || !i_header_len || !i_cookie_len)
         return HI_INVALID_ARG;
@@ -79,9 +78,9 @@ int hi_split_header_cookie(
     if (cookie->cookie_end > raw_header + i_raw_header_len)
         return HI_OUT_OF_BOUNDS;
 
-    header_end = (const u_char *)(header + *i_header_len);
+    header_end = (const u_char*)(header + *i_header_len);
     *i_header_len = 0;
-    cookie_end = (const u_char *)(cookie_header + *i_cookie_len);
+    cookie_end = (const u_char*)(cookie_header + *i_cookie_len);
     *i_cookie_len = 0;
 
     do
@@ -98,15 +97,17 @@ int hi_split_header_cookie(
         /* Copy out the headers from start to beginning of the cookie */
         if (this_header_len > 0)
         {
-            if (SafeMemcpy(header + *i_header_len, this_header_start, this_header_len, header, header_end) == SAFEMEM_SUCCESS)
+            if (SafeMemcpy(header + *i_header_len, this_header_start, this_header_len, header,
+                header_end) == SAFEMEM_SUCCESS)
             {
                 *i_header_len += this_header_len;
             }
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_HTTPINSPECT, "HttpInspect: no leading header: %d to %d\n",
-                this_header_end - this_header_start, this_header_len););
+            DEBUG_WRAP(DebugMessage(DEBUG_HTTPINSPECT,
+                "HttpInspect: no leading header: %d to %d\n",
+                this_header_end - this_header_start, this_header_len); );
         }
 
         /* Trim the cookie and only copy what we can store in the buf */
@@ -117,7 +118,8 @@ int hi_split_header_cookie(
         /* And copy the cookie */
         if (this_cookie_len > 0)
         {
-            if (SafeMemcpy(cookie_header + *i_cookie_len, cookie->cookie, this_cookie_len, cookie_header, cookie_end) == SAFEMEM_SUCCESS)
+            if (SafeMemcpy(cookie_header + *i_cookie_len, cookie->cookie, this_cookie_len,
+                cookie_header, cookie_end) == SAFEMEM_SUCCESS)
             {
                 *i_cookie_len += this_cookie_len;
             }
@@ -125,7 +127,7 @@ int hi_split_header_cookie(
         else
         {
             DEBUG_WRAP(DebugMessage(DEBUG_HTTPINSPECT, "HttpInspect: trimming cookie: %d to %d\n",
-                cookie->cookie_end - cookie->cookie, this_cookie_len););
+                cookie->cookie_end - cookie->cookie, this_cookie_len); );
         }
 
         /* update for the next one */
@@ -154,8 +156,8 @@ int hi_split_header_cookie(
     }
     while (last_cookie);
 
-    /* Clear out the 'first' cookie since we're done with it */
-    /* Eliminates unexptected 'reuse' in the case of pipeline'd requests. */
+    /* Clear out the 'first' cookie since we're done with it
+       Eliminates unexptected 'reuse' in the case of pipeline'd requests. */
     memset(first_cookie, 0, sizeof(COOKIE_PTR));
 
     if (this_header_len && hi_util_in_bounds(raw_header, raw_header_end, this_header_start))
@@ -169,23 +171,24 @@ int hi_split_header_cookie(
         /* Copy the remaining headers after the last cookie */
         if (this_header_len > 0)
         {
-            if (SafeMemcpy(header + *i_header_len, this_header_start, this_header_len, header, header_end) == SAFEMEM_SUCCESS)
+            if (SafeMemcpy(header + *i_header_len, this_header_start, this_header_len, header,
+                header_end) == SAFEMEM_SUCCESS)
             {
                 *i_header_len += this_header_len;
             }
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_HTTPINSPECT, "HttpInspect: no leading header: %d to %d\n",
-                this_header_end - this_header_start, this_header_len););
-
+            DEBUG_WRAP(DebugMessage(DEBUG_HTTPINSPECT,
+                "HttpInspect: no leading header: %d to %d\n",
+                this_header_end - this_header_start, this_header_len); );
         }
     }
 
     return iRet;
 }
 
-int hi_client_norm(HI_SESSION *session)
+int hi_client_norm(HI_SESSION* session)
 {
     static THREAD_LOCAL u_char UriBuf[MAX_URI];
     static THREAD_LOCAL u_char HeaderBuf[MAX_URI];
@@ -193,7 +196,7 @@ int hi_client_norm(HI_SESSION *session)
     static THREAD_LOCAL u_char RawHeaderBuf[MAX_URI];
     static THREAD_LOCAL u_char RawCookieBuf[MAX_URI];
     static THREAD_LOCAL u_char PostBuf[MAX_URI];
-    HI_CLIENT_REQ    *ClientReq;
+    HI_CLIENT_REQ* ClientReq;
     int iRet;
     int iUriBufSize = MAX_URI;
     int iRawHeaderBufSize = MAX_URI;
@@ -203,9 +206,9 @@ int hi_client_norm(HI_SESSION *session)
     int iPostBufSize = MAX_URI;
     uint16_t encodeType = 0;
     u_int updated_uri_size = 0;
-    const u_char *updated_uri_start = NULL;
+    const u_char* updated_uri_start = NULL;
 
-    if(!session || !session->server_conf)
+    if (!session || !session->server_conf)
     {
         return HI_INVALID_ARG;
     }
@@ -217,23 +220,23 @@ int hi_client_norm(HI_SESSION *session)
     ClientReq->post_encode_type = 0;
 
     /* Handle URI normalization */
-    if(ClientReq->uri_norm)
+    if (ClientReq->uri_norm)
     {
         updated_uri_start = ClientReq->uri;
         updated_uri_size = ClientReq->uri_size;
         session->norm_flags &= ~HI_BODY;
-        if(proxy_start && (ClientReq->uri == proxy_start))
+        if (proxy_start && (ClientReq->uri == proxy_start))
         {
-            if(hi_util_in_bounds(ClientReq->uri, (ClientReq->uri + ClientReq->uri_size), proxy_end))
+            if (hi_util_in_bounds(ClientReq->uri, (ClientReq->uri + ClientReq->uri_size),
+                proxy_end))
             {
                 updated_uri_start = proxy_end;
                 updated_uri_size = (ClientReq->uri_size) - (proxy_end - proxy_start);
             }
-
         }
         proxy_start = proxy_end = NULL;
         iRet = hi_norm_uri(session, UriBuf, &iUriBufSize,
-                           updated_uri_start, updated_uri_size, &encodeType);
+            updated_uri_start, updated_uri_size, &encodeType);
         if (iRet == HI_NONFATAL_ERR)
         {
             /* There was a non-fatal problem normalizing */
@@ -253,9 +256,10 @@ int hi_client_norm(HI_SESSION *session)
     }
     else
     {
-        if(proxy_start && (ClientReq->uri == proxy_start))
+        if (proxy_start && (ClientReq->uri == proxy_start))
         {
-            if(hi_util_in_bounds(ClientReq->uri, (ClientReq->uri + ClientReq->uri_size), proxy_end))
+            if (hi_util_in_bounds(ClientReq->uri, (ClientReq->uri + ClientReq->uri_size),
+                proxy_end))
             {
                 ClientReq->uri_norm = proxy_end;
                 ClientReq->uri_norm_size = (ClientReq->uri_size) - (proxy_end - proxy_start);
@@ -273,11 +277,10 @@ int hi_client_norm(HI_SESSION *session)
             RawCookieBuf, &iRawCookieBufSize,
             ClientReq->header_raw, ClientReq->header_raw_size,
             &ClientReq->cookie);
-        if( iRet == HI_SUCCESS )
+        if ( iRet == HI_SUCCESS )
         {
             ClientReq->cookie.cookie = RawCookieBuf;
             ClientReq->cookie.cookie_end = RawCookieBuf + iRawCookieBufSize;
-
         }
     }
     else
@@ -290,20 +293,21 @@ int hi_client_norm(HI_SESSION *session)
             }
             /* Limiting to MAX_URI above should cause this to always return SAFEMEM_SUCCESS */
             SafeMemcpy(RawHeaderBuf, ClientReq->header_raw, ClientReq->header_raw_size,
-                    &RawHeaderBuf[0], &RawHeaderBuf[0] + iRawHeaderBufSize);
+                &RawHeaderBuf[0], &RawHeaderBuf[0] + iRawHeaderBufSize);
         }
         iRawHeaderBufSize = ClientReq->header_raw_size;
         iRawCookieBufSize = 0;
     }
 
-    if(ClientReq->header_norm && session->server_conf->normalize_headers)
+    if (ClientReq->header_norm && session->server_conf->normalize_headers)
     {
         session->norm_flags &= ~HI_BODY;
         // FIXIT-M the usefulness  of this one size fits all normalization is questionable.
-        // A specific issue is that a header such as "Referer: http://www.foo.com/home" will trigger multislash
+        // A specific issue is that a header such as "Referer: http://www.foo.com/home" will
+        // trigger multislash
         // normalization and alert.
         iRet = hi_norm_uri(session, HeaderBuf, &iHeaderBufSize,
-                       RawHeaderBuf, iRawHeaderBufSize, &encodeType);
+            RawHeaderBuf, iRawHeaderBufSize, &encodeType);
         if (iRet == HI_NONFATAL_ERR)
         {
             /* There was a non-fatal problem normalizing */
@@ -333,11 +337,11 @@ int hi_client_norm(HI_SESSION *session)
         }
     }
 
-    if(ClientReq->cookie.cookie && session->server_conf->normalize_cookies)
+    if (ClientReq->cookie.cookie && session->server_conf->normalize_cookies)
     {
         session->norm_flags &= ~HI_BODY;
         iRet = hi_norm_uri(session, CookieBuf, &iCookieBufSize,
-                       RawCookieBuf, iRawCookieBufSize, &encodeType);
+            RawCookieBuf, iRawCookieBufSize, &encodeType);
         if (iRet == HI_NONFATAL_ERR)
         {
             /* There was a non-fatal problem normalizing */
@@ -369,11 +373,11 @@ int hi_client_norm(HI_SESSION *session)
 
     /* Handle normalization of post methods.
      * Note: posts go into a different buffer. */
-    if(ClientReq->post_norm)
+    if (ClientReq->post_norm)
     {
         session->norm_flags |= HI_BODY;
         iRet = hi_norm_uri(session, PostBuf, &iPostBufSize,
-                           ClientReq->post_raw, ClientReq->post_raw_size, &encodeType);
+            ClientReq->post_raw, ClientReq->post_raw_size, &encodeType);
         if (iRet == HI_NONFATAL_ERR)
         {
             ClientReq->post_norm = NULL;
@@ -406,3 +410,4 @@ int hi_client_norm(HI_SESSION *session)
 
     return HI_SUCCESS;
 }
+

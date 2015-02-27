@@ -16,17 +16,16 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 #ifndef SFEVENTQ_H
 #define SFEVENTQ_H
 
 typedef struct s_SF_EVENTQ_NODE
 {
-    void   *event;
+    void* event;
 
-    struct s_SF_EVENTQ_NODE *prev;
-    struct s_SF_EVENTQ_NODE *next;
-
+    struct s_SF_EVENTQ_NODE* prev;
+    struct s_SF_EVENTQ_NODE* next;
 }  SF_EVENTQ_NODE;
 
 typedef struct s_SF_EVENTQ
@@ -35,20 +34,20 @@ typedef struct s_SF_EVENTQ
     **  Handles the actual ordering and memory
     **  of the event queue and it's nodes.
     */
-    SF_EVENTQ_NODE *head;
-    SF_EVENTQ_NODE *last;
+    SF_EVENTQ_NODE* head;
+    SF_EVENTQ_NODE* last;
 
-    SF_EVENTQ_NODE *node_mem;
-    char           *event_mem;
+    SF_EVENTQ_NODE* node_mem;
+    char* event_mem;
 
     /*
     **  The reserve event allows us to allocate one extra node
     **  and compare against the last event in the queue to determine
-    **  if the incoming event is a higher priority than the last 
+    **  if the incoming event is a higher priority than the last
     **  event in the queue.
     */
-    char           *reserve_event;
-    
+    char* reserve_event;
+
     /*
     **  Queue configuration
     */
@@ -62,15 +61,14 @@ typedef struct s_SF_EVENTQ
     */
     int cur_nodes;
     int cur_events;
-
 }  SF_EVENTQ;
 
-
-SF_EVENTQ * sfeventq_new(int max_nodes, int log_nodes, int event_size);
-void * sfeventq_event_alloc(SF_EVENTQ *);
-void sfeventq_reset(SF_EVENTQ *);
-int sfeventq_add(SF_EVENTQ *, void *event);
-int sfeventq_action(SF_EVENTQ *, int (*action_func)(void *event, void *user), void *user);
-void sfeventq_free(SF_EVENTQ *);
+SF_EVENTQ* sfeventq_new(int max_nodes, int log_nodes, int event_size);
+void* sfeventq_event_alloc(SF_EVENTQ*);
+void sfeventq_reset(SF_EVENTQ*);
+int sfeventq_add(SF_EVENTQ*, void* event);
+int sfeventq_action(SF_EVENTQ*, int (* action_func)(void* event, void* user), void* user);
+void sfeventq_free(SF_EVENTQ*);
 
 #endif
+

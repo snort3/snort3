@@ -51,7 +51,7 @@ struct Event
 };
 
 void SetEvent(
-    Event *, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
+Event*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
 
 #endif
 

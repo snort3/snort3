@@ -62,6 +62,7 @@ static int get_line_number(lua_State* L)
     lua_getinfo(L, "nSl", &ar);
     return ar.currentline;
 }
+
 #endif
 
 static void load_config(lua_State* L, const char* file)
@@ -188,11 +189,11 @@ void Shell::install(const char* name, const luaL_Reg* reg)
 void Shell::execute(const char* cmd, string& rsp)
 {
     int err = 0;
-    
+
     try
     {
         err = luaL_loadbuffer(lua, cmd, strlen(cmd), "shell");
-    
+
         if ( !err )
             err = lua_pcall(lua, 0, 0, 0);
     }

@@ -42,7 +42,7 @@ extern THREAD_LOCAL ProfileStats arpPerfStats;
 struct IPMacEntry
 {
     uint32_t ipv4_addr;
-    uint8_t  mac_addr[6];
+    uint8_t mac_addr[6];
 };
 
 typedef std::vector<IPMacEntry> IPMacEntryList;
@@ -70,7 +70,7 @@ public:
     PegCount* get_counts() const override;
 
     unsigned get_gid() const override
-    { return GID_ARP_SPOOF; };
+    { return GID_ARP_SPOOF; }
 
     const RuleMap* get_rules() const override;
     ProfileStats* get_profile() const override;

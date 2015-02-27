@@ -58,15 +58,15 @@
 typedef struct _detection_option_key
 {
     option_type_t option_type;
-    void *option_data;
+    void* option_data;
 } detection_option_key_t;
 
 #define HASH_RULE_OPTIONS 16384
 #define HASH_RULE_TREE 8192
 
-uint32_t detection_option_hash_func(SFHASHFCN*, unsigned char *k, int)
+uint32_t detection_option_hash_func(SFHASHFCN*, unsigned char* k, int)
 {
-    detection_option_key_t *key = (detection_option_key_t*)k;
+    detection_option_key_t* key = (detection_option_key_t*)k;
 
     if ( key->option_type != RULE_OPTION_TYPE_LEAF_NODE )
     {
@@ -76,10 +76,10 @@ uint32_t detection_option_hash_func(SFHASHFCN*, unsigned char *k, int)
     return 0;
 }
 
-int detection_option_key_compare_func(const void *k1, const void *k2, size_t)
+int detection_option_key_compare_func(const void* k1, const void* k2, size_t)
 {
-    const detection_option_key_t *key1 = (detection_option_key_t*)k1;
-    const detection_option_key_t *key2 = (detection_option_key_t*)k2;
+    const detection_option_key_t* key1 = (detection_option_key_t*)k1;
+    const detection_option_key_t* key2 = (detection_option_key_t*)k2;
 
 #ifdef KEEP_THEM_ALLOCATED
     return DETECTION_OPTION_NOT_EQUAL;
@@ -102,9 +102,9 @@ int detection_option_key_compare_func(const void *k1, const void *k2, size_t)
     return DETECTION_OPTION_NOT_EQUAL;
 }
 
-int detection_hash_free_func(void *option_key, void*)
+int detection_hash_free_func(void* option_key, void*)
 {
-    detection_option_key_t *key = (detection_option_key_t*)option_key;
+    detection_option_key_t* key = (detection_option_key_t*)option_key;
 
     if ( key->option_type != RULE_OPTION_TYPE_LEAF_NODE )
     {
@@ -114,42 +114,41 @@ int detection_hash_free_func(void *option_key, void*)
     return 0;
 }
 
-SFXHASH * DetectionHashTableNew(void)
+SFXHASH* DetectionHashTableNew(void)
 {
-    SFXHASH *doht = sfxhash_new(HASH_RULE_OPTIONS,
-                                sizeof(detection_option_key_t),
-                                0,      /* Data size == 0, just store the ptr */
-                                0,      /* Memcap */
-                                0,      /* Auto node recovery */
-                                NULL,   /* Auto free function */
-                                detection_hash_free_func,   /* User free function */
-                                1);     /* Recycle nodes */
-
+    SFXHASH* doht = sfxhash_new(HASH_RULE_OPTIONS,
+        sizeof(detection_option_key_t),
+        0,                              /* Data size == 0, just store the ptr */
+        0,                              /* Memcap */
+        0,                              /* Auto node recovery */
+        NULL,                           /* Auto free function */
+        detection_hash_free_func,                           /* User free function */
+        1);                             /* Recycle nodes */
 
     if (doht == NULL)
         FatalError("Failed to create rule detection option hash table");
 
     sfxhash_set_keyops(doht, detection_option_hash_func,
-                       detection_option_key_compare_func);
+        detection_option_key_compare_func);
 
     return doht;
 }
 
-void DetectionHashTableFree(SFXHASH *doht)
+void DetectionHashTableFree(SFXHASH* doht)
 {
     if (doht != NULL)
         sfxhash_delete(doht);
 }
 
 int add_detection_option(
-    SnortConfig* sc, option_type_t type, void *option_data, void **existing_data)
+    SnortConfig* sc, option_type_t type, void* option_data, void** existing_data)
 {
     detection_option_key_t key;
 
     if (sc == NULL)
     {
         FatalError("%s(%d) Snort config is NULL.\n",
-                   __FILE__, __LINE__);
+            __FILE__, __LINE__);
     }
 
     if (sc->detection_option_hash_table == NULL)
@@ -174,7 +173,7 @@ int add_detection_option(
     return DETECTION_OPTION_NOT_EQUAL;
 }
 
-uint32_t detection_option_tree_hash(detection_option_tree_node_t *node)
+uint32_t detection_option_tree_hash(detection_option_tree_node_t* node)
 {
     uint32_t a,b,c;
     int i;
@@ -184,7 +183,7 @@ uint32_t detection_option_tree_hash(detection_option_tree_node_t *node)
 
     a = b = c = 0;
 
-    for (i=0;i<node->num_children;i++)
+    for (i=0; i<node->num_children; i++)
     {
 #if (defined(__ia64) || defined(__amd64) || defined(_LP64))
         {
@@ -217,10 +216,10 @@ uint32_t detection_option_tree_hash(detection_option_tree_node_t *node)
     return c;
 }
 
-uint32_t detection_option_tree_hash_func(SFHASHFCN*, unsigned char *k, int)
+uint32_t detection_option_tree_hash_func(SFHASHFCN*, unsigned char* k, int)
 {
-    detection_option_key_t *key = (detection_option_key_t *)k;
-    detection_option_tree_node_t *node;
+    detection_option_key_t* key = (detection_option_key_t*)k;
+    detection_option_tree_node_t* node;
 
     if (!key || !key->option_data)
         return 0;
@@ -230,7 +229,7 @@ uint32_t detection_option_tree_hash_func(SFHASHFCN*, unsigned char *k, int)
     return detection_option_tree_hash(node);
 }
 
-int detection_option_tree_compare(detection_option_tree_node_t *r, detection_option_tree_node_t *l)
+int detection_option_tree_compare(detection_option_tree_node_t* r, detection_option_tree_node_t* l)
 {
     int ret = DETECTION_OPTION_NOT_EQUAL;
     int i;
@@ -247,7 +246,7 @@ int detection_option_tree_compare(detection_option_tree_node_t *r, detection_opt
     if (r->num_children != l->num_children)
         return DETECTION_OPTION_NOT_EQUAL;
 
-    for (i=0;i<r->num_children;i++)
+    for (i=0; i<r->num_children; i++)
     {
         /* Recurse & check the children for equality */
         ret = detection_option_tree_compare(r->children[i], l->children[i]);
@@ -258,38 +257,38 @@ int detection_option_tree_compare(detection_option_tree_node_t *r, detection_opt
     return DETECTION_OPTION_EQUAL;
 }
 
-int detection_option_tree_compare_func(const void *k1, const void *k2, size_t)
+int detection_option_tree_compare_func(const void* k1, const void* k2, size_t)
 {
-    detection_option_key_t *key_r = (detection_option_key_t *)k1;
-    detection_option_key_t *key_l = (detection_option_key_t *)k2;
-    detection_option_tree_node_t *r;
-    detection_option_tree_node_t *l;
+    detection_option_key_t* key_r = (detection_option_key_t*)k1;
+    detection_option_key_t* key_l = (detection_option_key_t*)k2;
+    detection_option_tree_node_t* r;
+    detection_option_tree_node_t* l;
 
     if (!key_r || !key_l)
         return DETECTION_OPTION_NOT_EQUAL;
 
-    r = (detection_option_tree_node_t *)key_r->option_data;
-    l = (detection_option_tree_node_t *)key_l->option_data;
+    r = (detection_option_tree_node_t*)key_r->option_data;
+    l = (detection_option_tree_node_t*)key_l->option_data;
 
     return detection_option_tree_compare(r, l);
 }
 
-int detection_option_tree_free_func(void*, void *data)
+int detection_option_tree_free_func(void*, void* data)
 {
-    detection_option_tree_node_t *node = (detection_option_tree_node_t *)data;
+    detection_option_tree_node_t* node = (detection_option_tree_node_t*)data;
     free_detection_option_tree(node);
     return 0;
 }
 
-void DetectionTreeHashTableFree(SFXHASH *dtht)
+void DetectionTreeHashTableFree(SFXHASH* dtht)
 {
     if (dtht != NULL)
         sfxhash_delete(dtht);
 }
 
-SFXHASH * DetectionTreeHashTableNew(void)
+SFXHASH* DetectionTreeHashTableNew(void)
 {
-    SFXHASH *dtht = sfxhash_new(
+    SFXHASH* dtht = sfxhash_new(
         HASH_RULE_TREE,
         sizeof(detection_option_key_t),
         0,      /* Data size == 0, just store the ptr */
@@ -320,7 +319,7 @@ static const char* const option_type_str[] =
     "RULE_OPTION_TYPE_OTHER"
 };
 
-void print_option_tree(detection_option_tree_node_t *node, int level)
+void print_option_tree(detection_option_tree_node_t* node, int level)
 {
     int i;
     unsigned int indent = 12 - (11 - level) + strlen(option_type_str[node->option_type]);
@@ -330,24 +329,25 @@ void print_option_tree(detection_option_tree_node_t *node, int level)
 
     DEBUG_WRAP(
         DebugMessage(DEBUG_DETECT, "%d%*s%*d 0x%x\n",
-           level, indent - offset, option_type_str[node->option_type],
-           54 - indent, node->num_children,
-           node->option_data);
-        for (i=0;i<node->num_children;i++)
+        level, indent - offset, option_type_str[node->option_type],
+        54 - indent, node->num_children,
+        node->option_data);
+        for (i=0; i<node->num_children; i++)
             print_option_tree(node->children[i], level+1);
-    );
+        );
 }
+
 #endif
 
 int add_detection_option_tree(
-    SnortConfig *sc, detection_option_tree_node_t *option_tree, void **existing_data)
+    SnortConfig* sc, detection_option_tree_node_t* option_tree, void** existing_data)
 {
     detection_option_key_t key;
 
     if (sc == NULL)
     {
         FatalError("%s(%d) Snort config for parsing is NULL.\n",
-                   __FILE__, __LINE__);
+            __FILE__, __LINE__);
     }
 
     if (sc->detection_option_tree_hash_table == NULL)
@@ -359,7 +359,7 @@ int add_detection_option_tree(
         return DETECTION_OPTION_EQUAL;
     }
 
-    key.option_data = (void *)option_tree;
+    key.option_data = (void*)option_tree;
     key.option_type = RULE_OPTION_TYPE_LEAF_NODE;
 
     *existing_data = sfxhash_find(sc->detection_option_tree_hash_table, &key);
@@ -375,7 +375,7 @@ int add_detection_option_tree(
 THREAD_LOCAL uint64_t rule_eval_pkt_count = 0;
 
 int detection_option_node_evaluate(
-    detection_option_tree_node_t *node, detection_option_eval_data_t *eval_data,
+    detection_option_tree_node_t* node, detection_option_eval_data_t* eval_data,
     Cursor& orig_cursor)
 {
     int i, result = 0;
@@ -386,7 +386,7 @@ int detection_option_node_evaluate(
     char flowbits_setoperation = 0;
     int loop_count = 0;
     uint32_t tmp_byte_extract_vars[NUM_BYTE_EXTRACT_VARS];
-    uint64_t cur_eval_pkt_count = 
+    uint64_t cur_eval_pkt_count =
         (rule_eval_pkt_count + (PacketManager::get_rebuilt_packet_count()));
     NODE_PROFILE_VARS;
 
@@ -407,7 +407,8 @@ int detection_option_node_evaluate(
         if ((state->last_check.ts.tv_usec == eval_data->p->pkth->ts.tv_usec) &&
             (state->last_check.ts.tv_sec == eval_data->p->pkth->ts.tv_sec) &&
             (state->last_check.packet_number == cur_eval_pkt_count) &&
-            (state->last_check.rebuild_flag == (eval_data->p->packet_flags & PKT_REBUILT_STREAM)) &&
+            (state->last_check.rebuild_flag == (eval_data->p->packet_flags &
+            PKT_REBUILT_STREAM)) &&
             (!(eval_data->p->packet_flags & PKT_ALLOW_MULTIPLE_DETECT)))
         {
             /* eval'd this rule option before on this packet,
@@ -444,124 +445,126 @@ int detection_option_node_evaluate(
     {
         switch (node->option_type)
         {
-            case RULE_OPTION_TYPE_LEAF_NODE:
-                /* Add the match for this otn to the queue. */
+        case RULE_OPTION_TYPE_LEAF_NODE:
+            /* Add the match for this otn to the queue. */
+        {
+            OptTreeNode* otn = (OptTreeNode*)node->option_data;
+            PatternMatchData* pmd = (PatternMatchData*)eval_data->pmd;
+
+            int pattern_size = 0;
+            int check_ports = 1;
+            int eval_rtn_result;
+            unsigned int svc_idx;
+
+            if (pmd)
+                pattern_size = pmd->pattern_size;
+
+            if (eval_data->p->application_protocol_ordinal != 0)
+            {
+                for (svc_idx = 0;
+                    svc_idx < otn->sigInfo.num_services;
+                    svc_idx++)
                 {
-                    OptTreeNode *otn = (OptTreeNode *)node->option_data;
-                    PatternMatchData *pmd = (PatternMatchData *)eval_data->pmd;
-
-                    int pattern_size = 0;
-                    int check_ports = 1;
-                    int eval_rtn_result;
-                    unsigned int svc_idx;
-
-                    if (pmd)
-                        pattern_size = pmd->pattern_size;
-
-                    if (eval_data->p->application_protocol_ordinal != 0)
+                    if (otn->sigInfo.services[svc_idx].service_ordinal != 0)
                     {
-                        for (svc_idx = 0;
-                             svc_idx < otn->sigInfo.num_services;
-                             svc_idx++)
+                        if (eval_data->p->application_protocol_ordinal ==
+                            otn->sigInfo.services[svc_idx].service_ordinal)
                         {
-                            if (otn->sigInfo.services[svc_idx].service_ordinal != 0)
-                            {
-                                if (eval_data->p->application_protocol_ordinal ==
-                                    otn->sigInfo.services[svc_idx].service_ordinal)
-                                {
-                                    check_ports = 0;
-                                    break; /* out of for */
-                                }
-                            }
-                        }
-
-                        if (otn->sigInfo.num_services && check_ports) /* none of the services match */
-                        {
-                            DEBUG_WRAP(DebugMessage(DEBUG_DETECT, 
-                                "[**] SID %d not matched because of service mismatch (%d!=%d [**]\n",
-                                otn->sigInfo.id,
-                                eval_data->p->application_protocol_ordinal,
-                                otn->sigInfo.services[0].service_ordinal););
-                            break; /* out of case */
+                            check_ports = 0;
+                            break;         /* out of for */
                         }
                     }
-                    // Don't include RTN time
-                    NODE_PROFILE_TMPEND(node);
-                    eval_rtn_result = fpEvalRTN(getRuntimeRtnFromOtn(otn), eval_data->p, check_ports);
-                    NODE_PROFILE_TMPSTART(node);
+                }
 
-                    if (eval_rtn_result)
-                    {
-                        if ( !otn->detection_filter ||
-                             !detection_filter_test(
-                                 otn->detection_filter,
-                                 eval_data->p->ptrs.ip_api.get_src(), eval_data->p->ptrs.ip_api.get_dst(),
-                                 eval_data->p->pkth->ts.tv_sec) )
-                        {
+                if (otn->sigInfo.num_services && check_ports)         /* none of the services match
+                                                                        */
+                {
+                    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
+                        "[**] SID %d not matched because of service mismatch (%d!=%d [**]\n",
+                        otn->sigInfo.id,
+                        eval_data->p->application_protocol_ordinal,
+                        otn->sigInfo.services[0].service_ordinal); );
+                    break;         /* out of case */
+                }
+            }
+            // Don't include RTN time
+            NODE_PROFILE_TMPEND(node);
+            eval_rtn_result = fpEvalRTN(getRuntimeRtnFromOtn(otn), eval_data->p, check_ports);
+            NODE_PROFILE_TMPSTART(node);
+
+            if (eval_rtn_result)
+            {
+                if ( !otn->detection_filter ||
+                    !detection_filter_test(
+                    otn->detection_filter,
+                    eval_data->p->ptrs.ip_api.get_src(), eval_data->p->ptrs.ip_api.get_dst(),
+                    eval_data->p->pkth->ts.tv_sec) )
+                {
 #ifdef PERF_PROFILING
-                            if (PROFILING_RULES)
-                                otn->state[get_instance_id()].matches++;
+                    if (PROFILING_RULES)
+                        otn->state[get_instance_id()].matches++;
 #endif
-                            if (!eval_data->flowbit_noalert)
-                            {
-                                fpAddMatch((OTNX_MATCH_DATA*)eval_data->pomd, pattern_size, otn);
-                            }
-                            result = rval = DETECTION_OPTION_MATCH;
-                        }
-                    }
-                }
-                break;
-            case RULE_OPTION_TYPE_CONTENT:
-                if (node->evaluate)
-                {
-                    /* This will be set in the fast pattern matcher if we found
-                     * a content and the rule option specifies not that
-                     * content. Essentially we've already evaluated this rule
-                     * option via the content option processing since only not
-                     * contents that are not relative in any way will have this
-                     * flag set */
-                    if (content_data->last_check)
+                    if (!eval_data->flowbit_noalert)
                     {
-                        PmdLastCheck* last_check =
-                            content_data->last_check + get_instance_id();
+                        fpAddMatch((OTNX_MATCH_DATA*)eval_data->pomd, pattern_size, otn);
+                    }
+                    result = rval = DETECTION_OPTION_MATCH;
+                }
+            }
+        }
+        break;
+        case RULE_OPTION_TYPE_CONTENT:
+            if (node->evaluate)
+            {
+                /* This will be set in the fast pattern matcher if we found
+                 * a content and the rule option specifies not that
+                 * content. Essentially we've already evaluated this rule
+                 * option via the content option processing since only not
+                 * contents that are not relative in any way will have this
+                 * flag set */
+                if (content_data->last_check)
+                {
+                    PmdLastCheck* last_check =
+                        content_data->last_check + get_instance_id();
 
-                        if ((last_check->ts.tv_sec == eval_data->p->pkth->ts.tv_sec) &&
-                            (last_check->ts.tv_usec == eval_data->p->pkth->ts.tv_usec) &&
-                            (last_check->packet_number == cur_eval_pkt_count) &&
-                            (last_check->rebuild_flag == (eval_data->p->packet_flags & PKT_REBUILT_STREAM)))
-                        {
-                            rval = DETECTION_OPTION_NO_MATCH;
-                            break;
-                        }
+                    if ((last_check->ts.tv_sec == eval_data->p->pkth->ts.tv_sec) &&
+                        (last_check->ts.tv_usec == eval_data->p->pkth->ts.tv_usec) &&
+                        (last_check->packet_number == cur_eval_pkt_count) &&
+                        (last_check->rebuild_flag == (eval_data->p->packet_flags &
+                        PKT_REBUILT_STREAM)))
+                    {
+                        rval = DETECTION_OPTION_NO_MATCH;
+                        break;
                     }
-                    rval = node->evaluate(node->option_data, cursor, eval_data->p);
                 }
-                break;
-            case RULE_OPTION_TYPE_PCRE:
-                if (node->evaluate)
+                rval = node->evaluate(node->option_data, cursor, eval_data->p);
+            }
+            break;
+        case RULE_OPTION_TYPE_PCRE:
+            if (node->evaluate)
+            {
+                rval = node->evaluate(node->option_data, cursor, eval_data->p);
+            }
+            break;
+        case RULE_OPTION_TYPE_FLOWBIT:
+            if (node->evaluate)
+            {
+                flowbits_setoperation = FlowBits_SetOperation(node->option_data);
+                if (!flowbits_setoperation)
                 {
                     rval = node->evaluate(node->option_data, cursor, eval_data->p);
                 }
-                break;
-            case RULE_OPTION_TYPE_FLOWBIT:
-                if (node->evaluate)
+                else
                 {
-                    flowbits_setoperation = FlowBits_SetOperation(node->option_data);
-                    if (!flowbits_setoperation)
-                    {
-                        rval = node->evaluate(node->option_data, cursor, eval_data->p);
-                    }
-                    else
-                    {
-                        /* set to match so we don't bail early.  */
-                        rval = DETECTION_OPTION_MATCH;
-                    }
+                    /* set to match so we don't bail early.  */
+                    rval = DETECTION_OPTION_MATCH;
                 }
-                break;
-            default:
-                if (node->evaluate)
-                    rval = node->evaluate(node->option_data, cursor, eval_data->p);
-                break;
+            }
+            break;
+        default:
+            if (node->evaluate)
+                rval = node->evaluate(node->option_data, cursor, eval_data->p);
+            break;
         }
 
         if (rval == DETECTION_OPTION_NO_MATCH)
@@ -594,11 +597,11 @@ int detection_option_node_evaluate(
         }
 
 #ifdef PPM_MGR
-        if( PPM_PKTS_ENABLED() )
+        if ( PPM_PKTS_ENABLED() )
         {
             PPM_GET_TIME();
             PPM_PACKET_TEST();
-            if( PPM_PACKET_ABORT_FLAG() )
+            if ( PPM_PACKET_ABORT_FLAG() )
             {
                 /* bail if we exceeded time */
                 if (result == DETECTION_OPTION_NO_MATCH)
@@ -620,10 +623,10 @@ int detection_option_node_evaluate(
         /* Passed, check the children. */
         if (node->num_children)
         {
-            for (i=0;i<node->num_children; i++)
+            for (i=0; i<node->num_children; i++)
             {
                 int j = 0;
-                detection_option_tree_node_t *child_node = node->children[i];
+                detection_option_tree_node_t* child_node = node->children[i];
                 dot_node_state_t* child_state = child_node->state + get_instance_id();
 
                 for (j = 0; j < NUM_BYTE_EXTRACT_VARS; j++)
@@ -636,8 +639,8 @@ int detection_option_node_evaluate(
                     if (child_state->result == DETECTION_OPTION_NO_MATCH)
                     {
                         if (((child_node->option_type == RULE_OPTION_TYPE_CONTENT)
-                                    || (child_node->option_type == RULE_OPTION_TYPE_PCRE))
-                                && !child_node->is_relative)
+                            || (child_node->option_type == RULE_OPTION_TYPE_PCRE))
+                            && !child_node->is_relative)
                         {
                             /* If it's a non-relative content or pcre, no reason
                              * to check again.  Only increment result once.
@@ -647,7 +650,7 @@ int detection_option_node_evaluate(
                             continue;
                         }
                         else if ((child_node->option_type == RULE_OPTION_TYPE_CONTENT)
-                                && child_node->is_relative)
+                            && child_node->is_relative)
                         {
                             /* Check for an unbounded relative search.  If this
                              * failed before, it's going to fail again so don't
@@ -691,11 +694,11 @@ int detection_option_node_evaluate(
                     result++;
                 }
 #ifdef PPM_MGR
-                if( PPM_PKTS_ENABLED() )
+                if ( PPM_PKTS_ENABLED() )
                 {
                     PPM_GET_TIME();
                     PPM_PACKET_TEST();
-                    if( PPM_PACKET_ABORT_FLAG() )
+                    if ( PPM_PACKET_ABORT_FLAG() )
                     {
                         /* bail if we exceeded time */
                         state->last_check.result = result;
@@ -757,8 +760,8 @@ int detection_option_node_evaluate(
 #endif
 
         loop_count++;
-
-    } while (continue_loop);
+    }
+    while (continue_loop);
 
     if (flowbits_setoperation && (result == DETECTION_OPTION_MATCH))
     {
@@ -802,12 +805,13 @@ typedef struct node_profile_stats
 } node_profile_stats_t;
 
 static void detection_option_node_update_otn_stats(
-    detection_option_tree_node_t *node,
-    node_profile_stats_t *stats, uint64_t checks
+    detection_option_tree_node_t* node,
+    node_profile_stats_t* stats, uint64_t checks
 #ifdef PPM_MGR
     , uint64_t disables
 #endif
-) {
+    )
+{
     int i;
     node_profile_stats_t local_stats; /* cumulative stats for this node */
     node_profile_stats_t node_stats;  /* sum of all instances */
@@ -849,7 +853,7 @@ static void detection_option_node_update_otn_stats(
     {
         /* Update stats for this otn */
         // FIXIT-M should be sum of instances (only called from main thread)
-        OptTreeNode *otn = (OptTreeNode *)node->option_data;
+        OptTreeNode* otn = (OptTreeNode*)node->option_data;
         OtnState* state = otn->state + get_instance_id();
         state->ticks += local_stats.ticks;
         state->ticks_match += local_stats.ticks_match;
@@ -863,29 +867,29 @@ static void detection_option_node_update_otn_stats(
 
     if (node->num_children)
     {
-        for (i=0;i<node->num_children; i++)
+        for (i=0; i<node->num_children; i++)
         {
             detection_option_node_update_otn_stats(
                 node->children[i], &local_stats, checks
 #ifdef PPM_MGR
                 , disables
 #endif
-            );
+                );
         }
     }
 }
 
-void detection_option_tree_update_otn_stats(SFXHASH *doth)
+void detection_option_tree_update_otn_stats(SFXHASH* doth)
 {
     if (doth == NULL)
         return;
 
     /* Find the first tree root in the table */
-    SFXHASH_NODE *hashnode = sfxhash_findfirst(doth);
+    SFXHASH_NODE* hashnode = sfxhash_findfirst(doth);
 
     while (hashnode)
     {
-        detection_option_tree_node_t *node =
+        detection_option_tree_node_t* node =
             (detection_option_tree_node_t*)hashnode->data;
 
         uint64_t checks = 0;
@@ -913,6 +917,7 @@ void detection_option_tree_update_otn_stats(SFXHASH *doth)
         hashnode = sfxhash_findnext(doth);
     }
 }
+
 #endif
 
 detection_option_tree_root_t* new_root()
@@ -928,14 +933,14 @@ detection_option_tree_root_t* new_root()
     return p;
 }
 
-void free_detection_option_root(void **existing_tree)
+void free_detection_option_root(void** existing_tree)
 {
-    detection_option_tree_root_t *root;
+    detection_option_tree_root_t* root;
 
     if (!existing_tree || !*existing_tree)
         return;
 
-    root = (detection_option_tree_root_t*)*existing_tree; 
+    root = (detection_option_tree_root_t*)*existing_tree;
     free(root->children);
 #ifdef PPM_MGR
     free(root->state);
@@ -947,22 +952,22 @@ void free_detection_option_root(void **existing_tree)
 detection_option_tree_node_t* new_node(
     option_type_t type, void* data)
 {
-    detection_option_tree_node_t* p = 
+    detection_option_tree_node_t* p =
         (detection_option_tree_node_t*)SnortAlloc(sizeof(*p));
 
     p->option_type = type;
     p->option_data = data;
 
     p->state = (dot_node_state_t*)
-        SnortAlloc(sizeof(*p->state) * get_instance_max()); 
+        SnortAlloc(sizeof(*p->state) * get_instance_max());
 
     return p;
 }
 
-void free_detection_option_tree(detection_option_tree_node_t *node)
+void free_detection_option_tree(detection_option_tree_node_t* node)
 {
     int i;
-    for (i=0;i<node->num_children;i++)
+    for (i=0; i<node->num_children; i++)
     {
         free_detection_option_tree(node->children[i]);
     }

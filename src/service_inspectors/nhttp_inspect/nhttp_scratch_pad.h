@@ -32,12 +32,18 @@
 // 3. commit() what you actually used if you want to keep it
 // Anything you do not commit will be reused by the next request.
 
-class ScratchPad {
+class ScratchPad
+{
 public:
-    ScratchPad(uint32_t _capacity) : capacity(_capacity), buffer(new uint64_t[_capacity/8+1]) {};
-    ~ScratchPad() { delete[] buffer; };
-    uint8_t* request(uint32_t needed) const {return (needed <= capacity-used) ? ((uint8_t*)buffer)+used : nullptr;};
-    void commit(uint32_t taken) { used += taken + (8-(taken%8))%8; }; // round up to multiple of 8 for alignment
+    ScratchPad(uint32_t _capacity) : capacity(_capacity), buffer(new uint64_t[_capacity/8+1]) { }
+    ~ScratchPad() { delete[] buffer; }
+    uint8_t* request(uint32_t needed) const
+    {
+        return (needed <= capacity-used) ?
+               ((uint8_t*)buffer)+used : nullptr;
+    }
+    void commit(uint32_t taken) { used += taken + (8-(taken%8))%8; }  // round up to multiple of 8
+                                                                      // for alignment
 
 private:
     const uint32_t capacity;

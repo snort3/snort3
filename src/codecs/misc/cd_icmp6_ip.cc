@@ -17,8 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_icmp6_ip.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -28,7 +26,6 @@
 #include "protocols/ipv6.h"
 #include "protocols/packet.h"
 #include "codecs/codec_module.h"
-
 
 // yes, macros are necessary. The API and class constructor require different strings.
 //
@@ -42,18 +39,15 @@
 
 namespace
 {
-
 class Icmp6IpCodec : public Codec
 {
 public:
-    Icmp6IpCodec() : Codec(ICMP6_IP_NAME){};
-    ~Icmp6IpCodec() {};
-
+    Icmp6IpCodec() : Codec(ICMP6_IP_NAME) { }
+    ~Icmp6IpCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
-
 } // namespace
 
 void Icmp6IpCodec::get_protocol_ids(std::vector<uint16_t>& v)
@@ -66,7 +60,6 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     /* lay the IP struct over the raw data */
     const ip::IP6Hdr* ip6h = reinterpret_cast<const ip::IP6Hdr*>(raw.data);
 
-
     /* do a little validation */
     if ( raw.len < ip::IP6_HEADER_LEN )
     {
@@ -78,7 +71,7 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
      * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
      * So we are just ignoring non IP datagrams
      */
-    if(ip6h->ver() != 6)
+    if (ip6h->ver() != 6)
     {
         codec_event(codec, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
         return false;
@@ -95,7 +88,6 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     // XXX NOT YET IMPLEMENTED - fragments inside ICMP payload
 
-
     // since we know the protocol ID in this layer (and NOT the
     // next layer), set the correct protocol here.  Normally,
     // I would just set the next_protocol_id and let the packet_manger
@@ -104,22 +96,22 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     // ICMP codec. Therefore, doing a minor decode here.
 
     // FIXIT-J L   Will fail to decode Ipv6 options
-    switch(ip6h->next())
+    switch (ip6h->next())
     {
-        case IPPROTO_TCP: /* decode the interesting part of the header */
-            codec.proto_bits |= PROTO_BIT__TCP_EMBED_ICMP;
-            break;
+    case IPPROTO_TCP:     /* decode the interesting part of the header */
+        codec.proto_bits |= PROTO_BIT__TCP_EMBED_ICMP;
+        break;
 
-        case IPPROTO_UDP:
-            codec.proto_bits |= PROTO_BIT__UDP_EMBED_ICMP;
-            break;
+    case IPPROTO_UDP:
+        codec.proto_bits |= PROTO_BIT__UDP_EMBED_ICMP;
+        break;
 
-        case IPPROTO_ICMP:
-            codec.proto_bits |= PROTO_BIT__ICMP_EMBED_ICMP;
-            break;
-        default:
-            codec.proto_bits |= PROTO_BIT__ICMP_EMBED_OTHER;
-            break;
+    case IPPROTO_ICMP:
+        codec.proto_bits |= PROTO_BIT__ICMP_EMBED_ICMP;
+        break;
+    default:
+        codec.proto_bits |= PROTO_BIT__ICMP_EMBED_OTHER;
+        break;
     }
 
     // if you changed lyr_len, you MUST change the encode()
@@ -128,7 +120,6 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     return true;
 }
 
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
@@ -136,9 +127,8 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 static Codec* ctor(Module*)
 { return new Icmp6IpCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi icmp6_ip_api =
 {
@@ -159,7 +149,6 @@ static const CodecApi icmp6_ip_api =
     dtor,
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -169,3 +158,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_icmp6_ip = &icmp6_ip_api.base;
 #endif
+

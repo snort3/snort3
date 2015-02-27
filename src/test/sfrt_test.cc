@@ -21,14 +21,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
 #endif
 
 #include <check.h>
-
 
 #if defined(__clang__)
 #pragma clang diagnostic pop
@@ -41,27 +39,28 @@
 #define NUM_IPS 32
 #define NUM_DATA 4
 
-typedef struct {
+typedef struct
+{
     const char* ip_str;
     int value;
 } IP_entry;
 
 static IP_entry ip_lists[] =
 {
-    {"192.168.0.1",4},
-    {"2.16.0.1", 100},
-    {"12.16.0.1", 500},
-    {"19.16.0.1", 12345},
-    {"12.16.0.2", 567890},
-    {"12.168.0.1", 456},
-    {"12.178.0.1", 123456},
-    {"192.168.0.11", 345667},
-    {"192.16.0.17/16", 345667},
-    {"192.168.0.12", 10},
-    {"::FFFF:129.144.52.38", 120},
-    {"ffee:ddcc:bbaa:9988:7766:5544:3322:1100/32", 121},
-    {"1001:db8:85a3::/29", 122},
-    {"255.255.255.255", 0}
+    { "192.168.0.1",4 },
+    { "2.16.0.1", 100 },
+    { "12.16.0.1", 500 },
+    { "19.16.0.1", 12345 },
+    { "12.16.0.2", 567890 },
+    { "12.168.0.1", 456 },
+    { "12.178.0.1", 123456 },
+    { "192.168.0.11", 345667 },
+    { "192.16.0.17/16", 345667 },
+    { "192.168.0.12", 10 },
+    { "::FFFF:129.144.52.38", 120 },
+    { "ffee:ddcc:bbaa:9988:7766:5544:3322:1100/32", 121 },
+    { "1001:db8:85a3::/29", 122 },
+    { "255.255.255.255", 0 }
 };
 //---------------------------------------------------------------
 
@@ -76,7 +75,7 @@ static int s_debug = 0;
 /* Add one ip, then delete that IP*/
 START_TEST (test_sfrt_remove_after_insert)
 {
-    table_t *dir;
+    table_t* dir;
     unsigned num_entries;
     unsigned index;
 
@@ -86,21 +85,21 @@ START_TEST (test_sfrt_remove_after_insert)
 
     dir = sfrt_new(DIR_16_4x4_16x5_4x4, IPv6, num_entries + 1, 200);
 
-    fail_unless( dir != NULL, "sfrt_new()");
+    fail_unless(dir != NULL, "sfrt_new()");
 
-    for(index=0; index<num_entries; index++)
+    for (index=0; index<num_entries; index++)
     {
         sfip_t ip;
         sfip_t ip2;
         int val;
-        int *result = NULL;
+        int* result = NULL;
 
-        IP_entry *ip_entry =  &(ip_lists[index]);
+        IP_entry* ip_entry =  &(ip_lists[index]);
         /*Parse IP*/
         if (ip_entry->ip_str)
         {
-            char *p;
-            char *ip2_str;
+            char* p;
+            char* ip2_str;
 
             sfip_pton(ip_entry->ip_str, &ip);
 
@@ -116,13 +115,14 @@ START_TEST (test_sfrt_remove_after_insert)
 
         if ( s_debug )
         {
-            printf("Insert IP addr: %s, family: %d\n", sfip_to_str(&ip), ip.family );
+            printf("Insert IP addr: %s, family: %d\n", sfip_to_str(&ip), ip.family);
         }
-        fail_unless(sfrt_insert(&ip, ip.bits, &(ip_entry->value), RT_FAVOR_TIME, dir) == RT_SUCCESS,"sfrt_insert()");
+        fail_unless(sfrt_insert(&ip, ip.bits, &(ip_entry->value), RT_FAVOR_TIME, dir) ==
+            RT_SUCCESS,"sfrt_insert()");
 
         if ( s_debug )
         {
-            printf("Lookup IP addr: %s, family: %d\n", sfip_to_str(&ip2), ip2.family );
+            printf("Lookup IP addr: %s, family: %d\n", sfip_to_str(&ip2), ip2.family);
         }
         result = (int*)sfrt_lookup(&ip2, dir);
         if ( s_debug )
@@ -137,11 +137,12 @@ START_TEST (test_sfrt_remove_after_insert)
 
         if ( s_debug )
         {
-            printf("IP addr: %s, family: %d\n", sfip_to_str(&ip), ip.family );
+            printf("IP addr: %s, family: %d\n", sfip_to_str(&ip), ip.family);
             printf("value input: %d, output: %d\n", ip_entry->value, *result);
         }
 
-        fail_unless(sfrt_remove(&ip, ip.bits, (void**)&result, RT_FAVOR_TIME, dir) == RT_SUCCESS,"sfrt_remove()");
+        fail_unless(sfrt_remove(&ip, ip.bits, (void**)&result, RT_FAVOR_TIME, dir) == RT_SUCCESS,
+            "sfrt_remove()");
         fail_unless(result != NULL,"sfrt_remove()");
 
         val = *result;
@@ -159,14 +160,12 @@ START_TEST (test_sfrt_remove_after_insert)
     }
 
     sfrt_free(dir);
-
 }
 END_TEST
-
 /*Add all IPs, then delete all of them*/
-START_TEST (test_sfrt_remove_after_insert_all)
+START_TEST(test_sfrt_remove_after_insert_all)
 {
-    table_t *dir;
+    table_t* dir;
     unsigned num_entries;
     unsigned index;
 
@@ -177,21 +176,21 @@ START_TEST (test_sfrt_remove_after_insert_all)
 
     dir = sfrt_new(DIR_16_4x4_16x5_4x4, IPv6, num_entries + 1, 200);
 
-    fail_unless( dir != NULL, "sfrt_new()");
+    fail_unless(dir != NULL, "sfrt_new()");
 
     /*insert all entries*/
-    for(index=0; index<num_entries; index++)
+    for (index=0; index<num_entries; index++)
     {
         sfip_t ip;
         sfip_t ip2;
-        int *result;
+        int* result;
 
-        IP_entry *ip_entry =  &(ip_lists[index]);
+        IP_entry* ip_entry =  &(ip_lists[index]);
         /*Parse IP*/
         if (ip_entry->ip_str)
         {
-            char *p;
-            char *ip2_str;
+            char* p;
+            char* ip2_str;
 
             sfip_pton(ip_entry->ip_str, &ip);
 
@@ -205,7 +204,8 @@ START_TEST (test_sfrt_remove_after_insert_all)
             free(ip2_str);
         }
 
-        fail_unless(sfrt_insert(&ip, ip.bits, &(ip_entry->value), RT_FAVOR_TIME, dir) == RT_SUCCESS,"sfrt_insert()");
+        fail_unless(sfrt_insert(&ip, ip.bits, &(ip_entry->value), RT_FAVOR_TIME, dir) ==
+            RT_SUCCESS,"sfrt_insert()");
 
         result = (int*)sfrt_lookup(&ip, dir);
 
@@ -215,7 +215,6 @@ START_TEST (test_sfrt_remove_after_insert_all)
         fail_unless(result != NULL, "sfrt_lookup()");
     }
 
-
     if ( s_debug )
     {
         printf("Usage: %d bytes\n", sfrt_usage(dir));
@@ -223,18 +222,19 @@ START_TEST (test_sfrt_remove_after_insert_all)
     }
 
     /*remove all entries*/
-    for(index=0; index<num_entries; index++)
+    for (index=0; index<num_entries; index++)
     {
         sfip_t ip;
         int val;
-        int *result;
+        int* result;
 
-        IP_entry *ip_entry =  &(ip_lists[index]);
+        IP_entry* ip_entry =  &(ip_lists[index]);
         /*Parse IP*/
         if (ip_entry->ip_str)
             sfip_pton(ip_entry->ip_str, &ip);
 
-        fail_unless(sfrt_remove(&ip, ip.bits, (void**)&result, RT_FAVOR_TIME, dir) == RT_SUCCESS,"sfrt_remove()");
+        fail_unless(sfrt_remove(&ip, ip.bits, (void**)&result, RT_FAVOR_TIME, dir) == RT_SUCCESS,
+            "sfrt_remove()");
 
         val = *result;
         if ( s_debug )
@@ -246,7 +246,7 @@ START_TEST (test_sfrt_remove_after_insert_all)
         /*check the next entry still exist*/
         if (index + 1 < num_entries)
         {
-            IP_entry *ip_entry =  &(ip_lists[index + 1]);
+            IP_entry* ip_entry =  &(ip_lists[index + 1]);
             /*Parse IP*/
             if (ip_entry->ip_str)
                 sfip_pton(ip_entry->ip_str, &ip);
@@ -261,8 +261,8 @@ START_TEST (test_sfrt_remove_after_insert_all)
     }
 
     sfrt_free(dir);
-
 }
+
 END_TEST
 
 Suite* TEST_SUITE_sfrt(void)

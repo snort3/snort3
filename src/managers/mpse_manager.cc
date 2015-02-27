@@ -61,8 +61,8 @@ void MpseManager::dump_plugins()
 
 void MpseManager::instantiate(const MpseApi*, Module*, SnortConfig*)
 {
-    // nothing to do here 
-    // see 
+    // nothing to do here
+    // see
 }
 
 static const MpseApi* get_api(const char* keyword)
@@ -88,9 +88,9 @@ Mpse* MpseManager::get_search_engine(
     SnortConfig* sc,
     const MpseApi* api,
     bool use_gc,
-    void (*user_free)(void*),
-    void (*tree_free)(void**),
-    void (*list_free)(void**))
+    void (* user_free)(void*),
+    void (* tree_free)(void**),
+    void (* list_free)(void**))
 {
     Module* mod = ModuleManager::get_module(api->base.name);
     Mpse* eng = api->ctor(sc, mod, use_gc, user_free, tree_free, list_free);
@@ -172,5 +172,6 @@ void MpseManager::print_search_engine_stats()
 {
     IntelPmPrintBufferStats();
 }
+
 #endif
 

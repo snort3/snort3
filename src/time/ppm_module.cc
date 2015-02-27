@@ -154,5 +154,6 @@ bool PpmModule::set(const char*, Value& v, SnortConfig* sc)
 
     return true;
 }
+
 #endif
 

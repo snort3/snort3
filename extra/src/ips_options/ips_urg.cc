@@ -49,14 +49,14 @@ static const char* s_help = "detection for TCP urgent pointer";
 static THREAD_LOCAL ProfileStats tcpUrgPerfStats;
 
 //-------------------------------------------------------------------------
-// option 
+// option
 //-------------------------------------------------------------------------
 
 class TcpUrgOption : public IpsOption
 {
 public:
     TcpUrgOption(const RangeCheck& c) : IpsOption(s_name)
-    { config = c; };
+    { config = c; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -90,7 +90,7 @@ bool TcpUrgOption::operator==(const IpsOption& ips) const
     return ( config == rhs.config );
 }
 
-int TcpUrgOption::eval(Cursor&, Packet *p)
+int TcpUrgOption::eval(Cursor&, Packet* p)
 {
     //PROFILE_VARS;
     //MODULE_PROFILE_START(tcpUrgPerfStats);
@@ -119,13 +119,13 @@ static const Parameter s_params[] =
 class UrgModule : public Module
 {
 public:
-    UrgModule() : Module(s_name, s_help, s_params) { };
+    UrgModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &tcpUrgPerfStats; };
+    { return &tcpUrgPerfStats; }
 
     RangeCheck data;
 };

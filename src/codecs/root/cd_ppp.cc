@@ -25,27 +25,22 @@
 #include "framework/codec.h"
 #include "main/snort.h"
 
-
 #define PPP_NAME "ppp"
 #define PPP_HELP_STR "support for point-to-point encapsulation"
 #define PPP_HELP ADD_DLT(PPP_HELP_STR, DLT_PPP)
 
 namespace
 {
-
 class PPPCodec : public Codec
 {
 public:
-    PPPCodec() : Codec(PPP_NAME){}
-    ~PPPCodec() {}
-
+    PPPCodec() : Codec(PPP_NAME) { }
+    ~PPPCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_data_link_type(std::vector<int>&) override;
 };
-
 } // namespace
-
 
 #ifndef DLT_PPP
 static constexpr int DLT_PPP = 9;
@@ -57,13 +52,12 @@ static constexpr uint8_t CHDLC_CTRL_UNNUMBERED = 0x03;
 void PPPCodec::get_data_link_type(std::vector<int>& v)
 { v.push_back(DLT_PPP); }
 
-
 bool PPPCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-    if(raw.len < 2)
+    if (raw.len < 2)
         return false;
 
-    if(raw.data[0] == CHDLC_ADDR_BROADCAST && raw.data[1] == CHDLC_CTRL_UNNUMBERED)
+    if (raw.data[0] == CHDLC_ADDR_BROADCAST && raw.data[1] == CHDLC_CTRL_UNNUMBERED)
     {
         /*
          * Check for full HDLC header (rfc1662 section 3.2)
@@ -75,19 +69,15 @@ bool PPPCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     return true;
 }
 
-
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
-
 static Codec* ctor(Module*)
 { return new PPPCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi ppp_api =
 {
@@ -107,7 +97,6 @@ static const CodecApi ppp_api =
     ctor,
     dtor,
 };
-
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =

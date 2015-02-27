@@ -36,7 +36,7 @@
 
 static print_output s_mode = CK_LAST;
 
-typedef Suite* (*SuiteCtor_f)();
+typedef Suite* (* SuiteCtor_f)();
 
 static SuiteCtor_f s_suites[] =
 {
@@ -78,7 +78,7 @@ int unit_test()
 
     while ( *ctor )
     {
-        Suite* ps = (*ctor)();
+        Suite* ps = (* ctor)();
 
         if ( !pr )
             pr = srunner_create(ps);
@@ -98,7 +98,8 @@ int unit_test()
 
     // srunner_set_log() overrides CK_ENV
     const char* log = getenv("CK_LOG");
-    if ( log ) srunner_set_log (pr, log);
+    if ( log )
+        srunner_set_log (pr, log);
 
     srunner_run_all(pr, s_mode);
     nErr = srunner_ntests_failed(pr);

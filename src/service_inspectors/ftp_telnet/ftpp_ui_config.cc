@@ -60,7 +60,7 @@ FTP_SERVER_PROTO_CONF::FTP_SERVER_PROTO_CONF()
 
     def_max_param_len = FTPP_UI_CONFIG_FTP_DEF_CMD_PARAM_MAX;
     max_cmd_len = MAX_CMD;
-    
+
     print_commands = data_chan = check_encrypted_data = false;
     telnet_cmds = ignore_telnet_erase_cmds = detect_encrypted = false;
 }
@@ -87,7 +87,7 @@ TELNET_PROTO_CONF::TELNET_PROTO_CONF()
  * Returns: void
  *
  */
-void ftpp_ui_config_reset_ftp_cmd_date_format(FTP_DATE_FMT *DateFmt)
+void ftpp_ui_config_reset_ftp_cmd_date_format(FTP_DATE_FMT* DateFmt)
 {
     if (DateFmt->optional)
     {
@@ -116,7 +116,7 @@ void ftpp_ui_config_reset_ftp_cmd_date_format(FTP_DATE_FMT *DateFmt)
  * Returns: void
  *
  */
-void ftpp_ui_config_reset_ftp_cmd_format(FTP_PARAM_FMT *ThisFmt)
+void ftpp_ui_config_reset_ftp_cmd_format(FTP_PARAM_FMT* ThisFmt)
 {
     if (ThisFmt->optional_fmt)
     {
@@ -125,7 +125,7 @@ void ftpp_ui_config_reset_ftp_cmd_format(FTP_PARAM_FMT *ThisFmt)
     if (ThisFmt->numChoices)
     {
         int i;
-        for (i=0;i<ThisFmt->numChoices;i++)
+        for (i=0; i<ThisFmt->numChoices; i++)
         {
             ftpp_ui_config_reset_ftp_cmd_format(ThisFmt->choices[i]);
         }
@@ -135,7 +135,7 @@ void ftpp_ui_config_reset_ftp_cmd_format(FTP_PARAM_FMT *ThisFmt)
     if (ThisFmt->next_param_fmt)
     {
         /* Don't free this one twice if its after an optional */
-        FTP_PARAM_FMT *next = ThisFmt->next_param_fmt;
+        FTP_PARAM_FMT* next = ThisFmt->next_param_fmt;
         ThisFmt->next_param_fmt->prev_param_fmt->next_param_fmt = NULL;
         ThisFmt->next_param_fmt = NULL;
         ftpp_ui_config_reset_ftp_cmd_format(next);
@@ -164,9 +164,9 @@ void ftpp_ui_config_reset_ftp_cmd_format(FTP_PARAM_FMT *ThisFmt)
  * Returns: int => return code indicating error or success
  *
  */
-int ftpp_ui_config_reset_ftp_cmd(FTP_CMD_CONF *FTPCmd)
+int ftpp_ui_config_reset_ftp_cmd(FTP_CMD_CONF* FTPCmd)
 {
-    FTP_PARAM_FMT *NextCmdFormat = FTPCmd->param_format;
+    FTP_PARAM_FMT* NextCmdFormat = FTPCmd->param_format;
 
     if (NextCmdFormat)
     {

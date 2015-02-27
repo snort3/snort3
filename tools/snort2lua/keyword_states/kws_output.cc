@@ -27,25 +27,22 @@
 
 namespace keywords
 {
-
-namespace {
-
+namespace
+{
 class Output : public ConversionState
 {
 public:
-    Output(Converter& c) : ConversionState(c) {};
-    virtual ~Output() {};
+    Output(Converter& c) : ConversionState(c) { }
+    virtual ~Output() { }
     virtual bool convert(std::istringstream& data);
 };
-
 } // namespace
-
 
 bool Output::convert(std::istringstream& data_stream)
 {
     std::string keyword;
 
-    if(data_stream >> keyword)
+    if (data_stream >> keyword)
     {
         if (keyword.back() == ':')
             keyword.pop_back();
@@ -58,7 +55,7 @@ bool Output::convert(std::istringstream& data_stream)
         }
     }
 
-    return false;    
+    return false;
 }
 
 /**************************
@@ -68,12 +65,12 @@ bool Output::convert(std::istringstream& data_stream)
 static ConversionState* ctor(Converter& c)
 { return new Output(c); }
 
-static const ConvertMap keyword_output = 
+static const ConvertMap keyword_output =
 {
     "output",
     ctor,
 };
 
 const ConvertMap* output_map = &keyword_output;
-
 } // namespace keywords
+

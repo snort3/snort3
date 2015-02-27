@@ -137,7 +137,7 @@ const BounceTo* FtpClientModule::get_bounce(unsigned idx)
 }
 
 FTP_CLIENT_PROTO_CONF* FtpClientModule::get_data()
-{   
+{
     FTP_CLIENT_PROTO_CONF* tmp = conf;
     conf = nullptr;
     return tmp;
@@ -212,23 +212,23 @@ FtpCmd::FtpCmd(std::string& key, std::string& fmt, int num)
 //-------------------------------------------------------------------------
 
 #define FTP_TELNET_CMD_STR                       \
-        "TELNET cmd on FTP command channel"
+    "TELNET cmd on FTP command channel"
 #define FTP_INVALID_CMD_STR                      \
-        "invalid FTP command"
+    "invalid FTP command"
 #define FTP_PARAMETER_LENGTH_OVERFLOW_STR        \
-        "FTP command parameters were too long"
+    "FTP command parameters were too long"
 #define FTP_MALFORMED_PARAMETER_STR              \
-        "FTP command parameters were malformed"
+    "FTP command parameters were malformed"
 #define FTP_PARAMETER_STR_FORMAT_STR             \
-        "FTP command parameters contained potential string format"
+    "FTP command parameters contained potential string format"
 #define FTP_RESPONSE_LENGTH_OVERFLOW_STR         \
-        "FTP response message was too long"
+    "FTP response message was too long"
 #define FTP_ENCRYPTED_STR                        \
-        "FTP traffic encrypted"
+    "FTP traffic encrypted"
 #define FTP_BOUNCE_STR                           \
-        "FTP bounce attempt"
+    "FTP bounce attempt"
 #define FTP_EVASIVE_TELNET_CMD_STR               \
-        "evasive (incomplete) TELNET cmd on FTP command channel"
+    "evasive (incomplete) TELNET cmd on FTP command channel"
 
 //-------------------------------------------------------------------------
 
@@ -358,7 +358,7 @@ void FtpServerModule::add_commands(
 {
     string tok;
     v.set_first_token();
-        
+
     while ( v.get_next_token(tok) )
         cmds.push_back(new FtpCmd(tok, flags, num));
 }
@@ -372,7 +372,7 @@ const FtpCmd* FtpServerModule::get_cmd(unsigned idx)
 }
 
 FTP_SERVER_PROTO_CONF* FtpServerModule::get_data()
-{   
+{
     FTP_SERVER_PROTO_CONF* tmp = conf;
     conf = nullptr;
     return tmp;

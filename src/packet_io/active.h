@@ -67,14 +67,13 @@ enum tActiveSsnDrop
     ACTIVE_SSN_DROP_WITHOUT_RESET,  // can drop but without reset
 };
 
-
 SO_PUBLIC extern THREAD_LOCAL tActiveDrop active_drop_pkt;
 SO_PUBLIC extern THREAD_LOCAL tActiveSsnDrop active_drop_ssn;
 SO_PUBLIC extern THREAD_LOCAL int active_have_rsp;
 SO_PUBLIC extern THREAD_LOCAL int active_tunnel_bypass;
 SO_PUBLIC extern THREAD_LOCAL int active_suspend;
 
-static inline void Active_Reset (void)
+static inline void Active_Reset(void)
 {
     active_drop_pkt = ACTIVE_ALLOW;
     active_drop_ssn = ACTIVE_SSN_ALLOW;
@@ -82,16 +81,16 @@ static inline void Active_Reset (void)
     active_tunnel_bypass = 0;
 }
 
-static inline void Active_Suspend (void)
+static inline void Active_Suspend(void)
 { active_suspend = 1; }
 
-static inline void Active_Resume (void)
+static inline void Active_Resume(void)
 { active_suspend = 0; }
 
-static inline bool Active_Suspended (void)
+static inline bool Active_Suspended(void)
 { return ( active_suspend != 0 ); }
 
-static inline tActiveDrop Active_GetDisposition (void)
+static inline tActiveDrop Active_GetDisposition(void)
 { return active_drop_pkt; }
 
 static inline void Active_CantDrop(void)
@@ -106,13 +105,13 @@ static inline void Active_CantDrop(void)
 #endif
 }
 
-static inline void Active_ForceDropPacket (void)
+static inline void Active_ForceDropPacket(void)
 {
     if ( Active_Suspended() )
         Active_CantDrop();
     else
         active_drop_pkt = ACTIVE_FORCE_DROP;
- }
+}
 
 static inline void Active_DropPacket(const Packet* p)
 {
@@ -136,7 +135,7 @@ static inline void Active_DropPacket(const Packet* p)
     }
 }
 
-static inline void Active_DAQDropPacket(const Packet *p)
+static inline void Active_DAQDropPacket(const Packet* p)
 {
     if ( Active_Suspended() )
     {
@@ -151,7 +150,7 @@ static inline void Active_DAQDropPacket(const Packet *p)
     }
 }
 
-static inline void _Active_DropSession (const Packet* p, tActiveSsnDrop ssn_drop)
+static inline void _Active_DropSession(const Packet* p, tActiveSsnDrop ssn_drop)
 {
     if ( Active_Suspended() )
     {
@@ -164,7 +163,7 @@ static inline void _Active_DropSession (const Packet* p, tActiveSsnDrop ssn_drop
     }
 }
 
-static inline void _Active_ForceDropSession (tActiveSsnDrop ssn_drop)
+static inline void _Active_ForceDropSession(tActiveSsnDrop ssn_drop)
 {
     if ( Active_Suspended() )
     {
@@ -177,43 +176,43 @@ static inline void _Active_ForceDropSession (tActiveSsnDrop ssn_drop)
     }
 }
 
-static inline void Active_DropSession (const Packet* p)
+static inline void Active_DropSession(const Packet* p)
 { _Active_DropSession(p, ACTIVE_SSN_DROP); }
 
-static inline void Active_ForceDropSession (void)
+static inline void Active_ForceDropSession(void)
 { _Active_ForceDropSession(ACTIVE_SSN_DROP); }
 
-static inline void Active_DropSessionWithoutReset (const Packet* p)
+static inline void Active_DropSessionWithoutReset(const Packet* p)
 { _Active_DropSession(p, ACTIVE_SSN_DROP_WITHOUT_RESET); }
 
-static inline void Active_ForceDropSessionWithoutReset (void)
+static inline void Active_ForceDropSessionWithoutReset(void)
 { _Active_ForceDropSession(ACTIVE_SSN_DROP_WITHOUT_RESET); }
 
-static inline int Active_PacketWouldBeDropped (void)
+static inline int Active_PacketWouldBeDropped(void)
 { return (active_drop_pkt == ACTIVE_WOULD_DROP ); }
 
-static inline int Active_PacketForceDropped (void)
+static inline int Active_PacketForceDropped(void)
 { return (active_drop_pkt == ACTIVE_FORCE_DROP ); }
 
-static inline int Active_PacketWasDropped (void)
+static inline int Active_PacketWasDropped(void)
 { return ( active_drop_pkt >= ACTIVE_DROP ); }
 
-static inline int Active_SessionWasDropped (void)
+static inline int Active_SessionWasDropped(void)
 { return ( active_drop_ssn != ACTIVE_SSN_ALLOW ); }
 
 /* SNORT2.9.7 has an
 // #ifdef ACTIVE_RESPONSE */
-static inline int Active_ResponseQueued (void)
+static inline int Active_ResponseQueued(void)
 { return ( active_have_rsp != ACTIVE_SSN_ALLOW ); }
 //#endif /* ACTIVE_RESPONSE */
 
-static inline void Active_SetTunnelBypass (void)
+static inline void Active_SetTunnelBypass(void)
 { active_tunnel_bypass++; }
 
-static inline void Active_ClearTunnelBypass (void)
+static inline void Active_ClearTunnelBypass(void)
 { active_tunnel_bypass--; }
 
-static inline int Active_GetTunnelBypass (void)
+static inline int Active_GetTunnelBypass(void)
 { return ( active_tunnel_bypass > 0 ); }
 
 // drops current session with active response invoked
@@ -226,12 +225,13 @@ SO_PUBLIC int Active_IgnoreSession(Packet*);
 
 // force drops the current session w/o active response invoked
 // ignores policy/inline test mode and treat drop as alert
-SO_PUBLIC int Active_ForceDropAction(Packet *p);
+SO_PUBLIC int Active_ForceDropAction(Packet* p);
 
 // force drops the current session with active response invoked
 // ignores policy/inline test mode and treat drop as alert
-SO_PUBLIC int Active_ForceDropResetAction(Packet *p);
+SO_PUBLIC int Active_ForceDropResetAction(Packet* p);
 
 SO_PUBLIC const char* Active_GetDispositionString();
 
 #endif // ACTIVE_H
+

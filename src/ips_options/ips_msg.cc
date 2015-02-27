@@ -54,7 +54,7 @@ static const Parameter s_params[] =
 class MsgModule : public Module
 {
 public:
-    MsgModule() : Module(s_name, s_help, s_params) { };
+    MsgModule() : Module(s_name, s_help, s_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
     std::string msg;
 };

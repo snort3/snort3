@@ -79,9 +79,9 @@
  * 1 means it's in bounds, 0 means it's not
  */
 static inline int inBounds(
-    const uint8_t *start, const uint8_t *end, const uint8_t *p)
+    const uint8_t* start, const uint8_t* end, const uint8_t* p)
 {
-    if(p >= start && p < end)
+    if (p >= start && p < end)
     {
         return 1;
     }
@@ -102,9 +102,9 @@ static inline int inBounds(
 **  @retval 0 failed
 **  @retval 1 detected
 */
-static int BitStringOverflow(ASN1_TYPE *asn1, void*)
+static int BitStringOverflow(ASN1_TYPE* asn1, void*)
 {
-    if(!asn1)
+    if (!asn1)
         return 0;
 
     /*
@@ -116,10 +116,10 @@ static int BitStringOverflow(ASN1_TYPE *asn1, void*)
     **  is greater than the total number of bits, then we have an
     **  exploit attempt.
     */
-    if(asn1->ident.tag == SF_ASN1_TAG_BIT_STR && !asn1->ident.flag)
+    if (asn1->ident.tag == SF_ASN1_TAG_BIT_STR && !asn1->ident.flag)
     {
-        if(asn1->len.size && asn1->data &&
-           (((asn1->len.size - 1)<<3) < (unsigned int)asn1->data[0]))
+        if (asn1->len.size && asn1->data &&
+            (((asn1->len.size - 1)<<3) < (unsigned int)asn1->data[0]))
         {
             return 1;
         }
@@ -141,7 +141,7 @@ static int BitStringOverflow(ASN1_TYPE *asn1, void*)
 **  @retval 0 failed
 **  @rteval 1 detected
 */
-static int DetectBitStringOverflow(ASN1_TYPE *asn1)
+static int DetectBitStringOverflow(ASN1_TYPE* asn1)
 {
     return asn1_traverse(asn1, NULL, BitStringOverflow);
 }
@@ -160,9 +160,9 @@ static int DetectBitStringOverflow(ASN1_TYPE *asn1)
 **  @retval 0 failed
 **  @retval 1 detected
 */
-static int DoubleOverflow(ASN1_TYPE *asn1, void*)
+static int DoubleOverflow(ASN1_TYPE* asn1, void*)
 {
-    if(!asn1)
+    if (!asn1)
         return 0;
 
     /*
@@ -173,11 +173,11 @@ static int DoubleOverflow(ASN1_TYPE *asn1, void*)
     **  not setting bit 7 or 8), and the buffer is greater than 256,
     **  then you overflow the array in the function.
     */
-    if(asn1->ident.tag == SF_ASN1_TAG_REAL && !asn1->ident.flag)
+    if (asn1->ident.tag == SF_ASN1_TAG_REAL && !asn1->ident.flag)
     {
-        if(asn1->len.size && asn1->data &&
-           ((asn1->data[0] & 0xc0) == 0x00) &&
-           (asn1->len.size > 256))
+        if (asn1->len.size && asn1->data &&
+            ((asn1->data[0] & 0xc0) == 0x00) &&
+            (asn1->len.size > 256))
         {
             return 1;
         }
@@ -199,7 +199,7 @@ static int DoubleOverflow(ASN1_TYPE *asn1, void*)
 **  @retval 0 failed
 **  @rteval 1 detected
 */
-static int DetectDoubleOverflow(ASN1_TYPE *asn1)
+static int DetectDoubleOverflow(ASN1_TYPE* asn1)
 {
     return asn1_traverse(asn1, NULL, DoubleOverflow);
 }
@@ -218,16 +218,16 @@ static int DetectDoubleOverflow(ASN1_TYPE *asn1)
 **  @retval 0 failed
 **  @retval 1 detected
 */
-static int OversizeLength(ASN1_TYPE *asn1, void *user)
+static int OversizeLength(ASN1_TYPE* asn1, void* user)
 {
-    unsigned int *max_size;
+    unsigned int* max_size;
 
-    if(!asn1 || !user)
+    if (!asn1 || !user)
         return 0;
 
-    max_size = (unsigned int *)user;
+    max_size = (unsigned int*)user;
 
-    if(*max_size && *max_size <= asn1->len.size)
+    if (*max_size && *max_size <= asn1->len.size)
         return 1;
 
     return 0;
@@ -246,9 +246,9 @@ static int OversizeLength(ASN1_TYPE *asn1, void *user)
 **  @retval 0 failed
 **  @rteval 1 detected
 */
-static int DetectOversizeLength(ASN1_TYPE *asn1, unsigned int max_size)
+static int DetectOversizeLength(ASN1_TYPE* asn1, unsigned int max_size)
 {
-    return asn1_traverse(asn1, (void *)&max_size, OversizeLength);
+    return asn1_traverse(asn1, (void*)&max_size, OversizeLength);
 }
 
 /*
@@ -263,7 +263,7 @@ static int DetectOversizeLength(ASN1_TYPE *asn1, unsigned int max_size)
 **  @retval 0 failed
 **  @retval 1 detected
 */
-static int Asn1DetectFuncs(ASN1_TYPE *asn1, ASN1_CTXT *ctxt, int dec_ret_val)
+static int Asn1DetectFuncs(ASN1_TYPE* asn1, ASN1_CTXT* ctxt, int dec_ret_val)
 {
     int iRet = 0;
 
@@ -272,7 +272,7 @@ static int Asn1DetectFuncs(ASN1_TYPE *asn1, ASN1_CTXT *ctxt, int dec_ret_val)
     **  option, then we want to evaluate this option as true and continue.
     **  Otherwise, if another option is wrong, then we
     */
-    if(ctxt->print)
+    if (ctxt->print)
     {
         asn1_traverse(asn1, NULL, asn1_print_types);
         iRet = 1;
@@ -281,21 +281,21 @@ static int Asn1DetectFuncs(ASN1_TYPE *asn1, ASN1_CTXT *ctxt, int dec_ret_val)
     /*
     **  Let's check the bitstring overflow.
     */
-    if(ctxt->bs_overflow)
+    if (ctxt->bs_overflow)
     {
         iRet = DetectBitStringOverflow(asn1);
-        if(iRet)
+        if (iRet)
             return 1;
     }
 
-    if(ctxt->double_overflow)
+    if (ctxt->double_overflow)
     {
         iRet = DetectDoubleOverflow(asn1);
-        if(iRet)
+        if (iRet)
             return 1;
     }
 
-    if(ctxt->length)
+    if (ctxt->length)
     {
         iRet = DetectOversizeLength(asn1, ctxt->max_length);
 
@@ -305,7 +305,7 @@ static int Asn1DetectFuncs(ASN1_TYPE *asn1, ASN1_CTXT *ctxt, int dec_ret_val)
         **  bigger than our data type could hold.  In this case, it's
         **  overlong too.
         */
-        if(!iRet && dec_ret_val == ASN1_ERR_OVERLONG_LEN)
+        if (!iRet && dec_ret_val == ASN1_ERR_OVERLONG_LEN)
             iRet = 1;
 
         /*
@@ -313,7 +313,7 @@ static int Asn1DetectFuncs(ASN1_TYPE *asn1, ASN1_CTXT *ctxt, int dec_ret_val)
         **  previous detections.  Just trying to short-circuit any future
         **  problems if we change the code flow here.
         */
-        if(iRet)
+        if (iRet)
             return 1;
     }
 
@@ -333,14 +333,14 @@ static int Asn1DetectFuncs(ASN1_TYPE *asn1, ASN1_CTXT *ctxt, int dec_ret_val)
 **  @retval 0 failed
 **  @retval 1 detected
 */
-int Asn1DoDetect(const uint8_t *data, uint16_t dsize, ASN1_CTXT *ctxt, const uint8_t *rel_ptr)
+int Asn1DoDetect(const uint8_t* data, uint16_t dsize, ASN1_CTXT* ctxt, const uint8_t* rel_ptr)
 {
-    ASN1_TYPE *asn1;
+    ASN1_TYPE* asn1;
     int iRet;
     unsigned int size;
-    const uint8_t *start;
-    const uint8_t *end;
-    const uint8_t *offset = NULL;
+    const uint8_t* start;
+    const uint8_t* end;
+    const uint8_t* offset = NULL;
 
     /*
     **  Failed if there is no data to decode.
@@ -351,52 +351,52 @@ int Asn1DoDetect(const uint8_t *data, uint16_t dsize, ASN1_CTXT *ctxt, const uin
     start = data;
     end = start + dsize;
 
-    switch(ctxt->offset_type)
+    switch (ctxt->offset_type)
     {
-        case REL_OFFSET:
-            if(!rel_ptr)
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_ASN1, "[*] No rel_ptr for "
-                           "relative offset, so we are bailing.\n"););
-                return 0;
-            }
+    case REL_OFFSET:
+        if (!rel_ptr)
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_ASN1, "[*] No rel_ptr for "
+                "relative offset, so we are bailing.\n"); );
+            return 0;
+        }
 
-            /*
-            **  Check that it is in bounds first.
-            **  Because rel_ptr can be "end" in the last match,
-            **  use end + 1 for upper bound
-            **  Bound checked also after offset is applied
-            */
-            if(!inBounds(start, end + 1, rel_ptr))
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_ASN1, "[*] ASN.1 bounds "
-                           "check failed for rel_ptr.\n"););
-                return 0;
-            }
+        /*
+        **  Check that it is in bounds first.
+        **  Because rel_ptr can be "end" in the last match,
+        **  use end + 1 for upper bound
+        **  Bound checked also after offset is applied
+        */
+        if (!inBounds(start, end + 1, rel_ptr))
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_ASN1, "[*] ASN.1 bounds "
+                "check failed for rel_ptr.\n"); );
+            return 0;
+        }
 
-            offset = rel_ptr+ctxt->offset;
+        offset = rel_ptr+ctxt->offset;
 
-            if(!inBounds(start, end, offset))
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_ASN1, "[*] ASN.1 bounds "
-                           "check failed rel_ptr+offset.\n"););
-                return 0;
-            }
+        if (!inBounds(start, end, offset))
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_ASN1, "[*] ASN.1 bounds "
+                "check failed rel_ptr+offset.\n"); );
+            return 0;
+        }
 
-            break;
+        break;
 
-        case ABS_OFFSET:
-        default:
-            offset = start+ctxt->offset;
+    case ABS_OFFSET:
+    default:
+        offset = start+ctxt->offset;
 
-            if(!inBounds(start, end, offset))
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_ASN1, "[*] ASN.1 bounds "
-                           "check failed.\n"););
-                return 0;
-            }
+        if (!inBounds(start, end, offset))
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_ASN1, "[*] ASN.1 bounds "
+                "check failed.\n"); );
+            return 0;
+        }
 
-            break;
+        break;
     }
 
     /*
@@ -406,10 +406,10 @@ int Asn1DoDetect(const uint8_t *data, uint16_t dsize, ASN1_CTXT *ctxt, const uin
     size = end - offset;
 
     iRet = asn1_decode(offset, size, &asn1);
-    if(iRet && !asn1)
+    if (iRet && !asn1)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_ASN1, "[*] ASN.1 decode failed "
-                   "miserably.\n"););
+            "miserably.\n"); );
         return 0;
     }
 
@@ -418,5 +418,4 @@ int Asn1DoDetect(const uint8_t *data, uint16_t dsize, ASN1_CTXT *ctxt, const uin
     */
     return Asn1DetectFuncs(asn1, ctxt, iRet);
 }
-
 

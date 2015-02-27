@@ -54,7 +54,7 @@ class TcpAckOption : public IpsOption
 public:
     TcpAckOption(const RangeCheck& c) :
         IpsOption(s_name)
-    { config = c; };
+    { config = c; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -92,7 +92,7 @@ bool TcpAckOption::operator==(const IpsOption& ips) const
     return ( config == rhs.config );
 }
 
-int TcpAckOption::eval(Cursor&, Packet *p)
+int TcpAckOption::eval(Cursor&, Packet* p)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(tcpAckPerfStats);
@@ -124,13 +124,13 @@ static const Parameter s_params[] =
 class AckModule : public Module
 {
 public:
-    AckModule() : Module(s_name, s_help, s_params) { };
+    AckModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &tcpAckPerfStats; };
+    { return &tcpAckPerfStats; }
 
     RangeCheck data;
 };

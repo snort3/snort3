@@ -81,7 +81,7 @@
 
 struct Packet;
 
-typedef void (*StreamAppDataFree)(void*);
+typedef void (* StreamAppDataFree)(void*);
 
 struct StreamFlowData
 {
@@ -96,14 +96,14 @@ public:
     virtual ~FlowData();
 
     unsigned get_id()
-    { return id; };
+    { return id; }
 
     static unsigned get_flow_id()
-    { return ++flow_id; };
+    { return ++flow_id; }
 
-    virtual void handle_expected(Packet*) { };
-    virtual void handle_retransmit(Packet*) { };
-    virtual void handle_eof(Packet*) { };
+    virtual void handle_expected(Packet*) { }
+    virtual void handle_retransmit(Packet*) { }
+    virtual void handle_eof(Packet*) { }
 
 public:  // FIXIT-L privatize
     FlowData* next;
@@ -172,63 +172,70 @@ public:
     void set_ttl(Packet*, bool client);
 
     void set_proxied()
-    { ssn_state.session_flags |= SSNFLAG_PROXIED; };
+    { ssn_state.session_flags |= SSNFLAG_PROXIED; }
 
     bool is_proxied()
-    { return (ssn_state.session_flags & SSNFLAG_PROXIED) != 0; };
+    { return (ssn_state.session_flags & SSNFLAG_PROXIED) != 0; }
 
     void block()
-    { ssn_state.session_flags |= SSNFLAG_BLOCK; };
+    { ssn_state.session_flags |= SSNFLAG_BLOCK; }
 
     bool was_blocked() const
-    { return (ssn_state.session_flags & SSNFLAG_BLOCK) != 0; };
+    { return (ssn_state.session_flags & SSNFLAG_BLOCK) != 0; }
 
     bool full_inspection() const
-    { return flow_state <= INSPECT; };
+    { return flow_state <= INSPECT; }
 
     void set_state(FlowState fs)
-    { flow_state = fs; };
+    { flow_state = fs; }
 
     void set_client(Inspector* ins)
     {
         ssn_client = ins;
         ssn_client->add_ref();
-    };
+    }
+
     void set_server(Inspector* ins)
     {
         ssn_server = ins;
         ssn_server->add_ref();
-    };
+    }
+
     void set_clouseau(Inspector* ins)
     {
         clouseau = ins;
         clouseau->add_ref();
-    };
+    }
+
     void clear_clouseau()
     {
         clouseau->rem_ref();
         clouseau = nullptr;
-    };
+    }
+
     void set_gadget(Inspector* ins)
     {
         gadget = ins;
         gadget->add_ref();
-    };
+    }
+
     void clear_gadget()
     {
         gadget->rem_ref();
         gadget = nullptr;
-    };
+    }
+
     void set_data(PlugData* pd)
     {
         data = pd;
         data->add_ref();
-    };
+    }
+
     void clear_data()
     {
         data->rem_ref();
         data = nullptr;
-    };
+    }
 
 public:  // FIXIT-M privatize if possible
     // these fields are const after initialization
@@ -271,11 +278,11 @@ public:  // FIXIT-M privatize if possible
     uint16_t ssn_policy;
     uint16_t session_state;
 
-    uint8_t  handler[SE_MAX];
-    uint8_t  response_count;
+    uint8_t handler[SE_MAX];
+    uint8_t response_count;
 
-    uint8_t  inner_client_ttl, inner_server_ttl;
-    uint8_t  outer_client_ttl, outer_server_ttl;
+    uint8_t inner_client_ttl, inner_server_ttl;
+    uint8_t outer_client_ttl, outer_server_ttl;
 };
 
 #endif

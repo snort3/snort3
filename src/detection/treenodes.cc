@@ -49,11 +49,11 @@
  * Returns: void function
  *
  ***************************************************************************/
-OptFpList * AddOptFuncToList(RuleOptEvalFunc ro_eval_func, OptTreeNode *otn)
+OptFpList* AddOptFuncToList(RuleOptEvalFunc ro_eval_func, OptTreeNode* otn)
 {
-    OptFpList *ofp = (OptFpList *)SnortAlloc(sizeof(OptFpList));
+    OptFpList* ofp = (OptFpList*)SnortAlloc(sizeof(OptFpList));
 
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Adding new rule to list\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Adding new rule to list\n"); );
 
     /* if there are no nodes on the function list... */
     if (otn->opt_func == NULL)
@@ -62,7 +62,7 @@ OptFpList * AddOptFuncToList(RuleOptEvalFunc ro_eval_func, OptTreeNode *otn)
     }
     else
     {
-        OptFpList *tmp = otn->opt_func;
+        OptFpList* tmp = otn->opt_func;
 
         /* walk to the end of the list */
         while (tmp->next != NULL)
@@ -71,7 +71,7 @@ OptFpList * AddOptFuncToList(RuleOptEvalFunc ro_eval_func, OptTreeNode *otn)
         tmp->next = ofp;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Set OptTestFunc to %p\n", ro_eval_func););
+    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Set OptTestFunc to %p\n", ro_eval_func); );
 
     ofp->OptTestFunc = ro_eval_func;
 

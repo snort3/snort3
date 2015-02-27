@@ -25,10 +25,8 @@
 #include <vector>
 #include <stack>
 
-
 #include "data/dt_table_api.h"
 #include "data/dt_rule_api.h"
-
 
 // TODO-1 - J:  Change name to data_api
 // TODO-1 - J:  Remove all unecessary includes
@@ -59,18 +57,17 @@ class DataApi;
 
 class DataApi
 {
-
 public:
     DataApi();
     virtual ~DataApi();
 
     // set and retrieve various pieces of information from this Data object
     // getters are for other data classes.
-    inline static void set_default_print() {mode = PrintMode::DEFAULT; }
+    inline static void set_default_print() { mode = PrintMode::DEFAULT; }
     inline static bool is_default_mode() { return mode == PrintMode::DEFAULT; }
-    inline static void set_quiet_print() {mode = PrintMode::QUIET; }
+    inline static void set_quiet_print() { mode = PrintMode::QUIET; }
     inline static bool is_quiet_mode() { return mode == PrintMode::QUIET; }
-    inline static void set_difference_print() {mode = PrintMode::DIFFERENCES; }
+    inline static void set_difference_print() { mode = PrintMode::DIFFERENCES; }
     inline static bool is_difference_mode() { return mode == PrintMode::DIFFERENCES; }
 
     // For problems with the Snort2Lua code, NOT with the snort configuration
@@ -81,7 +78,6 @@ public:
     // translate a given variable into a string
     // spaces will appear if multiple values added to variable
     std::string translate_variable(const std::string&);
-
 
     // reset any open tables.
     void reset_state();
@@ -98,19 +94,15 @@ public:
     bool empty() const
     { return vars.empty() && includes.empty(); }
 
-
     // functions specifically usefull when parsing includes.
     // allows for easy swapping of data.  These two functions
     // swap data which will be printed in 'print_rules()' and
     // 'print_conf_options()'
     void swap_conf_data(std::vector<Variable*>&,
-                            std::vector<Include*>&,
-                            Comments*&);
-
-
+        std::vector<Include*>&,
+        Comments*&);
 
     // FILE CREATION AND ADDITIONS
-
 
     // add a variable to this file
     bool add_variable(std::string name, std::string value);
@@ -148,5 +140,5 @@ private:
     bool curr_data_bad;  // keep track whether current 'conversion' is already bad
 };
 
-
 #endif
+

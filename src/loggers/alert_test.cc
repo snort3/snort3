@@ -86,7 +86,7 @@ static const Parameter s_params[] =
 class TestModule : public Module
 {
 public:
-    TestModule() : Module(S_NAME, s_help, s_params) { };
+    TestModule() : Module(S_NAME, s_help, s_params) { }
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -131,7 +131,8 @@ bool TestModule::begin(const char*, int, SnortConfig*)
 
 //-------------------------------------------------------------------------
 
-class TestLogger : public Logger {
+class TestLogger : public Logger
+{
 public:
     TestLogger(TestModule*);
 
@@ -160,16 +161,16 @@ void TestLogger::close()
     TextLog_Term(test_file);
 }
 
-void TestLogger::alert(Packet *p, const char *msg, Event *event)
+void TestLogger::alert(Packet* p, const char* msg, Event* event)
 {
     TextLog_Print(test_file, "" STDu64 "\t", pc.total_from_daq);
 
     if (event != NULL)
     {
         TextLog_Print(test_file, "%lu\t%lu\t%lu\t",
-                (unsigned long) event->sig_info->generator,
-                (unsigned long) event->sig_info->id,
-                (unsigned long) event->sig_info->rev);
+            (unsigned long)event->sig_info->generator,
+            (unsigned long)event->sig_info->id,
+            (unsigned long)event->sig_info->rev);
     }
 
     if (flags & TEST_FLAG_MSG)

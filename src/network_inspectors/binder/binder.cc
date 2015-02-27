@@ -230,12 +230,12 @@ struct Stuff
     PlugData* data;
 
     Stuff()
-    { 
+    {
         action = BA_INSPECT;
         client = server = nullptr;
         wizard = gadget = nullptr;
         data = nullptr;
-    };
+    }
 
     bool update(Binding*);
 
@@ -361,7 +361,7 @@ public:
     ~Binder();
 
     void show(SnortConfig*) override
-    { LogMessage("Binder\n"); };
+    { LogMessage("Binder\n"); }
 
     bool configure(SnortConfig*) override;
 
@@ -369,7 +369,7 @@ public:
     int exec(int, void*) override;
 
     void add(Binding* b)
-    { bindings.push_back(b); };
+    { bindings.push_back(b); }
 
 private:
     void apply(const Stuff&, Flow*);
@@ -477,7 +477,7 @@ void Binder::set_binding(SnortConfig* sc, Binding* pb)
     }
     else if ( (pb->use.object = DataManager::get_data(key, sc)) )
     {
-            pb->use.what = BW_DATA;
+        pb->use.what = BW_DATA;
     }
     if ( !pb->use.object )
         pb->use.what = BW_NONE;
@@ -576,7 +576,7 @@ static const InspectApi bind_api =
         mod_ctor,
         mod_dtor
     },
-    IT_BINDER, 
+    IT_BINDER,
     (uint16_t)PktType::ANY,
     nullptr, // buffers
     nullptr, // service

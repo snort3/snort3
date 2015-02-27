@@ -24,23 +24,28 @@
 #include "nhttp_field.h"
 #include "nhttp_infractions.h"
 
-class UriNormalizer {
+class UriNormalizer
+{
 public:
-    static void normalize(const Field &input, Field &result, bool do_path, ScratchPad &scratch_pad,
-       NHttpInfractions &infractions);
+    static void normalize(const Field& input, Field& result, bool do_path, ScratchPad& scratch_pad,
+        NHttpInfractions& infractions);
 
 private:
     static const NHttpEnums::CharAction uri_char[256];
     static const bool good_percent[256];
 
-    static bool no_path_check(const uint8_t* in_buf, int32_t in_length, NHttpInfractions& infractions);
-    static bool path_check(const uint8_t* in_buf, int32_t in_length, NHttpInfractions& infractions);
+    static bool no_path_check(const uint8_t* in_buf, int32_t in_length,
+        NHttpInfractions& infractions);
+    static bool path_check(const uint8_t* in_buf, int32_t in_length,
+        NHttpInfractions& infractions);
 
-    static int32_t norm_char_clean(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const void* not_used);
-    static int32_t norm_backslash(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const void* not_used);
-    static int32_t norm_path_clean(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const void* not_used);
+    static int32_t norm_char_clean(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const
+    void* not_used);
+    static int32_t norm_backslash(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const
+    void* not_used);
+    static int32_t norm_path_clean(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const
+    void* not_used);
 };
 
 #endif
-
 

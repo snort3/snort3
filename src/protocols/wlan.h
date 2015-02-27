@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 // wlan.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifndef PROTOCOLS_WLAN_H
 #define PROTOCOLS_WLAN_H
 
@@ -25,24 +24,22 @@
 
 namespace wlan
 {
-
 /*
  *  Wireless Header (IEEE 802.11)
  */
 struct WifiHdr
 {
-  uint16_t frame_control;
-  uint16_t duration_id;
-  uint8_t  addr1[6];
-  uint8_t  addr2[6];
-  uint8_t  addr3[6];
-  uint16_t seq_control;
-  uint8_t  addr4[6];
-} ;
+    uint16_t frame_control;
+    uint16_t duration_id;
+    uint8_t addr1[6];
+    uint8_t addr2[6];
+    uint8_t addr3[6];
+    uint16_t seq_control;
+    uint8_t addr4[6];
+};
 
-
-/* Frame type/subype combinations with version = 0 */
-        /*** FRAME TYPE *****  HEX ****  SUBTYPE TYPE  DESCRIPT ********/
+/* Frame type/subype combinations with version = 0
+  ** FRAME TYPE *****  HEX ****  SUBTYPE TYPE  DESCRIPT ********/
 #define WLAN_TYPE_MGMT_ASREQ   0x0      /* 0000    00  Association Req */
 #define WLAN_TYPE_MGMT_ASRES   0x10     /* 0001    00  Assocaition Res */
 #define WLAN_TYPE_MGMT_REREQ   0x20     /* 0010    00  Reassoc. Req.   */
@@ -71,8 +68,8 @@ struct WifiHdr
 #define WLAN_TYPE_DATA_CFPL    0x68     /* 0110    10  CF-Poll (no data)*/
 #define WLAN_TYPE_DATA_ACKPL   0x78     /* 0111    10  CF-Ack+CF-Poll  */
 
-/*** Flags for IEEE 802.11 Frame Control ***/
-/* The following are designed to be bitwise-AND-d in an 8-bit u_char */
+/*** Flags for IEEE 802.11 Frame Control **
+   The following are designed to be bitwise-AND-d in an 8-bit u_char */
 #define WLAN_FLAG_TODS      0x0100    /* To DS Flag   10000000 */
 #define WLAN_FLAG_FROMDS    0x0200    /* From DS Flag 01000000 */
 #define WLAN_FLAG_FRAG      0x0400    /* More Frag    00100000 */
@@ -81,7 +78,7 @@ struct WifiHdr
 #define WLAN_FLAG_MOREDAT   0x2000    /* More Data    00000100 */
 #define WLAN_FLAG_WEP       0x4000    /* Wep Enabled  00000010 */
 #define WLAN_FLAG_ORDER     0x8000    /* Strict Order 00000001 */
-
 } // namespace wlan
 
 #endif
+

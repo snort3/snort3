@@ -67,10 +67,11 @@ typedef struct fd_SWF_s
 
 /* API Functions */
 
-fd_status_t File_Decomp_Init_SWF( fd_session_p_t SessionPtr );
+fd_status_t File_Decomp_Init_SWF(fd_session_p_t SessionPtr);
 
-fd_status_t File_Decomp_SWF( fd_session_p_t SessionPtr );
+fd_status_t File_Decomp_SWF(fd_session_p_t SessionPtr);
 
-fd_status_t File_Decomp_End_SWF( fd_session_p_t SessionPtr );
+fd_status_t File_Decomp_End_SWF(fd_session_p_t SessionPtr);
 
 #endif
+

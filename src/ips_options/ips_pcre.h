@@ -25,10 +25,10 @@
 
 struct PcreData
 {
-    pcre *re;           /* compiled regex */
-    pcre_extra *pe;     /* studied regex foo */
+    pcre* re;           /* compiled regex */
+    pcre_extra* pe;     /* studied regex foo */
     int options;        /* sp_pcre specfic options (relative & inverse) */
-    char *expression;
+    char* expression;
 };
 
 PcreData* pcre_get_data(void*);

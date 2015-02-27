@@ -26,6 +26,6 @@
 #define FILE_SERVICE_CONFIG_H
 #include "file_service.h"
 /*configure file services*/
-void file_service_config(const char *args, void **file_config);
+void file_service_config(const char* args, void** file_config);
 #endif
 

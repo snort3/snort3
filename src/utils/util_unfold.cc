@@ -24,12 +24,12 @@
  * and exits when the end of a header is found, defined as \n followed by a
  * non-whitespace.  This is especially helpful for HTML.
  */
-int sf_unfold_header(const uint8_t *inbuf, uint32_t inbuf_size, uint8_t *outbuf,
-                          uint32_t outbuf_size, uint32_t *output_bytes, int trim_spaces, int *folded)
+int sf_unfold_header(const uint8_t* inbuf, uint32_t inbuf_size, uint8_t* outbuf,
+    uint32_t outbuf_size, uint32_t* output_bytes, int trim_spaces, int* folded)
 {
     int num_spaces = 0;
-    const uint8_t *cursor, *endofinbuf;
-    uint8_t *outbuf_ptr;
+    const uint8_t* cursor, * endofinbuf;
+    uint8_t* outbuf_ptr;
 
     uint32_t n = 0;
 
@@ -44,78 +44,77 @@ int sf_unfold_header(const uint8_t *inbuf, uint32_t inbuf_size, uint8_t *outbuf,
      * end of the line and the next line starts with a tab or space, add the space
      * to the buffer and keep reading.  If the next line does not start with a
      * tab or space, stop reading because that's the end of the header. */
-    while((cursor < endofinbuf) && (n < outbuf_size))
+    while ((cursor < endofinbuf) && (n < outbuf_size))
     {
-        if(((*cursor == ' ') || (*cursor == '\t')))
+        if (((*cursor == ' ') || (*cursor == '\t')))
         {
-            if(folding_present)
+            if (folding_present)
                 num_spaces++;
-            if(httpheaderfolding)
+            if (httpheaderfolding)
             {
                 num_spaces++;
                 folding_present = 1;
                 httpheaderfolding = 0;
             }
-            else if(!trim_spaces)
+            else if (!trim_spaces)
             {
                 /* Spaces are valid except after CRs */
                 *outbuf_ptr++ = *cursor;
             }
         }
-        else if((*cursor == '\n') && (httpheaderfolding != 1))
+        else if ((*cursor == '\n') && (httpheaderfolding != 1))
         {
             /* Can't have multiple LFs in a row, but if we get one it
              * needs to be followed by at least one space */
             httpheaderfolding = 1;
         }
-        else if((*cursor == '\r') && !httpheaderfolding)
+        else if ((*cursor == '\r') && !httpheaderfolding)
         {
             /* CR needs to be followed by LF and can't start a line */
             httpheaderfolding = 2;
         }
-        else if(!httpheaderfolding)
+        else if (!httpheaderfolding)
         {
             *outbuf_ptr++ = *cursor;
             n++;
         }
         else
         {
-            /* We have reached the end of the header */
-            /* Unless we get multiple CRs, which is suspicious, but not for us to decide */
+            /* We have reached the end of the header
+               Unless we get multiple CRs, which is suspicious, but not for us to decide */
             break;
         }
         cursor++;
     }
-    if(n < outbuf_size)
+    if (n < outbuf_size)
         *outbuf_ptr = '\0';
     else
         outbuf[outbuf_size - 1] = '\0';
-    
-    *output_bytes = outbuf_ptr - outbuf; 
-    if(folded)
-        *folded = num_spaces; 
+
+    *output_bytes = outbuf_ptr - outbuf;
+    if (folded)
+        *folded = num_spaces;
     return 0;
 }
 
-
 /* Strips the CRLF from the input buffer */
 
-int sf_strip_CRLF(const uint8_t *inbuf, uint32_t inbuf_size, uint8_t *outbuf,
-              uint32_t outbuf_size, uint32_t *output_bytes)
+int sf_strip_CRLF(const uint8_t* inbuf, uint32_t inbuf_size, uint8_t* outbuf,
+    uint32_t outbuf_size, uint32_t* output_bytes)
 {
-    const uint8_t *cursor, *endofinbuf;
-    uint8_t *outbuf_ptr;
+    const uint8_t* cursor, * endofinbuf;
+    uint8_t* outbuf_ptr;
     uint32_t n = 0;
 
-    if( !inbuf || !outbuf)
+    if ( !inbuf || !outbuf)
         return -1;
 
     cursor = inbuf;
     endofinbuf = inbuf + inbuf_size;
     outbuf_ptr = outbuf;
-    while((cursor < endofinbuf) && (n < outbuf_size))
+    while ((cursor < endofinbuf) && (n < outbuf_size))
     {
-        if((*cursor != '\n') && (*cursor != '\r'))
+        if ((*cursor != '\n') && (*cursor != '\r'))
         {
             *outbuf_ptr++ = *cursor;
             n++;
@@ -123,7 +122,7 @@ int sf_strip_CRLF(const uint8_t *inbuf, uint32_t inbuf_size, uint8_t *outbuf,
         cursor++;
     }
 
-    if(output_bytes)
+    if (output_bytes)
         *output_bytes = outbuf_ptr - outbuf;
 
     return(0);
@@ -133,25 +132,25 @@ int sf_strip_CRLF(const uint8_t *inbuf, uint32_t inbuf_size, uint8_t *outbuf,
  * Only strips the LWS before LF or CRLF
  */
 
-int sf_strip_LWS(const uint8_t *inbuf, uint32_t inbuf_size, uint8_t *outbuf,
-          uint32_t outbuf_size, uint32_t *output_bytes)
+int sf_strip_LWS(const uint8_t* inbuf, uint32_t inbuf_size, uint8_t* outbuf,
+    uint32_t outbuf_size, uint32_t* output_bytes)
 {
-    const uint8_t *cursor, *endofinbuf;
-    uint8_t *outbuf_ptr;
+    const uint8_t* cursor, * endofinbuf;
+    uint8_t* outbuf_ptr;
     uint32_t n = 0;
     uint8_t lws = 0;
 
-    if( !inbuf || !outbuf)
+    if ( !inbuf || !outbuf)
         return -1;
 
     cursor = inbuf;
     endofinbuf = inbuf + inbuf_size;
     outbuf_ptr = outbuf;
-    while((cursor < endofinbuf) && (n < outbuf_size))
+    while ((cursor < endofinbuf) && (n < outbuf_size))
     {
-        if((*cursor != '\n') && (*cursor != '\r'))
+        if ((*cursor != '\n') && (*cursor != '\r'))
         {
-            if((*cursor != ' ') && (*cursor != '\t'))
+            if ((*cursor != ' ') && (*cursor != '\t'))
                 lws = 0;
             else
                 lws = 1;
@@ -160,12 +159,12 @@ int sf_strip_LWS(const uint8_t *inbuf, uint32_t inbuf_size, uint8_t *outbuf,
         }
         else
         {
-            if(lws)
+            if (lws)
             {
                 lws = 0;
-                while( n > 0 )
+                while ( n > 0 )
                 {
-                    if((*(outbuf_ptr-1) != ' ') && (*(outbuf_ptr-1) !='\t'))
+                    if ((*(outbuf_ptr-1) != ' ') && (*(outbuf_ptr-1) !='\t'))
                         break;
                     n--;
                     outbuf_ptr--;
@@ -176,10 +175,11 @@ int sf_strip_LWS(const uint8_t *inbuf, uint32_t inbuf_size, uint8_t *outbuf,
             n++;
         }
         cursor++;
-        }
+    }
 
-        if(output_bytes)
-            *output_bytes = outbuf_ptr - outbuf;
+    if (output_bytes)
+        *output_bytes = outbuf_ptr - outbuf;
 
-        return(0);
+    return(0);
 }
+

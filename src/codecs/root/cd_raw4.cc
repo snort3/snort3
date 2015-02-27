@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_raw4.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -32,22 +31,16 @@
 
 namespace
 {
-
 class Raw4Codec : public Codec
 {
 public:
-    Raw4Codec() : Codec(CD_RAW4_NAME){};
-    ~Raw4Codec() {};
-
+    Raw4Codec() : Codec(CD_RAW4_NAME) { }
+    ~Raw4Codec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_data_link_type(std::vector<int>&) override;
 };
-
-
 } // namespace
-
-
 
 //--------------------------------------------------------------------
 // decode.c::Raw packets
@@ -72,13 +65,11 @@ bool Raw4Codec::decode(const RawData&, CodecData& data, DecodeData&)
     return true;
 }
 
-
-void Raw4Codec::get_data_link_type(std::vector<int>&v)
+void Raw4Codec::get_data_link_type(std::vector<int>& v)
 {
     v.push_back(DLT_RAW);
     v.push_back(DLT_IPV4);
 }
-
 
 //-------------------------------------------------------------------------
 // api
@@ -87,7 +78,7 @@ void Raw4Codec::get_data_link_type(std::vector<int>&v)
 static Codec* ctor(Module*)
 { return new Raw4Codec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi raw4_api =
@@ -108,7 +99,6 @@ static const CodecApi raw4_api =
     ctor, // ctor
     dtor, // dtor
 };
-
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =

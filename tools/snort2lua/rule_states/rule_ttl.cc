@@ -27,25 +27,20 @@
 
 namespace rules
 {
-
 namespace
 {
-
-
 class Ttl : public ConversionState
 {
 public:
-    Ttl(Converter& c) : ConversionState(c) {};
-    virtual ~Ttl() {};
+    Ttl(Converter& c) : ConversionState(c) { }
+    virtual ~Ttl() { }
     virtual bool convert(std::istringstream&);
 };
-
 } // namespace
 
 bool Ttl::convert(std::istringstream& stream)
 {
     std::string arg = util::get_rule_option_args(stream);
-
 
     if ( arg.empty() )
     {
@@ -97,7 +92,6 @@ bool Ttl::convert(std::istringstream& stream)
     return set_next_rule_state(stream);
 }
 
-
 static ConversionState* ctor(Converter& c)
 { return new Ttl(c); }
 
@@ -108,5 +102,5 @@ static const ConvertMap rule_ttl =
 };
 
 const ConvertMap* ttl_map = &rule_ttl;
-
 } // namespace rules
+

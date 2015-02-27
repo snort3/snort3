@@ -58,9 +58,9 @@
 **  @return  0  successful
 **  @return !0  failed
 */
-static inline int boInitStaticBITOP(BITOP *BitOp,int iBytes,unsigned char *buf)
+static inline int boInitStaticBITOP(BITOP* BitOp,int iBytes,unsigned char* buf)
 {
-    if(iBytes < 1 || !buf || !BitOp)
+    if (iBytes < 1 || !buf || !BitOp)
         return 1;
 
     BitOp->pucBitBuffer   = buf;
@@ -90,14 +90,14 @@ static inline int boInitStaticBITOP(BITOP *BitOp,int iBytes,unsigned char *buf)
 **    int - 0 if successful, 1 if failed.
 **
 */
-static inline int boInitBITOP(BITOP *BitOp, int iBytes)
+static inline int boInitBITOP(BITOP* BitOp, int iBytes)
 {
     int iSize;
 
     /*
     **  Sanity check for size
     */
-    if((iBytes < 1) || (BitOp == NULL))
+    if ((iBytes < 1) || (BitOp == NULL))
     {
         return 1;
     }
@@ -107,15 +107,15 @@ static inline int boInitBITOP(BITOP *BitOp, int iBytes)
     **  if it is already initialized then we return that it
     **  is initialized.
     */
-    if(BitOp->pucBitBuffer)
+    if (BitOp->pucBitBuffer)
     {
         return 0;
     }
 
     iSize = iBytes << 3;
 
-    BitOp->pucBitBuffer = (unsigned char  *)calloc(1, iBytes);
-    if(BitOp->pucBitBuffer == NULL)
+    BitOp->pucBitBuffer = (unsigned char*)calloc(1, iBytes);
+    if (BitOp->pucBitBuffer == NULL)
     {
         return 1;
     }
@@ -141,7 +141,7 @@ static inline int boInitBITOP(BITOP *BitOp, int iBytes)
 **    int - 0 if successful, 1 if failed.
 **
 */
-static inline int boResetBITOP(BITOP *BitOp)
+static inline int boResetBITOP(BITOP* BitOp)
 {
     if (BitOp == NULL)
         return 1;
@@ -165,7 +165,7 @@ static inline int boResetBITOP(BITOP *BitOp)
 **    int - 0 if successful, 1 if failed.
 **
 */
-static inline int boSetAllBits(BITOP *BitOp)
+static inline int boSetAllBits(BITOP* BitOp)
 {
     if (BitOp == NULL)
         return 1;
@@ -190,14 +190,14 @@ static inline int boSetAllBits(BITOP *BitOp)
 **    int - 0 if the bit was set, 1 if there was an error.
 **
 */
-static inline int boSetBit(BITOP *BitOp, unsigned int uiPos)
+static inline int boSetBit(BITOP* BitOp, unsigned int uiPos)
 {
-    unsigned char  mask;
+    unsigned char mask;
 
     /*
     **  Sanity Check while setting bits
     */
-    if((BitOp == NULL) || (BitOp->uiMaxBits <= uiPos))
+    if ((BitOp == NULL) || (BitOp->uiMaxBits <= uiPos))
         return 1;
 
     mask = (unsigned char)( 0x80 >> (uiPos & 7));
@@ -206,6 +206,7 @@ static inline int boSetBit(BITOP *BitOp, unsigned int uiPos)
 
     return 0;
 }
+
 /*
 **
 **  NAME
@@ -222,14 +223,14 @@ static inline int boSetBit(BITOP *BitOp, unsigned int uiPos)
 **    int - 0 if bit not set, 1 if bit is set.
 **
 */
-static inline int boIsBitSet(BITOP *BitOp, unsigned int uiPos)
+static inline int boIsBitSet(BITOP* BitOp, unsigned int uiPos)
 {
-    unsigned char  mask;
+    unsigned char mask;
 
     /*
     **  Sanity Check while setting bits
     */
-    if((BitOp == NULL) || (BitOp->uiMaxBits <= uiPos))
+    if ((BitOp == NULL) || (BitOp->uiMaxBits <= uiPos))
         return 0;
 
     mask = (unsigned char)(0x80 >> (uiPos & 7));
@@ -253,14 +254,14 @@ static inline int boIsBitSet(BITOP *BitOp, unsigned int uiPos)
 **    int - 0 if the bit was cleared, 1 if there was an error.
 **
 */
-static inline void boClearBit(BITOP *BitOp, unsigned int uiPos)
+static inline void boClearBit(BITOP* BitOp, unsigned int uiPos)
 {
-    unsigned char  mask;
+    unsigned char mask;
 
     /*
     **  Sanity Check while clearing bits
     */
-    if((BitOp == NULL) || (BitOp->uiMaxBits <= uiPos))
+    if ((BitOp == NULL) || (BitOp->uiMaxBits <= uiPos))
         return;
 
     mask = (unsigned char)(0x80 >> (uiPos & 7));
@@ -284,12 +285,12 @@ static inline void boClearBit(BITOP *BitOp, unsigned int uiPos)
 **    int - 0 if the byte was cleared, 1 if there was an error.
 **
 */
-static inline void boClearByte(BITOP *BitOp, unsigned int uiPos)
+static inline void boClearByte(BITOP* BitOp, unsigned int uiPos)
 {
     /*
     **  Sanity Check while clearing bytes
     */
-    if((BitOp == NULL) || (BitOp->uiMaxBits <= uiPos))
+    if ((BitOp == NULL) || (BitOp->uiMaxBits <= uiPos))
         return;
 
     BitOp->pucBitBuffer[uiPos >> 3] = 0;
@@ -314,9 +315,9 @@ static inline void boClearByte(BITOP *BitOp, unsigned int uiPos)
  **    void function
  **
  **/
-static inline void boFreeBITOP(BITOP *BitOp)
+static inline void boFreeBITOP(BITOP* BitOp)
 {
-    if((BitOp == NULL) || (BitOp->pucBitBuffer == NULL))
+    if ((BitOp == NULL) || (BitOp->pucBitBuffer == NULL))
         return;
 
     free(BitOp->pucBitBuffer);
@@ -324,3 +325,4 @@ static inline void boFreeBITOP(BITOP *BitOp)
 }
 
 #endif /* _BITOPT_FUNCS_H_ */
+

@@ -40,7 +40,7 @@
 #include "snort.h"
 
 #ifdef DEBUG_MSGS
-const char *DebugMessageFile = NULL;  // FIXIT-M use access methods
+const char* DebugMessageFile = NULL;  // FIXIT-M use access methods
 int DebugMessageLine = 0;  // FIXIT-M use access methods
 
 int DebugThis(uint64_t level)
@@ -78,7 +78,7 @@ uint64_t GetDebugLevel(void)
     return debug_level;
 }
 
-void DebugMessageFunc(uint64_t level, const char *fmt, ...)
+void DebugMessageFunc(uint64_t level, const char* fmt, ...)
 {
     va_list ap;
 
@@ -91,7 +91,7 @@ void DebugMessageFunc(uint64_t level, const char *fmt, ...)
     {
         char buf[STD_BUF];
         int buf_len = sizeof(buf);
-        char *buf_ptr = buf;
+        char* buf_ptr = buf;
 
         buf[buf_len - 1] = '\0';
 
@@ -99,7 +99,7 @@ void DebugMessageFunc(uint64_t level, const char *fmt, ...)
         if (DebugMessageFile != NULL)
         {
             snprintf(buf, buf_len - 1, "%s:%d: ",
-                    DebugMessageFile, DebugMessageLine);
+                DebugMessageFile, DebugMessageLine);
             buf_ptr += strlen(buf);
             buf_len -= strlen(buf);
         }
@@ -118,11 +118,10 @@ void DebugMessageFunc(uint64_t level, const char *fmt, ...)
 }
 
 #ifdef SF_WCHAR
-void DebugWideMessageFunc(uint64_t level, const wchar_t *fmt, ...)
+void DebugWideMessageFunc(uint64_t level, const wchar_t* fmt, ...)
 {
     va_list ap;
     wchar_t buf[STD_BUF+1];
-
 
     if (!(level & GetDebugLevel()))
     {
@@ -152,14 +151,18 @@ void DebugWideMessageFunc(uint64_t level, const wchar_t *fmt, ...)
 
     va_end(ap);
 }
+
 #endif
 #else /* DEBUG_MSGS */
 void DebugMessageFunc(uint64_t /*level*/, const char* /*fmt*/, ...)
 {
 }
+
 #ifdef SF_WCHAR
 void DebugWideMessageFunc(uint64_t /*level*/, const wchar_t* /*fmt*/, ...)
 {
 }
+
 #endif
 #endif /* DEBUG_MSGS */
+

@@ -31,7 +31,7 @@ public:
     virtual ~Include();
 
     // overloading operators
-    friend std::ostream &operator<<( std::ostream&, const Include &);
+    friend std::ostream& operator<<(std::ostream&, const Include&);
 
     friend bool operator==(const Include& lhs, const Include& rhs);
     friend bool operator!=(const Include& lhs, const Include& rhs);
@@ -40,5 +40,5 @@ private:
     std::string file_name;
 };
 
-
 #endif
+

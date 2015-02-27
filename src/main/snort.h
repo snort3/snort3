@@ -34,7 +34,6 @@
 #include "events/event_queue.h"
 #include "filters/sfrf.h"
 
-
 struct Packet;
 class Flow;
 struct NetworkPolicy;
@@ -59,16 +58,16 @@ void snort_thread_idle();
 void snort_thread_rotate();
 
 void CapturePacket();
-void DecodeRebuiltPacket (Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, Flow*);
-void DetectRebuiltPacket (Packet*);
-void LogRebuiltPacket (Packet*);
+void DecodeRebuiltPacket(Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, Flow*);
+void DetectRebuiltPacket(Packet*);
+void LogRebuiltPacket(Packet*);
 
 DAQ_Verdict ProcessPacket(Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, bool is_frag=false);
 
 DAQ_Verdict fail_open(void*, const DAQ_PktHdr_t*, const uint8_t*);
 DAQ_Verdict packet_callback(void*, const DAQ_PktHdr_t*, const uint8_t*);
 
-typedef void (*MainHook_f)(Packet*);
+typedef void (* MainHook_f)(Packet*);
 void set_main_hook(MainHook_f);
 
 //-------------------------------------------------------------------------
@@ -143,7 +142,6 @@ enum OutputFlag
 
     OUTPUT_FLAG__NO_ALERT          = 0x00001000,      /* -A none */
     OUTPUT_FLAG__NO_LOG            = 0x00002000,      /* -K none */
-
 };
 
 enum LoggingFlag
@@ -156,7 +154,8 @@ enum LoggingFlag
     LOGGING_FLAG__WARN_UNKNOWN    = 0x00000020,      // --warn-unknown
 };
 
-enum TunnelFlags{
+enum TunnelFlags
+{
     TUNNEL_GTP    = 0x01,
     TUNNEL_TEREDO = 0x02,
     TUNNEL_6IN4   = 0x04,
@@ -280,7 +279,7 @@ static inline int ScProcessAllEvents(void)
 
 static inline int ScAdapterInlineMode(void)
 {
-   return snort_conf->run_flags & RUN_FLAG__INLINE;
+    return snort_conf->run_flags & RUN_FLAG__INLINE;
 }
 
 static inline long int ScMplsStackDepth(void)
@@ -338,6 +337,7 @@ static inline int ScProfileRules(void)
 {
     return snort_conf->profile_rules.num;
 }
+
 #endif
 
 static inline int ScStaticHash(void)
@@ -484,7 +484,7 @@ static inline int ScGid(void)
 // FIXIT-L this should be feature of otn
 #define EventIsInternal(gid) (gid == GENERATOR_INTERNAL)
 
-static inline void EnableInternalEvent(RateFilterConfig *config, uint32_t sid)
+static inline void EnableInternalEvent(RateFilterConfig* config, uint32_t sid)
 {
     if (config == NULL)
         return;
@@ -492,7 +492,7 @@ static inline void EnableInternalEvent(RateFilterConfig *config, uint32_t sid)
     config->internal_event_mask |= (1 << sid);
 }
 
-static inline int InternalEventIsEnabled(RateFilterConfig *config, uint32_t sid)
+static inline int InternalEventIsEnabled(RateFilterConfig* config, uint32_t sid)
 {
     if (config == NULL)
         return 0;

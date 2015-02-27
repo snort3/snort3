@@ -17,8 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_i4l_rawip.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -26,11 +24,8 @@
 #include <pcap.h>
 #include "framework/codec.h"
 
-
-
 #define I4L_RAWIP_NAME "i4l_rawip"
 #define I4L_RAWIP_HELP_STR "support for I4L IP"
-
 
 #ifdef DLT_I4L_RAWIP
 #define I4L_RAWIP_HELP ADD_DLT(I4L_RAWIP_HELP_STR, DLT_I4L_RAWIP)
@@ -40,18 +35,15 @@
 
 namespace
 {
-
 class I4LRawIpCodec : public Codec
 {
 public:
-    I4LRawIpCodec() : Codec(I4L_RAWIP_NAME){};
-    ~I4LRawIpCodec() {};
+    I4LRawIpCodec() : Codec(I4L_RAWIP_NAME) { }
+    ~I4LRawIpCodec() { }
 
     void get_data_link_type(std::vector<int>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
-
-
 } // namespace
 
 void I4LRawIpCodec::get_data_link_type(std::vector<int>& v)
@@ -63,10 +55,9 @@ void I4LRawIpCodec::get_data_link_type(std::vector<int>& v)
 #endif
 }
 
-
 bool I4LRawIpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-    if(raw.len < 2)
+    if (raw.len < 2)
         return false;
 
     codec.lyr_len = 2;
@@ -74,18 +65,15 @@ bool I4LRawIpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     return true;
 }
 
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
-
 static Codec* ctor(Module*)
 { return new I4LRawIpCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi i4l_rawip_api =
 {
@@ -106,7 +94,6 @@ static const CodecApi i4l_rawip_api =
     dtor,
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -116,3 +103,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_i4l_rawip = &i4l_rawip_api.base;
 #endif
+

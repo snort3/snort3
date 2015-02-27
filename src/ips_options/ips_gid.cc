@@ -52,7 +52,7 @@ static const Parameter s_params[] =
 class GidModule : public Module
 {
 public:
-    GidModule() : Module(s_name, s_help, s_params) { };
+    GidModule() : Module(s_name, s_help, s_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
     int gid;
 };

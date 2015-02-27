@@ -118,18 +118,18 @@ class ByteJumpOption : public IpsOption
 {
 public:
     ByteJumpOption(const ByteJumpData& c) : IpsOption(s_name)
-    { config = c; };
+    { config = c; }
 
-    ~ByteJumpOption() { };
+    ~ByteJumpOption() { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
     CursorActionType get_cursor_type() const override
-    { return CAT_ADJUST; };
+    { return CAT_ADJUST; }
 
     bool is_relative() override
-    { return (config.relative_flag == 1); };
+    { return (config.relative_flag == 1); }
 
     int eval(Cursor&, Packet*) override;
 
@@ -144,7 +144,7 @@ private:
 uint32_t ByteJumpOption::hash() const
 {
     uint32_t a,b,c;
-    const ByteJumpData *data = &config;
+    const ByteJumpData* data = &config;
 
     a = data->bytes_to_grab;
     b = data->offset;
@@ -153,9 +153,9 @@ uint32_t ByteJumpOption::hash() const
     mix(a,b,c);
 
     a += (data->relative_flag << 24 |
-          data->data_string_convert_flag << 16 |
-          data->from_beginning_flag << 8 |
-          data->align_flag);
+        data->data_string_convert_flag << 16 |
+        data->from_beginning_flag << 8 |
+        data->align_flag);
     b += data->endianess;
     c += data->multiplier;
 
@@ -178,8 +178,8 @@ bool ByteJumpOption::operator==(const IpsOption& ips) const
         return false;
 
     ByteJumpOption& rhs = (ByteJumpOption&)ips;
-    ByteJumpData *left = (ByteJumpData *)&config;
-    ByteJumpData *right = (ByteJumpData *)&rhs.config;
+    ByteJumpData* left = (ByteJumpData*)&config;
+    ByteJumpData* right = (ByteJumpData*)&rhs.config;
 
     if (( left->bytes_to_grab == right->bytes_to_grab) &&
         ( left->offset == right->offset) &&
@@ -201,7 +201,7 @@ bool ByteJumpOption::operator==(const IpsOption& ips) const
 
 int ByteJumpOption::eval(Cursor& c, Packet*)
 {
-    ByteJumpData *bjd = (ByteJumpData *)&config;
+    ByteJumpData* bjd = (ByteJumpData*)&config;
     int rval = DETECTION_OPTION_NO_MATCH;
     uint32_t jump = 0;
     uint32_t payload_bytes_grabbed = 0;
@@ -215,7 +215,7 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
     {
         uint32_t extract_offset;
         GetByteExtractValue(&extract_offset, bjd->offset_var);
-        offset = (int32_t) extract_offset;
+        offset = (int32_t)extract_offset;
     }
     else
     {
@@ -226,15 +226,15 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
     const int dsize = c.size();
     const uint8_t* const end_ptr = start_ptr + dsize;
     const uint8_t* const base_ptr = offset +
-       ((bjd->relative_flag) ? c.start() : start_ptr);
+        ((bjd->relative_flag) ? c.start() : start_ptr);
 
     /* Both of the extraction functions contain checks to ensure the data
      * is inbounds and will return no match if it isn't */
     if ( !bjd->data_string_convert_flag )
     {
         if ( byte_extract(
-                bjd->endianess, bjd->bytes_to_grab,
-                base_ptr, start_ptr, end_ptr, &jump) )
+            bjd->endianess, bjd->bytes_to_grab,
+            base_ptr, start_ptr, end_ptr, &jump) )
         {
             MODULE_PROFILE_END(byteJumpPerfStats);
             return rval;
@@ -265,7 +265,7 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
     /* if we need to align on 32-bit boundries, round up to the next
      * 32-bit value
      */
-    if(bjd->align_flag)
+    if (bjd->align_flag)
     {
         if ((jump % 4) != 0)
         {
@@ -353,14 +353,14 @@ static const Parameter s_params[] =
 class ByteJumpModule : public Module
 {
 public:
-    ByteJumpModule() : Module(s_name, s_help, s_params) { };
+    ByteJumpModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &byteJumpPerfStats; };
+    { return &byteJumpPerfStats; }
 
     ByteJumpData data;
     string var;
@@ -390,7 +390,7 @@ bool ByteJumpModule::end(const char*, int, SnortConfig*)
     }
     unsigned e1 = ffs(data.endianess);
     unsigned e2 = ffs(data.endianess >> e1);
-    
+
     if ( e1 && e2 )
     {
         ParseError("byte_jump has multiple arguments "

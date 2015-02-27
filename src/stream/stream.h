@@ -65,16 +65,17 @@
 #define FROM_CLIENT     1
 #define FROM_SENDER     1
 
-class Memcap {
+class Memcap
+{
 public:
-    Memcap(unsigned u) { cap = u; use = 0; };
+    Memcap(unsigned u) { cap = u; use = 0; }
 
-    void set_cap(unsigned c) { cap = c; };
-    unsigned get_cap() { return cap; };
-    bool at_max() { return use >= cap; };
-    void alloc(unsigned sz) { use += sz; };
-    void dealloc(unsigned sz) { if ( use >= sz) use -= sz; };
-    unsigned used() { return use; };
+    void set_cap(unsigned c) { cap = c; }
+    unsigned get_cap() { return cap; }
+    bool at_max() { return use >= cap; }
+    void alloc(unsigned sz) { use += sz; }
+    void dealloc(unsigned sz) { if ( use >= sz) use -= sz; }
+    unsigned used() { return use; }
 
 private:
     unsigned cap;
@@ -97,16 +98,17 @@ struct StreamConfig
     class FlowControl* fc;
     class Stream* stream;
 
-    struct StreamGlobalConfig *global_config;
+    struct StreamGlobalConfig* global_config;
     uint8_t service_filter[MAX_PROTOCOL_ORDINAL];
 };
 
 #if 0
 FIXIT-M delete?
-typedef struct {
-    PegCount  filtered;
-    PegCount  inspected;
-    PegCount  session_tracked;
+typedef struct
+{
+    PegCount filtered;
+    PegCount inspected;
+    PegCount session_tracked;
 } tPortFilterStats;
 #endif
 

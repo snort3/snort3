@@ -60,7 +60,6 @@
 #define MAXHOSTNAMELEN 256
 #endif
 
-
 static THREAD_LOCAL DataBuffer DecodeBuffer;
 
 /*
@@ -91,14 +90,14 @@ static THREAD_LOCAL int ftp_cmd_pipe_index = 0;
  * Returns: int => return code indicating error or success
  */
 static int getIP959(
-    const char **ip_start, const char *last_char, const char *term_char,
-    sfip_t *ipRet, uint16_t *portRet
-)
+    const char** ip_start, const char* last_char, const char* term_char,
+    sfip_t* ipRet, uint16_t* portRet
+    )
 {
     uint32_t ip=0;
     uint16_t port=0;
     int octet=0;
-    const char *this_param = *ip_start;
+    const char* this_param = *ip_start;
     do
     {
         int value = 0;
@@ -110,9 +109,10 @@ static int getIP959(
             }
             value = value * 10 + (*this_param - '0');
             this_param++;
-        } while ((this_param < last_char) &&
-                 (*this_param != ',') &&
-                 (strchr(term_char, *this_param) == NULL));
+        }
+        while ((this_param < last_char) &&
+            (*this_param != ',') &&
+            (strchr(term_char, *this_param) == NULL));
         if (value > 0xFF)
         {
             return FTPP_INVALID_ARG;
@@ -129,7 +129,8 @@ static int getIP959(
         if (strchr(term_char, *this_param) == NULL)
             this_param++;
         octet++;
-    } while ((this_param < last_char) && (strchr(term_char, *this_param) == NULL));
+    }
+    while ((this_param < last_char) && (strchr(term_char, *this_param) == NULL));
 
     if (octet != 6)
     {
@@ -162,10 +163,10 @@ static int getIP959(
  *
  *    228 <human readable text> (af,hal,h1,h2,h3,h4...,pal,p1,p2...)
  */
-static int getIP1639 (
-    const char **ip_start, const char *last_char, const char*,
-    sfip_t *ipRet, uint16_t *portRet
-)
+static int getIP1639(
+    const char** ip_start, const char* last_char, const char*,
+    sfip_t* ipRet, uint16_t* portRet
+    )
 {
     char bytes[21];  /* max of 1+5+3 and 1+17+3 */
     const char* tok = *ip_start;
@@ -181,7 +182,8 @@ static int getIP1639 (
         if (
             val > 255 || endPtr == tok ||
             ( *endPtr && *endPtr != ',' && endPtr != last_char )
-        ) {
+            )
+        {
             return FTPP_INVALID_ARG;
         }
         bytes[nBytes++] = (uint8_t)val;
@@ -189,8 +191,8 @@ static int getIP1639 (
     }
     *ip_start = tok;
 
-    /* now we check that the we have a valid sequence of */
-    /* bytes and convert the address and port accordingly */
+    /* now we check that the we have a valid sequence of
+       bytes and convert the address and port accordingly */
     switch ( bytes[0] )
     {
     case 4:
@@ -251,9 +253,9 @@ static int getIP1639 (
  * this copy is unfortunate but inet_pton() doesn't
  * like the delim and the src buf is const so ...
  */
-void CopyField (
+void CopyField(
     char* buf, const char* tok, int max, const char* end, char delim
-)
+    )
 {
     int len = end - tok + 1;
     char* s;
@@ -270,14 +272,16 @@ void CopyField (
     }
     s = strchr(buf, delim);
 
-    if ( s ) *s = '\0';
-    else *buf = '\0';
+    if ( s )
+        *s = '\0';
+    else
+        *buf = '\0';
 }
 
-static int getIP2428 (
-    const char **ip_start, const char *last_char, const char*,
-    sfip_t *ipRet, uint16_t *portRet, FTP_PARAM_TYPE ftyp
-)
+static int getIP2428(
+    const char** ip_start, const char* last_char, const char*,
+    sfip_t* ipRet, uint16_t* portRet, FTP_PARAM_TYPE ftyp
+    )
 {
     const char* tok = *ip_start;
     char delim = *tok;
@@ -292,36 +296,41 @@ static int getIP2428 (
     if ( delim < 33 || delim > 126 )
         return FTPP_INVALID_ARG;
 
-    while ( tok && tok < last_char && field < 4 ) {
+    while ( tok && tok < last_char && field < 4 )
+    {
         int check = (*++tok != delim) ? field : 0;
 
-        switch ( check ) {
-            case 0:  /* empty */
-                break;
+        switch ( check )
+        {
+        case 0:      /* empty */
+            break;
 
-            case 1:  /* check family */
-                family = atoi(tok);
-                if ( family == 1 ) family = AF_INET;
-                else if ( family == 2 ) family = AF_INET6;
-                else return FTPP_INVALID_ARG;
-                fieldMask |= 1;
-                break;
+        case 1:      /* check family */
+            family = atoi(tok);
+            if ( family == 1 )
+                family = AF_INET;
+            else if ( family == 2 )
+                family = AF_INET6;
+            else
+                return FTPP_INVALID_ARG;
+            fieldMask |= 1;
+            break;
 
-            case 2:  /* check address */
-                CopyField(buf, tok, sizeof(buf), last_char, delim);
-                if ( sfip_pton(buf, ipRet) != SFIP_SUCCESS || family != ipRet->family )
-                    return FTPP_INVALID_ARG;
+        case 2:      /* check address */
+            CopyField(buf, tok, sizeof(buf), last_char, delim);
+            if ( sfip_pton(buf, ipRet) != SFIP_SUCCESS || family != ipRet->family )
+                return FTPP_INVALID_ARG;
 
-                fieldMask |= 2;
-                break;
+            fieldMask |= 2;
+            break;
 
-            case 3:  /* check port */
-                port = atoi(tok);
-                if ( port < 0 || port > MAXPORTS-1 )
-                    return FTPP_MALFORMED_IP_PORT;
-                *portRet = port;
-                fieldMask |= 4;
-                break;
+        case 3:      /* check port */
+            port = atoi(tok);
+            if ( port < 0 || port > MAXPORTS-1 )
+                return FTPP_MALFORMED_IP_PORT;
+            *portRet = port;
+            fieldMask |= 4;
+            break;
         }
         /* advance to next field */
         tok = strchr(tok, delim);
@@ -330,7 +339,8 @@ static int getIP2428 (
 
     if (tok)
     {
-        if ( *tok == delim ) tok++;
+        if ( *tok == delim )
+            tok++;
         *ip_start = tok;
     }
     else
@@ -349,9 +359,9 @@ static int getIP2428 (
 }
 
 static int getFTPip(
-    FTP_PARAM_TYPE ftyp, const char **ip_start, const char *last_char,
-    const char *term_char, sfip_t *ipRet, uint16_t *portRet
-)
+    FTP_PARAM_TYPE ftyp, const char** ip_start, const char* last_char,
+    const char* term_char, sfip_t* ipRet, uint16_t* portRet
+    )
 {
     if ( ftyp == e_host_port )
     {
@@ -363,7 +373,6 @@ static int getFTPip(
     }
     return getIP2428(ip_start, last_char, term_char, ipRet, portRet, ftyp);
 }
-
 
 /*
  * Function: validate_date_format(
@@ -380,13 +389,13 @@ static int getFTPip(
  * Returns: int => return code indicating error or success
  *
  */
-static int validate_date_format(FTP_DATE_FMT *ThisFmt, const char **this_param)
+static int validate_date_format(FTP_DATE_FMT* ThisFmt, const char** this_param)
 {
     int valid_string = 0;
     int checked_something_else = 0;
     int checked_next = 0;
     int iRet = FTPP_ALERT;
-    const char *curr_ch;
+    const char* curr_ch;
     if (!ThisFmt)
         return FTPP_INVALID_ARG;
 
@@ -396,7 +405,7 @@ static int validate_date_format(FTP_DATE_FMT *ThisFmt, const char **this_param)
     curr_ch = *this_param;
     if (!ThisFmt->empty)
     {
-        char *format_char = ThisFmt->format_string;
+        char* format_char = ThisFmt->format_string;
 
         do
         {
@@ -443,14 +452,14 @@ static int validate_date_format(FTP_DATE_FMT *ThisFmt, const char **this_param)
 
     if ((ThisFmt->optional) && !isspace((int)(*curr_ch)))
     {
-        const char *tmp_ch = curr_ch;
+        const char* tmp_ch = curr_ch;
         iRet = validate_date_format(ThisFmt->optional, &tmp_ch);
         if (iRet == FTPP_SUCCESS)
             curr_ch = tmp_ch;
     }
     if ((ThisFmt->next_a) && !isspace((int)(*curr_ch)))
     {
-        const char *tmp_ch = curr_ch;
+        const char* tmp_ch = curr_ch;
         checked_something_else = 1;
         iRet = validate_date_format(ThisFmt->next_a, &tmp_ch);
         if (iRet == FTPP_SUCCESS)
@@ -480,7 +489,7 @@ static int validate_date_format(FTP_DATE_FMT *ThisFmt, const char **this_param)
     }
     if ((!checked_next) && (ThisFmt->next))
     {
-        const char *tmp_ch = curr_ch;
+        const char* tmp_ch = curr_ch;
         checked_something_else = 1;
         iRet = validate_date_format(ThisFmt->next, &tmp_ch);
         if (iRet == FTPP_SUCCESS)
@@ -539,14 +548,14 @@ static int validate_date_format(FTP_DATE_FMT *ThisFmt, const char **this_param)
  * Returns: int => return code indicating error or success
  *
  */
-static int validate_param(Packet *p,
-                const char *param,
-                const char *end,
-                FTP_PARAM_FMT *ThisFmt,
-                FTP_SESSION *session)
+static int validate_param(Packet* p,
+    const char* param,
+    const char* end,
+    FTP_PARAM_FMT* ThisFmt,
+    FTP_SESSION* session)
 {
     int iRet;
-    const char *this_param = param;
+    const char* this_param = param;
 
     if (param > end)
         return FTPP_ALERT;
@@ -554,8 +563,8 @@ static int validate_param(Packet *p,
     switch (ThisFmt->type)
     {
     case e_head:
-        /* shouldn't get here, but just in case */
-        /* this hack is because we do get here! */
+        /* shouldn't get here, but just in case
+           this hack is because we do get here! */
         this_param--;
         break;
     case e_unrestricted:
@@ -583,7 +592,7 @@ static int validate_param(Packet *p,
                 this_param++;
             }
             while ((this_param < end) &&
-                   (*this_param != '\n'));
+                (*this_param != '\n'));
 
             if (numPercents >= MAX_PERCENT_SIGNS)
             {
@@ -595,181 +604,181 @@ static int validate_param(Packet *p,
         break;
     case e_int:
         /* check that this_param is all digits up to next space */
+    {
+        do
         {
-            do
+            if (!isdigit((int)(*this_param)))
             {
-                if (!isdigit((int)(*this_param)))
-                {
-                    /* Alert on non-digit */
-                    return FTPP_INVALID_PARAM;
-                }
-                this_param++;
+                /* Alert on non-digit */
+                return FTPP_INVALID_PARAM;
             }
-            while ((this_param < end) && (*this_param != ' ') );
+            this_param++;
         }
-        break;
+        while ((this_param < end) && (*this_param != ' ') );
+    }
+    break;
     case e_number:
         /* check that this_param is all digits up to next space
          * and value is between 1 & 255 */
+    {
+        int iValue = 0;
+        do
         {
-            int iValue = 0;
-            do
+            if (!isdigit((int)(*this_param)))
             {
-                if (!isdigit((int)(*this_param)))
-                {
-                    /* Alert on non-digit */
-                    return FTPP_INVALID_PARAM;
-                }
-                iValue = iValue * 10 + (*this_param - '0');
-                this_param++;
-            }
-            while ((this_param < end) && (*this_param != ' ') );
-
-            if ((iValue > 255) || (iValue == 0))
+                /* Alert on non-digit */
                 return FTPP_INVALID_PARAM;
+            }
+            iValue = iValue * 10 + (*this_param - '0');
+            this_param++;
         }
-        break;
+        while ((this_param < end) && (*this_param != ' ') );
+
+        if ((iValue > 255) || (iValue == 0))
+            return FTPP_INVALID_PARAM;
+    }
+    break;
     case e_char:
         /* check that this_param is one of chars specified */
+    {
+        int bitNum = (*this_param & 0x1f);
+        if (!isalpha((int)(*this_param)))
         {
-            int bitNum = (*this_param & 0x1f);
-            if (!isalpha((int)(*this_param)))
+            /* Alert on non-char */
+            return FTPP_INVALID_PARAM;
+        }
+        else
+        {
+            if (!(ThisFmt->format.chars_allowed & (1 << (bitNum-1))) )
             {
-                /* Alert on non-char */
+                /* Alert on unexpected char */
                 return FTPP_INVALID_PARAM;
             }
-            else
-            {
-                if (!(ThisFmt->format.chars_allowed & (1 << (bitNum-1))) )
-                {
-                    /* Alert on unexpected char */
-                    return FTPP_INVALID_PARAM;
-                }
-            }
-            this_param++; /* should be a space */
         }
-        break;
+        this_param++;     /* should be a space */
+    }
+    break;
     case e_date:
         /* check that this_param conforms to date specified */
+    {
+        const char* tmp_ch = this_param;
+        iRet = validate_date_format(ThisFmt->format.date_fmt, &tmp_ch);
+        if (iRet != FTPP_SUCCESS)
         {
-            const char *tmp_ch = this_param;
-            iRet = validate_date_format(ThisFmt->format.date_fmt, &tmp_ch);
-            if (iRet != FTPP_SUCCESS)
-            {
-                /* Alert invalid date */
-                return FTPP_INVALID_PARAM;
-            }
-            if (!isspace((int)(*tmp_ch)))
-            {
-                /* Alert invalid date -- didn't make it to end of parameter.
-                Overflow attempt? */
-                return FTPP_INVALID_PARAM;
-            }
-            this_param = tmp_ch;
+            /* Alert invalid date */
+            return FTPP_INVALID_PARAM;
         }
-        break;
+        if (!isspace((int)(*tmp_ch)))
+        {
+            /* Alert invalid date -- didn't make it to end of parameter.
+            Overflow attempt? */
+            return FTPP_INVALID_PARAM;
+        }
+        this_param = tmp_ch;
+    }
+    break;
     case e_literal:
         /* check that this_param matches the literal specified */
-        {
-            const char* s = ThisFmt->format.literal;
-            size_t n = strlen(s);
+    {
+        const char* s = ThisFmt->format.literal;
+        size_t n = strlen(s);
 
-            if ( strncmp(this_param, s, n) )
-            {
-                /* Alert on non-char */
-                return FTPP_INVALID_PARAM;
-            }
-            this_param += n;
+        if ( strncmp(this_param, s, n) )
+        {
+            /* Alert on non-char */
+            return FTPP_INVALID_PARAM;
         }
-        break;
-                            /* check that this_param is:  */
+        this_param += n;
+    }
+    break;
+    /* check that this_param is:  */
     case e_host_port:       /* PORT: h1,h2,h3,h4,p1,p2    */
     case e_long_host_port:  /* LPRT: af,hal,h1,h2,h3,h4...,pal,p1,p2... */
     case e_extd_host_port:  /* EPRT: |<af>|<addr>|<port>| */
-        {
-            sfip_t ipAddr;
-            uint16_t port=0;
+    {
+        sfip_t ipAddr;
+        uint16_t port=0;
 
-            int ret = getFTPip(
-                ThisFmt->type, &this_param, end, " \n", &ipAddr, &port
+        int ret = getFTPip(
+            ThisFmt->type, &this_param, end, " \n", &ipAddr, &port
             );
-            switch (ret)
-            {
-            case FTPP_NON_DIGIT:
-                /* Alert on non-digit */
-                return FTPP_INVALID_PARAM;
-                break;
-            case FTPP_INVALID_ARG:
-                /* Alert on number > 255 */
-                return FTPP_INVALID_PARAM;
-                break;
-            case FTPP_MALFORMED_IP_PORT:
-                /* Alert on malformed host-port */
-                return FTPP_INVALID_PARAM;
-                break;
-            }
+        switch (ret)
+        {
+        case FTPP_NON_DIGIT:
+            /* Alert on non-digit */
+            return FTPP_INVALID_PARAM;
+            break;
+        case FTPP_INVALID_ARG:
+            /* Alert on number > 255 */
+            return FTPP_INVALID_PARAM;
+            break;
+        case FTPP_MALFORMED_IP_PORT:
+            /* Alert on malformed host-port */
+            return FTPP_INVALID_PARAM;
+            break;
+        }
 
-            if ( ThisFmt->type == e_extd_host_port && !sfip_is_set(ipAddr) )
+        if ( ThisFmt->type == e_extd_host_port && !sfip_is_set(ipAddr) )
+        {
+            // actually, we expect no addr in 229 responses, which is
+            // understood to be server address, so we set that here
+            ipAddr = *p->ptrs.ip_api.get_src();
+        }
+        if ( session->client_conf->bounce )
+        {
+            if (!sfip_equals(&ipAddr, p->ptrs.ip_api.get_src()))
             {
-                // actually, we expect no addr in 229 responses, which is
-                // understood to be server address, so we set that here
-                ipAddr = *p->ptrs.ip_api.get_src();
-            }
-            if ( session->client_conf->bounce )
-            {
-                if (!sfip_equals(&ipAddr, p->ptrs.ip_api.get_src()))
+                int alert = 1;
+
+                FTP_BOUNCE_TO* BounceTo = ftp_bounce_lookup_find(
+                    session->client_conf->bounce_lookup, &ipAddr, &iRet);
+                if (BounceTo)
                 {
-                    int alert = 1;
-
-                    FTP_BOUNCE_TO *BounceTo = ftp_bounce_lookup_find(
-                        session->client_conf->bounce_lookup, &ipAddr, &iRet);
-                    if (BounceTo)
+                    if (BounceTo->portlo)
                     {
-                        if (BounceTo->portlo)
+                        if (BounceTo->porthi)
                         {
-                            if (BounceTo->porthi)
-                            {
-                                if ((port >= BounceTo->portlo) &&
-                                    (port <= BounceTo->porthi))
-                                    alert = 0;
-                            }
-                            else
-                            {
-                                if (port == BounceTo->portlo)
-                                    alert = 0;
-                            }
+                            if ((port >= BounceTo->portlo) &&
+                                (port <= BounceTo->porthi))
+                                alert = 0;
+                        }
+                        else
+                        {
+                            if (port == BounceTo->portlo)
+                                alert = 0;
                         }
                     }
+                }
 
-                    /* Alert on invalid IP address for PORT */
-                    if (alert)
-                    {
-                        SnortEventqAdd(GID_FTP, FTP_BOUNCE);
-                        /* Return here -- because we will likely want to
-                         * inspect the data traffic over a bounced data
-                         * connection */
-                        return FTPP_PORT_ATTACK;
-                    }
+                /* Alert on invalid IP address for PORT */
+                if (alert)
+                {
+                    SnortEventqAdd(GID_FTP, FTP_BOUNCE);
+                    /* Return here -- because we will likely want to
+                     * inspect the data traffic over a bounced data
+                     * connection */
+                    return FTPP_PORT_ATTACK;
                 }
             }
-
-            session->clientIP = ipAddr;
-            session->clientPort = port;
-            session->data_chan_state |= DATA_CHAN_PORT_CMD_ISSUED;
-            if (session->data_chan_state & DATA_CHAN_PASV_CMD_ISSUED)
-            {
-                /*
-                 * If there was a PORT command previously in
-                 * a series of pipelined requests, this
-                 * cancels it.
-                 */
-                session->data_chan_state &= ~DATA_CHAN_PASV_CMD_ISSUED;
-            }
-
-            sfip_clear(session->serverIP);
-            session->serverPort = 0;
         }
-        break;
+
+        session->clientIP = ipAddr;
+        session->clientPort = port;
+        session->data_chan_state |= DATA_CHAN_PORT_CMD_ISSUED;
+        if (session->data_chan_state & DATA_CHAN_PASV_CMD_ISSUED)
+        {
+            /*
+             * If there was a PORT command previously in
+             * a series of pipelined requests, this
+             * cancels it.
+             */
+            session->data_chan_state &= ~DATA_CHAN_PASV_CMD_ISSUED;
+        }
+
+        sfip_clear(session->serverIP);
+        session->serverPort = 0;
+    }
+    break;
     }
 
     ThisFmt->next_param = this_param;
@@ -797,16 +806,16 @@ static int validate_param(Packet *p,
  * Returns: int => return code indicating error or success
  *
  */
-static int check_ftp_param_validity(Packet *p,
-                             const char *params_begin,
-                             const char *params_end,
-                             FTP_PARAM_FMT *param_format,
-                             FTP_SESSION *session)
+static int check_ftp_param_validity(Packet* p,
+    const char* params_begin,
+    const char* params_end,
+    FTP_PARAM_FMT* param_format,
+    FTP_SESSION* session)
 {
     int iRet = FTPP_ALERT;
-    FTP_PARAM_FMT *ThisFmt = param_format;
-    FTP_PARAM_FMT *NextFmt;
-    const char *this_param = params_begin;
+    FTP_PARAM_FMT* ThisFmt = param_format;
+    FTP_PARAM_FMT* NextFmt;
+    const char* this_param = params_begin;
 
     if (!param_format)
         return FTPP_INVALID_ARG;
@@ -829,14 +838,14 @@ static int check_ftp_param_validity(Packet *p,
     {
         /* Check against optional */
         iRet = validate_param(p, this_param, params_end,
-                              ThisFmt->optional_fmt, session);
+            ThisFmt->optional_fmt, session);
         if (iRet == FTPP_SUCCESS)
         {
-            const char *next_param;
+            const char* next_param;
             NextFmt = ThisFmt->optional_fmt;
             next_param = NextFmt->next_param+1;
             iRet = check_ftp_param_validity(p, next_param, params_end,
-                                            NextFmt, session);
+                NextFmt, session);
             if (iRet == FTPP_SUCCESS)
             {
                 this_param = NextFmt->next_param+1;
@@ -849,18 +858,18 @@ static int check_ftp_param_validity(Packet *p,
         /* Check against choices -- one of many */
         int i;
         int valid = 0;
-        for (i=0;i<ThisFmt->numChoices && !valid;i++)
+        for (i=0; i<ThisFmt->numChoices && !valid; i++)
         {
             /* Try choice [i] */
             iRet = validate_param(p, this_param, params_end,
-                              ThisFmt->choices[i], session);
+                ThisFmt->choices[i], session);
             if (iRet == FTPP_SUCCESS)
             {
-                const char *next_param;
+                const char* next_param;
                 NextFmt = ThisFmt->choices[i];
                 next_param = NextFmt->next_param+1;
                 iRet = check_ftp_param_validity(p, next_param, params_end,
-                                                NextFmt, session);
+                    NextFmt, session);
                 if (iRet == FTPP_SUCCESS)
                 {
                     this_param = NextFmt->next_param+1;
@@ -873,14 +882,14 @@ static int check_ftp_param_validity(Packet *p,
     {
         /* Check against next param */
         iRet = validate_param(p, this_param, params_end,
-                          ThisFmt->next_param_fmt, session);
+            ThisFmt->next_param_fmt, session);
         if (iRet == FTPP_SUCCESS)
         {
-            const char *next_param;
+            const char* next_param;
             NextFmt = ThisFmt->next_param_fmt;
             next_param = NextFmt->next_param+1;
             iRet = check_ftp_param_validity(p, next_param, params_end,
-                                            NextFmt, session);
+                NextFmt, session);
             if (iRet == FTPP_SUCCESS)
             {
                 this_param = NextFmt->next_param+1;
@@ -912,18 +921,18 @@ static int check_ftp_param_validity(Packet *p,
  * Returns: int => return code indicating error or success
  *
  */
-int initialize_ftp(FTP_SESSION *session, Packet *p, int iMode)
+int initialize_ftp(FTP_SESSION* session, Packet* p, int iMode)
 {
     int iRet;
-    const unsigned char *read_ptr = p->data;
-    FTP_CLIENT_REQ *req;
+    const unsigned char* read_ptr = p->data;
+    FTP_CLIENT_REQ* req;
     char ignoreTelnetErase = FTPP_APPLY_TNC_ERASE_CMDS;
 
     /* Normalize this packet ala telnet */
     if (((iMode == FTPP_SI_CLIENT_MODE) &&
-         session->client_conf->ignore_telnet_erase_cmds) ||
+        session->client_conf->ignore_telnet_erase_cmds) ||
         ((iMode == FTPP_SI_SERVER_MODE) &&
-         session->server_conf->ignore_telnet_erase_cmds) )
+        session->server_conf->ignore_telnet_erase_cmds) )
         ignoreTelnetErase = FTPP_IGNORE_TNC_ERASE_CMDS;
 
     iRet = normalize_telnet(NULL, p, iMode, ignoreTelnetErase);
@@ -940,7 +949,7 @@ int initialize_ftp(FTP_SESSION *session, Packet *p, int iMode)
     {
         /* Normalized data will always be in decode buffer */
         if ( (iMode == FTPP_SI_CLIENT_MODE) ||
-              (iMode == FTPP_SI_SERVER_MODE) )
+            (iMode == FTPP_SI_SERVER_MODE) )
         {
             SnortEventqAdd(GID_FTP, FTP_TELNET_CMD);
             return FTPP_ALERT; /* Nothing else to do since we alerted */
@@ -953,15 +962,15 @@ int initialize_ftp(FTP_SESSION *session, Packet *p, int iMode)
         req = &session->client.request;
     else if (iMode == FTPP_SI_SERVER_MODE)
     {
-        FTP_SERVER_RSP *rsp = &session->server.response;
-        req = (FTP_CLIENT_REQ *)rsp;
+        FTP_SERVER_RSP* rsp = &session->server.response;
+        req = (FTP_CLIENT_REQ*)rsp;
     }
     else
         return FTPP_INVALID_ARG;
 
     /* Set the beginning of the pipeline to the start of the
      * (normalized) buffer */
-    req->pipeline_req = (const char *)read_ptr;
+    req->pipeline_req = (const char*)read_ptr;
 
     return FTPP_SUCCESS;
 }
@@ -983,8 +992,8 @@ int initialize_ftp(FTP_SESSION *session, Packet *p, int iMode)
  * Returns: int => return code indicating error or success
  *
  */
-static int do_stateful_checks(FTP_SESSION *session, Packet *p,
-                       FTP_CLIENT_REQ *req, int rsp_code)
+static int do_stateful_checks(FTP_SESSION* session, Packet* p,
+    FTP_CLIENT_REQ* req, int rsp_code)
 {
     int iRet = FTPP_SUCCESS;
 
@@ -1008,7 +1017,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                 {
                     sfip_t ipAddr;
                     uint16_t port=0;
-                    const char *ip_begin = req->param_begin;
+                    const char* ip_begin = req->param_begin;
                     sfip_clear(ipAddr);
                     session->data_chan_state &= ~DATA_CHAN_PASV_CMD_ISSUED;
                     session->data_chan_state |= DATA_CHAN_PASV_CMD_ACCEPT;
@@ -1021,7 +1030,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                     if (req->param_size != 0)
                     {
                         while ((ip_begin < req->param_end) &&
-                               (*ip_begin != '('))
+                            (*ip_begin != '('))
                         {
                             ip_begin++;
                         }
@@ -1037,12 +1046,12 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                              * differentiated between commands and responses, but
                              * this distinction is only required for EPSV rsps. */
                             (rsp_code == 229) ? e_int :
-                                (rsp_code == 228 ? e_long_host_port : e_host_port);
+                            (rsp_code == 228 ? e_long_host_port : e_host_port);
 
                         ip_begin++;
                         iRet = getFTPip(
                             ftyp, &ip_begin, req->param_end, ")", &ipAddr, &port
-                        );
+                            );
                         if (iRet == FTPP_SUCCESS)
                         {
                             if (!sfip_is_set(ipAddr))
@@ -1055,13 +1064,14 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                             sfip_copy(session->clientIP, p->ptrs.ip_api.get_dst());
                             session->clientPort = 0;
 
-                            if ((file_api->get_max_file_depth() > 0) || !(session->server_conf->data_chan))
+                            if ((file_api->get_max_file_depth() > 0) ||
+                                !(session->server_conf->data_chan))
                             {
                                 FtpDataFlowData* fd = new FtpDataFlowData(p);
                                 FTP_DATA_SESSION* ftpdata = &fd->session;
 
                                 int result;
-                                /* This is a passive data transfer */ 
+                                /* This is a passive data transfer */
                                 ftpdata->mode = FTPP_XFER_PASSIVE;
                                 ftpdata->data_chan = session->server_conf->data_chan;
 
@@ -1126,13 +1136,14 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                         /*
                         session->serverPort = ntohs(p->ptrs.tcph->th_sport) -1;
                         */
-                        if ((file_api->get_max_file_depth() > 0) || !(session->server_conf->data_chan))
+                        if ((file_api->get_max_file_depth() > 0) ||
+                            !(session->server_conf->data_chan))
                         {
                             FtpDataFlowData* fd = new FtpDataFlowData(p);
                             FTP_DATA_SESSION* ftpdata = &fd->session;
 
                             int result;
-                            /* This is a active data transfer */ 
+                            /* This is a active data transfer */
                             ftpdata->mode = FTPP_XFER_ACTIVE;
                             ftpdata->data_chan = session->server_conf->data_chan;
 
@@ -1189,7 +1200,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
 
     if (session->server_conf->detect_encrypted)
     {
-        switch(session->encr_state)
+        switch (session->encr_state)
         {
         case AUTH_TLS_CMD_ISSUED:
             if (rsp_code == 234)
@@ -1198,7 +1209,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                 session->encr_state = AUTH_TLS_ENCRYPTED;
                 SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
                 DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                    "FTP stream is now TLS encrypted\n"););
+                    "FTP stream is now TLS encrypted\n"); );
             }
             break;
         case AUTH_SSL_CMD_ISSUED:
@@ -1208,7 +1219,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                 session->encr_state = AUTH_SSL_ENCRYPTED;
                 SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
                 DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                    "FTP stream is now SSL encrypted\n"););
+                    "FTP stream is now SSL encrypted\n"); );
             }
             break;
         case AUTH_UNKNOWN_CMD_ISSUED:
@@ -1217,7 +1228,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                 session->encr_state = AUTH_UNKNOWN_ENCRYPTED;
                 SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
                 DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                    "FTP stream is now encrypted\n"););
+                    "FTP stream is now encrypted\n"); );
             }
             break;
         }
@@ -1255,18 +1266,18 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
 #define FTP_RESPONSE_2BCONT 2
 #define FTP_RESPONSE_CONT   3
 #define FTP_RESPONSE_ENDCONT 4
-int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
+int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
 {
     int iRet = FTPP_SUCCESS;
     int encrypted = 0;
     int space = 0;
     long state = FTP_CMD_OK;
     int rsp_code = 0;
-    FTP_CLIENT_REQ *req;
-    FTP_CMD_CONF *CmdConf = NULL;
+    FTP_CLIENT_REQ* req;
+    FTP_CMD_CONF* CmdConf = NULL;
 
-    const unsigned char *read_ptr;
-    const unsigned char *end = p->data + p->dsize;
+    const unsigned char* read_ptr;
+    const unsigned char* end = p->data + p->dsize;
 
     if ( DecodeBuffer.len )
         end = DecodeBuffer.data + DecodeBuffer.len;
@@ -1278,8 +1289,8 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
     }
     else if (iMode == FTPP_SI_SERVER_MODE)
     {
-        FTP_SERVER_RSP *rsp = &ftpssn->server.response;
-        req = (FTP_CLIENT_REQ *)rsp;
+        FTP_SERVER_RSP* rsp = &ftpssn->server.response;
+        req = (FTP_CLIENT_REQ*)rsp;
     }
     else
         return FTPP_INVALID_ARG;
@@ -1290,26 +1301,26 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
 
         /* Starts at the beginning of the buffer/line,
          * so next up is a command */
-        read_ptr = (const unsigned char *)req->pipeline_req;
+        read_ptr = (const unsigned char*)req->pipeline_req;
 
-         /* but first we ignore leading white space */
-         while ( (read_ptr < end) &&
-             (iMode == FTPP_SI_CLIENT_MODE) && isspace(*read_ptr) )
-             read_ptr++;
+        /* but first we ignore leading white space */
+        while ( (read_ptr < end) &&
+            (iMode == FTPP_SI_CLIENT_MODE) && isspace(*read_ptr) )
+            read_ptr++;
 
         // ignore extra \r\n emitted by some clients
         if ( read_ptr == end )
             break;
 
-        req->cmd_begin = (const char *)read_ptr;
+        req->cmd_begin = (const char*)read_ptr;
 
         while ((read_ptr < end) &&
-               (*read_ptr != SP) &&
-               (*read_ptr != CR) &&
-               (*read_ptr != LF) && /* Check for LF when there wasn't a CR,
+            (*read_ptr != SP) &&
+            (*read_ptr != CR) &&
+            (*read_ptr != LF) &&    /* Check for LF when there wasn't a CR,
                                      * protocol violation, but accepted by
                                      * some servers. */
-               (*read_ptr != DASH))
+            (*read_ptr != DASH))
         {
             /* If the first char is a digit this is a response
              * in server mode. */
@@ -1336,20 +1347,20 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
 
             read_ptr++;
         }
-        req->cmd_end = (const char *)read_ptr;
+        req->cmd_end = (const char*)read_ptr;
         req->cmd_size = req->cmd_end - req->cmd_begin;
 
         if (iMode == FTPP_SI_CLIENT_MODE)
         {
             if ( (req->cmd_size > ftpssn->server_conf->max_cmd_len)
-              || (req->cmd_size < MIN_CMD)
-              || (state == FTP_CMD_INV) )
+                || (req->cmd_size < MIN_CMD)
+                || (state == FTP_CMD_INV) )
             {
                 /* Uh, something is very wrong...
                  * nonalpha char seen or cmd is bad length.
                  * See if this might be encrypted, ie, non-alpha bytes. */
-                const unsigned char *ptr = (const unsigned char *)req->cmd_begin;
-                while (ptr < (const unsigned char *)req->cmd_end)
+                const unsigned char* ptr = (const unsigned char*)req->cmd_begin;
+                while (ptr < (const unsigned char*)req->cmd_end)
                 {
                     if (!isalpha((int)(*ptr)))
                     {
@@ -1381,7 +1392,7 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                         stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
                     }
                     DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                        "FTP client stream is now encrypted\n"););
+                        "FTP client stream is now encrypted\n"); );
                 }
                 break;
             }
@@ -1400,9 +1411,9 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                 else
                 {
                     CmdConf = ftp_cmd_lookup_find(ftpssn->server_conf->cmd_lookup,
-                                              req->cmd_begin,
-                                              req->cmd_size,
-                                              &iRet);
+                        req->cmd_begin,
+                        req->cmd_size,
+                        &iRet);
                     if ((iRet == FTPP_NOT_FOUND) || (CmdConf == NULL))
                     {
                         /* Alert, cmd not found */
@@ -1427,7 +1438,7 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                 /* Uh, something is very wrong...
                  * nondigit char seen or resp code is not 3 chars.
                  * See if this might be encrypted, ie, non-alpha bytes. */
-                const char *ptr = req->cmd_begin;
+                const char* ptr = req->cmd_begin;
                 while (ptr < req->cmd_end)
                 {
                     if (!isdigit((int)(*ptr)))
@@ -1460,7 +1471,7 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                         stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
                     }
                     DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                        "FTP server stream is now encrypted\n"););
+                        "FTP server stream is now encrypted\n"); );
                 }
                 break;
             }
@@ -1481,8 +1492,8 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
             {
                 if (*read_ptr != DASH)
                 {
-                    const unsigned char *resp_begin = (const unsigned char *)req->cmd_begin;
-                    const unsigned char *resp_end = (const unsigned char *)req->cmd_end;
+                    const unsigned char* resp_begin = (const unsigned char*)req->cmd_begin;
+                    const unsigned char* resp_end = (const unsigned char*)req->cmd_end;
                     if (resp_end - resp_begin >= 3)
                     {
                         if (isdigit(*(resp_begin)) &&
@@ -1490,8 +1501,8 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                             isdigit(*(resp_begin+2)) )
                         {
                             rsp_code = ( (*(resp_begin) - '0') * 100 +
-                                         (*(resp_begin+1) - '0') * 10 +
-                                         (*(resp_begin+2) - '0') );
+                                (*(resp_begin+1) - '0') * 10 +
+                                (*(resp_begin+2) - '0') );
                             if (rsp_code == ftpssn->server.response.state)
                             {
                                 /* End of continued response */
@@ -1517,14 +1528,14 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                 }
                 else if ((state == FTP_RESPONSE) && (*read_ptr == DASH))
                 {
-                    const unsigned char *resp_begin = (const unsigned char *)req->cmd_begin;
+                    const unsigned char* resp_begin = (const unsigned char*)req->cmd_begin;
                     if (isdigit(*(resp_begin)) &&
                         isdigit(*(resp_begin+1)) &&
                         isdigit(*(resp_begin+2)) )
                     {
                         int resp_code = ( (*(resp_begin) - '0') * 100 +
-                                          (*(resp_begin+1) - '0') * 10 +
-                                          (*(resp_begin+2) - '0') );
+                            (*(resp_begin+1) - '0') * 10 +
+                            (*(resp_begin+2) - '0') );
                         if (resp_code == ftpssn->server.response.state)
                         {
                             /* Continuation of previous response */
@@ -1541,7 +1552,7 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                     else
                     {
                         DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                            "invalid FTP response code."););
+                            "invalid FTP response code."); );
                         ftpssn->server.response.state = FTP_RESPONSE_INV;
                     }
                 }
@@ -1572,16 +1583,16 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
             else if (!space && ftpssn->server.response.state == 0)
             {
                 DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                    "Missing LF from end of FTP command\n"););
+                    "Missing LF from end of FTP command\n"); );
             }
             else
             {
                 /* Now grab the command parameters/response message
                  * read_ptr < end already checked */
-                req->param_begin = (const char *)read_ptr;
+                req->param_begin = (const char*)read_ptr;
                 if ((read_ptr = (unsigned char*)memchr(read_ptr, CR, end - read_ptr)) == NULL)
                     read_ptr = end;
-                req->param_end = (const char *)read_ptr;
+                req->param_end = (const char*)read_ptr;
                 read_ptr++;
 
                 if (read_ptr < end)
@@ -1592,12 +1603,12 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                      */
                     if (*read_ptr == LF)
                     {
-                       read_ptr++;
+                        read_ptr++;
                     }
                     else
                     {
                         DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                            "Missing LF from end of FTP command with params\n"););
+                            "Missing LF from end of FTP command with params\n"); );
                     }
                 }
             }
@@ -1608,13 +1619,13 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
             req->param_begin = NULL;
             req->param_end = NULL;
             DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                "Missing LF from end of FTP command sans params\n"););
+                "Missing LF from end of FTP command sans params\n"); );
         }
 
         /* Set the pointer for the next request/response
          * in the pipeline. */
         if (read_ptr < end)
-            req->pipeline_req = (const char *)read_ptr;
+            req->pipeline_req = (const char*)read_ptr;
         else
             req->pipeline_req = NULL;
 
@@ -1711,9 +1722,9 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                     /* If we are not ignoring the data channel OR file processing is enabled */
                     if (!ftpssn->server_conf->data_chan || (file_api->get_max_file_depth() > -1))
                     {
-                        /* The following  check cleans up filename  for failed data 
-                         * transfers.  If  the  transfer had  been  successful  the 
-                         * filename  pointer  would have  been  handed  off to  the 
+                        /* The following  check cleans up filename  for failed data
+                         * transfers.  If  the  transfer had  been  successful  the
+                         * filename  pointer  would have  been  handed  off to  the
                          * FTP_DATA_SESSION for tracking. */
                         if (ftpssn->filename)
                         {
@@ -1726,9 +1737,9 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                         // Request could have been sent without parameters, i.e. filename,
                         // so make sure something is there.
                         if (((req->param_begin != NULL) && (req->param_size > 0))
-                                && (CmdConf->file_get_cmd || CmdConf->file_put_cmd))
+                            && (CmdConf->file_get_cmd || CmdConf->file_put_cmd))
                         {
-                            ftpssn->filename = (char *)malloc(req->param_size+1);
+                            ftpssn->filename = (char*)malloc(req->param_size+1);
                             if (ftpssn->filename)
                             {
                                 memcpy(ftpssn->filename, req->param_begin, req->param_size);
@@ -1755,7 +1766,7 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                         ftpssn->encr_state = AUTH_TLS_CMD_ISSUED;
                     }
                     else if (req->param_begin && (req->param_size > 0) &&
-                             ((req->param_begin[0] == 'S') || (req->param_begin[0] == 's')))
+                        ((req->param_begin[0] == 'S') || (req->param_begin[0] == 's')))
                     {
                         ftpssn->encr_state = AUTH_SSL_CMD_ISSUED;
                     }
@@ -1767,8 +1778,8 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                 if (CmdConf->check_validity)
                 {
                     iRet = check_ftp_param_validity(p, req->param_begin,
-                                    req->param_end, CmdConf->param_format,
-                                    ftpssn);
+                        req->param_end, CmdConf->param_format,
+                        ftpssn);
                     /* If negative, haven't already alerted on violation */
                     if (iRet < 0)
                     {
@@ -1791,13 +1802,13 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
             ftp_cmd_pipe_index++;
         else if ((rsp_code != 226) && (rsp_code != 426))
         {
-             /*
-              * In terms of counting responses, ignore
-              * 226 response saying transfer complete
-              * 426 response saying transfer aborted
-              * The 226 may or may not be sent by the server.
-              * Both are 2nd response to a transfer command.
-              */
+            /*
+             * In terms of counting responses, ignore
+             * 226 response saying transfer complete
+             * 426 response saying transfer aborted
+             * The 226 may or may not be sent by the server.
+             * Both are 2nd response to a transfer command.
+             */
             ftp_cmd_pipe_index++;
         }
     }
@@ -1812,3 +1823,4 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
 
     return iRet;
 }
+

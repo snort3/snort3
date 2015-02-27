@@ -108,22 +108,22 @@ static const uint8_t class_map[256] =
     0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x33, 0x43, 0x03, 0x03, 0x03, 0x03, 0x03,
     0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
 //
-//   ' ',  '!',  '"',  '#',  '$',  '%',  '&',  ''',  '(',  ')',  '*',  '+',  ',',  '-',  '.',  '/' 
+//   ' ',  '!',  '"',  '#',  '$',  '%',  '&',  ''',  '(',  ')',  '*',  '+',  ',',  '-',  '.',  '/'
     0x33, 0x07, 0x23, 0x07, 0x07, 0x07, 0x07, 0x07, 0x23, 0x23, 0x07, 0x07, 0x23, 0x07, 0x07, 0x23,
 //
-//   '0',  '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',  ':',  ';',  '<',  '=',  '>',  '?' 
+//   '0',  '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',  ':',  ';',  '<',  '=',  '>',  '?'
     0x87, 0x87, 0x87, 0x87, 0x87, 0x87, 0x87, 0x87, 0x87, 0x87, 0x23, 0x23, 0x23, 0x23, 0x23, 0x23,
 //
-//   '@',  'A',  'B',  'C',  'D',  'E',  'F',  'G',  'H',  'I',  'J',  'K',  'L',  'M',  'N',  'O' 
+//   '@',  'A',  'B',  'C',  'D',  'E',  'F',  'G',  'H',  'I',  'J',  'K',  'L',  'M',  'N',  'O'
     0x23, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
 //
-//   'P',  'Q',  'R',  'S',  'T',  'U',  'V',  'W',  'X',  'Y',  'Z',  '[',  '\',  ']',  '^',  '_' 
+//   'P',  'Q',  'R',  'S',  'T',  'U',  'V',  'W',  'X',  'Y',  'Z',  '[',  '\',  ']',  '^',  '_'
     0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x23, 0x23, 0x23, 0x07, 0x07,
 //
-//   '`',  'a',  'b',  'c',  'd',  'e',  'f',  'g',  'h',  'i',  'j',  'k',  'l',  'm',  'n',  'o' 
+//   '`',  'a',  'b',  'c',  'd',  'e',  'f',  'g',  'h',  'i',  'j',  'k',  'l',  'm',  'n',  'o'
     0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
 //
-//   'p',  'q',  'r',  's',  't',  'u',  'v',  'w',  'x',  'y',  'z',  '{',  '|',  '}',  '~',  '.' 
+//   'p',  'q',  'r',  's',  't',  'u',  'v',  'w',  'x',  'y',  'z',  '{',  '|',  '}',  '~',  '.'
     0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x23, 0x07, 0x23, 0x07, 0x03,
 //
 //  non-ascii
@@ -147,7 +147,7 @@ static const uint8_t class_map[256] =
 #define CHRS "\6"  // matches CHAR
 #define DIGS "\7"  // matches DIGIT
 
-static uint8_t Classify (const char* s)
+static uint8_t Classify(const char* s)
 {
     if ( !strcmp(s, ANYS) )
         return CLASS_ANY;
@@ -177,7 +177,8 @@ static uint8_t Classify (const char* s)
 // fsm stuff
 //--------------------------------------------------------------------
 
-typedef enum {
+typedef enum
+{
     ACT_NOP, ACT_NOB,
     ACT_GET, ACT_PST,
     ACT_V09, ACT_V10, ACT_V11,
@@ -187,12 +188,14 @@ typedef enum {
     ACT_CHK, ACT_CK0, ACT_HDR
 } Action;
 
-typedef struct {
+typedef struct
+{
     uint8_t action;
     uint8_t next;
 } Cell;
 
-typedef struct {
+typedef struct
+{
     Cell cell[256];
 } State;
 
@@ -202,7 +205,8 @@ static unsigned hi_fsm_size = 0;
 #define EOL '\n'  // \r is ignored
 #define LWS ' '   // space or tab
 
-typedef struct {
+typedef struct
+{
     uint8_t state;
     uint8_t match;
     uint8_t other;
@@ -256,6 +260,7 @@ typedef struct {
 // see below for other possible enhancements.
 // -------------------------------------------------------------------
 
+/* *INDENT-OFF* */
 static const HiRule hi_rule[] =
 {
     // P* are resPonse specific
@@ -370,51 +375,100 @@ static const HiRule hi_rule[] =
     { R8+ 0, R2   , R8+ 1, ACT_NOP, EOLS },
     { R8+ 1, R8   , R8   , ACT_NOP, ANYS },
 };
+/* *INDENT-ON* */
 
 //--------------------------------------------------------------------
 // trace stuff
 //--------------------------------------------------------------------
 
 #ifdef HI_TRACE
-static void get_state (int s, char* buf, int max)
+static void get_state(int s, char* buf, int max)
 {
     int nbase;
     const char* sbase;
 
-    if ( s >= MAX_STATE ) { sbase = "X"; nbase = MAX_STATE; }
-
-    else if ( s >= R8 ) { sbase = "R8"; nbase = R8; }
-    else if ( s >= R7 ) { sbase = "R7"; nbase = R7; }
-    else if ( s >= R6 ) { sbase = "R6"; nbase = R6; }
-    else if ( s >= R5 ) { sbase = "R5"; nbase = R5; }
-    else if ( s >= R4 ) { sbase = "R4"; nbase = R4; }
-    else if ( s >= R3 ) { sbase = "R3"; nbase = R3; }
-    else if ( s >= R2 ) { sbase = "R2"; nbase = R2; }
+    if ( s >= MAX_STATE )
+    {
+        sbase = "X"; nbase = MAX_STATE;
+    }
+    else if ( s >= R8 )
+    {
+        sbase = "R8"; nbase = R8;
+    }
+    else if ( s >= R7 )
+    {
+        sbase = "R7"; nbase = R7;
+    }
+    else if ( s >= R6 )
+    {
+        sbase = "R6"; nbase = R6;
+    }
+    else if ( s >= R5 )
+    {
+        sbase = "R5"; nbase = R5;
+    }
+    else if ( s >= R4 )
+    {
+        sbase = "R4"; nbase = R4;
+    }
+    else if ( s >= R3 )
+    {
+        sbase = "R3"; nbase = R3;
+    }
+    else if ( s >= R2 )
+    {
+        sbase = "R2"; nbase = R2;
+    }
     //else if ( s >= R1 ) { sbase = "R1"; nbase = R1; }
     //else if ( s >= R0 ) { sbase = "R0"; nbase = R0; }
 
-    else if ( s >= Q3 ) { sbase = "Q3"; nbase = Q3; }
-    else if ( s >= Q2 ) { sbase = "Q2"; nbase = Q2; }
-    else if ( s >= Q1 ) { sbase = "Q1"; nbase = Q1; }
-    else if ( s >= Q0 ) { sbase = "Q0"; nbase = Q0; }
-
-    else if ( s >= P3 ) { sbase = "P3"; nbase = P3; }
-    else if ( s >= P2 ) { sbase = "P2"; nbase = P2; }
-    else if ( s >= P1 ) { sbase = "P1"; nbase = P1; }
-    else                { sbase = "P0"; nbase = P0; }
+    else if ( s >= Q3 )
+    {
+        sbase = "Q3"; nbase = Q3;
+    }
+    else if ( s >= Q2 )
+    {
+        sbase = "Q2"; nbase = Q2;
+    }
+    else if ( s >= Q1 )
+    {
+        sbase = "Q1"; nbase = Q1;
+    }
+    else if ( s >= Q0 )
+    {
+        sbase = "Q0"; nbase = Q0;
+    }
+    else if ( s >= P3 )
+    {
+        sbase = "P3"; nbase = P3;
+    }
+    else if ( s >= P2 )
+    {
+        sbase = "P2"; nbase = P2;
+    }
+    else if ( s >= P1 )
+    {
+        sbase = "P1"; nbase = P1;
+    }
+    else
+    {
+        sbase = "P0"; nbase = P0;
+    }
 
     snprintf(buf, max, "%s+%d", sbase, (s-nbase));
 }
 
 #if 0
-static inline bool dump_it (int c)
+static inline bool dump_it(int c)
 {
-    if ( !c ) return false;
+    if ( !c )
+        return false;
     return ( isupper(c) || isdigit(c) || strchr(":-/. \t\n", c) );
 }
+
 #endif
 
-static void hi_fsm_dump ()
+static void hi_fsm_dump()
 {
 #if 0
     unsigned i;
@@ -451,6 +505,7 @@ static void hi_fsm_dump ()
     }
 #endif
 }
+
 #endif
 
 //--------------------------------------------------------------------
@@ -459,7 +514,7 @@ static void hi_fsm_dump ()
 
 #define TBD 0xFF
 
-static void hi_load (State* state, int event, const HiRule* rule)
+static void hi_load(State* state, int event, const HiRule* rule)
 {
     //assert(state->cell[event].next == TBD);
 
@@ -467,13 +522,13 @@ static void hi_load (State* state, int event, const HiRule* rule)
     state->cell[event].next = rule->match;
 }
 
-static void hi_reload (State* state, int event, int next)
+static void hi_reload(State* state, int event, int next)
 {
     state->cell[event].action = ACT_NOP;
     state->cell[event].next = next;
 }
 
-static void hi_link (State* state, const char* event, const HiRule* rule)
+static void hi_link(State* state, const char* event, const HiRule* rule)
 {
     bool not_done;
 
@@ -488,27 +543,28 @@ static void hi_link (State* state, const char* event, const HiRule* rule)
             hi_load(state, toupper(*event), rule);
             hi_load(state, tolower(*event), rule);
         }
-        else for ( i = 0; i < 256; i++ )
-        {
-            if ( (state->cell[i].next == TBD) && (class_map[i] & cls) )
+        else
+            for ( i = 0; i < 256; i++ )
             {
-                hi_load(state, toupper(i), rule);
-                hi_load(state, tolower(i), rule);
+                if ( (state->cell[i].next == TBD) && (class_map[i] & cls) )
+                {
+                    hi_load(state, toupper(i), rule);
+                    hi_load(state, tolower(i), rule);
+                }
             }
-        }
         rule = hi_rule + rule->other;
         event = rule->event;
     }
     while ( not_done );
 }
 
-static void hi_relink (State* state, const char* event, int next)
+static void hi_relink(State* state, const char* event, int next)
 {
     hi_reload(state, toupper(*event), next);
     hi_reload(state, tolower(*event), next);
 }
 
-static void hi_link_check (void)
+static void hi_link_check(void)
 {
     unsigned i, j;
 
@@ -522,7 +578,7 @@ static void hi_link_check (void)
     }
 }
 
-static bool hi_fsm_compile (void)
+static bool hi_fsm_compile(void)
 {
     unsigned i = 0, j;
     unsigned max = sizeof(hi_rule) / sizeof(hi_rule[0]);
@@ -545,7 +601,7 @@ static bool hi_fsm_compile (void)
     hi_fsm = (State*)malloc(hi_fsm_size*sizeof(*hi_fsm));
     if ( hi_fsm == NULL )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF, "Unable to allocate memory for hi_fsm."););
+        DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF, "Unable to allocate memory for hi_fsm."); );
         return false;
     }
     next = max;
@@ -586,12 +642,12 @@ static bool hi_fsm_compile (void)
 // actions
 //--------------------------------------------------------------------
 
-static inline int dton (int c)
+static inline int dton(int c)
 {
     return c - '0';
 }
 
-static inline int xton (int c)
+static inline int xton(int c)
 {
     if ( isdigit(c) )
         return c - '0';
@@ -602,117 +658,117 @@ static inline int xton (int c)
     return c - 'a' + 10;
 }
 
-static inline void hi_paf_event_post ()
+static inline void hi_paf_event_post()
 {
     SnortEventqAdd(
         GID_HTTP_CLIENT,
         HI_CLIENT_UNBOUNDED_POST);
 }
 
-static inline void hi_paf_event_simple ()
+static inline void hi_paf_event_simple()
 {
     SnortEventqAdd(
         GID_HTTP_CLIENT,
         HI_CLIENT_SIMPLE_REQUEST);
 }
 
-static inline void hi_paf_event_msg_size ()
+static inline void hi_paf_event_msg_size()
 {
     SnortEventqAdd(
         GID_HTTP_SERVER,
         HI_CLISRV_MSG_SIZE_EXCEPTION);
 }
 
-static inline void hi_paf_event_pipe ()
+static inline void hi_paf_event_pipe()
 {
     SnortEventqAdd(
         GID_HTTP_CLIENT,
         HI_CLIENT_PIPELINE_MAX);
 }
 
-static inline StreamSplitter::Status hi_exec (Hi5State* s, Action a, int c)
+static inline StreamSplitter::Status hi_exec(Hi5State* s, Action a, int c)
 {
     switch ( a )
     {
-        case ACT_HDR:
+    case ACT_HDR:
+        break;
+    case ACT_SRL:
+        break;
+    case ACT_NOP:
+        break;
+    case ACT_V09:
+        s->flags |= HIF_REQ|HIF_V09|HIF_ERR;
+        break;
+    case ACT_V10:
+        s->flags |= HIF_V10;
+        break;
+    case ACT_V11:
+        s->flags |= HIF_V11;
+        break;
+    case ACT_NOB:
+        s->flags |= HIF_NOB;
+        break;
+    case ACT_GET:
+        s->flags |= HIF_GET;
+        break;
+    case ACT_PST:
+        s->flags |= HIF_PST;
+        break;
+    case ACT_REQ:
+        s->flags |= HIF_REQ;
+        break;
+    case ACT_RSP:
+        s->flags |= HIF_RSP;
+        break;
+    case ACT_SHI:
+        if ( s->flags & HIF_ERR )
             break;
-        case ACT_SRL:
+        if ( isdigit(c) && (s->len < 429496728) )
+            s->len = (10 * s->len) + dton(c);
+        else
+        {
+            hi_paf_event_msg_size();
+            s->flags |= HIF_ERR;
+        }
+        break;
+    case ACT_SHX:
+        if ( s->flags & HIF_ERR )
             break;
-        case ACT_NOP:
-            break;
-        case ACT_V09:
-            s->flags |= HIF_REQ|HIF_V09|HIF_ERR;
-            break;
-        case ACT_V10:
-            s->flags |= HIF_V10;
-            break;
-        case ACT_V11:
-            s->flags |= HIF_V11;
-            break;
-        case ACT_NOB:
-            s->flags |= HIF_NOB;
-            break;
-        case ACT_GET:
-            s->flags |= HIF_GET;
-            break;
-        case ACT_PST:
-            s->flags |= HIF_PST;
-            break;
-        case ACT_REQ:
-            s->flags |= HIF_REQ;
-            break;
-        case ACT_RSP:
-            s->flags |= HIF_RSP;
-            break;
-        case ACT_SHI:
-            if ( s->flags & HIF_ERR )
-                break;
-            if ( isdigit(c) && (s->len < 429496728) )
-                s->len = (10 * s->len) + dton(c);
-            else
-            {
-                hi_paf_event_msg_size();
-                s->flags |= HIF_ERR;
-            }
-            break;
-        case ACT_SHX:
-            if ( s->flags & HIF_ERR )
-                break;
-            if ( isxdigit(c) && !(s->len & 0xF8000000) )
-                s->len = (s->len << 4) + xton(c);
-            else
-            {
-                hi_paf_event_msg_size();
-                s->flags |= HIF_ERR;
-                return StreamSplitter::FLUSH;
-            }
-            break;
-        case ACT_LNB:
-            s->flags |= HIF_LEN;
-            DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-                "%s: lnb=%u\n", __FUNCTION__, s->len);)
-            break;
-        case ACT_LNC:
-            s->flags |= HIF_LEN;
-            DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-                "%s: lnc=%u\n", __FUNCTION__, s->len);)
-            if ( s->len )
-                return StreamSplitter::SKIP;
-            s->flags &= ~HIF_NOF;
-            s->msg = 3;
-            break;
-        case ACT_LN0:
-            s->len = 0;
-            break;
-        case ACT_CHK:
-            s->flags |= HIF_CHK;
-            break;
-        case ACT_CK0:
-            s->flags |= HIF_NOF;
-            s->flags &= ~HIF_CHK;
-            s->fsm = MSG_CHUNK_STATE;
-            s->len = 0;
-            break;
+        if ( isxdigit(c) && !(s->len & 0xF8000000) )
+            s->len = (s->len << 4) + xton(c);
+        else
+        {
+            hi_paf_event_msg_size();
+            s->flags |= HIF_ERR;
+            return StreamSplitter::FLUSH;
+        }
+        break;
+    case ACT_LNB:
+        s->flags |= HIF_LEN;
+        DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
+            "%s: lnb=%u\n", __FUNCTION__, s->len); )
+        break;
+    case ACT_LNC:
+        s->flags |= HIF_LEN;
+        DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
+            "%s: lnc=%u\n", __FUNCTION__, s->len); )
+        if ( s->len )
+            return StreamSplitter::SKIP;
+        s->flags &= ~HIF_NOF;
+        s->msg = 3;
+        break;
+    case ACT_LN0:
+        s->len = 0;
+        break;
+    case ACT_CHK:
+        s->flags |= HIF_CHK;
+        break;
+    case ACT_CK0:
+        s->flags |= HIF_NOF;
+        s->flags &= ~HIF_CHK;
+        s->fsm = MSG_CHUNK_STATE;
+        s->len = 0;
+        break;
     }
     return StreamSplitter::SEARCH;
 }
@@ -728,7 +784,7 @@ static inline Hi5State* get_state(Flow* flow, bool c2s)
     return s ? &s->state : nullptr;
 }
 
-bool hi_paf_simple_request (Flow* ssn)
+bool hi_paf_simple_request(Flow* ssn)
 {
     Hi5State* ps = get_state(ssn, true);
     return ( ps && (ps->flags & HIF_V09) );
@@ -741,13 +797,13 @@ bool hi_paf_simple_request (Flow* ssn)
 #define MAX_PIPELINE       24
 #define PIPELINE_RUPTURED 255
 
-static void hi_pipe_push (Hi5State* s_req, Flow* ssn)
+static void hi_pipe_push(Hi5State* s_req, Flow* ssn)
 {
     uint32_t nreq = s_req->pipe & 0xFF;
     uint32_t pipe = s_req->pipe >> 8;
 
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: nreq=%d, pipe=0x%X\n", __FUNCTION__, nreq, pipe);)
+        "%s: nreq=%d, pipe=0x%X\n", __FUNCTION__, nreq, pipe); )
 
     if ( nreq == MAX_PIPELINE )
     {
@@ -765,7 +821,7 @@ static void hi_pipe_push (Hi5State* s_req, Flow* ssn)
     s_req->pipe = (pipe << 8) | ++nreq;
 }
 
-static void hi_pipe_pop (Hi5State* s_rsp, Flow* ssn)
+static void hi_pipe_pop(Hi5State* s_rsp, Flow* ssn)
 {
     Hi5State* s_req = get_state(ssn, true);
 
@@ -776,7 +832,7 @@ static void hi_pipe_pop (Hi5State* s_rsp, Flow* ssn)
     uint32_t pipe = s_req->pipe >> 8;
 
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: nreq=%d, pipe=0x%X\n", __FUNCTION__, nreq, pipe);)
+        "%s: nreq=%d, pipe=0x%X\n", __FUNCTION__, nreq, pipe); )
 
     if ( nreq == 0 || nreq == PIPELINE_RUPTURED )
         return;
@@ -794,25 +850,25 @@ static void hi_pipe_pop (Hi5State* s_rsp, Flow* ssn)
 // control
 //--------------------------------------------------------------------
 
-static inline bool simple_allowed (Hi5State* s)
+static inline bool simple_allowed(Hi5State* s)
 {
     return ( (s->fsm == REQ_V09_STATE_1 || s->fsm == REQ_V09_STATE_2)
-        && s->flags & HIF_GET );
+           && s->flags & HIF_GET );
 }
 
-static inline bool have_pdu (Hi5State* s)
+static inline bool have_pdu(Hi5State* s)
 {
     return ( s->fsm != REQ_START_STATE && s->fsm != RSP_START_STATE );
 }
 
-static inline bool paf_abort (Hi5State* s)
+static inline bool paf_abort(Hi5State* s)
 {
     return ( s->fsm == REQ_ABORT_STATE || s->fsm == RSP_ABORT_STATE );
 }
 
 // this is the 2nd step of stateful scanning, which executes
 // the fsm.
-static StreamSplitter::Status hi_scan_fsm (Hi5State* s, int c)
+static StreamSplitter::Status hi_scan_fsm(Hi5State* s, int c)
 {
     StreamSplitter::Status status;
     State* m = hi_fsm + s->fsm;
@@ -831,7 +887,7 @@ static StreamSplitter::Status hi_scan_fsm (Hi5State* s, int c)
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
         "%s: %s(%u)[0x%2X, '%c'] -> %d,%s(%u)\n",
         __FUNCTION__, before, prev, c, isgraph(c) ? c : '.',
-        cell->action, after, s->fsm);)
+        cell->action, after, s->fsm); )
 #endif
 
     status = hi_exec(s, (Action)cell->action, c);
@@ -839,10 +895,10 @@ static StreamSplitter::Status hi_scan_fsm (Hi5State* s, int c)
     return status;
 }
 
-static StreamSplitter::Status hi_eoh (Hi5State* s, Flow* ssn)
+static StreamSplitter::Status hi_eoh(Hi5State* s, Flow* ssn)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: flags=0x%X, len=%u\n", __FUNCTION__, s->flags, s->len);)
+        "%s: flags=0x%X, len=%u\n", __FUNCTION__, s->flags, s->len); )
 
     if ( (s->flags & HIF_REQ) )
         hi_pipe_push(s, ssn);
@@ -857,7 +913,8 @@ static StreamSplitter::Status hi_eoh (Hi5State* s, Flow* ssn)
     }
     if ( (s->flags & HIF_ERR) ||
         ((s->flags & HIF_NOB) && (s->flags & HIF_RSP))
-    ) {
+        )
+    {
         if ( s->flags & HIF_V09 )
             hi_paf_event_simple();
 
@@ -888,12 +945,12 @@ static StreamSplitter::Status hi_eoh (Hi5State* s, Flow* ssn)
 // simplified version ignores \r (in the spirit of send strict,
 // recv tolerant, but it would only take 2 more states to check
 // for \r).  the 2nd step is hi_scan_fsm().
-static inline StreamSplitter::Status hi_scan_msg (
+static inline StreamSplitter::Status hi_scan_msg(
     Hi5State* s, int c, uint32_t* fp, Flow* ssn)
 {
     StreamSplitter::Status paf = StreamSplitter::SEARCH;
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s[%d]: 0x%2X, '%c'\n", __FUNCTION__, s->msg, c, isgraph(c) ? c : '.');)
+        "%s[%d]: 0x%2X, '%c'\n", __FUNCTION__, s->msg, c, isgraph(c) ? c : '.'); )
 
     if ( c == '\r' )
     {
@@ -959,7 +1016,8 @@ static inline StreamSplitter::Status hi_scan_msg (
     case 4:
         if ( c == '\n' )
             s->msg = 3;
-        break; }
+        break;
+    }
 
     if ( paf_abort(s) )
         paf = StreamSplitter::ABORT;
@@ -974,7 +1032,7 @@ static inline StreamSplitter::Status hi_scan_msg (
 // utility
 //--------------------------------------------------------------------
 
-static void hi_reset (Hi5State* s, uint32_t flags)
+static void hi_reset(Hi5State* s, uint32_t flags)
 {
     s->len = s->msg = 0;
 
@@ -989,7 +1047,7 @@ static void hi_reset (Hi5State* s, uint32_t flags)
     s->flags = 0;
 
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: fsm=%u, flags=0x%X\n", __FUNCTION__, s->fsm, s->flags);)
+        "%s: fsm=%u, flags=0x%X\n", __FUNCTION__, s->fsm, s->flags); )
 }
 
 //--------------------------------------------------------------------
@@ -1019,7 +1077,7 @@ StreamSplitter::Status HttpSplitter::scan(
     *fp = 0;
 
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: len=%u\n", __FUNCTION__, len);)
+        "%s: len=%u\n", __FUNCTION__, len); )
 
     if ( hip->flags & HIF_ERR )
     {
@@ -1061,7 +1119,7 @@ StreamSplitter::Status HttpSplitter::scan(
         }
     }
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: paf=%d, rfp=%u\n", __FUNCTION__, paf, *fp);)
+        "%s: paf=%d, rfp=%u\n", __FUNCTION__, paf, *fp); )
 
     hi_paf_calls++;
     hi_paf_bytes += n;
@@ -1073,10 +1131,10 @@ StreamSplitter::Status HttpSplitter::scan(
 // public stuff
 //--------------------------------------------------------------------
 
-bool hi_paf_init (uint32_t cap)
+bool hi_paf_init(uint32_t cap)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: cap=%u\n",  __FUNCTION__, cap);)
+        "%s: cap=%u\n",  __FUNCTION__, cap); )
 
     hi_cap = cap;
 
@@ -1090,12 +1148,12 @@ bool hi_paf_init (uint32_t cap)
     return true;
 }
 
-void hi_paf_term (void)
+void hi_paf_term(void)
 {
     free(hi_fsm);
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
         "%s: calls=%u, bytes=%u\n",  __FUNCTION__,
-        hi_paf_calls, hi_paf_bytes);)
+        hi_paf_calls, hi_paf_bytes); )
 
     hi_fsm = NULL;
     hi_fsm_size = 0;

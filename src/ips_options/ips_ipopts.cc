@@ -52,7 +52,6 @@ struct IpOptionData
 {
     ip::IPOptionCodes ip_option;
     u_char any_flag;
-
 };
 
 class IpOptOption : public IpsOption
@@ -60,15 +59,15 @@ class IpOptOption : public IpsOption
 public:
     IpOptOption(const IpOptionData& c) :
         IpsOption(s_name)
-    { config = c; };
+    { config = c; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
     int eval(Cursor&, Packet*) override;
 
-    IpOptionData* get_data() 
-    { return &config; };
+    IpOptionData* get_data()
+    { return &config; }
 
 private:
     IpOptionData config;
@@ -81,7 +80,7 @@ private:
 uint32_t IpOptOption::hash() const
 {
     uint32_t a,b,c;
-    const IpOptionData *data = &config;
+    const IpOptionData* data = &config;
 
     a = (uint32_t)data->ip_option;
     b = data->any_flag;
@@ -99,8 +98,8 @@ bool IpOptOption::operator==(const IpsOption& ips) const
         return false;
 
     IpOptOption& rhs = (IpOptOption&)ips;
-    IpOptionData *left = (IpOptionData*)&config;
-    IpOptionData *right = (IpOptionData*)&rhs.config;
+    IpOptionData* left = (IpOptionData*)&config;
+    IpOptionData* right = (IpOptionData*)&rhs.config;
 
     if ((left->ip_option == right->ip_option) &&
         (left->any_flag == right->any_flag))
@@ -111,14 +110,14 @@ bool IpOptOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int IpOptOption::eval(Cursor&, Packet *p)
+int IpOptOption::eval(Cursor&, Packet* p)
 {
-    IpOptionData *ipOptionData = &config;
+    IpOptionData* ipOptionData = &config;
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "CheckIpOptions:"););
-    if(!p->ptrs.ip_api.is_ip4())
+    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "CheckIpOptions:"); );
+    if (!p->ptrs.ip_api.is_ip4())
         return rval; /* if error occured while ip header
                    * was processed, return 0 automatically.  */
 
@@ -127,22 +126,22 @@ int IpOptOption::eval(Cursor&, Packet *p)
     const ip::IP4Hdr* const ip4h = p->ptrs.ip_api.get_ip4h();
     const uint8_t option_len = ip4h->get_opt_len();
 
-    if((ipOptionData->any_flag == 1) && (option_len > 0))
+    if ((ipOptionData->any_flag == 1) && (option_len > 0))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Matched any ip options!\n"););
+        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Matched any ip options!\n"); );
         rval = DETECTION_OPTION_MATCH;
         MODULE_PROFILE_END(ipOptionPerfStats);
         return rval;
     }
 
     ip::IpOptionIterator iter(ip4h, p);
-    for( const ip::IpOptions& opt : iter)
+    for ( const ip::IpOptions& opt : iter)
     {
-    	DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "testing pkt(%d):rule(%d)\n",
-				ipOptionData->ip_option,
-				static_cast<int>(opt.code)); );
+        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "testing pkt(%d):rule(%d)\n",
+            ipOptionData->ip_option,
+            static_cast<int>(opt.code)); );
 
-        if(ipOptionData->ip_option == opt.code)
+        if (ipOptionData->ip_option == opt.code)
         {
             rval = DETECTION_OPTION_MATCH;
             MODULE_PROFILE_END(ipOptionPerfStats);
@@ -161,47 +160,47 @@ int IpOptOption::eval(Cursor&, Packet *p)
 
 static void ipopts_parse(const char* data, IpOptionData* ds_ptr)
 {
-    if(strcasecmp(data, "rr") == 0)
+    if (strcasecmp(data, "rr") == 0)
     {
         ds_ptr->ip_option = ip::IPOptionCodes::RR;
     }
-    else if(strcasecmp(data, "eol") == 0)
+    else if (strcasecmp(data, "eol") == 0)
     {
         ds_ptr->ip_option = ip::IPOptionCodes::EOL;
     }
-    else if(strcasecmp(data, "nop") == 0)
+    else if (strcasecmp(data, "nop") == 0)
     {
         ds_ptr->ip_option = ip::IPOptionCodes::NOP;
     }
-    else if(strcasecmp(data, "ts") == 0)
+    else if (strcasecmp(data, "ts") == 0)
     {
         ds_ptr->ip_option = ip::IPOptionCodes::TS;
     }
-    else if(strcasecmp(data, "esec") == 0)
+    else if (strcasecmp(data, "esec") == 0)
     {
         ds_ptr->ip_option = ip::IPOptionCodes::ESEC;
     }
-    else if(strcasecmp(data, "sec") == 0)
+    else if (strcasecmp(data, "sec") == 0)
     {
         ds_ptr->ip_option = ip::IPOptionCodes::SECURITY;
     }
-    else if(strcasecmp(data, "lsrr") == 0)
+    else if (strcasecmp(data, "lsrr") == 0)
     {
         ds_ptr->ip_option = ip::IPOptionCodes::LSRR;
     }
-    else if(strcasecmp(data, "lsrre") == 0)
+    else if (strcasecmp(data, "lsrre") == 0)
     {
         ds_ptr->ip_option = ip::IPOptionCodes::LSRR_E;
     }
-    else if(strcasecmp(data, "satid") == 0)
+    else if (strcasecmp(data, "satid") == 0)
     {
         ds_ptr->ip_option = ip::IPOptionCodes::SATID;
     }
-    else if(strcasecmp(data, "ssrr") == 0)
+    else if (strcasecmp(data, "ssrr") == 0)
     {
         ds_ptr->ip_option = ip::IPOptionCodes::SSRR;
     }
-    else if(strcasecmp(data, "any") == 0)
+    else if (strcasecmp(data, "any") == 0)
     {
         ds_ptr->ip_option = static_cast<ip::IPOptionCodes>(0);
         ds_ptr->any_flag = 1;
@@ -229,13 +228,13 @@ static const Parameter s_params[] =
 class IpOptModule : public Module
 {
 public:
-    IpOptModule() : Module(s_name, s_help, s_params) { };
+    IpOptModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &ipOptionPerfStats; };
+    { return &ipOptionPerfStats; }
 
     IpOptionData data;
 };

@@ -31,27 +31,26 @@
 
 #ifdef LINUX_SMP
 
-typedef struct _CPUSTAT {
-    
+typedef struct _CPUSTAT
+{
     double user;
     double sys;
     double total;
     double idle;
-
 } CPUSTAT;
 
-typedef struct _SFPROCPIDSTATS {
-    
-    CPUSTAT *SysCPUs;
+typedef struct _SFPROCPIDSTATS
+{
+    CPUSTAT* SysCPUs;
 
     int iCPUs;
-    
 } SFPROCPIDSTATS;
 
-int sfInitProcPidStats(SFPROCPIDSTATS *sfProcPidStats);
-int sfProcessProcPidStats(SFPROCPIDSTATS *sfProcPidStats);
-void FreeProcPidStats(SFPROCPIDSTATS *sfProcPidStats);
+int sfInitProcPidStats(SFPROCPIDSTATS* sfProcPidStats);
+int sfProcessProcPidStats(SFPROCPIDSTATS* sfProcPidStats);
+void FreeProcPidStats(SFPROCPIDSTATS* sfProcPidStats);
 
 #endif
 
 #endif
+

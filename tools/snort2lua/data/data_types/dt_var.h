@@ -33,14 +33,13 @@ public:
     Variable(std::string name);
     virtual ~Variable();
 
-    inline std::string get_name(){ return name; };
+    inline std::string get_name() { return name; }
     std::string get_value(DataApi*);
     bool add_value(std::string);
-    friend std::ostream &operator<<( std::ostream&, const Variable &);
-
+    friend std::ostream& operator<<(std::ostream&, const Variable&);
 
 private:
-    enum class VarType { STRING, VARIABLE};
+    enum class VarType { STRING, VARIABLE };
 
     struct VarData
     {
@@ -52,8 +51,7 @@ private:
     std::string name;
     int depth;
     const std::size_t max_line_length = 77; // leave room for additional text
-
 };
 
-
 #endif
+

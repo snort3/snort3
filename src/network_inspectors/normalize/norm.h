@@ -29,7 +29,7 @@ struct Packet;
 
 // all normalizers look like this:
 // the return is 1 if packet was changed, else 0
-typedef int (*NormalFunc)(  // FIXIT-L why is this exposed?
+typedef int (* NormalFunc)( // FIXIT-L why is this exposed?
     struct NormalizerConfig*, Packet*, uint8_t layer, int changes);
 
 extern const PegInfo norm_names[];
@@ -44,7 +44,6 @@ struct NormalizerConfig
     NormalFunc normalizers[PacketManager::max_protocols()];
     NormMode norm_mode;
 };
-
 
 int Norm_SetConfig(NormalizerConfig*);
 int Norm_Packet(NormalizerConfig*, Packet*);

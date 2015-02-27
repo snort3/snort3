@@ -36,136 +36,149 @@
 using namespace NHttpEnums;
 
 const StrCode NHttpMsgRequest::method_list[] =
-   {{ METH_OPTIONS,            "OPTIONS"},
-    { METH_GET,                "GET"},
-    { METH_HEAD,               "HEAD"},
-    { METH_POST,               "POST"},
-    { METH_PUT,                "PUT"},
-    { METH_DELETE,             "DELETE"},
-    { METH_TRACE,              "TRACE"},
-    { METH_CONNECT,            "CONNECT"},
-    { METH_PROPFIND,           "PROPFIND"},
-    { METH_PROPPATCH,          "PROPPATCH"},
-    { METH_MKCOL,              "MKCOL"},
-    { METH_COPY,               "COPY"},
-    { METH_MOVE,               "MOVE"},
-    { METH_LOCK,               "LOCK"},
-    { METH_UNLOCK,             "UNLOCK"},
-    { METH_VERSION_CONTROL,    "VERSION-CONTROL"},
-    { METH_REPORT,             "REPORT"},
-    { METH_CHECKOUT,           "CHECKOUT"},
-    { METH_CHECKIN,            "CHECKIN"},
-    { METH_UNCHECKOUT,         "UNCHECKOUT"},
-    { METH_MKWORKSPACE,        "MKWORKSPACE"},
-    { METH_UPDATE,             "UPDATE"},
-    { METH_LABEL,              "LABEL"},
-    { METH_MERGE,              "MERGE"},
-    { METH_BASELINE_CONTROL,   "BASELINE-CONTROL"},
-    { METH_MKACTIVITY,         "MKACTIVITY"},
-    { METH_ORDERPATCH,         "ORDERPATCH"},
-    { METH_ACL,                "ACL"},
-    { METH_PATCH,              "PATCH"},
-    { METH_SEARCH,             "SEARCH"},
-    { METH_BCOPY,              "BCOPY"},
-    { METH_BDELETE,            "BDELETE"},
-    { METH_BMOVE,              "BMOVE"},
-    { METH_BPROPFIND,          "BPROPFIND"},
-    { METH_BPROPPATCH,         "BPROPPATCH"},
-    { METH_NOTIFY,             "NOTIFY"},
-    { METH_POLL,               "POLL"},
-    { METH_SUBSCRIBE,          "SUBSCRIBE"},
-    { METH_UNSUBSCRIBE,        "UNSUBSCRIBE"},
-    { METH_X_MS_ENUMATTS,      "X-MS-ENUMATTS"},
-    { METH_BIND,               "BIND"},
-    { METH_LINK,               "LINK"},
-    { METH_MKCALENDAR,         "MKCALENDAR"},
-    { METH_MKREDIRECTREF,      "MKREDIRECTREF"},
-    { METH_REBIND,             "REBIND"},
-    { METH_UNBIND,             "UNBIND"},
-    { METH_UNLINK,             "UNLINK"},
-    { METH_UPDATEREDIRECTREF,  "UPDATEREDIRECTREF"},
-    { 0,                       nullptr} };
+{
+    { METH_OPTIONS,            "OPTIONS" },
+    { METH_GET,                "GET" },
+    { METH_HEAD,               "HEAD" },
+    { METH_POST,               "POST" },
+    { METH_PUT,                "PUT" },
+    { METH_DELETE,             "DELETE" },
+    { METH_TRACE,              "TRACE" },
+    { METH_CONNECT,            "CONNECT" },
+    { METH_PROPFIND,           "PROPFIND" },
+    { METH_PROPPATCH,          "PROPPATCH" },
+    { METH_MKCOL,              "MKCOL" },
+    { METH_COPY,               "COPY" },
+    { METH_MOVE,               "MOVE" },
+    { METH_LOCK,               "LOCK" },
+    { METH_UNLOCK,             "UNLOCK" },
+    { METH_VERSION_CONTROL,    "VERSION-CONTROL" },
+    { METH_REPORT,             "REPORT" },
+    { METH_CHECKOUT,           "CHECKOUT" },
+    { METH_CHECKIN,            "CHECKIN" },
+    { METH_UNCHECKOUT,         "UNCHECKOUT" },
+    { METH_MKWORKSPACE,        "MKWORKSPACE" },
+    { METH_UPDATE,             "UPDATE" },
+    { METH_LABEL,              "LABEL" },
+    { METH_MERGE,              "MERGE" },
+    { METH_BASELINE_CONTROL,   "BASELINE-CONTROL" },
+    { METH_MKACTIVITY,         "MKACTIVITY" },
+    { METH_ORDERPATCH,         "ORDERPATCH" },
+    { METH_ACL,                "ACL" },
+    { METH_PATCH,              "PATCH" },
+    { METH_SEARCH,             "SEARCH" },
+    { METH_BCOPY,              "BCOPY" },
+    { METH_BDELETE,            "BDELETE" },
+    { METH_BMOVE,              "BMOVE" },
+    { METH_BPROPFIND,          "BPROPFIND" },
+    { METH_BPROPPATCH,         "BPROPPATCH" },
+    { METH_NOTIFY,             "NOTIFY" },
+    { METH_POLL,               "POLL" },
+    { METH_SUBSCRIBE,          "SUBSCRIBE" },
+    { METH_UNSUBSCRIBE,        "UNSUBSCRIBE" },
+    { METH_X_MS_ENUMATTS,      "X-MS-ENUMATTS" },
+    { METH_BIND,               "BIND" },
+    { METH_LINK,               "LINK" },
+    { METH_MKCALENDAR,         "MKCALENDAR" },
+    { METH_MKREDIRECTREF,      "MKREDIRECTREF" },
+    { METH_REBIND,             "REBIND" },
+    { METH_UNBIND,             "UNBIND" },
+    { METH_UNLINK,             "UNLINK" },
+    { METH_UPDATEREDIRECTREF,  "UPDATEREDIRECTREF" },
+    { 0,                       nullptr }
+};
 
 const StrCode NHttpUri::scheme_list[] =
-   {{ SCH_HTTP,                "http"},
-    { SCH_HTTPS,               "https"},
-    { SCH_FTP,                 "ftp"},
-    { SCH_GOPHER,              "gopher"},
-    { SCH_FILE,                "file"},
-    { 0,                       nullptr} };
+{
+    { SCH_HTTP,                "http" },
+    { SCH_HTTPS,               "https" },
+    { SCH_FTP,                 "ftp" },
+    { SCH_GOPHER,              "gopher" },
+    { SCH_FILE,                "file" },
+    { 0,                       nullptr }
+};
 
 const StrCode NHttpMsgHeadShared::header_list[] =
-   {{ HEAD_CACHE_CONTROL,        "cache-control"},
-    { HEAD_CONNECTION,           "connection"},
-    { HEAD_DATE,                 "date"},
-    { HEAD_PRAGMA,               "pragma"},
-    { HEAD_TRAILER,              "trailer"},
-    { HEAD_COOKIE,               "cookie"},
-    { HEAD_SET_COOKIE,           "set-cookie"},
-    { HEAD_TRANSFER_ENCODING,    "transfer-encoding"},
-    { HEAD_UPGRADE,              "upgrade"},
-    { HEAD_VIA,                  "via"},
-    { HEAD_WARNING,              "warning"},
-    { HEAD_ACCEPT,               "accept"},
-    { HEAD_ACCEPT_CHARSET,       "accept-charset"},
-    { HEAD_ACCEPT_ENCODING,      "accept-encoding"},
-    { HEAD_ACCEPT_LANGUAGE,      "accept-language"},
-    { HEAD_AUTHORIZATION,        "authorization"},
-    { HEAD_EXPECT,               "expect"},
-    { HEAD_FROM,                 "from"},
-    { HEAD_HOST,                 "host"},
-    { HEAD_IF_MATCH,             "if-match"},
-    { HEAD_IF_MODIFIED_SINCE,    "if-modified-since"},
-    { HEAD_IF_NONE_MATCH,        "if-none-match"},
-    { HEAD_IF_RANGE,             "if-range"},
-    { HEAD_IF_UNMODIFIED_SINCE,  "if-unmodified-since"},
-    { HEAD_MAX_FORWARDS,         "max-forwards"},
-    { HEAD_PROXY_AUTHORIZATION,  "proxy-authorization"},
-    { HEAD_RANGE,                "range"},
-    { HEAD_REFERER,              "referer"},
-    { HEAD_TE,                   "te"},
-    { HEAD_USER_AGENT,           "user-agent"},
-    { HEAD_ACCEPT_RANGES,        "accept-ranges"},
-    { HEAD_AGE,                  "age"},
-    { HEAD_ETAG,                 "etag"},
-    { HEAD_LOCATION,             "location"},
-    { HEAD_PROXY_AUTHENTICATE,   "proxy-authenticate"},
-    { HEAD_RETRY_AFTER,          "retry-after"},
-    { HEAD_SERVER,               "server"},
-    { HEAD_VARY,                 "vary"},
-    { HEAD_WWW_AUTHENTICATE,     "www-authenticate"},
-    { HEAD_ALLOW,                "allow"},
-    { HEAD_CONTENT_ENCODING,     "content-encoding"},
-    { HEAD_CONTENT_LANGUAGE,     "content-language"},
-    { HEAD_CONTENT_LENGTH,       "content-length"},
-    { HEAD_CONTENT_LOCATION,     "content-location"},
-    { HEAD_CONTENT_MD5,          "content-md5"},
-    { HEAD_CONTENT_RANGE,        "content-range"},
-    { HEAD_CONTENT_TYPE,         "content-type"},
-    { HEAD_EXPIRES,              "expires"},
-    { HEAD_LAST_MODIFIED,        "last-modified"},
-    { HEAD_X_FORWARDED_FOR,      "x-forwarded-for"},
-    { HEAD_TRUE_CLIENT_IP,       "true-client-ip"},
-    { 0,                         nullptr} };
+{
+    { HEAD_CACHE_CONTROL,        "cache-control" },
+    { HEAD_CONNECTION,           "connection" },
+    { HEAD_DATE,                 "date" },
+    { HEAD_PRAGMA,               "pragma" },
+    { HEAD_TRAILER,              "trailer" },
+    { HEAD_COOKIE,               "cookie" },
+    { HEAD_SET_COOKIE,           "set-cookie" },
+    { HEAD_TRANSFER_ENCODING,    "transfer-encoding" },
+    { HEAD_UPGRADE,              "upgrade" },
+    { HEAD_VIA,                  "via" },
+    { HEAD_WARNING,              "warning" },
+    { HEAD_ACCEPT,               "accept" },
+    { HEAD_ACCEPT_CHARSET,       "accept-charset" },
+    { HEAD_ACCEPT_ENCODING,      "accept-encoding" },
+    { HEAD_ACCEPT_LANGUAGE,      "accept-language" },
+    { HEAD_AUTHORIZATION,        "authorization" },
+    { HEAD_EXPECT,               "expect" },
+    { HEAD_FROM,                 "from" },
+    { HEAD_HOST,                 "host" },
+    { HEAD_IF_MATCH,             "if-match" },
+    { HEAD_IF_MODIFIED_SINCE,    "if-modified-since" },
+    { HEAD_IF_NONE_MATCH,        "if-none-match" },
+    { HEAD_IF_RANGE,             "if-range" },
+    { HEAD_IF_UNMODIFIED_SINCE,  "if-unmodified-since" },
+    { HEAD_MAX_FORWARDS,         "max-forwards" },
+    { HEAD_PROXY_AUTHORIZATION,  "proxy-authorization" },
+    { HEAD_RANGE,                "range" },
+    { HEAD_REFERER,              "referer" },
+    { HEAD_TE,                   "te" },
+    { HEAD_USER_AGENT,           "user-agent" },
+    { HEAD_ACCEPT_RANGES,        "accept-ranges" },
+    { HEAD_AGE,                  "age" },
+    { HEAD_ETAG,                 "etag" },
+    { HEAD_LOCATION,             "location" },
+    { HEAD_PROXY_AUTHENTICATE,   "proxy-authenticate" },
+    { HEAD_RETRY_AFTER,          "retry-after" },
+    { HEAD_SERVER,               "server" },
+    { HEAD_VARY,                 "vary" },
+    { HEAD_WWW_AUTHENTICATE,     "www-authenticate" },
+    { HEAD_ALLOW,                "allow" },
+    { HEAD_CONTENT_ENCODING,     "content-encoding" },
+    { HEAD_CONTENT_LANGUAGE,     "content-language" },
+    { HEAD_CONTENT_LENGTH,       "content-length" },
+    { HEAD_CONTENT_LOCATION,     "content-location" },
+    { HEAD_CONTENT_MD5,          "content-md5" },
+    { HEAD_CONTENT_RANGE,        "content-range" },
+    { HEAD_CONTENT_TYPE,         "content-type" },
+    { HEAD_EXPIRES,              "expires" },
+    { HEAD_LAST_MODIFIED,        "last-modified" },
+    { HEAD_X_FORWARDED_FOR,      "x-forwarded-for" },
+    { HEAD_TRUE_CLIENT_IP,       "true-client-ip" },
+    { 0,                         nullptr }
+};
 
 const StrCode NHttpMsgHeadShared::trans_code_list[] =
-   {{ TRANSCODE_CHUNKED,         "chunked"},
-    { TRANSCODE_IDENTITY,        "identity"},
-    { TRANSCODE_GZIP,            "gzip"},
-    { TRANSCODE_COMPRESS,        "compress"},
-    { TRANSCODE_DEFLATE,         "deflate"},
-    { 0,                         nullptr} };
+{
+    { TRANSCODE_CHUNKED,         "chunked" },
+    { TRANSCODE_IDENTITY,        "identity" },
+    { TRANSCODE_GZIP,            "gzip" },
+    { TRANSCODE_COMPRESS,        "compress" },
+    { TRANSCODE_DEFLATE,         "deflate" },
+    { 0,                         nullptr }
+};
 
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_NIL {NORM_NULL, false, nullptr, nullptr, nullptr, nullptr,
-   nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_BASIC {NORM_FIELD, false, nullptr, nullptr, nullptr, nullptr,
-   nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_CAT {NORM_FIELD, true, norm_remove_lws, nullptr, nullptr,
-   nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_DECIMAL {NORM_INT64, false, norm_decimal_integer, nullptr,
-   nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_TRANSCODE {NORM_ENUM64, true, norm_remove_lws, nullptr,
-   norm_to_lower, nullptr, norm_seq_str_code, NHttpMsgHeadShared::trans_code_list};
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_NIL
+{ NORM_NULL, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_BASIC
+{ NORM_FIELD, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_CAT
+{ NORM_FIELD, true, norm_remove_lws, nullptr, nullptr, nullptr, nullptr, nullptr };
+
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_DECIMAL
+{ NORM_INT64, false, norm_decimal_integer, nullptr, nullptr, nullptr, nullptr, nullptr };
+
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_TRANSCODE
+{ NORM_ENUM64, true, norm_remove_lws, nullptr, norm_to_lower, nullptr, norm_seq_str_code,
+  NHttpMsgHeadShared::trans_code_list };
 
 #if defined(__clang__)
 // designated initializers are not supported in C++11.  However,
@@ -174,6 +187,7 @@ const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_TRANSCODE {NORM_ENUM64, tr
 #pragma clang diagnostic ignored "-Wc99-extensions"
 #endif
 
+/* *INDENT-OFF* */
 const HeaderNormalizer* const NHttpMsgHeadShared::header_norms[HEAD__MAXVALUE] = { [0] = &NORMALIZER_NIL,
     [HEAD__OTHER] = &NORMALIZER_BASIC,
     [HEAD_CACHE_CONTROL] = &NORMALIZER_BASIC,
@@ -228,6 +242,7 @@ const HeaderNormalizer* const NHttpMsgHeadShared::header_norms[HEAD__MAXVALUE] =
     [HEAD_X_FORWARDED_FOR] = &NORMALIZER_CAT,
     [HEAD_TRUE_CLIENT_IP] = &NORMALIZER_BASIC
 };
+/* *INDENT-ON* */
 
 #if defined(__clang__)
 #pragma clang diagnostic pop
@@ -271,15 +286,18 @@ const RuleMap NHttpModule::nhttp_events[] =
     { EVENT_PIPELINE_MAX,                    "too many pipelined requests" },
     { EVENT_ANOM_SERVER,                     "anomalous http server on undefined HTTP port" },
     { EVENT_INVALID_STATCODE,                "invalid status code in HTTP response" },
-    { EVENT_NO_CONTLEN,                      "no content-length or transfer-encoding in HTTP response" },
-    { EVENT_UTF_NORM_FAIL,                   "HTTP response has UTF charset which failed to normalize" },
+    { EVENT_NO_CONTLEN,
+      "no content-length or transfer-encoding in HTTP response" },
+    { EVENT_UTF_NORM_FAIL,
+      "HTTP response has UTF charset which failed to normalize" },
     { EVENT_UTF7,                            "HTTP response has UTF-7 charset" },
     { EVENT_DECOMPR_FAILED,                  "HTTP response gzip decompression failed" },
     { EVENT_CONSECUTIVE_SMALL_CHUNKS_S,      "server consecutive small chunk sizes" },
     { EVENT_MSG_SIZE_EXCEPTION,              "invalid content-length or chunk size" },
     { EVENT_JS_OBFUSCATION_EXCD,             "javascript obfuscation levels exceeds 1" },
     { EVENT_JS_EXCESS_WS,                    "javascript whitespaces exceeds max allowed" },
-    { EVENT_MIXED_ENCODINGS,                 "multiple encodings within javascript obfuscated data" },
+    { EVENT_MIXED_ENCODINGS,
+      "multiple encodings within javascript obfuscated data" },
     { EVENT_SWF_ZLIB_FAILURE,                "SWF file zlib decompression failure" },
     { EVENT_SWF_LZMA_FAILURE,                "SWF file LZMA decompression failure" },
     { EVENT_PDF_DEFL_FAILURE,                "PDF file deflate decompression failure" },
@@ -290,29 +308,30 @@ const RuleMap NHttpModule::nhttp_events[] =
     { 0, nullptr }
 };
 
-const int8_t NHttpEnums::as_hex[256] = {
-   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+const int8_t NHttpEnums::as_hex[256] =
+{
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
-   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1,
 
-   -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
-   -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
-   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
-   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
-   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
-   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  };
-
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+};
 

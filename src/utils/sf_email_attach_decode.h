@@ -31,15 +31,14 @@
 #define DECODE_EXCEEDED  1 /* Decode Complete when we reach the max depths */
 #define DECODE_FAIL    -1
 
-typedef enum {
-
+typedef enum
+{
     DECODE_NONE = 0,
     DECODE_B64,
     DECODE_QP,
     DECODE_UU,
     DECODE_BITENC,
     DECODE_ALL
-
 } DecodeType;
 
 struct Base64_DecodeState
@@ -79,16 +78,15 @@ struct Email_DecodeState
     DecodeType decode_type;
     uint8_t decode_present;
     uint32_t prev_encoded_bytes;
-    unsigned char *prev_encoded_buf;
+    unsigned char* prev_encoded_buf;
     uint32_t decoded_bytes;
-    uint8_t *encodeBuf;
-    uint8_t *decodeBuf;
-    uint8_t *decodePtr;
+    uint8_t* encodeBuf;
+    uint8_t* decodeBuf;
+    uint8_t* decodePtr;
     Base64_DecodeState b64_state;
     QP_DecodeState qp_state;
     UU_DecodeState uu_state;
     BitEnc_DecodeState bitenc_state;
-
 };
 
 struct MimeStats
@@ -99,22 +97,22 @@ struct MimeStats
 };
 
 // end :: start + length
-int EmailDecode(const uint8_t *start, const uint8_t *end, Email_DecodeState *);
+int EmailDecode(const uint8_t* start, const uint8_t* end, Email_DecodeState*);
 
 static inline int getCodeDepth(int code_depth, int64_t file_depth)
 {
-   if (file_depth < 0 )
-       return code_depth;
-   else if (( file_depth > MAX_BUF) || (!file_depth) )
-       return 0;
-   else if (file_depth > code_depth)
-       return (int)file_depth;
-   else
-       return code_depth;
+    if (file_depth < 0 )
+        return code_depth;
+    else if (( file_depth > MAX_BUF) || (!file_depth) )
+        return 0;
+    else if (file_depth > code_depth)
+        return (int)file_depth;
+    else
+        return code_depth;
 }
 
-static inline void SetEmailDecodeState(Email_DecodeState *ds, void *data, int max_depth, 
-        int b64_depth, int qp_depth, int uu_depth, int bitenc_depth, int64_t file_depth)
+static inline void SetEmailDecodeState(Email_DecodeState* ds, void* data, int max_depth,
+    int b64_depth, int qp_depth, int uu_depth, int bitenc_depth, int64_t file_depth)
 {
     if ( max_depth & 7 )
     {
@@ -127,8 +125,8 @@ static inline void SetEmailDecodeState(Email_DecodeState *ds, void *data, int ma
     ds->prev_encoded_buf = NULL;
     ds->decoded_bytes = 0;
 
-    ds->encodeBuf = (uint8_t *)data;
-    ds->decodeBuf = (uint8_t *)data + max_depth;
+    ds->encodeBuf = (uint8_t*)data;
+    ds->decodeBuf = (uint8_t*)data + max_depth;
     ds->decodePtr = ds->decodeBuf;
 
     ds->b64_state.encode_depth = ds->b64_state.decode_depth = getCodeDepth(b64_depth, file_depth);
@@ -144,11 +142,10 @@ static inline void SetEmailDecodeState(Email_DecodeState *ds, void *data, int ma
 
     ds->bitenc_state.depth = getCodeDepth(bitenc_depth, file_depth);
     ds->bitenc_state.bytes_read = 0;
-
 }
 
 static inline Email_DecodeState* NewEmailDecodeState(
-    int max_depth, int b64_depth, int qp_depth, 
+    int max_depth, int b64_depth, int qp_depth,
     int uu_depth, int bitenc_depth, int64_t file_depth)
 {
     Email_DecodeState* ds = (Email_DecodeState*)calloc(1, sizeof(*ds) + (2*max_depth));
@@ -156,7 +153,7 @@ static inline Email_DecodeState* NewEmailDecodeState(
 
     if ( ds )
         SetEmailDecodeState(
-            ds, data, max_depth, b64_depth, qp_depth, 
+            ds, data, max_depth, b64_depth, qp_depth,
             uu_depth, bitenc_depth, file_depth);
 
     return ds;
@@ -167,24 +164,25 @@ static inline void DeleteEmailDecodeState(Email_DecodeState* ds)
     free(ds);
 }
 
-static inline void updateMaxDepth(int64_t file_depth, int *max_depth)
+static inline void updateMaxDepth(int64_t file_depth, int* max_depth)
 {
-    if((!file_depth) || (file_depth > MAX_BUF))
+    if ((!file_depth) || (file_depth > MAX_BUF))
     {
         *max_depth = MAX_BUF;
     }
     else if (file_depth > (*max_depth))
     {
-       *max_depth = (int)file_depth;
+        *max_depth = (int)file_depth;
     }
 }
-static inline void ClearPrevEncodeBuf(Email_DecodeState *ds)
+
+static inline void ClearPrevEncodeBuf(Email_DecodeState* ds)
 {
     ds->prev_encoded_bytes = 0;
     ds->prev_encoded_buf = NULL;
 }
 
-static inline void ResetBytesRead(Email_DecodeState *ds)
+static inline void ResetBytesRead(Email_DecodeState* ds)
 {
     ds->uu_state.begin_found = ds->uu_state.end_found = 0;
     ClearPrevEncodeBuf(ds);
@@ -194,15 +192,14 @@ static inline void ResetBytesRead(Email_DecodeState *ds)
     ds->bitenc_state.bytes_read = 0;
 }
 
-static inline void ResetDecodedBytes(Email_DecodeState *ds)
+static inline void ResetDecodedBytes(Email_DecodeState* ds)
 {
     ds->decodePtr = NULL;
     ds->decoded_bytes = 0;
     ds->decode_present = 0;
 }
 
-
-static inline void ResetEmailDecodeState(Email_DecodeState *ds)
+static inline void ResetEmailDecodeState(Email_DecodeState* ds)
 {
     if ( ds == NULL )
         return;
@@ -210,12 +207,11 @@ static inline void ResetEmailDecodeState(Email_DecodeState *ds)
     ds->uu_state.begin_found = ds->uu_state.end_found = 0;
     ResetDecodedBytes(ds);
     ClearPrevEncodeBuf(ds);
-
 }
 
-static inline void ClearEmailDecodeState(Email_DecodeState *ds)
+static inline void ClearEmailDecodeState(Email_DecodeState* ds)
 {
-    if(ds == NULL)
+    if (ds == NULL)
         return;
 
     ds->decode_type = DECODE_NONE;
@@ -234,28 +230,31 @@ static inline int limitDetection(int depth, int decoded_bytes, int decode_bytes_
         return (depth + decoded_bytes - decode_bytes_total);
 }
 
-static inline int getDetectionSize(int b64_depth, int qp_depth, int uu_depth, int bitenc_depth, Email_DecodeState *ds)
+static inline int getDetectionSize(int b64_depth, int qp_depth, int uu_depth, int bitenc_depth,
+    Email_DecodeState* ds)
 {
     int iRet = 0;
 
-    switch(ds->decode_type)
+    switch (ds->decode_type)
     {
-        case DECODE_B64:
-            iRet = limitDetection(b64_depth, ds->decoded_bytes, ds->b64_state.decode_bytes_read);
-            break;
-        case DECODE_QP:
-            iRet = limitDetection(qp_depth, ds->decoded_bytes, ds->qp_state.decode_bytes_read);
-            break;
-        case DECODE_UU:
-            iRet = limitDetection(uu_depth, ds->decoded_bytes, ds->uu_state.decode_bytes_read);
-            break;
-        case DECODE_BITENC:
-            iRet = limitDetection(bitenc_depth, ds->decoded_bytes, ds->bitenc_state.bytes_read);
-            break;
-        default:
-            break;
+    case DECODE_B64:
+        iRet = limitDetection(b64_depth, ds->decoded_bytes, ds->b64_state.decode_bytes_read);
+        break;
+    case DECODE_QP:
+        iRet = limitDetection(qp_depth, ds->decoded_bytes, ds->qp_state.decode_bytes_read);
+        break;
+    case DECODE_UU:
+        iRet = limitDetection(uu_depth, ds->decoded_bytes, ds->uu_state.decode_bytes_read);
+        break;
+    case DECODE_BITENC:
+        iRet = limitDetection(bitenc_depth, ds->decoded_bytes, ds->bitenc_state.bytes_read);
+        break;
+    default:
+        break;
     }
 
     return iRet;
 }
-#endif 
+
+#endif
+

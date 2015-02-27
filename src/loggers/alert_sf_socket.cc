@@ -99,7 +99,7 @@ static const Parameter s_params[] =
 class SfSocketModule : public Module
 {
 public:
-    SfSocketModule() : Module(s_name, s_help, s_params) { };
+    SfSocketModule() : Module(s_name, s_help, s_params) { }
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -135,7 +135,7 @@ bool SfSocketModule::begin(const char*, int, SnortConfig*)
 bool SfSocketModule::end(const char* fqn, int, SnortConfig*)
 {
     if ( !strcmp(fqn, "alert_sfsocket.rules") )
-            rulez.push_back(rule);
+        rulez.push_back(rule);
 
     return true;
 }
@@ -146,27 +146,27 @@ bool SfSocketModule::end(const char* fqn, int, SnortConfig*)
 static int AlertSFSocket_Connect(void)
 {
     /* check sock value */
-    if(context.sock == -1)
+    if (context.sock == -1)
         FatalError("AlertSFSocket: Invalid socket\n");
 
-    if(connect(context.sock, (sockaddr*)&context.addr, sizeof(context.addr)) == -1)
+    if (connect(context.sock, (sockaddr*)&context.addr, sizeof(context.addr)) == -1)
     {
-        if(errno == ECONNREFUSED || errno == ENOENT)
+        if (errno == ECONNREFUSED || errno == ENOENT)
         {
             LogMessage("WARNING: AlertSFSocket: Unable to connect to socket: "
-                    "%s.\n", get_error(errno));
+                "%s.\n", get_error(errno));
             return 1;
         }
         else
         {
             FatalError("AlertSFSocket: Unable to connect to socket "
-                    "(%i): %s\n", errno, get_error(errno));
+                "(%i): %s\n", errno, get_error(errno));
         }
     }
     return 0;
 }
 
-static void sock_init(const char *args)
+static void sock_init(const char* args)
 {
     if ( (context.sock = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0 )
         FatalError("Unable to create socket: %s\n", get_error(errno));
@@ -178,7 +178,7 @@ static void sock_init(const char *args)
     context.addr.sun_family = AF_UNIX;
     memcpy(context.addr.sun_path + 1, name.c_str(), strlen(name.c_str()));
 
-    if(AlertSFSocket_Connect() == 0)
+    if (AlertSFSocket_Connect() == 0)
         context.connected = 1;
 }
 
@@ -190,52 +190,52 @@ void send_sar(uint8_t* data, unsigned len)
     {
         tries++;
         /* connect as needed */
-        if(!context.connected)
+        if (!context.connected)
         {
-            if(AlertSFSocket_Connect() != 0)
+            if (AlertSFSocket_Connect() != 0)
                 break;
             context.connected = 1;
         }
 
         /* send request */
-        if(send(context.sock, data, len, 0) == len)
+        if (send(context.sock, data, len, 0) == len)
         {
             /* success */
             return;
         }
         /* send failed */
-        if(errno == ENOBUFS)
+        if (errno == ENOBUFS)
         {
             LogMessage("ERROR: AlertSFSocket: out of buffer space\n");
             break;
         }
-        else if(errno == ECONNRESET)
+        else if (errno == ECONNRESET)
         {
             context.connected = 0;
             LogMessage("WARNING: AlertSFSocket: connection reset, will attempt "
-                    "to reconnect.\n");
+                "to reconnect.\n");
         }
-        else if(errno == ECONNREFUSED)
+        else if (errno == ECONNREFUSED)
         {
             LogMessage("WARNING: AlertSFSocket: connection refused, "
-                    "will attempt to reconnect.\n");
+                "will attempt to reconnect.\n");
             context.connected = 0;
         }
-        else if(errno == ENOTCONN)
+        else if (errno == ENOTCONN)
         {
             LogMessage("WARNING: AlertSFSocket: not connected, "
-                    "will attempt to reconnect.\n");
+                "will attempt to reconnect.\n");
             context.connected = 0;
         }
         else
         {
             LogMessage("ERROR: AlertSFSocket: unhandled error '%i' in send(): "
-                    "%s\n", errno, get_error(errno));
+                "%s\n", errno, get_error(errno));
             context.connected = 0;
         }
-    } while(tries <= 1);
+    }
+    while (tries <= 1);
     LogMessage("ERROR: AlertSFSocket: Alert not sent\n");
-    return;
 }
 
 //-------------------------------------------------------------------------
@@ -244,25 +244,25 @@ void send_sar(uint8_t* data, unsigned len)
 /* search for an OptTreeNode by sid in specific policy*/
 // FIXIT-L wow - this should be encapsulated somewhere ...
 // (actually, the whole reason for doing this needs to be rethought)
-static OptTreeNode *OptTreeNode_Search(uint32_t, uint32_t sid)
+static OptTreeNode* OptTreeNode_Search(uint32_t, uint32_t sid)
 {
-    SFGHASH_NODE *hashNode;
-    OptTreeNode *otn = NULL;
-    RuleTreeNode *rtn = NULL;
+    SFGHASH_NODE* hashNode;
+    OptTreeNode* otn = NULL;
+    RuleTreeNode* rtn = NULL;
 
-    if(sid == 0)
+    if (sid == 0)
         return NULL;
 
     for (hashNode = sfghash_findfirst(snort_conf->otn_map);
-            hashNode;
-            hashNode = sfghash_findnext(snort_conf->otn_map))
+        hashNode;
+        hashNode = sfghash_findnext(snort_conf->otn_map))
     {
-        otn = (OptTreeNode *)hashNode->data;
+        otn = (OptTreeNode*)hashNode->data;
         rtn = getRuntimeRtnFromOtn(otn);
         if (rtn)
         {
             if ((rtn->proto == IPPROTO_TCP) || (rtn->proto == IPPROTO_UDP)
-                    || (rtn->proto == IPPROTO_ICMP) || (rtn->proto == ETHERNET_TYPE_IP))
+                || (rtn->proto == IPPROTO_ICMP) || (rtn->proto == ETHERNET_TYPE_IP))
             {
                 if (otn->sigInfo.id == sid)
                 {
@@ -288,12 +288,12 @@ struct SnortActionRequest
     uint32_t dest_ip;
     uint16_t sport;
     uint16_t dport;
-    uint8_t  protocol;
+    uint8_t protocol;
 };
 
-void load_sar(Packet *packet, Event *event, SnortActionRequest& sar)
+void load_sar(Packet* packet, Event* event, SnortActionRequest& sar)
 {
-    if(!event || !packet || !packet->ptrs.ip_api.is_valid())
+    if (!event || !packet || !packet->ptrs.ip_api.is_valid())
         return;
 
     // for now, only support ip4
@@ -318,7 +318,7 @@ void load_sar(Packet *packet, Event *event, SnortActionRequest& sar)
     sar.dest_ip = ntohl(packet->ptrs.ip_api.get_dst()->ip32[0]);
     sar.protocol = packet->get_ip_proto_next();
 
-    if(packet->is_tcp() || packet->is_udp())
+    if (packet->is_tcp() || packet->is_udp())
     {
         sar.sport = packet->ptrs.sp;
         sar.dport = packet->ptrs.dp;
@@ -332,7 +332,8 @@ void load_sar(Packet *packet, Event *event, SnortActionRequest& sar)
 
 //-------------------------------------------------------------------------
 
-class SfSocketLogger : public Logger {
+class SfSocketLogger : public Logger
+{
 public:
     SfSocketLogger(SfSocketModule*);
 
@@ -377,7 +378,7 @@ void SfSocketLogger::close()
     context.sock = -1;
 }
 
-void SfSocketLogger::alert(Packet *packet, const char*, Event *event)
+void SfSocketLogger::alert(Packet* packet, const char*, Event* event)
 {
     SnortActionRequest sar;
     load_sar(packet, event, sar);

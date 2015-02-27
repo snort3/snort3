@@ -54,30 +54,30 @@ struct HashMatchData
 
 HashMatchData::HashMatchData()
 {
-    length = offset = 0; 
+    length = offset = 0;
     offset_var = BYTE_EXTRACT_NO_VAR;
     relative = negated = false;
 }
 
-typedef void (*HashFunc)(const unsigned char* data, size_t size, unsigned char* digest);
+typedef void (* HashFunc)(const unsigned char* data, size_t size, unsigned char* digest);
 
 class HashOption : public IpsOption
 {
 public:
     HashOption(const char* s, ProfileStats& p, HashMatchData* c, HashFunc f, unsigned n) :
         IpsOption(s, RULE_OPTION_TYPE_OTHER), ps(p)
-    { config = c; hashf = f; size = n; assert(n <= MAX_HASH_SIZE); };
+    { config = c; hashf = f; size = n; assert(n <= MAX_HASH_SIZE); }
 
-    ~HashOption() { delete config; };
+    ~HashOption() { delete config; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
     CursorActionType get_cursor_type() const override
-    { return CAT_ADJUST; };
+    { return CAT_ADJUST; }
 
     bool is_relative() override
-    { return config->relative; };
+    { return config->relative; }
 
     int eval(Cursor&, Packet*) override;
     int match(Cursor&);
@@ -96,7 +96,7 @@ private:
 uint32_t HashOption::hash() const
 {
     uint32_t a,b,c;
-    const HashMatchData *hmd = config;
+    const HashMatchData* hmd = config;
 
     a = hmd->negated;
     b = hmd->relative;
@@ -121,14 +121,14 @@ bool HashOption::operator==(const IpsOption& ips) const
 
     HashOption& rhs = (HashOption&)ips;
 
-    if ( 
+    if (
         config->hash == rhs.config->hash &&
         config->length == rhs.config->length &&
         config->offset == rhs.config->offset &&
         config->offset_var == rhs.config->offset_var &&
         config->negated == rhs.config->negated &&
         config->relative == rhs.config->relative
-    )
+        )
         return true;
 
     return false;
@@ -147,7 +147,7 @@ int HashOption::match(Cursor& c)
     {
         uint32_t extract;
         GetByteExtractValue(&extract, config->offset_var);
-        offset = (int) extract;
+        offset = (int)extract;
     }
     else
         offset = config->offset;
@@ -232,7 +232,7 @@ static void parse_hash(HashMatchData* hmd, const char* rule)
 }
 
 // FIXIT-L refactor for general use?
-static void parse_offset(HashMatchData* hmd, const char *data)
+static void parse_offset(HashMatchData* hmd, const char* data)
 {
     if (data == NULL)
     {
@@ -283,17 +283,17 @@ class HashModule : public Module
 public:
     HashModule(const char* s, ProfileStats& p) :
         Module(s, s_help, s_params), ps(p)
-    { hmd = nullptr; };
+    { hmd = nullptr; }
 
     ~HashModule()
-    { delete hmd; };
+    { delete hmd; }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &ps; };
+    { return &ps; }
 
     HashMatchData* get_data();
 

@@ -20,7 +20,8 @@
 #ifndef SF_RETURNS_H
 #define SF_RETURNS_H
 
-enum SFIP_RET {
+enum SFIP_RET
+{
     SFIP_SUCCESS=0,
     SFIP_FAILURE,
     SFIP_LESSER,
@@ -40,5 +41,5 @@ enum SFIP_RET {
     SFIP_CONFLICT           /* For IP conflicts in IP lists */
 };
 
-
 #endif
+

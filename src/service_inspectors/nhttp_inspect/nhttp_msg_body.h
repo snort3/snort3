@@ -27,12 +27,13 @@
 // NHttpMsgBody class
 //-------------------------------------------------------------------------
 
-class NHttpMsgBody : public NHttpMsgSection {
+class NHttpMsgBody : public NHttpMsgSection
+{
 public:
-    NHttpMsgBody(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
-       NHttpEnums::SourceId source_id_, bool buf_owner);
+    NHttpMsgBody(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
+        NHttpEnums::SourceId source_id_, bool buf_owner);
     void analyze() override;
-    void print_section(FILE *output) override;
+    void print_section(FILE* output) override;
     void gen_events() override;
     void update_flow() override;
     void legacy_clients() override;
@@ -45,20 +46,4 @@ protected:
 };
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

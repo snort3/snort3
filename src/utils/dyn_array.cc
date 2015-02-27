@@ -29,18 +29,18 @@
 #define POLICY_ALLOCATION_CHUNK 10
 
 // FIXIT-L replace with vector
-int sfDynArrayCheckBounds (
-        void ** dynArray,
-        unsigned int index,
-        unsigned int *maxElements
-        )
+int sfDynArrayCheckBounds(
+    void** dynArray,
+    unsigned int index,
+    unsigned int* maxElements
+    )
 {
-    void *ppTmp = NULL;
+    void* ppTmp = NULL;
 
     if (index >= *maxElements)
     {
         //expand the array
-        ppTmp = calloc(index+POLICY_ALLOCATION_CHUNK, sizeof(void *));
+        ppTmp = calloc(index+POLICY_ALLOCATION_CHUNK, sizeof(void*));
         if (!(ppTmp))
         {
             return -1;

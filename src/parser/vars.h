@@ -29,10 +29,10 @@
 
 struct VarNode
 {
-    char *name;
-    char *value;
-    char *line;
-    VarNode *next;
+    char* name;
+    char* value;
+    char* line;
+    VarNode* next;
 };
 
 void config_set_var(SnortConfig* sc, const char*);
@@ -45,32 +45,32 @@ void FreeVarList(VarNode*);
 void InitVarTables(IpsPolicy*);
 void VarTablesFree(IpsPolicy*);
 
-VarEntry * VarDefine(SnortConfig *sc, const char *name, const char *value);
-int PortVarDefine(SnortConfig *sc, const char *name, const char *s);
-void ParseIpVar(SnortConfig *sc, const char *name, const char *s);  // FIXIT-L actually in parse_conf.cc
+VarEntry* VarDefine(SnortConfig* sc, const char* name, const char* value);
+int PortVarDefine(SnortConfig* sc, const char* name, const char* s);
+void ParseIpVar(SnortConfig* sc, const char* name, const char* s);  // FIXIT-L actually in
+                                                                    // parse_conf.cc
 
-VarEntry *VarAlloc();
-void DeleteVars(VarEntry *var_table);
-void AddVarToTable(SnortConfig *, const char *, const char *);
+VarEntry* VarAlloc();
+void DeleteVars(VarEntry* var_table);
+void AddVarToTable(SnortConfig*, const char*, const char*);
 
 enum VarType
 {
     VAR_TYPE__DEFAULT,
     VAR_TYPE__PORTVAR,
     VAR_TYPE__IPVAR
-
 };
 
-int VarIsIpAddr(vartable_t *ip_vartable, const char *value);
-int VarIsIpList(vartable_t *ip_vartable, const char *value);
-void DisallowCrossTableDuplicateVars(SnortConfig *sc, const char *name, VarType var_type);
-const char *VarGet(SnortConfig *sc, const char *name);
+int VarIsIpAddr(vartable_t* ip_vartable, const char* value);
+int VarIsIpList(vartable_t* ip_vartable, const char* value);
+void DisallowCrossTableDuplicateVars(SnortConfig* sc, const char* name, VarType var_type);
+const char* VarGet(SnortConfig* sc, const char* name);
 /*
  * Same as VarGet - but this does not Fatal out if a var is not found
  */
-const char * VarSearch(SnortConfig *sc, const char *name);
+const char* VarSearch(SnortConfig* sc, const char* name);
 
-const char * ExpandVars(SnortConfig *sc, const char *string);
+const char* ExpandVars(SnortConfig* sc, const char* string);
 
 #endif
 

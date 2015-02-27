@@ -26,17 +26,15 @@
 
 namespace config
 {
-
-namespace {
-
+namespace
+{
 class Classification : public ConversionState
 {
- public:
-    Classification(Converter& c) : ConversionState(c) {}
-    virtual ~Classification() {}
+public:
+    Classification(Converter& c) : ConversionState(c) { }
+    virtual ~Classification() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool Classification::convert(std::istringstream& data_stream)
@@ -62,7 +60,7 @@ bool Classification::convert(std::istringstream& data_stream)
     util::trim(keyword);
     table_api.add_option("text", keyword);
 
-    if(!(data_stream >> priority))
+    if (!(data_stream >> priority))
         return false;
 
     table_api.add_option("priority", priority);
@@ -85,5 +83,5 @@ static const ConvertMap classification_api =
 };
 
 const ConvertMap* classification_map = &classification_api;
-
 } // namespace config
+

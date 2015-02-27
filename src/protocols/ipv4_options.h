@@ -25,10 +25,8 @@
 
 struct Packet;
 
-
 namespace ip
 {
-
 struct IP4Hdr;
 
 enum class IPOptionCodes : std::uint8_t
@@ -47,7 +45,6 @@ enum class IPOptionCodes : std::uint8_t
     ANY = 0xff,
 };
 
-
 struct IpOptions
 {
     IPOptionCodes code;
@@ -62,20 +59,19 @@ struct IpOptions
 
     inline const IpOptions& next() const
     {
-
         //  because gcc requires strict aliasing.
 #       if defined(__GNUC__)
-            const uint8_t tmp_len = ((uint8_t) code <= 1) ? 1 : len;
-            const uint8_t* const tmp = reinterpret_cast<const uint8_t*>(this);
-            const IpOptions* opt = reinterpret_cast<const IpOptions*>(&tmp[tmp_len]);
-            return *opt;
+        const uint8_t tmp_len = ((uint8_t)code <= 1) ? 1 : len;
+        const uint8_t* const tmp = reinterpret_cast<const uint8_t*>(this);
+        const IpOptions* opt = reinterpret_cast<const IpOptions*>(&tmp[tmp_len]);
+        return *opt;
 
         // ... and the legible code
 #       else
-            if ( (uint8_t)code <= 1 )
-                return reinterpret_cast<const IpOptions&>(len);
-            else
-                return reinterpret_cast<const IpOptions&>(data[len -2]);
+        if ( (uint8_t)code <= 1 )
+            return reinterpret_cast<const IpOptions&>(len);
+        else
+            return reinterpret_cast<const IpOptions&>(data[len -2]);
 #       endif
     }
 };
@@ -89,10 +85,10 @@ class SO_PUBLIC IpOptionIteratorIter
 public:
     IpOptionIteratorIter(const IpOptions*);
 
-    bool operator== (const IpOptionIteratorIter& rhs)
+    bool operator==(const IpOptionIteratorIter& rhs)
     { return opt == rhs.opt; }
 
-    bool operator!= (const IpOptionIteratorIter& rhs)
+    bool operator!=(const IpOptionIteratorIter& rhs)
     { return opt != rhs.opt; }
 
     // I'd suggest just using IpOptionIterator and completley ignoring this
@@ -103,7 +99,7 @@ public:
         return *this;
     }
 
-    const IpOptions& operator* () const;
+    const IpOptions& operator*() const;
 
 private:
     const IpOptions* opt;
@@ -140,8 +136,7 @@ private:
     const uint8_t* end_ptr;
     const uint8_t* start_ptr;
 };
-
 } // namespace ip
 
-
 #endif /* PROTOCOLS_IP_OPTIONS_H */
+

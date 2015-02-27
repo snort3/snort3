@@ -45,19 +45,18 @@ using namespace std;
 /* Input is packet and an nine-byte (including NULL) character array.  Results
  * are put into the character array.
  */
-void CreateTCPFlagString(const tcp::TCPHdr* const tcph, char *flagBuffer)
+void CreateTCPFlagString(const tcp::TCPHdr* const tcph, char* flagBuffer)
 {
     /* parse TCP flags */
-    *flagBuffer++ = (char) ((tcph->th_flags & TH_RES1) ? '1' : '*');
-    *flagBuffer++ = (char) ((tcph->th_flags & TH_RES2) ? '2' : '*');
-    *flagBuffer++ = (char) ((tcph->th_flags & TH_URG)  ? 'U' : '*');
-    *flagBuffer++ = (char) ((tcph->th_flags & TH_ACK)  ? 'A' : '*');
-    *flagBuffer++ = (char) ((tcph->th_flags & TH_PUSH) ? 'P' : '*');
-    *flagBuffer++ = (char) ((tcph->th_flags & TH_RST)  ? 'R' : '*');
-    *flagBuffer++ = (char) ((tcph->th_flags & TH_SYN)  ? 'S' : '*');
-    *flagBuffer++ = (char) ((tcph->th_flags & TH_FIN)  ? 'F' : '*');
+    *flagBuffer++ = (char)((tcph->th_flags & TH_RES1) ? '1' : '*');
+    *flagBuffer++ = (char)((tcph->th_flags & TH_RES2) ? '2' : '*');
+    *flagBuffer++ = (char)((tcph->th_flags & TH_URG)  ? 'U' : '*');
+    *flagBuffer++ = (char)((tcph->th_flags & TH_ACK)  ? 'A' : '*');
+    *flagBuffer++ = (char)((tcph->th_flags & TH_PUSH) ? 'P' : '*');
+    *flagBuffer++ = (char)((tcph->th_flags & TH_RST)  ? 'R' : '*');
+    *flagBuffer++ = (char)((tcph->th_flags & TH_SYN)  ? 'S' : '*');
+    *flagBuffer++ = (char)((tcph->th_flags & TH_FIN)  ? 'F' : '*');
     *flagBuffer = '\0';
-
 }
 
 /****************************************************************************
@@ -71,9 +70,9 @@ void CreateTCPFlagString(const tcp::TCPHdr* const tcph, char *flagBuffer)
  * Returns: file handle
  *
  ***************************************************************************/
-FILE *OpenAlertFile(const char *filearg)
+FILE* OpenAlertFile(const char* filearg)
 {
-    FILE *file;
+    FILE* file;
 
     if ( !filearg )
         filearg = "alert.txt";
@@ -81,14 +80,14 @@ FILE *OpenAlertFile(const char *filearg)
     std::string name;
     const char* filename = get_instance_file(name, filearg);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT,"Opening alert file: %s\n", filename););
+    DEBUG_WRAP(DebugMessage(DEBUG_INIT,"Opening alert file: %s\n", filename); );
 
-    if((file = fopen(filename, "a")) == NULL)
+    if ((file = fopen(filename, "a")) == NULL)
     {
         FatalError("OpenAlertFile() => fopen() alert file %s: %s\n",
-                   filename, get_error(errno));
+            filename, get_error(errno));
     }
-    setvbuf(file, (char *) NULL, _IOLBF, (size_t) 0);
+    setvbuf(file, (char*)NULL, _IOLBF, (size_t)0);
 
     return file;
 }
@@ -104,7 +103,7 @@ FILE *OpenAlertFile(const char *filearg)
  * Returns: 0=success, else errno
  *
  ***************************************************************************/
-int RollAlertFile(const char *filearg)
+int RollAlertFile(const char* filearg)
 {
     char newname[STD_BUF+1];
     time_t now = time(NULL);
@@ -118,12 +117,12 @@ int RollAlertFile(const char *filearg)
 
     SnortSnprintf(newname, sizeof(newname)-1, "%s.%lu", oldname, (unsigned long)now);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT,"Rolling alert file: %s\n", newname););
+    DEBUG_WRAP(DebugMessage(DEBUG_INIT,"Rolling alert file: %s\n", newname); );
 
     if ( rename(oldname, newname) )
     {
         FatalError("RollAlertFile() => rename(%s, %s) = %s\n",
-                   oldname, newname, get_error(errno));
+            oldname, newname, get_error(errno));
     }
     return errno;
 }
@@ -164,7 +163,6 @@ void snort_print(Packet* p)
     // FIXIT-L ARP logging not impelemted
     else if (p->proto_bits & PROTO_BIT__ARP)
     {
-
         log_mutex.lock();
         LogArpHeader(text_log, p);
         TextLog_Flush(text_log);

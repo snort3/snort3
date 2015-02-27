@@ -88,7 +88,7 @@ public:
     const RuleMap* get_rules() const override;
 
     unsigned get_gid() const override
-    { return GID_STREAM_TCP; };
+    { return GID_STREAM_TCP; }
 
     StreamTcpConfig* get_data();
 

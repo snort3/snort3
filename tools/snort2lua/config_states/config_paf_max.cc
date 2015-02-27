@@ -26,30 +26,23 @@
 
 namespace config
 {
-
-namespace {
-
+namespace
+{
 class PafMax : public ConversionState
 {
 public:
-    PafMax(Converter& c) : ConversionState(c) {};
-    virtual ~PafMax() {};
+    PafMax(Converter& c) : ConversionState(c) { }
+    virtual ~PafMax() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
-
 
 bool PafMax::convert(std::istringstream& data_stream)
 {
     int val;
 
-
     if (data_stream >> val)
     {
-
-
-
 // FIXIT-H J  - this is a hack to ensure max_pdu is in
 //              every configuratino file and does not
 //              overwrite the stream_tcp table
@@ -74,10 +67,8 @@ bool PafMax::convert(std::istringstream& data_stream)
         data_api.add_comment("stream_tcp.max_pdu = " + std::to_string(val));
 #endif
 
-
         if (!(data_stream >> val))
             return true;
-
 
         data_api.failed_conversion(data_stream, std::to_string(val));
     }
@@ -103,5 +94,5 @@ static const ConvertMap paf_max_api =
 };
 
 const ConvertMap* paf_max_map = &paf_max_api;
-
 } // namespace config
+

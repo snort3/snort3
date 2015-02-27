@@ -20,7 +20,6 @@
 #ifndef HELPERS_UTIL_H
 #define HELPERS_UTIL_H
 
-
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -35,8 +34,7 @@ class Table;
 
 namespace util
 {
-
-std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
+std::vector<std::string>& split(const std::string& s, char delim, std::vector<std::string>& elems);
 
 // Search through the vector for the map which matches keyword
 
@@ -46,18 +44,16 @@ const std::unique_ptr<const ConvertMap>& find_map(
     const std::vector<std::unique_ptr<const ConvertMap> >&, const std::string& keyword);
 
 // trim from begining
-std::string &ltrim(std::string &s);
+std::string& ltrim(std::string& s);
 
 // trim from end
-std::string &rtrim(std::string &s);
+std::string& rtrim(std::string& s);
 
 // trim from both ends
-std::string &trim(std::string &s);
-
+std::string& trim(std::string& s);
 
 // return true if this file exists. False otherwise.
 bool file_exists(const std::string& name);
-
 
 /*
  * Takes in a stream and a string of delimeters. The function will extract the charachters
@@ -75,8 +71,8 @@ bool file_exists(const std::string& name);
  *          False - whenma substing was unable to be extracted.
  */
 bool get_string(std::istringstream& data_stream,
-                std::string& option,
-                const std::string delimeters);
+    std::string& option,
+    const std::string delimeters);
 
 /*
  * Returns the rest of the data_streams data as one argument.
@@ -104,10 +100,10 @@ std::string get_rule_option_args(std::istringstream& data_stream);
  *
  */
 std::string rule_option_find_val(std::istringstream& data_stream,
-                                 std::string opt_name);
+    std::string opt_name);
 
 // remove any ']]' and double spaces from this string.
-std::string &sanitize_lua_string(std::string &s);
+std::string& sanitize_lua_string(std::string& s);
 
 // find the location of the first space before max_str_lenght.
 // if no space exists before max_str_length, return the first space
@@ -115,7 +111,7 @@ std::string &sanitize_lua_string(std::string &s);
 std::size_t get_substr_length(std::string s, std::size_t max_length);
 
 bool case_compare(std::string, std::string);
-
 }  // namespace util
 
 #endif
+

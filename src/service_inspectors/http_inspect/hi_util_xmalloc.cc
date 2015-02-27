@@ -36,78 +36,78 @@
 
 static THREAD_LOCAL unsigned msize=0;
 
-void * xmalloc(size_t byteSize)
+void* xmalloc(size_t byteSize)
 {
 #ifdef MDEBUG
-   int * data = (int*) malloc( byteSize + 4 );
-   unsigned m = msize;
+    int* data = (int*)malloc(byteSize + 4);
+    unsigned m = msize;
 
-   if(data)memset(data,0,byteSize+4);
+    if (data)
+        memset(data,0,byteSize+4);
 #else
-   int * data = (int*) malloc( byteSize );
-   if(data)memset(data,0,byteSize);
+    int* data = (int*)malloc(byteSize);
+    if (data)
+        memset(data,0,byteSize);
 #endif
 
-   if( data == NULL )
+    if ( data == NULL )
     {
         return NULL;
     }
 
 #ifdef MDEBUG
 
-	msize += byteSize + 4;
+    msize += byteSize + 4;
 
-	*data = byteSize+4;
+    *data = byteSize+4;
 
     //printf("** xmalloc msize=%u, allocbytes=%d, msize=%u  %x\n", m, byteSize+4, msize, data);
 
-	data++;
+    data++;
 
     return data;
 
 #else
 
-	msize += byteSize;
+    msize += byteSize;
 
     return data;
 #endif
 }
 
-void xfree( void * p )
+void xfree(void* p)
 {
 #ifdef MDEBUG
-   unsigned m = msize;
-   int  *q = (int*)p;
-   q--;
-   msize -= *q;
+    unsigned m = msize;
+    int* q = (int*)p;
+    q--;
+    msize -= *q;
 
-   free(q);
+    free(q);
 
 #else
 
-   free(p);
+    free(p);
 
 #endif
-
-
 }
 
 void xshowmem(void)
 {
 #ifdef MDEBUG
-	  printf("xmalloc-mem: %u bytes\n",msize);
+    printf("xmalloc-mem: %u bytes\n",msize);
 #endif
 }
 
-char *xstrdup(const char *str)
+char* xstrdup(const char* str)
 {
     int data_size;
-	char *data = NULL;
+    char* data = NULL;
 
     data_size = strlen(str) + 1;
-    data = (char *)xmalloc(data_size);
+    data = (char*)xmalloc(data_size);
 
-	if(data == NULL)
+    if (data == NULL)
     {
         return NULL;
     }

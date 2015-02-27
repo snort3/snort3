@@ -34,69 +34,72 @@
  * Return Sid associated with index
  * author: marc norton
  */
-unsigned RuleIndexMapSid( rule_index_map_t * map, int index )
+unsigned RuleIndexMapSid(rule_index_map_t* map, int index)
 {
-    if( ! map )
+    if ( !map )
         return 0;
 
-    if( index < map->num_rules )
+    if ( index < map->num_rules )
     {
         return map->map[index].sid;
     }
     return 0;
 }
+
 /*
  * Return Gid associated with index
  * author: marc norton
  */
-unsigned RuleIndexMapGid(rule_index_map_t * map, int index )
+unsigned RuleIndexMapGid(rule_index_map_t* map, int index)
 {
-    if( ! map )
+    if ( !map )
     {
         return 0;
     }
-    if( index < map->num_rules )
+    if ( index < map->num_rules )
     {
         return map->map[index].gid;
     }
     return 0;
 }
+
 /*
  * Create a rule index map table
  * author: marc norton
  */
-rule_index_map_t * RuleIndexMapCreate( int max_rules )
+rule_index_map_t* RuleIndexMapCreate(int max_rules)
 {
-        rule_index_map_t *p = (rule_index_map_t*)calloc( 1, sizeof(rule_index_map_t) );
-        if(!p)
-        {
-            return 0;
-        }
-        p->max_rules=max_rules;
-        p->num_rules=0;
-        p->map = (rule_number_t*)calloc( max_rules, sizeof(rule_number_t));
-        if(!p->map )
-        {
-            free(p);
-            return 0;
-        }
-        return p;
+    rule_index_map_t* p = (rule_index_map_t*)calloc(1, sizeof(rule_index_map_t) );
+    if (!p)
+    {
+        return 0;
+    }
+    p->max_rules=max_rules;
+    p->num_rules=0;
+    p->map = (rule_number_t*)calloc(max_rules, sizeof(rule_number_t));
+    if (!p->map )
+    {
+        free(p);
+        return 0;
+    }
+    return p;
 }
+
 /*
  * Free a rule index map table
  * author: marc norton
  */
-void RuleIndexMapFree( rule_index_map_t ** p )
+void RuleIndexMapFree(rule_index_map_t** p)
 {
-    if( !p || !*p )
+    if ( !p || !*p )
     {
-      return ;
+        return;
     }
-    if( (*p)->map )
+    if ( (*p)->map )
     {
         free((*p)->map);
     }
-    free( *p );
+    free(*p);
 
     *p = 0;
 }
@@ -105,37 +108,38 @@ void RuleIndexMapFree( rule_index_map_t ** p )
  * Add a rule to a rule index map table
  * author: marc norton
  */
-int RuleIndexMapAdd( rule_index_map_t * p, unsigned gid, unsigned sid )
+int RuleIndexMapAdd(rule_index_map_t* p, unsigned gid, unsigned sid)
 {
-        int index;
+    int index;
 
-        if( !p )
-        {
-            return -1;
-        }
-        if( p->num_rules == (p->max_rules - 1) )
-        {
-            return -1;
-        }
-        index = p->num_rules  ;
-        p->map[ index ].gid = gid;
-        p->map[ index ].sid = sid;
-        p->num_rules++;
+    if ( !p )
+    {
+        return -1;
+    }
+    if ( p->num_rules == (p->max_rules - 1) )
+    {
+        return -1;
+    }
+    index = p->num_rules;
+    p->map[ index ].gid = gid;
+    p->map[ index ].sid = sid;
+    p->num_rules++;
 
-        //printf("RuleIndexMapping: index=%d gid=%u sid=%u\n",index,gid,sid);
-        return index;
+    //printf("RuleIndexMapping: index=%d gid=%u sid=%u\n",index,gid,sid);
+    return index;
 }
+
 /*
  * print a rule index map table to stdout
  * author: marc norton
  */
-void print_rule_index_map( rule_index_map_t * p )
+void print_rule_index_map(rule_index_map_t* p)
 {
     int i;
     printf("***\n*** Rule Index Map (%d entries)\n***\n",p->num_rules);
-    for(i=0;i<p->num_rules;i++)
+    for (i=0; i<p->num_rules; i++)
     {
-         printf("rule-index-map[%d] { gid:%u sid:%u }\n",i,p->map[i].gid,p->map[i].sid);
+        printf("rule-index-map[%d] { gid:%u sid:%u }\n",i,p->map[i].gid,p->map[i].sid);
     }
     printf("***end rule index map ***\n");
 }

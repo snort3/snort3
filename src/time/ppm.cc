@@ -88,14 +88,14 @@ PPM_TICKS ppm_tpu = 0; /* ticks per usec */
 
 static ppm_stats_t g_ppm_stats;
 
-THREAD_LOCAL ppm_stats_t       ppm_stats;
-THREAD_LOCAL ppm_pkt_timer_t   ppm_pkt_times[PPM_MAX_TIMERS];
-THREAD_LOCAL ppm_pkt_timer_t  *ppm_pt = NULL;
-THREAD_LOCAL unsigned int      ppm_pkt_index = 0;
-THREAD_LOCAL ppm_rule_timer_t  ppm_rule_times[PPM_MAX_TIMERS];
-THREAD_LOCAL ppm_rule_timer_t *ppm_rt = NULL;
-THREAD_LOCAL unsigned int      ppm_rule_times_index = 0;
-THREAD_LOCAL uint64_t          ppm_cur_time = 0;
+THREAD_LOCAL ppm_stats_t ppm_stats;
+THREAD_LOCAL ppm_pkt_timer_t ppm_pkt_times[PPM_MAX_TIMERS];
+THREAD_LOCAL ppm_pkt_timer_t* ppm_pt = NULL;
+THREAD_LOCAL unsigned int ppm_pkt_index = 0;
+THREAD_LOCAL ppm_rule_timer_t ppm_rule_times[PPM_MAX_TIMERS];
+THREAD_LOCAL ppm_rule_timer_t* ppm_rt = NULL;
+THREAD_LOCAL unsigned int ppm_rule_times_index = 0;
+THREAD_LOCAL uint64_t ppm_cur_time = 0;
 
 /* temporary flags */
 THREAD_LOCAL int ppm_abort_this_pkt = 0;
@@ -105,10 +105,9 @@ THREAD_LOCAL int ppm_suspend_this_rule = 0;
 #define MAX_DP_NRULES 1000
 typedef struct
 {
-    uint64_t   pkt;
-    detection_option_tree_root_t * tree;
+    uint64_t pkt;
+    detection_option_tree_root_t* tree;
     PPM_TICKS ticks;
-
 } ppm_rules_t;
 
 /* suspended rules */
@@ -121,7 +120,7 @@ static THREAD_LOCAL int ppm_n_rules;
 
 /* cleared rules - re-enabled */
 // FIXIT-L see above re storing rule tree pointers
-static THREAD_LOCAL detection_option_tree_root_t * ppm_crules[MAX_DP_NRULES];
+static THREAD_LOCAL detection_option_tree_root_t* ppm_crules[MAX_DP_NRULES];
 static THREAD_LOCAL int ppm_n_crules;
 
 void ppm_init_rules(void)
@@ -130,9 +129,9 @@ void ppm_init_rules(void)
     ppm_n_crules = 0;
 }
 
-void ppm_set_rule(detection_option_tree_root_t * root,PPM_TICKS ticks)
+void ppm_set_rule(detection_option_tree_root_t* root,PPM_TICKS ticks)
 {
-    if( ppm_n_rules < MAX_DP_NRULES )
+    if ( ppm_n_rules < MAX_DP_NRULES )
     {
         ppm_rules[ppm_n_rules].tree=root;
         ppm_rules[ppm_n_rules].ticks=ticks;
@@ -140,9 +139,9 @@ void ppm_set_rule(detection_option_tree_root_t * root,PPM_TICKS ticks)
     }
 }
 
-void ppm_clear_rule(detection_option_tree_root_t *root)
+void ppm_clear_rule(detection_option_tree_root_t* root)
 {
-    if( ppm_n_crules < MAX_DP_NRULES )
+    if ( ppm_n_crules < MAX_DP_NRULES )
     {
         ppm_crules[ppm_n_crules++]=root;
     }
@@ -155,52 +154,58 @@ static int ppm_calc_ticks(void)
 {
     ppm_tpu = (PPM_TICKS)get_ticks_per_usec();
 
-    if( ppm_tpu == 0 )
+    if ( ppm_tpu == 0 )
     {
         return -1;
     }
 
     return 0;
 }
-void ppm_print_cfg(ppm_cfg_t *ppm_cfg)
+
+void ppm_print_cfg(ppm_cfg_t* ppm_cfg)
 {
     if (ppm_cfg == NULL)
         return;
 
     if (!ppm_cfg->enabled)
-        return ;
+        return;
 
-    if( ppm_cfg->max_pkt_ticks )
+    if ( ppm_cfg->max_pkt_ticks )
     {
         LogMessage("\n");
         LogMessage("Packet Performance Monitor Config:\n");
         LogMessage("  ticks per usec  : %lu ticks\n",(unsigned long)ppm_tpu);
 
-        LogMessage("  max packet time : %lu usecs\n",(unsigned long)(ppm_cfg->max_pkt_ticks/ppm_tpu));
+        LogMessage("  max packet time : %lu usecs\n",(unsigned long)(ppm_cfg->max_pkt_ticks/
+            ppm_tpu));
         LogMessage("  packet action   : ");
-        if( ppm_cfg->pkt_action )
+        if ( ppm_cfg->pkt_action )
             LogMessage("fastpath-expensive-packets\n");
         else
             LogMessage("none\n");
         LogMessage("  packet logging  : ");
-        if(ppm_cfg->pkt_log&PPM_LOG_ALERT) LogMessage("alert " );
-        if(ppm_cfg->pkt_log&PPM_LOG_MESSAGE) LogMessage("log ");
-        if(!ppm_cfg->pkt_log) LogMessage("none ");
+        if (ppm_cfg->pkt_log&PPM_LOG_ALERT)
+            LogMessage("alert ");
+        if (ppm_cfg->pkt_log&PPM_LOG_MESSAGE)
+            LogMessage("log ");
+        if (!ppm_cfg->pkt_log)
+            LogMessage("none ");
         LogMessage("\n");
 #ifdef DEBUG
-        LogMessage("  debug-pkts      : %s\n",(ppm_cfg->debug_pkts)? "enabled":"disabled");
+        LogMessage("  debug-pkts      : %s\n",(ppm_cfg->debug_pkts) ? "enabled" : "disabled");
 #endif
     }
 
-    if( ppm_cfg->max_rule_ticks)
+    if ( ppm_cfg->max_rule_ticks)
     {
         LogMessage("\n");
         LogMessage("Rule Performance Monitor Config:\n");
         LogMessage("  ticks per usec  : %lu ticks\n",(unsigned long)ppm_tpu);
 
-        LogMessage("  max rule time   : %lu usecs\n",(unsigned long)(ppm_cfg->max_rule_ticks/ppm_tpu));
+        LogMessage("  max rule time   : %lu usecs\n",(unsigned long)(ppm_cfg->max_rule_ticks/
+            ppm_tpu));
         LogMessage("  rule action     : ");
-        if( ppm_cfg->rule_action )
+        if ( ppm_cfg->rule_action )
         {
             LogMessage("suspend-expensive-rules\n");
             LogMessage("  rule threshold  : %u \n",(unsigned int)ppm_cfg->rule_threshold);
@@ -210,24 +215,30 @@ void ppm_print_cfg(ppm_cfg_t *ppm_cfg)
 
 #ifdef PPM_TEST
         /* use usecs instead of ticks for rule suspension during pcap playback */
-        LogMessage("  suspend timeout : %lu secs\n", (unsigned long)(ppm_cfg->max_suspend_ticks/((uint64_t)1000000)) );
+        LogMessage("  suspend timeout : %lu secs\n", (unsigned long)(ppm_cfg->max_suspend_ticks/
+            ((uint64_t)1000000)) );
 #else
-        LogMessage("  suspend timeout : %lu secs\n", (unsigned long)(ppm_cfg->max_suspend_ticks/((uint64_t)ppm_tpu*1000000)) );
+        LogMessage("  suspend timeout : %lu secs\n", (unsigned long)(ppm_cfg->max_suspend_ticks/
+            ((uint64_t)ppm_tpu*1000000)) );
 #endif
         LogMessage("  rule logging    : ");
-        if(ppm_cfg->rule_log&PPM_LOG_ALERT) LogMessage("alert " );
-        if(ppm_cfg->rule_log&PPM_LOG_MESSAGE) LogMessage("log ");
-        if(!ppm_cfg->rule_log) LogMessage("none ");
+        if (ppm_cfg->rule_log&PPM_LOG_ALERT)
+            LogMessage("alert ");
+        if (ppm_cfg->rule_log&PPM_LOG_MESSAGE)
+            LogMessage("log ");
+        if (!ppm_cfg->rule_log)
+            LogMessage("none ");
         LogMessage("\n");
 #ifdef DEBUG
-        /*LogMessage("  debug-rules     : %s\n",(ppm_cfg->debug_rules)?"enabled":"disabled"); unsupported */
+        /*LogMessage("  debug-rules     : %s\n",(ppm_cfg->debug_rules)?"enabled":"disabled");
+          unsupported */
 #endif
     }
 }
 
-static int print_rule( int, RuleTreeNode*, OptTreeNode * o )
+static int print_rule(int, RuleTreeNode*, OptTreeNode* o)
 {
-    if( !o->enabled )
+    if ( !o->enabled )
     {
         //if( o->sigInfo.generator==1 || o->sigInfo.generator==3 )
         LogMessage("   disabled gid=%u, sid=%u\n",o->sigInfo.generator,o->sigInfo.id);
@@ -253,7 +264,7 @@ void ppm_sum_stats()
     g_ppm_stats.tot_pcre_rules += ppm_stats.tot_pcre_rules;
 }
 
-void ppm_print_summary(ppm_cfg_t *ppm_cfg)
+void ppm_print_summary(ppm_cfg_t* ppm_cfg)
 {
     if (ppm_cfg == NULL)
         return;
@@ -261,7 +272,7 @@ void ppm_print_summary(ppm_cfg_t *ppm_cfg)
     if (!ppm_cfg->enabled)
         return;
 
-    if(ppm_cfg->max_pkt_ticks)
+    if (ppm_cfg->max_pkt_ticks)
     {
         LogLabel("packet performance");
 
@@ -271,13 +282,13 @@ void ppm_print_summary(ppm_cfg_t *ppm_cfg)
         LogCount("packet events",
             (unsigned int)g_ppm_stats.pkt_event_cnt);
 
-        if( g_ppm_stats.tot_pkts )
+        if ( g_ppm_stats.tot_pkts )
             LogStat("avg pkt time (usecs)",
                 ppm_ticks_to_usecs((PPM_TICKS)(g_ppm_stats.tot_pkt_time/
-                    g_ppm_stats.tot_pkts)));
+                g_ppm_stats.tot_pkts)));
     }
 
-    if(ppm_cfg->max_rule_ticks)
+    if (ppm_cfg->max_rule_ticks)
     {
         LogLabel("rule performance");
 
@@ -287,22 +298,22 @@ void ppm_print_summary(ppm_cfg_t *ppm_cfg)
         LogCount("rule events",
             (unsigned int)g_ppm_stats.rule_event_cnt);
 
-        if( g_ppm_stats.tot_rules )
-            LogStat("avg rule time (usecs)", 
+        if ( g_ppm_stats.tot_rules )
+            LogStat("avg rule time (usecs)",
                 ppm_ticks_to_usecs((PPM_TICKS)(g_ppm_stats.tot_rule_time/
-                    g_ppm_stats.tot_rules)));
+                g_ppm_stats.tot_rules)));
 
-        if( g_ppm_stats.tot_nc_rules )
+        if ( g_ppm_stats.tot_nc_rules )
             LogStat("avg nc-rule time (usecs)",
                 ppm_ticks_to_usecs((PPM_TICKS)(g_ppm_stats.tot_nc_rule_time/
-                    g_ppm_stats.tot_nc_rules)));
+                g_ppm_stats.tot_nc_rules)));
 
-        if( g_ppm_stats.tot_pcre_rules )
+        if ( g_ppm_stats.tot_pcre_rules )
             LogStat("avg nc-pcre-rule time (usecs)",
                 ppm_ticks_to_usecs((PPM_TICKS)(g_ppm_stats.tot_pcre_rule_time/
-                    g_ppm_stats.tot_pcre_rules)));
+                g_ppm_stats.tot_pcre_rules)));
 
-        fpWalkOtns( 0, print_rule );
+        fpWalkOtns(0, print_rule);
     }
 }
 
@@ -317,7 +328,7 @@ double ppm_ticks_to_usecs(PPM_TICKS ticks)
 /*
  *  Initialization
  */
-void ppm_init(ppm_cfg_t *ppm_cfg)
+void ppm_init(ppm_cfg_t* ppm_cfg)
 {
     /* calc ticks per usec */
     if (ppm_calc_ticks() == -1)
@@ -339,10 +350,14 @@ void ppm_init(ppm_cfg_t *ppm_cfg)
 /*
  *  Logging functions - syslog and/or events
  */
-#define PPM_FMT_FASTPATH "PPM: Pkt-Event Pkt[" STDi64 "] used=%g usecs, %u rules, %u nc-rules tested, packet fastpathed (%s:%d -> %s:%d).\n"
-#define PPM_FMT_PACKET   "PPM: Pkt-Event Pkt[" STDi64 "] used=%g usecs, %u rules, %u nc-rules tested (%s:%d -> %s:%d).\n"
+#define PPM_FMT_FASTPATH \
+    "PPM: Pkt-Event Pkt[" STDi64 \
+    "] used=%g usecs, %u rules, %u nc-rules tested, packet fastpathed (%s:%d -> %s:%d).\n"
+#define PPM_FMT_PACKET \
+    "PPM: Pkt-Event Pkt[" STDi64 \
+    "] used=%g usecs, %u rules, %u nc-rules tested (%s:%d -> %s:%d).\n"
 
-void ppm_pkt_log(ppm_cfg_t *ppm_cfg, Packet* p)
+void ppm_pkt_log(ppm_cfg_t* ppm_cfg, Packet* p)
 {
     if (!ppm_cfg->max_pkt_ticks)
         return;
@@ -357,7 +372,7 @@ void ppm_pkt_log(ppm_cfg_t *ppm_cfg, Packet* p)
         char src[INET6_ADDRSTRLEN];
         char dst[INET6_ADDRSTRLEN];
 
-        const sfip_t *addr = p->ptrs.ip_api.get_src();
+        const sfip_t* addr = p->ptrs.ip_api.get_src();
         sfip_ntop(addr, src, sizeof(src));
 
         addr = p->ptrs.ip_api.get_dst();
@@ -366,34 +381,36 @@ void ppm_pkt_log(ppm_cfg_t *ppm_cfg, Packet* p)
         if (ppm_abort_this_pkt)
         {
             LogMessage(PPM_FMT_FASTPATH,
-                       ppm_pt->pktcnt,
-                       ppm_ticks_to_usecs((PPM_TICKS)ppm_pt->tot),
-                       ppm_pt->rule_tests, ppm_pt->nc_rule_tests,
-                       src, p->ptrs.sp, dst, p->ptrs.dp);
+                ppm_pt->pktcnt,
+                ppm_ticks_to_usecs((PPM_TICKS)ppm_pt->tot),
+                ppm_pt->rule_tests, ppm_pt->nc_rule_tests,
+                src, p->ptrs.sp, dst, p->ptrs.dp);
         }
         else
         {
             LogMessage(PPM_FMT_PACKET,
-                       ppm_pt->pktcnt,
-                       ppm_ticks_to_usecs((PPM_TICKS)ppm_pt->tot),
-                       ppm_pt->rule_tests, ppm_pt->nc_rule_tests,
-                       src, p->ptrs.sp, dst, p->ptrs.dp);
+                ppm_pt->pktcnt,
+                ppm_ticks_to_usecs((PPM_TICKS)ppm_pt->tot),
+                ppm_pt->rule_tests, ppm_pt->nc_rule_tests,
+                src, p->ptrs.sp, dst, p->ptrs.dp);
         }
     }
 }
 
 #define PPM_FMT_SUS_PKT   "PPM: Rule-Event Pkt[" STDi64 "] suspended (%s:%d -> %s:%d).\n"
-#define PPM_FMT_SUSPENDED "PPM: Rule-Event Pkt[" STDi64 "] address=0x%p used=%g usecs suspended %s\n"
+#define PPM_FMT_SUSPENDED \
+    "PPM: Rule-Event Pkt[" STDi64 \
+    "] address=0x%p used=%g usecs suspended %s\n"
 #define PPM_FMT_REENABLED "PPM: Rule-Event Pkt[" STDi64 "] address=0x%p re-enabled %s\n"
 
-void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
+void ppm_rule_log(ppm_cfg_t* ppm_cfg, uint64_t pktcnt, Packet* p)
 {
-    detection_option_tree_root_t *proot;
+    detection_option_tree_root_t* proot;
     char timestamp[TIMEBUF_SIZE];
     *timestamp = '\0';
 
     if (!ppm_cfg->max_rule_ticks)
-        return ;
+        return;
 
     if (ppm_n_crules)
     {
@@ -404,7 +421,7 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
         {
             int i;
 
-            if(!*timestamp)
+            if (!*timestamp)
                 ts_print((struct timeval*)&p->pkth->ts, timestamp);
 
             for (i=0; i< ppm_n_crules; i++)
@@ -412,7 +429,7 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
                 proot = ppm_crules[i];
 
                 LogMessage(PPM_FMT_REENABLED,
-                           pktcnt, (void*)proot, timestamp);
+                    pktcnt, (void*)proot, timestamp);
             }
         }
 
@@ -430,7 +447,7 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
             char src[INET6_ADDRSTRLEN];
             char dst[INET6_ADDRSTRLEN];
 
-            const sfip_t *addr = p->ptrs.ip_api.get_src();
+            const sfip_t* addr = p->ptrs.ip_api.get_src();
             sfip_ntop(addr, src, sizeof(src));
 
             addr = p->ptrs.ip_api.get_dst();
@@ -438,7 +455,7 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
 
             LogMessage(PPM_FMT_SUS_PKT, pktcnt, src, p->ptrs.sp, dst, p->ptrs.dp);
 
-            if(!*timestamp)
+            if (!*timestamp)
                 ts_print((struct timeval*)&p->pkth->ts, timestamp);
 
             for (i=0; i< ppm_n_rules; i++)
@@ -446,9 +463,9 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
                 proot = ppm_rules[i].tree;
 
                 LogMessage(PPM_FMT_SUSPENDED,
-                           pktcnt, (void*)proot,
-                           ppm_ticks_to_usecs((PPM_TICKS)ppm_rules[i].ticks),
-                           timestamp);
+                    pktcnt, (void*)proot,
+                    ppm_ticks_to_usecs((PPM_TICKS)ppm_rules[i].ticks),
+                    timestamp);
             }
         }
 
@@ -456,7 +473,7 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
     }
 }
 
-void ppm_set_rule_event(ppm_cfg_t *ppm_cfg, detection_option_tree_root_t *root)
+void ppm_set_rule_event(ppm_cfg_t* ppm_cfg, detection_option_tree_root_t* root)
 {
     if (!ppm_cfg->max_rule_ticks)
         return;
@@ -467,7 +484,7 @@ void ppm_set_rule_event(ppm_cfg_t *ppm_cfg, detection_option_tree_root_t *root)
         ppm_set_rule(root, ppm_rt->tot);
 }
 
-void ppm_clear_rule_event(ppm_cfg_t *ppm_cfg, detection_option_tree_root_t *root)
+void ppm_clear_rule_event(ppm_cfg_t* ppm_cfg, detection_option_tree_root_t* root)
 {
     if (!ppm_cfg->max_rule_ticks)
         return;
@@ -478,42 +495,41 @@ void ppm_clear_rule_event(ppm_cfg_t *ppm_cfg, detection_option_tree_root_t *root
         ppm_clear_rule(root);
 }
 
-
 /*
  * Config functions
  */
 
-void ppm_set_pkt_action(ppm_cfg_t *ppm_cfg, int flag)
+void ppm_set_pkt_action(ppm_cfg_t* ppm_cfg, int flag)
 {
     ppm_cfg->pkt_action = flag;
 }
 
-void ppm_set_pkt_log(ppm_cfg_t *ppm_cfg, int flag)
+void ppm_set_pkt_log(ppm_cfg_t* ppm_cfg, int flag)
 {
     ppm_cfg->pkt_log |= flag;
 }
 
-void ppm_set_rule_action(ppm_cfg_t *ppm_cfg, int flag)
+void ppm_set_rule_action(ppm_cfg_t* ppm_cfg, int flag)
 {
     ppm_cfg->rule_action = flag;
 }
 
-void ppm_set_rule_log(ppm_cfg_t *ppm_cfg, int flag)
+void ppm_set_rule_log(ppm_cfg_t* ppm_cfg, int flag)
 {
     ppm_cfg->rule_log |= flag;
 }
 
-void ppm_set_max_pkt_time(ppm_cfg_t *ppm_cfg, PPM_USECS usecs)
+void ppm_set_max_pkt_time(ppm_cfg_t* ppm_cfg, PPM_USECS usecs)
 {
     ppm_cfg->max_pkt_ticks = usecs * ppm_tpu;
 }
 
-void ppm_set_max_rule_time(ppm_cfg_t *ppm_cfg, PPM_USECS usecs)
+void ppm_set_max_rule_time(ppm_cfg_t* ppm_cfg, PPM_USECS usecs)
 {
     ppm_cfg->max_rule_ticks = usecs * ppm_tpu;
 }
 
-void ppm_set_max_suspend_time(ppm_cfg_t *ppm_cfg, PPM_SECS secs)
+void ppm_set_max_suspend_time(ppm_cfg_t* ppm_cfg, PPM_SECS secs)
 {
     /* use usecs instead of ticks for rule suspension during pcap playback */
     ppm_cfg->max_suspend_ticks = (uint64_t)secs * 1000000;
@@ -522,21 +538,22 @@ void ppm_set_max_suspend_time(ppm_cfg_t *ppm_cfg, PPM_SECS secs)
 #endif
 }
 
-void ppm_set_rule_threshold(ppm_cfg_t *ppm_cfg, unsigned int cnt)
+void ppm_set_rule_threshold(ppm_cfg_t* ppm_cfg, unsigned int cnt)
 {
     ppm_cfg->rule_threshold = cnt;
 }
 
 #ifdef DEBUG
-void ppm_set_debug_rules(ppm_cfg_t *ppm_cfg, int flag)
+void ppm_set_debug_rules(ppm_cfg_t* ppm_cfg, int flag)
 {
     ppm_cfg->debug_rules = flag;
 }
 
-void ppm_set_debug_pkts(ppm_cfg_t *ppm_cfg, int flag)
+void ppm_set_debug_pkts(ppm_cfg_t* ppm_cfg, int flag)
 {
     ppm_cfg->debug_pkts = flag;
 }
+
 #endif
 
 #endif

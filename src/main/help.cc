@@ -47,36 +47,36 @@ using namespace std;
 #include "framework/parameter.h"
 
 #define snort_help \
-"\n" \
-"Snort has several options to get more help:\n" \
-"\n" \
-"-? list command line options (same as --help)\n" \
-"--help this overview of help\n" \
-"--help-commands [<module prefix>] output matching commands\n" \
-"--help-config [<module prefix>] output matching config options\n" \
-"--help-counts [<module prefix>] output matching peg counts\n" \
-"--help-module <module> output description of given module\n" \
-"--help-modules list all available modules with brief help\n" \
-"--help-plugins list all available plugins with brief help\n" \
-"--help-options [<option prefix>] output matching command line options\n" \
-"--help-signals dump available control signals\n" \
-"--list-buffers output available inspection buffers\n" \
-"--list-builtin [<module prefix>] output matching builtin rules\n" \
-"--list-gids [<module prefix>] output matching generators\n" \
-"--list-modules [<module type>] list all known modules\n" \
-"--list-plugins list all known modules\n" \
-"--show-plugins list module and plugin versions\n" \
-"\n" \
-"--help* and --list* options preempt other processing so should be last on the\n" \
-"command line since any following options are ignored.  To ensure options like\n" \
-"--markup and --plugin-path take effect, place them ahead of the help or list\n" \
-"options.\n" \
-"\n" \
-"Options that filter output based on a matching prefix, such as --help-config\n" \
-"won't output anything if there is no match.  If no prefix is given, everything\n" \
-"matches.\n" \
-"\n" \
-"Report bugs to bugs@snort.org.\n"
+    "\n" \
+    "Snort has several options to get more help:\n" \
+    "\n" \
+    "-? list command line options (same as --help)\n" \
+    "--help this overview of help\n" \
+    "--help-commands [<module prefix>] output matching commands\n" \
+    "--help-config [<module prefix>] output matching config options\n" \
+    "--help-counts [<module prefix>] output matching peg counts\n" \
+    "--help-module <module> output description of given module\n" \
+    "--help-modules list all available modules with brief help\n" \
+    "--help-plugins list all available plugins with brief help\n" \
+    "--help-options [<option prefix>] output matching command line options\n" \
+    "--help-signals dump available control signals\n" \
+    "--list-buffers output available inspection buffers\n" \
+    "--list-builtin [<module prefix>] output matching builtin rules\n" \
+    "--list-gids [<module prefix>] output matching generators\n" \
+    "--list-modules [<module type>] list all known modules\n" \
+    "--list-plugins list all known modules\n" \
+    "--show-plugins list module and plugin versions\n" \
+    "\n" \
+    "--help* and --list* options preempt other processing so should be last on the\n" \
+    "command line since any following options are ignored.  To ensure options like\n" \
+    "--markup and --plugin-path take effect, place them ahead of the help or list\n" \
+    "options.\n" \
+    "\n" \
+    "Options that filter output based on a matching prefix, such as --help-config\n" \
+    "won't output anything if there is no match.  If no prefix is given, everything\n" \
+    "matches.\n" \
+    "\n" \
+    "Report bugs to bugs@snort.org.\n"
 
 //-------------------------------------------------------------------------
 
@@ -137,7 +137,8 @@ void help_signals(SnortConfig*, const char*)
     exit(0);
 }
 
-enum HelpType {
+enum HelpType
+{
     HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD,
     HT_BUF, HT_LST, HT_PLG, HT_DDR, HT_DBR,
     HT_HMO, HT_HPL, HT_DFL, HT_PEG

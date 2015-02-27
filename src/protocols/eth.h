@@ -17,22 +17,16 @@
 //--------------------------------------------------------------------------
 // eth.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifndef PROTOCOLS_ETH_H
 #define PROTOCOLS_ETH_H
 
-
 #include <arpa/inet.h>
-
 
 #define ETHERNET_HEADER_LEN 14
 #define ETHERNET_MTU                  1500
 
-
 namespace eth
 {
-
-
 constexpr uint16_t MTU_LEN = 1500;
 constexpr uint16_t MAX_FRAME_LENGTH = 1500;
 constexpr uint16_t MIN_ETHERTYPE = 1536;
@@ -52,9 +46,7 @@ struct EtherHdr
     inline uint16_t raw_ethertype() const
     { return ether_type; }
 };
-
 } // namespace eth
-
 
 #endif
 

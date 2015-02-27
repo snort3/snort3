@@ -55,7 +55,7 @@ static const Parameter s_params[] =
 class SoidModule : public Module
 {
 public:
-    SoidModule() : Module(s_name, s_help, s_params) { };
+    SoidModule() : Module(s_name, s_help, s_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
     std::string soid;
 };

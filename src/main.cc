@@ -157,7 +157,7 @@ class Request
 {
 public:
     void set(int, const char* = "");
-    const char* get() const { return buf; };
+    const char* get() const { return buf; }
 
     void read(int);
     void respond(const char*) const;
@@ -184,7 +184,8 @@ void Request::read(int f)
     buf[0] = '\0';
     unsigned n = ::read(fd, buf, sizeof(buf)-1);
 
-    do buf[n] = '\0';
+    do
+        buf[n] = '\0';
     while ( n-- and isspace(buf[n]) );
 }
 
@@ -215,12 +216,13 @@ static Request request;
 // pig foo
 //-------------------------------------------------------------------------
 
-class Pig {
+class Pig
+{
 public:
     Analyzer* analyzer;
     std::thread* athread;
 
-    Pig() { analyzer = nullptr; };
+    Pig() { analyzer = nullptr; }
 
     void start(unsigned, const char*, Swapper*);
     void stop(unsigned);
@@ -386,6 +388,7 @@ int main_dump_plugins(lua_State*)
     PluginManager::dump_plugins();
     return 0;
 }
+
 #endif
 
 int main_quit(lua_State*)
@@ -494,7 +497,7 @@ static int socket_init()
 
     listener = socket(AF_INET, SOCK_STREAM, 0);
 
-    if (listener < 0) 
+    if (listener < 0)
     {
         FatalError("socket failed: %s\n", strerror(errno));
         return -2;
@@ -511,7 +514,7 @@ static int socket_init()
     addr.sin_addr.s_addr = htonl(0x7F000001);
     addr.sin_port = htons(snort_conf->remote_control);
 
-    if ( ::bind(listener, (struct sockaddr*)&addr, sizeof(addr)) < 0 ) 
+    if ( ::bind(listener, (struct sockaddr*)&addr, sizeof(addr)) < 0 )
     {
         FatalError("bind failed: %s\n", strerror(errno));
         return -3;
@@ -545,9 +548,9 @@ static int socket_conn()
     struct sockaddr_in addr;
     socklen_t len = sizeof(addr);
 
-    remote_control = accept(listener, (struct sockaddr *) &addr, &len);
+    remote_control = accept(listener, (struct sockaddr*)&addr, &len);
 
-    if ( remote_control < 0 ) 
+    if ( remote_control < 0 )
         return -1;
 
     // FIXIT-L authenticate, use ssl ?
@@ -622,6 +625,7 @@ static bool service_users()
     }
     return false;
 }
+
 #endif
 
 static bool check_response()
@@ -792,7 +796,7 @@ static void snort_main()
 #endif
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     const char* s = getenv("SNORT_PROMPT");
 

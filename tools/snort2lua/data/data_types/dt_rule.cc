@@ -17,21 +17,18 @@
 //--------------------------------------------------------------------------
 // dt_rule.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #include "data/data_types/dt_rule.h"
 #include "data/dt_data.h"  // included for print mode
 #include "helpers/s2l_util.h"
 #include "data/data_types/dt_rule_option.h"
 
-
 Rule::Rule() :  num_hdr_data(0),
-                is_bad_rule(false),
-                is_comment(false)
+    is_bad_rule(false),
+    is_comment(false)
 {
 }
 
-Rule::~Rule(){}
-
+Rule::~Rule() { }
 
 bool Rule::add_hdr_data(std::string data)
 {
@@ -48,7 +45,6 @@ bool Rule::add_hdr_data(std::string data)
     }
 }
 
-
 void Rule::update_rule_action(std::string new_type)
 { hdr_data[0] = new_type; }
 
@@ -60,7 +56,6 @@ void Rule::add_comment(std::string new_comment)
 
 void Rule::make_comment()
 { is_comment = true; }
-
 
 void Rule::add_option(std::string keyword)
 {
@@ -75,7 +70,7 @@ void Rule::add_option(std::string keyword, std::string data)
 }
 
 void Rule::add_suboption(std::string keyword)
-{  options.back()->add_suboption(keyword); }
+{ options.back()->add_suboption(keyword); }
 
 void Rule::add_suboption(std::string keyword, std::string val)
 { options.back()->add_suboption(keyword, val); }
@@ -87,7 +82,7 @@ void Rule::set_curr_options_buffer(std::string new_buffer)
      * 2) The sticky buffer is set and is not equal to the new buffer
      */
     if ( (sticky_buffer.empty() && new_buffer.compare("pkt_data")) ||
-         (!sticky_buffer.empty() && sticky_buffer.compare(new_buffer)) )
+        (!sticky_buffer.empty() && sticky_buffer.compare(new_buffer)) )
     {
         RuleOption* new_opt = new RuleOption(new_buffer);
         options.insert(options.end() - 1, new_opt);
@@ -95,8 +90,7 @@ void Rule::set_curr_options_buffer(std::string new_buffer)
     }
 }
 
-
-std::ostream &operator<<( std::ostream& out, const Rule &rule)
+std::ostream& operator<<(std::ostream& out, const Rule& rule)
 {
     bool first_line = true;
 
@@ -107,11 +101,10 @@ std::ostream &operator<<( std::ostream& out, const Rule &rule)
             out << s << "\n";
     }
 
-
     if (rule.is_bad_rule || rule.is_comment)
         out << "#";
 
-    for(std::size_t i = 0; i < rule.num_hdr_data; i++)
+    for (std::size_t i = 0; i < rule.num_hdr_data; i++)
     {
         if (first_line)
             first_line = false;
@@ -141,3 +134,4 @@ std::ostream &operator<<( std::ostream& out, const Rule &rule)
 
     return out;
 }
+

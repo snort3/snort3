@@ -46,7 +46,7 @@ public:
     bool end(const char*, int, SnortConfig*) override;
 
     unsigned get_gid() const override
-    { return GID_HTTP_CLIENT; };
+    { return GID_HTTP_CLIENT; }
 
     const RuleMap* get_rules() const override;
     const PegInfo* get_pegs() const override;
@@ -72,7 +72,7 @@ public:
     const RuleMap* get_rules() const override;
 
     unsigned get_gid() const override
-    { return GID_HTTP_SERVER; };
+    { return GID_HTTP_SERVER; }
 
     HTTPINSPECT_CONF* get_data();
 

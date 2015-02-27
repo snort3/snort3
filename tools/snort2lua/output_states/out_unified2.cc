@@ -26,16 +26,14 @@
 
 namespace output
 {
-
 namespace
 {
-
 template<const std::string* output_name>
 class Unified2 : public ConversionState
 {
 public:
-    Unified2(Converter& c) : ConversionState(c) {};
-    virtual ~Unified2() {};
+    Unified2(Converter& c) : ConversionState(c) { }
+    virtual ~Unified2() { }
 
     virtual bool convert(std::istringstream& data_stream)
     {
@@ -75,7 +73,6 @@ public:
                 tmpval = parse_int_option("limit", arg_stream, false);
                 tmpval = table_api.add_option("units", "M") && tmpval;
             }
-
             else
                 tmpval = false;
 
@@ -90,17 +87,16 @@ public:
 template<const std::string* output_name>
 static ConversionState* unified2_ctor(Converter& c)
 {
-    c.get_table_api().open_top_level_table("unified2"); // create table in case there are no arguments
+    c.get_table_api().open_top_level_table("unified2"); // create table in case there are no
+                                                        // arguments
     c.get_table_api().close_table();
     return new Unified2<output_name>(c);
 }
-
 } // namespace
 
 /**************************
  *******  A P I ***********
  **************************/
-
 
 static const std::string unified2 = "unified2";
 static const std::string log_unified2 = "log_unified2";
@@ -109,25 +105,23 @@ static const std::string alert_unified2 = "alert_unified2";
 static const ConvertMap unified2_api =
 {
     unified2,
-    unified2_ctor<&unified2>,
+    unified2_ctor<& unified2>,
 };
 
 static const ConvertMap log_unified2_api =
 {
     log_unified2,
-    unified2_ctor<&log_unified2>,
+    unified2_ctor<& log_unified2>,
 };
 
 static const ConvertMap alert_unified2_api =
 {
     alert_unified2,
-    unified2_ctor<&alert_unified2>,
+    unified2_ctor<& alert_unified2>,
 };
-
 
 const ConvertMap* unified2_map = &unified2_api;
 const ConvertMap* log_unified2_map = &log_unified2_api;
 const ConvertMap* alert_unified2_map = &alert_unified2_api;
-
 } // output namespace
 

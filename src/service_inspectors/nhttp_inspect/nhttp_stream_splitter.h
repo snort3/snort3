@@ -27,20 +27,31 @@
 
 class NHttpInspect;
 
-class NHttpStreamSplitter : public StreamSplitter {
+class NHttpStreamSplitter : public StreamSplitter
+{
 public:
-    NHttpStreamSplitter(bool is_client_to_server, NHttpInspect* my_inspector_) : StreamSplitter(is_client_to_server),
-       source_id(is_client_to_server ? NHttpEnums::SRC_CLIENT : NHttpEnums::SRC_SERVER),
-       my_inspector(my_inspector_) { };
-    Status scan(Flow* flow, const uint8_t* data, uint32_t length, uint32_t not_used, uint32_t* flush_offset) override;
-    const StreamBuffer* reassemble(Flow* flow, unsigned total, unsigned offset, const uint8_t* data, unsigned len,
-       uint32_t flags, unsigned& copied) override;
-    bool is_paf() override { return true; };
-    unsigned max() override { return NHttpTestManager::use_test_input() ? NHttpEnums::DATABLOCKSIZE : paf_max; };
+    NHttpStreamSplitter(bool is_client_to_server, NHttpInspect* my_inspector_) : StreamSplitter(
+        is_client_to_server),
+        source_id(is_client_to_server ? NHttpEnums::SRC_CLIENT : NHttpEnums::SRC_SERVER),
+        my_inspector(my_inspector_) { }
+    Status scan(Flow* flow, const uint8_t* data, uint32_t length, uint32_t not_used,
+        uint32_t* flush_offset) override;
+    const StreamBuffer* reassemble(Flow* flow, unsigned total, unsigned offset, const
+        uint8_t* data, unsigned len,
+        uint32_t flags, unsigned& copied) override;
+    bool is_paf() override { return true; }
+    unsigned max() override
+    {
+        return NHttpTestManager::use_test_input() ?
+               NHttpEnums::DATABLOCKSIZE : paf_max;
+    }
+
 private:
-    void prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, NHttpEnums::SectionType section_type,
-       bool tcp_close, const NHttpInfractions& infractions, uint32_t num_octets, uint32_t length, uint32_t num_excess,
-       bool zero_chunk);
+    void prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, NHttpEnums::SectionType
+        section_type,
+        bool tcp_close, const NHttpInfractions& infractions, uint32_t num_octets, uint32_t length,
+        uint32_t num_excess,
+        bool zero_chunk);
     NHttpSplitter* get_splitter(NHttpEnums::SectionType type) const;
 
     const NHttpEnums::SourceId source_id;

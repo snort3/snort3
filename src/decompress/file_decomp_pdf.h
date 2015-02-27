@@ -38,7 +38,7 @@ typedef struct fd_PDF_Parse_Stack_s
 {
     uint8_t State;
     uint8_t Sub_State;
-} fd_PDF_Parse_Stack_t, *fd_PDF_Parse_Stack_p_t;
+} fd_PDF_Parse_Stack_t, * fd_PDF_Parse_Stack_p_t;
 
 typedef struct fd_PDF_Parse_s
 {
@@ -53,7 +53,7 @@ typedef struct fd_PDF_Parse_s
     uint32_t Gen_Number;
     uint8_t Sub_State;
     uint8_t State;
-} fd_PDF_Parse_t, *fd_PDF_Parse_p_t;
+} fd_PDF_Parse_t, * fd_PDF_Parse_p_t;
 
 typedef struct fd_PDF_Deflate_s
 {
@@ -69,14 +69,15 @@ typedef struct fd_PDF_s
     fd_PDF_Parse_t Parse;
     uint8_t Decomp_Type;
     uint8_t State;
-} fd_PDF_t, *fd_PDF_p_t;
+} fd_PDF_t, * fd_PDF_p_t;
 
 /* API Functions */
 
-fd_status_t File_Decomp_Init_PDF( fd_session_p_t SessionPtr );
+fd_status_t File_Decomp_Init_PDF(fd_session_p_t SessionPtr);
 
-fd_status_t File_Decomp_End_PDF( fd_session_p_t SessionPtr );
+fd_status_t File_Decomp_End_PDF(fd_session_p_t SessionPtr);
 
 fd_status_t File_Decomp_PDF(fd_session_p_t SessionPtr);
 
 #endif
+

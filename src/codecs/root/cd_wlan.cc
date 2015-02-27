@@ -18,7 +18,6 @@
 //--------------------------------------------------------------------------
 // cd_wlan.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -41,7 +40,6 @@
 
 namespace
 {
-
 static const RuleMap wlan_rules[] =
 {
     { DECODE_BAD_80211_ETHLLC, "bad 802.11 LLC header" },
@@ -52,92 +50,87 @@ static const RuleMap wlan_rules[] =
 class WlanCodecModule : public CodecModule
 {
 public:
-    WlanCodecModule() : CodecModule(CD_WLAN_NAME, CD_WLAN_HELP) {}
+    WlanCodecModule() : CodecModule(CD_WLAN_NAME, CD_WLAN_HELP) { }
 
     const RuleMap* get_rules() const
     { return wlan_rules; }
 };
 
-
 class WlanCodec : public Codec
 {
 public:
-    WlanCodec() : Codec(CD_WLAN_NAME){};
-    ~WlanCodec() {};
-
+    WlanCodec() : Codec(CD_WLAN_NAME) { }
+    ~WlanCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_data_link_type(std::vector<int>&) override;
-    void get_protocol_ids(std::vector<uint16_t>&v) override;
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
 
 #define MINIMAL_IEEE80211_HEADER_LEN    10    /* Ack frames and others */
 #define IEEE802_11_DATA_HDR_LEN         24    /* Header for data packets */
-
 } // namespace
 
-
-void WlanCodec::get_data_link_type(std::vector<int>&v)
+void WlanCodec::get_data_link_type(std::vector<int>& v)
 { v.push_back(DLT_IEEE802_11); }
 
-void WlanCodec::get_protocol_ids(std::vector<uint16_t>&v)
+void WlanCodec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(PROTO_ETHERNET_802_11); }
 
 bool WlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     /* do a little validation */
-    if(raw.len < MINIMAL_IEEE80211_HEADER_LEN)
+    if (raw.len < MINIMAL_IEEE80211_HEADER_LEN)
         return false;
 
     /* lay the wireless structure over the packet data */
-    const wlan::WifiHdr *wifih = reinterpret_cast<const wlan::WifiHdr *>(raw.data);
-
+    const wlan::WifiHdr* wifih = reinterpret_cast<const wlan::WifiHdr*>(raw.data);
 
     /* determine frame type */
-    switch(wifih->frame_control & 0x00ff)
+    switch (wifih->frame_control & 0x00ff)
     {
-        /* management frames */
-        case WLAN_TYPE_MGMT_ASREQ:
-        case WLAN_TYPE_MGMT_ASRES:
-        case WLAN_TYPE_MGMT_REREQ:
-        case WLAN_TYPE_MGMT_RERES:
-        case WLAN_TYPE_MGMT_PRREQ:
-        case WLAN_TYPE_MGMT_PRRES:
-        case WLAN_TYPE_MGMT_BEACON:
-        case WLAN_TYPE_MGMT_ATIM:
-        case WLAN_TYPE_MGMT_DIS:
-        case WLAN_TYPE_MGMT_AUTH:
-        case WLAN_TYPE_MGMT_DEAUTH:
-            break;
+    /* management frames */
+    case WLAN_TYPE_MGMT_ASREQ:
+    case WLAN_TYPE_MGMT_ASRES:
+    case WLAN_TYPE_MGMT_REREQ:
+    case WLAN_TYPE_MGMT_RERES:
+    case WLAN_TYPE_MGMT_PRREQ:
+    case WLAN_TYPE_MGMT_PRRES:
+    case WLAN_TYPE_MGMT_BEACON:
+    case WLAN_TYPE_MGMT_ATIM:
+    case WLAN_TYPE_MGMT_DIS:
+    case WLAN_TYPE_MGMT_AUTH:
+    case WLAN_TYPE_MGMT_DEAUTH:
+        break;
 
-            /* Control frames */
-        case WLAN_TYPE_CONT_PS:
-        case WLAN_TYPE_CONT_RTS:
-        case WLAN_TYPE_CONT_CTS:
-        case WLAN_TYPE_CONT_ACK:
-        case WLAN_TYPE_CONT_CFE:
-        case WLAN_TYPE_CONT_CFACK:
-            break;
-            /* Data packets without data */
-        case WLAN_TYPE_DATA_NULL:
-        case WLAN_TYPE_DATA_CFACK:
-        case WLAN_TYPE_DATA_CFPL:
-        case WLAN_TYPE_DATA_ACKPL:
+    /* Control frames */
+    case WLAN_TYPE_CONT_PS:
+    case WLAN_TYPE_CONT_RTS:
+    case WLAN_TYPE_CONT_CTS:
+    case WLAN_TYPE_CONT_ACK:
+    case WLAN_TYPE_CONT_CFE:
+    case WLAN_TYPE_CONT_CFACK:
+        break;
+    /* Data packets without data */
+    case WLAN_TYPE_DATA_NULL:
+    case WLAN_TYPE_DATA_CFACK:
+    case WLAN_TYPE_DATA_CFPL:
+    case WLAN_TYPE_DATA_ACKPL:
 
-            break;
-        case WLAN_TYPE_DATA_DTCFACK:
-        case WLAN_TYPE_DATA_DTCFPL:
-        case WLAN_TYPE_DATA_DTACKPL:
-        case WLAN_TYPE_DATA_DATA:
-        {
-            codec.lyr_len = IEEE802_11_DATA_HDR_LEN;
-            codec.next_prot_id = PROTO_ETHERNET_LLC;
+        break;
+    case WLAN_TYPE_DATA_DTCFACK:
+    case WLAN_TYPE_DATA_DTCFPL:
+    case WLAN_TYPE_DATA_DTACKPL:
+    case WLAN_TYPE_DATA_DATA:
+    {
+        codec.lyr_len = IEEE802_11_DATA_HDR_LEN;
+        codec.next_prot_id = PROTO_ETHERNET_LLC;
 
-            break;
-        }
-        default:
-            break;
+        break;
+    }
+    default:
+        break;
     }
 
     return true;
@@ -146,7 +139,7 @@ bool WlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 void WlanCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const uint16_t /*lyr_len*/)
 {
-    const wlan::WifiHdr *wifih = reinterpret_cast<const wlan::WifiHdr *>(raw_pkt);
+    const wlan::WifiHdr* wifih = reinterpret_cast<const wlan::WifiHdr*>(raw_pkt);
 
     /* src addr */
     TextLog_Print(text_log, "addr1(%02X:%02X:%02X:%02X:%02X:%02X) -> ",
@@ -165,7 +158,6 @@ void WlanCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
         ntohs(wifih->duration_id), ntohs(wifih->seq_control));
 }
 
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
@@ -179,9 +171,8 @@ static void mod_dtor(Module* m)
 static Codec* ctor(Module*)
 { return new WlanCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi wlan_api =
 {
@@ -202,7 +193,6 @@ static const CodecApi wlan_api =
     dtor,
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -212,3 +202,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_wlan = &wlan_api.base;
 #endif
+

@@ -64,7 +64,7 @@ public:
     ContentOption(PatternMatchData* c,
         option_type_t t = RULE_OPTION_TYPE_CONTENT) :
         IpsOption(s_name, t)
-    { config = c; };
+    { config = c; }
 
     ~ContentOption();
 
@@ -72,19 +72,19 @@ public:
     bool operator==(const IpsOption&) const override;
 
     CursorActionType get_cursor_type() const override
-    { return CAT_ADJUST; };
+    { return CAT_ADJUST; }
 
     bool is_relative() override
-    { return (config->relative == 1); };
+    { return (config->relative == 1); }
 
     PatternMatchData* get_data()
-    { return config; };
+    { return config; }
 
     void set_data(PatternMatchData* pmd)
-    { config = pmd; };
+    { config = pmd; }
 
     int eval(Cursor& c, Packet*) override
-    { return CheckANDPatternMatch(config, c); };
+    { return CheckANDPatternMatch(config, c); }
 
 protected:
     PatternMatchData* config;
@@ -96,16 +96,16 @@ protected:
 
 ContentOption::~ContentOption()
 {
-    PatternMatchData *pmd = config;
+    PatternMatchData* pmd = config;
 
     if ( !pmd )
         return;
 
     if (pmd->pattern_buf)
         free(pmd->pattern_buf);
-    if(pmd->skip_stride)
+    if (pmd->skip_stride)
         free(pmd->skip_stride);
-    if(pmd->shift_stride)
+    if (pmd->shift_stride)
         free(pmd->shift_stride);
 
     free(pmd->last_check);
@@ -115,7 +115,7 @@ ContentOption::~ContentOption()
 uint32_t ContentOption::hash() const
 {
     uint32_t a,b,c;
-    const PatternMatchData *pmd = config;
+    const PatternMatchData* pmd = config;
 
     a = pmd->negated;
     b = pmd->offset;
@@ -158,8 +158,8 @@ bool ContentOption::operator==(const IpsOption& ips) const
         return false;
 
     ContentOption& rhs = (ContentOption&)ips;
-    PatternMatchData *left = config;
-    PatternMatchData *right = rhs.config;
+    PatternMatchData* left = config;
+    PatternMatchData* right = rhs.config;
     unsigned int i;
 
     /* Sizes will be most different, check that first */
@@ -173,7 +173,7 @@ bool ContentOption::operator==(const IpsOption& ips) const
         if (left->no_case)
         {
             /* If no_case is set, do case insensitive compare on pattern */
-            for (i=0;i<left->pattern_size;i++)
+            for (i=0; i<left->pattern_size; i++)
             {
                 if (toupper(left->pattern_buf[i]) != toupper(right->pattern_buf[i]))
                 {
@@ -216,7 +216,7 @@ bool ContentOption::operator==(const IpsOption& ips) const
 
 static PatternMatchData* new_pmd()
 {
-    PatternMatchData *pmd = (PatternMatchData*)SnortAlloc(sizeof(PatternMatchData));
+    PatternMatchData* pmd = (PatternMatchData*)SnortAlloc(sizeof(PatternMatchData));
 
     /* Set any non-zero default values here. */
     pmd->offset_var = BYTE_EXTRACT_NO_VAR;
@@ -232,7 +232,7 @@ static void finalize_content(PatternMatchData* pmd, OptTreeNode*)
             get_instance_max() * sizeof(*pmd->last_check));
 }
 
-static void make_precomp(PatternMatchData * idx)
+static void make_precomp(PatternMatchData* idx)
 {
     idx->skip_stride = make_skip(idx->pattern_buf, idx->pattern_size);
     idx->shift_stride = make_shift(idx->pattern_buf, idx->pattern_size);
@@ -251,7 +251,7 @@ static void make_precomp(PatternMatchData * idx)
  * Returns: int => number of bytes before pattern repeats within itself
  *
  ***************************************************************************/
-static unsigned int GetMaxJumpSize(char *data, int data_len)
+static unsigned int GetMaxJumpSize(char* data, int data_len)
 {
     int i, j;
 
@@ -330,7 +330,7 @@ static int uniSearchReal(PatternMatchData* pmd, Cursor& c)
     {
         uint32_t extract;
         GetByteExtractValue(&extract, pmd->offset_var);
-        offset = (int) extract;
+        offset = (int)extract;
     }
     else
         offset = pmd->offset;
@@ -339,7 +339,7 @@ static int uniSearchReal(PatternMatchData* pmd, Cursor& c)
     {
         uint32_t extract;
         GetByteExtractValue(&extract, pmd->depth_var);
-        depth = (int) extract;
+        depth = (int)extract;
     }
     else
         depth = pmd->depth;
@@ -410,7 +410,7 @@ static int CheckANDPatternMatch(PatternMatchData* idx, Cursor& c)
     PROFILE_VARS;
     MODULE_PROFILE_START(contentPerfStats);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "CheckPatternANDMatch: "););
+    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "CheckPatternANDMatch: "); );
 
     found = uniSearchReal(idx, c);
 
@@ -430,11 +430,11 @@ static int CheckANDPatternMatch(PatternMatchData* idx, Cursor& c)
     if ( found )
     {
         rval = DETECTION_OPTION_MATCH;
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Pattern match found\n"););
+        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Pattern match found\n"); );
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Pattern match failed\n"););
+        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Pattern match failed\n"); );
     }
 
     MODULE_PROFILE_END(contentPerfStats);
@@ -461,15 +461,18 @@ bool content_next(PatternMatchData* pmd)
 // helper foo
 //-------------------------------------------------------------------------
 
-typedef enum {
+typedef enum
+{
     CMF_DISTANCE = 0x1, CMF_WITHIN = 0x2, CMF_OFFSET = 0x4, CMF_DEPTH = 0x8
 } ContentModifierFlags;
 
-static unsigned GetCMF (PatternMatchData* pmd)
+static unsigned GetCMF(PatternMatchData* pmd)
 {
     unsigned cmf = 0;
-    if ( (pmd->offset != 0) || (pmd->offset_var != -1) ) cmf |= CMF_OFFSET;
-    if ( (pmd->depth != 0) || (pmd->depth_var != -1) ) cmf |= CMF_DEPTH;
+    if ( (pmd->offset != 0) || (pmd->offset_var != -1) )
+        cmf |= CMF_OFFSET;
+    if ( (pmd->depth != 0) || (pmd->depth_var != -1) )
+        cmf |= CMF_DEPTH;
     return cmf;
 }
 
@@ -493,7 +496,7 @@ static void parse_content(PatternMatchData* ds_idx, const char* rule)
     const char* tmp_buf = buf.c_str();
     unsigned dummy_size = buf.size();
 
-    ds_idx->pattern_buf = (char *)SnortAlloc(dummy_size+1);
+    ds_idx->pattern_buf = (char*)SnortAlloc(dummy_size+1);
     memcpy(ds_idx->pattern_buf, tmp_buf, dummy_size);
 
     ds_idx->pattern_size = dummy_size;
@@ -501,7 +504,7 @@ static void parse_content(PatternMatchData* ds_idx, const char* rule)
     ds_idx->match_delta = GetMaxJumpSize(ds_idx->pattern_buf, ds_idx->pattern_size);
 }
 
-static void parse_offset(PatternMatchData* pmd, const char *data)
+static void parse_offset(PatternMatchData* pmd, const char* data)
 {
     if ( GetCMF(pmd) & BAD_OFFSET && pmd->relative )
     {
@@ -531,10 +534,10 @@ static void parse_offset(PatternMatchData* pmd, const char *data)
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "Pattern offset = %d\n",
-                pmd->offset););
+        pmd->offset); );
 }
 
-static void parse_depth(PatternMatchData* pmd, const char *data)
+static void parse_depth(PatternMatchData* pmd, const char* data)
 {
     if ( GetCMF(pmd) & BAD_DEPTH && pmd->relative )
     {
@@ -556,7 +559,7 @@ static void parse_depth(PatternMatchData* pmd, const char *data)
         if (pmd->depth < (int)pmd->pattern_size)
         {
             ParseError("the depth (%d) is less than the size of the content(%u)",
-                    pmd->depth, pmd->pattern_size);
+                pmd->depth, pmd->pattern_size);
             return;
         }
         pmd->depth_var = BYTE_EXTRACT_NO_VAR;
@@ -572,10 +575,10 @@ static void parse_depth(PatternMatchData* pmd, const char *data)
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "Pattern depth = %d\n",
-                pmd->depth););
+        pmd->depth); );
 }
 
-static void parse_distance(PatternMatchData* pmd, const char *data)
+static void parse_distance(PatternMatchData* pmd, const char* data)
 {
     if ( GetCMF(pmd) & BAD_DISTANCE && !pmd->relative )
     {
@@ -607,7 +610,7 @@ static void parse_distance(PatternMatchData* pmd, const char *data)
     pmd->relative = 1;
 }
 
-static void parse_within(PatternMatchData* pmd, const char *data)
+static void parse_within(PatternMatchData* pmd, const char* data)
 {
     if ( GetCMF(pmd) & BAD_WITHIN && !pmd->relative )
     {
@@ -643,7 +646,7 @@ static void parse_within(PatternMatchData* pmd, const char *data)
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "Pattern within = %d\n",
-                pmd->depth););
+        pmd->depth); );
 
     pmd->relative = 1;
 }
@@ -691,17 +694,17 @@ class ContentModule : public Module
 {
 public:
     ContentModule() : Module(s_name, s_help, s_params)
-    { pmd = nullptr; };
+    { pmd = nullptr; }
 
     ~ContentModule()
-    { delete pmd; };
+    { delete pmd; }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &contentPerfStats; };
+    { return &contentPerfStats; }
 
     PatternMatchData* get_data();
 
@@ -802,7 +805,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* content_ctor(Module* p, OptTreeNode * otn)
+static IpsOption* content_ctor(Module* p, OptTreeNode* otn)
 {
     ContentModule* m = (ContentModule*)p;
     PatternMatchData* pmd = m->get_data();

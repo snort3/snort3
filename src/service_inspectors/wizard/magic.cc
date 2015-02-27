@@ -20,14 +20,15 @@
 #include "magic.h"
 
 MagicPage::MagicPage(const MagicBook& b) : book(b)
-{ 
-    for ( int i = 0; i < 256; ++i ) next[i] = nullptr;
+{
+    for ( int i = 0; i < 256; ++i )
+        next[i] = nullptr;
     any = nullptr;
 }
 
 MagicPage::~MagicPage()
-{ 
-    for ( int i = 0; i < 256; ++i ) 
+{
+    for ( int i = 0; i < 256; ++i )
     {
         if ( next[i] && next[i] != this )
             delete next[i];

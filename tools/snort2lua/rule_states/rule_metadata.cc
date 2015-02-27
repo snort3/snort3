@@ -27,18 +27,15 @@
 
 namespace rules
 {
-
-namespace {
-
-
+namespace
+{
 class Metadata : public ConversionState
 {
 public:
-    Metadata(Converter& c) : ConversionState(c) {};
-    virtual ~Metadata() {};
+    Metadata(Converter& c) : ConversionState(c) { }
+    virtual ~Metadata() { }
     virtual bool convert(std::istringstream& data);
 };
-
 } // namespace
 
 bool Metadata::convert(std::istringstream& data_stream)
@@ -53,13 +50,12 @@ bool Metadata::convert(std::istringstream& data_stream)
     tmp = util::get_rule_option_args(data_stream);
     std::istringstream metadata_stream(util::trim(tmp));
 
-
-    while(metadata_stream >> keyword)
+    while (metadata_stream >> keyword)
     {
         value = std::string();
 
         while (metadata_stream >> tmp &&
-                tmp.back() != ',')
+            tmp.back() != ',')
         {
             if (!value.empty())
                 value += ' ';
@@ -87,7 +83,6 @@ bool Metadata::convert(std::istringstream& data_stream)
             rule_api.make_rule_a_comment();
             rule_api.add_comment("metadata: engine - deprecated");
         }
-
         else
         {
             rule_api.add_suboption(keyword, value);
@@ -104,7 +99,6 @@ bool Metadata::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-
 static ConversionState* ctor(Converter& c)
 {
     return new Metadata(c);
@@ -118,5 +112,5 @@ static const ConvertMap metadata_api =
 };
 
 const ConvertMap* metadata_map = &metadata_api;
-
 } // namespace rules
+

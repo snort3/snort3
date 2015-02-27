@@ -29,25 +29,28 @@
 // NHttpMsgHeadShared class
 //-------------------------------------------------------------------------
 
-class NHttpMsgHeadShared: public NHttpMsgSection {
+class NHttpMsgHeadShared : public NHttpMsgSection
+{
 public:
     void analyze() override;
     void gen_events() override;
 
-    int32_t get_num_headers() const { return num_headers; };
-    const Field& get_headers() const { return msg_text; };
-    const Field& get_header_line(int k) const { return header_line[k]; };
-    const Field& get_header_name(int k) const { return header_name[k]; };
-    const Field& get_header_value(int k) const { return header_value[k]; };
-    NHttpEnums::HeaderId get_header_name_id(int k)  const { return header_name_id[k]; };
+    int32_t get_num_headers() const { return num_headers; }
+    const Field& get_headers() const { return msg_text; }
+    const Field& get_header_line(int k) const { return header_line[k]; }
+    const Field& get_header_name(int k) const { return header_name[k]; }
+    const Field& get_header_value(int k) const { return header_value[k]; }
+    NHttpEnums::HeaderId get_header_name_id(int k)  const { return header_name_id[k]; }
     const Field& get_header_value_norm(NHttpEnums::HeaderId header_id);
 
 protected:
-    NHttpMsgHeadShared(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
-       NHttpEnums::SourceId source_id_, bool buf_owner) :
-       NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner) {};
+    NHttpMsgHeadShared(const uint8_t* buffer, const uint16_t buf_size,
+        NHttpFlowData* session_data_,
+        NHttpEnums::SourceId source_id_, bool buf_owner) :
+        NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner) { }
 
-    // Header normalization strategies. There should be one defined for every different way we can process
+    // Header normalization strategies. There should be one defined for every different way we can
+    // process
     // a header field value.
     static const HeaderNormalizer NORMALIZER_NIL;
     static const HeaderNormalizer NORMALIZER_BASIC;
@@ -68,7 +71,7 @@ protected:
     void parse_header_lines();
     void derive_header_name_id(int index);
 
-    void print_headers(FILE *output);
+    void print_headers(FILE* output);
 
     // All of these are indexed by the relative position of the header field in the message
     static const int MAXHEADERS = 200;  // I'm an arbitrary number. Need to revisit.
@@ -84,22 +87,4 @@ protected:
 };
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

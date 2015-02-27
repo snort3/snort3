@@ -40,10 +40,10 @@ struct Packet;
 // ctor(<key>) returns eval func and optional data
 // data is freed with dtor(data)
 
-typedef int (*SoEvalFunc)(void*, class Cursor&, Packet*);
-typedef SoEvalFunc (*SoNewFunc)(const char* key, void**);
-typedef void (*SoDelFunc)(void*);
-typedef void (*SoAuxFunc)();
+typedef int (* SoEvalFunc)(void*, class Cursor&, Packet*);
+typedef SoEvalFunc (* SoNewFunc)(const char* key, void**);
+typedef void (* SoDelFunc)(void*);
+typedef void (* SoAuxFunc)();
 
 struct SoApi
 {

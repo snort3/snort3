@@ -31,7 +31,6 @@ struct Packet;
 struct OptTreeNode;
 struct Event;
 
-
 #define TAG_SESSION   1
 #define TAG_HOST      2
 #define TAG_HOST_SRC  3
@@ -43,11 +42,11 @@ struct Event;
 #define TAG_METRIC_UNLIMITED  0x08
 #define TAG_METRIC_SESSION    0x10
 
-
 void InitTag(void);
 void CleanupTag(void);
-int CheckTagList(Packet *, Event *, void**);
-void SetTags(Packet *, OptTreeNode *, uint16_t);
+int CheckTagList(Packet*, Event*, void**);
+void SetTags(Packet*, OptTreeNode*, uint16_t);
 void TagCacheReset(void);
 
 #endif /* TAG_H */
+

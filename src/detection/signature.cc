@@ -35,10 +35,10 @@
 
 /********************* Reference Implementation *******************************/
 
-ReferenceNode * AddReference(
-    SnortConfig *sc, ReferenceNode **head, const char *system, const char *id)
+ReferenceNode* AddReference(
+    SnortConfig* sc, ReferenceNode** head, const char* system, const char* id)
 {
-    ReferenceNode *node;
+    ReferenceNode* node;
 
     if ((system == NULL) || (id == NULL) ||
         (sc == NULL) || (head == NULL))
@@ -47,7 +47,7 @@ ReferenceNode * AddReference(
     }
 
     /* create the new node */
-    node = (ReferenceNode *)SnortAlloc(sizeof(ReferenceNode));
+    node = (ReferenceNode*)SnortAlloc(sizeof(ReferenceNode));
 
     /* lookup the reference system */
     node->system = ReferenceSystemLookup(sc->references, system);
@@ -64,22 +64,22 @@ ReferenceNode * AddReference(
 }
 
 /* print a reference node */
-void FPrintReference(FILE *fp, ReferenceNode *ref_node)
+void FPrintReference(FILE* fp, ReferenceNode* ref_node)
 {
     if ((fp == NULL) || (ref_node == NULL))
         return;
 
     if (ref_node->system != NULL)
     {
-        if(ref_node->system->url)
+        if (ref_node->system->url)
         {
             fprintf(fp, "[Xref => %s%s]", ref_node->system->url,
-                    ref_node->id);
+                ref_node->id);
         }
         else
         {
             fprintf(fp, "[Xref => %s %s]", ref_node->system->name,
-                    ref_node->id);
+                ref_node->id);
         }
     }
     else
@@ -92,11 +92,11 @@ void FPrintReference(FILE *fp, ReferenceNode *ref_node)
 
 /********************** Reference System Implementation ***********************/
 
-ReferenceSystemNode * ReferenceSystemAdd(
+ReferenceSystemNode* ReferenceSystemAdd(
     SnortConfig* sc, const char* name, const char* url)
 {
-    ReferenceSystemNode **head = &sc->references; 
-    ReferenceSystemNode *node;
+    ReferenceSystemNode** head = &sc->references;
+    ReferenceSystemNode* node;
 
     if (name == NULL)
     {
@@ -108,7 +108,7 @@ ReferenceSystemNode * ReferenceSystemAdd(
         return NULL;
 
     /* create the new node */
-    node = (ReferenceSystemNode *)SnortAlloc(sizeof(ReferenceSystemNode));
+    node = (ReferenceSystemNode*)SnortAlloc(sizeof(ReferenceSystemNode));
 
     node->name = SnortStrdup(name);
     if (url != NULL)
@@ -121,7 +121,7 @@ ReferenceSystemNode * ReferenceSystemAdd(
     return node;
 }
 
-ReferenceSystemNode * ReferenceSystemLookup(ReferenceSystemNode *head, const char *name)
+ReferenceSystemNode* ReferenceSystemLookup(ReferenceSystemNode* head, const char* name)
 {
     if (name == NULL)
         return NULL;
@@ -137,13 +137,12 @@ ReferenceSystemNode * ReferenceSystemLookup(ReferenceSystemNode *head, const cha
     return head;
 }
 
-
 /****************** End of Reference System Implementation ********************/
 
 /************************ Class/Priority Implementation ***********************/
 
 void AddClassification(
-    SnortConfig *sc, const char* type, const char* name, int priority)
+    SnortConfig* sc, const char* type, const char* name, int priority)
 {
     int max_id = 0;
     ClassType* current = sc->classifications;
@@ -165,7 +164,7 @@ void AddClassification(
         current = current->next;
     }
 
-    ClassType* new_node = (ClassType *)SnortAlloc(sizeof(ClassType));
+    ClassType* new_node = (ClassType*)SnortAlloc(sizeof(ClassType));
 
     new_node->type = SnortStrdup(type);
     new_node->name = SnortStrdup(name);
@@ -178,9 +177,9 @@ void AddClassification(
 }
 
 /* NOTE:  This lookup can only be done during parse time */
-ClassType * ClassTypeLookupByType(SnortConfig *sc, const char *type)
+ClassType* ClassTypeLookupByType(SnortConfig* sc, const char* type)
 {
-    ClassType *node;
+    ClassType* node;
 
     if (sc == NULL)
         FatalError("%s(%d) Snort config is NULL.\n", __FILE__, __LINE__);
@@ -202,9 +201,9 @@ ClassType * ClassTypeLookupByType(SnortConfig *sc, const char *type)
 }
 
 /* NOTE:  This lookup can only be done during parse time */
-ClassType * ClassTypeLookupById(SnortConfig *sc, int id)
+ClassType* ClassTypeLookupById(SnortConfig* sc, int id)
 {
-    ClassType *node;
+    ClassType* node;
 
     if (sc == NULL)
         FatalError("%s(%d) Snort config is NULL.\n", __FILE__, __LINE__);
@@ -222,7 +221,7 @@ ClassType * ClassTypeLookupById(SnortConfig *sc, int id)
     return node;
 }
 
-void OtnRemove(SFGHASH *otn_map, OptTreeNode *otn)
+void OtnRemove(SFGHASH* otn_map, OptTreeNode* otn)
 {
     OtnKey key;
 
@@ -236,11 +235,11 @@ void OtnRemove(SFGHASH *otn_map, OptTreeNode *otn)
         sfghash_remove(otn_map, &key);
 }
 
-void OtnFree(void *data)
+void OtnFree(void* data)
 {
-    OptTreeNode *otn = (OptTreeNode *)data;
-    OptFpList *opt_func;
-    ReferenceNode *ref_node;
+    OptTreeNode* otn = (OptTreeNode*)data;
+    OptFpList* opt_func;
+    ReferenceNode* ref_node;
     unsigned int svc_idx;
 
     if (otn == NULL)
@@ -250,7 +249,7 @@ void OtnFree(void *data)
 
     while (opt_func != NULL)
     {
-        OptFpList *tmp = opt_func;
+        OptFpList* tmp = opt_func;
         opt_func = opt_func->next;
         free(tmp);
     }
@@ -271,7 +270,7 @@ void OtnFree(void *data)
     ref_node = otn->sigInfo.refs;
     while (ref_node != NULL)
     {
-        ReferenceNode *tmp = ref_node;
+        ReferenceNode* tmp = ref_node;
 
         ref_node = ref_node->next;
         free(tmp->id);
@@ -292,7 +291,7 @@ void OtnFree(void *data)
 
         for (i = 0; i < otn->proto_node_num; i++)
         {
-            RuleTreeNode *rtn = deleteRtnFromOtn(otn, i);
+            RuleTreeNode* rtn = deleteRtnFromOtn(otn, i);
             if (rtn != NULL)
                 free(rtn);
         }
@@ -308,12 +307,12 @@ void OtnFree(void *data)
     free(otn);
 }
 
-SFGHASH * OtnLookupNew(void)
+SFGHASH* OtnLookupNew(void)
 {
     return sfghash_new(10000, sizeof(OtnKey), 0, OtnFree);
 }
 
-void OtnLookupAdd(SFGHASH *otn_map, OptTreeNode *otn)
+void OtnLookupAdd(SFGHASH* otn_map, OptTreeNode* otn)
 {
     int status;
     OtnKey key;
@@ -327,29 +326,29 @@ void OtnLookupAdd(SFGHASH *otn_map, OptTreeNode *otn)
     status = sfghash_add(otn_map, &key, otn);
     switch (status)
     {
-        case SFGHASH_OK:
-            /* otn was inserted successfully */
-            break;
+    case SFGHASH_OK:
+        /* otn was inserted successfully */
+        break;
 
-        case SFGHASH_INTABLE:
-            ParseError("duplicate rule with same gid (%u) and sid (%u)",
-                key.gid, key.sid);
-            break;
+    case SFGHASH_INTABLE:
+        ParseError("duplicate rule with same gid (%u) and sid (%u)",
+            key.gid, key.sid);
+        break;
 
-        case SFGHASH_NOMEM:
-            FatalError("Failed to allocate memory for rule.\n");
-            break;
+    case SFGHASH_NOMEM:
+        FatalError("Failed to allocate memory for rule.\n");
+        break;
 
-        default:
-            FatalError("%s(%d): OtnLookupAdd() - unexpected return value "
-                       "from sfghash_add().\n", __FILE__, __LINE__);
-            break;
+    default:
+        FatalError("%s(%d): OtnLookupAdd() - unexpected return value "
+            "from sfghash_add().\n", __FILE__, __LINE__);
+        break;
     }
 }
 
-OptTreeNode * OtnLookup(SFGHASH *otn_map, uint32_t gid, uint32_t sid)
+OptTreeNode* OtnLookup(SFGHASH* otn_map, uint32_t gid, uint32_t sid)
 {
-    OptTreeNode * otn;
+    OptTreeNode* otn;
     OtnKey key;
 
     if (otn_map == NULL)
@@ -358,19 +357,18 @@ OptTreeNode * OtnLookup(SFGHASH *otn_map, uint32_t gid, uint32_t sid)
     key.gid = gid;
     key.sid = sid;
 
-    otn = (OptTreeNode *)sfghash_find(otn_map, &key);
+    otn = (OptTreeNode*)sfghash_find(otn_map, &key);
 
     return otn;
 }
 
-void OtnLookupFree(SFGHASH *otn_map)
+void OtnLookupFree(SFGHASH* otn_map)
 {
     if (otn_map == NULL)
         return;
 
     sfghash_delete(otn_map);
 }
-
 
 /***************** End of Class/Priority Implementation ***********************/
 

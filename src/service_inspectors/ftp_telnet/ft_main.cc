@@ -81,20 +81,21 @@ void ft_update_perf(ProfileStats& stats)
         ftppDetectCalled = 0;
     }
 }
+
 #endif
 
-void CleanupFTPCMDConf(void *ftpCmd)
+void CleanupFTPCMDConf(void* ftpCmd)
 {
-    FTP_CMD_CONF *FTPCmd = (FTP_CMD_CONF *)ftpCmd;
+    FTP_CMD_CONF* FTPCmd = (FTP_CMD_CONF*)ftpCmd;
     /* Free the FTP_PARAM_FMT stuff... */
     ftpp_ui_config_reset_ftp_cmd(FTPCmd);
 
     free(FTPCmd);
 }
 
-void CleanupFTPServerConf(void *serverConf)
+void CleanupFTPServerConf(void* serverConf)
 {
-    FTP_SERVER_PROTO_CONF *ServerConf = (FTP_SERVER_PROTO_CONF*)serverConf;
+    FTP_SERVER_PROTO_CONF* ServerConf = (FTP_SERVER_PROTO_CONF*)serverConf;
     if (ServerConf == NULL)
         return;
 
@@ -116,15 +117,15 @@ void CleanupFTPServerConf(void *serverConf)
     ftp_cmd_lookup_cleanup(&ServerConf->cmd_lookup);
 }
 
-void CleanupFTPBounceTo(void *ftpBounce)
+void CleanupFTPBounceTo(void* ftpBounce)
 {
-    FTP_BOUNCE_TO *FTPBounce = (FTP_BOUNCE_TO *)ftpBounce;
+    FTP_BOUNCE_TO* FTPBounce = (FTP_BOUNCE_TO*)ftpBounce;
     free(FTPBounce);
 }
 
-void CleanupFTPClientConf(void *clientConf)
+void CleanupFTPClientConf(void* clientConf)
 {
-    FTP_CLIENT_PROTO_CONF *ClientConf = (FTP_CLIENT_PROTO_CONF*)clientConf;
+    FTP_CLIENT_PROTO_CONF* ClientConf = (FTP_CLIENT_PROTO_CONF*)clientConf;
     if (ClientConf == NULL)
         return;
 
@@ -145,9 +146,9 @@ void CleanupFTPClientConf(void *clientConf)
  *          1               => errors
  *
  */
-int CheckFTPCmdOptions(FTP_SERVER_PROTO_CONF *serverConf)
+int CheckFTPCmdOptions(FTP_SERVER_PROTO_CONF* serverConf)
 {
-    FTP_CMD_CONF *cmdConf;
+    FTP_CMD_CONF* cmdConf;
     int iRet =0;
     int config_error = 0;
 
@@ -186,7 +187,7 @@ int CheckFTPCmdOptions(FTP_SERVER_PROTO_CONF *serverConf)
  *
  */
 int CheckFTPServerConfigs(
-    SnortConfig*, FTP_SERVER_PROTO_CONF *serverConf)
+    SnortConfig*, FTP_SERVER_PROTO_CONF* serverConf)
 {
     if (CheckFTPCmdOptions(serverConf))
     {
@@ -215,7 +216,7 @@ int FTPCheckConfigs(SnortConfig* sc, void* pData)
     if ( !config )
     {
         ErrorMessage("FTP configuration requires "
-                "default client and default server configurations.\n");
+            "default client and default server configurations.\n");
         return -1;
     }
 #if 0
@@ -243,7 +244,7 @@ int FTPCheckConfigs(SnortConfig* sc, void* pData)
  * Returns: None
  *
  */
-void do_detection(Packet *p)
+void do_detection(Packet* p)
 {
     PROFILE_VARS;
 

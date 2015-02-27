@@ -69,9 +69,9 @@ int PrintConfOpt(bool on, const char* Option)
  * Returns: None
  *
  */
-static void PrintFormatDate(char *buf, FTP_DATE_FMT *DateFmt)
+static void PrintFormatDate(char* buf, FTP_DATE_FMT* DateFmt)
 {
-    FTP_DATE_FMT *OptChild;
+    FTP_DATE_FMT* OptChild;
 
     if (!DateFmt->empty)
         sfsnprintfappend(buf, BUF_SIZE, "%s", DateFmt->format_string);
@@ -113,11 +113,11 @@ static void PrintFormatDate(char *buf, FTP_DATE_FMT *DateFmt)
  * Returns: None
  *
  */
-static void PrintCmdFmt(char *buf, FTP_PARAM_FMT *CmdFmt)
+static void PrintCmdFmt(char* buf, FTP_PARAM_FMT* CmdFmt)
 {
-    FTP_PARAM_FMT *OptChild;
+    FTP_PARAM_FMT* OptChild;
 
-    switch(CmdFmt->type)
+    switch (CmdFmt->type)
     {
     case e_int:
         sfsnprintfappend(buf, BUF_SIZE, " %s", F_INT);
@@ -135,7 +135,7 @@ static void PrintCmdFmt(char *buf, FTP_PARAM_FMT *CmdFmt)
         break;
     case e_literal:
         sfsnprintfappend(buf, BUF_SIZE, " %s 0x%x", F_LITERAL,
-                CmdFmt->format.literal);
+            CmdFmt->format.literal);
         break;
     case e_unrestricted:
         sfsnprintfappend(buf, BUF_SIZE, " %s", F_STRING);
@@ -170,7 +170,7 @@ static void PrintCmdFmt(char *buf, FTP_PARAM_FMT *CmdFmt)
     {
         int i;
         sfsnprintfappend(buf, BUF_SIZE, "{");
-        for (i=0;i<CmdFmt->numChoices;i++)
+        for (i=0; i<CmdFmt->numChoices; i++)
         {
             if (i)
                 sfsnprintfappend(buf, BUF_SIZE, "|");
@@ -182,12 +182,11 @@ static void PrintCmdFmt(char *buf, FTP_PARAM_FMT *CmdFmt)
 
     if (CmdFmt->next_param_fmt && CmdFmt->next_param_fmt->prev_optional)
         PrintCmdFmt(buf, CmdFmt->next_param_fmt);
-
 }
 
-int PrintFTPClientConf(FTP_CLIENT_PROTO_CONF *ClientConf)
+int PrintFTPClientConf(FTP_CLIENT_PROTO_CONF* ClientConf)
 {
-    FTP_BOUNCE_TO *FTPBounce;
+    FTP_BOUNCE_TO* FTPBounce;
     int iErr;
 
     LogMessage("ftp_client:\n");
@@ -204,7 +203,7 @@ int PrintFTPClientConf(FTP_CLIENT_PROTO_CONF *ClientConf)
 
         while (FTPBounce)
         {
-            char *addr_str;
+            char* addr_str;
             char bits_str[5];
             uint8_t bits;
             bits_str[0] = '\0';
@@ -219,14 +218,14 @@ int PrintFTPClientConf(FTP_CLIENT_PROTO_CONF *ClientConf)
             if (FTPBounce->porthi)
             {
                 LogMessage("        Address: %s%s, Ports: %d-%d\n",
-                            addr_str, bits_str[0] ? bits_str : "",
-                            FTPBounce->portlo, FTPBounce->porthi);
+                    addr_str, bits_str[0] ? bits_str : "",
+                    FTPBounce->portlo, FTPBounce->porthi);
             }
             else
             {
                 LogMessage("        Address: %s%s, Port: %d\n",
-                            addr_str, bits_str[0] ? bits_str : "",
-                            FTPBounce->portlo);
+                    addr_str, bits_str[0] ? bits_str : "",
+                    FTPBounce->portlo);
             }
 
             FTPBounce = ftp_bounce_lookup_next(ClientConf->bounce_lookup, &iErr);
@@ -236,13 +235,13 @@ int PrintFTPClientConf(FTP_CLIENT_PROTO_CONF *ClientConf)
     return FTPP_SUCCESS;
 }
 
-int PrintFTPServerConf(FTP_SERVER_PROTO_CONF *ServerConf)
+int PrintFTPServerConf(FTP_SERVER_PROTO_CONF* ServerConf)
 {
     char buf[BUF_SIZE+1];
     int iRet;
-    FTP_CMD_CONF *FTPCmd;
+    FTP_CMD_CONF* FTPCmd;
 
-    if(!ServerConf)
+    if (!ServerConf)
     {
         return FTPP_INVALID_ARG;
     }
@@ -278,7 +277,7 @@ int PrintFTPServerConf(FTP_SERVER_PROTO_CONF *ServerConf)
 
             if (FTPCmd->check_validity)
             {
-                FTP_PARAM_FMT *CmdFmt = FTPCmd->param_format;
+                FTP_PARAM_FMT* CmdFmt = FTPCmd->param_format;
                 while (CmdFmt != NULL)
                 {
                     PrintCmdFmt(buf, CmdFmt);

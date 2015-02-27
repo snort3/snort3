@@ -50,7 +50,7 @@ static const Parameter s_params[] =
 class RevModule : public Module
 {
 public:
-    RevModule() : Module(s_name, s_help, s_params) { };
+    RevModule() : Module(s_name, s_help, s_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
     int rev;
 };

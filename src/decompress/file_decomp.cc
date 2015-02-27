@@ -46,8 +46,9 @@ static struct sig_map_s
     file_compression_type_t File_Compression_Type;
 } Signature_Map[] =
 {
+    // none: compression type is embedded in PDF dictionaries
+    { PDF_Sig, sizeof(PDF_Sig), false, FILE_TYPE_PDF, FILE_COMPRESSION_TYPE_NONE },
 
-    { PDF_Sig, sizeof(PDF_Sig), false, FILE_TYPE_PDF, FILE_COMPRESSION_TYPE_NONE },  // Compression type is embedded in PDF dictionaries
     { SWF_ZLIB_Sig, sizeof(SWF_ZLIB_Sig), false, FILE_TYPE_SWF, FILE_COMPRESSION_TYPE_ZLIB },
 #ifdef LZMA
     { SWF_LZMA_Sig, sizeof(SWF_LZMA_Sig), false, FILE_TYPE_SWF, FILE_COMPRESSION_TYPE_LZMA },
@@ -66,23 +67,23 @@ static uint8_t File_Decomp_Buffer[DECODE_BLEN];
 
 /* Look for possible sig at the current payload location.
    Do NOT beyond the current location (initial Next_In). */
-static fd_status_t Locate_Sig_Here( fd_session_p_t SessionPtr )
+static fd_status_t Locate_Sig_Here(fd_session_p_t SessionPtr)
 {
     uint64_t Sig_Index, Char_Index;
 
     /* If there's no new input, we don't change state */
-    if( (SessionPtr->Avail_In == 0) ||
+    if ( (SessionPtr->Avail_In == 0) ||
         (SessionPtr->Next_In == NULL) || (SessionPtr->Next_Out == NULL) )
         return( File_Decomp_Error );
 
-    if( SessionPtr->Avail_Out < MAX_SIG_LENGTH )
+    if ( SessionPtr->Avail_Out < MAX_SIG_LENGTH )
         return( File_Decomp_BlockOut );
 
     /* Given that we are here, there is at least one input byte to process.
        And at least enough room in the output stream for the signature. */
 
-   /* Have we started down a sig string? */
-    if( (SessionPtr->Sig_State & SIG_MATCH_ACTIVE) != 0 )
+    /* Have we started down a sig string? */
+    if ( (SessionPtr->Sig_State & SIG_MATCH_ACTIVE) != 0 )
     {
         /* Get the current index into the sig map table (indicating which sig) and
            the index into the sig itself.  */
@@ -98,37 +99,38 @@ static fd_status_t Locate_Sig_Here( fd_session_p_t SessionPtr )
 
     /* There must be more in the input stream for us to look at, else
        we indicate that we didn't find the sig yet. */
-    if( SessionPtr->Avail_In <= Char_Index )
+    if ( SessionPtr->Avail_In <= Char_Index )
         return( File_Decomp_BlockIn );
 
     /* NOTE:  The following code block makes the assumption that there are
-              at least MAX_SIG_LENGTH bytes in the output buffer.  This assumption 
+              at least MAX_SIG_LENGTH bytes in the output buffer.  This assumption
               is valid for the current implementation where the signature only
               occurs at the beginning of the file.  For the generic case of the sig
               begin embedded with the file, the seach will need to modified.*/
-    while( 1 )
+    while ( 1 )
     {
         /* if we get to the end of the sig table (or the table is empty),
            indicate that we didn't match a sig */
-        if( Signature_Map[Sig_Index].Sig == NULL )
+        if ( Signature_Map[Sig_Index].Sig == NULL )
             return( File_Decomp_NoSig );
 
         /* Get next char and see if it matches next char in sig */
-        if( (Signature_Map[Sig_Index].Enabled) &&
+        if ( (Signature_Map[Sig_Index].Enabled) &&
             (*(SessionPtr->Next_In+Char_Index) == *(Signature_Map[Sig_Index].Sig+Char_Index)) )
-        { 
+        {
             /* Check to see if we are at the end of the sig string. */
-            if( Char_Index == (Signature_Map[Sig_Index].Sig_Length-1) )
+            if ( Char_Index == (Signature_Map[Sig_Index].Sig_Length-1) )
             {
-                uint8_t *Sig = (uint8_t *)Signature_Map[Sig_Index].Sig;
+                uint8_t* Sig = (uint8_t*)Signature_Map[Sig_Index].Sig;
                 uint16_t Len = (uint16_t)Signature_Map[Sig_Index].Sig_Length;
 
                 SessionPtr->File_Type = Signature_Map[Sig_Index].File_Type;
                 SessionPtr->Decomp_Type = Signature_Map[Sig_Index].File_Compression_Type;
 
-                if( (SessionPtr->File_Type == FILE_TYPE_SWF) && ((SessionPtr->Modes & FILE_REVERT_BIT) != 0) )
+                if ( (SessionPtr->File_Type == FILE_TYPE_SWF) && ((SessionPtr->Modes &
+                    FILE_REVERT_BIT) != 0) )
                 {
-                    Sig = (uint8_t *)SWF_Uncomp_Sig;
+                    Sig = (uint8_t*)SWF_Uncomp_Sig;
                     Len = (uint16_t)sizeof( SWF_Uncomp_Sig );
                 }
                 /* The following is safe as we can only be here is there are
@@ -140,9 +142,9 @@ static fd_status_t Locate_Sig_Here( fd_session_p_t SessionPtr )
                 SessionPtr->Total_In += Len;
                 return( File_Decomp_OK );
             }
-                
+
             /* check for more available input bytes */
-            if( Char_Index < SessionPtr->Avail_In )
+            if ( Char_Index < SessionPtr->Avail_In )
             {
                 /* Set to the next char and keep checking this matching sig */
                 Char_Index += 1;
@@ -154,8 +156,8 @@ static fd_status_t Locate_Sig_Here( fd_session_p_t SessionPtr )
                    and save the sig index.  We'll pickup where we left off when more
                    input is available. */
                 SessionPtr->Sig_State = SIG_MATCH_ACTIVE |
-                                       ((Sig_Index & SIG_SIG_INDEX_MASK) << SIG_SIG_INDEX_SHIFT) |
-                                       ((Char_Index & SIG_CHR_INDEX_MASK) << SIG_CHR_INDEX_SHIFT);
+                    ((Sig_Index & SIG_SIG_INDEX_MASK) << SIG_SIG_INDEX_SHIFT) |
+                    ((Char_Index & SIG_CHR_INDEX_MASK) << SIG_CHR_INDEX_SHIFT);
                 return( File_Decomp_BlockIn );
             }
         }
@@ -169,53 +171,53 @@ static fd_status_t Locate_Sig_Here( fd_session_p_t SessionPtr )
     }
 }
 
-static fd_status_t Initialize_Decompression( fd_session_p_t SessionPtr )
+static fd_status_t Initialize_Decompression(fd_session_p_t SessionPtr)
 {
     fd_status_t Ret_Code = File_Decomp_OK;
 
-    switch( SessionPtr->File_Type )
+    switch ( SessionPtr->File_Type )
     {
-        case( FILE_TYPE_SWF ):
-        {
-            Ret_Code = File_Decomp_Init_SWF( SessionPtr );
-            break;
-        }
-        case( FILE_TYPE_PDF ):
-        {
-            Ret_Code = File_Decomp_Init_PDF( SessionPtr );
-            break;
-        }
-        default:
-           return( File_Decomp_Error );
+    case ( FILE_TYPE_SWF ):
+    {
+        Ret_Code = File_Decomp_Init_SWF(SessionPtr);
+        break;
+    }
+    case ( FILE_TYPE_PDF ):
+    {
+        Ret_Code = File_Decomp_Init_PDF(SessionPtr);
+        break;
+    }
+    default:
+        return( File_Decomp_Error );
     }
 
-    if( Ret_Code == File_Decomp_OK )
+    if ( Ret_Code == File_Decomp_OK )
         SessionPtr->State = STATE_ACTIVE;
 
     return( Ret_Code );
 }
 
-static fd_status_t Process_Decompression( fd_session_p_t SessionPtr )
+static fd_status_t Process_Decompression(fd_session_p_t SessionPtr)
 {
     fd_status_t Ret_Code = File_Decomp_OK;
 
-    switch( SessionPtr->File_Type )
+    switch ( SessionPtr->File_Type )
     {
-        case( FILE_TYPE_SWF ):
-        {
-            Ret_Code = File_Decomp_SWF( SessionPtr );
-            break;
-        }
-        case( FILE_TYPE_PDF ):
-        {
-            Ret_Code = File_Decomp_PDF( SessionPtr );
-            break;
-        }
-        default:
-           return( File_Decomp_Error );
+    case ( FILE_TYPE_SWF ):
+    {
+        Ret_Code = File_Decomp_SWF(SessionPtr);
+        break;
+    }
+    case ( FILE_TYPE_PDF ):
+    {
+        Ret_Code = File_Decomp_PDF(SessionPtr);
+        break;
+    }
+    default:
+        return( File_Decomp_Error );
     }
 
-    if( Ret_Code == File_Decomp_Complete )
+    if ( Ret_Code == File_Decomp_Complete )
         SessionPtr->State = STATE_COMPLETE;
 
     return( Ret_Code );
@@ -223,43 +225,43 @@ static fd_status_t Process_Decompression( fd_session_p_t SessionPtr )
 
 /* The caller provides Compr_Depth, Decompr_Depth and Modes in the session object.
    Based on the requested Modes, gear=up to initialize the potential decompressors. */
-fd_status_t File_Decomp_Init( fd_session_p_t SessionPtr )
+fd_status_t File_Decomp_Init(fd_session_p_t SessionPtr)
 {
     int Sig;
 
-    if( SessionPtr == NULL )
+    if ( SessionPtr == NULL )
         return( File_Decomp_Error );
 
     SessionPtr->State = STATE_READY;
     SessionPtr->File_Type = FILE_TYPE_NONE;
     SessionPtr->Decomp_Type = FILE_COMPRESSION_TYPE_NONE;
 
-    for( Sig=0; Signature_Map[Sig].Sig != NULL; Sig++ )
+    for ( Sig=0; Signature_Map[Sig].Sig != NULL; Sig++ )
     {
-        if( (Signature_Map[Sig].File_Type == FILE_TYPE_PDF ) &&
+        if ( (Signature_Map[Sig].File_Type == FILE_TYPE_PDF ) &&
             ((SessionPtr->Modes & FILE_PDF_ANY) != 0) )
             Signature_Map[Sig].Enabled = true;
 
-        if( (Signature_Map[Sig].File_Type == FILE_TYPE_SWF ) &&
+        if ( (Signature_Map[Sig].File_Type == FILE_TYPE_SWF ) &&
             (Signature_Map[Sig].File_Compression_Type == FILE_COMPRESSION_TYPE_ZLIB) &&
             ((SessionPtr->Modes & FILE_SWF_ZLIB_BIT) != 0) )
             Signature_Map[Sig].Enabled = true;
- 
+
 #ifdef LZMA
-        if( (Signature_Map[Sig].File_Type == FILE_TYPE_SWF ) &&
+        if ( (Signature_Map[Sig].File_Type == FILE_TYPE_SWF ) &&
             (Signature_Map[Sig].File_Compression_Type == FILE_COMPRESSION_TYPE_LZMA) &&
             ((SessionPtr->Modes & FILE_SWF_LZMA_BIT) != 0) )
             Signature_Map[Sig].Enabled = true;
-#endif 
+#endif
     }
 
     return( File_Decomp_OK );
 }
 
 /* Setup session to use internal decompression buffer. Set compr/decompr limits */
-fd_status_t File_Decomp_SetBuf( fd_session_p_t SessionPtr )
+fd_status_t File_Decomp_SetBuf(fd_session_p_t SessionPtr)
 {
-    if( SessionPtr == NULL )
+    if ( SessionPtr == NULL )
         return( File_Decomp_Error );
 
     SessionPtr->Buffer = File_Decomp_Buffer;
@@ -269,11 +271,11 @@ fd_status_t File_Decomp_SetBuf( fd_session_p_t SessionPtr )
     SessionPtr->Avail_Out = sizeof(File_Decomp_Buffer);
 
     /* If Compr/Decompr limits are set, then enforce then. */
-    if( SessionPtr->Decompr_Depth > 0 )
+    if ( SessionPtr->Decompr_Depth > 0 )
     {
         uint32_t remainder;
 
-        if( SessionPtr->Total_Out > SessionPtr->Decompr_Depth )
+        if ( SessionPtr->Total_Out > SessionPtr->Decompr_Depth )
             return( File_Decomp_Error );
 
         /* Calc whats left in allowance */
@@ -281,20 +283,20 @@ fd_status_t File_Decomp_SetBuf( fd_session_p_t SessionPtr )
 
         /* Use smaller of remainder or value provided */
         SessionPtr->Avail_Out = (remainder < SessionPtr->Avail_Out) ?
-                                 remainder : SessionPtr->Avail_Out;
+            remainder : SessionPtr->Avail_Out;
     }
 
-    if( SessionPtr->Compr_Depth > 0 )
+    if ( SessionPtr->Compr_Depth > 0 )
     {
         uint32_t remainder;
 
-        if( SessionPtr->Total_In > SessionPtr->Compr_Depth )
+        if ( SessionPtr->Total_In > SessionPtr->Compr_Depth )
             return( File_Decomp_Error );
 
         remainder = (SessionPtr->Total_In - SessionPtr->Compr_Depth);
 
         SessionPtr->Avail_In = (remainder < SessionPtr->Avail_In) ?
-                                remainder : SessionPtr->Avail_In;
+            remainder : SessionPtr->Avail_In;
     }
 
     /* SessionPtr->Next_In is set by the caller to File_Decomp() */
@@ -320,26 +322,26 @@ fd_session_p_t File_Decomp_New()
 }
 
 /* Process Decompression.  The session Next_In, Avail_In, Next_Out, Avail_Out MUST have been
-   set by caller. 
+   set by caller.
 */
-fd_status_t File_Decomp( fd_session_p_t SessionPtr )
+fd_status_t File_Decomp(fd_session_p_t SessionPtr)
 {
     fd_status_t Return_Code;
 
-    if( (SessionPtr->State == STATE_NEW) ||
+    if ( (SessionPtr->State == STATE_NEW) ||
         (SessionPtr->Next_In == NULL) || (SessionPtr->Next_Out == NULL) )
         return( File_Decomp_Error );
 
     /* STATE_NEW: Look for one of the configured file signatures. */
-    if( SessionPtr->State == STATE_READY )
+    if ( SessionPtr->State == STATE_READY )
     {
         /* Look for the signature at the beginning of the payload stream. */
-        if( (Return_Code = Locate_Sig_Here( SessionPtr )) == File_Decomp_OK )
+        if ( (Return_Code = Locate_Sig_Here(SessionPtr)) == File_Decomp_OK )
         {
             /* We now know the file type and decompression type.  Setup appropriate state. */
-            if( (Return_Code = Initialize_Decompression( SessionPtr )) == File_Decomp_OK )
+            if ( (Return_Code = Initialize_Decompression(SessionPtr)) == File_Decomp_OK )
             {
-                return( Process_Decompression( SessionPtr ) );
+                return( Process_Decompression(SessionPtr) );
             }
             else
                 return( Return_Code );
@@ -348,71 +350,70 @@ fd_status_t File_Decomp( fd_session_p_t SessionPtr )
             /* Locate_Sig_Here() might return BlockIn, BlockOut, Error, or NoSig */
             return( Return_Code );
     }
-    else if( SessionPtr->State == STATE_ACTIVE )
+    else if ( SessionPtr->State == STATE_ACTIVE )
     {
-        return( Process_Decompression( SessionPtr ) );
+        return( Process_Decompression(SessionPtr) );
     }
     else
         return( File_Decomp_Error );
 }
 
-
-fd_status_t File_Decomp_End( fd_session_p_t SessionPtr )
+fd_status_t File_Decomp_End(fd_session_p_t SessionPtr)
 {
-    if( SessionPtr == NULL ) 
+    if ( SessionPtr == NULL )
         return( File_Decomp_Error );
 
-    switch( SessionPtr->File_Type )
+    switch ( SessionPtr->File_Type )
     {
-        case( FILE_TYPE_SWF ):
-        {
-            return( File_Decomp_End_SWF( SessionPtr ) );
-        }
-        case( FILE_TYPE_PDF ):
-        {
-            return( File_Decomp_End_PDF( SessionPtr ) );
-        }
-        default:
-           return( File_Decomp_Error );
+    case ( FILE_TYPE_SWF ):
+    {
+        return( File_Decomp_End_SWF(SessionPtr) );
+    }
+    case ( FILE_TYPE_PDF ):
+    {
+        return( File_Decomp_End_PDF(SessionPtr) );
+    }
+    default:
+        return( File_Decomp_Error );
     }
 
     return( File_Decomp_OK );
 }
 
-fd_status_t File_Decomp_Reset( fd_session_p_t SessionPtr )
+fd_status_t File_Decomp_Reset(fd_session_p_t SessionPtr)
 {
     fd_status_t Ret_Code;
 
-    if( SessionPtr == NULL )
+    if ( SessionPtr == NULL )
         return( File_Decomp_Error );
 
-    Ret_Code = File_Decomp_End( SessionPtr );
+    Ret_Code = File_Decomp_End(SessionPtr);
 
     SessionPtr->State = STATE_READY;
 
     return( Ret_Code );
 }
 
-fd_status_t File_Decomp_StopFree( fd_session_p_t SessionPtr )
+fd_status_t File_Decomp_StopFree(fd_session_p_t SessionPtr)
 {
-    if( SessionPtr == NULL )
+    if ( SessionPtr == NULL )
         return( File_Decomp_Error );
 
-    File_Decomp_End( SessionPtr );
-    File_Decomp_Free( SessionPtr );
+    File_Decomp_End(SessionPtr);
+    File_Decomp_Free(SessionPtr);
 
     return( File_Decomp_OK );
 }
 
-
-void File_Decomp_Free( fd_session_p_t SessionPtr )
+void File_Decomp_Free(fd_session_p_t SessionPtr)
 {
     delete SessionPtr;
 }
 
-void File_Decomp_Alert( fd_session_p_t SessionPtr, int Event )
+void File_Decomp_Alert(fd_session_p_t SessionPtr, int Event)
 {
-    if( (SessionPtr != NULL) && (SessionPtr->Alert_Callback != NULL) && (SessionPtr->Alert_Context) )
+    if ( (SessionPtr != NULL) && (SessionPtr->Alert_Callback != NULL) &&
+        (SessionPtr->Alert_Context) )
         (SessionPtr->Alert_Callback)(SessionPtr->Alert_Context, Event);
 }
 

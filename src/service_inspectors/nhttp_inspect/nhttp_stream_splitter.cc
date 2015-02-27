@@ -29,253 +29,316 @@
 
 using namespace NHttpEnums;
 
-// Convenience function. All the housekeeping that must be done before we can return FLUSH to stream.
-void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, SectionType section_type,
-      bool tcp_close, const NHttpInfractions& infractions, uint32_t num_octets, uint32_t length, uint32_t num_excess,
-      bool zero_chunk) {
+// Convenience function. All the housekeeping that must be done before we can return FLUSH to
+// stream.
+void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset,
+    SectionType section_type,
+    bool tcp_close, const NHttpInfractions& infractions, uint32_t num_octets, uint32_t length,
+    uint32_t num_excess,
+    bool zero_chunk)
+{
     session_data->section_type[source_id] = section_type;
     session_data->num_excess[source_id] = num_excess;
     session_data->zero_chunk[source_id] = zero_chunk;
     session_data->tcp_close[source_id] = tcp_close;
     session_data->infractions[source_id] = infractions;
-    switch (section_type) {
-      case SEC_BODY:
+    switch (section_type)
+    {
+    case SEC_BODY:
         paf_max = DATABLOCKSIZE;
         break;
-      case SEC_CHUNK:
+    case SEC_CHUNK:
         paf_max = DATABLOCKSIZE - session_data->chunk_buffer_length[source_id];
         break;
-      default:
+    default:
         paf_max = MAXOCTETS;
         break;
     }
-    if (tcp_close) {
+    if (tcp_close)
+    {
         session_data->type_expected[source_id] = SEC_CLOSED;
     }
 
     // When TCP connection closes do not flush octets that have not arrived yet
     uint32_t flush_amount = (!tcp_close || (num_octets <= length)) ? num_octets : length;
-    if (!NHttpTestManager::use_test_input()) {
+    if (!NHttpTestManager::use_test_input())
+    {
         *flush_offset = flush_amount;
     }
-    else {
+    else
+    {
         NHttpTestManager::get_test_input_source()->flush(flush_amount);
     }
-    session_data->unused_octets_visible[source_id] = (length >= num_octets) ? length - num_octets : 0;
+    session_data->unused_octets_visible[source_id] = (length >= num_octets) ? length - num_octets :
+        0;
     session_data->header_octets_visible[source_id] = 0;
 }
 
-NHttpSplitter* NHttpStreamSplitter::get_splitter(SectionType type) const {
-    switch (type) {
-      case SEC_REQUEST:
-      case SEC_STATUS: return (NHttpSplitter*) new NHttpStartSplitter;
-      case SEC_CHUNK: return (NHttpSplitter*) new NHttpChunkSplitter;
-      case SEC_HEADER:
-      case SEC_TRAILER: return (NHttpSplitter*) new NHttpHeaderSplitter;
-      default: assert(0); return nullptr;
+NHttpSplitter* NHttpStreamSplitter::get_splitter(SectionType type) const
+{
+    switch (type)
+    {
+    case SEC_REQUEST:
+    case SEC_STATUS: return (NHttpSplitter*)new NHttpStartSplitter;
+    case SEC_CHUNK: return (NHttpSplitter*)new NHttpChunkSplitter;
+    case SEC_HEADER:
+    case SEC_TRAILER: return (NHttpSplitter*)new NHttpHeaderSplitter;
+    default: assert(0); return nullptr;
     }
 }
 
-StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t length, uint32_t,
-   uint32_t* flush_offset) {
-
+StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data, uint32_t length,
+    uint32_t,
+    uint32_t* flush_offset)
+{
     assert(length <= MAXOCTETS);
 
     /* FIXIT-L Temporary printf while we shake out stream interface */
-    if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output()) {
+    if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output())
+    {
         printf("scan() from flow %p direction %d\n", (void*)flow, 1 - (int)to_server());
         fflush(nullptr);
     }
 
-    // When the system begins providing TCP connection close information this won't always be false. FIXIT-H
+    // When the system begins providing TCP connection close information this won't always be
+    // false. FIXIT-H
     bool tcp_close = false;
 
-    // This is the session state information we share with NHttpInspect and store with stream. A session is defined
-    // by a TCP connection. Since scan() is the first to see a new TCP connection the new flow data object is created
+    // This is the session state information we share with NHttpInspect and store with stream. A
+    // session is defined
+    // by a TCP connection. Since scan() is the first to see a new TCP connection the new flow data
+    // object is created
     // here.
-    NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
-    if (session_data == nullptr) {
+    NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(
+        NHttpFlowData::nhttp_flow_id);
+    if (session_data == nullptr)
+    {
         flow->set_application_data(session_data = new NHttpFlowData);
     }
     assert(session_data != nullptr);
 
-    if (NHttpTestManager::use_test_input()) {
-        // This block substitutes a completely new data buffer supplied by the test tool in place of the "real" data.
+    if (NHttpTestManager::use_test_input())
+    {
+        // This block substitutes a completely new data buffer supplied by the test tool in place
+        // of the "real" data.
         // It also rewrites the buffer length and TCP close indicator.
         *flush_offset = length;
         bool need_break;
         uint8_t* test_data = nullptr;
-        NHttpTestManager::get_test_input_source()->scan(test_data, length, source_id, tcp_close, need_break);
-        if (need_break) {
+        NHttpTestManager::get_test_input_source()->scan(test_data, length, source_id, tcp_close,
+            need_break);
+        if (need_break)
+        {
             session_data = new NHttpFlowData;
             flow->set_application_data(session_data);
         }
-        if (length == 0) {
+        if (length == 0)
+        {
             return StreamSplitter::FLUSH;
         }
         data = test_data;
         assert(session_data->type_expected[source_id] != SEC_ABORT);
         assert(session_data->type_expected[source_id] != SEC_CLOSED);
     }
-    else if (NHttpTestManager::use_test_output()) {
+    else if (NHttpTestManager::use_test_output())
+    {
         printf("Scan from flow data %p direction %d\n", (void*)session_data, source_id);
         fflush(stdout);
     }
 
     const SectionType type = session_data->type_expected[source_id];
 
-    switch (type) {
-      case SEC_REQUEST:
-      case SEC_STATUS:
-      case SEC_CHUNK:
-      case SEC_HEADER:
-      case SEC_TRAILER:
-      {
+    switch (type)
+    {
+    case SEC_REQUEST:
+    case SEC_STATUS:
+    case SEC_CHUNK:
+    case SEC_HEADER:
+    case SEC_TRAILER:
+    {
         NHttpSplitter*& splitter = session_data->splitter[source_id];
-        if (splitter == nullptr) {
+        if (splitter == nullptr)
+        {
             splitter = get_splitter(type);
             assert(splitter != nullptr);
         }
         const uint32_t max_length = MAXOCTETS - splitter->get_octets_seen();
-        const ScanResult split_result = splitter->split(data, (length <= max_length) ? length : max_length);
-        switch (split_result) {
-          case SCAN_NOTFOUND:
-            if (splitter->get_octets_seen() == MAXOCTETS) {
+        const ScanResult split_result = splitter->split(data, (length <= max_length) ? length :
+            max_length);
+        switch (split_result)
+        {
+        case SCAN_NOTFOUND:
+            if (splitter->get_octets_seen() == MAXOCTETS)
+            {
                 // FIXIT-H need to process this data (except chunk header) not just discard it.
                 session_data->type_expected[source_id] = SEC_ABORT;
                 delete splitter;
                 splitter = nullptr;
-                if (!NHttpTestManager::use_test_input()) {
+                if (!NHttpTestManager::use_test_input())
+                {
                     return StreamSplitter::ABORT;
                 }
-                else {
+                else
+                {
                     NHttpTestManager::get_test_input_source()->discard(length);
                     return StreamSplitter::FLUSH;
                 }
             }
-            if (tcp_close) {
-                if (splitter->partial_ok()) {
-                    prepare_flush(session_data, flush_offset, type, true, splitter->get_infractions() += INF_TRUNCATED,
-                       length, length, splitter->get_num_excess(), splitter->get_zero_chunk());
+            if (tcp_close)
+            {
+                if (splitter->partial_ok())
+                {
+                    prepare_flush(session_data, flush_offset, type, true,
+                        splitter->get_infractions() += INF_TRUNCATED,
+                        length, length, splitter->get_num_excess(), splitter->get_zero_chunk());
                     delete splitter;
                     splitter = nullptr;
                     return StreamSplitter::FLUSH;
                 }
-                else {
-                    prepare_flush(session_data, flush_offset, SEC_DISCARD, true, splitter->get_infractions(), length,
-                       length, 0, false);
+                else
+                {
+                    prepare_flush(session_data, flush_offset, SEC_DISCARD, true,
+                        splitter->get_infractions(), length,
+                        length, 0, false);
                     delete splitter;
                     splitter = nullptr;
                     return StreamSplitter::FLUSH;
                 }
             }
             // Incomplete headers wait patiently for more data
-            return NHttpTestManager::use_test_input() ? StreamSplitter::FLUSH : StreamSplitter::SEARCH;
-          case SCAN_ABORT:
+            return NHttpTestManager::use_test_input() ? StreamSplitter::FLUSH :
+                   StreamSplitter::SEARCH;
+        case SCAN_ABORT:
             session_data->type_expected[source_id] = SEC_ABORT;
             delete splitter;
             splitter = nullptr;
-            if (!NHttpTestManager::use_test_input()) {
+            if (!NHttpTestManager::use_test_input())
+            {
                 return StreamSplitter::ABORT;
             }
-            else {
+            else
+            {
                 NHttpTestManager::get_test_input_source()->discard(length);
                 return StreamSplitter::FLUSH;
             }
-          case SCAN_DISCARD:
-          case SCAN_DISCARD_CONTINUE: {
+        case SCAN_DISCARD:
+        case SCAN_DISCARD_CONTINUE:
+        {
             const uint32_t flush_octets = splitter->get_num_flush();
-            prepare_flush(session_data, flush_offset, SEC_DISCARD, tcp_close && (flush_octets >= length),
-               splitter->get_infractions(), flush_octets, length, 0, false);
-            if (split_result == SCAN_DISCARD) {
+            prepare_flush(session_data, flush_offset, SEC_DISCARD, tcp_close && (flush_octets >=
+                length),
+                splitter->get_infractions(), flush_octets, length, 0, false);
+            if (split_result == SCAN_DISCARD)
+            {
                 delete splitter;
                 splitter = nullptr;
             }
             return StreamSplitter::FLUSH;
-          }
-          case SCAN_FOUND: {
+        }
+        case SCAN_FOUND:
+        {
             const uint32_t flush_octets = splitter->get_num_flush();
             prepare_flush(session_data, flush_offset, type, tcp_close && (flush_octets == length),
-               splitter->get_infractions(), flush_octets, length, splitter->get_num_excess(),
-               splitter->get_zero_chunk());
+                splitter->get_infractions(), flush_octets, length, splitter->get_num_excess(),
+                splitter->get_zero_chunk());
             delete splitter;
             splitter = nullptr;
-            if ((type == SEC_REQUEST) || (type == SEC_STATUS)) {
-                // Look ahead to see if entire header section is already here so we can aggregate it for detection.
+            if ((type == SEC_REQUEST) || (type == SEC_STATUS))
+            {
+                // Look ahead to see if entire header section is already here so we can aggregate
+                // it for detection.
                 splitter = get_splitter(SEC_HEADER);
-                if (splitter->peek(data + flush_octets, length - flush_octets) == SCAN_FOUND) {
+                if (splitter->peek(data + flush_octets, length - flush_octets) == SCAN_FOUND)
+                {
                     session_data->header_octets_visible[source_id] = splitter->get_num_flush();
                 }
             }
             return StreamSplitter::FLUSH;
-          }
         }
-      }
-      case SEC_BODY: {
+        }
+    }
+    case SEC_BODY:
+    {
         prepare_flush(session_data, flush_offset, SEC_BODY,
-           tcp_close && (length <= session_data->data_length[source_id]), NHttpInfractions(),
-           session_data->data_length[source_id], length, 0, false);
+            tcp_close && (length <= session_data->data_length[source_id]), NHttpInfractions(),
+            session_data->data_length[source_id], length, 0, false);
         return StreamSplitter::FLUSH;
-      }
-      case SEC_ABORT:
+    }
+    case SEC_ABORT:
         return StreamSplitter::ABORT;
-      default:
+    default:
         assert(0);
         return StreamSplitter::ABORT;
     }
 }
 
-// FIXIT-P total is not used because it is not reliably correct. Could be used to compute required buffer size
+// FIXIT-P total is not used because it is not reliably correct. Could be used to compute required
+// buffer size
 // instead of always allocating the maximum
 const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, unsigned offset,
-       const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
+    const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
 {
     static THREAD_LOCAL StreamBuffer nhttp_buf;
 
-    // When the system begins providing TCP connection close information this won't always be false. FIXIT-H
+    // When the system begins providing TCP connection close information this won't always be
+    // false. FIXIT-H
     bool tcp_close = false;
 
     /* FIXIT-L Temporary printf while we shake out stream interface */
-    if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output()) {
-        printf("reassemble() from flow %p direction %d total %u length %u offset %u\n", (void*)flow, 1 - (int)to_server(), total, len, offset); fflush(nullptr);
+    if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output())
+    {
+        printf("reassemble() from flow %p direction %d total %u length %u offset %u\n",
+            (void*)flow, 1 - (int)to_server(), total, len, offset); fflush(nullptr);
     }
 
-    NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
+    NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(
+        NHttpFlowData::nhttp_flow_id);
     assert(session_data != nullptr);
     copied = len;
 
-    if (NHttpTestManager::use_test_input()) {
+    if (NHttpTestManager::use_test_input())
+    {
         if (!(flags & PKT_PDU_TAIL))
         {
             return nullptr;
         }
         uint8_t* test_buffer;
-        NHttpTestManager::get_test_input_source()->reassemble(&test_buffer, len, source_id, session_data, tcp_close);
-        if (test_buffer == nullptr) {
-            // Source ID does not match test data, no test data was flushed, or there is no more test data
+        NHttpTestManager::get_test_input_source()->reassemble(&test_buffer, len, source_id,
+            session_data, tcp_close);
+        if (test_buffer == nullptr)
+        {
+            // Source ID does not match test data, no test data was flushed, or there is no more
+            // test data
             return nullptr;
         }
         data = test_buffer;
         offset = 0;
     }
-    else if (NHttpTestManager::use_test_output()) {
+    else if (NHttpTestManager::use_test_output())
+    {
         printf("Reassemble from flow data %p direction %d\n", (void*)session_data, source_id);
         fflush(stdout);
     }
 
-    if (session_data->section_type[source_id] == SEC__NOTCOMPUTE) {
-        // FIXIT-M Apparently scan() did not flush this data. Probably Stream is flushing excess data while it prunes
-        // a session. In any event it doesn't belong here because we cannot process it. Forward it to our parent class
+    if (session_data->section_type[source_id] == SEC__NOTCOMPUTE)
+    {
+        // FIXIT-M Apparently scan() did not flush this data. Probably Stream is flushing excess
+        // data while it prunes
+        // a session. In any event it doesn't belong here because we cannot process it. Forward it
+        // to our parent class
         // for processing.
         return StreamSplitter::reassemble(flow, total, offset, data, len, flags, copied);
     }
 
     session_data->tcp_close[source_id] = tcp_close || session_data->tcp_close[source_id];
 
-    // FIXIT-P stream should be enhanced to do discarding for us. For now flush-then-discard here is how scan() handles
+    // FIXIT-P stream should be enhanced to do discarding for us. For now flush-then-discard here
+    // is how scan() handles
     // things we don't need to examine.
-    if (session_data->section_type[source_id] == SEC_DISCARD) {
-        if (NHttpTestManager::use_test_output()) {
+    if (session_data->section_type[source_id] == SEC_DISCARD)
+    {
+        if (NHttpTestManager::use_test_output())
+        {
             fprintf(NHttpTestManager::get_output_file(), "Discarded %u octets\n\n", len);
             fflush(NHttpTestManager::get_output_file());
         }
@@ -288,46 +351,62 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
     uint8_t*& chunk_buffer = session_data->chunk_buffer[source_id];
     int32_t& chunk_buffer_length = session_data->chunk_buffer_length[source_id];
     uint8_t*& buffer = !is_chunk ? session_data->section_buffer[source_id] : chunk_buffer;
-    int32_t& buffer_length = !is_chunk ? session_data->section_buffer_length[source_id] : chunk_buffer_length;
+    int32_t& buffer_length = !is_chunk ? session_data->section_buffer_length[source_id] :
+        chunk_buffer_length;
     bool& buffer_owned = !is_chunk ? session_data->section_buffer_owned[source_id] :
-       session_data->chunk_buffer_owned[source_id];
+        session_data->chunk_buffer_owned[source_id];
 
-    if (buffer == nullptr) {
+    if (buffer == nullptr)
+    {
         buffer = new uint8_t[MAXOCTETS];
         assert(buffer != nullptr);
         buffer_owned = true;
     }
 
     memcpy(buffer + buffer_length + offset, data, len);
-    if (flags & PKT_PDU_TAIL) {
+    if (flags & PKT_PDU_TAIL)
+    {
         ProcessResult send_to_detection;
-        if (!is_chunk) {
-            // start line/headers/body individual section processing with aggregation prior to being sent to detection
+        if (!is_chunk)
+        {
+            // start line/headers/body individual section processing with aggregation prior to
+            // being sent to detection
             // only the last section added to the buffer goes to the inspector
             send_to_detection = my_inspector->process(buffer + buffer_length,
-               offset + len - session_data->num_excess[source_id], flow, source_id, buffer_length == 0);
+                offset + len - session_data->num_excess[source_id], flow, source_id,
+                buffer_length == 0);
         }
-        else {
-            // small chunks are aggregated before processing and are kept here until the buffer is full (paf_max)
-            // all the chunks in the buffer go to the inspector together. Zero-length chunk (len == 1,
+        else
+        {
+            // small chunks are aggregated before processing and are kept here until the buffer is
+            // full (paf_max)
+            // all the chunks in the buffer go to the inspector together. Zero-length chunk (len ==
+            // 1,
             // zero_chunk == true) flushes accumulated chunks.
 
-            // infractions for each aggregated small chunk are accumulated here and then restored before processing
+            // infractions for each aggregated small chunk are accumulated here and then restored
+            // before processing
             session_data->chunk_infractions[source_id] += session_data->infractions[source_id];
 
-            // FIXIT-M this implementation of the zero-length chunk is temporary until stream can support a zero-
+            // FIXIT-M this implementation of the zero-length chunk is temporary until stream can
+            // support a zero-
             // octet flush.
-            const int32_t total_chunk_len = chunk_buffer_length + offset + len - session_data->zero_chunk[source_id];
-            if ((total_chunk_len < DATABLOCKSIZE) && (!session_data->zero_chunk[source_id]) && !tcp_close) {
+            const int32_t total_chunk_len = chunk_buffer_length + offset + len -
+                session_data->zero_chunk[source_id];
+            if ((total_chunk_len < DATABLOCKSIZE) && (!session_data->zero_chunk[source_id]) &&
+                !tcp_close)
+            {
                 chunk_buffer_length = total_chunk_len;
                 return nullptr;
             }
-            if (total_chunk_len == 0) {
+            if (total_chunk_len == 0)
+            {
                 // Zero-length chunk cannot be processed by itself.
                 delete[] chunk_buffer;
                 chunk_buffer = nullptr;
                 chunk_buffer_length = 0;
-                // zero-length chunk is not visible to inspector. Transition to trailer must be handled here.
+                // zero-length chunk is not visible to inspector. Transition to trailer must be
+                // handled here.
                 session_data->section_type[source_id] = SEC__NOTCOMPUTE;
                 session_data->type_expected[source_id] = SEC_TRAILER;
                 return nullptr;
@@ -335,32 +414,39 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             paf_max = DATABLOCKSIZE;
             session_data->infractions[source_id] = session_data->chunk_infractions[source_id];
             session_data->chunk_infractions[source_id] = NHttpInfractions();
-            send_to_detection = my_inspector->process(chunk_buffer, total_chunk_len, flow, source_id, true);
-            if (session_data->zero_chunk[source_id]) {
-                // zero-length chunk is not visible to inspector. Transition to trailer must be handled here.
+            send_to_detection = my_inspector->process(chunk_buffer, total_chunk_len, flow,
+                source_id, true);
+            if (session_data->zero_chunk[source_id])
+            {
+                // zero-length chunk is not visible to inspector. Transition to trailer must be
+                // handled here.
                 session_data->section_type[source_id] = SEC__NOTCOMPUTE;
                 session_data->type_expected[source_id] = SEC_TRAILER;
             }
         }
 
-        // Buffers are reset to nullptr without delete[] because NHttpMsgSection holds the pointer and is responsible
-        switch (send_to_detection) {
-          case RES_INSPECT:
+        // Buffers are reset to nullptr without delete[] because NHttpMsgSection holds the pointer
+        // and is responsible
+        switch (send_to_detection)
+        {
+        case RES_INSPECT:
             nhttp_buf.data = buffer;
             nhttp_buf.length = buffer_length + offset + len - session_data->zero_chunk[source_id];
             assert((nhttp_buf.length <= MAXOCTETS) && (nhttp_buf.length != 0));
             buffer = nullptr;
             buffer_length = 0;
-            if (NHttpTestManager::use_test_output()) {
-                fprintf(NHttpTestManager::get_output_file(), "Sent to detection %u octets\n\n", nhttp_buf.length);
+            if (NHttpTestManager::use_test_output())
+            {
+                fprintf(NHttpTestManager::get_output_file(), "Sent to detection %u octets\n\n",
+                    nhttp_buf.length);
                 fflush(NHttpTestManager::get_output_file());
             }
             return &nhttp_buf;
-          case RES_IGNORE:
+        case RES_IGNORE:
             buffer = nullptr;
             buffer_length = 0;
             return nullptr;
-          case RES_AGGREGATE:
+        case RES_AGGREGATE:
             buffer_length += offset + len;
             buffer_owned = false;
             return nullptr;

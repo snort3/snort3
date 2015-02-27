@@ -37,27 +37,27 @@
 #include "sfip/sf_vartable.h"
 #include "sfip/sf_ipvar.h"
 
-sfip_var_t* sfip_var_from_string(const char *addr)
+sfip_var_t* sfip_var_from_string(const char* addr)
 {
-    sfip_var_t *ret;
+    sfip_var_t* ret;
     int ret_code;
-    vartable_t *ip_vartable;
+    vartable_t* ip_vartable;
 
     ip_vartable = get_ips_policy()->ip_vartable;
 
     DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Got address string: %s\n",
-                addr););
+        addr); );
 
     ret = (sfip_var_t*)SnortAlloc(sizeof(sfip_var_t));
 
-    if((ret_code = sfvt_add_to_var(ip_vartable, ret, addr)) != SFIP_SUCCESS)
+    if ((ret_code = sfvt_add_to_var(ip_vartable, ret, addr)) != SFIP_SUCCESS)
     {
-        if(ret_code == SFIP_LOOKUP_FAILURE)
+        if (ret_code == SFIP_LOOKUP_FAILURE)
         {
             ParseError("Undefined variable in the string: %s", addr);
             return ret;
         }
-        else if(ret_code == SFIP_CONFLICT)
+        else if (ret_code == SFIP_CONFLICT)
         {
             ParseError("Negated IP ranges that equal to or are"
                 " more-specific than non-negated ranges are not allowed."

@@ -105,7 +105,7 @@ static const Parameter s_params[] =
 class TcpdumpModule : public Module
 {
 public:
-    TcpdumpModule() : Module(S_NAME, s_help, s_params) { };
+    TcpdumpModule() : Module(S_NAME, s_help, s_params) { }
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -149,13 +149,13 @@ bool TcpdumpModule::end(const char*, int, SnortConfig*)
 // api stuff
 //-------------------------------------------------------------------------
 
-static inline size_t SizeOf (const DAQ_PktHdr_t *pkth)
+static inline size_t SizeOf(const DAQ_PktHdr_t* pkth)
 {
     return PCAP_PKT_HDR_SZ + pkth->caplen;
 }
 
 static int SizeOfCallback(
-    DAQ_PktHdr_t *pkth, uint8_t*, void *userdata)
+    DAQ_PktHdr_t* pkth, uint8_t*, void* userdata)
 {
     size_t* pSize = (size_t*)userdata;
     (*pSize) += SizeOf(pkth);
@@ -164,34 +164,34 @@ static int SizeOfCallback(
 }
 
 static void LogTcpdumpSingle(
-    LtdConfig* data, Packet *p, const char*, Event*)
+    LtdConfig* data, Packet* p, const char*, Event*)
 {
     size_t dumpSize = SizeOf(p->pkth);
 
     if ( data->limit && (context.size + dumpSize > data->limit) )
         TcpdumpRollLogFile(data);
 
-    pcap_dump((u_char *)context.dumpd,(struct pcap_pkthdr*)p->pkth,p->pkt);
+    pcap_dump((u_char*)context.dumpd,(struct pcap_pkthdr*)p->pkth,p->pkt);
     context.size += dumpSize;
 
     if (!ScLineBufferedLogging())  // FIXIT-L misnomer
     {
-        fflush( (FILE*) context.dumpd );
+        fflush( (FILE*)context.dumpd);
     }
 }
 
 static int LogTcpdumpStreamCallback(
-    DAQ_PktHdr_t *pkth, uint8_t *packet_data, void*)
+    DAQ_PktHdr_t* pkth, uint8_t* packet_data, void*)
 {
     pcap_dump((u_char*)context.dumpd,
-              (struct pcap_pkthdr*)pkth,
-              (u_char*)packet_data);
+        (struct pcap_pkthdr*)pkth,
+        (u_char*)packet_data);
 
     return 0;
 }
 
 static void LogTcpdumpStream(
-    LtdConfig* data, Packet *p, const char*, Event*)
+    LtdConfig* data, Packet* p, const char*, Event*)
 {
     size_t dumpSize = 0;
 
@@ -207,7 +207,7 @@ static void LogTcpdumpStream(
     if (!ScLineBufferedLogging())
     {
         /* we happen to know that pcap_dumper_t* is really just a FILE* */
-        fflush( (FILE*) context.dumpd );
+        fflush( (FILE*)context.dumpd);
     }
 }
 
@@ -234,7 +234,7 @@ static void TcpdumpInitLogFile(LtdConfig*, int /*nostamps?*/)
 
         context.dumpd = pcap ? pcap_dump_open(pcap, file.c_str()) : NULL;
 
-        if(context.dumpd == NULL)
+        if (context.dumpd == NULL)
         {
             FatalError("%s: can't open %s: %s\n",
                 S_NAME, file.c_str(), pcap_geterr(pcap));
@@ -253,10 +253,11 @@ static void TcpdumpRollLogFile(LtdConfig* data)
     /* don't roll over any sooner than resolution
      * of filename discriminator
      */
-    if ( now <= context.lastTime ) return;
+    if ( now <= context.lastTime )
+        return;
 
     /* close the output file */
-    if( context.dumpd != NULL )
+    if ( context.dumpd != NULL )
     {
         pcap_dump_close(context.dumpd);
         context.dumpd = NULL;
@@ -275,13 +276,13 @@ static void SpoLogTcpdumpCleanup(LtdConfig*)
      * if we haven't written any data, dump the output file so there aren't
      * fragments all over the disk
      */
-    if(context.file && !pc.log_pkts && !pc.total_alert_pkts)
+    if (context.file && !pc.log_pkts && !pc.total_alert_pkts)
     {
         int ret = unlink(context.file);
 
         if ( ret )
             ErrorMessage("Could not remove tcpdump output file %s: %s\n",
-                 context.file, get_error(errno));
+                context.file, get_error(errno));
 
         free(context.file);
         context.file = nullptr;
@@ -292,7 +293,8 @@ static void SpoLogTcpdumpCleanup(LtdConfig*)
 // logger stuff
 //-------------------------------------------------------------------------
 
-class PcapLogger : public Logger {
+class PcapLogger : public Logger
+{
 public:
     PcapLogger(TcpdumpModule*);
     ~PcapLogger();
@@ -335,9 +337,9 @@ void PcapLogger::close()
         free(context.file);
 }
 
-void PcapLogger::log(Packet* p, const char *msg, Event *event)
+void PcapLogger::log(Packet* p, const char* msg, Event* event)
 {
-    if(p->packet_flags & PKT_REBUILT_STREAM)
+    if (p->packet_flags & PKT_REBUILT_STREAM)
         LogTcpdumpStream(config, p, msg, event);
     else
         LogTcpdumpSingle(config, p, msg, event);

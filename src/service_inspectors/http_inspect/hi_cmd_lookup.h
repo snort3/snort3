@@ -22,12 +22,13 @@
 
 #include "hi_ui_config.h"
 
-int http_cmd_lookup_init(CMD_LOOKUP **CmdLookup);
-int http_cmd_lookup_cleanup(CMD_LOOKUP **CmdLookup);
-int http_cmd_lookup_add(CMD_LOOKUP *CmdLookup, char cmd[], int len, HTTP_CMD_CONF *HTTPCmd);
+int http_cmd_lookup_init(CMD_LOOKUP** CmdLookup);
+int http_cmd_lookup_cleanup(CMD_LOOKUP** CmdLookup);
+int http_cmd_lookup_add(CMD_LOOKUP* CmdLookup, char cmd[], int len, HTTP_CMD_CONF* HTTPCmd);
 
-HTTP_CMD_CONF *http_cmd_lookup_find(CMD_LOOKUP *CmdLookup, const char cmd[], int len, int *iError);
-HTTP_CMD_CONF *http_cmd_lookup_first(CMD_LOOKUP *CmdLookup, int *iError);
-HTTP_CMD_CONF *http_cmd_lookup_next(CMD_LOOKUP *CmdLookup, int *iError);
+HTTP_CMD_CONF* http_cmd_lookup_find(CMD_LOOKUP* CmdLookup, const char cmd[], int len, int* iError);
+HTTP_CMD_CONF* http_cmd_lookup_first(CMD_LOOKUP* CmdLookup, int* iError);
+HTTP_CMD_CONF* http_cmd_lookup_next(CMD_LOOKUP* CmdLookup, int* iError);
 
 #endif
+

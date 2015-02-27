@@ -37,7 +37,7 @@ THREAD_LOCAL ProfileStats ip_perf_stats;
 // private methods
 //-------------------------------------------------------------------------
 
-void IpSessionCleanup (Flow* lws, FragTracker* tracker)
+void IpSessionCleanup(Flow* lws, FragTracker* tracker)
 {
     if ( lws->ssn_server )
     {
@@ -65,33 +65,32 @@ void IpSessionCleanup (Flow* lws, FragTracker* tracker)
 // private packet processing methods
 //-------------------------------------------------------------------------
 
-static inline void UpdateSession (Packet* p, Flow* lws)
+static inline void UpdateSession(Packet* p, Flow* lws)
 {
     lws->markup_packet_flags(p);
 
     if ( !(lws->ssn_state.session_flags & SSNFLAG_ESTABLISHED) )
     {
-
         if ( p->packet_flags & PKT_FROM_CLIENT )
         {
             DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Stream: Updating on packet from client\n"););
+                "Stream: Updating on packet from client\n"); );
 
             lws->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
         }
         else
         {
             DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Stream: Updating on packet from server\n"););
+                "Stream: Updating on packet from server\n"); );
 
             lws->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
         }
 
         if ( (lws->ssn_state.session_flags & SSNFLAG_SEEN_CLIENT) &&
-             (lws->ssn_state.session_flags & SSNFLAG_SEEN_SERVER) )
+            (lws->ssn_state.session_flags & SSNFLAG_SEEN_SERVER) )
         {
             DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Stream: session established!\n"););
+                "Stream: session established!\n"); );
 
             lws->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
 
@@ -119,10 +118,10 @@ void IpSession::clear()
     IpSessionCleanup(flow, &tracker);
 }
 
-bool IpSession::setup (Packet* p)
+bool IpSession::setup(Packet* p)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM,
-        "Stream IP session created!\n"););
+        "Stream IP session created!\n"); );
 
     memset(&tracker, 0, sizeof(tracker));
     // FIXIT count ip session creates here
@@ -207,7 +206,7 @@ bool IpSession::check_alerted(Packet* p, uint32_t gid, uint32_t sid)
          *  that we have previously alerted on a non-rebuilt packet.
          */
         if ( (p->packet_flags & PKT_REBUILT_FRAG)
-                && ft->alert_gid[i] == gid && ft->alert_sid[i] == sid )
+            && ft->alert_gid[i] == gid && ft->alert_sid[i] == sid )
         {
             return true;
         }

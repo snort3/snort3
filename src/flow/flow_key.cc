@@ -36,12 +36,12 @@
 //-------------------------------------------------------------------------
 
 inline void FlowKey::init4(
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const sfip_t* srcIP, uint16_t srcPort,
+    const sfip_t* dstIP, uint16_t dstPort,
     uint8_t proto, uint32_t mplsId, bool order)
 {
-    const uint32_t *src;
-    const uint32_t *dst;
+    const uint32_t* src;
+    const uint32_t* dst;
 
     if ( proto ==  IPPROTO_ICMP )
     {
@@ -93,28 +93,28 @@ inline void FlowKey::init4(
         ip::isPrivateIP(*src) && ip::isPrivateIP(*dst))
         mplsLabel = mplsId;
     else
-    	mplsLabel = 0;
+        mplsLabel = 0;
 }
 
 inline void FlowKey::init6(
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const sfip_t* srcIP, uint16_t srcPort,
+    const sfip_t* dstIP, uint16_t dstPort,
     uint8_t proto, uint32_t mplsId, bool order)
 {
-    const sfip_t *src;
-    const sfip_t *dst;
+    const sfip_t* src;
+    const sfip_t* dst;
 
     if ( proto == IPPROTO_ICMP )
     {
-            if (srcPort == ICMP_ECHOREPLY)
-            {
-                dstPort = ICMP_ECHO; /* Treat ICMP echo reply the same as request */
-                srcPort = 0;
-            }
-            else /* otherwise, every ICMP type gets different key */
-            {
-                dstPort = 0;
-            }
+        if (srcPort == ICMP_ECHOREPLY)
+        {
+            dstPort = ICMP_ECHO;     /* Treat ICMP echo reply the same as request */
+            srcPort = 0;
+        }
+        else     /* otherwise, every ICMP type gets different key */
+        {
+            dstPort = 0;
+        }
     }
     else if ( proto == IPPROTO_ICMPV6 )
     {
@@ -165,7 +165,7 @@ inline void FlowKey::init6(
     if (ScMplsOverlappingIp())
         mplsLabel = mplsId;
     else
-    	mplsLabel = 0;
+        mplsLabel = 0;
 }
 
 void FlowKey::init_vlan(uint16_t vlan)
@@ -195,12 +195,12 @@ void FlowKey::init_mpls(uint32_t mplsId)
     if (ScMplsOverlappingIp())
         mplsLabel = mplsId;
     else
-    	mplsLabel = 0;
+        mplsLabel = 0;
 }
 
 void FlowKey::init(
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const sfip_t* srcIP, uint16_t srcPort,
+    const sfip_t* dstIP, uint16_t dstPort,
     uint8_t proto, uint16_t vlan,
     uint32_t mplsId, uint16_t addrSpaceId)
 {
@@ -223,7 +223,7 @@ void FlowKey::init(
 }
 
 void FlowKey::init(
-    const sfip_t *srcIP, const sfip_t *dstIP,
+    const sfip_t* srcIP, const sfip_t* dstIP,
     uint32_t id, uint8_t proto, uint16_t vlan,
     uint32_t mplsId, uint16_t addrSpaceId)
 {
@@ -253,7 +253,7 @@ void FlowKey::init(
 // hash foo
 //-------------------------------------------------------------------------
 
-uint32_t FlowKey::hash(SFHASHFCN*, unsigned char *d, int)
+uint32_t FlowKey::hash(SFHASHFCN*, unsigned char* d, int)
 {
     uint32_t a,b,c;
     uint32_t offset = 0;
@@ -282,8 +282,8 @@ uint32_t FlowKey::hash(SFHASHFCN*, unsigned char *d, int)
 
     offset=36;
     a += *(uint32_t*)(d+offset);   /* vlan, protocol, & version */
-    tmp = *(uint32_t *)(d+offset+4);
-    if( tmp )
+    tmp = *(uint32_t*)(d+offset+4);
+    if ( tmp )
     {
         b += tmp;   /* mpls label */
     }
@@ -297,93 +297,109 @@ uint32_t FlowKey::hash(SFHASHFCN*, unsigned char *d, int)
     return c;
 }
 
-int FlowKey::compare(const void *s1, const void *s2, size_t)
+int FlowKey::compare(const void* s1, const void* s2, size_t)
 {
 #ifndef SPARCV9 /* ie, everything else, use 64bit comparisons */
-    uint64_t *a,*b;
+    uint64_t* a,* b;
 
     a = (uint64_t*)s1;
     b = (uint64_t*)s2;
-    if(*a - *b) return 1;       /* Compares IPv4 lo/hi */
-                                /* Compares IPv6 low[0,1] */
+    if (*a - *b)
+        return 1;               /* Compares IPv4 lo/hi
+                                   Compares IPv6 low[0,1] */
 
     a++;
     b++;
-    if(*a - *b) return 1;       /* Compares port lo/hi, vlan, protocol, version */
-                                /* Compares IPv6 low[2,3] */
+    if (*a - *b)
+        return 1;               /* Compares port lo/hi, vlan, protocol, version
+                                   Compares IPv6 low[2,3] */
 
     a++;
     b++;
-    if(*a - *b) return 1;       /* Compares IPv6 hi[0,1] */
+    if (*a - *b)
+        return 1;               /* Compares IPv6 hi[0,1] */
 
     a++;
     b++;
-    if(*a - *b) return 1;       /* Compares IPv6 hi[2,3] */
+    if (*a - *b)
+        return 1;               /* Compares IPv6 hi[2,3] */
 
     a++;
     b++;
-    if(*a - *b) return 1;       /* Compares port lo/hi, vlan, protocol, version */
+    if (*a - *b)
+        return 1;               /* Compares port lo/hi, vlan, protocol, version */
 
     a++;
     b++;
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-    if (*a - *b) return 1;      /* Compares MPLS label, AddressSpace ID and 16bit pad */
+    if (*a - *b)
+        return 1;               /* Compares MPLS label, AddressSpace ID and 16bit pad */
 #else
     {
-        uint32_t *x, *y;
-        x = (uint32_t *)a;
-        y = (uint32_t *)b;
+        uint32_t* x, * y;
+        x = (uint32_t*)a;
+        y = (uint32_t*)b;
         //x++;
         //y++;
-        if (*x - *y) return 1;  /* Compares mpls label, no pad */
+        if (*x - *y)
+            return 1;           /* Compares mpls label, no pad */
     }
 #endif
 
 #else /* SPARCV9 */
-    uint32_t *a,*b;
+    uint32_t* a,* b;
 
     a = (uint32_t*)s1;
     b = (uint32_t*)s2;
-    if ((*a - *b) || (*(a+1) - *(b+1))) return 1;       /* Compares IPv4 lo/hi */
-                                /* Compares IPv6 low[0,1] */
+    if ((*a - *b) || (*(a+1) - *(b+1)))
+        return 1;                                       /* Compares IPv4 lo/hi */
+    /* Compares IPv6 low[0,1] */
 
     a+=2;
     b+=2;
-    if ((*a - *b) || (*(a+1) - *(b+1))) return 1;       /* Compares port lo/hi, vlan, protocol, version */
-                                /* Compares IPv6 low[2,3] */
+    if ((*a - *b) || (*(a+1) - *(b+1)))
+        return 1;                                       /* Compares port lo/hi, vlan, protocol,
+                                                          version */
+    /* Compares IPv6 low[2,3] */
 
     a+=2;
     b+=2;
-    if ((*a - *b) || (*(a+1) - *(b+1))) return 1;       /* Compares IPv6 hi[0,1] */
+    if ((*a - *b) || (*(a+1) - *(b+1)))
+        return 1;                                       /* Compares IPv6 hi[0,1] */
 
     a+=2;
     b+=2;
-    if ((*a - *b) || (*(a+1) - *(b+1))) return 1;       /* Compares IPv6 hi[2,3] */
+    if ((*a - *b) || (*(a+1) - *(b+1)))
+        return 1;                                       /* Compares IPv6 hi[2,3] */
 
     a+=2;
     b+=2;
-    if ((*a - *b) || (*(a+1) - *(b+1))) return 1;       /* Compares port lo/hi, vlan, protocol, version */
+    if ((*a - *b) || (*(a+1) - *(b+1)))
+        return 1;                                       /* Compares port lo/hi, vlan, protocol,
+                                                          version */
 
     a+=2;
     b+=2;
     {
-        uint32_t *x, *y;
-        x = (uint32_t *)a;
-        y = (uint32_t *)b;
+        uint32_t* x, * y;
+        x = (uint32_t*)a;
+        y = (uint32_t*)b;
         //x++;
         //y++;
-        if (*x - *y) return 1;  /* Compares mpls label */
+        if (*x - *y)
+            return 1;           /* Compares mpls label */
     }
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     a++;
     b++;
     {
-        uint16_t *x, *y;
-        x = (uint16_t *)a;
-        y = (uint16_t *)b;
+        uint16_t* x, * y;
+        x = (uint16_t*)a;
+        y = (uint16_t*)b;
         //x++;
         //y++;
-        if (*x - *y) return 1;  /* Compares addressSpaceID, no pad */
+        if (*x - *y)
+            return 1;           /* Compares addressSpaceID, no pad */
     }
 #endif
 #endif /* SPARCV9 */

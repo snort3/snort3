@@ -26,19 +26,16 @@
 
 namespace preprocessors
 {
-
-namespace {
-
+namespace
+{
 class StreamIp : public ConversionState
 {
 public:
-    StreamIp(Converter& c) : ConversionState(c) {};
-    virtual ~StreamIp() {};
+    StreamIp(Converter& c) : ConversionState(c) { }
+    virtual ~StreamIp() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
-
 
 bool StreamIp::convert(std::istringstream& data_stream)
 {
@@ -52,7 +49,6 @@ bool StreamIp::convert(std::istringstream& data_stream)
         std::string keyword;
         bool tmpval = true;
         std::istringstream arg_stream(args);
-
 
         if (!(arg_stream >> keyword))
         {
@@ -90,5 +86,5 @@ static const ConvertMap preprocessor_stream_ip =
 };
 
 const ConvertMap* stream_ip_map = &preprocessor_stream_ip;
-
 } // namespace preprocessors
+

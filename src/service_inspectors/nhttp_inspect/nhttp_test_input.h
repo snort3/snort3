@@ -25,21 +25,24 @@
 #include "nhttp_enum.h"
 #include "nhttp_flow_data.h"
 
-class NHttpTestInput {
+class NHttpTestInput
+{
 public:
-    NHttpTestInput(const char *fileName);
+    NHttpTestInput(const char* fileName);
     ~NHttpTestInput();
-    void scan(uint8_t*& data, uint32_t& length, NHttpEnums::SourceId source_id, bool& tcp_close, bool& need_break);
+    void scan(uint8_t*& data, uint32_t& length, NHttpEnums::SourceId source_id, bool& tcp_close,
+        bool& need_break);
     void flush(uint32_t num_octets);
     void discard(uint32_t num_octets);
     void reassemble(uint8_t** buffer, unsigned& length, NHttpEnums::SourceId source_id,
-       const NHttpFlowData* session_data, bool& tcp_close);
+        const NHttpFlowData* session_data, bool& tcp_close);
 
 private:
     FILE* test_data_file;
     uint8_t msg_buf[2 * NHttpEnums::MAXOCTETS];
 
-    // data has been flushed and must be sent by reassemble() before more data may be given to scan()
+    // data has been flushed and must be sent by reassemble() before more data may be given to
+    // scan()
     bool flushed = false;
 
     // current direction of traffic flow. Toggled by commands in file.

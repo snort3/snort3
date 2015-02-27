@@ -58,7 +58,7 @@ StreamIpConfig::StreamIpConfig()
     frag_engine.min_fragment_length = 0;
 }
 
-static void ip_show (StreamIpConfig* pc)
+static void ip_show(StreamIpConfig* pc)
 {
     LogMessage("Stream IP config:\n");
     LogMessage("    Timeout: %d seconds\n", pc->session_timeout);

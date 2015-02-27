@@ -16,7 +16,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 /*
  * @file    stream_ip.h
  * @author  Russ Combs <rcombs@sourcefire.com>
@@ -71,3 +71,4 @@ StreamIpConfig* get_ip_cfg(Inspector*);
 class Defrag* get_defrag(Inspector*);
 
 #endif
+

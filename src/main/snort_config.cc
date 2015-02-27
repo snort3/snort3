@@ -54,11 +54,11 @@
 // private implementation
 //-------------------------------------------------------------------------
 
-static void FreeRuleStateList(RuleState *head)
+static void FreeRuleStateList(RuleState* head)
 {
     while (head != NULL)
     {
-        RuleState *tmp = head;
+        RuleState* tmp = head;
 
         head = head->next;
 
@@ -66,11 +66,11 @@ static void FreeRuleStateList(RuleState *head)
     }
 }
 
-static void FreeClassifications(ClassType *head)
+static void FreeClassifications(ClassType* head)
 {
     while (head != NULL)
     {
-        ClassType *tmp = head;
+        ClassType* tmp = head;
 
         head = head->next;
 
@@ -84,11 +84,11 @@ static void FreeClassifications(ClassType *head)
     }
 }
 
-static void FreeReferences(ReferenceSystemNode *head)
+static void FreeReferences(ReferenceSystemNode* head)
 {
     while (head != NULL)
     {
-        ReferenceSystemNode *tmp = head;
+        ReferenceSystemNode* tmp = head;
 
         head = head->next;
 
@@ -112,13 +112,13 @@ static void init_policy_mode(IpsPolicy* p)
         break;
 
     case POLICY_MODE__INLINE:
-        if( ScAdapterInlineTestMode() )
+        if ( ScAdapterInlineTestMode() )
             p->policy_mode = POLICY_MODE__INLINE_TEST;
 
         else if (!ScAdapterInlineMode())
         {
-           ParseWarning("adapter is in passive mode; switching policy mode to tap.");
-           p->policy_mode = POLICY_MODE__PASSIVE;
+            ParseWarning("adapter is in passive mode; switching policy mode to tap.");
+            p->policy_mode = POLICY_MODE__PASSIVE;
         }
         break;
 
@@ -148,9 +148,9 @@ static void init_policies(SnortConfig* sc)
  * but the goal is to minimize config checks at run time when running in
  * IDS mode so we keep things simple and enforce that the only difference
  * among run_modes is how we handle packets via the log_func. */
-SnortConfig * SnortConfNew(void)
+SnortConfig* SnortConfNew(void)
 {
-    SnortConfig *sc = (SnortConfig *)SnortAlloc(sizeof(SnortConfig));
+    SnortConfig* sc = (SnortConfig*)SnortAlloc(sizeof(SnortConfig));
 
     sc->pkt_cnt = 0;
     sc->pkt_skip = 0;
@@ -170,7 +170,7 @@ SnortConfig * SnortConfNew(void)
     sc->default_rule_state = RULE_STATE_ENABLED;
 
     // FIXIT-L pcre_match_limit* are interdependent
-    // somehow a packet thread needs a much lower setting 
+    // somehow a packet thread needs a much lower setting
     sc->pcre_match_limit = 1500;
     sc->pcre_match_limit_recursion = 1500;
 
@@ -203,7 +203,7 @@ SnortConfig * SnortConfNew(void)
     return sc;
 }
 
-void SnortConfSetup(SnortConfig *sc)
+void SnortConfSetup(SnortConfig* sc)
 {
     if (ScOutputUseUtc())
         snort_conf->thiszone = 0;
@@ -234,7 +234,7 @@ void SnortConfSetup(SnortConfig *sc)
 #endif
 }
 
-void SnortConfFree(SnortConfig *sc)
+void SnortConfFree(SnortConfig* sc)
 {
     assert(sc);
 
@@ -300,7 +300,7 @@ void SnortConfFree(SnortConfig *sc)
     if ( sc->respond_device )
         free(sc->respond_device);
 
-     if (sc->eth_dst )
+    if (sc->eth_dst )
         free(sc->eth_dst);
 
     if ( sc->output )
@@ -312,9 +312,9 @@ void SnortConfFree(SnortConfig *sc)
         FreeVarList(sc->var_list);
 
     if ( sc->fast_pattern_config &&
-         (!snort_conf || sc == snort_conf ||
-         (sc->fast_pattern_config->search_api !=
-             snort_conf->fast_pattern_config->search_api)) )
+        (!snort_conf || sc == snort_conf ||
+        (sc->fast_pattern_config->search_api !=
+        snort_conf->fast_pattern_config->search_api)) )
     {
         MpseManager::stop_search_engine(sc->fast_pattern_config->search_api);
     }
@@ -342,7 +342,7 @@ void SnortConfFree(SnortConfig *sc)
     trim_heap();
 }
 
-SnortConfig* MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
+SnortConfig* MergeSnortConfs(SnortConfig* cmd_line, SnortConfig* config_file)
 {
     /* Move everything from the command line config over to the
      * config_file config */
@@ -350,7 +350,7 @@ SnortConfig* MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
     if (cmd_line == NULL)
     {
         FatalError("%s(%d) Merging snort configs: snort conf is NULL.\n",
-                   __FILE__, __LINE__);
+            __FILE__, __LINE__);
     }
 
     if (config_file == NULL)
@@ -528,7 +528,7 @@ SnortConfig* MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
     return config_file;
 }
 
-int VerifyReload(SnortConfig *sc)
+int VerifyReload(SnortConfig* sc)
 {
     if (sc == NULL)
         return -1;
@@ -536,7 +536,7 @@ int VerifyReload(SnortConfig *sc)
     if (snort_conf->asn1_mem != sc->asn1_mem)
     {
         ErrorMessage("Snort Reload: Changing the asn1 memory configuration "
-                     "requires a restart.\n");
+            "requires a restart.\n");
         return -1;
     }
 
@@ -548,22 +548,22 @@ int VerifyReload(SnortConfig *sc)
         if (strcasecmp(snort_conf->bpf_filter, sc->bpf_filter) != 0)
         {
             ErrorMessage("Snort Reload: Changing the bpf filter configuration "
-                         "requires a restart.\n");
+                "requires a restart.\n");
             return -1;
         }
     }
     else if (sc->bpf_filter != snort_conf->bpf_filter)
     {
         ErrorMessage("Snort Reload: Changing the bpf filter configuration "
-                     "requires a restart.\n");
+            "requires a restart.\n");
         return -1;
     }
 
     if ( sc->respond_attempts != snort_conf->respond_attempts ||
-         sc->respond_device != snort_conf->respond_device )
+        sc->respond_device != snort_conf->respond_device )
     {
         ErrorMessage("Snort Reload: Changing config response "
-                     "requires a restart.\n");
+            "requires a restart.\n");
         return -1;
     }
 
@@ -573,14 +573,14 @@ int VerifyReload(SnortConfig *sc)
         if (strcasecmp(snort_conf->chroot_dir, sc->chroot_dir) != 0)
         {
             ErrorMessage("Snort Reload: Changing the chroot directory "
-                         "configuration requires a restart.\n");
+                "configuration requires a restart.\n");
             return -1;
         }
     }
     else if (snort_conf->chroot_dir != sc->chroot_dir)
     {
         ErrorMessage("Snort Reload: Changing the chroot directory "
-                     "configuration requires a restart.\n");
+            "configuration requires a restart.\n");
         return -1;
     }
 
@@ -588,7 +588,7 @@ int VerifyReload(SnortConfig *sc)
         (sc->run_flags & RUN_FLAG__DAEMON))
     {
         ErrorMessage("Snort Reload: Changing to or from daemon mode "
-                     "requires a restart.\n");
+            "requires a restart.\n");
         return -1;
     }
 
@@ -599,35 +599,35 @@ int VerifyReload(SnortConfig *sc)
         if (strcasecmp(snort_conf->orig_log_dir, sc->orig_log_dir) != 0)
         {
             ErrorMessage("Snort Reload: Changing the log directory "
-                         "configuration requires a restart.\n");
+                "configuration requires a restart.\n");
             return -1;
         }
     }
     else if (snort_conf->orig_log_dir != sc->orig_log_dir)
     {
         ErrorMessage("Snort Reload: Changing the log directory "
-                     "configuration requires a restart.\n");
+            "configuration requires a restart.\n");
         return -1;
     }
 
     if (snort_conf->max_attribute_hosts != sc->max_attribute_hosts)
     {
         ErrorMessage("Snort Reload: Changing max_attribute_hosts "
-                     "configuration requires a restart.\n");
+            "configuration requires a restart.\n");
         return -1;
     }
     if (snort_conf->max_attribute_services_per_host != sc->max_attribute_services_per_host)
     {
         ErrorMessage("Snort Reload: Changing max_attribute_services_per_host "
-                     "configuration requires a restart.\n");
+            "configuration requires a restart.\n");
         return -1;
     }
 
-    if ( (snort_conf->output_flags & OUTPUT_FLAG__NO_LOG) != 
-         (sc->output_flags & OUTPUT_FLAG__NO_LOG) )
+    if ( (snort_conf->output_flags & OUTPUT_FLAG__NO_LOG) !=
+        (sc->output_flags & OUTPUT_FLAG__NO_LOG) )
     {
         ErrorMessage("Snort Reload: Changing from log to no log or vice "
-                     "versa requires a restart.\n");
+            "versa requires a restart.\n");
         return -1;
     }
 
@@ -635,7 +635,7 @@ int VerifyReload(SnortConfig *sc)
         (sc->run_flags & RUN_FLAG__NO_PROMISCUOUS))
     {
         ErrorMessage("Snort Reload: Changing to or from promiscuous mode "
-                     "requires a restart.\n");
+            "requires a restart.\n");
         return -1;
     }
 
@@ -644,7 +644,7 @@ int VerifyReload(SnortConfig *sc)
     if (snort_conf->ppm_cfg.rule_log != sc->ppm_cfg.rule_log)
     {
         ErrorMessage("Snort Reload: Changing the ppm rule_log "
-                     "configuration requires a restart.\n");
+            "configuration requires a restart.\n");
         return -1;
     }
 #endif
@@ -652,21 +652,21 @@ int VerifyReload(SnortConfig *sc)
     if (snort_conf->group_id != sc->group_id)
     {
         ErrorMessage("Snort Reload: Changing the group id "
-                     "configuration requires a restart.\n");
+            "configuration requires a restart.\n");
         return -1;
     }
 
     if (snort_conf->user_id != sc->user_id)
     {
         ErrorMessage("Snort Reload: Changing the user id "
-                     "configuration requires a restart.\n");
+            "configuration requires a restart.\n");
         return -1;
     }
 
     if (snort_conf->pkt_snaplen != sc->pkt_snaplen)
     {
         ErrorMessage("Snort Reload: Changing the packet snaplen "
-                     "configuration requires a restart.\n");
+            "configuration requires a restart.\n");
         return -1;
     }
 
@@ -674,7 +674,7 @@ int VerifyReload(SnortConfig *sc)
         sc->threshold_config->memcap)
     {
         ErrorMessage("Snort Reload: Changing the threshold memcap "
-                     "configuration requires a restart.\n");
+            "configuration requires a restart.\n");
         return -1;
     }
 
@@ -682,7 +682,7 @@ int VerifyReload(SnortConfig *sc)
         sc->rate_filter_config->memcap)
     {
         ErrorMessage("Snort Reload: Changing the rate filter memcap "
-                     "configuration requires a restart.\n");
+            "configuration requires a restart.\n");
         return -1;
     }
 
@@ -690,14 +690,14 @@ int VerifyReload(SnortConfig *sc)
         sc->detection_filter_config->memcap)
     {
         ErrorMessage("Snort Reload: Changing the detection filter memcap "
-                     "configuration requires a restart.\n");
+            "configuration requires a restart.\n");
         return -1;
     }
 
     if (snort_conf->so_rule_memcap != sc->so_rule_memcap)
     {
         ErrorMessage("Snort Reload: Changing the so rule memcap "
-                     "configuration requires a restart.\n");
+            "configuration requires a restart.\n");
         return -1;
     }
 

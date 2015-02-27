@@ -109,16 +109,16 @@ class DpxModule : public Module
 {
 public:
     DpxModule() : Module(s_name, s_help)
-    { };
+    { }
 
     const PegInfo* get_pegs() const
-    { return simple_pegs; };
+    { return simple_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&dpxstats; };
+    { return (PegCount*)&dpxstats; }
 
     ProfileStats* get_profile() const override
-    { return &dpxPerfStats; };
+    { return &dpxPerfStats; }
 };
 
 //-------------------------------------------------------------------------
@@ -146,7 +146,7 @@ static const InspectApi dpx_api
         nullptr,
         nullptr
     },
-    IT_NETWORK, 
+    IT_NETWORK,
     PROTO_BIT__UDP,
     nullptr, // service
     nullptr, // contents

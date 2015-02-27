@@ -17,12 +17,10 @@
 //--------------------------------------------------------------------------
 // cd_sip.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #include <pcap.h>
 #include <cstdint>
 #include "framework/codec.h"
 #include "protocols/protocol_ids.h"
-
 
 #define CD_SLIP_NAME "slip"
 #define CD_SLIP_HELP_STR "support for slip protocol"
@@ -30,22 +28,18 @@
 
 const uint16_t SLIP_HEADER_LEN = 16;
 
-
 namespace
 {
-
 class SlipCodec : public Codec
 {
 public:
-    SlipCodec() : Codec(CD_SLIP_NAME){};
-    ~SlipCodec() {};
+    SlipCodec() : Codec(CD_SLIP_NAME) { }
+    ~SlipCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_data_link_type(std::vector<int>&) override;
 };
-
 } // namespace
-
 
 void SlipCodec::get_data_link_type(std::vector<int>& v)
 {
@@ -53,7 +47,6 @@ void SlipCodec::get_data_link_type(std::vector<int>& v)
     v.push_back(DLT_SLIP);
 #endif
 }
-
 
 bool SlipCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
@@ -66,18 +59,15 @@ bool SlipCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     return true;
 }
 
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
-
 static Codec* ctor(Module*)
 { return new SlipCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi slip_api =
 {
@@ -98,7 +88,6 @@ static const CodecApi slip_api =
     dtor
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -108,3 +97,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_slip = &slip_api.base;
 #endif
+

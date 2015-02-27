@@ -28,10 +28,10 @@ struct ThresholdConfig
 {
     int memcap;
     int enabled;
-    ThresholdObjects *thd_objs;
+    ThresholdObjects* thd_objs;
 };
 
-ThresholdConfig * ThresholdConfigNew(void);
+ThresholdConfig* ThresholdConfigNew(void);
 void ThresholdConfigFree(ThresholdConfig*);
 void sfthreshold_reset(void);
 int sfthreshold_create(struct SnortConfig*, ThresholdConfig*, THDX_STRUCT*);
@@ -41,3 +41,4 @@ void sfthreshold_reset_active(void);
 void sfthreshold_free(void);
 
 #endif
+

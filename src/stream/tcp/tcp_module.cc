@@ -304,7 +304,6 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
         else
             config->flags &= ~STREAM_CONFIG_SHOW_PACKETS;
     }
-
     else
         return false;
 
@@ -314,7 +313,7 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
 bool StreamTcpModule::begin(const char* fqn, int, SnortConfig*)
 {
     if ( !strcmp(fqn, "stream_tcp.small_segments") ||
-         !strcmp(fqn, "stream_tcp.queue_limit"))
+        !strcmp(fqn, "stream_tcp.queue_limit"))
     {
         return true;
     }

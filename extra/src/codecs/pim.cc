@@ -20,7 +20,6 @@
 
 // cd_pim.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -29,10 +28,8 @@
 #include "framework/decode_data.h"
 #include "codecs/codec_module.h"
 
-
 namespace
 {
-
 // yes, macros are necessary. The API and class constructor require different strings.
 #define CD_PIM_NAME "pim"
 #define CD_PIM_HELP "support for protocol independent multicast"
@@ -40,30 +37,26 @@ namespace
 class PimCodec : public Codec
 {
 public:
-    PimCodec() : Codec(CD_PIM_NAME){};
-    ~PimCodec() {};
-
+    PimCodec() : Codec(CD_PIM_NAME) { }
+    ~PimCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-
 };
 
 const uint16_t IPPROTO_ID_PIM = 103;
-
 } // namespace
-
 
 void PimCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(IPPROTO_ID_PIM);
 }
+
 bool PimCodec::decode(const RawData&, CodecData& codec, DecodeData&)
 {
     codec_event(codec, DECODE_IP_BAD_PROTO);
     return true;
 }
-
 
 //-------------------------------------------------------------------------
 // api
@@ -72,9 +65,8 @@ bool PimCodec::decode(const RawData&, CodecData& codec, DecodeData&)
 static Codec* ctor(Module*)
 { return new PimCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi pim_api =
 {
@@ -100,3 +92,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
     &pim_api.base,
     nullptr
 };
+

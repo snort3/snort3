@@ -24,7 +24,6 @@
 
 namespace parser
 {
-
 class Markup
 {
 public:
@@ -43,7 +42,6 @@ public:
 private:
     static bool enabled;
 };
-
 }
 
 #endif

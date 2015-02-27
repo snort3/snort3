@@ -33,7 +33,6 @@ class Codec;
 class Module;
 class PacketManager;
 
-
 //-------------------------------------------------------------------------
 
 #ifdef PERF_PROFILING
@@ -41,9 +40,7 @@ struct ProfileStats;
 extern THREAD_LOCAL ProfileStats decodePerfStats;
 #endif
 
-
 static const uint16_t max_protocol_id = 65535;
-
 
 /*
  *  CodecManager class
@@ -89,3 +86,4 @@ private:
 };
 
 #endif
+

@@ -26,19 +26,16 @@
 
 namespace preprocessors
 {
-
-namespace {
-
+namespace
+{
 class StreamGlobal : public ConversionState
 {
 public:
-    StreamGlobal(Converter& c) : ConversionState(c) {};
-    virtual ~StreamGlobal() {};
+    StreamGlobal(Converter& c) : ConversionState(c) { }
+    virtual ~StreamGlobal() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
-
 
 bool StreamGlobal::convert(std::istringstream& data_stream)
 {
@@ -47,7 +44,7 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
 
     table_api.open_table("stream");
 
-    while(util::get_string(data_stream, keyword, ","))
+    while (util::get_string(data_stream, keyword, ","))
     {
         bool tmpval = true;
         std::istringstream arg_stream(keyword);
@@ -86,7 +83,6 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             if (!eat_option(arg_stream))
                 tmpval = false;
         }
-
         else if (!keyword.compare("max_tcp"))
         {
             table_api.open_table("tcp_cache");
@@ -94,14 +90,12 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("max_sessions", arg_stream, false);
             table_api.close_table();
         }
-
         else if (!keyword.compare("max_tcp"))
         {
             table_api.open_table("tcp_cache");
             tmpval = parse_int_option("max_sessions", arg_stream, false);
             table_api.close_table();
         }
-
         else if (!keyword.compare("tcp_cache_nominal_timeout"))
         {
             table_api.open_table("tcp_cache");
@@ -109,7 +103,6 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("pruning_timeout", arg_stream, false);
             table_api.close_table();
         }
-
         else if (!keyword.compare("tcp_cache_pruning_timeout"))
         {
             table_api.open_table("tcp_cache");
@@ -117,14 +110,12 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("idle_timeout", arg_stream, false);
             table_api.close_table();
         }
-
         else if (!keyword.compare("memcap"))
         {
             table_api.open_table("tcp_cache");
             tmpval = parse_int_option("memcap", arg_stream, false);
             table_api.close_table();
         }
-
         else if (!keyword.compare("max_udp"))
         {
             table_api.open_table("udp_cache");
@@ -132,7 +123,6 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("max_sessions", arg_stream, false);
             table_api.close_table();
         }
-
         else if (!keyword.compare("udp_cache_pruning_timeout"))
         {
             table_api.open_table("udp_cache");
@@ -140,7 +130,6 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("pruning_timeout", arg_stream, false);
             table_api.close_table();
         }
-
         else if (!keyword.compare("udp_cache_nominal_timeout"))
         {
             table_api.open_table("udp_cache");
@@ -148,7 +137,6 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("idle_timeout", arg_stream, false);
             table_api.close_table();
         }
-
         else if (!keyword.compare("max_icmp"))
         {
             table_api.open_table("icmp_cache");
@@ -156,7 +144,6 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("max_sessions", arg_stream, false);
             table_api.close_table();
         }
-
         else if (!keyword.compare("max_ip"))
         {
             table_api.open_table("ip_cache");
@@ -164,14 +151,12 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("max_sessions", arg_stream, false);
             table_api.close_table();
         }
-
         else if (!keyword.compare("show_rebuilt_packets"))
         {
             table_api.open_top_level_table("stream_tcp");
             table_api.add_option("show_rebuilt_packets", true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("min_response_seconds"))
         {
             table_api.open_top_level_table("active");
@@ -179,7 +164,6 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("min_interval", arg_stream, false);
             table_api.close_table();
         }
-
         else if (!keyword.compare("max_active_responses"))
         {
             table_api.open_top_level_table("active");
@@ -187,7 +171,6 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("max_responses", arg_stream, false);
             table_api.close_table();
         }
-
         else
         {
             tmpval = false;
@@ -200,9 +183,8 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
         }
     }
 
-    return retval;    
+    return retval;
 }
-
 
 /**************************
  *******  A P I ***********
@@ -213,12 +195,12 @@ static ConversionState* ctor(Converter& c)
     return new StreamGlobal(c);
 }
 
-static const ConvertMap preprocessor_stream_global = 
+static const ConvertMap preprocessor_stream_global =
 {
     "stream5_global",
     ctor,
 };
 
 const ConvertMap* stream_global_map = &preprocessor_stream_global;
-
 } // namespace preprocessors
+

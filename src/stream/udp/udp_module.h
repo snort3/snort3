@@ -28,7 +28,7 @@
 #include "framework/module.h"
 #include "main/thread.h"
 #include "stream/stream.h"
-    
+
 struct SnortConfig;
 
 extern const PegInfo udp_pegs[];

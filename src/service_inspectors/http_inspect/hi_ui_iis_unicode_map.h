@@ -16,12 +16,12 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 /**
 **  @file       hi_ui_iis_unicode_map.h
-**  
+**
 **  @author     Daniel Roelker <droelker@sourcefire.com>
-**  
+**
 **  @brief      Header file for hi_ui_iis_unicode_map functions.
 */
 #ifndef HI_UI_IIS_UNICODE_MAP_H
@@ -36,8 +36,8 @@
 */
 #define HI_UI_NON_ASCII_CODEPOINT -1
 
-int hi_ui_parse_iis_unicode_map(uint8_t** iis_unicode_map, char *filename,
-                                int iCodePage);
+int hi_ui_parse_iis_unicode_map(uint8_t** iis_unicode_map, char* filename,
+    int iCodePage);
 
 bool get_default_unicode_map(uint8_t*& map, int& page);
 

@@ -32,9 +32,9 @@
 #include "util.h"
 #include "perf.h"
 
-int DisplayEventPerfStats(SFEVENT_STATS *sfEventStats);
+int DisplayEventPerfStats(SFEVENT_STATS* sfEventStats);
 
-int InitEventStats(SFEVENT *sfEvent)
+int InitEventStats(SFEVENT* sfEvent)
 {
     sfEvent->NQEvents = 0;
     sfEvent->QEvents  = 0;
@@ -42,7 +42,7 @@ int InitEventStats(SFEVENT *sfEvent)
     return 0;
 }
 
-int UpdateNQEvents(SFEVENT *sfEvent)
+int UpdateNQEvents(SFEVENT* sfEvent)
 {
     if (sfEvent == NULL)
         return -1;
@@ -59,7 +59,7 @@ int UpdateNQEvents(SFEVENT *sfEvent)
     return 0;
 }
 
-int UpdateQEvents(SFEVENT *sfEvent)
+int UpdateQEvents(SFEVENT* sfEvent)
 {
     if (sfEvent == NULL)
         return -1;
@@ -76,7 +76,7 @@ int UpdateQEvents(SFEVENT *sfEvent)
     return 0;
 }
 
-int ProcessEventStats(SFEVENT *sfEvent)
+int ProcessEventStats(SFEVENT* sfEvent)
 {
     SFEVENT_STATS sfEventStats;
 
@@ -84,12 +84,12 @@ int ProcessEventStats(SFEVENT *sfEvent)
     sfEventStats.QEvents = sfEvent->QEvents;
     sfEventStats.TotalEvents = sfEvent->TotalEvents;
 
-    if(sfEvent->TotalEvents)
+    if (sfEvent->TotalEvents)
     {
         sfEventStats.NQPercent = 100.0 * (double)sfEvent->NQEvents /
-                                 (double)sfEvent->TotalEvents;
+            (double)sfEvent->TotalEvents;
         sfEventStats.QPercent  = 100.0 * (double)sfEvent->QEvents /
-                                 (double)sfEvent->TotalEvents;
+            (double)sfEvent->TotalEvents;
     }
     else
     {
@@ -106,21 +106,20 @@ int ProcessEventStats(SFEVENT *sfEvent)
     return 0;
 }
 
-int DisplayEventPerfStats(SFEVENT_STATS *sfEventStats)
+int DisplayEventPerfStats(SFEVENT_STATS* sfEventStats)
 {
     LogMessage("\n");
     LogMessage("\n");
     LogMessage("Snort Setwise Event Stats\n");
     LogMessage("-------------------------\n");
 
-    LogMessage( "Total Events:           " STDu64 "\n", sfEventStats->TotalEvents);
-    LogMessage( "Qualified Events:       " STDu64 "\n", sfEventStats->QEvents);
-    LogMessage( "Non-Qualified Events:   " STDu64 "\n", sfEventStats->NQEvents);
+    LogMessage("Total Events:           " STDu64 "\n", sfEventStats->TotalEvents);
+    LogMessage("Qualified Events:       " STDu64 "\n", sfEventStats->QEvents);
+    LogMessage("Non-Qualified Events:   " STDu64 "\n", sfEventStats->NQEvents);
 
     LogMessage("%%Qualified Events:      %.4f%%\n", sfEventStats->QPercent);
     LogMessage("%%Non-Qualified Events:  %.4f%%\n", sfEventStats->NQPercent);
 
     return 0;
 }
-
 

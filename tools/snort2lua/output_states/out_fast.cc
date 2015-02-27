@@ -26,17 +26,15 @@
 
 namespace output
 {
-
-namespace {
-
+namespace
+{
 class AlertFast : public ConversionState
 {
 public:
-    AlertFast(Converter& c) : ConversionState(c) {};
-    virtual ~AlertFast() {};
+    AlertFast(Converter& c) : ConversionState(c) { }
+    virtual ~AlertFast() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool AlertFast::convert(std::istringstream& data_stream)
@@ -50,7 +48,6 @@ bool AlertFast::convert(std::istringstream& data_stream)
         return true;
 
     table_api.add_deleted_comment("<filename> can no longer be specific");
-
 
     if (!(data_stream >> keyword))
         return retval;
@@ -67,7 +64,6 @@ bool AlertFast::convert(std::istringstream& data_stream)
         table_api.add_option("packet", false);
     }
 
-
     int limit;
     char c = '\0';
     std::string units = "B";
@@ -83,7 +79,6 @@ bool AlertFast::convert(std::istringstream& data_stream)
         else if (c == 'G' || c == 'g')
             units = "G";
     }
-
 
     retval = table_api.add_option("limit", limit) && retval;
     retval = table_api.add_option("units", units) && retval;
@@ -113,5 +108,5 @@ static const ConvertMap alert_fast_api =
 };
 
 const ConvertMap* alert_fast_map = &alert_fast_api;
-
 } // namespace output
+

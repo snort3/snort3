@@ -46,15 +46,16 @@
 #define SHA256UPDATE  SHA256_Update
 #define SHA256FINAL   SHA256_Final
 
-static inline int get_data_size_from_depth_limit(FileContext* context, FileProcessType type, int data_size)
+static inline int get_data_size_from_depth_limit(FileContext* context, FileProcessType type, int
+    data_size)
 {
-    FileConfig *file_config =  (FileConfig *)context->file_config;
+    FileConfig* file_config =  (FileConfig*)context->file_config;
     uint64_t max_depth;
 
     if (!file_config)
         return data_size;
 
-    switch(type)
+    switch (type)
     {
     case SNORT_FILE_TYPE_ID:
         max_depth = file_config->file_type_depth;
@@ -72,10 +73,10 @@ static inline int get_data_size_from_depth_limit(FileContext* context, FileProce
         data_size = (int)(max_depth - context->processed_bytes);
 
     return data_size;
-
 }
+
 /*Main File Processing functions */
-void file_type_id( FileContext* context, uint8_t* file_data, int data_size, FilePosition position)
+void file_type_id(FileContext* context, uint8_t* file_data, int data_size, FilePosition position)
 {
     if (!context)
         return;
@@ -91,7 +92,6 @@ void file_type_id( FileContext* context, uint8_t* file_data, int data_size, File
         return;
     }
 
-
     switch (position)
     {
     case SNORT_FILE_START:
@@ -115,9 +115,10 @@ void file_type_id( FileContext* context, uint8_t* file_data, int data_size, File
     default:
         break;
     }
-
 }
-void file_signature_sha256( FileContext* context, uint8_t* file_data, int data_size, FilePosition position)
+
+void file_signature_sha256(FileContext* context, uint8_t* file_data, int data_size, FilePosition
+    position)
 {
     if (!context)
         return;
@@ -131,36 +132,36 @@ void file_signature_sha256( FileContext* context, uint8_t* file_data, int data_s
     {
     case SNORT_FILE_START:
         context->file_signature_context = SnortAlloc(sizeof(SHA256CONTEXT));
-        SHA256INIT((SHA256CONTEXT *)context->file_signature_context);
-        SHA256UPDATE((SHA256CONTEXT *)context->file_signature_context, file_data, data_size);
+        SHA256INIT((SHA256CONTEXT*)context->file_signature_context);
+        SHA256UPDATE((SHA256CONTEXT*)context->file_signature_context, file_data, data_size);
         break;
     case SNORT_FILE_MIDDLE:
         if (!context->file_signature_context)
             context->file_signature_context = SnortAlloc(sizeof(SHA256CONTEXT));
-        SHA256UPDATE((SHA256CONTEXT *)context->file_signature_context, file_data, data_size);
+        SHA256UPDATE((SHA256CONTEXT*)context->file_signature_context, file_data, data_size);
         break;
     case SNORT_FILE_END:
         if (!context->file_signature_context)
             context->file_signature_context = SnortAlloc(sizeof(SHA256CONTEXT));
-        SHA256UPDATE((SHA256CONTEXT *)context->file_signature_context, file_data, data_size);
+        SHA256UPDATE((SHA256CONTEXT*)context->file_signature_context, file_data, data_size);
         context->sha256 = (uint8_t*)SnortAlloc(SHA256_HASH_SIZE);
-        SHA256FINAL(context->sha256, (SHA256CONTEXT *)context->file_signature_context);
+        SHA256FINAL(context->sha256, (SHA256CONTEXT*)context->file_signature_context);
         break;
     case SNORT_FILE_FULL:
         context->file_signature_context = SnortAlloc(sizeof (SHA256CONTEXT));
-        SHA256INIT((SHA256CONTEXT *)context->file_signature_context);
-        SHA256UPDATE((SHA256CONTEXT *)context->file_signature_context, file_data, data_size);
+        SHA256INIT((SHA256CONTEXT*)context->file_signature_context);
+        SHA256UPDATE((SHA256CONTEXT*)context->file_signature_context, file_data, data_size);
         context->sha256 = (uint8_t*)SnortAlloc(SHA256_HASH_SIZE);
-        SHA256FINAL(context->sha256, (SHA256CONTEXT *)context->file_signature_context);
+        SHA256FINAL(context->sha256, (SHA256CONTEXT*)context->file_signature_context);
         break;
     default:
         break;
     }
 }
 
-/*File properties*/
-/*Only set the pointer for performance, no deep copy*/
-void file_name_set (FileContext *context, uint8_t *file_name, uint32_t name_size)
+/*File properties
+  Only set the pointer for performance, no deep copy*/
+void file_name_set(FileContext* context, uint8_t* file_name, uint32_t name_size)
 {
     if (!context)
         return;
@@ -172,7 +173,7 @@ void file_name_set (FileContext *context, uint8_t *file_name, uint32_t name_size
  *        0: file name is unavailable
  */
 
-int file_name_get (FileContext *context, uint8_t **file_name, uint32_t *name_size)
+int file_name_get(FileContext* context, uint8_t** file_name, uint32_t* name_size)
 {
     if (!context)
         return 0;
@@ -186,48 +187,52 @@ int file_name_get (FileContext *context, uint8_t **file_name, uint32_t *name_siz
         return 0;
     return 1;
 }
-void file_size_set (FileContext *context, uint64_t file_size)
+
+void file_size_set(FileContext* context, uint64_t file_size)
 {
     if (!context)
         return;
     context->file_size = file_size;
-
 }
-uint64_t file_size_get (FileContext *context)
+
+uint64_t file_size_get(FileContext* context)
 {
     if (!context)
         return 0;
     return (context->file_size);
 }
-void file_direction_set (FileContext *context, bool upload)
+
+void file_direction_set(FileContext* context, bool upload)
 {
     if (!context)
         return;
     context->upload= upload;
-
 }
-bool file_direction_get (FileContext *context)
+
+bool file_direction_get(FileContext* context)
 {
     if (!context)
         return 0;
     return (context->upload);
-
 }
-void file_sig_sha256_set (FileContext *context, uint8_t * signature)
+
+void file_sig_sha256_set(FileContext* context, uint8_t* signature)
 {
     if (!context)
         return;
     context->sha256= signature;
 }
-uint8_t* file_sig_sha256_get (FileContext *context)
+
+uint8_t* file_sig_sha256_get(FileContext* context)
 {
     if (!context)
         return NULL;
     return (context->sha256);
 }
+
 const char* file_info_from_ID(void* conf, uint32_t id)
 {
-    RuleInfo *info;
+    RuleInfo* info;
 
     if (SNORT_FILE_TYPE_UNKNOWN == id)
         return "Unknown file type, done";
@@ -242,23 +247,26 @@ const char* file_info_from_ID(void* conf, uint32_t id)
 
     return NULL;
 }
+
 #if defined(DEBUG_MSGS) || defined (REG_TEST)
 /*
  * Print a 32-byte hash value.
  */
-void file_sha256_print(unsigned char *hash)
+void file_sha256_print(unsigned char* hash)
 {
     printf("SHA256: %02X%02X %02X%02X %02X%02X %02X%02X "
-            "%02X%02X %02X%02X %02X%02X %02X%02X "
-            "%02X%02X %02X%02X %02X%02X %02X%02X "
-            "%02X%02X %02X%02X %02X%02X %02X%02X\n",
-            hash[0], hash[1], hash[2], hash[3],
-            hash[4], hash[5], hash[6], hash[7],
-            hash[8], hash[9], hash[10], hash[11],
-            hash[12], hash[13], hash[14], hash[15],
-            hash[16], hash[17], hash[18], hash[19],
-            hash[20], hash[21], hash[22], hash[23],
-            hash[24], hash[25], hash[26], hash[27],
-            hash[28], hash[29], hash[30], hash[31]);
+        "%02X%02X %02X%02X %02X%02X %02X%02X "
+        "%02X%02X %02X%02X %02X%02X %02X%02X "
+        "%02X%02X %02X%02X %02X%02X %02X%02X\n",
+        hash[0], hash[1], hash[2], hash[3],
+        hash[4], hash[5], hash[6], hash[7],
+        hash[8], hash[9], hash[10], hash[11],
+        hash[12], hash[13], hash[14], hash[15],
+        hash[16], hash[17], hash[18], hash[19],
+        hash[20], hash[21], hash[22], hash[23],
+        hash[24], hash[25], hash[26], hash[27],
+        hash[28], hash[29], hash[30], hash[31]);
 }
+
 #endif
+

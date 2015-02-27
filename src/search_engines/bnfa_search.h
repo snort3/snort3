@@ -36,11 +36,11 @@
 #ifndef BNFA_SEARCH_H
 #define BNFA_SEARCH_H
 
-/* debugging - allow printing the trie and nfa in list format */
-/* #define ALLOW_LIST_PRINT */
+/* debugging - allow printing the trie and nfa in list format
+   #define ALLOW_LIST_PRINT */
 
-/* debugging - enable full format */
-/* #define ALLOW_NFA_FULL */
+/* debugging - enable full format
+   #define ALLOW_NFA_FULL */
 
 /*
 *   DEFINES and Typedef's
@@ -59,22 +59,20 @@
 #define BNFA_SPARSE_COUNT_BITS          0x3f000000
 #define BNFA_SPARSE_MAX_ROW_TRANSITIONS 0x3f
 
-typedef  unsigned int   bnfa_state_t;
-
+typedef  unsigned int bnfa_state_t;
 
 /*
 *   Internal Pattern Representation
 */
 typedef struct bnfa_pattern
 {
-    struct bnfa_pattern * next;
+    struct bnfa_pattern* next;
 
-    unsigned char       * casepatrn;   /* case specific */
-    unsigned              n;           /* pattern len */
-    int                   nocase;      /* nocase flag */
-    int                   negative;    /* pattern is negated */
-    void                * userdata;    /* ptr to users pattern data/info  */
-
+    unsigned char* casepatrn;          /* case specific */
+    unsigned n;                        /* pattern len */
+    int nocase;                        /* nocase flag */
+    int negative;                      /* pattern is negated */
+    void* userdata;                    /* ptr to users pattern data/info  */
 } bnfa_pattern_t;
 
 /*
@@ -82,10 +80,9 @@ typedef struct bnfa_pattern
 */
 typedef struct bnfa_trans_node_s
 {
-  bnfa_state_t               key;
-  bnfa_state_t               next_state;
-  struct bnfa_trans_node_s * next;
-
+    bnfa_state_t key;
+    bnfa_state_t next_state;
+    struct bnfa_trans_node_s* next;
 } bnfa_trans_node_t;
 
 /*
@@ -93,70 +90,72 @@ typedef struct bnfa_trans_node_s
 */
 typedef struct bnfa_match_node_s
 {
-    void                     * data;
-    void                     * rule_option_tree;
-    void                     * neg_list;
-    struct bnfa_match_node_s * next;
-
+    void* data;
+    void* rule_option_tree;
+    void* neg_list;
+    struct bnfa_match_node_s* next;
 } bnfa_match_node_t;
 
 /*
 *  Final storage type for the state transitions
 */
-enum {
-  BNFA_FULL,
-  BNFA_SPARSE
+enum
+{
+    BNFA_FULL,
+    BNFA_SPARSE
 };
 
-enum {
-  BNFA_PER_PAT_CASE,
-  BNFA_CASE,
-  BNFA_NOCASE
+enum
+{
+    BNFA_PER_PAT_CASE,
+    BNFA_CASE,
+    BNFA_NOCASE
 };
 
 /*
 *   Aho-Corasick State Machine Struct
 */
-typedef struct {
-	int                bnfaMethod;
-	int                bnfaCaseMode;
-	int                bnfaFormat;
-	int                bnfaAlphabetSize;
-	int                bnfaOpt;
+typedef struct
+{
+    int bnfaMethod;
+    int bnfaCaseMode;
+    int bnfaFormat;
+    int bnfaAlphabetSize;
+    int bnfaOpt;
 
-	unsigned           bnfaPatternCnt;
-	bnfa_pattern_t     * bnfaPatterns;
+    unsigned bnfaPatternCnt;
+    bnfa_pattern_t* bnfaPatterns;
 
-	int                bnfaMaxStates;
-	int                bnfaNumStates;
-	int		           bnfaNumTrans;
-	int                bnfaMatchStates;
+    int bnfaMaxStates;
+    int bnfaNumStates;
+    int bnfaNumTrans;
+    int bnfaMatchStates;
 
-	bnfa_trans_node_t  ** bnfaTransTable;
+    bnfa_trans_node_t** bnfaTransTable;
 
-	bnfa_state_t       ** bnfaNextState;
-	bnfa_match_node_t  ** bnfaMatchList;
-	bnfa_state_t       * bnfaFailState;
+    bnfa_state_t** bnfaNextState;
+    bnfa_match_node_t** bnfaMatchList;
+    bnfa_state_t* bnfaFailState;
 
-	bnfa_state_t       * bnfaTransList;
-   	int                bnfaForceFullZeroState;
+    bnfa_state_t* bnfaTransList;
+    int bnfaForceFullZeroState;
 
-	int 			   bnfa_memory;
-	int 			   pat_memory;
-	int 			   list_memory;
-	int 			   queue_memory;
-	int 			   nextstate_memory;
-	int 			   failstate_memory;
-	int 			   matchlist_memory;
+    int bnfa_memory;
+    int pat_memory;
+    int list_memory;
+    int queue_memory;
+    int nextstate_memory;
+    int failstate_memory;
+    int matchlist_memory;
 
-    void               (*userfree)(void *);
-    void               (*optiontreefree)(void **);
-    void               (*neg_list_free)(void **);
+    void (* userfree)(void*);
+    void (* optiontreefree)(void**);
+    void (* neg_list_free)(void**);
 
 #define MAX_INQ 32
     unsigned inq;
     unsigned inq_flush;
-    void * q[MAX_INQ];
+    void* q[MAX_INQ];
 }bnfa_struct_t;
 
 /*
@@ -164,42 +163,42 @@ typedef struct {
 */
 void bnfa_init_xlatcase();
 
-bnfa_struct_t * bnfaNew ( void (*userfree)(void *p),
-                          void (*optiontreefree)(void **p),
-                          void (*neg_list_free)(void **p));
-void bnfaSetOpt(bnfa_struct_t  * p, int flag);
-void bnfaSetCase(bnfa_struct_t  * p, int flag);
-void bnfaFree( bnfa_struct_t  * pstruct );
+bnfa_struct_t* bnfaNew(void (* userfree)(void* p),
+    void (* optiontreefree)(void** p),
+    void (* neg_list_free)(void** p));
+void bnfaSetOpt(bnfa_struct_t* p, int flag);
+void bnfaSetCase(bnfa_struct_t* p, int flag);
+void bnfaFree(bnfa_struct_t* pstruct);
 
 int bnfaAddPattern(
-    bnfa_struct_t * pstruct, const uint8_t* pat, unsigned patlen,
-    bool nocase, bool negative, void * userdata);
+    bnfa_struct_t* pstruct, const uint8_t* pat, unsigned patlen,
+    bool nocase, bool negative, void* userdata);
 
-int bnfaCompile( bnfa_struct_t * pstruct,
-			     int (*build_tree)(void * id, void **existing_tree),
-                 int (*neg_list_func)(void *id, void **list));
+int bnfaCompile(bnfa_struct_t* pstruct,
+    int (* build_tree)(void* id, void** existing_tree),
+    int (* neg_list_func)(void* id, void** list));
 struct SnortConfig;
 int bnfaCompile(
-    SnortConfig*, 
-    bnfa_struct_t * pstruct,
-    int (*build_tree)(SnortConfig*, void * id, void **existing_tree),
-    int (*neg_list_func)(void *id, void **list));
+    SnortConfig*,
+    bnfa_struct_t* pstruct,
+    int (* build_tree)(SnortConfig*, void* id, void** existing_tree),
+    int (* neg_list_func)(void* id, void** list));
 
-typedef int (*bnfa_match_f)(
+typedef int (* bnfa_match_f)(
     bnfa_pattern_t*, void* tree, int index, void* data, void* neg_list);
 
 unsigned _bnfa_search_csparse_nfa(
-    bnfa_struct_t * pstruct, const uint8_t* t, int tlen, bnfa_match_f,
-    void * sdata, unsigned sindex, int* current_state );
+bnfa_struct_t * pstruct, const uint8_t* t, int tlen, bnfa_match_f,
+void* sdata, unsigned sindex, int* current_state);
 
 unsigned _bnfa_search_csparse_nfa_q(
-    bnfa_struct_t * pstruct, unsigned char * t, int tlen, bnfa_match_f,
-    void * sdata, unsigned sindex, int* current_state );
+bnfa_struct_t * pstruct, unsigned char* t, int tlen, bnfa_match_f,
+void* sdata, unsigned sindex, int* current_state);
 
-int bnfaPatternCount( bnfa_struct_t * p);
+int bnfaPatternCount(bnfa_struct_t* p);
 
-void bnfaPrint(	bnfa_struct_t * pstruct); /* prints the nfa states-verbose!! */
-void bnfaPrintInfo( bnfa_struct_t  * pstruct); /* print info on this search engine */
+void bnfaPrint(bnfa_struct_t* pstruct);   /* prints the nfa states-verbose!! */
+void bnfaPrintInfo(bnfa_struct_t* pstruct);    /* print info on this search engine */
 
 /*
  * Summary - this tracks search engine information accross multiple instances of
@@ -207,9 +206,11 @@ void bnfaPrintInfo( bnfa_struct_t  * pstruct); /* print info on this search engi
  * rule grouping, to track total patterns, states, memory, etc...
  *
  */
-void bnfaPrintInfoEx( bnfa_struct_t * p, const char * text );
-void bnfaAccumInfo( bnfa_struct_t  * pstruct); /* add info to summary over multiple search engines */
+void bnfaPrintInfoEx(bnfa_struct_t* p, const char* text);
+void bnfaAccumInfo(bnfa_struct_t* pstruct);    /* add info to summary over multiple search engines
+                                                 */
 void bnfaPrintSummary(void); /* print current summary */
 void bnfaInitSummary(void);  /* reset accumulator foir global summary over multiple engines */
 void bnfa_print_qinfo(void);
 #endif
+

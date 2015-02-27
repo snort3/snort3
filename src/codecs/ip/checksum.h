@@ -28,40 +28,35 @@
 #include <stdlib.h>
 #include <cstddef>
 
-
 namespace checksum
 {
-
 struct Pseudoheader6
 {
     uint32_t sip[4];
     uint32_t dip[4];
-    uint8_t  zero;
-    uint8_t  protocol;
+    uint8_t zero;
+    uint8_t protocol;
     uint16_t len;
 };
 
-
 struct Pseudoheader
 {
-
     uint32_t sip;
     uint32_t dip;
-    uint8_t  zero;
-    uint8_t  protocol;
+    uint8_t zero;
+    uint8_t protocol;
     uint16_t len;
 };
 
 //  calculate the checksum for this general case.
-static uint16_t cksum_add(const uint16_t *buf, std::size_t buf_len);
-inline uint16_t tcp_cksum(const uint16_t *buf, std::size_t len, const Pseudoheader* const);
-inline uint16_t tcp_cksum(const uint16_t *buf, std::size_t len, const Pseudoheader6* const);
-inline uint16_t udp_cksum(const uint16_t *buf, std::size_t len, const Pseudoheader* const);
-inline uint16_t udp_cksum(const uint16_t *buf, std::size_t len, const Pseudoheader6* const);
-inline uint16_t icmp_cksum(const uint16_t *buf, std::size_t len, const Pseudoheader6* const);
-inline uint16_t icmp_cksum(const uint16_t *buf, std::size_t len);
-inline uint16_t ip_cksum(const uint16_t *buf, std::size_t len);
-
+static uint16_t cksum_add(const uint16_t* buf, std::size_t buf_len);
+inline uint16_t tcp_cksum(const uint16_t* buf, std::size_t len, const Pseudoheader* const);
+inline uint16_t tcp_cksum(const uint16_t* buf, std::size_t len, const Pseudoheader6* const);
+inline uint16_t udp_cksum(const uint16_t* buf, std::size_t len, const Pseudoheader* const);
+inline uint16_t udp_cksum(const uint16_t* buf, std::size_t len, const Pseudoheader6* const);
+inline uint16_t icmp_cksum(const uint16_t* buf, std::size_t len, const Pseudoheader6* const);
+inline uint16_t icmp_cksum(const uint16_t* buf, std::size_t len);
+inline uint16_t ip_cksum(const uint16_t* buf, std::size_t len);
 
 /*
  *  NOTE: Since multiple dynamic libraries use checksums, the choice
@@ -78,8 +73,6 @@ inline uint16_t ip_cksum(const uint16_t *buf, std::size_t len);
  */
 namespace detail
 {
-
-
 struct PsuedoheaderUnion
 {
     union
@@ -98,17 +91,18 @@ struct Psuedoheader6Union
     };
 };
 
-static inline uint16_t cksum_add(const uint16_t *buf, std::size_t len, uint32_t cksum)
+static inline uint16_t cksum_add(const uint16_t* buf, std::size_t len, uint32_t cksum)
 {
-    const uint16_t *sp = buf;
+    const uint16_t* sp = buf;
     std::size_t n, sn;
 
     if (len > 1 )
     {
         sn = ((len / 2) & 0xF);  // == len/2 % 16
-        n = (((len / 2) + 15) / 16) ;  // ceiling of (len / 2) / 16
+        n = (((len / 2) + 15) / 16);   // ceiling of (len / 2) / 16
 
-        switch (sn) {
+        switch (sn)
+        {
         case 0:
             sn = 16;
             cksum += sp[15];
@@ -145,9 +139,9 @@ static inline uint16_t cksum_add(const uint16_t *buf, std::size_t len, uint32_t 
         }
         sp += sn;
 
-
         /* XXX - unroll loop using Duff's device. */
-        while (--n > 0) {
+        while (--n > 0)
+        {
             cksum += sp[0];
             cksum += sp[1];
             cksum += sp[2];
@@ -165,7 +159,7 @@ static inline uint16_t cksum_add(const uint16_t *buf, std::size_t len, uint32_t 
             cksum += sp[14];
             cksum += sp[15];
             sp += 16;
-        };
+        }
     }
 
     if (len & 1)
@@ -177,9 +171,8 @@ static inline uint16_t cksum_add(const uint16_t *buf, std::size_t len, uint32_t 
     return (uint16_t)(~cksum);
 }
 
-
 static inline void add_ipv4_pseudoheader(const Pseudoheader* const ph4,
-                                         uint32_t &cksum)
+    uint32_t& cksum)
 {
     /*
      * This mess is necessary to make static analyzers happy.
@@ -198,9 +191,8 @@ static inline void add_ipv4_pseudoheader(const Pseudoheader* const ph4,
     cksum += h[5];
 }
 
-
 static inline void add_ipv6_pseudoheader(const Pseudoheader6* const ph6,
-                                         uint32_t &cksum)
+    uint32_t& cksum)
 {
     /*
      * This mess is necessary to make static analyzers happy.
@@ -231,10 +223,9 @@ static inline void add_ipv6_pseudoheader(const Pseudoheader6* const ph6,
     cksum += h[17];
 }
 
-
-static inline void add_tcp_header(const uint16_t* &d,
-                                    std::size_t &len,
-                                    uint32_t &cksum)
+static inline void add_tcp_header(const uint16_t*& d,
+    std::size_t& len,
+    uint32_t& cksum)
 {
     /* TCP hdr must have 20 hdr bytes */
     cksum += d[0];
@@ -251,22 +242,22 @@ static inline void add_tcp_header(const uint16_t* &d,
     len -= 20;
 }
 
-static inline void add_udp_header(const uint16_t* &d,
-                                    size_t &len,
-                                    uint32_t &cksum)
+static inline void add_udp_header(const uint16_t*& d,
+    size_t& len,
+    uint32_t& cksum)
 {
-   /* UDP must have 8 hdr bytes */
-   cksum += d[0];
-   cksum += d[1];
-   cksum += d[2];
-   cksum += d[3];
-   len -= 8;
-   d += 4;
+    /* UDP must have 8 hdr bytes */
+    cksum += d[0];
+    cksum += d[1];
+    cksum += d[2];
+    cksum += d[3];
+    len -= 8;
+    d += 4;
 }
 
-static inline void add_ip_header(const uint16_t* &d,
-                                 std::size_t &len,
-                                 uint32_t &cksum)
+static inline void add_ip_header(const uint16_t*& d,
+    std::size_t& len,
+    uint32_t& cksum)
 {
     /* IP must be >= 20 bytes */
     cksum += d[0];
@@ -282,13 +273,11 @@ static inline void add_ip_header(const uint16_t* &d,
     d += 10;
     len -= 20;
 }
-
 } // namespace detail
 
-
-inline uint16_t icmp_cksum(const uint16_t *buf,
-                    std::size_t len,
-                    const Pseudoheader6* const ph)
+inline uint16_t icmp_cksum(const uint16_t* buf,
+    std::size_t len,
+    const Pseudoheader6* const ph)
 {
     uint32_t cksum = 0;
 
@@ -296,15 +285,14 @@ inline uint16_t icmp_cksum(const uint16_t *buf,
     return detail::cksum_add(buf, len, cksum);
 }
 
-inline uint16_t icmp_cksum(const uint16_t *buf, size_t len)
+inline uint16_t icmp_cksum(const uint16_t* buf, size_t len)
 {
     return detail::cksum_add(buf, len, 0);
 }
 
-
-inline uint16_t tcp_cksum(const uint16_t *h,
-                   std::size_t len,
-                   const Pseudoheader* const ph )
+inline uint16_t tcp_cksum(const uint16_t* h,
+    std::size_t len,
+    const Pseudoheader* const ph)
 {
     uint32_t cksum = 0;
 
@@ -313,10 +301,9 @@ inline uint16_t tcp_cksum(const uint16_t *h,
     return detail::cksum_add(h, len, cksum);
 }
 
-
-inline uint16_t tcp_cksum(const uint16_t *buf,
-                   std::size_t len,
-                   const Pseudoheader6* const ph )
+inline uint16_t tcp_cksum(const uint16_t* buf,
+    std::size_t len,
+    const Pseudoheader6* const ph)
 {
     uint32_t cksum = 0;
 
@@ -325,10 +312,9 @@ inline uint16_t tcp_cksum(const uint16_t *buf,
     return detail::cksum_add(buf, len, cksum);
 }
 
-
-inline uint16_t udp_cksum(const uint16_t *buf,
-                   std::size_t len,
-                   const Pseudoheader* const ph )
+inline uint16_t udp_cksum(const uint16_t* buf,
+    std::size_t len,
+    const Pseudoheader* const ph)
 {
     uint32_t cksum = 0;
 
@@ -337,10 +323,9 @@ inline uint16_t udp_cksum(const uint16_t *buf,
     return detail::cksum_add(buf, len, cksum);
 }
 
-
-inline uint16_t udp_cksum(const uint16_t *buf,
-                   std::size_t len,
-                   const Pseudoheader6* const ph )
+inline uint16_t udp_cksum(const uint16_t* buf,
+    std::size_t len,
+    const Pseudoheader6* const ph)
 {
     uint32_t cksum = 0;
 
@@ -349,7 +334,7 @@ inline uint16_t udp_cksum(const uint16_t *buf,
     return detail::cksum_add(buf, len, cksum);
 }
 
-inline uint16_t ip_cksum(const uint16_t *buf, std::size_t len)
+inline uint16_t ip_cksum(const uint16_t* buf, std::size_t len)
 {
     uint32_t cksum = 0;
 
@@ -357,9 +342,9 @@ inline uint16_t ip_cksum(const uint16_t *buf, std::size_t len)
     return detail::cksum_add(buf, len, cksum);
 }
 
-static inline uint16_t cksum_add(const uint16_t *buf, std::size_t len)
+static inline uint16_t cksum_add(const uint16_t* buf, std::size_t len)
 { return detail::cksum_add(buf, len, 0); }
-
 } // namespace checksum
 
 #endif  /* CODECS_CHECKSUM_H */
+

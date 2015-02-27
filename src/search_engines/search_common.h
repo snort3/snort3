@@ -19,7 +19,7 @@
 #ifndef SEARCH_COMMON_H
 #define SEARCH_COMMON_H
 
-typedef int (*MpseCallback)(void* id, void* tree, int index, void* data, void* neg_list);
+typedef int (* MpseCallback)(void* id, void* tree, int index, void* data, void* neg_list);
 
 #endif
 

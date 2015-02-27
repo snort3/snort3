@@ -117,14 +117,13 @@ typedef enum s_FTP_PARAM_TYPE
  */
 typedef struct s_FTP_DATE_FMT
 {
-    char *format_string;
+    char* format_string;
     int empty;
-    struct s_FTP_DATE_FMT *next;
-    struct s_FTP_DATE_FMT *prev;
-    struct s_FTP_DATE_FMT *optional;
-    struct s_FTP_DATE_FMT *next_a;
-    struct s_FTP_DATE_FMT *next_b;
-
+    struct s_FTP_DATE_FMT* next;
+    struct s_FTP_DATE_FMT* prev;
+    struct s_FTP_DATE_FMT* optional;
+    struct s_FTP_DATE_FMT* next_a;
+    struct s_FTP_DATE_FMT* next_b;
 } FTP_DATE_FMT;
 
 typedef struct s_FTP_PARAM_FMT
@@ -139,41 +138,39 @@ typedef struct s_FTP_PARAM_FMT
     union u_FORMAT
     {
         uint32_t chars_allowed;     /* For type == e_char */
-        FTP_DATE_FMT *date_fmt;      /* For type == e_date */
+        FTP_DATE_FMT* date_fmt;      /* For type == e_date */
         char* literal;               /* For type == e_literal */
     } format;
 
-    struct s_FTP_PARAM_FMT *prev_param_fmt;
-    struct s_FTP_PARAM_FMT *next_param_fmt;
-    struct s_FTP_PARAM_FMT *optional_fmt;
-    struct s_FTP_PARAM_FMT **choices;
+    struct s_FTP_PARAM_FMT* prev_param_fmt;
+    struct s_FTP_PARAM_FMT* next_param_fmt;
+    struct s_FTP_PARAM_FMT* optional_fmt;
+    struct s_FTP_PARAM_FMT** choices;
     int numChoices;
     int prev_optional; /* Only set if optional is set */
-    const char *next_param; /* Pointer to buffer for the next parameter.
+    const char* next_param; /* Pointer to buffer for the next parameter.
                          To be used to backtrack for optional
                          parameters that don't match. */
-
 }  FTP_PARAM_FMT;
 
 typedef struct s_FTP_CMD_CONF
 {
     /* Maximum length for parameters for this cmd.
      * Default -1 is unlimited */
-    unsigned int  max_param_len;
-    int  max_param_len_overridden;
+    unsigned int max_param_len;
+    int max_param_len_overridden;
 
-    int  check_validity;
-    int  data_chan_cmd;
-    int  data_xfer_cmd;
-    int  file_put_cmd;
-    int  file_get_cmd;
-    int  encr_cmd;
-    int  login_cmd;
-    int  dir_response;
+    int check_validity;
+    int data_chan_cmd;
+    int data_xfer_cmd;
+    int file_put_cmd;
+    int file_get_cmd;
+    int encr_cmd;
+    int login_cmd;
+    int dir_response;
 
-    FTP_PARAM_FMT *param_format;
+    FTP_PARAM_FMT* param_format;
     char cmd_name[1];  // variable length array
-
 }  FTP_CMD_CONF;
 
 /*
@@ -216,15 +213,15 @@ typedef struct s_FTP_BOUNCE_TO
  */
 struct FTP_CLIENT_PROTO_CONF
 {
-    unsigned int  max_resp_len;
+    unsigned int max_resp_len;
 
     bool data_chan;
     bool bounce;
     bool telnet_cmds;
     bool ignore_telnet_erase_cmds;
 
-    /* allow_bounce to IP/mask port|port-range */
-    /* TODO: change this to use a quick find of IP/mask */
+    /* allow_bounce to IP/mask port|port-range
+       TODO: change this to use a quick find of IP/mask */
     BOUNCE_LOOKUP* bounce_lookup;
 
     FTP_CLIENT_PROTO_CONF();
@@ -247,14 +244,14 @@ struct TELNET_PROTO_CONF
     TELNET_PROTO_CONF();
 };
 
-int ftpp_ui_config_reset_ftp_client(FTP_CLIENT_PROTO_CONF *ClientConf,
-                                    char first);
-int ftpp_ui_config_reset_ftp_server(FTP_SERVER_PROTO_CONF *ServerConf,
-                                    char first);
-void ftpp_ui_config_reset_ftp_cmd_format(FTP_PARAM_FMT *ThisFmt);
-void ftpp_ui_config_reset_ftp_cmd_date_format(FTP_DATE_FMT *DateFmt);
-int ftpp_ui_config_reset_ftp_cmd(FTP_CMD_CONF *FTPCmd);
-int ftpp_ui_config_reset_telnet_proto(TELNET_PROTO_CONF *ClientConf);
+int ftpp_ui_config_reset_ftp_client(FTP_CLIENT_PROTO_CONF* ClientConf,
+    char first);
+int ftpp_ui_config_reset_ftp_server(FTP_SERVER_PROTO_CONF* ServerConf,
+    char first);
+void ftpp_ui_config_reset_ftp_cmd_format(FTP_PARAM_FMT* ThisFmt);
+void ftpp_ui_config_reset_ftp_cmd_date_format(FTP_DATE_FMT* DateFmt);
+int ftpp_ui_config_reset_ftp_cmd(FTP_CMD_CONF* FTPCmd);
+int ftpp_ui_config_reset_telnet_proto(TELNET_PROTO_CONF* ClientConf);
 
 #endif
 

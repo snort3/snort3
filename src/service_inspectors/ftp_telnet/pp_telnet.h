@@ -20,9 +20,9 @@
  * Description:
  *
  * Header file for FTPTelnet telnet Module
- *  
+ *
  * This file defines the telnet checking functions
- *  
+ *
  * NOTES:
  *  - 20.09.04:  Initial Development.  SAS
  *
@@ -78,4 +78,5 @@
 /* list of function prototypes for this preprocessor */
 extern int normalize_telnet(TELNET_SESSION*, Packet*, int iMode, char ignoreEraseCmd);
 
-#endif 
+#endif
+

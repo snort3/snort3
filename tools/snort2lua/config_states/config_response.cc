@@ -26,17 +26,15 @@
 
 namespace config
 {
-
-namespace {
-
+namespace
+{
 class Response : public ConversionState
 {
 public:
-    Response(Converter& c) : ConversionState(c) {};
-    virtual ~Response() {};
+    Response(Converter& c) : ConversionState(c) { }
+    virtual ~Response() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool Response::convert(std::istringstream& data_stream)
@@ -66,7 +64,6 @@ bool Response::convert(std::istringstream& data_stream)
         else
             tmpval = false;
 
-
         if (retval && !tmpval)
             retval = false;
     }
@@ -88,5 +85,5 @@ static const ConvertMap response_api =
 };
 
 const ConvertMap* response_map = &response_api;
-
 } // namespace config
+

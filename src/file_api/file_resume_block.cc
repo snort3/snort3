@@ -39,7 +39,7 @@
 #include "sfip/sf_ip.h"
 
 /* The hash table of expected files */
-static THREAD_LOCAL_TBD SFXHASH *fileHash = NULL;
+static THREAD_LOCAL_TBD SFXHASH* fileHash = NULL;
 
 typedef struct _FileHashKey
 {
@@ -52,7 +52,7 @@ typedef struct _FileNode
 {
     time_t expires;
     File_Verdict verdict;
-    uint32_t   file_type_id;
+    uint32_t file_type_id;
     uint8_t sha256[SHA256_HASH_SIZE];
 } FileNode;
 
@@ -61,10 +61,9 @@ typedef struct _FileNode
 void file_resume_block_init(void)
 {
     fileHash = sfxhash_new(MAX_FILES_TRACKED, sizeof(FileHashKey), sizeof(FileNode), 0, 1,
-            NULL, NULL, 1);
+        NULL, NULL, 1);
     if (!fileHash)
         FatalError("Failed to create the expected channel hash table.\n");
-
 }
 
 void file_resume_block_cleanup(void)
@@ -76,8 +75,8 @@ void file_resume_block_cleanup(void)
     }
 }
 
-static inline void updateFileNode(FileNode *node, File_Verdict verdict,
-        uint32_t file_type_id, uint8_t *signature)
+static inline void updateFileNode(FileNode* node, File_Verdict verdict,
+    uint32_t file_type_id, uint8_t* signature)
 {
     node->verdict = verdict;
     node->file_type_id = file_type_id;
@@ -86,6 +85,7 @@ static inline void updateFileNode(FileNode *node, File_Verdict verdict,
         memcpy(node->sha256, signature, SHA256_HASH_SIZE);
     }
 }
+
 /** *
  * @param sip - source IP address
  * @param dip - destination IP address
@@ -93,16 +93,16 @@ static inline void updateFileNode(FileNode *node, File_Verdict verdict,
  * @param file_sig - file signature
  * @param expiry - session expiry in seconds.
  */
-int file_resume_block_add_file(void *pkt, uint32_t file_sig, uint32_t timeout,
-        File_Verdict verdict, uint32_t file_type_id, uint8_t *signature)
+int file_resume_block_add_file(void* pkt, uint32_t file_sig, uint32_t timeout,
+    File_Verdict verdict, uint32_t file_type_id, uint8_t* signature)
 {
     FileHashKey hashKey;
-    SFXHASH_NODE *hash_node = NULL;
-    FileNode *node;
+    SFXHASH_NODE* hash_node = NULL;
+    FileNode* node;
     FileNode new_node;
-    const sfip_t *srcIP;
-    const sfip_t *dstIP;
-    Packet *p = (Packet *)pkt;
+    const sfip_t* srcIP;
+    const sfip_t* dstIP;
+    Packet* p = (Packet*)pkt;
     time_t now = p->pkth->ts.tv_sec;
 
     srcIP = p->ptrs.ip_api.get_src();
@@ -126,8 +126,7 @@ int file_resume_block_add_file(void *pkt, uint32_t file_sig, uint32_t timeout,
     }
     else
     {
-
-        DEBUG_WRAP(DebugMessage(DEBUG_FILE, "Adding file node\n"););
+        DEBUG_WRAP(DebugMessage(DEBUG_FILE, "Adding file node\n"); );
 
         updateFileNode(&new_node, verdict, file_type_id, signature);
 
@@ -148,19 +147,19 @@ int file_resume_block_add_file(void *pkt, uint32_t file_sig, uint32_t timeout,
              * gracefully.
              */
             DEBUG_WRAP(DebugMessage(DEBUG_FILE,
-                    "Failed to add file node to hash table\n"););
+                "Failed to add file node to hash table\n"); );
             return -1;
         }
     }
     return 0;
 }
 
-static inline File_Verdict checkVerdict(Packet *p, FileNode *node, SFXHASH_NODE *hash_node)
+static inline File_Verdict checkVerdict(Packet* p, FileNode* node, SFXHASH_NODE* hash_node)
 {
     File_Verdict verdict = FILE_VERDICT_UNKNOWN;
 
-    /*Query the file policy in case verdict has been changed*/
-    /*Check file type first*/
+    /*Query the file policy in case verdict has been changed
+      Check file type first*/
     if (file_type_done && (node->file_type_id))
     {
         verdict = file_type_done(p, p->flow, node->file_type_id, 0);
@@ -225,20 +224,20 @@ static inline File_Verdict checkVerdict(Packet *p, FileNode *node, SFXHASH_NODE 
     return verdict;
 }
 
-File_Verdict file_resume_block_check(void *pkt, uint32_t file_sig)
+File_Verdict file_resume_block_check(void* pkt, uint32_t file_sig)
 {
     File_Verdict verdict = FILE_VERDICT_UNKNOWN;
-    const sfip_t *srcIP;
-    const sfip_t *dstIP;
-    SFXHASH_NODE *hash_node;
+    const sfip_t* srcIP;
+    const sfip_t* dstIP;
+    SFXHASH_NODE* hash_node;
     FileHashKey hashKey;
-    FileNode *node;
-    Packet *p = (Packet *)pkt;
+    FileNode* node;
+    Packet* p = (Packet*)pkt;
 
     /* No hash table, or its empty?  Get out of dodge.  */
     if ((!fileHash) || (!sfxhash_count(fileHash)))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FILE, "No expected sessions\n"););
+        DEBUG_WRAP(DebugMessage(DEBUG_FILE, "No expected sessions\n"); );
         return verdict;
     }
     srcIP = p->ptrs.ip_api.get_src();
@@ -259,10 +258,10 @@ File_Verdict file_resume_block_check(void *pkt, uint32_t file_sig)
 
     if (node)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FILE, "Found resumed file\n"););
+        DEBUG_WRAP(DebugMessage(DEBUG_FILE, "Found resumed file\n"); );
         if (node->expires && p->pkth->ts.tv_sec > node->expires)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "File expired\n"););
+            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "File expired\n"); );
             sfxhash_free_node(fileHash, hash_node);
             return verdict;
         }
@@ -271,3 +270,4 @@ File_Verdict file_resume_block_check(void *pkt, uint32_t file_sig)
     }
     return verdict;
 }
+

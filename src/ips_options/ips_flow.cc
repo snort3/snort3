@@ -63,13 +63,13 @@ struct FlowCheckData
     uint8_t stateless;
     uint8_t established;
     uint8_t unestablished;
-};        
+};
 
 class FlowCheckOption : public IpsOption
 {
 public:
     FlowCheckOption(const FlowCheckData& c) : IpsOption(s_name)
-    { config = c; };
+    { config = c; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -87,7 +87,7 @@ private:
 uint32_t FlowCheckOption::hash() const
 {
     uint32_t a,b,c;
-    const FlowCheckData *data = &config;
+    const FlowCheckData* data = &config;
 
     a = data->from_server || data->from_client << 16;
     b = data->ignore_reassembled || data->only_reassembled << 16;
@@ -108,8 +108,8 @@ bool FlowCheckOption::operator==(const IpsOption& ips) const
         return false;
 
     FlowCheckOption& rhs = (FlowCheckOption&)ips;
-    FlowCheckData *left = (FlowCheckData *)&config;
-    FlowCheckData *right = (FlowCheckData *)&rhs.config;
+    FlowCheckData* left = (FlowCheckData*)&config;
+    FlowCheckData* right = (FlowCheckData*)&rhs.config;
 
     if (( left->from_server == right->from_server) &&
         ( left->from_client == right->from_client) &&
@@ -125,9 +125,9 @@ bool FlowCheckOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int FlowCheckOption::eval(Cursor&, Packet *p)
+int FlowCheckOption::eval(Cursor&, Packet* p)
 {
-    FlowCheckData *fcd = &config;
+    FlowCheckData* fcd = &config;
     PROFILE_VARS;
 
     MODULE_PROFILE_START(flowCheckPerfStats);
@@ -206,7 +206,8 @@ int FlowCheckOption::eval(Cursor&, Packet *p)
     {
         if ( !(p->packet_flags & PKT_REBUILT_STREAM)
             && !PacketHasFullPDU(p)
-        ) {
+            )
+        {
             MODULE_PROFILE_END(flowCheckPerfStats);
             return DETECTION_OPTION_NO_MATCH;
         }
@@ -229,47 +230,54 @@ int FlowCheckOption::eval(Cursor&, Packet *p)
 // public methods
 //-------------------------------------------------------------------------
 
-int OtnFlowFromServer( OptTreeNode * otn )
+int OtnFlowFromServer(OptTreeNode* otn)
 {
     FlowCheckData* fcd =
         (FlowCheckData*)get_rule_type_data(otn, s_name);
 
-    if(fcd )
+    if (fcd )
     {
-        if( fcd->from_server ) return 1;
+        if ( fcd->from_server )
+            return 1;
     }
     return 0;
 }
-int OtnFlowFromClient( OptTreeNode * otn )
+
+int OtnFlowFromClient(OptTreeNode* otn)
 {
     FlowCheckData* fcd =
         (FlowCheckData*)get_rule_type_data(otn, s_name);
 
-    if(fcd )
+    if (fcd )
     {
-        if( fcd->from_client ) return 1;
+        if ( fcd->from_client )
+            return 1;
     }
     return 0;
 }
-int OtnFlowIgnoreReassembled( OptTreeNode * otn )
+
+int OtnFlowIgnoreReassembled(OptTreeNode* otn)
 {
     FlowCheckData* fcd =
         (FlowCheckData*)get_rule_type_data(otn, s_name);
 
-    if( fcd )
+    if ( fcd )
     {
-        if( fcd->ignore_reassembled ) return 1;
+        if ( fcd->ignore_reassembled )
+            return 1;
     }
     return 0;
 }
-int OtnFlowOnlyReassembled( OptTreeNode * otn )
+
+int OtnFlowOnlyReassembled(OptTreeNode* otn)
 {
     FlowCheckData* fcd =
         (FlowCheckData*)get_rule_type_data(otn, s_name);
 
-    if( fcd )
+    if ( fcd )
     {
-        if( fcd->only_reassembled ) return 1;
+        if ( fcd->only_reassembled )
+            return 1;
     }
     return 0;
 }
@@ -280,48 +288,48 @@ int OtnFlowOnlyReassembled( OptTreeNode * otn )
 
 static void flow_verify(FlowCheckData* fcd)
 {
-    if(fcd->from_client && fcd->from_server)
+    if (fcd->from_client && fcd->from_server)
     {
         ParseError("can't use both from_client and flow_from server");
         return;
     }
 
-    if((fcd->ignore_reassembled & IGNORE_STREAM) && (fcd->only_reassembled & ONLY_STREAM))
+    if ((fcd->ignore_reassembled & IGNORE_STREAM) && (fcd->only_reassembled & ONLY_STREAM))
     {
         ParseError("can't use no_stream and only_stream");
         return;
     }
 
-    if((fcd->ignore_reassembled & IGNORE_FRAG) && (fcd->only_reassembled & ONLY_FRAG))
+    if ((fcd->ignore_reassembled & IGNORE_FRAG) && (fcd->only_reassembled & ONLY_FRAG))
     {
         ParseError("can't use no_frag and only_frag");
         return;
     }
 
-    if(fcd->stateless && (fcd->from_client || fcd->from_server))
+    if (fcd->stateless && (fcd->from_client || fcd->from_server))
     {
         ParseError("can't use flow: stateless option with other options");
         return;
     }
 
-    if(fcd->stateless && fcd->established)
+    if (fcd->stateless && fcd->established)
     {
         ParseError("can't specify established and stateless "
-                   "options in same rule");
+            "options in same rule");
         return;
     }
 
-    if(fcd->stateless && fcd->unestablished)
+    if (fcd->stateless && fcd->unestablished)
     {
         ParseError("can't specify unestablished and stateless "
-                   "options in same rule");
+            "options in same rule");
         return;
     }
 
-    if(fcd->established && fcd->unestablished)
+    if (fcd->established && fcd->unestablished)
     {
         ParseError("can't specify unestablished and established "
-                   "options in same rule");
+            "options in same rule");
         return;
     }
 }
@@ -374,13 +382,13 @@ static const Parameter s_params[] =
 class FlowModule : public Module
 {
 public:
-    FlowModule() : Module(s_name, s_help, s_params) { };
+    FlowModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &flowCheckPerfStats; };
+    { return &flowCheckPerfStats; }
 
     FlowCheckData data;
 };
@@ -423,7 +431,7 @@ bool FlowModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("no_frag") )
         data.ignore_reassembled |= IGNORE_FRAG;
 
-    else if ( v.is("only_frag") ) 
+    else if ( v.is("only_frag") )
         data.only_reassembled |= ONLY_FRAG;
 
     else
@@ -447,7 +455,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* flow_ctor(Module* p, OptTreeNode *otn)
+static IpsOption* flow_ctor(Module* p, OptTreeNode* otn)
 {
     FlowModule* m = (FlowModule*)p;
 
@@ -463,7 +471,7 @@ static IpsOption* flow_ctor(Module* p, OptTreeNode *otn)
     if (otn->proto == IPPROTO_ICMP)
     {
         if ( (m->data.only_reassembled != ONLY_FRAG) &&
-             (m->data.ignore_reassembled != IGNORE_FRAG) )
+            (m->data.ignore_reassembled != IGNORE_FRAG) )
         {
             ParseError("Cannot check flow connection for ICMP traffic");
             return nullptr;

@@ -28,11 +28,9 @@
 
 class Converter
 {
-
 public:
     Converter();
     virtual ~Converter();
-
 
     // tells this class whether to parse include files.
     inline static void set_parse_includes(bool val)
@@ -55,15 +53,13 @@ public:
     inline static bool include_create_lua()
     { return convert_conf_mult_files; }
 
-
     int convert(std::string input,
-                std::string output,
-                std::string rules, // defaults to output_file
-                std::string errors); // defaults to output_file
+        std::string output,
+        std::string rules,         // defaults to output_file
+        std::string errors);         // defaults to output_file
 
     // parse a file without creating an entirely new Lua configuation
     int parse_include_file(std::string input_file);
-
 
     // set the next parsing state.
     void set_state(ConversionState* c);
@@ -74,7 +70,6 @@ public:
 
     bool failed_conversions() const
     { return data_api.failed_conversions() || rule_api.failed_conversions(); }
-
 
     inline void start_multiline_parsing()
     { multiline_state = true; }
@@ -91,7 +86,6 @@ public:
     inline RuleApi& get_rule_api()
     { return rule_api; }
 
-
 private:
     static bool parse_includes;
     static bool convert_rules_mult_files;
@@ -106,11 +100,9 @@ private:
     bool error;
     bool multiline_state;
 
-
     // initialize data class
     bool initialize();
 };
 
-
-
 #endif
+

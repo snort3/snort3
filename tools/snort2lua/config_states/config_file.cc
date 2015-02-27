@@ -24,20 +24,17 @@
 #include "helpers/s2l_util.h"
 #include "data/dt_table_api.h"
 
-
 namespace config
 {
-
-namespace {
-
+namespace
+{
 class File : public ConversionState
 {
 public:
-    File(Converter& c) : ConversionState(c) {};
-    virtual ~File() {};
+    File(Converter& c) : ConversionState(c) { }
+    virtual ~File() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool File::convert(std::istringstream& data_stream)
@@ -46,7 +43,7 @@ bool File::convert(std::istringstream& data_stream)
     bool retval = true;
 
     table_api.open_table("file_id");
-    while(util::get_string(data_stream, args, ","))
+    while (util::get_string(data_stream, args, ","))
     {
         std::istringstream arg_stream(args);
         std::string keyword = std::string();
@@ -77,37 +74,33 @@ bool File::convert(std::istringstream& data_stream)
             table_api.add_diff_option_comment("config file: type_id", "enable_type");
             table_api.add_option("enable_type", true);
         }
-
         else if (!keyword.compare("signature"))
         {
             table_api.add_diff_option_comment("config file: signature", "enable_signature");
             table_api.add_option("enable_signature", true);
         }
-
         else if (!keyword.compare("file_type_depth"))
         {
             table_api.add_diff_option_comment("config file: file_type_depth", "type_depth");
             tmpval = parse_int_option("type_depth", arg_stream, false);
         }
-
         else if (!keyword.compare("file_signature_depth"))
         {
-            table_api.add_diff_option_comment("config file: file_signature_depth", "signature_depth");
+            table_api.add_diff_option_comment("config file: file_signature_depth",
+                "signature_depth");
             tmpval = parse_int_option("signature_depth", arg_stream, false);
         }
-
         else if (!keyword.compare("file_block_timeout"))
         {
             table_api.add_diff_option_comment("config file: file_block_timeout", "block_timeout");
             tmpval = parse_int_option("block_timeout", arg_stream, false);
         }
-
         else if (!keyword.compare("file_lookup_timeout"))
         {
-            table_api.add_diff_option_comment("config file: file_lookup_timeout", "lookup_timeout");
+            table_api.add_diff_option_comment("config file: file_lookup_timeout",
+                "lookup_timeout");
             tmpval = parse_int_option("lookup_timeout", arg_stream, false);
         }
-
         else
             tmpval = false;
 
@@ -134,5 +127,5 @@ static const ConvertMap file_api =
 };
 
 const ConvertMap* file_map = &file_api;
-
 } // namespace config
+

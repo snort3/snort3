@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 // vlan.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifndef PROTOCOLS_VLAN_H
 #define PROTOCOLS_VLAN_H
 
@@ -25,7 +24,6 @@
 
 namespace vlan
 {
-
 struct VlanTagHdr
 {
     uint16_t vth_pri_cfi_vlan;
@@ -43,7 +41,6 @@ struct VlanTagHdr
     inline uint16_t proto() const
     { return ntohs(vth_proto); }
 };
-
 } // namespace vlan
 
 #endif

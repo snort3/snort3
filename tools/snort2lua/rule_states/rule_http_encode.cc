@@ -27,18 +27,15 @@
 
 namespace rules
 {
-
-namespace {
-
-
+namespace
+{
 class HttpEncode : public ConversionState
 {
 public:
-    HttpEncode(Converter& c) : ConversionState(c) {};
-    virtual ~HttpEncode() {};
+    HttpEncode(Converter& c) : ConversionState(c) { }
+    virtual ~HttpEncode() { }
     virtual bool convert(std::istringstream& data);
 };
-
 } // namespace
 
 bool HttpEncode::convert(std::istringstream& data_stream)
@@ -53,7 +50,6 @@ bool HttpEncode::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-
 static ConversionState* ctor(Converter& c)
 { return new HttpEncode(c); }
 
@@ -65,5 +61,5 @@ static const ConvertMap http_encode_api =
 };
 
 const ConvertMap* http_encode_map = &http_encode_api;
-
 } // namespace rules
+

@@ -17,8 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_swipe.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -29,25 +27,23 @@
 #define CD_SWIPE_NAME "swipe"
 #define CD_SWIPE_HELP "support for Swipe"
 
-namespace{
-
+namespace
+{
 class SwipeCodec : public Codec
 {
 public:
-    SwipeCodec() : Codec(CD_SWIPE_NAME){};
-    ~SwipeCodec(){};
-    
+    SwipeCodec() : Codec(CD_SWIPE_NAME) { }
+    ~SwipeCodec() { }
+
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
-
 } // namespace
 
 static const uint16_t SWIPE_PROT_ID = 53;
 
-void SwipeCodec::get_protocol_ids(std::vector<uint16_t> &proto_ids)
+void SwipeCodec::get_protocol_ids(std::vector<uint16_t>& proto_ids)
 { proto_ids.push_back(SWIPE_PROT_ID); }
-
 
 bool SwipeCodec::decode(const RawData&, CodecData& codec, DecodeData&)
 {
@@ -60,10 +56,10 @@ bool SwipeCodec::decode(const RawData&, CodecData& codec, DecodeData&)
 // api
 //-------------------------------------------------------------------------
 
-static Codec *ctor(Module*)
+static Codec* ctor(Module*)
 { return new SwipeCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi swipe_api =
@@ -85,7 +81,6 @@ static const CodecApi swipe_api =
     dtor, // dtor
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -95,6 +90,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_swipe = &swipe_api.base;
 #endif
-
-
 

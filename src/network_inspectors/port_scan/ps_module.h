@@ -66,7 +66,7 @@ public:
     const RuleMap* get_rules() const override;
 
     unsigned get_gid() const override
-    { return GID_PORT_SCAN; };
+    { return GID_PORT_SCAN; }
 
     PortscanConfig* get_data();
 

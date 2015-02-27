@@ -35,21 +35,22 @@ enum AnalyzerCommand
 
 class Swapper;
 
-class Analyzer {
+class Analyzer
+{
 public:
     Analyzer(const char* source);
 
     void operator()(unsigned, Swapper*);
 
-    bool is_done() { return done; };
-    uint64_t get_count() { return count; };
-    const char* get_source() { return source; };
+    bool is_done() { return done; }
+    uint64_t get_count() { return count; }
+    const char* get_source() { return source; }
 
     // FIXIT-M add asynchronous response too
     bool execute(AnalyzerCommand);
 
-    void set_config(Swapper* ps) { swap = ps; };
-    bool swap_pending() { return command == AC_SWAP; };
+    void set_config(Swapper* ps) { swap = ps; }
+    bool swap_pending() { return command == AC_SWAP; }
 
 private:
     void analyze();

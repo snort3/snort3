@@ -77,7 +77,7 @@ public:
     Status scan(Flow*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
 
-    bool is_paf() override { return true; };
+    bool is_paf() override { return true; }
 
 private:
     Wizard* wizard;
@@ -91,7 +91,7 @@ public:
     ~Wizard();
 
     void show(SnortConfig*) override
-    { LogMessage("Wizard\n"); };
+    { LogMessage("Wizard\n"); }
 
     void eval(Packet*) override;
 
@@ -110,7 +110,7 @@ public:
 };
 
 //-------------------------------------------------------------------------
-// splitter - this doesn't actually split the stream but it applies 
+// splitter - this doesn't actually split the stream but it applies
 // basic magic type logic to determine the appropriate inspector that
 // will split the stream.
 //-------------------------------------------------------------------------
@@ -128,7 +128,7 @@ MagicSplitter::~MagicSplitter()
     wizard->rem_ref();
 }
 
-StreamSplitter::Status MagicSplitter::scan (
+StreamSplitter::Status MagicSplitter::scan(
     Flow* f, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t*)
 {
@@ -250,7 +250,7 @@ static const InspectApi wiz_api =
         mod_ctor,
         mod_dtor
     },
-    IT_WIZARD, 
+    IT_WIZARD,
     (uint16_t)PktType::TCP | (uint16_t)PktType::UDP,
     nullptr, // buffers
     nullptr, // service

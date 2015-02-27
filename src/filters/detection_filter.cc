@@ -31,10 +31,10 @@
 
 static THREAD_LOCAL SFXHASH* detection_filter_hash = NULL;
 
-DetectionFilterConfig * DetectionFilterConfigNew(void)
+DetectionFilterConfig* DetectionFilterConfigNew(void)
 {
-    DetectionFilterConfig *df =
-        (DetectionFilterConfig *)SnortAlloc(sizeof(DetectionFilterConfig));
+    DetectionFilterConfig* df =
+        (DetectionFilterConfig*)SnortAlloc(sizeof(DetectionFilterConfig));
 
     df->memcap = 1024 * 1024;
     df->enabled = 1;
@@ -42,7 +42,7 @@ DetectionFilterConfig * DetectionFilterConfigNew(void)
     return df;
 }
 
-void DetectionFilterConfigFree(DetectionFilterConfig *config)
+void DetectionFilterConfigFree(DetectionFilterConfig* config)
 {
     if (config == NULL)
         return;
@@ -53,16 +53,16 @@ void DetectionFilterConfigFree(DetectionFilterConfig *config)
 void detection_filter_print_config(DetectionFilterConfig*)
 { }
 
-int detection_filter_test (
+int detection_filter_test(
     void* pv,
-    const sfip_t *sip, const sfip_t *dip,
-    long curtime )
+    const sfip_t* sip, const sfip_t* dip,
+    long curtime)
 {
     if (pv == NULL)
         return 0;
 
     return sfthd_test_rule(detection_filter_hash, (THD_NODE*)pv,
-                           sip, dip, curtime);
+        sip, dip, curtime);
 }
 
 /* empty out active entries */
@@ -74,7 +74,7 @@ void detection_filter_reset_active(void)
     sfxhash_make_empty(detection_filter_hash);
 }
 
-void* detection_filter_create(DetectionFilterConfig *df_config, THDX_STRUCT *thdx)
+void* detection_filter_create(DetectionFilterConfig* df_config, THDX_STRUCT* thdx)
 {
     if (df_config == NULL)
         return NULL;
@@ -85,7 +85,7 @@ void* detection_filter_create(DetectionFilterConfig *df_config, THDX_STRUCT *thd
     df_config->count++;
 
     return sfthd_create_rule_threshold(df_config->count, thdx->tracking,
-                                       thdx->type, thdx->count, thdx->seconds);
+        thdx->type, thdx->count, thdx->seconds);
 }
 
 void detection_filter_init(DetectionFilterConfig* df_config)

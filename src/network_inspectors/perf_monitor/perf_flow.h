@@ -33,101 +33,99 @@
 #define SF_MAX_PKT_LEN  9000
 #define SF_MAX_PORT     UINT16_MAX
 
-typedef enum {
+typedef enum
+{
     SFS_TYPE_TCP   = 0,
     SFS_TYPE_UDP   = 1,
     SFS_TYPE_OTHER = 2,
     SFS_TYPE_MAX   = 3
 } SFSType;
 
-typedef enum {
+typedef enum
+{
     SFS_STATE_TCP_ESTABLISHED = 0,
     SFS_STATE_TCP_CLOSED      = 1,
     SFS_STATE_UDP_CREATED     = 2,
     SFS_STATE_MAX             = 3
 } SFSState;
 
-typedef struct _portflow {
-
-    double   totperc[SF_MAX_PORT+1];
-    double   sport_rate[SF_MAX_PORT+1];
-    double   dport_rate[SF_MAX_PORT+1];
-
+typedef struct _portflow
+{
+    double totperc[SF_MAX_PORT+1];
+    double sport_rate[SF_MAX_PORT+1];
+    double dport_rate[SF_MAX_PORT+1];
 } PORTFLOW;
 
-typedef struct _icmpflow {
-
+typedef struct _icmpflow
+{
     double totperc[256];
-    int    display[256];
-
+    int display[256];
 } ICMPFLOW;
 
-typedef struct _sfflow {
-
+typedef struct _sfflow
+{
     time_t time;
-    uint64_t   *pktLenCnt;
-    uint64_t    pktTotal;
+    uint64_t* pktLenCnt;
+    uint64_t pktTotal;
 
-    uint64_t   byteTotal;
+    uint64_t byteTotal;
 
-    uint64_t   *pktLenPercent;
+    uint64_t* pktLenPercent;
 
-    uint64_t   *portTcpSrc;
-    uint64_t   *portTcpDst;
-    uint64_t   *portUdpSrc;
-    uint64_t   *portUdpDst;
+    uint64_t* portTcpSrc;
+    uint64_t* portTcpDst;
+    uint64_t* portUdpSrc;
+    uint64_t* portUdpDst;
 
-    uint64_t   *typeIcmp;
+    uint64_t* typeIcmp;
 
-    uint64_t    portTcpHigh;
-    uint64_t    portTcpTotal;
+    uint64_t portTcpHigh;
+    uint64_t portTcpTotal;
 
-    uint64_t    portUdpHigh;
-    uint64_t    portUdpTotal;
+    uint64_t portUdpHigh;
+    uint64_t portUdpTotal;
 
-    uint64_t    typeIcmpTotal;
+    uint64_t typeIcmpTotal;
 
-    SFXHASH     *ipMap;
+    SFXHASH* ipMap;
 }  SFFLOW;
 
-typedef struct _sfflow_stats {
-
+typedef struct _sfflow_stats
+{
     time_t time;
-    double    pktLenPercent[SF_MAX_PKT_LEN + 2];
-    int       pktLenPercentCount;
+    double pktLenPercent[SF_MAX_PKT_LEN + 2];
+    int pktLenPercentCount;
 
-    double    trafficTCP;
-    double    trafficUDP;
-    double    trafficICMP;
-    double    trafficOTHER;
+    double trafficTCP;
+    double trafficUDP;
+    double trafficICMP;
+    double trafficOTHER;
 
-    PORTFLOW  portflowTCP;
-    double    portflowHighTCP;
-    int       portflowTCPCount;
+    PORTFLOW portflowTCP;
+    double portflowHighTCP;
+    int portflowTCPCount;
 
-    PORTFLOW  portflowUDP;
-    double    portflowHighUDP;
-    int       portflowUDPCount;
+    PORTFLOW portflowUDP;
+    double portflowHighUDP;
+    int portflowUDPCount;
 
-    ICMPFLOW  flowICMP;
-    int       flowICMPCount;
-
-
+    ICMPFLOW flowICMP;
+    int flowICMPCount;
 }  SFFLOW_STATS;
 
 /*
 **  Functions for the performance functions to call
 */
-int InitFlowStats   (SFFLOW *sfFlow);
-int InitFlowIPStats   (SFFLOW *sfFlow);
-void UpdateFlowStats(SFFLOW *, Packet *);
-void ProcessFlowStats(SFFLOW *sfFlow, FILE *fh, int console);
-void ProcessFlowIPStats(SFFLOW *sfFlow, FILE *fh, int console);
-int UpdateFlowIPStats(SFFLOW *, const sfip_t *src_addr, const sfip_t *dst_addr, int len, SFSType type);
-int UpdateFlowIPState(SFFLOW *, const sfip_t *src_addr, const sfip_t *dst_addr, SFSState state);
-void FreeFlowStats(SFFLOW *sfFlow);
-void LogFlowPerfHeader(FILE *);
+int InitFlowStats(SFFLOW* sfFlow);
+int InitFlowIPStats(SFFLOW* sfFlow);
+void UpdateFlowStats(SFFLOW*, Packet*);
+void ProcessFlowStats(SFFLOW* sfFlow, FILE* fh, int console);
+void ProcessFlowIPStats(SFFLOW* sfFlow, FILE* fh, int console);
+int UpdateFlowIPStats(SFFLOW*, const sfip_t* src_addr, const sfip_t* dst_addr, int len, SFSType
+    type);
+int UpdateFlowIPState(SFFLOW*, const sfip_t* src_addr, const sfip_t* dst_addr, SFSState state);
+void FreeFlowStats(SFFLOW* sfFlow);
+void LogFlowPerfHeader(FILE*);
 
 #endif
-
 

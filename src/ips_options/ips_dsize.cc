@@ -51,9 +51,9 @@ class DsizeOption : public IpsOption
 public:
     DsizeOption(const RangeCheck& c) :
         IpsOption(s_name)
-    { config = c; };
+    { config = c; }
 
-    ~DsizeOption() { };
+    ~DsizeOption() { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -93,15 +93,15 @@ bool DsizeOption::operator==(const IpsOption& ips) const
 }
 
 // Test the packet's payload size against the rule payload size value
-int DsizeOption::eval(Cursor&, Packet *p)
+int DsizeOption::eval(Cursor&, Packet* p)
 {
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
     MODULE_PROFILE_START(dsizePerfStats);
 
-    /* fake packet dsizes are always wrong */
-    /* (unless they are PDUs) */
+    /* fake packet dsizes are always wrong
+       (unless they are PDUs) */
     if (
         (p->packet_flags & PKT_REBUILT_STREAM) &&
         !(p->packet_flags & PKT_PDU_HEAD) )
@@ -135,13 +135,13 @@ static const Parameter s_params[] =
 class DsizeModule : public Module
 {
 public:
-    DsizeModule() : Module(s_name, s_help, s_params) { };
+    DsizeModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &dsizePerfStats; };
+    { return &dsizePerfStats; }
 
     RangeCheck data;
 };

@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 // thread.cc author Russ Combs <rucombs@cisco.com>
 
-
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -36,7 +35,6 @@
 #include "parser/parser.h"
 #include "log/messages.h"
 
-
 //-------------------------------------------------------------------------
 // FIXIT-L instance_id zero indicates main thread during parse time and the
 // first packet thread during runtime.  not sure if i'm ok with that.
@@ -45,7 +43,6 @@
 
 static unsigned instance_max = 1;
 static THREAD_LOCAL unsigned instance_id = 0;
-
 
 void set_instance_id(unsigned id)
 {
@@ -75,7 +72,7 @@ bool set_cpu_affinity(SnortConfig* sc, const std::string& str, int cpu)
     std::map<const std::string, int>& sa = *(sc->source_affinity);
 
     auto search = sa.find(str);
-    if(search != sa.end())
+    if (search != sa.end())
         ParseError("Multiple CPU's set for interface %s", str.c_str());
 
     sa[std::string(str)] = cpu;
@@ -113,7 +110,7 @@ void pin_thread_to_cpu(const char* source)
     ta.shrink_to_fit();
     auto search = sa.find(src);
 
-    if(search != sa.end())
+    if (search != sa.end())
     {
         cpu = sa[src];
     }
@@ -121,7 +118,6 @@ void pin_thread_to_cpu(const char* source)
     {
         cpu = ta[instance_id];
     }
-
 
     if (cpu != -1)
     {
@@ -147,7 +143,6 @@ void pin_thread_to_cpu(const char* source)
             if (sched_setaffinity(0, sizeof(cpu_set), &cpu_set))
                 FatalError("unable to pin source %s to CPU %d: %s\n",
                     source, cpu, std::strerror(errno));
-
         }
 #       else
         {

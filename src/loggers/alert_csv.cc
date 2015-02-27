@@ -95,7 +95,7 @@ static const Parameter s_params[] =
 class CsvModule : public Module
 {
 public:
-    CsvModule() : Module(S_NAME, s_help, s_params) { };
+    CsvModule() : Module(S_NAME, s_help, s_params) { }
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -149,7 +149,8 @@ bool CsvModule::end(const char*, int, SnortConfig*)
 // logger stuff
 //-------------------------------------------------------------------------
 
-class CsvLogger : public Logger {
+class CsvLogger : public Logger
+{
 public:
     CsvLogger(CsvModule*);
     ~CsvLogger();
@@ -165,7 +166,6 @@ public:
     char** args;
     int numargs;
 };
-
 
 CsvLogger::CsvLogger(CsvModule* m)
 {
@@ -190,12 +190,12 @@ void CsvLogger::close()
         TextLog_Term(csv_log);
 }
 
-void CsvLogger::alert(Packet *p, const char *msg, Event *event)
+void CsvLogger::alert(Packet* p, const char* msg, Event* event)
 {
     int num;
-    char *type;
+    char* type;
     char tcpFlags[9];
-    const eth::EtherHdr *eh = nullptr;
+    const eth::EtherHdr* eh = nullptr;
 
     assert(p);
 
@@ -214,17 +214,17 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         else if (!strcasecmp("gid", type))
         {
             if (event != NULL)
-                TextLog_Print(csv_log, "%lu",  (unsigned long) event->sig_info->generator);
+                TextLog_Print(csv_log, "%lu",  (unsigned long)event->sig_info->generator);
         }
         else if (!strcasecmp("sid", type))
         {
             if (event != NULL)
-                TextLog_Print(csv_log, "%lu",  (unsigned long) event->sig_info->id);
+                TextLog_Print(csv_log, "%lu",  (unsigned long)event->sig_info->id);
         }
         else if (!strcasecmp("rev", type))
         {
             if (event != NULL)
-                TextLog_Print(csv_log, "%lu",  (unsigned long) event->sig_info->rev);
+                TextLog_Print(csv_log, "%lu",  (unsigned long)event->sig_info->rev);
         }
         else if (!strcasecmp("msg", type))
         {
@@ -235,17 +235,17 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
             // api returns zero if invalid
             switch (p->type())
             {
-                case PktType::UDP:
-                    TextLog_Puts(csv_log, "UDP");
-                    break;
-                case PktType::TCP:
-                    TextLog_Puts(csv_log, "TCP");
-                    break;
-                case PktType::ICMP:
-                    TextLog_Puts(csv_log, "ICMP");
-                    break;
-                default:
-                    break;
+            case PktType::UDP:
+                TextLog_Puts(csv_log, "UDP");
+                break;
+            case PktType::TCP:
+                TextLog_Puts(csv_log, "TCP");
+                break;
+            case PktType::ICMP:
+                TextLog_Puts(csv_log, "ICMP");
+                break;
+            default:
+                break;
             }
         }
         else if (!strcasecmp("eth_src", type))
@@ -253,8 +253,8 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
             if (eh)
             {
                 TextLog_Print(csv_log, "%02X:%02X:%02X:%02X:%02X:%02X", eh->ether_src[0],
-                        eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
-                        eh->ether_src[4], eh->ether_src[5]);
+                    eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
+                    eh->ether_src[4], eh->ether_src[5]);
             }
         }
         else if (!strcasecmp("eth_dst", type))
@@ -262,8 +262,8 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
             if (eh)
             {
                 TextLog_Print(csv_log, "%02X:%02X:%02X:%02X:%02X:%02X", eh->ether_dst[0],
-                        eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
-                        eh->ether_dst[4], eh->ether_dst[5]);
+                    eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
+                    eh->ether_dst[4], eh->ether_dst[5]);
             }
         }
         else if (!strcasecmp("eth_type", type))
@@ -286,24 +286,24 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
             // api return 0 if invalid
             switch (p->type())
             {
-                case PktType::UDP:
-                case PktType::TCP:
-                    TextLog_Print(csv_log, "%d", p->ptrs.sp);
-                    break;
-                default:
-                    break;
+            case PktType::UDP:
+            case PktType::TCP:
+                TextLog_Print(csv_log, "%d", p->ptrs.sp);
+                break;
+            default:
+                break;
             }
         }
         else if (!strcasecmp("dst_port", type))
         {
             switch (p->type())
             {
-                case PktType::UDP:
-                case PktType::TCP:
-                    TextLog_Print(csv_log, "%d", p->ptrs.dp);
-                    break;
-                default:
-                    break;
+            case PktType::UDP:
+            case PktType::TCP:
+                TextLog_Print(csv_log, "%d", p->ptrs.dp);
+                break;
+            default:
+                break;
             }
         }
         else if (!strcasecmp("src_addr", type))

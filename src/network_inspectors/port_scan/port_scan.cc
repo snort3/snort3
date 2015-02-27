@@ -102,78 +102,78 @@ THREAD_LOCAL ProfileStats psPerfStats;
 **  @retval -1 buffer not large enough
 **  @retval  0 successful
 */
-static int MakeProtoInfo(PS_PROTO *proto, u_char *buffer, u_int *total_size)
+static int MakeProtoInfo(PS_PROTO* proto, u_char* buffer, u_int* total_size)
 {
     int dsize;
-    sfip_t *ip1, *ip2;
+    sfip_t* ip1, * ip2;
 
-    if(!total_size || !buffer)
+    if (!total_size || !buffer)
         return -1;
 
     dsize = (g_tmp_pkt->max_dsize - *total_size);
 
-    if(dsize < PROTO_BUFFER_SIZE)
-       return -1;
+    if (dsize < PROTO_BUFFER_SIZE)
+        return -1;
 
     ip1 = &proto->low_ip;
     ip2 = &proto->high_ip;
 
-    if(proto->alerts == PS_ALERT_PORTSWEEP ||
-       proto->alerts == PS_ALERT_PORTSWEEP_FILTERED)
+    if (proto->alerts == PS_ALERT_PORTSWEEP ||
+        proto->alerts == PS_ALERT_PORTSWEEP_FILTERED)
     {
-        SnortSnprintf((char *)buffer, PROTO_BUFFER_SIZE,
-                      "Priority Count: %d\n"
-                      "Connection Count: %d\n"
-                      "IP Count: %d\n"
-                      "Scanned IP Range: %s:",
-                      proto->priority_count,
-                      proto->connection_count,
-                      proto->u_ip_count,
-                      inet_ntoa(ip1));
+        SnortSnprintf((char*)buffer, PROTO_BUFFER_SIZE,
+            "Priority Count: %d\n"
+            "Connection Count: %d\n"
+            "IP Count: %d\n"
+            "Scanned IP Range: %s:",
+            proto->priority_count,
+            proto->connection_count,
+            proto->u_ip_count,
+            inet_ntoa(ip1));
 
         /* Now print the high ip into the buffer.  This saves us
          * from having to copy the results of inet_ntoa (which is
          * a static buffer) to avoid the reuse of that buffer when
          * more than one use of inet_ntoa is within the same printf.
          */
-        SnortSnprintfAppend((char *)buffer, PROTO_BUFFER_SIZE,
-                      "%s\n"
-                      "Port/Proto Count: %d\n"
-                      "Port/Proto Range: %d:%d\n",
-                      inet_ntoa(ip2),
-                      proto->u_port_count,
-                      proto->low_p,
-                      proto->high_p);
+        SnortSnprintfAppend((char*)buffer, PROTO_BUFFER_SIZE,
+            "%s\n"
+            "Port/Proto Count: %d\n"
+            "Port/Proto Range: %d:%d\n",
+            inet_ntoa(ip2),
+            proto->u_port_count,
+            proto->low_p,
+            proto->high_p);
     }
     else
     {
-        SnortSnprintf((char *)buffer, PROTO_BUFFER_SIZE,
-                      "Priority Count: %d\n"
-                      "Connection Count: %d\n"
-                      "IP Count: %d\n"
-                      "Scanner IP Range: %s:",
-                      proto->priority_count,
-                      proto->connection_count,
-                      proto->u_ip_count,
-                      inet_ntoa(ip1)
-                      );
+        SnortSnprintf((char*)buffer, PROTO_BUFFER_SIZE,
+            "Priority Count: %d\n"
+            "Connection Count: %d\n"
+            "IP Count: %d\n"
+            "Scanner IP Range: %s:",
+            proto->priority_count,
+            proto->connection_count,
+            proto->u_ip_count,
+            inet_ntoa(ip1)
+            );
 
         /* Now print the high ip into the buffer.  This saves us
          * from having to copy the results of inet_ntoa (which is
          * a static buffer) to avoid the reuse of that buffer when
          * more than one use of inet_ntoa is within the same printf.
          */
-        SnortSnprintfAppend((char *)buffer, PROTO_BUFFER_SIZE,
-                      "%s\n"
-                      "Port/Proto Count: %d\n"
-                      "Port/Proto Range: %d:%d\n",
-                      inet_ntoa(ip2),
-                      proto->u_port_count,
-                      proto->low_p,
-                      proto->high_p);
+        SnortSnprintfAppend((char*)buffer, PROTO_BUFFER_SIZE,
+            "%s\n"
+            "Port/Proto Count: %d\n"
+            "Port/Proto Range: %d:%d\n",
+            inet_ntoa(ip2),
+            proto->u_port_count,
+            proto->low_p,
+            proto->high_p);
     }
 
-    dsize = SnortStrnlen((const char *)buffer, PROTO_BUFFER_SIZE);
+    dsize = SnortStrnlen((const char*)buffer, PROTO_BUFFER_SIZE);
     *total_size += dsize;
 
     /*
@@ -184,30 +184,30 @@ static int MakeProtoInfo(PS_PROTO *proto, u_char *buffer, u_int *total_size)
     return 0;
 }
 
-static int LogPortscanAlert(Packet *p, uint32_t event_id,
-        uint32_t event_ref, uint32_t gen_id, uint32_t sig_id)
+static int LogPortscanAlert(Packet* p, uint32_t event_id,
+    uint32_t event_ref, uint32_t gen_id, uint32_t sig_id)
 {
     char timebuf[TIMEBUF_SIZE];
-    const sfip_t *src_addr;
-    const sfip_t *dst_addr;
+    const sfip_t* src_addr;
+    const sfip_t* dst_addr;
 
-    if(!p->ptrs.ip_api.is_valid())
+    if (!p->ptrs.ip_api.is_valid())
         return -1;
 
     /* Do not log if being suppressed */
     src_addr = p->ptrs.ip_api.get_src();
     dst_addr = p->ptrs.ip_api.get_dst();
 
-    if( sfthreshold_test(gen_id, sig_id, src_addr, dst_addr, p->pkth->ts.tv_sec) )
+    if ( sfthreshold_test(gen_id, sig_id, src_addr, dst_addr, p->pkth->ts.tv_sec) )
     {
         return 0;
     }
 
-    ts_print((struct timeval *)&p->pkth->ts, timebuf);
+    ts_print((struct timeval*)&p->pkth->ts, timebuf);
 
     fprintf(g_logfile, "Time: %s\n", timebuf);
 
-    if(event_id)
+    if (event_id)
         fprintf(g_logfile, "event_id: %u\n", event_id);
     else
         fprintf(g_logfile, "event_ref: %u\n", event_ref);
@@ -221,13 +221,13 @@ static int LogPortscanAlert(Packet *p, uint32_t event_id,
     return 0;
 }
 
-static int GeneratePSSnortEvent(Packet *p,uint32_t gen_id,uint32_t sig_id)
+static int GeneratePSSnortEvent(Packet* p,uint32_t gen_id,uint32_t sig_id)
 {
     unsigned int event_id;
 
     event_id = GenerateSnortEvent(p,gen_id,sig_id);
 
-    if(g_logfile)
+    if (g_logfile)
         LogPortscanAlert(p, event_id, 0, gen_id, sig_id);
 
     return event_id;
@@ -245,9 +245,9 @@ static int GeneratePSSnortEvent(Packet *p,uint32_t gen_id,uint32_t sig_id)
 **
 **  @retval 0 success
 */
-static int GenerateOpenPortEvent(Packet *p, uint32_t gen_id, uint32_t sig_id,
-        uint32_t sig_rev, uint32_t cls, uint32_t pri,
-        uint32_t event_ref, struct timeval *event_time, const char *msg)
+static int GenerateOpenPortEvent(Packet* p, uint32_t gen_id, uint32_t sig_id,
+    uint32_t sig_rev, uint32_t cls, uint32_t pri,
+    uint32_t event_ref, struct timeval* event_time, const char* msg)
 {
     Event event;
 
@@ -256,7 +256,7 @@ static int GenerateOpenPortEvent(Packet *p, uint32_t gen_id, uint32_t sig_id,
     **  reference for it, so we don't log a snort event.  We still keep
     **  track of it though.
     */
-    if(!event_ref)
+    if (!event_ref)
         return 0;
 
     /* reset the thresholding subsystem checks for this packet */
@@ -268,15 +268,15 @@ static int GenerateOpenPortEvent(Packet *p, uint32_t gen_id, uint32_t sig_id,
     event.ref_time.tv_sec  = event_time->tv_sec;
     event.ref_time.tv_usec = event_time->tv_usec;
 
-    if(p)
+    if (p)
     {
         /*
          * Do threshold test for suppression and thresholding.  We have to do it
          * here since these are tagged packets, which aren't subject to thresholding,
          * but we want to do it for open port events.
          */
-        if( sfthreshold_test(gen_id, sig_id, p->ptrs.ip_api.get_src(),
-                            p->ptrs.ip_api.get_dst(), p->pkth->ts.tv_sec) )
+        if ( sfthreshold_test(gen_id, sig_id, p->ptrs.ip_api.get_src(),
+            p->ptrs.ip_api.get_dst(), p->pkth->ts.tv_sec) )
         {
             return 0;
         }
@@ -288,7 +288,7 @@ static int GenerateOpenPortEvent(Packet *p, uint32_t gen_id, uint32_t sig_id,
         return -1;
     }
 
-    if(g_logfile)
+    if (g_logfile)
         LogPortscanAlert(p, 0, event_ref, gen_id, sig_id);
 
     return event.event_id;
@@ -304,7 +304,7 @@ static int GenerateOpenPortEvent(Packet *p, uint32_t gen_id, uint32_t sig_id,
 **  @return integer
 */
 static int MakeOpenPortInfo(
-    PS_PROTO*, u_char *buffer, u_int *total_size, void *user)
+    PS_PROTO*, u_char* buffer, u_int* total_size, void* user)
 {
     int dsize;
 
@@ -313,13 +313,13 @@ static int MakeOpenPortInfo(
 
     dsize = (g_tmp_pkt->max_dsize - *total_size);
 
-    if(dsize < PROTO_BUFFER_SIZE)
-       return -1;
+    if (dsize < PROTO_BUFFER_SIZE)
+        return -1;
 
-    SnortSnprintf((char *)buffer, PROTO_BUFFER_SIZE,
-                  "Open Port: %u\n", *((unsigned short *)user));
+    SnortSnprintf((char*)buffer, PROTO_BUFFER_SIZE,
+        "Open Port: %u\n", *((unsigned short*)user));
 
-    dsize = SnortStrnlen((const char *)buffer, PROTO_BUFFER_SIZE);
+    dsize = SnortStrnlen((const char*)buffer, PROTO_BUFFER_SIZE);
     *total_size += dsize;
 
     /*
@@ -342,11 +342,11 @@ static int MakeOpenPortInfo(
 **  fake packet.
 **
 */
-static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
-        void *user)
+static int MakePortscanPkt(PS_PKT* ps_pkt, PS_PROTO* proto, int proto_type,
+    void* user)
 {
     unsigned int ip_size = 0;
-    Packet* p = (Packet *)ps_pkt->pkt;
+    Packet* p = (Packet*)ps_pkt->pkt;
     EncodeFlags flags = ENC_FLAG_NET;
 
     if (!p->has_ip())
@@ -362,26 +362,26 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
 
     switch (proto_type)
     {
-        case PS_PROTO_TCP:
-            g_tmp_pkt->ps_proto = IPPROTO_TCP;
-            break;
-        case PS_PROTO_UDP:
-            g_tmp_pkt->ps_proto = IPPROTO_UDP;
-            break;
-        case PS_PROTO_ICMP:
-            g_tmp_pkt->ps_proto = IPPROTO_ICMP;
-            break;
-        case PS_PROTO_IP:
-            g_tmp_pkt->ps_proto = IPPROTO_IP;
-            break;
-        case PS_PROTO_OPEN_PORT:
-            g_tmp_pkt->ps_proto = p->get_ip_proto_next();
-            break;
-        default:
-            return -1;
+    case PS_PROTO_TCP:
+        g_tmp_pkt->ps_proto = IPPROTO_TCP;
+        break;
+    case PS_PROTO_UDP:
+        g_tmp_pkt->ps_proto = IPPROTO_UDP;
+        break;
+    case PS_PROTO_ICMP:
+        g_tmp_pkt->ps_proto = IPPROTO_ICMP;
+        break;
+    case PS_PROTO_IP:
+        g_tmp_pkt->ps_proto = IPPROTO_IP;
+        break;
+    case PS_PROTO_OPEN_PORT:
+        g_tmp_pkt->ps_proto = p->get_ip_proto_next();
+        break;
+    default:
+        return -1;
     }
 
-    if(g_tmp_pkt->is_ip4())
+    if (g_tmp_pkt->is_ip4())
     {
         ((IP4Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip4h())->set_proto(IPPROTO_PS);
     }
@@ -391,25 +391,25 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
         ((ip::IP6Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip6h())->set_proto(IPPROTO_PS);
     }
 
-    switch(proto_type)
+    switch (proto_type)
     {
-        case PS_PROTO_TCP:
-        case PS_PROTO_UDP:
-        case PS_PROTO_ICMP:
-        case PS_PROTO_IP:
-            if(MakeProtoInfo(proto, (u_char *)g_tmp_pkt->data, &ip_size))
-                return -1;
-
-            break;
-
-        case PS_PROTO_OPEN_PORT:
-            if(MakeOpenPortInfo(proto, (u_char *)g_tmp_pkt->data, &ip_size, user))
-                return -1;
-
-            break;
-
-        default:
+    case PS_PROTO_TCP:
+    case PS_PROTO_UDP:
+    case PS_PROTO_ICMP:
+    case PS_PROTO_IP:
+        if (MakeProtoInfo(proto, (u_char*)g_tmp_pkt->data, &ip_size))
             return -1;
+
+        break;
+
+    case PS_PROTO_OPEN_PORT:
+        if (MakeOpenPortInfo(proto, (u_char*)g_tmp_pkt->data, &ip_size, user))
+            return -1;
+
+        break;
+
+    default:
+        return -1;
     }
 
     /*
@@ -419,61 +419,61 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
 
     // FIXIT-L: IP4 is gauranteed to have been set in update().  Is IP6()
     //        also gauranteed?
-    if(g_tmp_pkt->ptrs.ip_api.is_ip6())
+    if (g_tmp_pkt->ptrs.ip_api.is_ip6())
         ((ip::IP6Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip6h())->set_len((uint16_t)ip_size);
 
     return 0;
 }
 
-static int PortscanAlertTcp(Packet *p, PS_PROTO *proto, int)
+static int PortscanAlertTcp(Packet* p, PS_PROTO* proto, int)
 {
     int iCtr;
     unsigned int event_ref;
     int portsweep = 0;
 
-    if(!proto)
+    if (!proto)
         return -1;
 
-    switch(proto->alerts)
+    switch (proto->alerts)
     {
-        case PS_ALERT_ONE_TO_ONE:
-            event_ref = GeneratePSSnortEvent(p, GID_PORT_SCAN, PSNG_TCP_PORTSCAN);
-            break;
+    case PS_ALERT_ONE_TO_ONE:
+        event_ref = GeneratePSSnortEvent(p, GID_PORT_SCAN, PSNG_TCP_PORTSCAN);
+        break;
 
-        case PS_ALERT_ONE_TO_ONE_DECOY:
-            event_ref = GeneratePSSnortEvent(p,GID_PORT_SCAN, PSNG_TCP_DECOY_PORTSCAN);
-            break;
+    case PS_ALERT_ONE_TO_ONE_DECOY:
+        event_ref = GeneratePSSnortEvent(p,GID_PORT_SCAN, PSNG_TCP_DECOY_PORTSCAN);
+        break;
 
-        case PS_ALERT_PORTSWEEP:
-           event_ref = GeneratePSSnortEvent(p,GID_PORT_SCAN, PSNG_TCP_PORTSWEEP);
-           portsweep = 1;
+    case PS_ALERT_PORTSWEEP:
+        event_ref = GeneratePSSnortEvent(p,GID_PORT_SCAN, PSNG_TCP_PORTSWEEP);
+        portsweep = 1;
 
-           break;
+        break;
 
-        case PS_ALERT_DISTRIBUTED:
-            event_ref = GeneratePSSnortEvent(p,GID_PORT_SCAN, PSNG_TCP_DISTRIBUTED_PORTSCAN);
-            break;
+    case PS_ALERT_DISTRIBUTED:
+        event_ref = GeneratePSSnortEvent(p,GID_PORT_SCAN, PSNG_TCP_DISTRIBUTED_PORTSCAN);
+        break;
 
-        case PS_ALERT_ONE_TO_ONE_FILTERED:
-            event_ref = GeneratePSSnortEvent(p,GID_PORT_SCAN, PSNG_TCP_FILTERED_PORTSCAN);
-            break;
+    case PS_ALERT_ONE_TO_ONE_FILTERED:
+        event_ref = GeneratePSSnortEvent(p,GID_PORT_SCAN, PSNG_TCP_FILTERED_PORTSCAN);
+        break;
 
-        case PS_ALERT_ONE_TO_ONE_DECOY_FILTERED:
-            event_ref = GeneratePSSnortEvent(p,GID_PORT_SCAN, PSNG_TCP_FILTERED_DECOY_PORTSCAN);
-            break;
+    case PS_ALERT_ONE_TO_ONE_DECOY_FILTERED:
+        event_ref = GeneratePSSnortEvent(p,GID_PORT_SCAN, PSNG_TCP_FILTERED_DECOY_PORTSCAN);
+        break;
 
-        case PS_ALERT_PORTSWEEP_FILTERED:
-            event_ref = GeneratePSSnortEvent(p,GID_PORT_SCAN, PSNG_TCP_PORTSWEEP_FILTERED);
-            portsweep = 1;
-            break;
+    case PS_ALERT_PORTSWEEP_FILTERED:
+        event_ref = GeneratePSSnortEvent(p,GID_PORT_SCAN, PSNG_TCP_PORTSWEEP_FILTERED);
+        portsweep = 1;
+        break;
 
-        case PS_ALERT_DISTRIBUTED_FILTERED:
-            event_ref = GeneratePSSnortEvent(p,GID_PORT_SCAN,
-                    PSNG_TCP_FILTERED_DISTRIBUTED_PORTSCAN);
-            break;
+    case PS_ALERT_DISTRIBUTED_FILTERED:
+        event_ref = GeneratePSSnortEvent(p,GID_PORT_SCAN,
+            PSNG_TCP_FILTERED_DISTRIBUTED_PORTSCAN);
+        break;
 
-        default:
-            return 0;
+    default:
+        return 0;
     }
 
     /*
@@ -487,184 +487,184 @@ static int PortscanAlertTcp(Packet *p, PS_PROTO *proto, int)
     **  Only log open ports for portsweeps after the alert has been
     **  generated.
     */
-    if(proto->open_ports_cnt && !portsweep)
+    if (proto->open_ports_cnt && !portsweep)
     {
-        for(iCtr = 0; iCtr < proto->open_ports_cnt; iCtr++)
+        for (iCtr = 0; iCtr < proto->open_ports_cnt; iCtr++)
         {
-            DAQ_PktHdr_t *pkth = (DAQ_PktHdr_t *)g_tmp_pkt->pkth;
+            DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)g_tmp_pkt->pkth;
             PS_PKT ps_pkt;
 
             memset(&ps_pkt, 0x00, sizeof(PS_PKT));
-            ps_pkt.pkt = (void *)p;
+            ps_pkt.pkt = (void*)p;
 
-            if(MakePortscanPkt(&ps_pkt, proto, PS_PROTO_OPEN_PORT,
-                        (void *)&proto->open_ports[iCtr]))
+            if (MakePortscanPkt(&ps_pkt, proto, PS_PROTO_OPEN_PORT,
+                (void*)&proto->open_ports[iCtr]))
                 return -1;
 
             pkth->ts.tv_usec += 1;
             GenerateOpenPortEvent(g_tmp_pkt,GID_PORT_SCAN,PSNG_OPEN_PORT,
-                    0,0,3, proto->event_ref, &proto->event_time,
-                    PSNG_OPEN_PORT_STR);
+                0,0,3, proto->event_ref, &proto->event_time,
+                PSNG_OPEN_PORT_STR);
         }
     }
 
     return 0;
 }
 
-static int PortscanAlertUdp(Packet *p, PS_PROTO *proto, int)
+static int PortscanAlertUdp(Packet* p, PS_PROTO* proto, int)
 {
-    if(!proto)
+    if (!proto)
         return -1;
 
-    switch(proto->alerts)
+    switch (proto->alerts)
     {
-        case PS_ALERT_ONE_TO_ONE:
-            GeneratePSSnortEvent(p, GID_PORT_SCAN, PSNG_UDP_PORTSCAN);
-            break;
+    case PS_ALERT_ONE_TO_ONE:
+        GeneratePSSnortEvent(p, GID_PORT_SCAN, PSNG_UDP_PORTSCAN);
+        break;
 
-        case PS_ALERT_ONE_TO_ONE_DECOY:
-            GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_UDP_DECOY_PORTSCAN);
-            break;
+    case PS_ALERT_ONE_TO_ONE_DECOY:
+        GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_UDP_DECOY_PORTSCAN);
+        break;
 
-        case PS_ALERT_PORTSWEEP:
-           GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_UDP_PORTSWEEP);
-            break;
+    case PS_ALERT_PORTSWEEP:
+        GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_UDP_PORTSWEEP);
+        break;
 
-        case PS_ALERT_DISTRIBUTED:
-            GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_UDP_DISTRIBUTED_PORTSCAN);
-            break;
+    case PS_ALERT_DISTRIBUTED:
+        GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_UDP_DISTRIBUTED_PORTSCAN);
+        break;
 
-        case PS_ALERT_ONE_TO_ONE_FILTERED:
-            GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_UDP_FILTERED_PORTSCAN);
-            break;
+    case PS_ALERT_ONE_TO_ONE_FILTERED:
+        GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_UDP_FILTERED_PORTSCAN);
+        break;
 
-        case PS_ALERT_ONE_TO_ONE_DECOY_FILTERED:
-            GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_UDP_FILTERED_DECOY_PORTSCAN);
-            break;
+    case PS_ALERT_ONE_TO_ONE_DECOY_FILTERED:
+        GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_UDP_FILTERED_DECOY_PORTSCAN);
+        break;
 
-        case PS_ALERT_PORTSWEEP_FILTERED:
-           GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_UDP_PORTSWEEP_FILTERED);
-            break;
+    case PS_ALERT_PORTSWEEP_FILTERED:
+        GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_UDP_PORTSWEEP_FILTERED);
+        break;
 
-        case PS_ALERT_DISTRIBUTED_FILTERED:
-            GeneratePSSnortEvent(p,GID_PORT_SCAN,
-                    PSNG_UDP_FILTERED_DISTRIBUTED_PORTSCAN);
-            break;
+    case PS_ALERT_DISTRIBUTED_FILTERED:
+        GeneratePSSnortEvent(p,GID_PORT_SCAN,
+            PSNG_UDP_FILTERED_DISTRIBUTED_PORTSCAN);
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 
     return 0;
 }
 
-static int PortscanAlertIp(Packet *p, PS_PROTO *proto, int)
+static int PortscanAlertIp(Packet* p, PS_PROTO* proto, int)
 {
-    if(!proto)
+    if (!proto)
         return -1;
 
-    switch(proto->alerts)
+    switch (proto->alerts)
     {
-        case PS_ALERT_ONE_TO_ONE:
-            GeneratePSSnortEvent(p, GID_PORT_SCAN, PSNG_IP_PORTSCAN);
-            break;
+    case PS_ALERT_ONE_TO_ONE:
+        GeneratePSSnortEvent(p, GID_PORT_SCAN, PSNG_IP_PORTSCAN);
+        break;
 
-        case PS_ALERT_ONE_TO_ONE_DECOY:
-            GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_IP_DECOY_PORTSCAN);
-            break;
+    case PS_ALERT_ONE_TO_ONE_DECOY:
+        GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_IP_DECOY_PORTSCAN);
+        break;
 
-        case PS_ALERT_PORTSWEEP:
-           GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_IP_PORTSWEEP);
-            break;
+    case PS_ALERT_PORTSWEEP:
+        GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_IP_PORTSWEEP);
+        break;
 
-        case PS_ALERT_DISTRIBUTED:
-            GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_IP_DISTRIBUTED_PORTSCAN);
-            break;
+    case PS_ALERT_DISTRIBUTED:
+        GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_IP_DISTRIBUTED_PORTSCAN);
+        break;
 
-        case PS_ALERT_ONE_TO_ONE_FILTERED:
-            GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_IP_FILTERED_PORTSCAN);
-            break;
+    case PS_ALERT_ONE_TO_ONE_FILTERED:
+        GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_IP_FILTERED_PORTSCAN);
+        break;
 
-        case PS_ALERT_ONE_TO_ONE_DECOY_FILTERED:
-            GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_IP_FILTERED_DECOY_PORTSCAN);
-            break;
+    case PS_ALERT_ONE_TO_ONE_DECOY_FILTERED:
+        GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_IP_FILTERED_DECOY_PORTSCAN);
+        break;
 
-        case PS_ALERT_PORTSWEEP_FILTERED:
-           GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_IP_PORTSWEEP_FILTERED);
-            break;
+    case PS_ALERT_PORTSWEEP_FILTERED:
+        GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_IP_PORTSWEEP_FILTERED);
+        break;
 
-        case PS_ALERT_DISTRIBUTED_FILTERED:
-            GeneratePSSnortEvent(p,GID_PORT_SCAN, PSNG_IP_FILTERED_DISTRIBUTED_PORTSCAN);
-            break;
+    case PS_ALERT_DISTRIBUTED_FILTERED:
+        GeneratePSSnortEvent(p,GID_PORT_SCAN, PSNG_IP_FILTERED_DISTRIBUTED_PORTSCAN);
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 
     return 0;
 }
 
-static int PortscanAlertIcmp(Packet *p, PS_PROTO *proto, int)
+static int PortscanAlertIcmp(Packet* p, PS_PROTO* proto, int)
 {
-    if(!proto)
+    if (!proto)
         return -1;
 
-    switch(proto->alerts)
+    switch (proto->alerts)
     {
-        case PS_ALERT_PORTSWEEP:
-           GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_ICMP_PORTSWEEP);
-            break;
+    case PS_ALERT_PORTSWEEP:
+        GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_ICMP_PORTSWEEP);
+        break;
 
-        case PS_ALERT_PORTSWEEP_FILTERED:
-           GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_ICMP_PORTSWEEP_FILTERED);
-            break;
+    case PS_ALERT_PORTSWEEP_FILTERED:
+        GeneratePSSnortEvent(p,GID_PORT_SCAN,PSNG_ICMP_PORTSWEEP_FILTERED);
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 
     return 0;
 }
 
-static int PortscanAlert(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type)
+static int PortscanAlert(PS_PKT* ps_pkt, PS_PROTO* proto, int proto_type)
 {
-    Packet *p;
+    Packet* p;
 
-    if(!ps_pkt || !ps_pkt->pkt)
+    if (!ps_pkt || !ps_pkt->pkt)
         return -1;
 
-    p = (Packet *)ps_pkt->pkt;
+    p = (Packet*)ps_pkt->pkt;
 
-    if(proto->alerts == PS_ALERT_OPEN_PORT)
+    if (proto->alerts == PS_ALERT_OPEN_PORT)
     {
-        if(MakePortscanPkt(ps_pkt, proto, PS_PROTO_OPEN_PORT, (void *)&p->ptrs.sp))
+        if (MakePortscanPkt(ps_pkt, proto, PS_PROTO_OPEN_PORT, (void*)&p->ptrs.sp))
             return -1;
 
         GenerateOpenPortEvent(g_tmp_pkt,GID_PORT_SCAN,PSNG_OPEN_PORT,0,0,3,
-                proto->event_ref, &proto->event_time, PSNG_OPEN_PORT_STR);
+            proto->event_ref, &proto->event_time, PSNG_OPEN_PORT_STR);
     }
     else
     {
-        if(MakePortscanPkt(ps_pkt, proto, proto_type, NULL))
+        if (MakePortscanPkt(ps_pkt, proto, proto_type, NULL))
             return -1;
 
-        switch(proto_type)
+        switch (proto_type)
         {
-            case PS_PROTO_TCP:
-                PortscanAlertTcp(g_tmp_pkt, proto, proto_type);
-                break;
+        case PS_PROTO_TCP:
+            PortscanAlertTcp(g_tmp_pkt, proto, proto_type);
+            break;
 
-            case PS_PROTO_UDP:
-                PortscanAlertUdp(g_tmp_pkt, proto, proto_type);
-                break;
+        case PS_PROTO_UDP:
+            PortscanAlertUdp(g_tmp_pkt, proto, proto_type);
+            break;
 
-            case PS_PROTO_ICMP:
-                PortscanAlertIcmp(g_tmp_pkt, proto, proto_type);
-                break;
+        case PS_PROTO_ICMP:
+            PortscanAlertIcmp(g_tmp_pkt, proto, proto_type);
+            break;
 
-            case PS_PROTO_IP:
-                PortscanAlertIp(g_tmp_pkt, proto, proto_type);
-                break;
+        case PS_PROTO_IP:
+            PortscanAlertIp(g_tmp_pkt, proto, proto_type);
+            break;
         }
     }
 
@@ -673,14 +673,14 @@ static int PortscanAlert(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type)
     return 0;
 }
 
-static void PrintIPPortSet(IP_PORT *p)
+static void PrintIPPortSet(IP_PORT* p)
 {
     char ip_str[80], output_str[80];
-    PORTRANGE *pr;
+    PORTRANGE* pr;
 
     SnortSnprintf(ip_str, sizeof(ip_str), "%s", sfip_to_str(&p->ip));
 
-    if(p->notflag)
+    if (p->notflag)
         SnortSnprintf(output_str, sizeof(output_str), "        !%s", ip_str);
     else
         SnortSnprintf(output_str, sizeof(output_str), "        %s", ip_str);
@@ -695,7 +695,7 @@ static void PrintIPPortSet(IP_PORT *p)
     if ( pr && pr->port_lo != 0 )
         SnortSnprintfAppend(output_str, sizeof(output_str), " : ");
 
-    for( ; pr != 0;
+    for (; pr != 0;
         pr=(PORTRANGE*)sflist_next(&cursor) )
     {
         if ( pr->port_lo != 0)
@@ -715,21 +715,33 @@ static void PrintPortscanConf(PortscanConfig* config)
 {
     char buf[STD_BUF + 1];
     int proto_cnt = 0;
-    IP_PORT *p;
+    IP_PORT* p;
 
     LogMessage("Portscan Detection Config:\n");
-    if(config->disabled)
+    if (config->disabled)
     {
-           LogMessage("    Portscan Detection: INACTIVE\n");
+        LogMessage("    Portscan Detection: INACTIVE\n");
     }
     memset(buf, 0, STD_BUF + 1);
     if (!config->disabled)
     {
         SnortSnprintf(buf, STD_BUF + 1, "    Detect Protocols:  ");
-        if(config->detect_scans & PS_PROTO_TCP)  { sfsnprintfappend(buf, STD_BUF, "TCP ");  proto_cnt++; }
-        if(config->detect_scans & PS_PROTO_UDP)  { sfsnprintfappend(buf, STD_BUF, "UDP ");  proto_cnt++; }
-        if(config->detect_scans & PS_PROTO_ICMP) { sfsnprintfappend(buf, STD_BUF, "ICMP "); proto_cnt++; }
-        if(config->detect_scans & PS_PROTO_IP)   { sfsnprintfappend(buf, STD_BUF, "IP");    proto_cnt++; }
+        if (config->detect_scans & PS_PROTO_TCP)
+        {
+            sfsnprintfappend(buf, STD_BUF, "TCP ");  proto_cnt++;
+        }
+        if (config->detect_scans & PS_PROTO_UDP)
+        {
+            sfsnprintfappend(buf, STD_BUF, "UDP ");  proto_cnt++;
+        }
+        if (config->detect_scans & PS_PROTO_ICMP)
+        {
+            sfsnprintfappend(buf, STD_BUF, "ICMP "); proto_cnt++;
+        }
+        if (config->detect_scans & PS_PROTO_IP)
+        {
+            sfsnprintfappend(buf, STD_BUF, "IP");    proto_cnt++;
+        }
         LogMessage("%s\n", buf);
     }
 
@@ -737,13 +749,13 @@ static void PrintPortscanConf(PortscanConfig* config)
     {
         memset(buf, 0, STD_BUF + 1);
         SnortSnprintf(buf, STD_BUF + 1, "    Detect Scan Type:  ");
-        if(config->detect_scan_type & PS_TYPE_PORTSCAN)
+        if (config->detect_scan_type & PS_TYPE_PORTSCAN)
             sfsnprintfappend(buf, STD_BUF, "portscan ");
-        if(config->detect_scan_type & PS_TYPE_PORTSWEEP)
+        if (config->detect_scan_type & PS_TYPE_PORTSWEEP)
             sfsnprintfappend(buf, STD_BUF, "portsweep ");
-        if(config->detect_scan_type & PS_TYPE_DECOYSCAN)
+        if (config->detect_scan_type & PS_TYPE_DECOYSCAN)
             sfsnprintfappend(buf, STD_BUF, "decoy_portscan ");
-        if(config->detect_scan_type & PS_TYPE_DISTPORTSCAN)
+        if (config->detect_scan_type & PS_TYPE_DISTPORTSCAN)
             sfsnprintfappend(buf, STD_BUF, "distributed_portscan");
         LogMessage("%s\n", buf);
     }
@@ -752,11 +764,11 @@ static void PrintPortscanConf(PortscanConfig* config)
     {
         memset(buf, 0, STD_BUF + 1);
         SnortSnprintf(buf, STD_BUF + 1, "    Sensitivity Level: ");
-        if(config->sense_level == PS_SENSE_HIGH)
+        if (config->sense_level == PS_SENSE_HIGH)
             sfsnprintfappend(buf, STD_BUF, "High/Experimental");
-        if(config->sense_level == PS_SENSE_MEDIUM)
+        if (config->sense_level == PS_SENSE_MEDIUM)
             sfsnprintfappend(buf, STD_BUF, "Medium");
-        if(config->sense_level == PS_SENSE_LOW)
+        if (config->sense_level == PS_SENSE_LOW)
             sfsnprintfappend(buf, STD_BUF, "Low");
         LogMessage("%s\n", buf);
     }
@@ -771,12 +783,12 @@ static void PrintPortscanConf(PortscanConfig* config)
         if ( config->logfile )
             LogMessage("    Logfile:           %s\n", "yes");
 
-        if(config->ignore_scanners)
+        if (config->ignore_scanners)
         {
             LogMessage("    Ignore Scanner IP List:\n");
             SF_LNODE* cursor;
 
-            for(p = (IP_PORT*)sflist_first(&config->ignore_scanners->ip_list, &cursor);
+            for (p = (IP_PORT*)sflist_first(&config->ignore_scanners->ip_list, &cursor);
                 p;
                 p = (IP_PORT*)sflist_next(&cursor))
             {
@@ -784,12 +796,12 @@ static void PrintPortscanConf(PortscanConfig* config)
             }
         }
 
-        if(config->ignore_scanned)
+        if (config->ignore_scanned)
         {
             LogMessage("    Ignore Scanned IP List:\n");
             SF_LNODE* cursor;
 
-            for(p = (IP_PORT*)sflist_first(&config->ignore_scanned->ip_list, &cursor);
+            for (p = (IP_PORT*)sflist_first(&config->ignore_scanned->ip_list, &cursor);
                 p;
                 p = (IP_PORT*)sflist_next(&cursor))
             {
@@ -797,12 +809,12 @@ static void PrintPortscanConf(PortscanConfig* config)
             }
         }
 
-        if(config->watch_ip)
+        if (config->watch_ip)
         {
             LogMessage("    Watch IP List:\n");
             SF_LNODE* cursor;
 
-            for(p = (IP_PORT*)sflist_first(&config->watch_ip->ip_list, &cursor);
+            for (p = (IP_PORT*)sflist_first(&config->watch_ip->ip_list, &cursor);
                 p;
                 p = (IP_PORT*)sflist_next(&cursor))
             {
@@ -839,6 +851,7 @@ static int PortscanGetProtoBits(int detect_scans)
 
     return proto_bits;
 }
+
 #endif
 
 //-------------------------------------------------------------------------
@@ -903,7 +916,7 @@ void PortScan::show(SnortConfig*)
     PrintPortscanConf(config);
 }
 
-void PortScan::eval(Packet *p)
+void PortScan::eval(Packet* p)
 {
     PS_PKT ps_pkt;
     PROFILE_VARS;
@@ -917,13 +930,13 @@ void PortScan::eval(Packet *p)
     ++spstats.total_packets;
 
     memset(&ps_pkt, 0x00, sizeof(PS_PKT)); // FIXIT-P don't zap unless necessary
-    ps_pkt.pkt = (void *)p;
+    ps_pkt.pkt = (void*)p;
 
     /* See if there is already an exisiting node in the hash table */
     ps_detect(&ps_pkt);
 
     if (ps_pkt.scanner && ps_pkt.scanner->proto.alerts &&
-       (ps_pkt.scanner->proto.alerts != PS_ALERT_GENERATED))
+        (ps_pkt.scanner->proto.alerts != PS_ALERT_GENERATED))
     {
         PortscanAlert(&ps_pkt, &ps_pkt.scanner->proto, ps_pkt.proto);
     }

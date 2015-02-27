@@ -16,14 +16,14 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 /**
  * @file   util_math.h
  * @author Chris Green <cmg@sourcefire.com>
  * @date   Fri Jun 27 10:12:57 2003
- * 
+ *
  * @brief  math related util functions
- * 
+ *
  * Place simple math functions that are useful all over the place
  * here.
  */
@@ -41,5 +41,4 @@ double calc_percent(double amt, double total);
 double calc_percent64(uint64_t amt, uint64_t total);
 
 #endif /* UTIL_MATH_H */
-
 

@@ -26,29 +26,26 @@
 
 namespace config
 {
-
-namespace {
-
+namespace
+{
 class Detection : public ConversionState
 {
 public:
-    Detection(Converter& c) : ConversionState(c) {};
-    virtual ~Detection() {};
+    Detection(Converter& c) : ConversionState(c) { }
+    virtual ~Detection() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool Detection::convert(std::istringstream& data_stream)
 {
-
     bool retval = true;
     std::string args;
 
     table_api.open_table("search_engine");
     table_api.add_comment("This table was previously 'config detection: ...");
 
-    while(util::get_string(data_stream, args, ", "))
+    while (util::get_string(data_stream, args, ", "))
     {
         bool tmpval = true;
         std::string keyword;
@@ -68,56 +65,54 @@ bool Detection::convert(std::istringstream& data_stream)
             table_api.add_diff_option_comment("search-optimize", "search_optimize");
             tmpval = table_api.add_option("search_optimize", true);
         }
-
         else if (!keyword.compare("split-any-any"))
         {
             table_api.add_diff_option_comment("split-any-any", "split_any_any");
             tmpval = table_api.add_option("split_any_any", true);
         }
-
-        else if(!keyword.compare("bleedover-warnings-enabled"))
+        else if (!keyword.compare("bleedover-warnings-enabled"))
         {
-            table_api.add_diff_option_comment("bleedover-warnings-enabled", "bleedover_warnings_enabled");
+            table_api.add_diff_option_comment("bleedover-warnings-enabled",
+                "bleedover_warnings_enabled");
             tmpval = table_api.add_option("bleedover_warnings_enabled", true);
         }
-
-        else if(!keyword.compare("enable-single-rule-group"))
+        else if (!keyword.compare("enable-single-rule-group"))
         {
-            table_api.add_diff_option_comment("enable-single-rule-group", "enable_single_rule_group");
+            table_api.add_diff_option_comment("enable-single-rule-group",
+                "enable_single_rule_group");
             tmpval = table_api.add_option("enable_single_rule_group", true);
         }
-
-        else if(!keyword.compare("debug-print-nocontent-rule-tests"))
+        else if (!keyword.compare("debug-print-nocontent-rule-tests"))
         {
-            table_api.add_diff_option_comment("debug-print-nocontent-rule-tests", "debug_print_nocontent_rule_tests");
+            table_api.add_diff_option_comment("debug-print-nocontent-rule-tests",
+                "debug_print_nocontent_rule_tests");
             tmpval = table_api.add_option("debug_print_nocontent_rule_tests", true);
         }
-
-        else if(!keyword.compare("debug-print-rule-groups-compiled"))
+        else if (!keyword.compare("debug-print-rule-groups-compiled"))
         {
-            table_api.add_diff_option_comment("debug-print-rule-groups-compiled", "debug_print_rule_groups_compiled");
+            table_api.add_diff_option_comment("debug-print-rule-groups-compiled",
+                "debug_print_rule_groups_compiled");
             tmpval = table_api.add_option("debug_print_rule_groups_compiled", true);
         }
-
-        else if(!keyword.compare("debug-print-rule-groups-uncompiled"))
+        else if (!keyword.compare("debug-print-rule-groups-uncompiled"))
         {
-            table_api.add_diff_option_comment("debug-print-rule-groups-uncompiled", "debug_print_rule_groups_uncompiled");
+            table_api.add_diff_option_comment("debug-print-rule-groups-uncompiled",
+                "debug_print_rule_groups_uncompiled");
             tmpval = table_api.add_option("debug_print_rule_groups_uncompiled", true);
         }
-
-        else if(!keyword.compare("debug-print-rule-group-build-details"))
+        else if (!keyword.compare("debug-print-rule-group-build-details"))
         {
-            table_api.add_diff_option_comment("debug-print-rule-group-build-details", "debug_print_rule_group_build_details");
+            table_api.add_diff_option_comment("debug-print-rule-group-build-details",
+                "debug_print_rule_group_build_details");
             tmpval = table_api.add_option("debug_print_rule_group_build_details", true);
         }
-
-        else if(!keyword.compare("debug-print-fast-pattern"))
+        else if (!keyword.compare("debug-print-fast-pattern"))
         {
-            table_api.add_diff_option_comment("debug-print-fast-pattern", "debug_print_fast_pattern");
+            table_api.add_diff_option_comment("debug-print-fast-pattern",
+                "debug_print_fast_pattern");
             tmpval = table_api.add_option("debug_print_fast_pattern", true);
         }
-
-        else if(!keyword.compare("max_queue_events"))
+        else if (!keyword.compare("max_queue_events"))
         {
             std::string val;
 
@@ -126,8 +121,7 @@ bool Detection::convert(std::istringstream& data_stream)
             else
                 tmpval = false;
         }
-
-        else if(!keyword.compare("max-pattern-len"))
+        else if (!keyword.compare("max-pattern-len"))
         {
             std::string val;
             table_api.add_diff_option_comment("max-pattern-len", "max_pattern_len");
@@ -137,8 +131,7 @@ bool Detection::convert(std::istringstream& data_stream)
             else
                 tmpval = false;
         }
-
-        else if(!keyword.compare("bleedover-port-limit"))
+        else if (!keyword.compare("bleedover-port-limit"))
         {
             std::string val;
             table_api.add_diff_option_comment("bleedover-port-limit", "bleedover_port_limit");
@@ -148,7 +141,6 @@ bool Detection::convert(std::istringstream& data_stream)
             else
                 tmpval = false;
         }
-
         else if (!keyword.compare("search-method"))
         {
             table_api.add_diff_option_comment("search-method", "search_method");
@@ -160,7 +152,6 @@ bool Detection::convert(std::istringstream& data_stream)
                 continue;
             }
 
-
             if (!method.compare("mwm"))
                 table_api.add_deleted_comment("mwm");
 
@@ -169,85 +160,71 @@ bool Detection::convert(std::istringstream& data_stream)
                 table_api.add_diff_option_comment("ac", "ac_full_q");
                 tmpval = table_api.add_option("search_method", "ac_full_q");
             }
-
             else if (!method.compare("ac-q"))
             {
                 table_api.add_diff_option_comment("ac-q", "ac_full_q");
                 tmpval = table_api.add_option("search_method", "ac_full_q");
             }
-
             else if (!method.compare("ac-nq"))
             {
                 table_api.add_diff_option_comment("ac-nq", "ac_full");
                 tmpval = table_api.add_option("search_method", "ac_full");
             }
-
             else if (!method.compare("ac-bnfa"))
             {
                 table_api.add_diff_option_comment("ac-bnfa", "ac_bnfa_q");
                 tmpval = table_api.add_option("search_method", "ac_bnfa_q");
             }
-
             else if (!method.compare("ac-bnfa-q"))
             {
                 table_api.add_diff_option_comment("ac-bnfa-q", "ac_bnfa_q");
                 tmpval = table_api.add_option("search_method", "ac_bnfa_q");
             }
-
             else if (!method.compare("ac-bnfa-nq"))
             {
                 table_api.add_diff_option_comment("ac-bnfa-nq", "ac_bnfa");
                 tmpval = table_api.add_option("search_method", "ac_bnfa");
             }
-
             else if (!method.compare("intel-cpm"))
             {
                 table_api.add_diff_option_comment("intel-cpm", "intel_cpm");
                 tmpval = table_api.add_option("search_method", "intel_cpm");
             }
-
             else if (!method.compare("ac-std"))
             {
                 table_api.add_diff_option_comment("ac-std", "ac_std");
                 tmpval = table_api.add_option("search_method", "ac_std");
             }
-
             else if (!method.compare("ac-banded"))
             {
                 table_api.add_diff_option_comment("ac-banded", "ac_banded");
                 tmpval = table_api.add_option("search_method", "ac_banded");
             }
-
             else if (!method.compare("acs"))
             {
                 table_api.add_diff_option_comment("acs", "ac_sparse");
                 tmpval = table_api.add_option("search_method", "ac_sparse");
             }
-
             else if (!method.compare("ac-sparsebands"))
             {
                 table_api.add_diff_option_comment("ac-sparsebands", "ac_sparse_bands");
                 tmpval = table_api.add_option("search_method", "ac_sparse_bands");
             }
-
             else if (!method.compare("lowmem"))
             {
                 table_api.add_diff_option_comment("lowmem", "lowmem_q");
                 tmpval = table_api.add_option("search_method", "lowmem_q");
             }
-
             else if (!method.compare("lowmem-q"))
             {
                 table_api.add_diff_option_comment("lowmem-q", "lowmem_q");
                 tmpval = table_api.add_option("search_method", "lowmem_q");
             }
-
             else if (!method.compare("lowmem-nq"))
             {
                 table_api.add_diff_option_comment("lowmem-nq", "lowmem");
                 tmpval = table_api.add_option("search_method", "lowmem");
             }
-
             else if (!method.compare("ac-split"))
             {
                 table_api.add_diff_option_comment("ac-split", "split_any_any");
@@ -256,16 +233,14 @@ bool Detection::convert(std::istringstream& data_stream)
                 bool tmpval1 = table_api.add_option("search_method", "ac_full_q");
                 tmpval = tmpval1 && tmpval2;
 
-                if(!table_api.add_option("split_any_any", true))
+                if (!table_api.add_option("split_any_any", true))
                     tmpval = false;
             }
-
             else
             {
                 tmpval = false;
             }
         }
-
         else
             tmpval = false;
 
@@ -275,7 +250,6 @@ bool Detection::convert(std::istringstream& data_stream)
 
     return retval;
 }
-
 
 /**************************
  *******  A P I ***********
@@ -293,5 +267,5 @@ static const ConvertMap detection_api =
 };
 
 const ConvertMap* detection_map = &detection_api;
-
 } // namespace config
+

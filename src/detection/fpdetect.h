@@ -50,10 +50,10 @@ extern THREAD_LOCAL ProfileStats ruleOTNEvalPerfStats;
 **  This is the only function that is needed to do an
 **  inspection on a packet.
 */
-int fpEvalPacket(Packet *p);
+int fpEvalPacket(Packet* p);
 
-int fpLogEvent(RuleTreeNode *rtn, OptTreeNode *otn, Packet *p);
-int fpEvalRTN(RuleTreeNode *rtn, Packet *p, int check_ports);
+int fpLogEvent(RuleTreeNode* rtn, OptTreeNode* otn, Packet* p);
+int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports);
 
 /*
 **  This define is for the number of unique events
@@ -68,13 +68,12 @@ int fpEvalRTN(RuleTreeNode *rtn, Packet *p, int check_ports);
 **  and iMatchIndex gets set to the event that holds the
 **  highest priority.
 */
-typedef struct {
-
- OptTreeNode *MatchArray[MAX_EVENT_MATCH];
- int  iMatchCount;
- int  iMatchIndex;
- int  iMatchMaxLen;
-
+typedef struct
+{
+    OptTreeNode* MatchArray[MAX_EVENT_MATCH];
+    int iMatchCount;
+    int iMatchIndex;
+    int iMatchMaxLen;
 }MATCH_INFO;
 
 /*
@@ -88,22 +87,23 @@ typedef struct {
 */
 typedef struct
 {
-    PORT_GROUP * pg;
-    Packet * p;
+    PORT_GROUP* pg;
+    Packet* p;
     int check_ports;
 
-    MATCH_INFO *matchInfo;
+    MATCH_INFO* matchInfo;
     int iMatchInfoArraySize;
 } OTNX_MATCH_DATA;
 
 void otnx_match_data_init(int);
 void otnx_match_data_term();
 
-int fpAddMatch( OTNX_MATCH_DATA *omd_local, int pLen, OptTreeNode *otn);
-SO_PUBLIC void fpEvalIpProtoOnlyRules(Packet *, uint8_t proto_id);
-OptTreeNode * GetOTN(uint32_t gid, uint32_t sid);
+int fpAddMatch(OTNX_MATCH_DATA* omd_local, int pLen, OptTreeNode* otn);
+SO_PUBLIC void fpEvalIpProtoOnlyRules(Packet*, uint8_t proto_id);
+OptTreeNode* GetOTN(uint32_t gid, uint32_t sid);
 
 #define TO_SERVER 1
 #define TO_CLIENT 0
 
 #endif
+

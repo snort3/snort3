@@ -23,7 +23,8 @@
 struct SFHASHFCN;
 struct ZHashNode;
 
-class ZHash {
+class ZHash
+{
 public:
     ZHash(int nrows, int keysize);
     ~ZHash();
@@ -42,11 +43,11 @@ public:
     bool remove(const void* key);
     bool remove();
 
-    inline unsigned get_count() { return count; };
+    inline unsigned get_count() { return count; }
 
     int set_keyops(
-        unsigned (*hash_fcn)(SFHASHFCN* p, unsigned char* d, int n),
-        int (*keycmp_fcn)(const void* s1, const void* s2, size_t n));
+        unsigned (* hash_fcn)(SFHASHFCN* p, unsigned char* d, int n),
+        int (* keycmp_fcn)(const void* s1, const void* s2, size_t n));
 
 private:
     ZHashNode* get_free_node();

@@ -28,14 +28,13 @@
 #include "bitop.h"
 #include "protocols/packet.h"
 
-typedef void * RULE_PTR;
+typedef void* RULE_PTR;
 
 #define ANYPORT   -1
 
-
 /*
 ** Macros to walk a RULE_NODE list, and get the
-** RULE_PTR from a RULE_NODE, these eliminate 
+** RULE_PTR from a RULE_NODE, these eliminate
 ** subroutine calls, in high performance needs.
 */
 #define PRM_GET_FIRST_GROUP_NODE(pg) (pg->pgHead)
@@ -55,142 +54,132 @@ enum PmType
     PM_TYPE__MAX
 };
 
-typedef struct _not_rule_node_ {
+typedef struct _not_rule_node_
+{
+    struct _not_rule_node_* next;
 
-  struct _not_rule_node_ * next;
-  
-  int iPos; /* RULE_NODE->iRuleNodeID */
-  
-  
+    int iPos; /* RULE_NODE->iRuleNodeID */
 } NOT_RULE_NODE;
 
+typedef struct _rule_node_
+{
+    struct  _rule_node_* rnNext;
 
-typedef struct _rule_node_ {
-
-  struct  _rule_node_ * rnNext;
- 
-  RULE_PTR rnRuleData; 
-  int iRuleNodeID;
- 
+    RULE_PTR rnRuleData;
+    int iRuleNodeID;
 }RULE_NODE;
 
-typedef struct {
-  
-  /* Content List */
-  RULE_NODE *pgHead, *pgTail, *pgCur;
-  int   pgContentCount;
- 
-  /* No-Content List */
-  RULE_NODE *pgHeadNC, *pgTailNC, *pgCurNC;
-  int   pgNoContentCount;
+typedef struct
+{
+    /* Content List */
+    RULE_NODE* pgHead, * pgTail, * pgCur;
+    int pgContentCount;
 
-  /*  Uri-Content List */
-  RULE_NODE *pgUriHead, *pgUriTail, *pgUriCur;
-  int   pgUriContentCount;
- 
-  /* Pattern Matching data structures (MPSE) */
-  class Mpse* pgPms[PM_TYPE__MAX];
+    /* No-Content List */
+    RULE_NODE* pgHeadNC, * pgTailNC, * pgCurNC;
+    int pgNoContentCount;
 
-  /* detection option tree */
-  void *pgNonContentTree;
-  
-  int avgLen;  
-  int minLen;
-  int maxLen;
-  int c1,c2,c3,c4,c5;
+    /*  Uri-Content List */
+    RULE_NODE* pgUriHead, * pgUriTail, * pgUriCur;
+    int pgUriContentCount;
 
-  /*
-  *   Not rule list for this group
-  */
-  NOT_RULE_NODE *pgNotRuleList;
+    /* Pattern Matching data structures (MPSE) */
+    class Mpse* pgPms[PM_TYPE__MAX];
 
-  /*
-  **  Count of rule_node's in this group/list 
-  */
-  int pgCount;
+    /* detection option tree */
+    void* pgNonContentTree;
 
-  int pgNQEvents;
-  int pgQEvents;
- 
+    int avgLen;
+    int minLen;
+    int maxLen;
+    int c1,c2,c3,c4,c5;
+
+    /*
+    *   Not rule list for this group
+    */
+    NOT_RULE_NODE* pgNotRuleList;
+
+    /*
+    **  Count of rule_node's in this group/list
+    */
+    int pgCount;
+
+    int pgNQEvents;
+    int pgQEvents;
 }PORT_GROUP;
 
+struct PORT_RULE_MAP
+{
+    int prmNumDstRules;
+    int prmNumSrcRules;
+    int prmNumGenericRules;
 
+    int prmNumDstGroups;
+    int prmNumSrcGroups;
 
-struct PORT_RULE_MAP{
-
-  int        prmNumDstRules;
-  int        prmNumSrcRules;
-  int        prmNumGenericRules;
-  
-  int        prmNumDstGroups;
-  int        prmNumSrcGroups;
-
-  PORT_GROUP *prmSrcPort[MAX_PORTS];
-  PORT_GROUP *prmDstPort[MAX_PORTS];
-  /* char       prmConflicts[MAX_PORTS]; */
-  PORT_GROUP *prmGeneric;
-
+    PORT_GROUP* prmSrcPort[MAX_PORTS];
+    PORT_GROUP* prmDstPort[MAX_PORTS];
+    /* char       prmConflicts[MAX_PORTS]; */
+    PORT_GROUP* prmGeneric;
 };
 
+typedef struct
+{
+    int prmNumRules;
+    int prmNumGenericRules;
 
-typedef struct {
+    int prmNumGroups;
 
-  int        prmNumRules;
-  int        prmNumGenericRules;
-  
-  int        prmNumGroups;
+    PORT_GROUP prmByteGroup[256];
+    PORT_GROUP prmGeneric;
+} BYTE_RULE_MAP;
 
-  PORT_GROUP prmByteGroup[256];
-  PORT_GROUP prmGeneric;
+PORT_RULE_MAP* prmNewMap(void);
+BYTE_RULE_MAP* prmNewByteMap(void);
 
-} BYTE_RULE_MAP ;
+void prmFreeMap(PORT_RULE_MAP* p);
+void prmFreeByteMap(BYTE_RULE_MAP* p);
 
+int prmxAddPortRule(PORT_GROUP* p, RULE_PTR rd);
+int prmxAddPortRuleUri(PORT_GROUP* p, RULE_PTR rd);
+int prmxAddPortRuleNC(PORT_GROUP* p, RULE_PTR rd);
 
-PORT_RULE_MAP * prmNewMap(void);
-BYTE_RULE_MAP * prmNewByteMap(void);
+int prmAddRule(PORT_RULE_MAP* p, int dport, int sport, RULE_PTR rd);
+int prmAddByteRule(BYTE_RULE_MAP* p, int dport, RULE_PTR rd);
 
-void prmFreeMap( PORT_RULE_MAP * p );
-void prmFreeByteMap( BYTE_RULE_MAP * p );
+int prmAddRuleUri(PORT_RULE_MAP* p, int dport, int sport, RULE_PTR rd);
+int prmAddRuleNC(PORT_RULE_MAP* p, int dport, int sport, RULE_PTR rd);
+int prmAddByteRuleNC(BYTE_RULE_MAP* p, int dport, RULE_PTR rd);
 
-int prmxAddPortRule( PORT_GROUP * p, RULE_PTR rd );
-int prmxAddPortRuleUri( PORT_GROUP * p, RULE_PTR rd );
-int prmxAddPortRuleNC( PORT_GROUP * p, RULE_PTR rd );
+void prmAddNotNode(PORT_GROUP* pg, int id);
 
-int prmAddRule( PORT_RULE_MAP * p, int dport, int sport, RULE_PTR rd );
-int prmAddByteRule( BYTE_RULE_MAP * p, int dport, RULE_PTR rd );
+int prmCompileGroups(PORT_RULE_MAP* p);
+int prmCompileByteGroups(BYTE_RULE_MAP* p);
 
-int prmAddRuleUri( PORT_RULE_MAP * p, int dport, int sport, RULE_PTR rd );
-int prmAddRuleNC( PORT_RULE_MAP * p, int dport, int sport, RULE_PTR rd );
-int prmAddByteRuleNC( BYTE_RULE_MAP * p, int dport, RULE_PTR rd );
+int prmShowStats(PORT_RULE_MAP* p);
+int prmShowByteStats(BYTE_RULE_MAP* p);
 
-void prmAddNotNode( PORT_GROUP * pg, int id );
+int prmShowEventStats(PORT_RULE_MAP* p);
+int prmShowEventByteStats(BYTE_RULE_MAP* p);
 
-int prmCompileGroups( PORT_RULE_MAP * p );
-int prmCompileByteGroups( BYTE_RULE_MAP * p );
+RULE_PTR prmGetFirstRule(PORT_GROUP* pg);
+RULE_PTR prmGetNextRule(PORT_GROUP* pg);
 
-int prmShowStats( PORT_RULE_MAP * p );
-int prmShowByteStats( BYTE_RULE_MAP * p );
+RULE_PTR prmGetFirstRuleUri(PORT_GROUP* pg);
+RULE_PTR prmGetNextRuleUri(PORT_GROUP* pg);
 
-int prmShowEventStats( PORT_RULE_MAP * p );
-int prmShowEventByteStats( BYTE_RULE_MAP * p );
+RULE_PTR prmGetFirstRuleNC(PORT_GROUP* pg);
+RULE_PTR prmGetNextRuleNC(PORT_GROUP* pg);
 
-RULE_PTR prmGetFirstRule( PORT_GROUP * pg );
-RULE_PTR prmGetNextRule( PORT_GROUP * pg );
+int prmFindRuleGroup(PORT_RULE_MAP* p, int dport, int sport, PORT_GROUP** src, PORT_GROUP** dst,
+    PORT_GROUP** gen);
+int prmFindGenericRuleGroup(PORT_RULE_MAP* prm, PORT_GROUP** gen);
+int prmFindByteRuleGroup(BYTE_RULE_MAP* p, int dport, PORT_GROUP** dst, PORT_GROUP** gen);
 
-RULE_PTR prmGetFirstRuleUri( PORT_GROUP * pg );
-RULE_PTR prmGetNextRuleUri( PORT_GROUP * pg );
+PORT_GROUP* prmFindDstRuleGroup(PORT_RULE_MAP* p, int port);
+PORT_GROUP* prmFindSrcRuleGroup(PORT_RULE_MAP* p, int port);
 
-RULE_PTR prmGetFirstRuleNC( PORT_GROUP * pg );
-RULE_PTR prmGetNextRuleNC( PORT_GROUP * pg );
-
-
-int prmFindRuleGroup( PORT_RULE_MAP * p, int dport, int sport, PORT_GROUP ** src, PORT_GROUP **dst , PORT_GROUP ** gen);
-int prmFindGenericRuleGroup(PORT_RULE_MAP *prm, PORT_GROUP ** gen);
-int prmFindByteRuleGroup( BYTE_RULE_MAP * p, int dport, PORT_GROUP **dst , PORT_GROUP ** gen);
-
-PORT_GROUP * prmFindDstRuleGroup( PORT_RULE_MAP * p, int port );
-PORT_GROUP * prmFindSrcRuleGroup( PORT_RULE_MAP * p, int port );
-
-PORT_GROUP * prmFindByteRuleGroupUnique( BYTE_RULE_MAP * p, int port );
+PORT_GROUP* prmFindByteRuleGroupUnique(BYTE_RULE_MAP* p, int port);
 
 #endif
+

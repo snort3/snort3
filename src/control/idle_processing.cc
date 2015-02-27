@@ -35,7 +35,7 @@
 
 typedef struct _IDLE_HANDLER_ELEMENT
 {
-    struct _IDLE_HANDLER_ELEMENT *next;
+    struct _IDLE_HANDLER_ELEMENT* next;
     IdleProcessingHandler handler;
 } IdleHandlerElement;
 
@@ -43,7 +43,7 @@ static IdleHandlerElement* idle_handlers = nullptr;
 
 int IdleProcessingRegisterHandler(IdleProcessingHandler func)
 {
-    IdleHandlerElement *e;
+    IdleHandlerElement* e;
 
     if ((e = (IdleHandlerElement*)calloc(1, sizeof(*e))) == NULL)
     {
@@ -58,7 +58,7 @@ int IdleProcessingRegisterHandler(IdleProcessingHandler func)
 
 void IdleProcessingExecute(void)
 {
-    IdleHandlerElement *e;
+    IdleHandlerElement* e;
 
     for (e = idle_handlers; e; e = e->next)
         e->handler();
@@ -66,7 +66,7 @@ void IdleProcessingExecute(void)
 
 void IdleProcessingCleanUp(void)
 {
-    IdleHandlerElement *e;
+    IdleHandlerElement* e;
 
     while ((e = idle_handlers))
     {

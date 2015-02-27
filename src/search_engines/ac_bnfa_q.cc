@@ -49,60 +49,62 @@ public:
     AcBnfaQMpse(
         SnortConfig*,
         bool use_gc,
-        void (*user_free)(void*),
-        void (*tree_free)(void**),
-        void (*list_free)(void**))
-    : Mpse("ac_bnfa_q", use_gc)
+        void (* user_free)(void*),
+        void (* tree_free)(void**),
+        void (* list_free)(void**))
+        : Mpse("ac_bnfa_q", use_gc)
     {
         obj = bnfaNew(user_free, tree_free, list_free);
 
-        if(obj)
+        if (obj)
             obj->bnfaMethod = 0;
-    };
+    }
+
     ~AcBnfaQMpse()
     {
         if (obj)
             bnfaFree(obj);
-    };
+    }
 
     void set_opt(int flag) override
     {
         if (obj)
             bnfaSetOpt(obj, flag);
-    };
+    }
+
     int add_pattern(
         SnortConfig*, const uint8_t* P, unsigned m,
         bool noCase, bool negative, void* ID, int) override
     {
         return bnfaAddPattern(obj, P, m, noCase, negative, ID);
-    };
+    }
 
     int prep_patterns(
         SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
     {
         return bnfaCompile(sc, obj, build_tree, neg_list);
-    };
+    }
 
     int _search(
         const unsigned char* T, int n, mpse_action_f action,
-        void* data, int* current_state ) override
+        void* data, int* current_state) override
     {
         /* return is actually the state */
         return _bnfa_search_csparse_nfa_q(
-            obj, (unsigned char *)T, n, (bnfa_match_f)action,
-            data, 0 /* start-state */, current_state );
-    };
+            obj, (unsigned char*)T, n, (bnfa_match_f)action,
+            data, 0 /* start-state */, current_state);
+    }
 
     int print_info() override
     {
         bnfaPrintInfo(obj);
         return 0;
-    };
+    }
 
     int get_pattern_count() override
     {
         return bnfaPatternCount(obj);
-    };
+    }
 };
 
 //-------------------------------------------------------------------------
@@ -113,9 +115,9 @@ static Mpse* bnfaq_ctor(
     SnortConfig* sc,
     class Module*,
     bool use_gc,
-    void (*user_free)(void*),
-    void (*tree_free)(void**),
-    void (*list_free)(void**))
+    void (* user_free)(void*),
+    void (* tree_free)(void**),
+    void (* list_free)(void**))
 {
     return new AcBnfaQMpse(sc, use_gc, user_free, tree_free, list_free);
 }

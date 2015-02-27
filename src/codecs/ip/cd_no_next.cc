@@ -17,8 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_no_next.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -29,27 +27,21 @@
 #include "detection/fpdetect.h"
 #include "main/snort.h"
 
-
 namespace
 {
-
 #define CD_NO_NEXT_NAME "ipv6_no_next"
 #define CD_NO_NEXT_HELP "sentinel codec"
 
 class Ipv6NoNextCodec : public Codec
 {
 public:
-    Ipv6NoNextCodec() : Codec(CD_NO_NEXT_NAME){};
-    ~Ipv6NoNextCodec() {};
-
+    Ipv6NoNextCodec() : Codec(CD_NO_NEXT_NAME) { }
+    ~Ipv6NoNextCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_protocol_ids(std::vector<uint16_t>&) override;
 };
-
-
 } // namespace
-
 
 bool Ipv6NoNextCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
@@ -73,11 +65,8 @@ bool Ipv6NoNextCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     return true;
 }
 
-
 void Ipv6NoNextCodec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(IPPROTO_ID_NONEXT); }
-
-
 
 //-------------------------------------------------------------------------
 // api
@@ -86,7 +75,7 @@ void Ipv6NoNextCodec::get_protocol_ids(std::vector<uint16_t>& v)
 static Codec* ctor(Module*)
 { return new Ipv6NoNextCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi no_next_api =
@@ -108,7 +97,6 @@ static const CodecApi no_next_api =
     dtor, // dtor
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -118,3 +106,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_no_next = &no_next_api.base;
 #endif
+

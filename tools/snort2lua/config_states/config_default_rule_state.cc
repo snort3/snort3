@@ -26,17 +26,15 @@
 
 namespace config
 {
-
-namespace {
-
+namespace
+{
 class DefaultRuleState : public ConversionState
 {
 public:
-    DefaultRuleState(Converter& c) : ConversionState(c) {};
-    virtual ~DefaultRuleState() {};
+    DefaultRuleState(Converter& c) : ConversionState(c) { }
+    virtual ~DefaultRuleState() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool DefaultRuleState::convert(std::istringstream& data_stream)
@@ -55,7 +53,6 @@ bool DefaultRuleState::convert(std::istringstream& data_stream)
     {
         table_api.add_option("default_rule_state", true);
     }
-
 
     table_api.close_table();
     return retval;
@@ -77,5 +74,5 @@ static const ConvertMap default_rule_state_api =
 };
 
 const ConvertMap* default_rule_state_map = &default_rule_state_api;
-
 } // namespace config
+

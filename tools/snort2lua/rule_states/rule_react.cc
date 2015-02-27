@@ -27,18 +27,15 @@
 
 namespace rules
 {
-
-namespace {
-
-
+namespace
+{
 class React : public ConversionState
 {
 public:
-    React(Converter& c) : ConversionState(c) {};
-    virtual ~React() {};
+    React(Converter& c) : ConversionState(c) { }
+    virtual ~React() { }
     virtual bool convert(std::istringstream& data);
 };
-
 } // namespace
 
 bool React::convert(std::istringstream& data_stream)
@@ -92,9 +89,8 @@ bool React::convert(std::istringstream& data_stream)
 
                     else
                         rule_api.bad_rule(data_stream, "resp: " + tmp);
-
-                } while (util::get_string(arg_stream, tmp, ","));
-
+                }
+                while (util::get_string(arg_stream, tmp, ","));
 
                 // get this rule's msg
                 if (find_msg)
@@ -128,7 +124,6 @@ bool React::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-
 static ConversionState* ctor(Converter& c)
 {
     // react may not have arguments. So, set this information now.
@@ -150,5 +145,5 @@ static const ConvertMap rule_react =
 };
 
 const ConvertMap* react_map = &rule_react;
-
 } // namespace rules
+

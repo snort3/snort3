@@ -27,13 +27,12 @@
 
 namespace preprocessors
 {
-
-
-template<const std::string *norm_option>
+template<const std::string* norm_option>
 static ConversionState* norm_sans_options_ctor(Converter& c)
 {
     c.get_table_api().open_table("normalizer");
-    c.get_table_api().add_diff_option_comment("preprocessor normalize_" + *norm_option, *norm_option + " = <bool>");
+    c.get_table_api().add_diff_option_comment("preprocessor normalize_" + *norm_option,
+        *norm_option + " = <bool>");
     c.get_table_api().add_option(*norm_option, true);
     c.get_table_api().close_table();
     return nullptr;
@@ -43,12 +42,11 @@ static ConversionState* norm_sans_options_ctor(Converter& c)
  *******  ICMP4 API *********
  ****************************/
 
-
 static const std::string icmp4 = "icmp4";
 static const ConvertMap preprocessor_norm_icmp4 =
 {
     "normalize_icmp4",
-    norm_sans_options_ctor<&icmp4>,
+    norm_sans_options_ctor<& icmp4>,
 };
 
 const ConvertMap* normalizer_icmp4_map = &preprocessor_norm_icmp4;
@@ -61,11 +59,10 @@ static const std::string icmp6 = "icmp6";
 static const ConvertMap preprocessor_norm_icmp6 =
 {
     "normalize_icmp6",
-    norm_sans_options_ctor<&icmp6>,
+    norm_sans_options_ctor<& icmp6>,
 };
 
 const ConvertMap* normalizer_icmp6_map = &preprocessor_norm_icmp6;
-
 
 /**************************
  *******  IP6 API *********
@@ -75,7 +72,7 @@ static const std::string ip6 = "ip6";
 static const ConvertMap preprocessor_norm_ip6 =
 {
     "normalize_ip6",
-    norm_sans_options_ctor<&ip6>,
+    norm_sans_options_ctor<& ip6>,
 };
 
 const ConvertMap* normalizer_ip6_map = &preprocessor_norm_ip6;
@@ -84,18 +81,16 @@ const ConvertMap* normalizer_ip6_map = &preprocessor_norm_ip6;
  *******  IP4 API *********
  **************************/
 
-namespace {
-
+namespace
+{
 class Ip4Normalizer : public ConversionState
 {
 public:
-    Ip4Normalizer(Converter& c) : ConversionState(c) {};
-    virtual ~Ip4Normalizer() {};
+    Ip4Normalizer(Converter& c) : ConversionState(c) { }
+    virtual ~Ip4Normalizer() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
-
 
 bool Ip4Normalizer::convert(std::istringstream& data_stream)
 {
@@ -106,16 +101,16 @@ bool Ip4Normalizer::convert(std::istringstream& data_stream)
 
     while (util::get_string(data_stream, keyword, " ,"))
     {
-        if(!keyword.compare("df"))
+        if (!keyword.compare("df"))
             table_api.add_option("df", true);
 
-        else if(!keyword.compare("rf"))
+        else if (!keyword.compare("rf"))
             table_api.add_option("rf", true);
-        
-        else if(!keyword.compare("tos"))
+
+        else if (!keyword.compare("tos"))
             table_api.add_option("tos", true);
-        
-        else if(!keyword.compare("trim"))
+
+        else if (!keyword.compare("trim"))
             table_api.add_option("trim", true);
 
         else
@@ -138,7 +133,7 @@ static ConversionState* ip4_ctor(Converter& c)
     return new Ip4Normalizer(c);
 }
 
-static const ConvertMap preprocessor_norm_ip4 = 
+static const ConvertMap preprocessor_norm_ip4 =
 {
     "normalize_ip4",
     ip4_ctor,
@@ -150,18 +145,16 @@ const ConvertMap* normalizer_ip4_map = &preprocessor_norm_ip4;
  *******  TCP API *********
  **************************/
 
-namespace {
-
+namespace
+{
 class TcpNormalizer : public ConversionState
 {
 public:
-    TcpNormalizer(Converter& c) : ConversionState(c) {};
-    virtual ~TcpNormalizer() {};
+    TcpNormalizer(Converter& c) : ConversionState(c) { }
+    virtual ~TcpNormalizer() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
-
 
 bool TcpNormalizer::convert(std::istringstream& data_stream)
 {
@@ -174,56 +167,55 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
 
     while (util::get_string(data_stream, keyword, " ,"))
     {
-        if(!keyword.compare("ips"))
+        if (!keyword.compare("ips"))
             table_api.add_option("ips", true);
-        
-        else if(!keyword.compare("trim"))
+
+        else if (!keyword.compare("trim"))
             table_api.add_option("trim", true);
 
-        else if(!keyword.compare("opts"))
+        else if (!keyword.compare("opts"))
             table_api.add_option("opts", true);
 
-        else if(!keyword.compare("urp"))
+        else if (!keyword.compare("urp"))
             table_api.add_option("urp", true);
 
-        else if(!keyword.compare("rsv"))
+        else if (!keyword.compare("rsv"))
             table_api.add_option("rsv", true);
 
-        else if(!keyword.compare("pad"))
+        else if (!keyword.compare("pad"))
             table_api.add_option("pad", true);
 
-        else if(!keyword.compare("block"))
+        else if (!keyword.compare("block"))
             table_api.add_option("block", true);
 
-        else if(!keyword.compare("req_urg"))
+        else if (!keyword.compare("req_urg"))
             table_api.add_option("req_urg", true);
 
-        else if(!keyword.compare("req_pay"))
+        else if (!keyword.compare("req_pay"))
             table_api.add_option("req_pay", true);
 
-        else if(!keyword.compare("req_urp"))
+        else if (!keyword.compare("req_urp"))
             table_api.add_option("req_urp", true);
-        
-        else if(!keyword.compare("trim_syn"))
+
+        else if (!keyword.compare("trim_syn"))
             table_api.add_option("trim_syn", true);
-        
-        else if(!keyword.compare("trim_rst"))
+
+        else if (!keyword.compare("trim_rst"))
             table_api.add_option("trim_rst", true);
-        
-        else if(!keyword.compare("trim_win"))
+
+        else if (!keyword.compare("trim_win"))
             table_api.add_option("trim_win", true);
-        
-        else if(!keyword.compare("trim_mss"))
+
+        else if (!keyword.compare("trim_mss"))
             table_api.add_option("trim_mss", true);
 
-        else if(!keyword.compare("ecn"))
+        else if (!keyword.compare("ecn"))
         {
             if (util::get_string(data_stream, value, " ,"))
                 table_api.add_option("ecn", value);
             else
                 data_api.failed_conversion(data_stream, "ecn[, ]missing_argument");
         }
-
         else if (!keyword.compare("allow"))
         {
             // loop until we break or reach end of stream
@@ -260,7 +252,6 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
                 }
             }
         }
-
         else
         {
             data_api.failed_conversion(data_stream, keyword);
@@ -270,7 +261,7 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
 
     table_api.close_table();
     table_api.close_table();
-    return retval;    
+    return retval;
 }
 
 /*******  A P I ***********/
@@ -284,12 +275,12 @@ static ConversionState* tcp_ctor(Converter& c)
     return new TcpNormalizer(c);
 }
 
-static const ConvertMap preprocessor_norm_tcp = 
+static const ConvertMap preprocessor_norm_tcp =
 {
     "normalize_tcp",
     tcp_ctor,
 };
 
 const ConvertMap* normalizer_tcp_map = &preprocessor_norm_tcp;
-
 } // namespace preprocessors
+

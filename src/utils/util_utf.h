@@ -20,7 +20,6 @@
 #ifndef UTIL_UTF_H
 #define UTIL_UTF_H
 
-
 /* return codes */
 #define DECODE_UTF_SUCCESS 0
 #define DECODE_UTF_FAILURE -1
@@ -48,11 +47,12 @@ int init_decode_utf_state(decode_utf_state_t*);
 int term_decode_utf_state(decode_utf_state_t*);
 
 /* setters & getters */
-int set_decode_utf_state_charset(decode_utf_state_t *dstate, int charset);
-int get_decode_utf_state_charset(decode_utf_state_t *dstate);
+int set_decode_utf_state_charset(decode_utf_state_t* dstate, int charset);
+int get_decode_utf_state_charset(decode_utf_state_t* dstate);
 
 /* UTF-Decoding function prototypes */
-int DecodeUTF(char *src, unsigned int src_len, char *dst, unsigned int dst_len, int *bytes_copied, decode_utf_state_t *dstate);
-
+int DecodeUTF(char* src, unsigned int src_len, char* dst, unsigned int dst_len, int* bytes_copied,
+    decode_utf_state_t* dstate);
 
 #endif /* UTIL_UTF_H */
+

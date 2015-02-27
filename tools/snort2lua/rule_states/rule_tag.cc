@@ -26,18 +26,15 @@
 
 namespace rules
 {
-
-namespace {
-
-
+namespace
+{
 class Tag : public ConversionState
 {
 public:
-    Tag(Converter& c) : ConversionState(c) {};
-    virtual ~Tag() {};
+    Tag(Converter& c) : ConversionState(c) { }
+    virtual ~Tag() { }
     virtual bool convert(std::istringstream& data);
 };
-
 } // namespace
 
 bool Tag::convert(std::istringstream& data_stream)
@@ -74,7 +71,6 @@ bool Tag::convert(std::istringstream& data_stream)
             rule_api.bad_rule(data_stream, "tag type must be either 'host' or 'session'");
         }
 
-
         bool cnt = true;
         int opt_val = 0;
 
@@ -88,7 +84,7 @@ bool Tag::convert(std::istringstream& data_stream)
                     {
                         opt_val = std::stoi(value);
                     }
-                    catch(std::exception e)
+                    catch (std::exception e)
                     {
                         rule_api.bad_rule(data_stream, "can't convert " + value + ":" + e.what());
                         valid = false;
@@ -116,7 +112,6 @@ bool Tag::convert(std::istringstream& data_stream)
             cnt = !cnt;
         }
 
-
         if (is_host)
         {
             if (!value.compare("src"))
@@ -139,7 +134,6 @@ bool Tag::convert(std::istringstream& data_stream)
                 rule_api.add_comment("tag: [,exclusive] is currently unsupported");
         }
 
-
         if (valid)
         {
             rule_api.add_option("tag", type);
@@ -155,14 +149,12 @@ bool Tag::convert(std::istringstream& data_stream)
         }
     }
 
-
     return set_next_rule_state(data_stream);
 }
 
 /**************************
  *******  A P I ***********
  **************************/
-
 
 static ConversionState* ctor(Converter& cv)
 { return new Tag(cv); }
@@ -174,5 +166,5 @@ static const ConvertMap tag_api =
 };
 
 const ConvertMap* tag_map = &tag_api;
-
 } // namespace rules
+

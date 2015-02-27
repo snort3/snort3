@@ -91,7 +91,7 @@ static Symbol symbols[PT_MAX] =
     { "so_rule", SOAPI_VERSION },
     { "logger", LOGAPI_VERSION }
 };
-#else 
+#else
 // this gets around the sequence issue with some compilers
 // but does not fail if we are missing an entry :(
 #define stringify(name) # name
@@ -139,10 +139,10 @@ struct Plugin
     void* handle;
 
     Plugin()
-    { clear(); };
+    { clear(); }
 
     void clear()
-    { source.clear(); key.clear(); api = nullptr; handle = nullptr; };
+    { source.clear(); key.clear(); api = nullptr; handle = nullptr; }
 };
 
 typedef map<string, Plugin> PlugMap;
@@ -152,7 +152,7 @@ struct RefCount
 {
     unsigned count;
 
-    RefCount() { count = 0; };
+    RefCount() { count = 0; }
 
     // FIXIT-L fails on fatal error
     //~RefCount() { assert(!count); };
@@ -223,7 +223,7 @@ static void load_list(
 static bool load_lib(const char* file)
 {
     struct stat fs;
-    void *handle;
+    void* handle;
 
     if ( stat(file, &fs) || !(fs.st_mode & S_IFREG) )
         return false;
@@ -299,7 +299,7 @@ static void load_plugins(const char* s)
 
     vector<char> buf(s, s+strlen(s)+1);
     char* last;
-    
+
     s = strtok_r(&buf[0], ":", &last);
 
     while ( s )
@@ -331,7 +331,7 @@ static void unload_plugins()
 
         it->second.clear();
     }
-    
+
     for ( RefMap::iterator it = ref_map.begin(); it != ref_map.end(); ++it )
     {
         dlclose(it->first);
@@ -405,7 +405,7 @@ void PluginManager::dump_plugins()
     EventManager::dump_plugins();
 }
 
-void PluginManager::release_plugins ()
+void PluginManager::release_plugins()
 {
     EventManager::release_plugins();
     ActionManager::release_plugins();
@@ -490,7 +490,7 @@ void PluginManager::instantiate(
 
     else if ( api->type == PT_DATA )
         // FIXIT-H instantiate PT_DATA with name
-        DataManager::instantiate((DataApi*)api, mod, sc/*, name*/);
+        DataManager::instantiate((DataApi*)api, mod, sc /*, name*/);
 
     else
         assert(false);

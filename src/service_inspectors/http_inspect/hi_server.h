@@ -16,17 +16,17 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 /**
 **  @file       hi_server.h
-**  
+**
 **  @author     Daniel Roelker <droelker@sourcefire.com>
-**  
+**
 **  @brief      Header file for HttpInspect Server Module
-**  
+**
 **  This file defines the server structure and functions to access server
 **  inspection.
-**  
+**
 **  NOTE:
 **      - Initial development.  DJR
 */
@@ -40,13 +40,13 @@
 
 typedef struct s_HI_SERVER_RESP
 {
-    const u_char *status_code;
-    const u_char *status_msg;
-    const u_char *header_raw;
-    const u_char *header_norm;
+    const u_char* status_code;
+    const u_char* status_msg;
+    const u_char* header_raw;
+    const u_char* header_norm;
     COOKIE_PTR cookie;
-    const u_char *cookie_norm;
-    const u_char *body;
+    const u_char* cookie_norm;
+    const u_char* body;
 
     u_int body_size;
     u_int status_code_size;
@@ -57,16 +57,14 @@ typedef struct s_HI_SERVER_RESP
 
     uint16_t header_encode_type;
     uint16_t cookie_encode_type;
-
 } HI_SERVER_RESP;
-
 
 typedef struct s_HI_SERVER
 {
     HI_SERVER_RESP response;
 } HI_SERVER;
 
-int hi_server_inspection(void *, Packet *, HttpSessionData *);
+int hi_server_inspection(void*, Packet*, HttpSessionData*);
 
 #endif
 

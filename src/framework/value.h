@@ -38,86 +38,86 @@ public:
     enum ValueType { VT_BOOL, VT_NUM, VT_STR };
 
     Value(bool b)
-    { set(b); init(); };
-    
+    { set(b); init(); }
+
     Value(double d)
-    { set(d); init(); };
-    
+    { set(d); init(); }
+
     Value(const char* s)
-    { set(s); init(); };
-    
+    { set(s); init(); }
+
     ValueType get_type()
-    { return type; };
+    { return type; }
 
     ~Value();
 
     void set(bool b)
-    { type = VT_BOOL; num = b ? 1 : 0; str.clear(); };
+    { type = VT_BOOL; num = b ? 1 : 0; str.clear(); }
 
     void set(double d)
-    { type = VT_NUM; num = d; str.clear(); };
+    { type = VT_NUM; num = d; str.clear(); }
 
     void set(long n)
-    { set((double)n); };
+    { set((double)n); }
 
     void set(const char* s)
-    { type = VT_STR; str = s; num = 0; };
+    { type = VT_STR; str = s; num = 0; }
 
     void set(const uint8_t* s, unsigned len)
-    { type = VT_STR; str.assign((char*)s, len); num = 0; };
+    { type = VT_STR; str.assign((char*)s, len); num = 0; }
 
     void set(const Parameter* p)
-    { param = p; };
+    { param = p; }
 
     void set_enum(unsigned u)
-    { type = VT_NUM; num = u;  };
+    { type = VT_NUM; num = u;  }
 
     void set_aux(unsigned u)
-    { num = u; };
+    { num = u; }
 
     const char* get_name() const
-    { return param ? param->name : nullptr; };
+    { return param ? param->name : nullptr; }
 
     bool is(const char* s)
-    { return param ? !strcmp(param->name, s) : false; };
+    { return param ? !strcmp(param->name, s) : false; }
 
     bool get_bool() const
-    { return num != 0; };
+    { return num != 0; }
 
     long get_long() const
-    { return (long)num; };
+    { return (long)num; }
 
     double get_real() const
-    { return num; };
+    { return num; }
 
     const uint8_t* get_buffer(unsigned& n) const
-    { n = str.size(); return (uint8_t*)str.data(); };
+    { n = str.size(); return (uint8_t*)str.data(); }
 
     const char* get_string() const
-    { return str.c_str(); };
+    { return str.c_str(); }
 
     const char* get_as_string();
 
     bool strtol(long&) const;
 
     bool operator==(const char* s) const
-    { return str == s; };
+    { return str == s; }
 
     bool operator==(long n) const
-    { return (long)num == n; };
+    { return (long)num == n; }
 
     bool operator==(double d) const
-    { return num == d; };
+    { return num == d; }
 
     void get_bits(PortList&) const;
     void get_bits(VlanList&) const;
     void get_bits(ByteList&) const;
 
     void lower()
-    { std::transform(str.begin(), str.end(), str.begin(), ::tolower); };
+    { std::transform(str.begin(), str.end(), str.begin(), ::tolower); }
 
     void upper()
-    { std::transform(str.begin(), str.end(), str.begin(), ::toupper); };
+    { std::transform(str.begin(), str.end(), str.begin(), ::toupper); }
 
     uint32_t get_ip4() const;
     void get_mac(uint8_t (&mac)[6]) const;
@@ -131,7 +131,7 @@ public:
 
 private:
     void init()
-    { param = nullptr; ss = nullptr; };
+    { param = nullptr; ss = nullptr; }
 
 private:
     ValueType type;

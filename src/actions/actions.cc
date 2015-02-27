@@ -37,19 +37,19 @@ static int PassAction(void)
 {
     pc.pass_pkts++;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"   => Pass rule, returning...\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"   => Pass rule, returning...\n"); );
     return 1;
 }
 
 int AlertAction(Packet* p, const OptTreeNode* otn)
 {
-    RuleTreeNode *rtn = getRuntimeRtnFromOtn(otn);
+    RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
 
     if (rtn == NULL)
         return 0;
 
     /* Call OptTreeNode specific output functions */
-    if(otn->outputFuncs)
+    if (otn->outputFuncs)
     {
         ListHead lh;  // FIXIT-L "kinda hackish"
         lh.LogList = otn->outputFuncs;
@@ -57,22 +57,22 @@ int AlertAction(Packet* p, const OptTreeNode* otn)
     }
     CallAlertFuncs(p, otn, rtn->listhead);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "   => Finishing alert packet!\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "   => Finishing alert packet!\n"); );
 
     CallLogFuncs(p, otn, rtn->listhead);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"   => Alert packet finished, returning!\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"   => Alert packet finished, returning!\n"); );
 
     return 1;
 }
 
 static int DropAction(Packet* p, const OptTreeNode* otn)
 {
-    RuleTreeNode *rtn = getRuntimeRtnFromOtn(otn);
+    RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
 
     DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-               "        <!!> Generating Alert and dropping! \"%s\"\n",
-               otn->sigInfo.message););
+        "        <!!> Generating Alert and dropping! \"%s\"\n",
+        otn->sigInfo.message); );
 
     /*
     **  Set packet flag so output plugins will know we dropped the
@@ -91,8 +91,8 @@ static int SDropAction(Packet* p, const OptTreeNode* otn)
 {
 #ifdef DEBUG_MSGS
     DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-               "        <!!> Dropping without Alerting! \"%s\"\n",
-               otn->sigInfo.message););
+        "        <!!> Dropping without Alerting! \"%s\"\n",
+        otn->sigInfo.message); );
 
     // Let's silently drop the packet
     Active_DropSession(p);
@@ -105,9 +105,9 @@ static int SDropAction(Packet* p, const OptTreeNode* otn)
 
 static int LogAction(Packet* p, const OptTreeNode* otn)
 {
-    RuleTreeNode *rtn = getRuntimeRtnFromOtn(otn);
+    RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"   => Logging packet data and returning...\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"   => Logging packet data and returning...\n"); );
 
     CallLogFuncs(p, otn, rtn->listhead);
 
@@ -122,7 +122,7 @@ static int LogAction(Packet* p, const OptTreeNode* otn)
 
 static const char* const rule_type[RULE_TYPE__MAX] =
 {
-    "none", "alert", "drop", 
+    "none", "alert", "drop",
     "log", "pass", "sdrop"
 };
 
@@ -130,7 +130,7 @@ const char* get_action_string(int action)
 {
     if ( action < RULE_TYPE__MAX )
         return rule_type[action];
-    
+
     return "ERROR";
 }
 
@@ -167,32 +167,32 @@ void action_execute(int action, Packet* p, OptTreeNode* otn, uint16_t event_id)
 {
     switch (action)
     {
-        case RULE_TYPE__PASS:
-            SetTags(p, otn, event_id);
-            PassAction();
-            break;
+    case RULE_TYPE__PASS:
+        SetTags(p, otn, event_id);
+        PassAction();
+        break;
 
-        case RULE_TYPE__ALERT:
-            AlertAction(p, otn);
-            SetTags(p, otn, event_id);
-            break;
+    case RULE_TYPE__ALERT:
+        AlertAction(p, otn);
+        SetTags(p, otn, event_id);
+        break;
 
-        case RULE_TYPE__LOG:
-            LogAction(p, otn);
-            SetTags(p, otn, event_id);
-            break;
+    case RULE_TYPE__LOG:
+        LogAction(p, otn);
+        SetTags(p, otn, event_id);
+        break;
 
-        case RULE_TYPE__DROP:
-            DropAction(p, otn);
-            SetTags(p, otn, event_id);
-            break;
+    case RULE_TYPE__DROP:
+        DropAction(p, otn);
+        SetTags(p, otn, event_id);
+        break;
 
-        case RULE_TYPE__SDROP:
-            SDropAction(p, otn);
-            break;
+    case RULE_TYPE__SDROP:
+        SDropAction(p, otn);
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 }
 

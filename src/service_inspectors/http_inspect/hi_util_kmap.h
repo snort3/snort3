@@ -16,7 +16,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 /*
 *   kmap.h
 *
@@ -34,63 +34,59 @@
 /*
 *
 */
-typedef struct _keynode {
+typedef struct _keynode
+{
+    struct  _keynode* next;
 
-  struct  _keynode * next;
-
-  unsigned char * key;
-  int             nkey;
-  void          * userdata;  /* data associated with this pattern */
-  
+    unsigned char* key;
+    int nkey;
+    void* userdata;          /* data associated with this pattern */
 } KEYNODE;
 
 /*
 *
 */
-typedef struct _kmapnode {
+typedef struct _kmapnode
+{
+    int nodechar;     /* node character */
 
-  int      nodechar;  /* node character */
+    struct  _kmapnode* sibling;
+    struct  _kmapnode* child;
 
-  struct  _kmapnode * sibling; 
-  struct  _kmapnode * child; 
-
-  KEYNODE * knode;
-
+    KEYNODE* knode;
 } KMAPNODE;
 
 /*
 *
 */
-typedef void (*KMapUserFreeFunc)(void *p);
+typedef void (* KMapUserFreeFunc)(void* p);
 
-typedef struct _kmap {
+typedef struct _kmap
+{
+    KMAPNODE* root[256]; /* KTrie nodes */
 
-  KMAPNODE * root[256];  /* KTrie nodes */
+    KEYNODE* keylist; // list of key+data pairs
+    KEYNODE* keynext; // findfirst/findnext node
 
-  KEYNODE  * keylist; // list of key+data pairs
-  KEYNODE  * keynext; // findfirst/findnext node
+    KMapUserFreeFunc userfree; // fcn to free user data
 
-  KMapUserFreeFunc userfree;  // fcn to free user data
- 
-  int        nchars; // # character nodes
+    int nchars;      // # character nodes
 
-  int        nocase;
-
+    int nocase;
 } KMAP;
 
 /*
 *  PROTOTYPES
 */
-KMAP * KMapNew ( KMapUserFreeFunc userfree );
-void   KMapSetNoCase( KMAP * km, int flag );
-int    KMapAdd ( KMAP * km, void * key, int ksize, void * userdata );
-void * KMapFind( KMAP * km, void * key, int ksize );
-void * KMapFindFirst( KMAP * km );
-void * KMapFindNext ( KMAP * km );
-KEYNODE * KMapFindFirstKey( KMAP * km );
-KEYNODE * KMapFindNextKey ( KMAP * km );
-void KMapDelete(KMAP *km);
+KMAP* KMapNew(KMapUserFreeFunc userfree);
+void KMapSetNoCase(KMAP* km, int flag);
+int KMapAdd(KMAP* km, void* key, int ksize, void* userdata);
+void* KMapFind(KMAP* km, void* key, int ksize);
+void* KMapFindFirst(KMAP* km);
+void* KMapFindNext(KMAP* km);
+KEYNODE* KMapFindFirstKey(KMAP* km);
+KEYNODE* KMapFindNextKey(KMAP* km);
+void KMapDelete(KMAP* km);
 
 #endif
-
 

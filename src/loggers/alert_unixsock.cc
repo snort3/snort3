@@ -114,10 +114,10 @@ static const Parameter s_params[] =
 class UnixSockModule : public Module
 {
 public:
-    UnixSockModule() : Module(s_name, s_help, s_params) { };
+    UnixSockModule() : Module(s_name, s_help, s_params) { }
 
     bool set(const char*, Value&, SnortConfig*) override
-    { return false; };
+    { return false; }
 };
 
 //-------------------------------------------------------------------------
@@ -125,10 +125,10 @@ public:
 static void get_alert_pkt(
     Packet* p, const char* msg, Event* event)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_LOG, "Logging Alert data!\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_LOG, "Logging Alert data!\n"); );
 
     // FIXIT-L ugh ...
-    memset((char *)&us.alert,0,sizeof(us.alert));
+    memset((char*)&us.alert,0,sizeof(us.alert));
 
     us.alert.gid = event->sig_info->generator;
     us.alert.sid = event->sig_info->id;
@@ -140,13 +140,13 @@ static void get_alert_pkt(
     us.alert.event_ref = event->event_reference;
     us.alert.ref_time = event->ref_time;
 
-    if(p && p->pkt)
+    if (p && p->pkt)
     {
         uint32_t snaplen = DAQ_GetSnapLen();
-        memmove( (void *)&us.alert.pkth, (const void *)p->pkth,
+        memmove( (void*)&us.alert.pkth, (const void*)p->pkth,
             sizeof(us.alert.pkth));
-        memmove( us.alert.pkt, (const void *)p->pkt,
-              us.alert.pkth.caplen > snaplen? snaplen : us.alert.pkth.caplen);
+        memmove(us.alert.pkt, (const void*)p->pkt,
+            us.alert.pkth.caplen > snaplen ? snaplen : us.alert.pkth.caplen);
     }
     else
         us.alert.val|=NOPACKET_STRUCT;
@@ -154,43 +154,42 @@ static void get_alert_pkt(
     if (msg)
     {
         // FIXIT-L ugh ...
-        memmove( (void *)us.alert.alertmsg, (const void *)msg,
-               strlen(msg)>ALERTMSG_LENGTH-1 ? ALERTMSG_LENGTH - 1 : strlen(msg));
+        memmove( (void*)us.alert.alertmsg, (const void*)msg,
+            strlen(msg)>ALERTMSG_LENGTH-1 ? ALERTMSG_LENGTH - 1 : strlen(msg));
     }
 
     /* some data which will help monitoring utility to dissect packet */
-    if(!(us.alert.val & NOPACKET_STRUCT))
+    if (!(us.alert.val & NOPACKET_STRUCT))
     {
-        if(p)
+        if (p)
         {
             if (p->proto_bits & PROTO_BIT__ETH)
             {
-
-                const eth::EtherHdr *eh = layer::get_eth_layer(p);
-                us.alert.dlthdr=(char *)eh-(char *)p->pkt;
+                const eth::EtherHdr* eh = layer::get_eth_layer(p);
+                us.alert.dlthdr=(char*)eh-(char*)p->pkt;
             }
 
             /* we don't log any headers besides eth yet */
             if (p->ptrs.ip_api.is_ip4() && p->pkt)
             {
-                us.alert.nethdr=(char *)p->ptrs.ip_api.get_ip4h()-(char *)p->pkt;
+                us.alert.nethdr=(char*)p->ptrs.ip_api.get_ip4h()-(char*)p->pkt;
 
-                switch(p->type())
+                switch (p->type())
                 {
                 case PktType::TCP:
-                   if (p->ptrs.tcph)
-                       us.alert.transhdr=(char *)p->ptrs.tcph-(char *)p->pkt;
-                   break;
+                    if (p->ptrs.tcph)
+                        us.alert.transhdr=(char*)p->ptrs.tcph-(char*)p->pkt;
+                    break;
 
                 case PktType::UDP:
                     if (p->ptrs.udph)
-                        us.alert.transhdr=(char *)p->ptrs.udph-(char *)p->pkt;
+                        us.alert.transhdr=(char*)p->ptrs.udph-(char*)p->pkt;
                     break;
 
                 case PktType::ICMP:
-                   if (p->ptrs.icmph)
-                       us.alert.transhdr=(char *)p->ptrs.icmph-(char *)p->pkt;
-                   break;
+                    if (p->ptrs.icmph)
+                        us.alert.transhdr=(char*)p->ptrs.icmph-(char*)p->pkt;
+                    break;
 
                 default:
                     /* us.alert.transhdr is null due to initial memset */
@@ -199,7 +198,8 @@ static void get_alert_pkt(
                 } /* switch */
             }
 
-            if (p->data && p->pkt) us.alert.data=p->data - p->pkt;
+            if (p->data && p->pkt)
+                us.alert.data=p->data - p->pkt;
         }
     }
 }
@@ -212,9 +212,9 @@ static void OpenAlertSock(void)
     get_instance_file(name, UNSOCK_FILE);
 
     if ( access(name.c_str(), W_OK) )
-       ErrorMessage("%s file doesn't exist or isn't writable\n", name.c_str());
+        ErrorMessage("%s file doesn't exist or isn't writable\n", name.c_str());
 
-    memset((char *) &us.addr, 0, sizeof(us.addr));
+    memset((char*)&us.addr, 0, sizeof(us.addr));
     us.addr.sun_family = AF_UNIX;
 
     /* copy path over and preserve a null byte at the end */
@@ -233,9 +233,10 @@ static void OpenAlertSock(void)
 
 //-------------------------------------------------------------------------
 
-class UnixSockLogger : public Logger {
+class UnixSockLogger : public Logger
+{
 public:
-    UnixSockLogger() { };
+    UnixSockLogger() { }
 
     void open() override;
     void close() override;
@@ -260,8 +261,8 @@ void UnixSockLogger::alert(Packet* p, const char* msg, Event* event)
 {
     get_alert_pkt(p, msg, event);
 
-    if(sendto(us.socket,(const void *)&us.alert,sizeof(us.alert),
-              0,(struct sockaddr *)&us.addr,sizeof(us.addr))==-1)
+    if (sendto(us.socket,(const void*)&us.alert,sizeof(us.alert),
+        0,(struct sockaddr*)&us.addr,sizeof(us.addr))==-1)
     {
         /* whatever we do to sign that some alerts could be missed */
     }

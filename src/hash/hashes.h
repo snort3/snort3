@@ -38,7 +38,7 @@
 #include <cstdint>
 extern "C"
 {
-typedef uint32_t __u32;
+    typedef uint32_t __u32;
 #include "hash/md5.h"
 }
 

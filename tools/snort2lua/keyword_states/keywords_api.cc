@@ -19,10 +19,8 @@
 
 #include "keyword_states/keywords_api.h"
 
-
 namespace keywords
 {
-
 extern const ConvertMap* activate_map;
 extern const ConvertMap* attribute_table_map;
 extern const ConvertMap* alert_map;
@@ -52,7 +50,6 @@ extern const ConvertMap* sdrop_map;
 extern const ConvertMap* suppress_map;
 extern const ConvertMap* threshold_map;
 extern const ConvertMap* var_map;
-
 
 const std::vector<const ConvertMap*> keywords_api =
 {
@@ -86,14 +83,11 @@ const std::vector<const ConvertMap*> keywords_api =
     threshold_map,
     var_map,
 };
-
-
 } // namespace keywords
 
 #if 0
 
-Unconverted keyword ---
-
+Unconverted keyword---
 
 #define SNORT_CONF_KEYWORD__DYNAMIC_OUTPUT       "dynamicoutput"
 #define SNORT_CONF_KEYWORD__RULE_TYPE            "ruletype"
@@ -101,3 +95,4 @@ Unconverted keyword ---
 # define SNORT_CONF_KEYWORD__SIDE_CHANNEL         "sidechannel"
 #define SNORT_CONF_KEYWORD__VERSION              "version"
 #endif
+

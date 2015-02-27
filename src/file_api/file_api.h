@@ -49,47 +49,46 @@
 
 struct FILE_LogState
 {
-    uint8_t *filenames;
+    uint8_t* filenames;
     uint16_t file_logged;
     uint16_t file_current;
 };
 
 struct MAIL_LogState
 {
-    void *log_hdrs_bkt;
-    unsigned char *emailHdrs;
+    void* log_hdrs_bkt;
+    unsigned char* emailHdrs;
     uint32_t log_depth;
     uint32_t hdrs_logged;
-    uint8_t *recipients;
+    uint8_t* recipients;
     uint16_t rcpts_logged;
-    uint8_t *senders;
+    uint8_t* senders;
     uint16_t snds_logged;
     FILE_LogState file_log;
 };
 
 struct MAIL_LogConfig
 {
-    uint32_t  memcap;
-    char  log_mailfrom;
-    char  log_rcptto;
-    char  log_filename;
-    char  log_email_hdrs;
-    uint32_t   email_hdrs_log_depth;
+    uint32_t memcap;
+    char log_mailfrom;
+    char log_rcptto;
+    char log_filename;
+    char log_email_hdrs;
+    uint32_t email_hdrs_log_depth;
 };
 
 #define MAX_MIME_BOUNDARY_LEN  70  /* Max length of boundary string, defined in RFC 2046 */
 
 struct MimeBoundary
 {
-    char   boundary[2 + MAX_MIME_BOUNDARY_LEN + 1];  /* '--' + MIME boundary string + '\0' */
-    int    boundary_len;
+    char boundary[2 + MAX_MIME_BOUNDARY_LEN + 1];    /* '--' + MIME boundary string + '\0' */
+    int boundary_len;
     class SearchTool* boundary_search;
-
 };
 
 struct DecodeConfig
 {
-    int  max_mime_mem;
+    int max_mime_mem;
     int max_depth;
     int b64_depth;
     int qp_depth;
@@ -103,59 +102,67 @@ struct MimeState
     int data_state;
     int state_flags;
     int log_flags;
-    void *decode_state;
-    MimeBoundary  mime_boundary;
-    DecodeConfig *decode_conf;
-    MAIL_LogConfig *log_config;
-    MAIL_LogState *log_state;
-    void *decode_bkt;
-    void *log_mempool;
+    void* decode_state;
+    MimeBoundary mime_boundary;
+    DecodeConfig* decode_conf;
+    MAIL_LogConfig* log_config;
+    MAIL_LogState* log_state;
+    void* decode_bkt;
+    void* log_mempool;
 };
 
 #define FILE_API_VERSION5 2
 
-typedef uint32_t (*Get_file_policy_func) (Flow* flow, int16_t app_id, bool upload);
-typedef File_Verdict (*File_type_done_func) (void* p, Flow* flow, uint32_t file_type_id, bool upload);
-typedef File_Verdict (*File_signature_done_func) (void* p, Flow* flow, uint8_t* file_sig, bool upload);
-typedef void (*Log_file_action_func) (Flow* flow, int action);
+typedef uint32_t (* Get_file_policy_func) (Flow* flow, int16_t app_id, bool upload);
+typedef File_Verdict (* File_type_done_func) (void* p, Flow* flow, uint32_t file_type_id, bool
+    upload);
+typedef File_Verdict (* File_signature_done_func) (void* p, Flow* flow, uint8_t* file_sig, bool
+    upload);
+typedef void (* Log_file_action_func) (Flow* flow, int action);
 
-typedef int (*File_process_func)( void* p, uint8_t* file_data, int data_size, FilePosition position,
-        bool upload, bool suspend_block_verdict);
-typedef int (*Get_file_name_func) (Flow* flow, uint8_t **file_name, uint32_t *name_len);
-typedef uint64_t (*Get_file_size_func) (Flow* flow);
-typedef bool (*Get_file_direction_func) (Flow* flow);
-typedef uint8_t *(*Get_file_sig_sha256_func) (Flow* flow);
+typedef int (* File_process_func)(void* p, uint8_t* file_data, int data_size, FilePosition
+    position,
+    bool upload, bool suspend_block_verdict);
+typedef int (* Get_file_name_func) (Flow* flow, uint8_t** file_name, uint32_t* name_len);
+typedef uint64_t (* Get_file_size_func) (Flow* flow);
+typedef bool (* Get_file_direction_func) (Flow* flow);
+typedef uint8_t*(* Get_file_sig_sha256_func) (Flow* flow);
 
-typedef void (*Set_file_name_func) (Flow* flow, uint8_t *, uint32_t);
-typedef void (*Set_file_direction_func) (Flow* flow, bool);
+typedef void (* Set_file_name_func) (Flow* flow, uint8_t*, uint32_t);
+typedef void (* Set_file_direction_func) (Flow* flow, bool);
 
-typedef int64_t (*Get_file_depth_func) (void);
+typedef int64_t (* Get_file_depth_func) (void);
 
-typedef void (*Set_file_policy_func)(Get_file_policy_func);
-typedef void (*Enable_file_type_func)(File_type_done_func);
-typedef void (*Enable_file_signature_func)(File_signature_done_func);
-typedef void (*Set_file_action_log_func)(Log_file_action_func);
+typedef void (* Set_file_policy_func)(Get_file_policy_func);
+typedef void (* Enable_file_type_func)(File_type_done_func);
+typedef void (* Enable_file_signature_func)(File_signature_done_func);
+typedef void (* Set_file_action_log_func)(Log_file_action_func);
 
-typedef int  (*Log_file_name_func)(const uint8_t *start, int length, FILE_LogState *log_state, bool *disp_cont);
-typedef void (*Set_file_name_from_log_func)(FILE_LogState *log_state, void *ssn);
-typedef int (*Set_log_buffers_func)(MAIL_LogState **log_state, MAIL_LogConfig *conf);
-typedef int (*File_resume_block_add_file_func)(void *pkt, uint32_t file_sig,
-        uint32_t timeout, File_Verdict verdict, uint32_t file_type_id, uint8_t *signature);
-typedef File_Verdict (*File_resume_block_check_func)(void *pkt, uint32_t file_sig);
-typedef uint32_t (*Str_to_hash_func)(uint8_t *str, int length );
-typedef void (*File_signature_lookup_func)(void* p, bool is_retransmit);
-typedef void (*Set_mime_decode_config_defaults_func)(DecodeConfig *decode_conf);
-typedef void (*Set_mime_log_config_defaults_func)(MAIL_LogConfig *log_config);
-typedef int (*Parse_mime_decode_args_func)(DecodeConfig *decode_conf, char *arg, const char *preproc_name);
-typedef const uint8_t * (*Process_mime_data_func)(void *packet, const uint8_t *start, const uint8_t *end,
-        const uint8_t *data_end_marker, uint8_t *data_end, MimeState *mime_ssn, bool upload);
-typedef void (*Free_mime_session_func)(MimeState *mime_ssn);
-typedef bool (*Is_decoding_enabled_func)(DecodeConfig *decode_conf);
-typedef bool (*Is_decoding_conf_changed_func)(DecodeConfig *configNext, DecodeConfig *config, const char *preproc_name);
-typedef bool (*Is_mime_log_enabled_func)(MAIL_LogConfig *log_config);
-typedef void (*Finalize_mime_position_func)(Flow *flow, void *decode_state, FilePosition *position);
-typedef File_Verdict (*Get_file_verdict_func)(Flow* flow);
-typedef void (*Render_block_verdict_func)(void *ctx, void *p);
+typedef int (* Log_file_name_func)(const uint8_t* start, int length, FILE_LogState* log_state,
+    bool* disp_cont);
+typedef void (* Set_file_name_from_log_func)(FILE_LogState* log_state, void* ssn);
+typedef int (* Set_log_buffers_func)(MAIL_LogState** log_state, MAIL_LogConfig* conf);
+typedef int (* File_resume_block_add_file_func)(void* pkt, uint32_t file_sig,
+    uint32_t timeout, File_Verdict verdict, uint32_t file_type_id, uint8_t* signature);
+typedef File_Verdict (* File_resume_block_check_func)(void* pkt, uint32_t file_sig);
+typedef uint32_t (* Str_to_hash_func)(uint8_t* str, int length);
+typedef void (* File_signature_lookup_func)(void* p, bool is_retransmit);
+typedef void (* Set_mime_decode_config_defaults_func)(DecodeConfig* decode_conf);
+typedef void (* Set_mime_log_config_defaults_func)(MAIL_LogConfig* log_config);
+typedef int (* Parse_mime_decode_args_func)(DecodeConfig* decode_conf, char* arg, const
+    char* preproc_name);
+typedef const uint8_t* (* Process_mime_data_func)(void* packet, const uint8_t* start, const
+    uint8_t* end,
+    const uint8_t* data_end_marker, uint8_t* data_end, MimeState* mime_ssn, bool upload);
+typedef void (* Free_mime_session_func)(MimeState* mime_ssn);
+typedef bool (* Is_decoding_enabled_func)(DecodeConfig* decode_conf);
+typedef bool (* Is_decoding_conf_changed_func)(DecodeConfig* configNext, DecodeConfig* config,
+    const char* preproc_name);
+typedef bool (* Is_mime_log_enabled_func)(MAIL_LogConfig* log_config);
+typedef void (* Finalize_mime_position_func)(Flow* flow, void* decode_state,
+    FilePosition* position);
+typedef File_Verdict (* Get_file_verdict_func)(Flow* flow);
+typedef void (* Render_block_verdict_func)(void* ctx, void* p);
 typedef struct _file_api
 {
     int version;
@@ -202,25 +209,27 @@ typedef struct _file_api
 } FileAPI;
 
 /* To be set by Stream */
-SO_PUBLIC extern FileAPI *file_api;
+SO_PUBLIC extern FileAPI* file_api;
 extern File_type_done_func file_type_done;
 extern File_signature_done_func file_signature_done;
 extern Log_file_action_func log_file_action;
 
-static inline void initFilePosition(FilePosition *position, uint64_t processed_size)
+static inline void initFilePosition(FilePosition* position, uint64_t processed_size)
 {
     *position = SNORT_FILE_START;
     if (processed_size)
         *position = SNORT_FILE_MIDDLE;
 }
-static inline void updateFilePosition(FilePosition *position, uint64_t processed_size)
+
+static inline void updateFilePosition(FilePosition* position, uint64_t processed_size)
 {
     if ((*position == SNORT_FILE_END) || (*position == SNORT_FILE_FULL))
         *position = SNORT_FILE_START;
     else if (processed_size)
         *position = SNORT_FILE_MIDDLE;
 }
-static inline void finalFilePosition(FilePosition *position)
+
+static inline void finalFilePosition(FilePosition* position)
 {
     if (*position == SNORT_FILE_START)
         *position = SNORT_FILE_FULL;
@@ -228,9 +237,9 @@ static inline void finalFilePosition(FilePosition *position)
         *position = SNORT_FILE_END;
 }
 
-static inline bool isFileStart( FilePosition position)
+static inline bool isFileStart(FilePosition position)
 {
-   return ((position == SNORT_FILE_START)|| (position == SNORT_FILE_FULL));
+    return ((position == SNORT_FILE_START)|| (position == SNORT_FILE_FULL));
 }
 
 static inline bool isFileEnd(FilePosition position)

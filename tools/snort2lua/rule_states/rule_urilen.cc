@@ -27,18 +27,15 @@
 
 namespace rules
 {
-
-namespace {
-
-
+namespace
+{
 class Urilen : public ConversionState
 {
 public:
-    Urilen(Converter& c) : ConversionState(c) {};
-    virtual ~Urilen() {};
+    Urilen(Converter& c) : ConversionState(c) { }
+    virtual ~Urilen() { }
     virtual bool convert(std::istringstream& data);
 };
-
 } // namespace
 
 bool Urilen::convert(std::istringstream& data_stream)
@@ -58,10 +55,10 @@ bool Urilen::convert(std::istringstream& data_stream)
         if (util::get_string(arg_stream, value, ","))
         {
             if (!value.compare("raw"))
-                 rule_api.set_curr_options_buffer("http_raw_uri");
+                rule_api.set_curr_options_buffer("http_raw_uri");
 
             else if (!value.compare("norm"))
-                 rule_api.set_curr_options_buffer("http_uri");
+                rule_api.set_curr_options_buffer("http_uri");
 
             else
                 rule_api.bad_rule(data_stream, "urilen:" + value + "," + args);
@@ -83,7 +80,6 @@ bool Urilen::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-
 static ConversionState* ctor(Converter& c)
 {
     return new Urilen(c);
@@ -97,5 +93,5 @@ static const ConvertMap rule_urilen =
 };
 
 const ConvertMap* urilen_map = &rule_urilen;
-
 } // namespace rules
+

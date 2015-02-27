@@ -287,7 +287,7 @@ static bool valid_addr(Value& v, const char*)
 
     if ( addr_pton(v.get_string(), &a) )
         return false;
-    
+
     if ( a.addr_type == ADDR_TYPE_IP )
         v.set(a.addr_data8, 4);
 
@@ -349,7 +349,7 @@ bool Parameter::validate(Value& v) const
     case PT_PORT:
         if ( !range )
             return valid_int(v, "0:65535");
-        // if a range was given fall thru
+    // if a range was given fall thru
     case PT_INT:
         return valid_int(v, (const char*)range);
     case PT_REAL:

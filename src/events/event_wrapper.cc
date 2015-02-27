@@ -57,10 +57,10 @@
  * SnortEventqAdd() and SnortEventLog() functions - whichalready  route the events to
  * the fpLogEvent()function.
  */
-uint32_t GenerateSnortEvent(Packet *p, uint32_t gid, uint32_t sid)
+uint32_t GenerateSnortEvent(Packet* p, uint32_t gid, uint32_t sid)
 {
-    OptTreeNode *otn;
-    RuleTreeNode *rtn;
+    OptTreeNode* otn;
+    RuleTreeNode* rtn;
 
     otn = GetOTN(gid, sid);
 
@@ -92,27 +92,26 @@ uint32_t GenerateSnortEvent(Packet *p, uint32_t gid, uint32_t sid)
  *
  * @return 1 on success, 0 on FAILURE ( note this is to stay the same as GenerateSnortEvent() )
  */
-int LogTagData(Packet *p,
-               uint32_t gen_id,
-               uint32_t sig_id,
-               uint32_t sig_rev,
-               uint32_t classification,
-               uint32_t priority,
-               uint32_t event_ref,
-               time_t ref_sec,
-               char *msg)
-
+int LogTagData(Packet* p,
+    uint32_t gen_id,
+    uint32_t sig_id,
+    uint32_t sig_rev,
+    uint32_t classification,
+    uint32_t priority,
+    uint32_t event_ref,
+    time_t ref_sec,
+    char* msg)
 {
     Event event;
 
-    if(!event_ref || !ref_sec)
+    if (!event_ref || !ref_sec)
         return 0;
 
     SetEvent(&event, gen_id, sig_id, sig_rev, classification, priority, event_ref);
 
     event.ref_time.tv_sec = (uint32_t)ref_sec;
 
-    if(p)
+    if (p)
         CallLogFuncs(p, NULL, &event, msg);
 
     return 1;

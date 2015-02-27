@@ -176,10 +176,10 @@ THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 #define TCP_STATE_CLOSED      11
 
 #ifndef MIN
-# define MIN(a,b)  (((a)<(b)) ? (a):(b))
+# define MIN(a,b)  (((a)<(b)) ? (a) : (b))
 #endif
 #ifndef MAX
-# define MAX(a,b)  (((a)>(b)) ? (a):(b))
+# define MAX(a,b)  (((a)>(b)) ? (a) : (b))
 #endif
 
 #define PAWS_WINDOW         60
@@ -280,7 +280,7 @@ THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 #define REASSEMBLY_POLICY_DEFAULT    REASSEMBLY_POLICY_BSD
 
 #define STREAM_MAX_MAX_WINDOW       0x3FFFc000 /* max window allowed by TCP */
-                                           /* 65535 << 14 (max wscale) */
+/* 65535 << 14 (max wscale) */
 #define STREAM_MIN_MAX_WINDOW       0
 
 #define MAX_PORTS_TO_PRINT      20
@@ -321,11 +321,11 @@ THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 
 struct TcpDataBlock
 {
-    uint32_t   seq;
-    uint32_t   ack;
-    uint32_t   win;
-    uint32_t   end_seq;
-    uint32_t   ts;
+    uint32_t seq;
+    uint32_t ack;
+    uint32_t win;
+    uint32_t end_seq;
+    uint32_t ts;
 };
 
 Session* get_tcp_session(Flow* lwssn)
@@ -333,12 +333,12 @@ Session* get_tcp_session(Flow* lwssn)
     return new TcpSession(lwssn);
 }
 
-static inline int SetupOK (const StreamTracker* st)
+static inline int SetupOK(const StreamTracker* st)
 {
     return ( (st->s_mgr.sub_state & SUB_SETUP_OK) == SUB_SETUP_OK );
 }
 
-static inline uint32_t SegsToFlush (const StreamTracker* st, unsigned max)
+static inline uint32_t SegsToFlush(const StreamTracker* st, unsigned max)
 {
     uint32_t n = st->seg_count - st->flush_count;
     StreamSegment* s;
@@ -352,7 +352,7 @@ static inline uint32_t SegsToFlush (const StreamTracker* st, unsigned max)
     while ( s )
     {
         if ( !s->buffered && SEQ_LT(s->seq, st->r_win_base) )
-          n++;
+            n++;
 
         if ( max && n == max )
             return n;
@@ -362,17 +362,17 @@ static inline uint32_t SegsToFlush (const StreamTracker* st, unsigned max)
     return n;
 }
 
-static inline bool DataToFlush (const StreamTracker* st)
+static inline bool DataToFlush(const StreamTracker* st)
 {
     // needed by stream_reassemble:action disable; can fire on rebuilt
     // packets, yanking the splitter out from under us :(
-    if ( !st->flush_policy )  
+    if ( !st->flush_policy )
         return false;
 
-    if ( 
+    if (
         st->flush_policy == STREAM_FLPOLICY_ON_DATA ||
         st->splitter->is_paf()
-    )
+        )
         return ( SegsToFlush(st, 1) > 0 );
 
     return ( SegsToFlush(st, 2) > 1 );  // FIXIT-L return false?
@@ -381,43 +381,44 @@ static inline bool DataToFlush (const StreamTracker* st)
 /*  P R O T O T Y P E S  ********************************************/
 static void StreamPrintTcpConfig(StreamTcpConfig*);
 
-static inline void SetupTcpDataBlock(TcpDataBlock *, Packet *);
-static int ProcessTcp(Flow *, Packet *, TcpDataBlock *,
-        StreamTcpConfig *);
+static inline void SetupTcpDataBlock(TcpDataBlock*, Packet*);
+static int ProcessTcp(Flow*, Packet*, TcpDataBlock*,
+    StreamTcpConfig*);
 static inline int CheckFlushPolicyOnData(
-    TcpSession *, StreamTracker *, StreamTracker *, Packet *);
+    TcpSession*, StreamTracker*, StreamTracker*, Packet*);
 static inline int CheckFlushPolicyOnAck(
-    TcpSession *, StreamTracker *, StreamTracker *, Packet *);
-static void StreamSeglistAddNode(StreamTracker *, StreamSegment *,
-                StreamSegment *);
+    TcpSession*, StreamTracker*, StreamTracker*, Packet*);
+static void StreamSeglistAddNode(StreamTracker*, StreamSegment*,
+    StreamSegment*);
 static int StreamSeglistDeleteNode(StreamTracker*, StreamSegment*);
 static int StreamSeglistDeleteNodeTrim(StreamTracker*, StreamSegment*, uint32_t flush_seq);
 static int AddStreamNode(
     StreamTracker*, Packet*, TcpDataBlock*,
     int16_t len, uint32_t slide, uint32_t trunc,
-    uint32_t seq, StreamSegment *left, StreamSegment **retSeg);
+    uint32_t seq, StreamSegment* left, StreamSegment** retSeg);
 static int DupStreamNode(
     Packet*,
     StreamTracker*,
     StreamSegment* left,
     StreamSegment** retSeg);
 
-static uint32_t StreamGetWscale(Packet *, uint16_t *);
-static uint32_t StreamPacketHasWscale(Packet *);
-static uint32_t StreamGetMss(Packet *, uint16_t *);
-static uint32_t StreamGetTcpTimestamp(Packet *, uint32_t *, int strip);
+static uint32_t StreamGetWscale(Packet*, uint16_t*);
+static uint32_t StreamPacketHasWscale(Packet*);
+static uint32_t StreamGetMss(Packet*, uint16_t*);
+static uint32_t StreamGetTcpTimestamp(Packet*, uint32_t*, int strip);
 
-int s5TcpStreamSizeInit(SnortConfig* sc, char *name, char *parameters, void **dataPtr);
-int s5TcpStreamSizeEval(Packet*, const uint8_t **cursor, void *dataPtr);
-void s5TcpStreamSizeCleanup(void *dataPtr);
+int s5TcpStreamSizeInit(SnortConfig* sc, char* name, char* parameters, void** dataPtr);
+int s5TcpStreamSizeEval(Packet*, const uint8_t** cursor, void* dataPtr);
+void s5TcpStreamSizeCleanup(void* dataPtr);
 int s5TcpStreamReassembleRuleOptionInit(
-    SnortConfig* sc, char *name, char *parameters, void **dataPtr);
-int s5TcpStreamReassembleRuleOptionEval(Packet*, const uint8_t **cursor, void *dataPtr);
-void s5TcpStreamReassembleRuleOptionCleanup(void *dataPtr);
+    SnortConfig* sc, char* name, char* parameters, void** dataPtr);
+int s5TcpStreamReassembleRuleOptionEval(Packet*, const uint8_t** cursor, void* dataPtr);
+void s5TcpStreamReassembleRuleOptionCleanup(void* dataPtr);
 
 /*  G L O B A L S  **************************************************/
 
-static const char* const reassembly_policy_names[] = {
+static const char* const reassembly_policy_names[] =
+{
     "no policy",
     "first",
     "last",
@@ -436,7 +437,8 @@ static const char* const reassembly_policy_names[] = {
 };
 
 #ifdef DEBUG_STREAM_EX
-static const char* const state_names[] = {
+static const char* const state_names[] =
+{
     "none",
     "listen",
     "syn_rcvd",
@@ -459,8 +461,8 @@ static const char* const flush_policy_names[] =
 };
 #endif
 
-static THREAD_LOCAL Packet *s5_pkt = nullptr;
-static THREAD_LOCAL Packet *cleanup_pkt = nullptr;
+static THREAD_LOCAL Packet* s5_pkt = nullptr;
+static THREAD_LOCAL Packet* cleanup_pkt = nullptr;
 
 /*  F U N C T I O N S  **********************************************/
 static inline void init_flush_policy(Flow*, StreamTracker* trk)
@@ -475,7 +477,7 @@ static inline void init_flush_policy(Flow*, StreamTracker* trk)
         trk->flush_policy = STREAM_FLPOLICY_ON_DATA;
 }
 
-bool StreamIsPafActiveTcp (Flow* lwssn, bool c2s)
+bool StreamIsPafActiveTcp(Flow* lwssn, bool c2s)
 {
     TcpSession* tcpssn = (TcpSession*)lwssn->session;
     StreamSplitter* ss = c2s ? tcpssn->server.splitter : tcpssn->client.splitter;
@@ -483,7 +485,7 @@ bool StreamIsPafActiveTcp (Flow* lwssn, bool c2s)
     return ss && ss->is_paf();
 }
 
-void StreamSetSplitterTcp (Flow* lwssn, bool c2s, StreamSplitter* ss)
+void StreamSetSplitterTcp(Flow* lwssn, bool c2s, StreamSplitter* ss)
 {
     TcpSession* tcpssn = (TcpSession*)lwssn->session;
     StreamTracker* trk;
@@ -506,7 +508,7 @@ void StreamSetSplitterTcp (Flow* lwssn, bool c2s, StreamSplitter* ss)
         s5_paf_setup(&trk->paf_state);
 }
 
-StreamSplitter* StreamGetSplitterTcp (Flow* lwssn, bool c2s)
+StreamSplitter* StreamGetSplitterTcp(Flow* lwssn, bool c2s)
 {
     TcpSession* tcpssn = (TcpSession*)lwssn->session;
     StreamTracker* trk;
@@ -523,9 +525,9 @@ StreamSplitter* StreamGetSplitterTcp (Flow* lwssn, bool c2s)
     return trk->splitter;
 }
 
-void StreamUpdatePerfBaseState(SFBASE *sf_base,
-                                Flow *lwssn,
-                                char newState)
+void StreamUpdatePerfBaseState(SFBASE* sf_base,
+    Flow* lwssn,
+    char newState)
 {
     if (!lwssn)
     {
@@ -547,11 +549,12 @@ void StreamUpdatePerfBaseState(SFBASE *sf_base,
             sf_base->iSessionsEstablished++;
 
             if (perfmon_config && (perfmon_config->perf_flags & SFPERF_FLOWIP))
-                UpdateFlowIPState(&sfFlow, &lwssn->client_ip, &lwssn->server_ip, SFS_STATE_TCP_ESTABLISHED);
+                UpdateFlowIPState(&sfFlow, &lwssn->client_ip, &lwssn->server_ip,
+                    SFS_STATE_TCP_ESTABLISHED);
 
             lwssn->ssn_state.session_flags |= SSNFLAG_COUNTED_ESTABLISH;
 
-            if ((lwssn->ssn_state.session_flags & SSNFLAG_COUNTED_INITIALIZE) && 
+            if ((lwssn->ssn_state.session_flags & SSNFLAG_COUNTED_INITIALIZE) &&
                 !(lwssn->ssn_state.session_flags & SSNFLAG_COUNTED_CLOSING))
             {
                 assert(sf_base->iSessionsInitializing);
@@ -570,7 +573,8 @@ void StreamUpdatePerfBaseState(SFBASE *sf_base,
                 sf_base->iSessionsEstablished--;
 
                 if (perfmon_config && (perfmon_config->perf_flags & SFPERF_FLOWIP))
-                    UpdateFlowIPState(&sfFlow, &lwssn->client_ip, &lwssn->server_ip, SFS_STATE_TCP_CLOSED);
+                    UpdateFlowIPState(&sfFlow, &lwssn->client_ip, &lwssn->server_ip,
+                        SFS_STATE_TCP_CLOSED);
             }
             else if (lwssn->ssn_state.session_flags & SSNFLAG_COUNTED_INITIALIZE)
             {
@@ -591,7 +595,8 @@ void StreamUpdatePerfBaseState(SFBASE *sf_base,
             sf_base->iSessionsEstablished--;
 
             if (perfmon_config && (perfmon_config->perf_flags & SFPERF_FLOWIP))
-                UpdateFlowIPState(&sfFlow, &lwssn->client_ip, &lwssn->server_ip, SFS_STATE_TCP_CLOSED);
+                UpdateFlowIPState(&sfFlow, &lwssn->client_ip, &lwssn->server_ip,
+                    SFS_STATE_TCP_CLOSED);
         }
         else if (lwssn->ssn_state.session_flags & SSNFLAG_COUNTED_INITIALIZE)
         {
@@ -613,36 +618,36 @@ static inline uint16_t GetTcpReassemblyPolicy(int os_policy)
 {
     switch (os_policy)
     {
-        case STREAM_POLICY_FIRST:
-            return REASSEMBLY_POLICY_FIRST;
-        case STREAM_POLICY_LINUX:
-            return REASSEMBLY_POLICY_LINUX;
-        case STREAM_POLICY_BSD:
-            return REASSEMBLY_POLICY_BSD;
-        case STREAM_POLICY_OLD_LINUX:
-            return REASSEMBLY_POLICY_OLD_LINUX;
-        case STREAM_POLICY_LAST:
-            return REASSEMBLY_POLICY_LAST;
-        case STREAM_POLICY_WINDOWS:
-            return REASSEMBLY_POLICY_WINDOWS;
-        case STREAM_POLICY_SOLARIS:
-            return REASSEMBLY_POLICY_SOLARIS;
-        case STREAM_POLICY_WINDOWS2K3:
-            return REASSEMBLY_POLICY_WINDOWS2K3;
-        case STREAM_POLICY_VISTA:
-            return REASSEMBLY_POLICY_VISTA;
-        case STREAM_POLICY_HPUX11:
-            return REASSEMBLY_POLICY_HPUX11;
-        case STREAM_POLICY_HPUX10:
-            return REASSEMBLY_POLICY_HPUX10;
-        case STREAM_POLICY_IRIX:
-            return REASSEMBLY_POLICY_IRIX;
-        case STREAM_POLICY_MACOS:
-            return REASSEMBLY_POLICY_MACOS;
-        case STREAM_POLICY_PROXY:
-            return REASSEMBLY_POLICY_FIRST;
-        default:
-            return REASSEMBLY_POLICY_DEFAULT;
+    case STREAM_POLICY_FIRST:
+        return REASSEMBLY_POLICY_FIRST;
+    case STREAM_POLICY_LINUX:
+        return REASSEMBLY_POLICY_LINUX;
+    case STREAM_POLICY_BSD:
+        return REASSEMBLY_POLICY_BSD;
+    case STREAM_POLICY_OLD_LINUX:
+        return REASSEMBLY_POLICY_OLD_LINUX;
+    case STREAM_POLICY_LAST:
+        return REASSEMBLY_POLICY_LAST;
+    case STREAM_POLICY_WINDOWS:
+        return REASSEMBLY_POLICY_WINDOWS;
+    case STREAM_POLICY_SOLARIS:
+        return REASSEMBLY_POLICY_SOLARIS;
+    case STREAM_POLICY_WINDOWS2K3:
+        return REASSEMBLY_POLICY_WINDOWS2K3;
+    case STREAM_POLICY_VISTA:
+        return REASSEMBLY_POLICY_VISTA;
+    case STREAM_POLICY_HPUX11:
+        return REASSEMBLY_POLICY_HPUX11;
+    case STREAM_POLICY_HPUX10:
+        return REASSEMBLY_POLICY_HPUX10;
+    case STREAM_POLICY_IRIX:
+        return REASSEMBLY_POLICY_IRIX;
+    case STREAM_POLICY_MACOS:
+        return REASSEMBLY_POLICY_MACOS;
+    case STREAM_POLICY_PROXY:
+        return REASSEMBLY_POLICY_FIRST;
+    default:
+        return REASSEMBLY_POLICY_DEFAULT;
     }
 }
 
@@ -695,7 +700,7 @@ inline bool StreamTcpConfig::midstream_allowed(Packet* p)
 //
 // this could be improved further beyond the 297 bug fixes by storing the
 // c2s policy on the server side and then obtaining server policy from the
-// server on session startup.  
+// server on session startup.
 //
 // either way, this client / server distinction must be kept in mind to
 // make sense of the code in this file.
@@ -754,7 +759,7 @@ int StreamVerifyTcpConfig(SnortConfig*, StreamTcpConfig*)
 }
 
 #ifdef DEBUG_STREAM_EX
-static void PrintStateMgr(StateMgr *s)
+static void PrintStateMgr(StateMgr* s)
 {
     LogMessage("StateMgr:\n");
     LogMessage("    state:          %s\n", state_names[s->state]);
@@ -764,7 +769,7 @@ static void PrintStateMgr(StateMgr *s)
     LogMessage("    stq_get_seq:    %d\n", s->stq_get_seq);
 }
 
-static void PrintStreamTracker(StreamTracker *s)
+static void PrintStreamTracker(StreamTracker* s)
 {
     LogMessage(" + StreamTracker +\n");
     LogMessage("    isn:                0x%X\n", s->isn);
@@ -786,7 +791,7 @@ static void PrintStreamTracker(StreamTracker *s)
     PrintStateMgr(&s->s_mgr);
 }
 
-static void PrintTcpSession(TcpSession *ts)
+static void PrintTcpSession(TcpSession* ts)
 {
     char buf[64];
 
@@ -807,7 +812,7 @@ static void PrintTcpSession(TcpSession *ts)
     PrintStreamTracker(&ts->server);
 }
 
-static void PrintTcpDataBlock(TcpDataBlock *tdb)
+static void PrintTcpDataBlock(TcpDataBlock* tdb)
 {
     LogMessage("TcpDataBlock:\n");
     LogMessage("    seq:    0x%08X\n", tdb->seq);
@@ -816,32 +821,33 @@ static void PrintTcpDataBlock(TcpDataBlock *tdb)
     LogMessage("    end:    0x%08X\n", tdb->end_seq);
 }
 
-static void PrintFlushMgr(FlushMgr *fm)
+static void PrintFlushMgr(FlushMgr* fm)
 {
-    if(fm == NULL)
+    if (fm == NULL)
         return;
 
-    switch(fm->flush_policy)
+    switch (fm->flush_policy)
     {
-        case STREAM_FLPOLICY_IGNORE:
-            STREAM_DEBUG_WRAP(DebugMessage(
-                DEBUG_STREAM_STATE, "    IGNORE\n"););
-            break;
+    case STREAM_FLPOLICY_IGNORE:
+        STREAM_DEBUG_WRAP(DebugMessage(
+            DEBUG_STREAM_STATE, "    IGNORE\n"); );
+        break;
 
-        case STREAM_FLPOLICY_ON_ACK:
-            STREAM_DEBUG_WRAP(DebugMessage(
-                DEBUG_STREAM_STATE, "    PROTOCOL\n"););
-            break;
+    case STREAM_FLPOLICY_ON_ACK:
+        STREAM_DEBUG_WRAP(DebugMessage(
+            DEBUG_STREAM_STATE, "    PROTOCOL\n"); );
+        break;
 
-        case STREAM_FLPOLICY_ON_DATA:
-            STREAM_DEBUG_WRAP(DebugMessage(
-                DEBUG_STREAM_STATE, "    PROTOCOL_IPS\n"););
-            break;
+    case STREAM_FLPOLICY_ON_DATA:
+        STREAM_DEBUG_WRAP(DebugMessage(
+            DEBUG_STREAM_STATE, "    PROTOCOL_IPS\n"); );
+        break;
     }
 }
+
 #endif  // DEBUG_STREAM_EX
 
-static inline void Discard ()
+static inline void Discard()
 {
     tcpStats.discards++;
 }
@@ -899,6 +905,7 @@ static inline void EventSessionHijackedClient()
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SESSION_HIJACKED_CLIENT);
     tcpStats.events++;
 }
+
 static inline void EventSessionHijackedServer()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SESSION_HIJACKED_SERVER);
@@ -953,7 +960,7 @@ static inline void EventDataAfterRstRcvd()
     tcpStats.events++;
 }
 
-static inline void EventInternal (uint32_t eventSid)
+static inline void EventInternal(uint32_t eventSid)
 {
     if ( !InternalEventIsEnabled(snort_conf->rate_filter_config, eventSid) )
         return;
@@ -961,12 +968,12 @@ static inline void EventInternal (uint32_t eventSid)
     tcpStats.internalEvents++;
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-        "Stream raised internal event %d\n", eventSid););
+        "Stream raised internal event %d\n", eventSid); );
 
     SnortEventqAdd(GENERATOR_INTERNAL, eventSid);
 }
 
-static inline void EventWindowSlam ()
+static inline void EventWindowSlam()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_WINDOW_SLAM);
     tcpStats.events++;
@@ -1013,7 +1020,7 @@ const PegInfo* Stream_GetNormPegs()
 { return pegName; }
 
 NormPegs Stream_GetNormCounts(unsigned& c)
-{ 
+{
     c = PC_MAX;
     return normStats;
 }
@@ -1056,7 +1063,7 @@ static inline bool NormalStripTimeStamp(Packet* p, const TcpOption* opt, NormMod
 }
 
 static inline void NormalTrimPayload(
-    Packet* p, uint16_t max, TcpDataBlock* tdb )
+    Packet* p, uint16_t max, TcpDataBlock* tdb)
 {
     uint16_t fat = p->dsize - max;
     p->dsize = max;
@@ -1065,7 +1072,7 @@ static inline void NormalTrimPayload(
 }
 
 static inline void NormalTrimPayloadIf(
-    Packet *p, uint32_t max, TcpDataBlock* tdb,
+    Packet* p, uint32_t max, TcpDataBlock* tdb,
     NormFlags flag, PegCounts peg, PerfCounts perf)
 {
     const NormMode mode = Normalize_GetMode(flag);
@@ -1078,7 +1085,7 @@ static inline void NormalTrimPayloadIf(
 }
 
 static inline void NormalTrimPayloadIfSyn(
-    Packet *p, uint32_t max, TcpDataBlock *tdb )
+    Packet* p, uint32_t max, TcpDataBlock* tdb)
 {
     if ( p->dsize > max )
         NormalTrimPayloadIf(p, max, tdb,
@@ -1086,7 +1093,7 @@ static inline void NormalTrimPayloadIfSyn(
 }
 
 static inline void NormalTrimPayloadIfRst(
-    Packet *p, uint32_t max, TcpDataBlock *tdb )
+    Packet* p, uint32_t max, TcpDataBlock* tdb)
 {
     if ( p->dsize > max )
         NormalTrimPayloadIf(p, max, tdb,
@@ -1094,7 +1101,7 @@ static inline void NormalTrimPayloadIfRst(
 }
 
 static inline void NormalTrimPayloadIfWin(
-    Packet *p, uint32_t max, TcpDataBlock *tdb )
+    Packet* p, uint32_t max, TcpDataBlock* tdb)
 {
     if ( p->dsize > max )
         NormalTrimPayloadIf(p, max, tdb,
@@ -1102,14 +1109,14 @@ static inline void NormalTrimPayloadIfWin(
 }
 
 static inline void NormalTrimPayloadIfMss(
-    Packet *p, uint32_t max, TcpDataBlock *tdb )
+    Packet* p, uint32_t max, TcpDataBlock* tdb)
 {
     if ( p->dsize > max )
         NormalTrimPayloadIf(p, max, tdb,
             NORM_TCP_TRIM_MSS, PC_TCP_TRIM_MSS, PERF_COUNT_TCP_TRIM_MSS);
 }
 
-static inline void NormalTrackECN (TcpSession* s, TCPHdr* tcph, int req3way)
+static inline void NormalTrackECN(TcpSession* s, TCPHdr* tcph, int req3way)
 {
     if ( !s )
         return;
@@ -1123,7 +1130,7 @@ static inline void NormalTrackECN (TcpSession* s, TCPHdr* tcph, int req3way)
         s->ecn = tcph->are_flags_set(TH_ECE|TH_CWR);
 }
 
-static inline void NormalCheckECN (TcpSession* s, Packet* p)
+static inline void NormalCheckECN(TcpSession* s, Packet* p)
 {
     if ( !s->ecn && (p->ptrs.tcph->th_flags & (TH_ECE|TH_CWR)) )
     {
@@ -1143,7 +1150,7 @@ static inline void NormalCheckECN (TcpSession* s, Packet* p)
 // ssn ingress is client; ssn egress is server
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-static inline void SetPacketHeaderFoo (TcpSession* tcpssn, const Packet* p)
+static inline void SetPacketHeaderFoo(TcpSession* tcpssn, const Packet* p)
 {
     if ( tcpssn->daq_flags & DAQ_PKT_FLAG_NOT_FORWARDING )
     {
@@ -1190,7 +1197,7 @@ static inline void GetPacketHeaderFoo(
     pkth->address_space_id = tcpssn->address_space_id;
 }
 
-static inline void SwapPacketHeaderFoo (TcpSession* tcpssn)
+static inline void SwapPacketHeaderFoo(TcpSession* tcpssn)
 {
     if ( tcpssn->egress_index != DAQ_PKTHDR_UNKNOWN )
     {
@@ -1205,6 +1212,7 @@ static inline void SwapPacketHeaderFoo (TcpSession* tcpssn)
         tcpssn->egress_group = ingress_group;
     }
 }
+
 #endif
 
 //-------------------------------------------------------------------------
@@ -1212,7 +1220,7 @@ static inline void SwapPacketHeaderFoo (TcpSession* tcpssn)
 static inline int IsBetween(uint32_t low, uint32_t high, uint32_t cur)
 {
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "(%X, %X, %X) = (low, high, cur)\n", low,high,cur););
+        "(%X, %X, %X) = (low, high, cur)\n", low,high,cur); );
 
     /* If we haven't seen anything, ie, low & high are 0, return true */
     if ((low == 0) && (low == high))
@@ -1222,7 +1230,7 @@ static inline int IsBetween(uint32_t low, uint32_t high, uint32_t cur)
 }
 
 #define SSNFLAG_SEEN_BOTH (SSNFLAG_SEEN_SERVER | SSNFLAG_SEEN_CLIENT)
-static inline bool TwoWayTraffic (Flow* lwssn)
+static inline bool TwoWayTraffic(Flow* lwssn)
 {
     return ( (lwssn->ssn_state.session_flags & SSNFLAG_SEEN_BOTH) == SSNFLAG_SEEN_BOTH );
 }
@@ -1253,7 +1261,7 @@ static inline uint32_t StreamGetWindow(
 }
 
 // ack number must ack syn
-static inline int ValidRstSynSent(StreamTracker *st, TcpDataBlock *tdb)
+static inline int ValidRstSynSent(StreamTracker* st, TcpDataBlock* tdb)
 {
     return tdb->ack == st->l_unackd;
 }
@@ -1263,74 +1271,74 @@ static inline int ValidRstSynSent(StreamTracker *st, TcpDataBlock *tdb)
 // validate here based on how various implementations actually
 // handle a rst.
 static inline int ValidRst(
-    Flow* lwssn, StreamTracker *st, TcpDataBlock *tdb)
+    Flow* lwssn, StreamTracker* st, TcpDataBlock* tdb)
 {
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Checking end_seq (%X) > r_win_base (%X) && "
-                "seq (%X) < r_nxt_ack(%X)\n",
-                tdb->end_seq, st->r_win_base, tdb->seq,
-                st->r_nxt_ack+StreamGetWindow(lwssn, st, tdb)););
+        "Checking end_seq (%X) > r_win_base (%X) && "
+        "seq (%X) < r_nxt_ack(%X)\n",
+        tdb->end_seq, st->r_win_base, tdb->seq,
+        st->r_nxt_ack+StreamGetWindow(lwssn, st, tdb)); );
 
     switch (st->os_policy)
     {
-        case STREAM_POLICY_HPUX11:
-            if (SEQ_GEQ(tdb->seq, st->r_nxt_ack))
+    case STREAM_POLICY_HPUX11:
+        if (SEQ_GEQ(tdb->seq, st->r_nxt_ack))
+        {
+            STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                "rst is valid seq (>= next seq)!\n"); );
+            return 1;
+        }
+        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+            "rst is not valid seq (>= next seq)!\n"); );
+        return 0;
+        break;
+    case STREAM_POLICY_FIRST:
+    case STREAM_POLICY_LAST:
+    case STREAM_POLICY_MACOS:
+    case STREAM_POLICY_WINDOWS:
+    case STREAM_POLICY_VISTA:
+    case STREAM_POLICY_WINDOWS2K3:
+    case STREAM_POLICY_HPUX10:
+    case STREAM_POLICY_IRIX:
+        if (SEQ_EQ(tdb->seq, st->r_nxt_ack))
+        {
+            STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                "rst is valid seq (next seq)!\n"); );
+            return 1;
+        }
+        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+            "rst is not valid seq (next seq)!\n"); );
+        return 0;
+        break;
+    case STREAM_POLICY_BSD:
+    case STREAM_POLICY_LINUX:
+    case STREAM_POLICY_OLD_LINUX:
+    case STREAM_POLICY_SOLARIS:
+        if (SEQ_GEQ(tdb->end_seq, st->r_win_base))
+        {
+            // reset must be admitted when window closed
+            if ( SEQ_LEQ(tdb->seq, st->r_win_base+StreamGetWindow(lwssn, st, tdb)) )
             {
                 STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "rst is valid seq (>= next seq)!\n"););
+                    "rst is valid seq (within window)!\n"); );
                 return 1;
             }
-            STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "rst is not valid seq (>= next seq)!\n"););
-            return 0;
-            break;
-        case STREAM_POLICY_FIRST:
-        case STREAM_POLICY_LAST:
-        case STREAM_POLICY_MACOS:
-        case STREAM_POLICY_WINDOWS:
-        case STREAM_POLICY_VISTA:
-        case STREAM_POLICY_WINDOWS2K3:
-        case STREAM_POLICY_HPUX10:
-        case STREAM_POLICY_IRIX:
-            if (SEQ_EQ(tdb->seq, st->r_nxt_ack))
-            {
-                STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "rst is valid seq (next seq)!\n"););
-                return 1;
-            }
-            STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "rst is not valid seq (next seq)!\n"););
-            return 0;
-            break;
-        case STREAM_POLICY_BSD:
-        case STREAM_POLICY_LINUX:
-        case STREAM_POLICY_OLD_LINUX:
-        case STREAM_POLICY_SOLARIS:
-            if(SEQ_GEQ(tdb->end_seq, st->r_win_base))
-            {
-                // reset must be admitted when window closed
-                if ( SEQ_LEQ(tdb->seq, st->r_win_base+StreamGetWindow(lwssn, st, tdb)) )
-                {
-                    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "rst is valid seq (within window)!\n"););
-                    return 1;
-                }
-            }
+        }
 
-            STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "rst is not valid seq (within window)!\n"););
-            return 0;
-            break;
+        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+            "rst is not valid seq (within window)!\n"); );
+        return 0;
+        break;
     }
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-        "rst is not valid!\n"););
+        "rst is not valid!\n"); );
     return 0;
 }
 
 static inline int ValidTimestamp(
-    StreamTracker *talker, StreamTracker *listener, TcpDataBlock *tdb,
-    Packet *p, int *eventcode, int *got_ts)
+    StreamTracker* talker, StreamTracker* listener, TcpDataBlock* tdb,
+    Packet* p, int* eventcode, int* got_ts)
 {
     if ( p->ptrs.tcph->th_flags & TH_RST or
         listener->config->policy == STREAM_POLICY_PROXY )
@@ -1348,11 +1356,11 @@ static inline int ValidTimestamp(
     /*
      * check PAWS
      */
-    if((talker->flags & TF_TSTAMP) && (listener->flags & TF_TSTAMP))
+    if ((talker->flags & TF_TSTAMP) && (listener->flags & TF_TSTAMP))
     {
         char validate_timestamp = 1;
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Checking timestamps for PAWS\n"););
+            "Checking timestamps for PAWS\n"); );
 
         *got_ts = StreamGetTcpTimestamp(p, &tdb->ts, 0);
 
@@ -1382,13 +1390,13 @@ static inline int ValidTimestamp(
                     validate_timestamp = 0;
                 }
                 else if ((listener->config->policy == STREAM_POLICY_OLD_LINUX) ||
-                         (listener->config->policy == STREAM_POLICY_WINDOWS) ||
-                         (listener->config->policy == STREAM_POLICY_VISTA))
+                    (listener->config->policy == STREAM_POLICY_WINDOWS) ||
+                    (listener->config->policy == STREAM_POLICY_VISTA))
                 {
                     /* Older Linux (2.2 kernel & earlier), Win32 (non 2K3)
                      * allow the 3whs to use a 0 timestamp. */
                     talker->flags &= ~TF_TSTAMP_ZERO;
-                    if(SEQ_EQ(listener->r_nxt_ack, tdb->seq))
+                    if (SEQ_EQ(listener->r_nxt_ack, tdb->seq))
                     {
                         talker->ts_last = tdb->ts;
                         validate_timestamp = 0; /* Ignore the timestamp for this
@@ -1412,10 +1420,10 @@ static inline int ValidTimestamp(
                     result = (int)(tdb->ts - talker->ts_last);
                 }
 
-                if(result < 0)
+                if (result < 0)
                 {
                     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                "Packet outside PAWS window, dropping\n"););
+                        "Packet outside PAWS window, dropping\n"); );
                     /* bail, we've got a packet outside the PAWS window! */
                     //Discard();
                     *eventcode |= EVENT_BAD_TIMESTAMP;
@@ -1423,13 +1431,13 @@ static inline int ValidTimestamp(
                     return ACTION_BAD_PKT;
                 }
                 else if ((talker->ts_last != 0) &&
-                        ((uint32_t)p->pkth->ts.tv_sec > talker->ts_last_pkt+PAWS_24DAYS))
+                    ((uint32_t)p->pkth->ts.tv_sec > talker->ts_last_pkt+PAWS_24DAYS))
                 {
                     /* this packet is from way too far into the future */
                     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                "packet PAWS timestamp way too far ahead of"
-                                "last packet %d %d...\n", p->pkth->ts.tv_sec,
-                                talker->ts_last_pkt););
+                        "packet PAWS timestamp way too far ahead of"
+                        "last packet %d %d...\n", p->pkth->ts.tv_sec,
+                        talker->ts_last_pkt); );
                     //Discard();
                     *eventcode |= EVENT_BAD_TIMESTAMP;
                     NormalDropPacketIf(p, NORM_TCP_OPT);
@@ -1438,7 +1446,7 @@ static inline int ValidTimestamp(
                 else
                 {
                     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                "packet PAWS ok...\n"););
+                        "packet PAWS ok...\n"); );
                 }
             }
         }
@@ -1451,7 +1459,7 @@ static inline int ValidTimestamp(
              */
             *eventcode |= EVENT_NO_TIMESTAMP;
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "packet no timestamp, had one earlier from this side...ok for now...\n"););
+                "packet no timestamp, had one earlier from this side...ok for now...\n"); );
 
             if (listener->config->policy == STREAM_POLICY_SOLARIS)
             {
@@ -1477,7 +1485,7 @@ static inline int ValidTimestamp(
         // we disable timestamp handling.
         int strip = ( SetupOK(talker) && SetupOK(listener) );
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "listener not doing timestamps...\n"););
+            "listener not doing timestamps...\n"); );
         *got_ts = StreamGetTcpTimestamp(p, &tdb->ts, strip);
 
         if (*got_ts)
@@ -1510,7 +1518,7 @@ static inline int ValidTimestamp(
                     break;
                 default:
                     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                "Packet with 0 timestamp, dropping\n"););
+                        "Packet with 0 timestamp, dropping\n"); );
                     //Discard();
                     /* bail */
                     *eventcode |= EVENT_BAD_TIMESTAMP;
@@ -1539,7 +1547,7 @@ static inline int ValidTimestamp(
 //                     or RCV.NXT =< SEG.SEQ+SEG.LEN-1 < RCV.NXT+RCV.WND
 //
 static inline int ValidSeq(
-    const Packet* p, Flow* lwssn, StreamTracker *st, TcpDataBlock *tdb)
+    const Packet* p, Flow* lwssn, StreamTracker* st, TcpDataBlock* tdb)
 {
     uint32_t win = StreamGetWindow(lwssn, st, tdb);
 
@@ -1556,24 +1564,25 @@ static inline int ValidSeq(
         return 0;
 
     if ( SEQ_LEQ(st->r_win_base, tdb->seq) &&
-         SEQ_LT(tdb->seq, st->r_win_base+win) )
+        SEQ_LT(tdb->seq, st->r_win_base+win) )
         return 1;
 
     return SEQ_LEQ(st->r_win_base, tdb->end_seq) &&
            SEQ_LT(tdb->end_seq, st->r_win_base+win);
 }
+
 #else
 static inline int ValidSeq(
-    const Packet* p, Flow* lwssn, StreamTracker *st, TcpDataBlock *tdb)
+    const Packet* p, Flow* lwssn, StreamTracker* st, TcpDataBlock* tdb)
 {
     int right_ok;
     uint32_t left_seq;
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Checking end_seq (%X) > r_win_base (%X) && "
-                "seq (%X) < r_nxt_ack(%X)\n",
-                tdb->end_seq, st->r_win_base, tdb->seq,
-                st->r_nxt_ack+StreamGetWindow(lwssn, st, tdb)););
+        "Checking end_seq (%X) > r_win_base (%X) && "
+        "seq (%X) < r_nxt_ack(%X)\n",
+        tdb->end_seq, st->r_win_base, tdb->seq,
+        st->r_nxt_ack+StreamGetWindow(lwssn, st, tdb)); );
 
     if ( SEQ_LT(st->r_nxt_ack, st->r_win_base) )
         left_seq = st->r_nxt_ack;
@@ -1589,39 +1598,40 @@ static inline int ValidSeq(
     {
         uint32_t win = StreamGetWindow(lwssn, st, tdb);
 
-        if( SEQ_LEQ(tdb->seq, st->r_win_base+win) )
+        if ( SEQ_LEQ(tdb->seq, st->r_win_base+win) )
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "seq is within window!\n"););
+                "seq is within window!\n"); );
             return 1;
         }
         else
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "seq is past the end of the window!\n"););
+                "seq is past the end of the window!\n"); );
         }
     }
     else
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "end_seq is before win_base\n"););
+            "end_seq is before win_base\n"); );
     }
     return 0;
 }
+
 #endif
 
 static inline void UpdateSsn(
-    Packet*, StreamTracker *rcv, StreamTracker *snd, TcpDataBlock *tdb)
+    Packet*, StreamTracker* rcv, StreamTracker* snd, TcpDataBlock* tdb)
 {
 #if 0
     if (
-         // FIXIT-L these checks are a hack to avoid off by one normalization
-         // due to FIN ... if last segment filled a hole, r_nxt_ack is not at
-         // end of data, FIN is ignored so sequence isn't bumped, and this
-         // forces seq-- on ACK of FIN.  :(
-         rcv->s_mgr.state == TCP_STATE_ESTABLISHED &&
-         rcv->s_mgr.state_queue == TCP_STATE_NONE &&
-         Normalize_IsEnabled(NORM_TCP_IPS) )
+        // FIXIT-L these checks are a hack to avoid off by one normalization
+        // due to FIN ... if last segment filled a hole, r_nxt_ack is not at
+        // end of data, FIN is ignored so sequence isn't bumped, and this
+        // forces seq-- on ACK of FIN.  :(
+        rcv->s_mgr.state == TCP_STATE_ESTABLISHED &&
+        rcv->s_mgr.state_queue == TCP_STATE_NONE &&
+        Normalize_IsEnabled(NORM_TCP_IPS) )
     {
         // walk the seglist until a gap or tdb->ack whichever is first
         // if a gap exists prior to ack, move ack back to start of gap
@@ -1650,7 +1660,7 @@ static inline void UpdateSsn(
 #endif
     // ** if we don't see a segment, we can't track seq at ** below
     // so we update the seq by the ack if it is beyond next expected
-    if(SEQ_GT(tdb->ack, rcv->l_unackd))
+    if (SEQ_GT(tdb->ack, rcv->l_unackd))
         rcv->l_unackd = tdb->ack;
 
     // ** this is how we track the last seq number sent
@@ -1666,7 +1676,7 @@ static inline void UpdateSsn(
     }
 #ifdef S5_PEDANTIC
     if ( SEQ_GT(tdb->ack, snd->r_win_base) &&
-         SEQ_LEQ(tdb->ack, snd->r_nxt_ack) )
+        SEQ_LEQ(tdb->ack, snd->r_nxt_ack) )
 #else
     if (SEQ_GT(tdb->ack, snd->r_win_base))
 #endif
@@ -1700,36 +1710,35 @@ void tcp_sterm()
     tcp_memcap = nullptr;
 }
 
-static inline void SetupTcpDataBlock(TcpDataBlock *tdb, Packet *p)
+static inline void SetupTcpDataBlock(TcpDataBlock* tdb, Packet* p)
 {
     tdb->seq = ntohl(p->ptrs.tcph->th_seq);
     tdb->ack = ntohl(p->ptrs.tcph->th_ack);
     tdb->win = ntohs(p->ptrs.tcph->th_win);
-    tdb->end_seq = tdb->seq + (uint32_t) p->dsize;
+    tdb->end_seq = tdb->seq + (uint32_t)p->dsize;
     tdb->ts = 0;
 
-    if(p->ptrs.tcph->th_flags & TH_SYN)
+    if (p->ptrs.tcph->th_flags & TH_SYN)
     {
         tdb->end_seq++;
-        if(!(p->ptrs.tcph->th_flags & TH_ACK))
+        if (!(p->ptrs.tcph->th_flags & TH_ACK))
             EventInternal(INTERNAL_EVENT_SYN_RECEIVED);
     }
     // don't bump end_seq for fin here
     // we will bump if/when fin is processed
-
 
 #ifdef DEBUG_STREAM_EX
     PrintTcpDataBlock(&tdb);
 #endif
 }
 
-static void SegmentFree (StreamSegment *seg)
+static void SegmentFree(StreamSegment* seg)
 {
     unsigned dropped = sizeof(StreamSegment);
 
-    STREAM_DEBUG_WRAP( DebugMessage(DEBUG_STREAM_STATE,
+    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
         "Dumping segment at seq %X, size %d, caplen %d\n",
-        seg->seq, seg->size, seg->caplen););
+        seg->seq, seg->size, seg->caplen); );
 
     if ( seg->caplen > 0 )
         dropped += seg->caplen - 1;  // seg contains 1st byte
@@ -1738,19 +1747,19 @@ static void SegmentFree (StreamSegment *seg)
     free(seg);
     tcpStats.segs_released++;
 
-    STREAM_DEBUG_WRAP( DebugMessage(DEBUG_STREAM_STATE,
-        "SegmentFree dropped %d bytes\n", dropped););
+    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+        "SegmentFree dropped %d bytes\n", dropped); );
 }
 
-static void DeleteSeglist(StreamSegment *listhead)
+static void DeleteSeglist(StreamSegment* listhead)
 {
-    StreamSegment *idx = listhead;
-    StreamSegment *dump_me;
+    StreamSegment* idx = listhead;
+    StreamSegment* dump_me;
     int i = 0;
 
-    STREAM_DEBUG_WRAP( DebugMessage(DEBUG_STREAM_STATE,
-                "In DeleteSeglist\n"););
-    while(idx)
+    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+        "In DeleteSeglist\n"); );
+    while (idx)
     {
         i++;
         dump_me = idx;
@@ -1758,17 +1767,17 @@ static void DeleteSeglist(StreamSegment *listhead)
         SegmentFree(dump_me);
     }
 
-    STREAM_DEBUG_WRAP( DebugMessage(DEBUG_STREAM_STATE,
-                "Dropped %d segments\n", i););
+    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+        "Dropped %d segments\n", i); );
 }
 
 static inline int purge_alerts(
-    StreamTracker *st, uint32_t flush_seq, Flow* flow)
+    StreamTracker* st, uint32_t flush_seq, Flow* flow)
 {
     int i;
     int new_count = 0;
 
-    for (i=0;i<st->alert_count;i++)
+    for (i=0; i<st->alert_count; i++)
     {
         StreamAlertInfo* ai = st->alerts + i;
 
@@ -1793,19 +1802,19 @@ static inline int purge_alerts(
     return new_count;
 }
 
-static inline int purge_to_seq(TcpSession *tcpssn, StreamTracker *st, uint32_t flush_seq)
+static inline int purge_to_seq(TcpSession* tcpssn, StreamTracker* st, uint32_t flush_seq)
 {
-    StreamSegment *ss = NULL;
-    StreamSegment *dump_me = NULL;
+    StreamSegment* ss = NULL;
+    StreamSegment* dump_me = NULL;
     int purged_bytes = 0;
     uint32_t last_ts = 0;
 
-    if(st->seglist == NULL)
+    if (st->seglist == NULL)
     {
         if ( SEQ_LT(st->seglist_base_seq, flush_seq) )
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "setting st->seglist_base_seq to 0x%X\n", flush_seq););
+                "setting st->seglist_base_seq to 0x%X\n", flush_seq); );
             st->seglist_base_seq = flush_seq;
         }
         return 0;
@@ -1814,16 +1823,16 @@ static inline int purge_to_seq(TcpSession *tcpssn, StreamTracker *st, uint32_t f
     ss = st->seglist;
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "In purge_to_seq, start seq = 0x%X end seq = 0x%X delta %d\n",
-                ss->seq, flush_seq, flush_seq-ss->seq););
-    while(ss)
+        "In purge_to_seq, start seq = 0x%X end seq = 0x%X delta %d\n",
+        ss->seq, flush_seq, flush_seq-ss->seq); );
+    while (ss)
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "s: %X  sz: %d\n", ss->seq, ss->size););
+            "s: %X  sz: %d\n", ss->seq, ss->size); );
         dump_me = ss;
 
         ss = ss->next;
-        if(SEQ_LT(dump_me->seq, flush_seq))
+        if (SEQ_LT(dump_me->seq, flush_seq))
         {
             if (dump_me->ts > last_ts)
             {
@@ -1838,7 +1847,7 @@ static inline int purge_to_seq(TcpSession *tcpssn, StreamTracker *st, uint32_t f
     if ( SEQ_LT(st->seglist_base_seq, flush_seq) )
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-            "setting st->seglist_base_seq to 0x%X\n", flush_seq););
+            "setting st->seglist_base_seq to 0x%X\n", flush_seq); );
         st->seglist_base_seq = flush_seq;
     }
     if ( SEQ_LT(st->r_nxt_ack, flush_seq) )
@@ -1885,7 +1894,7 @@ static inline int purge_to_seq(TcpSession *tcpssn, StreamTracker *st, uint32_t f
     return purged_bytes;
 }
 
-static inline void purge_all (StreamTracker *st)
+static inline void purge_all(StreamTracker* st)
 {
     DeleteSeglist(st->seglist);
     st->seglist = st->seglist_tail = st->seglist_next = NULL;
@@ -1900,7 +1909,7 @@ static inline void purge_all (StreamTracker *st)
 //   initial part of a segment
 // * FIXIT-L need flag to mark any reassembled packets that have a gap
 //   (if we reassemble such)
-static inline int purge_flushed_ackd (TcpSession *tcpssn, StreamTracker *st)
+static inline int purge_flushed_ackd(TcpSession* tcpssn, StreamTracker* st)
 {
     StreamSegment* seg = st->seglist;
     uint32_t seq;
@@ -1926,13 +1935,12 @@ static inline int purge_flushed_ackd (TcpSession *tcpssn, StreamTracker *st)
         return purge_to_seq(tcpssn, st, seq);
 
     return 0;
-
 }
 
-static void ShowRebuiltPacket (TcpSession* ssn, Packet* pkt)
+static void ShowRebuiltPacket(TcpSession* ssn, Packet* pkt)
 {
     if ( (ssn->client.config->flags & STREAM_CONFIG_SHOW_PACKETS) ||
-         (ssn->server.config->flags & STREAM_CONFIG_SHOW_PACKETS) )
+        (ssn->server.config->flags & STREAM_CONFIG_SHOW_PACKETS) )
     {
 #ifdef REG_TEST
         printf("+++++++++++++++++++Stream Packet+++++++++++++++++++++\n");
@@ -1945,11 +1953,11 @@ static void ShowRebuiltPacket (TcpSession* ssn, Packet* pkt)
 }
 
 static inline unsigned int getSegmentFlushSize(
-        StreamTracker* st,
-        StreamSegment *ss,
-        uint32_t to_seq,
-        unsigned int flushBufSize
-        )
+    StreamTracker* st,
+    StreamSegment* ss,
+    uint32_t to_seq,
+    unsigned int flushBufSize
+    )
 {
     unsigned int flushSize = ss->size;
 
@@ -1968,11 +1976,11 @@ static inline unsigned int getSegmentFlushSize(
  * flush the client seglist up to the most recently acked segment
  */
 static int FlushStream(
-    Packet* p, StreamTracker *st, uint32_t toSeq, uint8_t *flushbuf,
-    const uint8_t *flushbuf_end)
+    Packet* p, StreamTracker* st, uint32_t toSeq, uint8_t* flushbuf,
+    const uint8_t* flushbuf_end)
 {
     uint16_t bytes_flushed = 0;
-    STREAM_DEBUG_WRAP(uint32_t bytes_queued = st->seg_bytes_logical;);
+    STREAM_DEBUG_WRAP(uint32_t bytes_queued = st->seg_bytes_logical; );
     uint32_t segs = 0;
     uint32_t flags = PKT_PDU_HEAD;
     PROFILE_VARS;
@@ -1993,10 +2001,10 @@ static int FlushStream(
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
             "Flushing %u bytes from %X\n", bytes_to_copy, ss->seq));
 
-        if ( 
+        if (
             !ss->next || (bytes_to_copy < ss->size) ||
             SEQ_EQ(ss->seq + bytes_to_copy,  toSeq)
-        )
+            )
             flags |= PKT_PDU_TAIL;
 
         const StreamBuffer* sb = nullptr;
@@ -2035,7 +2043,7 @@ static int FlushStream(
         bytes_flushed += bytes_to_copy;
 
         if ( bytes_to_copy < ss->size &&
-             DupStreamNode(NULL, st, ss, &sr) == STREAM_INSERT_OK )
+            DupStreamNode(NULL, st, ss, &sr) == STREAM_INSERT_OK )
         {
             ss->size = bytes_to_copy;
             sr->seq += bytes_to_copy;
@@ -2074,18 +2082,18 @@ static int FlushStream(
             break;
     }
 
-    STREAM_DEBUG_WRAP(bytes_queued -= bytes_flushed;);
+    STREAM_DEBUG_WRAP(bytes_queued -= bytes_flushed; );
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
         "flushed %d bytes / %d segs on stream, "
         "%d still queued\n",
-        bytes_flushed, segs, bytes_queued););
+        bytes_flushed, segs, bytes_queued); );
 
     MODULE_PROFILE_END(s5TcpBuildPacketPerfStats);
     return bytes_flushed;
 }
 
 static inline int _flush_to_seq(
-    TcpSession *tcpssn, StreamTracker *st, uint32_t bytes, Packet *p, uint32_t dir)
+    TcpSession* tcpssn, StreamTracker* st, uint32_t bytes, Packet* p, uint32_t dir)
 {
     uint32_t stop_seq;
     uint32_t footprint;
@@ -2112,8 +2120,8 @@ static inline int _flush_to_seq(
 #endif
 
     // TBD in ips mode, these should be coming from current packet (tdb)
-    ((TCPHdr *)s5_pkt->ptrs.tcph)->th_ack = htonl(st->l_unackd);
-    ((TCPHdr *)s5_pkt->ptrs.tcph)->th_win = htons((uint16_t)st->l_window);
+    ((TCPHdr*)s5_pkt->ptrs.tcph)->th_ack = htonl(st->l_unackd);
+    ((TCPHdr*)s5_pkt->ptrs.tcph)->th_win = htons((uint16_t)st->l_window);
 
     // if not specified, set bytes to flush to what was acked
     if ( !bytes && SEQ_GT(st->r_win_base, st->seglist_base_seq) )
@@ -2127,27 +2135,27 @@ static inline int _flush_to_seq(
     {
         footprint = stop_seq - st->seglist_base_seq;
 
-        if(footprint == 0)
+        if (footprint == 0)
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "Negative footprint, bailing %d (0x%X - 0x%X)\n",
-                        footprint, stop_seq, st->seglist_base_seq););
+                "Negative footprint, bailing %d (0x%X - 0x%X)\n",
+                footprint, stop_seq, st->seglist_base_seq); );
             MODULE_PROFILE_END(s5TcpFlushPerfStats);
 
             return bytes_processed;
         }
 
 #ifdef DEBUG_STREAM_EX
-        if(footprint < st->seg_bytes_logical)
+        if (footprint < st->seg_bytes_logical)
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "Footprint less than queued bytes, "
-                        "win_base: 0x%X base_seq: 0x%X\n",
-                        stop_seq, st->seglist_base_seq););
+                "Footprint less than queued bytes, "
+                "win_base: 0x%X base_seq: 0x%X\n",
+                stop_seq, st->seglist_base_seq); );
         }
 #endif
 
-        if(footprint > s5_pkt->max_dsize)
+        if (footprint > s5_pkt->max_dsize)
         {
             /* this is as much as we can pack into a stream buffer */
             footprint = s5_pkt->max_dsize;
@@ -2155,16 +2163,16 @@ static inline int _flush_to_seq(
         }
 
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Attempting to flush %lu bytes\n", footprint););
+            "Attempting to flush %lu bytes\n", footprint); );
 
         ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_sec = st->seglist_next->tv.tv_sec;
         ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_usec = st->seglist_next->tv.tv_usec;
-        ((TCPHdr *)s5_pkt->ptrs.tcph)->th_seq = htonl(st->seglist_next->seq);
+        ((TCPHdr*)s5_pkt->ptrs.tcph)->th_seq = htonl(st->seglist_next->seq);
 
         /* setup the pseudopacket payload */
         s5_pkt->dsize = 0;
         const uint8_t* s5_pkt_end = s5_pkt->data + s5_pkt->max_dsize;
-        flushed_bytes = FlushStream(p, st, stop_seq, (uint8_t *)s5_pkt->data, s5_pkt_end);
+        flushed_bytes = FlushStream(p, st, stop_seq, (uint8_t*)s5_pkt->data, s5_pkt_end);
 
         if ( !flushed_bytes )
             break; /* No more data... bail */
@@ -2209,7 +2217,7 @@ static inline int _flush_to_seq(
         st->seglist_base_seq += flushed_bytes;
 
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-            "setting st->seglist_base_seq to 0x%X\n", st->seglist_base_seq););
+            "setting st->seglist_base_seq to 0x%X\n", st->seglist_base_seq); );
 
         if ( st->splitter )
             st->splitter->update();
@@ -2227,7 +2235,8 @@ static inline int _flush_to_seq(
         {
             st->flags &= ~TF_MISSING_PREV_PKT;
         }
-    } while ( DataToFlush(st) );
+    }
+    while ( DataToFlush(st) );
 
     /* tell them how many bytes we processed */
     MODULE_PROFILE_END(s5TcpFlushPerfStats);
@@ -2239,29 +2248,29 @@ static inline int _flush_to_seq(
  * and fire it thru the system.
  */
 static inline int flush_to_seq(
-    TcpSession *tcpssn, StreamTracker *st, uint32_t bytes, Packet *p, uint32_t dir)
+    TcpSession* tcpssn, StreamTracker* st, uint32_t bytes, Packet* p, uint32_t dir)
 {
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "In flush_to_seq()\n"););
+        "In flush_to_seq()\n"); );
 
     if ( !bytes )
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "bailing, no data\n"););
+            "bailing, no data\n"); );
         return 0;
     }
 
     if ( !st->seglist_next )
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "bailing, bad seglist ptr\n"););
+            "bailing, bad seglist ptr\n"); );
         return 0;
     }
 
     if (!DataToFlush(st) && !(st->flags & TF_FORCE_FLUSH))
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "only 1 packet in seglist no need to flush\n"););
+            "only 1 packet in seglist no need to flush\n"); );
         return 0;
     }
 
@@ -2297,7 +2306,7 @@ static inline int flush_to_seq(
  * between our base sequence and the last ack'd sequence we
  * received
  */
-static inline uint32_t get_q_footprint(StreamTracker *st)
+static inline uint32_t get_q_footprint(StreamTracker* st)
 {
     uint32_t fp;
 
@@ -2308,7 +2317,7 @@ static inline uint32_t get_q_footprint(StreamTracker *st)
 
     fp = st->r_win_base - st->seglist_base_seq;
 
-    if(fp <= 0)
+    if (fp <= 0)
         return 0;
 
     st->seglist_next = st->seglist;
@@ -2318,7 +2327,7 @@ static inline uint32_t get_q_footprint(StreamTracker *st)
 // FIXIT-L get_q_sequenced() performance could possibly be
 // boosted by tracking sequenced bytes as seglist is updated
 // to avoid the while loop, etc. below.
-static inline uint32_t get_q_sequenced(StreamTracker *st)
+static inline uint32_t get_q_sequenced(StreamTracker* st)
 {
     uint32_t len;
     StreamSegment* seg = st ? st->seglist : NULL;
@@ -2350,7 +2359,7 @@ static inline uint32_t get_q_sequenced(StreamTracker *st)
 }
 
 static inline int flush_ackd(
-    TcpSession *tcpssn, StreamTracker *st, Packet *p, uint32_t dir)
+    TcpSession* tcpssn, StreamTracker* st, Packet* p, uint32_t dir)
 {
     uint32_t bytes = get_q_footprint(st);
     return flush_to_seq(tcpssn, st, bytes, p, dir);
@@ -2360,7 +2369,7 @@ static inline int flush_ackd(
 // CheckFlushPolicyOn*() with the exception that for the *OnAck() case,
 // any available ackd data must be flushed in both directions.
 static inline int flush_stream(
-    TcpSession *tcpssn, StreamTracker *st, Packet *p, uint32_t dir)
+    TcpSession* tcpssn, StreamTracker* st, Packet* p, uint32_t dir)
 {
     // this is not always redundant; stream_reassemble rule option causes trouble
     if ( !st->flush_policy )
@@ -2375,11 +2384,11 @@ static inline int flush_stream(
     return flush_ackd(tcpssn, st, p, dir);
 }
 
-int StreamFlushServer(Packet *p, Flow *lwssn)
+int StreamFlushServer(Packet* p, Flow* lwssn)
 {
     int flushed;
     TcpSession* tcpssn = (TcpSession*)lwssn->session;
-    StreamTracker *flushTracker = &tcpssn->server;
+    StreamTracker* flushTracker = &tcpssn->server;
 
     flushTracker->flags |= TF_FORCE_FLUSH;
 
@@ -2403,11 +2412,11 @@ int StreamFlushServer(Packet *p, Flow *lwssn)
     return flushed;
 }
 
-int StreamFlushClient(Packet *p, Flow *lwssn)
+int StreamFlushClient(Packet* p, Flow* lwssn)
 {
     int flushed;
     TcpSession* tcpssn = (TcpSession*)lwssn->session;
-    StreamTracker *flushTracker = &tcpssn->client;
+    StreamTracker* flushTracker = &tcpssn->client;
 
     flushTracker->flags |= TF_FORCE_FLUSH;
 
@@ -2431,9 +2440,9 @@ int StreamFlushClient(Packet *p, Flow *lwssn)
     return flushed;
 }
 
-int StreamFlushListener(Packet *p, Flow *lwssn)
+int StreamFlushListener(Packet* p, Flow* lwssn)
 {
-    StreamTracker *listener = NULL;
+    StreamTracker* listener = NULL;
     int dir = 0;
     int flushed = 0;
 
@@ -2441,10 +2450,10 @@ int StreamFlushListener(Packet *p, Flow *lwssn)
 
     /* figure out direction of this packet -- we should've already
      * looked at it, so the packet_flags are already set. */
-    if(p->packet_flags & PKT_FROM_SERVER)
+    if (p->packet_flags & PKT_FROM_SERVER)
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Flushing listener on packet from server\n"););
+            "Flushing listener on packet from server\n"); );
         listener = &tcpssn->client;
         /* dir of flush is the data from the opposite side */
         dir = PKT_FROM_SERVER;
@@ -2452,7 +2461,7 @@ int StreamFlushListener(Packet *p, Flow *lwssn)
     else if (p->packet_flags & PKT_FROM_CLIENT)
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Flushing listener on packet from client\n"););
+            "Flushing listener on packet from client\n"); );
         listener = &tcpssn->server;
         /* dir of flush is the data from the opposite side */
         dir = PKT_FROM_CLIENT;
@@ -2472,9 +2481,9 @@ int StreamFlushListener(Packet *p, Flow *lwssn)
     return flushed;
 }
 
-int StreamFlushTalker(Packet *p, Flow *lwssn)
+int StreamFlushTalker(Packet* p, Flow* lwssn)
 {
-    StreamTracker *talker = NULL;
+    StreamTracker* talker = NULL;
     int dir = 0;
     int flushed = 0;
 
@@ -2482,10 +2491,10 @@ int StreamFlushTalker(Packet *p, Flow *lwssn)
 
     /* figure out direction of this packet -- we should've already
      * looked at it, so the packet_flags are already set. */
-    if(p->packet_flags & PKT_FROM_SERVER)
+    if (p->packet_flags & PKT_FROM_SERVER)
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Flushing talker on packet from server\n"););
+            "Flushing talker on packet from server\n"); );
         talker = &tcpssn->server;
         /* dir of flush is the data from the opposite side */
         dir = PKT_FROM_CLIENT;
@@ -2493,7 +2502,7 @@ int StreamFlushTalker(Packet *p, Flow *lwssn)
     else if (p->packet_flags & PKT_FROM_CLIENT)
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Flushing talker on packet from client\n"););
+            "Flushing talker on packet from client\n"); );
         talker = &tcpssn->client;
         /* dir of flush is the data from the opposite side */
         dir = PKT_FROM_SERVER;
@@ -2513,14 +2522,14 @@ int StreamFlushTalker(Packet *p, Flow *lwssn)
     return flushed;
 }
 
-static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicationData)
+static void TcpSessionClear(Flow* lwssn, TcpSession* tcpssn, int freeApplicationData)
 {
-    STREAM_DEBUG_WRAP( DebugMessage(DEBUG_STREAM_STATE,
-                "In TcpSessionClear, %lu bytes in use\n", tcp_memcap->used()););
-    STREAM_DEBUG_WRAP( DebugMessage(DEBUG_STREAM_STATE,
-                "client has %d segs queued\n", tcpssn->client.seg_count););
-    STREAM_DEBUG_WRAP( DebugMessage(DEBUG_STREAM_STATE,
-                "server has %d segs queued\n", tcpssn->server.seg_count););
+    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+        "In TcpSessionClear, %lu bytes in use\n", tcp_memcap->used()); );
+    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+        "client has %d segs queued\n", tcpssn->client.seg_count); );
+    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+        "server has %d segs queued\n", tcpssn->server.seg_count); );
 
     // update stats
     if ( tcpssn->tcp_init )
@@ -2568,8 +2577,8 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
     // generate event for rate filtering
     EventInternal(INTERNAL_EVENT_SESSION_DEL);
 
-    STREAM_DEBUG_WRAP( DebugMessage(DEBUG_STREAM_STATE,
-                "After cleaning, %lu bytes in use\n", tcp_memcap->used()););
+    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+        "After cleaning, %lu bytes in use\n", tcp_memcap->used()); );
 
     memset(&tcpssn->client, 0, sizeof(tcpssn->client));
     memset(&tcpssn->server, 0, sizeof(tcpssn->server));
@@ -2577,7 +2586,7 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
     tcpssn->lws_init = tcpssn->tcp_init = false;
 }
 
-static void FlushQueuedSegs(Flow *lwssn, TcpSession* tcpssn)
+static void FlushQueuedSegs(Flow* lwssn, TcpSession* tcpssn)
 {
     /* Flush ack'd data on both sides as necessary */
     {
@@ -2643,7 +2652,7 @@ static void FlushQueuedSegs(Flow *lwssn, TcpSession* tcpssn)
     }
 }
 
-static void TcpSessionCleanup(Flow *lwssn, int freeApplicationData)
+static void TcpSessionCleanup(Flow* lwssn, int freeApplicationData)
 {
     TcpSession* tcpssn = (TcpSession*)lwssn->session;
     FlushQueuedSegs(lwssn, tcpssn);
@@ -2651,7 +2660,7 @@ static void TcpSessionCleanup(Flow *lwssn, int freeApplicationData)
 }
 
 #ifdef SEG_TEST
-static void CheckSegments (const StreamTracker* a)
+static void CheckSegments(const StreamTracker* a)
 {
     StreamSegment* ss = a->seglist;
     uint32_t sx = ss ? ss->seq : 0;
@@ -2667,6 +2676,7 @@ static void CheckSegments (const StreamTracker* a)
         ss = ss->next;
     }
 }
+
 #endif
 
 #ifdef REG_TEST
@@ -2678,20 +2688,23 @@ static THREAD_LOCAL int s5_trace_enabled = -1;
 
 static void TraceEvent(
     const Packet* p, TcpDataBlock*, uint32_t txd, uint32_t rxd
-) {
+    )
+{
     int i;
     char flags[7] = "UAPRSF";
     const TCPHdr* h = p->ptrs.tcph;
     const char* order = "";
 
     if ( !h )
-       return;
+        return;
 
     for ( i = 0; i < 6; i++)
-        if ( !((1<<(5-i)) & h->th_flags) ) flags[i] = '-';
+        if ( !((1<<(5-i)) & h->th_flags) )
+            flags[i] = '-';
 
     // force relative ack to zero if not conveyed
-    if ( flags[1] != 'A' ) rxd = ntohl(h->th_ack);
+    if ( flags[1] != 'A' )
+        rxd = ntohl(h->th_ack);
 
     if ( p->packet_flags & PKT_STREAM_ORDER_OK )
         order = " (ins)";
@@ -2705,27 +2718,29 @@ static void TraceEvent(
         pc.total_from_daq, flags, h->th_flags,
         ntohl(h->th_seq)-txd, ntohl(h->th_ack)-rxd,
         ntohs(h->th_win), p->dsize, order
-    );
+        );
 }
 
-static void TraceSession (const Flow* lws)
+static void TraceSession(const Flow* lws)
 {
     fprintf(stdout, "    LWS: ST=0x%x SF=0x%x CP=%u SP=%u\n",
         (unsigned)lws->session_state, lws->ssn_state.session_flags,
         lws->client_port, lws->server_port
-    );
+        );
 }
 
-static const char* const statext[] = {
+static const char* const statext[] =
+{
     "NON", "LST", "SYR", "SYS", "EST", "CLW",
     "LAK", "FW1", "CLG", "FW2", "TWT", "CLD"
 };
 
-static const char* const flushxt[] = {
+static const char* const flushxt[] =
+{
     "IGN", "FPR", "PRE", "PRO", "PAF"
 };
 
-static void TraceSegments (const StreamTracker* a)
+static void TraceSegments(const StreamTracker* a)
 {
     StreamSegment* ss = a->seglist;
     uint32_t sx = a->r_win_base;
@@ -2760,13 +2775,13 @@ static void TraceState(
         s, statext[a->s_mgr.state], a->s_mgr.sub_state,
         LCL(a, l_unackd), why, a->l_window,
         RMT(a, r_nxt_ack, b), RMT(a, r_win_base, b)
-    );
+        );
     if ( a->s_mgr.state_queue )
         fprintf(stdout,
             "QS=%s QC=0x%02x QA=%-4u",
             statext[a->s_mgr.state_queue], a->s_mgr.expected_flags,
             RMT(a, s_mgr.transition_seq, b)
-        );
+            );
     fprintf(stdout, "\n");
     unsigned paf = a->splitter->is_paf() ? 2 : 0;
     unsigned fpt = a->flush_policy ? 192 : 0;
@@ -2776,7 +2791,7 @@ static void TraceState(
         flushxt[a->flush_policy+paf], fpt,
         a->seg_count, a->flush_count, a->seg_bytes_logical,
         a->seglist_base_seq - b->isn
-    );
+        );
     if ( s5_trace_enabled == 2 )
         TraceSegments(a);
 
@@ -2785,27 +2800,32 @@ static void TraceState(
 
 static void TraceTCP(
     const Packet* p, const Flow* lws, TcpDataBlock* tdb, int event
-) {
+    )
+{
     const TcpSession* ssn = (TcpSession*)lws->session;
     const StreamTracker* srv = ssn ? &ssn->server : NULL;
     const StreamTracker* cli = ssn ? &ssn->client : NULL;
 
-    const char* cdir = "?", *sdir = "?";
+    const char* cdir = "?", * sdir = "?";
     uint32_t txd = 0, rxd = 0;
 
     if ( p->packet_flags & PKT_FROM_SERVER )
     {
         sdir = "SRV>";
         cdir = "CLI<";
-        if ( srv ) txd = srv->isn;
-        if ( cli ) rxd = cli->isn;
+        if ( srv )
+            txd = srv->isn;
+        if ( cli )
+            rxd = cli->isn;
     }
     else if ( p->packet_flags & PKT_FROM_CLIENT )
     {
         sdir = "SRV<";
         cdir = "CLI>";
-        if ( cli ) txd = cli->isn;
-        if ( srv ) rxd = srv->isn;
+        if ( cli )
+            txd = cli->isn;
+        if ( srv )
+            rxd = srv->isn;
     }
     TraceEvent(p, tdb, txd, rxd);
 
@@ -2817,14 +2837,17 @@ static void TraceTCP(
 
     if ( lws && !event )
     {
-        if ( cli ) TraceState(cli, srv, cdir);
-        if ( srv ) TraceState(srv, cli, sdir);
+        if ( cli )
+            TraceState(cli, srv, cdir);
+        if ( srv )
+            TraceState(srv, cli, sdir);
     }
 }
 
 static inline void S5TraceTCP(
     const Packet* p, const Flow* lws, TcpDataBlock* tdb, int event
-) {
+    )
+{
     if ( !s5_trace_enabled )
         return;
 
@@ -2832,7 +2855,8 @@ static inline void S5TraceTCP(
     {
         const char* s5t = getenv("S5_TRACE");
 
-        if ( !s5t ) {
+        if ( !s5t )
+        {
             s5_trace_enabled = 0;
             return;
         }
@@ -2841,14 +2865,15 @@ static inline void S5TraceTCP(
     }
     TraceTCP(p, lws, tdb, event);
 }
+
 #else
 #define S5TraceTCP(pkt, flow, tdb, evt)
 #endif  // REG_TEST
 
-static uint32_t StreamGetTcpTimestamp(Packet *p, uint32_t *ts, int strip)
+static uint32_t StreamGetTcpTimestamp(Packet* p, uint32_t* ts, int strip)
 {
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Getting timestamp...\n"););
+        "Getting timestamp...\n"); );
 
     const NormMode mode = Normalize_GetMode(NORM_TCP_OPT);
     TcpOptIterator iter(p->ptrs.tcph, p);
@@ -2856,7 +2881,7 @@ static uint32_t StreamGetTcpTimestamp(Packet *p, uint32_t *ts, int strip)
     // using const because non-const is not supported
     for (const TcpOption& opt : iter)
     {
-        if(opt.code == TcpOptCode::TIMESTAMP)
+        if (opt.code == TcpOptCode::TIMESTAMP)
         {
             if ( strip )
             {
@@ -2866,7 +2891,7 @@ static uint32_t StreamGetTcpTimestamp(Packet *p, uint32_t *ts, int strip)
             {
                 *ts = EXTRACT_32BITS(opt.data);
                 STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                "Found timestamp %lu\n", *ts););
+                    "Found timestamp %lu\n", *ts); );
 
                 return TF_TSTAMP;
             }
@@ -2875,24 +2900,24 @@ static uint32_t StreamGetTcpTimestamp(Packet *p, uint32_t *ts, int strip)
     *ts = 0;
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "No timestamp...\n"););
+        "No timestamp...\n"); );
 
     return TF_NONE;
 }
 
-static uint32_t StreamGetMss(Packet *p, uint16_t *value)
+static uint32_t StreamGetMss(Packet* p, uint16_t* value)
 {
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Getting MSS...\n"););
+        "Getting MSS...\n"); );
 
     TcpOptIterator iter(p->ptrs.tcph, p);
     for (const TcpOption& opt : iter)
     {
-        if(opt.code == TcpOptCode::MAXSEG)
+        if (opt.code == TcpOptCode::MAXSEG)
         {
             *value = EXTRACT_16BITS(opt.data);
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "Found MSS %u\n", *value););
+                "Found MSS %u\n", *value); );
             return TF_MSS;
         }
     }
@@ -2900,26 +2925,25 @@ static uint32_t StreamGetMss(Packet *p, uint16_t *value)
     *value = 0;
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "No MSS...\n"););
+        "No MSS...\n"); );
     return TF_NONE;
 }
 
-static uint32_t StreamGetWscale(Packet *p, uint16_t *value)
+static uint32_t StreamGetWscale(Packet* p, uint16_t* value)
 {
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Getting wscale...\n"););
-
+        "Getting wscale...\n"); );
 
     TcpOptIterator iter(p->ptrs.tcph, p);
 
     // using const because non-const is not supported
     for (const TcpOption& opt : iter)
     {
-        if(opt.code == TcpOptCode::WSCALE)
+        if (opt.code == TcpOptCode::WSCALE)
         {
-            *value = (uint16_t) opt.data[0];
+            *value = (uint16_t)opt.data[0];
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "Found wscale %d\n", *value););
+                "Found wscale %d\n", *value); );
 
             /* If scale specified in option is larger than 14,
              * use 14 because of limitation in the math of
@@ -2938,30 +2962,31 @@ static uint32_t StreamGetWscale(Packet *p, uint16_t *value)
 
     *value = 0;
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "No wscale...\n"););
+        "No wscale...\n"); );
     return TF_NONE;
 }
 
-static uint32_t StreamPacketHasWscale(Packet *p)
+static uint32_t StreamPacketHasWscale(Packet* p)
 {
     uint16_t wscale;
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Checking for wscale...\n"););
+        "Checking for wscale...\n"); );
     return StreamGetWscale(p, &wscale);
 }
 
 #if 0
-static inline int IsWellFormed(Packet *p, StreamTracker *ts)
+static inline int IsWellFormed(Packet* p, StreamTracker* ts)
 {
     return ( !ts->mss || (p->dsize <= ts->mss) );
 }
+
 #endif
 
-static void FinishServerInit(Packet *p, TcpDataBlock *tdb, TcpSession *ssn)
+static void FinishServerInit(Packet* p, TcpDataBlock* tdb, TcpSession* ssn)
 {
-    StreamTracker *server;
-    StreamTracker *client;
+    StreamTracker* server;
+    StreamTracker* client;
 
     if (!ssn)
     {
@@ -2982,7 +3007,7 @@ static void FinishServerInit(Packet *p, TcpDataBlock *tdb, TcpSession *ssn)
         server->l_nxt_seq--;
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-               "seglist_base_seq = %X\n", client->seglist_base_seq););
+        "seglist_base_seq = %X\n", client->seglist_base_seq); );
 
     if (!(ssn->flow->session_state & STREAM_STATE_MIDSTREAM))
     {
@@ -3009,18 +3034,18 @@ static void FinishServerInit(Packet *p, TcpDataBlock *tdb, TcpSession *ssn)
 }
 
 static void NewQueue(
-    StreamTracker *st, Packet *p, TcpDataBlock *tdb)
+    StreamTracker* st, Packet* p, TcpDataBlock* tdb)
 {
-    StreamSegment *ss = NULL;
+    StreamSegment* ss = NULL;
     uint32_t overlap = 0;
     PROFILE_VARS;
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "In NewQueue\n"););
+        "In NewQueue\n"); );
 
     MODULE_PROFILE_START(s5TcpInsertPerfStats);
 
-    if(st->flush_policy != STREAM_FLPOLICY_IGNORE)
+    if (st->flush_policy != STREAM_FLPOLICY_IGNORE)
     {
         uint32_t seq = tdb->seq;
 
@@ -3031,12 +3056,12 @@ static void NewQueue(
         if ( SEQ_GT(st->r_win_base, seq) )
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "segment overlaps ack'd data...\n"););
+                "segment overlaps ack'd data...\n"); );
             overlap = st->r_win_base - tdb->seq;
-            if(overlap >= p->dsize)
+            if (overlap >= p->dsize)
             {
                 STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "full overlap on ack'd data, dropping segment\n"););
+                    "full overlap on ack'd data, dropping segment\n"); );
                 MODULE_PROFILE_END(s5TcpInsertPerfStats);
                 return;
             }
@@ -3045,22 +3070,21 @@ static void NewQueue(
         AddStreamNode(st, p, tdb, p->dsize, overlap, 0, tdb->seq+overlap, NULL, &ss);
 
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Attached new queue to seglist, %d bytes queued, "
-                    "base_seq 0x%X\n",
-                    ss->size, st->seglist_base_seq););
+            "Attached new queue to seglist, %d bytes queued, "
+            "base_seq 0x%X\n",
+            ss->size, st->seglist_base_seq); );
     }
 
     MODULE_PROFILE_END(s5TcpInsertPerfStats);
-    return;
 }
 
-static inline int SegmentFastTrack(StreamSegment *tail, TcpDataBlock *tdb)
+static inline int SegmentFastTrack(StreamSegment* tail, TcpDataBlock* tdb)
 {
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Checking seq for fast track: %X > %X\n", tdb->seq,
-                tail->seq + tail->size););
+        "Checking seq for fast track: %X > %X\n", tdb->seq,
+        tail->seq + tail->size); );
 
-    if(SEQ_EQ(tdb->seq, tail->seq + tail->size))
+    if (SEQ_EQ(tdb->seq, tail->seq + tail->size))
         return 1;
 
     return 0;
@@ -3102,16 +3126,16 @@ static inline StreamSegment* SegmentAlloc(
 }
 
 static int AddStreamNode(
-    StreamTracker *st, Packet *p,
+    StreamTracker* st, Packet* p,
     TcpDataBlock* tdb,
     int16_t len,
     uint32_t slide,
     uint32_t trunc,
     uint32_t seq,
-    StreamSegment *left,
-    StreamSegment **retSeg)
+    StreamSegment* left,
+    StreamSegment** retSeg)
 {
-    StreamSegment *ss = NULL;
+    StreamSegment* ss = NULL;
     int32_t newSize = len - slide - trunc;
 
     if (newSize <= 0)
@@ -3121,26 +3145,26 @@ static int AddStreamNode(
          * insert it
          */
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "zero size TCP data after left & right trimming "
-                    "(len: %d slide: %d trunc: %d)\n",
-                    len, slide, trunc););
+            "zero size TCP data after left & right trimming "
+            "(len: %d slide: %d trunc: %d)\n",
+            len, slide, trunc); );
         Discard();
         NormalTrimPayloadIfWin(p, 0, tdb);
 
 #ifdef DEBUG_STREAM_EX
         {
-            StreamSegment *idx = st->seglist;
+            StreamSegment* idx = st->seglist;
             unsigned long i = 0;
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Dumping seglist, %d segments\n", st->seg_count););
+                "Dumping seglist, %d segments\n", st->seg_count); );
             while (idx)
             {
                 i++;
                 STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "%d  ptr: %p  seq: 0x%X  size: %d nxt: %p prv: %p\n",
-                        i, idx, idx->seq, idx->size, idx->next, idx->prev););
+                    "%d  ptr: %p  seq: 0x%X  size: %d nxt: %p prv: %p\n",
+                    i, idx, idx->seq, idx->size, idx->next, idx->prev); );
 
-                if(st->seg_count < i)
+                if (st->seg_count < i)
                     FatalError("Circular list\n");
 
                 idx = idx->next;
@@ -3161,16 +3185,16 @@ static int AddStreamNode(
     ss->ts = tdb->ts;
 
     /* handle the urg ptr */
-    if(p->ptrs.tcph->th_flags & TH_URG)
+    if (p->ptrs.tcph->th_flags & TH_URG)
     {
-        if(p->ptrs.tcph->urp() < p->dsize)
+        if (p->ptrs.tcph->urp() < p->dsize)
         {
-            switch(st->os_policy)
+            switch (st->os_policy)
             {
             case STREAM_POLICY_LINUX:
             case STREAM_POLICY_OLD_LINUX:
-                /* Linux, Old linux discard data from urgent pointer */
-                /* If urg pointer is 0, it's treated as a 1 */
+                /* Linux, Old linux discard data from urgent pointer
+                   If urg pointer is 0, it's treated as a 1 */
                 ss->urg_offset = p->ptrs.tcph->urp();
                 if (ss->urg_offset == 0)
                 {
@@ -3188,8 +3212,8 @@ static int AddStreamNode(
             case STREAM_POLICY_HPUX11:
             case STREAM_POLICY_HPUX10:
             case STREAM_POLICY_IRIX:
-                /* Others discard data from urgent pointer */
-                /* If urg pointer is beyond this packet, it's treated as a 0 */
+                /* Others discard data from urgent pointer
+                   If urg pointer is beyond this packet, it's treated as a 0 */
                 ss->urg_offset = p->ptrs.tcph->urp();
                 if (ss->urg_offset > p->dsize)
                 {
@@ -3209,9 +3233,9 @@ static int AddStreamNode(
     p->packet_flags |= PKT_STREAM_INSERT;
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "added %d bytes on segment list @ seq: 0x%X, total %lu, "
-                "%d segments queued\n", ss->size, ss->seq,
-                st->seg_bytes_logical, SegsToFlush(st, 0)););
+        "added %d bytes on segment list @ seq: 0x%X, total %lu, "
+        "%d segments queued\n", ss->size, ss->seq,
+        st->seg_bytes_logical, SegsToFlush(st, 0)); );
 
     *retSeg = ss;
 #ifdef SEG_TEST
@@ -3220,10 +3244,10 @@ static int AddStreamNode(
     return STREAM_INSERT_OK;
 }
 
-static int DupStreamNode(Packet *p,
-        StreamTracker *st,
-        StreamSegment *left,
-        StreamSegment **retSeg)
+static int DupStreamNode(Packet* p,
+    StreamTracker* st,
+    StreamSegment* left,
+    StreamSegment** retSeg)
 {
     StreamSegment* ss = SegmentAlloc(p, &left->tv, left->caplen, left->pktlen, left->pkt);
 
@@ -3245,17 +3269,16 @@ static int DupStreamNode(Packet *p,
     //st->total_bytes_queued += ss->size;
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "added %d bytes on segment list @ seq: 0x%X, total %lu, "
-                "%d segments queued\n", ss->size, ss->seq,
-                st->seg_bytes_logical, SegsToFlush(st, 0)););
+        "added %d bytes on segment list @ seq: 0x%X, total %lu, "
+        "%d segments queued\n", ss->size, ss->seq,
+        st->seg_bytes_logical, SegsToFlush(st, 0)); );
 
     *retSeg = ss;
     return STREAM_INSERT_OK;
-
 }
 
-static inline bool IsRetransmit(StreamSegment *seg, const uint8_t *rdata,
-        uint16_t rsize, uint32_t rseq)
+static inline bool IsRetransmit(StreamSegment* seg, const uint8_t* rdata,
+    uint16_t rsize, uint32_t rseq)
 {
     // If seg->orig_size == seg->size, then it's sequence number wasn't adjusted
     // so can just do a straight compare of the sequence numbers.
@@ -3264,7 +3287,7 @@ static inline bool IsRetransmit(StreamSegment *seg, const uint8_t *rdata,
     if (SEQ_EQ(seg->seq, rseq) && (seg->orig_dsize == seg->size))
     {
         if (((seg->size <= rsize) && (memcmp(seg->data, rdata, seg->size) == 0))
-                || ((seg->size > rsize) && (memcmp(seg->data, rdata, rsize) == 0)))
+            || ((seg->size > rsize) && (memcmp(seg->data, rdata, rsize) == 0)))
             return true;
     }
 
@@ -3274,21 +3297,21 @@ static inline bool IsRetransmit(StreamSegment *seg, const uint8_t *rdata,
 static inline void RetransmitProcess(Packet* p, TcpSession*)
 {
     // Data has already been analyzed so don't bother looking at it again.
-    DisableDetect( p );
+    DisableDetect(p);
 
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "Allowing retransmitted data "
-                "-- not blocked previously\n"););
+        "-- not blocked previously\n"); );
 }
 
 static inline void RetransmitHandle(Packet* p, TcpSession* tcpssn)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "Calling SE_REXMIT Handler\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "Calling SE_REXMIT Handler\n"); );
     tcpssn->flow->call_handlers(p, false);
 }
 
 static inline void EndOfFileHandle(Packet* p, TcpSession* tcpssn)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "Calling SE_EOF Handler\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "Calling SE_EOF Handler\n"); );
     tcpssn->flow->call_handlers(p, true);
 }
 
@@ -3300,13 +3323,13 @@ static inline NormMode get_norm_ips(StreamTracker* st)
     return Normalize_GetMode(NORM_TCP_IPS);
 }
 
-static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
-        TcpSession *tcpssn)
+static int StreamQueue(StreamTracker* st, Packet* p, TcpDataBlock* tdb,
+    TcpSession* tcpssn)
 {
-    StreamSegment *ss = NULL;
-    StreamSegment *left = NULL;
-    StreamSegment *right = NULL;
-    StreamSegment *dump_me = NULL;
+    StreamSegment* ss = NULL;
+    StreamSegment* left = NULL;
+    StreamSegment* right = NULL;
+    StreamSegment* dump_me = NULL;
     uint32_t seq = tdb->seq;
     uint32_t seq_end = tdb->end_seq;
     uint16_t len = p->dsize;
@@ -3320,7 +3343,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
     int32_t dist_tail;
     uint16_t reassembly_policy;
     // To check for retransmitted data
-    const uint8_t *rdata = p->data;
+    const uint8_t* rdata = p->data;
     uint16_t rsize = p->dsize;
     uint32_t rseq = tdb->seq;
     PROFILE_VARS;
@@ -3328,7 +3351,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
         StreamSegment *lastptr = NULL;
         uint32_t base_seq = st->seglist_base_seq;
         int last = 0;
-    );
+        );
 
     const NormMode ips_data = get_norm_ips(st);
 
@@ -3337,23 +3360,22 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
     else
         reassembly_policy = st->reassembly_policy;
 
+    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+        "Queuing %d bytes on stream!\n"
+        "base_seq: %X seq: %X  seq_end: %X\n",
+        seq_end - seq, base_seq, seq, seq_end); );
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Queuing %d bytes on stream!\n"
-                "base_seq: %X seq: %X  seq_end: %X\n",
-                seq_end - seq, base_seq, seq, seq_end););
-
+        "%d segments on seglist\n", SegsToFlush(st, 0)); );
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "%d segments on seglist\n", SegsToFlush(st, 0)););
+        "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n"); );
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n"););
-    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n"););
+        "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n"); );
 
     MODULE_PROFILE_START(s5TcpInsertPerfStats);
 
     // NORM fast tracks are in sequence - no norms
-    if(st->seglist_tail && SegmentFastTrack(st->seglist_tail, tdb))
+    if (st->seglist_tail && SegmentFastTrack(st->seglist_tail, tdb))
     {
         /* segment fit cleanly at the end of the segment list */
         left = st->seglist_tail;
@@ -3361,11 +3383,11 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
 
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
             "Fast tracking segment! (tail_seq %X size %d)\n",
-            st->seglist_tail->seq, st->seglist_tail->size););
+            st->seglist_tail->seq, st->seglist_tail->size); );
 
         ret = AddStreamNode(st, p, tdb, len,
-                slide /* 0 */, trunc /* 0 */, seq, left /* tail */,
-                &ss);
+            slide /* 0 */, trunc /* 0 */, seq, left /* tail */,
+            &ss);
 
         MODULE_PROFILE_END(s5TcpInsertPerfStats);
         return ret;
@@ -3399,72 +3421,72 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
     if (SEQ_LEQ(dist_head, dist_tail))
     {
         /* Start iterating at the head (left) */
-        for(ss = st->seglist; ss; ss = ss->next)
+        for (ss = st->seglist; ss; ss = ss->next)
         {
             STREAM_DEBUG_WRAP(
                 DebugMessage(DEBUG_STREAM_STATE,
-                    "ss: %p  seq: 0x%X  size: %lu delta: %d\n",
-                    ss, ss->seq, ss->size, (ss->seq-base_seq) - last);
+                "ss: %p  seq: 0x%X  size: %lu delta: %d\n",
+                ss, ss->seq, ss->size, (ss->seq-base_seq) - last);
                 last = ss->seq-base_seq;
                 lastptr = ss;
 
                 DebugMessage(DEBUG_STREAM_STATE,
-                    "   lastptr: %p ss->next: %p ss->prev: %p\n",
-                    lastptr, ss->next, ss->prev);
+                "   lastptr: %p ss->next: %p ss->prev: %p\n",
+                lastptr, ss->next, ss->prev);
                 );
 
             right = ss;
 
-            if(SEQ_GEQ(right->seq, seq))
+            if (SEQ_GEQ(right->seq, seq))
                 break;
 
             left = right;
         }
 
-        if(ss == NULL)
+        if (ss == NULL)
             right = NULL;
     }
     else
     {
         /* Start iterating at the tail (right) */
-        for(ss = st->seglist_tail; ss; ss = ss->prev)
+        for (ss = st->seglist_tail; ss; ss = ss->prev)
         {
             STREAM_DEBUG_WRAP(
                 DebugMessage(DEBUG_STREAM_STATE,
-                    "ss: %p  seq: 0x%X  size: %lu delta: %d\n",
-                    ss, ss->seq, ss->size, (ss->seq-base_seq) - last);
+                "ss: %p  seq: 0x%X  size: %lu delta: %d\n",
+                ss, ss->seq, ss->size, (ss->seq-base_seq) - last);
                 last = ss->seq-base_seq;
                 lastptr = ss;
 
                 DebugMessage(DEBUG_STREAM_STATE,
-                    "   lastptr: %p ss->next: %p ss->prev: %p\n",
-                    lastptr, ss->next, ss->prev);
+                "   lastptr: %p ss->next: %p ss->prev: %p\n",
+                lastptr, ss->next, ss->prev);
                 );
 
             left = ss;
 
-            if(SEQ_LT(left->seq, seq))
+            if (SEQ_LT(left->seq, seq))
                 break;
 
             right = left;
         }
 
-        if(ss == NULL)
+        if (ss == NULL)
             left = NULL;
     }
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n"););
+        "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n"); );
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n"););
+        "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n"); );
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "left: %p:0x%X  right: %p:0x%X\n", left,
-                left?left->seq:0, right, right?right->seq:0););
+        "left: %p:0x%X  right: %p:0x%X\n", left,
+        left ? left->seq : 0, right, right ? right->seq : 0); );
     /*
      * handle left overlaps
      */
-    if(left)
+    if (left)
     {
         // NOTE that left->seq is always less than seq, otherwise it would
         // be a right based on the above determination of left and right
@@ -3473,55 +3495,80 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
         overlap = left->seq + left->size - seq;
 
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "left overlap %d\n", overlap););
+            "left overlap %d\n", overlap); );
 
-        if(overlap > 0)
+        if (overlap > 0)
         {
             // NOTE that overlap will always be less than left->size since
             // seq is always greater than left->seq
             tcpStats.overlaps++;
             st->overlap_count++;
 
-            switch(reassembly_policy)
+            switch (reassembly_policy)
             {
-                case REASSEMBLY_POLICY_FIRST:
-                case REASSEMBLY_POLICY_LINUX:
-                case REASSEMBLY_POLICY_BSD:
-                case REASSEMBLY_POLICY_WINDOWS:
-                case REASSEMBLY_POLICY_WINDOWS2K3:
-                case REASSEMBLY_POLICY_VISTA:
-                case REASSEMBLY_POLICY_HPUX10:
-                case REASSEMBLY_POLICY_IRIX:
-                case REASSEMBLY_POLICY_OLD_LINUX:
-                case REASSEMBLY_POLICY_MACOS:
+            case REASSEMBLY_POLICY_FIRST:
+            case REASSEMBLY_POLICY_LINUX:
+            case REASSEMBLY_POLICY_BSD:
+            case REASSEMBLY_POLICY_WINDOWS:
+            case REASSEMBLY_POLICY_WINDOWS2K3:
+            case REASSEMBLY_POLICY_VISTA:
+            case REASSEMBLY_POLICY_HPUX10:
+            case REASSEMBLY_POLICY_IRIX:
+            case REASSEMBLY_POLICY_OLD_LINUX:
+            case REASSEMBLY_POLICY_MACOS:
+                STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                    "left overlap, honoring old data\n"); );
+                if (SEQ_LT(left->seq,tdb->seq) && SEQ_GT(left->seq + left->size, tdb->seq +
+                    p->dsize))
+                {
+                    if ( ips_data == NORM_MODE_ON )
+                    {
+                        unsigned offset = tdb->seq - left->seq;
+                        memcpy((uint8_t*)p->data, left->payload+offset, p->dsize);
+                        p->packet_flags |= PKT_MODIFIED;
+                    }
+                    normStats[PC_TCP_IPS_DATA][ips_data]++;
+                    sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA][ips_data]++;
+                }
+                else if (SEQ_LT(left->seq, tdb->seq))
+                {
+                    if ( ips_data == NORM_MODE_ON )
+                    {
+                        unsigned offset = tdb->seq - left->seq;
+                        unsigned length = left->seq + left->size - tdb->seq;
+                        memcpy((uint8_t*)p->data, left->payload+offset, length);
+                        p->packet_flags |= PKT_MODIFIED;
+                    }
+                    normStats[PC_TCP_IPS_DATA][ips_data]++;
+                    sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA][ips_data]++;
+                }
+                seq += overlap;
+                //slide = overlap;
+                if (SEQ_LEQ(seq_end, seq))
+                {
+                    /*
+                     * houston, we have a problem
+                     */
+                    /* flag an anomaly */
+                    EventBadSegment();
+                    Discard();
+                    MODULE_PROFILE_END(s5TcpInsertPerfStats);
+                    return STREAM_INSERT_ANOMALY;
+                }
+                break;
+
+            case REASSEMBLY_POLICY_SOLARIS:
+            case REASSEMBLY_POLICY_HPUX11:
+                if (SEQ_LT(left->seq, seq) && SEQ_GEQ(left->seq + left->size, seq + len))
+                {
+                    /* New packet is entirely overlapped by an
+                     * existing packet on both sides.  Drop the
+                     * new data. */
                     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                "left overlap, honoring old data\n"););
-                    if (SEQ_LT(left->seq,tdb->seq) && SEQ_GT(left->seq + left->size, tdb->seq + p->dsize))
-                    {
-                        if ( ips_data == NORM_MODE_ON )
-                        {
-                            unsigned offset = tdb->seq - left->seq;
-                            memcpy((uint8_t*)p->data, left->payload+offset, p->dsize);
-                            p->packet_flags |= PKT_MODIFIED;
-                        }
-                        normStats[PC_TCP_IPS_DATA][ips_data]++;
-                        sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA][ips_data]++;
-                    }
-                    else if (SEQ_LT(left->seq, tdb->seq))
-                    {
-                        if ( ips_data == NORM_MODE_ON )
-                        {
-                            unsigned offset = tdb->seq - left->seq;
-                            unsigned length = left->seq + left->size - tdb->seq;
-                            memcpy((uint8_t*)p->data, left->payload+offset, length);
-                            p->packet_flags |= PKT_MODIFIED;
-                        }
-                        normStats[PC_TCP_IPS_DATA][ips_data]++;
-                        sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA][ips_data]++;
-                    }
+                        "left overlap, honoring old data\n"); );
                     seq += overlap;
                     //slide = overlap;
-                    if(SEQ_LEQ(seq_end, seq))
+                    if (SEQ_LEQ(seq_end, seq))
                     {
                         /*
                          * houston, we have a problem
@@ -3532,82 +3579,58 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                         MODULE_PROFILE_END(s5TcpInsertPerfStats);
                         return STREAM_INSERT_ANOMALY;
                     }
-                    break;
+                }
 
-                case REASSEMBLY_POLICY_SOLARIS:
-                case REASSEMBLY_POLICY_HPUX11:
-                    if (SEQ_LT(left->seq, seq) && SEQ_GEQ(left->seq + left->size, seq + len))
+                /* Otherwise, trim the old data accordingly */
+                left->size -= (int16_t)overlap;
+                st->seg_bytes_logical -= overlap;
+                STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                    "left overlap, honoring new data\n"); );
+                break;
+            case REASSEMBLY_POLICY_LAST:
+                /* True "Last" policy" */
+                if (SEQ_LT(left->seq, seq) && SEQ_GT(left->seq + left->size, seq + len))
+                {
+                    /* New data is overlapped on both sides by
+                     * existing data.  Existing data needs to be
+                     * split and the new data inserted in the
+                     * middle.
+                     *
+                     * Need to duplicate left.  Adjust that
+                     * seq by + (seq + len) and
+                     * size by - (seq + len - left->seq).
+                     */
+                    ret = DupStreamNode(p, st, left, &right);
+                    if (ret != STREAM_INSERT_OK)
                     {
-                        /* New packet is entirely overlapped by an
-                         * existing packet on both sides.  Drop the
-                         * new data. */
-                        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                    "left overlap, honoring old data\n"););
-                        seq += overlap;
-                        //slide = overlap;
-                        if(SEQ_LEQ(seq_end, seq))
-                        {
-                            /*
-                             * houston, we have a problem
-                             */
-                            /* flag an anomaly */
-                            EventBadSegment();
-                            Discard();
-                            MODULE_PROFILE_END(s5TcpInsertPerfStats);
-                            return STREAM_INSERT_ANOMALY;
-                        }
+                        /* No warning,
+                         * its done in StreamSeglistAddNode */
+                        MODULE_PROFILE_END(s5TcpInsertPerfStats);
+                        return ret;
                     }
-
-                    /* Otherwise, trim the old data accordingly */
                     left->size -= (int16_t)overlap;
                     st->seg_bytes_logical -= overlap;
-                    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                "left overlap, honoring new data\n"););
-                    break;
-                case REASSEMBLY_POLICY_LAST:
-                    /* True "Last" policy" */
-                    if (SEQ_LT(left->seq, seq) && SEQ_GT(left->seq + left->size, seq + len))
-                    {
-                        /* New data is overlapped on both sides by
-                         * existing data.  Existing data needs to be
-                         * split and the new data inserted in the
-                         * middle.
-                         *
-                         * Need to duplicate left.  Adjust that
-                         * seq by + (seq + len) and
-                         * size by - (seq + len - left->seq).
-                         */
-                        ret = DupStreamNode(p, st, left, &right);
-                        if (ret != STREAM_INSERT_OK)
-                        {
-                            /* No warning,
-                             * its done in StreamSeglistAddNode */
-                            MODULE_PROFILE_END(s5TcpInsertPerfStats);
-                            return ret;
-                        }
-                        left->size -= (int16_t)overlap;
-                        st->seg_bytes_logical -= overlap;
 
-                        right->seq = seq + len;
-                        right->size -= (int16_t)(seq + len - left->seq);
-                        right->payload += (seq + len - left->seq);
-                        st->seg_bytes_logical -= (seq + len - left->seq);
-                    }
-                    else
-                    {
-                        left->size -= (int16_t)overlap;
-                        st->seg_bytes_logical -= overlap;
-                    }
+                    right->seq = seq + len;
+                    right->size -= (int16_t)(seq + len - left->seq);
+                    right->payload += (seq + len - left->seq);
+                    st->seg_bytes_logical -= (seq + len - left->seq);
+                }
+                else
+                {
+                    left->size -= (int16_t)overlap;
+                    st->seg_bytes_logical -= overlap;
+                }
 
-                    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                "left overlap, honoring new data\n"););
-                    break;
+                STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                    "left overlap, honoring new data\n"); );
+                break;
             }
 
-            if(SEQ_LEQ(seq_end, seq))
+            if (SEQ_LEQ(seq_end, seq))
             {
                 STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "seq_end < seq"););
+                    "seq_end < seq"); );
                 /*
                  * houston, we have a problem
                  */
@@ -3621,12 +3644,12 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
         else
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "No left overlap\n"););
+                "No left overlap\n"); );
         }
     }
 
     //(seq_end > right->seq) && (seq_end <= (right->seq+right->size))))
-    while(right && !done && SEQ_LT(right->seq, seq_end))
+    while (right && !done && SEQ_LT(right->seq, seq_end))
     {
         trunc = 0;
         overlap = (int)(seq_end - right->seq);
@@ -3634,14 +3657,14 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
         //right->seq + right->size - seq_end;
 
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "right overlap(%d): len: %d right->seq: 0x%X seq: 0x%X\n",
-                    overlap, len, right->seq, seq););
+            "right overlap(%d): len: %d right->seq: 0x%X seq: 0x%X\n",
+            overlap, len, right->seq, seq); );
         /* Treat sequence number overlap as a retransmission
          * Only check right side since left side happens rarely
          */
         RetransmitHandle(p, tcpssn);
 
-        if(overlap < right->size)
+        if (overlap < right->size)
         {
             if (IsRetransmit(right, rdata, rsize, rseq))
             {
@@ -3655,55 +3678,55 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
             st->overlap_count++;
 
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "Got partial right overlap\n"););
+                "Got partial right overlap\n"); );
 
-            switch(reassembly_policy)
+            switch (reassembly_policy)
             {
-                /* truncate existing data */
-                case REASSEMBLY_POLICY_LAST:
-                case REASSEMBLY_POLICY_LINUX:
-                case REASSEMBLY_POLICY_OLD_LINUX:
-                case REASSEMBLY_POLICY_BSD:
-                case REASSEMBLY_POLICY_WINDOWS:
-                case REASSEMBLY_POLICY_WINDOWS2K3:
-                case REASSEMBLY_POLICY_IRIX:
-                case REASSEMBLY_POLICY_HPUX10:
-                case REASSEMBLY_POLICY_MACOS:
-                    if (SEQ_EQ(right->seq, seq) &&
-                        (reassembly_policy != REASSEMBLY_POLICY_LAST))
-                    {
-                        slide = (right->seq + right->size - seq);
-                        seq += slide;
-                    }
-                    else
-                    {
-                        /* partial overlap */
-                        right->seq += overlap;
-                        right->payload += overlap;
-                        right->size -= (int16_t)overlap;
-                        st->seg_bytes_logical -= overlap;
-                        st->total_bytes_queued -= overlap;
-                    }
+            /* truncate existing data */
+            case REASSEMBLY_POLICY_LAST:
+            case REASSEMBLY_POLICY_LINUX:
+            case REASSEMBLY_POLICY_OLD_LINUX:
+            case REASSEMBLY_POLICY_BSD:
+            case REASSEMBLY_POLICY_WINDOWS:
+            case REASSEMBLY_POLICY_WINDOWS2K3:
+            case REASSEMBLY_POLICY_IRIX:
+            case REASSEMBLY_POLICY_HPUX10:
+            case REASSEMBLY_POLICY_MACOS:
+                if (SEQ_EQ(right->seq, seq) &&
+                    (reassembly_policy != REASSEMBLY_POLICY_LAST))
+                {
+                    slide = (right->seq + right->size - seq);
+                    seq += slide;
+                }
+                else
+                {
+                    /* partial overlap */
+                    right->seq += overlap;
+                    right->payload += overlap;
+                    right->size -= (int16_t)overlap;
+                    st->seg_bytes_logical -= overlap;
+                    st->total_bytes_queued -= overlap;
+                }
 
-                    // right->size always > 0 since overlap < right->size
+                // right->size always > 0 since overlap < right->size
 
-                    break;
+                break;
 
-                case REASSEMBLY_POLICY_FIRST:
-                case REASSEMBLY_POLICY_VISTA:
-                case REASSEMBLY_POLICY_SOLARIS:
-                case REASSEMBLY_POLICY_HPUX11:
-                    if ( ips_data == NORM_MODE_ON )
-                    {
-                        unsigned offset = right->seq - tdb->seq;
-                        unsigned length = tdb->seq + p->dsize - right->seq;
-                        memcpy((uint8_t*)p->data+offset, right->payload, length);
-                        p->packet_flags |= PKT_MODIFIED;
-                    }
-                    normStats[PC_TCP_IPS_DATA][ips_data]++;
-                    sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA][ips_data]++;
-                    trunc = overlap;
-                    break;
+            case REASSEMBLY_POLICY_FIRST:
+            case REASSEMBLY_POLICY_VISTA:
+            case REASSEMBLY_POLICY_SOLARIS:
+            case REASSEMBLY_POLICY_HPUX11:
+                if ( ips_data == NORM_MODE_ON )
+                {
+                    unsigned offset = right->seq - tdb->seq;
+                    unsigned length = tdb->seq + p->dsize - right->seq;
+                    memcpy((uint8_t*)p->data+offset, right->payload, length);
+                    p->packet_flags |= PKT_MODIFIED;
+                }
+                normStats[PC_TCP_IPS_DATA][ips_data]++;
+                sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA][ips_data]++;
+                trunc = overlap;
+                break;
             }
 
             /* all done, keep me out of the loop */
@@ -3725,7 +3748,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                 right = right->next;
 
                 if (rsize == 0)
-                {   
+                {
                     // All data was retransmitted
                     RetransmitProcess(p, tcpssn);
                     addthis = 0;
@@ -3734,162 +3757,162 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
             }
 
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "Got full right overlap\n"););
+                "Got full right overlap\n"); );
 
             tcpStats.overlaps++;
             st->overlap_count++;
 
-            switch(reassembly_policy)
+            switch (reassembly_policy)
             {
-                case REASSEMBLY_POLICY_BSD:
-                case REASSEMBLY_POLICY_LINUX:
-                case REASSEMBLY_POLICY_WINDOWS:
-                case REASSEMBLY_POLICY_WINDOWS2K3:
-                case REASSEMBLY_POLICY_HPUX10:
-                case REASSEMBLY_POLICY_IRIX:
-                case REASSEMBLY_POLICY_MACOS:
-                    if (SEQ_GEQ(seq_end, right->seq + right->size) &&
-                       SEQ_LT(seq, right->seq))
-                    {
-                        dump_me = right;
-
-                        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                    "retrans, dropping old data at seq %d, size %d\n",
-                                    right->seq, right->size););
-                        right = right->next;
-                        StreamSeglistDeleteNode(st, dump_me);
-                        break;
-                    }
-                    else
-                    {
-                        switch (reassembly_policy)
-                        {
-                        case REASSEMBLY_POLICY_WINDOWS:
-                        case REASSEMBLY_POLICY_WINDOWS2K3:
-                        case REASSEMBLY_POLICY_BSD:
-                        case REASSEMBLY_POLICY_MACOS:
-                            /* BSD/MacOS & Windows follow a FIRST policy in the
-                             * case below... */
-                             break;
-                        default:
-                            /* All others follow a LAST policy */
-                            if (SEQ_GT(seq_end, right->seq + right->size) &&
-                                SEQ_EQ(seq, right->seq))
-                            {
-                                /* When existing data is fully overlapped by new
-                                 * and sequence numbers are the same, most OSs
-                                 * follow a LAST policy.
-                                 */
-                                goto right_overlap_last;
-                            }
-                            break;
-                        }
-                    }
-                    /* Fall through */
-                case REASSEMBLY_POLICY_FIRST:
-                case REASSEMBLY_POLICY_VISTA:
-                    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                "Got full right overlap, truncating new\n"););
-                    if ( ips_data == NORM_MODE_ON )
-                    {
-                        unsigned offset = right->seq - tdb->seq;
-                        memcpy((uint8_t*)p->data+offset, right->payload, right->size);
-                        p->packet_flags |= PKT_MODIFIED;
-                    }
-                    normStats[PC_TCP_IPS_DATA][ips_data]++;
-                    sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA][ips_data]++;
-
-                    if (SEQ_EQ(right->seq, seq))
-                    {
-                        /* Overlap is greater than or equal to right->size
-                         * slide gets set before insertion */
-                        seq += right->size;
-                        left = right;
-                        right = right->next;
-
-                        /* Adjusted seq is fully overlapped */
-                        if (SEQ_EQ(seq, seq_end))
-                        {
-                            STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                        "StreamQueue got full right overlap with "
-                                        "resulting seq too high, bad segment "
-                                        "(seq: %X  seq_end: %X overlap: %lu\n",
-                                        seq, seq_end, overlap););
-                            EventBadSegment();
-                            Discard();
-                            MODULE_PROFILE_END(s5TcpInsertPerfStats);
-                            return STREAM_INSERT_ANOMALY;
-                        }
-
-                        /* No data to add on the left of right, so continue
-                         * since some of the other non-first targets may have
-                         * fallen into this case */
-                        continue;
-                    }
-
-                    /* seq is less than right->seq */
-
-                    /* trunc is reset to 0 at beginning of loop */
-                    trunc = overlap;
-
-                    /* insert this one, and see if we need to chunk it up */
-                    /* Adjust slide so that is correct relative to orig seq */
-                    slide = seq - tdb->seq;
-                    ret = AddStreamNode(st, p, tdb, len, slide, trunc, seq, left, &ss);
-                    if (ret != STREAM_INSERT_OK)
-                    {
-                        /* no warning, already done above */
-                        MODULE_PROFILE_END(s5TcpInsertPerfStats);
-                        return ret;
-                    }
-
-                    /* Set seq to end of right since overlap was greater than
-                     * or equal to right->size and inserted seq has been
-                     * truncated to beginning of right
-                     * And reset trunc to 0 since we may fall out of loop if
-                     * next right is NULL */
-                    seq = right->seq + right->size;
-                    left = right;
-                    right = right->next;
-                    trunc = 0;
-
-                    /* Keep looping since in IPS we may need to copy old
-                     * data into packet */
-                    break;
-
-                case REASSEMBLY_POLICY_HPUX11:
-                case REASSEMBLY_POLICY_SOLARIS:
-                    /* If this packet is wholly overlapping and the same size
-                     * as a previous one and we have not received the one
-                     * immediately preceeding, we take the FIRST. */
-                    if (SEQ_EQ(right->seq, seq) && (right->size == len) &&
-                        (left && !SEQ_EQ(left->seq + left->size, seq)))
-                    {
-                        trunc += overlap;
-                        if(SEQ_LEQ((int)(seq_end - trunc), seq))
-                        {
-                            STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                "StreamQueue got full right overlap with "
-                                "resulting seq too high, bad segment "
-                                "(seq: %X  seq_end: %X overlap: %lu\n",
-                                seq, seq_end, overlap););
-                            EventBadSegment();
-                            Discard();
-                            MODULE_PROFILE_END(s5TcpInsertPerfStats);
-                            return STREAM_INSERT_ANOMALY;
-                        }
-                        break;
-                    }
-                /* Fall through */
-                case REASSEMBLY_POLICY_OLD_LINUX:
-                case REASSEMBLY_POLICY_LAST:
-right_overlap_last:
-                    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                "Got full right overlap of old, dropping old\n"););
+            case REASSEMBLY_POLICY_BSD:
+            case REASSEMBLY_POLICY_LINUX:
+            case REASSEMBLY_POLICY_WINDOWS:
+            case REASSEMBLY_POLICY_WINDOWS2K3:
+            case REASSEMBLY_POLICY_HPUX10:
+            case REASSEMBLY_POLICY_IRIX:
+            case REASSEMBLY_POLICY_MACOS:
+                if (SEQ_GEQ(seq_end, right->seq + right->size) &&
+                    SEQ_LT(seq, right->seq))
+                {
                     dump_me = right;
+
+                    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                        "retrans, dropping old data at seq %d, size %d\n",
+                        right->seq, right->size); );
                     right = right->next;
                     StreamSeglistDeleteNode(st, dump_me);
                     break;
+                }
+                else
+                {
+                    switch (reassembly_policy)
+                    {
+                    case REASSEMBLY_POLICY_WINDOWS:
+                    case REASSEMBLY_POLICY_WINDOWS2K3:
+                    case REASSEMBLY_POLICY_BSD:
+                    case REASSEMBLY_POLICY_MACOS:
+                        /* BSD/MacOS & Windows follow a FIRST policy in the
+                         * case below... */
+                        break;
+                    default:
+                        /* All others follow a LAST policy */
+                        if (SEQ_GT(seq_end, right->seq + right->size) &&
+                            SEQ_EQ(seq, right->seq))
+                        {
+                            /* When existing data is fully overlapped by new
+                             * and sequence numbers are the same, most OSs
+                             * follow a LAST policy.
+                             */
+                            goto right_overlap_last;
+                        }
+                        break;
+                    }
+                }
+            /* Fall through */
+            case REASSEMBLY_POLICY_FIRST:
+            case REASSEMBLY_POLICY_VISTA:
+                STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                    "Got full right overlap, truncating new\n"); );
+                if ( ips_data == NORM_MODE_ON )
+                {
+                    unsigned offset = right->seq - tdb->seq;
+                    memcpy((uint8_t*)p->data+offset, right->payload, right->size);
+                    p->packet_flags |= PKT_MODIFIED;
+                }
+                normStats[PC_TCP_IPS_DATA][ips_data]++;
+                sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA][ips_data]++;
+
+                if (SEQ_EQ(right->seq, seq))
+                {
+                    /* Overlap is greater than or equal to right->size
+                     * slide gets set before insertion */
+                    seq += right->size;
+                    left = right;
+                    right = right->next;
+
+                    /* Adjusted seq is fully overlapped */
+                    if (SEQ_EQ(seq, seq_end))
+                    {
+                        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                            "StreamQueue got full right overlap with "
+                            "resulting seq too high, bad segment "
+                            "(seq: %X  seq_end: %X overlap: %lu\n",
+                            seq, seq_end, overlap); );
+                        EventBadSegment();
+                        Discard();
+                        MODULE_PROFILE_END(s5TcpInsertPerfStats);
+                        return STREAM_INSERT_ANOMALY;
+                    }
+
+                    /* No data to add on the left of right, so continue
+                     * since some of the other non-first targets may have
+                     * fallen into this case */
+                    continue;
+                }
+
+                /* seq is less than right->seq */
+
+                /* trunc is reset to 0 at beginning of loop */
+                trunc = overlap;
+
+                /* insert this one, and see if we need to chunk it up
+                   Adjust slide so that is correct relative to orig seq */
+                slide = seq - tdb->seq;
+                ret = AddStreamNode(st, p, tdb, len, slide, trunc, seq, left, &ss);
+                if (ret != STREAM_INSERT_OK)
+                {
+                    /* no warning, already done above */
+                    MODULE_PROFILE_END(s5TcpInsertPerfStats);
+                    return ret;
+                }
+
+                /* Set seq to end of right since overlap was greater than
+                 * or equal to right->size and inserted seq has been
+                 * truncated to beginning of right
+                 * And reset trunc to 0 since we may fall out of loop if
+                 * next right is NULL */
+                seq = right->seq + right->size;
+                left = right;
+                right = right->next;
+                trunc = 0;
+
+                /* Keep looping since in IPS we may need to copy old
+                 * data into packet */
+                break;
+
+            case REASSEMBLY_POLICY_HPUX11:
+            case REASSEMBLY_POLICY_SOLARIS:
+                /* If this packet is wholly overlapping and the same size
+                 * as a previous one and we have not received the one
+                 * immediately preceeding, we take the FIRST. */
+                if (SEQ_EQ(right->seq, seq) && (right->size == len) &&
+                    (left && !SEQ_EQ(left->seq + left->size, seq)))
+                {
+                    trunc += overlap;
+                    if (SEQ_LEQ((int)(seq_end - trunc), seq))
+                    {
+                        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                            "StreamQueue got full right overlap with "
+                            "resulting seq too high, bad segment "
+                            "(seq: %X  seq_end: %X overlap: %lu\n",
+                            seq, seq_end, overlap); );
+                        EventBadSegment();
+                        Discard();
+                        MODULE_PROFILE_END(s5TcpInsertPerfStats);
+                        return STREAM_INSERT_ANOMALY;
+                    }
+                    break;
+                }
+            /* Fall through */
+            case REASSEMBLY_POLICY_OLD_LINUX:
+            case REASSEMBLY_POLICY_LAST:
+right_overlap_last:
+                STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                    "Got full right overlap of old, dropping old\n"); );
+                dump_me = right;
+                right = right->next;
+                StreamSeglistDeleteNode(st, dump_me);
+                break;
             }
         }
     }
@@ -3904,23 +3927,22 @@ right_overlap_last:
     else
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Fully truncated right overlap\n"););
+            "Fully truncated right overlap\n"); );
     }
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "StreamQueue returning normally\n"););
+        "StreamQueue returning normally\n"); );
 
     MODULE_PROFILE_END(s5TcpInsertPerfStats);
     return ret;
 }
 
-static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
-                             Packet *p, TcpDataBlock *tdb,
-                             StreamTcpConfig* config)
+static void ProcessTcpStream(StreamTracker* rcv, TcpSession* tcpssn,
+    Packet* p, TcpDataBlock* tdb,
+    StreamTcpConfig* config)
 {
-
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "In ProcessTcpStream(), %d bytes to queue\n", p->dsize););
+        "In ProcessTcpStream(), %d bytes to queue\n", p->dsize); );
 
     if ( p->packet_flags & PKT_IGNORE )
         return;
@@ -3946,7 +3968,7 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
 
                 if (rcv->small_seg_count > config->max_consec_small_segs)
                 {
-                    /* Above threshold, log it...  in this TCP policy, 
+                    /* Above threshold, log it...  in this TCP policy,
                      * action controlled by preprocessor rule. */
                     EventMaxSmallSegsExceeded();
 
@@ -3971,18 +3993,18 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
         return;
     }
 
-    if(rcv->seg_count != 0)
+    if (rcv->seg_count != 0)
     {
-        if(rcv->flush_policy == STREAM_FLPOLICY_IGNORE)
+        if (rcv->flush_policy == STREAM_FLPOLICY_IGNORE)
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Ignoring segment due to IGNORE flush_policy\n"););
+                "Ignoring segment due to IGNORE flush_policy\n"); );
             return;
         }
         else
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "queuing segment\n"););
+                "queuing segment\n"); );
 
             if ( SEQ_GT(rcv->r_win_base, tdb->seq) )
             {
@@ -4008,12 +4030,12 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
                 (rcv->overlap_count > rcv->config->overlap_limit))
             {
                 STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "Reached the overlap limit.  Flush the data "
-                        "and kill the session if configured\n"););
+                    "Reached the overlap limit.  Flush the data "
+                    "and kill the session if configured\n"); );
                 if (p->packet_flags & PKT_FROM_CLIENT)
                 {
                     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "Flushing data on packet from the client\n"););
+                        "Flushing data on packet from the client\n"); );
                     flush_stream(tcpssn, rcv, p, PKT_FROM_CLIENT);
 
                     flush_stream(tcpssn, &tcpssn->server, p, PKT_FROM_SERVER);
@@ -4021,7 +4043,7 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
                 else
                 {
                     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "Flushing data on packet from the server\n"););
+                        "Flushing data on packet from the server\n"); );
                     flush_stream(tcpssn, rcv, p, PKT_FROM_SERVER);
 
                     flush_stream(tcpssn, &tcpssn->client, p, PKT_FROM_CLIENT);
@@ -4037,26 +4059,24 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
     }
     else
     {
-        if(rcv->flush_policy == STREAM_FLPOLICY_IGNORE)
+        if (rcv->flush_policy == STREAM_FLPOLICY_IGNORE)
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "Ignoring segment due to IGNORE flush_policy\n"););
+                "Ignoring segment due to IGNORE flush_policy\n"); );
             return;
         }
         else
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                "queuing segment\n"););
+                "queuing segment\n"); );
             NewQueue(rcv, p, tdb);
         }
     }
-
-    return;
 }
 
 static int ProcessTcpData(
-    Packet *p, StreamTracker *listener, TcpSession *tcpssn,
-    TcpDataBlock *tdb, StreamTcpConfig *config)
+    Packet* p, StreamTracker* listener, TcpSession* tcpssn,
+    TcpDataBlock* tdb, StreamTcpConfig* config)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(s5TcpDataPerfStats);
@@ -4071,7 +4091,7 @@ static int ProcessTcpData(
         else
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Bailing, data on SYN, not MAC Policy!\n"););
+                "Bailing, data on SYN, not MAC Policy!\n"); );
             NormalTrimPayloadIfSyn(p, 0, tdb);
             MODULE_PROFILE_END(s5TcpDataPerfStats);
             return STREAM_UNALIGNED;
@@ -4086,7 +4106,7 @@ static int ProcessTcpData(
             StreamGetWindow(tcpssn->flow, listener, tdb) == 0 )
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "Bailing, we're out of the window!\n"););
+                "Bailing, we're out of the window!\n"); );
             NormalTrimPayloadIfWin(p, 0, tdb);
             MODULE_PROFILE_END(s5TcpDataPerfStats);
             return STREAM_UNALIGNED;
@@ -4097,7 +4117,7 @@ static int ProcessTcpData(
         if (listener->s_mgr.state_queue == TCP_STATE_NONE)
             listener->r_nxt_ack = tdb->end_seq;
 
-        if(p->dsize != 0)
+        if (p->dsize != 0)
         {
             if ( !(tcpssn->flow->ssn_state.session_flags & SSNFLAG_STREAM_ORDER_BAD) )
                 p->packet_flags |= PKT_STREAM_ORDER_OK;
@@ -4122,8 +4142,8 @@ static int ProcessTcpData(
          * duplicate data over the original in some cases.
          */
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "out of order segment (tdb->seq: 0x%X "
-                    "l->r_nxt_ack: 0x%X!\n", tdb->seq, listener->r_nxt_ack););
+            "out of order segment (tdb->seq: 0x%X "
+            "l->r_nxt_ack: 0x%X!\n", tdb->seq, listener->r_nxt_ack); );
 
         if (listener->s_mgr.state_queue == TCP_STATE_NONE)
         {
@@ -4132,7 +4152,7 @@ static int ProcessTcpData(
                 StreamGetWindow(tcpssn->flow, listener, tdb) == 0 )
             {
                 STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "Bailing, we're out of the window!\n"););
+                    "Bailing, we're out of the window!\n"); );
                 NormalTrimPayloadIfWin(p, 0, tdb);
                 MODULE_PROFILE_END(s5TcpDataPerfStats);
                 return STREAM_UNALIGNED;
@@ -4151,7 +4171,7 @@ static int ProcessTcpData(
             }
         }
 
-        if(p->dsize != 0)
+        if (p->dsize != 0)
         {
             if ( !(tcpssn->flow->ssn_state.session_flags & SSNFLAG_STREAM_ORDER_BAD) )
             {
@@ -4166,12 +4186,12 @@ static int ProcessTcpData(
     return STREAM_UNALIGNED;
 }
 
-void SetTcpReassemblyPolicy(StreamTracker *st)
+void SetTcpReassemblyPolicy(StreamTracker* st)
 {
     st->reassembly_policy = GetTcpReassemblyPolicy(st->os_policy);
 }
 
-static void SetOSPolicy(Flow* flow, TcpSession *tcpssn)
+static void SetOSPolicy(Flow* flow, TcpSession* tcpssn)
 {
     if ( !tcpssn->client.os_policy )
     {
@@ -4194,7 +4214,7 @@ static void SetOSPolicy(Flow* flow, TcpSession *tcpssn)
  * there is no guarantee of memory alignment (and thus performance
  * issues similar to memcmp). */
 static inline int ValidMacAddress(
-    StreamTracker *talker, StreamTracker *listener, Packet *p)
+    StreamTracker* talker, StreamTracker* listener, Packet* p)
 {
     int i, j, ret = 0;
 
@@ -4202,7 +4222,7 @@ static inline int ValidMacAddress(
         return 0;
 
     // if flag is set, gauranteed to have an eth layer
-    const eth::EtherHdr *eh = layer::get_eth_layer(p);
+    const eth::EtherHdr* eh = layer::get_eth_layer(p);
 
     for ( i = 0; i < 6; ++i )
     {
@@ -4219,9 +4239,9 @@ static inline int ValidMacAddress(
     if ( i < 6 && j < 6 )
     {
         if (
-            !memcmp(talker->mac_addr, eh->ether_dst, 6) &&   
-            !memcmp(listener->mac_addr, eh->ether_src, 6) 
-        )
+            !memcmp(talker->mac_addr, eh->ether_dst, 6) &&
+            !memcmp(listener->mac_addr, eh->ether_src, 6)
+            )
             // this is prolly a tap
             return 0;
     }
@@ -4244,7 +4264,7 @@ static inline int ValidMacAddress(
 }
 
 static inline void CopyMacAddr(
-    Packet *p, TcpSession *tcpssn, int dir)
+    Packet* p, TcpSession* tcpssn, int dir)
 {
     int i;
 
@@ -4253,12 +4273,12 @@ static inline void CopyMacAddr(
         return;
 
     // if flag is set, gauranteed to have an eth layer
-    const eth::EtherHdr *eh = layer::get_eth_layer(p);
+    const eth::EtherHdr* eh = layer::get_eth_layer(p);
 
     if (dir == FROM_CLIENT)
     {
         /* Client is SRC */
-        for (i=0;i<6;i++)
+        for (i=0; i<6; i++)
         {
             tcpssn->client.mac_addr[i] = eh->ether_src[i];
             tcpssn->server.mac_addr[i] = eh->ether_dst[i];
@@ -4267,7 +4287,7 @@ static inline void CopyMacAddr(
     else
     {
         /* Server is SRC */
-        for (i=0;i<6;i++)
+        for (i=0; i<6; i++)
         {
             tcpssn->server.mac_addr[i] = eh->ether_src[i];
             tcpssn->client.mac_addr[i] = eh->ether_dst[i];
@@ -4296,7 +4316,7 @@ static void NewTcpSession(
 
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "adding TcpSession to lightweight session\n"););
+            "adding TcpSession to lightweight session\n"); );
         lwssn->protocol = p->type();
         tmp->flow = lwssn;
 
@@ -4362,8 +4382,8 @@ static void NewTcpSession(
 }
 
 static void NewTcpSessionOnSyn(
-    Packet *p, Flow *lwssn,
-    TcpDataBlock *tdb, StreamTcpConfig *dstPolicy)
+    Packet* p, Flow* lwssn,
+    TcpDataBlock* tdb, StreamTcpConfig* dstPolicy)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(s5TcpNewSessPerfStats);
@@ -4374,11 +4394,11 @@ static void NewTcpSessionOnSyn(
          *****************************************************************/
         tmp = (TcpSession*)lwssn->session;
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Creating new session tracker on SYN!\n"););
+            "Creating new session tracker on SYN!\n"); );
 
         lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
 
-        if(p->ptrs.tcph->are_flags_set(TH_CWR|TH_ECE))
+        if (p->ptrs.tcph->are_flags_set(TH_CWR|TH_ECE))
         {
             lwssn->ssn_state.session_flags |= SSNFLAG_ECN_CLIENT_QUERY;
         }
@@ -4400,7 +4420,7 @@ static void NewTcpSessionOnSyn(
         tmp->server.r_win_base = tdb->seq+1;
 
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "seglist_base_seq = %X\n", tmp->server.seglist_base_seq););
+            "seglist_base_seq = %X\n", tmp->server.seglist_base_seq); );
         tmp->server.s_mgr.state = TCP_STATE_LISTEN;
 
         tmp->client.flags |= StreamGetTcpTimestamp(p, &tmp->client.ts_last, 0);
@@ -4408,7 +4428,6 @@ static void NewTcpSessionOnSyn(
             tmp->client.flags |= TF_TSTAMP_ZERO;
         tmp->client.flags |= StreamGetMss(p, &tmp->client.mss);
         tmp->client.flags |= StreamGetWscale(p, &tmp->client.wscale);
-
 
         /* Set the StreamTcpConfig for each direction (pkt from client) */
         tmp->client.config = dstPolicy;  // FIXIT-M use external binding for both dirs
@@ -4422,8 +4441,8 @@ static void NewTcpSessionOnSyn(
 }
 
 static void NewTcpSessionOnSynAck(
-    Packet *p, Flow *lwssn,
-    TcpDataBlock *tdb, StreamTcpConfig *dstPolicy)
+    Packet* p, Flow* lwssn,
+    TcpDataBlock* tdb, StreamTcpConfig* dstPolicy)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(s5TcpNewSessPerfStats);
@@ -4431,11 +4450,11 @@ static void NewTcpSessionOnSynAck(
     {
         tmp = (TcpSession*)lwssn->session;
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Creating new session tracker on SYN_ACK!\n"););
+            "Creating new session tracker on SYN_ACK!\n"); );
 
         lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
 
-        if(p->ptrs.tcph->are_flags_set(TH_CWR|TH_ECE))
+        if (p->ptrs.tcph->are_flags_set(TH_CWR|TH_ECE))
         {
             lwssn->ssn_state.session_flags |= SSNFLAG_ECN_SERVER_REPLY;
         }
@@ -4459,7 +4478,7 @@ static void NewTcpSessionOnSynAck(
         tmp->client.isn = tdb->ack-1;
 
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "seglist_base_seq = %X\n", tmp->client.seglist_base_seq););
+            "seglist_base_seq = %X\n", tmp->client.seglist_base_seq); );
         tmp->client.s_mgr.state = TCP_STATE_SYN_SENT;
 
         tmp->server.flags |= StreamGetTcpTimestamp(p, &tmp->server.ts_last, 0);
@@ -4480,8 +4499,8 @@ static void NewTcpSessionOnSynAck(
 }
 
 static void NewTcpSessionOn3Way(
-    Packet *p, Flow *lwssn,
-    TcpDataBlock *tdb, StreamTcpConfig *dstPolicy)
+    Packet* p, Flow* lwssn,
+    TcpDataBlock* tdb, StreamTcpConfig* dstPolicy)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(s5TcpNewSessPerfStats);
@@ -4492,11 +4511,11 @@ static void NewTcpSessionOn3Way(
          *****************************************************************/
         tmp = (TcpSession*)lwssn->session;
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Creating new session tracker on ACK!\n"););
+            "Creating new session tracker on ACK!\n"); );
 
         lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
 
-        if(p->ptrs.tcph->are_flags_set(TH_CWR|TH_ECE))
+        if (p->ptrs.tcph->are_flags_set(TH_CWR|TH_ECE))
         {
             lwssn->ssn_state.session_flags |= SSNFLAG_ECN_CLIENT_QUERY;
         }
@@ -4515,7 +4534,7 @@ static void NewTcpSessionOn3Way(
         tmp->server.r_win_base = tdb->seq+1;
 
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "seglist_base_seq = %X\n", tmp->server.seglist_base_seq););
+            "seglist_base_seq = %X\n", tmp->server.seglist_base_seq); );
         tmp->server.s_mgr.state = TCP_STATE_ESTABLISHED;
 
         tmp->client.flags |= StreamGetTcpTimestamp(p, &tmp->client.ts_last, 0);
@@ -4536,8 +4555,8 @@ static void NewTcpSessionOn3Way(
 }
 
 static void NewTcpSessionOnData(
-    Packet *p, Flow *lwssn,
-    TcpDataBlock *tdb, StreamTcpConfig *dstPolicy)
+    Packet* p, Flow* lwssn,
+    TcpDataBlock* tdb, StreamTcpConfig* dstPolicy)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(s5TcpNewSessPerfStats);
@@ -4545,17 +4564,17 @@ static void NewTcpSessionOnData(
     {
         tmp = (TcpSession*)lwssn->session;
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Creating new session tracker on data packet (ACK|PSH)!\n"););
+            "Creating new session tracker on data packet (ACK|PSH)!\n"); );
 
         if (lwssn->ssn_state.direction == FROM_CLIENT)
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "Session direction is FROM_CLIENT\n"););
+                "Session direction is FROM_CLIENT\n"); );
 
             /* Sender is client (src port is higher) */
             lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
 
-            if(p->ptrs.tcph->are_flags_set(TH_CWR|TH_ECE))
+            if (p->ptrs.tcph->are_flags_set(TH_CWR|TH_ECE))
             {
                 lwssn->ssn_state.session_flags |= SSNFLAG_ECN_CLIENT_QUERY;
             }
@@ -4579,7 +4598,7 @@ static void NewTcpSessionOnData(
             tmp->server.l_unackd = tdb->ack - 1;
 
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "seglist_base_seq = %X\n", tmp->server.seglist_base_seq););
+                "seglist_base_seq = %X\n", tmp->server.seglist_base_seq); );
             tmp->server.s_mgr.state = TCP_STATE_ESTABLISHED;
 
             tmp->client.flags |= StreamGetTcpTimestamp(p, &tmp->client.ts_last, 0);
@@ -4597,7 +4616,7 @@ static void NewTcpSessionOnData(
         else
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "Session direction is FROM_SERVER\n"););
+                "Session direction is FROM_SERVER\n"); );
 
             /* Sender is server (src port is lower) */
             lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
@@ -4621,7 +4640,7 @@ static void NewTcpSessionOnData(
             tmp->client.isn = tdb->ack-1;
 
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "seglist_base_seq = %X\n", tmp->client.seglist_base_seq););
+                "seglist_base_seq = %X\n", tmp->client.seglist_base_seq); );
             tmp->client.s_mgr.state = TCP_STATE_ESTABLISHED;
 
             tmp->server.flags |= StreamGetTcpTimestamp(p, &tmp->server.ts_last, 0);
@@ -4643,8 +4662,8 @@ static void NewTcpSessionOnData(
 }
 
 static int RepeatedSyn(
-    StreamTracker *listener, StreamTracker *talker,
-    TcpDataBlock *tdb, TcpSession *tcpssn)
+    StreamTracker* listener, StreamTracker* talker,
+    TcpDataBlock* tdb, TcpSession* tcpssn)
 {
     switch (listener->os_policy)
     {
@@ -4659,7 +4678,7 @@ static int RepeatedSyn(
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Got syn on established windows ssn, which causes Reset,"
-                "bailing\n"););
+                "bailing\n"); );
             tcpssn->flow->ssn_state.session_flags |= SSNFLAG_RESET;
             talker->s_mgr.state = TCP_STATE_CLOSED;
             return ACTION_RST;
@@ -4668,7 +4687,7 @@ static int RepeatedSyn(
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Got syn on established windows ssn, not causing Reset,"
-                "bailing\n"););
+                "bailing\n"); );
             Discard();
             return ACTION_NOTHING;
         }
@@ -4677,7 +4696,7 @@ static int RepeatedSyn(
         /* MACOS ignores a 2nd SYN, regardless of the sequence number. */
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
             "Got syn on established macos ssn, not causing Reset,"
-            "bailing\n"););
+            "bailing\n"); );
         Discard();
         return ACTION_NOTHING;
         break;
@@ -4691,10 +4710,10 @@ static int RepeatedSyn(
     case STREAM_POLICY_HPUX10:
     case STREAM_POLICY_IRIX:
         /* If its not a retransmission of the actual SYN... RESET */
-        if(!SEQ_EQ(tdb->seq,talker->isn))
+        if (!SEQ_EQ(tdb->seq,talker->isn))
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Got syn on established ssn, which causes Reset, bailing\n"););
+                "Got syn on established ssn, which causes Reset, bailing\n"); );
             tcpssn->flow->ssn_state.session_flags |= SSNFLAG_RESET;
             talker->s_mgr.state = TCP_STATE_CLOSED;
             return ACTION_RST;
@@ -4703,7 +4722,7 @@ static int RepeatedSyn(
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Got syn on established ssn, not causing Reset,"
-                "bailing\n"););
+                "bailing\n"); );
             Discard();
             return ACTION_NOTHING;
         }
@@ -4767,7 +4786,7 @@ static void LogTcpEvents(int eventcode)
 }
 
 static int ProcessTcp(
-    Flow *lwssn, Packet *p, TcpDataBlock *tdb,
+    Flow* lwssn, Packet* p, TcpDataBlock* tdb,
     StreamTcpConfig* config)
 {
     int retcode = ACTION_NOTHING;
@@ -4775,16 +4794,16 @@ static int ProcessTcp(
     int got_ts = 0;
     int new_ssn = 0;
     int ts_action = ACTION_NOTHING;
-    TcpSession *tcpssn = NULL;
-    StreamTracker *talker = NULL;
-    StreamTracker *listener = NULL;
-    STREAM_DEBUG_WRAP(char *t = NULL; char *l = NULL;)
+    TcpSession* tcpssn = NULL;
+    StreamTracker* talker = NULL;
+    StreamTracker* listener = NULL;
+    STREAM_DEBUG_WRAP(char* t = NULL; char* l = NULL; )
     PROFILE_VARS;
 
     if (lwssn->protocol != PktType::TCP)
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Lightweight session not TCP on TCP packet\n"););
+            "Lightweight session not TCP on TCP packet\n"); );
         return retcode;
     }
 
@@ -4812,14 +4831,14 @@ static int ProcessTcp(
         if ( p->ptrs.tcph->is_syn_only() )
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Stream SYN PACKET, establishing lightweight"
-                    "session direction.\n"););
+                "Stream SYN PACKET, establishing lightweight"
+                "session direction.\n"); );
             /* SYN packet from client */
             lwssn->ssn_state.direction = FROM_CLIENT;
             lwssn->session_state |= STREAM_STATE_SYN;
 
             if ( require3Way || (StreamPacketHasWscale(p) & TF_WSCALE) ||
-                 (p->dsize > 0) )
+                (p->dsize > 0) )
             {
                 /* Create TCP session if we
                  * 1) require 3-WAY HS, OR
@@ -4840,8 +4859,8 @@ static int ProcessTcp(
                 (lwssn->ssn_state.session_flags & SSNFLAG_RESET))
             {
                 STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "Stream SYN|ACK PACKET, establishing lightweight"
-                        "session direction.\n"););
+                    "Stream SYN|ACK PACKET, establishing lightweight"
+                    "session direction.\n"); );
                 lwssn->ssn_state.direction = FROM_SERVER;
             }
             lwssn->session_state |= STREAM_STATE_SYN_ACK;
@@ -4857,8 +4876,8 @@ static int ProcessTcp(
             p->ptrs.tcph->is_ack() && !p->ptrs.tcph->is_rst() &&
             (lwssn->session_state & STREAM_STATE_SYN_ACK) )
         {
-            /* TODO: do we need to verify the ACK field is >= the seq of the SYN-ACK? */
-            /* 3-way Handshake complete, create TCP session */
+            /* TODO: do we need to verify the ACK field is >= the seq of the SYN-ACK?
+               3-way Handshake complete, create TCP session */
             lwssn->session_state |= STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED;
             NewTcpSessionOn3Way(p, lwssn, tdb, config);
             new_ssn = 1;
@@ -4867,8 +4886,8 @@ static int ProcessTcp(
         }
         else if ( p->dsize && (!require3Way || allow_midstream) )
         {
-            /* create session on data, need to figure out direction, etc */
-            /* Assume from client, can update later */
+            /* create session on data, need to figure out direction, etc
+               Assume from client, can update later */
             if (p->ptrs.sp > p->ptrs.dp)
                 lwssn->ssn_state.direction = FROM_CLIENT;
             else
@@ -4895,7 +4914,7 @@ static int ProcessTcp(
     {
         /* If session is already marked as established */
         if ( !(lwssn->session_state & STREAM_STATE_ESTABLISHED) &&
-             (!config->require_3whs() || config->midstream_allowed(p)) )
+            (!config->require_3whs() || config->midstream_allowed(p)) )
         {
             /* If not requiring 3-way Handshake... */
 
@@ -4925,10 +4944,10 @@ static int ProcessTcp(
     /* figure out direction of this packet */
     lwssn->set_direction(p);
 
-    if(p->packet_flags & PKT_FROM_SERVER)
+    if (p->packet_flags & PKT_FROM_SERVER)
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Stream: Updating on packet from server\n"););
+            "Stream: Updating on packet from server\n"); );
         lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
 
         if (tcpssn->tcp_init)
@@ -4938,8 +4957,8 @@ static int ProcessTcp(
         }
 
         STREAM_DEBUG_WRAP(
-                t = "Server";
-                l = "Client");
+            t = "Server";
+            l = "Client");
 
         if ( talker && talker->s_mgr.state == TCP_STATE_LISTEN &&
             ((p->ptrs.tcph->th_flags & (TH_SYN|TH_ACK)) == TH_SYN) )
@@ -4951,7 +4970,7 @@ static int ProcessTcp(
             !(lwssn->session_state & STREAM_STATE_ESTABLISHED))
         {
             FinishServerInit(p, tdb, tcpssn);
-            if((p->ptrs.tcph->th_flags & TH_ECE) &&
+            if ((p->ptrs.tcph->th_flags & TH_ECE) &&
                 lwssn->ssn_state.session_flags & SSNFLAG_ECN_CLIENT_QUERY)
             {
                 lwssn->ssn_state.session_flags |= SSNFLAG_ECN_SERVER_REPLY;
@@ -4971,7 +4990,7 @@ static int ProcessTcp(
     else
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Stream: Updating on packet from client\n"););
+            "Stream: Updating on packet from client\n"); );
         /* if we got here we had to see the SYN already... */
         lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
         if (tcpssn->tcp_init)
@@ -4981,8 +5000,8 @@ static int ProcessTcp(
         }
 
         STREAM_DEBUG_WRAP(
-                t = "Client";
-                l = "Server";);
+            t = "Client";
+            l = "Server"; );
 
         if ((lwssn->session_state & STREAM_STATE_MIDSTREAM) &&
             !(lwssn->session_state & STREAM_STATE_ESTABLISHED))
@@ -5008,8 +5027,8 @@ static int ProcessTcp(
             (listener->s_mgr.state == TCP_STATE_CLOSED) ||
             (talker->s_mgr.state == TCP_STATE_CLOSED) )
         {
-            /* Listener previously issued a reset */
-            /* Talker is re-SYN-ing */
+            /* Listener previously issued a reset
+               Talker is re-SYN-ing */
             // FIXIT-L this leads to bogus 129:20
             TcpSessionCleanup(lwssn, 1);
 
@@ -5057,7 +5076,7 @@ static int ProcessTcp(
                 lwssn->set_ttl(p, false);
                 NewTcpSessionOnSynAck(p, lwssn, tdb, config);
                 tcpStats.resyns++;
-                tcpssn = (TcpSession *)lwssn->session;
+                tcpssn = (TcpSession*)lwssn->session;
                 new_ssn = 1;
 
                 bool require3Way = config->require_3whs();
@@ -5071,7 +5090,7 @@ static int ProcessTcp(
             }
         }
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Got SYN pkt on reset ssn, re-SYN-ing\n"););
+            "Got SYN pkt on reset ssn, re-SYN-ing\n"); );
     }
 
     // FIXIT-L why flush here instead of just purge?
@@ -5104,7 +5123,7 @@ static int ProcessTcp(
             if ( Normalize_GetMode(NORM_TCP_TRIM_SYN) == NORM_MODE_OFF )
             {
                 STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Got data on SYN packet, not processing it\n"););
+                    "Got data on SYN packet, not processing it\n"); );
                 //EventDataOnSyn(config);
                 eventcode |= EVENT_DATA_ON_SYN;
                 retcode |= ACTION_BAD_PKT;
@@ -5120,34 +5139,34 @@ static int ProcessTcp(
     }
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "   %s [talker] state: %s\n", t,
-                state_names[talker->s_mgr.state]););
+        "   %s [talker] state: %s\n", t,
+        state_names[talker->s_mgr.state]); );
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "   %s state: %s(%d)\n", l,
-                state_names[listener->s_mgr.state],
-                listener->s_mgr.state););
+        "   %s state: %s(%d)\n", l,
+        state_names[listener->s_mgr.state],
+        listener->s_mgr.state); );
 
     // may find better placement to eliminate redundant flag checks
-    if(p->ptrs.tcph->th_flags & TH_SYN)
+    if (p->ptrs.tcph->th_flags & TH_SYN)
         talker->s_mgr.sub_state |= SUB_SYN_SENT;
-    if(p->ptrs.tcph->th_flags & TH_ACK)
+    if (p->ptrs.tcph->th_flags & TH_ACK)
         talker->s_mgr.sub_state |= SUB_ACK_SENT;
 
     /*
      * process SYN ACK on unestablished sessions
      */
-    if( (TCP_STATE_SYN_SENT == listener->s_mgr.state) &&
+    if ( (TCP_STATE_SYN_SENT == listener->s_mgr.state) &&
         (TCP_STATE_LISTEN == talker->s_mgr.state) )
     {
-        if(p->ptrs.tcph->th_flags & TH_ACK)
+        if (p->ptrs.tcph->th_flags & TH_ACK)
         {
             /*
              * make sure we've got a valid segment
              */
-            if(!IsBetween(listener->l_unackd, listener->l_nxt_seq, tdb->ack))
+            if (!IsBetween(listener->l_unackd, listener->l_nxt_seq, tdb->ack))
             {
                 STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "Pkt ack is out of bounds, bailing!\n"););
+                    "Pkt ack is out of bounds, bailing!\n"); );
                 Discard();
                 NormalTrimPayloadIfWin(p, 0, tdb);
                 LogTcpEvents(eventcode);
@@ -5163,20 +5182,20 @@ static int ProcessTcp(
         /*
          * catch resets sent by server
          */
-        if(p->ptrs.tcph->th_flags & TH_RST)
+        if (p->ptrs.tcph->th_flags & TH_RST)
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "got RST\n"););
+                "got RST\n"); );
 
             NormalTrimPayloadIfRst(p, 0, tdb);
 
             /* Reset is valid when in SYN_SENT if the
              * ack field ACKs the SYN.
              */
-            if(ValidRstSynSent(listener, tdb))
+            if (ValidRstSynSent(listener, tdb))
             {
                 STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "got RST, closing talker\n"););
+                    "got RST, closing talker\n"); );
                 /* Reset is valid */
                 /* Mark session as reset... Leave it around so that any
                  * additional data sent from one side or the other isn't
@@ -5192,7 +5211,7 @@ static int ProcessTcp(
             }
             /* Reset not valid. */
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "bad sequence number, bailing\n"););
+                "bad sequence number, bailing\n"); );
             Discard();
             eventcode |= EVENT_BAD_RST;
             NormalDropPacketIf(p, NORM_TCP_BLOCK);
@@ -5204,7 +5223,7 @@ static int ProcessTcp(
         /*
          * finish up server init
          */
-        if(p->ptrs.tcph->th_flags & TH_SYN)
+        if (p->ptrs.tcph->th_flags & TH_SYN)
         {
             FinishServerInit(p, tdb, tcpssn);
             if (talker->flags & TF_TSTAMP)
@@ -5213,15 +5232,15 @@ static int ProcessTcp(
                 talker->ts_last = tdb->ts;
             }
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "Finish server init got called!\n"););
+                "Finish server init got called!\n"); );
         }
         else
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "Finish server init didn't get called!\n"););
+                "Finish server init didn't get called!\n"); );
         }
 
-        if((p->ptrs.tcph->th_flags & TH_ECE) &&
+        if ((p->ptrs.tcph->th_flags & TH_ECE) &&
             lwssn->ssn_state.session_flags & SSNFLAG_ECN_CLIENT_QUERY)
         {
             lwssn->ssn_state.session_flags |= SSNFLAG_ECN_SERVER_REPLY;
@@ -5232,7 +5251,7 @@ static int ProcessTcp(
          */
         listener->s_mgr.state = TCP_STATE_SYN_SENT;
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Accepted SYN ACK\n"););
+            "Accepted SYN ACK\n"); );
         LogTcpEvents(eventcode);
         MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode;
@@ -5264,21 +5283,22 @@ static int ProcessTcp(
     /*
      * check RST validity
      */
-    if(p->ptrs.tcph->th_flags & TH_RST)
+    if (p->ptrs.tcph->th_flags & TH_RST)
     {
         NormalTrimPayloadIfRst(p, 0, tdb);
 
-        if(ValidRst(lwssn, listener, tdb))
+        if (ValidRst(lwssn, listener, tdb))
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Got RST, bailing\n"););
+                "Got RST, bailing\n"); );
 
             if (
                 listener->s_mgr.state == TCP_STATE_FIN_WAIT_1 ||
                 listener->s_mgr.state == TCP_STATE_FIN_WAIT_2 ||
                 listener->s_mgr.state == TCP_STATE_CLOSE_WAIT ||
                 listener->s_mgr.state == TCP_STATE_CLOSING
-            ) {
+                )
+            {
                 StreamFlushTalker(p, lwssn);
                 StreamFlushListener(p, lwssn);
                 lwssn->free_application_data();
@@ -5299,7 +5319,7 @@ static int ProcessTcp(
         }
         /* Reset not valid. */
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "bad sequence number, bailing\n"););
+            "bad sequence number, bailing\n"); );
         Discard();
         eventcode |= EVENT_BAD_RST;
         NormalDropPacketIf(p, NORM_TCP_BLOCK);
@@ -5311,11 +5331,11 @@ static int ProcessTcp(
     {
         /* check for valid seqeuence/retrans */
         if ( listener->config->policy != STREAM_POLICY_PROXY and
-            (listener->s_mgr.state >= TCP_STATE_ESTABLISHED) and
+                (listener->s_mgr.state >= TCP_STATE_ESTABLISHED) and
             !ValidSeq(p, lwssn, listener, tdb) )
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "bad sequence number, bailing\n"););
+                "bad sequence number, bailing\n"); );
             Discard();
             NormalTrimPayloadIfWin(p, 0, tdb);
             LogTcpEvents(eventcode);
@@ -5327,7 +5347,7 @@ static int ProcessTcp(
     if (ts_action != ACTION_NOTHING)
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "bad timestamp, bailing\n"););
+            "bad timestamp, bailing\n"); );
         Discard();
         // this packet was normalized elsewhere
         LogTcpEvents(eventcode);
@@ -5339,15 +5359,15 @@ static int ProcessTcp(
      * update PAWS timestamps
      */
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "PAWS update tdb->seq %lu > listener->r_win_base %lu\n",
-                tdb->seq, listener->r_win_base););
-    if(got_ts && SEQ_EQ(listener->r_win_base, tdb->seq))
+        "PAWS update tdb->seq %lu > listener->r_win_base %lu\n",
+        tdb->seq, listener->r_win_base); );
+    if (got_ts && SEQ_EQ(listener->r_win_base, tdb->seq))
     {
-        if((int32_t)(tdb->ts - talker->ts_last) >= 0 ||
-           (uint32_t)p->pkth->ts.tv_sec >= talker->ts_last_pkt+PAWS_24DAYS)
+        if ((int32_t)(tdb->ts - talker->ts_last) >= 0 ||
+            (uint32_t)p->pkth->ts.tv_sec >= talker->ts_last_pkt+PAWS_24DAYS)
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "updating timestamps...\n"););
+                "updating timestamps...\n"); );
             talker->ts_last = tdb->ts;
             talker->ts_last_pkt = p->pkth->ts.tv_sec;
         }
@@ -5355,7 +5375,7 @@ static int ProcessTcp(
     else
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "not updating timestamps...\n"););
+            "not updating timestamps...\n"); );
     }
 
     /*
@@ -5366,10 +5386,9 @@ static int ProcessTcp(
     {
         int action;
         if ( !SEQ_EQ(tdb->seq, talker->isn) &&
-             NormalDropPacketIf(p, NORM_TCP_BLOCK) )
+            NormalDropPacketIf(p, NORM_TCP_BLOCK) )
             action = ACTION_BAD_PKT;
-        else
-        if ( talker->s_mgr.state >= TCP_STATE_ESTABLISHED )
+        else if ( talker->s_mgr.state >= TCP_STATE_ESTABLISHED )
             action = RepeatedSyn(listener, talker, tdb, tcpssn);
         else
             action = ACTION_NOTHING;
@@ -5392,7 +5411,7 @@ static int ProcessTcp(
         if (listener->config->max_window && (tdb->win > listener->config->max_window))
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Got window that was beyond the allowed policy value, bailing\n"););
+                "Got window that was beyond the allowed policy value, bailing\n"); );
             /* got a window too large, alert! */
             eventcode |= EVENT_WINDOW_TOO_LARGE;
             Discard();
@@ -5407,7 +5426,7 @@ static int ProcessTcp(
             && !(lwssn->ssn_state.session_flags & SSNFLAG_MIDSTREAM))
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Window slammed shut!\n"););
+                "Window slammed shut!\n"); );
             /* got a window slam alert! */
             eventcode |= EVENT_WINDOW_SLAM;
             Discard();
@@ -5421,16 +5440,16 @@ static int ProcessTcp(
         }
     }
 
-    if(talker->s_mgr.state_queue != TCP_STATE_NONE)
+    if (talker->s_mgr.state_queue != TCP_STATE_NONE)
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Found queued state transition on ack 0x%X, "
-                    "current 0x%X!\n", talker->s_mgr.transition_seq,
-                    tdb->ack););
-        if(tdb->ack == talker->s_mgr.transition_seq)
+            "Found queued state transition on ack 0x%X, "
+            "current 0x%X!\n", talker->s_mgr.transition_seq,
+            tdb->ack); );
+        if (tdb->ack == talker->s_mgr.transition_seq)
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "accepting transition!\n"););
+                "accepting transition!\n"); );
             talker->s_mgr.state = talker->s_mgr.state_queue;
             talker->s_mgr.state_queue = TCP_STATE_NONE;
         }
@@ -5439,156 +5458,156 @@ static int ProcessTcp(
     /*
      * process ACK flags
      */
-    if(p->ptrs.tcph->th_flags & TH_ACK)
+    if (p->ptrs.tcph->th_flags & TH_ACK)
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Got an ACK...\n"););
+            "Got an ACK...\n"); );
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "   %s [listener] state: %s\n", l,
-                    state_names[listener->s_mgr.state]););
+            "   %s [listener] state: %s\n", l,
+            state_names[listener->s_mgr.state]); );
 
-        switch(listener->s_mgr.state)
+        switch (listener->s_mgr.state)
         {
-            case TCP_STATE_SYN_SENT:
-                    break;
-            case TCP_STATE_SYN_RCVD:
-                STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "listener state is SYN_SENT...\n"););
-                if ( IsBetween(listener->l_unackd, listener->l_nxt_seq, tdb->ack) )
+        case TCP_STATE_SYN_SENT:
+            break;
+        case TCP_STATE_SYN_RCVD:
+            STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                "listener state is SYN_SENT...\n"); );
+            if ( IsBetween(listener->l_unackd, listener->l_nxt_seq, tdb->ack) )
+            {
+                UpdateSsn(p, listener, talker, tdb);
+                lwssn->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
+                lwssn->session_state |= STREAM_STATE_ESTABLISHED;
+                listener->s_mgr.state = TCP_STATE_ESTABLISHED;
+                talker->s_mgr.state = TCP_STATE_ESTABLISHED;
+                StreamUpdatePerfBaseState(&sfBase, lwssn, TCP_STATE_ESTABLISHED);
+                /* Indicate this packet completes 3-way handshake */
+                p->packet_flags |= PKT_STREAM_TWH;
+            }
+
+            talker->flags |= got_ts;
+            if (got_ts && SEQ_EQ(listener->r_nxt_ack, tdb->seq))
+            {
+                talker->ts_last_pkt = p->pkth->ts.tv_sec;
+                talker->ts_last = tdb->ts;
+            }
+
+            break;
+
+        case TCP_STATE_ESTABLISHED:
+        case TCP_STATE_CLOSE_WAIT:
+            UpdateSsn(p, listener, talker, tdb);
+            break;
+
+        case TCP_STATE_FIN_WAIT_1:
+            UpdateSsn(p, listener, talker, tdb);
+
+            STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                "tdb->ack %X >= talker->r_nxt_ack %X\n",
+                tdb->ack, talker->r_nxt_ack); );
+
+            if ( SEQ_EQ(tdb->ack, listener->l_nxt_seq) )
+            {
+                if ( (listener->os_policy == STREAM_POLICY_WINDOWS) && (tdb->win == 0) )
                 {
-                    UpdateSsn(p, listener, talker, tdb);
-                    lwssn->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
-                    lwssn->session_state |= STREAM_STATE_ESTABLISHED;
-                    listener->s_mgr.state = TCP_STATE_ESTABLISHED;
-                    talker->s_mgr.state = TCP_STATE_ESTABLISHED;
-                    StreamUpdatePerfBaseState(&sfBase, lwssn, TCP_STATE_ESTABLISHED);
-                    /* Indicate this packet completes 3-way handshake */
-                    p->packet_flags |= PKT_STREAM_TWH;
+                    eventcode |= EVENT_WINDOW_SLAM;
+                    Discard();
+
+                    if ( NormalDropPacketIf(p, NORM_TCP_BLOCK) )
+                    {
+                        LogTcpEvents(eventcode);
+                        MODULE_PROFILE_END(s5TcpStatePerfStats);
+                        return retcode | ACTION_BAD_PKT;
+                    }
                 }
 
-                talker->flags |= got_ts;
-                if(got_ts && SEQ_EQ(listener->r_nxt_ack, tdb->seq))
+                listener->s_mgr.state = TCP_STATE_FIN_WAIT_2;
+
+                if ( (p->ptrs.tcph->th_flags & TH_FIN) )
                 {
-                    talker->ts_last_pkt = p->pkth->ts.tv_sec;
-                    talker->ts_last = tdb->ts;
-                }
+                    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                        "seq ok, setting state!\n"); );
 
-                break;
-
-            case TCP_STATE_ESTABLISHED:
-            case TCP_STATE_CLOSE_WAIT:
-                UpdateSsn(p, listener, talker, tdb);
-                break;
-
-            case TCP_STATE_FIN_WAIT_1:
-                UpdateSsn(p, listener, talker, tdb);
-
-                STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "tdb->ack %X >= talker->r_nxt_ack %X\n",
-                            tdb->ack, talker->r_nxt_ack););
-
-                if ( SEQ_EQ(tdb->ack, listener->l_nxt_seq) )
-                {
-                    if ( (listener->os_policy == STREAM_POLICY_WINDOWS) && (tdb->win == 0) )
+                    if (talker->s_mgr.state_queue == TCP_STATE_NONE)
                     {
-                        eventcode |= EVENT_WINDOW_SLAM;
-                        Discard();
-
-                        if ( NormalDropPacketIf(p, NORM_TCP_BLOCK) )
-                        {
-                            LogTcpEvents(eventcode);
-                            MODULE_PROFILE_END(s5TcpStatePerfStats);
-                            return retcode | ACTION_BAD_PKT;
-                        }
+                        talker->s_mgr.state = TCP_STATE_LAST_ACK;
+                        EndOfFileHandle(p, tcpssn);
                     }
-
-                    listener->s_mgr.state = TCP_STATE_FIN_WAIT_2;
-
-                    if ( (p->ptrs.tcph->th_flags & TH_FIN) )
+                    if ( lwssn->ssn_state.session_flags & SSNFLAG_MIDSTREAM )
                     {
-                        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                "seq ok, setting state!\n"););
-
-                        if (talker->s_mgr.state_queue == TCP_STATE_NONE)
-                        {
-                            talker->s_mgr.state = TCP_STATE_LAST_ACK;
-                            EndOfFileHandle(p, tcpssn);
-                        }
-                        if ( lwssn->ssn_state.session_flags & SSNFLAG_MIDSTREAM )
-                        {
-                            // FIXIT-L this should be handled below in fin section
-                            // but midstream sessions fail the seq test
-                            listener->s_mgr.state_queue = TCP_STATE_TIME_WAIT;
-                            listener->s_mgr.transition_seq = tdb->end_seq;
-                            listener->s_mgr.expected_flags = TH_ACK;
-                        }
-                    }
-                    else if (listener->s_mgr.state_queue == TCP_STATE_CLOSING)
-                    {
+                        // FIXIT-L this should be handled below in fin section
+                        // but midstream sessions fail the seq test
                         listener->s_mgr.state_queue = TCP_STATE_TIME_WAIT;
                         listener->s_mgr.transition_seq = tdb->end_seq;
                         listener->s_mgr.expected_flags = TH_ACK;
                     }
                 }
-                else
+                else if (listener->s_mgr.state_queue == TCP_STATE_CLOSING)
                 {
-                    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                "bad ack!\n"););
+                    listener->s_mgr.state_queue = TCP_STATE_TIME_WAIT;
+                    listener->s_mgr.transition_seq = tdb->end_seq;
+                    listener->s_mgr.expected_flags = TH_ACK;
                 }
-                break;
+            }
+            else
+            {
+                STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                    "bad ack!\n"); );
+            }
+            break;
 
-            case TCP_STATE_FIN_WAIT_2:
-                UpdateSsn(p, listener, talker, tdb);
-                if ( SEQ_GT(tdb->ack, listener->l_nxt_seq) )
-                {
-                    eventcode |= EVENT_BAD_ACK;
-                    LogTcpEvents(eventcode);
-                    NormalDropPacketIf(p, NORM_TCP_BLOCK);
-                    MODULE_PROFILE_END(s5TcpStatePerfStats);
-                    return retcode | ACTION_BAD_PKT;
-                }
-                break;
+        case TCP_STATE_FIN_WAIT_2:
+            UpdateSsn(p, listener, talker, tdb);
+            if ( SEQ_GT(tdb->ack, listener->l_nxt_seq) )
+            {
+                eventcode |= EVENT_BAD_ACK;
+                LogTcpEvents(eventcode);
+                NormalDropPacketIf(p, NORM_TCP_BLOCK);
+                MODULE_PROFILE_END(s5TcpStatePerfStats);
+                return retcode | ACTION_BAD_PKT;
+            }
+            break;
 
-            case TCP_STATE_CLOSING:
-                UpdateSsn(p, listener, talker, tdb);
-                if(SEQ_GEQ(tdb->end_seq, listener->r_nxt_ack))
-                {
-                    listener->s_mgr.state = TCP_STATE_TIME_WAIT;
-                }
-                break;
+        case TCP_STATE_CLOSING:
+            UpdateSsn(p, listener, talker, tdb);
+            if (SEQ_GEQ(tdb->end_seq, listener->r_nxt_ack))
+            {
+                listener->s_mgr.state = TCP_STATE_TIME_WAIT;
+            }
+            break;
 
-            case TCP_STATE_LAST_ACK:
-                UpdateSsn(p, listener, talker, tdb);
+        case TCP_STATE_LAST_ACK:
+            UpdateSsn(p, listener, talker, tdb);
 
-                if ( SEQ_EQ(tdb->ack, listener->l_nxt_seq) )
-                {
-                    listener->s_mgr.state = TCP_STATE_CLOSED;
-                }
-                break;
+            if ( SEQ_EQ(tdb->ack, listener->l_nxt_seq) )
+            {
+                listener->s_mgr.state = TCP_STATE_CLOSED;
+            }
+            break;
 
-            default:
-                // FIXIT-L safe to ignore when inline?
-                break;
+        default:
+            // FIXIT-L safe to ignore when inline?
+            break;
         }
     }
 
     /*
      * handle data in the segment
      */
-    if(p->dsize)
+    if (p->dsize)
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "   %s state: %s(%d) getting data\n", l,
-                    state_names[listener->s_mgr.state],
-                    listener->s_mgr.state););
+            "   %s state: %s(%d) getting data\n", l,
+            state_names[listener->s_mgr.state],
+            listener->s_mgr.state); );
 
         // FIN means only that sender is done talking,
         // other side may continue yapping.
-        if(TCP_STATE_FIN_WAIT_2 == talker->s_mgr.state ||
-           TCP_STATE_TIME_WAIT == talker->s_mgr.state)
+        if (TCP_STATE_FIN_WAIT_2 == talker->s_mgr.state ||
+            TCP_STATE_TIME_WAIT == talker->s_mgr.state)
         {
-            /* data on a segment when we're not accepting data any more */
-            /* alert! */
+            /* data on a segment when we're not accepting data any more
+               alert! */
             //EventDataOnClosed(talker->config);
             eventcode |= EVENT_DATA_ON_CLOSED;
             retcode |= ACTION_BAD_PKT;
@@ -5596,8 +5615,8 @@ static int ProcessTcp(
         }
         else if (TCP_STATE_CLOSED == talker->s_mgr.state)
         {
-            /* data on a segment when we're not accepting data any more */
-            /* alert! */
+            /* data on a segment when we're not accepting data any more
+               alert! */
             if (lwssn->ssn_state.session_flags & SSNFLAG_RESET)
             {
                 //EventDataAfterReset(listener->config);
@@ -5617,9 +5636,9 @@ static int ProcessTcp(
         else
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "Queuing data on listener, t %s, l %s...\n",
-                        flush_policy_names[talker->flush_policy],
-                        flush_policy_names[listener->flush_policy]););
+                "Queuing data on listener, t %s, l %s...\n",
+                flush_policy_names[talker->flush_policy],
+                flush_policy_names[listener->flush_policy]); );
 
             if ( config->policy != STREAM_POLICY_PROXY )
             {
@@ -5647,9 +5666,9 @@ static int ProcessTcp(
              * for the record, I've seen FTP data sessions that send
              * data packets with no tcp flags set
              */
-            if ( (p->ptrs.tcph->th_flags != 0) or
-                (config->policy == STREAM_POLICY_LINUX) or
-                (config->policy == STREAM_POLICY_PROXY) )
+            if ( (p->ptrs.tcph->th_flags != 0)or
+                    (config->policy == STREAM_POLICY_LINUX) or
+                    (config->policy == STREAM_POLICY_PROXY) )
             {
                 ProcessTcpData(p, listener, tcpssn, tdb, config);
             }
@@ -5661,22 +5680,22 @@ static int ProcessTcp(
         }
     }
 
-    if(p->ptrs.tcph->th_flags & TH_FIN)
+    if (p->ptrs.tcph->th_flags & TH_FIN)
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Got a FIN...\n"););
+            "Got a FIN...\n"); );
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "   %s state: %s(%d)\n", l,
-                    state_names[talker->s_mgr.state],
-                    talker->s_mgr.state););
+            "   %s state: %s(%d)\n", l,
+            state_names[talker->s_mgr.state],
+            talker->s_mgr.state); );
 
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "checking ack (0x%X) vs nxt_ack (0x%X)\n",
-                    tdb->end_seq, listener->r_win_base););
-        if(SEQ_LT(tdb->end_seq,listener->r_win_base))
+            "checking ack (0x%X) vs nxt_ack (0x%X)\n",
+            tdb->end_seq, listener->r_win_base); );
+        if (SEQ_LT(tdb->end_seq,listener->r_win_base))
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "FIN inside r_win_base, bailing\n"););
+                "FIN inside r_win_base, bailing\n"); );
             goto dupfin;
         }
         else
@@ -5704,48 +5723,48 @@ static int ProcessTcp(
                     p->packet_flags |= PKT_PDU_TAIL;
                 }
             }
-            switch(talker->s_mgr.state)
+            switch (talker->s_mgr.state)
             {
-                case TCP_STATE_SYN_RCVD:
-                case TCP_STATE_ESTABLISHED:
-                    if (talker->s_mgr.state_queue == TCP_STATE_CLOSE_WAIT)
-                    {
-                        talker->s_mgr.state_queue = TCP_STATE_CLOSING;
-                    }
-                    talker->s_mgr.state = TCP_STATE_FIN_WAIT_1;
-                    EndOfFileHandle(p, tcpssn);
+            case TCP_STATE_SYN_RCVD:
+            case TCP_STATE_ESTABLISHED:
+                if (talker->s_mgr.state_queue == TCP_STATE_CLOSE_WAIT)
+                {
+                    talker->s_mgr.state_queue = TCP_STATE_CLOSING;
+                }
+                talker->s_mgr.state = TCP_STATE_FIN_WAIT_1;
+                EndOfFileHandle(p, tcpssn);
 
-                    if ( !p->dsize )
-                        CheckFlushPolicyOnData(tcpssn, talker, listener, p);
+                if ( !p->dsize )
+                    CheckFlushPolicyOnData(tcpssn, talker, listener, p);
 
-                    StreamUpdatePerfBaseState(&sfBase, tcpssn->flow, TCP_STATE_CLOSING);
-                    break;
+                StreamUpdatePerfBaseState(&sfBase, tcpssn->flow, TCP_STATE_CLOSING);
+                break;
 
-                case TCP_STATE_CLOSE_WAIT:
-                    talker->s_mgr.state = TCP_STATE_LAST_ACK;
-                    break;
+            case TCP_STATE_CLOSE_WAIT:
+                talker->s_mgr.state = TCP_STATE_LAST_ACK;
+                break;
 
-                case TCP_STATE_FIN_WAIT_1:
-                    if (!p->dsize)
-                        RetransmitHandle(p, tcpssn);
-                    break;
+            case TCP_STATE_FIN_WAIT_1:
+                if (!p->dsize)
+                    RetransmitHandle(p, tcpssn);
+                break;
 
-                default:
-                    /* all other states stay where they are */
-                    break;
+            default:
+                /* all other states stay where they are */
+                break;
             }
 
             if ( (talker->s_mgr.state == TCP_STATE_FIN_WAIT_1) ||
-                      (talker->s_mgr.state == TCP_STATE_LAST_ACK) )
+                (talker->s_mgr.state == TCP_STATE_LAST_ACK) )
             {
                 uint32_t end_seq = ( lwssn->ssn_state.session_flags & SSNFLAG_MIDSTREAM ) ?
-                      tdb->end_seq-1 : tdb->end_seq;
+                    tdb->end_seq-1 : tdb->end_seq;
 
                 if ( (listener->s_mgr.expected_flags == TH_ACK) &&
-                     SEQ_GEQ(end_seq, listener->s_mgr.transition_seq) )
+                    SEQ_GEQ(end_seq, listener->s_mgr.transition_seq) )
                 {
                     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "FIN beyond previous, ignoring\n"););
+                        "FIN beyond previous, ignoring\n"); );
                     eventcode |= EVENT_BAD_FIN;
                     LogTcpEvents(eventcode);
                     NormalDropPacketIf(p, NORM_TCP_BLOCK);
@@ -5755,23 +5774,23 @@ static int ProcessTcp(
             }
             switch ( listener->s_mgr.state )
             {
-                case TCP_STATE_ESTABLISHED:
-                    listener->s_mgr.state_queue = TCP_STATE_CLOSE_WAIT;
-                    listener->s_mgr.transition_seq = tdb->end_seq + 1;
-                    listener->s_mgr.expected_flags = TH_ACK;
-                    break;
+            case TCP_STATE_ESTABLISHED:
+                listener->s_mgr.state_queue = TCP_STATE_CLOSE_WAIT;
+                listener->s_mgr.transition_seq = tdb->end_seq + 1;
+                listener->s_mgr.expected_flags = TH_ACK;
+                break;
 
-                case TCP_STATE_FIN_WAIT_1:
-                    listener->s_mgr.state_queue = TCP_STATE_CLOSING;
-                    listener->s_mgr.transition_seq = tdb->end_seq + 1;
-                    listener->s_mgr.expected_flags = TH_ACK;
-                    break;
+            case TCP_STATE_FIN_WAIT_1:
+                listener->s_mgr.state_queue = TCP_STATE_CLOSING;
+                listener->s_mgr.transition_seq = tdb->end_seq + 1;
+                listener->s_mgr.expected_flags = TH_ACK;
+                break;
 
-                case TCP_STATE_FIN_WAIT_2:
-                    listener->s_mgr.state_queue = TCP_STATE_TIME_WAIT;
-                    listener->s_mgr.transition_seq = tdb->end_seq + 1;
-                    listener->s_mgr.expected_flags = TH_ACK;
-                    break;
+            case TCP_STATE_FIN_WAIT_2:
+                listener->s_mgr.state_queue = TCP_STATE_TIME_WAIT;
+                listener->s_mgr.transition_seq = tdb->end_seq + 1;
+                listener->s_mgr.expected_flags = TH_ACK;
+                break;
             }
         }
     }
@@ -5779,33 +5798,36 @@ static int ProcessTcp(
 dupfin:
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "   %s [talker] state: %s\n", t,
-                state_names[talker->s_mgr.state]););
+        "   %s [talker] state: %s\n", t,
+        state_names[talker->s_mgr.state]); );
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "   %s state: %s(%d)\n", l,
-                state_names[listener->s_mgr.state],
-                listener->s_mgr.state););
+        "   %s state: %s(%d)\n", l,
+        state_names[listener->s_mgr.state],
+        listener->s_mgr.state); );
 
     /*
      * handle TIME_WAIT timer stuff
      */
-    if((talker->s_mgr.state == TCP_STATE_TIME_WAIT && listener->s_mgr.state == TCP_STATE_CLOSED) ||
-       (listener->s_mgr.state == TCP_STATE_TIME_WAIT && talker->s_mgr.state == TCP_STATE_CLOSED) ||
-       (listener->s_mgr.state == TCP_STATE_TIME_WAIT && talker->s_mgr.state == TCP_STATE_TIME_WAIT))
+    if ((talker->s_mgr.state == TCP_STATE_TIME_WAIT && listener->s_mgr.state ==
+        TCP_STATE_CLOSED) ||
+        (listener->s_mgr.state == TCP_STATE_TIME_WAIT && talker->s_mgr.state ==
+        TCP_STATE_CLOSED) ||
+        (listener->s_mgr.state == TCP_STATE_TIME_WAIT && talker->s_mgr.state ==
+        TCP_STATE_TIME_WAIT))
     {
 //dropssn:
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Session terminating, flushing session buffers\n"););
+            "Session terminating, flushing session buffers\n"); );
 
-        if(p->packet_flags & PKT_FROM_SERVER)
+        if (p->packet_flags & PKT_FROM_SERVER)
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "flushing FROM_SERVER\n"););
-            if(talker->seg_bytes_logical)
+                "flushing FROM_SERVER\n"); );
+            if (talker->seg_bytes_logical)
             {
                 uint32_t flushed = flush_stream(tcpssn, talker, p, PKT_FROM_CLIENT);
 
-                if(flushed)
+                if (flushed)
                 {
                     // FIXIT-L - these calls redundant?
                     purge_alerts(talker, talker->r_win_base, tcpssn->flow);
@@ -5813,11 +5835,11 @@ dupfin:
                 }
             }
 
-            if(listener->seg_bytes_logical)
+            if (listener->seg_bytes_logical)
             {
                 uint32_t flushed = flush_stream(tcpssn, listener, p, PKT_FROM_SERVER);
 
-                if(flushed)
+                if (flushed)
                 {
                     purge_alerts(listener, listener->r_win_base, tcpssn->flow);
                     purge_to_seq(tcpssn, listener, listener->seglist->seq + flushed);
@@ -5827,23 +5849,23 @@ dupfin:
         else
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "flushing FROM_CLIENT\n"););
-            if(listener->seg_bytes_logical)
+                "flushing FROM_CLIENT\n"); );
+            if (listener->seg_bytes_logical)
             {
                 uint32_t flushed = flush_stream(tcpssn, listener, p, PKT_FROM_CLIENT);
 
-                if(flushed)
+                if (flushed)
                 {
                     purge_alerts(listener, listener->r_win_base, tcpssn->flow);
                     purge_to_seq(tcpssn, listener, listener->seglist->seq + flushed);
                 }
             }
 
-            if(talker->seg_bytes_logical)
+            if (talker->seg_bytes_logical)
             {
                 uint32_t flushed = flush_stream(tcpssn, talker, p, PKT_FROM_SERVER);
 
-                if(flushed)
+                if (flushed)
                 {
                     purge_alerts(talker, talker->r_win_base, tcpssn->flow);
                     purge_to_seq(tcpssn, talker, talker->seglist->seq + flushed);
@@ -5851,17 +5873,19 @@ dupfin:
             }
         }
         LogTcpEvents(eventcode);
-        /* The last ACK is a part of the session.  Delete the session after processing is complete. */
+        /* The last ACK is a part of the session.  Delete the session after processing is complete.
+          */
         TcpSessionCleanup(lwssn, 0);
         lwssn->session_state |= STREAM_STATE_CLOSED;
         MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode | ACTION_LWSSN_CLOSED;
     }
-    else if(listener->s_mgr.state == TCP_STATE_CLOSED && talker->s_mgr.state == TCP_STATE_SYN_SENT)
+    else if (listener->s_mgr.state == TCP_STATE_CLOSED && talker->s_mgr.state ==
+        TCP_STATE_SYN_SENT)
     {
-        if(p->ptrs.tcph->th_flags & TH_SYN &&
-           !(p->ptrs.tcph->th_flags & TH_ACK) &&
-           !(p->ptrs.tcph->th_flags & TH_RST))
+        if (p->ptrs.tcph->th_flags & TH_SYN &&
+            !(p->ptrs.tcph->th_flags & TH_ACK) &&
+            !(p->ptrs.tcph->th_flags & TH_RST))
         {
             lwssn->set_expire(p, config->session_timeout);
         }
@@ -5879,7 +5903,7 @@ dupfin:
 }
 
 // this is for post-ack flushing
-static inline uint32_t GetReverseDir (const Packet* p)
+static inline uint32_t GetReverseDir(const Packet* p)
 {
     /* Remember, one side's packets are stored in the
      * other side's queue.  So when talker ACKs data,
@@ -5899,7 +5923,7 @@ static inline uint32_t GetReverseDir (const Packet* p)
     return 0;
 }
 
-static inline uint32_t GetForwardDir (const Packet* p)
+static inline uint32_t GetForwardDir(const Packet* p)
 {
     if ( p->packet_flags & PKT_FROM_SERVER )
         return PKT_FROM_SERVER;
@@ -5980,80 +6004,79 @@ static inline void fallback(
 }
 
 static inline int CheckFlushPolicyOnData(
-    TcpSession *tcpssn, StreamTracker *talker,
-    StreamTracker *listener, Packet *p)
+    TcpSession* tcpssn, StreamTracker* talker,
+    StreamTracker* listener, Packet* p)
 {
     uint32_t flushed = 0;
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "In CheckFlushPolicyOnData\n"););
+        "In CheckFlushPolicyOnData\n"); );
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Talker flush policy: %s\n",
-                flush_policy_names[talker->flush_policy]););
+        "Talker flush policy: %s\n",
+        flush_policy_names[talker->flush_policy]); );
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Listener flush policy: %s\n",
-                flush_policy_names[listener->flush_policy]););
+        "Listener flush policy: %s\n",
+        flush_policy_names[listener->flush_policy]); );
 
-    switch(listener->flush_policy)
+    switch (listener->flush_policy)
     {
-        case STREAM_FLPOLICY_IGNORE:
-            STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "STREAM_FLPOLICY_IGNORE\n"););
-            return 0;
+    case STREAM_FLPOLICY_IGNORE:
+        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+            "STREAM_FLPOLICY_IGNORE\n"); );
+        return 0;
 
-
-        case STREAM_FLPOLICY_ON_ACK:
-            break;
-
-        case STREAM_FLPOLICY_ON_DATA:
-        {
-            uint32_t flags = GetForwardDir(p);
-            uint32_t flush_amt = flush_pdu_ips(tcpssn, listener, &flags);
-            uint32_t this_flush;
-
-            while ( flush_amt > 0 )
-            {
-#if 0
-                // FIXIT-P can't do this with new HI - copy is inevitable
-                // if this payload is exactly one pdu, don't
-                // actually flush, just use the raw packet
-                if ( listener->seglist_next && 
-                     (tdb->seq == listener->seglist_next->seq) &&
-                     (flush_amt == listener->seglist_next->size) &&
-                     (flush_amt == p->dsize) )
-                {
-                    this_flush = flush_amt;
-                    listener->seglist_next->buffered = SL_BUF_FLUSHED;
-                    listener->flush_count++;
-                    p->packet_flags |= PKT_PDU_FULL;
-                    ShowRebuiltPacket(tcpssn, p);
-                }
-                else
-#endif
-                {
-                    this_flush = flush_to_seq(
-                        tcpssn, listener, flush_amt, p, flags);
-                }
-                // if we didn't flush as expected, bail
-                // (we can flush less than max dsize)
-                if ( !this_flush )
-                    break;
-
-                flushed += this_flush;
-                flags = GetForwardDir(p);
-                flush_amt = flush_pdu_ips(tcpssn, listener, &flags);
-            }
-            if ( !flags && listener->splitter->is_paf() )
-            {
-                // FIXIT-L PAF auto disable with multiple splitters?
-                //if ( AutoDisable(listener, talker) )
-                //    return 0;
-
-                fallback(listener, talker);
-                return CheckFlushPolicyOnData(tcpssn, talker, listener, p);
-            }
-        }
+    case STREAM_FLPOLICY_ON_ACK:
         break;
+
+    case STREAM_FLPOLICY_ON_DATA:
+    {
+        uint32_t flags = GetForwardDir(p);
+        uint32_t flush_amt = flush_pdu_ips(tcpssn, listener, &flags);
+        uint32_t this_flush;
+
+        while ( flush_amt > 0 )
+        {
+#if 0
+            // FIXIT-P can't do this with new HI - copy is inevitable
+            // if this payload is exactly one pdu, don't
+            // actually flush, just use the raw packet
+            if ( listener->seglist_next &&
+                (tdb->seq == listener->seglist_next->seq) &&
+                (flush_amt == listener->seglist_next->size) &&
+                (flush_amt == p->dsize) )
+            {
+                this_flush = flush_amt;
+                listener->seglist_next->buffered = SL_BUF_FLUSHED;
+                listener->flush_count++;
+                p->packet_flags |= PKT_PDU_FULL;
+                ShowRebuiltPacket(tcpssn, p);
+            }
+            else
+#endif
+            {
+                this_flush = flush_to_seq(
+                    tcpssn, listener, flush_amt, p, flags);
+            }
+            // if we didn't flush as expected, bail
+            // (we can flush less than max dsize)
+            if ( !this_flush )
+                break;
+
+            flushed += this_flush;
+            flags = GetForwardDir(p);
+            flush_amt = flush_pdu_ips(tcpssn, listener, &flags);
+        }
+        if ( !flags && listener->splitter->is_paf() )
+        {
+            // FIXIT-L PAF auto disable with multiple splitters?
+            //if ( AutoDisable(listener, talker) )
+            //    return 0;
+
+            fallback(listener, talker);
+            return CheckFlushPolicyOnData(tcpssn, talker, listener, p);
+        }
+    }
+    break;
     }
     return flushed;
 }
@@ -6113,7 +6136,7 @@ static inline uint32_t flush_pdu_ackd(
             MODULE_PROFILE_END(s5TcpPAFPerfStats);
 
             // for non-paf splitters, flush_pt > 0 means we reached
-            // the minimum required, but we flush what is available 
+            // the minimum required, but we flush what is available
             // instead of creating more, but smaller, packets
             // FIXIT-L just flush to end of segment to avoid splitting
             // instead of all avail?
@@ -6137,80 +6160,80 @@ static inline uint32_t flush_pdu_ackd(
 }
 
 int CheckFlushPolicyOnAck(
-    TcpSession *tcpssn, StreamTracker *talker,
-    StreamTracker *listener, Packet *p)
+    TcpSession* tcpssn, StreamTracker* talker,
+    StreamTracker* listener, Packet* p)
 {
     uint32_t flushed = 0;
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "In CheckFlushPolicyOnAck\n"););
+        "In CheckFlushPolicyOnAck\n"); );
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Talker flush policy: %s\n",
-                flush_policy_names[talker->flush_policy]););
+        "Talker flush policy: %s\n",
+        flush_policy_names[talker->flush_policy]); );
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Listener flush policy: %s\n",
-                flush_policy_names[listener->flush_policy]););
+        "Listener flush policy: %s\n",
+        flush_policy_names[listener->flush_policy]); );
 
-    switch(talker->flush_policy)
+    switch (talker->flush_policy)
     {
-        case STREAM_FLPOLICY_IGNORE:
-            STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "STREAM_FLPOLICY_IGNORE\n"););
-            return 0;
+    case STREAM_FLPOLICY_IGNORE:
+        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+            "STREAM_FLPOLICY_IGNORE\n"); );
+        return 0;
 
-        case STREAM_FLPOLICY_ON_ACK:
+    case STREAM_FLPOLICY_ON_ACK:
+    {
+        uint32_t flags = GetReverseDir(p);
+        uint32_t flush_amt = flush_pdu_ackd(tcpssn, talker, &flags);
+
+        while ( flush_amt > 0 )
         {
-            uint32_t flags = GetReverseDir(p);
-            uint32_t flush_amt = flush_pdu_ackd(tcpssn, talker, &flags);
+            talker->seglist_next = talker->seglist;
+            talker->seglist_base_seq = talker->seglist->seq;
 
-            while ( flush_amt > 0 )
-            {
-                talker->seglist_next = talker->seglist;
-                talker->seglist_base_seq = talker->seglist->seq;
+            // for consistency with other cases, should return total
+            // but that breaks flushing pipelined pdus
+            flushed = flush_to_seq(
+                tcpssn, talker, flush_amt, p, flags);
 
-                // for consistency with other cases, should return total
-                // but that breaks flushing pipelined pdus
-                flushed = flush_to_seq(
-                    tcpssn, talker, flush_amt, p, flags);
+            // ideally we would purge just once after this loop
+            // but that throws off base
+            purge_to_seq(tcpssn, talker, talker->seglist->seq + flushed);
 
-                // ideally we would purge just once after this loop
-                // but that throws off base
-                purge_to_seq(tcpssn, talker, talker->seglist->seq + flushed);
+            // if we didn't flush as expected, bail
+            // (we can flush less than max dsize)
+            if ( !flushed )
+                break;
 
-                // if we didn't flush as expected, bail
-                // (we can flush less than max dsize)
-                if ( !flushed )
-                    break;
-
-                flags = GetReverseDir(p);
-                flush_amt = flush_pdu_ackd(tcpssn, talker, &flags);
-            }
-            if ( !flags && talker->splitter->is_paf() )
-            {
-                // FIXIT-L PAF auto disable with multiple splitters?
-                //if ( AutoDisable(talker, listener) )
-                //    return 0;
-
-                fallback(talker, listener);
-                return CheckFlushPolicyOnAck(tcpssn, talker, listener, p);
-            }
+            flags = GetReverseDir(p);
+            flush_amt = flush_pdu_ackd(tcpssn, talker, &flags);
         }
-        break;
+        if ( !flags && talker->splitter->is_paf() )
+        {
+            // FIXIT-L PAF auto disable with multiple splitters?
+            //if ( AutoDisable(talker, listener) )
+            //    return 0;
 
-        case STREAM_FLPOLICY_ON_DATA:
-            purge_flushed_ackd(tcpssn, talker);
-            break;
+            fallback(talker, listener);
+            return CheckFlushPolicyOnAck(tcpssn, talker, listener, p);
+        }
+    }
+    break;
+
+    case STREAM_FLPOLICY_ON_DATA:
+        purge_flushed_ackd(tcpssn, talker);
+        break;
     }
 
     return flushed;
 }
 
-static void StreamSeglistAddNode(StreamTracker *st, StreamSegment *prev,
-        StreamSegment *ss)
+static void StreamSeglistAddNode(StreamTracker* st, StreamSegment* prev,
+    StreamSegment* ss)
 {
     tcpStats.segs_queued++;
 
-    if(prev)
+    if (prev)
     {
         ss->next = prev->next;
         ss->prev = prev;
@@ -6223,7 +6246,7 @@ static void StreamSeglistAddNode(StreamTracker *st, StreamSegment *prev,
     else
     {
         ss->next = st->seglist;
-        if(ss->next)
+        if (ss->next)
             ss->next->prev = ss;
         else
             st->seglist_tail = ss;
@@ -6239,21 +6262,21 @@ static void StreamSeglistAddNode(StreamTracker *st, StreamSegment *prev,
 #endif
 }
 
-static int StreamSeglistDeleteNode (StreamTracker* st, StreamSegment* seg)
+static int StreamSeglistDeleteNode(StreamTracker* st, StreamSegment* seg)
 {
     int ret;
     assert(st && seg);
 
-    STREAM_DEBUG_WRAP( DebugMessage(DEBUG_STREAM_STATE,
-                    "Dropping segment at seq %X, len %d\n",
-                    seg->seq, seg->size););
+    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+        "Dropping segment at seq %X, len %d\n",
+        seg->seq, seg->size); );
 
-    if(seg->prev)
+    if (seg->prev)
         seg->prev->next = seg->next;
     else
         st->seglist = seg->next;
 
-    if(seg->next)
+    if (seg->next)
         seg->next->prev = seg->prev;
     else
         st->seglist_tail = seg->prev;
@@ -6290,9 +6313,9 @@ static int StreamSeglistDeleteNodeTrim(
 
         if ( delta < seg->size )
         {
-            STREAM_DEBUG_WRAP( DebugMessage(DEBUG_STREAM_STATE,
+            STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Left-Trimming segment at seq %X, len %d, delta %u\n",
-                seg->seq, seg->size, delta););
+                seg->seq, seg->size, delta); );
 
             seg->seq = flush_seq;
             seg->size -= (uint16_t)delta;
@@ -6307,13 +6330,13 @@ static int StreamSeglistDeleteNodeTrim(
 /* Iterates through the packets that were reassembled for
  * logging of tagged packets.
  */
-int GetTcpRebuiltPackets(Packet *p, Flow *ssn,
-        PacketIterator callback, void *userdata)
+int GetTcpRebuiltPackets(Packet* p, Flow* ssn,
+    PacketIterator callback, void* userdata)
 {
     int packets = 0;
-    TcpSession *tcpssn = (TcpSession*)ssn->session;
-    StreamTracker *st;
-    StreamSegment *ss;
+    TcpSession* tcpssn = (TcpSession*)ssn->session;
+    StreamTracker* st;
+    StreamSegment* ss;
     uint32_t start_seq = ntohl(p->ptrs.tcph->th_seq);
     uint32_t end_seq = start_seq + p->dsize;
 
@@ -6329,7 +6352,8 @@ int GetTcpRebuiltPackets(Packet *p, Flow *ssn,
     }
 
     // skip over segments not covered by this reassembled packet
-    for (ss = st->seglist; ss && SEQ_LT(ss->seq, start_seq); ss = ss->next);
+    for (ss = st->seglist; ss && SEQ_LT(ss->seq, start_seq); ss = ss->next)
+        ;
 
     // return flushed segments only
     for (; ss && ss->buffered == SL_BUF_FLUSHED; ss = ss->next)
@@ -6355,13 +6379,13 @@ int GetTcpRebuiltPackets(Packet *p, Flow *ssn,
 /* Iterates through the packets that were reassembled for
  * logging of tagged packets.
  */
-int GetTcpStreamSegments(Packet *p, Flow *ssn,
-        StreamSegmentIterator callback, void *userdata)
+int GetTcpStreamSegments(Packet* p, Flow* ssn,
+    StreamSegmentIterator callback, void* userdata)
 {
     int packets = 0;
-    TcpSession *tcpssn = (TcpSession *)ssn->session;
-    StreamTracker *st;
-    StreamSegment *ss;
+    TcpSession* tcpssn = (TcpSession*)ssn->session;
+    StreamTracker* st;
+    StreamSegment* ss;
     uint32_t start_seq = ntohl(p->ptrs.tcph->th_seq);
     uint32_t end_seq = start_seq + p->dsize;
 
@@ -6373,7 +6397,8 @@ int GetTcpStreamSegments(Packet *p, Flow *ssn,
         st = &tcpssn->client;
 
     // skip over segments not covered by this reassembled packet
-    for (ss = st->seglist; ss && SEQ_LT(ss->seq, start_seq); ss = ss->next);
+    for (ss = st->seglist; ss && SEQ_LT(ss->seq, start_seq); ss = ss->next)
+        ;
 
     // return flushed segments only
     for (; ss && ss->buffered == SL_BUF_FLUSHED; ss = ss->next)
@@ -6402,9 +6427,9 @@ int StreamAddSessionAlertTcp(
     Flow* lwssn, Packet* p,
     uint32_t gid, uint32_t sid)
 {
-    StreamTracker *st;
+    StreamTracker* st;
     StreamAlertInfo* ai;
-    TcpSession *tcpssn = (TcpSession*)lwssn->session;
+    TcpSession* tcpssn = (TcpSession*)lwssn->session;
 
     if (sfip_equals(p->ptrs.ip_api.get_src(),&tcpssn->flow->client_ip))
     {
@@ -6431,12 +6456,12 @@ int StreamAddSessionAlertTcp(
     return 1;
 }
 
-int StreamCheckSessionAlertTcp(Flow *lwssn, Packet *p, uint32_t gid, uint32_t sid)
+int StreamCheckSessionAlertTcp(Flow* lwssn, Packet* p, uint32_t gid, uint32_t sid)
 {
-    StreamTracker *st;
+    StreamTracker* st;
     int i;
     int iRet = 0;
-    TcpSession *tcpssn = (TcpSession*)lwssn->session;
+    TcpSession* tcpssn = (TcpSession*)lwssn->session;
 
     /* If this is not a rebuilt packet, no need to check further */
     if (!(p->packet_flags & PKT_REBUILT_STREAM))
@@ -6453,13 +6478,13 @@ int StreamCheckSessionAlertTcp(Flow *lwssn, Packet *p, uint32_t gid, uint32_t si
         st = &tcpssn->client;
     }
 
-    for (i=0;i<st->alert_count;i++)
+    for (i=0; i<st->alert_count; i++)
     {
         /*  This is a rebuilt packet and if we've seen this alert before,
          *  return that we have previously alerted on original packet.
          */
         if ( st->alerts[i].gid == gid &&
-             st->alerts[i].sid == sid )
+            st->alerts[i].sid == sid )
         {
             return -1;
         }
@@ -6469,14 +6494,14 @@ int StreamCheckSessionAlertTcp(Flow *lwssn, Packet *p, uint32_t gid, uint32_t si
 }
 
 int StreamUpdateSessionAlertTcp(
-    Flow *lwssn, Packet *p,
+    Flow* lwssn, Packet* p,
     uint32_t gid, uint32_t sid,
     uint32_t event_id, uint32_t event_second)
 {
-    StreamTracker *st;
+    StreamTracker* st;
     int i;
     uint32_t seq_num;
-    TcpSession *tcpssn = (TcpSession*)lwssn->session;
+    TcpSession* tcpssn = (TcpSession*)lwssn->session;
 
     if (sfip_equals(p->ptrs.ip_api.get_src(), &tcpssn->flow->client_ip))
     {
@@ -6492,12 +6517,12 @@ int StreamUpdateSessionAlertTcp(
     if ( p->ptrs.tcph->th_flags & TH_FIN )
         seq_num--;
 
-    for (i=0;i<st->alert_count;i++)
+    for (i=0; i<st->alert_count; i++)
     {
         StreamAlertInfo* ai = st->alerts + i;
 
         if ( ai->gid == gid &&
-             ai->sid == sid && SEQ_EQ(ai->seq, seq_num))
+            ai->sid == sid && SEQ_EQ(ai->seq, seq_num))
         {
             ai->event_id = event_id;
             ai->event_second = event_second;
@@ -6508,10 +6533,10 @@ int StreamUpdateSessionAlertTcp(
     return -1;
 }
 
-void StreamSetExtraDataTcp (Flow* lwssn, Packet* p, uint32_t xid)
+void StreamSetExtraDataTcp(Flow* lwssn, Packet* p, uint32_t xid)
 {
-    StreamTracker *st;
-    TcpSession *tcpssn = (TcpSession*)lwssn->session;
+    StreamTracker* st;
+    TcpSession* tcpssn = (TcpSession*)lwssn->session;
 
     if (sfip_equals(p->ptrs.ip_api.get_src(),&tcpssn->flow->client_ip))
         st = &tcpssn->server;
@@ -6521,10 +6546,10 @@ void StreamSetExtraDataTcp (Flow* lwssn, Packet* p, uint32_t xid)
     st->xtradata_mask |= BIT(xid);
 }
 
-void StreamClearExtraDataTcp (Flow* lwssn, Packet* p, uint32_t xid)
+void StreamClearExtraDataTcp(Flow* lwssn, Packet* p, uint32_t xid)
 {
-    StreamTracker *st;
-    TcpSession *tcpssn = (TcpSession*)lwssn->session;
+    StreamTracker* st;
+    TcpSession* tcpssn = (TcpSession*)lwssn->session;
 
     if (sfip_equals(p->ptrs.ip_api.get_src(),&tcpssn->flow->client_ip))
         st = &tcpssn->server;
@@ -6537,10 +6562,10 @@ void StreamClearExtraDataTcp (Flow* lwssn, Packet* p, uint32_t xid)
         st->xtradata_mask = 0;
 }
 
-char StreamGetReassemblyDirectionTcp(Flow *lwssn)
+char StreamGetReassemblyDirectionTcp(Flow* lwssn)
 {
     char dir = SSN_DIR_NONE;
-    TcpSession *tcpssn = NULL;
+    TcpSession* tcpssn = NULL;
 
     if (!lwssn)
         return SSN_DIR_NONE;
@@ -6560,9 +6585,9 @@ char StreamGetReassemblyDirectionTcp(Flow *lwssn)
     return dir;
 }
 
-bool StreamGetReassemblyFlushPolicyTcp(Flow *lwssn, char dir)
+bool StreamGetReassemblyFlushPolicyTcp(Flow* lwssn, char dir)
 {
-    TcpSession *tcpssn = NULL;
+    TcpSession* tcpssn = NULL;
 
     if (!lwssn)
         return false;
@@ -6581,9 +6606,9 @@ bool StreamGetReassemblyFlushPolicyTcp(Flow *lwssn, char dir)
     return false;
 }
 
-char StreamIsStreamSequencedTcp(Flow *lwssn, char dir)
+char StreamIsStreamSequencedTcp(Flow* lwssn, char dir)
 {
-    TcpSession *tcpssn = NULL;
+    TcpSession* tcpssn = NULL;
 
     if (!lwssn)
         return 1;
@@ -6607,14 +6632,14 @@ char StreamIsStreamSequencedTcp(Flow *lwssn, char dir)
 
 /* This will falsly return SSN_MISSING_BEFORE on the first reassembed
  * packet if reassembly for this direction was set mid-session */
-int StreamMissingInReassembledTcp(Flow *lwssn, char dir)
+int StreamMissingInReassembledTcp(Flow* lwssn, char dir)
 {
-    TcpSession *tcpssn = NULL;
+    TcpSession* tcpssn = NULL;
 
     if (!lwssn)
         return SSN_MISSING_NONE;
 
-    tcpssn = (TcpSession *)lwssn->session;
+    tcpssn = (TcpSession*)lwssn->session;
 
     if (dir & SSN_DIR_FROM_CLIENT)
     {
@@ -6640,14 +6665,14 @@ int StreamMissingInReassembledTcp(Flow *lwssn, char dir)
     return SSN_MISSING_NONE;
 }
 
-char StreamPacketsMissingTcp(Flow *lwssn, char dir)
+char StreamPacketsMissingTcp(Flow* lwssn, char dir)
 {
-    TcpSession *tcpssn = NULL;
+    TcpSession* tcpssn = NULL;
 
     if (!lwssn)
         return 0;
 
-    tcpssn = (TcpSession *)lwssn->session;
+    tcpssn = (TcpSession*)lwssn->session;
 
     if (dir & SSN_DIR_FROM_CLIENT)
     {
@@ -6685,7 +6710,7 @@ void TcpSession::reset()
         TcpSessionClear(flow, (TcpSession*)flow->session, 2);
 }
 
-bool TcpSession::setup (Packet*)
+bool TcpSession::setup(Packet*)
 {
     // FIXIT-L this it should not be necessary to reset here
     reset();
@@ -6747,7 +6772,7 @@ void TcpSession::restart(Packet* p)
 }
 
 void TcpSession::update_direction(
-    char dir, const sfip_t *ip, uint16_t port)
+    char dir, const sfip_t* ip, uint16_t port)
 {
     sfip_t tmpIp;
     uint16_t tmpPort;
@@ -6791,7 +6816,7 @@ void TcpSession::update_direction(
 /*
  * Main entry point for TCP
  */
-int TcpSession::process(Packet *p)
+int TcpSession::process(Packet* p)
 {
     TcpDataBlock tdb;
     int status;
@@ -6801,9 +6826,9 @@ int TcpSession::process(Packet *p)
         char flagbuf[9];
         CreateTCPFlagString(p->ptrs.tcph, flagbuf);
         DebugMessage((DEBUG_STREAM|DEBUG_STREAM_STATE),
-            "Got TCP Packet 0x%X:%d ->  0x%X:%d %s\nseq: 0x%X   ack:0x%X  dsize: %u\n",
-            p->ptrs.ip_api.get_src(), p->ptrs.sp, p->ptrs.ip_api.get_dst(), p->ptrs.dp, flagbuf,
-            ntohl(p->ptrs.tcph->th_seq), ntohl(p->ptrs.tcph->th_ack), p->dsize););
+        "Got TCP Packet 0x%X:%d ->  0x%X:%d %s\nseq: 0x%X   ack:0x%X  dsize: %u\n",
+        p->ptrs.ip_api.get_src(), p->ptrs.sp, p->ptrs.ip_api.get_dst(), p->ptrs.dp, flagbuf,
+        ntohl(p->ptrs.tcph->th_seq), ntohl(p->ptrs.tcph->th_ack), p->dsize); );
 
     MODULE_PROFILE_START(s5TcpPerfStats);
 
@@ -6836,11 +6861,11 @@ int TcpSession::process(Packet *p)
                 if ( config->midstream_allowed(p) )
                     goto midstream_pickup_allowed;
 
-                 // Do nothing with this packet since we require a 3-way ;)
+                // Do nothing with this packet since we require a 3-way ;)
                 DEBUG_WRAP(
                     DebugMessage(DEBUG_STREAM_STATE, "Stream: Requiring 3-way "
                     "Handshake, but failed to retrieve session object "
-                    "for non SYN packet.\n"););
+                    "for non SYN packet.\n"); );
 
                 if ( !p->ptrs.tcph->is_rst() && !(tcpssn->event_mask & EVENT_NO_3WHS) )
                 {
@@ -6858,7 +6883,7 @@ int TcpSession::process(Packet *p)
         else
         {
 midstream_pickup_allowed:
-            if ( 
+            if (
                 !p->ptrs.tcph->is_syn_ack() &&
                 !p->dsize &&
                 !(StreamPacketHasWscale(p) & TF_WSCALE) )
@@ -6889,7 +6914,7 @@ midstream_pickup_allowed:
         else
         {
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Stream TCP session timedout!\n"););
+                "Stream TCP session timedout!\n"); );
 
             /* Not reset, simply time'd out.  Clean it up */
             TcpSessionCleanup(flow, 1);
@@ -6900,7 +6925,7 @@ midstream_pickup_allowed:
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
         "Finished Stream TCP cleanly!\n"
-                    "---------------------------------------------------\n"););
+        "---------------------------------------------------\n"); );
 
     if ( !(status & ACTION_LWSSN_CLOSED) )
     {
@@ -6913,7 +6938,7 @@ midstream_pickup_allowed:
 
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
             "Stream Ignoring packet from %d. Session marked as ignore\n",
-            p->packet_flags & PKT_FROM_SERVER? "server" : "client"););
+            p->packet_flags & PKT_FROM_SERVER ? "server" : "client"); );
     }
 
     MODULE_PROFILE_END(s5TcpPerfStats);

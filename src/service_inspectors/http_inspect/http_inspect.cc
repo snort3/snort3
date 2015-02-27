@@ -113,7 +113,7 @@ static inline void InitLookupTables(void);
 static void CheckGzipConfig(HTTPINSPECT_GLOBAL_CONF*);
 static void CheckMemcap(HTTPINSPECT_GLOBAL_CONF*);
 
-static void CheckGzipConfig(HTTPINSPECT_GLOBAL_CONF *pPolicyConfig)
+static void CheckGzipConfig(HTTPINSPECT_GLOBAL_CONF* pPolicyConfig)
 {
     if (!pPolicyConfig->max_gzip_mem)
         pPolicyConfig->max_gzip_mem = DEFAULT_MAX_GZIP_MEM;
@@ -128,13 +128,13 @@ static void CheckGzipConfig(HTTPINSPECT_GLOBAL_CONF *pPolicyConfig)
         pPolicyConfig->max_gzip_mem / (sizeof(DECOMPRESS_STATE) + sizeof(fd_session_t));
 }
 
-static void CheckMemcap(HTTPINSPECT_GLOBAL_CONF *pPolicyConfig)
+static void CheckMemcap(HTTPINSPECT_GLOBAL_CONF* pPolicyConfig)
 {
     if (!pPolicyConfig->memcap)
         pPolicyConfig->memcap = DEFAULT_HTTP_MEMCAP;
 }
 
-static void updateConfigFromFileProcessing (HTTPINSPECT_CONF* ServerConf)
+static void updateConfigFromFileProcessing(HTTPINSPECT_CONF* ServerConf)
 {
     /*Either one is unlimited*/
     int64_t fileDepth = file_api->get_max_file_depth();
@@ -162,7 +162,6 @@ static void updateConfigFromFileProcessing (HTTPINSPECT_CONF* ServerConf)
         ServerConf->post_extract_size = ServerConf->post_depth;
     else
         ServerConf->post_extract_size = fileDepth;
-
 }
 
 static int HttpInspectVerifyPolicy(SnortConfig*, HTTPINSPECT_CONF* pData)
@@ -188,7 +187,7 @@ static inline void InitLookupTables(void)
     memset(valid_lookup, INVALID_HEX_VAL, sizeof(valid_lookup));
 
     iNum = 0;
-    for(iCtr = 48; iCtr < 58; iCtr++)
+    for (iCtr = 48; iCtr < 58; iCtr++)
     {
         hex_lookup[iCtr] = iNum;
         valid_lookup[iCtr] = HEX_VAL;
@@ -199,7 +198,7 @@ static inline void InitLookupTables(void)
     * Set the upper case values.
     */
     iNum = 10;
-    for(iCtr = 65; iCtr < 71; iCtr++)
+    for (iCtr = 65; iCtr < 71; iCtr++)
     {
         hex_lookup[iCtr] = iNum;
         valid_lookup[iCtr] = HEX_VAL;
@@ -210,12 +209,12 @@ static inline void InitLookupTables(void)
      *  Set the lower case values.
      */
     iNum = 10;
-    for(iCtr = 97; iCtr < 103; iCtr++)
+    for (iCtr = 97; iCtr < 103; iCtr++)
     {
         hex_lookup[iCtr] = iNum;
         valid_lookup[iCtr] = HEX_VAL;
         iNum++;
-   }
+    }
 }
 
 //-------------------------------------------------------------------------
@@ -234,7 +233,7 @@ public:
     void show(SnortConfig*) override;
 
     StreamSplitter* get_splitter(bool c2s) override
-    { return new HttpSplitter(c2s); };
+    { return new HttpSplitter(c2s); }
 
     void eval(Packet*) override;
 
@@ -293,7 +292,7 @@ bool HttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
     return true;
 }
 
-bool HttpInspect::configure (SnortConfig* sc)
+bool HttpInspect::configure(SnortConfig* sc)
 {
     global = (HttpData*)DataManager::acquire(GLOBAL_KEYWORD, sc);
     config->global = global->data;
@@ -311,8 +310,8 @@ bool HttpInspect::configure (SnortConfig* sc)
     if ( (config->post_extract_size > -1) &&
         file_api->is_decoding_enabled(&config->global->decode_conf) )
     {
-        updateMaxDepth(config->global->decode_conf.file_depth, &config->global->decode_conf.max_depth);
-
+        updateMaxDepth(config->global->decode_conf.file_depth,
+            &config->global->decode_conf.max_depth);
     }
     return !HttpInspectVerifyPolicy(sc, config);
 }
@@ -325,7 +324,7 @@ void HttpInspect::show(SnortConfig*)
     PrintServerConf(config);
 }
 
-void HttpInspect::eval (Packet* p)
+void HttpInspect::eval(Packet* p)
 {
     PROFILE_VARS;
 

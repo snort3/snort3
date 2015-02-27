@@ -53,25 +53,25 @@
 
 class Flow;
 
-typedef int (*LogFunction)(Flow*, uint8_t **buf, uint32_t *len, uint32_t *type);
-typedef void (*LogExtraData)(Flow*, void *config, LogFunction *funcs,
+typedef int (* LogFunction)(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
+typedef void (* LogExtraData)(Flow*, void* config, LogFunction* funcs,
     uint32_t max_count, uint32_t xtradata_mask, uint32_t id, uint32_t sec);
 
-typedef int (*PacketIterator)
-    (
-     DAQ_PktHdr_t *,
-     uint8_t *,  /* pkt pointer */
-     void *      /* user-defined data pointer */
-    );
+typedef int (* PacketIterator)
+(
+    DAQ_PktHdr_t*,
+    uint8_t*,    /* pkt pointer */
+    void*        /* user-defined data pointer */
+);
 
-typedef int (*StreamSegmentIterator)
-    (
-     DAQ_PktHdr_t *,
-     uint8_t *,  /* pkt pointer */
-     uint8_t *,  /* payload pointer */
-     uint32_t,   /* sequence number */
-     void *      /* user-defined data pointer */
-    );
+typedef int (* StreamSegmentIterator)
+(
+    DAQ_PktHdr_t*,
+    uint8_t*,    /* pkt pointer */
+    uint8_t*,    /* payload pointer */
+    uint32_t,    /* sequence number */
+    void*        /* user-defined data pointer */
+);
 
 #define MAX_LOG_FN 32
 
@@ -108,7 +108,7 @@ public:
      * TCP only.
      */
     int ignore_session(
-        const sfip_t *addr1, uint16_t p1, const sfip_t *addr2, uint16_t p2,
+        const sfip_t* addr1, uint16_t p1, const sfip_t* addr2, uint16_t p2,
         uint8_t proto, char dir, uint32_t ppId);
 
     /* Resume inspection for session.
@@ -149,7 +149,7 @@ public:
 
     /* Check session alert - true if previously alerted
      */
-    static bool check_session_alerted(Flow*, Packet *p, uint32_t gid, uint32_t sid);
+    static bool check_session_alerted(Flow*, Packet* p, uint32_t gid, uint32_t sid);
 
     /* Set Extra Data Logging
      *
@@ -158,7 +158,7 @@ public:
      *      -1 failure ( no alerts )
      */
     static int update_session_alert(
-        Flow*, Packet *p, uint32_t gid, uint32_t sid,
+        Flow*, Packet* p, uint32_t gid, uint32_t sid,
         uint32_t eventId, uint32_t eventSecond);
 
     /* Get Flowbits data
@@ -232,7 +232,7 @@ public:
      *     -1 on failure
      */
     int set_application_protocol_id_expected(
-        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2, uint8_t proto,
+        const sfip_t* a1, uint16_t p1, const sfip_t* a2, uint16_t p2, uint8_t proto,
         int16_t appId, FlowData*);
 
     /** Retrieve application session data based on the lookup tuples for
@@ -243,7 +243,7 @@ public:
      *     Application Data reference (pointer)
      */
     static FlowData* get_application_data_from_ip_port(
-        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2, uint8_t    proto,
+        const sfip_t* a1, uint16_t p1, const sfip_t* a2, uint16_t p2, uint8_t proto,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId, unsigned flow_id);
 
     /*  Get the application data from the session key
@@ -255,8 +255,8 @@ public:
     void reg_xtra_data_log(LogExtraData, void*);
     uint32_t get_xtra_data_map(LogFunction**);
 
-    static void set_extra_data(Flow*, Packet *, uint32_t);
-    static void clear_extra_data(Flow*, Packet *, uint32_t);
+    static void set_extra_data(Flow*, Packet*, uint32_t);
+    static void clear_extra_data(Flow*, Packet*, uint32_t);
     void log_extra_data(Flow*, uint32_t mask, uint32_t id, uint32_t sec);
 
     /** Retrieve stream session pointer based on the lookup tuples for
@@ -267,7 +267,7 @@ public:
      *     Stream session pointer
      */
     static Flow* get_session_ptr_from_ip_port(
-        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2, uint8_t proto,
+        const sfip_t* a1, uint16_t p1, const sfip_t* a2, uint16_t p2, uint8_t proto,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
 
     /* Delete the session if it is in the closed session state.
@@ -282,7 +282,7 @@ public:
      */
     static void populate_session_key(Packet*, FlowKey*);
 
-    void update_direction(Flow*, char dir, const sfip_t *ip, uint16_t port);
+    void update_direction(Flow*, char dir, const sfip_t* ip, uint16_t port);
 
     static void set_application_protocol_id_from_host_entry(
         Flow*, const struct HostAttributeEntry*, int direction);
@@ -291,7 +291,7 @@ public:
     static uint32_t get_session_flags(Flow*);
 
     static bool is_midstream(Flow* flow)
-        { return flow->ssn_state.session_flags & SSNFLAG_MIDSTREAM; };
+    { return flow->ssn_state.session_flags & SSNFLAG_MIDSTREAM; }
 
     static int get_ignore_direction(Flow*);
     static int set_ignore_direction(Flow*, int ignore_direction);
@@ -300,9 +300,9 @@ public:
     // outer=false to get inner ip ttl for ip in ip; else outer=true
     static uint8_t get_session_ttl(Flow*, char dir, bool outer);
 
-    static bool expired_session (Flow*, Packet*);
-    static bool ignored_session (Flow*, Packet*);
-    static bool blocked_session (Flow*, Packet*);
+    static bool expired_session(Flow*, Packet*);
+    static bool ignored_session(Flow*, Packet*);
+    static bool blocked_session(Flow*, Packet*);
 
 private:
     static void set_ip_protocol(Flow*);
@@ -311,7 +311,7 @@ private:
     uint32_t xtradata_func_count = 0;
     LogFunction xtradata_map[MAX_LOG_FN];
     LogExtraData extra_data_log = NULL;
-    void *extra_data_config = NULL;
+    void* extra_data_config = NULL;
 };
 
 SO_PUBLIC extern Stream stream;

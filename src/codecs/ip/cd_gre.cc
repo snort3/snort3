@@ -18,7 +18,6 @@
 //--------------------------------------------------------------------------
 // cd_gre.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -36,7 +35,6 @@
 
 namespace
 {
-
 static const RuleMap gre_rules[] =
 {
     { DECODE_GRE_DGRAM_LT_GREHDR, "GRE header length > payload length" },
@@ -51,7 +49,7 @@ static const RuleMap gre_rules[] =
 class GreModule : public CodecModule
 {
 public:
-    GreModule() : CodecModule(CD_GRE_NAME, CD_GRE_HELP) {}
+    GreModule() : CodecModule(CD_GRE_NAME, CD_GRE_HELP) { }
 
     const RuleMap* get_rules() const override
     { return gre_rules; }
@@ -60,8 +58,8 @@ public:
 class GreCodec : public Codec
 {
 public:
-    GreCodec() : Codec(CD_GRE_NAME){};
-    ~GreCodec(){};
+    GreCodec() : Codec(CD_GRE_NAME) { }
+    ~GreCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
@@ -75,8 +73,8 @@ static const uint32_t GRE_KEY_LEN = 4;
 static const uint32_t GRE_SEQ_LEN = 4;
 static const uint32_t GRE_SRE_HEADER_LEN = 4;
 
-/* GRE version 1 used with PPTP */
-/* static const uint32_t GRE_V1_HEADER_LEN == GRE_HEADER_LEN + GRE_KEY_LEN; */
+/* GRE version 1 used with PPTP
+   static const uint32_t GRE_V1_HEADER_LEN == GRE_HEADER_LEN + GRE_KEY_LEN; */
 static const uint32_t GRE_V1_ACK_LEN = 4;
 
 #define GRE_V1_FLAGS(x)   (x->version & 0x78)
@@ -88,13 +86,10 @@ static const uint32_t GRE_V1_ACK_LEN = 4;
 #define GRE_SSR(x)     (x->flags & 0x08)
 #define GRE_RECUR(x)   (x->flags & 0x07)
 #define GRE_FLAGS(x)   (x->version & 0xF8)
-
 } // anonymous namespace
-
 
 void GreCodec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(IPPROTO_ID_GRE); }
-
 
 /*
  * Function: DecodeGRE(uint8_t *, uint32_t, Packet *)
@@ -123,100 +118,100 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
      * figure out the length
      */
 
-    const gre::GREHdr* const greh = reinterpret_cast<const gre::GREHdr *>(raw.data);
+    const gre::GREHdr* const greh = reinterpret_cast<const gre::GREHdr*>(raw.data);
     uint16_t len = GRE_HEADER_LEN;
 
     switch (greh->get_version())
     {
-        case 0x00:
-            /* these must not be set */
-            if (GRE_RECUR(greh) || GRE_FLAGS(greh))
-            {
-                codec_event(codec, DECODE_GRE_INVALID_HEADER);
-                return false;
-            }
+    case 0x00:
+        /* these must not be set */
+        if (GRE_RECUR(greh) || GRE_FLAGS(greh))
+        {
+            codec_event(codec, DECODE_GRE_INVALID_HEADER);
+            return false;
+        }
 
-            if (GRE_CHKSUM(greh) || GRE_ROUTE(greh))
-                len += GRE_CHKSUM_LEN + GRE_OFFSET_LEN;
+        if (GRE_CHKSUM(greh) || GRE_ROUTE(greh))
+            len += GRE_CHKSUM_LEN + GRE_OFFSET_LEN;
 
-            if (GRE_KEY(greh))
-                len += GRE_KEY_LEN;
-
-            if (GRE_SEQ(greh))
-                len += GRE_SEQ_LEN;
-
-            /* if this flag is set, we need to walk through all of the
-             * Source Route Entries */
-            if (GRE_ROUTE(greh))
-            {
-                uint16_t sre_addrfamily;
-                uint8_t sre_offset;
-                uint8_t sre_length;
-                const uint8_t *sre_ptr;
-
-                sre_ptr = raw.data + len;
-
-                while (1)
-                {
-                    len += GRE_SRE_HEADER_LEN;
-                    if (len > raw.len)
-                        break;
-
-                    sre_addrfamily = ntohs(*((uint16_t *)sre_ptr));
-                    sre_ptr += sizeof(sre_addrfamily);
-
-                    sre_ptr += sizeof(sre_offset);
-
-                    sre_length = *((uint8_t *)sre_ptr);
-                    sre_ptr += sizeof(sre_length);
-
-                    if ((sre_addrfamily == 0) && (sre_length == 0))
-                        break;
-
-                    len += sre_length;
-                    sre_ptr += sre_length;
-                }
-            }
-
-            break;
-
-        /* PPTP */
-        case 0x01:
-            /* these flags should never be present */
-            if (GRE_CHKSUM(greh) || GRE_ROUTE(greh) || GRE_SSR(greh) ||
-                GRE_RECUR(greh) || GRE_V1_FLAGS(greh))
-            {
-                codec_event(codec, DECODE_GRE_V1_INVALID_HEADER);
-                return false;
-            }
-
-            /* protocol must be 0x880B - PPP */
-            if (greh->proto() != ETHERTYPE_PPP)
-            {
-                codec_event(codec, DECODE_GRE_V1_INVALID_HEADER);
-                return false;
-            }
-
-            /* this flag should always be present */
-            if (!(GRE_KEY(greh)))
-            {
-                codec_event(codec, DECODE_GRE_V1_INVALID_HEADER);
-                return false;
-            }
-
+        if (GRE_KEY(greh))
             len += GRE_KEY_LEN;
 
-            if (GRE_SEQ(greh))
-                len += GRE_SEQ_LEN;
+        if (GRE_SEQ(greh))
+            len += GRE_SEQ_LEN;
 
-            if (GRE_V1_ACK(greh))
-                len += GRE_V1_ACK_LEN;
+        /* if this flag is set, we need to walk through all of the
+         * Source Route Entries */
+        if (GRE_ROUTE(greh))
+        {
+            uint16_t sre_addrfamily;
+            uint8_t sre_offset;
+            uint8_t sre_length;
+            const uint8_t* sre_ptr;
 
-            break;
+            sre_ptr = raw.data + len;
 
-        default:
-            codec_event(codec, DECODE_GRE_INVALID_VERSION);
+            while (1)
+            {
+                len += GRE_SRE_HEADER_LEN;
+                if (len > raw.len)
+                    break;
+
+                sre_addrfamily = ntohs(*((uint16_t*)sre_ptr));
+                sre_ptr += sizeof(sre_addrfamily);
+
+                sre_ptr += sizeof(sre_offset);
+
+                sre_length = *((uint8_t*)sre_ptr);
+                sre_ptr += sizeof(sre_length);
+
+                if ((sre_addrfamily == 0) && (sre_length == 0))
+                    break;
+
+                len += sre_length;
+                sre_ptr += sre_length;
+            }
+        }
+
+        break;
+
+    /* PPTP */
+    case 0x01:
+        /* these flags should never be present */
+        if (GRE_CHKSUM(greh) || GRE_ROUTE(greh) || GRE_SSR(greh) ||
+            GRE_RECUR(greh) || GRE_V1_FLAGS(greh))
+        {
+            codec_event(codec, DECODE_GRE_V1_INVALID_HEADER);
             return false;
+        }
+
+        /* protocol must be 0x880B - PPP */
+        if (greh->proto() != ETHERTYPE_PPP)
+        {
+            codec_event(codec, DECODE_GRE_V1_INVALID_HEADER);
+            return false;
+        }
+
+        /* this flag should always be present */
+        if (!(GRE_KEY(greh)))
+        {
+            codec_event(codec, DECODE_GRE_V1_INVALID_HEADER);
+            return false;
+        }
+
+        len += GRE_KEY_LEN;
+
+        if (GRE_SEQ(greh))
+            len += GRE_SEQ_LEN;
+
+        if (GRE_V1_ACK(greh))
+            len += GRE_V1_ACK_LEN;
+
+        break;
+
+    default:
+        codec_event(codec, DECODE_GRE_INVALID_VERSION);
+        return false;
     }
 
     if (len > raw.len)
@@ -231,17 +226,15 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     return true;
 }
 
-
 void GreCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const uint16_t /*lyr_len*/)
 {
-    const gre::GREHdr *greh = reinterpret_cast<const gre::GREHdr *>(raw_pkt);
+    const gre::GREHdr* greh = reinterpret_cast<const gre::GREHdr*>(raw_pkt);
 
     TextLog_Print(text_log, "version:%u flags:0x%02X ethertype:(0x%04X)",
-            greh->get_version(), greh->flags,
-            greh->proto());
+        greh->get_version(), greh->flags,
+        greh->proto());
 }
-
 
 //-------------------------------------------------------------------------
 // api
@@ -256,7 +249,7 @@ static void mod_dtor(Module* m)
 static Codec* ctor(Module*)
 { return new GreCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi gre_api =
@@ -287,5 +280,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_gre = &gre_api.base;
 #endif
-
 

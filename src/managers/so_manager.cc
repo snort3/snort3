@@ -126,7 +126,7 @@ static const char* expand(const uint8_t* data, unsigned len)
 
     stream.total_in = 0;
     stream.total_out = 0;
- 
+
     if ( inflateInit(&stream) != Z_OK )
         return nullptr;
 
@@ -159,7 +159,8 @@ static void strvrt(const string& text, string& data)
     // nonetheless this seems to work as good as the basic
     // C++ 11 default generator and uniform distribution
     uint8_t key = (uint8_t)(rand() >> 16);
-    if ( !key ) key = 0xA5;
+    if ( !key )
+        key = 0xA5;
 
     for ( unsigned i = 0; i < len; i++ )
         data[i] ^= key;
@@ -326,7 +327,7 @@ void SoManager::rule_to_hex(const char*)
     cout << dec;
     cout << "};" << endl;
     cout << "const unsigned rule_" << var << "_len = ";
-    cout  << data.size() << ";" << endl;
+    cout << data.size() << ";" << endl;
 }
 
 void SoManager::rule_to_text(const char*)

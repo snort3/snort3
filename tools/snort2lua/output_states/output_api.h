@@ -25,9 +25,8 @@
 
 namespace output
 {
-
 extern const std::vector<const ConvertMap*> output_api;
-
 } // namespace output
 
 #endif
+

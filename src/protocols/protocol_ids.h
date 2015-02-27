@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 // protocol_ids.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifndef PROTOCOLS_PROTOCOL_IDS_H
 #define PROTOCOLS_PROTOCOL_IDS_H
 
@@ -30,15 +29,12 @@
  *****          in the specific file.                         ****
  ****************************************************************/
 
-
 /*
  *  PROTOCOL ID'S By Range
  *   0    (0x0000) -   255  (0x00FF)  --> IP protocols
  *   256  (0x0100) -  1535  (0x05FF)  --> protocols without IDs (teredo, gtp)
  *  1536  (0x6000) -  65536 (0xFFFF)  --> Ethertypes
  */
-
-
 
 /*
  * Below is a partial list of protocol numbers for the IP protocols.
@@ -78,7 +74,6 @@ constexpr uint16_t PROTO_ETHERNET_802_3 = 0x0105;
 constexpr uint16_t PROTO_ETHERNET_802_11 = 0x0106;
 constexpr uint16_t PROTO_ETHERNET_LLC = 0x0107;
 
-
 /*
  * Below is a partial list of ethertypes.
  *  Defined at:
@@ -99,7 +94,7 @@ constexpr uint16_t ETHERTYPE_FPATH = 0x8903;
 
 static inline bool is_ip6_extension(const uint8_t proto)
 {
-    switch(proto)
+    switch (proto)
     {
     case IPPROTO_ID_HOPOPTS:
     case IPPROTO_ID_DSTOPTS:
@@ -116,3 +111,4 @@ static inline bool is_ip6_extension(const uint8_t proto)
 }
 
 #endif
+

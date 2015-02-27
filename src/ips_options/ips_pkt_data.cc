@@ -39,10 +39,10 @@ static THREAD_LOCAL ProfileStats pktDataPerfStats;
 class PktDataOption : public IpsOption
 {
 public:
-    PktDataOption() : IpsOption(s_name) { };
+    PktDataOption() : IpsOption(s_name) { }
 
     CursorActionType get_cursor_type() const override
-    { return CAT_SET_RAW; };
+    { return CAT_SET_RAW; }
 
     int eval(Cursor&, Packet*) override;
 };
@@ -68,10 +68,10 @@ int PktDataOption::eval(Cursor& c, Packet* p)
 class PktDataModule : public Module
 {
 public:
-    PktDataModule() : Module(s_name, s_help) { };
+    PktDataModule() : Module(s_name, s_help) { }
 
     ProfileStats* get_profile() const override
-    { return &pktDataPerfStats; };
+    { return &pktDataPerfStats; }
 };
 
 //-------------------------------------------------------------------------
@@ -121,3 +121,4 @@ static const IpsApi pkt_data_api =
 };
 
 const BaseApi* ips_pkt_data = &pkt_data_api.base;
+

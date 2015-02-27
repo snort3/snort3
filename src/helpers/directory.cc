@@ -64,7 +64,7 @@ static bool is_sub(const char* path)
 
     if ( !n || path[n-1] == '.' )
         return false;
-    
+
     if ( stat(path, &s) )
         return false;
 

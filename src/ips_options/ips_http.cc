@@ -41,10 +41,10 @@ class HttpCursorModule : public Module
 {
 public:
     HttpCursorModule(const char* s, const char* h, ProfileStats& p) :
-        Module(s, h), ps(p) { };
+        Module(s, h), ps(p) { }
 
     ProfileStats* get_profile() const override
-    { return &ps; };
+    { return &ps; }
 
     ProfileStats& ps;
 };
@@ -69,12 +69,13 @@ public:
     HttpIpsOption(
         const char* s, ProfileStats& p, CursorActionType c = CAT_SET_OTHER) :
         IpsOption(s), ps(p)
-    { key = s; cat = c; };
+    { key = s; cat = c; }
 
     CursorActionType get_cursor_type() const override
-    { return cat; };
+    { return cat; }
 
     int eval(Cursor&, Packet*) override;
+
 private:
     const char* key;
     CursorActionType cat;

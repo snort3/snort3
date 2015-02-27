@@ -48,7 +48,7 @@
 
 RateFilterConfig* RateFilter_ConfigNew(void)
 {
-    RateFilterConfig *rf_config = (RateFilterConfig *)SnortAlloc(sizeof(*rf_config));
+    RateFilterConfig* rf_config = (RateFilterConfig*)SnortAlloc(sizeof(*rf_config));
 
     rf_config->memcap = 1024 * 1024;
 
@@ -58,7 +58,7 @@ RateFilterConfig* RateFilter_ConfigNew(void)
 /* Free threshold context
  * @param pContext pointer to global threshold context.
  */
-void RateFilter_ConfigFree(RateFilterConfig *config)
+void RateFilter_ConfigFree(RateFilterConfig* config)
 {
     int i;
 
@@ -83,7 +83,7 @@ void RateFilter_Cleanup(void)
  * Create and Add a Thresholding Event Object
  */
 int RateFilter_Create(
-    SnortConfig *sc, RateFilterConfig *rf_config, tSFRFConfigNode *thdx)
+    SnortConfig* sc, RateFilterConfig* rf_config, tSFRFConfigNode* thdx)
 {
     int error;
 
@@ -95,6 +95,7 @@ int RateFilter_Create(
         "THRESHOLD: gid=%u, sid=%u, tracking=%d, count=%d, seconds=%d \n",
         thdx->gid, thdx->sid, thdx->tracking, thdx->count, thdx->seconds);
 }
+
 #endif
 
     /* Add the object to the table - */
@@ -125,8 +126,8 @@ int RateFilter_Test(
     unsigned gid = otn->sigInfo.generator;
     unsigned sid = otn->sigInfo.id;
 
-    const sfip_t *sip;
-    const sfip_t *dip;
+    const sfip_t* sip;
+    const sfip_t* dip;
     sfip_t cleared;
 
     if ( p->ptrs.ip_api.is_valid() )
@@ -165,7 +166,7 @@ int RateFilter_Test(
 }
 
 /* empty out active entries */
-void RateFilter_ResetActive (void)
+void RateFilter_ResetActive(void)
 {
     SFRF_Flush();
 }
@@ -177,7 +178,7 @@ void RateFilter_PrintConfig(RateFilterConfig*)
 }
 
 #if 0
-static int _logConfigNode( tSFRFConfigNode* p)
+static int _logConfigNode(tSFRFConfigNode* p)
 {
     const char* trackBy = "?";
     char buf[STD_BUF+1];
@@ -191,24 +192,25 @@ static int _logConfigNode( tSFRFConfigNode* p)
     }
     else
     {
-        SnortSnprintfAppend(buf, STD_BUF, "| gen-id=%-6d", p->gid );
+        SnortSnprintfAppend(buf, STD_BUF, "| gen-id=%-6d", p->gid);
     }
     if ( p->sid == 0 )
     {
-        SnortSnprintfAppend(buf, STD_BUF, " sig-id=global" );
+        SnortSnprintfAppend(buf, STD_BUF, " sig-id=global");
     }
     else
     {
-        SnortSnprintfAppend(buf, STD_BUF, " sig-id=%-10d", p->sid );
+        SnortSnprintfAppend(buf, STD_BUF, " sig-id=%-10d", p->sid);
     }
 
-    SnortSnprintfAppend(buf, STD_BUF, " policyId=%-10d", p->policyId );
+    SnortSnprintfAppend(buf, STD_BUF, " policyId=%-10d", p->policyId);
 
-    switch ( p->tracking ) {
-        case SFRF_TRACK_BY_SRC : trackBy = "src"; break;
-        case SFRF_TRACK_BY_DST : trackBy = "dst"; break;
-        case SFRF_TRACK_BY_RULE: trackBy = "rule"; break;
-        default: break;
+    switch ( p->tracking )
+    {
+    case SFRF_TRACK_BY_SRC: trackBy = "src"; break;
+    case SFRF_TRACK_BY_DST: trackBy = "dst"; break;
+    case SFRF_TRACK_BY_RULE: trackBy = "rule"; break;
+    default: break;
     }
     SnortSnprintfAppend(buf, STD_BUF, " tracking=%s", trackBy);
     SnortSnprintfAppend(buf, STD_BUF, " count=%-3d", p->count);
@@ -219,7 +221,7 @@ static int _logConfigNode( tSFRFConfigNode* p)
     return 1;
 }
 
-static int _printThresholdContext(RateFilterConfig *config)
+static int _printThresholdContext(RateFilterConfig* config)
 {
     int gid;
     int lcnt=0;
@@ -237,9 +239,9 @@ static int _printThresholdContext(RateFilterConfig *config)
             continue;
         }
 
-        for ( item_hash_node  = sfghash_findfirst( sfrf_hash );
-              item_hash_node != 0;
-              item_hash_node  = sfghash_findnext( sfrf_hash ) )
+        for ( item_hash_node  = sfghash_findfirst(sfrf_hash);
+            item_hash_node != 0;
+            item_hash_node  = sfghash_findnext(sfrf_hash) )
         {
             tSFRFSidNode* sfrf_item;
             tSFRFConfigNode* sfrf_node;
@@ -249,20 +251,22 @@ static int _printThresholdContext(RateFilterConfig *config)
             SF_LNODE* cursor;
 
             for ( sfrf_node  =
-                      (tSFRFConfigNode*)sflist_first(sfrf_item->configNodeList, &cursor);
-                  sfrf_node != 0;
-                  sfrf_node =
-                      (tSFRFConfigNode*)sflist_next(&cursor) )
+                (tSFRFConfigNode*)sflist_first(sfrf_item->configNodeList, &cursor);
+                sfrf_node != 0;
+                sfrf_node =
+                (tSFRFConfigNode*)sflist_next(&cursor) )
             {
-                if ( _logConfigNode( sfrf_node) != 0 )
+                if ( _logConfigNode(sfrf_node) != 0 )
                     lcnt++;
             }
         }
     }
 
-    if ( ! lcnt ) LogMessage("| none\n");
+    if ( !lcnt )
+        LogMessage("| none\n");
 
     return 0;
 }
+
 #endif
 

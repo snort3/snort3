@@ -24,15 +24,12 @@
 
 namespace tcp
 {
-
-
 TcpOptIteratorIter::TcpOptIteratorIter(const TcpOption* first_opt) : opt(first_opt)
 {
 }
 
-const TcpOption& TcpOptIteratorIter::operator* () const
+const TcpOption& TcpOptIteratorIter::operator*() const
 { return *opt; }
-
 
 TcpOptIterator::TcpOptIterator(const TCPHdr* const tcp_header, const Packet* const p)
 {
@@ -55,7 +52,6 @@ TcpOptIterator::TcpOptIterator(const TCPHdr* const tcp_header, const Packet* con
     // Can occur if tcp_layer > max_layers.  No Options in such a case.
 }
 
-
 TcpOptIterator::TcpOptIterator(const TCPHdr* const tcp_header, const uint32_t valid_hdr_len)
 {
     const uint8_t* const hdr = (const uint8_t* const)tcp_header;
@@ -67,7 +63,6 @@ TcpOptIterator::TcpOptIterator(const TCPHdr* const tcp_header, const uint32_t va
         end_ptr = hdr + valid_hdr_len;
 }
 
-
 TcpOptIteratorIter TcpOptIterator::begin() const
 {
     return TcpOptIteratorIter(reinterpret_cast<const TcpOption*>(start_ptr));
@@ -77,6 +72,5 @@ TcpOptIteratorIter TcpOptIterator::end() const
 {
     return TcpOptIteratorIter(reinterpret_cast<const TcpOption*>(end_ptr));
 }
-
-
 } // namespace ip
+

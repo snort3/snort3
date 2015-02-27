@@ -20,7 +20,6 @@
 #ifndef DATA_DATA_TYPES_DT_RULE_H
 #define DATA_DATA_TYPES_DT_RULE_H
 
-
 #include <string>
 #include <vector>
 #include <iostream>
@@ -46,7 +45,7 @@ public:
     void bad_rule();
     void make_comment();
 
-    friend std::ostream &operator<<( std::ostream&, const Rule &);
+    friend std::ostream& operator<<(std::ostream&, const Rule&);
 
 private:
     std::vector<std::string> comments;
@@ -59,3 +58,4 @@ private:
 };
 
 #endif
+

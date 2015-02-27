@@ -32,13 +32,12 @@
 std::size_t RuleApi::error_count = 0;
 std::string RuleApi::remark = "";
 
-
 RuleApi::RuleApi()
     :   curr_rule(nullptr),
-        curr_data_bad(false)
+    curr_data_bad(false)
 {
     bad_rules = new Comments(start_bad_rules, 0,
-                    Comments::CommentType::MULTI_LINE);
+        Comments::CommentType::MULTI_LINE);
 }
 
 RuleApi::~RuleApi()
@@ -141,7 +140,6 @@ void RuleApi::update_rule_action(std::string new_type)
     }
 }
 
-
 void RuleApi::add_option(std::string opt_name)
 {
     if (!curr_rule)
@@ -167,7 +165,7 @@ void RuleApi::add_suboption(std::string keyword)
 }
 
 void RuleApi::add_suboption(std::string keyword,
-                            std::string val)
+    std::string val)
 {
     if (curr_rule)
         curr_rule->add_suboption(keyword, val);
@@ -191,7 +189,7 @@ void RuleApi::add_comment(std::string comment)
     curr_rule->add_comment(comment);
 }
 
-std::ostream& operator<<( std::ostream &out, const RuleApi& data)
+std::ostream& operator<<(std::ostream& out, const RuleApi& data)
 {
     if (DataApi::is_default_mode())
     {
@@ -199,13 +197,11 @@ std::ostream& operator<<( std::ostream &out, const RuleApi& data)
             out << (*data.bad_rules) << "\n";
     }
 
-
     out << "local_rules =\n[[\n";
     for (Rule* r : data.rules)
         out << (*r) << "\n\n";
 
     out << "]]\n\n\n";
-
 
     return out;
 }
@@ -231,6 +227,6 @@ void RuleApi::print_rejects(std::ostream& out)
     }
 }
 
-
 void RuleApi::swap_rules(std::vector<Rule*>& new_rules)
 { rules.swap(new_rules); }
+

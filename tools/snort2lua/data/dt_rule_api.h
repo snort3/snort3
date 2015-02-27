@@ -25,19 +25,16 @@
 #include <vector>
 #include <stack>
 
-
 class Rule;
 class RuleOption;
 class Comments;
 class RuleApi;
-
 
 // Yes, I need to redo this API.
 
 // FIXIT-L J  Simplify this API.  Several options functions are no longer necessary!!
 class RuleApi
 {
-
 public:
     RuleApi();
     virtual ~RuleApi();
@@ -49,12 +46,9 @@ public:
     bool empty() const;
     void reset_state();
 
-
-    friend std::ostream &operator<<(std::ostream&, const RuleApi &);
+    friend std::ostream& operator<<(std::ostream&, const RuleApi&);
     void print_rules(std::ostream&, bool in_rule_file);
     void print_rejects(std::ostream&);
-
-
 
     // functions specifically usefull when parsing includes.
     // allows for easy swapping of data.  These two functions
@@ -78,7 +72,6 @@ public:
     void make_rule_a_comment();
     void bad_rule(std::istringstream& stream, std::string bad_option);
 
-
 private:
     static std::size_t error_count;
     static std::string remark;
@@ -92,6 +85,5 @@ private:
     void begin_rule();
 };
 
-
-
 #endif
+

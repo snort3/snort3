@@ -16,7 +16,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 #ifndef DETECTION_FILTER_H
 #define DETECTION_FILTER_H
 
@@ -26,7 +26,7 @@
 //
 // both detection_filter and event_filter use the same basic mechanism.
 // however, detection_filter is evaluated as the final step in rule matching.
-// and thereby controls event generation.  event_filter is evaluated after 
+// and thereby controls event generation.  event_filter is evaluated after
 // the event is queued, and thereby controls which events get logged.
 
 struct sfip_t;
@@ -39,16 +39,17 @@ struct DetectionFilterConfig
     int enabled;
 };
 
-DetectionFilterConfig * DetectionFilterConfigNew(void);
-void DetectionFilterConfigFree(DetectionFilterConfig *);
+DetectionFilterConfig* DetectionFilterConfigNew(void);
+void DetectionFilterConfigFree(DetectionFilterConfig*);
 
 void detection_filter_init(DetectionFilterConfig*);
-void detection_filter_term( void );
+void detection_filter_term(void);
 
-void detection_filter_print_config(DetectionFilterConfig *);
+void detection_filter_print_config(DetectionFilterConfig*);
 void detection_filter_reset_active(void);
 
-int detection_filter_test(void*, const sfip_t *sip, const sfip_t *dip, long curtime);
-void * detection_filter_create(DetectionFilterConfig *, THDX_STRUCT *);
+int detection_filter_test(void*, const sfip_t* sip, const sfip_t* dip, long curtime);
+void* detection_filter_create(DetectionFilterConfig*, THDX_STRUCT*);
 
 #endif
+

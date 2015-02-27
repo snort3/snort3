@@ -25,27 +25,33 @@
 #include "nhttp_module.h"
 
 const Parameter NHttpModule::nhttp_params[] =
-    {{ "test_input", Parameter::PT_BOOL, nullptr, "false", "read HTTP messages from text file" },
-     { "test_output", Parameter::PT_BOOL, nullptr, "false", "print out HTTP section data" },
-     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }};
+{
+    { "test_input", Parameter::PT_BOOL, nullptr, "false", "read HTTP messages from text file" },
+    { "test_output", Parameter::PT_BOOL, nullptr, "false", "print out HTTP section data" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
 
-bool NHttpModule::begin(const char*, int, SnortConfig*) {
+bool NHttpModule::begin(const char*, int, SnortConfig*)
+{
     test_input = false;
     test_output = false;
     return true;
 }
 
-bool NHttpModule::set(const char*, Value &val, SnortConfig*) {
-    if (val.is("test_input")) {
+bool NHttpModule::set(const char*, Value& val, SnortConfig*)
+{
+    if (val.is("test_input"))
+    {
         test_input = val.get_bool();
     }
-    else if (val.is("test_output")) {
+    else if (val.is("test_output"))
+    {
         test_output = val.get_bool();
     }
-    else {
+    else
+    {
         return false;
     }
     return true;
 }
-
 

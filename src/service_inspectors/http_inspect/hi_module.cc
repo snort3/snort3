@@ -359,7 +359,8 @@ static const Parameter hi_server_params[] =
       "????" }, // FIXIT-M need to figure out this parameter format and implement it
 
     { "decompress_swf", Parameter::PT_BOOL, nullptr, "false",
-      "????" }, // FIXIT-M need to figure out this parameter format and implement it with deflate and lzma
+      "????" }, // FIXIT-M need to figure out this parameter format and implement it with deflate
+                // and lzma
 
     { "enable_cookies", Parameter::PT_BOOL, nullptr, "true",
       "extract cookies" },
@@ -451,7 +452,7 @@ static const RuleMap hi_server_rules[] =
 
 HttpServerModule::HttpServerModule() :
     Module(SERVER_KEYWORD, hi_server_help, hi_server_params)
-{ 
+{
     server = nullptr;
 }
 
@@ -494,9 +495,11 @@ bool HttpServerModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("code_page") )
         server->iis_unicode_codepage = v.get_long();
 
-    else if ( v.is("decompress_pdf") ); // FIXIT-M need to figure this out and implement it
+    else if ( v.is("decompress_pdf") )
+        ;                               // FIXIT-M need to figure this out and implement it
 
-    else if ( v.is("decompress_swf") ); // FIXIT-M need to figure this out and implement it
+    else if ( v.is("decompress_swf") )
+        ;                               // FIXIT-M need to figure this out and implement it
                                         // including #define DECOMPRESS_DEFLATE "deflate" and
                                         // including #define DECOMPRESS_LZMA "lzma"
 
@@ -617,7 +620,8 @@ bool HttpServerModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("whitespace_chars") )
         v.get_bits(server->whitespace);
 
-    else if ( v.is("xff_headers") ); // FIXIT-M need to figure this out and implement it
+    else if ( v.is("xff_headers") )
+        ;                            // FIXIT-M need to figure this out and implement it
 
     else
         return false;
@@ -635,7 +639,8 @@ bool HttpServerModule::begin(const char*, int, SnortConfig*)
 
         // This sets the default non-RFC characters to 0x00 through 0x07
         // You must make a parallel change to the default_non_rfc_chars macro in this file
-        for (int i = 0; i <= 7; i++) {
+        for (int i = 0; i <= 7; i++)
+        {
             server->non_rfc_chars.set(i);
         }
     }
@@ -646,7 +651,7 @@ bool HttpServerModule::end(const char* fqn, int, SnortConfig*)
 {
     if ( strcmp(fqn, SERVER_KEYWORD) )
         return true;
-    
+
     if ( server->iis_unicode_map_filename )
     {
         hi_ui_parse_iis_unicode_map(
@@ -657,8 +662,8 @@ bool HttpServerModule::end(const char* fqn, int, SnortConfig*)
     else
     {
         get_default_unicode_map(
-                server->iis_unicode_map,
-                server->iis_unicode_codepage);
+            server->iis_unicode_map,
+            server->iis_unicode_codepage);
     }
 
     {

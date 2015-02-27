@@ -26,20 +26,16 @@
 
 namespace config
 {
-
-namespace {
-
-
+namespace
+{
 class MplsPayloadType : public ConversionState
 {
 public:
-    MplsPayloadType(Converter& c) : ConversionState(c) {};
-    virtual ~MplsPayloadType() {};
+    MplsPayloadType(Converter& c) : ConversionState(c) { }
+    virtual ~MplsPayloadType() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
-
 
 bool MplsPayloadType::convert(std::istringstream& data_stream)
 {
@@ -51,21 +47,22 @@ bool MplsPayloadType::convert(std::istringstream& data_stream)
 
     table_api.open_table("mpls");
 
-
     if (!type.compare("ethernet"))
     {
-        table_api.add_diff_option_comment("config mpls_payload_type: ethernet", "mpls_payload_type = eth");
+        table_api.add_diff_option_comment("config mpls_payload_type: ethernet",
+            "mpls_payload_type = eth");
         retval = table_api.add_option("mpls_payload_type", "eth");
     }
     else if (!type.compare("ipv4"))
     {
-        table_api.add_diff_option_comment("config mpls_payload_type: ipv4", "mpls_payload_type = ip4");
+        table_api.add_diff_option_comment("config mpls_payload_type: ipv4",
+            "mpls_payload_type = ip4");
         retval = table_api.add_option("mpls_payload_type", "ip4");
     }
-
     else if (!type.compare("ipv6"))
     {
-        table_api.add_diff_option_comment("config mpls_payload_type: ipv6", "mpls_payload_type = ip6");
+        table_api.add_diff_option_comment("config mpls_payload_type: ipv6",
+            "mpls_payload_type = ip6");
         retval = table_api.add_option("mpls_payload_type", "ip6");
     }
     else
@@ -79,7 +76,6 @@ bool MplsPayloadType::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-
 static ConversionState* ctor(Converter& c)
 {
     return new MplsPayloadType(c);
@@ -92,5 +88,5 @@ static const ConvertMap mpls_payload_type_api =
 };
 
 const ConvertMap* mpls_payload_type_map = &mpls_payload_type_api;
-
 } // namespace config
+

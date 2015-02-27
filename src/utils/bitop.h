@@ -25,16 +25,17 @@
 **   5.23.02 - Moved bitop functions to bitop.h to inline. Norton/Roelker
 **   1.21.04 - Added static initialization. Roelker
 **   9.13.05 - Separated type and inline func definitions. Sturges
-** 
+**
 */
 
 #ifndef BITOP_H
 #define BITOP_H
 
-typedef struct _BITOP {
-    unsigned char *pucBitBuffer;
-    unsigned int  uiBitBufferSize;
-    unsigned int  uiMaxBits;
+typedef struct _BITOP
+{
+    unsigned char* pucBitBuffer;
+    unsigned int uiBitBufferSize;
+    unsigned int uiMaxBits;
 } BITOP;
 
 #endif

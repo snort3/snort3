@@ -81,22 +81,22 @@ static THREAD_LOCAL DataBuffer DecodeBuffer;
  *
  */
 int normalize_telnet(
-    TELNET_SESSION *tnssn, Packet *p,
+    TELNET_SESSION* tnssn, Packet* p,
     int iMode, char ignoreEraseCmds)
 {
     int ret = FTPP_NORMALIZED;
-    const unsigned char *read_ptr, *sb_start = NULL;
+    const unsigned char* read_ptr, * sb_start = NULL;
     int saw_ayt = 0;
-    const unsigned char *start = DecodeBuffer.data;
-    unsigned char *write_ptr;
-    const unsigned char *end;
+    const unsigned char* start = DecodeBuffer.data;
+    unsigned char* write_ptr;
+    const unsigned char* end;
     int normalization_required = 0;
     int consec_8bit_chars = 0;
 
     /* Telnet commands are handled in here.
     * They can be 2 bytes long -- ie, IAC NOP, IAC AYT, etc.
     * Sub-negotiation strings are at least 4 bytes, IAC SB x IAC SE */
-    if(p->dsize < 2)
+    if (p->dsize < 2)
     {
         if (tnssn && iMode == FTPP_SI_CLIENT_MODE)
             tnssn->consec_ayt = 0;
@@ -108,10 +108,10 @@ int normalize_telnet(
     end = p->data + p->dsize;
 
     /* look to see if we have any telnet negotiaion codes in the data */
-    while(!normalization_required && (read_ptr < end))
+    while (!normalization_required && (read_ptr < end))
     {
         /* look for the start of a negotiation string */
-        if(*read_ptr == (unsigned char) TNC_IAC)
+        if (*read_ptr == (unsigned char)TNC_IAC)
         {
             /* set a flag for stage 2 normalization */
             normalization_required = 1;
@@ -154,9 +154,9 @@ int normalize_telnet(
         read_ptr++;
     }
 
-    if(!normalization_required)
+    if (!normalization_required)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET, "Nothing to process!\n"););
+        DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET, "Nothing to process!\n"); );
         if (tnssn && iMode == FTPP_SI_CLIENT_MODE)
             tnssn->consec_ayt = 0;
         return FTPP_SUCCESS;
@@ -175,20 +175,20 @@ int normalize_telnet(
     /* setup for overwriting the negotaiation strings with
     * the follow-on data
     */
-    write_ptr = (unsigned char *) DecodeBuffer.data;
+    write_ptr = (unsigned char*)DecodeBuffer.data;
 
     /* walk thru the remainder of the packet */
-    while((read_ptr < end) &&
-            (write_ptr < ((unsigned char *) DecodeBuffer.data) + sizeof(DecodeBuffer.data)))
+    while ((read_ptr < end) &&
+        (write_ptr < ((unsigned char*)DecodeBuffer.data) + sizeof(DecodeBuffer.data)))
     {
         saw_ayt = 0;
         /* if the following byte isn't a subnegotiation initialization */
-        if(((read_ptr + 1) < end) &&
-            (*read_ptr == (unsigned char) TNC_IAC) &&
-            (*(read_ptr + 1) != (unsigned char) TNC_SB))
+        if (((read_ptr + 1) < end) &&
+            (*read_ptr == (unsigned char)TNC_IAC) &&
+            (*(read_ptr + 1) != (unsigned char)TNC_SB))
         {
             /* NOPs are two bytes long */
-            switch(* ((unsigned char *)(read_ptr + 1)))
+            switch (*((unsigned char*)(read_ptr + 1)))
             {
             case TNC_NOP:
                 read_ptr += 2;
@@ -198,7 +198,7 @@ int normalize_telnet(
                 /* wind it back a character? */
                 if (ignoreEraseCmds == FTPP_APPLY_TNC_ERASE_CMDS)
                 {
-                    if(write_ptr  > start)
+                    if (write_ptr  > start)
                     {
                         write_ptr--;
                     }
@@ -216,7 +216,7 @@ int normalize_telnet(
                         write_ptr--;
 
                         if ((*write_ptr == CR) &&
-                           ((*(write_ptr+1) == NUL) || (*(write_ptr+1) == LF)) )
+                            ((*(write_ptr+1) == NUL) || (*(write_ptr+1) == LF)) )
                         {
                             /* Okay, found the CR NUL or CR LF, move it
                              * forward past those two -- that is the
@@ -228,7 +228,7 @@ int normalize_telnet(
                     }
                 }
                 break;
-                /* These are two bytes long */
+            /* These are two bytes long */
             case TNC_AYT:
                 saw_ayt = 1;
                 if (tnssn)
@@ -236,7 +236,7 @@ int normalize_telnet(
                     tnssn->consec_ayt++;
                     if ((tnssn->telnet_conf->ayt_threshold > 0) &&
                         (tnssn->consec_ayt >
-                            tnssn->telnet_conf->ayt_threshold))
+                        tnssn->telnet_conf->ayt_threshold))
                     {
                         /* Alert on consecutive AYT commands */
                         SnortEventqAdd(GID_TELNET, TELNET_AYT_OVERFLOW);
@@ -244,7 +244,7 @@ int normalize_telnet(
                         return FTPP_ALERT;
                     }
                 }
-                /* Fall through */
+            /* Fall through */
             case TNC_BRK:
             case TNC_DM:
             case TNC_IP:
@@ -292,9 +292,9 @@ int normalize_telnet(
             }
         }
         /* check for subnegotiation */
-        else if(((read_ptr + 1) < end) &&
-            (*read_ptr == (unsigned char) TNC_IAC) &&
-            (*(read_ptr+1) == (unsigned char) TNC_SB))
+        else if (((read_ptr + 1) < end) &&
+            (*read_ptr == (unsigned char)TNC_IAC) &&
+            (*(read_ptr+1) == (unsigned char)TNC_SB))
         {
             sb_start = read_ptr;
 
@@ -309,38 +309,38 @@ int normalize_telnet(
                 case 0x00:
                     /* Client sending the Encryption IS marker
                      * followed by address. */
+                {
+                    read_ptr++;
+                    if (*read_ptr != 0x00)
+                    /* Encryption type is not NULL */
                     {
-                        read_ptr++;
-                        if (*read_ptr != 0x00)
-                            /* Encryption type is not NULL */
-                        {
-                            /* printf("Encryption being negotiated by
-                             * telnet client\n"); */
-                        }
+                        /* printf("Encryption being negotiated by
+                         * telnet client\n"); */
                     }
-                    break;
+                }
+                break;
 #endif
                 case 0x03:
                     /* Client sending the Encryption START marker
                      * followed by address. */
+                {
+                    read_ptr++;
+                    /* printf("Encryption started by telnet client\n"); */
+                    if (tnssn)
                     {
-                        read_ptr++;
-                        /* printf("Encryption started by telnet client\n"); */
-                        if (tnssn)
-                        {
-                            tnssn->encr_state = 1;
-                            SnortEventqAdd(GID_TELNET, TELNET_ENCRYPTED);
+                        tnssn->encr_state = 1;
+                        SnortEventqAdd(GID_TELNET, TELNET_ENCRYPTED);
 
-                            if (!tnssn->telnet_conf->check_encrypted_data)
-                            {
-                                /* Mark this session & packet as one to ignore */
-                                stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
-                                /* No point to do further normalization */
-                                return FTPP_ALERT;
-                            }
+                        if (!tnssn->telnet_conf->check_encrypted_data)
+                        {
+                            /* Mark this session & packet as one to ignore */
+                            stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
+                            /* No point to do further normalization */
+                            return FTPP_ALERT;
                         }
                     }
-                    break;
+                }
+                break;
                 }
                 break;
             }
@@ -349,10 +349,10 @@ int normalize_telnet(
              * embedded IAC IACs within a sub negotiation.  Just looking
              * for the TNC_SE could cause problems.  Similarly, just looking
              * for the TNC_IAC could end it too early. */
-            while(read_ptr < end)
+            while (read_ptr < end)
             {
-                if ((*read_ptr == (unsigned char) TNC_IAC) &&
-                    (*(read_ptr+1) == (unsigned char) TNC_SE))
+                if ((*read_ptr == (unsigned char)TNC_IAC) &&
+                    (*(read_ptr+1) == (unsigned char)TNC_SE))
                 {
                     sb_start = NULL;
                     break;
@@ -396,10 +396,10 @@ int normalize_telnet(
             DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
                 "overwriting %2X(%c) with %2X(%c)\n",
                 (unsigned char)(*write_ptr&0xFF), *write_ptr,
-                (unsigned char)(*read_ptr & 0xFF), *read_ptr););
+                (unsigned char)(*read_ptr & 0xFF), *read_ptr); );
 
             /* overwrite the negotiation bytes with the follow-on bytes */
-            switch(* ((unsigned char *)(read_ptr)))
+            switch (*((unsigned char*)(read_ptr)))
             {
             case 0x7F: /* Delete */
             case 0x08: /* Backspace/Ctrl-H */
@@ -424,3 +424,4 @@ int normalize_telnet(
 
     return ret;
 }
+

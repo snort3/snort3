@@ -24,25 +24,21 @@
 #include "helpers/converter.h"
 #include "helpers/s2l_util.h"
 
-
 namespace keywords
 {
-
-namespace {
-
+namespace
+{
 class RateFilter : public ConversionState
 {
 public:
-    RateFilter(Converter& c) : ConversionState(c) {};
-    virtual ~RateFilter() {};
+    RateFilter(Converter& c) : ConversionState(c) { }
+    virtual ~RateFilter() { }
     virtual bool convert(std::istringstream& data);
 
 private:
     void fix_separators(std::istringstream& stream);
 };
-
 } // namespace
-
 
 void RateFilter::fix_separators(std::istringstream& stream)
 {
@@ -53,7 +49,7 @@ void RateFilter::fix_separators(std::istringstream& stream)
 
     while ( (curr = s.find_first_of("[],", curr)) != std::string::npos )
     {
-        switch(s[curr])
+        switch (s[curr])
         {
         case '[':
             cnt++;
@@ -74,7 +70,6 @@ void RateFilter::fix_separators(std::istringstream& stream)
     stream.seekg(pos);
 }
 
-
 bool RateFilter::convert(std::istringstream& data_stream)
 {
     bool retval = true;
@@ -83,7 +78,7 @@ bool RateFilter::convert(std::istringstream& data_stream)
     table_api.open_table("rate_filter");
     fix_separators(data_stream);
 
-    while(std::getline(data_stream, args, ';'))
+    while (std::getline(data_stream, args, ';'))
     {
         std::string keyword;
         std::istringstream arg_stream(args);
@@ -91,7 +86,7 @@ bool RateFilter::convert(std::istringstream& data_stream)
 
         arg_stream >> keyword;
 
-        if(keyword.empty())
+        if (keyword.empty())
             continue;
 
         else if (!keyword.compare("track"))
@@ -115,18 +110,16 @@ bool RateFilter::convert(std::istringstream& data_stream)
             util::trim(keyword);
             table_api.add_option("apply_to", keyword);
         }
-        else if(!keyword.compare("gen_id"))
+        else if (!keyword.compare("gen_id"))
         {
             table_api.add_diff_option_comment("gen_id", "gid");
             tmpval = parse_int_option("gid", arg_stream, false);
         }
-
         else if (!keyword.compare("sig_id"))
         {
             table_api.add_diff_option_comment("sig_id", "sid");
             tmpval = parse_int_option("sid", arg_stream, false);
         }
-
         else
             tmpval = false;
 
@@ -151,5 +144,5 @@ static const ConvertMap keyword_rate_filter =
 };
 
 const ConvertMap* rate_filter_map = &keyword_rate_filter;
-
 } // namespace keywords
+

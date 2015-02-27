@@ -27,19 +27,16 @@
 
 namespace keywords
 {
-
-namespace {
-
+namespace
+{
 class Config : public ConversionState
 {
 public:
-    Config(Converter& c) : ConversionState(c) {};
-    virtual ~Config() {};
+    Config(Converter& c) : ConversionState(c) { }
+    virtual ~Config() { }
     virtual bool convert(std::istringstream& data);
 };
-
 } // namespace
-
 
 bool Config::convert(std::istringstream& data_stream)
 {
@@ -47,8 +44,7 @@ bool Config::convert(std::istringstream& data_stream)
 
     if (util::get_string(data_stream, keyword, ":"))
     {
-
-        if(keyword.back() == ':')
+        if (keyword.back() == ':')
             keyword.pop_back();
 
         const ConvertMap* map = util::find_map(config::config_api, keyword);
@@ -75,12 +71,12 @@ bool Config::convert(std::istringstream& data_stream)
 static ConversionState* ctor(Converter& c)
 { return new Config(c); }
 
-static const ConvertMap keyword_config = 
+static const ConvertMap keyword_config =
 {
     "config",
     ctor,
 };
 
 const ConvertMap* config_map = &keyword_config;
-
 } // namespace keywords
+

@@ -94,8 +94,8 @@ bool StreamIsPafActiveTcp(Flow*, bool to_server);
 void StreamSetSplitterTcp(Flow*, bool c2s, StreamSplitter*);
 StreamSplitter* StreamGetSplitterTcp(Flow*, bool c2s);
 
-int GetTcpRebuiltPackets(Packet*, Flow*, PacketIterator, void *userdata);
-int GetTcpStreamSegments(Packet*, Flow*, StreamSegmentIterator, void *userdata);
+int GetTcpRebuiltPackets(Packet*, Flow*, PacketIterator, void* userdata);
+int GetTcpStreamSegments(Packet*, Flow*, StreamSegmentIterator, void* userdata);
 
 #endif
 

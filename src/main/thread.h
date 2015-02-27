@@ -26,17 +26,16 @@
 #define THREAD_LOCAL_TBD
 //#define THREAD_LOCAL // for single-threaded debugging
 
-// this is a gnu extension that at present is slightly faster than the 
+// this is a gnu extension that at present is slightly faster than the
 // c++11 form
 #define THREAD_LOCAL __thread
 
 // the c++11 form currently seems to be slightly slower than __thread
-// possibly due to dynamic initialization requirements 
+// possibly due to dynamic initialization requirements
 //#define THREAD_LOCAL thread_local
 
 void set_instance_id(unsigned);
 void set_instance_max(unsigned);
-
 
 struct SnortConfig;
 bool set_cpu_affinity(SnortConfig*, const std::string&, int cpu);

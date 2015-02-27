@@ -48,7 +48,8 @@
 // private state
 //--------------------------------------------------------------------
 
-typedef enum {
+typedef enum
+{
     FT_NOP,  // no flush
     FT_SFP,  // abort paf
     FT_PAF,  // flush to paf pt when len >= paf
@@ -74,15 +75,15 @@ static THREAD_LOCAL uint32_t s5_idx;  // offset from start of queued bytes
 
 //--------------------------------------------------------------------
 
-static uint32_t s5_paf_flush (
+static uint32_t s5_paf_flush(
     StreamSplitter*, PAF_State* ps, FlushType ft, uint32_t* flags)
 {
     uint32_t at = 0;
     *flags &= ~(PKT_PDU_HEAD | PKT_PDU_TAIL);
 
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-       "%s: type=%d, fpt=%u, len=%u, tot=%u\n",
-        __FUNCTION__, ft, ps->fpt, s5_len, ps->tot);)
+        "%s: type=%d, fpt=%u, len=%u, tot=%u\n",
+        __FUNCTION__, ft, ps->fpt, s5_len, ps->tot); )
 
     switch ( ft )
     {
@@ -146,7 +147,7 @@ static uint32_t s5_paf_flush (
 //--------------------------------------------------------------------
 // FIXIT-L PAF support multiple scanners
 
-static bool s5_paf_callback (
+static bool s5_paf_callback(
     StreamSplitter* ss, PAF_State* ps, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t flags)
 {
@@ -157,10 +158,10 @@ static bool s5_paf_callback (
         ps->fpt = 0;
 
     if ( ssn->gadget )
-    printf(
-        "%s scan[%d] '%-8.8s' -> %d, %d\n", 
-        ss->to_server() ? "c2s" : "s2c", len, (char*)data,
-        ps->paf, ps->fpt);
+        printf(
+            "%s scan[%d] '%-8.8s' -> %d, %d\n",
+            ss->to_server() ? "c2s" : "s2c", len, (char*)data,
+            ps->paf, ps->fpt);
 #endif
 
     if ( ps->paf != StreamSplitter::SEARCH )
@@ -179,13 +180,13 @@ static bool s5_paf_callback (
 
 //--------------------------------------------------------------------
 
-static inline bool s5_paf_eval (
+static inline bool s5_paf_eval(
     StreamSplitter* ss, PAF_State* ps, Flow* ssn,
     uint32_t flags, const uint8_t* data, uint32_t len, FlushType* ft)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
         "%s: paf=%d, idx=%u, len=%u, fpt=%u\n",
-        __FUNCTION__, ps->paf, s5_idx, s5_len, ps->fpt);)
+        __FUNCTION__, ps->paf, s5_idx, s5_len, ps->fpt); )
 
     uint16_t fuzz = 0; // FIXIT-L PAF add a little zippedy-do-dah
 
@@ -259,28 +260,28 @@ static inline bool s5_paf_eval (
 // public stuff
 //--------------------------------------------------------------------
 
-void s5_paf_setup (PAF_State* ps)
+void s5_paf_setup(PAF_State* ps)
 {
     // this is already cleared when instantiated
     //memset(ps, 0, sizeof(*ps));
     ps->paf = StreamSplitter::START;
 }
 
-void s5_paf_clear (PAF_State* ps)
+void s5_paf_clear(PAF_State* ps)
 {
     ps->paf = StreamSplitter::ABORT;
 }
 
 //--------------------------------------------------------------------
 
-uint32_t s5_paf_check (
+uint32_t s5_paf_check(
     StreamSplitter* ss, PAF_State* ps, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t total,
     uint32_t seq, uint32_t* flags)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
         "%s: len=%u, amt=%u, seq=%u, cur=%u, pos=%u, fpt=%u, tot=%u, paf=%d\n",
-        __FUNCTION__, len, total, seq, ps->seq, ps->pos, ps->fpt, ps->tot, ps->paf);)
+        __FUNCTION__, len, total, seq, ps->seq, ps->pos, ps->fpt, ps->tot, ps->paf); )
 
     if ( !s5_paf_initialized(ps) )
     {
@@ -292,7 +293,7 @@ uint32_t s5_paf_check (
         // if seq jumped we have a gap.  Flush any queued data, then abort
         s5_len = total - len;
 
-        if(s5_len)
+        if (s5_len)
         {
             ps->fpt = 0;
             return s5_paf_flush(ss, ps, FT_MAX, flags);
@@ -318,16 +319,16 @@ uint32_t s5_paf_check (
     s5_idx = total - len;
 
     // if 'total' is greater than the maximum paf_max AND 'total' is greater
-    // than paf_max bytes + fuzz (i.e. after we have finished analyzing the 
-    // current segment, total bytes analyzed will be greater than the 
-    // configured (fuzz + paf_max) == (ss->max() + fuzz), we must ensure a flush 
-    // occurs at the paf_max byte.  So, we manually set the data's length and 
+    // than paf_max bytes + fuzz (i.e. after we have finished analyzing the
+    // current segment, total bytes analyzed will be greater than the
+    // configured (fuzz + paf_max) == (ss->max() + fuzz), we must ensure a flush
+    // occurs at the paf_max byte.  So, we manually set the data's length and
     // total queued bytes (s5_len) to guarantee that at most paf_max bytes will
     // be analyzed and flushed since the last flush point.  It should also be
     // noted that we perform the check here rather in in s5_paf_flush() to
-    // avoid scanning the same data twice. The first scan would analyze the 
+    // avoid scanning the same data twice. The first scan would analyze the
     // entire segment and the second scan would analyze this segments
-    // unflushed data. 
+    // unflushed data.
     uint16_t fuzz = 0; // FIXIT-L PAF add a little zippedy-do-dah
 
     if ( total >= MAX_PAF_MAX && total > ss->max() + fuzz )
@@ -340,8 +341,8 @@ uint32_t s5_paf_check (
         s5_len = total;
     }
 
-
-    do {
+    do
+    {
         FlushType ft = FT_NOP;
         uint32_t idx = s5_idx;
         uint32_t shift, fp;
@@ -365,8 +366,8 @@ uint32_t s5_paf_check (
             data += shift;
             len -= shift;
         }
-
-    } while ( 1 );
+    }
+    while ( 1 );
 
     if ( (ps->paf != StreamSplitter::FLUSH) && (s5_len > ss->max()+fuzz) )
     {

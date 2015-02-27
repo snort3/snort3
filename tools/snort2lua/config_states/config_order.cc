@@ -26,17 +26,15 @@
 
 namespace config
 {
-
-namespace {
-
+namespace
+{
 class Order : public ConversionState
 {
 public:
-    Order(Converter& c) : ConversionState(c) {};
-    virtual ~Order() {};
+    Order(Converter& c) : ConversionState(c) { }
+    virtual ~Order() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool Order::convert(std::istringstream& data_stream)
@@ -74,5 +72,5 @@ static const ConvertMap order_api =
 };
 
 const ConvertMap* order_map = &order_api;
-
 } // namespace config
+

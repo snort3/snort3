@@ -54,12 +54,12 @@
 **
 **  @retval HI_SUCCESS function successful
 */
-int hi_server_anomaly_detection(void *S, const u_char *data, int dsize)
+int hi_server_anomaly_detection(void* S, const u_char* data, int dsize)
 {
-    HI_SESSION *session = (HI_SESSION *)S;
-    HTTPINSPECT_GLOBAL_CONF *GlobalConf;
+    HI_SESSION* session = (HI_SESSION*)S;
+    HTTPINSPECT_GLOBAL_CONF* GlobalConf;
 
-    if(data == NULL || dsize < 1)
+    if (data == NULL || dsize < 1)
         return HI_INVALID_ARG;
 
     GlobalConf = session->global_conf;
@@ -68,13 +68,13 @@ int hi_server_anomaly_detection(void *S, const u_char *data, int dsize)
     **  We are just going to look for server responses on non-HTTP
     **  ports.
     */
-    if(GlobalConf->anomalous_servers && dsize > 5)
+    if (GlobalConf->anomalous_servers && dsize > 5)
     {
         /*
         **  We now do the checking for anomalous HTTP servers
         */
-        if(data[0]=='H' && data[1]=='T' && data[2]=='T' && data[3]=='P' &&
-           data[4]=='/')
+        if (data[0]=='H' && data[1]=='T' && data[2]=='T' && data[3]=='P' &&
+            data[4]=='/')
         {
             hi_set_event(GID_HTTP_SERVER, HI_ANOM_SERVER);
         }
@@ -82,3 +82,4 @@ int hi_server_anomaly_detection(void *S, const u_char *data, int dsize)
 
     return HI_SUCCESS;
 }
+

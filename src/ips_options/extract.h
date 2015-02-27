@@ -16,7 +16,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 #ifndef EXTRACT_H
 #define EXTRACT_H
 
@@ -29,12 +29,12 @@
 #define PARSELEN      10
 
 SO_PUBLIC int string_extract(
-    int bytes_to_grab, int base, const uint8_t *ptr,
-    const uint8_t *start, const uint8_t *end, uint32_t *value);
+    int bytes_to_grab, int base, const uint8_t* ptr,
+    const uint8_t* start, const uint8_t* end, uint32_t* value);
 
 SO_PUBLIC int byte_extract(
-    int endianess, int bytes_to_grab, const uint8_t *ptr,
-    const uint8_t *start, const uint8_t *end, uint32_t *value);
+    int endianess, int bytes_to_grab, const uint8_t* ptr,
+    const uint8_t* start, const uint8_t* end, uint32_t* value);
 
 #endif
 

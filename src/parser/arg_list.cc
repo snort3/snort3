@@ -56,7 +56,7 @@ bool ArgList::get_arg(const char*& key, const char*& val)
         }
         if ( s[1] != '-' )
         {
-            s += 1; 
+            s += 1;
             if ( strlen(s) > 1 )
             {
                 buf.assign(s, 1);

@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_default.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #include "framework/codec.h"
 #include "protocols/protocol_ids.h"
 
@@ -26,34 +25,29 @@
 
 namespace
 {
-
 class DefaultCodec : public Codec
 {
 public:
-    DefaultCodec() : Codec(CD_DEFAULT_NAME){};
-    ~DefaultCodec(){};
+    DefaultCodec() : Codec(CD_DEFAULT_NAME) { }
+    ~DefaultCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override
     { v.push_back(FINISHED_DECODE); }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override
-    { return false; };
+    { return false; }
 };
-
 } // namespace
-
 
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
-
 static Codec* ctor(Module*)
 { return new DefaultCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi default_api =
 {
@@ -75,3 +69,4 @@ static const CodecApi default_api =
 };
 
 const CodecApi* default_codec = &default_api;
+

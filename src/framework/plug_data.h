@@ -38,18 +38,18 @@ struct SnortConfig;
 class PlugData
 {
 public:
-    virtual ~PlugData() { };
+    virtual ~PlugData() { }
 
-    unsigned get_ref() { return ref_count; };
-    void set_ref(unsigned r) { ref_count = r; };
+    unsigned get_ref() { return ref_count; }
+    void set_ref(unsigned r) { ref_count = r; }
 
-    void add_ref() { ++ref_count; };
-    void rem_ref() { --ref_count; };
+    void add_ref() { ++ref_count; }
+    void rem_ref() { --ref_count; }
 
     bool is_inactive();
 
 protected:
-    PlugData() { ref_count = 0; };
+    PlugData() { ref_count = 0; }
 
 private:
     unsigned ref_count;
@@ -60,16 +60,16 @@ class PlugDataType : public PlugData
 {
 public:
     PlugDataType(T* t)
-    { data = t; };
+    { data = t; }
 
     ~PlugDataType()
-    { delete data; };
+    { delete data; }
 
     T* data;
 };
 
-typedef PlugData* (*DataNewFunc)(class Module*);
-typedef void (*DataDelFunc)(PlugData*);
+typedef PlugData* (* DataNewFunc)(class Module*);
+typedef void (* DataDelFunc)(PlugData*);
 
 struct DataApi
 {

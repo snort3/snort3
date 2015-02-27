@@ -67,7 +67,7 @@ static RangeCheck::Op get_op(const char* s, unsigned n)
     return RangeCheck::MAX;
 }
 
-bool RangeCheck::parse(const char* s) 
+bool RangeCheck::parse(const char* s)
 {
     min = max = 0;
     char* enda = nullptr, * endb = nullptr;

@@ -156,7 +156,7 @@ const char* SpellBook::find_spell(
 
     if ( len > max )
         len = max;
-    
+
     p = find_spell(data, len, p, 0);
 
     if ( !p->value.empty() )
@@ -164,4 +164,4 @@ const char* SpellBook::find_spell(
 
     return nullptr;
 }
- 
+

@@ -85,23 +85,23 @@
 #endif
 #include "snort_types.h"
 
-const char *rt_error_messages[] =
+const char* rt_error_messages[] =
 {
-   "Success",
-   "Insert Failure",
-   "Policy Table Exceeded",
-   "Dir Insert Failure",
-   "Dir Lookup Failure",
-   "Memory Allocation Failure"
+    "Success",
+    "Insert Failure",
+    "Policy Table Exceeded",
+    "Dir Insert Failure",
+    "Dir Lookup Failure",
+    "Memory Allocation Failure"
 #ifdef SUPPORT_LCTRIE
-   ,
-   "LC Trie Compile Failure",
-   "LC Trie Insert Failure",
-   "LC Trie Lookup Failure"
+    ,
+    "LC Trie Compile Failure",
+    "LC Trie Insert Failure",
+    "LC Trie Lookup Failure"
 #endif
 };
 
-static inline int allocateTableIndex(table_t *table);
+static inline int allocateTableIndex(table_t* table);
 
 /* Create new lookup table
  * @param   table_type Type of table. Uses the types enumeration in route.h
@@ -109,30 +109,29 @@ static inline int allocateTableIndex(table_t *table);
  * @param   data_size  Max number of unique data entries
  *
  * Returns the new table. */
-table_t *sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_cap)
+table_t* sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_cap)
 {
-    table_t *table = (table_t*)malloc(sizeof(table_t));
+    table_t* table = (table_t*)malloc(sizeof(table_t));
 
-    if(!table)
+    if (!table)
     {
         return NULL;
     }
-
 
     /* If this limit is exceeded, there will be no way to distinguish
      * between pointers and indeces into the data table.  Only
      * applies to DIR-n-m. */
 #ifdef SUPPORT_LCTRIE
 #if SIZEOF_LONG_INT == 8
-    if(data_size >= 0x800000000000000 && table_type == LCT)
+    if (data_size >= 0x800000000000000 && table_type == LCT)
 #else
-    if(data_size >= 0x8000000 && table_type != LCT)
+    if (data_size >= 0x8000000 && table_type != LCT)
 #endif
 #else /* SUPPORT_LCTRIE */
 #if SIZEOF_LONG_INT == 8
-    if(data_size >= 0x800000000000000)
+    if (data_size >= 0x800000000000000)
 #else
-    if(data_size >= 0x8000000)
+    if (data_size >= 0x8000000)
 #endif
 #endif
     {
@@ -149,7 +148,7 @@ table_t *sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_ca
 
     table->data = (GENERIC*)calloc(sizeof(GENERIC) * table->max_size, 1);
 
-    if(!table->data)
+    if (!table->data)
     {
         free(table);
         return NULL;
@@ -167,107 +166,107 @@ table_t *sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_ca
     /* index 0 will be used for failed lookups, so set this to 1 */
     table->num_ent = 1;
 
-    switch(table_type)
+    switch (table_type)
     {
 #ifdef SUPPORT_LCTRIE
-        /* Setup LC-trie table */
-        case LCT:
-            /* LC trie is presently not allowed  */
-            table->insert = sfrt_lct_insert;
-            table->lookup = sfrt_lct_lookup;
-            table->free = sfrt_lct_free;
-            table->usage = sfrt_lct_usage;
-            table->print = NULL;
-            table->remove = NULL;
+    /* Setup LC-trie table */
+    case LCT:
+        /* LC trie is presently not allowed  */
+        table->insert = sfrt_lct_insert;
+        table->lookup = sfrt_lct_lookup;
+        table->free = sfrt_lct_free;
+        table->usage = sfrt_lct_usage;
+        table->print = NULL;
+        table->remove = NULL;
 
-            table->rt = sfrt_lct_new(data_size);
-            free(table->data);
-            free(table);
-            return NULL;
+        table->rt = sfrt_lct_new(data_size);
+        free(table->data);
+        free(table);
+        return NULL;
 
-            break;
+        break;
 #endif
-        /* Setup DIR-n-m table */
-        case DIR_24_8:
-        case DIR_16x2:
-        case DIR_16_8x2:
-        case DIR_16_4x4:
-        case DIR_8x4:
-        case DIR_4x8:
-        case DIR_2x16:
-        case DIR_16_4x4_16x5_4x4:
-        case DIR_16x7_4x4:
-        case DIR_16x8:
-        case DIR_8x16:
-            table->insert = sfrt_dir_insert;
-            table->lookup = sfrt_dir_lookup;
-            table->free = sfrt_dir_free;
-            table->usage = sfrt_dir_usage;
-            table->print = sfrt_dir_print;
-            table->remove = sfrt_dir_remove;
+    /* Setup DIR-n-m table */
+    case DIR_24_8:
+    case DIR_16x2:
+    case DIR_16_8x2:
+    case DIR_16_4x4:
+    case DIR_8x4:
+    case DIR_4x8:
+    case DIR_2x16:
+    case DIR_16_4x4_16x5_4x4:
+    case DIR_16x7_4x4:
+    case DIR_16x8:
+    case DIR_8x16:
+        table->insert = sfrt_dir_insert;
+        table->lookup = sfrt_dir_lookup;
+        table->free = sfrt_dir_free;
+        table->usage = sfrt_dir_usage;
+        table->print = sfrt_dir_print;
+        table->remove = sfrt_dir_remove;
 
-            break;
+        break;
 
-        default:
-            free(table->data);
-            free(table);
-            return NULL;
-    };
+    default:
+        free(table->data);
+        free(table);
+        return NULL;
+    }
 
     /* Allocate the user-specified DIR-n-m table */
-    switch(table_type)
+    switch (table_type)
     {
-        case DIR_24_8:
-            table->rt = sfrt_dir_new(mem_cap, 2, 24,8);
-            break;
-        case DIR_16x2:
-            table->rt = sfrt_dir_new(mem_cap, 2, 16,16);
-            break;
-        case DIR_16_8x2:
-            table->rt = sfrt_dir_new(mem_cap, 3, 16,8,8);
-            break;
-        case DIR_16_4x4:
-            table->rt = sfrt_dir_new(mem_cap, 5, 16,4,4,4,4);
-            break;
-        case DIR_8x4:
-            table->rt = sfrt_dir_new(mem_cap, 4, 8,8,8,8);
-            break;
-        /* There is no reason to use 4x8 except for benchmarking and
-         * comparison purposes. */
-        case DIR_4x8:
-            table->rt = sfrt_dir_new(mem_cap, 8, 4,4,4,4,4,4,4,4);
-            break;
-        /* There is no reason to use 2x16 except for benchmarking and
-         * comparison purposes. */
-        case DIR_2x16:
-            table->rt = sfrt_dir_new(mem_cap, 16,
-                            2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2);
-            break;
-        case DIR_16_4x4_16x5_4x4:
-            table->rt = sfrt_dir_new(mem_cap, 5, 16,4,4,4,4);
-            table->rt6 = sfrt_dir_new(mem_cap, 14, 16,4,4,4,4,16,16,16,16,16,4,4,4,4);
-            break;
-        case DIR_16x7_4x4:
-            table->rt = sfrt_dir_new(mem_cap, 5, 16,4,4,4,4);
-            table->rt6 = sfrt_dir_new(mem_cap, 11, 16,16,16,16,16,16,16,4,4,4,4);
-            break;
-        case DIR_16x8:
-            table->rt = sfrt_dir_new(mem_cap, 2, 16,16);
-            table->rt6 = sfrt_dir_new(mem_cap, 8, 16,16,16,16,16,16,16,16);
-            break;
-        case DIR_8x16:
-            table->rt = sfrt_dir_new(mem_cap, 4, 16,8,4,4);
-            table->rt6 = sfrt_dir_new(mem_cap, 16,
-                            8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8);
-            break;
-    };
+    case DIR_24_8:
+        table->rt = sfrt_dir_new(mem_cap, 2, 24,8);
+        break;
+    case DIR_16x2:
+        table->rt = sfrt_dir_new(mem_cap, 2, 16,16);
+        break;
+    case DIR_16_8x2:
+        table->rt = sfrt_dir_new(mem_cap, 3, 16,8,8);
+        break;
+    case DIR_16_4x4:
+        table->rt = sfrt_dir_new(mem_cap, 5, 16,4,4,4,4);
+        break;
+    case DIR_8x4:
+        table->rt = sfrt_dir_new(mem_cap, 4, 8,8,8,8);
+        break;
+    /* There is no reason to use 4x8 except for benchmarking and
+     * comparison purposes. */
+    case DIR_4x8:
+        table->rt = sfrt_dir_new(mem_cap, 8, 4,4,4,4,4,4,4,4);
+        break;
+    /* There is no reason to use 2x16 except for benchmarking and
+     * comparison purposes. */
+    case DIR_2x16:
+        table->rt = sfrt_dir_new(mem_cap, 16,
+            2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2);
+        break;
+    case DIR_16_4x4_16x5_4x4:
+        table->rt = sfrt_dir_new(mem_cap, 5, 16,4,4,4,4);
+        table->rt6 = sfrt_dir_new(mem_cap, 14, 16,4,4,4,4,16,16,16,16,16,4,4,4,4);
+        break;
+    case DIR_16x7_4x4:
+        table->rt = sfrt_dir_new(mem_cap, 5, 16,4,4,4,4);
+        table->rt6 = sfrt_dir_new(mem_cap, 11, 16,16,16,16,16,16,16,4,4,4,4);
+        break;
+    case DIR_16x8:
+        table->rt = sfrt_dir_new(mem_cap, 2, 16,16);
+        table->rt6 = sfrt_dir_new(mem_cap, 8, 16,16,16,16,16,16,16,16);
+        break;
+    case DIR_8x16:
+        table->rt = sfrt_dir_new(mem_cap, 4, 16,8,4,4);
+        table->rt6 = sfrt_dir_new(mem_cap, 16,
+            8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8);
+        break;
+    }
 
-    if((!table->rt) || (!table->rt6))
+    if ((!table->rt) || (!table->rt6))
     {
         if (table->rt)
-            table->free( table->rt );
+            table->free(table->rt);
         if (table->rt6)
-            table->free( table->rt6 );
+            table->free(table->rt6);
         free(table->data);
         free(table);
         return NULL;
@@ -277,15 +276,15 @@ table_t *sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_ca
 }
 
 /* Free lookup table */
-void sfrt_free(table_t *table)
+void sfrt_free(table_t* table)
 {
-    if(!table)
+    if (!table)
     {
         /* What are you calling me for? */
         return;
     }
 
-    if(!table->data)
+    if (!table->data)
     {
         /* This really really should not have happened */
     }
@@ -294,22 +293,22 @@ void sfrt_free(table_t *table)
         free(table->data);
     }
 
-    if(!table->rt)
+    if (!table->rt)
     {
         /* This should not have happened either */
     }
     else
     {
-        table->free( table->rt );
+        table->free(table->rt);
     }
 
-    if(!table->rt6)
+    if (!table->rt6)
     {
         /* This should not have happened either */
     }
     else
     {
-        table->free( table->rt6 );
+        table->free(table->rt6);
     }
 
     free(table);
@@ -319,14 +318,14 @@ void sfrt_free(table_t *table)
 GENERIC sfrt_lookup(sfip_t* ip, table_t* table)
 {
     tuple_t tuple;
-    void *rt = NULL;
+    void* rt = NULL;
 
-    if(!ip)
+    if (!ip)
     {
         return NULL;
     }
 
-    if(!table || !table->lookup)
+    if (!table || !table->lookup)
     {
         return NULL;
     }
@@ -347,7 +346,7 @@ GENERIC sfrt_lookup(sfip_t* ip, table_t* table)
 
     tuple = table->lookup(ip, rt);
 
-    if(tuple.index >= table->max_size)
+    if (tuple.index >= table->max_size)
     {
         return NULL;
     }
@@ -363,17 +362,16 @@ void sfrt_iterate(table_t* table, sfrt_iterator_callback userfunc)
         return;
 
     for (index = 0, count = 0;
-            index < table->max_size;
-            index++)
+        index < table->max_size;
+        index++)
     {
         if (table->data[index])
         {
             userfunc(table->data[index]);
-            if (++count == table->num_ent) break;
+            if (++count == table->num_ent)
+                break;
         }
     }
-
-    return;
 }
 
 void sfrt_iterate_with_snort_config(
@@ -385,17 +383,16 @@ void sfrt_iterate_with_snort_config(
         return;
 
     for (index = 0, count = 0;
-            index < table->max_size;
-            index++)
+        index < table->max_size;
+        index++)
     {
         if (table->data[index])
         {
             userfunc(sc, table->data[index]);
-            if (++count == table->num_ent) break;
+            if (++count == table->num_ent)
+                break;
         }
     }
-
-    return;
 }
 
 int sfrt_iterate2(table_t* table, sfrt_iterator_callback3 userfunc)
@@ -405,15 +402,16 @@ int sfrt_iterate2(table_t* table, sfrt_iterator_callback3 userfunc)
         return 0;
 
     for (index = 0, count = 0;
-            index < table->max_size;
-            index++)
+        index < table->max_size;
+        index++)
     {
         if (table->data[index])
         {
             int ret = userfunc(table->data[index]);
             if (ret != 0)
                 return ret;
-            if (++count == table->num_ent) break;
+            if (++count == table->num_ent)
+                break;
         }
     }
 
@@ -428,15 +426,16 @@ int sfrt_iterate2_with_snort_config(
         return 0;
 
     for (index = 0, count = 0;
-            index < table->max_size;
-            index++)
+        index < table->max_size;
+        index++)
     {
         if (table->data[index])
         {
             int ret = userfunc(sc, table->data[index]);
             if (ret != 0)
                 return ret;
-            if (++count == table->num_ent) break;
+            if (++count == table->num_ent)
+                break;
         }
     }
 
@@ -446,7 +445,7 @@ int sfrt_iterate2_with_snort_config(
 void sfrt_cleanup2(
     table_t* table,
     sfrt_iterator_callback2 cleanup_func,
-    void *data
+    void* data
     )
 {
     uint32_t index, count;
@@ -454,8 +453,8 @@ void sfrt_cleanup2(
         return;
 
     for (index = 0, count = 0;
-            index < table->max_size;
-            index++)
+        index < table->max_size;
+        index++)
     {
         if (table->data[index])
         {
@@ -465,7 +464,8 @@ void sfrt_cleanup2(
              * table->data[index].  Set that to NULL.
              */
             table->data[index] = NULL;
-            if (++count == table->num_ent) break;
+            if (++count == table->num_ent)
+                break;
         }
     }
 }
@@ -478,8 +478,8 @@ void sfrt_cleanup(table_t* table, sfrt_iterator_callback cleanup_func)
         return;
 
     for (index = 0, count = 0;
-            index < table->max_size;
-            index++)
+        index < table->max_size;
+        index++)
     {
         if (table->data[index])
         {
@@ -490,17 +490,16 @@ void sfrt_cleanup(table_t* table, sfrt_iterator_callback cleanup_func)
              */
             table->data[index] = NULL;
 
-            if (++count == table->num_ent) break;
+            if (++count == table->num_ent)
+                break;
         }
     }
-
-    return;
 }
 
-GENERIC sfrt_search(sfip_t* ip, unsigned char len, table_t *table)
+GENERIC sfrt_search(sfip_t* ip, unsigned char len, table_t* table)
 {
     tuple_t tuple;
-    void *rt = NULL;
+    void* rt = NULL;
 
     if ((ip == NULL) || (table == NULL) || (len == 0))
         return NULL;
@@ -517,7 +516,7 @@ GENERIC sfrt_search(sfip_t* ip, unsigned char len, table_t *table)
     if (table->ip_type == IPv6)
         return NULL;
 
-    if( (table->ip_type == IPv4 && len > 32) ||
+    if ( (table->ip_type == IPv4 && len > 32) ||
         (table->ip_type == IPv6 && len > 128) )
     {
         return NULL;
@@ -531,18 +530,18 @@ GENERIC sfrt_search(sfip_t* ip, unsigned char len, table_t *table)
     return table->data[tuple.index];
 }
 
-/* Insert "ip", of length "len", into "table", and have it point to "ptr" */
-/* Insert "ip", of length "len", into "table", and have it point to "ptr" */
+/* Insert "ip", of length "len", into "table", and have it point to "ptr"
+   Insert "ip", of length "len", into "table", and have it point to "ptr" */
 int sfrt_insert(sfip_t* ip, unsigned char len, GENERIC ptr,
-					   int behavior, table_t *table)
+    int behavior, table_t* table)
 {
     int index;
     int newIndex = 0;
     int res;
     tuple_t tuple;
-    void *rt = NULL;
+    void* rt = NULL;
 
-    if(!ip)
+    if (!ip)
     {
         return RT_INSERT_FAILURE;
     }
@@ -550,12 +549,12 @@ int sfrt_insert(sfip_t* ip, unsigned char len, GENERIC ptr,
     if (len == 0)
         return RT_INSERT_FAILURE;
 
-    if(!table || !table->insert || !table->data || !table->lookup)
+    if (!table || !table->insert || !table->data || !table->lookup)
     {
         return RT_INSERT_FAILURE;
     }
 
-    if( (table->ip_type == IPv4 && len > 32) ||
+    if ( (table->ip_type == IPv4 && len > 32) ||
         (table->ip_type == IPv6 && len > 128) )
     {
         return RT_INSERT_FAILURE;
@@ -565,37 +564,38 @@ int sfrt_insert(sfip_t* ip, unsigned char len, GENERIC ptr,
      * seeing if there is an existing entry with the same length. */
     /* Only perform this if the table is not an LC-trie */
 #ifdef SUPPORT_LCTRIE
-    if(table->table_type != LCT)
+    if (table->table_type != LCT)
     {
 #endif
 
-        if (ip->family == AF_INET)
-        {
-            rt = table->rt;
-        }
-        else if (ip->family == AF_INET6)
-        {
-            rt = table->rt6;
-        }
-        if (!rt)
-        {
-            return RT_INSERT_FAILURE;
-        }
+    if (ip->family == AF_INET)
+    {
+        rt = table->rt;
+    }
+    else if (ip->family == AF_INET6)
+    {
+        rt = table->rt6;
+    }
+    if (!rt)
+    {
+        return RT_INSERT_FAILURE;
+    }
 
-        tuple = table->lookup(ip, rt);
+    tuple = table->lookup(ip, rt);
 
 #ifdef SUPPORT_LCTRIE
-    }
+}
+
 #endif
 
 #ifdef SUPPORT_LCTRIE
-    if(table->table_type == LCT || tuple.length != len)
+    if (table->table_type == LCT || tuple.length != len)
     {
 #else
-    if(tuple.length != len)
+    if (tuple.length != len)
     {
 #endif
-        if( table->num_ent >= table->max_size)
+        if ( table->num_ent >= table->max_size)
         {
             return RT_POLICY_TABLE_EXCEEDED;
         }
@@ -625,9 +625,9 @@ int sfrt_insert(sfip_t* ip, unsigned char len, GENERIC ptr,
  * Pretty print sfrt table.
  * @param table - routing table.
  */
-void sfrt_print(table_t *table)
+void sfrt_print(table_t* table)
 {
-    if(!table || !table->print )
+    if (!table || !table->print )
     {
         return;
     }
@@ -638,9 +638,9 @@ void sfrt_print(table_t *table)
         table->print(table->rt6);
 }
 
-uint32_t sfrt_num_entries(table_t *table)
+uint32_t sfrt_num_entries(table_t* table)
 {
-    if(!table || !table->rt || !table->allocated)
+    if (!table || !table->rt || !table->allocated)
     {
         return 0;
     }
@@ -649,19 +649,19 @@ uint32_t sfrt_num_entries(table_t *table)
     return table->num_ent - 1;
 }
 
-uint32_t sfrt_usage(table_t *table)
+uint32_t sfrt_usage(table_t* table)
 {
     uint32_t usage;
-    if(!table || !table->rt || !table->allocated || !table->usage)
+    if (!table || !table->rt || !table->allocated || !table->usage)
     {
         return 0;
     }
 
-    usage = table->allocated + table->usage( table->rt );
+    usage = table->allocated + table->usage(table->rt);
 
     if (table->rt6)
     {
-        usage += table->usage( table->rt6 );
+        usage += table->usage(table->rt6);
     }
 
     return usage;
@@ -677,13 +677,13 @@ uint32_t sfrt_usage(table_t *table)
  * will then point to null data. This can cause hung or crosslinked data. RT_FAVOR_SPECIFIC does not have this drawback.
  * hung or crosslinked entries.
  */
-int sfrt_remove(sfip_t* ip, unsigned char len, GENERIC *ptr,
-					   int behavior, table_t *table)
+int sfrt_remove(sfip_t* ip, unsigned char len, GENERIC* ptr,
+    int behavior, table_t* table)
 {
     int index;
-    void *rt = NULL;
+    void* rt = NULL;
 
-    if(!ip)
+    if (!ip)
     {
         return RT_REMOVE_FAILURE;
     }
@@ -691,38 +691,39 @@ int sfrt_remove(sfip_t* ip, unsigned char len, GENERIC *ptr,
     if (len == 0)
         return RT_REMOVE_FAILURE;
 
-    if(!table || !table->data || !table->remove || !table->lookup )
+    if (!table || !table->data || !table->remove || !table->lookup )
     {
         //remove operation will fail for LCT since this operation is not implemented
         return RT_REMOVE_FAILURE;
     }
 
-    if( (table->ip_type == IPv4 && len > 32) ||
+    if ( (table->ip_type == IPv4 && len > 32) ||
         (table->ip_type == IPv6 && len > 128) )
     {
         return RT_REMOVE_FAILURE;
     }
 
 #ifdef SUPPORT_LCTRIE
-    if(table->table_type != LCT)
+    if (table->table_type != LCT)
     {
 #endif
 
-        if (ip->family == AF_INET)
-        {
-            rt = table->rt;
-        }
-        else if (ip->family == AF_INET6)
-        {
-            rt = table->rt6;
-        }
-        if (!rt)
-        {
-            return RT_REMOVE_FAILURE;
-        }
+    if (ip->family == AF_INET)
+    {
+        rt = table->rt;
+    }
+    else if (ip->family == AF_INET6)
+    {
+        rt = table->rt6;
+    }
+    if (!rt)
+    {
+        return RT_REMOVE_FAILURE;
+    }
 
 #ifdef SUPPORT_LCTRIE
-    }
+}
+
 #endif
 
     /* The actual value that is looked-up is an index
@@ -744,14 +745,14 @@ int sfrt_remove(sfip_t* ip, unsigned char len, GENERIC *ptr,
  * Index 0 is error in this function but this is valid entry in table->data that is used
  * for failure case. Calling function must check for 0 and take appropriate error action.
  */
-static inline int allocateTableIndex(table_t *table)
+static inline int allocateTableIndex(table_t* table)
 {
     uint32_t index;
 
     //0 is special index for failed entries.
     for (index = table->lastAllocatedIndex+1;
-            index != table->lastAllocatedIndex;
-            index = (index+1) % table->max_size)
+        index != table->lastAllocatedIndex;
+        index = (index+1) % table->max_size)
     {
         if (index && !table->data[index])
         {
@@ -769,12 +770,12 @@ static inline int allocateTableIndex(table_t *table)
 
 int main()
 {
-    table_t *dir;
+    table_t* dir;
     uint32_t ip_list[NUM_IPS];  /* entirely arbitrary */
     char data[NUM_DATA];     /* also entirely arbitrary */
     uint32_t index, val;
 
-    for(index=0; index<NUM_IPS; index++)
+    for (index=0; index<NUM_IPS; index++)
     {
         ip_list[index] = (uint32_t)rand()%NUM_IPS;
         data[index%NUM_DATA] = index%26 + 65;    /* Random letter */
@@ -782,31 +783,30 @@ int main()
 
     dir = sfrt_new(DIR_16x2, IPv4, NUM_IPS, 20);
 
-    if(!dir)
+    if (!dir)
     {
         printf("Failed to create DIR\n");
         return 1;
     }
 
-    for(index=0; index < NUM_IPS; index++)
+    for (index=0; index < NUM_IPS; index++)
     {
-        if(sfrt_insert(&ip_list[index], 32, &data[index%NUM_DATA],
-                       RT_FAVOR_SPECIFIC, dir) != RT_SUCCESS)
+        if (sfrt_insert(&ip_list[index], 32, &data[index%NUM_DATA],
+            RT_FAVOR_SPECIFIC, dir) != RT_SUCCESS)
         {
             printf("DIR Insertion failure\n");
             return 1;
         }
 
         printf("%d\t %x: %c -> %c\n", index, ip_list[index],
-              data[index%NUM_DATA], *(uint32_t*)sfrt_lookup(&ip_list[index], dir));
-
+            data[index%NUM_DATA], *(uint32_t*)sfrt_lookup(&ip_list[index], dir));
     }
 
-    for(index=0; index < NUM_IPS; index++)
+    for (index=0; index < NUM_IPS; index++)
     {
         val = *(uint32_t*)sfrt_lookup(&ip_list[index], dir);
         printf("\t@%d\t%x: %c.  originally:\t%c\n",
-                            index, ip_list[index], val, data[index%NUM_DATA]);
+            index, ip_list[index], val, data[index%NUM_DATA]);
     }
 
     printf("Usage: %d bytes\n", ((dir_table_t*)(dir->rt))->allocated);

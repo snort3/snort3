@@ -17,8 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_sun_nd.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -26,10 +24,8 @@
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
 
-
 namespace
 {
-
 // yes, macros are necessary. The API and class constructor require different strings.
 #define CD_SUN_ND_NAME "sun_nd"
 #define CD_SUN_ND_HELP "support for Sun ND"
@@ -37,19 +33,15 @@ namespace
 class SunNdCodec : public Codec
 {
 public:
-    SunNdCodec() : Codec(CD_SUN_ND_NAME){};
-    ~SunNdCodec() {};
-
+    SunNdCodec() : Codec(CD_SUN_ND_NAME) { }
+    ~SunNdCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-
 };
 
 const uint16_t IPPROTO_ID_SUN_ND = 77;
-
 } // namespace
-
 
 void SunNdCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
@@ -62,7 +54,6 @@ bool SunNdCodec::decode(const RawData&, CodecData& codec, DecodeData&)
     return true;
 }
 
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
@@ -70,9 +61,8 @@ bool SunNdCodec::decode(const RawData&, CodecData& codec, DecodeData&)
 static Codec* ctor(Module*)
 { return new SunNdCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi sun_nd_api =
 {
@@ -93,7 +83,6 @@ static const CodecApi sun_nd_api =
     dtor,
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -103,3 +92,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_sun_nd = &sun_nd_api.base;
 #endif
+

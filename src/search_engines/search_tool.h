@@ -35,13 +35,13 @@ public:
 
     // set state to zero on first call
     int find(const char* s, unsigned s_len, mpse_action_f, int& state,
-        bool confine = false, void* user_data = nullptr);
+    bool confine = false, void* user_data = nullptr);
 
     int find(const char* s, unsigned s_len, mpse_action_f,
-        bool confine = false, void* user_data = nullptr);
+    bool confine = false, void* user_data = nullptr);
 
     int find_all(const char* s, unsigned s_len, mpse_action_f,
-        bool confine = false, void* user_data = nullptr);
+    bool confine = false, void* user_data = nullptr);
 
 private:
     class Mpse* mpse;
@@ -49,3 +49,4 @@ private:
 };
 
 #endif
+

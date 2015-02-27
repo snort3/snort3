@@ -156,15 +156,15 @@ class ByteTestOption : public IpsOption
 {
 public:
     ByteTestOption(const ByteTestData& c) : IpsOption(s_name)
-    { config = c; };
+    { config = c; }
 
-    ~ByteTestOption() { };
+    ~ByteTestOption() { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
     bool is_relative() override
-    { return ( config.relative_flag == 1 ); };
+    { return ( config.relative_flag == 1 ); }
 
     int eval(Cursor&, Packet*) override;
 
@@ -179,7 +179,7 @@ private:
 uint32_t ByteTestOption::hash() const
 {
     uint32_t a,b,c;
-    const ByteTestData *data = (ByteTestData *)&config;
+    const ByteTestData* data = (ByteTestData*)&config;
 
     a = data->bytes_to_compare;
     b = data->cmp_value;
@@ -189,9 +189,9 @@ uint32_t ByteTestOption::hash() const
 
     a += data->offset;
     b += (data->not_flag << 24 |
-          data->relative_flag << 16 |
-          data->data_string_convert_flag << 8 |
-          data->endianess);
+        data->relative_flag << 16 |
+        data->data_string_convert_flag << 8 |
+        data->endianess);
     c += data->base;
 
     mix(a,b,c);
@@ -212,8 +212,8 @@ bool ByteTestOption::operator==(const IpsOption& ips) const
         return false;
 
     ByteTestOption& rhs = (ByteTestOption&)ips;
-    const ByteTestData *left = &config;
-    const ByteTestData *right = &rhs.config;
+    const ByteTestData* left = &config;
+    const ByteTestData* right = &rhs.config;
 
     if (( left->bytes_to_compare == right->bytes_to_compare) &&
         ( left->cmp_value == right->cmp_value) &&
@@ -235,7 +235,7 @@ bool ByteTestOption::operator==(const IpsOption& ips) const
 
 int ByteTestOption::eval(Cursor& c, Packet*)
 {
-    ByteTestData *btd = (ByteTestData *)&config;
+    ByteTestData* btd = (ByteTestData*)&config;
     int rval = DETECTION_OPTION_NO_MATCH;
     uint32_t value = 0;
     int success = 0;
@@ -277,7 +277,7 @@ int ByteTestOption::eval(Cursor& c, Packet*)
      * byte_extract.c
      */
 
-    if(!btd->data_string_convert_flag)
+    if (!btd->data_string_convert_flag)
     {
         if ( byte_extract(
             btd->endianess, btd->bytes_to_compare,
@@ -297,7 +297,7 @@ int ByteTestOption::eval(Cursor& c, Packet*)
         if ( payload_bytes_grabbed < 0 )
         {
             DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                                    "String Extraction Failed\n"););
+                "String Extraction Failed\n"); );
 
             MODULE_PROFILE_END(byteTestPerfStats);
             return rval;
@@ -308,7 +308,7 @@ int ByteTestOption::eval(Cursor& c, Packet*)
         "Grabbed %d bytes at offset %d, value = 0x%08X(%u)\n",
         payload_bytes_grabbed, btd->offset, value, value); );
 
-    switch(btd->opcode)
+    switch (btd->opcode)
     {
     case CHECK_LT:
         success = (value < cmp_value);
@@ -354,7 +354,7 @@ int ByteTestOption::eval(Cursor& c, Packet*)
     if (btd->not_flag)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                    "checking for not success...flag\n"););
+            "checking for not success...flag\n"); );
         if (!success)
         {
             rval = DETECTION_OPTION_MATCH;
@@ -376,12 +376,15 @@ int ByteTestOption::eval(Cursor& c, Packet*)
 
 static void parse_operator(const char* cptr, ByteTestData& idx)
 {
-    while(isspace((int)*cptr)) {cptr++;}
-
-    if(*cptr == '!')
+    while (isspace((int)*cptr))
     {
-       idx.not_flag = 1;
-       cptr++;
+        cptr++;
+    }
+
+    if (*cptr == '!')
+    {
+        idx.not_flag = 1;
+        cptr++;
     }
 
     if (idx.not_flag && strlen(cptr) == 0)
@@ -391,34 +394,34 @@ static void parse_operator(const char* cptr, ByteTestData& idx)
     else
     {
         /* set the opcode */
-        switch(*cptr)
+        switch (*cptr)
         {
-            case '<': idx.opcode = CHECK_LT;
-                      cptr++;
-                      if (*cptr == '=')
-                          idx.opcode = CHECK_LTE;
-                      else
-                          cptr--;
-                      break;
+        case '<': idx.opcode = CHECK_LT;
+            cptr++;
+            if (*cptr == '=')
+                idx.opcode = CHECK_LTE;
+            else
+                cptr--;
+            break;
 
-            case '=': idx.opcode = CHECK_EQ;
-                      break;
+        case '=': idx.opcode = CHECK_EQ;
+            break;
 
-            case '>': idx.opcode = CHECK_GT;
-                      cptr++;
-                      if (*cptr == '=')
-                          idx.opcode = CHECK_GTE;
-                      else
-                          cptr--;
-                      break;
+        case '>': idx.opcode = CHECK_GT;
+            cptr++;
+            if (*cptr == '=')
+                idx.opcode = CHECK_GTE;
+            else
+                cptr--;
+            break;
 
-            case '&': idx.opcode = CHECK_AND;
-                      break;
+        case '&': idx.opcode = CHECK_AND;
+            break;
 
-            case '^': idx.opcode = CHECK_XOR;
-                      break;
+        case '^': idx.opcode = CHECK_XOR;
+            break;
 
-            default: ParseError(
+        default: ParseError(
                 "byte_test unknown opcode ('%c)", *cptr);
         }
     }
@@ -475,14 +478,14 @@ static const Parameter s_params[] =
 class ByteTestModule : public Module
 {
 public:
-    ByteTestModule() : Module(s_name, s_help, s_params) { };
+    ByteTestModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &byteTestPerfStats; };
+    { return &byteTestPerfStats; }
 
     ByteTestData data;
     string cmp_var;
@@ -525,7 +528,7 @@ bool ByteTestModule::end(const char*, int, SnortConfig*)
     }
     unsigned e1 = ffs(data.endianess);
     unsigned e2 = ffs(data.endianess >> e1);
-    
+
     if ( e1 && e2 )
     {
         ParseError("byte_test has multiple arguments "

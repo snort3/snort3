@@ -17,17 +17,14 @@
 //--------------------------------------------------------------------------
 // udp.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifndef PROTOCOLS_UDP_H
 #define PROTOCOLS_UDP_H
 
 #include <cstdint>
 #include <arpa/inet.h>
 
-
 namespace udp
 {
-
 constexpr uint8_t UDP_HEADER_LEN = 8;
 
 struct UDPHdr
@@ -50,7 +47,6 @@ struct UDPHdr
     inline uint16_t cksum() const
     { return ntohs(uh_chk); }
 
-
     /*  Raw access to fields */
     inline uint16_t raw_src_port() const
     { return uh_sport; }
@@ -64,8 +60,7 @@ struct UDPHdr
     inline uint16_t raw_cksum() const
     { return uh_chk; }
 };
-
-
 } // namespace
 
 #endif
+

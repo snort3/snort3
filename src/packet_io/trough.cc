@@ -33,24 +33,23 @@
 struct PcapReadObject
 {
     SourceType type;
-    char *arg;
-    char *filter;
-
+    char* arg;
+    char* filter;
 };
 
-static SF_LIST *pcap_object_list = NULL;
-static SF_QUEUE *pcap_queue = NULL;
-static SF_QUEUE *pcap_save_queue = NULL;
+static SF_LIST* pcap_object_list = NULL;
+static SF_QUEUE* pcap_queue = NULL;
+static SF_QUEUE* pcap_save_queue = NULL;
 static char* pcap_filter = NULL;
 static long int pcap_loop_count = 0;
 static unsigned file_count = 0;
 
 /* very slow sort - do not use at runtime! */
-static SF_LIST * SortDirectory(const char *path)
+static SF_LIST* SortDirectory(const char* path)
 {
-    SF_LIST *dir_entries;
-    DIR *dir;
-    struct dirent *direntry;
+    SF_LIST* dir_entries;
+    DIR* dir;
+    struct dirent* direntry;
     int ret = 0;
 
     if (path == NULL)
@@ -67,7 +66,7 @@ static SF_LIST * SortDirectory(const char *path)
     if (dir == NULL)
     {
         ErrorMessage("Error opening directory: %s: %s\n",
-                     path, get_error(errno));
+            path, get_error(errno));
         sflist_free_all(dir_entries, free);
         return NULL;
     }
@@ -77,17 +76,17 @@ static SF_LIST * SortDirectory(const char *path)
 
     while ((direntry = readdir(dir)) != NULL)  // main thread only
     {
-        char *node_entry_name, *dir_entry_name;
-        SF_LNODE *node;
+        char* node_entry_name, * dir_entry_name;
+        SF_LNODE* node;
         NODE_DATA ndata;
 
         dir_entry_name = SnortStrdup(direntry->d_name);
 
         for (ndata = sflist_first(dir_entries, &node);
-             ndata != NULL;
-             ndata = sflist_next(&node))
+            ndata != NULL;
+            ndata = sflist_next(&node))
         {
-            node_entry_name = (char *)ndata;
+            node_entry_name = (char*)ndata;
             if (strcmp(dir_entry_name, node_entry_name) < 0)
                 break;
         }
@@ -109,7 +108,7 @@ static SF_LIST * SortDirectory(const char *path)
     if (errno != 0)
     {
         ErrorMessage("Error reading directory: %s: %s\n",
-                     path, get_error(errno));
+            path, get_error(errno));
         errno = 0;
         sflist_free_all(dir_entries, free);
         closedir(dir);
@@ -121,10 +120,10 @@ static SF_LIST * SortDirectory(const char *path)
     return dir_entries;
 }
 
-int GetFilesUnderDir(const char *path, SF_QUEUE *dir_queue, const char *filter)
+int GetFilesUnderDir(const char* path, SF_QUEUE* dir_queue, const char* filter)
 {
-    SF_LIST *dir_entries;
-    char *direntry;
+    SF_LIST* dir_entries;
+    char* direntry;
     int ret = 0;
     int num_files = 0;
 
@@ -139,9 +138,9 @@ int GetFilesUnderDir(const char *path, SF_QUEUE *dir_queue, const char *filter)
     }
     SF_LNODE* cursor;
 
-    for (direntry = (char *)sflist_first(dir_entries, &cursor);
-         direntry != NULL;
-         direntry = (char *)sflist_next(&cursor))
+    for (direntry = (char*)sflist_first(dir_entries, &cursor);
+        direntry != NULL;
+        direntry = (char*)sflist_next(&cursor))
     {
         char path_buf[PATH_MAX];
         struct stat file_stat;
@@ -151,7 +150,7 @@ int GetFilesUnderDir(const char *path, SF_QUEUE *dir_queue, const char *filter)
             continue;
 
         ret = SnortSnprintf(path_buf, PATH_MAX, "%s%s%s",
-                            path, path[strlen(path) - 1] == '/' ? "" : "/", direntry);
+            path, path[strlen(path) - 1] == '/' ? "" : "/", direntry);
         if (ret == SNORT_SNPRINTF_TRUNCATION)
         {
             ErrorMessage("Error copying file to buffer: Path too long\n");
@@ -169,7 +168,7 @@ int GetFilesUnderDir(const char *path, SF_QUEUE *dir_queue, const char *filter)
         if (ret == -1)
         {
             ErrorMessage("Could not stat file: %s: %s\n",
-                         path_buf, get_error(errno));
+                path_buf, get_error(errno));
             continue;
         }
 
@@ -188,7 +187,7 @@ int GetFilesUnderDir(const char *path, SF_QUEUE *dir_queue, const char *filter)
         {
             if ((filter == NULL) || (fnmatch(filter, direntry, 0) == 0))
             {
-                char *file = SnortStrdup(path_buf);
+                char* file = SnortStrdup(path_buf);
 
                 ret = sfqueue_add(dir_queue, (NODE_DATA)file);
                 if (ret == -1)
@@ -221,11 +220,11 @@ int GetFilesUnderDir(const char *path, SF_QUEUE *dir_queue, const char *filter)
  * returns -1 on error and 0 on success
  *
  ****************************************************************/
-static int GetPcaps(SF_LIST *pol, SF_QUEUE *pcap_queue)
+static int GetPcaps(SF_LIST* pol, SF_QUEUE* pcap_queue)
 {
-    PcapReadObject *pro = NULL;
-    char *arg = NULL;
-    char *filter = NULL;
+    PcapReadObject* pro = NULL;
+    char* arg = NULL;
+    char* filter = NULL;
     int ret = 0;
 
     if ((pol == NULL) || (pcap_queue == NULL))
@@ -233,158 +232,159 @@ static int GetPcaps(SF_LIST *pol, SF_QUEUE *pcap_queue)
 
     SF_LNODE* cursor;
 
-    for (pro = (PcapReadObject *)sflist_first(pol, &cursor);
-         pro != NULL;
-         pro = (PcapReadObject *)sflist_next(&cursor))
+    for (pro = (PcapReadObject*)sflist_first(pol, &cursor);
+        pro != NULL;
+        pro = (PcapReadObject*)sflist_next(&cursor))
     {
         arg = pro->arg;
         filter = pro->filter;
 
         switch (pro->type)
         {
-            case SOURCE_FILE_LIST:
-                /* arg should be a file with a list of pcaps in it */
+        case SOURCE_FILE_LIST:
+            /* arg should be a file with a list of pcaps in it */
+        {
+            FILE* pcap_file = NULL;
+            char* pcap = NULL;
+            char path_buf[4096];           /* max chars we'll accept for a path */
+
+            pcap_file = fopen(arg, "r");
+            if (pcap_file == NULL)
+            {
+                ErrorMessage("Could not open pcap list file: %s: %s\n",
+                    arg, get_error(errno));
+                return -1;
+            }
+
+            while (fgets(path_buf, sizeof(path_buf), pcap_file) != NULL)
+            {
+                char* path_buf_ptr, * path_buf_end;
+                struct stat stat_buf;
+
+                path_buf[sizeof(path_buf) - 1] = '\0';
+                path_buf_ptr = &path_buf[0];
+                path_buf_end = path_buf_ptr + strlen(path_buf_ptr);
+
+                /* move past spaces if any */
+                while (isspace((int)*path_buf_ptr))
+                    path_buf_ptr++;
+
+                /* if nothing but spaces on line, continue */
+                if (*path_buf_ptr == '\0')
+                    continue;
+
+                /* get rid of trailing spaces */
+                while ((path_buf_end > path_buf_ptr) &&
+                    (isspace((int)*(path_buf_end - 1))))
+                    path_buf_end--;
+
+                *path_buf_end = '\0';
+
+                /* do a quick check to make sure file exists */
+                if (ScReadMode() && stat(path_buf_ptr, &stat_buf) == -1)
                 {
-                    FILE *pcap_file = NULL;
-                    char *pcap = NULL;
-                    char path_buf[4096];   /* max chars we'll accept for a path */
-
-                    pcap_file = fopen(arg, "r");
-                    if (pcap_file == NULL)
-                    {
-                        ErrorMessage("Could not open pcap list file: %s: %s\n",
-                                     arg, get_error(errno));
-                        return -1;
-                    }
-
-                    while (fgets(path_buf, sizeof(path_buf), pcap_file) != NULL)
-                    {
-                        char *path_buf_ptr, *path_buf_end;
-                        struct stat stat_buf;
-
-                        path_buf[sizeof(path_buf) - 1] = '\0';
-                        path_buf_ptr = &path_buf[0];
-                        path_buf_end = path_buf_ptr + strlen(path_buf_ptr);
-
-                        /* move past spaces if any */
-                        while (isspace((int)*path_buf_ptr))
-                            path_buf_ptr++;
-
-                        /* if nothing but spaces on line, continue */
-                        if (*path_buf_ptr == '\0')
-                            continue;
-
-                        /* get rid of trailing spaces */
-                        while ((path_buf_end > path_buf_ptr) &&
-                               (isspace((int)*(path_buf_end - 1))))
-                            path_buf_end--;
-
-                        *path_buf_end = '\0';
-
-                        /* do a quick check to make sure file exists */
-                        if (ScReadMode() && stat(path_buf_ptr, &stat_buf) == -1)
-                        {
-                            ErrorMessage("Error getting stat on pcap file: %s: %s\n",
-                                         path_buf_ptr, get_error(errno));
-                            fclose(pcap_file);
-                            return -1;
-                        }
-                        else if (ScReadMode() && stat_buf.st_mode & S_IFDIR)
-                        {
-                            ret = GetFilesUnderDir(path_buf_ptr, pcap_queue, filter);
-                            if (ret == -1)
-                            {
-                                ErrorMessage("Error getting pcaps under dir: %s\n", path_buf_ptr);
-                                fclose(pcap_file);
-                                return -1;
-                            }
-                        }
-                        else if (!ScReadMode() || stat_buf.st_mode & S_IFREG)
-                        {
-                            if ((filter == NULL) || (fnmatch(filter, path_buf_ptr, 0) == 0))
-                            {
-                                pcap = SnortStrdup(path_buf_ptr);
-                                ret = sfqueue_add(pcap_queue, (NODE_DATA)pcap);
-                                if (ret == -1)
-                                {
-                                    ErrorMessage("Could not insert pcap into list: %s\n", pcap);
-                                    free(pcap);
-                                    fclose(pcap_file);
-                                    return -1;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            ErrorMessage("Specified entry in \'%s\' is not a regular file or directory: %s\n",
-                                         arg, path_buf_ptr);
-                            fclose(pcap_file);
-                            return -1;
-                        }
-                    }
-
+                    ErrorMessage("Error getting stat on pcap file: %s: %s\n",
+                        path_buf_ptr, get_error(errno));
                     fclose(pcap_file);
+                    return -1;
                 }
-
-                break;
-
-            case SOURCE_LIST:
-                /* arg should be a space separated list of pcaps */
+                else if (ScReadMode() && stat_buf.st_mode & S_IFDIR)
                 {
-                    char *tmp = NULL;
-                    char *pcap = NULL;
-                    struct stat stat_buf;
-
-                    tmp = strtok_r(arg, " ", &arg);
-                    if (tmp == NULL)
+                    ret = GetFilesUnderDir(path_buf_ptr, pcap_queue, filter);
+                    if (ret == -1)
                     {
-                        ErrorMessage("No pcaps specified in pcap list\n");
+                        ErrorMessage("Error getting pcaps under dir: %s\n", path_buf_ptr);
+                        fclose(pcap_file);
                         return -1;
                     }
-
-                    do
+                }
+                else if (!ScReadMode() || stat_buf.st_mode & S_IFREG)
+                {
+                    if ((filter == NULL) || (fnmatch(filter, path_buf_ptr, 0) == 0))
                     {
-                        /* do a quick check to make sure file exists */
-                        if (ScReadMode() && stat(tmp, &stat_buf) == -1)
-                        {
-                            ErrorMessage("Error getting stat on file: %s: %s\n",
-                                       tmp, get_error(errno));
-                            return -1;
-                        }
-                        else if (ScReadMode() && !(stat_buf.st_mode & (S_IFREG|S_IFIFO)))
-                        {
-                            ErrorMessage("Specified pcap is not a regular file: %s\n", tmp);
-                            return -1;
-                        }
-
-                        pcap = SnortStrdup(tmp);
+                        pcap = SnortStrdup(path_buf_ptr);
                         ret = sfqueue_add(pcap_queue, (NODE_DATA)pcap);
                         if (ret == -1)
                         {
                             ErrorMessage("Could not insert pcap into list: %s\n", pcap);
                             free(pcap);
+                            fclose(pcap_file);
                             return -1;
                         }
-
-                    } while ((tmp = strtok_r(NULL, " ", &arg)) != NULL);
+                    }
                 }
-
-                break;
-
-            case SOURCE_DIR:
-                /* arg should be a directory name */
-                ret = GetFilesUnderDir(arg, pcap_queue, filter);
-                if (ret == -1)
+                else
                 {
-                    ErrorMessage("Error getting pcaps under dir: %s\n", arg);
+                    ErrorMessage(
+                        "Specified entry in \'%s\' is not a regular file or directory: %s\n",
+                        arg, path_buf_ptr);
+                    fclose(pcap_file);
+                    return -1;
+                }
+            }
+
+            fclose(pcap_file);
+        }
+
+        break;
+
+        case SOURCE_LIST:
+            /* arg should be a space separated list of pcaps */
+        {
+            char* tmp = NULL;
+            char* pcap = NULL;
+            struct stat stat_buf;
+
+            tmp = strtok_r(arg, " ", &arg);
+            if (tmp == NULL)
+            {
+                ErrorMessage("No pcaps specified in pcap list\n");
+                return -1;
+            }
+
+            do
+            {
+                /* do a quick check to make sure file exists */
+                if (ScReadMode() && stat(tmp, &stat_buf) == -1)
+                {
+                    ErrorMessage("Error getting stat on file: %s: %s\n",
+                        tmp, get_error(errno));
+                    return -1;
+                }
+                else if (ScReadMode() && !(stat_buf.st_mode & (S_IFREG|S_IFIFO)))
+                {
+                    ErrorMessage("Specified pcap is not a regular file: %s\n", tmp);
                     return -1;
                 }
 
-                break;
+                pcap = SnortStrdup(tmp);
+                ret = sfqueue_add(pcap_queue, (NODE_DATA)pcap);
+                if (ret == -1)
+                {
+                    ErrorMessage("Could not insert pcap into list: %s\n", pcap);
+                    free(pcap);
+                    return -1;
+                }
+            }
+            while ((tmp = strtok_r(NULL, " ", &arg)) != NULL);
+        }
 
-            default:
-                ParseError("Bad read multiple pcaps type");
-                break;
+        break;
+
+        case SOURCE_DIR:
+            /* arg should be a directory name */
+            ret = GetFilesUnderDir(arg, pcap_queue, filter);
+            if (ret == -1)
+            {
+                ErrorMessage("Error getting pcaps under dir: %s\n", arg);
+                return -1;
+            }
+
+            break;
+
+        default:
+            ParseError("Bad read multiple pcaps type");
+            break;
         }
     }
 
@@ -397,7 +397,7 @@ long Trough_GetLoopCount()
 void Trough_SetLoopCount(long int c)
 { pcap_loop_count = c; }
 
-void Trough_SetFilter (const char* f)
+void Trough_SetFilter(const char* f)
 {
     if (pcap_filter != NULL)
         free(pcap_filter);
@@ -405,7 +405,7 @@ void Trough_SetFilter (const char* f)
     pcap_filter = f ? SnortStrdup(f) : NULL;
 }
 
-void Trough_Multi (SourceType type, const char* list)
+void Trough_Multi(SourceType type, const char* list)
 {
     PcapReadObject* pro;
 
@@ -416,7 +416,7 @@ void Trough_Multi (SourceType type, const char* list)
             FatalError("Could not allocate list to store pcaps\n");
     }
 
-    pro = (PcapReadObject *)SnortAlloc(sizeof(PcapReadObject));
+    pro = (PcapReadObject*)SnortAlloc(sizeof(PcapReadObject));
     pro->type = type;
     pro->arg = SnortStrdup(list);
     if (pcap_filter != NULL)
@@ -428,7 +428,7 @@ void Trough_Multi (SourceType type, const char* list)
         FatalError("Could not add pcap object to list: %s\n", list);
 }
 
-void Trough_SetUp (void)
+void Trough_SetUp(void)
 {
     if (pcap_object_list != NULL)
     {
@@ -452,7 +452,7 @@ void Trough_SetUp (void)
         /* free pcap list used to get params */
         while (sflist_count(pcap_object_list) > 0)
         {
-            PcapReadObject *pro = (PcapReadObject *)sflist_remove_head(pcap_object_list);
+            PcapReadObject* pro = (PcapReadObject*)sflist_remove_head(pcap_object_list);
             if (pro == NULL)
                 FatalError("Failed to remove pcap item from list.\n");
 
@@ -475,7 +475,7 @@ void Trough_SetUp (void)
     }
 }
 
-int Trough_CleanUp (void)
+int Trough_CleanUp(void)
 {
     /* clean up pcap queues */
     if (pcap_queue != NULL)
@@ -487,7 +487,7 @@ int Trough_CleanUp (void)
     return 0;
 }
 
-const char* Trough_First (void)
+const char* Trough_First(void)
 {
     const char* pcap = (char*)sfqueue_remove(pcap_queue);
 
@@ -501,7 +501,7 @@ const char* Trough_First (void)
     return pcap;
 }
 
-bool Trough_Next (void)
+bool Trough_Next(void)
 {
     if ( sfqueue_count(pcap_queue) > 0 )
         return true;
@@ -510,7 +510,7 @@ bool Trough_Next (void)
     {
         if ( --pcap_loop_count )
         {
-            SF_QUEUE *tmp;
+            SF_QUEUE* tmp;
 
             /* switch pcap lists */
             tmp = pcap_queue;
@@ -528,7 +528,7 @@ unsigned Trough_GetFileCount()
     return file_count;
 }
 
-unsigned Trough_GetQCount (void)
+unsigned Trough_GetQCount(void)
 {
     return sfqueue_count(pcap_queue);
 }

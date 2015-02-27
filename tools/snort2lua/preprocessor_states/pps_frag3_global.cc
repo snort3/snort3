@@ -24,55 +24,50 @@
 
 namespace preprocessors
 {
-
-namespace {
-
+namespace
+{
 class Frag3Global : public ConversionState
 {
 public:
-    Frag3Global(Converter& c) : ConversionState(c) {};
-    virtual ~Frag3Global() {};
+    Frag3Global(Converter& c) : ConversionState(c) { }
+    virtual ~Frag3Global() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool Frag3Global::convert(std::istringstream& data_stream)
 {
-
     bool retval = true;
     std::string keyword;
 
     table_api.open_table("stream_ip");
 
-
     // full options are comma seperated
-    while(util::get_string(data_stream, keyword, ","))
+    while (util::get_string(data_stream, keyword, ","))
     {
         bool tmpval = true;
 
         // suboptions are space seperated
         std::istringstream args_stream(keyword);
         args_stream >> keyword;
-        
-        if(!keyword.compare("disabled"))
+
+        if (!keyword.compare("disabled"))
             table_api.add_deleted_comment("disabled");
 
-        else if(!keyword.compare("max_frags"))
+        else if (!keyword.compare("max_frags"))
             tmpval = parse_int_option("max_frags", args_stream, false);
-        
-        else if(!keyword.compare("memcap"))
+
+        else if (!keyword.compare("memcap"))
             tmpval = parse_deleted_option("memcap", args_stream);
 
-        else if(!keyword.compare("prealloc_memcap"))
+        else if (!keyword.compare("prealloc_memcap"))
             tmpval = parse_deleted_option("prealloc_memcap", args_stream);
 
-        else if(!keyword.compare("prealloc_frags"))
+        else if (!keyword.compare("prealloc_frags"))
             tmpval = parse_deleted_option("prealloc_frags", args_stream);
 
         else
             tmpval = false;
-
 
         if (!tmpval)
         {
@@ -81,7 +76,7 @@ bool Frag3Global::convert(std::istringstream& data_stream)
         }
     }
 
-    return retval;    
+    return retval;
 }
 
 /**************************
@@ -100,5 +95,5 @@ static const ConvertMap preprocessor_frag3_global =
 };
 
 const ConvertMap* frag3_global_map = &preprocessor_frag3_global;
-
 } // namespace preprocessors
+

@@ -24,7 +24,6 @@
 
 namespace rules
 {
-
 extern const ConvertMap* ack_map;
 extern const ConvertMap* asn1_map;
 extern const ConvertMap* base64_data_map;
@@ -137,6 +136,5 @@ const std::vector<const ConvertMap*> rule_options_api =
     urilen_map,
     window_map,
 };
-
 } // namespace rules
 

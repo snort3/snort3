@@ -31,7 +31,6 @@
 #include "managers/codec_manager.h"
 #include "main/thread.h"
 
-
 struct _daq_pkthdr;
 struct TextLog;
 
@@ -66,10 +65,10 @@ public:
 
     // when encoding, rather than copy the destination MAC address from the
     // inbound packet, manually set the MAC address.
-    static void encode_set_dst_mac(uint8_t* );
+    static void encode_set_dst_mac(uint8_t*);
     // get the MAC address which has been set using encode_set_dst_mac().
     // Useful for root decoders setting the MAC address
-    static uint8_t *encode_get_dst_mac();
+    static uint8_t* encode_get_dst_mac();
     // update the packet's checksums and length variables. Call this function
     // after Snort has changed any data in this packet
     static void encode_update(Packet*);
@@ -77,7 +76,7 @@ public:
     static int encode_format(
         EncodeFlags f, const Packet* orig, Packet* clone, PseudoPacketType type);
     // encode the packet with pre-set daq info.
-    static int encode_format_with_daq_info (
+    static int encode_format_with_daq_info(
         EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type,
         const DAQ_PktHdr_t*, uint32_t opaque);
     // orig is the wire pkt; clone was obtained with New()
@@ -86,21 +85,19 @@ public:
     // of response. Len will be set to the response's length.
     // payload && payload_len are optional.
     static const uint8_t* encode_response(
-        TcpResponse, EncodeFlags, const Packet* orig, uint32_t& len,
-        const uint8_t* const payload = nullptr, uint32_t payload_len = 0);
+    TcpResponse, EncodeFlags, const Packet* orig, uint32_t& len,
+    const uint8_t* const payload = nullptr, uint32_t payload_len = 0);
     // Send an ICMP unreachable response!
-    static const uint8_t* encode_reject( UnreachResponse type,
+    static const uint8_t* encode_reject(UnreachResponse type,
         EncodeFlags flags, const Packet* p, uint32_t& len);
 
     // for backwards compatability and convenience.
-    static inline int encode_format_with_daq_info (
+    static inline int encode_format_with_daq_info(
         EncodeFlags f, const Packet* orig, Packet* clone,
         PseudoPacketType type, uint32_t opaque)
     { return encode_format_with_daq_info(f, orig, clone, type, nullptr, opaque); }
 
-
     /* codec support and statistics */
-
 
     // get the number of packets which have been rebuilt by this thread
     static PegCount get_rebuilt_packet_count(void);
@@ -112,7 +109,6 @@ public:
     static inline void encode_reset(void)
     { encode_set_pkt(NULL); }
 
-
     // print codec information.  MUST be called after thread_term.
     static void dump_stats();
     // Get the name of the given protocol
@@ -121,9 +117,6 @@ public:
     static const char* get_proto_name(uint8_t protocol);
     // print this packets information, layer by layer
     static void log_protocols(TextLog* const, const Packet* const);
-
-
-
 
     /* Accessor functions -- any object in Snort++ can now convert a
      * protocol to its mapped value.
@@ -147,7 +140,7 @@ private:
     static void accumulate();
     static void pop_teredo(Packet*, RawData&);
     static bool encode(const Packet* p, EncodeFlags,
-        uint8_t lyr_start, uint8_t next_prot, Buffer& buf);
+    uint8_t lyr_start, uint8_t next_prot, Buffer& buf);
 
     // constant offsets into the s_stats array.  Notice the stat_offset
     // constant which is used when adding a protocol specific codec
@@ -157,9 +150,11 @@ private:
     static const uint8_t stat_offset = 3;
 
     // declared in header so it can access s_protocols
-    static THREAD_LOCAL std::array<PegCount, stat_offset + CodecManager::s_protocols.size()> s_stats;
+    static THREAD_LOCAL std::array<PegCount, stat_offset +
+    CodecManager::s_protocols.size()> s_stats;
     static std::array<PegCount, s_stats.size()> g_stats;
     static const std::array<const char*, stat_offset> stat_names;
 };
 
 #endif
+

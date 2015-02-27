@@ -122,13 +122,13 @@ static const Parameter s_params[] =
 class SoModule : public Module
 {
 public:
-    SoModule() : Module(s_name, s_help, s_params) { };
+    SoModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &soPerfStats; };
+    { return &soPerfStats; }
 
     string name;
 };

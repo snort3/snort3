@@ -21,22 +21,19 @@
 
 namespace output
 {
+extern const ConvertMap* alert_csv_map;
+extern const ConvertMap* alert_fast_map;
+extern const ConvertMap* alert_full_map;
+extern const ConvertMap* alert_syslog_map;
+extern const ConvertMap* alert_test_map;
+extern const ConvertMap* alert_unified2_map;
+extern const ConvertMap* log_null_map;
+extern const ConvertMap* log_tcpdump_map;
+extern const ConvertMap* log_unified2_map;
+extern const ConvertMap* alert_unixsock_map;
+extern const ConvertMap* unified2_map;
 
-extern const ConvertMap *alert_csv_map;
-extern const ConvertMap *alert_fast_map;
-extern const ConvertMap *alert_full_map;
-extern const ConvertMap *alert_syslog_map;
-extern const ConvertMap *alert_test_map;
-extern const ConvertMap *alert_unified2_map;
-extern const ConvertMap *log_null_map;
-extern const ConvertMap *log_tcpdump_map;
-extern const ConvertMap *log_unified2_map;
-extern const ConvertMap *alert_unixsock_map;
-extern const ConvertMap *unified2_map;
-
-
-
-const std::vector<const ConvertMap*> output_api = 
+const std::vector<const ConvertMap*> output_api =
 {
     alert_csv_map,
     alert_fast_map,
@@ -50,5 +47,5 @@ const std::vector<const ConvertMap*> output_api =
     alert_unixsock_map,
     unified2_map,
 };
-
 } // namespace output
+

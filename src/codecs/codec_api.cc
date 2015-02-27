@@ -27,7 +27,6 @@
 
 // root codecs
 
-
 // ip codecs
 extern const BaseApi* cd_ipv4;    // static due to dependence on fpdetect
 extern const BaseApi* cd_hopopts; // static to ensure the symbols CheckIPV6HopOptions
@@ -70,7 +69,6 @@ extern const BaseApi* cd_transbridge;
 extern const BaseApi* cd_udp;
 extern const BaseApi* cd_vlan;
 
-
 //  Root codecs
 extern const BaseApi* cd_eapol;
 extern const BaseApi* cd_eth;
@@ -84,7 +82,6 @@ extern const BaseApi* cd_raw6;
 extern const BaseApi* cd_wlan;
 
 #endif
-
 
 const BaseApi* codecs[] =
 {

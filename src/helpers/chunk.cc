@@ -37,7 +37,7 @@ using namespace std;
 
 struct Loader
 {
-    Loader(string& s) : chunk(s) { done = false; };
+    Loader(string& s) : chunk(s) { done = false; }
     string& chunk;
     bool done;
 };
@@ -78,7 +78,7 @@ void init_chunk(
         return;
     }
 
-    // load the args table 
+    // load the args table
     if ( luaL_loadstring(L, args.c_str()) )
     {
         ParseError("%s luajit failed to load args %s", name, lua_tostring(L, -1));

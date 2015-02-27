@@ -29,24 +29,34 @@ class NHttpMsgHeader;
 class NHttpMsgTrailer;
 class NHttpMsgSection;
 
-class NHttpTransaction {
+class NHttpTransaction
+{
 public:
-    static NHttpTransaction* attach_my_transaction(NHttpFlowData* session_data, NHttpEnums::SourceId source_id);
+    static NHttpTransaction* attach_my_transaction(NHttpFlowData* session_data,
+        NHttpEnums::SourceId source_id);
     ~NHttpTransaction();
 
-    NHttpMsgRequest* get_request() const { return request; };
-    void set_request(NHttpMsgRequest* request_) { request = request_; };
+    NHttpMsgRequest* get_request() const { return request; }
+    void set_request(NHttpMsgRequest* request_) { request = request_; }
 
-    NHttpMsgStatus* get_status() const { return status; };
-    void set_status(NHttpMsgStatus* status_) { status = status_; };
+    NHttpMsgStatus* get_status() const { return status; }
+    void set_status(NHttpMsgStatus* status_) { status = status_; }
 
-    NHttpMsgHeader* get_header(NHttpEnums::SourceId source_id) const { return header[source_id]; };
-    void set_header(NHttpMsgHeader* header_, NHttpEnums::SourceId source_id) { header[source_id] = header_; };
+    NHttpMsgHeader* get_header(NHttpEnums::SourceId source_id) const { return header[source_id]; }
+    void set_header(NHttpMsgHeader* header_, NHttpEnums::SourceId source_id)
+    {
+        header[source_id] =
+            header_;
+    }
 
-    NHttpMsgTrailer* get_trailer(NHttpEnums::SourceId source_id) const { return trailer[source_id]; };
-    void set_trailer(NHttpMsgTrailer* trailer_, NHttpEnums::SourceId source_id) { trailer[source_id] = trailer_; };
+    NHttpMsgTrailer* get_trailer(NHttpEnums::SourceId source_id) const
+    {
+        return trailer[source_id];
+    }
+    void set_trailer(NHttpMsgTrailer* trailer_, NHttpEnums::SourceId
+        source_id) { trailer[source_id] = trailer_; }
 
-    void set_body(NHttpMsgSection* latest_body_) { latest_body = latest_body_; };
+    void set_body(NHttpMsgSection* latest_body_) { latest_body = latest_body_; }
 
 private:
     NHttpTransaction() = default;

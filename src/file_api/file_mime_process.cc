@@ -41,10 +41,9 @@ MimePcre mime_boundary_pcre;
 
 typedef struct _MimeToken
 {
-    const char *name;
-    int   name_len;
-    int   search_id;
-
+    const char* name;
+    int name_len;
+    int search_id;
 } MimeToken;
 
 typedef enum _MimeHdrEnum
@@ -53,22 +52,20 @@ typedef enum _MimeHdrEnum
     HDR_CONT_TRANS_ENC,
     HDR_CONT_DISP,
     HDR_LAST
-
 } MimeHdrEnum;
 
 const MimeToken mime_hdrs[] =
 {
-        {"Content-type:", 13, HDR_CONTENT_TYPE},
-        {"Content-Transfer-Encoding:", 26, HDR_CONT_TRANS_ENC},
-        {"Content-Disposition:", 20, HDR_CONT_DISP},
-        {NULL,             0, 0}
+    { "Content-type:", 13, HDR_CONTENT_TYPE },
+    { "Content-Transfer-Encoding:", 26, HDR_CONT_TRANS_ENC },
+    { "Content-Disposition:", 20, HDR_CONT_DISP },
+    { NULL,             0, 0 }
 };
 
 typedef struct _MIMESearch
 {
-    const char *name;
-    int   name_len;
-
+    const char* name;
+    int name_len;
 } MIMESearch;
 
 typedef struct _MIMESearchInfo
@@ -76,34 +73,32 @@ typedef struct _MIMESearchInfo
     int id;
     int index;
     int length;
-
 } MIMESearchInfo;
 
 MIMESearchInfo mime_search_info;
 
 SearchTool* mime_hdr_search_mpse = nullptr;
 MIMESearch mime_hdr_search[HDR_LAST];
-MIMESearch *mime_current_search = NULL;
+MIMESearch* mime_current_search = NULL;
 
 /* Extract the filename from the header */
-static inline int extract_file_name(const char **start, int length, bool *disp_cont)
+static inline int extract_file_name(const char** start, int length, bool* disp_cont)
 {
-    const char *tmp = NULL;
-    const char *end = *start+length;
+    const char* tmp = NULL;
+    const char* end = *start+length;
 
     if (length <= 0)
         return -1;
-
 
     if (!(*disp_cont))
     {
         tmp = SnortStrcasestr(*start, length, "filename");
 
-        if( tmp == NULL )
+        if ( tmp == NULL )
             return -1;
 
         tmp = tmp + 8;
-        while( (tmp < end) && ((isspace(*tmp)) || (*tmp == '=') ))
+        while ( (tmp < end) && ((isspace(*tmp)) || (*tmp == '=') ))
         {
             tmp++;
         }
@@ -111,23 +106,22 @@ static inline int extract_file_name(const char **start, int length, bool *disp_c
     else
         tmp = *start;
 
-    if(tmp < end)
+    if (tmp < end)
     {
-        if(*tmp == '"' || (*disp_cont))
+        if (*tmp == '"' || (*disp_cont))
         {
-            if(*tmp == '"')
+            if (*tmp == '"')
             {
-                if(*disp_cont)
+                if (*disp_cont)
                 {
                     *disp_cont = false;
                     return (tmp - *start);
                 }
                 tmp++;
-
             }
             *start = tmp;
-            tmp = SnortStrnPbrk(*start ,(end - tmp),"\"");
-            if(tmp == NULL )
+            tmp = SnortStrnPbrk(*start,(end - tmp),"\"");
+            if (tmp == NULL )
             {
                 if ((end - tmp) > 0 )
                 {
@@ -151,30 +145,28 @@ static inline int extract_file_name(const char **start, int length, bool *disp_c
     {
         return -1;
     }
-
 }
 
 /* accumulate MIME attachment filenames. The filenames are appended by commas */
-int log_file_name(const uint8_t *start, int length, FILE_LogState *log_state, bool *disp_cont)
+int log_file_name(const uint8_t* start, int length, FILE_LogState* log_state, bool* disp_cont)
 {
-    uint8_t *alt_buf;
+    uint8_t* alt_buf;
     int alt_size;
-    uint16_t *alt_len;
+    uint16_t* alt_len;
     int ret=0;
     int cont =0;
     int log_avail = 0;
 
-
-    if(!start || (length <= 0))
+    if (!start || (length <= 0))
     {
         *disp_cont = false;
         return -1;
     }
 
-    if(*disp_cont)
+    if (*disp_cont)
         cont = 1;
 
-    ret = extract_file_name((const char **)(&start), length, disp_cont);
+    ret = extract_file_name((const char**)(&start), length, disp_cont);
 
     if (ret == -1)
         return ret;
@@ -186,13 +178,12 @@ int log_file_name(const uint8_t *start, int length, FILE_LogState *log_state, bo
     alt_len = &(log_state->file_logged);
     log_avail = alt_size - *alt_len;
 
-    if(!alt_buf || (log_avail <= 0))
+    if (!alt_buf || (log_avail <= 0))
         return -1;
-
 
     if ( *alt_len > 0 && ((*alt_len + 1) < alt_size))
     {
-        if(!cont)
+        if (!cont)
         {
             alt_buf[*alt_len] = ',';
             *alt_len = *alt_len + 1;
@@ -203,7 +194,7 @@ int log_file_name(const uint8_t *start, int length, FILE_LogState *log_state, bo
 
     if (ret != SAFEMEM_SUCCESS)
     {
-        if(*alt_len != 0)
+        if (*alt_len != 0)
             *alt_len = *alt_len - 1;
         return -1;
     }
@@ -213,21 +204,22 @@ int log_file_name(const uint8_t *start, int length, FILE_LogState *log_state, bo
 
     return 0;
 }
+
 /*
  * Return: 0: success
  *         -1: fail
  *
  */
-int set_log_buffers(MAIL_LogState **log_state, MAIL_LogConfig *conf)
+int set_log_buffers(MAIL_LogState** log_state, MAIL_LogConfig* conf)
 {
-    if((*log_state == NULL)
-            && (conf->log_email_hdrs || conf->log_filename
-                    || conf->log_mailfrom || conf->log_rcptto))
+    if ((*log_state == NULL)
+        && (conf->log_email_hdrs || conf->log_filename
+        || conf->log_mailfrom || conf->log_rcptto))
     {
         uint32_t bufsz = (2* MAX_EMAIL) + MAX_FILE + conf->email_hdrs_log_depth;
-        *log_state = (MAIL_LogState *)calloc(1, sizeof(*log_state) + bufsz);
+        *log_state = (MAIL_LogState*)calloc(1, sizeof(*log_state) + bufsz);
 
-        if((*log_state) != NULL)
+        if ((*log_state) != NULL)
         {
             uint8_t* buf = ((uint8_t*)(*log_state)) + sizeof(*log_state);
             (*log_state)->log_depth = conf->email_hdrs_log_depth;
@@ -245,12 +237,11 @@ int set_log_buffers(MAIL_LogState **log_state, MAIL_LogConfig *conf)
         {
             return -1;
         }
-
     }
     return 0;
 }
 
-static void set_mime_buffers(MimeState *ssn)
+static void set_mime_buffers(MimeState* ssn)
 {
     if ((ssn != NULL) && (ssn->decode_state == NULL))
     {
@@ -259,14 +250,14 @@ static void set_mime_buffers(MimeState *ssn)
         ssn->decode_state = NewEmailDecodeState(
             conf->max_depth, conf->b64_depth, conf->qp_depth,
             conf->uu_depth, conf->bitenc_depth,
-                        conf->file_depth);
+            conf->file_depth);
     }
 }
 
 /*
  * Initialize run-time boundary search, this should be called for every transaction
  */
-static int init_boundary_search(MimeBoundary *mime_boundary )
+static int init_boundary_search(MimeBoundary* mime_boundary)
 {
     if (mime_boundary->boundary_search != NULL)
         delete mime_boundary->boundary_search;
@@ -287,24 +278,23 @@ static int init_boundary_search(MimeBoundary *mime_boundary )
 /*
  * Update boundary search string when found
  */
-static int get_boundary(const char *data, int data_len, MimeBoundary *mime_boundary)
+static int get_boundary(const char* data, int data_len, MimeBoundary* mime_boundary)
 {
     int result;
     int ovector[9];
     int ovecsize = 9;
-    const char *boundary;
+    const char* boundary;
     int boundary_len;
     int ret;
-    char *mime_boundary_str;
-    int  *mime_boundary_len;
-
+    char* mime_boundary_str;
+    int* mime_boundary_len;
 
     mime_boundary_str = &mime_boundary->boundary[0];
     mime_boundary_len = &mime_boundary->boundary_len;
 
     /* result will be the number of matches (including submatches) */
     result = pcre_exec(mime_boundary_pcre.re, mime_boundary_pcre.pe,
-            data, data_len, 0, 0, ovector, ovecsize);
+        data, data_len, 0, 0, ovector, ovecsize);
     if (result < 0)
         return -1;
 
@@ -322,7 +312,7 @@ static int get_boundary(const char *data, int data_len, MimeBoundary *mime_bound
     mime_boundary_str[0] = '-';
     mime_boundary_str[1] = '-';
     ret = SafeMemcpy(mime_boundary_str + 2, boundary, boundary_len,
-            mime_boundary_str + 2, mime_boundary_str + 2 + MAX_MIME_BOUNDARY_LEN);
+        mime_boundary_str + 2, mime_boundary_str + 2 + MAX_MIME_BOUNDARY_LEN);
 
     pcre_free_substring(boundary);
 
@@ -337,18 +327,18 @@ static int get_boundary(const char *data, int data_len, MimeBoundary *mime_bound
     return 0;
 }
 
-void get_mime_eol(const uint8_t *ptr, const uint8_t *end,
-        const uint8_t **eol, const uint8_t **eolm)
+void get_mime_eol(const uint8_t* ptr, const uint8_t* end,
+    const uint8_t** eol, const uint8_t** eolm)
 {
-    const uint8_t *tmp_eol;
-    const uint8_t *tmp_eolm;
+    const uint8_t* tmp_eol;
+    const uint8_t* tmp_eolm;
 
     /* XXX maybe should fatal error here since none of these
      * pointers should be NULL */
     if (ptr == NULL || end == NULL || eol == NULL || eolm == NULL)
         return;
 
-    tmp_eol = (uint8_t *)memchr(ptr, '\n', end - ptr);
+    tmp_eol = (uint8_t*)memchr(ptr, '\n', end - ptr);
     if (tmp_eol == NULL)
     {
         tmp_eol = end;
@@ -375,7 +365,6 @@ void get_mime_eol(const uint8_t *ptr, const uint8_t *end,
     *eolm = tmp_eolm;
 }
 
-
 /*
  * Callback function for string search
  *
@@ -386,7 +375,7 @@ void get_mime_eol(const uint8_t *ptr, const uint8_t *end,
  * @return response
  * @retval 1        commands caller to stop searching
  */
-static int search_str_found(void *id, void*, int index, void*, void*)
+static int search_str_found(void* id, void*, int index, void*, void*)
 {
     int search_id = (int)(uintptr_t)id;
 
@@ -408,7 +397,7 @@ static int search_str_found(void *id, void*, int index, void*, void*)
  * @return response
  * @retval 1        commands caller to stop searching
  */
-static int boundary_str_found(void *id, void*, int index, void*, void*)
+static int boundary_str_found(void* id, void*, int index, void*, void*)
 {
     int boundary_id = (int)(uintptr_t)id;
 
@@ -419,50 +408,50 @@ static int boundary_str_found(void *id, void*, int index, void*, void*)
     return 1;
 }
 
-static inline int is_decoding_enabled(DecodeConfig *pPolicyConfig)
+static inline int is_decoding_enabled(DecodeConfig* pPolicyConfig)
 {
-    if( (pPolicyConfig->b64_depth > -1) || (pPolicyConfig->qp_depth > -1)
-            || (pPolicyConfig->uu_depth > -1) || (pPolicyConfig->bitenc_depth > -1)
-            || (pPolicyConfig->file_depth > -1))
+    if ( (pPolicyConfig->b64_depth > -1) || (pPolicyConfig->qp_depth > -1)
+        || (pPolicyConfig->uu_depth > -1) || (pPolicyConfig->bitenc_depth > -1)
+        || (pPolicyConfig->file_depth > -1))
     {
         return 0;
     }
     else
         return -1;
-
 }
 
-static inline void process_decode_type(const char *start, int length, bool cnt_xf, MimeState *mime_ssn)
+static inline void process_decode_type(const char* start, int length, bool cnt_xf,
+    MimeState* mime_ssn)
 {
-    const char *tmp = NULL;
-    Email_DecodeState *decode_state = (Email_DecodeState *)(mime_ssn->decode_state);
+    const char* tmp = NULL;
+    Email_DecodeState* decode_state = (Email_DecodeState*)(mime_ssn->decode_state);
 
-    if(cnt_xf)
+    if (cnt_xf)
     {
-        if(decode_state->b64_state.encode_depth > -1)
+        if (decode_state->b64_state.encode_depth > -1)
         {
             tmp = SnortStrcasestr(start, length, "base64");
-            if( tmp != NULL )
+            if ( tmp != NULL )
             {
                 decode_state->decode_type = DECODE_B64;
                 return;
             }
         }
 
-        if(decode_state->qp_state.encode_depth > -1)
+        if (decode_state->qp_state.encode_depth > -1)
         {
             tmp = SnortStrcasestr(start, length, "quoted-printable");
-            if( tmp != NULL )
+            if ( tmp != NULL )
             {
                 decode_state->decode_type = DECODE_QP;
                 return;
             }
         }
 
-        if(decode_state->uu_state.encode_depth > -1)
+        if (decode_state->uu_state.encode_depth > -1)
         {
             tmp = SnortStrcasestr(start, length, "uuencode");
-            if( tmp != NULL )
+            if ( tmp != NULL )
             {
                 decode_state->decode_type = DECODE_UU;
                 return;
@@ -470,32 +459,31 @@ static inline void process_decode_type(const char *start, int length, bool cnt_x
         }
     }
 
-    if(decode_state->bitenc_state.depth > -1)
+    if (decode_state->bitenc_state.depth > -1)
     {
         decode_state->decode_type = DECODE_BITENC;
         return;
     }
-
-    return;
 }
 
-static inline void setup_decode(const char *data, int size, bool cnt_xf, MimeState *mime_ssn)
+static inline void setup_decode(const char* data, int size, bool cnt_xf, MimeState* mime_ssn)
 {
     /* Check for Encoding Type */
-    if( !is_decoding_enabled(mime_ssn->decode_conf))
+    if ( !is_decoding_enabled(mime_ssn->decode_conf))
     {
         set_mime_buffers(mime_ssn);
-        if(mime_ssn->decode_state != NULL)
+        if (mime_ssn->decode_state != NULL)
         {
-            ResetBytesRead((Email_DecodeState *)(mime_ssn->decode_state));
-            process_decode_type(data, size, cnt_xf, mime_ssn );
+            ResetBytesRead((Email_DecodeState*)(mime_ssn->decode_state));
+            process_decode_type(data, size, cnt_xf, mime_ssn);
             mime_ssn->state_flags |= MIME_FLAG_EMAIL_ATTACH;
             /* check to see if there are other attachments in this packet */
-            if( ((Email_DecodeState *)(mime_ssn->decode_state))->decoded_bytes )
+            if ( ((Email_DecodeState*)(mime_ssn->decode_state))->decoded_bytes )
                 mime_ssn->state_flags |= MIME_FLAG_MULTIPLE_EMAIL_ATTACH;
         }
     }
 }
+
 /*
  * Handle Headers - Data or Mime
  *
@@ -505,19 +493,19 @@ static inline void setup_decode(const char *data, int size, bool cnt_xf, MimeSta
  *
  * @return  i       index into p->payload where we stopped looking at data
  */
-static const uint8_t * process_mime_header(
-    Packet*, const uint8_t *ptr,
-    const uint8_t *data_end_marker, MimeState *mime_ssn)
+static const uint8_t* process_mime_header(
+    Packet*, const uint8_t* ptr,
+    const uint8_t* data_end_marker, MimeState* mime_ssn)
 {
-    const uint8_t *eol = data_end_marker;
-    const uint8_t *eolm = eol;
-    const uint8_t *colon;
-    const uint8_t *content_type_ptr = NULL;
-    const uint8_t *cont_trans_enc = NULL;
-    const uint8_t *cont_disp = NULL;
+    const uint8_t* eol = data_end_marker;
+    const uint8_t* eolm = eol;
+    const uint8_t* colon;
+    const uint8_t* content_type_ptr = NULL;
+    const uint8_t* cont_trans_enc = NULL;
+    const uint8_t* cont_disp = NULL;
     int header_found;
     int ret;
-    const uint8_t *start_hdr;
+    const uint8_t* start_hdr;
 
     start_hdr = ptr;
 
@@ -541,8 +529,8 @@ static const uint8_t * process_mime_header(
         {
             /* reset global header state values */
             mime_ssn->state_flags &=
-                    ~(MIME_FLAG_FOLDING | MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_DATA_HEADER_CONT
-                            | MIME_FLAG_IN_CONT_TRANS_ENC );
+                ~(MIME_FLAG_FOLDING | MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_DATA_HEADER_CONT
+                | MIME_FLAG_IN_CONT_TRANS_ENC );
 
             mime_ssn->data_state = STATE_DATA_BODY;
 
@@ -582,24 +570,24 @@ static const uint8_t * process_mime_header(
             /* If the end on line marker and end of line are the same, assume
              * header was truncated, so stay in data header state */
             if ((eolm != eol) &&
-                    ((colon == eolm) || got_non_printable_in_header_name))
+                ((colon == eolm) || got_non_printable_in_header_name))
             {
                 /* no colon or got spaces in header name (won't be interpreted as a header)
                  * assume we're in the body */
                 mime_ssn->state_flags &=
-                        ~(MIME_FLAG_FOLDING | MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_DATA_HEADER_CONT
-                                |MIME_FLAG_IN_CONT_TRANS_ENC);
+                    ~(MIME_FLAG_FOLDING | MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_DATA_HEADER_CONT
+                    |MIME_FLAG_IN_CONT_TRANS_ENC);
 
                 mime_ssn->data_state = STATE_DATA_BODY;
 
                 return ptr;
             }
 
-            if(tolower((int)*ptr) == 'c')
+            if (tolower((int)*ptr) == 'c')
             {
                 mime_current_search = &mime_hdr_search[0];
                 header_found = mime_hdr_search_mpse->find(
-                    (const char *)ptr, eolm - ptr, search_str_found, true);
+                    (const char*)ptr, eolm - ptr, search_str_found, true);
 
                 /* Headers must start at beginning of line */
                 if ((header_found > 0) && (mime_search_info.index == 0))
@@ -623,11 +611,11 @@ static const uint8_t * process_mime_header(
                     }
                 }
             }
-            else if(tolower((int)*ptr) == 'e')
+            else if (tolower((int)*ptr) == 'e')
             {
-                if((eolm - ptr) >= 9)
+                if ((eolm - ptr) >= 9)
                 {
-                    if(strncasecmp((const char *)ptr, "Encoding:", 9) == 0)
+                    if (strncasecmp((const char*)ptr, "Encoding:", 9) == 0)
                     {
                         cont_trans_enc = ptr + 9;
                         mime_ssn->state_flags |= MIME_FLAG_IN_CONT_TRANS_ENC;
@@ -639,7 +627,6 @@ static const uint8_t * process_mime_header(
         {
             mime_ssn->state_flags &= ~MIME_FLAG_DATA_HEADER_CONT;
         }
-
 
         /* check for folding
          * if char on next line is a space and not \n or \r\n, we are folding */
@@ -665,20 +652,20 @@ static const uint8_t * process_mime_header(
          * because boundary=BOUNDARY can be split across mulitple folded lines before
          * or after the '=' */
         if ((mime_ssn->state_flags &
-                (MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_FOLDING)) == MIME_FLAG_IN_CONTENT_TYPE)
+            (MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_FOLDING)) == MIME_FLAG_IN_CONTENT_TYPE)
         {
             if (mime_ssn->data_state != STATE_MIME_HEADER)
             {
                 /* we got the full content-type header - look for boundary string */
-                ret = get_boundary((const char *)content_type_ptr, eolm - content_type_ptr,
-                        &(mime_ssn->mime_boundary));
+                ret = get_boundary((const char*)content_type_ptr, eolm - content_type_ptr,
+                    &(mime_ssn->mime_boundary));
                 if (ret != -1)
                 {
                     ret = init_boundary_search(&(mime_ssn->mime_boundary));
                     if (ret != -1)
                     {
                         DEBUG_WRAP(DebugMessage(DEBUG_FILE, "Got mime boundary: %s\n",
-                                mime_ssn->mime_boundary.boundary););
+                            mime_ssn->mime_boundary.boundary); );
 
                         mime_ssn->state_flags |= MIME_FLAG_GOT_BOUNDARY;
                     }
@@ -686,29 +673,30 @@ static const uint8_t * process_mime_header(
             }
             else if (!(mime_ssn->state_flags & MIME_FLAG_EMAIL_ATTACH))
             {
-                setup_decode((const char *)content_type_ptr, (eolm - content_type_ptr), false, mime_ssn );
+                setup_decode((const char*)content_type_ptr, (eolm - content_type_ptr), false,
+                    mime_ssn);
             }
 
             mime_ssn->state_flags &= ~MIME_FLAG_IN_CONTENT_TYPE;
             content_type_ptr = NULL;
         }
         else if ((mime_ssn->state_flags &
-                (MIME_FLAG_IN_CONT_TRANS_ENC | MIME_FLAG_FOLDING)) == MIME_FLAG_IN_CONT_TRANS_ENC)
+            (MIME_FLAG_IN_CONT_TRANS_ENC | MIME_FLAG_FOLDING)) == MIME_FLAG_IN_CONT_TRANS_ENC)
         {
-            setup_decode((const char *)cont_trans_enc, (eolm - cont_trans_enc), true, mime_ssn );
+            setup_decode((const char*)cont_trans_enc, (eolm - cont_trans_enc), true, mime_ssn);
 
             mime_ssn->state_flags &= ~MIME_FLAG_IN_CONT_TRANS_ENC;
 
             cont_trans_enc = NULL;
         }
         else if (((mime_ssn->state_flags &
-                (MIME_FLAG_IN_CONT_DISP | MIME_FLAG_FOLDING)) == MIME_FLAG_IN_CONT_DISP) && cont_disp)
+            (MIME_FLAG_IN_CONT_DISP | MIME_FLAG_FOLDING)) == MIME_FLAG_IN_CONT_DISP) && cont_disp)
         {
-            bool disp_cont = (mime_ssn->state_flags & MIME_FLAG_IN_CONT_DISP_CONT)? true: false;
-            if(mime_ssn->log_config->log_filename && mime_ssn->log_state )
+            bool disp_cont = (mime_ssn->state_flags & MIME_FLAG_IN_CONT_DISP_CONT) ? true : false;
+            if (mime_ssn->log_config->log_filename && mime_ssn->log_state )
             {
-                if(!log_file_name(cont_disp, eolm - cont_disp,
-                        &(mime_ssn->log_state->file_log), &disp_cont) )
+                if (!log_file_name(cont_disp, eolm - cont_disp,
+                    &(mime_ssn->log_state->file_log), &disp_cont) )
                     mime_ssn->log_flags |= MIME_FLAG_FILENAME_PRESENT;
             }
             if (disp_cont)
@@ -743,15 +731,15 @@ static const uint8_t * process_mime_header(
  * @param   i index into p->payload buffer to start looking at data
  * @return  i index into p->payload where we stopped looking at data
  */
-static const uint8_t * process_mime_body(
-    Packet*, const uint8_t *ptr,
-    const uint8_t *data_end_marker, MimeState *mime_ssn)
+static const uint8_t* process_mime_body(
+    Packet*, const uint8_t* ptr,
+    const uint8_t* data_end_marker, MimeState* mime_ssn)
 {
     int boundary_found = 0;
-    const uint8_t *boundary_ptr = NULL;
-    const uint8_t *attach_start = NULL;
-    const uint8_t *attach_end = NULL;
-    Email_DecodeState *decode_state = (Email_DecodeState *)(mime_ssn->decode_state);
+    const uint8_t* boundary_ptr = NULL;
+    const uint8_t* attach_start = NULL;
+    const uint8_t* attach_end = NULL;
+    Email_DecodeState* decode_state = (Email_DecodeState*)(mime_ssn->decode_state);
 
     if ( mime_ssn->state_flags & MIME_FLAG_EMAIL_ATTACH )
         attach_start = ptr;
@@ -759,7 +747,7 @@ static const uint8_t * process_mime_body(
     if (mime_ssn->state_flags & MIME_FLAG_GOT_BOUNDARY)
     {
         boundary_found = mime_ssn->mime_boundary.boundary_search->find(
-            (const char *)ptr, data_end_marker - ptr, boundary_str_found);
+            (const char*)ptr, data_end_marker - ptr, boundary_str_found);
 
         mime_search_info.length = mime_ssn->mime_boundary.boundary_len;
 
@@ -770,30 +758,29 @@ static const uint8_t * process_mime_body(
             /* should start at beginning of line */
             if ((boundary_ptr == ptr) || (*(boundary_ptr - 1) == '\n'))
             {
-                const uint8_t *eol;
-                const uint8_t *eolm;
-                const uint8_t *tmp;
+                const uint8_t* eol;
+                const uint8_t* eolm;
+                const uint8_t* tmp;
 
                 if (mime_ssn->state_flags & MIME_FLAG_EMAIL_ATTACH )
                 {
                     attach_end = boundary_ptr-1;
                     mime_ssn->state_flags &= ~MIME_FLAG_EMAIL_ATTACH;
-                    if(attach_start < attach_end)
+                    if (attach_start < attach_end)
                     {
-                        if(EmailDecode( attach_start, attach_end, decode_state) < DECODE_SUCCESS )
+                        if (EmailDecode(attach_start, attach_end, decode_state) < DECODE_SUCCESS )
                         {
                             // MIME_DecodeAlert();
                         }
                     }
                 }
 
-
                 /* Check for end boundary */
                 tmp = boundary_ptr + mime_search_info.length;
                 if (((tmp + 1) < data_end_marker) && (tmp[0] == '-') && (tmp[1] == '-'))
                 {
                     DEBUG_WRAP(DebugMessage(DEBUG_FILE, "Mime boundary end found: %s--\n",
-                            (char *)mime_ssn->mime_boundary.boundary););
+                        (char*)mime_ssn->mime_boundary.boundary); );
 
                     /* no more MIME */
                     mime_ssn->state_flags &= ~MIME_FLAG_GOT_BOUNDARY;
@@ -806,7 +793,7 @@ static const uint8_t * process_mime_body(
                 else
                 {
                     DEBUG_WRAP(DebugMessage(DEBUG_FILE, "Mime boundary found: %s\n",
-                            (char *)mime_ssn->mime_boundary.boundary););
+                        (char*)mime_ssn->mime_boundary.boundary); );
 
                     mime_ssn->data_state = STATE_MIME_HEADER;
                 }
@@ -822,9 +809,9 @@ static const uint8_t * process_mime_body(
     if ( mime_ssn->state_flags & MIME_FLAG_EMAIL_ATTACH )
     {
         attach_end = data_end_marker;
-        if(attach_start < attach_end)
+        if (attach_start < attach_end)
         {
-            if(EmailDecode( attach_start, attach_end, decode_state) < DECODE_SUCCESS )
+            if (EmailDecode(attach_start, attach_end, decode_state) < DECODE_SUCCESS )
             {
                 //  MIME_DecodeAlert();
             }
@@ -837,9 +824,9 @@ static const uint8_t * process_mime_body(
 /*
  * Reset MIME session state
  */
-static void reset_mime_state(MimeState *mime_ssn)
+static void reset_mime_state(MimeState* mime_ssn)
 {
-    Email_DecodeState *decode_state = (Email_DecodeState *)(mime_ssn->decode_state);
+    Email_DecodeState* decode_state = (Email_DecodeState*)(mime_ssn->decode_state);
 
     if (mime_ssn->mime_boundary.boundary_search != NULL)
     {
@@ -854,7 +841,7 @@ static void reset_mime_state(MimeState *mime_ssn)
 }
 
 #if 0
-static inline FilePosition getFilePoistion(Packet *p)
+static inline FilePosition getFilePoistion(Packet* p)
 {
     FilePosition position = SNORT_FILE_POSITION_UNKNOWN;
 
@@ -869,6 +856,7 @@ static inline FilePosition getFilePoistion(Packet *p)
 
     return position;
 }
+
 #endif
 
 /*
@@ -876,21 +864,21 @@ static inline FilePosition getFilePoistion(Packet *p)
  *
  * This should be called when mime data is available
  */
-const uint8_t * process_mime_data(void *packet, const uint8_t *start, const uint8_t *end,
-        const uint8_t *data_end_marker, uint8_t *data_end, MimeState *mime_ssn, bool upload)
+const uint8_t* process_mime_data(void* packet, const uint8_t* start, const uint8_t* end,
+    const uint8_t* data_end_marker, uint8_t* data_end, MimeState* mime_ssn, bool upload)
 {
-    Packet *p = (Packet *)packet;
+    Packet* p = (Packet*)packet;
     FilePosition position = SNORT_FILE_START;
 
     /* if we've just entered the data state, check for a dot + end of line
      * if found, no data */
     if ((mime_ssn->data_state == STATE_DATA_INIT) ||
-            (mime_ssn->data_state == STATE_DATA_UNKNOWN))
+        (mime_ssn->data_state == STATE_DATA_UNKNOWN))
     {
         if ((start < end) && (*start == '.'))
         {
-            const uint8_t *eol = NULL;
-            const uint8_t *eolm = NULL;
+            const uint8_t* eol = NULL;
+            const uint8_t* eolm = NULL;
 
             get_mime_eol(start, end, &eol, &eolm);
 
@@ -943,23 +931,22 @@ const uint8_t * process_mime_data(void *packet, const uint8_t *start, const uint
     set_file_data((uint8_t*)start, (data_end - start));
 
     if ((mime_ssn->data_state == STATE_DATA_HEADER) ||
-            (mime_ssn->data_state == STATE_DATA_UNKNOWN))
+        (mime_ssn->data_state == STATE_DATA_UNKNOWN))
     {
 #ifdef DEBUG_MSGS
         if (mime_ssn->data_state == STATE_DATA_HEADER)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "DATA HEADER STATE ~~~~~~~~~~~~~~~~~~~~~~\n"););
+            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "DATA HEADER STATE ~~~~~~~~~~~~~~~~~~~~~~\n"); );
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "DATA UNKNOWN STATE ~~~~~~~~~~~~~~~~~~~~~\n"););
+            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "DATA UNKNOWN STATE ~~~~~~~~~~~~~~~~~~~~~\n"); );
         }
 #endif
 
         start = process_mime_header(p, start, data_end_marker, mime_ssn);
         if (start == NULL)
             return NULL;
-
     }
 
     /* now we shouldn't have to worry about copying any data to the alt buffer
@@ -972,22 +959,25 @@ const uint8_t * process_mime_data(void *packet, const uint8_t *start, const uint
          * Pipeline the MIME decoded data.*/
         if ( mime_ssn->state_flags & MIME_FLAG_MULTIPLE_EMAIL_ATTACH)
         {
-            DecodeConfig *conf= mime_ssn->decode_conf;
+            DecodeConfig* conf= mime_ssn->decode_conf;
             int detection_size = getDetectionSize(conf->b64_depth, conf->qp_depth,
-                    conf->uu_depth, conf->bitenc_depth, (Email_DecodeState *)(mime_ssn->decode_state) );
+                conf->uu_depth, conf->bitenc_depth, (Email_DecodeState*)(mime_ssn->decode_state) );
 
-            set_file_data(((Email_DecodeState *)(mime_ssn->decode_state))->decodePtr, detection_size);
+            set_file_data(((Email_DecodeState*)(mime_ssn->decode_state))->decodePtr,
+                detection_size);
             /*Process file type/file signature*/
-            if (file_api->file_process(p,(uint8_t *)((Email_DecodeState *)(mime_ssn->decode_state))->decodePtr,
-                    (uint16_t)((Email_DecodeState *)(mime_ssn->decode_state))->decoded_bytes, position, upload, false)
-                    && (isFileStart(position)) && mime_ssn->log_state)
+            if (file_api->file_process(p,
+                (uint8_t*)((Email_DecodeState*)(mime_ssn->decode_state))->decodePtr,
+                (uint16_t)((Email_DecodeState*)(mime_ssn->decode_state))->decoded_bytes, position,
+                upload, false)
+                && (isFileStart(position)) && mime_ssn->log_state)
             {
                 file_api->set_file_name_from_log(&(mime_ssn->log_state->file_log), p->flow);
             }
             updateFilePosition(&position, file_api->get_file_processed_size(p->flow));
             Detect(p);
             mime_ssn->state_flags &= ~MIME_FLAG_MULTIPLE_EMAIL_ATTACH;
-            ResetEmailDecodeState((Email_DecodeState *)(mime_ssn->decode_state));
+            ResetEmailDecodeState((Email_DecodeState*)(mime_ssn->decode_state));
             p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
             /* Reset the log count when a packet goes through detection multiple times */
             DetectReset();
@@ -995,12 +985,12 @@ const uint8_t * process_mime_data(void *packet, const uint8_t *start, const uint
         switch (mime_ssn->data_state)
         {
         case STATE_MIME_HEADER:
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "MIME HEADER STATE ~~~~~~~~~~~~~~~~~~~~~~\n"););
+            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "MIME HEADER STATE ~~~~~~~~~~~~~~~~~~~~~~\n"); );
             start = process_mime_header(p, start, data_end_marker, mime_ssn);
             file_api->finalize_mime_position(p->flow, mime_ssn->decode_state, &position);
             break;
         case STATE_DATA_BODY:
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "DATA BODY STATE ~~~~~~~~~~~~~~~~~~~~~~~~\n"););
+            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "DATA BODY STATE ~~~~~~~~~~~~~~~~~~~~~~~~\n"); );
             start = process_mime_body(p, start, data_end_marker, mime_ssn);
             break;
         }
@@ -1008,31 +998,34 @@ const uint8_t * process_mime_data(void *packet, const uint8_t *start, const uint
 
     /* We have either reached the end of MIME header or end of MIME encoded data*/
 
-    if((mime_ssn->decode_state) != NULL)
+    if ((mime_ssn->decode_state) != NULL)
     {
         if ((position == SNORT_FILE_START) || (position == SNORT_FILE_FULL))
         {
-            DecodeConfig *conf= mime_ssn->decode_conf;
+            DecodeConfig* conf= mime_ssn->decode_conf;
             int detection_size = getDetectionSize(conf->b64_depth, conf->qp_depth,
-                    conf->uu_depth, conf->bitenc_depth, (Email_DecodeState *)(mime_ssn->decode_state) );
-            set_file_data(((Email_DecodeState *)(mime_ssn->decode_state))->decodePtr, detection_size);
+                conf->uu_depth, conf->bitenc_depth, (Email_DecodeState*)(mime_ssn->decode_state) );
+            set_file_data(((Email_DecodeState*)(mime_ssn->decode_state))->decodePtr,
+                detection_size);
         }
         else
         {
-            set_file_data(((Email_DecodeState *)(mime_ssn->decode_state))->decodePtr, 0);
+            set_file_data(((Email_DecodeState*)(mime_ssn->decode_state))->decodePtr, 0);
         }
         if ((data_end_marker != end)||(mime_ssn->state_flags & MIME_FLAG_MIME_END))
         {
             finalFilePosition(&position);
         }
         /*Process file type/file signature*/
-        if (file_api->file_process(p,(uint8_t *)((Email_DecodeState *)(mime_ssn->decode_state))->decodePtr,
-                (uint16_t)((Email_DecodeState *)(mime_ssn->decode_state))->decoded_bytes, position, upload, false)
-                && (isFileStart(position))&& mime_ssn->log_state)
+        if (file_api->file_process(p,
+            (uint8_t*)((Email_DecodeState*)(mime_ssn->decode_state))->decodePtr,
+            (uint16_t)((Email_DecodeState*)(mime_ssn->decode_state))->decoded_bytes, position,
+            upload, false)
+            && (isFileStart(position))&& mime_ssn->log_state)
         {
             file_api->set_file_name_from_log(&(mime_ssn->log_state->file_log), p->flow);
         }
-        ResetDecodedBytes((Email_DecodeState *)(mime_ssn->decode_state));
+        ResetDecodedBytes((Email_DecodeState*)(mime_ssn->decode_state));
     }
 
     /* if we got the data end reset state, otherwise we're probably still in the data
@@ -1051,9 +1044,9 @@ const uint8_t * process_mime_data(void *packet, const uint8_t *start, const uint
  */
 void init_mime(void)
 {
-    const char *error;
+    const char* error;
     int erroffset;
-    const MimeToken *tmp;
+    const MimeToken* tmp;
 
     /* Header search */
     mime_hdr_search_mpse = new SearchTool();
@@ -1078,12 +1071,12 @@ void init_mime(void)
      * lines, a straight search won't do. Shouldn't be too slow since it will most
      * likely only be acting on a small portion of data */
     mime_boundary_pcre.re = pcre_compile("boundary\\s*=\\s*\"?([^\\s\"]+)\"?",
-            PCRE_CASELESS | PCRE_DOTALL,
-            &error, &erroffset, NULL);
+        PCRE_CASELESS | PCRE_DOTALL,
+        &error, &erroffset, NULL);
     if (mime_boundary_pcre.re == NULL)
     {
         FatalError("Failed to compile pcre regex for getting boundary "
-                "in a multipart message: %s\n", error);
+            "in a multipart message: %s\n", error);
     }
 
     mime_boundary_pcre.pe = pcre_study(mime_boundary_pcre.re, 0, &error);
@@ -1091,7 +1084,7 @@ void init_mime(void)
     if (error != NULL)
     {
         FatalError("Failed to study pcre regex for getting boundary "
-                "in a multipart message: %s\n", error);
+            "in a multipart message: %s\n", error);
     }
 }
 
@@ -1104,7 +1097,6 @@ void init_mime(void)
  */
 void free_mime(void)
 {
-
     if (mime_hdr_search_mpse != NULL)
         delete mime_hdr_search_mpse;
 
@@ -1115,7 +1107,7 @@ void free_mime(void)
         pcre_free(mime_boundary_pcre.pe);
 }
 
-void free_mime_session(MimeState *mime_ssn)
+void free_mime_session(MimeState* mime_ssn)
 {
     if (!mime_ssn)
         return;
@@ -1126,27 +1118,27 @@ void free_mime_session(MimeState *mime_ssn)
         mime_ssn->mime_boundary.boundary_search = NULL;
     }
 
-    if(mime_ssn->decode_state != NULL)
+    if (mime_ssn->decode_state != NULL)
     {
         free(mime_ssn->decode_state);
     }
-    if(mime_ssn->log_state != NULL)
+    if (mime_ssn->log_state != NULL)
     {
         free(mime_ssn->log_state);
     }
 
     free(mime_ssn);
-
 }
 
 /*
  * When the file ends (a MIME boundary detected), position are updated
  */
-void finalize_mime_position(Flow *flow, void *decode_state, FilePosition *position)
+void finalize_mime_position(Flow* flow, void* decode_state, FilePosition* position)
 {
     /* check to see if there are file data in the session or
      * new decoding data waiting for processing */
-    if( file_api->get_file_processed_size(flow) ||
-            (decode_state && ((Email_DecodeState *)decode_state)->decoded_bytes) )
+    if ( file_api->get_file_processed_size(flow) ||
+        (decode_state && ((Email_DecodeState*)decode_state)->decoded_bytes) )
         finalFilePosition(position);
 }
+

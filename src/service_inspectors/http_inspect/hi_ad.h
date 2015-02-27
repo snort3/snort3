@@ -16,7 +16,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 #ifndef HI_AD_H
 #define HI_AD_H
 
@@ -24,6 +24,7 @@
 
 #include "hi_include.h"
 
-int hi_server_anomaly_detection(void *S, const u_char *data, int dsize);
+int hi_server_anomaly_detection(void* S, const u_char* data, int dsize);
 
 #endif
+

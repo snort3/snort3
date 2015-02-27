@@ -38,10 +38,10 @@ public:
     void execute(const char*, std::string&);
 
     const char* get_file() const
-    { return file.c_str(); };
+    { return file.c_str(); }
 
     bool get_loaded() const
-    { return loaded; };
+    { return loaded; }
 
 private:
     static int panic(lua_State*);

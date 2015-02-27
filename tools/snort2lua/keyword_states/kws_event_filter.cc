@@ -26,20 +26,18 @@
 
 namespace keywords
 {
-
-namespace {
-
+namespace
+{
 class Filter : public ConversionState
 {
 public:
-    Filter(Converter& c, std::string s) : ConversionState(c), type(s) {};
-    virtual ~Filter() {};
+    Filter(Converter& c, std::string s) : ConversionState(c), type(s) { }
+    virtual ~Filter() { }
     virtual bool convert(std::istringstream& data_stream);
 
 private:
     std::string type;
 };
-
 } // namespace
 
 bool Filter::convert(std::istringstream& data_stream)
@@ -56,7 +54,6 @@ bool Filter::convert(std::istringstream& data_stream)
         warn = false;
     }
 
-
     table_api.open_table();
     while (std::getline(data_stream, args, ','))
     {
@@ -65,7 +62,6 @@ bool Filter::convert(std::istringstream& data_stream)
 
         std::istringstream arg_stream(args);
         arg_stream >> keyword;
-
 
         if (keyword.empty())
             continue;
@@ -87,13 +83,11 @@ bool Filter::convert(std::istringstream& data_stream)
             table_api.add_diff_option_comment("gen_id", "gid");
             tmpval = parse_int_option("gid", arg_stream, false);
         }
-
         else if (!keyword.compare("sig_id"))
         {
             table_api.add_diff_option_comment("sig_id", "sid");
             tmpval = parse_int_option("sid", arg_stream, false);
         }
-
         else
         {
             tmpval = false;
@@ -101,7 +95,6 @@ bool Filter::convert(std::istringstream& data_stream)
 
         if (retval)
             retval = tmpval;
-
     }
 
     table_api.close_table();
@@ -120,7 +113,6 @@ static ConversionState* threshold_ctor(Converter& c)
 static ConversionState* event_filter_ctor(Converter& c)
 { return new Filter(c, "event_filter"); }
 
-
 static const ConvertMap event_filter_api =
 {
     "event_filter",
@@ -135,5 +127,5 @@ static const ConvertMap threshold_api =
 
 const ConvertMap* event_filter_map = &event_filter_api;
 const ConvertMap* threshold_map = &threshold_api;
-
 } // namespace keywords
+

@@ -66,16 +66,16 @@ typedef struct _Base64DecodeData
 {
     uint32_t bytes_to_decode;
     uint32_t offset;
-    uint8_t  flags;
+    uint8_t flags;
 }Base64DecodeData;
 
 class Base64DecodeOption : public IpsOption
 {
 public:
     Base64DecodeOption(const Base64DecodeData& c) : IpsOption(s_name)
-    { config = c; };
+    { config = c; }
 
-    ~Base64DecodeOption() { };
+    ~Base64DecodeOption() { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -112,12 +112,12 @@ bool Base64DecodeOption::operator==(const IpsOption& ips) const
         return false;
 
     Base64DecodeOption& rhs = (Base64DecodeOption&)ips;
-    const Base64DecodeData *left = &config;
-    const Base64DecodeData *right = &rhs.config;
+    const Base64DecodeData* left = &config;
+    const Base64DecodeData* right = &rhs.config;
 
     if ((left->bytes_to_decode == right->bytes_to_decode) &&
-            ( left->offset == right->offset) &&
-            ( left->flags == right->flags))
+        ( left->offset == right->offset) &&
+        ( left->flags == right->flags))
     {
         return true;
     }
@@ -128,7 +128,7 @@ bool Base64DecodeOption::operator==(const IpsOption& ips) const
 int Base64DecodeOption::eval(Cursor& c, Packet*)
 {
     int rval = DETECTION_OPTION_NO_MATCH;
-    const uint8_t *start_ptr;
+    const uint8_t* start_ptr;
     unsigned size;
     uint8_t base64_buf[DECODE_BLEN];
     uint32_t base64_size =0;
@@ -137,9 +137,9 @@ int Base64DecodeOption::eval(Cursor& c, Packet*)
     MODULE_PROFILE_START(base64PerfStats);
 
     base64_decode_size = 0;
-    Base64DecodeData* idx = (Base64DecodeData *)&config;
+    Base64DecodeData* idx = (Base64DecodeData*)&config;
 
-    if(idx->flags & BASE64DECODE_RELATIVE_FLAG)
+    if (idx->flags & BASE64DECODE_RELATIVE_FLAG)
     {
         start_ptr = c.start();
         size = c.length();
@@ -158,7 +158,7 @@ int Base64DecodeOption::eval(Cursor& c, Packet*)
     start_ptr += idx->offset;
     size -= idx->offset;
 
-    if(sf_unfold_header(start_ptr, size, base64_buf, sizeof(base64_buf), &base64_size, 0, 0) != 0)
+    if (sf_unfold_header(start_ptr, size, base64_buf, sizeof(base64_buf), &base64_size, 0, 0) != 0)
     {
         MODULE_PROFILE_END(base64PerfStats);
         return rval;
@@ -169,7 +169,8 @@ int Base64DecodeOption::eval(Cursor& c, Packet*)
         base64_size = idx->bytes_to_decode;
     }
 
-    if(sf_base64decode(base64_buf, base64_size, (uint8_t *)base64_decode_buf, sizeof(base64_decode_buf), &base64_decode_size) != 0)
+    if (sf_base64decode(base64_buf, base64_size, (uint8_t*)base64_decode_buf,
+        sizeof(base64_decode_buf), &base64_decode_size) != 0)
     {
         MODULE_PROFILE_END(base64PerfStats);
         return rval;
@@ -201,13 +202,13 @@ static const Parameter s_params[] =
 class B64DecodeModule : public Module
 {
 public:
-    B64DecodeModule() : Module(s_name, s_help, s_params) { };
+    B64DecodeModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &base64PerfStats; };
+    { return &base64PerfStats; }
 
     Base64DecodeData data;
 };
@@ -292,10 +293,10 @@ static const IpsApi base64_decode_api =
 class Base64DataOption : public IpsOption
 {
 public:
-    Base64DataOption() : IpsOption(s_data_name) { };
+    Base64DataOption() : IpsOption(s_data_name) { }
 
     CursorActionType get_cursor_type() const override
-    { return CAT_SET_OTHER; };
+    { return CAT_SET_OTHER; }
 
     int eval(Cursor&, Packet*);
 };
@@ -325,7 +326,7 @@ int Base64DataOption::eval(Cursor& c, Packet*)
 //-------------------------------------------------------------------------
 
 static class IpsOption* base64_data_ctor(
-    Module*, OptTreeNode *otn)
+    Module*, OptTreeNode* otn)
 {
     if ( !otn_has_plugin(otn, "base64_decode") )
     {

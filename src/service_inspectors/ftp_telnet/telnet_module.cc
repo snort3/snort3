@@ -29,11 +29,11 @@ using namespace std;
 //-------------------------------------------------------------------------
 
 #define TELNET_AYT_OVERFLOW_STR                  \
-        "consecutive telnet AYT commands beyond threshold"
+    "consecutive telnet AYT commands beyond threshold"
 #define TELNET_ENCRYPTED_STR                     \
-        "telnet traffic encrypted"
+    "telnet traffic encrypted"
 #define TELNET_SB_NO_SE_STR                      \
-        "telnet subnegotiation begin command without subnegotiation end"
+    "telnet subnegotiation begin command without subnegotiation end"
 
 static const Parameter s_params[] =
 {
@@ -100,7 +100,7 @@ bool TelnetModule::set(const char*, Value& v, SnortConfig*)
 }
 
 TELNET_PROTO_CONF* TelnetModule::get_data()
-{   
+{
     TELNET_PROTO_CONF* tmp = conf;
     conf = nullptr;
     return tmp;

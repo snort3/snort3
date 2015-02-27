@@ -86,7 +86,6 @@ typedef struct _FragBitsData
 {
     char mode;
     uint16_t frag_bits;
-
 } FragBitsData;
 
 class FragBitsOption : public IpsOption
@@ -94,7 +93,7 @@ class FragBitsOption : public IpsOption
 public:
     FragBitsOption(const FragBitsData& c) :
         IpsOption(s_name)
-    { config = c; };
+    { config = c; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -114,7 +113,7 @@ static uint16_t bitmask = 0x0;
 uint32_t FragBitsOption::hash() const
 {
     uint32_t a,b,c;
-    const FragBitsData *data = &config;
+    const FragBitsData* data = &config;
 
     a = data->mode;
     b = data->frag_bits;
@@ -132,8 +131,8 @@ bool FragBitsOption::operator==(const IpsOption& ips) const
         return false;
 
     FragBitsOption& rhs = (FragBitsOption&)ips;
-    FragBitsData *left = (FragBitsData*)&config;
-    FragBitsData *right = (FragBitsData*)&rhs.config;
+    FragBitsData* left = (FragBitsData*)&config;
+    FragBitsData* right = (FragBitsData*)&rhs.config;
 
     if ((left->mode == right->mode) &&
         (left->frag_bits == right->frag_bits))
@@ -144,13 +143,13 @@ bool FragBitsOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int FragBitsOption::eval(Cursor&, Packet *p)
+int FragBitsOption::eval(Cursor&, Packet* p)
 {
-    FragBitsData *fb = &config;
+    FragBitsData* fb = &config;
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    if(!p->ptrs.ip_api.is_valid())
+    if (!p->ptrs.ip_api.is_valid())
     {
         return rval;
     }
@@ -159,64 +158,64 @@ int FragBitsOption::eval(Cursor&, Packet *p)
     MODULE_PROFILE_START(fragBitsPerfStats);
 
     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "           <!!> CheckFragBits: ");
-           DebugMessage(DEBUG_PLUGIN, "[rule: 0x%X:%d   pkt: 0x%X] ",
-                fb->frag_bits, fb->mode, frag_offset & bitmask););
+        DebugMessage(DEBUG_PLUGIN, "[rule: 0x%X:%d   pkt: 0x%X] ",
+        fb->frag_bits, fb->mode, frag_offset & bitmask); );
 
-    switch(fb->mode)
+    switch (fb->mode)
     {
-        case FB_NORMAL:
-            /* check if the rule bits match the bits in the packet */
-            if(fb->frag_bits == (frag_offset & bitmask))
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got Normal bits match\n"););
-                rval = DETECTION_OPTION_MATCH;
-            }
-            else
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Normal test failed\n"););
-            }
-            break;
+    case FB_NORMAL:
+        /* check if the rule bits match the bits in the packet */
+        if (fb->frag_bits == (frag_offset & bitmask))
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got Normal bits match\n"); );
+            rval = DETECTION_OPTION_MATCH;
+        }
+        else
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Normal test failed\n"); );
+        }
+        break;
 
-        case FB_NOT:
-            /* check if the rule bits don't match the bits in the packet */
-            if((fb->frag_bits & (frag_offset & bitmask)) == 0)
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got NOT bits match\n"););
-                rval = DETECTION_OPTION_MATCH;
-            }
-            else
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"NOT test failed\n"););
-            }
-            break;
+    case FB_NOT:
+        /* check if the rule bits don't match the bits in the packet */
+        if ((fb->frag_bits & (frag_offset & bitmask)) == 0)
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got NOT bits match\n"); );
+            rval = DETECTION_OPTION_MATCH;
+        }
+        else
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"NOT test failed\n"); );
+        }
+        break;
 
-        case FB_ALL:
-            /* check if the rule bits are present in the packet */
-            if((fb->frag_bits & (frag_offset & bitmask)) == fb->frag_bits)
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got ALL bits match\n"););
-                rval = DETECTION_OPTION_MATCH;
-            }
-            else
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"ALL test failed\n"););
-            }
-            break;
+    case FB_ALL:
+        /* check if the rule bits are present in the packet */
+        if ((fb->frag_bits & (frag_offset & bitmask)) == fb->frag_bits)
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got ALL bits match\n"); );
+            rval = DETECTION_OPTION_MATCH;
+        }
+        else
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"ALL test failed\n"); );
+        }
+        break;
 
-        case FB_ANY:
-            /* check if any of the rule bits match the bits in the packet */
-            if((fb->frag_bits & (frag_offset & bitmask)) != 0)
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got ANY bits match\n"););
-                rval = DETECTION_OPTION_MATCH;
-            }
-            else
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"ANY test failed\n"););
-            }
-            break;
-        default:
-            break;
+    case FB_ANY:
+        /* check if any of the rule bits match the bits in the packet */
+        if ((fb->frag_bits & (frag_offset & bitmask)) != 0)
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got ANY bits match\n"); );
+            rval = DETECTION_OPTION_MATCH;
+        }
+        else
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"ANY test failed\n"); );
+        }
+        break;
+    default:
+        break;
     }
 
     /* if the test isn't successful, this function *must* return 0 */
@@ -228,20 +227,20 @@ int FragBitsOption::eval(Cursor&, Packet *p)
 // api methods
 //-------------------------------------------------------------------------
 
-void fragbits_parse(const char *data, FragBitsData *ds_ptr)
+void fragbits_parse(const char* data, FragBitsData* ds_ptr)
 {
-    const char *fptr;
-    const char *fend;
+    const char* fptr;
+    const char* fend;
 
     /* manipulate the option arguments here */
     fptr = data;
 
-    while(isspace((u_char) *fptr))
+    while (isspace((u_char) *fptr))
     {
         fptr++;
     }
 
-    if(strlen(fptr) == 0)
+    if (strlen(fptr) == 0)
     {
         ParseError("no arguments to the fragbits keyword");
         return;
@@ -251,41 +250,41 @@ void fragbits_parse(const char *data, FragBitsData *ds_ptr)
 
     ds_ptr->mode = FB_NORMAL;  /* default value */
 
-    while(fptr < fend)
+    while (fptr < fend)
     {
-        switch((*fptr&0xFF))
+        switch ((*fptr&0xFF))
         {
-            case 'd':
-            case 'D': /* don't frag bit */
-                ds_ptr->frag_bits |= FB_DF;
-                break;
+        case 'd':
+        case 'D':     /* don't frag bit */
+            ds_ptr->frag_bits |= FB_DF;
+            break;
 
-            case 'm':
-            case 'M': /* more frags bit */
-                ds_ptr->frag_bits |= FB_MF;
-                break;
+        case 'm':
+        case 'M':     /* more frags bit */
+            ds_ptr->frag_bits |= FB_MF;
+            break;
 
-            case 'r':
-            case 'R': /* reserved bit */
-                ds_ptr->frag_bits |= FB_RB;
-                break;
+        case 'r':
+        case 'R':     /* reserved bit */
+            ds_ptr->frag_bits |= FB_RB;
+            break;
 
-            case '!': /* NOT flag, fire if flags are not set */
-                ds_ptr->mode = FB_NOT;
-                break;
+        case '!':     /* NOT flag, fire if flags are not set */
+            ds_ptr->mode = FB_NOT;
+            break;
 
-            case '*': /* ANY flag, fire on any of these bits */
-                ds_ptr->mode = FB_ANY;
-                break;
+        case '*':     /* ANY flag, fire on any of these bits */
+            ds_ptr->mode = FB_ANY;
+            break;
 
-            case '+': /* ALL flag, fire on these bits plus any others */
-                ds_ptr->mode = FB_ALL;
-                break;
+        case '+':     /* ALL flag, fire on these bits plus any others */
+            ds_ptr->mode = FB_ALL;
+            break;
 
-            default:
-                ParseError(
-                    "Bad Frag Bits = '%c'. Valid options are: RDM+!*", *fptr);
-                return;
+        default:
+            ParseError(
+                "Bad Frag Bits = '%c'. Valid options are: RDM+!*", *fptr);
+            return;
         }
 
         fptr++;
@@ -313,17 +312,16 @@ static const Parameter s_params[] =
 class FragBitsModule : public Module
 {
 public:
-    FragBitsModule() : Module(s_name, s_help, s_params) { };
+    FragBitsModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &fragBitsPerfStats; };
+    { return &fragBitsPerfStats; }
 
     FragBitsData data;
 };
-
 
 bool FragBitsModule::begin(const char*, int, SnortConfig*)
 {

@@ -26,27 +26,24 @@
 
 namespace preprocessors
 {
-
-namespace {
-
+namespace
+{
 class HttpInspectServer : public ConversionState
 {
 public:
-    HttpInspectServer(Converter& c) : ConversionState(c) {};
-    virtual ~HttpInspectServer() {};
+    HttpInspectServer(Converter& c) : ConversionState(c) { }
+    virtual ~HttpInspectServer() { }
     virtual bool convert(std::istringstream& data_stream);
 
 private:
     static int binding_id;
 };
-
 } // namespace
-
 
 #if 0
 
-    { "profile", Parameter::PT_ENUM, profiles, "none",
-      "set defaults appropriate for selected server" },
+{ "profile", Parameter::PT_ENUM, profiles, "none",
+  "set defaults appropriate for selected server" },
 
 #endif
 
@@ -62,15 +59,15 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
     bind.set_when_proto("tcp");
     bind.set_use_type("http_inspect");
 
-    if(!(data_stream >> keyword) || keyword.compare("server"))
+    if (!(data_stream >> keyword) || keyword.compare("server"))
     {
         return false;
     }
 
-    if(!(data_stream >> keyword))
+    if (!(data_stream >> keyword))
         return false;
 
-    if(!keyword.compare("default"))
+    if (!keyword.compare("default"))
     {
         table_api.open_table("http_inspect");
         table_api.add_diff_option_comment("http_inspect_server", "http_inspect");
@@ -91,7 +88,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
 
             if (!data_stream.good())
                 return false;
-
         }
         else
         {
@@ -100,7 +96,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
     }
 
     // parse the file configuration
-    while(data_stream >> keyword)
+    while (data_stream >> keyword)
     {
         bool tmpval = true;
 
@@ -118,12 +114,12 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("normalize_javascript"))
         {
-            table_api.add_diff_option_comment("normalize_javascript", "profile.normalize_javascript");
+            table_api.add_diff_option_comment("normalize_javascript",
+                "profile.normalize_javascript");
             table_api.open_table("profile");
             table_api.append_option("normalize_javascript", true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("enable_xff"))
             tmpval = table_api.add_option("enable_xff", true);
 
@@ -137,7 +133,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             table_api.append_option("non_strict", true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("inspect_uri_only"))
             tmpval = table_api.add_option("inspect_uri_only", true);
 
@@ -154,7 +149,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             table_api.append_option("normalize_utf", true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("log_uri"))
             tmpval = table_api.add_option("log_uri", true);
 
@@ -174,7 +168,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_yn_bool_option("ascii", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("utf_8"))
         {
             table_api.add_diff_option_comment("utf_8", "profile.utf_8");
@@ -182,7 +175,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_yn_bool_option("utf_8", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("u_encode"))
         {
             table_api.add_diff_option_comment("u_encode", "profile.u_encode");
@@ -190,7 +182,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_yn_bool_option("u_encode", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("bare_byte"))
         {
             table_api.add_diff_option_comment("bare_byte", "profile.bare_byte");
@@ -198,7 +189,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_yn_bool_option("bare_byte", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("iis_unicode"))
         {
             table_api.add_diff_option_comment("iis_unicode", "profile.iis_unicode");
@@ -206,7 +196,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_yn_bool_option("iis_unicode", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("double_decode"))
         {
             table_api.add_diff_option_comment("double_decode", "profile.double_decode");
@@ -214,7 +203,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_yn_bool_option("double_decode", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("multi_slash"))
         {
             table_api.add_diff_option_comment("multi_slash", "profile.multi_slash");
@@ -222,7 +210,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_yn_bool_option("multi_slash", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("iis_backslash"))
         {
             table_api.add_diff_option_comment("iis_backslash", "profile.iis_backslash");
@@ -237,7 +224,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_yn_bool_option("directory", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("apache_whitespace"))
         {
             table_api.add_diff_option_comment("apache_whitespace", "profile.apache_whitespace");
@@ -245,7 +231,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_yn_bool_option("apache_whitespace", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("iis_delimiter"))
         {
             table_api.add_diff_option_comment("iis_delimiter", "profile.iis_delimiter");
@@ -253,7 +238,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_yn_bool_option("iis_delimiter", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("webroot"))
         {
             table_api.add_diff_option_comment("webroot", "profile.webroot");
@@ -261,23 +245,22 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_yn_bool_option("webroot", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("max_javascript_whitespaces"))
         {
-            table_api.add_diff_option_comment("max_javascript_whitespaces", "profile.max_javascript_whitespaces");
+            table_api.add_diff_option_comment("max_javascript_whitespaces",
+                "profile.max_javascript_whitespaces");
             table_api.open_table("profile");
             tmpval = parse_int_option("max_javascript_whitespaces", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("server_flow_depth"))
         {
-            table_api.add_diff_option_comment("server_flow_depth [-1:65495]", "profile.server_flow_depth [-1:65535]");
+            table_api.add_diff_option_comment("server_flow_depth [-1:65495]",
+                "profile.server_flow_depth [-1:65535]");
             table_api.open_table("profile");
             tmpval = parse_int_option("server_flow_depth", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("client_flow_depth"))
         {
             table_api.add_diff_option_comment("client_flow_depth", "profile.client_flow_depth");
@@ -285,7 +268,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("client_flow_depth", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("chunk_length"))
         {
             table_api.add_diff_option_comment("chunk_length", "profile.chunk_length");
@@ -293,7 +275,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("chunk_length", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("oversize_dir_length"))
             tmpval = parse_int_option("oversize_dir_length", data_stream, false);
 
@@ -304,7 +285,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("max_header_length", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("max_spaces"))
         {
             table_api.add_diff_option_comment("max_spaces", "profile.max_spaces");
@@ -312,7 +292,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("max_spaces", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("max_headers"))
         {
             table_api.add_diff_option_comment("max_headers", "profile.max_headers");
@@ -320,7 +299,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("max_headers", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("no_alerts"))
             table_api.add_deleted_comment("no_alerts");
 
@@ -340,39 +318,36 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_bracketed_byte_list("whitespace_chars", data_stream);
             table_api.close_table();
         }
-
         else if (!keyword.compare("base36"))
             tmpval = eat_option(data_stream);
 
         else if (!keyword.compare("post_depth"))
         {
-            table_api.add_diff_option_comment("post_depth [-1:65495]", "profile.post_depth [-1:65535]");
+            table_api.add_diff_option_comment("post_depth [-1:65495]",
+                "profile.post_depth [-1:65535]");
             table_api.open_table("profile");
             tmpval = parse_int_option("post_depth", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("non_rfc_char"))
         {
             table_api.add_diff_option_comment("non_rfc_char", "non_rfc_chars");
             parse_bracketed_byte_list("non_rfc_chars", data_stream);
         }
-
         else if (!keyword.compare("enable_cookie"))
         {
             tmpval = table_api.add_option("enable_cookies", true);
             table_api.add_diff_option_comment("enable_cookie", "enable_cookies");
         }
-
         else if (!keyword.compare("flow_depth"))
         {
-            table_api.add_diff_option_comment("flow_depth_depth [-1:65495]", "profile.flow_depth [-1:65535]");
+            table_api.add_diff_option_comment("flow_depth_depth [-1:65495]",
+                "profile.flow_depth [-1:65535]");
             table_api.open_table("profile");
             table_api.add_diff_option_comment("flow_depth", "server_flow_depth");
             tmpval = parse_int_option("server_flow_depth", data_stream, true);
             table_api.close_table();
         }
-
         else if (!keyword.compare("ports"))
         {
             std::string tmp = "";
@@ -392,17 +367,16 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
                 retval = false;
             }
         }
-
         else if (!keyword.compare("small_chunk_length"))
         {
             std::string bracket;
             int length;
             int consec_chunks;
 
-            if(!(data_stream >> bracket) || bracket.compare("{") ||
-                    !(data_stream >> length) ||
-                    !(data_stream >> consec_chunks) ||
-                    !(data_stream >> bracket) || bracket.compare("}"))
+            if (!(data_stream >> bracket) || bracket.compare("{") ||
+                !(data_stream >> length) ||
+                !(data_stream >> consec_chunks) ||
+                !(data_stream >> bracket) || bracket.compare("}"))
             {
                 tmpval = false;
             }
@@ -414,7 +388,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
                 table_api.close_table();
             }
         }
-
         else if (!keyword.compare("iis_unicode_map"))
         {
             std::string map_file;
@@ -422,7 +395,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
 
             table_api.open_table("profile");
 
-            if( (data_stream >> map_file) &&
+            if ( (data_stream >> map_file) &&
                 (data_stream >> code_page))
             {
                 table_api.open_table("iis_unicode_map");
@@ -437,12 +410,11 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             }
             table_api.close_table();
         }
-
         else if (!keyword.compare("profile"))
         {
             if (data_stream >> keyword)
             {
-                if(!keyword.compare("all"))
+                if (!keyword.compare("all"))
                 {
                     std::string profile_name = "http_profile_default";
                     tmpval = table_api.add_option("profile", "$" + profile_name);
@@ -458,9 +430,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
                 data_api.failed_conversion(data_stream, "profile <string>");
                 retval = false;
             }
-
         }
-
         else
         {
             tmpval = false;
@@ -479,7 +449,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
     return retval;
 }
 
-
 /**************************
  *******  A P I ***********
  **************************/
@@ -489,12 +458,12 @@ static ConversionState* ctor(Converter& c)
     return new HttpInspectServer(c);
 }
 
-static const ConvertMap preprocessor_httpinsepct_server = 
+static const ConvertMap preprocessor_httpinsepct_server =
 {
     "http_inspect_server",
     ctor,
 };
 
 const ConvertMap* httpinspect_server_map = &preprocessor_httpinsepct_server;
-
 }
+

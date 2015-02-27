@@ -29,57 +29,71 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgBody::NHttpMsgBody(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
-   SourceId source_id_, bool buf_owner) :
-   NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner),
-   data_length(session_data->data_length[source_id]), body_octets(session_data->body_octets[source_id])
+NHttpMsgBody::NHttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,
+    NHttpFlowData* session_data_,
+    SourceId source_id_, bool buf_owner) :
+    NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner),
+    data_length(session_data->data_length[source_id]), body_octets(
+    session_data->body_octets[source_id])
 {
-   transaction->set_body(this);
+    transaction->set_body(this);
 }
 
-void NHttpMsgBody::analyze() {
+void NHttpMsgBody::analyze()
+{
     body_octets += msg_text.length;
     data.start = msg_text.start;
     data.length = msg_text.length;
 
-    if (tcp_close && (body_octets < data_length)) infractions += INF_TRUNCATED;
+    if (tcp_close && (body_octets < data_length))
+        infractions += INF_TRUNCATED;
 }
 
-void NHttpMsgBody::gen_events() {
+void NHttpMsgBody::gen_events()
+{
 }
 
-void NHttpMsgBody::print_section(FILE *output) {
+void NHttpMsgBody::print_section(FILE* output)
+{
     NHttpMsgSection::print_message_title(output, "body");
-    fprintf(output, "Expected data length %" PRIi64 ", octets seen %" PRIi64 "\n", data_length, body_octets);
+    fprintf(output, "Expected data length %" PRIi64 ", octets seen %" PRIi64 "\n", data_length,
+        body_octets);
     data.print(output, "Data");
     NHttpMsgSection::print_message_wrapup(output);
 }
 
-void NHttpMsgBody::update_flow() {
-    if (tcp_close) {
+void NHttpMsgBody::update_flow()
+{
+    if (tcp_close)
+    {
         session_data->type_expected[source_id] = SEC_CLOSED;
         session_data->section_type[source_id] = SEC__NOTCOMPUTE;
         session_data->half_reset(source_id);
     }
-    else if (body_octets < data_length) {
+    else if (body_octets < data_length)
+    {
         // More body coming
         session_data->body_octets[source_id] = body_octets;
     }
-    else {
+    else
+    {
         // End of message
-        session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
+        session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST :
+            SEC_STATUS;
         session_data->section_type[source_id] = SEC__NOTCOMPUTE;
         session_data->half_reset(source_id);
     }
 }
 
 // Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgBody::legacy_clients() {
+void NHttpMsgBody::legacy_clients()
+{
     ClearHttpBuffers();
     legacy_request();
     legacy_status();
     legacy_header(false);
-    if (data.length > 0) {
+    if (data.length > 0)
+    {
         SetHttpBuffer(HTTP_BUFFER_CLIENT_BODY, data.start, (unsigned)data.length);
         set_file_data((uint8_t*)data.start, (unsigned)data.length);
     }

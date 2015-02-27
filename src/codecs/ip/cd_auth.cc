@@ -17,12 +17,9 @@
 //--------------------------------------------------------------------------
 // cd_auth.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-
 
 #include "framework/codec.h"
 #include "protocols/protocol_ids.h"
@@ -36,23 +33,21 @@
 
 namespace
 {
-
 static const RuleMap auth_rules[] =
 {
-    { DECODE_AUTH_HDR_TRUNC, "truncated authentication header"},
-    { DECODE_AUTH_HDR_BAD_LEN, "bad authentication header length"},
+    { DECODE_AUTH_HDR_TRUNC, "truncated authentication header" },
+    { DECODE_AUTH_HDR_BAD_LEN, "bad authentication header length" },
     { 0, nullptr }
 };
 
 class AuthModule : public CodecModule
 {
 public:
-    AuthModule() : CodecModule(CD_AUTH_NAME, CD_AUTH_HELP) {}
+    AuthModule() : CodecModule(CD_AUTH_NAME, CD_AUTH_HELP) { }
 
     const RuleMap* get_rules() const
     { return auth_rules; }
 };
-
 
 //-------------------------------------------------------------------------
 // auth module
@@ -61,8 +56,8 @@ public:
 class AuthCodec : public Codec
 {
 public:
-    AuthCodec() : Codec(CD_AUTH_NAME){};
-    ~AuthCodec(){};
+    AuthCodec() : Codec(CD_AUTH_NAME) { }
+    ~AuthCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
@@ -80,17 +75,14 @@ struct AuthHdr
 };
 
 constexpr uint8_t MIN_AUTH_LEN = 16; // this is in minimum number of bytes ...
-                                 // no relatino to the AuthHdr.len field.
-
+// no relatino to the AuthHdr.len field.
 } // anonymous namespace
-
 
 void AuthCodec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(IPPROTO_ID_AUTH); }
 
 bool AuthCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
-
     const AuthHdr* const ah = reinterpret_cast<const AuthHdr* const>(raw.data);
 
     if (raw.len < MIN_AUTH_LEN)
@@ -111,7 +103,6 @@ bool AuthCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     codec.next_prot_id = ah->next;
 
-
     // must be called AFTER setting next_prot_id
     if (snort.ip_api.is_ip6())
     {
@@ -129,8 +120,6 @@ bool AuthCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     return true;
 }
 
-
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
@@ -144,7 +133,7 @@ static void mod_dtor(Module* m)
 static Codec* ctor(Module*)
 { return new AuthCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi ah_api =
@@ -153,7 +142,7 @@ static const CodecApi ah_api =
         PT_CODEC,
         CD_AUTH_NAME,
         CD_AUTH_HELP,
-        CDAPI_PLUGIN_V0, 
+        CDAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor,
@@ -166,7 +155,6 @@ static const CodecApi ah_api =
     dtor, // dtor
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -176,3 +164,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_ah = &ah_api.base;
 #endif
+

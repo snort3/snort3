@@ -52,33 +52,33 @@ struct ProfileStats;
 class SO_PUBLIC Module
 {
 public:
-    virtual ~Module() { };
+    virtual ~Module() { }
 
     // configuration:
     // for lists (tables with numeric indices):
     // int == 0 is list container
     // int > 0 is list item
     virtual bool begin(const char*, int, SnortConfig*)
-    { return true; };
+    { return true; }
 
     virtual bool end(const char*, int, SnortConfig*)
-    { return true; };
+    { return true; }
 
     virtual bool set(const char*, Value&, SnortConfig*)
-    { return !get_parameters(); };
+    { return !get_parameters(); }
 
     // ips events:
     virtual unsigned get_gid() const
-    { return 0; };
+    { return 0; }
 
     const char* get_name() const
-    { return name ? name : params->name; };
+    { return name ? name : params->name; }
 
     bool is_table() const
-    { return (name != nullptr); };
+    { return (name != nullptr); }
 
     bool is_list() const
-    { return list; };
+    { return list; }
 
     Parameter::Type get_type() const
     {
@@ -88,37 +88,37 @@ public:
             return Parameter::PT_TABLE;
         else
             return params->type;
-    };
+    }
 
     const char* get_help() const
-    { return help; };
+    { return help; }
 
     const Parameter* get_parameters() const
-    { return params; };
+    { return params; }
 
     virtual const Command* get_commands() const
-    { return nullptr; };
+    { return nullptr; }
 
     virtual const RuleMap* get_rules() const
-    { return nullptr; };
+    { return nullptr; }
 
     virtual const PegInfo* get_pegs() const
-    { return nullptr; };
+    { return nullptr; }
 
     // counts and profile are thread local
     virtual PegCount* get_counts() const
-    { return nullptr; };
+    { return nullptr; }
 
     virtual ProfileStats* get_profile() const
-    { return nullptr; };
+    { return nullptr; }
 
     // implement above -or- below
     virtual ProfileStats* get_profile(
         unsigned /*index*/, const char*& /*name*/, const char*& /*parent*/) const
-    { return nullptr; };
+    { return nullptr; }
 
     virtual const char* get_defaults() const
-    { return nullptr; };
+    { return nullptr; }
 
     virtual void sum_stats();
     virtual void show_stats();

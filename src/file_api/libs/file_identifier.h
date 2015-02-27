@@ -45,27 +45,25 @@ typedef struct _IdentifierNode
     uint32_t type_id;       /* magic content to match*/
     IdNodeState state;
     uint32_t offset;            /* offset from file start */
-    struct _IdentifierNode *next[MAX_BRANCH]; /* pointer to an array of 256 identifiers pointers*/
-
+    struct _IdentifierNode* next[MAX_BRANCH]; /* pointer to an array of 256 identifiers pointers*/
 } IdentifierNode;
 
 typedef struct _IdentifierNodeHead
 {
     int offset;            /* offset from file start */
-    IdentifierNode *start;  /* start node for the trie at this offset*/
-    struct _IdentifierNodeHead *nextHead; /* pointer to next offset head*/
-
+    IdentifierNode* start;  /* start node for the trie at this offset*/
+    struct _IdentifierNodeHead* nextHead; /* pointer to next offset head*/
 } IdentifierNodeHead;
 
 void init_file_identifers(void);
-void insert_file_rule(RuleInfo *rule, void *conf);
+void insert_file_rule(RuleInfo* rule, void* conf);
 uint32_t memory_usage_identifiers(void);
 
-uint32_t find_file_type_id(uint8_t *buf, int len, FileContext *context);
+uint32_t find_file_type_id(uint8_t* buf, int len, FileContext* context);
 
 #ifdef DEBUG_MSGS
 void print_identifiers(IdentifierNode*);
-char *test_find_file_type(void *conf);
+char* test_find_file_type(void* conf);
 #endif
 
 #endif

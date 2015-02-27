@@ -134,7 +134,7 @@ typedef uint16_t Port;
 
 #if !defined(__GNUC__) || __GNUC__ < 2 || \
     (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
-#define	__attribute__(x)	/* delete __attribute__ if non-gcc or gcc1 */
+#define __attribute__(x)    /* delete __attribute__ if non-gcc or gcc1 */
 #endif
 
 #endif  /* __SF_TYPES_H__ */

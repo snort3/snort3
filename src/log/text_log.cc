@@ -39,14 +39,14 @@
 #include "util.h"
 
 /* some reasonable minimums */
-#define MIN_BUF  (1*K_BYTES)
+#define MIN_BUF  (1* K_BYTES)
 #define MIN_FILE (MIN_BUF)
 
 /*-------------------------------------------------------------------
  * TextLog_Open/Close: open/close associated log file
  *-------------------------------------------------------------------
  */
-static FILE* TextLog_Open (const char* name)
+static FILE* TextLog_Open(const char* name)
 {
     if ( name && !strcasecmp(name, "stdout") )
         return stdout;
@@ -54,13 +54,15 @@ static FILE* TextLog_Open (const char* name)
     return OpenAlertFile(name);
 }
 
-static void TextLog_Close (FILE* file)
+static void TextLog_Close(FILE* file)
 {
-    if ( !file ) return;
-    if ( file != stdout ) fclose(file);
+    if ( !file )
+        return;
+    if ( file != stdout )
+        fclose(file);
 }
 
-static size_t TextLog_Size (FILE* file)
+static size_t TextLog_Size(FILE* file)
 {
     struct stat sbuf;
     int fd = fileno(file);
@@ -72,14 +74,18 @@ static size_t TextLog_Size (FILE* file)
  * TextLog_Init: constructor
  *-------------------------------------------------------------------
  */
-TextLog* TextLog_Init (
+TextLog* TextLog_Init(
     const char* name, unsigned int maxBuf, size_t maxFile
-) {
+    )
+{
     TextLog* txt;
 
-    if ( maxBuf < MIN_BUF ) maxBuf = MIN_BUF;
-    if ( maxFile < MIN_FILE ) maxFile = MIN_FILE;
-    if ( maxFile < maxBuf ) maxFile = maxBuf;
+    if ( maxBuf < MIN_BUF )
+        maxBuf = MIN_BUF;
+    if ( maxFile < MIN_FILE )
+        maxFile = MIN_FILE;
+    if ( maxFile < maxBuf )
+        maxFile = maxBuf;
 
     txt = (TextLog*)malloc(sizeof(TextLog)+maxBuf);
 
@@ -104,14 +110,16 @@ TextLog* TextLog_Init (
  * TextLog_Term: destructor
  *-------------------------------------------------------------------
  */
-void TextLog_Term (TextLog* const txt)
+void TextLog_Term(TextLog* const txt)
 {
-    if ( !txt ) return;
+    if ( !txt )
+        return;
 
     TextLog_Flush(txt);
     TextLog_Close(txt->file);
 
-    if ( txt->name ) free(txt->name);
+    if ( txt->name )
+        free(txt->name);
     free(txt);
 }
 
@@ -121,10 +129,12 @@ void TextLog_Term (TextLog* const txt)
  * than resolution of filename discriminator
  *-------------------------------------------------------------------
  */
-static void TextLog_Roll (TextLog* const txt)
+static void TextLog_Roll(TextLog* const txt)
 {
-    if ( txt->file == stdout ) return;
-    if ( txt->last >= time(NULL) ) return;
+    if ( txt->file == stdout )
+        return;
+    if ( txt->last >= time(NULL) )
+        return;
 
     TextLog_Close(txt->file);
     RollAlertFile(txt->name);
@@ -142,8 +152,10 @@ bool TextLog_Flush(TextLog* const txt)
 {
     int ok;
 
-    if ( !txt->pos ) return false;
-    if ( txt->size + txt->pos > txt->maxFile ) TextLog_Roll(txt);
+    if ( !txt->pos )
+        return false;
+    if ( txt->size + txt->pos > txt->maxFile )
+        TextLog_Roll(txt);
 
     ok = fwrite(txt->buf, txt->pos, 1, txt->file);
 
@@ -160,7 +172,7 @@ bool TextLog_Flush(TextLog* const txt)
  * TextLog_Putc: append char to buffer
  *-------------------------------------------------------------------
  */
-bool TextLog_Putc (TextLog* const txt, char c)
+bool TextLog_Putc(TextLog* const txt, char c)
 {
     if ( TextLog_Avail(txt) < 1 )
     {
@@ -176,7 +188,7 @@ bool TextLog_Putc (TextLog* const txt, char c)
  * TextLog_Write: append string to buffer
  *-------------------------------------------------------------------
  */
-bool TextLog_Write (TextLog* const txt, const char* str, int len)
+bool TextLog_Write(TextLog* const txt, const char* str, int len)
 {
     int avail = TextLog_Avail(txt);
 
@@ -205,7 +217,7 @@ bool TextLog_Write (TextLog* const txt, const char* str, int len)
  * TextLog_Printf: append formatted string to buffer
  *-------------------------------------------------------------------
  */
-bool TextLog_Print (TextLog* const txt, const char* fmt, ...)
+bool TextLog_Print(TextLog* const txt, const char* fmt, ...)
 {
     int avail = TextLog_Avail(txt);
     int len;
@@ -244,7 +256,7 @@ bool TextLog_Print (TextLog* const txt, const char* fmt, ...)
  * checking for 3
  *-------------------------------------------------------------------
  */
-bool TextLog_Quote (TextLog* const txt, const char* qs)
+bool TextLog_Quote(TextLog* const txt, const char* qs)
 {
     int pos = txt->pos;
 
@@ -262,10 +274,12 @@ bool TextLog_Quote (TextLog* const txt, const char* qs)
         }
         txt->buf[pos++] = *qs++;
     }
-    if ( *qs ) return false;
+    if ( *qs )
+        return false;
 
     txt->buf[pos++] = '"';
     txt->pos = pos;
 
     return true;
 }
+

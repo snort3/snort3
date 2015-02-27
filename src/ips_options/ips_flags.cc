@@ -73,7 +73,7 @@ class TcpFlagOption : public IpsOption
 public:
     TcpFlagOption(const TcpFlagCheckData& c) :
         IpsOption(s_name)
-    { config = c; };
+    { config = c; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -91,7 +91,7 @@ private:
 uint32_t TcpFlagOption::hash() const
 {
     uint32_t a,b,c;
-    const TcpFlagCheckData *data = &config;
+    const TcpFlagCheckData* data = &config;
 
     a = data->mode;
     b = data->tcp_flags || (data->tcp_mask << 8);
@@ -109,8 +109,8 @@ bool TcpFlagOption::operator==(const IpsOption& ips) const
         return false;
 
     TcpFlagOption& rhs = (TcpFlagOption&)ips;
-    TcpFlagCheckData *left = (TcpFlagCheckData*)&config;
-    TcpFlagCheckData *right = (TcpFlagCheckData*)&rhs.config;
+    TcpFlagCheckData* left = (TcpFlagCheckData*)&config;
+    TcpFlagCheckData* right = (TcpFlagCheckData*)&rhs.config;
 
     if ((left->mode == right->mode) &&
         (left->tcp_flags == right->tcp_flags) &&
@@ -122,16 +122,16 @@ bool TcpFlagOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int TcpFlagOption::eval(Cursor&, Packet *p)
+int TcpFlagOption::eval(Cursor&, Packet* p)
 {
-    TcpFlagCheckData *flagptr = &config;
+    TcpFlagCheckData* flagptr = &config;
     int rval = DETECTION_OPTION_NO_MATCH;
     u_char tcp_flags;
     PROFILE_VARS;
 
     MODULE_PROFILE_START(tcpFlagsPerfStats);
 
-    if(!p->ptrs.tcph)
+    if (!p->ptrs.tcph)
     {
         /* if error appeared when tcp header was processed,
          * test fails automagically */
@@ -144,90 +144,91 @@ int TcpFlagOption::eval(Cursor&, Packet *p)
 
     tcp_flags = p->ptrs.tcph->th_flags & (0xFF ^ flagptr->tcp_mask);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "           <!!> CheckTcpFlags: "););
+    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "           <!!> CheckTcpFlags: "); );
 
-    switch((flagptr->mode))
+    switch ((flagptr->mode))
     {
-        case M_NORMAL:
-            if(flagptr->tcp_flags == tcp_flags) /* only these set */
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got TCP [default] flag match!\n"););
-                rval = DETECTION_OPTION_MATCH;
-            }
-            else
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"No match\n"););
-            }
-            break;
+    case M_NORMAL:
+        if (flagptr->tcp_flags == tcp_flags)    /* only these set */
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got TCP [default] flag match!\n"); );
+            rval = DETECTION_OPTION_MATCH;
+        }
+        else
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"No match\n"); );
+        }
+        break;
 
-        case M_ALL:
-            /* all set */
-            if((flagptr->tcp_flags & tcp_flags) == flagptr->tcp_flags)
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Got TCP [ALL] flag match!\n"););
-                rval = DETECTION_OPTION_MATCH;
-            }
-            else
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"No match\n"););
-            }
-            break;
+    case M_ALL:
+        /* all set */
+        if ((flagptr->tcp_flags & tcp_flags) == flagptr->tcp_flags)
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Got TCP [ALL] flag match!\n"); );
+            rval = DETECTION_OPTION_MATCH;
+        }
+        else
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"No match\n"); );
+        }
+        break;
 
-        case M_NOT:
-            if((flagptr->tcp_flags & tcp_flags) == 0)  /* none set */
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got TCP [NOT] flag match!\n"););
-                rval = DETECTION_OPTION_MATCH;
-            }
-            else
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "No match\n"););
-            }
-            break;
+    case M_NOT:
+        if ((flagptr->tcp_flags & tcp_flags) == 0)     /* none set */
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got TCP [NOT] flag match!\n"); );
+            rval = DETECTION_OPTION_MATCH;
+        }
+        else
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "No match\n"); );
+        }
+        break;
 
-        case M_ANY:
-            if((flagptr->tcp_flags & tcp_flags) != 0)  /* something set */
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got TCP [ANY] flag match!\n"););
-                rval = DETECTION_OPTION_MATCH;
-            }
-            else
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"No match\n"););
-            }
-            break;
+    case M_ANY:
+        if ((flagptr->tcp_flags & tcp_flags) != 0)     /* something set */
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got TCP [ANY] flag match!\n"); );
+            rval = DETECTION_OPTION_MATCH;
+        }
+        else
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"No match\n"); );
+        }
+        break;
 
-        default:  /* Should never see this */
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "TCP flag check went to default case"
-				    " for some silly reason\n"););
-            break;
+    default:      /* Should never see this */
+        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "TCP flag check went to default case"
+            " for some silly reason\n"); );
+        break;
     }
 
     MODULE_PROFILE_END(tcpFlagsPerfStats);
     return rval;
 }
+
 //-------------------------------------------------------------------------
 // parse methods
 //-------------------------------------------------------------------------
 
-static void flags_parse_test(const char *rule, TcpFlagCheckData *idx)
+static void flags_parse_test(const char* rule, TcpFlagCheckData* idx)
 {
-    const char *fptr;
-    const char *fend;
+    const char* fptr;
+    const char* fend;
 
     fptr = rule;
 
     /* make sure there is atleast a split pointer */
-    if(fptr == NULL)
+    if (fptr == NULL)
     {
         ParseError("flags missing in TCP flag rule");
         return;
     }
 
-    while(isspace((u_char) *fptr))
+    while (isspace((u_char) *fptr))
         fptr++;
 
-    if(strlen(fptr) == 0)
+    if (strlen(fptr) == 0)
     {
         ParseError("flags missing in TCP flag rule");
         return;
@@ -238,99 +239,99 @@ static void flags_parse_test(const char *rule, TcpFlagCheckData *idx)
 
     idx->mode = M_NORMAL; /* this is the default, unless overridden */
 
-    while(fptr < fend)
+    while (fptr < fend)
     {
-        switch(*fptr)
+        switch (*fptr)
         {
-            case 'f':
-            case 'F':
-                idx->tcp_flags |= R_FIN;
-                break;
+        case 'f':
+        case 'F':
+            idx->tcp_flags |= R_FIN;
+            break;
 
-            case 's':
-            case 'S':
-                idx->tcp_flags |= R_SYN;
-                break;
+        case 's':
+        case 'S':
+            idx->tcp_flags |= R_SYN;
+            break;
 
-            case 'r':
-            case 'R':
-                idx->tcp_flags |= R_RST;
-                break;
+        case 'r':
+        case 'R':
+            idx->tcp_flags |= R_RST;
+            break;
 
-            case 'p':
-            case 'P':
-                idx->tcp_flags |= R_PSH;
-                break;
+        case 'p':
+        case 'P':
+            idx->tcp_flags |= R_PSH;
+            break;
 
-            case 'a':
-            case 'A':
-                idx->tcp_flags |= R_ACK;
-                break;
+        case 'a':
+        case 'A':
+            idx->tcp_flags |= R_ACK;
+            break;
 
-            case 'u':
-            case 'U':
-                idx->tcp_flags |= R_URG;
-                break;
+        case 'u':
+        case 'U':
+            idx->tcp_flags |= R_URG;
+            break;
 
-            case '0':
-                idx->tcp_flags = 0;
-                break;
+        case '0':
+            idx->tcp_flags = 0;
+            break;
 
-            case '1': /* reserved bit flags */
-            case 'c':
-            case 'C':
-                idx->tcp_flags |= R_CWR; /* Congestion Window Reduced, RFC 3168 */
-                break;
+        case '1':     /* reserved bit flags */
+        case 'c':
+        case 'C':
+            idx->tcp_flags |= R_CWR;     /* Congestion Window Reduced, RFC 3168 */
+            break;
 
-            case '2': /* reserved bit flags */
-            case 'e':
-            case 'E':
-                idx->tcp_flags |= R_ECE; /* ECN echo, RFC 3168 */
-                break;
+        case '2':     /* reserved bit flags */
+        case 'e':
+        case 'E':
+            idx->tcp_flags |= R_ECE;     /* ECN echo, RFC 3168 */
+            break;
 
-            case '!': /* not, fire if all flags specified are not present,
+        case '!':     /* not, fire if all flags specified are not present,
                          other are don't care */
-                idx->mode = M_NOT;
-                break;
-            case '*': /* star or any, fire if any flags specified are
+            idx->mode = M_NOT;
+            break;
+        case '*':     /* star or any, fire if any flags specified are
                          present, other are don't care */
-                idx->mode = M_ANY;
-                break;
-            case '+': /* plus or all, fire if all flags specified are
+            idx->mode = M_ANY;
+            break;
+        case '+':     /* plus or all, fire if all flags specified are
                          present, other are don't care */
-                idx->mode = M_ALL;
-                break;
-            default:
-                ParseError(
-                    "bad TCP flag = '%c'"
-                    "Valid otions: UAPRSFCE or 0 for NO flags (e.g. NULL scan),"
-                    " and !, + or * for modifiers",
-                    *fptr);
-                return;
+            idx->mode = M_ALL;
+            break;
+        default:
+            ParseError(
+                "bad TCP flag = '%c'"
+                "Valid otions: UAPRSFCE or 0 for NO flags (e.g. NULL scan),"
+                " and !, + or * for modifiers",
+                *fptr);
+            return;
         }
 
         fptr++;
     }
 }
 
-static void flags_parse_mask(const char *rule, TcpFlagCheckData *idx)
+static void flags_parse_mask(const char* rule, TcpFlagCheckData* idx)
 {
-    const char *fptr;
-    const char *fend;
+    const char* fptr;
+    const char* fend;
 
     fptr = rule;
 
     /* make sure there is atleast a split pointer */
-    if(fptr == NULL)
+    if (fptr == NULL)
     {
         ParseError("flags missing in TCP flag rule");
         return;
     }
 
-    while(isspace((u_char) *fptr))
+    while (isspace((u_char) *fptr))
         fptr++;
 
-    if(strlen(fptr) == 0)
+    if (strlen(fptr) == 0)
     {
         ParseError("flags missing in TCP flag rule");
         return;
@@ -340,54 +341,54 @@ static void flags_parse_mask(const char *rule, TcpFlagCheckData *idx)
     fend = fptr + strlen(fptr);
 
     /* create the mask portion now */
-    while(fptr < fend)
+    while (fptr < fend)
     {
-        switch(*fptr)
+        switch (*fptr)
         {
-            case 'f':
-            case 'F':
-                idx->tcp_mask |= R_FIN;
-                break;
+        case 'f':
+        case 'F':
+            idx->tcp_mask |= R_FIN;
+            break;
 
-            case 's':
-            case 'S':
-                idx->tcp_mask |= R_SYN;
-                break;
+        case 's':
+        case 'S':
+            idx->tcp_mask |= R_SYN;
+            break;
 
-            case 'r':
-            case 'R':
-                idx->tcp_mask |= R_RST;
-                break;
+        case 'r':
+        case 'R':
+            idx->tcp_mask |= R_RST;
+            break;
 
-            case 'p':
-            case 'P':
-                idx->tcp_mask |= R_PSH;
-                break;
+        case 'p':
+        case 'P':
+            idx->tcp_mask |= R_PSH;
+            break;
 
-            case 'a':
-            case 'A':
-                idx->tcp_mask |= R_ACK;
-                break;
+        case 'a':
+        case 'A':
+            idx->tcp_mask |= R_ACK;
+            break;
 
-            case 'u':
-            case 'U':
-                idx->tcp_mask |= R_URG;
-                break;
+        case 'u':
+        case 'U':
+            idx->tcp_mask |= R_URG;
+            break;
 
-            case '1': /* reserved bit flags */
-            case 'c':
-            case 'C':
-                idx->tcp_mask |= R_CWR; /* Congestion Window Reduced, RFC 3168 */
-                break;
+        case '1':     /* reserved bit flags */
+        case 'c':
+        case 'C':
+            idx->tcp_mask |= R_CWR;     /* Congestion Window Reduced, RFC 3168 */
+            break;
 
-            case '2': /* reserved bit flags */
-            case 'e':
-            case 'E':
-                idx->tcp_mask |= R_ECE; /* ECN echo, RFC 3168 */
-                break;
-            default:
-                ParseError("bad TCP flag = '%c'. Valid otions: UAPRSFCE", *fptr);
-                return;
+        case '2':     /* reserved bit flags */
+        case 'e':
+        case 'E':
+            idx->tcp_mask |= R_ECE;     /* ECN echo, RFC 3168 */
+            break;
+        default:
+            ParseError("bad TCP flag = '%c'. Valid otions: UAPRSFCE", *fptr);
+            return;
         }
 
         fptr++;
@@ -415,13 +416,13 @@ static const Parameter s_params[] =
 class FlagsModule : public Module
 {
 public:
-    FlagsModule() : Module(s_name, s_help, s_params) { };
+    FlagsModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &tcpFlagsPerfStats; };
+    { return &tcpFlagsPerfStats; }
 
     TcpFlagCheckData data;
 };

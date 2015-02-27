@@ -25,34 +25,35 @@
 
 #define UU_DECODE_CHAR(c) (((c) - 0x20) & 0x3f)
 
-int sf_qpdecode(char *src, uint32_t slen, char *dst, uint32_t dlen, uint32_t *bytes_read, uint32_t *bytes_copied )
+int sf_qpdecode(char* src, uint32_t slen, char* dst, uint32_t dlen, uint32_t* bytes_read,
+    uint32_t* bytes_copied)
 {
     char ch;
 
-    if(!src || !slen || !dst || !dlen || !bytes_read || !bytes_copied )
+    if (!src || !slen || !dst || !dlen || !bytes_read || !bytes_copied )
         return -1;
 
     *bytes_read = 0;
     *bytes_copied = 0;
 
-    while( (*bytes_read < slen) && (*bytes_copied < dlen))
+    while ( (*bytes_read < slen) && (*bytes_copied < dlen))
     {
         ch = src[*bytes_read];
         *bytes_read += 1;
-        if( ch == '=' )
+        if ( ch == '=' )
         {
-            if( (*bytes_read < slen))
+            if ( (*bytes_read < slen))
             {
-                if(src[*bytes_read] == '\n')
+                if (src[*bytes_read] == '\n')
                 {
                     *bytes_read += 1;
                     continue;
                 }
-                else if( *bytes_read < (slen - 1) )
+                else if ( *bytes_read < (slen - 1) )
                 {
                     char ch1 = src[*bytes_read];
                     char ch2 = src[*bytes_read + 1];
-                    if( ch1 == '\r' && ch2 == '\n')
+                    if ( ch1 == '\r' && ch2 == '\n')
                     {
                         *bytes_read += 2;
                         continue;
@@ -60,12 +61,12 @@ int sf_qpdecode(char *src, uint32_t slen, char *dst, uint32_t dlen, uint32_t *by
                     if (isxdigit((int)ch1) && isxdigit((int)ch2))
                     {
                         char hexBuf[3];
-                        char *eptr;
+                        char* eptr;
                         hexBuf[0] = ch1;
                         hexBuf[1] = ch2;
                         hexBuf[2] = '\0';
                         dst[*bytes_copied]= (char)strtoul(hexBuf, &eptr, 16);
-                        if((*eptr != '\0'))
+                        if ((*eptr != '\0'))
                         {
                             return -1;
                         }
@@ -97,15 +98,17 @@ int sf_qpdecode(char *src, uint32_t slen, char *dst, uint32_t dlen, uint32_t *by
     }
 
     return 0;
-
 }
-int sf_uudecode(uint8_t *src, uint32_t slen, uint8_t *dst, uint32_t dlen, uint32_t *bytes_read, uint32_t *bytes_copied, uint8_t *begin_found, uint8_t *end_found)
-{
-    uint8_t *sod;
-    int sol = 1, length = 0;
-    uint8_t *ptr, *end, *dptr, *dend;
 
-    if(!src || !slen || !dst || !dlen ||  !bytes_read || !bytes_copied || !begin_found || !end_found )
+int sf_uudecode(uint8_t* src, uint32_t slen, uint8_t* dst, uint32_t dlen, uint32_t* bytes_read,
+    uint32_t* bytes_copied, uint8_t* begin_found, uint8_t* end_found)
+{
+    uint8_t* sod;
+    int sol = 1, length = 0;
+    uint8_t* ptr, * end, * dptr, * dend;
+
+    if (!src || !slen || !dst || !dlen ||  !bytes_read || !bytes_copied || !begin_found ||
+        !end_found )
         return -1;
 
     ptr = src;
@@ -113,9 +116,9 @@ int sf_uudecode(uint8_t *src, uint32_t slen, uint8_t *dst, uint32_t dlen, uint32
     dptr = dst;
     dend = dst + dlen;
     /* begin not found. Search for begin */
-    if( !(*begin_found) )
+    if ( !(*begin_found) )
     {
-        if( slen < 5 )
+        if ( slen < 5 )
         {
             /* Not enough data to search */
             *bytes_read = 0;
@@ -124,13 +127,13 @@ int sf_uudecode(uint8_t *src, uint32_t slen, uint8_t *dst, uint32_t dlen, uint32
         }
         else
         {
-            sod = (uint8_t *)SnortStrnStr((const char *)src, 5 , "begin");
-            if(sod)
+            sod = (uint8_t*)SnortStrnStr((const char*)src, 5, "begin");
+            if (sod)
             {
                 *begin_found = 1;
                 /*begin str found. Move to the actual data*/
-                ptr = (uint8_t *)SnortStrnStr((const char *)(sod), (end - sod), "\n");
-                if( !ptr )
+                ptr = (uint8_t*)SnortStrnStr((const char*)(sod), (end - sod), "\n");
+                if ( !ptr )
                 {
                     *bytes_read = slen;
                     *bytes_copied = 0;
@@ -145,55 +148,55 @@ int sf_uudecode(uint8_t *src, uint32_t slen, uint8_t *dst, uint32_t dlen, uint32
         }
     }
 
-    while( (ptr < end) && (dptr < dend))
+    while ( (ptr < end) && (dptr < dend))
     {
-        if(*ptr == '\n')
+        if (*ptr == '\n')
         {
             sol = 1;
             ptr++;
             continue;
         }
 
-        if(sol)
+        if (sol)
         {
             sol = 0;
             length = UU_DECODE_CHAR(*ptr);
 
-            if( length <= 0 )
+            if ( length <= 0 )
             {
                 /* empty line with no encoded characters indicates end of output */
                 break;
             }
-            else if( length == 5 )
+            else if ( length == 5 )
             {
-                if(*ptr == 'e')
+                if (*ptr == 'e')
                 {
                     *end_found = 1;
                     break;
                 }
             }
             /* check if destination buffer is big enough */
-            if(( dend - dptr) < length)
+            if (( dend - dptr) < length)
             {
                 length = dend - dptr;
             }
 
-            length = (length * 4) / 3 ;
+            length = (length * 4) / 3;
 
             /*check if src buffer has enough encoded data*/
-            if( (end - (ptr + 1)) < length)
+            if ( (end - (ptr + 1)) < length)
             {
                 /*not enough data to decode. We will wait for the next packet*/
                 break;
             }
 
             ptr++;
-            
-            while( length > 0 )
+
+            while ( length > 0 )
             {
                 *dptr++ = (UU_DECODE_CHAR(ptr[0]) << 2) | (UU_DECODE_CHAR(ptr[1]) >> 4);
                 ptr++;
-                if(--length == 0 )
+                if (--length == 0 )
                     break;
 
                 *dptr++ = (UU_DECODE_CHAR(ptr[0]) << 4) | (UU_DECODE_CHAR(ptr[1]) >> 2);
@@ -213,7 +216,7 @@ int sf_uudecode(uint8_t *src, uint32_t slen, uint8_t *dst, uint32_t dlen, uint32
         }
     }
 
-    if(*end_found)
+    if (*end_found)
         *bytes_read = end - src;
     else
         *bytes_read = ptr - src;
@@ -221,11 +224,10 @@ int sf_uudecode(uint8_t *src, uint32_t slen, uint8_t *dst, uint32_t dlen, uint32
     return 0;
 }
 
-
-int Base64Decode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds)
+int Base64Decode(const uint8_t* start, const uint8_t* end, Email_DecodeState* ds)
 {
-    uint32_t encode_avail = 0, decode_avail = 0 ;
-    uint8_t *encode_buf, *decode_buf;
+    uint32_t encode_avail = 0, decode_avail = 0;
+    uint8_t* encode_buf, * decode_buf;
     uint32_t act_encode_size = 0, act_decode_size = 0;
     uint32_t prev_bytes = 0;
     uint32_t i = 0;
@@ -250,8 +252,8 @@ int Base64Decode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds
 
     /* 1. Stop decoding when we have reached either the decode depth or encode depth.
      * 2. Stop decoding when we are out of memory */
-    if(encode_avail ==0 || decode_avail ==0 ||
-            (!encode_buf) || (!decode_buf))
+    if (encode_avail ==0 || decode_avail ==0 ||
+        (!encode_buf) || (!decode_buf))
     {
         ResetEmailDecodeState(ds);
         return DECODE_EXCEEDED;
@@ -259,16 +261,16 @@ int Base64Decode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds
 
     /*The non decoded encoded data in the previous packet is required for successful decoding
      * in case of base64 data spanned across packets*/
-    if( ds->prev_encoded_bytes )
+    if ( ds->prev_encoded_bytes )
     {
-        if(ds->prev_encoded_bytes > encode_avail)
+        if (ds->prev_encoded_bytes > encode_avail)
             ds->prev_encoded_bytes = encode_avail;
 
-        if(ds->prev_encoded_buf)
+        if (ds->prev_encoded_buf)
         {
             prev_bytes = ds->prev_encoded_bytes;
             encode_avail = encode_avail - prev_bytes;
-            while(ds->prev_encoded_bytes)
+            while (ds->prev_encoded_bytes)
             {
                 /* Since this data cannot be more than 3 bytes*/
                 encode_buf[i] = ds->prev_encoded_buf[i];
@@ -278,7 +280,8 @@ int Base64Decode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds
         }
     }
 
-    if(sf_strip_CRLF(start, (end-start), encode_buf + prev_bytes, encode_avail, &act_encode_size) != 0)
+    if (sf_strip_CRLF(start, (end-start), encode_buf + prev_bytes, encode_avail,
+        &act_encode_size) != 0)
     {
         ResetEmailDecodeState(ds);
         return DECODE_FAIL;
@@ -286,28 +289,28 @@ int Base64Decode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds
 
     act_encode_size = act_encode_size + prev_bytes;
 
-    i = (act_encode_size)%4 ;
+    i = (act_encode_size)%4;
 
     /* Encoded data should be in multiples of 4. Then we need to wait for the remainder encoded data to
      * successfully decode the base64 data. This happens when base64 data is spanned across packets*/
-    if(i)
+    if (i)
     {
         ds->prev_encoded_bytes = i;
         act_encode_size = act_encode_size - i;
         ds->prev_encoded_buf = encode_buf + act_encode_size;
     }
 
-    if(sf_base64decode(encode_buf, act_encode_size, decode_buf, decode_avail, &act_decode_size) != 0)
+    if (sf_base64decode(encode_buf, act_encode_size, decode_buf, decode_avail, &act_decode_size) !=
+        0)
     {
         ResetEmailDecodeState(ds);
         return DECODE_FAIL;
     }
-    else if(!act_decode_size && !encode_avail)
+    else if (!act_decode_size && !encode_avail)
     {
         ResetEmailDecodeState(ds);
         return DECODE_FAIL;
     }
-
 
     ds->decode_present = 1;
     ds->decodePtr = decode_buf;
@@ -318,10 +321,10 @@ int Base64Decode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds
     return DECODE_SUCCESS;
 }
 
-int QPDecode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds)
+int QPDecode(const uint8_t* start, const uint8_t* end, Email_DecodeState* ds)
 {
-    uint32_t encode_avail = 0, decode_avail = 0 ;
-    uint8_t *encode_buf, *decode_buf;
+    uint32_t encode_avail = 0, decode_avail = 0;
+    uint8_t* encode_buf, * decode_buf;
     uint32_t act_encode_size = 0, act_decode_size = 0, bytes_read = 0;
     uint32_t prev_bytes = 0;
     uint32_t i = 0;
@@ -346,8 +349,8 @@ int QPDecode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds)
 
     /* 1. Stop decoding when we have reached either the decode depth or encode depth.
      * 2. Stop decoding when we are out of memory */
-    if(encode_avail ==0 || decode_avail ==0 ||
-            (!encode_buf) || (!decode_buf))
+    if (encode_avail ==0 || decode_avail ==0 ||
+        (!encode_buf) || (!decode_buf))
     {
         ResetEmailDecodeState(ds);
         return DECODE_EXCEEDED;
@@ -355,16 +358,16 @@ int QPDecode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds)
 
     /*The non decoded encoded data in the previous packet is required for successful decoding
      * in case of base64 data spanned across packets*/
-    if( ds->prev_encoded_bytes )
+    if ( ds->prev_encoded_bytes )
     {
-        if(ds->prev_encoded_bytes > encode_avail)
+        if (ds->prev_encoded_bytes > encode_avail)
             ds->prev_encoded_bytes = encode_avail;
 
-        if(ds->prev_encoded_buf)
+        if (ds->prev_encoded_buf)
         {
             prev_bytes = ds->prev_encoded_bytes;
             encode_avail = encode_avail - prev_bytes;
-            while(ds->prev_encoded_bytes)
+            while (ds->prev_encoded_bytes)
             {
                 /* Since this data cannot be more than 3 bytes*/
                 encode_buf[i] = ds->prev_encoded_buf[i];
@@ -374,7 +377,8 @@ int QPDecode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds)
         }
     }
 
-    if(sf_strip_LWS(start, (end-start), encode_buf + prev_bytes, encode_avail, &act_encode_size) != 0)
+    if (sf_strip_LWS(start, (end-start), encode_buf + prev_bytes, encode_avail,
+        &act_encode_size) != 0)
     {
         ResetEmailDecodeState(ds);
         return DECODE_FAIL;
@@ -382,19 +386,19 @@ int QPDecode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds)
 
     act_encode_size = act_encode_size + prev_bytes;
 
-    if(sf_qpdecode((char *)encode_buf, act_encode_size, (char *)decode_buf, decode_avail, &bytes_read, &act_decode_size) != 0)
+    if (sf_qpdecode((char*)encode_buf, act_encode_size, (char*)decode_buf, decode_avail,
+        &bytes_read, &act_decode_size) != 0)
     {
         ResetEmailDecodeState(ds);
         return DECODE_FAIL;
     }
-    else if(!act_decode_size && !encode_avail)
+    else if (!act_decode_size && !encode_avail)
     {
         ResetEmailDecodeState(ds);
         return DECODE_FAIL;
     }
 
-
-    if(bytes_read < act_encode_size)
+    if (bytes_read < act_encode_size)
     {
         ds->prev_encoded_bytes = (act_encode_size - bytes_read);
         ds->prev_encoded_buf = encode_buf + bytes_read;
@@ -410,11 +414,10 @@ int QPDecode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds)
     return DECODE_SUCCESS;
 }
 
-
-int UUDecode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds)
+int UUDecode(const uint8_t* start, const uint8_t* end, Email_DecodeState* ds)
 {
-    uint32_t encode_avail = 0, decode_avail = 0 ;
-    uint8_t *encode_buf, *decode_buf;
+    uint32_t encode_avail = 0, decode_avail = 0;
+    uint8_t* encode_buf, * decode_buf;
     uint32_t act_encode_size = 0, act_decode_size = 0, bytes_read = 0;
     uint32_t prev_bytes = 0;
     uint32_t i = 0;
@@ -440,8 +443,8 @@ int UUDecode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds)
 
     /* 1. Stop decoding when we have reached either the decode depth or encode depth.
      * 2. Stop decoding when we are out of memory */
-    if(encode_avail ==0 || decode_avail ==0 ||
-            (!encode_buf) || (!decode_buf))
+    if (encode_avail ==0 || decode_avail ==0 ||
+        (!encode_buf) || (!decode_buf))
     {
         ds->uu_state.begin_found = 0;
         ResetEmailDecodeState(ds);
@@ -450,16 +453,16 @@ int UUDecode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds)
 
     /*The non decoded encoded data in the previous packet is required for successful decoding
      * in case of base64 data spanned across packets*/
-    if( ds->prev_encoded_bytes )
+    if ( ds->prev_encoded_bytes )
     {
-        if(ds->prev_encoded_bytes > encode_avail)
+        if (ds->prev_encoded_bytes > encode_avail)
             ds->prev_encoded_bytes = encode_avail;
 
-        if(ds->prev_encoded_buf)
+        if (ds->prev_encoded_buf)
         {
             prev_bytes = ds->prev_encoded_bytes;
             encode_avail = encode_avail - prev_bytes;
-            while(ds->prev_encoded_bytes)
+            while (ds->prev_encoded_bytes)
             {
                 /* Since this data cannot be more than 3 bytes*/
                 encode_buf[i] = ds->prev_encoded_buf[i];
@@ -469,15 +472,15 @@ int UUDecode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds)
         }
     }
 
-    if((uint32_t)(end- start) > encode_avail)
+    if ((uint32_t)(end- start) > encode_avail)
         act_encode_size = encode_avail;
     else
         act_encode_size = end - start;
 
-
-    if(encode_avail > 0)
+    if (encode_avail > 0)
     {
-        if(SafeMemcpy((encode_buf + prev_bytes), start, act_encode_size, encode_buf, (encode_buf+ encode_avail + prev_bytes)) != SAFEMEM_SUCCESS) 
+        if (SafeMemcpy((encode_buf + prev_bytes), start, act_encode_size, encode_buf, (encode_buf+
+            encode_avail + prev_bytes)) != SAFEMEM_SUCCESS)
         {
             ResetEmailDecodeState(ds);
             return DECODE_FAIL;
@@ -486,14 +489,14 @@ int UUDecode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds)
 
     act_encode_size = act_encode_size + prev_bytes;
 
-
-    if(sf_uudecode(encode_buf, act_encode_size, decode_buf, decode_avail, &bytes_read, &act_decode_size, 
-                &(ds->uu_state.begin_found), &(ds->uu_state.end_found)) != 0)
+    if (sf_uudecode(encode_buf, act_encode_size, decode_buf, decode_avail, &bytes_read,
+        &act_decode_size,
+        &(ds->uu_state.begin_found), &(ds->uu_state.end_found)) != 0)
     {
         ResetEmailDecodeState(ds);
         return DECODE_FAIL;
     }
-    else if(!act_decode_size && !encode_avail)
+    else if (!act_decode_size && !encode_avail)
     {
         /* Have insufficient data to decode */
         ResetEmailDecodeState(ds);
@@ -502,13 +505,13 @@ int UUDecode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds)
 
     /* Found the end. No more encoded data */
 
-    if(ds->uu_state.end_found)
+    if (ds->uu_state.end_found)
     {
         ds->uu_state.end_found = 0;
         ds->uu_state.begin_found = 0;
     }
 
-    if(bytes_read < act_encode_size)
+    if (bytes_read < act_encode_size)
     {
         ds->prev_encoded_bytes = (act_encode_size - bytes_read);
         ds->prev_encoded_buf = encode_buf + bytes_read;
@@ -524,10 +527,7 @@ int UUDecode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds)
     return DECODE_SUCCESS;
 }
 
-
-
-
-int BitEncExtract(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds)
+int BitEncExtract(const uint8_t* start, const uint8_t* end, Email_DecodeState* ds)
 {
     uint32_t bytes_avail = 0;
     uint32_t act_size = 0;
@@ -549,14 +549,13 @@ int BitEncExtract(const uint8_t *start, const uint8_t *end, Email_DecodeState *d
 
     /* 1. Stop decoding when we have reached either the decode depth or encode depth.
      * 2. Stop decoding when we are out of memory */
-    if(bytes_avail ==0)
+    if (bytes_avail ==0)
     {
         ResetEmailDecodeState(ds);
         return DECODE_EXCEEDED;
     }
 
-
-    if( (uint32_t)(end-start) < bytes_avail )
+    if ( (uint32_t)(end-start) < bytes_avail )
     {
         act_size = ( end - start);
     }
@@ -566,33 +565,33 @@ int BitEncExtract(const uint8_t *start, const uint8_t *end, Email_DecodeState *d
     }
 
     ds->decode_present = 1;
-    ds->decodePtr = (uint8_t *)start;
+    ds->decodePtr = (uint8_t*)start;
     ds->decoded_bytes = act_size;
     ds->bitenc_state.bytes_read += act_size;
 
     return DECODE_SUCCESS;
 }
 
-int EmailDecode(const uint8_t *start, const uint8_t *end, Email_DecodeState *ds)
+int EmailDecode(const uint8_t* start, const uint8_t* end, Email_DecodeState* ds)
 {
     int iRet = DECODE_FAIL;
 
-    switch(ds->decode_type)
+    switch (ds->decode_type)
     {
-        case DECODE_B64:
-            iRet = Base64Decode(start, end, ds);
-            break;
-        case DECODE_QP:
-            iRet = QPDecode(start, end, ds);
-            break;
-        case DECODE_UU:
-            iRet = UUDecode(start, end, ds);
-            break;
-        case DECODE_BITENC:
-            iRet = BitEncExtract(start, end, ds);
-            break;
-        default: 
-            break;
+    case DECODE_B64:
+        iRet = Base64Decode(start, end, ds);
+        break;
+    case DECODE_QP:
+        iRet = QPDecode(start, end, ds);
+        break;
+    case DECODE_UU:
+        iRet = UUDecode(start, end, ds);
+        break;
+    case DECODE_BITENC:
+        iRet = BitEncExtract(start, end, ds);
+        break;
+    default:
+        break;
     }
 
     return iRet;

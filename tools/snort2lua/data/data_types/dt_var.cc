@@ -33,8 +33,7 @@ Variable::Variable(std::string name)
     this->depth = 0;
 }
 
-Variable::~Variable(){}
-
+Variable::~Variable() { }
 
 std::string Variable::get_value(DataApi* ld)
 {
@@ -57,14 +56,12 @@ std::string Variable::get_value(DataApi* ld)
     return variable;
 }
 
-
 // does this need a new variable?
 bool Variable::add_value(std::string elem)
 {
     std::string s;
     std::string end;
     util::trim(elem);
-
 
     if (elem.size() <= 1)
     {
@@ -84,11 +81,9 @@ bool Variable::add_value(std::string elem)
             s = elem.substr(0, pos);
             end = elem.substr(pos, std::string::npos);
         }
-
     }
 
-
-    if(s.front() == '$')
+    if (s.front() == '$')
     {
         // add a space between strings
         if (!vars.empty())
@@ -100,19 +95,19 @@ bool Variable::add_value(std::string elem)
         }
 
         s.erase(s.begin());
-        VarData *vd = new VarData();
+        VarData* vd = new VarData();
         vd->type = VarType::VARIABLE;
         vd->data = s;
         vars.push_back(vd);
     }
     else if (!vars.empty() && vars.back()->type == VarType::STRING)
     {
-        VarData *vd = vars.back();
+        VarData* vd = vars.back();
         vd->data += " " + s;
     }
     else
     {
-        VarData *vd = new VarData();
+        VarData* vd = new VarData();
         vd->type = VarType::STRING;
 
         // if the previous variable was a symbol, we need a space seperator.
@@ -130,27 +125,27 @@ bool Variable::add_value(std::string elem)
 }
 
 static inline void print_newline(std::ostream& out,
-                                 std::size_t& count,
-                                 std::string whitespace)
+    std::size_t& count,
+    std::string whitespace)
 {
     out << "\n" << whitespace;
     count = whitespace.size();
 }
 
-std::ostream& operator<<( std::ostream& out, const Variable &var)
+std::ostream& operator<<(std::ostream& out, const Variable& var)
 {
     std::string whitespace;
     bool first_var = true;
     std::size_t count = 0;
 
-    for(int i = 0; i < var.depth; i++)
+    for (int i = 0; i < var.depth; i++)
         whitespace += "    ";
 
     out << whitespace << var.name << " = ";
     count += whitespace.size() + var.name.size() + 3;
     whitespace += "    ";
 
-    for(Variable::VarData *v : var.vars)
+    for (Variable::VarData* v : var.vars)
     {
         // keeping lines below max_line_length charachters
         if ((count + 4) > var.max_line_length)
@@ -165,7 +160,6 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
         else
             first_var = false;
 
-
         // print string
         if (v->type == Variable::VarType::VARIABLE)
         {
@@ -175,23 +169,19 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
             out << v->data;
             count += v->data.size();
         }
-
         else if ((count + v->data.size()) < var.max_line_length)
         {
             out << "'" << v->data << "'";
             count += v->data.size() + 2;
         }
-
         else
         {
             if (count + 3 > var.max_line_length)
                 print_newline(out, count, whitespace);
 
-
             util::sanitize_lua_string(v->data);
             out << "[[ ";
             count += 3;
-
 
             std::size_t printed_length = 0;
             std::size_t str_size = v->data.size();
@@ -204,17 +194,15 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
                 else
                     print_newline(out, count, whitespace);
 
-
-                while(isspace(v->data[printed_length]))
+                while (isspace(v->data[printed_length]))
                     printed_length++;
-
 
                 std::string tmp = v->data.substr(printed_length);
 
                 if (var.max_line_length < count)
                 {
                     out << "FATAL ERROR: dt_var.cc - underflow! was "
-                            "not reset" << std::endl;
+                        "not reset" << std::endl;
                 }
                 else
                 {
@@ -234,3 +222,4 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
 
     return out;
 }
+

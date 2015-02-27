@@ -36,7 +36,7 @@ FlowData::FlowData(unsigned u, Inspector* ph)
 {
     assert(u > 0);
     id = u;  handler = ph;
-    if ( handler ) 
+    if ( handler )
         handler->add_ref();
 }
 
@@ -161,7 +161,7 @@ void Flow::clear(bool freeAppData)
 
 int Flow::set_application_data(FlowData* fd)
 {
-    FlowData *appData = get_application_data(fd->get_id());
+    FlowData* appData = get_application_data(fd->get_id());
     assert(appData != fd);
 
     if (appData)
@@ -272,7 +272,7 @@ void Flow::set_direction(Packet* p)
 {
     ip::IpApi* ip_api = &p->ptrs.ip_api;
 
-    if(ip_api->is_ip4())
+    if (ip_api->is_ip4())
     {
         if (sfip_fast_eq4(ip_api->get_src(), &client_ip))
         {
@@ -360,7 +360,7 @@ bool Flow::expired(Packet* p)
     return false;
 }
 
-void Flow::set_ttl (Packet* p, bool client)
+void Flow::set_ttl(Packet* p, bool client)
 {
     uint8_t inner_ttl = 0, outer_ttl = 0;
 

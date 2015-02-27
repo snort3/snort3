@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 // init_state.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #include <vector>
 #include <sstream>
 #include <iostream>
@@ -27,8 +26,7 @@
 #include "keyword_states/keywords_api.h"
 #include "data/dt_data.h"
 
-
-InitState::InitState(Converter& c) : ConversionState(c) {}
+InitState::InitState(Converter& c) : ConversionState(c) { }
 
 bool InitState::convert(std::istringstream& data_stream)
 {
@@ -36,7 +34,7 @@ bool InitState::convert(std::istringstream& data_stream)
 
     if (data_stream >> keyword)
     {
-        const ConvertMap *map = util::find_map(keywords::keywords_api, keyword);
+        const ConvertMap* map = util::find_map(keywords::keywords_api, keyword);
         if (map)
         {
             cv.set_state(map->ctor(cv));
@@ -60,3 +58,4 @@ bool InitState::convert(std::istringstream& data_stream)
 
     return false;
 }
+

@@ -16,7 +16,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 /*
 *
 *  sfsnprintfappend.h
@@ -32,6 +32,7 @@
 
 #include "main/snort_types.h"
 
-SO_PUBLIC int sfsnprintfappend(char *dest, int dsize, const char *format, ...);
+SO_PUBLIC int sfsnprintfappend(char* dest, int dsize, const char* format, ...);
 
 #endif /* SFSNPRINTFAPPEND_H */
+

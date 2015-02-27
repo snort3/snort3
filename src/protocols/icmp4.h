@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 // icmp4.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifndef PROTOCOLS_ICMP4_H
 #define PROTOCOLS_ICMP4_H
 
@@ -26,14 +25,11 @@
 
 namespace icmp
 {
-
-
 constexpr uint32_t ICMP_BASE_LEN = 4;
 constexpr uint8_t ICMP_UNREACH_DATA_LEN = 8;
 
-// do NOT add 'ICMP_' to the begining of these const because they 
+// do NOT add 'ICMP_' to the begining of these const because they
 // will overlap with dnet macros
-
 
 //enum class IcmpType : std::uint8_t {
 enum IcmpType : std::uint8_t
@@ -56,17 +52,16 @@ enum IcmpType : std::uint8_t
 //      NR_ICMP_TYPES = 18,
 };
 
-
 //enum class IcmpCode : std::uint8_t {
 enum IcmpCode : std::uint8_t
 {
     /* Codes for ICMP UNREACHABLES (3) */
-    NET_UNREACH = 0,  
-    HOST_UNREACH = 1, 
-    PROT_UNREACH = 2,   
-    PORT_UNREACH = 3, 
-    FRAG_NEEDED = 4, 
-    SR_FAILED = 5, 
+    NET_UNREACH = 0,
+    HOST_UNREACH = 1,
+    PROT_UNREACH = 2,
+    PORT_UNREACH = 3,
+    FRAG_NEEDED = 4,
+    SR_FAILED = 5,
     NET_UNKNOWN = 6,
     HOST_UNKNOWN = 7,
     HOST_ISOLATED = 8,
@@ -74,10 +69,10 @@ enum IcmpCode : std::uint8_t
     PKT_FILTERED_HOST = 10,
     NET_UNR_TOS = 11,
     HOST_UNR_TOS = 12,
-    PKT_FILTERED = 13, 
-    PREC_VIOLATION = 14, 
-    PREC_CUTOFF = 15, 
-    
+    PKT_FILTERED = 13,
+    PREC_VIOLATION = 14,
+    PREC_CUTOFF = 15,
+
     /* Code for ICMP Source Quence (4) */
     SOURCE_QUENCH_CODE = 0,
 
@@ -88,7 +83,7 @@ enum IcmpCode : std::uint8_t
     REDIR_TOS_HOST = 3,
 
     /* Codes for ICMP Echo (8) */
-    ECHO_CODE = 0, 
+    ECHO_CODE = 0,
 
     /* Codes for ICMP time excceeded (11) */
     TIMEOUT_TRANSIT = 0,
@@ -177,7 +172,7 @@ struct ICMPHdr
         /* IP header for unreach */
         struct ih_ip
         {
-            ip::IP4Hdr *ip;
+            ip::IP4Hdr* ip;
             /* options and then 64 bits of data */
         } ip;
 
@@ -189,8 +184,7 @@ struct ICMPHdr
 
         uint32_t mask;
 
-        char    data[1];
-
+        char data[1];
     } icmp_dun;
 #define s_icmp_otime      icmp_dun.ts.otime
 #define s_icmp_rtime      icmp_dun.ts.rtime
@@ -199,12 +193,8 @@ struct ICMPHdr
 #define s_icmp_radv       icmp_dun.radv
 #define s_icmp_mask       icmp_dun.mask
 #define s_icmp_data       icmp_dun.data
-    
-} ;
-
+};
 } //namespace icmp
-
-
 
 typedef icmp::ICMPHdr ICMPHdr;
 
@@ -263,3 +253,4 @@ constexpr uint8_t ICMP_PARAM_OPTMISSING = 1;
 constexpr uint8_t ICMP_PARAM_BAD_LENGTH = 2;
 
 #endif /* ICMP4_H */
+

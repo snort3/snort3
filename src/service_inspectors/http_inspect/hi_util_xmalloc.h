@@ -16,17 +16,17 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 #ifndef HI_UTIL_XMALLOC_H
 #define HI_UTIL_XMALLOC_H
 
 #include <sys/types.h>
 
-void *xmalloc(size_t byteSize);
-char *xstrdup(const char *str);
+void* xmalloc(size_t byteSize);
+char* xstrdup(const char* str);
 
 void xshowmem(void);
-void xfree( void * );
+void xfree(void*);
 
 #endif
 

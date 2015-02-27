@@ -66,7 +66,8 @@ typedef enum
     SFRF_COUNT_MAX
 } SFRF_COUNT_OPERATION;
 
-typedef enum {
+typedef enum
+{
     FS_NEW = 0, FS_OFF, FS_ON, FS_MAX
 } FilterState;
 
@@ -76,7 +77,7 @@ typedef enum {
 struct tSFRFConfigNode
 {
     // Internally generated unique threshold identity
-    int      tid;
+    int tid;
 
     // Generator id from configured threshold
     unsigned gid;
@@ -104,7 +105,6 @@ struct tSFRFConfigNode
 
     // ip set to restrict rate_filter
     sfip_var_t* applyTo;
-
 };
 
 /* tSFRFSidNode acts as a container of gid+sid based threshold objects,
@@ -124,7 +124,6 @@ struct tSFRFSidNode
 
     // List of threshold configuration nodes of type tSFRFConfigNode
     SF_LIST* configNodeList;
-
 };
 
 struct tSFRFGenHashKey
@@ -134,9 +133,7 @@ struct tSFRFGenHashKey
 
     // Signature id from configured threshold
     unsigned sid;
-
 };
-
 
 /* Single global context containing rate_filter configuration nodes.
  */
@@ -156,7 +153,6 @@ struct RateFilterConfig
     int memcap;
 
     int internal_event_mask;
-
 };
 
 /*
@@ -164,19 +160,19 @@ struct RateFilterConfig
  */
 void SFRF_Delete(void);
 void SFRF_Flush(void);
-int SFRF_ConfigAdd(SnortConfig*, RateFilterConfig *, tSFRFConfigNode* );
+int SFRF_ConfigAdd(SnortConfig*, RateFilterConfig*, tSFRFConfigNode*);
 
 int SFRF_TestThreshold(
-    RateFilterConfig *config,
-    unsigned gid,
-    unsigned sid,
-    const sfip_t *sip,
-    const sfip_t *dip,
-    time_t curTime,
-    SFRF_COUNT_OPERATION
+RateFilterConfig *config,
+unsigned gid,
+unsigned sid,
+const sfip_t *sip,
+const sfip_t *dip,
+time_t curTime,
+SFRF_COUNT_OPERATION
 );
 
-void SFRF_ShowObjects(RateFilterConfig *);
+void SFRF_ShowObjects(RateFilterConfig*);
 /*@}*/
 #endif // SFRF_H
 

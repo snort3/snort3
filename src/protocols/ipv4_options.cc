@@ -24,14 +24,11 @@
 
 namespace ip
 {
-
-
 IpOptionIteratorIter::IpOptionIteratorIter(const IpOptions* first_opt) : opt(first_opt)
 { }
 
-const IpOptions& IpOptionIteratorIter::operator* () const
+const IpOptions& IpOptionIteratorIter::operator*() const
 { return *opt; }
-
 
 IpOptionIterator::IpOptionIterator(const IP4Hdr* const ip4_header, const Packet* const p)
 {
@@ -53,8 +50,6 @@ IpOptionIterator::IpOptionIterator(const IP4Hdr* const ip4_header, const Packet*
     // Can occur if tcp_layer > max_layers.  No Options in such a case.
 }
 
-
-
 IpOptionIterator::IpOptionIterator(const IP4Hdr* const ip4_header, const uint8_t valid_hdr_len)
 {
     const uint8_t* const hdr = (const uint8_t* const)ip4_header;
@@ -75,6 +70,5 @@ IpOptionIteratorIter IpOptionIterator::end() const
 {
     return IpOptionIteratorIter(reinterpret_cast<const IpOptions*>(end_ptr));
 }
-
-
 } // namespace ip
+

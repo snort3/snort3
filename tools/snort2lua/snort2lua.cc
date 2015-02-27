@@ -25,7 +25,6 @@
 #include "helpers/s2l_util.h"
 #include "helpers/parse_cmd_line.h"
 
-
 /*********************************************
  **************  MAIN FILES  *****************
  *********************************************/
@@ -36,10 +35,9 @@ static void print_line(std::string s)
         std::cout << s << std::endl;
 }
 
-int main (int argc, char* argv[])
+int main(int argc, char* argv[])
 {
     bool fail = false;
-
 
     if (!parser::parse_cmd_line(argc, argv))
     {
@@ -69,8 +67,8 @@ int main (int argc, char* argv[])
         fail = true;
     }
 
-
     if (fail || cv.failed_conversions())
         return -2;
     return 0;
 }
+

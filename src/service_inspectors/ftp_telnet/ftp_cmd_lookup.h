@@ -35,12 +35,13 @@
 #include "ftpp_include.h"
 #include "ftpp_ui_config.h"
 
-int ftp_cmd_lookup_init(CMD_LOOKUP **CmdLookup);
-int ftp_cmd_lookup_cleanup(CMD_LOOKUP **CmdLookup);
-int ftp_cmd_lookup_add(CMD_LOOKUP *CmdLookup, const char* cmd, int len, FTP_CMD_CONF *FTPCmd);
+int ftp_cmd_lookup_init(CMD_LOOKUP** CmdLookup);
+int ftp_cmd_lookup_cleanup(CMD_LOOKUP** CmdLookup);
+int ftp_cmd_lookup_add(CMD_LOOKUP* CmdLookup, const char* cmd, int len, FTP_CMD_CONF* FTPCmd);
 
-FTP_CMD_CONF *ftp_cmd_lookup_find(CMD_LOOKUP *CmdLookup, const char cmd[], int len, int *iError);
-FTP_CMD_CONF *ftp_cmd_lookup_first(CMD_LOOKUP *CmdLookup, int *iError);
-FTP_CMD_CONF *ftp_cmd_lookup_next(CMD_LOOKUP *CmdLookup, int *iError);
+FTP_CMD_CONF* ftp_cmd_lookup_find(CMD_LOOKUP* CmdLookup, const char cmd[], int len, int* iError);
+FTP_CMD_CONF* ftp_cmd_lookup_first(CMD_LOOKUP* CmdLookup, int* iError);
+FTP_CMD_CONF* ftp_cmd_lookup_next(CMD_LOOKUP* CmdLookup, int* iError);
 
 #endif
+

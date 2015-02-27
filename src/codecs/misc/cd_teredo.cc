@@ -18,9 +18,6 @@
 //--------------------------------------------------------------------------
 // cd_teredo.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -39,19 +36,16 @@
 
 namespace
 {
-
 class TeredoCodec : public Codec
 {
 public:
-    TeredoCodec() : Codec(CD_TEREDO_NAME){};
-    ~TeredoCodec(){};
+    TeredoCodec() : Codec(CD_TEREDO_NAME) { }
+    ~TeredoCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
-
 } // anonymous namespace
-
 
 void TeredoCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
@@ -66,7 +60,7 @@ bool TeredoCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort
         return false;
 
     /* Decode indicators. If both are present, Auth always comes before Origin. */
-    if ( ntohs(*(uint16_t *)raw_pkt) == teredo::INDICATOR_AUTH )
+    if ( ntohs(*(uint16_t*)raw_pkt) == teredo::INDICATOR_AUTH )
     {
         if ( raw.len < teredo::INDICATOR_AUTH_MIN_LEN )
             return false;
@@ -74,14 +68,15 @@ bool TeredoCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort
         uint8_t client_id_length = *(raw_pkt + 2);
         uint8_t auth_data_length = *(raw_pkt + 3);
 
-        if (raw.len < (uint32_t)(teredo::INDICATOR_AUTH_MIN_LEN + client_id_length + auth_data_length))
+        if (raw.len < (uint32_t)(teredo::INDICATOR_AUTH_MIN_LEN + client_id_length +
+            auth_data_length))
             return false;
 
         raw_pkt += (teredo::INDICATOR_AUTH_MIN_LEN + client_id_length + auth_data_length);
         codec.lyr_len = (teredo::INDICATOR_AUTH_MIN_LEN + client_id_length + auth_data_length);
     }
 
-    if ( ntohs(*(uint16_t *)raw_pkt) == teredo::INDICATOR_ORIGIN )
+    if ( ntohs(*(uint16_t*)raw_pkt) == teredo::INDICATOR_ORIGIN )
     {
         if ( raw.len < teredo::INDICATOR_ORIGIN_LEN )
             return false;
@@ -117,7 +112,7 @@ bool TeredoCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort
 static Codec* ctor(Module*)
 { return new TeredoCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi teredo_api =
@@ -139,7 +134,6 @@ static const CodecApi teredo_api =
     dtor, // dtor
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -149,3 +143,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_teredo = &teredo_api.base;
 #endif
+

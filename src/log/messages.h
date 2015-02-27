@@ -58,30 +58,32 @@ class Dumper
 public:
     Dumper(const char* s = nullptr, unsigned n = 3)
     {
-        max = n; idx = 0; 
+        max = n; idx = 0;
         if ( s )
             LogMessage("%s\n", s);
-    };
+    }
 
     ~Dumper()
     {
         if ( idx % max )
             LogMessage("\n");
-    };  
+    }
 
     void dump(const char* s, unsigned v = 0)
     {
         const char* eol = !(++idx % max) ? "\n" : "";
         LogMessage("    %18.18s(v%u)%s", s, v, eol);
-    };  
+    }
+
     void dump(const char* s, const char* t)
     {
         LogMessage("%s::%s\n", s, t);
-    };  
+    }
+
 private:
     unsigned max;
     unsigned idx;
-};  
+};
 
 #endif
 

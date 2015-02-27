@@ -35,7 +35,6 @@
 **
 */
 
-
 #include <stdio.h>
 
 #ifdef HAVE_CONFIG_H
@@ -84,38 +83,35 @@ typedef enum _CvsTypes
 {
     CVS_INVALID_ENTRY = 1,
     CVS_END_OF_ENUM
-    
 } CvsTypes;
 
 typedef struct _CvsRuleOption
 {
     CvsTypes type;
-
 } CvsRuleOption;
 
 /* represents a CVS command with argument */
 typedef struct _CvsCommand
 {
-    const uint8_t  *cmd_str;        /* command string */
-    int              cmd_str_len;
-    const uint8_t  *cmd_arg;        /* command argument */
-    int              cmd_arg_len;
-    
+    const uint8_t* cmd_str;         /* command string */
+    int cmd_str_len;
+    const uint8_t* cmd_arg;         /* command argument */
+    int cmd_arg_len;
 } CvsCommand;
 
-static int CvsDecode(const uint8_t *, uint16_t, CvsRuleOption *);
-static void CvsGetCommand(const uint8_t *, const uint8_t *, CvsCommand *);
-static int CvsCmdCompare(const char *, const uint8_t *, int);
-static int CvsValidateEntry(const uint8_t *, const uint8_t *);
-static void CvsGetEOL(const uint8_t *, const uint8_t *,
-                      const uint8_t **, const uint8_t **);
+static int CvsDecode(const uint8_t*, uint16_t, CvsRuleOption*);
+static void CvsGetCommand(const uint8_t*, const uint8_t*, CvsCommand*);
+static int CvsCmdCompare(const char*, const uint8_t*, int);
+static int CvsValidateEntry(const uint8_t*, const uint8_t*);
+static void CvsGetEOL(const uint8_t*, const uint8_t*,
+    const uint8_t**, const uint8_t**);
 
 class CvsOption : public IpsOption
 {
 public:
     CvsOption(const CvsRuleOption& c) :
         IpsOption(s_name)
-    { config = c; };
+    { config = c; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -133,7 +129,7 @@ private:
 uint32_t CvsOption::hash() const
 {
     uint32_t a,b,c;
-    const CvsRuleOption *data = &config;
+    const CvsRuleOption* data = &config;
 
     a = data->type;
     b = 0;
@@ -151,8 +147,8 @@ bool CvsOption::operator==(const IpsOption& ips) const
         return false;
 
     CvsOption& rhs = (CvsOption&)ips;
-    CvsRuleOption *left = (CvsRuleOption*)&config;
-    CvsRuleOption *right = (CvsRuleOption*)&rhs.config;
+    CvsRuleOption* left = (CvsRuleOption*)&config;
+    CvsRuleOption* right = (CvsRuleOption*)&rhs.config;
 
     if (left->type == right->type)
     {
@@ -162,12 +158,11 @@ bool CvsOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int CvsOption::eval(Cursor&, Packet *p)
+int CvsOption::eval(Cursor&, Packet* p)
 {
     int ret;
     int rval = DETECTION_OPTION_NO_MATCH;
-    CvsRuleOption *cvs_rule_option = &config;
-
+    CvsRuleOption* cvs_rule_option = &config;
 
     if (p == NULL)
     {
@@ -184,7 +179,7 @@ int CvsOption::eval(Cursor&, Packet *p)
         return rval;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "CVS begin detection\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "CVS begin detection\n"); );
 
     ret = CvsDecode(p->data, p->dsize, cvs_rule_option);
 
@@ -200,14 +195,13 @@ int CvsOption::eval(Cursor&, Packet *p)
 // helper methods
 //-------------------------------------------------------------------------
 
-static int CvsDecode(const uint8_t *data, uint16_t data_len,
-                     CvsRuleOption *cvs_rule_option)
+static int CvsDecode(const uint8_t* data, uint16_t data_len,
+    CvsRuleOption* cvs_rule_option)
 {
-    const uint8_t *line, *end;
-    const uint8_t *eol = NULL, *eolm = NULL;
+    const uint8_t* line, * end;
+    const uint8_t* eol = NULL, * eolm = NULL;
     CvsCommand command;
     int ret;
-
 
     line = data;
     end = data + data_len;
@@ -226,30 +220,30 @@ static int CvsDecode(const uint8_t *data, uint16_t data_len,
             return CVS_NO_ALERT;
 
         DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "CVS command\n"
-                                              "  comand: %.*s\n"
-                                              "argument: %.*s\n",
-                                command.cmd_str_len, (char *)command.cmd_str,
-                                command.cmd_arg == NULL ? 4 : command.cmd_arg_len,
-                                command.cmd_arg == NULL ? "none" : (char *)command.cmd_arg););
+            "  comand: %.*s\n"
+            "argument: %.*s\n",
+            command.cmd_str_len, (char*)command.cmd_str,
+            command.cmd_arg == NULL ? 4 : command.cmd_arg_len,
+            command.cmd_arg == NULL ? "none" : (char*)command.cmd_arg); );
 
         switch (cvs_rule_option->type)
         {
-            case CVS_INVALID_ENTRY:
-                if (CvsCmdCompare(CVS_ENTRY_STR, command.cmd_str, command.cmd_str_len) == 0)
+        case CVS_INVALID_ENTRY:
+            if (CvsCmdCompare(CVS_ENTRY_STR, command.cmd_str, command.cmd_str_len) == 0)
+            {
+                ret = CvsValidateEntry(command.cmd_arg,
+                    (command.cmd_arg + command.cmd_arg_len));
+
+                if ((ret == CVS_ENTRY_INVALID)&&(eol < end))
                 {
-                    ret = CvsValidateEntry(command.cmd_arg,
-                                           (command.cmd_arg + command.cmd_arg_len));
-
-                    if ((ret == CVS_ENTRY_INVALID)&&(eol < end))
-                    {
-                        return CVS_ALERT;
-                    }
+                    return CVS_ALERT;
                 }
+            }
 
-                break;
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
 
         line = eol;
@@ -257,7 +251,6 @@ static int CvsDecode(const uint8_t *data, uint16_t data_len,
 
     return CVS_NO_ALERT;
 }
-
 
 /*
 **  NAME
@@ -273,7 +266,7 @@ static int CvsDecode(const uint8_t *data, uint16_t data_len,
 **
 */
 
-static int CvsCmdCompare(const char *cmd, const uint8_t *pkt_cmd, int pkt_cmd_len)
+static int CvsCmdCompare(const char* cmd, const uint8_t* pkt_cmd, int pkt_cmd_len)
 {
     if (((size_t)pkt_cmd_len == strlen(cmd)) &&
         (memcmp(pkt_cmd, cmd, pkt_cmd_len) == 0))
@@ -283,7 +276,6 @@ static int CvsCmdCompare(const char *cmd, const uint8_t *pkt_cmd, int pkt_cmd_le
 
     return 1;
 }
-
 
 /*
 **  NAME
@@ -304,10 +296,9 @@ static int CvsCmdCompare(const char *cmd, const uint8_t *pkt_cmd, int pkt_cmd_le
 **
 */
 
-static void CvsGetCommand(const uint8_t *line, const uint8_t *end, CvsCommand *cmd)
+static void CvsGetCommand(const uint8_t* line, const uint8_t* end, CvsCommand* cmd)
 {
-    const uint8_t *cmd_end;
-
+    const uint8_t* cmd_end;
 
     if (cmd == NULL)
         return;
@@ -325,7 +316,7 @@ static void CvsGetCommand(const uint8_t *line, const uint8_t *end, CvsCommand *c
 
     cmd->cmd_str = line;
 
-    cmd_end = (const uint8_t *)memchr(line, CVS_COMMAND_SEPARATOR, end - line);
+    cmd_end = (const uint8_t*)memchr(line, CVS_COMMAND_SEPARATOR, end - line);
     if (cmd_end != NULL)
     {
         cmd->cmd_str_len = cmd_end - line;
@@ -339,7 +330,6 @@ static void CvsGetCommand(const uint8_t *line, const uint8_t *end, CvsCommand *c
         cmd->cmd_arg_len = 0;
     }
 }
-
 
 /*
 **  NAME
@@ -358,10 +348,9 @@ static void CvsGetCommand(const uint8_t *line, const uint8_t *end, CvsCommand *c
 **
 */
 
-static int CvsValidateEntry(const uint8_t *entry_arg, const uint8_t *end_arg)
+static int CvsValidateEntry(const uint8_t* entry_arg, const uint8_t* end_arg)
 {
     int slashes = 0;
-
 
     if ((entry_arg == NULL) || (end_arg == NULL))
     {
@@ -376,7 +365,7 @@ static int CvsValidateEntry(const uint8_t *entry_arg, const uint8_t *end_arg)
          * commands occurs */
         if (slashes == 3)
         {
-            if((*entry_arg != '/')&&(*entry_arg != '+'))
+            if ((*entry_arg != '/')&&(*entry_arg != '+'))
             {
                 return CVS_ENTRY_INVALID;
             }
@@ -400,7 +389,6 @@ static int CvsValidateEntry(const uint8_t *entry_arg, const uint8_t *end_arg)
     return CVS_ENTRY_VALID;
 }
 
-
 /*
 **       Gets a line from the data string.
 **       Sets an end-of-line marker to point to the marker
@@ -408,10 +396,10 @@ static int CvsValidateEntry(const uint8_t *entry_arg, const uint8_t *end_arg)
 **
 */
 
-static void CvsGetEOL(const uint8_t *ptr, const uint8_t *end,
-                      const uint8_t **eol, const uint8_t **eolm)
+static void CvsGetEOL(const uint8_t* ptr, const uint8_t* end,
+    const uint8_t** eol, const uint8_t** eolm)
 {
-    *eolm = (uint8_t *)memchr(ptr, CVS_COMMAND_DELIMITER, end - ptr);
+    *eolm = (uint8_t*)memchr(ptr, CVS_COMMAND_DELIMITER, end - ptr);
     if (*eolm == NULL)
     {
         *eolm = end;
@@ -441,13 +429,13 @@ static const Parameter s_params[] =
 class CvsModule : public Module
 {
 public:
-    CvsModule() : Module(s_name, s_help, s_params) { };
+    CvsModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &cvsPerfStats; };
+    { return &cvsPerfStats; }
 
     CvsRuleOption data;
 };

@@ -64,18 +64,17 @@ typedef struct _SFPERF
     uint32_t pkt_cnt;
     int sample_interval;
     time_t sample_time;
-    char *file;
-    FILE *fh;
+    char* file;
+    FILE* fh;
     int base_reset;
     int flow_max_port_to_track;
-    char *flow_file;
-    FILE *flow_fh;
+    char* flow_file;
+    FILE* flow_fh;
     uint32_t max_file_size;
-    char *flowip_file;
-    FILE *flowip_fh;
+    char* flowip_file;
+    FILE* flowip_fh;
     uint32_t flowip_memcap;
 } SFPERF;
-
 
 SO_PUBLIC extern THREAD_LOCAL SFBASE sfBase;
 extern THREAD_LOCAL SFFLOW sfFlow;
@@ -83,19 +82,19 @@ extern THREAD_LOCAL SFEVENT sfEvent;
 extern THREAD_LOCAL SFPERF* perfmon_config;
 extern THREAD_LOCAL int perfmon_rotate_perf_file;
 
-void sfInitPerformanceStatistics(SFPERF *);
-FILE * sfOpenBaseStatsFile(const char *);
-void sfCloseBaseStatsFile(SFPERF *sfPerf);
-FILE * sfOpenFlowStatsFile(const char *);
-void sfCloseFlowStatsFile(SFPERF *sfPerf);
-FILE * sfOpenFlowIPStatsFile(const char *);
-void sfCloseFlowIPStatsFile(SFPERF *sfPerf);
-int sfRotateBaseStatsFile(SFPERF *sfPerf);
-int sfRotateFlowStatsFile(SFPERF *sfPerf);
-void sfPerformanceStats(SFPERF *, Packet *);
-void sfPerfStatsSummary(SFPERF *);
-void SetSampleTime(SFPERF *, Packet *);
-void InitPerfStats(SFPERF *sfPerf);
+void sfInitPerformanceStatistics(SFPERF*);
+FILE* sfOpenBaseStatsFile(const char*);
+void sfCloseBaseStatsFile(SFPERF* sfPerf);
+FILE* sfOpenFlowStatsFile(const char*);
+void sfCloseFlowStatsFile(SFPERF* sfPerf);
+FILE* sfOpenFlowIPStatsFile(const char*);
+void sfCloseFlowIPStatsFile(SFPERF* sfPerf);
+int sfRotateBaseStatsFile(SFPERF* sfPerf);
+int sfRotateFlowStatsFile(SFPERF* sfPerf);
+void sfPerformanceStats(SFPERF*, Packet*);
+void sfPerfStatsSummary(SFPERF*);
+void SetSampleTime(SFPERF*, Packet*);
+void InitPerfStats(SFPERF* sfPerf);
 
 static inline void SetRotatePerfFileFlag(void)
 {
@@ -111,5 +110,6 @@ static inline void ClearRotatePerfFileFlag(void)
 {
     perfmon_rotate_perf_file = 0;
 }
+
 #endif
 

@@ -36,7 +36,7 @@ struct StreamBuffer
 class SO_PUBLIC StreamSplitter
 {
 public:
-    virtual ~StreamSplitter() { };
+    virtual ~StreamSplitter() { }
 
     enum Status
     {
@@ -55,7 +55,7 @@ public:
         uint32_t len,          // length of data
         uint32_t flags,        // packet flags indicating direction of data
         uint32_t* fp           // flush point (offset) relative to data
-    ) = 0;
+        ) = 0;
 
     virtual const StreamBuffer* reassemble(
         Flow*,
@@ -65,24 +65,24 @@ public:
         unsigned len,          // length of data to process this iteration
         uint32_t flags,        // packet flags indicating pdu head and/or tail
         unsigned& copied       // actual data copied (1 <= copied <= len)
-    );
+        );
 
-    virtual bool is_paf() { return false; };
+    virtual bool is_paf() { return false; }
     virtual unsigned max();
 
     // FIXIT-L this is temporary for legacy paf_max required only
-    // for HI; it is not appropriate for multiple stream_tcp with 
+    // for HI; it is not appropriate for multiple stream_tcp with
     // different paf_max; the HI splitter should pull from there
     static void set_max(unsigned);
 
-    virtual void reset() { };
-    virtual void update() { };
+    virtual void reset() { }
+    virtual void update() { }
 
-    bool to_server() { return c2s; };
-    bool to_client() { return !c2s; };
+    bool to_server() { return c2s; }
+    bool to_client() { return !c2s; }
 
 protected:
-    StreamSplitter(bool b) { c2s = b; };
+    StreamSplitter(bool b) { c2s = b; }
 
 private:
     static unsigned max_pdu;
@@ -104,7 +104,7 @@ public:
         uint32_t len,
         uint32_t flags,
         uint32_t* fp
-    ) override;
+        ) override;
     void reset() override;
     void update() override;
 
@@ -129,7 +129,7 @@ public:
         uint32_t len,
         uint32_t flags,
         uint32_t* fp
-    ) override;
+        ) override;
 };
 
 #endif

@@ -27,9 +27,8 @@
 
 namespace preprocessors
 {
-
-namespace {
-
+namespace
+{
 class RpcDecode : public ConversionState
 {
 public:
@@ -40,7 +39,6 @@ public:
 private:
     bool converted_args;
 };
-
 } // namespace
 
 RpcDecode::RpcDecode(Converter& c) : ConversionState(c)
@@ -75,19 +73,19 @@ bool RpcDecode::convert(std::istringstream& data_stream)
     bind.set_use_type("rpc_decode");
 
     table_api.open_table("rpc_decode");
-    
-    while(data_stream >> keyword)
+
+    while (data_stream >> keyword)
     {
-        if(!keyword.compare("no_alert_multiple_requests"))
+        if (!keyword.compare("no_alert_multiple_requests"))
             table_api.add_deleted_comment("no_alert_multiple_requests");
 
-        else if(!keyword.compare("alert_fragments"))
+        else if (!keyword.compare("alert_fragments"))
             table_api.add_deleted_comment("alert_fragments");
 
-        else if(!keyword.compare("no_alert_large_fragments"))
+        else if (!keyword.compare("no_alert_large_fragments"))
             table_api.add_deleted_comment("no_alert_large_fragments");
 
-        else if(!keyword.compare("no_alert_incomplete"))
+        else if (!keyword.compare("no_alert_incomplete"))
             table_api.add_deleted_comment("no_alert_incomplete");
 
         else if (isdigit(keyword[0]))
@@ -99,7 +97,6 @@ bool RpcDecode::convert(std::istringstream& data_stream)
         {
             data_api.failed_conversion(data_stream, keyword);
             retval = false;
-
         }
     }
 
@@ -110,7 +107,7 @@ bool RpcDecode::convert(std::istringstream& data_stream)
     }
 
     converted_args = true;
-    return retval;   
+    return retval;
 }
 
 /**************************
@@ -127,5 +124,5 @@ static const ConvertMap preprocessor_rpc_decode =
 };
 
 const ConvertMap* rpc_decode_map = &preprocessor_rpc_decode;
-
 } // namespace preprocessors
+

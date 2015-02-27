@@ -26,19 +26,16 @@
 
 namespace preprocessors
 {
-
-namespace {
-
+namespace
+{
 class Gtp : public ConversionState
 {
 public:
-    Gtp(Converter& c) : ConversionState(c) {};
-    virtual ~Gtp() {};
+    Gtp(Converter& c) : ConversionState(c) { }
+    virtual ~Gtp() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
-
 
 bool Gtp::convert(std::istringstream& data_stream)
 {
@@ -53,23 +50,19 @@ bool Gtp::convert(std::istringstream& data_stream)
         bool tmpval = true;
         std::istringstream arg_stream(args);
 
-
         if (!(arg_stream >> keyword))
         {
             tmpval = false;
         }
-
         else if (!keyword.compare("ports"))
         {
             table_api.add_diff_option_comment("ports", "gtp_ports");
             tmpval = parse_curly_bracket_list("gtp_ports", arg_stream);
         }
-
         else
         {
             tmpval = false;
         }
-
 
         if (retval && !tmpval)
             retval = false;
@@ -95,5 +88,5 @@ static const ConvertMap preprocessor_gtp =
 };
 
 const ConvertMap* gtp_map = &preprocessor_gtp;
-
 } // namespace preprocessors
+

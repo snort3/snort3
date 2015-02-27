@@ -27,42 +27,19 @@
 // Individual pieces of the message found during parsing.
 // Length values <= 0 are StatusCode values and imply that the start pointer is meaningless.
 // Never use the start pointer without verifying that length > 0.
-class Field {
+class Field
+{
 public:
     int32_t length = NHttpEnums::STAT_NOTCOMPUTE;
     const uint8_t* start = nullptr;
 
     static const Field FIELD_NULL;
 
-    Field(int32_t length_, const uint8_t* start_) : length(length_), start(start_) {};
-    explicit Field(int32_t length_) : length(length_) { assert(length<=0); };
+    Field(int32_t length_, const uint8_t* start_) : length(length_), start(start_) { }
+    explicit Field(int32_t length_) : length(length_) { assert(length<=0); }
     Field() = default;
     void print(FILE* output, const char* name, bool int_vals = false) const;
 };
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -20,7 +20,6 @@
 #ifndef HI_CLIENT_H
 #define HI_CLIENT_H
 
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -47,34 +46,33 @@
 
 #define XFF_TOP_PRECEDENCE (1)
 #define XFF_BOT_PRECEDENCE (255)
- 
+
 typedef struct s_COOKIE_PTR
 {
-    const u_char *cookie;
-    const u_char *cookie_end;
-    struct s_COOKIE_PTR *next;
+    const u_char* cookie;
+    const u_char* cookie_end;
+    struct s_COOKIE_PTR* next;
 } COOKIE_PTR;
-
 
 typedef struct s_CONTLEN_PTR
 {
-    const u_char *cont_len_start;
-    const u_char *cont_len_end;
+    const u_char* cont_len_start;
+    const u_char* cont_len_end;
     uint32_t len;
 }CONTLEN_PTR;
 
 typedef struct s_CONT_ENCODING_PTR
 {
-    const u_char *cont_encoding_start;
-    const u_char *cont_encoding_end;
+    const u_char* cont_encoding_start;
+    const u_char* cont_encoding_end;
     uint16_t compress_fmt;
 }CONT_ENCODING_PTR;
 
 typedef struct s_HEADER_FIELD_PTR
 {
-    COOKIE_PTR *cookie;
-    CONTLEN_PTR *content_len;
-    CONT_ENCODING_PTR *content_encoding;
+    COOKIE_PTR* cookie;
+    CONTLEN_PTR* content_len;
+    CONT_ENCODING_PTR* content_encoding;
 } HEADER_FIELD_PTR;
 
 /* These numbers were chosen to avoid conflicting with
@@ -97,18 +95,18 @@ typedef struct s_HEADER_FIELD_PTR
 
 typedef struct s_URI_PTR
 {
-    const u_char *uri;                /* the beginning of the URI */
-    const u_char *uri_end;            /* the end of the URI */
-    const u_char *norm;               /* ptr to first normalization occurence */
-    const u_char *ident;              /* ptr to beginning of the HTTP identifier */
-    const u_char *first_sp_start;     /* beginning of first space delimiter */
-    const u_char *first_sp_end;       /* end of first space delimiter */
-    const u_char *second_sp_start;    /* beginning of second space delimiter */
-    const u_char *second_sp_end;      /* end of second space delimiter */
-    const u_char *param;              /* '?' (beginning of parameter field) */
-    const u_char *delimiter;          /* HTTP URI delimiter (\r\n\) */
-    const u_char *last_dir;           /* ptr to last dir, so we catch long dirs */
-    const u_char *proxy;              /* ptr to the absolute URI */
+    const u_char* uri;                /* the beginning of the URI */
+    const u_char* uri_end;            /* the end of the URI */
+    const u_char* norm;               /* ptr to first normalization occurence */
+    const u_char* ident;              /* ptr to beginning of the HTTP identifier */
+    const u_char* first_sp_start;     /* beginning of first space delimiter */
+    const u_char* first_sp_end;       /* end of first space delimiter */
+    const u_char* second_sp_start;    /* beginning of second space delimiter */
+    const u_char* second_sp_end;      /* end of second space delimiter */
+    const u_char* param;              /* '?' (beginning of parameter field) */
+    const u_char* delimiter;          /* HTTP URI delimiter (\r\n\) */
+    const u_char* last_dir;           /* ptr to last dir, so we catch long dirs */
+    const u_char* proxy;              /* ptr to the absolute URI */
 }  URI_PTR;
 
 typedef struct s_HEADER_PTR
@@ -120,18 +118,17 @@ typedef struct s_HEADER_PTR
     bool is_chunked;
 } HEADER_PTR;
 
-
 typedef struct s_HI_CLIENT_REQ
 {
-    const u_char *uri;
-    const u_char *uri_norm;
-    const u_char *post_raw;
-    const u_char *post_norm;
-    const u_char *header_raw;
-    const u_char *header_norm;
+    const u_char* uri;
+    const u_char* uri_norm;
+    const u_char* post_raw;
+    const u_char* post_norm;
+    const u_char* header_raw;
+    const u_char* header_norm;
     COOKIE_PTR cookie;
-    const u_char *cookie_norm;
-    const u_char *method_raw;
+    const u_char* cookie_norm;
+    const u_char* method_raw;
 
     u_int uri_size;
     u_int uri_norm_size;
@@ -142,41 +139,40 @@ typedef struct s_HI_CLIENT_REQ
     u_int cookie_norm_size;
     u_int method_size;
 
-    const u_char *pipeline_req;
+    const u_char* pipeline_req;
     u_char method;
     uint16_t uri_encode_type;
     uint16_t header_encode_type;
     uint16_t cookie_encode_type;
     uint16_t post_encode_type;
-    const u_char *content_type;
-
+    const u_char* content_type;
 }  HI_CLIENT_REQ;
 
 typedef struct s_HI_CLIENT
 {
     HI_CLIENT_REQ request;
-    int (*state)(void *, unsigned char, int);
-
+    int (* state)(void*, unsigned char, int);
 }  HI_CLIENT;
 
 typedef struct s_HI_CLIENT_HDR_ARGS
 {
-    HEADER_PTR *hdr_ptr;
-    HEADER_FIELD_PTR *hdr_field_ptr;
-    HttpSessionData *sd; 
-    int strm_ins; 
+    HEADER_PTR* hdr_ptr;
+    HEADER_FIELD_PTR* hdr_field_ptr;
+    HttpSessionData* sd;
+    int strm_ins;
     int hst_name_hdr;
     uint8_t true_clnt_xff;
     uint8_t top_precedence;
     uint8_t new_precedence;
 } HI_CLIENT_HDR_ARGS;
 
-int hi_client_inspection(Packet *p, void *session, HttpSessionData *hsd, int stream_ins);
+int hi_client_inspection(Packet* p, void* session, HttpSessionData* hsd, int stream_ins);
 int hi_client_init();
 
-char **hi_client_get_field_names();
+char** hi_client_get_field_names();
 
-extern const u_char *proxy_start;
-extern const u_char *proxy_end;
+extern const u_char* proxy_start;
+extern const u_char* proxy_end;
 
 #endif
+

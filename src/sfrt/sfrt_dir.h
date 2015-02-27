@@ -37,8 +37,8 @@
  * dir_sub_table_t.  They are managed by a dir_table_t. */
 typedef struct
 {
-    word *entries;
-    uint8_t *lengths;
+    word* entries;
+    uint8_t* lengths;
     int num_entries; /* Number of entries in this table */
     int width;       /* width of this table. */
                      /* While one determines the other, this way fewer
@@ -49,13 +49,13 @@ typedef struct
     /** number of entries filled including chidren sub_tables. This is used
      * for freeing sub_tables when all entried are freed by delete operation.
      */
-    int filledEntries;    
+    int filledEntries;
 } dir_sub_table_t;
 
 /* Master data structure for the DIR-n-m derivative */
 typedef struct
 {
-    int *dimensions;    /* DIR-n-m will consist of any number of arbitrarily
+    int* dimensions;    /* DIR-n-m will consist of any number of arbitrarily
                          * long tables. This variable keeps track of the
                          * dimensions */
     int dim_size;       /* And this variable keeps track of 'dimensions''s
@@ -67,19 +67,19 @@ typedef struct
 
     uint32_t allocated;
 
-    dir_sub_table_t *sub_table;
+    dir_sub_table_t* sub_table;
 } dir_table_t;
 
-/*******************************************************************/
-/* DIR-n-m functions, these are not intended to be called directly */
-dir_table_t *  sfrt_dir_new(uint32_t mem_cap, int count,...);
-void           sfrt_dir_free(void *);
-tuple_t        sfrt_dir_lookup(IP ip, void *table);
-int            sfrt_dir_insert(IP ip, int len, word data_index,
-                               int behavior, void *table);
-uint32_t      sfrt_dir_usage(void *table);
-void          sfrt_dir_print(void *table);
-word sfrt_dir_remove(IP ip, int len, int behavior, void *table);
+/******************************************************************
+   DIR-n-m functions, these are not intended to be called directly */
+dir_table_t* sfrt_dir_new(uint32_t mem_cap, int count,...);
+void sfrt_dir_free(void*);
+tuple_t sfrt_dir_lookup(IP ip, void* table);
+int sfrt_dir_insert(IP ip, int len, word data_index,
+    int behavior, void* table);
+uint32_t sfrt_dir_usage(void* table);
+void sfrt_dir_print(void* table);
+word sfrt_dir_remove(IP ip, int len, int behavior, void* table);
 
 #endif /* SFRT_DIR_H */
 

@@ -56,14 +56,13 @@
 #include "snort_bounds.h"
 #include "detection_util.h"
 
-
-int hi_server_norm(HI_SESSION *session, HttpSessionData *hsd)
+int hi_server_norm(HI_SESSION* session, HttpSessionData* hsd)
 {
     static THREAD_LOCAL u_char HeaderBuf[MAX_URI];
     static THREAD_LOCAL u_char CookieBuf[MAX_URI];
     static THREAD_LOCAL u_char RawHeaderBuf[MAX_URI];
     static THREAD_LOCAL u_char RawCookieBuf[MAX_URI];
-    HI_SERVER_RESP    *ServerResp;
+    HI_SERVER_RESP* ServerResp;
     int iRet;
     int iRawHeaderBufSize = MAX_URI;
     int iRawCookieBufSize = MAX_URI;
@@ -71,11 +70,10 @@ int hi_server_norm(HI_SESSION *session, HttpSessionData *hsd)
     int iCookieBufSize = MAX_URI;
     uint16_t encodeType = 0;
 
-    if(!session || !session->server_conf)
+    if (!session || !session->server_conf)
     {
         return HI_INVALID_ARG;
     }
-
 
     ServerResp = &session->server.response;
     ServerResp->header_encode_type = 0;
@@ -90,10 +88,10 @@ int hi_server_norm(HI_SESSION *session, HttpSessionData *hsd)
             RawCookieBuf, &iRawCookieBufSize,
             ServerResp->header_raw, ServerResp->header_raw_size,
             &ServerResp->cookie);
-        if( iRet == HI_SUCCESS)
+        if ( iRet == HI_SUCCESS)
         {
-             ServerResp->cookie.cookie = RawCookieBuf;
-             ServerResp->cookie.cookie_end = RawCookieBuf + iRawCookieBufSize;
+            ServerResp->cookie.cookie = RawCookieBuf;
+            ServerResp->cookie.cookie_end = RawCookieBuf + iRawCookieBufSize;
         }
     }
     else
@@ -106,17 +104,17 @@ int hi_server_norm(HI_SESSION *session, HttpSessionData *hsd)
             }
             /* Limiting to MAX_URI above should cause this to always return SAFEMEM_SUCCESS */
             SafeMemcpy(RawHeaderBuf, ServerResp->header_raw, ServerResp->header_raw_size,
-                    &RawHeaderBuf[0], &RawHeaderBuf[0] + iRawHeaderBufSize);
+                &RawHeaderBuf[0], &RawHeaderBuf[0] + iRawHeaderBufSize);
         }
         iRawHeaderBufSize = ServerResp->header_raw_size;
         iRawCookieBufSize = 0;
     }
 
-    if(ServerResp->header_norm && session->server_conf->normalize_headers)
+    if (ServerResp->header_norm && session->server_conf->normalize_headers)
     {
         session->norm_flags &= ~HI_BODY;
         iRet = hi_norm_uri(session, HeaderBuf, &iHeaderBufSize,
-                       RawHeaderBuf, iRawHeaderBufSize, &encodeType);
+            RawHeaderBuf, iRawHeaderBufSize, &encodeType);
         if (iRet == HI_NONFATAL_ERR)
         {
             /* There was a non-fatal problem normalizing */
@@ -146,11 +144,11 @@ int hi_server_norm(HI_SESSION *session, HttpSessionData *hsd)
         }
     }
 
-    if(ServerResp->cookie.cookie && session->server_conf->normalize_cookies)
+    if (ServerResp->cookie.cookie && session->server_conf->normalize_cookies)
     {
         session->norm_flags &= ~HI_BODY;
         iRet = hi_norm_uri(session, CookieBuf, &iCookieBufSize,
-                       RawCookieBuf, iRawCookieBufSize, &encodeType);
+            RawCookieBuf, iRawCookieBufSize, &encodeType);
         if (iRet == HI_NONFATAL_ERR)
         {
             /* There was a non-fatal problem normalizing */
@@ -232,25 +230,25 @@ int hi_server_norm(HI_SESSION *session, HttpSessionData *hsd)
                or utf-32be charsets.*/
             switch (charset)
             {
-                case CHARSET_UTF16LE:
-                case CHARSET_UTF16BE:
-                case CHARSET_UTF32LE:
-                case CHARSET_UTF32BE:
-                    result = DecodeUTF((char *)ServerResp->body, ServerResp->body_size,
-                            (char *)HttpDecodeBuf.data, sizeof(HttpDecodeBuf.data),
-                            &bytes_copied,
-                            &(hsd->utf_state));
+            case CHARSET_UTF16LE:
+            case CHARSET_UTF16BE:
+            case CHARSET_UTF32LE:
+            case CHARSET_UTF32BE:
+                result = DecodeUTF((char*)ServerResp->body, ServerResp->body_size,
+                    (char*)HttpDecodeBuf.data, sizeof(HttpDecodeBuf.data),
+                    &bytes_copied,
+                    &(hsd->utf_state));
 
-                    if (result == DECODE_UTF_FAILURE)
-                    {
-                        hi_set_event(GID_HTTP_SERVER, HI_SERVER_UTF_NORM_FAIL);
-                    }
-                    SetHttpDecode((uint16_t)bytes_copied);
-                    ServerResp->body = HttpDecodeBuf.data;
-                    ServerResp->body_size = HttpDecodeBuf.len;
-                    break;
-                default:
-                    break;
+                if (result == DECODE_UTF_FAILURE)
+                {
+                    hi_set_event(GID_HTTP_SERVER, HI_SERVER_UTF_NORM_FAIL);
+                }
+                SetHttpDecode((uint16_t)bytes_copied);
+                ServerResp->body = HttpDecodeBuf.data;
+                ServerResp->body_size = HttpDecodeBuf.len;
+                break;
+            default:
+                break;
             }
         }
     }
@@ -258,7 +256,7 @@ int hi_server_norm(HI_SESSION *session, HttpSessionData *hsd)
     if (session->server_conf->normalize_javascript && (ServerResp->body_size > 0))
     {
         int js_present, status, index;
-        char *ptr, *start, *end;
+        char* ptr, * start, * end;
         JSState js;
 
         js.allowed_spaces = session->server_conf->max_js_ws;
@@ -266,45 +264,46 @@ int hi_server_norm(HI_SESSION *session, HttpSessionData *hsd)
         js.alerts = 0;
 
         js_present = status = index = 0;
-        start = (char *)ServerResp->body;
+        start = (char*)ServerResp->body;
         ptr = start;
         end = start + ServerResp->body_size;
-        
-        while(ptr < end)
+
+        while (ptr < end)
         {
-            char *angle_bracket, *js_start;
+            char* angle_bracket, * js_start;
             int type_js, bytes_copied, script_found;
             bytes_copied = 0;
             type_js = 0;
             hi_current_search = &hi_js_search[0];
 
             script_found = hi_javascript_search_mpse->find(
-                (const char *)ptr, (end-ptr), HI_SearchStrFound);
+                (const char*)ptr, (end-ptr), HI_SearchStrFound);
 
             if (script_found > 0)
             {
                 js_start = ptr + hi_search_info.index;
-                angle_bracket = (char *)SnortStrnStr((const char *)(js_start), (end - js_start), ">");
-                if(!angle_bracket)
+                angle_bracket = (char*)SnortStrnStr((const char*)(js_start), (end - js_start),
+                    ">");
+                if (!angle_bracket)
                     break;
 
-                if(angle_bracket > js_start)
+                if (angle_bracket > js_start)
                 {
                     script_found = hi_htmltype_search_mpse->find(
-                        (const char *)js_start, (angle_bracket-js_start), HI_SearchStrFound);
+                        (const char*)js_start, (angle_bracket-js_start), HI_SearchStrFound);
 
                     js_start = angle_bracket;
-                    if(script_found > 0)
+                    if (script_found > 0)
                     {
                         switch (hi_search_info.id)
                         {
-                            case HTML_JS:
-                                js_present = 1;
-                                type_js = 1;
-                                break;
-                            default:
-                                type_js = 0;
-                                break;
+                        case HTML_JS:
+                            js_present = 1;
+                            type_js = 1;
+                            break;
+                        default:
+                            type_js = 0;
+                            break;
                         }
                     }
                     else
@@ -313,31 +312,35 @@ int hi_server_norm(HI_SESSION *session, HttpSessionData *hsd)
                         js_present = 1;
                         type_js = 1;
                     }
-
                 }
                 //Save before the <script> begins
-                if(js_start > ptr)
+                if (js_start > ptr)
                 {
-                    status = SafeBoundsMemmove(HttpDecodeBuf.data+index, ptr, (js_start - ptr), HttpDecodeBuf.data, HttpDecodeBuf.data + sizeof(HttpDecodeBuf.data));
-                    if(status == SAFEMEM_SUCCESS)
+                    status = SafeBoundsMemmove(HttpDecodeBuf.data+index, ptr, (js_start - ptr),
+                        HttpDecodeBuf.data, HttpDecodeBuf.data + sizeof(HttpDecodeBuf.data));
+                    if (status == SAFEMEM_SUCCESS)
                         index += (js_start - ptr);
                     else
                         break;
                 }
 
                 ptr = js_start;
-                if(!type_js)
+                if (!type_js)
                     continue;
 
-                if(session->server_conf->iis_unicode.on)
+                if (session->server_conf->iis_unicode.on)
                 {
-                    JSNormalizeDecode(js_start, (uint16_t)(end-js_start), (char *)HttpDecodeBuf.data+index, (uint16_t)(sizeof(HttpDecodeBuf.data) - index), 
-                            &ptr, &bytes_copied, &js, session->server_conf->iis_unicode_map);
+                    JSNormalizeDecode(js_start, (uint16_t)(end-js_start),
+                        (char*)HttpDecodeBuf.data+index, (uint16_t)(sizeof(HttpDecodeBuf.data) -
+                        index),
+                        &ptr, &bytes_copied, &js, session->server_conf->iis_unicode_map);
                 }
                 else
                 {
-                    JSNormalizeDecode(js_start, (uint16_t)(end-js_start), (char *)HttpDecodeBuf.data+index, (uint16_t)(sizeof(HttpDecodeBuf.data) - index), 
-                                                    &ptr, &bytes_copied, &js, NULL);
+                    JSNormalizeDecode(js_start, (uint16_t)(end-js_start),
+                        (char*)HttpDecodeBuf.data+index, (uint16_t)(sizeof(HttpDecodeBuf.data) -
+                        index),
+                        &ptr, &bytes_copied, &js, NULL);
                 }
                 index += bytes_copied;
             }
@@ -345,37 +348,39 @@ int hi_server_norm(HI_SESSION *session, HttpSessionData *hsd)
                 break;
         }
 
-        if(js_present)    
+        if (js_present)
         {
-            if( ptr < end )
+            if ( ptr < end )
             {
-                status = SafeBoundsMemmove(HttpDecodeBuf.data+index, ptr, (end - ptr), HttpDecodeBuf.data, HttpDecodeBuf.data + sizeof(HttpDecodeBuf.data));
-                if(status == SAFEMEM_SUCCESS)
+                status = SafeBoundsMemmove(HttpDecodeBuf.data+index, ptr, (end - ptr),
+                    HttpDecodeBuf.data, HttpDecodeBuf.data + sizeof(HttpDecodeBuf.data));
+                if (status == SAFEMEM_SUCCESS)
                     index += (end - ptr);
             }
             SetHttpDecode((uint16_t)index);
             ServerResp->body = HttpDecodeBuf.data;
             ServerResp->body_size = index;
-            if(js.alerts) 
+            if (js.alerts)
             {
-                if(js.alerts & ALERT_LEVELS_EXCEEDED) 
+                if (js.alerts & ALERT_LEVELS_EXCEEDED)
                 {
                     hi_set_event(GID_HTTP_SERVER, HI_SERVER_JS_OBFUSCATION_EXCD);
                 }
-                if(js.alerts & ALERT_SPACES_EXCEEDED)
+                if (js.alerts & ALERT_SPACES_EXCEEDED)
                 {
                     hi_set_event(GID_HTTP_SERVER, HI_SERVER_JS_EXCESS_WS);
                 }
-                if(js.alerts & ALERT_MIXED_ENCODINGS)
+                if (js.alerts & ALERT_MIXED_ENCODINGS)
                 {
                     hi_set_event(GID_HTTP_SERVER, HI_SERVER_MIXED_ENCODINGS);
                 }
             }
 
-            if(hsd)
+            if (hsd)
                 hsd->log_flags |= HTTP_LOG_JSNORM_DATA;
         }
     }
 
     return HI_SUCCESS;
 }
+

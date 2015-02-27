@@ -33,22 +33,20 @@ public:
     RuleOption(std::string name, std::string val);
     virtual ~RuleOption();
 
-    inline std::string get_name(){ return name; };
+    inline std::string get_name() { return name; }
 
     bool add_suboption(std::string name);
     bool add_suboption(std::string name, std::string val);
- 
+
     // overloading operators
-    friend std::ostream &operator<<( std::ostream&, const RuleOption &);
+    friend std::ostream& operator<<(std::ostream&, const RuleOption&);
 
 private:
 
     std::string name;
     std::string value;
     std::vector<RuleSubOption*> sub_options;
-
-
 };
 
-
 #endif
+

@@ -28,7 +28,7 @@ static inline Table* find_table(std::vector<Table*> vec, std::string name)
     if (name.empty())
         return nullptr;
 
-    for( auto *t : vec)
+    for ( auto* t : vec)
         if (!name.compare(t->get_name()))
             return t;
 
@@ -40,7 +40,7 @@ Table::Table(int d)
     this->name = "";
     this->depth = d;
     this->comments = new Comments(d + 1,
-                    Comments::CommentType::SINGLE_LINE);
+        Comments::CommentType::SINGLE_LINE);
 }
 
 Table::Table(std::string table_name, int d)
@@ -48,18 +48,18 @@ Table::Table(std::string table_name, int d)
     this->name = table_name;
     this->depth = d;
     this->comments = new Comments(d + 1,
-                    Comments::CommentType::SINGLE_LINE);
+        Comments::CommentType::SINGLE_LINE);
 }
 
 Table::~Table()
 {
-    for( Table* t : tables)
+    for ( Table* t : tables)
         delete t;
 
-    for( Option* o : options)
+    for ( Option* o : options)
         delete o;
 
-    for( Option* a : append_options)
+    for ( Option* a : append_options)
         delete a;
 
     delete comments;
@@ -79,7 +79,7 @@ bool Table::has_differences()
 
 Table* Table::open_table()
 {
-    Table *t = new Table(depth + 1);
+    Table* t = new Table(depth + 1);
     tables.push_back(t);
     return t;
 }
@@ -101,7 +101,7 @@ bool Table::add_option(std::string opt_name, int value)
     if (has_option(opt_name, value))
         return true;
 
-    Option *o = new Option(opt_name, value, depth + 1);
+    Option* o = new Option(opt_name, value, depth + 1);
     options.push_back(o);
     return true;
 }
@@ -111,7 +111,7 @@ bool Table::add_option(std::string opt_name, bool value)
     if (has_option(opt_name, value))
         return true;
 
-    Option *o = new Option(opt_name, value, depth + 1);
+    Option* o = new Option(opt_name, value, depth + 1);
     options.push_back(o);
     return true;
 }
@@ -121,7 +121,7 @@ bool Table::add_option(std::string opt_name, std::string value)
     if (has_option(opt_name, value))
         return true;
 
-    Option *o = new Option(opt_name, value, depth + 1);
+    Option* o = new Option(opt_name, value, depth + 1);
     options.push_back(o);
     return true;
 }
@@ -130,7 +130,7 @@ void Table::append_option(std::string opt_name, int value)
 {
     if (!has_option(opt_name, value))
     {
-        Option *a = new Option(opt_name, value, 0);
+        Option* a = new Option(opt_name, value, 0);
         append_options.push_back(a);
     }
 }
@@ -139,7 +139,7 @@ void Table::append_option(std::string opt_name, bool value)
 {
     if (!has_option(opt_name, value))
     {
-        Option *a = new Option(opt_name, value, 0);
+        Option* a = new Option(opt_name, value, 0);
         append_options.push_back(a);
     }
 }
@@ -148,7 +148,7 @@ void Table::append_option(std::string opt_name, std::string value)
 {
     if (!has_option(opt_name, value))
     {
-        Option *a = new Option(opt_name, value, 0);
+        Option* a = new Option(opt_name, value, 0);
         append_options.push_back(a);
     }
 }
@@ -159,7 +159,7 @@ bool Table::add_list(std::string list_name, std::string next_elem)
         if (l->get_name() == list_name)
             return l->add_value(next_elem);
 
-    Variable *var = new Variable(list_name, depth + 1);
+    Variable* var = new Variable(list_name, depth + 1);
     lists.push_back(var);
     return var->add_value(next_elem);
 }
@@ -176,7 +176,6 @@ bool Table::has_option(const std::string opt_name)
 
     return false;
 }
-
 
 bool Table::has_option(Option opt)
 {
@@ -209,17 +208,16 @@ bool Table::has_option(std::string opt_name, std::string val)
     return has_option(opt);
 }
 
-
 void Table::add_comment(std::string c)
 {
     comments->add_sorted_text(c);
 }
 
-std::ostream &operator<<( std::ostream& out, const Table &t)
+std::ostream& operator<<(std::ostream& out, const Table& t)
 {
     std::string whitespace = "";
 
-    for(int i = 0; i < t.depth; i++)
+    for (int i = 0; i < t.depth; i++)
         whitespace += "    ";
 
     if (!t.name.empty())
@@ -261,3 +259,4 @@ std::ostream &operator<<( std::ostream& out, const Table &t)
 
     return out;
 }
+

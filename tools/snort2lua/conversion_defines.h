@@ -29,7 +29,7 @@
 
 class ConversionState;
 class Converter;
-typedef ConversionState* (*conv_new_f)(Converter&);
+typedef ConversionState* (* conv_new_f)(Converter&);
 
 struct ConvertMap
 {
@@ -37,5 +37,5 @@ struct ConvertMap
     conv_new_f ctor;
 };
 
-
 #endif
+

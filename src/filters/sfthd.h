@@ -75,22 +75,19 @@ enum
     THD_TRK_DST
 };
 
-
 /*!
     THD_IP_NODE
 
     Dynamic hashed node data - added and deleted during runtime
     These are added during run-time, and recycled if we max out memory usage.
 */
-typedef struct {
-
+typedef struct
+{
     unsigned count;
     unsigned prev;
     time_t tstart;
     time_t tlast;
-
 } THD_IP_NODE;
-
 
 /*!
     THD_IP_NODE_KEY
@@ -98,23 +95,20 @@ typedef struct {
     HASH Key to lookup and store Ip nodes. The structure now tracks thresholds for different
     policies. This destroys locality of reference and may cause poor performance.
 */
-typedef struct{
-
+typedef struct
+{
     int thd_id;
     sfip_t ip;
     PolicyId policyId;
+} THD_IP_NODE_KEY;
 
-} THD_IP_NODE_KEY ;
-
-typedef struct{
-
+typedef struct
+{
     unsigned gen_id;
     unsigned sig_id;
     sfip_t ip;
     PolicyId policyId;
-
-} THD_IP_GNODE_KEY ;
-
+} THD_IP_GNODE_KEY;
 
 /*!
     THD_NODE
@@ -123,21 +117,19 @@ typedef struct{
     These are created at program startup, and remain static.
     The THD_IP_NODE elements are dynamic.
 */
-typedef struct {
-
-    int      thd_id;   /* Id of this node */
+typedef struct
+{
+    int thd_id;        /* Id of this node */
     unsigned gen_id;   /* Keep these around if needed */
     unsigned sig_id;
-    int      tracking; /* by_src, by_dst */
-    int      type;
-    int      priority;
-    int      count;
+    int tracking;      /* by_src, by_dst */
+    int type;
+    int priority;
+    int count;
     unsigned seconds;
     uint64_t filtered;
     sfip_var_t* ip_address;
-
 } THD_NODE;
-
 
 /*!
     THD_ITEM
@@ -150,8 +142,8 @@ typedef struct {
 
     These are static data elements, built at program startup.
 */
-typedef struct {
-
+typedef struct
+{
     PolicyId policyId;
     unsigned gen_id; /* just so we know what gen_id we are */
     unsigned sig_id;
@@ -160,7 +152,6 @@ typedef struct {
      * 'THD_NODE->sfthd_id + src_ip or dst_ip' to get the correct THD_IP_NODE.
      */
     SF_LIST* sfthd_node_list;
-
 } THD_ITEM;
 
 // Temporary structure useful when parsing the Snort rules
@@ -168,19 +159,18 @@ struct THDX_STRUCT
 {
     unsigned gen_id;
     unsigned sig_id;
-    int  type;
-    int  tracking;
-    int  priority;
-    int  count;
-    unsigned int  seconds;
+    int type;
+    int tracking;
+    int priority;
+    int count;
+    unsigned int seconds;
     sfip_var_t* ip_address;
 };
 
-typedef struct {
-
+typedef struct
+{
     PolicyId policyId;
     unsigned sig_id;
-
 } tThdItemKey;
 
 /*!
@@ -193,15 +183,15 @@ typedef struct {
  */
 struct THD_STRUCT
 {
-    SFXHASH *ip_nodes;   /* Global hash of active IP's key=THD_IP_NODE_KEY, data=THD_IP_NODE */
-    SFXHASH *ip_gnodes;  /* Global hash of active IP's key=THD_IP_GNODE_KEY, data=THD_IP_GNODE */
-
+    SFXHASH* ip_nodes;   /* Global hash of active IP's key=THD_IP_NODE_KEY, data=THD_IP_NODE */
+    SFXHASH* ip_gnodes;  /* Global hash of active IP's key=THD_IP_GNODE_KEY, data=THD_IP_GNODE */
 };
 
 struct ThresholdObjects
 {
     int count;  /* Total number of thresholding/suppression objects */
-    SFGHASH *sfthd_array[THD_MAX_GENID];    /* Local Hash of THD_ITEM nodes,  lookup by key=sig_id */
+    SFGHASH* sfthd_array[THD_MAX_GENID];    /* Local Hash of THD_ITEM nodes,  lookup by key=sig_id
+                                              */
 
     /* Double array of THD_NODE pointers. First index is policyId and therefore variable length.
      * Second index is genId and of fixed length, A simpler definition could be
@@ -210,39 +200,37 @@ struct ThresholdObjects
      * compile time.
      */
     //THD_NODE * (*sfthd_garray)[THD_MAX_GENID];
-    THD_NODE* **sfthd_garray;
+    THD_NODE*** sfthd_garray;
     PolicyId numPoliciesAllocated;
-
 };
-
 
 /*
  * Prototypes
  */
 // lbytes = local threshold memcap
 // gbytes = global threshold memcap (0 to disable global)
-THD_STRUCT * sfthd_new(unsigned lbytes, unsigned gbytes);
-SFXHASH * sfthd_local_new(unsigned bytes);
-SFXHASH * sfthd_global_new(unsigned bytes);
-void sfthd_free(THD_STRUCT *);
-ThresholdObjects * sfthd_objs_new(void);
-void sfthd_objs_free(ThresholdObjects *);
+THD_STRUCT* sfthd_new(unsigned lbytes, unsigned gbytes);
+SFXHASH* sfthd_local_new(unsigned bytes);
+SFXHASH* sfthd_global_new(unsigned bytes);
+void sfthd_free(THD_STRUCT*);
+ThresholdObjects* sfthd_objs_new(void);
+void sfthd_objs_free(ThresholdObjects*);
 
-int sfthd_test_rule(SFXHASH *rule_hash, THD_NODE *sfthd_node,
-                    const sfip_t *sip, const sfip_t *dip, long curtime);
+int sfthd_test_rule(SFXHASH* rule_hash, THD_NODE* sfthd_node,
+    const sfip_t* sip, const sfip_t* dip, long curtime);
 
-void * sfthd_create_rule_threshold(
-   int id,
-   int tracking,
-   int type,
-   int count,
-   unsigned int seconds
-);
+void* sfthd_create_rule_threshold(
+    int id,
+    int tracking,
+    int type,
+    int count,
+    unsigned int seconds
+    );
 
 struct SnortConfig;
 int sfthd_create_threshold(
     SnortConfig*,
-    ThresholdObjects *,
+    ThresholdObjects*,
     unsigned gen_id,
     unsigned sig_id,
     int tracking,
@@ -250,33 +238,33 @@ int sfthd_create_threshold(
     int priority,
     int count,
     int seconds,
-    sfip_var_t *ip_address
-);
+    sfip_var_t* ip_address
+    );
 
 //  1: don't log due to event_filter
 //  0: log
 // -1: don't log due to suppress
 int sfthd_test_threshold(
-    ThresholdObjects *,
-    THD_STRUCT *,
+    ThresholdObjects*,
+    THD_STRUCT*,
     unsigned gen_id,
     unsigned sig_id,
-    const sfip_t *sip,
-    const sfip_t *dip,
-    long curtime ) ;
+    const sfip_t* sip,
+    const sfip_t* dip,
+    long curtime);
 
-
-SFXHASH * sfthd_new_hash(unsigned, size_t, size_t);
+SFXHASH* sfthd_new_hash(unsigned, size_t, size_t);
 
 int sfthd_test_local(
-    SFXHASH *local_hash,
-    THD_NODE *sfthd_node,
-    const sfip_t *sip,
-    const sfip_t *dip,
-    time_t curtime );
+    SFXHASH* local_hash,
+    THD_NODE* sfthd_node,
+    const sfip_t* sip,
+    const sfip_t* dip,
+    time_t curtime);
 
 #ifdef THD_DEBUG
-int sfthd_show_objects( THD_STRUCT * thd );
+int sfthd_show_objects(THD_STRUCT* thd);
 #endif
 
 #endif
+

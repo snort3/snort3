@@ -30,26 +30,30 @@
 
 class NHttpApi;
 
-class NHttpInspect : public Inspector {
+class NHttpInspect : public Inspector
+{
 public:
     NHttpInspect(bool test_input, bool test_output);
 
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
     bool get_buf(unsigned, Packet*, InspectionBuffer&) override;
-    bool configure(SnortConfig*) override { return true; };
-    void show(SnortConfig*) override { LogMessage("NHttpInspect\n"); };
-    void eval(Packet*) override { return; };
-    void tinit() override {};
-    void tterm() override {};
-    NHttpStreamSplitter* get_splitter(bool is_client_to_server) override { return new
-       NHttpStreamSplitter(is_client_to_server, this); };
+    bool configure(SnortConfig*) override { return true; }
+    void show(SnortConfig*) override { LogMessage("NHttpInspect\n"); }
+    void eval(Packet*) override { }
+    void tinit() override { }
+    void tterm() override { }
+    NHttpStreamSplitter* get_splitter(bool is_client_to_server) override
+    {
+        return new
+               NHttpStreamSplitter(is_client_to_server, this);
+    }
 
 private:
     friend NHttpApi;
     friend NHttpStreamSplitter;
 
     NHttpEnums::ProcessResult process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
-       NHttpEnums::SourceId source_id_, bool buf_owner) const;
+        NHttpEnums::SourceId source_id_, bool buf_owner) const;
 };
 
 #endif

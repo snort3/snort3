@@ -17,8 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_erspan3.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #include <arpa/inet.h>
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
@@ -30,7 +28,6 @@
 
 namespace
 {
-
 static const RuleMap erspan3_rules[] =
 {
     { DECODE_ERSPAN3_DGRAM_LT_HDR, "captured < ERSpan type3 header length" },
@@ -40,24 +37,21 @@ static const RuleMap erspan3_rules[] =
 class Erspan3Module : public CodecModule
 {
 public:
-    Erspan3Module() : CodecModule(CD_ERSPAN3_NAME, CD_ERSPAN3_HELP) {}
+    Erspan3Module() : CodecModule(CD_ERSPAN3_NAME, CD_ERSPAN3_HELP) { }
 
     const RuleMap* get_rules() const
     { return erspan3_rules; }
 };
 
-
 class Erspan3Codec : public Codec
 {
 public:
-    Erspan3Codec() : Codec(CD_ERSPAN3_NAME){};
-    ~Erspan3Codec(){};
-
+    Erspan3Codec() : Codec(CD_ERSPAN3_NAME) { }
+    ~Erspan3Codec() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
-
 
 struct ERSpanType3Hdr
 {
@@ -87,7 +81,6 @@ constexpr uint16_t ETHERTYPE_ERSPAN_TYPE3 = 0x22eb;
 
 void Erspan3Codec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(ETHERTYPE_ERSPAN_TYPE3); }
-
 
 /*
  * Function: DecodeERSPANType3(uint8_t *, uint32_t, Packet *)
@@ -139,9 +132,8 @@ static void mod_dtor(Module* m)
 static Codec* ctor(Module*)
 { return new Erspan3Codec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi erspan3_api =
 {
@@ -162,8 +154,6 @@ static const CodecApi erspan3_api =
     dtor, // dtor
 };
 
-
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -173,3 +163,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_erspan3 = &erspan3_api.base;
 #endif
+

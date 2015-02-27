@@ -16,7 +16,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 #ifndef ASN1_DETECT_H
 #define ASN1_DETECT_H
 
@@ -34,9 +34,9 @@ typedef struct s_ASN1_CTXT
     unsigned int max_length;
     int offset;
     int offset_type;
-
 } ASN1_CTXT;
 
-int Asn1DoDetect(const uint8_t *, uint16_t, ASN1_CTXT *, const uint8_t *);
+int Asn1DoDetect(const uint8_t*, uint16_t, ASN1_CTXT*, const uint8_t*);
 
 #endif
+

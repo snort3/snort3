@@ -21,10 +21,8 @@
 #include "config.h"
 #endif
 
-
 #include <pcap.h>
 #include "framework/codec.h"
-
 
 #ifndef DLT_PFLOG
 #define DLT_PFLOG 117
@@ -33,14 +31,10 @@
 #define PFLOG_NAME "pflog"
 #define PFLOG_HELP_STR "support for OpenBSD PF log"
 
-
 #define PFLOG_HELP ADD_DLT(PFLOG_HELP_STR, DLT_PFLOG)
-
-
 
 namespace
 {
-
 /*
  * Snort supports 3 versions of the OpenBSD pflog header:
  *
@@ -61,13 +55,12 @@ namespace
 class PflogCodec : public Codec
 {
 public:
-    PflogCodec() : Codec(PFLOG_NAME){};
-    ~PflogCodec() {};
+    PflogCodec() : Codec(PFLOG_NAME) { }
+    ~PflogCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_data_link_type(std::vector<int>&) override;
 };
-
 
 struct Pflog1Hdr
 {
@@ -92,60 +85,59 @@ struct Pflog1Hdr
 
 struct Pflog2Hdr
 {
-    int8_t   length;
-    uint8_t  af;
-    uint8_t  action;
-    uint8_t  reason;
-    char     ifname[IFNAMSIZ];
-    char     ruleset[PFLOG_RULELEN];
+    int8_t length;
+    uint8_t af;
+    uint8_t action;
+    uint8_t reason;
+    char ifname[IFNAMSIZ];
+    char ruleset[PFLOG_RULELEN];
     uint32_t rulenr;
     uint32_t subrulenr;
-    uint8_t  dir;
-    uint8_t  pad[PFLOG_PADLEN];
-} ;
+    uint8_t dir;
+    uint8_t pad[PFLOG_PADLEN];
+};
 
 #define PFLOG2_HDRLEN (sizeof(Pflog2Hdr))
 #define PFLOG2_HDRMIN (PFLOG2_HDRLEN - PFLOG_PADLEN)
 
 struct Pflog3Hdr
 {
-    int8_t   length;
-    uint8_t  af;
-    uint8_t  action;
-    uint8_t  reason;
-    char     ifname[IFNAMSIZ];
-    char     ruleset[PFLOG_RULELEN];
+    int8_t length;
+    uint8_t af;
+    uint8_t action;
+    uint8_t reason;
+    char ifname[IFNAMSIZ];
+    char ruleset[PFLOG_RULELEN];
     uint32_t rulenr;
     uint32_t subrulenr;
     uint32_t uid;
     uint32_t pid;
     uint32_t rule_uid;
     uint32_t rule_pid;
-    uint8_t  dir;
-    uint8_t  pad[PFLOG_PADLEN];
+    uint8_t dir;
+    uint8_t pad[PFLOG_PADLEN];
 };
 
 #define PFLOG3_HDRLEN (sizeof(Pflog3Hdr))
 #define PFLOG3_HDRMIN (PFLOG3_HDRLEN - PFLOG_PADLEN)
 
-
 struct Pflog4Hdr
 {
-    uint8_t  length;
-    uint8_t  af;
-    uint8_t  action;
-    uint8_t  reason;
-    char     ifname[IFNAMSIZ];
-    char     ruleset[PFLOG_RULELEN];
+    uint8_t length;
+    uint8_t af;
+    uint8_t action;
+    uint8_t reason;
+    char ifname[IFNAMSIZ];
+    char ruleset[PFLOG_RULELEN];
     uint32_t rulenr;
     uint32_t subrulenr;
     uint32_t uid;
     uint32_t pid;
     uint32_t rule_uid;
     uint32_t rule_pid;
-    uint8_t  dir;
-    uint8_t  rewritten;
-    uint8_t  pad[2];
+    uint8_t dir;
+    uint8_t rewritten;
+    uint8_t pad[2];
     uint8_t saddr[16];
     uint8_t daddr[16];
     uint16_t sport;
@@ -154,9 +146,7 @@ struct Pflog4Hdr
 
 #define PFLOG4_HDRLEN sizeof(struct Pflog4Hdr)
 #define PFLOG4_HDRMIN sizeof(struct Pflog4Hdr)
-
 } // namespace
-
 
 void PflogCodec::get_data_link_type(std::vector<int>& v)
 { v.push_back(DLT_PFLOG); }
@@ -168,92 +158,87 @@ bool PflogCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     uint32_t hlen;
     uint32_t padlen = PFLOG_PADLEN;
 
-
     /* do a little validation */
-    if(cap_len < PFLOG2_HDRMIN)
+    if (cap_len < PFLOG2_HDRMIN)
         return false;
 
     /* lay the pf header structure over the packet data */
-    switch(*((uint8_t*)raw.data))
+    switch (*((uint8_t*)raw.data))
     {
-        case PFLOG2_HDRMIN:
-        {
-            const Pflog2Hdr* const pf2h =
-                reinterpret_cast<const Pflog2Hdr*>(raw.data);
-            pflen = pf2h->length;
-            hlen = PFLOG2_HDRLEN;
-            af = pf2h->af;
-            break;
-        }
-        case PFLOG3_HDRMIN:
-        {
-            const Pflog3Hdr* const pf3h =
-                reinterpret_cast<const Pflog3Hdr*>(raw.data);
-            pflen = pf3h->length;
-            hlen = PFLOG3_HDRLEN;
-            af = pf3h->af;
-            break;
-        }
-        case PFLOG4_HDRMIN:
-        {
-            const Pflog4Hdr* const pf4h =
-                reinterpret_cast<const Pflog4Hdr*>(raw.data);
-            pflen = pf4h->length;
-            hlen = PFLOG4_HDRLEN;
-            af = pf4h->af;
-            padlen = sizeof(pf4h->pad);
-            break;
-        }
-        default:
-            return false;
+    case PFLOG2_HDRMIN:
+    {
+        const Pflog2Hdr* const pf2h =
+            reinterpret_cast<const Pflog2Hdr*>(raw.data);
+        pflen = pf2h->length;
+        hlen = PFLOG2_HDRLEN;
+        af = pf2h->af;
+        break;
+    }
+    case PFLOG3_HDRMIN:
+    {
+        const Pflog3Hdr* const pf3h =
+            reinterpret_cast<const Pflog3Hdr*>(raw.data);
+        pflen = pf3h->length;
+        hlen = PFLOG3_HDRLEN;
+        af = pf3h->af;
+        break;
+    }
+    case PFLOG4_HDRMIN:
+    {
+        const Pflog4Hdr* const pf4h =
+            reinterpret_cast<const Pflog4Hdr*>(raw.data);
+        pflen = pf4h->length;
+        hlen = PFLOG4_HDRLEN;
+        af = pf4h->af;
+        padlen = sizeof(pf4h->pad);
+        break;
+    }
+    default:
+        return false;
     }
 
     /* now that we know a little more, do a little more validation */
-    if(cap_len < hlen)
+    if (cap_len < hlen)
         return false;
 
     /* note that the pflen may exclude the padding which is always present */
-    if(pflen < hlen - padlen || pflen > hlen)
+    if (pflen < hlen - padlen || pflen > hlen)
         return false;
 
-
     /* check the network type - should only be AF_INET or AF_INET6 */
-    switch(af)
+    switch (af)
     {
-        case AF_INET:   /* IPv4 */
-            codec.next_prot_id = ETHERTYPE_IPV4;
-            break;
+    case AF_INET:       /* IPv4 */
+        codec.next_prot_id = ETHERTYPE_IPV4;
+        break;
 
 #if defined(AF_INET6)
-        case AF_INET6:  /* IPv6 */
-            codec.next_prot_id = ETHERTYPE_IPV6;
-            break;
+    case AF_INET6:      /* IPv6 */
+        codec.next_prot_id = ETHERTYPE_IPV6;
+        break;
 #endif
 
-        default:
-            /* To my knowledge, pflog devices can only
-             * pass IP and IP6 packets. -fleck
-             */
-            // TBD add decoder drop event for unknown pflog network type
-            break;
+    default:
+        /* To my knowledge, pflog devices can only
+         * pass IP and IP6 packets. -fleck
+         */
+        // TBD add decoder drop event for unknown pflog network type
+        break;
     }
 
     codec.lyr_len = hlen;
     return true;
 }
 
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
-
 static Codec* ctor(Module*)
 { return new PflogCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi pflog_api =
 {
@@ -273,7 +258,6 @@ static const CodecApi pflog_api =
     ctor,
     dtor,
 };
-
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =

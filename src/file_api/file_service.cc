@@ -47,14 +47,15 @@
 #include "file_resume_block.h"
 #include "framework/inspector.h"
 #include "detection_util.h"
-#include "service_inspectors/http_inspect/hi_main.h" // FIXIT-M bad dependency; use inspector::get_buf()
+#include "service_inspectors/http_inspect/hi_main.h" // FIXIT-M bad dependency; use
+                                                     // inspector::get_buf()
 
 static bool file_type_id_enabled = false;  // STATIC
 static bool file_signature_enabled = false;
 static bool file_processing_initiated = false;
 
 static Get_file_policy_func get_file_policy = NULL;
-File_type_done_func  file_type_done = NULL;
+File_type_done_func file_type_done = NULL;
 File_signature_done_func file_signature_done = NULL;
 Log_file_action_func log_file_action = NULL;
 
@@ -64,39 +65,39 @@ static int file_process(
     bool upload, bool suspend_block_verdict);
 
 /*File properties*/
-static int get_file_name (Flow* flow, uint8_t **file_name, uint32_t *name_size);
+static int get_file_name(Flow* flow, uint8_t** file_name, uint32_t* name_size);
 static uint64_t get_file_size(Flow* flow);
 static uint64_t get_file_processed_size(Flow* flow);
 static bool get_file_direction(Flow* flow);
-static uint8_t *get_file_sig_sha256(Flow* flow);
+static uint8_t* get_file_sig_sha256(Flow* flow);
 
-static void set_file_name(Flow* flow, uint8_t * file_name, uint32_t name_size);
+static void set_file_name(Flow* flow, uint8_t* file_name, uint32_t name_size);
 static void set_file_direction(Flow* flow, bool upload);
 
 static void set_file_policy_callback(Get_file_policy_func);
-static void enable_file_type(File_type_done_func );
+static void enable_file_type(File_type_done_func);
 static void enable_file_signature (File_signature_done_func);
 static void set_file_action_log_callback(Log_file_action_func);
 
 static int64_t get_max_file_depth(void);
 
-static void set_file_name_from_log(FILE_LogState *log_state, void *ssn);
+static void set_file_name_from_log(FILE_LogState* log_state, void* ssn);
 
-static uint32_t str_to_hash(uint8_t *str, int length );
+static uint32_t str_to_hash(uint8_t* str, int length);
 
 static void file_signature_lookup(void* p, bool is_retransmit);
 
 //static void print_file_stats(int exiting);
 
-static inline void finish_signature_lookup(FileContext *context, Flow *flow);
-static File_Verdict get_file_verdict(Flow *flow);
-static void render_block_verdict(void *ctx, void *p);
+static inline void finish_signature_lookup(FileContext* context, Flow* flow);
+static File_Verdict get_file_verdict(Flow* flow);
+static void render_block_verdict(void* ctx, void* p);
 
 FileAPI fileAPI;
 FileAPI* file_api = NULL;
 
-typedef struct _File_Stats {
-
+typedef struct _File_Stats
+{
     uint64_t files_total;
     uint64_t files_processed[FILE_ID_MAX + 1][2];
     uint64_t signatures_processed[FILE_ID_MAX + 1][2];
@@ -104,7 +105,6 @@ typedef struct _File_Stats {
     uint64_t verdicts_signature[FILE_VERDICT_MAX];
     uint64_t files_processed_by_proto[MAX_PROTOCOL_ORDINAL + 1];
     uint64_t signatures_processed_by_proto[MAX_PROTOCOL_ORDINAL + 1];
-
 } FileStats;
 
 static THREAD_LOCAL_TBD FileStats file_stats;
@@ -112,19 +112,19 @@ static THREAD_LOCAL_TBD FileStats file_stats;
 static void cleanDynamicContext(FileContext*);
 
 static void _file_signature_lookup(FileContext* context,
-        void* p, bool is_retransmit, bool suspend_block_verdict);
+    void* p, bool is_retransmit, bool suspend_block_verdict);
 
 class FileFlowData : public FlowData
 {
 public:
     FileFlowData() : FlowData(flow_id)
-    { memset(&context, 0, sizeof(context)); };
+    { memset(&context, 0, sizeof(context)); }
 
     ~FileFlowData()
-    { cleanDynamicContext(&context); };
+    { cleanDynamicContext(&context); }
 
     static void init()
-    { flow_id = FlowData::get_flow_id(); };
+    { flow_id = FlowData::get_flow_id(); }
 
     void handle_retransmit(Packet*) override;
 
@@ -188,9 +188,9 @@ static void start_file_processing(void)
         file_processing_initiated = true;
     }
 }
-void free_file_config(void *conf)
-{
 
+void free_file_config(void* conf)
+{
     free_file_rules(conf);
     free_file_identifiers(conf);
     free(conf);
@@ -203,14 +203,15 @@ void close_fileAPI(void)
 }
 
 /*File context management*/
-static void cleanDynamicContext (FileContext *context)
+static void cleanDynamicContext(FileContext* context)
 {
     if (context->file_signature_context)
         free(context->file_signature_context);
-    if(context->sha256)
+    if (context->sha256)
         free(context->sha256);
 }
-void file_context_reset(FileContext *context)
+
+void file_context_reset(FileContext* context)
 {
     cleanDynamicContext(context);
     memset(context, 0, sizeof(*context));
@@ -226,7 +227,7 @@ static FileContext* get_file_context(Flow* f)
 
 static FileContext* get_file_context(void* p, FilePosition position, bool upload)
 {
-    Packet *pkt = (Packet *)p;
+    Packet* pkt = (Packet*)p;
 
     /* Attempt to get a previously allocated context. */
     FileContext* context = get_file_context(pkt->flow);
@@ -238,7 +239,7 @@ static FileContext* get_file_context(void* p, FilePosition position, bool upload
     {
         FileFlowData* ffd = new FileFlowData;
         context = &ffd->context;
-	    pkt->flow->set_application_data(ffd);
+        pkt->flow->set_application_data(ffd);
         file_stats.files_total++;
     }
     else
@@ -273,11 +274,11 @@ static FileContext* get_file_context(void* p, FilePosition position, bool upload
 
 #if defined(DEBUG_MSGS) || defined (REG_TEST)
 #define MAX_CONTEXT_INFO_LEN 1024
-static void printFileContext (FileContext* context)
+static void printFileContext(FileContext* context)
 {
     char buf[MAX_CONTEXT_INFO_LEN + 1];
     int unused;
-    char *cur = buf;
+    char* cur = buf;
     int used = 0;
 
     if (!context)
@@ -296,9 +297,9 @@ static void printFileContext (FileContext* context)
     unused -= used;
     cur += used;
 
-    if ((context->file_name_size > 0) && (unused > (int) context->file_name_size))
+    if ((context->file_name_size > 0) && (unused > (int)context->file_name_size))
     {
-        strncpy(cur, (char *)context->file_name, context->file_name_size );
+        strncpy(cur, (char*)context->file_name, context->file_name_size);
         unused -= context->file_name_size;
         cur += context->file_name_size;
     }
@@ -306,7 +307,7 @@ static void printFileContext (FileContext* context)
     if (unused > 0)
     {
         used = snprintf(cur, unused, "\nFile type: %s(%d)",
-                file_info_from_ID(context->file_config, context->file_type_id), context->file_type_id);
+            file_info_from_ID(context->file_config, context->file_type_id), context->file_type_id);
         unused -= used;
         cur += used;
     }
@@ -314,7 +315,7 @@ static void printFileContext (FileContext* context)
     if (unused > 0)
     {
         used = snprintf(cur, unused, "\nFile size: %u",
-                (unsigned int)context->file_size);
+            (unsigned int)context->file_size);
         unused -= used;
         cur += used;
     }
@@ -322,21 +323,21 @@ static void printFileContext (FileContext* context)
     if (unused > 0)
     {
         snprintf(cur, unused, "\nProcessed size: %u\n",
-                (unsigned int)context->processed_bytes);
+            (unsigned int)context->processed_bytes);
     }
 
     buf[sizeof(buf) - 1] = '\0';
     printf("%s", buf);
 }
 
-static void DumpHex(FILE *fp, const uint8_t *data, unsigned len)
+static void DumpHex(FILE* fp, const uint8_t* data, unsigned len)
 {
     char str[18];
     unsigned i;
     unsigned pos;
     char c;
 
-    FileConfig *file_config =  (FileConfig *)(snort_conf->file_config);
+    FileConfig* file_config =  (FileConfig*)(snort_conf->file_config);
 
     if (file_config->show_data_depth < (int64_t)len)
         len = file_config->show_data_depth;
@@ -382,6 +383,7 @@ static void DumpHex(FILE *fp, const uint8_t *data, unsigned len)
         fprintf(fp, "  %s\n", str);
     }
 }
+
 #endif
 
 static inline void updateFileSize(FileContext* context, int data_size, FilePosition position)
@@ -399,39 +401,40 @@ static inline int file_eventq_add(uint32_t gid, uint32_t sid, const char*, RuleT
     return SnortEventqAdd(gid, sid, type);
 }
 
-static inline void add_file_to_block(Packet *p, File_Verdict verdict,
-        uint32_t file_type_id, uint8_t *signature)
+static inline void add_file_to_block(Packet* p, File_Verdict verdict,
+    uint32_t file_type_id, uint8_t* signature)
 {
-    uint8_t *buf = NULL;
+    uint8_t* buf = NULL;
     uint32_t len = 0;
     uint32_t type = 0;
     uint32_t file_sig;
-    FileConfig *file_config =  (FileConfig *)(snort_conf->file_config);
+    FileConfig* file_config =  (FileConfig*)(snort_conf->file_config);
 
     /*Use URI as the identifier for file*/
     if (GetHttpUriData(p->flow, &buf, &len, &type))
     {
         file_sig = str_to_hash(buf, len);
         file_resume_block_add_file(p, file_sig, (uint32_t)file_config->file_block_timeout,
-                verdict, file_type_id, signature);
+            verdict, file_type_id, signature);
     }
 }
+
 /*
  * Check HTTP partial content header
  * Return: 1: partial content header
  *         0: not http partial content header
  */
-static inline int check_http_partial_content(Packet *p)
+static inline int check_http_partial_content(Packet* p)
 {
-    uint8_t *buf = NULL;
+    uint8_t* buf = NULL;
     uint32_t len = 0;
     uint32_t type = 0;
     uint32_t file_sig;
     InspectionBuffer hb;
 
     if ( !p->flow || !p->flow->clouseau ||
-         // FIXIT-P cache id at parse time for runtime use
-         !p->flow->clouseau->get_buf("http_stat_code", p, hb) )
+        // FIXIT-P cache id at parse time for runtime use
+        !p->flow->clouseau->get_buf("http_stat_code", p, hb) )
     {
         return 0;
     }
@@ -451,10 +454,10 @@ static inline int check_http_partial_content(Packet *p)
 }
 
 static void _file_signature_lookup(FileContext* context,
-        void* p, bool is_retransmit, bool suspend_block_verdict)
+    void* p, bool is_retransmit, bool suspend_block_verdict)
 {
     File_Verdict verdict = FILE_VERDICT_UNKNOWN;
-    Packet *pkt = (Packet *)p;
+    Packet* pkt = (Packet*)p;
 
     if (!context->file_signature_enabled)
         return;
@@ -473,7 +476,7 @@ static void _file_signature_lookup(FileContext* context,
     if (verdict == FILE_VERDICT_LOG )
     {
         file_eventq_add(GENERATOR_FILE_SIGNATURE, FILE_SIGNATURE_SHA256,
-                FILE_SIGNATURE_SHA256_STR, RULE_TYPE__ALERT);
+            FILE_SIGNATURE_SHA256_STR, RULE_TYPE__ALERT);
         pkt->packet_flags |= PKT_FILE_EVENT_SET;
     }
     else if (verdict == FILE_VERDICT_PENDING)
@@ -481,7 +484,7 @@ static void _file_signature_lookup(FileContext* context,
         /*Can't decide verdict, drop packet and waiting...*/
         if (is_retransmit)
         {
-            FileConfig *file_config =  (FileConfig *)context->file_config;
+            FileConfig* file_config =  (FileConfig*)context->file_config;
             /*Drop packets if not timeout*/
             if (pkt->pkth->ts.tv_sec <= context->expires)
             {
@@ -492,17 +495,18 @@ static void _file_signature_lookup(FileContext* context,
             context->file_signature_enabled = 0;
             if (file_config && file_config->block_timeout_lookup)
                 file_eventq_add(GENERATOR_FILE_SIGNATURE, FILE_SIGNATURE_SHA256,
-                        FILE_SIGNATURE_SHA256_STR, RULE_TYPE__DROP);
+                    FILE_SIGNATURE_SHA256_STR, RULE_TYPE__DROP);
             else
                 file_eventq_add(GENERATOR_FILE_SIGNATURE, FILE_SIGNATURE_SHA256,
-                        FILE_SIGNATURE_SHA256_STR, RULE_TYPE__ALERT);
+                    FILE_SIGNATURE_SHA256_STR, RULE_TYPE__ALERT);
             pkt->packet_flags |= PKT_FILE_EVENT_SET;
         }
         else
         {
-            FileConfig *file_config =  (FileConfig *)context->file_config;
+            FileConfig* file_config =  (FileConfig*)context->file_config;
             if (file_config)
-                context->expires = (time_t)(file_config->file_lookup_timeout + pkt->pkth->ts.tv_sec);
+                context->expires = (time_t)(file_config->file_lookup_timeout +
+                    pkt->pkth->ts.tv_sec);
             Active_DropPacket(pkt);
             return;
         }
@@ -518,7 +522,7 @@ static void _file_signature_lookup(FileContext* context,
     finish_signature_lookup(context, pkt->flow);
 }
 
-static inline void finish_signature_lookup(FileContext *context, Flow* flow)
+static inline void finish_signature_lookup(FileContext* context, Flow* flow)
 {
     if (context->sha256)
     {
@@ -538,9 +542,9 @@ static File_Verdict get_file_verdict(Flow* flow)
     return context->verdict;
 }
 
-static void render_block_verdict(void *ctx, void *p)
+static void render_block_verdict(void* ctx, void* p)
 {
-    FileContext *context = (FileContext*)ctx;
+    FileContext* context = (FileContext*)ctx;
     Packet* pkt = (Packet*)p;
 
     if (p == NULL)
@@ -557,7 +561,7 @@ static void render_block_verdict(void *ctx, void *p)
     if (context->verdict == FILE_VERDICT_BLOCK)
     {
         file_eventq_add(GENERATOR_FILE_SIGNATURE, FILE_SIGNATURE_SHA256,
-                FILE_SIGNATURE_SHA256_STR, RULE_TYPE__DROP);
+            FILE_SIGNATURE_SHA256_STR, RULE_TYPE__DROP);
         Active_ForceDropPacket();
         DisableInspection(pkt);
         pkt->packet_flags |= PKT_FILE_EVENT_SET;
@@ -566,7 +570,7 @@ static void render_block_verdict(void *ctx, void *p)
     else if (context->verdict == FILE_VERDICT_REJECT)
     {
         file_eventq_add(GENERATOR_FILE_SIGNATURE, FILE_SIGNATURE_SHA256,
-                FILE_SIGNATURE_SHA256_STR, RULE_TYPE__DROP);
+            FILE_SIGNATURE_SHA256_STR, RULE_TYPE__DROP);
         Active_ForceDropPacket();
         DisableInspection(pkt);
         pkt->packet_flags |= PKT_FILE_EVENT_SET;
@@ -578,7 +582,7 @@ static void render_block_verdict(void *ctx, void *p)
 
 static void file_signature_lookup(void* p, bool is_retransmit)
 {
-    Packet *pkt = (Packet *)p;
+    Packet* pkt = (Packet*)p;
     FileContext* context = get_file_context(pkt->flow);
     if (!context)
         return;
@@ -590,11 +594,11 @@ static void file_signature_lookup(void* p, bool is_retransmit)
  *    1: continue processing/log/block this file
  *    0: ignore this file
  */
-static int file_process( void* p, uint8_t* file_data, int data_size,
-        FilePosition position, bool upload, bool suspend_block_verdict)
+static int file_process(void* p, uint8_t* file_data, int data_size,
+    FilePosition position, bool upload, bool suspend_block_verdict)
 {
     FileContext* context;
-    Packet *pkt = (Packet *)p;
+    Packet* pkt = (Packet*)p;
     /* if both disabled, return immediately*/
     if ((!file_type_id_enabled) && (!file_signature_enabled))
         return 0;
@@ -604,12 +608,12 @@ static int file_process( void* p, uint8_t* file_data, int data_size,
     if (DEBUG_FILE & GetDebugLevel())
 #endif
 #if defined(DEBUG_MSGS) || defined (REG_TEST)
-        DumpHex(stdout, file_data, data_size);
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE, "stream pointer %p\n", pkt->flow ););
+    DumpHex(stdout, file_data, data_size);
+    DEBUG_WRAP(DebugMessage(DEBUG_FILE, "stream pointer %p\n", pkt->flow); );
 #endif
 
     context = get_file_context(p, position, upload);
-    if(check_http_partial_content(pkt))
+    if (check_http_partial_content(pkt))
     {
         context->file_type_enabled = false;
         context->file_signature_enabled = false;
@@ -652,14 +656,14 @@ static int file_process( void* p, uint8_t* file_data, int data_size,
         if (verdict == FILE_VERDICT_LOG )
         {
             file_eventq_add(GENERATOR_FILE_TYPE, context->file_type_id,
-                    file_info_from_ID(context->file_config,context->file_type_id), RULE_TYPE__ALERT);
+                file_info_from_ID(context->file_config,context->file_type_id), RULE_TYPE__ALERT);
             context->file_signature_enabled = false;
             pkt->packet_flags |= PKT_FILE_EVENT_SET;
         }
         else if (verdict == FILE_VERDICT_BLOCK)
         {
             file_eventq_add(GENERATOR_FILE_TYPE, context->file_type_id,
-                    file_info_from_ID(context->file_config,context->file_type_id), RULE_TYPE__DROP);
+                file_info_from_ID(context->file_config,context->file_type_id), RULE_TYPE__DROP);
             Active_ForceDropPacket();
             DisableInspection(pkt);
             updateFileSize(context, data_size, position);
@@ -685,7 +689,6 @@ static int file_process( void* p, uint8_t* file_data, int data_size,
         else if (verdict == FILE_VERDICT_STOP)
         {
             context->file_signature_enabled = false;
-
         }
     }
     /*file signature calculation*/
@@ -696,21 +699,20 @@ static int file_process( void* p, uint8_t* file_data, int data_size,
 #if defined(DEBUG_MSGS) || defined (REG_TEST)
         if (
 #if defined(DEBUG_MSGS) && !defined (REG_TEST)
-                (DEBUG_FILE & GetDebugLevel()) &&
+            (DEBUG_FILE & GetDebugLevel()) &&
 #endif
-                (context->sha256) )
+            (context->sha256) )
         {
             file_sha256_print(context->sha256);
         }
 #endif
         _file_signature_lookup(context, p, false, suspend_block_verdict);
-
     }
     updateFileSize(context, data_size, position);
     return 1;
 }
 
-static void set_file_name (Flow* flow, uint8_t* file_name, uint32_t name_size)
+static void set_file_name(Flow* flow, uint8_t* file_name, uint32_t name_size)
 {
     /* Attempt to get a previously allocated context. */
     FileContext* context = get_file_context(flow);
@@ -720,26 +722,26 @@ static void set_file_name (Flow* flow, uint8_t* file_name, uint32_t name_size)
 #if defined(DEBUG_MSGS) && !defined (REG_TEST)
     if (DEBUG_FILE & GetDebugLevel())
 #endif
-        printFileContext(context);
+    printFileContext(context);
 #endif
 }
 
 /* Return 1: file name available,
  *        0: file name is unavailable
  */
-static int get_file_name (Flow* flow, uint8_t **file_name, uint32_t *name_size)
+static int get_file_name(Flow* flow, uint8_t** file_name, uint32_t* name_size)
 {
     FileContext* context = get_file_context(flow);
     return file_name_get(context, file_name, name_size);
-
 }
-static uint64_t  get_file_size(Flow* flow)
+
+static uint64_t get_file_size(Flow* flow)
 {
     FileContext* context = get_file_context(flow);
     return file_size_get(context);
 }
 
-static uint64_t  get_file_processed_size(Flow* flow)
+static uint64_t get_file_processed_size(Flow* flow)
 {
     FileContext* context = get_file_context(flow);
 
@@ -761,7 +763,7 @@ static bool get_file_direction(Flow* flow)
     return file_direction_get(context);
 }
 
-static uint8_t *get_file_sig_sha256(Flow* flow)
+static uint8_t* get_file_sig_sha256(Flow* flow)
 {
     FileContext* context = get_file_context(flow);
     return file_sig_sha256_get(context);
@@ -802,7 +804,7 @@ static int64_t get_max_file_depth(void)
 {
     int64_t file_depth = -1;
 
-    FileConfig *file_config =  (FileConfig *)(snort_conf->file_config);
+    FileConfig* file_config =  (FileConfig*)(snort_conf->file_config);
 
     if (!file_config)
         return -1;
@@ -823,20 +825,19 @@ static int64_t get_max_file_depth(void)
 
         if (file_config->file_signature_depth > file_depth)
             file_depth = file_config->file_signature_depth;
-
     }
 
     return file_depth;
 }
 
-static void set_file_name_from_log(FILE_LogState *log_state, void* pv)
+static void set_file_name_from_log(FILE_LogState* log_state, void* pv)
 {
     Flow* ssn = (Flow*)pv; // FIXIT-M eliminate need for cast
 
     if ((log_state) && (log_state->file_logged > log_state->file_current))
     {
         set_file_name(ssn, log_state->filenames + log_state->file_current,
-                log_state->file_logged -log_state->file_current);
+            log_state->file_logged -log_state->file_current);
     }
     else
     {
@@ -844,19 +845,19 @@ static void set_file_name_from_log(FILE_LogState *log_state, void* pv)
     }
 }
 
-static uint32_t str_to_hash(uint8_t *str, int length )
+static uint32_t str_to_hash(uint8_t* str, int length)
 {
     uint32_t a,b,c,tmp;
     int i,j,k,l;
     a = b = c = 0;
-    for (i=0,j=0;i<length;i+=4)
+    for (i=0,j=0; i<length; i+=4)
     {
         tmp = 0;
         k = length - i;
         if (k > 4)
             k=4;
 
-        for (l=0;l<k;l++)
+        for (l=0; l<k; l++)
         {
             tmp |= *(str + i + l) << l*8;
         }
@@ -892,7 +893,7 @@ static void print_file_stats(int exiting)
     uint64_t processed_total[2];
     uint64_t verdicts_total;
 
-    if(!file_stats.files_total)
+    if (!file_stats.files_total)
         return;
 
     LogMessage("File type stats:\n");
@@ -905,17 +906,17 @@ static void print_file_stats(int exiting)
     {
         char* type_name =  file_info_from_ID(snort_conf->file_config, i);
         if (type_name &&
-                (file_stats.files_processed[i][0] || file_stats.files_processed[i][1] ))
+            (file_stats.files_processed[i][0] || file_stats.files_processed[i][1] ))
         {
             LogMessage("%12s(%3d)          " FMTu64("-10") " " FMTu64("-10") " \n",
-                    type_name, i,
-                    file_stats.files_processed[i][0], file_stats.files_processed[i][1]);
+                type_name, i,
+                file_stats.files_processed[i][0], file_stats.files_processed[i][1]);
             processed_total[0]+= file_stats.files_processed[i][0];
             processed_total[1]+= file_stats.files_processed[i][1];
         }
     }
-    LogMessage("            Total          " FMTu64("-10")"  " FMTu64("-10") " \n",
-            processed_total[0], processed_total[1]);
+    LogMessage("            Total          " FMTu64("-10") "  " FMTu64("-10") " \n",
+        processed_total[0], processed_total[1]);
 
     LogMessage("\nFile signature stats:\n");
 
@@ -927,17 +928,17 @@ static void print_file_stats(int exiting)
     {
         char* type_name =  file_info_from_ID(snort_conf->file_config, i);
         if (type_name &&
-                (file_stats.signatures_processed[i][0] || file_stats.signatures_processed[i][1] ))
+            (file_stats.signatures_processed[i][0] || file_stats.signatures_processed[i][1] ))
         {
             LogMessage("%12s(%3d)          " FMTu64("-10") " " FMTu64("-10") " \n",
-                    type_name, i,
-                    file_stats.signatures_processed[i][0], file_stats.signatures_processed[i][1]);
+                type_name, i,
+                file_stats.signatures_processed[i][0], file_stats.signatures_processed[i][1]);
             processed_total[0]+= file_stats.signatures_processed[i][0];
             processed_total[1]+= file_stats.signatures_processed[i][1];
         }
     }
     LogMessage("            Total          " FMTu64("-10") " " FMTu64("-10") " \n",
-            processed_total[0], processed_total[1]);
+        processed_total[0], processed_total[1]);
 
     LogMessage("\nFile type verdicts:\n");
 
@@ -949,27 +950,27 @@ static void print_file_stats(int exiting)
         {
         case FILE_VERDICT_UNKNOWN:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "UNKNOWN",
-                    file_stats.verdicts_type[i]);
+                file_stats.verdicts_type[i]);
             break;
         case FILE_VERDICT_LOG:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "LOG",
-                    file_stats.verdicts_type[i]);
+                file_stats.verdicts_type[i]);
             break;
         case FILE_VERDICT_STOP:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "STOP",
-                    file_stats.verdicts_type[i]);
+                file_stats.verdicts_type[i]);
             break;
         case FILE_VERDICT_BLOCK:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "BLOCK",
-                    file_stats.verdicts_type[i]);
+                file_stats.verdicts_type[i]);
             break;
         case FILE_VERDICT_REJECT:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "REJECT",
-                    file_stats.verdicts_type[i]);
+                file_stats.verdicts_type[i]);
             break;
         case FILE_VERDICT_PENDING:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "PENDING",
-                    file_stats.verdicts_type[i]);
+                file_stats.verdicts_type[i]);
             break;
         default:
             break;
@@ -987,27 +988,27 @@ static void print_file_stats(int exiting)
         {
         case FILE_VERDICT_UNKNOWN:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "UNKNOWN",
-                    file_stats.verdicts_signature[i]);
+                file_stats.verdicts_signature[i]);
             break;
         case FILE_VERDICT_LOG:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "LOG",
-                    file_stats.verdicts_signature[i]);
+                file_stats.verdicts_signature[i]);
             break;
         case FILE_VERDICT_STOP:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "STOP",
-                    file_stats.verdicts_signature[i]);
+                file_stats.verdicts_signature[i]);
             break;
         case FILE_VERDICT_BLOCK:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "BLOCK",
-                    file_stats.verdicts_signature[i]);
+                file_stats.verdicts_signature[i]);
             break;
         case FILE_VERDICT_REJECT:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "REJECT",
-                    file_stats.verdicts_signature[i]);
+                file_stats.verdicts_signature[i]);
             break;
         case FILE_VERDICT_PENDING:
             LogMessage("   %12s:           " FMTu64("-10") " \n", "PENDING",
-                    file_stats.verdicts_signature[i]);
+                file_stats.verdicts_signature[i]);
             break;
         default:
             break;
@@ -1021,7 +1022,8 @@ static void print_file_stats(int exiting)
         {
             if (file_stats.files_processed_by_proto[i])
             {
-                LogMessage("   %12d:           " FMTu64("-10") " \n", i ,file_stats.files_processed_by_proto[i]);
+                LogMessage("   %12d:           " FMTu64("-10") " \n", i,
+                    file_stats.files_processed_by_proto[i]);
             }
         }
         LogMessage("\nFile signatures processed by protocol IDs:\n");
@@ -1029,12 +1031,14 @@ static void print_file_stats(int exiting)
         {
             if (file_stats.signatures_processed_by_proto[i])
             {
-                LogMessage("   %12d:           " FMTu64("-10") " \n", i ,file_stats.signatures_processed_by_proto[i]);
+                LogMessage("   %12d:           " FMTu64("-10") " \n", i,
+                    file_stats.signatures_processed_by_proto[i]);
             }
         }
     }
 
     LogMessage("\nTotal files processed:     " FMTu64("-10") " \n", file_stats.files_total);
 }
+
 #endif
 

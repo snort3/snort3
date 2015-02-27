@@ -24,7 +24,7 @@
 #include "utils/stats.h"
 
 struct FlowConfig
-{   
+{
     uint64_t mem_cap;
     uint32_t max_sessions;
     uint16_t cache_pruning_timeout;
@@ -46,10 +46,10 @@ public:
     Flow* find_flow(const FlowKey*);
     Flow* new_flow(const FlowKey*);
 
-    void init_tcp(const FlowConfig&, InspectSsnFunc);
-    void init_udp(const FlowConfig&, InspectSsnFunc);
-    void init_icmp(const FlowConfig&, InspectSsnFunc);
-    void init_ip(const FlowConfig&, InspectSsnFunc);
+    void init_tcp(const FlowConfig &, InspectSsnFunc);
+    void init_udp(const FlowConfig &, InspectSsnFunc);
+    void init_icmp(const FlowConfig &, InspectSsnFunc);
+    void init_ip(const FlowConfig &, InspectSsnFunc);
     void init_exp(const FlowConfig& tcp, const FlowConfig& udp);
 
     void delete_flow(const FlowKey*);
@@ -58,17 +58,17 @@ public:
     void prune_flows(uint8_t proto, Packet*);
     void timeout_flows(uint32_t flowCount, time_t cur_time);
 
-    char expected_flow (Flow*, Packet*);
+    char expected_flow(Flow*, Packet*);
     bool is_expected(Packet*);
 
     int add_expected(
-        const sfip_t *srcIP, uint16_t srcPort,
-        const sfip_t *dstIP, uint16_t dstPort,
+        const sfip_t* srcIP, uint16_t srcPort,
+        const sfip_t* dstIP, uint16_t dstPort,
         uint8_t protocol, char direction, FlowData*);
 
     int add_expected(
-        const sfip_t *srcIP, uint16_t srcPort,
-        const sfip_t *dstIP, uint16_t dstPort,
+        const sfip_t* srcIP, uint16_t srcPort,
+        const sfip_t* dstIP, uint16_t dstPort,
         uint8_t protocol, int16_t appId, FlowData*);
 
     uint32_t max_flows(uint8_t proto);

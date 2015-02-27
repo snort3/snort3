@@ -16,7 +16,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 /*
 *  snprintf that appends to destination buffer
 *
@@ -49,7 +49,7 @@
  * Returns: number of characters added to the buffer
  *
  ****************************************************************************/
-int sfsnprintfappend(char *dest, int dsize, const char *format, ...)
+int sfsnprintfappend(char* dest, int dsize, const char* format, ...)
 {
     int currLen, appendLen;
     va_list ap;
@@ -64,9 +64,9 @@ int sfsnprintfappend(char *dest, int dsize, const char *format, ...)
     va_start(ap, format);
     appendLen = vsnprintf(dest+currLen, dsize-currLen, format, ap);
     va_end(ap);
- 
-    dest[dsize-1]=0;/* guarantee a null tremination */
-    
+
+    dest[dsize-1]=0; /* guarantee a null tremination */
+
     return appendLen;
 }
 

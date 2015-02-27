@@ -49,7 +49,7 @@ struct SnortBuffer
 
 extern "C" {
 // ensure Lua can link with this
-const SnortBuffer* get_buffer();
+    const SnortBuffer* get_buffer();
 }
 
 static THREAD_LOCAL Cursor* cursor;
@@ -83,13 +83,13 @@ class LuaJitModule : public Module
 {
 public:
     LuaJitModule(const char* name) : Module(name, s_help, s_params)
-    { };
+    { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &luaIpsPerfStats; };
+    { return &luaIpsPerfStats; }
 
 public:
     std::string args;

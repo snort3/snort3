@@ -30,16 +30,17 @@
 // NHttpMsgRequest class
 //-------------------------------------------------------------------------
 
-class NHttpMsgRequest: public NHttpMsgStart {
+class NHttpMsgRequest : public NHttpMsgStart
+{
 public:
-    NHttpMsgRequest(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
-       NHttpEnums::SourceId source_id_, bool buf_owner);
-    ~NHttpMsgRequest() { delete uri; };
-    void print_section(FILE *output) override;
+    NHttpMsgRequest(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
+        NHttpEnums::SourceId source_id_, bool buf_owner);
+    ~NHttpMsgRequest() { delete uri; }
+    void print_section(FILE* output) override;
     void gen_events() override;
     void update_flow() override;
     void legacy_clients() override;
-    const Field& get_method() { return method; };
+    const Field& get_method() { return method; }
     const Field& get_uri();
     const Field& get_uri_norm_legacy();
 
@@ -54,22 +55,4 @@ private:
 };
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -36,9 +36,9 @@ std::size_t DataApi::errors_count = 0;
 DataApi::DataApi() : curr_data_bad(false)
 {
     comments = new Comments(start_comments, 0,
-                    Comments::CommentType::MULTI_LINE);
+        Comments::CommentType::MULTI_LINE);
     errors = new Comments(start_errors, 0,
-                    Comments::CommentType::MULTI_LINE);
+        Comments::CommentType::MULTI_LINE);
 }
 
 DataApi::~DataApi()
@@ -52,8 +52,6 @@ DataApi::~DataApi()
     delete comments;
     delete errors;
 }
-
-
 
 std::string DataApi::translate_variable(const std::string& var_name)
 {
@@ -74,7 +72,7 @@ std::string DataApi::translate_variable(const std::string& var_name)
  * Given a Snort style string to expand, this funcion will return
  * the expanded string
  */
-std::string DataApi::expand_vars(const std::string &string)
+std::string DataApi::expand_vars(const std::string& string)
 {
     std::string estring;
     estring.resize(1024, '\0');
@@ -86,50 +84,49 @@ std::string DataApi::expand_vars(const std::string &string)
     char c;
     int quote_toggle = 0;
 
-    if(string.empty() || string.rfind('$') == std::string::npos)
+    if (string.empty() || string.rfind('$') == std::string::npos)
         return string;
-
 
     i = j = 0;
     l_string = string.size();
 
-    while(i < l_string && j < std::string::npos)
+    while (i < l_string && j < std::string::npos)
     {
         c = string[i++];
 
-        if(c == '"')
+        if (c == '"')
         {
             /* added checks to make sure that we are inside a quoted string
              */
             quote_toggle ^= 1;
         }
 
-        if(c == '$' && !quote_toggle)
+        if (c == '$' && !quote_toggle)
         {
-            std::memset((char *) rawvarname, 0, sizeof(rawvarname));
+            std::memset((char*)rawvarname, 0, sizeof(rawvarname));
             varname_completed = 0;
             name_only = 1;
             iv = i;
             jv = 0;
 
-            if(string[i] == '(')
+            if (string[i] == '(')
             {
                 name_only = 0;
                 iv = i + 1;
             }
 
-            while(!varname_completed
-                  && iv < l_string
-                  && jv < (int)sizeof(rawvarname) - 1)
+            while (!varname_completed
+                && iv < l_string
+                && jv < (int)sizeof(rawvarname) - 1)
             {
                 c = string[iv++];
 
-                if((name_only && !(isalnum(c) || c == '_'))
-                   || (!name_only && c == ')'))
+                if ((name_only && !(isalnum(c) || c == '_'))
+                    || (!name_only && c == ')'))
                 {
                     varname_completed = 1;
 
-                    if(name_only)
+                    if (name_only)
                         iv--;
                 }
                 else
@@ -138,16 +135,16 @@ std::string DataApi::expand_vars(const std::string &string)
                 }
             }
 
-            if(varname_completed || iv == l_string)
+            if (varname_completed || iv == l_string)
             {
-                char *p;
+                char* p;
 
                 i = iv;
 
                 varcontents = NULL;
 
-                std::memset((char *) varname, 0, sizeof(varname));
-                std::memset((char *) varaux, 0, sizeof(varaux));
+                std::memset((char*)varname, 0, sizeof(varname));
+                std::memset((char*)varaux, 0, sizeof(varaux));
                 varmodifier = ' ';
 
                 p = strchr(rawvarname, ':');
@@ -155,7 +152,7 @@ std::string DataApi::expand_vars(const std::string &string)
                 {
                     std::strncpy(varname, rawvarname, (std::size_t)(p - rawvarname));
 
-                    if(strlen(p) >= 2)
+                    if (strlen(p) >= 2)
                     {
                         varmodifier = *(p + 1);
                         std::strncpy(varaux, p + 2, sizeof(varaux));
@@ -164,31 +161,31 @@ std::string DataApi::expand_vars(const std::string &string)
                 else
                     std::strncpy(varname, rawvarname, sizeof(varname));
 
-                std::memset((char *) varbuffer, 0, sizeof(varbuffer));
+                std::memset((char*)varbuffer, 0, sizeof(varbuffer));
 
                 std::string tmp = translate_variable(varname);
                 varcontents = tmp.c_str();
 
-                switch(varmodifier)
+                switch (varmodifier)
                 {
-                    case '-':
-                        if(!varcontents || !strlen(varcontents))
-                            varcontents = varaux;
-                        break;
+                case '-':
+                    if (!varcontents || !strlen(varcontents))
+                        varcontents = varaux;
+                    break;
 
-                    case '?':
-                        if(!varcontents || !strlen(varcontents))
-                            return std::string();
-                        break;
+                case '?':
+                    if (!varcontents || !strlen(varcontents))
+                        return std::string();
+                    break;
                 }
 
                 /* If variable not defined now, we're toast */
-                if(!varcontents || !strlen(varcontents))
+                if (!varcontents || !strlen(varcontents))
                 {
                     return std::string();
                 }
 
-                if(varcontents)
+                if (varcontents)
                 {
                     std::size_t l_varcontents = strlen(varcontents);
 
@@ -197,7 +194,7 @@ std::string DataApi::expand_vars(const std::string &string)
                     if (estring.size() < j + l_varcontents)
                         estring.resize(estring.size() * 2);
 
-                    while(iv < l_varcontents && j < estring.size() - 1)
+                    while (iv < l_varcontents && j < estring.size() - 1)
                         estring[j++] = varcontents[iv++];
                 }
             }
@@ -233,7 +230,6 @@ bool DataApi::failed_conversions() const
 std::size_t DataApi::num_errors() const
 { return errors_count; }
 
-
 void DataApi::failed_conversion(const std::istringstream& stream)
 {
     // we only need to go through this once.
@@ -248,7 +244,7 @@ void DataApi::failed_conversion(const std::istringstream& stream)
 }
 
 void DataApi::failed_conversion(const std::istringstream& stream,
-                                const std::string unknown_option)
+    const std::string unknown_option)
 {
     // we only need to go through this once.
     if (!curr_data_bad)
@@ -262,18 +258,16 @@ void DataApi::failed_conversion(const std::istringstream& stream,
     errors->add_text("^^^^ unknown_syntax=" + unknown_option);
 }
 
-
 bool DataApi::add_variable(std::string name, std::string value)
 {
     for (auto v : vars)
         if (!name.compare(v->get_name()))
             return v->add_value(value);
 
-    Variable *var = new Variable(name);
+    Variable* var = new Variable(name);
     vars.push_back(var);
     return var->add_value(value);
 }
-
 
 void DataApi::reset_state()
 {
@@ -282,7 +276,6 @@ void DataApi::reset_state()
 
 bool DataApi::add_include_file(std::string file_name)
 {
-
     Include* incl = new Include(file_name);
 
     if (incl == nullptr)
@@ -303,7 +296,6 @@ void DataApi::developer_error(std::string error_string)
 void DataApi::add_comment(std::string c)
 { comments->add_text(c); }
 
-
 void DataApi::print_errors(std::ostream& out)
 {
     if (is_default_mode() &&
@@ -320,9 +312,7 @@ void DataApi::print_data(std::ostream& out)
 
     for (Include* i : includes)
         out << (*i) << "\n\n";
-
 }
-
 
 void DataApi::print_comments(std::ostream& out)
 {
@@ -331,8 +321,8 @@ void DataApi::print_comments(std::ostream& out)
 }
 
 void DataApi::swap_conf_data(std::vector<Variable*>& new_vars,
-                                std::vector<Include*>& new_includes,
-                                Comments*& new_comments)
+    std::vector<Include*>& new_includes,
+    Comments*& new_comments)
 {
     vars.swap(new_vars);
     includes.swap(new_includes);
@@ -341,3 +331,4 @@ void DataApi::swap_conf_data(std::vector<Variable*>& new_vars,
     new_comments = comments;
     comments = tmp;
 }
+

@@ -16,16 +16,16 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 /**
 **  @file       hi_client_norm.h
-**  
+**
 **  @author     Daniel Roelker <droelker@sourcefire.com>
-**  
+**
 **  @brief      Function prototypes for client normalization routines.
-**  
+**
 **  Contains public functions for accessing client normalization.
-**  
+**
 **  NOTES:
 **      - Initial development,  DJR
 */
@@ -35,6 +35,7 @@
 #include "hi_include.h"
 #include "hi_si.h"
 
-int hi_client_norm(HI_SESSION *session);
+int hi_client_norm(HI_SESSION* session);
 
 #endif
+

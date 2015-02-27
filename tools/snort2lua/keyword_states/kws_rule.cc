@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 // kws_rule.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #include <sstream>
 #include <vector>
 
@@ -26,21 +25,17 @@
 #include "helpers/s2l_util.h"
 #include "rule_states/rule_api.h"
 
-
 namespace keywords
 {
-
 namespace
 {
-
 class RuleHeader : public ConversionState
 {
 public:
-    explicit RuleHeader(Converter& c) : ConversionState(c) {};
-    virtual ~RuleHeader() {};
+    explicit RuleHeader(Converter& c) : ConversionState(c) { }
+    virtual ~RuleHeader() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool RuleHeader::convert(std::istringstream& data_stream)
@@ -56,7 +51,6 @@ bool RuleHeader::convert(std::istringstream& data_stream)
     {
         rule_api.add_hdr_data(hdr_data);
     }
-
 
     // Now, remove the last ')' and anything beyond. We will automatically
     // add that part back when printing each rule.
@@ -76,14 +70,14 @@ bool RuleHeader::convert(std::istringstream& data_stream)
  *******  GENERAL API ***********
  ********************************/
 
-template<const std::string *name>
+template<const std::string* name>
 static ConversionState* rule_ctor(Converter& c)
 {
     c.get_rule_api().add_hdr_data(*name);
     return new RuleHeader(c);
 }
 
-template<const std::string *name>
+template<const std::string* name>
 static ConversionState* dep_rule_ctor(Converter& c)
 {
     c.get_rule_api().add_hdr_data(*name);
@@ -103,17 +97,16 @@ static const std::string sdrop = "sdrop";
 static const std::string activate = "activate";
 static const std::string dynamic = "dynamic";
 
-static const ConvertMap alert_api = {alert, rule_ctor<&alert>};
-static const ConvertMap block_api = {block, rule_ctor<&block>};
-static const ConvertMap log_api = {log, rule_ctor<&log>};
-static const ConvertMap pass_api = {pass, rule_ctor<&pass>};
-static const ConvertMap drop_api = {drop, rule_ctor<&drop>};
-static const ConvertMap reject_api = {reject, rule_ctor<&reject>};
-static const ConvertMap sblock_api = {sblock, rule_ctor<&sblock>};
-static const ConvertMap sdrop_api = {sdrop, rule_ctor<&sdrop>};
-static const ConvertMap activate_api = {activate, dep_rule_ctor<&activate>};
-static const ConvertMap dynamic_api = {dynamic, dep_rule_ctor<&dynamic>};
-
+static const ConvertMap alert_api = { alert, rule_ctor<& alert>};
+static const ConvertMap block_api = { block, rule_ctor<& block>};
+static const ConvertMap log_api = { log, rule_ctor<& log>};
+static const ConvertMap pass_api = { pass, rule_ctor<& pass>};
+static const ConvertMap drop_api = { drop, rule_ctor<& drop>};
+static const ConvertMap reject_api = { reject, rule_ctor<& reject>};
+static const ConvertMap sblock_api = { sblock, rule_ctor<& sblock>};
+static const ConvertMap sdrop_api = { sdrop, rule_ctor<& sdrop>};
+static const ConvertMap activate_api = { activate, dep_rule_ctor<& activate>};
+static const ConvertMap dynamic_api = { dynamic, dep_rule_ctor<& dynamic>};
 
 const ConvertMap* alert_map = &alert_api;
 const ConvertMap* block_map = &block_api;
@@ -125,5 +118,5 @@ const ConvertMap* sblock_map = &sblock_api;
 const ConvertMap* sdrop_map = &sdrop_api;
 const ConvertMap* activate_map = &activate_api;
 const ConvertMap* dynamic_map = &dynamic_api;
-
 } // namespace keywords
+

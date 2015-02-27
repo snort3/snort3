@@ -28,28 +28,25 @@
 
 namespace keywords
 {
-
-namespace {
-
+namespace
+{
 class Include : public ConversionState
 {
 public:
-    Include(Converter& c) : ConversionState(c) {};
-    virtual ~Include() {};
+    Include(Converter& c) : ConversionState(c) { }
+    virtual ~Include() { }
     virtual bool convert(std::istringstream& data);
 
 private:
     bool convert_file(std::string file, std::string full_file_name);
 };
-
 } // namespace
-
 
 bool Include::convert(std::istringstream& data_stream)
 {
     std::string file = util::get_remain_data(data_stream);
 
-    if(!file.empty())
+    if (!file.empty())
     {
         // if not parsing, assume its a regular rule file.
         if (cv.get_parse_includes())
@@ -60,11 +57,9 @@ bool Include::convert(std::istringstream& data_stream)
             if (!util::file_exists(full_file))
                 full_file = parser::get_conf_dir() + full_file;
 
-
             // if we still can't find this file, add it as a snort file
             if (util::file_exists(full_file))
                 return !(cv.parse_include_file(full_file));
-
 
             std::string error_string = "Can't find file " + file + ".  "
                 "  Searched locations: " + tmp + ",  " + full_file;
@@ -89,12 +84,12 @@ bool Include::convert(std::istringstream& data_stream)
 static ConversionState* ctor(Converter& c)
 { return new Include(c); }
 
-static const ConvertMap keyword_include = 
+static const ConvertMap keyword_include =
 {
     "include",
     ctor,
 };
 
 const ConvertMap* include_map = &keyword_include;
-
 }  // namespace keywords
+

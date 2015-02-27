@@ -19,9 +19,6 @@
 //--------------------------------------------------------------------------
 // token_ring.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -31,12 +28,10 @@
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
 
-
 #ifdef DLT_IEEE802
 
 namespace
 {
-
 #define TR_NAME "token_ring"
 #define TR_HELP "support for token ring decoding"
 
@@ -49,30 +44,24 @@ static const RuleMap tkr_rules[] =
     { 0, nullptr }
 };
 
-
 class TrCodecModule : public CodecModule
 {
 public:
-    TrCodecModule() : CodecModule(TR_NAME, TR_HELP) {}
+    TrCodecModule() : CodecModule(TR_NAME, TR_HELP) { }
 
     const RuleMap* get_rules() const override
     { return tkr_rules; }
 };
 
-
-
-
 class TrCodec : public Codec
 {
 public:
-    TrCodec() : Codec(TR_NAME){};
-    ~TrCodec() {};
-
+    TrCodec() : Codec(TR_NAME) { }
+    ~TrCodec() { }
 
     void get_data_link_type(std::vector<int>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
-
 
 // THESE ARE NEVER USED!!
 #define MINIMAL_TOKENRING_HEADER_LEN    22
@@ -93,24 +82,20 @@ public:
 #define TR_RCF_LIMITED_BROADCAST   0xC000    /* single-route broadcast */
 #define TR_RCF_FRAME2K             0x20
 #define TR_RCF_BROADCAST_MASK      0xC000
-
 } // namespace
 
-
-void TrCodec::get_data_link_type(std::vector<int>&v)
+void TrCodec::get_data_link_type(std::vector<int>& v)
 {
     v.push_back(DLT_IEEE802);
 }
 
-
 //void DecodeTRPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
 bool TrCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-
     const uint32_t cap_len = raw.len;
     uint32_t dataoff;      /* data offset is variable here */
 
-    if(cap_len < sizeof(token_ring::Trh_hdr))
+    if (cap_len < sizeof(token_ring::Trh_hdr))
     {
         codec_event(codec, DECODE_BAD_TRH);
         return false;
@@ -136,16 +121,16 @@ bool TrCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
      * first I assume that we have single-ring network with no RIF
      * information presented in frame
      */
-    if(cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc)))
+    if (cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc)))
     {
         codec_event(codec, DECODE_BAD_TR_ETHLLC);
         return false;
     }
 
-    const token_ring::Trh_llc *trhllc =
-        reinterpret_cast<const token_ring::Trh_llc *>(raw.data + sizeof(token_ring::Trh_hdr));
+    const token_ring::Trh_llc* trhllc =
+        reinterpret_cast<const token_ring::Trh_llc*>(raw.data + sizeof(token_ring::Trh_hdr));
 
-    if(trhllc->dsap != IPARP_SAP && trhllc->ssap != IPARP_SAP)
+    if (trhllc->dsap != IPARP_SAP && trhllc->ssap != IPARP_SAP)
     {
         /*
          * DSAP != SSAP != 0xAA .. either we are having frame which doesn't
@@ -153,25 +138,24 @@ bool TrCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
          * lattest ...
          */
 
-        if(cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc) + sizeof(token_ring::Trh_mr)))
+        if (cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc) +
+            sizeof(token_ring::Trh_mr)))
         {
             codec_event(codec, DECODE_BAD_TRHMR);
             return false;
         }
 
         const token_ring::Trh_mr* const trhmr =
-            reinterpret_cast<const token_ring::Trh_mr *>(raw.data + sizeof(token_ring::Trh_hdr));
+            reinterpret_cast<const token_ring::Trh_mr*>(raw.data + sizeof(token_ring::Trh_hdr));
 
-
-        if(cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc) +
-                      sizeof(token_ring::Trh_mr) + TRH_MR_LEN(trhmr)))
+        if (cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc) +
+            sizeof(token_ring::Trh_mr) + TRH_MR_LEN(trhmr)))
         {
             codec_event(codec, DECODE_BAD_TR_MR_LEN);
             return false;
         }
 
         dataoff = sizeof(token_ring::Trh_hdr) + TRH_MR_LEN(trhmr) + sizeof(token_ring::Trh_llc);
-
     }
     else
     {
@@ -188,7 +172,7 @@ bool TrCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
      * Assigned Numbers [7] (IP = 2048, ARP = 2054). .. but we would check
      * SSAP and DSAP and assume this would be enough to trust.
      */
-    if(trhllc->dsap != IPARP_SAP && trhllc->ssap != IPARP_SAP)
+    if (trhllc->dsap != IPARP_SAP && trhllc->ssap != IPARP_SAP)
     {
         return false;
     }
@@ -198,12 +182,9 @@ bool TrCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     return true;
 }
 
-
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
-
 
 static Module* mod_ctor()
 { return new TrCodecModule; }
@@ -214,9 +195,8 @@ static void mod_dtor(Module* m)
 static Codec* ctor(Module*)
 { return new TrCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi tr_api =
 {
@@ -237,7 +217,6 @@ static const CodecApi tr_api =
     dtor,
 };
 
-
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &tr_api.base,
@@ -245,3 +224,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 };
 
 #endif
+

@@ -34,10 +34,9 @@ THREAD_LOCAL uint16_t event_id; // FIXIT-M also incremented in fpLogEvent()
 THREAD_LOCAL SigInfo sig_info;  // FIXIT-M move to stack
 
 void SetEvent(
-    Event *event, uint32_t generator, uint32_t id, uint32_t rev,
+    Event* event, uint32_t generator, uint32_t id, uint32_t rev,
     uint32_t classification, uint32_t priority, uint32_t event_ref)
 {
-
     sig_info.generator = generator;
     sig_info.id = id;
     sig_info.rev = rev;
@@ -48,13 +47,11 @@ void SetEvent(
     /* this one gets set automatically */
     event->event_id = ++event_id | ScEventLogId();
 
-    if(event_ref)
+    if (event_ref)
         event->event_reference = event_ref;
     else
         event->event_reference = event->event_id;
 
     event->ref_time.tv_sec = event->ref_time.tv_usec = 0;
-
-    return;
 }
 

@@ -27,18 +27,15 @@
 
 namespace rules
 {
-
-namespace {
-
-
+namespace
+{
 class StreamReassemble : public ConversionState
 {
 public:
-    StreamReassemble(Converter& c) : ConversionState(c) {};
-    virtual ~StreamReassemble() {};
+    StreamReassemble(Converter& c) : ConversionState(c) { }
+    virtual ~StreamReassemble() { }
     virtual bool convert(std::istringstream& data);
 };
-
 } // namespace
 
 bool StreamReassemble::convert(std::istringstream& data_stream)
@@ -74,7 +71,6 @@ bool StreamReassemble::convert(std::istringstream& data_stream)
             direction + " must be either 'client', 'server', or 'both'");
     }
 
-
     rule_api.add_option("stream_reassemble");
     rule_api.add_suboption("action", action);
     rule_api.add_suboption("direction", direction);
@@ -104,7 +100,6 @@ bool StreamReassemble::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-
 static ConversionState* ctor(Converter& cv)
 { return new StreamReassemble(cv); }
 
@@ -115,6 +110,5 @@ static const ConvertMap stream_reassemble_api =
 };
 
 const ConvertMap* stream_reassemble_map = &stream_reassemble_api;
-
-
 } // namespace rules
+

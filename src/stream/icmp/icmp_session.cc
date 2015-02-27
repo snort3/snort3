@@ -64,7 +64,7 @@ THREAD_LOCAL ProfileStats icmp_perf_stats;
 // private functions
 //------------------------------------------------------------------------
 
-static void IcmpSessionCleanup(Flow *ssn)
+static void IcmpSessionCleanup(Flow* ssn)
 {
     if (ssn->ssn_state.session_flags & SSNFLAG_PRUNED)
     {
@@ -85,15 +85,15 @@ static void IcmpSessionCleanup(Flow *ssn)
     ssn->clear();
 }
 
-static int ProcessIcmpUnreach(Packet *p)
+static int ProcessIcmpUnreach(Packet* p)
 {
     /* Handle ICMP unreachable */
     FlowKey skey;
     Flow* ssn = NULL;
     uint16_t sport;
     uint16_t dport;
-    const sfip_t *src;
-    const sfip_t *dst;
+    const sfip_t* src;
+    const sfip_t* dst;
     ip::IpApi iph;
 
     /* Set the Ip API to the embedded IP Header. */
@@ -189,7 +189,7 @@ static int ProcessIcmpUnreach(Packet *p)
     {
         /* Mark this session as dead. */
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-            "Marking session as dead, per ICMP Unreachable!\n"););
+            "Marking session as dead, per ICMP Unreachable!\n"); );
         ssn->ssn_state.session_flags |= SSNFLAG_DROP_CLIENT;
         ssn->ssn_state.session_flags |= SSNFLAG_DROP_SERVER;
         ssn->session_state |= STREAM_STATE_UNREACH;
@@ -243,7 +243,7 @@ int IcmpSession::process(Packet* p)
 #define icmp_sender_ip flow->client_ip
 #define icmp_responder_ip flow->server_ip
 
-void IcmpSession::update_direction(char dir, const sfip_t *ip, uint16_t)
+void IcmpSession::update_direction(char dir, const sfip_t* ip, uint16_t)
 {
     if (sfip_equals(&icmp_sender_ip, ip))
     {
@@ -255,7 +255,7 @@ void IcmpSession::update_direction(char dir, const sfip_t *ip, uint16_t)
     }
     else if (sfip_equals(&icmp_responder_ip, ip))
     {
-        if ((dir == SSN_DIR_FROM_RESPONDER) && 
+        if ((dir == SSN_DIR_FROM_RESPONDER) &&
             (flow->ssn_state.direction == SSN_DIR_FROM_RESPONDER))
         {
             /* Direction already set as RESPONDER */

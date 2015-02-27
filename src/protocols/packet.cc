@@ -20,7 +20,6 @@
 #include "protocols/packet.h"
 #include "protocols/protocol_ids.h"
 
-
 #if 0
 uint8_t Packet::ip_proto_next() const
 {
@@ -32,7 +31,6 @@ uint8_t Packet::ip_proto_next() const
     {
         const ip::IP6Hdr* const ip6h = ptrs.ip_api.get_ip6h();
         int lyr = num_layers-1;
-
 
         for (; lyr >= 0; lyr--)
             if (layers[lyr].start == (const uint8_t*)(ip6h))
@@ -57,16 +55,17 @@ uint8_t Packet::ip_proto_next() const
 
     return IPPROTO_ID_RESERVED;
 }
+
 #endif
 
-bool Packet::get_ip_proto_next(uint8_t &lyr, uint8_t& proto) const
+bool Packet::get_ip_proto_next(uint8_t& lyr, uint8_t& proto) const
 {
     if (lyr > num_layers)
         return false;
 
     while (lyr < num_layers)
     {
-        switch(layers[lyr].prot_id)
+        switch (layers[lyr].prot_id)
         {
         case IPPROTO_ID_IPV6:
         case ETHERTYPE_IPV6:
@@ -74,7 +73,8 @@ bool Packet::get_ip_proto_next(uint8_t &lyr, uint8_t& proto) const
             while ( ((lyr + 1) < num_layers) && is_ip6_extension(layers[lyr+1].prot_id) )
                 ++lyr;
 
-            if ( (layers[lyr].prot_id == IPPROTO_ID_IPV6) || (layers[lyr].prot_id == ETHERTYPE_IPV6) )
+            if ( (layers[lyr].prot_id == IPPROTO_ID_IPV6) || (layers[lyr].prot_id ==
+                ETHERTYPE_IPV6) )
                 proto =  reinterpret_cast<const ip::IP6Hdr*>(layers[lyr++].start)->next();
             else
                 proto =  reinterpret_cast<const ip::IP6Extension*>(layers[lyr++].start)->ip6e_nxt;
@@ -89,8 +89,8 @@ bool Packet::get_ip_proto_next(uint8_t &lyr, uint8_t& proto) const
         default:
             ++lyr;
         }
-
     }
 
     return false;
 }
+

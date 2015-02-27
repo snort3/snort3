@@ -107,7 +107,7 @@ int hi_ui_config_init_global_conf(HTTPINSPECT_GLOBAL_CONF* gc)
 **  @retval HI_INVALID_ARG  Fatal Error.  Undefined pointer to GlobalConf
 **  @retval HI_MEM_ALLOC_FAIL Fatal Error.  Memory Allocation Failed
 */
-int hi_ui_config_default(HTTPINSPECT_CONF *global_server)
+int hi_ui_config_default(HTTPINSPECT_CONF* global_server)
 {
     global_server->extract_gzip = 1;
     global_server->unlimited_decompress = 1;
@@ -125,7 +125,10 @@ int hi_ui_config_default(HTTPINSPECT_CONF *global_server)
 
     global_server->u_encoding.on = 1;
 
-    global_server->whitespace[9] = HI_UI_CONFIG_WS_BEFORE_URI | HI_UI_CONFIG_WS_AFTER_URI;   /* horizontal tab */
+    global_server->whitespace[9] = HI_UI_CONFIG_WS_BEFORE_URI | HI_UI_CONFIG_WS_AFTER_URI;   /*
+                                                                                               horizontal
+                                                                                               tab
+                                                                                               */
     global_server->whitespace[11] = HI_UI_CONFIG_WS_BEFORE_URI;  /* vertical tab */
     global_server->whitespace[12] = HI_UI_CONFIG_WS_BEFORE_URI;  /* form feed */
     global_server->whitespace[13] = HI_UI_CONFIG_WS_BEFORE_URI;  /* carriage return */
@@ -142,9 +145,9 @@ int hi_ui_config_default(HTTPINSPECT_CONF *global_server)
     return HI_SUCCESS;
 }
 
-void HttpInspectCleanupHttpMethodsConf(void *HttpMethods)
+void HttpInspectCleanupHttpMethodsConf(void* HttpMethods)
 {
-    HTTP_CMD_CONF *HTTPMethods = (HTTP_CMD_CONF *)HttpMethods;
+    HTTP_CMD_CONF* HTTPMethods = (HTTP_CMD_CONF*)HttpMethods;
 
     free(HTTPMethods);
 }

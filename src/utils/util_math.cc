@@ -43,7 +43,7 @@
  */
 double calc_percent(double amt, double total)
 {
-    if(total <= 0.0)
+    if (total <= 0.0)
         return 0.0;
 
     return (amt/total) * 100.0;

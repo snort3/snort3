@@ -17,8 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_null.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -28,27 +26,22 @@
 #include "main/snort.h"
 #include <pcap.h>
 
-
 #define CD_NULL_NAME "null"
 #define CD_NULL_HELP_STR "support for null encapsulation"
 #define CD_NULL_HELP ADD_DLT(CD_NULL_HELP_STR, DLT_NULL)
 
 namespace
 {
-
 class NullCodec : public Codec
 {
 public:
-    NullCodec() : Codec(CD_NULL_NAME){};
-    ~NullCodec() {};
+    NullCodec() : Codec(CD_NULL_NAME) { }
+    ~NullCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_data_link_type(std::vector<int>&) override;
 };
-
-
 } // namespace
-
 
 static const uint16_t NULL_HDRLEN = 4;
 
@@ -67,7 +60,7 @@ static const uint16_t NULL_HDRLEN = 4;
 bool NullCodec::decode(const RawData& raw, CodecData& data, DecodeData&)
 {
     /* do a little validation */
-    if(raw.len < NULL_HDRLEN)
+    if (raw.len < NULL_HDRLEN)
         return false;
 
     data.lyr_len = NULL_HDRLEN;
@@ -75,7 +68,7 @@ bool NullCodec::decode(const RawData& raw, CodecData& data, DecodeData&)
     return true;
 }
 
-void NullCodec::get_data_link_type(std::vector<int>&v)
+void NullCodec::get_data_link_type(std::vector<int>& v)
 { v.push_back(DLT_NULL); }
 
 //-------------------------------------------------------------------------
@@ -85,7 +78,7 @@ void NullCodec::get_data_link_type(std::vector<int>&v)
 static Codec* ctor(Module*)
 { return new NullCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi null_api =
@@ -107,7 +100,6 @@ static const CodecApi null_api =
     dtor, // dtor
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -117,3 +109,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_null = &null_api.base;
 #endif
+

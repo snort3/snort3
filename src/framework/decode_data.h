@@ -25,7 +25,6 @@
 #include "protocols/mpls.h"
 #include "protocols/ip.h"
 
-
 namespace tcp
 {
 struct TCPHdr;
@@ -55,7 +54,6 @@ enum class PktType : std::uint8_t
 //    FREE = 0xE0,
 };
 
-
 enum DecodeFlags : std::uint16_t
 {
     /* error flags */
@@ -66,15 +64,13 @@ enum DecodeFlags : std::uint16_t
     DECODE_ERR_BAD_TTL = 0x0010,
 
     DECODE_ERR_CKSUM_ALL = ( DECODE_ERR_CKSUM_IP | DECODE_ERR_CKSUM_TCP |
-                            DECODE_ERR_CKSUM_UDP | DECODE_ERR_CKSUM_ICMP ),
+        DECODE_ERR_CKSUM_UDP | DECODE_ERR_CKSUM_ICMP ),
     DECODE_ERR_FLAGS = ( DECODE_ERR_CKSUM_ALL | DECODE_ERR_BAD_TTL ),
-
 
     DECODE_PKT_TRUST = 0x0020,    /* Tell Snort++ to whitelist this packet */
     DECODE_FRAG = 0x0040,  /* flag to indicate a fragmented packet */
     DECODE_MF = 0x0080,
 };
-
 
 // FIXIT-L J make this an enum!!
 #define PROTO_BIT__NONE     0x0000
@@ -92,7 +88,9 @@ enum DecodeFlags : std::uint16_t
 #define PROTO_BIT__UDP_EMBED_ICMP  0x0800
 #define PROTO_BIT__ICMP_EMBED_ICMP 0x1000
 #define PROTO_BIT__ICMP_EMBED_OTHER 0x2000
-#define PROTO_BIT__ICMP_EMBED (PROTO_BIT__TCP_EMBED_ICMP | PROTO_BIT__UDP_EMBED_ICMP | PROTO_BIT__ICMP_EMBED_ICMP | PROTO_BIT__ICMP_EMBED_OTHER)
+#define PROTO_BIT__ICMP_EMBED \
+    (PROTO_BIT__TCP_EMBED_ICMP | PROTO_BIT__UDP_EMBED_ICMP | \
+    PROTO_BIT__ICMP_EMBED_ICMP | PROTO_BIT__ICMP_EMBED_OTHER)
 #define PROTO_BIT__IP6_EXT  0x4000
 #define PROTO_BIT__FREE     0x0000 /* No proto bits free */
 #define PROTO_BIT__OTHER    0x8000
@@ -100,7 +98,8 @@ enum DecodeFlags : std::uint16_t
 
 struct DecodeData
 {
-    /*  Pointers which will be used by Snort++. (starting with uint16_t so tcph is 64 bytes from start*/
+    /*  Pointers which will be used by Snort++. (starting with uint16_t so tcph is 64 bytes from
+      start*/
 
     /*
      * these four pounters are each referenced literally
@@ -131,3 +130,4 @@ struct DecodeData
 };
 
 #endif /* FRAMEWORK_DECODE_DATA_H */
+

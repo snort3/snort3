@@ -25,23 +25,20 @@
 #include "helpers/s2l_util.h"
 #include "helpers/util_binder.h"
 
-
 namespace preprocessors
 {
-
-namespace {
-
+namespace
+{
 class Frag3Engine : public ConversionState
 {
 public:
-    explicit Frag3Engine(Converter& c) : ConversionState(c) {};
-    virtual ~Frag3Engine() {};
+    explicit Frag3Engine(Converter& c) : ConversionState(c) { }
+    virtual ~Frag3Engine() { }
     virtual bool convert(std::istringstream& data_stream);
 
 private:
     std::string choose_table_name(std::istringstream& data_stream);
 };
-
 } // namespace
 
 std::string Frag3Engine::choose_table_name(std::istringstream& data_stream)
@@ -73,18 +70,18 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
     const std::string table_name = choose_table_name(data_stream);
     table_api.open_table(table_name);
 
-    while(data_stream >> keyword)
+    while (data_stream >> keyword)
     {
-        if(keyword.back() == ',')
+        if (keyword.back() == ',')
             keyword.pop_back();
-        
-        if(keyword.empty())
+
+        if (keyword.empty())
             continue;
 
-        if(!keyword.compare("detect_anomalies"))
+        if (!keyword.compare("detect_anomalies"))
             table_api.add_deleted_comment("detect_anomalies");
 
-        else if(!keyword.compare("bind_to"))
+        else if (!keyword.compare("bind_to"))
         {
             std::string ip_list;
 
@@ -101,7 +98,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
                 b.set_use_name(table_name);
             }
         }
-        else if(!keyword.compare("min_ttl"))
+        else if (!keyword.compare("min_ttl"))
         {
             if (!parse_int_option("min_ttl", data_stream, false))
             {
@@ -109,7 +106,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
                 retval = false;
             }
         }
-        else if(!keyword.compare("overlap_limit"))
+        else if (!keyword.compare("overlap_limit"))
         {
             if (!parse_int_option("max_overlaps", data_stream, false))
             {
@@ -119,8 +116,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
 
             table_api.add_diff_option_comment("overlap_limit", "max_overlaps");
         }
-
-        else if(!keyword.compare("min_fragment_length"))
+        else if (!keyword.compare("min_fragment_length"))
         {
             if (!parse_int_option("min_frag_length", data_stream, false))
             {
@@ -129,8 +125,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
             }
             table_api.add_diff_option_comment("min_fragment_length", "min_frag_length");
         }
-
-        else if(!keyword.compare("timeout"))
+        else if (!keyword.compare("timeout"))
         {
             std::string val;
             table_api.add_diff_option_comment("timeout", "session_timeout");
@@ -141,7 +136,8 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
                 if (seconds == 0)
                 {
                     table_api.add_option("session_timeout", 256);
-                    table_api.add_diff_option_comment("preprocessor frag3_engine: timeout 0", "session_timeout 256");
+                    table_api.add_diff_option_comment("preprocessor frag3_engine: timeout 0",
+                        "session_timeout 256");
                 }
                 else
                 {
@@ -149,9 +145,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
                 }
             }
         }
-
-
-        else if(!keyword.compare("policy"))
+        else if (!keyword.compare("policy"))
         {
             std::string policy;
 
@@ -160,7 +154,6 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
                 data_api.failed_conversion(data_stream, "policy <missing_policy>");
                 retval = false;
             }
-
             else if (!policy.compare("first"))
                 table_api.add_option("policy", "first");
 
@@ -184,14 +177,12 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
                 table_api.add_diff_option_comment("policy bsd-right", "policy = bsd_right");
                 table_api.add_option("policy", "bsd_right");
             }
-
             else
             {
                 data_api.failed_conversion(data_stream, "policy '" + keyword + "'");
                 retval = false;
             }
         }
-
         else
         {
             data_api.failed_conversion(data_stream, keyword);
@@ -199,7 +190,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
         }
     }
 
-    return retval;    
+    return retval;
 }
 
 /**************************
@@ -218,5 +209,5 @@ static const ConvertMap preprocessor_frag3_engine =
 };
 
 const ConvertMap* frag3_engine_map = &preprocessor_frag3_engine;
-
 } // namespace preprocessors
+

@@ -51,11 +51,11 @@ struct PatternMatchData
     unsigned pattern_size;  /* size of app layer pattern */
     unsigned replace_size;  /* size of app layer replace pattern */
 
-    char *replace_buf;      /* app layer pattern to replace with */
-    char *pattern_buf;      /* app layer pattern to match on */
+    char* replace_buf;      /* app layer pattern to replace with */
+    char* pattern_buf;      /* app layer pattern to match on */
 
-    int *skip_stride;       /* B-M skip array */
-    int *shift_stride;      /* B-M shift array */
+    int* skip_stride;       /* B-M skip array */
+    int* shift_stride;      /* B-M shift array */
     unsigned match_delta;   /* Maximum distance we can jump to search for
                              * this pattern again. */
 
@@ -83,8 +83,8 @@ PatternMatchData* content_get_data(void*);
 bool content_next(PatternMatchData*);
 
 int PatternMatchAdjustRelativeOffsets(
-    void*, PatternMatchData *dup_pmd,
-    const uint8_t *current_cursor, const uint8_t *orig_cursor);
+    void*, PatternMatchData* dup_pmd,
+    const uint8_t* current_cursor, const uint8_t* orig_cursor);
 
 // FIXIT-L if really needed, would b better as specific method
 // so PMD isn't exposed

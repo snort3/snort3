@@ -37,13 +37,14 @@ typedef MEM_OFFSET TABLE_PTR;
 
 typedef enum
 {
-   SAVE_TO_NEW,
-   SAVE_TO_CURRENT
+    SAVE_TO_NEW,
+    SAVE_TO_CURRENT
 }SaveDest;
 
-typedef int64_t (*updateEntryInfoFunc)(INFO *entryInfo, INFO newInfo,
-        SaveDest saveDest, uint8_t *base);
-typedef struct {
+typedef int64_t (* updateEntryInfoFunc)(INFO* entryInfo, INFO newInfo,
+    SaveDest saveDest, uint8_t* base);
+typedef struct
+{
     FLAT_INDEX index;
     int length;
 } tuple_flat_t;
@@ -51,9 +52,10 @@ typedef struct {
 // FIXIT-L circular include here
 #include "sfrt/sfrt_flat_dir.h"
 
-/*******************************************************************/
-/* Master table struct.  Abstracts DIR and LC-trie methods         */
-typedef struct {
+/******************************************************************
+   Master table struct.  Abstracts DIR and LC-trie methods         */
+typedef struct
+{
     uint32_t num_ent; /* Number of entries in the policy table */
     uint32_t max_size; /* Max size of policies array */
     char ip_type; /* Only IPs of this family will be used */
@@ -64,22 +66,21 @@ typedef struct {
     TABLE_PTR rt; /* Actual "routing" table */
     TABLE_PTR rt6; /* Actual "routing" table */
     TABLE_PTR list_info; /* List file information table (entry information)*/
-
 } table_flat_t;
 /*******************************************************************/
 
 /* Abstracted routing table API */
-table_flat_t * sfrt_flat_new(char table_flat_type, char ip_type,
-        long data_size, uint32_t mem_cap);
+table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,
+    long data_size, uint32_t mem_cap);
 void sfrt_flat_free(TABLE_PTR table);
 
-GENERIC sfrt_flat_lookup(void *adr, table_flat_t *table);
-GENERIC sfrt_flat_dir8x_lookup(void *adr, table_flat_t* table);
+GENERIC sfrt_flat_lookup(void* adr, table_flat_t* table);
+GENERIC sfrt_flat_dir8x_lookup(void* adr, table_flat_t* table);
 
-int sfrt_flat_insert(void *adr, unsigned char len, INFO ptr, int behavior,
-        table_flat_t *table, updateEntryInfoFunc updateEntry);
-uint32_t sfrt_flat_usage(table_flat_t *table);
-uint32_t sfrt_flat_num_entries(table_flat_t *table);
+int sfrt_flat_insert(void* adr, unsigned char len, INFO ptr, int behavior,
+    table_flat_t* table, updateEntryInfoFunc updateEntry);
+uint32_t sfrt_flat_usage(table_flat_t* table);
+uint32_t sfrt_flat_num_entries(table_flat_t* table);
 
 #endif
 

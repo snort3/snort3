@@ -29,7 +29,8 @@
 #define HI_POST_METHOD 2
 #define HI_GET_METHOD 4
 
-struct HIStats {
+struct HIStats
+{
     PegCount total;
     PegCount get;              /* Number of GETs */
     PegCount post;             /* Number of POST methods encountered */

@@ -26,7 +26,6 @@
 #include <vector>
 #include <stack>
 
-
 /*
 *
 * As a heads up to whoever reads this file.  This one API is
@@ -51,34 +50,31 @@ class TableApi;
 
 class TableApi
 {
-
 public:
-TableApi();
-virtual ~TableApi();
+    TableApi();
+    virtual ~TableApi();
 
-void reset_state();
-friend std::ostream& operator<<( std::ostream &out, const TableApi& table);
-void print_tables( std::ostream &out);
+    void reset_state();
+    friend std::ostream& operator<<(std::ostream& out, const TableApi& table);
+    void print_tables(std::ostream& out);
 
-inline bool empty()
-{ return tables.empty(); }
-
+    inline bool empty()
+    { return tables.empty(); }
 
 /*
  * Accessing and choosing specific tables.
  */
 
 // open a table at the topmost layer. i.e., the table will not be nested inside any other table.
-void open_top_level_table(std::string name);
+    void open_top_level_table(std::string name);
 // open a nested named table --> 'name = {...}')
-void open_table(std::string name);
+    void open_table(std::string name);
 // open a nested table that does not contain a name --> {...})
-void open_table();
+    void open_table();
 // close the nested table.  go to previous table level
-void close_table();
+    void close_table();
 
-void swap_tables(std::vector<Table*>& new_tables);
-
+    void swap_tables(std::vector<Table*>& new_tables);
 
 /*
  * Adding/accessing data to the specific table chosen above!!
@@ -92,48 +88,44 @@ void swap_tables(std::vector<Table*>& new_tables);
  *        is a Snort/Lua variable. Therefore, if val starts with $, Snort2Lua will not
  *        place quotes around the string
  */
-bool add_option(const std::string opt_name, const std::string val);
-bool add_option(const std::string opt_name, const int val);
-bool add_option(const std::string opt_name, const bool val);
-bool add_option(const std::string opt_name, const char* const v);
+    bool add_option(const std::string opt_name, const std::string val);
+    bool add_option(const std::string opt_name, const int val);
+    bool add_option(const std::string opt_name, const bool val);
+    bool add_option(const std::string opt_name, const char* const v);
 
 // sometimes, you may need to create a default option, before overwriting that
 // option later. For instance, if you have a default table, and then you
 // need to overwrite a single option in that default table, you can use these
 // methods to overwrite that option.
-void append_option(const std::string opt_name, const std::string val);
-void append_option(const std::string opt_name, const int val);
-void append_option(const std::string opt_name, const bool val);
-void append_option(const std::string opt_name, const char* const v);
+    void append_option(const std::string opt_name, const std::string val);
+    void append_option(const std::string opt_name, const int val);
+    void append_option(const std::string opt_name, const bool val);
+    void append_option(const std::string opt_name, const char* const v);
 
 // add an option with a list of variables -->  table = { name = 'elem1 elem2 ...' }
 // corresponds to Parameter::PT_MULTI
-bool add_list(std::string list_name, std::string next_elem);
+    bool add_list(std::string list_name, std::string next_elem);
 // add a commment to be printed in the table --> table = { -- comment \n ... }
-bool add_comment(std::string comment);
+    bool add_comment(std::string comment);
 // add a comment about an option change to the table
-bool add_diff_option_comment(std::string orig_var, std::string new_var);
+    bool add_diff_option_comment(std::string orig_var, std::string new_var);
 // attach a deprecated option comment to the current table
-bool add_deleted_comment(std::string dep_var);
+    bool add_deleted_comment(std::string dep_var);
 // attach an unsupported option comment to the current table
-bool add_unsupported_comment(std::string unsupported_var);
-
+    bool add_unsupported_comment(std::string unsupported_var);
 
 // return true if this name exists as an option name for the selected table
-bool option_exists(const std::string name);
+    bool option_exists(const std::string name);
 
 private:
-void create_append_data(std::string& fqn, Table* &t);
+    void create_append_data(std::string& fqn, Table*& t);
 
 // Data
-std::vector<Table*> tables;
-std::stack<Table*> open_tables;
-std::stack<unsigned> top_level_tables;
-bool curr_data_bad;
-
-
+    std::vector<Table*> tables;
+    std::stack<Table*> open_tables;
+    std::stack<unsigned> top_level_tables;
+    bool curr_data_bad;
 };
 
-
-
 #endif
+

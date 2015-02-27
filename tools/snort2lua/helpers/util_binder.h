@@ -20,7 +20,6 @@
 #ifndef HELPERS_PPS_BINDER_H
 #define HELPERS_PPS_BINDER_H
 
-
 #include <string>
 #include <vector>
 
@@ -50,15 +49,12 @@ public:
     void add_when_net(std::string net);
     void add_when_port(std::string port);
 
-
     void set_use_type(std::string module_name);
     void set_use_name(std::string struct_name);
     void set_use_file(std::string file_name);
     void set_use_service(std::string service_name);
     void set_use_action(std::string action);
     void set_use_policy_id(std::string id);
-
-
 
 private:
     TableApi& table_api;
@@ -81,6 +77,7 @@ private:
     std::string use_action;
 };
 
-typedef void (Binder::*binder_func)(std::string);
+typedef void (Binder::* binder_func)(std::string);
 
 #endif
+

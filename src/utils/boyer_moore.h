@@ -24,11 +24,11 @@
 #include "main/snort_types.h"
 // boyer_moore.h was split out of mstring.h
 
-int *make_skip(char *, int);
-int *make_shift(char *, int);
-int mSearch(const char *, int, const char *, int, int *, int *);
-int mSearchCI(const char *, int, const char *, int, int *, int *);
-int mSearchREG(const char *, int, const char *, int, int *, int *);
+int* make_skip(char*, int);
+int* make_shift(char*, int);
+int mSearch(const char*, int, const char*, int, int*, int*);
+int mSearchCI(const char*, int, const char*, int, int*, int*);
+int mSearchREG(const char*, int, const char*, int, int*, int*);
 
 #endif
 

@@ -25,10 +25,8 @@
 
 struct Packet;
 
-
 namespace tcp
 {
-
 struct TCPHdr;
 
 /* http://www.iana.org/assignments/tcp-parameters
@@ -37,7 +35,8 @@ struct TCPHdr;
  * things on AIX
  */
 
-enum class TcpOptCode : std::uint8_t {
+enum class TcpOptCode : std::uint8_t
+{
     EOL = 0,    /* End of Option List [RFC793] */
     NOP = 1,    /* No-Option [RFC793] */
     MAXSEG = 2, /* Maximum Segment Size [RFC793] */
@@ -58,7 +57,6 @@ enum class TcpOptCode : std::uint8_t {
     BUBBA = 17,     /* Bubba   [Knowles] */
     TRAILER_CSUM = 18,  /* Trailer Checksum Option [Subbu & Monroe] */
     MD5SIG = 19,    /* MD5 Signature Option [RFC2385] */
-
 
     /* Space Communications Protocol Standardization */
     SCPS = 20,  /* Capabilities [Scott] */
@@ -94,7 +92,6 @@ const uint8_t TCPOLEN_CC_ECHO = 6;  /* page 17 of rfc1644 */
 const uint8_t TCPOLEN_TRAILER_CSUM = 3;
 const uint8_t TCPOLEN_MD5SIG = 18;
 
-
 struct TcpOption
 {
     TcpOptCode code;
@@ -110,20 +107,19 @@ struct TcpOption
     inline const TcpOption& next() const
     {
 #       if defined(__GNUC__)
-            const uint8_t tmp_len = ((uint8_t) code <= 1) ? 1 : len;
-            const uint8_t* const tmp = reinterpret_cast<const uint8_t*>(this);
-            const TcpOption* opt = reinterpret_cast<const TcpOption*>(&tmp[tmp_len]);
-            return *opt;
+        const uint8_t tmp_len = ((uint8_t)code <= 1) ? 1 : len;
+        const uint8_t* const tmp = reinterpret_cast<const uint8_t*>(this);
+        const TcpOption* opt = reinterpret_cast<const TcpOption*>(&tmp[tmp_len]);
+        return *opt;
 
 #       else
-            if ( (uint8_t)code <= 1 )
-                return reinterpret_cast<const TcpOption&>(len);
-            else
-                return reinterpret_cast<const TcpOption&>(data[len -2]);
+        if ( (uint8_t)code <= 1 )
+            return reinterpret_cast<const TcpOption&>(len);
+        else
+            return reinterpret_cast<const TcpOption&>(data[len -2]);
 #       endif
     }
 };
-
 
 /*
  * Use TcpOptIterator ... this should NOT be called directly
@@ -134,10 +130,10 @@ class SO_PUBLIC TcpOptIteratorIter
 public:
     TcpOptIteratorIter(const TcpOption*);
 
-    bool operator== (const TcpOptIteratorIter& rhs)
+    bool operator==(const TcpOptIteratorIter& rhs)
     { return opt == rhs.opt; }
 
-    bool operator!= (const TcpOptIteratorIter& rhs)
+    bool operator!=(const TcpOptIteratorIter& rhs)
     { return opt != rhs.opt; }
 
     TcpOptIteratorIter& operator++()
@@ -146,7 +142,7 @@ public:
         return *this;
     }
 
-    const TcpOption& operator* () const;
+    const TcpOption& operator*() const;
 
 private:
     const TcpOption* opt;
@@ -180,9 +176,7 @@ private:
     const uint8_t* start_ptr;
     const uint8_t* end_ptr;
 };
-
-
 } // namespace tcp
 
-
 #endif /* PROTOCOLS_TCP_OPTIONS_H */
+

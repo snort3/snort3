@@ -30,7 +30,6 @@
 #include "detection/rule_option_types.h"
 #include "actions/actions.h"
 
-
 class IpsOption;
 struct Packet;
 struct RuleTreeNode;
@@ -43,11 +42,11 @@ struct sfip_var_t;
 struct OptFpList
 {
     /* context data for this test */
-    void *context;
-    
-    int (*OptTestFunc)(void* option_data, class Cursor&, Packet*);
-    
-    OptFpList *next;
+    void* context;
+
+    int (* OptTestFunc)(void* option_data, class Cursor&, Packet*);
+
+    OptFpList* next;
 
     unsigned char isRelative;
     option_type_t type;
@@ -74,8 +73,8 @@ struct OtnState
 struct OptTreeNode
 {
     /* plugin/detection functions go here */
-    OptFpList *opt_func;
-    OutputSet *outputFuncs; /* per sid enabled output functions */
+    OptFpList* opt_func;
+    OutputSet* outputFuncs; /* per sid enabled output functions */
     IpsOption* agent;
 
     /* metadata about signature */
@@ -83,18 +82,18 @@ struct OptTreeNode
     char* soid;
 
     void* detection_filter; /* if present, evaluated last, after header checks */
-    TagData *tag;
+    TagData* tag;
 
-    OptTreeNode *next;
+    OptTreeNode* next;
 
     /* ptr to list of RTNs (head part) */
-    RuleTreeNode **proto_nodes;
+    RuleTreeNode** proto_nodes;
 
     OtnState* state;
 
     int chain_node_number;
     int evalIndex;       /* where this rule sits in the evaluation sets */
-    int proto;           /* protocol, added for integrity checks 
+    int proto;           /* protocol, added for integrity checks
                             during rule parsing */
 
     int session_flag;    /* record session data */
@@ -123,24 +122,24 @@ struct OptTreeNode
 struct RuleFpList
 {
     /* context data for this test */
-    void *context;
+    void* context;
 
     /* rule check function pointer */
-    int (*RuleHeadFunc)(Packet *, RuleTreeNode *, RuleFpList *, int);
+    int (* RuleHeadFunc)(Packet*, RuleTreeNode*, RuleFpList*, int);
 
     /* pointer to the next rule function node */
-    RuleFpList *next;
+    RuleFpList* next;
 };
 
 struct RuleTreeNode
 {
-    RuleFpList *rule_func; /* match functions.. (Bidirectional etc.. ) */
+    RuleFpList* rule_func; /* match functions.. (Bidirectional etc.. ) */
 
-    sfip_var_t *sip;
-    sfip_var_t *dip;
+    sfip_var_t* sip;
+    sfip_var_t* dip;
 
-    PortObject * src_portobject;
-    PortObject * dst_portobject;
+    PortObject* src_portobject;
+    PortObject* dst_portobject;
 
     struct ListHead* listhead;
 
@@ -157,9 +156,9 @@ struct RuleTreeNode
     unsigned int otnRefCount;
 };
 
-typedef int (*RuleOptEvalFunc)(void*, Cursor&, Packet*);
-OptFpList * AddOptFuncToList(RuleOptEvalFunc, OptTreeNode *);
-        
+typedef int (* RuleOptEvalFunc)(void*, Cursor&, Packet*);
+OptFpList* AddOptFuncToList(RuleOptEvalFunc, OptTreeNode*);
+
 void* get_rule_type_data(OptTreeNode*, const char* name);
 void* get_rule_type_data(OptTreeNode*, option_type_t);
 
@@ -167,7 +166,7 @@ SO_PUBLIC bool otn_has_plugin(OptTreeNode* otn, const char* name);
 
 static inline bool otn_has_plugin(OptTreeNode* otn, int id)
 { return (otn->plugins & (0x1 << id)) != 0; }
-    
+
 static inline void otn_set_plugin(OptTreeNode* otn, int id)
 { otn->plugins |= (0x1 << id); }
 

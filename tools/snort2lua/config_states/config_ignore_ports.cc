@@ -29,20 +29,17 @@
 
 namespace config
 {
-
-namespace {
-
+namespace
+{
 constexpr uint16_t MAX_PORTS = 0xFFFF; // == 65535
 
 class IgnorePorts : public ConversionState
 {
 public:
-    IgnorePorts(Converter& c) : ConversionState(c) {};
-    virtual ~IgnorePorts() {};
+    IgnorePorts(Converter& c) : ConversionState(c) { }
+    virtual ~IgnorePorts() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
-
 } // namespace
 
 bool IgnorePorts::convert(std::istringstream& data_stream)
@@ -51,12 +48,10 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
     std::string keyword;
     std::string port;
 
-
     std::streamoff pos = data_stream.tellg();
     std::string port_string = data_stream.str();
     port_string = port_string.substr(pos);
     port_string = data_api.expand_vars(port_string);
-
 
     // if the keyword is not 'tcp' or 'udp', return false;
     if (!(data_stream >> keyword) ||
@@ -95,7 +90,6 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
                 for (int i = 0; i <= high; i++)
                     bind.add_when_port(std::to_string(i));
             }
-
             else if ((colon_pos+1)  == port.size())
             {
                 int low = std::stoi(port.substr(0, colon_pos));
@@ -118,13 +112,13 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
                     bind.add_when_port(std::to_string(i));
             }
         }
-        catch(std::invalid_argument)
+        catch (std::invalid_argument)
         {
             data_api.failed_conversion(data_stream, "can't convert " + port);
             retval = false;
             bind.print_binding(false); // don't print the binding if an error occured
         }
-        catch(std::out_of_range)
+        catch (std::out_of_range)
         {
             data_api.failed_conversion(data_stream, "Port" + port + " must be <= 65535");
             retval = false;
@@ -150,5 +144,5 @@ static const ConvertMap config_ignore_ports =
 };
 
 const ConvertMap* ignore_ports_map = &config_ignore_ports;
-
 } // namespace config
+

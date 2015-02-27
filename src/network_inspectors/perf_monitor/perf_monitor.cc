@@ -79,16 +79,16 @@ static void PerfMonitorChangeLogFilesPermission(void)
                 if (chmod(perfmon_config->file, mode) != 0)
                 {
                     ParseError("perfmonitor: Unable to change mode of "
-                            "base stats file '%s' to mode:%d: %s.",
-                            perfmon_config->file, mode, get_error(errno));
+                        "base stats file '%s' to mode:%d: %s.",
+                        perfmon_config->file, mode, get_error(errno));
                     return;
                 }
 
                 if (chown(perfmon_config->file, ScUid(), ScGid()) != 0)
                 {
                     ParseError("perfmonitor: Unable to change permissions of "
-                            "base stats file '%s' to user:%d and group:%d: %s.",
-                            perfmon_config->file, ScUid(), ScGid(), get_error(errno));
+                        "base stats file '%s' to user:%d and group:%d: %s.",
+                        perfmon_config->file, ScUid(), ScGid(), get_error(errno));
                     return;
                 }
             }
@@ -106,16 +106,16 @@ static void PerfMonitorChangeLogFilesPermission(void)
                 if (chmod(perfmon_config->flow_file, mode) != 0)
                 {
                     ParseError("perfmonitor: Unable to change mode of "
-                            "flow stats file '%s' to mode:%d: %s.",
-                            perfmon_config->flow_file, mode, get_error(errno));
+                        "flow stats file '%s' to mode:%d: %s.",
+                        perfmon_config->flow_file, mode, get_error(errno));
                     return;
                 }
 
                 if (chown(perfmon_config->flow_file, ScUid(), ScGid()) != 0)
                 {
                     ParseError("perfmonitor: Unable to change permissions of "
-                            "flow stats file '%s' to user:%d and group:%d: %s.",
-                            perfmon_config->flow_file, ScUid(), ScGid(), get_error(errno));
+                        "flow stats file '%s' to user:%d and group:%d: %s.",
+                        perfmon_config->flow_file, ScUid(), ScGid(), get_error(errno));
                     return;
                 }
             }
@@ -133,16 +133,16 @@ static void PerfMonitorChangeLogFilesPermission(void)
                 if (chmod(perfmon_config->flowip_file, mode) != 0)
                 {
                     ParseError("perfmonitor: Unable to change mode of "
-                            "flow-ip stats file '%s' to mode:%d: %s.",
-                            perfmon_config->flowip_file, mode, get_error(errno));
+                        "flow-ip stats file '%s' to mode:%d: %s.",
+                        perfmon_config->flowip_file, mode, get_error(errno));
                     return;
                 }
 
                 if (chown(perfmon_config->flowip_file, ScUid(), ScGid()) != 0)
                 {
                     ParseError("perfmonitor: Unable to change permissions of "
-                            "flow-ip stats file '%s' to user:%d and group:%d: %s.",
-                            perfmon_config->flowip_file, ScUid(), ScGid(), get_error(errno));
+                        "flow-ip stats file '%s' to user:%d and group:%d: %s.",
+                        perfmon_config->flowip_file, ScUid(), ScGid(), get_error(errno));
                     return;
                 }
             }
@@ -160,45 +160,46 @@ static void PrintConfig(SFPERF* pconfig)
     LogMessage("  Packet Count:     %d\n", pconfig->pkt_cnt);
     LogMessage("  Max File Size:    %u\n", pconfig->max_file_size);
     LogMessage("  Base Stats:       %s%s\n",
-            pconfig->perf_flags & SFPERF_BASE ? "ACTIVE" : "INACTIVE",
-            pconfig->perf_flags & SFPERF_SUMMARY_BASE ? " (SUMMARY)" : "");
+        pconfig->perf_flags & SFPERF_BASE ? "ACTIVE" : "INACTIVE",
+        pconfig->perf_flags & SFPERF_SUMMARY_BASE ? " (SUMMARY)" : "");
     if (pconfig->perf_flags & SFPERF_BASE)
     {
         LogMessage("    Base Stats File:  %s\n",
-                (pconfig->file != NULL) ? pconfig->file : "INACTIVE");
+            (pconfig->file != NULL) ? pconfig->file : "INACTIVE");
         LogMessage("    Max Perf Stats:   %s\n",
-                (pconfig->perf_flags & SFPERF_MAX_BASE_STATS) ? "ACTIVE" : "INACTIVE");
+            (pconfig->perf_flags & SFPERF_MAX_BASE_STATS) ? "ACTIVE" : "INACTIVE");
     }
     LogMessage("  Flow Stats:       %s%s\n",
-            pconfig->perf_flags & SFPERF_FLOW ? "ACTIVE" : "INACTIVE",
-            pconfig->perf_flags & SFPERF_SUMMARY_FLOW ? " (SUMMARY)" : "");
+        pconfig->perf_flags & SFPERF_FLOW ? "ACTIVE" : "INACTIVE",
+        pconfig->perf_flags & SFPERF_SUMMARY_FLOW ? " (SUMMARY)" : "");
     if (pconfig->perf_flags & SFPERF_FLOW)
     {
         LogMessage("    Max Flow Port:    %u\n", pconfig->flow_max_port_to_track);
         LogMessage("    Flow File:        %s\n",
-                (pconfig->flow_file != NULL) ? pconfig->flow_file : "INACTIVE");
+            (pconfig->flow_file != NULL) ? pconfig->flow_file : "INACTIVE");
     }
     LogMessage("  Event Stats:      %s%s\n",
-            pconfig->perf_flags & SFPERF_EVENT ? "ACTIVE" : "INACTIVE",
-            pconfig->perf_flags & SFPERF_SUMMARY_EVENT ? " (SUMMARY)" : "");
+        pconfig->perf_flags & SFPERF_EVENT ? "ACTIVE" : "INACTIVE",
+        pconfig->perf_flags & SFPERF_SUMMARY_EVENT ? " (SUMMARY)" : "");
     LogMessage("  Flow IP Stats:    %s%s\n",
-            pconfig->perf_flags & SFPERF_FLOWIP ? "ACTIVE" : "INACTIVE",
-            pconfig->perf_flags & SFPERF_SUMMARY_FLOWIP ? " (SUMMARY)" : "");
+        pconfig->perf_flags & SFPERF_FLOWIP ? "ACTIVE" : "INACTIVE",
+        pconfig->perf_flags & SFPERF_SUMMARY_FLOWIP ? " (SUMMARY)" : "");
     if (pconfig->perf_flags & SFPERF_FLOWIP)
     {
         LogMessage("    Flow IP Memcap:   %u\n", pconfig->flowip_memcap);
         LogMessage("    Flow IP File:     %s\n",
-                (pconfig->flowip_file != NULL) ? pconfig->flowip_file : "INACTIVE");
+            (pconfig->flowip_file != NULL) ? pconfig->flowip_file : "INACTIVE");
     }
     LogMessage("  Console Mode:     %s\n",
-            (pconfig->perf_flags & SFPERF_CONSOLE) ? "ACTIVE" : "INACTIVE");
+        (pconfig->perf_flags & SFPERF_CONSOLE) ? "ACTIVE" : "INACTIVE");
 }
 
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
 
-class PerfMonitor : public Inspector {
+class PerfMonitor : public Inspector
+{
 public:
     PerfMonitor(PerfMonModule*);
     ~PerfMonitor();
@@ -300,7 +301,7 @@ void PerfMonitor::tterm()
 #endif
 }
 
-void PerfMonitor::eval(Packet *p)
+void PerfMonitor::eval(Packet* p)
 {
     static THREAD_LOCAL bool first = true;
     PROFILE_VARS;

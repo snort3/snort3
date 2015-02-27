@@ -44,7 +44,7 @@ public:
     static void instantiate(const IpsApi*, Module*, SnortConfig*);
 
     static bool get_option(
-            SnortConfig*, struct OptTreeNode*, int proto,
+        SnortConfig*, struct OptTreeNode*, int proto,
         const char* keyword, char* args, RuleOptType&);
 
     static bool option_begin(SnortConfig*, const char* key, int proto);

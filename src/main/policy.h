@@ -96,16 +96,15 @@ public:
 
 typedef struct _VarEntry
 {
-    char *name;
-    char *value;
+    char* name;
+    char* value;
 
     unsigned char flags;
     uint32_t id;
 
-    sfip_var_t *addrset;
-    struct _VarEntry *prev;
-    struct _VarEntry *next;
-
+    sfip_var_t* addrset;
+    struct _VarEntry* prev;
+    struct _VarEntry* next;
 } VarEntry;
 
 enum PolicyMode
@@ -135,12 +134,12 @@ public:
 
     uint32_t var_id;
 
-    VarEntry *var_table;
-    vartable_t *ip_vartable;
+    VarEntry* var_table;
+    vartable_t* ip_vartable;
 
     /* The portobjects in these are attached to rtns and used during runtime */
-    PortVarTable *portVarTable;     /* named entries, uses a hash table */
-    PortTable *nonamePortVarTable;  /* un-named entries */
+    PortVarTable* portVarTable;     /* named entries, uses a hash table */
+    PortTable* nonamePortVarTable;  /* un-named entries */
 };
 
 //-------------------------------------------------------------------------
@@ -158,7 +157,7 @@ public:
     unsigned add_shell(Shell*);
 
     Shell* get_shell(unsigned i = 0)
-    { return i < shells.size() ? shells[i] : nullptr; };
+    { return i < shells.size() ? shells[i] : nullptr; }
 
 public:  // FIXIT-M make impl private
     std::vector<Shell*> shells;

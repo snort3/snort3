@@ -64,7 +64,7 @@ struct HttpBuffer
 
 struct DataPointer
 {
-    uint8_t *data;
+    uint8_t* data;
     unsigned len;
 };
 
@@ -81,17 +81,17 @@ extern SO_PUBLIC const char* http_buffer_name[HTTP_BUFFER_MAX];
 extern SO_PUBLIC THREAD_LOCAL DataPointer g_alt_data;
 extern SO_PUBLIC THREAD_LOCAL DataPointer g_file_data;
 
-static inline void ClearHttpBuffers (void)
+static inline void ClearHttpBuffers(void)
 {
     http_mask = 0;
 }
 
-static inline uint32_t GetHttpBufferMask (void)
+static inline uint32_t GetHttpBufferMask(void)
 {
     return http_mask;
 }
 
-static inline const HttpBuffer* GetHttpBuffer (HTTP_BUFFER b)
+static inline const HttpBuffer* GetHttpBuffer(HTTP_BUFFER b)
 {
     if ( !((1 << b) & http_mask) )
         return NULL;
@@ -99,7 +99,7 @@ static inline const HttpBuffer* GetHttpBuffer (HTTP_BUFFER b)
     return http_buffer + b;
 }
 
-static inline void SetHttpBufferEncoding (
+static inline void SetHttpBufferEncoding(
     HTTP_BUFFER b, const uint8_t* buf, unsigned len, uint32_t enc)
 {
     HttpBuffer* hb = http_buffer + b;
@@ -111,7 +111,7 @@ static inline void SetHttpBufferEncoding (
     http_mask |= (1 << b);
 }
 
-static inline void SetHttpBuffer (HTTP_BUFFER b, const uint8_t* buf, unsigned len)
+static inline void SetHttpBuffer(HTTP_BUFFER b, const uint8_t* buf, unsigned len)
 {
     SetHttpBufferEncoding(b, buf, len, 0);
 }
@@ -140,7 +140,7 @@ void EventTrace_Term(void);
 
 void EventTrace_Log(const Packet*, OptTreeNode*, int action);
 
-static inline int EventTrace_IsEnabled (void)
+static inline int EventTrace_IsEnabled(void)
 {
     return ( snort_conf->event_trace_max > 0 );
 }

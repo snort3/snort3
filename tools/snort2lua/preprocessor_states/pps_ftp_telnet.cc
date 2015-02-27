@@ -26,20 +26,19 @@
 
 namespace preprocessors
 {
-
-namespace {
-
+namespace
+{
 class FtpTelnet : public ConversionState
 {
 public:
-    FtpTelnet(Converter& c) : ConversionState(c) {};
-    virtual ~FtpTelnet() {};
+    FtpTelnet(Converter& c) : ConversionState(c) { }
+    virtual ~FtpTelnet() { }
     virtual bool convert(std::istringstream& data_stream);
+
 private:
     bool add_ftp_n_telnet_option(std::string opt_name, bool val);
     void add_ftp_n_telnet_deprecated(std::istringstream&, std::string opt_name);
 };
-
 } // namespace
 
 bool FtpTelnet::add_ftp_n_telnet_option(std::string opt_name, bool val)
@@ -56,7 +55,7 @@ bool FtpTelnet::add_ftp_n_telnet_option(std::string opt_name, bool val)
 }
 
 void FtpTelnet::add_ftp_n_telnet_deprecated(std::istringstream& data_stream,
-                                            std::string opt_name)
+    std::string opt_name)
 {
     std::string tmp;
     data_stream >> tmp;  // eat the next word
@@ -70,42 +69,40 @@ void FtpTelnet::add_ftp_n_telnet_deprecated(std::istringstream& data_stream,
 
 bool FtpTelnet::convert(std::istringstream& data_stream)
 {
-
     std::string keyword;
     std::string s_value;
 
-    // using this to keep track of any errors.  I want to convert as much 
+    // using this to keep track of any errors.  I want to convert as much
     // as possible while being aware something went wrong
     bool retval = true;
 
-    if(data_stream >> keyword)
+    if (data_stream >> keyword)
     {
-        if(keyword.compare("global"))
+        if (keyword.compare("global"))
         {
             data_api.failed_conversion(data_stream, "'global' keyword required");
             return false;
         }
     }
 
-    while(data_stream >> keyword)
+    while (data_stream >> keyword)
     {
         bool tmpval = true;
 
-        if(!keyword.compare("check_encrypted"))
+        if (!keyword.compare("check_encrypted"))
             tmpval = add_ftp_n_telnet_option("check_encrypted", true);
 
-        else if(!keyword.compare("inspection_type"))
+        else if (!keyword.compare("inspection_type"))
             add_ftp_n_telnet_deprecated(data_stream, "inspection_type");
 
-        else if(!keyword.compare("encrypted_traffic"))
+        else if (!keyword.compare("encrypted_traffic"))
         {
             data_stream >> s_value;
 
-            if(!s_value.compare("yes"))
+            if (!s_value.compare("yes"))
                 tmpval = add_ftp_n_telnet_option("encrypted_traffic", true);
             else
                 tmpval = add_ftp_n_telnet_option("encrypted_traffic", false);
-            
         }
         else
         {
@@ -119,7 +116,7 @@ bool FtpTelnet::convert(std::istringstream& data_stream)
         }
     }
 
-    return retval;    
+    return retval;
 }
 
 /**************************
@@ -131,12 +128,12 @@ static ConversionState* ctor(Converter& c)
     return new FtpTelnet(c);
 }
 
-static const ConvertMap preprocessor_ftptelnet = 
+static const ConvertMap preprocessor_ftptelnet =
 {
     "ftp_telnet",
     ctor,
 };
 
 const ConvertMap* ftptelnet_map = &preprocessor_ftptelnet;
-
 } // namespace preprocessors
+

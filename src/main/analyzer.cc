@@ -29,7 +29,7 @@ using namespace std;
 #include "packet_io/sfdaq.h"
 
 typedef DAQ_Verdict
-    (*PacketCallback)(void*, const DAQ_PktHdr_t*, const uint8_t*);
+(* PacketCallback)(void*, const DAQ_PktHdr_t*, const uint8_t*);
 
 // FIXIT-M add fail open capability
 static THREAD_LOCAL PacketCallback main_func = packet_callback;
@@ -93,11 +93,11 @@ bool Analyzer::handle(AnalyzerCommand ac)
         return false;
 
     case AC_PAUSE:
-        {
-            chrono::milliseconds ms(500);
-            this_thread::sleep_for(ms);
-        }
-        break;
+    {
+        chrono::milliseconds ms(500);
+        this_thread::sleep_for(ms);
+    }
+    break;
 
     case AC_RESUME:
         command = AC_NONE;
@@ -139,7 +139,7 @@ void Analyzer::analyze()
             break;
 
         // FIXIT-L acquire(0) won't return until no packets, signal, etc.
-        // which makes this idle unlikely to execute under high traffic 
+        // which makes this idle unlikely to execute under high traffic
         // conditions; that means the idle processing may not be useful
         // or that we need a hook to do things periodically even when
         // traffic is available

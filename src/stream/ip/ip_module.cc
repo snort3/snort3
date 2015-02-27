@@ -54,10 +54,10 @@ using namespace std;
 
 #if 0  // OBE
 #define DEFRAG_IPV6_BSD_ICMP_FRAG_STR
-    "IPv6 BSD mbufs remote kernel buffer overflow"
+"IPv6 BSD mbufs remote kernel buffer overflow"
 
 #define DEFRAG_IPV6_BAD_FRAG_PKT_STR
-    "bogus fragmentation packet, possible BSD attack"
+"bogus fragmentation packet, possible BSD attack"
 #endif
 
 #define DEFRAG_MIN_TTL_EVASION_STR \
@@ -70,7 +70,7 @@ using namespace std;
     "tiny fragment"
 
 FragEngine::FragEngine()
-{ 
+{
     memset(this, 0, sizeof(*this));
     frag_timeout = 60;
 }
@@ -152,7 +152,7 @@ ProfileStats* StreamIpModule::get_profile(
         name = "frag";
         parent = "stream_ip";
         return &fragPerfStats;
-    
+
     case 2:
         name = "frag_insert";
         parent = "frag";
@@ -196,7 +196,6 @@ bool StreamIpModule::set(const char*, Value& v, SnortConfig*)
         config->session_timeout = v.get_long();
         config->frag_engine.frag_timeout = v.get_long();
     }
-
     else
         return false;
 

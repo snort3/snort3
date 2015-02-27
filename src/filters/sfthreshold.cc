@@ -52,17 +52,17 @@
 #include <errno.h>
 
 /* Data */
-THD_STRUCT *thd_runtime = NULL;
+THD_STRUCT* thd_runtime = NULL;
 
 static THREAD_LOCAL int thd_checked = 0; // per packet
 static THREAD_LOCAL int thd_answer = 0;  // per packet
 
 typedef enum { PRINT_GLOBAL, PRINT_LOCAL, PRINT_SUPPRESS } PrintFormat;
 
-ThresholdConfig * ThresholdConfigNew(void)
+ThresholdConfig* ThresholdConfigNew(void)
 {
-    ThresholdConfig *tc =
-        (ThresholdConfig *)SnortAlloc(sizeof(ThresholdConfig));
+    ThresholdConfig* tc =
+        (ThresholdConfig*)SnortAlloc(sizeof(ThresholdConfig));
 
     /* sfthd_objs_new will handle fatal */
     tc->thd_objs = sfthd_objs_new();
@@ -72,7 +72,7 @@ ThresholdConfig * ThresholdConfigNew(void)
     return tc;
 }
 
-void ThresholdConfigFree(ThresholdConfig *tc)
+void ThresholdConfigFree(ThresholdConfig* tc)
 {
     if (tc == NULL)
         return;
@@ -90,87 +90,91 @@ void ThresholdConfigFree(ThresholdConfig *tc)
 // prnMode = 1: term output format (with header and count of filtered events)
 // prnMode = 2: term output format (count only)
 #if 0
-static int print_thd_node( THD_NODE *p , PrintFormat type, unsigned* prnMode )
+static int print_thd_node(THD_NODE* p, PrintFormat type, unsigned* prnMode)
 {
     char buf[STD_BUF+1];
     memset(buf, 0, STD_BUF+1);
 
-    switch( type )
+    switch ( type )
     {
     case PRINT_GLOBAL:
-           if(p->type == THD_TYPE_SUPPRESS ) return 0;
-           if(p->sig_id != 0 ) return 0;
-           break;
+        if (p->type == THD_TYPE_SUPPRESS )
+            return 0;
+        if (p->sig_id != 0 )
+            return 0;
+        break;
 
     case PRINT_LOCAL:
-           if(p->type == THD_TYPE_SUPPRESS ) return 0;
-           if(p->sig_id == 0 || p->gen_id == 0 ) return 0;
-           break;
+        if (p->type == THD_TYPE_SUPPRESS )
+            return 0;
+        if (p->sig_id == 0 || p->gen_id == 0 )
+            return 0;
+        break;
 
     case PRINT_SUPPRESS:
-           if(p->type != THD_TYPE_SUPPRESS ) return 0;
-           break;
+        if (p->type != THD_TYPE_SUPPRESS )
+            return 0;
+        break;
     }
 
     /* SnortSnprintfAppend(buf, STD_BUF, "| thd-id=%d", p->thd_id ); */
 
-
     if ( *prnMode && !p->filtered )
         return 1;
 
-    if( p->gen_id == 0 )
+    if ( p->gen_id == 0 )
     {
         SnortSnprintfAppend(buf, STD_BUF, "| gen-id=global");
     }
     else
     {
-        SnortSnprintfAppend(buf, STD_BUF, "| gen-id=%-6d", p->gen_id );
+        SnortSnprintfAppend(buf, STD_BUF, "| gen-id=%-6d", p->gen_id);
     }
-    if( p->sig_id == 0 )
+    if ( p->sig_id == 0 )
     {
-        SnortSnprintfAppend(buf, STD_BUF, " sig-id=global" );
+        SnortSnprintfAppend(buf, STD_BUF, " sig-id=global");
     }
     else
     {
-        SnortSnprintfAppend(buf, STD_BUF, " sig-id=%-10d", p->sig_id );
+        SnortSnprintfAppend(buf, STD_BUF, " sig-id=%-10d", p->sig_id);
     }
 
     switch ( p->type )
     {
-        case THD_TYPE_LIMIT:
-            SnortSnprintfAppend(buf, STD_BUF, " type=Limit    ");
-            break;
+    case THD_TYPE_LIMIT:
+        SnortSnprintfAppend(buf, STD_BUF, " type=Limit    ");
+        break;
 
-        case THD_TYPE_THRESHOLD:
-            SnortSnprintfAppend(buf, STD_BUF, " type=Threshold");
-            break;
+    case THD_TYPE_THRESHOLD:
+        SnortSnprintfAppend(buf, STD_BUF, " type=Threshold");
+        break;
 
-        case THD_TYPE_BOTH:
-            SnortSnprintfAppend(buf, STD_BUF, " type=Both     ");
-            break;
+    case THD_TYPE_BOTH:
+        SnortSnprintfAppend(buf, STD_BUF, " type=Both     ");
+        break;
 
-        case THD_TYPE_SUPPRESS:
-            if ( *prnMode )
-                SnortSnprintfAppend(buf, STD_BUF, " type=Suppress ");
-            break;
+    case THD_TYPE_SUPPRESS:
+        if ( *prnMode )
+            SnortSnprintfAppend(buf, STD_BUF, " type=Suppress ");
+        break;
     }
 
     switch ( p->tracking )
     {
-        case THD_TRK_NONE:
-            SnortSnprintfAppend(buf, STD_BUF, " tracking=none");
-            break;
+    case THD_TRK_NONE:
+        SnortSnprintfAppend(buf, STD_BUF, " tracking=none");
+        break;
 
-        case THD_TRK_SRC:
-            SnortSnprintfAppend(buf, STD_BUF, " tracking=src");
-            break;
+    case THD_TRK_SRC:
+        SnortSnprintfAppend(buf, STD_BUF, " tracking=src");
+        break;
 
-        case THD_TRK_DST:
-            SnortSnprintfAppend(buf, STD_BUF, " tracking=dst");
-            break;
+    case THD_TRK_DST:
+        SnortSnprintfAppend(buf, STD_BUF, " tracking=dst");
+        break;
     }
 
-    if( p->type == THD_TYPE_SUPPRESS )
+    if ( p->type == THD_TYPE_SUPPRESS )
     {
         if ( p->tracking != THD_TRK_NONE )
         {
@@ -188,7 +192,8 @@ static int print_thd_node( THD_NODE *p , PrintFormat type, unsigned* prnMode )
     {
         if ( *prnMode == 1 )
         {
-            LogMessage("+-----------------------[filtered events]--------------------------------------\n");
+            LogMessage(
+                "+-----------------------[filtered events]--------------------------------------\n");
             *prnMode = 2;
         }
         SnortSnprintfAppend(buf, STD_BUF, " filtered=" STDu64, p->filtered);
@@ -198,29 +203,29 @@ static int print_thd_node( THD_NODE *p , PrintFormat type, unsigned* prnMode )
     return 1;
 }
 
-static int print_thd_local(ThresholdObjects *thd_objs, PrintFormat type, unsigned* prnMode)
+static int print_thd_local(ThresholdObjects* thd_objs, PrintFormat type, unsigned* prnMode)
 {
-    SFGHASH  * sfthd_hash;
-    THD_ITEM * sfthd_item;
-    THD_NODE * sfthd_node;
-    int        gen_id;
-    SFGHASH_NODE * item_hash_node;
-    int        lcnt=0;
+    SFGHASH* sfthd_hash;
+    THD_ITEM* sfthd_item;
+    THD_NODE* sfthd_node;
+    int gen_id;
+    SFGHASH_NODE* item_hash_node;
+    int lcnt=0;
     PolicyId policyId;
 
     for (policyId = 0; policyId < thd_objs->numPoliciesAllocated; policyId++)
     {
-        for(gen_id=0;gen_id < THD_MAX_GENID ; gen_id++ )
+        for (gen_id=0; gen_id < THD_MAX_GENID; gen_id++ )
         {
             sfthd_hash = thd_objs->sfthd_array[gen_id];
-            if( !sfthd_hash )
+            if ( !sfthd_hash )
             {
                 continue;
             }
 
-            for(item_hash_node  = sfghash_findfirst( sfthd_hash );
-                    item_hash_node != 0;
-                    item_hash_node  = sfghash_findnext( sfthd_hash ) )
+            for (item_hash_node  = sfghash_findfirst(sfthd_hash);
+                item_hash_node != 0;
+                item_hash_node  = sfghash_findnext(sfthd_hash) )
             {
                 /* Check for any Permanent sig_id objects for this gen_id */
                 sfthd_item = (THD_ITEM*)item_hash_node->data;
@@ -231,9 +236,9 @@ static int print_thd_local(ThresholdObjects *thd_objs, PrintFormat type, unsigne
                 }
                 SF_LNODE* cursor;
 
-                for( sfthd_node  = (THD_NODE*)sflist_first(sfthd_item->sfthd_node_list, &cursor);
-                        sfthd_node != 0;
-                        sfthd_node = (THD_NODE*)sflist_next(&cursor) )
+                for ( sfthd_node  = (THD_NODE*)sflist_first(sfthd_item->sfthd_node_list, &cursor);
+                    sfthd_node != 0;
+                    sfthd_node = (THD_NODE*)sflist_next(&cursor) )
                 {
                     if (print_thd_node(sfthd_node, type, prnMode) != 0)
                         lcnt++;
@@ -242,11 +247,12 @@ static int print_thd_local(ThresholdObjects *thd_objs, PrintFormat type, unsigne
         }
     }
 
-    if( !lcnt && !*prnMode )
+    if ( !lcnt && !*prnMode )
         LogMessage("| none\n");
 
     return 0;
 }
+
 #endif
 
 void print_thresholding(ThresholdConfig*, unsigned)
@@ -266,7 +272,7 @@ void sfthreshold_free(void)
 
 */
 int sfthreshold_create(
-    SnortConfig* sc, ThresholdConfig *thd_config, THDX_STRUCT *thdx)
+    SnortConfig* sc, ThresholdConfig* thd_config, THDX_STRUCT* thdx)
 {
     if (thd_config == NULL)
         return -1;
@@ -286,15 +292,15 @@ int sfthreshold_create(
 
     /* Add the object to the table - */
     return sfthd_create_threshold(sc,
-                                  thd_config->thd_objs,
-                                  thdx->gen_id,
-                                  thdx->sig_id,
-                                  thdx->tracking,
-                                  thdx->type,
-                                  thdx->priority,
-                                  thdx->count,
-                                  thdx->seconds,
-                                  thdx->ip_address);
+        thd_config->thd_objs,
+        thdx->gen_id,
+        thdx->sig_id,
+        thdx->tracking,
+        thdx->type,
+        thdx->priority,
+        thdx->count,
+        thdx->seconds,
+        thdx->ip_address);
 }
 
 /*
@@ -308,9 +314,9 @@ int sfthreshold_create(
            !0 - don't log
 */
 int sfthreshold_test(
-    unsigned gen_id, unsigned  sig_id,
-    const sfip_t *sip, const sfip_t *dip,
-    long curtime )
+    unsigned gen_id, unsigned sig_id,
+    const sfip_t* sip, const sfip_t* dip,
+    long curtime)
 {
     if ((snort_conf->threshold_config == NULL) ||
         !snort_conf->threshold_config->enabled)
@@ -320,9 +326,9 @@ int sfthreshold_test(
 
     if (!thd_checked)
     {
-       thd_checked = 1;
-       thd_answer = sfthd_test_threshold(snort_conf->threshold_config->thd_objs,
-                                         thd_runtime, gen_id, sig_id, sip, dip, curtime);
+        thd_checked = 1;
+        thd_answer = sfthd_test_threshold(snort_conf->threshold_config->thd_objs,
+            thd_runtime, gen_id, sig_id, sip, dip, curtime);
     }
 
     return thd_answer;

@@ -24,19 +24,17 @@
 #include "helpers/converter.h"
 #include "helpers/s2l_util.h"
 
-
 namespace keywords
 {
-
-namespace {
-
-template<const std::string *snort_option>
+namespace
+{
+template<const std::string* snort_option>
 class Paths : public ConversionState
 {
 public:
-    Paths(Converter& c) : ConversionState(c) {};
+    Paths(Converter& c) : ConversionState(c) { }
 
-    virtual ~Paths() {};
+    virtual ~Paths() { }
     virtual bool convert(std::istringstream& data_stream)
     {
         std::string arg1;
@@ -67,8 +65,8 @@ public:
 
             else if (!arg1.compare("file"))
                 table_api.add_comment("Cannot add specific files to Snort++"
-                " plugin path.  Use 'plugin_path = "
-                "<dir>' instead of adding specific file: " + arg1);
+                    " plugin path.  Use 'plugin_path = "
+                    "<dir>' instead of adding specific file: " + arg1);
 
             else
                 return false;
@@ -78,13 +76,10 @@ public:
     }
 };
 
-
-template<const std::string *snort_option>
+template<const std::string* snort_option>
 static ConversionState* paths_ctor(Converter& c)
 { return new Paths<snort_option>(c); }
-
 } // namespace
-
 
 /**************************
  *******  A P I ***********
@@ -98,28 +93,27 @@ static const std::string dynamicpreprocessor = "dynamicpreprocessor";
 static const ConvertMap dynamicengine_api =
 {
     dynamicengine,
-    paths_ctor<&dynamicengine>,
+    paths_ctor<& dynamicengine>,
 };
 static const ConvertMap dynamicdetection_api =
 {
     dynamicdetection,
-    paths_ctor<&dynamicdetection>,
+    paths_ctor<& dynamicdetection>,
 };
 static const ConvertMap dynamicsidechannel_api =
 {
     dynamicsidechannel,
-    paths_ctor<&dynamicsidechannel>,
+    paths_ctor<& dynamicsidechannel>,
 };
 static const ConvertMap dynamicpreprocessor_api =
 {
     dynamicpreprocessor,
-    paths_ctor<&dynamicpreprocessor>,
+    paths_ctor<& dynamicpreprocessor>,
 };
-
 
 const ConvertMap* dynamicengine_map = &dynamicengine_api;
 const ConvertMap* dynamicdetection_map = &dynamicdetection_api;
 const ConvertMap* dynamicsidechannel_map = &dynamicsidechannel_api;
 const ConvertMap* dynamicpreprocessor_map = &dynamicpreprocessor_api;
-
 } // namespace keywords
+

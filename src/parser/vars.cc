@@ -75,31 +75,31 @@
 void config_set_var(SnortConfig* sc, const char* val)
 {
     {
-        const char *equal_ptr = strchr(val, '=');
-        VarNode *node;
+        const char* equal_ptr = strchr(val, '=');
+        VarNode* node;
 
         if (equal_ptr == NULL)
         {
             FatalError("Format for command line variable definitions "
-                       "is:\n -S var=value\n");
+                "is:\n -S var=value\n");
         }
 
         /* Save these and parse when snort conf is parsed so
          * they can be added to the snort conf configuration */
-        node = (VarNode *)SnortAlloc(sizeof(VarNode));
+        node = (VarNode*)SnortAlloc(sizeof(VarNode));
         node->name = SnortStrndup(val, equal_ptr - val);
 
         /* Make sure it's not already in the list */
         if (sc->var_list != NULL)
         {
-            VarNode *tmp = sc->var_list;
+            VarNode* tmp = sc->var_list;
 
             while (tmp != NULL)
             {
                 if (strcasecmp(tmp->name, node->name) == 0)
                 {
                     FatalError("Duplicate variable name: %s.\n",
-                               tmp->name);
+                        tmp->name);
                 }
 
                 tmp = tmp->next;
@@ -115,14 +115,13 @@ void config_set_var(SnortConfig* sc, const char* val)
          * equals is already there */
         *strchr(node->line, '=') = ' ';
     }
-
 }
 
-void FreeVarList(VarNode *head)
+void FreeVarList(VarNode* head)
 {
     while (head != NULL)
     {
-        VarNode *tmp = head;
+        VarNode* tmp = head;
 
         head = head->next;
 
@@ -153,49 +152,49 @@ void FreeVarList(VarNode *head)
  *  portvar http [80,8080,8138,8700:8800,!8711]
  *  portvar http $http_basic
  */
-int PortVarDefine(SnortConfig *sc, const char *name, const char *s)
+int PortVarDefine(SnortConfig* sc, const char* name, const char* s)
 {
-    PortObject *po;
+    PortObject* po;
     POParser pop;
-    int   rstat;
-    PortVarTable *portVarTable = get_ips_policy()->portVarTable;
+    int rstat;
+    PortVarTable* portVarTable = get_ips_policy()->portVarTable;
 
     DisallowCrossTableDuplicateVars(sc, name, VAR_TYPE__PORTVAR);
 
-    if( SnortStrcasestr(s,strlen(s),"any") ) /* this allows 'any' or '[any]' */
+    if ( SnortStrcasestr(s,strlen(s),"any") ) /* this allows 'any' or '[any]' */
     {
-        if(strstr(s,"!"))
+        if (strstr(s,"!"))
         {
             ParseError("illegal use of negation and 'any': %s.", s);
         }
 
         po = PortObjectNew();
-        if( !po )
+        if ( !po )
         {
             ParseAbort("PortVarTable missing an 'any' variable.");
         }
-        PortObjectSetName( po, name );
-        PortObjectAddPortAny( po );
+        PortObjectSetName(po, name);
+        PortObjectAddPortAny(po);
     }
     else
     {
         /* Parse the Port List info into a PortObject  */
         po = PortObjectParseString(portVarTable, &pop, name, s, 0);
-        if(!po)
+        if (!po)
         {
-            const char* errstr = PortObjectParseError( &pop );
+            const char* errstr = PortObjectParseError(&pop);
             ParseAbort("PortVar Parse error: (pos=%d,error=%s)\n>>%s\n>>%*s.",
-                       pop.pos,errstr,s,pop.pos,"^");
+                pop.pos,errstr,s,pop.pos,"^");
         }
     }
 
     /* Add The PortObject to the PortList Table */
     rstat = PortVarTableAdd(portVarTable, po);
-    if( rstat < 0 )
+    if ( rstat < 0 )
     {
         ParseError("PortVarTableAdd failed with '%s', exiting.", po->name);
     }
-    else if( rstat > 0 )
+    else if ( rstat > 0 )
     {
         ParseWarning("PortVar '%s', already defined.", po->name);
     }
@@ -220,11 +219,11 @@ int PortVarDefine(SnortConfig *sc, const char *name, const char *s)
  * Returns: pointer to new VarEntry
  *
  ***************************************************************************/
-VarEntry *VarAlloc()
+VarEntry* VarAlloc()
 {
-    VarEntry * pve;
+    VarEntry* pve;
 
-     pve = (VarEntry *)SnortAlloc(sizeof(VarEntry));
+    pve = (VarEntry*)SnortAlloc(sizeof(VarEntry));
 
     return( pve);
 }
@@ -242,51 +241,51 @@ VarEntry *VarAlloc()
  * Returns: 1 if IP address, 0 otherwise
  *
  ***************************************************************************/
-int VarIsIpAddr(vartable_t *ip_vartable, const char *value)
+int VarIsIpAddr(vartable_t* ip_vartable, const char* value)
 {
-    const char *tmp;
+    const char* tmp;
 
     /* empty list, consider this an IP address */
     if ((*value == '[') && (*(value+1) == ']'))
         return 1;
 
-    while(*value == '!' || *value == '[') value++;
+    while (*value == '!' || *value == '[')
+        value++;
 
     /* Check for dotted-quad */
-    if( isdigit((int)*value) &&
-         ((tmp = strchr(value, (int)'.')) != NULL) &&
-         ((tmp = strchr(tmp+1, (int)'.')) != NULL) &&
-         (strchr(tmp+1, (int)'.') != NULL))
+    if ( isdigit((int)*value) &&
+        ((tmp = strchr(value, (int)'.')) != NULL) &&
+        ((tmp = strchr(tmp+1, (int)'.')) != NULL) &&
+        (strchr(tmp+1, (int)'.') != NULL))
         return 1;
 
     /* IPv4 with a mask, and fewer than 4 fields */
-    else if( isdigit((int)*value) &&
-         (strchr(value+1, (int)':') == NULL) &&
-         ((tmp = strchr(value+1, (int)'/')) != NULL) &&
-         isdigit((int)(*(tmp+1))) )
+    else if ( isdigit((int)*value) &&
+        (strchr(value+1, (int)':') == NULL) &&
+        ((tmp = strchr(value+1, (int)'/')) != NULL) &&
+        isdigit((int)(*(tmp+1))) )
         return 1;
 
     /* IPv6 */
-    else if((tmp = strchr(value, (int)':')) != NULL)
+    else if ((tmp = strchr(value, (int)':')) != NULL)
     {
-        const char *tmp2;
+        const char* tmp2;
 
-        if((tmp2 = strchr(tmp+1, (int)':')) == NULL)
+        if ((tmp2 = strchr(tmp+1, (int)':')) == NULL)
             return 0;
 
-        for(tmp++; tmp < tmp2; tmp++)
-            if(!isxdigit((int)*tmp))
+        for (tmp++; tmp < tmp2; tmp++)
+            if (!isxdigit((int)*tmp))
                 return 0;
 
         return 1;
     }
-
     /* Any */
-    else if(!strncmp(value, "any", 3))
+    else if (!strncmp(value, "any", 3))
         return 1;
 
     /* Check if it's a variable containing an IP */
-    else if(sfvt_lookup_var(ip_vartable, value+1) || sfvt_lookup_var(ip_vartable, value))
+    else if (sfvt_lookup_var(ip_vartable, value+1) || sfvt_lookup_var(ip_vartable, value))
         return 1;
 
     return 0;
@@ -304,7 +303,7 @@ int VarIsIpAddr(vartable_t *ip_vartable, const char *value)
  * Returns: 1 if the brackets match correctly, 0 otherwise
  *
  ***************************************************************************/
-static int CheckBrackets(char *value)
+static int CheckBrackets(char* value)
 {
     int num_brackets = 0;
 
@@ -345,9 +344,9 @@ static int CheckBrackets(char *value)
  * Returns: 1 if each item is an IP address, 0 otherwise
  *
  ***************************************************************************/
-int VarIsIpList(vartable_t *ip_vartable, const char *value)
+int VarIsIpList(vartable_t* ip_vartable, const char* value)
 {
-    char *copy, *item;
+    char* copy, * item;
     int item_is_ip = 1;
 
     copy = SnortStrdup((const char*)value);
@@ -395,13 +394,13 @@ int VarIsIpList(vartable_t *ip_vartable, const char *value)
  *
  ***************************************************************************/
 void DisallowCrossTableDuplicateVars(
-    SnortConfig*, const char *name, VarType var_type)
+    SnortConfig*, const char* name, VarType var_type)
 {
     IpsPolicy* dp = get_ips_policy();
-    VarEntry *var_table = dp->var_table;
-    PortVarTable *portVarTable = dp->portVarTable;
-    vartable_t *ip_vartable = dp->ip_vartable;
-    VarEntry *p = var_table;
+    VarEntry* var_table = dp->var_table;
+    PortVarTable* portVarTable = dp->portVarTable;
+    vartable_t* ip_vartable = dp->ip_vartable;
+    VarEntry* p = var_table;
 
     /* If this is a faked Portvar, treat as a portvar */
     if ((var_type == VAR_TYPE__DEFAULT) &&
@@ -412,62 +411,64 @@ void DisallowCrossTableDuplicateVars(
 
     switch (var_type)
     {
-        case VAR_TYPE__DEFAULT:
-            if (PortVarTableFind(portVarTable, name)
-                    || sfvt_lookup_var(ip_vartable, name)
-               )
-            {
-                ParseError("can not redefine variable name %s to be of type "
-                           "'var'. Use a different name.", name);
-            }
-            break;
+    case VAR_TYPE__DEFAULT:
+        if (PortVarTableFind(portVarTable, name)
+            || sfvt_lookup_var(ip_vartable, name)
+            )
+        {
+            ParseError("can not redefine variable name %s to be of type "
+                "'var'. Use a different name.", name);
+        }
+        break;
 
-        case VAR_TYPE__PORTVAR:
-            if (var_table != NULL)
+    case VAR_TYPE__PORTVAR:
+        if (var_table != NULL)
+        {
+            do
             {
-                do
+                if (strcasecmp(p->name, name) == 0)
                 {
-                    if(strcasecmp(p->name, name) == 0)
-                    {
-                        ParseError("can not redefine variable name %s to be of "
-                                   "type 'portvar'. Use a different name.", name);
-                    }
-                    p = p->next;
-                } while(p != var_table);
+                    ParseError("can not redefine variable name %s to be of "
+                        "type 'portvar'. Use a different name.", name);
+                }
+                p = p->next;
             }
+            while (p != var_table);
+        }
 
-            if(sfvt_lookup_var(ip_vartable, name))
+        if (sfvt_lookup_var(ip_vartable, name))
+        {
+            ParseError("can not redefine variable name %s to be of type "
+                "'portvar'. Use a different name.", name);
+        }
+
+        break;
+
+    case VAR_TYPE__IPVAR:
+        if (var_table != NULL)
+        {
+            do
             {
-                ParseError("can not redefine variable name %s to be of type "
-                           "'portvar'. Use a different name.", name);
-            }
-
-            break;
-
-        case VAR_TYPE__IPVAR:
-            if (var_table != NULL)
-            {
-                do
+                if (strcasecmp(p->name, name) == 0)
                 {
-                    if(strcasecmp(p->name, name) == 0)
-                    {
-                        ParseError("can not redefine variable name %s to be of "
-                                   "type 'ipvar'. Use a different name.", name);
-                    }
+                    ParseError("can not redefine variable name %s to be of "
+                        "type 'ipvar'. Use a different name.", name);
+                }
 
-                    p = p->next;
-                } while(p != var_table);
+                p = p->next;
             }
+            while (p != var_table);
+        }
 
-            if(PortVarTableFind(portVarTable, name))
-            {
-                ParseError("can not redefine variable name %s to be of type "
-                           "'ipvar'. Use a different name.", name);
-            }
+        if (PortVarTableFind(portVarTable, name))
+        {
+            ParseError("can not redefine variable name %s to be of type "
+                "'ipvar'. Use a different name.", name);
+        }
 
-        default:
-            /* Invalid function usage */
-            break;
+    default:
+        /* Invalid function usage */
+        break;
     }
 }
 
@@ -483,22 +484,22 @@ void DisallowCrossTableDuplicateVars(
  * Returns: void function
  *
  ***************************************************************************/
-VarEntry * VarDefine(
-    SnortConfig *sc, const char *name, const char *value)
+VarEntry* VarDefine(
+    SnortConfig* sc, const char* name, const char* value)
 {
     IpsPolicy* dp = get_ips_policy();
-    VarEntry *var_table = dp->var_table;
-    vartable_t *ip_vartable = dp->ip_vartable;
-    VarEntry *p;
+    VarEntry* var_table = dp->var_table;
+    vartable_t* ip_vartable = dp->ip_vartable;
+    VarEntry* p;
     uint32_t var_id = 0;
 
-    if(value == NULL)
+    if (value == NULL)
     {
         ParseAbort("bad value in variable definition.  Make sure you don't "
-                   "have a '$' in the var name.");
+            "have a '$' in the var name.");
     }
 
-    if(VarIsIpList(ip_vartable, value))
+    if (VarIsIpList(ip_vartable, value))
     {
         SFIP_RET ret;
 
@@ -512,52 +513,52 @@ VarEntry * VarDefine(
          * is only necessary for ExpandVars. */
         DisallowCrossTableDuplicateVars(sc, name, VAR_TYPE__IPVAR);
 
-        if((ret = sfvt_define(ip_vartable, name, value)) != SFIP_SUCCESS)
+        if ((ret = sfvt_define(ip_vartable, name, value)) != SFIP_SUCCESS)
         {
-            switch(ret) {
-                case SFIP_ARG_ERR:
-                    ParseAbort("the following is not allowed: %s.", value);
-                    break;
+            switch (ret)
+            {
+            case SFIP_ARG_ERR:
+                ParseAbort("the following is not allowed: %s.", value);
+                break;
 
-                case SFIP_DUPLICATE:
-                    ParseWarning("Var '%s' redefined.", name);
-                    break;
+            case SFIP_DUPLICATE:
+                ParseWarning("Var '%s' redefined.", name);
+                break;
 
-                case SFIP_CONFLICT:
-                    ParseAbort("negated IP ranges that are more general than "
-                               "non-negated ranges are not allowed. Consider "
-                               "inverting the logic in %s.", name);
-                    break;
+            case SFIP_CONFLICT:
+                ParseAbort("negated IP ranges that are more general than "
+                    "non-negated ranges are not allowed. Consider "
+                    "inverting the logic in %s.", name);
+                break;
 
-                case SFIP_NOT_ANY:
-                    ParseAbort("!any is not allowed in %s", name);
-                    break;
+            case SFIP_NOT_ANY:
+                ParseAbort("!any is not allowed in %s", name);
+                break;
 
-                default:
-                    ParseAbort("failed to parse the IP address: %s.", value);
+            default:
+                ParseAbort("failed to parse the IP address: %s.", value);
             }
         }
         return NULL;
     }
     /* Check if this is a variable that stores an IP */
-    else if(*value == '$')
+    else if (*value == '$')
     {
-        sfip_var_t *var;
-        if((var = sfvt_lookup_var(ip_vartable, value)) != NULL)
+        sfip_var_t* var;
+        if ((var = sfvt_lookup_var(ip_vartable, value)) != NULL)
         {
             sfvt_define(ip_vartable, name, value);
             return NULL;
         }
     }
 
-
     DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-               "VarDefine: name=%s value=%s\n",name,value););
+        "VarDefine: name=%s value=%s\n",name,value); );
 
     /* Check to see if this variable is just being aliased */
     if (var_table != NULL)
     {
-        VarEntry *tmp = var_table;
+        VarEntry* tmp = var_table;
 
         do
         {
@@ -569,18 +570,18 @@ VarEntry * VarDefine(
             }
 
             tmp = tmp->next;
-
-        } while (tmp != var_table);
+        }
+        while (tmp != var_table);
     }
 
     value = ExpandVars(sc, value);
-    if(!value)
+    if (!value)
     {
         ParseAbort("could not expand var('%s').", name);
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-               "VarDefine: name=%s value=%s (expanded)\n",name,value););
+        "VarDefine: name=%s value=%s (expanded)\n",name,value); );
 
     DisallowCrossTableDuplicateVars(sc, name, VAR_TYPE__DEFAULT);
 
@@ -616,8 +617,8 @@ VarEntry * VarDefine(
         }
 
         p = p->next;
-
-    } while (p != var_table);   /* List is circular */
+    }
+    while (p != var_table);     /* List is circular */
 
     p = VarAlloc();
     p->name  = SnortStrdup(name);
@@ -634,33 +635,34 @@ VarEntry * VarDefine(
 
 #ifdef XXXXXXX
     vlen = strlen(value);
-    LogMessage("Var '%s' defined, value len = %d chars", p->name, vlen  );
+    LogMessage("Var '%s' defined, value len = %d chars", p->name, vlen);
 
-    if( vlen < 64 )
+    if ( vlen < 64 )
     {
-      LogMessage(", value = %s\n", value );
+        LogMessage(", value = %s\n", value);
     }
     else
     {
-      LogMessage("\n");
-      n = 128;
-      s = value;
-      while(vlen)
-      {
-         if( n > vlen ) n = vlen;
-         LogMessage("   %.*s\n", n, s );
-         s    += n;
-         vlen -= n;
-      }
+        LogMessage("\n");
+        n = 128;
+        s = value;
+        while (vlen)
+        {
+            if ( n > vlen )
+                n = vlen;
+            LogMessage("   %.*s\n", n, s);
+            s    += n;
+            vlen -= n;
+        }
     }
 #endif
 
     return p;
 }
 
-void DeleteVars(VarEntry *var_table)
+void DeleteVars(VarEntry* var_table)
 {
-    VarEntry *q, *p = var_table;
+    VarEntry* q, * p = var_table;
 
     while (p)
     {
@@ -680,13 +682,13 @@ void DeleteVars(VarEntry *var_table)
     }
 }
 
-const char * VarSearch(SnortConfig *sc, const char *name)
+const char* VarSearch(SnortConfig* sc, const char* name)
 {
     IpsPolicy* dp = get_ips_policy();
-    VarEntry *var_table = dp->var_table;
-    PortVarTable *portVarTable = dp->portVarTable;
-    vartable_t *ip_vartable = dp->ip_vartable;
-    sfip_var_t *ipvar;
+    VarEntry* var_table = dp->var_table;
+    PortVarTable* portVarTable = dp->portVarTable;
+    vartable_t* ip_vartable = dp->ip_vartable;
+    sfip_var_t* ipvar;
 
     if ((ipvar = sfvt_lookup_var(ip_vartable, name)) != NULL)
         return ExpandVars(sc, ipvar->value);
@@ -697,14 +699,14 @@ const char * VarSearch(SnortConfig *sc, const char *name)
 
     if (var_table != NULL)
     {
-        VarEntry *p = var_table;
+        VarEntry* p = var_table;
         do
         {
-            if(strcasecmp(p->name, name) == 0)
+            if (strcasecmp(p->name, name) == 0)
                 return p->value;
             p = p->next;
-
-        } while(p != var_table);
+        }
+        while (p != var_table);
     }
 
     return NULL;
@@ -722,36 +724,37 @@ const char * VarSearch(SnortConfig *sc, const char *name)
  *          undefined variable name
  *
  ***************************************************************************/
-const char *VarGet(SnortConfig*, const char *name)
+const char* VarGet(SnortConfig*, const char* name)
 {
     IpsPolicy* dp = get_ips_policy();
-    VarEntry *var_table = dp->var_table;
-    vartable_t *ip_vartable = dp->ip_vartable;
-    sfip_var_t *var;
+    VarEntry* var_table = dp->var_table;
+    vartable_t* ip_vartable = dp->ip_vartable;
+    sfip_var_t* var;
 
 // XXX-IPv6 This function should never be used if IP6 support is enabled!
 // Infact it won't presently even work for IP variables since the raw ASCII
 // value is never stored, and is never meant to be used.
 
-    if((var = sfvt_lookup_var(ip_vartable, name)) == NULL) {
+    if ((var = sfvt_lookup_var(ip_vartable, name)) == NULL)
+    {
         /* Do the old style lookup since it wasn't found in
          * the variable table */
-        if(var_table != NULL)
+        if (var_table != NULL)
         {
-            VarEntry *p = var_table;
+            VarEntry* p = var_table;
             do
             {
-                if(strcasecmp(p->name, name) == 0)
+                if (strcasecmp(p->name, name) == 0)
                     return p->value;
                 p = p->next;
-            } while(p != var_table);
+            }
+            while (p != var_table);
         }
 
         ParseError("undefined variable name: %s.", name);
     }
 
     return name;
-
 }
 
 /****************************************************************************
@@ -772,7 +775,7 @@ const char *VarGet(SnortConfig*, const char *name)
  *      static variable and most likely needs to be string dup'ed.
  *
  ***************************************************************************/
-const char * ExpandVars(SnortConfig *sc, const char *string)
+const char* ExpandVars(SnortConfig* sc, const char* string)
 {
     static char estring[ 65536 ];  // FIXIT-L convert this foo to a std::string
 
@@ -782,52 +785,52 @@ const char * ExpandVars(SnortConfig *sc, const char *string)
     int varname_completed, c, i, j, iv, jv, l_string, name_only;
     int quote_toggle = 0;
 
-    if(!string || !*string || !strchr(string, '$'))
+    if (!string || !*string || !strchr(string, '$'))
         return(string);
 
-    memset((char *) estring, 0, sizeof(estring));
+    memset((char*)estring, 0, sizeof(estring));
 
     i = j = 0;
     l_string = strlen(string);
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES, "ExpandVars, Before: %s\n", string););
+    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES, "ExpandVars, Before: %s\n", string); );
 
-    while(i < l_string && j < (int)sizeof(estring) - 1)
+    while (i < l_string && j < (int)sizeof(estring) - 1)
     {
         c = string[i++];
 
-        if(c == '"')
+        if (c == '"')
         {
             /* added checks to make sure that we are inside a quoted string
              */
             quote_toggle ^= 1;
         }
 
-        if(c == '$' && !quote_toggle)
+        if (c == '$' && !quote_toggle)
         {
-            memset((char *) rawvarname, 0, sizeof(rawvarname));
+            memset((char*)rawvarname, 0, sizeof(rawvarname));
             varname_completed = 0;
             name_only = 1;
             iv = i;
             jv = 0;
 
-            if(string[i] == '(')
+            if (string[i] == '(')
             {
                 name_only = 0;
                 iv = i + 1;
             }
 
-            while(!varname_completed
-                  && iv < l_string
-                  && jv < (int)sizeof(rawvarname) - 1)
+            while (!varname_completed
+                && iv < l_string
+                && jv < (int)sizeof(rawvarname) - 1)
             {
                 c = string[iv++];
 
-                if((name_only && !(isalnum(c) || c == '_'))
-                   || (!name_only && c == ')'))
+                if ((name_only && !(isalnum(c) || c == '_'))
+                    || (!name_only && c == ')'))
                 {
                     varname_completed = 1;
 
-                    if(name_only)
+                    if (name_only)
                         iv--;
                 }
                 else
@@ -836,16 +839,16 @@ const char * ExpandVars(SnortConfig *sc, const char *string)
                 }
             }
 
-            if(varname_completed || iv == l_string)
+            if (varname_completed || iv == l_string)
             {
-                char *p;
+                char* p;
 
                 i = iv;
 
                 varcontents = NULL;
 
-                memset((char *) varname, 0, sizeof(varname));
-                memset((char *) varaux, 0, sizeof(varaux));
+                memset((char*)varname, 0, sizeof(varname));
+                memset((char*)varaux, 0, sizeof(varaux));
                 varmodifier = ' ';
 
                 p = strchr(rawvarname, ':');
@@ -853,7 +856,7 @@ const char * ExpandVars(SnortConfig *sc, const char *string)
                 {
                     SnortStrncpy(varname, rawvarname, p - rawvarname);
 
-                    if(strlen(p) >= 2)
+                    if (strlen(p) >= 2)
                     {
                         varmodifier = *(p + 1);
                         SnortStrncpy(varaux, p + 2, sizeof(varaux));
@@ -862,39 +865,39 @@ const char * ExpandVars(SnortConfig *sc, const char *string)
                 else
                     SnortStrncpy(varname, rawvarname, sizeof(varname));
 
-                memset((char *) varbuffer, 0, sizeof(varbuffer));
+                memset((char*)varbuffer, 0, sizeof(varbuffer));
 
                 varcontents = VarSearch(sc, varname);
 
-                switch(varmodifier)
+                switch (varmodifier)
                 {
-                    case '-':
-                        if(!varcontents || !strlen(varcontents))
-                            varcontents = varaux;
-                        break;
+                case '-':
+                    if (!varcontents || !strlen(varcontents))
+                        varcontents = varaux;
+                    break;
 
-                    case '?':
-                        if(!varcontents || !strlen(varcontents))
-                        {
-                            if(strlen(varaux))
-                                ParseAbort("%s", varaux);
-                            else
-                                ParseAbort("undefined variable '%s'.", varname);
-                        }
-                        break;
+                case '?':
+                    if (!varcontents || !strlen(varcontents))
+                    {
+                        if (strlen(varaux))
+                            ParseAbort("%s", varaux);
+                        else
+                            ParseAbort("undefined variable '%s'.", varname);
+                    }
+                    break;
                 }
 
                 /* If variable not defined now, we're toast */
-                if(!varcontents || !strlen(varcontents))
+                if (!varcontents || !strlen(varcontents))
                     ParseAbort("undefined variable name: %s.", varname);
 
-                if(varcontents)
+                if (varcontents)
                 {
                     int l_varcontents = strlen(varcontents);
 
                     iv = 0;
 
-                    while(iv < l_varcontents && j < (int)sizeof(estring) - 1)
+                    while (iv < l_varcontents && j < (int)sizeof(estring) - 1)
                         estring[j++] = varcontents[iv++];
                 }
             }
@@ -909,17 +912,17 @@ const char * ExpandVars(SnortConfig *sc, const char *string)
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES, "ExpandVars, After: %s\n", estring););
+    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES, "ExpandVars, After: %s\n", estring); );
 
     return estring;
 }
 
-void AddVarToTable(SnortConfig *sc, const char *name, const char *value)
+void AddVarToTable(SnortConfig* sc, const char* name, const char* value)
 {
     //TODO: snort.cfg and rules should use PortVar instead ...this allows compatability for now.
     if (strstr(name, "_PORT") || strstr(name, "PORT_"))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"PortVar\n"););
+        DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"PortVar\n"); );
         PortVarDefine(sc, name, value);
     }
     else
@@ -928,7 +931,7 @@ void AddVarToTable(SnortConfig *sc, const char *name, const char *value)
     }
 }
 
-void InitVarTables(IpsPolicy *p)
+void InitVarTables(IpsPolicy* p)
 {
     if (p == NULL)
         return;

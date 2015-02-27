@@ -27,18 +27,15 @@
 
 namespace rules
 {
-
-namespace {
-
-
+namespace
+{
 class Pcre : public ConversionState
 {
 public:
-    Pcre(Converter& c) : ConversionState(c) {};
-    virtual ~Pcre() {};
+    Pcre(Converter& c) : ConversionState(c) { }
+    virtual ~Pcre() { }
     virtual bool convert(std::istringstream& data);
 };
-
 } // namespace
 
 bool Pcre::convert(std::istringstream& data_stream)
@@ -65,10 +62,8 @@ bool Pcre::convert(std::istringstream& data_stream)
         return set_next_rule_state(data_stream);
     }
 
-
     pcre_str.erase(pcre_str.begin());
     pattern += '"';
-
 
     if (pcre_str.front() == 'm')
     {
@@ -86,49 +81,47 @@ bool Pcre::convert(std::istringstream& data_stream)
         return set_next_rule_state(data_stream);
     }
 
-
     pattern += pcre_str.substr(0, pattern_end + 1);
     options = pcre_str.substr(pattern_end + 1, std::string::npos);
     new_opts = "";
-
 
     for (char c : options )
     {
         std::string sticky_buffer = std::string(); // empty string
 
-        switch(c)
+        switch (c)
         {
-            case 'B': sticky_buffer = "pkt_data"; break;
-            case 'U': sticky_buffer = "http_uri"; break;
-            case 'P': sticky_buffer = "http_client_body"; break;
-            case 'H': sticky_buffer = "http_header"; break;
-            case 'M': sticky_buffer = "http_method"; break;
-            case 'C': sticky_buffer = "http_cookie"; break;
-            case 'I': sticky_buffer = "http_raw_uri"; break;
-            case 'D': sticky_buffer = "http_raw_header"; break;
-            case 'K': sticky_buffer = "http_raw_cookie"; break;
-            case 'S': sticky_buffer = "http_stat_code"; break;
-            case 'Y': sticky_buffer = "http_stat_msg"; break;
-            case 'i':
-            case 's':
-            case 'm':
-            case 'x':
-            case 'A':
-            case 'E':
-            case 'G':
-            case 'R':
-            case 'O':
-            case '"': // end of reg_ex
-                new_opts += c;
-                break;
-            default:
-            {
-                std::string dlt_opt = "unknown option - '";
-                dlt_opt.append(1, c);
-                dlt_opt += "'";
-                rule_api.bad_rule(data_stream, dlt_opt);
-                break;
-            }
+        case 'B': sticky_buffer = "pkt_data"; break;
+        case 'U': sticky_buffer = "http_uri"; break;
+        case 'P': sticky_buffer = "http_client_body"; break;
+        case 'H': sticky_buffer = "http_header"; break;
+        case 'M': sticky_buffer = "http_method"; break;
+        case 'C': sticky_buffer = "http_cookie"; break;
+        case 'I': sticky_buffer = "http_raw_uri"; break;
+        case 'D': sticky_buffer = "http_raw_header"; break;
+        case 'K': sticky_buffer = "http_raw_cookie"; break;
+        case 'S': sticky_buffer = "http_stat_code"; break;
+        case 'Y': sticky_buffer = "http_stat_msg"; break;
+        case 'i':
+        case 's':
+        case 'm':
+        case 'x':
+        case 'A':
+        case 'E':
+        case 'G':
+        case 'R':
+        case 'O':
+        case '"':     // end of reg_ex
+            new_opts += c;
+            break;
+        default:
+        {
+            std::string dlt_opt = "unknown option - '";
+            dlt_opt.append(1, c);
+            dlt_opt += "'";
+            rule_api.bad_rule(data_stream, dlt_opt);
+            break;
+        }
         }
 
         if (!sticky_buffer.empty())
@@ -136,12 +129,12 @@ bool Pcre::convert(std::istringstream& data_stream)
             buffer = sticky_buffer;
 
             if (sticky_buffer_set)
-                rule_api.bad_rule(data_stream, "Two sticky buffers set for this regular expression!");
+                rule_api.bad_rule(data_stream,
+                    "Two sticky buffers set for this regular expression!");
             else
                 sticky_buffer_set = true;
         }
     }
-
 
     rule_api.add_option("pcre", pattern + new_opts);
     rule_api.set_curr_options_buffer(buffer);
@@ -152,10 +145,8 @@ bool Pcre::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-
 static ConversionState* ctor(Converter& c)
 { return new Pcre(c); }
-
 
 static const ConvertMap pcre_api =
 {
@@ -164,6 +155,5 @@ static const ConvertMap pcre_api =
 };
 
 const ConvertMap* pcre_map = &pcre_api;
-
 } // namespace rules
 

@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_frag.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -37,30 +36,24 @@
 
 namespace
 {
-
 class Ipv6FragCodec : public Codec
 {
 public:
-    Ipv6FragCodec() : Codec(CD_IPV6_FRAG_NAME){};
-    ~Ipv6FragCodec() {};
-
+    Ipv6FragCodec() : Codec(CD_IPV6_FRAG_NAME) { }
+    ~Ipv6FragCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     void get_protocol_ids(std::vector<uint16_t>&) override;
-    
 };
-
-
 } // namespace
-
 
 bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     const ip::IP6Frag* const ip6frag_hdr = reinterpret_cast<const ip::IP6Frag*>(raw.data);
 
-    if(raw.len < ip::MIN_EXT_LEN )
+    if (raw.len < ip::MIN_EXT_LEN )
     {
         codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
@@ -89,7 +82,7 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
 
 #if 0
     // reserved flag currently not used
-    if (ip6frag_hdr->get_res() != 0)))
+    if (ip6frag_hdr->get_res() != 0)
         data.decode_flags |= DECODE_RF;
 #endif
 
@@ -100,7 +93,6 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
         snort.decode_flags |= DECODE_FRAG;
     else
         codec_event(codec, DECODE_IPV6_BAD_FRAG_PKT);
-
 
     codec.lyr_len = sizeof(ip::IP6Frag);
     codec.ip6_csum_proto = ip6frag_hdr->ip6f_nxt;
@@ -123,7 +115,6 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
            but only the Next Header of the original frag is used. */
         // check DecodeIP(); we handle frags the same way here
         codec.next_prot_id = FINISHED_DECODE;
-
     }
     else
     {
@@ -133,11 +124,8 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
     return true;
 }
 
-
-
 void Ipv6FragCodec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(IPPROTO_ID_FRAGMENT); }
-
 
 void Ipv6FragCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const uint16_t /*lyr_len*/)
@@ -145,9 +133,8 @@ void Ipv6FragCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const ip::IP6Frag* fragh = reinterpret_cast<const ip::IP6Frag*>(raw_pkt);
     const uint16_t offlg = fragh->off();
 
-
     TextLog_Print(text_log, "Next:0x%02X Off:%u ID:%u",
-            fragh->ip6f_nxt, offlg, fragh->id());
+        fragh->ip6f_nxt, offlg, fragh->id());
 
     if (fragh->mf())
         TextLog_Puts(text_log, " MF");
@@ -163,7 +150,7 @@ void Ipv6FragCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 static Codec* ctor(Module*)
 { return new Ipv6FragCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi ipv6_frag_api =
@@ -185,7 +172,6 @@ static const CodecApi ipv6_frag_api =
     dtor, // dtor
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -195,3 +181,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_frag = &ipv6_frag_api.base;
 #endif
+

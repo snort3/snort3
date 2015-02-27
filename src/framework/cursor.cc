@@ -38,7 +38,7 @@ void Cursor::reset(Packet* p)
     {
         set("pkt_data", g_alt_data.data, g_alt_data.len);
     }
-    else if( IsLimitedDetect(p) )
+    else if ( IsLimitedDetect(p) )
     {
         set("pkt_data", p->data, p->alt_dsize);
     }

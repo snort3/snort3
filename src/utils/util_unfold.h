@@ -23,8 +23,9 @@
 
 #include "snort_types.h"
 
-SO_PUBLIC int sf_unfold_header(const uint8_t*, uint32_t, uint8_t*, uint32_t, uint32_t*, int, int * );
+SO_PUBLIC int sf_unfold_header(const uint8_t*, uint32_t, uint8_t*, uint32_t, uint32_t*, int, int*);
 SO_PUBLIC int sf_strip_CRLF(const uint8_t*, uint32_t, uint8_t*, uint32_t, uint32_t*);
 SO_PUBLIC int sf_strip_LWS(const uint8_t*, uint32_t, uint8_t*, uint32_t, uint32_t*);
 
-#endif 
+#endif
+

@@ -32,21 +32,18 @@ extern "C" {
  * amount of data expected to be obfuscated */
 #define OB_LENGTH_MAX  UINT16_MAX
 
-
 /*******************************************************************************
  * Types
  ******************************************************************************/
-typedef uint8_t   ob_char_t;
-typedef uint16_t  ob_size_t;
+typedef uint8_t ob_char_t;
+typedef uint16_t ob_size_t;
 
 typedef enum _ObRet
 {
     OB_RET_SUCCESS,
     OB_RET_ERROR,
     OB_RET_OVERFLOW
-
 } ObRet;
-
 
 /*******************************************************************************
  * Callback to use for obfuscating payload or stream segments - see API below.
@@ -86,15 +83,14 @@ typedef enum _ObRet
  *  OB_RET_ERROR  if the rest of the obfuscation should not be done
  *
  ******************************************************************************/
-typedef ObRet (*ObfuscationCallback)
-    (
-     const DAQ_PktHdr_t *pkth,
-     const uint8_t *packet_data,
-     ob_size_t length,
-     ob_char_t ob_char,
-     void *user_data
-    );
-
+typedef ObRet (* ObfuscationCallback)
+(
+    const DAQ_PktHdr_t* pkth,
+    const uint8_t* packet_data,
+    ob_size_t length,
+    ob_char_t ob_char,
+    void* user_data
+);
 
 /*******************************************************************************
  * Obfuscation API
@@ -112,8 +108,7 @@ typedef struct _ObfuscationApi
      *  None
      */
 
-    void (*resetObfuscationEntries)(void);
-
+    void (* resetObfuscationEntries)(void);
 
     /*
      * Adds an obfuscation entry to the queue
@@ -150,9 +145,8 @@ typedef struct _ObfuscationApi
      *  OB_RET_OVERFLOW  if there is no space left to add an entry
      */
 
-    ObRet (*addObfuscationEntry)(Packet *p, ob_size_t offset,
-            ob_size_t length, ob_char_t ob_char);
-
+    ObRet (* addObfuscationEntry)(Packet* p, ob_size_t offset,
+        ob_size_t length, ob_char_t ob_char);
 
     /*
      * Determines if there are any obfuscation entries associated with
@@ -167,8 +161,7 @@ typedef struct _ObfuscationApi
      *  0  if it doesn't
      */
 
-    int (*payloadObfuscationRequired)(Packet *p);
-
+    int (* payloadObfuscationRequired)(Packet* p);
 
     /*
      * Obfuscate the payload associated with the Packet.  Mainly for use by the
@@ -190,9 +183,8 @@ typedef struct _ObfuscationApi
      *  OB_RET_ERROR  on error
      */
 
-    ObRet (*obfuscatePacket)(Packet *p,
-            ObfuscationCallback callback, void *user_data);
-
+    ObRet (* obfuscatePacket)(Packet* p,
+        ObfuscationCallback callback, void* user_data);
 
     /*
      * Obfuscate the stream segments associated with the Packet.  Mainly for use
@@ -216,9 +208,8 @@ typedef struct _ObfuscationApi
      *  OB_RET_ERROR  on error
      */
 
-    ObRet (*obfuscatePacketStreamSegments)(Packet *p,
-            ObfuscationCallback callback, void *user_data);
-
+    ObRet (* obfuscatePacketStreamSegments)(Packet* p,
+        ObfuscationCallback callback, void* user_data);
 
     /*
      * Obfuscates the Packet payload and returns payload and payload length
@@ -247,8 +238,8 @@ typedef struct _ObfuscationApi
      *                  the pointers to payload and payload_len will be valid
      */
 
-    ObRet (*getObfuscatedPayload)(Packet *p, uint8_t **payload,
-            ob_size_t *payload_len);
+    ObRet (* getObfuscatedPayload)(Packet* p, uint8_t** payload,
+        ob_size_t* payload_len);
 
     /*
      * Prints the current obfuscation entries.
@@ -261,11 +252,11 @@ typedef struct _ObfuscationApi
      *  None
      */
 
-    void (*printObfuscationEntries)(int sorted);
-
+    void (* printObfuscationEntries)(int sorted);
 } ObfuscationApi;
 
 /* For access when including header */
-extern ObfuscationApi *obApi;
+extern ObfuscationApi* obApi;
 
 #endif  /* OBFUSCATION_H */
+

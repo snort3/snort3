@@ -25,14 +25,15 @@
 
 struct Packet;
 
-class ExpectCache {
+class ExpectCache
+{
 public:
     ExpectCache(uint32_t max);
     ~ExpectCache();
 
     int add_flow(
-        const sfip_t *cliIP, uint16_t cliPort,
-        const sfip_t *srvIP, uint16_t srvPort,
+        const sfip_t* cliIP, uint16_t cliPort,
+        const sfip_t* srvIP, uint16_t srvPort,
         uint8_t protocol, char direction,
         FlowData*, int16_t appId = 0);
 
@@ -40,10 +41,10 @@ public:
     char process_expected(Packet*, Flow*);
     char check(Packet*, Flow*);
 
-    unsigned long get_expects() { return expects; };
-    unsigned long get_realized() { return realized; };
-    unsigned long get_prunes() { return prunes; };
-    unsigned long get_overflows() { return overflows; };
+    unsigned long get_expects() { return expects; }
+    unsigned long get_realized() { return realized; }
+    unsigned long get_prunes() { return prunes; }
+    unsigned long get_overflows() { return overflows; }
 
 private:
     void prune();
@@ -55,7 +56,7 @@ private:
 private:
     class ZHash* hash_table;
     struct ExpectNode* nodes;
-    struct ExpectFlow* pool, *list;
+    struct ExpectFlow* pool, * list;
     sfip_t zeroed;
 
     unsigned long expects, realized;

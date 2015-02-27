@@ -26,18 +26,15 @@
 
 namespace rules
 {
-
-namespace {
-
-
+namespace
+{
 class Base64Decode : public ConversionState
 {
 public:
-    Base64Decode(Converter& c) : ConversionState(c) {};
-    virtual ~Base64Decode() {};
+    Base64Decode(Converter& c) : ConversionState(c) { }
+    virtual ~Base64Decode() { }
     virtual bool convert(std::istringstream& data);
 };
-
 } // namespace
 
 bool Base64Decode::convert(std::istringstream& data_stream)
@@ -88,7 +85,6 @@ bool Base64Decode::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-
 static ConversionState* ctor(Converter& cv)
 {
     return new Base64Decode(cv);
@@ -102,5 +98,5 @@ static const ConvertMap base64_decode_api =
 };
 
 const ConvertMap* base64_decode_map = &base64_decode_api;
-
 } // namespace rules
+

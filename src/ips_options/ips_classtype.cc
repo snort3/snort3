@@ -55,7 +55,7 @@ static const Parameter s_params[] =
 class ClassTypeModule : public Module
 {
 public:
-    ClassTypeModule() : Module(s_name, s_help, s_params) { };
+    ClassTypeModule() : Module(s_name, s_help, s_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
     ClassType* type;
 };
@@ -120,3 +120,4 @@ static const IpsApi classtype_api =
 };
 
 const BaseApi* ips_classtype = &classtype_api.base;
+

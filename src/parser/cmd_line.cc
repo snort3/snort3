@@ -43,28 +43,28 @@ static void check_flags(SnortConfig* sc)
         (sc->run_flags & RUN_FLAG__DAEMON))
     {
         FatalError("Cannot use test mode and daemon mode together.\n"
-                   "To verify configuration, run first in test "
-                   "mode and then restart in daemon mode.\n");
+            "To verify configuration, run first in test "
+            "mode and then restart in daemon mode.\n");
     }
 
     if ((sc->run_flags & RUN_FLAG__INLINE) &&
-            (sc->run_flags & RUN_FLAG__INLINE_TEST))
+        (sc->run_flags & RUN_FLAG__INLINE_TEST))
     {
         FatalError("Cannot use inline adapter mode and inline test "
-                "mode together. \n");
+            "mode together. \n");
     }
 
     if (Trough_GetLoopCount() && !(sc->run_flags & RUN_FLAG__READ))
     {
         FatalError("--pcap-loop can only be used in combination with pcaps "
-                   "on the command line.\n");
+            "on the command line.\n");
     }
 
     if ((sc->run_flags & RUN_FLAG__PCAP_RELOAD) &&
         !(sc->run_flags & RUN_FLAG__READ))
     {
         FatalError("--pcap-reload can only be used in combination with pcaps "
-                   "on the command line.\n");
+            "on the command line.\n");
     }
 }
 
@@ -148,7 +148,7 @@ static void set(
 
     if ( !p )
         ParseError("unknown option %s %s", key, val);
-    
+
     else if ( !set_arg(m, p, k.c_str(), val, sc) )
     {
         ParseError("can't set %s %s", key, val);
@@ -163,7 +163,7 @@ SnortConfig* parse_cmd_line(int argc, char* argv[])
     SnortConfig* sc = SnortConfNew();
 
     ArgList al(argc, argv);
-    const char* key, *val;
+    const char* key, * val;
     unsigned c = 0;
 
     // get special options first

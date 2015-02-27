@@ -45,7 +45,7 @@ public:
     const RuleMap* get_rules() const override;
 
     unsigned get_gid() const override
-    { return GID_PPM; };
+    { return GID_PPM; }
 };
 
 #endif

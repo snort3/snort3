@@ -24,9 +24,8 @@
 
 namespace config
 {
-
-namespace {
-
+namespace
+{
 class PolicyId : public ConversionState
 {
 public:
@@ -34,7 +33,6 @@ public:
     virtual ~PolicyId() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool PolicyId::convert(std::istringstream& data_stream)
@@ -81,5 +79,5 @@ static const ConvertMap policy_id_api =
 };
 
 const ConvertMap* policy_id_map = &policy_id_api;
-
 } // namespace config
+

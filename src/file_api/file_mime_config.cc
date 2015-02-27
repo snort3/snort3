@@ -44,7 +44,6 @@
 #define CONF_BITENC_DECODE               "bitenc_decode_depth"
 #define CONF_UU_DECODE                   "uu_decode_depth"
 
-
 /*These are temporary values*/
 #define DEFAULT_MAX_MIME_MEM          838860
 #define DEFAULT_MIME_MEMCAP           838860
@@ -58,13 +57,12 @@
 
 #define ERRSTRLEN   512
 
-
 static int ProcessDecodeDepth(
-    DecodeConfig *config, char *ErrorString, int ErrStrLen,
-    const char *decode_type, DecodeType type, const char *preproc_name)
+    DecodeConfig* config, char* ErrorString, int ErrStrLen,
+    const char* decode_type, DecodeType type, const char* preproc_name)
 {
-    char *endptr;
-    char *value;
+    char* endptr;
+    char* value;
     int decode_depth = 0;
     if (config == NULL)
     {
@@ -76,33 +74,33 @@ static int ProcessDecodeDepth(
     if ( value == NULL )
     {
         snprintf(ErrorString, ErrStrLen,
-                "Invalid format for %s config option '%s'.", preproc_name, decode_type);
+            "Invalid format for %s config option '%s'.", preproc_name, decode_type);
         return -1;
     }
     decode_depth = strtol(value, &endptr, 10);
 
-    if(*endptr)
+    if (*endptr)
     {
         snprintf(ErrorString, ErrStrLen,
-                "Invalid format for %s config option '%s'.", preproc_name, decode_type);
+            "Invalid format for %s config option '%s'.", preproc_name, decode_type);
         return -1;
     }
-    if(decode_depth < MIN_DEPTH || decode_depth > MAX_DEPTH)
+    if (decode_depth < MIN_DEPTH || decode_depth > MAX_DEPTH)
     {
         snprintf(ErrorString, ErrStrLen,
-                "Invalid value for %s config option '%s'."
-                "It should range between %d and %d.",
-                preproc_name, decode_type, MIN_DEPTH, MAX_DEPTH);
+            "Invalid value for %s config option '%s'."
+            "It should range between %d and %d.",
+            preproc_name, decode_type, MIN_DEPTH, MAX_DEPTH);
         return -1;
     }
 
-    switch(type)
+    switch (type)
     {
     case DECODE_B64:
-        if((decode_depth > 0) && (decode_depth & 3))
+        if ((decode_depth > 0) && (decode_depth & 3))
         {
             decode_depth += 4 - (decode_depth & 3);
-            if(decode_depth > MAX_DEPTH )
+            if (decode_depth > MAX_DEPTH )
             {
                 decode_depth = decode_depth - 4;
             }
@@ -110,7 +108,6 @@ static int ProcessDecodeDepth(
                 "%s: 'b64_decode_depth' is not a multiple of 4. "
                 "Rounding up to the next multiple of 4. The new 'b64_decode_depth' is %d.\n",
                 preproc_name, decode_depth);
-
         }
         config->b64_depth = decode_depth;
         break;
@@ -130,7 +127,7 @@ static int ProcessDecodeDepth(
     return 0;
 }
 
-void set_mime_decode_config_defauts(DecodeConfig *decode_conf)
+void set_mime_decode_config_defauts(DecodeConfig* decode_conf)
 {
     decode_conf->max_mime_mem = DEFAULT_MIME_MEMCAP;
     decode_conf->b64_depth = DEFAULT_DEPTH;
@@ -140,7 +137,7 @@ void set_mime_decode_config_defauts(DecodeConfig *decode_conf)
     decode_conf->max_depth = DEFAULT_DEPTH;
 }
 
-void set_mime_log_config_defauts(MAIL_LogConfig *log_config)
+void set_mime_log_config_defauts(MAIL_LogConfig* log_config)
 {
     log_config->memcap = DEFAULT_MIME_MEMCAP;
     log_config->log_filename = 0;
@@ -150,11 +147,11 @@ void set_mime_log_config_defauts(MAIL_LogConfig *log_config)
     log_config->email_hdrs_log_depth = 0;
 }
 
-bool is_decoding_enabled(DecodeConfig *decode_conf)
+bool is_decoding_enabled(DecodeConfig* decode_conf)
 {
-    if( (decode_conf->b64_depth > -1) || (decode_conf->qp_depth > -1)
-     || (decode_conf->uu_depth > -1) || (decode_conf->bitenc_depth > -1)
-     || (decode_conf->file_depth > -1))
+    if ( (decode_conf->b64_depth > -1) || (decode_conf->qp_depth > -1)
+        || (decode_conf->uu_depth > -1) || (decode_conf->bitenc_depth > -1)
+        || (decode_conf->file_depth > -1))
     {
         return true;
     }
@@ -162,19 +159,21 @@ bool is_decoding_enabled(DecodeConfig *decode_conf)
         return false;
 }
 
-bool is_mime_log_enabled(MAIL_LogConfig *log_config)
+bool is_mime_log_enabled(MAIL_LogConfig* log_config)
 {
-    if(log_config->log_email_hdrs || log_config->log_filename ||
-            log_config->log_mailfrom || log_config->log_rcptto)
+    if (log_config->log_email_hdrs || log_config->log_filename ||
+        log_config->log_mailfrom || log_config->log_rcptto)
         return true;
     return false;
 }
 
-bool is_decoding_conf_changed(DecodeConfig *configNext, DecodeConfig *config, const char *preproc_name)
+bool is_decoding_conf_changed(DecodeConfig* configNext, DecodeConfig* config, const
+    char* preproc_name)
 {
     if (configNext == NULL)
     {
-        ErrorMessage("%s reload: Changing the %s configuration requires a restart.\n", preproc_name, preproc_name);
+        ErrorMessage("%s reload: Changing the %s configuration requires a restart.\n",
+            preproc_name, preproc_name);
         return true;
     }
     if (configNext->max_mime_mem != config->max_mime_mem)
@@ -183,31 +182,35 @@ bool is_decoding_conf_changed(DecodeConfig *configNext, DecodeConfig *config, co
 
         return true;
     }
-    if(configNext->b64_depth != config->b64_depth)
+    if (configNext->b64_depth != config->b64_depth)
     {
-        ErrorMessage("%s reload: Changing the b64_decode_depth requires a restart.\n", preproc_name);
+        ErrorMessage("%s reload: Changing the b64_decode_depth requires a restart.\n",
+            preproc_name);
 
         return true;
     }
-    if(configNext->qp_depth != config->qp_depth)
+    if (configNext->qp_depth != config->qp_depth)
     {
-        ErrorMessage("%s reload: Changing the qp_decode_depth requires a restart.\n", preproc_name);
+        ErrorMessage("%s reload: Changing the qp_decode_depth requires a restart.\n",
+            preproc_name);
 
         return true;
     }
-    if(configNext->bitenc_depth != config->bitenc_depth)
+    if (configNext->bitenc_depth != config->bitenc_depth)
     {
-        ErrorMessage("%s reload: Changing the bitenc_decode_depth requires a restart.\n", preproc_name);
+        ErrorMessage("%s reload: Changing the bitenc_decode_depth requires a restart.\n",
+            preproc_name);
 
         return true;
     }
-    if(configNext->uu_depth != config->uu_depth)
+    if (configNext->uu_depth != config->uu_depth)
     {
-        ErrorMessage("%s reload: Changing the uu_decode_depth requires a restart.\n", preproc_name);
+        ErrorMessage("%s reload: Changing the uu_decode_depth requires a restart.\n",
+            preproc_name);
 
         return true;
     }
-    if(configNext->file_depth != config->file_depth)
+    if (configNext->file_depth != config->file_depth)
     {
         ErrorMessage("%s reload: Changing the file_depth requires a restart.\n", preproc_name);
 
@@ -226,7 +229,7 @@ bool is_decoding_conf_changed(DecodeConfig *configNext, DecodeConfig *config, co
  *           0: no error
  *
  */
-int parse_mime_decode_args(DecodeConfig *decode_conf, char *arg, const char *preproc_name)
+int parse_mime_decode_args(DecodeConfig* decode_conf, char* arg, const char* preproc_name)
 {
     int ret = 0;
     char errStr[ERRSTRLEN];
@@ -241,24 +244,28 @@ int parse_mime_decode_args(DecodeConfig *decode_conf, char *arg, const char *pre
     if ( !strcasecmp(CONF_MAX_MIME_MEM, arg) )
     {
         ret = CheckValueInRange(get_tok(NULL, CONF_SEPARATORS), CONF_MAX_MIME_MEM,
-                MIN_MIME_MEM, MAX_MIME_MEM, &value);
+            MIN_MIME_MEM, MAX_MIME_MEM, &value);
         decode_conf->max_mime_mem = (int)value;
     }
     else if ( !strcasecmp(CONF_B64_DECODE, arg) )
     {
-        ret = ProcessDecodeDepth(decode_conf, errStr, errStrLen, CONF_B64_DECODE, DECODE_B64, preproc_name);
+        ret = ProcessDecodeDepth(decode_conf, errStr, errStrLen, CONF_B64_DECODE, DECODE_B64,
+            preproc_name);
     }
     else if ( !strcasecmp(CONF_QP_DECODE, arg) )
     {
-        ret = ProcessDecodeDepth(decode_conf, errStr, errStrLen, CONF_QP_DECODE, DECODE_QP, preproc_name);
+        ret = ProcessDecodeDepth(decode_conf, errStr, errStrLen, CONF_QP_DECODE, DECODE_QP,
+            preproc_name);
     }
     else if ( !strcasecmp(CONF_UU_DECODE, arg) )
     {
-        ret = ProcessDecodeDepth(decode_conf, errStr, errStrLen, CONF_UU_DECODE, DECODE_UU, preproc_name);
+        ret = ProcessDecodeDepth(decode_conf, errStr, errStrLen, CONF_UU_DECODE, DECODE_UU,
+            preproc_name);
     }
     else if ( !strcasecmp(CONF_BITENC_DECODE, arg) )
     {
-        ret = ProcessDecodeDepth(decode_conf, errStr, errStrLen, CONF_BITENC_DECODE, DECODE_BITENC, preproc_name);
+        ret = ProcessDecodeDepth(decode_conf, errStr, errStrLen, CONF_BITENC_DECODE, DECODE_BITENC,
+            preproc_name);
     }
     else
     {

@@ -26,17 +26,15 @@
 
 namespace output
 {
-
-namespace {
-
+namespace
+{
 class LogTcpDump : public ConversionState
 {
 public:
-    LogTcpDump(Converter& c) : ConversionState(c) {};
-    virtual ~LogTcpDump() {};
+    LogTcpDump(Converter& c) : ConversionState(c) { }
+    virtual ~LogTcpDump() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool LogTcpDump::convert(std::istringstream& data_stream)
@@ -51,7 +49,6 @@ bool LogTcpDump::convert(std::istringstream& data_stream)
         return true;
 
     table_api.add_deleted_comment("<filename> can no longer be specific");
-
 
     if (!(data_stream >> limit))
         return retval;
@@ -69,7 +66,6 @@ bool LogTcpDump::convert(std::istringstream& data_stream)
         else if (c == 'G' || c == 'g')
             units = "G";
     }
-
 
     retval = table_api.add_option("units", units) && retval;
 
@@ -98,5 +94,5 @@ static const ConvertMap log_tcpdump_api =
 };
 
 const ConvertMap* log_tcpdump_map = &log_tcpdump_api;
-
 } // namespace output
+

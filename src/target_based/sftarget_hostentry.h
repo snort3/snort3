@@ -33,32 +33,32 @@
 
 /* API for HostAttributeEntry 'class' */
 
-int hasService(const HostAttributeEntry *hostEntry,
-               int ipprotocol,
-               int protocol,
-               int application);
-int hasClient(const HostAttributeEntry *hostEntry,
-               int ipprotocol,
-               int protocol,
-               int application);
-int hasProtocol(const HostAttributeEntry *hostEntry,
-               int ipprotocol,
-               int protocol,
-               int application);
+int hasService(const HostAttributeEntry* hostEntry,
+    int ipprotocol,
+    int protocol,
+    int application);
+int hasClient(const HostAttributeEntry* hostEntry,
+    int ipprotocol,
+    int protocol,
+    int application);
+int hasProtocol(const HostAttributeEntry* hostEntry,
+    int ipprotocol,
+    int protocol,
+    int application);
 
-int getProtocol(const HostAttributeEntry *hostEntry,
-               int ipprotocol,
-               uint16_t port);
+int getProtocol(const HostAttributeEntry* hostEntry,
+    int ipprotocol,
+    uint16_t port);
 
-int getApplicationProtocolId(const HostAttributeEntry *host_entry,
-               int ipprotocol,
-               uint16_t port,
-               char direction);
+int getApplicationProtocolId(const HostAttributeEntry* host_entry,
+    int ipprotocol,
+    uint16_t port,
+    char direction);
 
 #define SFAT_UNKNOWN_STREAM_POLICY 0
-uint16_t getStreamPolicy(const HostAttributeEntry *host_entry);
+uint16_t getStreamPolicy(const HostAttributeEntry* host_entry);
 #define SFAT_UNKNOWN_FRAG_POLICY 0
-uint16_t getFragPolicy(const HostAttributeEntry *host_entry);
+uint16_t getFragPolicy(const HostAttributeEntry* host_entry);
 
 #endif
 

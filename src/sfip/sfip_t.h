@@ -39,10 +39,10 @@
 
 #include "main/snort_types.h"
 
-
 /* factored out for attribute table */
 
-struct sfip_t {
+struct sfip_t
+{
     int16_t family;
     int16_t bits;
 
@@ -50,7 +50,7 @@ struct sfip_t {
      * must be the last field in this struct */
     union
     {
-        uint8_t  ip8[16];
+        uint8_t ip8[16];
         uint16_t ip16[8];
         uint32_t ip32[4];
 /*      uint64_t    ip64[2]; */
@@ -65,7 +65,6 @@ struct sfip_t {
     // the '+ 4' is the int32_t IPv4 address
     inline std::size_t sfip_size() const
     { return is_ip6() ? sizeof(sfip_t) : offsetof(sfip_t, ip8) + 4; }
-
 };
 
 // This is leftover from Snort which we're stuck with
@@ -73,7 +72,7 @@ struct sfip_t {
 #undef inet_ntoa
 #endif
 
-SO_PUBLIC char *sfip_to_str(const sfip_t*);
+SO_PUBLIC char* sfip_to_str(const sfip_t*);
 #define sfip_ntoa(x) sfip_to_str(x)
 #define inet_ntoa sfip_ntoa
 

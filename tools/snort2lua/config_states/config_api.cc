@@ -135,8 +135,7 @@ extern const ConvertMap* utc_map;
 extern const ConvertMap* verbose_map;
 extern const ConvertMap* vlan_agnostic_map;
 
-
-const std::vector<const ConvertMap*> config_api = 
+const std::vector<const ConvertMap*> config_api =
 {
     addressspace_agnostic_map,
     alert_with_interface_name_map,
@@ -252,16 +251,16 @@ const std::vector<const ConvertMap*> config_api =
     verbose_map,
     vlan_agnostic_map,
 };
-
 } // namespace config
 
 #if 0
 
-FIXIT-L J  Add this configuration options when we start supporting them in Snort++
-UNSUPPORTED OPTIONS -- these will all be included at a later date.
+FIXIT-L J Add this configuration options when we start supporting them in Snort++
+UNSUPPORTED OPTIONS-- these will all be included at a later date.
 
-./src/parser.h:#define CONFIG_OPT__POLICY                          "policy_id"
-./src/parser.h:# define CONFIG_OPT__SIDE_CHANNEL                    "sidechannel"
-./src/parser.h:#define CONFIG_OPT__PROTECTED_CONTENT               "protected_content"
-./src/parser.h:#define CONFIG_OPT__NAP_POLICY_MODE                 "na_policy_mode"
+./src/parser.h : #define CONFIG_OPT__POLICY                          "policy_id"
+./src/parser.h : # define CONFIG_OPT__SIDE_CHANNEL                    "sidechannel"
+./src/parser.h : #define CONFIG_OPT__PROTECTED_CONTENT               "protected_content"
+./src/parser.h : #define CONFIG_OPT__NAP_POLICY_MODE                 "na_policy_mode"
 #endif
+

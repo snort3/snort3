@@ -28,21 +28,21 @@ class Flow;
 class Session
 {
 public:
-    virtual ~Session() { };
+    virtual ~Session() { }
 
-    virtual bool setup(Packet*) { return true; };
-    virtual void update_direction(char /*dir*/, const sfip_t*, uint16_t /*port*/) { };
-    virtual int process(Packet*) { return 0; };
+    virtual bool setup(Packet*) { return true; }
+    virtual void update_direction(char /*dir*/, const sfip_t*, uint16_t /*port*/) { }
+    virtual int process(Packet*) { return 0; }
 
-    virtual void restart(Packet*) { };
+    virtual void restart(Packet*) { }
     virtual void clear() = 0;
-    virtual void cleanup() { clear(); };
+    virtual void cleanup() { clear(); }
 
-    virtual bool add_alert(Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return false; };
-    virtual bool check_alerted(Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return false; };
+    virtual bool add_alert(Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return false; }
+    virtual bool check_alerted(Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return false; }
 
 protected:
-    Session(Flow* f) { flow = f; };
+    Session(Flow* f) { flow = f; }
 
 public:
     Flow* flow;  // FIXIT-L use reference?

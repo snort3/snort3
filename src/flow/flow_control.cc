@@ -88,7 +88,7 @@ uint32_t FlowControl::max_flows(uint8_t proto)
     return 0;
 }
 
-PegCount FlowControl::get_prunes (uint8_t proto)
+PegCount FlowControl::get_prunes(uint8_t proto)
 {
     FlowCache* cache = get_cache(proto);
     return cache ? cache->get_prunes() : 0;
@@ -131,7 +131,7 @@ void FlowControl::clear_counts()
 // cache foo
 //-------------------------------------------------------------------------
 
-inline FlowCache* FlowControl::get_cache (uint8_t proto)
+inline FlowCache* FlowControl::get_cache(uint8_t proto)
 {
     switch ( proto )
     {
@@ -143,7 +143,7 @@ inline FlowCache* FlowControl::get_cache (uint8_t proto)
     }
 }
 
-Flow* FlowControl::find_flow (const FlowKey* key)
+Flow* FlowControl::find_flow(const FlowKey* key)
 {
     FlowCache* cache = get_cache(key->protocol);
 
@@ -153,7 +153,7 @@ Flow* FlowControl::find_flow (const FlowKey* key)
     return NULL;
 }
 
-Flow* FlowControl::new_flow (const FlowKey* key)
+Flow* FlowControl::new_flow(const FlowKey* key)
 {
     FlowCache* cache = get_cache(key->protocol);
 
@@ -165,7 +165,7 @@ Flow* FlowControl::new_flow (const FlowKey* key)
 
 // FIXIT-L cache* can be put in flow so that lookups by
 // protocol are obviated for existing / initialized flows
-void FlowControl::delete_flow (const FlowKey* key)
+void FlowControl::delete_flow(const FlowKey* key)
 {
     FlowCache* cache = get_cache(key->protocol);
 
@@ -178,7 +178,7 @@ void FlowControl::delete_flow (const FlowKey* key)
         cache->release(flow, "ha sync");
 }
 
-void FlowControl::delete_flow (Flow* flow, const char* why)
+void FlowControl::delete_flow(Flow* flow, const char* why)
 {
     FlowCache* cache = get_cache(flow->ip_proto);
 
@@ -186,7 +186,7 @@ void FlowControl::delete_flow (Flow* flow, const char* why)
         cache->release(flow, why);
 }
 
-void FlowControl::purge_flows (uint8_t proto)
+void FlowControl::purge_flows(uint8_t proto)
 {
     FlowCache* cache = get_cache(proto);
 
@@ -194,7 +194,7 @@ void FlowControl::purge_flows (uint8_t proto)
         cache->purge();
 }
 
-void FlowControl::prune_flows (uint8_t proto, Packet* p)
+void FlowControl::prune_flows(uint8_t proto, Packet* p)
 {
     FlowCache* cache = get_cache(proto);
 
@@ -269,7 +269,7 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
     else
     {
         key->init(ip_api.get_src(), p->ptrs.sp, ip_api.get_dst(), p->ptrs.dp,
-                  proto, vlanId, mplsId, addressSpaceId);
+            proto, vlanId, mplsId, addressSpaceId);
     }
 }
 
@@ -351,7 +351,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         if ( b )
             b->eval(p);
 
-        if ( !b || (flow->flow_state == Flow::INSPECT && 
+        if ( !b || (flow->flow_state == Flow::INSPECT &&
             (!flow->ssn_client || !flow->session->setup(p))) )
             flow->set_state(Flow::ALLOW);
 
@@ -608,7 +608,7 @@ void FlowControl::init_exp(
     exp_cache = new ExpectCache(max);
 }
 
-char FlowControl::expected_flow (Flow* flow, Packet* p)
+char FlowControl::expected_flow(Flow* flow, Packet* p)
 {
     char ignore = exp_cache->check(p, flow);
 
@@ -616,7 +616,7 @@ char FlowControl::expected_flow (Flow* flow, Packet* p)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
             "Stream: Ignoring packet from %d. Marking flow marked as ignore.\n",
-            p->packet_flags & PKT_FROM_CLIENT? "sender" : "responder"););
+            p->packet_flags & PKT_FROM_CLIENT ? "sender" : "responder"); );
 
         flow->ssn_state.ignore_direction = ignore;
         DisableInspection(p);
@@ -626,8 +626,8 @@ char FlowControl::expected_flow (Flow* flow, Packet* p)
 }
 
 int FlowControl::add_expected(
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const sfip_t* srcIP, uint16_t srcPort,
+    const sfip_t* dstIP, uint16_t dstPort,
     uint8_t protocol, char direction,
     FlowData* fd)
 {
@@ -636,8 +636,8 @@ int FlowControl::add_expected(
 }
 
 int FlowControl::add_expected(
-    const sfip_t *srcIP, uint16_t srcPort,
-    const sfip_t *dstIP, uint16_t dstPort,
+    const sfip_t* srcIP, uint16_t srcPort,
+    const sfip_t* dstIP, uint16_t dstPort,
     uint8_t protocol, int16_t appId, FlowData* fd)
 {
     return exp_cache->add_flow(

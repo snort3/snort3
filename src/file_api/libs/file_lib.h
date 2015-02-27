@@ -39,23 +39,22 @@
 
 typedef struct _MagicData
 {
-    uint8_t *content;       /* magic content to match*/
+    uint8_t* content;       /* magic content to match*/
     int content_len;        /* length of magic content */
     uint32_t offset;             /* pattern search start offset */
 
-    struct _MagicData *next; /* ptr to next match struct */
-
+    struct _MagicData* next; /* ptr to next match struct */
 } MagicData;
 
 typedef struct _RuleInfo
 {
-    uint32_t   rev;
-    char       *message;
-    char       *type;
-    uint32_t   id;
-    char       *category;
-    char       *version;
-    MagicData  *magics;
+    uint32_t rev;
+    char* message;
+    char* type;
+    uint32_t id;
+    char* category;
+    char* version;
+    MagicData* magics;
 } RuleInfo;
 
 typedef enum _File_Verdict
@@ -73,16 +72,16 @@ struct FileContext
 {
     bool file_type_enabled;
     bool file_signature_enabled;
-    uint8_t    *file_name;
-    uint32_t   file_name_size;
-    uint64_t   file_size;
-    bool       upload;
-    uint64_t   processed_bytes;
-    uint32_t   file_type_id;
-    uint8_t    *sha256;
-    void *     file_type_context;
-    void *     file_signature_context;
-    void *     file_config;
+    uint8_t* file_name;
+    uint32_t file_name_size;
+    uint64_t file_size;
+    bool upload;
+    uint64_t processed_bytes;
+    uint32_t file_type_id;
+    uint8_t* sha256;
+    void* file_type_context;
+    void* file_signature_context;
+    void* file_config;
     time_t expires;
     File_Verdict verdict;
     bool suspend_block_verdict;
@@ -103,32 +102,32 @@ typedef enum _FileProcessType
     SNORT_FILE_SHA256
 } FileProcessType;
 
-
 /*Main File Processing functions */
-void file_type_id( FileContext* context, uint8_t* file_data, int data_size, FilePosition position);
-void file_signature_sha256( FileContext* context, uint8_t* file_data, int data_size, FilePosition position);
+void file_type_id(FileContext* context, uint8_t* file_data, int data_size, FilePosition position);
+void file_signature_sha256(FileContext* context, uint8_t* file_data, int data_size, FilePosition
+    position);
 
 /*File context management*/
-FileContext *file_context_create(void);
-void file_context_reset(FileContext *context);
-void file_context_free(void *context);
+FileContext* file_context_create(void);
+void file_context_reset(FileContext* context);
+void file_context_free(void* context);
 /*File properties*/
-void file_name_set (FileContext *context, uint8_t *file_name, uint32_t name_size);
-int file_name_get (FileContext *context, uint8_t **file_name, uint32_t *name_size);
-void file_size_set (FileContext *context, uint64_t file_size);
-uint64_t file_size_get (FileContext *context);
-void file_direction_set (FileContext *context, bool upload);
-bool file_direction_get (FileContext *context);
-void file_sig_sha256_set (FileContext *context, uint8_t *signature);
-uint8_t* file_sig_sha256_get (FileContext *context);
+void file_name_set(FileContext* context, uint8_t* file_name, uint32_t name_size);
+int file_name_get(FileContext* context, uint8_t** file_name, uint32_t* name_size);
+void file_size_set(FileContext* context, uint64_t file_size);
+uint64_t file_size_get(FileContext* context);
+void file_direction_set(FileContext* context, bool upload);
+bool file_direction_get(FileContext* context);
+void file_sig_sha256_set(FileContext* context, uint8_t* signature);
+uint8_t* file_sig_sha256_get(FileContext* context);
 
-const char* file_info_from_ID(void *conf, uint32_t);
+const char* file_info_from_ID(void* conf, uint32_t);
 extern int64_t file_type_depth;
 extern int64_t file_signature_depth;
 
 void free_file_identifiers(void*);
 #if defined(DEBUG_MSGS) || defined (REG_TEST)
-void file_sha256_print(unsigned char *hash);
+void file_sha256_print(unsigned char* hash);
 #endif
 #endif
 

@@ -27,27 +27,24 @@
 
 namespace rules
 {
-
-namespace {
-
-
+namespace
+{
 class Resp : public ConversionState
 {
 public:
-    Resp(Converter& c) : ConversionState(c) {};
-    virtual ~Resp() {};
+    Resp(Converter& c) : ConversionState(c) { }
+    virtual ~Resp() { }
     virtual bool convert(std::istringstream& data);
+
 private:
     void add_diff_comment(std::string, std::string);
 };
-
 } // namespace
-
 
 void Resp::add_diff_comment(std::string old_v, std::string new_v)
 {
     table_api.add_diff_option_comment("rule_type - resp:" + old_v,
-                                        "reject - " + new_v);
+        "reject - " + new_v);
 }
 
 bool Resp::convert(std::istringstream& data_stream)
@@ -98,69 +95,57 @@ bool Resp::convert(std::istringstream& data_stream)
                         add_diff_comment("reset_dest", "reset: dest");
                         table_api.add_option("reset", "dest");
                     }
-
                     else if (!tmp.compare("rst_rcv"))
                     {
                         add_diff_comment("rst_rcv", "reset: dest");
                         table_api.add_option("reset", "dest");
                     }
-
                     else if (!tmp.compare("reset_both"))
                     {
                         add_diff_comment("reset_both", "reset: both");
                         table_api.add_option("reset", "both");
                     }
-
                     else if (!tmp.compare("rst_all"))
                     {
                         add_diff_comment("rst_all", "reset: both");
                         table_api.add_option("reset", "both");
                     }
-
                     else if (!tmp.compare("rst_snd"))
                     {
                         add_diff_comment("rst_snd", "reset: source");
                         table_api.add_option("reset", "source");
                     }
-
                     else if (!tmp.compare("reset_source"))
                     {
                         add_diff_comment("reset_source", "reset: source");
                         table_api.add_option("reset", "source");
                     }
-
                     else if (!tmp.compare("icmp_net"))
                     {
                         add_diff_comment("icmp_net", "control: network");
                         table_api.add_option("control", "network");
                     }
-
                     else if (!tmp.compare("icmp_host"))
                     {
                         add_diff_comment("icmp_host", "control: host");
                         table_api.add_option("control", "host");
                     }
-
                     else if (!tmp.compare("icmp_all"))
                     {
                         add_diff_comment("icmp_all", "control: all");
                         table_api.add_option("control", "all");
                     }
-
                     else if (!tmp.compare("icmp_port"))
                     {
                         add_diff_comment("icmp_port", "control: port");
                         table_api.add_option("control", "port");
                     }
-
                     else
                     {
                         rule_api.bad_rule(data_stream, "resp: " + tmp);
                     }
-
-
-                } while (util::get_string(arg_stream, tmp, ","));
-
+                }
+                while (util::get_string(arg_stream, tmp, ","));
 
                 table_api.close_table(); // "reject"
             }
@@ -177,7 +162,6 @@ bool Resp::convert(std::istringstream& data_stream)
 /**************************
  *******  A P I ***********
  **************************/
-
 
 static ConversionState* ctor(Converter& c)
 {
@@ -200,5 +184,5 @@ static const ConvertMap rule_resp =
 };
 
 const ConvertMap* resp_map = &rule_resp;
-
 } // namespace rules
+

@@ -18,8 +18,8 @@
 //--------------------------------------------------------------------------
 // Writen by Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
-#include"util_jsnorm.h"
-#include"main/thread.h"
+#include "util_jsnorm.h"
+#include "main/thread.h"
 
 #define INVALID_HEX_VAL -1
 #define MAX_BUF 8
@@ -40,8 +40,8 @@
 
 #define ANY '\0'
 
-
-typedef enum {
+typedef enum
+{
     PNORM_ACT_DQUOTES,
     PNORM_ACT_NOP,
     PNORM_ACT_PLUS,
@@ -51,19 +51,21 @@ typedef enum {
 } ActionPNorm;
 
 // Actions for SFCC
-typedef enum {
-    SFCC_ACT_COMMA, 
-    SFCC_ACT_DEC, 
-    SFCC_ACT_HEX, 
+typedef enum
+{
+    SFCC_ACT_COMMA,
+    SFCC_ACT_DEC,
+    SFCC_ACT_HEX,
     SFCC_ACT_INV,
-    SFCC_ACT_NOP, 
+    SFCC_ACT_NOP,
     SFCC_ACT_OCT,
     SFCC_ACT_QUIT,
     SFCC_ACT_SPACE
 } ActionSFCC;
 
 // Actions for Unescape
-typedef enum {
+typedef enum
+{
     UNESC_ACT_BACKSLASH,
     UNESC_ACT_CONV,
     UNESC_ACT_NOP,
@@ -79,12 +81,13 @@ typedef enum {
 } ActionUnsc;
 
 // Actions for Javascript norm
-typedef enum {
-    ACT_NOP, 
+typedef enum
+{
+    ACT_NOP,
     ACT_QUIT,
     ACT_SAVE,
     ACT_SFCC,
-    ACT_SPACE, 
+    ACT_SPACE,
     ACT_UNESCAPE
 } ActionJSNorm;
 
@@ -93,7 +96,8 @@ static int valid_chars[256];
 
 static THREAD_LOCAL char decoded_out[6335];
 
-typedef struct {
+typedef struct
+{
     uint8_t state;
     uint8_t event;
     uint8_t match;
@@ -101,25 +105,27 @@ typedef struct {
     uint8_t action;
 } JSNorm;
 
-
-typedef struct {
-    char *data;
+typedef struct
+{
+    char* data;
     uint16_t size;
     uint16_t len;
 }Dbuf;
 
-typedef struct {
+typedef struct
+{
     uint8_t fsm;
     uint8_t fsm_other;
     uint8_t prev_event;
     uint8_t d_quotes;
     uint8_t s_quotes;
     uint16_t num_spaces;
-    char *overwrite;
+    char* overwrite;
     Dbuf output;
 }PNormState;
 
-typedef struct {
+typedef struct
+{
     uint8_t fsm;
     uint8_t buf[MAX_BUF];
     uint8_t buflen;
@@ -128,16 +134,18 @@ typedef struct {
     Dbuf output;
 } SFCCState;
 
-typedef struct {
+typedef struct
+{
     uint8_t fsm;
     uint8_t prev_event;
     uint16_t num_spaces;
     uint8_t* unicode_map;
-    char *overwrite;
+    char* overwrite;
     Dbuf dest;
 } JSNormState;
 
-typedef struct {
+typedef struct
+{
     uint8_t fsm;
     uint8_t multiple_levels;
     uint8_t prev_event;
@@ -146,7 +154,7 @@ typedef struct {
     int iNorm;
     int paren_count;
     uint8_t* unicode_map;
-    char *overwrite;
+    char* overwrite;
     ActionUnsc prev_action;
     Dbuf output;
 } UnescapeState;
@@ -174,7 +182,7 @@ static const JSNorm sfcc_norm[] =
     { S3+0, IS_HEX, S3+0, S4+0, SFCC_ACT_HEX },
 
     { S4+0, ',', S0+1, S4+1, SFCC_ACT_COMMA },
-    { S4+1, ')', S0+1, S4+2, SFCC_ACT_QUIT  },
+    { S4+1, ')', S0+1, S4+2, SFCC_ACT_QUIT },
     { S4+2, ANY, S4+1, S0+1, SFCC_ACT_INV }
 };
 
@@ -261,7 +269,6 @@ static const JSNorm unescape_norm[] =
     { U6+ 0, ')', U0+ 0, U7+ 0, UNESC_ACT_QUIT },
 
     { U7+ 0, ANY, U0+ 0, U0+ 0, UNESC_ACT_NOP }
-
 };
 
 #define P0 0
@@ -286,7 +293,6 @@ static const JSNorm plus_norm[]=
 
     { P4+ 0, ANY, P0+ 0, P0+ 0, PNORM_ACT_NOP }
 };
-
 
 #define Z0 0
 #define Z1 Z0+9
@@ -347,7 +353,6 @@ static const JSNorm javascript_norm[] =
     { Z2+17, 'T', Z2+18, Z0+ 0, ACT_NOP },
     { Z2+18, '(', Z0+ 0, Z0+ 0, ACT_UNESCAPE },
 
-
     { Z3+ 0, '<', Z3+ 1, Z6+ 0, ACT_NOP },
     { Z3+ 1, '/', Z3+ 2, Z0+ 0, ACT_NOP },
     { Z3+ 2, 'S', Z3+ 3, Z0+ 0, ACT_NOP },
@@ -359,13 +364,10 @@ static const JSNorm javascript_norm[] =
     { Z3+ 8, '>', Z3+ 0, Z3+ 9, ACT_QUIT },
     { Z3+ 9, ANY, Z3+ 8, Z3+ 8, ACT_NOP },
 
-
     { Z6+ 0, ANY, Z0+ 0, Z0+ 0, ACT_NOP }
-    
 };
 
-
-void UnescapeDecode(char *, uint16_t , char **, char **, uint16_t *, JSState *, uint8_t*);
+void UnescapeDecode(char*, uint16_t, char**, char**, uint16_t*, JSState*, uint8_t*);
 
 void InitJSNormLookupTable(void)
 {
@@ -377,14 +379,14 @@ void InitJSNormLookupTable(void)
 
     iNum = 0;
 
-    for(iCtr = 48; iCtr < 56; iCtr++)
+    for (iCtr = 48; iCtr < 56; iCtr++)
     {
         hex_lookup[iCtr] = iNum;
         valid_chars[iCtr] = (IS_HEX|IS_OCT|IS_DEC);
         iNum++;
     }
 
-    for(iCtr = 56; iCtr < 58; iCtr++)
+    for (iCtr = 56; iCtr < 58; iCtr++)
     {
         hex_lookup[iCtr] = iNum;
         valid_chars[iCtr] = (IS_HEX|IS_DEC);
@@ -392,7 +394,7 @@ void InitJSNormLookupTable(void)
     }
 
     iNum = 10;
-    for(iCtr = 65; iCtr < 71; iCtr++)
+    for (iCtr = 65; iCtr < 71; iCtr++)
     {
         valid_chars[iCtr] = IS_HEX;
         hex_lookup[iCtr] = iNum;
@@ -400,7 +402,7 @@ void InitJSNormLookupTable(void)
     }
 
     iNum = 10;
-    for(iCtr = 97; iCtr < 103; iCtr++)
+    for (iCtr = 97; iCtr < 103; iCtr++)
     {
         valid_chars[iCtr] = IS_HEX;
         hex_lookup[iCtr] = iNum;
@@ -408,29 +410,28 @@ void InitJSNormLookupTable(void)
     }
 }
 
-static inline int outBounds(const char *start, const char *end, char *ptr)
+static inline int outBounds(const char* start, const char* end, char* ptr)
 {
-    if((ptr >= start) && (ptr < end))
+    if ((ptr >= start) && (ptr < end))
         return 0;
-	else 
+    else
         return -1;
 }
 
-static inline void CheckWSExceeded(JSState *js, uint16_t *num_spaces)
+static inline void CheckWSExceeded(JSState* js, uint16_t* num_spaces)
 {
-    if(js->allowed_spaces && (*num_spaces > js->allowed_spaces))
+    if (js->allowed_spaces && (*num_spaces > js->allowed_spaces))
     {
         js->alerts |= ALERT_SPACES_EXCEEDED;
     }
 
     *num_spaces = 0;
-
 }
 
-static void WriteDecodedPNorm(PNormState *s, int c, JSState *js)
+static void WriteDecodedPNorm(PNormState* s, int c, JSState* js)
 {
-    const char *dstart, *dend;
-    char *dptr;
+    const char* dstart, * dend;
+    char* dptr;
 
     dstart = s->output.data;
     dend = s->output.data + s->output.size;
@@ -438,7 +439,7 @@ static void WriteDecodedPNorm(PNormState *s, int c, JSState *js)
 
     CheckWSExceeded(js, &(s->num_spaces));
 
-    if(dptr < dend)
+    if (dptr < dend)
     {
         *dptr = (char)c;
         dptr++;
@@ -447,119 +448,116 @@ static void WriteDecodedPNorm(PNormState *s, int c, JSState *js)
     s->output.len = dptr - dstart;
 }
 
-static int PNorm_exec (PNormState *s, ActionPNorm a, int c, JSState *js)
+static int PNorm_exec(PNormState* s, ActionPNorm a, int c, JSState* js)
 {
-    char *cur_ptr;
+    char* cur_ptr;
     int iRet = RET_OK;
 
     cur_ptr = s->output.data+ s->output.len;
 
-    switch(a)
+    switch (a)
     {
-        case PNORM_ACT_DQUOTES:
-            if(s->prev_event == '\\')
+    case PNORM_ACT_DQUOTES:
+        if (s->prev_event == '\\')
+        {
+            s->fsm = s->fsm_other;
+            WriteDecodedPNorm(s, c, js);
+            break;
+        }
+        s->d_quotes++;
+        if ( s->d_quotes == 2)
+        {
+            s->overwrite = cur_ptr;
+            WriteDecodedPNorm(s, c, js);
+            s->d_quotes = 0;
+            break;
+        }
+        if (s->prev_event == '+')
+        {
+            s->prev_event = 0;
+            if ( s->overwrite && (s->overwrite < cur_ptr))
             {
-                s->fsm = s->fsm_other;
-                WriteDecodedPNorm(s, c, js);
-                break;
-            }
-            s->d_quotes++;
-            if( s->d_quotes == 2)
-            {
-                s->overwrite = cur_ptr;
-                WriteDecodedPNorm(s, c, js);
-                s->d_quotes = 0;
-                break;
-            }
-            if(s->prev_event == '+')
-            {
-                s->prev_event = 0;
-                if( s->overwrite && (s->overwrite < cur_ptr))
-                {
-                    s->output.len = s->overwrite - s->output.data;
-                }
-                else
-                {
-                    WriteDecodedPNorm(s, c, js);
-                }
+                s->output.len = s->overwrite - s->output.data;
             }
             else
             {
                 WriteDecodedPNorm(s, c, js);
             }
-            break;
-        case PNORM_ACT_NOP:
-            s->prev_event = c;
-            s->overwrite = NULL;
+        }
+        else
+        {
+            WriteDecodedPNorm(s, c, js);
+        }
+        break;
+    case PNORM_ACT_NOP:
+        s->prev_event = c;
+        s->overwrite = NULL;
+        WriteDecodedPNorm(s, c, js);
+        break;
+    case PNORM_ACT_PLUS:
+        s->prev_event = '+';
+        WriteDecodedPNorm(s, c, js);
+        break;
+    case PNORM_ACT_SPACE:
+        if ( s->num_spaces == 0)
+        {
+            WriteDecodedPNorm(s, c, js);
+        }
+        s->num_spaces++;
+        break;
+    case PNORM_ACT_SQUOTES:
+        if (s->prev_event == '\\')
+        {
+            s->fsm = s->fsm_other;
             WriteDecodedPNorm(s, c, js);
             break;
-        case PNORM_ACT_PLUS:
-            s->prev_event = '+';
+        }
+        s->s_quotes++;
+        if ( s->s_quotes == 2)
+        {
+            s->overwrite = cur_ptr;
             WriteDecodedPNorm(s, c, js);
+            s->s_quotes = 0;
             break;
-        case PNORM_ACT_SPACE:
-            if( s->num_spaces == 0)
+        }
+        if (s->prev_event == '+')
+        {
+            s->prev_event = 0;
+            if ( s->overwrite && (s->overwrite < cur_ptr))
             {
-                WriteDecodedPNorm(s, c, js);
-            }
-            s->num_spaces++;
-            break;
-        case PNORM_ACT_SQUOTES:
-            if(s->prev_event == '\\')
-            {
-                s->fsm = s->fsm_other;
-                WriteDecodedPNorm(s, c, js);
-                break;
-            }
-            s->s_quotes++;
-            if( s->s_quotes == 2)
-            {
-                s->overwrite = cur_ptr;
-                WriteDecodedPNorm(s, c, js);
-                s->s_quotes = 0;
-                break;
-            }
-            if(s->prev_event == '+')
-            {
-                s->prev_event = 0;
-                if( s->overwrite && (s->overwrite < cur_ptr))
-                {
-                    s->output.len = s->overwrite - s->output.data;
-                }
-                else
-                {
-                    WriteDecodedPNorm(s, c, js);
-                }
+                s->output.len = s->overwrite - s->output.data;
             }
             else
             {
                 WriteDecodedPNorm(s, c, js);
             }
-            break;
-        case PNORM_ACT_WITHIN_QUOTES:
-            s->prev_event = c;
+        }
+        else
+        {
             WriteDecodedPNorm(s, c, js);
-        default:
-            break;
-
+        }
+        break;
+    case PNORM_ACT_WITHIN_QUOTES:
+        s->prev_event = c;
+        WriteDecodedPNorm(s, c, js);
+    default:
+        break;
     }
 
     return iRet;
-
 }
 
-static int PNorm_scan_fsm(PNormState* s, int c, JSState *js)
+static int PNorm_scan_fsm(PNormState* s, int c, JSState* js)
 {
     char uc;
-    const JSNorm *m = plus_norm + s->fsm;
+    const JSNorm* m = plus_norm + s->fsm;
 
     uc = toupper(c);
 
-    if(isspace(c))
+    if (isspace(c))
     {
         c = uc =' ';
     }
-
 
     do
     {
@@ -572,16 +570,18 @@ static int PNorm_scan_fsm(PNormState* s, int c, JSState *js)
 
         s->fsm = m->other;
         m = plus_norm + s->fsm;
-    } while ( 1 );
+    }
+    while ( 1 );
 
-    return(PNorm_exec(s, (ActionPNorm)m->action, c, js)); 
+    return(PNorm_exec(s, (ActionPNorm)m->action, c, js));
 }
 
-int PNormDecode(char *src, uint16_t srclen, char *dst, uint16_t dstlen, uint16_t *bytes_copied, JSState *js)
+int PNormDecode(char* src, uint16_t srclen, char* dst, uint16_t dstlen, uint16_t* bytes_copied,
+    JSState* js)
 {
     int iRet = RET_OK;
-    const char *end;
-    char *ptr;
+    const char* end;
+    char* ptr;
     PNormState s;
 
     end = src + srclen;
@@ -598,63 +598,62 @@ int PNormDecode(char *src, uint16_t srclen, char *dst, uint16_t dstlen, uint16_t
     s.num_spaces = 0;
     s.fsm_other = 0;
 
-    while(ptr < end)
+    while (ptr < end)
     {
         iRet = PNorm_scan_fsm(&s, *ptr, js);
         ptr++;
-    } 
+    }
 
     //dst = s.output.data;  FIXIT-L dead store; should be?
     *bytes_copied = s.output.len;
 
     return iRet;
-
 }
 
-int ConvertToChar( uint16_t flags, uint8_t *buf, uint8_t buflen)
+int ConvertToChar(uint16_t flags, uint8_t* buf, uint8_t buflen)
 {
     int val = 0;
-    char *p = NULL;
+    char* p = NULL;
     buf[buflen] = ANY;
 
-    if(flags & IS_DEC)
+    if (flags & IS_DEC)
     {
-        val = strtoul( (const char *)buf, &p, 10);
+        val = strtoul( (const char*)buf, &p, 10);
     }
-    else if(flags & IS_OCT)
+    else if (flags & IS_OCT)
     {
-        val = strtoul( (const char *)buf, &p, 8);
+        val = strtoul( (const char*)buf, &p, 8);
     }
     else if (flags & IS_HEX)
     {
-        val = strtoul( (const char *)buf, &p, 16);
+        val = strtoul( (const char*)buf, &p, 16);
     }
 
     return val;
 }
 
-static void WriteDecodedSFCC(SFCCState *s)
+static void WriteDecodedSFCC(SFCCState* s)
 {
-    char *start = s->output.data;
-    char *end = s->output.data + s->output.size;
+    char* start = s->output.data;
+    char* end = s->output.data + s->output.size;
     uint16_t len = s->output.len;
-    char *ptr = s->output.data + len;
+    char* ptr = s->output.data + len;
     int copy_len = 0;
 
-    if(ptr < end)
+    if (ptr < end)
     {
-        if(s->cur_flags)
+        if (s->cur_flags)
         {
             *ptr = (char)ConvertToChar(s->cur_flags, s->buf, s->buflen);
             ptr++;
         }
         else
         {
-            if((end - ptr) < s->buflen)
+            if ((end - ptr) < s->buflen)
                 copy_len = end - ptr;
             else
                 copy_len = s->buflen;
-            memcpy(ptr , s->buf , copy_len);
+            memcpy(ptr, s->buf, copy_len);
             ptr = ptr + copy_len;
         }
     }
@@ -662,95 +661,91 @@ static void WriteDecodedSFCC(SFCCState *s)
     s->output.len = (ptr -start);
     s->cur_flags = 0;
     s->buflen = 0;
-
 }
 
-
-static int SFCC_exec (SFCCState *s, ActionSFCC a, int c)
+static int SFCC_exec(SFCCState* s, ActionSFCC a, int c)
 {
     int iRet = RET_OK;
-    switch(a)
+    switch (a)
     {
-        case SFCC_ACT_NOP:
-            break;
-        case SFCC_ACT_QUIT:
-            WriteDecodedSFCC(s);
-            iRet = RET_QUIT;
-            break;
-        case SFCC_ACT_INV:
-            WriteDecodedSFCC(s);
-            iRet = RET_INV;
-            break;
-        case SFCC_ACT_DEC:
-            if( s->buflen < MAX_BUF)
-            {
-                s->buf[s->buflen] = c;
-                s->buflen++;
-                s->cur_flags = IS_DEC;
-            }
-            else
-            {
-                s->cur_flags = 0;
-                WriteDecodedSFCC(s);
-            }
-            break;
-        case SFCC_ACT_OCT:
-            if( s->buflen < MAX_BUF)
-            {
-                s->buf[s->buflen] = c;
-                s->buflen++;
-                s->cur_flags = IS_OCT;
-            }
-            else
-            {
-                s->cur_flags = 0;
-                WriteDecodedSFCC(s);
-            }
-            break;
-        case SFCC_ACT_HEX:
-            if( s->buflen < MAX_BUF)
-            {
-                s->buf[s->buflen] = c;
-                s->buflen++;
-                s->cur_flags = IS_HEX;
-            }
-            else
-            {
-                s->cur_flags = 0;
-                WriteDecodedSFCC(s);
-            }
-            break;
-        case SFCC_ACT_COMMA:
-        case SFCC_ACT_SPACE:
-            WriteDecodedSFCC(s);
+    case SFCC_ACT_NOP:
+        break;
+    case SFCC_ACT_QUIT:
+        WriteDecodedSFCC(s);
+        iRet = RET_QUIT;
+        break;
+    case SFCC_ACT_INV:
+        WriteDecodedSFCC(s);
+        iRet = RET_INV;
+        break;
+    case SFCC_ACT_DEC:
+        if ( s->buflen < MAX_BUF)
+        {
+            s->buf[s->buflen] = c;
+            s->buflen++;
+            s->cur_flags = IS_DEC;
+        }
+        else
+        {
             s->cur_flags = 0;
-            break;
-        default:
-            break;
+            WriteDecodedSFCC(s);
+        }
+        break;
+    case SFCC_ACT_OCT:
+        if ( s->buflen < MAX_BUF)
+        {
+            s->buf[s->buflen] = c;
+            s->buflen++;
+            s->cur_flags = IS_OCT;
+        }
+        else
+        {
+            s->cur_flags = 0;
+            WriteDecodedSFCC(s);
+        }
+        break;
+    case SFCC_ACT_HEX:
+        if ( s->buflen < MAX_BUF)
+        {
+            s->buf[s->buflen] = c;
+            s->buflen++;
+            s->cur_flags = IS_HEX;
+        }
+        else
+        {
+            s->cur_flags = 0;
+            WriteDecodedSFCC(s);
+        }
+        break;
+    case SFCC_ACT_COMMA:
+    case SFCC_ACT_SPACE:
+        WriteDecodedSFCC(s);
+        s->cur_flags = 0;
+        break;
+    default:
+        break;
     }
 
     s->alert_flags |= s->cur_flags;
     return iRet;
 }
 
-static int SFCC_scan_fsm (SFCCState* s, int c)
+static int SFCC_scan_fsm(SFCCState* s, int c)
 {
     int indexed = 0;
     int value = 0;
     int uc;
-    const JSNorm *m = sfcc_norm + s->fsm;
-    
+    const JSNorm* m = sfcc_norm + s->fsm;
 
     uc = toupper(c);
 
-    if(isspace(c))
+    if (isspace(c))
         return (SFCC_exec(s, SFCC_ACT_SPACE, c));
 
     value = valid_chars[uc];
 
-    if(value)
+    if (value)
         indexed = 1;
-
 
     do
     {
@@ -765,14 +760,13 @@ static int SFCC_scan_fsm (SFCCState* s, int c)
     while ( 1 );
 
     return(SFCC_exec(s, (ActionSFCC)m->action, c));
-
-
 }
 
-void StringFromCharCodeDecode(char *src, uint16_t srclen, char **ptr, char **dst, uint16_t *bytes_copied, JSState *js, uint8_t* iis_unicode_map)
+void StringFromCharCodeDecode(char* src, uint16_t srclen, char** ptr, char** dst,
+    uint16_t* bytes_copied, JSState* js, uint8_t* iis_unicode_map)
 {
     int iRet;
-    const char *start, *end;
+    const char* start, * end;
     SFCCState s;
     uint16_t alert = 0;
 
@@ -786,12 +780,12 @@ void StringFromCharCodeDecode(char *src, uint16_t srclen, char **ptr, char **dst
     s.output.len = 0;
     s.cur_flags = s.alert_flags = 0;
 
-    while(!outBounds(start, end, *ptr))
+    while (!outBounds(start, end, *ptr))
     {
         iRet = SFCC_scan_fsm(&s, **ptr);
-        if(iRet != RET_OK)
+        if (iRet != RET_OK)
         {
-            if( (iRet == RET_INV) && ((*ptr - 1) > start ))
+            if ( (iRet == RET_INV) && ((*ptr - 1) > start ))
                 (*ptr)--;
 
             break;
@@ -802,20 +796,21 @@ void StringFromCharCodeDecode(char *src, uint16_t srclen, char **ptr, char **dst
     alert = s.alert_flags;
 
     //alert mixed encodings
-    if(alert != ( alert & -alert))
+    if (alert != ( alert & -alert))
     {
         js->alerts |= ALERT_MIXED_ENCODINGS;
     }
-    UnescapeDecode(s.output.data, s.output.len, &(s.output.data), &(s.output.data), &(s.output.len), js, iis_unicode_map);
+    UnescapeDecode(s.output.data, s.output.len, &(s.output.data), &(s.output.data),
+        &(s.output.len), js, iis_unicode_map);
 
     *dst = s.output.data;
     *bytes_copied = s.output.len;
-
 }
-static void WriteDecodedUnescape(UnescapeState *s, int c, JSState *js)
+
+static void WriteDecodedUnescape(UnescapeState* s, int c, JSState* js)
 {
-    const char *dstart, *dend;
-    char *dptr;
+    const char* dstart, * dend;
+    char* dptr;
 
     dstart = s->output.data;
     dend = s->output.data + s->output.size;
@@ -823,7 +818,7 @@ static void WriteDecodedUnescape(UnescapeState *s, int c, JSState *js)
 
     CheckWSExceeded(js, &(s->num_spaces));
 
-    if(dptr < dend)
+    if (dptr < dend)
     {
         *dptr = (char)c;
         dptr++;
@@ -832,187 +827,186 @@ static void WriteDecodedUnescape(UnescapeState *s, int c, JSState *js)
     s->output.len = dptr - dstart;
 }
 
-static int Unescape_exec (UnescapeState *s, ActionUnsc a, int c, JSState *js)
+static int Unescape_exec(UnescapeState* s, ActionUnsc a, int c, JSState* js)
 {
-    char *cur_ptr;
+    char* cur_ptr;
     int iRet = RET_OK;
 
     cur_ptr = s->output.data+ s->output.len;
 
-    switch(a)
+    switch (a)
     {
-        case UNESC_ACT_BACKSLASH:
+    case UNESC_ACT_BACKSLASH:
+        s->prev_action = (ActionUnsc)0;
+        s->alert_flags |= IS_BACKSLASH;
+        s->iNorm <<= 4;
+        s->iNorm = (s->iNorm | (hex_lookup[c]));
+        if ( s->overwrite && (s->overwrite < cur_ptr))
+        {
+            s->output.len = s->overwrite - s->output.data;
+        }
+        s->overwrite = NULL;
+        WriteDecodedUnescape(s, s->iNorm, js);
+        s->iNorm = 0;
+        break;
+    case UNESC_ACT_CONV:
+        s->prev_action = (ActionUnsc)0;
+        s->iNorm <<= 4;
+        s->iNorm = (s->iNorm | (hex_lookup[c]));
+        WriteDecodedUnescape(s, c, js);
+        break;
+    case UNESC_ACT_NOP:
+        s->prev_action = (ActionUnsc)0;
+        s->iNorm = 0;
+        s->overwrite = NULL;
+        WriteDecodedUnescape(s, c, js);
+        break;
+    case UNESC_ACT_PAREN:
+        if (s->prev_action == UNESC_ACT_UNESCAPE)
+        {
             s->prev_action = (ActionUnsc)0;
-            s->alert_flags |= IS_BACKSLASH;
-            s->iNorm <<= 4;
-            s->iNorm = (s->iNorm | (hex_lookup[c]));
-            if( s->overwrite && (s->overwrite < cur_ptr))
-            {
-                s->output.len = s->overwrite - s->output.data;
-            }
-            s->overwrite = NULL;
-            WriteDecodedUnescape(s, s->iNorm, js);
-            s->iNorm = 0;
-            break;
-        case UNESC_ACT_CONV:
-            s->prev_action = (ActionUnsc)0;
-            s->iNorm <<= 4;
-            s->iNorm = (s->iNorm | (hex_lookup[c]));
+            s->multiple_levels++;
+        }
+        s->iNorm = 0;
+        if (s->paren_count > 0)
             WriteDecodedUnescape(s, c, js);
-            break;
-        case UNESC_ACT_NOP:
-            s->prev_action = (ActionUnsc)0;
-            s->iNorm = 0;
-            s->overwrite = NULL;
-            WriteDecodedUnescape(s, c, js);
-            break;
-        case UNESC_ACT_PAREN:
-            if(s->prev_action == UNESC_ACT_UNESCAPE)
-            {
-                s->prev_action = (ActionUnsc)0;
-                s->multiple_levels++;
-            }
-            s->iNorm = 0;
-            if(s->paren_count > 0)
-                WriteDecodedUnescape(s, c, js);
-            s->paren_count++;
-            break;
-        case UNESC_ACT_PERCENT:
-            s->prev_action = (ActionUnsc)0;
-            s->alert_flags |= IS_PERCENT;
-            s->iNorm <<= 4;
-            s->iNorm = (s->iNorm | (hex_lookup[c]));
-            if( s->overwrite && (s->overwrite < cur_ptr))
-            {
-                s->output.len = s->overwrite - s->output.data;
-            }
-            s->overwrite = NULL;
-            WriteDecodedUnescape(s, s->iNorm, js);
-            s->iNorm = 0;
-            break;
-        case UNESC_ACT_QUIT:
-            s->prev_action = (ActionUnsc)0;
-            s->iNorm = 0;
-            s->overwrite = NULL;
-            if(s->paren_count)
-                s->paren_count--;
+        s->paren_count++;
+        break;
+    case UNESC_ACT_PERCENT:
+        s->prev_action = (ActionUnsc)0;
+        s->alert_flags |= IS_PERCENT;
+        s->iNorm <<= 4;
+        s->iNorm = (s->iNorm | (hex_lookup[c]));
+        if ( s->overwrite && (s->overwrite < cur_ptr))
+        {
+            s->output.len = s->overwrite - s->output.data;
+        }
+        s->overwrite = NULL;
+        WriteDecodedUnescape(s, s->iNorm, js);
+        s->iNorm = 0;
+        break;
+    case UNESC_ACT_QUIT:
+        s->prev_action = (ActionUnsc)0;
+        s->iNorm = 0;
+        s->overwrite = NULL;
+        if (s->paren_count)
+            s->paren_count--;
 
-            if( s->paren_count == 0 )
-                iRet = RET_QUIT;
+        if ( s->paren_count == 0 )
+            iRet = RET_QUIT;
+        else
+            WriteDecodedUnescape(s, c, js);
+        break;
+    case UNESC_ACT_SAVE:
+        s->prev_action = (ActionUnsc)0;
+        s->iNorm = 0;
+        s->overwrite = cur_ptr;
+        WriteDecodedUnescape(s, c, js);
+        break;
+    case UNESC_ACT_SAVE_NOP:
+        s->prev_action = (ActionUnsc)0;
+        s->iNorm = 0;
+        WriteDecodedUnescape(s, c, js);
+        break;
+    case UNESC_ACT_SPACE:
+        s->iNorm = 0;
+        if (s->prev_event == '\'' || s->prev_event =='"')
+        {
+            WriteDecodedUnescape(s, c, js);
+            return iRet;
+        }
+        if ( s->prev_event != ' ')
+        {
+            WriteDecodedUnescape(s, c, js);
+        }
+        s->num_spaces++;
+        break;
+    case UNESC_ACT_UBACKSLASH:
+        s->prev_action = (ActionUnsc)0;
+        s->alert_flags |= IS_UBACKSLASH;
+        s->iNorm <<= 4;
+        s->iNorm = (s->iNorm | (hex_lookup[c]));
+        if ( s->overwrite && (s->overwrite < cur_ptr))
+        {
+            s->output.len = s->overwrite - s->output.data;
+        }
+        s->overwrite = NULL;
+
+        if ( s->iNorm > 0xff )
+        {
+            if (s->unicode_map && (s->iNorm <= 0xffff))
+            {
+                s->iNorm = s->unicode_map[s->iNorm];
+                if (s->iNorm == -1)
+                    s->iNorm = NON_ASCII_CHAR;
+            }
             else
-                WriteDecodedUnescape(s, c, js);
-            break;
-        case UNESC_ACT_SAVE:
-            s->prev_action = (ActionUnsc)0;
-            s->iNorm = 0;
-            s->overwrite = cur_ptr;
-            WriteDecodedUnescape(s, c, js);
-            break;
-        case UNESC_ACT_SAVE_NOP:
-            s->prev_action = (ActionUnsc)0;
-            s->iNorm = 0;
-            WriteDecodedUnescape(s, c, js);
-            break;
-        case UNESC_ACT_SPACE:
-            s->iNorm = 0;
-            if(s->prev_event == '\'' || s->prev_event =='"')
             {
-                WriteDecodedUnescape(s, c, js);
-                return iRet;
+                s->iNorm = NON_ASCII_CHAR;
             }
-            if( s->prev_event != ' ')
+        }
+        WriteDecodedUnescape(s, s->iNorm, js);
+        s->iNorm = 0;
+        break;
+    case UNESC_ACT_UPERCENT:
+        s->prev_action = (ActionUnsc)0;
+        s->alert_flags |= IS_UPERCENT;
+        s->iNorm <<= 4;
+        s->iNorm = (s->iNorm | (hex_lookup[c]));
+        if ( s->overwrite && (s->overwrite < cur_ptr))
+        {
+            s->output.len = s->overwrite - s->output.data;
+        }
+        s->overwrite = NULL;
+        if ( s->iNorm > 0xff )
+        {
+            if (s->unicode_map && (s->iNorm <= 0xffff))
             {
-                WriteDecodedUnescape(s, c, js);
-            }
-            s->num_spaces++;
-            break;
-        case UNESC_ACT_UBACKSLASH:
-            s->prev_action = (ActionUnsc)0;
-            s->alert_flags |= IS_UBACKSLASH;
-            s->iNorm <<= 4;
-            s->iNorm = (s->iNorm | (hex_lookup[c]));
-            if( s->overwrite && (s->overwrite < cur_ptr))
-            {
-                s->output.len = s->overwrite - s->output.data;
-            }
-            s->overwrite = NULL;
-
-            if( s->iNorm > 0xff )
-            {
-                if(s->unicode_map && (s->iNorm <= 0xffff))
-                {
-                    s->iNorm = s->unicode_map[s->iNorm];
-                    if(s->iNorm == -1)
-                        s->iNorm = NON_ASCII_CHAR;
-                }
-                else
-                {
+                s->iNorm = s->unicode_map[s->iNorm];
+                if (s->iNorm == -1)
                     s->iNorm = NON_ASCII_CHAR;
-                }
             }
-            WriteDecodedUnescape(s, s->iNorm, js);
-            s->iNorm = 0;
-            break;
-        case UNESC_ACT_UPERCENT:
-            s->prev_action = (ActionUnsc)0;
-            s->alert_flags |= IS_UPERCENT;
-            s->iNorm <<= 4;
-            s->iNorm = (s->iNorm | (hex_lookup[c]));
-            if( s->overwrite && (s->overwrite < cur_ptr))
+            else
             {
-                s->output.len = s->overwrite - s->output.data;
+                s->iNorm = NON_ASCII_CHAR;
             }
-            s->overwrite = NULL;
-            if( s->iNorm > 0xff )
-            {
-                if(s->unicode_map && (s->iNorm <= 0xffff))
-                {
-                    s->iNorm = s->unicode_map[s->iNorm];
-                    if(s->iNorm == -1)
-                        s->iNorm = NON_ASCII_CHAR;
-                }
-                else
-                {
-                    s->iNorm = NON_ASCII_CHAR;
-                }
-            }
-            WriteDecodedUnescape(s, s->iNorm, js);
-            s->iNorm = 0;
-            break;
-        case UNESC_ACT_UNESCAPE:
-            /* Save the action and wait till parenthesis to increment the multiple_levels. 
-             * Only space is allowed between this action and parentheses */
-            s->prev_action = a;
-            s->iNorm = 0;
-            WriteDecodedUnescape(s, c, js);
-            break;
-        default:
-            break;
+        }
+        WriteDecodedUnescape(s, s->iNorm, js);
+        s->iNorm = 0;
+        break;
+    case UNESC_ACT_UNESCAPE:
+        /* Save the action and wait till parenthesis to increment the multiple_levels.
+         * Only space is allowed between this action and parentheses */
+        s->prev_action = a;
+        s->iNorm = 0;
+        WriteDecodedUnescape(s, c, js);
+        break;
+    default:
+        break;
     }
 
     s->prev_event = c;
     return iRet;
 }
 
-static int Unescape_scan_fsm (UnescapeState* s, int c, JSState *js)
+static int Unescape_scan_fsm(UnescapeState* s, int c, JSState* js)
 {
     int indexed = 0;
     int value = 0;
     int uc;
-    const JSNorm *m = unescape_norm + s->fsm;
+    const JSNorm* m = unescape_norm + s->fsm;
 
     uc = toupper(c);
 
-    if(isspace(c))
+    if (isspace(c))
     {
         c = uc =' ';
         return(Unescape_exec(s, UNESC_ACT_SPACE, c, js));
     }
 
-
     value = valid_chars[uc];
 
-    if(value)
+    if (value)
         indexed = 1;
 
     do
@@ -1028,13 +1022,13 @@ static int Unescape_scan_fsm (UnescapeState* s, int c, JSState *js)
     while ( 1 );
 
     return(Unescape_exec(s, (ActionUnsc)m->action, c, js));
-
 }
 
-void UnescapeDecode(char *src, uint16_t srclen, char **ptr, char **dst, uint16_t *bytes_copied, JSState *js, uint8_t* iis_unicode_map)
+void UnescapeDecode(char* src, uint16_t srclen, char** ptr, char** dst, uint16_t* bytes_copied,
+    JSState* js, uint8_t* iis_unicode_map)
 {
     int iRet;
-    const char *start, *end;
+    const char* start, * end;
     UnescapeState s;
     uint16_t alert = 0;
 
@@ -1055,10 +1049,10 @@ void UnescapeDecode(char *src, uint16_t srclen, char **ptr, char **dst, uint16_t
     s.num_spaces = 0;
     s.paren_count = 0;
 
-    while(!outBounds(start, end, *ptr))
+    while (!outBounds(start, end, *ptr))
     {
         iRet = Unescape_scan_fsm(&s, **ptr, js);
-        if(iRet != RET_OK)
+        if (iRet != RET_OK)
         {
             /*if( (iRet == RET_INV) && ((*ptr - 1) > start ))
                 (*ptr)--;*/
@@ -1071,12 +1065,12 @@ void UnescapeDecode(char *src, uint16_t srclen, char **ptr, char **dst, uint16_t
     alert = s.alert_flags;
 
     //alert mixed encodings
-    if(alert != ( alert & -alert))
+    if (alert != ( alert & -alert))
     {
         js->alerts |= ALERT_MIXED_ENCODINGS;
     }
 
-    if(s.multiple_levels > js->allowed_levels)
+    if (s.multiple_levels > js->allowed_levels)
     {
         js->alerts |= ALERT_LEVELS_EXCEEDED;
     }
@@ -1086,10 +1080,10 @@ void UnescapeDecode(char *src, uint16_t srclen, char **ptr, char **dst, uint16_t
     //*bytes_copied = s.output.len;
 }
 
-static inline void WriteJSNormChar(JSNormState *s, int c, JSState *js)
+static inline void WriteJSNormChar(JSNormState* s, int c, JSState* js)
 {
-    const char *dstart, *dend;
-    char *dptr;
+    const char* dstart, * dend;
+    char* dptr;
 
     dstart = s->dest.data;
     dend = s->dest.data + s->dest.size;
@@ -1097,7 +1091,7 @@ static inline void WriteJSNormChar(JSNormState *s, int c, JSState *js)
 
     CheckWSExceeded(js, &(s->num_spaces));
 
-    if(!outBounds(dstart, dend, dptr))
+    if (!outBounds(dstart, dend, dptr))
     {
         *dptr = (char)c;
         dptr++;
@@ -1105,10 +1099,10 @@ static inline void WriteJSNormChar(JSNormState *s, int c, JSState *js)
     s->dest.len = dptr - dstart;
 }
 
-static void WriteJSNorm(JSNormState *s, char *copy_buf, uint16_t copy_len, JSState *js)
+static void WriteJSNorm(JSNormState* s, char* copy_buf, uint16_t copy_len, JSState* js)
 {
-    const char *end, *dstart, *dend;
-    char *ptr, *dptr;
+    const char* end, * dstart, * dend;
+    char* ptr, * dptr;
 
     ptr = copy_buf;
     end = copy_buf + copy_len;
@@ -1119,9 +1113,9 @@ static void WriteJSNorm(JSNormState *s, char *copy_buf, uint16_t copy_len, JSSta
 
     CheckWSExceeded(js, &(s->num_spaces));
 
-    if(ptr < end)
+    if (ptr < end)
     {
-        if((dend - dptr) < copy_len )
+        if ((dend - dptr) < copy_len )
         {
             copy_len = dend - dptr;
         }
@@ -1132,52 +1126,52 @@ static void WriteJSNorm(JSNormState *s, char *copy_buf, uint16_t copy_len, JSSta
     s->dest.len = dptr - dstart;
 }
 
-static int JSNorm_exec(JSNormState *s, ActionJSNorm a, int c, char *src, uint16_t srclen, char **ptr, JSState *js)
+static int JSNorm_exec(JSNormState* s, ActionJSNorm a, int c, char* src, uint16_t srclen,
+    char** ptr, JSState* js)
 {
-    char *cur_ptr;
+    char* cur_ptr;
     int iRet = RET_OK;
     uint16_t bcopied = 0;
-    char *dest;
+    char* dest;
     cur_ptr = s->dest.data+ s->dest.len;
-    switch(a)
+    switch (a)
     {
-        case ACT_NOP:
+    case ACT_NOP:
+        WriteJSNormChar(s, c, js);
+        break;
+    case ACT_SAVE:
+        s->overwrite = cur_ptr;
+        WriteJSNormChar(s, c, js);
+        break;
+    case ACT_SPACE:
+        if ( s->prev_event != ' ')
+        {
             WriteJSNormChar(s, c, js);
-            break;
-        case ACT_SAVE:
-            s->overwrite = cur_ptr;
-            WriteJSNormChar(s, c, js);
-            break;
-        case ACT_SPACE:
-            if( s->prev_event != ' ')
-            {
-                WriteJSNormChar(s, c, js);
-            }
-            s->num_spaces++;
-            break;
-        case ACT_UNESCAPE:
-            if(s->overwrite && (s->overwrite < cur_ptr))
-            {
-                s->dest.len = s->overwrite - s->dest.data;
-            }
-            UnescapeDecode(src, srclen, ptr, &dest, &bcopied, js, s->unicode_map);
-            WriteJSNorm(s, dest, bcopied, js);
-            break;
-        case ACT_SFCC:
-            if( s->overwrite && (s->overwrite < cur_ptr))
-            {
-
-                s->dest.len = s->overwrite - s->dest.data;
-            }
-            StringFromCharCodeDecode(src, srclen, ptr, &dest, &bcopied, js, s->unicode_map);
-            WriteJSNorm(s, dest, bcopied, js);
-            break;
-        case ACT_QUIT:
-            iRet = RET_QUIT;
-            WriteJSNormChar(s, c, js);
-            break;
-        default:
-            break;
+        }
+        s->num_spaces++;
+        break;
+    case ACT_UNESCAPE:
+        if (s->overwrite && (s->overwrite < cur_ptr))
+        {
+            s->dest.len = s->overwrite - s->dest.data;
+        }
+        UnescapeDecode(src, srclen, ptr, &dest, &bcopied, js, s->unicode_map);
+        WriteJSNorm(s, dest, bcopied, js);
+        break;
+    case ACT_SFCC:
+        if ( s->overwrite && (s->overwrite < cur_ptr))
+        {
+            s->dest.len = s->overwrite - s->dest.data;
+        }
+        StringFromCharCodeDecode(src, srclen, ptr, &dest, &bcopied, js, s->unicode_map);
+        WriteJSNorm(s, dest, bcopied, js);
+        break;
+    case ACT_QUIT:
+        iRet = RET_QUIT;
+        WriteJSNormChar(s, c, js);
+        break;
+    default:
+        break;
     }
 
     s->prev_event = c;
@@ -1185,20 +1179,19 @@ static int JSNorm_exec(JSNormState *s, ActionJSNorm a, int c, char *src, uint16_
     return iRet;
 }
 
-static int JSNorm_scan_fsm (JSNormState* s, int c, char *src, uint16_t srclen, char **ptr, JSState *js)
+static int JSNorm_scan_fsm(JSNormState* s, int c, char* src, uint16_t srclen, char** ptr,
+    JSState* js)
 {
     char uc;
-    const JSNorm *m = javascript_norm + s->fsm;
-
+    const JSNorm* m = javascript_norm + s->fsm;
 
     uc = toupper(c);
 
-    if(isspace(c))
+    if (isspace(c))
     {
         c = uc =' ';
         return(JSNorm_exec(s, ACT_SPACE, c, src, srclen, ptr, js));
     }
-
 
     do
     {
@@ -1209,18 +1202,20 @@ static int JSNorm_scan_fsm (JSNormState* s, int c, char *src, uint16_t srclen, c
         }
         s->fsm = m->other;
         m = javascript_norm + s->fsm;
-    }while ( 1 );
+    }
+    while ( 1 );
 
     return(JSNorm_exec(s, (ActionJSNorm)m->action, c, src, srclen, ptr, js));
 }
 
-int JSNormalizeDecode(char *src, uint16_t srclen, char *dst, uint16_t destlen, char **ptr, int *bytes_copied, JSState *js, uint8_t* iis_unicode_map)
+int JSNormalizeDecode(char* src, uint16_t srclen, char* dst, uint16_t destlen, char** ptr,
+    int* bytes_copied, JSState* js, uint8_t* iis_unicode_map)
 {
     int iRet = RET_OK;
-    const char *start, *end;
+    const char* start, * end;
     JSNormState s;
 
-    if(js == NULL)
+    if (js == NULL)
     {
         return RET_QUIT;
     }
@@ -1237,17 +1232,17 @@ int JSNormalizeDecode(char *src, uint16_t srclen, char *dst, uint16_t destlen, c
     s.unicode_map = iis_unicode_map;
     s.num_spaces = 0;
 
-    while(!outBounds(start, end, *ptr))
+    while (!outBounds(start, end, *ptr))
     {
         iRet = JSNorm_scan_fsm(&s, **ptr, src, srclen, ptr, js);
-        if(iRet != RET_OK)
+        if (iRet != RET_OK)
         {
             break;
         }
         (*ptr)++;
-    } 
+    }
 
-    if(!outBounds(start, end, *ptr) && (iRet == RET_QUIT))
+    if (!outBounds(start, end, *ptr) && (iRet == RET_QUIT))
     {
         (*ptr)++;
     }
@@ -1257,7 +1252,6 @@ int JSNormalizeDecode(char *src, uint16_t srclen, char *dst, uint16_t destlen, c
 
     return RET_OK;
 }
-
 
 /*
 int main(int argc, char *argv[])
@@ -1308,3 +1302,4 @@ int main(int argc, char *argv[])
     return 0;
 
 }*/
+

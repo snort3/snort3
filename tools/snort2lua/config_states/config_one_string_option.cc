@@ -27,24 +27,23 @@
 
 namespace config
 {
-
 namespace
 {
-
 class ConfigStringOption : public ConversionState
 {
 public:
-    ConfigStringOption( Converter& c,
-                        const std::string* snort_opt,
-                        const std::string* table,
-                        const std::string* lua_opt) :
-            ConversionState(c),
-            snort_option(snort_opt),
-            lua_table(table),
-            lua_option(lua_opt)
+    ConfigStringOption(Converter& c,
+        const std::string* snort_opt,
+        const std::string* table,
+        const std::string* lua_opt) :
+        ConversionState(c),
+        snort_option(snort_opt),
+        lua_table(table),
+        lua_option(lua_opt)
     {
-    };
-    virtual ~ConfigStringOption() {};
+    }
+
+    virtual ~ConfigStringOption() { }
 
     virtual bool convert(std::istringstream& stream)
     {
@@ -59,7 +58,6 @@ public:
         // get length (stringstream will not read spaces...which we want)
         std::string arg_s = util::get_remain_data(stream);
 
-
         if (arg_s.empty())
         {
             data_api.failed_conversion(stream, "<missing_argument>");
@@ -68,7 +66,7 @@ public:
 
         table_api.open_table(*lua_table);
 
-        if((lua_option != nullptr) && snort_option->compare(*lua_option))
+        if ((lua_option != nullptr) && snort_option->compare(*lua_option))
         {
             table_api.add_diff_option_comment("config " + *snort_option +
                 ":", *lua_option);
@@ -90,18 +88,16 @@ private:
     const std::string* lua_option;
 };
 
-
-template<const std::string *snort_option,
-        const std::string *lua_table,
-        const std::string *lua_option = nullptr>
+template<const std::string* snort_option,
+const std::string* lua_table,
+const std::string* lua_option = nullptr>
 static ConversionState* config_string_ctor(Converter& c)
 {
-    return new ConfigStringOption(  c,
-                                    snort_option,
-                                    lua_table,
-                                    lua_option);
+    return new ConfigStringOption(c,
+        snort_option,
+        lua_table,
+        lua_option);
 }
-
 } // namespace
 
 /*************************************************
@@ -117,7 +113,6 @@ static const std::string process = "process";
 static const std::string react = "react";
 static const std::string output = "output";
 
-
 /*************************************************
  *******************  bpf_file  ******************
  *************************************************/
@@ -126,7 +121,7 @@ static const std::string bpf_file = "bpf_file";
 static const ConvertMap bpf_file_api =
 {
     bpf_file,
-    config_string_ctor<&bpf_file, &packets>,
+    config_string_ctor<& bpf_file, & packets>,
 };
 
 const ConvertMap* bpf_file_map = &bpf_file_api;
@@ -139,7 +134,7 @@ static const std::string chroot = "chroot";
 static const ConvertMap chroot_api =
 {
     chroot,
-    config_string_ctor<&chroot, &process>,
+    config_string_ctor<& chroot, & process>,
 };
 
 const ConvertMap* chroot_map = &chroot_api;
@@ -152,7 +147,7 @@ static const std::string type = "type";
 static const ConvertMap daq_api =
 {
     daq,
-    config_string_ctor<&daq, &daq, &type>,
+    config_string_ctor<& daq, & daq, & type>,
 };
 
 const ConvertMap* daq_map = &daq_api;
@@ -166,7 +161,7 @@ static const std::string dir = "dir";
 static const ConvertMap daq_dir_api =
 {
     daq_dir,
-    config_string_ctor<&daq_dir, &daq, &dir>,
+    config_string_ctor<& daq_dir, & daq, & dir>,
 };
 
 const ConvertMap* daq_dir_map = &daq_dir_api;
@@ -179,7 +174,7 @@ static const std::string daq_mode = "daq_mode";
 static const ConvertMap daq_mode_api =
 {
     daq_mode,
-    config_string_ctor<&daq_mode, &daq, &mode>,
+    config_string_ctor<& daq_mode, & daq, & mode>,
 };
 
 const ConvertMap* daq_mode_map = &daq_mode_api;
@@ -193,7 +188,7 @@ static const std::string var = "var";
 static const ConvertMap daq_var_api =
 {
     daq_var,
-    config_string_ctor<&daq_var, &daq, &var>,
+    config_string_ctor<& daq_var, & daq, & var>,
 };
 
 const ConvertMap* daq_var_map = &daq_var_api;
@@ -206,7 +201,7 @@ static const std::string logdir = "logdir";
 static const ConvertMap logdir_api =
 {
     logdir,
-    config_string_ctor<&logdir, &output>,
+    config_string_ctor<& logdir, & output>,
 };
 
 const ConvertMap* logdir_map = &logdir_api;
@@ -215,12 +210,11 @@ const ConvertMap* logdir_map = &logdir_api;
  ********************  react  ********************
  *************************************************/
 
-
 static const std::string page = "page";
 static const ConvertMap react_api =
 {
     react,
-    config_string_ctor<&react, &react, &page>,
+    config_string_ctor<& react, & react, & page>,
 };
 
 const ConvertMap* react_map = &react_api;
@@ -233,7 +227,7 @@ static const std::string reference_net = "reference_net";
 static const ConvertMap reference_net_api =
 {
     reference_net,
-    config_string_ctor<&reference_net, &alerts>,
+    config_string_ctor<& reference_net, & alerts>,
 };
 
 const ConvertMap* reference_net_map = &reference_net_api;
@@ -246,7 +240,7 @@ static const std::string set_gid = "set_gid";
 static const ConvertMap set_gid_api =
 {
     set_gid,
-    config_string_ctor<&set_gid, &process>,
+    config_string_ctor<& set_gid, & process>,
 };
 
 const ConvertMap* set_gid_map = &set_gid_api;
@@ -259,7 +253,7 @@ static const std::string set_uid = "set_uid";
 static const ConvertMap set_uid_api =
 {
     set_uid,
-    config_string_ctor<&set_uid, &process>,
+    config_string_ctor<& set_uid, & process>,
 };
 
 const ConvertMap* set_uid_map = &set_uid_api;
@@ -272,9 +266,9 @@ static const std::string umask = "umask";
 static const ConvertMap umask_api =
 {
     umask,
-    config_string_ctor<&umask, &process>,
+    config_string_ctor<& umask, & process>,
 };
 
 const ConvertMap* umask_map = &umask_api;
-
 } // namespace config
+

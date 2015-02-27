@@ -56,7 +56,6 @@ typedef struct _IpProtoData
 {
     uint8_t protocol;
     uint8_t comparison_flag;
-
 } IpProtoData;
 
 class IpProtoOption : public IpsOption
@@ -64,15 +63,15 @@ class IpProtoOption : public IpsOption
 public:
     IpProtoOption(const IpProtoData& c) :
         IpsOption(s_name, RULE_OPTION_TYPE_IP_PROTO)
-    { config = c; };
+    { config = c; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
     int eval(Cursor&, Packet*) override;
 
-    IpProtoData* get_data() 
-    { return &config; };
+    IpProtoData* get_data()
+    { return &config; }
 
 private:
     IpProtoData config;
@@ -85,7 +84,7 @@ private:
 uint32_t IpProtoOption::hash() const
 {
     uint32_t a,b,c;
-    const IpProtoData *data = &config;
+    const IpProtoData* data = &config;
 
     a = data->protocol;
     b = data->comparison_flag;
@@ -103,8 +102,8 @@ bool IpProtoOption::operator==(const IpsOption& ips) const
         return false;
 
     IpProtoOption& rhs = (IpProtoOption&)ips;
-    IpProtoData *left = (IpProtoData*)&config;
-    IpProtoData *right = (IpProtoData*)&rhs.config;
+    IpProtoData* left = (IpProtoData*)&config;
+    IpProtoData* right = (IpProtoData*)&rhs.config;
 
     if ((left->protocol == right->protocol) &&
         (left->comparison_flag == right->comparison_flag))
@@ -115,15 +114,15 @@ bool IpProtoOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int IpProtoOption::eval(Cursor&, Packet *p)
+int IpProtoOption::eval(Cursor&, Packet* p)
 {
-    IpProtoData *ipd = &config;
+    IpProtoData* ipd = &config;
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
     if (!p->has_ip())
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Not IP\n"););
+        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Not IP\n"); );
         return rval;
     }
 
@@ -155,7 +154,7 @@ int IpProtoOption::eval(Cursor&, Packet *p)
 
     default:
         ErrorMessage("%s(%d) Invalid comparison flag.\n",
-                     __FILE__, __LINE__);
+            __FILE__, __LINE__);
         break;
     }
 
@@ -168,53 +167,53 @@ int IpProtoOption::eval(Cursor&, Packet *p)
 // public methods
 //-------------------------------------------------------------------------
 
-bool CheckOtnIpProto(OptTreeNode *otn, int proto)
+bool CheckOtnIpProto(OptTreeNode* otn, int proto)
 {
-   if ( !otn )
-       return false;
+    if ( !otn )
+        return false;
 
-   IpProtoOption* opt = (IpProtoOption*)
-       get_rule_type_data(otn, RULE_OPTION_TYPE_IP_PROTO);
+    IpProtoOption* opt = (IpProtoOption*)
+        get_rule_type_data(otn, RULE_OPTION_TYPE_IP_PROTO);
 
-   if ( !opt )
-       return false;
+    if ( !opt )
+        return false;
 
-   IpProtoData* ipd = opt->get_data();
+    IpProtoData* ipd = opt->get_data();
 
     switch (ipd->comparison_flag)
     {
-        case IP_PROTO__EQUAL:
-            return ( proto == ipd->protocol );
+    case IP_PROTO__EQUAL:
+        return ( proto == ipd->protocol );
 
-        case IP_PROTO__NOT_EQUAL:
-            return ( proto != ipd->protocol );
+    case IP_PROTO__NOT_EQUAL:
+        return ( proto != ipd->protocol );
 
-        case IP_PROTO__GREATER_THAN:
-            return ( proto > ipd->protocol );
+    case IP_PROTO__GREATER_THAN:
+        return ( proto > ipd->protocol );
 
-        case IP_PROTO__LESS_THAN:
-            return ( proto < ipd->protocol );
+    case IP_PROTO__LESS_THAN:
+        return ( proto < ipd->protocol );
     }
     return false;
 }
 
-int GetOtnIpProto(OptTreeNode *otn)
+int GetOtnIpProto(OptTreeNode* otn)
 {
-   if ( !otn )
-       return -1;
+    if ( !otn )
+        return -1;
 
-   IpProtoOption* opt = (IpProtoOption*)
-       get_rule_type_data(otn, RULE_OPTION_TYPE_IP_PROTO);
+    IpProtoOption* opt = (IpProtoOption*)
+        get_rule_type_data(otn, RULE_OPTION_TYPE_IP_PROTO);
 
-   if ( !opt )
-       return -1;
+    if ( !opt )
+        return -1;
 
-   IpProtoData* ipd = opt->get_data();
+    IpProtoData* ipd = opt->get_data();
 
-   if ( ipd->comparison_flag == IP_PROTO__EQUAL )
-       return (int)ipd->protocol;
+    if ( ipd->comparison_flag == IP_PROTO__EQUAL )
+        return (int)ipd->protocol;
 
-   return -1;
+    return -1;
 }
 
 //-------------------------------------------------------------------------
@@ -223,7 +222,8 @@ int GetOtnIpProto(OptTreeNode *otn)
 
 static void ip_proto_parse(const char* data, IpProtoData* ds_ptr)
 {
-    while(isspace((int)*data)) data++;
+    while (isspace((int)*data))
+        data++;
 
     if (*data == '!')
     {
@@ -246,16 +246,16 @@ static void ip_proto_parse(const char* data, IpProtoData* ds_ptr)
     }
 
     /* check for a number or a protocol name */
-    if(isdigit((int)*data))
+    if (isdigit((int)*data))
     {
         unsigned long ip_proto;
-        char *endptr;
+        char* endptr;
 
         ip_proto = SnortStrtoul(data, &endptr, 10);
         if ((errno == ERANGE) || (ip_proto >= NUM_IP_PROTOS))
         {
             ParseError("invalid protocol number for 'ip_proto' "
-                       "rule option.  Value must be between 0 and 255.");
+                "rule option.  Value must be between 0 and 255.");
             return;
         }
 
@@ -263,7 +263,7 @@ static void ip_proto_parse(const char* data, IpProtoData* ds_ptr)
     }
     else
     {
-        struct protoent *pt = getprotobyname(data);  // main thread only
+        struct protoent* pt = getprotobyname(data);  // main thread only
 
         if (pt != NULL)
         {
@@ -273,7 +273,7 @@ static void ip_proto_parse(const char* data, IpProtoData* ds_ptr)
         else
         {
             ParseError("invalid protocol name for \"ip_proto\" "
-                       "rule option: '%s'.", data);
+                "rule option: '%s'.", data);
             return;
         }
     }
@@ -285,7 +285,7 @@ static void ip_proto_parse(const char* data, IpProtoData* ds_ptr)
 
 static const Parameter s_params[] =
 {
-    { "~proto", Parameter::PT_STRING, nullptr, nullptr, 
+    { "~proto", Parameter::PT_STRING, nullptr, nullptr,
       "[!|>|<] name or number" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -297,13 +297,13 @@ static const Parameter s_params[] =
 class IpProtoModule : public Module
 {
 public:
-    IpProtoModule() : Module(s_name, s_help, s_params) { };
+    IpProtoModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &ipProtoPerfStats; };
+    { return &ipProtoPerfStats; }
 
     IpProtoData data;
 };

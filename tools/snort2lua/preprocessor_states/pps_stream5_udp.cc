@@ -26,46 +26,42 @@
 
 namespace preprocessors
 {
-
-namespace {
-
+namespace
+{
 class StreamUdp : public ConversionState
 {
 public:
-    StreamUdp(Converter& c) : ConversionState(c) {};
-    virtual ~StreamUdp() {};
+    StreamUdp(Converter& c) : ConversionState(c) { }
+    virtual ~StreamUdp() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool StreamUdp::convert(std::istringstream& data_stream)
 {
-
     bool retval = true;
     std::string keyword;
 
     table_api.open_table("stream_udp");
 
-    while(data_stream >> keyword)
+    while (data_stream >> keyword)
     {
         bool tmpval = true;
 
-        if(keyword.back() == ',')
+        if (keyword.back() == ',')
             keyword.pop_back();
-        
-        if(keyword.empty())
+
+        if (keyword.empty())
             continue;
-        
-        if(!keyword.compare("ignore_any_rules"))
+
+        if (!keyword.compare("ignore_any_rules"))
             tmpval = table_api.add_option("ignore_any_rules", true);
 
-        else if(!keyword.compare("timeout"))
+        else if (!keyword.compare("timeout"))
         {
             table_api.add_diff_option_comment("timeout", "session_timeout");
             tmpval = parse_int_option("session_timeout", data_stream, false);
         }
-
         else
             tmpval = false;
 
@@ -73,7 +69,7 @@ bool StreamUdp::convert(std::istringstream& data_stream)
             retval = tmpval;
     }
 
-    return retval;    
+    return retval;
 }
 
 /**************************
@@ -92,5 +88,5 @@ static const ConvertMap preprocessor_stream_udp =
 };
 
 const ConvertMap* stream_udp_map = &preprocessor_stream_udp;
-
 } // namespace preprocessors
+

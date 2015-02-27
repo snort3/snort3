@@ -26,17 +26,15 @@
 
 namespace config
 {
-
-namespace {
-
+namespace
+{
 class Reference : public ConversionState
 {
 public:
-    Reference(Converter& c) : ConversionState(c) {};
-    virtual ~Reference() {};
+    Reference(Converter& c) : ConversionState(c) { }
+    virtual ~Reference() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool Reference::convert(std::istringstream& data_stream)
@@ -72,5 +70,5 @@ static const ConvertMap reference_api =
 };
 
 const ConvertMap* reference_map = &reference_api;
-
 } // namespace config
+

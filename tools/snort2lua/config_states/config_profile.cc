@@ -26,21 +26,17 @@
 
 namespace config
 {
-
-namespace {
-
-
+namespace
+{
 template<const std::string* table_name>
 class Profilers : public ConversionState
 {
 public:
-    Profilers(Converter& c) : ConversionState(c) {};
-    virtual ~Profilers() {};
+    Profilers(Converter& c) : ConversionState(c) { }
+    virtual ~Profilers() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
-
 
 template<const std::string* table_name>
 bool Profilers<table_name>::convert(std::istringstream& data_stream)
@@ -64,7 +60,6 @@ bool Profilers<table_name>::convert(std::istringstream& data_stream)
         {
             table_api.add_deleted_comment("profile_*: filename ...");
         }
-
         else if (!keyword.compare("print"))
         {
             table_api.add_diff_option_comment("print", "count");
@@ -77,14 +72,13 @@ bool Profilers<table_name>::convert(std::istringstream& data_stream)
                 tmpval = table_api.add_option("count", -1);
 
             else if (isdigit(tmp_string[0]) ||
-                     (tmp_string[0] == '-') ||
-                     (tmp_string[0] == '+'))
+                (tmp_string[0] == '-') ||
+                (tmp_string[0] == '+'))
                 tmpval = table_api.add_option("count", std::stoi(tmp_string));
 
             else
                 tmpval = false;
         }
-
         else if (!keyword.compare("sort"))
         {
             std::string val;
@@ -94,14 +88,13 @@ bool Profilers<table_name>::convert(std::istringstream& data_stream)
 
             else if (!val.compare("avg_ticks_per_nomatch"))
             {
-                table_api.add_diff_option_comment("sort avg_ticks_per_nomatch", "sort = avg_ticks_per_no_match");
+                table_api.add_diff_option_comment("sort avg_ticks_per_nomatch",
+                    "sort = avg_ticks_per_no_match");
                 tmpval = table_api.add_option("sort", "avg_ticks_per_no_match");
             }
-
             else
                 tmpval = table_api.add_option("sort", val);
         }
-
         else
         {
             tmpval = false;
@@ -135,20 +128,19 @@ static ConversionState* ctor(Converter& c)
 static const std::string rules = "rules";
 static const std::string modules = "modules";
 
-
 static const ConvertMap profile_rules_api =
 {
     "profile_rules",
-    ctor<&rules>,
+    ctor<& rules>,
 };
 
 static const ConvertMap profile_preprocs_api =
 {
     "profile_preprocs",
-    ctor<&modules>,
+    ctor<& modules>,
 };
 
 const ConvertMap* profile_rules_map = &profile_rules_api;
 const ConvertMap* profile_preprocs_map = &profile_preprocs_api;
-
 } // namespace config
+

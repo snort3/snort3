@@ -56,7 +56,7 @@ bool HexBook::translate(const char* in, HexVector& out)
 
             byte += in[i];
         }
-        else 
+        else
             push = true;
 
         if ( push && byte.size() )
@@ -165,4 +165,4 @@ const char* HexBook::find_spell(
 
     return nullptr;
 }
- 
+

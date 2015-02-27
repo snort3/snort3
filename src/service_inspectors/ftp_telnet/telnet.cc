@@ -57,24 +57,24 @@ static int TelnetCheckConfigs(SnortConfig*, void* pData)
     TELNET_PROTO_CONF* telnet_config = (TELNET_PROTO_CONF*)pData;
 
     if ((telnet_config->ayt_threshold > 0) &&
-            !telnet_config->normalize)
+        !telnet_config->normalize)
     {
-         ParseWarning("telnet configuration check: using an "
-                 "AreYouThere threshold requires telnet normalization to be "
-                 "turned on.\n");
+        ParseWarning("telnet configuration check: using an "
+            "AreYouThere threshold requires telnet normalization to be "
+            "turned on.\n");
     }
     if ( telnet_config->detect_encrypted &&
-            !telnet_config->normalize)
+        !telnet_config->normalize)
     {
         ParseWarning("telnet configuration check: checking for "
-                "encrypted traffic requires telnet normalization to be turned on.\n");
+            "encrypted traffic requires telnet normalization to be turned on.\n");
     }
 
     return 0;
 }
 
-static int SnortTelnet(TELNET_PROTO_CONF* telnet_config, TELNET_SESSION *Telnetsession,
-                Packet *p, int iInspectMode)
+static int SnortTelnet(TELNET_PROTO_CONF* telnet_config, TELNET_SESSION* Telnetsession,
+    Packet* p, int iInspectMode)
 {
     int iRet;
     PROFILE_VARS;
@@ -113,11 +113,11 @@ static int SnortTelnet(TELNET_PROTO_CONF* telnet_config, TELNET_SESSION *Telnets
     return FTPP_SUCCESS;
 }
 
-static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet *p)
+static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet* p)
 {
     FTPP_SI_INPUT SiInput;
     int iInspectMode = FTPP_SI_NO_MODE;
-    FTP_TELNET_SESSION *ft_ssn = NULL;
+    FTP_TELNET_SESSION* ft_ssn = NULL;
 
     /*
      * Set up the FTPP_SI_INPUT pointer.  This is what the session_inspection()
@@ -182,9 +182,9 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet *p)
     {
         switch (SiInput.pproto)
         {
-            case FTPP_SI_PROTO_TELNET:
-                return SnortTelnet(GlobalConf, (TELNET_SESSION *)ft_ssn, p, iInspectMode);
-                break;
+        case FTPP_SI_PROTO_TELNET:
+            return SnortTelnet(GlobalConf, (TELNET_SESSION*)ft_ssn, p, iInspectMode);
+            break;
         }
     }
 
@@ -204,9 +204,9 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet *p)
  *                     >0 = non-fatal error, <0 = fatal error)
  *
  */
-static int PrintTelnetConf(TELNET_PROTO_CONF *TelnetConf)
+static int PrintTelnetConf(TELNET_PROTO_CONF* TelnetConf)
 {
-    if(!TelnetConf)
+    if (!TelnetConf)
     {
         return FTPP_INVALID_ARG;
     }
@@ -226,7 +226,8 @@ static int PrintTelnetConf(TELNET_PROTO_CONF *TelnetConf)
 // class stuff
 //-------------------------------------------------------------------------
 
-class Telnet : public Inspector {
+class Telnet : public Inspector
+{
 public:
     Telnet(TELNET_PROTO_CONF*);
     ~Telnet();

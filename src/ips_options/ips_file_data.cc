@@ -43,11 +43,11 @@ static THREAD_LOCAL ProfileStats fileDataPerfStats;
 class FileDataOption : public IpsOption
 {
 public:
-    FileDataOption() : IpsOption(s_name) { };
-    ~FileDataOption() { };
+    FileDataOption() : IpsOption(s_name) { }
+    ~FileDataOption() { }
 
     CursorActionType get_cursor_type() const override
-    { return CAT_SET_FILE; };
+    { return CAT_SET_FILE; }
 
     int eval(Cursor&, Packet*) override;
 };
@@ -59,7 +59,7 @@ public:
 int FileDataOption::eval(Cursor& c, Packet*)
 {
     int rval = DETECTION_OPTION_NO_MATCH;
-    uint8_t *data;
+    uint8_t* data;
     uint16_t len;
 
     PROFILE_VARS;
@@ -91,10 +91,10 @@ int FileDataOption::eval(Cursor& c, Packet*)
 class FileDataModule : public Module
 {
 public:
-    FileDataModule() : Module(s_name, s_help) { };
+    FileDataModule() : Module(s_name, s_help) { }
 
     ProfileStats* get_profile() const override
-    { return &fileDataPerfStats; };
+    { return &fileDataPerfStats; }
 };
 
 //-------------------------------------------------------------------------

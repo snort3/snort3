@@ -53,17 +53,15 @@ struct SnortConfig;
 
 typedef struct _pmx_
 {
-   void * RuleNode;
-   void * PatternMatchData;
-
+    void* RuleNode;
+    void* PatternMatchData;
 } PMX;
 
 /* Used for negative content list */
 typedef struct _NCListNode
 {
-    PMX *pmx;
-    struct _NCListNode *next;
-
+    PMX* pmx;
+    struct _NCListNode* next;
 } NCListNode;
 
 /*
@@ -93,18 +91,17 @@ struct FastPatternConfig
  */
 struct srmm_table_t
 {
-  SFGHASH * tcp_to_srv;
-  SFGHASH * tcp_to_cli;
+    SFGHASH* tcp_to_srv;
+    SFGHASH* tcp_to_cli;
 
-  SFGHASH * udp_to_srv;
-  SFGHASH * udp_to_cli;
+    SFGHASH* udp_to_srv;
+    SFGHASH* udp_to_cli;
 
-  SFGHASH * icmp_to_srv;
-  SFGHASH * icmp_to_cli;
+    SFGHASH* icmp_to_srv;
+    SFGHASH* icmp_to_cli;
 
-  SFGHASH * ip_to_srv;
-  SFGHASH * ip_to_cli;
-
+    SFGHASH* ip_to_srv;
+    SFGHASH* ip_to_cli;
 };
 
 /*
@@ -112,18 +109,17 @@ struct srmm_table_t
  */
 struct sopg_table_t
 {
-  PORT_GROUP *tcp_to_srv[MAX_PROTOCOL_ORDINAL];
-  PORT_GROUP *tcp_to_cli[MAX_PROTOCOL_ORDINAL];
+    PORT_GROUP* tcp_to_srv[MAX_PROTOCOL_ORDINAL];
+    PORT_GROUP* tcp_to_cli[MAX_PROTOCOL_ORDINAL];
 
-  PORT_GROUP *udp_to_srv[MAX_PROTOCOL_ORDINAL];
-  PORT_GROUP *udp_to_cli[MAX_PROTOCOL_ORDINAL];
+    PORT_GROUP* udp_to_srv[MAX_PROTOCOL_ORDINAL];
+    PORT_GROUP* udp_to_cli[MAX_PROTOCOL_ORDINAL];
 
-  PORT_GROUP *icmp_to_srv[MAX_PROTOCOL_ORDINAL];
-  PORT_GROUP *icmp_to_cli[MAX_PROTOCOL_ORDINAL];
+    PORT_GROUP* icmp_to_srv[MAX_PROTOCOL_ORDINAL];
+    PORT_GROUP* icmp_to_cli[MAX_PROTOCOL_ORDINAL];
 
-  PORT_GROUP *ip_to_srv[MAX_PROTOCOL_ORDINAL];
-  PORT_GROUP *ip_to_cli[MAX_PROTOCOL_ORDINAL];
-
+    PORT_GROUP* ip_to_srv[MAX_PROTOCOL_ORDINAL];
+    PORT_GROUP* ip_to_cli[MAX_PROTOCOL_ORDINAL];
 };
 
 /*
@@ -139,60 +135,61 @@ int fpInitDetectionEngine(void);
 */
 int fpCreateFastPacketDetection(SnortConfig*);
 
-FastPatternConfig * FastPatternConfigNew(void);
-void fpSetDefaults(FastPatternConfig *);
-void FastPatternConfigFree(FastPatternConfig *);
+FastPatternConfig* FastPatternConfigNew(void);
+void fpSetDefaults(FastPatternConfig*);
+void FastPatternConfigFree(FastPatternConfig*);
 
 /*
 **  Functions that allow the detection routins to
 **  find the right classification for a given packet.
 */
-int prmFindRuleGroupTcp(PORT_RULE_MAP *, int, int, PORT_GROUP **, PORT_GROUP **, PORT_GROUP **);
-int prmFindRuleGroupUdp(PORT_RULE_MAP *, int, int, PORT_GROUP **, PORT_GROUP **, PORT_GROUP **);
-int prmFindRuleGroupIp(PORT_RULE_MAP *, int, PORT_GROUP **, PORT_GROUP **);
-int prmFindRuleGroupIcmp(PORT_RULE_MAP *, int, PORT_GROUP **, PORT_GROUP **);
+int prmFindRuleGroupTcp(PORT_RULE_MAP*, int, int, PORT_GROUP**, PORT_GROUP**, PORT_GROUP**);
+int prmFindRuleGroupUdp(PORT_RULE_MAP*, int, int, PORT_GROUP**, PORT_GROUP**, PORT_GROUP**);
+int prmFindRuleGroupIp(PORT_RULE_MAP*, int, PORT_GROUP**, PORT_GROUP**);
+int prmFindRuleGroupIcmp(PORT_RULE_MAP*, int, PORT_GROUP**, PORT_GROUP**);
 
-int fpSetDetectSearchMethod(FastPatternConfig *, const char *);
-void fpSetDetectSearchOpt(FastPatternConfig *, int flag);
-void fpSetDebugMode(FastPatternConfig *);
-void fpSetStreamInsert(FastPatternConfig *);
-void fpSetMaxQueueEvents(FastPatternConfig *, unsigned int);
-void fpDetectSetSplitAnyAny(FastPatternConfig *, int);
-void fpSetMaxPatternLen(FastPatternConfig *, unsigned int);
+int fpSetDetectSearchMethod(FastPatternConfig*, const char*);
+void fpSetDetectSearchOpt(FastPatternConfig*, int flag);
+void fpSetDebugMode(FastPatternConfig*);
+void fpSetStreamInsert(FastPatternConfig*);
+void fpSetMaxQueueEvents(FastPatternConfig*, unsigned int);
+void fpDetectSetSplitAnyAny(FastPatternConfig*, int);
+void fpSetMaxPatternLen(FastPatternConfig*, unsigned int);
 
-void fpDetectSetSingleRuleGroup(FastPatternConfig *);
-void fpDetectSetBleedOverPortLimit(FastPatternConfig *, unsigned int);
-void fpDetectSetBleedOverWarnings(FastPatternConfig *);
-void fpDetectSetDebugPrintNcRules(FastPatternConfig *);
-void fpDetectSetDebugPrintRuleGroupBuildDetails(FastPatternConfig *);
-void fpDetectSetDebugPrintRuleGroupsCompiled(FastPatternConfig *);
-void fpDetectSetDebugPrintRuleGroupsUnCompiled(FastPatternConfig *);
-void fpDetectSetDebugPrintFastPatterns(FastPatternConfig *, int);
+void fpDetectSetSingleRuleGroup(FastPatternConfig*);
+void fpDetectSetBleedOverPortLimit(FastPatternConfig*, unsigned int);
+void fpDetectSetBleedOverWarnings(FastPatternConfig*);
+void fpDetectSetDebugPrintNcRules(FastPatternConfig*);
+void fpDetectSetDebugPrintRuleGroupBuildDetails(FastPatternConfig*);
+void fpDetectSetDebugPrintRuleGroupsCompiled(FastPatternConfig*);
+void fpDetectSetDebugPrintRuleGroupsUnCompiled(FastPatternConfig*);
+void fpDetectSetDebugPrintFastPatterns(FastPatternConfig*, int);
 
-int  fpDetectGetSingleRuleGroup(FastPatternConfig *);
-int  fpDetectGetBleedOverPortLimit(FastPatternConfig *);
-int  fpDetectGetBleedOverWarnings(FastPatternConfig *);
-int  fpDetectGetDebugPrintNcRules(FastPatternConfig *);
-int  fpDetectGetDebugPrintRuleGroupBuildDetails(FastPatternConfig *);
-int  fpDetectGetDebugPrintRuleGroupsCompiled(FastPatternConfig *);
-int  fpDetectGetDebugPrintRuleGroupsUnCompiled(FastPatternConfig *);
-int  fpDetectSplitAnyAny(FastPatternConfig *);
-int  fpDetectGetDebugPrintFastPatterns(FastPatternConfig *);
+int fpDetectGetSingleRuleGroup(FastPatternConfig*);
+int fpDetectGetBleedOverPortLimit(FastPatternConfig*);
+int fpDetectGetBleedOverWarnings(FastPatternConfig*);
+int fpDetectGetDebugPrintNcRules(FastPatternConfig*);
+int fpDetectGetDebugPrintRuleGroupBuildDetails(FastPatternConfig*);
+int fpDetectGetDebugPrintRuleGroupsCompiled(FastPatternConfig*);
+int fpDetectGetDebugPrintRuleGroupsUnCompiled(FastPatternConfig*);
+int fpDetectSplitAnyAny(FastPatternConfig*);
+int fpDetectGetDebugPrintFastPatterns(FastPatternConfig*);
 
 void fpDeleteFastPacketDetection(SnortConfig*);
 
-PORT_GROUP * fpGetServicePortGroupByOrdinal(sopg_table_t *, int, int, int16_t);
+PORT_GROUP* fpGetServicePortGroupByOrdinal(sopg_table_t*, int, int, int16_t);
 
 /*
 **  Shows the event stats for the created FastPacketDetection
 */
 void fpShowEventStats(SnortConfig*);
-typedef int (*OtnWalkFcn)(int, struct RuleTreeNode *, struct OptTreeNode*);
+typedef int (* OtnWalkFcn)(int, struct RuleTreeNode*, struct OptTreeNode*);
 void fpWalkOtns(int, OtnWalkFcn);
-void fpDynamicDataFree(void *);
+void fpDynamicDataFree(void*);
 
 void set_fp_content(struct OptTreeNode*);
 
-const char * PatternRawToContent(const char *pattern, int pattern_len);
+const char* PatternRawToContent(const char* pattern, int pattern_len);
 
 #endif  /* __FPCREATE_H__ */
+

@@ -32,7 +32,7 @@ struct PsCommon
 {
     unsigned long memcap;
 
-    PsCommon() { memcap = 0; };
+    PsCommon() { memcap = 0; }
 };
 
 struct PortscanConfig
@@ -46,9 +46,9 @@ struct PortscanConfig
     int print_tracker;
     bool logfile;
 
-    IPSET *ignore_scanners;
-    IPSET *ignore_scanned;
-    IPSET *watch_ip;
+    IPSET* ignore_scanners;
+    IPSET* ignore_scanned;
+    IPSET* watch_ip;
 
     PsCommon* common;
 
@@ -58,29 +58,28 @@ struct PortscanConfig
 
 struct PS_PROTO
 {
-    short          connection_count;
-    short          priority_count;
-    short          u_ip_count;
-    short          u_port_count;
+    short connection_count;
+    short priority_count;
+    short u_ip_count;
+    short u_port_count;
 
     unsigned short high_p;
     unsigned short low_p;
     unsigned short u_ports;
 
-    sfip_t           high_ip;
-    sfip_t           low_ip;
-    sfip_t           u_ips;
+    sfip_t high_ip;
+    sfip_t low_ip;
+    sfip_t u_ips;
 
     unsigned short open_ports[PS_OPEN_PORTS];
-    unsigned char  open_ports_cnt;
+    unsigned char open_ports_cnt;
 
     struct timeval event_time;
-    unsigned int   event_ref;
+    unsigned int event_ref;
 
-    unsigned char  alerts;
+    unsigned char alerts;
 
-    time_t         window;
-
+    time_t window;
 };
 
 struct PS_TRACKER
@@ -88,17 +87,15 @@ struct PS_TRACKER
     int priority_node;
     int protocol;
     PS_PROTO proto;
-
 };
 
 struct PS_PKT
 {
-    void *pkt;
+    void* pkt;
     int proto;
     int reverse_pkt;
-    PS_TRACKER *scanner;
-    PS_TRACKER *scanned;
-
+    PS_TRACKER* scanner;
+    PS_TRACKER* scanned;
 };
 
 //-------------------------------------------------------------------------
@@ -148,7 +145,7 @@ struct PS_PKT
 #define PSNG_TCP_FILTERED_DECOY_PORTSCAN       6
 #define PSNG_TCP_PORTSWEEP_FILTERED            7
 #define PSNG_TCP_FILTERED_DISTRIBUTED_PORTSCAN 8
-           
+
 #define PSNG_IP_PORTSCAN                       9
 #define PSNG_IP_DECOY_PORTSCAN                 10
 #define PSNG_IP_PORTSWEEP                      11
@@ -157,7 +154,7 @@ struct PS_PKT
 #define PSNG_IP_FILTERED_DECOY_PORTSCAN        14
 #define PSNG_IP_PORTSWEEP_FILTERED             15
 #define PSNG_IP_FILTERED_DISTRIBUTED_PORTSCAN  16
-        
+
 #define PSNG_UDP_PORTSCAN                      17
 #define PSNG_UDP_DECOY_PORTSCAN                18
 #define PSNG_UDP_PORTSWEEP                     19
@@ -196,7 +193,7 @@ struct PS_PKT
 #define PSNG_IP_PORTSCAN_STR \
     "IP protocol scan"
 #define PSNG_IP_DECOY_PORTSCAN_STR \
-     "IP decoy protocol scan"
+    "IP decoy protocol scan"
 #define PSNG_IP_PORTSWEEP_STR \
     "IP protocol sweep"
 #define PSNG_IP_DISTRIBUTED_PORTSCAN_STR \

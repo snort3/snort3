@@ -18,8 +18,6 @@
 //--------------------------------------------------------------------------
 // cd_mpls.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
 #include "network_inspectors/perf_monitor/perf.h"
@@ -37,7 +35,6 @@
 
 namespace
 {
-
 static const Parameter mpls_params[] =
 {
     { "enable_mpls_multicast", Parameter::PT_BOOL, nullptr, "false",
@@ -73,7 +70,7 @@ static const RuleMap mpls_rules[] =
 class MplsModule : public CodecModule
 {
 public:
-    MplsModule() : CodecModule(CD_MPLS_NAME, CD_MPLS_HELP, mpls_params) {};
+    MplsModule() : CodecModule(CD_MPLS_NAME, CD_MPLS_HELP, mpls_params) { }
 
     const RuleMap* get_rules() const override
     { return mpls_rules; }
@@ -88,7 +85,8 @@ public:
         else if ( v.is("enable_mpls_overlapping_ip") )
         {
             if ( v.get_bool() )
-                sc->run_flags |= RUN_FLAG__MPLS_OVERLAPPING_IP; // FIXIT-L move to existing bitfield
+                sc->run_flags |= RUN_FLAG__MPLS_OVERLAPPING_IP; // FIXIT-L move to existing
+                                                                // bitfield
         }
         else if ( v.is("max_mpls_stack_depth") )
         {
@@ -108,8 +106,8 @@ public:
 class MplsCodec : public Codec
 {
 public:
-    MplsCodec() : Codec(CD_MPLS_NAME){};
-    ~MplsCodec(){};
+    MplsCodec() : Codec(CD_MPLS_NAME) { }
+    ~MplsCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
@@ -119,23 +117,18 @@ private:
     int checkMplsHdr(const CodecData&, uint32_t label, uint8_t bos);
 };
 
-
 constexpr uint16_t ETHERTYPE_MPLS_UNICAST = 0x8847;
 constexpr uint16_t ETHERTYPE_MPLS_MULTICAST = 0x8848;
 constexpr int MPLS_HEADER_LEN = 4;
 constexpr int NUM_RESERVED_LABELS = 16;
 constexpr int MPLS_PAYLOADTYPE_ERROR = -1;
-
 } // namespace
-
-
 
 void MplsCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(ETHERTYPE_MPLS_UNICAST);
     v.push_back(ETHERTYPE_MPLS_MULTICAST);
 }
-
 
 bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
@@ -152,11 +145,11 @@ bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     UpdateMPLSStats(&sfBase, raw.len, Active_PacketWasDropped());
     const uint32_t* tmpMplsHdr =
-        reinterpret_cast<const uint32_t *>(raw.data);
+        reinterpret_cast<const uint32_t*>(raw.data);
 
     while (!bos)
     {
-        if(stack_len < MPLS_HEADER_LEN)
+        if (stack_len < MPLS_HEADER_LEN)
         {
             codec_event(codec, DECODE_BAD_MPLS);
             return false;
@@ -169,10 +162,10 @@ bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         exp = (uint8_t)(mpls_h & 0x0000000E);
         label = (mpls_h>>4) & 0x000FFFFF;
 
-        if((label<NUM_RESERVED_LABELS)&&((iRet = checkMplsHdr(codec, label, bos)) < 0))
+        if ((label<NUM_RESERVED_LABELS)&&((iRet = checkMplsHdr(codec, label, bos)) < 0))
             return false;
 
-        if( bos )
+        if ( bos )
         {
             snort.mplsHdr.label = label;
             snort.mplsHdr.exp = exp;
@@ -182,7 +175,7 @@ bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             p->mpls = &(snort.mplsHdr);
       **/
             codec.proto_bits |= PROTO_BIT__MPLS;
-            if(!iRet)
+            if (!iRet)
             {
                 iRet = ScMplsPayloadType();
             }
@@ -203,25 +196,24 @@ bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     switch (iRet)
     {
-        case MPLS_PAYLOADTYPE_IPV4:
-            codec.next_prot_id = ETHERTYPE_IPV4;
-            break;
+    case MPLS_PAYLOADTYPE_IPV4:
+        codec.next_prot_id = ETHERTYPE_IPV4;
+        break;
 
-        case MPLS_PAYLOADTYPE_IPV6:
-            codec.next_prot_id = ETHERTYPE_IPV6;
-            break;
+    case MPLS_PAYLOADTYPE_IPV6:
+        codec.next_prot_id = ETHERTYPE_IPV6;
+        break;
 
-        case MPLS_PAYLOADTYPE_ETHERNET:
-            codec.next_prot_id = ETHERTYPE_TRANS_ETHER_BRIDGING;
-            break;
+    case MPLS_PAYLOADTYPE_ETHERNET:
+        codec.next_prot_id = ETHERTYPE_TRANS_ETHER_BRIDGING;
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 
     return true;
 }
-
 
 /*
  * check if reserved labels are used properly
@@ -229,75 +221,75 @@ bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 int MplsCodec::checkMplsHdr(const CodecData& codec, uint32_t label, uint8_t bos)
 {
     int iRet = 0;
-    switch(label)
+    switch (label)
     {
-        case 0:
-        case 2:
-               /* check if this label is the bottom of the stack */
-               if(bos)
-               {
-                   if ( label == 0 )
-                       iRet = MPLS_PAYLOADTYPE_IPV4;
-                   else if ( label == 2 )
-                       iRet = MPLS_PAYLOADTYPE_IPV6;
+    case 0:
+    case 2:
+        /* check if this label is the bottom of the stack */
+        if (bos)
+        {
+            if ( label == 0 )
+                iRet = MPLS_PAYLOADTYPE_IPV4;
+            else if ( label == 2 )
+                iRet = MPLS_PAYLOADTYPE_IPV6;
 
-
-                   /* when label == 2, IPv6 is expected;
-                    * when label == 0, IPv4 is expected */
-                   if((label&&(ScMplsPayloadType() != MPLS_PAYLOADTYPE_IPV6))
-                       ||((!label)&&(ScMplsPayloadType() != MPLS_PAYLOADTYPE_IPV4)))
-                   {
-                        if( !label )
-                            codec_event(codec, DECODE_BAD_MPLS_LABEL0);
-                        else
-                            codec_event(codec, DECODE_BAD_MPLS_LABEL2);
-                   }
-                   break;
-               }
+            /* when label == 2, IPv6 is expected;
+             * when label == 0, IPv4 is expected */
+            if ((label&&(ScMplsPayloadType() != MPLS_PAYLOADTYPE_IPV6))
+                ||((!label)&&(ScMplsPayloadType() != MPLS_PAYLOADTYPE_IPV4)))
+            {
+                if ( !label )
+                    codec_event(codec, DECODE_BAD_MPLS_LABEL0);
+                else
+                    codec_event(codec, DECODE_BAD_MPLS_LABEL2);
+            }
+            break;
+        }
 
 #if 0
-               /* This is valid per RFC 4182.  Just pop this label off, ignore it
-                * and move on to the next one.
-                */
-               if( !label )
-                   codec_event(codec, DECODE_BAD_MPLS_LABEL0);
-               else
-                   codec_event(codec, DECODE_BAD_MPLS_LABEL2);
+        /* This is valid per RFC 4182.  Just pop this label off, ignore it
+         * and move on to the next one.
+         */
+        if ( !label )
+            codec_event(codec, DECODE_BAD_MPLS_LABEL0);
+        else
+            codec_event(codec, DECODE_BAD_MPLS_LABEL2);
 
-               p->iph = NULL;
-               p->family = NO_IP;
-               return(-1);
+        p->iph = NULL;
+        p->family = NO_IP;
+        return(-1);
 #endif
-               break;
-        case 1:
-               if(!bos) break;
+        break;
+    case 1:
+        if (!bos)
+            break;
 
-               codec_event(codec, DECODE_BAD_MPLS_LABEL1);
+        codec_event(codec, DECODE_BAD_MPLS_LABEL1);
 
-               iRet = MPLS_PAYLOADTYPE_ERROR;
-               break;
+        iRet = MPLS_PAYLOADTYPE_ERROR;
+        break;
 
-      case 3:
-               codec_event(codec, DECODE_BAD_MPLS_LABEL3);
+    case 3:
+        codec_event(codec, DECODE_BAD_MPLS_LABEL3);
 
-               iRet = MPLS_PAYLOADTYPE_ERROR;
-               break;
-        case 4:
-        case 5:
-        case 6:
-        case 7:
-        case 8:
-        case 9:
-        case 10:
-        case 11:
-        case 12:
-        case 13:
-        case 14:
-        case 15:
-                codec_event(codec, DECODE_MPLS_RESERVED_LABEL);
-                break;
-        default:
-                break;
+        iRet = MPLS_PAYLOADTYPE_ERROR;
+        break;
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+        codec_event(codec, DECODE_MPLS_RESERVED_LABEL);
+        break;
+    default:
+        break;
     }
     if ( !iRet )
     {
@@ -327,7 +319,7 @@ static void mod_dtor(Module* m)
 static Codec* ctor(Module*)
 { return new MplsCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi mpls_api =
@@ -358,8 +350,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_mpls = &mpls_api.base;
 #endif
-
-
-
-
 

@@ -43,20 +43,20 @@ extern int16_t ftp_data_app_id;
 
 void do_detection(Packet*);
 
-void CleanupFTPServerConf(void *serverConf);
-void CleanupFTPCMDConf(void *ftpCmd);
-void CleanupFTPClientConf(void *clientConf);
-void CleanupFTPBounceTo(void *ftpBounce);
+void CleanupFTPServerConf(void* serverConf);
+void CleanupFTPCMDConf(void* ftpCmd);
+void CleanupFTPClientConf(void* clientConf);
+void CleanupFTPBounceTo(void* ftpBounce);
 
 int CheckFTPServerConfigs(SnortConfig*, FTP_SERVER_PROTO_CONF*);
-int FTPCheckConfigs(SnortConfig*, void* );
+int FTPCheckConfigs(SnortConfig*, void*);
 
 FTP_CLIENT_PROTO_CONF* get_default_ftp_client();
 FTP_SERVER_PROTO_CONF* get_default_ftp_server();
 
 #ifdef PERF_PROFILING
 void ft_update_perf(ProfileStats&);
-#endif 
+#endif
 
 #endif
 

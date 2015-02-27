@@ -16,26 +16,26 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 /**
 **  @file           hi_hbm.h
-**  
+**
 **  @author         Marc Norton <mnorton@sourcefire.com>
-**  
+**
 **  @brief          Header file for Horspool type Boyer-Moore implementation
 */
 #ifndef HI_UTIL_HBM_H
 #define HI_UTIL_HBM_H
 
-typedef struct {
-
- unsigned char *P;
- int            M;
- short          bcShift[256];
-
+typedef struct
+{
+    unsigned char* P;
+    int M;
+    short bcShift[256];
 }HBM_STRUCT;
 
-HBM_STRUCT * hbm_prep(unsigned char * pat, int m);
-unsigned char * hbm_match(HBM_STRUCT * px, unsigned char *text, int n);
+HBM_STRUCT* hbm_prep(unsigned char* pat, int m);
+unsigned char* hbm_match(HBM_STRUCT* px, unsigned char* text, int n);
 
 #endif
+

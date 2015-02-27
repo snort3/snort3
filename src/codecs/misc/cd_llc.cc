@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_llc.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -30,25 +29,21 @@
 #include "log/text_log.h"
 #include "protocols/packet_manager.h"
 
-
 #define LLC_NAME "llc"
 #define LLC_HELP "support for logical link control"
 
 namespace
 {
-
 class LlcCodec : public Codec
 {
 public:
-    LlcCodec() : Codec(LLC_NAME){};
-    ~LlcCodec() {};
-
+    LlcCodec() : Codec(LLC_NAME) { }
+    ~LlcCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
     void get_protocol_ids(std::vector<uint16_t>&) override;
 };
-
 
 struct EthLlc
 {
@@ -65,12 +60,12 @@ struct EthLlcOther
     uint16_t proto() const
     {
 #       if defined(__GNUC__)
-            // fixing the type_punned pointer problem
-            const uint8_t* tmp1 = &proto_id[0];
-            const uint16_t* const tmp2 = reinterpret_cast<const uint16_t*>(tmp1);
-            return ntohs(*tmp2);
+        // fixing the type_punned pointer problem
+        const uint8_t* tmp1 = &proto_id[0];
+        const uint16_t* const tmp2 = reinterpret_cast<const uint16_t*>(tmp1);
+        return ntohs(*tmp2);
 #       else
-            return ntohs(*((uint16_t*)(&proto_id[0])));
+        return ntohs(*((uint16_t*)(&proto_id[0])));
 #       endif
     }
 };
@@ -84,27 +79,23 @@ struct EthLlcOther
 
 #define ETH_ORG_CODE_ETHR 0x000000    /* Encapsulated Ethernet */
 #define ETH_ORG_CODE_CDP  0x00000c    /* Cisco Discovery Proto */
-
 } // namespace
-
 
 void LlcCodec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(PROTO_ETHERNET_LLC); }
 
 bool LlcCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-    if(raw.len < sizeof(EthLlc))
+    if (raw.len < sizeof(EthLlc))
     {
         // FIXIT-L - J - Need a better alert
         codec_event(codec, DECODE_BAD_VLAN_ETHLLC);
         return false;
     }
 
-     const EthLlc *ehllc = reinterpret_cast<const EthLlc *>(raw.data);
+    const EthLlc* ehllc = reinterpret_cast<const EthLlc*>(raw.data);
 
-
-
-    if(ehllc->dsap == ETH_DSAP_IP &&
+    if (ehllc->dsap == ETH_DSAP_IP &&
         ehllc->ssap == ETH_SSAP_IP)
     {
         if (raw.len <  sizeof(EthLlc) + sizeof(EthLlcOther))
@@ -113,7 +104,8 @@ bool LlcCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
             return false;
         }
 
-        const EthLlcOther *ehllcother = reinterpret_cast<const EthLlcOther *>(raw.data + sizeof(EthLlc));
+        const EthLlcOther* ehllcother = reinterpret_cast<const EthLlcOther*>(raw.data +
+            sizeof(EthLlc));
 
         if (ehllcother->org_code[0] == 0 &&
             ehllcother->org_code[1] == 0 &&
@@ -130,17 +122,16 @@ bool LlcCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 void LlcCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const uint16_t /*lyr_len*/)
 {
-    const EthLlc *ehllc = reinterpret_cast<const EthLlc *>(raw_pkt);
+    const EthLlc* ehllc = reinterpret_cast<const EthLlc*>(raw_pkt);
 
     TextLog_Print(text_log, "DSAP:0x%X SSAP:0x%X CTRL:0x%X",
         ehllc->dsap, ehllc->ssap, ehllc->ctrl);
 
     // Assuming that if these three conditions are met, this is SNAP.
-    if(ehllc->dsap == ETH_DSAP_IP &&
+    if (ehllc->dsap == ETH_DSAP_IP &&
         ehllc->ssap == ETH_SSAP_IP)
     {
-
-        const EthLlcOther *other = reinterpret_cast<const EthLlcOther *>(raw_pkt + sizeof(EthLlc));
+        const EthLlcOther* other = reinterpret_cast<const EthLlcOther*>(raw_pkt + sizeof(EthLlc));
         const uint16_t proto = other->proto();
 
         TextLog_Print(text_log, " ORG:0x%02X%02X%02X PROTO:0x%04X",
@@ -149,7 +140,6 @@ void LlcCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     }
 }
 
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
@@ -157,9 +147,8 @@ void LlcCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 static Codec* ctor(Module*)
 { return new LlcCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi llc_api =
 {
@@ -180,7 +169,6 @@ static const CodecApi llc_api =
     dtor,
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -190,3 +178,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_llc = &llc_api.base;
 #endif
+

@@ -17,8 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_linux_sll.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -34,21 +32,18 @@
 
 namespace
 {
-
 class LinuxSllCodec : public Codec
 {
 public:
-    LinuxSllCodec() : Codec(CD_LINUX_SLL_NAME){};
-    ~LinuxSllCodec() {};
+    LinuxSllCodec() : Codec(CD_LINUX_SLL_NAME) { }
+    ~LinuxSllCodec() { }
 
     void get_data_link_type(std::vector<int>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
-
 } // namespace
 
-
-void LinuxSllCodec::get_data_link_type(std::vector<int>&v)
+void LinuxSllCodec::get_data_link_type(std::vector<int>& v)
 {
 #ifdef DLT_LINUX_SLL
     v.push_back(DLT_LINUX_SLL);
@@ -58,7 +53,7 @@ void LinuxSllCodec::get_data_link_type(std::vector<int>&v)
 bool LinuxSllCodec::decode(const RawData& raw, CodecData& data, DecodeData&)
 {
     /* do a little validation */
-    if(raw.len < linux_sll::SLL_HDR_LEN)
+    if (raw.len < linux_sll::SLL_HDR_LEN)
         return false;
 
     /* lay the ethernet structure over the packet data */
@@ -70,8 +65,6 @@ bool LinuxSllCodec::decode(const RawData& raw, CodecData& data, DecodeData&)
     return true;
 }
 
-
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
@@ -79,9 +72,8 @@ bool LinuxSllCodec::decode(const RawData& raw, CodecData& data, DecodeData&)
 static Codec* ctor(Module*)
 { return new LinuxSllCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi linux_ssl_api =
 {
@@ -101,7 +93,6 @@ static const CodecApi linux_ssl_api =
     ctor,
     dtor,
 };
-
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =

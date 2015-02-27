@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 // ipv6.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifndef PROTOCOLS_IPV6_H
 #define PROTOCOLS_IPV6_H
 
@@ -37,17 +36,14 @@
 #endif /* !IFNAMSIZ */
 #endif /* !WIN32 */
 
-
 namespace ip
 {
-
 constexpr uint8_t IP6_HEADER_LEN = 40;
 constexpr uint32_t MIN_EXT_LEN = 8;
 constexpr uint8_t IP6_MULTICAST = 0xFF;  // first/most significant octet
 
 constexpr uint16_t IP6F_MF_MASK = 0x0001; /* more-fragments flag */
 constexpr uint16_t IP6F_RES_MASK = 0x0006; /* reserved bits */
-
 
 enum class MulticastScope : uint8_t
 {
@@ -59,7 +55,6 @@ enum class MulticastScope : uint8_t
     ORG = 0x08,
     GLOBAL = 0x0E,
 };
-
 
 /* IPv6 address */
 struct snort_in6_addr
@@ -77,12 +72,11 @@ struct IP6Hdr
     uint32_t ip6_vtf;               /* 4 bits version, 8 bits TC,len
                                         20 bits flow-ID */
     uint16_t ip6_payload_len;               /* payload length */
-    uint8_t  ip6_next;                /* next header */
-    uint8_t  ip6_hoplim;               /* hop limit */
+    uint8_t ip6_next;                 /* next header */
+    uint8_t ip6_hoplim;                /* hop limit */
 
     snort_in6_addr ip6_src;      /* source address */
     snort_in6_addr ip6_dst;      /* destination address */
-
 
     inline uint16_t len() const
     { return ntohs(ip6_payload_len); }
@@ -106,8 +100,6 @@ struct IP6Hdr
     inline uint32_t flow() const
     { return (uint16_t)((ntohl(ip6_vtf) & 0x000FFFFF) >> 20); }
 
-
-
     // becaise Snort expects this in terms of 32 bit words.
     inline uint8_t hlen() const
     { return IP6_HEADER_LEN; }
@@ -120,7 +112,6 @@ struct IP6Hdr
 
     inline MulticastScope get_dst_multicast_scope() const
     { return static_cast<MulticastScope>(ip6_dst.u6_addr8[1] & 0x0F); }
-
 
     /* booleans */
     inline bool is_src_multicast() const
@@ -144,7 +135,6 @@ struct IP6Hdr
     inline bool is_dst_multicast_scope_global() const
     { return (static_cast<MulticastScope>(ip6_dst.u6_addr8[1]) == MulticastScope::GLOBAL); }
 
-
     /*  setters  */
     inline void set_len(uint16_t new_len)
     { ip6_payload_len = htons(new_len); }
@@ -152,18 +142,14 @@ struct IP6Hdr
     inline void set_proto(uint8_t prot)
     { ip6_next = prot; }
 
-
     inline void set_raw_len(uint16_t new_len)
     { ip6_payload_len = new_len; }
-
 
     /* Access raw data */
 
     inline uint16_t raw_len() const
     { return ip6_payload_len; }
-
 };
-
 
 enum class HopByHopOptions : uint8_t
 {
@@ -182,7 +168,7 @@ enum class HopByHopOptions : uint8_t
 struct IP6Option
 {
     uint8_t type;
-    const uint8_t *data;
+    const uint8_t* data;
 };
 
 /* Generic Extension Header */
@@ -192,16 +178,15 @@ struct IP6Extension
     uint8_t ip6e_len;
     /* options follow */
     uint8_t ip6e_pad[6];
-} ;
-
+};
 
 /* Fragment header */
 struct IP6Frag
 {
-    uint8_t   ip6f_nxt;     /* next header */
-    uint8_t   ip6f_reserved;    /* reserved field */
-    uint16_t  ip6f_offlg;   /* offset, reserved, and flag */
-    uint32_t  ip6f_ident;   /* identification */
+    uint8_t ip6f_nxt;       /* next header */
+    uint8_t ip6f_reserved;      /* reserved field */
+    uint16_t ip6f_offlg;    /* offset, reserved, and flag */
+    uint32_t ip6f_ident;    /* identification */
 
     inline uint8_t next() const
     { return ip6f_nxt; }
@@ -224,8 +209,6 @@ struct IP6Frag
     inline uint8_t res() const
     { return ip6f_reserved; }
 
-
-
     inline uint16_t raw_off_w_flags() const
     { return ip6f_offlg; }
 
@@ -233,24 +216,22 @@ struct IP6Frag
     { return ip6f_ident; }
 };
 
-
 // Reflects the recomended IPv6 order in RFC 2460 4.1
 constexpr int IPV6_ORDER_MAX = 7;
 static inline int IPV6ExtensionOrder(uint8_t type)
 {
     switch (type)
     {
-        case IPPROTO_ID_HOPOPTS:   return 1;
-        case IPPROTO_ID_DSTOPTS:   return 2;
-        case IPPROTO_ID_ROUTING:   return 3;
-        case IPPROTO_ID_FRAGMENT:  return 4;
-        case IPPROTO_ID_AUTH:      return 5;
-        case IPPROTO_ID_ESP:       return 6;
-        default:                   return IPV6_ORDER_MAX;
+    case IPPROTO_ID_HOPOPTS:   return 1;
+    case IPPROTO_ID_DSTOPTS:   return 2;
+    case IPPROTO_ID_ROUTING:   return 3;
+    case IPPROTO_ID_FRAGMENT:  return 4;
+    case IPPROTO_ID_AUTH:      return 5;
+    case IPPROTO_ID_ESP:       return 6;
+    default:                   return IPV6_ORDER_MAX;
     }
 }
-
-
 } // namespace ipv6
 
 #endif
+

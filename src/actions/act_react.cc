@@ -109,7 +109,7 @@ class ReactAction : public IpsAction
 {
 public:
     ReactAction(ReactData* c) : IpsAction(s_name, ACT_PROXY)
-    { config = c; };
+    { config = c; }
 
     ~ReactAction();
 
@@ -151,7 +151,7 @@ void ReactAction::exec(Packet* p)
     MODULE_PROFILE_END(reactPerfStats);
 }
 
-void ReactAction::send (Packet* p)
+void ReactAction::send(Packet* p)
 {
     EncodeFlags df = (p->packet_flags & PKT_FROM_SERVER) ? ENC_FLAG_FWD : 0;
     EncodeFlags rf = ENC_FLAG_SEQ | (ENC_FLAG_VAL & config->buf_len);
@@ -169,7 +169,7 @@ void ReactAction::send (Packet* p)
 // implementation foo
 //-------------------------------------------------------------------------
 
-static bool react_getpage (const char* file)
+static bool react_getpage(const char* file)
 {
     char* msg;
     char* percent_s;
@@ -203,7 +203,8 @@ static bool react_getpage (const char* file)
 
     s_page[n] = '\0';
     msg = strstr(s_page, MSG_KEY);
-    if ( msg ) strncpy(msg, "%s", 2);
+    if ( msg )
+        strncpy(msg, "%s", 2);
 
     // search for %
     percent_s = strstr(s_page, MSG_PERCENT);
@@ -226,7 +227,7 @@ static bool react_getpage (const char* file)
 //--------------------------------------------------------------------
 
 // format response buffer
-static void react_config (ReactData* rd)
+static void react_config(ReactData* rd)
 {
     size_t body_len, head_len, total_len;
     char dummy;
@@ -267,13 +268,13 @@ static const Parameter s_params[] =
 class ReactModule : public Module
 {
 public:
-    ReactModule() : Module(s_name, s_help, s_params) { };
+    ReactModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &reactPerfStats; };
+    { return &reactPerfStats; }
 
     bool msg;
 };

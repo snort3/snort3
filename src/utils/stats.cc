@@ -89,13 +89,13 @@ void LogLabel(const char* s)
     }
 }
 
-void LogCount (const char* s, uint64_t c)
+void LogCount(const char* s, uint64_t c)
 {
     if ( c )
         LogMessage("%25.25s: " STDu64 "\n", s, c);
 }
 
-void LogStat (const char* s, uint64_t n, uint64_t tot)
+void LogStat(const char* s, uint64_t n, uint64_t tot)
 {
 #ifdef VALGRIND_TESTING
     LogMessage("%25.25s: " FMTu64("-12") "\n", s, n);
@@ -104,7 +104,7 @@ void LogStat (const char* s, uint64_t n, uint64_t tot)
 #endif
 }
 
-void LogStat (const char* s, double d)
+void LogStat(const char* s, double d)
 {
     LogMessage("%25.25s: %g\n", s, d);
 }
@@ -113,12 +113,12 @@ void LogStat (const char* s, double d)
 
 static struct timeval starttime, endtime;
 
-void TimeStart (void)
+void TimeStart(void)
 {
     gettimeofday(&starttime, NULL);
 }
 
-void TimeStop (void)
+void TimeStop(void)
 {
     gettimeofday(&endtime, NULL);
 }
@@ -130,7 +130,8 @@ static void timing_stats()
 
     uint32_t tmp = (uint32_t)difftime.tv_sec;
     uint32_t total_secs = tmp;
-    if ( total_secs < 1 ) total_secs = 1;
+    if ( total_secs < 1 )
+        total_secs = 1;
 
     uint32_t hrs  = tmp / SECONDS_PER_HOUR;
     tmp  = tmp % SECONDS_PER_HOUR;
@@ -282,7 +283,7 @@ static void get_daq_stats(DAQStats& daq_stats)
     daq_stats.internal_blacklist = gaux.internal_blacklist;
     daq_stats.internal_whitelist = gaux.internal_whitelist;
 #ifdef REG_TEST
-    daq_stats.skipped = snort_conf->pkt_skip; 
+    daq_stats.skipped = snort_conf->pkt_skip;
 #endif
     daq_stats.fail_open = gaux.total_fail_open;
     daq_stats.idle = gaux.idle;
@@ -325,8 +326,8 @@ void DropStats()
 
 //-------------------------------------------------------------------------
 
-void PrintStatistics (void)
-{   
+void PrintStatistics(void)
+{
     DropStats();
     timing_stats();
 
@@ -337,11 +338,11 @@ void PrintStatistics (void)
 #ifdef PERF_PROFILING
     {
         int save_quiet_flag = snort_conf->logging_flags & LOGGING_FLAG__QUIET;
-    
+
         snort_conf->logging_flags &= ~LOGGING_FLAG__QUIET;
-    
+
         ShowAllProfiles();
-    
+
         snort_conf->logging_flags |= save_quiet_flag;
     }
 #endif
@@ -386,7 +387,6 @@ void show_percent_stats(
     PegCount* pegs, const char* names[], unsigned n, const char* module_name)
 {
     bool head = false;
-
 
     for ( unsigned i = 0; i < n; ++i )
     {

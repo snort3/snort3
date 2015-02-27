@@ -17,7 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 // strvec.h author Russ Combs <rcombs@sourcefire.com>
- 
+
 #ifndef STRVEC_H
 #define STRVEC_H
 

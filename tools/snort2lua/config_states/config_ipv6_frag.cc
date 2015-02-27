@@ -26,20 +26,18 @@
 
 namespace config
 {
-
-namespace {
-
+namespace
+{
 class Ipv6Frag : public ConversionState
 {
 public:
-    Ipv6Frag(Converter& c) : ConversionState(c) {};
-    virtual ~Ipv6Frag() {};
+    Ipv6Frag(Converter& c) : ConversionState(c) { }
+    virtual ~Ipv6Frag() { }
     virtual bool convert(std::istringstream& data_stream);
 
 private:
     void add_deleted_option(std::string opt);
 };
-
 } // namespace
 
 void Ipv6Frag::add_deleted_option(std::string dlt_opt)
@@ -86,7 +84,6 @@ bool Ipv6Frag::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("session_timeout", arg_stream, false);
             table_api.close_table();
         }
-
         else
         {
             tmpval = false;
@@ -115,5 +112,5 @@ static const ConvertMap ipv6_frag_api =
 };
 
 const ConvertMap* ipv6_frag_map = &ipv6_frag_api;
-
 } // namespace config
+

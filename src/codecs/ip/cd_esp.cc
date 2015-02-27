@@ -18,8 +18,6 @@
 //--------------------------------------------------------------------------
 // cd_esp.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -34,13 +32,11 @@
 
 namespace
 {
-
 static const RuleMap esp_rules[] =
 {
     { DECODE_ESP_HEADER_TRUNC, "truncated encapsulated security payload header" },
     { 0, nullptr }
 };
-
 
 static const Parameter esp_params[] =
 {
@@ -53,11 +49,10 @@ static const Parameter esp_params[] =
 class EspModule : public CodecModule
 {
 public:
-    EspModule() : CodecModule(CD_ESP_NAME, CD_ESP_HELP, esp_params) {}
+    EspModule() : CodecModule(CD_ESP_NAME, CD_ESP_HELP, esp_params) { }
 
     const RuleMap* get_rules() const override
     { return esp_rules; }
-
 
     bool set(const char*, Value& v, SnortConfig* sc) override
     {
@@ -70,32 +65,24 @@ public:
     }
 };
 
-
 class EspCodec : public Codec
 {
 public:
-    EspCodec() : Codec(CD_ESP_NAME){};
-    ~EspCodec(){};
-
+    EspCodec() : Codec(CD_ESP_NAME) { }
+    ~EspCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
-
 /* ESP constants */
 constexpr uint32_t ESP_HEADER_LEN = 8;
 constexpr uint32_t ESP_AUTH_DATA_LEN = 12;
 constexpr uint32_t ESP_TRAILER_LEN = 2;
-
 } // anonymous namespace
-
-
 
 void EspCodec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(IPPROTO_ID_ESP); }
-
-
 
 /*
  * Function: DecodeESP(const uint8_t *, uint32_t, Packet *)
@@ -109,12 +96,11 @@ void EspCodec::get_protocol_ids(std::vector<uint16_t>& v)
  */
 bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
-    const uint8_t *esp_payload;
+    const uint8_t* esp_payload;
     uint8_t pad_length;
 
     if (!ScESPDecoding())
         return false;
-    
 
     /* The ESP header contains a crypto Initialization Vector (IV) and
        a sequence number. Skip these. */
@@ -138,7 +124,6 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     pad_length = *(esp_payload + guessed_len);
     codec.next_prot_id = *(esp_payload + guessed_len + 1);
 
-
     // must be called AFTER setting next_prot_id
     if (snort.ip_api.is_ip6())
     {
@@ -148,13 +133,11 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             return false;
         }
 
-
         CheckIPv6ExtensionOrder(codec, IPPROTO_ID_ESP);
         codec.proto_bits |= PROTO_BIT__IP6_EXT;
         codec.ip6_csum_proto = codec.next_prot_id;
         codec.ip6_extension_count++;
     }
-
 
     // TODO:  Leftover from Snort. Do we really want thsi?
     const_cast<uint32_t&>(raw.len) -= (ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
@@ -172,7 +155,6 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         codec.next_prot_id = FINISHED_DECODE;
         return true;
     }
-
 
     /* Attempt to decode the inner payload.
        There is a small chance that an encrypted next_header would become a
@@ -193,7 +175,6 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     return true;
 }
 
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
@@ -207,7 +188,7 @@ static void mod_dtor(Module* m)
 static Codec* ctor(Module*)
 { return new EspCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi esp_api =
@@ -229,7 +210,6 @@ static const CodecApi esp_api =
     dtor, // dtor
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -239,3 +219,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_esp = &esp_api.base;
 #endif
+

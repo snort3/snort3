@@ -80,15 +80,16 @@ int DAQ_BreakLoop(int error, void* handle = nullptr);
 #ifdef HAVE_DAQ_ACQUIRE_WITH_META
 void DAQ_Set_MetaCallback(DAQ_Meta_Func_t meta_callback);
 #endif
-SO_PUBLIC DAQ_Mode DAQ_GetInterfaceMode(const DAQ_PktHdr_t *h);
+SO_PUBLIC DAQ_Mode DAQ_GetInterfaceMode(const DAQ_PktHdr_t* h);
 
 int DAQ_ModifyFlow(const void* h, uint32_t id);
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-static inline uint16_t DAQ_GetAddressSpaceID(const DAQ_PktHdr_t *h)
+static inline uint16_t DAQ_GetAddressSpaceID(const DAQ_PktHdr_t* h)
 {
     return h->address_space_id;
 }
+
 #endif
 
 // returns total stats if no daq else current stats

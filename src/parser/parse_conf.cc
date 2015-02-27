@@ -76,7 +76,7 @@ struct Location
     unsigned line;
 
     Location(const char* s, unsigned u)
-    { file = s; line = u; };
+    { file = s; line = u; }
 };
 
 static std::stack<Location> files;
@@ -102,7 +102,7 @@ void get_parse_location(const char*& file, unsigned& line)
     file = loc.file.c_str();
     line = loc.line;
 }
-    
+
 void push_parse_location(const char* file, unsigned line)
 {
     if ( !file )
@@ -129,7 +129,7 @@ void inc_parse_position()
     ++loc.line;
 }
 
-void parse_include(SnortConfig *sc, const char *arg)
+void parse_include(SnortConfig* sc, const char* arg)
 {
     struct stat file_stat;  /* for include path testing */
     char* fname = SnortStrdup(arg);
@@ -143,7 +143,7 @@ void parse_include(SnortConfig *sc, const char *arg)
         int path_len = strlen(snort_conf_dir) + strlen(arg) + 1;
         free(fname);
 
-        fname = (char *)SnortAlloc(path_len);
+        fname = (char*)SnortAlloc(path_len);
         snprintf(fname, path_len, "%s%s", snort_conf_dir, arg);
     }
 
@@ -153,36 +153,37 @@ void parse_include(SnortConfig *sc, const char *arg)
     free((char*)fname);
 }
 
-void ParseIpVar(SnortConfig *sc, const char* var, const char* val)
+void ParseIpVar(SnortConfig* sc, const char* var, const char* val)
 {
     int ret;
     IpsPolicy* p = get_ips_policy(); // FIXIT-M double check, see below
     DisallowCrossTableDuplicateVars(sc, var, VAR_TYPE__IPVAR);
 
-    if((ret = sfvt_define(p->ip_vartable, var, val)) != SFIP_SUCCESS)
+    if ((ret = sfvt_define(p->ip_vartable, var, val)) != SFIP_SUCCESS)
     {
-        switch(ret) {
-            case SFIP_ARG_ERR:
-                ParseError("the following is not allowed: %s.", val);
-                return;
+        switch (ret)
+        {
+        case SFIP_ARG_ERR:
+            ParseError("the following is not allowed: %s.", val);
+            return;
 
-            case SFIP_DUPLICATE:
-                ParseWarning("Var '%s' redefined.", var);
-                break;
+        case SFIP_DUPLICATE:
+            ParseWarning("Var '%s' redefined.", var);
+            break;
 
-            case SFIP_CONFLICT:
-                ParseError("negated IP ranges that are more general than "
-                        "non-negated ranges are not allowed. Consider "
-                        "inverting the logic in %s.", var);
-                return;
+        case SFIP_CONFLICT:
+            ParseError("negated IP ranges that are more general than "
+                "non-negated ranges are not allowed. Consider "
+                "inverting the logic in %s.", var);
+            return;
 
-            case SFIP_NOT_ANY:
-                ParseError("!any is not allowed in %s.", var);
-                return;
+        case SFIP_NOT_ANY:
+            ParseError("!any is not allowed in %s.", var);
+            return;
 
-            default:
-                ParseError("failed to parse the IP address: %s.", val);
-                return;
+        default:
+            ParseError("failed to parse the IP address: %s.", val);
+            return;
         }
     }
 }
@@ -196,12 +197,12 @@ void add_service_to_otn(
     }
     else
     {
-        char *svc_name;
+        char* svc_name;
         int svc_count = otn->sigInfo.num_services;
 
         if (otn->sigInfo.services == NULL)
         {
-            otn->sigInfo.services = 
+            otn->sigInfo.services =
                 (ServiceInfo*)SnortAlloc(sizeof(ServiceInfo) * sc->max_metadata_services);
         }
 
@@ -222,12 +223,12 @@ void add_service_to_otn(
 // or we are going to just alert instead of drop,
 // or we are going to ignore session data instead of drop.
 // the alert case is tested for separately with ScTreatDropAsAlert().
-static inline int ScKeepDropRules (void)
+static inline int ScKeepDropRules(void)
 {
     return ( ScInlineMode() || ScAdapterInlineMode() || ScTreatDropAsIgnore() );
 }
 
-static inline int ScLoadAsDropRules (void)
+static inline int ScLoadAsDropRules(void)
 {
     return ( ScInlineTestMode() || ScAdapterInlineTestMode() );
 }
@@ -275,7 +276,7 @@ ListHead* get_rule_list(SnortConfig* sc, const char* s)
 
     while ( p && strcmp(p->name, s) )
         p = p->next;
-    
+
     return p ? p->RuleList : nullptr;
 }
 
@@ -285,7 +286,7 @@ void AddRuleState(SnortConfig* sc, const RuleState& rs)
     if (sc == NULL)
         return;
 
-    RuleState* state = (RuleState *)SnortAlloc(sizeof(RuleState));
+    RuleState* state = (RuleState*)SnortAlloc(sizeof(RuleState));
     *state = rs;
 
     if ( !sc->rule_state_list )
@@ -299,7 +300,7 @@ void AddRuleState(SnortConfig* sc, const RuleState& rs)
     }
 }
 
-void ParseConfigFile(SnortConfig *sc, const char *fname)
+void ParseConfigFile(SnortConfig* sc, const char* fname)
 {
     if ( !fname )
         return;

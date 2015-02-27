@@ -16,7 +16,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 #ifndef ASN1_H
 #define ASN1_H
 
@@ -42,7 +42,7 @@
 #define SF_ASN1_TAG_MASK      0x1f
 
 #define SF_ASN1_TAG_RSV_ENC   0
-#define SF_ASN1_TAG_BOOL      1 
+#define SF_ASN1_TAG_BOOL      1
 #define SF_ASN1_TAG_INT       2
 #define SF_ASN1_TAG_BIT_STR   3
 #define SF_ASN1_TAG_OCT_STR   4
@@ -56,11 +56,11 @@
 #define SF_ASN1_TAG_REL_OBJ   13
 
 #define SF_ASN1_TAG_SEQ       16
-#define SF_ASN1_TAG_SET       17 
+#define SF_ASN1_TAG_SET       17
 
 #define SF_ASN1_TAG_UTF8_STR  12
 #define SF_ASN1_TAG_NUM_STR   18
-#define SF_ASN1_TAG_PRINT_STR 19 
+#define SF_ASN1_TAG_PRINT_STR 19
 #define SF_ASN1_TAG_T61_STR   20
 #define SF_ASN1_TAG_VID_STR   21
 #define SF_ASN1_TAG_IA5_STR   22
@@ -86,49 +86,46 @@
 struct ASN1_LEN
 {
     unsigned char type;
-    unsigned int  size;
+    unsigned int size;
 };
 
 struct ASN1_IDENT
 {
-    unsigned char  asn1_class;
-    unsigned char  flag;
-    unsigned char  tag_type;
-    unsigned int   tag;
+    unsigned char asn1_class;
+    unsigned char flag;
+    unsigned char tag_type;
+    unsigned int tag;
 };
 
 struct ASN1_TYPE
 {
     ASN1_IDENT ident;
-    ASN1_LEN   len;
-    
-    const unsigned char     *data;
-    unsigned int      data_len;
+    ASN1_LEN len;
 
-    unsigned char     eoc;
+    const unsigned char* data;
+    unsigned int data_len;
 
-    struct ASN1_TYPE  *next;
-    struct ASN1_TYPE  *cnext;
-    
+    unsigned char eoc;
+
+    struct ASN1_TYPE* next;
+    struct ASN1_TYPE* cnext;
 };
 
 struct ASN1_DATA
 {
-    const unsigned char *data;
-    const unsigned char *start;
-    const unsigned char *end;
-    unsigned int   len;
+    const unsigned char* data;
+    const unsigned char* start;
+    const unsigned char* end;
+    unsigned int len;
 };
 
 struct ASN1_CONFIG
 {
-    ASN1_TYPE *mem;
+    ASN1_TYPE* mem;
     int num_nodes;
-
 };
 
 struct SnortConfig;
-
 
 /*
 **  Error Codes
@@ -149,9 +146,10 @@ struct SnortConfig;
 
 void asn1_init_mem(SnortConfig*);
 void asn1_free_mem(SnortConfig*);
-int asn1_decode(const unsigned char *data, unsigned int len, ASN1_TYPE **asn1_type);
-int asn1_print_types(ASN1_TYPE *asn1_type, void *user);
-int asn1_traverse(ASN1_TYPE *asn1, void * user, 
-                  int (*DetectFunc)(ASN1_TYPE *, void *));
+int asn1_decode(const unsigned char* data, unsigned int len, ASN1_TYPE** asn1_type);
+int asn1_print_types(ASN1_TYPE* asn1_type, void* user);
+int asn1_traverse(ASN1_TYPE* asn1, void* user,
+    int (* DetectFunc)(ASN1_TYPE*, void*));
 
 #endif
+

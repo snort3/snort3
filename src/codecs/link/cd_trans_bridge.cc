@@ -17,9 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_trans_bridge.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -33,27 +30,22 @@
 
 namespace
 {
-
 #define CD_TRANSBRIDGE_NAME "trans_bridge"
 #define CD_TRANSBRIDGE_HELP "support for trans-bridging"
 
 class TransbridgeCodec : public Codec
 {
 public:
-    TransbridgeCodec() : Codec(CD_TRANSBRIDGE_NAME){};
-    ~TransbridgeCodec(){};
-
+    TransbridgeCodec() : Codec(CD_TRANSBRIDGE_NAME) { }
+    ~TransbridgeCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
-
 } // anonymous namespace
-
 
 void TransbridgeCodec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(ETHERTYPE_TRANS_ETHER_BRIDGING); }
-
 
 /*
  * Function: DecodeTransBridging(uint8_t *, const uint32_t, Packet)
@@ -73,7 +65,7 @@ void TransbridgeCodec::get_protocol_ids(std::vector<uint16_t>& v)
  */
 bool TransbridgeCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-    if(raw.len < eth::ETH_HEADER_LEN)
+    if (raw.len < eth::ETH_HEADER_LEN)
     {
         codec_event(codec, DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR);
         return false;
@@ -91,7 +83,6 @@ bool TransbridgeCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     return true;
 }
 
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
@@ -99,7 +90,7 @@ bool TransbridgeCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 static Codec* ctor(Module*)
 { return new TransbridgeCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi transbridge_api =
@@ -121,7 +112,6 @@ static const CodecApi transbridge_api =
     dtor, // dtor
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -131,7 +121,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_transbridge = &transbridge_api.base;
 #endif
-
-
-
 

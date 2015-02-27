@@ -30,7 +30,7 @@ void Markup::enable(bool e)
 const char hn[] = "========== ";
 
 const char* Markup::head(unsigned level)
-{ 
+{
     unsigned max = strlen(hn);
 
     if ( level >= max )
@@ -74,8 +74,8 @@ const string& Markup::escape(const string& s)
     if (enabled)
     {
         for (size_t found = m.find_first_of(asciidoc_chars, 0);
-             found != string::npos;
-             found = m.find_first_of(asciidoc_chars, found))
+            found != string::npos;
+            found = m.find_first_of(asciidoc_chars, found))
         {
             m.insert(found, "\\");
             found +=2;
@@ -84,3 +84,4 @@ const string& Markup::escape(const string& s)
 #endif
     return m;
 }
+

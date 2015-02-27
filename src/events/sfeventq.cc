@@ -69,25 +69,25 @@
 **  @retval -1 failure
 **  @retval  0 success
 */
-SF_EVENTQ * sfeventq_new(int max_nodes, int log_nodes, int event_size)
+SF_EVENTQ* sfeventq_new(int max_nodes, int log_nodes, int event_size)
 {
-    SF_EVENTQ *eq;
+    SF_EVENTQ* eq;
 
     if ((max_nodes <= 0) || (log_nodes <= 0) || (event_size <= 0))
         return NULL;
 
-    eq = (SF_EVENTQ *)SnortAlloc(sizeof(SF_EVENTQ));
+    eq = (SF_EVENTQ*)SnortAlloc(sizeof(SF_EVENTQ));
 
     /* Initialize the memory for the nodes that we are going to use. */
-    eq->node_mem = (SF_EVENTQ_NODE *)SnortAlloc(sizeof(SF_EVENTQ_NODE) * max_nodes);
-    eq->event_mem = (char *)SnortAlloc(event_size * (max_nodes + 1));
+    eq->node_mem = (SF_EVENTQ_NODE*)SnortAlloc(sizeof(SF_EVENTQ_NODE) * max_nodes);
+    eq->event_mem = (char*)SnortAlloc(event_size * (max_nodes + 1));
 
     eq->max_nodes = max_nodes;
     eq->log_nodes = log_nodes;
     eq->event_size = event_size;
     eq->cur_nodes = 0;
     eq->cur_events = 0;
-    eq->reserve_event = (char *)(&eq->event_mem[max_nodes * eq->event_size]);
+    eq->reserve_event = (char*)(&eq->event_mem[max_nodes * eq->event_size]);
 
     return eq;
 }
@@ -108,22 +108,22 @@ SF_EVENTQ * sfeventq_new(int max_nodes, int log_nodes, int event_size)
 **  @retval  NULL unable to allocate memory.
 **  @retval !NULL ptr to memory.
 */
-void * sfeventq_event_alloc(SF_EVENTQ *eq)
+void* sfeventq_event_alloc(SF_EVENTQ* eq)
 {
-    void *event;
+    void* event;
 
     if (eq->cur_events >= eq->max_nodes)
     {
         if (eq->reserve_event == NULL)
             return NULL;
 
-        event = (void *)eq->reserve_event;
+        event = (void*)eq->reserve_event;
         eq->reserve_event = NULL;
 
         return event;
     }
 
-    event = (void *)(&eq->event_mem[eq->cur_events * eq->event_size]);
+    event = (void*)(&eq->event_mem[eq->cur_events * eq->event_size]);
 
     eq->cur_events++;
 
@@ -140,12 +140,12 @@ void * sfeventq_event_alloc(SF_EVENTQ *eq)
 **
 **  @return void
 */
-void sfeventq_reset(SF_EVENTQ *eq)
+void sfeventq_reset(SF_EVENTQ* eq)
 {
     eq->head = NULL;
     eq->cur_nodes = 0;
     eq->cur_events = 0;
-    eq->reserve_event = (char *)(&eq->event_mem[eq->max_nodes * eq->event_size]);
+    eq->reserve_event = (char*)(&eq->event_mem[eq->max_nodes * eq->event_size]);
 }
 
 /*
@@ -158,7 +158,7 @@ void sfeventq_reset(SF_EVENTQ *eq)
 **  @return none
 **
 */
-void sfeventq_free(SF_EVENTQ *eq)
+void sfeventq_free(SF_EVENTQ* eq)
 {
     if (eq == NULL)
         return;
@@ -199,7 +199,7 @@ void sfeventq_free(SF_EVENTQ *eq)
 **  @retval NULL resource exhaustion and event is lower priority than last node
 **  @retval !NULL ptr to node memory.
 */
-static SF_EVENTQ_NODE * get_eventq_node(SF_EVENTQ *eq, void*)
+static SF_EVENTQ_NODE* get_eventq_node(SF_EVENTQ* eq, void*)
 {
     if (eq->cur_nodes >= eq->max_nodes)
         return NULL;
@@ -225,11 +225,11 @@ static SF_EVENTQ_NODE * get_eventq_node(SF_EVENTQ *eq, void*)
 **  @retval -1 add event failed
 **  @retval  0 add event succeeded
 */
-int sfeventq_add(SF_EVENTQ *eq, void *event)
+int sfeventq_add(SF_EVENTQ* eq, void* event)
 {
-    SF_EVENTQ_NODE *node;
+    SF_EVENTQ_NODE* node;
 
-    if(!event)
+    if (!event)
         return -1;
 
     /*
@@ -239,7 +239,7 @@ int sfeventq_add(SF_EVENTQ *eq, void *event)
     **  So we just drop it.
     */
     node = get_eventq_node(eq, event);
-    if(!node)
+    if (!node)
         return -1;
 
     node->event = event;
@@ -249,7 +249,7 @@ int sfeventq_add(SF_EVENTQ *eq, void *event)
     /*
     **  This is the first node
     */
-    if(eq->cur_nodes == 1)
+    if (eq->cur_nodes == 1)
     {
         eq->head = eq->last = node;
         return 0;
@@ -280,9 +280,9 @@ int sfeventq_add(SF_EVENTQ *eq, void *event)
 **  @retval  0 no events logged
 **  @retval  1 events logged
 */
-int sfeventq_action(SF_EVENTQ *eq, int (*action_func)(void *, void *), void *user)
+int sfeventq_action(SF_EVENTQ* eq, int (* action_func)(void*, void*), void* user)
 {
-    SF_EVENTQ_NODE *node;
+    SF_EVENTQ_NODE* node;
     int logged = 0;
 
     if (action_func == NULL)
@@ -311,57 +311,57 @@ int sfeventq_action(SF_EVENTQ *eq, int (*action_func)(void *, void *), void *use
 #include <stdio.h>
 #include <time.h>
 
-int myaction(void *event, void *user)
+int myaction(void* event, void* user)
 {
-    int *e;
+    int* e;
 
-    if(!event)
+    if (!event)
         return 1;
 
-    e = (int *)event;
+    e = (int*)event;
 
     printf("-- EVENT: %d\n", *e);
 
     return 0;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-    int  max_events;
-    int  log_events;
-    int  add_events;
-    int *event;
-    int  iCtr;
-    SF_EVENTQ *eq;
+    int max_events;
+    int log_events;
+    int add_events;
+    int* event;
+    int iCtr;
+    SF_EVENTQ* eq;
 
-    if(argc < 4)
+    if (argc < 4)
     {
         printf("-- Not enough args\n");
         return 1;
     }
 
     max_events = atoi(argv[1]);
-    if(max_events <= 0)
+    if (max_events <= 0)
     {
         printf("-- max_events invalid.\n");
         return 1;
     }
 
     log_events = atoi(argv[2]);
-    if(log_events <= 0)
+    if (log_events <= 0)
     {
         printf("-- log_events invalid.\n");
         return 1;
     }
 
     add_events = atoi(argv[3]);
-    if(add_events <= 0)
+    if (add_events <= 0)
     {
         printf("-- add_events invalid.\n");
         return 1;
     }
 
-    if(max_events < log_events)
+    if (max_events < log_events)
     {
         printf("-- log_events greater than max_events\n");
         return 1;
@@ -380,10 +380,10 @@ int main(int argc, char **argv)
     {
         printf("-- Event Queue Test --\n\n");
 
-        for(iCtr = 0; iCtr < add_events; iCtr++)
+        for (iCtr = 0; iCtr < add_events; iCtr++)
         {
-            event  = (int *)sfeventq_event_alloc(eq);
-            if(!event)
+            event  = (int*)sfeventq_event_alloc(eq);
+            if (!event)
             {
                 printf("-- event allocation failed\n");
                 return 1;
@@ -397,16 +397,18 @@ int main(int argc, char **argv)
 
         printf("\n-- Logging\n\n");
 
-        if(sfeventq_action(eq, myaction, NULL))
+        if (sfeventq_action(eq, myaction, NULL))
         {
             printf("-- There was a problem.\n");
             return 1;
         }
 
         sfeventq_reset(eq);
-
-    } while(getc(stdin) < 14);
+    }
+    while (getc(stdin) < 14);
 
     return 0;
 }
+
 #endif
+

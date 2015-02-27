@@ -40,19 +40,19 @@ static THREAD_LOCAL uint32_t t_flags = 0;
 #define ON "on"
 #define OFF "off"
 
-static inline void LogConf (const char* p, const char* s)
+static inline void LogConf(const char* p, const char* s)
 {
     LogMessage("%12s: %s\n", p, s);
 }
 
-static inline void LogFlag (
+static inline void LogFlag(
     const char* p, const NormalizerConfig* nc, NormFlags nf)
 {
     const char* s = Norm_IsEnabled(nc, nf) ? ON : OFF;
     LogConf(p, s);
 }
 
-static void Print_IP4 (SnortConfig*, const NormalizerConfig* nc)
+static void Print_IP4(SnortConfig*, const NormalizerConfig* nc)
 {
     if ( !Norm_IsEnabled(nc, (NormFlags)NORM_IP4_ANY) )
         return;
@@ -67,19 +67,19 @@ static void Print_IP4 (SnortConfig*, const NormalizerConfig* nc)
     if ( Norm_IsEnabled(nc, NORM_IP4_TTL) )
     {
         NetworkPolicy* policy = get_network_policy();
-        LogMessage("%12s: %s (min=%d, new=%d)\n", "ip4.ttl", ON, 
+        LogMessage("%12s: %s (min=%d, new=%d)\n", "ip4.ttl", ON,
             policy->min_ttl, policy->new_ttl);
     }
     else
         LogConf("ip4.ttl", OFF);
 }
 
-static void Print_ICMP4 (const NormalizerConfig* nc)
+static void Print_ICMP4(const NormalizerConfig* nc)
 {
     LogFlag("icmp4", nc, NORM_ICMP4);
 }
 
-static void Print_IP6 (SnortConfig*, const NormalizerConfig* nc)
+static void Print_IP6(SnortConfig*, const NormalizerConfig* nc)
 {
     if ( !Norm_IsEnabled(nc, (NormFlags)NORM_IP6_ANY) )
         return;
@@ -94,12 +94,12 @@ static void Print_IP6 (SnortConfig*, const NormalizerConfig* nc)
     }
 }
 
-static void Print_ICMP6 (const NormalizerConfig* nc)
+static void Print_ICMP6(const NormalizerConfig* nc)
 {
     LogFlag("icmp6", nc, NORM_ICMP6);
 }
 
-static void Print_TCP (const NormalizerConfig* nc)
+static void Print_TCP(const NormalizerConfig* nc)
 {
     if ( !Norm_IsEnabled(nc, (NormFlags)NORM_TCP_ANY) )
         return;
@@ -242,7 +242,7 @@ void Normalizer::show(SnortConfig* sc)
     Print_TCP(&config);
 }
 
-void Normalizer::eval(Packet *p)
+void Normalizer::eval(Packet* p)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(norm_perf_stats);
@@ -251,7 +251,6 @@ void Normalizer::eval(Packet *p)
         Norm_Packet(&config, p);
 
     MODULE_PROFILE_END(norm_perf_stats);
-    return;
 }
 
 //-------------------------------------------------------------------------

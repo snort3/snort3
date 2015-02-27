@@ -57,7 +57,6 @@ typedef struct _RpcCheckData
     u_long vers; /* RPC program version */
     u_long proc; /* RPC procedure number */
     int flags; /* Which of the above fields have been specified */
-
 } RpcCheckData;
 
 #define RPC_CHECK_PROG 1
@@ -69,7 +68,7 @@ class RpcOption : public IpsOption
 public:
     RpcOption(const RpcCheckData& c) :
         IpsOption(s_name)
-    { config = c; };
+    { config = c; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -87,7 +86,7 @@ private:
 uint32_t RpcOption::hash() const
 {
     uint32_t a,b,c;
-    const RpcCheckData *data = &config;
+    const RpcCheckData* data = &config;
 
     a = data->program;
     b = data->vers;
@@ -109,8 +108,8 @@ bool RpcOption::operator==(const IpsOption& ips) const
         return false;
 
     RpcOption& rhs = (RpcOption&)ips;
-    RpcCheckData *left = (RpcCheckData*)&config;
-    RpcCheckData *right = (RpcCheckData*)&rhs.config;
+    RpcCheckData* left = (RpcCheckData*)&config;
+    RpcCheckData* right = (RpcCheckData*)&rhs.config;
 
     if ((left->program == right->program) &&
         (left->vers == right->vers) &&
@@ -123,9 +122,9 @@ bool RpcOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int RpcOption::eval(Cursor&, Packet *p)
+int RpcOption::eval(Cursor&, Packet* p)
 {
-    RpcCheckData *ds_ptr = &config;
+    RpcCheckData* ds_ptr = &config;
     unsigned char* c=(unsigned char*)p->data;
     u_long rpcvers, prog, vers, proc;
     enum msg_type direction;
@@ -141,24 +140,24 @@ int RpcOption::eval(Cursor&, Packet *p)
 
     MODULE_PROFILE_START(rpcCheckPerfStats);
 
-    if( p->is_tcp() )
+    if ( p->is_tcp() )
     {
         /* offset to rpc_msg */
         c+=4;
         /* Fail if the packet is too short to match */
-        if(p->dsize<28)
+        if (p->dsize<28)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "RPC packet too small"););
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "RPC packet too small"); );
             MODULE_PROFILE_END(rpcCheckPerfStats);
             return rval;
         }
     }
     else
-    { /* must be UDP */
-        /* Fail if the packet is too short to match */
-        if(p->dsize<24)
+    { /* must be UDP
+         Fail if the packet is too short to match */
+        if (p->dsize<24)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "RPC packet too small"););
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "RPC packet too small"); );
             MODULE_PROFILE_END(rpcCheckPerfStats);
             return rval;
         }
@@ -166,12 +165,12 @@ int RpcOption::eval(Cursor&, Packet *p)
 
 #ifdef DEBUG_MSGS
     DebugMessage(DEBUG_PLUGIN,"<---xid---> <---dir---> <---rpc--->"
-                              " <---prog--> <---vers--> <---proc-->\n");
-    for(i=0; i<24; i++)
+        " <---prog--> <---vers--> <---proc-->\n");
+    for (i=0; i<24; i++)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "%02X ",c[i]););
+        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "%02X ",c[i]); );
     }
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"\n"); );
 #endif
 
     /* Read xid */
@@ -181,9 +180,9 @@ int RpcOption::eval(Cursor&, Packet *p)
     direction = IXDR_GET_ENUM (c, enum msg_type);
 
     /* We only look at calls */
-    if(direction != CALL)
+    if (direction != CALL)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "RPC packet not a call"););
+        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "RPC packet not a call"); );
         MODULE_PROFILE_END(rpcCheckPerfStats);
         return rval;
     }
@@ -192,9 +191,9 @@ int RpcOption::eval(Cursor&, Packet *p)
     rpcvers = IXDR_GET_LONG (c);
 
     /* Fail if it is not right */
-    if(rpcvers != RPC_MSG_VERSION)
+    if (rpcvers != RPC_MSG_VERSION)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC msg version invalid"););
+        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC msg version invalid"); );
         MODULE_PROFILE_END(rpcCheckPerfStats);
         return rval;
     }
@@ -205,25 +204,25 @@ int RpcOption::eval(Cursor&, Packet *p)
     proc = IXDR_GET_LONG (c);
 
     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC decoded to: %lu %lu %lu\n",
-                            prog,vers,proc););
+        prog,vers,proc); );
 
     DEBUG_WRAP(
-           DebugMessage(DEBUG_PLUGIN, "RPC matching on: %d %d %d\n",
-                ds_ptr->flags & RPC_CHECK_PROG,ds_ptr->flags & RPC_CHECK_VERS,
-                ds_ptr->flags & RPC_CHECK_PROC););
-    if(!(ds_ptr->flags & RPC_CHECK_PROG) ||
-       ds_ptr->program == prog)
+        DebugMessage(DEBUG_PLUGIN, "RPC matching on: %d %d %d\n",
+        ds_ptr->flags & RPC_CHECK_PROG,ds_ptr->flags & RPC_CHECK_VERS,
+        ds_ptr->flags & RPC_CHECK_PROC); );
+    if (!(ds_ptr->flags & RPC_CHECK_PROG) ||
+        ds_ptr->program == prog)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC program matches"););
-        if(!(ds_ptr->flags & RPC_CHECK_VERS) ||
-           ds_ptr->vers == vers)
+        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC program matches"); );
+        if (!(ds_ptr->flags & RPC_CHECK_VERS) ||
+            ds_ptr->vers == vers)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC version matches"););
-            if(!(ds_ptr->flags & RPC_CHECK_PROC) ||
-               ds_ptr->proc == proc)
+            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC version matches"); );
+            if (!(ds_ptr->flags & RPC_CHECK_PROC) ||
+                ds_ptr->proc == proc)
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC proc matches"););
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Yippee! Found one!"););
+                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC proc matches"); );
+                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Yippee! Found one!"); );
                 rval = DETECTION_OPTION_MATCH;
             }
         }
@@ -231,7 +230,7 @@ int RpcOption::eval(Cursor&, Packet *p)
     else
     {
         /* you can put debug comments here or not */
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC not equal\n"););
+        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC not equal\n"); );
     }
 
     /* if the test isn't successful, return 0 */
@@ -263,13 +262,13 @@ static const Parameter s_params[] =
 class RpcModule : public Module
 {
 public:
-    RpcModule() : Module(s_name, s_help, s_params) { };
+    RpcModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &rpcCheckPerfStats; };
+    { return &rpcCheckPerfStats; }
 
     RpcCheckData data;
 };

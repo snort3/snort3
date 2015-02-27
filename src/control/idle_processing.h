@@ -20,7 +20,7 @@
 #ifndef IDLE_PROCESSING_H
 #define IDLE_PROCESSING_H
 
-typedef void (*IdleProcessingHandler)(void);
+typedef void (* IdleProcessingHandler)(void);
 
 int IdleProcessingRegisterHandler(IdleProcessingHandler);
 void IdleProcessingExecute(void);

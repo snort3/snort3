@@ -28,16 +28,14 @@
 
 namespace rules
 {
-
-namespace {
-
-
-template<const std::string *option_name>
+namespace
+{
+template<const std::string* option_name>
 class Content : public ConversionState
 {
 public:
-    Content(Converter& c) : ConversionState(c), sticky_buffer_set(false) {};
-    virtual ~Content() {};
+    Content(Converter& c) : ConversionState(c), sticky_buffer_set(false) { }
+    virtual ~Content() { }
     virtual bool convert(std::istringstream& data);
 
 private:
@@ -45,13 +43,11 @@ private:
     bool parse_options(std::istringstream&, std::string, std::string);
     void add_sticky_buffer(std::istringstream&, std::string buffer);
     bool extract_payload(std::istringstream& data_stream,
-                        std::string& option);
-
+        std::string& option);
 };
-
 } // namespace
 
-template<const std::string *option_name>
+template<const std::string* option_name>
 void Content<option_name>::add_sticky_buffer(std::istringstream& data_stream, std::string buffer)
 {
     if (sticky_buffer_set)
@@ -64,13 +60,12 @@ void Content<option_name>::add_sticky_buffer(std::istringstream& data_stream, st
     sticky_buffer_set = true;
 }
 
-template<const std::string *option_name>
+template<const std::string* option_name>
 bool Content<option_name>::parse_options(
     std::istringstream& data_stream,
     std::string keyword,
     std::string val)
 {
-
     if (!keyword.compare("offset"))
         rule_api.add_suboption("offset", val);
 
@@ -129,8 +124,8 @@ bool Content<option_name>::parse_options(
     {
         if (val.empty())
         {
-             rule_api.add_suboption("fast_pattern");
-		}
+            rule_api.add_suboption("fast_pattern");
+        }
         else if (!val.compare("only"))
         {
             static bool not_printed = true;
@@ -155,9 +150,10 @@ bool Content<option_name>::parse_options(
                     rule_api.add_suboption("fast_pattern_length", std::to_string(length));
                 }
                 else
-                    rule_api.bad_rule(data_stream, "content: wxyz: fast_pattern " + val + "," + "<missing!>");
+                    rule_api.bad_rule(data_stream, "content: wxyz: fast_pattern " + val + "," +
+                        "<missing!>");
             }
-            catch(std::exception&)
+            catch (std::exception&)
             {
                 rule_api.bad_rule(data_stream, "content: wxyz: fast_pattern <int>,<int>");
             }
@@ -166,14 +162,12 @@ bool Content<option_name>::parse_options(
     else
         return false;
 
-
     return true;
 }
 
-
-template<const std::string *option_name>
+template<const std::string* option_name>
 bool Content<option_name>::extract_payload(std::istringstream& stream,
-                                           std::string& option)
+    std::string& option)
 {
     if ( !stream.good() )
         return false;
@@ -196,7 +190,7 @@ bool Content<option_name>::extract_payload(std::istringstream& stream,
     return true;
 }
 
-template<const std::string *option_name>
+template<const std::string* option_name>
 bool Content<option_name>::convert(std::istringstream& data_stream)
 {
     std::string keyword;
@@ -235,11 +229,9 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
             rule_api.bad_rule(data_stream, "content: " + keyword + " " + val);
     }
 
-
     pos = data_stream.tellg();
     val = util::get_rule_option_args(data_stream);
     std::istringstream subopts(val);
-
 
     // This loop parses all of the content keyword modifiers after
     // the initial semicolon.  This loop must be performed here
@@ -247,7 +239,7 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
     // must be added to the rule before the above content keyword.
     // Once we leave this method, we will have no memory of
     // 'this' current keyword.
-    while(util::get_string(subopts, keyword, ":"))
+    while (util::get_string(subopts, keyword, ":"))
     {
         val = std::string();
         std::getline(subopts, val);
@@ -256,10 +248,8 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
         util::trim(keyword);
         util::trim(val);
 
-
         if (!parse_options(data_stream, keyword, val))
         {
-
             if (!sticky_buffer_set)
                 add_sticky_buffer(data_stream, "pkt_data");
 
@@ -270,13 +260,12 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
             return set_next_rule_state(data_stream);
         }
 
-
         // lets get the next keyword
         pos = data_stream.tellg();
         val = util::get_rule_option_args(data_stream);
         subopts.clear();
         subopts.str(val);
-    };
+    }
 
     if (!sticky_buffer_set)
         add_sticky_buffer(data_stream, "pkt_data");
@@ -289,8 +278,7 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-
-template<const std::string *rule_name>
+template<const std::string* rule_name>
 static ConversionState* content_ctor(Converter& c)
 {
     return new Content<rule_name>(c);
@@ -300,27 +288,25 @@ static const std::string content = "content";
 static const std::string protected_content = "protected_content";
 static const std::string uricontent = "uricontent";
 
-
 //  Uricontent:"foo" --> http_uti; content:"foo".
 //  So, just add the 'http_uri' option first, then parse as if content
 static ConversionState* uricontent_ctor(Converter& c)
 {
     c.get_rule_api().add_option("http_uri");
     c.get_rule_api().add_comment("uricontent deprecated --> 'http_uri: content:'foo'");
-    return new Content<&content>(c);
+    return new Content<& content>(c);
 }
-
 
 static const ConvertMap rule_content_api =
 {
     content,
-    content_ctor<&content>,
+    content_ctor<& content>,
 };
 
 static const ConvertMap rule_protected_content_api =
 {
     protected_content,
-    content_ctor<&protected_content>,
+    content_ctor<& protected_content>,
 };
 
 static const ConvertMap rule_uricontent_api =
@@ -329,9 +315,8 @@ static const ConvertMap rule_uricontent_api =
     uricontent_ctor,
 };
 
-
 const ConvertMap* content_map = &rule_content_api;
 const ConvertMap* protected_content_map = &rule_protected_content_api;
 const ConvertMap* uricontent_map = &rule_uricontent_api;
-
 } // namespace rules
+

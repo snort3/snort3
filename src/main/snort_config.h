@@ -36,7 +36,6 @@
 #include "main/thread.h"
 #include "framework/bits.h"
 
-
 #define DEFAULT_LOG_DIR "."
 
 #ifdef INTEL_SOFT_CPM
@@ -78,7 +77,6 @@ typedef enum _PathType
 {
     PATH_TYPE__FILE,
     PATH_TYPE__DIRECTORY
-
 } PathType;
 
 #endif
@@ -110,7 +108,7 @@ struct SnortConfig
     long int tagged_packet_limit;
 
     char* event_trace_file;
-    char *log_dir;           /* -l or config log_dir */
+    char* log_dir;           /* -l or config log_dir */
 
     //------------------------------------------------------
     // daq stuff
@@ -142,7 +140,7 @@ struct SnortConfig
 
     int dirty_pig;
 
-    char *chroot_dir;        /* -t or config chroot */
+    char* chroot_dir;        /* -t or config chroot */
 
     char* plugin_path;
     char* script_path;
@@ -156,7 +154,7 @@ struct SnortConfig
 
     uint8_t enable_teredo;
     uint8_t enable_esp;
-    PortList *gtp_ports;
+    PortList* gtp_ports;
 
     uint8_t num_layers;
     uint8_t max_ip6_extensions;
@@ -169,7 +167,7 @@ struct SnortConfig
     uint8_t max_responses;
     uint8_t min_interval;
     char* respond_device;
-    uint8_t *eth_dst;
+    uint8_t* eth_dst;
 
     char* output;
 
@@ -187,24 +185,24 @@ struct SnortConfig
     uint64_t pkt_cnt;           /* -n */
     uint64_t pkt_skip;
 
-    char *bpf_file;          /* -F or config bpf_file */
+    char* bpf_file;          /* -F or config bpf_file */
 
     //------------------------------------------------------
     // various modules
-    FastPatternConfig *fast_pattern_config;
-    EventQueueConfig *event_queue_config;
-    void *file_config;
+    FastPatternConfig* fast_pattern_config;
+    EventQueueConfig* event_queue_config;
+    void* file_config;
 
     /* XXX XXX policy specific? */
-    ThresholdConfig *threshold_config;
-    RateFilterConfig *rate_filter_config;
+    ThresholdConfig* threshold_config;
+    RateFilterConfig* rate_filter_config;
 
 #ifdef PPM_MGR
     ppm_cfg_t ppm_cfg;
 #endif
 
 #ifdef INTEL_SOFT_CPM
-    struct _IntelPmHandles *ipm_handles;
+    struct _IntelPmHandles* ipm_handles;
 #endif
 
     //------------------------------------------------------
@@ -212,7 +210,7 @@ struct SnortConfig
 
     uint32_t event_log_id;      /* -G */
     sfip_t obfuscation_net;  // -B
-    char *bpf_filter;        // --bpf
+    char* bpf_filter;        // --bpf
 
     //------------------------------------------------------
     // FIXIT-L non-module stuff - separate config from derived state?
@@ -223,22 +221,22 @@ struct SnortConfig
     bool stdin_rules;
 
     char pid_filename[STD_BUF];
-    char *orig_log_dir;      /* set in case of chroot */
+    char* orig_log_dir;      /* set in case of chroot */
 
     int thiszone;
 
-    RuleState *rule_state_list;
-    ClassType *classifications;
-    ReferenceSystemNode *references;
-    SFGHASH *otn_map;
+    RuleState* rule_state_list;
+    ClassType* classifications;
+    ReferenceSystemNode* references;
+    SFGHASH* otn_map;
 
-    DetectionFilterConfig *detection_filter_config;
+    DetectionFilterConfig* detection_filter_config;
 
-    SF_LIST **ip_proto_only_lists;
+    SF_LIST** ip_proto_only_lists;
     uint8_t ip_proto_array[NUM_IP_PROTOS];
 
     int num_rule_types;
-    RuleListNode *rule_lists;
+    RuleListNode* rule_lists;
     int evalOrder[RULE_TYPE__MAX + 1];
 
     ListHead Alert;
@@ -250,7 +248,7 @@ struct SnortConfig
     struct FrameworkConfig* framework_config;
 
     /* master port list table */
-    rule_port_tables_t *port_tables;
+    rule_port_tables_t* port_tables;
 
     /* The port-rule-maps map the src-dst ports to rules for
      * udp and tcp, for Ip we map the dst port as the protocol,
@@ -260,24 +258,24 @@ struct SnortConfig
      * rules may or may not have content.  We process the content
      * 1st and then the no content rules for udp/tcp and icmp, and
      * then we process the ip rules. */
-    PORT_RULE_MAP *prmIpRTNX;
-    PORT_RULE_MAP *prmTcpRTNX;
-    PORT_RULE_MAP *prmUdpRTNX;
-    PORT_RULE_MAP *prmIcmpRTNX;
+    PORT_RULE_MAP* prmIpRTNX;
+    PORT_RULE_MAP* prmTcpRTNX;
+    PORT_RULE_MAP* prmUdpRTNX;
+    PORT_RULE_MAP* prmIcmpRTNX;
 
-    srmm_table_t *srmmTable;   /* srvc rule map master table */
-    srmm_table_t *spgmmTable;  /* srvc port_group map master table */
-    sopg_table_t *sopgTable;   /* service-oridnal to port_group table */
+    srmm_table_t* srmmTable;   /* srvc rule map master table */
+    srmm_table_t* spgmmTable;  /* srvc port_group map master table */
+    sopg_table_t* sopgTable;   /* service-oridnal to port_group table */
 
-    SFXHASH *detection_option_hash_table;
-    SFXHASH *detection_option_tree_hash_table;
+    SFXHASH* detection_option_hash_table;
+    SFXHASH* detection_option_tree_hash_table;
 
     PolicyMap* policy_map;
 
     uint8_t tunnel_mask;
 
     uint32_t so_rule_memcap;
-    char *output_dir;
+    char* output_dir;
 
     struct VarNode* var_list;
 
@@ -296,13 +294,13 @@ struct SnortConfig
     std::vector<int>* thread_affinity;
 
     InspectionPolicy* get_inspection_policy()
-    { return policy_map->inspection_policy[0]; };
+    { return policy_map->inspection_policy[0]; }
 
     IpsPolicy* get_ips_policy()
-    { return policy_map->ips_policy[0]; };
+    { return policy_map->ips_policy[0]; }
 
     NetworkPolicy* get_network_policy()
-    { return policy_map->network_policy[0]; };
+    { return policy_map->network_policy[0]; }
 
     inline uint8_t get_num_layers() const
     { return num_layers; }
@@ -319,7 +317,7 @@ struct SnortConfig
 SnortConfig* SnortConfNew(void);
 void SnortConfSetup(SnortConfig*);
 void SnortConfFree(SnortConfig*);
-SnortConfig * MergeSnortConfs(SnortConfig* cmd_line, SnortConfig* config_file);
+SnortConfig* MergeSnortConfs(SnortConfig* cmd_line, SnortConfig* config_file);
 int VerifyReload(SnortConfig*);
 
 #endif

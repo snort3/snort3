@@ -17,8 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_hopopts.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -35,17 +33,15 @@
 
 namespace
 {
-
 class Ipv6HopOptsCodec : public Codec
 {
 public:
-    Ipv6HopOptsCodec() : Codec(CD_HOPOPTS_NAME) {};
-    ~Ipv6HopOptsCodec() {};
+    Ipv6HopOptsCodec() : Codec(CD_HOPOPTS_NAME) { }
+    ~Ipv6HopOptsCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
-
 
 struct IP6HopByHop
 {
@@ -54,10 +50,7 @@ struct IP6HopByHop
     /* options follow */
     uint8_t ip6hbh_pad[6];
 };
-
-
 } // anonymous namespace
-
 
 /*
  * Class functions
@@ -65,8 +58,7 @@ struct IP6HopByHop
 
 bool Ipv6HopOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-    const IP6HopByHop *hbh_hdr = reinterpret_cast<const IP6HopByHop*>(raw.data);
-
+    const IP6HopByHop* hbh_hdr = reinterpret_cast<const IP6HopByHop*>(raw.data);
 
     if (raw.len < sizeof(IP6HopByHop))
     {
@@ -80,15 +72,14 @@ bool Ipv6HopOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
     }
 
-
     codec.lyr_len = sizeof(IP6HopByHop) + (hbh_hdr->ip6hbh_len << 3);
-    if(codec.lyr_len > raw.len)
+    if (codec.lyr_len > raw.len)
     {
         codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
-    codec.next_prot_id = (uint16_t) hbh_hdr->ip6hbh_nxt;
+    codec.next_prot_id = (uint16_t)hbh_hdr->ip6hbh_nxt;
     codec.ip6_csum_proto = hbh_hdr->ip6hbh_nxt;
     codec.ip6_extension_count++;
     codec.proto_bits |= PROTO_BIT__IP6_EXT;
@@ -106,7 +97,6 @@ void Ipv6HopOptsCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IPPROTO_ID_HOPOPTS);
 }
 
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
@@ -114,9 +104,8 @@ void Ipv6HopOptsCodec::get_protocol_ids(std::vector<uint16_t>& v)
 static Codec* ctor(Module*)
 { return new Ipv6HopOptsCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi ipv6_hopopts_api =
 {
@@ -158,5 +147,4 @@ const BaseApi* cd_hopopts = &ipv6_hopopts_api.base;
 const BaseApi* cd_hopopts = &ipv6_hopopts_api.base;
 
 #endif /* 0 */
-
 

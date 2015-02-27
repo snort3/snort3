@@ -77,16 +77,16 @@
 /*
 **  Static function prototypes
 */
-int fpEvalRTN(RuleTreeNode *rtn, Packet *p, int check_ports);
-static inline int fpEvalHeaderIp(Packet *p, int ip_proto, OTNX_MATCH_DATA *);
-static inline int fpEvalHeaderIcmp(Packet *p, OTNX_MATCH_DATA *);
-static inline int fpEvalHeaderTcp(Packet *p, OTNX_MATCH_DATA *);
-static inline int fpEvalHeaderUdp(Packet *p, OTNX_MATCH_DATA *);
-static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
-                                 int check_ports, char ip_rule, OTNX_MATCH_DATA *);
-static int rule_tree_match (void* id, void * tree, int index, void * data, void *neg_list );
-static inline int fpAddSessionAlert(Packet *p, OptTreeNode *otn);
-static inline int fpSessionAlerted(Packet *p, OptTreeNode *otn);
+int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports);
+static inline int fpEvalHeaderIp(Packet* p, int ip_proto, OTNX_MATCH_DATA*);
+static inline int fpEvalHeaderIcmp(Packet* p, OTNX_MATCH_DATA*);
+static inline int fpEvalHeaderTcp(Packet* p, OTNX_MATCH_DATA*);
+static inline int fpEvalHeaderUdp(Packet* p, OTNX_MATCH_DATA*);
+static inline int fpEvalHeaderSW(PORT_GROUP* port_group, Packet* p,
+    int check_ports, char ip_rule, OTNX_MATCH_DATA*);
+static int rule_tree_match(void* id, void* tree, int index, void* data, void* neg_list);
+static inline int fpAddSessionAlert(Packet* p, OptTreeNode* otn);
+static inline int fpSessionAlerted(Packet* p, OptTreeNode* otn);
 
 #ifdef PERF_PROFILING
 THREAD_LOCAL ProfileStats rulePerfStats;
@@ -101,7 +101,7 @@ THREAD_LOCAL OTNX_MATCH_DATA t_omd;
 void otnx_match_data_init(int num_rule_types)
 {
     t_omd.iMatchInfoArraySize = num_rule_types;
-    t_omd.matchInfo = (MATCH_INFO *)SnortAlloc(num_rule_types * sizeof(MATCH_INFO));
+    t_omd.matchInfo = (MATCH_INFO*)SnortAlloc(num_rule_types * sizeof(MATCH_INFO));
 }
 
 void otnx_match_data_term()
@@ -130,11 +130,11 @@ void otnx_match_data_term()
 **    None
 **
 */
-static inline void InitMatchInfo(OTNX_MATCH_DATA *o)
+static inline void InitMatchInfo(OTNX_MATCH_DATA* o)
 {
     int i = 0;
 
-    for(i = 0; i < o->iMatchInfoArraySize; i++)
+    for (i = 0; i < o->iMatchInfoArraySize; i++)
     {
         o->matchInfo[i].iMatchCount  = 0;
         o->matchInfo[i].iMatchIndex  = 0;
@@ -144,7 +144,7 @@ static inline void InitMatchInfo(OTNX_MATCH_DATA *o)
 
 // called by fpLogEvent(), which does the filtering etc.
 // this handles the non-rule-actions (responses).
-static inline void fpLogOther (
+static inline void fpLogOther(
     Packet* p, RuleTreeNode* rtn, OptTreeNode* otn, int action)
 {
     if ( EventTrace_IsEnabled() )
@@ -164,7 +164,7 @@ static inline void fpLogOther (
 **    function was pulled out of fpEvalSomething, so now we can log an
 **    event no matter where we are.
 */
-int fpLogEvent(RuleTreeNode *rtn, OptTreeNode *otn, Packet *p)
+int fpLogEvent(RuleTreeNode* rtn, OptTreeNode* otn, Packet* p)
 {
     int action = -1, rateAction = -1;
     int override, filterEvent = 0;
@@ -202,7 +202,8 @@ int fpLogEvent(RuleTreeNode *rtn, OptTreeNode *otn, Packet *p)
     // perform rate filtering tests - impacts action taken
     rateAction = RateFilter_Test(otn, p);
     override = ( rateAction >= RULE_TYPE__MAX );
-    if ( override ) rateAction -= RULE_TYPE__MAX;
+    if ( override )
+        rateAction -= RULE_TYPE__MAX;
 
     // internal events are no-ops
     if ( (rateAction < 0) && EventIsInternal(otn->sigInfo.generator) )
@@ -251,12 +252,12 @@ int fpLogEvent(RuleTreeNode *rtn, OptTreeNode *otn, Packet *p)
      * check the decoder/preprocessor events (they have been added to Event queue already).
      * If its order is lower than 'pass', it should have been passed.
      * This is consistent with other detection rules */
-	if ( (p->packet_flags & PKT_PASS_RULE)
-         &&(ScGetEvalIndex(rtn->type) > ScGetEvalIndex(RULE_TYPE__PASS)))
-	{
-	    fpLogOther(p, rtn, otn, rtn->type);
-	    return 1;
-	}
+    if ( (p->packet_flags & PKT_PASS_RULE)
+        &&(ScGetEvalIndex(rtn->type) > ScGetEvalIndex(RULE_TYPE__PASS)))
+    {
+        fpLogOther(p, rtn, otn, rtn->type);
+        return 1;
+    }
     OTN_PROFILE_ALERT(otn);
 
     event_id++;
@@ -293,17 +294,17 @@ int fpLogEvent(RuleTreeNode *rtn, OptTreeNode *otn, Packet *p)
 **    int - 1 max_events variable hit, 0 successful.
 **
 */
-int fpAddMatch(OTNX_MATCH_DATA *omd_local, int pLen, OptTreeNode *otn)
+int fpAddMatch(OTNX_MATCH_DATA* omd_local, int pLen, OptTreeNode* otn)
 {
-    MATCH_INFO * pmi;
+    MATCH_INFO* pmi;
     int evalIndex;
     int i;
-    RuleTreeNode *rtn = getRuntimeRtnFromOtn(otn);
+    RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
 
     evalIndex = rtn->listhead->ruleListNode->evalIndex;
 
     /* bounds check index */
-    if( evalIndex >= omd_local->iMatchInfoArraySize )
+    if ( evalIndex >= omd_local->iMatchInfoArraySize )
     {
         pc.match_limit++;
         return 1;
@@ -314,7 +315,7 @@ int fpAddMatch(OTNX_MATCH_DATA *omd_local, int pLen, OptTreeNode *otn)
     **  If we hit the max number of unique events for any rule type alert,
     **  log or pass, then we don't add it to the list.
     */
-    if( pmi->iMatchCount >= (int)snort_conf->fast_pattern_config->max_queue_events ||
+    if ( pmi->iMatchCount >= (int)snort_conf->fast_pattern_config->max_queue_events ||
         pmi->iMatchCount >= MAX_EVENT_MATCH)
     {
         pc.match_limit++;
@@ -322,9 +323,9 @@ int fpAddMatch(OTNX_MATCH_DATA *omd_local, int pLen, OptTreeNode *otn)
     }
 
     /* Check that we are not storing the same otn again */
-    for( i=0; i< pmi->iMatchCount;i++ )
+    for ( i=0; i< pmi->iMatchCount; i++ )
     {
-        if( pmi->MatchArray[ i  ] == otn )
+        if ( pmi->MatchArray[ i  ] == otn )
         {
             //LogMessage("fpAddMatch: storing the same otn...\n");
             return 0;
@@ -342,14 +343,14 @@ int fpAddMatch(OTNX_MATCH_DATA *omd_local, int pLen, OptTreeNode *otn)
     **  if there is no content rules in the
     **  same array.
     */
-    if(pLen > 0)
+    if (pLen > 0)
     {
         /*
         **  Event Comparison Function
         **  Here the largest content match is the
         **  priority
         */
-        if( pmi->iMatchMaxLen < pLen )
+        if ( pmi->iMatchMaxLen < pLen )
         {
             pmi->iMatchMaxLen = pLen;
             pmi->iMatchIndex  = pmi->iMatchCount;
@@ -379,13 +380,13 @@ int fpAddMatch(OTNX_MATCH_DATA *omd_local, int pLen, OptTreeNode *otn)
 **    int - 1 if match, 0 if match failed.
 **
 */
-int fpEvalRTN(RuleTreeNode *rtn, Packet *p, int check_ports)
+int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
 {
     PROFILE_VARS;
 
     MODULE_PROFILE_START(ruleRTNEvalPerfStats);
 
-    if(rtn == NULL)
+    if (rtn == NULL)
     {
         MODULE_PROFILE_END(ruleRTNEvalPerfStats);
         return 0;
@@ -394,24 +395,24 @@ int fpEvalRTN(RuleTreeNode *rtn, Packet *p, int check_ports)
     /* TODO: maybe add a port test here ... */
 
     DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "[*] Rule Head %d\n",
-                rtn->head_node_number);)
+        rtn->head_node_number); )
 
-    if(!rtn->rule_func->RuleHeadFunc(p, rtn, rtn->rule_func, check_ports))
+    if (!rtn->rule_func->RuleHeadFunc(p, rtn, rtn->rule_func, check_ports))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-                    "   => Header check failed, checking next node\n"););
+            "   => Header check failed, checking next node\n"); );
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-                    "   => returned from next node check\n"););
+            "   => returned from next node check\n"); );
         MODULE_PROFILE_END(ruleRTNEvalPerfStats);
         return 0;
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-             "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n"););
+        "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n"); );
     DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "   => RTN %d Matched!\n",
-                rtn->head_node_number););
+        rtn->head_node_number); );
     DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-            "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n"););
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n"); );
     /*
     **  Return that there is a rule match and log the event outside
     **  of this routine.
@@ -421,8 +422,8 @@ int fpEvalRTN(RuleTreeNode *rtn, Packet *p, int check_ports)
 }
 
 static int detection_option_tree_evaluate(
-    detection_option_tree_root_t *root,
-    detection_option_eval_data_t *eval_data)
+    detection_option_tree_root_t* root,
+    detection_option_eval_data_t* eval_data)
 {
     int i, rval = 0;
     PROFILE_VARS;
@@ -434,7 +435,7 @@ static int detection_option_tree_evaluate(
 
 #ifdef PPM_MGR
     /* Start Rule Timer */
-    if( PPM_RULES_ENABLED() )
+    if ( PPM_RULES_ENABLED() )
     {
         PPM_GET_TIME();
         PPM_INIT_RULE_TIMER();
@@ -462,14 +463,14 @@ static int detection_option_tree_evaluate(
     }
 
 #ifdef PPM_MGR
-    if( PPM_ENABLED() )
+    if ( PPM_ENABLED() )
     {
         PPM_GET_TIME();
 
         /* Rule test */
-        if( PPM_RULES_ENABLED() )
+        if ( PPM_RULES_ENABLED() )
         {
-            if( PPM_PKTS_ENABLED() )
+            if ( PPM_PKTS_ENABLED() )
                 PPM_INC_PKT_RULE_TESTS();
 
             PPM_RULE_TEST(root, eval_data->p);
@@ -483,15 +484,15 @@ static int detection_option_tree_evaluate(
     return rval;
 }
 
-static int rule_tree_match( void * id, void *tree, int index, void * data, void * neg_list)
+static int rule_tree_match(void* id, void* tree, int index, void* data, void* neg_list)
 {
-    OTNX_MATCH_DATA  *pomd   = (OTNX_MATCH_DATA *)data;
-    PMX              *pmx    = (PMX*)id;
-    PatternMatchData *pmd    = (PatternMatchData*)pmx->PatternMatchData;
-    detection_option_tree_root_t *root = (detection_option_tree_root_t *)tree;
+    OTNX_MATCH_DATA* pomd   = (OTNX_MATCH_DATA*)data;
+    PMX* pmx    = (PMX*)id;
+    PatternMatchData* pmd    = (PatternMatchData*)pmx->PatternMatchData;
+    detection_option_tree_root_t* root = (detection_option_tree_root_t*)tree;
     detection_option_eval_data_t eval_data;
-    NCListNode *ncl;
-    int               rval=0;
+    NCListNode* ncl;
+    int rval=0;
     PROFILE_VARS;
 
     eval_data.pomd = pomd;
@@ -507,10 +508,10 @@ static int rule_tree_match( void * id, void *tree, int index, void * data, void 
      * may muck with an unintended rule */
 
     /* Set flag for not contents so they aren't evaluated */
-    for (ncl = (NCListNode *)neg_list; ncl != NULL; ncl = ncl->next)
+    for (ncl = (NCListNode*)neg_list; ncl != NULL; ncl = ncl->next)
     {
-        PMX *neg_pmx = (PMX *)ncl->pmx;
-        PatternMatchData *neg_pmd = (PatternMatchData *)neg_pmx->PatternMatchData;
+        PMX* neg_pmx = (PMX*)ncl->pmx;
+        PatternMatchData* neg_pmd = (PatternMatchData*)neg_pmx->PatternMatchData;
 
         assert(neg_pmd->last_check);
 
@@ -556,11 +557,11 @@ static int rule_tree_match( void * id, void *tree, int index, void * data, void 
         int8_t curr_layer = eval_data.p->num_layers - 1;
 
         if (layer::set_inner_ip_api(eval_data.p,
-                                    eval_data.p->ptrs.ip_api,
-                                    curr_layer) &&
-                (eval_data.p->ptrs.ip_api != tmp_api))
+            eval_data.p->ptrs.ip_api,
+            curr_layer) &&
+            (eval_data.p->ptrs.ip_api != tmp_api))
         {
-            const uint8_t *tmp_data = eval_data.p->data;
+            const uint8_t* tmp_data = eval_data.p->data;
             uint16_t tmp_dsize = eval_data.p->dsize;
 
             /* clear so we dont keep recursing */
@@ -574,12 +575,11 @@ static int rule_tree_match( void * id, void *tree, int index, void * data, void 
 
                 /* Recurse, and evaluate with the inner IP */
                 rule_tree_match(id, tree, index, data, NULL);
-
-
-            } while (layer::set_inner_ip_api(eval_data.p,
-                                             eval_data.p->ptrs.ip_api,
-                                             curr_layer) &&
-                        (eval_data.p->ptrs.ip_api != tmp_api));
+            }
+            while (layer::set_inner_ip_api(eval_data.p,
+                eval_data.p->ptrs.ip_api,
+                curr_layer) &&
+                (eval_data.p->ptrs.ip_api != tmp_api));
 
             /*  cleanup restore original data & dsize */
             eval_data.p->packet_flags &= ~PKT_IP_RULE_2ND;
@@ -592,43 +592,43 @@ static int rule_tree_match( void * id, void *tree, int index, void * data, void 
     return 0;
 }
 
-static int sortOrderByPriority(const void *e1, const void *e2)
+static int sortOrderByPriority(const void* e1, const void* e2)
 {
-    OptTreeNode *otn1;
-    OptTreeNode *otn2;
+    OptTreeNode* otn1;
+    OptTreeNode* otn2;
 
     if (!e1 || !e2)
         return 0;
 
-    otn1 = *(OptTreeNode **)e1;
-    otn2 = *(OptTreeNode **)e2;
+    otn1 = *(OptTreeNode**)e1;
+    otn2 = *(OptTreeNode**)e2;
 
-    if( otn1->sigInfo.priority < otn2->sigInfo.priority )
+    if ( otn1->sigInfo.priority < otn2->sigInfo.priority )
         return -1;
 
-    if( otn1->sigInfo.priority > otn2->sigInfo.priority )
+    if ( otn1->sigInfo.priority > otn2->sigInfo.priority )
         return +1;
 
     /* This improves stability of repeated tests */
-    if( otn1->sigInfo.id < otn2->sigInfo.id )
+    if ( otn1->sigInfo.id < otn2->sigInfo.id )
         return -1;
 
-    if( otn1->sigInfo.id > otn2->sigInfo.id )
+    if ( otn1->sigInfo.id > otn2->sigInfo.id )
         return +1;
 
     return 0;
 }
 
-static int sortOrderByContentLength(const void *e1, const void *e2)
+static int sortOrderByContentLength(const void* e1, const void* e2)
 {
-    OptTreeNode *otn1;
-    OptTreeNode *otn2;
+    OptTreeNode* otn1;
+    OptTreeNode* otn2;
 
     if (!e1 || !e2)
         return 0;
 
-    otn1 = *(OptTreeNode **)e1;
-    otn2 = *(OptTreeNode **)e2;
+    otn1 = *(OptTreeNode**)e1;
+    otn2 = *(OptTreeNode**)e2;
 
     if (otn1->longestPatternLen < otn2->longestPatternLen)
         return +1;
@@ -637,15 +637,14 @@ static int sortOrderByContentLength(const void *e1, const void *e2)
         return -1;
 
     /* This improves stability of repeated tests */
-    if( otn1->sigInfo.id < otn2->sigInfo.id )
+    if ( otn1->sigInfo.id < otn2->sigInfo.id )
         return +1;
 
-    if( otn1->sigInfo.id > otn2->sigInfo.id )
+    if ( otn1->sigInfo.id > otn2->sigInfo.id )
         return -1;
 
     return 0;
 }
-
 
 /*
 **
@@ -720,24 +719,24 @@ static int sortOrderByContentLength(const void *e1, const void *e2)
 **    int - return 0 if no match, 1 if match.
 **
 */
-static inline int fpFinalSelectEvent(OTNX_MATCH_DATA *o, Packet *p)
+static inline int fpFinalSelectEvent(OTNX_MATCH_DATA* o, Packet* p)
 {
     int i;
     int j;
     int k;
-    OptTreeNode *otn;
+    OptTreeNode* otn;
     int tcnt = 0;
-    EventQueueConfig *eq = snort_conf->event_queue_config;
-    RuleTreeNode *rtn;
+    EventQueueConfig* eq = snort_conf->event_queue_config;
+    RuleTreeNode* rtn;
 
-    for( i = 0; i < o->iMatchInfoArraySize; i++ )
+    for ( i = 0; i < o->iMatchInfoArraySize; i++ )
     {
         /* bail if were not dumping events in all the action groups,
          * and we've alresady got some events */
         if (!ScProcessAllEvents() && (tcnt > 0))
             return 1;
 
-        if(o->matchInfo[i].iMatchCount)
+        if (o->matchInfo[i].iMatchCount)
         {
             /*
              * We must always sort so if we que 8 and log 3 and they are
@@ -754,12 +753,12 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA *o, Packet *p)
             if (eq->order == SNORT_EVENTQ_PRIORITY)
             {
                 qsort(o->matchInfo[i].MatchArray, o->matchInfo[i].iMatchCount,
-                      sizeof(void *), sortOrderByPriority);
+                    sizeof(void*), sortOrderByPriority);
             }
             else if (eq->order == SNORT_EVENTQ_CONTENT_LEN)
             {
                 qsort(o->matchInfo[i].MatchArray, o->matchInfo[i].iMatchCount,
-                      sizeof(void*), sortOrderByContentLength);
+                    sizeof(void*), sortOrderByContentLength);
             }
             else
             {
@@ -767,7 +766,7 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA *o, Packet *p)
             }
 
             /* Process each event in the action (alert,drop,log,...) groups */
-            for(j=0; j < o->matchInfo[i].iMatchCount; j++)
+            for (j=0; j < o->matchInfo[i].iMatchCount; j++)
             {
                 otn = o->matchInfo[i].MatchArray[j];
                 rtn = getRtnFromOtn(otn);
@@ -775,7 +774,7 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA *o, Packet *p)
                 if ((otn != NULL) && (rtn != NULL) && pass_action(rtn->type))
                 {
                     /* Already acted on rules, so just don't act on anymore */
-                    if( tcnt > 0 )
+                    if ( tcnt > 0 )
                         return 1;
                 }
 
@@ -783,9 +782,9 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA *o, Packet *p)
                 **  Loop here so we don't log the same event
                 **  multiple times.
                 */
-                for(k = 0; k < j; k++)
+                for (k = 0; k < j; k++)
                 {
-                    if(o->matchInfo[i].MatchArray[k] == otn)
+                    if (o->matchInfo[i].MatchArray[k] == otn)
                     {
                         otn = NULL;
                         break;
@@ -848,7 +847,7 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA *o, Packet *p)
 **          1 if flagged
 **
 */
-static inline int fpAddSessionAlert(Packet *p, OptTreeNode *otn)
+static inline int fpAddSessionAlert(Packet* p, OptTreeNode* otn)
 {
     if ( !p->flow )
         return 0;
@@ -878,15 +877,14 @@ static inline int fpAddSessionAlert(Packet *p, OptTreeNode *otn)
 **          1 if alert previously generated
 **
 */
-static inline int fpSessionAlerted(Packet *p, OptTreeNode *otn)
+static inline int fpSessionAlerted(Packet* p, OptTreeNode* otn)
 {
-    SigInfo *si = &otn->sigInfo;
+    SigInfo* si = &otn->sigInfo;
 
     if (!stream.check_session_alerted(p->flow, p, si->generator, si->id))
         return 0;
     else
         return 1;
-
 }
 
 #if 0
@@ -896,31 +894,36 @@ Not currently used
  *
  * rule proto: # gid: # sid: # sp: # dp # \n
  */
-void printRuleFmt1( SnortConfig *sc, OptTreeNode * otn )
+void printRuleFmt1(SnortConfig* sc, OptTreeNode* otn)
 {
-    RuleTreeNode *rtn = getParserRtnFromOtn(otn);
+    RuleTreeNode* rtn = getParserRtnFromOtn(otn);
 
     LogMessage("rule proto: ");
 
-    if(      rtn->proto== IPPROTO_TCP     )LogMessage("tcp  ");
-    else if( rtn->proto== IPPROTO_UDP     )LogMessage("udp  ");
-    else if( rtn->proto== IPPROTO_ICMP    )LogMessage("icmp ");
-    else if( rtn->proto== ETHERNET_TYPE_IP)LogMessage("ip   ");
+    if (      rtn->proto== IPPROTO_TCP     )
+        LogMessage("tcp  ");
+    else if ( rtn->proto== IPPROTO_UDP     )
+        LogMessage("udp  ");
+    else if ( rtn->proto== IPPROTO_ICMP    )
+        LogMessage("icmp ");
+    else if ( rtn->proto== ETHERNET_TYPE_IP)
+        LogMessage("ip   ");
 
     LogMessage("gid:%u sid:%5u ", otn->sigInfo.generator,otn->sigInfo.id);
 
     LogMessage(" sp:");
 
-    fflush(stdout);fflush(stderr);
+    fflush(stdout); fflush(stderr);
     PortObjectPrintPortsRaw(rtn->src_portobject);
-    fflush(stdout);fflush(stderr);
+    fflush(stdout); fflush(stderr);
 
     LogMessage(" dp:");
 
     PortObjectPrintPortsRaw(rtn->dst_portobject);
     printf("\n");
-    fflush(stdout);fflush(stderr);
+    fflush(stdout); fflush(stderr);
 }
+
 #endif
 
 /*
@@ -944,16 +947,16 @@ void printRuleFmt1( SnortConfig *sc, OptTreeNode * otn )
 **          1 for sucessful pattern match
 **
 */
-static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
-        int check_ports, char ip_rule, OTNX_MATCH_DATA *omd)
+static inline int fpEvalHeaderSW(PORT_GROUP* port_group, Packet* p,
+    int check_ports, char ip_rule, OTNX_MATCH_DATA* omd)
 {
     Mpse* so;
     int start_state;
-    const uint8_t *tmp_payload;
+    const uint8_t* tmp_payload;
     int8_t curr_ip_layer = 0;
     bool repeat = false;
     uint16_t tmp_dsize;
-    FastPatternConfig *fp = snort_conf->fast_pattern_config;
+    FastPatternConfig* fp = snort_conf->fast_pattern_config;
     PROFILE_VARS;
 
     if (ip_rule)
@@ -1068,13 +1071,13 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
              **  payload, in case any of the rules have the
              **  'rawbytes' option.
              */
-            // FIXIT-M alt buf and file data should be obtained from 
+            // FIXIT-M alt buf and file data should be obtained from
             // inspector gadget as an extension of above
             so = port_group->pgPms[PM_TYPE__CONTENT];
 
             if ( so && so->get_pattern_count() > 0 )
             {
-                if(g_alt_data.len)
+                if (g_alt_data.len)
                 {
                     start_state = 0;
                     so->search(g_alt_data.data, g_alt_data.len,
@@ -1086,7 +1089,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
 #endif
                 }
 
-                if(g_file_data.len)
+                if (g_file_data.len)
                 {
                     start_state = 0;
                     so->search(g_file_data.data, g_file_data.len,
@@ -1098,13 +1101,13 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
 #endif
                 }
 
-                 /*
-                 **  Content-Match - If no Uri-Content matches, than do a Content search
-                 **
-                 **  NOTE:
-                 **    We may want to bail after the Content search if there
-                 **    has been a successful match.
-                 */
+                /*
+                **  Content-Match - If no Uri-Content matches, than do a Content search
+                **
+                **  NOTE:
+                **    We may want to bail after the Content search if there
+                **    has been a successful match.
+                */
                 if (p->data && p->dsize)
                 {
                     uint16_t pattern_match_size = p->dsize;
@@ -1114,7 +1117,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
 
                     start_state = 0;
                     so->search(p->data, pattern_match_size,
-                            rule_tree_match, omd, &start_state);
+                        rule_tree_match, omd, &start_state);
 #ifdef PPM_MGR
                     /* Bail if we spent too much time already */
                     if (PPM_PACKET_ABORT_FLAG())
@@ -1156,7 +1159,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
         LogMessage("NC-testing %u rules\n", port_group->pgNoContentCount);
 
 #ifdef PPM_MGR
-    if( PPM_ENABLED() )
+    if ( PPM_ENABLED() )
         PPM_GET_TIME();
 #endif
 
@@ -1174,7 +1177,8 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
             eval_data.flowbit_noalert = 0;
 
             MODULE_PROFILE_START(ncrulePerfStats);
-            rval = detection_option_tree_evaluate((detection_option_tree_root_t*)port_group->pgNonContentTree, &eval_data);
+            rval = detection_option_tree_evaluate(
+                (detection_option_tree_root_t*)port_group->pgNonContentTree, &eval_data);
             MODULE_PROFILE_END(ncrulePerfStats);
 
             if (rval)
@@ -1193,7 +1197,6 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
 
         if (ip_rule)
         {
-
             /* Evaluate again with the next IP layer */
             if (layer::set_outer_ip_api(p, p->ptrs.ip_api, curr_ip_layer))
             {
@@ -1211,7 +1214,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
             }
         }
     }
-    while(repeat);
+    while (repeat);
 
 #ifdef PPM_MGR  /* Tag only used with PPM right now */
 fp_eval_header_sw_reset_ip:
@@ -1223,15 +1226,15 @@ fp_eval_header_sw_reset_ip:
 /*
 ** fpEvalHeaderUdp::
 */
-static inline int fpEvalHeaderUdp(Packet *p, OTNX_MATCH_DATA *omd)
+static inline int fpEvalHeaderUdp(Packet* p, OTNX_MATCH_DATA* omd)
 {
-    PORT_GROUP *src = NULL, *dst = NULL, *gen = NULL;
+    PORT_GROUP* src = NULL, * dst = NULL, * gen = NULL;
 
     {
         /* Check for a service/protocol ordinal for this packet */
         int16_t proto_ordinal = p->flow ? p->flow->ssn_state.application_protocol : 0;
 
-        DEBUG_WRAP( DebugMessage(DEBUG_ATTRIBUTE,"proto_ordinal=%d\n",proto_ordinal););
+        DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,"proto_ordinal=%d\n",proto_ordinal); );
 
         if (proto_ordinal > 0)
         {
@@ -1240,14 +1243,14 @@ static inline int fpEvalHeaderUdp(Packet *p, OTNX_MATCH_DATA *omd)
 
             /* TODO:  To From Server ?, else we apply  */
             dst = fpGetServicePortGroupByOrdinal(snort_conf->sopgTable, IPPROTO_UDP,
-                                                 TO_SERVER, proto_ordinal);
+                TO_SERVER, proto_ordinal);
             src = fpGetServicePortGroupByOrdinal(snort_conf->sopgTable, IPPROTO_UDP,
-                                                 TO_CLIENT, proto_ordinal);
+                TO_CLIENT, proto_ordinal);
 
             DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,
-                        "fpEvalHeaderUdpp:targetbased-ordinal-lookup: "
-                        "sport=%d, dport=%d, proto_ordinal=%d, src:%x, "
-                        "dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,proto_ordinal,src,dst,gen););
+                "fpEvalHeaderUdpp:targetbased-ordinal-lookup: "
+                "sport=%d, dport=%d, proto_ordinal=%d, src:%x, "
+                "dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,proto_ordinal,src,dst,gen); );
         }
     }
 
@@ -1258,15 +1261,15 @@ static inline int fpEvalHeaderUdp(Packet *p, OTNX_MATCH_DATA *omd)
             return 0;
 
         DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,
-                    "fpEvalHeaderUdp: sport=%d, dport=%d, "
-                    "src:%x, dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,src,dst,gen););
+            "fpEvalHeaderUdp: sport=%d, dport=%d, "
+            "src:%x, dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,src,dst,gen); );
     }
 
     if (fpDetectGetDebugPrintNcRules(snort_conf->fast_pattern_config))
     {
         LogMessage(
             "fpEvalHeaderUdp: sport=%d, dport=%d, src:%p, dst:%p, gen:%p\n",
-             p->ptrs.sp, p->ptrs.dp, (void*)src, (void*)dst, (void*)gen);
+            p->ptrs.sp, p->ptrs.dp, (void*)src, (void*)dst, (void*)gen);
     }
 
     InitMatchInfo(omd);
@@ -1295,14 +1298,14 @@ static inline int fpEvalHeaderUdp(Packet *p, OTNX_MATCH_DATA *omd)
 /*
 **  fpEvalHeaderTcp::
 */
-static inline int fpEvalHeaderTcp(Packet *p, OTNX_MATCH_DATA *omd)
+static inline int fpEvalHeaderTcp(Packet* p, OTNX_MATCH_DATA* omd)
 {
-    PORT_GROUP *src = NULL, *dst = NULL, *gen = NULL;
+    PORT_GROUP* src = NULL, * dst = NULL, * gen = NULL;
 
     {
         int16_t proto_ordinal = p->flow ? p->flow->ssn_state.application_protocol : 0;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "proto_ordinal=%d\n", proto_ordinal););
+        DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "proto_ordinal=%d\n", proto_ordinal); );
 
         if (proto_ordinal > 0)
         {
@@ -1311,24 +1314,24 @@ static inline int fpEvalHeaderTcp(Packet *p, OTNX_MATCH_DATA *omd)
 
             if (p->packet_flags & PKT_FROM_SERVER) /* to cli */
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_server\n"););
+                DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_server\n"); );
 
                 src = fpGetServicePortGroupByOrdinal(snort_conf->sopgTable, IPPROTO_TCP,
-                                                     0 /*to_cli */,  proto_ordinal);
+                    0 /*to_cli */,  proto_ordinal);
             }
 
             if (p->packet_flags & PKT_FROM_CLIENT) /* to srv */
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_client\n"););
+                DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_client\n"); );
 
                 dst = fpGetServicePortGroupByOrdinal(snort_conf->sopgTable, IPPROTO_TCP,
-                                                     1 /*to_srv */,  proto_ordinal);
+                    1 /*to_srv */,  proto_ordinal);
             }
 
             DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,
-                        "fpEvalHeaderTcp:targetbased-ordinal-lookup: "
-                        "sport=%d, dport=%d, proto_ordinal=%d, src:%x, "
-                        "dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,proto_ordinal,src,dst,gen););
+                "fpEvalHeaderTcp:targetbased-ordinal-lookup: "
+                "sport=%d, dport=%d, proto_ordinal=%d, src:%x, "
+                "dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,proto_ordinal,src,dst,gen); );
         }
     }
 
@@ -1339,15 +1342,15 @@ static inline int fpEvalHeaderTcp(Packet *p, OTNX_MATCH_DATA *omd)
             return 0;
 
         DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,
-                    "fpEvalHeaderTcp: sport=%d, "
-                    "dport=%d, src:%x, dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,src,dst,gen););
+            "fpEvalHeaderTcp: sport=%d, "
+            "dport=%d, src:%x, dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,src,dst,gen); );
     }
 
     if (fpDetectGetDebugPrintNcRules(snort_conf->fast_pattern_config))
     {
         LogMessage(
             "fpEvalHeaderTcp: sport=%d, dport=%d, src:%p, dst:%p, gen:%p\n",
-             p->ptrs.sp, p->ptrs.dp, (void*)src, (void*)dst, (void*)gen);
+            p->ptrs.sp, p->ptrs.dp, (void*)src, (void*)dst, (void*)gen);
     }
 
     InitMatchInfo(omd);
@@ -1366,7 +1369,7 @@ static inline int fpEvalHeaderTcp(Packet *p, OTNX_MATCH_DATA *omd)
 
     if (gen != NULL)
     {
-        if(fpEvalHeaderSW(gen, p, 1, 0, omd))
+        if (fpEvalHeaderSW(gen, p, 1, 0, omd))
             return 1;
     }
 
@@ -1376,9 +1379,9 @@ static inline int fpEvalHeaderTcp(Packet *p, OTNX_MATCH_DATA *omd)
 /*
 **  fpEvalHeaderICMP::
 */
-static inline int fpEvalHeaderIcmp(Packet *p, OTNX_MATCH_DATA *omd)
+static inline int fpEvalHeaderIcmp(Packet* p, OTNX_MATCH_DATA* omd)
 {
-    PORT_GROUP *gen = NULL, *type = NULL;
+    PORT_GROUP* gen = NULL, * type = NULL;
 
     if (!prmFindRuleGroupIcmp(snort_conf->prmIcmpRTNX, p->ptrs.icmph->type, &type, &gen))
         return 0;
@@ -1410,14 +1413,14 @@ static inline int fpEvalHeaderIcmp(Packet *p, OTNX_MATCH_DATA *omd)
 /*
 **  fpEvalHeaderIP::
 */
-static inline int fpEvalHeaderIp(Packet *p, int ip_proto, OTNX_MATCH_DATA *omd)
+static inline int fpEvalHeaderIp(Packet* p, int ip_proto, OTNX_MATCH_DATA* omd)
 {
-    PORT_GROUP *gen = NULL, *ip_group = NULL;
+    PORT_GROUP* gen = NULL, * ip_group = NULL;
 
     if (!prmFindRuleGroupIp(snort_conf->prmIpRTNX, ip_proto, &ip_group, &gen))
         return 0;
 
-    if(fpDetectGetDebugPrintNcRules(snort_conf->fast_pattern_config))
+    if (fpDetectGetDebugPrintNcRules(snort_conf->fast_pattern_config))
         LogMessage("fpEvalHeaderIp: ip_group=%p, gen=%p\n", (void*)ip_group, (void*)gen);
 
     InitMatchInfo(omd);
@@ -1462,17 +1465,17 @@ static inline int fpEvalHeaderIp(Packet *p, int ip_proto, OTNX_MATCH_DATA *omd)
 **    int - 0 means that packet has been processed.
 **
 */
-int fpEvalPacket(Packet *p)
+int fpEvalPacket(Packet* p)
 {
-    OTNX_MATCH_DATA *omd = &t_omd;
+    OTNX_MATCH_DATA* omd = &t_omd;
 
     /* Run UDP rules against the UDP header of Teredo packets */
     if ( p->ptrs.udph && (p->proto_bits & (PROTO_BIT__TEREDO | PROTO_BIT__GTP)) )
     {
         uint16_t tmp_sp = p->ptrs.sp;
         uint16_t tmp_dp = p->ptrs.dp;
-        const udp::UDPHdr *tmp_udph = p->ptrs.udph;
-        const uint8_t *tmp_data = p->data;
+        const udp::UDPHdr* tmp_udph = p->ptrs.udph;
+        const uint8_t* tmp_data = p->data;
         int tmp_do_detect_content = do_detect_content;
         uint16_t tmp_dsize = p->dsize;
 
@@ -1481,7 +1484,7 @@ int fpEvalPacket(Packet *p)
         p->ptrs.udph = udph;
         p->ptrs.sp = ntohs(udph->uh_sport);
         p->ptrs.dp = ntohs(udph->uh_dport);
-        p->data = (const uint8_t *)udph + udp::UDP_HEADER_LEN;
+        p->data = (const uint8_t*)udph + udp::UDP_HEADER_LEN;
 
         ip::IpApi tmp_api;
         int8_t curr_layer = 0;
@@ -1503,7 +1506,7 @@ int fpEvalPacket(Packet *p)
         do_detect_content = tmp_do_detect_content;
     }
 
-    switch(p->type())
+    switch (p->type())
     {
     case PktType::TCP:
         return fpEvalHeaderTcp(p, omd);
@@ -1513,7 +1516,7 @@ int fpEvalPacket(Packet *p)
 
     case PktType::ICMP:
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-                    "Detecting on IcmpList\n"););
+            "Detecting on IcmpList\n"); );
         return fpEvalHeaderIcmp(p, omd);
 
     /*
@@ -1523,22 +1526,21 @@ int fpEvalPacket(Packet *p)
         return fpEvalHeaderIp(p, -1, omd);
         break;
     }
-
 }
 
 // FIXIT-M delete this - see fpAddIpProtoOnlyRule() for details
-void fpEvalIpProtoOnlyRules(Packet *p, uint8_t proto_id)
+void fpEvalIpProtoOnlyRules(Packet* p, uint8_t proto_id)
 {
     if ((p != NULL) && p->has_ip())
     {
-        SF_LIST *l = snort_conf->ip_proto_only_lists[proto_id];
-        OptTreeNode *otn;
+        SF_LIST* l = snort_conf->ip_proto_only_lists[proto_id];
+        OptTreeNode* otn;
         SF_LNODE* cursor;
 
         /* If list is NULL, sflist_first returns NULL */
-        for (otn = (OptTreeNode *)sflist_first(l, &cursor);
-             otn != NULL;
-             otn = (OptTreeNode *)sflist_next(&cursor))
+        for (otn = (OptTreeNode*)sflist_first(l, &cursor);
+            otn != NULL;
+            otn = (OptTreeNode*)sflist_next(&cursor))
         {
             if (fpEvalRTN(getRuntimeRtnFromOtn(otn), p, 0))
             {
@@ -1552,10 +1554,9 @@ void fpEvalIpProtoOnlyRules(Packet *p, uint8_t proto_id)
     }
 }
 
-
-OptTreeNode * GetOTN(uint32_t gid, uint32_t sid)
+OptTreeNode* GetOTN(uint32_t gid, uint32_t sid)
 {
-    OptTreeNode *otn = OtnLookup(snort_conf->otn_map, gid, sid);
+    OptTreeNode* otn = OtnLookup(snort_conf->otn_map, gid, sid);
 
     if ( !otn )
         return nullptr;

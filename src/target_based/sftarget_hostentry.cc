@@ -24,12 +24,12 @@
 
 #include "sftarget_hostentry.h"
 
-int hasService(const HostAttributeEntry *host_entry,
-               int ipprotocol,
-               int protocol,
-               int application)
+int hasService(const HostAttributeEntry* host_entry,
+    int ipprotocol,
+    int protocol,
+    int application)
 {
-    ApplicationEntry *service;
+    ApplicationEntry* service;
 
     if (!host_entry)
         return SFTARGET_NOMATCH;
@@ -60,12 +60,12 @@ int hasService(const HostAttributeEntry *host_entry,
     return SFTARGET_NOMATCH;
 }
 
-int hasClient(const HostAttributeEntry *host_entry,
-               int ipprotocol,
-               int protocol,
-               int application)
+int hasClient(const HostAttributeEntry* host_entry,
+    int ipprotocol,
+    int protocol,
+    int application)
 {
-    ApplicationEntry *client;
+    ApplicationEntry* client;
 
     if (!host_entry)
         return SFTARGET_NOMATCH;
@@ -96,10 +96,10 @@ int hasClient(const HostAttributeEntry *host_entry,
     return SFTARGET_NOMATCH;
 }
 
-int hasProtocol(const HostAttributeEntry *host_entry,
-               int ipprotocol,
-               int protocol,
-               int application)
+int hasProtocol(const HostAttributeEntry* host_entry,
+    int ipprotocol,
+    int protocol,
+    int application)
 {
     int ret = SFTARGET_NOMATCH;
 
@@ -114,7 +114,7 @@ int hasProtocol(const HostAttributeEntry *host_entry,
     return ret;
 }
 
-uint16_t getFragPolicy(const HostAttributeEntry *host_entry)
+uint16_t getFragPolicy(const HostAttributeEntry* host_entry)
 {
     if (!host_entry)
         return SFAT_UNKNOWN_FRAG_POLICY;
@@ -122,7 +122,7 @@ uint16_t getFragPolicy(const HostAttributeEntry *host_entry)
     return host_entry->hostInfo.fragPolicy;
 }
 
-uint16_t getStreamPolicy(const HostAttributeEntry *host_entry)
+uint16_t getStreamPolicy(const HostAttributeEntry* host_entry)
 {
     if (!host_entry)
         return SFAT_UNKNOWN_STREAM_POLICY;
@@ -130,12 +130,12 @@ uint16_t getStreamPolicy(const HostAttributeEntry *host_entry)
     return host_entry->hostInfo.streamPolicy;
 }
 
-int getApplicationProtocolId(const HostAttributeEntry *host_entry,
-               int ipprotocol,
-               uint16_t port,
-               char direction)
+int getApplicationProtocolId(const HostAttributeEntry* host_entry,
+    int ipprotocol,
+    uint16_t port,
+    char direction)
 {
-    ApplicationEntry *application;
+    ApplicationEntry* application;
 
     if (!host_entry)
         return 0;

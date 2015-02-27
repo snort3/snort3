@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_erspan2.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
 #include "protocols/protocol_ids.h"
@@ -28,7 +27,6 @@
 
 namespace
 {
-
 static const RuleMap erspan2_rules[] =
 {
     { DECODE_ERSPAN_HDR_VERSION_MISMATCH, "ERSpan header version mismatch" },
@@ -39,24 +37,21 @@ static const RuleMap erspan2_rules[] =
 class Erspan2Module : public CodecModule
 {
 public:
-    Erspan2Module() : CodecModule(CD_ERSPAN2_NAME, CD_ERSPAN2_HELP) {}
+    Erspan2Module() : CodecModule(CD_ERSPAN2_NAME, CD_ERSPAN2_HELP) { }
 
     const RuleMap* get_rules() const override
     { return erspan2_rules; }
 };
 
-
 class Erspan2Codec : public Codec
 {
 public:
-    Erspan2Codec() : Codec(CD_ERSPAN2_NAME){};
-    ~Erspan2Codec(){};
+    Erspan2Codec() : Codec(CD_ERSPAN2_NAME) { }
+    ~Erspan2Codec() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    
 };
-
 
 struct ERSpanType2Hdr
 {
@@ -66,16 +61,13 @@ struct ERSpanType2Hdr
 
     uint16_t version() const
     { return ntohs(ver_vlan) >> 12; }
-} ;
+};
 
 constexpr uint16_t ETHERTYPE_ERSPAN_TYPE2 = 0x88be;
 } // namespace
 
-
-
 void Erspan2Codec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(ETHERTYPE_ERSPAN_TYPE2); }
-
 
 /*
  * Function: DecodeERSPANType2(uint8_t *, uint32_t, Packet *)
@@ -90,7 +82,7 @@ void Erspan2Codec::get_protocol_ids(std::vector<uint16_t>& v)
  * Returns: void function
  *
  */
-bool Erspan2Codec::decode(const RawData& raw, CodecData& codec, DecodeData& )
+bool Erspan2Codec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     const ERSpanType2Hdr* const erSpan2Hdr =
         reinterpret_cast<const ERSpanType2Hdr*>(raw.data);
@@ -114,7 +106,6 @@ bool Erspan2Codec::decode(const RawData& raw, CodecData& codec, DecodeData& )
     return true;
 }
 
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
@@ -128,9 +119,8 @@ static void mod_dtor(Module* m)
 static Codec* ctor(Module*)
 { return new Erspan2Codec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi erspan2_api =
 {
@@ -160,3 +150,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_erspan2 = &erspan2_api.base;
 #endif
+

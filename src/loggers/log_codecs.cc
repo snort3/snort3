@@ -37,8 +37,6 @@
 #include "log/text_log.h"
 #include "utils/stats.h"
 
-
-
 static THREAD_LOCAL TextLog* test_file = nullptr;
 
 #define S_NAME "log_codecs"
@@ -48,7 +46,6 @@ static THREAD_LOCAL TextLog* test_file = nullptr;
 //-------------------------------------------------------------------------
 // module stuff
 //-------------------------------------------------------------------------
-
 
 static const unsigned ALERT_FLAG_MSG = 0x01;
 
@@ -65,11 +62,10 @@ static const Parameter ex_params[] =
 
 namespace
 {
-
 class LogCodecModule : public Module
 {
 public:
-    LogCodecModule() : Module(S_NAME, LOG_CODECS_HELP, ex_params) { };
+    LogCodecModule() : Module(S_NAME, LOG_CODECS_HELP, ex_params) { }
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -78,7 +74,6 @@ public:
     bool print_to_file;
     uint8_t flags;
 };
-
 } // namespace
 
 bool LogCodecModule::set(const char*, Value& v, SnortConfig*)
@@ -93,7 +88,6 @@ bool LogCodecModule::set(const char*, Value& v, SnortConfig*)
         if ( v.get_bool() )
             flags |= ALERT_FLAG_MSG;
     }
-
     else
         return false;
 
@@ -113,8 +107,8 @@ bool LogCodecModule::begin(const char*, int, SnortConfig*)
 
 namespace
 {
-
-class CodecLogger : public Logger {
+class CodecLogger : public Logger
+{
 public:
     CodecLogger(LogCodecModule* m);
 
@@ -126,9 +120,7 @@ public:
     std::string file;
     uint8_t flags;
 };
-
 } // namespace
-
 
 CodecLogger::CodecLogger(LogCodecModule* m)
 {
@@ -144,7 +136,6 @@ void CodecLogger::open()
 void CodecLogger::close()
 { TextLog_Term(test_file); }
 
-
 void CodecLogger::log(Packet* p, const char* msg, Event* e)
 {
     std::string s = std::string(msg);
@@ -154,9 +145,9 @@ void CodecLogger::log(Packet* p, const char* msg, Event* e)
     if (e != NULL)
     {
         TextLog_Print(test_file, "    gid:%lu    sid:%lu    rev:%lu\t",
-                (unsigned long) e->sig_info->generator,
-                (unsigned long) e->sig_info->id,
-                (unsigned long) e->sig_info->rev);
+            (unsigned long)e->sig_info->generator,
+            (unsigned long)e->sig_info->id,
+            (unsigned long)e->sig_info->rev);
     }
 
     if (flags & ALERT_FLAG_MSG)
@@ -203,5 +194,5 @@ static const LogApi log_codecs_api =
     codec_log_dtor
 };
 
-
 const BaseApi* log_codecs = &log_codecs_api.base;
+

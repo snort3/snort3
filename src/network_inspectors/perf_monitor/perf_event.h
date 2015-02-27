@@ -29,17 +29,16 @@
 
 #include "snort_types.h"
 
-typedef struct _SFEVENT {
-
+typedef struct _SFEVENT
+{
     uint64_t NQEvents;
     uint64_t QEvents;
 
     uint64_t TotalEvents;
-
 } SFEVENT;
 
-typedef struct _SFEVENT_STATS {
-
+typedef struct _SFEVENT_STATS
+{
     uint64_t NQEvents;
     uint64_t QEvents;
 
@@ -47,21 +46,21 @@ typedef struct _SFEVENT_STATS {
 
     double NQPercent;
     double QPercent;
-
 }  SFEVENT_STATS;
 
 /*
 **  These functions are for interfacing with the main
 **  perf module.
-*/ 
-int InitEventStats(SFEVENT *sfEvent);
-int ProcessEventStats(SFEVENT *sfEvent);
+*/
+int InitEventStats(SFEVENT* sfEvent);
+int ProcessEventStats(SFEVENT* sfEvent);
 
 /*
 **  These functions are external for updating the
 **  SFEVENT structure.
 */
-int UpdateNQEvents(SFEVENT *);
-int UpdateQEvents(SFEVENT *);
+int UpdateNQEvents(SFEVENT*);
+int UpdateQEvents(SFEVENT*);
 
 #endif
+

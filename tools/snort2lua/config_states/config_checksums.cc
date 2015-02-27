@@ -26,24 +26,23 @@
 
 namespace config
 {
-
-namespace {
-
+namespace
+{
 class ConfigChecksum : public ConversionState
 {
 public:
-    ConfigChecksum( Converter& c,
-                    const std::string* snort_opt,
-                    const std::string* table,
-                    const std::string* lua_opt) :
-            ConversionState(c),
-            snort_option(snort_opt),
-            lua_table(table),
-            lua_option(lua_opt)
+    ConfigChecksum(Converter& c,
+        const std::string* snort_opt,
+        const std::string* table,
+        const std::string* lua_opt) :
+        ConversionState(c),
+        snort_option(snort_opt),
+        lua_table(table),
+        lua_option(lua_opt)
     {
-    };
+    }
 
-    virtual ~ConfigChecksum() {};
+    virtual ~ConfigChecksum() { }
     virtual bool convert(std::istringstream& stream)
     {
         std::string val;
@@ -54,12 +53,10 @@ public:
 
         table_api.open_table(*lua_table);
 
-
-        if(lua_option == nullptr)
+        if (lua_option == nullptr)
             lua_option = snort_option;
         else if (snort_option->compare(*lua_option))
             table_api.add_diff_option_comment(*snort_option, *lua_option);
-
 
         while (stream >> val)
             retval = table_api.add_list(*lua_option, val) && retval;
@@ -73,23 +70,18 @@ private:
     const std::string* lua_option;
 };
 
-
-template<const std::string *snort_option,
-         const std::string *lua_name,
-         const std::string *lua_option = nullptr>
+template<const std::string* snort_option,
+const std::string* lua_name,
+const std::string* lua_option = nullptr>
 static ConversionState* config_checksum_ctor(Converter& c)
 {
     return new ConfigChecksum(c, snort_option, lua_name, lua_option);
 }
-
-
-
 } // namespace
 
 /**************************
  *******  A P I ***********
  **************************/
-
 
 static const std::string network = "network";
 static const std::string checksum_mode = "checksum_mode";
@@ -99,16 +91,16 @@ static const std::string checksum_drop = "checksum_drop";
 static const ConvertMap config_checksum_mode =
 {
     checksum_mode,
-    config_checksum_ctor<&checksum_mode, &network, &checksum_eval>,
+    config_checksum_ctor<& checksum_mode, & network, & checksum_eval>,
 };
 
 static const ConvertMap config_checksum_drop =
 {
     checksum_drop,
-    config_checksum_ctor<&checksum_drop, &network>,
+    config_checksum_ctor<& checksum_drop, & network>,
 };
 
 const ConvertMap* checksum_mode_map = &config_checksum_mode;
 const ConvertMap* checksum_drop_map = &config_checksum_drop;
-
 } // namespace config
+

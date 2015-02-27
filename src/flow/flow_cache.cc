@@ -91,7 +91,7 @@ int FlowCache::get_count()
     return hash_table ? hash_table->get_count() : 0;
 }
 
-Flow* FlowCache::find(const FlowKey *key)
+Flow* FlowCache::find(const FlowKey* key)
 {
     Flow* flow = (Flow*)hash_table->find(key);
 
@@ -106,7 +106,7 @@ Flow* FlowCache::find(const FlowKey *key)
 }
 
 // always prepend
-void FlowCache::link_uni (Flow* flow)
+void FlowCache::link_uni(Flow* flow)
 {
     flow->next = uni_head->next;
     flow->prev = uni_head;
@@ -118,7 +118,7 @@ void FlowCache::link_uni (Flow* flow)
 }
 
 // but remove from any point
-void FlowCache::unlink_uni (Flow* flow)
+void FlowCache::unlink_uni(Flow* flow)
 {
     if ( !flow->next )
         return;
@@ -168,9 +168,9 @@ int FlowCache::remove(Flow* flow)
     return hash_table->remove(flow->key);
 }
 
-uint32_t FlowCache::prune_stale(uint32_t thetime, Flow *save_me)
+uint32_t FlowCache::prune_stale(uint32_t thetime, Flow* save_me)
 {
-    Flow *flow;
+    Flow* flow;
     uint32_t pruned = 0;
     Active_Suspend();
 
@@ -180,12 +180,12 @@ uint32_t FlowCache::prune_stale(uint32_t thetime, Flow *save_me)
     while ( flow )
     {
         // FIXIT-L this loops forever if 1 flow in cache
-        if(flow == save_me)
+        if (flow == save_me)
             hash_table->touch();
 
-        else if((flow->last_data_seen + timeoutAggressive) < thetime)
+        else if ((flow->last_data_seen + timeoutAggressive) < thetime)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "pruning stale flow\n"););
+            DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "pruning stale flow\n"); );
             flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
             release(flow, "stale/timeout");
             pruned++;
@@ -230,7 +230,7 @@ uint32_t FlowCache::prune_unis()
     return pruned;
 }
 
-uint32_t FlowCache::prune_excess(bool memCheck, Flow *save_me)
+uint32_t FlowCache::prune_excess(bool memCheck, Flow* save_me)
 {
     /* Free up 'n' flows at a time until we get under the
      * memcap or free enough flows to be able to create
@@ -243,13 +243,13 @@ uint32_t FlowCache::prune_excess(bool memCheck, Flow *save_me)
     while (
         (hash_table->get_count() > 1) &&
         ((!memCheck && ((hash_table->get_count() > max_cap) || !pruned)) ||
-         (memCheck && tcp_memcap->at_max()) )) // FIXIT-M remove explicit dependence on tcp_memcap
+        (memCheck && tcp_memcap->at_max()) ))  // FIXIT-M remove explicit dependence on tcp_memcap
     {
         unsigned int blocks = 0;
         Flow* flow = (Flow*)hash_table->first();
 
-        for (unsigned i=0;i<cleanup_flows &&
-             (hash_table->get_count() > blocks); i++)
+        for (unsigned i=0; i<cleanup_flows &&
+            (hash_table->get_count() > blocks); i++)
         {
             if ( (flow != save_me) && (!memCheck || !flow->was_blocked()) )
             {
@@ -292,11 +292,11 @@ void FlowCache::timeout(uint32_t flowCount, time_t cur_time)
     while ( flow && flowRetiredCount < flowCount && flowExaminedCount < flowMax )
     {
         if ((time_t)(flow->last_data_seen + timeoutNominal) > cur_time)
-           break;
+            break;
 
         flowExaminedCount++;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "retiring stale flow\n"););
+        DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "retiring stale flow\n"); );
         flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
         release(flow, "stale/timeout");
 

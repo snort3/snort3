@@ -58,30 +58,30 @@ struct ByteExtractData
     uint32_t base;
     uint32_t multiplier;
     int8_t var_number;
-    char *name;
+    char* name;
 };
 
 /* Storage for extracted variables */
-static char *variable_names[NUM_BYTE_EXTRACT_VARS];
+static char* variable_names[NUM_BYTE_EXTRACT_VARS];
 static THREAD_LOCAL uint32_t extracted_values[NUM_BYTE_EXTRACT_VARS];
 
 class ByteExtractOption : public IpsOption
 {
 public:
     ByteExtractOption(const ByteExtractData& c) : IpsOption(s_name)
-    { config = c; };
+    { config = c; }
 
     ~ByteExtractOption()
-    { free(config.name); };
+    { free(config.name); }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
     CursorActionType get_cursor_type() const override
-    { return CAT_ADJUST; };
+    { return CAT_ADJUST; }
 
     bool is_relative() override
-    { return (config.relative_flag == 1); };
+    { return (config.relative_flag == 1); }
 
     int eval(Cursor&, Packet*) override;
 
@@ -96,7 +96,7 @@ private:
 uint32_t ByteExtractOption::hash() const
 {
     uint32_t a,b,c;
-    const ByteExtractData *data = (ByteExtractData *)&config;
+    const ByteExtractData* data = (ByteExtractData*)&config;
 
     a = data->bytes_to_grab;
     b = data->offset;
@@ -105,9 +105,9 @@ uint32_t ByteExtractOption::hash() const
     mix(a,b,c);
 
     a += (data->relative_flag << 24 |
-          data->data_string_convert_flag << 16 |
-          data->align << 8 |
-          data->endianess);
+        data->data_string_convert_flag << 16 |
+        data->align << 8 |
+        data->endianess);
     b += data->multiplier;
     c += data->var_number;
 
@@ -125,8 +125,8 @@ bool ByteExtractOption::operator==(const IpsOption& ips) const
         return false;
 
     ByteExtractOption& rhs = (ByteExtractOption&)ips;
-    ByteExtractData *left = (ByteExtractData *)&config;
-    ByteExtractData *right = (ByteExtractData *)&rhs.config;
+    ByteExtractData* left = (ByteExtractData*)&config;
+    ByteExtractData* right = (ByteExtractData*)&rhs.config;
 
     if ((left->bytes_to_grab == right->bytes_to_grab) &&
         (left->offset == right->offset) &&
@@ -144,11 +144,11 @@ bool ByteExtractOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int ByteExtractOption::eval(Cursor& c, Packet *p)
+int ByteExtractOption::eval(Cursor& c, Packet* p)
 {
-    ByteExtractData *data = &config;
+    ByteExtractData* data = &config;
     int ret, bytes_read;
-    uint32_t *value;
+    uint32_t* value;
 
     PROFILE_VARS;
     MODULE_PROFILE_START(byteExtractPerfStats);
@@ -240,7 +240,7 @@ static void clear_var_names()
 //-------------------------------------------------------------------------
 
 /* Given a variable name, retrieve its index. For use by other options. */
-int8_t GetVarByName(const char *name)
+int8_t GetVarByName(const char* name)
 {
     int i;
 
@@ -257,7 +257,7 @@ int8_t GetVarByName(const char *name)
 }
 
 /* If given an OptFpList with no byte_extracts, clear the variable_names array */
-static void ClearVarNames(OptFpList *fpl)
+static void ClearVarNames(OptFpList* fpl)
 {
     while (fpl != NULL)
     {
@@ -274,7 +274,7 @@ static void ClearVarNames(OptFpList *fpl)
 /* Add a variable's name to the variable_names array
    Returns: variable index
 */
-static int8_t AddVarNameToList(ByteExtractData *data)
+static int8_t AddVarNameToList(ByteExtractData* data)
 {
     int i;
 
@@ -285,7 +285,6 @@ static int8_t AddVarNameToList(ByteExtractData *data)
             variable_names[i] = SnortStrdup(data->name);
             break;
         }
-
         else if ( strcmp(variable_names[i], data->name) == 0 )
         {
             break;
@@ -296,7 +295,7 @@ static int8_t AddVarNameToList(ByteExtractData *data)
 }
 
 /* Setters & Getters for extracted values */
-int GetByteExtractValue(uint32_t *dst, int8_t var_number)
+int GetByteExtractValue(uint32_t* dst, int8_t var_number)
 {
     if (dst == NULL || var_number >= NUM_BYTE_EXTRACT_VARS)
         return BYTE_EXTRACT_NO_VAR;
@@ -321,53 +320,53 @@ int SetByteExtractValue(uint32_t value, int8_t var_number)
 //-------------------------------------------------------------------------
 
 /* Checks a ByteExtractData instance for errors. */
-static bool ByteExtractVerify(ByteExtractData *data)
+static bool ByteExtractVerify(ByteExtractData* data)
 {
     if (data->bytes_to_grab > MAX_BYTES_TO_GRAB && data->data_string_convert_flag == 0)
     {
         ParseError("byte_extract rule option cannot extract more than %d bytes.",
-                     MAX_BYTES_TO_GRAB);
+            MAX_BYTES_TO_GRAB);
         return false;
     }
 
     if (data->bytes_to_grab > PARSELEN && data->data_string_convert_flag == 1)
     {
         ParseError("byte_extract rule cannot process more than %d bytes for "
-                   "string extraction.",  PARSELEN);
+            "string extraction.",  PARSELEN);
         return false;
     }
 
     if (data->align != 0 && data->align != 2 && data->align != 4)
     {
         ParseError("byte_extract rule option has an invalid argument "
-                   "to 'align'. Valid arguments are '2' and '4'.");
+            "to 'align'. Valid arguments are '2' and '4'.");
         return false;
     }
 
     if (data->offset < 0 && data->relative_flag == 0)
     {
         ParseError("byte_extract rule option has a negative offset, but does "
-                   "not use the 'relative' option.");
+            "not use the 'relative' option.");
         return false;
     }
 
     if (data->name && isdigit(data->name[0]))
     {
         ParseError("byte_extract rule option has a name which starts with a digit. "
-                   "Variable names must start with a letter.");
+            "Variable names must start with a letter.");
         return false;
     }
 
     if (data->base && !data->data_string_convert_flag)
     {
         ParseError("byte_extract rule option has a string conversion type "
-                   "(dec, hex, or oct) without the \"string\" "
-                   "argument.");
+            "(dec, hex, or oct) without the \"string\" "
+            "argument.");
         return false;
     }
     unsigned e1 = ffs(data->endianess);
     unsigned e2 = ffs(data->endianess >> e1);
-    
+
     if ( e1 && e2 )
     {
         ParseError("byte_extract rule option has multiple arguments "
@@ -429,14 +428,14 @@ static const Parameter s_params[] =
 class ExtractModule : public Module
 {
 public:
-    ExtractModule() : Module(s_name, s_help, s_params) { };
+    ExtractModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &byteExtractPerfStats; };
+    { return &byteExtractPerfStats; }
 
     ByteExtractData data;
 };

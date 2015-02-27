@@ -93,18 +93,18 @@ static THREAD_LOCAL ProfileStats pcrePerfStats;
 //-------------------------------------------------------------------------
 
 static void pcre_capture(
-    const void *code, const void *extra)
+    const void* code, const void* extra)
 {
     int tmp_ovector_size = 0;
 
-    pcre_fullinfo((const pcre *)code, (const pcre_extra *)extra,
+    pcre_fullinfo((const pcre*)code, (const pcre_extra*)extra,
         PCRE_INFO_CAPTURECOUNT, &tmp_ovector_size);
 
     if (tmp_ovector_size > s_ovector_size)
         s_ovector_size = tmp_ovector_size;
 }
 
-static void pcre_check_anchored(PcreData *pcre_data)
+static void pcre_check_anchored(PcreData* pcre_data)
 {
     int rc;
     unsigned long int options = 0;
@@ -112,36 +112,36 @@ static void pcre_check_anchored(PcreData *pcre_data)
     if ((pcre_data == NULL) || (pcre_data->re == NULL) || (pcre_data->pe == NULL))
         return;
 
-    rc = pcre_fullinfo(pcre_data->re, pcre_data->pe, PCRE_INFO_OPTIONS, (void *)&options);
+    rc = pcre_fullinfo(pcre_data->re, pcre_data->pe, PCRE_INFO_OPTIONS, (void*)&options);
     switch (rc)
     {
-        /* pcre_fullinfo fails for the following:
-         * PCRE_ERROR_NULL - the argument code was NULL
-         *                   the argument where was NULL
-         * PCRE_ERROR_BADMAGIC - the "magic number" was not found
-         * PCRE_ERROR_BADOPTION - the value of what was invalid
-         * so a failure here means we passed in bad values and we should
-         * probably fatal error */
+    /* pcre_fullinfo fails for the following:
+     * PCRE_ERROR_NULL - the argument code was NULL
+     *                   the argument where was NULL
+     * PCRE_ERROR_BADMAGIC - the "magic number" was not found
+     * PCRE_ERROR_BADOPTION - the value of what was invalid
+     * so a failure here means we passed in bad values and we should
+     * probably fatal error */
 
-        case 0:
-            /* This is the success code */
-            break;
+    case 0:
+        /* This is the success code */
+        break;
 
-        case PCRE_ERROR_NULL:
-            ParseError("pcre_fullinfo: code and/or where were NULL.");
-            return;
+    case PCRE_ERROR_NULL:
+        ParseError("pcre_fullinfo: code and/or where were NULL.");
+        return;
 
-        case PCRE_ERROR_BADMAGIC:
-            ParseError("pcre_fullinfo: compiled code didn't have correct magic.");
-            return;
+    case PCRE_ERROR_BADMAGIC:
+        ParseError("pcre_fullinfo: compiled code didn't have correct magic.");
+        return;
 
-        case PCRE_ERROR_BADOPTION:
-            ParseError("pcre_fullinfo: option type is invalid.");
-            return;
+    case PCRE_ERROR_BADOPTION:
+        ParseError("pcre_fullinfo: option type is invalid.");
+        return;
 
-        default:
-            ParseError("pcre_fullinfo: Unknown error code.");
-            return;
+    default:
+        ParseError("pcre_fullinfo: Unknown error code.");
+        return;
     }
 
     if ((options & PCRE_ANCHORED) && !(options & PCRE_MULTILINE))
@@ -156,14 +156,14 @@ static void pcre_check_anchored(PcreData *pcre_data)
 
 static void pcre_parse(const char* data, PcreData* pcre_data)
 {
-    const char *error;
-    char *re, *free_me;
-    char *opts;
+    const char* error;
+    char* re, * free_me;
+    char* opts;
     char delimit = '/';
     int erroffset;
     int compile_flags = 0;
 
-    if(data == NULL)
+    if (data == NULL)
     {
         ParseError("pcre requires a regular expression");
         return;
@@ -173,13 +173,17 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     re = free_me;
 
     /* get rid of starting and ending whitespace */
-    while (isspace((int)re[strlen(re)-1])) re[strlen(re)-1] = '\0';
-    while (isspace((int)*re)) re++;
+    while (isspace((int)re[strlen(re)-1]))
+        re[strlen(re)-1] = '\0';
+    while (isspace((int)*re))
+        re++;
 
-    if(*re == '!') {
+    if (*re == '!')
+    {
         pcre_data->options |= SNORT_PCRE_INVERT;
         re++;
-        while(isspace((int)*re)) re++;
+        while (isspace((int)*re))
+            re++;
     }
 
     if ( *re == '"')
@@ -190,19 +194,22 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
 
     /* 'm//' or just '//' */
 
-    if(*re == 'm')
+    if (*re == 'm')
     {
         re++;
-        if(! *re) goto syntax;
+        if (!*re)
+            goto syntax;
 
         /* Space as a ending delimiter?  Uh, no. */
-        if(isspace((int)*re)) goto syntax;
+        if (isspace((int)*re))
+            goto syntax;
         /* using R would be bad, as it triggers RE */
-        if(*re == 'R') goto syntax;
+        if (*re == 'R')
+            goto syntax;
 
         delimit = *re;
     }
-    else if(*re != delimit)
+    else if (*re != delimit)
         goto syntax;
 
     pcre_data->expression = SnortStrdup(re);
@@ -212,30 +219,32 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     if (opts == NULL)
         goto syntax;
 
-    if(!((opts - re) > 1)) /* empty regex(m||) or missing delim not OK */
+    if (!((opts - re) > 1)) /* empty regex(m||) or missing delim not OK */
         goto syntax;
 
     re++;
     *opts++ = '\0';
 
     /* process any /regex/ismxR options */
-    while(*opts != '\0') {
-        switch(*opts) {
+    while (*opts != '\0')
+    {
+        switch (*opts)
+        {
         case 'i':  compile_flags |= PCRE_CASELESS;            break;
         case 's':  compile_flags |= PCRE_DOTALL;              break;
         case 'm':  compile_flags |= PCRE_MULTILINE;           break;
         case 'x':  compile_flags |= PCRE_EXTENDED;            break;
 
-            /*
-             * these are pcre specific... don't work with perl
-             */
+        /*
+         * these are pcre specific... don't work with perl
+         */
         case 'A':  compile_flags |= PCRE_ANCHORED;            break;
         case 'E':  compile_flags |= PCRE_DOLLAR_ENDONLY;      break;
         case 'G':  compile_flags |= PCRE_UNGREEDY;            break;
 
-            /*
-             * these are snort specific don't work with pcre or perl
-             */
+        /*
+         * these are snort specific don't work with pcre or perl
+         */
         case 'R':  pcre_data->options |= SNORT_PCRE_RELATIVE; break;
         case 'O':  pcre_data->options |= SNORT_OVERRIDE_MATCH_LIMIT; break;
 
@@ -247,13 +256,13 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     }
 
     /* now compile the re */
-    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "pcre: compiling %s\n", re););
+    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "pcre: compiling %s\n", re); );
     pcre_data->re = pcre_compile(re, compile_flags, &error, &erroffset, NULL);
 
-    if(pcre_data->re == NULL)
+    if (pcre_data->re == NULL)
     {
         ParseError(": pcre compile of '%s' failed at offset "
-                   "%d : %s", re, erroffset, error);
+            "%d : %s", re, erroffset, error);
         return;
     }
 
@@ -276,7 +285,8 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
         }
 
 #ifdef PCRE_EXTRA_MATCH_LIMIT_RECURSION
-        if ((ScPcreMatchLimitRecursion() != -1) && !(pcre_data->options & SNORT_OVERRIDE_MATCH_LIMIT))
+        if ((ScPcreMatchLimitRecursion() != -1) && !(pcre_data->options &
+            SNORT_OVERRIDE_MATCH_LIMIT))
         {
             if (pcre_data->pe->flags & PCRE_EXTRA_MATCH_LIMIT_RECURSION)
             {
@@ -293,9 +303,9 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     else
     {
         if (!(pcre_data->options & SNORT_OVERRIDE_MATCH_LIMIT) &&
-             ((ScPcreMatchLimit() != -1) || (ScPcreMatchLimitRecursion() != -1)))
+            ((ScPcreMatchLimit() != -1) || (ScPcreMatchLimitRecursion() != -1)))
         {
-            pcre_data->pe = (pcre_extra *)SnortAlloc(sizeof(pcre_extra));
+            pcre_data->pe = (pcre_extra*)SnortAlloc(sizeof(pcre_extra));
             if (ScPcreMatchLimit() != -1)
             {
                 pcre_data->pe->flags |= PCRE_EXTRA_MATCH_LIMIT;
@@ -312,7 +322,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
         }
     }
 
-    if(error != NULL)
+    if (error != NULL)
     {
         ParseError("pcre study failed : %s", error);
         return;
@@ -324,7 +334,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     free(free_me);
     return;
 
- syntax:
+syntax:
     free(free_me);
 
     // ensure integrity from parse error to fatal error
@@ -347,22 +357,22 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
  * @return 1 when we find the string, 0 when we don't (unless we've been passed a flag to invert)
  */
 static bool pcre_search(
-    const PcreData *pcre_data,
-    const uint8_t *buf,
+    const PcreData* pcre_data,
+    const uint8_t* buf,
     int len,
     int start_offset,
-    int *found_offset)
+    int* found_offset)
 {
     bool matched;
     int result;
 
-    if(pcre_data == NULL
-       || buf == NULL
-       || len <= 0
-       || found_offset == NULL)
+    if (pcre_data == NULL
+        || buf == NULL
+        || len <= 0
+        || found_offset == NULL)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-            "Returning 0 because we didn't have the required parameters!\n"););
+            "Returning 0 because we didn't have the required parameters!\n"); );
         return false;
     }
 
@@ -379,9 +389,9 @@ static bool pcre_search(
         start_offset,   /* start at offset 0 in the subject */
         0,              /* options(handled at compile time */
         ss->pcre_ovector,      /* vector for substring information */
-        snort_conf->pcre_ovector_size);/* number of elements in the vector */
+        snort_conf->pcre_ovector_size); /* number of elements in the vector */
 
-    if(result >= 0)
+    if (result >= 0)
     {
         matched = true;
 
@@ -406,18 +416,18 @@ static bool pcre_search(
 
         *found_offset = ss->pcre_ovector[1];
     }
-    else if(result == PCRE_ERROR_NOMATCH)
+    else if (result == PCRE_ERROR_NOMATCH)
     {
         matched = false;
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "pcre_exec error : %d \n", result););
+        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "pcre_exec error : %d \n", result); );
         return false;
     }
 
     /* invert sense of match */
-    if(pcre_data->options & SNORT_PCRE_INVERT)
+    if (pcre_data->options & SNORT_PCRE_INVERT)
     {
         matched = !matched;
     }
@@ -434,7 +444,7 @@ class PcreOption : public IpsOption
 public:
     PcreOption(PcreData* c) :
         IpsOption(s_name, RULE_OPTION_TYPE_PCRE)
-    { config = c; };
+    { config = c; }
 
     ~PcreOption();
 
@@ -442,15 +452,15 @@ public:
     bool operator==(const IpsOption&) const override;
 
     bool is_relative() override
-    { return (config->options & SNORT_PCRE_RELATIVE) != 0; };
+    { return (config->options & SNORT_PCRE_RELATIVE) != 0; }
 
     int eval(Cursor&, Packet*) override;
 
     PcreData* get_data()
-    { return config; };
+    { return config; }
 
     void set_data(PcreData* pcre)
-    { config = pcre; };
+    { config = pcre; }
 
 private:
     PcreData* config;
@@ -477,34 +487,34 @@ uint32_t PcreOption::hash() const
 {
     int i,j,k,l,expression_len;
     uint32_t a,b,c,tmp;
-    const PcreData *data = config;
+    const PcreData* data = config;
 
     expression_len = strlen(data->expression);
     a = b = c = 0;
 
-    for (i=0,j=0;i<expression_len;i+=4)
+    for (i=0,j=0; i<expression_len; i+=4)
     {
         tmp = 0;
         k = expression_len - i;
         if (k > 4)
             k=4;
 
-        for (l=0;l<k;l++)
+        for (l=0; l<k; l++)
         {
             tmp |= *(data->expression + i + l) << l*8;
         }
 
         switch (j)
         {
-            case 0:
-                a += tmp;
-                break;
-            case 1:
-                b += tmp;
-                break;
-            case 2:
-                c += tmp;
-                break;
+        case 0:
+            a += tmp;
+            break;
+        case 1:
+            b += tmp;
+            break;
+        case 2:
+            c += tmp;
+            break;
         }
         j++;
 
@@ -534,8 +544,8 @@ bool PcreOption::operator==(const IpsOption& ips) const
         return false;
 
     PcreOption& rhs = (PcreOption&)ips;
-    PcreData *left = config;
-    PcreData *right = rhs.config;
+    PcreData* left = config;
+    PcreData* right = rhs.config;
 
     if (( strcmp(left->expression, right->expression) == 0) &&
         ( left->options == right->options))
@@ -548,7 +558,7 @@ bool PcreOption::operator==(const IpsOption& ips) const
 
 int PcreOption::eval(Cursor& c, Packet*)
 {
-    PcreData *pcre_data = config;
+    PcreData* pcre_data = config;
     int found_offset = -1;  /* where is the ending location of the pattern */
     bool matched = false;
 
@@ -623,7 +633,7 @@ void pcre_setup(SnortConfig* sc)
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
         SnortState* ss = sc->state + i;
-        ss->pcre_ovector = (int *) SnortAlloc(s_ovector_max*sizeof(int));
+        ss->pcre_ovector = (int*)SnortAlloc(s_ovector_max*sizeof(int));
     }
 }
 
@@ -659,16 +669,16 @@ class PcreModule : public Module
 {
 public:
     PcreModule() : Module(s_name, s_help, s_params)
-    { data = nullptr; };
+    { data = nullptr; }
 
     ~PcreModule()
-    { delete data; };
+    { delete data; }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &pcrePerfStats; };
+    { return &pcrePerfStats; }
 
     PcreData* get_data();
 

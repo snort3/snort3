@@ -20,17 +20,15 @@
 #include "data/data_types/dt_rule_option.h"
 #include "data/data_types/dt_rule_suboption.h"
 
-
-
 RuleOption::RuleOption(std::string n) :
-        name(n),
-        value(std::string())
-{}
+    name(n),
+    value(std::string())
+{ }
 
 RuleOption::RuleOption(std::string n, std::string v)
     :   name(n),
-        value(v)
-{}
+    value(v)
+{ }
 
 RuleOption::~RuleOption()
 {
@@ -44,15 +42,14 @@ bool RuleOption::add_suboption(std::string subopt_name)
 }
 
 bool RuleOption::add_suboption(std::string subopt_name,
-                                std::string val)
+    std::string val)
 {
     RuleSubOption* subopt = new RuleSubOption(subopt_name, val);
     sub_options.push_back(subopt);
     return true;
 }
 
-
-std::ostream &operator<<( std::ostream& out, const RuleOption &opt)
+std::ostream& operator<<(std::ostream& out, const RuleOption& opt)
 {
     bool first_print = true;
 
@@ -80,3 +77,4 @@ std::ostream &operator<<( std::ostream& out, const RuleOption &opt)
 
     return out;
 }
+

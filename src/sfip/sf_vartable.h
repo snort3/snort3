@@ -22,7 +22,7 @@
  * sf_vartable.h
  * 11/17/06
  *
- * Library for implementing a variable table.  
+ * Library for implementing a variable table.
  * All API calls have the prefix "sfvt".
 */
 
@@ -36,21 +36,22 @@ struct sfip_var_t;
 struct vartable_t;
 
 /* Allocates new variable table */
-vartable_t * sfvt_alloc_table(void);
-void sfvt_free_table(vartable_t *table);
+vartable_t* sfvt_alloc_table(void);
+void sfvt_free_table(vartable_t* table);
 
 /* Adds the variable described by "str" to the table "table" */
-SFIP_RET sfvt_add_str(vartable_t *table, const char *str, sfip_var_t **);
-SFIP_RET sfvt_define(vartable_t *table, const char *name, const char *value);
+SFIP_RET sfvt_add_str(vartable_t* table, const char* str, sfip_var_t**);
+SFIP_RET sfvt_define(vartable_t* table, const char* name, const char* value);
 
 /* Adds the variable described by "str" to the variable "dst",
  * using the vartable for looking variables used within "str" */
-SFIP_RET sfvt_add_to_var(vartable_t *table, sfip_var_t *dst, const char *src);
+SFIP_RET sfvt_add_to_var(vartable_t* table, sfip_var_t* dst, const char* src);
 
 /* Looks up a variable from the table using the name as the key */
-sfip_var_t *sfvt_lookup_var(vartable_t *table, const char *name);
+sfip_var_t* sfvt_lookup_var(vartable_t* table, const char* name);
 
 /* Prints a table's contents */
-void sfvt_print(FILE *f, vartable_t *table);
+void sfvt_print(FILE* f, vartable_t* table);
 
 #endif
+

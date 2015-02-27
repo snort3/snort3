@@ -24,7 +24,6 @@
 #include <vector>
 #include <iostream>
 
-
 static const std::string start_comments =
     "\nCOMMENTS:\n"
     "    these line were commented "
@@ -48,7 +47,6 @@ public:
         MULTI_LINE
     };
 
-
     Comments(CommentType);
     Comments(int depth, CommentType);
     Comments(std::string name, int depth, CommentType);
@@ -62,7 +60,7 @@ public:
     bool size() const;
 
     // overloading operators
-    friend std::ostream &operator<<( std::ostream&, const Comments &);
+    friend std::ostream& operator<<(std::ostream&, const Comments&);
 
 private:
     std::vector<std::string> comment;
@@ -76,5 +74,5 @@ private:
     const std::string end_multi_com = "--]]";
 };
 
-
 #endif
+

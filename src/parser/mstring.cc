@@ -56,7 +56,7 @@
 #include "util.h"
 #include "detection_util.h"
 
-static char * mSplitAddTok(const char *, const int, const char *, const char);
+static char* mSplitAddTok(const char*, const int, const char*, const char);
 
 #ifdef TEST_MSTRING
 
@@ -69,15 +69,15 @@ int main()
      char find[] = "\xe8\xc0\xff\xff\xff/bin/sh";  */
     int i;
     int toks;
-    int *shift;
-    int *skip;
+    int* shift;
+    int* skip;
 
 /*   shift=make_shift(find,sizeof(find)-1);
      skip=make_skip(find,sizeof(find)-1); */
 
     DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,"%d\n",
-			    mSearch(test, sizeof(test) - 1, find,
-				    sizeof(find) - 1, shift, skip)););
+        mSearch(test, sizeof(test) - 1, find,
+        sizeof(find) - 1, shift, skip)); );
 
     return 0;
 }
@@ -113,8 +113,8 @@ int main()
  *
  ****************************************************************/
 // FIXIT-L eliminate mSplit(); create iterator service if needed
-char ** mSplit(const char *str, const char *sep_chars, const int max_toks,
-               int *num_toks, const char meta_char)
+char** mSplit(const char* str, const char* sep_chars, const int max_toks,
+    int* num_toks, const char meta_char)
 {
     size_t cur_tok = 0;  /* current token index into array of strings */
     size_t tok_start;    /* index to start of token */
@@ -123,13 +123,13 @@ char ** mSplit(const char *str, const char *sep_chars, const int max_toks,
     /* It's rare we'll need more than this even if max_toks is set really
      * high.  Store toks here until finished, then allocate.  If more than
      * this is necessary, then allocate max toks */
-    char *toks_buf[TOKS_BUF_SIZE];
+    char* toks_buf[TOKS_BUF_SIZE];
     size_t toks_buf_size = TOKS_BUF_SIZE;
     int toks_buf_size_increment = 10;
-    char **toks_alloc = NULL;   /* Used if the static buf isn't enough */
-    char **toks = toks_buf;     /* Pointer to one of the two above */
-    char **retstr;
-    const char *whitespace = " \t";
+    char** toks_alloc = NULL;   /* Used if the static buf isn't enough */
+    char** toks = toks_buf;     /* Pointer to one of the two above */
+    char** retstr;
+    const char* whitespace = " \t";
 
     if (num_toks == NULL)
         return NULL;
@@ -179,7 +179,7 @@ char ** mSplit(const char *str, const char *sep_chars, const int max_toks,
      * one tok */
     if ((cur_tok + 1) == (size_t)max_toks)
     {
-        retstr = (char **)SnortAlloc(sizeof(char *));
+        retstr = (char**)SnortAlloc(sizeof(char*));
         retstr[cur_tok] = SnortStrndup(&str[i], strlen(str) - i);
         if (retstr[cur_tok] == NULL)
         {
@@ -256,8 +256,8 @@ char ** mSplit(const char *str, const char *sep_chars, const int max_toks,
 
                 if (toks != toks_alloc)
                 {
-                    retstr = (char **)SnortAlloc(sizeof(char *) * cur_tok);
-                    memcpy(retstr, toks, (sizeof(char *) * cur_tok));
+                    retstr = (char**)SnortAlloc(sizeof(char*) * cur_tok);
+                    memcpy(retstr, toks, (sizeof(char*) * cur_tok));
                 }
                 else
                 {
@@ -273,7 +273,7 @@ char ** mSplit(const char *str, const char *sep_chars, const int max_toks,
              * max toks in that case. */
             if (cur_tok == toks_buf_size)
             {
-                char **tmp;
+                char** tmp;
 
                 if (toks_alloc != NULL)
                     tmp = toks_alloc;
@@ -285,8 +285,8 @@ char ** mSplit(const char *str, const char *sep_chars, const int max_toks,
                 else
                     toks_buf_size = cur_tok + toks_buf_size_increment;
 
-                toks_alloc = (char **)SnortAlloc(sizeof(char *) * toks_buf_size);
-                memcpy(toks_alloc, tmp, (sizeof(char *) * cur_tok));
+                toks_alloc = (char**)SnortAlloc(sizeof(char*) * toks_buf_size);
+                memcpy(toks_alloc, tmp, (sizeof(char*) * cur_tok));
                 toks = toks_alloc;
 
                 if (tmp != toks_buf)
@@ -301,8 +301,8 @@ char ** mSplit(const char *str, const char *sep_chars, const int max_toks,
                 /* Already got a ret string */
                 if (toks != toks_alloc)
                 {
-                    retstr = (char **)SnortAlloc(sizeof(char *) * (cur_tok + 1));
-                    memcpy(retstr, toks, (sizeof(char *) * (cur_tok + 1)));
+                    retstr = (char**)SnortAlloc(sizeof(char*) * (cur_tok + 1));
+                    memcpy(retstr, toks, (sizeof(char*) * (cur_tok + 1)));
                 }
                 else
                 {
@@ -358,8 +358,8 @@ char ** mSplit(const char *str, const char *sep_chars, const int max_toks,
      * one more tok.  Unescape escaped sepatator charactors */
     if (toks != toks_alloc)
     {
-        retstr = (char **)SnortAlloc(sizeof(char *) * (cur_tok + 1));
-        memcpy(retstr, toks, (sizeof(char *) * (cur_tok + 1)));
+        retstr = (char**)SnortAlloc(sizeof(char*) * (cur_tok + 1));
+        memcpy(retstr, toks, (sizeof(char*) * (cur_tok + 1)));
     }
     else
     {
@@ -375,10 +375,11 @@ char ** mSplit(const char *str, const char *sep_chars, const int max_toks,
 }
 
 /* Will not return NULL.  SnortAlloc will fatal if it fails */
-static char * mSplitAddTok(const char *str, const int len, const char *sep_chars, const char meta_char)
+static char* mSplitAddTok(const char* str, const int len, const char* sep_chars, const char
+    meta_char)
 {
     size_t i, j, k;
-    char *tok;
+    char* tok;
     int tok_len = 0;
     int got_meta = 0;
 
@@ -416,7 +417,7 @@ static char * mSplitAddTok(const char *str, const int len, const char *sep_chars
     }
 
     /* Allocate it and fill it in */
-    tok = (char *)SnortAlloc(tok_len + 1);
+    tok = (char*)SnortAlloc(tok_len + 1);
     for (i = 0, k = 0; (int)i < len; i++)
     {
         if (!got_meta)
@@ -462,23 +463,23 @@ static char * mSplitAddTok(const char *str, const int len, const char *sep_chars
  * At this point, toks is again NULL.
  *
  ****************************************************************/
-void mSplitFree(char ***pbuf, int num_toks)
+void mSplitFree(char*** pbuf, int num_toks)
 {
     int i;
     char** buf;  /* array of string pointers */
 
-    if( pbuf==NULL || *pbuf==NULL )
+    if ( pbuf==NULL || *pbuf==NULL )
     {
         return;
     }
 
     buf = *pbuf;
 
-    for( i=0; i<num_toks; i++ )
+    for ( i=0; i<num_toks; i++ )
     {
-        if( buf[i] != NULL )
+        if ( buf[i] != NULL )
         {
-            free( buf[i] );
+            free(buf[i]);
             buf[i] = NULL;
         }
     }
@@ -505,18 +506,18 @@ void mSplitFree(char ***pbuf, int num_toks)
  *      failure (substr not in str)
  *
  ****************************************************************/
-int mContainsSubstr(const char *buf, int b_len, const char *pat, int p_len)
+int mContainsSubstr(const char* buf, int b_len, const char* pat, int p_len)
 {
-    const char *b_idx;  /* index ptr into the data buffer */
-    const char *p_idx;  /* index ptr into the pattern buffer */
-    const char *b_end;  /* ptr to the end of the data buffer */
+    const char* b_idx;  /* index ptr into the data buffer */
+    const char* p_idx;  /* index ptr into the pattern buffer */
+    const char* b_end;  /* ptr to the end of the data buffer */
     int m_cnt = 0;      /* number of pattern matches so far... */
 #ifdef DEBUG_MSGS
     unsigned long loopcnt = 0;
 #endif
 
     /* mark the end of the strs */
-    b_end = (char *) (buf + b_len);
+    b_end = (char*)(buf + b_len);
 
     /* init the index ptrs */
     b_idx = buf;
@@ -528,13 +529,12 @@ int mContainsSubstr(const char *buf, int b_len, const char *pat, int p_len)
         loopcnt++;
 #endif
 
-        if(*p_idx == *b_idx)
+        if (*p_idx == *b_idx)
         {
-
-            if(m_cnt == (p_len - 1))
+            if (m_cnt == (p_len - 1))
             {
-		DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-					"\n%ld compares for match\n", loopcnt););
+                DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
+                    "\n%ld compares for match\n", loopcnt); );
                 return 1;
             }
             m_cnt++;
@@ -543,7 +543,7 @@ int mContainsSubstr(const char *buf, int b_len, const char *pat, int p_len)
         }
         else
         {
-            if(m_cnt == 0)
+            if (m_cnt == 0)
             {
                 b_idx++;
             }
@@ -556,9 +556,8 @@ int mContainsSubstr(const char *buf, int b_len, const char *pat, int p_len)
 
             m_cnt = 0;
         }
-
-    } while(b_idx < b_end);
-
+    }
+    while (b_idx < b_end);
 
     /* if we make it here we didn't find what we were looking for */
     return 0;

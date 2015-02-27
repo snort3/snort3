@@ -16,7 +16,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 /*
 **  @file       hi_mi.h
 **
@@ -36,7 +36,7 @@
 #include "hi_include.h"
 #include "hi_main.h"
 
-int hi_mi_mode_inspection(HI_SESSION *session, int iInspectMode, Packet *p, HttpSessionData *);
+int hi_mi_mode_inspection(HI_SESSION* session, int iInspectMode, Packet* p, HttpSessionData*);
 
 #endif
 

@@ -17,27 +17,23 @@
 //--------------------------------------------------------------------------
 // mpls.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifndef PROTOCOLS_MPLS_H
 #define PROTOCOLS_MPLS_H
 
-namespace mpls{
-
+namespace mpls
+{
 struct MplsHdr
 {
     uint32_t label;
-    uint8_t  exp;
-    uint8_t  bos;
-    uint8_t  ttl;
-} ;
-
-
+    uint8_t exp;
+    uint8_t bos;
+    uint8_t ttl;
+};
 } // namespace mpls
 
 constexpr int MPLS_PAYLOADTYPE_ETHERNET = 1;
 constexpr int MPLS_PAYLOADTYPE_IPV4 = 2;
 constexpr int MPLS_PAYLOADTYPE_IPV6 = 3;
-
 
 #endif
 

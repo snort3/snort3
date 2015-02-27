@@ -360,16 +360,16 @@ static TokenType get_token(
 enum FsmAction
 {
     FSM_ACT, FSM_PRO,
-    FSM_SIP, FSM_SP, 
-    FSM_DIR, 
+    FSM_SIP, FSM_SP,
+    FSM_DIR,
     FSM_DIP, FSM_DP,
     FSM_STB, FSM_SOB,
-    FSM_EOB, 
+    FSM_EOB,
     FSM_KEY, FSM_OPT,
     FSM_VAL, FSM_SET,
     FSM_ADD, FSM_INC,
     FSM_END,
-    FSM_NOP, FSM_ERR, 
+    FSM_NOP, FSM_ERR,
     FSM_MAX
 };
 
@@ -400,27 +400,27 @@ struct State
 
 static const State fsm[] =
 {
-    { -1,  0, TT_NONE,    FSM_ERR, nullptr,    ""      },
-    {  0, 15, TT_LITERAL, FSM_KEY, "include",  ""      },
-    {  0,  1, TT_LITERAL, FSM_ACT, nullptr,    "("     },
-    {  1,  8, TT_PUNCT,   FSM_STB, "(",        "(:,;)" },
-    {  1,  2, TT_LITERAL, FSM_PRO, nullptr,    ""      },
-    {  2,  3, TT_LIST,    FSM_SIP, nullptr,    nullptr },
-    {  2,  3, TT_LITERAL, FSM_SIP, nullptr,    nullptr },
-    {  3,  4, TT_LIST,    FSM_SP,  nullptr,    nullptr },
-    {  3,  4, TT_LITERAL, FSM_SP,  nullptr,    nullptr },
-    {  4,  5, TT_LITERAL, FSM_DIR, nullptr,    nullptr },
-    {  5,  6, TT_LIST,    FSM_DIP, nullptr,    nullptr },
-    {  5,  6, TT_LITERAL, FSM_DIP, nullptr,    nullptr },
-    {  6,  7, TT_LIST,    FSM_DP,  nullptr,    "(:,;)" },
-    {  6,  7, TT_LITERAL, FSM_DP,  nullptr,    "(:,;)" },
-    {  7,  8, TT_PUNCT,   FSM_SOB, "(",        nullptr },
-    {  8,  0, TT_PUNCT,   FSM_EOB, ")",        nullptr },
-    {  8, 13, TT_LITERAL, FSM_KEY, "metadata", nullptr },
-    {  8, 16, TT_LITERAL, FSM_KEY, "reference",":;"    },
-    {  8,  9, TT_LITERAL, FSM_KEY, nullptr,    nullptr },
-    {  9,  8, TT_PUNCT,   FSM_END, ";",        nullptr },
-    {  9, 10, TT_PUNCT,   FSM_NOP, ":",        nullptr },
+    { -1,  0, TT_NONE,    FSM_ERR, nullptr,    "" },
+    { 0, 15, TT_LITERAL, FSM_KEY, "include",  "" },
+    { 0,  1, TT_LITERAL, FSM_ACT, nullptr,    "(" },
+    { 1,  8, TT_PUNCT,   FSM_STB, "(",        "(:,;)" },
+    { 1,  2, TT_LITERAL, FSM_PRO, nullptr,    "" },
+    { 2,  3, TT_LIST,    FSM_SIP, nullptr,    nullptr },
+    { 2,  3, TT_LITERAL, FSM_SIP, nullptr,    nullptr },
+    { 3,  4, TT_LIST,    FSM_SP,  nullptr,    nullptr },
+    { 3,  4, TT_LITERAL, FSM_SP,  nullptr,    nullptr },
+    { 4,  5, TT_LITERAL, FSM_DIR, nullptr,    nullptr },
+    { 5,  6, TT_LIST,    FSM_DIP, nullptr,    nullptr },
+    { 5,  6, TT_LITERAL, FSM_DIP, nullptr,    nullptr },
+    { 6,  7, TT_LIST,    FSM_DP,  nullptr,    "(:,;)" },
+    { 6,  7, TT_LITERAL, FSM_DP,  nullptr,    "(:,;)" },
+    { 7,  8, TT_PUNCT,   FSM_SOB, "(",        nullptr },
+    { 8,  0, TT_PUNCT,   FSM_EOB, ")",        nullptr },
+    { 8, 13, TT_LITERAL, FSM_KEY, "metadata", nullptr },
+    { 8, 16, TT_LITERAL, FSM_KEY, "reference",":;" },
+    { 8,  9, TT_LITERAL, FSM_KEY, nullptr,    nullptr },
+    { 9,  8, TT_PUNCT,   FSM_END, ";",        nullptr },
+    { 9, 10, TT_PUNCT,   FSM_NOP, ":",        nullptr },
     // we can't allow this because the syntax is squiffy
     // would prefer to require a ; after the last option
     // (and delete all the other cases like this too)
@@ -430,17 +430,17 @@ static const State fsm[] =
     { 11, 12, TT_STRING,  FSM_VAL, nullptr,    nullptr },
     { 11, 12, TT_LITERAL, FSM_VAL, nullptr,    nullptr },
     { 11,  8, TT_PUNCT,   FSM_END, ";",        nullptr },
-    { 11,  0, TT_PUNCT,   FSM_EOB, ")",        ""      },
+    { 11,  0, TT_PUNCT,   FSM_EOB, ")",        "" },
     { 11, 10, TT_PUNCT,   FSM_SET, ",",        nullptr },
     { 12,  8, TT_PUNCT,   FSM_END, ";",        nullptr },
-    { 12,  0, TT_PUNCT,   FSM_EOB, ")",        ""      },
+    { 12,  0, TT_PUNCT,   FSM_EOB, ")",        "" },
     { 12, 10, TT_PUNCT,   FSM_SET, ",",        nullptr },
     { 13, 14, TT_PUNCT,   FSM_NOP, ":",        nullptr },
     { 14,  8, TT_PUNCT,   FSM_END, ";",        "(:,;)" },
     { 14, 14, TT_NONE,    FSM_SET, ",",        nullptr },
     { 14, 14, TT_NONE,    FSM_ADD, nullptr,    nullptr },
     { 15,  0, TT_LITERAL, FSM_INC, nullptr,    nullptr },
-    { 16, 14, TT_PUNCT,   FSM_NOP, ":",        ";"     },
+    { 16, 14, TT_PUNCT,   FSM_NOP, ":",        ";" },
 };
 
 static const State* get_state(int num, TokenType type, const string& tok)
@@ -475,7 +475,7 @@ struct RuleParseState
     bool tbd;
 
     RuleParseState()
-    { otn = nullptr; };
+    { otn = nullptr; }
 };
 
 static void parse_body(const char*, RuleParseState&, struct SnortConfig*);

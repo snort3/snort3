@@ -25,7 +25,6 @@
 
 namespace output
 {
-
 static ConversionState* ctor(Converter& c)
 {
     c.get_table_api().open_table("alert_null");
@@ -40,5 +39,5 @@ static const ConvertMap log_null_api =
 };
 
 const ConvertMap* log_null_map = &log_null_api;
-
 } // namespace output
+

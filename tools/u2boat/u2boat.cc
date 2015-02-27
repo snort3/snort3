@@ -49,16 +49,16 @@
 #define PCAP_LINKTYPE ETHERNET
 #define MAX_U2RECORD_DATA_LENGTH 65536
 
-static int GetRecord(FILE *input, u2record *rec);
-static int PcapInitOutput(FILE *output);
-static int PcapConversion(u2record *rec, FILE *output);
+static int GetRecord(FILE* input, u2record* rec);
+static int PcapInitOutput(FILE* output);
+static int PcapConversion(u2record* rec, FILE* output);
 
-static int ConvertLog(FILE *input, FILE *output, const char *format)
+static int ConvertLog(FILE* input, FILE* output, const char* format)
 {
     u2record tmp_record;
 
     /* Determine conversion function */
-    int (* ConvertRecord)(u2record *, FILE *) = NULL;
+    int (* ConvertRecord)(u2record*, FILE*) = NULL;
 
     /* This will become an if/else series once more formats are supported.
      * Callbacks are used so that this comparison only needs to happen once. */
@@ -113,7 +113,7 @@ static int ConvertLog(FILE *input, FILE *output, const char *format)
 }
 
 /* Create and write the pcap file's global header */
-static int PcapInitOutput(FILE *output)
+static int PcapInitOutput(FILE* output)
 {
     size_t ret;
     struct pcap_file_header hdr;
@@ -126,7 +126,7 @@ static int PcapInitOutput(FILE *output)
     hdr.snaplen = PCAP_SNAPLEN;
     hdr.linktype = PCAP_LINKTYPE;
 
-    ret = fwrite( (void *)&hdr, sizeof(struct pcap_file_header), 1, output );
+    ret = fwrite( (void*)&hdr, sizeof(struct pcap_file_header), 1, output);
     if (ret < 1)
     {
         fprintf(stderr, "Error: Unable to write pcap file header\n");
@@ -136,12 +136,12 @@ static int PcapInitOutput(FILE *output)
 }
 
 /* Convert a unified2 packet record to pcap format, then dump */
-static int PcapConversion(u2record *rec, FILE *output)
+static int PcapConversion(u2record* rec, FILE* output)
 {
     Serial_Unified2Packet packet;
     struct pcap_pkthdr pcap_hdr;
-    uint32_t *field;
-    uint8_t *pcap_data;
+    uint32_t* field;
+    uint8_t* pcap_data;
     static int packet_found = 0;
 
     /* Ignore IDS Events. We are only interested in Packets. */
@@ -165,8 +165,8 @@ static int PcapConversion(u2record *rec, FILE *output)
 
     /* Unified 2 records are always stored in network order.
      * Convert all fields except packet data to host order */
-    field = (uint32_t *)&packet;
-    while(field < (uint32_t *)packet.packet_data)
+    field = (uint32_t*)&packet;
+    while (field < (uint32_t*)packet.packet_data)
     {
         *field = ntohl(*field);
         field++;
@@ -180,17 +180,17 @@ static int PcapConversion(u2record *rec, FILE *output)
 
     /* Write to the pcap file */
     pcap_data = rec->data + sizeof(Serial_Unified2Packet) - 4;
-    pcap_dump( (u_char *)output, &pcap_hdr, (u_char *)pcap_data );
+    pcap_dump( (u_char*)output, &pcap_hdr, (u_char*)pcap_data);
 
     return SUCCESS;
 }
 
 /* Retrieve a single unified2 record from input file */
-static int GetRecord(FILE *input, u2record *rec)
+static int GetRecord(FILE* input, u2record* rec)
 {
     uint32_t items_read;
     static uint32_t buffer_size = MAX_U2RECORD_DATA_LENGTH;
-    uint8_t *tmp;
+    uint8_t* tmp;
 
     if (!input || !rec)
         return FAILURE;
@@ -231,21 +231,21 @@ static int GetRecord(FILE *input, u2record *rec)
     if (items_read != rec->length)
     {
         fprintf(stderr, "Error: incomplete record. %d of %u bytes read.\n",
-                items_read, rec->length);
+            items_read, rec->length);
         return FAILURE;
     }
 
     return SUCCESS;
 }
 
-int main (int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-    char *input_filename = NULL;
-    char *output_filename = NULL;
-    const char *output_type = NULL;
+    char* input_filename = NULL;
+    char* output_filename = NULL;
+    const char* output_type = NULL;
 
-    FILE *input_file = NULL;
-    FILE *output_file = NULL;
+    FILE* input_file = NULL;
+    FILE* output_file = NULL;
 
     int c, errnum;
     opterr = 0;
@@ -255,18 +255,18 @@ int main (int argc, char *argv[])
     {
         switch (c)
         {
-            case 't':
-                output_type = optarg;
-                break;
-            case '?':
-                if (optopt == 't')
-                    fprintf(stderr,
-                            "Option -%c requires an argument.\n", optopt);
-                else if (isprint (optopt))
-                    fprintf(stderr, "Unknown option -%c.\n", optopt);
-                return FAILURE;
-            default:
-                abort();
+        case 't':
+            output_type = optarg;
+            break;
+        case '?':
+            if (optopt == 't')
+                fprintf(stderr,
+                    "Option -%c requires an argument.\n", optopt);
+            else if (isprint (optopt))
+                fprintf(stderr, "Unknown option -%c.\n", optopt);
+            return FAILURE;
+        default:
+            abort();
         }
     }
 
@@ -329,3 +329,4 @@ int main (int argc, char *argv[])
 
     return 0;
 }
+

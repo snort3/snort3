@@ -23,7 +23,6 @@
 
 namespace parser
 {
-
 /*
  * This file is directly copied (and then edited)
  * from Snrot++'s cmd_line.h
@@ -36,7 +35,7 @@ const std::string get_conf_dir();
 const std::string get_error_file();
 const std::string get_out_file();
 const std::string get_rule_file();
-
 } // namespace parser
 
 #endif
+

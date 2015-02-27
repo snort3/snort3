@@ -40,7 +40,7 @@ struct InspectionBuffer
 {
     enum Type
     {
-        IBT_KEY, IBT_HEADER, IBT_BODY, 
+        IBT_KEY, IBT_HEADER, IBT_BODY,
         IBT_ALT, IBT_FILE, // FIXIT-M alt and file data are tbd
         IBT_MAX
     };
@@ -62,35 +62,35 @@ public:
 
     // access external dependencies here
     // return verification status
-    virtual bool configure(SnortConfig*) { return true; };
-    virtual void show(SnortConfig*) { };
+    virtual bool configure(SnortConfig*) { return true; }
+    virtual void show(SnortConfig*) { }
 
     // packet thread functions
     // tinit, tterm called on default policy instance only
-    virtual void tinit() { };  // allocate configurable thread local
-    virtual void tterm() { };  // purge only, deallocate via api
+    virtual void tinit() { }   // allocate configurable thread local
+    virtual void tterm() { }   // purge only, deallocate via api
 
     virtual void eval(Packet*) = 0;
-    virtual void meta(int, const uint8_t*) { };
-    virtual int exec(int, void*) { return 0; };
+    virtual void meta(int, const uint8_t*) { }
+    virtual int exec(int, void*) { return 0; }
 
     // framework support
-    unsigned get_ref(unsigned i) { return ref_count[i]; };
-    void set_ref(unsigned i, unsigned r) { ref_count[i] = r; };
+    unsigned get_ref(unsigned i) { return ref_count[i]; }
+    void set_ref(unsigned i, unsigned r) { ref_count[i] = r; }
 
-    void add_ref() { ++ref_count[slot]; };
-    void rem_ref() { --ref_count[slot]; };
+    void add_ref() { ++ref_count[slot]; }
+    void rem_ref() { --ref_count[slot]; }
 
     bool is_inactive();
 
-    void set_service(ServiceId id) { srv_id = id; };
-    ServiceId get_service() { return srv_id; };
+    void set_service(ServiceId id) { srv_id = id; }
+    ServiceId get_service() { return srv_id; }
 
     // for well known buffers
     // well known buffers may be included among generic below,
     // but they must be accessible from here
     virtual bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&)
-    { return false; };
+    { return false; }
 
     // for generic buffers
     // key is listed in api buffers
@@ -98,16 +98,16 @@ public:
     unsigned get_buf_id(const char* key);
     virtual bool get_buf(const char* key, Packet*, InspectionBuffer&);
     virtual bool get_buf(unsigned /*id*/, Packet*, InspectionBuffer&)
-    { return false; };
+    { return false; }
 
     // IT_SERVICE only
     virtual class StreamSplitter* get_splitter(bool to_server);
 
     void set_api(const InspectApi* p)
-    { api = p; };
+    { api = p; }
 
     const InspectApi* get_api()
-    { return api; };
+    { return api; }
 
 public:
     static unsigned max_slots;
@@ -135,10 +135,10 @@ enum InspectorType
     IT_MAX
 };
 
-typedef Inspector* (*InspectNew)(Module*);
-typedef void (*InspectDelFunc)(Inspector*);
-typedef void (*InspectFunc)();
-typedef class Session* (*InspectSsnFunc)(class Flow*);
+typedef Inspector* (* InspectNew)(Module*);
+typedef void (* InspectDelFunc)(Inspector*);
+typedef void (* InspectFunc)();
+typedef class Session* (* InspectSsnFunc)(class Flow*);
 
 struct InspectApi
 {

@@ -47,7 +47,7 @@ public:
 
     void init();
     // FIXIT-L add ttl style syntax
-    bool parse(const char* s); 
+    bool parse(const char* s);
     bool eval(long);
 };
 

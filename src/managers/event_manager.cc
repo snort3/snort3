@@ -51,10 +51,10 @@ struct Output
     Logger* handler;
 
     Output(const LogApi* p)
-    { api = p; handler = nullptr; };
+    { api = p; handler = nullptr; }
 
     ~Output()
-    { api->dtor(handler); };
+    { api->dtor(handler); }
 };
 
 typedef list<Output*> OutputList;
@@ -228,7 +228,7 @@ void EventManager::close_outputs()
 }
 
 void EventManager::call_alerters(
-    OutputSet* idx, Packet* pkt, const char *message, Event *event)
+    OutputSet* idx, Packet* pkt, const char* message, Event* event)
 {
     if ( idx )
     {
@@ -241,7 +241,7 @@ void EventManager::call_alerters(
 }
 
 void EventManager::call_loggers(
-    OutputSet* idx, Packet* pkt, const char *message, Event *event)
+    OutputSet* idx, Packet* pkt, const char* message, Event* event)
 {
     if ( idx )
     {

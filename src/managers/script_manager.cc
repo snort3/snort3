@@ -35,7 +35,7 @@
 // K ::= number of threads
 // change to create K lua states here for each script + args
 // and change LuaJit*() to get reference to thread states
-// ultimately should look into changing detection engine to 
+// ultimately should look into changing detection engine to
 // keep just one copy of rule option + args
 
 using namespace std;
@@ -53,10 +53,10 @@ protected:
         type = t;
         name = s;
         chunk = c;
-    };
+    }
 
 public:
-    virtual ~LuaApi() { };
+    virtual ~LuaApi() { }
     virtual const BaseApi* get_base() const = 0;
 
 public:
@@ -78,7 +78,7 @@ public:
     IpsLuaApi(string& t, string& n, string& c, unsigned v);
 
     const BaseApi* get_base() const
-    { return &api.base; };
+    { return &api.base; }
 
 public:
     IpsApi api;
@@ -102,7 +102,7 @@ public:
     LogLuaApi(string& t, string& n, string& c, unsigned v);
 
     const BaseApi* get_base() const
-    { return &api.base; };
+    { return &api.base; }
 
 public:
     LogApi api;
@@ -120,7 +120,7 @@ LogLuaApi::LogLuaApi(string& t, string& s, string& c, unsigned v) : LuaApi(t, s,
 // lua foo
 //-------------------------------------------------------------------------
 
-static bool get_field (lua_State* L, const char* key, int& value)
+static bool get_field(lua_State* L, const char* key, int& value)
 {
     lua_pushstring(L, key);
     lua_gettable(L, -2);
@@ -138,7 +138,7 @@ static bool get_field (lua_State* L, const char* key, int& value)
     return true;
 }
 
-static bool get_field (lua_State* L, const char* key, string& value)
+static bool get_field(lua_State* L, const char* key, string& value)
 {
     lua_pushstring(L, key);
     lua_gettable(L, -2);
@@ -243,7 +243,7 @@ void ScriptManager::load_scripts(const char* s)
 
     vector<char> buf(s, s+strlen(s)+1);
     char* last;
-    
+
     s = strtok_r(&buf[0], ":", &last);
 
     while ( s )

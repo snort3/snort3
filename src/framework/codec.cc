@@ -23,15 +23,14 @@
 #include "protocols/ipv6.h"
 
 EncState::EncState(const ip::IpApi& api, EncodeFlags f, uint8_t pr,
-        uint8_t t, uint16_t data_size) :
-        ip_api(api),
-        flags(f),
-        dsize(data_size),
-        next_ethertype(0),
-        next_proto(pr),
-        ttl(t)
+    uint8_t t, uint16_t data_size) :
+    ip_api(api),
+    flags(f),
+    dsize(data_size),
+    next_ethertype(0),
+    next_proto(pr),
+    ttl(t)
 { }
-
 
 uint8_t EncState::get_ttl(uint8_t lyr_ttl) const
 {
@@ -58,8 +57,6 @@ uint8_t EncState::get_ttl(uint8_t lyr_ttl) const
     }
 }
 
-
-
 /* Logic behind 'buf + size + 1' -- we're encoding the
  * packet from the inside out.  So, whenever we add
  * data, 'allocating' N bytes means moving the pointer
@@ -75,7 +72,6 @@ Buffer::Buffer(uint8_t* buf, uint32_t size) :
     off(0)
 { }
 
-
 void Codec::codec_event(const CodecData& codec, CodecSid sid)
 {
     if ( codec.codec_flags & CODEC_STREAM_REBUILT )
@@ -83,7 +79,6 @@ void Codec::codec_event(const CodecData& codec, CodecSid sid)
 
     SnortEventqAdd(GID_DECODE, sid);
 }
-
 
 bool Codec::CheckIPV6HopOptions(const RawData& raw, const CodecData& codec)
 {
@@ -94,7 +89,7 @@ bool Codec::CheckIPV6HopOptions(const RawData& raw, const CodecData& codec)
         reinterpret_cast<const uint8_t*>(raw.data);
 
     const uint32_t total_octets = (exthdr->ip6e_len * 8) + 8;
-    const uint8_t *hdr_end = pkt + total_octets;
+    const uint8_t* hdr_end = pkt + total_octets;
     uint8_t oplen;
 
     if (raw.len < total_octets)
@@ -109,28 +104,28 @@ bool Codec::CheckIPV6HopOptions(const RawData& raw, const CodecData& codec)
         const ip::HopByHopOptions type = static_cast<ip::HopByHopOptions>(*pkt);
         switch (type)
         {
-            case ip::HopByHopOptions::PAD1:
-                pkt++;
-                break;
-            case ip::HopByHopOptions::PADN:
-            case ip::HopByHopOptions::JUMBO:
-            case ip::HopByHopOptions::RTALERT:
-            case ip::HopByHopOptions::TUNNEL_ENCAP:
-            case ip::HopByHopOptions::QUICK_START:
-            case ip::HopByHopOptions::CALIPSO:
-            case ip::HopByHopOptions::HOME_ADDRESS:
-            case ip::HopByHopOptions::ENDPOINT_IDENT:
-                oplen = *(++pkt);
-                if ((pkt + oplen + 1) > hdr_end)
-                {
-                    codec_event(codec, DECODE_IPV6_BAD_OPT_LEN);
-                    return false;
-                }
-                pkt += oplen + 1;
-                break;
-            default:
-                codec_event(codec, DECODE_IPV6_BAD_OPT_TYPE);
+        case ip::HopByHopOptions::PAD1:
+            pkt++;
+            break;
+        case ip::HopByHopOptions::PADN:
+        case ip::HopByHopOptions::JUMBO:
+        case ip::HopByHopOptions::RTALERT:
+        case ip::HopByHopOptions::TUNNEL_ENCAP:
+        case ip::HopByHopOptions::QUICK_START:
+        case ip::HopByHopOptions::CALIPSO:
+        case ip::HopByHopOptions::HOME_ADDRESS:
+        case ip::HopByHopOptions::ENDPOINT_IDENT:
+            oplen = *(++pkt);
+            if ((pkt + oplen + 1) > hdr_end)
+            {
+                codec_event(codec, DECODE_IPV6_BAD_OPT_LEN);
                 return false;
+            }
+            pkt += oplen + 1;
+            break;
+        default:
+            codec_event(codec, DECODE_IPV6_BAD_OPT_TYPE);
+            return false;
         }
     }
 
@@ -150,8 +145,8 @@ void Codec::CheckIPv6ExtensionOrder(CodecData& codec, const uint8_t proto)
            2) The second destination header is the last one before the upper layer.
         */
         if (!((codec.codec_flags & CODEC_ROUTING_SEEN) &&
-              (proto == IPPROTO_ID_DSTOPTS) &&
-              (next_order == ip::IPV6_ORDER_MAX)))
+            (proto == IPPROTO_ID_DSTOPTS) &&
+            (next_order == ip::IPV6_ORDER_MAX)))
         {
             codec_event(codec, DECODE_IPV6_UNORDERED_EXTENSIONS);
         }
@@ -164,3 +159,4 @@ void Codec::CheckIPv6ExtensionOrder(CodecData& codec, const uint8_t proto)
     if (proto == IPPROTO_ID_ROUTING)
         codec.codec_flags |= CODEC_ROUTING_SEEN;
 }
+

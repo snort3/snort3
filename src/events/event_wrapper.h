@@ -16,14 +16,14 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 #ifndef EVENT_WRAPPER_H
 #define EVENT_WRAPPER_H
 
 #include <stdint.h>
 #include "snort_types.h"
 
-uint32_t GenerateSnortEvent(struct Packet *p, uint32_t gen_id, uint32_t sig_id);
+uint32_t GenerateSnortEvent(struct Packet* p, uint32_t gen_id, uint32_t sig_id);
 
 #endif
 

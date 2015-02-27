@@ -25,14 +25,12 @@
 #include "config_states/config_api.h"
 #include "keyword_states/keywords_api.h"
 
-
 namespace keywords
 {
-
 const std::vector<std::unique_ptr<const ConvertMap> > ruletype_api;
 
-namespace {
-
+namespace
+{
 enum class ParseState
 {
     NAME,
@@ -47,11 +45,11 @@ class RuleType : public ConversionState
 {
 public:
     RuleType(Converter& c) : ConversionState(c),
-                             state(ParseState::NAME),
-                             entire_line("ruletype")
-    {}
+        state(ParseState::NAME),
+        entire_line("ruletype")
+    { }
 
-    virtual ~RuleType() {};
+    virtual ~RuleType() { }
     virtual bool convert(std::istringstream& data);
 
 private:
@@ -60,9 +58,7 @@ private:
     std::string type;
     std::string entire_line;
 };
-
 } // namespace
-
 
 bool RuleType::convert(std::istringstream& stream)
 {
@@ -88,7 +84,7 @@ bool RuleType::convert(std::istringstream& stream)
             {
                 std::istringstream tmp(entire_line);
                 data_api.failed_conversion(tmp, val);
-                return false;   
+                return false;
             }
             state = ParseState::TYPE_KEYWORD;
             break;
@@ -98,7 +94,7 @@ bool RuleType::convert(std::istringstream& stream)
             {
                 std::istringstream tmp(entire_line);
                 data_api.failed_conversion(tmp, val);
-                return false;   
+                return false;
             }
             state = ParseState::TYPE_NAME;
             break;
@@ -116,7 +112,8 @@ bool RuleType::convert(std::istringstream& stream)
                 if ( util::find_map(ruletype_api, name) != nullptr )
                 {
                     std::istringstream tmp(entire_line);
-                    data_api.failed_conversion(tmp, name + " -- defined multiple times in configuration file");
+                    data_api.failed_conversion(tmp, name +
+                        " -- defined multiple times in configuration file");
                     return false;
                 }
 
@@ -124,9 +121,9 @@ bool RuleType::convert(std::istringstream& stream)
 
                 if (map)
                 {
-
                     // using smart pointer to gaurantee new Map is deleted
-                    const std::vector<std::unique_ptr<const ConvertMap> >& ruletype_map = ruletype_api;
+                    const std::vector<std::unique_ptr<const ConvertMap> >& ruletype_map =
+                        ruletype_api;
                     std::unique_ptr<ConvertMap> new_map(new ConvertMap());
                     new_map->keyword = name;
                     new_map->ctor = map->ctor;
@@ -157,9 +154,8 @@ bool RuleType::convert(std::istringstream& stream)
         case ParseState::OUTPUT_ARGS:
             // eat this argument.  Do nothing.
             break;
-        }   
+        }
     }
-
 
     // OUTPUT_ARGS ate up the rest of the line.
     // Now, start a new line.
@@ -179,12 +175,12 @@ bool RuleType::convert(std::istringstream& stream)
 static ConversionState* ctor(Converter& c)
 { return new RuleType(c); }
 
-static const ConvertMap keyword_ruletype = 
+static const ConvertMap keyword_ruletype =
 {
     "ruletype",
     ctor,
 };
 
 const ConvertMap* ruletype_map = &keyword_ruletype;
-
 } // namepsace keywords
+

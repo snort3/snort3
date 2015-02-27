@@ -54,7 +54,7 @@ public:
     Status scan(Flow*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
 
-    virtual bool is_paf() override { return true; };
+    virtual bool is_paf() override { return true; }
 
 public:
     Hi5State state;

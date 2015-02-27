@@ -35,7 +35,7 @@ struct DataBlock
     PlugData* data;
 
     DataBlock(const DataApi* p)
-    { api = p; data = nullptr; };
+    { api = p; data = nullptr; }
 
     ~DataBlock()
     {
@@ -43,7 +43,7 @@ struct DataBlock
             api->dtor(data);
     }
 };
-    
+
 static list<DataBlock*> s_data;
 
 static DataBlock* get_block(const char* keyword)

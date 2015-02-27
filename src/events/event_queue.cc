@@ -65,8 +65,7 @@
 
 typedef struct s_SNORT_EVENTQ_USER
 {
-    void *pkt;
-
+    void* pkt;
 } SNORT_EVENTQ_USER;
 
 #define NUM_EVENT_QUEUES 3
@@ -82,24 +81,28 @@ static THREAD_LOCAL unsigned qOverflow = 0;
 // successfully pushed.
 void SnortEventqPush(void)
 {
-    if ( qIndex < NUM_EVENT_QUEUES-1 ) qIndex++;
-    else qOverflow++;
+    if ( qIndex < NUM_EVENT_QUEUES-1 )
+        qIndex++;
+    else
+        qOverflow++;
 }
 
 void SnortEventqPop(void)
 {
-    if ( qOverflow > 0 ) qOverflow--;
-    else if ( qIndex > 0 ) qIndex--;
+    if ( qOverflow > 0 )
+        qOverflow--;
+    else if ( qIndex > 0 )
+        qIndex--;
 }
 
 //-------------------------------------------------
 /*
 **  Set default values
 */
-EventQueueConfig * EventQueueConfigNew(void)
+EventQueueConfig* EventQueueConfigNew(void)
 {
     EventQueueConfig* eqc =
-        (EventQueueConfig *)SnortAlloc(sizeof(EventQueueConfig));
+        (EventQueueConfig*)SnortAlloc(sizeof(EventQueueConfig));
 
     eqc->max_events = 8;
     eqc->log_events = 3;
@@ -178,7 +181,7 @@ void SnortEventqNew(EventQueueConfig* eq_config)
     for ( i = 0; i < NUM_EVENT_QUEUES; i++ )
     {
         event_queue[i] = sfeventq_new(eq_config->max_events,
-                eq_config->log_events, sizeof(EventNode));
+            eq_config->log_events, sizeof(EventNode));
 
         if (event_queue[i] == NULL)
             FatalError("Failed to initialize Snort event queue.\n");
@@ -192,7 +195,7 @@ void SnortEventqFree()
         sfeventq_free(event_queue[i]);
 }
 
-static int LogSnortEvents(void *event, void *user)
+static int LogSnortEvents(void* event, void* user)
 {
     if ( !event || !user )
         return 0;
@@ -236,18 +239,18 @@ static int LogSnortEvents(void *event, void *user)
 int SnortEventqLog(Packet* p)
 {
     SNORT_EVENTQ_USER user;
-    user.pkt = (void *)p;
-    sfeventq_action(event_queue[qIndex], LogSnortEvents, (void *)&user);
+    user.pkt = (void*)p;
+    sfeventq_action(event_queue[qIndex], LogSnortEvents, (void*)&user);
     return 0;
 }
 
-static inline void reset_counts (void)
+static inline void reset_counts(void)
 {
     pc.log_limit += s_events;
     s_events = 0;
 }
 
-void SnortEventqResetCounts (void)
+void SnortEventqResetCounts(void)
 {
     reset_counts();
 }

@@ -71,7 +71,7 @@ void Replace_QueueChange(const std::string& s, unsigned off)
     r->offset = off;
 }
 
-static inline void Replace_ApplyChange(Packet *p, Replacement* r)
+static inline void Replace_ApplyChange(Packet* p, Replacement* r)
 {
     uint8_t* start = (uint8_t*)p->data + r->offset;
     const uint8_t* end = p->data + p->dsize;
@@ -85,7 +85,7 @@ static inline void Replace_ApplyChange(Packet *p, Replacement* r)
     memcpy(start, r->data.c_str(), len);
 }
 
-static void Replace_ModifyPacket(Packet *p)
+static void Replace_ModifyPacket(Packet* p)
 {
     if ( num_rpl == 0 )
         return;
@@ -110,7 +110,7 @@ static const Parameter s_params[] =
 class ReplaceModule : public Module
 {
 public:
-    ReplaceModule() : Module(s_name, s_help, s_params) { };
+    ReplaceModule() : Module(s_name, s_help, s_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
@@ -143,7 +143,7 @@ public:
     void exec(Packet*) override;
 };
 
-ReplaceAction::ReplaceAction(ReplaceModule*) : 
+ReplaceAction::ReplaceAction(ReplaceModule*) :
     IpsAction(s_name, ACT_RESET)
 {
     Active_SetEnabled(1);

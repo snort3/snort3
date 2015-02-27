@@ -88,9 +88,9 @@ static const Parameter detection_params[] =
 class DetectionModule : public Module
 {
 public:
-    DetectionModule() : Module("detection", detection_help, detection_params) { };
+    DetectionModule() : Module("detection", detection_help, detection_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
-    const PegInfo* get_pegs() const override { return pc_names; };
+    const PegInfo* get_pegs() const override { return pc_names; }
 };
 
 bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
@@ -145,7 +145,7 @@ static const Parameter event_queue_params[] =
 class EventQueueModule : public Module
 {
 public:
-    EventQueueModule() : Module("event_queue", event_queue_help, event_queue_params) { };
+    EventQueueModule() : Module("event_queue", event_queue_help, event_queue_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
 };
 
@@ -238,7 +238,7 @@ static const Parameter search_engine_params[] =
 class SearchEngineModule : public Module
 {
 public:
-    SearchEngineModule() : Module("search_engine", search_engine_help, search_engine_params) { };
+    SearchEngineModule() : Module("search_engine", search_engine_help, search_engine_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
 };
 
@@ -323,7 +323,7 @@ static const Parameter profile_rule_params[] =
     { "count", Parameter::PT_INT, "-1:", "-1",
       "print results to given level (-1 = all, 0 = off?)" },
 
-    { "sort", Parameter::PT_ENUM, 
+    { "sort", Parameter::PT_ENUM,
       "checks | avg_ticks | total_ticks | matches | no_matches | "
       "avg_ticks_per_match | avg_ticks_per_no_match",
       "avg_ticks", "sort by given field" },
@@ -360,7 +360,7 @@ static const Parameter profile_params[] =
 class ProfileModule : public Module
 {
 public:
-    ProfileModule() : Module("profile", profile_help, profile_params) { };
+    ProfileModule() : Module("profile", profile_help, profile_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
 };
@@ -402,6 +402,7 @@ bool ProfileModule::set(const char* fqn, Value& v, SnortConfig* sc)
 
     return true;
 }
+
 #endif
 
 //-------------------------------------------------------------------------
@@ -430,8 +431,8 @@ static const Parameter classification_params[] =
 class ClassificationsModule : public Module
 {
 public:
-    ClassificationsModule() : 
-        Module("classifications", classifications_help, classification_params, true) { };
+    ClassificationsModule() :
+        Module("classifications", classifications_help, classification_params, true) { }
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -496,8 +497,8 @@ static const Parameter reference_params[] =
 class ReferencesModule : public Module
 {
 public:
-    ReferencesModule() : 
-        Module("references", reference_help, reference_params, true) { };
+    ReferencesModule() :
+        Module("references", reference_help, reference_params, true) { }
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -566,8 +567,7 @@ static const Parameter alerts_params[] =
 
     { "reference_net", Parameter::PT_STRING, nullptr, nullptr,
       "set the CIDR for homenet "
-      "(for use with -l or -B, does NOT change $HOME_NET in IDS mode)"
-    },
+      "(for use with -l or -B, does NOT change $HOME_NET in IDS mode)" },
 
     { "stateful", Parameter::PT_BOOL, nullptr, "false",
       "don't alert w/o established session (note: rule action still taken)" },
@@ -584,7 +584,7 @@ static const Parameter alerts_params[] =
 class AlertsModule : public Module
 {
 public:
-    AlertsModule() : Module("alerts", alerts_help, alerts_params) { };
+    AlertsModule() : Module("alerts", alerts_help, alerts_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
 };
 
@@ -607,7 +607,6 @@ bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
         setFlowbitSize(v.get_long());
         sc->flowbit_size = (uint16_t)getFlowbitSizeInBytes();
     }
-
     else if ( v.is("order") )
         OrderRuleLists(sc, v.get_string());
 
@@ -691,7 +690,7 @@ static const Parameter output_params[] =
 class OutputModule : public Module
 {
 public:
-    OutputModule() : Module("output", output_help, output_params) { };
+    OutputModule() : Module("output", output_help, output_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
 };
 
@@ -700,17 +699,17 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
     if ( v.is("dump_chars_only") )
     {
         if ( v.get_bool() )
-        sc->output_flags |= OUTPUT_FLAG__CHAR_DATA;
+            sc->output_flags |= OUTPUT_FLAG__CHAR_DATA;
     }
     else if ( v.is("dump_payload") )
     {
         if ( v.get_bool() )
-        sc->output_flags |= OUTPUT_FLAG__APP_DATA;
+            sc->output_flags |= OUTPUT_FLAG__APP_DATA;
     }
     else if ( v.is("dump_payload_verbose") )
     {
         if ( v.get_bool() )
-        sc->output_flags |= OUTPUT_FLAG__VERBOSE_DUMP;
+            sc->output_flags |= OUTPUT_FLAG__VERBOSE_DUMP;
     }
     else if ( v.is("file") )
         sc->event_trace_file = SnortStrdup(v.get_string());
@@ -718,12 +717,12 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("log_ipv6_extra_data") )
     {
         if ( v.get_bool() )
-        sc->log_ipv6_extra = 1; // FIXIT-M move to output|logging_flags
+            sc->log_ipv6_extra = 1; // FIXIT-M move to output|logging_flags
     }
     else if ( v.is("quiet") )
     {
         if ( v.get_bool() )
-        sc->logging_flags |= LOGGING_FLAG__QUIET;
+            sc->logging_flags |= LOGGING_FLAG__QUIET;
     }
     else if ( v.is("logdir") )
         sc->log_dir = SnortStrdup(v.get_string());
@@ -739,12 +738,12 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("obfuscate") )
     {
         if ( v.get_bool() )
-        sc->output_flags |= OUTPUT_FLAG__OBFUSCATE;
+            sc->output_flags |= OUTPUT_FLAG__OBFUSCATE;
     }
     else if ( v.is("show_year") )
     {
         if ( v.get_bool() )
-        sc->output_flags |= OUTPUT_FLAG__INCLUDE_YEAR;
+            sc->output_flags |= OUTPUT_FLAG__INCLUDE_YEAR;
     }
     else if ( v.is("tagged_packet_limit") )
         sc->tagged_packet_limit = v.get_long();
@@ -752,7 +751,7 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("verbose") )
     {
         if ( v.get_bool() )
-        sc->logging_flags |= LOGGING_FLAG__VERBOSE;
+            sc->logging_flags |= LOGGING_FLAG__VERBOSE;
     }
     else
         return false;
@@ -790,7 +789,7 @@ static const Parameter active_params[] =
 class ActiveModule : public Module
 {
 public:
-    ActiveModule() : Module("active", active_help, active_params) { };
+    ActiveModule() : Module("active", active_help, active_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
 };
 
@@ -850,7 +849,7 @@ static const Parameter packets_params[] =
 class PacketsModule : public Module
 {
 public:
-    PacketsModule() : Module("packets", packets_help, packets_params) { };
+    PacketsModule() : Module("packets", packets_help, packets_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
 };
 
@@ -920,9 +919,9 @@ static const Parameter daq_params[] =
 class DaqModule : public Module
 {
 public:
-    DaqModule() : Module("daq", daq_help, daq_params) { };
+    DaqModule() : Module("daq", daq_help, daq_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
-    const PegInfo* get_pegs() const override { return daq_names; };
+    const PegInfo* get_pegs() const override { return daq_names; }
 };
 
 bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
@@ -976,14 +975,14 @@ static const Parameter attribute_table_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-const char* attribute_table_help = 
+const char* attribute_table_help =
     "configure hosts loading";
 
 class AttributeTableModule : public Module
 {
 public:
-    AttributeTableModule() : 
-        Module("attribute_table", attribute_table_help, attribute_table_params) { };
+    AttributeTableModule() :
+        Module("attribute_table", attribute_table_help, attribute_table_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
 };
 
@@ -1014,7 +1013,7 @@ static const Parameter network_params[] =
       "all | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none", "none",
       "drop if checksum is bad" },
 
-    { "checksum_eval", Parameter::PT_MULTI, 
+    { "checksum_eval", Parameter::PT_MULTI,
       "all | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none", "none",
       "checksums to verify" },
 
@@ -1051,7 +1050,7 @@ static const Parameter network_params[] =
 class NetworkModule : public Module
 {
 public:
-    NetworkModule() : Module("network", network_help, network_params) { };
+    NetworkModule() : Module("network", network_help, network_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
 };
 
@@ -1122,10 +1121,9 @@ static const Parameter ips_params[] =
 class IpsModule : public Module
 {
 public:
-    IpsModule() : Module("ips", ips_help, ips_params) { };
+    IpsModule() : Module("ips", ips_help, ips_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
 };
-
 
 bool IpsModule::set(const char*, Value& v, SnortConfig*)
 {
@@ -1159,13 +1157,13 @@ bool IpsModule::set(const char*, Value& v, SnortConfig*)
 static const Parameter thread_pinning_params[] =
 {
     { "cpu", Parameter::PT_INT, "0:127", "0",
-        "pin the associated source/thread to this cpu"},
+      "pin the associated source/thread to this cpu" },
 
     { "source", Parameter::PT_STRING, nullptr, nullptr,
-        "set cpu affinity for this source (either pcap or <iface>"},
+      "set cpu affinity for this source (either pcap or <iface>" },
 
     { "thread", Parameter::PT_INT, "0:", "0",
-        "set cpu affinity for the <cur_thread_num> thread that runs"},
+      "set cpu affinity for the <cur_thread_num> thread that runs" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -1176,7 +1174,7 @@ static const Parameter process_params[] =
       "set chroot directory (same as -t)" },
 
     { "threads", Parameter::PT_LIST, thread_pinning_params, nullptr,
-        "thread pinning parameters"},
+      "thread pinning parameters" },
 
     { "daemon", Parameter::PT_BOOL, nullptr, "false",
       "fork as a daemon (same as -D)" },
@@ -1205,7 +1203,7 @@ static const Parameter process_params[] =
 class ProcessModule : public Module
 {
 public:
-    ProcessModule() : Module("process", process_help, process_params) { };
+    ProcessModule() : Module("process", process_help, process_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
@@ -1245,7 +1243,6 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
         if ( v.get_bool() )
             ConfigUtc(sc, "");
     }
-
     else if (v.is("cpu"))
         cpu = v.get_long();
 
@@ -1293,11 +1290,10 @@ bool ProcessModule::end(const char* fqn, int idx, SnortConfig* sc)
                 fqn, thread, source.c_str());
             return false;
         }
-
         else if (!source.empty())
             set_cpu_affinity(sc, source, cpu);
 
-        else 
+        else
             set_cpu_affinity(sc, thread, cpu);
     }
 
@@ -1344,7 +1340,7 @@ static const Parameter file_id_params[] =
 class FileIdModule : public Module
 {
 public:
-    FileIdModule() : Module("file_id", file_id_help, file_id_params) { };
+    FileIdModule() : Module("file_id", file_id_help, file_id_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
 };
 
@@ -1411,7 +1407,7 @@ static const Parameter suppress_params[] =
 class SuppressModule : public Module
 {
 public:
-    SuppressModule() : Module("suppress", suppress_help, suppress_params, true) { };
+    SuppressModule() : Module("suppress", suppress_help, suppress_params, true) { }
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
@@ -1495,8 +1491,8 @@ static const Parameter event_filter_params[] =
 class EventFilterModule : public Module
 {
 public:
-    EventFilterModule() : 
-        Module("event_filter", event_filter_help, event_filter_params, true) { };
+    EventFilterModule() :
+        Module("event_filter", event_filter_help, event_filter_params, true) { }
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
@@ -1593,7 +1589,7 @@ static const Parameter rate_filter_params[] =
 class RateFilterModule : public Module
 {
 public:
-    RateFilterModule() : Module("rate_filter", rate_filter_help, rate_filter_params, true) { };
+    RateFilterModule() : Module("rate_filter", rate_filter_help, rate_filter_params, true) { }
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
@@ -1674,7 +1670,7 @@ static const Parameter rule_state_params[] =
 class RuleStateModule : public Module
 {
 public:
-    RuleStateModule() : Module("rule_state", rule_state_help, rule_state_params) { };
+    RuleStateModule() : Module("rule_state", rule_state_help, rule_state_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
@@ -1764,8 +1760,8 @@ class HostsModule : public Module
 {
 public:
     HostsModule() : Module("hosts", hosts_help, hosts_params, true)
-    { app = nullptr; host = nullptr; };
-    ~HostsModule() { assert(!host && !app); };
+    { app = nullptr; host = nullptr; }
+    ~HostsModule() { assert(!host && !app); }
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -1856,8 +1852,8 @@ static const Parameter xxx_params[] =
 class XXXModule : public Module
 {
 public:
-    XXXModule() : Module("xxx", xxx_help, xxx_params) { };
-    const RuleMap* get_rules() { return xxx_rules; };
+    XXXModule() : Module("xxx", xxx_help, xxx_params) { }
+    const RuleMap* get_rules() { return xxx_rules; }
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
@@ -1883,6 +1879,7 @@ bool XXXModule::end(const char*, int, SnortConfig*)
 {
     return true;
 }
+
 #endif
 
 //-------------------------------------------------------------------------

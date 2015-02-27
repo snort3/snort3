@@ -60,9 +60,9 @@ struct tTargetBasedConfig
     ~tTargetBasedConfig();
 };
 
-void SFAT_CleanupCallback(void *host_attr_ent)
+void SFAT_CleanupCallback(void* host_attr_ent)
 {
-    HostAttributeEntry *host_entry = (HostAttributeEntry*)host_attr_ent;
+    HostAttributeEntry* host_entry = (HostAttributeEntry*)host_attr_ent;
     FreeHostEntry(host_entry);
 }
 
@@ -100,14 +100,14 @@ uint32_t SFAT_NumberOfHosts(void)
     return 0;
 }
 
-void FreeApplicationEntry(ApplicationEntry *app)
+void FreeApplicationEntry(ApplicationEntry* app)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "Freeing ApplicationEntry: 0x%x\n",
-        app););
+        app); );
     free(app);
 }
 
-ApplicationEntry * SFAT_CreateApplicationEntry(void)
+ApplicationEntry* SFAT_CreateApplicationEntry(void)
 {
     return (ApplicationEntry*)SnortAlloc(sizeof(ApplicationEntry));
 }
@@ -117,15 +117,15 @@ HostAttributeEntry* SFAT_CreateHostEntry(void)
     return (HostAttributeEntry*)SnortAlloc(sizeof(HostAttributeEntry));
 }
 
-void FreeHostEntry(HostAttributeEntry *host)
+void FreeHostEntry(HostAttributeEntry* host)
 {
-    ApplicationEntry *app = NULL, *tmp_app;
+    ApplicationEntry* app = NULL, * tmp_app;
 
     if (!host)
         return;
 
     DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "Freeing HostEntry: 0x%x\n",
-        host););
+        host); );
 
     /* Free the service list */
     if (host->services)
@@ -136,7 +136,8 @@ void FreeHostEntry(HostAttributeEntry *host)
             app = tmp_app->next;
             FreeApplicationEntry(tmp_app);
             host->services = app;
-        } while (app);
+        }
+        while (app);
     }
 
     /* Free the client list */
@@ -148,13 +149,14 @@ void FreeHostEntry(HostAttributeEntry *host)
             app = tmp_app->next;
             FreeApplicationEntry(tmp_app);
             host->clients = app;
-        } while (app);
+        }
+        while (app);
     }
 
     free(host);
 }
 
-static void AppendApplicationData(ApplicationList **list, ApplicationEntry* app)
+static void AppendApplicationData(ApplicationList** list, ApplicationEntry* app)
 {
     if (!list)
         return;
@@ -174,10 +176,10 @@ int SFAT_AddService(HostAttributeEntry* host, ApplicationEntry* app)
 
 int SFAT_AddApplicationData(HostAttributeEntry* host, ApplicationEntry* app)
 {
-    uint8_t required_fields = 
+    uint8_t required_fields =
         (APPLICATION_ENTRY_PORT |
-         APPLICATION_ENTRY_IPPROTO |
-         APPLICATION_ENTRY_PROTO);
+        APPLICATION_ENTRY_IPPROTO |
+        APPLICATION_ENTRY_PROTO);
 
     if ((app->fields & required_fields) != required_fields)
     {
@@ -190,9 +192,9 @@ int SFAT_AddApplicationData(HostAttributeEntry* host, ApplicationEntry* app)
 }
 
 #ifdef DEBUG_MSGS
-void PrintHostAttributeEntry(HostAttributeEntry *host)
+void PrintHostAttributeEntry(HostAttributeEntry* host)
 {
-    ApplicationEntry *app;
+    ApplicationEntry* app;
     int i = 0;
 
     if (!host)
@@ -213,7 +215,7 @@ void PrintHostAttributeEntry(HostAttributeEntry *host)
     {
         DebugMessage(DEBUG_ATTRIBUTE, "\tService #%d:\n", i);
         DebugMessage(DEBUG_ATTRIBUTE, "\t\tIPProtocol: %s\tPort: %s\tProtocol %s\n",
-                app->ipproto, app->port, app->protocol);
+            app->ipproto, app->port, app->protocol);
     }
     if (i==0)
         DebugMessage(DEBUG_ATTRIBUTE, "\t\tNone\n");
@@ -223,7 +225,7 @@ void PrintHostAttributeEntry(HostAttributeEntry *host)
     {
         DebugMessage(DEBUG_ATTRIBUTE, "\tClient #%d:\n", i);
         DebugMessage(DEBUG_ATTRIBUTE, "\t\tIPProtocol: %s\tProtocol %s\n",
-                app->ipproto, app->protocol);
+            app->ipproto, app->protocol);
 
         if (app->fields & APPLICATION_ENTRY_PORT)
         {
@@ -235,6 +237,7 @@ void PrintHostAttributeEntry(HostAttributeEntry *host)
         DebugMessage(DEBUG_ATTRIBUTE, "\t\tNone\n");
     }
 }
+
 #endif
 
 int SFAT_AddHost(HostAttributeEntry* host)
@@ -245,15 +248,15 @@ int SFAT_AddHost(HostAttributeEntry* host)
 int SFAT_AddHostEntryToMap(HostAttributeEntry* host)
 {
     int ret;
-    sfip_t *ipAddr;
+    sfip_t* ipAddr;
 
-    DEBUG_WRAP(PrintHostAttributeEntry(host););
+    DEBUG_WRAP(PrintHostAttributeEntry(host); );
 
     ipAddr = &host->ipAddr;
     assert(ipAddr);
 
     ret = sfrt_insert(ipAddr, (unsigned char)ipAddr->bits, host,
-                        RT_FAVOR_SPECIFIC, next_cfg->lookupTable);
+        RT_FAVOR_SPECIFIC, next_cfg->lookupTable);
 
     if (ret != RT_SUCCESS)
     {
@@ -284,7 +287,7 @@ int SFAT_AddHostEntryToMap(HostAttributeEntry* host)
     return ret == RT_SUCCESS ? SFAT_OK : SFAT_ERROR;
 }
 
-HostAttributeEntry *SFAT_LookupHostEntryByIP(const sfip_t *ipAddr)
+HostAttributeEntry* SFAT_LookupHostEntryByIP(const sfip_t* ipAddr)
 {
     if ( !curr_cfg )
         return NULL;
@@ -292,7 +295,7 @@ HostAttributeEntry *SFAT_LookupHostEntryByIP(const sfip_t *ipAddr)
     return (HostAttributeEntry*)sfrt_lookup((sfip_t*)ipAddr, curr_cfg->lookupTable);
 }
 
-HostAttributeEntry *SFAT_LookupHostEntryBySrc(Packet *p)
+HostAttributeEntry* SFAT_LookupHostEntryBySrc(Packet* p)
 {
     if (!p || !p->ptrs.ip_api.is_valid())
         return NULL;
@@ -300,7 +303,7 @@ HostAttributeEntry *SFAT_LookupHostEntryBySrc(Packet *p)
     return SFAT_LookupHostEntryByIP(p->ptrs.ip_api.get_src());
 }
 
-HostAttributeEntry *SFAT_LookupHostEntryByDst(Packet *p)
+HostAttributeEntry* SFAT_LookupHostEntryByDst(Packet* p)
 {
     if (!p || !p->ptrs.ip_api.is_valid())
         return NULL;
@@ -357,10 +360,10 @@ tTargetBasedConfig* SFAT_Swap()
     return curr_cfg;
 }
 
-void SFAT_UpdateApplicationProtocol(sfip_t *ipAddr, uint16_t port, uint16_t protocol, uint16_t id)
+void SFAT_UpdateApplicationProtocol(sfip_t* ipAddr, uint16_t port, uint16_t protocol, uint16_t id)
 {
-    HostAttributeEntry *host_entry;
-    ApplicationEntry *service;
+    HostAttributeEntry* host_entry;
+    ApplicationEntry* service;
     unsigned service_count = 0;
     int rval;
 
@@ -375,7 +378,7 @@ void SFAT_UpdateApplicationProtocol(sfip_t *ipAddr, uint16_t port, uint16_t prot
         sfip_set_ip(&host_entry->ipAddr, ipAddr);
 
         if ((rval = sfrt_insert(ipAddr, (unsigned char)ipAddr->bits, host_entry,
-            RT_FAVOR_SPECIFIC, curr_cfg->lookupTable)) != RT_SUCCESS)
+                RT_FAVOR_SPECIFIC, curr_cfg->lookupTable)) != RT_SUCCESS)
         {
             FreeHostEntry(host_entry);
             return;

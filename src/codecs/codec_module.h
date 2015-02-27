@@ -32,7 +32,6 @@ constexpr int GID_DECODE = 116;
 // remember to add rules to preproc_rules/decoder.rules
 // add the new decoder rules to the following enum.
 
-
 enum CodecSid : uint32_t
 {
     DECODE_NOT_IPV4_DGRAM = 1,
@@ -209,11 +208,9 @@ enum CodecSid : uint32_t
     DECODE_INDEX_MAX // = 470
 };
 
-
 //-------------------------------------------------------------------------
 // module
 //-------------------------------------------------------------------------
-
 
 class SO_PUBLIC CodecModule : public Module
 {
@@ -223,7 +220,7 @@ public:
     { }
 
     CodecModule(const char* s, const char* h, const Parameter* p, bool is_list = false)
-    : Module(s, h, p, is_list) { }
+        : Module(s, h, p, is_list) { }
 
     unsigned get_gid() const override
     { return GID_DECODE; }

@@ -17,13 +17,11 @@
 //--------------------------------------------------------------------------
 // out_unixsock.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #include "conversion_state.h"
 #include "data/dt_table_api.h"
 
 namespace output
 {
-
 static ConversionState* ctor(Converter& c)
 {
     c.get_table_api().open_table("alert_unixsock");
@@ -38,5 +36,5 @@ static const ConvertMap alert_unixsock_api =
 };
 
 const ConvertMap* alert_unixsock_map = &alert_unixsock_api;
-
 } // namespace output
+

@@ -27,33 +27,31 @@
 
 namespace preprocessors
 {
-
-namespace {
-
+namespace
+{
 class HttpInspect : public ConversionState
 {
 public:
     HttpInspect(Converter& c) : ConversionState(c) { }
-    virtual ~HttpInspect() {}
+    virtual ~HttpInspect() { }
     virtual bool convert(std::istringstream& data);
 
 private:
     bool add_decode_option(std::string opt_name,  std::istringstream& stream);
 };
-
 } // namespace
 
 bool HttpInspect::convert(std::istringstream& data_stream)
 {
     std::string keyword;
 
-    // using this to keep track of any errors.  I want to convert as much 
+    // using this to keep track of any errors.  I want to convert as much
     // as possible while being aware something went wrong
     bool retval = true;
 
-    if(data_stream >> keyword)
+    if (data_stream >> keyword)
     {
-        if(keyword.compare("global"))
+        if (keyword.compare("global"))
         {
             data_api.failed_conversion(data_stream, "'global' keyword required");
             return false;
@@ -62,57 +60,55 @@ bool HttpInspect::convert(std::istringstream& data_stream)
     table_api.open_table("http_global");
     table_api.add_diff_option_comment("http_inspect", "http_global");
 
-
-
-    while(data_stream >> keyword)
+    while (data_stream >> keyword)
     {
         bool tmpval = true;
 
-        if(!keyword.compare("compress_depth"))
+        if (!keyword.compare("compress_depth"))
             tmpval = parse_int_option("compress_depth", data_stream, false);
 
-        else if(!keyword.compare("decompress_depth")) 
+        else if (!keyword.compare("decompress_depth"))
             tmpval = parse_int_option("decompress_depth", data_stream, false);
 
-        else if(!keyword.compare("detect_anomalous_servers"))
+        else if (!keyword.compare("detect_anomalous_servers"))
             tmpval = table_api.add_option("detect_anomalous_servers", true);
 
-        else if(!keyword.compare("proxy_alert"))
+        else if (!keyword.compare("proxy_alert"))
             tmpval = table_api.add_option("proxy_alert", true);
 
-        else if(!keyword.compare("max_gzip_mem"))
+        else if (!keyword.compare("max_gzip_mem"))
             tmpval = parse_int_option("max_gzip_mem", data_stream, false);
-        
-        else if(!keyword.compare("memcap"))
+
+        else if (!keyword.compare("memcap"))
             tmpval = parse_int_option("memcap", data_stream, false);
 
-        else if(!keyword.compare("chunk_length"))
+        else if (!keyword.compare("chunk_length"))
             tmpval = parse_int_option("chunk_length", data_stream, false);
-        
-        else if(!keyword.compare("disabled"))
+
+        else if (!keyword.compare("disabled"))
             table_api.add_deleted_comment("disabled");
 
-        else if(!keyword.compare("b64_decode_depth"))
+        else if (!keyword.compare("b64_decode_depth"))
             tmpval = add_decode_option("b64_decode_depth", data_stream);
 
-        else if(!keyword.compare("bitenc_decode_depth"))
+        else if (!keyword.compare("bitenc_decode_depth"))
             tmpval = add_decode_option("bitenc_decode_depth", data_stream);
 
-        else if(!keyword.compare("max_mime_mem"))
+        else if (!keyword.compare("max_mime_mem"))
             tmpval = add_decode_option("max_mime_mem", data_stream);
-        
-        else if(!keyword.compare("qp_decode_depth"))
+
+        else if (!keyword.compare("qp_decode_depth"))
             tmpval = add_decode_option("qp_decode_depth", data_stream);
 
-        else if(!keyword.compare("uu_decode_depth"))
+        else if (!keyword.compare("uu_decode_depth"))
             tmpval = add_decode_option("uu_decode_depth", data_stream);
 
-        else if(!keyword.compare("iis_unicode_map"))
+        else if (!keyword.compare("iis_unicode_map"))
         {
             std::string codemap;
             int code_page;
 
-            if( (data_stream >> codemap) &&
+            if ( (data_stream >> codemap) &&
                 (data_stream >> code_page))
             {
                 table_api.open_table("unicode_map");
@@ -126,7 +122,6 @@ bool HttpInspect::convert(std::istringstream& data_stream)
                 retval = false;
             }
         }
-
         else
         {
             tmpval = false;
@@ -139,7 +134,7 @@ bool HttpInspect::convert(std::istringstream& data_stream)
         }
     }
 
-    return retval;    
+    return retval;
 }
 
 bool HttpInspect::add_decode_option(std::string opt_name,  std::istringstream& stream)
@@ -170,12 +165,12 @@ static ConversionState* ctor(Converter& c)
     return new HttpInspect(c);
 }
 
-static const ConvertMap preprocessor_httpinspect = 
+static const ConvertMap preprocessor_httpinspect =
 {
     "http_inspect",
     ctor,
 };
 
 const ConvertMap* httpinspect_map = &preprocessor_httpinspect;
-
 } // namespace preprocessors
+

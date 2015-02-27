@@ -16,14 +16,14 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 /**
  * @file   log_text.h
  * @author Russ Combs <rcombs@sourcefire.com>
  * @date   Fri Jun 27 10:34:37 2003
- * 
+ *
  * @brief  logging to text file
- * 
+ *
  * Use these methods to write to a TextLog.
  */
 
@@ -55,7 +55,7 @@ void LogPriorityData(TextLog*, const Event*, bool doNewLine);
 void LogXrefs(TextLog*, const Event*, bool doNewLine);
 
 void LogIPPkt(TextLog*, Packet*);
-void LogNetData (TextLog*, const uint8_t* data, const int len, Packet*);
+void LogNetData(TextLog*, const uint8_t* data, const int len, Packet*);
 
 void LogTimeStamp(TextLog*, Packet*);
 void LogTrHeader(TextLog*, Packet*);
@@ -69,3 +69,4 @@ void LogUDPHeader(TextLog*, Packet*);
 void LogICMPHeader(TextLog*, Packet*);
 
 #endif
+

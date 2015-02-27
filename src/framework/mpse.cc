@@ -48,8 +48,8 @@ Mpse::Mpse(const char* m, bool use_gc)
 }
 
 int Mpse::search(
-    const unsigned char * T, int n, mpse_action_f action,
-    void * data, int* current_state )
+    const unsigned char* T, int n, mpse_action_f action,
+    void* data, int* current_state)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(mpsePerfStats);
@@ -57,15 +57,15 @@ int Mpse::search(
     int ret = _search(T, n, action, data, current_state);
 
     if ( inc_global_counter )
-      s_bcnt += n;
+        s_bcnt += n;
 
     MODULE_PROFILE_END(mpsePerfStats);
     return ret;
 }
 
 int Mpse::search_all(
-    const unsigned char * T, int n, mpse_action_f action,
-    void * data, int* current_state )
+    const unsigned char* T, int n, mpse_action_f action,
+    void* data, int* current_state)
 {
     return _search(T, n, action, data, current_state);
 }

@@ -64,7 +64,7 @@ static const Parameter s_params[] =
 class LowmemQModule : public Module
 {
 public:
-    LowmemQModule() : Module(s_name, s_help, s_params) { };
+    LowmemQModule() : Module(s_name, s_help, s_params) { }
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -102,44 +102,45 @@ private:
 public:
     LowmemQMpse(
         bool use_gc,
-        void (*user_free)(void*),
-        void (*tree_free)(void**),
-        void (*list_free)(void**))
-    : Mpse(s_name, use_gc)
+        void (* user_free)(void*),
+        void (* tree_free)(void**),
+        void (* list_free)(void**))
+        : Mpse(s_name, use_gc)
     {
         obj = KTrieNew(1, user_free, tree_free, list_free);
-    };
+    }
+
     ~LowmemQMpse()
     {
         if (obj)
             KTrieDelete(obj);
-    };
+    }
 
     int add_pattern(
         SnortConfig*, const uint8_t* P, unsigned m,
         bool noCase, bool negative, void* ID, int) override
     {
         return KTrieAddPattern(obj, P, m, noCase, negative, ID);
-    };
+    }
 
     int prep_patterns(
         SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
     {
         return KTrieCompileWithSnortConf(sc, obj, build_tree, neg_list);
-    };
+    }
 
     int _search(
         const unsigned char* T, int n, mpse_action_f action,
-        void* data, int* current_state ) override
+        void* data, int* current_state) override
     {
         *current_state = 0;
-        return KTrieSearchQ(obj, (unsigned char *)T, n, action, data);
-    };
+        return KTrieSearchQ(obj, (unsigned char*)T, n, action, data);
+    }
 
     int get_pattern_count() override
     {
         return KTriePatternCount(obj);
-    };
+    }
 };
 
 //-------------------------------------------------------------------------
@@ -156,9 +157,9 @@ static Mpse* lmq_ctor(
     SnortConfig*,
     class Module* mod,
     bool use_gc,
-    void (*user_free)(void*),
-    void (*tree_free)(void**),
-    void (*list_free)(void**))
+    void (* user_free)(void*),
+    void (* tree_free)(void**),
+    void (* list_free)(void**))
 {
     LowmemQModule* lmqm = (LowmemQModule*)mod;
     s_var = lmqm->var;
@@ -184,11 +185,11 @@ static void lmq_print()
     if ( !s_var.empty() )
         LogMessage("lowmemq.var = %s\n", s_var.c_str());
 
-    double x = (double) KTrieMemUsed();
+    double x = (double)KTrieMemUsed();
 
     LogMessage("[ LowMem Search-Method Memory Used : %g %s ]\n",
         (x > 1.e+6) ?  x/1.e+6 : x/1.e+3,
-        (x > 1.e+6) ? "MBytes" : "KBytes" );
+        (x > 1.e+6) ? "MBytes" : "KBytes");
 }
 
 static const MpseApi lmq_api =

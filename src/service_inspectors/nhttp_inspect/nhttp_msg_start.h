@@ -27,16 +27,17 @@
 // NHttpMsgStart class
 //-------------------------------------------------------------------------
 
-class NHttpMsgStart: public NHttpMsgSection {
+class NHttpMsgStart : public NHttpMsgSection
+{
 public:
     void analyze() override;
     void gen_events() override;
     NHttpEnums::ProcessResult worth_detection() override;
 
 protected:
-    NHttpMsgStart(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
-       NHttpEnums::SourceId source_id_, bool buf_owner) :
-       NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner) {};
+    NHttpMsgStart(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
+        NHttpEnums::SourceId source_id_, bool buf_owner) :
+        NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner) { }
     virtual void parse_start_line() = 0;
     void derive_version_id();
 
@@ -45,9 +46,4 @@ protected:
 };
 
 #endif
-
-
-
-
-
 

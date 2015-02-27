@@ -191,13 +191,13 @@ class BoModule : public Module
 {
 public:
     BoModule() : Module(s_name, s_help)
-    { };
+    { }
 
     const RuleMap* get_rules() const override
-    { return bo_rules; };
+    { return bo_rules; }
 
     unsigned get_gid() const override
-    { return GID_BO; };
+    { return GID_BO; }
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
@@ -229,7 +229,7 @@ ProfileStats* BoModule::get_profile() const
 static char BoRand(void)
 {
     holdrand = holdrand * 214013L + 2531011L;
-    return (char) (((holdrand  >> 16) & 0x7fff) & 0xFF);
+    return (char)(((holdrand  >> 16) & 0x7fff) & 0xFF);
 }
 
 /*
@@ -240,23 +240,23 @@ static char BoRand(void)
 static void PrecalcPrefix(void)
 {
     uint8_t cookie_cyphertext[BO_MAGIC_SIZE];
-    const char *cookie_plaintext = "*!*QWTY?";
+    const char* cookie_plaintext = "*!*QWTY?";
     int key;
     int cookie_index;
-    const char *cp_ptr;       /* cookie plaintext indexing pointer */
+    const char* cp_ptr;       /* cookie plaintext indexing pointer */
     uint16_t cyphertext_referent;
 
     memset(lookup1, 0, sizeof(lookup1));
     memset(lookup2, 0, sizeof(lookup2));
 
-    for(key=0;key<65536;key++)
+    for (key=0; key<65536; key++)
     {
         /* setup to generate cyphertext for this key */
         holdrand = key;
         cp_ptr = cookie_plaintext;
 
         /* convert the plaintext cookie to cyphertext for this key */
-        for(cookie_index=0;cookie_index<BO_MAGIC_SIZE;cookie_index++)
+        for (cookie_index=0; cookie_index<BO_MAGIC_SIZE; cookie_index++)
         {
             cookie_cyphertext[cookie_index] =(uint8_t)(*cp_ptr^(BoRand()));
             cp_ptr++;
@@ -266,13 +266,13 @@ static void PrecalcPrefix(void)
          * generate the key lookup mechanism from the first 2 characters of
          * the cyphertext
          */
-        cyphertext_referent = (uint16_t) (cookie_cyphertext[0] << 8) & 0xFF00;
-        cyphertext_referent |= (uint16_t) (cookie_cyphertext[1]) & 0x00FF;
+        cyphertext_referent = (uint16_t)(cookie_cyphertext[0] << 8) & 0xFF00;
+        cyphertext_referent |= (uint16_t)(cookie_cyphertext[1]) & 0x00FF;
 
         /* if there are any keyspace collisions that's going to suck */
-        if(lookup1[cyphertext_referent][0] != 0)
+        if (lookup1[cyphertext_referent][0] != 0)
         {
-            if(lookup1[cyphertext_referent][1] != 0)
+            if (lookup1[cyphertext_referent][1] != 0)
             {
                 lookup1[cyphertext_referent][2] = (uint16_t)key;
             }
@@ -290,8 +290,8 @@ static void PrecalcPrefix(void)
          * generate the second lookup from the last two characters of
          * the cyphertext
          */
-        cyphertext_referent = (uint16_t) (cookie_cyphertext[6] << 8) & 0xFF00;
-        cyphertext_referent |= (uint16_t) (cookie_cyphertext[7]) & 0x00FF;
+        cyphertext_referent = (uint16_t)(cookie_cyphertext[6] << 8) & 0xFF00;
+        cyphertext_referent |= (uint16_t)(cookie_cyphertext[7]) & 0x00FF;
 
         /*
          * set the second lookup with the current key
@@ -322,7 +322,7 @@ static void PrecalcPrefix(void)
  *      CRC         1
  *
  */
-static int BoGetDirection(Packet *p, char *pkt_data)
+static int BoGetDirection(Packet* p, char* pkt_data)
 {
     uint32_t len = 0;
     uint32_t id = 0;
@@ -346,8 +346,8 @@ static int BoGetDirection(Packet *p, char *pkt_data)
     /* Get length from BO header - 32 bit int */
     for ( i = 0; i < 4; i++ )
     {
-        plaintext = (char) (*pkt_data ^ BoRand());
-        l = (uint32_t) plaintext;
+        plaintext = (char)(*pkt_data ^ BoRand());
+        l = (uint32_t)plaintext;
         len += l << (8*i);
         pkt_data++;
     }
@@ -355,14 +355,14 @@ static int BoGetDirection(Packet *p, char *pkt_data)
     /* Get ID from BO header - 32 bit int */
     for ( i = 0; i < 4; i++ )
     {
-        plaintext = (char) (*pkt_data ^ BoRand() );
-        l = ((uint32_t) plaintext) & 0x000000FF;
+        plaintext = (char)(*pkt_data ^ BoRand() );
+        l = ((uint32_t)plaintext) & 0x000000FF;
         id += l << (8*i);
         pkt_data++;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Data length = %lu\n", len););
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "ID = %lu\n", id););
+    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Data length = %lu\n", len); );
+    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "ID = %lu\n", id); );
 
     /* Do more len checking */
 
@@ -383,17 +383,17 @@ static int BoGetDirection(Packet *p, char *pkt_data)
         len -= BO_MIN_SIZE;
     }
 
-    if( len > 7 )
+    if ( len > 7 )
     {
         len = 7; /* we need no more than  7 variable chars */
     }
 
     /* Continue parsing BO header */
-    type = (char) (*pkt_data ^ BoRand());
+    type = (char)(*pkt_data ^ BoRand());
     pkt_data++;
 
     /* check to make sure we don't run off end of packet */
-    if ((uint32_t)(p->dsize - ((uint8_t *)pkt_data - p->data)) < len)
+    if ((uint32_t)(p->dsize - ((uint8_t*)pkt_data - p->data)) < len)
     {
         /* We don't have enough data to inspect */
         return BO_FROM_UNKNOWN;
@@ -401,17 +401,17 @@ static int BoGetDirection(Packet *p, char *pkt_data)
 
     if ( type & 0x80 )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Partial packet\n"););
+        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Partial packet\n"); );
     }
     if ( type & 0x40 )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Continued packet\n"););
+        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Continued packet\n"); );
     }
 
     /* Extract type of BO packet */
     type = type & 0x3F;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Type = 0x%x\n", type););
+    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Type = 0x%x\n", type); );
 
     /* Only examine data if this is a ping request or response */
     if ( type == BO_TYPE_PING )
@@ -421,16 +421,16 @@ static int BoGetDirection(Packet *p, char *pkt_data)
             return BO_FROM_CLIENT;
         }
 
-        for(i=0;i<len;i++ ) /* start at 0 to advance the BoRand() function properly */
+        for (i=0; i<len; i++ ) /* start at 0 to advance the BoRand() function properly */
         {
-            buf1[i] = (char) (pkt_data[i] ^ BoRand());
+            buf1[i] = (char)(pkt_data[i] ^ BoRand());
             if ( buf1[i] == 0 )
             {
                 return BO_FROM_UNKNOWN;
             }
         }
 
-        if( ( buf1[3] == 'P' || buf1[3] == 'p' ) &&
+        if ( ( buf1[3] == 'P' || buf1[3] == 'p' ) &&
             ( buf1[4] == 'O' || buf1[4] == 'o' ) &&
             ( buf1[5] == 'N' || buf1[5] == 'n' ) &&
             ( buf1[6] == 'G' || buf1[6] == 'g' ) )
@@ -450,9 +450,10 @@ static int BoGetDirection(Packet *p, char *pkt_data)
 // class stuff
 //-------------------------------------------------------------------------
 
-class BackOrifice : public Inspector {
+class BackOrifice : public Inspector
+{
 public:
-    BackOrifice() { };
+    BackOrifice() { }
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;
@@ -463,15 +464,15 @@ void BackOrifice::show(SnortConfig*)
     LogMessage("%s\n", s_name);
 }
 
-void BackOrifice::eval(Packet *p)
+void BackOrifice::eval(Packet* p)
 {
     uint16_t cyphertext_referent;
     uint16_t cyphertext_suffix;
     uint16_t key;
-    const char *magic_cookie = "*!*QWTY?";
-    char *pkt_data;
-    const char *magic_data;
-    char *end;
+    const char* magic_cookie = "*!*QWTY?";
+    char* pkt_data;
+    const char* magic_data;
+    char* end;
     char plaintext;
     int i;
     int bo_direction = 0;
@@ -481,7 +482,7 @@ void BackOrifice::eval(Packet *p)
     assert(p->is_udp());
 
     /* make sure it's at least 19 bytes long */
-    if(p->dsize < BO_MIN_SIZE)
+    if (p->dsize < BO_MIN_SIZE)
     {
         return;
     }
@@ -493,17 +494,17 @@ void BackOrifice::eval(Packet *p)
      * take the first two characters of the packet and generate the
      * first reference that gives us a reference key
      */
-    cyphertext_referent = (uint16_t) (p->data[0] << 8) & 0xFF00;
-    cyphertext_referent |= (uint16_t) (p->data[1]) & 0x00FF;
+    cyphertext_referent = (uint16_t)(p->data[0] << 8) & 0xFF00;
+    cyphertext_referent |= (uint16_t)(p->data[1]) & 0x00FF;
 
     /*
      * generate the second referent from the last two characters
      * of the cyphertext
      */
-    cyphertext_suffix = (uint16_t) (p->data[6] << 8) & 0xFF00;
-    cyphertext_suffix |= (uint16_t) (p->data[7]) & 0x00FF;
+    cyphertext_suffix = (uint16_t)(p->data[6] << 8) & 0xFF00;
+    cyphertext_suffix |= (uint16_t)(p->data[7]) & 0x00FF;
 
-    for(i=0;i<3;i++)
+    for (i=0; i<3; i++)
     {
         /* get the key from the cyphertext */
         key = lookup1[cyphertext_referent][i];
@@ -515,22 +516,22 @@ void BackOrifice::eval(Packet *p)
          *
          * moral of the story: don't use a lame keyspace
          */
-        if(lookup2[key] == cyphertext_suffix)
+        if (lookup2[key] == cyphertext_suffix)
         {
             holdrand = key;
             pkt_data = (char*)p->data;
             end = (char*)p->data + BO_MAGIC_SIZE;
             magic_data = magic_cookie;
 
-            while(pkt_data<end)
+            while (pkt_data<end)
             {
-                plaintext = (char) (*pkt_data ^ BoRand());
+                plaintext = (char)(*pkt_data ^ BoRand());
 
-                if(*magic_data != plaintext)
+                if (*magic_data != plaintext)
                 {
                     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-                            "Failed check one on 0x%X : 0x%X\n",
-                            *magic_data, plaintext););
+                        "Failed check one on 0x%X : 0x%X\n",
+                        *magic_data, plaintext); );
                     MODULE_PROFILE_END(boPerfStats);
                     return;
                 }
@@ -541,20 +542,20 @@ void BackOrifice::eval(Packet *p)
 
             /* if we fall thru there's a detect */
             DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-                        "Detected Back Orifice Data!\n");
-            DebugMessage(DEBUG_PLUGIN, "hash value: %d\n", key););
+                "Detected Back Orifice Data!\n");
+                DebugMessage(DEBUG_PLUGIN, "hash value: %d\n", key); );
 
             bo_direction = BoGetDirection(p, pkt_data);
 
             if ( bo_direction == BO_FROM_CLIENT )
             {
                 SnortEventqAdd(GID_BO, BO_CLIENT_TRAFFIC_DETECT);
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Client packet\n"););
+                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Client packet\n"); );
             }
             else if ( bo_direction == BO_FROM_SERVER )
             {
                 SnortEventqAdd(GID_BO, BO_SERVER_TRAFFIC_DETECT);
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Server packet\n"););
+                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Server packet\n"); );
             }
             else
             {
@@ -564,8 +565,6 @@ void BackOrifice::eval(Packet *p)
     }
 
     MODULE_PROFILE_END(boPerfStats);
-
-    return;
 }
 
 //-------------------------------------------------------------------------
@@ -604,7 +603,7 @@ static const InspectApi bo_api =
         mod_ctor,
         mod_dtor
     },
-    IT_NETWORK, 
+    IT_NETWORK,
     (uint16_t)PktType::UDP,
     nullptr, // buffers
     nullptr, // service

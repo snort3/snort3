@@ -99,13 +99,13 @@ class Asn1Option : public IpsOption
 {
 public:
     Asn1Option(ASN1_CTXT& c) : IpsOption(s_name)
-    { config = c; };
+    { config = c; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
     bool is_relative() override
-    { return ( config.offset_type == REL_OFFSET ); };
+    { return ( config.offset_type == REL_OFFSET ); }
 
     int eval(Cursor&, Packet*) override;
 
@@ -120,7 +120,7 @@ private:
 uint32_t Asn1Option::hash() const
 {
     uint32_t a,b,c;
-    const ASN1_CTXT *data = &config;
+    const ASN1_CTXT* data = &config;
 
     a = data->bs_overflow;
     b = data->double_overflow;
@@ -149,8 +149,8 @@ bool Asn1Option::operator==(const IpsOption& rhs) const
 
     Asn1Option& asn1 = (Asn1Option&)rhs;
 
-    const ASN1_CTXT *left = &config;
-    const ASN1_CTXT *right = &asn1.config;
+    const ASN1_CTXT* left = &config;
+    const ASN1_CTXT* right = &asn1.config;
 
     if ((left->bs_overflow == right->bs_overflow) &&
         (left->double_overflow == right->double_overflow) &&
@@ -166,14 +166,14 @@ bool Asn1Option::operator==(const IpsOption& rhs) const
     return false;
 }
 
-int Asn1Option::eval(Cursor& c, Packet *p)
+int Asn1Option::eval(Cursor& c, Packet* p)
 {
     PROFILE_VARS;
 
     /*
     **  Failed if there is no data to decode.
     */
-    if(!p->data)
+    if (!p->data)
         return DETECTION_OPTION_NO_MATCH;
 
     MODULE_PROFILE_START(asn1PerfStats);
@@ -218,13 +218,13 @@ static const Parameter s_params[] =
 class Asn1Module : public Module
 {
 public:
-    Asn1Module() : Module(s_name, s_help, s_params) { };
+    Asn1Module() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &asn1PerfStats; };
+    { return &asn1PerfStats; }
 
     ASN1_CTXT data;
 };

@@ -17,16 +17,13 @@
 //--------------------------------------------------------------------------
 // gre.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifndef PROTOCOLS_GRE_H
 #define PROTOCOLS_GRE_H
 
 #include <arpa/inet.h>
 
-
 namespace gre
 {
-
 /* GRE related stuff */
 struct GREHdr
 {
@@ -43,8 +40,7 @@ struct GREHdr
     inline uint16_t raw_proto() const
     { return ether_type; }
 };
-
-
 } // namespace gre
 
 #endif
+

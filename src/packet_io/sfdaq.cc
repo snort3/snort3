@@ -76,7 +76,7 @@ static void DAQ_Accumulate(void);
 
 //--------------------------------------------------------------------
 
-void DAQ_Load (const SnortConfig* sc)
+void DAQ_Load(const SnortConfig* sc)
 {
     const char** dirs = StringVector_GetVector(sc->daq_dirs);
 
@@ -88,7 +88,7 @@ void DAQ_Load (const SnortConfig* sc)
     loaded = 1;
 }
 
-void DAQ_Unload ()
+void DAQ_Unload()
 {
     daq_unload_modules();
     loaded = 0;
@@ -96,7 +96,7 @@ void DAQ_Unload ()
 
 //--------------------------------------------------------------------
 
-int DAQ_PrintTypes (FILE* f)
+int DAQ_PrintTypes(FILE* f)
 {
     DAQ_Module_Info_t* list = NULL;
     int i, nMods = daq_get_module_list(&list);
@@ -132,7 +132,7 @@ int DAQ_PrintTypes (FILE* f)
     return 0;
 }
 
-DAQ_Mode DAQ_GetInterfaceMode(const DAQ_PktHdr_t *h)
+DAQ_Mode DAQ_GetInterfaceMode(const DAQ_PktHdr_t* h)
 {
 #ifdef DAQ_PKT_FLAG_NOT_FORWARDING
     // interface is not inline, so return passive
@@ -149,7 +149,7 @@ DAQ_Mode DAQ_GetInterfaceMode(const DAQ_PktHdr_t *h)
     return DAQ_MODE_PASSIVE;
 }
 
-DAQ_Mode DAQ_GetMode (const SnortConfig* sc)
+DAQ_Mode DAQ_GetMode(const SnortConfig* sc)
 {
     if ( sc->daq_mode )
     {
@@ -177,7 +177,7 @@ DAQ_Mode DAQ_GetMode (const SnortConfig* sc)
 
 //--------------------------------------------------------------------
 
-static int DAQ_ValidateModule (DAQ_Mode mode)
+static int DAQ_ValidateModule(DAQ_Mode mode)
 {
     uint32_t have = daq_get_type(daq_mod);
     uint32_t need = 0;
@@ -194,7 +194,7 @@ static int DAQ_ValidateModule (DAQ_Mode mode)
     return ( (have & need) != 0 );
 }
 
-static int DAQ_ValidateInstance ()
+static int DAQ_ValidateInstance()
 {
     uint32_t caps = daq_get_capabilities(daq_mod, daq_hand);
 
@@ -225,7 +225,7 @@ static int DAQ_ValidateInstance ()
 
 //--------------------------------------------------------------------
 
-void DAQ_Init (const SnortConfig* sc)
+void DAQ_Init(const SnortConfig* sc)
 {
     const char* type = DAQ_DEFAULT;
     if ( !loaded )
@@ -250,7 +250,7 @@ void DAQ_Init (const SnortConfig* sc)
         type, daq_mode_string(daq_mode));
 }
 
-void DAQ_Term ()
+void DAQ_Term()
 {
 //#ifndef VALGRIND_TESTING
     if ( loaded )
@@ -259,7 +259,7 @@ void DAQ_Term ()
 //#endif
 }
 
-void DAQ_Abort ()
+void DAQ_Abort()
 {
     if ( DAQ_WasStarted() )
         DAQ_Stop();
@@ -270,7 +270,7 @@ void DAQ_Abort ()
 
 //--------------------------------------------------------------------
 
-const char* DAQ_GetInterfaceSpec (void)
+const char* DAQ_GetInterfaceSpec(void)
 {
     return interface_spec ? interface_spec : "";
 }
@@ -283,7 +283,7 @@ const char* DAQ_GetType(void)
 // Snort has its own snap applied to packets it acquires via the DAQ.  This
 // should not be confused with the snap that was used to capture a pcap which
 // may be different.
-uint32_t DAQ_GetSnapLen (void)
+uint32_t DAQ_GetSnapLen(void)
 {
     return snap;
 }
@@ -293,32 +293,32 @@ uint32_t DAQ_GetSnapLen (void)
 // the datalink type in the file must be used - which may not be known until
 // start.  The value is cached here since it used for packet operations like
 // logging and is needed at shutdown.  this avoids sequencing issues.
-int DAQ_GetBaseProtocol (void)
+int DAQ_GetBaseProtocol(void)
 {
     return daq_dlt;
 }
 
-int DAQ_Unprivileged (void)
+int DAQ_Unprivileged(void)
 {
     return !( daq_get_type(daq_mod) & DAQ_TYPE_NO_UNPRIV );
 }
 
-int DAQ_UnprivilegedStart (void)
+int DAQ_UnprivilegedStart(void)
 {
     return ( daq_get_capabilities(daq_mod, daq_hand) & DAQ_CAPA_UNPRIV_START );
 }
 
-int DAQ_CanReplace (void)
+int DAQ_CanReplace(void)
 {
     return ( daq_get_capabilities(daq_mod, daq_hand) & DAQ_CAPA_REPLACE );
 }
 
-int DAQ_CanInject (void)
+int DAQ_CanInject(void)
 {
     return ( daq_get_capabilities(daq_mod, daq_hand) & DAQ_CAPA_INJECT );
 }
 
-int DAQ_CanWhitelist (void)
+int DAQ_CanWhitelist(void)
 {
 #ifdef DAQ_CAPA_WHITELIST
     return ( daq_get_capabilities(daq_mod, daq_hand) & DAQ_CAPA_WHITELIST );
@@ -327,8 +327,7 @@ int DAQ_CanWhitelist (void)
 #endif
 }
 
-
-int DAQ_RawInjection (void)
+int DAQ_RawInjection(void)
 {
     return ( daq_get_capabilities(daq_mod, daq_hand) & DAQ_CAPA_INJECT_RAW );
 }
@@ -355,7 +354,7 @@ int DAQ_SetFilter(const char* bpf)
 
 //--------------------------------------------------------------------
 
-static void DAQ_LoadVars (DAQ_Config_t* cfg, const SnortConfig* sc)
+static void DAQ_LoadVars(DAQ_Config_t* cfg, const SnortConfig* sc)
 {
     unsigned i = 0;
 
@@ -380,7 +379,7 @@ static void DAQ_LoadVars (DAQ_Config_t* cfg, const SnortConfig* sc)
     while ( 1 );
 }
 
-static int DAQ_Config (DAQ_Config_t* cfg)
+static int DAQ_Config(DAQ_Config_t* cfg)
 {
     int err;
     char buf[256] = "";
@@ -400,7 +399,7 @@ static int DAQ_Config (DAQ_Config_t* cfg)
 
 //--------------------------------------------------------------------
 
-int DAQ_New (const SnortConfig* sc, const char* intf)
+int DAQ_New(const SnortConfig* sc, const char* intf)
 {
     DAQ_Config_t cfg;
 
@@ -462,7 +461,7 @@ int DAQ_Delete(void)
 
 //--------------------------------------------------------------------
 
-int DAQ_Start ()
+int DAQ_Start()
 {
     int err = daq_start(daq_mod, daq_hand);
 
@@ -476,7 +475,7 @@ int DAQ_Start ()
     return err;
 }
 
-int DAQ_WasStarted (void)
+int DAQ_WasStarted(void)
 {
     DAQ_State s;
 
@@ -488,7 +487,7 @@ int DAQ_WasStarted (void)
     return ( DAQ_STATE_STARTED == s );
 }
 
-int DAQ_Stop ()
+int DAQ_Stop()
 {
     int err = daq_stop(daq_mod, daq_hand);
 
@@ -507,9 +506,10 @@ void DAQ_Set_MetaCallback(DAQ_Meta_Func_t meta_callback)
 {
     daq_meta_callback = meta_callback;
 }
+
 #endif
 
-int DAQ_Acquire (int max, DAQ_Analysis_Func_t callback, uint8_t* user)
+int DAQ_Acquire(int max, DAQ_Analysis_Func_t callback, uint8_t* user)
 {
 #if HAVE_DAQ_ACQUIRE_WITH_META
     int err = daq_acquire_with_meta(daq_mod, daq_hand, max, callback, daq_meta_callback, user);
@@ -545,7 +545,7 @@ int DAQ_Inject(const DAQ_PktHdr_t* h, int rev, const uint8_t* buf, uint32_t len)
 void* DAQ_GetHandle()
 { return daq_hand; }
 
-int DAQ_BreakLoop (int error, void* hand)
+int DAQ_BreakLoop(int error, void* hand)
 {
     if ( !hand )
         hand = daq_hand;
@@ -555,7 +555,7 @@ int DAQ_BreakLoop (int error, void* hand)
 
 //--------------------------------------------------------------------
 
-static void DAQ_Accumulate (void)
+static void DAQ_Accumulate(void)
 {
     int i;
     const DAQ_Stats_t* ps = DAQ_GetStats();
@@ -571,7 +571,7 @@ static void DAQ_Accumulate (void)
 }
 
 // returns statically allocated stats - don't free
-const DAQ_Stats_t* DAQ_GetStats (void)
+const DAQ_Stats_t* DAQ_GetStats(void)
 {
     int err = 0;
 
@@ -599,7 +599,7 @@ const DAQ_Stats_t* DAQ_GetStats (void)
 int DAQ_ModifyFlow(const void* h, uint32_t id)
 {
 #ifdef HAVE_DAQ_ACQUIRE_WITH_META
-    const DAQ_PktHdr_t *hdr = (DAQ_PktHdr_t*) h;
+    const DAQ_PktHdr_t* hdr = (DAQ_PktHdr_t*)h;
     DAQ_ModFlow_t mod;
 
     mod.opaque = id;

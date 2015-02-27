@@ -41,37 +41,33 @@
 /*
 *
 */
-typedef struct _ktriepattern {
+typedef struct _ktriepattern
+{
+    struct  _ktriepattern* next; /* global list of all patterns*/
+    struct  _ktriepattern* mnext; /* matching list of duplicate keywords*/
 
-  struct  _ktriepattern* next;  /* global list of all patterns*/
-  struct  _ktriepattern* mnext;  /* matching list of duplicate keywords*/
-
-  unsigned char* P;    /* no case*/
-  unsigned char* Pcase; /* case sensitive*/
-  int             n;
-  int             nocase;
-  int             negative;
-  void         * id;
-  void         * rule_option_tree;
-  void         * neg_list;
-
+    unsigned char* P;  /* no case*/
+    unsigned char* Pcase; /* case sensitive*/
+    int n;
+    int nocase;
+    int negative;
+    void* id;
+    void* rule_option_tree;
+    void* neg_list;
 } KTRIEPATTERN;
-
 
 /*
 *
 */
-typedef struct _ktrienode {
+typedef struct _ktrienode
+{
+    int edge;   /* character*/
 
-  int     edge; /* character*/
+    struct  _ktrienode* sibling;
+    struct  _ktrienode* child;
 
-  struct  _ktrienode* sibling;
-  struct  _ktrienode* child;
-
-  KTRIEPATTERN*pkeyword;
-
+    KTRIEPATTERN* pkeyword;
 } KTRIENODE;
-
 
 #define KTRIE_ROOT_NODES     256
 
@@ -86,67 +82,66 @@ typedef struct
 /*
 *
 */
-typedef struct {
+typedef struct
+{
+    KTRIEPATTERN* patrn; /* List of patterns, built as they are added*/
 
-  KTRIEPATTERN* patrn; /* List of patterns, built as they are added*/
+    KTRIENODE* root[KTRIE_ROOT_NODES];   /* KTrie nodes*/
 
+    int memory;
+    int nchars;
+    int npats;
+    int duplicates;
+    int method;
+    int end_states;          /* should equal npats - duplicates*/
 
-  KTRIENODE   * root[KTRIE_ROOT_NODES];  /* KTrie nodes*/
-
-  int            memory;
-  int            nchars;
-  int            npats;
-  int            duplicates;
-  int            method;
-  int            end_states; /* should equal npats - duplicates*/
-
-  int            bcSize;
-  unsigned short bcShift[KTRIE_ROOT_NODES];
-  void           (*userfree)(void*p);
-  void           (*optiontreefree)(void**p);
-  void           (*neg_list_free)(void**p);
-  SFK_PMQ        q;
-
+    int bcSize;
+    unsigned short bcShift[KTRIE_ROOT_NODES];
+    void (* userfree)(void* p);
+    void (* optiontreefree)(void** p);
+    void (* neg_list_free)(void** p);
+    SFK_PMQ q;
 } KTRIE_STRUCT;
 
 void KTrie_init_xlatcase();
 
 KTRIE_STRUCT* KTrieNew(
-    int method, void (*userfree)(void*p),
-    void (*optiontreefree)(void**p),
-    void (*neg_list_free)(void**p));
+    int method, void (* userfree)(void* p),
+    void (* optiontreefree)(void** p),
+    void (* neg_list_free)(void** p));
 
 int KTrieAddPattern(
     KTRIE_STRUCT* ts, const uint8_t* P, unsigned n,
-    bool nocase, bool negative, void* id );
+    bool nocase, bool negative, void* id);
 
 int KTrieCompile(
     KTRIE_STRUCT* ts,
-    int (*build_tree)(void* id, void**existing_tree),
-    int (*neg_list_func)(void*id, void**list));
+    int (* build_tree)(void* id, void** existing_tree),
+    int (* neg_list_func)(void* id, void** list));
 
 struct SnortConfig;
 
 int KTrieCompileWithSnortConf(
     SnortConfig*, KTRIE_STRUCT* ts,
-    int (*build_tree)(SnortConfig*, void* id, void**existing_tree),
-    int (*neg_list_func)(void*id, void**list));
+    int (* build_tree)(SnortConfig*, void* id, void** existing_tree),
+    int (* neg_list_func)(void* id, void** list));
 
 int KTrieSearch(
     KTRIE_STRUCT* ts, unsigned char* T,  int n,
-    int(*match)(void* id, void*tree, int index, void*data, void*neg_list),
-    void*data );
+    int (* match)(void* id, void* tree, int index, void* data, void* neg_list),
+    void* data);
 
 int KTrieSearchQ(
     KTRIE_STRUCT* ts, unsigned char* T,  int n,
-    int(*match)(void* id, void*tree, int index, void*data, void*neg_list),
-    void*data );
+    int (* match)(void* id, void* tree, int index, void* data, void* neg_list),
+    void* data);
 
 unsigned int KTrieMemUsed(void);
 void KTrieInitMemUsed(void);
-void KTrieDelete(KTRIE_STRUCT*k);
-int  KTriePatternCount(KTRIE_STRUCT*k);
+void KTrieDelete(KTRIE_STRUCT* k);
+int KTriePatternCount(KTRIE_STRUCT* k);
 
 void sfksearch_print_qinfo(void);
 
 #endif
+

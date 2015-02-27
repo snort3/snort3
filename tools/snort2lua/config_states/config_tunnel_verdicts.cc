@@ -26,17 +26,15 @@
 
 namespace config
 {
-
-namespace {
-
+namespace
+{
 class TunnelVerdicts : public ConversionState
 {
 public:
-    TunnelVerdicts(Converter& c) : ConversionState(c) {};
-    virtual ~TunnelVerdicts() {};
+    TunnelVerdicts(Converter& c) : ConversionState(c) { }
+    virtual ~TunnelVerdicts() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool TunnelVerdicts::convert(std::istringstream& data_stream)
@@ -73,5 +71,5 @@ static const ConvertMap tunnel_verdicts_api =
 };
 
 const ConvertMap* tunnel_verdicts_map = &tunnel_verdicts_api;
-
 } // namespace config
+

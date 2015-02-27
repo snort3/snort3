@@ -52,38 +52,38 @@ public:
     LowmemMpse(
         SnortConfig*,
         bool use_gc,
-        void (*user_free)(void*),
-        void (*tree_free)(void**),
-        void (*list_free)(void**))
-    : Mpse("lowmem", use_gc)
-    { obj = KTrieNew(0,user_free, tree_free, list_free); };
+        void (* user_free)(void*),
+        void (* tree_free)(void**),
+        void (* list_free)(void**))
+        : Mpse("lowmem", use_gc)
+    { obj = KTrieNew(0,user_free, tree_free, list_free); }
 
     ~LowmemMpse()
-    { KTrieDelete(obj); };
+    { KTrieDelete(obj); }
 
     int add_pattern(
         SnortConfig*, const uint8_t* P, unsigned m,
         bool noCase, bool negative, void* ID, int) override
     {
         return KTrieAddPattern(obj, P, m, noCase, negative, ID);
-    };
+    }
 
     int prep_patterns(
         SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
     {
-        return KTrieCompileWithSnortConf(sc, obj, build_tree, neg_list );
-    };
+        return KTrieCompileWithSnortConf(sc, obj, build_tree, neg_list);
+    }
 
     int _search(
         const unsigned char* T, int n, mpse_action_f action,
-        void* data, int* current_state ) override
+        void* data, int* current_state) override
     {
         *current_state = 0;
-        return KTrieSearch(obj, (unsigned char *)T, n, action, data);
-    };
+        return KTrieSearch(obj, (unsigned char*)T, n, action, data);
+    }
 
     int get_pattern_count() override
-    { return KTriePatternCount(obj); };
+    { return KTriePatternCount(obj); }
 };
 
 //-------------------------------------------------------------------------
@@ -94,9 +94,9 @@ static Mpse* lm_ctor(
     SnortConfig* sc,
     class Module*,
     bool use_gc,
-    void (*user_free)(void*),
-    void (*tree_free)(void**),
-    void (*list_free)(void**))
+    void (* user_free)(void*),
+    void (* tree_free)(void**),
+    void (* list_free)(void**))
 {
     return new LowmemMpse(sc, use_gc, user_free, tree_free, list_free);
 }
@@ -117,11 +117,11 @@ static void lm_print()
     if ( !KTrieMemUsed() )
         return;
 
-    double x = (double) KTrieMemUsed();
+    double x = (double)KTrieMemUsed();
 
     LogMessage("[ LowMem Search-Method Memory Used : %g %s ]\n",
-            (x > 1.e+6) ?  x/1.e+6 : x/1.e+3,
-            (x > 1.e+6) ? "MBytes" : "KBytes" );
+        (x > 1.e+6) ?  x/1.e+6 : x/1.e+3,
+        (x > 1.e+6) ? "MBytes" : "KBytes");
 }
 
 static const MpseApi lm_api =

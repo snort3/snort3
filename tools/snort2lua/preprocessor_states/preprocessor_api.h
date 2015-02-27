@@ -25,9 +25,8 @@
 
 namespace preprocessors
 {
-
 extern const std::vector<const ConvertMap*> preprocessor_api;
-
 } // namespace preprocessors
 
 #endif
+

@@ -56,12 +56,12 @@
 #define F_EXTD_HOST_PORT    "extd_host_port"
 
 int ProcessFTPCmdValidity(
-    FTP_SERVER_PROTO_CONF *ServerConf,
+    FTP_SERVER_PROTO_CONF* ServerConf,
     const char* cmd, const char* fmt,
-    char *ErrorString, int ErrStrLen);
+    char* ErrorString, int ErrStrLen);
 
 int ProcessFTPAllowBounce(
-    FTP_CLIENT_PROTO_CONF* ClientConf, const uint8_t* addr, unsigned len, 
+    FTP_CLIENT_PROTO_CONF* ClientConf, const uint8_t* addr, unsigned len,
     Port low, Port high);
 
 #endif

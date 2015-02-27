@@ -26,17 +26,15 @@
 
 namespace output
 {
-
-namespace {
-
+namespace
+{
 class AlertFull : public ConversionState
 {
 public:
-    AlertFull(Converter& c) : ConversionState(c) {};
-    virtual ~AlertFull() {};
+    AlertFull(Converter& c) : ConversionState(c) { }
+    virtual ~AlertFull() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool AlertFull::convert(std::istringstream& data_stream)
@@ -47,14 +45,12 @@ bool AlertFull::convert(std::istringstream& data_stream)
     char c = '\0';
     std::string units = "B";
 
-
     table_api.open_top_level_table("alert_full");
 
     if (!(data_stream >> keyword))
         return true;
 
     table_api.add_deleted_comment("<filename> can no longer be specific");
-
 
     if (!(data_stream >> limit))
         return retval;
@@ -68,7 +64,6 @@ bool AlertFull::convert(std::istringstream& data_stream)
         else if (c == 'G' || c == 'g')
             units = "G";
     }
-
 
     retval = table_api.add_option("limit", limit) && retval;
     retval = table_api.add_option("units", units) && retval;
@@ -98,5 +93,5 @@ static const ConvertMap alert_full_api =
 };
 
 const ConvertMap* alert_full_map = &alert_full_api;
-
 } // namespace output
+

@@ -69,8 +69,8 @@ struct SnortPacket
 
 extern "C" {
 // ensure Lua can link with this
-const SnortEvent* get_event();
-const SnortPacket* get_packet();
+    const SnortEvent* get_event();
+    const SnortPacket* get_packet();
 }
 
 static THREAD_LOCAL Event* event;
@@ -140,22 +140,22 @@ class LuaLogModule : public Module
 {
 public:
     LuaLogModule(const char* name) : Module(name, s_help, s_params)
-    { };
+    { }
 
     bool begin(const char*, int, SnortConfig*) override
     {
         args.clear();
         return true;
-    };
+    }
 
     bool set(const char*, Value& v, SnortConfig*) override
     {
         args = v.get_string();
         return true;
-    };
+    }
 
     ProfileStats* get_profile() const override
-    { return &luaLogPerfStats; };
+    { return &luaLogPerfStats; }
 
 public:
     std::string args;

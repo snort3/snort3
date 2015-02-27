@@ -20,7 +20,6 @@
 #ifndef DATA_DATA_TYPES_DT_TABLE_H
 #define DATA_DATA_TYPES_DT_TABLE_H
 
-
 #include <string>
 #include <vector>
 #include <iostream>
@@ -36,7 +35,7 @@ public:
     Table(std::string name, int depth);
     virtual ~Table();
 
-    inline std::string get_name(){ return name; }
+    inline std::string get_name() { return name; }
     bool has_differences();
     Table* open_table();
     Table* open_table(std::string);
@@ -47,14 +46,14 @@ public:
     void add_comment(std::string comment);
     bool has_option(const std::string);
 
-    /*  emit options after table has finished printing. */
-    /*  These options will be appended to the previous table as supposed */
-    /*  to overwriting the entire table */
+    /*  emit options after table has finished printing.
+        These options will be appended to the previous table as supposed
+        to overwriting the entire table */
     void append_option(std::string opt_name, int val);
     void append_option(std::string opt_name, bool val);
     void append_option(std::string opt_name, std::string val);
 
-    friend std::ostream &operator<<( std::ostream&, const Table &);
+    friend std::ostream& operator<<(std::ostream&, const Table&);
 
 private:
     std::string name;
@@ -65,7 +64,6 @@ private:
     std::vector<Variable*> lists;
     std::vector<Option*> append_options;
 
-
     bool has_option(std::string name, int val);
     bool has_option(std::string name, bool val);
     bool has_option(std::string name, std::string val);
@@ -73,3 +71,4 @@ private:
 };
 
 #endif
+

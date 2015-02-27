@@ -73,13 +73,13 @@
 **
 **  @retval HI_SUCCESS  function successful
 */
-static int InitServerConf(HTTPINSPECT_CONF *GlobalConf,
-                          HTTPINSPECT_CONF **ServerConf,
-                          HTTPINSPECT_CONF **ClientConf,
-                          HI_SI_INPUT *SiInput, int *piInspectMode, Packet *p)
+static int InitServerConf(HTTPINSPECT_CONF* GlobalConf,
+    HTTPINSPECT_CONF** ServerConf,
+    HTTPINSPECT_CONF** ClientConf,
+    HI_SI_INPUT* SiInput, int* piInspectMode, Packet* p)
 {
-    HTTPINSPECT_CONF *ServerConfSip;
-    HTTPINSPECT_CONF *ServerConfDip;
+    HTTPINSPECT_CONF* ServerConfSip;
+    HTTPINSPECT_CONF* ServerConfDip;
     int iServerSip;
     int iServerDip;
     int http_id_found = 0;
@@ -125,57 +125,57 @@ static int InitServerConf(HTTPINSPECT_CONF *GlobalConf,
     **  Depending on the type of packet direction we get from the
     **  state machine, we evaluate client/server differently.
     */
-    switch(SiInput->pdir)
+    switch (SiInput->pdir)
     {
-        case HI_SI_NO_MODE:
-            /*
-            **  We check for the case where both SIP and DIP
-            **  appear to be servers.  In this case, we assume client
-            **  and process that way.
-            */
-            if(iServerSip && iServerDip)
-            {
-                *piInspectMode = HI_SI_CLIENT_MODE;
-                *ServerConf = ServerConfDip;
-                *ClientConf = ServerConfSip;
-            }
-            else if(iServerSip)
-            {
-                *piInspectMode = HI_SI_SERVER_MODE;
-                *ServerConf = ServerConfSip;
-                *ClientConf = ServerConfDip;
-            }
-            else if(iServerDip)
-            {
-                *piInspectMode = HI_SI_CLIENT_MODE;
-                *ServerConf = ServerConfDip;
-                *ClientConf = ServerConfSip;
-            }
-            break;
+    case HI_SI_NO_MODE:
+        /*
+        **  We check for the case where both SIP and DIP
+        **  appear to be servers.  In this case, we assume client
+        **  and process that way.
+        */
+        if (iServerSip && iServerDip)
+        {
+            *piInspectMode = HI_SI_CLIENT_MODE;
+            *ServerConf = ServerConfDip;
+            *ClientConf = ServerConfSip;
+        }
+        else if (iServerSip)
+        {
+            *piInspectMode = HI_SI_SERVER_MODE;
+            *ServerConf = ServerConfSip;
+            *ClientConf = ServerConfDip;
+        }
+        else if (iServerDip)
+        {
+            *piInspectMode = HI_SI_CLIENT_MODE;
+            *ServerConf = ServerConfDip;
+            *ClientConf = ServerConfSip;
+        }
+        break;
 
-        case HI_SI_CLIENT_MODE:
-            if(iServerDip || http_id_found)
-            {
-                *piInspectMode = HI_SI_CLIENT_MODE;
-                *ServerConf = ServerConfDip;
-                *ClientConf = ServerConfSip;
-            }
-            break;
+    case HI_SI_CLIENT_MODE:
+        if (iServerDip || http_id_found)
+        {
+            *piInspectMode = HI_SI_CLIENT_MODE;
+            *ServerConf = ServerConfDip;
+            *ClientConf = ServerConfSip;
+        }
+        break;
 
-        case HI_SI_SERVER_MODE:
-            if(iServerSip || http_id_found)
-            {
-                *piInspectMode = HI_SI_SERVER_MODE;
-                *ServerConf = ServerConfSip;
-                *ClientConf = ServerConfDip;
-            }
-            break;
+    case HI_SI_SERVER_MODE:
+        if (iServerSip || http_id_found)
+        {
+            *piInspectMode = HI_SI_SERVER_MODE;
+            *ServerConf = ServerConfSip;
+            *ClientConf = ServerConfDip;
+        }
+        break;
 
-        default:
-            *piInspectMode = HI_SI_NO_MODE;
-            *ServerConf = NULL;
-            *ClientConf = NULL;
-            break;
+    default:
+        *piInspectMode = HI_SI_NO_MODE;
+        *ServerConf = NULL;
+        *ClientConf = NULL;
+        break;
     }
 
     return HI_SUCCESS;
@@ -196,7 +196,7 @@ static int InitServerConf(HTTPINSPECT_CONF *GlobalConf,
 **
 **  @retval HI_SUCCESS
 */
-static inline int Resetsession(HI_SESSION *session)
+static inline int Resetsession(HI_SESSION* session)
 {
     memset(&session->client.request, 0, sizeof(session->client.request));
     memset(&session->server.response, 0, sizeof(session->server.response));
@@ -231,12 +231,12 @@ static inline int Resetsession(HI_SESSION *session)
 **  @retval HI_SUCCESS function successful
 */
 int hi_si_session_inspection(
-    HTTPINSPECT_CONF* conf, HI_SESSION **session,
-    HI_SI_INPUT *SiInput, int *piInspectMode, Packet *p)
+    HTTPINSPECT_CONF* conf, HI_SESSION** session,
+    HI_SI_INPUT* SiInput, int* piInspectMode, Packet* p)
 {
     static THREAD_LOCAL HI_SESSION Staticsession;
-    HTTPINSPECT_CONF *ServerConf = NULL;
-    HTTPINSPECT_CONF *ClientConf = NULL;
+    HTTPINSPECT_CONF* ServerConf = NULL;
+    HTTPINSPECT_CONF* ClientConf = NULL;
     int iRet;
 
     Resetsession(&Staticsession);

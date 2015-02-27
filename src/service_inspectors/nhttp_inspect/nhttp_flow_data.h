@@ -35,7 +35,7 @@ public:
     ~NHttpFlowData();
     void show(FILE* out_file) const;
     static unsigned nhttp_flow_id;
-    static void init() { nhttp_flow_id = FlowData::get_flow_id(); };
+    static void init() { nhttp_flow_id = FlowData::get_flow_id(); }
 
     friend class NHttpInspect;
     friend class NHttpMsgSection;
@@ -49,6 +49,7 @@ public:
     friend class NHttpStreamSplitter;
     friend class NHttpTransaction;
     friend class NHttpTestInput;
+
 private:
     void half_reset(NHttpEnums::SourceId source_id);
 
@@ -61,13 +62,17 @@ private:
     bool section_buffer_owned[2] = { true, true };
     uint8_t* chunk_buffer[2] = { nullptr, nullptr };
     int32_t chunk_buffer_length[2] = { 0, 0 };
-    bool chunk_buffer_owned[2] = { true, true }; // never actually false and not checked, just here to simplify code
+
+    // never actually false and not checked, just here to simplify code
+    bool chunk_buffer_owned[2] = { true, true };
+
     bool zero_chunk[2] = { false, false };
     NHttpInfractions chunk_infractions[2];
 
     // StreamSplitter => Inspector (facts about the most recent message section)
     // 0 element refers to client request, 1 element refers to server response
-    NHttpEnums::SectionType section_type[2] = { NHttpEnums::SEC__NOTCOMPUTE, NHttpEnums::SEC__NOTCOMPUTE };
+    NHttpEnums::SectionType section_type[2] = { NHttpEnums::SEC__NOTCOMPUTE,
+                                                NHttpEnums::SEC__NOTCOMPUTE };
     uint32_t num_excess[2] = { 0, 0 };
     bool tcp_close[2] = { false, false };
     NHttpInfractions infractions[2];
@@ -76,14 +81,18 @@ private:
 
     // Inspector => StreamSplitter (facts about the message section that is coming next)
     NHttpEnums::SectionType type_expected[2] = { NHttpEnums::SEC_REQUEST, NHttpEnums::SEC_STATUS };
-    int64_t data_length[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT }; // length of the data from Content-Length field
+
+    // length of the data from Content-Length field
+    int64_t data_length[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
 
     // Inspector's internal data about the current message
-    NHttpEnums::VersionId version_id[2] = { NHttpEnums::VERS__NOTPRESENT, NHttpEnums::VERS__NOTPRESENT };
+    NHttpEnums::VersionId version_id[2] = { NHttpEnums::VERS__NOTPRESENT,
+                                            NHttpEnums::VERS__NOTPRESENT };
     NHttpEnums::MethodId method_id = NHttpEnums::METH__NOTPRESENT;
     int32_t status_code_num = NHttpEnums::STAT_NOTPRESENT;
 
-    int64_t body_octets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT }; // number of user data octets seen so far (regular body or chunks)
+    // number of user data octets seen so far (regular body or chunks)
+    int64_t body_octets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
 
     // Transaction management including pipelining
     NHttpTransaction* transaction[2] = { nullptr, nullptr };
@@ -100,13 +109,4 @@ private:
 };
 
 #endif
-
-
-
-
-
-
-
-
-
 

@@ -67,15 +67,15 @@ int main()
      char find[] = "\xe8\xc0\xff\xff\xff/bin/sh";  */
     int i;
     int toks;
-    int *shift;
-    int *skip;
+    int* shift;
+    int* skip;
 
 /*   shift=make_shift(find,sizeof(find)-1);
      skip=make_skip(find,sizeof(find)-1); */
 
     DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,"%d\n",
-			    mSearch(test, sizeof(test) - 1, find,
-				    sizeof(find) - 1, shift, skip)););
+        mSearch(test, sizeof(test) - 1, find,
+        sizeof(find) - 1, shift, skip)); );
 
     return 0;
 }
@@ -96,16 +96,16 @@ int main()
  *      int * - the skip table
  *
  ****************************************************************/
-int *make_skip(char *ptrn, int plen)
+int* make_skip(char* ptrn, int plen)
 {
-    int  i;
-    int *skip = (int *) SnortAlloc(256* sizeof(int));
+    int i;
+    int* skip = (int*)SnortAlloc(256* sizeof(int));
 
     for ( i = 0; i < 256; i++ )
         skip[i] = plen + 1;
 
-    while(plen != 0)
-        skip[(unsigned char) *ptrn++] = plen--;
+    while (plen != 0)
+        skip[(unsigned char)*ptrn++] = plen--;
 
     return skip;
 }
@@ -124,31 +124,33 @@ int *make_skip(char *ptrn, int plen)
  *      int * - the shift table
  *
  ****************************************************************/
-int *make_shift(char *ptrn, int plen)
+int* make_shift(char* ptrn, int plen)
 {
-    int *shift = (int *) SnortAlloc(plen * sizeof(int));
-    int *sptr = shift + plen - 1;
-    char *pptr = ptrn + plen - 1;
+    int* shift = (int*)SnortAlloc(plen * sizeof(int));
+    int* sptr = shift + plen - 1;
+    char* pptr = ptrn + plen - 1;
     char c;
 
-     c = ptrn[plen - 1];
+    c = ptrn[plen - 1];
 
     *sptr = 1;
 
-    while(sptr-- != shift)
+    while (sptr-- != shift)
     {
-        char *p1 = ptrn + plen - 2, *p2, *p3;
+        char* p1 = ptrn + plen - 2, * p2, * p3;
 
         do
         {
-            while(p1 >= ptrn && *p1-- != c);
+            while (p1 >= ptrn && *p1-- != c)
+                ;
 
             p2 = ptrn + plen - 2;
             p3 = p1;
 
-            while(p3 >= ptrn && *p3-- == *p2-- && p2 >= pptr);
+            while (p3 >= ptrn && *p3-- == *p2-- && p2 >= pptr)
+                ;
         }
-        while(p3 >= ptrn && p2 >= pptr);
+        while (p3 >= ptrn && p2 >= pptr);
 
         *sptr = shift + plen - sptr + p2 - p3;
 
@@ -178,27 +180,27 @@ int *make_shift(char *ptrn, int plen)
  *
  ****************************************************************/
 int mSearch(
-    const char *buf, int blen, const char *ptrn, int plen, int *skip, int *shift)
+    const char* buf, int blen, const char* ptrn, int plen, int* skip, int* shift)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,"buf: %p  blen: %d  ptrn: %p  "
-                "plen: %d\n", buf, blen, ptrn, plen););
+        "plen: %d\n", buf, blen, ptrn, plen); );
 
-    if(plen == 0)
+    if (plen == 0)
         return -1;
 
     int b_idx = plen;
 
-    while(b_idx <= blen)
+    while (b_idx <= blen)
     {
         int p_idx = plen, skip_stride, shift_stride;
 
-        while(buf[--b_idx] == ptrn[--p_idx])
+        while (buf[--b_idx] == ptrn[--p_idx])
         {
-            if(p_idx == 0)
+            if (p_idx == 0)
                 return b_idx;
         }
 
-        skip_stride = skip[(unsigned char) buf[b_idx]];
+        skip_stride = skip[(unsigned char)buf[b_idx]];
         shift_stride = shift[p_idx];
 
         b_idx += (skip_stride > shift_stride) ? skip_stride : shift_stride;
@@ -227,24 +229,24 @@ int mSearch(
  *
  ****************************************************************/
 int mSearchCI(
-    const char *buf, int blen, const char *ptrn, int plen, int *skip, int *shift)
+    const char* buf, int blen, const char* ptrn, int plen, int* skip, int* shift)
 {
     int b_idx = plen;
 
-    if(plen == 0)
+    if (plen == 0)
         return -1;
 
-    while(b_idx <= blen)
+    while (b_idx <= blen)
     {
         int p_idx = plen, skip_stride, shift_stride;
 
-        while((unsigned char) ptrn[--p_idx] == toupper((unsigned char) buf[--b_idx]))
+        while ((unsigned char)ptrn[--p_idx] == toupper((unsigned char)buf[--b_idx]))
         {
-            if(p_idx == 0)
+            if (p_idx == 0)
                 return b_idx;
         }
 
-        skip_stride = skip[toupper((unsigned char) buf[b_idx])];
+        skip_stride = skip[toupper((unsigned char)buf[b_idx])];
         shift_stride = shift[p_idx];
 
         b_idx += (skip_stride > shift_stride) ? skip_stride : shift_stride;
@@ -273,7 +275,7 @@ int mSearchCI(
  *
  ****************************************************************/
 int mSearchREG(
-    const char *buf, int blen, const char *ptrn, int plen, int *skip, int *shift)
+    const char* buf, int blen, const char* ptrn, int plen, int* skip, int* shift)
 {
     int b_idx = plen;
     int literal = 0;
@@ -283,89 +285,91 @@ int mSearchREG(
 #endif /* DEBUG_MSGS */
 
     DEBUG_WRAP(
-	       DebugMessage(DEBUG_PATTERN_MATCH, "buf: %p  blen: %d  ptrn: %p "
-			    " plen: %d b_idx: %d\n", buf, blen, ptrn, plen, b_idx);
-	       DebugMessage(DEBUG_PATTERN_MATCH, "packet data: \"%s\"\n", buf);
-	       DebugMessage(DEBUG_PATTERN_MATCH, "matching for \"%s\"\n", ptrn);
-	       );
+        DebugMessage(DEBUG_PATTERN_MATCH, "buf: %p  blen: %d  ptrn: %p "
+        " plen: %d b_idx: %d\n", buf, blen, ptrn, plen, b_idx);
+        DebugMessage(DEBUG_PATTERN_MATCH, "packet data: \"%s\"\n", buf);
+        DebugMessage(DEBUG_PATTERN_MATCH, "matching for \"%s\"\n", ptrn);
+        );
 
-    if(plen == 0)
+    if (plen == 0)
         return 1;
 
-    while(b_idx <= blen)
+    while (b_idx <= blen)
     {
         int p_idx = plen, skip_stride, shift_stride;
 
-	DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "Looping... "
-				"([%d]0x%X (%c) -> [%d]0x%X(%c))\n",
-				b_idx, buf[b_idx-1],
-				buf[b_idx-1],
-				p_idx, ptrn[p_idx-1], ptrn[p_idx-1]););
+        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "Looping... "
+            "([%d]0x%X (%c) -> [%d]0x%X(%c))\n",
+            b_idx, buf[b_idx-1],
+            buf[b_idx-1],
+            p_idx, ptrn[p_idx-1], ptrn[p_idx-1]); );
 
-        while(buf[--b_idx] == ptrn[--p_idx]
-              || (ptrn[p_idx] == '?' && !literal)
-              || (ptrn[p_idx] == '*' && !literal)
-              || (ptrn[p_idx] == '\\' && !literal))
+        while (buf[--b_idx] == ptrn[--p_idx]
+            || (ptrn[p_idx] == '?' && !literal)
+            || (ptrn[p_idx] == '*' && !literal)
+            || (ptrn[p_idx] == '\\' && !literal))
         {
-	    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "comparing: b:%c -> p:%c\n",
-				    buf[b_idx], ptrn[p_idx]););
+            DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "comparing: b:%c -> p:%c\n",
+                buf[b_idx], ptrn[p_idx]); );
 #ifdef DEBUG_MSGS
             cmpcnt++;
 #endif
 
-            if(literal)
+            if (literal)
                 literal = 0;
-            if(!literal && ptrn[p_idx] == '\\')
+            if (!literal && ptrn[p_idx] == '\\')
                 literal = 1;
-            if(ptrn[p_idx] == '*')
+            if (ptrn[p_idx] == '*')
             {
-		DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,"Checking wildcard matching...\n"););
-                while(p_idx != 0 && ptrn[--p_idx] == '*'); /* fool-proof */
+                DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,"Checking wildcard matching...\n"); );
+                while (p_idx != 0 && ptrn[--p_idx] == '*')
+                    ;                                      /* fool-proof */
 
-                while(buf[--b_idx] != ptrn[p_idx])
+                while (buf[--b_idx] != ptrn[p_idx])
                 {
-		    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "comparing: b[%d]:%c -> p[%d]:%c\n",
-					    b_idx, buf[b_idx], p_idx, ptrn[p_idx]););
+                    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
+                        "comparing: b[%d]:%c -> p[%d]:%c\n",
+                        b_idx, buf[b_idx], p_idx, ptrn[p_idx]); );
 
-                   regexcomp++;
-                    if(b_idx == 0)
+                    regexcomp++;
+                    if (b_idx == 0)
                     {
-			DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-						"b_idx went to 0, returning 0\n");)
+                        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
+                            "b_idx went to 0, returning 0\n"); )
                         return 0;
                     }
                 }
 
-		DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, 
-            "got wildcard final char match! (b[%d]: %c -> p[%d]: %c\n",
-            b_idx, buf[b_idx], p_idx, ptrn[p_idx]););
+                DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
+                    "got wildcard final char match! (b[%d]: %c -> p[%d]: %c\n",
+                    b_idx, buf[b_idx], p_idx, ptrn[p_idx]); );
             }
 
-            if(p_idx == 0)
+            if (p_idx == 0)
             {
-		DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "match: compares = %d.\n",
-					cmpcnt););
+                DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "match: compares = %d.\n",
+                    cmpcnt); );
                 return 1;
             }
 
-            if(b_idx == 0)
+            if (b_idx == 0)
                 break;
         }
 
-	DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "skip-shifting...\n"););
-	skip_stride = skip[(unsigned char) buf[b_idx]];
-	shift_stride = shift[p_idx];
+        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "skip-shifting...\n"); );
+        skip_stride = skip[(unsigned char)buf[b_idx]];
+        shift_stride = shift[p_idx];
 
-	b_idx += (skip_stride > shift_stride) ? skip_stride : shift_stride;
-	DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "b_idx skip-shifted to %d\n", b_idx););
-	b_idx += regexcomp;
-	DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-				"b_idx regex compensated %d steps, to %d\n", regexcomp, b_idx););
-	regexcomp = 0;
+        b_idx += (skip_stride > shift_stride) ? skip_stride : shift_stride;
+        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "b_idx skip-shifted to %d\n", b_idx); );
+        b_idx += regexcomp;
+        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
+            "b_idx regex compensated %d steps, to %d\n", regexcomp, b_idx); );
+        regexcomp = 0;
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "no match: compares = %d, b_idx = %d, "
-			    "blen = %d\n", cmpcnt, b_idx, blen););
+        "blen = %d\n", cmpcnt, b_idx, blen); );
 
     return 0;
 }

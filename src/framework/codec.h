@@ -41,19 +41,19 @@ enum CodecSid : uint32_t;
 
 namespace ip
 {
-    class IpApi;
+class IpApi;
 }
 namespace tcp
 {
-    struct TCPHdr;
+struct TCPHdr;
 }
 namespace udp
 {
-    struct UDPHdr;
+struct UDPHdr;
 }
 namespace icmp
 {
-    struct ICMPHdr;
+struct ICMPHdr;
 }
 
 // Used by root codecs to add their DLT to their HELP string
@@ -61,18 +61,14 @@ namespace icmp
 #define ARG_STRINGIFY(x) STRINGIFY(x)
 #define ADD_DLT(help, x) help " (DLT " ARG_STRINGIFY(x) ")"
 
-
 constexpr uint8_t MIN_TTL = 64;
 constexpr uint8_t MAX_TTL = 255;
-
 
 struct RawData
 {
     const uint8_t* data;
     uint32_t len;
 };
-
-
 
 /*  Decode Flags */
 constexpr uint16_t CODEC_DF = 0x0001;    /* don't fragment flag */
@@ -88,11 +84,11 @@ constexpr uint16_t CODEC_SAVE_LAYER = 0x0004;   /* DO NOT USE THIS LAYER!!
                                                  *  --  use DECODE_ENCAP_LAYER
                                                  */
 constexpr uint16_t CODEC_ENCAP_LAYER = (CODEC_SAVE_LAYER | CODEC_UNSURE_ENCAP );
-                                            /* If encapsulation decode fails, back out to this layer
-                                             * This will be cleared by PacketManager between decodes
-                                             * This flag automatically sets DECODE_ENCAP_LAYER for
-                                             *      the next layer (and only the next layer).
-                                             */
+/* If encapsulation decode fails, back out to this layer
+ * This will be cleared by PacketManager between decodes
+ * This flag automatically sets DECODE_ENCAP_LAYER for
+ *      the next layer (and only the next layer).
+ */
 constexpr uint16_t CODEC_ROUTING_SEEN = 0x0008; /* used to check ip6 extensino order */
 constexpr uint16_t CODEC_IPOPT_RR_SEEN = 0x0010; /* used by icmp4 for alerting */
 constexpr uint16_t CODEC_IPOPT_RTRALT_SEEN = 0x0020;  /* used by IGMP for alerting */
@@ -102,9 +98,8 @@ constexpr uint16_t CODEC_STREAM_REBUILT = 0x0100;
 constexpr uint16_t CODEC_NON_IP_TUNNEL = 0x0200;
 
 constexpr uint16_t CODEC_IPOPT_FLAGS = (CODEC_IPOPT_RR_SEEN |
-                                        CODEC_IPOPT_RTRALT_SEEN |
-                                        CODEC_IPOPT_LEN_THREE);
-
+    CODEC_IPOPT_RTRALT_SEEN |
+    CODEC_IPOPT_LEN_THREE);
 
 struct CodecData
 {
@@ -116,8 +111,8 @@ struct CodecData
     /* Reset before each decode of packet begins */
 
     /*  Codec specific fields.  These fields are only relevent to codecs. */
-    uint16_t proto_bits;    /* protocols contained within this packet */
-                            /*   -- will be propogated to Snort++ Packet struct*/
+    uint16_t proto_bits;    /* protocols contained within this packet
+                                 -- will be propogated to Snort++ Packet struct*/
     uint16_t codec_flags;   /* flags used while decoding */
     uint8_t ip_layer_cnt;
 
@@ -134,20 +129,25 @@ struct CodecData
     { return codec_flags & CODEC_STREAM_REBUILT; }
 };
 
-
-
 typedef uint64_t EncodeFlags;
 constexpr EncodeFlags ENC_FLAG_FWD = 0x8000000000000000;  // send in forward direction
 constexpr EncodeFlags ENC_FLAG_SEQ = 0x4000000000000000;  // VAL bits contain seq adj
 constexpr EncodeFlags ENC_FLAG_ID  = 0x2000000000000000;  // use randomized IP ID
-constexpr EncodeFlags ENC_FLAG_NET = 0x1000000000000000;  // stop after innermost network (ip4/6) layer
-constexpr EncodeFlags ENC_FLAG_DEF = 0x0800000000000000;  // stop before innermost ip4 opts or ip6 frag header
-constexpr EncodeFlags ENC_FLAG_RAW = 0x0400000000000000;  // don't encode outer eth header (this is raw ip)
+constexpr EncodeFlags ENC_FLAG_NET = 0x1000000000000000;  // stop after innermost network (ip4/6)
+                                                          // layer
+constexpr EncodeFlags ENC_FLAG_DEF = 0x0800000000000000;  // stop before innermost ip4 opts or ip6
+                                                          // frag header
+constexpr EncodeFlags ENC_FLAG_RAW = 0x0400000000000000;  // don't encode outer eth header (this is
+                                                          // raw ip)
 constexpr EncodeFlags ENC_FLAG_PAY = 0x0200000000000000;  // set to when a TCP payload is attached
-constexpr EncodeFlags ENC_FLAG_PSH = 0x0100000000000000;  // set by PacketManager when TCP should set PUSH flag
-constexpr EncodeFlags ENC_FLAG_FIN = 0x0080000000000000;  // set by PacketManager when TCP should set FIN flag
-constexpr EncodeFlags ENC_FLAG_TTL = 0x0040000000000000;  // set by PacketManager when TCP should set FIN flag
-constexpr EncodeFlags ENC_FLAG_INLINE = 0x0020000000000000;  // set by PacketManager when TCP should set FIN flag
+constexpr EncodeFlags ENC_FLAG_PSH = 0x0100000000000000;  // set by PacketManager when TCP should
+                                                          // set PUSH flag
+constexpr EncodeFlags ENC_FLAG_FIN = 0x0080000000000000;  // set by PacketManager when TCP should
+                                                          // set FIN flag
+constexpr EncodeFlags ENC_FLAG_TTL = 0x0040000000000000;  // set by PacketManager when TCP should
+                                                          // set FIN flag
+constexpr EncodeFlags ENC_FLAG_INLINE = 0x0020000000000000;  // set by PacketManager when TCP
+                                                             // should set FIN flag
 constexpr EncodeFlags ENC_FLAG_RST_CLNT = 0x0010000000000000;  // finish with a client RST packet
 constexpr EncodeFlags ENC_FLAG_RST_SRVR = 0x0008000000000000;  // finish with a server RST packet
 constexpr EncodeFlags ENC_FLAG_VAL = 0x00000000FFFFFFFF;  // bits for adjusting seq and/or ack
@@ -177,7 +177,6 @@ struct SO_PUBLIC EncState
 
     uint8_t get_ttl(uint8_t lyr_ttl) const;
 };
-
 
 struct SO_PUBLIC Buffer
 {
@@ -212,21 +211,18 @@ public:
     uint32_t off;       /* offset into data */
 };
 
-
 typedef uint8_t UpdateFlags;
 constexpr UpdateFlags UPD_COOKED = 0x01;
 constexpr UpdateFlags UPD_MODIFIED = 0x02;
 constexpr UpdateFlags UPD_RESIZED = 0x04;
 constexpr UpdateFlags UPD_REBUILT_FRAG = 0x08;
 
-
-
 /*  Codec Class */
 
 class SO_PUBLIC Codec
 {
 public:
-    virtual ~Codec() { };
+    virtual ~Codec() { }
 
     // PKT_MAX = ETHERNET_HEADER_LEN () + VLAN_HEADER (4) + ETHERNET_MTU () + IP_MAXPACKET()
 
@@ -244,12 +240,14 @@ public:
 
     // Get the codec's name
     inline const char* get_name() const
-    {return name; }
+    { return name; }
     // Registers this Codec's data link type (as defined by libpcap)
-    virtual void get_data_link_type(std::vector<int>&) // FIXIT-M J return a vector == efficient in c++11
+    virtual void get_data_link_type(std::vector<int>&) // FIXIT-M J return a vector == efficient in
+                                                       // c++11
     { }
     // Register the code's protocol ID's and Ethertypes
-    virtual void get_protocol_ids(std::vector<uint16_t>&)  // FIXIT-M J return a vector == efficient in c++11
+    virtual void get_protocol_ids(std::vector<uint16_t>&)  // FIXIT-M J return a vector ==
+                                                           // efficient in c++11
     { }
 
     /*
@@ -288,7 +286,6 @@ public:
      */
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/, const uint16_t /*lyr_len*/)
     { }
-
 
     /*
      * Encoding -- active response!!
@@ -336,13 +333,12 @@ public:
     virtual void format(bool /*reverse*/, uint8_t* /*raw_pkt*/, DecodeData&)
     { }
 
-
 protected:
     Codec(const char* s)
     { name = s; }
 
     // Create an event with the Codec GID
-    void codec_event(const CodecData&, CodecSid);
+    void codec_event(const CodecData &, CodecSid);
     // Check the Hop and DST IPv6 extension
     bool CheckIPV6HopOptions(const RawData&, const CodecData&);
     // NOTE:: data.next_prot_id MUST be set before calling this!!
@@ -352,12 +348,9 @@ private:
     const char* name;
 };
 
-
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
-
 
 // this is the current version of the api
 #define CDAPI_VERSION 0
@@ -366,9 +359,9 @@ private:
 // to be useful, these must be explicit (*_V0, *_V1, ...)
 #define CDAPI_PLUGIN_V0 0
 
-typedef Codec* (*CdNewFunc)(Module*);
-typedef void (*CdDelFunc)(Codec *);
-typedef void (*CdAuxFunc)();
+typedef Codec* (* CdNewFunc)(Module*);
+typedef void (* CdDelFunc)(Codec*);
+typedef void (* CdAuxFunc)();
 
 struct CodecApi
 {

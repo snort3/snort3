@@ -16,7 +16,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 #ifndef PACKET_TIME_H
 #define PACKET_TIME_H
 
@@ -27,10 +27,10 @@
 #include <sys/time.h>
 #include <cstdint>
 
-void packet_time_update(const struct timeval *cur_tv);
+void packet_time_update(const struct timeval* cur_tv);
 time_t packet_time(void);
 uint32_t packet_first_time(void);
-void packet_gettimeofday(struct timeval *tv);
+void packet_gettimeofday(struct timeval* tv);
 
 #endif
 

@@ -100,7 +100,7 @@ static const Parameter s_params[] =
 class FastModule : public Module
 {
 public:
-    FastModule() : Module(S_NAME, s_help, s_params) { };
+    FastModule() : Module(S_NAME, s_help, s_params) { }
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -155,7 +155,8 @@ bool FastModule::end(const char*, int, SnortConfig*)
 //-------------------------------------------------------------------------
 static const char* s_dispos[] = { " [Allow]", " [CDrop]", " [WDrop]", " [Drop]", " [FDrop]" };
 
-class FastLogger : public Logger {
+class FastLogger : public Logger
+{
 public:
     FastLogger(FastModule*);
 
@@ -225,6 +226,7 @@ static void LogReassembly(const Packet* p)
         break;
     }
 }
+
 #endif
 
 #ifndef REG_TEST
@@ -244,13 +246,12 @@ static const char* get_pkt_type(Packet* p)
 
 #endif
 
-void FastLogger::alert(Packet *p, const char *msg, Event *event)
+void FastLogger::alert(Packet* p, const char* msg, Event* event)
 {
     tActiveDrop dispos = Active_GetDisposition();
     LogTimeStamp(fast_log, p);
 
-
-    if( dispos > ACTIVE_ALLOW )
+    if ( dispos > ACTIVE_ALLOW )
     {
         if ( dispos > ACTIVE_DROP )
             dispos = ACTIVE_DROP;
@@ -270,12 +271,12 @@ void FastLogger::alert(Packet *p, const char *msg, Event *event)
         TextLog_Puts(fast_log, " [**] ");
 #endif
 
-        if(event != NULL)
+        if (event != NULL)
         {
             TextLog_Print(fast_log, "[%lu:%lu:%lu] ",
-                    (unsigned long) event->sig_info->generator,
-                    (unsigned long) event->sig_info->id,
-                    (unsigned long) event->sig_info->rev);
+                (unsigned long)event->sig_info->generator,
+                (unsigned long)event->sig_info->id,
+                (unsigned long)event->sig_info->rev);
         }
 
         if (ScAlertInterface())
@@ -314,12 +315,12 @@ void FastLogger::alert(Packet *p, const char *msg, Event *event)
 #ifdef REG_TEST
         LogReassembly(p);
 #endif
-        if(p->has_ip())
+        if (p->has_ip())
             LogIPPkt(fast_log, p);
 
 #if 0
         // FIXIT-L -J LogArpHeader unimplemented
-        else if(p->proto_bits & PROTO_BIT__ARP)
+        else if (p->proto_bits & PROTO_BIT__ARP)
             LogArpHeader(fast_log, p);
 #endif
     }

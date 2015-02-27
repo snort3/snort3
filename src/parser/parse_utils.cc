@@ -28,7 +28,7 @@
 
 using namespace std;
 
-static inline int xton (int c)
+static inline int xton(int c)
 {
     if ( isdigit(c) )
         return c - '0';
@@ -62,7 +62,7 @@ bool parse_byte_code(const char* in, bool& negate, std::string& out)
                 state = 1;
                 break;
             }
-            // fall through
+        // fall through
         case 1:
             if ( c == '"' )
                 state = 2;
@@ -81,7 +81,7 @@ bool parse_byte_code(const char* in, bool& negate, std::string& out)
             }
             else if ( c == '"' )
                 state = 9;
-            else 
+            else
                 out += c;
             break;
         case 3:
@@ -132,7 +132,7 @@ bool parse_byte_code(const char* in, bool& negate, std::string& out)
 int parse_int(const char* data, const char* tag, int low, int high)
 {
     int32_t value = 0;
-    char *endptr = NULL;
+    char* endptr = NULL;
 
     value = SnortStrtol(data, &endptr, 10);
 

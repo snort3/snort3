@@ -20,26 +20,24 @@
 #include <string>
 #include "data/data_types/dt_rule_suboption.h"
 
-
 RuleSubOption::RuleSubOption(std::string n)
     :   name(n),
-        value(std::string())
+    value(std::string())
 {
 }
 
 RuleSubOption::RuleSubOption(std::string n, std::string v)
     :   name(n),
-        value(v)
+    value(v)
 {
 }
-
 
 RuleSubOption::~RuleSubOption()
 {
 }
 
 // overloading operators
-std::ostream &operator<<( std::ostream& out, const RuleSubOption& subopt)
+std::ostream& operator<<(std::ostream& out, const RuleSubOption& subopt)
 {
     out << subopt.name;
 
@@ -48,3 +46,4 @@ std::ostream &operator<<( std::ostream& out, const RuleSubOption& subopt)
 
     return out;
 }
+

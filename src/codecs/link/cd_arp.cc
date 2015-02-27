@@ -30,7 +30,6 @@
 
 namespace
 {
-
 static const RuleMap arp_rules[] =
 {
     { DECODE_ARP_TRUNCATED, "truncated ARP" },
@@ -40,35 +39,29 @@ static const RuleMap arp_rules[] =
 class ArpModule : public CodecModule
 {
 public:
-    ArpModule() : CodecModule(CD_ARP_NAME, CD_ARP_HELP) {}
+    ArpModule() : CodecModule(CD_ARP_NAME, CD_ARP_HELP) { }
 
     const RuleMap* get_rules() const override
     { return arp_rules; }
 };
 
-
 class ArpCodec : public Codec
 {
 public:
-    ArpCodec() : Codec(CD_ARP_NAME){};
-    ~ArpCodec(){};
+    ArpCodec() : Codec(CD_ARP_NAME) { }
+    ~ArpCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
 };
-
-
 } // anonymous namespace
-
-
 
 void ArpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(ETHERTYPE_ARP);
     v.push_back(ETHERTYPE_REVARP);
 }
-
 
 //--------------------------------------------------------------------
 // decode.c::ARP
@@ -87,7 +80,7 @@ void ArpCodec::get_protocol_ids(std::vector<uint16_t>& v)
  */
 bool ArpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
-    if(raw.len < arp::ETHERARP_HDR_LEN)
+    if (raw.len < arp::ETHERARP_HDR_LEN)
     {
         codec_event(codec, DECODE_ARP_TRUNCATED);
         return false;
@@ -118,7 +111,7 @@ static void mod_dtor(Module* m)
 static Codec* ctor(Module*)
 { return new ArpCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi arp_api =
@@ -149,3 +142,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_arp = &arp_api.base;
 #endif
+

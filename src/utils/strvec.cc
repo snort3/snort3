@@ -23,12 +23,13 @@
 #include "strvec.h"
 #include "util.h"
 
-typedef struct {
+typedef struct
+{
     char** v;
     unsigned n;
 } StringVector;
 
-void* StringVector_New (void)
+void* StringVector_New(void)
 {
     StringVector* sv = (StringVector*)SnortAlloc(sizeof(*sv));
     sv->v = (char**)SnortAlloc(sizeof(*sv->v));
@@ -36,7 +37,7 @@ void* StringVector_New (void)
     return sv;
 }
 
-void StringVector_Delete (void* pv)
+void StringVector_Delete(void* pv)
 {
     unsigned i;
     StringVector* sv = (StringVector*)pv;
@@ -51,7 +52,7 @@ void StringVector_Delete (void* pv)
     free(sv);
 }
 
-int StringVector_Add (void* pv, const char* s)
+int StringVector_Add(void* pv, const char* s)
 {
     StringVector* sv = (StringVector*)pv;
     char** v;
@@ -71,7 +72,7 @@ int StringVector_Add (void* pv, const char* s)
     return 1;
 }
 
-char* StringVector_Get (void* pv, unsigned index)
+char* StringVector_Get(void* pv, unsigned index)
 {
     StringVector* sv = (StringVector*)pv;
 
@@ -81,7 +82,7 @@ char* StringVector_Get (void* pv, unsigned index)
     return sv->v[index];
 }
 
-int StringVector_AddVector (void* pd, void* ps)
+int StringVector_AddVector(void* pd, void* ps)
 {
     unsigned i = 0;
     const char* s = StringVector_Get(ps, i++);
@@ -96,7 +97,7 @@ int StringVector_AddVector (void* pd, void* ps)
     return 1;
 }
 
-const char** StringVector_GetVector (void* pv)
+const char** StringVector_GetVector(void* pv)
 {
     StringVector* sv = (StringVector*)pv;
 

@@ -30,30 +30,39 @@
 // NHttpUri class
 //-------------------------------------------------------------------------
 
-class NHttpUri {
+class NHttpUri
+{
 public:
-    NHttpUri(const uint8_t* start, int32_t length, NHttpEnums::MethodId method) : uri(length, start), method_id(method),
-       scratch_pad(2*length+200) {};
-    const Field& get_uri() const { return uri; };
-    NHttpEnums::UriType get_uri_type() { parse_uri(); return uri_type; };
-    const Field& get_scheme() { parse_uri(); return scheme; };
-    const Field& get_authority() { parse_uri(); return authority; };
-    const Field& get_host() { parse_authority(); return host; };
-    const Field& get_port() { parse_authority(); return port; };
-    const Field& get_abs_path() { parse_uri(); return abs_path; };
-    const Field& get_path() { parse_abs_path(); return path; };
-    const Field& get_query() { parse_abs_path(); return query; };
-    const Field& get_fragment() { parse_abs_path(); return fragment; };
+    NHttpUri(const uint8_t* start, int32_t length, NHttpEnums::MethodId method) : uri(length,
+        start), method_id(method),
+        scratch_pad(2*length+200) { }
+    const Field& get_uri() const { return uri; }
+    NHttpEnums::UriType get_uri_type() { parse_uri(); return uri_type; }
+    const Field& get_scheme() { parse_uri(); return scheme; }
+    const Field& get_authority() { parse_uri(); return authority; }
+    const Field& get_host() { parse_authority(); return host; }
+    const Field& get_port() { parse_authority(); return port; }
+    const Field& get_abs_path() { parse_uri(); return abs_path; }
+    const Field& get_path() { parse_abs_path(); return path; }
+    const Field& get_query() { parse_abs_path(); return query; }
+    const Field& get_fragment() { parse_abs_path(); return fragment; }
 
-    NHttpInfractions get_format_infractions() { parse_uri(); return format_infractions; };
-    NHttpInfractions get_scheme_infractions() { get_scheme_id(); return scheme_infractions; };
-    NHttpInfractions get_host_infractions() { get_norm_host(); return host_infractions; };
-    NHttpInfractions get_port_infractions() { get_port_value(); return port_infractions; };
-    NHttpInfractions get_path_infractions() { get_norm_path(); return path_infractions; };
-    NHttpInfractions get_query_infractions() { get_norm_query(); return query_infractions; };
-    NHttpInfractions get_fragment_infractions() { get_norm_fragment(); return fragment_infractions; };
-    NHttpInfractions get_uri_infractions() { return get_format_infractions() + get_scheme_infractions() + get_host_infractions() +
-       get_port_infractions() + get_path_infractions() + get_query_infractions() + get_fragment_infractions(); };
+    NHttpInfractions get_format_infractions() { parse_uri(); return format_infractions; }
+    NHttpInfractions get_scheme_infractions() { get_scheme_id(); return scheme_infractions; }
+    NHttpInfractions get_host_infractions() { get_norm_host(); return host_infractions; }
+    NHttpInfractions get_port_infractions() { get_port_value(); return port_infractions; }
+    NHttpInfractions get_path_infractions() { get_norm_path(); return path_infractions; }
+    NHttpInfractions get_query_infractions() { get_norm_query(); return query_infractions; }
+    NHttpInfractions get_fragment_infractions()
+    {
+        get_norm_fragment(); return fragment_infractions;
+    }
+    NHttpInfractions get_uri_infractions()
+    {
+        return get_format_infractions() + get_scheme_infractions() + get_host_infractions() +
+               get_port_infractions() + get_path_infractions() + get_query_infractions() +
+               get_fragment_infractions();
+    }
 
     NHttpEnums::SchemeId get_scheme_id();
     const Field& get_norm_host();
@@ -103,8 +112,4 @@ private:
 };
 
 #endif
-
-
-
-
 

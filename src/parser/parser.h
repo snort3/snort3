@@ -47,31 +47,31 @@ void pop_parse_location();
 void inc_parse_position();
 
 /* rule setup funcs */
-SnortConfig * ParseSnortConf(const SnortConfig*);
-void ParseRules(SnortConfig *);
+SnortConfig* ParseSnortConf(const SnortConfig*);
+void ParseRules(SnortConfig*);
 
-void OrderRuleLists(SnortConfig *, const char *);
-void PrintRuleOrder(RuleListNode *);
+void OrderRuleLists(SnortConfig*, const char*);
+void PrintRuleOrder(RuleListNode*);
 
-const char * VarGet(SnortConfig *, const char *);
-char * ProcessFileOption(SnortConfig *, const char *);
-void SetRuleStates(SnortConfig *);
+const char* VarGet(SnortConfig*, const char*);
+char* ProcessFileOption(SnortConfig*, const char*);
+void SetRuleStates(SnortConfig*);
 
 void ParserCleanup(void);
-void FreeRuleLists(SnortConfig *);
-void VarTablesFree(SnortConfig *);
-void PortTablesFree(rule_port_tables_t *);
+void FreeRuleLists(SnortConfig*);
+void VarTablesFree(SnortConfig*);
+void PortTablesFree(rule_port_tables_t*);
 
 void parser_append_rules(const char*);
 
-void ConfigureSideChannelModules(SnortConfig *);
+void ConfigureSideChannelModules(SnortConfig*);
 
-SO_PUBLIC NORETURN void ParseAbort(const char *, ...);
-SO_PUBLIC void ParseError(const char *, ...);
-SO_PUBLIC void ParseWarning(const char *, ...);
-SO_PUBLIC void ParseMessage(const char *, ...);
+SO_PUBLIC NORETURN void ParseAbort(const char*, ...);
+SO_PUBLIC void ParseError(const char*, ...);
+SO_PUBLIC void ParseWarning(const char*, ...);
+SO_PUBLIC void ParseMessage(const char*, ...);
 
-int ParseBool(const char *arg);
+int ParseBool(const char* arg);
 
 int addRtnToOtn(struct OptTreeNode*, RuleTreeNode*);
 int addRtnToOtn(struct OptTreeNode*, RuleTreeNode*, PolicyId);
@@ -86,7 +86,7 @@ RuleTreeNode* deleteRtnFromOtn(struct OptTreeNode*, PolicyId);
  *
  * @return pointer to deleted RTN, NULL otherwise.
  */
-static inline RuleTreeNode *getRtnFromOtn(
+static inline RuleTreeNode* getRtnFromOtn(
     const struct OptTreeNode* otn, PolicyId policyId)
 {
     if (otn && otn->proto_nodes && (otn->proto_node_num > (unsigned)policyId))
@@ -97,19 +97,19 @@ static inline RuleTreeNode *getRtnFromOtn(
     return NULL;
 }
 
-static inline RuleTreeNode *getRtnFromOtn(
+static inline RuleTreeNode* getRtnFromOtn(
     const struct OptTreeNode* otn)
 {
     return getRtnFromOtn(otn, get_ips_policy()->policy_id);
 }
 
-static inline RuleTreeNode *getRuntimeRtnFromOtn(
-    const struct OptTreeNode *otn)
+static inline RuleTreeNode* getRuntimeRtnFromOtn(
+    const struct OptTreeNode* otn)
 {
     return getRtnFromOtn(otn);
 }
 
-extern rule_index_map_t * ruleIndexMap;
+extern rule_index_map_t* ruleIndexMap;
 
 ListHead* CreateRuleType(SnortConfig*, const char*, RuleType, int, ListHead*);
 

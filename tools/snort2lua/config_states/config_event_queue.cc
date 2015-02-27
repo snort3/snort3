@@ -26,17 +26,15 @@
 
 namespace config
 {
-
-namespace {
-
+namespace
+{
 class EventQueue : public ConversionState
 {
 public:
-    EventQueue(Converter& c) : ConversionState(c) {};
-    virtual ~EventQueue() {};
+    EventQueue(Converter& c) : ConversionState(c) { }
+    virtual ~EventQueue() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool EventQueue::convert(std::istringstream& data_stream)
@@ -50,7 +48,6 @@ bool EventQueue::convert(std::istringstream& data_stream)
     {
         bool tmpval = true;
 
-
         if (!keyword.compare("process_all_events"))
             tmpval = table_api.add_option("process_all_events", true);
 
@@ -58,31 +55,28 @@ bool EventQueue::convert(std::istringstream& data_stream)
         {
             std::string val;
 
-            if(util::get_string(data_stream, val, ", "))
+            if (util::get_string(data_stream, val, ", "))
                 tmpval = table_api.add_option("max_queue", std::stoi(val));
             else
                 tmpval = false;
         }
-
         else if (!keyword.compare("log"))
         {
             std::string val;
 
-            if(util::get_string(data_stream, val, ", "))
+            if (util::get_string(data_stream, val, ", "))
                 tmpval = table_api.add_option("log", std::stoi(val));
             else
                 tmpval = false;
         }
-
         else if (!keyword.compare("order_events"))
         {
             std::string val;
-            if(util::get_string(data_stream, val, ", "))
+            if (util::get_string(data_stream, val, ", "))
                 tmpval = table_api.add_option("order_events", val);
             else
                 tmpval = false;
         }
-
         else
             tmpval = false;
 
@@ -109,5 +103,5 @@ static const ConvertMap event_queue_api =
 };
 
 const ConvertMap* event_queue_map = &event_queue_api;
-
 } // namespace config
+

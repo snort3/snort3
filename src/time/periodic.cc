@@ -28,28 +28,27 @@
 
 typedef struct _PeriodicCheckFuncNode
 {
-    void *arg;
+    void* arg;
     uint16_t priority;
     uint32_t period;
     uint32_t time_left;
     PeriodicFunc func;
-    struct _PeriodicCheckFuncNode *next;
-
+    struct _PeriodicCheckFuncNode* next;
 } PeriodicCheckFuncNode;
 
-static PeriodicCheckFuncNode *periodic_check_funcs;
+static PeriodicCheckFuncNode* periodic_check_funcs;
 
 void periodic_register(
-    PeriodicFunc periodic_func, void *arg,
-    uint16_t priority, uint32_t period )
+    PeriodicFunc periodic_func, void* arg,
+    uint16_t priority, uint32_t period)
 {
-    PeriodicCheckFuncNode **list= &periodic_check_funcs;
-    PeriodicCheckFuncNode *node;
+    PeriodicCheckFuncNode** list= &periodic_check_funcs;
+    PeriodicCheckFuncNode* node;
 
     if (list == NULL)
         return;
 
-    node = (PeriodicCheckFuncNode *)SnortAlloc(sizeof(PeriodicCheckFuncNode));
+    node = (PeriodicCheckFuncNode*)SnortAlloc(sizeof(PeriodicCheckFuncNode));
 
     if (*list == NULL)
     {
@@ -57,8 +56,8 @@ void periodic_register(
     }
     else
     {
-        PeriodicCheckFuncNode *tmp = *list;
-        PeriodicCheckFuncNode *last = NULL;
+        PeriodicCheckFuncNode* tmp = *list;
+        PeriodicCheckFuncNode* last = NULL;
 
         do
         {
@@ -69,8 +68,8 @@ void periodic_register(
 
             last = tmp;
             tmp = tmp->next;
-
-        } while (tmp != NULL);
+        }
+        while (tmp != NULL);
 
         /* Priority higher than first item in list */
         if (last == NULL)

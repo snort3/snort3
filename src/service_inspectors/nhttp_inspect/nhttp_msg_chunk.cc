@@ -27,34 +27,37 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgChunk::NHttpMsgChunk(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
-   SourceId source_id_, bool buf_owner) : NHttpMsgBody(buffer, buf_size, session_data_, source_id_, buf_owner)
+NHttpMsgChunk::NHttpMsgChunk(const uint8_t* buffer, const uint16_t buf_size,
+    NHttpFlowData* session_data_,
+    SourceId source_id_, bool buf_owner) : NHttpMsgBody(buffer, buf_size, session_data_,
+    source_id_, buf_owner)
 {
-   transaction->set_body(this);
+    transaction->set_body(this);
 }
 
-void NHttpMsgChunk::gen_events() {}
+void NHttpMsgChunk::gen_events() { }
 
-void NHttpMsgChunk::print_section(FILE *output) {
+void NHttpMsgChunk::print_section(FILE* output)
+{
     NHttpMsgSection::print_message_title(output, "chunk");
     fprintf(output, "Cumulative octets %" PRIi64 "\n", body_octets);
     data.print(output, "Data");
     NHttpMsgSection::print_message_wrapup(output);
 }
 
-void NHttpMsgChunk::update_flow() {
-    if (tcp_close) {
+void NHttpMsgChunk::update_flow()
+{
+    if (tcp_close)
+    {
         session_data->type_expected[source_id] = SEC_CLOSED;
         session_data->section_type[source_id] = SEC__NOTCOMPUTE;
         session_data->half_reset(source_id);
     }
-    else {
-        // Zero-length chunk is not visible here. StreamSplitter::reassemble() updates type_expected to SEC_TRAILER.
+    else
+    {
+        // Zero-length chunk is not visible here. StreamSplitter::reassemble() updates
+        // type_expected to SEC_TRAILER.
         session_data->body_octets[source_id] = body_octets;
     }
 }
-
-
-
-
 

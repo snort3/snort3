@@ -18,7 +18,6 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-
 #ifndef UTIL_H
 #define UTIL_H
 
@@ -71,40 +70,42 @@
     x[12] = y[12]; x[13] = y[13]; x[14] = y[14]; x[15] = y[15];
 
 /* Externs ********************************************************************/
-SO_PUBLIC extern char **protocol_names;
+SO_PUBLIC extern char** protocol_names;
 
 /* Public function prototypes *************************************************/
 void StoreSnortInfoStrings(void);
 int DisplayBanner(void);
 int gmt2local(time_t);
-void ts_print(register const struct timeval *, char *);
-void strip(char *);
+void ts_print(register const struct timeval*, char*);
+void strip(char*);
 void CheckLogDir(void);
-char *read_infile(const char* key, const char* fname);
+char* read_infile(const char* key, const char* fname);
 void CleanupProtoNames(void);
 void CreatePidFile(pid_t);
 void ClosePidFile(void);
 void SetUidGid(int, int);
 void InitGroups(int, int);
-void SetChroot(char *, char **);
+void SetChroot(char*, char**);
 void InitProtoNames(void);
 
-SO_PUBLIC int SnortSnprintf(char *, size_t, const char *, ...) __attribute__((format (printf, 3, 4)));
-SO_PUBLIC int SnortSnprintfAppend(char *, size_t, const char *, ...) __attribute__((format (printf, 3, 4)));
+SO_PUBLIC int SnortSnprintf(char*, size_t, const char*, ...) __attribute__((format (printf, 3,
+    4)));
+SO_PUBLIC int SnortSnprintfAppend(char*, size_t, const char*, ...) __attribute__((format (printf,
+    3, 4)));
 
-SO_PUBLIC char *SnortStrdup(const char *);
-int SnortStrncpy(char *, const char *, size_t);
-char *SnortStrndup(const char *, size_t);
-int SnortStrnlen(const char *, int);
-const char *SnortStrnPbrk(const char *s, int slen, const char *accept);
-const char *SnortStrnStr(const char *s, int slen, const char *searchstr);
-const char *SnortStrcasestr(const char *s, int slen, const char *substr);
-int CheckValueInRange(const char *value_str, const char *option,
-        unsigned long lo, unsigned long hi, unsigned long *value);
+SO_PUBLIC char* SnortStrdup(const char*);
+int SnortStrncpy(char*, const char*, size_t);
+char* SnortStrndup(const char*, size_t);
+int SnortStrnlen(const char*, int);
+const char* SnortStrnPbrk(const char* s, int slen, const char* accept);
+const char* SnortStrnStr(const char* s, int slen, const char* searchstr);
+const char* SnortStrcasestr(const char* s, int slen, const char* substr);
+int CheckValueInRange(const char* value_str, const char* option,
+    unsigned long lo, unsigned long hi, unsigned long* value);
 
-char *CurrentWorkingDir(void);
-char *GetAbsolutePath(char *dir);
-char *StripPrefixDir(char *prefix, char *dir);
+char* CurrentWorkingDir(void);
+char* GetAbsolutePath(char* dir);
+char* StripPrefixDir(char* prefix, char* dir);
 
 void PrintVersion(void);
 
@@ -118,10 +119,10 @@ void SetNoCores(void);
  done using it. Otherwise, you will have created a memory
  leak.
 ***********************************************************/
-char *hex(const u_char *, int);
-char *fasthex(const u_char *, int);
+char* hex(const u_char*, int);
+char* fasthex(const u_char*, int);
 
-static inline void* SnortAlloc (unsigned long size)
+static inline void* SnortAlloc(unsigned long size)
 {
     void* pv = calloc(size, sizeof(char));
 
@@ -134,7 +135,7 @@ static inline void* SnortAlloc (unsigned long size)
     return NULL;
 }
 
-static inline long SnortStrtol(const char *nptr, char **endptr, int base)
+static inline long SnortStrtol(const char* nptr, char** endptr, int base)
 {
     long iRet;
     errno = 0;
@@ -143,13 +144,13 @@ static inline long SnortStrtol(const char *nptr, char **endptr, int base)
     return iRet;
 }
 
-static inline unsigned long SnortStrtoul(const char *nptr, char **endptr, int base)
+static inline unsigned long SnortStrtoul(const char* nptr, char** endptr, int base)
 {
-        unsigned long iRet;
-        errno = 0;
-        iRet = strtoul(nptr, endptr, base);
+    unsigned long iRet;
+    errno = 0;
+    iRet = strtoul(nptr, endptr, base);
 
-        return iRet;
+    return iRet;
 }
 
 // Checks to make sure we're not going to evaluate a negative number for which
@@ -171,8 +172,8 @@ static inline unsigned long SnortStrtoul(const char *nptr, char **endptr, int ba
 // Also will set errno to ERANGE on a value returned from strtoul that is
 // greater than UINT32_MAX, but still return success.
 //
-static inline int SnortStrToU32(const char *buffer, char **endptr,
-        uint32_t *value, int base)
+static inline int SnortStrToU32(const char* buffer, char** endptr,
+    uint32_t* value, int base)
 {
     unsigned long int tmp;
 
@@ -211,27 +212,28 @@ static inline int SnortStrToU32(const char *buffer, char **endptr,
     return 0;
 }
 
-static inline long SnortStrtolRange(const char *nptr, char **endptr, int base, long lo, long hi)
+static inline long SnortStrtolRange(const char* nptr, char** endptr, int base, long lo, long hi)
 {
     long iRet = SnortStrtol(nptr, endptr, base);
     if ((iRet > hi) || (iRet < lo))
-        *endptr = (char *)nptr;
+        *endptr = (char*)nptr;
 
     return iRet;
 }
 
-static inline unsigned long SnortStrtoulRange(const char *nptr, char **endptr, int base, unsigned long lo, unsigned long hi)
+static inline unsigned long SnortStrtoulRange(const char* nptr, char** endptr, int base, unsigned
+    long lo, unsigned long hi)
 {
     unsigned long iRet = SnortStrtoul(nptr, endptr, base);
     if ((iRet > hi) || (iRet < lo))
-        *endptr = (char *)nptr;
+        *endptr = (char*)nptr;
 
     return iRet;
 }
 
-static inline int IsEmptyStr(const char *str)
+static inline int IsEmptyStr(const char* str)
 {
-    const char *end;
+    const char* end;
 
     if (str == NULL)
         return 1;
@@ -265,3 +267,4 @@ SO_PUBLIC const char* get_error(int errnum);
 char* get_tok(char* s, const char* delim);
 
 #endif /*__UTIL_H__*/
+

@@ -25,7 +25,7 @@ FtpSplitter::~FtpSplitter() { }
 
 // flush at last line feed in data
 // preproc will deal with any pipelined commands
-StreamSplitter::Status FtpSplitter::scan (
+StreamSplitter::Status FtpSplitter::scan(
     Flow*, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t* fp)
 {
@@ -33,7 +33,7 @@ StreamSplitter::Status FtpSplitter::scan (
     uint8_t* lf =  (uint8_t*)memrchr(data, '\n', len);
 #else
     uint32_t n = len;
-    uint8_t* lf = NULL, * tmp = (uint8_t*) data;
+    uint8_t* lf = NULL, * tmp = (uint8_t*)data;
 
     while ( (tmp = (uint8_t*)memchr(tmp, '\n', n)) )
     {

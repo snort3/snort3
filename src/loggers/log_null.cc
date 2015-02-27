@@ -40,9 +40,10 @@
 // log_null module
 //-------------------------------------------------------------------------
 
-class NullLogger : public Logger {
+class NullLogger : public Logger
+{
 public:
-    NullLogger() { };
+    NullLogger() { }
 };
 
 static Logger* null_ctor(SnortConfig*, Module*)

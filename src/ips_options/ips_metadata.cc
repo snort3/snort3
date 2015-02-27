@@ -58,7 +58,7 @@ class MetadataModule : public Module
 {
 public:
     MetadataModule() : Module(s_name, s_help, s_params)
-    { snort_config = nullptr; };
+    { snort_config = nullptr; }
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -81,7 +81,7 @@ bool MetadataModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( !v.is("*") )  // ignore other metadata
         return false;
-    
+
     return true;
 }
 
@@ -132,3 +132,4 @@ static const IpsApi metadata_api =
 };
 
 const BaseApi* ips_metadata = &metadata_api.base;
+

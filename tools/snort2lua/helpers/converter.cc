@@ -25,17 +25,14 @@
 #include "helpers/s2l_util.h"
 #include "init_state.h"
 
-
-
 bool Converter::parse_includes = true;
 bool Converter::convert_rules_mult_files = true;
 bool Converter::convert_conf_mult_files = true;
 
-
 Converter::Converter()
     :   state(nullptr),
-        error(false),
-        multiline_state(false)
+    error(false),
+    multiline_state(false)
 {
 }
 
@@ -62,7 +59,6 @@ void Converter::reset_state()
     rule_api.reset_state();
 }
 
-
 int Converter::parse_include_file(std::string input_file)
 {
     std::vector<Variable*> vars;
@@ -80,7 +76,7 @@ int Converter::parse_include_file(std::string input_file)
     if (convert_conf_mult_files)
     {
         comments = new Comments(start_comments, 0,
-                    Comments::CommentType::MULTI_LINE);
+            Comments::CommentType::MULTI_LINE);
 
         data_api.swap_conf_data(vars, includes, comments);
         table_api.swap_tables(tables);
@@ -89,10 +85,7 @@ int Converter::parse_include_file(std::string input_file)
     if (convert_rules_mult_files)
         rule_api.swap_rules(rules);
 
-
-
     rc = parse_file(input_file);
-
 
     if (convert_conf_mult_files)
     {
@@ -119,7 +112,6 @@ int Converter::parse_include_file(std::string input_file)
         if (include_file)
             data_api.add_include_file(input_file + ".lua");
     }
-
 
     if (convert_rules_mult_files)
     {
@@ -158,7 +150,7 @@ int Converter::parse_file(std::string input_file)
         return -1;
 
     in.open(input_file, std::ifstream::in);
-    while(!in.eof())
+    while (!in.eof())
     {
         std::string tmp;
         std::getline(in, tmp);
@@ -166,8 +158,9 @@ int Converter::parse_file(std::string input_file)
 
         std::size_t first_non_white_char = tmp.find_first_not_of(' ');
         if ((first_non_white_char == std::string::npos) ||
-                 (tmp[first_non_white_char] == '#') ||
-                 (tmp[first_non_white_char] == ';')) // no, i did not know that semicolons made a line a comment
+            (tmp[first_non_white_char] == '#') ||
+            (tmp[first_non_white_char] == ';'))      // no, i did not know that semicolons made a
+                                                     // line a comment
         {
             util::trim(tmp);
 
@@ -193,7 +186,7 @@ int Converter::parse_file(std::string input_file)
 
             try
             {
-                while(data_stream.peek() != EOF)
+                while (data_stream.peek() != EOF)
                 {
                     if ((state == nullptr) || !state->convert(data_stream))
                     {
@@ -236,9 +229,9 @@ bool Converter::initialize()
 }
 
 int Converter::convert(std::string input,
-                        std::string output_file,
-                        std::string rule_file,
-                        std::string error_file)
+    std::string output_file,
+    std::string rule_file,
+    std::string error_file)
 {
     int rc;
     initialize();
@@ -250,7 +243,6 @@ int Converter::convert(std::string input,
 
     if (error_file.empty())
         error_file = output_file + ".rej";
-
 
     if (!rule_api.empty() &&
         table_api.empty() &&
@@ -302,7 +294,7 @@ int Converter::convert(std::string input,
         out << "\n";
         out << "\n";
         out << "\n";
-        out << "require(\"snort_config\")\n\n";;
+        out << "require(\"snort_config\")\n\n";
         out << "dir = os.getenv('SNORT_LUA_PATH')\n";
         out << "\n";
         out << "if ( not dir ) then\n";
@@ -313,7 +305,6 @@ int Converter::convert(std::string input,
         out << "\n";
         out << "\n";
         data_api.print_data(out);
-
 
         if (!rule_api.empty())
         {
@@ -337,13 +328,10 @@ int Converter::convert(std::string input,
                 table_api.add_option("include", rule_file);
                 table_api.close_table();
             }
-
         }
-
 
         table_api.print_tables(out);
         data_api.print_comments(out);
-
 
         if ((failed_conversions()) && !DataApi::is_quiet_mode())
         {
@@ -382,3 +370,4 @@ int Converter::convert(std::string input,
 
     return rc;
 }
+

@@ -20,10 +20,10 @@
  * Description:
  *
  * Header file for FTPTelnet FTP Server Module
- * 
+ *
  * This file defines the server structure and functions to access server
  * inspection.
- * 
+ *
  * NOTES:
  * - 16.09.04:  Initial Development.  SAS
  *
@@ -38,18 +38,18 @@
 
 typedef struct s_FTP_SERVER_RSP
 {
-    char *rsp_line;
-    unsigned int  rsp_line_size;
+    char* rsp_line;
+    unsigned int rsp_line_size;
 
-    char *rsp_begin;
-    char *rsp_end;
-    unsigned int  rsp_size;
+    char* rsp_begin;
+    char* rsp_end;
+    unsigned int rsp_size;
 
-    char *msg_begin;
-    char *msg_end;
+    char* msg_begin;
+    char* msg_end;
     unsigned int msg_size;
 
-    char *pipeline_req;
+    char* pipeline_req;
     int state;
 } FTP_SERVER_RSP;
 
@@ -58,6 +58,7 @@ typedef struct s_FTP_SERVER
     FTP_SERVER_RSP response;
 } FTP_SERVER;
 
-int ftp_server_inspection(void *S, unsigned char *data, int dsize);
+int ftp_server_inspection(void* S, unsigned char* data, int dsize);
 
 #endif
+

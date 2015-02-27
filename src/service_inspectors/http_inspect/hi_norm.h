@@ -16,16 +16,16 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 /**
 **  @file       hi_norm.h
 **
 **  @author     Daniel Roelker <droelker@sourcefire.com>
-**  
+**
 **  @brief      Contains function prototypes for normalization routines.
-**  
+**
 **  Contains stuctures and headers for normalization routines.
-**  
+**
 **  NOTES:
 **      - Initial development.  DJR
 */
@@ -40,12 +40,13 @@
 
 #define MAX_URI 8192
 
-int hi_normalization(HI_SESSION *session, int iInspectMode, HttpSessionData *hsd);
-int hi_norm_uri(HI_SESSION *session, u_char *uribuf,int *uribuf_size,
-                const u_char *uri, int uri_size, uint16_t *encodeType);
+int hi_normalization(HI_SESSION* session, int iInspectMode, HttpSessionData* hsd);
+int hi_norm_uri(HI_SESSION* session, u_char* uribuf,int* uribuf_size,
+    const u_char* uri, int uri_size, uint16_t* encodeType);
 
-int hi_split_header_cookie(HI_SESSION *session, u_char *header, int *i_header_len,
-                           u_char *cookie_header, int *i_cookie_len,
-                           const u_char *raw_header, int i_raw_header_len,
-                           COOKIE_PTR *cookie);
+int hi_split_header_cookie(HI_SESSION* session, u_char* header, int* i_header_len,
+    u_char* cookie_header, int* i_cookie_len,
+    const u_char* raw_header, int i_raw_header_len,
+    COOKIE_PTR* cookie);
 #endif
+

@@ -18,8 +18,8 @@
 // s2l_util.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
-#include <algorithm> 
-#include <functional> 
+#include <algorithm>
+#include <functional>
 #include <cctype>
 #include <locale>
 #include <sys/stat.h>
@@ -35,12 +35,9 @@
 
 namespace util
 {
-
-
-
-std::vector<std::string> &split(const std::string &s, 
-                                char delim, 
-                                std::vector<std::string> &elems)
+std::vector<std::string>& split(const std::string& s,
+    char delim,
+    std::vector<std::string>& elems)
 {
     std::istringstream ss(s);
     std::string item;
@@ -56,7 +53,7 @@ const ConvertMap* find_map(
     const std::vector<const ConvertMap*>& map,
     const std::string& keyword)
 {
-    for (const ConvertMap *p : map)
+    for (const ConvertMap* p : map)
         if (p->keyword.compare(0, p->keyword.size(), keyword) == 0)
             return p;
 
@@ -75,41 +72,39 @@ const std::unique_ptr<const ConvertMap>& find_map(
     return np;
 }
 
-
 Table* find_table(const std::vector<Table*>& vec, const std::string& name)
 {
-    if(name.empty())
+    if (name.empty())
         return nullptr;
 
-    for( auto *t : vec)
-        if(!name.compare(t->get_name()))
+    for ( auto* t : vec)
+        if (!name.compare(t->get_name()))
             return t;
 
     return nullptr;
 }
 
-
-
-std::string &ltrim(std::string &s) {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+std::string& ltrim(std::string& s)
+{
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(
+        std::isspace))));
     return s;
 }
 
-std::string &rtrim(std::string &s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+std::string& rtrim(std::string& s)
+{
+    s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(
+        std::isspace))).base(), s.end());
     return s;
 }
 
-std::string &trim(std::string &s)
+std::string& trim(std::string& s)
 {
     return ltrim(rtrim(s));
 }
 
-
-
-std::string &sanitize_lua_string(std::string &s)
+std::string& sanitize_lua_string(std::string& s)
 {
-
     std::size_t found = s.find("]]");
     while (found != std::string::npos)
     {
@@ -122,11 +117,9 @@ std::string &sanitize_lua_string(std::string &s)
     {
         s.erase(found, 1);
         found = s.find("  ");
-
     }
     return s;
 }
-
 
 std::size_t get_substr_length(std::string str, std::size_t max_length)
 {
@@ -148,8 +141,8 @@ std::size_t get_substr_length(std::string str, std::size_t max_length)
 }
 
 bool get_string(std::istringstream& stream,
-                std::string& option,
-                const std::string delimeters)
+    std::string& option,
+    const std::string delimeters)
 {
     if (delimeters.empty() || !stream.good())
     {
@@ -189,13 +182,11 @@ bool get_string(std::istringstream& stream,
         else
             stream.seekg((std::streamoff)(pos) + (std::streamoff)(first_delim) + 1);
 
-
         option = option.substr(first_char, first_delim - first_char);
         trim(option);
         return true;
     }
 }
-
 
 std::string get_remain_data(std::istringstream& stream)
 {
@@ -206,7 +197,7 @@ std::string get_remain_data(std::istringstream& stream)
     stream.seekg(pos);
 
     // read argument
-    char *arg_c = new char[length + 1];
+    char* arg_c = new char[length + 1];
     stream.read(arg_c, length);
     arg_c[length] = '\0';
     std::string arg_s(arg_c);
@@ -214,7 +205,6 @@ std::string get_remain_data(std::istringstream& stream)
     util::trim(arg_s);
     return arg_s;
 }
-
 
 std::string get_rule_option_args(std::istringstream& stream)
 {
@@ -225,8 +215,8 @@ std::string get_rule_option_args(std::istringstream& stream)
     {
         std::getline(stream, tmp, ';');
         args += tmp + ";";
-
-    } while (tmp.back() == '\\');
+    }
+    while (tmp.back() == '\\');
 
     // semicolon will be added when printing
     args.pop_back();
@@ -235,7 +225,7 @@ std::string get_rule_option_args(std::istringstream& stream)
 }
 
 std::string rule_option_find_val(std::istringstream& data_stream,
-                                 std::string opt_name)
+    std::string opt_name)
 {
     std::string rule_keyword;
     std::string val = std::string();
@@ -244,13 +234,12 @@ std::string rule_option_find_val(std::istringstream& data_stream,
     if (curr_pos == -1)
         data_stream.clear();
 
-
     data_stream.seekg(0);
     std::getline(data_stream, rule_keyword, '(');
     std::streamoff tmp_pos = data_stream.tellg();
 
     // This loop is a near duplicate of set_next_rule_state.
-    while(std::getline(data_stream, rule_keyword, ':'))
+    while (std::getline(data_stream, rule_keyword, ':'))
     {
         std::size_t semi_colon_pos = rule_keyword.find(';');
         if (semi_colon_pos != std::string::npos)
@@ -281,7 +270,6 @@ std::string rule_option_find_val(std::istringstream& data_stream,
         tmp_pos = data_stream.tellg();
     }
 
-
     // reset the original state
     if (curr_pos == -1)
         data_stream.setstate(std::ios::eofbit);
@@ -292,9 +280,10 @@ std::string rule_option_find_val(std::istringstream& data_stream,
     return val;
 }
 
-bool file_exists (const std::string& name) {
-  struct stat buffer;
-  return (stat (name.c_str(), &buffer) == 0);
+bool file_exists(const std::string& name)
+{
+    struct stat buffer;
+    return (stat (name.c_str(), &buffer) == 0);
 }
 
 bool case_compare(std::string arg1, std::string arg2)
@@ -306,6 +295,5 @@ bool case_compare(std::string arg1, std::string arg2)
         return true;
     return false;
 }
-
-
 } // namespace util
+

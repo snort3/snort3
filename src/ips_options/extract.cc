@@ -51,23 +51,23 @@
  *
  * @returns 0 on success, otherwise failure
  */
-int byte_extract(int endianess, int bytes_to_grab, const uint8_t *ptr,
-                 const uint8_t *start, const uint8_t *end,
-                 uint32_t *value)
+int byte_extract(int endianess, int bytes_to_grab, const uint8_t* ptr,
+    const uint8_t* start, const uint8_t* end,
+    uint32_t* value)
 {
-    if(endianess != ENDIAN_LITTLE && endianess != ENDIAN_BIG)
+    if (endianess != ENDIAN_LITTLE && endianess != ENDIAN_BIG)
     {
         /* we only support 2 byte formats */
         return -2;
     }
 
     /* make sure the data to grab stays in bounds */
-    if(!inBounds(start,end,ptr + (bytes_to_grab - 1)))
+    if (!inBounds(start,end,ptr + (bytes_to_grab - 1)))
     {
         return -3;
     }
 
-    if(!inBounds(start,end,ptr))
+    if (!inBounds(start,end,ptr))
     {
         return -3;
     }
@@ -76,56 +76,56 @@ int byte_extract(int endianess, int bytes_to_grab, const uint8_t *ptr,
      * We only support grabbing 1, 2, or 4 bytes of binary data.
      * And now, due to popular demand, 3 bytes!
      */
-    switch(bytes_to_grab)
+    switch (bytes_to_grab)
     {
-        case 1:
-            *value =  (*ptr) & 0xFF;
-            break;
-        case 2:
-            if(endianess == ENDIAN_LITTLE)
-            {
-                *value = (*ptr) & 0xFF;
-                *value |= (*(ptr + 1) & 0xFF) << 8;
-            }
-            else
-            {
-                *value = ((*ptr) & 0xFF) << 8;
-                *value |= (*(ptr + 1)) & 0xFF;
-            }
-            break;
-        case 3:
-            if (endianess == ENDIAN_LITTLE)
-            {
-                *value = (*ptr) & 0xFF;
-                *value |= ((*(ptr + 1)) & 0xFF) << 8;
-                *value |= ((*(ptr + 2)) & 0xFF) << 16;
-            }
-            else
-            {
-                *value = ((*ptr) & 0xFF) << 16;
-                *value |= ((*(ptr + 1)) & 0xFF) << 8;
-                *value |= (*(ptr + 2)) & 0xFF;
-            }
-            break;
-        case 4:
-            if(endianess == ENDIAN_LITTLE)
-            {
-                *value = (*ptr) & 0xFF;
-                *value |= ((*(ptr + 1)) & 0xFF) << 8;
-                *value |= ((*(ptr + 2)) & 0xFF) << 16;
-                *value |= ((*(ptr + 3)) & 0xFF) << 24;
-            }
-            else
-            {
-                *value =  ((*ptr) & 0xFF)       << 24;
-                *value |= ((*(ptr + 1)) & 0xFF) << 16;
-                *value |= ((*(ptr + 2)) & 0xFF) << 8;
-                *value |= (*(ptr + 3)) & 0xFF;
-            }
-            break;
-        default:
-            /* unknown type */
-            return -1;
+    case 1:
+        *value =  (*ptr) & 0xFF;
+        break;
+    case 2:
+        if (endianess == ENDIAN_LITTLE)
+        {
+            *value = (*ptr) & 0xFF;
+            *value |= (*(ptr + 1) & 0xFF) << 8;
+        }
+        else
+        {
+            *value = ((*ptr) & 0xFF) << 8;
+            *value |= (*(ptr + 1)) & 0xFF;
+        }
+        break;
+    case 3:
+        if (endianess == ENDIAN_LITTLE)
+        {
+            *value = (*ptr) & 0xFF;
+            *value |= ((*(ptr + 1)) & 0xFF) << 8;
+            *value |= ((*(ptr + 2)) & 0xFF) << 16;
+        }
+        else
+        {
+            *value = ((*ptr) & 0xFF) << 16;
+            *value |= ((*(ptr + 1)) & 0xFF) << 8;
+            *value |= (*(ptr + 2)) & 0xFF;
+        }
+        break;
+    case 4:
+        if (endianess == ENDIAN_LITTLE)
+        {
+            *value = (*ptr) & 0xFF;
+            *value |= ((*(ptr + 1)) & 0xFF) << 8;
+            *value |= ((*(ptr + 2)) & 0xFF) << 16;
+            *value |= ((*(ptr + 3)) & 0xFF) << 24;
+        }
+        else
+        {
+            *value =  ((*ptr) & 0xFF) << 24;
+            *value |= ((*(ptr + 1)) & 0xFF) << 16;
+            *value |= ((*(ptr + 2)) & 0xFF) << 8;
+            *value |= (*(ptr + 3)) & 0xFF;
+        }
+        break;
+    default:
+        /* unknown type */
+        return -1;
     }
 
     return 0;
@@ -143,31 +143,31 @@ int byte_extract(int endianess, int bytes_to_grab, const uint8_t *ptr,
  *
  * @returns 0 on success, otherwise failure
  */
-int string_extract(int bytes_to_grab, int base, const uint8_t *ptr,
-                   const uint8_t *start, const uint8_t *end,
-                   uint32_t *value)
+int string_extract(int bytes_to_grab, int base, const uint8_t* ptr,
+    const uint8_t* start, const uint8_t* end,
+    uint32_t* value)
 {
     char byte_array[TEXTLEN];
-    char *parse_helper;
+    char* parse_helper;
     int x; /* counter */
 
-    if(bytes_to_grab > (TEXTLEN - 1) || bytes_to_grab <= 0)
+    if (bytes_to_grab > (TEXTLEN - 1) || bytes_to_grab <= 0)
     {
         return -1;
     }
 
     /* make sure the data to grab stays in bounds */
-    if(!inBounds(start,end,ptr + (bytes_to_grab - 1)))
+    if (!inBounds(start,end,ptr + (bytes_to_grab - 1)))
     {
         return -3;
     }
 
-    if(!inBounds(start,end,ptr))
+    if (!inBounds(start,end,ptr))
     {
         return -3;
     }
 
-    for(x=0;x<bytes_to_grab; x++)
+    for (x=0; x<bytes_to_grab; x++)
     {
         byte_array[x] = *(ptr+x);
     }
@@ -179,15 +179,14 @@ int string_extract(int bytes_to_grab, int base, const uint8_t *ptr,
 
 #ifdef TEST_BYTE_EXTRACT
     printf("[----]\n");
-    for(x=0;(x<=TEXTLEN) && (byte_array[x] != '\0');x++)
+    for (x=0; (x<=TEXTLEN) && (byte_array[x] != '\0'); x++)
         printf("%c", byte_array[x]);
     printf("\n");
 
-    printf("converted value: 0x%08X (%u) %s\n", *value, *value, (char *) byte_array);
+    printf("converted value: 0x%08X (%u) %s\n", *value, *value, (char*)byte_array);
 #endif /* TEST_BYTE_EXTRACT */
     return(parse_helper - byte_array);  /* Return the number of bytes actually extracted */
 }
-
 
 #ifdef TEST_BYTE_EXTRACT
 #include <stdio.h>
@@ -212,7 +211,7 @@ void test_extract(void)
     value3[2] = 0x00;
     value3[3] = 0x00;
 
-    if(byte_extract(ENDIAN_BIG, 2, value1, value1, value1 + 2, &ret))
+    if (byte_extract(ENDIAN_BIG, 2, value1, value1, value1 + 2, &ret))
     {
         printf("test 1 failed\n");
     }
@@ -221,7 +220,7 @@ void test_extract(void)
         printf("test 1: value: %x %u\n", ret, ret);
     }
 
-    if(byte_extract(ENDIAN_LITTLE, 2, value1, value1, value1 + 2, &ret))
+    if (byte_extract(ENDIAN_LITTLE, 2, value1, value1, value1 + 2, &ret))
     {
         printf("test 2 failed\n");
     }
@@ -230,8 +229,7 @@ void test_extract(void)
         printf("test 2: value: %x %u\n", ret, ret);
     }
 
-
-    if(byte_extract(ENDIAN_LITTLE, 2, value1 + 2, value1, value1 + 2, &ret))
+    if (byte_extract(ENDIAN_LITTLE, 2, value1 + 2, value1, value1 + 2, &ret))
     {
         printf("test 3 failed correctly\n");
     }
@@ -240,8 +238,7 @@ void test_extract(void)
         printf("test 3: value: %x %u\n", ret, ret);
     }
 
-
-    if(byte_extract(ENDIAN_BIG, 2, value2, value2, value2 + 2, &ret))
+    if (byte_extract(ENDIAN_BIG, 2, value2, value2, value2 + 2, &ret))
     {
         printf("test 1 failed\n");
     }
@@ -250,7 +247,7 @@ void test_extract(void)
         printf("test 1: value: %x %u\n", ret, ret);
     }
 
-    if(byte_extract(ENDIAN_LITTLE, 2, value2, value2, value2 + 2, &ret))
+    if (byte_extract(ENDIAN_LITTLE, 2, value2, value2, value2 + 2, &ret))
     {
         printf("test 2 failed\n");
     }
@@ -259,8 +256,7 @@ void test_extract(void)
         printf("test 2: value: %x %u\n", ret, ret);
     }
 
-
-    if(byte_extract(ENDIAN_LITTLE, 2, value2 + 2, value2, value2 + 2, &ret))
+    if (byte_extract(ENDIAN_LITTLE, 2, value2 + 2, value2, value2 + 2, &ret))
     {
         printf("test 3 failed correctly\n");
     }
@@ -269,8 +265,7 @@ void test_extract(void)
         printf("test 3: value: %x %u\n", ret, ret);
     }
 
-
-    if(byte_extract(ENDIAN_BIG, 4, value3, value3, value3 + 4, &ret))
+    if (byte_extract(ENDIAN_BIG, 4, value3, value3, value3 + 4, &ret))
     {
         printf("test 1 failed\n");
     }
@@ -279,7 +274,7 @@ void test_extract(void)
         printf("test 1: value: %x %u\n", ret, ret);
     }
 
-    if(byte_extract(ENDIAN_LITTLE, 4, value3, value3, value3 + 4, &ret))
+    if (byte_extract(ENDIAN_LITTLE, 4, value3, value3, value3 + 4, &ret))
     {
         printf("test 2 failed\n");
     }
@@ -288,8 +283,7 @@ void test_extract(void)
         printf("test 2: value: %x %u\n", ret, ret);
     }
 
-
-    if(byte_extract(ENDIAN_LITTLE, 4, value3 + 2, value3, value3 + 4, &ret))
+    if (byte_extract(ENDIAN_LITTLE, 4, value3 + 2, value3, value3 + 4, &ret))
     {
         printf("test 3 failed correctly\n");
     }
@@ -300,26 +294,26 @@ void test_extract(void)
 
     printf("-----------------------------\n");
 
-    for(i=0;i<10;i++)
+    for (i=0; i<10; i++)
     {
-        if(byte_extract(ENDIAN_LITTLE, 4, value3 + i, value3, value3 + 4, &ret))
+        if (byte_extract(ENDIAN_LITTLE, 4, value3 + i, value3, value3 + 4, &ret))
         {
             printf("[loop] %d failed correctly\n", i);
         }
         else
         {
-            printf("[loop] value: %x %x\n", ret, *(uint32_t *) &value3);
+            printf("[loop] value: %x %x\n", ret, *(uint32_t*)&value3);
         }
     }
 }
 
 void test_string(void)
 {
-    char *stringdata = "21212312412";
+    char* stringdata = "21212312412";
     int datalen = strlen(stringdata);
     uint32_t ret;
 
-    if(string_extract(4, 10, stringdata,  stringdata, stringdata + datalen,  &ret) < 0)
+    if (string_extract(4, 10, stringdata,  stringdata, stringdata + datalen,  &ret) < 0)
     {
         printf("TS1: Failed\n");
     }
@@ -328,7 +322,7 @@ void test_string(void)
         printf("TS1: value %x %u\n", ret, ret);
     }
 
-    if(string_extract(10, 10, stringdata,  stringdata, stringdata + datalen,  &ret) < 0)
+    if (string_extract(10, 10, stringdata,  stringdata, stringdata + datalen,  &ret) < 0)
     {
         printf("TS2: Failed\n");
     }
@@ -337,7 +331,7 @@ void test_string(void)
         printf("TS2: value %x %u\n", ret, ret);
     }
 
-    if(string_extract(9, 10, stringdata,  stringdata, stringdata + datalen,  &ret) < 0)
+    if (string_extract(9, 10, stringdata,  stringdata, stringdata + datalen,  &ret) < 0)
     {
         printf("TS3: Failed\n");
     }
@@ -346,8 +340,7 @@ void test_string(void)
         printf("TS3: value %x %u\n", ret, ret);
     }
 
-
-    if(string_extract(19, 10, stringdata,  stringdata, stringdata + datalen,  &ret) < 0)
+    if (string_extract(19, 10, stringdata,  stringdata, stringdata + datalen,  &ret) < 0)
     {
         printf("TS4: Failed Normally\n");
     }
@@ -355,7 +348,6 @@ void test_string(void)
     {
         printf("TS4: value %x %u\n", ret, ret);
     }
-
 }
 
 int main(void)
@@ -366,3 +358,4 @@ int main(void)
 }
 
 #endif /* TEST_BYTE_EXTRACT */
+

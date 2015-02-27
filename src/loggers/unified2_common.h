@@ -31,11 +31,10 @@
 #endif
 #include <netinet/in.h>
 
-
 /*! \defgroup Unified2
  */
-/** \addtogroup Unified2 */
-/*@{*/
+/** \addtogroup Unified2
+  @{*/
 
 //SNORT DEFINES
 //Long time ago...
@@ -54,10 +53,9 @@
 /* Data structure used for serialization of Unified2 Records */
 typedef struct _Serial_Unified2_Header
 {
-    uint32_t   type;
-    uint32_t   length;
+    uint32_t type;
+    uint32_t length;
 } Serial_Unified2_Header;
-
 
 //UNIFIED2_IDS_EVENT_VLAN = type 104
 //comes from SFDC to EStreamer archive in serialized form with the extended header
@@ -76,15 +74,14 @@ struct Unified2IDSEvent
     uint32_t ip_destination;
     uint16_t sport_itype;
     uint16_t dport_icode;
-    uint8_t  protocol;
-    uint8_t  impact_flag;//overloads packet_action
-    uint8_t  impact;
-    uint8_t  blocked;
+    uint8_t protocol;
+    uint8_t impact_flag; //overloads packet_action
+    uint8_t impact;
+    uint8_t blocked;
     uint32_t mpls_label;
     uint16_t vlanId;
-    uint16_t pad2;//Policy ID
-} ;
-
+    uint16_t pad2; //Policy ID
+};
 
 //UNIFIED2_IDS_EVENT_IPV6_VLAN = type 105
 typedef struct _Unified2IDSEventIPv6
@@ -102,16 +99,14 @@ typedef struct _Unified2IDSEventIPv6
     struct in6_addr ip_destination;
     uint16_t sport_itype;
     uint16_t dport_icode;
-    uint8_t  protocol;
-    uint8_t  impact_flag;
-    uint8_t  impact;
-    uint8_t  blocked;
+    uint8_t protocol;
+    uint8_t impact_flag;
+    uint8_t impact;
+    uint8_t blocked;
     uint32_t mpls_label;
     uint16_t vlanId;
-    uint16_t pad2;/*could be IPS Policy local id to support local sensor alerts*/
+    uint16_t pad2; /*could be IPS Policy local id to support local sensor alerts*/
 } Unified2IDSEventIPv6;
-
-
 
 //UNIFIED2_PACKET = type 2
 typedef struct _Serial_Unified2Packet
@@ -126,16 +121,15 @@ typedef struct _Serial_Unified2Packet
     uint8_t packet_data[4];
 } Serial_Unified2Packet;
 
-
-typedef struct _Unified2ExtraDataHdr{
+typedef struct _Unified2ExtraDataHdr
+{
     uint32_t event_type;
     uint32_t event_length;
 }Unified2ExtraDataHdr;
 
-
-
 //UNIFIED2_EXTRA_DATA - type 110
-typedef struct _SerialUnified2ExtraData{
+typedef struct _SerialUnified2ExtraData
+{
     uint32_t sensor_id;
     uint32_t event_id;
     uint32_t event_second;
@@ -144,15 +138,15 @@ typedef struct _SerialUnified2ExtraData{
     uint32_t blob_length;       /* Length of the data + sizeof(blob_length) + sizeof(data_type)*/
 } SerialUnified2ExtraData;
 
-
 typedef struct _Data_Blob
 {
     uint32_t length;
-    const uint8_t *data;
+    const uint8_t* data;
 } Data_Blob;
 
 //UNIFIED2_EXTRA_DATA - type 110
-typedef struct _Serial_Unified2ExtraData{
+typedef struct _Serial_Unified2ExtraData
+{
     uint32_t sensor_id;
     uint32_t event_id;
     uint32_t event_second;
@@ -185,14 +179,13 @@ typedef enum _EventDataType
 
 #define EVENT_TYPE_EXTRA_DATA   4
 
-#define MAX_XFF_WRITE_BUF_LENGTH (sizeof(Serial_Unified2_Header) + \
-        sizeof(Unified2ExtraDataHdr) + sizeof(SerialUnified2ExtraData) \
-        + sizeof(struct in6_addr))
-
+#define MAX_XFF_WRITE_BUF_LENGTH \
+    (sizeof(Serial_Unified2_Header) + \
+    sizeof(Unified2ExtraDataHdr) + sizeof(SerialUnified2ExtraData) \
+    + sizeof(struct in6_addr))
 
 #define Serial_Unified2IDSEvent Unified2IDSEvent
 #define Serial_Unified2IDSEventIPv6 Unified2IDSEventIPv6
-
 
 //---------------LEGACY, type '7'
 //These structures are not used anymore in the product
@@ -211,10 +204,10 @@ typedef struct _Serial_Unified2IDSEvent_legacy
     uint32_t ip_destination;
     uint16_t sport_itype;
     uint16_t dport_icode;
-    uint8_t  protocol;
-    uint8_t  impact_flag;//sets packet_action
-    uint8_t  impact;
-    uint8_t  blocked;
+    uint8_t protocol;
+    uint8_t impact_flag; //sets packet_action
+    uint8_t impact;
+    uint8_t blocked;
 } Serial_Unified2IDSEvent_legacy;
 
 //----------LEGACY, type '72'
@@ -233,13 +226,11 @@ typedef struct _Serial_Unified2IDSEventIPv6_legacy
     struct in6_addr ip_destination;
     uint16_t sport_itype;
     uint16_t dport_icode;
-    uint8_t  protocol;
-    uint8_t  impact_flag;
-    uint8_t  impact;
-    uint8_t  blocked;
+    uint8_t protocol;
+    uint8_t impact_flag;
+    uint8_t impact;
+    uint8_t blocked;
 } Serial_Unified2IDSEventIPv6_legacy;
-
-
 
 ////////////////////-->LEGACY
 

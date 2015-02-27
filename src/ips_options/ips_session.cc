@@ -88,7 +88,7 @@ class SessionOption : public IpsOption
 public:
     SessionOption(const SessionData& c) :
         IpsOption(s_name)
-    { config = c; };
+    { config = c; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -99,7 +99,7 @@ private:
     SessionData config;
 };
 
-static FILE *OpenSessionFile(Packet*);
+static FILE* OpenSessionFile(Packet*);
 static void DumpSessionData(FILE*, Packet*, SessionData*);
 
 //-------------------------------------------------------------------------
@@ -109,7 +109,7 @@ static void DumpSessionData(FILE*, Packet*, SessionData*);
 uint32_t SessionOption::hash() const
 {
     uint32_t a,b,c;
-    const SessionData *data = &config;
+    const SessionData* data = &config;
 
     a = data->session_flag;
     b = 0;
@@ -127,8 +127,8 @@ bool SessionOption::operator==(const IpsOption& ips) const
         return false;
 
     SessionOption& rhs = (SessionOption&)ips;
-    SessionData *left = (SessionData*)&config;
-    SessionData *right = (SessionData*)&rhs.config;
+    SessionData* left = (SessionData*)&config;
+    SessionData* right = (SessionData*)&rhs.config;
 
     if (left->session_flag == right->session_flag)
     {
@@ -138,30 +138,30 @@ bool SessionOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int SessionOption::eval(Cursor&, Packet *p)
+int SessionOption::eval(Cursor&, Packet* p)
 {
-    SessionData *session_data = &config;
-    FILE *session;         /* session file ptr */
+    SessionData* session_data = &config;
+    FILE* session;         /* session file ptr */
     PROFILE_VARS;
 
     MODULE_PROFILE_START(sessionPerfStats);
 
     /* if there's data in this packet */
-    if(p != NULL)
+    if (p != NULL)
     {
-        if((p->dsize != 0 && p->data != NULL) || (!(p->ptrs.decode_flags & DECODE_FRAG)))
+        if ((p->dsize != 0 && p->data != NULL) || (!(p->ptrs.decode_flags & DECODE_FRAG)))
         {
-             session = OpenSessionFile(p);
+            session = OpenSessionFile(p);
 
-             if(session == NULL)
-             {
-                 MODULE_PROFILE_END(sessionPerfStats);
-                 return DETECTION_OPTION_MATCH;
-             }
+            if (session == NULL)
+            {
+                MODULE_PROFILE_END(sessionPerfStats);
+                return DETECTION_OPTION_MATCH;
+            }
 
-             DumpSessionData(session, p, session_data);
+            DumpSessionData(session, p, session_data);
 
-             fclose(session);
+            fclose(session);
         }
     }
 
@@ -173,20 +173,20 @@ int SessionOption::eval(Cursor&, Packet *p)
 // implementation methods
 //-------------------------------------------------------------------------
 
-static FILE *OpenSessionFile(Packet *p)
+static FILE* OpenSessionFile(Packet* p)
 {
     char filename[STD_BUF];
     char session_file[STD_BUF]; /* name of session file */
-    const sfip_t *dst, *src;
+    const sfip_t* dst, * src;
 
-    FILE *ret;
+    FILE* ret;
 
-    if(p->ptrs.decode_flags & DECODE_FRAG)
+    if (p->ptrs.decode_flags & DECODE_FRAG)
     {
         return NULL;
     }
 
-    memset((char *)session_file, 0, STD_BUF);
+    memset((char*)session_file, 0, STD_BUF);
 
     /* figure out which way this packet is headed in relation to the homenet */
     dst = p->ptrs.ip_api.get_dst();
@@ -194,14 +194,15 @@ static FILE *OpenSessionFile(Packet *p)
 
     const char* addr;
 
-    if(sfip_contains(&snort_conf->homenet, dst) == SFIP_CONTAINS) {
-        if(sfip_contains(&snort_conf->homenet, src) == SFIP_NOT_CONTAINS)
+    if (sfip_contains(&snort_conf->homenet, dst) == SFIP_CONTAINS)
+    {
+        if (sfip_contains(&snort_conf->homenet, src) == SFIP_NOT_CONTAINS)
         {
             addr = inet_ntoa(p->ptrs.ip_api.get_src());
         }
         else
         {
-            if(p->ptrs.sp >= p->ptrs.dp)
+            if (p->ptrs.sp >= p->ptrs.dp)
             {
                 addr = inet_ntoa(p->ptrs.ip_api.get_src());
             }
@@ -213,13 +214,13 @@ static FILE *OpenSessionFile(Packet *p)
     }
     else
     {
-        if(sfip_contains(&snort_conf->homenet, src) == SFIP_CONTAINS)
+        if (sfip_contains(&snort_conf->homenet, src) == SFIP_CONTAINS)
         {
             addr = inet_ntoa(p->ptrs.ip_api.get_dst());
         }
         else
         {
-            if(p->ptrs.sp >= p->ptrs.dp)
+            if (p->ptrs.sp >= p->ptrs.dp)
             {
                 addr = inet_ntoa(p->ptrs.ip_api.get_src());
             }
@@ -233,17 +234,18 @@ static FILE *OpenSessionFile(Packet *p)
     const char* log_path = get_instance_file(name, addr);
 
     /* build the log directory */
-    if(mkdir(log_path,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
+    if (mkdir(log_path,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
     {
-        if(errno != EEXIST)
+        if (errno != EEXIST)
         {
             FatalError("Problem creating directory %s: %s\n",
-                       log_path,get_error(errno));
+                log_path,get_error(errno));
         }
     }
 
-    if(p->ptrs.sp >= p->ptrs.dp)
+    if (p->ptrs.sp >= p->ptrs.dp)
         SnortSnprintf(session_file, STD_BUF, "%s/SESSION:%d-%d", log_path, p->ptrs.sp, p->ptrs.dp);
+
 
     else
         SnortSnprintf(session_file, STD_BUF, "%s/SESSION:%d-%d", log_path, p->ptrs.dp, p->ptrs.sp);
@@ -254,51 +256,50 @@ static FILE *OpenSessionFile(Packet *p)
 
     ret = fopen(session_file, "a");
 
-    if(ret == NULL)
+    if (ret == NULL)
     {
         FatalError("OpenSessionFile() => fopen(%s) session file: %s\n",
-                   session_file, get_error(errno));
+            session_file, get_error(errno));
     }
 
     return ret;
-
 }
 
-static void DumpSessionData(FILE *fp, Packet *p, SessionData *sessionData)
+static void DumpSessionData(FILE* fp, Packet* p, SessionData* sessionData)
 {
-    const u_char *idx;
-    const u_char *end;
+    const u_char* idx;
+    const u_char* end;
     char conv[] = "0123456789ABCDEF"; /* xlation lookup table */
 
-    if(p->dsize == 0 || p->data == NULL || (p->ptrs.decode_flags & DECODE_FRAG))
+    if (p->dsize == 0 || p->data == NULL || (p->ptrs.decode_flags & DECODE_FRAG))
         return;
 
     idx = p->data;
     end = idx + p->dsize;
 
-    if(sessionData->session_flag == SESSION_PRINTABLE)
+    if (sessionData->session_flag == SESSION_PRINTABLE)
     {
-        while(idx != end)
+        while (idx != end)
         {
-            if((*idx > 0x1f && *idx < 0x7f) || *idx == 0x0a || *idx == 0x0d)
+            if ((*idx > 0x1f && *idx < 0x7f) || *idx == 0x0a || *idx == 0x0d)
             {
                 fputc(*idx, fp);
             }
             idx++;
         }
     }
-    else if(sessionData->session_flag == SESSION_BINARY)
+    else if (sessionData->session_flag == SESSION_BINARY)
     {
         fwrite(p->data, p->dsize, sizeof(char), fp);
     }
     else
     {
-        while(idx != end)
+        while (idx != end)
         {
-            if((*idx > 0x1f && *idx < 0x7f) || *idx == 0x0a || *idx == 0x0d)
+            if ((*idx > 0x1f && *idx < 0x7f) || *idx == 0x0a || *idx == 0x0d)
             {
                 /* Escape all occurences of '\' */
-                if(*idx == '\\')
+                if (*idx == '\\')
                     fputc('\\', fp);
                 fputc(*idx, fp);
             }
@@ -332,13 +333,13 @@ static const Parameter s_params[] =
 class SsnModule : public Module
 {
 public:
-    SsnModule() : Module(s_name, s_help, s_params) { };
+    SsnModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &sessionPerfStats; };
+    { return &sessionPerfStats; }
 
     SessionData data;
 };
@@ -403,7 +404,7 @@ static const IpsApi session_api =
      * enough requests that I'm going to pull the verifier so that things
      * should work for everyone
      */
-    1, /*PROTO_BIT__TCP*/0,
+    1, /*PROTO_BIT__TCP*/ 0,
     nullptr,
     nullptr,
     nullptr,

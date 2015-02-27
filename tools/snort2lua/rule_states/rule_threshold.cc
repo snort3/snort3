@@ -27,18 +27,15 @@
 
 namespace rules
 {
-
-namespace {
-
-
+namespace
+{
 class Threshold : public ConversionState
 {
 public:
-    Threshold(Converter& c) : ConversionState(c) {};
-    virtual ~Threshold() {};
+    Threshold(Converter& c) : ConversionState(c) { }
+    virtual ~Threshold() { }
     virtual bool convert(std::istringstream& data);
 };
-
 } // namespace
 
 bool Threshold::convert(std::istringstream& data_stream)
@@ -48,7 +45,6 @@ bool Threshold::convert(std::istringstream& data_stream)
 
     args = util::get_rule_option_args(data_stream);
     std::istringstream arg_stream(args);
-
 
     table_api.open_table("event_filter");
     table_api.add_diff_option_comment("ips_option: threshold", "event_filter");
@@ -92,7 +88,7 @@ bool Threshold::convert(std::istringstream& data_stream)
     std::getline(data_stream, rule_keyword, '(');
     std::streamoff tmp_pos = data_stream.tellg();
 
-    while(std::getline(data_stream, rule_keyword, ':'))
+    while (std::getline(data_stream, rule_keyword, ':'))
     {
         std::size_t semi_colon_pos = rule_keyword.find(';');
         if (semi_colon_pos != std::string::npos)
@@ -100,7 +96,7 @@ bool Threshold::convert(std::istringstream& data_stream)
             // found an option without a colon, so set stream
             // to semi-colon
             std::streamoff off = 1 + (std::streamoff)(tmp_pos) +
-                                 (std::streamoff)(semi_colon_pos);
+                (std::streamoff)(semi_colon_pos);
             data_stream.seekg(off);
             rule_keyword = rule_keyword.substr(0, semi_colon_pos);
         }
@@ -120,7 +116,7 @@ bool Threshold::convert(std::istringstream& data_stream)
             table_api.add_option("gid", std::stoi(val));
             found_gid = true;
         }
-        else  if (semi_colon_pos == std::string::npos)
+        else if (semi_colon_pos == std::string::npos)
             std::getline(data_stream, rule_keyword, ';');
 
         // short circuit in case we already found the gid/sid
@@ -132,7 +128,6 @@ bool Threshold::convert(std::istringstream& data_stream)
 
     if (!found_gid)
         table_api.add_option("gid", 1);
-
 
     table_api.close_table();
     table_api.close_table();
@@ -147,7 +142,6 @@ bool Threshold::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-
 static ConversionState* ctor(Converter& c)
 { return new Threshold(c); }
 
@@ -158,5 +152,5 @@ static const ConvertMap rule_threshold =
 };
 
 const ConvertMap* threshold_map = &rule_threshold;
-
 } // namespace rules
+

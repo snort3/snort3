@@ -62,7 +62,7 @@ static int already_fatal = 0;
  *
  * Returns: void function
  */
-void LogMessage(const char *format,...)
+void LogMessage(const char* format,...)
 {
     char buf[STD_BUF+1];
     va_list ap;
@@ -103,7 +103,7 @@ void LogMessage(const char *format,...)
  *
  * Returns: void function
  */
-void WarningMessage(const char *format,...)
+void WarningMessage(const char* format,...)
 {
     char buf[STD_BUF+1];
     va_list ap;
@@ -140,7 +140,7 @@ void WarningMessage(const char *format,...)
  *
  * Returns: void function
  */
-void ErrorMessage(const char *format,...)
+void ErrorMessage(const char* format,...)
 {
     char buf[STD_BUF+1];
     va_list ap;
@@ -173,7 +173,7 @@ void ErrorMessage(const char *format,...)
  * Returns: void function
  */
 
-void ErrorMessageThrottled(ThrottleInfo *throttleInfo, const char *format,...)
+void ErrorMessageThrottled(ThrottleInfo* throttleInfo, const char* format,...)
 {
     char buf[STD_BUF+1];
     va_list ap;
@@ -183,8 +183,9 @@ void ErrorMessageThrottled(ThrottleInfo *throttleInfo, const char *format,...)
         return;
 
     throttleInfo->count++;
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT,"current_time: %d, throttle (%p): count " STDu64 ", last update: %d\n",
-            (int)current_time, throttleInfo, throttleInfo->count, (int)throttleInfo->lastUpdate );)
+    DEBUG_WRAP(DebugMessage(DEBUG_INIT,
+        "current_time: %d, throttle (%p): count " STDu64 ", last update: %d\n",
+        (int)current_time, throttleInfo, throttleInfo->count, (int)throttleInfo->lastUpdate); )
     /*Note: we only output the first error message,
      * and the statistics after at least duration_to_log seconds
      * when the same type of error message is printed out again */
@@ -197,16 +198,15 @@ void ErrorMessageThrottled(ThrottleInfo *throttleInfo, const char *format,...)
 
         if (index && (throttleInfo->count > 1))
         {
-           snprintf(&buf[index - 1], STD_BUF-index,
-                   " (suppressed " STDu64 " times in the last %d seconds).\n",
-                   throttleInfo->count, (int) (current_time - throttleInfo->lastUpdate));
+            snprintf(&buf[index - 1], STD_BUF-index,
+                " (suppressed " STDu64 " times in the last %d seconds).\n",
+                throttleInfo->count, (int)(current_time - throttleInfo->lastUpdate));
         }
 
         ErrorMessage("%s",buf);
         throttleInfo->lastUpdate = current_time;
         throttleInfo->count = 0;
     }
-
 }
 
 /*
@@ -220,7 +220,7 @@ void ErrorMessageThrottled(ThrottleInfo *throttleInfo, const char *format,...)
  *
  * Returns: void function
  */
-NORETURN void FatalError(const char *format,...)
+NORETURN void FatalError(const char* format,...)
 {
     char buf[STD_BUF+1];
     va_list ap;
@@ -250,7 +250,7 @@ NORETURN void FatalError(const char *format,...)
     }
 
 #if 0
-    // FIXIT-M need to stop analyzers / workers 
+    // FIXIT-M need to stop analyzers / workers
     // and they should handle the DAQ break / abort
     if ( SnortIsInitializing() )
     {
@@ -265,13 +265,13 @@ NORETURN void FatalError(const char *format,...)
     }
 }
 
-void PrintPacketData(const uint8_t *data, const uint32_t len)
+void PrintPacketData(const uint8_t* data, const uint32_t len)
 {
     uint32_t i, j;
     uint32_t total_len = 0;
     uint8_t hex_buf[16];
     uint8_t char_buf[16];
-    const char *length_chars =
+    const char* length_chars =
         "       0  1  2  3  4  5  6  7   8  9 10 11 12 13 14 15\n"
         "------------------------------------------------------\n";
 
@@ -341,13 +341,13 @@ void PrintPacketData(const uint8_t *data, const uint32_t len)
     LogMessage("\n");
 }
 
-char * ObfuscateIpToText(const sfip_t *ip)
+char* ObfuscateIpToText(const sfip_t* ip)
 {
     static THREAD_LOCAL char ip_buf1[INET6_ADDRSTRLEN];
     static THREAD_LOCAL char ip_buf2[INET6_ADDRSTRLEN];
     static THREAD_LOCAL int buf_num = 0;
     int buf_size = INET6_ADDRSTRLEN;
-    char *ip_buf;
+    char* ip_buf;
 
     if (buf_num)
         ip_buf = ip_buf2;
@@ -370,7 +370,7 @@ char * ObfuscateIpToText(const sfip_t *ip)
     else
     {
         sfip_t tmp;
-        char *tmp_buf;
+        char* tmp_buf;
 
         sfip_copy(tmp, ip);
 

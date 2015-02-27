@@ -97,13 +97,14 @@ public:
     bool operator==(const IpsOption&) const override;
 
     void store(int off)
-    { offset[get_instance_id()] = off; };
+    { offset[get_instance_id()] = off; }
 
     bool pending()
-    { return offset[get_instance_id()] >= 0; };
+    { return offset[get_instance_id()] >= 0; }
 
     int pos()
-    { return offset[get_instance_id()]; };
+    { return offset[get_instance_id()]; }
+
 private:
     string repl;
     int* offset; /* >=0 is offset to start of replace */
@@ -120,7 +121,7 @@ ReplaceOption::ReplaceOption(string& s) : IpsOption(s_name)
     repl = s;
 }
 
-ReplaceOption::~ReplaceOption() 
+ReplaceOption::~ReplaceOption()
 {
     delete[] offset;
 }
@@ -206,13 +207,13 @@ static const Parameter s_params[] =
 class ReplModule : public Module
 {
 public:
-    ReplModule() : Module(s_name, s_help, s_params) { };
+    ReplModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &replacePerfStats; };
+    { return &replacePerfStats; }
 
     string data;
 };

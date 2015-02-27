@@ -17,8 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_fabricpath.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
 //#include "codecs/codec_events.h"
@@ -30,7 +28,6 @@
 
 namespace
 {
-
 static const RuleMap fabricpath_rules[] =
 {
     { DECODE_FPATH_HDR_TRUNC, "truncated FabricPath header" },
@@ -40,24 +37,22 @@ static const RuleMap fabricpath_rules[] =
 class FabricPathModule : public CodecModule
 {
 public:
-    FabricPathModule() : CodecModule(CD_FABRICPATH_NAME, CD_FABRICPATH_HELP) {}
+    FabricPathModule() : CodecModule(CD_FABRICPATH_NAME, CD_FABRICPATH_HELP) { }
 
     const RuleMap* get_rules() const
     { return fabricpath_rules; }
 };
 
-
 class FabricPathCodec : public Codec
 {
 public:
-    FabricPathCodec() : Codec(CD_FABRICPATH_NAME){};
-    ~FabricPathCodec(){};
-
+    FabricPathCodec() : Codec(CD_FABRICPATH_NAME) { }
+    ~FabricPathCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                        EncState&, Buffer&) override;
+        EncState&, Buffer&) override;
     void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
 };
 
@@ -75,7 +70,6 @@ constexpr uint8_t FABRICPATH_HEADER_LEN = 16;
 void FabricPathCodec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(ETHERTYPE_FPATH); }
 
-
 bool FabricPathCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if ( raw.len < FABRICPATH_HEADER_LEN )
@@ -90,7 +84,7 @@ bool FabricPathCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 }
 
 bool FabricPathCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
-                    EncState& enc, Buffer& buf)
+    EncState& enc, Buffer& buf)
 {
     // not raw ip -> encode layer 2
     bool raw = ( enc.flags & ENC_FLAG_RAW );
@@ -98,7 +92,7 @@ bool FabricPathCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_l
     if ( !raw )
     {
         // if not raw ip AND out buf is empty
-        if( buf.size() == 0)
+        if ( buf.size() == 0)
         {
             buf.off = 0;  // for alignment
         }
@@ -111,7 +105,6 @@ bool FabricPathCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_l
 
             const FPathHdr* hi = reinterpret_cast<const FPathHdr*>(raw_in);
             FPathHdr* ho = reinterpret_cast<FPathHdr*>(buf.data());
-
 
             ho->fpath_type = hi->fpath_type;
             if ( enc.forward() )
@@ -142,7 +135,6 @@ void FabricPathCodec::format(bool reverse, uint8_t* raw_pkt, DecodeData&)
     }
 }
 
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
@@ -156,9 +148,8 @@ static void mod_dtor(Module* m)
 static Codec* ctor(Module*)
 { return new FabricPathCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi fabricpath_api =
 {
@@ -179,8 +170,6 @@ static const CodecApi fabricpath_api =
     dtor, // dtor
 };
 
-
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -190,3 +179,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_fabricpath = &fabricpath_api.base;
 #endif
+

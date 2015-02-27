@@ -40,112 +40,114 @@
 /*
 *   Set max # bytes & init other variables.
 */
-void sfmemcap_init( MEMCAP * mc, unsigned long nbytes )
+void sfmemcap_init(MEMCAP* mc, unsigned long nbytes)
 {
-	mc->memcap = nbytes;
-	mc->memused= 0;
-	mc->nblocks= 0;
+    mc->memcap = nbytes;
+    mc->memused= 0;
+    mc->nblocks= 0;
 }
 
 /*
 *   Create and Init a MEMCAP -  use free to release it
 */
-MEMCAP * sfmemcap_new( unsigned nbytes )
+MEMCAP* sfmemcap_new(unsigned nbytes)
 {
-	 MEMCAP * mc;
+    MEMCAP* mc;
 
-	 mc = (MEMCAP*)calloc(1,sizeof(MEMCAP));
+    mc = (MEMCAP*)calloc(1,sizeof(MEMCAP));
 
-         if( mc ) sfmemcap_init( mc, nbytes );
+    if ( mc )
+        sfmemcap_init(mc, nbytes);
 
-	 return mc;
+    return mc;
 }
 
 /*
 *  Release the memcap structure
 */
-void sfmemcap_delete( MEMCAP * p )
+void sfmemcap_delete(MEMCAP* p)
 {
-     if(p)free( p );
+    if (p)
+        free(p);
 }
 
 /*
 *  Allocate some memory
 */
-void * sfmemcap_alloc( MEMCAP * mc, unsigned long nbytes )
+void* sfmemcap_alloc(MEMCAP* mc, unsigned long nbytes)
 {
-   long * data;
+    long* data;
 
-   //printf("sfmemcap_alloc: %d bytes requested, memcap=%d, used=%d\n",nbytes,mc->memcap,mc->memused);
+    //printf("sfmemcap_alloc: %d bytes requested, memcap=%d,
+    // used=%d\n",nbytes,mc->memcap,mc->memused);
 
-   nbytes += sizeof(long);
+    nbytes += sizeof(long);
 
+    /* Check if we are limiting memory use */
+    if ( mc->memcap > 0 )
+    {
+        /* Check if we've maxed out our memory - if we are tracking memory */
+        if ( (mc->memused + nbytes) > mc->memcap )
+        {
+            return 0;
+        }
+    }
 
-   /* Check if we are limiting memory use */
-   if( mc->memcap > 0 )
-   {
-      /* Check if we've maxed out our memory - if we are tracking memory */
-      if( (mc->memused + nbytes) > mc->memcap )
-      {
-	      return 0;
-      }
-   }
+    //data = (long *) malloc( nbytes );
+    data = (long*)SnortAlloc(nbytes);
 
-   //data = (long *) malloc( nbytes );
-   data = (long *)SnortAlloc( nbytes );
-
-   if( data == NULL )
-   {
+    if ( data == NULL )
+    {
         return 0;
-   }
+    }
 
-   *data++ = (long)nbytes;
+    *data++ = (long)nbytes;
 
-   mc->memused += nbytes;
-   mc->nblocks++;
+    mc->memused += nbytes;
+    mc->nblocks++;
 
-   return data;
+    return data;
 }
 
 /*
 *   Free some memory
 */
-void sfmemcap_free( MEMCAP * mc, void * p )
+void sfmemcap_free(MEMCAP* mc, void* p)
 {
-   long * q;
+    long* q;
 
-   q = (long*)p;
-   q--;
-   mc->memused -= (unsigned)(*q);
-   mc->nblocks--;
+    q = (long*)p;
+    q--;
+    mc->memused -= (unsigned)(*q);
+    mc->nblocks--;
 
-   free(q);
+    free(q);
 }
 
 /*
 *   For debugging.
 */
-void sfmemcap_showmem( MEMCAP * mc )
+void sfmemcap_showmem(MEMCAP* mc)
 {
-     fprintf(stderr, "memcap: memcap = %lu bytes,",mc->memcap);
-     fprintf(stderr, " memused= %lu bytes,",mc->memused);
-     fprintf(stderr, " nblocks= %d blocks\n",mc->nblocks);
+    fprintf(stderr, "memcap: memcap = %lu bytes,",mc->memcap);
+    fprintf(stderr, " memused= %lu bytes,",mc->memused);
+    fprintf(stderr, " nblocks= %d blocks\n",mc->nblocks);
 }
 
 /*
 *  String Dup Some memory.
 */
-char * sfmemcap_strdup( MEMCAP * mc, const char *str )
+char* sfmemcap_strdup(MEMCAP* mc, const char* str)
 {
-    char *data = NULL;
+    char* data = NULL;
     int data_size;
 
     data_size = strlen(str) + 1;
-    data = (char *)sfmemcap_alloc(mc, data_size);
+    data = (char*)sfmemcap_alloc(mc, data_size);
 
-    if(data == NULL)
+    if (data == NULL)
     {
-        return  0 ;
+        return 0;
     }
 
     SnortStrncpy(data, str, data_size);
@@ -156,15 +158,16 @@ char * sfmemcap_strdup( MEMCAP * mc, const char *str )
 /*
 *  Dup Some memory.
 */
-void * sfmemcap_dupmem( MEMCAP * mc, void * src, unsigned long n )
+void* sfmemcap_dupmem(MEMCAP* mc, void* src, unsigned long n)
 {
-    void * data = (char *)sfmemcap_alloc( mc, n );
-    if(data == NULL)
+    void* data = (char*)sfmemcap_alloc(mc, n);
+    if (data == NULL)
     {
-        return  0;
+        return 0;
     }
 
-    memcpy( data, src, n );
+    memcpy(data, src, n);
 
     return data;
 }
+

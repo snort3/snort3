@@ -67,11 +67,11 @@ struct ListHead
     OutputSet* AlertList;
     class IpsAction* action;
     struct RuleListNode* ruleListNode;
-}; 
+};
 
 struct RuleListNode
 {
-    ListHead *RuleList;   /* The rule list associated with this node */
+    ListHead* RuleList;   /* The rule list associated with this node */
     RuleType mode;        /* the rule mode */
     int rval;             /* 0 == no detection, 1 == detection event */
     int evalIndex;        /* eval index for this rule set */
@@ -84,7 +84,7 @@ struct RuleState
     uint32_t sid;
     uint32_t gid;
     int state;
-    RuleState *next;
+    RuleState* next;
 };
 
 #endif

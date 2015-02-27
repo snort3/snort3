@@ -16,14 +16,14 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 /**
  * @file   util_net.h
  * @author Chris Green <cmg@sourcefire.com>
  * @date   Fri Jun 27 10:20:31 2003
- * 
+ *
  * @brief  simple network related functions
- * 
+ *
  * Put your simple network related functions here
  */
 
@@ -33,7 +33,8 @@
 #include "main/snort_types.h"
 #include "sfip/sfip_t.h"
 
-SO_PUBLIC char *inet_ntoax(const sfip_t *);
-SO_PUBLIC char * mktcpflag_str(int flags);
+SO_PUBLIC char* inet_ntoax(const sfip_t*);
+SO_PUBLIC char* mktcpflag_str(int flags);
 
 #endif /* UTIL_NET_H */
+

@@ -25,20 +25,16 @@
 
 namespace config
 {
-
-namespace {
-
-
+namespace
+{
 class Alertfile : public ConversionState
 {
 public:
-    Alertfile(Converter& c) : ConversionState(c) {};
-    virtual ~Alertfile() {};
+    Alertfile(Converter& c) : ConversionState(c) { }
+    virtual ~Alertfile() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
-
 
 bool Alertfile::convert(std::istringstream& data_stream)
 {
@@ -66,7 +62,6 @@ bool Alertfile::convert(std::istringstream& data_stream)
 
     table_api.close_table();
 
-
     table_api.open_table("alert_fast");
     table_api.add_diff_option_comment("config alertfile:", "alert_fast.file");
 
@@ -87,10 +82,8 @@ bool Alertfile::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-
 static ConversionState* ctor(Converter& c)
 { return new Alertfile(c); }
-
 
 static const ConvertMap alertfile_api =
 {
@@ -99,5 +92,5 @@ static const ConvertMap alertfile_api =
 };
 
 const ConvertMap* alertfile_map = &alertfile_api;
-
 } // namespace config
+

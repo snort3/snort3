@@ -31,8 +31,9 @@
 
 void file_resume_block_init(void);
 void file_resume_block_cleanup(void);
-int file_resume_block_add_file(void *pkt, uint32_t file_sig, uint32_t timeout,
-        File_Verdict verdict, uint32_t file_type_id, uint8_t *signature);
-File_Verdict file_resume_block_check(void *pkt, uint32_t file_sig);
+int file_resume_block_add_file(void* pkt, uint32_t file_sig, uint32_t timeout,
+    File_Verdict verdict, uint32_t file_type_id, uint8_t* signature);
+File_Verdict file_resume_block_check(void* pkt, uint32_t file_sig);
 
-#endif 
+#endif
+

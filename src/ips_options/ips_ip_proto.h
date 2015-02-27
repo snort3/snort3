@@ -25,8 +25,8 @@
 #include "treenodes.h"
 #include "snort_types.h"
 
-int GetOtnIpProto(OptTreeNode *);
-bool CheckOtnIpProto(OptTreeNode *otn, int proto);
+int GetOtnIpProto(OptTreeNode*);
+bool CheckOtnIpProto(OptTreeNode* otn, int proto);
 
 #endif
 

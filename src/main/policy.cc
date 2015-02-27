@@ -126,7 +126,7 @@ PolicyMap::~PolicyMap()
 }
 
 unsigned PolicyMap::add_shell(Shell* sh)
-{ 
+{
     unsigned idx = shells.size();
     shells.push_back(sh);
     inspection_policy.push_back(new InspectionPolicy);  // FIXIT-M need id?

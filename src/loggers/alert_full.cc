@@ -89,7 +89,7 @@ static const Parameter s_params[] =
 class FullModule : public Module
 {
 public:
-    FullModule() : Module(S_NAME, s_help, s_params) { };
+    FullModule() : Module(S_NAME, s_help, s_params) { }
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -138,7 +138,8 @@ bool FullModule::end(const char*, int, SnortConfig*)
 // logger stuff
 //-------------------------------------------------------------------------
 
-class FullLogger : public Logger {
+class FullLogger : public Logger
+{
 public:
     FullLogger(FullModule*);
 
@@ -169,17 +170,17 @@ void FullLogger::close()
         TextLog_Term(full_log);
 }
 
-void FullLogger::alert(Packet *p, const char *msg, Event *event)
+void FullLogger::alert(Packet* p, const char* msg, Event* event)
 {
     {
         TextLog_Puts(full_log, "[**] ");
 
-        if(event != NULL)
+        if (event != NULL)
         {
-                TextLog_Print(full_log, "[%lu:%lu:%lu] ",
-                        (unsigned long) event->sig_info->generator,
-                        (unsigned long) event->sig_info->id,
-                        (unsigned long) event->sig_info->rev);
+            TextLog_Print(full_log, "[%lu:%lu:%lu] ",
+                (unsigned long)event->sig_info->generator,
+                (unsigned long)event->sig_info->id,
+                (unsigned long)event->sig_info->rev);
         }
 
         if (ScAlertInterface())
@@ -188,7 +189,7 @@ void FullLogger::alert(Packet *p, const char *msg, Event *event)
             TextLog_Print(full_log, " <%s> ", iface);
         }
 
-        if(msg != NULL)
+        if (msg != NULL)
         {
             TextLog_Puts(full_log, msg);
             TextLog_Puts(full_log, " [**]\n");
@@ -199,16 +200,16 @@ void FullLogger::alert(Packet *p, const char *msg, Event *event)
         }
     }
 
-    if(p && p->has_ip())
+    if (p && p->has_ip())
     {
         LogPriorityData(full_log, event, true);
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_LOG, "Logging Alert data!\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_LOG, "Logging Alert data!\n"); );
 
     LogTimeStamp(full_log, p);
 
-    if(p && p->has_ip())
+    if (p && p->has_ip())
     {
         /* print the packet header to the alert file */
 
@@ -220,20 +221,20 @@ void FullLogger::alert(Packet *p, const char *msg, Event *event)
         LogIPHeader(full_log, p);
 
         /* if this isn't a fragment, print the other header info */
-        if(!(p->is_fragment()))
+        if (!(p->is_fragment()))
         {
-            switch(p->type())
+            switch (p->type())
             {
             case PktType::TCP:
-               LogTCPHeader(full_log, p);
+                LogTCPHeader(full_log, p);
                 break;
 
             case PktType::UDP:
-               LogUDPHeader(full_log, p);
+                LogUDPHeader(full_log, p);
                 break;
 
             case PktType::ICMP:
-               LogICMPHeader(full_log, p);
+                LogICMPHeader(full_log, p);
                 break;
 
             default:

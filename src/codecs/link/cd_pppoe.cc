@@ -18,8 +18,6 @@
 //--------------------------------------------------------------------------
 // cd_pppoe.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
 #include "protocols/packet.h"
@@ -28,7 +26,6 @@
 
 namespace
 {
-
 enum class PppoepktType
 {
     DISCOVERY,
@@ -42,10 +39,8 @@ struct PPPoEHdr
     uint8_t code;         /* pppoe code CODE_* */
     uint16_t session;     /* session id */
     uint16_t length;      /* payload length */
-                                /* payload follows */
+    /* payload follows */
 };
-
-
 
 //-------------------------------------------------------------------------
 // General PPPoEpkt module.
@@ -68,23 +63,19 @@ static const RuleMap pppoe_rules[] =
 class PPPoEModule : public CodecModule
 {
 public:
-    PPPoEModule() : CodecModule(CD_PPPOE_NAME, pppoe_help) {}
+    PPPoEModule() : CodecModule(CD_PPPOE_NAME, pppoe_help) { }
 
     const RuleMap* get_rules() const override
     { return pppoe_rules; }
 };
 
-
-
-
 class PPPoECodec : public Codec
 {
-public:
-    ~PPPoECodec() {};
+public: ~PPPoECodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override final;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                        EncState&, Buffer&) override final;
+        EncState&, Buffer&) override final;
 
 protected:
     PPPoECodec(const char* s, PppoepktType type) :
@@ -95,10 +86,7 @@ protected:
 private:
     PppoepktType ppp_type;
 };
-
-
 } // namespace
-
 
 constexpr uint16_t PPPOE_HEADER_LEN = 6;
 
@@ -124,135 +112,133 @@ const uint16_t PPPoE_TAG_AC_SYSTEM_ERROR = 0x0202;
 constexpr uint16_t PPPoE_TAG_GENERIC_ERROR = 0x0203;
 #endif
 
-
 bool PPPoECodec::decode(const RawData& raw,
-                                    CodecData& codec,
-                                    DecodeData&)
+    CodecData& codec,
+    DecodeData&)
 {
     /* do a little validation */
-    if(raw.len < PPPOE_HEADER_LEN)
+    if (raw.len < PPPOE_HEADER_LEN)
     {
         codec_event(codec, DECODE_BAD_PPPOE);
         return false;
     }
 
-
     /* lay the PPP over ethernet structure over the packet data */
     const PPPoEHdr* const pppoeh = reinterpret_cast<const PPPoEHdr*>(raw.data);
 
     /* grab out the network type */
-    switch(ppp_type)
+    switch (ppp_type)
     {
-        case PppoepktType::DISCOVERY:
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "(PPPOE Discovery) "););
-            break;
+    case PppoepktType::DISCOVERY:
+        DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "(PPPOE Discovery) "); );
+        break;
 
-        case PppoepktType::SESSION:
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "(PPPOE Session) "););
-            break;
+    case PppoepktType::SESSION:
+        DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "(PPPOE Session) "); );
+        break;
     }
 
 #ifdef DEBUG_MSGS
-    switch(pppoeh->code)
+    switch (pppoeh->code)
     {
-        case PPPoE_CODE_PADI:
-            /* The Host sends the PADI packet with the DESTINATION_ADDR set
-             * to the broadcast address.  The CODE field is set to 0x09 and
-             * the SESSION_ID MUST be set to 0x0000.
-             *
-             * The PADI packet MUST contain exactly one TAG of TAG_TYPE
-             * Service-Name, indicating the service the Host is requesting,
-             * and any number of other TAG types.  An entire PADI packet
-             * (including the PPPoE header) MUST NOT exceed 1484 octets so
-             * as to leave sufficient room for a relay agent to add a
-             * Relay-Session-Id TAG.
-             */
-            DebugMessage(DEBUG_DECODE, "Active Discovery Initiation (PADI)\n");
-            break;
+    case PPPoE_CODE_PADI:
+        /* The Host sends the PADI packet with the DESTINATION_ADDR set
+         * to the broadcast address.  The CODE field is set to 0x09 and
+         * the SESSION_ID MUST be set to 0x0000.
+         *
+         * The PADI packet MUST contain exactly one TAG of TAG_TYPE
+         * Service-Name, indicating the service the Host is requesting,
+         * and any number of other TAG types.  An entire PADI packet
+         * (including the PPPoE header) MUST NOT exceed 1484 octets so
+         * as to leave sufficient room for a relay agent to add a
+         * Relay-Session-Id TAG.
+         */
+        DebugMessage(DEBUG_DECODE, "Active Discovery Initiation (PADI)\n");
+        break;
 
-        case PPPoE_CODE_PADO:
-            /* When the Access Concentrator receives a PADI that it can
-             * serve, it replies by sending a PADO packet.  The
-             * DESTINATION_ADDR is the unicast address of the Host that
-             * sent the PADI.  The CODE field is set to 0x07 and the
-             * SESSION_ID MUST be set to 0x0000.
-             *
-             * The PADO packet MUST contain one AC-Name TAG containing the
-             * Access Concentrator's name, a Service-Name TAG identical to
-             * the one in the PADI, and any number of other Service-Name
-             * TAGs indicating other services that the Access Concentrator
-             * offers.  If the Access Concentrator can not serve the PADI
-             * it MUST NOT respond with a PADO.
-             */
-            DebugMessage(DEBUG_DECODE, "Active Discovery Offer (PADO)\n");
-            break;
+    case PPPoE_CODE_PADO:
+        /* When the Access Concentrator receives a PADI that it can
+         * serve, it replies by sending a PADO packet.  The
+         * DESTINATION_ADDR is the unicast address of the Host that
+         * sent the PADI.  The CODE field is set to 0x07 and the
+         * SESSION_ID MUST be set to 0x0000.
+         *
+         * The PADO packet MUST contain one AC-Name TAG containing the
+         * Access Concentrator's name, a Service-Name TAG identical to
+         * the one in the PADI, and any number of other Service-Name
+         * TAGs indicating other services that the Access Concentrator
+         * offers.  If the Access Concentrator can not serve the PADI
+         * it MUST NOT respond with a PADO.
+         */
+        DebugMessage(DEBUG_DECODE, "Active Discovery Offer (PADO)\n");
+        break;
 
-        case PPPoE_CODE_PADR:
-            /* Since the PADI was broadcast, the Host may receive more than
-             * one PADO.  The Host looks through the PADO packets it receives
-             * and chooses one.  The choice can be based on the AC-Name or
-             * the Services offered.  The Host then sends one PADR packet
-             * to the Access Concentrator that it has chosen.  The
-             * DESTINATION_ADDR field is set to the unicast Ethernet address
-             * of the Access Concentrator that sent the PADO.  The CODE
-             * field is set to 0x19 and the SESSION_ID MUST be set to 0x0000.
-             *
-             * The PADR packet MUST contain exactly one TAG of TAG_TYPE
-             * Service-Name, indicating the service the Host is requesting,
-             * and any number of other TAG types.
-             */
-            DebugMessage(DEBUG_DECODE, "Active Discovery Request (PADR)\n");
-            break;
+    case PPPoE_CODE_PADR:
+        /* Since the PADI was broadcast, the Host may receive more than
+         * one PADO.  The Host looks through the PADO packets it receives
+         * and chooses one.  The choice can be based on the AC-Name or
+         * the Services offered.  The Host then sends one PADR packet
+         * to the Access Concentrator that it has chosen.  The
+         * DESTINATION_ADDR field is set to the unicast Ethernet address
+         * of the Access Concentrator that sent the PADO.  The CODE
+         * field is set to 0x19 and the SESSION_ID MUST be set to 0x0000.
+         *
+         * The PADR packet MUST contain exactly one TAG of TAG_TYPE
+         * Service-Name, indicating the service the Host is requesting,
+         * and any number of other TAG types.
+         */
+        DebugMessage(DEBUG_DECODE, "Active Discovery Request (PADR)\n");
+        break;
 
-        case PPPoE_CODE_PADS:
-            /* When the Access Concentrator receives a PADR packet, it
-             * prepares to begin a PPP session.  It generates a unique
-             * SESSION_ID for the PPPoE session and replies to the Host with
-             * a PADS packet.  The DESTINATION_ADDR field is the unicast
-             * Ethernet address of the Host that sent the PADR.  The CODE
-             * field is set to 0x65 and the SESSION_ID MUST be set to the
-             * unique value generated for this PPPoE session.
-             *
-             * The PADS packet contains exactly one TAG of TAG_TYPE
-             * Service-Name, indicating the service under which Access
-             * Concentrator has accepted the PPPoE session, and any number
-             * of other TAG types.
-             *
-             * If the Access Concentrator does not like the Service-Name in
-             * the PADR, then it MUST reply with a PADS containing a TAG of
-             * TAG_TYPE Service-Name-Error (and any number of other TAG
-             * types).  In this case the SESSION_ID MUST be set to 0x0000.
-             */
-            DebugMessage(DEBUG_DECODE, "Active Discovery "
-                         "Session-confirmation (PADS)\n");
-            break;
+    case PPPoE_CODE_PADS:
+        /* When the Access Concentrator receives a PADR packet, it
+         * prepares to begin a PPP session.  It generates a unique
+         * SESSION_ID for the PPPoE session and replies to the Host with
+         * a PADS packet.  The DESTINATION_ADDR field is the unicast
+         * Ethernet address of the Host that sent the PADR.  The CODE
+         * field is set to 0x65 and the SESSION_ID MUST be set to the
+         * unique value generated for this PPPoE session.
+         *
+         * The PADS packet contains exactly one TAG of TAG_TYPE
+         * Service-Name, indicating the service under which Access
+         * Concentrator has accepted the PPPoE session, and any number
+         * of other TAG types.
+         *
+         * If the Access Concentrator does not like the Service-Name in
+         * the PADR, then it MUST reply with a PADS containing a TAG of
+         * TAG_TYPE Service-Name-Error (and any number of other TAG
+         * types).  In this case the SESSION_ID MUST be set to 0x0000.
+         */
+        DebugMessage(DEBUG_DECODE, "Active Discovery "
+            "Session-confirmation (PADS)\n");
+        break;
 
-        case PPPoE_CODE_PADT:
-            /* This packet may be sent anytime after a session is established
-             * to indicate that a PPPoE session has been terminated.  It may
-             * be sent by either the Host or the Access Concentrator.  The
-             * DESTINATION_ADDR field is a unicast Ethernet address, the
-             * CODE field is set to 0xa7 and the SESSION_ID MUST be set to
-             * indicate which session is to be terminated.  No TAGs are
-             * required.
-             *
-             * When a PADT is received, no further PPP traffic is allowed to
-             * be sent using that session.  Even normal PPP termination
-             * packets MUST NOT be sent after sending or receiving a PADT.
-             * A PPP peer SHOULD use the PPP protocol itself to bring down a
-             * PPPoE session, but the PADT MAY be used when PPP can not be
-             * used.
-             */
-            DebugMessage(DEBUG_DECODE, "Active Discovery Terminate (PADT)\n");
-            break;
+    case PPPoE_CODE_PADT:
+        /* This packet may be sent anytime after a session is established
+         * to indicate that a PPPoE session has been terminated.  It may
+         * be sent by either the Host or the Access Concentrator.  The
+         * DESTINATION_ADDR field is a unicast Ethernet address, the
+         * CODE field is set to 0xa7 and the SESSION_ID MUST be set to
+         * indicate which session is to be terminated.  No TAGs are
+         * required.
+         *
+         * When a PADT is received, no further PPP traffic is allowed to
+         * be sent using that session.  Even normal PPP termination
+         * packets MUST NOT be sent after sending or receiving a PADT.
+         * A PPP peer SHOULD use the PPP protocol itself to bring down a
+         * PPPoE session, but the PADT MAY be used when PPP can not be
+         * used.
+         */
+        DebugMessage(DEBUG_DECODE, "Active Discovery Terminate (PADT)\n");
+        break;
 
-        case PPPoE_CODE_SESS:
-            DebugMessage(DEBUG_DECODE, "Session Packet (SESS)\n");
-            break;
+    case PPPoE_CODE_SESS:
+        DebugMessage(DEBUG_DECODE, "Session Packet (SESS)\n");
+        break;
 
-        default:
-            DebugMessage(DEBUG_DECODE, "(Unknown)\n");
-            break;
+    default:
+        DebugMessage(DEBUG_DECODE, "(Unknown)\n");
+        break;
     }
 #else
     UNUSED(pppoeh);
@@ -266,23 +252,21 @@ bool PPPoECodec::decode(const RawData& raw,
 
     if (ppp_type == PppoepktType::DISCOVERY)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Returning early on PPPOE discovery packet\n"););
+        DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Returning early on PPPOE discovery packet\n"); );
         return true;
     }
-
 
     codec.lyr_len = PPPOE_HEADER_LEN;
     codec.next_prot_id = ETHERTYPE_PPP;
     return true;
 }
 
-
 /******************************************************************
  ******************** E N C O D E R  ******************************
  ******************************************************************/
 
 bool PPPoECodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                        EncState&, Buffer& buf)
+    EncState&, Buffer& buf)
 {
     if (!buf.allocate(raw_len))
         return false;
@@ -294,17 +278,14 @@ bool PPPoECodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
     return true;
 }
 
-
 /*******************************************************************
  *******************************************************************
  *************                  CODECS              ****************
  *******************************************************************
  *******************************************************************/
 
-
 namespace
 {
-
 const uint16_t ETHERNET_TYPE_PPPoE_DISC =  0x8863; /* discovery stage */
 const uint16_t ETHERNET_TYPE_PPPoE_SESS =  0x8864; /* session stage */
 
@@ -314,37 +295,31 @@ const uint16_t ETHERNET_TYPE_PPPoE_SESS =  0x8864; /* session stage */
 #define CD_PPPOEPKT_SESS_NAME "pppoe_sess"
 #define CD_PPPOEPKT_SESS_HELP "support for point-to-point session"
 
-
 /*  'decode' and 'encode' functions are in the PPPoECodec */
 class PPPoEDiscCodec : public PPPoECodec
 {
 public:
-    PPPoEDiscCodec() : PPPoECodec(CD_PPPOEPKT_DISC_NAME, PppoepktType::DISCOVERY){};
-    ~PPPoEDiscCodec() {};
+    PPPoEDiscCodec() : PPPoECodec(CD_PPPOEPKT_DISC_NAME, PppoepktType::DISCOVERY) { }
+    ~PPPoEDiscCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override
     { v.push_back(ETHERNET_TYPE_PPPoE_DISC); }
 };
 
-
 class PPPoESessCodec : public PPPoECodec
 {
 public:
     PPPoESessCodec() : PPPoECodec(CD_PPPOEPKT_SESS_NAME, PppoepktType::SESSION) { }
-    ~PPPoESessCodec() {}
+    ~PPPoESessCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override
     { v.push_back(ETHERNET_TYPE_PPPoE_SESS); }
 };
-
-
 } // namespace
 
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
-
-
 
 // ***  NOTE: THE CODEC AND MODULE HAVE A DIFFERENT NAME!
 // since the module is only creating a rule stub and is NOT
@@ -362,9 +337,8 @@ static Codec* disc_ctor(Module*)
 static Codec* sess_ctor(Module*)
 { return new PPPoESessCodec(); }
 
-static void pppoe_dtor(Codec *cd)
+static void pppoe_dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi pppoepkt_disc_api =
 {
@@ -385,7 +359,6 @@ static const CodecApi pppoepkt_disc_api =
     pppoe_dtor,
 };
 
-
 static const CodecApi pppoepkt_sess_api =
 {
     {
@@ -405,7 +378,6 @@ static const CodecApi pppoepkt_sess_api =
     pppoe_dtor,
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -417,3 +389,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 const BaseApi* cd_pppoepkt_disc = &pppoepkt_disc_api.base;
 const BaseApi* cd_pppoepkt_sess = &pppoepkt_sess_api.base;
 #endif
+

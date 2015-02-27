@@ -30,7 +30,7 @@ void parse_rule_init();
 void parse_rule_term();
 void parse_rule_print();
 
-void parse_rule(struct SnortConfig*, const char *args, RuleType, ListHead*);
+void parse_rule(struct SnortConfig*, const char* args, RuleType, ListHead*);
 
 void parse_rule_type(SnortConfig*, const char*, RuleTreeNode&);
 void parse_rule_proto(SnortConfig*, const char*, RuleTreeNode&);

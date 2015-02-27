@@ -64,7 +64,7 @@ class TagModule : public Module
 {
 public:
     TagModule() : Module(s_name, s_help, s_params)
-    { tag = nullptr; };
+    { tag = nullptr; }
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -104,7 +104,7 @@ bool TagModule::set(const char*, Value& v, SnortConfig*)
     if ( v.is("~") )
     {
         // FIXIT-M -- confusing
-        switch(v.get_long())
+        switch (v.get_long())
         {
         case 0:
             tag->tag_type = TAG_SESSION;
@@ -119,7 +119,6 @@ bool TagModule::set(const char*, Value& v, SnortConfig*)
             break;
         default:
             return false;
-
         }
     }
     else if ( v.is("packets") )

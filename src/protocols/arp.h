@@ -17,14 +17,11 @@
 //--------------------------------------------------------------------------
 // arp.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifndef PROTOCOLS_ARP_H
 #define PROTOCOLS_ARP_H
 
 namespace arp
 {
-
-
 struct ARPHdr
 {
     uint16_t ar_hrd;       /* format of hardware address   */
@@ -47,16 +44,13 @@ struct EtherARP
     uint8_t arp_tpa[4];    /* target protocol address */
 };
 
-
 constexpr uint16_t ETHERARP_HDR_LEN = 28; /*  sizeof EtherARP != 28 */
-
 } // namespace arp
 
 constexpr uint16_t ARPOP_REQUEST = 1;  /* ARP request  */
 constexpr uint16_t ARPOP_REPLY = 2;    /* ARP reply    */
 constexpr uint16_t ARPOP_RREQUEST = 3; /* RARP request */
 constexpr uint16_t ARPOP_RREPLY = 4;   /* RARP reply   */
-
 
 #endif
 

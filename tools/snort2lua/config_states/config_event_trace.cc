@@ -26,17 +26,15 @@
 
 namespace config
 {
-
-namespace {
-
+namespace
+{
 class EventTrace : public ConversionState
 {
 public:
-    EventTrace(Converter& c) : ConversionState(c) {};
-    virtual ~EventTrace() {};
+    EventTrace(Converter& c) : ConversionState(c) { }
+    virtual ~EventTrace() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool EventTrace::convert(std::istringstream& data_stream)
@@ -49,7 +47,7 @@ bool EventTrace::convert(std::istringstream& data_stream)
     table_api.open_table("event_trace");
 
     while (util::get_string(data_stream, keyword, ", ") &&
-            util::get_string(data_stream, arg, ", "))
+        util::get_string(data_stream, arg, ", "))
     {
         bool tmpval = true;
 
@@ -61,7 +59,6 @@ bool EventTrace::convert(std::istringstream& data_stream)
 
         else
             tmpval = false;
-
 
         if (retval && !tmpval)
             retval = false;
@@ -88,5 +85,5 @@ static const ConvertMap event_trace_api =
 };
 
 const ConvertMap* event_trace_map = &event_trace_api;
-
 } // namespace config
+

@@ -29,16 +29,18 @@
 
 class NHttpTestInput;
 
-class NHttpTestManager {
+class NHttpTestManager
+{
 public:
-    static bool use_test_input() { return test_input; };
+    static bool use_test_input() { return test_input; }
     static void activate_test_input();
-    static void activate_test_output() { test_output = true; };
-    static NHttpTestInput* get_test_input_source() { return test_input_source; };
+    static void activate_test_output() { test_output = true; }
+    static NHttpTestInput* get_test_input_source() { return test_input_source; }
     static void update_test_number(int64_t new_test_number);
-    static bool use_test_output() { return test_output || test_input; };
-    static FILE* get_output_file() { return (test_out != nullptr) ? test_out : stdout; };
-    static int64_t get_test_number() { return test_number; };
+    static bool use_test_output() { return test_output || test_input; }
+    static FILE* get_output_file() { return (test_out != nullptr) ? test_out : stdout; }
+    static int64_t get_test_number() { return test_number; }
+
 private:
     NHttpTestManager() = delete;
     // Test input read from file
@@ -54,22 +56,4 @@ private:
 };
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

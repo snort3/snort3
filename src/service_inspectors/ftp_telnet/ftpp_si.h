@@ -72,7 +72,6 @@
 typedef struct s_FTP_TELNET_SESSION
 {
     int proto;
-
 } FTP_TELNET_SESSION;
 
 /*
@@ -86,25 +85,24 @@ struct TELNET_SESSION
     FTP_TELNET_SESSION ft_ssn;
 
     /* The client configuration for this session if its FTP */
-    TELNET_PROTO_CONF *telnet_conf;
+    TELNET_PROTO_CONF* telnet_conf;
 
     /* Number of consecutive are-you-there commands seen. */
     int consec_ayt;
 
     int encr_state;
-
 };
 
 class TelnetFlowData : public FlowData
 {
 public:
     TelnetFlowData() : FlowData(flow_id)
-    { memset(&session, 0, sizeof(session)); };
+    { memset(&session, 0, sizeof(session)); }
 
     ~TelnetFlowData() { }
 
     static void init()
-    { flow_id = FlowData::get_flow_id(); };
+    { flow_id = FlowData::get_flow_id(); }
 
 public:
     static unsigned flow_id;
@@ -151,28 +149,27 @@ struct FTP_SESSION
     FTP_SERVER server;
 
     /* The client configuration for this session if its FTP */
-    FTP_CLIENT_PROTO_CONF *client_conf;
+    FTP_CLIENT_PROTO_CONF* client_conf;
 
     /* The server configuration for this session if its FTP */
-    FTP_SERVER_PROTO_CONF *server_conf;
+    FTP_SERVER_PROTO_CONF* server_conf;
 
     /* The data channel info */
     int data_chan_state;
     int data_chan_index;
     int data_xfer_index;
     bool data_xfer_dir;
-    sfip_t      clientIP;
+    sfip_t clientIP;
     uint16_t clientPort;
-    sfip_t      serverIP;
+    sfip_t serverIP;
     uint16_t serverPort;
 
     /* A file is being transfered on ftp-data channel */
-    char *filename;
+    char* filename;
     int file_xfer_info; /* -1: ignore, 0: unknown, >0: filename length */
 
     /* Command/data channel encryption */
     int encr_state;
-
 };
 
 void FTPFreesession(FTP_SESSION*);
@@ -181,13 +178,13 @@ class FtpFlowData : public FlowData
 {
 public:
     FtpFlowData() : FlowData(flow_id)
-    { memset(&session, 0, sizeof(session)); };
+    { memset(&session, 0, sizeof(session)); }
 
     ~FtpFlowData()
-    { FTPFreesession(&session); };
+    { FTPFreesession(&session); }
 
     static void init()
-    { flow_id = FlowData::get_flow_id(); };
+    { flow_id = FlowData::get_flow_id(); }
 
 public:
     static unsigned flow_id;
@@ -195,7 +192,8 @@ public:
 };
 
 /* FTP-Data Transfer Modes */
-enum {
+enum
+{
     FTPP_XFER_PASSIVE = 0,
     FTPP_XFER_ACTIVE  = 1
 };
@@ -204,7 +202,7 @@ struct FTP_DATA_SESSION
 {
     FTP_TELNET_SESSION ft_ssn;
     FlowKey ftp_key;
-    char *filename;
+    char* filename;
     int data_chan;
     int file_xfer_info;
     FilePosition position;
@@ -220,7 +218,7 @@ public:
     ~FtpDataFlowData();
 
     static void init()
-    { flow_id = FlowData::get_flow_id(); };
+    { flow_id = FlowData::get_flow_id(); }
 
     void handle_eof(Packet*) override;
 
@@ -251,22 +249,21 @@ struct FTPP_SI_INPUT
     unsigned short dport;
     unsigned char pdir;
     unsigned char pproto;
-
 };
 
-int FTPGetPacketDir(Packet *);
+int FTPGetPacketDir(Packet*);
 
 /* FTP-Data file processing */
-FTP_DATA_SESSION * FTPDatasessionNew(Packet *p);
-void FTPDatasessionFree(void *p_ssn);
+FTP_DATA_SESSION* FTPDatasessionNew(Packet* p);
+void FTPDatasessionFree(void* p_ssn);
 
-bool FTPDataDirection(Packet *p, FTP_DATA_SESSION *ftpdata);
+bool FTPDataDirection(Packet* p, FTP_DATA_SESSION* ftpdata);
 
 int TelnetsessionInspection(
-    Packet*, TELNET_PROTO_CONF*, TELNET_SESSION**, FTPP_SI_INPUT*, int *piInspectMode);
+    Packet*, TELNET_PROTO_CONF*, TELNET_SESSION**, FTPP_SI_INPUT*, int* piInspectMode);
 
 int FTPsessionInspection(
-    Packet*, FTP_SESSION**, FTPP_SI_INPUT*, int *piInspectMode);
+    Packet*, FTP_SESSION**, FTPP_SI_INPUT*, int* piInspectMode);
 
 int SetSiInput(FTPP_SI_INPUT*, Packet*);
 

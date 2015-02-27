@@ -51,17 +51,17 @@ struct PAF_State     // per session direction
 void s5_paf_setup(PAF_State*);  // called at session start
 void s5_paf_clear(PAF_State*);  // called at session end
 
-static inline uint32_t s5_paf_position (PAF_State* ps)
+static inline uint32_t s5_paf_position(PAF_State* ps)
 {
     return ps->seq;
 }
 
-static inline uint32_t s5_paf_initialized (PAF_State* ps)
+static inline uint32_t s5_paf_initialized(PAF_State* ps)
 {
     return ( ps->paf != StreamSplitter::START );
 }
 
-static inline uint32_t s5_paf_active (PAF_State* ps)
+static inline uint32_t s5_paf_active(PAF_State* ps)
 {
     return ( ps->paf != StreamSplitter::ABORT );
 }

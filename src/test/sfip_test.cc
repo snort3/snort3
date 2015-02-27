@@ -21,15 +21,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
 #endif
 
 #include <check.h>
-
 
 #if defined(__clang__)
 #pragma clang diagnostic pop
@@ -42,7 +39,8 @@
 
 static int s_debug = 0;
 
-static const char* const codes[] = {
+static const char* const codes[] =
+{
     "success",
     "failure",
     "lesser",
@@ -62,7 +60,8 @@ static const char* const codes[] = {
     "conflict"
 };
 
-typedef struct {
+typedef struct
+{
     const char* func;
     const char* arg1;
     const char* arg2;
@@ -71,7 +70,8 @@ typedef struct {
 
 //---------------------------------------------------------------
 
-static FuncTest ftests[] = {
+static FuncTest ftests[] =
+{
     { "sfip_pton", "192.168.0.1", "192.168.0.1", SFIP_SUCCESS },
     { "sfip_pton", "255.255.255.255/21", "255.255.248.0", SFIP_SUCCESS },
     { "sfip_pton", "1.1.255.255      255.255.248.0", "1.1.248.0", SFIP_SUCCESS },
@@ -206,14 +206,14 @@ static FuncTest ftests[] = {
     { "sfip_fast_cont6", "ffff:ffff::1", "ffff::ffff:1/8", SFIP_FAILURE },
     { "sfip_fast_cont6", "ffff::ffff:1/8", "ffff:ffff::1", SFIP_SUCCESS },
     { "sfip_fast_cont6", "ffee:ddcc:bbaa:9988:7766:5544:3322:1100/32",
-                         "ffee:ddcc:bbaa:9988:7766:5544:3322:1100", SFIP_SUCCESS },
+      "ffee:ddcc:bbaa:9988:7766:5544:3322:1100", SFIP_SUCCESS },
     { "sfip_fast_cont6", "1001:db8:85a3::/28", "1001:db0::", SFIP_SUCCESS },
     { "sfip_fast_cont6", "1001:db8:85a3::/29", "1001:db0::", SFIP_FAILURE },
 
     { "sfip_contains", "ffff:ffff::1", "ffff::ffff:1/8", SFIP_NOT_CONTAINS },
     { "sfip_contains", "ffff::ffff:1/8", "ffff:ffff::1", SFIP_CONTAINS },
     { "sfip_contains", "ffee:ddcc:bbaa:9988:7766:5544:3322:1100/32",
-                       "ffee:ddcc:bbaa:9988:7766:5544:3322:1100", SFIP_CONTAINS },
+      "ffee:ddcc:bbaa:9988:7766:5544:3322:1100", SFIP_CONTAINS },
     { "sfip_contains", "1001:db8:85a3::/28", "1001:db0::", SFIP_CONTAINS },
     { "sfip_contains", "1001:db8:85a3::/29", "1001:db0::", SFIP_NOT_CONTAINS },
 
@@ -221,11 +221,11 @@ static FuncTest ftests[] = {
       "2001:0db8:0000:0000:0000:0000:1428:57ab", SFIP_ARG_ERR },
 
     { "sfip_obfuscate", "::",
-                        "0000:0000:0000:0000:0000:0000:0000:0000", SFIP_EQUAL },
+      "0000:0000:0000:0000:0000:0000:0000:0000", SFIP_EQUAL },
     { "sfip_obfuscate", "::/64",
-                        "0000:0000:0000:0000:0004:0003:0002:0001", SFIP_EQUAL },
+      "0000:0000:0000:0000:0004:0003:0002:0001", SFIP_EQUAL },
     { "sfip_obfuscate", "f0:e0:d0:c0::8/64",
-                        "00f0:00e0:00d0:00c0:0004:0003:0002:0001", SFIP_EQUAL },
+      "00f0:00e0:00d0:00c0:0004:0003:0002:0001", SFIP_EQUAL },
     { "sfip_obfuscate", "9.8.7.6", "9.8.7.6", SFIP_EQUAL },
     { "sfip_obfuscate", "0.0.0.8/16", "0.0.2.1", SFIP_EQUAL },
     { "sfip_obfuscate", "192.168.0.0/16", "192.168.2.1", SFIP_EQUAL }
@@ -235,14 +235,18 @@ static FuncTest ftests[] = {
 
 //---------------------------------------------------------------
 
-static int RunFunc (const char* func, const char* arg1, const char* arg2) {
+static int RunFunc(const char* func, const char* arg1, const char* arg2)
+{
     sfip_t ip1, ip2;
     int result = SFIP_FAILURE;
 
-    if ( arg1 ) sfip_pton(arg1, &ip1);
-    if ( arg2 ) sfip_pton(arg2, &ip2);
+    if ( arg1 )
+        sfip_pton(arg1, &ip1);
+    if ( arg2 )
+        sfip_pton(arg2, &ip2);
 
-    if ( !strcmp(func, "sfip_pton") ) {
+    if ( !strcmp(func, "sfip_pton") )
+    {
         char buf1[INET6_ADDRSTRLEN];
         char buf2[INET6_ADDRSTRLEN];
 
@@ -250,61 +254,81 @@ static int RunFunc (const char* func, const char* arg1, const char* arg2) {
         sfip_ntop(&ip2, buf2, sizeof(buf2));
 
         result = strcmp(buf1, buf2) ? SFIP_FAILURE : SFIP_SUCCESS;
-
-    } else if ( !strcmp(func, "sfip_size") ) {
+    }
+    else if ( !strcmp(func, "sfip_size") )
+    {
         result = sfip_size(&ip1);
         result = (result == atoi(arg2)) ? SFIP_SUCCESS : SFIP_FAILURE;
-
-    } else if ( !strcmp(func, "sfip_contains") ) {
+    }
+    else if ( !strcmp(func, "sfip_contains") )
+    {
         result = sfip_contains(&ip1, &ip2);
-
-    } else if ( !strcmp(func, "sfip_is_set") ) {
+    }
+    else if ( !strcmp(func, "sfip_is_set") )
+    {
         result = !sfip_is_set(&ip1);
-
-    } else if ( !strcmp(func, "sfip_is_loopback") ) {
+    }
+    else if ( !strcmp(func, "sfip_is_loopback") )
+    {
         result = !sfip_is_loopback(&ip1);
-
-    } else if ( !strcmp(func, "sfip_ismapped") ) {
+    }
+    else if ( !strcmp(func, "sfip_ismapped") )
+    {
         result = !sfip_ismapped(&ip1);
-
-    } else if ( !strcmp(func, "_ip6_cmp") ) {
+    }
+    else if ( !strcmp(func, "_ip6_cmp") )
+    {
         result = _ip6_cmp(&ip1, &ip2);
-
-    } else if ( !strcmp(func, "sfip_compare") ) {
+    }
+    else if ( !strcmp(func, "sfip_compare") )
+    {
         result = sfip_compare(&ip1, &ip2);
-
-    } else if ( !strcmp(func, "sfip_compare_unset") ) {
+    }
+    else if ( !strcmp(func, "sfip_compare_unset") )
+    {
         result = sfip_compare_unset(&ip1, &ip2);
-
-    } else if ( !strcmp(func, "sfip_fast_lt4") ) {
+    }
+    else if ( !strcmp(func, "sfip_fast_lt4") )
+    {
         result = !sfip_fast_lt4(&ip1, &ip2);
-
-    } else if ( !strcmp(func, "sfip_fast_gt4") ) {
+    }
+    else if ( !strcmp(func, "sfip_fast_gt4") )
+    {
         result = !sfip_fast_gt4(&ip1, &ip2);
-
-    } else if ( !strcmp(func, "sfip_fast_eq4") ) {
+    }
+    else if ( !strcmp(func, "sfip_fast_eq4") )
+    {
         result = !sfip_fast_eq4(&ip1, &ip2);
-
-    } else if ( !strcmp(func, "sfip_fast_lt6") ) {
+    }
+    else if ( !strcmp(func, "sfip_fast_lt6") )
+    {
         result = !sfip_fast_lt6(&ip1, &ip2);
-
-    } else if ( !strcmp(func, "sfip_fast_gt6") ) {
+    }
+    else if ( !strcmp(func, "sfip_fast_gt6") )
+    {
         result = !sfip_fast_gt6(&ip1, &ip2);
-
-    } else if ( !strcmp(func, "sfip_fast_eq6") ) {
+    }
+    else if ( !strcmp(func, "sfip_fast_eq6") )
+    {
         result = !sfip_fast_eq6(&ip1, &ip2);
-
-    } else if ( !strcmp(func, "sfip_fast_cont4") ) {
+    }
+    else if ( !strcmp(func, "sfip_fast_cont4") )
+    {
         result = !sfip_fast_cont4(&ip1, &ip2);
-
-    } else if ( !strcmp(func, "sfip_fast_cont6") ) {
+    }
+    else if ( !strcmp(func, "sfip_fast_cont6") )
+    {
         result = !sfip_fast_cont6(&ip1, &ip2);
-
-    } else if ( !strcmp(func, "sfip_obfuscate") ) {
+    }
+    else if ( !strcmp(func, "sfip_obfuscate") )
+    {
         sfip_t ip;
-        if ( ip1.family == AF_INET ) {
+        if ( ip1.family == AF_INET )
+        {
             sfip_pton("4.3.2.1", &ip);
-        } else {
+        }
+        else
+        {
             sfip_pton("8:7:6:5:4:3:2:1", &ip);
         }
         sfip_obfuscate(&ip1, &ip);
@@ -315,7 +339,8 @@ static int RunFunc (const char* func, const char* arg1, const char* arg2) {
 
 //---------------------------------------------------------------
 
-static int FuncCheck (int i) {
+static int FuncCheck(int i)
+{
     FuncTest* f = ftests + i;
     int result;
 
@@ -327,10 +352,12 @@ static int FuncCheck (int i) {
     code = (0 <= result && (size_t)result < sizeof(codes)/sizeof(code[0])) ?
         codes[result] : "uh oh";
 
-    if ( result != f->expected ) {
+    if ( result != f->expected )
+    {
         status = "Failed";
     }
-    if ( result != f->expected || s_debug ) {
+    if ( result != f->expected || s_debug )
+    {
         if ( f->arg2 )
             printf("[%d] %s: %s(%s, %s) = %s\n",
                 i, status, f->func, f->arg1, f->arg2, code);
@@ -341,21 +368,27 @@ static int FuncCheck (int i) {
     return result == f->expected;
 }
 
-static int AllocCheck (int i) {
+static int AllocCheck(int i)
+{
     FuncTest* f = ftests + i;
     SFIP_RET status;
-    sfip_t* pip1, *pip2;
+    sfip_t* pip1, * pip2;
 
     pip1 = sfip_alloc(f->arg1, &status);
-    if ( !pip1 || status != SFIP_SUCCESS ) return 0;
+    if ( !pip1 || status != SFIP_SUCCESS )
+        return 0;
 
-    if ( f->arg2 ) {
+    if ( f->arg2 )
+    {
         pip2 = sfip_alloc(f->arg2, &status);
-    } else {
+    }
+    else
+    {
         unsigned int i = 0xffffffff;
         pip2 = sfip_alloc_raw(&i, AF_INET, &status);
     }
-    if ( !pip2 || status != SFIP_SUCCESS ) return 0;
+    if ( !pip2 || status != SFIP_SUCCESS )
+        return 0;
 
     sfip_free(pip1);
     sfip_free(pip2);
@@ -363,25 +396,30 @@ static int AllocCheck (int i) {
     return 1;
 }
 
-static int RawCheck (int i) {
+static int RawCheck(int i)
+{
     SFIP_RET status;
     uint8_t addr[16];
-    const char* s, *exp;
+    const char* s, * exp;
     size_t j;
     sfip_t* pip;
 
-    for ( j = 0; j < sizeof(addr); j++ ) 
+    for ( j = 0; j < sizeof(addr); j++ )
         // avoid leading zero confusion
         addr[j] = j | (j % 2 ? 0x00 : 0x80);
 
-    if ( i ) {
+    if ( i )
+    {
         pip = sfip_alloc_raw(addr, AF_INET6, &status);
         exp = "8001:8203:8405:8607:8809:8a0b:8c0d:8e0f";
-    } else {
+    }
+    else
+    {
         pip = sfip_alloc_raw(addr, AF_INET, &status);
         exp = "128.1.130.3";
     }
-    if ( status != SFIP_SUCCESS ) return 0;
+    if ( status != SFIP_SUCCESS )
+        return 0;
 
     s = sfip_to_str(pip);
     sfip_free(pip);
@@ -389,7 +427,8 @@ static int RawCheck (int i) {
     return !strcasecmp(s, exp);
 }
 
-static int SetCheck (int i) {
+static int SetCheck(int i)
+{
     FuncTest* f = ftests + i;
     SFIP_RET status;
     sfip_t ip1, ip2;
@@ -401,7 +440,8 @@ static int SetCheck (int i) {
     return (status == SFIP_SUCCESS) && !memcmp(&ip1, &ip2, sizeof(ip1));
 }
 
-static int CopyCheck (int i) {
+static int CopyCheck(int i)
+{
     FuncTest* f = ftests + i;
     SFIP_RET status;
     sfip_t ip1, ip2;
@@ -422,30 +462,26 @@ START_TEST (test_funcs)
 {
     fail_unless(FuncCheck(_i) == 1, "FuncCheck()");
 }
-END_TEST
-
-START_TEST (test_alloc)
+END_TEST START_TEST(test_alloc)
 {
     fail_unless(AllocCheck(_i) == 1, "AllocCheck()");
 }
-END_TEST
 
-START_TEST (test_raw)
+END_TEST START_TEST(test_raw)
 {
     fail_unless(RawCheck(_i) == 1, "RawCheck()");
 }
-END_TEST
 
-START_TEST (test_set)
+END_TEST START_TEST(test_set)
 {
     fail_unless(SetCheck(_i) == 1, "SetCheck()");
 }
-END_TEST
 
-START_TEST (test_copy)
+END_TEST START_TEST(test_copy)
 {
     fail_unless(CopyCheck(_i) == 1, "CopyCheck()");
 }
+
 END_TEST
 
 Suite* TEST_SUITE_sfip(void)

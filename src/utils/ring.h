@@ -27,7 +27,8 @@
 #include "ring_logic.h"
 
 template <typename T>
-class Ring {
+class Ring
+{
 public:
     Ring<T>(int size);
     ~Ring<T>();
@@ -63,33 +64,33 @@ Ring<T>::~Ring ()
 }
 
 template <typename T>
-T* Ring<T>::read ()
+T* Ring<T>::read()
 {
     int ix = logic.read();
     return (ix < 0) ? nullptr : store + ix;
 }
 
 template <typename T>
-T* Ring<T>::write ()
+T* Ring<T>::write()
 {
     int ix = logic.write();
     return (ix < 0) ? nullptr : store + ix;
 }
 
 template <typename T>
-bool Ring<T>::push ()
+bool Ring<T>::push()
 {
     return logic.push();
 }
 
 template <typename T>
-bool Ring<T>::pop ()
+bool Ring<T>::pop()
 {
     return logic.pop();
 }
 
 template <typename T>
-T Ring<T>::get (T v)
+T Ring<T>::get(T v)
 {
     T* p = read();
     if ( !p )
@@ -100,7 +101,7 @@ T Ring<T>::get (T v)
 }
 
 template <typename T>
-bool Ring<T>::put (T v)
+bool Ring<T>::put(T v)
 {
     T* p = write();
     if ( !p )
@@ -111,19 +112,19 @@ bool Ring<T>::put (T v)
 }
 
 template <typename T>
-int Ring<T>::count ()
+int Ring<T>::count()
 {
     return logic.count();
 }
 
 template <typename T>
-bool Ring<T>::full ()
+bool Ring<T>::full()
 {
     return logic.full();
 }
 
 template <typename T>
-bool Ring<T>::empty ()
+bool Ring<T>::empty()
 {
     return logic.empty();
 }

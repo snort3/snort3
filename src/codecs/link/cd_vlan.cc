@@ -17,8 +17,6 @@
 //--------------------------------------------------------------------------
 // cd_vlan.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -37,7 +35,6 @@
 
 namespace
 {
-
 static const RuleMap vlan_rules[] =
 {
     { DECODE_BAD_VLAN, "bad VLAN frame" },
@@ -49,64 +46,56 @@ static const RuleMap vlan_rules[] =
 class VlanModule : public CodecModule
 {
 public:
-    VlanModule() : CodecModule(CD_VLAN_NAME, CD_VLAN_HELP) {}
+    VlanModule() : CodecModule(CD_VLAN_NAME, CD_VLAN_HELP) { }
 
     const RuleMap* get_rules() const override
     { return vlan_rules; }
 };
 
-
 class VlanCodec : public Codec
 {
 public:
-    VlanCodec() : Codec(CD_VLAN_NAME){};
-    ~VlanCodec(){};
+    VlanCodec() : Codec(CD_VLAN_NAME) { }
+    ~VlanCodec() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
 
-
 constexpr unsigned int ETHERNET_MAX_LEN_ENCAP = 1518;    /* 802.3 (+LLC) or ether II ? */
-
 } // namespace
-
 
 void VlanCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(ETHERTYPE_8021Q);
 }
 
-
 bool VlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-    if(raw.len < sizeof(vlan::VlanTagHdr))
+    if (raw.len < sizeof(vlan::VlanTagHdr))
     {
         codec_event(codec, DECODE_BAD_VLAN);
         return false;
     }
 
     const vlan::VlanTagHdr* const vh =
-        reinterpret_cast<const vlan::VlanTagHdr *>(raw.data);
-
+        reinterpret_cast<const vlan::VlanTagHdr*>(raw.data);
 
     const uint16_t proto = vh->proto();
 
     /* check to see if we've got an encapsulated LLC layer
      * http://www.geocities.com/billalexander/ethernet.html
      */
-    if(proto <= ETHERNET_MAX_LEN_ENCAP)
+    if (proto <= ETHERNET_MAX_LEN_ENCAP)
         codec.next_prot_id = PROTO_ETHERNET_LLC;
     else
         codec.next_prot_id = proto;
-
 
     // Vlan IDs 0 and 4095 are reserved.
     const uint16_t vid = vh->vid();
     if (vid == 0 || vid == 4095)
         codec_event(codec, DECODE_BAD_VLAN);
-
 
     codec.lyr_len = sizeof(vlan::VlanTagHdr);
     codec.proto_bits |= PROTO_BIT__VLAN;
@@ -114,9 +103,9 @@ bool VlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 }
 
 void VlanCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
-    const uint16_t /*lyr_len*/ )
+    const uint16_t /*lyr_len*/)
 {
-    const vlan::VlanTagHdr* const vh = reinterpret_cast<const vlan::VlanTagHdr *>(raw_pkt);
+    const vlan::VlanTagHdr* const vh = reinterpret_cast<const vlan::VlanTagHdr*>(raw_pkt);
     const uint16_t proto = ntohs(vh->vth_proto);
     const uint16_t vid = vh->vid();
     const uint16_t priority = vh->priority();
@@ -126,13 +115,11 @@ void VlanCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
         priority, priority,
         vh->cfi(), vid, vid);
 
-
     if (proto <= ETHERNET_MAX_LEN_ENCAP)
         TextLog_Print(text_log, "  Len:0x%04X", proto);
     else
         TextLog_Print(text_log, "  Next:0x%04X", proto);
 }
-
 
 //-------------------------------------------------------------------------
 // api
@@ -147,7 +134,7 @@ static void mod_dtor(Module* m)
 static Codec* ctor(Module*)
 { return new VlanCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi vlan_api =
@@ -168,7 +155,6 @@ static const CodecApi vlan_api =
     ctor, // ctor
     dtor, // dtor
 };
-
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =

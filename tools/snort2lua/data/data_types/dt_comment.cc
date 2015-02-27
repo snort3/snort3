@@ -47,7 +47,7 @@ Comments::Comments(std::string c, int d, CommentType t)
 
 Comments::~Comments()
 {
-} 
+}
 
 void Comments::add_text(std::string text)
 {
@@ -78,12 +78,13 @@ void Comments::add_sorted_text(std::string new_text)
 bool Comments::empty() const
 {
     return ((comment.empty()) ||
-            (comment.size() == 1 && header));
+           (comment.size() == 1 && header));
 }
+
 bool Comments::size() const
 { return header ? comment.size() - 1 : comment.size(); }
 
-std::ostream &operator<<( std::ostream& out, const Comments &c)
+std::ostream& operator<<(std::ostream& out, const Comments& c)
 {
     std::string whitespace = "";
     std::string pre_str;
@@ -92,9 +93,8 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
     if (c.comment.size() == 0)
         return out;
 
-    for(int i = 0; i < c.depth; i++)
+    for (int i = 0; i < c.depth; i++)
         whitespace += "    ";
-
 
     // creating the correct format for strings
     if (c.type == Comments::CommentType::SINGLE_LINE)
@@ -107,9 +107,7 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
         pre_str = whitespace + "    ";
     }
 
-
     const std::size_t pre_str_length = pre_str.size();
-
 
     for (std::string str : c.comment)
     {
@@ -130,7 +128,7 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
         else if (c.type == Comments::CommentType::MULTI_LINE)
             util::sanitize_lua_string(util::ltrim(str));
 
-        while(!str.empty())
+        while (!str.empty())
         {
             std::size_t substr_len = max_line_length;
 
@@ -149,7 +147,6 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
                 }
             }
 
-
             // don't print the extra '\n' on the first line.
             if (first_line)
             {
@@ -166,7 +163,6 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
             str.erase(0, substr_len + 1); // extra '1' is for the space
         }
     }
-
 
     if (c.type == Comments::CommentType::MULTI_LINE)
         out << '\n' << whitespace << c.end_multi_com;

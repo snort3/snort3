@@ -51,17 +51,17 @@ THREAD_LOCAL SFFLOW sfFlow;
 THREAD_LOCAL SFEVENT sfEvent;
 THREAD_LOCAL int perfmon_rotate_perf_file = 0;
 
-static void UpdatePerfStats(SFPERF *, Packet *p);
-static bool CheckSampleInterval(SFPERF *, Packet *);
-static inline bool sfCheckFileSize(FILE *, uint32_t);
-static inline void sfProcessBaseStats(SFPERF *);
-static inline void sfProcessFlowStats(SFPERF *);
-static inline void sfProcessFlowIpStats(SFPERF *);
-static inline void sfProcessEventStats(SFPERF *);
-static inline int sfRotateFlowIPStatsFile(SFPERF *);
-static int sfRotateFile(const char *, FILE *, const char *, uint32_t);
+static void UpdatePerfStats(SFPERF*, Packet* p);
+static bool CheckSampleInterval(SFPERF*, Packet*);
+static inline bool sfCheckFileSize(FILE*, uint32_t);
+static inline void sfProcessBaseStats(SFPERF*);
+static inline void sfProcessFlowStats(SFPERF*);
+static inline void sfProcessFlowIpStats(SFPERF*);
+static inline void sfProcessEventStats(SFPERF*);
+static inline int sfRotateFlowIPStatsFile(SFPERF*);
+static int sfRotateFile(const char*, FILE*, const char*, uint32_t);
 
-void sfInitPerformanceStatistics(SFPERF *sfPerf)
+void sfInitPerformanceStatistics(SFPERF* sfPerf)
 {
     memset(sfPerf, 0, sizeof(SFPERF));
     sfPerf->sample_interval = 60;
@@ -73,7 +73,7 @@ void sfInitPerformanceStatistics(SFPERF *sfPerf)
     sfPerf->base_reset = 1;
 }
 
-static void WriteTimeStamp(FILE *fh, const char *action)
+static void WriteTimeStamp(FILE* fh, const char* action)
 {
     time_t curr_time = time(NULL);
     char time_buf[26];
@@ -96,10 +96,10 @@ static void WriteTimeStamp(FILE *fh, const char *action)
     fflush(fh);
 }
 
-FILE * sfOpenBaseStatsFile(const char *file)
+FILE* sfOpenBaseStatsFile(const char* file)
 {
     static THREAD_LOCAL bool start_up = true;
-    FILE *fh = NULL;
+    FILE* fh = NULL;
 
     // This file needs to be readable by everyone
     mode_t old_umask = umask(022);
@@ -124,7 +124,7 @@ FILE * sfOpenBaseStatsFile(const char *file)
     return fh;
 }
 
-void sfCloseBaseStatsFile(SFPERF *sfPerf)
+void sfCloseBaseStatsFile(SFPERF* sfPerf)
 {
     if (sfPerf->fh == NULL)
         return;
@@ -134,10 +134,10 @@ void sfCloseBaseStatsFile(SFPERF *sfPerf)
     sfPerf->fh = NULL;
 }
 
-FILE * sfOpenFlowStatsFile(const char *file)
+FILE* sfOpenFlowStatsFile(const char* file)
 {
     static THREAD_LOCAL bool start_up = true;
-    FILE *fh = NULL;
+    FILE* fh = NULL;
 
     // This file needs to be readable by everyone
     mode_t old_umask = umask(022);
@@ -162,7 +162,7 @@ FILE * sfOpenFlowStatsFile(const char *file)
     return fh;
 }
 
-void sfCloseFlowStatsFile(SFPERF *sfPerf)
+void sfCloseFlowStatsFile(SFPERF* sfPerf)
 {
     if (sfPerf->flow_fh == NULL)
         return;
@@ -172,10 +172,10 @@ void sfCloseFlowStatsFile(SFPERF *sfPerf)
     sfPerf->flow_fh = NULL;
 }
 
-FILE * sfOpenFlowIPStatsFile(const char *file)
+FILE* sfOpenFlowIPStatsFile(const char* file)
 {
     static THREAD_LOCAL bool start_up = true;
-    FILE *fh = NULL;
+    FILE* fh = NULL;
 
     // This file needs to be readable by everyone
     mode_t old_umask = umask(022);
@@ -195,7 +195,7 @@ FILE * sfOpenFlowIPStatsFile(const char *file)
     return fh;
 }
 
-void sfCloseFlowIPStatsFile(SFPERF *sfPerf)
+void sfCloseFlowIPStatsFile(SFPERF* sfPerf)
 {
     if (sfPerf->flowip_fh == NULL)
         return;
@@ -204,13 +204,13 @@ void sfCloseFlowIPStatsFile(SFPERF *sfPerf)
     sfPerf->flowip_fh = NULL;
 }
 
-static int sfRotateFile(const char *old_file, FILE *old_fh,
-        const char *rotate_prefix, uint32_t max_file_size)
+static int sfRotateFile(const char* old_file, FILE* old_fh,
+    const char* rotate_prefix, uint32_t max_file_size)
 {
     time_t ts;
-    struct tm *tm;
+    struct tm* tm;
     char rotate_file[PATH_MAX];
-    char *path_ptr;
+    char* path_ptr;
     int path_len = 0;
     struct stat file_stats;
 
@@ -220,7 +220,7 @@ static int sfRotateFile(const char *old_file, FILE *old_fh,
     if (old_fh == NULL)
     {
         ErrorMessage("Perfmonitor: Performance stats file \"%s\" "
-                "isn't open.\n", old_file);
+            "isn't open.\n", old_file);
         return -1;
     }
 
@@ -247,8 +247,8 @@ static int sfRotateFile(const char *old_file, FILE *old_fh,
 
     // Create rotate file name based on path, optional prefix and date
     SnortSnprintf(rotate_file, PATH_MAX, "%.*s%s%s%d-%02d-%02d", path_len, old_file,
-            (rotate_prefix != NULL) ? rotate_prefix : "", (rotate_prefix != NULL) ? "-" : "",
-            tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday);
+        (rotate_prefix != NULL) ? rotate_prefix : "", (rotate_prefix != NULL) ? "-" : "",
+        tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday);
 
     // If the rotate file doesn't exist, just rename the old one to the new one
     if (stat(rotate_file, &file_stats) != 0)
@@ -256,15 +256,15 @@ static int sfRotateFile(const char *old_file, FILE *old_fh,
         if (rename(old_file, rotate_file) != 0)
         {
             ErrorMessage("Perfmonitor: Could not rename performance stats "
-                    "file from \"%s\" to \"%s\": %s.\n",
-                    old_file, rotate_file, get_error(errno));
+                "file from \"%s\" to \"%s\": %s.\n",
+                old_file, rotate_file, get_error(errno));
         }
     }
     else  // Otherwise, if it does exist, append data from current stats file to it
     {
         char read_buf[4096];
         size_t num_read, num_wrote;
-        FILE *rotate_fh;
+        FILE* rotate_fh;
         int rotate_index = 0;
         char rotate_file_with_index[PATH_MAX];
 
@@ -279,9 +279,9 @@ static int sfRotateFile(const char *old_file, FILE *old_fh,
 
                 // Check to see if there are any files already rotated and indexed
                 SnortSnprintf(rotate_file_with_index, PATH_MAX, "%s.%02d",
-                        rotate_file, rotate_index);
-
-            } while (stat(rotate_file_with_index, &file_stats) == 0);
+                    rotate_file, rotate_index);
+            }
+            while (stat(rotate_file_with_index, &file_stats) == 0);
 
             // Subtract one to append to last existing file
             rotate_index--;
@@ -294,16 +294,16 @@ static int sfRotateFile(const char *old_file, FILE *old_fh,
             else
             {
                 SnortSnprintf(rotate_file_with_index, PATH_MAX, "%s.%02d",
-                        rotate_file, rotate_index);
+                    rotate_file, rotate_index);
                 rotate_fh = fopen(rotate_file_with_index, "a");
             }
 
             if (rotate_fh == NULL)
             {
                 ErrorMessage("Perfmonitor: Could not open performance stats "
-                        "archive file \"%s\" for appending: %s.\n",
-                        *rotate_file_with_index ? rotate_file_with_index : rotate_file,
-                        get_error(errno));
+                    "archive file \"%s\" for appending: %s.\n",
+                    *rotate_file_with_index ? rotate_file_with_index : rotate_file,
+                    get_error(errno));
                 break;
             }
 
@@ -311,9 +311,9 @@ static int sfRotateFile(const char *old_file, FILE *old_fh,
             if (old_fh == NULL)
             {
                 ErrorMessage("Perfmonitor: Could not open performance stats file "
-                        "\"%s\" for reading to copy to archive \"%s\": %s.\n",
-                        old_file, (*rotate_file_with_index ? rotate_file_with_index :
-                        rotate_file), get_error(errno));
+                    "\"%s\" for reading to copy to archive \"%s\": %s.\n",
+                    old_file, (*rotate_file_with_index ? rotate_file_with_index :
+                    rotate_file), get_error(errno));
                 break;
             }
 
@@ -329,7 +329,7 @@ static int sfRotateFile(const char *old_file, FILE *old_fh,
                     {
                         // A read error occurred
                         ErrorMessage("Perfmonitor: Error reading performance stats "
-                                "file \"%s\": %s.\n", old_file, get_error(errno));
+                            "file \"%s\": %s.\n", old_file, get_error(errno));
                         break;
                     }
                 }
@@ -343,9 +343,9 @@ static int sfRotateFile(const char *old_file, FILE *old_fh,
                     if (fstat(rotate_fd, &file_stats) != 0)
                     {
                         ErrorMessage("Perfmonitor: Error getting file "
-                                "information for \"%s\": %s.\n",
-                                *rotate_file_with_index ? rotate_file_with_index : rotate_file,
-                                get_error(errno));
+                            "information for \"%s\": %s.\n",
+                            *rotate_file_with_index ? rotate_file_with_index : rotate_file,
+                            get_error(errno));
                         break;
                     }
 
@@ -357,14 +357,14 @@ static int sfRotateFile(const char *old_file, FILE *old_fh,
 
                         // Create new file same as before but with an index added to the end
                         SnortSnprintf(rotate_file_with_index, PATH_MAX, "%s.%02d",
-                                rotate_file, rotate_index);
+                            rotate_file, rotate_index);
 
                         rotate_fh = fopen(rotate_file_with_index, "a");
                         if (rotate_fh == NULL)
                         {
                             ErrorMessage("Perfmonitor: Could not open performance "
-                                    "stats archive file \"%s\" for writing: %s.\n",
-                                    rotate_file_with_index, get_error(errno));
+                                "stats archive file \"%s\" for writing: %s.\n",
+                                rotate_file_with_index, get_error(errno));
                             break;
                         }
                     }
@@ -374,14 +374,15 @@ static int sfRotateFile(const char *old_file, FILE *old_fh,
                     {
                         // A bad write occurred
                         ErrorMessage("Perfmonitor: Error writing to performance "
-                                "stats archive file \"%s\": %s.\n", rotate_file, get_error(errno));
+                            "stats archive file \"%s\": %s.\n", rotate_file, get_error(errno));
                         break;
                     }
 
                     fflush(rotate_fh);
                 }
             }
-        } while (0);
+        }
+        while (0);
 
         if (rotate_fh != NULL)
             fclose(rotate_fh);
@@ -395,7 +396,7 @@ static int sfRotateFile(const char *old_file, FILE *old_fh,
     return 0;
 }
 
-int sfRotateBaseStatsFile(SFPERF *sfPerf)
+int sfRotateBaseStatsFile(SFPERF* sfPerf)
 {
     if ((sfPerf != NULL) && (sfPerf->file != NULL))
     {
@@ -409,14 +410,14 @@ int sfRotateBaseStatsFile(SFPERF *sfPerf)
         if ((sfPerf->fh = sfOpenBaseStatsFile(file)) == NULL)
         {
             FatalError("Cannot open performance stats file \"%s\": %s.\n",
-                    file, get_error(errno));
+                file, get_error(errno));
         }
     }
 
     return 0;
 }
 
-int sfRotateFlowStatsFile(SFPERF *sfPerf)
+int sfRotateFlowStatsFile(SFPERF* sfPerf)
 {
     if ((sfPerf != NULL) && (sfPerf->flow_file != NULL))
     {
@@ -430,14 +431,14 @@ int sfRotateFlowStatsFile(SFPERF *sfPerf)
         if ((sfPerf->flow_fh = sfOpenFlowStatsFile(file)) == NULL)
         {
             FatalError("Perfmonitor: Cannot open flow stats file \"%s\": %s.\n",
-                    file, get_error(errno));
+                file, get_error(errno));
         }
     }
 
     return 0;
 }
 
-static inline int sfRotateFlowIPStatsFile(SFPERF *sfPerf)
+static inline int sfRotateFlowIPStatsFile(SFPERF* sfPerf)
 {
     if ((sfPerf != NULL) && (sfPerf->flowip_file != NULL))
     {
@@ -451,14 +452,14 @@ static inline int sfRotateFlowIPStatsFile(SFPERF *sfPerf)
         if ((sfPerf->flowip_fh = sfOpenFlowIPStatsFile(file)) == NULL)
         {
             FatalError("Perfmonitor: Cannot open flow-ip stats file \"%s\": %s.\n",
-                    file, get_error(errno));
+                file, get_error(errno));
         }
     }
 
     return 0;
 }
 
-void sfPerformanceStats(SFPERF *sfPerf, Packet *p)
+void sfPerformanceStats(SFPERF* sfPerf, Packet* p)
 {
     // Update stats first since other stats from various places like frag and
     // stream have been added.
@@ -507,7 +508,7 @@ void sfPerformanceStats(SFPERF *sfPerf, Packet *p)
     }
 }
 
-void SetSampleTime(SFPERF *sfPerf, Packet *p)
+void SetSampleTime(SFPERF* sfPerf, Packet* p)
 {
     if (sfPerf == NULL)
         return;
@@ -525,7 +526,7 @@ void SetSampleTime(SFPERF *sfPerf, Packet *p)
     }
 }
 
-static bool CheckSampleInterval(SFPERF *sfPerf, Packet *p)
+static bool CheckSampleInterval(SFPERF* sfPerf, Packet* p)
 {
     time_t curr_time;
 
@@ -546,7 +547,7 @@ static bool CheckSampleInterval(SFPERF *sfPerf, Packet *p)
     return false;
 }
 
-void InitPerfStats(SFPERF *sfPerf)
+void InitPerfStats(SFPERF* sfPerf)
 {
     perfmon_config = sfPerf;  // FIXIT-L sfPerf isn't propagated far enough
 
@@ -567,7 +568,7 @@ void InitPerfStats(SFPERF *sfPerf)
 #endif
 }
 
-static void UpdatePerfStats(SFPERF *sfPerf, Packet *p)
+static void UpdatePerfStats(SFPERF* sfPerf, Packet* p)
 {
     perfmon_config = sfPerf;  // FIXIT-L sfPerf isn't propagated far enough
     bool rebuilt = PacketIsRebuilt(p);
@@ -587,11 +588,12 @@ static void UpdatePerfStats(SFPERF *sfPerf, Packet *p)
         else if (p->ptrs.udph != NULL)
             type = SFS_TYPE_UDP;
 
-        UpdateFlowIPStats(&sfFlow, p->ptrs.ip_api.get_src(), p->ptrs.ip_api.get_dst(), p->pkth->caplen, type);
+        UpdateFlowIPStats(&sfFlow, p->ptrs.ip_api.get_src(), p->ptrs.ip_api.get_dst(),
+            p->pkth->caplen, type);
     }
 }
 
-static inline bool sfCheckFileSize(FILE *fh, uint32_t max_file_size)
+static inline bool sfCheckFileSize(FILE* fh, uint32_t max_file_size)
 {
     int fd;
     struct stat file_stats;
@@ -601,59 +603,59 @@ static inline bool sfCheckFileSize(FILE *fh, uint32_t max_file_size)
 
     fd = fileno(fh);
     if ((fstat(fd, &file_stats) == 0)
-            && ((uint32_t)file_stats.st_size >= max_file_size))
+        && ((uint32_t)file_stats.st_size >= max_file_size))
         return true;
 
     return false;
 }
 
-static inline void sfProcessBaseStats(SFPERF *sfPerf)
+static inline void sfProcessBaseStats(SFPERF* sfPerf)
 {
     if (!(sfPerf->perf_flags & SFPERF_BASE))
         return;
 
     ProcessBaseStats(&sfBase, sfPerf->fh,
-            sfPerf->perf_flags & SFPERF_CONSOLE,
-            sfPerf->perf_flags & SFPERF_MAX_BASE_STATS);
+        sfPerf->perf_flags & SFPERF_CONSOLE,
+        sfPerf->perf_flags & SFPERF_MAX_BASE_STATS);
 
     if ((sfPerf->fh != NULL)
-            && sfCheckFileSize(sfPerf->fh, sfPerf->max_file_size))
+        && sfCheckFileSize(sfPerf->fh, sfPerf->max_file_size))
     {
         sfRotateBaseStatsFile(sfPerf);
     }
 }
 
-static inline void sfProcessFlowStats(SFPERF *sfPerf)
+static inline void sfProcessFlowStats(SFPERF* sfPerf)
 {
     if (!(sfPerf->perf_flags & SFPERF_FLOW))
         return;
 
     ProcessFlowStats(&sfFlow, sfPerf->flow_fh,
-            sfPerf->perf_flags & SFPERF_CONSOLE);
+        sfPerf->perf_flags & SFPERF_CONSOLE);
 
     if ((sfPerf->flow_fh != NULL)
-            && sfCheckFileSize(sfPerf->flow_fh, sfPerf->max_file_size))
+        && sfCheckFileSize(sfPerf->flow_fh, sfPerf->max_file_size))
     {
         sfRotateFlowStatsFile(sfPerf);
     }
 }
 
-static inline void sfProcessFlowIpStats(SFPERF *sfPerf)
+static inline void sfProcessFlowIpStats(SFPERF* sfPerf)
 {
     if (!(sfPerf->perf_flags & SFPERF_FLOWIP))
         return;
 
     ProcessFlowIPStats(&sfFlow, sfPerf->flowip_fh,
-            sfPerf->perf_flags & SFPERF_CONSOLE);
+        sfPerf->perf_flags & SFPERF_CONSOLE);
 
     if ((sfPerf->flowip_fh != NULL)
-            && sfCheckFileSize(sfPerf->flowip_fh, sfPerf->max_file_size))
+        && sfCheckFileSize(sfPerf->flowip_fh, sfPerf->max_file_size))
     {
         sfRotateFlowIPStatsFile(sfPerf);
     }
 }
 
-static inline void sfProcessEventStats(SFPERF *sfPerf)
+static inline void sfProcessEventStats(SFPERF* sfPerf)
 {
     if (!(sfPerf->perf_flags & SFPERF_EVENT))
         return;
@@ -662,7 +664,7 @@ static inline void sfProcessEventStats(SFPERF *sfPerf)
         ProcessEventStats(&sfEvent);
 }
 
-void sfPerfStatsSummary(SFPERF *sfPerf)
+void sfPerfStatsSummary(SFPERF* sfPerf)
 {
     if (sfPerf == NULL)
         return;

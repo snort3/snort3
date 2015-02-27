@@ -23,7 +23,6 @@
 #include <cstdint>
 #include <arpa/inet.h>
 
-
 #ifndef WIN32
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -37,25 +36,20 @@
 
 #include "protocols/protocol_ids.h" // include ipv4 protocol numbers
 
-
 #define ETHERNET_TYPE_IP 0x0800
 
 #ifndef IP_MAXPACKET
 #define IP_MAXPACKET    65535        /* maximum packet size */
 #endif /* IP_MAXPACKET */
 
-
 namespace ip
 {
-
 constexpr uint32_t IP4_BROADCAST = 0xffffffff;
 constexpr uint8_t IP4_HEADER_LEN = 20;
 constexpr uint8_t IP4_THIS_NET  = 0x00;  // msb
 constexpr uint8_t IP4_MULTICAST = 0x0E;  // ms nibble
 constexpr uint8_t IP4_RESERVED = 0x0F;  // ms nibble
 constexpr uint8_t IP4_LOOPBACK = 0x7F;  // msb
-
-
 
 // This must be a standard layour struct!
 struct IP4Hdr
@@ -79,7 +73,7 @@ struct IP4Hdr
     { return (ip_verhl >> 4); }
 
     inline uint8_t tos() const
-    { return ip_tos; };
+    { return ip_tos; }
 
     inline uint16_t len() const
     { return ntohs(ip_len); }
@@ -114,7 +108,6 @@ struct IP4Hdr
     inline uint16_t csum() const
     { return ntohs(ip_csum); }
 
-
     /* booleans */
     inline bool is_src_broadcast() const
     { return ip_src == IP4_BROADCAST; }
@@ -124,7 +117,6 @@ struct IP4Hdr
 
     inline bool has_options() const
     { return hlen() > 20; }
-
 
     /* Access raw data */
     inline uint16_t raw_len() const
@@ -145,8 +137,6 @@ struct IP4Hdr
     inline uint32_t get_dst() const
     { return ip_dst; }
 
-
-
     /*  setters  */
     inline void set_hlen(uint8_t value)
     { ip_verhl = (ip_verhl & 0xf0) | (value & 0x0f); }
@@ -156,34 +146,27 @@ struct IP4Hdr
 
     inline void set_ip_len(uint16_t new_len)
     { ip_len = htons(new_len); }
-
-} ;
-
-
+};
 
 static inline bool isPrivateIP(uint32_t addr)
 {
     switch (addr & 0xff)
     {
-        case 0x0a:
+    case 0x0a:
+        return true;
+        break;
+    case 0xac:
+        if ((addr & 0xf000) == 0x1000)
             return true;
-            break;
-        case 0xac:
-            if ((addr & 0xf000) == 0x1000)
-                return true;
-            break;
-        case 0xc0:
-            if (((addr & 0xff00) ) == 0xa800)
-                return true;
-            break;
+        break;
+    case 0xc0:
+        if (((addr & 0xff00) ) == 0xa800)
+            return true;
+        break;
     }
     return false;
 }
-
-
 } /* namespace ip */
-
-
 
 /* tcpdump shows us the way to cross platform compatibility */
 
@@ -191,9 +174,7 @@ static inline bool isPrivateIP(uint32_t addr)
 // TYPEDEF WHICH NEED TO BE DELETED
 typedef ip::IP4Hdr IP4Hdr;
 
-
 /* #define IP_HEADER_LEN ip::ip4_hdr_len() */
-
 
 #endif
 

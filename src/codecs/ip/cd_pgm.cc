@@ -18,8 +18,6 @@
 //--------------------------------------------------------------------------
 // cd_pgm.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -31,7 +29,6 @@
 
 namespace
 {
-
 #define CD_PGM_NAME "pgm"
 #define CD_PGM_HELP "support for pragmatic general multicast"
 
@@ -44,23 +41,21 @@ static const RuleMap pgm_rules[] =
 class PgmModule : public CodecModule
 {
 public:
-    PgmModule() : CodecModule(CD_PGM_NAME, CD_PGM_HELP) {}
+    PgmModule() : CodecModule(CD_PGM_NAME, CD_PGM_HELP) { }
 
     const RuleMap* get_rules() const
     { return pgm_rules; }
 };
 
-
 class PgmCodec : public Codec
 {
 public:
-    PgmCodec() : Codec(CD_PGM_NAME){};
-    ~PgmCodec() {};
+    PgmCodec() : Codec(CD_PGM_NAME) { }
+    ~PgmCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_protocol_ids(std::vector<uint16_t>&) override;
 };
-
 
 static const uint16_t IPPROTO_ID_PGM = 113;
 static const int PGM_NAK_ERR = -1;
@@ -77,13 +72,13 @@ struct PGM_NAK_OPT
 
 struct PGM_NAK
 {
-    uint32_t  seqnum;
-    uint16_t  afil1;
-    uint16_t  res1;
-    uint32_t  src;
-    uint16_t  afi2;
-    uint16_t  res2;
-    uint32_t  multi;
+    uint32_t seqnum;
+    uint16_t afil1;
+    uint16_t res1;
+    uint32_t src;
+    uint16_t afi2;
+    uint16_t res2;
+    uint32_t multi;
     PGM_NAK_OPT opt;
 };
 
@@ -91,26 +86,25 @@ struct PgmHeader
 {
     uint16_t srcport;
     uint16_t dstport;
-    uint8_t  type;
-    uint8_t  opt;
+    uint8_t type;
+    uint8_t opt;
     uint16_t checksum;
-    uint8_t  gsd[6];
+    uint8_t gsd[6];
     uint16_t length;
-    PGM_NAK  nak;
+    PGM_NAK nak;
 };
-
-
 } // namespace
 
 /* This PGM NAK function started off as an SO rule, sid 8351. */
-static inline int pgm_nak_detect (const RawData& raw)
+static inline int pgm_nak_detect(const RawData& raw)
 {
     /* request must be bigger than 44 bytes to cause vuln */
-    if (raw.len <= sizeof(PgmHeader)) {
+    if (raw.len <= sizeof(PgmHeader))
+    {
         return PGM_NAK_ERR;
     }
 
-     const PgmHeader* const header =
+    const PgmHeader* const header =
         reinterpret_cast<const PgmHeader* const>(raw.data);
 
     if (8 != header->type)
@@ -119,15 +113,14 @@ static inline int pgm_nak_detect (const RawData& raw)
     if (2 != header->nak.opt.type)
         return PGM_NAK_ERR;
 
-
     /*
      * alert if the amount of data after the options is more than the length
      * specified.
      */
     const uint16_t data_left = raw.len - 36;
 
-    if (data_left > header->nak.opt.len) {
-
+    if (data_left > header->nak.opt.len)
+    {
         /* checksum is expensive... do that only if the length is bad */
         if (header->checksum != 0)
         {
@@ -143,7 +136,6 @@ static inline int pgm_nak_detect (const RawData& raw)
 
     return PGM_NAK_OK;
 }
-
 
 //-------------------------------------------------------------------------
 // private functions
@@ -161,8 +153,6 @@ void PgmCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IPPROTO_ID_PGM);
 }
 
-
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
@@ -176,9 +166,8 @@ static void mod_dtor(Module* m)
 static Codec* ctor(Module*)
 { return new PgmCodec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
-
 
 static const CodecApi pgm_api =
 {

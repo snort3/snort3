@@ -59,9 +59,9 @@
 **  @retval 1 within bounds
 **  @retval 0 not within bounds
 */
-static inline int hi_util_in_bounds(const u_char *start, const u_char *end, const u_char *p)
+static inline int hi_util_in_bounds(const u_char* start, const u_char* end, const u_char* p)
 {
-    if(p >= start && p < end)
+    if (p >= start && p < end)
     {
         return 1;
     }
@@ -69,50 +69,60 @@ static inline int hi_util_in_bounds(const u_char *start, const u_char *end, cons
     return 0;
 }
 
-static inline void SkipWhiteSpace(const u_char *start, const u_char *end,
-        const u_char **ptr)
+static inline void SkipWhiteSpace(const u_char* start, const u_char* end,
+    const u_char** ptr)
 {
     while (hi_util_in_bounds(start, end, *ptr) && isspace((int)**ptr) && (**ptr != '\n'))
         (*ptr)++;
 }
-static inline int SkipBlankSpace(const u_char *start, const u_char *end,
-       const u_char **ptr)
+
+static inline int SkipBlankSpace(const u_char* start, const u_char* end,
+    const u_char** ptr)
 {
     int count = 0;
-    while((hi_util_in_bounds(start, end, *ptr)) && ( **ptr == ' ' || **ptr == '\t') ) 
+    while ((hi_util_in_bounds(start, end, *ptr)) && ( **ptr == ' ' || **ptr == '\t') )
     {
         (*ptr)++;
         count++;
     }
     return count;
 }
-static inline void SkipDigits(const u_char *start, const u_char *end,
-        const u_char **ptr)
+
+static inline void SkipDigits(const u_char* start, const u_char* end,
+    const u_char** ptr)
 {
-    while((hi_util_in_bounds(start, end, *ptr)) && (isdigit((int)**ptr)) ) {(*ptr)++;}
+    while ((hi_util_in_bounds(start, end, *ptr)) && (isdigit((int)**ptr)) )
+    {
+        (*ptr)++;
+    }
 }
 
-static inline void SkipBlankAndNewLine(const u_char *start, const u_char *end,
-        const u_char **ptr)
+static inline void SkipBlankAndNewLine(const u_char* start, const u_char* end,
+    const u_char** ptr)
 {
-    while( (hi_util_in_bounds(start, end, *ptr)) &&
-            ( **ptr == ' ' || **ptr == '\t') && (**ptr != '\n')  ) {(*ptr)++;}
+    while ( (hi_util_in_bounds(start, end, *ptr)) &&
+        ( **ptr == ' ' || **ptr == '\t') && (**ptr != '\n')  )
+    {
+        (*ptr)++;
+    }
 }
 
-static inline void SkipCRLF(const u_char *start, const u_char *end,
-                const u_char **ptr)
+static inline void SkipCRLF(const u_char* start, const u_char* end,
+    const u_char** ptr)
 {
-        while( (hi_util_in_bounds(start, end, *ptr)) &&
-                            ( **ptr == '\r' || **ptr == '\n') ) {(*ptr)++;}
+    while ( (hi_util_in_bounds(start, end, *ptr)) &&
+        ( **ptr == '\r' || **ptr == '\n') )
+    {
+        (*ptr)++;
+    }
 }
 
-
-static inline int IsHeaderFieldName(const u_char *p, const u_char *end,
-        const char *header_name, size_t header_len)
+static inline int IsHeaderFieldName(const u_char* p, const u_char* end,
+    const char* header_name, size_t header_len)
 {
     if ((p+header_len) <= end)
     {
-        if(!strncasecmp((const char *)p, header_name, header_len))
+        if (!strncasecmp((const char*)p, header_name, header_len))
             return 1;
         else
             return 0;

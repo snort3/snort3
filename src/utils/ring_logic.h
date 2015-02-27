@@ -24,7 +24,8 @@
 #ifndef RING_LOGIC_H
 #define RING_LOGIC_H
 
-class RingLogic {
+class RingLogic
+{
 public:
     RingLogic(int size);
 
@@ -42,7 +43,7 @@ public:
 
 private:
     int next(int ix)
-    { return ( ++ix < sz ) ? ix : 0; };
+    { return ( ++ix < sz ) ? ix : 0; }
 
 private:
     int sz;
@@ -90,7 +91,8 @@ inline bool RingLogic::pop()
 inline int RingLogic::count()
 {
     int c = wx - rx - 1;
-    if ( c < 0 ) c += sz;
+    if ( c < 0 )
+        c += sz;
     return c;
 }
 
@@ -103,5 +105,6 @@ inline bool RingLogic::empty()
 {
     return ( count() == 0 );
 }
+
 #endif
 

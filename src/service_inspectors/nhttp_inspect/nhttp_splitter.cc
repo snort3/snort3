@@ -21,38 +21,49 @@
 
 using namespace NHttpEnums;
 
-ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length) {
-    for (uint32_t k = 0; k < length; k++) {
-        // Discard magic six white space characters CR, LF, Tab, VT, FF, and SP when they occur before the start line.
+ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length)
+{
+    for (uint32_t k = 0; k < length; k++)
+    {
+        // Discard magic six white space characters CR, LF, Tab, VT, FF, and SP when they occur
+        // before the start line.
         // If we have seen nothing but white space so far ...
-        if (num_crlf == octets_seen + k) {
-            if ((buffer[k] == 32) || ((buffer[k] >= 9) && (buffer[k] <= 13))) {
-                if (num_crlf < MAX_LEADING_WHITESPACE) {
+        if (num_crlf == octets_seen + k)
+        {
+            if ((buffer[k] == 32) || ((buffer[k] >= 9) && (buffer[k] <= 13)))
+            {
+                if (num_crlf < MAX_LEADING_WHITESPACE)
+                {
                     num_crlf++;
                     continue;
                 }
-                else {
+                else
+                {
                     infractions += INF_TOOMUCHLEADINGWS;
                     return SCAN_ABORT;
                 }
             }
-            if (num_crlf > 0) {
+            if (num_crlf > 0)
+            {
                 num_flush = k;     // current octet not flushed with white space
                 return SCAN_DISCARD;
             }
         }
 
-        // If we get this far then the leading white space issue is behind us and num_crlf was reset to zero
-        if (buffer[k] == '\n') {
+        // If we get this far then the leading white space issue is behind us and num_crlf was
+        // reset to zero
+        if (buffer[k] == '\n')
+        {
             num_crlf++;
             num_flush = k+1;
             return SCAN_FOUND;
         }
-        if (num_crlf == 1) { // FIXIT-M there needs to be an event for this
-            // CR not followed by LF
+        if (num_crlf == 1)   // FIXIT-M there needs to be an event for this
+        {   // CR not followed by LF
             return SCAN_ABORT;
         }
-        if (buffer[k] == '\r') {
+        if (buffer[k] == '\r')
+        {
             num_crlf = 1;
         }
     }
@@ -60,38 +71,51 @@ ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length) {
     return SCAN_NOTFOUND;
 }
 
-ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length) {
-    if (peek_status == SCAN_FOUND) {
+ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length)
+{
+    if (peek_status == SCAN_FOUND)
+    {
         return SCAN_FOUND;
     }
     buffer += peek_octets;
     length -= peek_octets;
 
-    // Header separators: leading \r\n, leading \n, nonleading \r\n\r\n, nonleading \n\r\n, nonleading \r\n\n, and
-    // nonleading \n\n. The separator itself becomes num_excess which is discarded during reassemble().
-    // FIXIT-L There is a regression test with a rule that looks for these separators in the header buffer.
+    // Header separators: leading \r\n, leading \n, nonleading \r\n\r\n, nonleading \n\r\n,
+    // nonleading \r\n\n, and
+    // nonleading \n\n. The separator itself becomes num_excess which is discarded during
+    // reassemble().
+    // FIXIT-L There is a regression test with a rule that looks for these separators in the header
+    // buffer.
     //         Need to resolve.
-    for (uint32_t k = 0; k < length; k++) {
-        if (buffer[k] == '\n') {
+    for (uint32_t k = 0; k < length; k++)
+    {
+        if (buffer[k] == '\n')
+        {
             num_crlf++;
-            if ((first_lf == 0) && (num_crlf < octets_seen + k + 1)) {
+            if ((first_lf == 0) && (num_crlf < octets_seen + k + 1))
+            {
                 first_lf = num_crlf;
             }
-            else {
+            else
+            {
                 num_flush = k + 1 + peek_octets;
                 return SCAN_FOUND;
             }
         }
-        else if (buffer[k] == '\r') {
-            if (num_crlf == first_lf) {
+        else if (buffer[k] == '\r')
+        {
+            if (num_crlf == first_lf)
+            {
                 num_crlf++;
             }
-            else {
+            else
+            {
                 num_crlf = 1;
                 first_lf = 0;
             }
         }
-        else {
+        else
+        {
             num_crlf = 0;
             first_lf = 0;
         }
@@ -101,72 +125,90 @@ ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length) {
     return SCAN_NOTFOUND;
 }
 
-ScanResult NHttpHeaderSplitter::peek(const uint8_t* buffer, uint32_t length) {
+ScanResult NHttpHeaderSplitter::peek(const uint8_t* buffer, uint32_t length)
+{
     peek_status = split(buffer, length);
     peek_octets = length;
     return peek_status;
 }
 
-ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length) {
+ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length)
+{
     // FIXIT-M when things go wrong and we must abort we need to flush partial chunk buffer
-    if (header_complete) {
+    if (header_complete)
+    {
         // Previously read the chunk header. Now just flush the length.
         num_flush = expected_length;
         return SCAN_FOUND;
     }
-    for (uint32_t k = 0; k < length; k++) {
-    // FIXIT-M learn to support white space before chunk header extension semicolon
-        if (buffer[k] == '\n') {
-            if (octets_seen + k == num_crlf) {
+    for (uint32_t k = 0; k < length; k++)
+    {
+        // FIXIT-M learn to support white space before chunk header extension semicolon
+        if (buffer[k] == '\n')
+        {
+            if (octets_seen + k == num_crlf)
+            {
                 // \r\n or \n leftover from previous chunk
                 num_flush = k+1;
                 return SCAN_DISCARD;
             }
-            if (!length_started) {
+            if (!length_started)
+            {
                 // chunk header specifies no length
                 return SCAN_ABORT;
             }
-            if (expected_length == 0) {
-                // Workaround because stream cannot handle zero-length flush. Instead of flushing the zero-length chunk
-                // to flush the partial chunk buffer in reassembly, we save the terminal \n from the chunk header for
+            if (expected_length == 0)
+            {
+                // Workaround because stream cannot handle zero-length flush. Instead of flushing
+                // the zero-length chunk
+                // to flush the partial chunk buffer in reassembly, we save the terminal \n from
+                // the chunk header for
                 // use as an end-of-chunks signal. FIXIT-M
                 expected_length = 1;
                 zero_chunk = true;
                 num_flush = k;
             }
-            else {
+            else
+            {
                 num_flush = k+1;
             }
             // flush completed chunk header
             header_complete = true;
             return SCAN_DISCARD_CONTINUE;
         }
-        if (num_crlf == 1) {
+        if (num_crlf == 1)
+        {
             // CR not followed by LF
             return SCAN_ABORT;
         }
-        if (buffer[k] == '\r') {
+        if (buffer[k] == '\r')
+        {
             num_crlf = 1;
             continue;
         }
-        if (buffer[k] == ';') {
+        if (buffer[k] == ';')
+        {
             semicolon = true;
         }
-        if (semicolon) {
+        if (semicolon)
+        {
             // we don't look at chunk header extensions
             continue;
         }
-        if (as_hex[buffer[k]] == -1) {
+        if (as_hex[buffer[k]] == -1)
+        {
             // illegal character present in chunk length
             return SCAN_ABORT;
         }
         length_started = true;
-        if (digits_seen >= 8) {
+        if (digits_seen >= 8)
+        {
             // overflow protection: must fit into 32 bits
             return SCAN_ABORT;
         }
         expected_length = expected_length * 16 + as_hex[buffer[k]];
-        if (expected_length > 0) {
+        if (expected_length > 0)
+        {
             // leading zeroes don't count
             digits_seen++;
         }

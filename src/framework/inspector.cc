@@ -58,7 +58,7 @@ bool Inspector::is_inactive()
     for (unsigned i = 0; i < get_instance_max(); ++i )
         if ( ref_count[i] )
             return false;
-    
+
     return true;
 }
 

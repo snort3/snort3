@@ -54,7 +54,7 @@ class ReassembleOption : public IpsOption
 public:
     ReassembleOption(const StreamReassembleRuleOptionData& c) :
         IpsOption(s_name)
-    { srod = c; };
+    { srod = c; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -95,8 +95,8 @@ bool ReassembleOption::operator==(const IpsOption& ips) const
     const ReassembleOption& rhs = (ReassembleOption&)ips;
 
     if ( (srod.enable == rhs.srod.enable) &&
-         (srod.direction == rhs.srod.direction) &&
-         (srod.alert == rhs.srod.alert) )
+        (srod.direction == rhs.srod.direction) &&
+        (srod.alert == rhs.srod.alert) )
         return true;
 
     return false;
@@ -110,7 +110,7 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
     PROFILE_VARS;
     MODULE_PROFILE_START(streamReassembleRuleOptionPerfStats);
 
-    Flow *lwssn = (Flow*)pkt->flow;
+    Flow* lwssn = (Flow*)pkt->flow;
     TcpSession* tcpssn = (TcpSession*)lwssn->session;
 
     if ( !srod.enable ) /* Turn it off */
@@ -119,13 +119,13 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
         {
             tcpssn->server.flush_policy = STREAM_FLPOLICY_IGNORE;
             stream.set_splitter(lwssn, true);
-        }   
+        }
 
         if ( srod.direction & SSN_DIR_FROM_CLIENT )
         {
             tcpssn->client.flush_policy = STREAM_FLPOLICY_IGNORE;
             stream.set_splitter(lwssn, false);
-        }   
+        }
     }
     else
     {
@@ -135,13 +135,13 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
         {
             tcpssn->server.flush_policy = STREAM_FLPOLICY_ON_ACK;
             stream.set_splitter(lwssn, true, new AtomSplitter(true));
-        }   
+        }
 
         if ( srod.direction & SSN_DIR_FROM_CLIENT )
         {
             tcpssn->client.flush_policy = STREAM_FLPOLICY_ON_ACK;
             stream.set_splitter(lwssn, false, new AtomSplitter(false));
-        }   
+        }
     }
 
     if (srod.fastpath)
@@ -185,13 +185,13 @@ static const Parameter s_params[] =
 class ReassembleModule : public Module
 {
 public:
-    ReassembleModule() : Module(s_name, s_help, s_params) { };
+    ReassembleModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &streamReassembleRuleOptionPerfStats; };
+    { return &streamReassembleRuleOptionPerfStats; }
 
     StreamReassembleRuleOptionData srod;
 };

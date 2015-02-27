@@ -29,12 +29,12 @@
 
 struct StateMgr
 {
-    uint8_t    state;
-    uint8_t    sub_state;
-    uint8_t    state_queue;
-    uint8_t    expected_flags;
-    uint32_t   transition_seq;
-    uint32_t   stq_get_seq;
+    uint8_t state;
+    uint8_t sub_state;
+    uint8_t state_queue;
+    uint8_t expected_flags;
+    uint32_t transition_seq;
+    uint32_t stq_get_seq;
 };
 
 //-------------------------------------------------------------------------
@@ -80,11 +80,11 @@ struct StreamAlertInfo
 
 struct StreamSegment
 {
-    uint8_t    *data;
-    uint8_t    *payload;
+    uint8_t* data;
+    uint8_t* payload;
 
-    StreamSegment *prev;
-    StreamSegment *next;
+    StreamSegment* prev;
+    StreamSegment* next;
 
 #ifdef DEBUG
     int ordinal;
@@ -93,21 +93,20 @@ struct StreamSegment
     uint32_t caplen;
     uint32_t pktlen;
 
-    uint32_t   ts;
-    uint32_t   seq;
+    uint32_t ts;
+    uint32_t seq;
 
-    uint16_t   orig_dsize;
-    uint16_t   size;
+    uint16_t orig_dsize;
+    uint16_t size;
 
-    uint16_t   urg_offset;
-    uint8_t    buffered;
+    uint16_t urg_offset;
+    uint8_t buffered;
 
     // this sequence ensures 4-byte alignment of iph in pkt
     // (only significant if we call the grinder)
-    uint8_t    pad1;
-    uint16_t   pad2;
-    uint8_t    pkt[1];  // variable length
-
+    uint8_t pad1;
+    uint16_t pad2;
+    uint8_t pkt[1];     // variable length
 };
 
 enum FlushPolicy
@@ -119,7 +118,7 @@ enum FlushPolicy
 
 struct StreamTracker
 {
-    StateMgr  s_mgr;        /* state tracking goodies */
+    StateMgr s_mgr;         /* state tracking goodies */
     class StreamSplitter* splitter;
     FlushPolicy flush_policy;
 
@@ -131,8 +130,8 @@ struct StreamTracker
     StreamAlertInfo alerts[MAX_SESSION_ALERTS]; /* history of alerts */
 
     StreamTcpConfig* config;
-    StreamSegment *seglist;       /* first queued segment */
-    StreamSegment *seglist_tail;  /* last queued segment */
+    StreamSegment* seglist;       /* first queued segment */
+    StreamSegment* seglist_tail;  /* last queued segment */
 
     // FIXIT-P seglist_base_seq is the sequence number to flush from
     // and is valid even when seglist is empty.  seglist_next is
@@ -177,14 +176,13 @@ struct StreamTracker
     uint16_t wscale;       /* window scale setting */
     uint16_t mss;          /* max segment size */
 
-    uint8_t  mac_addr[6];
-    uint8_t  flags;        /* bitmap flags (TF_xxx) */
+    uint8_t mac_addr[6];
+    uint8_t flags;         /* bitmap flags (TF_xxx) */
 
-    uint8_t  alert_count;  /* number alerts stored (up to MAX_SESSION_ALERTS) */
-
+    uint8_t alert_count;   /* number alerts stored (up to MAX_SESSION_ALERTS) */
 };
 
-// FIXIT-L session tracking must be split from reassembly 
+// FIXIT-L session tracking must be split from reassembly
 // into a separate module a la ip_session.cc and ip_defrag.cc
 // (of course defrag should also be cleaned up)
 class TcpSession : public Session
@@ -193,7 +191,7 @@ public:
     TcpSession(Flow*);
     ~TcpSession();
 
-    bool setup (Packet*) override;
+    bool setup(Packet*) override;
     int process(Packet*) override;
 
     void update_direction(char dir, const sfip_t*, uint16_t port) override;

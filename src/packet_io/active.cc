@@ -26,7 +26,6 @@
 #include "config.h"
 #endif
 
-
 #include "utils/dnet_header.h"
 #include "stream/stream_api.h"
 #include "snort.h"
@@ -53,7 +52,7 @@ THREAD_LOCAL int active_tunnel_bypass = 0;
 THREAD_LOCAL int active_suspend = 0;
 THREAD_LOCAL int active_have_rsp = 0;
 
-typedef int (*send_t) (
+typedef int (* send_t) (
     const DAQ_PktHdr_t* h, int rev, const uint8_t* buf, uint32_t len);
 
 static THREAD_LOCAL eth_t* s_link = NULL;
@@ -71,10 +70,9 @@ static int Active_Close(void);
 static int Active_SendEth(const DAQ_PktHdr_t*, int, const uint8_t*, uint32_t);
 static int Active_SendIp(const DAQ_PktHdr_t*, int, const uint8_t*, uint32_t);
 
-
 //--------------------------------------------------------------------
 
-void Active_KillSession (Packet* p, EncodeFlags* pf)
+void Active_KillSession(Packet* p, EncodeFlags* pf)
 {
     EncodeFlags flags = pf ? *pf : ENC_FLAG_FWD;
 
@@ -101,15 +99,16 @@ void Active_KillSession (Packet* p, EncodeFlags* pf)
 
 //--------------------------------------------------------------------
 
-int Active_Init (SnortConfig* sc)
+int Active_Init(SnortConfig* sc)
 {
     s_attempts = sc->respond_attempts;
-    if ( s_attempts > MAX_ATTEMPTS ) s_attempts = MAX_ATTEMPTS;
-    if ( s_enabled && !s_attempts ) s_attempts = 1;
+    if ( s_attempts > MAX_ATTEMPTS )
+        s_attempts = MAX_ATTEMPTS;
+    if ( s_enabled && !s_attempts )
+        s_attempts = 1;
 
     if ( s_enabled && (!DAQ_CanInject() || sc->respond_device) )
     {
-
         if ( ScReadMode() || Active_Open(sc->respond_device) )
         {
             ParseWarning("active responses disabled since DAQ "
@@ -125,24 +124,25 @@ int Active_Init (SnortConfig* sc)
     return 0;
 }
 
-int Active_Term (void)
+int Active_Term(void)
 {
     Active_Close();
     return 0;
 }
 
-int Active_IsEnabled (void) { return s_enabled && s_attempts; }
+int Active_IsEnabled(void) { return s_enabled && s_attempts; }
 
-void Active_SetEnabled (int on_off)
-{ 
+void Active_SetEnabled(int on_off)
+{
     if ( !on_off || on_off > s_enabled )
         s_enabled = on_off;
 }
 
-static inline EncodeFlags GetFlags (void)
+static inline EncodeFlags GetFlags(void)
 {
     EncodeFlags flags = ENC_FLAG_ID;
-    if ( DAQ_RawInjection() || s_ipnet ) flags |= ENC_FLAG_RAW;
+    if ( DAQ_RawInjection() || s_ipnet )
+        flags |= ENC_FLAG_RAW;
     return flags;
 }
 
@@ -164,7 +164,8 @@ void Active_SendReset(Packet* p, EncodeFlags ef)
         value = Strafe(i, value, p);
 
         rej = PacketManager::encode_response(TcpResponse::RST, flags|value, p, len);
-        if ( !rej ) return;
+        if ( !rej )
+            return;
 
         s_send(p->pkth, !(ef & ENC_FLAG_FWD), rej, len);
     }
@@ -180,12 +181,13 @@ void Active_SendUnreach(Packet* p, UnreachResponse type)
         return;
 
     rej = PacketManager::encode_reject(type, flags, p, len);
-    if ( !rej ) return;
+    if ( !rej )
+        return;
 
     s_send(p->pkth, 1, rej, len);
 }
 
-bool Active_SendData (
+bool Active_SendData(
     Packet* p, EncodeFlags flags, const uint8_t* buf, uint32_t blen)
 {
     uint16_t toSend;
@@ -208,10 +210,11 @@ bool Active_SendData (
     uint32_t sent = 0;
     const uint16_t maxPayload = PacketManager::encode_get_max_payload(p);
 
-    if(!maxPayload)
+    if (!maxPayload)
         return false;
 
-    do{
+    do
+    {
         uint32_t plen = 0;
         toSend = blen > maxPayload ? maxPayload : blen;
         flags = (flags & ~ENC_FLAG_VAL) | sent;
@@ -224,7 +227,8 @@ bool Active_SendData (
 
         buf += toSend;
         sent += toSend;
-    } while(blen -= toSend);
+    }
+    while (blen -= toSend);
 
     if (flags & ENC_FLAG_RST_CLNT)
     {
@@ -233,13 +237,13 @@ bool Active_SendData (
         seg = PacketManager::encode_response(TcpResponse::RST, flags, p, plen);
 
         if ( seg )
-        s_send(p->pkth, !(flags & ENC_FLAG_FWD), seg, plen);
+            s_send(p->pkth, !(flags & ENC_FLAG_FWD), seg, plen);
     }
 
     return true;
 }
 
-void Active_InjectData (
+void Active_InjectData(
     Packet* p, EncodeFlags flags, const uint8_t* buf, uint32_t blen)
 {
     uint32_t plen;
@@ -296,16 +300,16 @@ int Active_IsUNRCandidate(const Packet* p)
     return 0;
 }
 
-
 //--------------------------------------------------------------------
 // TBD strafed sequence numbers could be divided by window
 // scaling if present.
 
-static uint32_t Strafe (int i, uint32_t flags, const Packet* p)
+static uint32_t Strafe(int i, uint32_t flags, const Packet* p)
 {
     flags &= ENC_FLAG_VAL;
 
-    switch ( i ) {
+    switch ( i )
+    {
     case 0:
         flags |= ENC_FLAG_SEQ;
         break;
@@ -341,12 +345,12 @@ static uint32_t Strafe (int i, uint32_t flags, const Packet* p)
 //--------------------------------------------------------------------
 // support for decoder and rule actions
 
-static inline void _Active_ForceIgnoreSession(Packet *p)
+static inline void _Active_ForceIgnoreSession(Packet* p)
 {
     stream.drop_packet(p);
 }
 
-static inline void _Active_DoIgnoreSession(Packet *p)
+static inline void _Active_DoIgnoreSession(Packet* p)
 {
     if ( ScInlineMode() || ScTreatDropAsIgnore() )
     {
@@ -354,14 +358,14 @@ static inline void _Active_DoIgnoreSession(Packet *p)
     }
 }
 
-int Active_IgnoreSession (Packet* p)
+int Active_IgnoreSession(Packet* p)
 {
     Active_DropPacket(p);
     _Active_DoIgnoreSession(p);
     return 0;
 }
 
-int Active_ForceDropAction(Packet *p)
+int Active_ForceDropAction(Packet* p)
 {
     if ( p->has_ip() )
         return 0;
@@ -381,7 +385,7 @@ int Active_ForceDropAction(Packet *p)
     return 0;
 }
 
-static inline int _Active_DoReset(Packet *p)
+static inline int _Active_DoReset(Packet* p)
 {
     if ( !Active_IsEnabled() )
         return 0;
@@ -410,7 +414,7 @@ static inline int _Active_DoReset(Packet *p)
     return 0;
 }
 
-int Active_DropAction (Packet* p)
+int Active_DropAction(Packet* p)
 {
     Active_IgnoreSession(p);
 
@@ -420,7 +424,7 @@ int Active_DropAction (Packet* p)
     return _Active_DoReset(p);
 }
 
-int Active_ForceDropResetAction(Packet *p)
+int Active_ForceDropResetAction(Packet* p)
 {
     Active_ForceDropAction(p);
 
@@ -430,7 +434,7 @@ int Active_ForceDropResetAction(Packet *p)
 //--------------------------------------------------------------------
 // support for non-DAQ injection
 
-static int Active_Open (const char* dev)
+static int Active_Open(const char* dev)
 {
     if ( dev && strcasecmp(dev, "ip") )
     {
@@ -453,7 +457,7 @@ static int Active_Open (const char* dev)
     return ( s_link || s_ipnet ) ? 0 : -1;
 }
 
-static int Active_Close (void)
+static int Active_Close(void)
 {
     if ( s_link )
         eth_close(s_link);
@@ -467,21 +471,21 @@ static int Active_Close (void)
     return 0;
 }
 
-static int Active_SendEth (
+static int Active_SendEth(
     const DAQ_PktHdr_t*, int, const uint8_t* buf, uint32_t len)
 {
     ssize_t sent = eth_send(s_link, buf, len);
     s_injects++;
-    return ( (uint32_t) sent != len );
+    return ( (uint32_t)sent != len );
 }
 
-static int Active_SendIp (
+static int Active_SendIp(
     const DAQ_PktHdr_t*, int, const uint8_t* buf, uint32_t len)
 {
     ssize_t sent = ip_send(s_ipnet, buf, len);
     s_injects++;
-    return ( (uint32_t) sent != len );
+    return ( (uint32_t)sent != len );
 }
 
-uint64_t Active_GetInjects (void) { return s_injects; }
+uint64_t Active_GetInjects(void) { return s_injects; }
 

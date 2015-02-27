@@ -25,13 +25,10 @@
 #include "helpers/converter.h"
 #include "helpers/s2l_util.h"
 
-
 namespace config
 {
-
 namespace
 {
-
 // Yes, this looks rather ugly. However, when using Templates,
 // I always got warnings.  Since we've got zero tolerance policy
 // for such things (and I wanted to keep my checks in Snort2Lua
@@ -40,16 +37,17 @@ class ConfigIntOption : public ConversionState
 {
 public:
     ConfigIntOption(Converter& c,
-                    const std::string* snort_opt,
-                    const std::string* table,
-                    const std::string* lua_opt) :
-            ConversionState(c),
-            snort_option(snort_opt),
-            lua_table(table),
-            lua_option(lua_opt)
+        const std::string* snort_opt,
+        const std::string* table,
+        const std::string* lua_opt) :
+        ConversionState(c),
+        snort_option(snort_opt),
+        lua_table(table),
+        lua_option(lua_opt)
     {
     }
-    virtual ~ConfigIntOption() {};
+
+    virtual ~ConfigIntOption() { }
 
     virtual bool convert(std::istringstream& stream)
     {
@@ -71,7 +69,7 @@ public:
         {
             retval = parse_int_option(*lua_option, stream, false);
             table_api.add_diff_option_comment("config " + *snort_option +
-                    ":", *lua_option);
+                ":", *lua_option);
         }
         else
         {
@@ -89,18 +87,16 @@ private:
     const std::string* lua_option;
 };
 
-
-template<const std::string *snort_option,
-        const std::string *lua_table,
-        const std::string *lua_option = nullptr>
+template<const std::string* snort_option,
+const std::string* lua_table,
+const std::string* lua_option = nullptr>
 static ConversionState* config_int_ctor(Converter& c)
 {
-    return new ConfigIntOption( c,
-                                snort_option,
-                                lua_table,
-                                lua_option);
+    return new ConfigIntOption(c,
+        snort_option,
+        lua_table,
+        lua_option);
 }
-
 } // namespace
 
 /*************************************************
@@ -126,7 +122,7 @@ static const std::string asn1 = "asn1";
 static const ConvertMap asn1_api =
 {
     asn1,
-    config_int_ctor<&asn1, &detection>,
+    config_int_ctor<& asn1, & detection>,
 };
 
 const ConvertMap* asn1_map = &asn1_api;
@@ -139,7 +135,7 @@ static const std::string flowbits_size = "flowbits_size";
 static const ConvertMap flowbits_size_api =
 {
     flowbits_size,
-    config_int_ctor<&flowbits_size, &alerts>,
+    config_int_ctor<& flowbits_size, & alerts>,
 };
 
 const ConvertMap* flowbits_size_map = &flowbits_size_api;
@@ -153,7 +149,7 @@ static const std::string max_hosts = "max_hosts";
 static const ConvertMap max_attribute_hosts_api =
 {
     max_attribute_hosts,
-    config_int_ctor<&max_attribute_hosts, &attribute_table, &max_hosts>,
+    config_int_ctor<& max_attribute_hosts, & attribute_table, & max_hosts>,
 };
 
 const ConvertMap* max_attribute_hosts_map = &max_attribute_hosts_api;
@@ -167,7 +163,7 @@ static const std::string max_services_per_host = "max_services_per_host";
 static const ConvertMap max_attribute_services_per_host_api =
 {
     max_attribute_services_per_host,
-    config_int_ctor<&max_attribute_services_per_host, &attribute_table, &max_services_per_host>,
+    config_int_ctor<& max_attribute_services_per_host, & attribute_table, & max_services_per_host>,
 };
 
 const ConvertMap* max_attribute_services_per_host_map = &max_attribute_services_per_host_api;
@@ -180,7 +176,7 @@ static const std::string max_ip6_extensions = "max_ip6_extensions";
 static const ConvertMap max_ip6_extensions_api =
 {
     max_ip6_extensions,
-    config_int_ctor<&max_ip6_extensions, &network>,
+    config_int_ctor<& max_ip6_extensions, & network>,
 };
 
 const ConvertMap* max_ip6_extensions_map = &max_ip6_extensions_api;
@@ -193,7 +189,7 @@ static const std::string max_metadata_services = "max_metadata_services";
 static const ConvertMap max_metadata_services_api =
 {
     max_metadata_services,
-    config_int_ctor<&max_metadata_services, &attribute_table>,
+    config_int_ctor<& max_metadata_services, & attribute_table>,
 };
 
 const ConvertMap* max_metadata_services_map = &max_metadata_services_api;
@@ -207,9 +203,9 @@ static const std::string max_mpls_stack_depth = "max_mpls_stack_depth";
 static const ConvertMap max_mpls_labelchain_len_api =
 {
     max_mpls_labelchain_len,
-    config_int_ctor<&max_mpls_labelchain_len,
-                    &mpls,
-                    &max_mpls_stack_depth>,
+    config_int_ctor<& max_mpls_labelchain_len,
+    & mpls,
+    & max_mpls_stack_depth>,
 };
 
 const ConvertMap* max_mpls_labelchain_len_map = &max_mpls_labelchain_len_api;
@@ -222,7 +218,7 @@ static const std::string min_ttl = "min_ttl";
 static const ConvertMap min_ttl_api =
 {
     min_ttl,
-    config_int_ctor<&min_ttl, &network>,
+    config_int_ctor<& min_ttl, & network>,
 };
 
 const ConvertMap* min_ttl_map = &min_ttl_api;
@@ -235,7 +231,7 @@ static const std::string new_ttl = "new_ttl";
 static const ConvertMap new_ttl_api =
 {
     new_ttl,
-    config_int_ctor<&new_ttl, &network>,
+    config_int_ctor<& new_ttl, & network>,
 };
 
 const ConvertMap* new_ttl_map = &new_ttl_api;
@@ -248,7 +244,7 @@ static const std::string pcre_match_limit = "pcre_match_limit";
 static const ConvertMap pcre_match_limit_api =
 {
     pcre_match_limit,
-    config_int_ctor<&pcre_match_limit, &detection>,
+    config_int_ctor<& pcre_match_limit, & detection>,
 };
 
 const ConvertMap* pcre_match_limit_map = &pcre_match_limit_api;
@@ -261,7 +257,7 @@ static const std::string pcre_match_limit_recursion = "pcre_match_limit_recursio
 static const ConvertMap pcre_match_limit_recursion_api =
 {
     pcre_match_limit_recursion,
-    config_int_ctor<&pcre_match_limit_recursion, &detection>,
+    config_int_ctor<& pcre_match_limit_recursion, & detection>,
 };
 
 const ConvertMap* pcre_match_limit_recursion_map = &pcre_match_limit_recursion_api;
@@ -275,11 +271,10 @@ static const std::string limit = "limit";
 static const ConvertMap pkt_count_api =
 {
     pkt_count,
-    config_int_ctor<&pkt_count, &packets, &limit>,
+    config_int_ctor<& pkt_count, & packets, & limit>,
 };
 
 const ConvertMap* pkt_count_map = &pkt_count_api;
-
 
 /**************************************************
  ******************** snaplen  ********************
@@ -289,11 +284,10 @@ static const std::string snaplen = "snaplen";
 static const ConvertMap snaplen_api =
 {
     snaplen,
-    config_int_ctor<&snaplen, &daq>,
+    config_int_ctor<& snaplen, & daq>,
 };
 
 const ConvertMap* snaplen_map = &snaplen_api;
-
 
 /**************************************************
  ************** tagged_packet_limit  **************
@@ -303,10 +297,9 @@ static const std::string tagged_packet_limit = "tagged_packet_limit";
 static const ConvertMap tagged_packet_limit_api =
 {
     tagged_packet_limit,
-    config_int_ctor<&tagged_packet_limit, &output>,
+    config_int_ctor<& tagged_packet_limit, & output>,
 };
 
 const ConvertMap* tagged_packet_limit_map = &tagged_packet_limit_api;
-
-
 } // namespace config
+

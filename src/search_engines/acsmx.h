@@ -18,7 +18,6 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-
 /*
 **   ACSMX.H
 **
@@ -42,7 +41,6 @@
 *   Prototypes
 */
 
-
 #define ALPHABET_SIZE    256
 
 #define ACSM_FAIL_STATE   -1
@@ -50,59 +48,53 @@
 typedef struct _acsm_userdata
 {
     uint32_t ref_count;
-    void *id;
-
+    void* id;
 } ACSM_USERDATA;
 
-typedef struct _acsm_pattern {
-
-    struct  _acsm_pattern *next;
-    unsigned char         *patrn;
-    unsigned char         *casepatrn;
-    int      n;
-    int      nocase;
-    int      negative;
-    int      iid;
-    ACSM_USERDATA *udata;
-    void   * rule_option_tree;
-    void   * neg_list;
-
+typedef struct _acsm_pattern
+{
+    struct  _acsm_pattern* next;
+    unsigned char* patrn;
+    unsigned char* casepatrn;
+    int n;
+    int nocase;
+    int negative;
+    int iid;
+    ACSM_USERDATA* udata;
+    void* rule_option_tree;
+    void* neg_list;
 } ACSM_PATTERN;
 
-
-typedef struct  {
-
+typedef struct
+{
     /* Next state - based on input character */
-    int      NextState[ ALPHABET_SIZE ];
+    int NextState[ ALPHABET_SIZE ];
 
     /* Failure state - used while building NFA & DFA  */
-    int      FailState;
+    int FailState;
 
     /* List of patterns that end here, if any */
-    ACSM_PATTERN *MatchList;
-
+    ACSM_PATTERN* MatchList;
 }ACSM_STATETABLE;
-
 
 /*
 * State machine Struct
 */
-typedef struct {
-
+typedef struct
+{
     int acsmMaxStates;
     int acsmNumStates;
 
-    ACSM_PATTERN    * acsmPatterns;
-    ACSM_STATETABLE * acsmStateTable;
+    ACSM_PATTERN* acsmPatterns;
+    ACSM_STATETABLE* acsmStateTable;
 
-    int   bcSize;
+    int bcSize;
     short bcShift[256];
 
     int numPatterns;
-    void (*userfree)(void *p);
-    void (*optiontreefree)(void **p);
-    void (*neg_list_free)(void **p);
-
+    void (* userfree)(void* p);
+    void (* optiontreefree)(void** p);
+    void (* neg_list_free)(void** p);
 }ACSM_STRUCT;
 
 /*
@@ -110,34 +102,35 @@ typedef struct {
 */
 void acsmx_init_xlatcase();
 
-ACSM_STRUCT * acsmNew (void (*userfree)(void *p),
-                       void (*optiontreefree)(void **p),
-                       void (*neg_list_free)(void **p));
+ACSM_STRUCT* acsmNew(void (* userfree)(void* p),
+    void (* optiontreefree)(void** p),
+    void (* neg_list_free)(void** p));
 
-int acsmAddPattern( ACSM_STRUCT * p, const uint8_t * pat, unsigned n,
-          bool nocase, bool negative, void * id, int iid );
+int acsmAddPattern(ACSM_STRUCT* p, const uint8_t* pat, unsigned n,
+    bool nocase, bool negative, void* id, int iid);
 
-int acsmCompile ( ACSM_STRUCT * acsm,
-             int (*build_tree)(void * id, void **existing_tree),
-             int (*neg_list_func)(void *id, void **list));
+int acsmCompile(ACSM_STRUCT* acsm,
+    int (* build_tree)(void* id, void** existing_tree),
+    int (* neg_list_func)(void* id, void** list));
 
 struct SnortConfig;
 
 int acsmCompile(
     SnortConfig*,
-    ACSM_STRUCT * acsm,
-    int (*build_tree)(SnortConfig*, void * id, void **existing_tree),
-    int (*neg_list_func)(void *id, void **list));
+    ACSM_STRUCT* acsm,
+    int (* build_tree)(SnortConfig*, void* id, void** existing_tree),
+    int (* neg_list_func)(void* id, void** list));
 
 int acsmSearch (
-    ACSM_STRUCT * acsm,unsigned char * T, int n, MpseCallback,
-    void * data, int* current_state );
+ACSM_STRUCT * acsm,unsigned char* T, int n, MpseCallback,
+void* data, int* current_state);
 
-void acsmFree ( ACSM_STRUCT * acsm );
-int acsmPatternCount ( ACSM_STRUCT * acsm );
+void acsmFree(ACSM_STRUCT* acsm);
+int acsmPatternCount(ACSM_STRUCT* acsm);
 
-int acsmPrintDetailInfo(ACSM_STRUCT *);
+int acsmPrintDetailInfo(ACSM_STRUCT*);
 
 int acsmPrintSummaryInfo(void);
 
 #endif
+

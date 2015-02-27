@@ -39,11 +39,11 @@
  * Returns: int => return code indicating error or success
  *
  */
-int http_cmd_lookup_init(CMD_LOOKUP **CmdLookup)
+int http_cmd_lookup_init(CMD_LOOKUP** CmdLookup)
 {
-    KMAP *km = KMapNew((KMapUserFreeFunc)HttpInspectCleanupHttpMethodsConf);
+    KMAP* km = KMapNew((KMapUserFreeFunc)HttpInspectCleanupHttpMethodsConf);
     *CmdLookup = km;
-    if(*CmdLookup == NULL)
+    if (*CmdLookup == NULL)
     {
         return -1;
     }
@@ -65,9 +65,9 @@ int http_cmd_lookup_init(CMD_LOOKUP **CmdLookup)
  * Returns: int => return code indicating error or success
  *
  */
-int http_cmd_lookup_cleanup(CMD_LOOKUP **CmdLookup)
+int http_cmd_lookup_cleanup(CMD_LOOKUP** CmdLookup)
 {
-    KMAP *km;
+    KMAP* km;
 
     if (CmdLookup == NULL)
         return -1;
@@ -103,23 +103,23 @@ int http_cmd_lookup_cleanup(CMD_LOOKUP **CmdLookup)
  * Returns: int => return code indicating error or success
  *
  */
-int http_cmd_lookup_add(CMD_LOOKUP *CmdLookup, char *cmd, int len,
-                            HTTP_CMD_CONF *HTTPCmd)
+int http_cmd_lookup_add(CMD_LOOKUP* CmdLookup, char* cmd, int len,
+    HTTP_CMD_CONF* HTTPCmd)
 {
     int iRet;
 
-    if(!CmdLookup || !HTTPCmd)
+    if (!CmdLookup || !HTTPCmd)
     {
         return -1;
     }
 
-    iRet = KMapAdd(CmdLookup, (void *)cmd, len, (void *)HTTPCmd);
+    iRet = KMapAdd(CmdLookup, (void*)cmd, len, (void*)HTTPCmd);
     if (iRet)
     {
         /*
          * This means the key has already been added.
          */
-        if(iRet == 1)
+        if (iRet == 1)
         {
             return -1;
         }
@@ -152,17 +152,17 @@ int http_cmd_lookup_add(CMD_LOOKUP *CmdLookup, char *cmd, int len,
  *                            matching IP if found, NULL otherwise.
  *
  */
-HTTP_CMD_CONF  *http_cmd_lookup_find(CMD_LOOKUP *CmdLookup,
-                                            const char *cmd, int len, int *iError)
+HTTP_CMD_CONF* http_cmd_lookup_find(CMD_LOOKUP* CmdLookup,
+    const char* cmd, int len, int* iError)
 {
-    HTTP_CMD_CONF *HTTPCmd = NULL;
+    HTTP_CMD_CONF* HTTPCmd = NULL;
 
-    if(!iError)
+    if (!iError)
     {
         return NULL;
     }
 
-    if(!CmdLookup)
+    if (!CmdLookup)
     {
         *iError = -1;
         return NULL;
@@ -170,7 +170,7 @@ HTTP_CMD_CONF  *http_cmd_lookup_find(CMD_LOOKUP *CmdLookup,
 
     *iError = 0;
 
-    HTTPCmd = (HTTP_CMD_CONF *)KMapFind(CmdLookup,(void *)cmd,len);
+    HTTPCmd = (HTTP_CMD_CONF*)KMapFind(CmdLookup,(void*)cmd,len);
     if (!HTTPCmd)
     {
         *iError = -1;
@@ -192,17 +192,17 @@ HTTP_CMD_CONF  *http_cmd_lookup_find(CMD_LOOKUP *CmdLookup,
  * Returns: HTTP_CMD_CONF* => Pointer to first cmd configuration structure
  *
  */
-HTTP_CMD_CONF *http_cmd_lookup_first(CMD_LOOKUP *CmdLookup,
-                                            int *iError)
+HTTP_CMD_CONF* http_cmd_lookup_first(CMD_LOOKUP* CmdLookup,
+    int* iError)
 {
-    HTTP_CMD_CONF *HTTPCmd;
+    HTTP_CMD_CONF* HTTPCmd;
 
-    if(!iError)
+    if (!iError)
     {
         return NULL;
     }
 
-    if(!CmdLookup)
+    if (!CmdLookup)
     {
         *iError = -1;
         return NULL;
@@ -210,7 +210,7 @@ HTTP_CMD_CONF *http_cmd_lookup_first(CMD_LOOKUP *CmdLookup,
 
     *iError = 0;
 
-    HTTPCmd = (HTTP_CMD_CONF *)KMapFindFirst(CmdLookup);
+    HTTPCmd = (HTTP_CMD_CONF*)KMapFindFirst(CmdLookup);
     if (!HTTPCmd)
     {
         *iError = -1;
@@ -235,17 +235,17 @@ HTTP_CMD_CONF *http_cmd_lookup_first(CMD_LOOKUP *CmdLookup,
  * Returns: HTTP_CMD_CONF*  => Pointer to next cmd configuration structure
  *
  */
-HTTP_CMD_CONF *http_cmd_lookup_next(CMD_LOOKUP *CmdLookup,
-                                           int *iError)
+HTTP_CMD_CONF* http_cmd_lookup_next(CMD_LOOKUP* CmdLookup,
+    int* iError)
 {
-    HTTP_CMD_CONF *HTTPCmd;
+    HTTP_CMD_CONF* HTTPCmd;
 
-    if(!iError)
+    if (!iError)
     {
         return NULL;
     }
 
-    if(!CmdLookup)
+    if (!CmdLookup)
     {
         *iError = -1;
         return NULL;
@@ -253,7 +253,7 @@ HTTP_CMD_CONF *http_cmd_lookup_next(CMD_LOOKUP *CmdLookup,
 
     *iError = 0;
 
-    HTTPCmd = (HTTP_CMD_CONF *)KMapFindNext(CmdLookup);
+    HTTPCmd = (HTTP_CMD_CONF*)KMapFindNext(CmdLookup);
     if (!HTTPCmd)
     {
         *iError = -1;
@@ -261,3 +261,4 @@ HTTP_CMD_CONF *http_cmd_lookup_next(CMD_LOOKUP *CmdLookup,
 
     return HTTPCmd;
 }
+

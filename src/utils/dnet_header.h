@@ -21,11 +21,9 @@
 #ifndef UTILS_DNET_HEADER_H
 #define UTILS_DNET_HEADER_H
 
-
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
-
 
 #if defined(__clang__)
 #pragma clang diagnostic push
@@ -45,7 +43,6 @@
 #include <dnet.h>
 #endif
 
-
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
@@ -54,5 +51,5 @@
 #pragma GCC diagnostic pop
 #endif
 
-
 #endif
+

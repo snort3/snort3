@@ -39,7 +39,7 @@
 #if (defined(__ia64) && defined(__GNUC__) )
 #define get_clockticks(val) \
 { \
-    __asm__ __volatile__ ("mov %0=ar.itc" : "=r"(val)); \
+    __asm__ __volatile__ ("mov %0=ar.itc" : "=r" (val)); \
 }
 #else
 #if (defined(__ia64) && defined(__hpux))
@@ -56,9 +56,9 @@
     uint32_t tbu0, tbu1, tbl; \
     do \
     { \
-        __asm__ __volatile__ ("mftbu %0" : "=r"(tbu0)); \
-        __asm__ __volatile__ ("mftb %0" : "=r"(tbl)); \
-        __asm__ __volatile__ ("mftbu %0" : "=r"(tbu1)); \
+        __asm__ __volatile__ ("mftbu %0" : "=r" (tbu0)); \
+        __asm__ __volatile__ ("mftb  %0" : "=r" (tbl)); \
+        __asm__ __volatile__ ("mftbu %0" : "=r" (tbu1)); \
     } while (tbu0 != tbu1); \
     val = ((uint64_t)tbl) | (((uint64_t)tbu0) << 32);  \
 }
@@ -68,15 +68,15 @@
 #ifdef _LP64
 #define get_clockticks(val) \
 { \
-    __asm__ __volatile__("rd %%tick, %0" : "=r"(val)); \
+    __asm__ __volatile__ ("rd %%tick, %0" : "=r" (val)); \
 }
 #else
 #define get_clockticks(val) \
 { \
     uint32_t a, b; \
-    __asm__ __volatile__("rd %%tick, %0\n" \
-                         "srlx %0, 32, %1" \
-                         : "=r"(a), "=r"(b)); \
+    __asm__ __volatile__ ("rd %%tick, %0\n" \
+        "srlx %0, 32, %1" \
+        : "=r" (a), "=r" (b)); \
     val = ((uint64_t)a) | (((uint64_t)b) << 32); \
 }
 #endif /* _LP64 */
@@ -88,7 +88,7 @@
 #endif /* IA64 && GNUC */
 #endif /* I386 || AMD64 || X86_64 */
 
-static inline double get_ticks_per_usec (void)
+static inline double get_ticks_per_usec(void)
 {
     uint64_t start = 0, end = 0;
     get_clockticks(start);
@@ -99,5 +99,5 @@ static inline double get_ticks_per_usec (void)
     return (double)(end-start)/1e6;
 }
 
-
 #endif /* CPUCLOCK_H */
+

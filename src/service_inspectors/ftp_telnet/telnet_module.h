@@ -50,7 +50,7 @@ public:
     bool end(const char*, int, SnortConfig*) override;
 
     unsigned get_gid() const override
-    { return GID_TELNET; };
+    { return GID_TELNET; }
 
     const RuleMap* get_rules() const override;
     const PegInfo* get_pegs() const override;

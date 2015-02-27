@@ -16,14 +16,14 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 /*
-	ipobj.h
+    ipobj.h
 
-	IP address encapsulation interface
+    IP address encapsulation interface
 
-	This module provides encapsulation of single IP ADDRESSes as objects,
-	and collections of IP ADDRESSes as objects
+    This module provides encapsulation of single IP ADDRESSes as objects,
+    and collections of IP ADDRESSes as objects
 
         Interaction with this library should be done in HOST byte order.
 */
@@ -37,55 +37,59 @@
 #include "sflsq.h"
 #include "sfip/sfip_t.h"
 
-struct PORTRANGE{
-   unsigned port_lo;
-   unsigned port_hi;
+struct PORTRANGE
+{
+    unsigned port_lo;
+    unsigned port_hi;
 };
 
-struct PORTSET{
-   SF_LIST port_list;
+struct PORTSET
+{
+    SF_LIST port_list;
 };
 
-struct IP_PORT{
+struct IP_PORT
+{
     sfip_t ip;
     PORTSET portset;
     char notflag;
 };
 
-struct IPSET{
+struct IPSET
+{
     SF_LIST ip_list;
 };
-
 
 /*
 
   IP ADDRESS SET OBJECTS
 
-   
+
    Snort Accepts:
 
-	IP-Address		192.168.1.1
-	IP-Address/MaskBits	192.168.1.0/24
-	IP-Address/Mask		192.168.1.0/255.255.255.0
+    IP-Address		192.168.1.1
+    IP-Address/MaskBits	192.168.1.0/24
+    IP-Address/Mask		192.168.1.0/255.255.255.0
 
-   
+
    These can all be handled via the CIDR block notation : IP/MaskBits
 
    We use collections (lists) of cidr blocks to represent address blocks
-   and indivdual addresses.    
+   and indivdual addresses.
 
    For a single IPAddress the implied Mask is 32 bits,or
    255.255.255.255, or 0xffffffff, or -1.
 */
-IPSET * ipset_new     (void);
-int     ipset_add     ( IPSET * ipset, sfip_t *ip, void * port, int notflag);
-int     ipset_contains( IPSET * ipset, const sfip_t *ip, void * port);
-IPSET * ipset_copy    ( IPSET * ipset );
-void    ipset_free    ( IPSET * ipset );
-int     ipset_print   ( IPSET * ipset );
+IPSET* ipset_new(void);
+int ipset_add(IPSET* ipset, sfip_t* ip, void* port, int notflag);
+int ipset_contains(IPSET* ipset, const sfip_t* ip, void* port);
+IPSET* ipset_copy(IPSET* ipset);
+void ipset_free(IPSET* ipset);
+int ipset_print(IPSET* ipset);
 
-/* helper functions -- all the sets work in host order   
+/* helper functions -- all the sets work in host order
 */
-int      ipset_parse(IPSET * ipset, const char *ipstr);
+int ipset_parse(IPSET* ipset, const char* ipstr);
 
 #endif
+

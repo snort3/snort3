@@ -49,9 +49,9 @@
 struct SnortConfig;
 struct MpseApi;
 
-typedef int (*mpse_build_f)(SnortConfig*, void *id, void **existing_tree);
-typedef int (*mpse_negate_f)(void *id, void **list);
-typedef int (*mpse_action_f)(void* id, void* tree, int index, void *data, void *neg_list);
+typedef int (* mpse_build_f)(SnortConfig*, void* id, void** existing_tree);
+typedef int (* mpse_negate_f)(void* id, void** list);
+typedef int (* mpse_action_f)(void* id, void* tree, int index, void* data, void* neg_list);
 
 class SO_PUBLIC Mpse
 {
@@ -60,39 +60,39 @@ public:
     static void reset_pattern_byte_count();
 
 public:
-    virtual ~Mpse() { };
+    virtual ~Mpse() { }
 
     virtual int add_pattern(
         SnortConfig* sc, const uint8_t* pat, unsigned len,
         bool noCase, bool negate, void* ID, int IID) = 0;
 
     virtual int prep_patterns(
-        SnortConfig*, mpse_build_f, mpse_negate_f) = 0;
+    SnortConfig*, mpse_build_f, mpse_negate_f) = 0;
 
     int search(
-        const unsigned char* T, int n, mpse_action_f,
-        void* data, int* current_state );
+    const unsigned char* T, int n, mpse_action_f,
+    void* data, int* current_state);
 
     virtual int search_all(
-        const unsigned char* T, int n, mpse_action_f,
-        void* data, int* current_state );
+    const unsigned char* T, int n, mpse_action_f,
+    void* data, int* current_state);
 
-    virtual void set_opt(int) { };
-    virtual int print_info() { return 0; };
-    virtual int get_pattern_count() { return 0; };
+    virtual void set_opt(int) { }
+    virtual int print_info() { return 0; }
+    virtual int get_pattern_count() { return 0; }
 
-    const char* get_method() { return method.c_str(); };
-    void set_verbose(bool b = true) { verbose = b; };
+    const char* get_method() { return method.c_str(); }
+    void set_verbose(bool b = true) { verbose = b; }
 
-    void set_api(const MpseApi* p) { api = p; };
-    const MpseApi* get_api() { return api; };
+    void set_api(const MpseApi* p) { api = p; }
+    const MpseApi* get_api() { return api; }
 
 protected:
     Mpse(const char* method, bool use_gc);
 
     virtual int _search(
-        const unsigned char* T, int n, mpse_action_f,
-        void* data, int* current_state ) = 0;
+    const unsigned char* T, int n, mpse_action_f,
+    void* data, int* current_state) = 0;
 
 private:
     std::string method;
@@ -105,18 +105,18 @@ private:
 extern THREAD_LOCAL ProfileStats mpsePerfStats;
 #endif
 
-typedef void (*MpseOptFunc)(SnortConfig*);
-typedef void (*MpseExeFunc)();
+typedef void (* MpseOptFunc)(SnortConfig*);
+typedef void (* MpseExeFunc)();
 
-typedef Mpse* (*MpseNewFunc)(
+typedef Mpse* (* MpseNewFunc)(
     SnortConfig* sc,
     class Module*,
     bool use_gc,
-    void (*user_free)(void*),
-    void (*tree_free)(void**),
-    void (*list_free)(void**));
+    void (* user_free)(void*),
+    void (* tree_free)(void**),
+    void (* list_free)(void**));
 
-typedef void (*MpseDelFunc)(Mpse*);
+typedef void (* MpseDelFunc)(Mpse*);
 
 struct MpseApi
 {

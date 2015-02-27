@@ -27,18 +27,15 @@
 
 namespace rules
 {
-
-namespace {
-
-
+namespace
+{
 class FileData : public ConversionState
 {
 public:
-    FileData(Converter& c) : ConversionState(c) {};
-    virtual ~FileData() {};
+    FileData(Converter& c) : ConversionState(c) { }
+    virtual ~FileData() { }
     virtual bool convert(std::istringstream& data);
 };
-
 } // namespace
 
 bool FileData::convert(std::istringstream& data_stream)
@@ -97,5 +94,5 @@ static const ConvertMap rule_file_data =
 };
 
 const ConvertMap* file_data_map = &rule_file_data;
-
 } // namespace rules
+

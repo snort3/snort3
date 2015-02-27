@@ -47,7 +47,7 @@ class SizeOption : public IpsOption
 public:
     SizeOption(const RangeCheck& c, int dir) :
         IpsOption(s_name)
-    { ssod = c; direction = dir; };
+    { ssod = c; direction = dir; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -102,8 +102,8 @@ int SizeOption::eval(Cursor&, Packet* pkt)
     PROFILE_VARS;
     MODULE_PROFILE_START(streamSizePerfStats);
 
-    Flow *lwssn = (Flow*)pkt->flow;
-    TcpSession *tcpssn = (TcpSession*)lwssn->session;
+    Flow* lwssn = (Flow*)pkt->flow;
+    TcpSession* tcpssn = (TcpSession*)lwssn->session;
 
     uint32_t client_size;
     uint32_t server_size;
@@ -178,13 +178,13 @@ static const Parameter s_params[] =
 class SizeModule : public Module
 {
 public:
-    SizeModule() : Module(s_name, s_help, s_params) { };
+    SizeModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &streamSizePerfStats; };
+    { return &streamSizePerfStats; }
 
     RangeCheck ssod;
     int direction;

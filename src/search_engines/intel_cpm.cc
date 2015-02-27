@@ -54,44 +54,45 @@ public:
     IntelCpmMpse(
         SnortConfig* sc,
         bool use_gc,
-        void (*user_free)(void*),
-        void (*tree_free)(void**),
-        void (*list_free)(void**))
-    : Mpse("intel_cpm", use_gc)
+        void (* user_free)(void*),
+        void (* tree_free)(void**),
+        void (* list_free)(void**))
+        : Mpse("intel_cpm", use_gc)
     {
         obj = IntelPmNew(sc, user_free, tree_free, list_free);
-    };
+    }
+
     ~IntelCpmMpse()
     {
         if (obj)
             IntelPmDelete(obj);
-    };
+    }
 
     int add_pattern(
         SnortConfig* sc, const uint8_t* P, unsigned m,
         bool noCase, bool negative, void* ID, int IID) override
     {
         return IntelPmAddPattern(sc, obj, P, m, noCase, negative, ID, IID);
-    };
+    }
 
     int prep_patterns(
         SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
     {
         return IntelPmFinishGroup(sc, obj, build_tree, neg_list);
-    };
+    }
 
     int _search(
         const unsigned char* T, int n, mpse_action_f action,
-        void* data, int* current_state ) override
+        void* data, int* current_state) override
     {
         *current_state = 0;
-        return IntelPmSearch((IntelPm *)p->obj, (unsigned char *)T, n, action, data);
-    };
+        return IntelPmSearch((IntelPm*)p->obj, (unsigned char*)T, n, action, data);
+    }
 
     int get_pattern_count() override
     {
         return IntelGetPatternCount(obj);
-    };
+    }
 };
 //-------------------------------------------------------------------------
 // api
@@ -121,9 +122,9 @@ static Mpse* cpm_ctor(
     SnortConfig* sc,
     class Module*,
     bool use_gc,
-    void (*user_free)(void*),
-    void (*tree_free)(void**),
-    void (*list_free)(void**))
+    void (* user_free)(void*),
+    void (* tree_free)(void**),
+    void (* list_free)(void**))
 {
     return new IntelCpmMpse(sc, use_gc, user_free, tree_free, list_free);
 }

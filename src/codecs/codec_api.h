@@ -20,7 +20,7 @@
 #ifndef CODEC_CODECS_API_H
 #define CODEC_CODECS_API_H
 
-
 extern const struct BaseApi* codecs[];
 
 #endif
+

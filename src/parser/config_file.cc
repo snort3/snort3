@@ -81,14 +81,14 @@ const char* get_snort_conf()
 const char* get_snort_conf_dir()
 { return snort_conf_dir.c_str(); }
 
-void ConfigAlertBeforePass(SnortConfig *sc, const char*)
+void ConfigAlertBeforePass(SnortConfig* sc, const char*)
 {
     sc->run_flags |= RUN_FLAG__ALERT_BEFORE_PASS;
 }
 
-static int GetChecksumFlags(const char *args)
+static int GetChecksumFlags(const char* args)
 {
-    char **toks;
+    char** toks;
     int num_toks;
     int i;
     int negative_flags = 0;
@@ -197,19 +197,19 @@ static int GetChecksumFlags(const char *args)
     return ret_flags;
 }
 
-void ConfigChecksumDrop(SnortConfig*, const char *args)
+void ConfigChecksumDrop(SnortConfig*, const char* args)
 {
     NetworkPolicy* policy = get_network_policy();
     policy->checksum_drop = GetChecksumFlags(args);
 }
 
-void ConfigChecksumMode(SnortConfig*, const char *args)
+void ConfigChecksumMode(SnortConfig*, const char* args)
 {
     NetworkPolicy* policy = get_network_policy();
     policy->checksum_eval = GetChecksumFlags(args);
 }
 
-void ConfigChrootDir(SnortConfig *sc, const char *args)
+void ConfigChrootDir(SnortConfig* sc, const char* args)
 {
     if ((args == NULL) || (sc->chroot_dir != NULL))
         return;
@@ -217,41 +217,41 @@ void ConfigChrootDir(SnortConfig *sc, const char *args)
     sc->chroot_dir = SnortStrdup(args);
 }
 
-void ConfigCreatePidFile(SnortConfig *sc, const char*)
+void ConfigCreatePidFile(SnortConfig* sc, const char*)
 {
     sc->run_flags |= RUN_FLAG__CREATE_PID_FILE;
 }
 
-void ConfigDaemon(SnortConfig *sc, const char*)
+void ConfigDaemon(SnortConfig* sc, const char*)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Daemon mode flag set\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Daemon mode flag set\n"); );
     sc->run_flags |= RUN_FLAG__DAEMON;
     sc->logging_flags |= LOGGING_FLAG__QUIET;
 }
 
-void ConfigDecodeDataLink(SnortConfig *sc, const char*)
+void ConfigDecodeDataLink(SnortConfig* sc, const char*)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Decode DLL set\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Decode DLL set\n"); );
     sc->output_flags |= OUTPUT_FLAG__SHOW_DATA_LINK;
 }
 
 void ConfigDumpCharsOnly(SnortConfig* sc, const char*)
 {
     /* dump the application layer as text only */
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Character payload dump set\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Character payload dump set\n"); );
     sc->output_flags |= OUTPUT_FLAG__CHAR_DATA;
 }
 
-void ConfigDumpPayload(SnortConfig *sc, const char*)
+void ConfigDumpPayload(SnortConfig* sc, const char*)
 {
     /* dump the application layer */
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Payload dump set\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Payload dump set\n"); );
     sc->output_flags |= OUTPUT_FLAG__APP_DATA;
 }
 
-void ConfigDumpPayloadVerbose(SnortConfig *sc, const char*)
+void ConfigDumpPayloadVerbose(SnortConfig* sc, const char*)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Verbose packet bytecode dumps enabled\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Verbose packet bytecode dumps enabled\n"); );
     sc->output_flags |= OUTPUT_FLAG__VERBOSE_DUMP;
 }
 
@@ -268,7 +268,7 @@ void ConfigDstMac(SnortConfig* sc, const char* s)
     memcpy(sc->eth_dst, dst.data, sizeof(dst.data));
 }
 
-void ConfigLogDir(SnortConfig *sc, const char *args)
+void ConfigLogDir(SnortConfig* sc, const char* args)
 {
     if ((args == NULL) || (sc->log_dir != NULL))
         return;
@@ -276,7 +276,7 @@ void ConfigLogDir(SnortConfig *sc, const char *args)
     sc->log_dir = SnortStrdup(args);
 }
 
-void ConfigDaqType(SnortConfig *sc, const char *args)
+void ConfigDaqType(SnortConfig* sc, const char* args)
 {
     if ( !args || !sc )
         return;
@@ -291,7 +291,7 @@ void ConfigDaqType(SnortConfig *sc, const char *args)
     sc->daq_type = SnortStrdup(args);
 }
 
-void ConfigDaqMode(SnortConfig *sc, const char *args)
+void ConfigDaqMode(SnortConfig* sc, const char* args)
 {
     if ( !args || !sc || sc->daq_mode )
         return;
@@ -300,7 +300,7 @@ void ConfigDaqMode(SnortConfig *sc, const char *args)
     sc->daq_mode = SnortStrdup(args);
 }
 
-void ConfigDaqVar(SnortConfig *sc, const char *args)
+void ConfigDaqVar(SnortConfig* sc, const char* args)
 {
     if ( !args || !sc )
         return;
@@ -319,7 +319,7 @@ void ConfigDaqVar(SnortConfig *sc, const char *args)
         ParseError("can't allocate memory for daq_var '%s'.", args);
 }
 
-void ConfigDaqDir(SnortConfig *sc, const char *args)
+void ConfigDaqDir(SnortConfig* sc, const char* args)
 {
     if ( !args || !sc )
         return;
@@ -344,42 +344,42 @@ void ConfigDirtyPig(SnortConfig* sc, const char*)
         sc->dirty_pig = 1;
 }
 
-void ConfigNoLog(SnortConfig *sc, const char*)
+void ConfigNoLog(SnortConfig* sc, const char*)
 {
     sc->output_flags |= OUTPUT_FLAG__NO_LOG;
 }
 
-void ConfigObfuscate(SnortConfig *sc, const char*)
+void ConfigObfuscate(SnortConfig* sc, const char*)
 {
     sc->output_flags |= OUTPUT_FLAG__OBFUSCATE;
 }
 
-void ConfigNoLoggingTimestamps(SnortConfig *sc, const char*)
+void ConfigNoLoggingTimestamps(SnortConfig* sc, const char*)
 {
     sc->output_flags |= OUTPUT_FLAG__NO_TIMESTAMP;
 }
 
-void ConfigObfuscationMask(SnortConfig *sc, const char *args)
+void ConfigObfuscationMask(SnortConfig* sc, const char* args)
 {
     if ( !args )
         return;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Got obfus data: %s\n", args););
+    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Got obfus data: %s\n", args); );
 
     sc->output_flags |= OUTPUT_FLAG__OBFUSCATE;
 
     sfip_pton(args, &sc->obfuscation_net);
 }
 
-void ConfigQuiet(SnortConfig *sc, const char*)
+void ConfigQuiet(SnortConfig* sc, const char*)
 {
     sc->logging_flags |= LOGGING_FLAG__QUIET;
 }
 
-void ConfigSetGid(SnortConfig *sc, const char *args)
+void ConfigSetGid(SnortConfig* sc, const char* args)
 {
     size_t i;
-    char *endptr;
+    char* endptr;
 
     if ( !args )
         return;
@@ -390,7 +390,7 @@ void ConfigSetGid(SnortConfig *sc, const char *args)
          * a group name */
         if (!isdigit((int)args[i]))
         {
-            struct group *gr = getgrnam(args);  // main thread only
+            struct group* gr = getgrnam(args);  // main thread only
 
             if (gr == NULL)
             {
@@ -415,10 +415,10 @@ void ConfigSetGid(SnortConfig *sc, const char *args)
     }
 }
 
-void ConfigSetUid(SnortConfig *sc, const char *args)
+void ConfigSetUid(SnortConfig* sc, const char* args)
 {
     size_t i;
-    char *endptr;
+    char* endptr;
 
     if ( !args )
         return;
@@ -429,7 +429,7 @@ void ConfigSetUid(SnortConfig *sc, const char *args)
          * a user name */
         if (!isdigit((int)args[i]))
         {
-            struct passwd *pw = getpwnam(args);  // main thread only
+            struct passwd* pw = getpwnam(args);  // main thread only
 
             if (pw == NULL)
             {
@@ -462,7 +462,7 @@ void ConfigSetUid(SnortConfig *sc, const char *args)
          * already set */
         if (sc->group_id == -1)
         {
-            struct passwd *pw = getpwuid((uid_t)sc->user_id);  // main thread only
+            struct passwd* pw = getpwuid((uid_t)sc->user_id);  // main thread only
 
             if (pw == NULL)
             {
@@ -475,21 +475,21 @@ void ConfigSetUid(SnortConfig *sc, const char *args)
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_INIT, "UserID: %d GroupID: %d.\n",
-                            sc->user_id, sc->group_id););
+        sc->user_id, sc->group_id); );
 }
 
-void ConfigShowYear(SnortConfig *sc, const char*)
+void ConfigShowYear(SnortConfig* sc, const char*)
 {
     sc->output_flags |= OUTPUT_FLAG__INCLUDE_YEAR;
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Enabled year in timestamp\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Enabled year in timestamp\n"); );
 }
 
-void ConfigTreatDropAsAlert(SnortConfig *sc, const char*)
+void ConfigTreatDropAsAlert(SnortConfig* sc, const char*)
 {
     sc->run_flags |= RUN_FLAG__TREAT_DROP_AS_ALERT;
 }
 
-void ConfigTreatDropAsIgnore(SnortConfig *sc, const char*)
+void ConfigTreatDropAsIgnore(SnortConfig* sc, const char*)
 {
     sc->run_flags |= RUN_FLAG__TREAT_DROP_AS_IGNORE;
 }
@@ -509,9 +509,9 @@ void ConfigProcessAllEvents(SnortConfig* sc, const char*)
 # endif
 #endif
 
-void ConfigUmask(SnortConfig *sc, const char *args)
+void ConfigUmask(SnortConfig* sc, const char* args)
 {
-    char *endptr;
+    char* endptr;
     long mask;
 
     mask = SnortStrtol(args, &endptr, 0);
@@ -524,20 +524,20 @@ void ConfigUmask(SnortConfig *sc, const char *args)
     sc->file_mask = (mode_t)mask;
 }
 
-void ConfigUtc(SnortConfig *sc, const char*)
+void ConfigUtc(SnortConfig* sc, const char*)
 {
     sc->output_flags |= OUTPUT_FLAG__USE_UTC;
 }
 
-void ConfigVerbose(SnortConfig *sc, const char*)
+void ConfigVerbose(SnortConfig* sc, const char*)
 {
     sc->logging_flags |= LOGGING_FLAG__VERBOSE;
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Verbose Flag active\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Verbose Flag active\n"); );
 }
 
-void ConfigTunnelVerdicts ( SnortConfig *sc, const char *args )
+void ConfigTunnelVerdicts(SnortConfig* sc, const char* args)
 {
-    char* tmp, *tok;
+    char* tmp, * tok;
 
     tmp = SnortStrdup(args);
     char* lasts = { 0 };
@@ -568,13 +568,13 @@ void ConfigTunnelVerdicts ( SnortConfig *sc, const char *args )
     free(tmp);
 }
 
-void ConfigPluginPath(SnortConfig *sc, const char *args)
+void ConfigPluginPath(SnortConfig* sc, const char* args)
 {
     if ( sc && args )
         sc->plugin_path = SnortStrdup(args);
 }
 
-void ConfigScriptPath(SnortConfig *sc, const char *args)
+void ConfigScriptPath(SnortConfig* sc, const char* args)
 {
     if ( sc && args )
         sc->script_path = SnortStrdup(args);
@@ -618,8 +618,8 @@ void config_alert_mode(SnortConfig* sc, const char* val)
         EventManager::enable_alerts(false);
     }
     else if ((strcasecmp(val, ALERT_CMG) == 0) ||
-             (strcasecmp(val, ALERT_JH) == 0) ||
-             (strcasecmp(val, ALERT_DJR) == 0))
+        (strcasecmp(val, ALERT_JH) == 0) ||
+        (strcasecmp(val, ALERT_DJR) == 0))
     {
         sc->output = SnortStrdup(OUTPUT_CMG);
         sc->output_flags |= OUTPUT_FLAG__SHOW_DATA_LINK;
@@ -671,7 +671,7 @@ void SetSnortConfDir(const char* file)
     /* extract the config directory from the config filename */
     if ( file )
     {
-        const char *path_sep = strrchr(file, '/');
+        const char* path_sep = strrchr(file, '/');
 
         /* is there a directory seperator in the filename */
         if (path_sep != NULL)

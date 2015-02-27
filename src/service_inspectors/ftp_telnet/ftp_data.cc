@@ -66,20 +66,20 @@ static THREAD_LOCAL SimpleStats fdstats;
 // FIXIT-L seems like file_data should be const pointer.
 // Need to root this out and eliminate const-removing casts.
 static void FTPDataProcess(
-    Packet *p, FTP_DATA_SESSION *data_ssn, uint8_t *file_data, uint16_t data_length)
+    Packet* p, FTP_DATA_SESSION* data_ssn, uint8_t* file_data, uint16_t data_length)
 {
     int status;
 
-    set_file_data((uint8_t *)p->data, p->dsize);
+    set_file_data((uint8_t*)p->data, p->dsize);
 
     status = file_api->file_process(p, file_data, data_length,
-       data_ssn->position, data_ssn->direction, false);
+        data_ssn->position, data_ssn->direction, false);
 
     /* Filename needs to be set AFTER the first call to file_process( ) */
     if (data_ssn->filename && !(data_ssn->packet_flags & FTPDATA_FLG_FILENAME_SET))
     {
         file_api->set_file_name(p->flow,
-          (uint8_t *)data_ssn->filename, data_ssn->file_xfer_info);
+            (uint8_t*)data_ssn->filename, data_ssn->file_xfer_info);
         data_ssn->packet_flags |= FTPDATA_FLG_FILENAME_SET;
     }
 
@@ -91,7 +91,7 @@ static void FTPDataProcess(
     }
 }
 
-static int SnortFTPData(Packet *p)
+static int SnortFTPData(Packet* p)
 {
     if (!p->flow)
         return -1;
@@ -118,12 +118,12 @@ static int SnortFTPData(Packet *p)
         FtpFlowData* fd = (FtpFlowData*)stream.get_application_data_from_key(
             &data_ssn->ftp_key, FtpFlowData::flow_id);
 
-        FTP_SESSION *ftp_ssn = fd ? &fd->session : NULL;
+        FTP_SESSION* ftp_ssn = fd ? &fd->session : NULL;
 
         if (!PROTO_IS_FTP(ftp_ssn))
         {
             DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-              "FTP-DATA Invalid FTP_SESSION retrieved durring lookup\n"););
+                "FTP-DATA Invalid FTP_SESSION retrieved durring lookup\n"); );
 
             if (data_ssn->data_chan)
                 stream.set_ignore_direction(p->flow, SSN_DIR_BOTH);
@@ -133,24 +133,24 @@ static int SnortFTPData(Packet *p)
 
         switch (ftp_ssn->file_xfer_info)
         {
-            case FTPP_FILE_UNKNOWN:
-                /* Keep waiting */
-                break;
+        case FTPP_FILE_UNKNOWN:
+            /* Keep waiting */
+            break;
 
-            case FTPP_FILE_IGNORE:
-                /* This wasn't a file transfer; ignore it */
-                if (data_ssn->data_chan)
-                    stream.set_ignore_direction(p->flow, SSN_DIR_BOTH);
-                return 0;
+        case FTPP_FILE_IGNORE:
+            /* This wasn't a file transfer; ignore it */
+            if (data_ssn->data_chan)
+                stream.set_ignore_direction(p->flow, SSN_DIR_BOTH);
+            return 0;
 
-            default:
-                /* A file transfer was detected. */
-                data_ssn->direction = ftp_ssn->data_xfer_dir;
-                data_ssn->file_xfer_info = ftp_ssn->file_xfer_info;
-                ftp_ssn->file_xfer_info  = 0;
-                data_ssn->filename  = ftp_ssn->filename;
-                ftp_ssn->filename   = NULL;
-                break;
+        default:
+            /* A file transfer was detected. */
+            data_ssn->direction = ftp_ssn->data_xfer_dir;
+            data_ssn->file_xfer_info = ftp_ssn->file_xfer_info;
+            ftp_ssn->file_xfer_info  = 0;
+            data_ssn->filename  = ftp_ssn->filename;
+            ftp_ssn->filename   = NULL;
+            break;
         }
     }
 
@@ -164,10 +164,10 @@ static int SnortFTPData(Packet *p)
     else
     {
         initFilePosition(&data_ssn->position,
-           file_api->get_file_processed_size(p->flow));
+            file_api->get_file_processed_size(p->flow));
     }
 
-    FTPDataProcess(p, data_ssn, (uint8_t *)p->data, p->dsize);
+    FTPDataProcess(p, data_ssn, (uint8_t*)p->data, p->dsize);
     return 0;
 }
 
@@ -191,7 +191,7 @@ FtpDataFlowData::~FtpDataFlowData()
         free(session.filename);
 }
 
-void FtpDataFlowData::handle_eof(Packet *p)
+void FtpDataFlowData::handle_eof(Packet* p)
 {
     FTP_DATA_SESSION* data_ssn = &session;
 
@@ -206,7 +206,7 @@ void FtpDataFlowData::handle_eof(Packet *p)
     if (!(data_ssn->packet_flags & FTPDATA_FLG_STOP))
     {
         data_ssn->packet_flags |= FTPDATA_FLG_STOP;
-        FTPDataProcess(p, data_ssn, (uint8_t *)p->data, p->dsize);
+        FTPDataProcess(p, data_ssn, (uint8_t*)p->data, p->dsize);
     }
 }
 
@@ -217,8 +217,8 @@ void FtpDataFlowData::handle_eof(Packet *p)
 class FtpData : public Inspector
 {
 public:
-    FtpData() { };
-    ~FtpData() { };
+    FtpData() { }
+    ~FtpData() { }
 
     void eval(Packet*) override;
 };
@@ -226,14 +226,14 @@ public:
 class FtpDataModule : public Module
 {
 public:
-    FtpDataModule() : Module(s_name, s_help) { };
+    FtpDataModule() : Module(s_name, s_help) { }
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     ProfileStats* get_profile() const override;
 
     bool set(const char*, Value&, SnortConfig*) override
-    { return false; };
+    { return false; }
 };
 
 const PegInfo* FtpDataModule::get_pegs() const

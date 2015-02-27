@@ -26,10 +26,10 @@ class ArgList
 {
 public:
     ArgList(int c, char* v[])
-    { argc = c; argv = v; reset(); };
+    { argc = c; argv = v; reset(); }
 
     void reset()
-    { idx = 0; arg = nullptr; };
+    { idx = 0; arg = nullptr; }
 
     bool get_arg(const char*& key, const char*& val);
     void dump();

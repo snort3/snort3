@@ -16,7 +16,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 /**
 **  @file       hi_si.h
 **
@@ -55,21 +55,21 @@ struct Packet;
 
 /**
 **  The HI_SESSION structure contains the complete HTTP session, both the
-**  client and the server constructs.  This structure is the structure that 
-**  is saved per session in the Stream Interface Module.  This structure 
-**  gets sent through the detection engine process (Normalization, 
+**  client and the server constructs.  This structure is the structure that
+**  is saved per session in the Stream Interface Module.  This structure
+**  gets sent through the detection engine process (Normalization,
 **  Detection).
 */
 struct HI_SESSION
 {
     /*
-    **  The client construct contains all the info associated with a 
+    **  The client construct contains all the info associated with a
     **  client request.
     */
     HI_CLIENT client;
 
     /*
-    **  The server construct contains all the info associated with a 
+    **  The server construct contains all the info associated with a
     **  server response.
     */
     HI_SERVER server;
@@ -77,24 +77,23 @@ struct HI_SESSION
     /*
     **  The server configuration for this session
     */
-    HTTPINSPECT_CONF *server_conf;
+    HTTPINSPECT_CONF* server_conf;
 
     /*
     **  If this HTTP request came from a proxy, we
     **  have to see if it was configured.
     */
-    HTTPINSPECT_CONF *client_conf;
+    HTTPINSPECT_CONF* client_conf;
 
     /*
     **  The global configuration for this session
     */
-    HTTPINSPECT_GLOBAL_CONF *global_conf;
+    HTTPINSPECT_GLOBAL_CONF* global_conf;
 
     uint32_t norm_flags;
-
 };
 
-#define HI_BODY 1 
+#define HI_BODY 1
 
 /**
 **  The HI_SI_INPUT structure holds the information that the session
@@ -102,7 +101,7 @@ struct HI_SESSION
 **  (client, server, neither) and to retrieve the appropriate server
 **  configuration.
 **
-**  The input is the source and destination IP addresses, and the 
+**  The input is the source and destination IP addresses, and the
 **  source and destination ports (since this should always be a
 **  TCP packet).
 */
@@ -113,20 +112,21 @@ typedef struct s_HI_SI_INPUT
     unsigned short sport;
     unsigned short dport;
     unsigned char pdir;
-
 } HI_SI_INPUT;
 
-int hi_si_session_inspection(HTTPINSPECT_CONF *GlobalConf,
-        HI_SESSION **session, HI_SI_INPUT *SiInput, int *piInspectMode,
-        Packet *p);
+int hi_si_session_inspection(HTTPINSPECT_CONF* GlobalConf,
+    HI_SESSION** session, HI_SI_INPUT* SiInput, int* piInspectMode,
+    Packet* p);
 
-extern int CheckChunkEncoding(HI_SESSION *, const u_char *, const u_char *, const u_char **, u_char *,
-                              uint32_t , uint32_t, uint32_t *, uint32_t *, HttpSessionData *, int);
-extern int IsHttpVersion(const u_char **, const u_char *);
-extern const u_char *extract_http_cookie(const u_char *p, const u_char *end, HEADER_PTR *, HEADER_FIELD_PTR *);
-extern const u_char *extract_http_content_length(HI_SESSION *, HTTPINSPECT_CONF *, const u_char *, const u_char *, const u_char *, HEADER_PTR *, HEADER_FIELD_PTR *) ;
+extern int CheckChunkEncoding(HI_SESSION*, const u_char*, const u_char*, const u_char **, u_char*,
+uint32_t, uint32_t, uint32_t*, uint32_t*, HttpSessionData*, int);
+extern int IsHttpVersion(const u_char**, const u_char*);
+extern const u_char* extract_http_cookie(const u_char* p, const u_char* end, HEADER_PTR*,
+    HEADER_FIELD_PTR*);
+extern const u_char* extract_http_content_length(HI_SESSION*, HTTPINSPECT_CONF*, const u_char*,
+    const u_char*, const u_char*, HEADER_PTR*, HEADER_FIELD_PTR*);
 
-extern const u_char *extract_http_transfer_encoding(HI_SESSION *, HttpSessionData *,
-        const u_char *, const u_char *, const u_char *, HEADER_PTR *, int);
+extern const u_char* extract_http_transfer_encoding(HI_SESSION*, HttpSessionData*,
+    const u_char*, const u_char*, const u_char*, HEADER_PTR*, int);
 #endif
 

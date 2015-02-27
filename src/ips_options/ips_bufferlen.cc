@@ -49,7 +49,7 @@ class LenOption : public IpsOption
 public:
     LenOption(const RangeCheck& c) :
         IpsOption(s_name)
-    { config = c; };
+    { config = c; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -116,13 +116,13 @@ static const Parameter s_params[] =
 class LenModule : public Module
 {
 public:
-    LenModule() : Module(s_name, s_help, s_params) { };
+    LenModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &lenCheckPerfStats; };
+    { return &lenCheckPerfStats; }
 
     RangeCheck data;
 };

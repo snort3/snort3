@@ -42,22 +42,22 @@
 #include "snort.h"
 #endif
 
-SFHASHFCN * sfhashfcn_new( int m )
+SFHASHFCN* sfhashfcn_new(int m)
 {
-    SFHASHFCN * p;
+    SFHASHFCN* p;
     static int one=1;
 
-    if( one ) /* one time init */
+    if ( one ) /* one time init */
     {
-        srand( (unsigned) time(0) );
+        srand( (unsigned)time(0) );
         one = 0;
     }
 
     // This can make all of the hashing static for testing.
     //#define rand() 0
 
-    p = (SFHASHFCN*) calloc( 1,sizeof(SFHASHFCN) );
-    if( !p )
+    p = (SFHASHFCN*)calloc(1,sizeof(SFHASHFCN) );
+    if ( !p )
         return 0;
 
 #ifndef MODULUS_HASH
@@ -68,8 +68,8 @@ SFHASHFCN * sfhashfcn_new( int m )
     else
 #endif
     {
-        p->seed     = sf_nearest_prime( (rand()%m)+3191 );
-        p->scale    = sf_nearest_prime( (rand()%m)+709 );
+        p->seed     = sf_nearest_prime( (rand()%m)+3191);
+        p->scale    = sf_nearest_prime( (rand()%m)+709);
         p->hardener = (rand()*rand()) + 133824503;
     }
 
@@ -79,25 +79,25 @@ SFHASHFCN * sfhashfcn_new( int m )
     return p;
 }
 
-void sfhashfcn_free( SFHASHFCN * p )
+void sfhashfcn_free(SFHASHFCN* p)
 {
-   if( p )
-   {
-       free( p);
-   }
+    if ( p )
+    {
+        free(p);
+    }
 }
 
-void sfhashfcn_static( SFHASHFCN * p )
+void sfhashfcn_static(SFHASHFCN* p)
 {
     p->seed     = 3193;
     p->scale    = 719;
     p->hardener = 133824503;
 }
 
-unsigned sfhashfcn_hash( SFHASHFCN * p, unsigned char *d, int n )
+unsigned sfhashfcn_hash(SFHASHFCN* p, unsigned char* d, int n)
 {
     unsigned hash = p->seed;
-    while( n )
+    while ( n )
     {
         hash *=  p->scale;
         hash += *d++;
@@ -113,15 +113,15 @@ unsigned sfhashfcn_hash( SFHASHFCN * p, unsigned char *d, int n )
  * @param hash_fcn user specified hash function
  * @param keycmp_fcn user specified key comparisoin function
  */
-int sfhashfcn_set_keyops( SFHASHFCN *h,
-                          unsigned (*hash_fcn)( SFHASHFCN * p,
-                                                unsigned char *d,
-                                                int n),
-                          int (*keycmp_fcn)( const void *s1,
-                                             const void *s2,
-                                             size_t n))
+int sfhashfcn_set_keyops(SFHASHFCN* h,
+    unsigned (* hash_fcn)(SFHASHFCN* p,
+    unsigned char* d,
+    int n),
+    int (* keycmp_fcn)(const void* s1,
+    const void* s2,
+    size_t n))
 {
-    if(h && hash_fcn && keycmp_fcn)
+    if (h && hash_fcn && keycmp_fcn)
     {
         h->hash_fcn   = hash_fcn;
         h->keycmp_fcn = keycmp_fcn;
@@ -149,22 +149,22 @@ void mix_str(
         if (k > 4)
             k=4;
 
-        for (unsigned l=0;l<k;l++)
+        for (unsigned l=0; l<k; l++)
         {
             tmp |= s[i + l] << l*8;
         }
 
         switch (j)
         {
-            case 0:
-                a += tmp;
-                break;
-            case 1:
-                b += tmp;
-                break;
-            case 2:
-                c += tmp;
-                break;
+        case 0:
+            a += tmp;
+            break;
+        case 1:
+            b += tmp;
+            break;
+        case 2:
+            c += tmp;
+            break;
         }
         j++;
 

@@ -27,29 +27,27 @@
 
 namespace preprocessors
 {
-
-namespace {
-
+namespace
+{
 class PerfMonitor : public ConversionState
 {
 public:
-    PerfMonitor(Converter& c) : ConversionState(c) {};
-    virtual ~PerfMonitor() {};
+    PerfMonitor(Converter& c) : ConversionState(c) { }
+    virtual ~PerfMonitor() { }
     virtual bool convert(std::istringstream& data_stream);
 
 private:
     bool parse_file_option(std::istringstream& data_stream,
-                        std::string orig_name,
-                        std::string option_name,
-                        std::string new_file_name);
+        std::string orig_name,
+        std::string option_name,
+        std::string new_file_name);
 };
-
 } // namespace
 
 bool PerfMonitor::parse_file_option(std::istringstream& data_stream,
-                                std::string orig_name,
-                                std::string option_name,
-                                std::string new_file_name)
+    std::string orig_name,
+    std::string option_name,
+    std::string new_file_name)
 {
     bool tmpval;
 
@@ -108,65 +106,56 @@ bool PerfMonitor::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("file"))
             parse_file_option(data_stream, "file",
-                                "file", "perf_monitor.csv");
+                "file", "perf_monitor.csv");
 
         else if (!keyword.compare("snortfile"))
         {
             table_api.add_diff_option_comment("snortfile", "file = true");
             parse_file_option(data_stream, "snortfile",
-                                "file", "perf_monitor.csv");
+                "file", "perf_monitor.csv");
         }
-
         else if (!keyword.compare("flow-file"))
         {
             table_api.add_diff_option_comment("flow-file", "flow_file = true");
             parse_file_option(data_stream, "flow-file",
-                                "flow_file", "perf_monitor_flow.csv");
+                "flow_file", "perf_monitor_flow.csv");
         }
-
         else if (!keyword.compare("flow-ip-file"))
         {
             table_api.add_diff_option_comment("flow-ip-file", "flow_ip_file = true");
             parse_file_option(data_stream, "flow-ip-file",
-                                "flow_ip_file", "perf_monitor_flow_ip.csv");
+                "flow_ip_file", "perf_monitor_flow_ip.csv");
         }
-
         else if (!keyword.compare("accumulate"))
         {
             table_api.add_diff_option_comment("accumulate", "reset = false");
             tmpval = table_api.add_option("reset", false);
         }
-
         else if (!keyword.compare("flow-ip"))
         {
             table_api.add_diff_option_comment("flow-ip", "flow_ip");
             tmpval = table_api.add_option("flow_ip", true);
         }
-
         else if (!keyword.compare("flow-ports"))
         {
             table_api.add_diff_option_comment("flow-ports", "flow_ports");
-            tmpval = parse_int_option("flow_ports", data_stream, false);            
+            tmpval = parse_int_option("flow_ports", data_stream, false);
         }
-
         else if (!keyword.compare("time"))
         {
             table_api.add_diff_option_comment("time", "seconds");
             tmpval = parse_int_option("seconds", data_stream, false);
         }
-
         else if (!keyword.compare("flow-ip-memcap"))
         {
             table_api.add_diff_option_comment("flow-ip-memcap", "flow_ip_memcap");
             tmpval = parse_string_option("flow_ip_memcap", data_stream);
         }
-
         else if (!keyword.compare("pktcnt"))
         {
             table_api.add_diff_option_comment("pktcnt", "packets");
             tmpval = parse_int_option("packets", data_stream, false);
         }
-
         else
             tmpval = false;
 
@@ -174,7 +163,7 @@ bool PerfMonitor::convert(std::istringstream& data_stream)
             retval = tmpval;
     }
 
-    return retval;    
+    return retval;
 }
 
 /**************************
@@ -186,12 +175,12 @@ static ConversionState* ctor(Converter& c)
     return new PerfMonitor(c);
 }
 
-static const ConvertMap keyword_perfmonitor = 
+static const ConvertMap keyword_perfmonitor =
 {
     "perfmonitor",
     ctor,
 };
 
 const ConvertMap* perfmonitor_map = &keyword_perfmonitor;
-
 }
+

@@ -22,13 +22,13 @@
 
 #include "snort_types.h"
 
-typedef void (*PeriodicFunc)(void*);
+typedef void (* PeriodicFunc)(void*);
 
 void periodic_register(
-    PeriodicFunc, void* arg, uint16_t priority, uint32_t period);
+PeriodicFunc, void* arg, uint16_t priority, uint32_t period);
 
 void periodic_check();
 void periodic_release();
 
-#endif 
+#endif
 

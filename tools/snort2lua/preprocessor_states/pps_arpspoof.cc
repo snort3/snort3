@@ -25,19 +25,16 @@
 
 namespace preprocessors
 {
-
-namespace {
-
+namespace
+{
 class ArpSpoof : public ConversionState
 {
 public:
-    ArpSpoof(Converter& c) : ConversionState(c) {};
-    virtual ~ArpSpoof() {};
+    ArpSpoof(Converter& c) : ConversionState(c) { }
+    virtual ~ArpSpoof() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
-
 
 bool ArpSpoof::convert(std::istringstream& data_stream)
 {
@@ -45,16 +42,15 @@ bool ArpSpoof::convert(std::istringstream& data_stream)
     bool retval = true;
     table_api.open_table("arp_spoof");
 
-    while(data_stream >> keyword)
+    while (data_stream >> keyword)
     {
         bool tmpval = true;
 
-        if(!keyword.compare("-unicast"))
+        if (!keyword.compare("-unicast"))
             table_api.add_deleted_comment("unicast");
 
         else
             tmpval = false;
-
 
         if (!tmpval)
         {
@@ -73,7 +69,7 @@ static ConversionState* arpspoof_ctor(Converter& c)
     return new ArpSpoof(c);
 }
 
-static const ConvertMap preprocessor_arpspoof = 
+static const ConvertMap preprocessor_arpspoof =
 {
     "arpspoof",
     arpspoof_ctor,
@@ -81,25 +77,20 @@ static const ConvertMap preprocessor_arpspoof =
 
 const ConvertMap* arpspoof_map = &preprocessor_arpspoof;
 
-
-
 /********************************
  *******  ArpSpoof Host *********
  ********************************/
 
-
-namespace {
-
+namespace
+{
 class ArpSpoofHost : public ConversionState
 {
 public:
-    ArpSpoofHost(Converter& c) : ConversionState(c) {};
-    virtual ~ArpSpoofHost() {};
+    ArpSpoofHost(Converter& c) : ConversionState(c) { }
+    virtual ~ArpSpoofHost() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
-
 
 bool ArpSpoofHost::convert(std::istringstream& data_stream)
 {
@@ -109,8 +100,8 @@ bool ArpSpoofHost::convert(std::istringstream& data_stream)
     table_api.open_table("arp_spoof");
     table_api.open_table("hosts");
 
-    while(data_stream >> ip &&
-          data_stream >> mac)
+    while (data_stream >> ip &&
+        data_stream >> mac)
     {
         table_api.open_table();
         table_api.add_option("ip", ip);
@@ -124,7 +115,7 @@ bool ArpSpoofHost::convert(std::istringstream& data_stream)
     if (!ip.empty())
         return false;
 
-    return retval;    
+    return retval;
 }
 
 /*******  A P I ***********/
@@ -134,12 +125,12 @@ static ConversionState* arpspoof_host_ctor(Converter& c)
     return new ArpSpoofHost(c);
 }
 
-static const ConvertMap preprocessor_arpspoof_host = 
+static const ConvertMap preprocessor_arpspoof_host =
 {
     "arpspoof_detect_host",
     arpspoof_host_ctor,
 };
 
 const ConvertMap* arpspoof_host_map = &preprocessor_arpspoof_host;
-
 } // namespace preprocessors
+

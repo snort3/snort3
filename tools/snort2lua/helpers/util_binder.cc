@@ -20,10 +20,9 @@
 #include "helpers/util_binder.h"
 #include "data/dt_table_api.h"
 
-
 Binder::Binder(TableApi& t) :   table_api(t),
-                                printed(false),
-                                when_policy_id(-1)
+    printed(false),
+    when_policy_id(-1)
 { }
 
 Binder::~Binder()
@@ -89,7 +88,6 @@ void Binder::add_to_configuration()
     table_api.close_table();  // "binder"
 }
 
-
 void Binder::set_when_policy_id(int id)
 { when_policy_id = id; }
 
@@ -110,10 +108,6 @@ void Binder::add_when_net(std::string net)
 
 void Binder::add_when_port(std::string port)
 { ports.push_back(std::string(port)); }
-
-
-
-
 
 void Binder::set_use_type(std::string module_name)
 { use_type = std::string(module_name); }

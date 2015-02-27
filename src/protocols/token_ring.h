@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 // token_ring.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifndef PROTOCOLS_TOKEN_RING_H
 #define PROTOCOLS_TOKEN_RING_H
 
@@ -25,7 +24,6 @@
 
 namespace token_ring
 {
-
 /* LLC structure */
 struct Trh_llc
 {
@@ -33,14 +31,13 @@ struct Trh_llc
     uint8_t ssap;
     uint8_t protid[3];
     uint16_t ethertype;
-} ;
+};
 
 /* RIF structure
  * Linux/tcpdump patch defines tokenring header in dump way, since not
  * every tokenring header with have RIF data... we define it separately, and
  * a bit more split up
  */
-
 
 /* These are macros to use the bitlevel accesses in the Trh_Mr header
 
@@ -84,13 +81,12 @@ struct Trh_hdr
 
 static inline const Trh_mr* get_trhmr(const Trh_llc* llc)
 {
-
-    if(llc->dsap != IPARP_SAP && llc->ssap != IPARP_SAP)
-        return reinterpret_cast<const Trh_mr *>(llc);
+    if (llc->dsap != IPARP_SAP && llc->ssap != IPARP_SAP)
+        return reinterpret_cast<const Trh_mr*>(llc);
 
     return nullptr;
 }
-
 } // namespace token_ring
 
 #endif
+

@@ -66,7 +66,7 @@
 #define PATH_MAX_UTIL 1024
 #endif
 
-char **protocol_names = NULL;
+char** protocol_names = NULL;
 
 /****************************************************************************
  * Store interesting data in memory that would not otherwise be visible
@@ -76,11 +76,12 @@ char **protocol_names = NULL;
 #define SNORT_VERSION_STRLEN sizeof(SNORT_VERSION_STRING)
 char __snort_version_string[SNORT_VERSION_STRLEN];
 
-void StoreSnortInfoStrings( void )
+void StoreSnortInfoStrings(void)
 {
     strncpy(__snort_version_string, SNORT_VERSION_STRING,
-            sizeof(__snort_version_string));
+        sizeof(__snort_version_string));
 }
+
 #undef SNORT_VERSION_STRING
 #undef SNORT_VERSION_STRLEN
 
@@ -99,7 +100,7 @@ int DisplayBanner(void)
 {
     const char* info = getenv("HOSTTYPE");
 
-    if( !info )
+    if ( !info )
         info="from 2.9.6-9";  // last sync with head
 
     const char* ljv = LUAJIT_VERSION;
@@ -109,10 +110,11 @@ int DisplayBanner(void)
     LogMessage("\n");
     LogMessage("   ,,_     -*> Snort++ <*-\n");
     LogMessage("  o\"  )~   Version %s (Build %s) %s\n",
-               VERSION, BUILD, info);
+        VERSION, BUILD, info);
     LogMessage("   ''''    By Martin Roesch & The Snort Team\n");
     LogMessage("           http://snort.org/contact#team\n");
-    LogMessage("           Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.\n");
+    LogMessage(
+        "           Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.\n");
     LogMessage("           Copyright (C) 1998-2013 Sourcefire, Inc., et al.\n");
 #ifdef HAVE_PCAP_LIB_VERSION
     LogMessage("           Using %s\n", pcap_lib_version());
@@ -139,20 +141,20 @@ int DisplayBanner(void)
  * Returns: void function
  *
  ****************************************************************************/
-void ts_print(const struct timeval *tvp, char *timebuf)
+void ts_print(const struct timeval* tvp, char* timebuf)
 {
     int s;
-    int    localzone;
+    int localzone;
     time_t Time;
     struct timeval tv;
     struct timezone tz;
-    struct tm *lt;    /* place to stick the adjusted clock data */
+    struct tm* lt;    /* place to stick the adjusted clock data */
 
     /* if null was passed, we use current time */
-    if(!tvp)
+    if (!tvp)
     {
         /* manual page (for linux) says tz is never used, so.. */
-        memset((char *) &tz, 0, sizeof(tz));
+        memset((char*)&tz, 0, sizeof(tz));
         gettimeofday(&tv, &tz);
         tvp = &tv;
     }
@@ -175,18 +177,18 @@ void ts_print(const struct timeval *tvp, char *timebuf)
     {
         int year = (lt->tm_year >= 100) ? (lt->tm_year - 100) : lt->tm_year;
 
-        (void) SnortSnprintf(timebuf, TIMEBUF_SIZE,
-                        "%02d/%02d/%02d-%02d:%02d:%02d.%06u ",
-                        lt->tm_mon + 1, lt->tm_mday, year,
-                        s / 3600, (s % 3600) / 60, s % 60,
-                        (u_int) tvp->tv_usec);
+        (void)SnortSnprintf(timebuf, TIMEBUF_SIZE,
+            "%02d/%02d/%02d-%02d:%02d:%02d.%06u ",
+            lt->tm_mon + 1, lt->tm_mday, year,
+            s / 3600, (s % 3600) / 60, s % 60,
+            (u_int)tvp->tv_usec);
     }
     else
     {
-        (void) SnortSnprintf(timebuf, TIMEBUF_SIZE,
-                        "%02d/%02d-%02d:%02d:%02d.%06u ", lt->tm_mon + 1,
-                        lt->tm_mday, s / 3600, (s % 3600) / 60, s % 60,
-                        (u_int) tvp->tv_usec);
+        (void)SnortSnprintf(timebuf, TIMEBUF_SIZE,
+            "%02d/%02d-%02d:%02d:%02d.%06u ", lt->tm_mon + 1,
+            lt->tm_mday, s / 3600, (s % 3600) / 60, s % 60,
+            (u_int)tvp->tv_usec);
     }
 }
 
@@ -204,7 +206,7 @@ void ts_print(const struct timeval *tvp, char *timebuf)
  ****************************************************************************/
 int gmt2local(time_t t)
 {
-    if(t == 0)
+    if (t == 0)
         t = time(NULL);
 
     struct tm gmt;
@@ -218,7 +220,7 @@ int gmt2local(time_t t)
 
     int dir = loc.tm_year - gmt.tm_year;
 
-    if(dir == 0)
+    if (dir == 0)
         dir = loc.tm_yday - gmt.tm_yday;
 
     dt += dir * 24 * 60 * 60;
@@ -244,25 +246,25 @@ int gmt2local(time_t t)
  * note that the string is now just 'Hello' and the length is shortened
  * by more than just an ending '\n' or '\r'
  ****************************************************************************/
-void strip(char *data)
+void strip(char* data)
 {
     int size;
-    char *end;
-    char *idx;
+    char* end;
+    char* idx;
 
     idx = data;
     end = data + strlen(data);
     size = end - idx;
 
-    while(idx != end)
+    while (idx != end)
     {
-        if((*idx == '\n') ||
-                (*idx == '\r'))
+        if ((*idx == '\n') ||
+            (*idx == '\r'))
         {
             *idx = 0;
             size--;
         }
-        if(*idx == '\t')
+        if (*idx == '\t')
         {
             *idx = ' ';
         }
@@ -270,13 +272,13 @@ void strip(char *data)
     }
 }
 
-static FILE *pid_lockfile = NULL;
-static FILE *pid_file = NULL;
+static FILE* pid_lockfile = NULL;
+static FILE* pid_file = NULL;
 
 void CreatePidFile(pid_t pid)
 {
     const char* dir = snort_conf->log_dir ? snort_conf->log_dir : ".";
-    SnortSnprintf(snort_conf->pid_filename, 
+    SnortSnprintf(snort_conf->pid_filename,
         sizeof(snort_conf->pid_filename), "%s/snort.pid", dir);
 
     if (!ScNoLockPidFile())
@@ -311,7 +313,7 @@ void CreatePidFile(pid_t pid)
 
     /* Okay, were able to lock PID file, now open and write PID */
     pid_file = fopen(snort_conf->pid_filename, "w");
-    if(pid_file)
+    if (pid_file)
     {
         LogMessage("Writing PID \"%d\" to file \"%s\"\n", (int)pid,
             snort_conf->pid_filename);
@@ -408,12 +410,12 @@ void InitGroups(int user_id, int group_id)
 {
     if ((user_id != -1) && (getuid() == 0))
     {
-        struct passwd *pw = getpwuid(user_id);  // main thread only
+        struct passwd* pw = getpwuid(user_id);  // main thread only
 
         if (pw != NULL)
         {
             /* getpwuid and initgroups may use the same static buffers */
-            char *username = SnortStrdup(pw->pw_name);
+            char* username = SnortStrdup(pw->pw_name);
 
             if (initgroups(username, group_id) < 0)
             {
@@ -437,12 +439,12 @@ void InitProtoNames(void)
     int i;
 
     if (protocol_names == NULL)
-        protocol_names = (char **)SnortAlloc(sizeof(char *) * NUM_IP_PROTOS);
+        protocol_names = (char**)SnortAlloc(sizeof(char*) * NUM_IP_PROTOS);
 
     for (i = 0; i < NUM_IP_PROTOS; i++)
     {
 #ifndef VALGRIND_TESTING
-        struct protoent *pt = getprotobynumber(i);  // main thread only
+        struct protoent* pt = getprotobynumber(i);  // main thread only
 
         if (pt != NULL)
         {
@@ -491,45 +493,45 @@ void CleanupProtoNames(void)
  * Returns: the processed BPF string
  *
  ****************************************************************************/
-char *read_infile(const char* key, const char* fname)
+char* read_infile(const char* key, const char* fname)
 {
     int fd, cc;
-    char *cp, *cmt;
+    char* cp, * cmt;
     struct stat buf;
 
     fd = open(fname, O_RDONLY);
 
-    if(fd < 0)
+    if (fd < 0)
     {
         ParseError("can't open %s = %s: %s\n", key, fname, get_error(errno));
         return nullptr;
     }
 
-    if(fstat(fd, &buf) < 0)
+    if (fstat(fd, &buf) < 0)
     {
         ParseError("can't stat %s: %s\n", fname, get_error(errno));
         return nullptr;
     }
 
-    cp = (char *)SnortAlloc(((u_int)buf.st_size + 1) * sizeof(char));
+    cp = (char*)SnortAlloc(((u_int)buf.st_size + 1) * sizeof(char));
 
-    cc = read(fd, cp, (int) buf.st_size);
+    cc = read(fd, cp, (int)buf.st_size);
 
-    if(cc < 0)
+    if (cc < 0)
     {
         ParseError("read %s: %s\n", fname, get_error(errno));
         free(cp);
         return nullptr;
     }
 
-    if(cc != buf.st_size)
+    if (cc != buf.st_size)
     {
-        ParseError("short read %s (%d != %d)\n", fname, cc, (int) buf.st_size);
+        ParseError("short read %s (%d != %d)\n", fname, cc, (int)buf.st_size);
         free(cp);
         return nullptr;
     }
 
-    cp[(int) buf.st_size] = '\0';
+    cp[(int)buf.st_size] = '\0';
 
     close(fd);
 
@@ -537,7 +539,7 @@ char *read_infile(const char* key, const char* fname)
      *  so that we can put comments in our BPF filters
      */
 
-    while((cmt = strchr(cp, '#')) != NULL)
+    while ((cmt = strchr(cp, '#')) != NULL)
     {
         while (*cmt != '\r' && *cmt != '\n' && *cmt != '\0')
         {
@@ -550,20 +552,19 @@ char *read_infile(const char* key, const char* fname)
     return(cp);
 }
 
-
- /****************************************************************************
-  *
-  * Function: CheckLogDir()
-  *
-  * Purpose: CyberPsychotic sez: basically we only check if logdir exist and
-  *          writable, since it might screw the whole thing in the middle. Any
-  *          other checks could be performed here as well.
-  *
-  * Arguments: None.
-  *
-  * Returns: void function
-  *
-  ****************************************************************************/
+/****************************************************************************
+ *
+ * Function: CheckLogDir()
+ *
+ * Purpose: CyberPsychotic sez: basically we only check if logdir exist and
+ *          writable, since it might screw the whole thing in the middle. Any
+ *          other checks could be performed here as well.
+ *
+ * Arguments: None.
+ *
+ * Returns: void function
+ *
+ ****************************************************************************/
 void CheckLogDir(void)
 {
     struct stat st;
@@ -577,9 +578,9 @@ void CheckLogDir(void)
     else if (!S_ISDIR(st.st_mode) || (access(snort_conf->log_dir, W_OK) == -1))
     {
         ParseError("Can not get write access to logging directory \"%s\". "
-                   "(directory doesn't exist or permissions are set incorrectly "
-                   "or it is not a directory at all)\n",
-                   snort_conf->log_dir);
+            "(directory doesn't exist or permissions are set incorrectly "
+            "or it is not a directory at all)\n",
+            snort_conf->log_dir);
     }
 }
 
@@ -589,7 +590,7 @@ void CheckLogDir(void)
  * returns  SNORT_SNPRINTF_TRUNCATION on truncation
  * returns  SNORT_SNPRINTF_ERROR on error
  */
-int SnortSnprintf(char *buf, size_t buf_size, const char *format, ...)
+int SnortSnprintf(char* buf, size_t buf_size, const char* format, ...)
 {
     va_list ap;
     int ret;
@@ -629,7 +630,7 @@ int SnortSnprintf(char *buf, size_t buf_size, const char *format, ...)
  * returns SNORT_SNPRINTF_TRUNCATION on truncation
  * returns SNORT_SNPRINTF_ERROR on error
  */
-int SnortSnprintfAppend(char *buf, size_t buf_size, const char *format, ...)
+int SnortSnprintfAppend(char* buf, size_t buf_size, const char* format, ...)
 {
     int str_len;
     int ret;
@@ -685,9 +686,9 @@ int SnortSnprintfAppend(char *buf, size_t buf_size, const char *format, ...)
  * dst and src are the same pointer - it will at least be null
  * terminated in any case
  */
-int SnortStrncpy(char *dst, const char *src, size_t dst_size)
+int SnortStrncpy(char* dst, const char* src, size_t dst_size)
 {
-    char *ret = NULL;
+    char* ret = NULL;
 
     if (dst == NULL || src == NULL || dst_size <= 0)
         return SNORT_STRNCPY_ERROR;
@@ -711,14 +712,14 @@ int SnortStrncpy(char *dst, const char *src, size_t dst_size)
     return SNORT_STRNCPY_SUCCESS;
 }
 
-char *SnortStrndup(const char *src, size_t dst_size)
+char* SnortStrndup(const char* src, size_t dst_size)
 {
-    char *ret = (char*)SnortAlloc(dst_size + 1);
+    char* ret = (char*)SnortAlloc(dst_size + 1);
     int ret_val;
 
     ret_val = SnortStrncpy(ret, src, dst_size + 1);
 
-    if(ret_val == SNORT_STRNCPY_ERROR)
+    if (ret_val == SNORT_STRNCPY_ERROR)
     {
         free(ret);
         return NULL;
@@ -733,7 +734,7 @@ char *SnortStrndup(const char *src, size_t dst_size)
  * returns the string length if '\0' terminated
  * returns SNORT_STRNLEN_ERROR if not '\0' terminated
  */
-int SnortStrnlen(const char *buf, int buf_size)
+int SnortStrnlen(const char* buf, int buf_size)
 {
     int i = 0;
 
@@ -752,9 +753,9 @@ int SnortStrnlen(const char *buf, int buf_size)
     return i;
 }
 
-char * SnortStrdup(const char *str)
+char* SnortStrdup(const char* str)
 {
-    char *copy = NULL;
+    char* copy = NULL;
 
     if (!str)
     {
@@ -778,10 +779,10 @@ char * SnortStrdup(const char *str)
  *
  * This code assumes 'accept' is a static string.
  */
-const char *SnortStrnPbrk(const char *s, int slen, const char *accept)
+const char* SnortStrnPbrk(const char* s, int slen, const char* accept)
 {
     char ch;
-    const char *s_end;
+    const char* s_end;
     if (!s || (slen == 0) || !*s || !accept)
         return NULL;
 
@@ -801,7 +802,7 @@ const char *SnortStrnPbrk(const char *s, int slen, const char *accept)
  * A 'safe' version of strstr that won't read past end of buffer s
  * in cases that s is not NULL terminated.
  */
-const char *SnortStrnStr(const char *s, int slen, const char *searchstr)
+const char* SnortStrnStr(const char* s, int slen, const char* searchstr)
 {
     char ch, nc;
     int len;
@@ -822,10 +823,12 @@ const char *SnortStrnStr(const char *s, int slen, const char *searchstr)
                 slen--;
                 if (slen == 0)
                     return NULL;
-            } while (nc != ch);
+            }
+            while (nc != ch);
             if (slen - len < 0)
                 return NULL;
-        } while (memcmp(s, searchstr, len) != 0);
+        }
+        while (memcmp(s, searchstr, len) != 0);
         s--;
     }
     return s;
@@ -834,7 +837,7 @@ const char *SnortStrnStr(const char *s, int slen, const char *searchstr)
 /*
  * Find first occurrence of substring in s, ignore case.
 */
-const char *SnortStrcasestr(const char *s, int slen, const char *substr)
+const char* SnortStrcasestr(const char* s, int slen, const char* substr)
 {
     char ch, nc;
     int len;
@@ -855,12 +858,14 @@ const char *SnortStrcasestr(const char *s, int slen, const char *substr)
                     return NULL;
                 }
                 slen--;
-                if(slen == 0)
+                if (slen == 0)
                     return NULL;
-            } while ((char)tolower((uint8_t)nc) != ch);
-            if(slen - len < 0)
+            }
+            while ((char)tolower((uint8_t)nc) != ch);
+            if (slen - len < 0)
                 return NULL;
-        } while (strncasecmp(s, substr, len) != 0);
+        }
+        while (strncasecmp(s, substr, len) != 0);
         s--;
     }
     return s;
@@ -872,13 +877,13 @@ const char *SnortStrcasestr(const char *s, int slen, const char *substr)
  * @param directory directory to chroot to
  * @param logstore ptr to snort_conf->log_dir which must be dynamically allocated
  */
-void SetChroot(char *directory, char **logstore)
+void SetChroot(char* directory, char** logstore)
 {
-    char *absdir;
+    char* absdir;
     size_t abslen;
-    char *logdir;
+    char* logdir;
 
-    if(!directory || !logstore)
+    if (!directory || !logstore)
     {
         ParseError("Null parameter passed\n");
         return;
@@ -886,19 +891,19 @@ void SetChroot(char *directory, char **logstore)
 
     logdir = *logstore;
 
-    if(logdir == NULL || *logdir == '\0')
+    if (logdir == NULL || *logdir == '\0')
     {
         ParseError("Null log directory\n");
         return;
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_INIT,"SetChroot: %s\n",
-                                       CurrentWorkingDir()););
+        CurrentWorkingDir()); );
 
     logdir = GetAbsolutePath(logdir);
 
     DEBUG_WRAP(DebugMessage(DEBUG_INIT, "SetChroot: %s\n",
-                                       CurrentWorkingDir()));
+        CurrentWorkingDir()));
 
     logdir = SnortStrdup(logdir);
 
@@ -907,10 +912,10 @@ void SetChroot(char *directory, char **logstore)
     *logstore = NULL;
 
     /* change to the directory */
-    if(chdir(directory) != 0)
+    if (chdir(directory) != 0)
     {
         ParseError("SetChroot: Can not chdir to \"%s\": %s\n", directory,
-                   get_error(errno));
+            get_error(errno));
         free(logdir);
         return;
     }
@@ -918,7 +923,7 @@ void SetChroot(char *directory, char **logstore)
     /* always returns an absolute pathname */
     absdir = CurrentWorkingDir();
 
-    if(absdir == NULL)
+    if (absdir == NULL)
     {
         ParseError("NULL Chroot found\n");
         free(logdir);
@@ -927,41 +932,40 @@ void SetChroot(char *directory, char **logstore)
 
     abslen = strlen(absdir);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "ABS: %s %d\n", absdir, abslen););
+    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "ABS: %s %d\n", absdir, abslen); );
 
     /* make the chroot call */
-    if(chroot(absdir) < 0)
+    if (chroot(absdir) < 0)
     {
         ParseError("Can not chroot to \"%s\": absolute: %s: %s\n",
-                   directory, absdir, get_error(errno));
+            directory, absdir, get_error(errno));
         free(logdir);
         return;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT,"chroot success (%s ->", absdir););
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT,"%s)\n ", CurrentWorkingDir()););
+    DEBUG_WRAP(DebugMessage(DEBUG_INIT,"chroot success (%s ->", absdir); );
+    DEBUG_WRAP(DebugMessage(DEBUG_INIT,"%s)\n ", CurrentWorkingDir()); );
 
     /* change to "/" in the new directory */
-    if(chdir("/") < 0)
+    if (chdir("/") < 0)
     {
         ParseError("Can not chdir to \"/\" after chroot: %s\n",
-                   get_error(errno));
+            get_error(errno));
         free(logdir);
         return;
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_INIT,"chdir success (%s)\n",
-                            CurrentWorkingDir()););
+        CurrentWorkingDir()); );
 
-
-    if(strncmp(absdir, logdir, strlen(absdir)))
+    if (strncmp(absdir, logdir, strlen(absdir)))
     {
         ParseError("Absdir is not a subset of the logdir");
         free(logdir);
         return;
     }
 
-    if(abslen >= strlen(logdir))
+    if (abslen >= strlen(logdir))
     {
         *logstore = SnortStrdup("/");
     }
@@ -971,52 +975,51 @@ void SetChroot(char *directory, char **logstore)
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_INIT,"new logdir from %s to %s\n",
-                            logdir, *logstore));
+        logdir, *logstore));
 
     LogMessage("Chroot directory = %s\n", directory);
     free(logdir);
 }
 
-
 /**
  * Return a ptr to the absolute pathname of snort.  This memory must
  * be copied to another region if you wish to save it for later use.
  */
-char *CurrentWorkingDir(void)
+char* CurrentWorkingDir(void)
 {
     static THREAD_LOCAL char buf[PATH_MAX_UTIL + 1];
 
-    if(getcwd((char *) buf, PATH_MAX_UTIL) == NULL)
+    if (getcwd((char*)buf, PATH_MAX_UTIL) == NULL)
     {
         return NULL;
     }
 
     buf[PATH_MAX_UTIL] = '\0';
 
-    return (char *) buf;
+    return (char*)buf;
 }
 
 /**
  * Given a directory name, return a ptr to a static
  */
-char *GetAbsolutePath(char *dir)
+char* GetAbsolutePath(char* dir)
 {
-    char *savedir, *dirp;
+    char* savedir, * dirp;
     static THREAD_LOCAL char buf[PATH_MAX_UTIL + 1];
 
-    if(dir == NULL)
+    if (dir == NULL)
     {
         return NULL;
     }
 
     savedir = strdup(CurrentWorkingDir());
 
-    if(savedir == NULL)
+    if (savedir == NULL)
     {
         return NULL;
     }
 
-    if(chdir(dir) < 0)
+    if (chdir(dir) < 0)
     {
         LogMessage("Can't change to directory: %s\n", dir);
         free(savedir);
@@ -1025,7 +1028,7 @@ char *GetAbsolutePath(char *dir)
 
     dirp = CurrentWorkingDir();
 
-    if(dirp == NULL)
+    if (dirp == NULL)
     {
         LogMessage("Unable to access current directory\n");
         free(savedir);
@@ -1037,7 +1040,7 @@ char *GetAbsolutePath(char *dir)
         buf[PATH_MAX_UTIL] = '\0';
     }
 
-    if(chdir(savedir) < 0)
+    if (chdir(savedir) < 0)
     {
         LogMessage("Can't change back to directory: %s\n", dir);
         free(savedir);
@@ -1045,7 +1048,7 @@ char *GetAbsolutePath(char *dir)
     }
 
     free(savedir);
-    return (char *) buf;
+    return (char*)buf;
 }
 
 /****************************************************************************
@@ -1061,16 +1064,16 @@ char *GetAbsolutePath(char *dir)
  * Returns: char * -- You must free this char * when you are done with it.
  *
  ***************************************************************************/
-char *hex(const u_char *xdata, int length)
+char* hex(const u_char* xdata, int length)
 {
     int x;
-    char *rval = NULL;
-    char *buf = NULL;
+    char* rval = NULL;
+    char* buf = NULL;
 
     if (xdata == NULL)
         return NULL;
 
-    buf = (char *)calloc((length * 2) + 1, sizeof(char));
+    buf = (char*)calloc((length * 2) + 1, sizeof(char));
 
     if (buf != NULL)
     {
@@ -1101,20 +1104,20 @@ char *hex(const u_char *xdata, int length)
  * Returns: char * -- You must free this char * when you are done with it.
  *
  ***************************************************************************/
-char *fasthex(const u_char *xdata, int length)
+char* fasthex(const u_char* xdata, int length)
 {
     char conv[] = "0123456789ABCDEF";
-    char *retbuf = NULL;
-    const u_char *index;
-    const u_char *end;
-    char *ridx;
+    char* retbuf = NULL;
+    const u_char* index;
+    const u_char* end;
+    char* ridx;
 
     index = xdata;
     end = xdata + length;
-    retbuf = (char *)SnortAlloc(((length * 2) + 1) * sizeof(char));
+    retbuf = (char*)SnortAlloc(((length * 2) + 1) * sizeof(char));
     ridx = retbuf;
 
-    while(index < end)
+    while (index < end)
     {
         *ridx++ = conv[((*index & 0xFF)>>4)];
         *ridx++ = conv[((*index & 0xFF)&0x0F)];
@@ -1124,10 +1127,10 @@ char *fasthex(const u_char *xdata, int length)
     return retbuf;
 }
 
-int CheckValueInRange(const char *value_str, const char *option,
-        unsigned long lo, unsigned long hi, unsigned long *value)
+int CheckValueInRange(const char* value_str, const char* option,
+    unsigned long lo, unsigned long hi, unsigned long* value)
 {
-    char *endptr;
+    char* endptr;
     uint32_t val;
 
     if ( value_str == NULL )
@@ -1142,7 +1145,7 @@ int CheckValueInRange(const char *value_str, const char *option,
         return -1;
     }
 
-    if(*endptr)
+    if (*endptr)
     {
         ParseError("invalid format for %s.", option);
         return -1;
@@ -1153,8 +1156,8 @@ int CheckValueInRange(const char *value_str, const char *option,
     if ( (errno == ERANGE) || (*value) < lo || (*value) > hi)
     {
         ParseError("invalid value for %s."
-                "It should range between %u and %u.", option,
-                lo, hi);
+            "It should range between %u and %u.", option,
+            lo, hi);
         return -1;
     }
 
@@ -1194,7 +1197,7 @@ const char* get_error(int errnum)
     return buf;
 }
 
-char* get_tok (char* s, const char* delim)
+char* get_tok(char* s, const char* delim)
 {
     static THREAD_LOCAL char* lasts = nullptr;
     return strtok_r(s, delim, &lasts);

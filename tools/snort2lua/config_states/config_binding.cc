@@ -31,14 +31,13 @@
 
 namespace config
 {
-
-namespace {
-
+namespace
+{
 class Binding : public ConversionState
 {
 public:
-    Binding(Converter& c) : ConversionState(c) {};
-    virtual ~Binding() {};
+    Binding(Converter& c) : ConversionState(c) { }
+    virtual ~Binding() { }
     virtual bool convert(std::istringstream& data_stream);
 
 private:
@@ -46,13 +45,12 @@ private:
     void add_policy_id(const std::string& id, Binder&);
     void add_net(const std::string& net, Binder&);
 };
-
 } // namespace
 
-typedef void (Binding::*binding_func)(const std::string&, Binder&);
+typedef void (Binding::* binding_func)(const std::string&, Binder&);
 
 void Binding::add_vlan(const std::string& vlan,
-                        Binder& bind)
+    Binder& bind)
 {
     const std::size_t init_pos = vlan.find_first_of('-');
 
@@ -85,7 +83,6 @@ void Binding::add_vlan(const std::string& vlan,
         const std::string vlan2_str = vlan.substr(init_pos+1);
         const int vlan2 = std::stoi(vlan2_str, &vlan2_pos);
 
-
         if ((vlan1_pos != init_pos) ||
             (vlan2_pos != vlan2_str.size()))
         {
@@ -98,14 +95,13 @@ void Binding::add_vlan(const std::string& vlan,
             throw std::out_of_range("Vlan must be in the range [0,4095]");
         }
 
-
         for (int i = vlan1; i <= vlan2; ++i)
             bind.add_when_vlan(std::to_string(i));
     }
 }
 
 void Binding::add_policy_id(const std::string& id,
-                            Binder& bind)
+    Binder& bind)
 {
     std::size_t bad_char_pos;
     const int policy_id = std::stoi(id, &bad_char_pos);
@@ -120,11 +116,10 @@ void Binding::add_policy_id(const std::string& id,
 }
 
 void Binding::add_net(const std::string& net,
-                        Binder& bind)
+    Binder& bind)
 {
     bind.add_when_net(net);
 }
-
 
 bool Binding::convert(std::istringstream& data_stream)
 {
@@ -172,10 +167,8 @@ bool Binding::convert(std::istringstream& data_stream)
             data_api.failed_conversion(data_stream, val + " -- " + e.what());
             rc = false;
         }
-
-    } while (util::get_string(data_stream, val, ","));
-
-
+    }
+    while (util::get_string(data_stream, val, ","));
 
     if (cv.get_parse_includes())
     {
@@ -184,7 +177,6 @@ bool Binding::convert(std::istringstream& data_stream)
 
         if (!util::file_exists(full_path))
             full_path = parser::get_conf_dir() + full_name;
-
 
         if (util::file_exists(full_path))
         {
@@ -195,13 +187,12 @@ bool Binding::convert(std::istringstream& data_stream)
             bind_cv.get_table_api().open_top_level_table("ips");
             bind_cv.get_table_api().close_table();
 
-
-//            file = file + ".lua";  FIXIT-L  the file names should contain their original variables
+//            file = file + ".lua";  FIXIT-L  the file names should contain their original
+// variables
             file = full_path + ".lua";
 
             if (bind_cv.convert(full_path, file, file, full_path + ".rej") < 0)
                 rc = false;
-
         }
         else
         {
@@ -227,5 +218,5 @@ static const ConvertMap binding_api =
 };
 
 const ConvertMap* binding_map = &binding_api;
-
 } // namespace config
+

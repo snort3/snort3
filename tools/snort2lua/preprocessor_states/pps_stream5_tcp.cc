@@ -25,17 +25,15 @@
 #include "helpers/s2l_util.h"
 #include "helpers/util_binder.h"
 
-
 namespace preprocessors
 {
-
-namespace {
-
+namespace
+{
 class StreamTcp : public ConversionState
 {
 public:
     StreamTcp(Converter&);
-    virtual ~StreamTcp() {};
+    virtual ~StreamTcp() { }
     virtual bool convert(std::istringstream& data_stream);
 
 private:
@@ -55,7 +53,6 @@ private:
     bool parse_protocol(std::istringstream& data_stream);
     void add_to_bindings(binder_func, std::string param);
 };
-
 } // namespace
 
 StreamTcp::StreamTcp(Converter& c) : ConversionState(c)
@@ -89,13 +86,10 @@ bool StreamTcp::parse_small_segments(std::istringstream& stream)
         !(stream >> min_bytes))
         return false;
 
-
-
     table_api.open_table("small_segments");
     table_api.add_option("count", consec_segs);
     table_api.add_option("maximum_size", min_bytes);
     table_api.close_table();
-
 
     if (!(stream >> ignore_ports))
         return true;
@@ -104,12 +98,11 @@ bool StreamTcp::parse_small_segments(std::istringstream& stream)
     if (ignore_ports.compare("ignore_ports"))
         return false;
 
-
     table_api.open_table("small_segments");
     long long port;
 
     // extracting into an int since thats what they should be!
-    while(stream >> port)
+    while (stream >> port)
         table_api.add_list("ignore_ports", std::to_string(port));
 
     table_api.close_table();
@@ -119,34 +112,33 @@ bool StreamTcp::parse_small_segments(std::istringstream& stream)
     return true;
 }
 
-
 bool StreamTcp::parse_ports(std::istringstream& arg_stream)
 {
     std::string port;
     std::string dir;
     Binder* bind;
 
-    if(!(arg_stream >> dir))
+    if (!(arg_stream >> dir))
         return false;
 
-    if( !dir.compare("client"))
+    if ( !dir.compare("client"))
     {
-        table_api.add_diff_option_comment("client ports", "binder.when.ports; binder.when.role = client");
+        table_api.add_diff_option_comment("client ports",
+            "binder.when.ports; binder.when.role = client");
         bind = bind_client;
     }
-
-    else if( !dir.compare("server"))
+    else if ( !dir.compare("server"))
     {
-        table_api.add_diff_option_comment("server ports", "binder.when.ports; binder.when.role = server");
+        table_api.add_diff_option_comment("server ports",
+            "binder.when.ports; binder.when.role = server");
         bind = bind_server;
     }
-
-    else if( !dir.compare("both"))
+    else if ( !dir.compare("both"))
     {
-        table_api.add_diff_option_comment("both ports", "binder.when.ports; binder.when.role = any");
+        table_api.add_diff_option_comment("both ports",
+            "binder.when.ports; binder.when.role = any");
         bind = bind_any;
     }
-
     else
     {
         return false;
@@ -180,7 +172,8 @@ bool StreamTcp::parse_ports(std::istringstream& arg_stream)
             do
             {
                 bind->add_when_port(port);
-            } while (arg_stream >> port);
+            }
+            while (arg_stream >> port);
         }
     }
 
@@ -201,31 +194,29 @@ bool StreamTcp::parse_protocol(std::istringstream& arg_stream)
     if (!(arg_stream >> dir))
         return true;
 
-
     if (!dir.compare("client"))
     {
-        table_api.add_diff_option_comment("client protocol", "binder.when.proto; binder.when.role = client");
+        table_api.add_diff_option_comment("client protocol",
+            "binder.when.proto; binder.when.role = client");
         bind = bind_client;
         protocols = &client_protocols;
     }
-
     else if (!dir.compare("server"))
     {
-        table_api.add_diff_option_comment("server protocol", "binder.when.proto; binder.when.role = server");
+        table_api.add_diff_option_comment("server protocol",
+            "binder.when.proto; binder.when.role = server");
         bind = bind_server;
         protocols = &server_protocols;
     }
-
     else if (!dir.compare("both"))
     {
-        table_api.add_diff_option_comment("both protocol", "binder.when.proto; binder.when.role = any");
+        table_api.add_diff_option_comment("both protocol",
+            "binder.when.proto; binder.when.role = any");
         bind = bind_any;
         protocols = &any_protocols;
     }
-
     else
         return false;
-
 
     // Ensure we only print the chosen bindings
     if (!binding_chosen)
@@ -262,7 +253,8 @@ bool StreamTcp::parse_protocol(std::istringstream& arg_stream)
                 // lets save the different protocols and create new
                 // Binders at the very end of the convert() functions.
                 protocols->push_back(protocol);
-            } while (arg_stream >> protocol);
+            }
+            while (arg_stream >> protocol);
         }
     }
 
@@ -290,7 +282,6 @@ bool StreamTcp::convert(std::istringstream& data_stream)
     server.set_when_role("server");
     any.set_when_role("any");
 
-
     // create pointers so other member functinos can access binders
     bind_client = &client;
     bind_server = &server;
@@ -302,8 +293,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
     table_api.open_table("stream_tcp");
 
-
-    while(util::get_string(data_stream, keyword, ","))
+    while (util::get_string(data_stream, keyword, ","))
     {
         bool tmpval = true;
         std::istringstream arg_stream(keyword);
@@ -339,7 +329,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
         else if (!keyword.compare("flush_factor"))
             tmpval = parse_int_option("flush_factor", arg_stream, false);
 
-        else if(!keyword.compare("protocol"))
+        else if (!keyword.compare("protocol"))
             tmpval = parse_protocol(arg_stream);
 
         else if (!keyword.compare("require_3whs"))
@@ -351,7 +341,6 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             else
                 table_api.add_option("require_3whs", 0);
         }
-
         else if (!keyword.compare("bind_to"))
         {
             table_api.add_diff_option_comment("bind_to", "bindings");
@@ -408,7 +397,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
                 data_api.failed_conversion(data_stream,  "stream5_tcp: policy <missing_arg>");
 
             else if (!policy.compare("bsd"))
-                    table_api.add_option("policy", "bsd");
+                table_api.add_option("policy", "bsd");
 
             else if (!policy.compare("first"))
                 table_api.add_option("policy", "first");
@@ -451,7 +440,8 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
             else if (!policy.compare("win2003"))
             {
-                table_api.add_diff_option_comment("policy win2003", "stream_tcp.policy = win-2003");
+                table_api.add_diff_option_comment("policy win2003",
+                    "stream_tcp.policy = win-2003");
                 table_api.add_option("policy", "win-2003");
             }
             else if (!policy.compare("win2k3"))
@@ -466,7 +456,8 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             }
             else if (!policy.compare("grannysmith"))
             {
-                table_api.add_diff_option_comment("policy grannysmith", "stream_tcp.policy = macos");
+                table_api.add_diff_option_comment("policy grannysmith",
+                    "stream_tcp.policy = macos");
                 table_api.add_option("policy", "macos");
             }
             else
@@ -488,9 +479,11 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
     if (!ports_set)
     {
-        const std::vector<std::string> default_ports = {"21", "23", "25", "42",
-            "53", "80", "110", "111", "135", "136", "137", "139", "143", "445",
-            "513", "514", "1433", "1521", "2401", "3306"};
+        const std::vector<std::string> default_ports = { "21", "23", "25", "42",
+                                                         "53", "80", "110", "111", "135", "136",
+                                                         "137", "139", "143", "445",
+                                                         "513", "514", "1433", "1521", "2401",
+                                                         "3306" };
 
         for (const std::string& s : default_ports)
             bind_default->add_when_port(s);
@@ -498,10 +491,12 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
     if (!protos_set)
     {
-        const std::vector<std::string> default_protos = {"ftp", "telnet",
-            "smtp", "nameserver", "dns", "http", "pop3", "sunrpc", "dcerpc",
-            "netbios-ssn", "imap", "login", "shell", "mssql", "oracle", "cvs",
-            "mysql"};
+        const std::vector<std::string> default_protos = { "ftp", "telnet",
+                                                          "smtp", "nameserver", "dns", "http",
+                                                          "pop3", "sunrpc", "dcerpc",
+                                                          "netbios-ssn", "imap", "login", "shell",
+                                                          "mssql", "oracle", "cvs",
+                                                          "mysql" };
 
         for (const std::string& s : default_protos)
         {
@@ -510,7 +505,6 @@ bool StreamTcp::convert(std::istringstream& data_stream)
         }
         bind_default->print_binding(false); // Binder was added in the for loop
     }
-
 
     if (!client_protocols.empty())
     {
@@ -546,7 +540,6 @@ bool StreamTcp::convert(std::istringstream& data_stream)
     return retval;
 }
 
-
 /**************************
  *******  A P I ***********
  **************************/
@@ -556,12 +549,12 @@ static ConversionState* ctor(Converter& c)
     return new StreamTcp(c);
 }
 
-static const ConvertMap preprocessor_stream_tcp = 
+static const ConvertMap preprocessor_stream_tcp =
 {
     "stream5_tcp",
     ctor,
 };
 
 const ConvertMap* stream_tcp_map = &preprocessor_stream_tcp;
-
 } // namespace preprocessors
+

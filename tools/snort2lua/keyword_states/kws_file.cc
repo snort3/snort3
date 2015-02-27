@@ -24,31 +24,27 @@
 #include "helpers/converter.h"
 #include "helpers/s2l_util.h"
 
-
 namespace keywords
 {
-
-namespace {
-
+namespace
+{
 static bool printed_error = false;
 
 class File : public ConversionState
 {
 public:
-    File(Converter& c) : ConversionState(c) {};
-    virtual ~File() {};
+    File(Converter& c) : ConversionState(c) { }
+    virtual ~File() { }
     virtual bool convert(std::istringstream& data);
 
 private:
 };
-
 } // namespace
 
 bool File::convert(std::istringstream& data_stream)
 {
     // No changes have been made to file. This class literally
     // copies the entire buffer into a rule.
-
 
     std::string data = data_stream.str();
     rule_api.add_hdr_data(data);
@@ -78,5 +74,5 @@ static const ConvertMap keyword_file =
 };
 
 const ConvertMap* file_map = &keyword_file;
-
 } // namespace keywords
+

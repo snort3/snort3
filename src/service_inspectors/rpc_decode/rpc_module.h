@@ -42,10 +42,10 @@ public:
     RpcDecodeModule();
 
     bool set(const char*, Value&, SnortConfig*) override
-    { return false; };
+    { return false; }
 
     unsigned get_gid() const override
-    { return GID_RPC_DECODE; };
+    { return GID_RPC_DECODE; }
 
     const RuleMap* get_rules() const override;
     const PegInfo* get_pegs() const override;

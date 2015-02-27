@@ -19,7 +19,6 @@
 
 #include "data/data_types/dt_option.h"
 
-
 Option::Option(std::string n, int val, int d)
 {
     this->name = n;
@@ -58,38 +57,39 @@ Option::~Option()
 {
 }
 
-std::ostream &operator<<( std::ostream& out, const Option &o)
+std::ostream& operator<<(std::ostream& out, const Option& o)
 {
     std::string whitespace = "";
 
-    for(int i = 0; i < o.depth; i++)
+    for (int i = 0; i < o.depth; i++)
         whitespace += "    ";
 
     out << whitespace << o.name << " = ";
 
-    switch(o.type)
+    switch (o.type)
     {
-        case Option::OptionType::STRING:
-            out << '\'' << o.value << '\'';
-            break;
+    case Option::OptionType::STRING:
+        out << '\'' << o.value << '\'';
+        break;
 
-        case Option::OptionType::BOOL:
-        case Option::OptionType::INT:
-        case Option::OptionType::VAR:
-            out << o.value;
-            break;
+    case Option::OptionType::BOOL:
+    case Option::OptionType::INT:
+    case Option::OptionType::VAR:
+        out << o.value;
+        break;
     }
     return out;
 }
 
 bool operator==(const Option& lhs, const Option& rhs)
 {
-    return ((!lhs.name.compare(rhs.name)) && 
-        lhs.type == rhs.type &&
-        (!lhs.value.compare(rhs.value)));
+    return ((!lhs.name.compare(rhs.name)) &&
+           lhs.type == rhs.type &&
+           (!lhs.value.compare(rhs.value)));
 }
 
 bool operator!=(const Option& lhs, const Option& rhs)
 {
     return !(lhs == rhs);
 }
+

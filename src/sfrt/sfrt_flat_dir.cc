@@ -36,31 +36,31 @@
 #define ARCH_WIDTH 32
 #endif
 
-typedef struct {
-    const sfip_t *ip;
+typedef struct
+{
+    const sfip_t* ip;
     int bits;
 } IPLOOKUP;
 
 /* Create new "sub" table of 2^width entries */
-static TABLE_PTR _sub_table_flat_new(dir_table_flat_t *root, uint32_t dimension,
-        uint32_t prefill, uint32_t bit_length)
+static TABLE_PTR _sub_table_flat_new(dir_table_flat_t* root, uint32_t dimension,
+    uint32_t prefill, uint32_t bit_length)
 {
-
     int width = root->dimensions[dimension];
     int len = 1 << width;
     int index;
-    dir_sub_table_flat_t *sub;
+    dir_sub_table_flat_t* sub;
     TABLE_PTR sub_ptr;
-    uint8_t *base;
-    DIR_Entry *entries;
+    uint8_t* base;
+    DIR_Entry* entries;
 
     /* Check if creating this node will exceed the memory cap.
      * The symbols in the conditional (other than cap), come from the
      * allocs below. */
-    if( root->mem_cap < ( root->allocated +
-            sizeof(dir_sub_table_flat_t) +
-            sizeof(DIR_Entry) * len ) ||
-            bit_length > 128)
+    if ( root->mem_cap < ( root->allocated +
+        sizeof(dir_sub_table_flat_t) +
+        sizeof(DIR_Entry) * len ) ||
+        bit_length > 128)
     {
         return 0;
     }
@@ -68,13 +68,13 @@ static TABLE_PTR _sub_table_flat_new(dir_table_flat_t *root, uint32_t dimension,
     /* Set up the initial prefilled "sub table" */
     sub_ptr = segment_malloc(sizeof(dir_sub_table_flat_t));
 
-    if(!sub_ptr)
+    if (!sub_ptr)
     {
         return 0;
     }
 
-    base = (uint8_t *)segment_basePtr();
-    sub = (dir_sub_table_flat_t *)(&base[sub_ptr]);
+    base = (uint8_t*)segment_basePtr();
+    sub = (dir_sub_table_flat_t*)(&base[sub_ptr]);
 
     /* This keeps the width readily available rather than recalculating it
      * from the number of entries during an insert or lookup */
@@ -89,15 +89,15 @@ static TABLE_PTR _sub_table_flat_new(dir_table_flat_t *root, uint32_t dimension,
 
     sub->entries = segment_malloc(sizeof(DIR_Entry) * sub->num_entries);
 
-    if(!sub->entries)
+    if (!sub->entries)
     {
         segment_free(sub_ptr);
         return 0;
     }
 
-    entries = (DIR_Entry *)(&base[sub->entries]);
+    entries = (DIR_Entry*)(&base[sub->entries]);
     /* Can't use memset here since prefill is multibyte */
-    for(index = 0; index < sub->num_entries; index++)
+    for (index = 0; index < sub->num_entries; index++)
     {
         entries[index].value = prefill;
         entries[index].length = (uint8_t)bit_length;
@@ -120,17 +120,17 @@ TABLE_PTR sfrt_dir_flat_new(uint32_t mem_cap, int count,...)
     int index;
     TABLE_PTR table_ptr;
     dir_table_flat_t* table;
-    uint8_t *base;
+    uint8_t* base;
 
     table_ptr = segment_malloc(sizeof(dir_table_flat_t));
 
-    if(!table_ptr)
+    if (!table_ptr)
     {
         return 0;
     }
 
-    base = (uint8_t *)segment_basePtr();
-    table = (dir_table_flat_t *)(&base[table_ptr]);
+    base = (uint8_t*)segment_basePtr();
+    table = (dir_table_flat_t*)(&base[table_ptr]);
 
     table->allocated = 0;
 
@@ -138,7 +138,7 @@ TABLE_PTR sfrt_dir_flat_new(uint32_t mem_cap, int count,...)
 
     va_start(ap, count);
 
-    for(index=0; index < count; index++)
+    for (index=0; index < count; index++)
     {
         val = va_arg(ap, int);
         table->dimensions[index] = val;
@@ -152,7 +152,7 @@ TABLE_PTR sfrt_dir_flat_new(uint32_t mem_cap, int count,...)
 
     table->sub_table = _sub_table_flat_new(table, 0, 0, 0);
 
-    if(!table->sub_table)
+    if (!table->sub_table)
     {
         segment_free(table_ptr);
         return 0;
@@ -164,29 +164,29 @@ TABLE_PTR sfrt_dir_flat_new(uint32_t mem_cap, int count,...)
 }
 
 /* Traverse "sub" tables, freeing each */
-static void _sub_table_flat_free(uint32_t *allocated, SUB_TABLE_PTR sub_ptr)
+static void _sub_table_flat_free(uint32_t* allocated, SUB_TABLE_PTR sub_ptr)
 {
     int index;
-    dir_sub_table_flat_t *sub;
-    uint8_t *base;
+    dir_sub_table_flat_t* sub;
+    uint8_t* base;
 
-    base = (uint8_t *)segment_basePtr();
-    sub = (dir_sub_table_flat_t *)(&base[sub_ptr]);
+    base = (uint8_t*)segment_basePtr();
+    sub = (dir_sub_table_flat_t*)(&base[sub_ptr]);
 
     sub->cur_num--;
 
-    for(index=0; index < sub->num_entries; index++)
+    for (index=0; index < sub->num_entries; index++)
     {
         /* The following condition will only be true if
          * this entry is a pointer  */
-        DIR_Entry *entry = (DIR_Entry *)(&base[sub->entries]);
-        if( !entry[index].length && entry[index].value )
+        DIR_Entry* entry = (DIR_Entry*)(&base[sub->entries]);
+        if ( !entry[index].length && entry[index].value )
         {
-            _sub_table_flat_free( allocated, entry[index].value);
+            _sub_table_flat_free(allocated, entry[index].value);
         }
     }
 
-    if(sub->entries)
+    if (sub->entries)
     {
         /* This probably does not need to be checked
          * since if it was not allocated, we would have errored out
@@ -196,7 +196,6 @@ static void _sub_table_flat_free(uint32_t *allocated, SUB_TABLE_PTR sub_ptr)
         *allocated -= sizeof(DIR_Entry) * sub->num_entries;
     }
 
-
     segment_free(sub_ptr);
 
     *allocated -= sizeof(dir_sub_table_flat_t);
@@ -205,18 +204,18 @@ static void _sub_table_flat_free(uint32_t *allocated, SUB_TABLE_PTR sub_ptr)
 /* Free the DIR-n-m structure */
 void sfrt_dir_flat_free(TABLE_PTR tbl_ptr)
 {
-    dir_table_flat_t *table;
-    uint8_t *base;
+    dir_table_flat_t* table;
+    uint8_t* base;
 
-    if(!tbl_ptr)
+    if (!tbl_ptr)
     {
         return;
     }
 
-    base = (uint8_t *)segment_basePtr();
-    table = (dir_table_flat_t *)(&base[tbl_ptr]);
+    base = (uint8_t*)segment_basePtr();
+    table = (dir_table_flat_t*)(&base[tbl_ptr]);
 
-    if(table->sub_table)
+    if (table->sub_table)
     {
         _sub_table_flat_free(&table->allocated, table->sub_table);
     }
@@ -224,22 +223,22 @@ void sfrt_dir_flat_free(TABLE_PTR tbl_ptr)
     segment_free(tbl_ptr);
 }
 
-static inline void _dir_fill_all(uint32_t *allocated, uint32_t index, uint32_t fill,
-        word length, uint32_t val, SUB_TABLE_PTR sub_ptr)
+static inline void _dir_fill_all(uint32_t* allocated, uint32_t index, uint32_t fill,
+    word length, uint32_t val, SUB_TABLE_PTR sub_ptr)
 {
-    dir_sub_table_flat_t *subtable;
-    uint8_t *base;
+    dir_sub_table_flat_t* subtable;
+    uint8_t* base;
 
-    base = (uint8_t *)segment_basePtr();
-    subtable = (dir_sub_table_flat_t *)(&base[sub_ptr]);
+    base = (uint8_t*)segment_basePtr();
+    subtable = (dir_sub_table_flat_t*)(&base[sub_ptr]);
 
     /* Fill entries */
-    for(; index < fill; index++)
+    for (; index < fill; index++)
     {
         /* Before overwriting this entry, verify there's not an existing
          * pointer ... otherwise free it to avoid a huge memory leak. */
-        DIR_Entry *entry = (DIR_Entry *)(&base[subtable->entries]);
-        if( entry[index].value && !entry[index].length)
+        DIR_Entry* entry = (DIR_Entry*)(&base[subtable->entries]);
+        if ( entry[index].value && !entry[index].length)
         {
             _sub_table_flat_free(allocated, entry[index].value);
         }
@@ -250,17 +249,16 @@ static inline void _dir_fill_all(uint32_t *allocated, uint32_t index, uint32_t f
 }
 
 static inline void _dir_fill_less_specific(int index, int fill,
-        word length, uint32_t val, SUB_TABLE_PTR sub_ptr)
+    word length, uint32_t val, SUB_TABLE_PTR sub_ptr)
 {
+    dir_sub_table_flat_t* subtable;
+    uint8_t* base;
 
-    dir_sub_table_flat_t *subtable;
-    uint8_t *base;
-
-    base = (uint8_t *)segment_basePtr();
-    subtable = (dir_sub_table_flat_t *)(&base[sub_ptr]);
+    base = (uint8_t*)segment_basePtr();
+    subtable = (dir_sub_table_flat_t*)(&base[sub_ptr]);
 
     /* Fill entries */
-    for(; index < fill; index++)
+    for (; index < fill; index++)
     {
         /* If we encounter a pointer, and we're inserting at this level, we
          * automatically know that this entry refers to more specific
@@ -273,16 +271,13 @@ static inline void _dir_fill_less_specific(int index, int fill,
          * B.
          *
          * Therefore, recurse to this next level. */
-        DIR_Entry *entry = (DIR_Entry *)(&base[subtable->entries]);
-        if( entry[index].value && !entry[index].length)
+        DIR_Entry* entry = (DIR_Entry*)(&base[subtable->entries]);
+        if ( entry[index].value && !entry[index].length)
         {
-
-            dir_sub_table_flat_t *next = (dir_sub_table_flat_t*)(&base[entry[index].value]);
+            dir_sub_table_flat_t* next = (dir_sub_table_flat_t*)(&base[entry[index].value]);
             _dir_fill_less_specific(0, 1 << next->width, length, val, entry[index].value);
         }
-
-
-        else if(length >= (unsigned)entry[index].length)
+        else if (length >= (unsigned)entry[index].length)
         {
             entry[index].value = val;
             entry[index].length = (char)length;
@@ -291,18 +286,17 @@ static inline void _dir_fill_less_specific(int index, int fill,
 }
 
 static inline int64_t _dir_update_info(int index, int fill,
-        word length, uint32_t val, SUB_TABLE_PTR sub_ptr, updateEntryInfoFunc updateEntry, INFO *data)
+    word length, uint32_t val, SUB_TABLE_PTR sub_ptr, updateEntryInfoFunc updateEntry, INFO* data)
 {
-
-    dir_sub_table_flat_t *subtable;
-    uint8_t *base;
+    dir_sub_table_flat_t* subtable;
+    uint8_t* base;
     int64_t bytesAllocatedTotal = 0;
 
-    base = (uint8_t *)segment_basePtr();
-    subtable = (dir_sub_table_flat_t *)(&base[sub_ptr]);
+    base = (uint8_t*)segment_basePtr();
+    subtable = (dir_sub_table_flat_t*)(&base[sub_ptr]);
 
     /* Fill entries */
-    for(; index < fill; index++)
+    for (; index < fill; index++)
     {
         /* If we encounter a pointer, and we're inserting at this level, we
          * automatically know that this entry refers to more specific
@@ -315,11 +309,11 @@ static inline int64_t _dir_update_info(int index, int fill,
          * B.
          *
          * Therefore, recurse to this next level. */
-        DIR_Entry *entry = (DIR_Entry *)(&base[subtable->entries]);
-        if( entry[index].value && !entry[index].length)
+        DIR_Entry* entry = (DIR_Entry*)(&base[subtable->entries]);
+        if ( entry[index].value && !entry[index].length)
         {
             int64_t bytesAllocated;
-            dir_sub_table_flat_t *next = (dir_sub_table_flat_t*)(&base[entry[index].value]);
+            dir_sub_table_flat_t* next = (dir_sub_table_flat_t*)(&base[entry[index].value]);
             bytesAllocated = _dir_update_info(0, 1 << next->width, length, val,
                     entry[index].value, updateEntry, data);
             if (bytesAllocated < 0)
@@ -327,27 +321,27 @@ static inline int64_t _dir_update_info(int index, int fill,
             else
                 bytesAllocatedTotal += bytesAllocated;
         }
-        else if(length > (unsigned)entry[index].length)
+        else if (length > (unsigned)entry[index].length)
         {
-           if (entry[index].value)
-           {
-               int64_t bytesAllocated;
-               bytesAllocated =  updateEntry(&data[entry[index].value], data[val],
-                       SAVE_TO_NEW, base);
-               if (bytesAllocated < 0)
-                   return bytesAllocated;
-               else
-                   bytesAllocatedTotal += bytesAllocated;
-           }
+            if (entry[index].value)
+            {
+                int64_t bytesAllocated;
+                bytesAllocated =  updateEntry(&data[entry[index].value], data[val],
+                    SAVE_TO_NEW, base);
+                if (bytesAllocated < 0)
+                    return bytesAllocated;
+                else
+                    bytesAllocatedTotal += bytesAllocated;
+            }
 
-           entry[index].value = val;
-           entry[index].length = (uint8_t)length;
+            entry[index].value = val;
+            entry[index].length = (uint8_t)length;
         }
-        else if(entry[index].value)
+        else if (entry[index].value)
         {
             int64_t bytesAllocated;
             bytesAllocated = updateEntry(&data[entry[index].value], data[val],
-                    SAVE_TO_CURRENT,  base);
+                SAVE_TO_CURRENT,  base);
             if (bytesAllocated < 0)
                 return bytesAllocated;
             else
@@ -357,6 +351,7 @@ static inline int64_t _dir_update_info(int index, int fill,
 
     return bytesAllocatedTotal;
 }
+
 /* Sub table insertion
  * This is called by dir_insert and recursively to find the the sub table
  * that should house the value "ptr"
@@ -365,15 +360,15 @@ static inline int64_t _dir_update_info(int index, int fill,
  * @param length    Number of bits of the IP used to specify this CIDR
  * @param ptr       Information to be associated with this IP range
  * @param master_table    The table that describes all, returned by dir_new */
-static int _dir_sub_insert(IPLOOKUP *ip, int length, int cur_len, INFO ptr,
-        int current_depth, int behavior,
-        SUB_TABLE_PTR sub_ptr, dir_table_flat_t *root_table,updateEntryInfoFunc updateEntry, INFO *data)
+static int _dir_sub_insert(IPLOOKUP* ip, int length, int cur_len, INFO ptr,
+    int current_depth, int behavior,
+    SUB_TABLE_PTR sub_ptr, dir_table_flat_t* root_table,updateEntryInfoFunc updateEntry,
+    INFO* data)
 {
-
     word index;
     uint32_t fill;
-    uint8_t *base = (uint8_t *)segment_basePtr();
-    dir_sub_table_flat_t *sub_table = (dir_sub_table_flat_t *)(&base[sub_ptr]);
+    uint8_t* base = (uint8_t*)segment_basePtr();
+    dir_sub_table_flat_t* sub_table = (dir_sub_table_flat_t*)(&base[sub_ptr]);
 
     {
         uint32_t local_index, i;
@@ -410,7 +405,7 @@ static int _dir_sub_insert(IPLOOKUP *ip, int length, int cur_len, INFO ptr,
     }
 
     /* Check if this is the last table to traverse to */
-    if(sub_table->width >= cur_len)
+    if (sub_table->width >= cur_len)
     {
         /* Calculate how many entries need to be filled
          * in this table. If the table is 24 bits wide, and the entry
@@ -418,15 +413,15 @@ static int _dir_sub_insert(IPLOOKUP *ip, int length, int cur_len, INFO ptr,
         fill = 1 << (sub_table->width - cur_len);
 
         index = (index >> (sub_table->width - cur_len)) <<
-                (sub_table->width - cur_len);
+            (sub_table->width - cur_len);
 
         fill += index;
 
         /* Favor most recent CIDR */
-        if(behavior == RT_FAVOR_TIME)
+        if (behavior == RT_FAVOR_TIME)
         {
             _dir_fill_all(&root_table->allocated, index, fill, length,
-                    (word)ptr, sub_ptr);
+                (word)ptr, sub_ptr);
         }
         /* Fill over less specific CIDR */
         else if (behavior == RT_FAVOR_SPECIFIC)
@@ -438,41 +433,41 @@ static int _dir_sub_insert(IPLOOKUP *ip, int length, int cur_len, INFO ptr,
             int64_t bytesAllocated;
 
             bytesAllocated = _dir_update_info(index, fill, length, (word)ptr,
-                    sub_ptr, updateEntry, data);
+                sub_ptr, updateEntry, data);
 
             if (bytesAllocated < 0)
                 return MEM_ALLOC_FAILURE;
 
             root_table->allocated += (uint32_t)bytesAllocated;
 
-            if( root_table->mem_cap < root_table->allocated)
+            if ( root_table->mem_cap < root_table->allocated)
                 return MEM_ALLOC_FAILURE;
         }
     }
     /* Need to traverse to a sub-table */
     else
     {
-        DIR_Entry *entry = (DIR_Entry *)(&base[sub_table->entries]);
+        DIR_Entry* entry = (DIR_Entry*)(&base[sub_table->entries]);
 
         /* Check if we need to alloc a new sub table.
          * If next_sub was 0/NULL, there's no entry at this index
          * If the length is non-zero, there is an entry */
-        if(!entry[index].value || entry[index].length)
+        if (!entry[index].value || entry[index].length)
         {
-            if( root_table->dim_size <= current_depth )
+            if ( root_table->dim_size <= current_depth )
             {
                 return RT_INSERT_FAILURE;
             }
 
             entry[index].value =
-                    (word) _sub_table_flat_new(root_table, current_depth+1,
-                            (word) entry[index].value, entry[index].length);
+                (word)_sub_table_flat_new(root_table, current_depth+1,
+                (word)entry[index].value, entry[index].length);
 
             sub_table->cur_num++;
 
             entry[index].length = 0;
 
-            if(!entry[index].value)
+            if (!entry[index].value)
             {
                 return MEM_ALLOC_FAILURE;
             }
@@ -481,8 +476,8 @@ static int _dir_sub_insert(IPLOOKUP *ip, int length, int cur_len, INFO ptr,
          * bits and update the length accordingly. */
         ip->bits += sub_table->width;
         return (_dir_sub_insert(ip, length,
-                cur_len - sub_table->width, ptr, current_depth+1,
-                behavior, entry[index].value, root_table, updateEntry, data));
+               cur_len - sub_table->width, ptr, current_depth+1,
+               behavior, entry[index].value, root_table, updateEntry, data));
     }
 
     return RT_SUCCESS;
@@ -493,40 +488,38 @@ static int _dir_sub_insert(IPLOOKUP *ip, int length, int cur_len, INFO ptr,
  * @param len       Number of bits of the IP used for lookup
  * @param ptr       Information to be associated with this IP range
  * @param master_table    The table that describes all, returned by dir_new */
-int sfrt_dir_flat_insert(const sfip_t *ip, int len, word data_index,
-        int behavior, TABLE_PTR table_ptr, updateEntryInfoFunc updateEntry, INFO *data)
+int sfrt_dir_flat_insert(const sfip_t* ip, int len, word data_index,
+    int behavior, TABLE_PTR table_ptr, updateEntryInfoFunc updateEntry, INFO* data)
 {
-    dir_table_flat_t *root;
+    dir_table_flat_t* root;
 
-    uint8_t *base;
-
-
+    uint8_t* base;
 
     IPLOOKUP iplu;
     iplu.ip = ip;
     iplu.bits = 0;
 
-    base = (uint8_t *)segment_basePtr();
-    root = (dir_table_flat_t *)(&base[table_ptr]);
+    base = (uint8_t*)segment_basePtr();
+    root = (dir_table_flat_t*)(&base[table_ptr]);
     /* Validate arguments */
-    if(!root || !root->sub_table)
+    if (!root || !root->sub_table)
     {
         return DIR_INSERT_FAILURE;
     }
 
     /* Find the sub table in which to insert */
     return _dir_sub_insert(&iplu, len, len, data_index,
-            0, behavior, root->sub_table, root, updateEntry, data);
+        0, behavior, root->sub_table, root, updateEntry, data);
 }
 
-/* Traverse sub tables looking for match */
-/* Called by dir_lookup and recursively */
-static tuple_flat_t _dir_sub_flat_lookup(IPLOOKUP *ip, TABLE_PTR table_ptr)
+/* Traverse sub tables looking for match
+   Called by dir_lookup and recursively */
+static tuple_flat_t _dir_sub_flat_lookup(IPLOOKUP* ip, TABLE_PTR table_ptr)
 {
     word index;
-    uint8_t *base = (uint8_t *)segment_basePtr();
-    DIR_Entry *entry;
-    dir_sub_table_flat_t *table = (dir_sub_table_flat_t *)(&base[table_ptr]);
+    uint8_t* base = (uint8_t*)segment_basePtr();
+    DIR_Entry* entry;
+    dir_sub_table_flat_t* table = (dir_sub_table_flat_t*)(&base[table_ptr]);
 
     {
         uint32_t local_index, i;
@@ -562,9 +555,9 @@ static tuple_flat_t _dir_sub_flat_lookup(IPLOOKUP *ip, TABLE_PTR table_ptr)
         local_index = ip->ip->ip32[i] << (ip->bits %32);
         index = local_index >> (ARCH_WIDTH - table->width);
     }
-    entry = (DIR_Entry *)(&base[table->entries]);
+    entry = (DIR_Entry*)(&base[table->entries]);
 
-    if( !entry[index].value || entry[index].length )
+    if ( !entry[index].value || entry[index].length )
     {
         tuple_flat_t ret;
         ret.index = entry[index].value;
@@ -573,27 +566,27 @@ static tuple_flat_t _dir_sub_flat_lookup(IPLOOKUP *ip, TABLE_PTR table_ptr)
     }
 
     ip->bits += table->width;
-    return _dir_sub_flat_lookup( ip, entry[index].value);
+    return _dir_sub_flat_lookup(ip, entry[index].value);
 }
 
 /* Lookup information associated with the value "ip" */
-tuple_flat_t sfrt_dir_flat_lookup(const sfip_t *ip, TABLE_PTR table_ptr)
+tuple_flat_t sfrt_dir_flat_lookup(const sfip_t* ip, TABLE_PTR table_ptr)
 {
-    dir_table_flat_t *root;
-    uint8_t *base = (uint8_t *)segment_basePtr();
+    dir_table_flat_t* root;
+    uint8_t* base = (uint8_t*)segment_basePtr();
     IPLOOKUP iplu;
     iplu.ip = ip;
     iplu.bits = 0;
 
-    if(!table_ptr )
+    if (!table_ptr )
     {
         tuple_flat_t ret = { 0, 0 };
         return ret;
     }
 
-    root = (dir_table_flat_t *)(&base[table_ptr]);
+    root = (dir_table_flat_t*)(&base[table_ptr]);
 
-    if(!root->sub_table)
+    if (!root->sub_table)
     {
         tuple_flat_t ret = { 0, 0 };
         return ret;
@@ -602,17 +595,16 @@ tuple_flat_t sfrt_dir_flat_lookup(const sfip_t *ip, TABLE_PTR table_ptr)
     return _dir_sub_flat_lookup(&iplu, root->sub_table);
 }
 
-
 uint32_t sfrt_dir_flat_usage(TABLE_PTR table_ptr)
 {
-    dir_table_flat_t *table;
-    uint8_t *base;
-    if(!table_ptr)
+    dir_table_flat_t* table;
+    uint8_t* base;
+    if (!table_ptr)
     {
         return 0;
     }
-    base = (uint8_t *)segment_basePtr();
-    table = (dir_table_flat_t *)(&base[table_ptr]);
+    base = (uint8_t*)segment_basePtr();
+    table = (dir_table_flat_t*)(&base[table_ptr]);
     return ((dir_table_flat_t*)(table))->allocated;
 }
 

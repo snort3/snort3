@@ -17,17 +17,13 @@
 //--------------------------------------------------------------------------
 // teredo.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifndef PROTOCOLS_TEREDO_H
 #define PROTOCOLS_TEREDO_H
 
 #include <cstdint>
 
-
-
 namespace teredo
 {
-
 constexpr uint16_t TEREDO_PORT = 3544;
 constexpr uint16_t INDICATOR_ORIGIN = 0x00;
 constexpr uint16_t INDICATOR_ORIGIN_LEN = 8;
@@ -37,8 +33,7 @@ constexpr uint16_t MIN_HDR_LEN = 2;
 
 inline bool is_teredo_port(uint16_t port)
 { return port == TEREDO_PORT; }
-
-
 } // namespace teredo
 
 #endif
+

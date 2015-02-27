@@ -17,17 +17,15 @@
 //--------------------------------------------------------------------------
 // eapol.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifndef PROTOCOLS_EAPOL_H
 #define PROTOCOLS_EAPOL_H
 
 namespace eapol
 {
-
 struct EtherEapol
 {
-    uint8_t  version;  /* EAPOL proto version */
-    uint8_t  eaptype;  /* EAPOL Packet type */
+    uint8_t version;   /* EAPOL proto version */
+    uint8_t eaptype;   /* EAPOL Packet type */
     uint16_t len;  /* Packet body length */
 };
 
@@ -40,14 +38,13 @@ struct EAPHdr
 
 struct EapolKey
 {
-  uint8_t type;
-  uint8_t length[2];
-  uint8_t counter[8];
-  uint8_t iv[16];
-  uint8_t index;
-  uint8_t sig[16];
+    uint8_t type;
+    uint8_t length[2];
+    uint8_t counter[8];
+    uint8_t iv[16];
+    uint8_t index;
+    uint8_t sig[16];
 };
-
 
 /* IEEE 802.1x eapol types */
 #define EAPOL_TYPE_EAP      0x00      /* EAP packet */
@@ -56,8 +53,6 @@ struct EapolKey
 #define EAPOL_TYPE_KEY      0x03      /* EAPOL Key */
 #define EAPOL_TYPE_ASF      0x04      /* EAPOL Encapsulated ASF-Alert */
 
-
-
 /* Extensible Authentication Protocol Codes RFC 2284*/
 #define EAP_CODE_REQUEST    0x01
 #define EAP_CODE_RESPONSE   0x02
@@ -72,8 +67,6 @@ struct EapolKey
 #define EAP_TYPE_GTC        0x06
 #define EAP_TYPE_TLS        0x0d
 
-
-
 /* Extensible Authentication Protocol Codes RFC 2284*/
 #define EAP_CODE_REQUEST    0x01
 #define EAP_CODE_RESPONSE   0x02
@@ -87,7 +80,7 @@ struct EapolKey
 #define EAP_TYPE_OTP        0x05
 #define EAP_TYPE_GTC        0x06
 #define EAP_TYPE_TLS        0x0d
-
 }
 
 #endif /* EAPOL_H */
+

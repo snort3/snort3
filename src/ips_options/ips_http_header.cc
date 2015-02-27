@@ -58,13 +58,13 @@ static const Parameter s_params[] =
 class HttpHeaderModule : public Module
 {
 public:
-    HttpHeaderModule() : Module(s_name, s_help, s_params) { };
+    HttpHeaderModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &httpHeaderPerfStats; };
+    { return &httpHeaderPerfStats; }
 
 public:
     string name;
@@ -95,13 +95,13 @@ class HttpHeaderOption : public IpsOption
 {
 public:
     HttpHeaderOption(string& s) : IpsOption(s_name)
-    { name = s; };
+    { name = s; }
 
     CursorActionType get_cursor_type() const override
-    { return CAT_SET_HEADER; };
+    { return CAT_SET_HEADER; }
 
     bool fp_research() override
-    { return name.size() != 0; };
+    { return name.size() != 0; }
 
     int eval(Cursor&, Packet*) override;
 
@@ -140,10 +140,13 @@ static bool find(
     // (skip space before and after :)
     t += k;
 
-    while ( isspace(*t) ) ++t;
+    while ( isspace(*t) )
+        ++t;
 
     if ( *t == ':' )
-        do ++t; while ( isspace(*t) );
+        do
+            ++t;
+        while ( isspace(*t) );
 
     // now find the end of header
     const uint8_t* z = (uint8_t*)memchr(t, '\n', n);

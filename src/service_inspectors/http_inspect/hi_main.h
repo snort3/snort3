@@ -64,7 +64,6 @@ typedef enum _HttpRespCompressType
 {
     HTTP_RESP_COMPRESS_TYPE__GZIP     = 0x00000001,
     HTTP_RESP_COMPRESS_TYPE__DEFLATE  = 0x00000002
-
 } _HttpRespCompressType;
 
 typedef struct s_DECOMPRESS_STATE
@@ -78,7 +77,6 @@ typedef struct s_DECOMPRESS_STATE
     uint8_t decompress_data;
     z_stream d_stream;
     bool deflate_initialized;
-
 } DECOMPRESS_STATE;
 
 typedef struct s_HTTP_RESP_STATE
@@ -105,14 +103,14 @@ typedef struct s_HTTP_LOG_STATE
 typedef struct _HttpSessionData
 {
     HTTP_RESP_STATE resp_state;
-    DECOMPRESS_STATE *decomp_state;
-    HTTP_LOG_STATE *log_state;
-    sfip_t *true_ip;
+    DECOMPRESS_STATE* decomp_state;
+    HTTP_LOG_STATE* log_state;
+    sfip_t* true_ip;
     decode_utf_state_t utf_state;
     uint8_t log_flags;
     uint8_t cli_small_chunk_count;
     uint8_t srv_small_chunk_count;
-    MimeState *mime_ssn;
+    MimeState* mime_ssn;
     fd_session_p_t fd_state;
 } HttpSessionData;
 
@@ -131,16 +129,15 @@ public:
 
 typedef struct _HISearch
 {
-    const char *name;
-    int   name_len;
-
+    const char* name;
+    int name_len;
 } HISearch;
 
-typedef struct _HiSearchToken               
-{   
-    const char *name;
-    int   name_len;
-    int   search_id;
+typedef struct _HiSearchToken
+{
+    const char* name;
+    int name_len;
+    int search_id;
 } HiSearchToken;
 
 typedef struct _HISearchInfo
@@ -149,7 +146,6 @@ typedef struct _HISearchInfo
     int index;
     int length;
 } HISearchInfo;
-
 
 #define COPY_URI 1
 #define COPY_HOSTNAME 2
@@ -178,31 +174,31 @@ extern class SearchTool* hi_htmltype_search_mpse;
 
 extern THREAD_LOCAL HISearch hi_js_search[HI_LAST];
 extern THREAD_LOCAL HISearch hi_html_search[HTML_LAST];
-extern THREAD_LOCAL HISearch *hi_current_search;
+extern THREAD_LOCAL HISearch* hi_current_search;
 extern THREAD_LOCAL HISearchInfo hi_search_info;
 
-void ApplyFlowDepth(HTTPINSPECT_CONF *, Packet *, HttpSessionData *, int, int, uint32_t);
+void ApplyFlowDepth(HTTPINSPECT_CONF*, Packet*, HttpSessionData*, int, int, uint32_t);
 void HttpInspectRegisterXtraDataFuncs();
 
-int HttpInspectMain(HTTPINSPECT_CONF *GlobalConf, Packet *p);
-int ProcessGlobalConf(HTTPINSPECT_GLOBAL_CONF *, char *, int);
-int PrintGlobalConf(HTTPINSPECT_GLOBAL_CONF *);
+int HttpInspectMain(HTTPINSPECT_CONF* GlobalConf, Packet* p);
+int ProcessGlobalConf(HTTPINSPECT_GLOBAL_CONF*, char*, int);
+int PrintGlobalConf(HTTPINSPECT_GLOBAL_CONF*);
 int PrintServerConf(HTTPINSPECT_CONF*);
 int HttpInspectInitializeGlobalConfig(HTTPINSPECT_GLOBAL_CONF*);
-HttpSessionData * SetNewHttpSessionData(Packet *, void *);
-void FreeHttpSessionData(void *data);
-int GetHttpTrueIP(Flow*, uint8_t **buf, uint32_t *len, uint32_t *type);
-int GetHttpGzipData(Flow*, uint8_t **buf, uint32_t *len, uint32_t *type);
-int GetHttpJSNormData(Flow*, uint8_t **buf, uint32_t *len, uint32_t *type);
-int GetHttpUriData(Flow*, uint8_t **buf, uint32_t *len, uint32_t *type);
-int GetHttpHostnameData(Flow*, uint8_t **buf, uint32_t *len, uint32_t *type);
+HttpSessionData* SetNewHttpSessionData(Packet*, void*);
+void FreeHttpSessionData(void* data);
+int GetHttpTrueIP(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
+int GetHttpGzipData(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
+int GetHttpJSNormData(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
+int GetHttpUriData(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
+int GetHttpHostnameData(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
 void HI_SearchInit(void);
 void HI_SearchFree(void);
-int HI_SearchStrFound(void *, void *, int , void *, void *);
+int HI_SearchStrFound(void*, void*, int, void*, void*);
 int IsJSNormData(Flow* flow);
 int IsGzipData(Flow* flow);
 
-static inline void ResetGzipState(DECOMPRESS_STATE *ds)
+static inline void ResetGzipState(DECOMPRESS_STATE* ds)
 {
     if (ds == NULL)
         return;
@@ -216,7 +212,7 @@ static inline void ResetGzipState(DECOMPRESS_STATE *ds)
     ds->decompress_data = 0;
 }
 
-static inline void ResetRespState(HTTP_RESP_STATE *ds)
+static inline void ResetRespState(HTTP_RESP_STATE* ds)
 {
     if (ds == NULL)
         return;
@@ -230,13 +226,13 @@ static inline void ResetRespState(HTTP_RESP_STATE *ds)
     ds->max_seq = 0;
 }
 
-static inline int SetLogBuffers(HttpSessionData *hsd)
+static inline int SetLogBuffers(HttpSessionData* hsd)
 {
     int iRet = 0;
 
     if (hsd->log_state == NULL)
     {
-        hsd->log_state = (HTTP_LOG_STATE *)calloc(1, sizeof(HTTP_LOG_STATE));
+        hsd->log_state = (HTTP_LOG_STATE*)calloc(1, sizeof(HTTP_LOG_STATE));
 
         if ( !hsd->log_state )
             iRet = -1;
@@ -249,5 +245,5 @@ static inline void SetHttpDecode(uint16_t altLen)
     HttpDecodeBuf.len = altLen;
 }
 
-
 #endif
+

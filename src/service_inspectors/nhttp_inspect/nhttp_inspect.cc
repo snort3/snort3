@@ -37,10 +37,12 @@ using namespace NHttpEnums;
 
 NHttpInspect::NHttpInspect(bool test_input, bool test_output)
 {
-    if (test_input) {
+    if (test_input)
+    {
         NHttpTestManager::activate_test_input();
     }
-    if (test_output) {
+    if (test_output)
+    {
         NHttpTestManager::activate_test_output();
     }
 }
@@ -60,14 +62,15 @@ bool NHttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuff
 
     default:
         return false;
-    }   
+    }
 }
 
 bool NHttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
 {
     const HttpBuffer* h = GetHttpBuffer((HTTP_BUFFER)id);
 
-    if (!h) {
+    if (!h)
+    {
         return false;
     }
 
@@ -76,22 +79,33 @@ bool NHttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
     return true;
 }
 
-ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId source_id,
-   bool buf_owner) const
+ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
+    SourceId source_id,
+    bool buf_owner) const
 {
-    NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
+    NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(
+        NHttpFlowData::nhttp_flow_id);
     assert(session_data != nullptr);
 
-    NHttpMsgSection *msg_section = nullptr;
+    NHttpMsgSection* msg_section = nullptr;
 
-    switch (session_data->section_type[source_id]) {
-      case SEC_REQUEST: msg_section = new NHttpMsgRequest(data, dsize, session_data, source_id, buf_owner); break;
-      case SEC_STATUS: msg_section = new NHttpMsgStatus(data, dsize, session_data, source_id, buf_owner); break;
-      case SEC_HEADER: msg_section = new NHttpMsgHeader(data, dsize, session_data, source_id, buf_owner); break;
-      case SEC_BODY: msg_section = new NHttpMsgBody(data, dsize, session_data, source_id, buf_owner); break;
-      case SEC_CHUNK: msg_section = new NHttpMsgChunk(data, dsize, session_data, source_id, buf_owner); break;
-      case SEC_TRAILER: msg_section = new NHttpMsgTrailer(data, dsize, session_data, source_id, buf_owner); break;
-      default: assert(0); if (buf_owner) delete[] data; return RES_IGNORE;
+    switch (session_data->section_type[source_id])
+    {
+    case SEC_REQUEST: msg_section = new NHttpMsgRequest(data, dsize, session_data, source_id,
+            buf_owner); break;
+    case SEC_STATUS: msg_section = new NHttpMsgStatus(data, dsize, session_data, source_id,
+            buf_owner); break;
+    case SEC_HEADER: msg_section = new NHttpMsgHeader(data, dsize, session_data, source_id,
+            buf_owner); break;
+    case SEC_BODY: msg_section = new NHttpMsgBody(data, dsize, session_data, source_id, buf_owner);
+        break;
+    case SEC_CHUNK: msg_section = new NHttpMsgChunk(data, dsize, session_data, source_id,
+            buf_owner); break;
+    case SEC_TRAILER: msg_section = new NHttpMsgTrailer(data, dsize, session_data, source_id,
+            buf_owner); break;
+    default: assert(0); if (buf_owner)
+            delete[] data;
+        return RES_IGNORE;
     }
 
     msg_section->analyze();
@@ -99,17 +113,22 @@ ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, F
     msg_section->gen_events();
 
     ProcessResult return_value = msg_section->worth_detection();
-    if (return_value == RES_INSPECT) {
+    if (return_value == RES_INSPECT)
+    {
         msg_section->legacy_clients();
     }
 
-    if (NHttpTestManager::use_test_output()) {
+    if (NHttpTestManager::use_test_output())
+    {
         msg_section->print_section(NHttpTestManager::get_output_file());
         fflush(NHttpTestManager::get_output_file());
-        if (NHttpTestManager::use_test_input()) {
-            printf("Finished processing section from test %" PRIi64 "\n", NHttpTestManager::get_test_number());
+        if (NHttpTestManager::use_test_input())
+        {
+            printf("Finished processing section from test %" PRIi64 "\n",
+                NHttpTestManager::get_test_number());
         }
-        else {
+        else
+        {
             printf("Finished processing section from flow %p\n", (void*)session_data);
         }
         fflush(stdout);

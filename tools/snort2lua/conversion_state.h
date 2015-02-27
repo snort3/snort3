@@ -42,16 +42,14 @@ class TableApi;
 
 class ConversionState
 {
-
 public:
     ConversionState(Converter& c) : cv(c),
-                                    data_api(c.get_data_api()),
-                                    table_api(c.get_table_api()),
-                                    rule_api(c.get_rule_api())
+        data_api(c.get_data_api()),
+        table_api(c.get_table_api()),
+        rule_api(c.get_rule_api())
     { }
-    virtual ~ConversionState() {};
+    virtual ~ConversionState() { }
     virtual bool convert(std::istringstream& data)=0;
-
 
 protected:
     Converter& cv;
@@ -59,33 +57,31 @@ protected:
     TableApi& table_api;
     RuleApi& rule_api;
 
-
 #if 0
-    Forward declaration fo parsing methods. Since these are all inline,
+    Forward declaration fo parsing methods.Since these are all inline,
     unable to forward declare in regular code.
 
     inline bool eat_option(std::istringstream& stream);
     inline bool parse_string_option(std::string opt_name,
-                                        std::istringstream& stream);
+        std::istringstream& stream);
     inline bool parse_int_option(std::string opt_name,
-                                        std::istringstream& stream, bool append);
+        std::istringstream& stream, bool append);
     inline bool parse_curly_bracket_list(std::string list_name,
-                                        std::istringstream& stream);
+        std::istringstream& stream);
     inline bool parse_yn_bool_option(std::string opt_name,
-                                        std::istringstream& stream, bool append);
+        std::istringstream& stream, bool append);
     inline bool parse_bracketed_byte_list(std::string list_name,
-                                        std::istringstream& stream);
+        std::istringstream& stream);
     inline bool parse_bracketed_unsupported_list(std::string list_name,
-                                        std::istringstream& stream);
+        std::istringstream& stream);
     inline bool parse_deleted_option(std::string table_name,
-                                        std::istringstream& stream);
+        std::istringstream& stream);
 
     //  rules have no order. Function placed here because every rule
     //  uses this.
     inline bool set_next_rule_state(std::istringstream& stream)
 
 #endif
-
 
     inline bool eat_option(std::istringstream& stream)
     {
@@ -97,13 +93,13 @@ protected:
     }
 
     inline bool parse_string_option(std::string opt_name,
-                                    std::istringstream& stream)
+        std::istringstream& stream)
     {
         std::string val;
 
-        if(stream >> val)
+        if (stream >> val)
         {
-            if(val.back() == ',')
+            if (val.back() == ',')
                 val.pop_back();
 
             table_api.add_option(opt_name, val);
@@ -115,19 +111,18 @@ protected:
     }
 
     inline bool parse_int_option(std::string opt_name,
-                                    std::istringstream& stream, bool append)
+        std::istringstream& stream, bool append)
     {
         int val;
 
-        if(stream >> val)
+        if (stream >> val)
         {
-            if(append)
+            if (append)
                 table_api.append_option(opt_name, val);
             else
                 table_api.add_option(opt_name, val);
             return true;
         }
-
 
         table_api.add_comment("snort.conf missing argument for: " + opt_name + " <int>");
         return false;
@@ -139,7 +134,7 @@ protected:
         std::string elem;
         bool retval = true;
 
-        if(!(stream >> elem) || (elem != "{"))
+        if (!(stream >> elem) || (elem != "{"))
             return false;
 
         while (stream >> elem && elem != "}")
@@ -153,12 +148,12 @@ protected:
     {
         std::string val;
 
-        if(!(stream >> val))
+        if (!(stream >> val))
             return false;
 
-        else if(!val.compare("yes"))
+        else if (!val.compare("yes"))
         {
-            if(append)
+            if (append)
             {
                 table_api.append_option(opt_name, true);
                 return true;
@@ -166,10 +161,9 @@ protected:
             else
                 return table_api.add_option(opt_name, true);
         }
-
         else if (!val.compare("no"))
         {
-            if(append)
+            if (append)
             {
                 table_api.append_option(opt_name, false);
                 return true;
@@ -188,7 +182,7 @@ protected:
         std::string elem;
         bool retval = true;
 
-        if(!(stream >> elem) || (elem != "{"))
+        if (!(stream >> elem) || (elem != "{"))
             return false;
 
         while (stream >> elem && elem != "}")
@@ -207,12 +201,11 @@ protected:
                 std::ostringstream tmp;
                 tmp << "0x" << std::hex << dig;
                 retval = table_api.add_list(list_name, tmp.str()) && retval;
-
             }
             else
             {
                 table_api.add_comment("Unable to convert " + elem +
-                        "!!  The element must be a single charachter or number between 0 - 255 inclusive");
+                    "!!  The element must be a single charachter or number between 0 - 255 inclusive");
                 retval = false;
             }
         }
@@ -226,39 +219,37 @@ protected:
         std::string tmp = "";
         std::string elem;
 
-        if(!(stream >> elem) || (elem != "{"))
+        if (!(stream >> elem) || (elem != "{"))
             return false;
 
         while (stream >> elem && elem != "}")
             tmp += " " + elem;
 
         // remove the extra space at the beginig of the string
-        if(tmp.size() > 0)
+        if (tmp.size() > 0)
             tmp.erase(tmp.begin());
 
-        return table_api.add_option("--" + list_name, tmp );
+        return table_api.add_option("--" + list_name, tmp);
     }
 
-
     inline bool parse_deleted_option(std::string opt_name,
-                                        std::istringstream& stream)
+        std::istringstream& stream)
     {
         std::string val;
         table_api.add_deleted_comment(opt_name);
 
-        if(stream >> val)
+        if (stream >> val)
             return true;
 
         return false;
     }
-
 
     inline bool set_next_rule_state(std::istringstream& stream)
     {
         std::string keyword;
         std::streamoff pos = stream.tellg();
 
-        while(std::getline(stream, keyword, ':'))
+        while (std::getline(stream, keyword, ':'))
         {
             std::size_t semi_colon_pos = keyword.find(';');
             if (semi_colon_pos != std::string::npos)
@@ -266,7 +257,7 @@ protected:
                 // found an option without a colon, so set stream
                 // to semi-colon
                 std::streamoff off = 1 + (std::streamoff)(pos) +
-                                     (std::streamoff)(semi_colon_pos);
+                    (std::streamoff)(semi_colon_pos);
                 stream.seekg(off);
                 keyword = keyword.substr(0, semi_colon_pos);
             }
@@ -303,10 +294,8 @@ protected:
         return true;
     }
 
-
 private:
-
 };
 
-
 #endif
+

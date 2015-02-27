@@ -25,19 +25,19 @@
 
 struct MEMCAP
 {
-   unsigned long memused;
-   unsigned long memcap;
-   int      nblocks;
-
+    unsigned long memused;
+    unsigned long memcap;
+    int nblocks;
 };
 
-void     sfmemcap_init(MEMCAP * mc, unsigned long nbytes);
-MEMCAP * sfmemcap_new( unsigned nbytes );
-void     sfmemcap_delete( MEMCAP * mc );
-void   * sfmemcap_alloc(MEMCAP * mc, unsigned long nbytes);
-void     sfmemcap_showmem(MEMCAP * mc );
-void     sfmemcap_free( MEMCAP * mc, void * memory);
-char   * sfmemcap_strdup(MEMCAP * mc, const char *str);
-void   * sfmemcap_dupmem(MEMCAP * mc, void * src, unsigned long n );
+void sfmemcap_init(MEMCAP* mc, unsigned long nbytes);
+MEMCAP* sfmemcap_new(unsigned nbytes);
+void sfmemcap_delete(MEMCAP* mc);
+void* sfmemcap_alloc(MEMCAP* mc, unsigned long nbytes);
+void sfmemcap_showmem(MEMCAP* mc);
+void sfmemcap_free(MEMCAP* mc, void* memory);
+char* sfmemcap_strdup(MEMCAP* mc, const char* str);
+void* sfmemcap_dupmem(MEMCAP* mc, void* src, unsigned long n);
 
 #endif
+

@@ -22,16 +22,19 @@
 
 #include "unified2_common.h"
 
-typedef struct _record {
+typedef struct _record
+{
     uint32_t type;
     uint32_t length;
-    uint8_t *data;
+    uint8_t* data;
 } u2record;
 
-typedef struct _u2iterator {
-    FILE *file;
-    char *filename;
+typedef struct _u2iterator
+{
+    FILE* file;
+    char* filename;
     u2record current;
 } u2iterator;
 
 #endif
+

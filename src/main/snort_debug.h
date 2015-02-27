@@ -18,7 +18,6 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-
 #ifndef SNORT_DEBUG_H
 #define SNORT_DEBUG_H
 
@@ -86,30 +85,31 @@
 
 #if 0
 // FIXIT delete duplicate declarations
-SO_PUBLIC void DebugMessageFunc(uint64_t dbg, const char *fmt, ...);
+SO_PUBLIC void DebugMessageFunc(uint64_t dbg, const char* fmt, ...);
 #ifdef SF_WCHAR
-void DebugWideMessageFunc(uint64_t dbg, const wchar_t *fmt, ...);
+void DebugWideMessageFunc(uint64_t dbg, const wchar_t* fmt, ...);
 #endif
 #endif
 
 #ifdef DEBUG_MSGS
 
-SO_PUBLIC extern const char *DebugMessageFile;
+SO_PUBLIC extern const char* DebugMessageFile;
 SO_PUBLIC extern int DebugMessageLine;
 
 #define DebugMessage DebugMessageFile = __FILE__; DebugMessageLine = __LINE__; DebugMessageFunc
-#define DebugWideMessage DebugMessageFile = __FILE__; DebugMessageLine = __LINE__; DebugWideMessageFunc
+#define DebugWideMessage \
+    DebugMessageFile = __FILE__; DebugMessageLine = __LINE__; \
+    DebugWideMessageFunc
 
-uint64_t GetDebugLevel (void);
+uint64_t GetDebugLevel(void);
 int DebugThis(uint64_t level);
 #endif /* DEBUG_MSGS */
 
-
 #ifdef DEBUG_MSGS
 #define DEBUG_WRAP(code) code
-SO_PUBLIC void DebugMessageFunc(uint64_t dbg, const char *fmt, ...);
+SO_PUBLIC void DebugMessageFunc(uint64_t dbg, const char* fmt, ...);
 #ifdef SF_WCHAR
-SO_PUBLIC void DebugWideMessageFunc(uint64_t dbg, const wchar_t *fmt, ...);
+SO_PUBLIC void DebugWideMessageFunc(uint64_t dbg, const wchar_t* fmt, ...);
 #endif
 #else /* DEBUG_MSGS */
 #define DEBUG_WRAP(code)

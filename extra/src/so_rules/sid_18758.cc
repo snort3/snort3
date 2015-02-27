@@ -37,7 +37,7 @@ static int eval(void*, Cursor&, Packet*)
 static SoEvalFunc ctor(const char* /*so*/, void** pv)
 {
     // so == "eval" here because that's our only so: option
-    // but we could use multiple so: options and bind to 
+    // but we could use multiple so: options and bind to
     // different functions based on the value of so
     // *pv can point to any data we need to use with so
     *pv = nullptr;

@@ -53,7 +53,7 @@ const char* http_buffer_name[HTTP_BUFFER_MAX] =
 static THREAD_LOCAL TextLog* tlog = NULL;
 static THREAD_LOCAL unsigned nEvents = 0;
 
-static void LogBuffer (const char* s, const uint8_t* p, unsigned n)
+static void LogBuffer(const char* s, const uint8_t* p, unsigned n)
 {
     char hex[(3*LOG_CHARS)+1];
     char txt[LOG_CHARS+1];
@@ -86,7 +86,7 @@ static void LogBuffer (const char* s, const uint8_t* p, unsigned n)
     }
 }
 
-void EventTrace_Log (const Packet* p, OptTreeNode* otn, int action)
+void EventTrace_Log(const Packet* p, OptTreeNode* otn, int action)
 {
     const char* acts = get_action_string(action);
 
@@ -95,28 +95,28 @@ void EventTrace_Log (const Packet* p, OptTreeNode* otn, int action)
 
     TextLog_Print(tlog,
         "\nEvt=%u, Gid=%u, Sid=%u, Rev=%u, Act=%s\n",
-        event_id, otn->sigInfo.generator, 
+        event_id, otn->sigInfo.generator,
         otn->sigInfo.id, otn->sigInfo.rev, acts
-    );
+        );
     TextLog_Print(tlog,
         "Pkt=%lu, Sec=%u.%6u, Len=%u, Cap=%u\n",
         pc.total_from_daq, p->pkth->ts.tv_sec, p->pkth->ts.tv_usec,
         p->pkth->pktlen, p->pkth->caplen
-    );
+        );
     TextLog_Print(tlog,
         "Pkt Bits: Flags=0x%X, Proto=0x%X, Err=0x%X\n",
         p->packet_flags, (unsigned)p->proto_bits, (unsigned)p->ptrs.decode_flags
-    );
+        );
     TextLog_Print(tlog,
         "Pkt Cnts: Dsz=%u, Alt=%u, Uri=0x%X\n",
         (unsigned)p->dsize, (unsigned)p->alt_dsize, http_mask
-    );
+        );
     LogBuffer("Packet", p->data, p->alt_dsize);
 
     nEvents++;
 }
 
-void EventTrace_Init (void)
+void EventTrace_Init(void)
 {
     if ( snort_conf->event_trace_max > 0 )
     {
@@ -134,7 +134,7 @@ void EventTrace_Init (void)
     }
 }
 
-void EventTrace_Term (void)
+void EventTrace_Term(void)
 {
     if ( tlog )
     {

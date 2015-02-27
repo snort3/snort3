@@ -38,7 +38,7 @@ struct Actor
     IpsAction* act;  // FIXIT-H must move to SnortConfig for reload?
 
     Actor(const ActionApi* p)
-    { api = p; act = nullptr; };
+    { api = p; act = nullptr; }
 };
 
 typedef list<Actor> AList;

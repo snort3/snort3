@@ -26,17 +26,15 @@
 
 namespace config
 {
-
-namespace {
-
+namespace
+{
 class PolicyMode : public ConversionState
 {
 public:
-    PolicyMode(Converter& c) : ConversionState(c) {};
-    virtual ~PolicyMode() {};
+    PolicyMode(Converter& c) : ConversionState(c) { }
+    virtual ~PolicyMode() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool PolicyMode::convert(std::istringstream& data_stream)
@@ -67,7 +65,6 @@ bool PolicyMode::convert(std::istringstream& data_stream)
             data_api.failed_conversion(data_stream, mode);
         }
 
-
         table_api.close_table();
     }
 
@@ -88,5 +85,5 @@ static const ConvertMap policy_mode_api =
 };
 
 const ConvertMap* policy_mode_map = &policy_mode_api;
-
 } // namespace config
+

@@ -52,25 +52,25 @@ struct SnortConfig;
 class SO_PUBLIC IpsAction
 {
 public:
-    virtual ~IpsAction() { };
+    virtual ~IpsAction() { }
 
     virtual void exec(Packet*) = 0;
 
-    const char* get_name() const { return name; };
+    const char* get_name() const { return name; }
     ActionType get_action() { return action; }
 
 protected:
     IpsAction(const char* s, ActionType a)
-    { name = s; action = a; };
+    { name = s; action = a; }
 
 private:
     const char* name;
     ActionType action;
 };
 
-typedef void (*IpsActFunc)();
-typedef IpsAction* (*ActNewFunc)(class Module*);
-typedef void (*ActDelFunc)(IpsAction*);
+typedef void (* IpsActFunc)();
+typedef IpsAction* (* ActNewFunc)(class Module*);
+typedef void (* ActDelFunc)(IpsAction*);
 
 struct ActionApi
 {

@@ -45,7 +45,7 @@ typedef enum file_compression_type
     FILE_COMPRESSION_TYPE_MAX
 } file_compression_type_t;
 
-typedef struct fd_session_s *fd_session_p_t, fd_session_t;
+typedef struct fd_session_s* fd_session_p_t, fd_session_t;
 
 #include "file_decomp_pdf.h"
 #include "file_decomp_swf.h"
@@ -94,17 +94,17 @@ typedef enum states
 
 struct fd_session_s
 {
-    uint8_t *Next_In;   /* next input byte */
+    uint8_t* Next_In;   /* next input byte */
     uint32_t Avail_In;  /* number of bytes available at next_in */
     uint32_t Total_In;  /* total number of input bytes read so far */
 
-    uint8_t *Next_Out;  /* next output byte should be put there */
+    uint8_t* Next_Out;  /* next output byte should be put there */
     uint32_t Avail_Out; /* remaining free space at next_out */
     uint32_t Total_Out; /* total number of bytes output so far */
 
     /* Internal buffer setup by _Init().  App can overide. */
-    uint8_t *Buffer;    /* pointer to decompresiion buffer */
-    uint32_t Buffer_Len;/* length of decompression buffer */
+    uint8_t* Buffer;    /* pointer to decompresiion buffer */
+    uint32_t Buffer_Len; /* length of decompression buffer */
 
     /* Configuration settings */
     uint32_t Compr_Depth;
@@ -112,8 +112,8 @@ struct fd_session_s
     uint32_t Modes;     /* Bit mapped set of potential file/algo modes */
 
     /* Alerting callback */
-    void (*Alert_Callback)(void *Context, int Event);
-    void *Alert_Context;
+    void (* Alert_Callback)(void* Context, int Event);
+    void* Alert_Context;
 
     /* Internal State */
     uint8_t File_Type;   /* Active file type */
@@ -145,20 +145,19 @@ struct fd_session_s
 
 #ifndef SYNC_OUT
 #define SYNC_OUT(src) \
-    SessionPtr->Next_In = (uint8_t *)src->next_in; \
+    SessionPtr->Next_In = (uint8_t*)src->next_in; \
     SessionPtr->Avail_In = src->avail_in; \
     SessionPtr->Total_In = src->total_in; \
-    SessionPtr->Next_Out = (uint8_t *)src->next_out; \
+    SessionPtr->Next_Out = (uint8_t*)src->next_out; \
     SessionPtr->Avail_Out = src->avail_out; \
     SessionPtr->Total_Out = src->total_out;
 #endif
 
-
 /* Inline Functions */
 
-static inline bool Peek_1( fd_session_p_t SessionPtr, uint8_t *c)
+static inline bool Peek_1(fd_session_p_t SessionPtr, uint8_t* c)
 {
-    if( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In > 0) )
+    if ( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In > 0) )
     {
         *c = *(SessionPtr->Next_In);
         return( true );
@@ -167,9 +166,9 @@ static inline bool Peek_1( fd_session_p_t SessionPtr, uint8_t *c)
         return( false );
 }
 
-static inline bool Get_1( fd_session_p_t SessionPtr, uint8_t *c )
+static inline bool Get_1(fd_session_p_t SessionPtr, uint8_t* c)
 {
-    if( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In > 0) )
+    if ( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In > 0) )
     {
         *c = *(SessionPtr->Next_In)++;
         SessionPtr->Avail_In -= 1;
@@ -180,9 +179,9 @@ static inline bool Get_1( fd_session_p_t SessionPtr, uint8_t *c )
         return( false );
 }
 
-static inline bool Get_N( fd_session_p_t SessionPtr, uint8_t **c, uint16_t N )
+static inline bool Get_N(fd_session_p_t SessionPtr, uint8_t** c, uint16_t N)
 {
-    if( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In >= N) )
+    if ( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In >= N) )
     {
         *c = SessionPtr->Next_In;
         SessionPtr->Next_In += N;
@@ -194,9 +193,9 @@ static inline bool Get_N( fd_session_p_t SessionPtr, uint8_t **c, uint16_t N )
         return( false );
 }
 
-static inline bool Put_1( fd_session_p_t SessionPtr, uint8_t c )
+static inline bool Put_1(fd_session_p_t SessionPtr, uint8_t c)
 {
-    if( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out > 0) )
+    if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out > 0) )
     {
         *(SessionPtr->Next_Out)++ = c;
         SessionPtr->Avail_Out -= 1;
@@ -207,11 +206,11 @@ static inline bool Put_1( fd_session_p_t SessionPtr, uint8_t c )
         return( false );
 }
 
-static inline bool Put_N( fd_session_p_t SessionPtr, uint8_t *c, uint16_t N )
+static inline bool Put_N(fd_session_p_t SessionPtr, uint8_t* c, uint16_t N)
 {
-    if( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out >= N) )
+    if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out >= N) )
     {
-        strncpy( (char *)SessionPtr->Next_Out, (const char *)c, N);
+        strncpy( (char*)SessionPtr->Next_Out, (const char*)c, N);
         SessionPtr->Next_Out += N;
         SessionPtr->Avail_Out -= N;
         SessionPtr->Total_Out += N;
@@ -221,9 +220,9 @@ static inline bool Put_N( fd_session_p_t SessionPtr, uint8_t *c, uint16_t N )
         return( false );
 }
 
-static inline bool Move_1( fd_session_p_t SessionPtr )
+static inline bool Move_1(fd_session_p_t SessionPtr)
 {
-    if( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out > 0) &&
+    if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out > 0) &&
         (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In > 0) )
     {
         *(SessionPtr->Next_Out) = *(SessionPtr->Next_In);
@@ -239,12 +238,12 @@ static inline bool Move_1( fd_session_p_t SessionPtr )
         return( false );
 }
 
-static inline bool Move_N( fd_session_p_t SessionPtr, uint16_t N )
+static inline bool Move_N(fd_session_p_t SessionPtr, uint16_t N)
 {
-    if( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out >= N) && 
+    if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out >= N) &&
         (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In >= N) )
     {
-        strncpy( (char *)SessionPtr->Next_Out, (const char *)SessionPtr->Next_In, N);
+        strncpy( (char*)SessionPtr->Next_Out, (const char*)SessionPtr->Next_In, N);
         SessionPtr->Next_Out += N;
         SessionPtr->Next_In += N;
         SessionPtr->Avail_In -= N;
@@ -261,19 +260,20 @@ static inline bool Move_N( fd_session_p_t SessionPtr, uint16_t N )
 
 fd_session_p_t File_Decomp_New();
 
-fd_status_t File_Decomp_Init( fd_session_p_t SessionPtr );
+fd_status_t File_Decomp_Init(fd_session_p_t SessionPtr);
 
-fd_status_t File_Decomp_SetBuf( fd_session_p_t SessionPtr );
+fd_status_t File_Decomp_SetBuf(fd_session_p_t SessionPtr);
 
-fd_status_t File_Decomp( fd_session_p_t SessionPtr );
+fd_status_t File_Decomp(fd_session_p_t SessionPtr);
 
-fd_status_t File_Decomp_End( fd_session_p_t SessionPtr );
+fd_status_t File_Decomp_End(fd_session_p_t SessionPtr);
 
-fd_status_t File_Decomp_Reset( fd_session_p_t SessionPtr );
+fd_status_t File_Decomp_Reset(fd_session_p_t SessionPtr);
 
-fd_status_t File_Decomp_StopFree( fd_session_p_t SessionPtr );
+fd_status_t File_Decomp_StopFree(fd_session_p_t SessionPtr);
 
-void File_Decomp_Free( fd_session_p_t SessionPtr );
+void File_Decomp_Free(fd_session_p_t SessionPtr);
 
-void File_Decomp_Alert( fd_session_p_t SessionPtr, int Event );
+void File_Decomp_Alert(fd_session_p_t SessionPtr, int Event);
 #endif
+

@@ -149,10 +149,10 @@ bool snort_is_reloading()
 #if 0
 #ifdef HAVE_DAQ_ACQUIRE_WITH_META
 static int MetaCallback(
-    void* user, const DAQ_MetaHdr_t *metahdr, const uint8_t* data)
+    void* user, const DAQ_MetaHdr_t* metahdr, const uint8_t* data)
 {
     PolicyId policy_id = getDefaultPolicy();
-    SnortPolicy *policy;
+    SnortPolicy* policy;
 
     PROFILE_VARS;
     MODULE_PROFILE_START(metaPerfStats);
@@ -164,6 +164,7 @@ static int MetaCallback(
 
     return 0;
 }
+
 #endif
 
 static void SetupMetadataCallback(void)  // FIXDAQ
@@ -172,6 +173,7 @@ static void SetupMetadataCallback(void)  // FIXDAQ
     DAQ_Set_MetaCallback(&MetaCallback);
 #endif
 }
+
 #endif
 
 #if 0
@@ -184,7 +186,7 @@ static void restart()
         (snort_conf->chroot_dir != NULL))
     {
         LogMessage("Reload via Signal Reload does not work if you aren't root "
-                   "or are chroot'ed.\n");
+            "or are chroot'ed.\n");
         /* We are restarting because of a configuration verification problem */
         CleanExit(1);
     }
@@ -210,6 +212,7 @@ static void restart()
 
     exit(-1);
 }
+
 #endif
 
 //-------------------------------------------------------------------------
@@ -249,6 +252,7 @@ static ProfileStats* get_profile(const char* key)
 
     return nullptr;
 }
+
 #endif
 
 static void register_profiles()
@@ -270,7 +274,7 @@ static void register_profiles()
 // initialization
 //-------------------------------------------------------------------------
 
-static void SnortInit(int argc, char **argv)
+static void SnortInit(int argc, char** argv)
 {
     init_signals();
 
@@ -289,7 +293,6 @@ static void SnortInit(int argc, char **argv)
     LogMessage("--------------------------------------------------\n");
     LogMessage("%s  Snort++ %s-%s\n", get_prompt(), VERSION, BUILD);
     LogMessage("--------------------------------------------------\n");
-
 
     ModuleManager::init();
     ScriptManager::load_scripts(snort_cmd_line_conf->script_path);
@@ -455,7 +458,7 @@ static void SnortCleanup()
      * thread-safe, but it will prevent the simple cases.
      */
     static int already_exiting = 0;
-    if( already_exiting != 0 )
+    if ( already_exiting != 0 )
     {
         return;
     }
@@ -480,7 +483,7 @@ static void SnortCleanup()
         if (ret != 0)
         {
             ErrorMessage("Could not remove pid file %s: %s\n",
-                         snort_conf->pid_filename, get_error(errno));
+                snort_conf->pid_filename, get_error(errno));
         }
     }
 
@@ -540,7 +543,7 @@ SnortConfig* get_reload_config()
     ModuleManager::reset_errors();
     trim_heap();
 
-    SnortConfig *sc = ParseSnortConf(snort_cmd_line_conf);
+    SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf);
     sc = MergeSnortConfs(snort_cmd_line_conf, sc);
 
     if ( ModuleManager::get_errors() || VerifyReload(sc) == -1 )
@@ -567,11 +570,11 @@ SnortConfig* get_reload_config()
     // FIXIT-L is this still needed?
     /* Transfer any user defined rule type outputs to the new rule list */
     {
-        RuleListNode *cur = snort_conf->rule_lists;
+        RuleListNode* cur = snort_conf->rule_lists;
 
         for (; cur != NULL; cur = cur->next)
         {
-            RuleListNode *rnew = sc->rule_lists;
+            RuleListNode* rnew = sc->rule_lists;
 
             for (; rnew != NULL; rnew = rnew->next)
             {
@@ -589,7 +592,7 @@ SnortConfig* get_reload_config()
     }
 
     if ( sc->fast_pattern_config->search_api !=
-            snort_conf->fast_pattern_config->search_api )
+        snort_conf->fast_pattern_config->search_api )
     {
         MpseManager::activate_search_engine(sc);
     }
@@ -645,8 +648,8 @@ static void set_policy(Packet* p)  // FIXIT-M delete this?
     p->user_policy_id = get_ips_policy()->user_policy_id;
 }
 
-void DecodeRebuiltPacket (
-    Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt, 
+void DecodeRebuiltPacket(
+    Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt,
     Flow* lws)
 {
     SnortEventqPush();
@@ -660,7 +663,7 @@ void DecodeRebuiltPacket (
     SnortEventqPop();
 }
 
-void DetectRebuiltPacket (Packet* p)
+void DetectRebuiltPacket(Packet* p)
 {
     int tmp_do_detect = do_detect;
     int tmp_do_detect_content = do_detect_content;
@@ -674,7 +677,7 @@ void DetectRebuiltPacket (Packet* p)
     do_detect_content = tmp_do_detect_content;
 }
 
-void LogRebuiltPacket (Packet* p)
+void LogRebuiltPacket(Packet* p)
 {
     SnortEventqPush();
     SnortEventqLog(p);
@@ -861,12 +864,13 @@ void snort_thread_rotate()
     SetRotatePerfFileFlag();
 }
 
-static void PQ_Show (const char* pcap)
+static void PQ_Show(const char* pcap)
 {
     if ( !ScPcapShow() )
         return;
 
-    if ( !strcmp(pcap, "-") ) pcap = "stdin";
+    if ( !strcmp(pcap, "-") )
+        pcap = "stdin";
 
     static bool first = true;
     if ( first )

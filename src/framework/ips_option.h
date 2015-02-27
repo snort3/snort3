@@ -55,49 +55,49 @@ enum CursorActionType
 class SO_PUBLIC IpsOption
 {
 public:
-    virtual ~IpsOption() { };
+    virtual ~IpsOption() { }
 
     // main thread
-    virtual uint32_t hash() const; 
+    virtual uint32_t hash() const;
     virtual bool operator==(const IpsOption& ips) const;
 
     bool operator!=(const IpsOption& ips) const
-    { return !(*this == ips); };
+    { return !(*this == ips); }
 
     // packet threads
-    virtual void config(SnortConfig*) { };
-    virtual bool is_relative() { return false; };
-    virtual bool fp_research() { return false; };
-    virtual int eval(class Cursor&, Packet*) { return true; };
-    virtual void action(Packet*) { };
+    virtual void config(SnortConfig*) { }
+    virtual bool is_relative() { return false; }
+    virtual bool fp_research() { return false; }
+    virtual int eval(class Cursor&, Packet*) { return true; }
+    virtual void action(Packet*) { }
 
-    option_type_t get_type() const { return type; };
-    const char* get_name() const { return name; };
+    option_type_t get_type() const { return type; }
+    const char* get_name() const { return name; }
 
     virtual CursorActionType get_cursor_type() const
-    { return CAT_NONE; };
+    { return CAT_NONE; }
 
     static int eval(void* v, Cursor& c, Packet* p)
     {
         IpsOption* opt = (IpsOption*)v;
         return opt->eval(c, p);
-    };
+    }
 
     static CursorActionType get_cat(void* v)
     {
         IpsOption* opt = (IpsOption*)v;
         return opt->get_cursor_type();
-    };
+    }
 
     static bool get_fp_only(void* v)
     {
         IpsOption* opt = (IpsOption*)v;
         return !opt->fp_research();
-    };
+    }
 
 protected:
     IpsOption(const char* s, option_type_t t = RULE_OPTION_TYPE_OTHER)
-    { name = s; type = t; };
+    { name = s; type = t; }
 
 private:
     const char* name;
@@ -112,10 +112,10 @@ enum RuleOptType
     OPT_TYPE_MAX
 };
 
-typedef void (*IpsOptFunc)(SnortConfig*);
+typedef void (* IpsOptFunc)(SnortConfig*);
 
-typedef IpsOption* (*IpsNewFunc)(class Module*, struct OptTreeNode*);
-typedef void (*IpsDelFunc)(IpsOption*);
+typedef IpsOption* (* IpsNewFunc)(class Module*, struct OptTreeNode*);
+typedef void (* IpsDelFunc)(IpsOption*);
 
 struct IpsApi
 {

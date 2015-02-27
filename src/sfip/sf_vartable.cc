@@ -39,9 +39,9 @@
 #include "sfip/sf_ipvar.h"
 #include "util.h"
 
-vartable_t * sfvt_alloc_table(void)
+vartable_t* sfvt_alloc_table(void)
 {
-    vartable_t *table = (vartable_t *)SnortAlloc(sizeof(vartable_t));
+    vartable_t* table = (vartable_t*)SnortAlloc(sizeof(vartable_t));
 
     /* ID for recognition of variables with different name, but same content
      * Start at 1, so a value of zero indicates not set.
@@ -52,10 +52,10 @@ vartable_t * sfvt_alloc_table(void)
     return table;
 }
 
-static char * sfvt_expand_value(vartable_t *table, const char *value)
+static char* sfvt_expand_value(vartable_t* table, const char* value)
 {
-    const char *ptr, *end;
-    char *tmp, *ret = NULL;
+    const char* ptr, * end;
+    char* tmp, * ret = NULL;
     int retlen = 0, retsize = 0;
     int escaped = 0;
 
@@ -80,7 +80,7 @@ static char * sfvt_expand_value(vartable_t *table, const char *value)
 
     /* Start by allocating the length of the value */
     retsize = strlen(value) + 1;
-    ret = (char *)SnortAlloc(retsize);
+    ret = (char*)SnortAlloc(retsize);
 
     ptr = tmp;
     end = tmp + strlen(tmp);
@@ -88,10 +88,10 @@ static char * sfvt_expand_value(vartable_t *table, const char *value)
     {
         if (!escaped && (*ptr == '$'))
         {
-            const char *varstart;
-            char *vartmp;
+            const char* varstart;
+            char* vartmp;
             int parens = 0;
-            sfip_var_t *ipvar;
+            sfip_var_t* ipvar;
 
             ptr++;
             if (ptr >= end)
@@ -137,10 +137,10 @@ static char * sfvt_expand_value(vartable_t *table, const char *value)
             {
                 if ((int)(retlen + strlen(ipvar->value)) >= retsize)
                 {
-                    char *tmpalloc;
+                    char* tmpalloc;
 
                     retsize = retlen + strlen(ipvar->value) + (end - ptr) + 1;
-                    tmpalloc = (char *)SnortAlloc(retsize);
+                    tmpalloc = (char*)SnortAlloc(retsize);
                     memcpy(tmpalloc, ret, retlen);
                     memcpy(tmpalloc + retlen, ipvar->value, strlen(ipvar->value));
                     free(ret);
@@ -168,7 +168,7 @@ static char * sfvt_expand_value(vartable_t *table, const char *value)
 
     if ((retlen + 1) < retsize)
     {
-        char *tmpalloc = (char *)SnortAlloc(retlen + 1);
+        char* tmpalloc = (char*)SnortAlloc(retlen + 1);
         memcpy(tmpalloc, ret, retlen);
         free(ret);
         ret = tmpalloc;
@@ -185,18 +185,19 @@ sfvt_expand_value_error:
 
 // XXX this implementation is just used to support
 // Snort's underlying implementation better
-SFIP_RET sfvt_define(vartable_t *table, const char *name, const char *value)
+SFIP_RET sfvt_define(vartable_t* table, const char* name, const char* value)
 {
-    char *buf;
+    char* buf;
     int len;
-    sfip_var_t *ipret = NULL;
+    sfip_var_t* ipret = NULL;
     SFIP_RET ret;
 
-    if(!name || !value) return SFIP_ARG_ERR;
+    if (!name || !value)
+        return SFIP_ARG_ERR;
 
     len = strlen(name) + strlen(value) + 2;
 
-    if((buf = (char*)malloc(len)) == NULL)
+    if ((buf = (char*)malloc(len)) == NULL)
     {
         return SFIP_FAILURE;
     }
@@ -211,21 +212,22 @@ SFIP_RET sfvt_define(vartable_t *table, const char *name, const char *value)
 }
 
 /* Adds the variable described by "str" to the table "table" */
-SFIP_RET sfvt_add_str(vartable_t *table, const char *str, sfip_var_t **ipret)
+SFIP_RET sfvt_add_str(vartable_t* table, const char* str, sfip_var_t** ipret)
 {
-    sfip_var_t *var;
-    sfip_var_t *swp;
-    sfip_var_t *p;
+    sfip_var_t* var;
+    sfip_var_t* swp;
+    sfip_var_t* p;
     int ret;
     SFIP_RET status = SFIP_FAILURE;
 
-    if(!table || !str || !ipret) return SFIP_FAILURE;
+    if (!table || !str || !ipret)
+        return SFIP_FAILURE;
 
     /* Creates the variable */
     var = sfvar_alloc(table, str, &status);
-    if( var == NULL )
+    if ( var == NULL )
     {
-         return SFIP_FAILURE;
+        return SFIP_FAILURE;
     }
 
     /* If this is an alias of another var, id will be set */
@@ -236,20 +238,20 @@ SFIP_RET sfvt_add_str(vartable_t *table, const char *str, sfip_var_t **ipret)
 
     /* Insertion sort */
 
-    if(!table->head)
+    if (!table->head)
     {
         table->head = var;
         return SFIP_SUCCESS;
     }
 
-    if((ret = strcmp(var->name, table->head->name)) < 0)
+    if ((ret = strcmp(var->name, table->head->name)) < 0)
     {
         var->next = table->head;
         table->head = var;
         return SFIP_SUCCESS;
     }
     /* Redefinition */
-    else if(ret == 0)
+    else if (ret == 0)
     {
         var->next = table->head->next;
         sfvar_free(table->head);
@@ -259,12 +261,12 @@ SFIP_RET sfvt_add_str(vartable_t *table, const char *str, sfip_var_t **ipret)
 
     /* The loop below checks table->head->next->name in the first iteration.
      * Make sure there is a table->head->next first */
-    if(!table->head->next)
+    if (!table->head->next)
     {
         table->head->next = var;
         return SFIP_SUCCESS;
     }
-    else if(!strcmp(var->name, table->head->next->name))
+    else if (!strcmp(var->name, table->head->next->name))
     {
         var->next = table->head->next->next;
         sfvar_free(table->head->next);
@@ -272,9 +274,9 @@ SFIP_RET sfvt_add_str(vartable_t *table, const char *str, sfip_var_t **ipret)
         return SFIP_DUPLICATE;
     }
 
-    for(p = table->head; p->next; p=p->next)
+    for (p = table->head; p->next; p=p->next)
     {
-        if((ret = strcmp(var->name, p->next->name)) < 0)
+        if ((ret = strcmp(var->name, p->next->name)) < 0)
         {
             swp = p->next;
             p->next = var;
@@ -283,7 +285,7 @@ SFIP_RET sfvt_add_str(vartable_t *table, const char *str, sfip_var_t **ipret)
             return SFIP_SUCCESS;
         }
         /* Redefinition */
-        else if(ret == 0)
+        else if (ret == 0)
         {
             var->next = p->next->next;
             sfvar_free(p->next);
@@ -298,50 +300,56 @@ SFIP_RET sfvt_add_str(vartable_t *table, const char *str, sfip_var_t **ipret)
 
 /* Adds the variable described by "src" to the variable "dst",
  * using the vartable for looking variables used within "src" */
-SFIP_RET sfvt_add_to_var(vartable_t *table, sfip_var_t *dst, const char *src)
+SFIP_RET sfvt_add_to_var(vartable_t* table, sfip_var_t* dst, const char* src)
 {
     SFIP_RET ret;
 
-    if(!table || !dst || !src) return SFIP_ARG_ERR;
+    if (!table || !dst || !src)
+        return SFIP_ARG_ERR;
 
-    if((ret = sfvar_parse_iplist(table, dst, src, 0)) == SFIP_SUCCESS)
+    if ((ret = sfvar_parse_iplist(table, dst, src, 0)) == SFIP_SUCCESS)
         return sfvar_validate(dst);
 
     return ret;
 }
 
 /* Looks up a variable from the table by the variable's name  */
-sfip_var_t *sfvt_lookup_var(vartable_t *table, const char *name)
+sfip_var_t* sfvt_lookup_var(vartable_t* table, const char* name)
 {
-    sfip_var_t *p;
+    sfip_var_t* p;
     int len;
-    const char *end;
+    const char* end;
 
-    if(!table || !name) return NULL;
+    if (!table || !name)
+        return NULL;
 
-    if(*name == '$') name++;
+    if (*name == '$')
+        name++;
 
     /* XXX should I assume there will be trailing garbage or
      * should I automatically find where the variable ends? */
-    for(end=name;
+    for (end=name;
         *end && !isspace((int)*end) && *end != '\\' && *end != ']';
-        end++) ;
+        end++)
+        ;
     len = end - name;
 
-    for(p=table->head; len && p; p=p->next)
+    for (p=table->head; len && p; p=p->next)
     {
         int name_len = strlen(p->name);
-        if((len == name_len) && !strncmp(p->name, name, len)) return p;
+        if ((len == name_len) && !strncmp(p->name, name, len))
+            return p;
     }
 
     return NULL;
 }
 
-void sfvt_free_table(vartable_t *table)
+void sfvt_free_table(vartable_t* table)
 {
-    sfip_var_t *p, *tmp;
+    sfip_var_t* p, * tmp;
 
-    if (!table) return;
+    if (!table)
+        return;
 
     p = table->head;
     while (p)
@@ -354,14 +362,15 @@ void sfvt_free_table(vartable_t *table)
 }
 
 /* Prints a table's contents */
-void sfip_print_table(FILE *f, vartable_t *table)
+void sfip_print_table(FILE* f, vartable_t* table)
 {
-    sfip_var_t *p;
+    sfip_var_t* p;
 
-    if(!f || !table) return;
+    if (!f || !table)
+        return;
 
     fprintf(f, "(Table %p)\n", (void*)table);
-    for(p=table->head; p; p=p->next)
+    for (p=table->head; p; p=p->next)
     {
         sfvar_print_to_file(f, p);
         puts("");
@@ -372,14 +381,15 @@ void sfip_print_table(FILE *f, vartable_t *table)
 
 #ifdef TESTER
 int failures = 0;
-#define TEST(x) if(x) printf("\tSuccess: line %d\n", __LINE__);\
-                else { printf("\tFAILURE: line %d\n", __LINE__); failures++; }
+#define TEST(x) \
+    if (x) printf("\tSuccess: line %d\n", __LINE__); \
+    else { printf("\tFAILURE: line %d\n", __LINE__); failures++; }
 
 int main()
 {
-    vartable_t *table;
-    sfip_var_t *var;
-    sfip_t *ip;
+    vartable_t* table;
+    sfip_var_t* var;
+    sfip_t* ip;
 
     puts("********************************************************************");
     puts("Testing variable table parsing:");
@@ -390,7 +400,8 @@ int main()
     TEST(sfvt_add_str(table, " moo [ any ] ", &var) == SFIP_SUCCESS);
 
     /* Test variable redefine */
-    TEST(sfvt_add_str(table, " goo [ 192.168.0.1, 192.168.0.2, 192.168.255.0 255.255.248.0 ] ", &var) == SFIP_DUPLICATE);
+    TEST(sfvt_add_str(table, " goo [ 192.168.0.1, 192.168.0.2, 192.168.255.0 255.255.248.0 ] ",
+        &var) == SFIP_DUPLICATE);
 
     /* These should fail since it's a variable name with bogus arguments */
     TEST(sfvt_add_str(table, " phlegm ", &var) == SFIP_FAILURE);
@@ -435,11 +446,12 @@ int main()
     ip = sfip_alloc_str("192.168.0.2");
     TEST(sfvar_ip_in(var, ip) == SFIP_SUCCESS);
 
-
     puts("");
     puts("********************************************************************");
 
     printf("\n\tTotal Failures: %d\n", failures);
     return 0;
 }
+
 #endif
+

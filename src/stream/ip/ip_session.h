@@ -50,19 +50,19 @@ struct FragTracker
 
     struct timeval frag_time; /* time we started tracking this frag */
 
-    Fragment *fraglist;      /* list of fragments */
-    Fragment *fraglist_tail; /* tail ptr for easy appending */
+    Fragment* fraglist;      /* list of fragments */
+    Fragment* fraglist_tail; /* tail ptr for easy appending */
     int fraglist_count;       /* handy dandy counter */
 
     uint32_t alert_gid[MAX_FRAG_ALERTS]; /* flag alerts seen in a frag list  */
     uint32_t alert_sid[MAX_FRAG_ALERTS]; /* flag alerts seen in a frag list  */
-    uint8_t  alert_count;                /* count alerts seen in a frag list */
+    uint8_t alert_count;                 /* count alerts seen in a frag list */
 
     uint8_t ip_options_len;  /* length of ip options for this set of frags */
-    uint8_t *ip_options_data; /* ip options from offset 0 packet */
+    uint8_t* ip_options_data; /* ip options from offset 0 packet */
     uint8_t copied_ip_options_len;  /* length of 'copied' ip options */
 
-    FragEngine *engine;
+    FragEngine* engine;
 
     int ordinal;
     int ipprotocol;

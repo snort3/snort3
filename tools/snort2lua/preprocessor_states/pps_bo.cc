@@ -17,13 +17,11 @@
 //--------------------------------------------------------------------------
 // pps_bo.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #include "conversion_state.h"
 #include "data/dt_table_api.h"
 
 namespace preprocessors
 {
-
 static ConversionState* bo_ctor(Converter& c)
 {
     c.get_table_api().open_table("bo");
@@ -31,12 +29,12 @@ static ConversionState* bo_ctor(Converter& c)
     return nullptr;
 }
 
-static const ConvertMap preprocessor_bo = 
+static const ConvertMap preprocessor_bo =
 {
     "bo",
     bo_ctor,
 };
 
 const ConvertMap* bo_map = &preprocessor_bo;
-
 } // namespace preprocessors
+

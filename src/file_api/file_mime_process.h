@@ -44,7 +44,6 @@
 #define MIME_FLAG_IN_CONT_DISP               0x00000200
 #define MIME_FLAG_IN_CONT_DISP_CONT          0x00000400
 
-
 #define STATE_DATA_INIT    0
 #define STATE_DATA_HEADER  1    /* Data header section of data state */
 #define STATE_DATA_BODY    2    /* Data body section of data state */
@@ -56,17 +55,17 @@
 
 typedef struct _MimePcre
 {
-    pcre       *re;
-    pcre_extra *pe;
-
+    pcre* re;
+    pcre_extra* pe;
 } MimePcre;
 
-int log_file_name(const uint8_t *start, int length, FILE_LogState *log_state, bool *disp_cont);
-int set_log_buffers(MAIL_LogState **log_state, MAIL_LogConfig *conf);
+int log_file_name(const uint8_t* start, int length, FILE_LogState* log_state, bool* disp_cont);
+int set_log_buffers(MAIL_LogState** log_state, MAIL_LogConfig* conf);
 void init_mime(void);
 void free_mime(void);
-const uint8_t* process_mime_data(void *packet, const uint8_t *start, const uint8_t *end,
-        const uint8_t *data_end_marker, uint8_t *data_end, MimeState *mime_ssn, bool upload);
-void free_mime_session(MimeState *mime_ssn);
-void finalize_mime_position(Flow *flow, void *decode_state, FilePosition *position);
-#endif 
+const uint8_t* process_mime_data(void* packet, const uint8_t* start, const uint8_t* end,
+    const uint8_t* data_end_marker, uint8_t* data_end, MimeState* mime_ssn, bool upload);
+void free_mime_session(MimeState* mime_ssn);
+void finalize_mime_position(Flow* flow, void* decode_state, FilePosition* position);
+#endif
+

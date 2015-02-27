@@ -35,55 +35,55 @@ public:
     Cursor(const Cursor&);
 
     const char* get_name() const
-    { return name; };
+    { return name; }
 
     bool is(const char* s) const
-    { return !strcmp(name, s); };
+    { return !strcmp(name, s); }
 
     void reset(Packet*);
 
     void set(const char* s, const uint8_t* b, unsigned n)
-    { name = s; data = b; sz = n; pos = delta = 0; };
+    { name = s; data = b; sz = n; pos = delta = 0; }
 
     const uint8_t* buffer() const
-    { return data; };
+    { return data; }
 
     unsigned size() const
-    { return sz; };
+    { return sz; }
 
     // the NEXT octect after last in buffer
     // (this pointer is out of bounds)
     const uint8_t* endo() const
-    { return data + sz; };
+    { return data + sz; }
 
     const uint8_t* start() const
-    { return data + pos; };
+    { return data + pos; }
 
     unsigned length() const
-    { return sz - pos; };
+    { return sz - pos; }
 
     unsigned get_pos() const
-    { return pos; };
+    { return pos; }
 
     unsigned get_delta() const
-    { return delta; };
+    { return delta; }
 
     bool add_pos(unsigned n)
-    { 
+    {
         if (pos + n > sz)
             return false;
         pos += n;
         return true;
-    };
+    }
 
     // pos and delta may go 1 byte after end
     bool set_pos(unsigned n)
-    { 
+    {
         if (n > sz)
             return false;
         pos = n;
         return true;
-    };
+    }
 
     bool set_delta(unsigned n)
     {
@@ -91,7 +91,7 @@ public:
             return false;
         delta = n;
         return true;
-    };
+    }
 
 private:
     const char* name;     // rule option name ("pkt_data", "http_uri", etc.)
@@ -99,7 +99,6 @@ private:
     unsigned sz;          // size of buffer
     unsigned pos;         // current pos
     unsigned delta;       // loop offset
-
 };
 
 #endif

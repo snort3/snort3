@@ -61,10 +61,10 @@ struct PHGlobal
     bool init;  // call api.pinit()
 
     PHGlobal(const InspectApi& p) : api(p)
-    { init = true; };
+    { init = true; }
 
-    static bool comp (const PHGlobal* a, const PHGlobal* b)
-    { return ( a->api.type < b->api.type ); };
+    static bool comp(const PHGlobal* a, const PHGlobal* b)
+    { return ( a->api.type < b->api.type ); }
 };
 
 struct PHClass
@@ -74,20 +74,21 @@ struct PHClass
     bool* term;  // call pin->tterm()
 
     PHClass(const InspectApi& p) : api(p)
-    { 
+    {
         init = new bool[get_instance_max()];
         term = new bool[get_instance_max()];
         for ( unsigned i = 0; i < get_instance_max(); ++i )
             init[i] = term[i] = true;
     }
+
     ~PHClass()
     {
         delete[] init;
         delete[] term;
     }
 
-    static bool comp (PHClass* a, PHClass* b)
-    { return ( a->api.type < b->api.type ); };
+    static bool comp(PHClass* a, PHClass* b)
+    { return ( a->api.type < b->api.type ); }
 };
 
 struct PHInstance
@@ -99,11 +100,11 @@ struct PHInstance
     PHInstance(PHClass&);
     ~PHInstance();
 
-    static bool comp (PHInstance* a, PHInstance* b)
-    { return ( a->pp_class.api.type < b->pp_class.api.type ); };
+    static bool comp(PHInstance* a, PHInstance* b)
+    { return ( a->pp_class.api.type < b->pp_class.api.type ); }
 
     void set_name(const char* s)
-    { name = s; };
+    { name = s; }
 };
 
 PHInstance::PHInstance(PHClass& p) : pp_class(p)
@@ -143,16 +144,16 @@ struct PHVector
     unsigned num;
 
     PHVector()
-    { vec = nullptr; num = 0; };
+    { vec = nullptr; num = 0; }
 
     ~PHVector()
-    { if ( vec ) delete[] vec; };
+    { if ( vec ) delete[] vec; }
 
     void alloc(unsigned max)
-    { vec = new PHInstance*[max]; };
+    { vec = new PHInstance*[max]; }
 
     void add(PHInstance* p)
-    { vec[num++] = p; };
+    { vec[num++] = p; }
 };
 
 struct FrameworkPolicy
@@ -183,7 +184,7 @@ void FrameworkPolicy::vectorize()
     {
         switch ( p->pp_class.api.type )
         {
-        case IT_PACKET:
+        case IT_PACKET :
             packet.add(p);
             break;
 
@@ -264,7 +265,7 @@ void InspectorManager::dump_buffers()
     }
 }
 
-void InspectorManager::release_plugins ()
+void InspectorManager::release_plugins()
 {
     empty_trash();
 
@@ -305,7 +306,7 @@ void InspectorManager::empty_trash()
 // policy stuff
 //-------------------------------------------------------------------------
 
-void InspectorManager::new_policy (InspectionPolicy* pi)
+void InspectorManager::new_policy(InspectionPolicy* pi)
 {
     pi->framework_policy = new FrameworkPolicy;
 
@@ -313,7 +314,7 @@ void InspectorManager::new_policy (InspectionPolicy* pi)
     pi->framework_policy->wizard = nullptr;
 }
 
-void InspectorManager::delete_policy (InspectionPolicy* pi)
+void InspectorManager::delete_policy(InspectionPolicy* pi)
 {
     for ( auto* p : pi->framework_policy->ilist )
     {
@@ -364,7 +365,7 @@ static PHInstance* get_new(
 }
 
 // FIXIT-M create a separate list for meta handlers?  is there really more than one?
-void InspectorManager::dispatch_meta (FrameworkPolicy* fp, int type, const uint8_t* data)
+void InspectorManager::dispatch_meta(FrameworkPolicy* fp, int type, const uint8_t* data)
 {
     for ( auto* p : fp->ilist )
         p->handler->meta(type, data);
@@ -378,7 +379,7 @@ Inspector* InspectorManager::get_binder()
         return nullptr;
 
     return pi->framework_policy->binder;
-} 
+}
 
 Inspector* InspectorManager::get_wizard()
 {
@@ -388,7 +389,7 @@ Inspector* InspectorManager::get_wizard()
         return nullptr;
 
     return pi->framework_policy->wizard;
-} 
+}
 
 // FIXIT-P cache get_inspector() returns or provide indexed lookup
 Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only)
@@ -404,7 +405,7 @@ Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only)
         return nullptr;
 
     return p->handler;
-} 
+}
 
 InspectorType InspectorManager::get_type(const char* key)
 {
@@ -429,18 +430,18 @@ InspectSsnFunc InspectorManager::get_session(uint16_t proto)
             return p->api.ssn;
     }
     return nullptr;
-} 
+}
 
 //-------------------------------------------------------------------------
 // config stuff
 //-------------------------------------------------------------------------
 
-void InspectorManager::new_config (SnortConfig* sc)
+void InspectorManager::new_config(SnortConfig* sc)
 {
     sc->framework_config = new FrameworkConfig;
 }
 
-void InspectorManager::delete_config (SnortConfig* sc)
+void InspectorManager::delete_config(SnortConfig* sc)
 {
     for ( auto* p : sc->framework_config->clist )
         delete p;
@@ -608,7 +609,7 @@ static bool configure(SnortConfig* sc, FrameworkPolicy* fp)
     return ok;
 }
 
-bool InspectorManager::configure(SnortConfig *sc)
+bool InspectorManager::configure(SnortConfig* sc)
 {
     sort(s_handlers.begin(), s_handlers.end(), PHGlobal::comp);
     bool ok = true;
@@ -624,7 +625,7 @@ bool InspectorManager::configure(SnortConfig *sc)
     return ok;
 }
 
-void InspectorManager::print_config(SnortConfig *sc)
+void InspectorManager::print_config(SnortConfig* sc)
 {
     InspectionPolicy* pi = get_inspection_policy();
 
@@ -650,8 +651,8 @@ static inline void execute(
         PHClass& ppc = (*prep)->pp_class;
 
         // FIXIT-P these checks can eventually be optimized
-	    // but they are required to ensure that session and app
-	    // handlers aren't called w/o a session pointer
+        // but they are required to ensure that session and app
+        // handlers aren't called w/o a session pointer
         if ( !p->flow && (ppc.api.type == IT_SERVICE) )
             break;
 
@@ -695,7 +696,7 @@ void InspectorManager::full_inspection(FrameworkPolicy* fp, Packet* p)
         flow->gadget->eval(p);
 }
 
-void InspectorManager::execute (Packet* p)
+void InspectorManager::execute(Packet* p)
 {
     FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
     assert(fp);

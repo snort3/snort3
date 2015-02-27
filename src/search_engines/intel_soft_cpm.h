@@ -25,21 +25,19 @@
 #include "cpa_types.h"
 #include "snort_debug.h"
 
-
 /* DATA TYPES *****************************************************************/
 typedef struct _IntelPmPattern
 {
-    void *user_data;
-    void *rule_option_tree;
-    void *neg_list;
+    void* user_data;
+    void* rule_option_tree;
+    void* neg_list;
 
-    unsigned char *pattern;
+    unsigned char* pattern;
     unsigned int pattern_len;
     unsigned int no_case;
     unsigned int negative;
     int id;   /* pattern id passed in from mpse */
     Cpa32U patternId;  /* actual pattern id */
-
 } IntelPmPattern;
 
 struct SnortConfig;
@@ -51,67 +49,66 @@ typedef struct _IntelPm
     CpaPmSessionCtx sessionCtx;
 
     /* Temporary data for building trees */
-    int (*build_tree)(SnortConfig*, void *id, void **existing_tree);
-    int (*neg_list_func)(void *id, void **list);
+    int (* build_tree)(SnortConfig*, void* id, void** existing_tree);
+    int (* neg_list_func)(void* id, void** list);
 
-    void *match_queue;
+    void* match_queue;
 
     /* Temporary data for match callback */
-    void *data;
+    void* data;
     MpseCallback match;
 
-    void (*user_free)(void *);
-    void (*option_tree_free)(void **);
-    void (*neg_list_free)(void **);
+    void (* user_free)(void*);
+    void (* option_tree_free)(void**);
+    void (* neg_list_free)(void**);
 
-    IntelPmPattern *pattern_array;
+    IntelPmPattern* pattern_array;
     Cpa32U pattern_array_len;
 
     /* Every IntelPm has a reference to this */
-    struct _IntelPmHandles *handles;
-
+    struct _IntelPmHandles* handles;
 } IntelPm;
-
 
 /* PROTOTYPES *****************************************************************/
 void IntelPmStartInstance(void);
 void IntelPmStopInstance(void);
 
-void * IntelPmNew(
-    SnortConfig*, 
-    void (*user_free)(void *p),
-    void (*option_tree_free)(void **p),
-    void (*neg_list_free)(void **p));
+void* IntelPmNew(
+    SnortConfig*,
+    void (* user_free)(void* p),
+    void (* option_tree_free)(void** p),
+    void (* neg_list_free)(void** p));
 
-void IntelPmDelete(IntelPm *ipm);
+void IntelPmDelete(IntelPm* ipm);
 
 int IntelPmAddPattern(
     SnortConfig* sc,
-    IntelPm *ipm,
-    const uint8_t *pat,
+    IntelPm* ipm,
+    const uint8_t* pat,
     unsigned pat_len,
     bool no_case,
     bool negative,
-    void *pat_data,
+    void* pat_data,
     int pat_id);
 
 int IntelPmFinishGroup(
     SnortConfig*,
-    IntelPm *ipm,
-    int (*build_tree)(SnortConfig*, void *id, void **existing_tree),
-    int (*neg_list_func)(void *id, void **list));
+    IntelPm* ipm,
+    int (* build_tree)(SnortConfig*, void* id, void** existing_tree),
+    int (* neg_list_func)(void* id, void** list));
 
 void IntelPmCompile(SnortConfig*);
 void IntelPmActivate(SnortConfig*);
 void IntelPmDeactivate(void);
 
 int IntelPmSearch(
-    IntelPm *ipm, unsigned char *buffer, int buffer_len, MpseCallback, void *data);
+IntelPm *ipm, unsigned char* buffer, int buffer_len, MpseCallback, void* data);
 
-int IntelGetPatternCount(IntelPm *ipm);
-int IntelPmPrintInfo(IntelPm *ipm);
+int IntelGetPatternCount(IntelPm* ipm);
+int IntelPmPrintInfo(IntelPm* ipm);
 void IntelPmPrintSummary(SnortConfig*);
 void IntelPmPrintBufferStats(void);
 int IntelPmRelease(struct _IntelPmHandles*);
 
 #endif  /* INTEL_SOFT_CPM_H */
+

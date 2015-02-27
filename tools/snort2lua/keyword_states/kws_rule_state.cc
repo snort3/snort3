@@ -26,17 +26,15 @@
 
 namespace keywords
 {
-
-namespace {
-
+namespace
+{
 class RuleState : public ConversionState
 {
 public:
-    RuleState(Converter& c) : ConversionState(c) {};
-    virtual ~RuleState() {};
+    RuleState(Converter& c) : ConversionState(c) { }
+    virtual ~RuleState() { }
     virtual bool convert(std::istringstream& data_stream);
 };
-
 } // namespace
 
 bool RuleState::convert(std::istringstream& data_stream)
@@ -52,41 +50,40 @@ bool RuleState::convert(std::istringstream& data_stream)
     {
         switch (count)
         {
-            case 0:
-                table_api.add_option("sid", std::stoi(arg));
-                count++;
-                break;
-            case 1:
-                table_api.add_option("gid", std::stoi(arg));
-                count++;
-                break;
-            case 2:
-                if (!arg.compare("enabled"))
-                {
-                    table_api.add_diff_option_comment("enabled", "enable");
-                    table_api.add_option("enable", true);
-                }
-                else if (!arg.compare("disabled"))
-                {
-                    table_api.add_diff_option_comment("disabled", "enable");
-                    table_api.add_option("enable", false);
-                }
-                else
-                {
-                    data_api.failed_conversion(data_stream, "third option must be {enabled|disabled|");
-                    retval = false;
-                }
-
-                count++;
-                break;
-            case 3:
-                table_api.add_deleted_comment("action");
-                count++;
-                break;
-            default:
+        case 0:
+            table_api.add_option("sid", std::stoi(arg));
+            count++;
+            break;
+        case 1:
+            table_api.add_option("gid", std::stoi(arg));
+            count++;
+            break;
+        case 2:
+            if (!arg.compare("enabled"))
+            {
+                table_api.add_diff_option_comment("enabled", "enable");
+                table_api.add_option("enable", true);
+            }
+            else if (!arg.compare("disabled"))
+            {
+                table_api.add_diff_option_comment("disabled", "enable");
+                table_api.add_option("enable", false);
+            }
+            else
+            {
+                data_api.failed_conversion(data_stream, "third option must be {enabled|disabled|");
                 retval = false;
-                data_api.failed_conversion(data_stream, "too many options! - " + arg);
+            }
 
+            count++;
+            break;
+        case 3:
+            table_api.add_deleted_comment("action");
+            count++;
+            break;
+        default:
+            retval = false;
+            data_api.failed_conversion(data_stream, "too many options! - " + arg);
         }
     }
 
@@ -109,5 +106,5 @@ static const ConvertMap rule_state_api =
 };
 
 const ConvertMap* rule_state_map = &rule_state_api;
-
 } // namespace keywords
+

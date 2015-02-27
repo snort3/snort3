@@ -26,21 +26,23 @@
 
 #include "nhttp_module.h"
 
-class NHttpApi {
+class NHttpApi
+{
 public:
     static const InspectApi nhttp_api;
+
 private:
     NHttpApi() = delete;
-    static Module* nhttp_mod_ctor() { return new NHttpModule; };
-    static void nhttp_mod_dtor(Module* m) { delete m; };
+    static Module* nhttp_mod_ctor() { return new NHttpModule; }
+    static void nhttp_mod_dtor(Module* m) { delete m; }
     static const char* nhttp_my_name;
     static const char* nhttp_help;
-    static void nhttp_init() { NHttpFlowData::init(); };
-    static void nhttp_term() {};
+    static void nhttp_init() { NHttpFlowData::init(); }
+    static void nhttp_term() { }
     static Inspector* nhttp_ctor(Module* mod);
-    static void nhttp_dtor(Inspector* p) { delete p; };
-    static void nhttp_tinit() {};
-    static void nhttp_tterm() {};
+    static void nhttp_dtor(Inspector* p) { delete p; }
+    static void nhttp_tinit() { }
+    static void nhttp_tterm() { }
 };
 
 #endif

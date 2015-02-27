@@ -28,31 +28,43 @@ using namespace NHttpEnums;
 
 const Field Field::FIELD_NULL { STAT_NOSOURCE };
 
-void Field::print(FILE *output, const char* name, bool int_vals) const {
-    if ((length == STAT_NOTPRESENT) || (length == STAT_NOTCOMPUTE) || (length == STAT_NOSOURCE)) {
+void Field::print(FILE* output, const char* name, bool int_vals) const
+{
+    if ((length == STAT_NOTPRESENT) || (length == STAT_NOTCOMPUTE) || (length == STAT_NOSOURCE))
+    {
         return;
     }
     const int out_count = fprintf(output, "%s, length = %d, ", name, length);
-    if (length <= 0) {
+    if (length <= 0)
+    {
         fprintf(output, "\n");
         return;
     }
-    const int32_t print_length = (length <= 1200) ? length : 1200;    // Limit the amount of data printed
-    for (int k=0; k < print_length; k++) {
-        if ((start[k] >= 0x20) && (start[k] <= 0x7E)) fprintf(output, "%c", (char)start[k]);
-        else if (start[k] == 0xD) fprintf(output, "~");
-        else if (start[k] == 0xA) fprintf(output, "^");
-        else fprintf(output, "*");
-        if ((k%120 == (119 - out_count)) && (k+1 < print_length)) {
+    const int32_t print_length = (length <= 1200) ? length : 1200;    // Limit the amount of data
+                                                                      // printed
+    for (int k=0; k < print_length; k++)
+    {
+        if ((start[k] >= 0x20) && (start[k] <= 0x7E))
+            fprintf(output, "%c", (char)start[k]);
+        else if (start[k] == 0xD)
+            fprintf(output, "~");
+        else if (start[k] == 0xA)
+            fprintf(output, "^");
+        else
+            fprintf(output, "*");
+        if ((k%120 == (119 - out_count)) && (k+1 < print_length))
+        {
             fprintf(output, "\n");
         }
     }
 
-    if (int_vals && (print_length%8 == 0)) {
+    if (int_vals && (print_length%8 == 0))
+    {
         fprintf(output, "\nInteger values =");
-        for (int j=0; j < print_length; j+=8) {
+        for (int j=0; j < print_length; j+=8)
+        {
             // FIXIT-L rewrite to eliminate doubtful cast
-            fprintf(output, " %" PRIu64 , *((const uint64_t*)(start+j)));
+            fprintf(output, " %" PRIu64, *((const uint64_t*)(start+j)));
         }
     }
     fprintf(output, "\n");

@@ -19,10 +19,10 @@
 // Writen by Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
 #include <stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<stdint.h>
-#include<ctype.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <ctype.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -34,11 +34,13 @@
 
 #define MAX_ALLOWED_OBFUSCATION 1
 
-typedef struct {
+typedef struct
+{
     int allowed_spaces;
     int allowed_levels;
     uint16_t alerts;
 }JSState;
 
-int JSNormalizeDecode(char *, uint16_t , char *, uint16_t destlen, char **, int *, JSState *, uint8_t*);
+int JSNormalizeDecode(char*, uint16_t, char*, uint16_t destlen, char**, int*, JSState*, uint8_t*);
 void InitJSNormLookupTable(void);
+

@@ -84,7 +84,6 @@ static bool allow_codes(NormalizerConfig* config, const char* s)
 // normalize parameters
 //-------------------------------------------------------------------------
 
-
 static const Parameter norm_ip4_params[] =
 {
     { "base", Parameter::PT_BOOL, nullptr, "true",
@@ -104,7 +103,6 @@ static const Parameter norm_ip4_params[] =
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
-
 
 static const Parameter norm_tcp_params[] =
 {
@@ -156,7 +154,7 @@ static const Parameter norm_tcp_params[] =
     { "req_urp", Parameter::PT_BOOL, nullptr, "true",
       "clear the urgent flag if the urgent pointer is not set" },
 
-    { "allow_names", Parameter::PT_MULTI, 
+    { "allow_names", Parameter::PT_MULTI,
       "sack | echo | partial_order | conn_count | alt_checksum | md5", nullptr,
       "don't clear given option names" },
 
@@ -166,8 +164,6 @@ static const Parameter norm_tcp_params[] =
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
-
-
 
 static const Parameter s_params[] =
 {
@@ -225,7 +221,6 @@ bool NormalizeModule::set_ip4(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-
 bool NormalizeModule::set_tcp(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("base") )
@@ -235,7 +230,6 @@ bool NormalizeModule::set_tcp(const char*, Value& v, SnortConfig*)
         Norm_Set(&config, NORM_TCP_OPT, v.get_bool());
         Norm_Set(&config, NORM_TCP_RSV, v.get_bool());
     }
-
     else if ( v.is("block") )
         Norm_Set(&config, NORM_TCP_BLOCK, v.get_bool());
 
@@ -282,7 +276,6 @@ bool NormalizeModule::set_tcp(const char*, Value& v, SnortConfig*)
         Norm_Set(&config, NORM_TCP_TRIM_WIN, v.get_bool());
         Norm_Set(&config, NORM_TCP_TRIM_MSS, v.get_bool());
     }
-
     else if ( v.is("ecn") )
     {
         if ( !strcmp(v.get_string(), "packet") )

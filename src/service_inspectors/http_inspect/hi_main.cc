@@ -82,16 +82,16 @@
 
 const HiSearchToken hi_patterns[] =
 {
-    {"<SCRIPT",         7,  HI_JAVASCRIPT},
-    {NULL,              0, 0}
+    { "<SCRIPT",         7,  HI_JAVASCRIPT },
+    { NULL,              0, 0 }
 };
 
 const HiSearchToken html_patterns[] =
 {
-    {"JAVASCRIPT",      10, HTML_JS},
-    {"ECMASCRIPT",      10, HTML_EMA},
-    {"VBSCRIPT",         8, HTML_VB},
-    {NULL,               0, 0}
+    { "JAVASCRIPT",      10, HTML_JS },
+    { "ECMASCRIPT",      10, HTML_EMA },
+    { "VBSCRIPT",         8, HTML_VB },
+    { NULL,               0, 0 }
 };
 
 SearchTool* hi_javascript_search_mpse = nullptr;
@@ -105,22 +105,23 @@ static uint32_t xtra_jsnorm_id;
 
 THREAD_LOCAL HISearch hi_js_search[HI_LAST];
 THREAD_LOCAL HISearch hi_html_search[HTML_LAST];
-THREAD_LOCAL HISearch *hi_current_search = NULL;
+THREAD_LOCAL HISearch* hi_current_search = NULL;
 THREAD_LOCAL HISearchInfo hi_search_info;
 
 THREAD_LOCAL HIStats hi_stats;
 
 THREAD_LOCAL DataBuffer HttpDecodeBuf;
 
-typedef enum {
+typedef enum
+{
     CONFIG_MAX_SPACES = 0,
-    CONFIG_MAX_JS_WS 
+    CONFIG_MAX_JS_WS
 } SpaceType;
 
 unsigned HttpFlowData::flow_id = 0;
 
 void HttpFlowData::init()
-{ 
+{
     flow_id = FlowData::get_flow_id();
 }
 
@@ -135,7 +136,7 @@ HttpFlowData::~HttpFlowData()
     FreeHttpSessionData(&session);
 }
 
-HttpSessionData* SetNewHttpSessionData(Packet *p, void*)
+HttpSessionData* SetNewHttpSessionData(Packet* p, void*)
 {
     HttpFlowData* fd = new HttpFlowData;
     p->flow->set_application_data(fd);
@@ -159,22 +160,22 @@ void HttpInspectRegisterXtraDataFuncs()
     xtra_jsnorm_id = stream.reg_xtra_data_cb(GetHttpJSNormData);
 }
 
-static void PrintFileDecompOpt(HTTPINSPECT_CONF *ServerConf)
+static void PrintFileDecompOpt(HTTPINSPECT_CONF* ServerConf)
 {
     LogMessage("      Decompress response files: %s %s %s\n",
-               ((ServerConf->file_decomp_modes & FILE_SWF_ZLIB_BIT) != 0) ? "SWF-ZLIB" : "",
-               ((ServerConf->file_decomp_modes & FILE_SWF_LZMA_BIT) != 0) ? "SWF-LZMA" : "",
-               ((ServerConf->file_decomp_modes & FILE_PDF_DEFL_BIT) != 0) ? "PDF-DEFL" : "");
+        ((ServerConf->file_decomp_modes & FILE_SWF_ZLIB_BIT) != 0) ? "SWF-ZLIB" : "",
+        ((ServerConf->file_decomp_modes & FILE_SWF_LZMA_BIT) != 0) ? "SWF-LZMA" : "",
+        ((ServerConf->file_decomp_modes & FILE_PDF_DEFL_BIT) != 0) ? "PDF-DEFL" : "");
 }
 
-static int PrintConfOpt(HTTPINSPECT_CONF_OPT *ConfOpt, const char *Option)
+static int PrintConfOpt(HTTPINSPECT_CONF_OPT* ConfOpt, const char* Option)
 {
-    if(!ConfOpt || !Option)
+    if (!ConfOpt || !Option)
     {
         return HI_INVALID_ARG;
     }
 
-    if(ConfOpt->on)
+    if (ConfOpt->on)
         LogMessage("      %s: ON\n", Option);
     else
         LogMessage("      %s: OFF\n", Option);
@@ -182,71 +183,74 @@ static int PrintConfOpt(HTTPINSPECT_CONF_OPT *ConfOpt, const char *Option)
     return 0;
 }
 
-int PrintServerConf(HTTPINSPECT_CONF *ServerConf)
+int PrintServerConf(HTTPINSPECT_CONF* ServerConf)
 {
     char buf[STD_BUF+1];
     int iCtr;
     int iChar = 0;
     PROFILES prof;
 
-    if(!ServerConf)
+    if (!ServerConf)
     {
         return HI_INVALID_ARG;
     }
 
     prof = ServerConf->profile;
     LogMessage("      Server profile: %s\n",
-        prof==HI_DEFAULT?"Default":
-        prof==HI_APACHE?"Apache":
-        prof==HI_IIS?"IIS":
-        prof==HI_IIS4?"IIS4":"IIS5");
+        prof==HI_DEFAULT ? "Default" :
+        prof==HI_APACHE ? "Apache" :
+        prof==HI_IIS ? "IIS" :
+        prof==HI_IIS4 ? "IIS4" : "IIS5");
 
     LogMessage("      Server Flow Depth: %d\n", ServerConf->server_flow_depth);
     LogMessage("      Client Flow Depth: %d\n", ServerConf->client_flow_depth);
     LogMessage("      Max Chunk Length: %d\n", ServerConf->chunk_length);
     if (ServerConf->small_chunk_length.size > 0)
         LogMessage("      Small Chunk Length Evasion: chunk size <= %u, threshold >= %u times\n",
-                   ServerConf->small_chunk_length.size, ServerConf->small_chunk_length.num);
+            ServerConf->small_chunk_length.size, ServerConf->small_chunk_length.num);
     LogMessage("      Max Header Field Length: %d\n", ServerConf->max_hdr_len);
     LogMessage("      Max Number Header Fields: %d\n", ServerConf->max_headers);
-    LogMessage("      Max Number of WhiteSpaces allowed with header folding: %d\n", ServerConf->max_spaces);
+    LogMessage("      Max Number of WhiteSpaces allowed with header folding: %d\n",
+        ServerConf->max_spaces);
     LogMessage("      Inspect Pipeline Requests: %s\n",
-               ServerConf->no_pipeline ? "NO" : "YES");
+        ServerConf->no_pipeline ? "NO" : "YES");
     LogMessage("      URI Discovery Strict Mode: %s\n",
-               ServerConf->non_strict ? "NO" : "YES");
+        ServerConf->non_strict ? "NO" : "YES");
     LogMessage("      Allow Proxy Usage: %s\n",
-               ServerConf->allow_proxy ? "YES" : "NO");
+        ServerConf->allow_proxy ? "YES" : "NO");
     LogMessage("      Oversize Dir Length: %d\n",
-               ServerConf->long_dir);
+        ServerConf->long_dir);
     LogMessage("      Only inspect URI: %s\n",
-               ServerConf->uri_only ? "YES" : "NO");
+        ServerConf->uri_only ? "YES" : "NO");
     LogMessage("      Normalize HTTP Headers: %s\n",
-               ServerConf->normalize_headers ? "YES" : "NO");
+        ServerConf->normalize_headers ? "YES" : "NO");
     LogMessage("      Inspect HTTP Cookies: %s\n",
-               ServerConf->enable_cookie ? "YES" : "NO");
+        ServerConf->enable_cookie ? "YES" : "NO");
     LogMessage("      Inspect HTTP Responses: %s\n",
-               ServerConf->inspect_response ? "YES" : "NO");
+        ServerConf->inspect_response ? "YES" : "NO");
     LogMessage("      Unlimited decompression of gzip data from responses: %s\n",
-                ServerConf->unlimited_decompress ? "YES" : "NO");
+        ServerConf->unlimited_decompress ? "YES" : "NO");
     LogMessage("      Normalize Javascripts in HTTP Responses: %s\n",
-                       ServerConf->normalize_javascript ? "YES" : "NO");
-    if(ServerConf->normalize_javascript)
+        ServerConf->normalize_javascript ? "YES" : "NO");
+    if (ServerConf->normalize_javascript)
     {
-        if(ServerConf->max_js_ws)
-            LogMessage("      Max Number of WhiteSpaces allowed with Javascript Obfuscation in HTTP responses: %d\n", ServerConf->max_js_ws);
+        if (ServerConf->max_js_ws)
+            LogMessage(
+                "      Max Number of WhiteSpaces allowed with Javascript Obfuscation in HTTP responses: %d\n",
+                ServerConf->max_js_ws);
     }
     LogMessage("      Normalize HTTP Cookies: %s\n",
-               ServerConf->normalize_cookies ? "YES" : "NO");
+        ServerConf->normalize_cookies ? "YES" : "NO");
     LogMessage("      Enable XFF and True Client IP: %s\n",
-               ServerConf->enable_xff ? "YES"  :  "NO");
+        ServerConf->enable_xff ? "YES"  :  "NO");
     LogMessage("      Extended ASCII code support in URI: %s\n",
-               ServerConf->extended_ascii_uri ? "YES" : "NO");
+        ServerConf->extended_ascii_uri ? "YES" : "NO");
     LogMessage("      Log HTTP URI data: %s\n",
-               ServerConf->log_uri ? "YES"  :  "NO");
+        ServerConf->log_uri ? "YES"  :  "NO");
     LogMessage("      Log HTTP Hostname data: %s\n",
-               ServerConf->log_hostname ? "YES"  :  "NO");
+        ServerConf->log_hostname ? "YES"  :  "NO");
     LogMessage("      Extract Gzip from responses: %s\n",
-               ServerConf->extract_gzip ? "YES" : "NO");
+        ServerConf->extract_gzip ? "YES" : "NO");
     PrintFileDecompOpt(ServerConf);
 
     PrintConfOpt(&ServerConf->ascii, "Ascii");
@@ -262,17 +266,17 @@ int PrintServerConf(HTTPINSPECT_CONF *ServerConf)
     PrintConfOpt(&ServerConf->apache_whitespace, "Apache WhiteSpace");
     PrintConfOpt(&ServerConf->iis_delimiter, "IIS Delimiter");
 
-    if(ServerConf->iis_unicode_map_filename)
+    if (ServerConf->iis_unicode_map_filename)
     {
         LogMessage("      IIS Unicode Map Filename: %s\n",
-                   ServerConf->iis_unicode_map_filename);
+            ServerConf->iis_unicode_map_filename);
         LogMessage("      IIS Unicode Map Codepage: %d\n",
-                   ServerConf->iis_unicode_codepage);
+            ServerConf->iis_unicode_codepage);
     }
-    else if(ServerConf->iis_unicode_map)
+    else if (ServerConf->iis_unicode_map)
     {
         LogMessage("      IIS Unicode Map: "
-                   "GLOBAL IIS UNICODE MAP CONFIG\n");
+            "GLOBAL IIS UNICODE MAP CONFIG\n");
     }
     else
     {
@@ -284,16 +288,16 @@ int PrintServerConf(HTTPINSPECT_CONF *ServerConf)
     */
     memset(buf, 0, STD_BUF+1);
     SnortSnprintf(buf, STD_BUF + 1, "      Non-RFC Compliant Characters: ");
-    for(iCtr = 0; iCtr < 256; iCtr++)
+    for (iCtr = 0; iCtr < 256; iCtr++)
     {
-        if(ServerConf->non_rfc_chars[iCtr])
+        if (ServerConf->non_rfc_chars[iCtr])
         {
             sfsnprintfappend(buf, STD_BUF, "0x%.2x ", (u_char)iCtr);
             iChar = 1;
         }
     }
 
-    if(!iChar)
+    if (!iChar)
     {
         sfsnprintfappend(buf, STD_BUF, "NONE");
     }
@@ -306,16 +310,16 @@ int PrintServerConf(HTTPINSPECT_CONF *ServerConf)
     iChar = 0;
     memset(buf, 0, STD_BUF+1);
     SnortSnprintf(buf, STD_BUF + 1, "      Whitespace Characters: ");
-    for(iCtr = 0; iCtr < 256; iCtr++)
+    for (iCtr = 0; iCtr < 256; iCtr++)
     {
-        if(ServerConf->whitespace[iCtr])
+        if (ServerConf->whitespace[iCtr])
         {
             sfsnprintfappend(buf, STD_BUF, "0x%.2x ", (u_char)iCtr);
             iChar = 1;
         }
     }
 
-    if(!iChar)
+    if (!iChar)
     {
         sfsnprintfappend(buf, STD_BUF, "NONE");
     }
@@ -325,32 +329,32 @@ int PrintServerConf(HTTPINSPECT_CONF *ServerConf)
     return 0;
 }
 
-int PrintGlobalConf(HTTPINSPECT_GLOBAL_CONF *GlobalConf)
+int PrintGlobalConf(HTTPINSPECT_GLOBAL_CONF* GlobalConf)
 {
     LogMessage("HttpInspect Config:\n");
     LogMessage("    GLOBAL CONFIG\n");
 
     LogMessage("      Detect Proxy Usage:       %s\n",
-               GlobalConf->proxy_alert ? "YES" : "NO");
+        GlobalConf->proxy_alert ? "YES" : "NO");
     LogMessage("      IIS Unicode Map Filename: %s\n",
-               GlobalConf->iis_unicode_map_filename);
+        GlobalConf->iis_unicode_map_filename);
     LogMessage("      IIS Unicode Map Codepage: %d\n",
-               GlobalConf->iis_unicode_codepage);
+        GlobalConf->iis_unicode_codepage);
     LogMessage("      Memcap used for logging URI and Hostname: %u\n",
-               GlobalConf->memcap);
+        GlobalConf->memcap);
     LogMessage("      Max Gzip Memory: %d\n",
-                GlobalConf->max_gzip_mem);
+        GlobalConf->max_gzip_mem);
     LogMessage("      Max Gzip sessions: %d\n",
-               GlobalConf->max_gzip_sessions);
+        GlobalConf->max_gzip_sessions);
     LogMessage("      Gzip Compress Depth: %d\n",
-               GlobalConf->compr_depth);
+        GlobalConf->compr_depth);
     LogMessage("      Gzip Decompress Depth: %d\n",
-               GlobalConf->decompr_depth);
+        GlobalConf->decompr_depth);
 
     return 0;
 }
 
-static inline int SetSiInput(HI_SI_INPUT *SiInput, Packet *p)
+static inline int SetSiInput(HI_SI_INPUT* SiInput, Packet* p)
 {
     sfip_copy(SiInput->sip, p->ptrs.ip_api.get_src());
     sfip_copy(SiInput->dip, p->ptrs.ip_api.get_dst());
@@ -360,15 +364,15 @@ static inline int SetSiInput(HI_SI_INPUT *SiInput, Packet *p)
     /*
     **  We now set the packet direction
     */
-    if(p->flow && stream.is_midstream(p->flow))
+    if (p->flow && stream.is_midstream(p->flow))
     {
         SiInput->pdir = HI_SI_NO_MODE;
     }
-    else if(p->packet_flags & PKT_FROM_SERVER)
+    else if (p->packet_flags & PKT_FROM_SERVER)
     {
         SiInput->pdir = HI_SI_SERVER_MODE;
     }
-    else if(p->packet_flags & PKT_FROM_CLIENT)
+    else if (p->packet_flags & PKT_FROM_CLIENT)
     {
         SiInput->pdir = HI_SI_CLIENT_MODE;
     }
@@ -378,10 +382,9 @@ static inline int SetSiInput(HI_SI_INPUT *SiInput, Packet *p)
     }
 
     return HI_SUCCESS;
-
 }
 
-static inline void ApplyClientFlowDepth (Packet* p, int flow_depth)
+static inline void ApplyClientFlowDepth(Packet* p, int flow_depth)
 {
     switch (flow_depth)
     {
@@ -414,7 +417,7 @@ static inline void ApplyClientFlowDepth (Packet* p, int flow_depth)
     }
 }
 
-static inline FilePosition getFilePoistion(Packet *p)
+static inline FilePosition getFilePoistion(Packet* p)
 {
     FilePosition position = SNORT_FILE_POSITION_UNKNOWN;
 
@@ -431,54 +434,55 @@ static inline FilePosition getFilePoistion(Packet *p)
 }
 
 // FIXIT-P extra data masks should only be updated as extra data changes state
-// eg just once when captured; this function is called on every packet and 
+// eg just once when captured; this function is called on every packet and
 // repeatedly sets the flags on session
 static inline void HttpLogFuncs(
-    HttpSessionData *hsd, Packet *p, int iCallDetect )
+    HttpSessionData* hsd, Packet* p, int iCallDetect)
 {
-    if(!hsd)
+    if (!hsd)
         return;
 
     /* for pipelined HTTP requests */
     if ( !iCallDetect )
         stream.clear_extra_data(p->flow, p, 0);
 
-    if(hsd->true_ip)
+    if (hsd->true_ip)
     {
-        if(!(p->packet_flags & PKT_STREAM_INSERT) && !(p->packet_flags & PKT_REBUILT_STREAM))
+        if (!(p->packet_flags & PKT_STREAM_INSERT) && !(p->packet_flags & PKT_REBUILT_STREAM))
             SetExtraData(p, xtra_trueip_id);
         else
             stream.set_extra_data(p->flow, p, xtra_trueip_id);
     }
 
-    if(hsd->log_flags & HTTP_LOG_URI)
+    if (hsd->log_flags & HTTP_LOG_URI)
     {
         stream.set_extra_data(p->flow, p, xtra_uri_id);
     }
 
-    if(hsd->log_flags & HTTP_LOG_HOSTNAME)
+    if (hsd->log_flags & HTTP_LOG_HOSTNAME)
     {
         stream.set_extra_data(p->flow, p, xtra_hname_id);
     }
 
-    if(hsd->log_flags & HTTP_LOG_JSNORM_DATA)
+    if (hsd->log_flags & HTTP_LOG_JSNORM_DATA)
     {
         SetExtraData(p, xtra_jsnorm_id);
     }
-    if(hsd->log_flags & HTTP_LOG_GZIP_DATA)
+    if (hsd->log_flags & HTTP_LOG_GZIP_DATA)
     {
         SetExtraData(p, xtra_gzip_id);
     }
 }
 
-static inline void setFileName(Packet *p)
+static inline void setFileName(Packet* p)
 {
-    uint8_t *buf = NULL;
+    uint8_t* buf = NULL;
     uint32_t len = 0;
     uint32_t type = 0;
     GetHttpUriData(p->flow, &buf, &len, &type);
     file_api->set_file_name (p->flow, buf, len);
 }
+
 /*
 **  NAME
 **    HttpInspectMain::
@@ -504,14 +508,14 @@ static inline void setFileName(Packet *p)
 **  @retval <0 fatal error
 **  @retval >0 non-fatal error
 */
-int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
+int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
 {
-    HI_SESSION  *session;
+    HI_SESSION* session;
     HI_SI_INPUT SiInput;
     int iInspectMode = 0;
     int iRet;
     int iCallDetect = 1;
-    HttpSessionData *hsd = NULL;
+    HttpSessionData* hsd = NULL;
 
     PROFILE_VARS;
 
@@ -609,7 +613,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
     }
 
     if (hsd == NULL)
-        hsd = SetNewHttpSessionData(p, (void *)session);
+        hsd = SetNewHttpSessionData(p, (void*)session);
     else
     {
         /* Gzip data should not be logged with all the packets of the session.*/
@@ -646,12 +650,13 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
             {
                 if (hsd->mime_ssn)
                 {
-                    uint8_t *end = ( uint8_t *)(p->data) + p->dsize;
+                    uint8_t* end = ( uint8_t*)(p->data) + p->dsize;
                     file_api->process_mime_data(p, p->data, end, end, end, hsd->mime_ssn, 1);
                 }
                 else if (file_api->get_file_processed_size(p->flow) >0)
                 {
-                    file_api->file_process(p, (uint8_t *)p->data, p->dsize, getFilePoistion(p), true, false);
+                    file_api->file_process(p, (uint8_t*)p->data, p->dsize, getFilePoistion(p),
+                        true, false);
                 }
             }
             return iRet;
@@ -677,7 +682,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
             if ( session->client.request.uri_norm )
             {
                 SetHttpBufferEncoding(
-                    HTTP_BUFFER_URI, 
+                    HTTP_BUFFER_URI,
                     session->client.request.uri_norm,
                     session->client.request.uri_norm_size,
                     session->client.request.uri_encode_type);
@@ -705,8 +710,8 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
                 p->packet_flags |= PKT_HTTP_DECODE;
             }
 
-            if ( session->client.request.header_norm || 
-                 session->client.request.header_raw )
+            if ( session->client.request.header_norm ||
+                session->client.request.header_raw )
             {
                 if ( session->client.request.header_norm )
                 {
@@ -740,53 +745,56 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
                 }
             }
 
-            if(session->client.request.method & (HI_POST_METHOD | HI_GET_METHOD))
+            if (session->client.request.method & (HI_POST_METHOD | HI_GET_METHOD))
             {
-                if(session->client.request.post_raw)
+                if (session->client.request.post_raw)
                 {
-                    uint8_t *start = (uint8_t *)(session->client.request.content_type);
+                    uint8_t* start = (uint8_t*)(session->client.request.content_type);
 
                     if ( hsd && start )
                     {
                         /* mime parsing
                          * mime boundary should be processed before this
                          */
-                        uint8_t *end;
+                        uint8_t* end;
 
                         if (!hsd->mime_ssn)
                         {
-                            hsd->mime_ssn = (MimeState *)SnortAlloc(sizeof(MimeState));
+                            hsd->mime_ssn = (MimeState*)SnortAlloc(sizeof(MimeState));
                             if (!hsd->mime_ssn)
                                 return 0;
                             hsd->mime_ssn->log_config = &(conf->global->mime_conf);
                             hsd->mime_ssn->decode_conf = &(conf->global->decode_conf);
                             /*Set log buffers per session*/
                             if (file_api->set_log_buffers(
-                                    &(hsd->mime_ssn->log_state), hsd->mime_ssn->log_config) < 0)
+                                &(hsd->mime_ssn->log_state), hsd->mime_ssn->log_config) < 0)
                             {
                                 return 0;
                             }
                         }
 
-                        end = (uint8_t *)(session->client.request.post_raw + session->client.request.post_raw_size);
+                        end = (uint8_t*)(session->client.request.post_raw +
+                            session->client.request.post_raw_size);
                         file_api->process_mime_data(p, start, end, end, end, hsd->mime_ssn, 1);
                     }
                     else
                     {
-                        if (file_api->file_process(p,(uint8_t *)session->client.request.post_raw,
-                                (uint16_t)session->client.request.post_raw_size,
-                                getFilePoistion(p), true, false))
+                        if (file_api->file_process(p,(uint8_t*)session->client.request.post_raw,
+                            (uint16_t)session->client.request.post_raw_size,
+                            getFilePoistion(p), true, false))
                         {
                             setFileName(p);
                         }
                     }
 
-                    if(session->server_conf->post_depth > -1)
+                    if (session->server_conf->post_depth > -1)
                     {
-                        if(session->server_conf->post_depth &&
-                                ((int)session->client.request.post_raw_size > session->server_conf->post_depth))
+                        if (session->server_conf->post_depth &&
+                            ((int)session->client.request.post_raw_size >
+                            session->server_conf->post_depth))
                         {
-                            session->client.request.post_raw_size = session->server_conf->post_depth;
+                            session->client.request.post_raw_size =
+                                session->server_conf->post_depth;
                         }
                         SetHttpBufferEncoding(
                             HTTP_BUFFER_CLIENT_BODY,
@@ -796,19 +804,19 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
 
                         p->packet_flags |= PKT_HTTP_DECODE;
                     }
-
                 }
             }
             else if (hsd)
             {
-                if(hsd->mime_ssn)
+                if (hsd->mime_ssn)
                 {
-                    uint8_t *end = ( uint8_t *)(p->data) + p->dsize;
+                    uint8_t* end = ( uint8_t*)(p->data) + p->dsize;
                     file_api->process_mime_data(p, p->data, end, end, end, hsd->mime_ssn, 1);
                 }
                 else if (file_api->get_file_processed_size(p->flow) >0)
                 {
-                    file_api->file_process(p, (uint8_t *)p->data, p->dsize, getFilePoistion(p), true, false);
+                    file_api->file_process(p, (uint8_t*)p->data, p->dsize, getFilePoistion(p),
+                        true, false);
                 }
             }
 
@@ -822,8 +830,8 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
                 p->packet_flags |= PKT_HTTP_DECODE;
             }
 
-            if ( session->client.request.cookie_norm || 
-                 session->client.request.cookie.cookie )
+            if ( session->client.request.cookie_norm ||
+                session->client.request.cookie.cookie )
             {
                 if ( session->client.request.cookie_norm )
                 {
@@ -836,8 +844,8 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
                     SetHttpBuffer(
                         HTTP_BUFFER_RAW_COOKIE,
                         session->client.request.cookie.cookie,
-                        session->client.request.cookie.cookie_end - 
-                            session->client.request.cookie.cookie);
+                        session->client.request.cookie.cookie_end -
+                        session->client.request.cookie.cookie);
 
                     p->packet_flags |= PKT_HTTP_DECODE;
                 }
@@ -846,20 +854,20 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
                     SetHttpBufferEncoding(
                         HTTP_BUFFER_COOKIE,
                         session->client.request.cookie.cookie,
-                        session->client.request.cookie.cookie_end - 
-                            session->client.request.cookie.cookie,
+                        session->client.request.cookie.cookie_end -
+                        session->client.request.cookie.cookie,
                         session->client.request.cookie_encode_type);
 
                     SetHttpBuffer(
                         HTTP_BUFFER_RAW_COOKIE,
                         session->client.request.cookie.cookie,
-                        session->client.request.cookie.cookie_end - 
-                            session->client.request.cookie.cookie);
+                        session->client.request.cookie.cookie_end -
+                        session->client.request.cookie.cookie);
 
                     p->packet_flags |= PKT_HTTP_DECODE;
                 }
             }
-            else if ( !session->server_conf->enable_cookie && 
+            else if ( !session->server_conf->enable_cookie &&
                 (hb = GetHttpBuffer(HTTP_BUFFER_HEADER)) )
             {
                 SetHttpBufferEncoding(
@@ -877,13 +885,12 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
             {
                 ApplyClientFlowDepth(p, session->server_conf->client_flow_depth);
 
-                if( !GetHttpBufferMask() && (p->alt_dsize == 0)  )
+                if ( !GetHttpBufferMask() && (p->alt_dsize == 0)  )
                 {
                     DisableDetect(p);
                     return 0;
                 }
             }
-
         }
         else   /* Server mode */
         {
@@ -894,7 +901,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
             **  header or not.  If the header size is 0 then, we know that this
             **  is not the header and don't do any detection.
             */
-            if( !(session->server_conf->inspect_response) &&
+            if ( !(session->server_conf->inspect_response) &&
                 IsLimitedDetect(p) && !p->alt_dsize )
             {
                 DisableDetect(p);
@@ -902,173 +909,175 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
             }
             ClearHttpBuffers();
 
-             if ( session->server.response.header_norm || 
-                  session->server.response.header_raw )
-             {
-                 if ( session->server.response.header_norm )
-                 {
-                     SetHttpBufferEncoding(
-                         HTTP_BUFFER_HEADER,
-                         session->server.response.header_norm,
-                         session->server.response.header_norm_size,
-                         session->server.response.header_encode_type);
+            if ( session->server.response.header_norm ||
+                session->server.response.header_raw )
+            {
+                if ( session->server.response.header_norm )
+                {
+                    SetHttpBufferEncoding(
+                        HTTP_BUFFER_HEADER,
+                        session->server.response.header_norm,
+                        session->server.response.header_norm_size,
+                        session->server.response.header_encode_type);
 
-                     SetHttpBuffer(
-                         HTTP_BUFFER_RAW_HEADER,
-                         session->server.response.header_raw,
-                         session->server.response.header_raw_size);
-                 }
-                 else
-                 {
-                     SetHttpBuffer(
-                         HTTP_BUFFER_HEADER,
-                         session->server.response.header_raw,
-                         session->server.response.header_raw_size);
+                    SetHttpBuffer(
+                        HTTP_BUFFER_RAW_HEADER,
+                        session->server.response.header_raw,
+                        session->server.response.header_raw_size);
+                }
+                else
+                {
+                    SetHttpBuffer(
+                        HTTP_BUFFER_HEADER,
+                        session->server.response.header_raw,
+                        session->server.response.header_raw_size);
 
-                     SetHttpBuffer(
-                         HTTP_BUFFER_RAW_HEADER,
-                         session->server.response.header_raw,
-                         session->server.response.header_raw_size);
-                 }
-             }
+                    SetHttpBuffer(
+                        HTTP_BUFFER_RAW_HEADER,
+                        session->server.response.header_raw,
+                        session->server.response.header_raw_size);
+                }
+            }
 
-             if ( session->server.response.cookie_norm || 
-                  session->server.response.cookie.cookie )
-             {
-                 if(session->server.response.cookie_norm )
-                 {
-                     SetHttpBufferEncoding(
-                         HTTP_BUFFER_COOKIE,
-                         session->server.response.cookie_norm,
-                         session->server.response.cookie_norm_size,
-                         session->server.response.cookie_encode_type);
+            if ( session->server.response.cookie_norm ||
+                session->server.response.cookie.cookie )
+            {
+                if (session->server.response.cookie_norm )
+                {
+                    SetHttpBufferEncoding(
+                        HTTP_BUFFER_COOKIE,
+                        session->server.response.cookie_norm,
+                        session->server.response.cookie_norm_size,
+                        session->server.response.cookie_encode_type);
 
-                     SetHttpBuffer(
-                         HTTP_BUFFER_RAW_COOKIE,
-                         session->server.response.cookie.cookie,
-                         session->server.response.cookie.cookie_end -
-                             session->server.response.cookie.cookie);
-                 }
-                 else
-                 {
-                     SetHttpBuffer(
-                         HTTP_BUFFER_COOKIE,
-                         session->server.response.cookie.cookie,
-                         session->server.response.cookie.cookie_end - 
-                             session->server.response.cookie.cookie);
+                    SetHttpBuffer(
+                        HTTP_BUFFER_RAW_COOKIE,
+                        session->server.response.cookie.cookie,
+                        session->server.response.cookie.cookie_end -
+                        session->server.response.cookie.cookie);
+                }
+                else
+                {
+                    SetHttpBuffer(
+                        HTTP_BUFFER_COOKIE,
+                        session->server.response.cookie.cookie,
+                        session->server.response.cookie.cookie_end -
+                        session->server.response.cookie.cookie);
 
-                     SetHttpBuffer(
-                         HTTP_BUFFER_RAW_COOKIE,
-                         session->server.response.cookie.cookie,
-                         session->server.response.cookie.cookie_end -
-                             session->server.response.cookie.cookie);
-                 }
-             }
-             else if ( !session->server_conf->enable_cookie && 
-                 (hb = GetHttpBuffer(HTTP_BUFFER_HEADER)) )
-             {
-                 SetHttpBufferEncoding(
-                     HTTP_BUFFER_COOKIE, hb->buf, hb->length, hb->encode_type);
+                    SetHttpBuffer(
+                        HTTP_BUFFER_RAW_COOKIE,
+                        session->server.response.cookie.cookie,
+                        session->server.response.cookie.cookie_end -
+                        session->server.response.cookie.cookie);
+                }
+            }
+            else if ( !session->server_conf->enable_cookie &&
+                (hb = GetHttpBuffer(HTTP_BUFFER_HEADER)) )
+            {
+                SetHttpBufferEncoding(
+                    HTTP_BUFFER_COOKIE, hb->buf, hb->length, hb->encode_type);
 
-                 hb = GetHttpBuffer(HTTP_BUFFER_RAW_HEADER);
-                 assert(hb);
+                hb = GetHttpBuffer(HTTP_BUFFER_RAW_HEADER);
+                assert(hb);
 
-                 SetHttpBuffer(HTTP_BUFFER_RAW_COOKIE, hb->buf, hb->length);
-             }
+                SetHttpBuffer(HTTP_BUFFER_RAW_COOKIE, hb->buf, hb->length);
+            }
 
-             if(session->server.response.status_code)
-             {
-                 SetHttpBuffer(
-                     HTTP_BUFFER_STAT_CODE,
-                     session->server.response.status_code,
-                     session->server.response.status_code_size);
-             }
+            if (session->server.response.status_code)
+            {
+                SetHttpBuffer(
+                    HTTP_BUFFER_STAT_CODE,
+                    session->server.response.status_code,
+                    session->server.response.status_code_size);
+            }
 
-             if(session->server.response.status_msg)
-             {
-                 SetHttpBuffer(
-                     HTTP_BUFFER_STAT_MSG,
-                     session->server.response.status_msg,
-                     session->server.response.status_msg_size);
-             }
+            if (session->server.response.status_msg)
+            {
+                SetHttpBuffer(
+                    HTTP_BUFFER_STAT_MSG,
+                    session->server.response.status_msg,
+                    session->server.response.status_msg_size);
+            }
 
-             if(session->server.response.body_size > 0)
-             {
-                 int detect_data_size = (int)session->server.response.body_size;
+            if (session->server.response.body_size > 0)
+            {
+                int detect_data_size = (int)session->server.response.body_size;
 
-                 /*body_size is included in the data_extracted*/
-                 if((session->server_conf->server_flow_depth > 0) &&
-                         (hsd->resp_state.data_extracted  < (session->server_conf->server_flow_depth + (int)session->server.response.body_size)))
-                 {
-                     /*flow_depth is smaller than data_extracted, need to subtract*/
-                     if(session->server_conf->server_flow_depth < hsd->resp_state.data_extracted)
-                         detect_data_size -= hsd->resp_state.data_extracted - session->server_conf->server_flow_depth;
-                 }
-                 else if (session->server_conf->server_flow_depth)
-                 {
-                     detect_data_size = 0;
-                 }
+                /*body_size is included in the data_extracted*/
+                if ((session->server_conf->server_flow_depth > 0) &&
+                    (hsd->resp_state.data_extracted  < (session->server_conf->server_flow_depth +
+                    (int)session->server.response.body_size)))
+                {
+                    /*flow_depth is smaller than data_extracted, need to subtract*/
+                    if (session->server_conf->server_flow_depth < hsd->resp_state.data_extracted)
+                        detect_data_size -= hsd->resp_state.data_extracted -
+                            session->server_conf->server_flow_depth;
+                }
+                else if (session->server_conf->server_flow_depth)
+                {
+                    detect_data_size = 0;
+                }
 
-                 /* Do we have a file decompression object? */
-                 if( hsd->fd_state != 0 )
-                 {
-                     fd_status_t Ret_Code;
+                /* Do we have a file decompression object? */
+                if ( hsd->fd_state != 0 )
+                {
+                    fd_status_t Ret_Code;
 
-                     uint16_t Data_Len;
-                     const uint8_t *Data;
+                    uint16_t Data_Len;
+                    const uint8_t* Data;
 
-                     hsd->fd_state->Next_In = (uint8_t*)(Data = session->server.response.body);
-                     hsd->fd_state->Avail_In = (Data_Len = (uint16_t)detect_data_size);
+                    hsd->fd_state->Next_In = (uint8_t*)(Data = session->server.response.body);
+                    hsd->fd_state->Avail_In = (Data_Len = (uint16_t)detect_data_size);
 
-                     (void)File_Decomp_SetBuf( hsd->fd_state );
+                    (void)File_Decomp_SetBuf(hsd->fd_state);
 
-                     Ret_Code = File_Decomp( hsd->fd_state );
+                    Ret_Code = File_Decomp(hsd->fd_state);
 
-                     if( Ret_Code == File_Decomp_DecompError )
-                     {
-                         session->server.response.body = Data;
-                         session->server.response.body_size = Data_Len;
+                    if ( Ret_Code == File_Decomp_DecompError )
+                    {
+                        session->server.response.body = Data;
+                        session->server.response.body_size = Data_Len;
 
-                         hi_set_event(GID_HTTP_SERVER, hsd->fd_state->Error_Event);
-                         File_Decomp_StopFree( hsd->fd_state );
-                         hsd->fd_state = NULL;
-                      }
-                     /* If we didn't find a Sig, then clear the File_Decomp state
-                        and don't keep looking. */
-                     else if( Ret_Code == File_Decomp_NoSig )
-                     {
-                         File_Decomp_StopFree( hsd->fd_state );
-                         hsd->fd_state = NULL;
-                     }
-                     else
-                     {
-                         session->server.response.body = hsd->fd_state->Buffer;
-                         session->server.response.body_size = hsd->fd_state->Total_Out;
-                     }
+                        hi_set_event(GID_HTTP_SERVER, hsd->fd_state->Error_Event);
+                        File_Decomp_StopFree(hsd->fd_state);
+                        hsd->fd_state = NULL;
+                    }
+                    /* If we didn't find a Sig, then clear the File_Decomp state
+                       and don't keep looking. */
+                    else if ( Ret_Code == File_Decomp_NoSig )
+                    {
+                        File_Decomp_StopFree(hsd->fd_state);
+                        hsd->fd_state = NULL;
+                    }
+                    else
+                    {
+                        session->server.response.body = hsd->fd_state->Buffer;
+                        session->server.response.body_size = hsd->fd_state->Total_Out;
+                    }
 
-                     set_file_data((uint8_t *)session->server.response.body, (uint16_t)session->server.response.body_size);
-                 }
+                    set_file_data((uint8_t*)session->server.response.body,
+                        (uint16_t)session->server.response.body_size);
+                }
+                else
+                {
+                    set_file_data((uint8_t*)session->server.response.body, detect_data_size);
+                }
 
-                 else
-                 {
-                     set_file_data((uint8_t *)session->server.response.body, detect_data_size);
-                 }
+                if (PacketHasPAFPayload(p)
+                    && file_api->file_process(p,(uint8_t*)session->server.response.body,
+                    (uint16_t)session->server.response.body_size,
+                    getFilePoistion(p), false, false))
+                {
+                    setFileName(p);
+                }
+            }
 
-                 if (PacketHasPAFPayload(p)
-                     && file_api->file_process(p,(uint8_t *)session->server.response.body, (uint16_t)session->server.response.body_size,
-                         getFilePoistion(p), false, false))
-                 {
-                     setFileName(p);
-                 }
-             }
-
-             if( IsLimitedDetect(p) &&
-                 !GetHttpBufferMask() && (p->alt_dsize == 0)  )
-             {
-                 DisableDetect(p);
-                 return 0;
-
-             }
+            if ( IsLimitedDetect(p) &&
+                !GetHttpBufferMask() && (p->alt_dsize == 0)  )
+            {
+                DisableDetect(p);
+                return 0;
+            }
         }
 
         /*
@@ -1094,8 +1103,8 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
         **  fail, we don't do any detection.
         */
         iCallDetect = 0;
-
-    } while(session->client.request.pipeline_req);
+    }
+    while (session->client.request.pipeline_req);
 
     if ( iCallDetect == 0 )
     {
@@ -1127,9 +1136,9 @@ int HttpInspectInitializeGlobalConfig(HTTPINSPECT_GLOBAL_CONF* config)
     return 0;
 }
 
-void FreeHttpSessionData(void *data)
+void FreeHttpSessionData(void* data)
 {
-    HttpSessionData *hsd = (HttpSessionData *)data;
+    HttpSessionData* hsd = (HttpSessionData*)data;
 
     if (hsd->decomp_state != NULL)
     {
@@ -1140,30 +1149,29 @@ void FreeHttpSessionData(void *data)
     if (hsd->log_state != NULL)
         free(hsd->log_state);
 
-    if(hsd->true_ip)
+    if (hsd->true_ip)
         sfip_free(hsd->true_ip);
 
     file_api->free_mime_session(hsd->mime_ssn);
 
-    if( hsd->fd_state != 0 )
+    if ( hsd->fd_state != 0 )
     {
         File_Decomp_StopFree(hsd->fd_state);
         hsd->fd_state = NULL;                  // ...just for good measure
     }
 }
 
-int GetHttpTrueIP(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
+int GetHttpTrueIP(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     HttpSessionData* hsd = get_session_data(flow);
 
-    if(!hsd->true_ip)
+    if (!hsd->true_ip)
         return 0;
 
-    if(hsd->true_ip->family == AF_INET6)
+    if (hsd->true_ip->family == AF_INET6)
     {
         *type = EVENT_INFO_XFF_IPV6;
         *len = sizeof(struct in6_addr); /*ipv6 address size in bytes*/
-
     }
     else
     {
@@ -1177,26 +1185,25 @@ int GetHttpTrueIP(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
 
 int IsGzipData(Flow* flow)
 {
-    HttpSessionData *hsd = NULL;
+    HttpSessionData* hsd = NULL;
 
     if (flow == NULL)
         return -1;
 
     hsd = get_session_data(flow);
 
-    if(hsd == NULL)
+    if (hsd == NULL)
         return -1;
 
-    if((hsd->log_flags & HTTP_LOG_GZIP_DATA) && (g_file_data.len > 0 ))
+    if ((hsd->log_flags & HTTP_LOG_GZIP_DATA) && (g_file_data.len > 0 ))
         return 0;
     else
         return -1;
 }
 
-
-int GetHttpGzipData(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
+int GetHttpGzipData(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
-    if(!IsGzipData(flow))
+    if (!IsGzipData(flow))
     {
         *buf = g_file_data.data;
         *len = g_file_data.len;
@@ -1205,31 +1212,29 @@ int GetHttpGzipData(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
     }
 
     return 0;
-
 }
 
 int IsJSNormData(Flow* flow)
 {
-    HttpSessionData *hsd = NULL;
+    HttpSessionData* hsd = NULL;
 
     if (flow == NULL)
         return -1;
 
     hsd = get_session_data(flow);
 
-    if(hsd == NULL)
+    if (hsd == NULL)
         return -1;
 
-    if((hsd->log_flags & HTTP_LOG_JSNORM_DATA) && (g_file_data.len > 0 ))
+    if ((hsd->log_flags & HTTP_LOG_JSNORM_DATA) && (g_file_data.len > 0 ))
         return 0;
     else
         return -1;
-
 }
 
-int GetHttpJSNormData(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
+int GetHttpJSNormData(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
-    if(!IsJSNormData(flow))
+    if (!IsJSNormData(flow))
     {
         *buf = g_file_data.data;
         *len = g_file_data.len;
@@ -1240,19 +1245,19 @@ int GetHttpJSNormData(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
     return 0;
 }
 
-int GetHttpUriData(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
+int GetHttpUriData(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
-    HttpSessionData *hsd = NULL;
-        
+    HttpSessionData* hsd = NULL;
+
     if (flow == NULL)
         return 0;
 
     hsd = get_session_data(flow);
-            
-    if(hsd == NULL)
+
+    if (hsd == NULL)
         return 0;
 
-    if(hsd->log_state && hsd->log_state->uri_bytes > 0)
+    if (hsd->log_state && hsd->log_state->uri_bytes > 0)
     {
         *buf = hsd->log_state->uri_extracted;
         *len = hsd->log_state->uri_bytes;
@@ -1263,39 +1268,38 @@ int GetHttpUriData(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
     return 0;
 }
 
-
-int GetHttpHostnameData(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
+int GetHttpHostnameData(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
-    HttpSessionData *hsd = NULL;
-        
+    HttpSessionData* hsd = NULL;
+
     if (flow == NULL)
         return 0;
 
     hsd = get_session_data(flow);
-            
-    if(hsd == NULL)
+
+    if (hsd == NULL)
         return 0;
 
-    if(hsd->log_state && hsd->log_state->hostname_bytes > 0)
+    if (hsd->log_state && hsd->log_state->hostname_bytes > 0)
     {
         *buf = hsd->log_state->hostname_extracted;
         *len = hsd->log_state->hostname_bytes;
         *type = EVENT_INFO_HTTP_HOSTNAME;
         return 1;
     }
-        
+
     return 0;
 }
 
 void HI_SearchInit(void)
 {
-    const HiSearchToken *tmp;
+    const HiSearchToken* tmp;
     hi_javascript_search_mpse = new SearchTool();
     if (hi_javascript_search_mpse == NULL)
     {
         FatalError("%s(%d) Could not allocate memory for HTTP <script> tag search.\n",
-                               __FILE__, __LINE__);
-    } 
+            __FILE__, __LINE__);
+    }
     for (tmp = &hi_patterns[0]; tmp->name != NULL; tmp++)
     {
         hi_js_search[tmp->search_id].name = tmp->name;
@@ -1308,8 +1312,8 @@ void HI_SearchInit(void)
     if (hi_htmltype_search_mpse == NULL)
     {
         FatalError("%s(%d) Could not allocate memory for HTTP <script> type search.\n",
-                                   __FILE__, __LINE__);
-    } 
+            __FILE__, __LINE__);
+    }
     for (tmp = &html_patterns[0]; tmp->name != NULL; tmp++)
     {
         hi_html_search[tmp->search_id].name = tmp->name;

@@ -17,14 +17,13 @@
 //--------------------------------------------------------------------------
 // dt_include.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #include "data/data_types/dt_include.h"
 
-Include::Include(std::string include_name) : file_name(include_name){}
-Include::~Include(){}
+Include::Include(std::string include_name) : file_name(include_name) { }
+Include::~Include() { }
 
 // overloading operators
-std::ostream &operator<<( std::ostream& out, const Include &incl)
+std::ostream& operator<<(std::ostream& out, const Include& incl)
 {
     out << "include '" << incl.file_name << "'";
     return out;
@@ -34,7 +33,9 @@ bool operator==(const Include& lhs, const Include& rhs)
 {
     return !(lhs.file_name.compare(rhs.file_name));
 }
+
 bool operator!=(const Include& lhs, const Include& rhs)
 {
     return !(lhs == rhs);
 }
+

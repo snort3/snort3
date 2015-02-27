@@ -43,7 +43,7 @@ public:
     PegCount* get_counts() const override;
 
     const NormalizerConfig* get_config()
-    { return &config; };
+    { return &config; }
 
 private:
     bool set_ip4(const char*, Value&, SnortConfig*);

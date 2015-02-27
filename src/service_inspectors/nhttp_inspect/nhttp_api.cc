@@ -32,7 +32,7 @@ const char* NHttpApi::nhttp_help = "the new HTTP inspector!";
 
 Inspector* NHttpApi::nhttp_ctor(Module* mod)
 {
-    const NHttpModule* const nhttp_mod = (NHttpModule*) mod;
+    const NHttpModule* const nhttp_mod = (NHttpModule*)mod;
     return new NHttpInspect(nhttp_mod->get_test_input(), nhttp_mod->get_test_output());
 }
 

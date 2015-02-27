@@ -47,7 +47,7 @@
 */
 #define HI_UI_CONFIG_MAX_HDR_DEFAULT 0
 #define HI_UI_CONFIG_MAX_HEADERS_DEFAULT 0
-#define HI_UI_CONFIG_MAX_SPACES_DEFAULT 200 
+#define HI_UI_CONFIG_MAX_SPACES_DEFAULT 200
 #define HI_UI_CONFIG_MAX_XFF_FIELD_NAMES 8
 
 /*
@@ -63,10 +63,8 @@
 */
 struct HTTPINSPECT_CONF_OPT
 {
-
     int on;     /**< if true, configuration option is on */
-
-} ;
+};
 
 /* The following are used to delineate server profiles for user output
  * and debugging information. */
@@ -84,14 +82,12 @@ typedef KMAP CMD_LOOKUP;
 typedef struct s_HTTP_CMD_CONF
 {
     char cmd_name[1];  // variable length array
-
 }  HTTP_CMD_CONF;
 
 typedef struct _HISmallChunkLength
 {
     uint8_t size;
     uint8_t num;
-
 } HISmallChunkLength;
 
 struct HTTPINSPECT_GLOBAL_CONF
@@ -130,20 +126,20 @@ struct HTTPINSPECT_CONF
 {
     HTTPINSPECT_GLOBAL_CONF* global;
 
-    int  server_flow_depth;
-    int  client_flow_depth;
-    int  post_depth;
+    int server_flow_depth;
+    int client_flow_depth;
+    int post_depth;
 
-    int64_t  server_extract_size;
-    int64_t  post_extract_size;
+    int64_t server_extract_size;
+    int64_t post_extract_size;
     /*
     **  Unicode mapping for IIS servers
     */
     uint8_t* iis_unicode_map;
-    char *iis_unicode_map_filename;
-    int  iis_unicode_codepage;
+    char* iis_unicode_map_filename;
+    int iis_unicode_codepage;
 
-    int  long_dir;
+    int long_dir;
 
     /*
     **  Chunk encoding anomaly detection
@@ -154,7 +150,7 @@ struct HTTPINSPECT_CONF
     char uri_only;
     char enable_cookie;
     char inspect_response;
-    uint8_t *xff_headers[HI_UI_CONFIG_MAX_XFF_FIELD_NAMES];
+    uint8_t* xff_headers[HI_UI_CONFIG_MAX_XFF_FIELD_NAMES];
     uint8_t xff_header_lengths[HI_UI_CONFIG_MAX_XFF_FIELD_NAMES];
     char enable_xff;
     char log_uri;
@@ -167,7 +163,7 @@ struct HTTPINSPECT_CONF
 #define HI_UI_CONFIG_TCI_FIELD_NAME  "True-Client-IP"
 #define XFF_BUILTIN_NAMES            (2)
 
-   /* Support Extended ascii codes in the URI */
+    /* Support Extended ascii codes in the URI */
     char extended_ascii_uri;
     /*
     **  pipeline requests
@@ -208,7 +204,7 @@ struct HTTPINSPECT_CONF
     char normalize_utf;
 
     /*
-     * Normalize Javascripts in HTTP server responses 
+     * Normalize Javascripts in HTTP server responses
      */
     char normalize_javascript;
 
@@ -237,7 +233,7 @@ struct HTTPINSPECT_CONF
     int max_js_ws;
 
     PROFILES profile;
-    CMD_LOOKUP    *cmd_lookup;
+    CMD_LOOKUP* cmd_lookup;
 
     ByteList whitespace;
     ByteList non_rfc_chars;
@@ -252,12 +248,13 @@ struct HTTPINSPECT_CONF
 /*
 **  Functions
 */
-int hi_ui_config_init_global_conf(HTTPINSPECT_GLOBAL_CONF *GlobalConf);
-int hi_ui_config_default(HTTPINSPECT_CONF *GlobalConf);
-int hi_ui_config_reset_global(HTTPINSPECT_GLOBAL_CONF *GlobalConf);
+int hi_ui_config_init_global_conf(HTTPINSPECT_GLOBAL_CONF* GlobalConf);
+int hi_ui_config_default(HTTPINSPECT_CONF* GlobalConf);
+int hi_ui_config_reset_global(HTTPINSPECT_GLOBAL_CONF* GlobalConf);
 
-void HttpInspectCleanupHttpMethodsConf(void *);
+void HttpInspectCleanupHttpMethodsConf(void*);
 
 extern int hex_lookup[256];
 extern int valid_lookup[256];
 #endif
+

@@ -27,18 +27,15 @@
 
 namespace rules
 {
-
-namespace {
-
-
+namespace
+{
 class IsDataAt : public ConversionState
 {
 public:
-    IsDataAt(Converter& c) : ConversionState(c) {};
-    virtual ~IsDataAt() {};
+    IsDataAt(Converter& c) : ConversionState(c) { }
+    virtual ~IsDataAt() { }
     virtual bool convert(std::istringstream& data);
 };
-
 } // namespace
 
 bool IsDataAt::convert(std::istringstream& data_stream)
@@ -59,7 +56,7 @@ bool IsDataAt::convert(std::istringstream& data_stream)
     {
         rule_api.add_option("isdataat", value);
 
-        while(util::get_string(arg_stream, value, " ,"))
+        while (util::get_string(arg_stream, value, " ,"))
         {
             if (!value.compare("relative"))
                 rule_api.add_suboption("relative");
@@ -79,7 +76,6 @@ bool IsDataAt::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-
 static ConversionState* ctor(Converter& cv)
 { return new IsDataAt(cv); }
 
@@ -90,6 +86,5 @@ static const ConvertMap isdataat_api =
 };
 
 const ConvertMap* isdataat_map = &isdataat_api;
-
-
 } // namespace rules
+

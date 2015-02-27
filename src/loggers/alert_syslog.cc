@@ -145,7 +145,7 @@ static const Parameter s_params[] =
 class SyslogModule : public Module
 {
 public:
-    SyslogModule() : Module(s_name, s_help, s_params) { };
+    SyslogModule() : Module(s_name, s_help, s_params) { }
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -196,7 +196,7 @@ bool SyslogModule::end(const char*, int, SnortConfig*)
 
 // FIXIT-M can't message be put in Event?
 static void AlertSyslog(
-    int priority, Packet *p, const char *msg, Event *event)
+    int priority, Packet* p, const char* msg, Event* event)
 {
     char event_string[STD_BUF];
     event_string[0] = '\0';
@@ -206,10 +206,10 @@ static void AlertSyslog(
         if (event != NULL)
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
-                    "[%lu:%lu:%lu] ",
-                    (unsigned long)event->sig_info->generator,
-                    (unsigned long)event->sig_info->id,
-                    (unsigned long)event->sig_info->rev);
+                "[%lu:%lu:%lu] ",
+                (unsigned long)event->sig_info->generator,
+                (unsigned long)event->sig_info->id,
+                (unsigned long)event->sig_info->rev);
         }
 
         if (msg != NULL)
@@ -220,71 +220,71 @@ static void AlertSyslog(
         if ( event )
         {
             if ((event->sig_info->classType != NULL)
-                    && (event->sig_info->classType->name != NULL))
+                && (event->sig_info->classType->name != NULL))
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string),
-                        "[Classification: %s] ",
-                        event->sig_info->classType->name);
+                    "[Classification: %s] ",
+                    event->sig_info->classType->name);
             }
 
             if (event->sig_info->priority != 0)
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string),
-                        "[Priority: %d] ", event->sig_info->priority);
+                    "[Priority: %d] ", event->sig_info->priority);
             }
         }
 
         if (ScAlertInterface())
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
-                    "<%s> ", PRINT_INTERFACE(DAQ_GetInterfaceSpec()));
+                "<%s> ", PRINT_INTERFACE(DAQ_GetInterfaceSpec()));
         }
 
         uint16_t proto = p->get_ip_proto_next();
         if (protocol_names[proto] != NULL)
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
-                    "{%s} ", protocol_names[proto]);
+                "{%s} ", protocol_names[proto]);
         }
         else
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
-                    "{%d} ", proto);
+                "{%d} ", proto);
         }
 
         if ((p->ptrs.decode_flags & DECODE_FRAG)
-                || ((proto != IPPROTO_TCP)
-                    && (proto != IPPROTO_UDP)))
+            || ((proto != IPPROTO_TCP)
+            && (proto != IPPROTO_UDP)))
         {
-            const char *ip_fmt = "%s -> %s";
+            const char* ip_fmt = "%s -> %s";
 
             if (ScObfuscate())
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                        ObfuscateIpToText(p->ptrs.ip_api.get_src()),
-                        ObfuscateIpToText(p->ptrs.ip_api.get_dst()));
+                    ObfuscateIpToText(p->ptrs.ip_api.get_src()),
+                    ObfuscateIpToText(p->ptrs.ip_api.get_dst()));
             }
             else
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                        inet_ntoax(p->ptrs.ip_api.get_src()), inet_ntoax(p->ptrs.ip_api.get_dst()));
+                    inet_ntoax(p->ptrs.ip_api.get_src()), inet_ntoax(p->ptrs.ip_api.get_dst()));
             }
         }
         else
         {
-            const char *ip_fmt = "%s:%d -> %s:%d";
+            const char* ip_fmt = "%s:%d -> %s:%d";
 
             if (ScObfuscate())
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                        ObfuscateIpToText(p->ptrs.ip_api.get_src()), p->ptrs.sp,
-                        ObfuscateIpToText(p->ptrs.ip_api.get_dst()), p->ptrs.dp);
+                    ObfuscateIpToText(p->ptrs.ip_api.get_src()), p->ptrs.sp,
+                    ObfuscateIpToText(p->ptrs.ip_api.get_dst()), p->ptrs.dp);
             }
             else
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                        inet_ntoax(p->ptrs.ip_api.get_src()), p->ptrs.sp,
-                        inet_ntoax(p->ptrs.ip_api.get_dst()), p->ptrs.dp);
+                    inet_ntoax(p->ptrs.ip_api.get_src()), p->ptrs.sp,
+                    inet_ntoax(p->ptrs.ip_api.get_dst()), p->ptrs.dp);
             }
         }
 
@@ -300,7 +300,8 @@ static void AlertSyslog(
 // logger stuff
 //-------------------------------------------------------------------------
 
-class SyslogLogger : public Logger {
+class SyslogLogger : public Logger
+{
 public:
     SyslogLogger(SyslogModule*);
     ~SyslogLogger();
@@ -323,7 +324,7 @@ SyslogLogger::SyslogLogger(SyslogModule* m)
 SyslogLogger::~SyslogLogger()
 { }
 
-void SyslogLogger::alert(Packet *p, const char *msg, Event *event)
+void SyslogLogger::alert(Packet* p, const char* msg, Event* event)
 {
     AlertSyslog(priority, p, msg, event);
 }

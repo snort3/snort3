@@ -50,7 +50,7 @@ public:
     virtual const char* find_spell(const uint8_t*, unsigned len, const MagicPage*&) const = 0;
 
     const MagicPage* page1()
-    { return root; };
+    { return root; }
 
 protected:
     MagicBook();
@@ -66,7 +66,7 @@ class SpellBook : public MagicBook
 {
 public:
     SpellBook();
-    ~SpellBook() { };
+    ~SpellBook() { }
 
     bool add_spell(const char*, const char*);
     const char* find_spell(const uint8_t*, unsigned len, const MagicPage*&) const;
@@ -85,8 +85,8 @@ private:
 class HexBook : public MagicBook
 {
 public:
-    HexBook() { };
-    ~HexBook() { };
+    HexBook() { }
+    ~HexBook() { }
 
     bool add_spell(const char*, const char*);
     const char* find_spell(const uint8_t*, unsigned len, const MagicPage*&) const;

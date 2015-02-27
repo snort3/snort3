@@ -57,7 +57,9 @@ THREAD_LOCAL ProfileStats decodePerfStats;
 
 // this may be my longer member declaration ... ever
 THREAD_LOCAL std::array<PegCount,PacketManager::stat_offset +
-    CodecManager::s_protocols.size()> PacketManager::s_stats{{0}};
+CodecManager::s_protocols.size()> PacketManager::s_stats {
+    { 0 }
+};
 
 //PacketManager::s_stats{{0}};
 std::array<PegCount, PacketManager::s_stats.size()> PacketManager::g_stats;
@@ -73,23 +75,23 @@ const std::array<const char*, PacketManager::stat_offset> PacketManager::stat_na
     }
 };
 
-
 // Encoder Foo
-static THREAD_LOCAL Packet *encode_pkt = nullptr;
+static THREAD_LOCAL Packet* encode_pkt = nullptr;
 static THREAD_LOCAL PegCount total_rebuilt_pkts = 0;
-static THREAD_LOCAL std::array<uint8_t, Codec::PKT_MAX> s_pkt{{0}};
+static THREAD_LOCAL std::array<uint8_t, Codec::PKT_MAX> s_pkt {
+    { 0 }
+};
 static THREAD_LOCAL uint8_t* dst_mac = nullptr;
 
 //-------------------------------------------------------------------------
 // Private helper functions
 //-------------------------------------------------------------------------
 
-static inline void push_layer(Packet *p,
-                                uint16_t prot_id,
-                                const uint8_t *hdr_start,
-                                uint32_t len)
+static inline void push_layer(Packet* p,
+    uint16_t prot_id,
+    const uint8_t* hdr_start,
+    uint32_t len)
 {
-
     // We check to ensure num_layer < MAX_LAYERS before this function call
     Layer& lyr = p->layers[p->num_layers++];
     lyr.prot_id = prot_id;
@@ -152,10 +154,10 @@ void PacketManager::encode_delete(Packet* p)
 {
     if (p)
     {
-        if(p->pkth)
+        if (p->pkth)
             free((void*)p->pkth);
 
-        if(p->layers)
+        if (p->layers)
             delete[] p->layers;
 
         p->pkth = nullptr;
@@ -201,12 +203,12 @@ void PacketManager::decode(
     s_stats[total_processed]++;
 
     // loop until the protocol id is no longer valid
-    while(CodecManager::s_protocols[mapped_prot]->decode(raw, codec_data, p->ptrs))
+    while (CodecManager::s_protocols[mapped_prot]->decode(raw, codec_data, p->ptrs))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Codec %s (protocol_id: %u:"
-                "ip header starts at: %p, length is %lu\n",
-                CodecManager::s_protocols[mapped_prot]->get_name(),
-                codec_data.next_prot_id, pkt, codec_data.lyr_len););
+            "ip header starts at: %p, length is %lu\n",
+            CodecManager::s_protocols[mapped_prot]->get_name(),
+            codec_data.next_prot_id, pkt, codec_data.lyr_len); );
 
         /*
          * We only want the layer immediately following SAVE_LAYER to have the
@@ -255,13 +257,10 @@ void PacketManager::decode(
         else
             push_layer(p, prev_prot_id, raw.data, codec_data.lyr_len);
 
-
         // internal statistics and record keeping
         s_stats[mapped_prot + stat_offset]++; // add correct decode for previous layer
         mapped_prot = CodecManager::s_proto_map[codec_data.next_prot_id];
         prev_prot_id = codec_data.next_prot_id;
-
-
 
         // set for next call
         const uint16_t curr_lyr_len = codec_data.lyr_len + codec_data.invalid_bytes;
@@ -276,9 +275,9 @@ void PacketManager::decode(
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Codec %s (protocol_id: %hu: ip header"
-                    " starts at: %p, length is %lu\n",
-                     CodecManager::s_protocols[mapped_prot]->get_name(),
-                     prev_prot_id, pkt, (unsigned long) codec_data.lyr_len););
+        " starts at: %p, length is %lu\n",
+        CodecManager::s_protocols[mapped_prot]->get_name(),
+        prev_prot_id, pkt, (unsigned long)codec_data.lyr_len); );
 
     s_stats[mapped_prot + stat_offset]++;
 
@@ -308,13 +307,13 @@ void PacketManager::decode(
         else
         {
             if ( (p->layers[p->num_layers-1].prot_id == PROTO_TEREDO) &&
-                 (prev_prot_id == IPPROTO_IPV6) )
+                (prev_prot_id == IPPROTO_IPV6) )
             {
                 pop_teredo(p, raw);
             }
 
             // if the codec exists, it failed
-            if(CodecManager::s_proto_map[prev_prot_id])
+            if (CodecManager::s_proto_map[prev_prot_id])
             {
                 s_stats[discards]++;
             }
@@ -339,11 +338,9 @@ void PacketManager::decode(
     MODULE_PROFILE_END(decodePerfStats);
 }
 
-
 //-------------------------------------------------------------------------
 // encoders operate layer by layer:
 //-------------------------------------------------------------------------
-
 
 //-------------------------------------------------------------------------
 // encoders:
@@ -397,12 +394,11 @@ static inline uint8_t GetTTL(const Packet* const p, bool forward)
     return ttl;
 }
 
-
 bool PacketManager::encode(const Packet* p,
-                            EncodeFlags flags,
-                            uint8_t lyr_start,
-                            uint8_t next_prot,
-                            Buffer& buf)
+    EncodeFlags flags,
+    uint8_t lyr_start,
+    uint8_t next_prot,
+    Buffer& buf)
 {
     if ( encode_pkt )
         p = encode_pkt;
@@ -413,13 +409,11 @@ bool PacketManager::encode(const Packet* p,
     else
         ttl = 0;
 
-
     if ( DAQ_GetInterfaceMode(p->pkth) == DAQ_MODE_INLINE )
         flags |= ENC_FLAG_INLINE;
 
     ip::IpApi tmp_api;
     EncState enc(tmp_api, flags, next_prot, ttl, p->dsize);
-
 
     const Layer* const lyrs = p->layers;
     int8_t outer_layer = lyr_start;
@@ -459,46 +453,42 @@ bool PacketManager::encode(const Packet* p,
     return true;
 }
 
-
 const uint8_t* PacketManager::encode_response(
     TcpResponse type, EncodeFlags flags, const Packet* p, uint32_t& len,
     const uint8_t* const payload, uint32_t payload_len)
 {
     Buffer buf(s_pkt.data(), s_pkt.size());
 
-
-    switch(type)
+    switch (type)
     {
-        case TcpResponse::FIN:
-            if (payload && (payload_len > 0))
-            {
-                if (!buf.allocate(payload_len))
-                    return nullptr;
+    case TcpResponse::FIN:
+        if (payload && (payload_len > 0))
+        {
+            if (!buf.allocate(payload_len))
+                return nullptr;
 
-                memcpy(buf.data(), payload, payload_len);
-                flags |= ENC_FLAG_PAY;
-            }
-            flags |= ENC_FLAG_FIN;
-            break;
+            memcpy(buf.data(), payload, payload_len);
+            flags |= ENC_FLAG_PAY;
+        }
+        flags |= ENC_FLAG_FIN;
+        break;
 
-        case TcpResponse::PUSH:
-            if (payload && (payload_len > 0))
-            {
-                if (!buf.allocate(payload_len))
-                    return nullptr;
+    case TcpResponse::PUSH:
+        if (payload && (payload_len > 0))
+        {
+            if (!buf.allocate(payload_len))
+                return nullptr;
 
-                memcpy(buf.data(), payload, payload_len);
-                flags |= ENC_FLAG_PAY;
-            }
-            flags |= ENC_FLAG_PSH;
-            break;
+            memcpy(buf.data(), payload, payload_len);
+            flags |= ENC_FLAG_PAY;
+        }
+        flags |= ENC_FLAG_PSH;
+        break;
 
-        case TcpResponse::RST:  // No payload, so do nothing.
-        default: // future proof
-            break;
+    case TcpResponse::RST:      // No payload, so do nothing.
+    default:     // future proof
+        break;
     }
-
-
 
     // FIXIT-M  -- check flags if we should skip something
     if (encode(p, flags, p->num_layers-1, ENC_PROTO_UNSET, buf))
@@ -511,8 +501,8 @@ const uint8_t* PacketManager::encode_response(
     return nullptr;
 }
 
-const uint8_t* PacketManager::encode_reject( UnreachResponse type,
-        EncodeFlags flags, const Packet* p, uint32_t& len)
+const uint8_t* PacketManager::encode_reject(UnreachResponse type,
+    EncodeFlags flags, const Packet* p, uint32_t& len)
 {
     Buffer buf(s_pkt.data(), s_pkt.size());
 
@@ -529,15 +519,13 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
 
         memcpy(buf.data(), p->layers[inner_ip_index+1].start, icmp::ICMP_UNREACH_DATA_LEN);
 
-
         const ip::IP4Hdr* const ip4h =
-                reinterpret_cast<const ip::IP4Hdr*>(p->layers[inner_ip_index].start);
+            reinterpret_cast<const ip::IP4Hdr*>(p->layers[inner_ip_index].start);
         const uint8_t ip_len = ip4h->hlen();
 
         if (!buf.allocate(ip_len))
             return nullptr;
         memcpy(buf.data(), ip4h, ip_len);
-
 
         // If this returns false, we're down pig creek.
         if (!buf.allocate(sizeof(icmp::Icmp4Base)))
@@ -550,24 +538,23 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
 
         switch (type)
         {
-            case UnreachResponse::NET:
-                icmph->code = icmp::IcmpCode::NET_UNREACH;
-                break;
-            case UnreachResponse::HOST:
-                icmph->code = icmp::IcmpCode::HOST_UNREACH;
-                break;
-            case UnreachResponse::PORT:
-                icmph->code = icmp::IcmpCode::PORT_UNREACH;
-                break;
-            case UnreachResponse::FWD:
-                icmph->code = icmp::IcmpCode::PKT_FILTERED;
-                break;
-            default: // future proofing
-                icmph->code = icmp::IcmpCode::PORT_UNREACH;
+        case UnreachResponse::NET:
+            icmph->code = icmp::IcmpCode::NET_UNREACH;
+            break;
+        case UnreachResponse::HOST:
+            icmph->code = icmp::IcmpCode::HOST_UNREACH;
+            break;
+        case UnreachResponse::PORT:
+            icmph->code = icmp::IcmpCode::PORT_UNREACH;
+            break;
+        case UnreachResponse::FWD:
+            icmph->code = icmp::IcmpCode::PKT_FILTERED;
+            break;
+        default:     // future proofing
+            icmph->code = icmp::IcmpCode::PORT_UNREACH;
         }
 
-        icmph->csum = checksum::icmp_cksum((uint16_t *)buf.data(), buf.size());
-
+        icmph->csum = checksum::icmp_cksum((uint16_t*)buf.data(), buf.size());
 
         if (encode(p, flags, inner_ip_index, IPPROTO_ID_ICMPV4, buf))
         {
@@ -580,7 +567,6 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
     }
     else if (p->is_ip6())
     {
-
         // FIXIT-M  -- check flags if we should skip ip6_options
         const int inner_ip_index = layer::get_inner_ip_lyr_index(p);
         assert(inner_ip_index >= 0);
@@ -591,7 +577,6 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
         if (!buf.allocate(icmp::ICMP_UNREACH_DATA_LEN))
             return nullptr;
         memcpy(buf.data(), p->layers[inner_ip_index+1].start, icmp::ICMP_UNREACH_DATA_LEN);
-
 
         // copy original ip header
         if (!buf.allocate(ip::IP6_HEADER_LEN))
@@ -607,25 +592,23 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
         icmph->csum = 0;
         icmph->opt32 = 0;
 
-
         switch (type)
         {
-            case UnreachResponse::NET:
-                icmph->code = icmp::Icmp6Code::UNREACH_NET;
-                break;
-            case UnreachResponse::HOST:
-                icmph->code = icmp::Icmp6Code::UNREACH_HOST;
-                break;
-            case UnreachResponse::PORT:
-                icmph->code = icmp::Icmp6Code::UNREACH_PORT;
-                break;
-            case UnreachResponse::FWD:
-                icmph->code = icmp::Icmp6Code::UNREACH_FILTER_PROHIB;
-                break;
-            default: // future proofing
-                icmph->code = icmp::Icmp6Code::UNREACH_PORT;
+        case UnreachResponse::NET:
+            icmph->code = icmp::Icmp6Code::UNREACH_NET;
+            break;
+        case UnreachResponse::HOST:
+            icmph->code = icmp::Icmp6Code::UNREACH_HOST;
+            break;
+        case UnreachResponse::PORT:
+            icmph->code = icmp::Icmp6Code::UNREACH_PORT;
+            break;
+        case UnreachResponse::FWD:
+            icmph->code = icmp::Icmp6Code::UNREACH_FILTER_PROHIB;
+            break;
+        default:     // future proofing
+            icmph->code = icmp::Icmp6Code::UNREACH_PORT;
         }
-
 
         checksum::Pseudoheader6 ps6;
         const int ip_len = buf.size();
@@ -635,8 +618,7 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
         ps6.protocol = IPPROTO_ICMPV6;
         ps6.len = htons((uint16_t)(ip_len));
 
-        icmph->csum = checksum::icmp_cksum((uint16_t *)buf.data(), ip_len, &ps6);
-
+        icmph->csum = checksum::icmp_cksum((uint16_t*)buf.data(), ip_len, &ps6);
 
         if (encode(p, flags, inner_ip_index, IPPROTO_ICMPV6, buf))
         {
@@ -653,7 +635,6 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
     }
 }
 
-
 //-------------------------------------------------------------------------
 // formatters:
 // - these packets undergo detection
@@ -662,7 +643,7 @@ const uint8_t* PacketManager::encode_reject( UnreachResponse type,
 // - inner layer header is very similar but payload differs
 // - original ttl is always used
 //-------------------------------------------------------------------------
-int PacketManager::encode_format_with_daq_info (
+int PacketManager::encode_format_with_daq_info(
     EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type,
     const DAQ_PktHdr_t* phdr, uint32_t opaque)
 {
@@ -676,7 +657,6 @@ int PacketManager::encode_format_with_daq_info (
         return -1;
 
     memset(c, 0, PKT_ZERO_LEN);
-
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     pkth->ingress_index = phdr->ingress_index;
@@ -720,7 +700,6 @@ int PacketManager::encode_format_with_daq_info (
             update_ip4_len = true;
         }
 
-
         if (num_layers <= 0)
             return -1;
     }
@@ -732,7 +711,7 @@ int PacketManager::encode_format_with_daq_info (
 
     if ( update_ip4_len )
     {
-        ip::IP4Hdr* ip4h = reinterpret_cast<ip::IP4Hdr*>(const_cast<uint8_t *>(lyr->start));
+        ip::IP4Hdr* ip4h = reinterpret_cast<ip::IP4Hdr*>(const_cast<uint8_t*>(lyr->start));
         lyr->length = ip::IP4_HEADER_LEN;
         ip4h->set_ip_len(ip::IP4_HEADER_LEN);
         ip4h->set_hlen(ip::IP4_HEADER_LEN >> 2);
@@ -778,28 +757,29 @@ int PacketManager::encode_format_with_daq_info (
     pkth->pktlen = len;
     pkth->ts = p->pkth->ts;
 
-
     layer::set_packet_pointer(c);  // set layer pointer to ensure lookin at the new packet
     total_rebuilt_pkts++;  // update local counter
     return 0;
 }
-
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
 int PacketManager::encode_format(EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type)
 {
     return encode_format_with_daq_info(f, p, c, type, p->pkth, p->pkth->opaque);
 }
+
 #elif defined(HAVE_DAQ_ACQUIRE_WITH_META)
 int PacketManager::encode_format(EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type)
 {
     return encode_format_with_daq_info(f, p, c, type, nullptr, p->pkth->opaque);
 }
+
 #else
 int PacketManager::encode_format(EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type)
 {
     return encode_format_with_daq_info(f, p, c, type, nullptr, 0);
 }
+
 #endif
 
 //-------------------------------------------------------------------------
@@ -809,16 +789,16 @@ int PacketManager::encode_format(EncodeFlags f, const Packet* p, Packet* c, Pseu
 // checking each time if needed.
 //-------------------------------------------------------------------------
 
-static inline void add_flag (UpdateFlags& flags,
+static inline void add_flag(UpdateFlags& flags,
     UpdateFlags flag_to_add,
     const Packet* const p,
-    decltype(Packet::packet_flags) pkt_flag) // future proofing.
+    decltype(Packet::packet_flags)pkt_flag)  // future proofing.
 {
     if ( p->packet_flags & pkt_flag )
         flags |= flag_to_add;
 }
 
-void PacketManager::encode_update (Packet* p)
+void PacketManager::encode_update(Packet* p)
 {
     uint32_t len = p->dsize;
 
@@ -828,13 +808,10 @@ void PacketManager::encode_update (Packet* p)
     add_flag(flags, UPD_RESIZED, p, PKT_RESIZED);
     add_flag(flags, UPD_REBUILT_FRAG, p, PKT_REBUILT_FRAG);
 
-
     int8_t outer_layer = p->num_layers-1;
     int8_t inner_layer = p->num_layers-1;
     const Layer* const lyr = p->layers;
     ip::IpApi tmp_api;
-
-
 
     // update the rest of the ip layers with the correct IP reference.
     while (layer::set_inner_ip_api(p, tmp_api, inner_layer))
@@ -861,13 +838,12 @@ void PacketManager::encode_update (Packet* p)
             tmp_api, flags, const_cast<uint8_t*>(l.start), l.length, len);
     }
 
-
     // see IP6_Update() for an explanation of this ...
     // FIXIT-L J   is this second statement really necessary?
     // PKT_RESIZED include PKT_MODIFIED ... so get rid of that extra flag
     if ( !(p->packet_flags & PKT_MODIFIED)
         || (p->packet_flags & (PKT_RESIZED & ~PKT_MODIFIED))
-    )
+        )
     {
         DAQ_PktHdr_t* pkth = const_cast<DAQ_PktHdr_t*>(p->pkth);
         pkth->caplen = len;
@@ -879,11 +855,10 @@ void PacketManager::encode_update (Packet* p)
 // codec support and statistics
 //-------------------------------------------------------------------------
 
-
-void PacketManager::encode_set_dst_mac(uint8_t *mac)
+void PacketManager::encode_set_dst_mac(uint8_t* mac)
 { dst_mac = mac; }
 
-uint8_t *PacketManager::encode_get_dst_mac()
+uint8_t* PacketManager::encode_get_dst_mac()
 { return dst_mac; }
 
 uint64_t PacketManager::get_rebuilt_packet_count(void)
@@ -909,14 +884,14 @@ void PacketManager::dump_stats()
     g_stats[3] = 0;
     g_stats[CodecManager::s_proto_map[FINISHED_DECODE] + stat_offset] = 0;
 
-    for(unsigned int i = 0; i < stat_names.size(); i++)
+    for (unsigned int i = 0; i < stat_names.size(); i++)
         pkt_names.push_back(stat_names[i]);
 
-    for(int i = 0; CodecManager::s_protocols[i] != 0; i++)
+    for (int i = 0; CodecManager::s_protocols[i] != 0; i++)
         pkt_names.push_back(CodecManager::s_protocols[i]->get_name());
 
-    show_percent_stats((PegCount*) &g_stats, &pkt_names[0],
-        (unsigned int) pkt_names.size(), "codec");
+    show_percent_stats((PegCount*)&g_stats, &pkt_names[0],
+        (unsigned int)pkt_names.size(), "codec");
 }
 
 void PacketManager::accumulate()
@@ -929,16 +904,14 @@ void PacketManager::accumulate()
     // mutex is automatically unlocked
 }
 
-
 const char* PacketManager::get_proto_name(uint16_t protocol)
 { return CodecManager::s_protocols[CodecManager::s_proto_map[protocol]]->get_name(); }
 
 const char* PacketManager::get_proto_name(uint8_t protocol)
 { return CodecManager::s_protocols[CodecManager::s_proto_map[protocol]]->get_name(); }
 
-
 void PacketManager::log_protocols(TextLog* const text_log,
-                                        const Packet* const p)
+    const Packet* const p)
 {
     uint8_t num_layers = p->num_layers;
     const Layer* const lyr = p->layers;
@@ -951,14 +924,11 @@ void PacketManager::log_protocols(TextLog* const text_log,
         TextLog_Print(text_log, "%-.6s(DLT):  ", cd->get_name());
         cd->log(text_log, lyr[0].start, lyr[0].length);
 
-
-
         for (int i = 1; i < num_layers; i++)
         {
             const uint16_t protocol = lyr[i].prot_id;
             const uint8_t codec_offset =  CodecManager::s_proto_map[protocol];
             cd = CodecManager::s_protocols[codec_offset];
-
 
             TextLog_NewLine(text_log);
             TextLog_Print(text_log, "%-.*s", 6, cd->get_name());
@@ -975,3 +945,4 @@ void PacketManager::log_protocols(TextLog* const text_log,
         }
     }
 }
+

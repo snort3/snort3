@@ -72,8 +72,7 @@ typedef struct
      * by rule, it is cleared out (all 0s).
      */
     sfip_t ip;
-
-} tSFRFTrackingNodeKey ;
+} tSFRFTrackingNodeKey;
 
 /* Tracking node for rate_filter. One node is created on fly, in tracking
  * hash for each threshold configure (identified by Tid) and source or
@@ -101,38 +100,37 @@ typedef struct
     /*  time when new action was activated due to rate limit exceeding.
     */
     time_t revertTime;
-
 } tSFRFTrackingNode;
 
-SFXHASH *rf_hash = NULL;
+SFXHASH* rf_hash = NULL;
 
 // private methods ...
 static int _checkThreshold(
     tSFRFConfigNode*,
     tSFRFTrackingNode*,
     time_t curTime
-);
+    );
 
 static int _checkSamplingPeriod(
     tSFRFConfigNode*,
     tSFRFTrackingNode*,
     time_t curTime
-);
+    );
 
-static tSFRFTrackingNode *_getSFRFTrackingNode(
+static tSFRFTrackingNode* _getSFRFTrackingNode(
     const sfip_t*,
     unsigned tid,
     time_t curTime
-);
+    );
 
 static void _updateDependentThresholds(
-    RateFilterConfig *config,
+    RateFilterConfig* config,
     unsigned gid,
     unsigned sid,
-    const sfip_t *sip,
-    const sfip_t *dip,
+    const sfip_t* sip,
+    const sfip_t* dip,
     time_t curTime
-);
+    );
 
 // public methods ...
 /* Create a new threshold global context
@@ -145,7 +143,7 @@ static void _updateDependentThresholds(
 */
 #define SFRF_BYTES (sizeof(tSFRFTrackingNodeKey) + sizeof(tSFRFTrackingNode))
 
-static void SFRF_New( unsigned nbytes )
+static void SFRF_New(unsigned nbytes)
 {
     int nrows;
 
@@ -165,10 +163,10 @@ static void SFRF_New( unsigned nbytes )
         1,         /* ANR flag - true ?- Automatic Node Recovery=ANR */
         0,         /* ANR callback - none */
         0,         /* user freemem callback - none */
-        1) ;      /* Recycle nodes ?*/
+        1);       /* Recycle nodes ?*/
 }
 
-void SFRF_Delete (void)
+void SFRF_Delete(void)
 {
     if ( !rf_hash )
         return;
@@ -177,15 +175,15 @@ void SFRF_Delete (void)
     rf_hash = NULL;
 }
 
-void SFRF_Flush (void)
+void SFRF_Flush(void)
 {
     if ( rf_hash )
         sfxhash_make_empty(rf_hash);
 }
 
-static void SFRF_ConfigNodeFree(void *item)
+static void SFRF_ConfigNodeFree(void* item)
 {
-    tSFRFConfigNode *node = (tSFRFConfigNode *)item;
+    tSFRFConfigNode* node = (tSFRFConfigNode*)item;
 
     if (node == NULL)
         return;
@@ -225,14 +223,14 @@ static void SFRF_SidNodeFree(void* item)
  * @return @retval  0 successfully added the thresholding object, !0 otherwise
 */
 int SFRF_ConfigAdd(
-    SnortConfig*, RateFilterConfig *rf_config, tSFRFConfigNode *cfgNode)
+    SnortConfig*, RateFilterConfig* rf_config, tSFRFConfigNode* cfgNode)
 {
     SFGHASH* genHash;
     int nrows;
     int hstatus;
     tSFRFSidNode* pSidNode;
     tSFRFConfigNode* pNewConfigNode;
-    tSFRFGenHashKey key = {0,0};
+    tSFRFGenHashKey key = { 0,0 };
 
     PolicyId policy_id = get_network_policy()->policy_id;
 
@@ -265,13 +263,13 @@ int SFRF_ConfigAdd(
         rf_config->noRevertCount++;
     }
 
-    /* Check for an existing 'gid' entry, if none found then create one. */
-    /* Get the hash table for this gid */
+    /* Check for an existing 'gid' entry, if none found then create one.
+       Get the hash table for this gid */
     genHash = rf_config->genHash[cfgNode->gid];
 
     if ( !genHash )
     {
-        if ( cfgNode->gid == 1 )/* patmatch rules gid, many rules */
+        if ( cfgNode->gid == 1 ) /* patmatch rules gid, many rules */
         {
             nrows= SFRF_GEN_ID_1_ROWS;
         }
@@ -281,7 +279,7 @@ int SFRF_ConfigAdd(
         }
 
         /* Create the hash table for this gid */
-        genHash = sfghash_new( nrows, sizeof(tSFRFGenHashKey), 0, SFRF_SidNodeFree );
+        genHash = sfghash_new(nrows, sizeof(tSFRFGenHashKey), 0, SFRF_SidNodeFree);
         if ( !genHash )
             return -2;
 
@@ -292,7 +290,7 @@ int SFRF_ConfigAdd(
     key.policyId = policy_id;
 
     /* Check if sid is already in the table - if not allocate and add it */
-    pSidNode = (tSFRFSidNode*)sfghash_find( genHash, (void*)&key );
+    pSidNode = (tSFRFSidNode*)sfghash_find(genHash, (void*)&key);
     if ( !pSidNode )
     {
         /* Create the pSidNode hash node data */
@@ -311,7 +309,7 @@ int SFRF_ConfigAdd(
         }
 
         /* Add the pSidNode to the hash table */
-        hstatus = sfghash_add( genHash, (void*)&key, pSidNode );
+        hstatus = sfghash_add(genHash, (void*)&key, pSidNode);
         if ( hstatus )
         {
             sflist_free(pSidNode->configNodeList);
@@ -344,12 +342,11 @@ int SFRF_ConfigAdd(
         return -6;
     }
 
-
 #ifdef SFRF_DEBUG
     printf("--%d-%d-%d: Threshold node added to tail of list\n",
-            pNewConfigNode->tid,
-            pNewConfigNode->gid,
-            pNewConfigNode->sid);
+        pNewConfigNode->tid,
+        pNewConfigNode->gid,
+        pNewConfigNode->sid);
     fflush(stdout);
 #endif
     sflist_add_tail(pSidNode->configNodeList,pNewConfigNode);
@@ -357,9 +354,8 @@ int SFRF_ConfigAdd(
     return 0;
 }
 
-
 #ifdef SFRF_DEBUG
-static char* get_netip(const sfip_t *ip)
+static char* get_netip(const sfip_t* ip)
 {
     return sfip_ntoa(ip);
 }
@@ -383,10 +379,11 @@ static char* get_netip(const sfip_t *ip)
  */
 static int SFRF_TestObject(
     tSFRFConfigNode* cfgNode,
-    const sfip_t *ip,
+    const sfip_t* ip,
     time_t curTime,
     SFRF_COUNT_OPERATION op
-) {
+    )
+{
     tSFRFTrackingNode* dynNode;
     int retValue = -1;
 
@@ -405,27 +402,27 @@ static int SFRF_TestObject(
 
     switch (op)
     {
-        case SFRF_COUNT_INCREMENT:
-            if ( (dynNode->count+1) != 0 )
+    case SFRF_COUNT_INCREMENT:
+        if ( (dynNode->count+1) != 0 )
+        {
+            dynNode->count++;
+        }
+        break;
+    case SFRF_COUNT_DECREMENT:
+        if ( cfgNode->seconds == 0 )
+        {
+            // count can be decremented only for total count, and not for rate
+            if ( dynNode->count != 0 )
             {
-                dynNode->count++;
+                dynNode->count--;
             }
-            break;
-        case SFRF_COUNT_DECREMENT:
-            if ( cfgNode->seconds == 0 )
-            {
-                // count can be decremented only for total count, and not for rate
-                if ( dynNode->count != 0 )
-                {
-                    dynNode->count--;
-                }
-            }
-            break;
-        case SFRF_COUNT_RESET:
-            dynNode->count = 0;
-            break;
-        default:
-            break;
+        }
+        break;
+    case SFRF_COUNT_RESET:
+        dynNode->count = 0;
+        break;
+    default:
+        break;
     }
 
     retValue = _checkThreshold(cfgNode, dynNode, curTime);
@@ -440,15 +437,15 @@ static int SFRF_TestObject(
 
 #ifdef SFRF_DEBUG
     printf("--SFRF_DEBUG: %d-%d-%d: %d Packet IP %s, op: %d, count %d, action %d\n",
-            cfgNode->tid, cfgNode->gid,
-            cfgNode->sid, (unsigned) curTime, get_netip(ip), op,
-            dynNode->count, retValue);
+        cfgNode->tid, cfgNode->gid,
+        cfgNode->sid, (unsigned)curTime, get_netip(ip), op,
+        dynNode->count, retValue);
     fflush(stdout);
 #endif
     return retValue;
 }
 
-static inline int SFRF_AppliesTo(tSFRFConfigNode* pCfg, const sfip_t *ip)
+static inline int SFRF_AppliesTo(tSFRFConfigNode* pCfg, const sfip_t* ip)
 {
     return ( !pCfg->applyTo || sfvar_ip_in(pCfg->applyTo, ip) );
 }
@@ -469,15 +466,16 @@ static inline int SFRF_AppliesTo(tSFRFConfigNode* pCfg, const sfip_t *ip)
  *             replace rule action. new_action value is returned.
  */
 int SFRF_TestThreshold(
-    RateFilterConfig *config,
+    RateFilterConfig* config,
     unsigned gid,
     unsigned sid,
-    const sfip_t *sip,
-    const sfip_t *dip,
+    const sfip_t* sip,
+    const sfip_t* dip,
     time_t curTime,
     SFRF_COUNT_OPERATION op
-) {
-    SFGHASH  *genHash;
+    )
+{
+    SFGHASH* genHash;
     tSFRFSidNode* pSidNode;
     tSFRFConfigNode* cfgNode;
     int newStatus = -1;
@@ -518,7 +516,7 @@ int SFRF_TestThreshold(
     key.sid = sid;
     key.policyId = policy_id;
 
-    pSidNode = (tSFRFSidNode*)sfghash_find( genHash, (void*)&key );
+    pSidNode = (tSFRFSidNode*)sfghash_find(genHash, (void*)&key);
     if ( !pSidNode )
     {
 #ifdef SFRF_DEBUG
@@ -533,53 +531,53 @@ int SFRF_TestThreshold(
     {
 #ifdef SFRF_DEBUG
         printf("--SFRF_DEBUG: %d-%d-%d: No user configuration\n",
-                0, gid, sid);
+            0, gid, sid);
         fflush(stdout);
 #endif
         return status;
     }
 
-    /* For each permanent thresholding object, test/add/update the config object */
-    /* We maintain a list of thd objects for each gid+sid */
-    /* each object has it's own unique thd_id */
+    /* For each permanent thresholding object, test/add/update the config object
+       We maintain a list of thd objects for each gid+sid
+       each object has it's own unique thd_id */
     SF_LNODE* cursor;
 
     for ( cfgNode  = (tSFRFConfigNode*)sflist_first(pSidNode->configNodeList, &cursor);
-          cfgNode != 0;
-          cfgNode  = (tSFRFConfigNode*)sflist_next(&cursor) )
+        cfgNode != 0;
+        cfgNode  = (tSFRFConfigNode*)sflist_next(&cursor) )
     {
         switch (cfgNode->tracking)
         {
-            case SFRF_TRACK_BY_SRC:
-                if ( SFRF_AppliesTo(cfgNode, sip) )
-                {
-                    newStatus = SFRF_TestObject(cfgNode, sip, curTime, op);
-                }
-                break;
+        case SFRF_TRACK_BY_SRC:
+            if ( SFRF_AppliesTo(cfgNode, sip) )
+            {
+                newStatus = SFRF_TestObject(cfgNode, sip, curTime, op);
+            }
+            break;
 
-            case SFRF_TRACK_BY_DST:
-                if ( SFRF_AppliesTo(cfgNode, dip) )
-                {
-                    newStatus = SFRF_TestObject(cfgNode, dip, curTime, op);
-                }
-                break;
+        case SFRF_TRACK_BY_DST:
+            if ( SFRF_AppliesTo(cfgNode, dip) )
+            {
+                newStatus = SFRF_TestObject(cfgNode, dip, curTime, op);
+            }
+            break;
 
-            case SFRF_TRACK_BY_RULE:
-                {
-                    sfip_t cleared;
-                    sfip_clear(cleared);
-                    newStatus = SFRF_TestObject(cfgNode, &cleared, curTime, op);
-                }
-                break;
+        case SFRF_TRACK_BY_RULE:
+        {
+            sfip_t cleared;
+            sfip_clear(cleared);
+            newStatus = SFRF_TestObject(cfgNode, &cleared, curTime, op);
+        }
+        break;
 
-            default:
-                // error case
-                break;
+        default:
+            // error case
+            break;
         }
 
 #ifdef SFRF_DEBUG
         printf("--SFRF_DEBUG: %d-%d-%d: Time %d, rate limit blocked: %d\n",
-                cfgNode->tid, gid, sid, (unsigned)curTime, newStatus);
+            cfgNode->tid, gid, sid, (unsigned)curTime, newStatus);
         fflush(stdout);
 #endif
 
@@ -599,7 +597,7 @@ int SFRF_TestThreshold(
  * @param pContext pointer to global threshold context
  * @return
  */
-void SFRF_ShowObjects(RateFilterConfig *config)
+void SFRF_ShowObjects(RateFilterConfig* config)
 {
     SFGHASH* genHash;
     tSFRFSidNode* pSidnode;
@@ -607,7 +605,7 @@ void SFRF_ShowObjects(RateFilterConfig *config)
     int gid;
     SFGHASH_NODE* sidHashNode;
 
-    for ( gid=0;gid < SFRF_MAX_GENID ; gid++ )
+    for ( gid=0; gid < SFRF_MAX_GENID; gid++ )
     {
         genHash = config->genHash [ gid ];
         if ( !genHash )
@@ -617,25 +615,26 @@ void SFRF_ShowObjects(RateFilterConfig *config)
 
         printf("...GEN_ID = %u\n",gid);
 
-        for ( sidHashNode  = sfghash_findfirst( genHash );
-              sidHashNode != 0;
-              sidHashNode  = sfghash_findnext( genHash ) )
+        for ( sidHashNode  = sfghash_findfirst(genHash);
+            sidHashNode != 0;
+            sidHashNode  = sfghash_findnext(genHash) )
         {
             /* Check for any Permanent sid objects for this gid */
             pSidnode = (tSFRFSidNode*)sidHashNode->data;
 
-            printf(".....GEN_ID = %u, SIG_ID = %u, PolicyId = %u\n",gid, pSidnode->sid, pSidnode->policyId);
+            printf(".....GEN_ID = %u, SIG_ID = %u, PolicyId = %u\n",gid, pSidnode->sid,
+                pSidnode->policyId);
 
-            /* For each permanent thresholding object, test/add/update the thd object */
-            /* We maintain a list of thd objects for each gid+sid */
-            /* each object has it's own unique thd_id */
+            /* For each permanent thresholding object, test/add/update the thd object
+               We maintain a list of thd objects for each gid+sid
+               each object has it's own unique thd_id */
             SF_LNODE* cursor;
 
             for ( cfgNode  = (tSFRFConfigNode*)sflist_first(pSidnode->configNodeList, &cursor);
-                  cfgNode != 0;
-                  cfgNode = (tSFRFConfigNode*)sflist_next(&cursor) )
+                cfgNode != 0;
+                cfgNode = (tSFRFConfigNode*)sflist_next(&cursor) )
             {
-                printf(".........SFRF_ID  =%d\n",cfgNode->tid );
+                printf(".........SFRF_ID  =%d\n",cfgNode->tid);
                 printf(".........tracking =%d\n",cfgNode->tracking);
                 printf(".........count    =%u\n",cfgNode->count);
                 printf(".........seconds  =%u\n",cfgNode->seconds);
@@ -657,7 +656,8 @@ static int _checkSamplingPeriod(
     tSFRFConfigNode* cfgNode,
     tSFRFTrackingNode* dynNode,
     time_t curTime
-) {
+    )
+{
     unsigned dt;
 
     if ( cfgNode->seconds )
@@ -669,8 +669,10 @@ static int _checkSamplingPeriod(
 
 #ifdef SFRF_OVER_RATE
             dt = (unsigned)(curTime - dynNode->tlast);
-            if ( dt > cfgNode->seconds ) dynNode->overRate = 0;
-            else dynNode->overRate = (dynNode->count > cfgNode->count);
+            if ( dt > cfgNode->seconds )
+                dynNode->overRate = 0;
+            else
+                dynNode->overRate = (dynNode->count > cfgNode->count);
             dynNode->tlast = curTime;
 #endif
             dynNode->count = 0;
@@ -709,7 +711,8 @@ static int _checkThreshold(
     tSFRFConfigNode* cfgNode,
     tSFRFTrackingNode* dynNode,
     time_t curTime
-) {
+    )
+{
     /* Once newAction is activated, it stays active for the revert timeout, unless ANR
      * causes the node itself to disappear.
      * Also note that we want to maintain the counters and rates update so that we reblock
@@ -775,17 +778,17 @@ static int _checkThreshold(
     return RULE_TYPE__MAX + cfgNode->newAction;
 }
 
-
 static void _updateDependentThresholds(
-    RateFilterConfig *config,
+    RateFilterConfig* config,
     unsigned gid,
     unsigned sid,
-    const sfip_t *sip,
-    const sfip_t *dip,
+    const sfip_t* sip,
+    const sfip_t* dip,
     time_t curTime
-) {
+    )
+{
     if ( gid == GENERATOR_INTERNAL &&
-         sid == INTERNAL_EVENT_SESSION_DEL )
+        sid == INTERNAL_EVENT_SESSION_DEL )
     {
         // decrementing counters - this results in the following sequence:
         // 1. sfdos_thd_test_threshold(gid internal, sid DEL)
@@ -795,19 +798,20 @@ static void _updateDependentThresholds(
         // 5.    continue with regularly scheduled programming (ie step 1)
 
         SFRF_TestThreshold(config, gid, INTERNAL_EVENT_SESSION_ADD,
-                sip, dip, curTime, SFRF_COUNT_DECREMENT);
+            sip, dip, curTime, SFRF_COUNT_DECREMENT);
         return;
     }
 }
 
 static tSFRFTrackingNode* _getSFRFTrackingNode(
-    const sfip_t *ip,
+    const sfip_t* ip,
     unsigned tid,
     time_t curTime
-) {
+    )
+{
     tSFRFTrackingNode* dynNode = NULL;
     tSFRFTrackingNodeKey key;
-    SFXHASH_NODE * hnode = NULL;
+    SFXHASH_NODE* hnode = NULL;
 
     /* Setup key */
     key.ip = *(ip);
@@ -834,5 +838,6 @@ static tSFRFTrackingNode* _getSFRFTrackingNode(
     }
     return dynNode;
 }
+
 /*@}*/
 

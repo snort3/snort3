@@ -54,7 +54,7 @@ static const Parameter s_params[] =
 class ExModule : public Module
 {
 public:
-    ExModule() : Module(s_name, s_help, s_params) { };
+    ExModule() : Module(s_name, s_help, s_params) { }
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -84,10 +84,11 @@ bool ExModule::begin(const char*, int, SnortConfig*)
 // logger stuff
 //-------------------------------------------------------------------------
 
-class ExLogger : public Logger {
+class ExLogger : public Logger
+{
 public:
     ExLogger(ExModule* m)
-    { upper = m->upper; };
+    { upper = m->upper; }
 
     void alert(Packet*, const char* msg, Event*) override;
 

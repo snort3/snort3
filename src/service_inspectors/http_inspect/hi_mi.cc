@@ -60,8 +60,8 @@
 **  @retval HI_INVALID_ARG  argument(s) was invalid or NULL
 */
 
-int hi_mi_mode_inspection(HI_SESSION *session, int iInspectMode,
-        Packet *p, HttpSessionData *hsd)
+int hi_mi_mode_inspection(HI_SESSION* session, int iInspectMode,
+    Packet* p, HttpSessionData* hsd)
 {
     int iRet;
     if (!session || !p->data || (p->dsize == 0))
@@ -76,16 +76,16 @@ int hi_mi_mode_inspection(HI_SESSION *session, int iInspectMode,
     **  HI_SI_SERVER_MODE:
     **    Inspect for HTTP server communication.
     */
-    if(iInspectMode == HI_SI_CLIENT_MODE)
+    if (iInspectMode == HI_SI_CLIENT_MODE)
     {
-        iRet = hi_client_inspection(p, (void *)session, hsd, !PacketHasStartOfPDU(p));
+        iRet = hi_client_inspection(p, (void*)session, hsd, !PacketHasStartOfPDU(p));
 
         if (iRet)
             return iRet;
     }
-    else if( hsd && iInspectMode == HI_SI_SERVER_MODE )
+    else if ( hsd && iInspectMode == HI_SI_SERVER_MODE )
     {
-        iRet = hi_server_inspection((void *)session, p, hsd);
+        iRet = hi_server_inspection((void*)session, p, hsd);
         if (iRet)
             return iRet;
     }
@@ -101,3 +101,4 @@ int hi_mi_mode_inspection(HI_SESSION *session, int iInspectMode,
 
     return HI_SUCCESS;
 }
+

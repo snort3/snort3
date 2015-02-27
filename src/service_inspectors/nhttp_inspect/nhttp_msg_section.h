@@ -32,22 +32,29 @@
 
 class NHttpMsgHeadShared;
 
-class NHttpMsgSection {
+class NHttpMsgSection
+{
 public:
-    virtual ~NHttpMsgSection() { if (delete_msg_on_destruct) delete[] msg_text.start; };
-    virtual void analyze() = 0;                         // Minimum necessary processing for every message
-    virtual void print_section(FILE *output) = 0;       // Test tool prints all derived message parts
-    virtual void gen_events() = 0;                      // Converts collected information into required preprocessor events
-    virtual void update_flow() = 0;                     // Manages the splitter and communication between message sections
-    virtual void legacy_clients() = 0;                  // Populates the raw and normalized buffer interface used by old Snort
-    virtual NHttpEnums::ProcessResult worth_detection() // What should we do with this section after processing?
-       { return NHttpEnums::RES_INSPECT; };
+    virtual ~NHttpMsgSection() { if (delete_msg_on_destruct) delete[] msg_text.start; }
+    virtual void analyze() = 0;                         // Minimum necessary processing for every
+                                                        // message
+    virtual void print_section(FILE* output) = 0;       // Test tool prints all derived message
+                                                        // parts
+    virtual void gen_events() = 0;                      // Converts collected information into
+                                                        // required preprocessor events
+    virtual void update_flow() = 0;                     // Manages the splitter and communication
+                                                        // between message sections
+    virtual void legacy_clients() = 0;                  // Populates the raw and normalized buffer
+                                                        // interface used by old Snort
+    virtual NHttpEnums::ProcessResult worth_detection() // What should we do with this section
+                                                        // after processing?
+    { return NHttpEnums::RES_INSPECT; }
 
-    NHttpEnums::MethodId get_method_id() const { return method_id; };
+    NHttpEnums::MethodId get_method_id() const { return method_id; }
 
 protected:
     NHttpMsgSection(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
-       NHttpEnums::SourceId source_id_, bool buf_owner);
+        NHttpEnums::SourceId source_id_, bool buf_owner);
 
     // Convenience methods
     void print_message_title(FILE* output, const char* title) const;

@@ -72,7 +72,7 @@ static THREAD_LOCAL ProfileStats isDataAtPerfStats;
 typedef struct _IsDataAtData
 {
     uint32_t offset;        /* byte location into the packet */
-    uint8_t  flags;
+    uint8_t flags;
     int8_t offset_var;      /* index of byte_extract variable for offset */
 } IsDataAtData;
 
@@ -81,18 +81,18 @@ class IsDataAtOption : public IpsOption
 public:
     IsDataAtOption(const IsDataAtData& c) :
         IpsOption(s_name)
-    { config = c; };
+    { config = c; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
     int eval(Cursor&, Packet*) override;
 
-    IsDataAtData* get_data() 
-    { return &config; };
+    IsDataAtData* get_data()
+    { return &config; }
 
     bool is_relative() override
-    { return (config.flags & ISDATAAT_RELATIVE_FLAG) != 0; };
+    { return (config.flags & ISDATAAT_RELATIVE_FLAG) != 0; }
 
 private:
     IsDataAtData config;
@@ -105,7 +105,7 @@ private:
 uint32_t IsDataAtOption::hash() const
 {
     uint32_t a,b,c;
-    const IsDataAtData *data = &config;
+    const IsDataAtData* data = &config;
 
     a = data->offset;
     b = data->flags;
@@ -124,8 +124,8 @@ bool IsDataAtOption::operator==(const IpsOption& ips) const
         return false;
 
     IsDataAtOption& rhs = (IsDataAtOption&)ips;
-    IsDataAtData *left = (IsDataAtData*)&config;
-    IsDataAtData *right = (IsDataAtData*)&rhs.config;
+    IsDataAtData* left = (IsDataAtData*)&config;
+    IsDataAtData* right = (IsDataAtData*)&rhs.config;
 
     if (( left->offset == right->offset) &&
         ( left->flags == right->flags) &&
@@ -139,7 +139,7 @@ bool IsDataAtOption::operator==(const IpsOption& ips) const
 
 int IsDataAtOption::eval(Cursor& c, Packet*)
 {
-    IsDataAtData *isdata = &config;
+    IsDataAtData* isdata = &config;
     int rval = DETECTION_OPTION_NO_MATCH;
     const uint8_t* start_ptr;
     int offset;
@@ -167,10 +167,10 @@ int IsDataAtOption::eval(Cursor& c, Packet*)
     }
     start_ptr += offset;
 
-    if(inBounds(c.buffer(), c.endo(), start_ptr))
+    if (inBounds(c.buffer(), c.endo(), start_ptr))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                    "[*] IsDataAt succeeded!  there is data...\n"););
+            "[*] IsDataAt succeeded!  there is data...\n"); );
         rval = DETECTION_OPTION_MATCH;
     }
 
@@ -188,21 +188,24 @@ int IsDataAtOption::eval(Cursor& c, Packet*)
 // parser
 //-------------------------------------------------------------------------
 
-static void isdataat_parse(const char *data, IsDataAtData *idx)
+static void isdataat_parse(const char* data, IsDataAtData* idx)
 {
-    char **toks;
+    char** toks;
     int num_toks;
-    char *endp;
-    char *offset;
+    char* endp;
+    char* offset;
 
     toks = mSplit(data, ",", 3, &num_toks, 0);
     offset = toks[0];
 
-    if(*offset == '!')
+    if (*offset == '!')
     {
         idx->flags |= ISDATAAT_NOT_FLAG;
         offset++;
-        while(isspace((int)*offset)) {offset++;}
+        while (isspace((int)*offset))
+        {
+            offset++;
+        }
     }
 
     /* set how many bytes to process from the packet */
@@ -211,13 +214,13 @@ static void isdataat_parse(const char *data, IsDataAtData *idx)
         idx->offset = strtol(offset, &endp, 10);
         idx->offset_var = -1;
 
-        if(offset == endp)
+        if (offset == endp)
         {
             ParseError("unable to parse as byte value %s\n", toks[0]);
             return;
         }
 
-        if(idx->offset > 65535)
+        if (idx->offset > 65535)
         {
             ParseError("isdataat offset greater than max IPV4 packet size");
             return;
@@ -258,13 +261,13 @@ static const Parameter s_params[] =
 class IsDataAtModule : public Module
 {
 public:
-    IsDataAtModule() : Module(s_name, s_help, s_params) { };
+    IsDataAtModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &isDataAtPerfStats; };
+    { return &isDataAtPerfStats; }
 
     IsDataAtData data;
 };

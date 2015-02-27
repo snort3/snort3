@@ -49,7 +49,7 @@ typedef enum
 
 typedef struct _ApplicationEntry
 {
-    struct _ApplicationEntry *next;
+    struct _ApplicationEntry* next;
 
     uint16_t port;
     uint16_t ipproto;
@@ -79,16 +79,16 @@ struct HostAttributeEntry
 {
     sfip_t ipAddr;
     HostInfo hostInfo;
-    ApplicationList *services;
-    ApplicationList *clients;
+    ApplicationList* services;
+    ApplicationList* clients;
 };
 
 int SFAT_AddHost(HostAttributeEntry*);
 int SFAT_AddService(HostAttributeEntry*, ApplicationEntry*);
 int SFAT_AddHostEntryToMap(HostAttributeEntry*);
 
-HostAttributeEntry * SFAT_CreateHostEntry(void);
-ApplicationEntry * SFAT_CreateApplicationEntry(void);
+HostAttributeEntry* SFAT_CreateHostEntry(void);
+ApplicationEntry* SFAT_CreateApplicationEntry(void);
 
 #endif /* SFTARGET_DATA_H */
 

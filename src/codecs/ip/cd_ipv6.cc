@@ -18,8 +18,6 @@
 //--------------------------------------------------------------------------
 // cd_ipv6.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -43,7 +41,6 @@
 
 namespace
 {
-
 static const RuleMap ipv6_rules[] =
 {
     { DECODE_IPV6_MIN_TTL, "IPv6 packet below TTL limit" },
@@ -54,15 +51,22 @@ static const RuleMap ipv6_rules[] =
     { DECODE_IPV6_DGRAM_GT_CAPLEN, "IP dgm len > captured len" },
     { DECODE_IPV6_DST_ZERO, "IPv6 packet with destination address ::0" },
     { DECODE_IPV6_SRC_MULTICAST, "IPv6 packet with multicast source address" },
-    { DECODE_IPV6_DST_RESERVED_MULTICAST, "IPv6 packet with reserved multicast destination address" },
+    { DECODE_IPV6_DST_RESERVED_MULTICAST,
+      "IPv6 packet with reserved multicast destination address" },
     { DECODE_IPV6_BAD_OPT_TYPE, "IPv6 header includes an undefined option type" },
-    { DECODE_IPV6_BAD_MULTICAST_SCOPE, "IPv6 address includes an unassigned multicast scope value" },
-    { DECODE_IPV6_BAD_NEXT_HEADER, "IPv6 header includes an invalid value for the 'next header' field" },
-    { DECODE_IPV6_ROUTE_AND_HOPBYHOP, "IPv6 header includes a routing extension header followed by a hop-by-hop header" },
+    { DECODE_IPV6_BAD_MULTICAST_SCOPE,
+      "IPv6 address includes an unassigned multicast scope value" },
+    { DECODE_IPV6_BAD_NEXT_HEADER,
+      "IPv6 header includes an invalid value for the 'next header' field" },
+    { DECODE_IPV6_ROUTE_AND_HOPBYHOP,
+      "IPv6 header includes a routing extension header followed by a hop-by-hop header" },
     { DECODE_IPV6_TWO_ROUTE_HEADERS, "IPv6 header includes two routing extension headers" },
-    { DECODE_IPV6_DSTOPTS_WITH_ROUTING, "IPv6 header has destination options followed by a routing header" },
-    { DECODE_IPV6_TUNNELED_IPV4_TRUNCATED, "IPV6 tunneled over IPv4, IPv6 header truncated, possible Linux kernel attack" },
-    { DECODE_IPV6_BAD_OPT_LEN, "IPv6 header includes an option which is too big for the containing header" },
+    { DECODE_IPV6_DSTOPTS_WITH_ROUTING,
+      "IPv6 header has destination options followed by a routing header" },
+    { DECODE_IPV6_TUNNELED_IPV4_TRUNCATED,
+      "IPV6 tunneled over IPv4, IPv6 header truncated, possible Linux kernel attack" },
+    { DECODE_IPV6_BAD_OPT_LEN,
+      "IPv6 header includes an option which is too big for the containing header" },
     { DECODE_IPV6_UNORDERED_EXTENSIONS, "IPv6 packet includes out-of-order extension headers" },
     { DECODE_IP6_ZERO_HOP_LIMIT, "IPV6 packet has zero hop limit" },
     { DECODE_IPV6_ISATAP_SPOOF, "BAD-TRAFFIC ISATAP-addressed IPv6 traffic spoofing attempt" },
@@ -75,23 +79,22 @@ static const RuleMap ipv6_rules[] =
 class Ipv6Module : public CodecModule
 {
 public:
-    Ipv6Module() : CodecModule(CD_IPV6_NAME, CD_IPV6_HELP) {}
+    Ipv6Module() : CodecModule(CD_IPV6_NAME, CD_IPV6_HELP) { }
 
     const RuleMap* get_rules() const override
     { return ipv6_rules; }
 };
 
-
 class Ipv6Codec : public Codec
 {
 public:
-    Ipv6Codec() : Codec(CD_IPV6_NAME){};
-    ~Ipv6Codec(){};
+    Ipv6Codec() : Codec(CD_IPV6_NAME) { }
+    ~Ipv6Codec() { }
 
     void get_protocol_ids(std::vector<uint16_t>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                        EncState&, Buffer&) override;
+        EncState&, Buffer&) override;
     void update(const ip::IpApi&, const EncodeFlags, uint8_t* raw_pkt,
         uint16_t lyr_len, uint32_t& updated_len) override;
     void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
@@ -99,17 +102,13 @@ public:
 
 private:
     void IPV6CheckIsatap(const ip::IP6Hdr* const,
-                                    const DecodeData&,
-                                    const CodecData&);
+        const DecodeData&,
+        const CodecData&);
     void IPV6MiscTests(const DecodeData&, const CodecData&);
     void CheckIPV6Multicast(const ip::IP6Hdr* const, const CodecData&);
     bool CheckTeredoPrefix(const ip::IP6Hdr* const hdr);
 };
-
-
 } // namespace
-
-
 
 /********************************************************************
  *************************   CLASS FUNCTIONS ************************
@@ -121,14 +120,13 @@ void Ipv6Codec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IPPROTO_ID_IPV6);
 }
 
-
 bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     /* lay the IP struct over the raw data */
     const ip::IP6Hdr* const ip6h =
         reinterpret_cast<const ip::IP6Hdr*>(raw.data);
 
-    if(raw.len < ip::IP6_HEADER_LEN)
+    if (raw.len < ip::IP6_HEADER_LEN)
     {
         if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
             codec_event(codec, DECODE_IPV6_TRUNCATED);
@@ -138,9 +136,8 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         return false;
     }
 
-
     /* Verify version in IP6 Header agrees */
-    if(ip6h->ver() != 6)
+    if (ip6h->ver() != 6)
     {
         if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
             codec_event(codec, DECODE_IPV6_IS_NOT);
@@ -157,7 +154,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     codec.ip_layer_cnt++;
     const uint32_t payload_len = ntohs(ip6h->ip6_payload_len) + ip::IP6_HEADER_LEN;
 
-    if(payload_len != raw.len)
+    if (payload_len != raw.len)
     {
         if (payload_len > raw.len)
         {
@@ -211,8 +208,8 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 }
 
 void Ipv6Codec::IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
-                                    const DecodeData& snort,
-                                    const CodecData& codec)
+    const DecodeData& snort,
+    const CodecData& codec)
 {
     /* Only check for IPv6 over IPv4 */
     if (snort.ip_api.is_ip4() && snort.ip_api.get_ip4h()->proto() == IPPROTO_ID_IPV6)
@@ -239,8 +236,8 @@ void Ipv6Codec::IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
  */
 void Ipv6Codec::IPV6MiscTests(const DecodeData& snort, const CodecData& codec)
 {
-    const sfip_t *ip_src = snort.ip_api.get_src();
-    const sfip_t *ip_dst = snort.ip_api.get_dst();
+    const sfip_t* ip_src = snort.ip_api.get_src();
+    const sfip_t* ip_dst = snort.ip_api.get_dst();
     /*
      * Some IP Header tests
      * Land Attack(same src/dst ip)
@@ -251,12 +248,12 @@ void Ipv6Codec::IPV6MiscTests(const DecodeData& snort, const CodecData& codec)
      * that is not so here.  The sfip_compare makes that assumption for
      * compatibility, but sfip_contains does not.  Hence, sfip_contains
      * is used here in the interrim. */
-    if( sfip_contains(ip_src, ip_dst) == SFIP_CONTAINS)
+    if ( sfip_contains(ip_src, ip_dst) == SFIP_CONTAINS)
     {
         codec_event(codec, DECODE_BAD_TRAFFIC_SAME_SRCDST);
     }
 
-    if(sfip_is_loopback(ip_src) || sfip_is_loopback(ip_dst))
+    if (sfip_is_loopback(ip_src) || sfip_is_loopback(ip_dst))
     {
         codec_event(codec, DECODE_BAD_TRAFFIC_LOOPBACK);
     }
@@ -268,8 +265,6 @@ void Ipv6Codec::IPV6MiscTests(const DecodeData& snort, const CodecData& codec)
         codec_event(codec, DECODE_IPV6_DST_ZERO);
     }
 }
-
-
 
 /* Check for multiple IPv6 Multicast-related alerts */
 void Ipv6Codec::CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData& codec)
@@ -288,17 +283,17 @@ void Ipv6Codec::CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData
     multicast_scope = ip6h->get_dst_multicast_scope();
     switch (multicast_scope)
     {
-        case ip::MulticastScope::RESERVED:
-        case ip::MulticastScope::INTERFACE:
-        case ip::MulticastScope::LINK:
-        case ip::MulticastScope::ADMIN:
-        case ip::MulticastScope::SITE:
-        case ip::MulticastScope::ORG:
-        case ip::MulticastScope::GLOBAL:
-            break;
+    case ip::MulticastScope::RESERVED:
+    case ip::MulticastScope::INTERFACE:
+    case ip::MulticastScope::LINK:
+    case ip::MulticastScope::ADMIN:
+    case ip::MulticastScope::SITE:
+    case ip::MulticastScope::ORG:
+    case ip::MulticastScope::GLOBAL:
+        break;
 
-        default:
-            codec_event(codec, DECODE_IPV6_BAD_MULTICAST_SCOPE);
+    default:
+        codec_event(codec, DECODE_IPV6_BAD_MULTICAST_SCOPE);
     }
 
     /* Check against assigned multicast addresses. These are listed at:
@@ -326,19 +321,18 @@ void Ipv6Codec::CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData
             (ip6h->ip6_dst.u6_addr16[5] != 0) ||
             (ip6h->ip6_dst.u6_addr16[6] != 0))
         {
-
             codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
         }
         else
         {
             switch (ntohl(ip6h->ip6_dst.u6_addr32[3]))
             {
-                case 0x00000001: // All Nodes
-                case 0x00000002: // All Routers
-                case 0x000000FB: // mDNSv6
-                    break;
-                default:
-                    codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
+            case 0x00000001:     // All Nodes
+            case 0x00000002:     // All Routers
+            case 0x000000FB:     // mDNSv6
+                break;
+            default:
+                codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
             }
         }
     }
@@ -347,46 +341,46 @@ void Ipv6Codec::CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData
         // Link-local scope
         switch (ntohl(ip6h->ip6_dst.u6_addr32[3]))
         {
-            case 0x00000001: // All Nodes
-            case 0x00000002: // All Routers
-            case 0x00000004: // DVMRP Routers
-            case 0x00000005: // OSPFIGP
-            case 0x00000006: // OSPFIGP Designated Routers
-            case 0x00000007: // ST Routers
-            case 0x00000008: // ST Hosts
-            case 0x00000009: // RIP Routers
-            case 0x0000000A: // EIGRP Routers
-            case 0x0000000B: // Mobile-Agents
-            case 0x0000000C: // SSDP
-            case 0x0000000D: // All PIMP Routers
-            case 0x0000000E: // RSVP-ENCAPSULATION
-            case 0x0000000F: // UPnP
-            case 0x00000012: // VRRP
-            case 0x00000016: // All MLDv2-capable routers
-            case 0x0000006A: // All-Snoopers
-            case 0x0000006B: // PTP-pdelay
-            case 0x0000006C: // Saratoga
-            case 0x0000006D: // LL-MANET-Routers
-            case 0x0000006E: // IGRS
-            case 0x0000006F: // iADT Discovery
-            case 0x000000FB: // mDNSv6
-            case 0x00010001: // Link Name
-            case 0x00010002: // All-dhcp-agents
-            case 0x00010003: // Link-local Multicast Name Resolution
-            case 0x00010004: // DTCP Announcement
-                break;
-            default:
-                if ((ip6h->ip6_dst.u6_addr8[11] == 1) &&
-                    (ip6h->ip6_dst.u6_addr8[12] == 0xFF))
-                {
-                    break; // Solicited-Node Address
-                }
-                if ((ip6h->ip6_dst.u6_addr8[11] == 2) &&
-                    (ip6h->ip6_dst.u6_addr8[12] == 0xFF))
-                {
-                    break; // Node Information Queries
-                }
-                codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
+        case 0x00000001:     // All Nodes
+        case 0x00000002:     // All Routers
+        case 0x00000004:     // DVMRP Routers
+        case 0x00000005:     // OSPFIGP
+        case 0x00000006:     // OSPFIGP Designated Routers
+        case 0x00000007:     // ST Routers
+        case 0x00000008:     // ST Hosts
+        case 0x00000009:     // RIP Routers
+        case 0x0000000A:     // EIGRP Routers
+        case 0x0000000B:     // Mobile-Agents
+        case 0x0000000C:     // SSDP
+        case 0x0000000D:     // All PIMP Routers
+        case 0x0000000E:     // RSVP-ENCAPSULATION
+        case 0x0000000F:     // UPnP
+        case 0x00000012:     // VRRP
+        case 0x00000016:     // All MLDv2-capable routers
+        case 0x0000006A:     // All-Snoopers
+        case 0x0000006B:     // PTP-pdelay
+        case 0x0000006C:     // Saratoga
+        case 0x0000006D:     // LL-MANET-Routers
+        case 0x0000006E:     // IGRS
+        case 0x0000006F:     // iADT Discovery
+        case 0x000000FB:     // mDNSv6
+        case 0x00010001:     // Link Name
+        case 0x00010002:     // All-dhcp-agents
+        case 0x00010003:     // Link-local Multicast Name Resolution
+        case 0x00010004:     // DTCP Announcement
+            break;
+        default:
+            if ((ip6h->ip6_dst.u6_addr8[11] == 1) &&
+                (ip6h->ip6_dst.u6_addr8[12] == 0xFF))
+            {
+                break;     // Solicited-Node Address
+            }
+            if ((ip6h->ip6_dst.u6_addr8[11] == 2) &&
+                (ip6h->ip6_dst.u6_addr8[12] == 0xFF))
+            {
+                break;     // Node Information Queries
+            }
+            codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
         }
     }
     else if (ip6h->is_dst_multicast_scope_site())
@@ -394,14 +388,14 @@ void Ipv6Codec::CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData
         // Site-local scope
         switch (ntohl(ip6h->ip6_dst.u6_addr32[3]))
         {
-            case 0x00000002: // All Routers
-            case 0x000000FB: // mDNSv6
-            case 0x00010003: // All-dhcp-servers
-            case 0x00010004: // Deprecated
-            case 0x00010005: // SL-MANET-ROUTERS
-                break;
-            default:
-                codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
+        case 0x00000002:     // All Routers
+        case 0x000000FB:     // mDNSv6
+        case 0x00010003:     // All-dhcp-servers
+        case 0x00010004:     // Deprecated
+        case 0x00010005:     // SL-MANET-ROUTERS
+            break;
+        default:
+            codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
         }
     }
     else if ((ip6h->ip6_dst.u6_addr8[1] & 0xF0) == 0)
@@ -409,52 +403,52 @@ void Ipv6Codec::CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData
         // Variable scope
         switch (ntohl(ip6h->ip6_dst.u6_addr32[3]))
         {
-            case 0x0000000C: // SSDP
-            case 0x000000FB: // mDNSv6
-            case 0x00000181: // PTP-primary
-            case 0x00000182: // PTP-alternate1
-            case 0x00000183: // PTP-alternate2
-            case 0x00000184: // PTP-alternate3
-            case 0x0000018C: // All ACs multicast address
-            case 0x00000201: // "rwho" Group (BSD)
-            case 0x00000202: // SUN RPC PMAPPROC_CALLIT
-            case 0x00000204: // All C1222 Nodes
-            case 0x00000300: // Mbus/IPv6
-            case 0x00027FFE: // SAPv1 Announcements
-            case 0x00027FFF: // SAPv0 Announcements
-                break;
-            default:
-                if ((ntohl(ip6h->ip6_dst.u6_addr32[3]) >= 0x00000100) &&
-                    (ntohl(ip6h->ip6_dst.u6_addr32[3]) <= 0x00000136))
-                {
-                    break; // Several addresses assigned in a contiguous block
-                }
+        case 0x0000000C:     // SSDP
+        case 0x000000FB:     // mDNSv6
+        case 0x00000181:     // PTP-primary
+        case 0x00000182:     // PTP-alternate1
+        case 0x00000183:     // PTP-alternate2
+        case 0x00000184:     // PTP-alternate3
+        case 0x0000018C:     // All ACs multicast address
+        case 0x00000201:     // "rwho" Group (BSD)
+        case 0x00000202:     // SUN RPC PMAPPROC_CALLIT
+        case 0x00000204:     // All C1222 Nodes
+        case 0x00000300:     // Mbus/IPv6
+        case 0x00027FFE:     // SAPv1 Announcements
+        case 0x00027FFF:     // SAPv0 Announcements
+            break;
+        default:
+            if ((ntohl(ip6h->ip6_dst.u6_addr32[3]) >= 0x00000100) &&
+                (ntohl(ip6h->ip6_dst.u6_addr32[3]) <= 0x00000136))
+            {
+                break;     // Several addresses assigned in a contiguous block
+            }
 
-                if ((ntohl(ip6h->ip6_dst.u6_addr32[3]) >= 0x00000140) &&
-                    (ntohl(ip6h->ip6_dst.u6_addr32[3]) <= 0x0000014F))
-                {
-                    break; // EPSON-disc-set
-                }
+            if ((ntohl(ip6h->ip6_dst.u6_addr32[3]) >= 0x00000140) &&
+                (ntohl(ip6h->ip6_dst.u6_addr32[3]) <= 0x0000014F))
+            {
+                break;     // EPSON-disc-set
+            }
 
-                if ((ntohl(ip6h->ip6_dst.u6_addr32[3]) >= 0x00020000) &&
-                    (ntohl(ip6h->ip6_dst.u6_addr32[3]) <= 0x00027FFD))
-                {
-                    break; // Multimedia Conference Calls
-                }
+            if ((ntohl(ip6h->ip6_dst.u6_addr32[3]) >= 0x00020000) &&
+                (ntohl(ip6h->ip6_dst.u6_addr32[3]) <= 0x00027FFD))
+            {
+                break;     // Multimedia Conference Calls
+            }
 
-                if ((ntohl(ip6h->ip6_dst.u6_addr32[3]) >= 0x00011000) &&
-                    (ntohl(ip6h->ip6_dst.u6_addr32[3]) <= 0x000113FF))
-                {
-                    break; // Service Location, Version 2
-                }
+            if ((ntohl(ip6h->ip6_dst.u6_addr32[3]) >= 0x00011000) &&
+                (ntohl(ip6h->ip6_dst.u6_addr32[3]) <= 0x000113FF))
+            {
+                break;     // Service Location, Version 2
+            }
 
-                if ((ntohl(ip6h->ip6_dst.u6_addr32[3]) >= 0x00028000) &&
-                    (ntohl(ip6h->ip6_dst.u6_addr32[3]) <= 0x0002FFFF))
-                {
-                    break; // SAP Dynamic Assignments
-                }
+            if ((ntohl(ip6h->ip6_dst.u6_addr32[3]) >= 0x00028000) &&
+                (ntohl(ip6h->ip6_dst.u6_addr32[3]) <= 0x0002FFFF))
+            {
+                break;     // SAP Dynamic Assignments
+            }
 
-                codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
+            codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
         }
     }
     else if ((ip6h->ip6_dst.u6_addr8[1] & 0xF0) == 0x30)
@@ -482,7 +476,6 @@ void Ipv6Codec::CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData
         codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
     }
 }
-
 
 /* Teredo packets need to have one of their IPs use either the Teredo prefix,
    or a link-local prefix (in the case of Router Solicitation messages) */
@@ -528,7 +521,6 @@ bool Ipv6Codec::CheckTeredoPrefix(const ip::IP6Hdr* const hdr)
     return false;
 }
 
-
 /******************************************************************
  *********************  L O G G E R  ******************************
 *******************************************************************/
@@ -549,8 +541,8 @@ void Ipv6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
         const ip::snort_in6_addr* const dst = ip6h->get_dst();
 
         TextLog_Print(text_log, "%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:"
-                            "%02X%02X:%02X%02X:%02X%02X -> %02X%02X:%02X%02X:"
-                            "%02X%02X:%02X%02X:%02X%02X:%02X%02X",
+            "%02X%02X:%02X%02X:%02X%02X -> %02X%02X:%02X%02X:"
+            "%02X%02X:%02X%02X:%02X%02X:%02X%02X",
             (int)src->u6_addr8[0], (int)src->u6_addr8[1], (int)src->u6_addr8[2],
             (int)src->u6_addr8[3], (int)src->u6_addr8[4], (int)src->u6_addr8[5],
             (int)src->u6_addr8[6], (int)src->u6_addr8[7], (int)src->u6_addr8[8],
@@ -564,23 +556,20 @@ void Ipv6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
             (int)dst->u6_addr8[14], (int)dst->u6_addr8[15]);
     }
 
-
     TextLog_NewLine(text_log);
     TextLog_Putc(text_log, '\t');
 
-
     TextLog_Print(text_log, "Next:0x%02X TTL:%u TOS:0x%X DgmLen:%u",
-            ip6h->next(), ip6h->hop_lim(), ip6h->tos(),
-            ip6h->len());
+        ip6h->next(), ip6h->hop_lim(), ip6h->tos(),
+        ip6h->len());
 }
-
 
 /******************************************************************
  *************************  E N C O D E R  ************************
  ******************************************************************/
 
 bool Ipv6Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
-                        EncState& enc, Buffer& buf)
+    EncState& enc, Buffer& buf)
 {
     if (!buf.allocate(sizeof(ip::IP6Hdr)))
         return false;
@@ -588,29 +577,28 @@ bool Ipv6Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     const ip::IP6Hdr* const hi = reinterpret_cast<const ip::IP6Hdr*>(raw_in);
     ip::IP6Hdr* const ipvh_out = reinterpret_cast<ip::IP6Hdr*>(buf.data());
 
-
-
-
     if ( enc.next_proto_set() )
         ipvh_out->ip6_next = enc.next_proto;
     else
         ipvh_out->ip6_next = hi->ip6_next;
 
-
     if ( enc.forward() )
     {
-        memcpy(ipvh_out->ip6_src.u6_addr8, hi->ip6_src.u6_addr8, sizeof(ipvh_out->ip6_src.u6_addr8));
-        memcpy(ipvh_out->ip6_dst.u6_addr8, hi->ip6_dst.u6_addr8, sizeof(ipvh_out->ip6_dst.u6_addr8));
+        memcpy(ipvh_out->ip6_src.u6_addr8, hi->ip6_src.u6_addr8,
+            sizeof(ipvh_out->ip6_src.u6_addr8));
+        memcpy(ipvh_out->ip6_dst.u6_addr8, hi->ip6_dst.u6_addr8,
+            sizeof(ipvh_out->ip6_dst.u6_addr8));
         ipvh_out->ip6_hoplim = enc.get_ttl(hi->ip6_hoplim);
     }
     else
     {
-        memcpy(ipvh_out->ip6_src.u6_addr8, hi->ip6_dst.u6_addr8, sizeof(ipvh_out->ip6_src.u6_addr8));
-        memcpy(ipvh_out->ip6_dst.u6_addr8, hi->ip6_src.u6_addr8, sizeof(ipvh_out->ip6_dst.u6_addr8));
+        memcpy(ipvh_out->ip6_src.u6_addr8, hi->ip6_dst.u6_addr8,
+            sizeof(ipvh_out->ip6_src.u6_addr8));
+        memcpy(ipvh_out->ip6_dst.u6_addr8, hi->ip6_src.u6_addr8,
+            sizeof(ipvh_out->ip6_dst.u6_addr8));
         ipvh_out->ip6_hoplim = enc.get_ttl(hi->ip6_hoplim);
     }
 
-    
     ipvh_out->ip6_vtf = htonl(ntohl(hi->ip6_vtf) & 0xFFF00000);
     ipvh_out->ip6_payload_len = htons(buf.size() - sizeof(ip::IP6Hdr));
 
@@ -632,7 +620,7 @@ void Ipv6Codec::update(const ip::IpApi&, const EncodeFlags flags,
 #ifdef NORMALIZER
         && !(flags & UPD_RESIZED)
 #endif
-    )
+        )
     {
         // FIXIT-M J  --  this worked in Snort.  In Snort++,
         //          will this be accurate?
@@ -678,7 +666,7 @@ static void mod_dtor(Module* m)
 static Codec* ctor(Module*)
 { return new Ipv6Codec(); }
 
-static void dtor(Codec *cd)
+static void dtor(Codec* cd)
 { delete cd; }
 
 static const CodecApi ipv6_api =
@@ -700,7 +688,6 @@ static const CodecApi ipv6_api =
     dtor, // dtor
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
@@ -710,3 +697,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_ipv6 = &ipv6_api.base;
 #endif
+

@@ -16,22 +16,22 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
- 
+
 /**
  * @file   util_str.h
  * @author Chris Green <cmg@sourcefire.com>
  * @date   Fri Jun 27 10:34:37 2003
- * 
+ *
  * @brief  string utility functions
- * 
+ *
  * some string handling wrappers
  */
 
 #ifndef UTIL_STR_H
 #define UTIL_STR_H
 
-int str2int(char *str, int *ret, int allow_negative);
-int toggle_option(char *name, char *value, int *opt_value);
+int str2int(char* str, int* ret, int allow_negative);
+int toggle_option(char* name, char* value, int* opt_value);
 
 #endif /* UTIL_STR_H */
 

@@ -48,17 +48,15 @@
 #define DEFAULT_FILE_BLOCK_TIMEOUT 86400 /*1 day*/
 #define DEFAULT_FILE_LOOKUP_TIMEOUT 2 /*2 seconds*/
 
-typedef void (*ParseFileOptFunc)(RuleInfo*, char *);
+typedef void (* ParseFileOptFunc)(RuleInfo*, char*);
 
 typedef struct _FileOptFunc
 {
-    const char *name;
+    const char* name;
     int args_required;
     int only_once;  /*the option is one per file rule*/
     ParseFileOptFunc parse_func;
-
 } FileOptFunc;
-
 
 #define FILE_OPT__TYPE              "type"
 #define FILE_OPT__ID                "id"
@@ -69,61 +67,58 @@ typedef struct _FileOptFunc
 #define FILE_OPT__CONTENT           "content"
 #define FILE_OPT__OFFSET            "offset"
 
-
 #define FILE_REVISION_MAX    UINT32_MAX
 #define FILE_OFFSET_MAX      UINT32_MAX
 
-static void ParseFileRuleType(RuleInfo *, char *);
-static void ParseFileRuleID(RuleInfo *, char *);
-static void ParseFileRuleVersion(RuleInfo *, char *);
-static void ParseFileRuleCategory(RuleInfo *, char *);
-static void ParseFileRuleMessage(RuleInfo *, char *);
-static void ParseFileRevision(RuleInfo *, char *);
-static void ParseFileContent(RuleInfo *, char *);
-static void ParseFileOffset(RuleInfo *, char *);
-
+static void ParseFileRuleType(RuleInfo*, char*);
+static void ParseFileRuleID(RuleInfo*, char*);
+static void ParseFileRuleVersion(RuleInfo*, char*);
+static void ParseFileRuleCategory(RuleInfo*, char*);
+static void ParseFileRuleMessage(RuleInfo*, char*);
+static void ParseFileRevision(RuleInfo*, char*);
+static void ParseFileContent(RuleInfo*, char*);
+static void ParseFileOffset(RuleInfo*, char*);
 
 static const FileOptFunc file_options[] =
 {
-        { FILE_OPT__TYPE,             1, 1, ParseFileRuleType },
-        { FILE_OPT__ID,               1, 1, ParseFileRuleID },
-        { FILE_OPT__VERSION,          0, 1, ParseFileRuleVersion },
-        { FILE_OPT__CATEGORY,         1, 1, ParseFileRuleCategory },
-        { FILE_OPT__MSG,              0, 1, ParseFileRuleMessage },
-        { FILE_OPT__REVISION,         0, 1, ParseFileRevision },
-        { FILE_OPT__CONTENT,          1, 0, ParseFileContent },
-        { FILE_OPT__OFFSET,           1, 0, ParseFileOffset},
+    { FILE_OPT__TYPE,             1, 1, ParseFileRuleType },
+    { FILE_OPT__ID,               1, 1, ParseFileRuleID },
+    { FILE_OPT__VERSION,          0, 1, ParseFileRuleVersion },
+    { FILE_OPT__CATEGORY,         1, 1, ParseFileRuleCategory },
+    { FILE_OPT__MSG,              0, 1, ParseFileRuleMessage },
+    { FILE_OPT__REVISION,         0, 1, ParseFileRevision },
+    { FILE_OPT__CONTENT,          1, 0, ParseFileContent },
+    { FILE_OPT__OFFSET,           1, 0, ParseFileOffset },
 
-        { NULL, 0, 0, NULL }   /* Marks end of array */
+    { NULL, 0, 0, NULL }       /* Marks end of array */
 };
-
 
 /* Used for content modifiers that are used as rule options - need to get the
  * last magic which is the one they are modifying.  If there isn't a last magic
  * error that a content must be specified before the modifier */
 
-static inline MagicData * GetLastMagic(RuleInfo *rule, const char *option)
+static inline MagicData* GetLastMagic(RuleInfo* rule, const char* option)
 {
-    MagicData *mdata;
-    MagicData *lastMagic = NULL;
+    MagicData* mdata;
+    MagicData* lastMagic = NULL;
 
     if ((rule) && (rule->magics))
     {
-        for (mdata = rule->magics; mdata->next != NULL; mdata = mdata->next);
+        for (mdata = rule->magics; mdata->next != NULL; mdata = mdata->next)
+            ;
         lastMagic = mdata;
     }
     if (lastMagic == NULL)
     {
         ParseError("please place 'content' rules before '%s' modifier",
-                option == NULL ? "unknown" : option);
+            option == NULL ? "unknown" : option);
     }
     return lastMagic;
 }
 
-static void ParseFileRuleType(RuleInfo *rule, char *args)
+static void ParseFileRuleType(RuleInfo* rule, char* args)
 {
-
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Type args: %s\n", args););
+    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Type args: %s\n", args); );
 
     if (args == NULL)
         ParseError("type rule option requires an argument.");
@@ -131,12 +126,12 @@ static void ParseFileRuleType(RuleInfo *rule, char *args)
     rule->type = SnortStrdup(args);
 }
 
-static void ParseFileRuleID(RuleInfo *rule, char *args)
+static void ParseFileRuleID(RuleInfo* rule, char* args)
 {
     unsigned long int id;
-    char *endptr;
+    char* endptr;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"ID args: %s\n", args););
+    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"ID args: %s\n", args); );
 
     if (args == NULL)
     {
@@ -148,16 +143,15 @@ static void ParseFileRuleID(RuleInfo *rule, char *args)
     if ((errno == ERANGE) || (*endptr != '\0')||(id > FILE_ID_MAX))
     {
         ParseError("invalid argument to 'id' rule option: %s.  "
-                "Must be a positive integer.", args);
+            "Must be a positive integer.", args);
     }
 
     rule->id = (uint32_t)id;
 }
 
-static void ParseFileRuleCategory(RuleInfo *rule, char *args)
+static void ParseFileRuleCategory(RuleInfo* rule, char* args)
 {
-
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Category args: %s\n", args););
+    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Category args: %s\n", args); );
 
     if (args == NULL)
         ParseError("category rule option requires an argument.");
@@ -165,10 +159,9 @@ static void ParseFileRuleCategory(RuleInfo *rule, char *args)
     rule->category = SnortStrdup(args);
 }
 
-static void ParseFileRuleVersion(RuleInfo *rule, char *args)
+static void ParseFileRuleVersion(RuleInfo* rule, char* args)
 {
-
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Version args: %s\n", args););
+    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Version args: %s\n", args); );
 
     if (args == NULL)
         ParseError("version rule option requires an argument.");
@@ -176,7 +169,7 @@ static void ParseFileRuleVersion(RuleInfo *rule, char *args)
     rule->version = SnortStrdup(args);
 }
 
-static void ParseFileRuleMessage(RuleInfo *rule, char *args)
+static void ParseFileRuleMessage(RuleInfo* rule, char* args)
 {
     size_t i;
     int escaped = 0;
@@ -188,7 +181,7 @@ static void ParseFileRuleMessage(RuleInfo *rule, char *args)
         return;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Msg args: %s\n", args););
+    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Msg args: %s\n", args); );
 
     if (*args == '"')
     {
@@ -212,16 +205,16 @@ static void ParseFileRuleMessage(RuleInfo *rule, char *args)
         /* If last quote is escaped, fatal error.
          * Make sure the backslash is not escaped */
         if ((args[strlen(args) - 1] == '\\') &&
-                (strlen(args) > 1) && (args[strlen(args) - 2] != '\\'))
+            (strlen(args) > 1) && (args[strlen(args) - 2] != '\\'))
         {
             ParseError("unmatch quote in rule option 'msg'.");
             return;
         }
     }
 
-    /* Only valid escaped chars are ';', '"' and '\' */
-    /* Would be ok except emerging threats rules are escaping other chars */
-    for (i = 0; (i < sizeof(msg_buf)) && (*args != '\0');)
+    /* Only valid escaped chars are ';', '"' and '\'
+       Would be ok except emerging threats rules are escaping other chars */
+    for (i = 0; (i < sizeof(msg_buf)) && (*args != '\0'); )
     {
         if (escaped)
         {
@@ -249,23 +242,23 @@ static void ParseFileRuleMessage(RuleInfo *rule, char *args)
     if (i == sizeof(msg_buf))
     {
         ParseError("message in 'msg' rule option too long.  Please limit "
-                "to %d characters.", sizeof(msg_buf));
+            "to %d characters.", sizeof(msg_buf));
         return;
     }
 
     msg_buf[i] = '\0';
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE, "Message: %s\n", msg_buf););
+    DEBUG_WRAP(DebugMessage(DEBUG_FILE, "Message: %s\n", msg_buf); );
 
     rule->message = SnortStrdup(msg_buf);
 }
 
-static void ParseFileRevision(RuleInfo *rule, char *args)
+static void ParseFileRevision(RuleInfo* rule, char* args)
 {
     unsigned long int rev;
-    char *endptr;
+    char* endptr;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Revision args: %s\n", args););
+    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Revision args: %s\n", args); );
 
     if (args == NULL)
     {
@@ -277,20 +270,19 @@ static void ParseFileRevision(RuleInfo *rule, char *args)
     if ((errno == ERANGE) || (*endptr != '\0') || (rev > FILE_REVISION_MAX))
     {
         ParseError("invalid argument to 'rev' rule option: %s.  "
-                "Must be a positive integer.", args);
+            "Must be a positive integer.", args);
     }
 
     rule->rev = (uint32_t)rev;
 }
 
-static uint8_t* convertTextToHex(char *text, int *size)
+static uint8_t* convertTextToHex(char* text, int* size)
 {
-
     int i;
-    char **toks;
+    char** toks;
     int num_toks;
     char hex_buf[3];
-    uint8_t *hex;
+    uint8_t* hex;
 
     toks = mSplit(text, " ", 0, &num_toks, 0);
 
@@ -300,64 +292,64 @@ static uint8_t* convertTextToHex(char *text, int *size)
         return (uint8_t*)"";
     }
 
-    hex = (uint8_t*) SnortAlloc(num_toks);
+    hex = (uint8_t*)SnortAlloc(num_toks);
     *size = num_toks;
 
     memset(hex_buf, 0, sizeof(hex_buf));
 
     for (i = 0; i < num_toks; i++)
     {
-        char *current_ptr = toks[i];
+        char* current_ptr = toks[i];
         if (2 != strlen(current_ptr))
         {
             ParseError("content hexmode argument has invalid "
-                    "number of hex digits.  The argument '%s' "
-                    "must contain a full even byte string.", current_ptr);
+                "number of hex digits.  The argument '%s' "
+                "must contain a full even byte string.", current_ptr);
             free(hex);
             return (uint8_t*)"";
         }
 
-        if(isxdigit((int) *current_ptr))
+        if (isxdigit((int)*current_ptr))
         {
             hex_buf[0] = *current_ptr;
         }
         else
         {
             ParseError("'%c' is not a valid hex value, please input hex values (0x0 - 0xF)",
-                       (char) *current_ptr);
+                (char)*current_ptr);
             free(hex);
             return (uint8_t*)"";
         }
 
         current_ptr++;
 
-        if(isxdigit((int) *current_ptr))
+        if (isxdigit((int)*current_ptr))
         {
             hex_buf[1] = *current_ptr;
         }
         else
         {
             ParseError("'%c' is not a valid hex value, please input hex values (0x0 - 0xF)",
-                       (char) *current_ptr);
+                (char)*current_ptr);
             free(hex);
             return (uint8_t*)"";
         }
-        DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Hex buffer: %s\n", hex_buf););
-        hex[i] = (uint8_t) strtol(hex_buf, (char **) NULL, 16)&0xFF;
+        DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Hex buffer: %s\n", hex_buf); );
+        hex[i] = (uint8_t)strtol(hex_buf, (char**)NULL, 16)&0xFF;
         memset(hex_buf, 0, sizeof(hex_buf));
-        DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Hex value: %x\n", hex[i]););
-
+        DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Hex value: %x\n", hex[i]); );
     }
     mSplitFree(&toks, num_toks);
     return hex;
 }
-static void ParseFileContent(RuleInfo *rule, char *args)
+
+static void ParseFileContent(RuleInfo* rule, char* args)
 {
-    MagicData *predata = NULL;
-    MagicData *newdata;
-    char *start_ptr;
-    char *end_ptr;
-    char *tmp;
+    MagicData* predata = NULL;
+    MagicData* newdata;
+    char* start_ptr;
+    char* end_ptr;
+    char* tmp;
 
     if (args == NULL)
     {
@@ -365,9 +357,9 @@ static void ParseFileContent(RuleInfo *rule, char *args)
         return;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Content args: %s\n", args););
+    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Content args: %s\n", args); );
 
-    while(isspace((int)*args))
+    while (isspace((int)*args))
         args++;
 
     /* find the start of the data */
@@ -402,18 +394,19 @@ static void ParseFileContent(RuleInfo *rule, char *args)
     if (strlen (tmp) > 0)
     {
         ParseError("bad data (possibly due to missing semicolon) after "
-                "trailing double quote.");
+            "trailing double quote.");
         return;
     }
 
     if (rule->magics)
     {
-        for (predata = rule->magics; predata->next != NULL; predata = predata->next);
+        for (predata = rule->magics; predata->next != NULL; predata = predata->next)
+            ;
     }
 
     newdata = (MagicData*)SnortAlloc(sizeof(*newdata));
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Content args: %s\n", start_ptr););
+    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Content args: %s\n", start_ptr); );
 
     newdata->content =  convertTextToHex(start_ptr, &(newdata->content_len));
 
@@ -425,16 +418,15 @@ static void ParseFileContent(RuleInfo *rule, char *args)
     {
         rule->magics = newdata;
     }
-
 }
 
-static void ParseFileOffset(RuleInfo *rule, char *args)
+static void ParseFileOffset(RuleInfo* rule, char* args)
 {
     unsigned long int offset;
-    char *endptr;
-    MagicData *mdata;
+    char* endptr;
+    MagicData* mdata;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Offset args: %s\n", args););
+    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Offset args: %s\n", args); );
 
     if (args == NULL)
     {
@@ -446,14 +438,14 @@ static void ParseFileOffset(RuleInfo *rule, char *args)
     if ((errno == ERANGE) || (*endptr != '\0')|| (offset > FILE_OFFSET_MAX))
     {
         ParseError("invalid argument to 'offset' rule option: %s.  "
-                "Must be a positive integer.", args);
+            "Must be a positive integer.", args);
         return;
     }
     mdata = GetLastMagic(rule, "offset");
     mdata->offset = (uint32_t)offset;
 }
 
-static void parse_options(char *option_name, char *option_args, char *configured, RuleInfo *rule)
+static void parse_options(char* option_name, char* option_args, char* configured, RuleInfo* rule)
 {
     int i;
     for (i = 0; file_options[i].name != NULL; i++)
@@ -470,8 +462,8 @@ static void parse_options(char *option_name, char *option_args, char *configured
         if ((option_args == NULL) && file_options[i].args_required)
         {
             ParseError("no argument passed to keyword '%s'.  "
-                    "Make sure you didn't forget a ':' or the "
-                    "argument to this keyword.\n",option_name);
+                "Make sure you didn't forget a ':' or the "
+                "argument to this keyword.\n",option_name);
             return;
         }
 
@@ -481,13 +473,12 @@ static void parse_options(char *option_name, char *option_args, char *configured
     }
     /* Unrecognized rule option */
     ParseError("unknown rule option: '%s'.", option_name);
-
 }
 
 #ifdef DEBUG_MSGS
-static int print_rule(RuleInfo *rule)
+static int print_rule(RuleInfo* rule)
 {
-    MagicData *mdata;
+    MagicData* mdata;
 
     if (!rule)
     {
@@ -509,8 +500,8 @@ static int print_rule(RuleInfo *rule)
     {
         int i;
         int buff_size = mdata->content_len * 2 + 1;
-        char *buff = (char*)SnortAlloc( buff_size);
-        char *start_ptr = buff;
+        char* buff = (char*)SnortAlloc(buff_size);
+        char* start_ptr = buff;
 
         DebugMessage(DEBUG_FILE,"Magic offset: %d\n", mdata->offset);
         DebugMessage(DEBUG_FILE,"Magic length: %d\n", mdata->content_len);
@@ -526,11 +517,12 @@ static int print_rule(RuleInfo *rule)
     }
     return rule->id;
 }
+
 #endif
 
-FileConfig *get_file_config(void **conf)
+FileConfig* get_file_config(void** conf)
 {
-    FileConfig *file_config = NULL;
+    FileConfig* file_config = NULL;
     if (!conf)
     {
         return NULL;
@@ -550,20 +542,20 @@ FileConfig *get_file_config(void **conf)
 #endif
     }
     else
-        file_config = (FileConfig *) (*conf);
+        file_config = (FileConfig*)(*conf);
 
     return file_config;
 }
 
 /*The main function for parsing rule option*/
-void parse_file_rule(const char *args, void **conf)
+void parse_file_rule(const char* args, void** conf)
 {
-    char **toks;
+    char** toks;
     int num_toks;
     int i;
     char configured[sizeof(file_options) / sizeof(FileOptFunc)];
-    RuleInfo *rule;
-    FileConfig *file_config = get_file_config(conf);
+    RuleInfo* rule;
+    FileConfig* file_config = get_file_config(conf);
 
     if (!file_config)
     {
@@ -571,10 +563,9 @@ void parse_file_rule(const char *args, void **conf)
     }
 
     rule = (RuleInfo*)SnortAlloc(sizeof (*rule));
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Loading file configuration: %s\n", args););
+    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Loading file configuration: %s\n", args); );
 
     toks = mSplit(args, ";", 0, &num_toks, 0);  /* get rule option pairs */
-
 
     /* Used to determine if a rule option has already been configured
      * in the rule.  Some can only be configured once */
@@ -582,25 +573,24 @@ void parse_file_rule(const char *args, void **conf)
 
     for (i = 0; i < num_toks; i++)
     {
-        char **opts;
+        char** opts;
         int num_opts;
-        char *option_args = NULL;
+        char* option_args = NULL;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_FILE,"   option: %s\n", toks[i]););
+        DEBUG_WRAP(DebugMessage(DEBUG_FILE,"   option: %s\n", toks[i]); );
 
         /* break out the option name from its data */
         opts = mSplit(toks[i], ":", 2, &num_opts, '\\');
 
-        DEBUG_WRAP(DebugMessage(DEBUG_FILE,"   option name: %s\n", opts[0]););
+        DEBUG_WRAP(DebugMessage(DEBUG_FILE,"   option name: %s\n", opts[0]); );
 
         if (num_opts == 2)
         {
             option_args = opts[1];
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE,"   option args: %s\n", option_args););
+            DEBUG_WRAP(DebugMessage(DEBUG_FILE,"   option args: %s\n", option_args); );
         }
         parse_options(opts[0], option_args, configured, rule);
         mSplitFree(&opts, num_opts);
-
     }
 
     if (file_config->FileRules[rule->id])
@@ -611,23 +601,25 @@ void parse_file_rule(const char *args, void **conf)
     }
     file_config->FileRules[rule->id] = rule;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Rule parsed: %d\n", print_rule(rule)););
+    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Rule parsed: %d\n", print_rule(rule)); );
     insert_file_rule(rule,file_config);
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Total memory used for identifiers: %d\n", memory_usage_identifiers()););
+    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Total memory used for identifiers: %d\n",
+        memory_usage_identifiers()); );
     mSplitFree(&toks, num_toks);
 }
-RuleInfo *get_rule_from_id(void *conf, uint32_t id)
+
+RuleInfo* get_rule_from_id(void* conf, uint32_t id)
 {
     if (conf)
     {
-        FileConfig *file_config = (FileConfig *)conf;
+        FileConfig* file_config = (FileConfig*)conf;
         return (file_config->FileRules[id]);
     }
 
     return NULL;
 }
 
-static void free_file_magic (MagicData  *magics)
+static void free_file_magic(MagicData* magics)
 {
     if (!magics)
         return;
@@ -635,7 +627,8 @@ static void free_file_magic (MagicData  *magics)
     free (magics->content);
     free (magics);
 }
-static void free_file_rule(RuleInfo *rule)
+
+static void free_file_rule(RuleInfo* rule)
 {
     if (!rule)
         return;
@@ -650,10 +643,11 @@ static void free_file_rule(RuleInfo *rule)
     free_file_magic(rule->magics);
     free(rule);
 }
-void free_file_rules(void *conf)
+
+void free_file_rules(void* conf)
 {
     int id;
-    FileConfig *file_config = (FileConfig *)conf;
+    FileConfig* file_config = (FileConfig*)conf;
 
     if (!file_config)
         return;

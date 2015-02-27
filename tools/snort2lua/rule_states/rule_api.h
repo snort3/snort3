@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 // converter.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-
 #ifndef RULE_STATES_RULE_API_H
 #define RULE_STATES_RULE_API_H
 
@@ -26,10 +25,9 @@
 
 namespace rules
 {
-
 // vector containing all of the rule keywords
 extern const std::vector<const ConvertMap*> rule_options_api;
-
 } // namespace rules
 
 #endif
+
