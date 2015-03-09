@@ -1,0 +1,227 @@
+NOTE: For the following examples "$my_path" is assumed to be the path to
+the Snort++ install directory. Additionally, it is assumed that
+"$my_path/bin" is in your PATH.
+
+
+==== Setting up the environment
+
+LUA_PATH is used directly by Lua to load and run required libraries.
+SNORT_LUA_PATH is used by Snort to load supplemental configuration files.
+
+    export LUA_PATH=$my_path/include/snort/lua/\?.lua\;\;
+    export SNORT_LUA_PATH=$my_path/etc
+
+
+==== Getting help
+
+Print the help summary:
+
+    snort --help
+
+This outputs:
+
+    Snort has several options to get more help:
+
+    -? list command line options (same as --help)
+    --help this overview of help
+    --help-commands [<module prefix>] output matching commands
+    --help-config [<module prefix>] output matching config options
+    --help-counts [<module prefix>] output matching peg counts
+    --help-module <module> output description of given module
+    --help-modules list all available modules with brief help
+    --help-plugins list all available plugins with brief help
+    --help-options [<option prefix>] output matching command line options
+    --help-signals dump available control signals
+    --list-buffers output available inspection buffers
+    --list-builtin [<module prefix>] output matching builtin rules
+    --list-gids [<module prefix>] output matching generators
+    --list-modules [<module type>] list all known modules
+    --list-plugins list all known modules
+    --show-plugins list module and plugin versions
+
+    --help* and --list* options preempt other processing so should be last on the
+    command line since any following options are ignored.  To ensure options like
+    --markup and --plugin-path take effect, place them ahead of the help or list
+    options.
+
+    Options that filter output based on a matching prefix, such as --help-config
+    won't output anything if there is no match.  If no prefix is given, everything
+    matches.
+
+    Report bugs to bugs@snort.org.
+
+Get help on a specific module ("stream", for example):
+
+    snort --help-module stream
+
+Get help on the "-A" command line option:
+
+    snort --help-options A
+
+Grep for help on threads:
+
+    snort --help-config | grep thread
+
+Output help on "rule" options in AsciiDoc format:
+
+    snort --markup --help-options rule
+
+NOTE: Snort++ stops reading command-line options after the "--help-*" and "--list-*" options,
+so any other options should be placed before them.:
+
+
+==== Sniffing and logging packets
+
+Read a pcap:
+
+    snort -r /path/to/my.pcap
+
+Dump the packets to STDOUT:
+
+    snort -r /path/to/my.pcap -K text
+
+Dump packets with application data and layer 2 headers
+
+    snort -r /path/to/my.pcap -K text -d -e
+
+NOTE: Command line options must be specified separately. "snort -de" won't work.
+You can still concatenate options and their arguments, however, so "snort -Ktext" will work.
+
+Dump packets from all pcaps in a directory:
+
+    snort --pcap-dir /path/to/pcap/dir --pcap-filter '*.pcap' -K text -d -e
+
+Log packets to a directory:
+
+    snort --pcap-dir /path/to/pcap/dir --pcap-filter '*.pcap' -K pcap -l /path/to/log/dir
+
+
+==== Configuration
+
+Validate a configuration file:
+
+    snort -c $my_path/etc/snort/snort.lua
+
+Validate a rules file and a configuration file:
+
+    snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules
+
+Read rules from STDIN and validate:
+
+    snort -c $my_path/etc/snort/snort.lua --stdin-rules < $my_path/etc/snort/sample.rules
+
+Enable warnings for Lua configurations and make warnings fatal:
+
+    snort -c $my_path/etc/snort/snort.lua --warn-all --pedantic
+
+Tell Snort++ where to look for additional Lua scripts:
+
+    snort --script-path /path/to/script/dir
+
+
+==== IDS mode
+
+Run Snort++ in IDS mode, reading packets from a pcap:
+
+    snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules \
+        -r /path/to/my.pcap
+
+Log any generated alerts to the console using the "-A" option:
+
+    snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules \
+        -r /path/to/my.pcap -A alert_full
+
+Add or modify a configuration from the command line using the "--lua" option:
+
+    snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap \
+        --lua 'ips = { enable_builtin_rules = true }'
+
+NOTE: The "--lua" option can be specified multiple times
+
+Run Snort++ in IDS mode on an entire directory of pcaps, processing each input source on a separate thread:
+
+    snort -c $my_path/etc/snort/snort.lua --pcap-dir /path/to/pcap/dir \
+        --pcap-filter '*.pcap' --max-packet-threads 8
+
+
+=== Output Files
+
+To make it simple to configure outputs when you run with multiple packet
+threads, output files are not explicitly configured. Instead, you can use
+the options below to format the paths:
+
+    <logdir>/[<run_prefix>][<id#>][<X>]<name>
+
+* logdir is set with -l and defaults to ./
+
+* run_prefix is set with --run-prefix else not used
+
+* id# is the packet thread number that writes the file; with one packet
+thread, id# (zero) is omitted without --id-zero
+
+* X is / if you use --id-subdir, else _ if id# is used
+
+* name is based on module name that writes the file
+
+* all text mode outputs default to stdout
+
+
+==== Shell
+
+You must build with --enable-shell to make the command line shell available.
+
+Enable shell mode:
+
+    snort --shell <args>
+
+You will see the shell mode command prompt, which looks like this:
+
+    o")~
+
+(The prompt can be changed with the SNORT_PROMPT environment variable.)
+
+You can pause immediately after loading the configuration and again before
+exiting with:
+
+    snort --shell --pause <args>
+
+In that case you must issue the resume() command to continue.  Enter quit()
+to terminate Snort or detach() to exit the shell.  You can list the
+available commands with help().
+
+To enable local telnet access on port 12345:
+
+    snort --shell -j 12345 <args>
+
+The command line interface is still under development.  Suggestions are 
+welcome.
+
+
+==== Interacting with Snort++ via signals
+
+NOTE: The following examples assume that Snort++ is currently running and
+has a process ID of <pid>:
+
+Modify and Reload Configuration:
+
+    echo 'suppress = { { gid = 1, sid = 2215 } }' >> $my_path/etc/snort/snort.lua
+    kill -hup <pid>
+
+Dump stats to stdout:
+
+    kill -usr1 <pid>
+
+Shutdown normally:
+
+    kill -term <pid>
+
+Exit without flushing packets:
+
+    kill -quit <pid>
+
+List available signals:
+
+    snort --help-signals
+
+NOTE: The available signals may vary from platform to platform.
+

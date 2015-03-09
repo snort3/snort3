@@ -48,11 +48,12 @@ set (UNBUILT_SOURCES
     params.txt
     reference.txt
     snort2lua.txt
+    snorty.png
     snort_manual.txt
     start.txt
     style.txt
     terms.txt
-    snorty.png
+    usage.txt
 #   config_changes.txt  If ruby executable is not found
 )
 

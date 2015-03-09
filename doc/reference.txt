@@ -2,6 +2,10 @@
 
 include::terms.txt[]
 
+=== Usage
+
+include::usage.txt[]
+
 === Optional Features
 
 include::features.txt[]

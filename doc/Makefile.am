@@ -37,10 +37,11 @@ overview.txt \
 params.txt \
 reference.txt \
 snort2lua.txt \
+snorty.png \
 start.txt \
 style.txt \
 terms.txt \
-snorty.png
+usage.txt
 
 all_sources = \
 $(unbuilt_sources) \
