@@ -206,9 +206,9 @@ static const CodecApi tr_api =
         CDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         TR_NAME,
         TR_HELP,
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

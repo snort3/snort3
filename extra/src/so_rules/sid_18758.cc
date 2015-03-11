@@ -58,9 +58,9 @@ static const SoApi so_api =
         SOAPI_VERSION,
         8,
         API_RESERVED,
+        API_OPTIONS,
         "3|18758",
         "SO rule example",
-        API_OPTIONS,
         nullptr,
         nullptr
     },

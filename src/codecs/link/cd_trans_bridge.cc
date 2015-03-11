@@ -101,9 +101,9 @@ static const CodecApi transbridge_api =
         CDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         CD_TRANSBRIDGE_NAME,
         CD_TRANSBRIDGE_HELP,
-        API_OPTIONS,
         nullptr,
         nullptr
     },

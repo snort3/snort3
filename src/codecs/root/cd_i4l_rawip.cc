@@ -83,9 +83,9 @@ static const CodecApi i4l_rawip_api =
         CDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         I4L_RAWIP_NAME,
         I4L_RAWIP_HELP,
-        API_OPTIONS,
         nullptr, // mod_ctor
         nullptr  // mod_dtor
     },

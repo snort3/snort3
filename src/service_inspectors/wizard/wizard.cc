@@ -247,9 +247,9 @@ static const InspectApi wiz_api =
         INSAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         WIZ_NAME,
         WIZ_HELP,
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

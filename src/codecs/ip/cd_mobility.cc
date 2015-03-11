@@ -79,9 +79,9 @@ static const CodecApi mobility_api =
         CDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         CD_MOBILE_NAME,
         CD_MOBILE_HELP,
-        API_OPTIONS,
         nullptr,
         nullptr
     },

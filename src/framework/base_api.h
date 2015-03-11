@@ -64,9 +64,9 @@ struct BaseApi
     uint32_t api_version;
     uint32_t version;
     uint64_t reserved;
+    const char* options;
     const char* name;
     const char* help;
-    const char* options;
     ModNewFunc mod_ctor;
     ModDelFunc mod_dtor;
 };

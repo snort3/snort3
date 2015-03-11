@@ -126,9 +126,9 @@ static const MpseApi acsb_api =
         SEAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         "ac_sparse_bands",
         "Aho-Corasick Sparse-Banded (high memory, moderate performance) MPSE",
-        API_OPTIONS,
         nullptr,
         nullptr
     },

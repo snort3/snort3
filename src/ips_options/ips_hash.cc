@@ -386,9 +386,9 @@ static const IpsApi md5_api =
         IPSAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         IPS_OPT,
         s_help,
-        API_OPTIONS,
         md5_mod_ctor,
         mod_dtor
     },
@@ -432,9 +432,9 @@ static const IpsApi sha256_api =
         IPSAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         IPS_OPT,
         s_help,
-        API_OPTIONS,
         sha256_mod_ctor,
         mod_dtor
     },
@@ -478,9 +478,9 @@ static const IpsApi sha512_api =
         IPSAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         IPS_OPT,
         s_help,
-        API_OPTIONS,
         sha512_mod_ctor,
         mod_dtor
     },

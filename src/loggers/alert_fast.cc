@@ -352,9 +352,9 @@ static LogApi fast_api
         LOGAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         S_NAME,
         s_help,
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

@@ -287,9 +287,9 @@ static const CodecApi gtp_api =
         CDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         CD_GTP_NAME,
         CD_GTP_HELP,
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

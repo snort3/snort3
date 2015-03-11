@@ -291,9 +291,9 @@ static const InspectApi no_api =
         INSAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         NORM_NAME,
         NORM_HELP,
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

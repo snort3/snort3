@@ -269,9 +269,9 @@ static const LogApi log_lua_api =
         LOGAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         "luajit",
         "Lua JIT script for logging events",
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

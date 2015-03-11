@@ -138,9 +138,9 @@ static const CodecApi icmp6_ip_api =
         CDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         ICMP6_IP_NAME,
         ICMP6_IP_HELP,
-        API_OPTIONS,
         nullptr, // module constructor
         nullptr  // module destructor
     },

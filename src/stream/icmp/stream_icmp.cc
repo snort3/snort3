@@ -115,9 +115,9 @@ static const InspectApi icmp_api =
         INSAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         MOD_NAME,
         MOD_HELP,
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

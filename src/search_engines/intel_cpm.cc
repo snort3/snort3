@@ -151,9 +151,9 @@ static const MpseApi cpm_api =
         SEAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         "intel_cpm",
         "Intel CPM library",
-        API_OPTIONS,
         nullptr,
         nullptr
     },

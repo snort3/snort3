@@ -322,9 +322,9 @@ static const CodecApi icmp4_ip_api =
         CDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         ICMP4_IP_NAME,
         ICMP4_IP_HELP,
-        API_OPTIONS,
         nullptr, // module constructor
         nullptr  // module destructor
     },

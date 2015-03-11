@@ -840,7 +840,6 @@ if test "x$SIGNAL_SNORT_READ_ATTR_TBL" != "x" ; then
 fi
 
 AC_DEFINE_UNQUOTED([API_OPTIONS], ["$API_OPTIONS"], [plugin api related build options])
-AC_SUBST(API_OPTIONS)
 
 #--------------------------------------------------------------------------
 # pthreads foo

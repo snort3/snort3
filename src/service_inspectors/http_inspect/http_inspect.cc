@@ -390,9 +390,9 @@ static const DataApi hg_api =
         PDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         GLOBAL_KEYWORD,
         GLOBAL_HELP,
-        API_OPTIONS,
         hg_mod_ctor,
         mod_dtor
     },
@@ -458,9 +458,9 @@ static const InspectApi hi_api =
         INSAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         SERVER_KEYWORD,
         SERVER_HELP,
-        API_OPTIONS,
         hs_mod_ctor,
         mod_dtor
     },

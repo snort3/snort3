@@ -144,9 +144,9 @@ static const MpseApi bnfa_api =
         SEAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         "ac_bnfa",
         "Aho-Corasick Binary NFA (low memory, high performance) MPSE",
-        API_OPTIONS,
         nullptr,
         nullptr
     },

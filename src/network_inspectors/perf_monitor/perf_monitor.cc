@@ -372,9 +372,9 @@ static const InspectApi pm_api =
         INSAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         PERF_NAME,
         PERF_HELP,
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

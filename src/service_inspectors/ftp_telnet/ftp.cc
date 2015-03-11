@@ -470,9 +470,9 @@ static const DataApi fc_api =
         PDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         client_key,
         client_help,
-        API_OPTIONS,
         fc_mod_ctor,
         mod_dtor
     },
@@ -516,9 +516,9 @@ static const InspectApi fs_api =
         INSAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         server_key,
         server_help,
-        API_OPTIONS,
         fs_mod_ctor,
         mod_dtor
     },

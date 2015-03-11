@@ -59,9 +59,9 @@ const InspectApi NHttpApi::nhttp_api =
         INSAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         NHttpApi::nhttp_my_name,
         NHttpApi::nhttp_help,
-        API_OPTIONS,
         NHttpApi::nhttp_mod_ctor,
         NHttpApi::nhttp_mod_dtor
     },

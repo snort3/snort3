@@ -481,9 +481,9 @@ static const CodecApi udp_api =
         CDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         CD_UDP_NAME,
         CD_UDP_HELP,
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

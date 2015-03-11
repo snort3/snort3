@@ -76,9 +76,9 @@ static const CodecApi pim_api =
         CDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         CD_PIM_NAME,
         CD_PIM_HELP,
-        API_OPTIONS,
         nullptr,
         nullptr
     },

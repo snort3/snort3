@@ -1105,9 +1105,9 @@ static const InspectApi rd_api =
         INSAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         mod_name,
         mod_help,
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

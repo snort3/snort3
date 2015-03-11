@@ -979,9 +979,9 @@ static const DataApi sd_api =
         PDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         PSG_NAME,
         PSG_HELP,
-        API_OPTIONS,
         gmod_ctor,
         mod_dtor
     },
@@ -1017,9 +1017,9 @@ static const InspectApi sp_api =
         INSAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         PS_NAME,
         PS_HELP,
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

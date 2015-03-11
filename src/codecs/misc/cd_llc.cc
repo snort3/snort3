@@ -158,9 +158,9 @@ static const CodecApi llc_api =
         CDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         LLC_NAME,
         LLC_HELP,
-        API_OPTIONS,
         nullptr,
         nullptr
     },

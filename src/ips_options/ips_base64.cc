@@ -269,9 +269,9 @@ static const IpsApi base64_decode_api =
         IPSAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         s_name,
         s_help,
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },
@@ -353,9 +353,9 @@ static const IpsApi base64_data_api =
         IPSAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         s_data_name,
         s_data_help,
-        API_OPTIONS,
         nullptr,
         nullptr
     },

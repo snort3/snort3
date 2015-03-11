@@ -140,10 +140,10 @@ static const MpseApi acfq_api =
         SEAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         "ac_full_q",
         "Aho-Corasick Full (high memory, best performance) with queued events,"
         " implements search_all()",
-        API_OPTIONS,
         nullptr,
         nullptr
     },

@@ -177,9 +177,9 @@ static const IpsApi urg_api =
         IPSAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         s_name,
         s_help,
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

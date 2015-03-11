@@ -123,9 +123,9 @@ static const CodecApi teredo_api =
         CDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         CD_TEREDO_NAME,
         CD_TEREDO_HELP,
-        API_OPTIONS,
         nullptr,
         nullptr
     },

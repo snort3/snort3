@@ -87,9 +87,9 @@ static const CodecApi ppp_api =
         CDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         PPP_NAME,
         PPP_HELP,
-        API_OPTIONS,
         nullptr, // mod_ctor
         nullptr, // mod_dtor
     },

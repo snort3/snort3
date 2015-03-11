@@ -146,9 +146,9 @@ static const MpseApi bnfaq_api =
         SEAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         "ac_bnfa_q",
         "Aho-Corasick Binary NFA (low memory, high performance) with queued events",
-        API_OPTIONS,
         nullptr,
         nullptr
     },

@@ -253,9 +253,9 @@ const IpsApi ips_lua_api =
         IPSAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         "tbd",
         "Lua JIT script for IPS rule option",
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

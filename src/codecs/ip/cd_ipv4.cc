@@ -795,9 +795,9 @@ static const CodecApi ipv4_api =
         CDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         CD_IPV4_NAME,
         CD_IPV4_HELP,
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

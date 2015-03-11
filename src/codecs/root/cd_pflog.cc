@@ -248,9 +248,9 @@ static const CodecApi pflog_api =
         CDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         PFLOG_NAME,
         PFLOG_HELP,
-        API_OPTIONS,
         nullptr, // mod_ctor
         nullptr  // mod_dtor
     },

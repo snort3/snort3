@@ -182,9 +182,9 @@ static const CodecApi wlan_api =
         CDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         CD_WLAN_NAME,
         CD_WLAN_HELP,
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

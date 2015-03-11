@@ -620,9 +620,9 @@ static const CodecApi icmp4_api =
         CDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         CD_ICMP4_NAME,
         CD_ICMP4_HELP,
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

@@ -186,9 +186,9 @@ static const LogApi log_codecs_api =
         LOGAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         S_NAME,
         LOG_CODECS_HELP,
-        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

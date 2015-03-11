@@ -77,9 +77,9 @@ static const CodecApi slip_api =
         CDAPI_VERSION,
         0,
         API_RESERVED,
+        API_OPTIONS,
         CD_SLIP_NAME,
         CD_SLIP_HELP,
-        API_OPTIONS,
         nullptr,
         nullptr
     },
