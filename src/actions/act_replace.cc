@@ -181,10 +181,13 @@ static ActionApi rep_api
 {
     {
         PT_IPS_ACTION,
+        sizeof(ActionApi),
+        ACTAPI_VERSION,
+        0,
+        API_RESERVED,
         s_name,
         s_help,
-        ACTAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

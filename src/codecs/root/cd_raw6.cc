@@ -66,10 +66,13 @@ static const CodecApi raw6_api =
 {
     {
         PT_CODEC,
+        sizeof(CodecApi),
+        CDAPI_VERSION,
+        0,
+        API_RESERVED,
         CD_RAW6_NAME,
         CD_RAW6_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         nullptr,
         nullptr,
     },

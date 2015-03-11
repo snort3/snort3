@@ -107,10 +107,13 @@ static const CodecApi ipv6_dstopts_api =
 {
     {
         PT_CODEC,
+        sizeof(CodecApi),
+        CDAPI_VERSION,
+        0,
+        API_RESERVED,
         CD_DSTOPTS_NAME,
         CD_DSTOPTS_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         nullptr,
         nullptr,
     },

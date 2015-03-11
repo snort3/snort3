@@ -54,10 +54,13 @@ static const SoApi so_api =
 {
     {
         PT_SO_RULE,
+        sizeof(SoApi),
+        SOAPI_VERSION,
+        8,
+        API_RESERVED,
         "3|18758",
         "SO rule example",
-        IPSAPI_PLUGIN_V0,
-        8,
+        API_OPTIONS,
         nullptr,
         nullptr
     },

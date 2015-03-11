@@ -285,10 +285,13 @@ static const InspectApi base_api =
 {
     {
         PT_INSPECTOR,
+        sizeof(InspectApi),
+        INSAPI_VERSION,
+        0,
+        API_RESERVED,
         MOD_NAME,
         MOD_HELP,
-        INSAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

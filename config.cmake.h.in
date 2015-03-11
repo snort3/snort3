@@ -1,4 +1,3 @@
-
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
@@ -21,7 +20,10 @@
 /* Version number of package */
 #define VERSION "@VERSION@"
 
-
+/* see configure.ac for the purpose of API_OPTIONS */
+/* there is no cmake magic yet to configure this */
+/* but luckily it is not yet needed */
+#define API_OPTIONS ""
 
 /*  User configured options */
 

@@ -97,10 +97,13 @@ static const CodecApi transbridge_api =
 {
     {
         PT_CODEC,
+        sizeof(CodecApi),
+        CDAPI_VERSION,
+        0,
+        API_RESERVED,
         CD_TRANSBRIDGE_NAME,
         CD_TRANSBRIDGE_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         nullptr,
         nullptr
     },

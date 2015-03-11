@@ -73,10 +73,13 @@ static const CodecApi slip_api =
 {
     {
         PT_CODEC,
+        sizeof(CodecApi),
+        CDAPI_VERSION,
+        0,
+        API_RESERVED,
         CD_SLIP_NAME,
         CD_SLIP_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         nullptr,
         nullptr
     },

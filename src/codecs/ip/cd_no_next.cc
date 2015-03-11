@@ -82,10 +82,13 @@ static const CodecApi no_next_api =
 {
     {
         PT_CODEC,
+        sizeof(CodecApi),
+        CDAPI_VERSION,
+        0,
+        API_RESERVED,
         CD_NO_NEXT_NAME,
         CD_NO_NEXT_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         nullptr,
         nullptr,
     },

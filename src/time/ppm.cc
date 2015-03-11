@@ -36,8 +36,6 @@
 *   config ppm: fastpath-expensive-packets
 *   config ppm: pkt-events  syslog|console
 *   config ppm: rule-events alert|syslog|console
-*   config ppm: debug-rules
-*   config ppm: debug-pkts
 *
 */
 
@@ -101,7 +99,6 @@ THREAD_LOCAL uint64_t ppm_cur_time = 0;
 THREAD_LOCAL int ppm_abort_this_pkt = 0;
 THREAD_LOCAL int ppm_suspend_this_rule = 0;
 
-/* debug-pkts  data */
 #define MAX_DP_NRULES 1000
 typedef struct
 {
@@ -191,9 +188,6 @@ void ppm_print_cfg(ppm_cfg_t* ppm_cfg)
         if (!ppm_cfg->pkt_log)
             LogMessage("none ");
         LogMessage("\n");
-#ifdef DEBUG
-        LogMessage("  debug-pkts      : %s\n",(ppm_cfg->debug_pkts) ? "enabled" : "disabled");
-#endif
     }
 
     if ( ppm_cfg->max_rule_ticks)
@@ -229,10 +223,6 @@ void ppm_print_cfg(ppm_cfg_t* ppm_cfg)
         if (!ppm_cfg->rule_log)
             LogMessage("none ");
         LogMessage("\n");
-#ifdef DEBUG
-        /*LogMessage("  debug-rules     : %s\n",(ppm_cfg->debug_rules)?"enabled":"disabled");
-          unsupported */
-#endif
     }
 }
 
@@ -542,19 +532,6 @@ void ppm_set_rule_threshold(ppm_cfg_t* ppm_cfg, unsigned int cnt)
 {
     ppm_cfg->rule_threshold = cnt;
 }
-
-#ifdef DEBUG
-void ppm_set_debug_rules(ppm_cfg_t* ppm_cfg, int flag)
-{
-    ppm_cfg->debug_rules = flag;
-}
-
-void ppm_set_debug_pkts(ppm_cfg_t* ppm_cfg, int flag)
-{
-    ppm_cfg->debug_pkts = flag;
-}
-
-#endif
 
 #endif
 

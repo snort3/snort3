@@ -202,10 +202,10 @@ static void finish_portlist_table(FastPatternConfig* fp, const char* s, PortTabl
     }
 }
 
-static rule_port_tables_t* PortTablesNew(void)
+static RulePortTables* PortTablesNew(void)
 {
-    rule_port_tables_t* rpt =
-        (rule_port_tables_t*)SnortAlloc(sizeof(rule_port_tables_t));
+    RulePortTables* rpt =
+        (RulePortTables*)SnortAlloc(sizeof(RulePortTables));
 
     /* No content rule objects */
     rpt->tcp_nocontent = PortObjectNew();
@@ -301,7 +301,7 @@ static rule_port_tables_t* PortTablesNew(void)
     return rpt;
 }
 
-static void PortTablesFinish(rule_port_tables_t* port_tables, FastPatternConfig* fp)
+static void PortTablesFinish(RulePortTables* port_tables, FastPatternConfig* fp)
 {
     /* TCP-SRC */
     if (fpDetectGetDebugPrintRuleGroupsCompiled(fp))
@@ -959,7 +959,7 @@ void FreeRuleLists(SnortConfig* sc)
     }
 }
 
-void PortTablesFree(rule_port_tables_t* port_tables)
+void PortTablesFree(RulePortTables* port_tables)
 {
     if (port_tables == NULL)
         return;

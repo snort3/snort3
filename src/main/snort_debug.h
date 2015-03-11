@@ -59,6 +59,7 @@
 #define DEBUG_FLOWBITS        0x0000000000008000LL
 #define DEBUG_FILE            0x0000000000010000LL
 #define DEBUG_CONTROL         0x0000000000020000LL
+#define DEBUG_PPM             0x0000000000040000LL
 #define DEBUG_EXP             0x0000000080000000LL
 
 // this env var uses the upper 32 bits of the flags:
@@ -92,7 +93,6 @@ void DebugWideMessageFunc(uint64_t dbg, const wchar_t* fmt, ...);
 #endif
 
 #ifdef DEBUG_MSGS
-
 SO_PUBLIC extern const char* DebugMessageFile;
 SO_PUBLIC extern int DebugMessageLine;
 
@@ -103,7 +103,7 @@ SO_PUBLIC extern int DebugMessageLine;
 
 uint64_t GetDebugLevel(void);
 int DebugThis(uint64_t level);
-#endif /* DEBUG_MSGS */
+#endif
 
 #ifdef DEBUG_MSGS
 #define DEBUG_WRAP(code) code
@@ -111,11 +111,10 @@ SO_PUBLIC void DebugMessageFunc(uint64_t dbg, const char* fmt, ...);
 #ifdef SF_WCHAR
 SO_PUBLIC void DebugWideMessageFunc(uint64_t dbg, const wchar_t* fmt, ...);
 #endif
-#else /* DEBUG_MSGS */
+#else
 #define DEBUG_WRAP(code)
 /* I would use DebugMessage(dbt,fmt...) but that only works with GCC */
+#endif
 
-#endif /* DEBUG_MSGS */
-
-#endif /* SNORT_DEBUG_H */
+#endif
 

@@ -139,10 +139,13 @@ static const InspectApi dpx_api
 {
     {
         PT_INSPECTOR,
+        sizeof(InspectApi),
+        INSAPI_VERSION,
+        0,
+        API_RESERVED,
         s_name,
         s_help,
-        INSAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         nullptr,
         nullptr
     },

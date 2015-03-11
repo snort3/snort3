@@ -157,10 +157,13 @@ static const CodecApi ipv6_frag_api =
 {
     {
         PT_CODEC,
+        sizeof(CodecApi),
+        CDAPI_VERSION,
+        0,
+        API_RESERVED,
         CD_IPV6_FRAG_NAME,
         CD_IPV6_FRAG_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         nullptr,
         nullptr,
     },

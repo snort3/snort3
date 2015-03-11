@@ -244,10 +244,13 @@ static const CodecApi pflog_api =
 {
     {
         PT_CODEC,
+        sizeof(CodecApi),
+        CDAPI_VERSION,
+        0,
+        API_RESERVED,
         PFLOG_NAME,
         PFLOG_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         nullptr, // mod_ctor
         nullptr  // mod_dtor
     },

@@ -157,7 +157,7 @@ void ResetRuleProfiling(void)
     OptTreeNode* otn  = NULL;
     SnortConfig* sc = snort_conf;
 
-    if ((sc == NULL) || (sc->profile_rules.num == 0))
+    if ((sc == NULL) || (sc->profile_rules->num == 0))
         return;
 
     for (hashNode = sfghash_findfirst(sc->otn_map);
@@ -372,7 +372,7 @@ void CollectRTNProfile(void)
                 {
                     OtnState* worst_otn = node->otn->state;
                     last = node;
-                    switch (sc->profile_rules.sort)
+                    switch (sc->profile_rules->sort)
                     {
                     case PROFILE_SORT_CHECKS:
                         if (state->checks >= worst_otn->checks)
@@ -456,7 +456,7 @@ void ShowRuleProfiles(void)
     /* Cycle through all Rules, print ticks & check count for each */
     SnortConfig* sc = snort_conf;
 
-    if ((sc == NULL) || (sc->profile_rules.num == 0))
+    if ((sc == NULL) || (sc->profile_rules->num == 0))
         return;
 
     detection_option_tree_update_otn_stats(sc->detection_option_tree_hash_table);
@@ -465,7 +465,7 @@ void ShowRuleProfiles(void)
     link_nodes();
 
     /* Specifically call out a top xxx or something? */
-    PrintWorstRules(sc->profile_rules.num);
+    PrintWorstRules(sc->profile_rules->num);
 }
 
 /* The preprocessor profile list is only accessed for printing stats when
@@ -768,7 +768,7 @@ void ResetPreprocProfiling(void)
     ProfileStatsNode* idx = NULL;
     SnortConfig* sc = snort_conf;
 
-    if ((sc == NULL) || (sc->profile_preprocs.num == 0))
+    if ((sc == NULL) || (sc->profile_preprocs->num == 0))
         return;
 
     for (idx = gProfileStatsNodeList; idx != NULL; idx = idx->next)
@@ -791,7 +791,7 @@ void ShowPreprocProfiles(void)
     double ticks_per_check;
     SnortConfig* sc = snort_conf;
 
-    if ((sc == NULL) || (sc->profile_preprocs.num == 0))
+    if ((sc == NULL) || (sc->profile_preprocs->num == 0))
         return;
 
     link_nodes();
@@ -850,7 +850,7 @@ void ShowPreprocProfiles(void)
             for (curr = listhead; curr && !got_position; curr = curr->next)
             {
                 last = curr;
-                switch (sc->profile_preprocs.sort)
+                switch (sc->profile_preprocs->sort)
                 {
                 case PROFILE_SORT_CHECKS:
                     if (pwp->node->stats.checks >= curr->node->stats.checks)
@@ -916,7 +916,7 @@ void ShowPreprocProfiles(void)
             }
         }
     }
-    PrintWorstPreprocs(sc->profile_preprocs.num);
+    PrintWorstPreprocs(sc->profile_preprocs->num);
     CleanupProfileStatsNodeList();
 }
 

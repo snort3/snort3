@@ -135,10 +135,13 @@ static const CodecApi ipv6_routing_api =
 {
     {
         PT_CODEC,
+        sizeof(CodecApi),
+        CDAPI_VERSION,
+        0,
+        API_RESERVED,
         CD_IPV6_ROUTING_NAME,
         CD_IPV6_ROUTING_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         nullptr,
         nullptr,
     },

@@ -616,14 +616,9 @@ void Ipv6Codec::update(const ip::IpApi&, const EncodeFlags flags,
     // we may not know the actual lengths because not all
     // extension headers are decoded and we stop at frag6.
     // in such case we do not modify the packet length.
-    if ( (flags & UPD_MODIFIED)
-#ifdef NORMALIZER
-        && !(flags & UPD_RESIZED)
-#endif
-        )
+    if ( (flags & UPD_MODIFIED) && !(flags & UPD_RESIZED) )
     {
-        // FIXIT-M J  --  this worked in Snort.  In Snort++,
-        //          will this be accurate?
+        // FIXIT-M -- this worked in Snort.  In Snort++, will this be accurate?
         updated_len = ntohs(h->ip6_payload_len) + ip::IP6_HEADER_LEN;
     }
     else
@@ -673,10 +668,13 @@ static const CodecApi ipv6_api =
 {
     {
         PT_CODEC,
+        sizeof(CodecApi),
+        CDAPI_VERSION,
+        0,
+        API_RESERVED,
         CD_IPV6_NAME,
         CD_IPV6_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         mod_ctor,
         mod_dtor,
     },

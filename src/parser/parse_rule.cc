@@ -188,7 +188,8 @@ static void port_list_free(port_list_t* plist)
  *    c)if the rule is bidir add the rule and port-object to both src and dst tables
  *
  */
-static int FinishPortListRule(rule_port_tables_t* port_tables, RuleTreeNode* rtn, OptTreeNode* otn,
+static int FinishPortListRule(
+    RulePortTables* port_tables, RuleTreeNode* rtn, OptTreeNode* otn,
     int proto, port_entry_t* pe, FastPatternConfig* fp)
 {
     int large_port_group = 0;

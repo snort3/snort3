@@ -119,10 +119,13 @@ static const MpseApi acs_api =
 {
     {
         PT_SEARCH_ENGINE,
+        sizeof(MpseApi),
+        SEAPI_VERSION,
+        0,
+        API_RESERVED,
         "ac_sparse",
         "Aho-Corasick Sparse (high memory, moderate performance) MPSE",
-        SEAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         nullptr,
         nullptr
     },

@@ -49,6 +49,8 @@
 #include "detection/fpcreate.h"
 #include "ips_options/ips_pcre.h"
 #include "protocols/udp.h"
+#include "time/ppm.h"
+#include "time/profiler.h"
 
 //-------------------------------------------------------------------------
 // private implementation
@@ -191,6 +193,15 @@ SnortConfig* SnortConfNew(void)
     sc->num_slots = get_instance_max();
     sc->state = (SnortState*)SnortAlloc(sizeof(SnortState)*sc->num_slots);
 
+#ifdef PERF_PROFILING
+    sc->profile_rules = (ProfileConfig*)SnortAlloc(sizeof(*sc->profile_rules));
+    sc->profile_preprocs = (ProfileConfig*)SnortAlloc(sizeof(*sc->profile_preprocs));
+#endif
+
+#ifdef PPM_MGR
+    sc->ppm_cfg = (ppm_cfg_t*)SnortAlloc(sizeof(*sc->ppm_cfg));
+#endif
+
     sc->policy_map = new PolicyMap;
 
     set_inspection_policy(sc->get_inspection_policy());
@@ -230,7 +241,7 @@ void SnortConfSetup(SnortConfig* sc)
     fpCreateFastPacketDetection(sc);
     pcre_setup(sc);
 #ifdef PPM_MGR
-    //PPM_PRINT_CFG(&sc->ppm_cfg);
+    //PPM_PRINT_CFG(sc->ppm_cfg);
 #endif
 }
 
@@ -333,6 +344,10 @@ void SnortConfFree(SnortConfig* sc)
 
     if (sc->gtp_ports)
         delete sc->gtp_ports;
+
+    free(sc->profile_rules);
+    free(sc->profile_preprocs);
+    free(sc->ppm_cfg);
 
 #ifdef INTEL_SOFT_CPM
     IntelPmRelease(sc->ipm_handles);
@@ -641,7 +656,7 @@ int VerifyReload(SnortConfig* sc)
 
 #ifdef PPM_MGR
     /* XXX XXX Not really sure we need to disallow this */
-    if (snort_conf->ppm_cfg.rule_log != sc->ppm_cfg.rule_log)
+    if (snort_conf->ppm_cfg->rule_log != sc->ppm_cfg->rule_log)
     {
         ErrorMessage("Snort Reload: Changing the ppm rule_log "
             "configuration requires a restart.\n");

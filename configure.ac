@@ -2,16 +2,19 @@
 # this file has the following sections:
 #
 # initialization
+# api options
 # host magic
-# Checks for programs.
+# checks for programs
 # visibility foo
-# Checks for typedefs, structures, and compiler characteristics.
-# vars
+# checks for types, etc.
+# checks for functions
 # enables
 # with foo
-# Checks for header files.
-# Checks for libraries.
+# checks for header files
+# checks for libraries
 # DAQ foo
+# other vars
+# pthreads foo
 # outputs
 #
 # if you add an AC_DEFINE() for a symbol that appears in an exported
@@ -43,7 +46,6 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_PROG_RANLIB
 AC_PROG_LIBTOOL
 AC_C_BIGENDIAN
 AC_C_INLINE
@@ -60,6 +62,25 @@ if test "x$CXX" = "xg++"; then
        exit 1
     fi
 fi
+
+#--------------------------------------------------------------------------
+# api options
+#--------------------------------------------------------------------------
+
+# build options which affect plugin compatibility must be appended to this
+# string to ensure issues are caught when loading:
+
+API_OPTIONS=""
+
+# presently such cases were eliminated.  however, if any arise, add a
+# statement like the following after the associated AC_DEFINE() statement:
+
+# AC_DEFINE(([HAVE_OPTION],[1], [option-name is enabled])
+# API_OPTIONS="$API_OPTIONS option-name"
+
+# API_OPTIONS is #defined in config.h but that file is not exported so it
+# is also #defined in api_options.h which is installed by
+# src/framework/Makefile.am.
 
 #--------------------------------------------------------------------------
 # host magic :(
@@ -111,7 +132,7 @@ case "$host" in
 esac
 
 #--------------------------------------------------------------------------
-# Checks for programs.
+# checks for programs
 #--------------------------------------------------------------------------
 
 # FIXIT-L should not need AM_CONDITIONAL() here
@@ -171,7 +192,7 @@ AC_DEFUN([CC_VISIBILITY],
 CC_VISIBILITY()
 
 #--------------------------------------------------------------------------
-# Checks for typedefs, structures, and compiler characteristics.
+# checks for types, etc.
 #--------------------------------------------------------------------------
 
 #AC_CHECK_HEADER_STDBOOL
@@ -204,7 +225,10 @@ AC_CHECK_SIZEOF([unsigned long long int])
 AC_CHECK_TYPES([uint8_t,uint16_t,uint32_t,uint64_t])
 AC_CHECK_TYPES([int8_t,int16_t,int32_t,int64_t])
 
-# Checks for library functions.
+#--------------------------------------------------------------------------
+# checks for functions
+#--------------------------------------------------------------------------
+
 AC_FUNC_CHOWN
 AC_FUNC_FORK
 AC_FUNC_MALLOC
@@ -212,34 +236,6 @@ AC_FUNC_REALLOC
 AC_FUNC_STRERROR_R
 AC_FUNC_STRTOD
 AC_CHECK_FUNCS([endgrent endpwent ftruncate getcwd gettimeofday inet_ntoa isascii localtime_r memchr memmove memset mkdir select socket strcasecmp strchr strdup strerror strncasecmp strrchr strstr strtol strtoul mallinfo malloc_trim])
-
-#--------------------------------------------------------------------------
-# vars
-#--------------------------------------------------------------------------
-
-AC_ARG_VAR(SIGNAL_SNORT_RELOAD, set the SIGNAL_SNORT_RELOAD value)
-
-if test "x$SIGNAL_SNORT_RELOAD" != "x" ; then
-   AC_DEFINE_UNQUOTED([SIGNAL_SNORT_RELOAD], [$SIGNAL_SNORT_RELOAD], [Set by user])
-fi
-
-AC_ARG_VAR(SIGNAL_SNORT_DUMP_STATS, set the SIGNAL_SNORT_DUMP_STATS value)
-
-if test "x$SIGNAL_SNORT_DUMP_STATS" != "x" ; then
-   AC_DEFINE_UNQUOTED([SIGNAL_SNORT_DUMP_STATS], [$SIGNAL_SNORT_DUMP_STATS], [Set by user])
-fi
-
-AC_ARG_VAR(SIGNAL_SNORT_ROTATE_STATS, set the SIGNAL_SNORT_ROTATE_STATS value)
-
-if test "x$SIGNAL_SNORT_ROTATE_STATS" != "x" ; then
-   AC_DEFINE_UNQUOTED([SIGNAL_SNORT_ROTATE_STATS], [$SIGNAL_SNORT_ROTATE_STATS], [Set by user])
-fi
-
-AC_ARG_VAR(SIGNAL_SNORT_READ_ATTR_TBL, set the SIGNAL_SNORT_READ_ATTR_TBL value)
-
-if test "x$SIGNAL_SNORT_READ_ATTR_TBL" != "x" ; then
-   AC_DEFINE_UNQUOTED([SIGNAL_SNORT_READ_ATTR_TBL], [$SIGNAL_SNORT_READ_ATTR_TBL], [Set by user])
-fi
 
 #--------------------------------------------------------------------------
 # enables
@@ -586,7 +582,7 @@ if test "x$with_intel_soft_cpm_libraries" != "xno"; then
 fi
 
 #--------------------------------------------------------------------------
-# Checks for header files.
+# checks for header files
 #--------------------------------------------------------------------------
 
 AC_FUNC_ALLOCA
@@ -604,7 +600,7 @@ if test "x$DNET_H" = "xno" -a "x$DUMBNET_H" = "xno"; then
 fi
 
 #--------------------------------------------------------------------------
-# Checks for libraries.
+# checks for libraries
 #--------------------------------------------------------------------------
 
 LPCAP=""
@@ -816,7 +812,38 @@ if test "x$have_daq_address_space_id" = "xyes"; then
 fi
 
 #--------------------------------------------------------------------------
-# Check for pthreads availability
+# other vars
+#--------------------------------------------------------------------------
+
+AC_ARG_VAR(SIGNAL_SNORT_RELOAD, set the SIGNAL_SNORT_RELOAD value)
+
+if test "x$SIGNAL_SNORT_RELOAD" != "x" ; then
+   AC_DEFINE_UNQUOTED([SIGNAL_SNORT_RELOAD], [$SIGNAL_SNORT_RELOAD], [Set by user])
+fi
+
+AC_ARG_VAR(SIGNAL_SNORT_DUMP_STATS, set the SIGNAL_SNORT_DUMP_STATS value)
+
+if test "x$SIGNAL_SNORT_DUMP_STATS" != "x" ; then
+   AC_DEFINE_UNQUOTED([SIGNAL_SNORT_DUMP_STATS], [$SIGNAL_SNORT_DUMP_STATS], [Set by user])
+fi
+
+AC_ARG_VAR(SIGNAL_SNORT_ROTATE_STATS, set the SIGNAL_SNORT_ROTATE_STATS value)
+
+if test "x$SIGNAL_SNORT_ROTATE_STATS" != "x" ; then
+   AC_DEFINE_UNQUOTED([SIGNAL_SNORT_ROTATE_STATS], [$SIGNAL_SNORT_ROTATE_STATS], [Set by user])
+fi
+
+AC_ARG_VAR(SIGNAL_SNORT_READ_ATTR_TBL, set the SIGNAL_SNORT_READ_ATTR_TBL value)
+
+if test "x$SIGNAL_SNORT_READ_ATTR_TBL" != "x" ; then
+   AC_DEFINE_UNQUOTED([SIGNAL_SNORT_READ_ATTR_TBL], [$SIGNAL_SNORT_READ_ATTR_TBL], [Set by user])
+fi
+
+AC_DEFINE_UNQUOTED([API_OPTIONS], ["$API_OPTIONS"], [plugin api related build options])
+AC_SUBST(API_OPTIONS)
+
+#--------------------------------------------------------------------------
+# pthreads foo
 #--------------------------------------------------------------------------
 
 AX_PTHREAD
@@ -935,3 +962,4 @@ AC_MSG_RESULT([
     ldflags:        ${LDFLAGS}
     libs:           ${LIBS}
 ])
+

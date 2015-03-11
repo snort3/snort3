@@ -466,10 +466,13 @@ static const DataApi fc_api =
 {
     {
         PT_DATA,
+        sizeof(DataApi),
+        PDAPI_VERSION,
+        0,
+        API_RESERVED,
         client_key,
         client_help,
-        MODAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         fc_mod_ctor,
         mod_dtor
     },
@@ -509,10 +512,13 @@ static const InspectApi fs_api =
 {
     {
         PT_INSPECTOR,
+        sizeof(InspectApi),
+        INSAPI_VERSION,
+        0,
+        API_RESERVED,
         server_key,
         server_help,
-        INSAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         fs_mod_ctor,
         mod_dtor
     },

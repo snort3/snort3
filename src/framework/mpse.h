@@ -40,11 +40,7 @@
 #endif
 
 // this is the current version of the api
-#define SEAPI_VERSION 0
-
-// this is the version of the api the plugins are using
-// to be useful, these must be explicit (*_V0, *_V1, ...)
-#define SEAPI_PLUGIN_V0 0
+#define SEAPI_VERSION ((BASE_API_VERSION << 16) | 0)
 
 struct SnortConfig;
 struct MpseApi;

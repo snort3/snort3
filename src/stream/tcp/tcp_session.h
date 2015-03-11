@@ -86,9 +86,6 @@ struct StreamSegment
     StreamSegment* prev;
     StreamSegment* next;
 
-#ifdef DEBUG
-    int ordinal;
-#endif
     struct timeval tv;
     uint32_t caplen;
     uint32_t pktlen;
@@ -138,10 +135,6 @@ struct StreamTracker
     // the segment to flush from and is set per packet.  should keep
     // up to date.
     StreamSegment* seglist_next;
-
-#ifdef DEBUG
-    int segment_ordinal;
-#endif
 
     /* Local for these variables means the local part of the connection.  For
      * example, if this particular StreamTracker was tracking the client side

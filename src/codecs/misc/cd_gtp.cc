@@ -283,10 +283,13 @@ static const CodecApi gtp_api =
 {
     {
         PT_CODEC,
+        sizeof(CodecApi),
+        CDAPI_VERSION,
+        0,
+        API_RESERVED,
         CD_GTP_NAME,
         CD_GTP_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

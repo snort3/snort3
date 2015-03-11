@@ -173,10 +173,13 @@ static const CodecApi pgm_api =
 {
     {
         PT_CODEC,
+        sizeof(CodecApi),
+        CDAPI_VERSION,
+        0,
+        API_RESERVED,
         CD_PGM_NAME,
         CD_PGM_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         mod_ctor,
         mod_dtor,
     },

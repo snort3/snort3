@@ -76,7 +76,7 @@ enum
 
 static void fpAddIpProtoOnlyRule(SF_LIST**, OptTreeNode*);
 static void fpRegIpProto(uint8_t*, OptTreeNode*);
-static int fpCreatePortGroups(SnortConfig*, rule_port_tables_t*);
+static int fpCreatePortGroups(SnortConfig*, RulePortTables*);
 static void fpDeletePortGroup(void*);
 static void fpDeletePMX(void* data);
 static int fpGetFinalPattern(FastPatternConfig* fp, PatternMatchData* pmd,
@@ -1437,7 +1437,7 @@ static int fpCreateInitRuleMap(
 /*
  * Create and initialize the rule maps
  */
-static int fpCreateRuleMaps(SnortConfig* sc, rule_port_tables_t* p)
+static int fpCreateRuleMaps(SnortConfig* sc, RulePortTables* p)
 {
     sc->prmTcpRTNX = prmNewMap();
     if (sc->prmTcpRTNX == NULL)
@@ -1877,7 +1877,7 @@ static int fpCreatePortTablePortGroups(
  *  uprade them for the create port group function
  */
 static int fpCreatePortGroups(
-    SnortConfig* sc, rule_port_tables_t* p)
+    SnortConfig* sc, RulePortTables* p)
 {
     PortObject2* po2, * add_any_any = NULL;
     FastPatternConfig* fp = sc->fast_pattern_config;
@@ -2496,7 +2496,7 @@ static int fpCreateServicePortGroups(SnortConfig* sc)
 */
 int fpCreateFastPacketDetection(SnortConfig* sc)
 {
-    rule_port_tables_t* port_tables;
+    RulePortTables* port_tables;
     FastPatternConfig* fp;
 
     /* This is somewhat necessary because of how the detection option trees

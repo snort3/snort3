@@ -106,8 +106,7 @@ bool Erspan3Codec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
     }
 
-    /* Check that this is in fact ERSpan Type 3.
-     */
+    // Check that this is in fact ERSpan Type 3.
     if (erSpan3Hdr->version() != 0x02) /* Type 3 == version 0x02 */
     {
         codec_event(codec, DECODE_ERSPAN_HDR_VERSION_MISMATCH);
@@ -139,10 +138,13 @@ static const CodecApi erspan3_api =
 {
     {
         PT_CODEC,
+        sizeof(CodecApi),
+        CDAPI_VERSION,
+        0,
+        API_RESERVED,
         CD_ERSPAN3_NAME,
         CD_ERSPAN3_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         mod_ctor,
         mod_dtor,
     },

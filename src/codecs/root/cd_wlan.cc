@@ -178,10 +178,13 @@ static const CodecApi wlan_api =
 {
     {
         PT_CODEC,
+        sizeof(CodecApi),
+        CDAPI_VERSION,
+        0,
+        API_RESERVED,
         CD_WLAN_NAME,
         CD_WLAN_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

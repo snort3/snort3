@@ -75,6 +75,7 @@ struct Symbol
 {
     const char* name;
     unsigned version;
+    unsigned size;
 };
 
 #if 1
@@ -82,14 +83,14 @@ struct Symbol
 // compiler catches too many but not too few
 static Symbol symbols[PT_MAX] =
 {
-    { "data", 0 },
-    { "codec", CDAPI_VERSION },
-    { "inspector", INSAPI_VERSION },
-    { "ips_action", ACTAPI_VERSION },
-    { "ips_option", IPSAPI_VERSION },
-    { "search_engine", SEAPI_VERSION },
-    { "so_rule", SOAPI_VERSION },
-    { "logger", LOGAPI_VERSION }
+    { "data", PDAPI_VERSION, sizeof(DataApi) },
+    { "codec", CDAPI_VERSION, sizeof(CodecApi) },
+    { "inspector", INSAPI_VERSION, sizeof(InspectApi) },
+    { "ips_action", ACTAPI_VERSION, sizeof(ActionApi) },
+    { "ips_option", IPSAPI_VERSION, sizeof(IpsApi) },
+    { "search_engine", SEAPI_VERSION, sizeof(MpseApi) },
+    { "so_rule", SOAPI_VERSION, sizeof(SoApi) },
+    { "logger", LOGAPI_VERSION, sizeof(LogApi) }
 };
 #else
 // this gets around the sequence issue with some compilers
@@ -97,14 +98,14 @@ static Symbol symbols[PT_MAX] =
 #define stringify(name) # name
 static Symbol symbols[PT_MAX] =
 {
-    [PT_DATA] = { stringify(PT_DATA), 0 },
-    [PT_CODEC] = { stringify(PT_CODEC), CDAPI_VERSION },
-    [PT_INSPECTOR] = { stringify(PT_INSPECTOR), INSAPI_VERSION },
-    [PT_IPS_ACTION] = { stringify(PT_IPS_ACTION), ACTAPI_VERSION },
-    [PT_IPS_OPTION] = { stringify(PT_IPS_OPTION), IPSAPI_VERSION },
-    [PT_SEARCH_ENGINE] = { stringify(PT_SEARCH_ENGINE), SEAPI_VERSION },
-    [PT_SO_RULE] = { stringify(PT_SO_RULE), SOAPI_VERSION },
-    [PT_LOGGER] = { stringify(PT_LOGGER), LOGAPI_VERSION }
+    [PT_DATA] = { stringify(PT_DATA), PDAPI_VERSION, sizeof(DataApi) },
+    [PT_CODEC] = { stringify(PT_CODEC), CDAPI_VERSION, sizeof(CodecApi) },
+    [PT_INSPECTOR] = { stringify(PT_INSPECTOR), INSAPI_VERSION, sizeof(InspectApi) },
+    [PT_IPS_ACTION] = { stringify(PT_IPS_ACTION), ACTAPI_VERSION, sizeof(ActionApi) },
+    [PT_IPS_OPTION] = { stringify(PT_IPS_OPTION), IPSAPI_VERSION, sizeof(IpsApi) },
+    [PT_SEARCH_ENGINE] = { stringify(PT_SEARCH_ENGINE), SEAPI_VERSION, sizeof(MpseApi) },
+    [PT_SO_RULE] = { stringify(PT_SO_RULE), SOAPI_VERSION, sizeof(SoApi) },
+    [PT_LOGGER] = { stringify(PT_LOGGER), LOGAPI_VERSION, sizeof(LogApi) }
 };
 #endif
 
@@ -168,6 +169,26 @@ static void set_key(string& key, Symbol* sym, const char* name)
     key += name;
 }
 
+// plugins are linked when loaded (RTLD_NOW) so missing symbols
+// don't make it this far.  we therefore only need to check
+// that shared structs are defined identically, so opts strings
+// must be identical.
+static bool compatible_builds(const char* plug_opts)
+{
+    const char* snort_opts = API_OPTIONS;
+
+    if ( !snort_opts and !plug_opts )
+        return true;
+
+    if ( !snort_opts or !plug_opts )
+        return false;
+
+    if ( strcmp(snort_opts, plug_opts) )
+        return false;
+
+    return true;
+}
+
 static bool register_plugin(
     const BaseApi* api, void* handle, const char* file)
 {
@@ -176,7 +197,13 @@ static bool register_plugin(
 
     Symbol* sym = symbols + api->type;
 
+    if ( api->size != sym->size )
+        return false;
+
     if ( api->api_version != sym->version )
+        return false;
+
+    if ( !compatible_builds(api->options) )
         return false;
 
     // validate api ?

@@ -111,10 +111,13 @@ static const CodecApi ipv6_hopopts_api =
 {
     {
         PT_CODEC,
+        sizeof(CodecApi),
+        CDAPI_VERSION,
+        0,
+        API_RESERVED,
         CD_HOPOPTS_NAME,
         CD_HOPOPTS_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         nullptr,
         nullptr,
     },

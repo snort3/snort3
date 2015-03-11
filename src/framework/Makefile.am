@@ -36,3 +36,10 @@ value.cc
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 
+# install this to enable plugin build compatibility check
+install-data-hook: $(top_builddir)/config.h
+	echo "#define API_OPTIONS \"$(API_OPTIONS)\"" >> $(x_includedir)/api_options.h
+
+uninstall-hook:
+	rm -f $(x_includedir)/api_options.h
+

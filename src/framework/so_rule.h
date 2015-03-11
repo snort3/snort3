@@ -27,11 +27,7 @@
 struct Packet;
 
 // this is the current version of the api
-#define SOAPI_VERSION 0
-
-// this is the version of the api the plugins are using
-// to be useful, these must be explicit (*_V0, *_V1, ...)
-#define SOAPI_PLUGIN_V0 0
+#define SOAPI_VERSION ((BASE_API_VERSION << 16) | 0)
 
 //-------------------------------------------------------------------------
 // rule format is:  header ( <stub opts>; soid:<tag>; <detect opts>; )

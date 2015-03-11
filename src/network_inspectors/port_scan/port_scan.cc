@@ -975,10 +975,13 @@ static const DataApi sd_api =
 {
     {
         PT_DATA,
+        sizeof(DataApi),
+        PDAPI_VERSION,
+        0,
+        API_RESERVED,
         PSG_NAME,
         PSG_HELP,
-        PDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         gmod_ctor,
         mod_dtor
     },
@@ -1010,10 +1013,13 @@ static const InspectApi sp_api =
 {
     {
         PT_INSPECTOR,
+        sizeof(InspectApi),
+        INSAPI_VERSION,
+        0,
+        API_RESERVED,
         PS_NAME,
         PS_HELP,
-        INSAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

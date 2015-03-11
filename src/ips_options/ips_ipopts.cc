@@ -285,10 +285,13 @@ static const IpsApi ipopts_api =
 {
     {
         PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        0,
+        API_RESERVED,
         s_name,
         s_help,
-        IPSAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

@@ -196,10 +196,13 @@ static const MpseApi lmq_api =
 {
     {
         PT_SEARCH_ENGINE,
+        sizeof(MpseApi),
+        SEAPI_VERSION,
+        0,
+        API_RESERVED,
         s_name,
         "Keyword Trie (low memory, moderate performance) MPSE with queued events",
-        SEAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

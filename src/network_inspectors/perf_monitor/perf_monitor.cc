@@ -368,10 +368,13 @@ static const InspectApi pm_api =
 {
     {
         PT_INSPECTOR,
+        sizeof(InspectApi),
+        INSAPI_VERSION,
+        0,
+        API_RESERVED,
         PERF_NAME,
         PERF_HELP,
-        INSAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

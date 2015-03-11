@@ -159,7 +159,7 @@ struct PortTable
     int non_opt_merges;
 };
 
-typedef struct RulePortTables
+struct RulePortTables
 {
     PortTable* tcp_src, * tcp_dst;
     PortTable* udp_src, * udp_dst;
@@ -175,7 +175,7 @@ typedef struct RulePortTables
     PortObject* udp_nocontent;
     PortObject* icmp_nocontent;
     PortObject* ip_nocontent;
-}rule_port_tables_t;
+};
 
 #define POPERR_NO_NAME            1
 #define POPERR_NO_ENDLIST_BRACKET 2

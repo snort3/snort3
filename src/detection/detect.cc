@@ -98,8 +98,8 @@ void snort_inspect(Packet* p)
         pktcnt = PPM_INC_PKT_CNT();
         PPM_GET_TIME();
         PPM_INIT_PKT_TIMER();
-#ifdef DEBUG
-        if ( PPM_DEBUG_PKTS() )
+#ifdef DEBUG_MSGS
+        if ( DebugThis(DEBUG_PPM) )
         {
             /* for debugging, info gathering, so don't worry about
             *  (unsigned) casting of pktcnt, were not likely to debug
@@ -174,8 +174,8 @@ void snort_inspect(Packet* p)
         PPM_GET_TIME();
         PPM_TOTAL_PKT_TIME();
         PPM_ACCUM_PKT_TIME();
-#ifdef DEBUG
-        if ( PPM_DEBUG_PKTS() )
+#ifdef DEBUG_MSGS
+        if ( DebugThis(DEBUG_PPM) )
         {
             LogMessage("PPM: Pkt[%u] Used= ",(unsigned)pktcnt);
             PPM_PRINT_PKT_TIME("%g usecs\n");

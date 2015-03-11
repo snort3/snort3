@@ -31,11 +31,7 @@
 struct Packet;
 
 // this is the current version of the api
-#define LOGAPI_VERSION 0
-
-// this is the version of the api the plugins are using
-// to be useful, these must be explicit (*_V0, *_V1, ...)
-#define LOGAPI_PLUGIN_V0 0
+#define LOGAPI_VERSION ((BASE_API_VERSION << 16) | 0)
 
 #define OUTPUT_TYPE_FLAG__NONE  0x0
 #define OUTPUT_TYPE_FLAG__ALERT 0x1

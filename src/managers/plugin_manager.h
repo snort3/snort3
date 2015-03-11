@@ -21,7 +21,7 @@
 #define PLUGIN_MANAGER_H
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"
+#include "config.h"
 #endif
 
 #include "snort_types.h"

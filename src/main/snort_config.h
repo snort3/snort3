@@ -29,7 +29,6 @@
 #include <sys/stat.h>
 #include "detection/rules.h"
 #include "sfip/sfip_t.h"
-#include "time/ppm.h"
 #include "main/policy.h"
 #include "utils/util.h"
 #include "protocols/packet.h"
@@ -38,27 +37,11 @@
 
 #define DEFAULT_LOG_DIR "."
 
-#ifdef INTEL_SOFT_CPM
-struct _IntelPmHandles;
-#endif
-
 #ifdef PERF_PROFILING
 #include "time/profiler.h"
 #endif
 
-struct FrameworkConfig;
-struct FastPatternConfig;
-struct EventQueueConfig;
-struct ThresholdConfig;
-struct RateFilterConfig;
-struct RuleState;
-struct ClassType;
-struct ReferenceSystemNode;
-struct SFGHASH;
-struct DetectionFilterConfig;
-struct RuleListNode;
 struct PORT_RULE_MAP;
-struct SFGHASH;
 struct SFXHASH;
 struct srmm_table_t;
 struct sopg_table_t;
@@ -66,10 +49,6 @@ struct sopg_table_t;
 // defined in sfghash.h  forward declared here
 struct sf_list;
 typedef sf_list SF_LIST;
-
-// defined in sfportobject.h. forward declared here
-struct RulePortTables;
-typedef RulePortTables rule_port_tables_t;
 
 #if 0
 FIXIT-L
@@ -127,13 +106,6 @@ struct SnortConfig
     int run_flags;
 
     //------------------------------------------------------
-    // profling module stuff
-#ifdef PERF_PROFILING
-    ProfileConfig profile_rules;
-    ProfileConfig profile_preprocs;
-#endif
-
-    //------------------------------------------------------
     // process stuff
     int user_id;
     int group_id;
@@ -189,21 +161,13 @@ struct SnortConfig
 
     //------------------------------------------------------
     // various modules
-    FastPatternConfig* fast_pattern_config;
-    EventQueueConfig* event_queue_config;
+    struct FastPatternConfig* fast_pattern_config;
+    struct EventQueueConfig* event_queue_config;
     void* file_config;
 
     /* XXX XXX policy specific? */
-    ThresholdConfig* threshold_config;
-    RateFilterConfig* rate_filter_config;
-
-#ifdef PPM_MGR
-    ppm_cfg_t ppm_cfg;
-#endif
-
-#ifdef INTEL_SOFT_CPM
-    struct _IntelPmHandles* ipm_handles;
-#endif
+    struct ThresholdConfig* threshold_config;
+    struct RateFilterConfig* rate_filter_config;
 
     //------------------------------------------------------
     // FIXIT-L command line only stuff, add to conf / module
@@ -225,18 +189,18 @@ struct SnortConfig
 
     int thiszone;
 
-    RuleState* rule_state_list;
-    ClassType* classifications;
-    ReferenceSystemNode* references;
-    SFGHASH* otn_map;
+    struct RuleState* rule_state_list;
+    struct ClassType* classifications;
+    struct ReferenceSystemNode* references;
+    struct SFGHASH* otn_map;
 
-    DetectionFilterConfig* detection_filter_config;
+    struct DetectionFilterConfig* detection_filter_config;
 
     SF_LIST** ip_proto_only_lists;
     uint8_t ip_proto_array[NUM_IP_PROTOS];
 
     int num_rule_types;
-    RuleListNode* rule_lists;
+    struct RuleListNode* rule_lists;
     int evalOrder[RULE_TYPE__MAX + 1];
 
     ListHead Alert;
@@ -248,7 +212,7 @@ struct SnortConfig
     struct FrameworkConfig* framework_config;
 
     /* master port list table */
-    rule_port_tables_t* port_tables;
+    struct RulePortTables* port_tables;
 
     /* The port-rule-maps map the src-dst ports to rules for
      * udp and tcp, for Ip we map the dst port as the protocol,
@@ -279,16 +243,20 @@ struct SnortConfig
 
     struct VarNode* var_list;
 
-#ifdef BUILD_SHELL
+    //------------------------------------------------------
+    // deliberately not conditional
+    // to avoid plugin compatibility issues
+    struct ProfileConfig* profile_rules;
+    struct ProfileConfig* profile_preprocs;
+
+    struct ppm_cfg_t* ppm_cfg;
+    struct _IntelPmHandles* ipm_handles;
+
     unsigned remote_control;
-#endif
+    //------------------------------------------------------
 
     SnortState* state;
     unsigned num_slots;
-
-#ifdef UNIT_TEST
-    bool unit_test;
-#endif
 
     std::map<const std::string, int>* source_affinity;
     std::vector<int>* thread_affinity;

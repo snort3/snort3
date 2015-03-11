@@ -344,10 +344,13 @@ static const CodecApi pppoepkt_disc_api =
 {
     {
         PT_CODEC,
+        sizeof(CodecApi),
+        CDAPI_VERSION,
+        0,
+        API_RESERVED,
         CD_PPPOEPKT_DISC_NAME,
         CD_PPPOEPKT_DISC_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         mod_ctor,
         mod_dtor,
     },
@@ -363,10 +366,13 @@ static const CodecApi pppoepkt_sess_api =
 {
     {
         PT_CODEC,
+        sizeof(CodecApi),
+        CDAPI_VERSION,
+        0,
+        API_RESERVED,
         CD_PPPOEPKT_SESS_NAME,
         CD_PPPOEPKT_SESS_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         nullptr,
         nullptr,
     },

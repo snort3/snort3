@@ -182,10 +182,13 @@ static const LogApi log_codecs_api =
 {
     {
         PT_LOGGER,
+        sizeof(LogApi),
+        LOGAPI_VERSION,
+        0,
+        API_RESERVED,
         S_NAME,
         LOG_CODECS_HELP,
-        LOGAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

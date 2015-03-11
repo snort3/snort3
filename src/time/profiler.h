@@ -155,14 +155,14 @@ struct ProfileStats
 #define MODULE_PROFILE_TMPEND(ppstat) MODULE_PROFILE_TMPEND_NAMED(snort, ppstat)
 
 /************** Profiling API ******************/
-void ShowRuleProfiles(void);
-void ResetRuleProfiling(void);
-
 struct ProfileConfig
 {
     int num;
     int sort;
 };
+
+void ShowRuleProfiles(void);
+void ResetRuleProfiling(void);
 
 // thread local access method
 typedef ProfileStats* (* get_profile_func)(const char*);

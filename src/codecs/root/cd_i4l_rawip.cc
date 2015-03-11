@@ -79,10 +79,13 @@ static const CodecApi i4l_rawip_api =
 {
     {
         PT_CODEC,
+        sizeof(CodecApi),
+        CDAPI_VERSION,
+        0,
+        API_RESERVED,
         I4L_RAWIP_NAME,
         I4L_RAWIP_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         nullptr, // mod_ctor
         nullptr  // mod_dtor
     },

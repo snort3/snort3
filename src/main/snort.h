@@ -117,10 +117,10 @@ enum RunFlag
 
     RUN_FLAG__TREAT_DROP_AS_IGNORE= 0x00100000,     /* --treat-drop-as-ignore */
     RUN_FLAG__PCAP_RELOAD         = 0x00200000,     /* --pcap-reload */
+    RUN_FLAG__TEST                = 0x00400000,     /* -T */
 #ifdef BUILD_SHELL
-    RUN_FLAG__SHELL               = 0x00400000,     /* --shell */
+    RUN_FLAG__SHELL               = 0x00800000      /* --shell */
 #endif
-    RUN_FLAG__TEST                = 0x00800000      /* -T */
 };
 
 enum OutputFlag
@@ -330,12 +330,12 @@ static inline long int ScPcreMatchLimitRecursion(void)
 #ifdef PERF_PROFILING
 static inline int ScProfilePreprocs(void)
 {
-    return snort_conf->profile_preprocs.num;
+    return snort_conf->profile_preprocs->num;
 }
 
 static inline int ScProfileRules(void)
 {
-    return snort_conf->profile_rules.num;
+    return snort_conf->profile_rules->num;
 }
 
 #endif

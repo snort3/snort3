@@ -386,10 +386,13 @@ static const DataApi hg_api =
 {
     {
         PT_DATA,
+        sizeof(DataApi),
+        PDAPI_VERSION,
+        0,
+        API_RESERVED,
         GLOBAL_KEYWORD,
         GLOBAL_HELP,
-        MODAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         hg_mod_ctor,
         mod_dtor
     },
@@ -451,10 +454,13 @@ static const InspectApi hi_api =
 {
     {
         PT_INSPECTOR,
+        sizeof(InspectApi),
+        INSAPI_VERSION,
+        0,
+        API_RESERVED,
         SERVER_KEYWORD,
         SERVER_HELP,
-        INSAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         hs_mod_ctor,
         mod_dtor
     },

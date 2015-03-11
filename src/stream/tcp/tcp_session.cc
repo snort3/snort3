@@ -6253,13 +6253,6 @@ static void StreamSeglistAddNode(StreamTracker* st, StreamSegment* prev,
         st->seglist = ss;
     }
     st->seg_count++;
-#ifdef DEBUG
-    ss->ordinal = st->segment_ordinal++;
-    if (ss->next && (ss->next->seq == ss->seq))
-    {
-        LogMessage("Same seq to right, check me\n");
-    }
-#endif
 }
 
 static int StreamSeglistDeleteNode(StreamTracker* st, StreamSegment* seg)

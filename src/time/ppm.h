@@ -42,7 +42,7 @@ typedef uint64_t PPM_TICKS;
 typedef uint64_t PPM_USECS;
 typedef unsigned int PPM_SECS;
 
-typedef struct
+struct ppm_cfg_t
 {
     /* config section */
     int enabled;
@@ -57,13 +57,8 @@ typedef struct
     int rule_log;    /* alert,console,syslog */
     int rule_action; /* suspend */
 
-#ifdef DEBUG
-    int debug_pkts;
-    int debug_rules;
-#endif
-
     uint64_t max_suspend_ticks;
-} ppm_cfg_t;
+};
 
 struct ppm_stats_t
 {
@@ -121,9 +116,9 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
 #define PPM_ACTION_SUSPEND 1
 
 /* Config flags */
-#define PPM_ENABLED()                 (snort_conf->ppm_cfg.enabled > 0)
-#define PPM_PKTS_ENABLED()            (snort_conf->ppm_cfg.max_pkt_ticks > 0)
-#define PPM_RULES_ENABLED()           (snort_conf->ppm_cfg.max_rule_ticks > 0)
+#define PPM_ENABLED()                 (snort_conf->ppm_cfg->enabled > 0)
+#define PPM_PKTS_ENABLED()            (snort_conf->ppm_cfg->max_pkt_ticks > 0)
+#define PPM_RULES_ENABLED()           (snort_conf->ppm_cfg->max_rule_ticks > 0)
 
 /* packet, rule event flags */
 #define PPM_PACKET_ABORT_FLAG()       ppm_abort_this_pkt
@@ -131,8 +126,8 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
 
 #define PPM_INC_PKT_CNT()         ppm_stats.tot_pkts++
 #define PPM_PKT_CNT()             ppm_pt->pktcnt
-#define PPM_PKT_LOG(p)            if (ppm_abort_this_pkt) ppm_pkt_log(&snort_conf->ppm_cfg,p)
-#define PPM_RULE_LOG(cnt,p)       ppm_rule_log(&snort_conf->ppm_cfg,cnt,p)
+#define PPM_PKT_LOG(p)            if (ppm_abort_this_pkt) ppm_pkt_log(snort_conf->ppm_cfg,p)
+#define PPM_RULE_LOG(cnt,p)       ppm_rule_log(snort_conf->ppm_cfg,cnt,p)
 #define PPM_ACCUM_PKT_TIME() \
     if ( ppm_pt ) \
     { \
@@ -157,9 +152,6 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
 #define PPM_INC_PKT_RULE_TESTS()      if (ppm_pt) ppm_pt->rule_tests++
 #define PPM_INC_PKT_PCRE_RULE_TESTS() if (ppm_pt) ppm_pt->pcre_rule_tests++
 #define PPM_INC_PKT_NC_RULE_TESTS()   if (ppm_pt) ppm_pt->nc_rule_tests++
-#ifdef DEBUG
-#define PPM_DEBUG_PKTS()           snort_conf->ppm_cfg.debug_pkts
-#endif
 
 #define PPM_PRINT_PKT_TIME(a)    LogMessage(a, ppm_ticks_to_usecs((PPM_TICKS)ppm_pt->tot) );
 
@@ -181,7 +173,7 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
         ppm_pt->rule_tests = 0; \
         ppm_pt->pcre_rule_tests = 0; \
         ppm_pt->nc_rule_tests = 0; \
-        ppm_pt->max_pkt_ticks = snort_conf->ppm_cfg.max_pkt_ticks; \
+        ppm_pt->max_pkt_ticks = snort_conf->ppm_cfg->max_pkt_ticks; \
         ppm_init_rules(); \
     }
 
@@ -212,7 +204,7 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
         ppm_rt = &ppm_rule_times[ppm_rule_times_index++]; \
         ppm_suspend_this_rule = 0; \
         ppm_rt->start=ppm_cur_time; \
-        ppm_rt->max_rule_ticks = snort_conf->ppm_cfg.max_rule_ticks; \
+        ppm_rt->max_rule_ticks = snort_conf->ppm_cfg->max_rule_ticks; \
     }
 
 #define PPM_END_RULE_TIMER() \
@@ -234,7 +226,7 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
         ppm_pt->tot = ppm_cur_time - ppm_pt->start /*- ppm_pt->subtract*/; \
         if (ppm_pt->tot > ppm_pt->max_pkt_ticks) \
         { \
-            if ( snort_conf->ppm_cfg.pkt_action & PPM_ACTION_SUSPEND ) \
+            if ( snort_conf->ppm_cfg->pkt_action & PPM_ACTION_SUSPEND ) \
                 ppm_abort_this_pkt = 1; \
         } \
     }
@@ -257,7 +249,7 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
         if (ppm_rt->tot > ppm_rt->max_rule_ticks) \
         { \
             dot_root_state_t* root_state = (root)->state + get_instance_id(); \
-            if ( snort_conf->ppm_cfg.rule_action & PPM_ACTION_SUSPEND ) \
+            if ( snort_conf->ppm_cfg->rule_action & PPM_ACTION_SUSPEND ) \
             { \
                 int ii; \
                 ppm_suspend_this_rule = 1; \
@@ -268,9 +260,9 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
                         root->children[ii]->state + get_instance_id(); \
                     ns->ppm_disable_cnt++; \
                 } \
-                if ( (root_state)->ppm_disable_cnt >= snort_conf->ppm_cfg.rule_threshold ) \
+                if ( (root_state)->ppm_disable_cnt >= snort_conf->ppm_cfg->rule_threshold ) \
                 { \
-                    ppm_set_rule_event(&snort_conf->ppm_cfg, root); \
+                    ppm_set_rule_event(snort_conf->ppm_cfg, root); \
                     (root_state)->enabled=false; \
                     (root_state)->ppm_suspend_time=PPM_RULE_TIME(p); \
                     PPM_DBG_CSV("disabled", (root), (root)->ppm_suspend_time); \
@@ -291,15 +283,15 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
 
 #define PPM_REENABLE_TREE(root,p) \
     dot_root_state_t* root_state = (root)->state + get_instance_id(); \
-    if ( (root_state)->ppm_suspend_time && snort_conf->ppm_cfg.max_suspend_ticks ) \
+    if ( (root_state)->ppm_suspend_time && snort_conf->ppm_cfg->max_suspend_ticks ) \
     { \
         PPM_TICKS now = PPM_RULE_TIME(p); \
-        PPM_TICKS then = (root_state)->ppm_suspend_time + snort_conf->ppm_cfg.max_suspend_ticks; \
+        PPM_TICKS then = (root_state)->ppm_suspend_time + snort_conf->ppm_cfg->max_suspend_ticks; \
         if ( now > then ) \
         { \
             (root_state)->ppm_suspend_time=0; \
             (root_state)->enabled=true; \
-            ppm_clear_rule_event(&snort_conf->ppm_cfg, root); \
+            ppm_clear_rule_event(snort_conf->ppm_cfg, root); \
             PPM_DBG_CSV("enabled", (root), now); \
         } \
         else \
@@ -309,10 +301,6 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
     }
 
 void ppm_init(ppm_cfg_t*);
-#ifdef DEBUG
-void ppm_set_debug_rules(ppm_cfg_t*, int);
-void ppm_set_debug_pkts(ppm_cfg_t*, int);
-#endif
 
 void ppm_set_pkt_action(ppm_cfg_t*, int);
 void ppm_set_pkt_log(ppm_cfg_t*, int);

@@ -382,10 +382,13 @@ static const IpsApi md5_api =
 {
     {
         PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        0,
+        API_RESERVED,
         IPS_OPT,
         s_help,
-        IPSAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         md5_mod_ctor,
         mod_dtor
     },
@@ -425,10 +428,13 @@ static const IpsApi sha256_api =
 {
     {
         PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        0,
+        API_RESERVED,
         IPS_OPT,
         s_help,
-        IPSAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         sha256_mod_ctor,
         mod_dtor
     },
@@ -468,10 +474,13 @@ static const IpsApi sha512_api =
 {
     {
         PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        0,
+        API_RESERVED,
         IPS_OPT,
         s_help,
-        IPSAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         sha512_mod_ctor,
         mod_dtor
     },

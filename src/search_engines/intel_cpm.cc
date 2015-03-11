@@ -147,10 +147,13 @@ static const MpseApi cpm_api =
 {
     {
         PT_SEARCH_ENGINE,
+        sizeof(MpseApi),
+        SEAPI_VERSION,
+        0,
+        API_RESERVED,
         "intel_cpm",
         "Intel CPM library",
-        SEAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         nullptr,
         nullptr
     },

@@ -122,10 +122,13 @@ static const MpseApi acb_api =
 {
     {
         PT_SEARCH_ENGINE,
+        sizeof(MpseApi),
+        SEAPI_VERSION,
+        0,
+        API_RESERVED,
         "ac_banded",
         "Aho-Corasick Banded (high memory, moderate performance)",
-        SEAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         nullptr,
         nullptr
     },

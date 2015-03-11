@@ -368,10 +368,10 @@ public:
 bool ProfileModule::begin(const char* fqn, int, SnortConfig* sc)
 {
     if ( !strcmp(fqn, "profile.rules") )
-        sc->profile_rules.num = -1;
+        sc->profile_rules->num = -1;
 
     else if ( !strcmp(fqn, "profile.modules") )
-        sc->profile_preprocs.num = -1;
+        sc->profile_preprocs->num = -1;
 
     return true;
 }
@@ -383,10 +383,10 @@ bool ProfileModule::set(const char* fqn, Value& v, SnortConfig* sc)
     const char* spp = "profile.modules";
 
     if ( !strncmp(fqn, spr, strlen(spr)) )
-        p = &sc->profile_rules;
+        p = sc->profile_rules;
 
     else if ( !strncmp(fqn, spp, strlen(spp)) )
-        p = &sc->profile_preprocs;
+        p = sc->profile_preprocs;
 
     else
         return false;

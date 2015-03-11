@@ -136,10 +136,13 @@ static const MpseApi acf_api =
 {
     {
         PT_SEARCH_ENGINE,
+        sizeof(MpseApi),
+        SEAPI_VERSION,
+        0,
+        API_RESERVED,
         "ac_full",
         "Aho-Corasick Full (high memory, best performance), implements search_all()",
-        SEAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         nullptr,
         nullptr
     },

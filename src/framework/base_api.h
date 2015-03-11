@@ -20,13 +20,23 @@
 #ifndef BASE_API_H
 #define BASE_API_H
 
-// use these for plugin modules
-// this is the current version of the api
-#define MODAPI_VERSION 0
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-// this is the version of the api the plugins are using
-// to be useful, these must be explicit (*_V0, *_V1, ...)
-#define MODAPI_PLUGIN_V0 0
+#include "main/snort_types.h"
+
+// this is the current version of the base api
+// must be prefixed to subtype version
+#define BASE_API_VERSION 1
+
+// set options to API_OPTIONS to ensure compatibility
+#ifndef API_OPTIONS
+#include "framework/api_options.h"
+#endif
+
+// set the reserved field to this to be future proof
+#define API_RESERVED 0
 
 enum PlugType
 {
@@ -50,10 +60,13 @@ typedef void (* ModDelFunc)(Module*);
 struct BaseApi
 {
     PlugType type;
+    uint32_t size;
+    uint32_t api_version;
+    uint32_t version;
+    uint64_t reserved;
     const char* name;
     const char* help;
-    unsigned api_version;
-    unsigned version;
+    const char* options;
     ModNewFunc mod_ctor;
     ModDelFunc mod_dtor;
 };

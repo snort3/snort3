@@ -240,10 +240,13 @@ static const IpsApi size_api =
 {
     {
         PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        0,
+        API_RESERVED,
         s_name,
         s_help,
-        IPSAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         size_mod_ctor,
         mod_dtor
     },

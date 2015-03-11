@@ -349,10 +349,13 @@ static LogApi syslog_api
 {
     {
         PT_LOGGER,
+        sizeof(LogApi),
+        LOGAPI_VERSION,
+        0,
+        API_RESERVED,
         s_name,
         s_help,
-        LOGAPI_PLUGIN_V0,
-        0,
+        API_OPTIONS,
         mod_ctor,
         mod_dtor
     },

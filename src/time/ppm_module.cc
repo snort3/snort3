@@ -49,10 +49,6 @@ static const Parameter s_params[] =
     { "pkt_log", Parameter::PT_ENUM, "none | log | alert | both", "none",
       "log event if max_pkt_time is exceeded" },
 
-#ifdef DEBUG
-    { "debug_pkts", Parameter::PT_BOOL, nullptr, "false",
-      "enable packet debug" },
-#endif
     { "max_rule_time", Parameter::PT_INT, "0:", "0",
       "enable rule latency thresholding (usec), 0 = off" },
 
@@ -68,10 +64,6 @@ static const Parameter s_params[] =
     { "rule_log", Parameter::PT_ENUM, "none|log|alert|both", "none",
       "enable event logging for suspended rules" },
 
-#ifdef DEBUG
-    { "debug_rules", Parameter::PT_BOOL, nullptr, "false",
-      "enable rule debug" },
-#endif
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -100,7 +92,7 @@ const RuleMap* PpmModule::get_rules() const
 bool PpmModule::begin(const char*, int, SnortConfig* sc)
 {
     if ( !PPM_ENABLED() )
-        PPM_INIT(&sc->ppm_cfg);
+        PPM_INIT(sc->ppm_cfg);
 
     return true;
 }
@@ -108,47 +100,39 @@ bool PpmModule::begin(const char*, int, SnortConfig* sc)
 bool PpmModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( v.is("max_pkt_time") )
-        ppm_set_max_pkt_time(&sc->ppm_cfg, v.get_long());
+        ppm_set_max_pkt_time(sc->ppm_cfg, v.get_long());
 
     else if ( v.is("fastpath_expensive_packets") )
-        ppm_set_pkt_action(&sc->ppm_cfg, PPM_ACTION_SUSPEND);
+        ppm_set_pkt_action(sc->ppm_cfg, PPM_ACTION_SUSPEND);
 
     else if ( v.is("pkt_log") )
     {
         unsigned u = v.get_long();
         if ( u & 0x1 )
-            ppm_set_pkt_log(&sc->ppm_cfg, PPM_LOG_MESSAGE);
+            ppm_set_pkt_log(sc->ppm_cfg, PPM_LOG_MESSAGE);
         if ( u & 0x2 )
-            ppm_set_pkt_log(&sc->ppm_cfg, PPM_LOG_ALERT);
+            ppm_set_pkt_log(sc->ppm_cfg, PPM_LOG_ALERT);
     }
-#ifdef DEBUG
-    else if ( v.is("debug_pkts") )
-        ppm_set_debug_pkts(&sc->ppm_cfg, 1);
-#endif
     else if ( v.is("max_rule_time") )
-        ppm_set_max_rule_time(&sc->ppm_cfg, v.get_long());
+        ppm_set_max_rule_time(sc->ppm_cfg, v.get_long());
 
     else if ( v.is("threshold") )
-        ppm_set_rule_threshold(&sc->ppm_cfg, v.get_long());
+        ppm_set_rule_threshold(sc->ppm_cfg, v.get_long());
 
     else if ( v.is("suspend_expensive_rules") )
-        ppm_set_rule_action(&sc->ppm_cfg, PPM_ACTION_SUSPEND);
+        ppm_set_rule_action(sc->ppm_cfg, PPM_ACTION_SUSPEND);
 
     else if ( v.is("suspend_timeout") )
-        ppm_set_max_suspend_time(&sc->ppm_cfg, v.get_long());
+        ppm_set_max_suspend_time(sc->ppm_cfg, v.get_long());
 
     else if ( v.is("rule_log") )
     {
         unsigned u = v.get_long();
         if ( u & 0x1 )
-            ppm_set_rule_log(&sc->ppm_cfg, PPM_LOG_MESSAGE);
+            ppm_set_rule_log(sc->ppm_cfg, PPM_LOG_MESSAGE);
         if ( u & 0x2 )
-            ppm_set_rule_log(&sc->ppm_cfg, PPM_LOG_ALERT);
+            ppm_set_rule_log(sc->ppm_cfg, PPM_LOG_ALERT);
     }
-#ifdef DEBUG
-    else if ( v.is("debug_rules") )
-        ppm_set_debug_rules(&sc->ppm_cfg, 1);
-#endif
     else
         return false;
 

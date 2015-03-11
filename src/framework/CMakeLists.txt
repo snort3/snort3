@@ -32,8 +32,21 @@ add_library ( framework STATIC
     value.cc
 )
 
-
-install (FILES ${FRAMEWORK_INCLUDES}
+install (FILES ${FRAMEWORK_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/api_options.h
     DESTINATION "${INCLUDE_INSTALL_PATH}/framework"
+)
+
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/api_options.h
+    COMMAND grep API_OPTIONS ${CMAKE_BINARY_DIR}/config.h > ${CMAKE_CURRENT_BINARY_DIR}/api_options.h
+    DEPENDS ${CMAKE_BINARY_DIR}/config.h
+)
+
+add_custom_target(api_options ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/api_options.h)
+
+set_property(
+    DIRECTORY
+    PROPERTY
+    ADDITIONAL_MAKE_CLEAN_FILES api_options.h
 )
 

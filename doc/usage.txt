@@ -9,7 +9,7 @@ LUA_PATH is used directly by Lua to load and run required libraries.
 SNORT_LUA_PATH is used by Snort to load supplemental configuration files.
 
     export LUA_PATH=$my_path/include/snort/lua/\?.lua\;\;
-    export SNORT_LUA_PATH=$my_path/etc
+    export SNORT_LUA_PATH=$my_path/etc/snort
 
 
 ==== Getting help
