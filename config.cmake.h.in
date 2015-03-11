@@ -306,6 +306,8 @@
 
 #cmakedefine HAVE_OPENSSL_MD5 1
 
+/* lzma available */
+#cmakedefine HAVE_LZMA 1
 
 
 /* Library specific functions */

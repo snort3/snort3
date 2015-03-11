@@ -40,8 +40,16 @@
 #include <netdb.h>
 #include <limits.h>
 #include <fcntl.h>
-#include <zlib.h>
 #include <luajit-2.0/luajit.h>
+#include <zlib.h>
+
+#ifdef HAVE_OPENSSL_SHA
+#include <openssl/crypto.h>
+#endif
+
+#ifdef HAVE_LZMA
+#include <lzma.h>
+#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -122,6 +130,12 @@ int DisplayBanner(void)
     LogMessage("           Using LuaJIT version %s\n", ljv);
     LogMessage("           Using PCRE version %s\n", pcre_version());
     LogMessage("           Using ZLIB version %s\n", zlib_version);
+#ifdef HAVE_LZMA
+    LogMessage("           Using LZMA version %s\n", lzma_version_string());
+#endif
+#ifdef HAVE_OPENSSL_SHA
+    LogMessage("           Using %s\n", SSLeay_version(SSLEAY_VERSION));
+#endif
     LogMessage("\n");
 
     return 0;

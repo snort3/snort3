@@ -1,5 +1,6 @@
-Pending - build 141
+15/03/11 - build 141
 
+-- added build foo for lzma; refactored configure.ac
 -- enhancements for checking compatibility of external plugins
 -- added doc/usage.txt
 

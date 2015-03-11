@@ -189,10 +189,13 @@ if (DEFINED OPENSSL_CRYPTO_LIBRARIES)
     check_library_exists (${OPENSSL_CRYPTO_LIBRARIES} MD5_Init "" HAVE_OPENSSL_MD5)
 endif()
 
+if (DEFINED LIBLZMA_LIBRARIES)
+    check_library_exists (${LIBLZMA_LIBRARIES} lzma_code "" HAVE_LZMA)
+endif()
+
 set_if_true (HAS_CXX11_FUNC HAVE___FUNCTION__)
 check_library_exists (pcap pcap_lib_version "${PCAP_LIBRARIES}" HAVE_PCAP_LIB_VERSION)
 check_library_exists (pcap pcap_lex_destroy "${PCAP_LIBRARIES}" HAVE_PCAP_LEX_DESTROY)
-
 
 set (CMAKE_REQUIRED_FLAGS ${CXX11_COMPILER_FLAGS})
 set (CMAKE_REQUIRED_INCLUDES ${DAQ_INCLUDE_DIR})
@@ -216,8 +219,6 @@ check_cxx_source_compiles(
 set (CMAKE_REQUIRED_FLAGS)
 set (CMAKE_REQUIRED_INCLUDES)
 set (CMAKE_REQUIRED_LIBRARIES)
-
-
 
 
 ###############################################################################

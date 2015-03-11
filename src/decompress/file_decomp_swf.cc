@@ -23,14 +23,14 @@
 #include <zlib.h>
 #include <string.h>
 
-#ifdef LZMA
+#ifdef HAVE_LZMA
 #include <lzma.h>
 #endif
 
 #include "file_decomp.h"
 #include "file_decomp_swf.h"
 
-#ifdef LZMA
+#ifdef HAVE_LZMA
 #define LZMA_HEADER_LEN  (13)
 #define LZMA_PRP_OFFSET  (0)
 #define SWF_PRP_OFFSET   (9)
@@ -126,7 +126,7 @@ static fd_status_t Decomp(fd_session_p_t SessionPtr)
 
         break;
     }
-#ifdef LZMA
+#ifdef HAVE_LZMA
     case FILE_COMPRESSION_TYPE_LZMA:
     {
         lzma_ret l_ret;
@@ -181,7 +181,7 @@ fd_status_t File_Decomp_End_SWF(fd_session_p_t SessionPtr)
 
         break;
     }
-#ifdef LZMA
+#ifdef HAVE_LZMA
     case FILE_COMPRESSION_TYPE_LZMA:
     {
         lzma_stream* l_s = &(SessionPtr->Decomp_State.SWF.StreamLZMA);
@@ -236,7 +236,7 @@ fd_status_t File_Decomp_Init_SWF(fd_session_p_t SessionPtr)
 
         break;
     }
-#ifdef LZMA
+#ifdef HAVE_LZMA
     case FILE_COMPRESSION_TYPE_LZMA:
     {
         lzma_ret l_ret;
@@ -304,7 +304,7 @@ fd_status_t File_Decomp_SWF(fd_session_p_t SessionPtr)
     }
     case ( SWF_STATE_PROC_HEADER ):
     {
-#ifdef LZMA
+#ifdef HAVE_LZMA
         if ( SessionPtr->Decomp_Type == FILE_COMPRESSION_TYPE_LZMA )
         {
             Ret_Code = File_Decomp_Process_LZMA_Header(SessionPtr);

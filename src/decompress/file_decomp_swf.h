@@ -21,7 +21,7 @@
 #define FILE_DECOMP_SWF_H
 
 #include <zlib.h>
-#ifdef LZMA
+#ifdef HAVE_LZMA
 #include <lzma.h>
 #endif
 
@@ -56,7 +56,7 @@ typedef enum swf_states
 typedef struct fd_SWF_s
 {
     z_stream StreamZLIB;
-#ifdef LZMA
+#ifdef HAVE_LZMA
     lzma_stream StreamLZMA;
 #endif
     uint8_t Header_Bytes[SWF_MAX_HEADER];

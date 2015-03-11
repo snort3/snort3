@@ -29,7 +29,7 @@
 
 static const char PDF_Sig[5] = { '%', 'P', 'D', 'F', '-' };
 static const char SWF_ZLIB_Sig[3] = { 'C', 'W', 'S' };
-#ifdef LZMA
+#ifdef HAVE_LZMA
 static const char SWF_LZMA_Sig[3] = { 'Z', 'W', 'S' };
 #endif
 static const char SWF_Uncomp_Sig[3] = { 'F', 'W', 'S' };
@@ -50,7 +50,7 @@ static struct sig_map_s
     { PDF_Sig, sizeof(PDF_Sig), false, FILE_TYPE_PDF, FILE_COMPRESSION_TYPE_NONE },
 
     { SWF_ZLIB_Sig, sizeof(SWF_ZLIB_Sig), false, FILE_TYPE_SWF, FILE_COMPRESSION_TYPE_ZLIB },
-#ifdef LZMA
+#ifdef HAVE_LZMA
     { SWF_LZMA_Sig, sizeof(SWF_LZMA_Sig), false, FILE_TYPE_SWF, FILE_COMPRESSION_TYPE_LZMA },
 #endif
     { NULL, 0, false, FILE_TYPE_NONE, FILE_COMPRESSION_TYPE_NONE }
@@ -247,7 +247,7 @@ fd_status_t File_Decomp_Init(fd_session_p_t SessionPtr)
             ((SessionPtr->Modes & FILE_SWF_ZLIB_BIT) != 0) )
             Signature_Map[Sig].Enabled = true;
 
-#ifdef LZMA
+#ifdef HAVE_LZMA
         if ( (Signature_Map[Sig].File_Type == FILE_TYPE_SWF ) &&
             (Signature_Map[Sig].File_Compression_Type == FILE_COMPRESSION_TYPE_LZMA) &&
             ((SessionPtr->Modes & FILE_SWF_LZMA_BIT) != 0) )
