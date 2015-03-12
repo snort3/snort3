@@ -1,9 +1,9 @@
-NOTE: For the following examples "$my_path" is assumed to be the path to
+For the following examples "$my_path" is assumed to be the path to
 the Snort++ install directory. Additionally, it is assumed that
 "$my_path/bin" is in your PATH.
 
 
-==== Setting up the environment
+==== Environment
 
 LUA_PATH is used directly by Lua to load and run required libraries.
 SNORT_LUA_PATH is used by Snort to load supplemental configuration files.
@@ -12,43 +12,11 @@ SNORT_LUA_PATH is used by Snort to load supplemental configuration files.
     export SNORT_LUA_PATH=$my_path/etc/snort
 
 
-==== Getting help
+==== Help
 
 Print the help summary:
 
     snort --help
-
-This outputs:
-
-    Snort has several options to get more help:
-
-    -? list command line options (same as --help)
-    --help this overview of help
-    --help-commands [<module prefix>] output matching commands
-    --help-config [<module prefix>] output matching config options
-    --help-counts [<module prefix>] output matching peg counts
-    --help-module <module> output description of given module
-    --help-modules list all available modules with brief help
-    --help-plugins list all available plugins with brief help
-    --help-options [<option prefix>] output matching command line options
-    --help-signals dump available control signals
-    --list-buffers output available inspection buffers
-    --list-builtin [<module prefix>] output matching builtin rules
-    --list-gids [<module prefix>] output matching generators
-    --list-modules [<module type>] list all known modules
-    --list-plugins list all known modules
-    --show-plugins list module and plugin versions
-
-    --help* and --list* options preempt other processing so should be last on the
-    command line since any following options are ignored.  To ensure options like
-    --markup and --plugin-path take effect, place them ahead of the help or list
-    options.
-
-    Options that filter output based on a matching prefix, such as --help-config
-    won't output anything if there is no match.  If no prefix is given, everything
-    matches.
-
-    Report bugs to bugs@snort.org.
 
 Get help on a specific module ("stream", for example):
 
@@ -67,16 +35,16 @@ Output help on "rule" options in AsciiDoc format:
     snort --markup --help-options rule
 
 NOTE: Snort++ stops reading command-line options after the "--help-*" and "--list-*" options,
-so any other options should be placed before them.:
+so any other options should be placed before them.
 
 
-==== Sniffing and logging packets
+==== Sniffing and Logging
 
 Read a pcap:
 
     snort -r /path/to/my.pcap
 
-Dump the packets to STDOUT:
+Dump the packets to stdout:
 
     snort -r /path/to/my.pcap -K text
 
@@ -102,11 +70,11 @@ Validate a configuration file:
 
     snort -c $my_path/etc/snort/snort.lua
 
-Validate a rules file and a configuration file:
+Validate a configuration file and a separate rules file:
 
     snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules
 
-Read rules from STDIN and validate:
+Read rules from stdin and validate:
 
     snort -c $my_path/etc/snort/snort.lua --stdin-rules < $my_path/etc/snort/sample.rules
 
@@ -123,20 +91,18 @@ Tell Snort++ where to look for additional Lua scripts:
 
 Run Snort++ in IDS mode, reading packets from a pcap:
 
-    snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules \
-        -r /path/to/my.pcap
+    snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap
 
 Log any generated alerts to the console using the "-A" option:
 
-    snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules \
-        -r /path/to/my.pcap -A alert_full
+    snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap -A alert_full
 
 Add or modify a configuration from the command line using the "--lua" option:
 
-    snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap \
+    snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap -A cmg \
         --lua 'ips = { enable_builtin_rules = true }'
 
-NOTE: The "--lua" option can be specified multiple times
+NOTE: The "--lua" option can be specified multiple times.
 
 Run Snort++ in IDS mode on an entire directory of pcaps, processing each input source on a separate thread:
 
@@ -152,18 +118,32 @@ the options below to format the paths:
 
     <logdir>/[<run_prefix>][<id#>][<X>]<name>
 
-* logdir is set with -l and defaults to ./
+Log to unified in the current directory:
 
-* run_prefix is set with --run-prefix else not used
+    snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap -A unified2
 
-* id# is the packet thread number that writes the file; with one packet
-thread, id# (zero) is omitted without --id-zero
+Log to unified in the current directory with a different prefix:
 
-* X is / if you use --id-subdir, else _ if id# is used
+    snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap -A unified2 \
+        --run-prefix take2
 
-* name is based on module name that writes the file
+Log to unified in /tmp:
 
-* all text mode outputs default to stdout
+    snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap -A unified2 -l /tmp
+
+Run 4 packet threads and log with thread number prefix (0-3):
+
+    snort -c $my_path/etc/snort/snort.lua --pcap-dir /path/to/pcap/dir \
+        --pcap-filter '*.pcap' -z 4 -A unified2
+
+Run 4 packet threads and log in thread number subdirs (0-3):
+
+    snort -c $my_path/etc/snort/snort.lua --pcap-dir /path/to/pcap/dir \
+        --pcap-filter '*.pcap' -z 4 -A unified2 --id-subdir
+
+NOTE: subdirectories are created automatically if required.  Log filename
+is based on module name that writes the file.  All text mode outputs
+default to stdout
 
 
 ==== Shell
@@ -197,10 +177,10 @@ The command line interface is still under development.  Suggestions are
 welcome.
 
 
-==== Interacting with Snort++ via signals
+==== Signals
 
 NOTE: The following examples assume that Snort++ is currently running and
-has a process ID of <pid>:
+has a process ID of <pid>.
 
 Modify and Reload Configuration:
 
