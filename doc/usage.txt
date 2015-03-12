@@ -143,7 +143,7 @@ Run 4 packet threads and log in thread number subdirs (0-3):
 
 NOTE: subdirectories are created automatically if required.  Log filename
 is based on module name that writes the file.  All text mode outputs
-default to stdout
+default to stdout.  These options can be combined.
 
 
 ==== Shell
