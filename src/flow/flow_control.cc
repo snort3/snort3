@@ -325,13 +325,33 @@ static void init_roles_udp(Packet* p, Flow* flow)
     flow->server_port = ntohs(p->ptrs.udph->uh_dport);
 }
 
+static void init_roles_ip(Packet* p, Flow* flow)
+{
+    flow->ssn_state.direction = FROM_SENDER;
+    sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
+    sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
+}
+
 static void init_roles(Packet* p, Flow* flow)
 {
-    if ( flow->protocol == PktType::TCP )
+    switch ( flow->protocol )
+    {
+    case PktType::TCP:
         init_roles_tcp(p, flow);
+        break;
 
-    else if ( flow->protocol == PktType::UDP )
+    case PktType::UDP:
         init_roles_udp(p, flow);
+        break;
+
+    case PktType::IP:
+    case PktType::ICMP:
+        init_roles_ip(p, flow);
+        break;
+
+    default:
+        break;
+    }
 }
 
 unsigned FlowControl::process(Flow* flow, Packet* p)

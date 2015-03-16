@@ -1,5 +1,6 @@
 Pending - build 142
 
+-- fix ip and icmp flow client/server ip init
 -- added logging examples to usage
 
 15/03/11 - build 141
