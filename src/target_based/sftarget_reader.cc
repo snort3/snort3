@@ -264,7 +264,7 @@ int SFAT_AddHostEntryToMap(HostAttributeEntry* host)
         {
             if ( !sfat_insufficient_space_logged )
             {
-                ParseWarning(
+                ParseWarning(WARN_HOSTS,
                     "AttributeTable insertion failed: %d Insufficient "
                     "space in attribute table, only configured to store %d hosts\n",
                     ret, ScMaxAttrHosts());
@@ -275,7 +275,7 @@ int SFAT_AddHostEntryToMap(HostAttributeEntry* host)
         }
         else if ( !sfat_grammar_error_printed )
         {
-            ParseWarning(
+            ParseWarning(WARN_HOSTS,
                 "AttributeTable insertion failed: %d '%s'\n",
                 ret, rt_error_messages[ret]);
             sfat_grammar_error_printed = true;

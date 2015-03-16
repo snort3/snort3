@@ -669,7 +669,7 @@ static const Parameter s_params[] =
     { "fast_pattern_offset", Parameter::PT_INT, nullptr, nullptr,
       "number of leading characters of this content the fast pattern matcher should exclude" },
 
-    { "fast_pattern_length", Parameter::PT_INT, nullptr, nullptr,
+    { "fast_pattern_length", Parameter::PT_INT, "1:", nullptr,
       "maximum number of characters from this content the fast pattern matcher should use" },
 
     { "offset", Parameter::PT_STRING, nullptr, nullptr,

@@ -607,6 +607,7 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf)
     SnortConfig* sc = SnortConfNew();
 
     sc->logging_flags = boot_conf->logging_flags;
+    sc->warning_flags = boot_conf->warning_flags;
     VarNode* tmp = boot_conf->var_list;
 
     const char* fname = get_snort_conf();
@@ -1123,8 +1124,11 @@ void ParseError(const char* format, ...)
     parse_errors++;
 }
 
-void ParseWarning(const char* format, ...)
+void ParseWarning(WarningGroup wg, const char* format, ...)
 {
+    if ( !(snort_conf->warning_flags & (1 << wg)) )
+        return;
+
     char buf[STD_BUF+1];
     va_list ap;
 

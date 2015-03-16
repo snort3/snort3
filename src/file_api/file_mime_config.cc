@@ -104,7 +104,7 @@ static int ProcessDecodeDepth(
             {
                 decode_depth = decode_depth - 4;
             }
-            ParseWarning(
+            ParseWarning(WARN_CONF,
                 "%s: 'b64_decode_depth' is not a multiple of 4. "
                 "Rounding up to the next multiple of 4. The new 'b64_decode_depth' is %d.\n",
                 preproc_name, decode_depth);

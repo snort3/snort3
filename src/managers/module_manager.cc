@@ -400,9 +400,6 @@ static bool ignored(const char* fqn)
 {
     static const char* ignore = nullptr;
 
-    if ( !(snort_conf->logging_flags & LOGGING_FLAG__WARN_UNKNOWN) )
-        return true;
-
     if ( !ignore )
     {
         ignore = getenv("SNORT_IGNORE");
@@ -441,7 +438,7 @@ static bool set_value(const char* fqn, Value& v)
         bool found = set_var(fqn, v);
 
         if ( !found && !ignored(fqn) )
-            ParseWarning("uknown symbol %s", fqn);
+            ParseWarning(WARN_SYMBOLS, "uknown symbol %s", fqn);
         return found;
     }
 

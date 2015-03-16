@@ -206,7 +206,7 @@ static TokenType get_token(
             else if ( c == '\\' )
                 state = esc ? 4 : 16;
             else if ( c == '\n' )
-                ParseWarning("line break in string on line %d\n", lines-1);
+                ParseWarning(WARN_RULES, "line break in string on line %d\n", lines-1);
             else
                 s += c;
             break;
@@ -221,7 +221,7 @@ static TokenType get_token(
             break;
         case 5:  // unquoted escape
             if ( c != '\n' && c != '\r' )
-                ParseWarning("invalid escape on line %d\n", lines);
+                ParseWarning(WARN_RULES, "invalid escape on line %d\n", lines);
             state = 0;
             break;
         case 6:  // token
@@ -313,7 +313,7 @@ static TokenType get_token(
                 state = 11;
             else if ( c == '\n' )
             {
-                ParseWarning("line break in commented string on line %d\n", lines-1);
+                ParseWarning(WARN_RULES, "line break in commented string on line %d\n", lines-1);
                 state = 11;
             }
             break;
@@ -325,7 +325,7 @@ static TokenType get_token(
             }
             else
             {
-                ParseWarning("\\x used with no following hex digits", lines-1);
+                ParseWarning(WARN_RULES, "\\x used with no following hex digits", lines-1);
                 s += c;
                 state = 3;
             }

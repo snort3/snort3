@@ -59,14 +59,14 @@ static int TelnetCheckConfigs(SnortConfig*, void* pData)
     if ((telnet_config->ayt_threshold > 0) &&
         !telnet_config->normalize)
     {
-        ParseWarning("telnet configuration check: using an "
+        ParseWarning(WARN_CONF, "telnet configuration check: using an "
             "AreYouThere threshold requires telnet normalization to be "
             "turned on.\n");
     }
     if ( telnet_config->detect_encrypted &&
         !telnet_config->normalize)
     {
-        ParseWarning("telnet configuration check: checking for "
+        ParseWarning(WARN_CONF, "telnet configuration check: checking for "
             "encrypted traffic requires telnet normalization to be turned on.\n");
     }
 

@@ -1713,15 +1713,6 @@ bool RuleStateModule::end(const char*, int idx, SnortConfig* sc)
 // hosts module
 //-------------------------------------------------------------------------
 
-// FIXIT-L these are cloned from ip_module.cc and tcp_module.cc
-
-#define ip_policies \
-    "unknown | first | linux | bsd | bsd_right |last | windows | solaris"
-
-#define tcp_policies \
-    "unknown | first | last | bsd | linux | old-linux | windows | win-2003 | " \
-    "vista | solaris | hpux | hpux10 | irix | macos"
-
 static const Parameter service_params[] =
 {
     { "name", Parameter::PT_STRING, nullptr, nullptr,
@@ -1741,10 +1732,10 @@ static const Parameter hosts_params[] =
     { "ip", Parameter::PT_ADDR, nullptr, "0.0.0.0/32",
       "hosts address / cidr" },
 
-    { "frag_policy", Parameter::PT_ENUM, ip_policies, "linux",
+    { "frag_policy", Parameter::PT_ENUM, IP_POLICIES, IP_POLICY_DEFAULT,
       "defragmentation policy" },
 
-    { "tcp_policy", Parameter::PT_ENUM, tcp_policies, "linux",
+    { "tcp_policy", Parameter::PT_ENUM, TCP_POLICIES, TCP_POLICY_DEFAULT,
       "tcp reassembly policy" },
 
     { "services", Parameter::PT_LIST, service_params, nullptr,
@@ -1779,11 +1770,11 @@ bool HostsModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("frag_policy") )
     {
-        host->hostInfo.fragPolicy = v.get_long();
+        host->hostInfo.fragPolicy = v.get_long() + 1;
     }
     else if ( v.is("tcp_policy") )
     {
-        host->hostInfo.streamPolicy = v.get_long();
+        host->hostInfo.streamPolicy = v.get_long() + 1;
     }
     else if ( v.is("name") )
         app->protocol = AddProtocolReference(v.get_string());

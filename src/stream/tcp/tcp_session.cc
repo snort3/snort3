@@ -248,6 +248,7 @@ THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 #define STREAM_MAX_FLUSH_FACTOR 2048
 
 /* target-based policy types */
+// changes to this enum require changes to stream_api.h::TCP_POLICIES
 #define STREAM_POLICY_FIRST       1
 #define STREAM_POLICY_LAST        2
 #define STREAM_POLICY_LINUX       3
@@ -423,17 +424,17 @@ static const char* const reassembly_policy_names[] =
     "first",
     "last",
     "linux",
-    "old linux",
+    "old-linux",
     "bsd",
     "macos",
-    "windows",
     "solaris",
     "irix",
     "hpux11",
     "hpux10",
     "windows",
     "win-2003",
-    "vista"
+    "vista",
+    "proxy"
 };
 
 #ifdef DEBUG_STREAM_EX

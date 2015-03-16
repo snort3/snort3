@@ -29,7 +29,7 @@
 #include "flow/flow.h"
 
 /* engine-based defragmentation policy enums */
-// must update parameter in defrag_module.cc if this changes
+// must update stream_api.h::IP_POLICIES if this changes
 enum
 {
     FRAG_POLICY_FIRST = 1,

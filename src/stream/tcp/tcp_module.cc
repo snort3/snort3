@@ -72,11 +72,6 @@ using namespace std;
 #define STREAM_TCP_NO_3WHS_STR \
     "TCP session without 3-way handshake"
 
-// sequence must match STREAM_POLICY_* and REASSEMBLY_POLICY_* defines
-#define policies \
-    "first | last | linux | old-linux | bsd | macos | solaris | irix | " \
-    "hpux | hpux10 | windows | win-2003 | vista | proxy"
-
 static const Parameter stream_tcp_small_params[] =
 {
     { "count", Parameter::PT_INT, "0:2048", "0",
@@ -119,7 +114,7 @@ static const Parameter s_params[] =
     { "max_pdu", Parameter::PT_INT, "1460:63780", "16384",
       "maximum reassembled PDU size" },
 
-    { "policy", Parameter::PT_ENUM, policies, "linux",
+    { "policy", Parameter::PT_ENUM, TCP_POLICIES, TCP_POLICY_DEFAULT,
       "determines operating system characteristics like reassembly" },
 
     { "reassemble_async", Parameter::PT_BOOL, nullptr, "true",

@@ -147,9 +147,6 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     /* do a little validation */
     if (raw.len < ip::IP4_HEADER_LEN)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "WARNING: Truncated IP4 header (%d bytes).\n", raw.len); );
-
         if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
             codec_event(codec, DECODE_IP4_HDR_TRUNC);
         return false;

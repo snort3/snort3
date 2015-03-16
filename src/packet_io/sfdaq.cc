@@ -202,21 +202,21 @@ static int DAQ_ValidateInstance()
         return 1;
 
     if ( !(caps & DAQ_CAPA_BLOCK) )
-        ParseWarning("inline mode configured but DAQ can't block packets.\n");
+        ParseWarning(WARN_DAQ, "inline mode configured but DAQ can't block packets.\n");
 
 #if 0
     // this is checked in normalize.c and sp_respond.c
     // and warned/disabled only if it was configured
     if ( !(caps & DAQ_CAPA_REPLACE) )
     {
-        ParseWarning("normalizations/replacements disabled "
+        ParseWarning(WARN_DAQ, "normalizations/replacements disabled "
             " because DAQ can't replace packets.\n");
     }
 
     // this is checked in spp_stream.c and active.c
     // and warned/disabled only if it was configured
     if ( !(caps & DAQ_CAPA_INJECT) )
-        ParseWarning("inline mode configured but DAQ can't "
+        ParseWarning(WARN_DAQ, "inline mode configured but DAQ can't "
             "inject packets.\n");
 #endif
 

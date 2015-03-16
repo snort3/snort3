@@ -150,8 +150,6 @@ enum LoggingFlag
     LOGGING_FLAG__QUIET           = 0x00000002,      /* -q */
     LOGGING_FLAG__SYSLOG          = 0x00000004,      /* -M */
     LOGGING_FLAG__SHOW_PLUGINS    = 0x00000008,      // --show-plugins
-    LOGGING_FLAG__WARN_FLOWBITS   = 0x00000010,      // --warn-flowbits
-    LOGGING_FLAG__WARN_UNKNOWN    = 0x00000020,      // --warn-unknown
 };
 
 enum TunnelFlags

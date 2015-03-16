@@ -240,7 +240,7 @@ static const Parameter s_params[] =
       "<filter options> are standard BPF options, as seen in TCPDump" },
 
     { "--c2x", Parameter::PT_STRING, nullptr, nullptr,
-      "output hex for given char" },
+      "output hex for given char (see also --x2c)" },
 
     { "--create-pidfile", Parameter::PT_IMPLIED, nullptr, nullptr,
       "create PID file, even when not in Daemon mode" },
@@ -434,14 +434,32 @@ static const Parameter s_params[] =
     { "--warn-all", Parameter::PT_IMPLIED, nullptr, nullptr,
       "enable all warnings" },
 
+    { "--warn-conf", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "warn about configuration issues" },
+
+    { "--warn-daq", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "warn about DAQ issues, usually related to mode" },
+
     { "--warn-flowbits", Parameter::PT_IMPLIED, nullptr, nullptr,
       "warn about flowbits that are checked but not set and vice-versa" },
 
-    { "--warn-unknown", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "warn about unknown symbols in your config" },
+    { "--warn-hosts", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "warn about host table issues" },
+
+    { "--warn-rules", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "warn about duplicate rules and rule parsing issues" },
+
+    { "--warn-scripts", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "warn about issues discovered while processing Lua scripts" },
+
+    { "--warn-symbols", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "warn about unknown symbols in your Lua config" },
+
+    { "--warn-vars", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "warn about variable definition and usage issues" },
 
     { "--x2c", Parameter::PT_INT, nullptr, nullptr,
-      "output ASCII char for given hex" },
+      "output ASCII char for given hex (see also --c2x)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -793,15 +811,31 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         help_version(sc, v.get_string());
 
     else if ( v.is("--warn-all") )
-    {
-        sc->logging_flags |= LOGGING_FLAG__WARN_FLOWBITS;
-        sc->logging_flags |= LOGGING_FLAG__WARN_UNKNOWN;
-    }
-    else if ( v.is("--warn-flowbits") )
-        sc->logging_flags |= LOGGING_FLAG__WARN_FLOWBITS;
+        sc->warning_flags = 0xFFFFFFFF;
 
-    else if ( v.is("--warn-unknown") )
-        sc->logging_flags |= LOGGING_FLAG__WARN_UNKNOWN;
+    else if ( v.is("--warn-conf") )
+        sc->warning_flags |= (1 << WARN_CONF);
+
+    else if ( v.is("--warn-daq") )
+        sc->warning_flags |= (1 << WARN_DAQ);
+
+    else if ( v.is("--warn-flowbits") )
+        sc->warning_flags |= (1 << WARN_FLOWBITS);
+
+    else if ( v.is("--warn-hosts") )
+        sc->warning_flags |= (1 << WARN_HOSTS);
+
+    else if ( v.is("--warn-rules") )
+        sc->warning_flags |= (1 << WARN_RULES);
+
+    else if ( v.is("--warn-scripts") )
+        sc->warning_flags |= (1 << WARN_SCRIPTS);
+
+    else if ( v.is("--warn-symbols") )
+        sc->warning_flags |= (1 << WARN_SYMBOLS);
+
+    else if ( v.is("--warn-vars") )
+        sc->warning_flags |= (1 << WARN_VARS);
 
     else if ( v.is("--x2c") )
         x2c(v.get_long());

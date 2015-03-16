@@ -220,7 +220,7 @@ static int add_signal(int sig, sighandler_t signal_handler, int check_needed)
     }
     else if (check_needed && (SIG_IGN != pre_handler) && (SIG_DFL!= pre_handler))
     {
-        ParseWarning("handler is already installed for signal %d.\n", sig);
+        ParseWarning(WARN_CONF, "handler is already installed for signal %d.\n", sig);
     }
     return 1;
 }

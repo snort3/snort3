@@ -834,7 +834,7 @@ void fpSetMaxQueueEvents(FastPatternConfig* fp, unsigned int num_events)
 void fpSetMaxPatternLen(FastPatternConfig* fp, unsigned int max_len)
 {
     if (fp->max_pattern_len != 0)
-        ParseWarning("maximum pattern length redefined from %d to %d.\n",
+        ParseWarning(WARN_CONF, "maximum pattern length redefined from %d to %d.\n",
             fp->max_pattern_len, max_len);
 
     fp->max_pattern_len = max_len;
@@ -1000,10 +1000,12 @@ void set_fp_content(OptTreeNode* otn)
         if ( tmp->fp )
         {
             if ( pmd )
-                ParseWarning("only one fast_pattern content per rule allowed - ignored");
+                ParseWarning(WARN_RULES,
+                    "only one fast_pattern content per rule allowed - ignored");
 
             else if ( !pmd_can_be_fp(tmp, curr_cat) )
-                ParseWarning("content ineligible for fast_pattern matcher - ignored");
+                ParseWarning(WARN_RULES,
+                    "content ineligible for fast_pattern matcher - ignored");
 
             else
                 pmd = tmp;
@@ -2253,7 +2255,7 @@ void fpBuildServicePortGroups(
                     FatalError("Could not AddProtocolReference\n");
 
                 else if ( id >= MAX_PROTOCOL_ORDINAL )
-                    ParseWarning("protocol-ordinal=%d exceeds "
+                    ParseWarning(WARN_RULES, "protocol-ordinal=%d exceeds "
                         "limit of %d for service=%s\n",id,MAX_PROTOCOL_ORDINAL,srvc);
             }
             else if ( id > 0 )

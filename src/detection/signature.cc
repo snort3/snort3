@@ -152,7 +152,7 @@ void AddClassification(
         /* dup check */
         if (strcasecmp(current->type, type) == 0)
         {
-            ParseWarning(
+            ParseWarning(WARN_CONF,
                 "Duplicate classification \"%s\""
                 "found, ignoring this line", type);
             return;

@@ -1,5 +1,7 @@
 Pending - build 142
 
+-- make all warnings optional
+-- fix ip and tcp policy defines
 -- fix ip and icmp flow client/server ip init
 -- added logging examples to usage
 

@@ -1161,7 +1161,7 @@ static int mergeDuplicateOtn(
         //OTN is for new policy group, salvage RTN
         deleteRtnFromOtn(otn_new);
 
-        ParseWarning(
+        ParseWarning(WARN_RULES,
             "%d:%d duplicates previous rule. Using revision %d.",
             otn_cur->sigInfo.generator, otn_cur->sigInfo.id, otn_cur->sigInfo.rev);
 
@@ -1207,7 +1207,7 @@ static int mergeDuplicateOtn(
         }
         else
         {
-            ParseWarning(
+            ParseWarning(WARN_RULES,
                 "%d:%d duplicates previous rule. Using revision %d.",
                 otn_new->sigInfo.generator, otn_new->sigInfo.id, otn_new->sigInfo.rev);
         }

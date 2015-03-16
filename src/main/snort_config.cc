@@ -119,7 +119,7 @@ static void init_policy_mode(IpsPolicy* p)
 
         else if (!ScAdapterInlineMode())
         {
-            ParseWarning("adapter is in passive mode; switching policy mode to tap.");
+            ParseWarning(WARN_DAQ, "adapter is in passive mode; switching policy mode to tap.");
             p->policy_mode = POLICY_MODE__PASSIVE;
         }
         break;

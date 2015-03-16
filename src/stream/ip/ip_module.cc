@@ -79,10 +79,6 @@ FragEngine::FragEngine()
 // stream_ip module
 //-------------------------------------------------------------------------
 
-// sequence must match FRAG_POLICY_* enum
-#define policies  \
-    "first | linux | bsd | bsd_right | last | windows | solaris"
-
 static const RuleMap stream_ip_rules[] =
 {
     { DEFRAG_IPOPTIONS, DEFRAG_IPOPTIONS_STR },
@@ -114,7 +110,7 @@ static const Parameter s_params[] =
     { "min_ttl", Parameter::PT_INT, "1:255", "1",
       "discard fragments with ttl below the minimum" },
 
-    { "policy", Parameter::PT_ENUM, policies, "linux",
+    { "policy", Parameter::PT_ENUM, IP_POLICIES, IP_POLICY_DEFAULT,
       "fragment reassembly policy" },
 
     { "session_timeout", Parameter::PT_INT, "1:86400", "30",

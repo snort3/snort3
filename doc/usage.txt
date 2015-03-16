@@ -34,8 +34,8 @@ Output help on "rule" options in AsciiDoc format:
 
     snort --markup --help-options rule
 
-NOTE: Snort++ stops reading command-line options after the "--help-*" and "--list-*" options,
-so any other options should be placed before them.
+NOTE: Snort++ stops reading command-line options after the "--help-*" and
+"--list-*" options, so any other options should be placed before them.
 
 
 ==== Sniffing and Logging
@@ -52,8 +52,9 @@ Dump packets with application data and layer 2 headers
 
     snort -r /path/to/my.pcap -K text -d -e
 
-NOTE: Command line options must be specified separately. "snort -de" won't work.
-You can still concatenate options and their arguments, however, so "snort -Ktext" will work.
+NOTE: Command line options must be specified separately. "snort -de" won't
+work.  You can still concatenate options and their arguments, however, so
+"snort -Ktext" will work.
 
 Dump packets from all pcaps in a directory:
 
@@ -104,10 +105,30 @@ Add or modify a configuration from the command line using the "--lua" option:
 
 NOTE: The "--lua" option can be specified multiple times.
 
-Run Snort++ in IDS mode on an entire directory of pcaps, processing each input source on a separate thread:
+Run Snort++ in IDS mode on an entire directory of pcaps, processing each
+input source on a separate thread:
 
     snort -c $my_path/etc/snort/snort.lua --pcap-dir /path/to/pcap/dir \
         --pcap-filter '*.pcap' --max-packet-threads 8
+
+
+=== Plugins
+
+Load external plugins and use the "ex" alert:
+
+    snort -c $my_path/etc/snort/snort.lua \
+        --plugin-path $my_path/lib/snort_extra \
+        -A alert_ex -r /path/to/my.pcap
+
+Test the LuaJIT rule option 'find' loaded from stdin:
+
+    snort -c $my_path/etc/snort/snort.lua \
+        --script-path $my_path/lib/snort_extra \
+        --stdin-rules -A cmg -r /path/to/my.pcap << END
+    alert tcp any any -> any 80 (
+        sid:3; msg:"found"; content:"GET";
+        find:"pat='HTTP/1%.%d'" ; )
+    END
 
 
 === Output Files

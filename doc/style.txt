@@ -152,7 +152,7 @@ yet firm so feedback is welcome to get something we can live with.
 ==== Headers
 
 * Don't hesitate to create a new header if it is needed.  Don't lump
-  unrelated stuff into a header because it is convenient.
+  unrelated stuff into an header because it is convenient.
 
 * Write header guards like this (leading underscores are reserved for
   system stuff).  In my_header.h:
@@ -164,7 +164,7 @@ yet firm so feedback is welcome to get something we can live with.
 
 * Includes from a different directory should specify parent directory.
   This makes it clear exactly what is included and avoids the primordial
-  soup that results from using -I this -I that -I the-other-thing ... .
+  soup that results from using -I this -I that -I the_other_thing ... .
 
     // given:
     src/foo/foo.cc
@@ -218,7 +218,7 @@ Currently using uncrustify from at https://github.com/bengardner/uncrustify
 to reformat legacy code and anything that happens to need a makeover at
 some point.
 
-The working config is crusty.cfg in the top level directory.  It does well,
+The working config is crusty.cfg in the top level directory.  It does well
 but will munge some things.  Specially formatted INDENT-OFF comments were
 added in 2 places to avoid a real mess.
 

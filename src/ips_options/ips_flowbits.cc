@@ -1045,14 +1045,14 @@ static void FlowBitsVerify(void)
 
         if ((fb->set > 0) && (fb->isset == 0))
         {
-            if ( snort_conf->logging_flags & LOGGING_FLAG__WARN_FLOWBITS )
-                ParseWarning("flowbits key '%s' is set but not checked.", (char*)n->key);
+            ParseWarning(WARN_FLOWBITS, "flowbits key '%s' is set but not checked.",
+                (char*)n->key);
             unchecked++;
         }
         else if ((fb->isset > 0) && (fb->set == 0))
         {
-            if ( snort_conf->logging_flags & LOGGING_FLAG__WARN_FLOWBITS )
-                ParseWarning("flowbits key '%s' is checked but not ever set.", (char*)n->key);
+            ParseWarning(WARN_FLOWBITS, "flowbits key '%s' is checked but not ever set.",
+                (char*)n->key);
             unset++;
         }
         else if ((fb->set == 0) && (fb->isset == 0))

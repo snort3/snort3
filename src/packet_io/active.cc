@@ -111,7 +111,7 @@ int Active_Init(SnortConfig* sc)
     {
         if ( ScReadMode() || Active_Open(sc->respond_device) )
         {
-            ParseWarning("active responses disabled since DAQ "
+            ParseWarning(WARN_DAQ, "active responses disabled since DAQ "
                 "can't inject packets.");
 #ifndef REG_TEST
             s_attempts = 0;

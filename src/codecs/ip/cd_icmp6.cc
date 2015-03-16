@@ -118,9 +118,6 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     if (raw.len < icmp::ICMP6_HEADER_MIN_LEN)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "WARNING: Truncated ICMP6 header (%d bytes).\n", raw.len); );
-
         codec_event(codec, DECODE_ICMP6_HDR_TRUNC);
         return false;
     }

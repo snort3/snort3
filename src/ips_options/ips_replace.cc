@@ -67,7 +67,7 @@ static bool replace_ok()
     {
         if ( !warned )
         {
-            ParseWarning("payload replacements disabled because DAQ "
+            ParseWarning(WARN_DAQ, "payload replacements disabled because DAQ "
                 " can't replace packets.\n");
             warned = 1;
         }

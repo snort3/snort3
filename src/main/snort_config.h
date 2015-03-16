@@ -79,8 +79,9 @@ struct SnortConfig
 
     //------------------------------------------------------
     // output module stuff
-    int output_flags;
-    int logging_flags;
+    uint32_t output_flags;
+    uint32_t logging_flags;
+    uint32_t warning_flags;
 
     uint8_t log_ipv6_extra;
     uint16_t event_trace_max;

@@ -127,7 +127,7 @@ static bool get_field(lua_State* L, const char* key, int& value)
 
     if ( !lua_isnumber(L, -1) )
     {
-        ParseWarning("%s is not a number", key);
+        ParseWarning(WARN_SCRIPTS, "%s is not a number", key);
         lua_pop(L, 1);
         return false;
     }
@@ -145,7 +145,7 @@ static bool get_field(lua_State* L, const char* key, string& value)
 
     if ( !lua_isstring(L, -1) )
     {
-        ParseWarning("%s is not a string", key);
+        ParseWarning(WARN_SCRIPTS, "%s is not a string", key);
         lua_pop(L, 1);
         return false;
     }
@@ -170,7 +170,7 @@ static void load_script(const char* f)
 
     if ( luaL_loadfile(L, f) )
     {
-        ParseWarning("can't load %s: %s", f, lua_tostring(L, -1));
+        ParseWarning(WARN_SCRIPTS, "can't load %s: %s", f, lua_tostring(L, -1));
         return;
     }
 
@@ -180,7 +180,7 @@ static void load_script(const char* f)
 
     if ( lua_pcall(L, 0, 0, 0) )
     {
-        ParseWarning("can't init %s: %s", f, lua_tostring(L, -1));
+        ParseWarning(WARN_SCRIPTS, "can't init %s: %s", f, lua_tostring(L, -1));
         return;
     }
 
@@ -188,7 +188,7 @@ static void load_script(const char* f)
 
     if ( !lua_istable(L, -1) )
     {
-        ParseWarning("can't get plugin from %s", f);
+        ParseWarning(WARN_SCRIPTS, "can't get plugin from %s", f);
         return;
     }
 
