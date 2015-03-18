@@ -1933,6 +1933,7 @@ static inline int _bnfa_binearch(bnfa_state_t* a, int a_len, int val)
     return -1;
 }
 
+#ifdef BNFA_MAIN
 /*
 *   Sparse format for state table using single array storage
 *
@@ -1998,6 +1999,7 @@ static inline unsigned _bnfa_get_next_state_csparse_nfa_qx(bnfa_state_t* pcx, un
         return 0; /* no transition keyword match failed */
     }
 }
+#endif
 
 /*
 *   Sparse format for state table using single array storage
@@ -2156,6 +2158,7 @@ static inline unsigned _process_queue(
     return 0;
 }
 
+#ifdef BNFA_MAIN
 static inline unsigned _bnfa_search_csparse_nfa_qx(
     bnfa_struct_t* bnfa, unsigned char* T, int n, bnfa_match_f Match, void* data)
 {
@@ -2197,6 +2200,7 @@ static inline unsigned _bnfa_search_csparse_nfa_qx(
     }
     return 0;
 }
+#endif
 
 unsigned _bnfa_search_csparse_nfa_q(
     bnfa_struct_t* bnfa, unsigned char* T, int n, bnfa_match_f Match,
@@ -2327,6 +2331,7 @@ unsigned _bnfa_search_csparse_nfa(
     return nfound;
 }
 
+#ifdef BNFA_MAIN
 /*
  * Case specific search, global to all patterns
  *
@@ -2465,6 +2470,7 @@ static inline unsigned _bnfa_search_csparse_nfa_nocase(
     *current_state = sindex;
     return nfound;
 }
+#endif
 
 int bnfaPatternCount(bnfa_struct_t* p)
 {

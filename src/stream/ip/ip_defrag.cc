@@ -407,47 +407,6 @@ static inline void EventAnomScMinTTL(FragEngine*)
     ip_stats.alerts++;
 }
 
-#if 0
-static int FragPolicyIdFromName(char* name)
-{
-    if (!name)
-    {
-        return FRAG_POLICY_DEFAULT;
-    }
-
-    if (!strcasecmp(name, "bsd"))
-    {
-        return FRAG_POLICY_BSD;
-    }
-    else if (!strcasecmp(name, "bsd-right"))
-    {
-        return FRAG_POLICY_BSD_RIGHT;
-    }
-    else if (!strcasecmp(name, "linux"))
-    {
-        return FRAG_POLICY_LINUX;
-    }
-    else if (!strcasecmp(name, "first"))
-    {
-        return FRAG_POLICY_FIRST;
-    }
-    else if (!strcasecmp(name, "windows"))
-    {
-        return FRAG_POLICY_WINDOWS;
-    }
-    else if (!strcasecmp(name, "solaris"))
-    {
-        return FRAG_POLICY_SOLARIS;
-    }
-    else if (!strcasecmp(name, "last"))
-    {
-        return FRAG_POLICY_LAST;
-    }
-    return FRAG_POLICY_DEFAULT;
-}
-
-#endif
-
 /**
  * Check to see if a FragTracker has timed out
  *

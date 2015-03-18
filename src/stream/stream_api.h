@@ -53,12 +53,12 @@
 
 // sequence must match FRAG_POLICY_* enum in stream_ip.h (1-based)
 #define IP_POLICIES  \
-     "first | linux | bsd | bsd-right | last | windows | solaris"
+     "first | linux | bsd | bsd_right | last | windows | solaris"
 
 // sequence must match STREAM_POLICY_* defines in tcp_session.cc (1-based)
 #define TCP_POLICIES \
-    "first | last | linux | old-linux | bsd | macos | solaris | irix | " \
-    "hpux11 | hpux10 | windows | win-2003 | vista | proxy"
+    "first | last | linux | old_linux | bsd | macos | solaris | irix | " \
+    "hpux11 | hpux10 | windows | win_2003 | vista | proxy"
 
 #define IP_POLICY_DEFAULT "linux"
 #define TCP_POLICY_DEFAULT "bsd"

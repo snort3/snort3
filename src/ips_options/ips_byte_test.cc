@@ -286,7 +286,9 @@ int ByteTestOption::eval(Cursor& c, Packet*)
             MODULE_PROFILE_END(byteTestPerfStats);
             return rval;
         }
+#ifdef DEBUG
         payload_bytes_grabbed = (int)btd->bytes_to_compare;
+#endif
     }
     else
     {

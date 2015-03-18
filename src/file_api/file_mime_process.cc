@@ -333,10 +333,13 @@ void get_mime_eol(const uint8_t* ptr, const uint8_t* end,
     const uint8_t* tmp_eol;
     const uint8_t* tmp_eolm;
 
-    /* XXX maybe should fatal error here since none of these
-     * pointers should be NULL */
-    if (ptr == NULL || end == NULL || eol == NULL || eolm == NULL)
+    assert(eol and eolm);
+
+    if ( !ptr or !end )
+    {
+        *eol = *eolm = end;
         return;
+    }
 
     tmp_eol = (uint8_t*)memchr(ptr, '\n', end - ptr);
     if (tmp_eol == NULL)

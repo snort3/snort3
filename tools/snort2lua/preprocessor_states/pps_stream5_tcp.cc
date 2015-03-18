@@ -415,7 +415,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
                 table_api.add_option("policy", "macos");
 
             else if (!policy.compare("old-linux"))
-                table_api.add_option("policy", "old-linux");
+                table_api.add_option("policy", "old_linux");
 
             else if (!policy.compare("solaris"))
                 table_api.add_option("policy", "solaris");
@@ -433,26 +433,28 @@ bool StreamTcp::convert(std::istringstream& data_stream)
                 table_api.add_deleted_comment("policy noack");
 
             else if (!policy.compare("hpux"))
+            {
+                table_api.add_diff_option_comment("policy hpux", "stream_tcp.policy = hpux11");
                 table_api.add_option("policy", "hpux");
-
+            }
             else if (!policy.compare("hpux10"))
                 table_api.add_option("policy", "hpux10");
 
             else if (!policy.compare("win2003"))
             {
                 table_api.add_diff_option_comment("policy win2003",
-                    "stream_tcp.policy = win-2003");
-                table_api.add_option("policy", "win-2003");
+                    "stream_tcp.policy = win_2003");
+                table_api.add_option("policy", "win_2003");
             }
             else if (!policy.compare("win2k3"))
             {
-                table_api.add_diff_option_comment("policy win2k3", "stream_tcp.policy = win-2003");
-                table_api.add_option("policy", "win-2003");
+                table_api.add_diff_option_comment("policy win2k3",
+                    "stream_tcp.policy = win_2003");
+                table_api.add_option("policy", "win_2003");
             }
             else if (!policy.compare("hpux11"))
             {
-                table_api.add_diff_option_comment("policy hpux11", "stream_tcp.policy = hpux");
-                table_api.add_option("policy", "hpux");
+                table_api.add_option("policy", "hpux11");
             }
             else if (!policy.compare("grannysmith"))
             {

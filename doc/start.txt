@@ -64,9 +64,18 @@ b. To build with cmake and make, run configure_cmake.sh.  It will
     make install
     ln -s $my_path/conf $my_path/etc
 
-c. You can also specify a cmake project generator or use ccmake:
+c. You can also specify a cmake project generator:
 
     ./configure_cmake.sh --generator=Xcode --prefix=$my_path
+
+d. Or use ccmake directly to configure and generate from an arbitrary build
+   directory like one of these:
+
+    ccmake -G Xcode /path/to/Snort++/tree
+    open snort.xcodeproj
+
+    ccmake -G "Eclipse CDT4 - Unix Makefiles" /path/to/Snort++/tree
+    run eclipse and do File > Import > Existing Eclipse Project
 
 
 === Run

@@ -695,7 +695,7 @@ void PrintWorstPreprocs(int numToPrint)
 
     LogMessage("%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
         4, "Num",
-        24, "Preprocessor",
+        24, "Module",
         6, "Layer",
         11, "Checks",
         11, "Exits",
@@ -706,7 +706,7 @@ void PrintWorstPreprocs(int numToPrint)
 
     LogMessage("%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
         4, "===",
-        24, "============",
+        24, "======",
         6, "=====",
         11, "======",
         11, "=====",

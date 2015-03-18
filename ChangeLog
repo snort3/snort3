@@ -1,5 +1,7 @@
 Pending - build 142
 
+-- fix static analysis issues reported by xcode
+-- change policy names with a-b form to a_b for consistency
 -- make all warnings optional
 -- fix ip and tcp policy defines
 -- fix ip and icmp flow client/server ip init

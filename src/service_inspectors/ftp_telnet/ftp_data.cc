@@ -103,7 +103,7 @@ static int SnortFTPData(Packet* p)
 
     assert(PROTO_IS_FTP_DATA(data_ssn));
 
-    if (data_ssn->packet_flags & FTPDATA_FLG_STOP)
+    if ( !data_ssn or (data_ssn->packet_flags & FTPDATA_FLG_STOP) )
         return 0;
 
     //  bail if we have not rebuilt the stream yet.

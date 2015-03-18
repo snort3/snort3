@@ -1093,7 +1093,7 @@ fd_status_t File_Decomp_PDF(fd_session_p_t SessionPtr)
             Ret_Code = Init_Stream(SessionPtr);
             if ( Ret_Code != File_Decomp_OK )
             {
-                Ret_Code = File_Decomp_End_PDF(SessionPtr);
+                File_Decomp_End_PDF(SessionPtr);
                 if ( Close_Stream(SessionPtr) != File_Decomp_OK )
                     return( File_Decomp_Error );
                 File_Decomp_Alert(SessionPtr, FILE_DECOMP_ERR_PDF_DEFL_FAILURE);
@@ -1110,7 +1110,7 @@ fd_status_t File_Decomp_PDF(fd_session_p_t SessionPtr)
             /* Has the decompressor indicated the end of the data */
             if ( Ret_Code == File_Decomp_Error )
             {
-                Ret_Code = File_Decomp_End_PDF(SessionPtr);
+                File_Decomp_End_PDF(SessionPtr);
                 if ( Close_Stream(SessionPtr) != File_Decomp_OK )
                     return( File_Decomp_Error );
                 File_Decomp_Alert(SessionPtr, FILE_DECOMP_ERR_PDF_DEFL_FAILURE);

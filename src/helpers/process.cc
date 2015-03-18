@@ -414,7 +414,7 @@ void daemonize()
 #else
     /* redirect stdin/stdout/stderr to /dev/null */
     const char* file = "/dev/null";
-    err = open(file, O_RDWR);  /* stdin, fd 0 */
+    err = open(file, O_RDWR) || err;  /* stdin, fd 0 */
 #endif
 
     err = dup(0) || err;  /* stdout, fd 0 => fd 1 */

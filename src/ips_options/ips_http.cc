@@ -33,6 +33,15 @@
 #include "framework/inspector.h"
 #include "framework/module.h"
 
+enum PsIdx
+{
+    PSI_URI, PSI_CB, PSI_METH, PSI_COOK, PSI_CODE,
+    PSI_MSG, PSI_RAW_URI, PSI_RAW_HDR, PSI_RAW_COOK,
+    PSI_MAX
+};
+
+static THREAD_LOCAL ProfileStats http_ps[PSI_MAX];
+
 //-------------------------------------------------------------------------
 // module
 //-------------------------------------------------------------------------
@@ -40,13 +49,14 @@
 class HttpCursorModule : public Module
 {
 public:
-    HttpCursorModule(const char* s, const char* h, ProfileStats& p) :
-        Module(s, h), ps(p) { }
+    HttpCursorModule(const char* s, const char* h, PsIdx psi) :
+        Module(s, h) { idx = psi; }
 
     ProfileStats* get_profile() const override
-    { return &ps; }
+    { return http_ps + idx; }
 
-    ProfileStats& ps;
+private:
+    PsIdx idx;
 };
 
 static void mod_dtor(Module* m)
@@ -67,9 +77,9 @@ class HttpIpsOption : public IpsOption
 {
 public:
     HttpIpsOption(
-        const char* s, ProfileStats& p, CursorActionType c = CAT_SET_OTHER) :
-        IpsOption(s), ps(p)
-    { key = s; cat = c; }
+        const char* s, PsIdx psi, CursorActionType c = CAT_SET_OTHER) :
+        IpsOption(s)
+    { key = s; cat = c; idx = psi; }
 
     CursorActionType get_cursor_type() const override
     { return cat; }
@@ -79,13 +89,13 @@ public:
 private:
     const char* key;
     CursorActionType cat;
-    ProfileStats& ps;
+    PsIdx idx;
 };
 
 int HttpIpsOption::eval(Cursor& c, Packet* p)
 {
     PROFILE_VARS;
-    MODULE_PROFILE_START(ps);
+    MODULE_PROFILE_START(http_ps[idx]);
 
     int rval;
     InspectionBuffer hb;
@@ -103,7 +113,7 @@ int HttpIpsOption::eval(Cursor& c, Packet* p)
         rval = DETECTION_OPTION_MATCH;
     }
 
-    MODULE_PROFILE_END(ps);
+    MODULE_PROFILE_END(http_ps[idx]);
     return rval;
 }
 
@@ -117,16 +127,14 @@ int HttpIpsOption::eval(Cursor& c, Packet* p)
 #define uri_help \
     "rule option to set the detection cursor to the normalized URI buffer"
 
-static THREAD_LOCAL ProfileStats uri_ps;
-
 static Module* uri_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, uri_help, uri_ps);
+    return new HttpCursorModule(IPS_OPT, uri_help, PSI_URI);
 }
 
 static IpsOption* uri_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, uri_ps, CAT_SET_COMMAND);
+    return new HttpIpsOption(IPS_OPT, PSI_URI, CAT_SET_COMMAND);
 }
 
 static const IpsApi uri_api =
@@ -164,16 +172,14 @@ static const IpsApi uri_api =
 #define cb_help \
     "rule option to set the detection cursor to the request body"
 
-static THREAD_LOCAL ProfileStats cb_ps;
-
 static Module* client_body_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, cb_help, cb_ps);
+    return new HttpCursorModule(IPS_OPT, cb_help, PSI_CB);
 }
 
 static IpsOption* client_body_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, cb_ps, CAT_SET_BODY);
+    return new HttpIpsOption(IPS_OPT, PSI_CB, CAT_SET_BODY);
 }
 
 static const IpsApi client_body_api =
@@ -211,16 +217,14 @@ static const IpsApi client_body_api =
 #define meth_help \
     "rule option to set the detection cursor to the HTTP request method"
 
-static THREAD_LOCAL ProfileStats meth_ps;
-
 static Module* method_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, meth_help, meth_ps);
+    return new HttpCursorModule(IPS_OPT, meth_help, PSI_METH);
 }
 
 static IpsOption* method_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, meth_ps);
+    return new HttpIpsOption(IPS_OPT, PSI_METH);
 }
 
 static const IpsApi method_api =
@@ -258,16 +262,14 @@ static const IpsApi method_api =
 #define cookie_help  \
     "rule option to set the detection cursor to the HTTP cookie"
 
-static THREAD_LOCAL ProfileStats cookie_ps;
-
 static Module* cookie_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, cookie_help, cookie_ps);
+    return new HttpCursorModule(IPS_OPT, cookie_help, PSI_COOK);
 }
 
 static IpsOption* cookie_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, cookie_ps);
+    return new HttpIpsOption(IPS_OPT, PSI_COOK);
 }
 
 static const IpsApi cookie_api =
@@ -305,16 +307,14 @@ static const IpsApi cookie_api =
 #define stat_code_help  \
     "rule option to set the detection cursor to the HTTP status code"
 
-static THREAD_LOCAL ProfileStats stat_code_ps;
-
 static Module* stat_code_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, stat_code_help, stat_code_ps);
+    return new HttpCursorModule(IPS_OPT, stat_code_help, PSI_CODE);
 }
 
 static IpsOption* stat_code_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, stat_code_ps);
+    return new HttpIpsOption(IPS_OPT, PSI_CODE);
 }
 
 static const IpsApi stat_code_api =
@@ -352,16 +352,14 @@ static const IpsApi stat_code_api =
 #define stat_msg_help  \
     "rule option to set the detection cursor to the HTTP status message"
 
-static THREAD_LOCAL ProfileStats stat_msg_ps;
-
 static Module* stat_msg_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, stat_msg_help, stat_msg_ps);
+    return new HttpCursorModule(IPS_OPT, stat_msg_help, PSI_MSG);
 }
 
 static IpsOption* stat_msg_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, stat_msg_ps);
+    return new HttpIpsOption(IPS_OPT, PSI_MSG);
 }
 
 static const IpsApi stat_msg_api =
@@ -399,16 +397,14 @@ static const IpsApi stat_msg_api =
 #define raw_uri_help  \
     "rule option to set the detection cursor to the unnormalized URI"
 
-static THREAD_LOCAL ProfileStats raw_uri_ps;
-
 static Module* raw_uri_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, raw_uri_help, raw_uri_ps);
+    return new HttpCursorModule(IPS_OPT, raw_uri_help, PSI_RAW_URI);
 }
 
 static IpsOption* raw_uri_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, raw_uri_ps);
+    return new HttpIpsOption(IPS_OPT, PSI_RAW_URI);
 }
 
 static const IpsApi raw_uri_api =
@@ -446,16 +442,14 @@ static const IpsApi raw_uri_api =
 #define raw_header_help  \
     "rule option to set the detection cursor to the unnormalized headers"
 
-static THREAD_LOCAL ProfileStats raw_header_ps;
-
 static Module* raw_header_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, raw_header_help, raw_header_ps);
+    return new HttpCursorModule(IPS_OPT, raw_header_help, PSI_RAW_HDR);
 }
 
 static IpsOption* raw_header_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, raw_header_ps);
+    return new HttpIpsOption(IPS_OPT, PSI_RAW_HDR);
 }
 
 static const IpsApi raw_header_api =
@@ -493,16 +487,14 @@ static const IpsApi raw_header_api =
 #define raw_cookie_help  \
     "rule option to set the detection cursor to the unnormalized cookie"
 
-static THREAD_LOCAL ProfileStats raw_cookie_ps;
-
 static Module* raw_cookie_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, raw_cookie_help, raw_cookie_ps);
+    return new HttpCursorModule(IPS_OPT, raw_cookie_help, PSI_RAW_COOK);
 }
 
 static IpsOption* raw_cookie_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, raw_cookie_ps);
+    return new HttpIpsOption(IPS_OPT, PSI_RAW_COOK);
 }
 
 static const IpsApi raw_cookie_api =

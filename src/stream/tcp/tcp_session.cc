@@ -424,7 +424,7 @@ static const char* const reassembly_policy_names[] =
     "first",
     "last",
     "linux",
-    "old-linux",
+    "old_linux",
     "bsd",
     "macos",
     "solaris",
@@ -432,7 +432,7 @@ static const char* const reassembly_policy_names[] =
     "hpux11",
     "hpux10",
     "windows",
-    "win-2003",
+    "win_2003",
     "vista",
     "proxy"
 };
@@ -2070,16 +2070,14 @@ static int FlushStream(
             !(st->flags & TF_FIRST_PKT_MISSING) )
         {
             if ( ss->next )
-            {
-                toSeq = ss->next->seq;
                 st->seglist_next = ss->next;
-            }
+
             st->flags |= TF_MISSING_PKT;
             break;
         }
         st->seglist_next = ss->next;
 
-        if ( sb )
+        if ( sb || !st->seglist_next )
             break;
     }
 

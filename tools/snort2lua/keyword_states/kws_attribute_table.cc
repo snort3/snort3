@@ -249,8 +249,11 @@ void AttributeTable::parse_os()
                 table_api.add_option("tcp_policy", "macos");
 
             else if (!policy.compare("old-linux"))
-                table_api.add_option("tcp_policy", "old-linux");
-
+            {
+                table_api.add_diff_option_comment("<STREAM_POLICY>old-linux</STREAM_POLICY>",
+                    "hosts.tcp_policy = old_linux");
+                table_api.add_option("tcp_policy", "old_linux");
+            }
             else if (!policy.compare("solaris"))
                 table_api.add_option("tcp_policy", "solaris");
 
@@ -279,22 +282,19 @@ void AttributeTable::parse_os()
                 table_api.add_deleted_comment("<STREAM_POLICY>noack</STREAM_POLICY>");
 
             else if (!policy.compare("hpux11"))
-            {
-                table_api.add_diff_option_comment("<STREAM_POLICY>hpux11</STREAM_POLICY>",
-                    "hosts.tcp_policy = hpux");
-                table_api.add_option("tcp_policy", "hpux");
-            }
+                table_api.add_option("tcp_policy", "hpux11");
+
             else if (!policy.compare("win2003"))
             {
                 table_api.add_diff_option_comment("<STREAM_POLICY>win2003</STREAM_POLICY>",
-                    "hosts.tcp_policy = win-2003");
-                table_api.add_option("tcp_policy", "win-2003");
+                    "hosts.tcp_policy = win_2003");
+                table_api.add_option("tcp_policy", "win_2003");
             }
             else if (!policy.compare("win2k3"))
             {
                 table_api.add_diff_option_comment("<STREAM_POLICY>win2k3</STREAM_POLICY>",
-                    "hosts.tcp_policy = win-2003");
-                table_api.add_option("tcp_policy", "win-2003");
+                    "hosts.tcp_policy = win_2003");
+                table_api.add_option("tcp_policy", "win_2003");
             }
             else if (!policy.compare("grannysmith"))
             {

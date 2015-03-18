@@ -55,6 +55,7 @@ using namespace std;
 #include "filters/sfthreshold.h"
 #include "sfip/sf_ip.h"
 #include "main/thread.h"
+#include "stream/stream_api.h"
 #include "utils/stats.h"
 
 #if defined(DEBUG_MSGS) || defined (REG_TEST)

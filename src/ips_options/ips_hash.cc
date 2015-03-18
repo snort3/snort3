@@ -40,6 +40,13 @@
 #include "hash/hashes.h"
 #include "parser/parse_utils.h"
 
+enum HashPsIdx
+{
+    HPI_MD5, HPI_SHA256, HPI_SHA512, HPI_MAX
+};
+
+static THREAD_LOCAL ProfileStats hash_ps[HPI_MAX];
+
 struct HashMatchData
 {
     std::string hash;
@@ -64,9 +71,9 @@ typedef void (* HashFunc)(const unsigned char* data, size_t size, unsigned char*
 class HashOption : public IpsOption
 {
 public:
-    HashOption(const char* s, ProfileStats& p, HashMatchData* c, HashFunc f, unsigned n) :
-        IpsOption(s, RULE_OPTION_TYPE_OTHER), ps(p)
-    { config = c; hashf = f; size = n; assert(n <= MAX_HASH_SIZE); }
+    HashOption(const char* s, HashPsIdx hpi, HashMatchData* c, HashFunc f, unsigned n) :
+        IpsOption(s, RULE_OPTION_TYPE_OTHER)
+    { config = c; hashf = f; size = n; idx = hpi; assert(n <= MAX_HASH_SIZE); }
 
     ~HashOption() { delete config; }
 
@@ -86,7 +93,7 @@ private:
     HashMatchData* config;
     HashFunc hashf;
     unsigned size;
-    ProfileStats& ps;
+    HashPsIdx idx;
 };
 
 //-------------------------------------------------------------------------
@@ -195,7 +202,7 @@ int HashOption::match(Cursor& c)
 int HashOption::eval(Cursor& c, Packet*)
 {
     PROFILE_VARS;
-    MODULE_PROFILE_START(ps);
+    MODULE_PROFILE_START(hash_ps[idx]);
 
     int rval = DETECTION_OPTION_NO_MATCH;
     int found = match(c);
@@ -218,7 +225,7 @@ int HashOption::eval(Cursor& c, Packet*)
         rval = DETECTION_OPTION_MATCH;
     }
 
-    MODULE_PROFILE_END(ps);
+    MODULE_PROFILE_END(hash_ps[idx]);
     return rval;
 }
 
@@ -281,9 +288,9 @@ static const Parameter s_params[] =
 class HashModule : public Module
 {
 public:
-    HashModule(const char* s, ProfileStats& p) :
-        Module(s, s_help, s_params), ps(p)
-    { hmd = nullptr; }
+    HashModule(const char* s, HashPsIdx hpi) :
+        Module(s, s_help, s_params)
+    { hmd = nullptr; idx = hpi; }
 
     ~HashModule()
     { delete hmd; }
@@ -293,13 +300,13 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &ps; }
+    { return hash_ps + idx; }
 
     HashMatchData* get_data();
 
 private:
     HashMatchData* hmd;
-    ProfileStats& ps;
+    HashPsIdx idx;
 };
 
 HashMatchData* HashModule::get_data()
@@ -364,18 +371,16 @@ static void opt_dtor(IpsOption* p)
 #undef IPS_OPT
 #define IPS_OPT "md5"
 
-static THREAD_LOCAL ProfileStats md5_ps;
-
 static Module* md5_mod_ctor()
 {
-    return new HashModule(IPS_OPT, md5_ps);
+    return new HashModule(IPS_OPT, HPI_MD5);
 }
 
 static IpsOption* md5_opt_ctor(Module* p, OptTreeNode*)
 {
     HashModule* m = (HashModule*)p;
     HashMatchData* hmd = m->get_data();
-    return new HashOption(IPS_OPT, md5_ps, hmd, md5, MD5_HASH_SIZE);
+    return new HashOption(IPS_OPT, HPI_MD5, hmd, md5, MD5_HASH_SIZE);
 }
 
 static const IpsApi md5_api =
@@ -410,18 +415,16 @@ static const IpsApi md5_api =
 #undef IPS_OPT
 #define IPS_OPT "sha256"
 
-static THREAD_LOCAL ProfileStats sha256_ps;
-
 static Module* sha256_mod_ctor()
 {
-    return new HashModule(IPS_OPT, md5_ps);
+    return new HashModule(IPS_OPT, HPI_SHA256);
 }
 
 static IpsOption* sha256_opt_ctor(Module* p, OptTreeNode*)
 {
     HashModule* m = (HashModule*)p;
     HashMatchData* hmd = m->get_data();
-    return new HashOption(IPS_OPT, sha256_ps, hmd, sha256, SHA256_HASH_SIZE);
+    return new HashOption(IPS_OPT, HPI_SHA256, hmd, sha256, SHA256_HASH_SIZE);
 }
 
 static const IpsApi sha256_api =
@@ -456,18 +459,16 @@ static const IpsApi sha256_api =
 #undef IPS_OPT
 #define IPS_OPT "sha512"
 
-static THREAD_LOCAL ProfileStats sha512_ps;
-
 static Module* sha512_mod_ctor()
 {
-    return new HashModule(IPS_OPT, md5_ps);
+    return new HashModule(IPS_OPT, HPI_SHA512);
 }
 
 static IpsOption* sha512_opt_ctor(Module* p, OptTreeNode*)
 {
     HashModule* m = (HashModule*)p;
     HashMatchData* hmd = m->get_data();
-    return new HashOption(IPS_OPT, sha512_ps, hmd, sha512, SHA512_HASH_SIZE);
+    return new HashOption(IPS_OPT, HPI_SHA512, hmd, sha512, SHA512_HASH_SIZE);
 }
 
 static const IpsApi sha512_api =

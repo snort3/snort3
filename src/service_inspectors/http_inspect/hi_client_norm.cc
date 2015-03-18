@@ -146,7 +146,9 @@ int hi_split_header_cookie(
         {
             this_header_len = cookie->cookie - this_header_start;
         }
+#ifdef DEBUG
         this_header_end = this_header_start + this_header_len;
+#endif
 
         if ((*i_header_len == MAX_URI) ||
             (*i_cookie_len == MAX_URI))

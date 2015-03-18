@@ -68,8 +68,6 @@ static fd_status_t File_Decomp_Process_LZMA_Header(fd_session_p_t SessionPtr)
         *(LZMA_Header + LZMA_UCL_OFFSET + idx) =
             (uint8_t)(LZMA_Uncomp_Len & (0xff << idx));
 
-    LZMA_Uncomp_Len = (uint64_t)(SWF_Uncomp_Len - (SWF_HDR_LEN));
-
     /* Move the LZMA Properties */
     for ( idx=0; idx<SWF_LZMA_PRP_LEN; idx++ )
         LZMA_Header[LZMA_PRP_OFFSET + idx] = *(SWF_Header + SWF_PRP_OFFSET + idx);
