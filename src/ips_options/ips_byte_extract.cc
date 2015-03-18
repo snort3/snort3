@@ -395,10 +395,10 @@ static const Parameter s_params[] =
     { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
       "offset from cursor instead of start of buffer" },
 
-    { "multiplier", Parameter::PT_INT, "1:65535", nullptr,
+    { "multiplier", Parameter::PT_INT, "1:65535", "1",
       "scale extracted value by given amount" },
 
-    { "align", Parameter::PT_INT, "0:4", nullptr,
+    { "align", Parameter::PT_INT, "0:4", "0",
       "round the number of converted bytes up to the next 2- or 4-byte boundary" },
 
     { "big", Parameter::PT_IMPLIED, nullptr, nullptr,

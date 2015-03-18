@@ -51,7 +51,7 @@ static const unsigned ALERT_FLAG_MSG = 0x01;
 
 static const Parameter ex_params[] =
 {
-    { "file", Parameter::PT_BOOL, nullptr, "stdout",
+    { "file", Parameter::PT_BOOL, nullptr, "false",
       "output to " F_NAME " instead of stdout" },
 
     { "msg", Parameter::PT_BOOL, nullptr, "false",

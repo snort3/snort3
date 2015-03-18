@@ -1,5 +1,6 @@
-Pending - build 142
+15/03/18 - build 142
 
+-- apply defaults from parameter tables instead of relying on ctors etc.
 -- fix static analysis issues reported by xcode
 -- change policy names with a-b form to a_b for consistency
 -- make all warnings optional

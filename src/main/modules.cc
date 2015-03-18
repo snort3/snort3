@@ -322,7 +322,7 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
 static const Parameter profile_rule_params[] =
 {
     { "count", Parameter::PT_INT, "-1:", "-1",
-      "print results to given level (-1 = all, 0 = off?)" },
+      "print results to given level (-1 = all, 0 = off)" },
 
     { "sort", Parameter::PT_ENUM,
       "checks | avg_ticks | total_ticks | matches | no_matches | "
@@ -335,7 +335,7 @@ static const Parameter profile_rule_params[] =
 static const Parameter profile_module_params[] =
 {
     { "count", Parameter::PT_INT, "-1:", "-1",
-      "print results to given level (-1 = all, 0 = off?)" },
+      "print results to given level (-1 = all, 0 = off)" },
 
     { "sort", Parameter::PT_ENUM,
       "checks | avg_ticks | total_ticks", "avg_ticks",

@@ -314,13 +314,13 @@ static const Parameter s_params[] =
     { "from_beginning", Parameter::PT_IMPLIED, nullptr, nullptr,
       "jump from start of buffer instead of cursor" },
 
-    { "multiplier", Parameter::PT_INT, "1:65535", nullptr,
+    { "multiplier", Parameter::PT_INT, "1:65535", "1",
       "scale extracted value by given amount" },
 
-    { "align", Parameter::PT_INT, "0:4", nullptr,
+    { "align", Parameter::PT_INT, "0:4", "0",
       "round the number of converted bytes up to the next 2- or 4-byte boundary" },
 
-    { "post_offset", Parameter::PT_INT, "-65535:65535", nullptr,
+    { "post_offset", Parameter::PT_INT, "-65535:65535", "0",
       "also skip forward or backwards (positive of negative value) this number of bytes" },
 
     { "big", Parameter::PT_IMPLIED, nullptr, nullptr,

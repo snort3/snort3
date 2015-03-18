@@ -66,6 +66,10 @@ struct Parameter
     bool is_quoted() const
     { return ( type > PT_PORT ); }
 
+    bool get_bool() const;
+    double get_number() const;
+    const char* get_string() const;
+
     static const Parameter* find(const Parameter*, const char*);
 };
 

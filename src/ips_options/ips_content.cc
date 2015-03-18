@@ -666,7 +666,7 @@ static const Parameter s_params[] =
     { "fast_pattern", Parameter::PT_IMPLIED, nullptr, nullptr,
       "use this content in the fast pattern matcher instead of the content selected by default" },
 
-    { "fast_pattern_offset", Parameter::PT_INT, nullptr, nullptr,
+    { "fast_pattern_offset", Parameter::PT_INT, "0:", "0",
       "number of leading characters of this content the fast pattern matcher should exclude" },
 
     { "fast_pattern_length", Parameter::PT_INT, "1:", nullptr,

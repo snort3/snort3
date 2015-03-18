@@ -21,6 +21,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 #include "utils/dnet_header.h"
 
 #include <string>
@@ -400,6 +401,27 @@ const char* Parameter::get_type() const
 {
     assert(type < Parameter::PT_MAX);
     return pt2str[type];
+}
+
+bool Parameter::get_bool() const
+{
+    if ( !deflt )
+        return false;
+
+    return ( strchr(deflt, 't') || strchr(deflt, 'T') );
+}
+
+double Parameter::get_number() const
+{
+    if ( !deflt )
+        return 0;
+
+    return strtod(deflt, nullptr);
+}
+
+const char* Parameter::get_string() const
+{
+    return deflt ? deflt : "";
 }
 
 const Parameter* Parameter::find(const Parameter* p, const char* s)

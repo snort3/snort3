@@ -57,12 +57,25 @@ struct ModHook
 typedef list<ModHook*> ModuleList;
 static ModuleList s_modules;
 static unsigned s_errors = 0;
+
 static string s_current;
 static string s_name;
 static string s_type;
 
 // for callbacks from Lua
 static SnortConfig* s_config = nullptr;
+
+// forward decls
+extern "C"
+{
+    bool open_table(const char*, int);
+    void close_table(const char*, int);
+
+    bool set_bool(const char* fqn, bool val);
+    bool set_number(const char* fqn, double val);
+    bool set_string(const char* fqn, const char* val);
+    bool set_alias(const char* from, const char* to);
+}
 
 //-------------------------------------------------------------------------
 // ModHook foo
@@ -301,7 +314,8 @@ static void dump_table(string& key, const char* pfx, const Parameter* p, bool li
 // set methods
 //-------------------------------------------------------------------------
 
-static const Parameter* get_params(const string& sfx, const Parameter* p)
+static const Parameter* get_params(
+    const string& sfx, const Parameter* p, int idx = 1)
 {
     size_t pos = sfx.find_first_of('.');
     std::string new_fqn;
@@ -329,9 +343,9 @@ static const Parameter* get_params(const string& sfx, const Parameter* p)
         p->type != Parameter::PT_LIST )
         return p;
 
-    if (new_fqn.find_first_of('.') == std::string::npos)
+    if ( new_fqn.find_first_of('.') == std::string::npos )
     {
-        if (p->type == Parameter::PT_LIST)
+        if ( idx && p->type == Parameter::PT_LIST )
         {
             const Parameter* tmp_p =
                 reinterpret_cast<const Parameter*>(p->range);
@@ -345,7 +359,7 @@ static const Parameter* get_params(const string& sfx, const Parameter* p)
     }
 
     p = (const Parameter*)p->range;
-    return get_params(new_fqn, p);
+    return get_params(new_fqn, p, idx);
 }
 
 // FIXIT-M vars may have been defined on command line
@@ -476,19 +490,145 @@ static bool set_value(const char* fqn, Value& v)
 }
 
 //-------------------------------------------------------------------------
-// ffi methods
+// defaults - set all parameter table defaults for each configured module
+// but there are no internal default list or list items.  since Lua calls
+// open table for each explicitly configured table only, here is what we
+// do:
+//
+// -- on open_table(), call Module::begin() for each module, list, and list
+//    item
+// -- recursively set all defaults after calling Module::begin(), skipping
+//    lists and list items
+// -- on close_table(), call Module::begin() for each module, list, and list
+//    item
 //-------------------------------------------------------------------------
 
-extern "C"
-{
-    bool open_table(const char*, int);
-    void close_table(const char*, int);
+static bool top_level(const char* s)
+{ return !strchr(s, '.'); }
 
-    bool set_bool(const char* fqn, bool val);
-    bool set_number(const char* fqn, double val);
-    bool set_string(const char* fqn, const char* val);
-    bool set_alias(const char* from, const char* to);
+static bool begin(Module* m, const Parameter* p, const char* s, int idx, int depth)
+{
+    if ( !p )
+    {
+        p = m->get_parameters();
+        assert(p);
+    }
+
+    // Module::begin() top-level, lists, and list items only
+    if ( top_level(s) or
+         (!idx and p->type == Parameter::PT_LIST) or
+         (idx and p->type != Parameter::PT_LIST) )
+    {
+        //printf("begin %s %d\n", s, idx);
+        if ( !m->begin(s, idx, s_config) )
+            return false;
+    }
+    // don't set list defaults
+    if ( m->is_list() or p->type == Parameter::PT_LIST )
+    {
+        if ( !idx )
+            return true;
+    }
+
+    // set list item defaults only if explicitly configured
+    // (this is why it is done here and not in the loop below)
+    if ( p->type == Parameter::PT_LIST )
+    {
+        const Parameter* t =
+            reinterpret_cast<const Parameter*>(p->range);
+
+        return begin(m, t, s, idx, depth+1);
+    }
+
+    // don't begin subtables again
+    if ( !top_level(s) && !depth )
+        return true;
+
+    while ( p->name )
+    {
+        string fqn = s;
+        fqn += '.';
+        fqn += p->name;
+
+        switch ( p->type )
+        {
+        // traverse subtables only to set defaults
+        case Parameter::PT_TABLE:
+            {
+                const Parameter* t =
+                    reinterpret_cast<const Parameter*>(p->range);
+
+                if ( !begin(m, t, fqn.c_str(), idx, depth+1) )
+                    return false;
+            }
+            break;
+
+        // skip lists, they must be configured explicitly
+        case Parameter::PT_LIST:
+        case Parameter::PT_MAX:
+            break;
+
+        case Parameter::PT_BOOL:
+            if ( p->deflt )
+            {
+                bool b = p->get_bool();
+                //printf("set default %s = %s\n", fqn.c_str(), p->deflt);
+                set_bool(fqn.c_str(), b);
+            }
+            break;
+
+        case Parameter::PT_INT:
+        case Parameter::PT_PORT:
+        case Parameter::PT_REAL:
+            if ( p->deflt )
+            {
+                double d = p->get_number();
+                //printf("set default %s = %f\n", fqn.c_str(), d);
+                set_number(fqn.c_str(), d);
+            }
+            break;
+
+        // everything else is a string of some sort
+        default:
+            if ( p->deflt )
+            {
+                //printf("set default %s = %s\n", fqn.c_str(), p->deflt);
+                set_string(fqn.c_str(), p->deflt);
+            }
+            break;
+        }
+        ++p;
+    }
+    return true;
 }
+
+// no need to recurse here; we only call Module::end() for
+// top-level, lists, and list items
+static bool end(Module* m, const Parameter* p, const char* s, int idx)
+{
+    bool top_param = !p;
+
+    if ( !p )
+    {
+        p = m->get_parameters();
+        assert(p);
+    }
+    // same as begin() but we must include top_param to catch
+    // top-level lists
+    if ( top_level(s) or
+         (top_param and p->type != Parameter::PT_TABLE) or
+         (!idx and p->type == Parameter::PT_LIST) or
+         (idx and p->type != Parameter::PT_LIST) )
+    {
+        //printf("end %s %d\n", s, idx);
+        return m->end(s, idx, s_config);
+    }
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// ffi methods
+//-------------------------------------------------------------------------
 
 SO_PUBLIC bool set_alias(const char* from, const char* to)
 {
@@ -499,6 +639,8 @@ SO_PUBLIC bool set_alias(const char* from, const char* to)
 
 SO_PUBLIC bool open_table(const char* s, int idx)
 {
+    //printf("open %s %d\n", s, idx);
+
     const char* orig = s;
     string fqn = s;
     set_type(fqn);
@@ -519,13 +661,13 @@ SO_PUBLIC bool open_table(const char* s, int idx)
     if ( snort_is_reloading() && h && h->api && h->api->type != PT_INSPECTOR )
         return false;
 
-    //printf("open %s %d\n", s, idx);
     Module* m = h->mod;
+    const Parameter* p = nullptr;
 
-    if (strcmp(m->get_name(), s))
+    if ( strcmp(m->get_name(), s) )
     {
         std::string fqn = s;
-        const Parameter* const p = get_params(fqn, m->get_parameters());
+        p = get_params(fqn, m->get_parameters(), idx);
 
         if ( !p )
         {
@@ -548,7 +690,7 @@ SO_PUBLIC bool open_table(const char* s, int idx)
         s_current = key;
     }
 
-    if ( !m->begin(s, idx, s_config) )
+    if ( !begin(m, p, s, idx, 0) )
     {
         ParseError("can't open %s", m->get_name());
         return false;
@@ -558,6 +700,8 @@ SO_PUBLIC bool open_table(const char* s, int idx)
 
 SO_PUBLIC void close_table(const char* s, int idx)
 {
+    //printf("close %s %d\n", s, idx);
+
     string fqn = s;
     set_type(fqn);
     s = fqn.c_str();
@@ -565,11 +709,9 @@ SO_PUBLIC void close_table(const char* s, int idx)
     string key = fqn;
     set_top(key);
 
-    //printf("close %s %d\n", s, idx);
-
     if ( ModHook* h = get_hook(key.c_str()) )
     {
-        if ( !h->mod->end(s, idx, s_config) )
+        if ( !end(h->mod, nullptr, s, idx) )
             ParseError("can't close %s", h->mod->get_name());
 
         else if ( !s_name.empty() )

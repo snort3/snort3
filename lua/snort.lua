@@ -35,8 +35,6 @@ if ( not conf_dir ) then
 end
 
 dofile(conf_dir .. '/snort_defaults.lua')
-dofile(conf_dir .. '/classification.lua')
-dofile(conf_dir .. '/reference.lua')
 
 ---------------------------------------------------------------------------
 -- configure modules

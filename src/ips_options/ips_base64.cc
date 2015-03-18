@@ -190,7 +190,7 @@ static const Parameter s_params[] =
     { "bytes", Parameter::PT_INT, "1:", nullptr,
       "Number of base64 encoded bytes to decode." },
 
-    { "offset", Parameter::PT_INT, "0:", nullptr,
+    { "offset", Parameter::PT_INT, "0:", "0",
       "Bytes past start of buffer to start decoding." },
 
     { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,

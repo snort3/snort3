@@ -43,7 +43,7 @@ static StreamModuleConfig stream_cfg =
 
 static const Parameter proto_params[] =
 {
-    { "memcap", Parameter::PT_INT, "0:", nullptr,
+    { "memcap", Parameter::PT_INT, "0:", "0",
       "maximum cache memory" },
 
     { "idle_timeout", Parameter::PT_INT, "1:", "60",

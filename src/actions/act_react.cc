@@ -256,7 +256,7 @@ static void react_config(ReactData* rd)
 
 static const Parameter s_params[] =
 {
-    { "msg", Parameter::PT_BOOL, nullptr, nullptr,
+    { "msg", Parameter::PT_BOOL, nullptr, "false",
       " use rule message in response page" },
 
     { "page", Parameter::PT_STRING, nullptr, nullptr,

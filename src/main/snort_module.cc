@@ -191,7 +191,7 @@ static const Parameter s_params[] =
     { "-S", Parameter::PT_STRING, nullptr, nullptr,
       "<n=v> set rules file variable n equal to value v" },
 
-    { "-s", Parameter::PT_INT, "68:65535", nullptr,
+    { "-s", Parameter::PT_INT, "68:65535", "1514",
       "<snap> (same as --snaplen)" },
 
     { "-T", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -229,8 +229,9 @@ static const Parameter s_params[] =
     { "-y", Parameter::PT_IMPLIED, nullptr, nullptr,
       "include year in timestamp in the alert and log files" },
 
-    { "-z", Parameter::PT_INT, "1:", nullptr,
-      "<count> maximum number of packet threads (same as --max-packet-threads)" },
+    { "-z", Parameter::PT_INT, "0:", "1",
+      "<count> maximum number of packet threads (same as --max-packet-threads)\n"
+      "        0 gets the number of CPU cores reported by the system" },
 
     { "--alert-before-pass", Parameter::PT_IMPLIED, nullptr, nullptr,
       "process alert, drop, sdrop, or reject before pass; "
@@ -336,8 +337,9 @@ static const Parameter s_params[] =
     { "--markup", Parameter::PT_IMPLIED, nullptr, nullptr,
       "output help in asciidoc compatible format" },
 
-    { "--max-packet-threads", Parameter::PT_INT, "0:", nullptr,
-      "<count> configure maximum number of packet threads (same as -z)" },
+    { "--max-packet-threads", Parameter::PT_INT, "0:", "1",
+      "<count> configure maximum number of packet threads (same as -z)\n"
+      "        0 gets the number of CPU cores reported by the system" },
 
     { "--nostamps", Parameter::PT_IMPLIED, nullptr, nullptr,
       "don't include timestamps in log file names" },
@@ -412,7 +414,7 @@ static const Parameter s_params[] =
     { "--skip", Parameter::PT_INT, "0:", nullptr,
       "<n> skip 1st n packets", },
 
-    { "--snaplen", Parameter::PT_INT, "68:65535", nullptr,
+    { "--snaplen", Parameter::PT_INT, "68:65535", "1514",
       "<snap> set snaplen of packet (same as -s)", },
 
     { "--stdin-rules", Parameter::PT_IMPLIED, nullptr, nullptr,

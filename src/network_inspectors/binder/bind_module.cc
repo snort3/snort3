@@ -56,7 +56,7 @@ static const Parameter binder_when_params[] =
 {
     // FIXIT when.policy_id should be an arbitrary string auto converted
     // into index for binder matching and lookups
-    { "policy_id", Parameter::PT_INT, "0:", nullptr,
+    { "policy_id", Parameter::PT_INT, "0:", "0",
       "unique ID for selection of this config by external logic" },
 
     { "ifaces", Parameter::PT_BIT_LIST, "255", nullptr,
@@ -97,8 +97,8 @@ static const Parameter binder_use_params[] =
     { "type", Parameter::PT_STRING, nullptr, nullptr,
       "select module for binding" },
 
-    { "name", Parameter::PT_STRING, nullptr, "defaults to type",
-      "symbol name" },
+    { "name", Parameter::PT_STRING, nullptr, nullptr,
+      "symbol name (defaults to type)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
