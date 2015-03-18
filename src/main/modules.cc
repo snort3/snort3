@@ -898,7 +898,9 @@ static const Parameter daq_params[] =
     { "no_promisc", Parameter::PT_BOOL, nullptr, "false",
       "whether to put DAQ device into promiscuous mode" },
 
-    { "type", Parameter::PT_STRING, nullptr, "pcap",
+    // FIXIT-L no default; causes
+    // ERROR: setting DAQ to pcap but pcap already selected.
+    { "type", Parameter::PT_STRING, nullptr, nullptr,
       "select type of DAQ" },
 
     // FIXIT-L should be a list?
@@ -1107,7 +1109,8 @@ static const Parameter ips_params[] =
     { "include", Parameter::PT_STRING, nullptr, nullptr,
       "legacy snort rules and includes" },
 
-    { "mode", Parameter::PT_ENUM, "tap | inline | inline-test", "tap",
+    // FIXIT-L no default; it breaks initialization by -Q
+    { "mode", Parameter::PT_ENUM, "tap | inline | inline-test", nullptr,
       "set policy mode" },
 
     { "rules", Parameter::PT_STRING, nullptr, nullptr,

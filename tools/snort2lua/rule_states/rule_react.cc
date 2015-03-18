@@ -71,7 +71,6 @@ bool React::convert(std::istringstream& data_stream)
             {
                 // Now that we have confirmed this is a valid option, parse it!!
                 table_api.open_table("react");
-                bool find_msg = false;
 
                 do
                 {
@@ -85,29 +84,16 @@ bool React::convert(std::istringstream& data_stream)
                         table_api.add_deleted_comment(tmp);
 
                     else if (!tmp.compare("msg"))
-                        find_msg = true;
-
+                    {
+                        table_api.add_diff_option_comment(
+                            "msg", "react.msg = true");
+                        table_api.add_option("msg", true);
+                    }
                     else
                         rule_api.bad_rule(data_stream, "resp: " + tmp);
                 }
                 while (util::get_string(arg_stream, tmp, ","));
 
-                // get this rule's msg
-                if (find_msg)
-                {
-                    std::string msg = util::rule_option_find_val(data_stream, "msg");
-
-                    if (!msg.empty())
-                    {
-                        if (msg.front() == '"' && msg.back() == '"')
-                        {
-                            msg.erase(msg.begin());
-                            msg.pop_back();
-                        }
-
-                        table_api.add_option("msg", msg);
-                    }
-                }
                 table_api.close_table(); // "react"
             }
             else

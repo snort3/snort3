@@ -261,8 +261,11 @@ void AttributeTable::parse_os()
                 table_api.add_option("tcp_policy", "windows");
 
             else if (!policy.compare("win-2003"))
-                table_api.add_option("tcp_policy", "win-2003");
-
+            {
+                table_api.add_diff_option_comment("<STREAM_POLICY>win-2003</STREAM_POLICY>",
+                    "hosts.tcp_policy = win_2003");
+                table_api.add_option("tcp_policy", "win_2003");
+            }
             else if (!policy.compare("vista"))
                 table_api.add_option("tcp_policy", "vista");
 
@@ -270,8 +273,11 @@ void AttributeTable::parse_os()
                 table_api.add_option("tcp_policy", "hpux10");
 
             else if (!policy.compare("hpux"))
-                table_api.add_option("tcp_policy", "hpux");
-
+            {
+                table_api.add_diff_option_comment("<STREAM_POLICY>hpux</STREAM_POLICY>",
+                    "hosts.tcp_policy = hpux11");
+                table_api.add_option("tcp_policy", "hpux11");
+            }
             else if (!policy.compare("macos"))
                 table_api.add_option("tcp_policy", "macos");
 

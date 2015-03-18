@@ -78,8 +78,7 @@ bool Ppm::convert(std::istringstream& data_stream)
         }
         else if (!keyword.compare("debug-pkts"))
         {
-            table_api.add_diff_option_comment("debug-pkts", "debug_pkts");
-            tmpval = table_api.add_option("debug_pkts", true);
+            table_api.add_deleted_comment("debug-pkts");
         }
         else if (!keyword.compare("max-rule-time"))
         {

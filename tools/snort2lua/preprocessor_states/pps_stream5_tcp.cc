@@ -435,7 +435,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             else if (!policy.compare("hpux"))
             {
                 table_api.add_diff_option_comment("policy hpux", "stream_tcp.policy = hpux11");
-                table_api.add_option("policy", "hpux");
+                table_api.add_option("policy", "hpux11");
             }
             else if (!policy.compare("hpux10"))
                 table_api.add_option("policy", "hpux10");

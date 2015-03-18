@@ -257,7 +257,7 @@ static void react_config(ReactData* rd)
 static const Parameter s_params[] =
 {
     { "msg", Parameter::PT_BOOL, nullptr, "false",
-      " use rule message in response page" },
+      " use rule msg in response page instead of default message" },
 
     { "page", Parameter::PT_STRING, nullptr, nullptr,
       "file containing HTTP response (headers and body)" },

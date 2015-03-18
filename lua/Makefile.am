@@ -5,6 +5,4 @@ x_includedir = $(sysconfdir)/snort
 x_include_HEADERS = \
 snort.lua \
 snort_defaults.lua \
-classification.lua \
-reference.lua \
 sample.rules
