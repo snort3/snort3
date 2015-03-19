@@ -1,5 +1,6 @@
 15/03/18 - build 142
 
+-- fixed host lookup issue
 -- folded classification.lua and reference.lua into snort_defaults.lua
 -- apply defaults from parameter tables instead of relying on ctors etc.
 -- fix static analysis issues reported by xcode

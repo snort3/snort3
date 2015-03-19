@@ -361,8 +361,10 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     p->flow = flow;
 
     if ( flow->flow_state )
+    {
         set_policies(snort_conf, flow->policy_id);
-
+        p->application_protocol_ordinal = flow->ssn_state.application_protocol;
+    }
     else
     {
         init_roles(p, flow);

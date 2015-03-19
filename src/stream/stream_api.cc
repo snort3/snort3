@@ -398,7 +398,7 @@ int Stream::set_application_protocol_id_expected(
 }
 
 void Stream::set_application_protocol_id_from_host_entry(
-    Flow* flow, const HostAttributeEntry* host_entry, int direction)
+    Flow* flow, const HostAttributeEntry* host_entry, int /*direction*/)
 {
     int16_t application_protocol;
 
@@ -414,22 +414,19 @@ void Stream::set_application_protocol_id_from_host_entry(
         set_ip_protocol(flow);
     }
 
-    if (direction == SSN_DIR_FROM_SERVER)
-    {
-        application_protocol = getApplicationProtocolId(
-            host_entry, flow->ssn_state.ipprotocol,
-            flow->server_port, SFAT_SERVICE);
-    }
-    else
-    {
-        application_protocol = getApplicationProtocolId(
-            host_entry, flow->ssn_state.ipprotocol,
-            flow->client_port, SFAT_SERVICE);
+    application_protocol = getApplicationProtocolId(
+        host_entry, flow->ssn_state.ipprotocol,
+        flow->server_port, SFAT_SERVICE);
 
+#if 0
+    // FIXIT - from client doesn't imply need to swap
+    if (direction == SSN_DIR_FROM_CLIENT)
+    {
         if ( application_protocol &&
             (flow->ssn_state.session_flags & SSNFLAG_MIDSTREAM) )
             flow->ssn_state.session_flags |= SSNFLAG_CLIENT_SWAP;
     }
+#endif
 
     if (flow->ssn_state.application_protocol != application_protocol)
     {
