@@ -1,3 +1,8 @@
+Pending - build 143
+
+-- eliminate dedicated nhttp chunk buffer
+-- minor nhttp cleanup in StreamSplitter
+
 15/03/18 - build 142
 
 -- fixed host lookup issue

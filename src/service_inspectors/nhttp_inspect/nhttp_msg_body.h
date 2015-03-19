@@ -39,7 +39,7 @@ public:
     void legacy_clients() override;
 
 protected:
-    int64_t data_length;
+    int64_t data_length; // FIXIT-M this has no meaning in chunk subclass. Potential source of errors.
     int64_t body_octets;
 
     Field data;

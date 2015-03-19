@@ -302,7 +302,10 @@ void NHttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sou
         // multiple times as we generate all the maximum size body sections needed for a single
         // flush.
         tcp_close = false;
-        const unsigned paf_max = DATABLOCKSIZE - session_data->chunk_buffer_length[source_id];
+        unsigned paf_max = DATABLOCKSIZE;
+        if (session_data->section_type[source_id] == SEC_CHUNK) {
+            paf_max -= session_data->section_buffer_length[source_id];
+        }
         length = (flush_octets <= paf_max) ? flush_octets : paf_max;
         for (uint32_t k = end_offset; k < length; k++)
         {

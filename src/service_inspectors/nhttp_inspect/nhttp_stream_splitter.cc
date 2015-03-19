@@ -48,7 +48,7 @@ void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* f
         paf_max = DATABLOCKSIZE;
         break;
     case SEC_CHUNK:
-        paf_max = DATABLOCKSIZE - session_data->chunk_buffer_length[source_id];
+        paf_max = DATABLOCKSIZE - session_data->section_buffer_length[source_id];
         break;
     default:
         paf_max = MAXOCTETS;
@@ -288,7 +288,8 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
     if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output())
     {
         printf("reassemble() from flow %p direction %d total %u length %u offset %u\n",
-            (void*)flow, 1 - (int)to_server(), total, len, offset); fflush(nullptr);
+            (void*)flow, 1 - (int)to_server(), total, len, offset);
+        fflush(stdout);
     }
 
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(
@@ -296,28 +297,31 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
     assert(session_data != nullptr);
     copied = len;
 
-    if (NHttpTestManager::use_test_input())
+    if (NHttpTestManager::use_test_output())
     {
-        if (!(flags & PKT_PDU_TAIL))
+        if (NHttpTestManager::use_test_input())
         {
-            return nullptr;
+            if (!(flags & PKT_PDU_TAIL))
+            {
+                return nullptr;
+            }
+            uint8_t* test_buffer;
+            NHttpTestManager::get_test_input_source()->reassemble(&test_buffer, len, source_id,
+                session_data, tcp_close);
+            if (test_buffer == nullptr)
+            {
+                // Source ID does not match test data, no test data was flushed, or there is no
+                // more test data
+                return nullptr;
+            }
+            data = test_buffer;
+            offset = 0;
         }
-        uint8_t* test_buffer;
-        NHttpTestManager::get_test_input_source()->reassemble(&test_buffer, len, source_id,
-            session_data, tcp_close);
-        if (test_buffer == nullptr)
+        else
         {
-            // Source ID does not match test data, no test data was flushed, or there is no more
-            // test data
-            return nullptr;
+            printf("Reassemble from flow data %p direction %d\n", (void*)session_data, source_id);
+            fflush(stdout);
         }
-        data = test_buffer;
-        offset = 0;
-    }
-    else if (NHttpTestManager::use_test_output())
-    {
-        printf("Reassemble from flow data %p direction %d\n", (void*)session_data, source_id);
-        fflush(stdout);
     }
 
     if (session_data->section_type[source_id] == SEC__NOTCOMPUTE)
@@ -346,28 +350,20 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
         return nullptr;
     }
 
-    bool is_chunk = (session_data->section_type[source_id] == SEC_CHUNK);
-
-    uint8_t*& chunk_buffer = session_data->chunk_buffer[source_id];
-    int32_t& chunk_buffer_length = session_data->chunk_buffer_length[source_id];
-    uint8_t*& buffer = !is_chunk ? session_data->section_buffer[source_id] : chunk_buffer;
-    int32_t& buffer_length = !is_chunk ? session_data->section_buffer_length[source_id] :
-        chunk_buffer_length;
-    bool& buffer_owned = !is_chunk ? session_data->section_buffer_owned[source_id] :
-        session_data->chunk_buffer_owned[source_id];
+    uint8_t*& buffer = session_data->section_buffer[source_id];
+    int32_t& buffer_length = session_data->section_buffer_length[source_id];
 
     if (buffer == nullptr)
     {
         buffer = new uint8_t[MAXOCTETS];
-        assert(buffer != nullptr);
-        buffer_owned = true;
+        session_data->section_buffer_owned[source_id] = true;
     }
 
     memcpy(buffer + buffer_length + offset, data, len);
     if (flags & PKT_PDU_TAIL)
     {
         ProcessResult send_to_detection;
-        if (!is_chunk)
+        if (session_data->section_type[source_id] != SEC_CHUNK)
         {
             // start line/headers/body individual section processing with aggregation prior to
             // being sent to detection
@@ -391,20 +387,20 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             // FIXIT-M this implementation of the zero-length chunk is temporary until stream can
             // support a zero-
             // octet flush.
-            const int32_t total_chunk_len = chunk_buffer_length + offset + len -
-                session_data->zero_chunk[source_id];
+            const int32_t total_chunk_len = buffer_length + offset + len -
+                (int)session_data->zero_chunk[source_id];
             if ((total_chunk_len < DATABLOCKSIZE) && (!session_data->zero_chunk[source_id]) &&
                 !tcp_close)
             {
-                chunk_buffer_length = total_chunk_len;
+                buffer_length = total_chunk_len;
                 return nullptr;
             }
             if (total_chunk_len == 0)
             {
                 // Zero-length chunk cannot be processed by itself.
-                delete[] chunk_buffer;
-                chunk_buffer = nullptr;
-                chunk_buffer_length = 0;
+                delete[] buffer;
+                buffer = nullptr;
+                buffer_length = 0;
                 // zero-length chunk is not visible to inspector. Transition to trailer must be
                 // handled here.
                 session_data->section_type[source_id] = SEC__NOTCOMPUTE;
@@ -414,8 +410,8 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             paf_max = DATABLOCKSIZE;
             session_data->infractions[source_id] = session_data->chunk_infractions[source_id];
             session_data->chunk_infractions[source_id] = NHttpInfractions();
-            send_to_detection = my_inspector->process(chunk_buffer, total_chunk_len, flow,
-                source_id, true);
+            send_to_detection = my_inspector->process(buffer, total_chunk_len, flow, source_id,
+                true);
             if (session_data->zero_chunk[source_id])
             {
                 // zero-length chunk is not visible to inspector. Transition to trailer must be
@@ -448,7 +444,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             return nullptr;
         case RES_AGGREGATE:
             buffer_length += offset + len;
-            buffer_owned = false;
+            session_data->section_buffer_owned[source_id] = false;
             return nullptr;
         }
     }

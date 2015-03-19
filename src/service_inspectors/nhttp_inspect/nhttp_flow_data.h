@@ -60,12 +60,6 @@ private:
     uint8_t* section_buffer[2] = { nullptr, nullptr };
     int32_t section_buffer_length[2] = { 0, 0 };
     bool section_buffer_owned[2] = { true, true };
-    uint8_t* chunk_buffer[2] = { nullptr, nullptr };
-    int32_t chunk_buffer_length[2] = { 0, 0 };
-
-    // never actually false and not checked, just here to simplify code
-    bool chunk_buffer_owned[2] = { true, true };
-
     bool zero_chunk[2] = { false, false };
     NHttpInfractions chunk_infractions[2];
 

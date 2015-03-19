@@ -22,7 +22,7 @@
 
 //-------------------------------------------------------------------------
 // ScratchPad class
-// Memory management for NHttpMsgHeader class
+// Storage management class
 //-------------------------------------------------------------------------
 
 // Working space and storage for all the derived fields

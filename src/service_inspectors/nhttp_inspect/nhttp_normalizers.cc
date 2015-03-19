@@ -27,8 +27,8 @@
 using namespace NHttpEnums;
 
 // Collection of stock normalization functions. This will probably grow throughout the life of the
-// software. New functions must follow the standard signature.
-// The void* at the end is for any special configuration data the function requires.
+// software. New functions must follow the standard signature. The void* at the end is for any
+// special configuration data the function requires.
 
 int32_t norm_decimal_integer(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
     NHttpInfractions& infractions, const void*)

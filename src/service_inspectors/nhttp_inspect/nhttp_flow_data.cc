@@ -50,7 +50,6 @@ NHttpFlowData::~NHttpFlowData()
         {
             delete[] section_buffer[k];
         }
-        delete[] chunk_buffer[k];
         delete transaction[k];
         delete splitter[k];
     }
@@ -90,8 +89,6 @@ void NHttpFlowData::show(FILE* out_file) const
         header_octets_visible[1]);
     fprintf(out_file, "Section buffer length: %d/%d\n", section_buffer_length[0],
         section_buffer_length[1]);
-    fprintf(out_file, "Chunk buffer length: %d/%d\n", chunk_buffer_length[0],
-        chunk_buffer_length[1]);
     fprintf(out_file, "Pipelining: front %d back %d overflow %d underflow %d\n", pipeline_front,
         pipeline_back,
         pipeline_overflow, pipeline_underflow);
