@@ -114,7 +114,7 @@ static const Parameter s_params[] =
     { "max_pdu", Parameter::PT_INT, "1460:63780", "16384",
       "maximum reassembled PDU size" },
 
-    { "policy", Parameter::PT_ENUM, TCP_POLICIES, TCP_POLICY_DEFAULT,
+    { "policy", Parameter::PT_ENUM, TCP_POLICIES, "bsd",
       "determines operating system characteristics like reassembly" },
 
     { "reassemble_async", Parameter::PT_BOOL, nullptr, "true",

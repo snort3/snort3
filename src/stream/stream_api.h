@@ -60,9 +60,6 @@
     "first | last | linux | old_linux | bsd | macos | solaris | irix | " \
     "hpux11 | hpux10 | windows | win_2003 | vista | proxy"
 
-#define IP_POLICY_DEFAULT "linux"
-#define TCP_POLICY_DEFAULT "bsd"
-
 class Flow;
 
 typedef int (* LogFunction)(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);

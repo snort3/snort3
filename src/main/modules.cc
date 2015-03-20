@@ -1736,10 +1736,10 @@ static const Parameter hosts_params[] =
     { "ip", Parameter::PT_ADDR, nullptr, "0.0.0.0/32",
       "hosts address / cidr" },
 
-    { "frag_policy", Parameter::PT_ENUM, IP_POLICIES, IP_POLICY_DEFAULT,
+    { "frag_policy", Parameter::PT_ENUM, IP_POLICIES, nullptr,
       "defragmentation policy" },
 
-    { "tcp_policy", Parameter::PT_ENUM, TCP_POLICIES, TCP_POLICY_DEFAULT,
+    { "tcp_policy", Parameter::PT_ENUM, TCP_POLICIES, nullptr,
       "tcp reassembly policy" },
 
     { "services", Parameter::PT_LIST, service_params, nullptr,

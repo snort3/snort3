@@ -110,7 +110,7 @@ static const Parameter s_params[] =
     { "min_ttl", Parameter::PT_INT, "1:255", "1",
       "discard fragments with ttl below the minimum" },
 
-    { "policy", Parameter::PT_ENUM, IP_POLICIES, IP_POLICY_DEFAULT,
+    { "policy", Parameter::PT_ENUM, IP_POLICIES, "linux",
       "fragment reassembly policy" },
 
     { "session_timeout", Parameter::PT_INT, "1:86400", "30",

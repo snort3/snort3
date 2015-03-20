@@ -1,5 +1,6 @@
 Pending - build 143
 
+-- fixed use of bound ip and tcp policy if not set in hosts
 -- eliminate dedicated nhttp chunk buffer
 -- minor nhttp cleanup in StreamSplitter
 
