@@ -213,17 +213,13 @@ static void mod_dtor(Module* m)
 static IpsAction* rej_ctor(Module* p)
 {
     RejectModule* m = (RejectModule*)p;
+    Active_SetEnabled(1);
     return new RejectAction(m->flags);
 }
 
 static void rej_dtor(IpsAction* p)
 {
     delete p;
-}
-
-static void rej_ginit()
-{
-    Active_SetEnabled(1);
 }
 
 static const ActionApi rej_api =
@@ -241,7 +237,7 @@ static const ActionApi rej_api =
         mod_dtor
     },
     RULE_TYPE__DROP,
-    rej_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

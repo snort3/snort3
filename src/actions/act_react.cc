@@ -321,6 +321,7 @@ static IpsAction* react_ctor(Module* p)
     rd->rule_msg = m->msg;
 
     react_config(rd); // FIXIT-L this must be done per response
+    Active_SetEnabled(1);
 
     return new ReactAction(rd);
 }
@@ -328,11 +329,6 @@ static IpsAction* react_ctor(Module* p)
 static void react_dtor(IpsAction* p)
 {
     delete p;
-}
-
-static void react_pinit()
-{
-    Active_SetEnabled(1);
 }
 
 static const ActionApi react_api =
@@ -350,7 +346,7 @@ static const ActionApi react_api =
         mod_dtor
     },
     RULE_TYPE__DROP,
-    react_pinit,
+    nullptr,  // pinit
     nullptr,  // pterm
     nullptr,  // tinit
     nullptr,  // tterm
