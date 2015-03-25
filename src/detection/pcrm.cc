@@ -1178,7 +1178,7 @@ int prmFindRuleGroup(
 
 int prmFindGenericRuleGroup(PORT_RULE_MAP* p, PORT_GROUP** gen)
 {
-    if (gen == NULL)
+    if ( !p or !gen )
     {
         return 0;
     }

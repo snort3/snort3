@@ -203,10 +203,13 @@ static void set_session(Flow* flow)
     flow->clouseau = nullptr;
 }
 
-static Inspector* get_gadget(Flow* flow, const HostAttributeEntry* host)
+static void set_service(Flow* flow, const HostAttributeEntry* host)
 {
     stream.set_application_protocol_id_from_host_entry(flow, host, SSN_DIR_FROM_SERVER);
+}
 
+static Inspector* get_gadget(Flow* flow)
+{
     if ( !flow->ssn_state.application_protocol )
         return nullptr;
 
@@ -340,8 +343,11 @@ void Stuff::apply_service(Flow* flow, const HostAttributeEntry* host)
     if ( data )
         flow->set_data(data);
 
-    if ( host && !gadget )
-        gadget = get_gadget(flow, host);
+    if ( host )
+        set_service(flow, host);
+
+    if ( !gadget )
+        gadget = get_gadget(flow);
 
     if ( gadget )
         flow->set_gadget(gadget);

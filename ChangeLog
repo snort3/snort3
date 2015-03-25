@@ -1,5 +1,6 @@
 Pending - build 143
 
+-- apply service from hosts when inspector already bound to flow
 -- ensure direction and service are applied to packet regardless of flow state
 -- enable active for react / reject only if used in configuration
 -- fixed use of bound ip and tcp policy if not set in hosts
