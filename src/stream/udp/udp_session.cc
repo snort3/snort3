@@ -96,9 +96,6 @@ static int ProcessUdp(
     if ( stream.blocked_session(lwssn, p) )
         return 0;
 
-    /* figure out direction of this packet */
-    lwssn->set_direction(p);
-
     if ( stream.ignored_session(lwssn, p) )
         return 0;
 

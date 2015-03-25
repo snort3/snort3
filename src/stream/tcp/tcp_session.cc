@@ -4940,9 +4940,6 @@ static int ProcessTcp(
             NormalTrackECN(tcpssn, (TCPHdr*)p->ptrs.tcph, config->require_3whs());
     }
 
-    /* figure out direction of this packet */
-    lwssn->set_direction(p);
-
     if (p->packet_flags & PKT_FROM_SERVER)
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,

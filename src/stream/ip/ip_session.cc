@@ -158,8 +158,6 @@ int IpSession::process(Packet* p)
 #endif
     }
 
-    flow->set_direction(p);
-
     if ( stream.blocked_session(flow, p) || stream.ignored_session(flow, p) )
     {
         MODULE_PROFILE_END(ip_perf_stats);
