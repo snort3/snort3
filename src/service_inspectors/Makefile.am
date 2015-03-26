@@ -22,6 +22,7 @@ ftp_telnet \
 http_inspect \
 nhttp_inspect \
 rpc_decode \
+ssh \
 wizard
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

@@ -78,5 +78,7 @@ ftp_server = default_ftp_server
 ftp_client = { }
 ftp_data = { }
 
+ssh = { }
+
 wizard = default_wizard
 

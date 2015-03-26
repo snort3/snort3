@@ -48,7 +48,9 @@ include_directories(BEFORE utils)
 
 
 
-# Build options for specific librries
+# Build options for specific libraries
+# FIXIT is this needed?  see also
+# STATIC_INSECTOR_LIBS in service_inspectors/CMakeLists.txt
 if (STATIC_INSPECTORS)
     set (STATIC_INSPECTOR_LIBRARIES
         arp_spoof
@@ -56,6 +58,7 @@ if (STATIC_INSPECTORS)
         ftp_telnet
         nhttp_inspect
         rpc_decode
+        ssh
         wizard
     )
 endif()

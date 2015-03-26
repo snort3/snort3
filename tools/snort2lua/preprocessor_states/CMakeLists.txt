@@ -12,6 +12,7 @@ add_library(preprocessor_states
     pps_normalizers.cc
     pps_perfmonitor.cc
     pps_rpc_decode.cc
+    pps_ssh.cc
     pps_sfportscan.cc
     pps_stream5_ip.cc
     pps_stream5_global.cc

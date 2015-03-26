@@ -1,6 +1,6 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2013-2013 Sourcefire, Inc.
+// Copyright (C) 2004-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,45 +16,41 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+//
 
-#include "service_inspectors.h"
+/*
+ * ssh_config.h: Definitions of SSH conf
+ * Author: Chris Sherwin
+ */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include "framework/inspector.h"
+#ifndef SSH_CONFIG_H
+#define SSH_CONFIG_H
 
-extern const BaseApi* sin_http_global;
-extern const BaseApi* sin_http_inspect;
-
-#ifdef STATIC_INSPECTORS
-extern const BaseApi* sin_bo;
-extern const BaseApi* sin_ftp_client;
-extern const BaseApi* sin_ftp_server;
-extern const BaseApi* sin_ftp_data;
-extern const BaseApi* sin_nhttp;
-extern const BaseApi* sin_rpc_decode;
-extern const BaseApi* sin_ssh;
-extern const BaseApi* sin_telnet;
-extern const BaseApi* sin_wizard;
-#endif
-
-const BaseApi* service_inspectors[] =
+/*
+ * Global SSH preprocessor configuration.
+ *
+ * AutodetectEnabled:	Whether or not to apply auto-detection of SSH
+ *				to ports other than those configured.
+ * MaxEncryptedPackets: Maximum number of encrypted packets examined per
+ *				session.
+ * MaxClientBytes:	Maximum bytes of encrypted data that can be
+ *				sent by client without a server response.
+ * MaxServerVersionLen: Maximum length of a server's version string.
+ *              Configurable threshold for Secure CRT-style overflow.
+ * EnabledAlerts:   Bit vector describing which alerts are enabled.
+ */
+struct SSH_PROTO_CONF
 {
-    sin_http_global,
-    sin_http_inspect,
-
-#ifdef STATIC_INSPECTORS
-    sin_bo,
-    sin_ftp_client,
-    sin_ftp_server,
-    sin_ftp_data,
-    sin_nhttp,
-    sin_rpc_decode,
-    sin_ssh,
-    sin_telnet,
-    sin_wizard,
-#endif
-    nullptr,
+    uint16_t MaxEncryptedPackets;
+    uint16_t MaxClientBytes;
+    uint16_t MaxServerVersionLen;
+    bool AutodetectEnabled;
 };
+
+#define SSH_DEFAULT_MAX_ENC_PKTS    25
+#define SSH_DEFAULT_MAX_CLIENT_BYTES    19600
+#define SSH_DEFAULT_MAX_SERVER_VERSION_LEN 80
+
+
+#endif
 

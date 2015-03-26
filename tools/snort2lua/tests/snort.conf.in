@@ -774,13 +774,13 @@ preprocessor arpspoof_detect_host: 192.168.40.2 f0:0f:00:f0:0f:00
 preprocessor arpspoof_detect_host: 192.168.40.3 f0:0f:00:f0:0f:00
 
 # TODO:  add once this is included in Snort++
-#preprocessor ssh: server_ports { 22 } \
-#                  autodetect \
-#                  max_client_bytes 19600 \
-#                  max_encrypted_packets 20 \
-#                  max_server_version_len 100 \
-#                  enable_respoverflow enable_ssh1crc32 \
-#                  enable_srvoverflow enable_protomismatch
+preprocessor ssh: server_ports { 22 } \
+                  autodetect \
+                  max_client_bytes 19600 \
+                  max_encrypted_packets 20 \
+                  max_server_version_len 100 \
+                  enable_respoverflow enable_ssh1crc32 \
+                  enable_srvoverflow enable_protomismatch
 
 # TODO: Add once this is included in Snort++
 #preprocessor dcerpc2: memcap 102400, events [co ]

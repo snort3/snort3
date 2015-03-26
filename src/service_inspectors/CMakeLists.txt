@@ -4,15 +4,17 @@ add_subdirectory(ftp_telnet)
 add_subdirectory(http_inspect)
 add_subdirectory(nhttp_inspect)
 add_subdirectory(rpc_decode)
+add_subdirectory(ssh)
 add_subdirectory(wizard)
 
 if (STATIC_INSPECTORS)
     set (STATIC_INSECTOR_LIBS
-        wizard
-        rpc_decode
         back_orifice
         ftp_telnet
         nhttp_inspect
+        ssh
+        rpc_decode
+        wizard
     )
 endif()
 

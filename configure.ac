@@ -971,6 +971,7 @@ src/service_inspectors/ftp_telnet/Makefile \
 src/service_inspectors/http_inspect/Makefile \
 src/service_inspectors/nhttp_inspect/Makefile \
 src/service_inspectors/rpc_decode/Makefile \
+src/service_inspectors/ssh/Makefile \
 src/service_inspectors/wizard/Makefile \
 src/protocols/Makefile \
 src/search_engines/Makefile \

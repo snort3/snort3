@@ -13,6 +13,7 @@ service_inspectors/back_orifice/libback_orifice.a \
 service_inspectors/ftp_telnet/libftp_telnet.a \
 service_inspectors/nhttp_inspect/libnhttp_inspect.a \
 service_inspectors/rpc_decode/librpc_decode.a \
+service_inspectors/ssh/libssh.a \
 service_inspectors/wizard/libwizard.a
 endif
 
