@@ -400,7 +400,7 @@ struct State
 
 static const State fsm[] =
 {
-    { -1,  0, TT_NONE,    FSM_ERR, nullptr,    "" },
+    { -1, 0, TT_NONE,    FSM_ERR, nullptr,    "" },
     { 0, 15, TT_LITERAL, FSM_KEY, "include",  "" },
     { 0,  1, TT_LITERAL, FSM_ACT, nullptr,    "(" },
     { 1,  8, TT_PUNCT,   FSM_STB, "(",        "(:,;)" },

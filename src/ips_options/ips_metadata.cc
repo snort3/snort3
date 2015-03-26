@@ -33,6 +33,7 @@ using namespace std;
 #include "framework/parameter.h"
 #include "framework/module.h"
 #include "parser/parse_conf.h"
+#include "parser/parser.h"
 
 #define s_name "metadata"
 
@@ -77,8 +78,19 @@ bool MetadataModule::begin(const char*, int, SnortConfig* sc)
 bool MetadataModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("service") )
-        services.push_back(v.get_string());
+    {
+        const char* s = v.get_string();
 
+        for ( auto p : services )
+        {
+            if ( p == s )
+            {
+                ParseWarning(WARN_RULES, "repeated metadata service '%s'", s);
+                return true;
+            }
+        }
+        services.push_back(s);
+    }
     else if ( !v.is("*") )  // ignore other metadata
         return false;
 
