@@ -780,10 +780,6 @@ static unsigned int ProcessSSHKeyExchange(SSHData* sessionp, Packet* p,
         {
             next_packet = false;
             npacket_offset = 0;
-            {
-                /* Invalid packet length. */
-                SnortEventqAdd(GID_SSH, SSH_EVENT_PAYLOAD_SIZE);
-            }
         }
     }
 

@@ -57,7 +57,7 @@ bool Ssh::convert(std::istringstream& data_stream)
         bool tmpval = true;
 
         if (!keyword.compare("autodetect"))
-            tmpval = table_api.add_option("autodetect", true);
+            table_api.add_deleted_comment("autodetect");
 
         else if (!keyword.compare("enable_respoverflow"))
             table_api.add_deleted_comment("enable_respoverflow");
@@ -82,17 +82,17 @@ bool Ssh::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("max_client_bytes"))
         {
-            tmpval = parse_int_option("max_client_bytes", data_stream, true);
+            tmpval = parse_int_option("max_client_bytes", data_stream, false);
         }
 
         else if (!keyword.compare("max_encrypted_packets"))
         {
-            tmpval = parse_int_option("max_encrypted_packets", data_stream, true);
+            tmpval = parse_int_option("max_encrypted_packets", data_stream, false);
         }
 
         else if (!keyword.compare("max_server_version_len"))
         {
-            tmpval = parse_int_option("max_server_version_len", data_stream, true);
+            tmpval = parse_int_option("max_server_version_len", data_stream, false);
         }
 
         else if (!keyword.compare("server_ports"))
