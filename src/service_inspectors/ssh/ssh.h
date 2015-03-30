@@ -67,8 +67,6 @@ public:
     SSHData session;
 };
 
-#define SSH_TRUE    (1)
-#define SSH_FALSE   (0)
 
 /*
  *  * Error codes.
@@ -177,33 +175,6 @@ typedef struct _ssh2Packet
 /* Direction of sent message. */
 #define SSH_DIR_FROM_SERVER (0x1)
 #define SSH_DIR_FROM_CLIENT (0x2)
-
-/*
- * Keyword strings for parsing configuration options.
- */
-#define SSH_MAX_ENC_PKTS_KEYWORD        "max_encrypted_packets"
-#define SSH_MAX_CLIENT_BYTES_KEYWORD        "max_client_bytes"
-#define SSH_MAX_SERVER_VERSION_KEYWORD  "max_server_version_len"
-#define SSH_ENABLE_RESPOVERFLOW_KEYWORD     "enable_respoverflow"
-#define SSH_ENABLE_CRC32_KEYWORD        "enable_ssh1crc32"
-#define SSH_ENABLE_SECURECRT_KEYWORD        "enable_srvoverflow"
-#define SSH_ENABLE_PROTOMISMATCH_KEYWORD    "enable_protomismatch"
-#define SSH_ENABLE_WRONGDIR_KEYWORD         "enable_badmsgdir"
-#define SSH_ENABLE_PAYLOAD_SIZE         "enable_paysize"
-#define SSH_ENABLE_UNRECOGNIZED_VER     "enable_recognition"
-
-/*
- * SSH alert flags
- */
-#define SSH_ALERT_NONE          (0x0)
-#define SSH_ALERT_RESPOVERFLOW  (0x1)
-#define SSH_ALERT_CRC32         (0x2)
-#define SSH_ALERT_SECURECRT     (0x4)
-#define SSH_ALERT_PROTOMISMATCH (0x8)
-#define SSH_ALERT_WRONGDIR      (0x10)
-#define SSH_ALERT_PAYSIZE       (0x20)
-#define SSH_ALERT_UNRECOGNIZED  (0x40)
-#define SSH_ALERT_ALL           (0xFFFF)
 
 #endif /* SSH_H */
 

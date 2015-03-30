@@ -791,7 +791,7 @@ preprocessor ssh: server_ports { 22 } \
 
 #
 # TODO: Add once this is included in Snort++
-#preprocessor dns: ports { 53 } enable_rdata_overflow
+preprocessor dns: ports { 53 } enable_rdata_overflow
 
 
 # TODO: Add once this is included in Snort++

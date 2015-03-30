@@ -62,12 +62,13 @@ stream_icmp = { }
 stream_tcp = { }
 stream_udp = { }
 
-perf_monitor = { }
-
 arp_spoof = { }
 back_orifice = { }
-rpc_decode = { }
+dns = { }
+perf_monitor = { }
 port_scan = { }
+rpc_decode = { }
+ssh = { }
 telnet = { }
 
 -- use http_inspect or new_http_inspect (incomplete)
@@ -77,8 +78,6 @@ http_inspect = { }
 ftp_server = default_ftp_server
 ftp_client = { }
 ftp_data = { }
-
-ssh = { }
 
 wizard = default_wizard
 

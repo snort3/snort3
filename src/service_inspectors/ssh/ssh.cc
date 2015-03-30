@@ -363,8 +363,7 @@ static inline int SSHCheckStrlen(char* str, int max)
  * p:    Pointer to the packet to inspect.
  * direction:     Which direction the packet is going.
  *
- * RETURNS:    SSH_SUCCESS, if successfully processed a proto exch msg
- *        SSH_FAILURE, otherwise.
+ * RETURNS:  offset processed
  */
 static unsigned int ProcessSSHProtocolVersionExchange(SSH_PROTO_CONF* config, SSHData* sessionp,
     Packet* p, uint8_t direction)
@@ -444,8 +443,7 @@ static unsigned int ProcessSSHProtocolVersionExchange(SSH_PROTO_CONF* config, SS
  * p:    Pointer to the packet to inspect.
  * direction:     Which direction the packet is going.
  *
- * RETURN:    SSH_SUCCESS, if a valid key exchange message is processed
- *        SSH_FAILURE, otherwise.
+ * RETURNS:  offset processed
  */
 static unsigned int ProcessSSHKeyInitExchange(SSHData* sessionp, Packet* p,
     uint8_t direction, unsigned int offset)
@@ -622,8 +620,7 @@ static unsigned int ProcessSSHKeyInitExchange(SSHData* sessionp, Packet* p,
  * p:    Pointer to the packet to inspect.
  * direction:     Which direction the packet is going.
  *
- * RETURN:    SSH_SUCCESS, if a valid key exchange message is processed
- *        SSH_FAILURE, otherwise.
+ * RETURNS:  offset processed
  */
 static unsigned int ProcessSSHKeyExchange(SSHData* sessionp, Packet* p,
     uint8_t direction, unsigned int offset)

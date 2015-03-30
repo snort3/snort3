@@ -18,6 +18,7 @@ service_inspectors.h
 
 SUBDIRS = \
 back_orifice \
+dns \
 ftp_telnet \
 http_inspect \
 nhttp_inspect \

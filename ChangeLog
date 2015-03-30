@@ -1,6 +1,10 @@
+Pending - build 144
+
+-- ported dns inspector
+
 15/03/26 - build 143
 
--- added ssh inspector
+-- ported ssh inspector
 -- apply service from hosts when inspector already bound to flow
 -- ensure direction and service are applied to packet regardless of flow state
 -- enable active for react / reject only if used in configuration

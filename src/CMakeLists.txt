@@ -55,6 +55,7 @@ if (STATIC_INSPECTORS)
     set (STATIC_INSPECTOR_LIBRARIES
         arp_spoof
         back_orifice
+        dns
         ftp_telnet
         nhttp_inspect
         rpc_decode

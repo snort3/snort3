@@ -10,6 +10,7 @@ if STATIC_INSPECTORS
 lib_list = \
 network_inspectors/arp_spoof/libarp_spoof.a \
 service_inspectors/back_orifice/libback_orifice.a \
+service_inspectors/dns/libdns.a \
 service_inspectors/ftp_telnet/libftp_telnet.a \
 service_inspectors/nhttp_inspect/libnhttp_inspect.a \
 service_inspectors/rpc_decode/librpc_decode.a \

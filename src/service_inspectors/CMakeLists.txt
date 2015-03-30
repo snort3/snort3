@@ -1,6 +1,7 @@
 
 add_subdirectory(back_orifice)
 add_subdirectory(ftp_telnet)
+add_subdirectory(dns)
 add_subdirectory(http_inspect)
 add_subdirectory(nhttp_inspect)
 add_subdirectory(rpc_decode)
@@ -11,9 +12,10 @@ if (STATIC_INSPECTORS)
     set (STATIC_INSECTOR_LIBS
         back_orifice
         ftp_telnet
+        dns
         nhttp_inspect
-        ssh
         rpc_decode
+        ssh
         wizard
     )
 endif()

@@ -29,22 +29,18 @@
 /*
  * Global SSH preprocessor configuration.
  *
- * AutodetectEnabled:	Whether or not to apply auto-detection of SSH
- *				to ports other than those configured.
  * MaxEncryptedPackets: Maximum number of encrypted packets examined per
  *				session.
  * MaxClientBytes:	Maximum bytes of encrypted data that can be
  *				sent by client without a server response.
  * MaxServerVersionLen: Maximum length of a server's version string.
  *              Configurable threshold for Secure CRT-style overflow.
- * EnabledAlerts:   Bit vector describing which alerts are enabled.
  */
 struct SSH_PROTO_CONF
 {
     uint16_t MaxEncryptedPackets;
     uint16_t MaxClientBytes;
     uint16_t MaxServerVersionLen;
-    bool AutodetectEnabled;
 };
 
 #define SSH_DEFAULT_MAX_ENC_PKTS    25
