@@ -1,0 +1,46 @@
+// this file defines API_OPTIONS.
+
+// API_OPTIONS is also defined in config.h for building Snort++ but that
+// file is not installed.  api_options.h will be included automatically by
+// base_api.h when building external plugins from the installed headers.
+
+// the purpose of this define is to detect incompatibility between Snort
+// and dynamic plugins that may have been built with different features.
+
+// this applies to conditionally defined member data in shared structs.  it
+// does not apply to conditionally defined functions since those prevent
+// loading (that should be true for virtuals as well).
+
+// for example, suppose we had this:
+// 
+// struct SnortConfig
+// {
+//     // some member data
+// #ifdef FOO
+//     // optional member data
+// #endif
+//     // more member data
+// };
+
+// and then we did this:
+// 
+// 1.  build and install snort with build option set A.
+// 2.  build and install external plugins.  These use A and are compatible.
+// 3.  build and install snort with build option set B (changing FOO).
+// 4.  run snort with B options and load external plugins with A options.
+
+// these are incompatible and will be caught upon loading instead of trying
+// to run with mismatched structs and crashing in possibly mysterious ways.
+// note that the api version of snort and plugins must match exactly.  api
+// version is orthogonal to build.
+
+// features like FOO require special handling in configure.ac and
+// config.cmake.h.in to make this work.  see those files for details.
+
+// finally, features like FOO should be avoided and have so far been
+// eliminated from Snort++.  however, they have plagued Snort 2.X so this
+// facility is provided just in case.
+
+/* plugin api related build options */
+#undef API_OPTIONS
+

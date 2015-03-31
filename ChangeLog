@@ -1,5 +1,7 @@
-Pending - build 144
+15/03/31 - build 144
 
+-- reworked autotools generation of api_options.h
+-- updated default manuals
 -- ported dns inspector
 
 15/03/26 - build 143

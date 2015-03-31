@@ -5,6 +5,7 @@ x_includedir = $(pkgincludedir)/framework
 noinst_LIBRARIES = libframework.a
 
 x_include_HEADERS = \
+api_options.h \
 base_api.h \
 bits.h \
 codec.h \
@@ -35,11 +36,4 @@ range.cc \
 value.cc
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
-
-# install this to enable plugin build compatibility check
-install-data-hook: $(top_builddir)/config.h
-	grep "API_OPTIONS" $< > $(x_includedir)/api_options.h
-
-uninstall-hook:
-	rm -f $(x_includedir)/api_options.h
 

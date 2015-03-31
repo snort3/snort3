@@ -781,7 +781,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0-a1 (Build 140) from 2.9.6-9
+o"  )~   Version 3.0.0-a1 (Build 144) from 2.9.6-9
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
@@ -1338,11 +1338,27 @@ ln -s $my_path/conf $my_path/etc</code></pre>
 </li>
 <li>
 <p>
-You can also specify a cmake project generator or use ccmake:
+You can also specify a cmake project generator:
 </p>
 <div class="literalblock">
 <div class="content">
 <pre><code>./configure_cmake.sh --generator=Xcode --prefix=$my_path</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+Or use ccmake directly to configure and generate from an arbitrary build
+   directory like one of these:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>ccmake -G Xcode /path/to/Snort++/tree
+open snort.xcodeproj</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>ccmake -G "Eclipse CDT4 - Unix Makefiles" /path/to/Snort++/tree
+run eclipse and do File &gt; Import &gt; Existing Eclipse Project</code></pre>
 </div></div>
 </li>
 </ol></div>
@@ -1962,7 +1978,7 @@ bool <strong>daq.no_promisc</strong> = false: whether to put DAQ device into pro
 </li>
 <li>
 <p>
-string <strong>daq.type</strong> = pcap: select type of DAQ
+string <strong>daq.type</strong>: select type of DAQ
 </p>
 </li>
 <li>
@@ -2331,12 +2347,12 @@ addr <strong>hosts[].ip</strong> = 0.0.0.0/32: hosts address / cidr
 </li>
 <li>
 <p>
-enum <strong>hosts[].frag_policy</strong> = linux: defragmentation policy { unknown | first | linux | bsd | bsd_right |last | windows | solaris }
+enum <strong>hosts[].frag_policy</strong>: defragmentation policy { first | linux | bsd | bsd_right | last | windows | solaris }
 </p>
 </li>
 <li>
 <p>
-enum <strong>hosts[].tcp_policy</strong> = linux: tcp reassembly policy { unknown | first | last | bsd | linux | old-linux | windows | win-2003 | vista | solaris | hpux | hpux10 | irix | macos }
+enum <strong>hosts[].tcp_policy</strong>: tcp reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
 </p>
 </li>
 <li>
@@ -2379,7 +2395,7 @@ string <strong>ips.include</strong>: legacy snort rules and includes
 </li>
 <li>
 <p>
-enum <strong>ips.mode</strong> = tap: set policy mode { tap | inline | inline-test }
+enum <strong>ips.mode</strong>: set policy mode { tap | inline | inline-test }
 </p>
 </li>
 <li>
@@ -2576,11 +2592,6 @@ enum <strong>ppm.pkt_log</strong> = none: log event if max_pkt_time is exceeded 
 </li>
 <li>
 <p>
-bool <strong>ppm.debug_pkts</strong> = false: enable packet debug
-</p>
-</li>
-<li>
-<p>
 int <strong>ppm.max_rule_time</strong> = 0: enable rule latency thresholding (usec), 0 = off { 0: }
 </p>
 </li>
@@ -2602,11 +2613,6 @@ int <strong>ppm.suspend_timeout</strong> = 60: seconds to suspend rule, 0 = perm
 <li>
 <p>
 enum <strong>ppm.rule_log</strong> = none: enable event logging for suspended rules { none|log|alert|both }
-</p>
-</li>
-<li>
-<p>
-bool <strong>ppm.debug_rules</strong> = false: enable rule debug
 </p>
 </li>
 </ul></div>
@@ -2695,7 +2701,7 @@ bool <strong>process.utc</strong> = false: use UTC instead of local time for tim
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>profile.rules.count</strong> = -1: print results to given level (-1 = all, 0 = off?) { -1: }
+int <strong>profile.rules.count</strong> = -1: print results to given level (-1 = all, 0 = off) { -1: }
 </p>
 </li>
 <li>
@@ -2705,7 +2711,7 @@ enum <strong>profile.rules.sort</strong> = avg_ticks: sort by given field { chec
 </li>
 <li>
 <p>
-int <strong>profile.modules.count</strong> = -1: print results to given level (-1 = all, 0 = off?) { -1: }
+int <strong>profile.modules.count</strong> = -1: print results to given level (-1 = all, 0 = off) { -1: }
 </p>
 </li>
 <li>
@@ -3035,7 +3041,7 @@ string <strong>snort.-S</strong>: &lt;n=v&gt; set rules file variable n equal to
 </li>
 <li>
 <p>
-int <strong>snort.-s</strong>: &lt;snap&gt; (same as --snaplen) { 68:65535 }
+int <strong>snort.-s</strong> = 1514: &lt;snap&gt; (same as --snaplen) { 68:65535 }
 </p>
 </li>
 <li>
@@ -3095,7 +3101,8 @@ implied <strong>snort.-y</strong>: include year in timestamp in the alert and lo
 </li>
 <li>
 <p>
-int <strong>snort.-z</strong>: &lt;count&gt; maximum number of packet threads (same as --max-packet-threads) { 1: }
+int <strong>snort.-z</strong> = 1: &lt;count&gt; maximum number of packet threads (same as --max-packet-threads)
+        0 gets the number of CPU cores reported by the system { 0: }
 </p>
 </li>
 <li>
@@ -3110,7 +3117,7 @@ string <strong>snort.--bpf</strong>: &lt;filter options&gt; are standard BPF opt
 </li>
 <li>
 <p>
-string <strong>snort.--c2x</strong>: output hex for given char
+string <strong>snort.--c2x</strong>: output hex for given char (see also --x2c)
 </p>
 </li>
 <li>
@@ -3270,7 +3277,8 @@ implied <strong>snort.--markup</strong>: output help in asciidoc compatible form
 </li>
 <li>
 <p>
-int <strong>snort.--max-packet-threads</strong>: &lt;count&gt; configure maximum number of packet threads (same as -z) { 0: }
+int <strong>snort.--max-packet-threads</strong> = 1: &lt;count&gt; configure maximum number of packet threads (same as -z)
+        0 gets the number of CPU cores reported by the system { 0: }
 </p>
 </li>
 <li>
@@ -3390,7 +3398,7 @@ int <strong>snort.--skip</strong>: &lt;n&gt; skip 1st n packets { 0: }
 </li>
 <li>
 <p>
-int <strong>snort.--snaplen</strong>: &lt;snap&gt; set snaplen of packet (same as -s) { 68:65535 }
+int <strong>snort.--snaplen</strong> = 1514: &lt;snap&gt; set snaplen of packet (same as -s) { 68:65535 }
 </p>
 </li>
 <li>
@@ -3420,17 +3428,47 @@ implied <strong>snort.--warn-all</strong>: enable all warnings
 </li>
 <li>
 <p>
+implied <strong>snort.--warn-conf</strong>: warn about configuration issues
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--warn-daq</strong>: warn about DAQ issues, usually related to mode
+</p>
+</li>
+<li>
+<p>
 implied <strong>snort.--warn-flowbits</strong>: warn about flowbits that are checked but not set and vice-versa
 </p>
 </li>
 <li>
 <p>
-implied <strong>snort.--warn-unknown</strong>: warn about unknown symbols in your config
+implied <strong>snort.--warn-hosts</strong>: warn about host table issues
 </p>
 </li>
 <li>
 <p>
-int <strong>snort.--x2c</strong>: output ASCII char for given hex
+implied <strong>snort.--warn-rules</strong>: warn about duplicate rules and rule parsing issues
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--warn-scripts</strong>: warn about issues discovered while processing Lua scripts
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--warn-symbols</strong>: warn about unknown symbols in your Lua config
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--warn-vars</strong>: warn about variable definition and usage issues
+</p>
+</li>
+<li>
+<p>
+int <strong>snort.--x2c</strong>: output ASCII char for given hex (see also --c2x)
 </p>
 </li>
 </ul></div>
@@ -5045,7 +5083,7 @@ mac <strong>arp_spoof.hosts[].mac</strong>: host mac address
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>binder[].when.policy_id</strong>: unique ID for selection of this config by external logic { 0: }
+int <strong>binder[].when.policy_id</strong> = 0: unique ID for selection of this config by external logic { 0: }
 </p>
 </li>
 <li>
@@ -5105,7 +5143,7 @@ string <strong>binder[].use.type</strong>: select module for binding
 </li>
 <li>
 <p>
-string <strong>binder[].use.name</strong> = defaults to type: symbol name
+string <strong>binder[].use.name</strong>: symbol name (defaults to type)
 </p>
 </li>
 </ul></div>
@@ -5129,6 +5167,37 @@ string <strong>binder[].use.name</strong> = defaults to type: symbol name
 <li>
 <p>
 <strong>binder.inspects</strong>: inspect bindings
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_dns">dns</h3>
+<div class="paragraph"><p>What: dns inspection</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>131:1</strong> (dns) Obsolete DNS RR Types
+</p>
+</li>
+<li>
+<p>
+<strong>131:2</strong> (dns) Experimental DNS RR Types
+</p>
+</li>
+<li>
+<p>
+<strong>131:3</strong> (dns) DNS Client rdata txt Overflow
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>dns.packets</strong>: total packets
 </p>
 </li>
 </ul></div>
@@ -6672,6 +6741,70 @@ bool <strong>port_scan.logfile</strong> = false: write scan events to file
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_ssh">ssh</h3>
+<div class="paragraph"><p>What: ssh inspection</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+int <strong>ssh.max_encrypted_packets</strong> = 25: ignore session after this many encrypted packets { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>ssh.max_client_bytes</strong> = 19600: number of unanswered bytes before alerting on challenge-response overflow or CRC32 { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>ssh.max_server_version_len</strong> = 80: limit before alerting on secure CRT server version string overflow { 0:255 }
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>128:1</strong> (ssh) Challenge-Response Overflow exploit
+</p>
+</li>
+<li>
+<p>
+<strong>128:2</strong> (ssh) SSH1 CRC32 exploit
+</p>
+</li>
+<li>
+<p>
+<strong>128:3</strong> (ssh) Server version string overflow
+</p>
+</li>
+<li>
+<p>
+<strong>128:5</strong> (ssh) Bad message direction
+</p>
+</li>
+<li>
+<p>
+<strong>128:6</strong> (ssh) Payload size incorrect for the given payload
+</p>
+</li>
+<li>
+<p>
+<strong>128:7</strong> (ssh) Failed to detect SSH version string
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>ssh.packets</strong>: total packets
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_stream">stream</h3>
 <div class="paragraph"><p>What: common flow tracking</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
@@ -6679,7 +6812,7 @@ bool <strong>port_scan.logfile</strong> = false: write scan events to file
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>stream.icmp_cache.memcap</strong>: maximum cache memory { 0: }
+int <strong>stream.icmp_cache.memcap</strong> = 0: maximum cache memory { 0: }
 </p>
 </li>
 <li>
@@ -6699,7 +6832,7 @@ int <strong>stream.icmp_cache.max_sessions</strong> = 262144: maximum simultaneo
 </li>
 <li>
 <p>
-int <strong>stream.ip_cache.memcap</strong>: maximum cache memory { 0: }
+int <strong>stream.ip_cache.memcap</strong> = 0: maximum cache memory { 0: }
 </p>
 </li>
 <li>
@@ -6719,7 +6852,7 @@ int <strong>stream.ip_cache.max_sessions</strong> = 262144: maximum simultaneous
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.memcap</strong>: maximum cache memory { 0: }
+int <strong>stream.tcp_cache.memcap</strong> = 0: maximum cache memory { 0: }
 </p>
 </li>
 <li>
@@ -6739,7 +6872,7 @@ int <strong>stream.tcp_cache.max_sessions</strong> = 262144: maximum simultaneou
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.memcap</strong>: maximum cache memory { 0: }
+int <strong>stream.udp_cache.memcap</strong> = 0: maximum cache memory { 0: }
 </p>
 </li>
 <li>
@@ -7025,7 +7158,7 @@ int <strong>stream_tcp.max_pdu</strong> = 16384: maximum reassembled PDU size { 
 </li>
 <li>
 <p>
-enum <strong>stream_tcp.policy</strong> = linux: determines operating system characteristics like reassembly { first | last | linux | old-linux | bsd | macos | solaris | irix | hpux | hpux10 | windows | win-2003 | vista | proxy }
+enum <strong>stream_tcp.policy</strong> = bsd: determines operating system characteristics like reassembly { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
 </p>
 </li>
 <li>
@@ -7511,7 +7644,7 @@ parse.</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-bool <strong>react.msg</strong>:  use rule message in response page
+bool <strong>react.msg</strong> = false:  use rule msg in response page instead of default message
 </p>
 </li>
 <li>
@@ -7614,7 +7747,7 @@ int <strong>base64_decode.bytes</strong>: Number of base64 encoded bytes to deco
 </li>
 <li>
 <p>
-int <strong>base64_decode.offset</strong>: Bytes past start of buffer to start decoding. { 0: }
+int <strong>base64_decode.offset</strong> = 0: Bytes past start of buffer to start decoding. { 0: }
 </p>
 </li>
 <li>
@@ -7665,12 +7798,12 @@ implied <strong>byte_extract.relative</strong>: offset from cursor instead of st
 </li>
 <li>
 <p>
-int <strong>byte_extract.multiplier</strong>: scale extracted value by given amount { 1:65535 }
+int <strong>byte_extract.multiplier</strong> = 1: scale extracted value by given amount { 1:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>byte_extract.align</strong>: round the number of converted bytes up to the next 2- or 4-byte boundary { 0:4 }
+int <strong>byte_extract.align</strong> = 0: round the number of converted bytes up to the next 2- or 4-byte boundary { 0:4 }
 </p>
 </li>
 <li>
@@ -7738,17 +7871,17 @@ implied <strong>byte_jump.from_beginning</strong>: jump from start of buffer ins
 </li>
 <li>
 <p>
-int <strong>byte_jump.multiplier</strong>: scale extracted value by given amount { 1:65535 }
+int <strong>byte_jump.multiplier</strong> = 1: scale extracted value by given amount { 1:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>byte_jump.align</strong>: round the number of converted bytes up to the next 2- or 4-byte boundary { 0:4 }
+int <strong>byte_jump.align</strong> = 0: round the number of converted bytes up to the next 2- or 4-byte boundary { 0:4 }
 </p>
 </li>
 <li>
 <p>
-int <strong>byte_jump.post_offset</strong>: also skip forward or backwards (positive of negative value) this number of bytes { -65535:65535 }
+int <strong>byte_jump.post_offset</strong> = 0: also skip forward or backwards (positive of negative value) this number of bytes { -65535:65535 }
 </p>
 </li>
 <li>
@@ -7892,12 +8025,12 @@ implied <strong>content.fast_pattern</strong>: use this content in the fast patt
 </li>
 <li>
 <p>
-int <strong>content.fast_pattern_offset</strong>: number of leading characters of this content the fast pattern matcher should exclude
+int <strong>content.fast_pattern_offset</strong> = 0: number of leading characters of this content the fast pattern matcher should exclude { 0: }
 </p>
 </li>
 <li>
 <p>
-int <strong>content.fast_pattern_length</strong>: maximum number of characters from this content the fast pattern matcher should use
+int <strong>content.fast_pattern_length</strong>: maximum number of characters from this content the fast pattern matcher should use { 1: }
 </p>
 </li>
 <li>
@@ -8861,7 +8994,7 @@ bool <strong>alert_test.msg</strong> = false: include alert msg
 <div class="ulist"><ul>
 <li>
 <p>
-bool <strong>log_codecs.file</strong> = stdout: output to log_codecs.txt instead of stdout
+bool <strong>log_codecs.file</strong> = false: output to log_codecs.txt instead of stdout
 </p>
 </li>
 <li>
@@ -10026,6 +10159,305 @@ have a .lua or .rules extension appended to the original filename.</p></div>
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_usage_2">Usage</h3>
+<div class="paragraph"><p>For the following examples "$my_path" is assumed to be the path to
+the Snort++ install directory. Additionally, it is assumed that
+"$my_path/bin" is in your PATH.</p></div>
+<div class="sect3">
+<h4 id="_environment">Environment</h4>
+<div class="paragraph"><p>LUA_PATH is used directly by Lua to load and run required libraries.
+SNORT_LUA_PATH is used by Snort to load supplemental configuration files.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>export LUA_PATH=$my_path/include/snort/lua/\?.lua\;\;
+export SNORT_LUA_PATH=$my_path/etc/snort</code></pre>
+</div></div>
+</div>
+<div class="sect3">
+<h4 id="_help_2">Help</h4>
+<div class="paragraph"><p>Print the help summary:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort --help</code></pre>
+</div></div>
+<div class="paragraph"><p>Get help on a specific module ("stream", for example):</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort --help-module stream</code></pre>
+</div></div>
+<div class="paragraph"><p>Get help on the "-A" command line option:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort --help-options A</code></pre>
+</div></div>
+<div class="paragraph"><p>Grep for help on threads:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort --help-config | grep thread</code></pre>
+</div></div>
+<div class="paragraph"><p>Output help on "rule" options in AsciiDoc format:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort --markup --help-options rule</code></pre>
+</div></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">Snort++ stops reading command-line options after the "--help-<strong>" and
+"--list-</strong>" options, so any other options should be placed before them.</td>
+</tr></table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_sniffing_and_logging">Sniffing and Logging</h4>
+<div class="paragraph"><p>Read a pcap:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -r /path/to/my.pcap</code></pre>
+</div></div>
+<div class="paragraph"><p>Dump the packets to stdout:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -r /path/to/my.pcap -K text</code></pre>
+</div></div>
+<div class="paragraph"><p>Dump packets with application data and layer 2 headers</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -r /path/to/my.pcap -K text -d -e</code></pre>
+</div></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">Command line options must be specified separately. "snort -de" won&#8217;t
+work.  You can still concatenate options and their arguments, however, so
+"snort -Ktext" will work.</td>
+</tr></table>
+</div>
+<div class="paragraph"><p>Dump packets from all pcaps in a directory:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort --pcap-dir /path/to/pcap/dir --pcap-filter '*.pcap' -K text -d -e</code></pre>
+</div></div>
+<div class="paragraph"><p>Log packets to a directory:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort --pcap-dir /path/to/pcap/dir --pcap-filter '*.pcap' -K pcap -l /path/to/log/dir</code></pre>
+</div></div>
+</div>
+<div class="sect3">
+<h4 id="_configuration_2">Configuration</h4>
+<div class="paragraph"><p>Validate a configuration file:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua</code></pre>
+</div></div>
+<div class="paragraph"><p>Validate a configuration file and a separate rules file:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules</code></pre>
+</div></div>
+<div class="paragraph"><p>Read rules from stdin and validate:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua --stdin-rules &lt; $my_path/etc/snort/sample.rules</code></pre>
+</div></div>
+<div class="paragraph"><p>Enable warnings for Lua configurations and make warnings fatal:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua --warn-all --pedantic</code></pre>
+</div></div>
+<div class="paragraph"><p>Tell Snort++ where to look for additional Lua scripts:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort --script-path /path/to/script/dir</code></pre>
+</div></div>
+</div>
+<div class="sect3">
+<h4 id="_ids_mode">IDS mode</h4>
+<div class="paragraph"><p>Run Snort++ in IDS mode, reading packets from a pcap:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap</code></pre>
+</div></div>
+<div class="paragraph"><p>Log any generated alerts to the console using the "-A" option:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap -A alert_full</code></pre>
+</div></div>
+<div class="paragraph"><p>Add or modify a configuration from the command line using the "--lua" option:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap -A cmg \
+    --lua 'ips = { enable_builtin_rules = true }'</code></pre>
+</div></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">The "--lua" option can be specified multiple times.</td>
+</tr></table>
+</div>
+<div class="paragraph"><p>Run Snort++ in IDS mode on an entire directory of pcaps, processing each
+input source on a separate thread:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua --pcap-dir /path/to/pcap/dir \
+    --pcap-filter '*.pcap' --max-packet-threads 8</code></pre>
+</div></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_plugins">Plugins</h3>
+<div class="paragraph"><p>Load external plugins and use the "ex" alert:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua \
+    --plugin-path $my_path/lib/snort_extra \
+    -A alert_ex -r /path/to/my.pcap</code></pre>
+</div></div>
+<div class="paragraph"><p>Test the LuaJIT rule option <em>find</em> loaded from stdin:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua \
+    --script-path $my_path/lib/snort_extra \
+    --stdin-rules -A cmg -r /path/to/my.pcap &lt;&lt; END
+alert tcp any any -&gt; any 80 (
+    sid:3; msg:"found"; content:"GET";
+    find:"pat='HTTP/1%.%d'" ; )
+END</code></pre>
+</div></div>
+</div>
+<div class="sect2">
+<h3 id="_output_files">Output Files</h3>
+<div class="paragraph"><p>To make it simple to configure outputs when you run with multiple packet
+threads, output files are not explicitly configured. Instead, you can use
+the options below to format the paths:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>&lt;logdir&gt;/[&lt;run_prefix&gt;][&lt;id#&gt;][&lt;X&gt;]&lt;name&gt;</code></pre>
+</div></div>
+<div class="paragraph"><p>Log to unified in the current directory:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap -A unified2</code></pre>
+</div></div>
+<div class="paragraph"><p>Log to unified in the current directory with a different prefix:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap -A unified2 \
+    --run-prefix take2</code></pre>
+</div></div>
+<div class="paragraph"><p>Log to unified in /tmp:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap -A unified2 -l /tmp</code></pre>
+</div></div>
+<div class="paragraph"><p>Run 4 packet threads and log with thread number prefix (0-3):</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua --pcap-dir /path/to/pcap/dir \
+    --pcap-filter '*.pcap' -z 4 -A unified2</code></pre>
+</div></div>
+<div class="paragraph"><p>Run 4 packet threads and log in thread number subdirs (0-3):</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua --pcap-dir /path/to/pcap/dir \
+    --pcap-filter '*.pcap' -z 4 -A unified2 --id-subdir</code></pre>
+</div></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">subdirectories are created automatically if required.  Log filename
+is based on module name that writes the file.  All text mode outputs
+default to stdout.  These options can be combined.</td>
+</tr></table>
+</div>
+<div class="sect3">
+<h4 id="_shell">Shell</h4>
+<div class="paragraph"><p>You must build with --enable-shell to make the command line shell available.</p></div>
+<div class="paragraph"><p>Enable shell mode:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort --shell &lt;args&gt;</code></pre>
+</div></div>
+<div class="paragraph"><p>You will see the shell mode command prompt, which looks like this:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>o")~</code></pre>
+</div></div>
+<div class="paragraph"><p>(The prompt can be changed with the SNORT_PROMPT environment variable.)</p></div>
+<div class="paragraph"><p>You can pause immediately after loading the configuration and again before
+exiting with:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort --shell --pause &lt;args&gt;</code></pre>
+</div></div>
+<div class="paragraph"><p>In that case you must issue the resume() command to continue.  Enter quit()
+to terminate Snort or detach() to exit the shell.  You can list the
+available commands with help().</p></div>
+<div class="paragraph"><p>To enable local telnet access on port 12345:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort --shell -j 12345 &lt;args&gt;</code></pre>
+</div></div>
+<div class="paragraph"><p>The command line interface is still under development.  Suggestions are
+welcome.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_signals">Signals</h4>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">The following examples assume that Snort++ is currently running and
+has a process ID of &lt;pid&gt;.</td>
+</tr></table>
+</div>
+<div class="paragraph"><p>Modify and Reload Configuration:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>echo 'suppress = { { gid = 1, sid = 2215 } }' &gt;&gt; $my_path/etc/snort/snort.lua
+kill -hup &lt;pid&gt;</code></pre>
+</div></div>
+<div class="paragraph"><p>Dump stats to stdout:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>kill -usr1 &lt;pid&gt;</code></pre>
+</div></div>
+<div class="paragraph"><p>Shutdown normally:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>kill -term &lt;pid&gt;</code></pre>
+</div></div>
+<div class="paragraph"><p>Exit without flushing packets:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>kill -quit &lt;pid&gt;</code></pre>
+</div></div>
+<div class="paragraph"><p>List available signals:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort --help-signals</code></pre>
+</div></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">The available signals may vary from platform to platform.</td>
+</tr></table>
+</div>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_optional_features">Optional Features</h3>
 <div class="paragraph"><p>Listed below are the features that must be explicitly enabled so they are built
 into the Snort binary.  For a full list of build features, run ./configure
@@ -10098,548 +10530,125 @@ into the Snort binary.  For a full list of build features, run ./configure
 </div>
 <div class="sect2">
 <h3 id="_command_line_options">Command Line Options</h3>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>--alert-before-pass</strong> process alert, drop, sdrop, or reject before pass; default is pass before alert, drop,&#8230;
-</p>
-</li>
-<li>
-<p>
-<strong>--bpf</strong> &lt;filter options&gt; are standard BPF options, as seen in TCPDump
-</p>
-</li>
-<li>
-<p>
-<strong>--c2x</strong> output hex for given char
-</p>
-</li>
-<li>
-<p>
-<strong>--create-pidfile</strong> create PID file, even when not in Daemon mode
-</p>
-</li>
-<li>
-<p>
-<strong>--daq</strong> &lt;type&gt; select packet acquisition module (default is pcap)
-</p>
-</li>
-<li>
-<p>
-<strong>--daq-dir</strong> &lt;dir&gt; tell snort where to find desired DAQ
-</p>
-</li>
-<li>
-<p>
-<strong>--daq-list</strong> list packet acquisition modules available in optional dir, default is static modules only
-</p>
-</li>
-<li>
-<p>
-<strong>--daq-mode</strong> &lt;mode&gt; select the DAQ operating mode
-</p>
-</li>
-<li>
-<p>
-<strong>--daq-var</strong> &lt;name=value&gt; specify extra DAQ configuration variable
-</p>
-</li>
-<li>
-<p>
-<strong>--dirty-pig</strong> don&#8217;t flush packets on shutdown
-</p>
-</li>
-<li>
-<p>
-<strong>--dump-builtin-rules</strong> [&lt;module prefix&gt;] output stub rules for selected modules
-</p>
-</li>
-<li>
-<p>
-<strong>--dump-defaults</strong> [&lt;module prefix&gt;] output module defaults in Lua format
-</p>
-</li>
-<li>
-<p>
-<strong>--dump-dynamic-rules</strong> output stub rules for all loaded rules libraries
-</p>
-</li>
-<li>
-<p>
-<strong>--dump-version</strong> output the version, the whole version, and only the version
-</p>
-</li>
-<li>
-<p>
-<strong>--enable-inline-test</strong> enable Inline-Test Mode Operation
-</p>
-</li>
-<li>
-<p>
-<strong>--help</strong> list command line options
-</p>
-</li>
-<li>
-<p>
-<strong>--help-commands</strong> [&lt;module prefix&gt;] output matching commands
-</p>
-</li>
-<li>
-<p>
-<strong>--help-config</strong> [&lt;module prefix&gt;] output matching config options
-</p>
-</li>
-<li>
-<p>
-<strong>--help-counts</strong> [&lt;module prefix&gt;] output matching peg counts
-</p>
-</li>
-<li>
-<p>
-<strong>--help-module</strong> &lt;module&gt; output description of given module
-</p>
-</li>
-<li>
-<p>
-<strong>--help-modules</strong> list all available modules with brief help
-</p>
-</li>
-<li>
-<p>
-<strong>--help-options</strong> &lt;option prefix&gt; output matching command line option quick help (same as -?)
-</p>
-</li>
-<li>
-<p>
-<strong>--help-plugins</strong> list all available plugins with brief help
-</p>
-</li>
-<li>
-<p>
-<strong>--help-signals</strong> dump available control signals
-</p>
-</li>
-<li>
-<p>
-<strong>--id-subdir</strong> create/use instance subdirectories in logdir instead of instance filename prefix
-</p>
-</li>
-<li>
-<p>
-<strong>--id-zero</strong> use id prefix / subdirectory even with one packet thread
-</p>
-</li>
-<li>
-<p>
-<strong>--list-buffers</strong> output available inspection buffers
-</p>
-</li>
-<li>
-<p>
-<strong>--list-builtin</strong> &lt;module prefix&gt; output matching builtin rules
-</p>
-</li>
-<li>
-<p>
-<strong>--list-gids</strong> [&lt;module prefix&gt;] output matching generators
-</p>
-</li>
-<li>
-<p>
-<strong>--list-modules</strong> [&lt;module type&gt;] list all known modules of given type
-</p>
-</li>
-<li>
-<p>
-<strong>--list-plugins</strong> list all known plugins
-</p>
-</li>
-<li>
-<p>
-<strong>--logid</strong> &lt;0xid&gt; log Identifier to uniquely id events for multiple snorts (same as -G)
-</p>
-</li>
-<li>
-<p>
-<strong>--lua</strong> &lt;chunk&gt; extend/override conf with chunk; may be repeated
-</p>
-</li>
-<li>
-<p>
-<strong>--markup</strong> output help in asciidoc compatible format
-</p>
-</li>
-<li>
-<p>
-<strong>--max-packet-threads</strong> &lt;count&gt; configure maximum number of packet threads (same as -z)
-</p>
-</li>
-<li>
-<p>
-<strong>--nolock-pidfile</strong> do not try to lock Snort PID file
-</p>
-</li>
-<li>
-<p>
-<strong>--nostamps</strong> don&#8217;t include timestamps in log file names
-</p>
-</li>
-<li>
-<p>
-<strong>--pause</strong> wait for resume/quit command before processing packets/terminating
-</p>
-</li>
-<li>
-<p>
-<strong>--pcap-dir</strong> &lt;dir&gt; a directory to recurse to look for pcaps - read mode is implied
-</p>
-</li>
-<li>
-<p>
-<strong>--pcap-file</strong> &lt;file&gt; file that contains a list of pcaps to read - read mode is implied
-</p>
-</li>
-<li>
-<p>
-<strong>--pcap-filter</strong> &lt;filter&gt; filter to apply when getting pcaps from file or directory
-</p>
-</li>
-<li>
-<p>
-<strong>--pcap-list</strong> &lt;list&gt; a space separated list of pcaps to read - read mode is implied
-</p>
-</li>
-<li>
-<p>
-<strong>--pcap-loop</strong> &lt;count&gt; read all pcaps &lt;count&gt; times;  0 will read until Snort is terminated
-</p>
-</li>
-<li>
-<p>
-<strong>--pcap-no-filter</strong> reset to use no filter when getting pcaps from file or directory
-</p>
-</li>
-<li>
-<p>
-<strong>--pcap-reload</strong> if reading multiple pcaps, reload snort config between pcaps
-</p>
-</li>
-<li>
-<p>
-<strong>--pcap-reset</strong> ignored - for REG_TEST only
-</p>
-</li>
-<li>
-<p>
-<strong>--pcap-show</strong> print a line saying what pcap is currently being read
-</p>
-</li>
-<li>
-<p>
-<strong>--pedantic</strong> warnings are fatal
-</p>
-</li>
-<li>
-<p>
-<strong>--plugin-path</strong> &lt;path&gt; where to find plugins
-</p>
-</li>
-<li>
-<p>
-<strong>--process-all-events</strong> process all action groups
-</p>
-</li>
-<li>
-<p>
-<strong>--rule</strong> &lt;rules&gt; to be added to configuration; may be repeated
-</p>
-</li>
-<li>
-<p>
-<strong>--rule-to-hex</strong> output so rule header to stdout for text rule on stdin
-</p>
-</li>
-<li>
-<p>
-<strong>--rule-to-text</strong> output plain so rule header to stdout for text rule on stdin
-</p>
-</li>
-<li>
-<p>
-<strong>--run-prefix</strong> &lt;pfx&gt; prepend this to each output file
-</p>
-</li>
-<li>
-<p>
-<strong>--script-path</strong> &lt;path&gt; where to find luajit scripts
-</p>
-</li>
-<li>
-<p>
-<strong>--shell</strong> enable the interactive command line
-</p>
-</li>
-<li>
-<p>
-<strong>--show-plugins</strong> list module and plugin versions
-</p>
-</li>
-<li>
-<p>
-<strong>--skip</strong> &lt;n&gt; skip 1st n packets
-</p>
-</li>
-<li>
-<p>
-<strong>--snaplen</strong> &lt;snap&gt; set snaplen of packet (same as -s)
-</p>
-</li>
-<li>
-<p>
-<strong>--stdin-rules</strong> read rules from stdin until EOF or a line starting with END is read
-</p>
-</li>
-<li>
-<p>
-<strong>--treat-drop-as-alert</strong> converts drop, sdrop, and reject rules into alert rules during startup
-</p>
-</li>
-<li>
-<p>
-<strong>--treat-drop-as-ignore</strong> use drop, sdrop, and reject rules to ignore session traffic when not inline
-</p>
-</li>
-<li>
-<p>
-<strong>--version</strong> show version number (same as -V)
-</p>
-</li>
-<li>
-<p>
-<strong>--warn-all</strong> enable all warnings
-</p>
-</li>
-<li>
-<p>
-<strong>--warn-flowbits</strong> warn about flowbits that are checked but not set and vice-versa
-</p>
-</li>
-<li>
-<p>
-<strong>--warn-unknown</strong> warn about unknown symbols in your config
-</p>
-</li>
-<li>
-<p>
-<strong>--x2c</strong> output ASCII char for given hex
-</p>
-</li>
-<li>
-<p>
-<strong>-?</strong> &lt;option prefix&gt; output matching command line option quick help (same as --help-options)
-</p>
-</li>
-<li>
-<p>
-<strong>-A</strong> &lt;mode&gt; set alert mode: none, cmg, or alert_*
-</p>
-</li>
-<li>
-<p>
-<strong>-B</strong> &lt;mask&gt; obfuscated IP addresses in alerts and packet dumps using CIDR mask
-</p>
-</li>
-<li>
-<p>
-<strong>-C</strong> print out payloads with character data only (no hex)
-</p>
-</li>
-<li>
-<p>
-<strong>-D</strong> run Snort in background (daemon) mode
-</p>
-</li>
-<li>
-<p>
-<strong>-E</strong> enable daemon restart
-</p>
-</li>
-<li>
-<p>
-<strong>-G</strong> &lt;0xid&gt; (same as --logid)
-</p>
-</li>
-<li>
-<p>
-<strong>-H</strong> make hash tables deterministic
-</p>
-</li>
-<li>
-<p>
-<strong>-K</strong> &lt;mode&gt; logging mode
-</p>
-</li>
-<li>
-<p>
-<strong>-M</strong> log messages to syslog (not alerts)
-</p>
-</li>
-<li>
-<p>
-<strong>-N</strong> ignored - for REG_TEST only
-</p>
-</li>
-<li>
-<p>
-<strong>-O</strong> obfuscate the logged IP addresses
-</p>
-</li>
-<li>
-<p>
-<strong>-Q</strong> enable inline mode operation
-</p>
-</li>
-<li>
-<p>
-<strong>-R</strong> &lt;rules&gt; include this rules file in the default policy
-</p>
-</li>
-<li>
-<p>
-<strong>-S</strong> &lt;n=v&gt; set rules file variable n equal to value v
-</p>
-</li>
-<li>
-<p>
-<strong>-T</strong> test and report on the current Snort configuration
-</p>
-</li>
-<li>
-<p>
-<strong>-U</strong> use UTC for timestamps
-</p>
-</li>
-<li>
-<p>
-<strong>-V</strong> (same as --version)
-</p>
-</li>
-<li>
-<p>
-<strong>-W</strong> lists available interfaces
-</p>
-</li>
-<li>
-<p>
-<strong>-X</strong> dump the raw packet data starting at the link layer
-</p>
-</li>
-<li>
-<p>
-<strong>-c</strong> &lt;conf&gt; use this configuration
-</p>
-</li>
-<li>
-<p>
-<strong>-d</strong> dump the Application Layer
-</p>
-</li>
-<li>
-<p>
-<strong>-e</strong> display the second layer header info
-</p>
-</li>
-<li>
-<p>
-<strong>-f</strong> turn off fflush() calls after binary log writes
-</p>
-</li>
-<li>
-<p>
-<strong>-g</strong> &lt;gname&gt; run snort gid as &lt;gname&gt; group (or gid) after initialization
-</p>
-</li>
-<li>
-<p>
-<strong>-i</strong> &lt;iface&gt;&#8230; list of interfaces
-</p>
-</li>
-<li>
-<p>
-<strong>-j</strong> &lt;port&gt; to listen for telnet connections
-</p>
-</li>
-<li>
-<p>
-<strong>-k</strong> &lt;mode&gt; checksum mode (all,noip,notcp,noudp,noicmp,none)
-</p>
-</li>
-<li>
-<p>
-<strong>-l</strong> &lt;logdir&gt; log to this directory instead of current directory
-</p>
-</li>
-<li>
-<p>
-<strong>-m</strong> &lt;umask&gt; set umask = &lt;umask&gt;
-</p>
-</li>
-<li>
-<p>
-<strong>-n</strong> &lt;count&gt; stop after count packets
-</p>
-</li>
-<li>
-<p>
-<strong>-q</strong> quiet mode - Don&#8217;t show banner and status report
-</p>
-</li>
-<li>
-<p>
-<strong>-r</strong> &lt;pcap&gt;&#8230; (same as --pcap-list)
-</p>
-</li>
-<li>
-<p>
-<strong>-s</strong> &lt;snap&gt; (same as --snaplen)
-</p>
-</li>
-<li>
-<p>
-<strong>-t</strong> &lt;dir&gt; chroots process to &lt;dir&gt; after initialization
-</p>
-</li>
-<li>
-<p>
-<strong>-u</strong> &lt;uname&gt; run snort as &lt;uname&gt; or &lt;uid&gt; after initialization
-</p>
-</li>
-<li>
-<p>
-<strong>-v</strong> be verbose
-</p>
-</li>
-<li>
-<p>
-<strong>-w</strong> dump 802.11 management and control frames
-</p>
-</li>
-<li>
-<p>
-<strong>-x</strong> same as --pedantic
-</p>
-</li>
-<li>
-<p>
-<strong>-y</strong> include year in timestamp in the alert and log files
-</p>
-</li>
-<li>
-<p>
-<strong>-z</strong> &lt;count&gt; maximum number of packet threads (same as --max-packet-threads)
-</p>
-</li>
-</ul></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>        0 gets the number of CPU cores reported by the system
+        0 gets the number of CPU cores reported by the system
+* *--alert-before-pass* process alert, drop, sdrop, or reject before pass; default is pass before alert, drop,...
+* *--bpf* &lt;filter options&gt; are standard BPF options, as seen in TCPDump
+* *--c2x* output hex for given char (see also --x2c)
+* *--create-pidfile* create PID file, even when not in Daemon mode
+* *--daq* &lt;type&gt; select packet acquisition module (default is pcap)
+* *--daq-dir* &lt;dir&gt; tell snort where to find desired DAQ
+* *--daq-list* list packet acquisition modules available in optional dir, default is static modules only
+* *--daq-mode* &lt;mode&gt; select the DAQ operating mode
+* *--daq-var* &lt;name=value&gt; specify extra DAQ configuration variable
+* *--dirty-pig* don't flush packets on shutdown
+* *--dump-builtin-rules* [&lt;module prefix&gt;] output stub rules for selected modules
+* *--dump-defaults* [&lt;module prefix&gt;] output module defaults in Lua format
+* *--dump-dynamic-rules* output stub rules for all loaded rules libraries
+* *--dump-version* output the version, the whole version, and only the version
+* *--enable-inline-test* enable Inline-Test Mode Operation
+* *--help* list command line options
+* *--help-commands* [&lt;module prefix&gt;] output matching commands
+* *--help-config* [&lt;module prefix&gt;] output matching config options
+* *--help-counts* [&lt;module prefix&gt;] output matching peg counts
+* *--help-module* &lt;module&gt; output description of given module
+* *--help-modules* list all available modules with brief help
+* *--help-options* &lt;option prefix&gt; output matching command line option quick help (same as -?)
+* *--help-plugins* list all available plugins with brief help
+* *--help-signals* dump available control signals
+* *--id-subdir* create/use instance subdirectories in logdir instead of instance filename prefix
+* *--id-zero* use id prefix / subdirectory even with one packet thread
+* *--list-buffers* output available inspection buffers
+* *--list-builtin* &lt;module prefix&gt; output matching builtin rules
+* *--list-gids* [&lt;module prefix&gt;] output matching generators
+* *--list-modules* [&lt;module type&gt;] list all known modules of given type
+* *--list-plugins* list all known plugins
+* *--logid* &lt;0xid&gt; log Identifier to uniquely id events for multiple snorts (same as -G)
+* *--lua* &lt;chunk&gt; extend/override conf with chunk; may be repeated
+* *--markup* output help in asciidoc compatible format
+* *--max-packet-threads* &lt;count&gt; configure maximum number of packet threads (same as -z)
+* *--nolock-pidfile* do not try to lock Snort PID file
+* *--nostamps* don't include timestamps in log file names
+* *--pause* wait for resume/quit command before processing packets/terminating
+* *--pcap-dir* &lt;dir&gt; a directory to recurse to look for pcaps - read mode is implied
+* *--pcap-file* &lt;file&gt; file that contains a list of pcaps to read - read mode is implied
+* *--pcap-filter* &lt;filter&gt; filter to apply when getting pcaps from file or directory
+* *--pcap-list* &lt;list&gt; a space separated list of pcaps to read - read mode is implied
+* *--pcap-loop* &lt;count&gt; read all pcaps &lt;count&gt; times;  0 will read until Snort is terminated
+* *--pcap-no-filter* reset to use no filter when getting pcaps from file or directory
+* *--pcap-reload* if reading multiple pcaps, reload snort config between pcaps
+* *--pcap-reset* ignored - for REG_TEST only
+* *--pcap-show* print a line saying what pcap is currently being read
+* *--pedantic* warnings are fatal
+* *--plugin-path* &lt;path&gt; where to find plugins
+* *--process-all-events* process all action groups
+* *--rule* &lt;rules&gt; to be added to configuration; may be repeated
+* *--rule-to-hex* output so rule header to stdout for text rule on stdin
+* *--rule-to-text* output plain so rule header to stdout for text rule on stdin
+* *--run-prefix* &lt;pfx&gt; prepend this to each output file
+* *--script-path* &lt;path&gt; where to find luajit scripts
+* *--shell* enable the interactive command line
+* *--show-plugins* list module and plugin versions
+* *--skip* &lt;n&gt; skip 1st n packets
+* *--snaplen* &lt;snap&gt; set snaplen of packet (same as -s)
+* *--stdin-rules* read rules from stdin until EOF or a line starting with END is read
+* *--treat-drop-as-alert* converts drop, sdrop, and reject rules into alert rules during startup
+* *--treat-drop-as-ignore* use drop, sdrop, and reject rules to ignore session traffic when not inline
+* *--version* show version number (same as -V)
+* *--warn-all* enable all warnings
+* *--warn-conf* warn about configuration issues
+* *--warn-daq* warn about DAQ issues, usually related to mode
+* *--warn-flowbits* warn about flowbits that are checked but not set and vice-versa
+* *--warn-hosts* warn about host table issues
+* *--warn-rules* warn about duplicate rules and rule parsing issues
+* *--warn-scripts* warn about issues discovered while processing Lua scripts
+* *--warn-symbols* warn about unknown symbols in your Lua config
+* *--warn-vars* warn about variable definition and usage issues
+* *--x2c* output ASCII char for given hex (see also --c2x)
+* *-?* &lt;option prefix&gt; output matching command line option quick help (same as --help-options)
+* *-A* &lt;mode&gt; set alert mode: none, cmg, or alert_*
+* *-B* &lt;mask&gt; obfuscated IP addresses in alerts and packet dumps using CIDR mask
+* *-C* print out payloads with character data only (no hex)
+* *-D* run Snort in background (daemon) mode
+* *-E* enable daemon restart
+* *-G* &lt;0xid&gt; (same as --logid)
+* *-H* make hash tables deterministic
+* *-K* &lt;mode&gt; logging mode
+* *-M* log messages to syslog (not alerts)
+* *-N* ignored - for REG_TEST only
+* *-O* obfuscate the logged IP addresses
+* *-Q* enable inline mode operation
+* *-R* &lt;rules&gt; include this rules file in the default policy
+* *-S* &lt;n=v&gt; set rules file variable n equal to value v
+* *-T* test and report on the current Snort configuration
+* *-U* use UTC for timestamps
+* *-V* (same as --version)
+* *-W* lists available interfaces
+* *-X* dump the raw packet data starting at the link layer
+* *-c* &lt;conf&gt; use this configuration
+* *-d* dump the Application Layer
+* *-e* display the second layer header info
+* *-f* turn off fflush() calls after binary log writes
+* *-g* &lt;gname&gt; run snort gid as &lt;gname&gt; group (or gid) after initialization
+* *-i* &lt;iface&gt;... list of interfaces
+* *-j* &lt;port&gt; to listen for telnet connections
+* *-k* &lt;mode&gt; checksum mode (all,noip,notcp,noudp,noicmp,none)
+* *-l* &lt;logdir&gt; log to this directory instead of current directory
+* *-m* &lt;umask&gt; set umask = &lt;umask&gt;
+* *-n* &lt;count&gt; stop after count packets
+* *-q* quiet mode - Don't show banner and status report
+* *-r* &lt;pcap&gt;... (same as --pcap-list)
+* *-s* &lt;snap&gt; (same as --snaplen)
+* *-t* &lt;dir&gt; chroots process to &lt;dir&gt; after initialization
+* *-u* &lt;uname&gt; run snort as &lt;uname&gt; or &lt;uid&gt; after initialization
+* *-v* be verbose
+* *-w* dump 802.11 management and control frames
+* *-x* same as --pedantic
+* *-y* include year in timestamp in the alert and log files
+* *-z* &lt;count&gt; maximum number of packet threads (same as --max-packet-threads)</code></pre>
+</div></div>
 </div>
 <div class="sect2">
 <h3 id="_parameters">Parameters</h3>
@@ -10778,7 +10787,7 @@ bit_list is typically used to store a set of byte, port, or VLAN ID
 </ul></div>
 </div>
 <div class="sect2">
-<h3 id="_configuration_2">Configuration</h3>
+<h3 id="_configuration_3">Configuration</h3>
 <div class="ulist"><ul>
 <li>
 <p>
@@ -11012,7 +11021,7 @@ int <strong>base64_decode.bytes</strong>: Number of base64 encoded bytes to deco
 </li>
 <li>
 <p>
-int <strong>base64_decode.offset</strong>: Bytes past start of buffer to start decoding. { 0: }
+int <strong>base64_decode.offset</strong> = 0: Bytes past start of buffer to start decoding. { 0: }
 </p>
 </li>
 <li>
@@ -11032,7 +11041,7 @@ string <strong>binder[].use.file</strong>: use configuration in given file
 </li>
 <li>
 <p>
-string <strong>binder[].use.name</strong> = defaults to type: symbol name
+string <strong>binder[].use.name</strong>: symbol name (defaults to type)
 </p>
 </li>
 <li>
@@ -11057,7 +11066,7 @@ addr_list <strong>binder[].when.nets</strong>: list of networks
 </li>
 <li>
 <p>
-int <strong>binder[].when.policy_id</strong>: unique ID for selection of this config by external logic { 0: }
+int <strong>binder[].when.policy_id</strong> = 0: unique ID for selection of this config by external logic { 0: }
 </p>
 </li>
 <li>
@@ -11092,7 +11101,7 @@ string <strong>bufferlen.~range</strong>: len | min&lt;&gt;max | &lt;max | &gt;m
 </li>
 <li>
 <p>
-int <strong>byte_extract.align</strong>: round the number of converted bytes up to the next 2- or 4-byte boundary { 0:4 }
+int <strong>byte_extract.align</strong> = 0: round the number of converted bytes up to the next 2- or 4-byte boundary { 0:4 }
 </p>
 </li>
 <li>
@@ -11122,7 +11131,7 @@ implied <strong>byte_extract.little</strong>: little endian
 </li>
 <li>
 <p>
-int <strong>byte_extract.multiplier</strong>: scale extracted value by given amount { 1:65535 }
+int <strong>byte_extract.multiplier</strong> = 1: scale extracted value by given amount { 1:65535 }
 </p>
 </li>
 <li>
@@ -11157,7 +11166,7 @@ int <strong>byte_extract.~offset</strong>: number of bytes into the buffer to st
 </li>
 <li>
 <p>
-int <strong>byte_jump.align</strong>: round the number of converted bytes up to the next 2- or 4-byte boundary { 0:4 }
+int <strong>byte_jump.align</strong> = 0: round the number of converted bytes up to the next 2- or 4-byte boundary { 0:4 }
 </p>
 </li>
 <li>
@@ -11192,7 +11201,7 @@ implied <strong>byte_jump.little</strong>: little endian
 </li>
 <li>
 <p>
-int <strong>byte_jump.multiplier</strong>: scale extracted value by given amount { 1:65535 }
+int <strong>byte_jump.multiplier</strong> = 1: scale extracted value by given amount { 1:65535 }
 </p>
 </li>
 <li>
@@ -11202,7 +11211,7 @@ implied <strong>byte_jump.oct</strong>: convert from octal string
 </li>
 <li>
 <p>
-int <strong>byte_jump.post_offset</strong>: also skip forward or backwards (positive of negative value) this number of bytes { -65535:65535 }
+int <strong>byte_jump.post_offset</strong> = 0: also skip forward or backwards (positive of negative value) this number of bytes { -65535:65535 }
 </p>
 </li>
 <li>
@@ -11322,12 +11331,12 @@ implied <strong>content.fast_pattern</strong>: use this content in the fast patt
 </li>
 <li>
 <p>
-int <strong>content.fast_pattern_length</strong>: maximum number of characters from this content the fast pattern matcher should use
+int <strong>content.fast_pattern_length</strong>: maximum number of characters from this content the fast pattern matcher should use { 1: }
 </p>
 </li>
 <li>
 <p>
-int <strong>content.fast_pattern_offset</strong>: number of leading characters of this content the fast pattern matcher should exclude
+int <strong>content.fast_pattern_offset</strong> = 0: number of leading characters of this content the fast pattern matcher should exclude { 0: }
 </p>
 </li>
 <li>
@@ -11382,7 +11391,7 @@ int <strong>daq.snaplen</strong> = deflt: set snap length (same as -P) { 0:65535
 </li>
 <li>
 <p>
-string <strong>daq.type</strong> = pcap: select type of DAQ
+string <strong>daq.type</strong>: select type of DAQ
 </p>
 </li>
 <li>
@@ -11762,7 +11771,7 @@ int <strong>gid.~</strong>: generator id { 1: }
 </li>
 <li>
 <p>
-enum <strong>hosts[].frag_policy</strong> = linux: defragmentation policy { unknown | first | linux | bsd | bsd_right |last | windows | solaris }
+enum <strong>hosts[].frag_policy</strong>: defragmentation policy { first | linux | bsd | bsd_right | last | windows | solaris }
 </p>
 </li>
 <li>
@@ -11787,7 +11796,7 @@ enum <strong>hosts[].services[].proto</strong> = tcp: ip protocol { tcp | udp }
 </li>
 <li>
 <p>
-enum <strong>hosts[].tcp_policy</strong> = linux: tcp reassembly policy { unknown | first | last | bsd | linux | old-linux | windows | win-2003 | vista | solaris | hpux | hpux10 | irix | macos }
+enum <strong>hosts[].tcp_policy</strong>: tcp reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
 </p>
 </li>
 <li>
@@ -12152,7 +12161,7 @@ string <strong>ips.include</strong>: legacy snort rules and includes
 </li>
 <li>
 <p>
-enum <strong>ips.mode</strong> = tap: set policy mode { tap | inline | inline-test }
+enum <strong>ips.mode</strong>: set policy mode { tap | inline | inline-test }
 </p>
 </li>
 <li>
@@ -12177,7 +12186,7 @@ string <strong>itype.~range</strong>: check if icmp type is <em>type | min&lt;&g
 </li>
 <li>
 <p>
-bool <strong>log_codecs.file</strong> = stdout: output to log_codecs.txt instead of stdout
+bool <strong>log_codecs.file</strong> = false: output to log_codecs.txt instead of stdout
 </p>
 </li>
 <li>
@@ -12652,16 +12661,6 @@ int <strong>port_scan_global.memcap</strong> = 1048576: maximum tracker memory {
 </li>
 <li>
 <p>
-bool <strong>ppm.debug_pkts</strong> = false: enable packet debug
-</p>
-</li>
-<li>
-<p>
-bool <strong>ppm.debug_rules</strong> = false: enable rule debug
-</p>
-</li>
-<li>
-<p>
 bool <strong>ppm.fastpath_expensive_packets</strong> = false: stop inspection if the max_pkt_time is exceeded
 </p>
 </li>
@@ -12757,7 +12756,7 @@ bool <strong>process.utc</strong> = false: use UTC instead of local time for tim
 </li>
 <li>
 <p>
-int <strong>profile.modules.count</strong> = -1: print results to given level (-1 = all, 0 = off?) { -1: }
+int <strong>profile.modules.count</strong> = -1: print results to given level (-1 = all, 0 = off) { -1: }
 </p>
 </li>
 <li>
@@ -12767,7 +12766,7 @@ enum <strong>profile.modules.sort</strong> = avg_ticks: sort by given field { ch
 </li>
 <li>
 <p>
-int <strong>profile.rules.count</strong> = -1: print results to given level (-1 = all, 0 = off?) { -1: }
+int <strong>profile.rules.count</strong> = -1: print results to given level (-1 = all, 0 = off) { -1: }
 </p>
 </li>
 <li>
@@ -12817,7 +12816,7 @@ enum <strong>rate_filter[].track</strong> = by_src: filter only matching source 
 </li>
 <li>
 <p>
-bool <strong>react.msg</strong>:  use rule message in response page
+bool <strong>react.msg</strong> = false:  use rule msg in response page instead of default message
 </p>
 </li>
 <li>
@@ -13042,7 +13041,7 @@ string <strong>snort.--bpf</strong>: &lt;filter options&gt; are standard BPF opt
 </li>
 <li>
 <p>
-string <strong>snort.--c2x</strong>: output hex for given char
+string <strong>snort.--c2x</strong>: output hex for given char (see also --x2c)
 </p>
 </li>
 <li>
@@ -13202,7 +13201,7 @@ implied <strong>snort.--markup</strong>: output help in asciidoc compatible form
 </li>
 <li>
 <p>
-int <strong>snort.--max-packet-threads</strong>: &lt;count&gt; configure maximum number of packet threads (same as -z) { 0: }
+int <strong>snort.--max-packet-threads</strong> = 1: &lt;count&gt; configure maximum number of packet threads (same as -z)
 </p>
 </li>
 <li>
@@ -13322,7 +13321,7 @@ int <strong>snort.--skip</strong>: &lt;n&gt; skip 1st n packets { 0: }
 </li>
 <li>
 <p>
-int <strong>snort.--snaplen</strong>: &lt;snap&gt; set snaplen of packet (same as -s) { 68:65535 }
+int <strong>snort.--snaplen</strong> = 1514: &lt;snap&gt; set snaplen of packet (same as -s) { 68:65535 }
 </p>
 </li>
 <li>
@@ -13352,17 +13351,47 @@ implied <strong>snort.--warn-all</strong>: enable all warnings
 </li>
 <li>
 <p>
+implied <strong>snort.--warn-conf</strong>: warn about configuration issues
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--warn-daq</strong>: warn about DAQ issues, usually related to mode
+</p>
+</li>
+<li>
+<p>
 implied <strong>snort.--warn-flowbits</strong>: warn about flowbits that are checked but not set and vice-versa
 </p>
 </li>
 <li>
 <p>
-implied <strong>snort.--warn-unknown</strong>: warn about unknown symbols in your config
+implied <strong>snort.--warn-hosts</strong>: warn about host table issues
 </p>
 </li>
 <li>
 <p>
-int <strong>snort.--x2c</strong>: output ASCII char for given hex
+implied <strong>snort.--warn-rules</strong>: warn about duplicate rules and rule parsing issues
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--warn-scripts</strong>: warn about issues discovered while processing Lua scripts
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--warn-symbols</strong>: warn about unknown symbols in your Lua config
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--warn-vars</strong>: warn about variable definition and usage issues
+</p>
+</li>
+<li>
+<p>
+int <strong>snort.--x2c</strong>: output ASCII char for given hex (see also --c2x)
 </p>
 </li>
 <li>
@@ -13532,7 +13561,7 @@ string <strong>snort.-r</strong>: &lt;pcap&gt;&#8230; (same as --pcap-list)
 </li>
 <li>
 <p>
-int <strong>snort.-s</strong>: &lt;snap&gt; (same as --snaplen) { 68:65535 }
+int <strong>snort.-s</strong> = 1514: &lt;snap&gt; (same as --snaplen) { 68:65535 }
 </p>
 </li>
 <li>
@@ -13567,7 +13596,7 @@ implied <strong>snort.-y</strong>: include year in timestamp in the alert and lo
 </li>
 <li>
 <p>
-int <strong>snort.-z</strong>: &lt;count&gt; maximum number of packet threads (same as --max-packet-threads) { 1: }
+int <strong>snort.-z</strong> = 1: &lt;count&gt; maximum number of packet threads (same as --max-packet-threads)
 </p>
 </li>
 <li>
@@ -13582,6 +13611,21 @@ string <strong>soid.~</strong>: SO rule ID has &lt;gid&gt;|&lt;sid&gt; format, l
 </li>
 <li>
 <p>
+int <strong>ssh.max_client_bytes</strong> = 19600: number of unanswered bytes before alerting on challenge-response overflow or CRC32 { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>ssh.max_encrypted_packets</strong> = 25: ignore session after this many encrypted packets { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>ssh.max_server_version_len</strong> = 80: limit before alerting on secure CRT server version string overflow { 0:255 }
+</p>
+</li>
+<li>
+<p>
 int <strong>stream.icmp_cache.idle_timeout</strong> = 60: maximum inactive time before retiring session tracker { 1: }
 </p>
 </li>
@@ -13592,7 +13636,7 @@ int <strong>stream.icmp_cache.max_sessions</strong> = 262144: maximum simultaneo
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.memcap</strong>: maximum cache memory { 0: }
+int <strong>stream.icmp_cache.memcap</strong> = 0: maximum cache memory { 0: }
 </p>
 </li>
 <li>
@@ -13612,7 +13656,7 @@ int <strong>stream.ip_cache.max_sessions</strong> = 262144: maximum simultaneous
 </li>
 <li>
 <p>
-int <strong>stream.ip_cache.memcap</strong>: maximum cache memory { 0: }
+int <strong>stream.ip_cache.memcap</strong> = 0: maximum cache memory { 0: }
 </p>
 </li>
 <li>
@@ -13632,7 +13676,7 @@ int <strong>stream.tcp_cache.max_sessions</strong> = 262144: maximum simultaneou
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.memcap</strong>: maximum cache memory { 0: }
+int <strong>stream.tcp_cache.memcap</strong> = 0: maximum cache memory { 0: }
 </p>
 </li>
 <li>
@@ -13652,7 +13696,7 @@ int <strong>stream.udp_cache.max_sessions</strong> = 262144: maximum simultaneou
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.memcap</strong>: maximum cache memory { 0: }
+int <strong>stream.udp_cache.memcap</strong> = 0: maximum cache memory { 0: }
 </p>
 </li>
 <li>
@@ -13757,7 +13801,7 @@ int <strong>stream_tcp.overlap_limit</strong> = 0: maximum number of allowed ove
 </li>
 <li>
 <p>
-enum <strong>stream_tcp.policy</strong> = linux: determines operating system characteristics like reassembly { first | last | linux | old-linux | bsd | macos | solaris | irix | hpux | hpux10 | windows | win-2003 | vista | proxy }
+enum <strong>stream_tcp.policy</strong> = bsd: determines operating system characteristics like reassembly { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
 </p>
 </li>
 <li>
@@ -13978,6 +14022,8 @@ string <strong>wizard.spells[].to_client[].spell</strong>: sequence of data with
 <li>
 <p>
 string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with wild cards (*)
+        0 gets the number of CPU cores reported by the system { 0: }
+        0 gets the number of CPU cores reported by the system { 0: }
 </p>
 </li>
 </ul></div>
@@ -14153,6 +14199,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>detection.total alerts</strong>: alerts including IP reputation
+</p>
+</li>
+<li>
+<p>
+<strong>dns.packets</strong>: total packets
 </p>
 </li>
 <li>
@@ -14603,6 +14654,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>snort.signals</strong>: total signals processed
+</p>
+</li>
+<li>
+<p>
+<strong>ssh.packets</strong>: total packets
 </p>
 </li>
 <li>
@@ -15082,7 +15138,17 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>128</strong>: ssh
+</p>
+</li>
+<li>
+<p>
 <strong>129</strong>: stream_tcp
+</p>
+</li>
+<li>
+<p>
+<strong>131</strong>: dns
 </p>
 </li>
 <li>
@@ -16417,6 +16483,36 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>128:1</strong> (ssh) Challenge-Response Overflow exploit
+</p>
+</li>
+<li>
+<p>
+<strong>128:2</strong> (ssh) SSH1 CRC32 exploit
+</p>
+</li>
+<li>
+<p>
+<strong>128:3</strong> (ssh) Server version string overflow
+</p>
+</li>
+<li>
+<p>
+<strong>128:5</strong> (ssh) Bad message direction
+</p>
+</li>
+<li>
+<p>
+<strong>128:6</strong> (ssh) Payload size incorrect for the given payload
+</p>
+</li>
+<li>
+<p>
+<strong>128:7</strong> (ssh) Failed to detect SSH version string
+</p>
+</li>
+<li>
+<p>
 <strong>129:1</strong> (stream_tcp) SYN on established session
 </p>
 </li>
@@ -16513,6 +16609,21 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>129:20</strong> (stream_tcp) TCP session without 3-way handshake
+</p>
+</li>
+<li>
+<p>
+<strong>131:1</strong> (dns) Obsolete DNS RR Types
+</p>
+</li>
+<li>
+<p>
+<strong>131:2</strong> (dns) Experimental DNS RR Types
+</p>
+</li>
+<li>
+<p>
+<strong>131:3</strong> (dns) DNS Client rdata txt Overflow
 </p>
 </li>
 <li>
@@ -16838,7 +16949,7 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </ul></div>
 </div>
 <div class="sect2">
-<h3 id="_signals">Signals</h3>
+<h3 id="_signals_2">Signals</h3>
 <div class="admonitionblock">
 <table><tr>
 <td class="icon">
@@ -16958,6 +17069,7 @@ change -&gt; detection: 'max-pattern-len' ==&gt; 'max_pattern_len'
 change -&gt; detection: 'search-method' ==&gt; 'search_method'
 change -&gt; detection: 'search-optimize' ==&gt; 'search_optimize'
 change -&gt; detection: 'split-any-any' ==&gt; 'split_any_any'
+change -&gt; dns: 'ports' ==&gt; 'bindings'
 change -&gt; event_filter: 'gen_id' ==&gt; 'gid'
 change -&gt; event_filter: 'sig_id' ==&gt; 'sid'
 change -&gt; event_filter: 'threshold' ==&gt; 'event_filter'
@@ -17010,7 +17122,6 @@ change -&gt; perfmonitor: 'pktcnt' ==&gt; 'packets'
 change -&gt; perfmonitor: 'snortfile' ==&gt; 'file = true'
 change -&gt; perfmonitor: 'time' ==&gt; 'seconds'
 change -&gt; policy_mode: 'inline_test' ==&gt; 'inline-test'
-change -&gt; ppm: 'debug-pkts' ==&gt; 'debug_pkts'
 change -&gt; ppm: 'max-pkt-time' ==&gt; 'max_pkt_time'
 change -&gt; ppm: 'max-rule-time' ==&gt; 'max_rule_time'
 change -&gt; ppm: 'pkt-log' ==&gt; 'pkt_log'
@@ -17026,6 +17137,7 @@ change -&gt; rule_state: 'disabled' ==&gt; 'enable'
 change -&gt; rule_state: 'enabled' ==&gt; 'enable'
 change -&gt; sfportscan: 'proto' ==&gt; 'protos'
 change -&gt; sfportscan: 'scan_type' ==&gt; 'scan_types'
+change -&gt; ssh: 'server_ports' ==&gt; 'bindings'
 change -&gt; stream5_global: 'max_active_responses' ==&gt; 'max_responses'
 change -&gt; stream5_global: 'max_icmp' ==&gt; 'max_sessions'
 change -&gt; stream5_global: 'max_ip' ==&gt; 'max_sessions'
@@ -17042,8 +17154,7 @@ change -&gt; stream5_tcp: 'bind_to' ==&gt; 'bindings'
 change -&gt; stream5_tcp: 'dont_reassemble_async' ==&gt; 'reassemble_async'
 change -&gt; stream5_tcp: 'max_queued_bytes' ==&gt; 'queue_limit.max_bytes'
 change -&gt; stream5_tcp: 'max_queued_segs' ==&gt; 'queue_limit.max_segments'
-change -&gt; stream5_tcp: 'policy hpux11' ==&gt; 'stream_tcp.policy = hpux'
-change -&gt; stream5_tcp: 'policy win2k3' ==&gt; 'stream_tcp.policy = win-2003'
+change -&gt; stream5_tcp: 'policy hpux' ==&gt; 'stream_tcp.policy = hpux11'
 change -&gt; stream5_tcp: 'timeout' ==&gt; 'session_timeout'
 change -&gt; stream5_tcp: 'use_static_footprint_sizes' ==&gt; 'footprint'
 change -&gt; stream5_udp: 'timeout' ==&gt; 'session_timeout'
@@ -17122,6 +17233,9 @@ deleted -&gt; csv: '&lt;filename&gt; can no longer be specific'
 deleted -&gt; csv: 'default'
 deleted -&gt; csv: 'trheader'
 deleted -&gt; detection: 'mwm'
+deleted -&gt; dns: 'enable_experimental_types'
+deleted -&gt; dns: 'enable_obsolete_types'
+deleted -&gt; dns: 'enable_rdata_overflow'
 deleted -&gt; fast: '&lt;filename&gt; can no longer be specific'
 deleted -&gt; frag3_engine: 'detect_anomalies'
 deleted -&gt; frag3_global: 'disabled'
@@ -17134,6 +17248,7 @@ deleted -&gt; perfmonitor: 'atexitonly: base-stats'
 deleted -&gt; perfmonitor: 'atexitonly: events-stats'
 deleted -&gt; perfmonitor: 'atexitonly: flow-ip-stats'
 deleted -&gt; perfmonitor: 'atexitonly: flow-stats'
+deleted -&gt; ppm: 'debug-pkts'
 deleted -&gt; react: 'block'
 deleted -&gt; react: 'warn'
 deleted -&gt; rpc_decode: 'alert_fragments'
@@ -17144,6 +17259,14 @@ deleted -&gt; rule_state: 'action'
 deleted -&gt; sfportscan: 'detect_ack_scans'
 deleted -&gt; sfportscan: 'disabled'
 deleted -&gt; sfportscan: 'logfile'
+deleted -&gt; ssh: 'autodetect'
+deleted -&gt; ssh: 'enable_badmsgdir'
+deleted -&gt; ssh: 'enable_paysize'
+deleted -&gt; ssh: 'enable_protomismatch'
+deleted -&gt; ssh: 'enable_recognition'
+deleted -&gt; ssh: 'enable_respoverflow'
+deleted -&gt; ssh: 'enable_srvoverflow'
+deleted -&gt; ssh: 'enable_ssh1crc32'
 deleted -&gt; stream5_global: 'disabled'
 deleted -&gt; stream5_global: 'flush_on_alert'
 deleted -&gt; stream5_global: 'no_midstream_drop_alerts'
@@ -17304,6 +17427,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>detection_filter</strong> (ips_option): rule option to require multiple hits before a rule generates an event
+</p>
+</li>
+<li>
+<p>
+<strong>dns</strong> (inspector): dns inspection
 </p>
 </li>
 <li>
@@ -17773,6 +17901,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>ssh</strong> (inspector): ssh inspection
+</p>
+</li>
+<li>
+<p>
 <strong>stream</strong> (inspector): common flow tracking
 </p>
 </li>
@@ -18123,6 +18256,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>inspector::dns</strong>: dns inspection
+</p>
+</li>
+<li>
+<p>
 <strong>inspector::ftp_data</strong>: FTP data channel handler
 </p>
 </li>
@@ -18159,6 +18297,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>inspector::rpc_decode</strong>: RPC inspector
+</p>
+</li>
+<li>
+<p>
+<strong>inspector::ssh</strong>: ssh inspection
 </p>
 </li>
 <li>
@@ -18622,7 +18765,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <div class="sect2">
 <h3 id="_extending_snort">Extending Snort++</h3>
 <div class="sect3">
-<h4 id="_plugins">Plugins</h4>
+<h4 id="_plugins_2">Plugins</h4>
 <div class="paragraph"><p>Snort++ uses a variety of plugins to accomplish much of its processing
 objectives, including:</p></div>
 <div class="ulist"><ul>
@@ -19273,7 +19416,7 @@ Put conditional code on the line following the if so it is easy to break
 <li>
 <p>
 Don&#8217;t hesitate to create a new header if it is needed.  Don&#8217;t lump
-  unrelated stuff into a header because it is convenient.
+  unrelated stuff into an header because it is convenient.
 </p>
 </li>
 <li>
@@ -19293,7 +19436,7 @@ Write header guards like this (leading underscores are reserved for
 <p>
 Includes from a different directory should specify parent directory.
   This makes it clear exactly what is included and avoids the primordial
-  soup that results from using -I this -I that -I the-other-thing &#8230; .
+  soup that results from using -I this -I that -I the_other_thing &#8230; .
 </p>
 <div class="literalblock">
 <div class="content">
@@ -19389,7 +19532,7 @@ Prefer <em>and</em> over &amp;&amp; and <em>or</em> over || for new source files
 <div class="paragraph"><p>Currently using uncrustify from at <a href="https://github.com/bengardner/uncrustify">https://github.com/bengardner/uncrustify</a>
 to reformat legacy code and anything that happens to need a makeover at
 some point.</p></div>
-<div class="paragraph"><p>The working config is crusty.cfg in the top level directory.  It does well,
+<div class="paragraph"><p>The working config is crusty.cfg in the top level directory.  It does well
 but will munge some things.  Specially formatted INDENT-OFF comments were
 added in 2 places to avoid a real mess.</p></div>
 </div>
@@ -19401,7 +19544,7 @@ added in 2 places to avoid a real mess.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-02-27 09:57:19 EST
+Last updated 2015-03-30 16:54:22 EDT
 </div>
 </div>
 </body>

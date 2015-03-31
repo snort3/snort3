@@ -31,7 +31,7 @@ AC_PREREQ([2.69])
 
 AC_CONFIG_SRCDIR([src/main.h])
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([config.h src/framework/api_options.h])
 
 AM_INIT_AUTOMAKE
 
@@ -77,8 +77,7 @@ API_OPTIONS=""
 # API_OPTIONS="$API_OPTIONS option-name"
 
 # API_OPTIONS is #defined in config.h but that file is not exported so it
-# is also #defined in api_options.h which is installed by
-# src/framework/Makefile.am.
+# is also #defined in api_options.h.
 
 #--------------------------------------------------------------------------
 # host magic :(
