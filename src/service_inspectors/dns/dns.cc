@@ -438,7 +438,6 @@ static uint16_t ParseDNSQuestion(const unsigned char* data,
 }
 
 uint16_t ParseDNSAnswer(const unsigned char* data,
-    uint16_t /*data_size*/,
     uint16_t bytes_unused,
     DNSData* dnsSessionData)
 {
@@ -691,8 +690,7 @@ uint16_t SkipDNSRData(const unsigned char* data,
     return bytes_unused;
 }
 
-uint16_t ParseDNSRData(Packet*,
-    const unsigned char* data,
+uint16_t ParseDNSRData(const unsigned char* data,
     uint16_t bytes_unused,
     DNSData* dnsSessionData)
 {
@@ -841,8 +839,7 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
         case DNS_RESP_STATE_ANS_RR: /* ANSWERS section */
             for (i=dnsSessionData->curr_rec; i<dnsSessionData->hdr.answers; i++)
             {
-                bytes_unused = ParseDNSAnswer(data, p->dsize,
-                    bytes_unused, dnsSessionData);
+                bytes_unused = ParseDNSAnswer(data, bytes_unused, dnsSessionData);
 
                 if (bytes_unused == 0)
                 {
@@ -869,7 +866,7 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
                 case DNS_RESP_STATE_RR_RDATA_MID:
                     /* Data now points to the beginning of the RDATA */
                     data = p->data + (p->dsize - bytes_unused);
-                    bytes_unused = ParseDNSRData(p, data, bytes_unused, dnsSessionData);
+                    bytes_unused = ParseDNSRData(data, bytes_unused, dnsSessionData);
                     if (dnsSessionData->curr_rec_state != DNS_RESP_STATE_RR_COMPLETE)
                     {
                         /* Out of data, pick up on the next packet */
@@ -897,8 +894,7 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
         case DNS_RESP_STATE_AUTH_RR: /* AUTHORITIES section */
             for (i=dnsSessionData->curr_rec; i<dnsSessionData->hdr.authorities; i++)
             {
-                bytes_unused = ParseDNSAnswer(data, p->dsize,
-                    bytes_unused, dnsSessionData);
+                bytes_unused = ParseDNSAnswer(data, bytes_unused, dnsSessionData);
 
                 if (bytes_unused == 0)
                 {
@@ -925,7 +921,7 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
                 case DNS_RESP_STATE_RR_RDATA_MID:
                     /* Data now points to the beginning of the RDATA */
                     data = p->data + (p->dsize - bytes_unused);
-                    bytes_unused = ParseDNSRData(p, data, bytes_unused, dnsSessionData);
+                    bytes_unused = ParseDNSRData(data, bytes_unused, dnsSessionData);
                     if (dnsSessionData->curr_rec_state != DNS_RESP_STATE_RR_COMPLETE)
                     {
                         /* Out of data, pick up on the next packet */
@@ -953,8 +949,7 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
         case DNS_RESP_STATE_ADD_RR: /* ADDITIONALS section */
             for (i=dnsSessionData->curr_rec; i<dnsSessionData->hdr.authorities; i++)
             {
-                bytes_unused = ParseDNSAnswer(data, p->dsize,
-                    bytes_unused, dnsSessionData);
+                bytes_unused = ParseDNSAnswer(data, bytes_unused, dnsSessionData);
 
                 if (bytes_unused == 0)
                 {
@@ -981,7 +976,7 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
                 case DNS_RESP_STATE_RR_RDATA_MID:
                     /* Data now points to the beginning of the RDATA */
                     data = p->data + (p->dsize - bytes_unused);
-                    bytes_unused = ParseDNSRData(p, data, bytes_unused, dnsSessionData);
+                    bytes_unused = ParseDNSRData(data, bytes_unused, dnsSessionData);
                     if (dnsSessionData->curr_rec_state != DNS_RESP_STATE_RR_COMPLETE)
                     {
                         /* Out of data, pick up on the next packet */
@@ -1101,7 +1096,7 @@ void Dns::show(SnortConfig*)
 void Dns::eval(Packet* p)
 {
     // precondition - what we registered for
-    assert(p->is_udp() && p->is_tcp() && p->dsize && p->data);
+    assert((p->is_udp() || p->is_tcp()) && p->dsize && p->data);
 
     ++dnsstats.total_packets;
     snort_dns(p);
