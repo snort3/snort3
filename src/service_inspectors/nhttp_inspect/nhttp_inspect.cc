@@ -47,18 +47,18 @@ NHttpInspect::NHttpInspect(bool test_input, bool test_output)
     }
 }
 
-bool NHttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
+bool NHttpInspect::get_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b)
 {
     switch ( ibt )
     {
     case InspectionBuffer::IBT_KEY:
-        return get_buf(HTTP_BUFFER_URI, p, b);
+        return get_buf(HTTP_BUFFER_URI, nullptr, b);
 
     case InspectionBuffer::IBT_HEADER:
-        return get_buf(HTTP_BUFFER_HEADER, p, b);
+        return get_buf(HTTP_BUFFER_HEADER, nullptr, b);
 
     case InspectionBuffer::IBT_BODY:
-        return get_buf(HTTP_BUFFER_CLIENT_BODY, p, b);
+        return get_buf(HTTP_BUFFER_CLIENT_BODY, nullptr, b);
 
     default:
         return false;
@@ -80,8 +80,7 @@ bool NHttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
 }
 
 ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
-    SourceId source_id,
-    bool buf_owner) const
+    SourceId source_id, bool buf_owner) const
 {
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(
         NHttpFlowData::nhttp_flow_id);
@@ -91,20 +90,30 @@ ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, F
 
     switch (session_data->section_type[source_id])
     {
-    case SEC_REQUEST: msg_section = new NHttpMsgRequest(data, dsize, session_data, source_id,
-            buf_owner); break;
-    case SEC_STATUS: msg_section = new NHttpMsgStatus(data, dsize, session_data, source_id,
-            buf_owner); break;
-    case SEC_HEADER: msg_section = new NHttpMsgHeader(data, dsize, session_data, source_id,
-            buf_owner); break;
-    case SEC_BODY: msg_section = new NHttpMsgBody(data, dsize, session_data, source_id, buf_owner);
+    case SEC_REQUEST:
+        msg_section = new NHttpMsgRequest(data, dsize, session_data, source_id, buf_owner);
         break;
-    case SEC_CHUNK: msg_section = new NHttpMsgChunk(data, dsize, session_data, source_id,
-            buf_owner); break;
-    case SEC_TRAILER: msg_section = new NHttpMsgTrailer(data, dsize, session_data, source_id,
-            buf_owner); break;
-    default: assert(0); if (buf_owner)
+    case SEC_STATUS:
+        msg_section = new NHttpMsgStatus(data, dsize, session_data, source_id, buf_owner);
+        break;
+    case SEC_HEADER:
+        msg_section = new NHttpMsgHeader(data, dsize, session_data, source_id, buf_owner);
+        break;
+    case SEC_BODY:
+        msg_section = new NHttpMsgBody(data, dsize, session_data, source_id, buf_owner);
+        break;
+    case SEC_CHUNK:
+        msg_section = new NHttpMsgChunk(data, dsize, session_data, source_id, buf_owner);
+        break;
+    case SEC_TRAILER:
+        msg_section = new NHttpMsgTrailer(data, dsize, session_data, source_id, buf_owner);
+        break;
+    default:
+        assert(0);
+        if (buf_owner)
+        {
             delete[] data;
+        }
         return RES_IGNORE;
     }
 

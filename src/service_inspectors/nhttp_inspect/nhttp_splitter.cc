@@ -21,7 +21,8 @@
 
 using namespace NHttpEnums;
 
-ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length)
+ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length,
+    NHttpInfractions& infractions, NHttpEventGen& events)
 {
     for (uint32_t k = 0; k < length; k++)
     {
@@ -40,6 +41,7 @@ ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length)
                 else
                 {
                     infractions += INF_TOOMUCHLEADINGWS;
+                    events.create_event(EVENT_LOSS_OF_SYNC);
                     return SCAN_ABORT;
                 }
             }
@@ -71,7 +73,8 @@ ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length)
     return SCAN_NOTFOUND;
 }
 
-ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length)
+ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length,
+    NHttpInfractions& infractions, NHttpEventGen& events)
 {
     if (peek_status == SCAN_FOUND)
     {
@@ -81,12 +84,10 @@ ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length)
     length -= peek_octets;
 
     // Header separators: leading \r\n, leading \n, nonleading \r\n\r\n, nonleading \n\r\n,
-    // nonleading \r\n\n, and
-    // nonleading \n\n. The separator itself becomes num_excess which is discarded during
-    // reassemble().
-    // FIXIT-L There is a regression test with a rule that looks for these separators in the header
-    // buffer.
-    //         Need to resolve.
+    // nonleading \r\n\n, and nonleading \n\n. The separator itself becomes num_excess which is
+    // discarded during reassemble().
+    // FIXIT-L There is a regression test with a rule that looks for these separators in the
+    // header buffer.
     for (uint32_t k = 0; k < length; k++)
     {
         if (buffer[k] == '\n')
@@ -98,6 +99,12 @@ ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length)
             }
             else
             {
+                // Alert on \n not preceded by \r. Correct cases are \r\n\r\n and \r\n.
+                if (!((num_crlf == 4) || ((num_crlf == 2) && (first_lf == 0))))
+                {
+                    infractions += INF_LFWITHOUTCR;
+                    events.create_event(EVENT_IIS_DELIMITER);
+                }
                 num_flush = k + 1 + peek_octets;
                 return SCAN_FOUND;
             }
@@ -125,14 +132,16 @@ ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length)
     return SCAN_NOTFOUND;
 }
 
-ScanResult NHttpHeaderSplitter::peek(const uint8_t* buffer, uint32_t length)
+ScanResult NHttpHeaderSplitter::peek(const uint8_t* buffer, uint32_t length,
+    NHttpInfractions& infractions, NHttpEventGen& events)
 {
-    peek_status = split(buffer, length);
+    peek_status = split(buffer, length, infractions, events);
     peek_octets = length;
     return peek_status;
 }
 
-ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length)
+ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length,
+    NHttpInfractions&, NHttpEventGen&)
 {
     // FIXIT-M when things go wrong and we must abort we need to flush partial chunk buffer
     if (header_complete)
@@ -160,10 +169,9 @@ ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length)
             if (expected_length == 0)
             {
                 // Workaround because stream cannot handle zero-length flush. Instead of flushing
-                // the zero-length chunk
-                // to flush the partial chunk buffer in reassembly, we save the terminal \n from
-                // the chunk header for
-                // use as an end-of-chunks signal. FIXIT-M
+                // the zero-length chunk to flush the partial chunk buffer in reassembly, we save
+                // the terminal \n from the chunk header for use as an end-of-chunks signal.
+                // FIXIT-M
                 expected_length = 1;
                 zero_chunk = true;
                 num_flush = k;

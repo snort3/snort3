@@ -74,6 +74,8 @@ void NHttpMsgBody::update_flow()
     {
         // More body coming
         session_data->body_octets[source_id] = body_octets;
+        session_data->infractions[source_id] = infractions;
+        session_data->events[source_id] = events;
     }
     else
     {

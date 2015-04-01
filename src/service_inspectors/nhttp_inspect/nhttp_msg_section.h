@@ -36,21 +36,26 @@ class NHttpMsgSection
 {
 public:
     virtual ~NHttpMsgSection() { if (delete_msg_on_destruct) delete[] msg_text.start; }
-    virtual void analyze() = 0;                         // Minimum necessary processing for every
-                                                        // message
-    virtual void print_section(FILE* output) = 0;       // Test tool prints all derived message
-                                                        // parts
-    virtual void gen_events() = 0;                      // Converts collected information into
-                                                        // required preprocessor events
-    virtual void update_flow() = 0;                     // Manages the splitter and communication
-                                                        // between message sections
-    virtual void legacy_clients() = 0;                  // Populates the raw and normalized buffer
-                                                        // interface used by old Snort
-    virtual NHttpEnums::ProcessResult worth_detection() // What should we do with this section
-                                                        // after processing?
-    { return NHttpEnums::RES_INSPECT; }
+
+    // Minimum necessary processing for every message
+    virtual void analyze() = 0;
+
+    // Internal client that triggers JIT processing for optional inspections
+    virtual void gen_events() = 0;
+
+    // Manages the splitter and communication between message sections
+    virtual void update_flow() = 0;
+
+    // Populates the raw and normalized buffer interface used by old Snort
+    virtual void legacy_clients() = 0;
+
+    // Should this section be sent directly to detection after inspection?
+    virtual NHttpEnums::ProcessResult worth_detection() { return NHttpEnums::RES_INSPECT; }
 
     NHttpEnums::MethodId get_method_id() const { return method_id; }
+
+    // Test tool prints all derived message parts
+    virtual void print_section(FILE* output) = 0;
 
 protected:
     NHttpMsgSection(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
@@ -59,7 +64,6 @@ protected:
     // Convenience methods
     void print_message_title(FILE* output, const char* title) const;
     void print_message_wrapup(FILE* output) const;
-    void create_event(NHttpEnums::EventSid sid);
     void legacy_request();
     void legacy_status();
     void legacy_header(bool use_trailer);
@@ -74,7 +78,7 @@ protected:
     ScratchPad scratch_pad;
 
     NHttpInfractions infractions;
-    uint64_t events_generated = 0;
+    NHttpEventGen events;
     NHttpEnums::VersionId version_id;
     NHttpEnums::MethodId method_id;
     int32_t status_code_num;

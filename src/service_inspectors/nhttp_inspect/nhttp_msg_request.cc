@@ -42,9 +42,8 @@ NHttpMsgRequest::NHttpMsgRequest(const uint8_t* buffer, const uint16_t buf_size,
 void NHttpMsgRequest::parse_start_line()
 {
     // FIXIT-M this needs to be redesigned to parse a truncated request line and extract the method
-    // and URI.
-    // The current implementation just gives up if the " HTTP/X.Y" isn't in its proper place at the
-    // end of the line.
+    // and URI. The current implementation just gives up if the " HTTP/X.Y" isn't in its proper
+    // place at the end of the line.
 
     // There should be exactly two spaces. One following the method and one before "HTTP/".
     // Additional spaces located within the URI are not allowed by RFC but we will tolerate it
@@ -72,8 +71,8 @@ void NHttpMsgRequest::parse_start_line()
     method.start = start_line.start;
     method.length = space;
     derive_method_id();
-    uri = new NHttpUri(start_line.start + method.length + 1, start_line.length - method.length -
-        10, method_id);
+    uri = new NHttpUri(start_line.start + method.length + 1,
+        start_line.length - method.length - 10, method_id);
     version.start = start_line.start + (start_line.length - 8);
     version.length = 8;
     assert (start_line.length == method.length + uri->get_uri().length + version.length + 2);
@@ -110,31 +109,31 @@ const Field& NHttpMsgRequest::get_uri_norm_legacy()
 void NHttpMsgRequest::gen_events()
 {
     if (method_id == METH__OTHER)
-        create_event(EVENT_UNKNOWN_METHOD);
+        events.create_event(EVENT_UNKNOWN_METHOD);
 
     // URI character encoding events
     if (uri && (uri->get_uri_infractions() && INF_URIPERCENTASCII))
-        create_event(EVENT_ASCII);
+        events.create_event(EVENT_ASCII);
     if (uri && (uri->get_uri_infractions() && INF_URIPERCENTUCODE))
-        create_event(EVENT_U_ENCODE);
+        events.create_event(EVENT_U_ENCODE);
     if (uri && (uri->get_uri_infractions() && INF_URI8BITCHAR))
-        create_event(EVENT_BARE_BYTE);
+        events.create_event(EVENT_BARE_BYTE);
     if (uri && (uri->get_uri_infractions() && INF_URIPERCENTUTF8))
-        create_event(EVENT_UTF_8);
+        events.create_event(EVENT_UTF_8);
     if (uri && (uri->get_uri_infractions() && INF_URIBADCHAR))
-        create_event(EVENT_NON_RFC_CHAR);
+        events.create_event(EVENT_NON_RFC_CHAR);
 
     // URI path events
     if (uri && (uri->get_path_infractions() && INF_URIMULTISLASH))
-        create_event(EVENT_MULTI_SLASH);
+        events.create_event(EVENT_MULTI_SLASH);
     if (uri && (uri->get_path_infractions() && INF_URIBACKSLASH))
-        create_event(EVENT_IIS_BACKSLASH);
+        events.create_event(EVENT_IIS_BACKSLASH);
     if (uri && (uri->get_path_infractions() && INF_URISLASHDOT))
-        create_event(EVENT_SELF_DIR_TRAV);
+        events.create_event(EVENT_SELF_DIR_TRAV);
     if (uri && (uri->get_path_infractions() && INF_URISLASHDOTDOT))
-        create_event(EVENT_DIR_TRAV);
+        events.create_event(EVENT_DIR_TRAV);
     if (uri && (uri->get_path_infractions() && INF_URIROOTTRAV))
-        create_event(EVENT_WEBROOT_DIR);
+        events.create_event(EVENT_WEBROOT_DIR);
 }
 
 void NHttpMsgRequest::print_section(FILE* output)
@@ -165,8 +164,8 @@ void NHttpMsgRequest::print_section(FILE* output)
         uri->get_norm_fragment().print(output, "Normalized Fragment");
         fprintf(output,
             "URI infractions: overall %" PRIx64 ", format %" PRIx64 ", scheme %" PRIx64 ", host %"
-            PRIx64 ", port %" PRIx64 ", path %"
-            PRIx64 ", query %" PRIx64 ", fragment %" PRIx64 "\n",
+            PRIx64 ", port %" PRIx64 ", path %" PRIx64 ", query %" PRIx64 ", fragment %" PRIx64
+            "\n",
             uri->get_uri_infractions().get_raw(), uri->get_format_infractions().get_raw(),
             uri->get_scheme_infractions().get_raw(), uri->get_host_infractions().get_raw(),
             uri->get_port_infractions().get_raw(), uri->get_path_infractions().get_raw(),
@@ -195,6 +194,8 @@ void NHttpMsgRequest::update_flow()
         session_data->type_expected[source_id] = SEC_HEADER;
         session_data->version_id[source_id] = version_id;
         session_data->method_id = method_id;
+        session_data->infractions[source_id].reset();
+        session_data->events[source_id].reset();
     }
     session_data->section_type[source_id] = SEC__NOTCOMPUTE;
 }

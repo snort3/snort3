@@ -1,5 +1,7 @@
 Pending - build 145
 
+-- merge in new http changes: events from splitter plus additional
+   refactoring and cleanup
 -- fix dns assertion; remove unused variables
 
 15/03/31 - build 144

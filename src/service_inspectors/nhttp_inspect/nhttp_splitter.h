@@ -24,6 +24,7 @@
 
 #include "nhttp_enum.h"
 #include "nhttp_infractions.h"
+#include "nhttp_event_gen.h"
 
 //-------------------------------------------------------------------------
 // NHttpSplitter class
@@ -33,31 +34,29 @@ class NHttpSplitter
 {
 public:
     virtual ~NHttpSplitter() = default;
-    virtual NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length) = 0;
-    virtual NHttpEnums::ScanResult peek(const uint8_t*, uint32_t)
-    {
-        assert(0);
-        return NHttpEnums::SCAN_NOTFOUND;
-    }
+    virtual NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length,
+        NHttpInfractions& infractions, NHttpEventGen& events) = 0;
+    virtual NHttpEnums::ScanResult peek(const uint8_t*, uint32_t, NHttpInfractions&,
+        NHttpEventGen&) { assert(0); return NHttpEnums::SCAN_NOTFOUND; }
     uint32_t get_num_flush() const { return num_flush; }
     virtual uint32_t get_octets_seen() const { return octets_seen; }
     virtual uint32_t get_num_excess() const { return 0; }
     virtual bool get_zero_chunk() const { return false; }
     virtual bool partial_ok() const { return true; }
-    NHttpInfractions get_infractions() const { return infractions; }
 
 protected:
-    uint32_t octets_seen = 0; // number of octets processed by previous split() calls that returned
-                              // NOTFOUND
+    // number of octets processed by previous split() calls that returned NOTFOUND
+    uint32_t octets_seen = 0;
+
     uint32_t num_crlf = 0;
     uint32_t num_flush = 0;
-    NHttpInfractions infractions;
 };
 
 class NHttpStartSplitter : public NHttpSplitter
 {
 public:
-    NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length) override;
+    NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length,
+        NHttpInfractions& infractions, NHttpEventGen& events) override;
     uint32_t get_num_excess() const override { return num_crlf; }
 
 private:
@@ -67,8 +66,10 @@ private:
 class NHttpHeaderSplitter : public NHttpSplitter
 {
 public:
-    NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length) override;
-    NHttpEnums::ScanResult peek(const uint8_t* buffer, uint32_t length) override;
+    NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length,
+        NHttpInfractions& infractions, NHttpEventGen& events) override;
+    NHttpEnums::ScanResult peek(const uint8_t* buffer, uint32_t length,
+        NHttpInfractions& infractions, NHttpEventGen& events) override;
     uint32_t get_octets_seen() const override { return octets_seen - peek_octets; }
     uint32_t get_num_excess() const override { return num_crlf; }
 
@@ -81,7 +82,8 @@ private:
 class NHttpChunkSplitter : public NHttpSplitter
 {
 public:
-    NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length) override;
+    NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length,
+        NHttpInfractions& infractions, NHttpEventGen& events) override;
     bool get_zero_chunk() const override { return zero_chunk; }
     bool partial_ok() const override { return false; }
 

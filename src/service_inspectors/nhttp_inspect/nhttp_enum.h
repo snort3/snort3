@@ -139,6 +139,8 @@ typedef enum
     INF_URISLASHDOTDOT,
     INF_URIROOTTRAV,
     INF_TOOMUCHLEADINGWS,
+    INF_ENDLESSHEADER,
+    INF_LFWITHOUTCR,
 } Infraction;
 
 // Formats for output from a header normalization function
@@ -153,7 +155,7 @@ typedef enum { TRANSCODE__OTHER=1, TRANSCODE_CHUNKED, TRANSCODE_IDENTITY, TRANSC
                TRANSCODE_DEFLATE } Transcoding;
 
 typedef enum
-{   // FIXIT-L limit 63 before code changes required
+{   // FIXIT-L limit 64 before code changes required
     EVENT_ASCII = 1,
     EVENT_DOUBLE_DECODE,
     EVENT_U_ENCODE,
@@ -205,6 +207,7 @@ typedef enum
     EVENT_PDF_UNSUP_COMP_TYPE,
     EVENT_PDF_CASC_COMP,
     EVENT_PDF_PARSE_FAILURE,
+    EVENT_LOSS_OF_SYNC,
     EVENT_MAXVALUE
 } EventSid;
 

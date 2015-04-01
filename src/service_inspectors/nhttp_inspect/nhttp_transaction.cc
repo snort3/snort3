@@ -44,7 +44,7 @@ NHttpTransaction* NHttpTransaction::attach_my_transaction(NHttpFlowData* session
 {
     // This factory method:
     // 1. garbage collects most recent body section which is no longer needed once another section
-    // arrives
+    //    arrives
     // 2. creates new transactions for all request messages and orphaned response messages
     // 3. associates requests and responses and supports pipelining
     // 4. garbage collects unneeded transactions
@@ -62,8 +62,8 @@ NHttpTransaction* NHttpTransaction::attach_my_transaction(NHttpFlowData* session
     }
 
     // Request section: put the old transaction in the pipeline and replace it with a new
-    // transaction. If the pipeline
-    // overflows or underflows we stop using it and just delete the old transaction.
+    // transaction. If the pipeline overflows or underflows we stop using it and just delete the
+    // old transaction.
     if (session_data->section_type[source_id] == SEC_REQUEST)
     {
         // When pipelining is not occurring the response should already have taken this transaction
@@ -84,10 +84,9 @@ NHttpTransaction* NHttpTransaction::attach_my_transaction(NHttpFlowData* session
         session_data->transaction[SRC_CLIENT] = new NHttpTransaction;
     }
     // Status section: delete the current transaction and get a new one from the pipeline. If the
-    // pipeline is empty
-    // check for a request-side transaction that just finished and take it. If there is no
-    // transaction available then
-    // declare an underflow and create a new transaction specifically for the response side.
+    // pipeline is empty check for a request-side transaction that just finished and take it. If
+    // there is no transaction available then declare an underflow and create a new transaction
+    // specifically for the response side.
     else if (session_data->section_type[source_id] == SEC_STATUS)
     {
         delete session_data->transaction[SRC_SERVER];

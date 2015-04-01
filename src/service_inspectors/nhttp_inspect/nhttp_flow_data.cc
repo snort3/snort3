@@ -71,6 +71,8 @@ void NHttpFlowData::half_reset(SourceId source_id)
     }
     data_length[source_id] = STAT_NOTPRESENT;
     body_octets[source_id] = STAT_NOTPRESENT;
+    infractions[source_id].reset();
+    events[source_id].reset();
 }
 
 void NHttpFlowData::show(FILE* out_file) const
@@ -90,8 +92,7 @@ void NHttpFlowData::show(FILE* out_file) const
     fprintf(out_file, "Section buffer length: %d/%d\n", section_buffer_length[0],
         section_buffer_length[1]);
     fprintf(out_file, "Pipelining: front %d back %d overflow %d underflow %d\n", pipeline_front,
-        pipeline_back,
-        pipeline_overflow, pipeline_underflow);
+        pipeline_back, pipeline_overflow, pipeline_underflow);
 }
 
 bool NHttpFlowData::add_to_pipeline(NHttpTransaction* latest)

@@ -42,8 +42,8 @@ public:
         return (needed <= capacity-used) ?
                ((uint8_t*)buffer)+used : nullptr;
     }
-    void commit(uint32_t taken) { used += taken + (8-(taken%8))%8; }  // round up to multiple of 8
-                                                                      // for alignment
+    // round up to multiple of 8 for alignment
+    void commit(uint32_t taken) { used += taken + (8-(taken%8))%8; }
 
 private:
     const uint32_t capacity;

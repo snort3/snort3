@@ -34,10 +34,8 @@ void UriNormalizer::normalize(const Field& input, Field& result, bool do_path,
     assert (input.length >= 0);
 
     // Almost all HTTP requests are honest and rarely need expensive normalization processing. We
-    // do a quick scan for
-    // red flags and only perform normalization if something comes up. Otherwise we set the
-    // normalized field to point
-    // at the raw value.
+    // do a quick scan for red flags and only perform normalization if something comes up.
+    // Otherwise we set the normalized field to point at the raw value.
     if ( ( do_path && path_check(input.start, input.length, infractions))      ||
         (!do_path && no_path_check(input.start, input.length, infractions)))
     {
@@ -195,9 +193,8 @@ int32_t UriNormalizer::norm_path_clean(const uint8_t* in_buf, int32_t in_length,
 {
     int32_t length = 0;
     // It simplifies the code that handles /./ and /../ to pretend there is an extra '/' after the
-    // buffer.
-    // Avoids making a special case of URIs that end in . or ..
-    // That is why the loop steps off the end of the input buffer by saying <= instead of <.
+    // buffer. Avoids making a special case of URIs that end in . or .. That is why the loop steps
+    // off the end of the input buffer by saying <= instead of <.
     for (int32_t k = 0; k <= in_length; k++)
     {
         // Pass through all non-slash characters and also the leading slash
@@ -218,19 +215,16 @@ int32_t UriNormalizer::norm_path_clean(const uint8_t* in_buf, int32_t in_length,
             length -= 1;
         }
         // This slash is the end of a /../ pattern, normalization depends on whether there is a
-        // previous directory that
-        // we can remove
+        // previous directory that we can remove
         else if ((length >= 3) && (out_buf[length-1] == '.') && (out_buf[length-2] == '.') &&
             (out_buf[length-3] == '/'))
         {
             infractions += INF_URISLASHDOTDOT;
             // Traversing above the root of the absolute path. A path of the form
-            // /../../../foo/bar/whatever cannot be
-            // further normalized. Instead of taking away a directory we leave the .. and write out
-            // the new slash.
-            // This code can write out the pretend slash after the end of the buffer. That is
-            // intentional so that the
-            // normal form of "/../../../.." is "/../../../../"
+            // /../../../foo/bar/whatever cannot be further normalized. Instead of taking away a
+            // directory we leave the .. and write out the new slash. This code can write out the
+            // pretend slash after the end of the buffer. That is intentional so that the normal
+            // form of "/../../../.." is "/../../../../"
             if ( (length == 3) ||
                 ((length >= 6) && (out_buf[length-4] == '.') && (out_buf[length-5] == '.') &&
                 (out_buf[length-6] == '/')))

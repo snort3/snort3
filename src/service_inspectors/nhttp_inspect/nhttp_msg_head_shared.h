@@ -50,8 +50,7 @@ protected:
         NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner) { }
 
     // Header normalization strategies. There should be one defined for every different way we can
-    // process
-    // a header field value.
+    // process a header field value.
     static const HeaderNormalizer NORMALIZER_NIL;
     static const HeaderNormalizer NORMALIZER_BASIC;
     static const HeaderNormalizer NORMALIZER_CAT;
@@ -74,8 +73,9 @@ protected:
     void print_headers(FILE* output);
 
     // All of these are indexed by the relative position of the header field in the message
-    static const int MAXHEADERS = 200;  // I'm an arbitrary number. Need to revisit.
+    static const int MAXHEADERS = 200;  // I'm an arbitrary number. FIXIT-P
     int32_t num_headers = NHttpEnums::STAT_NOTCOMPUTE;
+    // FIXIT-P these big static header arrays should relocate to the scratch pad
     Field header_line[MAXHEADERS];
     Field header_name[MAXHEADERS];
     NHttpEnums::HeaderId header_name_id[MAXHEADERS];

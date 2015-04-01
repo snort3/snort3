@@ -30,12 +30,10 @@
 //-------------------------------------------------------------------------
 
 // Three normalization functions per HeaderNormalizer seems likely to be enough. Nothing subtle
-// will break if you choose
-// to expand it to four or more. Just a whole bunch of signatures and initializers to update.
-// When defining a HeaderNormalizer don't leave holes in the normalizer list. E.g. if you have two
-// normalizers they must
-// be first and second. If you do first and third instead it won't explode but the third one won't
-// be used either.
+// will break if you choose to expand it to four or more. Just a whole bunch of signatures and
+// initializers to update. When defining a HeaderNormalizer don't leave holes in the normalizer
+// list. E.g. if you have two normalizers they must be first and second. If you do first and third
+// instead it won't explode but the third one won't be used either.
 
 class HeaderNormalizer
 {
@@ -50,10 +48,9 @@ public:
         int32_t (* f3)(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const void*),
         const void* f3_arg)
         : format(_format), concatenate_repeats(_concatenate_repeats), normalizer { f1, f2, f3 },
-    norm_arg { f1_arg, f2_arg, f3_arg },
-    num_normalizers((f1 != nullptr) + (f1 != nullptr)*(f2 != nullptr) + (f1 != nullptr)*(f2 !=
-        nullptr)*(f3 != nullptr))
-    { };
+        norm_arg { f1_arg, f2_arg, f3_arg },
+        num_normalizers((f1 != nullptr) + (f1 != nullptr)*(f2 != nullptr) + (f1 != nullptr)*(f2 !=
+        nullptr)*(f3 != nullptr)) { }
     int32_t normalize(const NHttpEnums::HeaderId head_id, const int count, ScratchPad& scratch_pad,
         NHttpInfractions& infractions, const NHttpEnums::HeaderId header_name_id[], const Field
         header_value[],

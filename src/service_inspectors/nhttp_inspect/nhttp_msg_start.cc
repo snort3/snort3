@@ -85,8 +85,7 @@ void NHttpMsgStart::gen_events() { }
 ProcessResult NHttpMsgStart::worth_detection()
 {
     // We combine the start line with the headers for sending to detection if they are already
-    // available and we will
-    // not exceed maximum size.
+    // available and we will not exceed maximum size.
     if ((session_data->header_octets_visible[source_id] > 0) &&
         (session_data->type_expected[source_id] == SEC_HEADER) &&
         (msg_text.length + session_data->header_octets_visible[source_id]) <= MAXOCTETS)

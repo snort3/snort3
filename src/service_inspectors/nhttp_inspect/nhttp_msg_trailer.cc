@@ -54,14 +54,13 @@ void NHttpMsgTrailer::update_flow()
     if (tcp_close)
     {
         session_data->type_expected[source_id] = SEC_CLOSED;
-        session_data->half_reset(source_id);
     }
     else
     {
-        session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST :
-            SEC_STATUS;
-        session_data->half_reset(source_id);
+        session_data->type_expected[source_id] =
+            (source_id == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
     }
+    session_data->half_reset(source_id);
     session_data->section_type[source_id] = SEC__NOTCOMPUTE;
 }
 

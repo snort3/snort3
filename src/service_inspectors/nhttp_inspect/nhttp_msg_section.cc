@@ -21,7 +21,6 @@
 #include <sys/types.h>
 #include <stdio.h>
 
-#include "main/snort.h"
 #include "detection/detection_util.h"
 
 #include "nhttp_enum.h"
@@ -34,8 +33,7 @@
 using namespace NHttpEnums;
 
 NHttpMsgSection::NHttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
-    NHttpFlowData* session_data_,
-    SourceId source_id_, bool buf_owner) :
+       NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner) :
     msg_text(buf_size, buffer),
     session_data(session_data_),
     source_id(source_id_),
@@ -43,6 +41,7 @@ NHttpMsgSection::NHttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     tcp_close(session_data->tcp_close[source_id]),
     scratch_pad(2*buf_size+500),
     infractions(session_data->infractions[source_id]),
+    events(session_data->events[source_id]),
     version_id(session_data->version_id[source_id]),
     method_id((source_id == SRC_CLIENT) ? session_data->method_id : METH__NOTPRESENT),
     status_code_num((source_id == SRC_SERVER) ? session_data->status_code_num : STAT_NOTPRESENT),
@@ -58,8 +57,7 @@ void NHttpMsgSection::print_message_title(FILE* output, const char* title) const
 void NHttpMsgSection::print_message_wrapup(FILE* output) const
 {
     fprintf(output, "Infractions: %" PRIx64 ", Events: %" PRIx64 ", TCP Close: %s\n",
-        infractions.get_raw(),
-        events_generated, tcp_close ? "True" : "False");
+        infractions.get_raw(), events.get_raw(), tcp_close ? "True" : "False");
     fprintf(output, "Interface to old clients. http_mask = %x.\n", http_mask);
     for (int i=0; i < HTTP_BUFFER_MAX; i++)
     {
@@ -73,12 +71,6 @@ void NHttpMsgSection::print_message_wrapup(FILE* output) const
     fprintf(output, "\n");
     session_data->show(output);
     fprintf(output, "\n");
-}
-
-void NHttpMsgSection::create_event(EventSid sid)
-{
-    SnortEventqAdd(NHTTP_GID, (uint32_t)sid);
-    events_generated |= (1 << (sid-1));
 }
 
 void NHttpMsgSection::legacy_request()

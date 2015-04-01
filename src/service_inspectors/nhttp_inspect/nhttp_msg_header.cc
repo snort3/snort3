@@ -42,7 +42,7 @@ void NHttpMsgHeader::gen_events()
 {
     NHttpMsgHeadShared::gen_events();
     if (header_count[HEAD_CONTENT_LENGTH] > 1)
-        create_event(EVENT_MULTIPLE_CONTLEN);
+        events.create_event(EVENT_MULTIPLE_CONTLEN);
 }
 
 void NHttpMsgHeader::print_section(FILE* output)
@@ -97,6 +97,8 @@ void NHttpMsgHeader::update_flow()
         // Chunked body
         session_data->type_expected[source_id] = SEC_CHUNK;
         session_data->body_octets[source_id] = 0;
+        session_data->infractions[source_id].reset();
+        session_data->events[source_id].reset();
     }
     else if ((get_header_value_norm(HEAD_CONTENT_LENGTH).length > 0) &&
         (*(int64_t*)header_value_norm[HEAD_CONTENT_LENGTH].start > 0))
@@ -106,6 +108,8 @@ void NHttpMsgHeader::update_flow()
         session_data->data_length[source_id] = *(int64_t*)get_header_value_norm(
             HEAD_CONTENT_LENGTH).start;
         session_data->body_octets[source_id] = 0;
+        session_data->infractions[source_id].reset();
+        session_data->events[source_id].reset();
     }
     else
     {
@@ -120,8 +124,7 @@ void NHttpMsgHeader::update_flow()
 ProcessResult NHttpMsgHeader::worth_detection()
 {
     // We can combine with body when sending to detection if the entire body is already available
-    // and the combined
-    // size does exceed paf_max.
+    // and the combined size does exceed paf_max.
     if ((session_data->type_expected[source_id] == SEC_BODY) &&
         (session_data->data_length[source_id] <= session_data->unused_octets_visible[source_id]) &&
         (session_data->data_length[source_id] <= DATABLOCKSIZE) &&

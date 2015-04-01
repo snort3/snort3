@@ -52,8 +52,7 @@ void NHttpMsgStatus::parse_start_line()
     // code.
 
     // Eventually we may need to cater to certain format errors, but for now exact match or treat
-    // as error.
-    // HTTP/X.Y<SP>###<SP><text>
+    // as error. HTTP/X.Y<SP>###<SP><text>
     if ((start_line.length < 13) || (start_line.start[8] != ' ') || (start_line.start[12] != ' '))
     {
         infractions += INF_BADSTATLINE;
@@ -137,6 +136,8 @@ void NHttpMsgStatus::update_flow()
         session_data->type_expected[source_id] = SEC_HEADER;
         session_data->version_id[source_id] = version_id;
         session_data->status_code_num = status_code_num;
+        session_data->infractions[source_id].reset();
+        session_data->events[source_id].reset();
     }
     session_data->section_type[source_id] = SEC__NOTCOMPUTE;
 }

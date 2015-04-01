@@ -97,7 +97,8 @@ static DNSData* get_dns_session_data(Packet* p)
     return fd ? &fd->session : NULL;
 }
 
-static uint16_t ParseDNSHeader(const unsigned char* data,
+static uint16_t ParseDNSHeader(
+    const unsigned char* data,
     uint16_t bytes_unused,
     DNSData* dnsSessionData)
 {
@@ -257,7 +258,8 @@ static uint16_t ParseDNSHeader(const unsigned char* data,
     return bytes_unused;
 }
 
-uint16_t ParseDNSName(const unsigned char* data,
+uint16_t ParseDNSName(
+    const unsigned char* data,
     uint16_t bytes_unused,
     DNSData* dnsSessionData)
 {
@@ -349,8 +351,8 @@ uint16_t ParseDNSName(const unsigned char* data,
     return bytes_unused;
 }
 
-static uint16_t ParseDNSQuestion(const unsigned char* data,
-    uint16_t /*data_size*/,
+static uint16_t ParseDNSQuestion(
+    const unsigned char* data,
     uint16_t bytes_unused,
     DNSData* dnsSessionData)
 {
@@ -437,7 +439,8 @@ static uint16_t ParseDNSQuestion(const unsigned char* data,
     return bytes_unused;
 }
 
-uint16_t ParseDNSAnswer(const unsigned char* data,
+uint16_t ParseDNSAnswer(
+    const unsigned char* data,
     uint16_t bytes_unused,
     DNSData* dnsSessionData)
 {
@@ -575,7 +578,8 @@ uint16_t ParseDNSAnswer(const unsigned char* data,
  * Vulnerability Research by Lurene Grenier, Judy Novak,
  * and Brian Caswell.
  */
-uint16_t CheckRRTypeTXTVuln(const unsigned char* data,
+uint16_t CheckRRTypeTXTVuln(
+    const unsigned char* data,
     uint16_t bytes_unused,
     DNSData* dnsSessionData)
 {
@@ -667,7 +671,8 @@ uint16_t CheckRRTypeTXTVuln(const unsigned char* data,
     return bytes_unused;
 }
 
-uint16_t SkipDNSRData(const unsigned char* data,
+uint16_t SkipDNSRData(
+    const unsigned char* data,
     uint16_t bytes_unused,
     DNSData* dnsSessionData)
 {
@@ -690,7 +695,8 @@ uint16_t SkipDNSRData(const unsigned char* data,
     return bytes_unused;
 }
 
-uint16_t ParseDNSRData(const unsigned char* data,
+uint16_t ParseDNSRData(
+    const unsigned char* data,
     uint16_t bytes_unused,
     DNSData* dnsSessionData)
 {
@@ -805,7 +811,7 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
             /* Skip over the 4 byte question records... */
             for (i=dnsSessionData->curr_rec; i< dnsSessionData->hdr.questions; i++)
             {
-                bytes_unused = ParseDNSQuestion(data, p->dsize, bytes_unused, dnsSessionData);
+                bytes_unused = ParseDNSQuestion(data, bytes_unused, dnsSessionData);
 
                 if (dnsSessionData->curr_rec_state == DNS_RESP_STATE_Q_COMPLETE)
                 {

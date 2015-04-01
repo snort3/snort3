@@ -36,11 +36,9 @@ NHttpTestInput::~NHttpTestInput()
     fclose(test_data_file);
 }
 
-// Read from the test data file and present to StreamSplitter.
-// In the process we may need to skip comments, execute simple commands, and handle escape
-// sequences.
-// The best way to understand this function is to read the comments at the top of the file of test
-// cases.
+// Read from the test data file and present to StreamSplitter. In the process we may need to skip
+// comments, execute simple commands, and handle escape sequences. The best way to understand this
+// function is to read the comments at the top of the file of test cases.
 void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, bool& tcp_close,
     bool& need_break)
 {
@@ -57,8 +55,7 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
     if (just_flushed)
     {
         // StreamSplitter just flushed and it has all been sent by reassemble. There may or may not
-        // be leftover data
-        // from the last paragraph that was not flushed.
+        // be leftover data from the last paragraph that was not flushed.
         just_flushed = false;
         data = msg_buf;
         length = end_offset - flush_octets;  // this is the leftover data
@@ -67,9 +64,8 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
         if (length > 0)
         {
             // Must present unflushed leftovers to StreamSplitter again. If we don't take this
-            // opportunity to left
-            // justify our data in the buffer we may "walk" to the right until we run out of buffer
-            // space.
+            // opportunity to left justify our data in the buffer we may "walk" to the right until
+            // we run out of buffer space.
             memmove(msg_buf, msg_buf+flush_octets, length);
             flush_octets = 0;
             return;
@@ -136,8 +132,7 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
             {
                 state = WAITING;
                 // FIXIT-L should not change direction with unflushed data remaining from previous
-                // paragraph. At the
-                // minimum need to test for this and assert.
+                // paragraph. At the minimum need to test for this and assert.
                 if ((command_length == strlen("request")) && !memcmp(command_value, "request",
                     strlen("request")))
                 {
@@ -298,9 +293,8 @@ void NHttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sou
     else
     {
         // We need to generate additional data to fill out the body or chunk section. We may come
-        // through here
-        // multiple times as we generate all the maximum size body sections needed for a single
-        // flush.
+        // through here multiple times as we generate all the maximum size body sections needed for
+        // a single flush.
         tcp_close = false;
         unsigned paf_max = DATABLOCKSIZE;
         if (session_data->section_type[source_id] == SEC_CHUNK) {

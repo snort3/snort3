@@ -31,8 +31,7 @@
 using namespace NHttpEnums;
 
 // This derivation removes embedded CRLFs (wrapping), omits leading and trailing linear white
-// space, and replaces
-// internal strings of <SP> and <LF> with a single <SP>
+// space, and replaces internal strings of <SP> and <LF> with a single <SP>
 int32_t HeaderNormalizer::derive_header_content(const uint8_t* value, int32_t length,
     uint8_t* buffer)
 {
@@ -80,12 +79,9 @@ int32_t HeaderNormalizer::normalize(const HeaderId head_id, const int count,
     }
 
     // Search Header IDs from all the headers in this message. concatenate_repeats means the header
-    // can properly be
-    // present more than once. The standard normalization is to concatenate all the repeated field
-    // values into a
-    // comma-separated list. Otherwise only the first value will be normalized and the rest will be
-    // ignored.
-
+    // can properly be present more than once. The standard normalization is to concatenate all the
+    // repeated field values into a comma-separated list. Otherwise only the first value will be
+    // normalized and the rest will be ignored.
     int num_matches = 0;
     int32_t buffer_length = 0;
     int curr_match = -1;   // FIXIT-P initialization that serves no functional purpose to prevent
@@ -95,8 +91,7 @@ int32_t HeaderNormalizer::normalize(const HeaderId head_id, const int count,
         if (header_name_id[k] == head_id)
         {
             if (++num_matches == 1)
-                curr_match = k;                        // remembering location of the first
-                                                       // matching header
+                curr_match = k;   // remembering location of the first matching header
             buffer_length += header_value[k].length;
             if (!concatenate_repeats || (num_matches >= count))
                 break;
@@ -107,22 +102,17 @@ int32_t HeaderNormalizer::normalize(const HeaderId head_id, const int count,
     buffer_length += num_matches - 1;    // allow space for concatenation commas
 
     // We are allocating twice as much memory as we need to store the normalized field value. The
-    // raw field value will
-    // be copied into one half of the buffer. Concatenation and white space normalization happen
-    // during this step. Next
-    // a series of normalization functions will transform the value into final form. Each
-    // normalization copies the value
-    // from one half of the buffer to the other. Based on whether the number of normalization
-    // functions is odd or even,
-    // the initial placement in the buffer is chosen so that the final normalization leaves the
-    // field value at the front
-    // of the buffer. The buffer space actually used is locked down in the scratch_pad. The
-    // remainder of the first half
-    // and all of the second half are returned to the scratch_pad for future use.
+    // raw field value will be copied into one half of the buffer. Concatenation and white space
+    // normalization happen during this step. Next a series of normalization functions will
+    // transform the value into final form. Each normalization copies the value from one half of
+    // the buffer to the other. Based on whether the number of normalization functions is odd or
+    // even, the initial placement in the buffer is chosen so that the final normalization leaves
+    // the field value at the front of the buffer. The buffer space actually used is locked down in
+    // the scratch_pad. The remainder of the first half and all of the second half are returned to
+    // the scratch_pad for future use.
 
     // Round up to multiple of eight so that both halves are 64-bit aligned. 200 is a "way too big"
-    // fudge factor to allow
-    // for modest expansion of field size during normalization.
+    // fudge factor to allow for modest expansion of field size during normalization.
     buffer_length += (8-buffer_length%8)%8 + 200;
     uint8_t* const scratch = scratch_pad.request(2*buffer_length);
     if (scratch == nullptr)

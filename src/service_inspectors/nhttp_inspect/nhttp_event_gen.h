@@ -15,38 +15,42 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// nhttp_infractions.h author Tom Peters <thopeter@cisco.com>
+// nhttp_event_gen.h author Tom Peters <thopeter@cisco.com>
 
-#ifndef NHTTP_INFRACTIONS_H
-#define NHTTP_INFRACTIONS_H
+#ifndef NHTTP_EVENT_GEN_H
+#define NHTTP_EVENT_GEN_H
 
 #include <assert.h>
 
+#include "events/event_queue.h"
+
+#include "nhttp_enum.h"
+
 //-------------------------------------------------------------------------
-// Infractions class
+// Event generator class
 //-------------------------------------------------------------------------
 
-class NHttpInfractions
+class NHttpEventGen
 {
 public:
-    NHttpInfractions() { }
-    NHttpInfractions(int inf) : infractions(((uint64_t)1) << inf) { assert((inf >= 0) && (inf < 64)); }
-    void reset() { infractions = 0; }
-    bool none_found() const { return infractions == 0; }
-    NHttpInfractions& operator+=(const NHttpInfractions& rhs)
-        { infractions |= rhs.infractions; return *this; }
-    friend NHttpInfractions operator+(NHttpInfractions lhs, const NHttpInfractions& rhs)
-        { lhs += rhs; return lhs; }
-    friend bool operator&&(const NHttpInfractions& lhs, const NHttpInfractions& rhs)
-        { return (lhs.infractions & rhs.infractions) != 0; }
+    void reset() { events_generated = 0; }
+    void create_event(NHttpEnums::EventSid sid)
+    {
+        assert((sid > 0) && (sid <= 64));
+        if ((events_generated & (((uint64_t)1) << (sid-1))) == 0)
+        {
+            SnortEventqAdd(NHttpEnums::NHTTP_GID, (uint32_t)sid);
+            events_generated |= (((uint64_t)1) << (sid-1));
+        }
+    }
 
     // The following method is for convenience of debug and test output only! The 64-bit
     // implementation will not be big enough forever and this interface cannot be all over the
     // code.
-    uint64_t get_raw() const { return infractions; }
+    uint64_t get_raw() const { return events_generated; }
 
 private:
-    uint64_t infractions = 0;
+    uint64_t events_generated = 0;
 };
 
 #endif

@@ -28,9 +28,8 @@
 using namespace NHttpEnums;
 
 NHttpMsgChunk::NHttpMsgChunk(const uint8_t* buffer, const uint16_t buf_size,
-    NHttpFlowData* session_data_,
-    SourceId source_id_, bool buf_owner) : NHttpMsgBody(buffer, buf_size, session_data_,
-    source_id_, buf_owner)
+    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner) :
+    NHttpMsgBody(buffer, buf_size, session_data_, source_id_, buf_owner)
 {
     transaction->set_body(this);
 }
@@ -58,6 +57,8 @@ void NHttpMsgChunk::update_flow()
         // Zero-length chunk is not visible here. StreamSplitter::reassemble() updates
         // type_expected to SEC_TRAILER.
         session_data->body_octets[source_id] = body_octets;
+        session_data->infractions[source_id] = infractions;
+        session_data->events[source_id] = events;
     }
 }
 

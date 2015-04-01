@@ -25,6 +25,7 @@
 
 #include "nhttp_splitter.h"
 #include "nhttp_infractions.h"
+#include "nhttp_event_gen.h"
 
 class NHttpTransaction;
 
@@ -61,7 +62,6 @@ private:
     int32_t section_buffer_length[2] = { 0, 0 };
     bool section_buffer_owned[2] = { true, true };
     bool zero_chunk[2] = { false, false };
-    NHttpInfractions chunk_infractions[2];
 
     // StreamSplitter => Inspector (facts about the most recent message section)
     // 0 element refers to client request, 1 element refers to server response
@@ -70,6 +70,7 @@ private:
     uint32_t num_excess[2] = { 0, 0 };
     bool tcp_close[2] = { false, false };
     NHttpInfractions infractions[2];
+    NHttpEventGen events[2];
     uint32_t unused_octets_visible[2] = { 0, 0 };
     uint32_t header_octets_visible[2] = { 0, 0 };
 
@@ -91,6 +92,8 @@ private:
     // Transaction management including pipelining
     NHttpTransaction* transaction[2] = { nullptr, nullptr };
     static const int MAX_PIPELINE = 100;  // requests seen - responses seen <= MAX_PIPELINE
+    // FIXIT-P consider dynamically allocating pipeline when first transaction is added. This would
+    // save a lot of space when there is no pipeline.
     NHttpTransaction* pipeline[MAX_PIPELINE];
     int pipeline_front = 0;
     int pipeline_back = 0;

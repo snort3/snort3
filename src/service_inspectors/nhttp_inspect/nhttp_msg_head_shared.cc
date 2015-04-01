@@ -67,22 +67,18 @@ void NHttpMsgHeadShared::parse_header_block()
 }
 
 // Return the number of octets before the CRLF that ends a header. CRLF does not count when
-// immediately followed by
-// <SP> or <LF>. These whitespace characters at the beginning of the next line indicate that the
-// previous header has
-// wrapped and is continuing on the next line.
+// immediately followed by <SP> or <LF>. These whitespace characters at the beginning of the next
+// line indicate that the previous header has wrapped and is continuing on the next line.
 //
 // The final header in the block will not be terminated by CRLF (splitter design) but will
-// terminate at the end of the
-// buffer. length is returned.
+// terminate at the end of the buffer. length is returned.
 //
 // Bare LF without CR is accepted as the terminator unless preceded by backslash character. FIXIT-L
-// this does not
-// consider whether \LF is contained within a quoted string and perhaps this should be revisited.
-// The current
-// approach errs in the direction of not incorrectly dividing a single header into two headers.
+// this does not consider whether \LF is contained within a quoted string and perhaps this should
+// be revisited. The current approach errs in the direction of not incorrectly dividing a single
+// header into two headers.
 //
-// FIXIT-M any abuse of backslashes in headers should be a preprocessor alarm.
+// FIXIT-M any abuse of backslashes in headers should be a preprocessor alert.
 
 uint32_t NHttpMsgHeadShared::find_header_end(const uint8_t* buffer, int32_t length, int* const
     num_seps)
@@ -154,7 +150,7 @@ const Field& NHttpMsgHeadShared::get_header_value_norm(NHttpEnums::HeaderId head
 void NHttpMsgHeadShared::gen_events()
 {
     if (infractions && INF_TOOMANYHEADERS)
-        create_event(EVENT_MAX_HEADERS);
+        events.create_event(EVENT_MAX_HEADERS);
 }
 
 void NHttpMsgHeadShared::print_headers(FILE* output)
