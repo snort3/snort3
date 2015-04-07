@@ -39,7 +39,7 @@ public:
     const StreamBuffer* reassemble(Flow* flow, unsigned total, unsigned offset, const
         uint8_t* data, unsigned len, uint32_t flags, unsigned& copied) override;
     bool is_paf() override { return true; }
-    unsigned max() override
+    unsigned max(Flow*) override
     {
         return NHttpTestManager::use_test_input() ? NHttpEnums::DATABLOCKSIZE : paf_max;
     }

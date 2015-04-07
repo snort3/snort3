@@ -49,6 +49,9 @@ public:
         LIMITED // previously did limit flush
     };
 
+    // scan(), finish(), reassemble() are called in this order:
+    // (scan (reassemble)*)* finish (reassemble)*
+
     virtual Status scan(
         Flow*,
         const uint8_t* data,   // in order segment data as it arrives
@@ -57,6 +60,12 @@ public:
         uint32_t* fp           // flush point (offset) relative to data
         ) = 0;
 
+    // finish indicates end of scanning
+    // return false to discard any unflushed data
+    virtual bool finish() { return true; }
+
+    // the last call to reassemble() will be made with len == 0 if
+    // finish() returned true as an opportunity for a final flush
     virtual const StreamBuffer* reassemble(
         Flow*,
         unsigned total,        // total amount to flush (sum of iterations)
@@ -68,7 +77,7 @@ public:
         );
 
     virtual bool is_paf() { return false; }
-    virtual unsigned max();
+    virtual unsigned max(Flow*);
 
     // FIXIT-L this is temporary for legacy paf_max required only
     // for HI; it is not appropriate for multiple stream_tcp with

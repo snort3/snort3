@@ -253,8 +253,8 @@ public:  // FIXIT-M privatize if possible
 
     // everything from here down is zeroed
     FlowData* appDataList;
-    Inspector* clouseau;
-    Inspector* gadget;
+    Inspector* clouseau;  // service identifier
+    Inspector* gadget;    // service handler
     PlugData* data;
     const char* service;
 

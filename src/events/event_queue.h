@@ -56,6 +56,7 @@ void SnortEventqResetCounts(void);
 SO_PUBLIC int SnortEventqLog(struct Packet*);
 SO_PUBLIC int SnortEventqAdd(struct OptTreeNode*);
 SO_PUBLIC int SnortEventqAdd(uint32_t gid, uint32_t sid, RuleType = RULE_TYPE__NONE);
+SO_PUBLIC bool event_is_enabled(uint32_t gid, uint32_t sid);
 
 void SnortEventqPush(void);
 void SnortEventqPop(void);

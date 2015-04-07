@@ -68,9 +68,12 @@ public:
     static void dispatch_meta(FrameworkPolicy*, int type, const uint8_t* data);
 
     static void execute(Packet*);
+    static void clear(Packet*);
+    static void empty_trash();
+
+private:
     static void bumble(Packet*);
     static void full_inspection(FrameworkPolicy*, Packet*);
-    static void empty_trash();
 };
 
 #endif

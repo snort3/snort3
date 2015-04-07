@@ -33,7 +33,7 @@ unsigned StreamSplitter::max_pdu = 16384;
 void StreamSplitter::set_max(unsigned m)
 { max_pdu = m; }
 
-unsigned StreamSplitter::max()
+unsigned StreamSplitter::max(Flow*)
 { return max_pdu; }
 
 const StreamBuffer* StreamSplitter::reassemble(

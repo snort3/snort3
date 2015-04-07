@@ -716,3 +716,9 @@ void InspectorManager::execute(Packet* p)
     ::execute(p, fp->probe.vec, fp->probe.num);
 }
 
+void InspectorManager::clear(Packet* p)
+{
+    if ( p->flow && p->flow->gadget )
+        p->flow->gadget->clear(p);
+}
+

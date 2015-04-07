@@ -72,8 +72,11 @@ static inline void s5_paf_jump(PAF_State* ps, uint32_t n)
     ps->seq = ps->pos;
 }
 
-// called on each in order segment
-uint32_t s5_paf_check(
+// called on each in order segment:
+// -- returns -1 for no flush
+// -- returns  0 to flush all data prior to this buffer
+// -- returns >0 to flush to offset from start of buffer
+int32_t s5_paf_check(
     StreamSplitter* paf_config, PAF_State*, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t total,
     uint32_t seq, uint32_t* flags);

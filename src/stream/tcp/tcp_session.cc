@@ -2585,76 +2585,62 @@ static void TcpSessionClear(Flow* lwssn, TcpSession* tcpssn, int freeApplication
     tcpssn->lws_init = tcpssn->tcp_init = false;
 }
 
-static void FlushQueuedSegs(Flow* lwssn, TcpSession* tcpssn)
+static void final_flush(
+    Flow* lwssn, TcpSession* tcpssn, StreamTracker& trk, Packet* p,
+    PegCount& peg, uint32_t flag)
 {
-    /* Flush ack'd data on both sides as necessary */
+    if ( !p )
     {
-        int flushed;
+        DAQ_PktHdr_t* const tmp_pcap_hdr = const_cast<DAQ_PktHdr_t*>(cleanup_pkt->pkth);
+        peg++;
 
-        /* Flush the client */
-        if (tcpssn->client.seglist && !(lwssn->ssn_state.ignore_direction & SSN_DIR_FROM_SERVER) )
-        {
-            DAQ_PktHdr_t* const tmp_pcap_hdr = const_cast<DAQ_PktHdr_t*>(cleanup_pkt->pkth);
-            tcpStats.s5tcp1++;
+        /* Do each field individually because of size differences on 64bit OS */
+        tmp_pcap_hdr->ts.tv_sec = trk.seglist->tv.tv_sec;
+        tmp_pcap_hdr->ts.tv_usec = trk.seglist->tv.tv_usec;
+        tmp_pcap_hdr->caplen = trk.seglist->caplen;
+        tmp_pcap_hdr->pktlen = trk.seglist->pktlen;
 
-            /* Do each field individually because of size differences on 64bit OS */
-            tmp_pcap_hdr->ts.tv_sec = tcpssn->client.seglist->tv.tv_sec;
-            tmp_pcap_hdr->ts.tv_usec = tcpssn->client.seglist->tv.tv_usec;
-            tmp_pcap_hdr->caplen = tcpssn->client.seglist->caplen;
-            tmp_pcap_hdr->pktlen = tcpssn->client.seglist->pktlen;
+        DecodeRebuiltPacket(cleanup_pkt, tmp_pcap_hdr, trk.seglist->pkt, lwssn);
+        p = cleanup_pkt;
+    }
 
-            DecodeRebuiltPacket(cleanup_pkt, tmp_pcap_hdr, tcpssn->client.seglist->pkt, lwssn);
+    if ( p->ptrs.tcph )
+    {
+        trk.flags |= TF_FORCE_FLUSH;
 
-            if ( !cleanup_pkt->ptrs.tcph )
-            {
-                flushed = 0;
-            }
-            else
-            {
-                tcpssn->client.flags |= TF_FORCE_FLUSH;
-                flushed = flush_stream(
-                    tcpssn, &tcpssn->client, cleanup_pkt, PKT_FROM_SERVER);
-                tcpssn->client.flags &= ~TF_FORCE_FLUSH;
-            }
-            if (flushed)
-                purge_flushed_ackd(tcpssn, &tcpssn->client);
-        }
+        if ( flush_stream(tcpssn, &trk, p, flag) )
+            purge_flushed_ackd(tcpssn, &trk);
 
-        /* Flush the server */
-        if (tcpssn->server.seglist && !(lwssn->ssn_state.ignore_direction & SSN_DIR_FROM_CLIENT) )
-        {
-            DAQ_PktHdr_t* const tmp_pcap_hdr = const_cast<DAQ_PktHdr_t*>(cleanup_pkt->pkth);
-            tcpStats.s5tcp2++;
-
-            /* Do each field individually because of size differences on 64bit OS */
-            tmp_pcap_hdr->ts.tv_sec = tcpssn->server.seglist->tv.tv_sec;
-            tmp_pcap_hdr->ts.tv_usec = tcpssn->server.seglist->tv.tv_usec;
-            tmp_pcap_hdr->caplen = tcpssn->server.seglist->caplen;
-            tmp_pcap_hdr->pktlen = tcpssn->server.seglist->pktlen;
-
-            DecodeRebuiltPacket(cleanup_pkt, tmp_pcap_hdr, tcpssn->server.seglist->pkt, lwssn);
-
-            if ( !cleanup_pkt->ptrs.tcph )
-            {
-                flushed = 0;
-            }
-            else
-            {
-                tcpssn->server.flags |= TF_FORCE_FLUSH;
-                flushed = flush_stream(
-                    tcpssn, &tcpssn->server, cleanup_pkt, PKT_FROM_CLIENT);
-                tcpssn->server.flags &= ~TF_FORCE_FLUSH;
-            }
-            if (flushed)
-                purge_flushed_ackd(tcpssn, &tcpssn->server);
-        }
+        trk.flags &= ~TF_FORCE_FLUSH;
     }
 }
 
-static void TcpSessionCleanup(Flow* lwssn, int freeApplicationData)
+// flush data on both sides as necessary
+static void FlushQueuedSegs(Flow* lwssn, TcpSession* tcpssn, bool clear, Packet* p = nullptr)
+{
+    // flush the client (data from server)
+    bool pending = clear and (!tcpssn->client.splitter or tcpssn->client.splitter->finish());
+
+    if ( (pending and (p or tcpssn->client.seglist) and
+        !(lwssn->ssn_state.ignore_direction & SSN_DIR_FROM_SERVER)) )
+    {
+        final_flush(lwssn, tcpssn, tcpssn->client, p, tcpStats.s5tcp1, PKT_FROM_SERVER);
+    }
+
+    // flush the server (data from client)
+    pending = clear and (!tcpssn->server.splitter or tcpssn->server.splitter->finish());
+
+    if ( (pending and (p or tcpssn->server.seglist) and
+        !(lwssn->ssn_state.ignore_direction & SSN_DIR_FROM_CLIENT)) )
+    {
+        final_flush(lwssn, tcpssn, tcpssn->server, p, tcpStats.s5tcp2, PKT_FROM_CLIENT);
+    }
+}
+
+static void TcpSessionCleanup(Flow* lwssn, int freeApplicationData, Packet* p = nullptr)
 {
     TcpSession* tcpssn = (TcpSession*)lwssn->session;
-    FlushQueuedSegs(lwssn, tcpssn);
+    FlushQueuedSegs(lwssn, tcpssn, true, p);
     TcpSessionClear(lwssn, tcpssn, freeApplicationData);
 }
 
@@ -4028,28 +4014,6 @@ static void ProcessTcpStream(StreamTracker* rcv, TcpSession* tcpssn,
             if ((rcv->config->overlap_limit) &&
                 (rcv->overlap_count > rcv->config->overlap_limit))
             {
-                STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Reached the overlap limit.  Flush the data "
-                    "and kill the session if configured\n"); );
-                if (p->packet_flags & PKT_FROM_CLIENT)
-                {
-                    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "Flushing data on packet from the client\n"); );
-                    flush_stream(tcpssn, rcv, p, PKT_FROM_CLIENT);
-
-                    flush_stream(tcpssn, &tcpssn->server, p, PKT_FROM_SERVER);
-                }
-                else
-                {
-                    STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "Flushing data on packet from the server\n"); );
-                    flush_stream(tcpssn, rcv, p, PKT_FROM_SERVER);
-
-                    flush_stream(tcpssn, &tcpssn->client, p, PKT_FROM_CLIENT);
-                }
-                purge_all(&tcpssn->client);
-                purge_all(&tcpssn->server);
-
                 /* Alert on overlap limit and reset counter */
                 EventExcessiveOverlap();
                 rcv->overlap_count = 0;
@@ -5811,67 +5775,10 @@ dupfin:
         (listener->s_mgr.state == TCP_STATE_TIME_WAIT && talker->s_mgr.state ==
         TCP_STATE_TIME_WAIT))
     {
-//dropssn:
-        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-            "Session terminating, flushing session buffers\n"); );
-
-        if (p->packet_flags & PKT_FROM_SERVER)
-        {
-            STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "flushing FROM_SERVER\n"); );
-            if (talker->seg_bytes_logical)
-            {
-                uint32_t flushed = flush_stream(tcpssn, talker, p, PKT_FROM_CLIENT);
-
-                if (flushed)
-                {
-                    // FIXIT-L - these calls redundant?
-                    purge_alerts(talker, talker->r_win_base, tcpssn->flow);
-                    purge_to_seq(tcpssn, talker, talker->seglist->seq + flushed);
-                }
-            }
-
-            if (listener->seg_bytes_logical)
-            {
-                uint32_t flushed = flush_stream(tcpssn, listener, p, PKT_FROM_SERVER);
-
-                if (flushed)
-                {
-                    purge_alerts(listener, listener->r_win_base, tcpssn->flow);
-                    purge_to_seq(tcpssn, listener, listener->seglist->seq + flushed);
-                }
-            }
-        }
-        else
-        {
-            STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "flushing FROM_CLIENT\n"); );
-            if (listener->seg_bytes_logical)
-            {
-                uint32_t flushed = flush_stream(tcpssn, listener, p, PKT_FROM_CLIENT);
-
-                if (flushed)
-                {
-                    purge_alerts(listener, listener->r_win_base, tcpssn->flow);
-                    purge_to_seq(tcpssn, listener, listener->seglist->seq + flushed);
-                }
-            }
-
-            if (talker->seg_bytes_logical)
-            {
-                uint32_t flushed = flush_stream(tcpssn, talker, p, PKT_FROM_SERVER);
-
-                if (flushed)
-                {
-                    purge_alerts(talker, talker->r_win_base, tcpssn->flow);
-                    purge_to_seq(tcpssn, talker, talker->seglist->seq + flushed);
-                }
-            }
-        }
+        // The last ACK is a part of the session.
+        // Delete the session after processing is complete.
         LogTcpEvents(eventcode);
-        /* The last ACK is a part of the session.  Delete the session after processing is complete.
-          */
-        TcpSessionCleanup(lwssn, 0);
+        TcpSessionCleanup(lwssn, 0, p);
         lwssn->session_state |= STREAM_STATE_CLOSED;
         MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode | ACTION_LWSSN_CLOSED;
@@ -5933,10 +5840,10 @@ static inline uint32_t GetForwardDir(const Packet* p)
 // see flush_pdu_ackd() for details
 // the key difference is that we operate on forward moving data
 // because we don't wait until it is acknowledged
-static inline uint32_t flush_pdu_ips(
+static inline int32_t flush_pdu_ips(
     TcpSession* ssn, StreamTracker* trk, uint32_t* flags)
 {
-    uint32_t total = 0, avail;
+    int32_t total = 0, avail;
     StreamSegment* seg;
     PROFILE_VARS;
 
@@ -5947,7 +5854,7 @@ static inline uint32_t flush_pdu_ips(
     // * must stop if gap (checked in s5_paf_check)
     while ( seg && *flags && (total < avail) )
     {
-        uint32_t flush_pt;
+        int32_t flush_pt;
         uint32_t size = seg->size;
         uint32_t end = seg->seq + seg->size;
         uint32_t pos = s5_paf_position(&trk->paf_state);
@@ -5964,7 +5871,7 @@ static inline uint32_t flush_pdu_ips(
             trk->splitter, &trk->paf_state, ssn->flow,
             seg->payload, size, total, seg->seq, flags);
 
-        if ( flush_pt > 0 )
+        if ( flush_pt >= 0 )
         {
             MODULE_PROFILE_END(s5TcpPAFPerfStats);
 
@@ -5980,23 +5887,16 @@ static inline uint32_t flush_pdu_ips(
     }
 
     MODULE_PROFILE_END(s5TcpPAFPerfStats);
-    return 0;
+    return -1;
 }
 
-static inline void fallback(
-    StreamTracker* a, StreamTracker* b)
+static inline void fallback(StreamTracker* a)
 {
     bool c2s = a->splitter->to_server();
 
     delete a->splitter;
     a->splitter = new AtomSplitter(c2s, a->config->paf_max);
     a->paf_state.paf = StreamSplitter::SEARCH;
-
-#if 1  /* FIXIT-M abort both sides ? */
-    delete b->splitter;
-    b->splitter = new AtomSplitter(!c2s, b->config->paf_max);
-    b->paf_state.paf = StreamSplitter::SEARCH;
-#endif
 }
 
 static inline int CheckFlushPolicyOnData(
@@ -6027,11 +5927,13 @@ static inline int CheckFlushPolicyOnData(
     case STREAM_FLPOLICY_ON_DATA:
     {
         uint32_t flags = GetForwardDir(p);
-        uint32_t flush_amt = flush_pdu_ips(tcpssn, listener, &flags);
+        int32_t flush_amt = flush_pdu_ips(tcpssn, listener, &flags);
         uint32_t this_flush;
 
-        while ( flush_amt > 0 )
+        while ( flush_amt >= 0 )
         {
+            if ( !flush_amt )
+                flush_amt = listener->seglist_next->seq - listener->seglist_base_seq;
 #if 0
             // FIXIT-P can't do this with new HI - copy is inevitable
             // if this payload is exactly one pdu, don't
@@ -6064,11 +5966,7 @@ static inline int CheckFlushPolicyOnData(
         }
         if ( !flags && listener->splitter->is_paf() )
         {
-            // FIXIT-L PAF auto disable with multiple splitters?
-            //if ( AutoDisable(listener, talker) )
-            //    return 0;
-
-            fallback(listener, talker);
+            fallback(listener);
             return CheckFlushPolicyOnData(tcpssn, talker, listener, p);
         }
     }
@@ -6092,7 +5990,7 @@ static inline int CheckFlushPolicyOnData(
 // - if we partially scan a segment we must save state so we
 //   know where we left off and can resume scanning the remainder
 
-static inline uint32_t flush_pdu_ackd(
+static inline int32_t flush_pdu_ackd(
     TcpSession* ssn, StreamTracker* trk, uint32_t* flags)
 {
     uint32_t total = 0;
@@ -6107,7 +6005,7 @@ static inline uint32_t flush_pdu_ackd(
     // * must stop if gap (checked in s5_paf_check)
     while ( seg && *flags && SEQ_LT(seg->seq, trk->r_win_base) )
     {
-        uint32_t flush_pt;
+        int32_t flush_pt;
         uint32_t size = seg->size;
         uint32_t end = seg->seq + seg->size;
         uint32_t pos = s5_paf_position(&trk->paf_state);
@@ -6127,7 +6025,7 @@ static inline uint32_t flush_pdu_ackd(
             trk->splitter, &trk->paf_state, ssn->flow,
             seg->payload, size, total, seg->seq, flags);
 
-        if ( flush_pt > 0 )
+        if ( flush_pt >= 0 )
         {
             MODULE_PROFILE_END(s5TcpPAFPerfStats);
 
@@ -6139,7 +6037,7 @@ static inline uint32_t flush_pdu_ackd(
             if ( !trk->splitter->is_paf() )
             {
                 // get_q_footprint() w/o side effects
-                uint32_t avail = (trk->r_win_base - trk->seglist_base_seq);
+                int32_t avail = (trk->r_win_base - trk->seglist_base_seq);
                 if ( avail > flush_pt )
                 {
                     s5_paf_jump(&trk->paf_state, avail - flush_pt);
@@ -6152,7 +6050,7 @@ static inline uint32_t flush_pdu_ackd(
     }
 
     MODULE_PROFILE_END(s5TcpPAFPerfStats);
-    return 0;
+    return -1;
 }
 
 int CheckFlushPolicyOnAck(
@@ -6180,10 +6078,13 @@ int CheckFlushPolicyOnAck(
     case STREAM_FLPOLICY_ON_ACK:
     {
         uint32_t flags = GetReverseDir(p);
-        uint32_t flush_amt = flush_pdu_ackd(tcpssn, talker, &flags);
+        int32_t flush_amt = flush_pdu_ackd(tcpssn, talker, &flags);
 
-        while ( flush_amt > 0 )
+        while ( flush_amt >= 0 )
         {
+            if ( !flush_amt )
+                flush_amt = talker->seglist_next->seq - talker->seglist_base_seq;
+
             talker->seglist_next = talker->seglist;
             talker->seglist_base_seq = talker->seglist->seq;
 
@@ -6206,11 +6107,7 @@ int CheckFlushPolicyOnAck(
         }
         if ( !flags && talker->splitter->is_paf() )
         {
-            // FIXIT-L PAF auto disable with multiple splitters?
-            //if ( AutoDisable(talker, listener) )
-            //    return 0;
-
-            fallback(talker, listener);
+            fallback(talker);
             return CheckFlushPolicyOnAck(tcpssn, talker, listener, p);
         }
     }
@@ -6948,7 +6845,7 @@ bool TcpSession::check_alerted(Packet* p, uint32_t gid, uint32_t sid)
 void TcpSession::flush()
 {
     if ( (SegsToFlush(&server, 1) > 0) || (SegsToFlush(&client, 1) > 0) )
-        FlushQueuedSegs(flow, this);
+        FlushQueuedSegs(flow, this, false);
 }
 
 void TcpSession::start_proxy()

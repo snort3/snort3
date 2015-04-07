@@ -174,6 +174,12 @@ int SnortEventqAdd(uint32_t gid, uint32_t sid, RuleType type)
     return 0;
 }
 
+bool event_is_enabled(uint32_t gid, uint32_t sid)
+{
+    OptTreeNode* otn = GetOTN(gid, sid);
+    return ( otn != nullptr );
+}
+
 void SnortEventqNew(EventQueueConfig* eq_config)
 {
     int i;

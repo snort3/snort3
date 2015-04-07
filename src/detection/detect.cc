@@ -112,6 +112,8 @@ void snort_inspect(Packet* p)
     }
 #endif
 
+    bool inspected = false;
+
     // If the packet has errors, we won't analyze it.
     if ( p->ptrs.decode_flags & DECODE_ERR_FLAGS )
     {
@@ -146,6 +148,7 @@ void snort_inspect(Packet* p)
         p->alt_dsize = 0;
 
         InspectorManager::execute(p);
+        inspected = true;
 
         if ( do_detect )
             Detect(p);
@@ -167,6 +170,9 @@ void snort_inspect(Packet* p)
     */
     if ( p->has_ip() )
         CheckTagging(p);
+
+    if ( inspected )
+        InspectorManager::clear(p);
 
 #ifdef PPM_MGR
     if ( PPM_PKTS_ENABLED() )

@@ -977,7 +977,7 @@ public:
         uint32_t, uint32_t*) override
     { return SEARCH; }
 
-    unsigned max() override { return MIN_CALL_BODY_SZ; }
+    unsigned max(Flow*) override { return MIN_CALL_BODY_SZ; }
 };
 
 //-------------------------------------------------------------------------

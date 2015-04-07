@@ -75,7 +75,7 @@ static THREAD_LOCAL uint32_t s5_idx;  // offset from start of queued bytes
 
 //--------------------------------------------------------------------
 
-static uint32_t s5_paf_flush(
+static int32_t s5_paf_flush(
     StreamSplitter*, PAF_State* ps, FlushType ft, uint32_t* flags)
 {
     uint32_t at = 0;
@@ -88,11 +88,11 @@ static uint32_t s5_paf_flush(
     switch ( ft )
     {
     case FT_NOP:
-        return 0;
+        return -1;
 
     case FT_SFP:
         *flags = 0;
-        return 0;
+        return -1;
 
     case FT_PAF:
         at = ps->fpt;
@@ -127,7 +127,7 @@ static uint32_t s5_paf_flush(
     }
 
     if ( !at || !s5_len )
-        return 0;
+        return -1;
 
     // safety - prevent seq + at < seq
     if ( at > 0x7FFFFFFF )
@@ -145,24 +145,12 @@ static uint32_t s5_paf_flush(
 }
 
 //--------------------------------------------------------------------
-// FIXIT-L PAF support multiple scanners
 
 static bool s5_paf_callback(
     StreamSplitter* ss, PAF_State* ps, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t flags)
 {
     ps->paf = ss->scan(ssn, data, len, flags, &ps->fpt);
-
-#if 0
-    if ( ps->paf == StreamSplitter::SEARCH )
-        ps->fpt = 0;
-
-    if ( ssn->gadget )
-        printf(
-            "%s scan[%d] '%-8.8s' -> %d, %d\n",
-            ss->to_server() ? "c2s" : "s2c", len, (char*)data,
-            ps->paf, ps->fpt);
-#endif
 
     if ( ps->paf != StreamSplitter::SEARCH )
     {
@@ -206,7 +194,7 @@ static inline bool s5_paf_eval(
             ps->paf = StreamSplitter::SEARCH;
             return true;
         }
-        if ( s5_len >= ss->max() + fuzz )
+        if ( s5_len >= ss->max(ssn) + fuzz )
         {
             *ft = FT_MAX;
             return false;
@@ -215,7 +203,7 @@ static inline bool s5_paf_eval(
 
     case StreamSplitter::LIMIT:
         // if we are within PAF_LIMIT_FUZZ character of paf_max ...
-        if ( s5_len + PAF_LIMIT_FUZZ >= ss->max() + fuzz)
+        if ( s5_len + PAF_LIMIT_FUZZ >= ss->max(ssn) + fuzz)
         {
             *ft = FT_LIMIT;
             ps->paf = StreamSplitter::LIMITED;
@@ -274,7 +262,7 @@ void s5_paf_clear(PAF_State* ps)
 
 //--------------------------------------------------------------------
 
-uint32_t s5_paf_check(
+int32_t s5_paf_check(
     StreamSplitter* ss, PAF_State* ps, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t total,
     uint32_t seq, uint32_t* flags)
@@ -299,11 +287,11 @@ uint32_t s5_paf_check(
             return s5_paf_flush(ss, ps, FT_MAX, flags);
         }
         *flags = 0;
-        return 0;
+        return -1;
     }
     else if ( SEQ_LEQ(seq + len, ps->seq) )
     {
-        return 0;
+        return -1;
     }
     else if ( SEQ_LT(seq, ps->seq) )
     {
@@ -331,7 +319,7 @@ uint32_t s5_paf_check(
     // unflushed data.
     uint16_t fuzz = 0; // FIXIT-L PAF add a little zippedy-do-dah
 
-    if ( total >= MAX_PAF_MAX && total > ss->max() + fuzz )
+    if ( total >= MAX_PAF_MAX && total > ss->max(ssn) + fuzz )
     {
         s5_len = MAX_PAF_MAX + fuzz;
         len = len + s5_len - total;
@@ -345,14 +333,18 @@ uint32_t s5_paf_check(
     {
         FlushType ft = FT_NOP;
         uint32_t idx = s5_idx;
-        uint32_t shift, fp;
+        uint32_t shift;
+        int32_t fp;
 
         bool cont = s5_paf_eval(ss, ps, ssn, *flags, data, len, &ft);
 
         if ( ft != FT_NOP )
         {
             fp = s5_paf_flush(ss, ps, ft, flags);
-            s5_paf_jump(ps, fp);
+            if ( fp > 0 )
+                s5_paf_jump(ps, fp);
+            else
+                s5_paf_jump(ps, 0);
             return fp;
         }
         if ( !cont )
@@ -369,12 +361,15 @@ uint32_t s5_paf_check(
     }
     while ( 1 );
 
-    if ( (ps->paf != StreamSplitter::FLUSH) && (s5_len > ss->max()+fuzz) )
+    if ( (ps->paf != StreamSplitter::FLUSH) && (s5_len > ss->max(ssn)+fuzz) )
     {
-        uint32_t fp = s5_paf_flush(ss, ps, FT_MAX, flags);
-        s5_paf_jump(ps, fp);
+        int32_t fp = s5_paf_flush(ss, ps, FT_MAX, flags);
+        if ( fp > 0 )
+            s5_paf_jump(ps, fp);
+        else
+            s5_paf_jump(ps, 0);
         return fp;
     }
-    return 0;
+    return -1;
 }
 
