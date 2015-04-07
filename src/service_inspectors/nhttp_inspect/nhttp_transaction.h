@@ -28,6 +28,8 @@ class NHttpMsgStatus;
 class NHttpMsgHeader;
 class NHttpMsgTrailer;
 class NHttpMsgSection;
+class NHttpMsgBody;
+class NHttpMsgHeadShared;
 
 class NHttpTransaction
 {
@@ -44,19 +46,22 @@ public:
 
     NHttpMsgHeader* get_header(NHttpEnums::SourceId source_id) const { return header[source_id]; }
     void set_header(NHttpMsgHeader* header_, NHttpEnums::SourceId source_id)
-    {
-        header[source_id] =
-            header_;
-    }
+        { header[source_id] = header_; }
 
     NHttpMsgTrailer* get_trailer(NHttpEnums::SourceId source_id) const
-    {
-        return trailer[source_id];
-    }
-    void set_trailer(NHttpMsgTrailer* trailer_, NHttpEnums::SourceId
-        source_id) { trailer[source_id] = trailer_; }
+        { return trailer[source_id]; }
+    void set_trailer(NHttpMsgTrailer* trailer_, NHttpEnums::SourceId source_id)
+        { trailer[source_id] = trailer_; }
 
-    void set_body(NHttpMsgSection* latest_body_) { latest_body = latest_body_; }
+    NHttpMsgBody* get_body() const { return latest_body; }
+    void set_body(NHttpMsgBody* latest_body_) { latest_body = latest_body_; }
+
+    // Convenience method
+    NHttpMsgHeadShared* get_latest_header(NHttpEnums::SourceId source_id)
+    {
+        return (trailer[source_id] != nullptr) ? (NHttpMsgHeadShared*)trailer[source_id] :
+            (NHttpMsgHeadShared*)header[source_id];
+    }
 
 private:
     NHttpTransaction() = default;
@@ -65,7 +70,7 @@ private:
     NHttpMsgStatus* status = nullptr;
     NHttpMsgHeader* header[2] = { nullptr, nullptr };
     NHttpMsgTrailer* trailer[2] = { nullptr, nullptr };
-    NHttpMsgSection* latest_body = nullptr;
+    NHttpMsgBody* latest_body = nullptr;
 };
 
 #endif

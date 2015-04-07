@@ -31,6 +31,7 @@
 #include "nhttp_msg_chunk.h"
 #include "nhttp_msg_trailer.h"
 #include "nhttp_test_manager.h"
+#include "nhttp_field.h"
 #include "nhttp_inspect.h"
 
 using namespace NHttpEnums;
@@ -46,6 +47,8 @@ NHttpInspect::NHttpInspect(bool test_input, bool test_output)
         NHttpTestManager::activate_test_output();
     }
 }
+
+THREAD_LOCAL NHttpMsgSection* NHttpInspect::latest_section = nullptr;
 
 bool NHttpInspect::get_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b)
 {
@@ -67,15 +70,16 @@ bool NHttpInspect::get_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer
 
 bool NHttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
 {
-    const HttpBuffer* h = GetHttpBuffer((HTTP_BUFFER)id);
-
-    if (!h)
-    {
+    if (latest_section == nullptr)
         return false;
-    }
 
-    b.data = h->buf;
-    b.len = h->length;
+    const Field& legacy = latest_section->get_legacy(id);
+
+    if (legacy.length <= 0)
+        return false;
+
+    b.data = legacy.start;
+    b.len = legacy.length;
     return true;
 }
 
@@ -86,27 +90,25 @@ ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, F
         NHttpFlowData::nhttp_flow_id);
     assert(session_data != nullptr);
 
-    NHttpMsgSection* msg_section = nullptr;
-
     switch (session_data->section_type[source_id])
     {
     case SEC_REQUEST:
-        msg_section = new NHttpMsgRequest(data, dsize, session_data, source_id, buf_owner);
+        latest_section = new NHttpMsgRequest(data, dsize, session_data, source_id, buf_owner);
         break;
     case SEC_STATUS:
-        msg_section = new NHttpMsgStatus(data, dsize, session_data, source_id, buf_owner);
+        latest_section = new NHttpMsgStatus(data, dsize, session_data, source_id, buf_owner);
         break;
     case SEC_HEADER:
-        msg_section = new NHttpMsgHeader(data, dsize, session_data, source_id, buf_owner);
+        latest_section = new NHttpMsgHeader(data, dsize, session_data, source_id, buf_owner);
         break;
     case SEC_BODY:
-        msg_section = new NHttpMsgBody(data, dsize, session_data, source_id, buf_owner);
+        latest_section = new NHttpMsgBody(data, dsize, session_data, source_id, buf_owner);
         break;
     case SEC_CHUNK:
-        msg_section = new NHttpMsgChunk(data, dsize, session_data, source_id, buf_owner);
+        latest_section = new NHttpMsgChunk(data, dsize, session_data, source_id, buf_owner);
         break;
     case SEC_TRAILER:
-        msg_section = new NHttpMsgTrailer(data, dsize, session_data, source_id, buf_owner);
+        latest_section = new NHttpMsgTrailer(data, dsize, session_data, source_id, buf_owner);
         break;
     default:
         assert(0);
@@ -117,19 +119,13 @@ ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, F
         return RES_IGNORE;
     }
 
-    msg_section->analyze();
-    msg_section->update_flow();
-    msg_section->gen_events();
-
-    ProcessResult return_value = msg_section->worth_detection();
-    if (return_value == RES_INSPECT)
-    {
-        msg_section->legacy_clients();
-    }
+    latest_section->analyze();
+    latest_section->update_flow();
+    latest_section->gen_events();
 
     if (NHttpTestManager::use_test_output())
     {
-        msg_section->print_section(NHttpTestManager::get_output_file());
+        latest_section->print_section(NHttpTestManager::get_output_file());
         fflush(NHttpTestManager::get_output_file());
         if (NHttpTestManager::use_test_input())
         {
@@ -143,6 +139,6 @@ ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, F
         fflush(stdout);
     }
 
-    return return_value;
+    return latest_section->worth_detection();
 }
 

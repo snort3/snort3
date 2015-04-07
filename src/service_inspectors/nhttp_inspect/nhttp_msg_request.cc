@@ -51,7 +51,7 @@ void NHttpMsgRequest::parse_start_line()
     if (start_line.start[start_line.length-9] != ' ')
     {
         // space before "HTTP" missing or in wrong place
-        infractions += INF_BADREQLINE;
+        infractions += INF_BAD_REQ_LINE;
         return;
     }
 
@@ -64,7 +64,7 @@ void NHttpMsgRequest::parse_start_line()
     if (space >= start_line.length-9)
     {
         // leading space or no space
-        infractions += INF_BADREQLINE;
+        infractions += INF_BAD_REQ_LINE;
         return;
     }
 
@@ -112,27 +112,27 @@ void NHttpMsgRequest::gen_events()
         events.create_event(EVENT_UNKNOWN_METHOD);
 
     // URI character encoding events
-    if (uri && (uri->get_uri_infractions() && INF_URIPERCENTASCII))
+    if (uri && (uri->get_uri_infractions() && INF_URI_PERCENT_ASCII))
         events.create_event(EVENT_ASCII);
-    if (uri && (uri->get_uri_infractions() && INF_URIPERCENTUCODE))
+    if (uri && (uri->get_uri_infractions() && INF_URI_PERCENT_UCODE))
         events.create_event(EVENT_U_ENCODE);
-    if (uri && (uri->get_uri_infractions() && INF_URI8BITCHAR))
+    if (uri && (uri->get_uri_infractions() && INF_URI_8BIT_CHAR))
         events.create_event(EVENT_BARE_BYTE);
-    if (uri && (uri->get_uri_infractions() && INF_URIPERCENTUTF8))
+    if (uri && (uri->get_uri_infractions() && INF_URI_PERCENT_UTF8))
         events.create_event(EVENT_UTF_8);
-    if (uri && (uri->get_uri_infractions() && INF_URIBADCHAR))
+    if (uri && (uri->get_uri_infractions() && INF_URI_BAD_CHAR))
         events.create_event(EVENT_NON_RFC_CHAR);
 
     // URI path events
-    if (uri && (uri->get_path_infractions() && INF_URIMULTISLASH))
+    if (uri && (uri->get_path_infractions() && INF_URI_MULTISLASH))
         events.create_event(EVENT_MULTI_SLASH);
-    if (uri && (uri->get_path_infractions() && INF_URIBACKSLASH))
+    if (uri && (uri->get_path_infractions() && INF_URI_BACKSLASH))
         events.create_event(EVENT_IIS_BACKSLASH);
-    if (uri && (uri->get_path_infractions() && INF_URISLASHDOT))
+    if (uri && (uri->get_path_infractions() && INF_URI_SLASH_DOT))
         events.create_event(EVENT_SELF_DIR_TRAV);
-    if (uri && (uri->get_path_infractions() && INF_URISLASHDOTDOT))
+    if (uri && (uri->get_path_infractions() && INF_URI_SLASH_DOT_DOT))
         events.create_event(EVENT_DIR_TRAV);
-    if (uri && (uri->get_path_infractions() && INF_URIROOTTRAV))
+    if (uri && (uri->get_path_infractions() && INF_URI_ROOT_TRAV))
         events.create_event(EVENT_WEBROOT_DIR);
 }
 
@@ -176,15 +176,13 @@ void NHttpMsgRequest::print_section(FILE* output)
 
 void NHttpMsgRequest::update_flow()
 {
-    const uint64_t disaster_mask = INF_BADREQLINE;
-
     // The following logic to determine body type is by no means the last word on this topic.
     if (tcp_close)
     {
         session_data->type_expected[source_id] = SEC_CLOSED;
         session_data->half_reset(source_id);
     }
-    else if (infractions && disaster_mask)
+    else if (infractions && INF_BAD_REQ_LINE)
     {
         session_data->type_expected[source_id] = SEC_ABORT;
         session_data->half_reset(source_id);
@@ -198,12 +196,5 @@ void NHttpMsgRequest::update_flow()
         session_data->events[source_id].reset();
     }
     session_data->section_type[source_id] = SEC__NOTCOMPUTE;
-}
-
-// Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgRequest::legacy_clients()
-{
-    ClearHttpBuffers();
-    legacy_request();
 }
 

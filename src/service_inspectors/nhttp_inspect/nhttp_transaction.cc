@@ -25,6 +25,7 @@
 #include "nhttp_msg_status.h"
 #include "nhttp_msg_header.h"
 #include "nhttp_msg_trailer.h"
+#include "nhttp_msg_body.h"
 
 using namespace NHttpEnums;
 
@@ -76,8 +77,7 @@ NHttpTransaction* NHttpTransaction::attach_my_transaction(NHttpFlowData* session
             }
             else if (!session_data->add_to_pipeline(session_data->transaction[SRC_CLIENT]))
             {
-                // The pipeline is full and just overflowed. FIXIT-M we should alert and set
-                // infraction.
+                // The pipeline is full and just overflowed. FIXIT-M alert and set infraction.
                 delete session_data->transaction[SRC_CLIENT];
             }
         }

@@ -54,8 +54,6 @@ void NHttpMsgHeader::print_section(FILE* output)
 
 void NHttpMsgHeader::update_flow()
 {
-    const uint64_t disaster_mask = 0;
-
     // The following logic to determine body type is by no means the last word on this topic.
     // FIXIT-H need to distinguish methods such as POST that should have a body from those that
     // should not.
@@ -64,11 +62,6 @@ void NHttpMsgHeader::update_flow()
     if (tcp_close)
     {
         session_data->type_expected[source_id] = SEC_CLOSED;
-        session_data->half_reset(source_id);
-    }
-    else if (infractions && disaster_mask)
-    {
-        session_data->type_expected[source_id] = SEC_ABORT;
         session_data->half_reset(source_id);
     }
     else if ((source_id == SRC_SERVER) && ((status_code_num <= 199) || (status_code_num == 204) ||
@@ -137,14 +130,5 @@ ProcessResult NHttpMsgHeader::worth_detection()
     // Do not send empty headers by themselves to detection
     return ((msg_text.length > 0) || (session_data->section_buffer_length[source_id] > 0))
            ? RES_INSPECT : RES_IGNORE;
-}
-
-// Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgHeader::legacy_clients()
-{
-    ClearHttpBuffers();
-    legacy_request();
-    legacy_status();
-    legacy_header(false);
 }
 

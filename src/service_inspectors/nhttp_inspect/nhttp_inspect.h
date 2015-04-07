@@ -29,6 +29,7 @@
 #include "nhttp_stream_splitter.h"
 
 class NHttpApi;
+class NHttpMsgSection;
 
 class NHttpInspect : public Inspector
 {
@@ -47,6 +48,8 @@ public:
         return new
                NHttpStreamSplitter(is_client_to_server, this);
     }
+
+    static THREAD_LOCAL NHttpMsgSection* latest_section; // FIXIT-L temporarily public
 
 private:
     friend NHttpApi;

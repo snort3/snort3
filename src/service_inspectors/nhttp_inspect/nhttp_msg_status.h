@@ -36,7 +36,6 @@ public:
     void print_section(FILE* output) override;
     void gen_events() override;
     void update_flow() override;
-    void legacy_clients() override;
 
     const Field& get_status_code() { return status_code; }
     const Field& get_reason_phrase() { return reason_phrase; }

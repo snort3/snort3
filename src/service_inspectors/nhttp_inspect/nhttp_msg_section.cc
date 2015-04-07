@@ -29,6 +29,7 @@
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_status.h"
 #include "nhttp_msg_head_shared.h"
+#include "nhttp_msg_body.h"
 
 using namespace NHttpEnums;
 
@@ -54,15 +55,13 @@ void NHttpMsgSection::print_message_title(FILE* output, const char* title) const
     msg_text.print(output, "Input");
 }
 
-void NHttpMsgSection::print_message_wrapup(FILE* output) const
+void NHttpMsgSection::print_message_wrapup(FILE* output)
 {
     fprintf(output, "Infractions: %" PRIx64 ", Events: %" PRIx64 ", TCP Close: %s\n",
         infractions.get_raw(), events.get_raw(), tcp_close ? "True" : "False");
-    fprintf(output, "Interface to old clients. http_mask = %x.\n", http_mask);
-    for (int i=0; i < HTTP_BUFFER_MAX; i++)
+    for (unsigned k=1; k < HTTP_BUFFER_MAX; k++)
     {
-        if ((1 << i) & http_mask)
-            Field(http_buffer[i].length, http_buffer[i].buf).print(output, http_buffer_name[i]);
+        get_legacy(k).print(output, http_buffer_name[k]);
     }
     if (g_file_data.len > 0)
     {
@@ -73,84 +72,78 @@ void NHttpMsgSection::print_message_wrapup(FILE* output) const
     fprintf(output, "\n");
 }
 
-void NHttpMsgSection::legacy_request()
+const Field& NHttpMsgSection::get_legacy(unsigned buffer_id)
 {
-    NHttpMsgRequest* const request = transaction->get_request();
-    if (request == nullptr)
-        return;
-    if (request->get_method().length > 0)
+    // When current section is trailers, that is what will be used for header and cookie buffers.
+    switch (buffer_id)
     {
-        SetHttpBuffer(HTTP_BUFFER_METHOD, request->get_method().start,
-            (unsigned)request->get_method().length);
-    }
-    if (request->get_uri().length > 0)
-    {
-        SetHttpBuffer(HTTP_BUFFER_RAW_URI, request->get_uri().start,
-            (unsigned)request->get_uri().length);
-    }
-    if (request->get_uri_norm_legacy().length > 0)
-    {
-        SetHttpBuffer(HTTP_BUFFER_URI, request->get_uri_norm_legacy().start,
-            (unsigned)request->get_uri_norm_legacy().length);
-    }
-}
-
-void NHttpMsgSection::legacy_status()
-{
-    NHttpMsgStatus* const status = transaction->get_status();
-    if (status == nullptr)
-        return;
-    if (status->get_status_code().length > 0)
-    {
-        SetHttpBuffer(HTTP_BUFFER_STAT_CODE, status->get_status_code().start,
-            (unsigned)status->get_status_code().length);
-    }
-    if (status->get_reason_phrase().length > 0)
-    {
-        SetHttpBuffer(HTTP_BUFFER_STAT_MSG, status->get_reason_phrase().start,
-            (unsigned)status->get_reason_phrase().length);
-    }
-}
-
-void NHttpMsgSection::legacy_header(bool use_trailer)
-{
-    NHttpMsgHeadShared* const header = use_trailer ?
-        (NHttpMsgHeadShared*)transaction->get_trailer(source_id) :
-        (NHttpMsgHeadShared*)transaction->get_header(source_id);
-    if (header == nullptr)
-        return;
-
-    if (header->get_headers().length > 0)
-    {
-        SetHttpBuffer(HTTP_BUFFER_RAW_HEADER, header->get_headers().start,
-            (unsigned)header->get_headers().length);
-        SetHttpBuffer(HTTP_BUFFER_HEADER, header->get_headers().start,
-            (unsigned)header->get_headers().length);
-    }
-
-    legacy_cookie(header, source_id);
-}
-
-// FIXIT-M there can be multiple cookie headers in one message.
-void NHttpMsgSection::legacy_cookie(NHttpMsgHeadShared* header, SourceId source_id)
-{
-    HeaderId cookie_head = (source_id == SRC_CLIENT) ? HEAD_COOKIE : HEAD_SET_COOKIE;
-
-    for (int k=0; k < header->get_num_headers(); k++)
-    {
-        if (header->get_header_name_id(k) == cookie_head)
+    case HTTP_BUFFER_CLIENT_BODY:
+      {
+        NHttpMsgBody* body = transaction->get_body();
+        return (body != nullptr) ? body->get_data() : Field::FIELD_NULL;
+      }
+    case HTTP_BUFFER_COOKIE:
+      {
+        NHttpMsgHeadShared* header = transaction->get_latest_header(source_id);
+        if (header == nullptr)
+            return Field::FIELD_NULL;
+        HeaderId cookie_head = (source_id == SRC_CLIENT) ? HEAD_COOKIE : HEAD_SET_COOKIE;
+        return header->get_header_value_norm(cookie_head);
+      }
+    case HTTP_BUFFER_HEADER:
+      {
+        NHttpMsgHeadShared* header = transaction->get_latest_header(source_id);
+        return (header != nullptr) ? header->get_headers() : Field::FIELD_NULL;
+      }
+    case HTTP_BUFFER_METHOD:
+      {
+        NHttpMsgRequest* request = transaction->get_request();
+        return (request != nullptr) ? request->get_method() : Field::FIELD_NULL;
+      }
+    case HTTP_BUFFER_RAW_COOKIE:
+      {
+        NHttpMsgHeadShared* header = transaction->get_latest_header(source_id);
+        if (header == nullptr)
+            return Field::FIELD_NULL;
+        HeaderId cookie_head = (source_id == SRC_CLIENT) ? HEAD_COOKIE : HEAD_SET_COOKIE;
+        // FIXIT-M there can be multiple cookie header in one message.
+        for (int k=0; k < header->get_num_headers(); k++)
         {
-            if (header->get_header_value(k).length > 0)
-                SetHttpBuffer(HTTP_BUFFER_RAW_COOKIE, header->get_header_value(k).start,
-                    (unsigned)header->get_header_value(k).length);
-            break;
+            if (header->get_header_name_id(k) == cookie_head)
+            {
+                return header->get_header_value(k);
+            }
         }
-    }
-
-    if (header->get_header_value_norm(cookie_head).length > 0)
-    {
-        SetHttpBuffer(HTTP_BUFFER_COOKIE, header->get_header_value_norm(cookie_head).start,
-            (unsigned)header->get_header_value_norm(cookie_head).length);
+        return Field::FIELD_NULL;
+      }
+    case HTTP_BUFFER_RAW_HEADER:
+      {
+        NHttpMsgHeadShared* header = transaction->get_latest_header(source_id);
+        return (header != nullptr) ? header->get_headers() : Field::FIELD_NULL;
+      }
+    case HTTP_BUFFER_RAW_URI:
+      {
+        NHttpMsgRequest* request = transaction->get_request();
+        return (request != nullptr) ? request->get_uri() : Field::FIELD_NULL;
+      }
+    case HTTP_BUFFER_STAT_CODE:
+      {
+        NHttpMsgStatus* status = transaction->get_status();
+        return (status != nullptr) ? status->get_status_code() : Field::FIELD_NULL;
+      }
+    case HTTP_BUFFER_STAT_MSG:
+      {
+        NHttpMsgStatus* status = transaction->get_status();
+        return (status != nullptr) ? status->get_reason_phrase() : Field::FIELD_NULL;
+      }
+    case HTTP_BUFFER_URI:
+      {
+        NHttpMsgRequest* request = transaction->get_request();
+        return (request != nullptr) ? request->get_uri_norm_legacy() : Field::FIELD_NULL;
+      }
+    default:
+        assert(0);
+        return Field::FIELD_NULL;
     }
 }
 

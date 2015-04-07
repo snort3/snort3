@@ -46,14 +46,14 @@ void NHttpMsgStart::derive_version_id()
     if (version.length != 8)
     {
         version_id = VERS__PROBLEMATIC;
-        infractions += INF_BADVERSION;
+        infractions += INF_BAD_VERSION;
         return;
     }
 
     if (memcmp(version.start, "HTTP/", 5) || (version.start[6] != '.'))
     {
         version_id = VERS__PROBLEMATIC;
-        infractions += INF_BADVERSION;
+        infractions += INF_BAD_VERSION;
     }
     else if ((version.start[5] == '1') && (version.start[7] == '1'))
     {
@@ -71,12 +71,12 @@ void NHttpMsgStart::derive_version_id()
         (version.start[7] >= '0') && (version.start[7] <= '9'))
     {
         version_id = VERS__OTHER;
-        infractions += INF_UNKNOWNVERSION;
+        infractions += INF_UNKNOWN_VERSION;
     }
     else
     {
         version_id = VERS__PROBLEMATIC;
-        infractions += INF_BADVERSION;
+        infractions += INF_BAD_VERSION;
     }
 }
 

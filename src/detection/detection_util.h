@@ -36,6 +36,8 @@
 #include "detect.h"
 #include "snort.h"
 #include "snort_debug.h"
+// FIXIT-L temporary
+#include "service_inspectors/nhttp_inspect/nhttp_inspect.h"
 
 #define DECODE_BLEN 65535
 
@@ -84,6 +86,8 @@ extern SO_PUBLIC THREAD_LOCAL DataPointer g_file_data;
 static inline void ClearHttpBuffers(void)
 {
     http_mask = 0;
+    // FIXIT-L temporary
+    NHttpInspect::latest_section = nullptr;
 }
 
 static inline uint32_t GetHttpBufferMask(void)

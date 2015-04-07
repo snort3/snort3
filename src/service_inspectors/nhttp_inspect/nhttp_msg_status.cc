@@ -55,7 +55,7 @@ void NHttpMsgStatus::parse_start_line()
     // as error. HTTP/X.Y<SP>###<SP><text>
     if ((start_line.length < 13) || (start_line.start[8] != ' ') || (start_line.start[12] != ' '))
     {
-        infractions += INF_BADSTATLINE;
+        infractions += INF_BAD_STAT_LINE;
         return;
     }
     version.start = start_line.start;
@@ -69,7 +69,7 @@ void NHttpMsgStatus::parse_start_line()
         if ((reason_phrase.start[k] <= 31) || (reason_phrase.start[k] >= 127))
         {
             // Illegal character in reason phrase
-            infractions += INF_BADPHRASE;
+            infractions += INF_BAD_PHRASE;
             break;
         }
     }
@@ -93,7 +93,7 @@ void NHttpMsgStatus::derive_status_code_num()
         '0') || (status_code.start[1] > '9') ||
         (status_code.start[2] < '0') || (status_code.start[2] > '9'))
     {
-        infractions += INF_BADSTATCODE;
+        infractions += INF_BAD_STAT_CODE;
         status_code_num = STAT_PROBLEMATIC;
         return;
     }
@@ -101,7 +101,7 @@ void NHttpMsgStatus::derive_status_code_num()
         (status_code.start[2] - '0');
     if ((status_code_num < 100) || (status_code_num > 599))
     {
-        infractions += INF_BADSTATCODE;
+        infractions += INF_BAD_STAT_CODE;
     }
 }
 
@@ -118,15 +118,13 @@ void NHttpMsgStatus::print_section(FILE* output)
 
 void NHttpMsgStatus::update_flow()
 {
-    const uint64_t disaster_mask = INF_BADSTATLINE;
-
     // The following logic to determine body type is by no means the last word on this topic.
     if (tcp_close)
     {
         session_data->type_expected[source_id] = SEC_CLOSED;
         session_data->half_reset(source_id);
     }
-    else if (infractions && disaster_mask)
+    else if (infractions && INF_BAD_STAT_LINE)
     {
         session_data->type_expected[source_id] = SEC_ABORT;
         session_data->half_reset(source_id);
@@ -140,13 +138,5 @@ void NHttpMsgStatus::update_flow()
         session_data->events[source_id].reset();
     }
     session_data->section_type[source_id] = SEC__NOTCOMPUTE;
-}
-
-// Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgStatus::legacy_clients()
-{
-    ClearHttpBuffers();
-    legacy_request();
-    legacy_status();
 }
 

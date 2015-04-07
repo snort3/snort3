@@ -47,6 +47,8 @@ void NHttpMsgBody::analyze()
 
     if (tcp_close && (body_octets < data_length))
         infractions += INF_TRUNCATED;
+    // FIXIT-L try to find a more logical location for this
+    set_file_data((uint8_t*)data.start, (unsigned)data.length);
 }
 
 void NHttpMsgBody::gen_events()
@@ -84,20 +86,6 @@ void NHttpMsgBody::update_flow()
             SEC_STATUS;
         session_data->section_type[source_id] = SEC__NOTCOMPUTE;
         session_data->half_reset(source_id);
-    }
-}
-
-// Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgBody::legacy_clients()
-{
-    ClearHttpBuffers();
-    legacy_request();
-    legacy_status();
-    legacy_header(false);
-    if (data.length > 0)
-    {
-        SetHttpBuffer(HTTP_BUFFER_CLIENT_BODY, data.start, (unsigned)data.length);
-        set_file_data((uint8_t*)data.start, (unsigned)data.length);
     }
 }
 

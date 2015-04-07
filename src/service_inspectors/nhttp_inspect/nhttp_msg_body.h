@@ -36,7 +36,7 @@ public:
     void print_section(FILE* output) override;
     void gen_events() override;
     void update_flow() override;
-    void legacy_clients() override;
+    Field& get_data() { return data; }
 
 protected:
     int64_t data_length; // FIXIT-M this has no meaning in chunk subclass. Potential source of errors.

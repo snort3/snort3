@@ -70,12 +70,3 @@ ProcessResult NHttpMsgTrailer::worth_detection()
     return (msg_text.length > 0) ? RES_INSPECT : RES_IGNORE;
 }
 
-// Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgTrailer::legacy_clients()
-{
-    ClearHttpBuffers();
-    legacy_request();
-    legacy_status();
-    legacy_header(true);
-}
-

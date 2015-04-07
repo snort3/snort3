@@ -20,6 +20,8 @@
 #ifndef NHTTP_MSG_SECTION_H
 #define NHTTP_MSG_SECTION_H
 
+#include "detection/detection_util.h"
+
 #include "nhttp_scratch_pad.h"
 #include "nhttp_field.h"
 #include "nhttp_flow_data.h"
@@ -46,8 +48,7 @@ public:
     // Manages the splitter and communication between message sections
     virtual void update_flow() = 0;
 
-    // Populates the raw and normalized buffer interface used by old Snort
-    virtual void legacy_clients() = 0;
+    const Field& get_legacy(unsigned buffer_id);
 
     // Should this section be sent directly to detection after inspection?
     virtual NHttpEnums::ProcessResult worth_detection() { return NHttpEnums::RES_INSPECT; }
@@ -63,11 +64,7 @@ protected:
 
     // Convenience methods
     void print_message_title(FILE* output, const char* title) const;
-    void print_message_wrapup(FILE* output) const;
-    void legacy_request();
-    void legacy_status();
-    void legacy_header(bool use_trailer);
-    void legacy_cookie(NHttpMsgHeadShared* header, NHttpEnums::SourceId source_id);
+    void print_message_wrapup(FILE* output);
 
     const Field msg_text;
 

@@ -40,7 +40,7 @@ ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length,
                 }
                 else
                 {
-                    infractions += INF_TOOMUCHLEADINGWS;
+                    infractions += INF_TOO_MUCH_LEADING_WS;
                     events.create_event(EVENT_LOSS_OF_SYNC);
                     return SCAN_ABORT;
                 }
@@ -102,7 +102,7 @@ ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length,
                 // Alert on \n not preceded by \r. Correct cases are \r\n\r\n and \r\n.
                 if (!((num_crlf == 4) || ((num_crlf == 2) && (first_lf == 0))))
                 {
-                    infractions += INF_LFWITHOUTCR;
+                    infractions += INF_LF_WITHOUT_CR;
                     events.create_event(EVENT_IIS_DELIMITER);
                 }
                 num_flush = k + 1 + peek_octets;

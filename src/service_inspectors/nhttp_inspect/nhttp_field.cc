@@ -40,8 +40,8 @@ void Field::print(FILE* output, const char* name, bool int_vals) const
         fprintf(output, "\n");
         return;
     }
-    const int32_t print_length = (length <= 1200) ? length : 1200;    // Limit the amount of data
-                                                                      // printed
+    // Limit the amount of data printed
+    const int32_t print_length = (length <= 1200) ? length : 1200;
     for (int k=0; k < print_length; k++)
     {
         if ((start[k] >= 0x20) && (start[k] <= 0x7E))

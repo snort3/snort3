@@ -30,7 +30,8 @@ class NHttpInfractions
 {
 public:
     NHttpInfractions() { }
-    NHttpInfractions(int inf) : infractions(((uint64_t)1) << inf) { assert((inf >= 0) && (inf < 64)); }
+    NHttpInfractions(int inf) : infractions(((uint64_t)1) << inf)
+      { assert((inf >= 0) && (inf < 64)); }
     void reset() { infractions = 0; }
     bool none_found() const { return infractions == 0; }
     NHttpInfractions& operator+=(const NHttpInfractions& rhs)
@@ -41,8 +42,8 @@ public:
         { return (lhs.infractions & rhs.infractions) != 0; }
 
     // The following method is for convenience of debug and test output only! The 64-bit
-    // implementation will not be big enough forever and this interface cannot be all over the
-    // code.
+    // implementation will not be big enough forever and this interface cannot be all over
+    // the code.
     uint64_t get_raw() const { return infractions; }
 
 private:

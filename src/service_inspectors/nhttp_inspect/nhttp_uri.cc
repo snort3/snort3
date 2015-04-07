@@ -94,7 +94,7 @@ void NHttpUri::parse_uri()
         }
         else
         {
-            format_infractions += INF_BADURI;
+            format_infractions += INF_BAD_URI;
             uri_type = URI__PROBLEMATIC;
             scheme.length = STAT_PROBLEMATIC;
             authority.length = STAT_PROBLEMATIC;
@@ -119,7 +119,7 @@ SchemeId NHttpUri::get_scheme_id()
     uint8_t* lower_scheme;
     if ((lower_scheme = scratch_pad.request(scheme.length)) == nullptr)
     {
-        scheme_infractions += INF_NOSCRATCH;
+        scheme_infractions += INF_NO_SCRATCH;
         scheme_id = SCH__INSUFMEMORY;
         return scheme_id;
     }
@@ -205,7 +205,7 @@ int32_t NHttpUri::get_port_value()
         port_value = port_value * 10 + (port.start[k] - '0');
         if ((port.start[k] < '0') || (port.start[k] > '9') || (port_value > 65535))
         {
-            port_infractions += INF_BADPORT;
+            port_infractions += INF_BAD_PORT;
             port_value = STAT_PROBLEMATIC;
             break;
         }

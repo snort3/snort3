@@ -163,7 +163,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
         case SCAN_NOTFOUND:
             if (splitter->get_octets_seen() == MAXOCTETS)
             {
-                session_data->infractions[source_id] += INF_ENDLESSHEADER;
+                session_data->infractions[source_id] += INF_ENDLESS_HEADER;
                 session_data->events[source_id].create_event(EVENT_LOSS_OF_SYNC);
                 // FIXIT-H need to process this data (except chunk header) not just discard it.
                 session_data->type_expected[source_id] = SEC_ABORT;

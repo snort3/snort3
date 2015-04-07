@@ -43,12 +43,12 @@ int32_t norm_decimal_integer(const uint8_t* in_buf, int32_t in_length, uint8_t* 
             non_leading_zeros++;
         if (non_leading_zeros > 18)
         {
-            infractions += INF_BADHEADERDATA;
+            infractions += INF_BAD_HEADER_DATA;
             return STAT_PROBLEMATIC;
         }
         if ((value < 0) || (value > 9))
         {
-            infractions += INF_BADHEADERDATA;
+            infractions += INF_BAD_HEADER_DATA;
             return STAT_PROBLEMATIC;
         }
         total = total*10 + value;

@@ -36,7 +36,7 @@ public:
     void reset() { events_generated = 0; }
     void create_event(NHttpEnums::EventSid sid)
     {
-        assert((sid > 0) && (sid <= 64));
+        assert(((int)sid > 0) && ((int)sid <= 64));
         if ((events_generated & (((uint64_t)1) << (sid-1))) == 0)
         {
             SnortEventqAdd(NHttpEnums::NHTTP_GID, (uint32_t)sid);
