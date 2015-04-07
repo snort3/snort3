@@ -1,5 +1,9 @@
 Pending - build 145
 
+-- abort PAF in current direction only
+-- added StreamSplitter::finish()
+-- allow relative flush point of zero
+-- added Inspector::clear()
 -- new http refactoring and cleanup
 -- new http changes - events from splitter
 -- fix dns assertion; remove unused variables
