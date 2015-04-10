@@ -132,6 +132,7 @@ typedef list<Inspector*> PHList;
 
 static PHGlobalList s_handlers;
 static PHList s_trash;
+static THREAD_LOCAL bool s_clear = false;
 
 struct FrameworkConfig
 {
@@ -693,7 +694,10 @@ void InspectorManager::full_inspection(FrameworkPolicy* fp, Packet* p)
 
     // FIXIT-M need list of gadgets for ambiguous wizardry
     else if ( flow->gadget && PacketHasPAFPayload(p) )
+    {
         flow->gadget->eval(p);
+        s_clear = true;
+    }
 }
 
 void InspectorManager::execute(Packet* p)
@@ -718,7 +722,12 @@ void InspectorManager::execute(Packet* p)
 
 void InspectorManager::clear(Packet* p)
 {
-    if ( p->flow && p->flow->gadget )
+    if ( !s_clear )
+        return;
+
+    if ( p->flow and p->flow->gadget )
         p->flow->gadget->clear(p);
+
+    s_clear = false;
 }
 

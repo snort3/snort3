@@ -2008,20 +2008,8 @@ static int FlushStream(
             )
             flags |= PKT_PDU_TAIL;
 
-        const StreamBuffer* sb = nullptr;
-
-        // FIXIT-M force handling to work around nhttp
-        if ( st->flags & TF_FORCE_FLUSH )
-        {
-            memcpy(flushbuf, ss->payload, bytes_to_copy);
-            s5_pkt->dsize += bytes_to_copy;
-            bytes_copied = bytes_to_copy;
-        }
-        else
-        {
-            sb = st->splitter->reassemble(
-                p->flow, total, bytes_flushed, ss->payload, bytes_to_copy, flags, bytes_copied);
-        }
+        const StreamBuffer* sb = st->splitter->reassemble(
+            p->flow, total, bytes_flushed, ss->payload, bytes_to_copy, flags, bytes_copied);
 
         flags = 0;
 
