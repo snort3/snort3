@@ -142,3 +142,22 @@ ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, F
     return latest_section->worth_detection();
 }
 
+void NHttpInspect::clear(Packet* p)
+{
+    latest_section = nullptr;
+
+    NHttpFlowData* session_data =
+        (NHttpFlowData*)p->flow->get_application_data(NHttpFlowData::nhttp_flow_id);
+
+    if (session_data == nullptr)
+        return;
+    assert((p->packet_flags & PKT_FROM_CLIENT) || (p->packet_flags & PKT_FROM_SERVER));
+    assert(!((p->packet_flags & PKT_FROM_CLIENT) && (p->packet_flags & PKT_FROM_SERVER)));
+    SourceId source_id = (p->packet_flags & PKT_FROM_CLIENT) ? SRC_CLIENT : SRC_SERVER;
+
+    if (session_data->transaction[source_id] == nullptr)
+        return;
+    delete session_data->transaction[source_id]->get_body();
+    session_data->transaction[source_id]->set_body(nullptr);
+}
+

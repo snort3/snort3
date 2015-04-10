@@ -41,6 +41,7 @@ public:
     bool configure(SnortConfig*) override { return true; }
     void show(SnortConfig*) override { LogMessage("NHttpInspect\n"); }
     void eval(Packet*) override { }
+    void clear(Packet* p) override;
     void tinit() override { }
     void tterm() override { }
     NHttpStreamSplitter* get_splitter(bool is_client_to_server) override
@@ -49,14 +50,14 @@ public:
                NHttpStreamSplitter(is_client_to_server, this);
     }
 
-    static THREAD_LOCAL NHttpMsgSection* latest_section; // FIXIT-L temporarily public
-
 private:
     friend NHttpApi;
     friend NHttpStreamSplitter;
 
     NHttpEnums::ProcessResult process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
         NHttpEnums::SourceId source_id_, bool buf_owner) const;
+
+    static THREAD_LOCAL NHttpMsgSection* latest_section;
 };
 
 #endif

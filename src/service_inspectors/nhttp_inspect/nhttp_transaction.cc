@@ -44,23 +44,10 @@ NHttpTransaction* NHttpTransaction::attach_my_transaction(NHttpFlowData* session
     source_id)
 {
     // This factory method:
-    // 1. garbage collects most recent body section which is no longer needed once another section
-    //    arrives
-    // 2. creates new transactions for all request messages and orphaned response messages
-    // 3. associates requests and responses and supports pipelining
-    // 4. garbage collects unneeded transactions
-    // 5. returns the current transaction
-
-    if (session_data->transaction[SRC_CLIENT] != nullptr)
-    {
-        delete session_data->transaction[SRC_CLIENT]->latest_body;
-        session_data->transaction[SRC_CLIENT]->latest_body = nullptr;
-    }
-    if (session_data->transaction[SRC_SERVER] != nullptr)
-    {
-        delete session_data->transaction[SRC_SERVER]->latest_body;
-        session_data->transaction[SRC_SERVER]->latest_body = nullptr;
-    }
+    // 1. creates new transactions for all request messages and orphaned response messages
+    // 2. associates requests and responses and supports pipelining
+    // 3. garbage collects unneeded transactions
+    // 4. returns the current transaction
 
     // Request section: put the old transaction in the pipeline and replace it with a new
     // transaction. If the pipeline overflows or underflows we stop using it and just delete the

@@ -1,5 +1,6 @@
 Pending - build 145
 
+-- nhttp clear() and related changes
 -- abort PAF in current direction only
 -- added StreamSplitter::finish()
 -- allow relative flush point of zero

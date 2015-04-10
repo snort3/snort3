@@ -269,8 +269,6 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
     }
 }
 
-// FIXIT-P total is not used because it is not reliably correct. Could be used to compute required
-// buffer size instead of always allocating the maximum.
 const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, unsigned offset,
     const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
 {
@@ -322,10 +320,8 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
 
     if (session_data->section_type[source_id] == SEC__NOTCOMPUTE)
     {
-        // FIXIT-M Apparently scan() did not flush this data. Probably Stream is flushing excess
-        // data while it prunes a session. In any event it doesn't belong here because we cannot
-        // process it. Forward it to our parent class for processing.
-        return StreamSplitter::reassemble(flow, total, offset, data, len, flags, copied);
+        // FIXIT-M Currently do not support processing of unflushed data. 
+        return nullptr;
     }
 
     session_data->tcp_close[source_id] = tcp_close || session_data->tcp_close[source_id];
