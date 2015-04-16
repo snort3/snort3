@@ -132,15 +132,17 @@ esac
 # Checks for programs.
 #--------------------------------------------------------------------------
 
-# FIXIT-L should not need AM_CONDITIONAL() here
 AC_CHECK_PROG(have_asciidoc,asciidoc,yes,no)
 
 AM_CONDITIONAL(MAKE_HTML_DOC, [test "x$have_asciidoc" = "xyes"])
 
-# FIXIT-L should not need AM_CONDITIONAL() here
 AC_CHECK_PROG(have_dblatex,dblatex,yes,no)
 
 AM_CONDITIONAL(MAKE_PDF_DOC, [test "x$have_dblatex" = "xyes" -a "x$have_asciidoc" = "xyes"])
+
+AC_CHECK_PROG(have_w3m,w3m,yes,no)
+
+AM_CONDITIONAL(MAKE_TEXT_DOC, [test "x$have_w3m" = "xyes" -a "x$have_asciidoc" = "xyes"])
 
 AC_MSG_CHECKING(for sparc)
 if eval "echo $host_cpu|grep -i sparc >/dev/null"; then

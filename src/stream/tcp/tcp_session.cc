@@ -2607,7 +2607,7 @@ static void final_flush(
 static void FlushQueuedSegs(Flow* lwssn, TcpSession* tcpssn, bool clear, Packet* p = nullptr)
 {
     // flush the client (data from server)
-    bool pending = clear and (!tcpssn->client.splitter or tcpssn->client.splitter->finish());
+    bool pending = clear and (!tcpssn->client.splitter or tcpssn->client.splitter->finish(lwssn));
 
     if ( (pending and (p or tcpssn->client.seglist) and
         !(lwssn->ssn_state.ignore_direction & SSN_DIR_FROM_SERVER)) )
@@ -2616,7 +2616,7 @@ static void FlushQueuedSegs(Flow* lwssn, TcpSession* tcpssn, bool clear, Packet*
     }
 
     // flush the server (data from client)
-    pending = clear and (!tcpssn->server.splitter or tcpssn->server.splitter->finish());
+    pending = clear and (!tcpssn->server.splitter or tcpssn->server.splitter->finish(lwssn));
 
     if ( (pending and (p or tcpssn->server.seglist) and
         !(lwssn->ssn_state.ignore_direction & SSN_DIR_FROM_CLIENT)) )

@@ -34,6 +34,7 @@ option (BUILD_UNIT_TESTS "Build Snort++ unit tests" OFF)
 option (BUILD_EXTRA_PLUGINS "Build and test the plugins in the extra directory" OFF)
 option (MAKE_HTML_DOC "Create the HTML documentation" ON)
 option (MAKE_PDF_DOC "Create the PDF documentation" ON)
+option (MAKE_TEXT_DOC "Create the text documentation" ON)
 
 
 set (SIGNAL_SNORT_RELOAD "" CACHE STRING "set the SIGNAL_SNORT_RELOAD value.  THIS NUMBER MUST BE AN INTEGER!!")

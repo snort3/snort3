@@ -62,7 +62,7 @@ public:
 
     // finish indicates end of scanning
     // return false to discard any unflushed data
-    virtual bool finish() { return true; }
+    virtual bool finish(Flow*) { return true; }
 
     // the last call to reassemble() will be made with len == 0 if
     // finish() returned true as an opportunity for a final flush

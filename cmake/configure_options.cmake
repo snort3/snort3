@@ -64,15 +64,20 @@ if (BUILD_UNIT_TESTS)
     enable_testing()
 endif()
 
-# If Asciidoc or DBLatex not found, automatically set the cache to false
+# If not found, automatically set the cache to false
 if (NOT ASCIIDOC_FOUND)
     get_property(MAKE_HTML_DOC_HELP_STRING CACHE "MAKE_HTML_DOC" PROPERTY HELPSTRING)
     set(MAKE_HTML_DOC "OFF" CACHE BOOL ${MAKE_HTML_DOC_HELP_STRING} FORCE)
 endif()
 
-if (NOT DBLATEX_FOUND)
+if (NOT (DBLATEX_FOUND AND ASCIIDOC_FOUND))
     get_property(MAKE_PDF_DOC_HELP_STRING CACHE "MAKE_PDF_DOC" PROPERTY HELPSTRING)
     set(MAKE_PDF_DOC "OFF" CACHE BOOL ${MAKE_PDF_DOC_HELP_STRING} FORCE)
+endif()
+
+if (NOT (W3M_FOUND AND ASCIIDOC_FOUND))
+    get_property(MAKE_TEXT_DOC_HELP_STRING CACHE "MAKE_TEXT_DOC" PROPERTY HELPSTRING)
+    set(MAKE_TEXT_DOC "OFF" CACHE BOOL ${MAKE_TEXT_DOC_HELP_STRING} FORCE)
 endif()
 
 

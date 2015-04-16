@@ -31,6 +31,9 @@ Optional:
 * dblatex from http://dblatex.sourceforge.net to build the pdf manual (in
   addition to asciidoc)
 
+* w3m from http://sourceforge.net/projects/w3m/ to build the plain text
+  manual
+
 * check from http://check.sourceforge.net to build unit tests
 
 

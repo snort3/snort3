@@ -48,10 +48,12 @@ $(unbuilt_sources) \
 $(BUILT_SOURCES)
 
 EXTRA_DIST = \
+default_snort_manual.text \
 default_snort_manual.html \
 default_snort_manual.pdf
 
 doc_DATA = \
+snort_manual.text \
 snort_manual.html \
 snort_manual.pdf
 
@@ -169,10 +171,19 @@ snort_manual.html: default_snort_manual.html
 endif
 
 if MAKE_PDF_DOC
-snort_manual.pdf: snort_manual.txt $(all_sources) snort_manual.html
+snort_manual.pdf: $(all_sources) snort_manual.html
 	a2x -f pdf $(pdf_args) $<
 else
 snort_manual.pdf: default_snort_manual.pdf
+	cp $< $@
+endif
+
+if MAKE_TEXT_DOC
+# should depend on html but strange timing issues arise
+snort_manual.text: $(all_sources) snort_manual.pdf
+	a2x -f text $<
+else
+snort_manual.text: default_snort_manual.text
 	cp $< $@
 endif
 
