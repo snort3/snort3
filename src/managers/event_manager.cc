@@ -190,14 +190,7 @@ void EventManager::instantiate(
         s_loggers.outputs.push_back(p->handler);
         return;
     }
-    Module* mod = ModuleManager::get_module(name);
-
-    if ( mod )
-    {
-        // emulate a config like name = { }
-        mod->begin(name, 0, sc);
-        mod->end(name, 0, sc);
-    }
+    Module* mod = ModuleManager::get_default_module(name, sc);
     instantiate(p, mod, sc);
 }
 

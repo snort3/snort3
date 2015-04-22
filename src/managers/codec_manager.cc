@@ -141,9 +141,7 @@ void CodecManager::release_plugins()
     s_proto_map.fill(0);
 }
 
-void CodecManager::instantiate(CodecApiWrapper& wrap,
-    Module* m,
-    SnortConfig* /*sc*/)
+void CodecManager::instantiate(CodecApiWrapper& wrap, Module* m, SnortConfig*)
 {
     static std::size_t codec_id = 1;
 

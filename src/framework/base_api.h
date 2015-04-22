@@ -40,7 +40,6 @@
 
 enum PlugType
 {
-    PT_DATA,
     PT_CODEC,
     PT_INSPECTOR,
     PT_IPS_ACTION,

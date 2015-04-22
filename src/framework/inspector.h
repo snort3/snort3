@@ -124,15 +124,31 @@ private:
     ServiceId srv_id;
 };
 
+template <typename T>
+class InspectorData : public Inspector
+{
+public:
+    InspectorData(T* t)
+    { data = t; }
+
+    ~InspectorData()
+    { delete data; }
+
+    void eval(Packet*) override { };
+
+    T* data;
+};
+
 enum InspectorType
 {
-    IT_BINDER,
-    IT_WIZARD,
-    IT_PACKET,
-    IT_NETWORK,
-    IT_STREAM,
-    IT_SERVICE,
-    IT_PROBE,
+    IT_PASSIVE,  // config only, or data consumer
+    IT_BINDER,   // maps config to traffic
+    IT_WIZARD,   // guesses service inspector
+    IT_PACKET,   // processes raw packets
+    IT_NETWORK,  // process packets w/o service
+    IT_STREAM,   // flow tracking and reassembly
+    IT_SERVICE,  // reassemble and process service PDUs
+    IT_PROBE,    // process all packets after above
     IT_MAX
 };
 

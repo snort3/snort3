@@ -29,7 +29,6 @@
 #include "sfip/sfip_t.h"
 #include "flow/flow_key.h"
 #include "framework/inspector.h"
-#include "framework/plug_data.h"
 #include "framework/codec.h"
 
 #define SSNFLAG_SEEN_CLIENT         0x00000001
@@ -225,7 +224,7 @@ public:
         gadget = nullptr;
     }
 
-    void set_data(PlugData* pd)
+    void set_data(Inspector* pd)
     {
         data = pd;
         data->add_ref();
@@ -255,7 +254,7 @@ public:  // FIXIT-M privatize if possible
     FlowData* appDataList;
     Inspector* clouseau;  // service identifier
     Inspector* gadget;    // service handler
-    PlugData* data;
+    Inspector* data;
     const char* service;
 
     unsigned policy_id;

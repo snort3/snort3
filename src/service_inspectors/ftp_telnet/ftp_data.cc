@@ -47,7 +47,6 @@
 #include "file_api/file_api.h"
 #include "parser.h"
 #include "framework/inspector.h"
-#include "framework/plug_data.h"
 #include "detection/detection_util.h"
 #include "protocols/tcp.h"
 

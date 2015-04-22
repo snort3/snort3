@@ -25,9 +25,7 @@ using namespace std;
 #include "flow/flow.h"
 #include "flow/session.h"
 #include "framework/inspector.h"
-#include "framework/plug_data.h"
 #include "stream/stream_splitter.h"
-#include "managers/data_manager.h"
 #include "managers/inspector_manager.h"
 #include "managers/plugin_manager.h"
 #include "protocols/packet.h"
@@ -230,7 +228,7 @@ struct Stuff
     Inspector* server;
     Inspector* wizard;
     Inspector* gadget;
-    PlugData* data;
+    Inspector* data;
 
     Stuff()
     {
@@ -258,8 +256,8 @@ bool Stuff::update(Binding* pb)
     {
     case BW_NONE:
         break;
-    case BW_DATA:
-        data = (PlugData*)pb->use.object;
+    case BW_PASSIVE:
+        data = (Inspector*)pb->use.object;
         break;
     case BW_CLIENT:
         client = (Inspector*)pb->use.object;
@@ -460,7 +458,7 @@ int Binder::exec(int, void* pv)
 // implementation stuff
 //-------------------------------------------------------------------------
 
-void Binder::set_binding(SnortConfig* sc, Binding* pb)
+void Binder::set_binding(SnortConfig*, Binding* pb)
 {
     if ( pb->use.action != BA_INSPECT )
         return;
@@ -476,14 +474,11 @@ void Binder::set_binding(SnortConfig* sc, Binding* pb)
         switch ( InspectorManager::get_type(key) )
         {
         case IT_STREAM: pb->use.what = BW_STREAM; break;
-        case IT_SERVICE: pb->use.what = BW_GADGET; break;
         case IT_WIZARD: pb->use.what = BW_WIZARD; break;
+        case IT_SERVICE: pb->use.what = BW_GADGET; break;
+        case IT_PASSIVE: pb->use.what = BW_PASSIVE; break;
         default: break;
         }
-    }
-    else if ( (pb->use.object = DataManager::get_data(key, sc)) )
-    {
-        pb->use.what = BW_DATA;
     }
     if ( !pb->use.object )
         pb->use.what = BW_NONE;

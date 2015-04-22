@@ -47,8 +47,7 @@
 #include "file_api/file_api.h"
 #include "parser.h"
 #include "framework/inspector.h"
-#include "framework/plug_data.h"
-#include "managers/data_manager.h"
+#include "managers/inspector_manager.h"
 #include "detection/detection_util.h"
 #include "target_based/sftarget_protocol_reference.h"
 
@@ -62,15 +61,6 @@ int16_t ftp_data_app_id = SFTARGET_UNKNOWN_PROTOCOL;
 
 THREAD_LOCAL ProfileStats ftpPerfStats;
 THREAD_LOCAL SimpleStats ftstats;
-
-static FTP_CLIENT_PROTO_CONF* bind_client = nullptr;
-static FTP_SERVER_PROTO_CONF* bind_server = nullptr;
-
-FTP_CLIENT_PROTO_CONF* get_default_ftp_client()
-{ return bind_client; }
-
-FTP_SERVER_PROTO_CONF* get_default_ftp_server()
-{ return bind_server; }
 
 //-------------------------------------------------------------------------
 // implementation stuff
@@ -364,7 +354,7 @@ static int ProcessFTPDataChanCmdsList(
 // class stuff
 //-------------------------------------------------------------------------
 
-typedef PlugDataType<FTP_CLIENT_PROTO_CONF> ClientData;
+typedef InspectorData<FTP_CLIENT_PROTO_CONF> FtpClient;
 
 class FtpServer : public Inspector
 {
@@ -377,40 +367,27 @@ public:
     void eval(Packet*) override;
     StreamSplitter* get_splitter(bool) override;
 
-private:
     FTP_SERVER_PROTO_CONF* ftp_server;
-    ClientData* ftp_client;  // FIXIT-H delete this when bindings implemented
 };
 
 FtpServer::FtpServer(FTP_SERVER_PROTO_CONF* server)
 {
     ftp_server = server;
-    ftp_client = nullptr;
 }
 
 FtpServer::~FtpServer ()
 {
     CleanupFTPServerConf(ftp_server);
     delete ftp_server;
-
-    if ( ftp_client )
-        // FIXIT-L make sure CleanupFTPClientConf() is called
-        DataManager::release(ftp_client);
 }
 
 bool FtpServer::configure(SnortConfig* sc)
 {
-    ftp_client = (ClientData*)DataManager::acquire(client_key, sc);
-
-    bind_server = ftp_server;
-    bind_client = ftp_client->data;
-
     return !FTPCheckConfigs(sc, ftp_server);
 }
 
 void FtpServer::show(SnortConfig*)
 {
-    PrintFTPClientConf(ftp_client->data);
     PrintFTPServerConf(ftp_server);
 }
 
@@ -429,13 +406,33 @@ void FtpServer::eval(Packet* p)
 }
 
 //-------------------------------------------------------------------------
+// get the relevant configs required by legacy ftp code
+// the client must be found if not explicitly bound
+
+FTP_CLIENT_PROTO_CONF* get_ftp_client(Packet* p)
+{
+    FtpClient* client = (FtpClient*)p->flow->data;
+    if ( !client )
+    {
+        client = (FtpClient*)InspectorManager::get_inspector(client_key);
+        assert(client);
+        p->flow->set_data(client);
+    }
+    return client->data;
+}
+
+FTP_SERVER_PROTO_CONF* get_ftp_server(Packet* p)
+{
+    FtpServer* server = (FtpServer*)p->flow->gadget;
+    assert(server);
+    return server->ftp_server;
+}
+
+//-------------------------------------------------------------------------
 // api stuff
 //
 // fc_ = ftp_client
 // fs_ = ftp_server
-//
-// FIXIT-L fc is a data module but may need to
-// be an inspector with separate bindings.
 //-------------------------------------------------------------------------
 
 static Module* fc_mod_ctor()
@@ -445,7 +442,7 @@ static Module* fc_mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static PlugData* fc_ctor(Module* m)
+static Inspector* fc_ctor(Module* m)
 {
     FtpClientModule* mod = (FtpClientModule*)m;
     FTP_CLIENT_PROTO_CONF* gc = mod->get_data();
@@ -456,18 +453,18 @@ static PlugData* fc_ctor(Module* m)
         ProcessFTPAllowBounce(
             gc, (uint8_t*)bt->address.c_str(), bt->address.size(), bt->low, bt->high);
     }
-    return new ClientData(gc);
+    return new FtpClient(gc);
 }
 
-static void fc_dtor(PlugData* p)
+static void fc_dtor(Inspector* p)
 { delete p; }
 
-static const DataApi fc_api =
+static const InspectApi fc_api =
 {
     {
-        PT_DATA,
-        sizeof(DataApi),
-        PDAPI_VERSION,
+        PT_INSPECTOR,
+        sizeof(InspectApi),
+        INSAPI_VERSION,
         0,
         API_RESERVED,
         API_OPTIONS,
@@ -476,8 +473,18 @@ static const DataApi fc_api =
         fc_mod_ctor,
         mod_dtor
     },
+    IT_PASSIVE,
+    (uint16_t)PktType::NONE,
+    nullptr, // buffers
+    "ftp",
+    nullptr, // init,
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     fc_ctor,
-    fc_dtor
+    fc_dtor,
+    nullptr, // ssn
+    nullptr  // reset
 };
 
 //-------------------------------------------------------------------------

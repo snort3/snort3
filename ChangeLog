@@ -1,3 +1,7 @@
+Pending - build 147
+
+-- change PT_DATA to IT_PASSIVE; supports named instances, reload, and consumers
+
 15/04/16 - build 146
 
 -- added build of snort_manual.text if w3m is installed

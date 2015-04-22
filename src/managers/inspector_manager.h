@@ -20,7 +20,7 @@
 #ifndef INSPECTOR_MANAGER_H
 #define INSPECTOR_MANAGER_H
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "framework/base_api.h"
 #include "framework/inspector.h"
 
@@ -56,6 +56,9 @@ public:
 
     static Inspector* get_binder();
     static Inspector* get_wizard();
+
+    SO_PUBLIC static Inspector* acquire(const char* key, SnortConfig*);
+    SO_PUBLIC static void release(Inspector*);
 
     static bool configure(SnortConfig*);
     static void print_config(SnortConfig*);

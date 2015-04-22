@@ -44,6 +44,7 @@ struct ICMPHdr;
 enum class PktType : std::uint8_t
 {
     UNKNOWN = 0x00,
+    NONE = 0x00,
     IP = 0x01,
     TCP = 0x02,
     UDP = 0x04,

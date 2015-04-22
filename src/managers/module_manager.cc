@@ -795,6 +795,18 @@ Module* ModuleManager::get_module(const char* s)
     return nullptr;
 }
 
+Module* ModuleManager::get_default_module(const char* s, SnortConfig* sc)
+{
+    Module* mod = get_module(s);
+
+    if ( mod )
+    {
+        mod->begin(s, 0, sc);
+        mod->end(s, 0, nullptr);
+    }
+    return mod;
+}
+
 const char* ModuleManager::get_current_module()
 { return s_current.c_str(); }
 

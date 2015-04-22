@@ -7,8 +7,6 @@ set (LUA_INCLUDES
 add_library( managers
     action_manager.h
     action_manager.cc
-    data_manager.h
-    data_manager.cc
     codec_manager.h
     codec_manager.cc
     event_manager.cc

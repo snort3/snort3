@@ -34,6 +34,7 @@ public:
 
     static void add_module(class Module*, const struct BaseApi* = nullptr);
     static Module* get_module(const char*);
+    static Module* get_default_module(const char*, SnortConfig*);
     static const char* get_current_module();
 
     static void list_modules(const char* = nullptr);

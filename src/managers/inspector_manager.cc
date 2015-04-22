@@ -39,7 +39,7 @@
 
 using namespace std;
 
-// FIXIT-L should be using IT_* instead or at least define once
+// FIXIT-L define once
 #define bind_id "binder"
 #define wiz_id "wizard"
 
@@ -97,7 +97,7 @@ struct PHInstance
     Inspector* handler;
     string name;
 
-    PHInstance(PHClass&);
+    PHInstance(PHClass&, Module* = nullptr);
     ~PHInstance();
 
     static bool comp(PHInstance* a, PHInstance* b)
@@ -107,9 +107,8 @@ struct PHInstance
     { name = s; }
 };
 
-PHInstance::PHInstance(PHClass& p) : pp_class(p)
+PHInstance::PHInstance(PHClass& p, Module* mod) : pp_class(p)
 {
-    Module* mod = ModuleManager::get_module(p.api.base.name);
     handler = p.api.ctor(mod);
 
     if ( handler )
@@ -132,6 +131,7 @@ typedef list<Inspector*> PHList;
 
 static PHGlobalList s_handlers;
 static PHList s_trash;
+static PHList s_trash2;
 static THREAD_LOCAL bool s_clear = false;
 
 struct FrameworkConfig
@@ -161,6 +161,7 @@ struct FrameworkPolicy
 {
     PHInstanceList ilist;
 
+    PHVector passive;
     PHVector packet;
     PHVector network;
     PHVector session;
@@ -175,6 +176,7 @@ struct FrameworkPolicy
 
 void FrameworkPolicy::vectorize()
 {
+    passive.alloc(ilist.size());
     packet.alloc(ilist.size());
     network.alloc(ilist.size());
     session.alloc(ilist.size());
@@ -185,6 +187,10 @@ void FrameworkPolicy::vectorize()
     {
         switch ( p->pp_class.api.type )
         {
+        case IT_PASSIVE :
+            passive.add(p);
+            break;
+
         case IT_PACKET :
             packet.add(p);
             break;
@@ -266,17 +272,24 @@ void InspectorManager::dump_buffers()
     }
 }
 
+#if 0
+static void dump_refs(PHList& trash)
+{
+    for ( auto* p : trash )
+    {
+        if ( !p->is_inactive() )
+            printf("%s = %u\n", p->get_api()->base.name, p->get_ref(0));
+    }
+}
+#endif
+
 void InspectorManager::release_plugins()
 {
     empty_trash();
 
 #if 0
-    // FIXIT-H multiple policies causes ref_counts > 0
-    for ( auto* p : s_trash )
-    {
-        if ( !p->is_inactive() )
-            printf("%s = %u\n", p->get_api()->base.name, p->get_ref(0));
-    }
+    dump_refs(s_trash);
+    dump_refs(s_trash2);
 #endif
 
     for ( auto* p : s_handlers )
@@ -288,19 +301,24 @@ void InspectorManager::release_plugins()
     }
 }
 
-void InspectorManager::empty_trash()
+static void empty_trash(PHList& trash)
 {
-    while ( !s_trash.empty() )
+    while ( !trash.empty() )
     {
-        auto* p = s_trash.front();
+        auto* p = trash.front();
 
         if ( !p->is_inactive() )
             return;
 
-        free_inspector(p);
-
-        s_trash.pop_front();
+        InspectorManager::free_inspector(p);
+        trash.pop_front();
     }
+}
+
+void InspectorManager::empty_trash()
+{
+    ::empty_trash(s_trash);
+    ::empty_trash(s_trash2);
 }
 
 //-------------------------------------------------------------------------
@@ -319,7 +337,10 @@ void InspectorManager::delete_policy(InspectionPolicy* pi)
 {
     for ( auto* p : pi->framework_policy->ilist )
     {
-        s_trash.push_back(p->handler);
+        if ( p->handler->get_api()->type == IT_PASSIVE )
+            s_trash2.push_back(p->handler);
+        else
+            s_trash.push_back(p->handler);
         delete p;
     }
     delete pi->framework_policy;
@@ -346,14 +367,14 @@ static PHInstance* get_instance(
 }
 
 static PHInstance* get_new(
-    PHClass* ppc, FrameworkPolicy* fp, const char* keyword)
+    PHClass* ppc, FrameworkPolicy* fp, const char* keyword, Module* mod)
 {
     PHInstance* p = get_instance(fp, keyword);
 
     if ( p )
         return p;
 
-    p = new PHInstance(*ppc);
+    p = new PHInstance(*ppc, mod);
 
     if ( !p->handler )
     {
@@ -536,15 +557,16 @@ void InspectorManager::thread_term(SnortConfig* sc)
 
 // new configuration
 void InspectorManager::instantiate(
-    const InspectApi* api, Module*, SnortConfig* sc, const char* name)
+    const InspectApi* api, Module* mod, SnortConfig* sc, const char* name)
 {
+    assert(mod);
+
     FrameworkConfig* fc = sc->framework_config;
     FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
 
     // FIXIT-L should not need to lookup inspector etc
     // since given api and mod
     const char* keyword = api->base.name;
-
     PHClass* ppc = get_class(keyword, fc);
 
     if ( !ppc )
@@ -555,7 +577,7 @@ void InspectorManager::instantiate(
         if ( name )
             keyword = name;
 
-        PHInstance* ppi = get_new(ppc, fp, keyword);
+        PHInstance* ppi = get_new(ppc, fp, keyword, mod);
 
         if ( !ppi )
             ParseError("can't instantiate inspector: '%s'.", keyword);
@@ -589,7 +611,7 @@ static void instantiate_binder(SnortConfig* sc, FrameworkPolicy* fp)
         m->add((unsigned)PktType::UDP, wiz_id);
 
     const InspectApi* api = get_plugin(bind_id);
-    InspectorManager::instantiate(api, nullptr, sc);
+    InspectorManager::instantiate(api, m, sc);
     fp->binder = get_instance(fp, bind_id)->handler;
     fp->binder->configure(sc);
 }
@@ -608,6 +630,30 @@ static bool configure(SnortConfig* sc, FrameworkPolicy* fp)
         instantiate_binder(sc, fp);
 
     return ok;
+}
+
+Inspector* InspectorManager::acquire(const char* key, SnortConfig* sc)
+{
+    Inspector* pi = get_inspector(key, sc);
+
+    if ( !pi )
+    {
+        const InspectApi* api = get_plugin(key);
+        Module* mod = ModuleManager::get_default_module(key, sc);
+        instantiate(api, mod, sc);
+        pi = get_inspector(key, sc);
+    }
+
+    if ( pi )
+        pi->add_ref();
+
+    return pi;
+}
+
+void InspectorManager::release(Inspector* pi)
+{
+    assert(pi);
+    pi->rem_ref();
 }
 
 bool InspectorManager::configure(SnortConfig* sc)

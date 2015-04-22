@@ -68,7 +68,7 @@
 #include "file_api/file_api.h"
 #include "sf_email_attach_decode.h"
 #include "framework/inspector.h"
-#include "managers/data_manager.h"
+#include "managers/inspector_manager.h"
 
 int hex_lookup[256];
 int valid_lookup[256];
@@ -221,7 +221,7 @@ static inline void InitLookupTables(void)
 // class stuff
 //-------------------------------------------------------------------------
 
-typedef PlugDataType<HTTPINSPECT_GLOBAL_CONF> HttpData;
+typedef InspectorData<HTTPINSPECT_GLOBAL_CONF> HttpData;
 
 class HttpInspect : public Inspector
 {
@@ -257,7 +257,7 @@ HttpInspect::~HttpInspect ()
         delete config;
 
     if ( global )
-        DataManager::release(global);
+        InspectorManager::release(global);
 }
 
 bool HttpInspect::get_buf(
@@ -294,7 +294,7 @@ bool HttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
 
 bool HttpInspect::configure(SnortConfig* sc)
 {
-    global = (HttpData*)DataManager::acquire(GLOBAL_KEYWORD, sc);
+    global = (HttpData*)InspectorManager::acquire(GLOBAL_KEYWORD, sc);
     config->global = global->data;
 
     HttpInspectInitializeGlobalConfig(config->global);
@@ -371,7 +371,7 @@ static Module* hg_mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static PlugData* hg_ctor(Module* m)
+static Inspector* hg_ctor(Module* m)
 {
     HttpInspectModule* mod = (HttpInspectModule*)m;
     HTTPINSPECT_GLOBAL_CONF* gc = mod->get_data();
@@ -379,15 +379,15 @@ static PlugData* hg_ctor(Module* m)
     return p;
 }
 
-static void hg_dtor(PlugData* p)
+static void hg_dtor(Inspector* p)
 { delete p; }
 
-static const DataApi hg_api =
+static const InspectApi hg_api =
 {
     {
-        PT_DATA,
-        sizeof(DataApi),
-        PDAPI_VERSION,
+        PT_INSPECTOR,
+        sizeof(InspectApi),
+        INSAPI_VERSION,
         0,
         API_RESERVED,
         API_OPTIONS,
@@ -396,8 +396,18 @@ static const DataApi hg_api =
         hg_mod_ctor,
         mod_dtor
     },
+    IT_PASSIVE,
+    (uint16_t)PktType::NONE,
+    nullptr, // buffers
+    "http",
+    nullptr, // init,
+    nullptr, // term,
+    nullptr, // tinit
+    nullptr, // tterm
     hg_ctor,
-    hg_dtor
+    hg_dtor,
+    nullptr, // ssn
+    nullptr  // reset
 };
 
 //-------------------------------------------------------------------------

@@ -54,7 +54,7 @@
 
 #include "main/analyzer.h"
 #include "protocols/packet.h"
-#include "managers/data_manager.h"
+#include "managers/inspector_manager.h"
 #include "protocols/packet_manager.h"
 #include "event.h"
 #include "event_wrapper.h"
@@ -65,14 +65,9 @@
 #include "filters/sfthreshold.h"
 #include "sfsnprintfappend.h"
 #include "framework/inspector.h"
-#include "framework/plug_data.h"
 #include "profiler.h"
 #include "detection/detect.h"
 #include "network_inspectors/port_scan/ipobj.h"
-
-#define DELIMITERS " \t\n"
-#define TOKEN_ARG_BEGIN "{"
-#define TOKEN_ARG_END   "}"
 
 #define PROTO_BUFFER_SIZE 256
 #define IPPROTO_PS 0xFF
@@ -870,12 +865,12 @@ PortScan::~PortScan()
         delete config;
 
     if ( global )
-        DataManager::release(global);
+        InspectorManager::release(global);
 }
 
 bool PortScan::configure(SnortConfig* sc)
 {
-    global = (PsData*)DataManager::acquire(PSG_NAME, sc);
+    global = (PsData*)InspectorManager::acquire(PSG_NAME, sc);
     config->common = global->data;
     return true;
 }
@@ -960,7 +955,7 @@ static Module* gmod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static PlugData* sd_ctor(Module* m)
+static Inspector* sd_ctor(Module* m)
 {
     PortScanGlobalModule* mod = (PortScanGlobalModule*)m;
     PsCommon* com = mod->get_data();
@@ -968,15 +963,15 @@ static PlugData* sd_ctor(Module* m)
     return p;
 }
 
-static void sd_dtor(PlugData* p)
+static void sd_dtor(Inspector* p)
 { delete p; }
 
-static const DataApi sd_api =
+static const InspectApi sd_api =
 {
     {
-        PT_DATA,
-        sizeof(DataApi),
-        PDAPI_VERSION,
+        PT_INSPECTOR,
+        sizeof(InspectApi),
+        INSAPI_VERSION,
         0,
         API_RESERVED,
         API_OPTIONS,
@@ -985,8 +980,18 @@ static const DataApi sd_api =
         gmod_ctor,
         mod_dtor
     },
+    IT_PASSIVE,
+    (uint16_t)PktType::NONE,
+    nullptr, // buffers
+    nullptr, // service
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     sd_ctor,
-    sd_dtor
+    sd_dtor,
+    nullptr, // ssn
+    nullptr  // reset
 };
 
 //-------------------------------------------------------------------------

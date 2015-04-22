@@ -33,7 +33,6 @@
 using namespace std;
 
 #include "action_manager.h"
-#include "data_manager.h"
 #include "event_manager.h"
 #include "inspector_manager.h"
 #include "ips_manager.h"
@@ -49,7 +48,6 @@ using namespace std;
 #include "framework/ips_option.h"
 #include "framework/inspector.h"
 #include "framework/mpse.h"
-#include "framework/plug_data.h"
 #include "framework/so_rule.h"
 
 #include "loggers/loggers.h"
@@ -83,7 +81,6 @@ struct Symbol
 // compiler catches too many but not too few
 static Symbol symbols[PT_MAX] =
 {
-    { "data", PDAPI_VERSION, sizeof(DataApi) },
     { "codec", CDAPI_VERSION, sizeof(CodecApi) },
     { "inspector", INSAPI_VERSION, sizeof(InspectApi) },
     { "ips_action", ACTAPI_VERSION, sizeof(ActionApi) },
@@ -98,7 +95,6 @@ static Symbol symbols[PT_MAX] =
 #define stringify(name) # name
 static Symbol symbols[PT_MAX] =
 {
-    [PT_DATA] = { stringify(PT_DATA), PDAPI_VERSION, sizeof(DataApi) },
     [PT_CODEC] = { stringify(PT_CODEC), CDAPI_VERSION, sizeof(CodecApi) },
     [PT_INSPECTOR] = { stringify(PT_INSPECTOR), INSAPI_VERSION, sizeof(InspectApi) },
     [PT_IPS_ACTION] = { stringify(PT_IPS_ACTION), ACTAPI_VERSION, sizeof(ActionApi) },
@@ -281,10 +277,6 @@ static void add_plugin(Plugin& p)
     }
     switch ( p.api->type )
     {
-    case PT_DATA:
-        DataManager::add_plugin((DataApi*)p.api);
-        break;
-
     case PT_CODEC:
         CodecManager::add_plugin((CodecApi*)p.api);
         break;
@@ -422,7 +414,6 @@ void PluginManager::show_plugins()
 
 void PluginManager::dump_plugins()
 {
-    DataManager::dump_plugins();
     CodecManager::dump_plugins();
     InspectorManager::dump_plugins();
     MpseManager::dump_plugins();
@@ -441,9 +432,6 @@ void PluginManager::release_plugins()
     SoManager::release_plugins();
     MpseManager::release_plugins();
     CodecManager::release_plugins();
-
-    // must follow the above
-    DataManager::release_plugins();
 
     unload_plugins();
 }
@@ -469,10 +457,6 @@ void PluginManager::instantiate(
 {
     switch ( api->type )
     {
-    case PT_DATA:
-        DataManager::instantiate((DataApi*)api, mod, sc);
-        break;
-
     case PT_CODEC:
         CodecManager::instantiate((CodecApi*)api, mod, sc);
         break;
@@ -514,10 +498,6 @@ void PluginManager::instantiate(
 {
     if ( api->type == PT_INSPECTOR )
         InspectorManager::instantiate((InspectApi*)api, mod, sc, name);
-
-    else if ( api->type == PT_DATA )
-        // FIXIT-H instantiate PT_DATA with name
-        DataManager::instantiate((DataApi*)api, mod, sc /*, name*/);
 
     else
         assert(false);

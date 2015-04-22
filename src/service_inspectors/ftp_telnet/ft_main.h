@@ -51,8 +51,8 @@ void CleanupFTPBounceTo(void* ftpBounce);
 int CheckFTPServerConfigs(SnortConfig*, FTP_SERVER_PROTO_CONF*);
 int FTPCheckConfigs(SnortConfig*, void*);
 
-FTP_CLIENT_PROTO_CONF* get_default_ftp_client();
-FTP_SERVER_PROTO_CONF* get_default_ftp_server();
+FTP_CLIENT_PROTO_CONF* get_ftp_client(Packet*);
+FTP_SERVER_PROTO_CONF* get_ftp_server(Packet*);
 
 #ifdef PERF_PROFILING
 void ft_update_perf(ProfileStats&);

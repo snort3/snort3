@@ -202,13 +202,12 @@ static int FTPInitConf(
     FTP_SERVER_PROTO_CONF** ServerConf,
     FTPP_SI_INPUT* SiInput, int* piInspectMode)
 {
-    // FIXIT-H BINDING ftp client and server must set by external bindings
-    // at that point these get deleted
-    FTP_CLIENT_PROTO_CONF* ClientConfSip = get_default_ftp_client();
-    FTP_CLIENT_PROTO_CONF* ClientConfDip = get_default_ftp_client();
+    // FIXIT-L are sip/dip still needed?
+    FTP_CLIENT_PROTO_CONF* ClientConfSip = get_ftp_client(p);
+    FTP_CLIENT_PROTO_CONF* ClientConfDip = ClientConfSip;
 
-    FTP_SERVER_PROTO_CONF* ServerConfSip = get_default_ftp_server();
-    FTP_SERVER_PROTO_CONF* ServerConfDip = get_default_ftp_server();
+    FTP_SERVER_PROTO_CONF* ServerConfSip = get_ftp_server(p);
+    FTP_SERVER_PROTO_CONF* ServerConfDip = ServerConfSip;
 
     int iServerSip;
     int iServerDip;

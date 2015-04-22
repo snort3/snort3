@@ -116,6 +116,9 @@ void Flow::reset()
     if ( gadget )
         clear_gadget();
 
+    if ( data )
+        clear_data();
+
     constexpr size_t offset = offsetof(Flow, appDataList);
     // FIXIT-L need a struct to zero here to make future proof
     memset((uint8_t*)this+offset, 0, sizeof(Flow)-offset);

@@ -28,7 +28,6 @@
 #include "snort.h"
 #include "snort_debug.h"
 #include "framework/inspector.h"
-#include "framework/plug_data.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "flow/flow_control.h"

@@ -44,7 +44,7 @@ enum BindAction
 enum BindWhat
 {
     BW_NONE,
-    BW_DATA,
+    BW_PASSIVE,
     BW_CLIENT,
     BW_SERVER,
     BW_STREAM,
