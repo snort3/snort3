@@ -26,7 +26,8 @@
 #include "managers/inspector_manager.h"
 #include "parser/vars.h"
 #include "main/shell.h"
-#include "snort.h"
+#include "main/snort.h"
+#include "detection/detect.h"
 
 //-------------------------------------------------------------------------
 // traffic policy
@@ -53,6 +54,15 @@ NetworkPolicy::~NetworkPolicy()
 // inspection policy
 //-------------------------------------------------------------------------
 
+class AltPktHandler : public DataHandler
+{
+public:
+    AltPktHandler() { };
+
+    void handle(DataEvent& e, Flow*)
+    { Detect((Packet*)e.get_packet()); }  // FIXIT-L not const!
+};
+
 InspectionPolicy::InspectionPolicy()
 {
     framework_policy = nullptr;
@@ -63,6 +73,11 @@ InspectionPolicy::InspectionPolicy()
 InspectionPolicy::~InspectionPolicy()
 {
     InspectorManager::delete_policy(this);
+}
+
+void InspectionPolicy::configure()
+{
+    dbus.subscribe(PACKET_EVENT, new AltPktHandler);
 }
 
 //-------------------------------------------------------------------------

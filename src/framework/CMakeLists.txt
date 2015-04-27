@@ -5,6 +5,7 @@ set (FRAMEWORK_INCLUDES
     codec.h
     counts.h
     cursor.h
+    data_bus.h
     decode_data.h
     logger.h
     inspector.h
@@ -22,6 +23,7 @@ add_library ( framework STATIC
     ${FRAMEWORK_INCLUDES}
     codec.cc
     cursor.cc
+    data_bus.cc
     inspector.cc
     ips_option.cc
     parameter.cc

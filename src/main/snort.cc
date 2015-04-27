@@ -685,7 +685,7 @@ void LogRebuiltPacket(Packet* p)
     SnortEventqPop();
 }
 
-DAQ_Verdict ProcessPacket(
+static DAQ_Verdict ProcessPacket(
     Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt, bool is_frag)
 {
     DAQ_Verdict verdict = DAQ_VERDICT_PASS;
@@ -735,6 +735,14 @@ DAQ_Verdict ProcessPacket(
     return verdict;
 }
 
+void ProcessDefragPacket(Packet* p, Packet* dpkt)
+{
+    SnortEventqPush();
+    PacketManager::encode_set_pkt(p);
+    ProcessPacket(dpkt, dpkt->pkth, dpkt->pkt, true);
+    SnortEventqPop();
+}
+
 DAQ_Verdict fail_open(
     void*, const DAQ_PktHdr_t*, const uint8_t*)
 {
@@ -774,7 +782,7 @@ DAQ_Verdict packet_callback(
 
     ActionManager::reset_queue();
 
-    verdict = ProcessPacket(s_packet, pkthdr, pkt);
+    verdict = ProcessPacket(s_packet, pkthdr, pkt, false);
 
     ActionManager::execute(s_packet);
 

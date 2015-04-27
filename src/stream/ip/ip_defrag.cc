@@ -952,10 +952,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
 #endif
 
     encap_frag_cnt++;
-    SnortEventqPush();
-    PacketManager::encode_set_pkt(p);
-    ProcessPacket(dpkt, dpkt->pkth, dpkt->pkt, true);
-    SnortEventqPop();
+    ProcessDefragPacket(p, dpkt);
     encap_frag_cnt--;
 
     DEBUG_WRAP(DebugMessage(DEBUG_FRAG,

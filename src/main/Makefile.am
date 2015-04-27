@@ -7,8 +7,6 @@ noinst_LIBRARIES = libmain.a
 x_include_HEADERS = \
 snort_debug.h \
 snort_types.h \
-snort.h \
-snort_config.h \
 thread.h
 
 libmain_a_SOURCES = \
@@ -26,6 +24,7 @@ shell.h \
 snort.cc \
 snort.h \
 snort_config.cc \
+snort_config.h \
 snort_config.h \
 snort_debug.cc \
 snort_module.cc \

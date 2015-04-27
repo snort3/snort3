@@ -65,6 +65,7 @@
 #include "detection_util.h"
 #include "parser.h"
 #include "sfsnprintfappend.h"
+#include "framework/data_bus.h"
 
 #ifdef PERF_PROFILING
 // FIXIT-M ftp, http, etc. should not be calling Detect()
@@ -260,7 +261,7 @@ void do_detection(Packet* p)
      * main detection engine for each protocol field.
      */
     MODULE_PROFILE_START(ftppDetectPerfStats);
-    Detect(p);
+    get_data_bus().publish(PACKET_EVENT, p);
 
     DisableInspection(p);
     MODULE_PROFILE_END(ftppDetectPerfStats);

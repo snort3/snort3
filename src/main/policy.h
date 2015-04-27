@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "main/snort_types.h"
+#include "framework/data_bus.h"
 
 struct PortTable;
 struct vartable_t;
@@ -86,8 +87,11 @@ public:
     InspectionPolicy();
     ~InspectionPolicy();
 
+    void configure();
+
 public:
     struct FrameworkPolicy* framework_policy;
+    DataBus dbus;
 };
 
 //-------------------------------------------------------------------------

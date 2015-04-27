@@ -46,11 +46,6 @@
 
 #define SFKSEARCH_TRACK_Q
 
-#ifdef SFKSEARCH_TRACK_Q
-//# include "snort.h"
-//# include "util.h"
-#endif
-
 static void KTrieFree(KTRIENODE* n);
 
 static unsigned int mtot = 0;

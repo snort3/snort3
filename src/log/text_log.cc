@@ -42,6 +42,22 @@
 #define MIN_BUF  (1* K_BYTES)
 #define MIN_FILE (MIN_BUF)
 
+struct TextLog
+{
+/* private:
+   file attributes: */
+    FILE* file;
+    char* name;
+    size_t size;
+    size_t maxFile;
+    time_t last;
+
+/* buffer attributes: */
+    unsigned int pos;
+    unsigned int maxBuf;
+    char buf[1];
+};
+
 /*-------------------------------------------------------------------
  * TextLog_Open/Close: open/close associated log file
  *-------------------------------------------------------------------
@@ -68,6 +84,22 @@ static size_t TextLog_Size(FILE* file)
     int fd = fileno(file);
     int err = fstat(fd, &sbuf);
     return err ? 0 : sbuf.st_size;
+}
+
+int TextLog_Tell(TextLog* const txt)
+{
+    return txt->pos;
+}
+
+int TextLog_Avail(TextLog* const txt)
+{
+    return txt->maxBuf - txt->pos - 1;
+}
+
+void TextLog_Reset(TextLog* const txt)
+{
+    txt->pos = 0;
+    txt->buf[txt->pos] = '\0';
 }
 
 /*-------------------------------------------------------------------

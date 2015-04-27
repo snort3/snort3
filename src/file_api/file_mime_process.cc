@@ -36,6 +36,7 @@
 #include "search_engines/search_tool.h"
 #include "protocols/packet.h"
 #include "detection_util.h"
+#include "framework/data_bus.h"
 
 MimePcre mime_boundary_pcre;
 
@@ -978,7 +979,7 @@ const uint8_t* process_mime_data(void* packet, const uint8_t* start, const uint8
                 file_api->set_file_name_from_log(&(mime_ssn->log_state->file_log), p->flow);
             }
             updateFilePosition(&position, file_api->get_file_processed_size(p->flow));
-            Detect(p);
+            get_data_bus().publish(PACKET_EVENT, p);
             mime_ssn->state_flags &= ~MIME_FLAG_MULTIPLE_EMAIL_ATTACH;
             ResetEmailDecodeState((Email_DecodeState*)(mime_ssn->decode_state));
             p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;

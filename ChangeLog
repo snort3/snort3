@@ -1,3 +1,8 @@
+Pending - build 148
+
+-- added publish-subscribe handling of data events
+-- added data_log plugin example for pub-sub
+
 15/04/23 - build 147
 
 -- change PT_DATA to IT_PASSIVE; supports named instances, reload, and consumers

@@ -665,6 +665,7 @@ bool InspectorManager::configure(SnortConfig* sc)
     {
         set_policies(sc, idx);
         InspectionPolicy* p = sc->policy_map->inspection_policy[idx];
+        p->configure();
         ok = ::configure(sc, p->framework_policy) && ok;
     }
 

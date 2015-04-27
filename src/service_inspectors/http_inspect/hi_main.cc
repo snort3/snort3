@@ -79,6 +79,7 @@
 #include "file_api/file_api.h"
 #include "sf_email_attach_decode.h"
 #include "protocols/tcp.h"
+#include "framework/data_bus.h"
 
 const HiSearchToken hi_patterns[] =
 {
@@ -604,7 +605,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
         }
         // see comments on call to Detect() below
         MODULE_PROFILE_START(hiDetectPerfStats);
-        Detect(p);
+        get_data_bus().publish(PACKET_EVENT, p);
 #ifdef PERF_PROFILING
         hiDetectCalled = 1;
 #endif
@@ -693,6 +694,10 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                     session->client.request.uri_size);
 
                 p->packet_flags |= PKT_HTTP_DECODE;
+
+                get_data_bus().publish(
+                    "http_uri", session->client.request.uri_norm,
+                    session->client.request.uri_norm_size, p->flow);
             }
             else if ( session->client.request.uri )
             {
@@ -708,6 +713,10 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                     session->client.request.uri_size);
 
                 p->packet_flags |= PKT_HTTP_DECODE;
+
+                get_data_bus().publish(
+                    "http_raw_uri", session->client.request.uri,
+                    session->client.request.uri_size, p->flow);
             }
 
             if ( session->client.request.header_norm ||

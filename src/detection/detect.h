@@ -49,7 +49,7 @@ extern THREAD_LOCAL ProfileStats detectPerfStats;
 /* detection/manipulation funcs */
 void snort_ignore(Packet*);
 void snort_inspect(Packet*);
-SO_PUBLIC bool Detect(Packet*);
+bool Detect(Packet*);
 void CallOutputPlugins(Packet*);
 int EvalPacket(ListHead*, int, Packet*);
 int EvalHeader(RuleTreeNode*, Packet*, int);

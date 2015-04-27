@@ -3,8 +3,6 @@ set (INCLUDES
     thread.h
     snort_debug.h
     snort_types.h
-    snort.h
-    snort_config.h
 )
 
 add_library (main STATIC
@@ -19,8 +17,9 @@ add_library (main STATIC
     policy.h
     shell.h
     shell.cc
-    snort.h
     snort.cc
+    snort.h
+    snort_config.h
     snort_debug.cc
     snort_config.cc
     snort_module.h

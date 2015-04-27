@@ -61,6 +61,7 @@
 #include "stream/stream_splitter.h"
 #include "target_based/sftarget_protocol_reference.h"
 #include "protocols/tcp.h"
+#include "framework/data_bus.h"
 
 #define RPC_MAX_BUF_SIZE   256
 #define RPC_FRAG_HDR_SIZE  sizeof(uint32_t)
@@ -315,7 +316,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
                     if (RpcPrepRaw(data, rsdata->frag_len, p) != RPC_STATUS__SUCCESS)
                         return RPC_STATUS__ERROR;
 
-                    Detect(p);
+                    get_data_bus().publish(PACKET_EVENT, p);
                 }
 
                 if ( (dsize > 0) )
@@ -400,7 +401,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
                 if ( (dsize > 0) )
                     RpcPreprocEvent(rconfig, rsdata, RPC_MULTIPLE_RECORD);
 
-                Detect(p);
+                get_data_bus().publish(PACKET_EVENT, p);
                 RpcBufClean(&rsdata->frag);
             }
 

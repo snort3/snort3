@@ -11,6 +11,7 @@ bits.h \
 codec.h \
 counts.h \
 cursor.h \
+data_bus.h \
 decode_data.h \
 logger.h \
 inspector.h \
@@ -26,6 +27,7 @@ value.h
 libframework_a_SOURCES = \
 codec.cc \
 cursor.cc \
+data_bus.cc \
 inspector.cc \
 ips_option.cc \
 parameter.cc \
