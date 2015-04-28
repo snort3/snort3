@@ -1,5 +1,8 @@
-Pending - build 148
+15/04/28 - build 148
 
+-- fixed default validation issue reported by Sancho Panza
+-- refactored snort and snort_config modules
+-- file id refactoring and cleanup
 -- added publish-subscribe handling of data events
 -- added data_log plugin example for pub-sub
 
