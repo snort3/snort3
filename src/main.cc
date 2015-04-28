@@ -54,6 +54,7 @@ using namespace std;
 #include "parser/parser.h"
 #include "packet_io/trough.h"
 #include "packet_io/intf.h"
+#include "packet_io/sfdaq.h"
 #include "control/idle_processing.h"
 #include "target_based/sftarget_reader.h"
 #include "flow/flow_control.h"
@@ -74,6 +75,7 @@ static Swapper* swapper = NULL;
 
 static int exit_logged = 0;
 static bool paused = false;
+static bool unknown_source = false;
 
 static bool pause_enabled = false;
 #ifdef BUILD_SHELL
@@ -666,6 +668,25 @@ static void service_check()
 // main foo
 //-------------------------------------------------------------------------
 
+static bool just_validate()
+{
+    if ( SnortConfig::test_mode() )
+        return true;
+
+    // pcap requires a source; as a convenience, if none given
+    // just validate instead of erroring out
+    if ( !Trough_GetQCount() and strcmp(DAQ_GetType(), "pcap") )
+        unknown_source = true;
+
+    if ( use_shell(snort_conf) )
+        return false;
+
+    if ( !Trough_GetQCount() and !strcmp(DAQ_GetType(), "pcap") )
+        return true;
+
+    return false;
+}
+
 static bool set_mode()
 {
 #ifdef UNIT_TEST
@@ -687,7 +708,7 @@ static bool set_mode()
         }
     }
 
-    if ( SnortConfig::test_mode() or (!Trough_GetQCount() and !use_shell(snort_conf)) )
+    if ( just_validate() )
     {
         LogMessage("\nSnort successfully validated the configuration.\n");
 
@@ -719,7 +740,7 @@ static bool set_mode()
 
 static inline bool dont_stop()
 {
-    if ( paused or Trough_Next() )
+    if ( paused or unknown_source or Trough_Next() )
         return true;
 
     if ( pause_enabled )
