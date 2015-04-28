@@ -20,7 +20,7 @@
 **  Author(s):  Hui Cao <hcao@sourcefire.com>
 **
 **  NOTES
-**  5.25.2012 - Initial Source Code. Hcao
+**  5.25.2012 - Initial Source Code. Hui Cao
 */
 #ifndef FILE_CONFIG_H
 #define FILE_CONFIG_H
@@ -31,32 +31,33 @@
 #endif
 #include "file_identifier.h"
 
-#define FILE_ID_MAX          1024
+#define DEFAULT_FILE_TYPE_DEPTH 1460
+#define DEFAULT_FILE_SIGNATURE_DEPTH 10485760 /*10 Mbytes*/
+#define DEFAULT_FILE_SHOW_DATA_DEPTH 100
+#define DEFAULT_FILE_BLOCK_TIMEOUT 86400 /*1 day*/
+#define DEFAULT_FILE_LOOKUP_TIMEOUT 2    /*2 seconds*/
 
-typedef struct _IdentifierMemoryBlock
+class FileConfig
 {
-    void* mem_block;  /*the node that is shared*/
-    struct _IdentifierMemoryBlock* next;  /*next node*/
-}IdentifierMemoryBlock;
-
-typedef struct _fileConfig
-{
-    IdentifierNode* identifier_root; /*Root of magic tries*/
-    IdentifierMemoryBlock* id_memory_root; /*root of memory used*/
-    RuleInfo* FileRules[FILE_ID_MAX + 1];
-    int64_t file_type_depth;
-    int64_t file_signature_depth;
-    int64_t file_block_timeout;
-    int64_t file_lookup_timeout;
-    bool block_timeout_lookup;
+public:
+    void print_file_rule(FileMagicRule&);
+    FileMagicRule* get_rule_from_id(uint32_t);
+    void process_file_rule(FileMagicRule&);
+    bool process_file_magic(FileMagicData&);
+    uint32_t find_file_type_id(uint8_t* buf, int len, FileContext* context);
+    int64_t file_type_depth = DEFAULT_FILE_TYPE_DEPTH;
+    int64_t file_signature_depth = DEFAULT_FILE_SIGNATURE_DEPTH;
+    int64_t file_block_timeout = DEFAULT_FILE_BLOCK_TIMEOUT;
+    int64_t file_lookup_timeout = DEFAULT_FILE_LOOKUP_TIMEOUT;
+    bool block_timeout_lookup = false;
 
 #if defined(DEBUG_MSGS) || defined (REG_TEST)
-    int64_t show_data_depth;
+    int64_t show_data_depth = DEFAULT_FILE_SHOW_DATA_DEPTH;
 #endif
-} FileConfig;
-FileConfig* get_file_config(void** file_config);
-void parse_file_rule(const char* args, void** file_config);
-RuleInfo* get_rule_from_id(void* conf, uint32_t);
-void free_file_rules(void*);
+
+private:
+    FileIdenfifier fileIdentifier;
+};
+
 #endif
 

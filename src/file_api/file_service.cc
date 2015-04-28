@@ -189,13 +189,6 @@ static void start_file_processing(void)
     }
 }
 
-void free_file_config(void* conf)
-{
-    free_file_rules(conf);
-    free_file_identifiers(conf);
-    free(conf);
-}
-
 void close_fileAPI(void)
 {
     file_resume_block_cleanup();

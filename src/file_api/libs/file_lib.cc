@@ -49,7 +49,7 @@
 static inline int get_data_size_from_depth_limit(FileContext* context, FileProcessType type, int
     data_size)
 {
-    FileConfig* file_config =  (FileConfig*)context->file_config;
+    FileConfig* file_config =  (FileConfig*) context->file_config;
     uint64_t max_depth;
 
     if (!file_config)
@@ -78,6 +78,8 @@ static inline int get_data_size_from_depth_limit(FileContext* context, FileProce
 /*Main File Processing functions */
 void file_type_id(FileContext* context, uint8_t* file_data, int data_size, FilePosition position)
 {
+    FileConfig* file_config =  (FileConfig*) context->file_config;
+
     if (!context)
         return;
 
@@ -96,19 +98,19 @@ void file_type_id(FileContext* context, uint8_t* file_data, int data_size, FileP
     {
     case SNORT_FILE_START:
         context->file_type_context = NULL;
-        context->file_type_id = find_file_type_id(file_data, data_size, context);
+        context->file_type_id = file_config->find_file_type_id(file_data, data_size, context);
         break;
     case SNORT_FILE_MIDDLE:
-        context->file_type_id = find_file_type_id(file_data, data_size, context);
+        context->file_type_id = file_config->find_file_type_id(file_data, data_size, context);
         break;
     case SNORT_FILE_END:
-        context->file_type_id = find_file_type_id(file_data, data_size, context);
+        context->file_type_id = file_config->find_file_type_id(file_data, data_size, context);
         if (SNORT_FILE_TYPE_CONTINUE ==  context->file_type_id)
             context->file_type_id = SNORT_FILE_TYPE_UNKNOWN;
         break;
     case SNORT_FILE_FULL:
         context->file_type_context = NULL;
-        context->file_type_id = find_file_type_id(file_data, data_size, context);
+        context->file_type_id = file_config->find_file_type_id(file_data, data_size, context);
         if (SNORT_FILE_TYPE_CONTINUE ==  context->file_type_id)
             context->file_type_id = SNORT_FILE_TYPE_UNKNOWN;
         break;
@@ -232,7 +234,8 @@ uint8_t* file_sig_sha256_get(FileContext* context)
 
 const char* file_info_from_ID(void* conf, uint32_t id)
 {
-    RuleInfo* info;
+    FileMagicRule* info = NULL;
+    FileConfig* file_config =  (FileConfig*) conf;
 
     if (SNORT_FILE_TYPE_UNKNOWN == id)
         return "Unknown file type, done";
@@ -240,10 +243,10 @@ const char* file_info_from_ID(void* conf, uint32_t id)
     else if (SNORT_FILE_TYPE_CONTINUE == id)
         return "Undecided file type, continue...";
 
-    info = get_rule_from_id(conf,id);
+    info = file_config->get_rule_from_id(id);
 
     if (info != NULL)
-        return info->type;
+        return info->type.c_str();
 
     return NULL;
 }

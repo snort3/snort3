@@ -317,7 +317,8 @@ void SnortConfFree(SnortConfig* sc)
     if ( sc->output )
         free(sc->output);
 
-    free_file_config(sc->file_config);
+    if(sc->file_config)
+        delete sc->file_config;
 
     if ( sc->var_list )
         FreeVarList(sc->var_list);

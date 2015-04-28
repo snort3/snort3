@@ -37,12 +37,8 @@
 #include "snort_debug.h"
 #include "parser.h"
 #include "util.h"
-#include "sfghash.h"
-#include "file_config.h"
+#include <algorithm>
 
-static THREAD_LOCAL_TBD uint32_t memory_used = 0; /*Track memory usage*/
-
-static THREAD_LOCAL_TBD SFGHASH* identifier_merge_hash = NULL;
 
 typedef struct _IdentifierSharedNode
 {
@@ -50,23 +46,26 @@ typedef struct _IdentifierSharedNode
     IdentifierNode* append_node;  /*the node that is added*/
 } IdentifierSharedNode;
 
-static THREAD_LOCAL_TBD IdentifierMemoryBlock* id_memory_root = NULL;
-static THREAD_LOCAL_TBD IdentifierMemoryBlock* id_memory_current = NULL;
-
-static void identifierMergeHashFree(void)
+void FileMagicData::clear()
 {
-    if (identifier_merge_hash != NULL)
-    {
-        sfghash_delete(identifier_merge_hash);
-        identifier_merge_hash = NULL;
-    }
+    content_str.clear();
+    content.clear();
+    offset = 0;
 }
 
-static void identifierMergeHashInit(void)
+void FileMagicRule::clear()
 {
-    if (identifier_merge_hash != NULL)
-        identifierMergeHashFree();
+    rev = 0;
+    message.clear();
+    type.clear();
+    id = 0;
+    category.clear();
+    version.clear();
+    file_magics.clear();
+}
 
+void FileIdenfifier::identifierMergeHashInit()
+{
     identifier_merge_hash = sfghash_new(1000, sizeof(IdentifierSharedNode), 0, NULL);
     if (identifier_merge_hash == NULL)
     {
@@ -75,31 +74,35 @@ static void identifierMergeHashInit(void)
     }
 }
 
-static inline void* calloc_mem(size_t size)
+FileIdenfifier::~FileIdenfifier()
+{
+    /*Release memory used for identifiers*/
+    for (IDMemoryBlocks::iterator idMem = idMemoryBlocks.begin();
+            idMem != idMemoryBlocks.end(); idMem++)
+    {
+        free(idMem->mem);
+    }
+
+    if (identifier_merge_hash != NULL)
+    {
+        sfghash_delete(identifier_merge_hash);
+    }
+}
+
+void* FileIdenfifier::calloc_mem(size_t size)
 {
     void* ret;
-    IdentifierMemoryBlock* imb;
+    IDMemoryBlock memblock;
     ret = SnortAlloc(size);
+    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"calloc_mem: %p. size: %d\n", ret, size); );
     memory_used += size;
     /*For memory management*/
-    size = sizeof(*imb);
-    imb = (IdentifierMemoryBlock*)SnortAlloc(size);
-    imb->mem_block = ret;
-    if (!id_memory_root)
-    {
-        id_memory_root = imb;
-    }
-    else
-    {
-        id_memory_current->next = imb;
-    }
-    id_memory_current = imb;
-    memory_used += size;
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"calloc:  %p (%d).\n", ret, size); );
+    memblock.mem = ret;
+    idMemoryBlocks.push_back(memblock);
     return ret;
 }
 
-static void set_node_state_shared(IdentifierNode* start)
+void FileIdenfifier::set_node_state_shared(IdentifierNode* start)
 {
     int i;
 
@@ -112,18 +115,14 @@ static void set_node_state_shared(IdentifierNode* start)
     if (start->state == ID_NODE_USED)
         start->state = ID_NODE_SHARED;
     else
-    {
-        start->state = ID_NODE_USED;
-    }
+       start->state = ID_NODE_USED;
 
     for (i = 0; i < MAX_BRANCH; i++)
-    {
-        set_node_state_shared(start->next[i]);
-    }
+       set_node_state_shared(start->next[i]);
 }
 
 /*Clone a trie*/
-static IdentifierNode* clone_node(IdentifierNode* start)
+IdentifierNode* FileIdenfifier::clone_node(IdentifierNode* start)
 {
     int index;
     IdentifierNode* node;
@@ -145,115 +144,58 @@ static IdentifierNode* clone_node(IdentifierNode* start)
     return node;
 }
 
-static void verify_magic_offset(MagicData* parent, MagicData* current)
+void FileIdenfifier::verify_magic_offset(FileMagicData* parent, FileMagicData* current)
 {
-    if ((parent) && (parent->content_len + parent->offset > current->offset))
+    if ((parent) && (parent->content.size() + parent->offset > current->offset))
     {
         ParseError("magic content at offset %d overlaps with offset %d.",
             parent->offset, current->offset);
         return;
     }
-
-    if ((current->next) && (current->content_len + current->offset > current->next->offset))
-    {
-        ParseError("magic content at offset %d overlaps with offset %d.",
-            current->offset, current->next->offset);
-    }
-}
-
-/* Add a new node to the sorted magic list
- */
-static void add_to_sorted_magic(MagicData** head, MagicData* md)
-{
-    MagicData* current = *head;
-
-    /*Avoid adding the same magic*/
-    if (!md || (current == md))
-        return;
-
-    if (md->offset < current->offset)
-    {
-        /*current becomes new head*/
-        md->next = current;
-        *head = md;
-        verify_magic_offset(NULL, md);
-        return;
-    }
-
-    /*Find the parent for the new magic*/
-    while (current)
-    {
-        MagicData* next = current->next;
-        if ((!next) || (md->offset < next->offset))
-        {
-            /*current is the parent*/
-            current->next = md;
-            md->next = next;
-            verify_magic_offset(current, md);
-            return;
-        }
-        current = next;
-    }
-}
-
-/* Content magics are sorted based on offset, this
- * will help compile the file magic trio
- */
-static void sort_magics(MagicData** head)
-{
-    MagicData* current = *head;
-
-    /*Add one magic at a time to sorted magics*/
-    while (current)
-    {
-        MagicData* next = current->next;
-        current->next = NULL;
-        add_to_sorted_magic(head, current);
-        current = next;
-    }
 }
 
 /*Create a trie for the magic*/
-static inline IdentifierNode* create_trie_from_magic(MagicData** head, uint32_t type_id)
+IdentifierNode* FileIdenfifier::create_trie_from_magic(FileMagicRule& rule, uint32_t type_id)
 {
-    int i;
     IdentifierNode* current;
     IdentifierNode* root = NULL;
-    MagicData* magic;
 
-    if (!head || !(*head)||(0 == (*head)->content_len) || !type_id)
+    if (!rule.file_magics.size() || !type_id)
         return NULL;
 
-    sort_magics(head);
-    magic = *head;
+    /* Content magics are sorted based on offset, this
+     * will help compile the file magic trio
+     */
+    std::sort(rule.file_magics.begin(),rule.file_magics.end());
 
     current =  (IdentifierNode*)calloc_mem(sizeof(*current));
     current->state = ID_NODE_NEW;
     root = current;
 
-    while (magic)
+    for(FileMagics::iterator magic = rule.file_magics.begin();
+            magic !=rule.file_magics.end(); magic++)
     {
+        unsigned int i;
         current->offset = magic->offset;
-        for (i = 0; i < magic->content_len; i++)
+        for (i = 0; i < magic->content.size(); i++)
         {
             IdentifierNode* node = (IdentifierNode*)calloc_mem(sizeof(*node));
+            uint8_t index = magic->content[i];
             node->offset = magic->offset + i + 1;
             node->state = ID_NODE_NEW;
-            current->next[magic->content[i]] = node;
+            current->next[index] = node;
             current = node;
         }
-        magic = magic->next;
     }
 
     /*Last node has type name*/
     current->type_id = type_id;
-    DEBUG_WRAP(print_identifiers(root); );
     return root;
 }
 
 /*This function examines whether to update the trie based on shared state*/
 
-static inline bool updateNext(IdentifierNode* start,IdentifierNode** next_ptr,
+bool FileIdenfifier::updateNext(IdentifierNode* start,IdentifierNode** next_ptr,
     IdentifierNode* append)
 {
     IdentifierNode* next = (*next_ptr);
@@ -308,12 +250,12 @@ static inline bool updateNext(IdentifierNode* start,IdentifierNode** next_ptr,
             sharedIdentifier.append_node = append;
             DEBUG_WRAP(DebugMessage(DEBUG_FILE,"MEM:Clone node on %p.\n", current_next); );
             DEBUG_WRAP(DebugMessage(DEBUG_FILE,"MEM:Before clone: %d.\n",
-                memory_usage_identifiers()); );
+                memory_usage()); );
             next = clone_node(current_next);
             set_node_state_shared(next);
             DEBUG_WRAP(DebugMessage(DEBUG_FILE,"MEM:Cloned node on %p.\n", next); );
             DEBUG_WRAP(DebugMessage(DEBUG_FILE,"MEM:After clone: %d.\n",
-                memory_usage_identifiers()); );
+                memory_usage()); );
             sfghash_add(identifier_merge_hash, &sharedIdentifier, next);
         }
 
@@ -325,9 +267,8 @@ static inline bool updateNext(IdentifierNode* start,IdentifierNode** next_ptr,
 
 /*
  * Append magic to existing trie
- *
  */
-static void update_trie(IdentifierNode* start, IdentifierNode* append)
+void FileIdenfifier::update_trie(IdentifierNode* start, IdentifierNode* append)
 {
     int i;
 
@@ -377,38 +318,33 @@ static void update_trie(IdentifierNode* start, IdentifierNode* append)
     }
 }
 
-void insert_file_rule(RuleInfo* rule, void* conf)
+void FileIdenfifier::insert_file_rule(FileMagicRule& rule)
 {
     IdentifierNode* node;
-    FileConfig* file_config = NULL;
 
-    file_config = (FileConfig*)conf;
-
-    if (!file_config->identifier_root)
+    if (!identifier_root)
     {
-        init_file_identifers();
-        file_config->identifier_root = (IdentifierNode*)calloc_mem(
-            sizeof(*file_config->identifier_root));
-        file_config->id_memory_root = id_memory_root;
+        identifier_root = (IdentifierNode *)calloc_mem(sizeof(*identifier_root));
         identifierMergeHashInit();
     }
 
-    node = create_trie_from_magic(&(rule->magics), rule->id);
+    if (rule.id > FILE_ID_MAX)
+    {
+        ParseError("file type: rule id %d larger than %d", rule.id, FILE_ID_MAX);
+        return;
+    }
 
-    update_trie(file_config->identifier_root, node);
-    DEBUG_WRAP(test_find_file_type(file_config); );
-}
+    if (file_magic_rules[rule.id].id > 0)
+    {
+        ParseError("file type: duplicated rule id %d defined", rule.id);
+        return;
+    }
 
-void init_file_identifers(void)
-{
-    memory_used = 0;
-    id_memory_root = NULL;
-    id_memory_current = NULL;
-}
 
-uint32_t memory_usage_identifiers(void)
-{
-    return memory_used;
+    file_magic_rules[rule.id] = rule;
+
+    node = create_trie_from_magic(rule, rule.id);
+    update_trie(identifier_root, node);
 }
 
 /*
@@ -416,7 +352,7 @@ uint32_t memory_usage_identifiers(void)
  * Find file type is to traverse the tries.
  * Context is saved to continue file type identification as data becomes available
  */
-uint32_t find_file_type_id(uint8_t* buf, int len, FileContext* context)
+uint32_t FileIdenfifier::find_file_type_id(uint8_t* buf, int len, FileContext* context)
 {
     FileConfig* file_config;
     IdentifierNode* current;
@@ -428,7 +364,7 @@ uint32_t find_file_type_id(uint8_t* buf, int len, FileContext* context)
     file_config = (FileConfig*)context->file_config;
 
     if (!(context->file_type_context))
-        context->file_type_context = (void*)(file_config->identifier_root);
+        context->file_type_context = (void*)(identifier_root);
 
     current = (IdentifierNode*)context->file_type_context;
 
@@ -469,89 +405,12 @@ uint32_t find_file_type_id(uint8_t* buf, int len, FileContext* context)
         return SNORT_FILE_TYPE_UNKNOWN;
 }
 
-void free_file_identifiers(void* conf)
+FileMagicRule*  FileIdenfifier::get_rule_from_id(uint32_t id)
 {
-    IdentifierMemoryBlock* id_memory_next;
-    FileConfig* file_config = (FileConfig*)conf;
-
-    if (!file_config)
-        return;
-    /*Release memory used for identifiers*/
-    id_memory_current = file_config->id_memory_root;
-    while (id_memory_current)
+    if ((id < FILE_ID_MAX) && (file_magic_rules[id].id > 0))
     {
-        id_memory_next = id_memory_current->next;
-        free(id_memory_current->mem_block);
-        free(id_memory_current);
-        id_memory_current = id_memory_next;
+        return (&(file_magic_rules[id]));
     }
-
-    file_config->id_memory_root = NULL;
-    identifierMergeHashFree();
-}
-
-void print_identifiers(IdentifierNode* current)
-{
-#ifdef DEBUG_MSGS
-    int i;
-
-    if ( !(DEBUG_FILE & GetDebugLevel()) )
-        return;
-
-    printf("Working on pointer %p, offset:%d\n", (void*)current, current->offset);
-
-    for (i = 0; i < MAX_BRANCH; i++)
-    {
-        if (current->next[i])
-        {
-            printf("Magic number: %x ", i);
-            print_identifiers(current->next[i]);
-        }
-    }
-    if (current->type_id)
-    {
-        printf("Type: %d\n", current->type_id);
-    }
-#else
-    UNUSED(current);
-#endif
-}
-
-char* test_find_file_type(void* conf)
-{
-#ifdef DEBUG_MSGS
-    if ( !(DEBUG_FILE & GetDebugLevel()) )
+    else
         return NULL;
-
-    uint8_t str[100] = { 0x4d, 0x5a, 0x46, 0x38, 0x66, 0x72, 0x65, 0x65, 0 };
-    unsigned int i;
-    uint32_t type_id;
-
-    FileContext* context = (FileContext*)SnortAlloc(sizeof (*context));
-
-    printf("Check string:");
-
-    for (i = 0; i < strlen((char*)str); i++)
-    {
-        printf(" %x", str[i]);
-    }
-    printf("\n");
-
-    context->file_config = conf;
-
-    type_id = find_file_type_id(str, strlen((char*)str), context);
-    if (SNORT_FILE_TYPE_UNKNOWN == type_id)
-    {
-        printf("File type is unknown\n");
-    }
-    else if (SNORT_FILE_TYPE_CONTINUE != type_id)
-        printf("File type is: %s (%d)\n",file_info_from_ID(conf, type_id), type_id);
-
-    free(context);
-    return ((char*)"MSEXE");
-#else
-    UNUSED(conf);
-    return NULL;
-#endif
 }
-

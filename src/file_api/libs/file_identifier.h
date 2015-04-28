@@ -20,7 +20,7 @@
 **  Author(s):  Hui Cao <hcao@sourcefire.com>
 **
 **  NOTES
-**  5.25.2012 - Initial Source Code. Hcao
+**  5.25.2012 - Initial Source Code. Hui Cao
 */
 
 #ifndef FILE_IDENTIFIER_H
@@ -30,15 +30,47 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include "sfghash.h"
+#include <list>
+
+#define FILE_ID_MAX          1024
 
 #define MAX_BRANCH (UINT8_MAX + 1)
 
-typedef enum _IdNodeState
+enum IdNodeState
 {
     ID_NODE_NEW,
     ID_NODE_USED,
     ID_NODE_SHARED
-} IdNodeState;
+} ;
+
+class FileMagicData
+{
+public:
+    void clear(void);
+    std::string content_str;   /* magic content to match*/
+    std::string content;       /* magic content raw values*/
+    uint32_t offset;           /* pattern search start offset */
+    bool operator < (const FileMagicData& magic) const
+    {
+        return (offset < magic.offset);
+    }
+};
+
+typedef std::vector<FileMagicData> FileMagics;
+
+class FileMagicRule
+{
+public:
+    void clear(void);
+    uint32_t rev;
+    std::string message;
+    std::string type;
+    uint32_t id;
+    std::string category;
+    std::string version;
+    FileMagics file_magics;
+};
 
 typedef struct _IdentifierNode
 {
@@ -48,23 +80,38 @@ typedef struct _IdentifierNode
     struct _IdentifierNode* next[MAX_BRANCH]; /* pointer to an array of 256 identifiers pointers*/
 } IdentifierNode;
 
-typedef struct _IdentifierNodeHead
+struct IDMemoryBlock
 {
-    int offset;            /* offset from file start */
-    IdentifierNode* start;  /* start node for the trie at this offset*/
-    struct _IdentifierNodeHead* nextHead; /* pointer to next offset head*/
-} IdentifierNodeHead;
+    void *mem;
+};
 
-void init_file_identifers(void);
-void insert_file_rule(RuleInfo* rule, void* conf);
-uint32_t memory_usage_identifiers(void);
+typedef std::list<IDMemoryBlock >  IDMemoryBlocks;
 
-uint32_t find_file_type_id(uint8_t* buf, int len, FileContext* context);
+class FileIdenfifier
+{
+public:
+    ~FileIdenfifier();
+    uint32_t memory_usage(void) {return memory_used;};
+    void insert_file_rule(FileMagicRule& rule);
+    uint32_t find_file_type_id(uint8_t* buf, int len, FileContext* context);
+    FileMagicRule* get_rule_from_id(uint32_t);
+private:
+    void identifierMergeHashInit(void);
+    void* calloc_mem(size_t size);
+    void set_node_state_shared(IdentifierNode* start);
+    IdentifierNode* clone_node(IdentifierNode* start);
+    void verify_magic_offset(FileMagicData* parent, FileMagicData* current);
+    bool updateNext(IdentifierNode* start, IdentifierNode** next_ptr, IdentifierNode* append);
+    IdentifierNode* create_trie_from_magic(FileMagicRule& rule, uint32_t type_id);
+    void update_trie(IdentifierNode* start, IdentifierNode* append);
 
-#ifdef DEBUG_MSGS
-void print_identifiers(IdentifierNode*);
-char* test_find_file_type(void* conf);
-#endif
+    /*properties*/
+    IdentifierNode* identifier_root = NULL; /*Root of magic tries*/
+    uint32_t memory_used = 0; /*Track memory usage*/
+    SFGHASH* identifier_merge_hash = NULL;
+    FileMagicRule file_magic_rules[FILE_ID_MAX + 1];
+    IDMemoryBlocks idMemoryBlocks;
+};
 
 #endif
 

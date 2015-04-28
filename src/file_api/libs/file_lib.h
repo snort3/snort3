@@ -20,7 +20,7 @@
 **  Author(s):  Hui Cao <hcao@sourcefire.com>
 **
 **  NOTES
-**  5.25.12 - Initial Source Code. Hcao
+**  5.25.12 - Initial Source Code. Hui Cao
 */
 
 #ifndef FILE_LIB_H
@@ -36,26 +36,6 @@
 
 #define SNORT_FILE_TYPE_UNKNOWN          UINT16_MAX  /**/
 #define SNORT_FILE_TYPE_CONTINUE         0 /**/
-
-typedef struct _MagicData
-{
-    uint8_t* content;       /* magic content to match*/
-    int content_len;        /* length of magic content */
-    uint32_t offset;             /* pattern search start offset */
-
-    struct _MagicData* next; /* ptr to next match struct */
-} MagicData;
-
-typedef struct _RuleInfo
-{
-    uint32_t rev;
-    char* message;
-    char* type;
-    uint32_t id;
-    char* category;
-    char* version;
-    MagicData* magics;
-} RuleInfo;
 
 typedef enum _File_Verdict
 {

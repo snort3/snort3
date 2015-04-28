@@ -34,6 +34,7 @@
 #include "protocols/packet.h"
 #include "main/thread.h"
 #include "framework/bits.h"
+#include "file_api/libs/file_config.h"
 
 #define DEFAULT_LOG_DIR "."
 
@@ -164,7 +165,8 @@ struct SnortConfig
     // various modules
     struct FastPatternConfig* fast_pattern_config;
     struct EventQueueConfig* event_queue_config;
-    void* file_config;
+
+    FileConfig* file_config;
 
     /* XXX XXX policy specific? */
     struct ThresholdConfig* threshold_config;

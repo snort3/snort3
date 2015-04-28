@@ -58,9 +58,7 @@ using namespace std;
 #include "stream/stream_api.h"
 #include "utils/stats.h"
 
-#if defined(DEBUG_MSGS) || defined (REG_TEST)
 #include "file_api/file_api.h"
-#endif
 
 //-------------------------------------------------------------------------
 // detection module
@@ -1307,6 +1305,42 @@ bool ProcessModule::end(const char* fqn, int idx, SnortConfig* sc)
 //-------------------------------------------------------------------------
 // file_id module
 //-------------------------------------------------------------------------
+static const Parameter file_magic_params[] =
+{
+    { "content", Parameter::PT_STRING, nullptr, nullptr,
+      "file magic content" },
+
+    { "offset", Parameter::PT_INT, "0:", "0",
+      "file magic offset" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter file_rule_params[] =
+{
+    { "rev", Parameter::PT_INT, "0:", "0",
+      "rule revision" },
+
+    { "msg", Parameter::PT_STRING, nullptr, nullptr,
+      "information about the file type" },
+
+    { "type", Parameter::PT_STRING, nullptr, nullptr,
+      "file type name" },
+
+    { "id", Parameter::PT_INT, "0:", "0",
+      "file type id" },
+
+    { "category", Parameter::PT_STRING, nullptr, nullptr,
+      "file type category" },
+
+    { "version", Parameter::PT_STRING, nullptr, nullptr,
+      "file type version" },
+
+    { "magic", Parameter::PT_LIST, file_magic_params, nullptr,
+        "list of file magic rules" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
 
 static const Parameter file_id_params[] =
 {
@@ -1335,6 +1369,9 @@ static const Parameter file_id_params[] =
     { "show_data_depth", Parameter::PT_INT, "0:", "100",
       "print this many octets" },
 #endif
+    { "file_rules", Parameter::PT_LIST, file_rule_params, nullptr,
+        "list of file magic rules" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -1346,11 +1383,16 @@ class FileIdModule : public Module
 public:
     FileIdModule() : Module("file_id", file_id_help, file_id_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
+private:
+    FileMagicRule rule;
+    FileMagicData magic;
 };
 
 bool FileIdModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    FileConfig* fc = get_file_config(&sc->file_config);
+    FileConfig* fc = sc->file_config;
     assert(fc);
 
     if ( v.is("type_depth") )
@@ -1378,12 +1420,89 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("show_data_depth") )
         fc->show_data_depth = v.get_long();
 #endif
+    else if ( v.is("file_rules") )
+        return true;
+
+    else if ( v.is("rev") )
+        rule.rev = v.get_long();
+
+    else if ( v.is("msg") )
+        rule.message = v.get_string();
+
+    else if ( v.is("type") )
+        rule.type = v.get_string();
+
+    else if ( v.is("id") )
+        rule.id = v.get_long();
+
+    else if ( v.is("category") )
+        rule.category = v.get_string();
+
+    else if ( v.is("version") )
+        rule.version = v.get_string();
+
+    else if ( v.is("magic") )
+        return true;
+
+    else if ( v.is("content") )
+        magic.content_str = v.get_string();
+
+    else if ( v.is("offset") )
+        magic.offset = v.get_long();
+
     else
         return false;
 
     return true;
 }
 
+bool FileIdModule::begin(const char* fqn, int idx, SnortConfig* sc)
+{
+    FileConfig* fc = sc->file_config;
+
+    if (!fc)
+    {
+        fc = new FileConfig;
+        sc->file_config = fc;
+    }
+
+    if (!idx)
+        return true;
+
+    if ( !strcmp(fqn, "file_id.file_rules") )
+    {
+        rule.clear();
+    }
+
+    else if ( !strcmp(fqn, "file_id.file_rules.magic") )
+    {
+        magic.clear();
+    }
+
+    return true;
+}
+
+bool FileIdModule::end(const char* fqn, int idx, SnortConfig* sc)
+{
+    FileConfig* fc = sc->file_config;
+
+    if (!idx)
+        return true;
+
+    if ( !strcmp(fqn, "file_id.file_rules") )
+    {
+        fc->process_file_rule(rule);
+        fc->print_file_rule(rule);
+    }
+
+    else if ( !strcmp(fqn, "file_id.file_rules.magic") )
+    {
+        fc->process_file_magic(magic);
+        rule.file_magics.push_back(magic);
+    }
+
+    return true;
+}
 //-------------------------------------------------------------------------
 // suppress module
 //-------------------------------------------------------------------------
