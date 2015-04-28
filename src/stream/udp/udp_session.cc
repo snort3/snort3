@@ -36,7 +36,6 @@
 #include "flow/session.h"
 #include "rules.h"
 #include "treenodes.h"
-#include "snort.h"
 #include "packet_io/active.h"
 #include "perf_monitor/perf.h"
 #include "profiler.h"

@@ -29,6 +29,7 @@
 #include "log/messages.h"
 #include "parser/parser.h"
 #include "packet_io/sfdaq.h"
+#include "main/snort_config.h"
 
 struct CodecManager::CodecApiWrapper
 {

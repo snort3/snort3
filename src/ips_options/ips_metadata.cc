@@ -27,7 +27,7 @@ using namespace std;
 
 #include "snort_types.h"
 #include "snort_debug.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
@@ -64,7 +64,7 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
 
-    SnortConfig* snort_config;
+    struct SnortConfig* snort_config;
     vector<string> services;
 };
 

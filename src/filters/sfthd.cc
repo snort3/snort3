@@ -36,6 +36,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -47,7 +48,6 @@
 #include "sfghash.h"
 #include "sfxhash.h"
 
-#include "snort.h"
 #include "util.h"
 #include "utils/dyn_array.h"
 

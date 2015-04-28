@@ -20,8 +20,10 @@
 #ifndef VARS_H
 #define VARS_H
 
-#include "main/snort_config.h"
+#include "main/snort_types.h"
 #include "sfip/sf_vartable.h"
+
+struct SnortConfig;
 
 //-------------------------------------------------------------------------
 // var node stuff
@@ -35,21 +37,30 @@ struct VarNode
     VarNode* next;
 };
 
-void config_set_var(SnortConfig* sc, const char*);
+void config_set_var(SnortConfig*, const char*);
 void FreeVarList(VarNode*);
 
 //-------------------------------------------------------------------------
 // var table stuff
 //-------------------------------------------------------------------------
 
-void InitVarTables(IpsPolicy*);
-void VarTablesFree(IpsPolicy*);
+struct VarEntry
+{
+    char* name;
+    char* value;
 
-VarEntry* VarDefine(SnortConfig* sc, const char* name, const char* value);
-int PortVarDefine(SnortConfig* sc, const char* name, const char* s);
-void ParseIpVar(SnortConfig* sc, const char* name, const char* s);  // FIXIT-L actually in
+    unsigned char flags;
+    uint32_t id;
+
+    sfip_var_t* addrset;
+    VarEntry* prev;
+    VarEntry* next;
+};
+
+VarEntry* VarDefine(SnortConfig*, const char* name, const char* value);
+int PortVarDefine(SnortConfig*, const char* name, const char* s);
+void ParseIpVar(SnortConfig*, const char* name, const char* s);  // FIXIT-L actually in
                                                                     // parse_conf.cc
-
 VarEntry* VarAlloc();
 void DeleteVars(VarEntry* var_table);
 void AddVarToTable(SnortConfig*, const char*, const char*);
@@ -63,14 +74,14 @@ enum VarType
 
 int VarIsIpAddr(vartable_t* ip_vartable, const char* value);
 int VarIsIpList(vartable_t* ip_vartable, const char* value);
-void DisallowCrossTableDuplicateVars(SnortConfig* sc, const char* name, VarType var_type);
-const char* VarGet(SnortConfig* sc, const char* name);
+void DisallowCrossTableDuplicateVars(SnortConfig*, const char* name, VarType var_type);
+const char* VarGet(SnortConfig*, const char* name);
 /*
  * Same as VarGet - but this does not Fatal out if a var is not found
  */
-const char* VarSearch(SnortConfig* sc, const char* name);
+const char* VarSearch(SnortConfig*, const char* name);
 
-const char* ExpandVars(SnortConfig* sc, const char* string);
+const char* ExpandVars(SnortConfig*, const char* string);
 
 #endif
 

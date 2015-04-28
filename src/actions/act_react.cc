@@ -56,7 +56,6 @@
 #include "profiler.h"
 #include "packet_io/active.h"
 #include "parser/parser.h"
-#include "snort.h"
 #include "framework/ips_action.h"
 #include "framework/parameter.h"
 #include "framework/module.h"

@@ -32,7 +32,7 @@
 #include "obfuscation.h"
 #include "packet_io/active.h"
 #include "ppm.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "log/messages.h"
 #include "target_based/sftarget_protocol_reference.h"
 #include "binder/bind_module.h"
@@ -465,6 +465,9 @@ void InspectorManager::new_config(SnortConfig* sc)
 
 void InspectorManager::delete_config(SnortConfig* sc)
 {
+    if ( !sc->framework_config )
+        return;
+
     for ( auto* p : sc->framework_config->clist )
         delete p;
 

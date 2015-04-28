@@ -24,7 +24,6 @@
 #include <pcap.h>
 #include "framework/codec.h"
 #include "protocols/linux_sll.h"
-#include "main/snort.h"
 
 #define CD_LINUX_SLL_NAME "linux_sll"
 #define CD_LINUX_SLL_HELP_STR "support for Linux SLL"

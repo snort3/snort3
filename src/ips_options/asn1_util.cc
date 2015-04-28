@@ -51,8 +51,8 @@
 
 #include "utils/util.h"
 #include "ips_options/asn1_util.h"
-#include "main/thread.h"
 #include "main/snort_config.h"
+#include "main/thread.h"
 
 /*
 **  Macros

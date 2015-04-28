@@ -139,7 +139,7 @@
 #define ACSMX2_TRACK_Q
 
 #ifdef  ACSMX2_TRACK_Q
-# include "snort.h"
+# include "snort_config.h"
 #endif
 
 #include "pat_stats.h"

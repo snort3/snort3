@@ -28,7 +28,8 @@
 #include "packet_time.h"
 #include "ips_options/ips_flowbits.h"
 #include "stream/stream.h"
-#include "zhash.h"
+#include "hash/zhash.h"
+#include "main/snort_debug.h"
 
 #define SESSION_CACHE_FLAG_PURGING  0x01
 

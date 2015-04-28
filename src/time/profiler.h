@@ -26,6 +26,7 @@
 #endif
 
 #include "main/snort_types.h"
+#include "main/snort_config.h"
 
 // unconditionally declared
 struct ProfileStats
@@ -64,7 +65,7 @@ struct ProfileStats
     node_ticks_delta = node_ticks_end - node_ticks_start
 
 #ifndef PROFILING_RULES
-#define PROFILING_RULES ScProfileRules()
+#define PROFILING_RULES SnortConfig::get_profile_rules()
 #endif
 
 #define NODE_PROFILE_VARS \
@@ -107,7 +108,7 @@ struct ProfileStats
 #define OTN_PROFILE_ALERT(otn) otn->state[get_instance_id()].alerts++;
 
 #ifndef PROFILING_MODULES
-#define PROFILING_MODULES ScProfilePreprocs()
+#define PROFILING_MODULES SnortConfig::get_profile_modules()
 #endif
 
 #define MODULE_PROFILE_START_NAMED(name, ppstat) \
@@ -220,5 +221,5 @@ static inline void ResetAllProfiles()
 #endif
 }
 
-#endif  /* PROFILER_H */
+#endif
 

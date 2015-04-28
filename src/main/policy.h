@@ -98,19 +98,6 @@ public:
 // detection stuff
 //-------------------------------------------------------------------------
 
-typedef struct _VarEntry
-{
-    char* name;
-    char* value;
-
-    unsigned char flags;
-    uint32_t id;
-
-    sfip_var_t* addrset;
-    struct _VarEntry* prev;
-    struct _VarEntry* next;
-} VarEntry;
-
 enum PolicyMode
 {
     POLICY_MODE__PASSIVE,
@@ -138,7 +125,7 @@ public:
 
     uint32_t var_id;
 
-    VarEntry* var_table;
+    struct VarEntry* var_table;
     vartable_t* ip_vartable;
 
     /* The portobjects in these are attached to rtns and used during runtime */
@@ -175,7 +162,7 @@ public:  // FIXIT-M make impl private
 //-------------------------------------------------------------------------
 
 // FIXIT-L may be inlined at some point; on lockdown for now
-// FIXIT-L SO_PUBLIC requierd because ScInlineMode(), etc. uses the function
+// FIXIT-L SO_PUBLIC requierd because SnortConfig::inline_mode(), etc. uses the function
 SO_PUBLIC NetworkPolicy* get_network_policy();
 SO_PUBLIC InspectionPolicy* get_inspection_policy();
 SO_PUBLIC IpsPolicy* get_ips_policy();

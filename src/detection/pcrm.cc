@@ -200,7 +200,7 @@
 
 #include "util.h"
 #include "fpcreate.h"
-#include "snort.h"
+#include "snort_config.h"
 
 /*
 **

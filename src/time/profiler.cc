@@ -24,6 +24,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,7 +33,6 @@
 #include <mutex>
 using namespace std;
 
-#include "snort.h"
 #include "rules.h"
 #include "treenodes.h"
 #include "treenodes.h"
@@ -768,7 +768,7 @@ void ResetPreprocProfiling(void)
     ProfileStatsNode* idx = NULL;
     SnortConfig* sc = snort_conf;
 
-    if ((sc == NULL) || (sc->profile_preprocs->num == 0))
+    if ((sc == NULL) || (sc->profile_modules->num == 0))
         return;
 
     for (idx = gProfileStatsNodeList; idx != NULL; idx = idx->next)
@@ -791,7 +791,7 @@ void ShowPreprocProfiles(void)
     double ticks_per_check;
     SnortConfig* sc = snort_conf;
 
-    if ((sc == NULL) || (sc->profile_preprocs->num == 0))
+    if ((sc == NULL) || (sc->profile_modules->num == 0))
         return;
 
     link_nodes();
@@ -850,7 +850,7 @@ void ShowPreprocProfiles(void)
             for (curr = listhead; curr && !got_position; curr = curr->next)
             {
                 last = curr;
-                switch (sc->profile_preprocs->sort)
+                switch (sc->profile_modules->sort)
                 {
                 case PROFILE_SORT_CHECKS:
                     if (pwp->node->stats.checks >= curr->node->stats.checks)
@@ -916,7 +916,7 @@ void ShowPreprocProfiles(void)
             }
         }
     }
-    PrintWorstPreprocs(sc->profile_preprocs->num);
+    PrintWorstPreprocs(sc->profile_modules->num);
     CleanupProfileStatsNodeList();
 }
 

@@ -44,7 +44,7 @@ using namespace std;
 #include "framework/parameter.h"
 #include "managers/module_manager.h"
 #include "ips_options/ips_options.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "snort_debug.h"
 #include "util.h"
 #include "parser/parser.h"

@@ -25,7 +25,6 @@
 #include "codecs/codec_module.h"
 #include "protocols/ipv6.h"
 #include "protocols/protocol_ids.h"
-#include "main/snort.h"
 #include "detection/fpdetect.h"
 #include "protocols/packet.h"
 #include "log/text_log.h"

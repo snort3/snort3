@@ -27,7 +27,6 @@ using namespace std;
 #include "snort_types.h"
 #include "parser.h"
 #include "snort_debug.h"
-#include "snort.h"
 #include "profiler.h"
 #include "flow/flow.h"
 #include "detection/detection_defines.h"

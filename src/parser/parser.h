@@ -26,14 +26,9 @@
 
 #include <stdio.h>
 
-#include "snort.h"
 #include "rules.h"
 #include "treenodes.h"
-#include "protocols/packet.h"
 #include "main/policy.h"
-#include "sflsq.h"
-#include "util.h"
-#include "parser/cmd_line.h"
 #include "detection/sfrim.h"
 
 unsigned get_parse_errors();
@@ -60,7 +55,7 @@ void SetRuleStates(SnortConfig*);
 void ParserCleanup(void);
 void FreeRuleLists(SnortConfig*);
 void VarTablesFree(SnortConfig*);
-void PortTablesFree(RulePortTables*);
+void PortTablesFree(struct RulePortTables*);
 
 void parser_append_rules(const char*);
 

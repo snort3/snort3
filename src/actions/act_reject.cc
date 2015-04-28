@@ -53,7 +53,6 @@
 #include "protocols/packet.h"
 #include "profiler.h"
 #include "packet_io/active.h"
-#include "snort.h"
 #include "util.h"
 #include "framework/ips_action.h"
 #include "framework/parameter.h"

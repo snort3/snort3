@@ -25,7 +25,7 @@
 #endif
 
 #include "protocols/packet.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "utils/util.h"
 #include "sfip/sf_ip.h"
 #include "protocols/icmp4.h"
@@ -89,7 +89,7 @@ inline void FlowKey::init4(
         COPY4(ip_h, src);
         port_h = srcPort;
     }
-    if (ScMplsOverlappingIp() &&
+    if (SnortConfig::mpls_overlapping_ip() &&
         ip::isPrivateIP(*src) && ip::isPrivateIP(*dst))
         mplsLabel = mplsId;
     else
@@ -162,7 +162,7 @@ inline void FlowKey::init6(
         port_h = srcPort;
     }
 
-    if (ScMplsOverlappingIp())
+    if (SnortConfig::mpls_overlapping_ip())
         mplsLabel = mplsId;
     else
         mplsLabel = 0;
@@ -170,7 +170,7 @@ inline void FlowKey::init6(
 
 void FlowKey::init_vlan(uint16_t vlan)
 {
-    if (!ScVlanAgnostic())
+    if (!SnortConfig::get_vlan_agnostic())
         vlan_tag = vlan;
     else
         vlan_tag = 0;
@@ -179,7 +179,7 @@ void FlowKey::init_vlan(uint16_t vlan)
 void FlowKey::init_address_space(uint16_t addrSpaceId)
 {
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-    if (!ScAddressSpaceAgnostic())
+    if (!SnortConfig::address_space_agnostic())
         addressSpaceId = addrSpaceId;
     else
         addressSpaceId = 0;
@@ -192,7 +192,7 @@ void FlowKey::init_address_space(uint16_t addrSpaceId)
 
 void FlowKey::init_mpls(uint32_t mplsId)
 {
-    if (ScMplsOverlappingIp())
+    if (SnortConfig::mpls_overlapping_ip())
         mplsLabel = mplsId;
     else
         mplsLabel = 0;

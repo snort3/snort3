@@ -56,7 +56,7 @@
 #include "util.h"
 #include "fpcreate.h"
 #include "signature.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "hash/sfghash.h"
 #include "sf_vartable.h"
 #include "sfip/sf_ip.h"
@@ -222,15 +222,15 @@ void add_service_to_otn(
 // if we are inline (and can actually drop),
 // or we are going to just alert instead of drop,
 // or we are going to ignore session data instead of drop.
-// the alert case is tested for separately with ScTreatDropAsAlert().
+// the alert case is tested for separately with SnortConfig::treat_drop_as_alert().
 static inline int ScKeepDropRules(void)
 {
-    return ( ScInlineMode() || ScAdapterInlineMode() || ScTreatDropAsIgnore() );
+    return ( SnortConfig::inline_mode() || SnortConfig::adaptor_inline_mode() || SnortConfig::treat_drop_as_ignore() );
 }
 
 static inline int ScLoadAsDropRules(void)
 {
-    return ( ScInlineTestMode() || ScAdapterInlineTestMode() );
+    return ( SnortConfig::inline_test_mode() || SnortConfig::adaptor_inline_test_mode() );
 }
 
 RuleType get_rule_type(const char* s)
@@ -243,7 +243,7 @@ RuleType get_rule_type(const char* s)
     switch ( rt )
     {
     case RULE_TYPE__DROP:
-        if ( ScTreatDropAsAlert() )
+        if ( SnortConfig::treat_drop_as_alert() )
             return RULE_TYPE__ALERT;
 
         if ( ScKeepDropRules() || ScLoadAsDropRules() )
@@ -252,7 +252,7 @@ RuleType get_rule_type(const char* s)
         return RULE_TYPE__NONE;
 
     case RULE_TYPE__SDROP:
-        if ( ScKeepDropRules() && !ScTreatDropAsAlert() )
+        if ( ScKeepDropRules() && !SnortConfig::treat_drop_as_alert() )
             return RULE_TYPE__SDROP;
 
         if ( ScLoadAsDropRules() )

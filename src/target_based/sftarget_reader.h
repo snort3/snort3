@@ -25,7 +25,6 @@
 #ifndef SFTARGET_READER_H
 #define SFTARGET_READER_H
 
-#include "snort.h"
 #include "sftarget_data.h"
 
 #define DEFAULT_MAX_ATTRIBUTE_HOSTS   10000
@@ -38,6 +37,8 @@
 #define MIN_MAX_ATTRIBUTE_SERVICES_PER_HOST       1
 #define MAX_MAX_METADATA_SERVICES 256
 #define MIN_MAX_METADATA_SERVICES 1
+
+struct Packet;
 
 /* main Functions, called by Snort shutdown */
 void SFAT_Init();

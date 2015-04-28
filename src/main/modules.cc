@@ -33,9 +33,9 @@ using namespace std;
 #include "framework/module.h"
 #include "managers/module_manager.h"
 #include "main.h"
-#include "snort.h"
-#include "snort_config.h"
-#include "snort_module.h"
+#include "main/snort.h"
+#include "main/snort_config.h"
+#include "main/snort_module.h"
 #include "parser/parser.h"
 #include "parser/parse_conf.h"
 #include "parser/config_file.h"
@@ -48,6 +48,7 @@ using namespace std;
 #include "filters/rate_filter.h"
 #include "codecs/codec_module.h"
 #include "time/ppm_module.h"
+#include "time/profiler.h"
 #include "parser/parse_ip.h"
 #include "target_based/sftarget_data.h"
 #include "detection/fpcreate.h"
@@ -370,7 +371,7 @@ bool ProfileModule::begin(const char* fqn, int, SnortConfig* sc)
         sc->profile_rules->num = -1;
 
     else if ( !strcmp(fqn, "profile.modules") )
-        sc->profile_preprocs->num = -1;
+        sc->profile_modules->num = -1;
 
     return true;
 }
@@ -385,7 +386,7 @@ bool ProfileModule::set(const char* fqn, Value& v, SnortConfig* sc)
         p = sc->profile_rules;
 
     else if ( !strncmp(fqn, spp, strlen(spp)) )
-        p = sc->profile_preprocs;
+        p = sc->profile_modules;
 
     else
         return false;
@@ -401,7 +402,6 @@ bool ProfileModule::set(const char* fqn, Value& v, SnortConfig* sc)
 
     return true;
 }
-
 #endif
 
 //-------------------------------------------------------------------------
@@ -593,7 +593,7 @@ bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
         sc->output_flags |= OUTPUT_FLAG__ALERT_IFACE;
 
     else if ( v.is("default_rule_state") )
-        sc->default_rule_state = v.get_long();
+        sc->default_rule_state = v.get_bool();
 
     else if ( v.is("detection_filter_memcap") )
         sc->detection_filter_config->memcap = v.get_long();

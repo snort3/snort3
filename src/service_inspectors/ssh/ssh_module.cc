@@ -21,7 +21,6 @@
 #include "ssh_module.h"
 #include <assert.h>
 #include <sstream>
-#include "main/snort_config.h"
 
 using namespace std;
 

@@ -58,7 +58,7 @@
 #include "packet_io/sfdaq.h"
 #include "detection_util.h"
 #include "detect.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "stream/stream_api.h"
 #include "protocols/layer.h"
 #include "protocols/vlan.h"
@@ -225,7 +225,7 @@ static void Unified2InitFile(Unified2Config* config)
     }
 
     /* If test mode, close and delete the file */
-    if (ScTestMode())  // FIXIT-L eliminate test check; should always remove if empty
+    if (SnortConfig::test_mode())  // FIXIT-L eliminate test check; should always remove if empty
     {
         fclose(u2.stream);
         u2.stream = NULL;
@@ -1096,7 +1096,7 @@ bool U2Module::begin(const char*, int, SnortConfig*)
 {
     limit = 0;
     units = 0;
-    nostamp = ScNoOutputTimestamp();
+    nostamp = SnortConfig::output_no_timestamp();
     mpls = vlan = false;
     return true;
 }
@@ -1178,7 +1178,7 @@ void U2Logger::alert(Packet* p, const char* msg, Event* event)
     {
         _AlertIP6_v2(p, msg, &config, event);
 
-        if (ScLogIPv6Extra() && p->ptrs.ip_api.is_ip6())
+        if (SnortConfig::get_log_ip6_extra() && p->ptrs.ip_api.is_ip6())
         {
             const sfip_t* ip = p->ptrs.ip_api.get_src();
             _WriteExtraData(&config, event->event_id, event->ref_time.tv_sec,

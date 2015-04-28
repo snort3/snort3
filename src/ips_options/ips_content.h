@@ -23,9 +23,8 @@
 
 #include <ctype.h>
 
-#include "snort.h"
-#include "snort_debug.h"
-#include "detection/rules.h"
+#include "main/snort_types.h"
+#include "main/thread.h"
 #include "detection/treenodes.h"
 
 extern THREAD_LOCAL int lastType;

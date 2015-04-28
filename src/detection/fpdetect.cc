@@ -39,7 +39,7 @@
 #include "config.h"
 #endif
 
-#include "snort.h"
+#include "snort_config.h"
 #include "detect.h"
 #include "snort_debug.h"
 #include "util.h"
@@ -186,7 +186,7 @@ int fpLogEvent(RuleTreeNode* rtn, OptTreeNode* otn, Packet* p)
     }
 
     if ((p->packet_flags & PKT_STREAM_UNEST_UNI) &&
-        ScAssureEstablished() &&
+        SnortConfig::assure_established() &&
         (!(p->packet_flags & PKT_REBUILT_STREAM)) &&
         (otn->stateless == 0))
     {
@@ -253,7 +253,7 @@ int fpLogEvent(RuleTreeNode* rtn, OptTreeNode* otn, Packet* p)
      * If its order is lower than 'pass', it should have been passed.
      * This is consistent with other detection rules */
     if ( (p->packet_flags & PKT_PASS_RULE)
-        &&(ScGetEvalIndex(rtn->type) > ScGetEvalIndex(RULE_TYPE__PASS)))
+        &&(SnortConfig::get_eval_index(rtn->type) > SnortConfig::get_eval_index(RULE_TYPE__PASS)))
     {
         fpLogOther(p, rtn, otn, rtn->type);
         return 1;
@@ -733,7 +733,7 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA* o, Packet* p)
     {
         /* bail if were not dumping events in all the action groups,
          * and we've alresady got some events */
-        if (!ScProcessAllEvents() && (tcnt > 0))
+        if (!SnortConfig::process_all_events() && (tcnt > 0))
             return 1;
 
         if (o->matchInfo[i].iMatchCount)

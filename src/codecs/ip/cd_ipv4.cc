@@ -24,7 +24,7 @@
 
 #include <array>
 #include "utils/dnet_header.h"
-#include "main/snort.h"
+#include "main/snort_config.h"
 #include "fpdetect.h"
 
 #include "protocols/tcp.h"
@@ -204,7 +204,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     // This code is left in, commented, to keep us from re-writing it later.
     else if (ip_len < len)
     {
-        if (ScLogVerbose())
+        if (SnortConfig::log_verbose())
             ErrorMessage("IP Len field is %d bytes "
                 "smaller than captured length.\n"
                 "    (ip.len: %lu, cap.len: %lu)\n",
@@ -227,7 +227,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         /*  If Teredo or GRE seen, this is not an 4in6 tunnel */
         if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
             codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
-        else if ( ScTunnelBypassEnabled(TUNNEL_4IN6) )
+        else if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_4IN6) )
             Active_SetTunnelBypass();
     }
 
@@ -239,7 +239,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
      */
     IP4AddrTests(iph, codec, snort);
 
-    if (ScIpChecksums())
+    if (SnortConfig::ip_checksums())
     {
         /* routers drop packets with bad IP checksums, we don't really
          * need to check them (should make this a command line/config
@@ -565,7 +565,7 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const IP4Hdr* const ip4h = reinterpret_cast<const IP4Hdr*>(raw_pkt);
 
     // FIXIT-H  -->  This does NOT obfuscate correctly
-    if (ScObfuscate())
+    if (SnortConfig::obfuscate())
     {
         TextLog_Print(text_log, "xxx.xxx.xxx.xxx -> xxx.xxx.xxx.xxx");
     }

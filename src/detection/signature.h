@@ -68,8 +68,7 @@ struct ClassType
 };
 
 /* NOTE:  These methods can only be used during parse time */
-void AddClassification(
-    SnortConfig* sc, const char* type, const char* name, int priority);
+void AddClassification(SnortConfig*, const char* type, const char* name, int priority);
 
 ClassType* ClassTypeLookupByType(SnortConfig*, const char*);
 ClassType* ClassTypeLookupById(SnortConfig*, int);

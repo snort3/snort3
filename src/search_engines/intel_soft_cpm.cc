@@ -25,7 +25,7 @@
 
 #include "pm/cpa_pm_compile.h"
 #include "util.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "snort_debug.h"
 #include "fpcreate.h"
 

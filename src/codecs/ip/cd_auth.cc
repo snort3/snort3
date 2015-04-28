@@ -26,7 +26,7 @@
 #include "protocols/ipv6.h"
 #include "protocols/packet.h"
 #include "codecs/codec_module.h"
-#include "main/snort.h"
+#include "main/snort_config.h"
 
 #define CD_AUTH_NAME "auth"
 #define CD_AUTH_HELP "support for IP authentication header"

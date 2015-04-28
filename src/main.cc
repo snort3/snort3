@@ -41,8 +41,7 @@
 #include <thread>
 using namespace std;
 
-#include "snort.h"
-#include "helpers/process.h"
+#include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/snort_module.h"
 #include "main/shell.h"
@@ -51,15 +50,16 @@ using namespace std;
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/inspector_manager.h"
-#include "util.h"
+#include "utils/util.h"
 #include "parser/parser.h"
-#include "profiler.h"
 #include "packet_io/trough.h"
 #include "packet_io/intf.h"
 #include "control/idle_processing.h"
 #include "target_based/sftarget_reader.h"
 #include "flow/flow_control.h"
+#include "helpers/process.h"
 #include "helpers/swapper.h"
+#include "time/profiler.h"
 #include "time/periodic.h"
 
 #ifdef UNIT_TEST
@@ -131,7 +131,7 @@ Swapper::Swapper(tTargetBasedConfig* told, tTargetBasedConfig* tnew)
 Swapper::~Swapper()
 {
     if ( old_conf )
-        SnortConfFree(old_conf);
+        delete old_conf;
 
     if ( old_attribs )
         SFAT_Free(old_attribs);
@@ -302,7 +302,7 @@ int main_reload_config(lua_State*)
     }
     request.respond(".. reloading configuration\n");
     SnortConfig* old = snort_conf;
-    SnortConfig* sc = get_reload_config();
+    SnortConfig* sc = Snort::get_reload_config();
 
     if ( !sc )
     {
@@ -678,7 +678,7 @@ static bool set_mode()
         FatalError("see prior %d errors\n", k);
         return false;
     }
-    if ( ScConfErrorOut() )
+    if ( SnortConfig::conf_error_out() )
     {
         if ( int k = get_parse_warnings() )
         {
@@ -687,7 +687,7 @@ static bool set_mode()
         }
     }
 
-    if ( ScTestMode() or (!Trough_GetQCount() and !use_shell(snort_conf)) )
+    if ( SnortConfig::test_mode() or (!Trough_GetQCount() and !use_shell(snort_conf)) )
     {
         LogMessage("\nSnort successfully validated the configuration.\n");
 
@@ -803,12 +803,12 @@ int main(int argc, char* argv[])
     if ( s )
         prompt = s;
 
-    snort_setup(argc, argv);
+    Snort::setup(argc, argv);
 
     if ( set_mode() )
         snort_main();
 
-    snort_cleanup();
+    Snort::cleanup();
 
     return 0;
 }

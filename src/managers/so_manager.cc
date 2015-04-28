@@ -42,7 +42,7 @@ using namespace std;
 #include "plugin_manager.h"
 #include "framework/so_rule.h"
 #include "framework/module.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "snort_debug.h"
 #include "util.h"
 #include "parser/parser.h"

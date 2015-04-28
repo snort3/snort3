@@ -24,7 +24,6 @@
 
 #include "snort_types.h"
 #include "snort_debug.h"
-#include "snort.h"
 #include "utils/util.h"
 #include "sfip/sf_ip.h"
 

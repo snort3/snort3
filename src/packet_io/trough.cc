@@ -29,6 +29,7 @@
 #include "sflsq.h"
 #include "sfdaq.h"
 #include "utils/util.h"
+#include "main/snort_config.h"
 
 struct PcapReadObject
 {
@@ -281,14 +282,14 @@ static int GetPcaps(SF_LIST* pol, SF_QUEUE* pcap_queue)
                 *path_buf_end = '\0';
 
                 /* do a quick check to make sure file exists */
-                if (ScReadMode() && stat(path_buf_ptr, &stat_buf) == -1)
+                if (SnortConfig::read_mode() && stat(path_buf_ptr, &stat_buf) == -1)
                 {
                     ErrorMessage("Error getting stat on pcap file: %s: %s\n",
                         path_buf_ptr, get_error(errno));
                     fclose(pcap_file);
                     return -1;
                 }
-                else if (ScReadMode() && stat_buf.st_mode & S_IFDIR)
+                else if (SnortConfig::read_mode() && stat_buf.st_mode & S_IFDIR)
                 {
                     ret = GetFilesUnderDir(path_buf_ptr, pcap_queue, filter);
                     if (ret == -1)
@@ -298,7 +299,7 @@ static int GetPcaps(SF_LIST* pol, SF_QUEUE* pcap_queue)
                         return -1;
                     }
                 }
-                else if (!ScReadMode() || stat_buf.st_mode & S_IFREG)
+                else if (!SnortConfig::read_mode() || stat_buf.st_mode & S_IFREG)
                 {
                     if ((filter == NULL) || (fnmatch(filter, path_buf_ptr, 0) == 0))
                     {
@@ -345,13 +346,13 @@ static int GetPcaps(SF_LIST* pol, SF_QUEUE* pcap_queue)
             do
             {
                 /* do a quick check to make sure file exists */
-                if (ScReadMode() && stat(tmp, &stat_buf) == -1)
+                if (SnortConfig::read_mode() && stat(tmp, &stat_buf) == -1)
                 {
                     ErrorMessage("Error getting stat on file: %s: %s\n",
                         tmp, get_error(errno));
                     return -1;
                 }
-                else if (ScReadMode() && !(stat_buf.st_mode & (S_IFREG|S_IFIFO)))
+                else if (SnortConfig::read_mode() && !(stat_buf.st_mode & (S_IFREG|S_IFIFO)))
                 {
                     ErrorMessage("Specified pcap is not a regular file: %s\n", tmp);
                     return -1;

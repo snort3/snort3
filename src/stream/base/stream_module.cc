@@ -23,7 +23,6 @@
 #include <string>
 using namespace std;
 
-#include "main/snort_config.h"
 #include "stream/stream.h"
 
 static constexpr unsigned K = 1024;

@@ -220,7 +220,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         return false;
     }
 
-    if (ScUdpChecksums())
+    if (SnortConfig::udp_checksums())
     {
         /* look at the UDP checksum to make sure we've got a good packet */
         uint16_t csum;
@@ -306,15 +306,15 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     // set in packet manager
     UDPMiscTests(snort, codec, uhlen - udp::UDP_HEADER_LEN);
 
-    if (ScGTPDecoding() &&
-        (ScIsGTPPort(src_port)||ScIsGTPPort(dst_port)))
+    if (SnortConfig::gtp_decoding() &&
+        (SnortConfig::is_gtp_port(src_port)||SnortConfig::is_gtp_port(dst_port)))
     {
         if ( !(snort.decode_flags & DECODE_FRAG) )
             codec.next_prot_id = PROTO_GTP;
     }
     else if (teredo::is_teredo_port(src_port) ||
         teredo::is_teredo_port(dst_port) ||
-        ScDeepTeredoInspection())
+        SnortConfig::deep_teredo_inspection())
     {
         codec.next_prot_id = PROTO_TEREDO;
     }

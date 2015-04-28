@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include "snort.h"
+#include "main/snort_config.h"
 #include "framework/codec.h"
 #include "protocols/icmp6.h"
 #include "protocols/icmp4.h"
@@ -125,7 +125,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     const icmp::Icmp6Hdr* const icmp6h = reinterpret_cast<const icmp::Icmp6Hdr*>(raw.data);
 
     /* Do checksums */
-    if (ScIcmpChecksums())
+    if (SnortConfig::icmp_checksums())
     {
         uint16_t csum;
         PegCount* bad_cksum_cnt;

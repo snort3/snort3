@@ -32,13 +32,7 @@
 #include "main/policy.h"
 #include "actions/actions.h"
 
-struct SFGHASH;
 struct sfip_t;
-struct SnortConfig;
-
-// defined in utils/sflsq.h
-struct sf_list;
-typedef sf_list SF_LIST;
 
 // define to use over rate threshold
 #define SFRF_OVER_RATE
@@ -123,7 +117,7 @@ struct tSFRFSidNode
     unsigned sid;
 
     // List of threshold configuration nodes of type tSFRFConfigNode
-    SF_LIST* configNodeList;
+    struct sf_list* configNodeList;
 };
 
 struct tSFRFGenHashKey
@@ -142,7 +136,7 @@ struct RateFilterConfig
     /* Array of hash, indexed by gid. Each array element is a hash, which
      * is keyed on sid/policyId and data is a tSFRFSidNode node.
      */
-    SFGHASH* genHash [SFRF_MAX_GENID];
+    struct SFGHASH* genHash [SFRF_MAX_GENID];
 
     // Number of DOS thresholds added.
     int count;
@@ -160,19 +154,34 @@ struct RateFilterConfig
  */
 void SFRF_Delete(void);
 void SFRF_Flush(void);
-int SFRF_ConfigAdd(SnortConfig*, RateFilterConfig*, tSFRFConfigNode*);
+int SFRF_ConfigAdd(struct SnortConfig*, RateFilterConfig*, tSFRFConfigNode*);
 
 int SFRF_TestThreshold(
-RateFilterConfig *config,
-unsigned gid,
-unsigned sid,
-const sfip_t *sip,
-const sfip_t *dip,
-time_t curTime,
-SFRF_COUNT_OPERATION
-);
+    RateFilterConfig *config,
+    unsigned gid,
+    unsigned sid,
+    const sfip_t *sip,
+    const sfip_t *dip,
+    time_t curTime,
+    SFRF_COUNT_OPERATION);
 
 void SFRF_ShowObjects(RateFilterConfig*);
-/*@}*/
-#endif // SFRF_H
+
+static inline void EnableInternalEvent(RateFilterConfig* config, uint32_t sid)
+{   
+    if (config == NULL)
+        return;
+
+    config->internal_event_mask |= (1 << sid);
+}
+
+static inline int InternalEventIsEnabled(RateFilterConfig* config, uint32_t sid)
+{
+    if (config == NULL)
+        return 0;
+
+    return (config->internal_event_mask & (1 << sid));
+}
+
+#endif
 

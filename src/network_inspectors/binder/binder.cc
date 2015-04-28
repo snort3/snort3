@@ -35,7 +35,7 @@ using namespace std;
 #include "time/profiler.h"
 #include "utils/stats.h"
 #include "log/messages.h"
-#include "main/snort.h"
+#include "main/snort_config.h"
 #include "main/policy.h"
 #include "parser/parser.h"
 #include "target_based/sftarget_data.h"

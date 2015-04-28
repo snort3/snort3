@@ -25,8 +25,8 @@
 //-------------------------------------------------------------------------
 
 #include "framework/inspector.h"
-#include "main/snort.h"
 #include "nhttp_stream_splitter.h"
+#include "log/messages.h"
 
 class NHttpApi;
 class NHttpMsgSection;

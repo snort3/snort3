@@ -48,7 +48,6 @@
 #include <string.h>
 
 #include "snort_types.h"
-#include "snort.h"
 #include "util.h"
 #include "snort_types.h"
 #include "perf.h"

@@ -21,7 +21,6 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "main/snort.h"
 #include "main/snort_types.h"
 
 #include "nhttp_enum.h"

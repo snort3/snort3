@@ -24,7 +24,7 @@
 
 #include <random>
 
-#include "snort.h"
+#include "snort_config.h"
 #include "protocols/packet.h"
 
 //-------------------------------------------------------------------------
@@ -41,7 +41,7 @@ void FlushBucket::set(unsigned sz)
     if ( sz )
         s_flush_bucket = new ConstFlushBucket(sz);
 
-    else if ( ScStaticHash() )
+    else if ( SnortConfig::static_hash() )
         s_flush_bucket = new StaticFlushBucket;
 
     else

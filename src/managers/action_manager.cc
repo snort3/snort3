@@ -19,14 +19,16 @@
 
 #include "action_manager.h"
 
+#include <assert.h>
+
 #include <list>
 using namespace std;
 
-#include "snort_types.h"
-#include "snort.h"
-#include "snort_debug.h"
-#include "util.h"
-#include "module_manager.h"
+#include "main/snort_types.h"
+#include "main/snort_config.h"
+#include "main/snort_debug.h"
+#include "utils/util.h"
+#include "managers/module_manager.h"
 #include "framework/ips_action.h"
 #include "parser/parser.h"
 #include "log/messages.h"

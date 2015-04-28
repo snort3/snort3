@@ -17,6 +17,8 @@
 //--------------------------------------------------------------------------
 // nhttp_inspect.cc author Tom Peters <thopeter@cisco.com>
 
+#include "nhttp_inspect.h"
+
 #include <assert.h>
 #include <stdio.h>
 
@@ -32,7 +34,6 @@
 #include "nhttp_msg_trailer.h"
 #include "nhttp_test_manager.h"
 #include "nhttp_field.h"
-#include "nhttp_inspect.h"
 
 using namespace NHttpEnums;
 

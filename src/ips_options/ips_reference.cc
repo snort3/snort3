@@ -26,7 +26,7 @@
 #include "snort_types.h"
 #include "detection/treenodes.h"
 #include "snort_debug.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/parameter.h"

@@ -50,7 +50,6 @@
 #include "snort_debug.h"
 #include "util.h"
 #include "mstring.h"
-#include "snort.h"
 #include "profiler.h"
 #include "fpdetect.h"
 #include "ips_byte_extract.h"

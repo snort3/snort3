@@ -17,7 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "snort.h"
+#include "snort_config.h"
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
@@ -57,33 +57,36 @@ using namespace std;
 
 #include <thread>
 
-#include "helpers/process.h"
-#include "protocols/packet.h"
-#include "packet_io/sfdaq.h"
-#include "packet_io/active.h"
-#include "rules.h"
-#include "treenodes.h"
-#include "snort_debug.h"
-#include "util.h"
-#include "parser.h"
-#include "packet_io/trough.h"
-#include "tag.h"
-#include "detect.h"
-#include "fpcreate.h"
-#include "fpdetect.h"
-#include "filters/sfthreshold.h"
-#include "filters/rate_filter.h"
-#include "packet_time.h"
-#include "perf_monitor/perf_base.h"
-#include "perf_monitor/perf.h"
-#include "ips_options/ips_flowbits.h"
-#include "event_queue.h"
-#include "framework/mpse.h"
 #include "main.h"
 #include "main/build.h"
 #include "main/snort_config.h"
-#include "main/shell.h"
-#include "main/analyzer.h"
+#include "main/snort_debug.h"
+#include "helpers/process.h"
+#include "protocols/packet.h"
+#include "protocols/packet_manager.h"
+#include "packet_io/sfdaq.h"
+#include "packet_io/active.h"
+#include "packet_io/trough.h"
+#include "utils/util.h"
+#include "parser/parser.h"
+#include "parser/config_file.h"
+#include "parser/cmd_line.h"
+#include "detection/tag.h"
+#include "detection/detect.h"
+#include "detection/fpcreate.h"
+#include "detection/fpdetect.h"
+#include "detection/detection_util.h"
+#include "filters/sfthreshold.h"
+#include "filters/rate_filter.h"
+#include "filters/detection_filter.h"
+#include "time/packet_time.h"
+#include "time/ppm.h"
+#include "time/profiler.h"
+#include "time/periodic.h"
+#include "perf_monitor/perf.h"
+#include "ips_options/ips_flowbits.h"
+#include "events/event_queue.h"
+#include "framework/mpse.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"
@@ -91,129 +94,23 @@ using namespace std;
 #include "managers/inspector_manager.h"
 #include "managers/ips_manager.h"
 #include "managers/mpse_manager.h"
-#include "protocols/packet_manager.h"
 #include "managers/codec_manager.h"
 #include "managers/action_manager.h"
-#include "detection/sfrim.h"
-#include "ppm.h"
-#include "profiler.h"
-#include "utils/strvec.h"
-#include "packet_io/intf.h"
-#include "detection_util.h"
 #include "control/idle_processing.h"
 #include "file_api/file_service.h"
 #include "flow/flow_control.h"
-#include "log/text_log.h"
-#include "log/log_text.h"
-#include "time/periodic.h"
-#include "parser/config_file.h"
-#include "parser/cmd_line.h"
-#include "stream/stream_api.h"
 #include "stream/stream.h"
-#include "actions/act_replace.h"
-#include "filters/detection_filter.h"
 #include "target_based/sftarget_reader.h"
 
-#ifdef INTEL_SOFT_CPM
-#include "search/intel_soft_cpm.h"
-#endif
-
 //-------------------------------------------------------------------------
 
-static THREAD_LOCAL Packet* s_packet = nullptr; // runtime variable.
-THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 static SnortConfig* snort_cmd_line_conf = nullptr;
-
-static bool snort_initializing = true;
-static bool snort_reloading = false;
-static int snort_exiting = 0;
-
 static pid_t snort_main_thread_pid = 0;
 
-static int snort_argc = 0;
-static char** snort_argv = NULL;
-
-static void CleanExit(int);
-static void SnortCleanup();
-
-//-------------------------------------------------------------------------
-// utility
-//-------------------------------------------------------------------------
-
-bool snort_is_starting()
-{ return snort_initializing; }
-
-bool snort_is_reloading()
-{ return snort_reloading; }
-
-#if 0
-#ifdef HAVE_DAQ_ACQUIRE_WITH_META
-static int MetaCallback(
-    void* user, const DAQ_MetaHdr_t* metahdr, const uint8_t* data)
-{
-    PolicyId policy_id = getDefaultPolicy();
-    SnortPolicy* policy;
-
-    PROFILE_VARS;
-    MODULE_PROFILE_START(metaPerfStats);
-
-    policy = snort_conf->targeted_policies[policy_id];
-    InspectorManager::dispatch_meta(policy->framework_policy, metahdr->type, data);
-
-    MODULE_PROFILE_END(metaPerfStats);
-
-    return 0;
-}
-
-#endif
-
-static void SetupMetadataCallback(void)  // FIXDAQ
-{
-#ifdef HAVE_DAQ_ACQUIRE_WITH_META
-    DAQ_Set_MetaCallback(&MetaCallback);
-#endif
-}
-
-#endif
-
-#if 0
-// FIXIT-L restart foo
-static void restart()
-{
-    int daemon_mode = ScDaemonMode();
-
-    if ((!ScReadMode() && (getuid() != 0)) ||
-        (snort_conf->chroot_dir != NULL))
-    {
-        LogMessage("Reload via Signal Reload does not work if you aren't root "
-            "or are chroot'ed.\n");
-        /* We are restarting because of a configuration verification problem */
-        CleanExit(1);
-    }
-
-    LogMessage("\n");
-    LogMessage("** Restarting Snort **\n");
-    LogMessage("\n");
-    SnortCleanup();
-
-    if (daemon_mode)
-        set_daemon_args(snort_argc, snort_argv);
-
-#ifdef PARANOID
-    execv(snort_argv[0], snort_argv);
-#else
-    execvp(snort_argv[0], snort_argv);
-#endif
-
-    /* only get here if we failed to restart */
-    LogMessage("Restarting %s failed: %s\n", snort_argv[0], get_error(errno));
-
-    closelog();
-
-    exit(-1);
-}
-
-#endif
+// non-local for easy access from core
+static THREAD_LOCAL DAQ_PktHdr_t s_pkth;
+static THREAD_LOCAL uint8_t s_data[65536];
+static THREAD_LOCAL Packet* s_packet = nullptr;
 
 //-------------------------------------------------------------------------
 // perf stats
@@ -252,7 +149,6 @@ static ProfileStats* get_profile(const char* key)
 
     return nullptr;
 }
-
 #endif
 
 static void register_profiles()
@@ -271,10 +167,45 @@ static void register_profiles()
 }
 
 //-------------------------------------------------------------------------
+// helpers
+//-------------------------------------------------------------------------
+
+static void pass_pkts(Packet*) { }
+static MainHook_f main_hook = pass_pkts;
+
+Packet* get_current_packet()
+{ return s_packet; }
+
+static void set_policy(Packet* p)  // FIXIT-M delete this?
+{
+    set_default_policy();
+    p->user_policy_id = get_ips_policy()->user_policy_id;
+}
+
+static void show_source(const char* pcap)
+{
+    if ( !SnortConfig::pcap_show() )
+        return;
+
+    if ( !strcmp(pcap, "-") )
+        pcap = "stdin";
+
+    static bool first = true;
+    if ( first )
+        first = false;
+    else
+        fprintf(stdout, "%s", "\n");
+
+    fprintf(stdout,
+        "Reading network traffic from \"%s\" with snaplen = %d\n",
+        pcap, DAQ_GetSnapLen());
+}
+
+//-------------------------------------------------------------------------
 // initialization
 //-------------------------------------------------------------------------
 
-static void SnortInit(int argc, char** argv)
+void Snort::init(int argc, char** argv)
 {
     init_signals();
 
@@ -312,24 +243,26 @@ static void SnortInit(int argc, char** argv)
     /* Merge the command line and config file confs to take care of
      * command line overriding config file.
      * Set the global snort_conf that will be used during run time */
-    snort_conf = MergeSnortConfs(snort_cmd_line_conf, sc);
+    sc->merge(snort_cmd_line_conf);
+    snort_conf = sc;
+
     CodecManager::instantiate();
 
     if ( snort_conf->output )
-        EventManager::instantiate(snort_conf->output, sc);
+        EventManager::instantiate(snort_conf->output, snort_conf);
 
-    if (ScAlertBeforePass())
+    if (SnortConfig::alert_before_pass())
     {
         OrderRuleLists(snort_conf, "drop sdrop reject alert pass log");
     }
 
-    SnortConfSetup(snort_conf);
+    snort_conf->setup();
 
     // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(snort_conf) )
         ParseError("can't initialize inspectors");
 
-    else if ( ScLogVerbose() )
+    else if ( SnortConfig::log_verbose() )
         InspectorManager::print_config(snort_conf);
 
     if (snort_conf->file_mask != 0)
@@ -369,15 +302,15 @@ static void SnortInit(int argc, char** argv)
 // be dropped so the fail open thread does the remaining initialization while
 // the main thread passes packets.  prior to opening and starting the DAQ,
 // packet passing is done by the driver/hardware.  the goal then is to put as
-// much initialization stuff in SnortInit() as possible and to restrict this
+// much initialization stuff in Snort::init() as possible and to restrict this
 // function to those things that depend on DAQ startup or non-root user/group.
 //
 // FIXIT-J breaks DAQ_New()/Start() because packet threads won't be root when
 // opening iface
-static void SnortUnprivilegedInit(void)
+void Snort::unprivileged_init()
 {
     /* create the PID file */
-    if ( !ScReadMode() && (ScDaemonMode() || ScCreatePidFile()))
+    if ( !SnortConfig::read_mode() && (SnortConfig::daemon_mode() || SnortConfig::create_pid_file()))
     {
         CreatePidFile(snort_main_thread_pid);
     }
@@ -387,67 +320,16 @@ static void SnortUnprivilegedInit(void)
         SetChroot(snort_conf->chroot_dir, &snort_conf->log_dir);
 
     /* Drop privileges if requested, when initialization is done */
-    SetUidGid(ScUid(), ScGid());
+    SetUidGid(SnortConfig::get_uid(), SnortConfig::get_gid());
 
-    snort_initializing = false;
-}
-
-void snort_setup(int argc, char* argv[])
-{
-    snort_argc = argc;
-    snort_argv = argv;
-
-    OpenLogger();
-
-    SnortInit(argc, argv);
-
-    LogMessage("%s\n", LOG_DIV);
-    DAQ_Init(snort_conf);
-
-    if ( ScDaemonMode() )
-        daemonize();
-
-    // this must follow daemonization
-    snort_main_thread_pid = gettid();
-
-    /* Change groups */
-    InitGroups(ScUid(), ScGid());
-    SnortUnprivilegedInit();
-
-    set_quick_exit(false);
+    initializing = false;
 }
 
 //-------------------------------------------------------------------------
 // termination
 //-------------------------------------------------------------------------
 
-static void CleanExit(int)
-{
-    SnortConfig tmp;
-
-    /* Have to trick LogMessage to log correctly after snort_conf
-     * is freed */
-    memset(&tmp, 0, sizeof(tmp));
-
-    if (snort_conf != NULL)
-    {
-        tmp.logging_flags |=
-            (snort_conf->logging_flags & LOGGING_FLAG__QUIET);
-
-        tmp.run_flags |= (snort_conf->run_flags & RUN_FLAG__DAEMON);
-
-        tmp.logging_flags |=
-            (snort_conf->logging_flags & LOGGING_FLAG__SYSLOG);
-    }
-
-    SnortCleanup();
-    snort_conf = &tmp;
-
-    LogMessage("%s  Snort exiting\n", get_prompt());
-    closelog();
-}
-
-static void SnortCleanup()
+void Snort::term()
 {
     /* This function can be called more than once.  For example,
      * once from the SIGINT signal handler, and once recursively
@@ -463,8 +345,7 @@ static void SnortCleanup()
         return;
     }
     already_exiting = 1;
-    snort_exiting = 1;
-    snort_initializing = false;  /* just in case we cut out early */
+    initializing = false;  /* just in case we cut out early */
 
     IdleProcessingCleanUp();
 
@@ -504,15 +385,16 @@ static void SnortCleanup()
     /* free allocated memory */
     if (snort_conf == snort_cmd_line_conf)
     {
-        SnortConfFree(snort_cmd_line_conf);
+        delete snort_cmd_line_conf;
         snort_cmd_line_conf = NULL;
         snort_conf = NULL;
     }
     else
     {
-        SnortConfFree(snort_cmd_line_conf);
+        delete snort_cmd_line_conf;
         snort_cmd_line_conf = NULL;
-        SnortConfFree(snort_conf);
+
+        delete snort_conf;
         snort_conf = NULL;
     }
     CleanupProtoNames();
@@ -520,45 +402,105 @@ static void SnortCleanup()
     PluginManager::release_plugins();
 }
 
-void snort_cleanup()
+void Snort::clean_exit(int)
 {
-    DAQ_Term();
+    SnortConfig tmp;
 
-    if ( !ScTestMode() )  // FIXIT-M ideally the check is in one place
-        PrintStatistics();
+    /* Have to trick LogMessage to log correctly after snort_conf
+     * is freed */
+    memset(&tmp, 0, sizeof(tmp));
 
-    CloseLogger();
-    CleanExit(0);
+    if (snort_conf != NULL)
+    {
+        tmp.logging_flags |=
+            (snort_conf->logging_flags & LOGGING_FLAG__QUIET);
+
+        tmp.run_flags |= (snort_conf->run_flags & RUN_FLAG__DAEMON);
+
+        tmp.logging_flags |=
+            (snort_conf->logging_flags & LOGGING_FLAG__SYSLOG);
+    }
+
+    term();
+    snort_conf = &tmp;
+
+    LogMessage("%s  Snort exiting\n", get_prompt());
+    closelog();
 }
 
 //-------------------------------------------------------------------------
-// reload foo
+// public methods
 //-------------------------------------------------------------------------
+
+bool Snort::initializing = true;
+bool Snort::reloading = false;
+
+bool Snort::is_starting()
+{ return initializing; }
+
+bool Snort::is_reloading()
+{ return reloading; }
+
+void Snort::set_main_hook(MainHook_f f)
+{ main_hook = f; }
+
+void Snort::setup(int argc, char* argv[])
+{
+    OpenLogger();
+
+    init(argc, argv);
+
+    LogMessage("%s\n", LOG_DIV);
+    DAQ_Init(snort_conf);
+
+    if ( SnortConfig::daemon_mode() )
+        daemonize();
+
+    // this must follow daemonization
+    snort_main_thread_pid = gettid();
+
+    /* Change groups */
+    InitGroups(SnortConfig::get_uid(), SnortConfig::get_gid());
+    unprivileged_init();
+
+    set_quick_exit(false);
+}
+
+void Snort::cleanup()
+{
+    DAQ_Term();
+
+    if ( !SnortConfig::test_mode() )  // FIXIT-M ideally the check is in one place
+        PrintStatistics();
+
+    CloseLogger();
+    clean_exit(0);
+}
 
 // FIXIT-M refactor this so startup and reload call the same core function to
 // instantiate things that can be reloaded
-SnortConfig* get_reload_config()
+SnortConfig* Snort::get_reload_config()
 {
-    snort_reloading = true;
+    reloading = true;
     ModuleManager::reset_errors();
     trim_heap();
 
     SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf);
-    sc = MergeSnortConfs(snort_cmd_line_conf, sc);
+    sc->merge(snort_cmd_line_conf);
 
-    if ( ModuleManager::get_errors() || VerifyReload(sc) == -1 )
+    if ( ModuleManager::get_errors() || !sc->verify() )
     {
-        SnortConfFree(sc);
-        snort_reloading = false;
+        delete sc;
+        reloading = false;
         return NULL;
     }
 
-    SnortConfSetup(sc);
+    sc->setup();
 
     if ( !InspectorManager::configure(sc) )
     {
-        SnortConfFree(sc);
-        snort_reloading = false;
+        delete sc;
+        reloading = false;
         return NULL;
     }
 
@@ -597,29 +539,11 @@ SnortConfig* get_reload_config()
         MpseManager::activate_search_engine(sc);
     }
 
-    snort_reloading = false;
+    reloading = false;
     return sc;
 }
 
-//-------------------------------------------------------------------------
-// runtime foo
-//-------------------------------------------------------------------------
-
-// non-local for easy access from core
-//static THREAD_LOCAL Packet s_packet;  declared above due to initalization in CodecManager
-static THREAD_LOCAL DAQ_PktHdr_t s_pkth;
-static THREAD_LOCAL uint8_t s_data[65536];
-
-static void pass_pkts(Packet*) { }
-static MainHook_f main_hook = pass_pkts;
-
-void set_main_hook(MainHook_f f)
-{ main_hook = f; }
-
-Packet* get_current_packet()
-{ return s_packet; }
-
-void CapturePacket()
+void Snort::capture_packet()
 {
     if ( snort_main_thread_pid == gettid() )
     {
@@ -642,13 +566,96 @@ void CapturePacket()
     }
 }
 
-static void set_policy(Packet* p)  // FIXIT-M delete this?
+DAQ_Verdict Snort::fail_open(
+    void*, const DAQ_PktHdr_t*, const uint8_t*)
 {
-    set_default_policy();
-    p->user_policy_id = get_ips_policy()->user_policy_id;
+    aux_counts.total_fail_open++;
+    return DAQ_VERDICT_PASS;
 }
 
-void DecodeRebuiltPacket(
+void Snort::thread_idle()
+{
+    if ( flow_con )
+        flow_con->timeout_flows(16384, time(NULL));
+    aux_counts.idle++;
+}
+
+void Snort::thread_rotate()
+{
+    SetRotatePerfFileFlag();
+}
+
+void Snort::thread_init(const char* intf)
+{
+    show_source(intf);
+
+    // FIXIT-M the start-up sequence is a little off due to dropping privs
+    DAQ_New(snort_conf, intf);
+    DAQ_Start();
+
+    s_packet = PacketManager::encode_new(false);
+    CodecManager::thread_init(snort_conf);
+
+    // this depends on instantiated daq capabilities
+    // so it is done here instead of init()
+    Active_Init(snort_conf);
+
+    SnortEventqNew(snort_conf->event_queue_config);
+
+    InitTag();
+
+    EventTrace_Init();
+    detection_filter_init(snort_conf->detection_filter_config);
+
+    otnx_match_data_init(snort_conf->num_rule_types);
+
+    EventManager::open_outputs();
+    IpsManager::setup_options();
+    ActionManager::thread_init(snort_conf);
+    InspectorManager::thread_init(snort_conf);
+}
+
+void Snort::thread_term()
+{
+#ifdef PPM_MGR
+    ppm_sum_stats();
+#endif
+    if ( !snort_conf->dirty_pig )
+        InspectorManager::thread_stop(snort_conf);
+
+    ModuleManager::accumulate(snort_conf);
+    InspectorManager::thread_term(snort_conf);
+    ActionManager::thread_term(snort_conf);
+
+    IpsManager::clear_options();
+    EventManager::close_outputs();
+    CodecManager::thread_term();
+
+    if ( s_packet )
+    {
+        PacketManager::encode_delete(s_packet);
+        s_packet = nullptr;
+    }
+
+    if ( DAQ_WasStarted() )
+        DAQ_Stop();
+
+    DAQ_Delete();
+
+#ifdef PERF_PROFILING
+    ReleaseProfileStats();
+#endif
+
+    otnx_match_data_term();
+    detection_filter_term();
+    EventTrace_Term();
+    CleanupTag();
+
+    SnortEventqFree();
+    Active_Term();
+}
+
+void Snort::decode_rebuilt_packet(
     Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt,
     Flow* lws)
 {
@@ -663,7 +670,7 @@ void DecodeRebuiltPacket(
     SnortEventqPop();
 }
 
-void DetectRebuiltPacket(Packet* p)
+void Snort::detect_rebuilt_packet(Packet* p)
 {
     int tmp_do_detect = do_detect;
     int tmp_do_detect_content = do_detect_content;
@@ -677,15 +684,7 @@ void DetectRebuiltPacket(Packet* p)
     do_detect_content = tmp_do_detect_content;
 }
 
-void LogRebuiltPacket(Packet* p)
-{
-    SnortEventqPush();
-    SnortEventqLog(p);
-    SnortEventqReset();
-    SnortEventqPop();
-}
-
-static DAQ_Verdict ProcessPacket(
+DAQ_Verdict Snort::process_packet(
     Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt, bool is_frag)
 {
     DAQ_Verdict verdict = DAQ_VERDICT_PASS;
@@ -726,7 +725,7 @@ static DAQ_Verdict ProcessPacket(
             return verdict;
         }
 
-        if ( ScInlineMode() || Active_PacketForceDropped() )
+        if ( SnortConfig::inline_mode() || Active_PacketForceDropped() )
             verdict = DAQ_VERDICT_BLACKLIST;
         else
             verdict = DAQ_VERDICT_IGNORE;
@@ -735,22 +734,7 @@ static DAQ_Verdict ProcessPacket(
     return verdict;
 }
 
-void ProcessDefragPacket(Packet* p, Packet* dpkt)
-{
-    SnortEventqPush();
-    PacketManager::encode_set_pkt(p);
-    ProcessPacket(dpkt, dpkt->pkth, dpkt->pkt, true);
-    SnortEventqPop();
-}
-
-DAQ_Verdict fail_open(
-    void*, const DAQ_PktHdr_t*, const uint8_t*)
-{
-    aux_counts.total_fail_open++;
-    return DAQ_VERDICT_PASS;
-}
-
-DAQ_Verdict packet_callback(
+DAQ_Verdict Snort::packet_callback(
     void*, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
     int inject = 0;
@@ -782,7 +766,7 @@ DAQ_Verdict packet_callback(
 
     ActionManager::reset_queue();
 
-    verdict = ProcessPacket(s_packet, pkthdr, pkt, false);
+    verdict = process_packet(s_packet, pkthdr, pkt);
 
     ActionManager::execute(s_packet);
 
@@ -858,106 +842,5 @@ DAQ_Verdict packet_callback(
 
     MODULE_PROFILE_END(totalPerfStats);
     return verdict;
-}
-
-void snort_thread_idle()
-{
-    if ( flow_con )
-        flow_con->timeout_flows(16384, time(NULL));
-    aux_counts.idle++;
-}
-
-void snort_thread_rotate()
-{
-    SetRotatePerfFileFlag();
-}
-
-static void PQ_Show(const char* pcap)
-{
-    if ( !ScPcapShow() )
-        return;
-
-    if ( !strcmp(pcap, "-") )
-        pcap = "stdin";
-
-    static bool first = true;
-    if ( first )
-        first = false;
-    else
-        fprintf(stdout, "%s", "\n");
-
-    fprintf(stdout,
-        "Reading network traffic from \"%s\" with snaplen = %d\n",
-        pcap, DAQ_GetSnapLen());
-}
-
-void snort_thread_init(const char* intf)
-{
-    PQ_Show(intf);
-
-    // FIXIT-M the start-up sequence is a little off due to dropping privs
-    DAQ_New(snort_conf, intf);
-    DAQ_Start();
-
-    s_packet = PacketManager::encode_new(false);
-    CodecManager::thread_init(snort_conf);
-
-    // this depends on instantiated daq capabilities
-    // so it is done here instead of SnortInit()
-    Active_Init(snort_conf);
-
-    SnortEventqNew(snort_conf->event_queue_config);
-
-    InitTag();
-
-    EventTrace_Init();
-    detection_filter_init(snort_conf->detection_filter_config);
-
-    otnx_match_data_init(snort_conf->num_rule_types);
-
-    EventManager::open_outputs();
-    IpsManager::setup_options();
-    ActionManager::thread_init(snort_conf);
-    InspectorManager::thread_init(snort_conf);
-}
-
-void snort_thread_term()
-{
-#ifdef PPM_MGR
-    ppm_sum_stats();
-#endif
-    if ( !snort_conf->dirty_pig )
-        InspectorManager::thread_stop(snort_conf);
-
-    ModuleManager::accumulate(snort_conf);
-    InspectorManager::thread_term(snort_conf);
-    ActionManager::thread_term(snort_conf);
-
-    IpsManager::clear_options();
-    EventManager::close_outputs();
-    CodecManager::thread_term();
-
-    if ( s_packet )
-    {
-        PacketManager::encode_delete(s_packet);
-        s_packet = nullptr;
-    }
-
-    if ( DAQ_WasStarted() )
-        DAQ_Stop();
-
-    DAQ_Delete();
-
-#ifdef PERF_PROFILING
-    ReleaseProfileStats();
-#endif
-
-    otnx_match_data_term();
-    detection_filter_term();
-    EventTrace_Term();
-    CleanupTag();
-
-    SnortEventqFree();
-    Active_Term();
 }
 

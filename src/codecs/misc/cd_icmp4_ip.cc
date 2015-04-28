@@ -26,7 +26,7 @@
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "log/text_log.h"
-#include "main/snort.h"
+#include "main/snort_config.h"
 #include "log/messages.h"
 #include "protocols/packet_manager.h"
 #include "protocols/icmp4.h"
@@ -154,7 +154,7 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     //      the two are not necessarily the same.
 
     // FIXIT-H  -->  This does NOT obfuscate correctly
-    if (ScObfuscate())
+    if (SnortConfig::obfuscate())
     {
         TextLog_Print(text_log, "xxx.xxx.xxx.xxx -> xxx.xxx.xxx.xxx");
     }

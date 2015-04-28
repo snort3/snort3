@@ -38,7 +38,7 @@
 #include "snort_types.h"
 #include "snort_debug.h"
 #include "main/analyzer.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "util.h"
 #include "tag.h"
 #include "pcrm.h"
@@ -121,7 +121,7 @@ void snort_inspect(Packet* p)
             "Packet errors = 0x%x, ignoring traffic!\n",
             (p->ptrs.decode_flags & DECODE_ERR_FLAGS)); );
 
-        if ( ScInlineMode() && ScChecksumDrop(p->ptrs.decode_flags & DECODE_ERR_CKSUM_ALL) )
+        if ( SnortConfig::inline_mode() && SnortConfig::checksum_drop(p->ptrs.decode_flags & DECODE_ERR_CKSUM_ALL) )
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
                 "Dropping bad packet\n"); );
@@ -210,7 +210,7 @@ void snort_log(Packet* p)
 
 void CallLogFuncs(Packet* p, ListHead* head, Event* event, const char* msg)
 {
-    event->event_id = event_id | ScEventLogId();
+    event->event_id = event_id | SnortConfig::get_event_log_id();
 
     check_tags_flag = 0;
     pc.log_pkts++;
@@ -226,7 +226,7 @@ void CallLogFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
     event.sig_info = &otn->sigInfo;
     event.ref_time.tv_sec = p->pkth->ts.tv_sec;
     event.ref_time.tv_usec = p->pkth->ts.tv_usec;
-    event.event_id = event_id | ScEventLogId();
+    event.event_id = event_id | SnortConfig::get_event_log_id();
     event.event_reference = event.event_id;
 
     check_tags_flag = 0;
@@ -243,7 +243,7 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
     event.sig_info = &otn->sigInfo;
     event.ref_time.tv_sec = p->pkth->ts.tv_sec;
     event.ref_time.tv_usec = p->pkth->ts.tv_usec;
-    event.event_id = event_id | ScEventLogId();
+    event.event_id = event_id | SnortConfig::get_event_log_id();
     event.event_reference = event.event_id;
 
     pc.total_alert_pkts++;

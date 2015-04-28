@@ -24,7 +24,6 @@
 using namespace std;
 
 #include "stream_icmp.h"
-#include "main/snort_config.h"
 
 //-------------------------------------------------------------------------
 // stream_icmp module

@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "snort.h"
+#include "snort_config.h"
 #include "detection/signature.h"
 
 THREAD_LOCAL uint16_t event_id; // FIXIT-M also incremented in fpLogEvent()
@@ -45,7 +45,7 @@ void SetEvent(
 
     event->sig_info = &sig_info;
     /* this one gets set automatically */
-    event->event_id = ++event_id | ScEventLogId();
+    event->event_id = ++event_id | SnortConfig::get_event_log_id();
 
     if (event_ref)
         event->event_reference = event_ref;

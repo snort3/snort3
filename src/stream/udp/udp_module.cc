@@ -24,7 +24,6 @@
 using namespace std;
 
 #include "stream_udp.h"
-#include "main/snort_config.h"
 
 //-------------------------------------------------------------------------
 // stream_udp module

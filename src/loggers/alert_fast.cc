@@ -54,7 +54,7 @@
 #include "packet_io/active.h"
 #include "log/text_log.h"
 #include "log/log_text.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/intf.h"
 #include "events/event.h"
@@ -195,7 +195,7 @@ static void LogReassembly(const Packet* p)
 {
     /* Log whether or not this is reassembled data - only indicate
      * if we're actually going to show any of the payload */
-    if ( !ScOutputAppData() || !p->dsize || !PacketWasCooked(p) )
+    if ( !SnortConfig::output_app_data() || !p->dsize || !PacketWasCooked(p) )
         return;
 
     switch ( p->pseudo_type )
@@ -279,7 +279,7 @@ void FastLogger::alert(Packet* p, const char* msg, Event* event)
                 (unsigned long)event->sig_info->rev);
         }
 
-        if (ScAlertInterface())
+        if (SnortConfig::alert_interface())
         {
             TextLog_Print(fast_log, " <%s> ", PRINT_INTERFACE(DAQ_GetInterfaceSpec()));
         }
@@ -309,7 +309,7 @@ void FastLogger::alert(Packet* p, const char* msg, Event* event)
         LogIpAddrs(fast_log, p);
     }
 
-    if ( packet || ScOutputAppData() )
+    if ( packet || SnortConfig::output_app_data() )
     {
         TextLog_NewLine(fast_log);
 #ifdef REG_TEST

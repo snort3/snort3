@@ -19,6 +19,8 @@
 
 #include "script_manager.h"
 
+#include <string.h>
+
 #include <string>
 #include <vector>
 #include <luajit-2.0/lua.hpp>

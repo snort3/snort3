@@ -40,11 +40,11 @@
 #include <unistd.h>
 #include <string>
 
+#include "main/snort_config.h"
 #include "main/analyzer.h"
-#include "util.h"
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "protocols/packet.h"
-#include "snort.h"
+#include "utils/util.h"
 
 THREAD_LOCAL SFBASE sfBase;
 THREAD_LOCAL SFFLOW sfFlow;
@@ -513,7 +513,7 @@ void SetSampleTime(SFPERF* sfPerf, Packet* p)
     if (sfPerf == NULL)
         return;
 
-    if (ScReadMode())
+    if (SnortConfig::read_mode())
     {
         if ((p == NULL) || (p->pkth == NULL))
             sfPerf->sample_time = 0;
@@ -530,7 +530,7 @@ static bool CheckSampleInterval(SFPERF* sfPerf, Packet* p)
 {
     time_t curr_time;
 
-    if (ScReadMode())
+    if (SnortConfig::read_mode())
     {
         curr_time = p->pkth->ts.tv_sec;
         sfBase.time = curr_time;

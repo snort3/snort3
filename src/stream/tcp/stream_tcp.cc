@@ -26,7 +26,6 @@
 #include "tcp_module.h"
 #include "tcp_session.h"
 
-#include "main/snort.h"
 #include "stream/flush_bucket.h"
 #include "stream/stream_splitter.h"
 

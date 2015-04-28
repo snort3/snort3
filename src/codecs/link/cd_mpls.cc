@@ -21,13 +21,11 @@
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
 #include "network_inspectors/perf_monitor/perf.h"
-#include "snort.h"
 #include "protocols/mpls.h"
 #include "packet_io/active.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/mpls.h"
 #include "main/snort_config.h"
-#include "main/snort.h"
 #include "log/text_log.h"
 
 #define CD_MPLS_NAME "mpls"
@@ -177,13 +175,14 @@ bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             codec.proto_bits |= PROTO_BIT__MPLS;
             if (!iRet)
             {
-                iRet = ScMplsPayloadType();
+                iRet = SnortConfig::get_mpls_payload_type();
             }
         }
         tmpMplsHdr++;
         stack_len -= MPLS_HEADER_LEN;
 
-        if ((ScMplsStackDepth() != -1) && (chainLen++ >= ScMplsStackDepth()))
+        if ((SnortConfig::get_mpls_stack_depth() != -1) &&
+            (chainLen++ >= SnortConfig::get_mpls_stack_depth()))
         {
             codec_event(codec, DECODE_MPLS_LABEL_STACK);
 
@@ -235,8 +234,8 @@ int MplsCodec::checkMplsHdr(const CodecData& codec, uint32_t label, uint8_t bos)
 
             /* when label == 2, IPv6 is expected;
              * when label == 0, IPv4 is expected */
-            if ((label&&(ScMplsPayloadType() != MPLS_PAYLOADTYPE_IPV6))
-                ||((!label)&&(ScMplsPayloadType() != MPLS_PAYLOADTYPE_IPV4)))
+            if ((label&&(SnortConfig::get_mpls_payload_type() != MPLS_PAYLOADTYPE_IPV6))
+                ||((!label)&&(SnortConfig::get_mpls_payload_type() != MPLS_PAYLOADTYPE_IPV4)))
             {
                 if ( !label )
                     codec_event(codec, DECODE_BAD_MPLS_LABEL0);
@@ -293,7 +292,7 @@ int MplsCodec::checkMplsHdr(const CodecData& codec, uint32_t label, uint8_t bos)
     }
     if ( !iRet )
     {
-        iRet = ScMplsPayloadType();
+        iRet = SnortConfig::get_mpls_payload_type();
     }
     return iRet;
 }

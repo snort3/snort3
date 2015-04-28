@@ -23,7 +23,7 @@
 using namespace std;
 
 #include "snort_types.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "snort_debug.h"
 #include "util.h"
 #include "module_manager.h"

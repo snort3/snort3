@@ -20,9 +20,6 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "main/snort.h"
-#include "target_based/sftarget_protocol_reference.h"
-
 #include "nhttp_enum.h"
 #include "nhttp_inspect.h"
 #include "nhttp_api.h"

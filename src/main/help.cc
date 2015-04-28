@@ -31,7 +31,7 @@ using namespace std;
 #include "main.h"
 #include "config_file.h"
 #include "helpers/process.h"
-#include "main/snort.h"
+#include "main/snort_config.h"
 #include "main/snort_module.h"
 #include "managers/event_manager.h"
 #include "managers/so_manager.h"
@@ -146,7 +146,7 @@ enum HelpType
 
 static void show_help(SnortConfig* sc, const char* val, HelpType ht)
 {
-    snort_conf = SnortConfNew();
+    snort_conf = new SnortConfig;
     ScriptManager::load_scripts(sc->script_path);
     PluginManager::load_plugins(sc->plugin_path);
     ModuleManager::init();
@@ -198,7 +198,7 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
     }
     ModuleManager::term();
     PluginManager::release_plugins();
-    SnortConfFree(snort_conf);
+    delete snort_conf;
     exit(0);
 }
 

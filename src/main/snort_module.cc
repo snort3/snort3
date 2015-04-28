@@ -31,10 +31,9 @@
 using namespace std;
 
 #include "main.h"
-#include "snort.h"
-#include "help.h"
-#include "shell.h"
-#include "snort_config.h"
+#include "main/snort_config.h"
+#include "main/help.h"
+#include "main/shell.h"
 #include "detection/detect.h"
 #include "framework/module.h"
 #include "framework/parameter.h"

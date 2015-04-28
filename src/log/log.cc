@@ -36,7 +36,7 @@ using namespace std;
 
 #include "log_text.h"
 #include "main/analyzer.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "protocols/tcp.h"
 #include "main/snort_debug.h"
 
@@ -174,7 +174,7 @@ void snort_print(Packet* p)
     {
         LogEapolPkt(text_log, p);
     }
-    else if (p->wifih && ScOutputWifiMgmt())
+    else if (p->wifih && SnortConfig::output_wifi_mgmt())
     {
         LogWifiPkt(text_log, p);
     }

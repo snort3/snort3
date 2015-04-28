@@ -44,7 +44,7 @@ extern "C" {
 #include "parser.h"
 #include "snort_debug.h"
 #include "util.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "main/analyzer.h"
 #include "packet_io/sfdaq.h"
 #include "stream/stream_api.h"
@@ -174,7 +174,7 @@ static void LogTcpdumpSingle(
     pcap_dump((u_char*)context.dumpd,(struct pcap_pkthdr*)p->pkth,p->pkt);
     context.size += dumpSize;
 
-    if (!ScLineBufferedLogging())  // FIXIT-L misnomer
+    if (!SnortConfig::line_buffered_logging())  // FIXIT-L misnomer
     {
         fflush( (FILE*)context.dumpd);
     }
@@ -204,7 +204,7 @@ static void LogTcpdumpStream(
 
     context.size += dumpSize;
 
-    if (!ScLineBufferedLogging())
+    if (!SnortConfig::line_buffered_logging())
     {
         /* we happen to know that pcap_dumper_t* is really just a FILE* */
         fflush( (FILE*)context.dumpd);
@@ -323,7 +323,7 @@ PcapLogger::~PcapLogger()
 
 void PcapLogger::open()
 {
-    TcpdumpInitLogFile(config, ScNoOutputTimestamp());
+    TcpdumpInitLogFile(config, SnortConfig::output_no_timestamp());
 }
 
 void PcapLogger::close()

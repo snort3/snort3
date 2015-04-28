@@ -52,7 +52,7 @@
 #include "signature.h"
 #include "filters/sfthreshold.h"
 #include "filters/sfthd.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "hash/sfghash.h"
 #include "ips_options/ips_ip_proto.h"
 #include "ips_options/ips_content.h"
@@ -1198,7 +1198,7 @@ static int mergeDuplicateOtn(
 
     if (rtn_cur)
     {
-        if (ScConfErrorOut())
+        if (SnortConfig::conf_error_out())
         {
             ParseError(
                 "%d:%d:%d duplicates previous rule.",
@@ -1477,7 +1477,7 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
 
     otn->chain_node_number = otn_count;
     otn->proto = rtn.proto;
-    otn->enabled = ScDefaultRuleState();
+    otn->enabled = SnortConfig::get_default_rule_state();
 
     IpsManager::reset_options();
 

@@ -47,17 +47,9 @@
 #define INTERNAL_EVENT_SESSION_ADD    2
 #define INTERNAL_EVENT_SESSION_DEL    3
 
-/*  D A T A  S T R U C T U R E S  *********************************************/
+#define EventIsInternal(gid) (gid == GENERATOR_INTERNAL)
 
-struct TagData
-{
-    int tag_type;       /* tag type (session/host) */
-    int tag_seconds;    /* number of "seconds" units to tag for */
-    int tag_packets;    /* number of "packets" units to tag for */
-    int tag_bytes;      /* number of "type" units to tag for */
-    int tag_metric;     /* (packets | seconds | bytes) units */
-    int tag_direction;  /* source or dest, used for host tagging */
-};
+/*  D A T A  S T R U C T U R E S  *********************************************/
 
 struct OutputSet;
 

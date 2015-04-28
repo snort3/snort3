@@ -20,7 +20,6 @@
 
 #include "telnet_module.h"
 #include <sstream>
-#include "main/snort_config.h"
 
 using namespace std;
 

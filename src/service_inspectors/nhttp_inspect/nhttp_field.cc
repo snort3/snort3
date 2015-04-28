@@ -20,9 +20,9 @@
 #include <sys/types.h>
 #include <stdio.h>
 
-#include "main/snort.h"
 #include "nhttp_enum.h"
 #include "nhttp_field.h"
+#include "main/snort_types.h"
 
 using namespace NHttpEnums;
 

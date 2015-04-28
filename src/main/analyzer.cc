@@ -25,6 +25,7 @@
 using namespace std;
 
 #include "snort.h"
+#include "thread.h"
 #include "helpers/swapper.h"
 #include "packet_io/sfdaq.h"
 
@@ -32,7 +33,7 @@ typedef DAQ_Verdict
 (* PacketCallback)(void*, const DAQ_PktHdr_t*, const uint8_t*);
 
 // FIXIT-M add fail open capability
-static THREAD_LOCAL PacketCallback main_func = packet_callback;
+static THREAD_LOCAL PacketCallback main_func = Snort::packet_callback;
 
 //-------------------------------------------------------------------------
 // analyzer
@@ -54,12 +55,12 @@ void Analyzer::operator()(unsigned id, Swapper* ps)
     ps->apply();
 
     pin_thread_to_cpu(source);
-    snort_thread_init(source);
+    Snort::thread_init(source);
     daqh = DAQ_GetHandle();
 
     analyze();
 
-    snort_thread_term();
+    Snort::thread_term();
 
     delete ps;
     done = true;
@@ -104,7 +105,7 @@ bool Analyzer::handle(AnalyzerCommand ac)
         break;
 
     case AC_ROTATE:
-        snort_thread_rotate();
+        Snort::thread_rotate();
         command = AC_NONE;
         break;
 
@@ -143,7 +144,7 @@ void Analyzer::analyze()
         // conditions; that means the idle processing may not be useful
         // or that we need a hook to do things periodically even when
         // traffic is available
-        snort_thread_idle();
+        Snort::thread_idle();
     }
 }
 

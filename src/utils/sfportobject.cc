@@ -195,7 +195,7 @@
 #include <memory>
 
 #include "snort_types.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "snort_bounds.h"
 #include "snort_debug.h"
 #include "detection/sfrim.h"
@@ -2219,7 +2219,7 @@ int PortTableCompileMergePortObjects(PortTable* p)
     sfhashfcn_set_keyops(mhash->sfhashfcn, PortObject_hash, PortObject_keycmp);
 
     /* remove randomness */
-    if (ScStaticHash())
+    if (SnortConfig::static_hash())
         sfhashfcn_static(mhash->sfhashfcn);
 
     p->pt_mpo_hash = mhash;
@@ -2233,7 +2233,7 @@ int PortTableCompileMergePortObjects(PortTable* p)
     sfhashfcn_set_keyops(mhashx->sfhashfcn,plx_hash,plx_keycmp);
 
     /* remove randomness */
-    if (ScStaticHash())
+    if (SnortConfig::static_hash())
         sfhashfcn_static(mhashx->sfhashfcn);
 
     p->pt_mpxo_hash = mhashx;

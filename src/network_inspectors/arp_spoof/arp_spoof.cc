@@ -83,10 +83,7 @@
 #include "event.h"
 #include "parser.h"
 #include "util.h"
-
-#include "snort.h"
 #include "profiler.h"
-
 #include "arp_module.h"
 #include "framework/inspector.h"
 #include "protocols/layer.h"

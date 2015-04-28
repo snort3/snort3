@@ -27,12 +27,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 
-#include "framework/counts.h"
-#include "utils/bitop_funcs.h"
-#include "framework/inspector.h"
 #include "snort_types.h"
-#include "snort.h"
-#include "detect.h"
 #include "stream/stream_api.h"
 #include "target_based/sftarget_protocol_reference.h"
 #include "network_inspectors/normalize/norm.h"

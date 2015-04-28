@@ -26,7 +26,7 @@
 #include "parser.h"
 #include "profiler.h"
 #include "snort_types.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "framework/inspector.h"
 #include "flow/flow.h"
 

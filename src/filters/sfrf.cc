@@ -38,7 +38,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "snort.h"
 #include "rules.h"
 #include "treenodes.h"
 #include "util.h"

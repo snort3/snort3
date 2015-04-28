@@ -55,7 +55,7 @@
 #include <sys/stat.h>
 #include <sys/resource.h>
 
-#include "snort.h"
+#include "snort_config.h"
 #include "snort_debug.h"
 #include "parser.h"
 #include "packet_io/sfdaq.h"
@@ -178,7 +178,7 @@ void ts_print(const struct timeval* tvp, char* timebuf)
     /*
     **  If we're doing UTC, then make sure that the timezone is correct.
     */
-    if (ScOutputUseUtc())
+    if (SnortConfig::output_use_utc())
         localzone = 0;
 
     s = (tvp->tv_sec + localzone) % 86400;
@@ -187,7 +187,7 @@ void ts_print(const struct timeval* tvp, char* timebuf)
     struct tm ttm;
     lt = gmtime_r(&Time, &ttm);
 
-    if (ScOutputIncludeYear())
+    if (SnortConfig::output_include_year())
     {
         int year = (lt->tm_year >= 100) ? (lt->tm_year - 100) : lt->tm_year;
 
@@ -295,7 +295,7 @@ void CreatePidFile(pid_t pid)
     SnortSnprintf(snort_conf->pid_filename,
         sizeof(snort_conf->pid_filename), "%s/snort.pid", dir);
 
-    if (!ScNoLockPidFile())
+    if (!SnortConfig::no_lock_pid_file())
     {
         char pid_lockfilename[STD_BUF+1];
         int lock_fd;

@@ -22,13 +22,10 @@
 
 #include <time.h>
 
-#include "snort.h"
+#include "snort_config.h"
 #include "log/text_log.h"
 #include "actions/actions.h"
 #include "utils/stats.h"
-
-THREAD_LOCAL uint32_t http_mask;
-THREAD_LOCAL HttpBuffer http_buffer[HTTP_BUFFER_MAX];
 
 THREAD_LOCAL DataPointer g_alt_data;
 THREAD_LOCAL DataPointer g_file_data;
@@ -96,21 +93,21 @@ void EventTrace_Log(const Packet* p, OptTreeNode* otn, int action)
     TextLog_Print(tlog,
         "\nEvt=%u, Gid=%u, Sid=%u, Rev=%u, Act=%s\n",
         event_id, otn->sigInfo.generator,
-        otn->sigInfo.id, otn->sigInfo.rev, acts
-        );
+        otn->sigInfo.id, otn->sigInfo.rev, acts);
+
     TextLog_Print(tlog,
         "Pkt=%lu, Sec=%u.%6u, Len=%u, Cap=%u\n",
         pc.total_from_daq, p->pkth->ts.tv_sec, p->pkth->ts.tv_usec,
-        p->pkth->pktlen, p->pkth->caplen
-        );
+        p->pkth->pktlen, p->pkth->caplen);
+
     TextLog_Print(tlog,
         "Pkt Bits: Flags=0x%X, Proto=0x%X, Err=0x%X\n",
-        p->packet_flags, (unsigned)p->proto_bits, (unsigned)p->ptrs.decode_flags
-        );
+        p->packet_flags, (unsigned)p->proto_bits, (unsigned)p->ptrs.decode_flags);
+
     TextLog_Print(tlog,
-        "Pkt Cnts: Dsz=%u, Alt=%u, Uri=0x%X\n",
-        (unsigned)p->dsize, (unsigned)p->alt_dsize, http_mask
-        );
+        "Pkt Cnts: Dsz=%u, Alt=%u\n",
+        (unsigned)p->dsize, (unsigned)p->alt_dsize);
+
     LogBuffer("Packet", p->data, p->alt_dsize);
 
     nEvents++;

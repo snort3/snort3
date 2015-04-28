@@ -61,7 +61,7 @@
 #include "util.h"
 #include "ipobj.h"
 #include "packet_time.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "filters/sfthreshold.h"
 #include "sfsnprintfappend.h"
 #include "framework/inspector.h"

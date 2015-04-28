@@ -44,7 +44,7 @@
 #include "treenodes.h"
 #include "snort_debug.h"
 #include "util.h"
-#include "main/snort.h"
+#include "main/snort_config.h"
 #include "parser.h"
 
 struct SfSock

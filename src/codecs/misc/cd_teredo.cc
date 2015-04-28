@@ -24,10 +24,8 @@
 
 #include "framework/codec.h"
 #include "packet_io/active.h"
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "protocols/packet.h"
-#include "snort.h"
-#include "main/snort_config.h"
 #include "protocols/teredo.h"
 #include "protocols/protocol_ids.h"
 
@@ -91,7 +89,7 @@ bool TeredoCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort
         codec.proto_bits |= PROTO_BIT__TEREDO;
         codec.codec_flags |= CODEC_TEREDO_SEEN;  // for ipv6 codec
 
-        if ( ScTunnelBypassEnabled(TUNNEL_TEREDO) )
+        if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_TEREDO) )
             Active_SetTunnelBypass();
 
         if ( (!teredo::is_teredo_port(snort.sp)) && (!teredo::is_teredo_port(snort.dp)) )

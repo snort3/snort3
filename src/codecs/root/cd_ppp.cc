@@ -23,7 +23,6 @@
 
 #include <cstdint>
 #include "framework/codec.h"
-#include "main/snort.h"
 
 #define PPP_NAME "ppp"
 #define PPP_HELP_STR "support for point-to-point encapsulation"

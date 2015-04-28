@@ -59,7 +59,6 @@
 #include "hi_cmd_lookup.h"
 #include "hi_paf.h"
 
-#include "snort.h"
 #include "profiler.h"
 #include "detection_util.h"
 
@@ -236,6 +235,9 @@ public:
     { return new HttpSplitter(c2s); }
 
     void eval(Packet*) override;
+
+    void clear(Packet*) override
+    { ClearHttpBuffers(); }
 
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
     bool get_buf(unsigned, Packet*, InspectionBuffer&) override;

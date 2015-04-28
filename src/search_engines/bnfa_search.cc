@@ -156,7 +156,7 @@
 #define BNFA_TRACK_Q
 
 #ifdef BNFA_TRACK_Q
-# include "snort.h"
+# include "snort_config.h"
 #endif
 
 #include "pat_stats.h"

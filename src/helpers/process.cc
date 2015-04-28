@@ -42,6 +42,7 @@ using namespace std;
 #include "main/analyzer.h"
 #include "main/thread.h"
 #include "main/snort.h"
+#include "main/snort_config.h"
 #include "utils/util.h"
 #include "utils/ring.h"
 #include "utils/stats.h"
@@ -163,7 +164,7 @@ static void oops_handler(int signal)
 {
     // FIXIT-L what should we capture if this is the main thread?
     if ( !is_main_thread )
-        CapturePacket();
+        Snort::capture_packet();
 
     add_signal(signal, SIG_DFL, 0);
     raise(signal);
@@ -314,7 +315,7 @@ void daemonize()
     int exit_val = 0;
     pid_t cpid;
 
-    if (ScDaemonRestart())
+    if (SnortConfig::daemon_restart())
         return;
 
     LogMessage("Initializing daemon mode\n");

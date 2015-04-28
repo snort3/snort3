@@ -26,7 +26,6 @@
 
 #include "ppm.h"
 #include "main/snort_config.h"
-#include "main/snort.h"
 
 //-------------------------------------------------------------------------
 // ppm attributes

@@ -70,7 +70,6 @@
 #endif
 
 #include "ips_options/asn1_util.h"
-#include "snort.h"
 
 /*
  * Check to make sure that p is less than or equal to the ptr range

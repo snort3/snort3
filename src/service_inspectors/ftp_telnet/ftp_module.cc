@@ -21,7 +21,6 @@
 #include "ftp_module.h"
 #include <sstream>
 
-#include "main/snort_config.h"
 #include "parser/parser.h"
 
 using namespace std;

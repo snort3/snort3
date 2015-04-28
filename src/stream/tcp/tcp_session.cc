@@ -61,7 +61,7 @@
 #include "util.h"
 #include "sflsq.h"
 #include "snort_bounds.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "time/packet_time.h"
 #include "protocols/packet.h"
 #include "protocols/packet_manager.h"
@@ -82,6 +82,7 @@
 #include "protocols/tcp.h"
 #include "protocols/eth.h"
 #include "network_inspectors/normalize/normalize.h"
+#include "filters/sfrf.h"
 
 using namespace tcp;
 
@@ -2194,7 +2195,7 @@ static inline int _flush_to_seq(
                 PROFILE_VARS;
                 MODULE_PROFILE_START(s5TcpProcessRebuiltPerfStats);
 
-                DetectRebuiltPacket(s5_pkt);
+                Snort::detect_rebuilt_packet(s5_pkt);
 
                 MODULE_PROFILE_END(s5TcpProcessRebuiltPerfStats);
             }
@@ -2588,7 +2589,7 @@ static void final_flush(
         tmp_pcap_hdr->caplen = trk.seglist->caplen;
         tmp_pcap_hdr->pktlen = trk.seglist->pktlen;
 
-        DecodeRebuiltPacket(cleanup_pkt, tmp_pcap_hdr, trk.seglist->pkt, lwssn);
+        Snort::decode_rebuilt_packet(cleanup_pkt, tmp_pcap_hdr, trk.seglist->pkt, lwssn);
         p = cleanup_pkt;
     }
 

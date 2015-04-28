@@ -36,7 +36,7 @@
 #include "parser.h"
 #include "util.h"
 #include "sfhashfcn.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "profiler.h"
 #include "fpdetect.h"
 #include "sfhashfcn.h"
@@ -271,31 +271,34 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
 
     if (pcre_data->pe)
     {
-        if ((ScPcreMatchLimit() != -1) && !(pcre_data->options & SNORT_OVERRIDE_MATCH_LIMIT))
+        if ((SnortConfig::get_pcre_match_limit() != -1) &&
+            !(pcre_data->options & SNORT_OVERRIDE_MATCH_LIMIT))
         {
             if (pcre_data->pe->flags & PCRE_EXTRA_MATCH_LIMIT)
             {
-                pcre_data->pe->match_limit = ScPcreMatchLimit();
+                pcre_data->pe->match_limit = SnortConfig::get_pcre_match_limit();
             }
             else
             {
                 pcre_data->pe->flags |= PCRE_EXTRA_MATCH_LIMIT;
-                pcre_data->pe->match_limit = ScPcreMatchLimit();
+                pcre_data->pe->match_limit = SnortConfig::get_pcre_match_limit();
             }
         }
 
 #ifdef PCRE_EXTRA_MATCH_LIMIT_RECURSION
-        if ((ScPcreMatchLimitRecursion() != -1) && !(pcre_data->options &
-            SNORT_OVERRIDE_MATCH_LIMIT))
+        if ((SnortConfig::get_pcre_match_limit_recursion() != -1) &&
+            !(pcre_data->options & SNORT_OVERRIDE_MATCH_LIMIT))
         {
             if (pcre_data->pe->flags & PCRE_EXTRA_MATCH_LIMIT_RECURSION)
             {
-                pcre_data->pe->match_limit_recursion = ScPcreMatchLimitRecursion();
+                pcre_data->pe->match_limit_recursion =
+                    SnortConfig::get_pcre_match_limit_recursion();
             }
             else
             {
                 pcre_data->pe->flags |= PCRE_EXTRA_MATCH_LIMIT_RECURSION;
-                pcre_data->pe->match_limit_recursion = ScPcreMatchLimitRecursion();
+                pcre_data->pe->match_limit_recursion =
+                    SnortConfig::get_pcre_match_limit_recursion();
             }
         }
 #endif
@@ -303,20 +306,22 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     else
     {
         if (!(pcre_data->options & SNORT_OVERRIDE_MATCH_LIMIT) &&
-            ((ScPcreMatchLimit() != -1) || (ScPcreMatchLimitRecursion() != -1)))
+            ((SnortConfig::get_pcre_match_limit() != -1) ||
+             (SnortConfig::get_pcre_match_limit_recursion() != -1)))
         {
             pcre_data->pe = (pcre_extra*)SnortAlloc(sizeof(pcre_extra));
-            if (ScPcreMatchLimit() != -1)
+            if (SnortConfig::get_pcre_match_limit() != -1)
             {
                 pcre_data->pe->flags |= PCRE_EXTRA_MATCH_LIMIT;
-                pcre_data->pe->match_limit = ScPcreMatchLimit();
+                pcre_data->pe->match_limit = SnortConfig::get_pcre_match_limit();
             }
 
 #ifdef PCRE_EXTRA_MATCH_LIMIT_RECURSION
-            if (ScPcreMatchLimitRecursion() != -1)
+            if (SnortConfig::get_pcre_match_limit_recursion() != -1)
             {
                 pcre_data->pe->flags |= PCRE_EXTRA_MATCH_LIMIT_RECURSION;
-                pcre_data->pe->match_limit_recursion = ScPcreMatchLimitRecursion();
+                pcre_data->pe->match_limit_recursion =
+                    SnortConfig::get_pcre_match_limit_recursion();
             }
 #endif
         }
@@ -566,7 +571,7 @@ int PcreOption::eval(Cursor& c, Packet*)
     MODULE_PROFILE_START(pcrePerfStats);
 
     //short circuit this for testing pcre performance impact
-    if (ScNoPcre())
+    if (SnortConfig::no_pcre())
     {
         MODULE_PROFILE_END(pcrePerfStats);
         return DETECTION_OPTION_NO_MATCH;

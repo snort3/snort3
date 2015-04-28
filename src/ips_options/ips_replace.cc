@@ -33,7 +33,6 @@ using namespace std;
 #include "parser.h"
 #include "parser/parse_utils.h"
 #include "ips_content.h"
-#include "snort.h"
 #include "packet_io/sfdaq.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
@@ -60,7 +59,7 @@ static bool replace_ok()
 {
     static int warned = 0;
 
-    if ( !ScInlineMode() )
+    if ( !SnortConfig::inline_mode() )
         return false;
 
     if ( !DAQ_CanReplace() )

@@ -25,7 +25,7 @@
 
 #include <timersub.h>
 
-#include "snort.h"
+#include "snort_config.h"
 #include "util.h"
 #include "helpers/process.h"
 #include "packet_io/sfdaq.h"
@@ -38,6 +38,7 @@
 #include "detection/fpcreate.h"
 #include "filters/sfthreshold.h"
 #include "time/ppm.h"
+#include "time/profiler.h"
 
 #define STATS_SEPARATOR \
     "--------------------------------------------------"
@@ -197,7 +198,7 @@ const PegInfo daq_names[] =
     { "blacklist", "total blacklist verdicts" },
     { "ignore", "total ignore verdicts" },
 
-    // FIXIT-L thise are not exactly DAQ counts - but they are related
+    // FIXIT-L these are not exactly DAQ counts - but they are related
     { "internal blacklist", "packets blacklisted internally due to lack of DAQ support" },
     { "internal whitelist", "packets whitelisted internally due to lack of DAQ support" },
 #ifdef REG_TEST
@@ -321,7 +322,7 @@ void DropStats()
     proc_stats.attribute_table_hosts = SFAT_NumberOfHosts();
     show_stats((PegCount*)&proc_stats, proc_names, array_size(proc_names)-1, "process");
 
-    if ( ScLogVerbose() )
+    if ( SnortConfig::log_verbose() )
         log_malloc_info();
 }
 

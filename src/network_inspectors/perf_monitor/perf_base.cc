@@ -55,7 +55,6 @@
 #include <sys/types.h>
 
 #include "snort_types.h"
-#include "snort.h"
 #include "util.h"
 #include "framework/mpse.h"
 #include "packet_io/sfdaq.h"
@@ -1124,7 +1123,7 @@ static void GetPktDropStats(SFBASE* sfBase, SFBASE_STATS* sfBaseStats)
 {
     uint64_t recv, drop, sum;
 
-    if (ScReadMode())
+    if (SnortConfig::read_mode())
     {
         recv = pc.total_from_daq;
         drop = 0;

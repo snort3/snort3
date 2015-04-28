@@ -34,38 +34,35 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "snort.h"
-#include "rules.h"
-#include "treenodes.h"
-#include "treenodes.h"
-#include "parser.h"
-#include "parse_rule.h"
-#include "fpdetect.h"
+#include "main/snort_config.h"
+#include "detection/rules.h"
+#include "detection/treenodes.h"
+#include "detection/fpdetect.h"
 #include "detection/detection_options.h"
+#include "detection/detection_defines.h"
+#include "detection/sfrim.h"
 #include "ips_options/ips_content.h"
 #include "ips_options/ips_ip_proto.h"
 #include "ips_options/ips_flow.h"
-#include "util.h"
+#include "utils/util.h"
 #include "utils/stats.h"
-#include "treenodes.h"
-#include "parser.h"
+#include "utils/sflsq.h"
+#include "parser/parser.h"
+#include "parser/parse_rule.h"
 #include "framework/mpse.h"
 #include "framework/ips_option.h"
 #include "managers/mpse_manager.h"
 #include "bitop_funcs.h"
-#include "detection/detection_defines.h"
+#include "utils/sfportobject.h"
 
 #ifdef INTEL_SOFT_CPM
 #include "search/intel_soft_cpm.h"
 #endif
-
-#include "snort.h"
-#include "utils/sfportobject.h"
-#include "detection/sfrim.h"
 
 enum
 {
@@ -2215,7 +2212,7 @@ void fpBuildServicePortGroupByServiceOtnList(
  * spg - service port group (lookup should be by service id/tag)
  *     - this table maintains a port_group ptr for each service
  * srm - service rule map table (lookup by ascii service name)
- *     - this table maintains a sf_list ptr (list of rule otns) for each service
+ *     - this table maintains a SF_LIST ptr (list of rule otns) for each service
  *
  */
 void fpBuildServicePortGroups(

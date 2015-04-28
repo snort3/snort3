@@ -29,7 +29,7 @@
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
 #include "stream/stream_api.h"
-#include "main/snort.h"
+#include "main/snort_config.h"
 #include "packet_io/active.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet_manager.h"
@@ -183,7 +183,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         /*  If Teredo or GRE seen, this is not an 4in6 tunnel */
         if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
             codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
-        else if ( ScTunnelBypassEnabled(TUNNEL_6IN4) )
+        else if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_6IN4) )
             Active_SetTunnelBypass();
     }
 
@@ -531,7 +531,7 @@ void Ipv6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const ip::IP6Hdr* const ip6h = reinterpret_cast<const ip::IP6Hdr*>(raw_pkt);
 
     // FIXIT-H  -->  This does NOT obfuscate correctly
-    if (ScObfuscate())
+    if (SnortConfig::obfuscate())
     {
         TextLog_Print(text_log, "x:x:x:x::x:x:x:x -> x:x:x:x::x:x:x:x");
     }

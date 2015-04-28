@@ -26,7 +26,6 @@ using namespace std;
 
 #include "snort_debug.h"
 #include "snort_types.h"
-#include "snort.h"
 
 // this is accumulated only for fast pattern
 // searches for the detection engine

@@ -45,7 +45,6 @@
 #include "snort_debug.h"
 #include "parser.h"
 #include "packet_io/sfdaq.h"
-#include "snort.h"
 #include "profiler.h"
 #include "framework/inspector.h"
 #include "utils/stats.h"
@@ -84,11 +83,11 @@ static void PerfMonitorChangeLogFilesPermission(void)
                     return;
                 }
 
-                if (chown(perfmon_config->file, ScUid(), ScGid()) != 0)
+                if (chown(perfmon_config->file, SnortConfig::get_uid(), SnortConfig::get_gid()) != 0)
                 {
                     ParseError("perfmonitor: Unable to change permissions of "
                         "base stats file '%s' to user:%d and group:%d: %s.",
-                        perfmon_config->file, ScUid(), ScGid(), get_error(errno));
+                        perfmon_config->file, SnortConfig::get_uid(), SnortConfig::get_gid(), get_error(errno));
                     return;
                 }
             }
@@ -111,11 +110,11 @@ static void PerfMonitorChangeLogFilesPermission(void)
                     return;
                 }
 
-                if (chown(perfmon_config->flow_file, ScUid(), ScGid()) != 0)
+                if (chown(perfmon_config->flow_file, SnortConfig::get_uid(), SnortConfig::get_gid()) != 0)
                 {
                     ParseError("perfmonitor: Unable to change permissions of "
                         "flow stats file '%s' to user:%d and group:%d: %s.",
-                        perfmon_config->flow_file, ScUid(), ScGid(), get_error(errno));
+                        perfmon_config->flow_file, SnortConfig::get_uid(), SnortConfig::get_gid(), get_error(errno));
                     return;
                 }
             }
@@ -138,11 +137,11 @@ static void PerfMonitorChangeLogFilesPermission(void)
                     return;
                 }
 
-                if (chown(perfmon_config->flowip_file, ScUid(), ScGid()) != 0)
+                if (chown(perfmon_config->flowip_file, SnortConfig::get_uid(), SnortConfig::get_gid()) != 0)
                 {
                     ParseError("perfmonitor: Unable to change permissions of "
                         "flow-ip stats file '%s' to user:%d and group:%d: %s.",
-                        perfmon_config->flowip_file, ScUid(), ScGid(), get_error(errno));
+                        perfmon_config->flowip_file, SnortConfig::get_uid(), SnortConfig::get_gid(), get_error(errno));
                     return;
                 }
             }
@@ -309,7 +308,7 @@ void PerfMonitor::eval(Packet* p)
 
     if (first)
     {
-        if (ScReadMode())
+        if (SnortConfig::read_mode())
         {
             sfBase.pkt_stats.pkts_recv = pc.total_from_daq;
             sfBase.pkt_stats.pkts_drop = 0;

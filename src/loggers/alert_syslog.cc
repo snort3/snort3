@@ -39,7 +39,7 @@
 #include "parser.h"
 #include "util.h"
 #include "util_net.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/intf.h"
 
@@ -184,7 +184,7 @@ bool SyslogModule::begin(const char*, int, SnortConfig*)
 
 bool SyslogModule::end(const char*, int, SnortConfig*)
 {
-    if ( ScDaemonMode() )
+    if ( SnortConfig::daemon_mode() )
         options |= LOG_PID;
 
     return true;
@@ -234,7 +234,7 @@ static void AlertSyslog(
             }
         }
 
-        if (ScAlertInterface())
+        if (SnortConfig::alert_interface())
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
                 "<%s> ", PRINT_INTERFACE(DAQ_GetInterfaceSpec()));
@@ -258,7 +258,7 @@ static void AlertSyslog(
         {
             const char* ip_fmt = "%s -> %s";
 
-            if (ScObfuscate())
+            if (SnortConfig::obfuscate())
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
                     ObfuscateIpToText(p->ptrs.ip_api.get_src()),
@@ -274,7 +274,7 @@ static void AlertSyslog(
         {
             const char* ip_fmt = "%s:%d -> %s:%d";
 
-            if (ScObfuscate())
+            if (SnortConfig::obfuscate())
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
                     ObfuscateIpToText(p->ptrs.ip_api.get_src()), p->ptrs.sp,

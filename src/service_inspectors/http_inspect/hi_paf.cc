@@ -58,10 +58,10 @@
 #include <string.h>
 
 #include "hi_events.h"
+#include "main/snort_debug.h"
 #include "protocols/packet.h"
-#include "snort.h"
 #include "stream/stream_api.h"
-#include "snort_debug.h"
+#include "events/event_queue.h"
 
 #ifdef DEBUG_MSGS
 #define HI_TRACE     // define for state trace

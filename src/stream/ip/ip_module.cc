@@ -25,7 +25,6 @@ using namespace std;
 
 #include "stream_ip.h"
 #include "ip_defrag.h"
-#include "main/snort_config.h"
 #include "stream/stream.h"
 
 #define DEFRAG_IPOPTIONS_STR \

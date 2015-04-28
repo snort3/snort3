@@ -20,7 +20,6 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "main/snort.h"
 #include "framework/module.h"
 
 #include "nhttp_enum.h"

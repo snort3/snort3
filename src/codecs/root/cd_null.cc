@@ -21,10 +21,10 @@
 #include "config.h"
 #endif
 
+#include <pcap.h>
+
 #include "framework/codec.h"
 #include "protocols/protocol_ids.h"
-#include "main/snort.h"
-#include <pcap.h>
 
 #define CD_NULL_NAME "null"
 #define CD_NULL_HELP_STR "support for null encapsulation"

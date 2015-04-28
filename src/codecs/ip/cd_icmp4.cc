@@ -23,7 +23,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "main/snort.h"
+#include "main/snort_config.h"
 #include "protocols/icmp4.h"
 #include "codecs/ip/checksum.h"
 #include "codecs/codec_module.h"
@@ -195,7 +195,7 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
         break;
     }
 
-    if (ScIcmpChecksums())
+    if (SnortConfig::icmp_checksums())
     {
         uint16_t csum = checksum::cksum_add((uint16_t*)icmph, raw.len);
 

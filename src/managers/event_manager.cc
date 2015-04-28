@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -33,17 +34,18 @@
 #include <list>
 using namespace std;
 
-#include "snort_types.h"
-#include "snort.h"
-#include "snort_debug.h"
-#include "util.h"
-#include "plugin_manager.h"
-#include "module_manager.h"
+#include "main/snort_types.h"
+#include "main/snort_config.h"
+#include "main/snort_debug.h"
+#include "utils/util.h"
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "loggers/loggers.h"
 #include "parser/parser.h"
 #include "log/messages.h"
+
+#include "plugin_manager.h"
+#include "module_manager.h"
 
 struct Output
 {

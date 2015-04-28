@@ -37,12 +37,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "snort_types.h"
-#include "snort_bounds.h"
-#include "snort_debug.h"
-#include "snort.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "stream/stream.h"
 #include "stream/stream_api.h"
+#include "utils/snort_bounds.h"
 
 //--------------------------------------------------------------------
 // private state

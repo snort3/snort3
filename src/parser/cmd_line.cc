@@ -28,6 +28,7 @@ using namespace std;
 
 #include "main/help.h"
 #include "main/snort_module.h"
+#include "main/snort_config.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
 #include "packet_io/trough.h"
@@ -160,7 +161,7 @@ static void set(
 
 SnortConfig* parse_cmd_line(int argc, char* argv[])
 {
-    SnortConfig* sc = SnortConfNew();
+    SnortConfig* sc = new SnortConfig;
 
     ArgList al(argc, argv);
     const char* key, * val;

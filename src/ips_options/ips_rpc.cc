@@ -33,7 +33,6 @@
 #include "snort_debug.h"
 #include "util.h"
 #include "sfhashfcn.h"
-#include "snort.h"
 #include "profiler.h"
 #include "fpdetect.h"
 #include "sfhashfcn.h"

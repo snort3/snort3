@@ -28,7 +28,7 @@
 #include "snort_types.h"
 #include "util.h"
 #include "profiler.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "framework/mpse.h"
 
 //-------------------------------------------------------------------------

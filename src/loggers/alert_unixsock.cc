@@ -40,8 +40,6 @@
 #include "snort_debug.h"
 #include "util.h"
 #include "packet_io/sfdaq.h"
-
-#include "snort.h"
 #include "event.h"
 
 #define UNSOCK_FILE "snort_alert"

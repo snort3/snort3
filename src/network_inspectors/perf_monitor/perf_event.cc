@@ -28,7 +28,6 @@
 #include "perf_event.h"
 
 #include "snort_types.h"
-#include "snort.h"
 #include "util.h"
 #include "perf.h"
 

@@ -33,7 +33,6 @@
 #include "util.h"
 #include "parser.h"
 #include "snort_debug.h"
-#include "snort.h"
 #include "sfip/sf_vartable.h"
 #include "sfip/sf_ipvar.h"
 

@@ -83,7 +83,6 @@
 #include "extract.h"
 #include "ips_byte_extract.h"
 #include "sfhashfcn.h"
-#include "snort.h"
 #include "profiler.h"
 #include "fpdetect.h"
 #include "sfhashfcn.h"

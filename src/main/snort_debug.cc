@@ -37,7 +37,7 @@
 #include <stdlib.h>
 
 #include "snort_types.h"
-#include "snort.h"
+#include "snort_config.h"
 
 #ifdef DEBUG_MSGS
 const char* DebugMessageFile = NULL;  // FIXIT-M use access methods
@@ -87,7 +87,7 @@ void DebugMessageFunc(uint64_t level, const char* fmt, ...)
 
     va_start(ap, fmt);
 
-    if ((snort_conf != NULL) && ScDaemonMode())
+    if ((snort_conf != NULL) && SnortConfig::daemon_mode())
     {
         char buf[STD_BUF];
         int buf_len = sizeof(buf);
@@ -135,7 +135,7 @@ void DebugWideMessageFunc(uint64_t level, const wchar_t* fmt, ...)
 
     va_start(ap, fmt);
 
-    if (ScDaemonMode())
+    if (SnortConfig::daemon_mode())
     {
 #ifdef HAVE_VSWPRINTF
         vswprintf(buf, STD_BUF, fmt, ap);

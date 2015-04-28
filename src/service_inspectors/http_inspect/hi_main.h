@@ -24,6 +24,8 @@
 #include "config.h"
 #endif
 
+#include <zlib.h>
+
 #include "protocols/packet.h"
 #include "stream/stream_api.h"
 #include "hi_ui_config.h"
@@ -32,15 +34,6 @@
 #include "search_engines/search_tool.h"
 #include "util_jsnorm.h"
 #include "profiler.h"
-
-#include <zlib.h>
-
-extern THREAD_LOCAL DataBuffer HttpDecodeBuf;
-
-#ifdef PERF_PROFILING
-extern THREAD_LOCAL ProfileStats hiDetectPerfStats;
-extern THREAD_LOCAL int hiDetectCalled;
-#endif
 
 #define MAX_METHOD_LEN  256
 
@@ -59,6 +52,15 @@ extern THREAD_LOCAL int hiDetectCalled;
 #define DEFLATE_RAW_WBITS -15
 #define DEFLATE_WBITS      15
 #define GZIP_WBITS         31
+
+extern SO_PUBLIC THREAD_LOCAL uint32_t http_mask;
+extern SO_PUBLIC THREAD_LOCAL HttpBuffer http_buffer[HTTP_BUFFER_MAX];
+extern THREAD_LOCAL DataBuffer HttpDecodeBuf;
+
+#ifdef PERF_PROFILING
+extern THREAD_LOCAL ProfileStats hiDetectPerfStats;
+extern THREAD_LOCAL int hiDetectCalled;
+#endif
 
 typedef enum _HttpRespCompressType
 {
@@ -197,6 +199,36 @@ void HI_SearchFree(void);
 int HI_SearchStrFound(void*, void*, int, void*, void*);
 int IsJSNormData(Flow* flow);
 int IsGzipData(Flow* flow);
+
+static inline void ClearHttpBuffers(void)
+{
+    http_mask = 0;
+}
+
+static inline uint32_t GetHttpBufferMask(void)
+{
+    return http_mask;
+}
+
+static inline const HttpBuffer* GetHttpBuffer(HTTP_BUFFER b)
+{
+    if ( !((1 << b) & http_mask) )
+        return NULL;
+
+    return http_buffer + b;
+}
+
+static inline void SetHttpBuffer(
+    HTTP_BUFFER b, const uint8_t* buf, unsigned len, uint32_t enc = 0)
+{
+    HttpBuffer* hb = http_buffer + b;
+    assert(b < HTTP_BUFFER_MAX && buf);
+
+    hb->buf = buf;
+    hb->length = len;
+    hb->encode_type = enc;
+    http_mask |= (1 << b);
+}
 
 static inline void ResetGzipState(DECOMPRESS_STATE* ds)
 {

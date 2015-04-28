@@ -34,12 +34,14 @@
 #include "port_scan/ps_detect.h"  // FIXIT-L for PS_PROTO_*
 #include "utils/strvec.h"
 #include "file_api/file_service.h"
+#include "file_api/libs/file_config.h"
 #include "target_based/sftarget_reader.h"
 #include "parser/parser.h"
 #include "parser/config_file.h"
 #include "parser/vars.h"
 #include "helpers/process.h"
 #include "filters/rate_filter.h"
+#include "filters/sfrf.h"
 #include "managers/ips_manager.h"
 #include "managers/module_manager.h"
 #include "managers/mpse_manager.h"
@@ -51,6 +53,9 @@
 #include "protocols/udp.h"
 #include "time/ppm.h"
 #include "time/profiler.h"
+#include "main/thread.h"
+
+THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 
 //-------------------------------------------------------------------------
 // private implementation
@@ -58,28 +63,25 @@
 
 static void FreeRuleStateList(RuleState* head)
 {
-    while (head != NULL)
+    while ( head )
     {
         RuleState* tmp = head;
-
         head = head->next;
-
         free(tmp);
     }
 }
 
 static void FreeClassifications(ClassType* head)
 {
-    while (head != NULL)
+    while ( head )
     {
         ClassType* tmp = head;
-
         head = head->next;
 
-        if (tmp->name != NULL)
+        if ( tmp->name )
             free(tmp->name);
 
-        if (tmp->type != NULL)
+        if ( tmp->type )
             free(tmp->type);
 
         free(tmp);
@@ -88,16 +90,15 @@ static void FreeClassifications(ClassType* head)
 
 static void FreeReferences(ReferenceSystemNode* head)
 {
-    while (head != NULL)
+    while ( head )
     {
         ReferenceSystemNode* tmp = head;
-
         head = head->next;
 
-        if (tmp->name != NULL)
+        if ( tmp->name )
             free(tmp->name);
 
-        if (tmp->url != NULL)
+        if ( tmp->url )
             free(tmp->url);
 
         free(tmp);
@@ -109,15 +110,15 @@ static void init_policy_mode(IpsPolicy* p)
     switch ( p->policy_mode )
     {
     case POLICY_MODE__PASSIVE:
-        if ( ScAdapterInlineTestMode() )
+        if ( SnortConfig::adaptor_inline_test_mode() )
             p->policy_mode = POLICY_MODE__INLINE_TEST;
         break;
 
     case POLICY_MODE__INLINE:
-        if ( ScAdapterInlineTestMode() )
+        if ( SnortConfig::adaptor_inline_test_mode() )
             p->policy_mode = POLICY_MODE__INLINE_TEST;
 
-        else if (!ScAdapterInlineMode())
+        else if (!SnortConfig::adaptor_inline_mode())
         {
             ParseWarning(WARN_DAQ, "adapter is in passive mode; switching policy mode to tap.");
             p->policy_mode = POLICY_MODE__PASSIVE;
@@ -128,7 +129,7 @@ static void init_policy_mode(IpsPolicy* p)
         break;
 
     case POLICY_MODE__MAX:
-        if ( ScAdapterInlineMode() )
+        if ( SnortConfig::adaptor_inline_mode() )
             p->policy_mode = POLICY_MODE__INLINE;
         else
             p->policy_mode = POLICY_MODE__PASSIVE;
@@ -146,275 +147,254 @@ static void init_policies(SnortConfig* sc)
 // public methods
 //-------------------------------------------------------------------------
 
-/* Alot of this initialization can be skipped if not running in IDS mode
+/* A lot of this initialization can be skipped if not running in IDS mode
  * but the goal is to minimize config checks at run time when running in
  * IDS mode so we keep things simple and enforce that the only difference
  * among run_modes is how we handle packets via the log_func. */
-SnortConfig* SnortConfNew(void)
+SnortConfig::SnortConfig()
 {
-    SnortConfig* sc = (SnortConfig*)SnortAlloc(sizeof(SnortConfig));
+    memset(this, 0, sizeof(*this));
 
-    sc->pkt_cnt = 0;
-    sc->pkt_skip = 0;
-    sc->pkt_snaplen = -1;
-    sc->output_flags = 0;
-    sc->num_layers = DEFAULT_LAYERMAX;
-    sc->max_ip6_extensions = 0;
-    sc->max_ip_layers = 0;
-    sc->gtp_ports = nullptr;
+    pkt_cnt = 0;
+    pkt_skip = 0;
+    pkt_snaplen = -1;
+    output_flags = 0;
+    num_layers = DEFAULT_LAYERMAX;
+    max_ip6_extensions = 0;
+    max_ip_layers = 0;
+    gtp_ports = nullptr;
 
     /*user_id and group_id should be initialized to -1 by default, because
      * chown() use this later, -1 means no change to user_id/group_id*/
-    sc->user_id = -1;
-    sc->group_id = -1;
+    user_id = -1;
+    group_id = -1;
 
-    sc->tagged_packet_limit = 256;
-    sc->default_rule_state = RULE_STATE_ENABLED;
+    tagged_packet_limit = 256;
+    default_rule_state = true;
 
     // FIXIT-L pcre_match_limit* are interdependent
     // somehow a packet thread needs a much lower setting
-    sc->pcre_match_limit = 1500;
-    sc->pcre_match_limit_recursion = 1500;
+    pcre_match_limit = 1500;
+    pcre_match_limit_recursion = 1500;
 
-    memset(sc->pid_filename, 0, sizeof(sc->pid_filename));
+    memset(pid_filename, 0, sizeof(pid_filename));
 
     /* Default max size of the attribute table */
-    sc->max_attribute_hosts = DEFAULT_MAX_ATTRIBUTE_HOSTS;
-    sc->max_attribute_services_per_host = DEFAULT_MAX_ATTRIBUTE_SERVICES_PER_HOST;
+    max_attribute_hosts = DEFAULT_MAX_ATTRIBUTE_HOSTS;
+    max_attribute_services_per_host = DEFAULT_MAX_ATTRIBUTE_SERVICES_PER_HOST;
 
     /* Default max number of services per rule */
-    sc->max_metadata_services = DEFAULT_MAX_METADATA_SERVICES;
-    sc->mpls_stack_depth = DEFAULT_LABELCHAIN_LENGTH;
+    max_metadata_services = DEFAULT_MAX_METADATA_SERVICES;
+    mpls_stack_depth = DEFAULT_LABELCHAIN_LENGTH;
 
-    InspectorManager::new_config(sc);
+    InspectorManager::new_config(this);
 
-    sc->var_list = NULL;
+    var_list = NULL;
 
-    sc->num_slots = get_instance_max();
-    sc->state = (SnortState*)SnortAlloc(sizeof(SnortState)*sc->num_slots);
+    num_slots = get_instance_max();
+    state = (SnortState*)SnortAlloc(sizeof(SnortState)*num_slots);
 
 #ifdef PERF_PROFILING
-    sc->profile_rules = (ProfileConfig*)SnortAlloc(sizeof(*sc->profile_rules));
-    sc->profile_preprocs = (ProfileConfig*)SnortAlloc(sizeof(*sc->profile_preprocs));
+    profile_rules = (ProfileConfig*)SnortAlloc(sizeof(*profile_rules));
+    profile_modules = (ProfileConfig*)SnortAlloc(sizeof(*profile_modules));
 #endif
 
 #ifdef PPM_MGR
-    sc->ppm_cfg = (ppm_cfg_t*)SnortAlloc(sizeof(*sc->ppm_cfg));
+    ppm_cfg = (ppm_cfg_t*)SnortAlloc(sizeof(*ppm_cfg));
 #endif
 
-    sc->policy_map = new PolicyMap;
+    policy_map = new PolicyMap;
 
-    set_inspection_policy(sc->get_inspection_policy());
-    set_ips_policy(sc->get_ips_policy());
-    set_network_policy(sc->get_network_policy());
+    set_inspection_policy(get_inspection_policy());
+    set_ips_policy(get_ips_policy());
+    set_network_policy(get_network_policy());
 
-    sc->source_affinity = new std::map<const std::string, int>;
-    sc->thread_affinity = new std::vector<int>(32, -1);
-
-    return sc;
+    source_affinity = new std::map<const std::string, int>;
+    thread_affinity = new std::vector<int>(32, -1);
 }
 
-void SnortConfSetup(SnortConfig* sc)
+SnortConfig::~SnortConfig()
 {
-    if (ScOutputUseUtc())
-        snort_conf->thiszone = 0;
-#ifndef VALGRIND_TESTING
-    else
-        snort_conf->thiszone = gmt2local(0);
-#endif
+    if ( log_dir )
+        free(log_dir);
 
-    init_policies(sc);
-    ParseRules(sc);
+    if ( orig_log_dir )
+        free(orig_log_dir);
 
-    // FIXIT-L see SnortInit() on config printing
-    //detection_filter_print_config(sc->detection_filter_config);
-    ////RateFilter_PrintConfig(sc->rate_filter_config);
-    //print_thresholding(sc->threshold_config, 0);
-    //PrintRuleOrder(sc->rule_lists);
+    if ( bpf_file )
+        free(bpf_file);
 
-    SetRuleStates(sc);
+    if ( chroot_dir )
+        free(chroot_dir);
 
-    /* Need to do this after dynamic detection stuff is initialized, too */
-    IpsManager::verify(sc);
-    ModuleManager::load_commands(sc);
+    if ( bpf_filter )
+        free(bpf_filter);
 
-    fpCreateFastPacketDetection(sc);
-    pcre_setup(sc);
-#ifdef PPM_MGR
-    //PPM_PRINT_CFG(sc->ppm_cfg);
-#endif
-}
+    if ( event_trace_file )
+        free(event_trace_file);
 
-void SnortConfFree(SnortConfig* sc)
-{
-    assert(sc);
+    FreeRuleStateList(rule_state_list);
+    FreeClassifications(classifications);
+    FreeReferences(references);
 
-    if (sc->log_dir != NULL)
-        free(sc->log_dir);
+    pcre_cleanup(this);
 
-    if (sc->orig_log_dir != NULL)
-        free(sc->orig_log_dir);
+    FreeRuleLists(this);
+    OtnLookupFree(otn_map);
+    PortTablesFree(port_tables);
 
-    if (sc->bpf_file != NULL)
-        free(sc->bpf_file);
+    ThresholdConfigFree(threshold_config);
+    RateFilter_ConfigFree(rate_filter_config);
+    DetectionFilterConfigFree(detection_filter_config);
 
-    if (sc->chroot_dir != NULL)
-        free(sc->chroot_dir);
+    if ( event_queue_config )
+        EventQueueConfigFree(event_queue_config);
 
-    if (sc->bpf_filter != NULL)
-        free(sc->bpf_filter);
-
-    if (sc->event_trace_file != NULL)
-        free(sc->event_trace_file);
-
-    FreeRuleStateList(sc->rule_state_list);
-    FreeClassifications(sc->classifications);
-    FreeReferences(sc->references);
-
-    pcre_cleanup(sc);
-
-    FreeRuleLists(sc);
-    OtnLookupFree(sc->otn_map);
-    PortTablesFree(sc->port_tables);
-
-    ThresholdConfigFree(sc->threshold_config);
-    RateFilter_ConfigFree(sc->rate_filter_config);
-    DetectionFilterConfigFree(sc->detection_filter_config);
-
-    if ( sc->event_queue_config )
-        EventQueueConfigFree(sc->event_queue_config);
-
-    if (sc->ip_proto_only_lists != NULL)
+    if ( ip_proto_only_lists )
     {
         unsigned int j;
 
         for (j = 0; j < NUM_IP_PROTOS; j++)
-            sflist_free_all(sc->ip_proto_only_lists[j], NULL);
+            sflist_free_all(ip_proto_only_lists[j], NULL);
 
-        free(sc->ip_proto_only_lists);
+        free(ip_proto_only_lists);
     }
 
-    fpDeleteFastPacketDetection(sc);
+    fpDeleteFastPacketDetection(this);
 
-    if ( sc->daq_type )
-        free(sc->daq_type);
+    if ( daq_type )
+        free(daq_type);
 
-    if ( sc->daq_mode )
-        free(sc->daq_mode);
+    if ( daq_mode )
+        free(daq_mode);
 
-    if ( sc->daq_vars )
-        StringVector_Delete(sc->daq_vars);
+    if ( daq_vars )
+        StringVector_Delete(daq_vars);
 
-    if ( sc->daq_dirs )
-        StringVector_Delete(sc->daq_dirs);
+    if ( daq_dirs )
+        StringVector_Delete(daq_dirs);
 
-    if ( sc->respond_device )
-        free(sc->respond_device);
+    if ( respond_device )
+        free(respond_device);
 
-    if (sc->eth_dst )
-        free(sc->eth_dst);
+    if (eth_dst )
+        free(eth_dst);
 
-    if ( sc->output )
-        free(sc->output);
+    if ( output )
+        free(output);
 
-    if(sc->file_config)
-        delete sc->file_config;
+    delete file_config;
 
-    if ( sc->var_list )
-        FreeVarList(sc->var_list);
+    if ( var_list )
+        FreeVarList(var_list);
 
-    if ( sc->fast_pattern_config &&
-        (!snort_conf || sc == snort_conf ||
-        (sc->fast_pattern_config->search_api !=
+    if ( fast_pattern_config &&
+        (!snort_conf || this == snort_conf ||
+        (fast_pattern_config->search_api !=
         snort_conf->fast_pattern_config->search_api)) )
     {
-        MpseManager::stop_search_engine(sc->fast_pattern_config->search_api);
+        MpseManager::stop_search_engine(fast_pattern_config->search_api);
     }
-    FastPatternConfigFree(sc->fast_pattern_config);
+    FastPatternConfigFree(fast_pattern_config);
 
-    delete sc->policy_map;
-    InspectorManager::delete_config(sc);
+    delete policy_map;
+    InspectorManager::delete_config(this);
 
-    free(sc->state);
+    free(state);
 
-    if (sc->source_affinity)
-        delete sc->source_affinity;
+    if (source_affinity)
+        delete source_affinity;
 
-    if (sc->thread_affinity)
-        delete sc->thread_affinity;
+    if (thread_affinity)
+        delete thread_affinity;
 
-    if (sc->gtp_ports)
-        delete sc->gtp_ports;
+    if (gtp_ports)
+        delete gtp_ports;
 
-    free(sc->profile_rules);
-    free(sc->profile_preprocs);
-    free(sc->ppm_cfg);
+    free(profile_rules);
+    free(profile_modules);
+    free(ppm_cfg);
 
 #ifdef INTEL_SOFT_CPM
-    IntelPmRelease(sc->ipm_handles);
+    IntelPmRelease(ipm_handles);
 #endif
 
-    free(sc);
     trim_heap();
 }
 
-SnortConfig* MergeSnortConfs(SnortConfig* cmd_line, SnortConfig* config_file)
+void SnortConfig::setup()
 {
-    /* Move everything from the command line config over to the
-     * config_file config */
+    if ( output_use_utc() )
+        thiszone = 0;
 
-    if (cmd_line == NULL)
+#ifndef VALGRIND_TESTING
+    else
+        thiszone = gmt2local(0);
+#endif
+
+    init_policies(this);
+    ParseRules(this);
+
+    // FIXIT-L see SnortInit() on config printing
+    //detection_filter_print_config(detection_filter_config);
+    ////RateFilter_PrintConfig(rate_filter_config);
+    //print_thresholding(threshold_config, 0);
+    //PrintRuleOrder(rule_lists);
+
+    SetRuleStates(this);
+
+    /* Need to do this after dynamic detection stuff is initialized, too */
+    IpsManager::verify(this);
+    ModuleManager::load_commands(this);
+
+    fpCreateFastPacketDetection(this);
+    pcre_setup(this);
+
+#ifdef PPM_MGR
+    //PPM_PRINT_CFG(ppm_cfg);
+#endif
+}
+
+// merge in everything from the command line config
+void SnortConfig::merge(SnortConfig* cmd_line)
+{
+    if ( !cmd_line->log_dir && !log_dir )
+        log_dir = SnortStrdup(DEFAULT_LOG_DIR);
+
+    else if ( cmd_line->log_dir )
     {
-        FatalError("%s(%d) Merging snort configs: snort conf is NULL.\n",
-            __FILE__, __LINE__);
+        if ( log_dir )
+            free(log_dir);
+
+        log_dir = SnortStrdup(cmd_line->log_dir);
     }
 
-    if (config_file == NULL)
-    {
-        if (cmd_line->log_dir == NULL)
-            cmd_line->log_dir = SnortStrdup(DEFAULT_LOG_DIR);
-    }
-    else if ((cmd_line->log_dir == NULL) && (config_file->log_dir == NULL))
-    {
-        config_file->log_dir = SnortStrdup(DEFAULT_LOG_DIR);
-    }
-    else if (cmd_line->log_dir != NULL)
-    {
-        if (config_file->log_dir != NULL)
-            free(config_file->log_dir);
-
-        config_file->log_dir = SnortStrdup(cmd_line->log_dir);
-    }
-
-    if (config_file == NULL)
-        return cmd_line;
-
-    config_file->run_prefix = cmd_line->run_prefix;
+    run_prefix = cmd_line->run_prefix;
     cmd_line->run_prefix = nullptr;
 
-    config_file->id_subdir = cmd_line->id_subdir;
-    config_file->id_zero = cmd_line->id_zero;
+    id_subdir = cmd_line->id_subdir;
+    id_zero = cmd_line->id_zero;
 
     /* Used because of a potential chroot */
-    config_file->orig_log_dir = SnortStrdup(config_file->log_dir);
+    orig_log_dir = SnortStrdup(log_dir);
 
-    config_file->event_log_id = cmd_line->event_log_id;
+    event_log_id = cmd_line->event_log_id;
 
-    config_file->run_flags |= cmd_line->run_flags;
-    config_file->output_flags |= cmd_line->output_flags;
-    config_file->logging_flags |= cmd_line->logging_flags;
+    run_flags |= cmd_line->run_flags;
+    output_flags |= cmd_line->output_flags;
+    logging_flags |= cmd_line->logging_flags;
 
     if ((cmd_line->run_flags & RUN_FLAG__TEST) &&
-        (config_file->run_flags & RUN_FLAG__DAEMON))
+        (run_flags & RUN_FLAG__DAEMON))
     {
         /* Just ignore deamon setting in conf file */
-        config_file->run_flags &= ~RUN_FLAG__DAEMON;
+        run_flags &= ~RUN_FLAG__DAEMON;
     }
 
-    config_file->stdin_rules = cmd_line->stdin_rules;
+    stdin_rules = cmd_line->stdin_rules;
 
     // only set by cmd_line to override other conf output settings
-    config_file->output = cmd_line->output;
+    output = cmd_line->output;
     cmd_line->output = nullptr;
 
     /* Merge checksum flags.  If command line modified them, use from the
@@ -423,7 +403,7 @@ SnortConfig* MergeSnortConfs(SnortConfig* cmd_line, SnortConfig* config_file)
     int cl_chk = cmd_line->get_network_policy()->checksum_eval;
     int cl_drop = cmd_line->get_network_policy()->checksum_drop;
 
-    for ( auto p : config_file->policy_map->network_policy )
+    for ( auto p : policy_map->network_policy )
     {
         if ( !(cl_chk & CHECKSUM_FLAG__DEF) )
             p->checksum_eval = cl_chk;
@@ -434,289 +414,275 @@ SnortConfig* MergeSnortConfs(SnortConfig* cmd_line, SnortConfig* config_file)
 
     /* FIXIT-L J do these belong in network policy? */
     if (cmd_line->num_layers != 0)
-        config_file->num_layers = cmd_line->num_layers;
+        num_layers = cmd_line->num_layers;
 
     if (cmd_line->max_ip6_extensions != 0)
-        config_file->max_ip6_extensions = cmd_line->max_ip6_extensions;
+        max_ip6_extensions = cmd_line->max_ip6_extensions;
 
     if (cmd_line->max_ip_layers != 0)
-        config_file->max_ip_layers = cmd_line->max_ip_layers;
+        max_ip_layers = cmd_line->max_ip_layers;
 
     if (cmd_line->obfuscation_net.family != 0)
-        memcpy(&config_file->obfuscation_net, &cmd_line->obfuscation_net, sizeof(sfip_t));
+        memcpy(&obfuscation_net, &cmd_line->obfuscation_net, sizeof(sfip_t));
 
     if (cmd_line->homenet.family != 0)
-        memcpy(&config_file->homenet, &cmd_line->homenet, sizeof(sfip_t));
+        memcpy(&homenet, &cmd_line->homenet, sizeof(sfip_t));
 
-    if (cmd_line->bpf_file != NULL)
+    if ( cmd_line->bpf_file )
     {
-        if (config_file->bpf_file != NULL)
-            free(config_file->bpf_file);
-        config_file->bpf_file = SnortStrdup(cmd_line->bpf_file);
+        if ( bpf_file )
+            free(bpf_file);
+        bpf_file = SnortStrdup(cmd_line->bpf_file);
     }
 
-    if (cmd_line->bpf_filter != NULL)
-        config_file->bpf_filter = SnortStrdup(cmd_line->bpf_filter);
+    if ( cmd_line->bpf_filter )
+        bpf_filter = SnortStrdup(cmd_line->bpf_filter);
 
     if (cmd_line->pkt_snaplen != -1)
-        config_file->pkt_snaplen = cmd_line->pkt_snaplen;
+        pkt_snaplen = cmd_line->pkt_snaplen;
 
     if (cmd_line->pkt_cnt != 0)
-        config_file->pkt_cnt = cmd_line->pkt_cnt;
+        pkt_cnt = cmd_line->pkt_cnt;
 
     if (cmd_line->pkt_skip != 0)
-        config_file->pkt_skip = cmd_line->pkt_skip;
+        pkt_skip = cmd_line->pkt_skip;
 
     if (cmd_line->group_id != -1)
-        config_file->group_id = cmd_line->group_id;
+        group_id = cmd_line->group_id;
 
     if (cmd_line->user_id != -1)
-        config_file->user_id = cmd_line->user_id;
+        user_id = cmd_line->user_id;
 
     /* Only configurable on command line */
     if (cmd_line->file_mask != 0)
-        config_file->file_mask = cmd_line->file_mask;
+        file_mask = cmd_line->file_mask;
 
-    if (cmd_line->chroot_dir != NULL)
+    if ( cmd_line->chroot_dir )
     {
-        if (config_file->chroot_dir != NULL)
-            free(config_file->chroot_dir);
-        config_file->chroot_dir = SnortStrdup(cmd_line->chroot_dir);
+        if ( chroot_dir )
+            free(chroot_dir);
+        chroot_dir = SnortStrdup(cmd_line->chroot_dir);
     }
 
     if ( cmd_line->daq_type )
-        config_file->daq_type = SnortStrdup(cmd_line->daq_type);
+        daq_type = SnortStrdup(cmd_line->daq_type);
 
     if ( cmd_line->daq_mode )
-        config_file->daq_mode = SnortStrdup(cmd_line->daq_mode);
+        daq_mode = SnortStrdup(cmd_line->daq_mode);
 
     if ( cmd_line->dirty_pig )
-        config_file->dirty_pig = cmd_line->dirty_pig;
+        dirty_pig = cmd_line->dirty_pig;
 
     if ( cmd_line->daq_vars )
     {
         /* Command line overwrites daq_vars */
-        if (config_file->daq_vars)
-            StringVector_Delete(config_file->daq_vars);
+        if (daq_vars)
+            StringVector_Delete(daq_vars);
 
-        config_file->daq_vars = StringVector_New();
-        StringVector_AddVector(config_file->daq_vars, cmd_line->daq_vars);
+        daq_vars = StringVector_New();
+        StringVector_AddVector(daq_vars, cmd_line->daq_vars);
     }
     if ( cmd_line->daq_dirs )
     {
         /* Command line overwrites daq_dirs */
-        if (config_file->daq_dirs)
-            StringVector_Delete(config_file->daq_dirs);
+        if (daq_dirs)
+            StringVector_Delete(daq_dirs);
 
-        config_file->daq_dirs = StringVector_New();
-        StringVector_AddVector(config_file->daq_dirs, cmd_line->daq_dirs);
+        daq_dirs = StringVector_New();
+        StringVector_AddVector(daq_dirs, cmd_line->daq_dirs);
     }
     if (cmd_line->mpls_stack_depth != DEFAULT_LABELCHAIN_LENGTH)
-        config_file->mpls_stack_depth = cmd_line->mpls_stack_depth;
+        mpls_stack_depth = cmd_line->mpls_stack_depth;
 
     /* Set MPLS payload type here if it hasn't been defined */
     if ((cmd_line->mpls_payload_type == 0) &&
-        (config_file->mpls_payload_type == 0))
+        (mpls_payload_type == 0))
     {
-        config_file->mpls_payload_type = DEFAULT_MPLS_PAYLOADTYPE;
+        mpls_payload_type = DEFAULT_MPLS_PAYLOADTYPE;
     }
     else if (cmd_line->mpls_payload_type != 0)
     {
-        config_file->mpls_payload_type = cmd_line->mpls_payload_type;
+        mpls_payload_type = cmd_line->mpls_payload_type;
     }
 
     if (cmd_line->run_flags & RUN_FLAG__PROCESS_ALL_EVENTS)
-        config_file->event_queue_config->process_all_events = 1;
+        event_queue_config->process_all_events = 1;
 
 #ifdef BUILD_SHELL
     if ( cmd_line->remote_control )
-        config_file->remote_control = cmd_line->remote_control;
+        remote_control = cmd_line->remote_control;
 #endif
 
     // config file vars are stored differently
-    // FIXIT-M should config_file and cmd_line use the same var list / table?
-    config_file->var_list = NULL;
+    // FIXIT-M should cmd_line use the same var list / table?
+    var_list = NULL;
 
-    free(config_file->state);
-    config_file->num_slots = get_instance_max();
-    config_file->state = (SnortState*)SnortAlloc(sizeof(SnortState)*config_file->num_slots);
-
-    return config_file;
+    free(state);
+    num_slots = get_instance_max();
+    state = (SnortState*)SnortAlloc(sizeof(SnortState)*num_slots);
 }
 
-int VerifyReload(SnortConfig* sc)
+bool SnortConfig::verify()
 {
-    if (sc == NULL)
-        return -1;
-
-    if (snort_conf->asn1_mem != sc->asn1_mem)
+    if (snort_conf->asn1_mem != asn1_mem)
     {
         ErrorMessage("Snort Reload: Changing the asn1 memory configuration "
             "requires a restart.\n");
-        return -1;
+        return false;
     }
 
-    if ((sc->bpf_filter == NULL) && (sc->bpf_file != NULL))
-        sc->bpf_filter = read_infile("packets.bpf_file", sc->bpf_file);
+    if ( !bpf_filter && bpf_file )
+        bpf_filter = read_infile("packets.bpf_file", bpf_file);
 
-    if ((sc->bpf_filter != NULL) && (snort_conf->bpf_filter != NULL))
+    if ( bpf_filter && snort_conf->bpf_filter )
     {
-        if (strcasecmp(snort_conf->bpf_filter, sc->bpf_filter) != 0)
+        if (strcasecmp(snort_conf->bpf_filter, bpf_filter) != 0)
         {
             ErrorMessage("Snort Reload: Changing the bpf filter configuration "
                 "requires a restart.\n");
-            return -1;
+            return false;
         }
     }
-    else if (sc->bpf_filter != snort_conf->bpf_filter)
+    else if (bpf_filter != snort_conf->bpf_filter)
     {
         ErrorMessage("Snort Reload: Changing the bpf filter configuration "
             "requires a restart.\n");
-        return -1;
+        return false;
     }
 
-    if ( sc->respond_attempts != snort_conf->respond_attempts ||
-        sc->respond_device != snort_conf->respond_device )
+    if ( respond_attempts != snort_conf->respond_attempts ||
+        respond_device != snort_conf->respond_device )
     {
         ErrorMessage("Snort Reload: Changing config response "
             "requires a restart.\n");
-        return -1;
+        return false;
     }
 
-    if ((snort_conf->chroot_dir != NULL) &&
-        (sc->chroot_dir != NULL))
+    if ( snort_conf->chroot_dir && chroot_dir )
     {
-        if (strcasecmp(snort_conf->chroot_dir, sc->chroot_dir) != 0)
+        if (strcasecmp(snort_conf->chroot_dir, chroot_dir) != 0)
         {
             ErrorMessage("Snort Reload: Changing the chroot directory "
                 "configuration requires a restart.\n");
-            return -1;
+            return false;
         }
     }
-    else if (snort_conf->chroot_dir != sc->chroot_dir)
+    else if (snort_conf->chroot_dir != chroot_dir)
     {
         ErrorMessage("Snort Reload: Changing the chroot directory "
             "configuration requires a restart.\n");
-        return -1;
+        return false;
     }
 
     if ((snort_conf->run_flags & RUN_FLAG__DAEMON) !=
-        (sc->run_flags & RUN_FLAG__DAEMON))
+        (run_flags & RUN_FLAG__DAEMON))
     {
         ErrorMessage("Snort Reload: Changing to or from daemon mode "
             "requires a restart.\n");
-        return -1;
+        return false;
     }
 
     /* Orig log dir because a chroot might have changed it */
-    if ((snort_conf->orig_log_dir != NULL) &&
-        (sc->orig_log_dir != NULL))
+    if ( snort_conf->orig_log_dir && orig_log_dir )
     {
-        if (strcasecmp(snort_conf->orig_log_dir, sc->orig_log_dir) != 0)
+        if (strcasecmp(snort_conf->orig_log_dir, orig_log_dir) != 0)
         {
             ErrorMessage("Snort Reload: Changing the log directory "
                 "configuration requires a restart.\n");
-            return -1;
+            return false;
         }
     }
-    else if (snort_conf->orig_log_dir != sc->orig_log_dir)
+    else if (snort_conf->orig_log_dir != orig_log_dir)
     {
         ErrorMessage("Snort Reload: Changing the log directory "
             "configuration requires a restart.\n");
-        return -1;
+        return false;
     }
 
-    if (snort_conf->max_attribute_hosts != sc->max_attribute_hosts)
+    if (snort_conf->max_attribute_hosts != max_attribute_hosts)
     {
         ErrorMessage("Snort Reload: Changing max_attribute_hosts "
             "configuration requires a restart.\n");
-        return -1;
+        return false;
     }
-    if (snort_conf->max_attribute_services_per_host != sc->max_attribute_services_per_host)
+    if (snort_conf->max_attribute_services_per_host != max_attribute_services_per_host)
     {
         ErrorMessage("Snort Reload: Changing max_attribute_services_per_host "
             "configuration requires a restart.\n");
-        return -1;
+        return false;
     }
 
     if ( (snort_conf->output_flags & OUTPUT_FLAG__NO_LOG) !=
-        (sc->output_flags & OUTPUT_FLAG__NO_LOG) )
+        (output_flags & OUTPUT_FLAG__NO_LOG) )
     {
         ErrorMessage("Snort Reload: Changing from log to no log or vice "
             "versa requires a restart.\n");
-        return -1;
+        return false;
     }
 
     if ((snort_conf->run_flags & RUN_FLAG__NO_PROMISCUOUS) !=
-        (sc->run_flags & RUN_FLAG__NO_PROMISCUOUS))
+        (run_flags & RUN_FLAG__NO_PROMISCUOUS))
     {
         ErrorMessage("Snort Reload: Changing to or from promiscuous mode "
             "requires a restart.\n");
-        return -1;
+        return false;
     }
 
 #ifdef PPM_MGR
     /* XXX XXX Not really sure we need to disallow this */
-    if (snort_conf->ppm_cfg->rule_log != sc->ppm_cfg->rule_log)
+    if (snort_conf->ppm_cfg->rule_log != ppm_cfg->rule_log)
     {
         ErrorMessage("Snort Reload: Changing the ppm rule_log "
             "configuration requires a restart.\n");
-        return -1;
+        return false;
     }
 #endif
 
-    if (snort_conf->group_id != sc->group_id)
+    if (snort_conf->group_id != group_id)
     {
         ErrorMessage("Snort Reload: Changing the group id "
             "configuration requires a restart.\n");
-        return -1;
+        return false;
     }
 
-    if (snort_conf->user_id != sc->user_id)
+    if (snort_conf->user_id != user_id)
     {
         ErrorMessage("Snort Reload: Changing the user id "
             "configuration requires a restart.\n");
-        return -1;
+        return false;
     }
 
-    if (snort_conf->pkt_snaplen != sc->pkt_snaplen)
+    if (snort_conf->pkt_snaplen != pkt_snaplen)
     {
         ErrorMessage("Snort Reload: Changing the packet snaplen "
             "configuration requires a restart.\n");
-        return -1;
+        return false;
     }
 
     if (snort_conf->threshold_config->memcap !=
-        sc->threshold_config->memcap)
+        threshold_config->memcap)
     {
         ErrorMessage("Snort Reload: Changing the threshold memcap "
             "configuration requires a restart.\n");
-        return -1;
+        return false;
     }
 
     if (snort_conf->rate_filter_config->memcap !=
-        sc->rate_filter_config->memcap)
+        rate_filter_config->memcap)
     {
         ErrorMessage("Snort Reload: Changing the rate filter memcap "
             "configuration requires a restart.\n");
-        return -1;
+        return false;
     }
 
     if (snort_conf->detection_filter_config->memcap !=
-        sc->detection_filter_config->memcap)
+        detection_filter_config->memcap)
     {
         ErrorMessage("Snort Reload: Changing the detection filter memcap "
             "configuration requires a restart.\n");
-        return -1;
+        return false;
     }
 
-    if (snort_conf->so_rule_memcap != sc->so_rule_memcap)
-    {
-        ErrorMessage("Snort Reload: Changing the so rule memcap "
-            "configuration requires a restart.\n");
-        return -1;
-    }
-
-    return 0;
+    return true;
 }
 

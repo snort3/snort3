@@ -60,6 +60,7 @@
 
 #include "snort_types.h"
 #include "snort_bounds.h"
+#include "snort_config.h"
 #include "snort_debug.h"
 #include "detection/treenodes.h"
 #include "protocols/packet.h"
@@ -70,7 +71,6 @@
 #include "sfhashfcn.h"
 #include "detection/detection_util.h"
 #include "detection/detection_defines.h"
-#include "snort.h"
 #include "profiler.h"
 #include "fpdetect.h"
 #include "framework/cursor.h"

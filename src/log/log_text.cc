@@ -41,7 +41,7 @@
 #include "signature.h"
 #include "util_net.h"
 #include "protocols/packet.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "log/text_log.h"
 #include "snort_bounds.h"
 #include "obfuscation.h"
@@ -438,7 +438,7 @@ void Log2ndHeader(TextLog* log, Packet* p)
         break;
 #endif
     default:
-        if (ScLogVerbose())
+        if (SnortConfig::log_verbose())
         {
             // FIXIT-L should only be output once!
             ErrorMessage("Datalink %i type 2nd layer display is not "
@@ -579,7 +579,7 @@ void LogIpAddrs(TextLog* log, Packet* p)
     {
         const char* ip_fmt = "%s -> %s";
 
-        if (ScObfuscate())
+        if (SnortConfig::obfuscate())
         {
             TextLog_Print(log, ip_fmt,
                 ObfuscateIpToText(p->ptrs.ip_api.get_src()),
@@ -596,7 +596,7 @@ void LogIpAddrs(TextLog* log, Packet* p)
     {
         const char* ip_fmt = "%s:%d -> %s:%d";
 
-        if (ScObfuscate())
+        if (SnortConfig::obfuscate())
         {
             TextLog_Print(log, ip_fmt,
                 ObfuscateIpToText(p->ptrs.ip_api.get_src()), p->ptrs.sp,
@@ -631,7 +631,7 @@ void LogIPHeader(TextLog* log, Packet* p)
 
     LogIpAddrs(log, p);
 
-    if (!ScOutputDataLink())
+    if (!SnortConfig::output_datalink())
     {
         TextLog_NewLine(log);
     }
@@ -1472,7 +1472,7 @@ void LogXrefs(TextLog* log, const Event* e, bool doNewLine)
  *--------------------------------------------------------------------
  */
 /*--------------------------------------------------------------------
- * Function: ScOutputCharData(TextLog*, char*, int)
+ * Function: SnortConfig::output_char_data(TextLog*, char*, int)
  *
  * Purpose: Dump the printable ASCII data from a packet
  *
@@ -1566,7 +1566,7 @@ void LogNetData(TextLog* log, const uint8_t* data, const int len, Packet* p)
 
     if ( len > IP_MAXPACKET )
     {
-        if (ScLogVerbose())
+        if (SnortConfig::log_verbose())
         {
             TextLog_Print(
                 log, "Got bogus buffer length (%d) for LogNetData, "
@@ -1576,7 +1576,7 @@ void LogNetData(TextLog* log, const uint8_t* data, const int len, Packet* p)
         end = data + BYTES_PER_FRAME;
     }
 
-    if (p && ScObfuscate() )
+    if (p && SnortConfig::obfuscate() )
     {
         int num_layers =  p->num_layers;
         uint8_t lyr_proto = 0;
@@ -1607,7 +1607,7 @@ void LogNetData(TextLog* log, const uint8_t* data, const int len, Packet* p)
     /* loop thru the whole buffer */
     while ( pb < end )
     {
-        if (ScVerboseByteDump())
+        if (SnortConfig::verbose_byte_dump())
         {
             TextLog_Print(log, "0x%04X: ", offset);
             offset += BYTES_PER_FRAME;
@@ -1616,7 +1616,7 @@ void LogNetData(TextLog* log, const uint8_t* data, const int len, Packet* p)
            first print the binary as ascii hex */
         for (i = 0; i < BYTES_PER_FRAME && pb+i < end; i++, byte_pos++)
         {
-            if (ScObfuscate() && ((byte_pos >= ip_ob_start) && (byte_pos < ip_ob_end)))
+            if (SnortConfig::obfuscate() && ((byte_pos >= ip_ob_start) && (byte_pos < ip_ob_end)))
             {
                 TextLog_Putc(log, 'X');
                 TextLog_Putc(log, 'X');
@@ -1637,7 +1637,7 @@ void LogNetData(TextLog* log, const uint8_t* data, const int len, Packet* p)
            or a '.' for control chars */
         for (i = 0; i < BYTES_PER_FRAME && pb+i < end; i++, char_pos++)
         {
-            if (ScObfuscate() && ((char_pos >= ip_ob_start) && (char_pos < ip_ob_end)))
+            if (SnortConfig::obfuscate() && ((char_pos >= ip_ob_start) && (char_pos < ip_ob_end)))
             {
                 TextLog_Putc(log, 'X');
             }
@@ -1681,14 +1681,14 @@ static int LogObfuscatedData(TextLog* log, Packet* p)
     }
 
     /* dump the application layer data */
-    if (ScOutputAppData() && !ScVerboseByteDump())
+    if (SnortConfig::output_app_data() && !SnortConfig::verbose_byte_dump())
     {
-        if (ScOutputCharData())
+        if (SnortConfig::output_char_data())
             LogCharData(log, (char*)payload, payload_len);
         else
             LogNetData(log, payload, payload_len, NULL);
     }
-    else if (ScVerboseByteDump())
+    else if (SnortConfig::verbose_byte_dump())
     {
         uint8_t buf[UINT16_MAX];
         uint16_t dlen = p->data - p->pkt;
@@ -1772,7 +1772,7 @@ void LogIPPkt(TextLog* log, Packet* p)
     LogTimeStamp(log, p);
 
     /* dump the ethernet header if we're doing that sort of thing */
-    if ( ScOutputDataLink() )
+    if ( SnortConfig::output_datalink() )
     {
         Log2ndHeader(log, p);
 
@@ -1862,7 +1862,7 @@ void LogIPPkt(TextLog* log, Packet* p)
     }
 
     /* dump the application layer data */
-    if (ScOutputAppData() && !ScVerboseByteDump())
+    if (SnortConfig::output_app_data() && !SnortConfig::verbose_byte_dump())
     {
 #ifdef REG_TEST
         const uint8_t* tmp_data = 0;
@@ -1878,7 +1878,7 @@ void LogIPPkt(TextLog* log, Packet* p)
             p->dsize = (uint16_t)((tmp_data - p->data) + tmp_dsize);
         }
 #endif
-        if (ScOutputCharData())
+        if (SnortConfig::output_char_data())
         {
             LogCharData(log, (char*)p->data, p->dsize);
             if (!IsJSNormData(p->flow))
@@ -1915,7 +1915,7 @@ void LogIPPkt(TextLog* log, Packet* p)
         }
 #endif
     }
-    else if (ScVerboseByteDump())
+    else if (SnortConfig::verbose_byte_dump())
     {
         LogNetData(log, p->pkt, p->pkth->caplen, p);
     }
@@ -2097,7 +2097,7 @@ void PrintEapolPkt(FILE* fp, Packet* p)
     fwrite(timestamp, strlen(timestamp), 1, fp);
 
     /* dump the ethernet header if we're doing that sort of thing */
-    if (ScOutputDataLink())
+    if (SnortConfig::output_datalink())
     {
         Print2ndHeader(fp, p);
     }
@@ -2122,14 +2122,14 @@ void PrintEapolPkt(FILE* fp, Packet* p)
     }
 
     /* dump the application layer data */
-    if (ScOutputAppData() && !ScVerboseByteDump())
+    if (SnortConfig::output_app_data() && !SnortConfig::verbose_byte_dump())
     {
-        if (ScOutputCharData())
+        if (SnortConfig::output_char_data())
             PrintCharData(fp, (char*)p->data, p->dsize);
         else
             PrintNetData(fp, p->data, p->dsize, NULL);
     }
-    else if (ScVerboseByteDump())
+    else if (SnortConfig::verbose_byte_dump())
     {
         PrintNetData(fp, p->pkt, p->pkth->caplen, p);
     }
@@ -2161,14 +2161,14 @@ void PrintWifiPkt(FILE* fp, Packet* p)
     Print2ndHeader(fp, p);
 
     /* dump the application layer data */
-    if (ScOutputAppData() && !ScVerboseByteDump())
+    if (SnortConfig::output_app_data() && !SnortConfig::verbose_byte_dump())
     {
-        if (ScOutputCharData())
+        if (SnortConfig::output_char_data())
             PrintCharData(fp, (char*)p->data, p->dsize);
         else
             PrintNetData(fp, p->data, p->dsize, NULL);
     }
-    else if (ScVerboseByteDump())
+    else if (SnortConfig::verbose_byte_dump())
     {
         PrintNetData(fp, p->pkt, p->pkth->caplen, p);
     }

@@ -28,7 +28,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
-#include "snort.h"
+#include "snort_config.h"
 #include "snort_bounds.h"
 #include "util.h"
 #include "snort_debug.h"

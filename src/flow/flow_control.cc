@@ -39,6 +39,7 @@
 #include "protocols/udp.h"
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
+#include "detection/detect.h"
 
 FlowControl::FlowControl()
 {

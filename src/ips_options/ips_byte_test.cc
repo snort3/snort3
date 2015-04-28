@@ -104,7 +104,6 @@ using namespace std;
 #include "util.h"
 #include "sfhashfcn.h"
 #include "ips_byte_extract.h"
-#include "snort.h"
 #include "profiler.h"
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"

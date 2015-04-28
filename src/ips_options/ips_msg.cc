@@ -25,14 +25,15 @@
 
 #include <string>
 
-#include "snort_types.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "detection/treenodes.h"
-#include "snort_debug.h"
-#include "snort.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
+#include "utils/util.h"
+#include "protocols/packet.h"
 
 #define s_name "msg"
 

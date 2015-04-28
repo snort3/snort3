@@ -40,7 +40,6 @@
 #include "sfhashfcn.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
-#include "snort.h"
 #include "profiler.h"
 #include "fpdetect.h"
 #include "sfhashfcn.h"

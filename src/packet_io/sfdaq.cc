@@ -36,7 +36,7 @@ extern "C" {
 #include <sfbpf_dlt.h>
 }
 
-#include "snort.h"
+#include "snort_config.h"
 #include "util.h"
 #include "utils/strvec.h"
 #include "parser/parser.h"
@@ -140,7 +140,7 @@ DAQ_Mode DAQ_GetInterfaceMode(const DAQ_PktHdr_t* h)
         return DAQ_MODE_PASSIVE;
 #endif
     // interface is inline
-    if ( ScAdapterInlineMode() )
+    if ( SnortConfig::adaptor_inline_mode() )
     {
         return DAQ_MODE_INLINE;
     }
@@ -159,17 +159,17 @@ DAQ_Mode DAQ_GetMode(const SnortConfig* sc)
         {
             if ( !strcasecmp(daq_mode_string((DAQ_Mode)i), sc->daq_mode) )
             {
-                if ( ScAdapterInlineMode() && (i != DAQ_MODE_INLINE) )
+                if ( SnortConfig::adaptor_inline_mode() && (i != DAQ_MODE_INLINE) )
                     FatalError("DAQ '%s' mode incompatible with -Q\n", sc->daq_mode);
                 return (DAQ_Mode)i;
             }
         }
         FatalError("Bad DAQ mode '%s'\n", sc->daq_mode);
     }
-    if ( ScAdapterInlineMode() )
+    if ( SnortConfig::adaptor_inline_mode() )
         return DAQ_MODE_INLINE;
 
-    if ( ScReadMode() )
+    if ( SnortConfig::read_mode() )
         return DAQ_MODE_READ_FILE;
 
     return DAQ_MODE_PASSIVE;
@@ -198,7 +198,7 @@ static int DAQ_ValidateInstance()
 {
     uint32_t caps = daq_get_capabilities(daq_mod, daq_hand);
 
-    if ( !ScAdapterInlineMode() )
+    if ( !SnortConfig::adaptor_inline_mode() )
         return 1;
 
     if ( !(caps & DAQ_CAPA_BLOCK) )
@@ -420,7 +420,7 @@ int DAQ_New(const SnortConfig* sc, const char* intf)
 
     DAQ_LoadVars(&cfg, sc);
 
-    if ( !ScReadMode() )
+    if ( !SnortConfig::read_mode() )
     {
         if ( !(sc->run_flags & RUN_FLAG__NO_PROMISCUOUS) )
             cfg.flags |= DAQ_CFG_PROMISC;

@@ -34,7 +34,7 @@
 #include "util.h"
 #include "log.h"
 #include "parser.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "events/event.h"
 
 #include "sfxhash.h"
@@ -576,8 +576,8 @@ int CheckTagList(Packet* p, Event* event, void** log_list)
              * bandwidth sensors. */
             /* Use the global max.
                If its non-0, check count for this tag node */
-            if ( ScTaggedPacketLimit() &&
-                returned->pkt_count >= ScTaggedPacketLimit() )
+            if ( SnortConfig::get_tagged_packet_limit() &&
+                returned->pkt_count >= SnortConfig::get_tagged_packet_limit() )
             {
                 returned->metric = 0;
             }
@@ -591,7 +591,7 @@ int CheckTagList(Packet* p, Event* event, void** log_list)
             /* set event reference details */
             event->ref_time.tv_sec = returned->event_time.tv_sec;
             event->ref_time.tv_usec = returned->event_time.tv_usec;
-            event->event_reference = returned->event_id | ScEventLogId();
+            event->event_reference = returned->event_id | SnortConfig::get_event_log_id();
             *log_list = returned->log_list;
         }
 

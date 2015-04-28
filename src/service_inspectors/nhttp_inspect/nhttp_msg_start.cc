@@ -21,8 +21,6 @@
 #include <sys/types.h>
 #include <stdio.h>
 
-#include "main/snort.h"
-
 #include "nhttp_enum.h"
 #include "nhttp_msg_start.h"
 

@@ -27,7 +27,6 @@
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
 #include "protocols/protocol_ids.h"
-#include "main/snort.h"
 #include "log/text_log.h"
 
 #ifndef DLT_IEEE802_11

@@ -22,7 +22,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "main/snort.h"
+#include "main/snort_config.h"
 #include "codecs/codec_module.h"
 
 // yes, macros are necessary. The API and class constructor require different strings.

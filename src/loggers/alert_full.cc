@@ -50,7 +50,7 @@
 #include "snort_debug.h"
 #include "parser.h"
 #include "util.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "log/text_log.h"
 #include "log/log_text.h"
 #include "packet_io/sfdaq.h"
@@ -183,7 +183,7 @@ void FullLogger::alert(Packet* p, const char* msg, Event* event)
                 (unsigned long)event->sig_info->rev);
         }
 
-        if (ScAlertInterface())
+        if (SnortConfig::alert_interface())
         {
             const char* iface = PRINT_INTERFACE(DAQ_GetInterfaceSpec());
             TextLog_Print(full_log, " <%s> ", iface);
@@ -213,7 +213,7 @@ void FullLogger::alert(Packet* p, const char* msg, Event* event)
     {
         /* print the packet header to the alert file */
 
-        if (ScOutputDataLink())
+        if (SnortConfig::output_datalink())
         {
             Log2ndHeader(full_log, p);
         }

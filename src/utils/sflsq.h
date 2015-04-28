@@ -58,33 +58,35 @@ SF_QNODE,SF_SNODE,SF_LNODE;
 /*
 *	Integer Stack - uses an array from the subroutines stack
 */
-typedef struct
+struct SF_ISTACK
 {
     unsigned* stack;
     unsigned nstack;
     unsigned n;
-}
-SF_ISTACK;
+};
+
 /*
 *	Pointer Stack - uses an array from the subroutines stack
 */
-typedef struct
+struct SF_PSTACK
 {
     void** stack;
     unsigned nstack;
     unsigned n;
-}
-SF_PSTACK;
+};
 
 /*
 *  Simple Structure for Queue's, stacks, lists
 */
-typedef struct sf_list
+struct sf_list
 {
     SF_LNODE* head, * tail;
     unsigned count;
-}
-SF_QUEUE,SF_STACK,SF_LIST;
+};
+
+typedef sf_list SF_QUEUE;
+typedef sf_list SF_STACK;
+typedef sf_list SF_LIST;
 
 /*
 *  Linked List Interface

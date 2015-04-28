@@ -40,7 +40,8 @@
 #include "parser.h"
 
 #include "sfrf.h"
-#include "snort.h"
+#include "rules.h"
+#include "snort_config.h"
 #include "sfthd.h"
 #include "sfip/sf_ip.h"
 

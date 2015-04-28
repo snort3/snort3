@@ -26,8 +26,9 @@
 #include "managers/inspector_manager.h"
 #include "parser/vars.h"
 #include "main/shell.h"
-#include "main/snort.h"
+#include "main/snort_config.h"
 #include "detection/detect.h"
+#include "utils/sfportobject.h"
 
 //-------------------------------------------------------------------------
 // traffic policy
@@ -91,20 +92,28 @@ IpsPolicy::IpsPolicy(PolicyId id)
     policy_mode = POLICY_MODE__MAX;
 
     var_table = nullptr;
-    var_id = 0;
-    ip_vartable = nullptr;
 
-    portVarTable = nullptr;
-    nonamePortVarTable = nullptr;
+    var_id = 1;
+    ip_vartable = sfvt_alloc_table();
+    portVarTable = PortVarTableCreate();
+    nonamePortVarTable = PortTableNew();
 
     enable_builtin_rules = false;
-
-    InitVarTables(this);
 }
 
 IpsPolicy::~IpsPolicy()
 {
-    VarTablesFree(this);
+    if ( var_table )
+        DeleteVars(var_table);
+
+    if ( ip_vartable )
+        sfvt_free_table(ip_vartable);
+
+    if ( portVarTable )
+        PortVarTableFree(portVarTable);
+
+    if ( nonamePortVarTable )
+        PortTableFree(nonamePortVarTable);
 }
 
 //-------------------------------------------------------------------------

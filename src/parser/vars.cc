@@ -51,7 +51,7 @@
 #include "signature.h"
 #include "filters/sfthreshold.h"
 #include "filters/sfthd.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "hash/sfghash.h"
 #include "sf_vartable.h"
 #include "sfip/sf_ip.h"
@@ -928,60 +928,6 @@ void AddVarToTable(SnortConfig* sc, const char* name, const char* value)
     else
     {
         VarDefine(sc, name, value);
-    }
-}
-
-void InitVarTables(IpsPolicy* p)
-{
-    if (p == NULL)
-        return;
-
-    if (p->var_table != NULL)
-        DeleteVars(p->var_table);
-    p->var_id = 1;
-
-    if (p->ip_vartable != NULL)
-        sfvt_free_table(p->ip_vartable);
-    p->ip_vartable = sfvt_alloc_table();
-
-    if (p->portVarTable != NULL)
-        PortVarTableFree(p->portVarTable);
-    p->portVarTable = PortVarTableCreate();
-
-    if (p->nonamePortVarTable != NULL)
-        PortTableFree(p->nonamePortVarTable);
-    p->nonamePortVarTable = PortTableNew();
-
-    if ((p->portVarTable == NULL) || (p->nonamePortVarTable == NULL))
-    {
-        ParseError("failed to create port variable tables.\n");
-    }
-}
-
-void VarTablesFree(IpsPolicy* p)
-{
-    if (p->var_table != NULL)
-    {
-        DeleteVars(p->var_table);
-        p->var_table = NULL;
-    }
-
-    if (p->ip_vartable != NULL)
-    {
-        sfvt_free_table(p->ip_vartable);
-        p->ip_vartable = NULL;
-    }
-
-    if (p->portVarTable != NULL)
-    {
-        PortVarTableFree(p->portVarTable);
-        p->portVarTable = NULL;
-    }
-
-    if (p->nonamePortVarTable != NULL)
-    {
-        PortTableFree(p->nonamePortVarTable);
-        p->nonamePortVarTable = NULL;
     }
 }
 

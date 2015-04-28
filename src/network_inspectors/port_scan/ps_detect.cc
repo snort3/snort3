@@ -106,7 +106,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "snort.h"
+#include "snort_config.h"
 #include "protocols/packet.h"
 #include "packet_time.h"
 #include "sfxhash.h"

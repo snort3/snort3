@@ -58,7 +58,6 @@
 #include <sys/types.h>
 #include <limits.h>
 
-#include "snort.h"
 #include "detect.h"
 #include "protocols/packet.h"
 #include "event.h"
@@ -111,6 +110,8 @@ THREAD_LOCAL HISearchInfo hi_search_info;
 
 THREAD_LOCAL HIStats hi_stats;
 
+THREAD_LOCAL uint32_t http_mask;
+THREAD_LOCAL HttpBuffer http_buffer[HTTP_BUFFER_MAX];
 THREAD_LOCAL DataBuffer HttpDecodeBuf;
 
 typedef enum
@@ -682,7 +683,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
 
             if ( session->client.request.uri_norm )
             {
-                SetHttpBufferEncoding(
+                SetHttpBuffer(
                     HTTP_BUFFER_URI,
                     session->client.request.uri_norm,
                     session->client.request.uri_norm_size,
@@ -701,7 +702,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
             }
             else if ( session->client.request.uri )
             {
-                SetHttpBufferEncoding(
+                SetHttpBuffer(
                     HTTP_BUFFER_URI,
                     session->client.request.uri,
                     session->client.request.uri_size,
@@ -724,7 +725,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
             {
                 if ( session->client.request.header_norm )
                 {
-                    SetHttpBufferEncoding(
+                    SetHttpBuffer(
                         HTTP_BUFFER_HEADER,
                         session->client.request.header_norm,
                         session->client.request.header_norm_size,
@@ -739,7 +740,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                 }
                 else
                 {
-                    SetHttpBufferEncoding(
+                    SetHttpBuffer(
                         HTTP_BUFFER_HEADER,
                         session->client.request.header_raw,
                         session->client.request.header_raw_size,
@@ -805,7 +806,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                             session->client.request.post_raw_size =
                                 session->server_conf->post_depth;
                         }
-                        SetHttpBufferEncoding(
+                        SetHttpBuffer(
                             HTTP_BUFFER_CLIENT_BODY,
                             session->client.request.post_raw,
                             session->client.request.post_raw_size,
@@ -844,7 +845,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
             {
                 if ( session->client.request.cookie_norm )
                 {
-                    SetHttpBufferEncoding(
+                    SetHttpBuffer(
                         HTTP_BUFFER_COOKIE,
                         session->client.request.cookie_norm,
                         session->client.request.cookie_norm_size,
@@ -860,7 +861,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                 }
                 else
                 {
-                    SetHttpBufferEncoding(
+                    SetHttpBuffer(
                         HTTP_BUFFER_COOKIE,
                         session->client.request.cookie.cookie,
                         session->client.request.cookie.cookie_end -
@@ -879,7 +880,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
             else if ( !session->server_conf->enable_cookie &&
                 (hb = GetHttpBuffer(HTTP_BUFFER_HEADER)) )
             {
-                SetHttpBufferEncoding(
+                SetHttpBuffer(
                     HTTP_BUFFER_COOKIE, hb->buf, hb->length, hb->encode_type);
 
                 hb = GetHttpBuffer(HTTP_BUFFER_RAW_HEADER);
@@ -923,7 +924,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
             {
                 if ( session->server.response.header_norm )
                 {
-                    SetHttpBufferEncoding(
+                    SetHttpBuffer(
                         HTTP_BUFFER_HEADER,
                         session->server.response.header_norm,
                         session->server.response.header_norm_size,
@@ -953,7 +954,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
             {
                 if (session->server.response.cookie_norm )
                 {
-                    SetHttpBufferEncoding(
+                    SetHttpBuffer(
                         HTTP_BUFFER_COOKIE,
                         session->server.response.cookie_norm,
                         session->server.response.cookie_norm_size,
@@ -983,7 +984,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
             else if ( !session->server_conf->enable_cookie &&
                 (hb = GetHttpBuffer(HTTP_BUFFER_HEADER)) )
             {
-                SetHttpBufferEncoding(
+                SetHttpBuffer(
                     HTTP_BUFFER_COOKIE, hb->buf, hb->length, hb->encode_type);
 
                 hb = GetHttpBuffer(HTTP_BUFFER_RAW_HEADER);

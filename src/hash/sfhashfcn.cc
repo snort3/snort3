@@ -39,7 +39,7 @@
 #include "sfprimetable.h"
 
 #ifndef MODULUS_HASH
-#include "snort.h"
+#include "snort_config.h"
 #endif
 
 SFHASHFCN* sfhashfcn_new(int m)
@@ -61,7 +61,7 @@ SFHASHFCN* sfhashfcn_new(int m)
         return 0;
 
 #ifndef MODULUS_HASH
-    if (ScStaticHash())
+    if (SnortConfig::static_hash())
     {
         sfhashfcn_static(p);
     }

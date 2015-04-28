@@ -24,6 +24,7 @@
 #define ACTIVE_H
 
 #include "main/snort_types.h"
+#include "main/snort_config.h"
 #include "protocols/packet.h"
 #include "protocols/packet_manager.h"
 #include "main/snort.h"
@@ -121,14 +122,14 @@ static inline void Active_DropPacket(const Packet* p)
     }
     else if ( active_drop_pkt != ACTIVE_FORCE_DROP )
     {
-        if ( ScInlineMode() )
+        if ( SnortConfig::inline_mode() )
         {
             if ( DAQ_GetInterfaceMode(p->pkth) == DAQ_MODE_INLINE )
                 active_drop_pkt = ACTIVE_DROP;
             else
                 active_drop_pkt = ACTIVE_WOULD_DROP;
         }
-        else if ( ScInlineTestMode() )
+        else if ( SnortConfig::inline_test_mode() )
         {
             active_drop_pkt = ACTIVE_WOULD_DROP;
         }

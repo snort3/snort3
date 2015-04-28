@@ -38,16 +38,17 @@
 #include <syslog.h>
 #include "utils/dnet_header.h"
 
-#include "snort_types.h"
-#include "snort_bounds.h"
-#include "snort_debug.h"
 #include "parser.h"
 #include "cmd_line.h"
 #include "mstring.h"
-#include "util.h"
-#include "utils/strvec.h"
 #include "keywords.h"
-#include "parser.h"
+
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "main/snort.h"
+#include "utils/util.h"
+#include "utils/strvec.h"
+#include "utils/snort_bounds.h"
 #include "ips_options/ips_flowbits.h"
 #include "file_api/file_service_config.h"
 #include "packet_io/sfdaq.h"
@@ -641,17 +642,17 @@ void config_log_mode(SnortConfig* sc, const char* val)
     if (strcasecmp(val, LOG_NONE) == 0)
     {
         sc->output_flags |= OUTPUT_FLAG__NO_LOG;
-        set_main_hook(snort_ignore);
+        Snort::set_main_hook(snort_ignore);
         EventManager::enable_logs(false);
     }
     else if (strcasecmp(val, LOG_TEXT) == 0)
     {
-        set_main_hook(snort_print);
+        Snort::set_main_hook(snort_print);
     }
     else if (strcasecmp(val, LOG_PCAP) == 0)
     {
         sc->output = SnortStrdup(OUTPUT_PCAP);
-        set_main_hook(snort_log);
+        Snort::set_main_hook(snort_log);
     }
     else
     {
@@ -663,7 +664,7 @@ void config_conf(SnortConfig*, const char* val)
 {
     lua_conf = val;
     SetSnortConfDir(lua_conf.c_str());
-    set_main_hook(snort_inspect);
+    Snort::set_main_hook(snort_inspect);
 }
 
 void SetSnortConfDir(const char* file)

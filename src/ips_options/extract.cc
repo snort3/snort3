@@ -28,7 +28,6 @@
 #include <ctype.h>
 #include <errno.h>
 
-#include "snort.h"
 #include "util.h"
 #include "extract.h"
 #include "snort_bounds.h"

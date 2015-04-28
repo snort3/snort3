@@ -25,14 +25,11 @@
 #include <assert.h>
 
 #include "stream_module.h"
-#include "snort.h"
-#include "snort_debug.h"
-#include "framework/inspector.h"
+#include "main/snort_debug.h"
 #include "managers/inspector_manager.h"
-#include "managers/module_manager.h"
 #include "flow/flow_control.h"
 #include "stream/stream_api.h"
-#include "profiler.h"
+#include "time/profiler.h"
 
 //-------------------------------------------------------------------------
 // stats

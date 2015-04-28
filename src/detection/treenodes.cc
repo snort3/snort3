@@ -33,7 +33,6 @@
 
 #include "snort_types.h"
 #include "snort_debug.h"
-#include "snort.h"
 #include "detect.h"
 #include "framework/ips_option.h"
 

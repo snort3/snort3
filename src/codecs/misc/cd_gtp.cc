@@ -23,7 +23,6 @@
 #endif
 
 #include "snort_debug.h"
-#include "main/snort.h"
 #include "framework/codec.h"
 #include "protocols/packet.h"
 #include "packet_io/active.h"
@@ -205,7 +204,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
     }
 
-    if ( ScTunnelBypassEnabled(TUNNEL_GTP) )
+    if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_GTP) )
         Active_SetTunnelBypass();
 
     if (raw.len > 0)

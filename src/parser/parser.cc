@@ -40,46 +40,44 @@
 #include <iostream>
 #include <string>
 
-#include "snort_bounds.h"
-#include "rules.h"
-#include "treenodes.h"
 #include "cmd_line.h"
-#include "snort_debug.h"
-#include "util.h"
 #include "mstring.h"
-#include "detect.h"
-#include "protocols/packet.h"
-#include "fpcreate.h"
-#include "tag.h"
-#include "signature.h"
-#include "filters/sfthreshold.h"
-#include "filters/sfthd.h"
-#include "snort.h"
-#include "hash/sfghash.h"
-#include "ips_options/ips_ip_proto.h"
-#include "ips_options/ips_content.h"
-#include "ips_options/ips_flowbits.h"
-#include "sf_vartable.h"
-#include "sfip/sf_ip.h"
-#include "sfip/sf_ipvar.h"
-#include "sflsq.h"
-#include "ppm.h"
-#include "filters/rate_filter.h"
-#include "filters/detection_filter.h"
-#include "detection/sfrim.h"
-#include "utils/sfportobject.h"
-#include "packet_io/active.h"
-#include "file_api/libs/file_config.h"
-#include "actions/actions.h"
-#include "managers/event_manager.h"
-#include "managers/module_manager.h"
-#include "main/shell.h"
 #include "config_file.h"
 #include "keywords.h"
 #include "parse_conf.h"
 #include "parse_rule.h"
 #include "parse_stream.h"
 #include "vars.h"
+
+#include "utils/snort_bounds.h"
+#include "utils/util.h"
+#include "utils/sflsq.h"
+#include "utils/sfportobject.h"
+#include "main/snort_config.h"
+#include "main/shell.h"
+#include "main/snort_debug.h"
+#include "detection/signature.h"
+#include "detection/treenodes.h"
+#include "detection/rules.h"
+#include "detection/detect.h"
+#include "detection/fpcreate.h"
+#include "detection/tag.h"
+#include "detection/sfrim.h"
+#include "protocols/packet.h"
+#include "filters/sfthreshold.h"
+#include "filters/sfthd.h"
+#include "filters/rate_filter.h"
+#include "filters/detection_filter.h"
+#include "hash/sfghash.h"
+#include "sfip/sf_vartable.h"
+#include "sfip/sf_ip.h"
+#include "sfip/sf_ipvar.h"
+#include "time/ppm.h"
+#include "packet_io/active.h"
+#include "file_api/libs/file_config.h"
+#include "actions/actions.h"
+#include "managers/event_manager.h"
+#include "managers/module_manager.h"
 
 static unsigned parse_errors = 0;
 static unsigned parse_warnings = 0;
@@ -604,7 +602,7 @@ static void parse_file(SnortConfig* sc, Shell* sh)
  ***************************************************************************/
 SnortConfig* ParseSnortConf(const SnortConfig* boot_conf)
 {
-    SnortConfig* sc = SnortConfNew();
+    SnortConfig* sc = new SnortConfig;
 
     sc->logging_flags = boot_conf->logging_flags;
     sc->warning_flags = boot_conf->warning_flags;

@@ -43,11 +43,10 @@
 #include <limits.h>
 #include <fcntl.h>
 
-#include "snort.h"
 #include "main/snort_config.h"
+#include "main/snort_debug.h"
 #include "packet_io/sfdaq.h"
 #include "time/packet_time.h"
-#include "main/snort_debug.h"
 #include "sfip/sf_ip.h"
 
 static int already_fatal = 0;
@@ -74,12 +73,12 @@ void LogMessage(const char* format,...)
         va_end(ap);
         return;
     }
-    if (ScLogQuiet() && !ScDaemonMode() && !ScLogSyslog())
+    if (SnortConfig::log_quiet() && !SnortConfig::daemon_mode() && !SnortConfig::log_syslog())
         return;
 
     va_start(ap, format);
 
-    if (ScDaemonMode() || ScLogSyslog())
+    if (SnortConfig::daemon_mode() || SnortConfig::log_syslog())
     {
         vsnprintf(buf, STD_BUF, format, ap);
         buf[STD_BUF] = '\0';
@@ -111,12 +110,12 @@ void WarningMessage(const char* format,...)
     if (snort_conf == NULL)
         return;
 
-    if (ScLogQuiet() && !ScDaemonMode() && !ScLogSyslog())
+    if (SnortConfig::log_quiet() && !SnortConfig::daemon_mode() && !SnortConfig::log_syslog())
         return;
 
     va_start(ap, format);
 
-    if (ScDaemonMode() || ScLogSyslog())
+    if (SnortConfig::daemon_mode() || SnortConfig::log_syslog())
     {
         vsnprintf(buf, STD_BUF, format, ap);
         buf[STD_BUF] = '\0';
@@ -147,7 +146,7 @@ void ErrorMessage(const char* format,...)
 
     va_start(ap, format);
 
-    if ( snort_conf && (ScDaemonMode() || ScLogSyslog()) )
+    if ( snort_conf && (SnortConfig::daemon_mode() || SnortConfig::log_syslog()) )
     {
         vsnprintf(buf, STD_BUF, format, ap);
         buf[STD_BUF] = '\0';
@@ -239,7 +238,7 @@ NORETURN void FatalError(const char* format,...)
 
     buf[STD_BUF] = '\0';
 
-    if ((snort_conf != NULL) && (ScDaemonMode() || ScLogSyslog()))
+    if ((snort_conf != NULL) && (SnortConfig::daemon_mode() || SnortConfig::log_syslog()))
     {
         syslog(LOG_CONS | LOG_DAEMON | LOG_ERR, "FATAL ERROR: %s", buf);
     }

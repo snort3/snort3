@@ -24,7 +24,6 @@
 #include "snort_types.h"
 #include "protocols/packet.h"
 #include "snort_debug.h"
-#include "snort.h"
 #include "profiler.h"
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"

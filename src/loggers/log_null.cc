@@ -31,7 +31,6 @@
 
 #include "framework/logger.h"
 #include "framework/module.h"
-#include "snort.h"
 
 #define s_name "log_null"
 #define s_help "support for null encapsulation"

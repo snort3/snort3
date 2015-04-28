@@ -33,11 +33,11 @@
 #pragma clang diagnostic pop
 #endif
 
-#include "snort.h"
 #include "sfip/sf_ip.h"
 #include "parser/parse_ip.h"
 #include "filters/sfthd.h"
 #include "utils/util.h"
+#include "main/snort_config.h"
 
 //---------------------------------------------------------------
 

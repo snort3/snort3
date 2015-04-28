@@ -53,7 +53,6 @@
 #include <time.h>
 
 #include "ppm_module.h"
-#include "snort.h"
 #include "rules.h"
 #include "treenodes.h"
 #include "treenodes.h"

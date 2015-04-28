@@ -37,7 +37,6 @@
 #include "util.h"
 #include "log/log_text.h"
 #include "log/text_log.h"
-#include "snort.h"
 #include "utils/stats.h"
 
 #include <stdio.h>

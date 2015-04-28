@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "parser.h"
+#include "utils/util.h"
 
 using namespace std;
 

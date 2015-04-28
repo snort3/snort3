@@ -19,6 +19,8 @@
 
 #include "module_manager.h"
 
+#include <assert.h>
+
 #include <iostream>
 #include <list>
 #include <mutex>
@@ -33,6 +35,7 @@
 #include "main/modules.h"
 #include "main/shell.h"
 #include "main/snort_types.h"
+#include "main/snort.h"
 #include "parser/parser.h"
 #include "parser/parse_conf.h"
 #include "parser/vars.h"
@@ -658,7 +661,7 @@ SO_PUBLIC bool open_table(const char* s, int idx)
         return false;
 
     // FIXIT-M only basic modules and inspectors can be reloaded at present
-    if ( snort_is_reloading() && h && h->api && h->api->type != PT_INSPECTOR )
+    if ( Snort::is_reloading() && h && h->api && h->api->type != PT_INSPECTOR )
         return false;
 
     Module* m = h->mod;

@@ -28,11 +28,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "snort_types.h"
+#include "main/snort_types.h"
+#include "main/snort_config.h"
+#include "main/snort_debug.h"
+#include "utils/util.h"
 #include "detection/treenodes.h"
-#include "snort_debug.h"
-#include "util.h"
-#include "snort.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/parameter.h"

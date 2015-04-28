@@ -28,7 +28,7 @@
 
 #include "utils/dnet_header.h"
 #include "stream/stream_api.h"
-#include "snort.h"
+#include "snort_config.h"
 
 #include "framework/codec.h"
 #include "managers/action_manager.h"
@@ -109,7 +109,7 @@ int Active_Init(SnortConfig* sc)
 
     if ( s_enabled && (!DAQ_CanInject() || sc->respond_device) )
     {
-        if ( ScReadMode() || Active_Open(sc->respond_device) )
+        if ( SnortConfig::read_mode() || Active_Open(sc->respond_device) )
         {
             ParseWarning(WARN_DAQ, "active responses disabled since DAQ "
                 "can't inject packets.");
@@ -352,7 +352,7 @@ static inline void _Active_ForceIgnoreSession(Packet* p)
 
 static inline void _Active_DoIgnoreSession(Packet* p)
 {
-    if ( ScInlineMode() || ScTreatDropAsIgnore() )
+    if ( SnortConfig::inline_mode() || SnortConfig::treat_drop_as_ignore() )
     {
         _Active_ForceIgnoreSession(p);
     }

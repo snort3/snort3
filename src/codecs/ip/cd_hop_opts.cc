@@ -25,7 +25,6 @@
 #include "protocols/ipv6.h"
 #include "codecs/codec_module.h"
 #include "protocols/protocol_ids.h"
-#include "main/snort.h"
 #include "detection/fpdetect.h"
 
 #define CD_HOPOPTS_NAME "ipv6_hop_opts"

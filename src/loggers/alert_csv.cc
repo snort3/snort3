@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,7 +38,6 @@
 #include "mstring.h"
 #include "util.h"
 #include "log.h"
-#include "snort.h"
 #include "log/text_log.h"
 #include "log/log_text.h"
 #include "protocols/tcp.h"

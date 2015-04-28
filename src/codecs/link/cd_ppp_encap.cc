@@ -24,7 +24,7 @@
 
 #include "framework/codec.h"
 #include "protocols/protocol_ids.h"
-#include "snort.h"
+#include "main/snort_config.h"
 #include "main/snort_debug.h"
 
 #define CD_PPPENCAP_NAME "ppp_encap"
@@ -116,7 +116,7 @@ bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
          * to tcp (only TCP packets can be VJ compressed) */
         if (raw.len < (uint32_t)(codec.lyr_len + ip::IP4_HEADER_LEN))
         {
-            if (ScLogVerbose())
+            if (SnortConfig::log_verbose())
                 ErrorMessage("PPP VJ min packet length > captured len"
                     "(%d bytes)\n", raw.len);
             return false;

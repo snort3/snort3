@@ -29,7 +29,6 @@
 #include "protocols/packet.h"
 #include "packet_io/active.h"
 #include "snort_debug.h"
-#include "snort.h"
 
 #define s_name "rewrite"
 

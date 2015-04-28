@@ -36,8 +36,8 @@
 #pragma clang diagnostic pop
 #endif
 
-#include "snort_types.h"
-#include "snort.h"
+#include "main/snort_types.h"
+#include "main/snort_config.h"
 #include "detection/rules.h"
 #include "detection/treenodes.h"
 #include "sfip/sf_ip.h"

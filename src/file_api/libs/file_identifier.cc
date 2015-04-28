@@ -354,14 +354,11 @@ void FileIdenfifier::insert_file_rule(FileMagicRule& rule)
  */
 uint32_t FileIdenfifier::find_file_type_id(uint8_t* buf, int len, FileContext* context)
 {
-    FileConfig* file_config;
     IdentifierNode* current;
     uint64_t end;
 
     if ((!context)||(!buf)||(len <= 0))
         return 0;
-
-    file_config = (FileConfig*)context->file_config;
 
     if (!(context->file_type_context))
         context->file_type_context = (void*)(identifier_root);

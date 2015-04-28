@@ -34,6 +34,7 @@
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
 #include "stream/stream.h"
+#include "main/snort_config.h"
 
 enum PegCounts
 {
@@ -240,11 +241,11 @@ static int Norm_IP4(
     }
     if ( Norm_IsEnabled(c, NORM_IP4_TTL) )
     {
-        if ( h->ip_ttl < ScMinTTL() )
+        if ( h->ip_ttl < SnortConfig::min_ttl() )
         {
             if ( mode == NORM_MODE_ON )
             {
-                h->ip_ttl = ScNewTTL();
+                h->ip_ttl = SnortConfig::new_ttl();
                 p->ptrs.decode_flags &= ~DECODE_ERR_BAD_TTL;
                 changes++;
             }
@@ -300,13 +301,13 @@ static int Norm_IP6(
         ip::IP6Hdr* h =
             reinterpret_cast<ip::IP6Hdr*>(const_cast<uint8_t*>(p->layers[layer].start));
 
-        if ( h->ip6_hoplim < ScMinTTL() )
+        if ( h->ip6_hoplim < SnortConfig::min_ttl() )
         {
             const NormMode mode = get_norm_mode(c);
 
             if ( mode == NORM_MODE_ON )
             {
-                h->ip6_hoplim = ScNewTTL();
+                h->ip6_hoplim = SnortConfig::new_ttl();
                 p->ptrs.decode_flags &= ~DECODE_ERR_BAD_TTL;
                 changes++;
             }

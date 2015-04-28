@@ -23,7 +23,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "snort.h"
+#include "main/snort_config.h"
 #include "protocols/protocol_ids.h"
 #include "codecs/codec_module.h"
 
@@ -99,7 +99,7 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     const uint8_t* esp_payload;
     uint8_t pad_length;
 
-    if (!ScESPDecoding())
+    if (!SnortConfig::esp_decoding())
         return false;
 
     /* The ESP header contains a crypto Initialization Vector (IV) and

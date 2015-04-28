@@ -25,7 +25,6 @@
 #endif
 
 #include "snort_types.h"
-#include "snort.h"
 #include "parser.h"
 #include "detection/detection_defines.h"
 #include "detection_util.h"

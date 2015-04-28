@@ -28,7 +28,6 @@
 
 #include "snort_types.h"
 #include "snort_debug.h"
-#include "snort.h"
 #include "hash/sfhashfcn.h"
 
 //-------------------------------------------------------------------------

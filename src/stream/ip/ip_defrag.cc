@@ -89,12 +89,12 @@
 #include "protocols/ipv4_options.h"
 #include "protocols/packet_manager.h"
 #include "main/snort_debug.h"
-#include "main/snort.h"
 #include "time/profiler.h"
 #include "time/timersub.h"
 #include "network_inspectors/perf_monitor/perf.h"
 #include "utils/stats.h"
 #include "utils/snort_bounds.h"
+#include "detection/detect.h"
 
 /*  D E F I N E S  **************************************************/
 
@@ -401,7 +401,7 @@ static inline void EventAnomOverlap(FragEngine*)
  *
  * @return none
  */
-static inline void EventAnomScMinTTL(FragEngine*)
+static inline void EventAnomMinTtl(FragEngine*)
 {
     SnortEventqAdd(GID_DEFRAG, DEFRAG_MIN_TTL_EVASION);
     ip_stats.alerts++;
@@ -952,7 +952,10 @@ static void FragRebuild(FragTracker* ft, Packet* p)
 #endif
 
     encap_frag_cnt++;
-    ProcessDefragPacket(p, dpkt);
+    SnortEventqPush();
+    PacketManager::encode_set_pkt(p);
+    Snort::process_packet(dpkt, dpkt->pkth, dpkt->pkt, true);
+    SnortEventqPop();
     encap_frag_cnt--;
 
     DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
@@ -1209,7 +1212,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
         }
 #endif
 
-        EventAnomScMinTTL(fe);
+        EventAnomMinTtl(fe);
         ip_stats.discards++;
         return;
     }

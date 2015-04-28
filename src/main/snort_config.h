@@ -27,43 +27,102 @@
 #include <vector>
 #include <map>
 #include <sys/stat.h>
+
 #include "detection/rules.h"
 #include "sfip/sfip_t.h"
 #include "main/policy.h"
+#include "main/thread.h"
 #include "utils/util.h"
 #include "protocols/packet.h"
-#include "main/thread.h"
 #include "framework/bits.h"
-#include "file_api/libs/file_config.h"
+#include "events/event_queue.h"
 
 #define DEFAULT_LOG_DIR "."
 
-#ifdef PERF_PROFILING
-#include "time/profiler.h"
-#endif
+enum RunFlag
+{
+    RUN_FLAG__READ                = 0x00000001,     /* -r --pcap-dir, etc. */
+    RUN_FLAG__DAEMON              = 0x00000002,     /* -D */
+    RUN_FLAG__DAEMON_RESTART      = 0x00000004,     /* --restart */
+    RUN_FLAG__NO_PROMISCUOUS      = 0x00000008,     /* -p */
 
-struct PORT_RULE_MAP;
-struct SFXHASH;
+    RUN_FLAG__INLINE              = 0x00000010,     /* -Q */
+    RUN_FLAG__STATIC_HASH         = 0x00000020,     /* -H */
+    RUN_FLAG__CREATE_PID_FILE     = 0x00000040,     /* --pid-path and --create-pidfile */
+    RUN_FLAG__NO_LOCK_PID_FILE    = 0x00000080,     /* --nolock-pidfile */
+
+    RUN_FLAG__TREAT_DROP_AS_ALERT = 0x00000100,     /* --treat-drop-as-alert */
+    RUN_FLAG__ALERT_BEFORE_PASS   = 0x00000200,     /* --alert-before-pass */
+    RUN_FLAG__CONF_ERROR_OUT      = 0x00000400,     /* -x and --conf-error-out */
+    RUN_FLAG__MPLS_MULTICAST      = 0x00000800,     /* --enable_mpls_multicast */
+
+    RUN_FLAG__MPLS_OVERLAPPING_IP = 0x00001000,     /* --enable_mpls_overlapping_ip */
+    RUN_FLAG__PROCESS_ALL_EVENTS  = 0x00002000,
+    RUN_FLAG__INLINE_TEST         = 0x00004000,     /* --enable-inline-test*/
+    RUN_FLAG__PCAP_SHOW           = 0x00008000,
+
+    RUN_FLAG__DISABLE_FAILOPEN    = 0x00010000,     /* --disable-inline-init-failopen */
+    RUN_FLAG__PAUSE               = 0x00020000,     // --pause
+    RUN_FLAG__NO_PCRE             = 0x00040000,
+    /* If stream is configured, the STATEFUL flag is set.  This is
+     * somewhat misnamed and is used to assure a session is established */
+    RUN_FLAG__ASSURE_EST          = 0x00080000,
+
+    RUN_FLAG__TREAT_DROP_AS_IGNORE= 0x00100000,     /* --treat-drop-as-ignore */
+    RUN_FLAG__PCAP_RELOAD         = 0x00200000,     /* --pcap-reload */
+    RUN_FLAG__TEST                = 0x00400000,     /* -T */
+#ifdef BUILD_SHELL
+    RUN_FLAG__SHELL               = 0x00800000      /* --shell */
+#endif
+};
+
+enum OutputFlag
+{
+    OUTPUT_FLAG__LINE_BUFFER       = 0x00000001,      /* -f */
+    OUTPUT_FLAG__VERBOSE_DUMP      = 0x00000002,      /* -X */
+    OUTPUT_FLAG__CHAR_DATA         = 0x00000004,      /* -C */
+    OUTPUT_FLAG__APP_DATA          = 0x00000008,      /* -d */
+
+    OUTPUT_FLAG__SHOW_DATA_LINK    = 0x00000010,      /* -e */
+    OUTPUT_FLAG__SHOW_WIFI_MGMT    = 0x00000020,      /* -w */
+    OUTPUT_FLAG__USE_UTC           = 0x00000040,      /* -U */
+    OUTPUT_FLAG__INCLUDE_YEAR      = 0x00000080,      /* -y */
+
+    /* Note using this alters the packet - can't be used inline */
+    OUTPUT_FLAG__OBFUSCATE         = 0x00000100,      /* -B */
+    OUTPUT_FLAG__ALERT_IFACE       = 0x00000200,      /* -I */
+    OUTPUT_FLAG__NO_TIMESTAMP      = 0x00000400,      /* --nostamps */
+
+    OUTPUT_FLAG__NO_ALERT          = 0x00001000,      /* -A none */
+    OUTPUT_FLAG__NO_LOG            = 0x00002000,      /* -K none */
+};
+
+enum LoggingFlag
+{
+    LOGGING_FLAG__VERBOSE         = 0x00000001,      /* -v */
+    LOGGING_FLAG__QUIET           = 0x00000002,      /* -q */
+    LOGGING_FLAG__SYSLOG          = 0x00000004,      /* -M */
+    LOGGING_FLAG__SHOW_PLUGINS    = 0x00000008,      // --show-plugins
+};
+
+enum TunnelFlags
+{
+    TUNNEL_GTP    = 0x01,
+    TUNNEL_TEREDO = 0x02,
+    TUNNEL_6IN4   = 0x04,
+    TUNNEL_4IN6   = 0x08
+};
+
 struct srmm_table_t;
 struct sopg_table_t;
+struct PORT_RULE_MAP;
+struct SFXHASH;
 
-// defined in sfghash.h  forward declared here
-struct sf_list;
-typedef sf_list SF_LIST;
-
-#if 0
-FIXIT-L
-typedef enum _PathType
-{
-    PATH_TYPE__FILE,
-    PATH_TYPE__DIRECTORY
-} PathType;
-
-#endif
+SO_PUBLIC extern THREAD_LOCAL struct SnortConfig* snort_conf;
 
 // SnortState members are updated during runtime
-// an array in SnortConfig is used instead of thread_locals because these
-// must get changed on reload
+// an array in SnortConfig is used instead of thread_locals
+// because these must get changed on reload
 struct SnortState
 {
     int* pcre_ovector;
@@ -71,9 +130,19 @@ struct SnortState
 
 struct SnortConfig
 {
+public:
+    SnortConfig();
+    ~SnortConfig();
+
+    void setup();
+    bool verify();
+
+    void merge(SnortConfig*);
+
+public:
     //------------------------------------------------------
     // alert module stuff
-    int default_rule_state;
+    bool default_rule_state;
 
     uint16_t flowbit_size;
     sfip_t homenet;
@@ -166,7 +235,7 @@ struct SnortConfig
     struct FastPatternConfig* fast_pattern_config;
     struct EventQueueConfig* event_queue_config;
 
-    FileConfig* file_config;
+    class FileConfig* file_config;
 
     /* XXX XXX policy specific? */
     struct ThresholdConfig* threshold_config;
@@ -199,7 +268,7 @@ struct SnortConfig
 
     struct DetectionFilterConfig* detection_filter_config;
 
-    SF_LIST** ip_proto_only_lists;
+    struct sf_list** ip_proto_only_lists;
     uint8_t ip_proto_array[NUM_IP_PROTOS];
 
     int num_rule_types;
@@ -241,7 +310,6 @@ struct SnortConfig
 
     uint8_t tunnel_mask;
 
-    uint32_t so_rule_memcap;
     char* output_dir;
 
     struct VarNode* var_list;
@@ -250,7 +318,7 @@ struct SnortConfig
     // deliberately not conditional
     // to avoid plugin compatibility issues
     struct ProfileConfig* profile_rules;
-    struct ProfileConfig* profile_preprocs;
+    struct ProfileConfig* profile_modules;
 
     struct ppm_cfg_t* ppm_cfg;
     struct _IntelPmHandles* ipm_handles;
@@ -264,6 +332,7 @@ struct SnortConfig
     std::map<const std::string, int>* source_affinity;
     std::vector<int>* thread_affinity;
 
+    // policy access
     InspectionPolicy* get_inspection_policy()
     { return policy_map->inspection_policy[0]; }
 
@@ -273,23 +342,235 @@ struct SnortConfig
     NetworkPolicy* get_network_policy()
     { return policy_map->network_policy[0]; }
 
-    inline uint8_t get_num_layers() const
+    // decoding related
+    uint8_t get_num_layers() const
     { return num_layers; }
 
     // curr_layer is the zero based ip6 options
-    inline bool hit_ip6_maxopts(uint8_t curr_opt) const
+    bool hit_ip6_maxopts(uint8_t curr_opt) const
     { return max_ip6_extensions && (curr_opt >= max_ip6_extensions); }
 
     // curr_ip is the zero based ip layer
-    inline bool hit_ip_maxlayers(uint8_t curr_ip) const
+    bool hit_ip_maxlayers(uint8_t curr_ip) const
     { return max_ip_layers && (curr_ip >= max_ip_layers); }
-};
 
-SnortConfig* SnortConfNew(void);
-void SnortConfSetup(SnortConfig*);
-void SnortConfFree(SnortConfig*);
-SnortConfig* MergeSnortConfs(SnortConfig* cmd_line, SnortConfig* config_file);
-int VerifyReload(SnortConfig*);
+    static long int get_mpls_stack_depth()
+    { return snort_conf->mpls_stack_depth; }
+
+    static long int get_mpls_payload_type()
+    { return snort_conf->mpls_payload_type; }
+
+    static bool mpls_overlapping_ip()
+    { return snort_conf->run_flags & RUN_FLAG__MPLS_OVERLAPPING_IP; }
+
+    static bool mpls_multicast()
+    { return snort_conf->run_flags & RUN_FLAG__MPLS_MULTICAST; }
+
+    static bool deep_teredo_inspection()
+    { return snort_conf->enable_teredo; }
+
+    static bool gtp_decoding()
+    { return snort_conf->gtp_ports; }
+
+    static bool is_gtp_port(uint16_t port)
+    { return snort_conf->gtp_ports->test(port); }
+
+    static bool esp_decoding()
+    { return snort_conf->enable_esp; }
+
+    // mode related
+    static bool test_mode()
+    { return snort_conf->run_flags & RUN_FLAG__TEST; }
+
+    static bool daemon_mode()
+    { return snort_conf->run_flags & RUN_FLAG__DAEMON; }
+
+    static bool daemon_restart()
+    { return snort_conf->run_flags & RUN_FLAG__DAEMON_RESTART; }
+
+    static bool read_mode()
+    { return snort_conf->run_flags & RUN_FLAG__READ; }
+
+    static bool inline_mode()
+    { return ::get_ips_policy()->policy_mode == POLICY_MODE__INLINE; }
+
+    static bool inline_test_mode()
+    { return ::get_ips_policy()->policy_mode == POLICY_MODE__INLINE_TEST; }
+
+    static bool adaptor_inline_mode()
+    { return snort_conf->run_flags & RUN_FLAG__INLINE; }
+
+    static bool adaptor_inline_test_mode()
+    { return snort_conf->run_flags & RUN_FLAG__INLINE_TEST; }
+
+    // logging stuff
+    static bool log_syslog()
+    { return snort_conf->logging_flags & LOGGING_FLAG__SYSLOG; }
+
+    static bool log_verbose()
+    { return snort_conf->logging_flags & LOGGING_FLAG__VERBOSE; }
+
+    static bool log_quiet()
+    { return snort_conf->logging_flags & LOGGING_FLAG__QUIET; }
+
+    // event stuff
+    static uint32_t get_event_log_id()
+    { return snort_conf->event_log_id; }
+
+    static bool get_log_ip6_extra()
+    { return snort_conf->log_ipv6_extra; }
+
+    static bool process_all_events()
+    { return snort_conf->event_queue_config->process_all_events; }
+
+    static int get_eval_index(RuleType type)
+    { return snort_conf->evalOrder[type]; }
+
+    static int get_default_rule_state()
+    { return snort_conf->default_rule_state; }
+
+    static bool tunnel_bypass_enabled(uint8_t proto)
+    { return !(snort_conf->tunnel_mask & proto); }
+
+    // checksum stuff
+    static bool checksum_drop(uint16_t codec_cksum_err_flag)
+    { return ::get_network_policy()->checksum_drop & codec_cksum_err_flag; }
+
+    static bool ip_checksums()
+    { return ::get_network_policy()->checksum_eval & CHECKSUM_FLAG__IP; }
+
+    static bool ip_checksum_drops()
+    { return ::get_network_policy()->checksum_drop & CHECKSUM_FLAG__IP; }
+
+    static bool udp_checksums()
+    { return ::get_network_policy()->checksum_eval & CHECKSUM_FLAG__UDP; }
+
+    static bool udp_checksum_drops()
+    { return ::get_network_policy()->checksum_drop & CHECKSUM_FLAG__UDP; }
+
+    static bool tcp_checksums()
+    { return ::get_network_policy()->checksum_eval & CHECKSUM_FLAG__TCP; }
+
+    static bool tcp_checksum_drops()
+    { return ::get_network_policy()->checksum_drop & CHECKSUM_FLAG__TCP; }
+
+    static bool icmp_checksums()
+    { return ::get_network_policy()->checksum_eval & CHECKSUM_FLAG__ICMP; }
+
+    static bool icmp_checksum_drops()
+    { return ::get_network_policy()->checksum_drop & CHECKSUM_FLAG__ICMP; }
+
+    // output stuff
+    static bool output_include_year()
+    { return snort_conf->output_flags & OUTPUT_FLAG__INCLUDE_YEAR; }
+
+    static bool output_use_utc()
+    { return snort_conf->output_flags & OUTPUT_FLAG__USE_UTC; }
+
+    static bool output_datalink()
+    { return snort_conf->output_flags & OUTPUT_FLAG__SHOW_DATA_LINK; }
+
+    static bool verbose_byte_dump()
+    { return snort_conf->output_flags & OUTPUT_FLAG__VERBOSE_DUMP; }
+
+    static bool obfuscate()
+    { return snort_conf->output_flags & OUTPUT_FLAG__OBFUSCATE; }
+
+    static bool output_app_data()
+    { return snort_conf->output_flags & OUTPUT_FLAG__APP_DATA; }
+
+    static bool output_char_data()
+    { return snort_conf->output_flags & OUTPUT_FLAG__CHAR_DATA; }
+
+    static bool alert_interface()
+    { return snort_conf->output_flags & OUTPUT_FLAG__ALERT_IFACE; }
+
+    static bool output_no_timestamp()
+    { return snort_conf->output_flags & OUTPUT_FLAG__NO_TIMESTAMP; }
+
+    static bool line_buffered_logging()
+    { return snort_conf->output_flags & OUTPUT_FLAG__LINE_BUFFER; }
+
+    static bool output_wifi_mgmt()
+    { return snort_conf->output_flags & OUTPUT_FLAG__SHOW_WIFI_MGMT; }
+
+    // run flags
+    static bool disable_inline_fail_open()
+    { return snort_conf->run_flags & RUN_FLAG__DISABLE_FAILOPEN; }
+
+    static bool no_lock_pid_file()
+    { return snort_conf->run_flags & RUN_FLAG__NO_LOCK_PID_FILE; }
+
+    static bool create_pid_file()
+    { return snort_conf->run_flags & RUN_FLAG__CREATE_PID_FILE; }
+
+    static bool pcap_show()
+    { return snort_conf->run_flags & RUN_FLAG__PCAP_SHOW; }
+
+    static bool treat_drop_as_alert()
+    { return snort_conf->run_flags & RUN_FLAG__TREAT_DROP_AS_ALERT; }
+
+    static bool treat_drop_as_ignore()
+    { return snort_conf->run_flags & RUN_FLAG__TREAT_DROP_AS_IGNORE; }
+
+    static bool alert_before_pass()
+    { return snort_conf->run_flags & RUN_FLAG__ALERT_BEFORE_PASS; }
+
+    static bool no_pcre()
+    { return snort_conf->run_flags & RUN_FLAG__NO_PCRE; }
+
+    static bool conf_error_out()
+    { return snort_conf->run_flags & RUN_FLAG__CONF_ERROR_OUT; }
+
+    static bool assure_established()
+    { return snort_conf->run_flags & RUN_FLAG__ASSURE_EST; }
+
+    // FIXIT-L snort_conf needed for static hash before initialized
+    static bool static_hash()
+    { return snort_conf && snort_conf->run_flags & RUN_FLAG__STATIC_HASH; }
+
+    // other stuff
+    static uint8_t min_ttl()
+    { return ::get_network_policy()->min_ttl; }
+
+    static uint8_t new_ttl()
+    { return ::get_network_policy()->new_ttl; }
+
+    static long int get_pcre_match_limit()
+    { return snort_conf->pcre_match_limit; }
+
+    static long int get_pcre_match_limit_recursion()
+    { return snort_conf->pcre_match_limit_recursion; }
+
+#ifdef PERF_PROFILING
+    static bool get_profile_modules()
+    { return snort_conf->profile_modules; }
+
+    static bool get_profile_rules()
+    { return snort_conf->profile_rules; }
+#endif
+
+    static long int get_tagged_packet_limit()
+    { return snort_conf->tagged_packet_limit; }
+
+    static uint32_t get_max_attribute_hosts()
+    { return snort_conf->max_attribute_hosts; }
+
+    static uint32_t get_max_services_per_host()
+    { return snort_conf->max_attribute_services_per_host; }
+
+    static int get_uid()
+    { return snort_conf->user_id; }
+
+    static int get_gid()
+    { return snort_conf->group_id; }
+
+    static bool get_vlan_agnostic()
+    { return snort_conf->vlan_agnostic; }
+
+    static bool address_space_agnostic()
+    { return snort_conf->addressspace_agnostic; }
+};
 
 #endif
 

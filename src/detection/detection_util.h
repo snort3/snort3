@@ -31,11 +31,11 @@
 #include "config.h"
 #endif
 
-#include "snort_types.h"
+#include "main/snort_types.h"
+#include "main/snort_config.h"
+#include "main/snort_debug.h"
+#include "detection/detect.h"
 #include "protocols/packet.h"
-#include "detect.h"
-#include "snort.h"
-#include "snort_debug.h"
 
 #define DECODE_BLEN 65535
 
@@ -74,47 +74,10 @@ struct DataBuffer
     unsigned len;
 };
 
-extern SO_PUBLIC THREAD_LOCAL uint32_t http_mask;
-extern SO_PUBLIC THREAD_LOCAL HttpBuffer http_buffer[HTTP_BUFFER_MAX];
 extern SO_PUBLIC const char* http_buffer_name[HTTP_BUFFER_MAX];
 
 extern SO_PUBLIC THREAD_LOCAL DataPointer g_alt_data;
 extern SO_PUBLIC THREAD_LOCAL DataPointer g_file_data;
-
-static inline void ClearHttpBuffers(void)
-{
-    http_mask = 0;
-}
-
-static inline uint32_t GetHttpBufferMask(void)
-{
-    return http_mask;
-}
-
-static inline const HttpBuffer* GetHttpBuffer(HTTP_BUFFER b)
-{
-    if ( !((1 << b) & http_mask) )
-        return NULL;
-
-    return http_buffer + b;
-}
-
-static inline void SetHttpBufferEncoding(
-    HTTP_BUFFER b, const uint8_t* buf, unsigned len, uint32_t enc)
-{
-    HttpBuffer* hb = http_buffer + b;
-    assert(b < HTTP_BUFFER_MAX && buf);
-
-    hb->buf = buf;
-    hb->length = len;
-    hb->encode_type = enc;
-    http_mask |= (1 << b);
-}
-
-static inline void SetHttpBuffer(HTTP_BUFFER b, const uint8_t* buf, unsigned len)
-{
-    SetHttpBufferEncoding(b, buf, len, 0);
-}
 
 #define SetDetectLimit(pktPtr, altLen) \
 { \
@@ -149,7 +112,6 @@ static inline void DetectReset()
 {
     g_alt_data.len = 0;
     g_file_data.len = 0;
-    ClearHttpBuffers();
 }
 
 #endif

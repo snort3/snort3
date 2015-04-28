@@ -27,7 +27,7 @@
 #include "framework/codec.h"
 #include "managers/codec_manager.h"
 #include "protocols/packet_manager.h"
-#include "main/snort.h"
+#include "main/snort_config.h"
 #include "main/thread.h"
 #include "log/messages.h"
 
@@ -103,7 +103,7 @@ static inline void push_layer(Packet* p,
 void PacketManager::pop_teredo(Packet* p, RawData& raw)
 {
     p->proto_bits &= ~PROTO_BIT__TEREDO;
-    if ( ScTunnelBypassEnabled(TUNNEL_TEREDO) )
+    if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_TEREDO) )
         Active_ClearTunnelBypass();
 
     const uint8_t mapped_prot = CodecManager::s_proto_map[PROTO_TEREDO];

@@ -48,7 +48,6 @@
 #include "snort_types.h"
 #include "protocols/packet.h"
 #include "snort_debug.h"
-#include "snort.h"
 #include "profiler.h"
 #include "detection/fpdetect.h"
 #include "sfhashfcn.h"

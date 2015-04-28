@@ -47,7 +47,7 @@
 #include "parser.h"
 
 #include "sfthd.h"
-#include "snort.h"
+#include "snort_config.h"
 
 #include <errno.h>
 

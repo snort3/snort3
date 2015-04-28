@@ -23,12 +23,12 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "util.h"
-#include "rules.h"
-#include "treenodes.h"
+#include "utils/util.h"
+#include "detection/rules.h"
+#include "detection/treenodes.h"
 #include "hash/sfghash.h"
-#include "snort.h"
-#include "parser.h"
+#include "parser/parser.h"
+#include "main/snort_config.h"
 
 /* for eval and free functions */
 #include "ips_options/ips_content.h"

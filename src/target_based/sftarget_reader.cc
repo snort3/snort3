@@ -28,6 +28,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <signal.h>
 #include <sys/types.h>
@@ -45,7 +46,7 @@
 #include "sftarget_hostentry.h"
 #include "sftarget_data.h"
 #include "perf_monitor/perf.h"
-#include "snort.h"
+#include "snort_config.h"
 #include "snort_debug.h"
 #include "utils/stats.h"
 #include "sfip/sf_ip.h"
@@ -73,7 +74,8 @@ tTargetBasedConfig::tTargetBasedConfig()
     // FIXIT-M 16k per host is no longer true
     // FIXIT-M init before snort_conf; move to filename and load separately
     // this is a hack to get it going
-    uint32_t max = snort_conf ? ScMaxAttrHosts() : DEFAULT_MAX_ATTRIBUTE_HOSTS;
+    uint32_t max = snort_conf ?
+        SnortConfig::get_max_attribute_hosts() : DEFAULT_MAX_ATTRIBUTE_HOSTS;
     lookupTable = sfrt_new(DIR_8x16, IPv6, max + 1, (max>>6) + 1);
 }
 
@@ -267,7 +269,7 @@ int SFAT_AddHostEntryToMap(HostAttributeEntry* host)
                 ParseWarning(WARN_HOSTS,
                     "AttributeTable insertion failed: %d Insufficient "
                     "space in attribute table, only configured to store %d hosts\n",
-                    ret, ScMaxAttrHosts());
+                    ret, SnortConfig::get_max_attribute_hosts());
                 sfat_insufficient_space_logged = true;
             }
             /* Reset return value and continue w/ only snort_conf->max_attribute_hosts */
@@ -371,7 +373,7 @@ void SFAT_UpdateApplicationProtocol(sfip_t* ipAddr, uint16_t port, uint16_t prot
 
     if (!host_entry)
     {
-        if (sfrt_num_entries(curr_cfg->lookupTable) >= ScMaxAttrHosts())
+        if (sfrt_num_entries(curr_cfg->lookupTable) >= SnortConfig::get_max_attribute_hosts())
             return;
 
         host_entry = (HostAttributeEntry*)SnortAlloc(sizeof(*host_entry));
@@ -398,7 +400,7 @@ void SFAT_UpdateApplicationProtocol(sfip_t* ipAddr, uint16_t port, uint16_t prot
     }
     if (!service)
     {
-        if ( service_count >= ScMaxAttrServicesPerHost() )
+        if ( service_count >= SnortConfig::get_max_services_per_host() )
             return;
 
         service = (ApplicationEntry*)SnortAlloc(sizeof(*service));
