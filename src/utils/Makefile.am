@@ -13,7 +13,8 @@ sflsq.h \
 sfmemcap.h \
 sfportobject.h \
 snort_bounds.h \
-stats.h
+stats.h \
+util.h
 
 libutils_a_SOURCES = \
 boyer_moore.cc boyer_moore.h \
@@ -29,7 +30,7 @@ sfsnprintfappend.cc sfsnprintfappend.h \
 snort_bounds.h \
 stats.cc \
 strvec.cc strvec.h \
-util.cc util.h \
+util.cc \
 util_jsnorm.cc util_jsnorm.h \
 util_math.cc util_math.h \
 util_net.cc util_net.h \

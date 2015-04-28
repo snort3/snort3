@@ -256,7 +256,7 @@ public:
 
     bool stdin_rules;
 
-    char pid_filename[STD_BUF];
+    char pid_filename[1024];
     char* orig_log_dir;      /* set in case of chroot */
 
     int thiszone;

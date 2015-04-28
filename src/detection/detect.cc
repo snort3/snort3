@@ -121,7 +121,8 @@ void snort_inspect(Packet* p)
             "Packet errors = 0x%x, ignoring traffic!\n",
             (p->ptrs.decode_flags & DECODE_ERR_FLAGS)); );
 
-        if ( SnortConfig::inline_mode() && SnortConfig::checksum_drop(p->ptrs.decode_flags & DECODE_ERR_CKSUM_ALL) )
+        if ( SnortConfig::inline_mode() and
+            SnortConfig::checksum_drop(p->ptrs.decode_flags & DECODE_ERR_CKSUM_ALL) )
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
                 "Dropping bad packet\n"); );

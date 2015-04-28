@@ -5,6 +5,8 @@ x_includedir = $(pkgincludedir)/main
 noinst_LIBRARIES = libmain.a
 
 x_include_HEADERS = \
+policy.h \
+snort_config.h \
 snort_debug.h \
 snort_types.h \
 thread.h
@@ -18,13 +20,11 @@ help.h \
 modules.cc \
 modules.h \
 policy.cc \
-policy.h \
 shell.cc \
 shell.h \
 snort.cc \
 snort.h \
 snort_config.cc \
-snort_config.h \
 snort_config.h \
 snort_debug.cc \
 snort_module.cc \
