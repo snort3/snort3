@@ -54,6 +54,7 @@
 #include "time/ppm.h"
 #include "time/profiler.h"
 #include "main/thread.h"
+#include "sfip/sf_ip.h"
 
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 
@@ -153,43 +154,15 @@ static void init_policies(SnortConfig* sc)
  * among run_modes is how we handle packets via the log_func. */
 SnortConfig::SnortConfig()
 {
-    memset(this, 0, sizeof(*this));
-
-    pkt_cnt = 0;
-    pkt_skip = 0;
-    pkt_snaplen = -1;
-    output_flags = 0;
     num_layers = DEFAULT_LAYERMAX;
-    max_ip6_extensions = 0;
-    max_ip_layers = 0;
-    gtp_ports = nullptr;
 
-    /*user_id and group_id should be initialized to -1 by default, because
-     * chown() use this later, -1 means no change to user_id/group_id*/
-    user_id = -1;
-    group_id = -1;
-
-    tagged_packet_limit = 256;
-    default_rule_state = true;
-
-    // FIXIT-L pcre_match_limit* are interdependent
-    // somehow a packet thread needs a much lower setting
-    pcre_match_limit = 1500;
-    pcre_match_limit_recursion = 1500;
-
-    memset(pid_filename, 0, sizeof(pid_filename));
-
-    /* Default max size of the attribute table */
     max_attribute_hosts = DEFAULT_MAX_ATTRIBUTE_HOSTS;
     max_attribute_services_per_host = DEFAULT_MAX_ATTRIBUTE_SERVICES_PER_HOST;
 
-    /* Default max number of services per rule */
     max_metadata_services = DEFAULT_MAX_METADATA_SERVICES;
     mpls_stack_depth = DEFAULT_LABELCHAIN_LENGTH;
 
     InspectorManager::new_config(this);
-
-    var_list = NULL;
 
     num_slots = get_instance_max();
     state = (SnortState*)SnortAlloc(sizeof(SnortState)*num_slots);
@@ -211,28 +184,21 @@ SnortConfig::SnortConfig()
 
     source_affinity = new std::map<const std::string, int>;
     thread_affinity = new std::vector<int>(32, -1);
+
+    sfip_clear(homenet);
+    sfip_clear(obfuscation_net);
+
+    memset(evalOrder, 0, sizeof(evalOrder));
+
+    memset(&Alert, 0, sizeof(Alert));
+    memset(&Log, 0, sizeof(Log));
+    memset(&Pass, 0, sizeof(Pass));
+    memset(&Drop, 0, sizeof(Drop));
+    memset(&SDrop, 0, sizeof(SDrop));
 }
 
 SnortConfig::~SnortConfig()
 {
-    if ( log_dir )
-        free(log_dir);
-
-    if ( orig_log_dir )
-        free(orig_log_dir);
-
-    if ( bpf_file )
-        free(bpf_file);
-
-    if ( chroot_dir )
-        free(chroot_dir);
-
-    if ( bpf_filter )
-        free(bpf_filter);
-
-    if ( event_trace_file )
-        free(event_trace_file);
-
     FreeRuleStateList(rule_state_list);
     FreeClassifications(classifications);
     FreeReferences(references);
@@ -252,9 +218,7 @@ SnortConfig::~SnortConfig()
 
     if ( ip_proto_only_lists )
     {
-        unsigned int j;
-
-        for (j = 0; j < NUM_IP_PROTOS; j++)
+        for (int j = 0; j < NUM_IP_PROTOS; j++)
             sflist_free_all(ip_proto_only_lists[j], NULL);
 
         free(ip_proto_only_lists);
@@ -262,26 +226,14 @@ SnortConfig::~SnortConfig()
 
     fpDeleteFastPacketDetection(this);
 
-    if ( daq_type )
-        free(daq_type);
-
-    if ( daq_mode )
-        free(daq_mode);
-
     if ( daq_vars )
         StringVector_Delete(daq_vars);
 
     if ( daq_dirs )
         StringVector_Delete(daq_dirs);
 
-    if ( respond_device )
-        free(respond_device);
-
     if (eth_dst )
         free(eth_dst);
-
-    if ( output )
-        free(output);
 
     delete file_config;
 
@@ -358,25 +310,19 @@ void SnortConfig::setup()
 // merge in everything from the command line config
 void SnortConfig::merge(SnortConfig* cmd_line)
 {
-    if ( !cmd_line->log_dir && !log_dir )
-        log_dir = SnortStrdup(DEFAULT_LOG_DIR);
+    if ( !cmd_line->log_dir.empty() )
+        log_dir = cmd_line->log_dir;
 
-    else if ( cmd_line->log_dir )
-    {
-        if ( log_dir )
-            free(log_dir);
-
-        log_dir = SnortStrdup(cmd_line->log_dir);
-    }
+    if ( log_dir.empty() )
+        log_dir = DEFAULT_LOG_DIR;
 
     run_prefix = cmd_line->run_prefix;
-    cmd_line->run_prefix = nullptr;
 
     id_subdir = cmd_line->id_subdir;
     id_zero = cmd_line->id_zero;
 
     /* Used because of a potential chroot */
-    orig_log_dir = SnortStrdup(log_dir);
+    orig_log_dir = log_dir;
 
     event_log_id = cmd_line->event_log_id;
 
@@ -395,7 +341,6 @@ void SnortConfig::merge(SnortConfig* cmd_line)
 
     // only set by cmd_line to override other conf output settings
     output = cmd_line->output;
-    cmd_line->output = nullptr;
 
     /* Merge checksum flags.  If command line modified them, use from the
      * command line, else just use from config_file. */
@@ -428,15 +373,11 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     if (cmd_line->homenet.family != 0)
         memcpy(&homenet, &cmd_line->homenet, sizeof(sfip_t));
 
-    if ( cmd_line->bpf_file )
-    {
-        if ( bpf_file )
-            free(bpf_file);
-        bpf_file = SnortStrdup(cmd_line->bpf_file);
-    }
+    if ( !cmd_line->bpf_file.empty() )
+        bpf_file = cmd_line->bpf_file;
 
-    if ( cmd_line->bpf_filter )
-        bpf_filter = SnortStrdup(cmd_line->bpf_filter);
+    if ( !cmd_line->bpf_filter.empty() )
+        bpf_filter = cmd_line->bpf_filter;
 
     if (cmd_line->pkt_snaplen != -1)
         pkt_snaplen = cmd_line->pkt_snaplen;
@@ -457,18 +398,16 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     if (cmd_line->file_mask != 0)
         file_mask = cmd_line->file_mask;
 
-    if ( cmd_line->chroot_dir )
+    if ( !cmd_line->chroot_dir.empty() )
     {
-        if ( chroot_dir )
-            free(chroot_dir);
-        chroot_dir = SnortStrdup(cmd_line->chroot_dir);
+        chroot_dir = cmd_line->chroot_dir;
     }
 
-    if ( cmd_line->daq_type )
-        daq_type = SnortStrdup(cmd_line->daq_type);
+    if ( cmd_line->daq_type.size() )
+        daq_type = cmd_line->daq_type;
 
-    if ( cmd_line->daq_mode )
-        daq_mode = SnortStrdup(cmd_line->daq_mode);
+    if ( cmd_line->daq_mode.size() )
+        daq_mode = cmd_line->daq_mode;
 
     if ( cmd_line->dirty_pig )
         dirty_pig = cmd_line->dirty_pig;
@@ -531,19 +470,7 @@ bool SnortConfig::verify()
         return false;
     }
 
-    if ( !bpf_filter && bpf_file )
-        bpf_filter = read_infile("packets.bpf_file", bpf_file);
-
-    if ( bpf_filter && snort_conf->bpf_filter )
-    {
-        if (strcasecmp(snort_conf->bpf_filter, bpf_filter) != 0)
-        {
-            ErrorMessage("Snort Reload: Changing the bpf filter configuration "
-                "requires a restart.\n");
-            return false;
-        }
-    }
-    else if (bpf_filter != snort_conf->bpf_filter)
+    if ( bpf_filter != snort_conf->bpf_filter )
     {
         ErrorMessage("Snort Reload: Changing the bpf filter configuration "
             "requires a restart.\n");
@@ -558,16 +485,7 @@ bool SnortConfig::verify()
         return false;
     }
 
-    if ( snort_conf->chroot_dir && chroot_dir )
-    {
-        if (strcasecmp(snort_conf->chroot_dir, chroot_dir) != 0)
-        {
-            ErrorMessage("Snort Reload: Changing the chroot directory "
-                "configuration requires a restart.\n");
-            return false;
-        }
-    }
-    else if (snort_conf->chroot_dir != chroot_dir)
+    if (snort_conf->chroot_dir != chroot_dir)
     {
         ErrorMessage("Snort Reload: Changing the chroot directory "
             "configuration requires a restart.\n");
@@ -583,16 +501,7 @@ bool SnortConfig::verify()
     }
 
     /* Orig log dir because a chroot might have changed it */
-    if ( snort_conf->orig_log_dir && orig_log_dir )
-    {
-        if (strcasecmp(snort_conf->orig_log_dir, orig_log_dir) != 0)
-        {
-            ErrorMessage("Snort Reload: Changing the log directory "
-                "configuration requires a restart.\n");
-            return false;
-        }
-    }
-    else if (snort_conf->orig_log_dir != orig_log_dir)
+    if (snort_conf->orig_log_dir != orig_log_dir)
     {
         ErrorMessage("Snort Reload: Changing the log directory "
             "configuration requires a restart.\n");

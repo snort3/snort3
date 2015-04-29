@@ -248,8 +248,8 @@ void Snort::init(int argc, char** argv)
 
     CodecManager::instantiate();
 
-    if ( snort_conf->output )
-        EventManager::instantiate(snort_conf->output, snort_conf);
+    if ( !snort_conf->output.empty() )
+        EventManager::instantiate(snort_conf->output.c_str(), snort_conf);
 
     if (SnortConfig::alert_before_pass())
     {
@@ -282,11 +282,11 @@ void Snort::init(int argc, char** argv)
 
     // FIXIT-L stuff like this that is also done in snort_config.cc::VerifyReload()
     // should be refactored
-    if ((snort_conf->bpf_filter == NULL) && (snort_conf->bpf_file != NULL))
-        snort_conf->bpf_filter = read_infile("packets.bpf_file", snort_conf->bpf_file);
+    if ( snort_conf->bpf_filter.empty() && !snort_conf->bpf_file.empty() )
+        snort_conf->bpf_filter = read_infile("bpf_file", snort_conf->bpf_file.c_str());
 
-    if (snort_conf->bpf_filter != NULL)
-        LogMessage("Snort BPF option: %s\n", snort_conf->bpf_filter);
+    if ( !snort_conf->bpf_filter.empty() )
+        LogMessage("Snort BPF option: %s\n", snort_conf->bpf_filter.c_str());
 }
 
 // this function should only include initialization that must be done as a
@@ -305,19 +305,20 @@ void Snort::init(int argc, char** argv)
 // much initialization stuff in Snort::init() as possible and to restrict this
 // function to those things that depend on DAQ startup or non-root user/group.
 //
-// FIXIT-J breaks DAQ_New()/Start() because packet threads won't be root when
+// FIXIT-L breaks DAQ_New()/Start() because packet threads won't be root when
 // opening iface
 void Snort::unprivileged_init()
 {
     /* create the PID file */
-    if ( !SnortConfig::read_mode() && (SnortConfig::daemon_mode() || SnortConfig::create_pid_file()))
+    if ( !SnortConfig::read_mode() &&
+        (SnortConfig::daemon_mode() || SnortConfig::create_pid_file()))
     {
         CreatePidFile(snort_main_thread_pid);
     }
 
     /* Drop the Chrooted Settings */
-    if (snort_conf->chroot_dir)
-        SetChroot(snort_conf->chroot_dir, &snort_conf->log_dir);
+    if ( !snort_conf->chroot_dir.empty() )
+        SetChroot(snort_conf->chroot_dir, snort_conf->log_dir);
 
     /* Drop privileges if requested, when initialization is done */
     SetUidGid(SnortConfig::get_uid(), SnortConfig::get_gid());
@@ -355,16 +356,14 @@ void Snort::term()
     ClosePidFile();
 
     /* remove pid file */
-    if ( snort_conf->pid_filename[0] )
+    if ( !snort_conf->pid_filename.empty() )
     {
-        int ret;
-
-        ret = unlink(snort_conf->pid_filename);
+        int ret = unlink(snort_conf->pid_filename.c_str());
 
         if (ret != 0)
         {
             ErrorMessage("Could not remove pid file %s: %s\n",
-                snort_conf->pid_filename, get_error(errno));
+                snort_conf->pid_filename.c_str(), get_error(errno));
         }
     }
 
@@ -406,11 +405,8 @@ void Snort::clean_exit(int)
 {
     SnortConfig tmp;
 
-    /* Have to trick LogMessage to log correctly after snort_conf
-     * is freed */
-    memset(&tmp, 0, sizeof(tmp));
-
-    if (snort_conf != NULL)
+    // Have to trick LogMessage to log correctly after snort_conf is freed
+    if ( snort_conf )
     {
         tmp.logging_flags |=
             (snort_conf->logging_flags & LOGGING_FLAG__QUIET);
@@ -590,8 +586,8 @@ void Snort::thread_init(const char* intf)
     show_source(intf);
 
     // FIXIT-M the start-up sequence is a little off due to dropping privs
-    DAQ_New(snort_conf, intf);
-    DAQ_Start();
+    if ( !DAQ_New(snort_conf, intf) )
+        DAQ_Start();
 
     s_packet = PacketManager::encode_new(false);
     CodecManager::thread_init(snort_conf);

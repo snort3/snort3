@@ -174,9 +174,10 @@ typedef enum _HtmlSearchIdEnum
 extern class SearchTool* hi_javascript_search_mpse;
 extern class SearchTool* hi_htmltype_search_mpse;
 
-extern THREAD_LOCAL HISearch hi_js_search[HI_LAST];
-extern THREAD_LOCAL HISearch hi_html_search[HTML_LAST];
-extern THREAD_LOCAL HISearch* hi_current_search;
+extern HISearch hi_js_search[HI_LAST];
+extern HISearch hi_html_search[HTML_LAST];
+
+extern const THREAD_LOCAL HISearch* hi_current_search;
 extern THREAD_LOCAL HISearchInfo hi_search_info;
 
 void ApplyFlowDepth(HTTPINSPECT_CONF*, Packet*, HttpSessionData*, int, int, uint32_t);

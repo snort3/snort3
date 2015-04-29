@@ -133,7 +133,12 @@ void Value::set_first_token()
 
 bool Value::get_next_token(string& tok)
 {
-    return ss && ( *ss >> tok );
+    return ss and ( *ss >> tok );
+}
+
+bool Value::get_next_csv_token(string& tok)
+{
+    return ss and std::getline(*ss, tok, ',');
 }
 
 bool Value::strtol(long& n) const
@@ -169,5 +174,37 @@ const char* Value::get_as_string()
         break;
     }
     return str.c_str();
+}
+
+void Value::update_mask(uint8_t& mask, uint8_t flag, bool invert)
+{
+    if ( get_bool() xor invert )
+        mask |= flag;
+    else
+        mask &= ~flag;
+}
+
+void Value::update_mask(uint16_t& mask, uint16_t flag, bool invert)
+{
+    if ( get_bool() xor invert )
+        mask |= flag;
+    else
+        mask &= ~flag;
+}
+
+void Value::update_mask(uint32_t& mask, uint32_t flag, bool invert)
+{
+    if ( get_bool() xor invert )
+        mask |= flag;
+    else
+        mask &= ~flag;
+}
+
+void Value::update_mask(uint64_t& mask, uint64_t flag, bool invert)
+{
+    if ( get_bool() xor invert )
+        mask |= flag;
+    else
+        mask &= ~flag;
 }
 

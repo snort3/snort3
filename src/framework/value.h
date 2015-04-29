@@ -128,6 +128,13 @@ public:
 
     void set_first_token();
     bool get_next_token(std::string&);
+    bool get_next_csv_token(std::string&);
+
+    // set/clear flag based on get_bool()
+    void update_mask(uint8_t& mask, uint8_t flag, bool invert = false);
+    void update_mask(uint16_t& mask, uint16_t flag, bool invert = false);
+    void update_mask(uint32_t& mask, uint32_t flag, bool invert = false);
+    void update_mask(uint64_t& mask, uint64_t flag, bool invert = false);
 
 private:
     void init()

@@ -42,10 +42,6 @@
 static const char* s_name = "urg";
 static const char* s_help = "detection for TCP urgent pointer";
 
-// FIXIT-H profiling is desirable but must be refactored to
-// avoid dependence on snort_config.h which snowballs
-//#undef PERF_PROFILING
-
 static THREAD_LOCAL ProfileStats tcpUrgPerfStats;
 
 //-------------------------------------------------------------------------
@@ -92,15 +88,18 @@ bool TcpUrgOption::operator==(const IpsOption& ips) const
 
 int TcpUrgOption::eval(Cursor&, Packet* p)
 {
-    //PROFILE_VARS;
-    //MODULE_PROFILE_START(tcpUrgPerfStats);
+    PROFILE_VARS;
+    MODULE_PROFILE_START(tcpUrgPerfStats);
 
     int rval = DETECTION_OPTION_NO_MATCH;
 
-    if ( p->ptrs.tcph && config.eval(p->ptrs.tcph->th_ack) )
+    if ( p->ptrs.tcph and p->ptrs.tcph->are_flags_set(TH_URG) and
+        config.eval(p->ptrs.tcph->urp()) )
+    {
         rval = DETECTION_OPTION_MATCH;
+    }
 
-    //MODULE_PROFILE_END(tcpUrgPerfStats);
+    MODULE_PROFILE_END(tcpUrgPerfStats);
     return rval;
 }
 
@@ -110,7 +109,7 @@ int TcpUrgOption::eval(Cursor&, Packet* p)
 
 static const Parameter s_params[] =
 {
-    { "*range", Parameter::PT_STRING, nullptr, nullptr,
+    { "~range", Parameter::PT_STRING, nullptr, nullptr,
       "check if urgent offset is min<>max | <max | >min" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -138,7 +137,7 @@ bool UrgModule::begin(const char*, int, SnortConfig*)
 
 bool UrgModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("*range") )
+    if ( !v.is("~range") )
         return false;
 
     return data.parse(v.get_string());

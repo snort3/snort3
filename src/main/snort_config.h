@@ -24,8 +24,9 @@
 #include "config.h"
 #endif
 
-#include <vector>
 #include <map>
+#include <string>
+#include <vector>
 #include <sys/stat.h>
 
 #include "detection/rules.h"
@@ -142,137 +143,141 @@ public:
 public:
     //------------------------------------------------------
     // alert module stuff
-    bool default_rule_state;
+    bool default_rule_state = true;
 
-    uint16_t flowbit_size;
+    uint16_t flowbit_size = 0;
     sfip_t homenet;
 
     //------------------------------------------------------
     // output module stuff
-    uint32_t output_flags;
-    uint32_t logging_flags;
-    uint32_t warning_flags;
+    uint32_t output_flags = 0;
+    uint32_t logging_flags = 0;
+    uint32_t warning_flags = 0;
 
-    uint8_t log_ipv6_extra;
-    uint16_t event_trace_max;
-    long int tagged_packet_limit;
+    uint8_t log_ipv6_extra = 0;
+    uint16_t event_trace_max = 0;
+    long int tagged_packet_limit = 256;
 
-    char* event_trace_file;
-    char* log_dir;           /* -l or config log_dir */
+    std::string log_dir;
 
     //------------------------------------------------------
     // daq stuff
-    char* daq_type;          /* --daq or config daq */
-    char* daq_mode;          /* --daq-mode or config daq_mode */
-    void* daq_vars;          /* --daq-var or config daq_var */
-    void* daq_dirs;          /* --daq-dir or config daq_dir */
+    std::string daq_type;
+    std::string daq_mode;
+
+    void* daq_vars = nullptr;
+    void* daq_dirs = nullptr;
 
     //------------------------------------------------------
     // detection module stuff
-    long int pcre_match_limit;
-    long int pcre_match_limit_recursion;
-    int pcre_ovector_size;  // computed from rules
+    // FIXIT-L pcre_match_limit* are interdependent
+    // somehow a packet thread needs a much lower setting
+    long int pcre_match_limit = 1500;
+    long int pcre_match_limit_recursion = 1500;
+    int pcre_ovector_size = 0;
 
-    int asn1_mem;
-    int run_flags;
+    int asn1_mem = 0;
+    uint32_t run_flags = 0;
 
     //------------------------------------------------------
     // process stuff
-    int user_id;
-    int group_id;
 
-    int dirty_pig;
+    // user_id and group_id should be initialized to -1 by default, because
+    // chown() use this later, -1 means no change to user_id/group_id
+    int user_id = -1;
+    int group_id = -1;
 
-    char* chroot_dir;        /* -t or config chroot */
+    int dirty_pig = 0;
 
-    char* plugin_path;
-    char* script_path;
+    std::string chroot_dir;        /* -t or config chroot */
+    std::string plugin_path;
+    std::string script_path;
 
-    mode_t file_mask;
+    mode_t file_mask = 0;
 
     //------------------------------------------------------
     // decode module stuff
-    uint8_t mpls_payload_type;
-    long int mpls_stack_depth;
+    uint8_t mpls_payload_type = 0;
+    long int mpls_stack_depth = 0;
 
-    uint8_t enable_teredo;
-    uint8_t enable_esp;
-    PortList* gtp_ports;
+    uint8_t enable_teredo = 0;
+    uint8_t enable_esp = 0;
+    PortList* gtp_ports = nullptr;
 
-    uint8_t num_layers;
-    uint8_t max_ip6_extensions;
-    uint8_t max_ip_layers;
-    int pkt_snaplen;
+    uint8_t num_layers = 0;
+    uint8_t max_ip6_extensions = 0;
+    uint8_t max_ip_layers = 0;
+    int pkt_snaplen = -1;
 
     //------------------------------------------------------
     // active stuff
-    uint8_t respond_attempts;
-    uint8_t max_responses;
-    uint8_t min_interval;
-    char* respond_device;
-    uint8_t* eth_dst;
+    uint8_t respond_attempts = 0;
+    uint8_t max_responses = 0;
+    uint8_t min_interval = 0;
+    uint8_t* eth_dst = nullptr;
 
-    char* output;
+    std::string respond_device;
+    std::string output;
 
     //------------------------------------------------------
     // attribute tables stuff
-    uint32_t max_attribute_hosts;
-    uint32_t max_attribute_services_per_host;
-    uint32_t max_metadata_services;
+    uint32_t max_attribute_hosts = 0;
+    uint32_t max_attribute_services_per_host = 0;
+    uint32_t max_metadata_services = 0;
 
     //------------------------------------------------------
     // packet module stuff
-    uint8_t vlan_agnostic;
-    uint8_t addressspace_agnostic;
+    uint8_t vlan_agnostic = 0;
+    uint8_t addressspace_agnostic = 0;
 
-    uint64_t pkt_cnt;           /* -n */
-    uint64_t pkt_skip;
+    uint64_t pkt_cnt = 0;           /* -n */
+    uint64_t pkt_skip = 0;
 
-    char* bpf_file;          /* -F or config bpf_file */
+    std::string bpf_file;          /* -F or config bpf_file */
 
     //------------------------------------------------------
     // various modules
-    struct FastPatternConfig* fast_pattern_config;
-    struct EventQueueConfig* event_queue_config;
+    struct FastPatternConfig* fast_pattern_config = nullptr;
+    struct EventQueueConfig* event_queue_config = nullptr;
 
-    class FileConfig* file_config;
+    class FileConfig* file_config = nullptr;
 
     /* XXX XXX policy specific? */
-    struct ThresholdConfig* threshold_config;
-    struct RateFilterConfig* rate_filter_config;
+    struct ThresholdConfig* threshold_config = nullptr;
+    struct RateFilterConfig* rate_filter_config = nullptr;
 
     //------------------------------------------------------
     // FIXIT-L command line only stuff, add to conf / module
 
-    uint32_t event_log_id;      /* -G */
-    sfip_t obfuscation_net;  // -B
-    char* bpf_filter;        // --bpf
+    uint32_t event_log_id = 0;
+    sfip_t obfuscation_net;
+    std::string bpf_filter;
 
     //------------------------------------------------------
     // FIXIT-L non-module stuff - separate config from derived state?
-    char* run_prefix;
-    bool id_subdir;
-    bool id_zero;
+    std::string run_prefix;
+    bool id_subdir = false;
+    bool id_zero = false;
 
-    bool stdin_rules;
+    bool stdin_rules = false;
 
-    char pid_filename[1024];
-    char* orig_log_dir;      /* set in case of chroot */
+    std::string pid_filename;
+    std::string orig_log_dir;      /* set in case of chroot */
 
-    int thiszone;
+    int thiszone = 0;
 
-    struct RuleState* rule_state_list;
-    struct ClassType* classifications;
-    struct ReferenceSystemNode* references;
-    struct SFGHASH* otn_map;
+    struct RuleState* rule_state_list = nullptr;
+    struct ClassType* classifications = nullptr;
+    struct ReferenceSystemNode* references = nullptr;
+    struct SFGHASH* otn_map = nullptr;
 
-    struct DetectionFilterConfig* detection_filter_config;
+    struct DetectionFilterConfig* detection_filter_config = nullptr;
 
-    struct sf_list** ip_proto_only_lists;
+    struct sf_list** ip_proto_only_lists = nullptr;
     uint8_t ip_proto_array[NUM_IP_PROTOS];
 
-    int num_rule_types;
-    struct RuleListNode* rule_lists;
+    int num_rule_types = 0;
+    struct RuleListNode* rule_lists = nullptr;
     int evalOrder[RULE_TYPE__MAX + 1];
 
     ListHead Alert;
@@ -281,10 +286,10 @@ public:
     ListHead Drop;
     ListHead SDrop;
 
-    struct FrameworkConfig* framework_config;
+    struct FrameworkConfig* framework_config = nullptr;
 
     /* master port list table */
-    struct RulePortTables* port_tables;
+    struct RulePortTables* port_tables = nullptr;
 
     /* The port-rule-maps map the src-dst ports to rules for
      * udp and tcp, for Ip we map the dst port as the protocol,
@@ -294,44 +299,43 @@ public:
      * rules may or may not have content.  We process the content
      * 1st and then the no content rules for udp/tcp and icmp, and
      * then we process the ip rules. */
-    PORT_RULE_MAP* prmIpRTNX;
-    PORT_RULE_MAP* prmTcpRTNX;
-    PORT_RULE_MAP* prmUdpRTNX;
-    PORT_RULE_MAP* prmIcmpRTNX;
+    PORT_RULE_MAP* prmIpRTNX = nullptr;
+    PORT_RULE_MAP* prmTcpRTNX = nullptr;
+    PORT_RULE_MAP* prmUdpRTNX = nullptr;
+    PORT_RULE_MAP* prmIcmpRTNX = nullptr;
 
-    srmm_table_t* srmmTable;   /* srvc rule map master table */
-    srmm_table_t* spgmmTable;  /* srvc port_group map master table */
-    sopg_table_t* sopgTable;   /* service-oridnal to port_group table */
+    srmm_table_t* srmmTable = nullptr;   /* srvc rule map master table */
+    srmm_table_t* spgmmTable = nullptr;  /* srvc port_group map master table */
+    sopg_table_t* sopgTable = nullptr;   /* service-oridnal to port_group table */
 
-    SFXHASH* detection_option_hash_table;
-    SFXHASH* detection_option_tree_hash_table;
+    SFXHASH* detection_option_hash_table = nullptr;
+    SFXHASH* detection_option_tree_hash_table = nullptr;
 
-    PolicyMap* policy_map;
+    PolicyMap* policy_map = nullptr;
 
-    uint8_t tunnel_mask;
+    uint8_t tunnel_mask = 0;
 
-    char* output_dir;
-
-    struct VarNode* var_list;
+    struct VarNode* var_list = nullptr;
 
     //------------------------------------------------------
     // deliberately not conditional
     // to avoid plugin compatibility issues
-    struct ProfileConfig* profile_rules;
-    struct ProfileConfig* profile_modules;
+    struct ProfileConfig* profile_rules = nullptr;
+    struct ProfileConfig* profile_modules = nullptr;
 
-    struct ppm_cfg_t* ppm_cfg;
-    struct _IntelPmHandles* ipm_handles;
+    struct ppm_cfg_t* ppm_cfg = nullptr;
+    struct _IntelPmHandles* ipm_handles = nullptr;
 
-    unsigned remote_control;
+    unsigned remote_control = 0;
     //------------------------------------------------------
 
-    SnortState* state;
-    unsigned num_slots;
+    SnortState* state = nullptr;
+    unsigned num_slots = 0;
 
     std::map<const std::string, int>* source_affinity;
-    std::vector<int>* thread_affinity;
+    std::vector<int>* thread_affinity = nullptr;
 
+    //------------------------------------------------------
     // policy access
     InspectionPolicy* get_inspection_policy()
     { return policy_map->inspection_policy[0]; }

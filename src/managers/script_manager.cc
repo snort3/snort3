@@ -238,13 +238,14 @@ static void load_script(const char* f)
 // public methods
 //-------------------------------------------------------------------------
 
-void ScriptManager::load_scripts(const char* s)
+void ScriptManager::load_scripts(const std::string& paths)
 {
-    if ( !s )
+    if ( paths.empty() )
         return;
 
-    vector<char> buf(s, s+strlen(s)+1);
-    char* last;
+    const char* t = paths.c_str();
+    vector<char> buf(t, t+strlen(t)+1);
+    char* last, * s;
 
     s = strtok_r(&buf[0], ":", &last);
 

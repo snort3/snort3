@@ -212,10 +212,10 @@ void ConfigChecksumMode(SnortConfig*, const char* args)
 
 void ConfigChrootDir(SnortConfig* sc, const char* args)
 {
-    if ((args == NULL) || (sc->chroot_dir != NULL))
+    if ( !args || !sc )
         return;
 
-    sc->chroot_dir = SnortStrdup(args);
+    sc->chroot_dir = args;
 }
 
 void ConfigCreatePidFile(SnortConfig* sc, const char*)
@@ -271,10 +271,10 @@ void ConfigDstMac(SnortConfig* sc, const char* s)
 
 void ConfigLogDir(SnortConfig* sc, const char* args)
 {
-    if ((args == NULL) || (sc->log_dir != NULL))
+    if ( !args || !sc )
         return;
 
-    sc->log_dir = SnortStrdup(args);
+    sc->log_dir = args;
 }
 
 void ConfigDaqType(SnortConfig* sc, const char* args)
@@ -282,23 +282,17 @@ void ConfigDaqType(SnortConfig* sc, const char* args)
     if ( !args || !sc )
         return;
 
-    if ( sc->daq_type )
-    {
-        ParseError("setting DAQ to %s but %s already selected.", args, sc->daq_type);
-        return;
-    }
-
     // will be validated later after paths are established
-    sc->daq_type = SnortStrdup(args);
+    sc->daq_type = args;
 }
 
 void ConfigDaqMode(SnortConfig* sc, const char* args)
 {
-    if ( !args || !sc || sc->daq_mode )
+    if ( !args || !sc )
         return;
 
     // will be validated later when daq is instantiated
-    sc->daq_mode = SnortStrdup(args);
+    sc->daq_mode = args;
 }
 
 void ConfigDaqVar(SnortConfig* sc, const char* args)
@@ -572,13 +566,13 @@ void ConfigTunnelVerdicts(SnortConfig* sc, const char* args)
 void ConfigPluginPath(SnortConfig* sc, const char* args)
 {
     if ( sc && args )
-        sc->plugin_path = SnortStrdup(args);
+        sc->plugin_path = args;
 }
 
 void ConfigScriptPath(SnortConfig* sc, const char* args)
 {
     if ( sc && args )
-        sc->script_path = SnortStrdup(args);
+        sc->script_path = args;
 }
 
 void config_syslog(SnortConfig* sc, const char*)

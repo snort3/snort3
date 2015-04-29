@@ -631,7 +631,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         ConfigAlertBeforePass(sc, v.get_string());
 
     else if ( v.is("--bpf") )
-        sc->bpf_filter = SnortStrdup(v.get_string());
+        sc->bpf_filter = v.get_string();
 
     else if ( v.is("--c2x") )
         c2x(v.get_string());
@@ -776,7 +776,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         dump_rule_text(sc, v.get_string());
 
     else if ( v.is("--run-prefix") )
-        sc->run_prefix = SnortStrdup(v.get_string());
+        sc->run_prefix = v.get_string();
 
     else if ( v.is("--script-path") )
         ConfigScriptPath(sc, v.get_string());

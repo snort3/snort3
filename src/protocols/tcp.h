@@ -106,6 +106,9 @@ struct TCPHdr
     inline uint32_t seq() const
     { return ntohl(th_seq); }
 
+    inline uint32_t ack() const
+    { return ntohl(th_ack); }
+
     inline bool has_options() const
     { return ((th_offx2 & 0xf0) > 0x50); }
 
@@ -136,6 +139,9 @@ struct TCPHdr
 
     inline uint32_t raw_seq() const
     { return th_seq; }
+
+    inline uint32_t raw_ack() const
+    { return th_ack; }
 
     inline uint8_t raw_hlen() const
     { return th_offx2 >> 4; }

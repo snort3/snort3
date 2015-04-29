@@ -103,9 +103,10 @@ static uint32_t xtra_hname_id;
 static uint32_t xtra_gzip_id;
 static uint32_t xtra_jsnorm_id;
 
-THREAD_LOCAL HISearch hi_js_search[HI_LAST];
-THREAD_LOCAL HISearch hi_html_search[HTML_LAST];
-THREAD_LOCAL HISearch* hi_current_search = NULL;
+HISearch hi_js_search[HI_LAST];
+HISearch hi_html_search[HTML_LAST];
+
+THREAD_LOCAL const HISearch* hi_current_search = NULL;
 THREAD_LOCAL HISearchInfo hi_search_info;
 
 THREAD_LOCAL HIStats hi_stats;

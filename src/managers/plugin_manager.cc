@@ -311,15 +311,13 @@ static void add_plugin(Plugin& p)
     }
 }
 
-static void load_plugins(const char* s)
+static void load_plugins(const std::string& paths)
 {
-    if ( !s )
-        return;
-
-    vector<char> buf(s, s+strlen(s)+1);
+    const char* t = paths.c_str();
+    vector<char> buf(t, t+strlen(t)+1);
     char* last;
 
-    s = strtok_r(&buf[0], ":", &last);
+    char* s = strtok_r(&buf[0], ":", &last);
 
     while ( s )
     {
@@ -361,7 +359,7 @@ static void unload_plugins()
 // framework methods
 //-------------------------------------------------------------------------
 
-void PluginManager::load_plugins(const char* paths)
+void PluginManager::load_plugins(const std::string& paths)
 {
     // builtins
     load_list(codecs);
@@ -374,7 +372,8 @@ void PluginManager::load_plugins(const char* paths)
     load_list(loggers);
 
     // plugins
-    ::load_plugins(paths);
+    if ( !paths.empty() )
+        ::load_plugins(paths);
 
     // scripts
     // FIXIT-L need path to script for --list-plugins

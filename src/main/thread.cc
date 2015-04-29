@@ -191,12 +191,12 @@ bool break_time()
 const char* get_instance_file(std::string& file, const char* name)
 {
     bool sep = false;
-    file = snort_conf->log_dir ? snort_conf->log_dir : "./";
+    file = !snort_conf->log_dir.empty() ? snort_conf->log_dir : "./";
 
     if ( file.back() != '/' )
         file += '/';
 
-    if ( snort_conf->run_prefix )
+    if ( !snort_conf->run_prefix.empty() )
     {
         file += snort_conf->run_prefix;
         sep = true;

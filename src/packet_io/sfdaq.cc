@@ -151,20 +151,20 @@ DAQ_Mode DAQ_GetInterfaceMode(const DAQ_PktHdr_t* h)
 
 DAQ_Mode DAQ_GetMode(const SnortConfig* sc)
 {
-    if ( sc->daq_mode )
+    if ( sc->daq_mode.size() )
     {
         int i;
 
         for ( i = 0; i < MAX_DAQ_MODE; i++ )
         {
-            if ( !strcasecmp(daq_mode_string((DAQ_Mode)i), sc->daq_mode) )
+            if ( !strcasecmp(daq_mode_string((DAQ_Mode)i), sc->daq_mode.c_str()) )
             {
                 if ( SnortConfig::adaptor_inline_mode() && (i != DAQ_MODE_INLINE) )
-                    FatalError("DAQ '%s' mode incompatible with -Q\n", sc->daq_mode);
+                    FatalError("DAQ '%s' mode incompatible with -Q\n", sc->daq_mode.c_str());
                 return (DAQ_Mode)i;
             }
         }
-        FatalError("Bad DAQ mode '%s'\n", sc->daq_mode);
+        FatalError("Bad DAQ mode '%s'\n", sc->daq_mode.c_str());
     }
     if ( SnortConfig::adaptor_inline_mode() )
         return DAQ_MODE_INLINE;
@@ -227,12 +227,13 @@ static int DAQ_ValidateInstance()
 
 void DAQ_Init(const SnortConfig* sc)
 {
-    const char* type = DAQ_DEFAULT;
     if ( !loaded )
         DAQ_Load(sc);
 
-    if ( sc->daq_type )
-        type = sc->daq_type;
+    const char* type = DAQ_DEFAULT;
+
+    if ( sc->daq_type.size() )
+        type = sc->daq_type.c_str();
 
     daq_mod = daq_find_module(type);
 
@@ -366,6 +367,9 @@ static void DAQ_LoadVars(DAQ_Config_t* cfg, const SnortConfig* sc)
         if ( !key )
             break;
 
+        while ( isspace(*key) )
+            ++key;
+
         val = strchr(key, '=');
 
         if ( val )
@@ -426,7 +430,8 @@ int DAQ_New(const SnortConfig* sc, const char* intf)
             cfg.flags |= DAQ_CFG_PROMISC;
     }
 
-    DAQ_Config(&cfg);
+    if ( DAQ_Config(&cfg) )
+        return -1;
 
     if ( !DAQ_ValidateInstance() )
         FatalError("DAQ configuration incompatible with intended operation.\n");
@@ -434,7 +439,7 @@ int DAQ_New(const SnortConfig* sc, const char* intf)
     if ( DAQ_UnprivilegedStart() )
         daq_dlt = daq_get_datalink_type(daq_mod, daq_hand);
 
-    DAQ_SetFilter(sc->bpf_filter);
+    DAQ_SetFilter(sc->bpf_filter.c_str());
     daq_config_clear_values(&cfg);
 
     memset(&daq_stats, 0, sizeof(daq_stats));

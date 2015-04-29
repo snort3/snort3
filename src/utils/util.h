@@ -39,6 +39,8 @@
 #include <sys/syscall.h>
 #endif
 
+#include <string>
+
 #include "main/snort_types.h"
 #include "log/messages.h"
 
@@ -85,7 +87,7 @@ void CreatePidFile(pid_t);
 void ClosePidFile(void);
 void SetUidGid(int, int);
 void InitGroups(int, int);
-void SetChroot(char*, char**);
+void SetChroot(std::string root_dir, std::string& log_dir);
 void InitProtoNames(void);
 
 SO_PUBLIC int SnortSnprintf(char*, size_t, const char*, ...) __attribute__((format (printf, 3,
@@ -104,7 +106,7 @@ int CheckValueInRange(const char* value_str, const char* option,
     unsigned long lo, unsigned long hi, unsigned long* value);
 
 char* CurrentWorkingDir(void);
-char* GetAbsolutePath(char* dir);
+char* GetAbsolutePath(const char* dir);
 char* StripPrefixDir(char* prefix, char* dir);
 
 void PrintVersion(void);

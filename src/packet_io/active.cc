@@ -107,9 +107,9 @@ int Active_Init(SnortConfig* sc)
     if ( s_enabled && !s_attempts )
         s_attempts = 1;
 
-    if ( s_enabled && (!DAQ_CanInject() || sc->respond_device) )
+    if ( s_enabled && (!DAQ_CanInject() || !sc->respond_device.empty()) )
     {
-        if ( SnortConfig::read_mode() || Active_Open(sc->respond_device) )
+        if ( SnortConfig::read_mode() || Active_Open(sc->respond_device.c_str()) )
         {
             ParseWarning(WARN_DAQ, "active responses disabled since DAQ "
                 "can't inject packets.");

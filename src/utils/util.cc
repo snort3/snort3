@@ -291,21 +291,19 @@ static FILE* pid_file = NULL;
 
 void CreatePidFile(pid_t pid)
 {
-    const char* dir = snort_conf->log_dir ? snort_conf->log_dir : ".";
-    SnortSnprintf(snort_conf->pid_filename,
-        sizeof(snort_conf->pid_filename), "%s/snort.pid", dir);
+    snort_conf->pid_filename = snort_conf->log_dir;
+    snort_conf->pid_filename += "/snort.pid";
 
-    if (!SnortConfig::no_lock_pid_file())
+    if ( !SnortConfig::no_lock_pid_file() )
     {
-        char pid_lockfilename[STD_BUF+1];
+        std::string pid_lockfilename = snort_conf->pid_filename;
+        pid_lockfilename += ".lck";
         int lock_fd;
 
         /* First, lock the PID file */
-        SnortSnprintf(pid_lockfilename, STD_BUF, "%s.lck",
-            snort_conf->pid_filename);
-        pid_lockfile = fopen(pid_lockfilename, "w");
+        pid_lockfile = fopen(pid_lockfilename.c_str(), "w");
 
-        if (pid_lockfile)
+        if ( pid_lockfile )
         {
             struct flock lock;
             lock_fd = fileno(pid_lockfile);
@@ -319,18 +317,18 @@ void CreatePidFile(pid_t pid)
             {
                 ClosePidFile();
                 ParseError("Failed to Lock PID File \"%s\" for PID \"%d\"\n",
-                    snort_conf->pid_filename, (int)pid);
+                    snort_conf->pid_filename.c_str(), (int)pid);
                 return;
             }
         }
     }
 
     /* Okay, were able to lock PID file, now open and write PID */
-    pid_file = fopen(snort_conf->pid_filename, "w");
+    pid_file = fopen(snort_conf->pid_filename.c_str(), "w");
     if (pid_file)
     {
         LogMessage("Writing PID \"%d\" to file \"%s\"\n", (int)pid,
-            snort_conf->pid_filename);
+            snort_conf->pid_filename.c_str());
         fprintf(pid_file, "%d\n", (int)pid);
         fflush(pid_file);
     }
@@ -338,8 +336,8 @@ void CreatePidFile(pid_t pid)
     {
         const char* error = get_error(errno);
         ErrorMessage("Failed to create pid file %s, Error: %s",
-            snort_conf->pid_filename, error);
-        snort_conf->pid_filename[0] = 0;
+            snort_conf->pid_filename.c_str(), error);
+        snort_conf->pid_filename.clear();
     }
 }
 
@@ -564,38 +562,6 @@ char* read_infile(const char* key, const char* fname)
     /** LogMessage("BPF filter file: %s\n", fname); **/
 
     return(cp);
-}
-
-/****************************************************************************
- *
- * Function: CheckLogDir()
- *
- * Purpose: CyberPsychotic sez: basically we only check if logdir exist and
- *          writable, since it might screw the whole thing in the middle. Any
- *          other checks could be performed here as well.
- *
- * Arguments: None.
- *
- * Returns: void function
- *
- ****************************************************************************/
-void CheckLogDir(void)
-{
-    struct stat st;
-
-    if (snort_conf->log_dir == NULL)
-        return;
-
-    if (stat(snort_conf->log_dir, &st) == -1)
-        ParseError("Stat check on log dir failed: %s.\n", get_error(errno));
-
-    else if (!S_ISDIR(st.st_mode) || (access(snort_conf->log_dir, W_OK) == -1))
-    {
-        ParseError("Can not get write access to logging directory \"%s\". "
-            "(directory doesn't exist or permissions are set incorrectly "
-            "or it is not a directory at all)\n",
-            snort_conf->log_dir);
-    }
 }
 
 /* Guaranteed to be '\0' terminated even if truncation occurs.
@@ -891,21 +857,12 @@ const char* SnortStrcasestr(const char* s, int slen, const char* substr)
  * @param directory directory to chroot to
  * @param logstore ptr to snort_conf->log_dir which must be dynamically allocated
  */
-void SetChroot(char* directory, char** logstore)
+void SetChroot(std::string directory, std::string& logstore)
 {
     char* absdir;
     size_t abslen;
-    char* logdir;
 
-    if (!directory || !logstore)
-    {
-        ParseError("Null parameter passed\n");
-        return;
-    }
-
-    logdir = *logstore;
-
-    if (logdir == NULL || *logdir == '\0')
+    if ( logstore.empty() )
     {
         ParseError("Null log directory\n");
         return;
@@ -914,23 +871,16 @@ void SetChroot(char* directory, char** logstore)
     DEBUG_WRAP(DebugMessage(DEBUG_INIT,"SetChroot: %s\n",
         CurrentWorkingDir()); );
 
-    logdir = GetAbsolutePath(logdir);
+    const char* logdir = GetAbsolutePath(logstore.c_str());
 
     DEBUG_WRAP(DebugMessage(DEBUG_INIT, "SetChroot: %s\n",
         CurrentWorkingDir()));
 
-    logdir = SnortStrdup(logdir);
-
-    /* We're going to reset logstore, so free it now */
-    free(*logstore);
-    *logstore = NULL;
-
     /* change to the directory */
-    if (chdir(directory) != 0)
+    if (chdir(directory.c_str()) != 0)
     {
-        ParseError("SetChroot: Can not chdir to \"%s\": %s\n", directory,
+        ParseError("SetChroot: Can not chdir to \"%s\": %s\n", directory.c_str(),
             get_error(errno));
-        free(logdir);
         return;
     }
 
@@ -940,7 +890,6 @@ void SetChroot(char* directory, char** logstore)
     if (absdir == NULL)
     {
         ParseError("NULL Chroot found\n");
-        free(logdir);
         return;
     }
 
@@ -952,8 +901,7 @@ void SetChroot(char* directory, char** logstore)
     if (chroot(absdir) < 0)
     {
         ParseError("Can not chroot to \"%s\": absolute: %s: %s\n",
-            directory, absdir, get_error(errno));
-        free(logdir);
+            directory.c_str(), absdir, get_error(errno));
         return;
     }
 
@@ -965,7 +913,6 @@ void SetChroot(char* directory, char** logstore)
     {
         ParseError("Can not chdir to \"/\" after chroot: %s\n",
             get_error(errno));
-        free(logdir);
         return;
     }
 
@@ -975,24 +922,22 @@ void SetChroot(char* directory, char** logstore)
     if (strncmp(absdir, logdir, strlen(absdir)))
     {
         ParseError("Absdir is not a subset of the logdir");
-        free(logdir);
         return;
     }
 
     if (abslen >= strlen(logdir))
     {
-        *logstore = SnortStrdup("/");
+        logstore = "/";
     }
     else
     {
-        *logstore = SnortStrdup(logdir + abslen);
+        logstore = logdir + abslen;
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_INIT,"new logdir from %s to %s\n",
-        logdir, *logstore));
+        logdir, logstore.c_str()));
 
-    LogMessage("Chroot directory = %s\n", directory);
-    free(logdir);
+    LogMessage("Chroot directory = %s\n", directory.c_str());
 }
 
 /**
@@ -1016,7 +961,7 @@ char* CurrentWorkingDir(void)
 /**
  * Given a directory name, return a ptr to a static
  */
-char* GetAbsolutePath(char* dir)
+char* GetAbsolutePath(const char* dir)
 {
     char* savedir, * dirp;
     static THREAD_LOCAL char buf[PATH_MAX_UTIL + 1];

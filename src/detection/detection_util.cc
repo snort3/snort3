@@ -21,6 +21,7 @@
 #include "detection_util.h"
 
 #include <time.h>
+#include <string>
 
 #include "snort_config.h"
 #include "log/text_log.h"
@@ -121,11 +122,10 @@ void EventTrace_Init(void)
         char time_buf[26];
         ctime_r(&now, time_buf);
 
-        char buf[STD_BUF];
-        const char* dir = snort_conf->log_dir ? snort_conf->log_dir : ".";
-        snprintf(buf, sizeof(buf), "%s/%s", dir, snort_conf->event_trace_file);
+        std::string fname;
+        get_instance_file(fname, "event_trace.txt");
 
-        tlog = TextLog_Init (buf, 128, 8*1024*1024);
+        tlog = TextLog_Init (fname.c_str(), 128, 8*1024*1024);
         TextLog_Print(tlog, "\nTrace started at %s", time_buf);
         TextLog_Print(tlog, "Trace max_data is %u bytes\n", snort_conf->event_trace_max);
     }

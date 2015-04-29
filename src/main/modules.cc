@@ -99,12 +99,8 @@ bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
         sc->asn1_mem = v.get_long();
 
     else if ( v.is("pcre_enable") )
-    {
-        if ( v.get_bool() )
-            sc->run_flags &= ~RUN_FLAG__NO_PCRE;
-        else
-            sc->run_flags |= RUN_FLAG__NO_PCRE;
-    }
+        v.update_mask(sc->run_flags, RUN_FLAG__NO_PCRE, true);
+
     else if ( v.is("pcre_match_limit") )
         sc->pcre_match_limit = v.get_long();
 
@@ -590,7 +586,7 @@ public:
 bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( v.is("alert_with_interface_name") )
-        sc->output_flags |= OUTPUT_FLAG__ALERT_IFACE;
+        v.update_mask(sc->output_flags, OUTPUT_FLAG__ALERT_IFACE);
 
     else if ( v.is("default_rule_state") )
         sc->default_rule_state = v.get_bool();
@@ -616,7 +612,7 @@ bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
         return ( sfip_pton(v.get_string(), &sc->homenet) == SFIP_SUCCESS );
 
     else if ( v.is("stateful") )
-        sc->run_flags |= RUN_FLAG__ASSURE_EST;
+        v.update_mask(sc->run_flags, RUN_FLAG__ASSURE_EST);
 
     else if ( v.is("tunnel_verdicts") )
         ConfigTunnelVerdicts(sc, v.get_string());
@@ -633,9 +629,6 @@ bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
 
 static const Parameter output_event_trace_params[] =
 {
-    { "file", Parameter::PT_STRING, nullptr, nullptr,
-      "where to write event trace logs" },
-
     { "max_data", Parameter::PT_INT, "0:65535", "0",
       "maximum amount of packet data to capture" },
 
@@ -696,62 +689,42 @@ public:
 bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( v.is("dump_chars_only") )
-    {
-        if ( v.get_bool() )
-            sc->output_flags |= OUTPUT_FLAG__CHAR_DATA;
-    }
+        v.update_mask(sc->output_flags, OUTPUT_FLAG__CHAR_DATA);
+
     else if ( v.is("dump_payload") )
-    {
-        if ( v.get_bool() )
-            sc->output_flags |= OUTPUT_FLAG__APP_DATA;
-    }
+        v.update_mask(sc->output_flags, OUTPUT_FLAG__APP_DATA);
+
     else if ( v.is("dump_payload_verbose") )
-    {
-        if ( v.get_bool() )
-            sc->output_flags |= OUTPUT_FLAG__VERBOSE_DUMP;
-    }
-    else if ( v.is("file") )
-        sc->event_trace_file = SnortStrdup(v.get_string());
+        v.update_mask(sc->output_flags, OUTPUT_FLAG__VERBOSE_DUMP);
 
     else if ( v.is("log_ipv6_extra_data") )
-    {
-        if ( v.get_bool() )
-            sc->log_ipv6_extra = 1; // FIXIT-M move to output|logging_flags
-    }
+        // FIXIT-M move to output|logging_flags
+        sc->log_ipv6_extra = v.get_bool() ? 0 : 1;
+
     else if ( v.is("quiet") )
-    {
-        if ( v.get_bool() )
-            sc->logging_flags |= LOGGING_FLAG__QUIET;
-    }
+        v.update_mask(sc->logging_flags, LOGGING_FLAG__QUIET);
+
     else if ( v.is("logdir") )
-        sc->log_dir = SnortStrdup(v.get_string());
+        sc->log_dir = v.get_string();
 
     else if ( v.is("max_data") )
         sc->event_trace_max = v.get_long();
 
     else if ( v.is("nolog") )
-    {
-        if ( v.get_bool() )
-            sc->output_flags |= OUTPUT_FLAG__NO_LOG;
-    }
+        v.update_mask(sc->output_flags, OUTPUT_FLAG__NO_LOG);
+
     else if ( v.is("obfuscate") )
-    {
-        if ( v.get_bool() )
-            sc->output_flags |= OUTPUT_FLAG__OBFUSCATE;
-    }
+        v.update_mask(sc->output_flags, OUTPUT_FLAG__OBFUSCATE);
+
     else if ( v.is("show_year") )
-    {
-        if ( v.get_bool() )
-            sc->output_flags |= OUTPUT_FLAG__INCLUDE_YEAR;
-    }
+        v.update_mask(sc->output_flags, OUTPUT_FLAG__INCLUDE_YEAR);
+
     else if ( v.is("tagged_packet_limit") )
         sc->tagged_packet_limit = v.get_long();
 
     else if ( v.is("verbose") )
-    {
-        if ( v.get_bool() )
-            sc->logging_flags |= LOGGING_FLAG__VERBOSE;
-    }
+        v.update_mask(sc->logging_flags, LOGGING_FLAG__VERBOSE);
+
     else
         return false;
 
@@ -798,7 +771,7 @@ bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
         sc->respond_attempts = v.get_long();
 
     else if ( v.is("device") )
-        sc->respond_device = SnortStrdup(v.get_string());
+        sc->respond_device = v.get_string();
 
     else if ( v.is("dst_mac") )
         ConfigDstMac(sc, v.get_string());
@@ -858,13 +831,11 @@ bool PacketsModule::set(const char*, Value& v, SnortConfig* sc)
         sc->addressspace_agnostic = v.get_long();
 
     else if ( v.is("bpf_file") )
-        sc->bpf_file = SnortStrdup(v.get_string());
+        sc->bpf_file = v.get_string();
 
     else if ( v.is("enable_inline_init_failopen") )
-    {
-        if ( !v.get_bool() )
-            sc->run_flags |= RUN_FLAG__DISABLE_FAILOPEN;
-    }
+        v.update_mask(sc->run_flags, RUN_FLAG__DISABLE_FAILOPEN, true);
+
     else if ( v.is("limit") )
         sc->pkt_cnt = v.get_long();
 
@@ -902,8 +873,8 @@ static const Parameter daq_params[] =
       "select type of DAQ" },
 
     // FIXIT-L should be a list?
-    { "var", Parameter::PT_STRING, nullptr, nullptr,
-      "list of name=value DAQ-specific parameters" },
+    { "vars", Parameter::PT_STRING, nullptr, nullptr,
+      "comma separated list of name=value DAQ-specific parameters" },
 
     { "snaplen", Parameter::PT_INT, "0:65535", "deflt",
       "set snap length (same as -P)" },
@@ -934,16 +905,19 @@ bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
         ConfigDaqMode(sc, v.get_string());
 
     else if ( v.is("no_promisc") )
-    {
-        if ( v.get_bool() )
-            sc->run_flags |= RUN_FLAG__NO_PROMISCUOUS;
-    }
+        v.update_mask(sc->run_flags, RUN_FLAG__NO_PROMISCUOUS);
+
     else if ( v.is("type") )
         ConfigDaqType(sc, v.get_string());
 
-    else if ( v.is("var") )
-        ConfigDaqVar(sc, v.get_string());
+    else if ( v.is("vars") )
+    {
+        string tok;
+        v.set_first_token();
 
+        while ( v.get_next_csv_token(tok) )
+            ConfigDaqVar(sc, tok.c_str());
+    }
     else if ( v.is("decode_data_link") )
     {
         if ( v.get_bool() )

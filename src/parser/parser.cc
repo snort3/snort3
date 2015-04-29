@@ -706,53 +706,6 @@ void DestroyRuleTreeNode(RuleTreeNode* rtn)
     free(rtn);
 }
 
-char* ProcessFileOption(SnortConfig* sc, const char* filespec)
-{
-    char* filename = NULL;
-
-    if (sc == NULL)
-        sc = snort_conf;
-
-    if (filespec == NULL)
-    {
-        ParseAbort(
-            "no arguement in this file option, remove extra ':' at the end of the alert option");
-    }
-
-    /* look for ".." in the string and complain and exit if it is found */
-    if (strstr(filespec, "..") != NULL)
-    {
-        ParseError("file definition contains '..'.  Do not do that.");
-    }
-
-    if (filespec[0] == '/')
-    {
-        /* absolute filespecs are saved as is */
-        filename = SnortStrdup(filespec);
-    }
-    else
-    {
-        std::string buf;
-
-        /* relative filespec is considered relative to the log directory
-           or /var/log if the log directory has not been set
-           Make sure this function isn't called before log dir is set */
-        if ((sc != NULL) && (sc->log_dir != NULL))
-            buf = snort_conf->log_dir;
-        else
-            buf = DEFAULT_LOG_DIR;
-
-        buf += "/";
-        buf += filespec;
-
-        filename = SnortStrdup(buf.c_str());
-    }
-
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"ProcessFileOption: %s\n", filename); );
-
-    return filename;
-}
-
 /****************************************************************************
  * Purpose: Adjust the information for a given rule
  *          relative to the Rule State list

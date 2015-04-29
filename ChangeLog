@@ -1,5 +1,11 @@
 Pending - build 150
 
+-- additional refactoring and cleanup
+-- fix http_inspect mpse search
+-- fixed urg rule option
+-- change daq.var to daq.vars to support multiple params
+   reported by Sancho Panza
+-- ensure unknown sources are analyzed
 -- pop and imap inspectors ported
 
 15/04/28 - build 149

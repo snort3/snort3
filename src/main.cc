@@ -753,6 +753,19 @@ static inline bool dont_stop()
     return false;
 }
 
+static const char* get_source()
+{
+    if ( Trough_Next() )
+        return Trough_First();
+
+    if ( unknown_source )
+    {
+        unknown_source = false;
+        return "";
+    }
+    return nullptr;
+}
+
 static void main_loop()
 {
     unsigned idx = max_pigs, swine = 0;
@@ -775,10 +788,10 @@ static void main_loop()
                     --swine;
                 }
             }
-            else if ( Trough_Next() )
+            else if ( const char* src = get_source() )
             {
                 Swapper* swapper = new Swapper(snort_conf, SFAT_GetConfig());
-                pig.start(idx, Trough_First(), swapper);
+                pig.start(idx, src, swapper);
                 ++swine;
                 continue;
             }

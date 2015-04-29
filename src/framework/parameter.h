@@ -28,8 +28,8 @@ struct Parameter
 {
     enum Type
     {
-        PT_TABLE,      // range is Parameter*, deflt is TBD
-        PT_LIST,       // range is Parameter*, deflt is TBD
+        PT_TABLE,      // range is Parameter*, no default
+        PT_LIST,       // range is Parameter*, no default
         PT_BOOL,       // if you are reading this, get more coffee
         PT_INT,        // signed 64 bits or less determined by range
         PT_REAL,       // double
