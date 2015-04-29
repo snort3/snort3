@@ -153,7 +153,7 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     // COPIED DIRECTLY FROM ipv4 CODEC.  This is specificially replicated since
     //      the two are not necessarily the same.
 
-    // FIXIT-H  -->  This does NOT obfuscate correctly
+    // FIXIT-L  -->  This does NOT obfuscate correctly
     if (SnortConfig::obfuscate())
     {
         TextLog_Print(text_log, "xxx.xxx.xxx.xxx -> xxx.xxx.xxx.xxx");

@@ -26,6 +26,7 @@
 #include "hi_events.h"
 #include "hi_cmd_lookup.h"
 #include "hi_ui_iis_unicode_map.h"
+#include "decompress/file_decomp.h"
 #include "utils/util.h"
 
 //-------------------------------------------------------------------------
@@ -262,10 +263,6 @@ bool HttpInspectModule::end(const char* fqn, int, SnortConfig*)
 // You must make a parallel change in Http_Server_Module::Begin().
 #define default_non_rfc_chars "0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07"
 
-// FIXIT-L refactor params to create a profile table so that user can define
-// different profiles (like above) and use those.  rename existing profile
-// to profile_type.
-
 static const Parameter hi_profile_server_params[] =
 {
     { "apache_whitespace", Parameter::PT_BOOL, nullptr, "false",
@@ -280,7 +277,6 @@ static const Parameter hi_profile_server_params[] =
     { "chunk_length", Parameter::PT_INT, "1:", "500000",
       "alert on chunk lengths greater than specified" },
 
-    // FIXIT-M this is backwards: 0 should mean nothing; -1 all
     { "client_flow_depth", Parameter::PT_INT, "-1:1460", "0",
       "raw request payload to inspect" },
 
@@ -356,11 +352,10 @@ static const Parameter hi_server_params[] =
       "don't alert on proxy use for this server" },
 
     { "decompress_pdf", Parameter::PT_BOOL, nullptr, "false",
-      "????" }, // FIXIT-M need to figure out this parameter format and implement it
+      "enable decompression of the compressed portions of PDF files" },
 
     { "decompress_swf", Parameter::PT_BOOL, nullptr, "false",
-      "????" }, // FIXIT-M need to figure out this parameter format and implement it with deflate
-                // and lzma
+      "enable decompression of SWF (Adobe Flash content)" },
 
     { "enable_cookies", Parameter::PT_BOOL, nullptr, "true",
       "extract cookies" },
@@ -419,8 +414,14 @@ static const Parameter hi_server_params[] =
     { "unlimited_decompress", Parameter::PT_BOOL, nullptr, "true",
       "decompress across multiple packets" },
 
+    // FIXIT-M need to implement xff header customization like:
+    // {
+    //     { name = 'x-forwarded-highest-priority', priority = 1 },
+    //     { name = 'x-forwarded-second-highest-priority', priority = 2 },
+    //     { name = 'x-forwarded-lowest-priority-custom', priority = 3 }
+    // }
     { "xff_headers", Parameter::PT_BOOL, nullptr, "false",
-      "????" }, // FIXIT-M need to figure out this parameter format and implement it
+      "not implemented" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -496,13 +497,13 @@ bool HttpServerModule::set(const char*, Value& v, SnortConfig*)
         server->iis_unicode_codepage = v.get_long();
 
     else if ( v.is("decompress_pdf") )
-        ;                               // FIXIT-M need to figure this out and implement it
+        server->file_decomp_modes |= (FILE_PDF_DEFL_BIT | FILE_REVERT_BIT);
 
     else if ( v.is("decompress_swf") )
-        ;                               // FIXIT-M need to figure this out and implement it
-                                        // including #define DECOMPRESS_DEFLATE "deflate" and
-                                        // including #define DECOMPRESS_LZMA "lzma"
-
+    {
+        server->file_decomp_modes |= (FILE_SWF_ZLIB_BIT | FILE_REVERT_BIT);
+        server->file_decomp_modes |= (FILE_SWF_LZMA_BIT | FILE_REVERT_BIT);
+    }
     else if ( v.is("directory") )
         server->directory.on = v.get_bool();
 
@@ -621,7 +622,7 @@ bool HttpServerModule::set(const char*, Value& v, SnortConfig*)
         v.get_bits(server->whitespace);
 
     else if ( v.is("xff_headers") )
-        ;                            // FIXIT-M need to figure this out and implement it
+        ;
 
     else
         return false;
