@@ -38,6 +38,8 @@ params.txt \
 reference.txt \
 snort2lua.txt \
 snorty.png \
+snort2x.png \
+snort3x.png \
 start.txt \
 style.txt \
 terms.txt \

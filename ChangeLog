@@ -1,5 +1,7 @@
 15/04/30 - build 150
 
+-- updated default manuals
+-- added packet processing section to manual
 -- additional refactoring and cleanup
 -- fix http_inspect mpse search
 -- fixed urg rule option

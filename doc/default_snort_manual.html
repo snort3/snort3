@@ -781,7 +781,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0-a1 (Build 144) from 2.9.6-9
+o"  )~   Version 3.0.0-a1 (Build 150) from 2.9.7-177
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
@@ -1202,6 +1202,67 @@ You can find the specifics on the binder, wizard, and hosts tables in the
 </li>
 </ul></div>
 </div>
+<div class="sect2">
+<h3 id="_packet_processing">Packet Processing</h3>
+<div class="paragraph"><p>One of the goals of Snort++ is to provide a more flexible framework for
+packet processing by implementing an event-driven approach.  Another is to
+produce data only when needed, to minimize expensive normalizations.  To help
+explain these concepts, let&#8217;s start by examining how Snort processes
+packets.  The key steps are given in the following figure:</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="./snort2x.png" alt="Snort 2X" width="640" />
+</div>
+</div>
+<div class="paragraph"><p>The preprocess step is highly configurable.  Arbitrary preprocessors can be
+loaded dynamically at startup, configured in snort.conf, and then executed
+at runtime.  Basically, the preprocessors are put into a list which is
+iterated for each packet.  Recent versions have tweaked the list handling
+some, but the same basic architecture has allowed Snort to grow from a
+sniffer, with no preprocessing, to a full-fledged IPS, with lots of
+preprocessing.</p></div>
+<div class="paragraph"><p>While this "list of plugins" approach has considerable flexibility, it
+hampers future development when the flow of data from one preprocessor to
+the next depends on traffic conditions, a common situation with advanced
+features like application identification.  In this case, a preprocessor
+like HTTP may be extracting and normalizing data that ultimately is not
+used, or app ID may be repeatedly checking for data that is just not
+available.</p></div>
+<div class="paragraph"><p>Callbacks help break out of the preprocess straightjacket.  This is where
+one preprocessor supplies another with a function to call when certain data
+is available.  Snort has started to take this approach to pass some HTTP and
+SIP preprocessor data to app ID.  However, it remains a peripheral feature
+and still requires the production of data that may not be consumed.</p></div>
+<div class="paragraph"><p>The basic processing steps Snort<code> takes are similar to Snort&#8217;s as seen in
+the following diagram.  The preprocess step employs specific inspector
+types instead of a generalized list, but the basic procedure includes
+stateless packet decoding, TCP stream reassembly, and service specific
+analysis in both cases.  (Snort</code> provides hooks for arbitrary inspectors,
+but they are not central to basic flow processing and are not shown.)</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="./snort3x.png" alt="Snort 3X" width="640" />
+</div>
+</div>
+<div class="paragraph"><p>However, Snort++ also provides a more flexible mechanism than callback
+functions.  By using inspection events, it is possible for an inspector to
+supply data that other inspectors can process.  This is known as the
+observer pattern or publish-subscribe pattern.</p></div>
+<div class="paragraph"><p>Note that the data is not actually published.  Instead, access to the data
+is published, and that means that subscribers can access the raw or
+normalized version(s) as needed.  Normalizations are done only on the first
+access, and subsequent accesses get the previously normalized data.  This
+results in just in time (JIT) processing.</p></div>
+<div class="paragraph"><p>A basic example of this in action is provided by the extra data_log plugin.
+It is a passive inspector, ie it does nothing until it receives the data it
+subscribed for (<em>other</em> in the above diagram).  By adding data_log = { key
+= <em>http_raw_uri</em> } to your snort.lua configuration, you will get a simple
+URI logger.</p></div>
+<div class="paragraph"><p>Inspection events coupled with pluggable inspectors provide a very flexible
+framework for implementing new features.  And JIT buffer stuffers allow
+Snort<code> to work smarter, not harder.  These capabilities will be leveraged
+more and more as Snort</code> development continues.</p></div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -1270,6 +1331,12 @@ asciidoc from <a href="http://www.methods.co.nz/asciidoc/">http://www.methods.co
 <p>
 dblatex from <a href="http://dblatex.sourceforge.net">http://dblatex.sourceforge.net</a> to build the pdf manual (in
   addition to asciidoc)
+</p>
+</li>
+<li>
+<p>
+w3m from <a href="http://sourceforge.net/projects/w3m/">http://sourceforge.net/projects/w3m/</a> to build the plain text
+  manual
 </p>
 </li>
 <li>
@@ -1983,7 +2050,7 @@ string <strong>daq.type</strong>: select type of DAQ
 </li>
 <li>
 <p>
-string <strong>daq.var</strong>: list of name=value DAQ-specific parameters
+string <strong>daq.vars</strong>: comma separated list of name=value DAQ-specific parameters
 </p>
 </li>
 <li>
@@ -2332,6 +2399,46 @@ bool <strong>file_id.enable_signature</strong> = false: enable signature calcula
 int <strong>file_id.show_data_depth</strong> = 100: print this many octets { 0: }
 </p>
 </li>
+<li>
+<p>
+int <strong>file_id.file_rules[].rev</strong> = 0: rule revision { 0: }
+</p>
+</li>
+<li>
+<p>
+string <strong>file_id.file_rules[].msg</strong>: information about the file type
+</p>
+</li>
+<li>
+<p>
+string <strong>file_id.file_rules[].type</strong>: file type name
+</p>
+</li>
+<li>
+<p>
+int <strong>file_id.file_rules[].id</strong> = 0: file type id { 0: }
+</p>
+</li>
+<li>
+<p>
+string <strong>file_id.file_rules[].category</strong>: file type category
+</p>
+</li>
+<li>
+<p>
+string <strong>file_id.file_rules[].version</strong>: file type version
+</p>
+</li>
+<li>
+<p>
+string <strong>file_id.file_rules[].magic[].content</strong>: file magic content
+</p>
+</li>
+<li>
+<p>
+int <strong>file_id.file_rules[].magic[].offset</strong> = 0: file magic offset { 0: }
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -2482,11 +2589,6 @@ bool <strong>output.dump_payload_verbose</strong> = false: dumps raw packet star
 <li>
 <p>
 bool <strong>output.log_ipv6_extra_data</strong> = false: log IPv6 source and destination addresses as unified2 extra data records
-</p>
-</li>
-<li>
-<p>
-string <strong>output.event_trace.file</strong>: where to write event trace logs
 </p>
 </li>
 <li>
@@ -4585,10 +4687,231 @@ bit_list <strong>udp.gtp_ports</strong> = 2152 3386: set GTP ports { 65535 }
 <h2 id="_data_modules">Data Modules</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Data modules are adjunct configurations for use with certain inspectors.</p></div>
+<div class="paragraph"><p>no match
+no match</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_inspector_modules">Inspector Modules</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>These modules perform a variety of functions, including analysis of
+protocols beyond basic decoding.</p></div>
+<div class="sect2">
+<h3 id="_arp_spoof">arp_spoof</h3>
+<div class="paragraph"><p>What: detect ARP attacks and anomalies</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+ip4 <strong>arp_spoof.hosts[].ip</strong>: host ip address
+</p>
+</li>
+<li>
+<p>
+mac <strong>arp_spoof.hosts[].mac</strong>: host mac address
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>112:1</strong> (arp_spoof) unicast ARP request
+</p>
+</li>
+<li>
+<p>
+<strong>112:2</strong> (arp_spoof) ethernet/ARP mismatch request for source
+</p>
+</li>
+<li>
+<p>
+<strong>112:3</strong> (arp_spoof) ethernet/ARP mismatch request for destination
+</p>
+</li>
+<li>
+<p>
+<strong>112:4</strong> (arp_spoof) attempted ARP cache overwrite attack
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>arp_spoof.packets</strong>: total packets
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_back_orifice">back_orifice</h3>
+<div class="paragraph"><p>What: back orifice detection</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>105:1</strong> (back_orifice) BO traffic detected
+</p>
+</li>
+<li>
+<p>
+<strong>105:2</strong> (back_orifice) BO client traffic detected
+</p>
+</li>
+<li>
+<p>
+<strong>105:3</strong> (back_orifice) BO server traffic detected
+</p>
+</li>
+<li>
+<p>
+<strong>105:4</strong> (back_orifice) BO Snort buffer attack
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>back_orifice.packets</strong>: total packets
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_binder">binder</h3>
+<div class="paragraph"><p>What: configure processing based on CIDRs, ports, services, etc.</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+int <strong>binder[].when.policy_id</strong> = 0: unique ID for selection of this config by external logic { 0: }
+</p>
+</li>
+<li>
+<p>
+bit_list <strong>binder[].when.ifaces</strong>: list of interface indices { 255 }
+</p>
+</li>
+<li>
+<p>
+bit_list <strong>binder[].when.vlans</strong>: list of VLAN IDs { 4095 }
+</p>
+</li>
+<li>
+<p>
+addr_list <strong>binder[].when.nets</strong>: list of networks
+</p>
+</li>
+<li>
+<p>
+enum <strong>binder[].when.proto</strong>: protocol { any | ip | icmp | tcp | udp }
+</p>
+</li>
+<li>
+<p>
+bit_list <strong>binder[].when.ports</strong>: list of ports { 65535 }
+</p>
+</li>
+<li>
+<p>
+enum <strong>binder[].when.role</strong> = any: use the given configuration on one or any end of a session { client | server | any }
+</p>
+</li>
+<li>
+<p>
+string <strong>binder[].when.service</strong>: override default configuration
+</p>
+</li>
+<li>
+<p>
+enum <strong>binder[].use.action</strong> = inspect: what to do with matching traffic { block | allow | inspect }
+</p>
+</li>
+<li>
+<p>
+string <strong>binder[].use.file</strong>: use configuration in given file
+</p>
+</li>
+<li>
+<p>
+string <strong>binder[].use.service</strong>: override automatic service identification
+</p>
+</li>
+<li>
+<p>
+string <strong>binder[].use.type</strong>: select module for binding
+</p>
+</li>
+<li>
+<p>
+string <strong>binder[].use.name</strong>: symbol name (defaults to type)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>binder.packets</strong>: initial bindings
+</p>
+</li>
+<li>
+<p>
+<strong>binder.blocks</strong>: block bindings
+</p>
+</li>
+<li>
+<p>
+<strong>binder.allows</strong>: allow bindings
+</p>
+</li>
+<li>
+<p>
+<strong>binder.inspects</strong>: inspect bindings
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_dns">dns</h3>
+<div class="paragraph"><p>What: dns inspection</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>131:1</strong> (dns) Obsolete DNS RR Types
+</p>
+</li>
+<li>
+<p>
+<strong>131:2</strong> (dns) Experimental DNS RR Types
+</p>
+</li>
+<li>
+<p>
+<strong>131:3</strong> (dns) DNS Client rdata txt Overflow
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>dns.packets</strong>: total packets
+</p>
+</li>
+</ul></div>
+</div>
 <div class="sect2">
 <h3 id="_ftp_client">ftp_client</h3>
 <div class="paragraph"><p>What: FTP client configuration module for use with ftp_server</p></div>
-<div class="paragraph"><p>Type: data</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -4629,9 +4952,186 @@ bool <strong>ftp_client.telnet_cmds</strong> = false: detect telnet escape seque
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_ftp_data">ftp_data</h3>
+<div class="paragraph"><p>What: FTP data channel handler</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>ftp_data.packets</strong>: total packets
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_ftp_server">ftp_server</h3>
+<div class="paragraph"><p>What: main FTP module; ftp_client should also be configured</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+string <strong>ftp_server.chk_str_fmt</strong>: check the formatting of the given commands
+</p>
+</li>
+<li>
+<p>
+string <strong>ftp_server.data_chan_cmds</strong>: check the formatting of the given commands
+</p>
+</li>
+<li>
+<p>
+string <strong>ftp_server.data_xfer_cmds</strong>: check the formatting of the given commands
+</p>
+</li>
+<li>
+<p>
+string <strong>ftp_server.directory_cmds[].dir_cmd</strong>: directory command
+</p>
+</li>
+<li>
+<p>
+int <strong>ftp_server.directory_cmds[].rsp_code</strong> = 200: expected successful response code for command { 200: }
+</p>
+</li>
+<li>
+<p>
+string <strong>ftp_server.file_put_cmds</strong>: check the formatting of the given commands
+</p>
+</li>
+<li>
+<p>
+string <strong>ftp_server.file_get_cmds</strong>: check the formatting of the given commands
+</p>
+</li>
+<li>
+<p>
+string <strong>ftp_server.encr_cmds</strong>: check the formatting of the given commands
+</p>
+</li>
+<li>
+<p>
+string <strong>ftp_server.login_cmds</strong>: check the formatting of the given commands
+</p>
+</li>
+<li>
+<p>
+bool <strong>ftp_server.check_encrypted</strong> = false: check for end of encryption
+</p>
+</li>
+<li>
+<p>
+string <strong>ftp_server.cmd_validity[].command</strong>: command string
+</p>
+</li>
+<li>
+<p>
+string <strong>ftp_server.cmd_validity[].format</strong>: format specification
+</p>
+</li>
+<li>
+<p>
+int <strong>ftp_server.cmd_validity[].length</strong> = 0: specify non-default maximum for command { 0: }
+</p>
+</li>
+<li>
+<p>
+int <strong>ftp_server.def_max_param_len</strong> = 100: default maximum length of commands handled by server; 0 is unlimited { 1: }
+</p>
+</li>
+<li>
+<p>
+bool <strong>ftp_server.encrypted_traffic</strong> = false: check for encrypted telnet and ftp
+</p>
+</li>
+<li>
+<p>
+string <strong>ftp_server.ftp_cmds</strong>: specify additional commands supported by server beyond RFC 959
+</p>
+</li>
+<li>
+<p>
+bool <strong>ftp_server.ignore_data_chan</strong> = false: do not inspect ftp data channels
+</p>
+</li>
+<li>
+<p>
+bool <strong>ftp_server.ignore_telnet_erase_cmds</strong> = false: ignore erase character and erase line commands when normalizing
+</p>
+</li>
+<li>
+<p>
+bool <strong>ftp_server.print_cmds</strong> = false: print command configurations on start up
+</p>
+</li>
+<li>
+<p>
+bool <strong>ftp_server.telnet_cmds</strong> = false: detect telnet escape sequences of ftp control channel
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>125:1</strong> (ftp_server) TELNET cmd on FTP command channel
+</p>
+</li>
+<li>
+<p>
+<strong>125:2</strong> (ftp_server) invalid FTP command
+</p>
+</li>
+<li>
+<p>
+<strong>125:3</strong> (ftp_server) FTP command parameters were too long
+</p>
+</li>
+<li>
+<p>
+<strong>125:4</strong> (ftp_server) FTP command parameters were malformed
+</p>
+</li>
+<li>
+<p>
+<strong>125:5</strong> (ftp_server) FTP command parameters contained potential string format
+</p>
+</li>
+<li>
+<p>
+<strong>125:6</strong> (ftp_server) FTP response message was too long
+</p>
+</li>
+<li>
+<p>
+<strong>125:7</strong> (ftp_server) FTP traffic encrypted
+</p>
+</li>
+<li>
+<p>
+<strong>125:8</strong> (ftp_server) FTP bounce attempt
+</p>
+</li>
+<li>
+<p>
+<strong>125:9</strong> (ftp_server) evasive (incomplete) TELNET cmd on FTP command channel
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>ftp_server.packets</strong>: total packets
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_http_global">http_global</h3>
 <div class="paragraph"><p>What: http inspector global configuration and client rules for use with http_server</p></div>
-<div class="paragraph"><p>Type: data</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -4963,423 +5463,6 @@ string <strong>http_global.unicode_map.map_file</strong>: unicode map file
 </ul></div>
 </div>
 <div class="sect2">
-<h3 id="_port_scan_global">port_scan_global</h3>
-<div class="paragraph"><p>What: shared settings for port_scan inspectors for use with port_scan</p></div>
-<div class="paragraph"><p>Type: data</p></div>
-<div class="paragraph"><p>Configuration:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-int <strong>port_scan_global.memcap</strong> = 1048576: maximum tracker memory { 1: }
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>Peg counts:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>port_scan_global.packets</strong>: total packets
-</p>
-</li>
-</ul></div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_inspector_modules">Inspector Modules</h2>
-<div class="sectionbody">
-<div class="paragraph"><p>These modules perform a variety of functions, including analysis of
-protocols beyond basic decoding.</p></div>
-<div class="sect2">
-<h3 id="_arp_spoof">arp_spoof</h3>
-<div class="paragraph"><p>What: detect ARP attacks and anomalies</p></div>
-<div class="paragraph"><p>Type: inspector</p></div>
-<div class="paragraph"><p>Configuration:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-ip4 <strong>arp_spoof.hosts[].ip</strong>: host ip address
-</p>
-</li>
-<li>
-<p>
-mac <strong>arp_spoof.hosts[].mac</strong>: host mac address
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>Rules:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>112:1</strong> (arp_spoof) unicast ARP request
-</p>
-</li>
-<li>
-<p>
-<strong>112:2</strong> (arp_spoof) ethernet/ARP mismatch request for source
-</p>
-</li>
-<li>
-<p>
-<strong>112:3</strong> (arp_spoof) ethernet/ARP mismatch request for destination
-</p>
-</li>
-<li>
-<p>
-<strong>112:4</strong> (arp_spoof) attempted ARP cache overwrite attack
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>Peg counts:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>arp_spoof.packets</strong>: total packets
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect2">
-<h3 id="_back_orifice">back_orifice</h3>
-<div class="paragraph"><p>What: back orifice detection</p></div>
-<div class="paragraph"><p>Type: inspector</p></div>
-<div class="paragraph"><p>Rules:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>105:1</strong> (back_orifice) BO traffic detected
-</p>
-</li>
-<li>
-<p>
-<strong>105:2</strong> (back_orifice) BO client traffic detected
-</p>
-</li>
-<li>
-<p>
-<strong>105:3</strong> (back_orifice) BO server traffic detected
-</p>
-</li>
-<li>
-<p>
-<strong>105:4</strong> (back_orifice) BO Snort buffer attack
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>Peg counts:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>back_orifice.packets</strong>: total packets
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect2">
-<h3 id="_binder">binder</h3>
-<div class="paragraph"><p>What: configure processing based on CIDRs, ports, services, etc.</p></div>
-<div class="paragraph"><p>Type: inspector</p></div>
-<div class="paragraph"><p>Configuration:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-int <strong>binder[].when.policy_id</strong> = 0: unique ID for selection of this config by external logic { 0: }
-</p>
-</li>
-<li>
-<p>
-bit_list <strong>binder[].when.ifaces</strong>: list of interface indices { 255 }
-</p>
-</li>
-<li>
-<p>
-bit_list <strong>binder[].when.vlans</strong>: list of VLAN IDs { 4095 }
-</p>
-</li>
-<li>
-<p>
-addr_list <strong>binder[].when.nets</strong>: list of networks
-</p>
-</li>
-<li>
-<p>
-enum <strong>binder[].when.proto</strong>: protocol { any | ip | icmp | tcp | udp }
-</p>
-</li>
-<li>
-<p>
-bit_list <strong>binder[].when.ports</strong>: list of ports { 65535 }
-</p>
-</li>
-<li>
-<p>
-enum <strong>binder[].when.role</strong> = any: use the given configuration on one or any end of a session { client | server | any }
-</p>
-</li>
-<li>
-<p>
-string <strong>binder[].when.service</strong>: override default configuration
-</p>
-</li>
-<li>
-<p>
-enum <strong>binder[].use.action</strong> = inspect: what to do with matching traffic { block | allow | inspect }
-</p>
-</li>
-<li>
-<p>
-string <strong>binder[].use.file</strong>: use configuration in given file
-</p>
-</li>
-<li>
-<p>
-string <strong>binder[].use.service</strong>: override automatic service identification
-</p>
-</li>
-<li>
-<p>
-string <strong>binder[].use.type</strong>: select module for binding
-</p>
-</li>
-<li>
-<p>
-string <strong>binder[].use.name</strong>: symbol name (defaults to type)
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>Peg counts:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>binder.packets</strong>: initial bindings
-</p>
-</li>
-<li>
-<p>
-<strong>binder.blocks</strong>: block bindings
-</p>
-</li>
-<li>
-<p>
-<strong>binder.allows</strong>: allow bindings
-</p>
-</li>
-<li>
-<p>
-<strong>binder.inspects</strong>: inspect bindings
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect2">
-<h3 id="_dns">dns</h3>
-<div class="paragraph"><p>What: dns inspection</p></div>
-<div class="paragraph"><p>Type: inspector</p></div>
-<div class="paragraph"><p>Rules:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>131:1</strong> (dns) Obsolete DNS RR Types
-</p>
-</li>
-<li>
-<p>
-<strong>131:2</strong> (dns) Experimental DNS RR Types
-</p>
-</li>
-<li>
-<p>
-<strong>131:3</strong> (dns) DNS Client rdata txt Overflow
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>Peg counts:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>dns.packets</strong>: total packets
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect2">
-<h3 id="_ftp_data">ftp_data</h3>
-<div class="paragraph"><p>What: FTP data channel handler</p></div>
-<div class="paragraph"><p>Type: inspector</p></div>
-<div class="paragraph"><p>Peg counts:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>ftp_data.packets</strong>: total packets
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect2">
-<h3 id="_ftp_server">ftp_server</h3>
-<div class="paragraph"><p>What: main FTP module; ftp_client should also be configured</p></div>
-<div class="paragraph"><p>Type: inspector</p></div>
-<div class="paragraph"><p>Configuration:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-string <strong>ftp_server.chk_str_fmt</strong>: check the formatting of the given commands
-</p>
-</li>
-<li>
-<p>
-string <strong>ftp_server.data_chan_cmds</strong>: check the formatting of the given commands
-</p>
-</li>
-<li>
-<p>
-string <strong>ftp_server.data_xfer_cmds</strong>: check the formatting of the given commands
-</p>
-</li>
-<li>
-<p>
-string <strong>ftp_server.directory_cmds[].dir_cmd</strong>: directory command
-</p>
-</li>
-<li>
-<p>
-int <strong>ftp_server.directory_cmds[].rsp_code</strong> = 200: expected successful response code for command { 200: }
-</p>
-</li>
-<li>
-<p>
-string <strong>ftp_server.file_put_cmds</strong>: check the formatting of the given commands
-</p>
-</li>
-<li>
-<p>
-string <strong>ftp_server.file_get_cmds</strong>: check the formatting of the given commands
-</p>
-</li>
-<li>
-<p>
-string <strong>ftp_server.encr_cmds</strong>: check the formatting of the given commands
-</p>
-</li>
-<li>
-<p>
-string <strong>ftp_server.login_cmds</strong>: check the formatting of the given commands
-</p>
-</li>
-<li>
-<p>
-bool <strong>ftp_server.check_encrypted</strong> = false: check for end of encryption
-</p>
-</li>
-<li>
-<p>
-string <strong>ftp_server.cmd_validity[].command</strong>: command string
-</p>
-</li>
-<li>
-<p>
-string <strong>ftp_server.cmd_validity[].format</strong>: format specification
-</p>
-</li>
-<li>
-<p>
-int <strong>ftp_server.cmd_validity[].length</strong> = 0: specify non-default maximum for command { 0: }
-</p>
-</li>
-<li>
-<p>
-int <strong>ftp_server.def_max_param_len</strong> = 100: default maximum length of commands handled by server; 0 is unlimited { 1: }
-</p>
-</li>
-<li>
-<p>
-bool <strong>ftp_server.encrypted_traffic</strong> = false: check for encrypted telnet and ftp
-</p>
-</li>
-<li>
-<p>
-string <strong>ftp_server.ftp_cmds</strong>: specify additional commands supported by server beyond RFC 959
-</p>
-</li>
-<li>
-<p>
-bool <strong>ftp_server.ignore_data_chan</strong> = false: do not inspect ftp data channels
-</p>
-</li>
-<li>
-<p>
-bool <strong>ftp_server.ignore_telnet_erase_cmds</strong> = false: ignore erase character and erase line commands when normalizing
-</p>
-</li>
-<li>
-<p>
-bool <strong>ftp_server.print_cmds</strong> = false: print command configurations on start up
-</p>
-</li>
-<li>
-<p>
-bool <strong>ftp_server.telnet_cmds</strong> = false: detect telnet escape sequences of ftp control channel
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>Rules:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>125:1</strong> (ftp_server) TELNET cmd on FTP command channel
-</p>
-</li>
-<li>
-<p>
-<strong>125:2</strong> (ftp_server) invalid FTP command
-</p>
-</li>
-<li>
-<p>
-<strong>125:3</strong> (ftp_server) FTP command parameters were too long
-</p>
-</li>
-<li>
-<p>
-<strong>125:4</strong> (ftp_server) FTP command parameters were malformed
-</p>
-</li>
-<li>
-<p>
-<strong>125:5</strong> (ftp_server) FTP command parameters contained potential string format
-</p>
-</li>
-<li>
-<p>
-<strong>125:6</strong> (ftp_server) FTP response message was too long
-</p>
-</li>
-<li>
-<p>
-<strong>125:7</strong> (ftp_server) FTP traffic encrypted
-</p>
-</li>
-<li>
-<p>
-<strong>125:8</strong> (ftp_server) FTP bounce attempt
-</p>
-</li>
-<li>
-<p>
-<strong>125:9</strong> (ftp_server) evasive (incomplete) TELNET cmd on FTP command channel
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>Peg counts:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>ftp_server.packets</strong>: total packets
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect2">
 <h3 id="_http_inspect">http_inspect</h3>
 <div class="paragraph"><p>What: http inspection and server rules; also configure http_inspect</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
@@ -5392,12 +5475,12 @@ bool <strong>http_inspect.allow_proxy_use</strong> = false: don&#8217;t alert on
 </li>
 <li>
 <p>
-bool <strong>http_inspect.decompress_pdf</strong> = false: ????
+bool <strong>http_inspect.decompress_pdf</strong> = false: enable decompression of the compressed portions of PDF files
 </p>
 </li>
 <li>
 <p>
-bool <strong>http_inspect.decompress_swf</strong> = false: ????
+bool <strong>http_inspect.decompress_swf</strong> = false: enable decompression of SWF (Adobe Flash content)
 </p>
 </li>
 <li>
@@ -5627,7 +5710,7 @@ bool <strong>http_inspect.unlimited_decompress</strong> = true: decompress acros
 </li>
 <li>
 <p>
-bool <strong>http_inspect.xff_headers</strong> = false: ????
+bool <strong>http_inspect.xff_headers</strong> = false: not implemented
 </p>
 </li>
 </ul></div>
@@ -5716,6 +5799,70 @@ bool <strong>http_inspect.xff_headers</strong> = false: ????
 <li>
 <p>
 <strong>120:17</strong> (http_inspect) HTTP response PDF file parse failure
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_imap">imap</h3>
+<div class="paragraph"><p>What: imap inspection</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+int <strong>imap.b64_decode_depth</strong> = 1460:  base64 decoding depth { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>imap.bitenc_decode_depth</strong> = 1460:  Non-Encoded MIME attachment extraction depth { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>imap.qp_decode_depth</strong> = 1460:  Quoted Printable decoding depth { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>imap.uu_decode_depth</strong> = 1460:  Unix-to-Unix decoding depth { -1:65535 }
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>141:1</strong> (imap) Unknown IMAP3 command
+</p>
+</li>
+<li>
+<p>
+<strong>141:2</strong> (imap) Unknown IMAP3 response
+</p>
+</li>
+<li>
+<p>
+<strong>141:4</strong> (imap) Base64 Decoding failed.
+</p>
+</li>
+<li>
+<p>
+<strong>141:5</strong> (imap) Quoted-Printable Decoding failed.
+</p>
+</li>
+<li>
+<p>
+<strong>141:7</strong> (imap) Unix-to-Unix Decoding failed.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>imap.packets</strong>: total packets
 </p>
 </li>
 </ul></div>
@@ -5992,6 +6139,11 @@ bool <strong>new_http_inspect.test_output</strong> = false: print out HTTP secti
 <li>
 <p>
 <strong>219:51</strong> (new_http_inspect) PDF file parse failure
+</p>
+</li>
+<li>
+<p>
+<strong>219:52</strong> (new_http_inspect) HTTP misformatted or not really HTTP
 </p>
 </li>
 </ul></div>
@@ -6514,6 +6666,70 @@ bool <strong>perf_monitor.flow_ip_file</strong> = false: output host pair statis
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_pop">pop</h3>
+<div class="paragraph"><p>What: pop inspection</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+int <strong>pop.b64_decode_depth</strong> = 1460:  base64 decoding depth { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>pop.bitenc_decode_depth</strong> = 1460:  Non-Encoded MIME attachment extraction depth { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>pop.qp_decode_depth</strong> = 1460:  Quoted Printable decoding depth { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>pop.uu_decode_depth</strong> = 1460:  Unix-to-Unix decoding depth { -1:65535 }
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>142:1</strong> (pop) Unknown POP3 command
+</p>
+</li>
+<li>
+<p>
+<strong>142:2</strong> (pop) Unknown POP3 response
+</p>
+</li>
+<li>
+<p>
+<strong>142:4</strong> (pop) Base64 Decoding failed.
+</p>
+</li>
+<li>
+<p>
+<strong>142:5</strong> (pop) Quoted-Printable Decoding failed.
+</p>
+</li>
+<li>
+<p>
+<strong>142:7</strong> (pop) Unix-to-Unix Decoding failed.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>pop.packets</strong>: total packets
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_port_scan">port_scan</h3>
 <div class="paragraph"><p>What: port scan inspector; also configure port_scan_global</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
@@ -6695,6 +6911,27 @@ bool <strong>port_scan.logfile</strong> = false: write scan events to file
 <li>
 <p>
 <strong>122:27</strong> (port_scan) open port
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_port_scan_global">port_scan_global</h3>
+<div class="paragraph"><p>What: shared settings for port_scan inspectors for use with port_scan</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+int <strong>port_scan_global.memcap</strong> = 1048576: maximum tracker memory { 1: }
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>port_scan_global.packets</strong>: total packets
 </p>
 </li>
 </ul></div>
@@ -11396,7 +11633,7 @@ string <strong>daq.type</strong>: select type of DAQ
 </li>
 <li>
 <p>
-string <strong>daq.var</strong>: list of name=value DAQ-specific parameters
+string <strong>daq.vars</strong>: comma separated list of name=value DAQ-specific parameters
 </p>
 </li>
 <li>
@@ -11517,6 +11754,46 @@ bool <strong>file_id.enable_signature</strong> = false: enable signature calcula
 <li>
 <p>
 bool <strong>file_id.enable_type</strong> = false: enable type ID
+</p>
+</li>
+<li>
+<p>
+string <strong>file_id.file_rules[].category</strong>: file type category
+</p>
+</li>
+<li>
+<p>
+int <strong>file_id.file_rules[].id</strong> = 0: file type id { 0: }
+</p>
+</li>
+<li>
+<p>
+string <strong>file_id.file_rules[].magic[].content</strong>: file magic content
+</p>
+</li>
+<li>
+<p>
+int <strong>file_id.file_rules[].magic[].offset</strong> = 0: file magic offset { 0: }
+</p>
+</li>
+<li>
+<p>
+string <strong>file_id.file_rules[].msg</strong>: information about the file type
+</p>
+</li>
+<li>
+<p>
+int <strong>file_id.file_rules[].rev</strong> = 0: rule revision { 0: }
+</p>
+</li>
+<li>
+<p>
+string <strong>file_id.file_rules[].type</strong>: file type name
+</p>
+</li>
+<li>
+<p>
+string <strong>file_id.file_rules[].version</strong>: file type version
 </p>
 </li>
 <li>
@@ -11876,12 +12153,12 @@ bool <strong>http_inspect.allow_proxy_use</strong> = false: don&#8217;t alert on
 </li>
 <li>
 <p>
-bool <strong>http_inspect.decompress_pdf</strong> = false: ????
+bool <strong>http_inspect.decompress_pdf</strong> = false: enable decompression of the compressed portions of PDF files
 </p>
 </li>
 <li>
 <p>
-bool <strong>http_inspect.decompress_swf</strong> = false: ????
+bool <strong>http_inspect.decompress_swf</strong> = false: enable decompression of SWF (Adobe Flash content)
 </p>
 </li>
 <li>
@@ -12111,7 +12388,7 @@ bool <strong>http_inspect.unlimited_decompress</strong> = true: decompress acros
 </li>
 <li>
 <p>
-bool <strong>http_inspect.xff_headers</strong> = false: ????
+bool <strong>http_inspect.xff_headers</strong> = false: not implemented
 </p>
 </li>
 <li>
@@ -12132,6 +12409,26 @@ string <strong>icode.~range</strong>: check if ICMP code is <em>code | min&lt;&g
 <li>
 <p>
 string <strong>id.~range</strong>: check if the IP ID is <em>id | min&lt;&gt;max | &lt;max | &gt;min</em>
+</p>
+</li>
+<li>
+<p>
+int <strong>imap.b64_decode_depth</strong> = 1460:  base64 decoding depth { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>imap.bitenc_decode_depth</strong> = 1460:  Non-Encoded MIME attachment extraction depth { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>imap.qp_decode_depth</strong> = 1460:  Quoted Printable decoding depth { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>imap.uu_decode_depth</strong> = 1460:  Unix-to-Unix decoding depth { -1:65535 }
 </p>
 </li>
 <li>
@@ -12461,11 +12758,6 @@ bool <strong>output.dump_payload_verbose</strong> = false: dumps raw packet star
 </li>
 <li>
 <p>
-string <strong>output.event_trace.file</strong>: where to write event trace logs
-</p>
-</li>
-<li>
-<p>
 int <strong>output.event_trace.max_data</strong> = 0: maximum amount of packet data to capture { 0:65535 }
 </p>
 </li>
@@ -12612,6 +12904,26 @@ bool <strong>perf_monitor.reset</strong> = true: reset (clear) statistics after 
 <li>
 <p>
 int <strong>perf_monitor.seconds</strong> = 60: report interval; 0 means report at exit only { 0: }
+</p>
+</li>
+<li>
+<p>
+int <strong>pop.b64_decode_depth</strong> = 1460:  base64 decoding depth { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>pop.bitenc_decode_depth</strong> = 1460:  Non-Encoded MIME attachment extraction depth { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>pop.qp_decode_depth</strong> = 1460:  Quoted Printable decoding depth { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>pop.uu_decode_depth</strong> = 1460:  Unix-to-Unix decoding depth { -1:65535 }
 </p>
 </li>
 <li>
@@ -14318,6 +14630,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>imap.packets</strong>: total packets
+</p>
+</li>
+<li>
+<p>
 <strong>ipv4.bad checksum</strong>: nonzero ip checksums
 </p>
 </li>
@@ -14614,6 +14931,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>perf_monitor.packets</strong>: total packets
+</p>
+</li>
+<li>
+<p>
+<strong>pop.packets</strong>: total packets
 </p>
 </li>
 <li>
@@ -15154,6 +15476,16 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>134</strong>: ppm
+</p>
+</li>
+<li>
+<p>
+<strong>141</strong>: imap
+</p>
+</li>
+<li>
+<p>
+<strong>142</strong>: pop
 </p>
 </li>
 <li>
@@ -16643,6 +16975,56 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>141:1</strong> (imap) Unknown IMAP3 command
+</p>
+</li>
+<li>
+<p>
+<strong>141:2</strong> (imap) Unknown IMAP3 response
+</p>
+</li>
+<li>
+<p>
+<strong>141:4</strong> (imap) Base64 Decoding failed.
+</p>
+</li>
+<li>
+<p>
+<strong>141:5</strong> (imap) Quoted-Printable Decoding failed.
+</p>
+</li>
+<li>
+<p>
+<strong>141:7</strong> (imap) Unix-to-Unix Decoding failed.
+</p>
+</li>
+<li>
+<p>
+<strong>142:1</strong> (pop) Unknown POP3 command
+</p>
+</li>
+<li>
+<p>
+<strong>142:2</strong> (pop) Unknown POP3 response
+</p>
+</li>
+<li>
+<p>
+<strong>142:4</strong> (pop) Base64 Decoding failed.
+</p>
+</li>
+<li>
+<p>
+<strong>142:5</strong> (pop) Quoted-Printable Decoding failed.
+</p>
+</li>
+<li>
+<p>
+<strong>142:7</strong> (pop) Unix-to-Unix Decoding failed.
+</p>
+</li>
+<li>
+<p>
 <strong>219:1</strong> (new_http_inspect) ascii encoding
 </p>
 </li>
@@ -16894,6 +17276,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>219:51</strong> (new_http_inspect) PDF file parse failure
+</p>
+</li>
+<li>
+<p>
+<strong>219:52</strong> (new_http_inspect) HTTP misformatted or not really HTTP
 </p>
 </li>
 </ul></div>
@@ -17516,7 +17903,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>ftp_client</strong> (data): FTP client configuration module for use with ftp_server
+<strong>ftp_client</strong> (inspector): FTP client configuration module for use with ftp_server
 </p>
 </li>
 <li>
@@ -17561,7 +17948,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>http_global</strong> (data): http inspector global configuration and client rules for use with http_server
+<strong>http_global</strong> (inspector): http inspector global configuration and client rules for use with http_server
 </p>
 </li>
 <li>
@@ -17642,6 +18029,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>igmp</strong> (codec): support for Internet group management protocol
+</p>
+</li>
+<li>
+<p>
+<strong>imap</strong> (inspector): imap inspection
 </p>
 </li>
 <li>
@@ -17756,12 +18148,17 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>pop</strong> (inspector): pop inspection
+</p>
+</li>
+<li>
+<p>
 <strong>port_scan</strong> (inspector): port scan inspector; also configure port_scan_global
 </p>
 </li>
 <li>
 <p>
-<strong>port_scan_global</strong> (data): shared settings for port_scan inspectors for use with port_scan
+<strong>port_scan_global</strong> (inspector): shared settings for port_scan inspectors for use with port_scan
 </p>
 </li>
 <li>
@@ -18156,7 +18553,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>codec::ppp</strong>: support for point-to-point encapsulation (DLT 9)
+<strong>codec::ppp</strong>: support for point-to-point encapsulation (DLT DLT_PPP)
 </p>
 </li>
 <li>
@@ -18226,21 +18623,6 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>data::ftp_client</strong>: FTP inspector client module
-</p>
-</li>
-<li>
-<p>
-<strong>data::http_global</strong>: shared HTTP inspector settings
-</p>
-</li>
-<li>
-<p>
-<strong>data::port_scan_global</strong>: shared settings for port_scan inspectors for use with port_scan
-</p>
-</li>
-<li>
-<p>
 <strong>inspector::arp_spoof</strong>: detect ARP attacks and anomalies
 </p>
 </li>
@@ -18261,6 +18643,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>inspector::ftp_client</strong>: FTP inspector client module
+</p>
+</li>
+<li>
+<p>
 <strong>inspector::ftp_data</strong>: FTP data channel handler
 </p>
 </li>
@@ -18271,7 +18658,17 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>inspector::http_global</strong>: shared HTTP inspector settings
+</p>
+</li>
+<li>
+<p>
 <strong>inspector::http_inspect</strong>: main HTTP inspector module
+</p>
+</li>
+<li>
+<p>
+<strong>inspector::imap</strong>: imap inspection
 </p>
 </li>
 <li>
@@ -18291,7 +18688,17 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>inspector::pop</strong>: pop inspection
+</p>
+</li>
+<li>
+<p>
 <strong>inspector::port_scan</strong>: port scan inspector; also configure port_scan_global
+</p>
+</li>
+<li>
+<p>
+<strong>inspector::port_scan_global</strong>: shared settings for port_scan inspectors for use with port_scan
 </p>
 </li>
 <li>
@@ -19544,7 +19951,7 @@ added in 2 places to avoid a real mess.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-03-30 16:54:22 EDT
+Last updated 2015-04-29 17:19:10 EDT
 </div>
 </div>
 </body>

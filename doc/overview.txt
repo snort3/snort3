@@ -53,7 +53,7 @@ this command:
 
     Type: basic
 
-    Configuration: 
+    Configuration:
 
     int active.attempts = 0: number of TCP packets sent per response (with
     varying sequence numbers) { 0:20 }
@@ -72,7 +72,7 @@ This says active is a basic module that has several parameters.  For each,
 you will see:
 
     type module.name = default: help { range }
-    
+
 For example, the active module has a max_responses parameter that takes
 non-negative integer values and defaults to zero.  We can change that in
 Lua as follows:
@@ -261,4 +261,76 @@ Additional Details:
 
 * You can find the specifics on the binder, wizard, and hosts tables in the
   manual or command line like this:  snort --help-module binder, etc.
+
+=== Packet Processing
+
+
+One of the goals of Snort++ is to provide a more flexible framework for
+packet processing by implementing an event-driven approach.  Another is to
+produce data only when needed, to minimize expensive normalizations.  To help
+explain these concepts, let's start by examining how Snort processes
+packets.  The key steps are given in the following figure:
+
+////
+(pkt) -> [decode] -> [preprocess] -> [detect] -> [log] -> (verdict)
+////
+image::snort2x.png["Snort 2X",width="640"]
+
+The preprocess step is highly configurable.  Arbitrary preprocessors can be
+loaded dynamically at startup, configured in snort.conf, and then executed
+at runtime.  Basically, the preprocessors are put into a list which is
+iterated for each packet.  Recent versions have tweaked the list handling
+some, but the same basic architecture has allowed Snort to grow from a
+sniffer, with no preprocessing, to a full-fledged IPS, with lots of
+preprocessing.
+
+While this "list of plugins" approach has considerable flexibility, it
+hampers future development when the flow of data from one preprocessor to
+the next depends on traffic conditions, a common situation with advanced
+features like application identification.  In this case, a preprocessor
+like HTTP may be extracting and normalizing data that ultimately is not
+used, or app ID may be repeatedly checking for data that is just not
+available.
+
+Callbacks help break out of the preprocess straightjacket.  This is where
+one preprocessor supplies another with a function to call when certain data
+is available.  Snort has started to take this approach to pass some HTTP and
+SIP preprocessor data to app ID.  However, it remains a peripheral feature
+and still requires the production of data that may not be consumed.
+
+The basic processing steps Snort++ takes are similar to Snort's as seen in
+the following diagram.  The preprocess step employs specific inspector
+types instead of a generalized list, but the basic procedure includes
+stateless packet decoding, TCP stream reassembly, and service specific
+analysis in both cases.  (Snort++ provides hooks for arbitrary inspectors,
+but they are not central to basic flow processing and are not shown.)
+
+////
+(pkt) -> [decode] -> [stream] -> [service] -> [detect] -> [log] -> (verdict)
+         -----------------------------------------------------
+                    [app id]   [firewall]   [other]
+////
+image::snort3x.png["Snort 3X",width="640"]
+
+However, Snort++ also provides a more flexible mechanism than callback
+functions.  By using inspection events, it is possible for an inspector to
+supply data that other inspectors can process.  This is known as the
+observer pattern or publish-subscribe pattern.
+
+Note that the data is not actually published.  Instead, access to the data
+is published, and that means that subscribers can access the raw or
+normalized version(s) as needed.  Normalizations are done only on the first
+access, and subsequent accesses get the previously normalized data.  This
+results in just in time (JIT) processing.
+
+A basic example of this in action is provided by the extra data_log plugin.
+It is a passive inspector, ie it does nothing until it receives the data it
+subscribed for ('other' in the above diagram).  By adding data_log = { key
+= 'http_raw_uri' } to your snort.lua configuration, you will get a simple
+URI logger.
+
+Inspection events coupled with pluggable inspectors provide a very flexible
+framework for implementing new features.  And JIT buffer stuffers allow
+Snort++ to work smarter, not harder.  These capabilities will be leveraged
+more and more as Snort++ development continues.
 

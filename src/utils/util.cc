@@ -109,7 +109,7 @@ int DisplayBanner(void)
     const char* info = getenv("HOSTTYPE");
 
     if ( !info )
-        info="from 2.9.6-9";  // last sync with head
+        info="from 2.9.7-177";  // last sync with head
 
     const char* ljv = LUAJIT_VERSION;
     while ( *ljv && !isdigit(*ljv) )

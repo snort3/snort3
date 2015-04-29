@@ -18,6 +18,7 @@ Table of Contents
     1.3. Plugins and Scripts
     1.4. New Http Inspector
     1.5. Binder and Wizard
+    1.6. Packet Processing
 
 2. Getting Started
 
@@ -82,33 +83,33 @@ Table of Contents
     4.22. wlan
 
 5. Data Modules
-
-    5.1. ftp_client
-    5.2. http_global
-    5.3. port_scan_global
-
 6. Inspector Modules
 
     6.1. arp_spoof
     6.2. back_orifice
     6.3. binder
     6.4. dns
-    6.5. ftp_data
-    6.6. ftp_server
-    6.7. http_inspect
-    6.8. new_http_inspect
-    6.9. normalizer
-    6.10. perf_monitor
-    6.11. port_scan
-    6.12. rpc_decode
-    6.13. ssh
-    6.14. stream
-    6.15. stream_icmp
-    6.16. stream_ip
-    6.17. stream_tcp
-    6.18. stream_udp
-    6.19. telnet
-    6.20. wizard
+    6.5. ftp_client
+    6.6. ftp_data
+    6.7. ftp_server
+    6.8. http_global
+    6.9. http_inspect
+    6.10. imap
+    6.11. new_http_inspect
+    6.12. normalizer
+    6.13. perf_monitor
+    6.14. pop
+    6.15. port_scan
+    6.16. port_scan_global
+    6.17. rpc_decode
+    6.18. ssh
+    6.19. stream
+    6.20. stream_icmp
+    6.21. stream_ip
+    6.22. stream_tcp
+    6.23. stream_udp
+    6.24. telnet
+    6.25. wizard
 
 7. IPS Action Modules
 
@@ -233,7 +234,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0-a1 (Build 145) from 2.9.6-9
+o"  )~   Version 3.0.0-a1 (Build 150) from 2.9.7-177
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
@@ -534,6 +535,75 @@ Additional Details:
     --help-module binder, etc.
 
 
+1.6. Packet Processing
+
+------------
+
+One of the goals of Snort++ is to provide a more flexible framework
+for packet processing by implementing an event-driven approach.
+Another is to produce data only when needed, to minimize expensive
+normalizations. To help explain these concepts, let’s start by
+examining how Snort processes packets. The key steps are given in the
+following figure:
+
+Snort 2X
+
+The preprocess step is highly configurable. Arbitrary preprocessors
+can be loaded dynamically at startup, configured in snort.conf, and
+then executed at runtime. Basically, the preprocessors are put into a
+list which is iterated for each packet. Recent versions have tweaked
+the list handling some, but the same basic architecture has allowed
+Snort to grow from a sniffer, with no preprocessing, to a
+full-fledged IPS, with lots of preprocessing.
+
+While this "list of plugins" approach has considerable flexibility,
+it hampers future development when the flow of data from one
+preprocessor to the next depends on traffic conditions, a common
+situation with advanced features like application identification. In
+this case, a preprocessor like HTTP may be extracting and normalizing
+data that ultimately is not used, or app ID may be repeatedly
+checking for data that is just not available.
+
+Callbacks help break out of the preprocess straightjacket. This is
+where one preprocessor supplies another with a function to call when
+certain data is available. Snort has started to take this approach to
+pass some HTTP and SIP preprocessor data to app ID. However, it
+remains a peripheral feature and still requires the production of
+data that may not be consumed.
+
+The basic processing steps Snort takes are similar to Snort’s as seen
+in the following diagram. The preprocess step employs specific
+inspector types instead of a generalized list, but the basic
+procedure includes stateless packet decoding, TCP stream reassembly,
+and service specific analysis in both cases. (Snort provides hooks
+for arbitrary inspectors, but they are not central to basic flow
+processing and are not shown.)
+
+Snort 3X
+
+However, Snort++ also provides a more flexible mechanism than
+callback functions. By using inspection events, it is possible for an
+inspector to supply data that other inspectors can process. This is
+known as the observer pattern or publish-subscribe pattern.
+
+Note that the data is not actually published. Instead, access to the
+data is published, and that means that subscribers can access the raw
+or normalized version(s) as needed. Normalizations are done only on
+the first access, and subsequent accesses get the previously
+normalized data. This results in just in time (JIT) processing.
+
+A basic example of this in action is provided by the extra data_log
+plugin. It is a passive inspector, ie it does nothing until it
+receives the data it subscribed for (other in the above diagram). By
+adding data_log = { key = http_raw_uri } to your snort.lua
+configuration, you will get a simple URI logger.
+
+Inspection events coupled with pluggable inspectors provide a very
+flexible framework for implementing new features. And JIT buffer
+stuffers allow Snort to work smarter, not harder. These capabilities
+will be leveraged more and more as Snort development continues.
+
+
 ---------------------------------------------------------------------
 
 2. Getting Started
@@ -568,6 +638,8 @@ Optional:
     HTML manual
   * dblatex from http://dblatex.sourceforge.net to build the pdf
     manual (in addition to asciidoc)
+  * w3m from http://sourceforge.net/projects/w3m/ to build the plain
+    text manual
   * check from http://check.sourceforge.net to build unit tests
 
 
@@ -994,7 +1066,8 @@ Configuration:
   * bool daq.no_promisc = false: whether to put DAQ device into
     promiscuous mode
   * string daq.type: select type of DAQ
-  * string daq.var: list of name=value DAQ-specific parameters
+  * string daq.vars: comma separated list of name=value DAQ-specific
+    parameters
   * int daq.snaplen = deflt: set snap length (same as -P) { 0:65535 }
   * bool daq.decode_data_link = false: display the second layer
     header info
@@ -1138,6 +1211,15 @@ Configuration:
   * bool file_id.enable_signature = false: enable signature
     calculation
   * int file_id.show_data_depth = 100: print this many octets { 0: }
+  * int file_id.file_rules[].rev = 0: rule revision { 0: }
+  * string file_id.file_rules[].msg: information about the file type
+  * string file_id.file_rules[].type: file type name
+  * int file_id.file_rules[].id = 0: file type id { 0: }
+  * string file_id.file_rules[].category: file type category
+  * string file_id.file_rules[].version: file type version
+  * string file_id.file_rules[].magic[].content: file magic content
+  * int file_id.file_rules[].magic[].offset = 0: file magic offset {
+    0: }
 
 
 3.11. hosts
@@ -1231,7 +1313,6 @@ Configuration:
     starting at link layer (same as -X)
   * bool output.log_ipv6_extra_data = false: log IPv6 source and
     destination addresses as unified2 extra data records
-  * string output.event_trace.file: where to write event trace logs
   * int output.event_trace.max_data = 0: maximum amount of packet
     data to capture { 0:65535 }
   * bool output.quiet = false: suppress non-fatal information (still
@@ -2180,142 +2261,7 @@ Rules:
 Data modules are adjunct configurations for use with certain
 inspectors.
 
-
-5.1. ftp_client
-
-------------
-
-What: FTP client configuration module for use with ftp_server
-
-Type: data
-
-Configuration:
-
-  * bool ftp_client.bounce = false: check for bounces
-  * addr ftp_client.bounce_to[].address = 1.0.0.0/32: allowed ip
-    address in CIDR format
-  * port ftp_client.bounce_to[].port = 20: allowed port { 1: }
-  * port ftp_client.bounce_to[].last_port: optional allowed range
-    from port to last_port inclusive { 0: }
-  * bool ftp_client.ignore_telnet_erase_cmds = false: ignore erase
-    character and erase line commands when normalizing
-  * int ftp_client.max_resp_len = -1: maximum ftp response accepted
-    by client { -1: }
-  * bool ftp_client.telnet_cmds = false: detect telnet escape
-    sequences on ftp control channel
-
-
-5.2. http_global
-
-------------
-
-What: http inspector global configuration and client rules for use
-with http_server
-
-Type: data
-
-Configuration:
-
-  * int http_global.compress_depth = 65535: maximum amount of packet
-    payload to decompress { 1:65535 }
-  * int http_global.decode.b64_decode_depth = 0: single packet decode
-    depth { -1:65535 }
-  * int http_global.decode.bitenc_decode_depth = 0: single packet
-    decode depth { -1:65535 }
-  * int http_global.decode.max_mime_mem = 838860: single packet
-    decode depth { 3276: }
-  * int http_global.decode.qp_decode_depth = 0: single packet decode
-    depth { -1:65535 }
-  * int http_global.decode.uu_decode_depth = 0: single packet decode
-    depth { -1:65535 }
-  * int http_global.decompress_depth = 65535: maximum amount of
-    decompressed data to process { 1:65535 }
-  * bool http_global.detect_anomalous_servers = false: inspect
-    non-configured ports for HTTP - bad idea
-  * int http_global.max_gzip_mem = 838860: total memory used for
-    decompression across all active sessions { 3276: }
-  * int http_global.memcap = 150994944: limit of memory used for
-    logging extra data { 2304: }
-  * bool http_global.proxy_alert = false: alert on proxy usage for
-    servers without allow_proxy_use
-  * int http_global.unicode_map.code_page = 1252: select code page in
-    map file { 0: }
-  * string http_global.unicode_map.map_file: unicode map file
-
-Rules:
-
-  * 119:1 (http_global) ascii encoding
-  * 119:2 (http_global) double decoding attack
-  * 119:3 (http_global) u encoding
-  * 119:4 (http_global) bare byte unicode encoding
-  * 119:5 (http_global) base36 encoding
-  * 119:6 (http_global) UTF-8 encoding
-  * 119:7 (http_global) IIS unicode codepoint encoding
-  * 119:8 (http_global) multi_slash encoding
-  * 119:9 (http_global) IIS backslash evasion
-  * 119:10 (http_global) self directory traversal
-  * 119:11 (http_global) directory traversal
-  * 119:12 (http_global) apache whitespace (tab)
-  * 119:13 (http_global) non-RFC http delimiter
-  * 119:14 (http_global) non-RFC defined char
-  * 119:15 (http_global) oversize request-URI directory
-  * 119:16 (http_global) oversize chunk encoding
-  * 119:17 (http_global) unauthorized proxy use detected
-  * 119:18 (http_global) webroot directory traversal
-  * 119:19 (http_global) long header
-  * 119:20 (http_global) max header fields
-  * 119:21 (http_global) multiple content length
-  * 119:22 (http_global) chunk size mismatch detected
-  * 119:23 (http_global) invalid ip in true-client-IP/XFF header
-  * 119:24 (http_global) multiple host hdrs detected
-  * 119:25 (http_global) hostname exceeds 255 characters
-  * 119:26 (http_global) header parsing space saturation
-  * 119:27 (http_global) client consecutive small chunk sizes
-  * 119:28 (http_global) post w/o content-length or chunks
-  * 119:29 (http_global) multiple true IPs in a session
-  * 119:30 (http_global) both true-client-IP and XFF hdrs present
-  * 119:31 (http_global) unknown method
-  * 119:32 (http_global) simple request
-  * 119:33 (http_global) unescaped space in http URI
-  * 119:34 (http_global) too many pipelined requests
-
-Peg counts:
-
-  * http_global.packets: total packets processed
-  * http_global.gets: GET requests
-  * http_global.posts: POST requests
-  * http_global.request headers: total requests
-  * http_global.response headers: total responses
-  * http_global.request cookies: requests with Cookie
-  * http_global.response cookies: responses with Set-Cookie
-  * http_global.post params: POST parameters extracted
-  * http_global.unicode: unicode normalizations
-  * http_global.double unicode: double unicode normalizations
-  * http_global.non-ascii: non-ascii normalizations
-  * http_global.paths with ../: directory traversal normalizations
-  * http_global.paths with //: double slash normalizations
-  * http_global.paths with ./: relative directory normalizations
-  * http_global.gzip packets: packets with gzip compression
-  * http_global.compressed bytes: total comparessed bytes processed
-  * http_global.decompressed bytes: total bytes decompressed
-
-
-5.3. port_scan_global
-
-------------
-
-What: shared settings for port_scan inspectors for use with port_scan
-
-Type: data
-
-Configuration:
-
-  * int port_scan_global.memcap = 1048576: maximum tracker memory {
-    1: }
-
-Peg counts:
-
-  * port_scan_global.packets: total packets
+no match no match
 
 
 ---------------------------------------------------------------------
@@ -2429,7 +2375,31 @@ Peg counts:
   * dns.packets: total packets
 
 
-6.5. ftp_data
+6.5. ftp_client
+
+------------
+
+What: FTP client configuration module for use with ftp_server
+
+Type: inspector
+
+Configuration:
+
+  * bool ftp_client.bounce = false: check for bounces
+  * addr ftp_client.bounce_to[].address = 1.0.0.0/32: allowed ip
+    address in CIDR format
+  * port ftp_client.bounce_to[].port = 20: allowed port { 1: }
+  * port ftp_client.bounce_to[].last_port: optional allowed range
+    from port to last_port inclusive { 0: }
+  * bool ftp_client.ignore_telnet_erase_cmds = false: ignore erase
+    character and erase line commands when normalizing
+  * int ftp_client.max_resp_len = -1: maximum ftp response accepted
+    by client { -1: }
+  * bool ftp_client.telnet_cmds = false: detect telnet escape
+    sequences on ftp control channel
+
+
+6.6. ftp_data
 
 ------------
 
@@ -2442,7 +2412,7 @@ Peg counts:
   * ftp_data.packets: total packets
 
 
-6.6. ftp_server
+6.7. ftp_server
 
 ------------
 
@@ -2509,7 +2479,102 @@ Peg counts:
   * ftp_server.packets: total packets
 
 
-6.7. http_inspect
+6.8. http_global
+
+------------
+
+What: http inspector global configuration and client rules for use
+with http_server
+
+Type: inspector
+
+Configuration:
+
+  * int http_global.compress_depth = 65535: maximum amount of packet
+    payload to decompress { 1:65535 }
+  * int http_global.decode.b64_decode_depth = 0: single packet decode
+    depth { -1:65535 }
+  * int http_global.decode.bitenc_decode_depth = 0: single packet
+    decode depth { -1:65535 }
+  * int http_global.decode.max_mime_mem = 838860: single packet
+    decode depth { 3276: }
+  * int http_global.decode.qp_decode_depth = 0: single packet decode
+    depth { -1:65535 }
+  * int http_global.decode.uu_decode_depth = 0: single packet decode
+    depth { -1:65535 }
+  * int http_global.decompress_depth = 65535: maximum amount of
+    decompressed data to process { 1:65535 }
+  * bool http_global.detect_anomalous_servers = false: inspect
+    non-configured ports for HTTP - bad idea
+  * int http_global.max_gzip_mem = 838860: total memory used for
+    decompression across all active sessions { 3276: }
+  * int http_global.memcap = 150994944: limit of memory used for
+    logging extra data { 2304: }
+  * bool http_global.proxy_alert = false: alert on proxy usage for
+    servers without allow_proxy_use
+  * int http_global.unicode_map.code_page = 1252: select code page in
+    map file { 0: }
+  * string http_global.unicode_map.map_file: unicode map file
+
+Rules:
+
+  * 119:1 (http_global) ascii encoding
+  * 119:2 (http_global) double decoding attack
+  * 119:3 (http_global) u encoding
+  * 119:4 (http_global) bare byte unicode encoding
+  * 119:5 (http_global) base36 encoding
+  * 119:6 (http_global) UTF-8 encoding
+  * 119:7 (http_global) IIS unicode codepoint encoding
+  * 119:8 (http_global) multi_slash encoding
+  * 119:9 (http_global) IIS backslash evasion
+  * 119:10 (http_global) self directory traversal
+  * 119:11 (http_global) directory traversal
+  * 119:12 (http_global) apache whitespace (tab)
+  * 119:13 (http_global) non-RFC http delimiter
+  * 119:14 (http_global) non-RFC defined char
+  * 119:15 (http_global) oversize request-URI directory
+  * 119:16 (http_global) oversize chunk encoding
+  * 119:17 (http_global) unauthorized proxy use detected
+  * 119:18 (http_global) webroot directory traversal
+  * 119:19 (http_global) long header
+  * 119:20 (http_global) max header fields
+  * 119:21 (http_global) multiple content length
+  * 119:22 (http_global) chunk size mismatch detected
+  * 119:23 (http_global) invalid ip in true-client-IP/XFF header
+  * 119:24 (http_global) multiple host hdrs detected
+  * 119:25 (http_global) hostname exceeds 255 characters
+  * 119:26 (http_global) header parsing space saturation
+  * 119:27 (http_global) client consecutive small chunk sizes
+  * 119:28 (http_global) post w/o content-length or chunks
+  * 119:29 (http_global) multiple true IPs in a session
+  * 119:30 (http_global) both true-client-IP and XFF hdrs present
+  * 119:31 (http_global) unknown method
+  * 119:32 (http_global) simple request
+  * 119:33 (http_global) unescaped space in http URI
+  * 119:34 (http_global) too many pipelined requests
+
+Peg counts:
+
+  * http_global.packets: total packets processed
+  * http_global.gets: GET requests
+  * http_global.posts: POST requests
+  * http_global.request headers: total requests
+  * http_global.response headers: total responses
+  * http_global.request cookies: requests with Cookie
+  * http_global.response cookies: responses with Set-Cookie
+  * http_global.post params: POST parameters extracted
+  * http_global.unicode: unicode normalizations
+  * http_global.double unicode: double unicode normalizations
+  * http_global.non-ascii: non-ascii normalizations
+  * http_global.paths with ../: directory traversal normalizations
+  * http_global.paths with //: double slash normalizations
+  * http_global.paths with ./: relative directory normalizations
+  * http_global.gzip packets: packets with gzip compression
+  * http_global.compressed bytes: total comparessed bytes processed
+  * http_global.decompressed bytes: total bytes decompressed
+
+
+6.9. http_inspect
 
 ------------
 
@@ -2521,8 +2586,10 @@ Configuration:
 
   * bool http_inspect.allow_proxy_use = false: don’t alert on proxy
     use for this server
-  * bool http_inspect.decompress_pdf = false: ????
-  * bool http_inspect.decompress_swf = false: ????
+  * bool http_inspect.decompress_pdf = false: enable decompression of
+    the compressed portions of PDF files
+  * bool http_inspect.decompress_swf = false: enable decompression of
+    SWF (Adobe Flash content)
   * bool http_inspect.enable_cookies = true: extract cookies
   * bool http_inspect.enable_xff = false: log True-Client-IP and
     X-Forwarded-For headers with unified2 alerts as extra data
@@ -2621,7 +2688,7 @@ Configuration:
     preceded by a space is considered a delimiter or part of URI
   * bool http_inspect.unlimited_decompress = true: decompress across
     multiple packets
-  * bool http_inspect.xff_headers = false: ????
+  * bool http_inspect.xff_headers = false: not implemented
 
 Rules:
 
@@ -2651,7 +2718,39 @@ Rules:
   * 120:17 (http_inspect) HTTP response PDF file parse failure
 
 
-6.8. new_http_inspect
+6.10. imap
+
+------------
+
+What: imap inspection
+
+Type: inspector
+
+Configuration:
+
+  * int imap.b64_decode_depth = 1460: base64 decoding depth {
+    -1:65535 }
+  * int imap.bitenc_decode_depth = 1460: Non-Encoded MIME attachment
+    extraction depth { -1:65535 }
+  * int imap.qp_decode_depth = 1460: Quoted Printable decoding depth
+    { -1:65535 }
+  * int imap.uu_decode_depth = 1460: Unix-to-Unix decoding depth {
+    -1:65535 }
+
+Rules:
+
+  * 141:1 (imap) Unknown IMAP3 command
+  * 141:2 (imap) Unknown IMAP3 response
+  * 141:4 (imap) Base64 Decoding failed.
+  * 141:5 (imap) Quoted-Printable Decoding failed.
+  * 141:7 (imap) Unix-to-Unix Decoding failed.
+
+Peg counts:
+
+  * imap.packets: total packets
+
+
+6.11. new_http_inspect
 
 ------------
 
@@ -2728,7 +2827,7 @@ Rules:
   * 219:52 (new_http_inspect) HTTP misformatted or not really HTTP
 
 
-6.9. normalizer
+6.12. normalizer
 
 ------------
 
@@ -2876,7 +2975,7 @@ Peg counts:
     segments
 
 
-6.10. perf_monitor
+6.13. perf_monitor
 
 ------------
 
@@ -2916,7 +3015,39 @@ Peg counts:
   * perf_monitor.packets: total packets
 
 
-6.11. port_scan
+6.14. pop
+
+------------
+
+What: pop inspection
+
+Type: inspector
+
+Configuration:
+
+  * int pop.b64_decode_depth = 1460: base64 decoding depth { -1:65535
+    }
+  * int pop.bitenc_decode_depth = 1460: Non-Encoded MIME attachment
+    extraction depth { -1:65535 }
+  * int pop.qp_decode_depth = 1460: Quoted Printable decoding depth {
+    -1:65535 }
+  * int pop.uu_decode_depth = 1460: Unix-to-Unix decoding depth {
+    -1:65535 }
+
+Rules:
+
+  * 142:1 (pop) Unknown POP3 command
+  * 142:2 (pop) Unknown POP3 response
+  * 142:4 (pop) Base64 Decoding failed.
+  * 142:5 (pop) Quoted-Printable Decoding failed.
+  * 142:7 (pop) Unix-to-Unix Decoding failed.
+
+Peg counts:
+
+  * pop.packets: total packets
+
+
+6.15. port_scan
 
 ------------
 
@@ -2974,7 +3105,25 @@ Rules:
   * 122:27 (port_scan) open port
 
 
-6.12. rpc_decode
+6.16. port_scan_global
+
+------------
+
+What: shared settings for port_scan inspectors for use with port_scan
+
+Type: inspector
+
+Configuration:
+
+  * int port_scan_global.memcap = 1048576: maximum tracker memory {
+    1: }
+
+Peg counts:
+
+  * port_scan_global.packets: total packets
+
+
+6.17. rpc_decode
 
 ------------
 
@@ -2995,7 +3144,7 @@ Peg counts:
   * rpc_decode.packets: total packets
 
 
-6.13. ssh
+6.18. ssh
 
 ------------
 
@@ -3027,7 +3176,7 @@ Peg counts:
   * ssh.packets: total packets
 
 
-6.14. stream
+6.19. stream
 
 ------------
 
@@ -3078,7 +3227,7 @@ Peg counts:
   * stream.ip prunes: ip sessions pruned
 
 
-6.15. stream_icmp
+6.20. stream_icmp
 
 ------------
 
@@ -3097,7 +3246,7 @@ Peg counts:
   * stream_icmp.released: icmp session trackers released
 
 
-6.16. stream_ip
+6.21. stream_ip
 
 ------------
 
@@ -3153,7 +3302,7 @@ Peg counts:
   * stream_ip.nodes deleted: fragments deleted from tracker
 
 
-6.17. stream_tcp
+6.22. stream_tcp
 
 ------------
 
@@ -3263,7 +3412,7 @@ Peg counts:
     flushed when session released
 
 
-6.18. stream_udp
+6.23. stream_udp
 
 ------------
 
@@ -3286,7 +3435,7 @@ Peg counts:
   * stream_udp.timeouts: udp session timeouts
 
 
-6.19. telnet
+6.24. telnet
 
 ------------
 
@@ -3315,7 +3464,7 @@ Peg counts:
   * telnet.packets: total packets
 
 
-6.20. wizard
+6.25. wizard
 
 ------------
 
@@ -5760,7 +5909,8 @@ Some additional details to note:
     promiscuous mode
   * int daq.snaplen = deflt: set snap length (same as -P) { 0:65535 }
   * string daq.type: select type of DAQ
-  * string daq.var: list of name=value DAQ-specific parameters
+  * string daq.vars: comma separated list of name=value DAQ-specific
+    parameters
   * int detection.asn1 = 256: maximum decode nodes { 1: }
   * bool detection.pcre_enable = true: disable pcre pattern matching
   * int detection.pcre_match_limit = 1500: limit pcre backtracking,
@@ -5801,6 +5951,15 @@ Some additional details to note:
   * bool file_id.enable_signature = false: enable signature
     calculation
   * bool file_id.enable_type = false: enable type ID
+  * string file_id.file_rules[].category: file type category
+  * int file_id.file_rules[].id = 0: file type id { 0: }
+  * string file_id.file_rules[].magic[].content: file magic content
+  * int file_id.file_rules[].magic[].offset = 0: file magic offset {
+    0: }
+  * string file_id.file_rules[].msg: information about the file type
+  * int file_id.file_rules[].rev = 0: rule revision { 0: }
+  * string file_id.file_rules[].type: file type name
+  * string file_id.file_rules[].version: file type version
   * int file_id.lookup_timeout = 2: give up on lookup after this many
     seconds { 0: }
   * int file_id.show_data_depth = 100: print this many octets { 0: }
@@ -5914,8 +6073,10 @@ Some additional details to note:
   * string http_header.~name: restrict to given header
   * bool http_inspect.allow_proxy_use = false: don’t alert on proxy
     use for this server
-  * bool http_inspect.decompress_pdf = false: ????
-  * bool http_inspect.decompress_swf = false: ????
+  * bool http_inspect.decompress_pdf = false: enable decompression of
+    the compressed portions of PDF files
+  * bool http_inspect.decompress_swf = false: enable decompression of
+    SWF (Adobe Flash content)
   * bool http_inspect.enable_cookies = true: extract cookies
   * bool http_inspect.enable_xff = false: log True-Client-IP and
     X-Forwarded-For headers with unified2 alerts as extra data
@@ -6014,7 +6175,7 @@ Some additional details to note:
     preceded by a space is considered a delimiter or part of URI
   * bool http_inspect.unlimited_decompress = true: decompress across
     multiple packets
-  * bool http_inspect.xff_headers = false: ????
+  * bool http_inspect.xff_headers = false: not implemented
   * string icmp_id.~range: check if icmp id is id | min<>max | <max |
     >min
   * string icmp_seq.~range: check if icmp sequence number is seq |
@@ -6023,6 +6184,14 @@ Some additional details to note:
     | >min
   * string id.~range: check if the IP ID is id | min<>max | <max | >
     min
+  * int imap.b64_decode_depth = 1460: base64 decoding depth {
+    -1:65535 }
+  * int imap.bitenc_decode_depth = 1460: Non-Encoded MIME attachment
+    extraction depth { -1:65535 }
+  * int imap.qp_decode_depth = 1460: Quoted Printable decoding depth
+    { -1:65535 }
+  * int imap.uu_decode_depth = 1460: Unix-to-Unix decoding depth {
+    -1:65535 }
   * string ip_proto.~proto: [!|>|<] name or number
   * select ipopts.~opt: output format { rr|eol|nop|ts|sec|esec|lsrr|
     lsrre|ssrr|satid|any }
@@ -6132,7 +6301,6 @@ Some additional details to note:
     as -d)
   * bool output.dump_payload_verbose = false: dumps raw packet
     starting at link layer (same as -X)
-  * string output.event_trace.file: where to write event trace logs
   * int output.event_trace.max_data = 0: maximum amount of packet
     data to capture { 0:65535 }
   * bool output.log_ipv6_extra_data = false: log IPv6 source and
@@ -6186,6 +6354,14 @@ Some additional details to note:
     each reporting interval
   * int perf_monitor.seconds = 60: report interval; 0 means report at
     exit only { 0: }
+  * int pop.b64_decode_depth = 1460: base64 decoding depth { -1:65535
+    }
+  * int pop.bitenc_decode_depth = 1460: Non-Encoded MIME attachment
+    extraction depth { -1:65535 }
+  * int pop.qp_decode_depth = 1460: Quoted Printable decoding depth {
+    -1:65535 }
+  * int pop.uu_decode_depth = 1460: Unix-to-Unix decoding depth {
+    -1:65535 }
   * string port_scan.ignore_scanned: list of CIDRs with optional
     ports to ignore if the destination of scan alerts
   * string port_scan.ignore_scanners: list of CIDRs with optional
@@ -6722,6 +6898,7 @@ Some additional details to note:
   * icmp4.bad checksum: non-zero icmp checksums
   * icmp6.bad checksum (ip4): nonzero ipcm4 checksums
   * icmp6.bad checksum (ip6): nonzero ipcm6 checksums
+  * imap.packets: total packets
   * ipv4.bad checksum: nonzero ip checksums
   * normalizer.icmp4 echo: icmp4 ping normalizations
   * normalizer.icmp6 echo: icmp6 echo normalizations
@@ -6816,6 +6993,7 @@ Some additional details to note:
   * normalizer.test tcp urgent ptr: During inline mode, would have
     packets without data with urgent pointer cleared
   * perf_monitor.packets: total packets
+  * pop.packets: total packets
   * port_scan_global.packets: total packets
   * rpc_decode.packets: total packets
   * snort.attribute table hosts: total number of hosts in table
@@ -6936,6 +7114,8 @@ Some additional details to note:
   * 129: stream_tcp
   * 131: dns
   * 134: ppm
+  * 141: imap
+  * 142: pop
   * 219: new_http_inspect
 
 
@@ -7280,6 +7460,16 @@ Some additional details to note:
   * 134:1 (ppm) rule options disabled by rule latency
   * 134:2 (ppm) rule options re-enabled by rule latency
   * 134:3 (ppm) packet aborted due to latency
+  * 141:1 (imap) Unknown IMAP3 command
+  * 141:2 (imap) Unknown IMAP3 response
+  * 141:4 (imap) Base64 Decoding failed.
+  * 141:5 (imap) Quoted-Printable Decoding failed.
+  * 141:7 (imap) Unix-to-Unix Decoding failed.
+  * 142:1 (pop) Unknown POP3 command
+  * 142:2 (pop) Unknown POP3 response
+  * 142:4 (pop) Base64 Decoding failed.
+  * 142:5 (pop) Quoted-Printable Decoding failed.
+  * 142:7 (pop) Unix-to-Unix Decoding failed.
   * 219:1 (new_http_inspect) ascii encoding
   * 219:2 (new_http_inspect) double decoding attack
   * 219:3 (new_http_inspect) u encoding
@@ -7722,8 +7912,8 @@ deleted -> unified2: 'filename'
     boolean flags
   * fragbits (ips_option): rule option to test IP frag flags
   * fragoffset (ips_option): rule option to test IP frag offset
-  * ftp_client (data): FTP client configuration module for use with
-    ftp_server
+  * ftp_client (inspector): FTP client configuration module for use
+    with ftp_server
   * ftp_data (inspector): FTP data channel handler
   * ftp_server (inspector): main FTP module; ftp_client should also
     be configured
@@ -7736,7 +7926,7 @@ deleted -> unified2: 'filename'
     cursor to the request body
   * http_cookie (ips_option): rule option to set the detection cursor
     to the HTTP cookie
-  * http_global (data): http inspector global configuration and
+  * http_global (inspector): http inspector global configuration and
     client rules for use with http_server
   * http_header (ips_option): rule option to set the detection cursor
     to the normalized header(s)
@@ -7763,6 +7953,7 @@ deleted -> unified2: 'filename'
   * icode (ips_option): rule option to check ICMP code
   * id (ips_option): rule option to check the IP ID field
   * igmp (codec): support for Internet group management protocol
+  * imap (inspector): imap inspection
   * ip_proto (ips_option): rule option to check the IP protocol
     number
   * ipopts (ips_option): rule option to check for IP options
@@ -7792,10 +7983,11 @@ deleted -> unified2: 'filename'
   * pgm (codec): support for pragmatic general multicast
   * pkt_data (ips_option): rule option to set the detection cursor to
     the normalized packet data
+  * pop (inspector): pop inspection
   * port_scan (inspector): port scan inspector; also configure
     port_scan_global
-  * port_scan_global (data): shared settings for port_scan inspectors
-    for use with port_scan
+  * port_scan_global (inspector): shared settings for port_scan
+    inspectors for use with port_scan
   * ppm (basic): packet and rule latency monitoring and control
     (requires --enable-ppm)
   * pppoe (codec): support for point-to-point protocol over ethernet
@@ -7897,7 +8089,8 @@ deleted -> unified2: 'filename'
   * codec::null: support for null encapsulation (DLT 0)
   * codec::pflog: support for OpenBSD PF log (DLT 117)
   * codec::pgm: support for pragmatic general multicast
-  * codec::ppp: support for point-to-point encapsulation (DLT 9)
+  * codec::ppp: support for point-to-point encapsulation (DLT
+    DLT_PPP)
   * codec::ppp_encap: support for point-to-point encapsulation
   * codec::pppoe_disc: support for point-to-point discovery
   * codec::pppoe_sess: support for point-to-point session
@@ -7912,24 +8105,26 @@ deleted -> unified2: 'filename'
   * codec::vlan: support for local area network
   * codec::wlan: support for wireless local area network protocol
     (DLT 105)
-  * data::ftp_client: FTP inspector client module
-  * data::http_global: shared HTTP inspector settings
-  * data::port_scan_global: shared settings for port_scan inspectors
-    for use with port_scan
   * inspector::arp_spoof: detect ARP attacks and anomalies
   * inspector::back_orifice: back orifice detection
   * inspector::binder: configure processing based on CIDRs, ports,
     services, etc.
   * inspector::dns: dns inspection
+  * inspector::ftp_client: FTP inspector client module
   * inspector::ftp_data: FTP data channel handler
   * inspector::ftp_server: FTP inspector server module
+  * inspector::http_global: shared HTTP inspector settings
   * inspector::http_inspect: main HTTP inspector module
+  * inspector::imap: imap inspection
   * inspector::new_http_inspect: the new HTTP inspector!
   * inspector::normalizer: packet scrubbing for inline mode
   * inspector::perf_monitor: performance monitoring and flow
     statistics collection
+  * inspector::pop: pop inspection
   * inspector::port_scan: port scan inspector; also configure
     port_scan_global
+  * inspector::port_scan_global: shared settings for port_scan
+    inspectors for use with port_scan
   * inspector::rpc_decode: RPC inspector
   * inspector::ssh: ssh inspection
   * inspector::stream: common flow tracking
