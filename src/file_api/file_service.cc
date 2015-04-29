@@ -92,6 +92,8 @@ static void file_signature_lookup(void* p, bool is_retransmit);
 static inline void finish_signature_lookup(FileContext* context, Flow* flow);
 static File_Verdict get_file_verdict(Flow* flow);
 static void render_block_verdict(void* ctx, void* p);
+static FilePosition get_file_position(void* pkt);
+static bool check_paf_abort(void* ssn);
 
 FileAPI fileAPI;
 FileAPI* file_api = NULL;
@@ -166,6 +168,7 @@ void FileAPIInit(void)
     fileAPI.set_mime_decode_config_defauts = &set_mime_decode_config_defauts;
     fileAPI.set_mime_log_config_defauts = &set_mime_log_config_defauts;
     fileAPI.parse_mime_decode_args = &parse_mime_decode_args;
+    fileAPI.check_decode_config = &check_decode_config;
     fileAPI.process_mime_data = &process_mime_data;
     fileAPI.free_mime_session = &free_mime_session;
     fileAPI.is_decoding_enabled = &is_decoding_enabled;
@@ -174,6 +177,12 @@ void FileAPIInit(void)
     fileAPI.finalize_mime_position = &finalize_mime_position;
     fileAPI.get_file_verdict = &get_file_verdict;
     fileAPI.render_block_verdict = &render_block_verdict;
+    fileAPI.get_file_position = &get_file_position;
+    fileAPI.reset_mime_paf_state = &reset_mime_paf_state;
+    fileAPI.process_mime_paf_data = &process_mime_paf_data;
+    fileAPI.check_data_end = check_data_end;
+    fileAPI.check_paf_abort = &check_paf_abort;
+
     file_api = &fileAPI;
     init_mime();
     FileFlowData::init();
@@ -838,6 +847,52 @@ static void set_file_name_from_log(FILE_LogState* log_state, void* pv)
     }
 }
 
+static FilePosition get_file_position(void* pkt)
+{
+    FilePosition position = SNORT_FILE_POSITION_UNKNOWN;
+    Packet* p = (Packet*)pkt;
+
+    if (PacketHasFullPDU(p))
+        position = SNORT_FILE_FULL;
+    else if (PacketHasStartOfPDU(p))
+        position = SNORT_FILE_START;
+    else if (p->packet_flags & PKT_PDU_TAIL)
+        position = SNORT_FILE_END;
+    else if (get_file_processed_size(p->flow))
+        position = SNORT_FILE_MIDDLE;
+
+    return position;
+}
+
+/*
+*  This function determines whether we shold abort PAF.  Will return
+*  true if the current packet is midstream, or unestablisted session
+*
+*  PARAMS:
+*      uint32_t - session flags passed in to callback.
+*
+*  RETURNS:
+*      true - if we should abort paf
+*      false - if we should continue using paf
+*/
+static bool check_paf_abort(void* ssn)
+{
+    uint32_t flags = stream.get_session_flags((Flow*)ssn);
+    if (flags & SSNFLAG_MIDSTREAM)
+    {
+        DEBUG_WRAP(DebugMessage(DEBUG_FILE,
+            "Aborting PAF because of midstream pickup.\n"));
+        return true;
+    }
+    else if (!(flags & SSNFLAG_ESTABLISHED))
+    {
+        DEBUG_WRAP(DebugMessage(DEBUG_FILE,
+            "Aborting PAF because of unestablished session.\n"));
+        return true;
+    }
+    return false;
+}
+
 static uint32_t str_to_hash(uint8_t* str, int length)
 {
     uint32_t a,b,c,tmp;
@@ -875,7 +930,7 @@ static uint32_t str_to_hash(uint8_t* str, int length)
             j = 0;
         }
     }
-    final(a,b,c);
+    final (a,b,c);
     return c;
 }
 

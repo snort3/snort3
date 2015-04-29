@@ -57,7 +57,9 @@ if (STATIC_INSPECTORS)
         back_orifice
         dns
         ftp_telnet
+	imap
         nhttp_inspect
+	pop
         rpc_decode
         ssh
         wizard

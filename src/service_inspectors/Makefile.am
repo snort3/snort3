@@ -21,7 +21,9 @@ back_orifice \
 dns \
 ftp_telnet \
 http_inspect \
+imap \
 nhttp_inspect \
+pop \
 rpc_decode \
 ssh \
 wizard

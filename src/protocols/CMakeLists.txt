@@ -16,6 +16,7 @@ set (PROTOCOL_HEADERS
     packet.h
     packet_manager.h
     protocol_ids.h
+    ssl.h
     tcp.h
     tcp_options.h
     teredo.h
@@ -31,6 +32,7 @@ add_library (protocols STATIC
     packet.cc
     ip.cc
     ipv4_options.cc
+    ssl.cc
     tcp_options.cc
     packet_manager.cc
 )

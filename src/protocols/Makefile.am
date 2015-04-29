@@ -21,6 +21,7 @@ mpls.h \
 packet.h \
 packet_manager.h \
 protocol_ids.h \
+ssl.h \
 tcp.h \
 tcp_options.h \
 teredo.h \
@@ -35,7 +36,8 @@ packet_manager.cc \
 packet.cc \
 ip.cc \
 ipv4_options.cc \
-tcp_options.cc
+tcp_options.cc \
+ssl.cc
 
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

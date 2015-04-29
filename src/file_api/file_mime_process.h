@@ -50,6 +50,9 @@
 #define STATE_MIME_HEADER  3    /* MIME header section within data section */
 #define STATE_DATA_UNKNOWN 4
 
+/* Maximum length of header chars before colon, based on Exim 4.32 exploit */
+#define MAX_HEADER_NAME_LEN 64
+
 /* log flags */
 #define MIME_FLAG_FILENAME_PRESENT           0x00000004
 
@@ -63,9 +66,14 @@ int log_file_name(const uint8_t* start, int length, FILE_LogState* log_state, bo
 int set_log_buffers(MAIL_LogState** log_state, MAIL_LogConfig* conf);
 void init_mime(void);
 void free_mime(void);
-const uint8_t* process_mime_data(void* packet, const uint8_t* start, const uint8_t* end,
-    const uint8_t* data_end_marker, uint8_t* data_end, MimeState* mime_ssn, bool upload);
+const uint8_t* process_mime_data(void *packet, const uint8_t *start, const uint8_t *end,
+                MimeState *mime_ssn, bool upload, bool paf_enabled);
 void free_mime_session(MimeState* mime_ssn);
 void finalize_mime_position(Flow* flow, void* decode_state, FilePosition* position);
+void reset_mime_paf_state(MimeDataPafInfo *data_info);
+/*  Process data boundary and flush each file based on boundary*/
+bool process_mime_paf_data(MimeDataPafInfo *data_info,  uint8_t val);
+bool check_data_end(void *end_state,  uint8_t val);
+
 #endif
 

@@ -653,7 +653,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                 if (hsd->mime_ssn)
                 {
                     uint8_t* end = ( uint8_t*)(p->data) + p->dsize;
-                    file_api->process_mime_data(p, p->data, end, end, end, hsd->mime_ssn, 1);
+                    file_api->process_mime_data(p, p->data, end, hsd->mime_ssn, 1, false);
                 }
                 else if (file_api->get_file_processed_size(p->flow) >0)
                 {
@@ -785,7 +785,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
 
                         end = (uint8_t*)(session->client.request.post_raw +
                             session->client.request.post_raw_size);
-                        file_api->process_mime_data(p, start, end, end, end, hsd->mime_ssn, 1);
+                        file_api->process_mime_data(p, start, end, hsd->mime_ssn, 1, false);
                     }
                     else
                     {
@@ -821,7 +821,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                 if (hsd->mime_ssn)
                 {
                     uint8_t* end = ( uint8_t*)(p->data) + p->dsize;
-                    file_api->process_mime_data(p, p->data, end, end, end, hsd->mime_ssn, 1);
+                    file_api->process_mime_data(p, p->data, end, hsd->mime_ssn, 1, false);
                 }
                 else if (file_api->get_file_processed_size(p->flow) >0)
                 {

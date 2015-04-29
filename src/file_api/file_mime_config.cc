@@ -286,3 +286,34 @@ int parse_mime_decode_args(DecodeConfig* decode_conf, char* arg, const char* pre
     return ret;
 }
 
+void check_decode_config(DecodeConfig *currentConfig)
+{
+    int max = -1;
+
+    if (!currentConfig->max_mime_mem)
+        currentConfig->max_mime_mem = DEFAULT_MAX_MIME_MEM;
+
+    if(!currentConfig->b64_depth || !currentConfig->qp_depth
+        || !currentConfig->uu_depth || !currentConfig->bitenc_depth)
+    {
+        currentConfig->max_depth = MAX_DEPTH;
+    }
+    else
+    {
+        if(max < currentConfig->b64_depth)
+            max = currentConfig->b64_depth;
+
+        if(max < currentConfig->qp_depth)
+            max = currentConfig->qp_depth;
+
+        if(max < currentConfig->bitenc_depth)
+            max = currentConfig->bitenc_depth;
+
+        if(max < currentConfig->uu_depth)
+            max = currentConfig->uu_depth;
+
+        currentConfig->max_depth = max;
+    }
+    return;
+}
+
