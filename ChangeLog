@@ -1,5 +1,6 @@
 15/04/30 - build 150
 
+-- fixed xcode static analysis issues
 -- updated default manuals
 -- added packet processing section to manual
 -- additional refactoring and cleanup
