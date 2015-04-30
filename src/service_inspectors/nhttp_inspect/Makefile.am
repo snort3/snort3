@@ -43,6 +43,6 @@ libnhttp_inspect_la_LDFLAGS = -export-dynamic -shared
 libnhttp_inspect_la_SOURCES = $(file_list)
 endif
 
-dist_doc_DATA = nhttp_test_msgs.txt
+EXTRA_DIST = nhttp_test_msgs.txt
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

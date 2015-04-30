@@ -157,7 +157,7 @@ struct HTTPINSPECT_CONF
     char log_hostname;
     bool unlimited_decompress;
     char extract_gzip;
-    unsigned long file_decomp_modes;
+    uint32_t file_decomp_modes;
 
 #define HI_UI_CONFIG_XFF_FIELD_NAME  "X-Forwarded-For"
 #define HI_UI_CONFIG_TCI_FIELD_NAME  "True-Client-IP"

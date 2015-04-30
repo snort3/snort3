@@ -52,7 +52,8 @@ $(BUILT_SOURCES)
 EXTRA_DIST = \
 default_snort_manual.text \
 default_snort_manual.html \
-default_snort_manual.pdf
+default_snort_manual.pdf \
+online_manual.sh
 
 doc_DATA = \
 snort_manual.text \

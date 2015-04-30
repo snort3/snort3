@@ -59,6 +59,13 @@ set (UNBUILT_SOURCES
 #   config_changes.txt  If ruby executable is not found
 )
 
+set (EXTRA_SOURCES
+    ${BUILT_SOURCES}
+    config_changes.txt
+    snort2lua_cmds.txt
+    version.txt
+)
+
 if (MAKE_HTML_DOC)
     set(HTML_DOCS snort_manual.html)
 else ()
@@ -77,8 +84,7 @@ else ()
     list(APPEND PACKAGED_DIST "default_snort_manual.text")
 endif()
 
-
-# Docuements to be built
+# Documents to be built
 set (EXTRA_DIST ${HTML_DOCS} ${PDF_DOCS} ${TEXT_DOCS})
 
 
@@ -178,7 +184,7 @@ if (MAKE_PDF_DOC OR MAKE_HTML_DOC OR MAKE_TEXT_DOC)
         )
         list (APPEND ALL_SOURCES ${output})
     else()
-        list (APPEND UNBUILT_SOURCES conf_differences.txt)
+        list (APPEND UNBUILT_SOURCES config_changes.txt)
     endif()
 
 
@@ -274,7 +280,7 @@ endif (MAKE_TEXT_DOC)
 # built documents
 
 # Specify binary path so we install the build manuals, not packaged manuals
-foreach (file ${EXTRA_DIST})
+foreach (file ${EXTRA_DIST} ${EXTRA_SOURCES})
     list(APPEND BUILT_DIST "${CMAKE_CURRENT_BINARY_DIR}/${file}")
 endforeach(file)
 
@@ -294,7 +300,7 @@ endif()
 
 if (MAKE_HTML_DOC)
     set (HTML_CHUNKED "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked")
-    install (DIRECTORY ${HTML_CHUNKED}/ DESTINATION "${SNORT_DATA_DIR}/snort_manual")
+    install (DIRECTORY ${HTML_CHUNKED}/ DESTINATION "${SNORT_DATA_DIR}/snort_manual.chunked")
     list(APPEND EXTRA_CLEAN "${HTML_CHUNKED}")
 endif()
 
