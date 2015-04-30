@@ -202,7 +202,8 @@ delete_unbuilt = $(if $(and $(findstring $(builddir),$(srcdir)),$(findstring $(s
 clean-local:
 	rm -f $(BUILT_SOURCES)
 	rm -f $(delete_unbuilt)
-	rm -f snort_manual.{fo,xml,html,pdf}
+	rm -f $(doc_DATA)
+	rm -f snort_manual.{fo,xml}
 	rm -rf snort_manual.chunked
 	rm -f *.css *.tgz
 
