@@ -253,13 +253,10 @@ static void IMAP_ResetState(void* ssn)
 void IMAP_GetEOL(const uint8_t* ptr, const uint8_t* end,
     const uint8_t** eol, const uint8_t** eolm)
 {
+    assert(ptr and end and eol and eolm);
+
     const uint8_t* tmp_eol;
     const uint8_t* tmp_eolm;
-
-    /* XXX maybe should fatal error here since none of these
-     *      * pointers should be NULL */
-    if (ptr == NULL || end == NULL || eol == NULL || eolm == NULL)
-        return;
 
     tmp_eol = (uint8_t*)memchr(ptr, '\n', end - ptr);
     if (tmp_eol == NULL)
@@ -511,7 +508,7 @@ static void IMAP_ProcessClientPacket(Packet* p, IMAPData* imap_ssn)
     const uint8_t* ptr = p->data;
     const uint8_t* end = p->data + p->dsize;
 
-    ptr = IMAP_HandleCommand(p, imap_ssn, ptr, end);
+    IMAP_HandleCommand(p, imap_ssn, ptr, end);
 }
 
 /*
@@ -532,7 +529,6 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
     const char *tmp = NULL;
     uint8_t *body_start = NULL;
     char *eptr;
-    uint32_t len = 0;
 
     ptr = p->data;
     end = p->data + p->dsize;
@@ -544,7 +540,8 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
             DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"); );
             if ( imap_ssn->body_len > imap_ssn->body_read)
             {
-                len = imap_ssn->body_len - imap_ssn->body_read;
+                uint32_t len = imap_ssn->body_len - imap_ssn->body_read;
+
                 if ( (uint32_t)(end - ptr) < len )
                 {
                     data_end = end;
@@ -609,15 +606,15 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
                 {
                     if ( (body_start + 1) < (uint8_t*)eol )
                     {
-                        len = (uint32_t)SnortStrtoul((const char*)(body_start + 1), &eptr, 10);
+                        uint32_t len =
+                            (uint32_t)SnortStrtoul((const char*)(body_start + 1), &eptr, 10);
+
                         if (*eptr != '}')
                         {
                             imap_ssn->state = STATE_UNKNOWN;
                         }
                         else
                             imap_ssn->body_len = len;
-
-                        len = 0;
                     }
                     else
                         imap_ssn->state = STATE_UNKNOWN;

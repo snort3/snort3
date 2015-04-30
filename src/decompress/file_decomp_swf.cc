@@ -16,6 +16,9 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+#include "file_decomp.h"
+#include "file_decomp_swf.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -26,9 +29,6 @@
 #ifdef HAVE_LZMA
 #include <lzma.h>
 #endif
-
-#include "file_decomp.h"
-#include "file_decomp_swf.h"
 
 #ifdef HAVE_LZMA
 #define LZMA_HEADER_LEN  (13)

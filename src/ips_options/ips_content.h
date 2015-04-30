@@ -22,6 +22,7 @@
 #define IPS_CONTENT_H
 
 #include <ctype.h>
+#include <sys/time.h>
 
 #include "main/snort_types.h"
 #include "main/thread.h"

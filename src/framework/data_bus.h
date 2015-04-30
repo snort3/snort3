@@ -25,7 +25,7 @@
 #include <vector>
 
 // FIXIT-P evaluate perf; focus is on correctness
-typedef std::vector<struct DataHandler*> DataList;
+typedef std::vector<class DataHandler*> DataList;
 typedef std::map<std::string, DataList> DataMap;
 
 #include "main/snort_types.h"

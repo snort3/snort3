@@ -16,6 +16,9 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+#include "file_decomp.h"
+#include "file_decomp_pdf.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -25,8 +28,7 @@
 #include <stdlib.h>
 #include <zlib.h>
 
-#include "file_decomp.h"
-#include "file_decomp_pdf.h"
+#include "main/thread.h"
 
 /* Define characters and tokens in PDF grammar */
 #define TOK_STRM_OPEN      "stream"
@@ -535,10 +537,11 @@ static inline fd_status_t Process_Stream(fd_PDF_Parse_p_t p)
    bulk of the file content. */
 static inline fd_status_t Handle_State_IND_OBJ(fd_session_p_t SessionPtr, uint8_t c)
 {
-    static uint8_t Ind_Obj_Token[] = { TOK_OBJ_OPEN };
-    static uint8_t Ind_Obj_End_Token[] = { TOK_OBJ_CLOSE };
-    static uint8_t Stream_Token[] = { TOK_STRM_OPEN };
-    static uint8_t Stream_End_Token[] = { TOK_STRM_CLOSE };
+    static THREAD_LOCAL uint8_t Ind_Obj_Token[] = { TOK_OBJ_OPEN };
+    static THREAD_LOCAL uint8_t Ind_Obj_End_Token[] = { TOK_OBJ_CLOSE };
+    static THREAD_LOCAL uint8_t Stream_Token[] = { TOK_STRM_OPEN };
+    static THREAD_LOCAL uint8_t Stream_End_Token[] = { TOK_STRM_CLOSE };
+
     fd_PDF_Parse_p_t p = &(SessionPtr->Decomp_State.PDF.Parse);
 
     /* Upon initial entry, setup state context */
@@ -718,7 +721,7 @@ static inline fd_status_t Handle_State_IND_OBJ(fd_session_p_t SessionPtr, uint8_
    this segment. */
 static inline fd_status_t Handle_State_XREF(fd_session_p_t SessionPtr, uint8_t c)
 {
-    static uint8_t* Xref_Tok;
+    static THREAD_LOCAL const uint8_t* Xref_Tok = (uint8_t*)TOK_XRF_STARTXREF;
     uint8_t Xref_End_Tok[] = { TOK_XRF_END };
     fd_PDF_Parse_p_t p = &(SessionPtr->Decomp_State.PDF.Parse);
 

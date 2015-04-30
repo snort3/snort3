@@ -49,6 +49,8 @@ set (UNBUILT_SOURCES
     reference.txt
     snort2lua.txt
     snorty.png
+    snort2x.png
+    snort3x.png
     snort_manual.txt
     start.txt
     style.txt

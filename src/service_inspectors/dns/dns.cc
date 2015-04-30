@@ -672,7 +672,7 @@ uint16_t CheckRRTypeTXTVuln(
 }
 
 uint16_t SkipDNSRData(
-    const unsigned char* data,
+    const unsigned char*,
     uint16_t bytes_unused,
     DNSData* dnsSessionData)
 {
@@ -681,7 +681,6 @@ uint16_t SkipDNSRData(
     if (bytes_required <= bytes_unused)
     {
         bytes_unused -= bytes_required;
-        data += bytes_required;
         dnsSessionData->bytes_seen_curr_rec += bytes_required;
     }
     else

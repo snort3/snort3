@@ -181,7 +181,7 @@ static inline void set_server_state(Flow* ssn, PopExpectedResp state)
  */
 static inline void reset_client_cmd_info(PopPafData* pfdata)
 {
-    pfdata->cmd_state.next_letter = '\0';
+    pfdata->cmd_state.next_letter = nullptr;
     pfdata->cmd_state.status = POP_CMD_SEARCH;
 }
 

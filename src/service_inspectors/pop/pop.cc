@@ -204,13 +204,10 @@ static void POP_ResetState(void* ssn)
 void POP_GetEOL(const uint8_t* ptr, const uint8_t* end,
     const uint8_t** eol, const uint8_t** eolm)
 {
+    assert(ptr and end and eol and eolm);
+
     const uint8_t* tmp_eol;
     const uint8_t* tmp_eolm;
-
-    /* XXX maybe should fatal error here since none of these
-     *      * pointers should be NULL */
-    if (ptr == NULL || end == NULL || eol == NULL || eolm == NULL)
-        return;
 
     tmp_eol = (uint8_t*)memchr(ptr, '\n', end - ptr);
     if (tmp_eol == NULL)
@@ -490,7 +487,7 @@ static void POP_ProcessClientPacket(Packet* p, POPData* pop_ssn)
     const uint8_t* ptr = p->data;
     const uint8_t* end = p->data + p->dsize;
 
-    ptr = POP_HandleCommand(p, pop_ssn, ptr, end);
+    POP_HandleCommand(p, pop_ssn, ptr, end);
 }
 
 /*

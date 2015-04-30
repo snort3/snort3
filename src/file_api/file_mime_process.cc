@@ -1005,7 +1005,7 @@ static inline bool store_boundary(MimeDataPafInfo* data_info,  uint8_t val)
         return 0;
     }
 
-    if ((*(data_info->boundary_search) == '='))
+    if (*(data_info->boundary_search) == '=')
     {
         /*Skip spaces for the end of boundary*/
         if (val == '=')
