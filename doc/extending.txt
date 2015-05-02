@@ -276,8 +276,3 @@ Action plugins specify a builtin action in the API which is used to
 determine verdict.  (Conversely, builtin actions don't have an associated
 plugin function.)
 
-
-=== Coding Style
-
-include::style.txt[]
-

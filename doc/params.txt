@@ -10,7 +10,7 @@ The following types are used:
   maximum
 * *bool*: true or false
 * *enum*: a string selected from the given range
-* *implied*: a IPS rule option that takes no value but means true
+* *implied*: an IPS rule option that takes no value but means true
 * *int*: a whole number in the given range
 * *ip4*: an IP4 address or CIDR
 * *mac*: an ethernet address with the form 01:02:03:04:05:06
@@ -18,6 +18,7 @@ The following types are used:
 * *port*: an int in the range 0:65535 indicating a TCP or UDP port number
 * *real*: a real number in the given range
 * *select*: a string selected from the given range
+* *string*: any string with no more than the given length, if any
 
 The parameter name may be adorned in various ways to indicate additional
 information about the type and use of the parameter:

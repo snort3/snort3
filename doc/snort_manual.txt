@@ -88,11 +88,15 @@ include::differences.txt[]
 
 include::snort2lua.txt[]
 
-== Reference
-
-include::reference.txt[]
-
 == Extending Snort++
 
 include::extending.txt[]
+
+== Coding Style
+
+include::style.txt[]
+
+== Reference
+
+include::reference.txt[]
 

@@ -1,13 +1,13 @@
 All new code should try to follow these style guidelines.  These are not
 yet firm so feedback is welcome to get something we can live with.
 
-==== General
+=== General
 
 * Generally try to follow
   http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml, 
   but there are a few differences.
 
-==== Naming
+=== Naming
 
 * Use camel case for namespaces, classes, and types like WhizBangPdfChecker.
 
@@ -16,7 +16,7 @@ yet firm so feedback is welcome to get something we can live with.
 
 * Use lower case filenames with underscores.
 
-==== Comments
+=== Comments
 
 * Write comments sparingly with a mind towards future proofing.  Often the
   comments can be obviated with better code.  Clear code is better than a
@@ -43,7 +43,7 @@ yet firm so feedback is welcome to get something we can live with.
 * Put author, description, etc. in separate comment(s) following the
   license.  Do not put such comments in the middle of the license foo.
 
-==== Logging
+=== Logging
 
 * Messages intended for the user should not look like debug messages. Eg,
   the function name should not be included.
@@ -53,7 +53,7 @@ yet firm so feedback is welcome to get something we can live with.
 * Don't bang your error messages (no !).  The user feels bad enough about the
   problem already w/o you shouting at him.
 
-==== Types
+=== Types
 
 * Use logical types to make the code clearer and to help the compiler catch
   problems.  typedef uint16_t Port; bool foo(Port) is way better than
@@ -84,7 +84,7 @@ yet firm so feedback is welcome to get something we can live with.
   didn't get updated and therefore won't get called due a change in the
   parent signature.
 
-==== Macros (aka defines)
+=== Macros (aka defines)
 
 * In many cases, even in C++, use #define name "value" instead of a
   const char* const name = "value" because it will eliminate a symbol from
@@ -103,7 +103,7 @@ yet firm so feedback is welcome to get something we can live with.
 * Multiline macros should be blocked (i.e. inside { }) to avoid if-else type
   surprises.
 
-==== Formatting
+=== Formatting
 
 * Indent 4 space chars ... no tabs!
 
@@ -149,7 +149,7 @@ yet firm so feedback is welcome to get something we can live with.
       if ( test )
           foo();
 
-==== Headers
+=== Headers
 
 * Don't hesitate to create a new header if it is needed.  Don't lump
   unrelated stuff into an header because it is convenient.
@@ -199,7 +199,7 @@ yet firm so feedback is welcome to get something we can live with.
 
 * Do not put using statements in headers.
 
-==== Warnings
+=== Warnings
 
 * With g++, use at least these compiler flags:
 
@@ -208,11 +208,11 @@ yet firm so feedback is welcome to get something we can live with.
 
 * Then Fix All Warnings.  None Allowed.
 
-==== Other
+=== Other
 
 * Prefer 'and' over && and 'or' over || for new source files.
 
-==== Uncrustify
+=== Uncrustify
 
 Currently using uncrustify from at https://github.com/bengardner/uncrustify
 to reformat legacy code and anything that happens to need a makeover at
