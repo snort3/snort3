@@ -26,6 +26,7 @@ namespace NHttpEnums
 {
 static const int MAXOCTETS = 63780;
 static const int DATABLOCKSIZE = 16384;
+static const int FINALBLOCKSIZE = 24576;
 static const uint32_t NHTTP_GID = 219;
 
 // Field status codes for when no valid value is present in length or integer value. Positive
@@ -37,15 +38,16 @@ enum StatusCode { STAT_NOSOURCE=-6, STAT_NOTCONFIGURED=-5, STAT_NOTCOMPUTE=-4, S
 enum SourceId { SRC__NOTCOMPUTE=-4, SRC_CLIENT=0, SRC_SERVER=1 };
 
 // Type of message section
-enum SectionType { SEC_DISCARD = -10, SEC_CLOSED = -9, SEC_ABORT = -8, SEC__NOTCOMPUTE=-4,
-    SEC__NOTPRESENT=-1, SEC_REQUEST = 2, SEC_STATUS, SEC_HEADER, SEC_BODY, SEC_CHUNK,
-    SEC_TRAILER };
+enum SectionType { SEC_DISCARD = -9, SEC_ABORT = -8, SEC__NOTCOMPUTE=-4, SEC__NOTPRESENT=-1,
+    SEC_REQUEST = 2, SEC_STATUS, SEC_HEADER, SEC_BODY, SEC_CHUNK, SEC_TRAILER };
 
 // Result of scanning by splitter
-enum ScanResult { SCAN_NOTFOUND, SCAN_FOUND, SCAN_DISCARD, SCAN_DISCARD_CONTINUE, SCAN_ABORT };
+enum ScanResult { SCAN_NOTFOUND, SCAN_FOUND, SCAN_FOUND_PIECE, SCAN_DISCARD, SCAN_ABORT,
+    SCAN_FLUSH_ABORT };
 
-// Result of processing a message section--what needs to happen next
-enum ProcessResult { RES_INSPECT, RES_IGNORE, RES_AGGREGATE };
+// State machine for chunk parsing
+enum ChunkState { CHUNK_ZEROS, CHUNK_NUMBER, CHUNK_OPTIONS, CHUNK_HCRLF, CHUNK_DATA, CHUNK_DCRLF1,
+    CHUNK_DCRLF2 };
 
 // List of possible HTTP versions. Version 0.9 omitted because 0.9 predates creation of the
 // HTTP/X.Y token. There would never be a message with "HTTP/0.9"

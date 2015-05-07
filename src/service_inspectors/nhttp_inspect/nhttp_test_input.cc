@@ -39,8 +39,7 @@ NHttpTestInput::~NHttpTestInput()
 // Read from the test data file and present to StreamSplitter. In the process we may need to skip
 // comments, execute simple commands, and handle escape sequences. The best way to understand this
 // function is to read the comments at the top of the file of test cases.
-void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, bool& tcp_close,
-    bool& need_break)
+void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, bool& need_break)
 {
     need_break = false;
     // Don't proceed if we have previously flushed data not reassembled yet.
@@ -50,7 +49,6 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
         length = 0;
         return;
     }
-    tcp_close = tcp_closed;
 
     if (just_flushed)
     {
@@ -58,7 +56,8 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
         // be leftover data from the last paragraph that was not flushed.
         just_flushed = false;
         data = msg_buf;
-        length = end_offset - flush_octets;  // this is the leftover data
+        // compute the leftover data
+        length = (flush_octets <= end_offset) ? (end_offset - flush_octets) : 0;
         previous_offset = 0;
         end_offset = length;
         if (length > 0)
@@ -70,10 +69,7 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
             flush_octets = 0;
             return;
         }
-        // If we reach here then StreamSplitter has already flushed all the data we have read so
-        // far.
-        tcp_closed = false;
-        tcp_close = tcp_closed;
+        // If we reach here then StreamSplitter has already flushed all data read so far
         flush_octets = 0;
     }
     else
@@ -86,7 +82,7 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
 
     // Now we need to move forward by reading more data from the file
     int new_char;
-    typedef enum { WAITING, COMMENT, COMMAND, PARAGRAPH, ESCAPE, HEXVAL } State;
+    enum State { WAITING, COMMENT, COMMAND, PARAGRAPH, ESCAPE, HEXVAL };
     State state = WAITING;
     bool ending = false;
     int command_length = 0;
@@ -162,7 +158,6 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
                     "tcpclose", strlen("tcpclose")))
                 {
                     tcp_closed = true;
-                    tcp_close = tcp_closed;
                 }
                 else if (command_length > 0)
                 {
@@ -262,6 +257,7 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
 void NHttpTestInput::flush(uint32_t num_octets)
 {
     flush_octets = previous_offset + num_octets;
+    assert(flush_octets <= 63780);
     flushed = true;
 }
 
@@ -271,47 +267,85 @@ void NHttpTestInput::discard(uint32_t num_octets)
     just_flushed = true;
 }
 
-void NHttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId source_id, const
-    NHttpFlowData* session_data,
+void NHttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId source_id,
     bool& tcp_close)
 {
-    if (!flushed || (source_id != last_source_id))
+    *buffer = nullptr;
+    tcp_close = false;
+
+    // Only piggyback on data moving in the same direction.
+    // Need flushed data unless the connection is closing.
+    if ((source_id != last_source_id) || (!flushed && !tcp_closed))
     {
-        *buffer = nullptr;
         return;
     }
-    *buffer = msg_buf;
 
-    if (flush_octets <= end_offset)
+    // How we process TCP close situations depends on the size of the flush relative to the data
+    // buffer.
+    // 1. less than whole buffer - not the final flush, ignore pending close
+    // 2. exactly equal - process data now and signal the close next time around
+    // 3. more than whole buffer - signal the close now and truncate and send next time around
+    // 4. there was no flush - signal the close now and send the leftovers next time around
+    if ((tcp_closed) && (flush_octets >= end_offset))
     {
-        // All the data we need comes from the file
-        tcp_close = tcp_closed && (flush_octets == end_offset);
-        length = flush_octets;
-        just_flushed = true;
-        flushed = false;
-    }
-    else
-    {
-        // We need to generate additional data to fill out the body or chunk section. We may come
-        // through here multiple times as we generate all the maximum size body sections needed for
-        // a single flush.
-        tcp_close = false;
-        unsigned paf_max = DATABLOCKSIZE;
-        if (session_data->section_type[source_id] == SEC_CHUNK) {
-            paf_max -= session_data->section_buffer_length[source_id];
+        if (close_pending)
+        {
+            // There is no more data. Clean up and notify caller about close.
+            just_flushed = true;
+            flushed = false;
+            close_pending = false;
+            tcp_closed = false;
+            tcp_close = true;
         }
-        length = (flush_octets <= paf_max) ? flush_octets : paf_max;
-        for (uint32_t k = end_offset; k < length; k++)
+        else if (!flushed)
+        {
+            // Failure to flush means scan() reached end of paragraph and returned PAF_SEARCH.
+            // Convert remaining data to flush and notify caller about close.
+            flush(end_offset - previous_offset);
+            tcp_close = true;
+            close_notified = true;
+        }
+        else if (flush_octets == end_offset)
+        {
+            // The flush point is the end of the paragraph. Supply the data now and if necessary
+            // notify the caller about close next time or otherwise just clean up.
+            *buffer = msg_buf;
+            length = flush_octets;
+            if (close_notified)
+            {
+                just_flushed = true;
+                flushed = false;
+                close_notified = false;
+                tcp_closed = false;
+            }
+            else
+            {
+                close_pending = true;
+            }
+        }
+        else
+        {
+            // Flushed more body data than is actually available. Truncate the size of the flush,
+            // notify caller about close, and supply the data next time.
+            flush_octets = end_offset;
+            tcp_close = true;
+            close_notified = true;
+        }
+        return;
+    }
+
+    // Normal case with no TCP close or at least not yet
+    *buffer = msg_buf;
+    length = flush_octets;
+    if (flush_octets > end_offset)
+    {
+        // We need to generate additional data to fill out the body or chunk section.
+        for (uint32_t k = end_offset; k < flush_octets; k++)
         {
             msg_buf[k] = 'A' + k % 26;
         }
-        flush_octets -= length;
-        end_offset = 0;
-        if (flush_octets == 0)
-        {
-            just_flushed = true;
-            flushed = false;
-        }
     }
+    just_flushed = true;
+    flushed = false;
 }
 

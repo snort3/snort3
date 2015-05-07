@@ -27,6 +27,14 @@
 
 using namespace NHttpEnums;
 
+NHttpMsgHeadShared::~NHttpMsgHeadShared()
+{
+    delete[] header_line;
+    delete[] header_name;
+    delete[] header_name_id;
+    delete[] header_value;
+}
+
 // All the header processing that is done for every message (i.e. not just-in-time) is done here.
 void NHttpMsgHeadShared::analyze()
 {
@@ -46,12 +54,13 @@ void NHttpMsgHeadShared::parse_header_block()
     int32_t bytes_used = 0;
     num_headers = 0;
     int num_seps;
+    header_line = new Field[session_data->num_head_lines[source_id]];
     while (bytes_used < msg_text.length)
     {
         header_line[num_headers].start = msg_text.start + bytes_used;
         header_line[num_headers].length = find_header_end(header_line[num_headers].start,
-            msg_text.length - bytes_used,
-            &num_seps);
+            msg_text.length - bytes_used, &num_seps);
+        assert(num_headers < session_data->num_head_lines[source_id]);
         bytes_used += header_line[num_headers++].length + num_seps;
         if (num_headers >= MAXHEADERS)
         {
@@ -99,6 +108,10 @@ uint32_t NHttpMsgHeadShared::find_header_end(const uint8_t* buffer, int32_t leng
 // Divide header field lines into field name and field value
 void NHttpMsgHeadShared::parse_header_lines()
 {
+    header_name = new Field[session_data->num_head_lines[source_id]];
+    header_value = new Field[session_data->num_head_lines[source_id]];
+    header_name_id = new HeaderId[session_data->num_head_lines[source_id]];
+
     int colon;
     for (int k=0; k < num_headers; k++)
     {

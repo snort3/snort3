@@ -40,16 +40,16 @@ public:
 
     friend class NHttpInspect;
     friend class NHttpMsgSection;
-    friend class NHttpMsgHeader;
     friend class NHttpMsgStart;
     friend class NHttpMsgRequest;
     friend class NHttpMsgStatus;
+    friend class NHttpMsgHeader;
+    friend class NHttpMsgHeadShared;
+    friend class NHttpMsgTrailer;
     friend class NHttpMsgBody;
     friend class NHttpMsgChunk;
-    friend class NHttpMsgTrailer;
     friend class NHttpStreamSplitter;
     friend class NHttpTransaction;
-    friend class NHttpTestInput;
 
 private:
     void half_reset(NHttpEnums::SourceId source_id);
@@ -59,9 +59,9 @@ private:
 
     // StreamSplitter internal data - reassemble()
     uint8_t* section_buffer[2] = { nullptr, nullptr };
-    int32_t section_buffer_length[2] = { 0, 0 };
-    bool section_buffer_owned[2] = { true, true };
-    bool zero_chunk[2] = { false, false };
+    uint32_t chunk_offset[2] = { 0, 0 };
+    NHttpEnums::ChunkState chunk_state[2] = { NHttpEnums::CHUNK_NUMBER, NHttpEnums::CHUNK_NUMBER };
+    uint32_t chunk_expected[2] = { 0, 0 };
 
     // StreamSplitter => Inspector (facts about the most recent message section)
     // 0 element refers to client request, 1 element refers to server response
@@ -71,8 +71,8 @@ private:
     bool tcp_close[2] = { false, false };
     NHttpInfractions infractions[2];
     NHttpEventGen events[2];
-    uint32_t unused_octets_visible[2] = { 0, 0 };
-    uint32_t header_octets_visible[2] = { 0, 0 };
+    int32_t num_head_lines[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
+    uint32_t flush_size[2] = { 0, 0 };
 
     // Inspector => StreamSplitter (facts about the message section that is coming next)
     NHttpEnums::SectionType type_expected[2] = { NHttpEnums::SEC_REQUEST, NHttpEnums::SEC_STATUS };
@@ -90,11 +90,10 @@ private:
     int64_t body_octets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
 
     // Transaction management including pipelining
+    // FIXIT-L pipeline deserves to be its own class
     NHttpTransaction* transaction[2] = { nullptr, nullptr };
     static const int MAX_PIPELINE = 100;  // requests seen - responses seen <= MAX_PIPELINE
-    // FIXIT-P consider dynamically allocating pipeline when first transaction is added. This would
-    // save a lot of space when there is no pipeline.
-    NHttpTransaction* pipeline[MAX_PIPELINE];
+    NHttpTransaction** pipeline = nullptr;
     int pipeline_front = 0;
     int pipeline_back = 0;
     bool pipeline_overflow = false;

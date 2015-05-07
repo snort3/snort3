@@ -24,9 +24,10 @@
 // NHttpInspect class
 //-------------------------------------------------------------------------
 
-#include "framework/inspector.h"
-#include "nhttp_stream_splitter.h"
 #include "log/messages.h"
+
+#include "nhttp_enum.h"
+#include "nhttp_stream_splitter.h"
 
 class NHttpApi;
 class NHttpMsgSection;
@@ -34,6 +35,8 @@ class NHttpMsgSection;
 class NHttpInspect : public Inspector
 {
 public:
+    static THREAD_LOCAL uint8_t body_buffer[NHttpEnums::MAXOCTETS];
+
     NHttpInspect(bool test_input, bool test_output);
 
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
@@ -49,12 +52,11 @@ public:
         return new
                NHttpStreamSplitter(is_client_to_server, this);
     }
-
 private:
     friend NHttpApi;
     friend NHttpStreamSplitter;
 
-    NHttpEnums::ProcessResult process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
+    bool process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
         NHttpEnums::SourceId source_id_, bool buf_owner) const;
 
     static THREAD_LOCAL NHttpMsgSection* latest_section;

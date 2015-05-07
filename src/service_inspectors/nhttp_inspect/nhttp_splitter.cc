@@ -76,18 +76,9 @@ ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length,
 ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length,
     NHttpInfractions& infractions, NHttpEventGen& events)
 {
-    if (peek_status == SCAN_FOUND)
-    {
-        return SCAN_FOUND;
-    }
-    buffer += peek_octets;
-    length -= peek_octets;
-
     // Header separators: leading \r\n, leading \n, nonleading \r\n\r\n, nonleading \n\r\n,
     // nonleading \r\n\n, and nonleading \n\n. The separator itself becomes num_excess which is
     // discarded during reassemble().
-    // FIXIT-L There is a regression test with a rule that looks for these separators in the
-    // header buffer.
     for (uint32_t k = 0; k < length; k++)
     {
         if (buffer[k] == '\n')
@@ -96,6 +87,10 @@ ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length,
             if ((first_lf == 0) && (num_crlf < octets_seen + k + 1))
             {
                 first_lf = num_crlf;
+                // This count is here so the inspector can quickly allocate memory to store the
+                // header lines. It doesn't allow for line wrapping because that is not important
+                // for this purpose.
+                num_head_lines++;
             }
             else
             {
@@ -105,7 +100,7 @@ ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length,
                     infractions += INF_LF_WITHOUT_CR;
                     events.create_event(EVENT_IIS_DELIMITER);
                 }
-                num_flush = k + 1 + peek_octets;
+                num_flush = k + 1;
                 return SCAN_FOUND;
             }
         }
@@ -127,98 +122,158 @@ ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length,
             first_lf = 0;
         }
     }
-    peek_octets = 0;
     octets_seen += length;
     return SCAN_NOTFOUND;
 }
 
-ScanResult NHttpHeaderSplitter::peek(const uint8_t* buffer, uint32_t length,
-    NHttpInfractions& infractions, NHttpEventGen& events)
+ScanResult NHttpBodySplitter::split(const uint8_t*, uint32_t, NHttpInfractions&, NHttpEventGen&)
 {
-    peek_status = split(buffer, length, infractions, events);
-    peek_octets = length;
-    return peek_status;
+    assert(remaining > 0);
+
+    // The normal body section size is about 16K. But if there are only 24K or less remaining we
+    // take the whole thing rather than leave a small final section.
+    if (remaining <= FINALBLOCKSIZE)
+    {
+        num_flush = remaining;
+        remaining = 0;
+        return SCAN_FOUND;
+    }
+    else
+    {
+        // FIXIT-M need to implement random increments
+        num_flush = DATABLOCKSIZE;
+        remaining -= num_flush;
+        return SCAN_FOUND_PIECE;
+    }
 }
 
 ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length,
     NHttpInfractions&, NHttpEventGen&)
 {
-    // FIXIT-M when things go wrong and we must abort we need to flush partial chunk buffer
-    if (header_complete)
+    if (new_section)
     {
-        // Previously read the chunk header. Now just flush the length.
-        num_flush = expected_length;
-        return SCAN_FOUND;
+        new_section = false;
+        octets_seen = 0;
     }
-    for (uint32_t k = 0; k < length; k++)
+
+    for (uint32_t k=0; k < length; k++)
     {
-        // FIXIT-M learn to support white space before chunk header extension semicolon
-        if (buffer[k] == '\n')
+        switch (curr_state)
         {
-            if (octets_seen + k == num_crlf)
+        case CHUNK_ZEROS:
+            if (buffer[k] == '0')
             {
-                // \r\n or \n leftover from previous chunk
-                num_flush = k+1;
-                return SCAN_DISCARD;
+                num_zeros++;
+                // FIXIT-L add test and alert for excessive zeros
+                break;
             }
-            if (!length_started)
+            curr_state = CHUNK_NUMBER;
+            // Fall through
+        case CHUNK_NUMBER:
+            if (buffer[k] == '\r')
             {
-                // chunk header specifies no length
-                return SCAN_ABORT;
+                curr_state = CHUNK_HCRLF;
+                break;
             }
-            if (expected_length == 0)
+            if (buffer[k] == ';')
             {
-                // Workaround because stream cannot handle zero-length flush. Instead of flushing
-                // the zero-length chunk to flush the partial chunk buffer in reassembly, we save
-                // the terminal \n from the chunk header for use as an end-of-chunks signal.
-                // FIXIT-M
-                expected_length = 1;
-                zero_chunk = true;
-                num_flush = k;
+                // FIXIT-L add alert for option use
+                curr_state = CHUNK_OPTIONS;
+                break;
+            }
+            if (as_hex[buffer[k]] == -1)
+            {
+                // illegal character present in chunk length
+                // FIXIT-L add alert for loss of sync
+                num_flush = k + 1;
+                return SCAN_FLUSH_ABORT;
+            }
+            expected = expected * 16 + as_hex[buffer[k]];
+            if (++digits_seen > 8)
+            {
+                // overflow protection: must fit into 32 bits
+                // FIXIT-L add alert for too large chunk size
+                num_flush = k + 1;
+                return SCAN_FLUSH_ABORT;
+            }
+            break;
+        case CHUNK_OPTIONS:
+            if (buffer[k] == '\r')
+            {
+                curr_state = CHUNK_HCRLF;
+            }
+            else if (buffer[k] == '\n')
+            {
+                // FIXIT-L add alert for loss of sync
+                num_flush = k + 1;
+                return SCAN_FLUSH_ABORT;
+            }
+            break;
+        case CHUNK_HCRLF:
+            if (buffer[k] != '\n')
+            {
+                // FIXIT-L add alert for loss of sync
+                num_flush = k + 1;
+                return SCAN_FLUSH_ABORT;
+            }
+            if (expected > 0)
+            {
+                curr_state = CHUNK_DATA;
+            }
+            else if (num_zeros > 0)
+            {
+                // Terminating zero-length chunk
+                num_flush = k + 1;
+                return SCAN_FOUND;
             }
             else
             {
-                num_flush = k+1;
+                // FIXIT-L add alert for loss of sync
+                num_flush = k + 1;
+                return SCAN_FLUSH_ABORT;
             }
-            // flush completed chunk header
-            header_complete = true;
-            return SCAN_DISCARD_CONTINUE;
-        }
-        if (num_crlf == 1)
-        {
-            // CR not followed by LF
-            return SCAN_ABORT;
-        }
-        if (buffer[k] == '\r')
-        {
-            num_crlf = 1;
-            continue;
-        }
-        if (buffer[k] == ';')
-        {
-            semicolon = true;
-        }
-        if (semicolon)
-        {
-            // we don't look at chunk header extensions
-            continue;
-        }
-        if (as_hex[buffer[k]] == -1)
-        {
-            // illegal character present in chunk length
-            return SCAN_ABORT;
-        }
-        length_started = true;
-        if (digits_seen >= 8)
-        {
-            // overflow protection: must fit into 32 bits
-            return SCAN_ABORT;
-        }
-        expected_length = expected_length * 16 + as_hex[buffer[k]];
-        if (expected_length > 0)
-        {
-            // leading zeroes don't count
-            digits_seen++;
+            break;
+        case CHUNK_DATA:
+          {
+            uint32_t skip_amount = (length-k <= expected) ? length-k : expected;
+            skip_amount = (skip_amount <= DATABLOCKSIZE-data_seen) ? skip_amount :
+                DATABLOCKSIZE-data_seen;
+            k += skip_amount - 1;
+            if ((expected -= skip_amount) == 0)
+            {
+                curr_state = CHUNK_DCRLF1;
+            }
+            if ((data_seen += skip_amount) == DATABLOCKSIZE)
+            {
+                // FIXIT-M need to randomize slice point
+                data_seen = 0;
+                num_flush = k+1;
+                new_section = true;
+                return SCAN_FOUND_PIECE;
+            }
+            break;
+          }
+        case CHUNK_DCRLF1:
+            if (buffer[k] != '\r')
+            {
+                // FIXIT-L add alert for CRLF error
+                num_flush = k + 1;
+                return SCAN_FLUSH_ABORT;
+            }
+            curr_state = CHUNK_DCRLF2;
+            break;
+        case CHUNK_DCRLF2:
+            if (buffer[k] != '\n')
+            {
+                // FIXIT-L add alert for CRLF error
+                num_flush = k + 1;
+                return SCAN_FLUSH_ABORT;
+            }
+            curr_state = CHUNK_ZEROS;
+            num_zeros = 0;
+            expected = 0;
+            digits_seen = 0;
+            break;
         }
     }
     octets_seen += length;

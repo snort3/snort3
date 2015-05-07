@@ -58,12 +58,7 @@ void NHttpMsgHeader::update_flow()
     // should not.
     // FIXIT-H need to support old implementations that don't use Content-Length but just
     // disconnect the connection.
-    if (tcp_close)
-    {
-        session_data->type_expected[source_id] = SEC_CLOSED;
-        session_data->half_reset(source_id);
-    }
-    else if ((source_id == SRC_SERVER) && ((status_code_num <= 199) || (status_code_num == 204) ||
+    if ((source_id == SRC_SERVER) && ((status_code_num <= 199) || (status_code_num == 204) ||
         (status_code_num == 304)))
     {
         // No body allowed by RFC for these response codes
@@ -111,23 +106,5 @@ void NHttpMsgHeader::update_flow()
         session_data->half_reset(source_id);
     }
     session_data->section_type[source_id] = SEC__NOTCOMPUTE;
-}
-
-ProcessResult NHttpMsgHeader::worth_detection()
-{
-    // We can combine with body when sending to detection if the entire body is already available
-    // and the combined size does exceed paf_max.
-    if ((session_data->type_expected[source_id] == SEC_BODY) &&
-        (session_data->data_length[source_id] <= session_data->unused_octets_visible[source_id]) &&
-        (session_data->data_length[source_id] <= DATABLOCKSIZE) &&
-        (session_data->section_buffer_length[source_id] + msg_text.length +
-        session_data->data_length[source_id] <= MAXOCTETS))
-    {
-        return RES_AGGREGATE;
-    }
-
-    // Do not send empty headers by themselves to detection
-    return ((msg_text.length > 0) || (session_data->section_buffer_length[source_id] > 0))
-           ? RES_INSPECT : RES_IGNORE;
 }
 

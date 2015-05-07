@@ -45,19 +45,20 @@ void NHttpMsgChunk::print_section(FILE* output)
 
 void NHttpMsgChunk::update_flow()
 {
-    if (tcp_close)
+    if (session_data->splitter[source_id] == nullptr)
     {
-        session_data->type_expected[source_id] = SEC_CLOSED;
-        session_data->section_type[source_id] = SEC__NOTCOMPUTE;
-        session_data->half_reset(source_id);
+        // Splitter deleted when zero-length chunk received
+        session_data->body_octets[source_id] = body_octets;
+        session_data->type_expected[source_id] = SEC_TRAILER;
+        session_data->infractions[source_id].reset();
+        session_data->events[source_id].reset();
     }
     else
     {
-        // Zero-length chunk is not visible here. StreamSplitter::reassemble() updates
-        // type_expected to SEC_TRAILER.
         session_data->body_octets[source_id] = body_octets;
         session_data->infractions[source_id] = infractions;
         session_data->events[source_id] = events;
     }
+    session_data->section_type[source_id] = SEC__NOTCOMPUTE;
 }
 

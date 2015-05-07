@@ -32,6 +32,8 @@
 class NHttpMsgHeadShared : public NHttpMsgSection
 {
 public:
+    ~NHttpMsgHeadShared();
+
     void analyze() override;
     void gen_events() override;
 
@@ -73,15 +75,15 @@ protected:
     void print_headers(FILE* output);
 
     // All of these are indexed by the relative position of the header field in the message
-    static const int MAXHEADERS = 200;  // I'm an arbitrary number. FIXIT-P
+    static const int MAXHEADERS = 200;  // I'm an arbitrary number. FIXIT-L
     int32_t num_headers = NHttpEnums::STAT_NOTCOMPUTE;
-    // FIXIT-P these big static header arrays should relocate to the scratch pad
-    Field header_line[MAXHEADERS];
-    Field header_name[MAXHEADERS];
-    NHttpEnums::HeaderId header_name_id[MAXHEADERS];
-    Field header_value[MAXHEADERS];
+    Field* header_line = nullptr;
+    Field* header_name = nullptr;
+    NHttpEnums::HeaderId* header_name_id = nullptr;
+    Field* header_value = nullptr;
 
     // Normalized values are indexed by HeaderId
+    // FIXIT-P there is room to optimize memory here
     int header_count[NHttpEnums::HEAD__MAXVALUE] = { };
     Field header_value_norm[NHttpEnums::HEAD__MAXVALUE];
 };

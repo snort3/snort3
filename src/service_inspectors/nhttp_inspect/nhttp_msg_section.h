@@ -32,8 +32,6 @@
 // NHttpMsgSection class
 //-------------------------------------------------------------------------
 
-class NHttpMsgHeadShared;
-
 class NHttpMsgSection
 {
 public:
@@ -51,7 +49,7 @@ public:
     const Field& get_legacy(unsigned buffer_id);
 
     // Should this section be sent directly to detection after inspection?
-    virtual NHttpEnums::ProcessResult worth_detection() { return NHttpEnums::RES_INSPECT; }
+    bool worth_detection() { return (msg_text.length > 0); }
 
     NHttpEnums::MethodId get_method_id() const { return method_id; }
 

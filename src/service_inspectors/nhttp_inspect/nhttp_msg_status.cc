@@ -118,12 +118,7 @@ void NHttpMsgStatus::print_section(FILE* output)
 void NHttpMsgStatus::update_flow()
 {
     // The following logic to determine body type is by no means the last word on this topic.
-    if (tcp_close)
-    {
-        session_data->type_expected[source_id] = SEC_CLOSED;
-        session_data->half_reset(source_id);
-    }
-    else if (infractions && INF_BAD_STAT_LINE)
+    if (infractions && INF_BAD_STAT_LINE)
     {
         session_data->type_expected[source_id] = SEC_ABORT;
         session_data->half_reset(source_id);

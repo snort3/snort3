@@ -30,12 +30,11 @@ class NHttpTestInput
 public:
     NHttpTestInput(const char* fileName);
     ~NHttpTestInput();
-    void scan(uint8_t*& data, uint32_t& length, NHttpEnums::SourceId source_id, bool& tcp_close,
-        bool& need_break);
+    void scan(uint8_t*& data, uint32_t& length, NHttpEnums::SourceId source_id, bool& need_break);
     void flush(uint32_t num_octets);
     void discard(uint32_t num_octets);
     void reassemble(uint8_t** buffer, unsigned& length, NHttpEnums::SourceId source_id,
-        const NHttpFlowData* session_data, bool& tcp_close);
+        bool& tcp_close);
 
 private:
     FILE* test_data_file;
@@ -48,7 +47,7 @@ private:
     // current direction of traffic flow. Toggled by commands in file.
     NHttpEnums::SourceId last_source_id = NHttpEnums::SRC_CLIENT;
 
-    // reassemble just completed and all flushed octets forwarded, time to resume scan()
+    // reassemble() just completed and all flushed octets forwarded, time to resume scan()
     bool just_flushed = true;
 
     // TCP connection directional close at end of current paragraph
@@ -62,6 +61,12 @@ private:
 
     // last read character in the buffer
     uint32_t end_offset = 0;
+
+    // Need to send close with next pass through reassemble()
+    bool close_pending = false;
+
+    // Close notification already provided
+    bool close_notified = false;
 };
 
 #endif

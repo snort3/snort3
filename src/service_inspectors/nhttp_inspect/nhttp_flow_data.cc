@@ -46,10 +46,7 @@ NHttpFlowData::~NHttpFlowData()
     }
     for (int k=0; k <= 1; k++)
     {
-        if (section_buffer_owned[k])
-        {
-            delete[] section_buffer[k];
-        }
+        delete[] section_buffer[k];
         delete transaction[k];
         delete splitter[k];
     }
@@ -85,18 +82,16 @@ void NHttpFlowData::show(FILE* out_file) const
     fprintf(out_file, "Type expected: %d/%d\n", type_expected[0], type_expected[1]);
     fprintf(out_file, "Data length: %" PRIi64 "/%" PRIi64 "\n", data_length[0], data_length[1]);
     fprintf(out_file, "Body octets: %" PRIi64 "/%" PRIi64 "\n", body_octets[0], body_octets[1]);
-    fprintf(out_file, "Unused octets visible: %u/%u\n", unused_octets_visible[0],
-        unused_octets_visible[1]);
-    fprintf(out_file, "Header octets visible: %u/%u\n", header_octets_visible[0],
-        header_octets_visible[1]);
-    fprintf(out_file, "Section buffer length: %d/%d\n", section_buffer_length[0],
-        section_buffer_length[1]);
     fprintf(out_file, "Pipelining: front %d back %d overflow %d underflow %d\n", pipeline_front,
         pipeline_back, pipeline_overflow, pipeline_underflow);
 }
 
 bool NHttpFlowData::add_to_pipeline(NHttpTransaction* latest)
 {
+    if (pipeline == nullptr)
+    {
+        pipeline = new NHttpTransaction*[MAX_PIPELINE];
+    }
     assert(!pipeline_overflow && !pipeline_underflow);
     int new_back = (pipeline_back+1) % MAX_PIPELINE;
     if (new_back == pipeline_front)
@@ -127,5 +122,6 @@ void NHttpFlowData::delete_pipeline()
     {
         delete pipeline[k];
     }
+    delete[] pipeline;
 }
 

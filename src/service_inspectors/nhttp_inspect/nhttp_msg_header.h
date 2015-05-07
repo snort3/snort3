@@ -34,7 +34,6 @@ public:
     void print_section(FILE* output) override;
     void gen_events() override;
     void update_flow() override;
-    NHttpEnums::ProcessResult worth_detection() override;
 };
 
 #endif

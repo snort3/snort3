@@ -49,6 +49,8 @@ NHttpInspect::NHttpInspect(bool test_input, bool test_output)
     }
 }
 
+THREAD_LOCAL uint8_t NHttpInspect::body_buffer[MAXOCTETS];
+
 THREAD_LOCAL NHttpMsgSection* NHttpInspect::latest_section = nullptr;
 
 bool NHttpInspect::get_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b)
@@ -84,7 +86,7 @@ bool NHttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
     return true;
 }
 
-ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
+bool NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
     SourceId source_id, bool buf_owner) const
 {
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(
@@ -117,7 +119,7 @@ ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, F
         {
             delete[] data;
         }
-        return RES_IGNORE;
+        return false;
     }
 
     latest_section->analyze();
@@ -158,7 +160,18 @@ void NHttpInspect::clear(Packet* p)
 
     if (session_data->transaction[source_id] == nullptr)
         return;
-    delete session_data->transaction[source_id]->get_body();
-    session_data->transaction[source_id]->set_body(nullptr);
+
+    // If current transaction is complete then we are done with it and should reclaim the space
+    if ((source_id == SRC_SERVER) && (session_data->type_expected[SRC_SERVER] == SEC_STATUS))
+    {
+        delete session_data->transaction[SRC_SERVER];
+        session_data->transaction[SRC_SERVER] = nullptr;
+    }
+    else
+    {
+        // Get rid of most recent body section if present
+        delete session_data->transaction[source_id]->get_body();
+        session_data->transaction[source_id]->set_body(nullptr);
+    }
 }
 

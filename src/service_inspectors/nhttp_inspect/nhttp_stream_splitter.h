@@ -38,21 +38,20 @@ public:
         uint32_t* flush_offset) override;
     const StreamBuffer* reassemble(Flow* flow, unsigned total, unsigned offset, const
         uint8_t* data, unsigned len, uint32_t flags, unsigned& copied) override;
+    bool finish(Flow* flow) override;
     bool is_paf() override { return true; }
-    unsigned max(Flow*) override
-    {
-        return NHttpTestManager::use_test_input() ? NHttpEnums::DATABLOCKSIZE : paf_max;
-    }
+    unsigned max(Flow*) override { return NHttpEnums::MAXOCTETS; }
 
 private:
     void prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, NHttpEnums::SectionType
-        section_type, bool tcp_close, uint32_t num_octets, uint32_t length, uint32_t num_excess,
-        bool zero_chunk);
-    NHttpSplitter* get_splitter(NHttpEnums::SectionType type) const;
+        section_type, uint32_t num_flushed, uint32_t octets_seen, uint32_t num_excess,
+        int32_t num_head_lines) const;
+    NHttpSplitter* get_splitter(NHttpEnums::SectionType type, const NHttpFlowData* session) const;
+    void chunk_spray(NHttpFlowData* session_data, uint8_t* buffer, const uint8_t* data,
+        unsigned length) const;
 
     const NHttpEnums::SourceId source_id;
     NHttpInspect* const my_inspector;
-    unsigned paf_max = NHttpEnums::MAXOCTETS;
 };
 
 #endif

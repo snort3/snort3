@@ -36,13 +36,10 @@ public:
     virtual ~NHttpSplitter() = default;
     virtual NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length,
         NHttpInfractions& infractions, NHttpEventGen& events) = 0;
-    virtual NHttpEnums::ScanResult peek(const uint8_t*, uint32_t, NHttpInfractions&,
-        NHttpEventGen&) { assert(0); return NHttpEnums::SCAN_NOTFOUND; }
     uint32_t get_num_flush() const { return num_flush; }
-    virtual uint32_t get_octets_seen() const { return octets_seen; }
+    uint32_t get_octets_seen() const { return octets_seen; }
     virtual uint32_t get_num_excess() const { return 0; }
-    virtual bool get_zero_chunk() const { return false; }
-    virtual bool partial_ok() const { return true; }
+    virtual uint32_t get_num_head_lines() const { return 0; }
 
 protected:
     // number of octets processed by previous split() calls that returned NOTFOUND
@@ -57,7 +54,7 @@ class NHttpStartSplitter : public NHttpSplitter
 public:
     NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length,
         NHttpInfractions& infractions, NHttpEventGen& events) override;
-    uint32_t get_num_excess() const override { return num_crlf; }
+    uint32_t get_num_excess() const override { return (num_flush > 0) ? num_crlf : 0; }
 
 private:
     static const int MAX_LEADING_WHITESPACE = 20;
@@ -68,15 +65,24 @@ class NHttpHeaderSplitter : public NHttpSplitter
 public:
     NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length,
         NHttpInfractions& infractions, NHttpEventGen& events) override;
-    NHttpEnums::ScanResult peek(const uint8_t* buffer, uint32_t length,
-        NHttpInfractions& infractions, NHttpEventGen& events) override;
-    uint32_t get_octets_seen() const override { return octets_seen - peek_octets; }
-    uint32_t get_num_excess() const override { return num_crlf; }
+    uint32_t get_num_excess() const override { return (num_flush > 0) ? num_crlf : 0; }
+    uint32_t get_num_head_lines() const override { return num_head_lines; }
 
 private:
-    uint32_t peek_octets = 0;
     unsigned first_lf = 0;
-    NHttpEnums::ScanResult peek_status = NHttpEnums::SCAN_NOTFOUND;
+    int32_t num_head_lines = 0;
+};
+
+class NHttpBodySplitter : public NHttpSplitter
+{
+public:
+    explicit NHttpBodySplitter(int64_t expected_length) : remaining(expected_length)
+        { assert(remaining > 0); }
+    NHttpEnums::ScanResult split(const uint8_t*, uint32_t, NHttpInfractions&, NHttpEventGen&)
+        override;
+
+private:
+    int64_t remaining;
 };
 
 class NHttpChunkSplitter : public NHttpSplitter
@@ -84,16 +90,14 @@ class NHttpChunkSplitter : public NHttpSplitter
 public:
     NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length,
         NHttpInfractions& infractions, NHttpEventGen& events) override;
-    bool get_zero_chunk() const override { return zero_chunk; }
-    bool partial_ok() const override { return false; }
 
 private:
-    uint32_t expected_length = 0;
-    bool length_started = false;
+    uint32_t data_seen = 0;
+    NHttpEnums::ChunkState curr_state = NHttpEnums::CHUNK_ZEROS;
+    uint32_t expected = 0;
+    uint32_t num_zeros = 0;
     uint32_t digits_seen = 0;
-    bool semicolon = false;
-    bool header_complete = false;
-    bool zero_chunk = false;
+    bool new_section = false;
 };
 
 #endif
