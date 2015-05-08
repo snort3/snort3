@@ -1,3 +1,9 @@
+15/05/08 - build 151
+
+-- doc tweaks
+-- new_http_inspect message parsing updates
+-- misc bug fixes
+
 15/04/30 - build 150
 
 -- fixed xcode static analysis issues

@@ -42,7 +42,7 @@
  * - bypasses sequence strafing in inline mode.
  */
 
-// act_rej.cc author Russ Combs <rucombs@cisco.com>
+// act_reject.cc author Russ Combs <rucombs@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

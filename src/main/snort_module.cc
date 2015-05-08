@@ -188,7 +188,7 @@ static const Parameter s_params[] =
       "<pcap>... (same as --pcap-list)" },
 
     { "-S", Parameter::PT_STRING, nullptr, nullptr,
-      "<n=v> set rules file variable n equal to value v" },
+      "<x=v> set config variable x equal to value v" },
 
     { "-s", Parameter::PT_INT, "68:65535", "1514",
       "<snap> (same as --snaplen)" },
@@ -229,8 +229,8 @@ static const Parameter s_params[] =
       "include year in timestamp in the alert and log files" },
 
     { "-z", Parameter::PT_INT, "0:", "1",
-      "<count> maximum number of packet threads (same as --max-packet-threads)\n"
-      "        0 gets the number of CPU cores reported by the system" },
+      "<count> maximum number of packet threads (same as --max-packet-threads); "
+      "0 gets the number of CPU cores reported by the system" },
 
     { "--alert-before-pass", Parameter::PT_IMPLIED, nullptr, nullptr,
       "process alert, drop, sdrop, or reject before pass; "
@@ -337,8 +337,7 @@ static const Parameter s_params[] =
       "output help in asciidoc compatible format" },
 
     { "--max-packet-threads", Parameter::PT_INT, "0:", "1",
-      "<count> configure maximum number of packet threads (same as -z)\n"
-      "        0 gets the number of CPU cores reported by the system" },
+      "<count> configure maximum number of packet threads (same as -z)" },
 
     { "--nostamps", Parameter::PT_IMPLIED, nullptr, nullptr,
       "don't include timestamps in log file names" },

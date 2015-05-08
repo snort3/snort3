@@ -28,13 +28,18 @@ Optional:
 * asciidoc from http://www.methods.co.nz/asciidoc/ to build the HTML
   manual
 
+* check from http://check.sourceforge.net to build unit tests
+
 * dblatex from http://dblatex.sourceforge.net to build the pdf manual (in
   addition to asciidoc)
 
+* lzma from http://www.7-zip.org/sdk.html for decompression of SWF fles.
+
+* openssl from https://www.openssl.org for SHA and MD5 file signatures and
+  the protected_content rule option.
+
 * w3m from http://sourceforge.net/projects/w3m/ to build the plain text
   manual
-
-* check from http://check.sourceforge.net to build unit tests
 
 
 === Building
