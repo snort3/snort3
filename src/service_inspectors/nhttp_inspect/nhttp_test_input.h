@@ -38,7 +38,7 @@ public:
 
 private:
     FILE* test_data_file;
-    uint8_t msg_buf[2 * NHttpEnums::MAXOCTETS];
+    uint8_t msg_buf[2 * NHttpEnums::MAX_OCTETS];
 
     // data has been flushed and must be sent by reassemble() before more data may be given to
     // scan()

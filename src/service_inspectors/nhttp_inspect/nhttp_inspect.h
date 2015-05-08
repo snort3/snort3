@@ -35,7 +35,7 @@ class NHttpMsgSection;
 class NHttpInspect : public Inspector
 {
 public:
-    static THREAD_LOCAL uint8_t body_buffer[NHttpEnums::MAXOCTETS];
+    static THREAD_LOCAL uint8_t body_buffer[NHttpEnums::MAX_OCTETS];
 
     NHttpInspect(bool test_input, bool test_output);
 

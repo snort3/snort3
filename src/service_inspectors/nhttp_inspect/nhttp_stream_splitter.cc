@@ -54,8 +54,8 @@ NHttpSplitter* NHttpStreamSplitter::get_splitter(SectionType type,
 {
     switch (type)
     {
-    case SEC_REQUEST:
-    case SEC_STATUS: return (NHttpSplitter*)new NHttpStartSplitter;
+    case SEC_REQUEST: return (NHttpSplitter*)new NHttpRequestSplitter;
+    case SEC_STATUS: return (NHttpSplitter*)new NHttpStatusSplitter;
     case SEC_HEADER:
     case SEC_TRAILER: return (NHttpSplitter*)new NHttpHeaderSplitter;
     case SEC_BODY: return (NHttpSplitter*)new NHttpBodySplitter(
@@ -126,7 +126,7 @@ void NHttpStreamSplitter::chunk_spray(NHttpFlowData* session_data, uint8_t* buff
 StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data, uint32_t length,
     uint32_t, uint32_t* flush_offset)
 {
-    assert(length <= MAXOCTETS);
+    assert(length <= MAX_OCTETS);
 
     /* FIXIT-L Temporary printf while we shake out stream interface */
     if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output())
@@ -168,7 +168,8 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
     }
     else if (NHttpTestManager::use_test_output())
     {
-        printf("Scan from flow data %p direction %d\n", (void*)session_data, source_id);
+        printf("Scan from flow data %p direction %d length %u\n", (void*)session_data, source_id,
+            length);
         fflush(stdout);
     }
 
@@ -183,13 +184,13 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
         splitter = get_splitter(type, session_data);
         assert(splitter != nullptr);
     }
-    const uint32_t max_length = MAXOCTETS - splitter->get_octets_seen();
+    const uint32_t max_length = MAX_OCTETS - splitter->get_octets_seen();
     const ScanResult split_result = splitter->split(data, (length <= max_length) ? length :
         max_length, session_data->infractions[source_id], session_data->events[source_id]);
     switch (split_result)
     {
     case SCAN_NOTFOUND:
-        if (splitter->get_octets_seen() == MAXOCTETS)
+        if (splitter->get_octets_seen() == MAX_OCTETS)
         {
             session_data->infractions[source_id] += INF_ENDLESS_HEADER;
             session_data->events[source_id].create_event(EVENT_LOSS_OF_SYNC);
@@ -256,11 +257,11 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
     copied = len;
 
     // FIXIT-M temporary workaround for high total values
-    if (total > MAXOCTETS)
+    if (total > MAX_OCTETS)
         return nullptr;
 
     assert(total >= offset + len);
-    assert(total <= MAXOCTETS);
+    assert(total <= MAX_OCTETS);
 
     /* FIXIT-L Temporary printf while we shake out stream interface */
     if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output())
@@ -377,7 +378,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
         {
             nhttp_buf.data = buffer;
             nhttp_buf.length = section_length;
-            assert((nhttp_buf.length <= MAXOCTETS) && (nhttp_buf.length != 0));
+            assert((nhttp_buf.length <= MAX_OCTETS) && (nhttp_buf.length != 0));
             buffer = nullptr;
             if (NHttpTestManager::use_test_output())
             {
@@ -409,6 +410,10 @@ bool NHttpStreamSplitter::finish(Flow* flow)
         (session_data->splitter[source_id]->get_octets_seen() > 0) &&
         (session_data->type_expected[source_id] != SEC_ABORT))
     {
+        if (!session_data->splitter[source_id]->valid())
+        {
+            return false;
+        }
         session_data->section_type[source_id] = session_data->type_expected[source_id];
         session_data->num_excess[source_id] = 0;
         session_data->num_head_lines[source_id] =

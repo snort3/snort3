@@ -24,9 +24,9 @@
 
 namespace NHttpEnums
 {
-static const int MAXOCTETS = 63780;
-static const int DATABLOCKSIZE = 16384;
-static const int FINALBLOCKSIZE = 24576;
+static const int MAX_OCTETS = 63780;
+static const int DATA_BLOCK_SIZE = 16384;
+static const int FINAL_BLOCK_SIZE = 24576;
 static const uint32_t NHTTP_GID = 219;
 
 // Field status codes for when no valid value is present in length or integer value. Positive
@@ -121,8 +121,10 @@ enum Infraction
     INF_URI_SLASH_DOT_DOT,
     INF_URI_ROOT_TRAV,
     INF_TOO_MUCH_LEADING_WS,
+    INF_WS_BETWEEN_MSGS,
     INF_ENDLESS_HEADER,
     INF_LF_WITHOUT_CR,
+    INF_NOT_HTTP,
 };
 
 // Formats for output from a header normalization function
@@ -189,10 +191,13 @@ enum EventSid
     EVENT_PDF_CASC_COMP,
     EVENT_PDF_PARSE_FAILURE,
     EVENT_LOSS_OF_SYNC,
+    EVENT_NOT_HTTP,
+    EVENT_WS_BETWEEN_MSGS,
     EVENT_MAXVALUE
 };
 
 extern const int8_t as_hex[256];
+extern const bool token_char[256];
 } // end namespace NHttpEnums
 
 #endif

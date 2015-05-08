@@ -49,7 +49,7 @@ NHttpInspect::NHttpInspect(bool test_input, bool test_output)
     }
 }
 
-THREAD_LOCAL uint8_t NHttpInspect::body_buffer[MAXOCTETS];
+THREAD_LOCAL uint8_t NHttpInspect::body_buffer[MAX_OCTETS];
 
 THREAD_LOCAL NHttpMsgSection* NHttpInspect::latest_section = nullptr;
 

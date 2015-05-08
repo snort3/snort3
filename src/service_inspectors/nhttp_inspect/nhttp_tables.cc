@@ -301,6 +301,8 @@ const RuleMap NHttpModule::nhttp_events[] =
     { EVENT_PDF_CASC_COMP,              "PDF file cascaded compression" },
     { EVENT_PDF_PARSE_FAILURE,          "PDF file parse failure" },
     { EVENT_LOSS_OF_SYNC,               "HTTP misformatted or not really HTTP" },
+    { EVENT_NOT_HTTP,                   "Input apparently not HTTP" },
+    { EVENT_WS_BETWEEN_MSGS,            "White space before or between messages" },
 
     { 0, nullptr }
 };
@@ -330,5 +332,33 @@ const int8_t NHttpEnums::as_hex[256] =
 
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+};
+
+
+const bool NHttpEnums::token_char[256] =
+{
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false,  true, false,  true,  true,  true,  true,  true, false, false,  true,  true, false,  true,  true, false,
+     true,  true,  true,  true,  true,  true,  true,  true,  true,  true, false, false, false, false, false, false,
+
+    false,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+     true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true, false, false, false,  true,  true,
+
+     true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+     true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true, false,  true, false,  true, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
 };
 

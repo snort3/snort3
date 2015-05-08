@@ -40,6 +40,7 @@ public:
     uint32_t get_octets_seen() const { return octets_seen; }
     virtual uint32_t get_num_excess() const { return 0; }
     virtual uint32_t get_num_head_lines() const { return 0; }
+    virtual bool valid() const { return true; }
 
 protected:
     // number of octets processed by previous split() calls that returned NOTFOUND
@@ -55,9 +56,29 @@ public:
     NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length,
         NHttpInfractions& infractions, NHttpEventGen& events) override;
     uint32_t get_num_excess() const override { return (num_flush > 0) ? num_crlf : 0; }
+    bool valid() const override { return validated; }
+
+protected:
+    enum ValidationResult { V_GOOD, V_BAD, V_TBD };
 
 private:
     static const int MAX_LEADING_WHITESPACE = 20;
+    virtual ValidationResult validate(uint8_t octet) = 0;
+    bool validated = false;
+};
+
+class NHttpRequestSplitter : public NHttpStartSplitter
+{
+private:
+    uint32_t octets_checked = 0;
+    ValidationResult validate(uint8_t octet) override;
+};
+
+class NHttpStatusSplitter : public NHttpStartSplitter
+{
+private:
+    uint32_t octets_checked = 0;
+    ValidationResult validate(uint8_t octet) override;
 };
 
 class NHttpHeaderSplitter : public NHttpSplitter

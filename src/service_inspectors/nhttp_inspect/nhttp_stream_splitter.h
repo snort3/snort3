@@ -40,7 +40,7 @@ public:
         uint8_t* data, unsigned len, uint32_t flags, unsigned& copied) override;
     bool finish(Flow* flow) override;
     bool is_paf() override { return true; }
-    unsigned max(Flow*) override { return NHttpEnums::MAXOCTETS; }
+    unsigned max(Flow*) override { return NHttpEnums::MAX_OCTETS; }
 
 private:
     void prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, NHttpEnums::SectionType
