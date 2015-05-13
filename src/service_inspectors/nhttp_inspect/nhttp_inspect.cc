@@ -161,6 +161,13 @@ void NHttpInspect::clear(Packet* p)
     if (session_data->transaction[source_id] == nullptr)
         return;
 
+    clear(session_data, source_id);
+}
+
+void NHttpInspect::clear(NHttpFlowData* session_data, SourceId source_id)
+{
+    latest_section = nullptr;
+
     // If current transaction is complete then we are done with it and should reclaim the space
     if ((source_id == SRC_SERVER) && (session_data->type_expected[SRC_SERVER] == SEC_STATUS))
     {

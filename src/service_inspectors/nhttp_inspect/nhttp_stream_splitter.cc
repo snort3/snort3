@@ -359,8 +359,8 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             if (not_chunk && (session_data->section_type[source_id] != SEC_BODY))
             {
                 delete[] buffer;
-                buffer = nullptr;
             }
+            buffer = nullptr;
             return nullptr;
         }
 
@@ -388,6 +388,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             }
             return &nhttp_buf;
         }
+        my_inspector->clear(session_data, source_id);
         buffer = nullptr;
     }
     return nullptr;

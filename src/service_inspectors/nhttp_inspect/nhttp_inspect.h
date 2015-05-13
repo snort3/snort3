@@ -45,6 +45,7 @@ public:
     void show(SnortConfig*) override { LogMessage("NHttpInspect\n"); }
     void eval(Packet*) override { }
     void clear(Packet* p) override;
+    void clear(NHttpFlowData* session_data, NHttpEnums::SourceId source_id);
     void tinit() override { }
     void tterm() override { }
     NHttpStreamSplitter* get_splitter(bool is_client_to_server) override
