@@ -807,12 +807,12 @@ void fpSetDebugMode(FastPatternConfig* fp)
 }
 
 /*
-**  Revert the detection engine back to not inspecting packets
+**  Enable or disable inspecting packets
 **  that are going to be rebuilt.
 */
-void fpSetStreamInsert(FastPatternConfig* fp)
+void fpSetStreamInsert(FastPatternConfig* fp, bool enable)
 {
-    fp->inspect_stream_insert = 0;
+    fp->inspect_stream_insert = enable;
 }
 
 /*

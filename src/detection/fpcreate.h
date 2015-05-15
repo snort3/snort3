@@ -151,7 +151,7 @@ int prmFindRuleGroupIcmp(PORT_RULE_MAP*, int, PORT_GROUP**, PORT_GROUP**);
 int fpSetDetectSearchMethod(FastPatternConfig*, const char*);
 void fpSetDetectSearchOpt(FastPatternConfig*, int flag);
 void fpSetDebugMode(FastPatternConfig*);
-void fpSetStreamInsert(FastPatternConfig*);
+void fpSetStreamInsert(FastPatternConfig*, bool enable);
 void fpSetMaxQueueEvents(FastPatternConfig*, unsigned int);
 void fpDetectSetSplitAnyAny(FastPatternConfig*, int);
 void fpSetMaxPatternLen(FastPatternConfig*, unsigned int);

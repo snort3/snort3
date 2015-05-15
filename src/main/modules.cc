@@ -213,8 +213,8 @@ static const Parameter search_engine_params[] =
     { "max_queue_events", Parameter::PT_INT, nullptr, "5",
       "maximum number of matching fast pattern states to queue per packet" },
 
-    { "no_stream_inserts", Parameter::PT_BOOL, nullptr, "false",
-      "don't inspect reassembled payload - good for performance, bad for detection" },
+    { "inspect_stream_inserts", Parameter::PT_BOOL, nullptr, "true",
+      "inspect reassembled payload - disabling is good for performance, bad for detection" },
 
     { "search_method", Parameter::PT_STRING, nullptr, "ac_bnfa_q",
       "set fast pattern algorithm - choose available search engine" },
@@ -289,8 +289,8 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("max_queue_events") )
         fpSetMaxQueueEvents(fp, v.get_long());
 
-    else if ( v.is("no_stream_inserts") )
-        fpSetStreamInsert(fp);
+    else if ( v.is("inspect_stream_inserts") )
+        fpSetStreamInsert(fp, v.get_bool());
 
     else if ( v.is("search_method") )
     {
