@@ -159,6 +159,7 @@ IMAPData* SetNewIMAPData(IMAP_PROTO_CONF* config, Packet* p)
     imap_ssn->mime_ssn.log_config = &(config->log_config);
     imap_ssn->mime_ssn.decode_conf = &(config->decode_conf);
     imap_ssn->mime_ssn.methods = &(imap_mime_methods);
+    imap_ssn->mime_ssn.config = config;
     if (file_api->set_log_buffers(&(imap_ssn->mime_ssn.log_state), &(config->log_config)) < 0)
     {
         return NULL;

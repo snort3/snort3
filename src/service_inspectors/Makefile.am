@@ -25,6 +25,7 @@ imap \
 nhttp_inspect \
 pop \
 rpc_decode \
+smtp \
 ssh \
 wizard
 

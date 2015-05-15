@@ -7,6 +7,7 @@ add_subdirectory(imap)
 add_subdirectory(nhttp_inspect)
 add_subdirectory(pop)
 add_subdirectory(rpc_decode)
+add_subdirectory(smtp)
 add_subdirectory(ssh)
 add_subdirectory(wizard)
 
@@ -19,6 +20,7 @@ if (STATIC_INSPECTORS)
         nhttp_inspect
         pop
         rpc_decode
+        smtp
         ssh
         wizard
     )

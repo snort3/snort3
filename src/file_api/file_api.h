@@ -47,6 +47,13 @@
 #define     FILE_RESUME_BLOCK                    0x01
 #define     FILE_RESUME_LOG                      0x02
 
+/* log flags */
+#define MIME_FLAG_MAIL_FROM_PRESENT               0x00000001
+#define MIME_FLAG_RCPT_TO_PRESENT                 0x00000002
+#define MIME_FLAG_FILENAME_PRESENT                0x00000004
+#define MIME_FLAG_EMAIL_HDRS_PRESENT              0x00000008
+
+
 struct FILE_LogState
 {
     uint8_t* filenames;
@@ -56,7 +63,6 @@ struct FILE_LogState
 
 struct MAIL_LogState
 {
-    void* log_hdrs_bkt;
     unsigned char* emailHdrs;
     uint32_t log_depth;
     uint32_t hdrs_logged;
@@ -115,9 +121,9 @@ struct MimeDataPafInfo
     MimeBoundaryState boundary_state;
 };
 
-typedef int (* Handle_header_line_func)(void* pkt, const uint8_t* ptr, const uint8_t* eol, int
+typedef int (* Handle_header_line_func)(void *conf, void* pkt, const uint8_t* ptr, const uint8_t* eol, int
     max_header_len, void* mime_ssn);
-typedef int (* Normalize_data_func)(void* pkt, const uint8_t* ptr, const uint8_t* data_end);
+typedef int (* Normalize_data_func)(void *conf, void* pkt, const uint8_t* ptr, const uint8_t* data_end);
 typedef void (* Decode_alert_func)(void* decode_state);
 typedef void (* Reset_state_func)(void *ssn);
 typedef bool (* Is_end_of_data_func)(void* ssn);
@@ -153,8 +159,7 @@ struct MimeState
     DecodeConfig* decode_conf;
     MAIL_LogConfig* log_config;
     MAIL_LogState* log_state;
-    void* decode_bkt;
-    void* log_mempool;
+    void *config;
     MimeMethods* methods;
 };
 

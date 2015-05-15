@@ -66,6 +66,7 @@ arp_spoof = { }
 back_orifice = { }
 dns = { }
 imap = { }
+smtp = { }
 perf_monitor = { }
 pop = { }
 port_scan = { }

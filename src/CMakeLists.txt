@@ -61,6 +61,7 @@ if (STATIC_INSPECTORS)
         nhttp_inspect
 	pop
         rpc_decode
+        smtp
         ssh
         wizard
     )

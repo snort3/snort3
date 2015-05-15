@@ -53,9 +53,6 @@
 /* Maximum length of header chars before colon, based on Exim 4.32 exploit */
 #define MAX_HEADER_NAME_LEN 64
 
-/* log flags */
-#define MIME_FLAG_FILENAME_PRESENT           0x00000004
-
 typedef struct _MimePcre
 {
     pcre* re;

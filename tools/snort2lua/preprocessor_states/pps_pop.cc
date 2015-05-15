@@ -64,11 +64,13 @@ bool Pop::convert(std::istringstream& data_stream)
         else if (!keyword.compare("memcap"))
         {
             table_api.add_deleted_comment("memcap");
+            data_stream >> keyword;
         }
 
         else if (!keyword.compare("max_mime_mem"))
         {
             table_api.add_deleted_comment("max_mime_mem");
+            data_stream >> keyword;
         }
 
         else if (!keyword.compare("b64_decode_depth"))

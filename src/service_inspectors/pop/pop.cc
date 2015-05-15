@@ -112,6 +112,7 @@ POPData* SetNewPOPData(POP_PROTO_CONF* config, Packet* p)
     pop_ssn->mime_ssn.log_config = &(config->log_config);
     pop_ssn->mime_ssn.decode_conf = &(config->decode_conf);
     pop_ssn->mime_ssn.methods = &(pop_mime_methods);
+    pop_ssn->mime_ssn.config = config;
     if (file_api->set_log_buffers(&(pop_ssn->mime_ssn.log_state), &(config->log_config)) < 0)
     {
         return NULL;

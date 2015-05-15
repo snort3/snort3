@@ -219,11 +219,11 @@ int set_log_buffers(MAIL_LogState** log_state, MAIL_LogConfig* conf)
         || conf->log_mailfrom || conf->log_rcptto))
     {
         uint32_t bufsz = (2* MAX_EMAIL) + MAX_FILE + conf->email_hdrs_log_depth;
-        *log_state = (MAIL_LogState*)calloc(1, sizeof(*log_state) + bufsz);
+        *log_state = (MAIL_LogState*)calloc(1, sizeof(MAIL_LogState) + bufsz);
 
         if ((*log_state) != NULL)
         {
-            uint8_t* buf = ((uint8_t*)(*log_state)) + sizeof(*log_state);
+            uint8_t* buf = ((uint8_t*)(*log_state)) + sizeof(MAIL_LogState);
             (*log_state)->log_depth = conf->email_hdrs_log_depth;
             (*log_state)->recipients = buf;
             (*log_state)->rcpts_logged = 0;
@@ -550,7 +550,7 @@ static const uint8_t* process_mime_header(
 
         if (mime_ssn->methods && mime_ssn->methods->handle_header_line)
         {
-            int ret = mime_ssn->methods->handle_header_line(p, ptr, eol, max_header_name_len,
+            int ret = mime_ssn->methods->handle_header_line(mime_ssn->config, p, ptr, eol, max_header_name_len,
                 mime_ssn);
             if (ret < 0)
                 return NULL;
@@ -771,7 +771,7 @@ const uint8_t* process_mime_data_paf(void* packet, const uint8_t* start, const u
                  * and dot to alt buffer */
                 if (mime_ssn->methods && mime_ssn->methods->normalize_data)
                 {
-                    if (mime_ssn->methods->normalize_data(p, start, end) < 0)
+                    if (mime_ssn->methods->normalize_data(mime_ssn->config, p, start, end) < 0)
                         return NULL;
                 }
 
@@ -820,7 +820,7 @@ const uint8_t* process_mime_data_paf(void* packet, const uint8_t* start, const u
 
     if (mime_ssn->methods && mime_ssn->methods->normalize_data)
     {
-        if (mime_ssn->methods->normalize_data(p, start, end) < 0)
+        if (mime_ssn->methods->normalize_data(mime_ssn->config, p, start, end) < 0)
             return NULL;
     }
     /* now we shouldn't have to worry about copying any data to the alt buffer
