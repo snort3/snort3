@@ -1,5 +1,6 @@
-Pending - build 152
+15/05/15 - build 152
 
+-- fixed config error for inspection of rebuilt packets
 -- ported smtp inspector from Snort
 -- static analysis fix for new_http_inspect
 
