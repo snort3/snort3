@@ -1515,17 +1515,25 @@ int fpEvalPacket(Packet* p)
         return fpEvalHeaderUdp(p, omd);
 
     case PktType::ICMP:
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-            "Detecting on IcmpList\n"); );
         return fpEvalHeaderIcmp(p, omd);
+
+    case PktType::USER:
+    case PktType::FILE:
+        if ( p->proto_bits & PROTO_BIT__TCP )
+            return fpEvalHeaderTcp(p, omd);
+
+        else if ( p->proto_bits & PROTO_BIT__UDP )
+            return fpEvalHeaderUdp(p, omd);
+        else
+            break;
 
     /*
     **  No Match on TCP/UDP, Do IP
     */
     default:
         return fpEvalHeaderIp(p, -1, omd);
-        break;
     }
+    return 0;
 }
 
 // FIXIT-M delete this - see fpAddIpProtoOnlyRule() for details

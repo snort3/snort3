@@ -172,9 +172,11 @@ typedef File_Verdict (* File_signature_done_func) (void* p, Flow* flow, uint8_t*
     upload);
 typedef void (* Log_file_action_func) (Flow* flow, int action);
 
-typedef int (* File_process_func)(void* p, uint8_t* file_data, int data_size, FilePosition
-    position,
+// FIXIT-L constify file_data et al
+typedef int (* File_process_func)(
+    void* p, uint8_t* file_data, int data_size, FilePosition,
     bool upload, bool suspend_block_verdict);
+
 typedef int (* Get_file_name_func) (Flow* flow, uint8_t** file_name, uint32_t* name_len);
 typedef uint64_t (* Get_file_size_func) (Flow* flow);
 typedef bool (* Get_file_direction_func) (Flow* flow);

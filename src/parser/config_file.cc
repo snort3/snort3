@@ -616,19 +616,22 @@ void config_alert_mode(SnortConfig* sc, const char* val)
         (strcasecmp(val, ALERT_JH) == 0) ||
         (strcasecmp(val, ALERT_DJR) == 0))
     {
-        sc->output = SnortStrdup(OUTPUT_CMG);
+        sc->output = OUTPUT_CMG;
         sc->output_flags |= OUTPUT_FLAG__SHOW_DATA_LINK;
         sc->output_flags |= OUTPUT_FLAG__APP_DATA;
     }
     else if (strcasecmp(val, ALERT_AJK) == 0)
-        sc->output = SnortStrdup(OUTPUT_AJK);
+        sc->output = OUTPUT_AJK;
 
 #ifdef REG_TEST
     else if (strcasecmp(val, ALERT_CON) == 0)
-        sc->output = SnortStrdup("alert_fast");
+        sc->output = "alert_fast";
 #endif
     else
-        sc->output = SnortStrdup(val);
+        sc->output = val;
+
+    sc->output_flags |= OUTPUT_FLAG__ALERTS;
+    Snort::set_main_hook(snort_inspect);
 }
 
 void config_log_mode(SnortConfig* sc, const char* val)
@@ -645,12 +648,13 @@ void config_log_mode(SnortConfig* sc, const char* val)
     }
     else if (strcasecmp(val, LOG_PCAP) == 0)
     {
-        sc->output = SnortStrdup(OUTPUT_PCAP);
+        sc->output = OUTPUT_PCAP;
         Snort::set_main_hook(snort_log);
     }
     else
     {
-        FatalError("Unknown -K option: %s\n", val);
+        sc->output = val;
+        Snort::set_main_hook(snort_log);
     }
 }
 

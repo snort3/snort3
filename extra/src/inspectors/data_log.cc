@@ -54,9 +54,7 @@ static THREAD_LOCAL TextLog* tlog = nullptr;
 
 static void dl_tinit()
 {
-    std::string fname;
-    get_instance_file(fname, f_name);
-    tlog = TextLog_Init(fname.c_str(), 64*K_BYTES, 1*M_BYTES);
+    tlog = TextLog_Init(f_name, 64*K_BYTES, 1*M_BYTES);
 }
 
 static void dl_tterm()

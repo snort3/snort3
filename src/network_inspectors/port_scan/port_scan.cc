@@ -186,7 +186,7 @@ static int LogPortscanAlert(Packet* p, uint32_t event_id,
     const sfip_t* src_addr;
     const sfip_t* dst_addr;
 
-    if (!p->ptrs.ip_api.is_valid())
+    if(!p->ptrs.ip_api.is_ip())
         return -1;
 
     /* Do not log if being suppressed */
@@ -382,7 +382,7 @@ static int MakePortscanPkt(PS_PKT* ps_pkt, PS_PROTO* proto, int proto_type,
     }
     else
     {
-        // since ip_api.is_valid() && !ip4h, this is automatically ip6h
+        // since ip_api.is_ip() && !ip4h, this is automatically ip6h
         ((ip::IP6Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip6h())->set_proto(IPPROTO_PS);
     }
 
@@ -916,7 +916,7 @@ void PortScan::eval(Packet* p)
     PS_PKT ps_pkt;
     PROFILE_VARS;
 
-    assert(p->ptrs.ip_api.is_valid());
+    assert(p->ptrs.ip_api.is_ip());
 
     if ( p->packet_flags & PKT_REBUILT_STREAM )
         return;
@@ -1029,7 +1029,7 @@ static const InspectApi sp_api =
         mod_dtor
     },
     IT_PROBE,
-    (uint16_t)PktType::ANY_IP,  // FIXIT-L dynamic assign
+    (uint16_t)PktType::IP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

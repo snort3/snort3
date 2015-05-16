@@ -155,7 +155,7 @@ void LogIPPkt(Packet* p)
 
 void snort_print(Packet* p)
 {
-    if (p->ptrs.ip_api.is_valid())
+    if (p->ptrs.ip_api.is_ip())
     {
         LogIPPkt(text_log, p);
     }

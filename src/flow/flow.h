@@ -35,6 +35,7 @@
 #define SSNFLAG_SEEN_SENDER         0x00000001
 #define SSNFLAG_SEEN_SERVER         0x00000002
 #define SSNFLAG_SEEN_RESPONDER      0x00000002
+
 #define SSNFLAG_ESTABLISHED         0x00000004
 #define SSNFLAG_MIDSTREAM           0x00000008 /* picked up midstream */
 
@@ -62,6 +63,7 @@
 #define SSNFLAG_PROXIED             0x01000000
 #define SSNFLAG_NONE                0x00000000 /* nothing, an MT bag of chips */
 
+#define SSNFLAG_SEEN_BOTH (SSNFLAG_SEEN_SERVER | SSNFLAG_SEEN_CLIENT)
 #define SSNFLAG_BLOCK (SSNFLAG_DROP_CLIENT|SSNFLAG_DROP_SERVER)
 
 #define STREAM_STATE_NONE              0x0000
@@ -125,13 +127,6 @@ struct LwState
     char ignore_direction;
 };
 
-enum Stream_Event
-{
-    SE_REXMIT,
-    SE_EOF,
-    SE_MAX
-};
-
 // this struct is organized by member size for compactness
 class Flow
 {
@@ -170,11 +165,17 @@ public:
 
     void set_ttl(Packet*, bool client);
 
+    bool two_way_traffic()
+    { return (ssn_state.session_flags & SSNFLAG_SEEN_BOTH) == SSNFLAG_SEEN_BOTH; }
+
     void set_proxied()
     { ssn_state.session_flags |= SSNFLAG_PROXIED; }
 
     bool is_proxied()
     { return (ssn_state.session_flags & SSNFLAG_PROXIED) != 0; }
+
+    bool is_stream()
+    { return (unsigned)protocol & (unsigned)PktType::STREAM; }
 
     void block()
     { ssn_state.session_flags |= SSNFLAG_BLOCK; }
@@ -277,11 +278,10 @@ public:  // FIXIT-M privatize if possible
     uint16_t ssn_policy;
     uint16_t session_state;
 
-    uint8_t handler[SE_MAX];
-    uint8_t response_count;
+    uint8_t  inner_client_ttl, inner_server_ttl;
+    uint8_t  outer_client_ttl, outer_server_ttl;
 
-    uint8_t inner_client_ttl, inner_server_ttl;
-    uint8_t outer_client_ttl, outer_server_ttl;
+    uint8_t  response_count;
 };
 
 #endif

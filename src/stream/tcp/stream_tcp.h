@@ -65,37 +65,5 @@ void tcp_stats();
 void tcp_reset_stats();
 void tcp_show(StreamTcpConfig*);
 
-// Stream support
-int StreamFlushListener(Packet*, Flow*);
-int StreamFlushTalker(Packet*, Flow*);
-int StreamFlushClient(Packet*, Flow*);
-int StreamFlushServer(Packet*, Flow*);
-void StreamTcpSessionClear(Flow*);
-char StreamGetReassemblyDirectionTcp(Flow*);
-
-int StreamAddSessionAlertTcp(Flow*, Packet*, uint32_t gid, uint32_t sid);
-int StreamCheckSessionAlertTcp(Flow*, Packet*, uint32_t gid, uint32_t sid);
-int StreamUpdateSessionAlertTcp(
-    Flow*, Packet*, uint32_t gid, uint32_t sid, uint32_t event_id, uint32_t event_second);
-
-void StreamSetExtraDataTcp(Flow*, Packet*, uint32_t flag);
-void StreamClearExtraDataTcp(Flow*, Packet*, uint32_t flag);
-
-bool StreamGetReassemblyFlushPolicyTcp(Flow*, char dir);
-
-char StreamIsStreamSequencedTcp(Flow*, char dir);
-int StreamMissingInReassembledTcp(Flow*, char dir);
-char StreamPacketsMissingTcp(Flow*, char dir);
-
-void* get_paf_config(StreamTcpConfig*);
-void** StreamGetPAFUserDataTcp(Flow*, bool to_server);
-bool StreamIsPafActiveTcp(Flow*, bool to_server);
-
-void StreamSetSplitterTcp(Flow*, bool c2s, StreamSplitter*);
-StreamSplitter* StreamGetSplitterTcp(Flow*, bool c2s);
-
-int GetTcpRebuiltPackets(Packet*, Flow*, PacketIterator, void* userdata);
-int GetTcpStreamSegments(Packet*, Flow*, StreamSegmentIterator, void* userdata);
-
 #endif
 

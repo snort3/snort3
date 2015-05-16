@@ -80,6 +80,10 @@ All output of events and packets is done by Loggers.
 
 include::logger.txt[]
 
+== DAQ Modules
+
+include::daq.txt[]
+
 == Snort++ vs Snort
 
 include::differences.txt[]

@@ -101,6 +101,8 @@ target_link_libraries( snort
     stream_icmp
     stream_tcp
     stream_udp
+    stream_user
+    stream_file
     http_inspect
     flow
     parser

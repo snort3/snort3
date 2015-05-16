@@ -18,14 +18,12 @@
 //--------------------------------------------------------------------------
 
 //--------------------------------------------------------------------
-// s5 protocol aware flushing stuff
-//
-// @file    stream_paf.h
-// @author  Russ Combs <rcombs@sourcefire.com>
+// protocol aware flushing stuff
+// paf.h author Russ Combs <rcombs@sourcefire.com>
 //--------------------------------------------------------------------
 
-#ifndef STREAM_PAF_H
-#define STREAM_PAF_H
+#ifndef PAF_H
+#define PAF_H
 
 #include <stdint.h>
 #include "snort_types.h"
@@ -34,8 +32,8 @@
 
 struct SnortConfig;
 
-void* s5_paf_new(unsigned max);     // create new paf config (per policy)
-void s5_paf_delete(void*);  // free config
+void* paf_new(unsigned max);     // create new paf config (per policy)
+void paf_delete(void*);  // free config
 
 struct PAF_State     // per session direction
 {
@@ -48,35 +46,32 @@ struct PAF_State     // per session direction
     StreamSplitter::Status paf;  // current scan state
 };
 
-void s5_paf_setup(PAF_State*);  // called at session start
-void s5_paf_clear(PAF_State*);  // called at session end
+void paf_setup(PAF_State*);  // called at session start
+void paf_clear(PAF_State*);  // called at session end
 
-static inline uint32_t s5_paf_position(PAF_State* ps)
+static inline uint32_t paf_position (PAF_State* ps)
 {
     return ps->seq;
 }
 
-static inline uint32_t s5_paf_initialized(PAF_State* ps)
+static inline uint32_t paf_initialized (PAF_State* ps)
 {
     return ( ps->paf != StreamSplitter::START );
 }
 
-static inline uint32_t s5_paf_active(PAF_State* ps)
+static inline uint32_t paf_active (PAF_State* ps)
 {
     return ( ps->paf != StreamSplitter::ABORT );
 }
 
-static inline void s5_paf_jump(PAF_State* ps, uint32_t n)
+static inline void paf_jump(PAF_State* ps, uint32_t n)
 {
     ps->pos += n;
     ps->seq = ps->pos;
 }
 
-// called on each in order segment:
-// -- returns -1 for no flush
-// -- returns  0 to flush all data prior to this buffer
-// -- returns >0 to flush to offset from start of buffer
-int32_t s5_paf_check(
+// called on each in order segment
+uint32_t paf_check(
     StreamSplitter* paf_config, PAF_State*, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t total,
     uint32_t seq, uint32_t* flags);

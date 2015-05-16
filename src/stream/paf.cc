@@ -17,14 +17,9 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-//--------------------------------------------------------------------
-// s5 stuff
-//
-// @file    stream_paf.c
-// @author  Russ Combs <rcombs@sourcefire.com>
-//--------------------------------------------------------------------
+// paf.cc author Russ Combs <rcombs@sourcefire.com>
 
-#include "stream_paf.h"
+#include "paf.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -60,7 +55,7 @@ static THREAD_LOCAL uint64_t prep_calls = 0;
 static THREAD_LOCAL uint64_t prep_bytes = 0;
 
 // s5_len and s5_idx are used only during the
-// lifetime of s5_paf_check()
+// lifetime of paf_check()
 // FIXIT-L these thread local should be moved into thread context
 static THREAD_LOCAL uint32_t s5_len;  // total bytes queued
 static THREAD_LOCAL uint32_t s5_idx;  // offset from start of queued bytes
@@ -74,7 +69,7 @@ static THREAD_LOCAL uint32_t s5_idx;  // offset from start of queued bytes
 
 //--------------------------------------------------------------------
 
-static int32_t s5_paf_flush(
+static uint32_t paf_flush (
     StreamSplitter*, PAF_State* ps, FlushType ft, uint32_t* flags)
 {
     uint32_t at = 0;
@@ -145,7 +140,7 @@ static int32_t s5_paf_flush(
 
 //--------------------------------------------------------------------
 
-static bool s5_paf_callback(
+static bool paf_callback (
     StreamSplitter* ss, PAF_State* ps, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t flags)
 {
@@ -167,7 +162,7 @@ static bool s5_paf_callback(
 
 //--------------------------------------------------------------------
 
-static inline bool s5_paf_eval(
+static inline bool paf_eval (
     StreamSplitter* ss, PAF_State* ps, Flow* ssn,
     uint32_t flags, const uint8_t* data, uint32_t len, FlushType* ft)
 {
@@ -182,7 +177,7 @@ static inline bool s5_paf_eval(
     case StreamSplitter::SEARCH:
         if ( s5_len > s5_idx )
         {
-            return s5_paf_callback(ss, ps, ssn, data, len, flags);
+            return paf_callback(ss, ps, ssn, data, len, flags);
         }
         return false;
 
@@ -223,12 +218,12 @@ static inline bool s5_paf_eval(
                 len -= delta;
             }
             s5_idx = ps->fpt;
-            return s5_paf_callback(ss, ps, ssn, data, len, flags);
+            return paf_callback(ss, ps, ssn, data, len, flags);
         }
         return false;
 
     case StreamSplitter::LIMITED:
-        // increment position by previously scanned bytes. set in s5_paf_flush
+        // increment position by previously scanned bytes. set in paf_flush
         ps->paf = StreamSplitter::SEARCH;
         s5_idx += ps->fpt;
         ps->fpt = 0;
@@ -247,21 +242,21 @@ static inline bool s5_paf_eval(
 // public stuff
 //--------------------------------------------------------------------
 
-void s5_paf_setup(PAF_State* ps)
+void paf_setup (PAF_State* ps)
 {
     // this is already cleared when instantiated
     //memset(ps, 0, sizeof(*ps));
     ps->paf = StreamSplitter::START;
 }
 
-void s5_paf_clear(PAF_State* ps)
+void paf_clear (PAF_State* ps)
 {
     ps->paf = StreamSplitter::ABORT;
 }
 
 //--------------------------------------------------------------------
 
-int32_t s5_paf_check(
+uint32_t paf_check (
     StreamSplitter* ss, PAF_State* ps, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t total,
     uint32_t seq, uint32_t* flags)
@@ -270,7 +265,7 @@ int32_t s5_paf_check(
         "%s: len=%u, amt=%u, seq=%u, cur=%u, pos=%u, fpt=%u, tot=%u, paf=%d\n",
         __FUNCTION__, len, total, seq, ps->seq, ps->pos, ps->fpt, ps->tot, ps->paf); )
 
-    if ( !s5_paf_initialized(ps) )
+    if ( !paf_initialized(ps) )
     {
         ps->seq = ps->pos = seq;
         ps->paf = StreamSplitter::SEARCH;
@@ -283,7 +278,7 @@ int32_t s5_paf_check(
         if (s5_len)
         {
             ps->fpt = 0;
-            return s5_paf_flush(ss, ps, FT_MAX, flags);
+            return paf_flush(ss, ps, FT_MAX, flags);
         }
         *flags = 0;
         return -1;
@@ -312,8 +307,8 @@ int32_t s5_paf_check(
     // occurs at the paf_max byte.  So, we manually set the data's length and
     // total queued bytes (s5_len) to guarantee that at most paf_max bytes will
     // be analyzed and flushed since the last flush point.  It should also be
-    // noted that we perform the check here rather in in s5_paf_flush() to
-    // avoid scanning the same data twice. The first scan would analyze the
+    // noted that we perform the check here rather in in paf_flush() to
+    // avoid scanning the same data twice. The first scan would analyze the 
     // entire segment and the second scan would analyze this segments
     // unflushed data.
     uint16_t fuzz = 0; // FIXIT-L PAF add a little zippedy-do-dah
@@ -335,15 +330,12 @@ int32_t s5_paf_check(
         uint32_t shift;
         int32_t fp;
 
-        bool cont = s5_paf_eval(ss, ps, ssn, *flags, data, len, &ft);
+        bool cont = paf_eval(ss, ps, ssn, *flags, data, len, &ft);
 
         if ( ft != FT_NOP )
         {
-            fp = s5_paf_flush(ss, ps, ft, flags);
-            if ( fp > 0 )
-                s5_paf_jump(ps, fp);
-            else
-                s5_paf_jump(ps, 0);
+            fp = paf_flush(ss, ps, ft, flags);
+            paf_jump(ps, fp);
             return fp;
         }
         if ( !cont )
@@ -362,11 +354,8 @@ int32_t s5_paf_check(
 
     if ( (ps->paf != StreamSplitter::FLUSH) && (s5_len > ss->max(ssn)+fuzz) )
     {
-        int32_t fp = s5_paf_flush(ss, ps, FT_MAX, flags);
-        if ( fp > 0 )
-            s5_paf_jump(ps, fp);
-        else
-            s5_paf_jump(ps, 0);
+        uint32_t fp = paf_flush(ss, ps, FT_MAX, flags);
+        paf_jump(ps, fp);
         return fp;
     }
     return -1;

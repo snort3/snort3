@@ -26,7 +26,7 @@
 **   Reference - Efficient String matching: An Aid to Bibliographic Search
 **               Alfred V Aho and Margaret J Corasick
 **               Bell Labratories
-**               Copyright(C) 1975 Association for Computing Machinery,Inc
+**               Copyright (C) 1975 Association for Computing Machinery,Inc
 **
 **   Implemented from the 4 algorithms in the paper by Aho & Corasick
 **   and some implementation ideas from 'Practical Algorithms in C'

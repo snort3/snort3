@@ -51,9 +51,11 @@ public:
     int64_t file_lookup_timeout = DEFAULT_FILE_LOOKUP_TIMEOUT;
     bool block_timeout_lookup = false;
 
-#if defined(DEBUG_MSGS) || defined (REG_TEST)
-    int64_t show_data_depth = DEFAULT_FILE_SHOW_DATA_DEPTH;
-#endif
+    static int64_t show_data_depth;
+
+    static bool trace_type;
+    static bool trace_signature;
+    static bool trace_stream;
 
 private:
     FileIdenfifier fileIdentifier;

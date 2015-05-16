@@ -465,7 +465,7 @@ void sfPerformanceStats(SFPERF* sfPerf, Packet* p)
     // stream have been added.
     UpdatePerfStats(sfPerf, p);
 
-    if ((sfPerf->perf_flags & SFPERF_TIME_COUNT) && !PacketIsRebuilt(p))
+    if ((sfPerf->perf_flags & SFPERF_TIME_COUNT) && !p->is_rebuilt())
     {
         static THREAD_LOCAL uint32_t cnt = 0;
 
@@ -571,7 +571,7 @@ void InitPerfStats(SFPERF* sfPerf)
 static void UpdatePerfStats(SFPERF* sfPerf, Packet* p)
 {
     perfmon_config = sfPerf;  // FIXIT-L sfPerf isn't propagated far enough
-    bool rebuilt = PacketIsRebuilt(p);
+    bool rebuilt = p->is_rebuilt();
 
     if (sfPerf->perf_flags & SFPERF_BASE)
         UpdateBaseStats(&sfBase, p, rebuilt);

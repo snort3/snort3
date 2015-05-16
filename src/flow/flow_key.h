@@ -26,26 +26,27 @@
 
 struct FlowKey
 {
-    uint32_t ip_l[4];   /* Low IP */
-    uint32_t ip_h[4];   /* High IP */
-    uint16_t port_l;   /* Low Port - 0 if ICMP */
-    uint16_t port_h;   /* High Port - 0 if ICMP */
-    uint16_t vlan_tag;
-    uint8_t protocol;
-    uint8_t version;
-    uint32_t mplsLabel;   /* MPLS label */
-    uint16_t addressSpaceId;
-    uint16_t addressSpaceIdPad1;
+    uint32_t   ip_l[4]; /* Low IP */
+    uint32_t   ip_h[4]; /* High IP */
+    uint16_t   port_l;  /* Low Port - 0 if ICMP */
+    uint16_t   port_h;  /* High Port - 0 if ICMP */
+    uint16_t   vlan_tag;
+    uint8_t    protocol;
+    uint8_t    version;
+    uint32_t   mplsLabel;
+    uint16_t   addressSpaceId;
+    uint16_t   addressSpaceIdPad1;
 
     void init(
-        const sfip_t* srcIP, uint16_t srcPort,
-        const sfip_t* dstIP, uint16_t dstPort,
-        uint8_t proto, uint16_t vlan,
-        uint32_t mplsId, uint16_t addrSpaceId);
+        uint8_t type, uint8_t proto,
+        const sfip_t *srcIP, uint16_t srcPort,
+        const sfip_t *dstIP, uint16_t dstPort,
+        uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
 
     void init(
-        const sfip_t* srcIP, const sfip_t* dstIP,
-        uint32_t id, uint8_t proto, uint16_t vlan,
+        uint8_t type, uint8_t proto,
+        const sfip_t *srcIP, const sfip_t *dstIP,
+        uint32_t id, uint16_t vlanId,
         uint32_t mplsId, uint16_t addrSpaceId);
 
     void init_mpls(uint32_t);
@@ -58,14 +59,16 @@ struct FlowKey
 
 private:
     void init4(
-        const sfip_t* srcIP, uint16_t srcPort,
-        const sfip_t* dstIP, uint16_t dstPort,
-        uint8_t proto, uint32_t mplsId, bool order = true);
+        uint8_t proto,
+        const sfip_t *srcIP, uint16_t srcPort,
+        const sfip_t *dstIP, uint16_t dstPort,
+        uint32_t mplsId, bool order = true);
 
     void init6(
-        const sfip_t* srcIP, uint16_t srcPort,
-        const sfip_t* dstIP, uint16_t dstPort,
-        uint8_t proto, uint32_t mplsId, bool order = true);
+        uint8_t proto,
+        const sfip_t *srcIP, uint16_t srcPort,
+        const sfip_t *dstIP, uint16_t dstPort,
+        uint32_t mplsId, bool order = true);
 };
 
 #endif

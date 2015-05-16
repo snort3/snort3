@@ -335,7 +335,7 @@ int PortScan::ps_filter_ignore(PS_PKT* ps_pkt)
 
     p = (Packet*)ps_pkt->pkt;
 
-    if (!p->ptrs.ip_api.is_valid())
+    if(!p->ptrs.ip_api.is_ip())
         return 1;
 
     if (p->ptrs.tcph)
@@ -594,10 +594,10 @@ int PortScan::ps_get_proto(PS_PKT* ps_pkt, int* proto)
 
     if (config->detect_scans & PS_PROTO_IP)
     {
-        if ((p->ptrs.ip_api.is_valid() && (p->ptrs.icmph == NULL))
-            || ((p->ptrs.icmph != NULL) && (p->ptrs.icmph->type == ICMP_DEST_UNREACH)
-            && ((p->ptrs.icmph->code == ICMP_PROT_UNREACH)
-            || (p->ptrs.icmph->code == ICMP_PKT_FILTERED))))
+        if ((p->ptrs.ip_api.is_ip() && (p->ptrs.icmph == NULL))
+                || ((p->ptrs.icmph != NULL) && (p->ptrs.icmph->type == ICMP_DEST_UNREACH)
+                    && ((p->ptrs.icmph->code == ICMP_PROT_UNREACH)
+                        || (p->ptrs.icmph->code == ICMP_PKT_FILTERED))))
         {
             *proto = PS_PROTO_IP;
             return 0;
@@ -1009,7 +1009,7 @@ int PortScan::ps_tracker_update_ip(PS_PKT* ps_pkt, PS_TRACKER* scanner,
 
     p = (Packet*)ps_pkt->pkt;
 
-    if (p->ptrs.ip_api.is_valid())
+    if(p->ptrs.ip_api.is_ip())
     {
         if (p->ptrs.icmph)
         {

@@ -338,10 +338,10 @@ int DAQ_SetFilter(const char* bpf)
     int err = 0;
     static mutex bpf_gate;
 
-    bpf_gate.lock();
     // doesn't look like the bpf flex scanner is reentrant
+    bpf_gate.lock();
 
-    if ( bpf )
+    if ( bpf and *bpf )
         err = daq_set_filter(daq_mod, daq_hand, bpf);
 
     bpf_gate.unlock();

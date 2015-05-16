@@ -29,6 +29,11 @@ extern const BaseApi* nin_stream_ip;
 extern const BaseApi* nin_stream_icmp;
 extern const BaseApi* nin_stream_tcp;
 extern const BaseApi* nin_stream_udp;
+extern const BaseApi* nin_stream_user;
+extern const BaseApi* nin_stream_file;
+
+extern const BaseApi* ips_stream_reassemble;
+extern const BaseApi* ips_stream_size;
 
 const BaseApi* stream_inspectors[] =
 {
@@ -37,6 +42,12 @@ const BaseApi* stream_inspectors[] =
     nin_stream_icmp,
     nin_stream_tcp,
     nin_stream_udp,
+    nin_stream_user,
+    nin_stream_file,
+
+    ips_stream_reassemble,
+    ips_stream_size,
+
     nullptr
 };
 

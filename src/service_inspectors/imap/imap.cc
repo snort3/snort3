@@ -358,7 +358,7 @@ static void PrintImapConf(IMAP_PROTO_CONF* config)
 
 static inline int InspectPacket(Packet* p)
 {
-    return PacketHasPAFPayload(p);
+    return p->has_paf_payload();
 }
 
 static int IMAP_Setup(Packet* p, IMAPData* ssn)

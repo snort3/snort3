@@ -117,7 +117,7 @@
 ** Reference - Efficient String matching: An Aid to Bibliographic Search
 **             Alfred V Aho and Margaret J Corasick
 **             Bell Labratories
-**             Copyright(C) 1975 Association for Computing Machinery,Inc
+**             Copyright (C) 1975 Association for Computing Machinery,Inc
 **
 ** 12/4/06 - man - modified summary
 ** 6/26/07 - man - Added last_match tracking, and accounted for nocase/case by

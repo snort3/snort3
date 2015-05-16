@@ -26,15 +26,8 @@
 extern const BaseApi* nin_binder;
 extern const BaseApi* nin_normalize;
 extern const BaseApi* nin_perf_monitor;
-extern const BaseApi* nin_stream_ip;
-extern const BaseApi* nin_stream_icmp;
-extern const BaseApi* nin_stream_tcp;
-extern const BaseApi* nin_stream_udp;
 extern const BaseApi* nin_port_scan_global;
 extern const BaseApi* nin_port_scan;
-
-extern const BaseApi* ips_stream_reassemble;
-extern const BaseApi* ips_stream_size;
 
 #ifdef STATIC_INSPECTORS
 extern const BaseApi* nin_arp_spoof;
@@ -45,15 +38,8 @@ const BaseApi* network_inspectors[] =
     nin_binder,
     nin_normalize,
     nin_perf_monitor,
-    nin_stream_ip,
-    nin_stream_icmp,
-    nin_stream_tcp,
-    nin_stream_udp,
     nin_port_scan_global,
     nin_port_scan,
-
-    ips_stream_reassemble,
-    ips_stream_size,
 
 #ifdef STATIC_INSPECTORS
     nin_arp_spoof,

@@ -32,10 +32,9 @@ public:
     ~ExpectCache();
 
     int add_flow(
-        const sfip_t* cliIP, uint16_t cliPort,
-        const sfip_t* srvIP, uint16_t srvPort,
-        uint8_t protocol, char direction,
-        FlowData*, int16_t appId = 0);
+        const sfip_t *cliIP, uint16_t cliPort,
+        const sfip_t *srvIP, uint16_t srvPort,
+        PktType, char direction, FlowData*, int16_t appId = 0);
 
     bool is_expected(Packet*);
     char process_expected(Packet*, Flow*);

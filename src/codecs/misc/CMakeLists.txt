@@ -10,10 +10,10 @@ if(STATIC_CODECS)
 
 else(STATIC_CODECS)
     add_shared_library(cd_gtp codecs cd_gtp.cc)
-    add_shared_library(cd_teredo codecs cd_teredo.cc)
     add_shared_library(cd_icmp4_ip codecs cd_icmp4_ip.cc)
     add_shared_library(cd_icmp6_ip codecs cd_icmp6_ip.cc)
     add_shared_library(cd_llc codecs cd_llc.cc)
+    add_shared_library(cd_teredo codecs cd_teredo.cc)
 
 endif(STATIC_CODECS)
 

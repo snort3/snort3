@@ -378,7 +378,7 @@ void Flow::set_ttl(Packet* p, bool client)
      * If there are no IP layers, then
      * outer_ip.is_valid() == inner_ip.is_valid() == false
      */
-    if (outer_ip_api.is_valid())
+    if (outer_ip_api.is_ip())
     {
         // FIXIT-J!! -- Do we want more than just the outermost
         //            and innermost ttl()?

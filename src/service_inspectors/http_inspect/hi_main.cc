@@ -424,9 +424,9 @@ static inline FilePosition getFilePoistion(Packet* p)
 {
     FilePosition position = SNORT_FILE_POSITION_UNKNOWN;
 
-    if (PacketHasFullPDU(p))
+    if (p->is_full_pdu())
         position = SNORT_FILE_FULL;
-    else if (PacketHasStartOfPDU(p))
+    else if (p->is_pdu_start())
         position = SNORT_FILE_START;
     else if (p->packet_flags & PKT_PDU_TAIL)
         position = SNORT_FILE_END;
@@ -583,8 +583,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
 
     hsd = get_session_data(p->flow);
 
-    if ( (p->packet_flags & PKT_STREAM_INSERT) &&
-        !PacketHasFullPDU(p) )
+    if ( (p->packet_flags & PKT_STREAM_INSERT) && !p->is_full_pdu() )
     {
         int flow_depth;
 
@@ -1074,7 +1073,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                     set_file_data((uint8_t*)session->server.response.body, detect_data_size);
                 }
 
-                if (PacketHasPAFPayload(p)
+                if (p->has_paf_payload()
                     && file_api->file_process(p,(uint8_t*)session->server.response.body,
                     (uint16_t)session->server.response.body_size,
                     getFilePoistion(p), false, false))

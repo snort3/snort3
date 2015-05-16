@@ -613,6 +613,9 @@ static void instantiate_binder(SnortConfig* sc, FrameworkPolicy* fp)
     if ( udp )
         m->add((unsigned)PktType::UDP, wiz_id);
 
+    if ( tcp or udp )
+        m->add((unsigned)PktType::USER, wiz_id);
+
     const InspectApi* api = get_plugin(bind_id);
     InspectorManager::instantiate(api, m, sc);
     fp->binder = get_instance(fp, bind_id)->handler;
@@ -707,11 +710,12 @@ static inline void execute(
         if ( !p->flow && (ppc.api.type == IT_SERVICE) )
             break;
 
-        if ( ((unsigned)p->type() & ppc.api.proto_bits) )
+        if ( (unsigned)p->type() & ppc.api.proto_bits )
             (*prep)->handler->eval(p);
     }
 }
 
+// FIXIT-L use inspection events instead of exec
 void InspectorManager::bumble(Packet* p)
 {
     Flow* flow = p->flow;
@@ -722,7 +726,7 @@ void InspectorManager::bumble(Packet* p)
 
     flow->clear_clouseau();
 
-    if ( !flow->gadget || flow->protocol != PktType::TCP )
+    if ( !flow->gadget || !flow->is_stream() )
         return;
 
     if ( flow->session )
@@ -743,7 +747,7 @@ void InspectorManager::full_inspection(FrameworkPolicy* fp, Packet* p)
         DisableDetect(p);
 
     // FIXIT-M need list of gadgets for ambiguous wizardry
-    else if ( flow->gadget && PacketHasPAFPayload(p) )
+    else if ( flow->gadget && p->has_paf_payload() )
     {
         flow->gadget->eval(p);
         s_clear = true;
@@ -756,10 +760,10 @@ void InspectorManager::execute(Packet* p)
     assert(fp);
 
     // FIXIT-L blocked flows should not be normalized
-    if ( !PacketWasCooked(p) )
+    if ( !p->is_cooked() )
         ::execute(p, fp->packet.vec, fp->packet.num);
 
-    if ( !PacketHasPAFPayload(p) )
+    if ( !p->has_paf_payload() )
         ::execute(p, fp->session.vec, fp->session.num);
 
     Flow* flow = p->flow;

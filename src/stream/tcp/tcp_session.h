@@ -21,7 +21,7 @@
 #define TCP_SESSION_H
 
 #include "stream_tcp.h"
-#include "stream_paf.h"
+#include "stream/paf.h"
 #include "flow/session.h"
 
 /* Only track a maximum number of alerts per session */
@@ -55,7 +55,7 @@ struct StateMgr
 //
 // -- event id and second are added to the session alert trackers so that
 //    the extra data can be correlated with events
-// -- event id and second are not available when StreamAddSessionAlertTcp
+// -- event id and second are not available when check_alerted()
 //    is called; u2 calls StreamUpdateSessionAlertTcp as events are logged
 //    to set these fields
 //-------------------------------------------------------------------------
@@ -72,19 +72,19 @@ struct StreamAlertInfo
 };
 
 //-----------------------------------------------------------------
-// we make a lot of StreamSegments, StreamTrackers, and TcpSessions
+// we make a lot of TcpSegments, TcpTrackers, and TcpSessions
 // so they are organized by member size/alignment requirements to
 // minimize unused space in the structs.
 // ... however, use of padding below is critical, adjust if needed
 //-----------------------------------------------------------------
 
-struct StreamSegment
+struct TcpSegment
 {
     uint8_t* data;
     uint8_t* payload;
 
-    StreamSegment* prev;
-    StreamSegment* next;
+    TcpSegment *prev;
+    TcpSegment *next;
 
     struct timeval tv;
     uint32_t caplen;
@@ -113,31 +113,29 @@ enum FlushPolicy
     STREAM_FLPOLICY_ON_DATA,    /* protocol aware ips */
 };
 
-struct StreamTracker
+struct TcpTracker
 {
     StateMgr s_mgr;         /* state tracking goodies */
     class StreamSplitter* splitter;
     FlushPolicy flush_policy;
 
-    // this is intended to be private to s5_paf but is included
+    // this is intended to be private to paf but is included
     // directly to avoid the need for allocation; do not directly
     // manipulate within this module.
     PAF_State paf_state;    // for tracking protocol aware flushing
 
-    StreamAlertInfo alerts[MAX_SESSION_ALERTS]; /* history of alerts */
-
     StreamTcpConfig* config;
-    StreamSegment* seglist;       /* first queued segment */
-    StreamSegment* seglist_tail;  /* last queued segment */
+    TcpSegment *seglist;       /* first queued segment */
+    TcpSegment *seglist_tail;  /* last queued segment */
 
     // FIXIT-P seglist_base_seq is the sequence number to flush from
     // and is valid even when seglist is empty.  seglist_next is
     // the segment to flush from and is set per packet.  should keep
     // up to date.
-    StreamSegment* seglist_next;
+    TcpSegment* seglist_next;
 
     /* Local for these variables means the local part of the connection.  For
-     * example, if this particular StreamTracker was tracking the client side
+     * example, if this particular TcpTracker was tracking the client side
      * of a connection, the l_unackd value would represent the client side of
      * the connection's last unacked sequence number
      */
@@ -169,10 +167,11 @@ struct StreamTracker
     uint16_t wscale;       /* window scale setting */
     uint16_t mss;          /* max segment size */
 
-    uint8_t mac_addr[6];
-    uint8_t flags;         /* bitmap flags (TF_xxx) */
+    uint8_t  mac_addr[6];
+    uint8_t  flags;        /* bitmap flags (TF_xxx) */
 
-    uint8_t alert_count;   /* number alerts stored (up to MAX_SESSION_ALERTS) */
+    uint8_t  alert_count;  /* number alerts stored (up to MAX_SESSION_ALERTS) */
+    StreamAlertInfo alerts[MAX_SESSION_ALERTS]; /* history of alerts */
 };
 
 // FIXIT-L session tracking must be split from reassembly
@@ -186,24 +185,46 @@ public:
 
     bool setup(Packet*) override;
     int process(Packet*) override;
-
-    void update_direction(char dir, const sfip_t*, uint16_t port) override;
-
     void clear() override;
     void cleanup() override;
-
-    void reset();
     void restart(Packet*) override;
+
+    void update_direction(char dir, const sfip_t*, uint16_t port) override;
 
     bool add_alert(Packet*, uint32_t gid, uint32_t sid) override;
     bool check_alerted(Packet*, uint32_t gid, uint32_t sid) override;
 
+    int update_alert(
+        Packet*, uint32_t /*gid*/, uint32_t /*sid*/,
+        uint32_t /*event_id*/, uint32_t /*event_second*/) override;
+
+    void flush_client(Packet*) override;
+    void flush_server(Packet*) override;
+    void flush_talker(Packet*) override;
+    void flush_listener(Packet*) override;
+
+    void set_splitter(bool /*c2s*/, StreamSplitter*) override;
+    StreamSplitter* get_splitter(bool /*c2s*/) override;
+
+    void set_extra_data(Packet*, uint32_t /*flag*/) override;
+    void clear_extra_data(Packet*, uint32_t /*flag*/) override;
+
+    int get_rebuilt_packets(Packet*, PacketIterator, void* /*userdata*/) override;
+    int get_segments(Packet*, StreamSegmentIterator, void* /*userdata*/) override;
+
+    bool is_sequenced(uint8_t /*dir*/) override;
+    bool are_packets_missing(uint8_t /*dir*/) override;
+
+    uint8_t get_reassembly_direction() override;
+    uint8_t missing_in_reassembled(uint8_t /*dir*/) override;
+
+    void reset();
     void flush();
     void start_proxy();
 
 public:
-    StreamTracker client;
-    StreamTracker server;
+    TcpTracker client;
+    TcpTracker server;
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     int32_t ingress_index;  /* Index of the inbound interface. */

@@ -25,13 +25,13 @@ using namespace std;
 #include "flow/flow.h"
 #include "flow/session.h"
 #include "framework/inspector.h"
-#include "stream/stream_splitter.h"
 #include "managers/inspector_manager.h"
 #include "managers/plugin_manager.h"
 #include "protocols/packet.h"
 #include "protocols/vlan.h"
 #include "protocols/layer.h"
 #include "stream/stream_api.h"
+#include "stream/stream_splitter.h"
 #include "time/profiler.h"
 #include "utils/stats.h"
 #include "log/messages.h"
@@ -50,6 +50,8 @@ THREAD_LOCAL ProfileStats bindPerfStats;
 #define INS_ICMP "stream_icmp"
 #define INS_TCP  "stream_tcp"
 #define INS_UDP  "stream_udp"
+#define INS_USER "stream_user"
+#define INS_FILE "stream_file"
 
 //-------------------------------------------------------------------------
 // binding
@@ -331,6 +333,14 @@ void Stuff::apply_session(Flow* flow, const HostAttributeEntry* host)
         set_session(flow, INS_UDP);
         break;
 
+    case PktType::USER:
+        set_session(flow, INS_USER);
+        break;
+
+    case PktType::FILE:
+        set_session(flow, INS_FILE);
+        break;
+
     default:
         set_session(flow);
     }
@@ -437,7 +447,7 @@ int Binder::exec(int, void* pv)
     if ( ins )
         flow->set_gadget(ins);
 
-    if ( flow->protocol != PktType::TCP )
+    if ( !flow->is_stream() )
         return 0;
 
     if ( ins )

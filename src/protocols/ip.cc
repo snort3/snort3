@@ -20,54 +20,58 @@
 #include <arpa/inet.h>
 #include "protocols/ip.h"
 #include "protocols/packet.h"
+#include "sfip/sf_ip.h"
 
 namespace ip
 {
 void IpApi::reset()
 {
-    ip4h = nullptr;
-    ip6h = nullptr;
-    src_p = nullptr;
-    dst_p = nullptr;
+    type = IAT_NONE;
+    iph = nullptr;
 }
 
 void IpApi::set(const IP4Hdr* h4)
 {
-    ip4h = h4;
-    ip6h = nullptr;
+    iph = (const void*)h4;
+    type = IAT_4;
 
     src.family = AF_INET;
     src.bits = 32;
-    src.ip32[0] = *(uint32_t*)(&ip4h->ip_src);
+    src.ip32[0] = *(uint32_t*)(&h4->ip_src);
     std::memset(&(src.ip32[1]), 0, 12);
-    src_p = &src;
 
     dst.family = AF_INET;
     dst.bits = 32;
-    dst.ip32[0] = *(uint32_t*)(&ip4h->ip_dst);
+    dst.ip32[0] = *(uint32_t*)(&h4->ip_dst);
     std::memset(&(dst.ip32[1]), 0, 12);
-    dst_p = &dst;
 }
 
 void IpApi::set(const ip::IP6Hdr* h6)
 {
-    ip6h = h6;
-    ip4h = nullptr;
+    iph = (const void*)h6;
+    type = IAT_6;
 
     src.family = AF_INET6;
     src.bits = 128;
-    std::memcpy(&(src.ip8), &(ip6h->ip6_src), 16);
-    src_p = &src;
+    std::memcpy(&(src.ip8), &(h6->ip6_src), 16);
 
     dst.family = AF_INET6;
     dst.bits = 128;
-    std::memcpy(&(dst.ip8), &(ip6h->ip6_dst), 16);
-    dst_p = &dst;
+    std::memcpy(&(dst.ip8), &(h6->ip6_dst), 16);
+}
+
+void IpApi::set(sfip_t& sip, sfip_t& dip)
+{
+    type = IAT_DATA;
+    sfip_set_ip(&src, &sip);
+    sfip_set_ip(&dst, &dip);
+    iph = nullptr;
 }
 
 bool IpApi::set(const uint8_t* raw_ip_data)
 {
     const IP4Hdr* h4 = reinterpret_cast<const IP4Hdr*>(raw_ip_data);
+
     if (h4->ver() == 4)
     {
         set(h4);
@@ -81,91 +85,189 @@ bool IpApi::set(const uint8_t* raw_ip_data)
         set(h6);
         return true;
     }
-
     return false;
 }
 
+uint16_t IpApi::tos() const
+{
+    switch ( type )
+    {
+    case IAT_4: return ((IP4Hdr*)iph)->tos();
+    case IAT_6: return ((IP6Hdr*)iph)->tos();
+    default: break;
+    }
+    return 0;
+}
+
+uint8_t IpApi::ttl() const
+{
+    switch ( type )
+    {
+    case IAT_4: return ((IP4Hdr*)iph)->ttl();
+    case IAT_6: return ((IP6Hdr*)iph)->hop_lim();
+    default: break;
+    }
+    return 0;
+}
+
+/* This is different than the Packet's ip_proto_next field - this
+ * variable hold the first non-ip and non-ipv6 extension protocols,
+ * while proto() returns the next or proto() field of the raw IP
+ * header */
+uint8_t IpApi::proto() const
+{
+    switch ( type )
+    {
+    case IAT_4: return ((IP4Hdr*)iph)->proto();
+    case IAT_6: return ((IP6Hdr*)iph)->next();
+    default: break;
+    }
+    return 0xFF;
+}
+
+// header length field: datagram/payload-only length for 4/6
+// you may want pay_len() or dgram_len() instead
+uint16_t IpApi::raw_len() const
+{
+    switch ( type )
+    {
+    case IAT_4: return ((IP4Hdr*)iph)->raw_len();
+    case IAT_6: return ((IP6Hdr*)iph)->raw_len();
+    default: break;
+    }
+    return 0;
+}
+
+uint8_t IpApi::hlen() const
+{
+    switch ( type )
+    {
+    case IAT_4: return ((IP4Hdr*)iph)->hlen();
+    case IAT_6: return ((IP6Hdr*)iph)->hlen();
+    default: break;
+    }
+    return 0;
+}
+
+uint8_t IpApi::ver() const
+{
+    switch ( type )
+    {
+    case IAT_4: return ((IP4Hdr*)iph)->ver();
+    case IAT_6: return ((IP6Hdr*)iph)->ver();
+    default: break;
+    }
+    return 0;
+}
+
+bool operator==(const IpApi& lhs, const IpApi& rhs)
+{
+    if ( lhs.type != rhs.type )
+        return false;
+
+    // FIXIT-H is this really supposed to be a shallow compare?
+    return ( lhs.iph == rhs.iph );
+}
+
+bool operator!=(const IpApi& lhs, const IpApi& rhs)
+{ return !(lhs == rhs); }
+
 uint32_t IpApi::id() const
 {
-    if (ip4h)
-        return (uint32_t)ip4h->id();
+    if ( type == IAT_4 )
+        return (uint32_t)((IP4Hdr*)iph)->id();
+
+    if ( type != IAT_6 )
+        return 0;
 
     const IP6Frag* const frag_hdr = layer::get_inner_ip6_frag();
 
     if (frag_hdr)
         return frag_hdr->id();
+
     return 0;
 }
 
 uint16_t IpApi::off() const
 {
-    if (ip4h)
-        return ip4h->off();
+    if ( type == IAT_4 )
+        return (uint32_t)((IP4Hdr*)iph)->off();
+
+    if ( type != IAT_6 )
+        return 0;
 
     const IP6Frag* const frag_hdr = layer::get_inner_ip6_frag();
 
-    if (frag_hdr)
+    if ( frag_hdr )
         return frag_hdr->off();
+
     return 0;
 }
 
 uint16_t IpApi::off_w_flags() const
 {
-    if (ip4h)
-        return ip4h->off_w_flags();
+    if ( type == IAT_4 )
+        return (uint32_t)((IP4Hdr*)iph)->off_w_flags();
+
+    if ( type != IAT_6 )
+        return 0;
 
     const IP6Frag* const frag_hdr = layer::get_inner_ip6_frag();
 
-    if (frag_hdr)
+    if ( frag_hdr )
         return frag_hdr->off_w_flags();
+
     return 0;
 }
 
 const uint8_t* IpApi::ip_data() const
 {
-    if (ip4h)
-        return reinterpret_cast<const uint8_t*>(ip4h) + ip4h->hlen();
-
-    if (ip6h)
-        return reinterpret_cast<const uint8_t*>(ip6h) + ip6h->hlen();
-
+    switch ( type )
+    {
+    case IAT_4: return reinterpret_cast<const uint8_t*>(iph) + ((IP4Hdr*)iph)->hlen();
+    case IAT_6: return reinterpret_cast<const uint8_t*>(iph) + ((IP6Hdr*)iph)->hlen();
+    default: break;
+    }
     return nullptr;
 }
 
 uint16_t IpApi::actual_ip_len() const
 {
-    if (ip4h)
-        return ip4h->len();
-
-    if (ip6h)
-        return ip6h->len();
-
+    switch ( type )
+    {
+    case IAT_4: return ((IP4Hdr*)iph)->len();
+    case IAT_6: return ((IP6Hdr*)iph)->len();
+    default: break;
+    }
     return 0;
 }
 
 uint16_t IpApi::dgram_len() const
 {
-    if (ip4h)
-        return ip4h->len();
-
-    if (ip6h)
-        return ip6h->len() + IP6_HEADER_LEN;
-
+    switch ( type )
+    {
+    case IAT_4: return ((IP4Hdr*)iph)->len();
+    case IAT_6: return ((IP6Hdr*)iph)->len() + IP6_HEADER_LEN;
+    default: break;
+    }
     return 0;
 }
 
 uint16_t IpApi::pay_len() const
 {
-    if (ip4h)
-        return ip4h->len() - ip4h->hlen();
-
-    if (ip6h)
-        return ip6h->len();
-
+    switch ( type )
+    {
+    case IAT_4: return ((IP4Hdr*)iph)->len() - ((IP4Hdr*)iph)->hlen();
+    case IAT_6: return ((IP6Hdr*)iph)->len();
+    default: break;
+    }
     return 0;
 }
 
-static bool is_ip6_loopback(const snort_in6_addr* const ip)
+static inline bool is_loopback(uint32_t addr)
+{ return (addr >> 24) == 0x7F; }
+
+static bool is_loopback(const snort_in6_addr* const ip)
 {
     const uint32_t* p = ip->u6_addr32;
 
@@ -175,42 +277,41 @@ static bool is_ip6_loopback(const snort_in6_addr* const ip)
         return false;
 
     /* Check if the 3rd 32-bit int is zero */
-    if ( p[2] == 0 )
-    {
-        /* ::7f00:0/104 is ipv4 compatible ipv6
-           ::1 is the IPv6 loopback */
-        return ( (ip->u6_addr8[12] == 0x7f) || (ntohl(p[3]) == 0x1) );
+    if ( p[2] == 0 ) {
+        /* ::7F00:0/104 is ipv4 compatible ipv6 */
+        /* ::1 is the IPv6 loopback */
+        return ( (ip->u6_addr8[12] == 0x7F) || (ntohl(p[3]) == 0x1) );
     }
 
     /* Check the 3rd 32-bit int for a mapped IPv4 address */
     if ( ntohl(p[2]) == 0xffff )
     {
         /* ::ffff:127.0.0.0/104 is IPv4 loopback mapped over IPv6 */
-        return ( ip->u6_addr8[12] == 0x7f );
+        return ( ip->u6_addr8[12] == 0x7F );
     }
     return false;
 }
 
 bool IpApi::is_src_loopback() const
 {
-    if (ip4h)
-        return ((ntohl(ip4h->get_src())) >> 24) == 0x7f;
-
-    if (ip6h)
-        return is_ip6_loopback(ip6h->get_src());
-
+    switch ( type )
+    {
+    case IAT_4: return is_loopback(ntohl(((IP4Hdr*)iph)->get_src()));
+    case IAT_6: return is_loopback(((IP6Hdr*)iph)->get_src());
+    default: break;
+    }
     return false;
 }
 
 // true if the current source address ia the loopback address
 bool IpApi::is_dst_loopback() const
 {
-    if (ip4h)
-        return ((ntohl(ip4h->get_dst())) >> 24) == 0x7f;
-
-    if (ip6h)
-        return is_ip6_loopback(ip6h->get_dst());
-
+    switch ( type )
+    {
+    case IAT_4: return ((ntohl(((IP4Hdr*)iph)->get_dst())) >> 24) == 0x7F;
+    case IAT_6: return is_loopback(((IP6Hdr*)iph)->get_dst());
+    default: break;
+    }
     return false;
 }
 } // namespace ip

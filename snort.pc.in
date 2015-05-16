@@ -13,5 +13,5 @@ Description: Snort dynamic plugins/detection/rules
 URL: www.snort.org
 Version: @VERSION@
 Libs: -L${libdir} -lcurl @LDFLAGS@ @LIBS@
-Cflags: -I${includedir} @CFLAGS@ @CPPFLAGS@
+Cflags: @CFLAGS@ @CPPFLAGS@
 

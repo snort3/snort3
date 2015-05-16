@@ -11,6 +11,8 @@ set( FILE_LIST
     smtp_config.h
     smtp_module.cc
     smtp_module.h
+    smtp_normalize.cc
+    smtp_normalize.h
 )
 
 if (STATIC_INSPECTORS)

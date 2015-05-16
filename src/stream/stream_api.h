@@ -117,8 +117,8 @@ public:
      * TCP only.
      */
     int ignore_session(
-        const sfip_t* addr1, uint16_t p1, const sfip_t* addr2, uint16_t p2,
-        uint8_t proto, char dir, uint32_t ppId);
+        const sfip_t *addr1, uint16_t p1, const sfip_t *addr2, uint16_t p2,
+        PktType, char dir, uint32_t ppId);
 
     /* Resume inspection for session.
      */
@@ -190,7 +190,7 @@ public:
      * Returns
      *     true/false
      */
-    static char is_stream_sequenced(Flow*, char dir);
+    static bool is_stream_sequenced(Flow*, uint8_t dir);
 
     /* Get whether there are missing packets before, after or
      * before and after reassembled buffer
@@ -201,7 +201,7 @@ public:
      *      SSN_MISSING_AFTER if missing after
      *      SSN_MISSING_NONE if none missing
      */
-    static int missing_in_reassembled(Flow*, char dir);
+    static int missing_in_reassembled(Flow*, uint8_t dir);
 
     /* Get true/false as to whether packets were missed on
      * the stream
@@ -209,7 +209,7 @@ public:
      * Returns
      *     true/false
      */
-    static char missed_packets(Flow*, char dir);
+    static bool missed_packets(Flow*, uint8_t dir);
 
     /* Get the protocol identifier from a stream
      *
@@ -228,9 +228,9 @@ public:
     // initialize response count and expiration time
     static void init_active_response(Packet*, Flow*);
 
-    static bool is_paf_active(Flow*, bool toServer);
     static void set_splitter(Flow*, bool toServer, class StreamSplitter* = nullptr);
     static StreamSplitter* get_splitter(Flow*, bool toServer);
+    static bool is_paf_active(Flow*, bool toServer);
 
     /* Turn off inspection for potential session.
      * Adds session identifiers to a hash table.
@@ -241,7 +241,7 @@ public:
      *     -1 on failure
      */
     int set_application_protocol_id_expected(
-        const sfip_t* a1, uint16_t p1, const sfip_t* a2, uint16_t p2, uint8_t proto,
+        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2, PktType,
         int16_t appId, FlowData*);
 
     /** Retrieve application session data based on the lookup tuples for
@@ -252,7 +252,8 @@ public:
      *     Application Data reference (pointer)
      */
     static FlowData* get_application_data_from_ip_port(
-        const sfip_t* a1, uint16_t p1, const sfip_t* a2, uint16_t p2, uint8_t proto,
+        uint8_t type, uint8_t proto,
+        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId, unsigned flow_id);
 
     /*  Get the application data from the session key
@@ -276,7 +277,8 @@ public:
      *     Stream session pointer
      */
     static Flow* get_session_ptr_from_ip_port(
-        const sfip_t* a1, uint16_t p1, const sfip_t* a2, uint16_t p2, uint8_t proto,
+        uint8_t type, uint8_t proto,
+        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
 
     /* Delete the session if it is in the closed session state.

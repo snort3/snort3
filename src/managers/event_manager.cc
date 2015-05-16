@@ -113,7 +113,25 @@ static Output* get_out(const char* key)
         if ( !strcasecmp(p->api->base.name, key) )
             return p;
 
-    return NULL;
+    return nullptr;
+}
+
+static Output* get_out(const char* key, const char* pfx)
+{
+    Output* p = get_out(key);
+
+    if ( p )
+        return p;
+
+    if ( !strncmp(key, pfx, strlen(pfx)) )
+        return nullptr;
+
+    string s = pfx;
+    s += key;
+
+    p = get_out(s.c_str());
+
+    return p;
 }
 
 unsigned EventManager::get_output_type_flags(char* key)
@@ -178,15 +196,20 @@ void EventManager::instantiate(
     // override prior outputs
     // (last cmdline option wins)
     s_loggers.outputs.clear();
+    string tmp = name;
 
-    Output* p = get_out(name);
+    const char* pfx = (sc->output_flags & OUTPUT_FLAG__ALERTS) ? "alert_" : "log_";
+    Output* p = get_out(name, pfx);
 
     if ( !p )
     {
         ParseError("unknown logger %s\n", name);
         return;
     }
-    else if ( p->handler )
+
+    sc->output = name = p->api->base.name;
+
+    if ( p->handler )
     {
         // configured by conf
         s_loggers.outputs.push_back(p->handler);

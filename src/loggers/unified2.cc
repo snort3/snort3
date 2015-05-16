@@ -272,7 +272,7 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, Event* 
             alertdata.ip_source = iph->get_src();
             alertdata.ip_destination = iph->get_dst();
 
-            if (IsPortscanPacket(p))
+            if (p->is_portscan())
             {
                 alertdata.protocol = p->ps_proto;
             }
@@ -286,7 +286,7 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, Event* 
                     alertdata.sport_itype = htons(p->ptrs.icmph->type);
                     alertdata.dport_icode = htons(p->ptrs.icmph->code);
                 }
-                else if (!IsPortscanPacket(p))
+                else if (!p->is_portscan())
                 {
                     alertdata.sport_itype = htons(p->ptrs.sp);
                     alertdata.dport_icode = htons(p->ptrs.dp);
@@ -356,7 +356,7 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, Event* 
     {
         alertdata.blocked = GetU2Flags(p, &alertdata.impact_flag);
 
-        if (p->ptrs.ip_api.is_valid())
+        if(p->ptrs.ip_api.is_ip())
         {
             const sfip_t* ip;
 
@@ -366,7 +366,7 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, Event* 
             ip = p->ptrs.ip_api.get_dst();
             alertdata.ip_destination = *(struct in6_addr*)ip->ip32;
 
-            if (IsPortscanPacket(p))
+            if (p->is_portscan())
             {
                 alertdata.protocol = p->ps_proto;
             }
@@ -380,7 +380,7 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, Event* 
                     alertdata.sport_itype = htons(p->ptrs.icmph->type);
                     alertdata.dport_icode = htons(p->ptrs.icmph->code);
                 }
-                else if (!IsPortscanPacket(p))
+                else if (!p->is_portscan())
                 {
                     alertdata.sport_itype = htons(p->ptrs.sp);
                     alertdata.dport_icode = htons(p->ptrs.dp);

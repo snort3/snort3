@@ -96,6 +96,7 @@ enum OutputFlag
 
     OUTPUT_FLAG__NO_ALERT          = 0x00001000,      /* -A none */
     OUTPUT_FLAG__NO_LOG            = 0x00002000,      /* -K none */
+    OUTPUT_FLAG__ALERTS            = 0x00004000,      /* -A != none */
 };
 
 enum LoggingFlag

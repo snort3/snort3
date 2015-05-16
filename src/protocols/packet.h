@@ -171,7 +171,7 @@ struct SO_PUBLIC Packet
 
     /*  Boolean functions - general information about this packet */
     inline bool has_ip() const
-    { return ptrs.ip_api.is_valid(); }
+    { return ptrs.ip_api.is_ip(); }
 
     inline bool is_ip4() const
     { return ptrs.ip_api.is_ip4(); }
@@ -237,6 +237,26 @@ struct SO_PUBLIC Packet
         memset(&flow, '\0', offsetof(Packet, pkth));
         ptrs.reset();
     }
+    bool from_client()
+    { return (packet_flags & PKT_FROM_CLIENT) != 0; }
+
+    bool from_server()
+    { return (packet_flags & PKT_FROM_SERVER) != 0; }
+
+    bool is_portscan()
+    { return is_cooked() and (pseudo_type == PSEUDO_PKT_PS); }
+
+    bool is_full_pdu()
+    { return (packet_flags & PKT_PDU_FULL) == PKT_PDU_FULL; }
+
+    bool is_pdu_start()
+    { return (packet_flags & PKT_PDU_HEAD) != 0; }
+
+    bool has_paf_payload()
+    { return (packet_flags & PKT_REBUILT_STREAM) or is_full_pdu(); }
+
+    bool is_rebuilt()
+    { return (packet_flags & (PKT_REBUILT_STREAM|PKT_REBUILT_FRAG)) != 0; }
 };
 
 #define PKT_ZERO_LEN offsetof(Packet, pkth)
@@ -249,24 +269,6 @@ struct SO_PUBLIC Packet
 #define SEQ_EQ(a,b)  ((int)((a) - (b)) == 0)
 
 #define BIT(i) (0x1 << (i-1))
-
-static inline int PacketWasCooked(const Packet* const p)
-{ return ( p->packet_flags & PKT_PSEUDO ) != 0; }
-
-static inline bool IsPortscanPacket(const Packet* const p)
-{ return ( PacketWasCooked(p) && (p->pseudo_type == PSEUDO_PKT_PS)); }
-
-static inline bool PacketHasFullPDU(const Packet* const p)
-{ return ( (p->packet_flags & PKT_PDU_FULL) == PKT_PDU_FULL ); }
-
-static inline bool PacketHasStartOfPDU(const Packet* const p)
-{ return ( (p->packet_flags & PKT_PDU_HEAD) != 0 ); }
-
-static inline bool PacketHasPAFPayload(const Packet* const p)
-{ return ( (p->packet_flags & PKT_REBUILT_STREAM) || PacketHasFullPDU(p) ); }
-
-static inline bool PacketIsRebuilt(const Packet* const p)
-{ return ( (p->packet_flags & (PKT_REBUILT_STREAM|PKT_REBUILT_FRAG)) != 0 ); }
 
 static inline void SetExtraData(Packet* p, const uint32_t xid)
 { p->xtradata_mask |= BIT(xid); }

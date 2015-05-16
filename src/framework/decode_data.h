@@ -43,34 +43,41 @@ struct ICMPHdr;
 /* NOTE: if A protocol is added, update DecodeFlags! */
 enum class PktType : std::uint8_t
 {
-    UNKNOWN = 0x00,
-    NONE = 0x00,
-    IP = 0x01,
-    TCP = 0x02,
-    UDP = 0x04,
-    ICMP = 0x08,
-    ARP = 0x10,
-    ANY = 0x1F,
-    ANY_IP = 0x0F,
-//    FREE = 0xE0,
+    NONE=     0x00,
+    IP =      0x01,
+    TCP =     0x02,
+    UDP =     0x04,
+    ICMP =    0x08,
+    ARP =     0x10,
+    USER =    0x20,
+    FILE =    0x40,
+    STREAM =  0x22,
+    ANY_IP =  0x0F,
+    ANY_SSN = 0x6F,
+    ANY =     0x7F,
+//  FREE =    0x80,
 };
 
 enum DecodeFlags : std::uint16_t
 {
-    /* error flags */
-    DECODE_ERR_CKSUM_IP = 0x0001,
-    DECODE_ERR_CKSUM_TCP = 0x0002,
-    DECODE_ERR_CKSUM_UDP = 0x0004,
+    DECODE_ERR_CKSUM_IP =   0x0001,  // error flags
+    DECODE_ERR_CKSUM_TCP =  0x0002,
+    DECODE_ERR_CKSUM_UDP =  0x0004,
     DECODE_ERR_CKSUM_ICMP = 0x0008,
-    DECODE_ERR_BAD_TTL = 0x0010,
+    DECODE_ERR_BAD_TTL =    0x0010,
 
     DECODE_ERR_CKSUM_ALL = ( DECODE_ERR_CKSUM_IP | DECODE_ERR_CKSUM_TCP |
         DECODE_ERR_CKSUM_UDP | DECODE_ERR_CKSUM_ICMP ),
     DECODE_ERR_FLAGS = ( DECODE_ERR_CKSUM_ALL | DECODE_ERR_BAD_TTL ),
 
-    DECODE_PKT_TRUST = 0x0020,    /* Tell Snort++ to whitelist this packet */
-    DECODE_FRAG = 0x0040,  /* flag to indicate a fragmented packet */
-    DECODE_MF = 0x0080,
+    DECODE_PKT_TRUST =      0x0020,  // whitelist this packet
+    DECODE_FRAG =           0x0040,  // ip - fragmented packet
+    DECODE_MF =             0x0080,  // ip - more fragments
+
+    // using decode flags in lieu of creating user layer for now
+    DECODE_C2S =            0x0100,  // user - client to server
+    DECODE_SOF =            0x0200,  // user - start of flow
+    DECODE_EOF =            0x0400,  // user - end of flow
 };
 
 // FIXIT-L J make this an enum!!
@@ -99,18 +106,17 @@ enum DecodeFlags : std::uint16_t
 
 struct DecodeData
 {
-    /*  Pointers which will be used by Snort++. (starting with uint16_t so tcph is 64 bytes from
-      start*/
-
     /*
-     * these four pounters are each referenced literally
+     * these three pointers are each referenced literally
      * dozens if not hundreds of times.  NOTHING else should be added!!
      */
     const tcp::TCPHdr* tcph;
     const udp::UDPHdr* udph;
     const icmp::ICMPHdr* icmph;
+
     uint16_t sp;            /* source port (TCP/UDP) */
     uint16_t dp;            /* dest port (TCP/UDP) */
+
     uint16_t decode_flags;
     PktType type;
 
@@ -130,5 +136,5 @@ struct DecodeData
     { return type; }
 };
 
-#endif /* FRAMEWORK_DECODE_DATA_H */
+#endif
 

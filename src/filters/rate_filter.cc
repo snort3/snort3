@@ -131,7 +131,7 @@ int RateFilter_Test(
     const sfip_t* dip;
     sfip_t cleared;
 
-    if ( p->ptrs.ip_api.is_valid() )
+    if ( p->ptrs.ip_api.is_ip() )
     {
         sip = p->ptrs.ip_api.get_src();
         dip = p->ptrs.ip_api.get_dst();

@@ -78,7 +78,7 @@ int hi_mi_mode_inspection(HI_SESSION* session, int iInspectMode,
     */
     if (iInspectMode == HI_SI_CLIENT_MODE)
     {
-        iRet = hi_client_inspection(p, (void*)session, hsd, !PacketHasStartOfPDU(p));
+        iRet = hi_client_inspection(p, (void*)session, hsd, !p->is_pdu_start());
 
         if (iRet)
             return iRet;

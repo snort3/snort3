@@ -35,6 +35,7 @@
 #include "framework/decode_data.h"
 
 struct TextLog;
+struct _daq_pkthdr;
 struct Packet;
 struct Layer;
 enum CodecSid : uint32_t;
@@ -66,40 +67,50 @@ constexpr uint8_t MAX_TTL = 255;
 
 struct RawData
 {
+    const _daq_pkthdr* pkth;
     const uint8_t* data;
     uint32_t len;
+
+    RawData(const _daq_pkthdr*, const uint8_t*);
 };
 
 /*  Decode Flags */
 constexpr uint16_t CODEC_DF = 0x0001;    /* don't fragment flag */
-constexpr uint16_t CODEC_UNSURE_ENCAP = 0x0002; /* packet may have incorrect encapsulation layer.
-                                                 * don't alert if "next layer" is invalid.
-                                                 * If decode fails with this bit set, PacketManager
-                                                 *          will back out to the previous layer.
-                                                 * IMPORTANT:  This bit can ONLY be set if the
-                                                 *              DECODE_ENCAP_LAYER flag was
-                                                 *              was previously set.
-                                                 */
-constexpr uint16_t CODEC_SAVE_LAYER = 0x0004;   /* DO NOT USE THIS LAYER!!
-                                                 *  --  use DECODE_ENCAP_LAYER
-                                                 */
+
+// packet may have incorrect encapsulation layer.  don't alert if "next
+// layer" is invalid.  If decode fails with this bit set, PacketManager
+// will back out to the previous layer.  IMPORTANT:  This bit can ONLY be
+// set if the DECODE_ENCAP_LAYER flag was was previously set.
+constexpr uint16_t CODEC_UNSURE_ENCAP = 0x0002;
+
+// DO NOT USE THIS LAYER!!  --  use DECODE_ENCAP_LAYER
+constexpr uint16_t CODEC_SAVE_LAYER = 0x0004;
+
+// If encapsulation decode fails, back out to this layer This will be
+// cleared by PacketManager between decodes This flag automatically sets
+// DECODE_ENCAP_LAYER for the next layer (and only the next layer).
 constexpr uint16_t CODEC_ENCAP_LAYER = (CODEC_SAVE_LAYER | CODEC_UNSURE_ENCAP );
-/* If encapsulation decode fails, back out to this layer
- * This will be cleared by PacketManager between decodes
- * This flag automatically sets DECODE_ENCAP_LAYER for
- *      the next layer (and only the next layer).
- */
-constexpr uint16_t CODEC_ROUTING_SEEN = 0x0008; /* used to check ip6 extensino order */
-constexpr uint16_t CODEC_IPOPT_RR_SEEN = 0x0010; /* used by icmp4 for alerting */
-constexpr uint16_t CODEC_IPOPT_RTRALT_SEEN = 0x0020;  /* used by IGMP for alerting */
-constexpr uint16_t CODEC_IPOPT_LEN_THREE = 0x0040; /* used by IGMP for alerting */
-constexpr uint16_t CODEC_TEREDO_SEEN = 0x0080; /* used in IPv6 Codec */
+
+// used to check ip6 extensino order
+constexpr uint16_t CODEC_ROUTING_SEEN = 0x0008;
+
+// used by icmp4 for alerting
+constexpr uint16_t CODEC_IPOPT_RR_SEEN = 0x0010;
+
+// used by IGMP for alerting
+constexpr uint16_t CODEC_IPOPT_RTRALT_SEEN = 0x0020;
+
+// used by IGMP for alerting
+constexpr uint16_t CODEC_IPOPT_LEN_THREE = 0x0040;
+
+// used in IPv6 Codec
+constexpr uint16_t CODEC_TEREDO_SEEN = 0x0080;
+
 constexpr uint16_t CODEC_STREAM_REBUILT = 0x0100;
 constexpr uint16_t CODEC_NON_IP_TUNNEL = 0x0200;
 
 constexpr uint16_t CODEC_IPOPT_FLAGS = (CODEC_IPOPT_RR_SEEN |
-    CODEC_IPOPT_RTRALT_SEEN |
-    CODEC_IPOPT_LEN_THREE);
+    CODEC_IPOPT_RTRALT_SEEN | CODEC_IPOPT_LEN_THREE);
 
 struct CodecData
 {

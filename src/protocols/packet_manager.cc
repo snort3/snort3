@@ -173,6 +173,13 @@ static_assert(CODEC_ENCAP_LAYER == (CODEC_UNSURE_ENCAP | CODEC_SAVE_LAYER),
     "If this is an encapsulated layer, you must also set UNSURE_ENCAP"
     " and SAVE_LAYER");
 
+RawData::RawData(const DAQ_PktHdr_t* h, const uint8_t* p)
+{
+    pkth = h;
+    data = p;
+    len = h->caplen;
+}
+
 //-------------------------------------------------------------------------
 // Encode/Decode functions
 //-------------------------------------------------------------------------
@@ -184,9 +191,7 @@ void PacketManager::decode(
     uint16_t prev_prot_id = FINISHED_DECODE;
     uint8_t mapped_prot = CodecManager::grinder;
 
-    RawData raw;
-    raw.data = pkt;
-    raw.len = pkthdr->caplen;
+    RawData raw(pkthdr, pkt);
     CodecData codec_data(FINISHED_DECODE);
 
     if ( cooked )
@@ -373,7 +378,7 @@ static inline uint8_t GetTTL(const Packet* const p, bool forward)
 {
     char dir;
     uint8_t ttl;
-    const bool outer = p->ptrs.ip_api.is_valid();
+    const bool outer = p->ptrs.ip_api.is_ip();
 
     if ( !p->flow )
         return 0;

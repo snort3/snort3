@@ -653,7 +653,7 @@ static void SMTP_ResetState(void* ssn)
 
 static inline int InspectPacket(Packet* p)
 {
-    return PacketHasPAFPayload(p);
+    return p->has_paf_payload();
 }
 
 /*

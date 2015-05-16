@@ -78,7 +78,7 @@ void Active_KillSession(Packet* p, EncodeFlags* pf)
 
     switch ( p->type() )
     {
-    case PktType::UNKNOWN:
+    case PktType::NONE:
         // Can only occur if we have never seen IP
         return;
 
@@ -390,7 +390,7 @@ static inline int _Active_DoReset(Packet* p)
     if ( !Active_IsEnabled() )
         return 0;
 
-    if ( !p->ptrs.ip_api.is_valid() )
+    if ( !p->ptrs.ip_api.is_ip() )
         return 0;
 
     switch ( p->type() )

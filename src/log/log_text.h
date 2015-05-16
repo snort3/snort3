@@ -55,6 +55,7 @@ void LogPriorityData(TextLog*, const Event*, bool doNewLine);
 void LogXrefs(TextLog*, const Event*, bool doNewLine);
 
 void LogIPPkt(TextLog*, Packet*);
+void LogPayload(TextLog*, Packet*);
 void LogNetData(TextLog*, const uint8_t* data, const int len, Packet*);
 
 void LogTimeStamp(TextLog*, Packet*);

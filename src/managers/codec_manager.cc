@@ -226,8 +226,8 @@ void CodecManager::thread_init(SnortConfig* sc)
         }
     }
 
-    if (!grinder)
-        ParseError("PacketManager: Unable to find a Codec with data link type %d\n", daq_dlt);
+    if(!grinder)
+        ParseError("Unable to find a Codec with data link type %d\n", daq_dlt);
 
 #ifndef VALGRIND_TESTING
     if ( s_rand )
@@ -239,7 +239,7 @@ void CodecManager::thread_init(SnortConfig* sc)
     s_rand = rand_open();
 
     if ( !s_rand )
-        ParseError("PacketManager::init: rand_open() failed.\n");
+        ParseError("rand_open() failed.\n");
 
     rand_get(s_rand, s_id_pool.data(), s_id_pool.size());
 #endif

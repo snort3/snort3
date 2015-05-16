@@ -1,8 +1,8 @@
 //--------------------------------------------------------------------------
-// Copyright(C) 2002,2003,2004 Marc Norton
-// Copyright(C) 2003,2004 Daniel Roelker
 // Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
+// Copyright (C) 2003-2004 Daniel Roelker
+// Copyright (C) 2002-2004 Marc Norton
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -31,7 +31,7 @@
 **   Reference - Efficient String matching: An Aid to Bibliographic Search
 **               Alfred V Aho and Margaret J Corasick
 **               Bell Labratories
-**               Copyright(C) 1975 Association for Computing Machinery,Inc
+**               Copyright (C) 1975 Association for Computing Machinery,Inc
 **
 **   +++
 **   +++ Version 1.0 notes - Marc Norton:

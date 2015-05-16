@@ -28,6 +28,7 @@ snort2lua_cmds.txt
 unbuilt_sources = \
 snort_manual.txt \
 config_changes.txt \
+daq.txt \
 differences.txt \
 enviro.txt \
 errors.txt \

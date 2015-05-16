@@ -15,3 +15,6 @@ add_library ( file_api STATIC
     file_mime_config.cc 
     file_mime_config.h
 )
+
+target_link_libraries(file_api file)
+

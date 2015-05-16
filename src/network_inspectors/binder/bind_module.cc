@@ -68,7 +68,7 @@ static const Parameter binder_when_params[] =
     { "nets", Parameter::PT_ADDR_LIST, nullptr, nullptr,
       "list of networks" },
 
-    { "proto", Parameter::PT_ENUM, "any | ip | icmp | tcp | udp", nullptr,
+    { "proto", Parameter::PT_ENUM, "any | ip | icmp | tcp | udp | user | file", nullptr,
       "protocol" },
 
     { "ports", Parameter::PT_BIT_LIST, "65535", nullptr,
@@ -151,8 +151,9 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
     else if ( v.is("proto") )
     {
         const PktType mask[] =
-        {
-            PktType::ANY, PktType::IP, PktType::ICMP, PktType::TCP, PktType::UDP
+        { 
+            PktType::ANY, PktType::IP, PktType::ICMP, PktType::TCP, PktType::UDP,
+            PktType::USER, PktType::FILE
         };
         work->when.protos = (unsigned)mask[v.get_long()];
     }

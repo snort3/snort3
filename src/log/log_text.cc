@@ -572,9 +572,6 @@ void LogIpOptions(TextLog* log, const IP4Hdr* ip4h, const Packet* const p)
  */
 void LogIpAddrs(TextLog* log, Packet* p)
 {
-    if (!p->has_ip())
-        return;
-
     if ( p->is_fragment() || ( !p->is_tcp() && !p->is_udp()))
     {
         const char* ip_fmt = "%s -> %s";
@@ -623,7 +620,7 @@ void LogIpAddrs(TextLog* log, Packet* p)
  */
 void LogIPHeader(TextLog* log, Packet* p)
 {
-    if (!p->ptrs.ip_api.is_valid())
+    if(!p->ptrs.ip_api.is_ip())
     {
         TextLog_Print(log, "IP header truncated\n");
         return;
@@ -952,7 +949,7 @@ void LogTCPHeader(TextLog* log, Packet* p)
     /* dump the TCP options */
 #ifdef REG_TEST
     // emulate snort bug
-    if ( !PacketWasCooked(p) || (p->pseudo_type == PSEUDO_PKT_IP) )
+    if ( !p->is_cooked() || (p->pseudo_type == PSEUDO_PKT_IP) )
 #endif
     if (tcph->has_options())
     {
@@ -1709,7 +1706,7 @@ static void LogPacketType(TextLog* log, Packet* p)
 {
     TextLog_NewLine(log);
 
-    if ( !p->dsize || !PacketWasCooked(p) )
+    if ( !p->dsize || !p->is_cooked() )
         return;
 
     switch ( p->pseudo_type )
@@ -1854,7 +1851,11 @@ void LogIPPkt(TextLog* log, Packet* p)
             break;
         }
     }
+    LogPayload(log, p);
+}
 
+void LogPayload(TextLog* log, Packet* p)
+{
     if ((p->dsize > 0) && obApi->payloadObfuscationRequired(p)
         && (LogObfuscatedData(log, p) == 0))
     {

@@ -239,7 +239,9 @@ static void AlertSyslog(
             SnortSnprintfAppend(event_string, sizeof(event_string),
                 "<%s> ", PRINT_INTERFACE(DAQ_GetInterfaceSpec()));
         }
-
+    }
+    if ((p != NULL) && p->ptrs.ip_api.is_ip())
+    {
         uint16_t proto = p->get_ip_proto_next();
         if (protocol_names[proto] != NULL)
         {

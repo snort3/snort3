@@ -38,7 +38,7 @@ THREAD_LOCAL ProfileStats ip_perf_stats;
 // private methods
 //-------------------------------------------------------------------------
 
-void IpSessionCleanup(Flow* lws, FragTracker* tracker)
+static void IpSessionCleanup (Flow* lws, FragTracker* tracker)
 {
     if ( lws->ssn_server )
     {
@@ -119,16 +119,13 @@ void IpSession::clear()
     IpSessionCleanup(flow, &tracker);
 }
 
-bool IpSession::setup(Packet* p)
+bool IpSession::setup(Packet*)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM,
         "Stream IP session created!\n"); );
 
     memset(&tracker, 0, sizeof(tracker));
     // FIXIT count ip session creates here
-
-    sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
-    sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
 
 #ifdef ENABLE_EXPECTED_IP
     if ( flow_con->expected_session(flow, p))
@@ -148,7 +145,7 @@ int IpSession::process(Packet* p)
     if ( stream.expired_session(flow, p) )
     {
         IpSessionCleanup(flow, &tracker);
-        // FIXIT count ip sessiont imeouts here
+        // FIXIT count ip session timeouts here
 
 #ifdef ENABLE_EXPECTED_IP
         if ( flow_con->expected_session(flow, p))

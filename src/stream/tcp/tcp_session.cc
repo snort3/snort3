@@ -335,15 +335,15 @@ Session* get_tcp_session(Flow* lwssn)
     return new TcpSession(lwssn);
 }
 
-static inline int SetupOK(const StreamTracker* st)
+static inline int SetupOK (const TcpTracker* st)
 {
     return ( (st->s_mgr.sub_state & SUB_SETUP_OK) == SUB_SETUP_OK );
 }
 
-static inline uint32_t SegsToFlush(const StreamTracker* st, unsigned max)
+static inline uint32_t SegsToFlush (const TcpTracker* st, unsigned max)
 {
     uint32_t n = st->seg_count - st->flush_count;
-    StreamSegment* s;
+    TcpSegment* s;
 
     if ( !n || max == 1 )
         return n;
@@ -364,7 +364,7 @@ static inline uint32_t SegsToFlush(const StreamTracker* st, unsigned max)
     return n;
 }
 
-static inline bool DataToFlush(const StreamTracker* st)
+static inline bool DataToFlush (const TcpTracker* st)
 {
     // needed by stream_reassemble:action disable; can fire on rebuilt
     // packets, yanking the splitter out from under us :(
@@ -387,22 +387,22 @@ static inline void SetupTcpDataBlock(TcpDataBlock*, Packet*);
 static int ProcessTcp(Flow*, Packet*, TcpDataBlock*,
     StreamTcpConfig*);
 static inline int CheckFlushPolicyOnData(
-    TcpSession*, StreamTracker*, StreamTracker*, Packet*);
+    TcpSession *, TcpTracker *, TcpTracker *, Packet *);
 static inline int CheckFlushPolicyOnAck(
-    TcpSession*, StreamTracker*, StreamTracker*, Packet*);
-static void StreamSeglistAddNode(StreamTracker*, StreamSegment*,
-    StreamSegment*);
-static int StreamSeglistDeleteNode(StreamTracker*, StreamSegment*);
-static int StreamSeglistDeleteNodeTrim(StreamTracker*, StreamSegment*, uint32_t flush_seq);
+    TcpSession *, TcpTracker *, TcpTracker *, Packet *);
+static void StreamSeglistAddNode(TcpTracker *, TcpSegment *,
+                TcpSegment *);
+static int StreamSeglistDeleteNode(TcpTracker*, TcpSegment*);
+static int StreamSeglistDeleteNodeTrim(TcpTracker*, TcpSegment*, uint32_t flush_seq);
 static int AddStreamNode(
-    StreamTracker*, Packet*, TcpDataBlock*,
+    TcpTracker*, Packet*, TcpDataBlock*,
     int16_t len, uint32_t slide, uint32_t trunc,
-    uint32_t seq, StreamSegment* left, StreamSegment** retSeg);
+    uint32_t seq, TcpSegment *left, TcpSegment **retSeg);
 static int DupStreamNode(
     Packet*,
-    StreamTracker*,
-    StreamSegment* left,
-    StreamSegment** retSeg);
+    TcpTracker*,
+    TcpSegment* left,
+    TcpSegment** retSeg);
 
 static uint32_t StreamGetWscale(Packet*, uint16_t*);
 static uint32_t StreamPacketHasWscale(Packet*);
@@ -467,7 +467,7 @@ static THREAD_LOCAL Packet* s5_pkt = nullptr;
 static THREAD_LOCAL Packet* cleanup_pkt = nullptr;
 
 /*  F U N C T I O N S  **********************************************/
-static inline void init_flush_policy(Flow*, StreamTracker* trk)
+static inline void init_flush_policy(Flow*, TcpTracker* trk)
 {
     if ( !trk->splitter )
         trk->flush_policy = STREAM_FLPOLICY_IGNORE;
@@ -479,57 +479,7 @@ static inline void init_flush_policy(Flow*, StreamTracker* trk)
         trk->flush_policy = STREAM_FLPOLICY_ON_DATA;
 }
 
-bool StreamIsPafActiveTcp(Flow* lwssn, bool c2s)
-{
-    TcpSession* tcpssn = (TcpSession*)lwssn->session;
-    StreamSplitter* ss = c2s ? tcpssn->server.splitter : tcpssn->client.splitter;
-
-    return ss && ss->is_paf();
-}
-
-void StreamSetSplitterTcp(Flow* lwssn, bool c2s, StreamSplitter* ss)
-{
-    TcpSession* tcpssn = (TcpSession*)lwssn->session;
-    StreamTracker* trk;
-
-    if ( c2s )
-    {
-        trk = &tcpssn->server;
-    }
-    else
-    {
-        trk = &tcpssn->client;
-    }
-
-    if ( trk->splitter && tcpssn->tcp_init )
-        delete trk->splitter;
-
-    trk->splitter = ss;
-
-    if ( ss )
-        s5_paf_setup(&trk->paf_state);
-}
-
-StreamSplitter* StreamGetSplitterTcp(Flow* lwssn, bool c2s)
-{
-    TcpSession* tcpssn = (TcpSession*)lwssn->session;
-    StreamTracker* trk;
-
-    if ( c2s )
-    {
-        trk = &tcpssn->server;
-    }
-    else
-    {
-        trk = &tcpssn->client;
-    }
-
-    return trk->splitter;
-}
-
-void StreamUpdatePerfBaseState(SFBASE* sf_base,
-    Flow* lwssn,
-    char newState)
+void StreamUpdatePerfBaseState(SFBASE *sf_base, Flow *lwssn, char newState)
 {
     if (!lwssn)
     {
@@ -771,9 +721,9 @@ static void PrintStateMgr(StateMgr* s)
     LogMessage("    stq_get_seq:    %d\n", s->stq_get_seq);
 }
 
-static void PrintStreamTracker(StreamTracker* s)
+static void PrintTcpTracker(TcpTracker *s)
 {
-    LogMessage(" + StreamTracker +\n");
+    LogMessage(" + TcpTracker +\n");
     LogMessage("    isn:                0x%X\n", s->isn);
     LogMessage("    ts_last:            %u\n", s->ts_last);
     LogMessage("    wscale:             %u\n", s->wscale);
@@ -809,9 +759,9 @@ static void PrintTcpSession(TcpSession* ts)
     LogMessage("    flags:              0x%X\n", ts->flow->ssn_state.session_flags);
 
     LogMessage("Client Tracker:\n");
-    PrintStreamTracker(&ts->client);
+    PrintTcpTracker(&ts->client);
     LogMessage("Server Tracker:\n");
-    PrintStreamTracker(&ts->server);
+    PrintTcpTracker(&ts->server);
 }
 
 static void PrintTcpDataBlock(TcpDataBlock* tdb)
@@ -1231,14 +1181,8 @@ static inline int IsBetween(uint32_t low, uint32_t high, uint32_t cur)
     return (SEQ_GEQ(cur, low) && SEQ_LEQ(cur, high));
 }
 
-#define SSNFLAG_SEEN_BOTH (SSNFLAG_SEEN_SERVER | SSNFLAG_SEEN_CLIENT)
-static inline bool TwoWayTraffic(Flow* lwssn)
-{
-    return ( (lwssn->ssn_state.session_flags & SSNFLAG_SEEN_BOTH) == SSNFLAG_SEEN_BOTH );
-}
-
 static inline uint32_t StreamGetWindow(
-    Flow* lwssn, StreamTracker* st, TcpDataBlock* tdb)
+    Flow* lwssn, TcpTracker* st, TcpDataBlock* tdb)
 {
     int32_t window;
 
@@ -1250,7 +1194,7 @@ static inline uint32_t StreamGetWindow(
     }
     // one way zero window is unitialized
     // two way zero window is actually closed (regardless of scaling)
-    else if ( TwoWayTraffic(lwssn) )
+    else if ( lwssn->two_way_traffic() )
         return st->l_window;
 
     // ensure the data is in the window
@@ -1263,7 +1207,7 @@ static inline uint32_t StreamGetWindow(
 }
 
 // ack number must ack syn
-static inline int ValidRstSynSent(StreamTracker* st, TcpDataBlock* tdb)
+static inline int ValidRstSynSent(TcpTracker *st, TcpDataBlock *tdb)
 {
     return tdb->ack == st->l_unackd;
 }
@@ -1273,7 +1217,7 @@ static inline int ValidRstSynSent(StreamTracker* st, TcpDataBlock* tdb)
 // validate here based on how various implementations actually
 // handle a rst.
 static inline int ValidRst(
-    Flow* lwssn, StreamTracker* st, TcpDataBlock* tdb)
+    Flow* lwssn, TcpTracker *st, TcpDataBlock *tdb)
 {
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
         "Checking end_seq (%X) > r_win_base (%X) && "
@@ -1339,8 +1283,8 @@ static inline int ValidRst(
 }
 
 static inline int ValidTimestamp(
-    StreamTracker* talker, StreamTracker* listener, TcpDataBlock* tdb,
-    Packet* p, int* eventcode, int* got_ts)
+    TcpTracker *talker, TcpTracker *listener, TcpDataBlock *tdb,
+    Packet *p, int *eventcode, int *got_ts)
 {
     if ( p->ptrs.tcph->th_flags & TH_RST or
         listener->config->policy == STREAM_POLICY_PROXY )
@@ -1549,7 +1493,7 @@ static inline int ValidTimestamp(
 //                     or RCV.NXT =< SEG.SEQ+SEG.LEN-1 < RCV.NXT+RCV.WND
 //
 static inline int ValidSeq(
-    const Packet* p, Flow* lwssn, StreamTracker* st, TcpDataBlock* tdb)
+    const Packet* p, Flow* lwssn, TcpTracker *st, TcpDataBlock *tdb)
 {
     uint32_t win = StreamGetWindow(lwssn, st, tdb);
 
@@ -1575,7 +1519,7 @@ static inline int ValidSeq(
 
 #else
 static inline int ValidSeq(
-    const Packet* p, Flow* lwssn, StreamTracker* st, TcpDataBlock* tdb)
+    const Packet* p, Flow* lwssn, TcpTracker *st, TcpDataBlock *tdb)
 {
     int right_ok;
     uint32_t left_seq;
@@ -1623,7 +1567,7 @@ static inline int ValidSeq(
 #endif
 
 static inline void UpdateSsn(
-    Packet*, StreamTracker* rcv, StreamTracker* snd, TcpDataBlock* tdb)
+    Packet*, TcpTracker *rcv, TcpTracker *snd, TcpDataBlock *tdb)
 {
 #if 0
     if (
@@ -1637,7 +1581,7 @@ static inline void UpdateSsn(
     {
         // walk the seglist until a gap or tdb->ack whichever is first
         // if a gap exists prior to ack, move ack back to start of gap
-        StreamSegment* seg = snd->seglist;
+        TcpSegment* seg = snd->seglist;
 
         // FIXIT-L must check ack oob with empty seglist
         // FIXIT-L add lower gap bound to tracker for efficiency?
@@ -1734,9 +1678,9 @@ static inline void SetupTcpDataBlock(TcpDataBlock* tdb, Packet* p)
 #endif
 }
 
-static void SegmentFree(StreamSegment* seg)
+static void SegmentFree (TcpSegment *seg)
 {
-    unsigned dropped = sizeof(StreamSegment);
+    unsigned dropped = sizeof(TcpSegment);
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
         "Dumping segment at seq %X, size %d, caplen %d\n",
@@ -1753,10 +1697,10 @@ static void SegmentFree(StreamSegment* seg)
         "SegmentFree dropped %d bytes\n", dropped); );
 }
 
-static void DeleteSeglist(StreamSegment* listhead)
+static void DeleteSeglist(TcpSegment *listhead)
 {
-    StreamSegment* idx = listhead;
-    StreamSegment* dump_me;
+    TcpSegment *idx = listhead;
+    TcpSegment *dump_me;
     int i = 0;
 
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
@@ -1774,7 +1718,7 @@ static void DeleteSeglist(StreamSegment* listhead)
 }
 
 static inline int purge_alerts(
-    StreamTracker* st, uint32_t flush_seq, Flow* flow)
+    TcpTracker *st, uint32_t flush_seq, Flow* flow)
 {
     int i;
     int new_count = 0;
@@ -1804,10 +1748,10 @@ static inline int purge_alerts(
     return new_count;
 }
 
-static inline int purge_to_seq(TcpSession* tcpssn, StreamTracker* st, uint32_t flush_seq)
+static inline int purge_to_seq(TcpSession *tcpssn, TcpTracker *st, uint32_t flush_seq)
 {
-    StreamSegment* ss = NULL;
-    StreamSegment* dump_me = NULL;
+    TcpSegment *ss = NULL;
+    TcpSegment *dump_me = NULL;
     int purged_bytes = 0;
     uint32_t last_ts = 0;
 
@@ -1896,7 +1840,7 @@ static inline int purge_to_seq(TcpSession* tcpssn, StreamTracker* st, uint32_t f
     return purged_bytes;
 }
 
-static inline void purge_all(StreamTracker* st)
+static inline void purge_all (TcpTracker *st)
 {
     DeleteSeglist(st->seglist);
     st->seglist = st->seglist_tail = st->seglist_next = NULL;
@@ -1911,9 +1855,9 @@ static inline void purge_all(StreamTracker* st)
 //   initial part of a segment
 // * FIXIT-L need flag to mark any reassembled packets that have a gap
 //   (if we reassemble such)
-static inline int purge_flushed_ackd(TcpSession* tcpssn, StreamTracker* st)
+static inline int purge_flushed_ackd (TcpSession *tcpssn, TcpTracker *st)
 {
-    StreamSegment* seg = st->seglist;
+    TcpSegment* seg = st->seglist;
     uint32_t seq;
 
     if ( !st->seglist )
@@ -1955,11 +1899,10 @@ static void ShowRebuiltPacket(TcpSession* ssn, Packet* pkt)
 }
 
 static inline unsigned int getSegmentFlushSize(
-    StreamTracker* st,
-    StreamSegment* ss,
+    TcpTracker* st,
+    TcpSegment *ss,
     uint32_t to_seq,
-    unsigned int flushBufSize
-    )
+    unsigned int flushBufSize)
 {
     unsigned int flushSize = ss->size;
 
@@ -1968,7 +1911,7 @@ static inline unsigned int getSegmentFlushSize(
         flushSize = flushBufSize;
 
     // copy only to flush point
-    if ( s5_paf_active(&st->paf_state) && SEQ_GT(ss->seq + flushSize, to_seq) )
+    if ( paf_active(&st->paf_state) && SEQ_GT(ss->seq + flushSize, to_seq) )
         flushSize = to_seq - ss->seq;
 
     return flushSize;
@@ -1978,8 +1921,8 @@ static inline unsigned int getSegmentFlushSize(
  * flush the client seglist up to the most recently acked segment
  */
 static int FlushStream(
-    Packet* p, StreamTracker* st, uint32_t toSeq, uint8_t* flushbuf,
-    const uint8_t* flushbuf_end)
+    Packet* p, TcpTracker *st, uint32_t toSeq, uint8_t *flushbuf,
+    const uint8_t *flushbuf_end)
 {
     uint16_t bytes_flushed = 0;
     STREAM_DEBUG_WRAP(uint32_t bytes_queued = st->seg_bytes_logical; );
@@ -1994,7 +1937,7 @@ static int FlushStream(
 
     while ( SEQ_LT(st->seglist_next->seq, toSeq) )
     {
-        StreamSegment* ss = st->seglist_next, * sr;
+        TcpSegment* ss = st->seglist_next, * sr;
         unsigned flushbuf_size = flushbuf_end - flushbuf;
         unsigned bytes_to_copy = getSegmentFlushSize(st, ss, toSeq, flushbuf_size);
         unsigned bytes_copied = 0;
@@ -2081,7 +2024,7 @@ static int FlushStream(
 }
 
 static inline int _flush_to_seq(
-    TcpSession* tcpssn, StreamTracker* st, uint32_t bytes, Packet* p, uint32_t dir)
+    TcpSession *tcpssn, TcpTracker *st, uint32_t bytes, Packet *p, uint32_t dir)
 {
     uint32_t stop_seq;
     uint32_t footprint;
@@ -2236,7 +2179,7 @@ static inline int _flush_to_seq(
  * and fire it thru the system.
  */
 static inline int flush_to_seq(
-    TcpSession* tcpssn, StreamTracker* st, uint32_t bytes, Packet* p, uint32_t dir)
+    TcpSession *tcpssn, TcpTracker *st, uint32_t bytes, Packet *p, uint32_t dir)
 {
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
         "In flush_to_seq()\n"); );
@@ -2294,7 +2237,7 @@ static inline int flush_to_seq(
  * between our base sequence and the last ack'd sequence we
  * received
  */
-static inline uint32_t get_q_footprint(StreamTracker* st)
+static inline uint32_t get_q_footprint(TcpTracker *st)
 {
     uint32_t fp;
 
@@ -2315,11 +2258,11 @@ static inline uint32_t get_q_footprint(StreamTracker* st)
 // FIXIT-L get_q_sequenced() performance could possibly be
 // boosted by tracking sequenced bytes as seglist is updated
 // to avoid the while loop, etc. below.
-static inline uint32_t get_q_sequenced(StreamTracker* st)
+static inline uint32_t get_q_sequenced(TcpTracker *st)
 {
     uint32_t len;
-    StreamSegment* seg = st ? st->seglist : NULL;
-    StreamSegment* base = NULL;
+    TcpSegment* seg = st ? st->seglist : NULL;
+    TcpSegment* base = NULL;
 
     if ( !seg )
         return 0;
@@ -2347,7 +2290,7 @@ static inline uint32_t get_q_sequenced(StreamTracker* st)
 }
 
 static inline int flush_ackd(
-    TcpSession* tcpssn, StreamTracker* st, Packet* p, uint32_t dir)
+    TcpSession *tcpssn, TcpTracker *st, Packet *p, uint32_t dir)
 {
     uint32_t bytes = get_q_footprint(st);
     return flush_to_seq(tcpssn, st, bytes, p, dir);
@@ -2357,7 +2300,7 @@ static inline int flush_ackd(
 // CheckFlushPolicyOn*() with the exception that for the *OnAck() case,
 // any available ackd data must be flushed in both directions.
 static inline int flush_stream(
-    TcpSession* tcpssn, StreamTracker* st, Packet* p, uint32_t dir)
+    TcpSession *tcpssn, TcpTracker *st, Packet *p, uint32_t dir)
 {
     // this is not always redundant; stream_reassemble rule option causes trouble
     if ( !st->flush_policy )
@@ -2372,145 +2315,7 @@ static inline int flush_stream(
     return flush_ackd(tcpssn, st, p, dir);
 }
 
-int StreamFlushServer(Packet* p, Flow* lwssn)
-{
-    int flushed;
-    TcpSession* tcpssn = (TcpSession*)lwssn->session;
-    StreamTracker* flushTracker = &tcpssn->server;
-
-    flushTracker->flags |= TF_FORCE_FLUSH;
-
-    /* If this is a rebuilt packet, don't flush now because we'll
-     * overwrite the packet being processed.
-     */
-    if (p->packet_flags & PKT_REBUILT_STREAM)
-    {
-        /* We'll check & clear the TF_FORCE_FLUSH next time through */
-        return 0;
-    }
-
-    /* Need to convert the addresses to network order */
-    flushed = flush_stream(tcpssn, flushTracker, p, PKT_FROM_SERVER);
-
-    if (flushed)
-        purge_flushed_ackd(tcpssn, flushTracker);
-
-    flushTracker->flags &= ~TF_FORCE_FLUSH;
-
-    return flushed;
-}
-
-int StreamFlushClient(Packet* p, Flow* lwssn)
-{
-    int flushed;
-    TcpSession* tcpssn = (TcpSession*)lwssn->session;
-    StreamTracker* flushTracker = &tcpssn->client;
-
-    flushTracker->flags |= TF_FORCE_FLUSH;
-
-    /* If this is a rebuilt packet, don't flush now because we'll
-     * overwrite the packet being processed.
-     */
-    if (p->packet_flags & PKT_REBUILT_STREAM)
-    {
-        /* We'll check & clear the TF_FORCE_FLUSH next time through */
-        return 0;
-    }
-
-    /* Need to convert the addresses to network order */
-    flushed = flush_stream(tcpssn, flushTracker, p, PKT_FROM_CLIENT);
-
-    if (flushed)
-        purge_flushed_ackd(tcpssn, flushTracker);
-
-    flushTracker->flags &= ~TF_FORCE_FLUSH;
-
-    return flushed;
-}
-
-int StreamFlushListener(Packet* p, Flow* lwssn)
-{
-    StreamTracker* listener = NULL;
-    int dir = 0;
-    int flushed = 0;
-
-    TcpSession* tcpssn = (TcpSession*)lwssn->session;
-
-    /* figure out direction of this packet -- we should've already
-     * looked at it, so the packet_flags are already set. */
-    if (p->packet_flags & PKT_FROM_SERVER)
-    {
-        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-            "Flushing listener on packet from server\n"); );
-        listener = &tcpssn->client;
-        /* dir of flush is the data from the opposite side */
-        dir = PKT_FROM_SERVER;
-    }
-    else if (p->packet_flags & PKT_FROM_CLIENT)
-    {
-        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-            "Flushing listener on packet from client\n"); );
-        listener = &tcpssn->server;
-        /* dir of flush is the data from the opposite side */
-        dir = PKT_FROM_CLIENT;
-    }
-
-    if (dir != 0)
-    {
-        listener->flags |= TF_FORCE_FLUSH;
-        flushed = flush_stream(tcpssn, listener, p, dir);
-
-        if (flushed)
-            purge_flushed_ackd(tcpssn, listener);
-
-        listener->flags &= ~TF_FORCE_FLUSH;
-    }
-
-    return flushed;
-}
-
-int StreamFlushTalker(Packet* p, Flow* lwssn)
-{
-    StreamTracker* talker = NULL;
-    int dir = 0;
-    int flushed = 0;
-
-    TcpSession* tcpssn = (TcpSession*)lwssn->session;
-
-    /* figure out direction of this packet -- we should've already
-     * looked at it, so the packet_flags are already set. */
-    if (p->packet_flags & PKT_FROM_SERVER)
-    {
-        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-            "Flushing talker on packet from server\n"); );
-        talker = &tcpssn->server;
-        /* dir of flush is the data from the opposite side */
-        dir = PKT_FROM_CLIENT;
-    }
-    else if (p->packet_flags & PKT_FROM_CLIENT)
-    {
-        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-            "Flushing talker on packet from client\n"); );
-        talker = &tcpssn->client;
-        /* dir of flush is the data from the opposite side */
-        dir = PKT_FROM_SERVER;
-    }
-
-    if (dir != 0)
-    {
-        talker->flags |= TF_FORCE_FLUSH;
-        flushed = flush_stream(tcpssn, talker, p, dir);
-
-        if (flushed)
-            purge_flushed_ackd(tcpssn, talker);
-
-        talker->flags &= ~TF_FORCE_FLUSH;
-    }
-
-    return flushed;
-}
-
-static void TcpSessionClear(Flow* lwssn, TcpSession* tcpssn, int freeApplicationData)
+static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicationData)
 {
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
         "In TcpSessionClear, %lu bytes in use\n", tcp_memcap->used()); );
@@ -2553,8 +2358,8 @@ static void TcpSessionClear(Flow* lwssn, TcpSession* tcpssn, int freeApplication
     purge_all(&tcpssn->client);
     purge_all(&tcpssn->server);
 
-    s5_paf_clear(&tcpssn->client.paf_state);
-    s5_paf_clear(&tcpssn->server.paf_state);
+    paf_clear(&tcpssn->client.paf_state);
+    paf_clear(&tcpssn->server.paf_state);
 
     // update light-weight state
     if ( freeApplicationData == 2 )
@@ -2568,14 +2373,11 @@ static void TcpSessionClear(Flow* lwssn, TcpSession* tcpssn, int freeApplication
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
         "After cleaning, %lu bytes in use\n", tcp_memcap->used()); );
 
-    memset(&tcpssn->client, 0, sizeof(tcpssn->client));
-    memset(&tcpssn->server, 0, sizeof(tcpssn->server));
-
     tcpssn->lws_init = tcpssn->tcp_init = false;
 }
 
 static void final_flush(
-    Flow* lwssn, TcpSession* tcpssn, StreamTracker& trk, Packet* p,
+    Flow* lwssn, TcpSession* tcpssn, TcpTracker& trk, Packet* p,
     PegCount& peg, uint32_t flag)
 {
     if ( !p )
@@ -2634,9 +2436,9 @@ static void TcpSessionCleanup(Flow* lwssn, int freeApplicationData, Packet* p = 
 }
 
 #ifdef SEG_TEST
-static void CheckSegments(const StreamTracker* a)
+static void CheckSegments (const TcpTracker* a)
 {
-    StreamSegment* ss = a->seglist;
+    TcpSegment* ss = a->seglist;
     uint32_t sx = ss ? ss->seq : 0;
 
     while ( ss )
@@ -2714,9 +2516,9 @@ static const char* const flushxt[] =
     "IGN", "FPR", "PRE", "PRO", "PAF"
 };
 
-static void TraceSegments(const StreamTracker* a)
+static void TraceSegments (const TcpTracker* a)
 {
-    StreamSegment* ss = a->seglist;
+    TcpSegment* ss = a->seglist;
     uint32_t sx = a->r_win_base;
     unsigned segs = 0, bytes = 0;
 
@@ -2740,7 +2542,7 @@ static void TraceSegments(const StreamTracker* a)
 }
 
 static void TraceState(
-    const StreamTracker* a, const StreamTracker* b, const char* s)
+    const TcpTracker* a, const TcpTracker* b, const char* s)
 {
     uint32_t why = a->l_nxt_seq ? LCL(a, l_nxt_seq) : 0;
 
@@ -2777,8 +2579,8 @@ static void TraceTCP(
     )
 {
     const TcpSession* ssn = (TcpSession*)lws->session;
-    const StreamTracker* srv = ssn ? &ssn->server : NULL;
-    const StreamTracker* cli = ssn ? &ssn->client : NULL;
+    const TcpTracker* srv = ssn ? &ssn->server : NULL;
+    const TcpTracker* cli = ssn ? &ssn->client : NULL;
 
     const char* cdir = "?", * sdir = "?";
     uint32_t txd = 0, rxd = 0;
@@ -2787,34 +2589,36 @@ static void TraceTCP(
     {
         sdir = "SRV>";
         cdir = "CLI<";
-        if ( srv )
+
+        if ( ssn->tcp_init )
+        {
             txd = srv->isn;
-        if ( cli )
             rxd = cli->isn;
+        }
     }
     else if ( p->packet_flags & PKT_FROM_CLIENT )
     {
         sdir = "SRV<";
         cdir = "CLI>";
-        if ( cli )
+
+        if ( ssn->tcp_init )
+        {
             txd = cli->isn;
-        if ( srv )
             rxd = srv->isn;
+        }
     }
     TraceEvent(p, tdb, txd, rxd);
 
-    if ( !cli->s_mgr.state && !srv->s_mgr.state )
+    if ( !ssn->tcp_init )
         return;
 
-    if ( lws )
+    if ( lws && ssn->lws_init )
         TraceSession(lws);
 
     if ( lws && !event )
     {
-        if ( cli )
-            TraceState(cli, srv, cdir);
-        if ( srv )
-            TraceState(srv, cli, sdir);
+        TraceState(cli, srv, cdir);
+        TraceState(srv, cli, sdir);
     }
 }
 
@@ -2950,7 +2754,7 @@ static uint32_t StreamPacketHasWscale(Packet* p)
 }
 
 #if 0
-static inline int IsWellFormed(Packet* p, StreamTracker* ts)
+static inline int IsWellFormed(Packet *p, TcpTracker *ts)
 {
     return ( !ts->mss || (p->dsize <= ts->mss) );
 }
@@ -2959,8 +2763,8 @@ static inline int IsWellFormed(Packet* p, StreamTracker* ts)
 
 static void FinishServerInit(Packet* p, TcpDataBlock* tdb, TcpSession* ssn)
 {
-    StreamTracker* server;
-    StreamTracker* client;
+    TcpTracker *server;
+    TcpTracker *client;
 
     if (!ssn)
     {
@@ -3008,9 +2812,9 @@ static void FinishServerInit(Packet* p, TcpDataBlock* tdb, TcpSession* ssn)
 }
 
 static void NewQueue(
-    StreamTracker* st, Packet* p, TcpDataBlock* tdb)
+    TcpTracker *st, Packet *p, TcpDataBlock *tdb)
 {
-    StreamSegment* ss = NULL;
+    TcpSegment *ss = NULL;
     uint32_t overlap = 0;
     PROFILE_VARS;
 
@@ -3052,7 +2856,7 @@ static void NewQueue(
     MODULE_PROFILE_END(s5TcpInsertPerfStats);
 }
 
-static inline int SegmentFastTrack(StreamSegment* tail, TcpDataBlock* tdb)
+static inline int SegmentFastTrack(TcpSegment *tail, TcpDataBlock *tdb)
 {
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
         "Checking seq for fast track: %X > %X\n", tdb->seq,
@@ -3064,10 +2868,10 @@ static inline int SegmentFastTrack(StreamSegment* tail, TcpDataBlock* tdb)
     return 0;
 }
 
-static inline StreamSegment* SegmentAlloc(
+static inline TcpSegment* SegmentAlloc(
     Packet* p, const struct timeval* tv, uint32_t caplen, uint32_t pktlen, const uint8_t* pkt)
 {
-    StreamSegment* ss;
+    TcpSegment* ss;
     unsigned size = sizeof(*ss);
 
     if ( caplen > 0 )
@@ -3084,10 +2888,10 @@ static inline StreamSegment* SegmentAlloc(
             tcp_memcap->dealloc(size);
             return NULL;
         }
-        flow_con->prune_flows(IPPROTO_TCP, p);
+        flow_con->prune_flows(PktType::TCP, p);
     }
 
-    ss = (StreamSegment*)SnortAlloc(size);
+    ss = (TcpSegment*)SnortAlloc(size);
 
     ss->tv.tv_sec = tv->tv_sec;
     ss->tv.tv_usec = tv->tv_usec;
@@ -3100,16 +2904,16 @@ static inline StreamSegment* SegmentAlloc(
 }
 
 static int AddStreamNode(
-    StreamTracker* st, Packet* p,
+    TcpTracker *st, Packet *p,
     TcpDataBlock* tdb,
     int16_t len,
     uint32_t slide,
     uint32_t trunc,
     uint32_t seq,
-    StreamSegment* left,
-    StreamSegment** retSeg)
+    TcpSegment *left,
+    TcpSegment **retSeg)
 {
-    StreamSegment* ss = NULL;
+    TcpSegment *ss = NULL;
     int32_t newSize = len - slide - trunc;
 
     if (newSize <= 0)
@@ -3127,7 +2931,7 @@ static int AddStreamNode(
 
 #ifdef DEBUG_STREAM_EX
         {
-            StreamSegment* idx = st->seglist;
+            TcpSegment *idx = st->seglist;
             unsigned long i = 0;
             STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Dumping seglist, %d segments\n", st->seg_count); );
@@ -3218,12 +3022,10 @@ static int AddStreamNode(
     return STREAM_INSERT_OK;
 }
 
-static int DupStreamNode(Packet* p,
-    StreamTracker* st,
-    StreamSegment* left,
-    StreamSegment** retSeg)
+static int DupStreamNode(
+    Packet *p, TcpTracker *st, TcpSegment *left, TcpSegment **retSeg)
 {
-    StreamSegment* ss = SegmentAlloc(p, &left->tv, left->caplen, left->pktlen, left->pkt);
+    TcpSegment* ss = SegmentAlloc(p, &left->tv, left->caplen, left->pktlen, left->pkt);
 
     if ( !ss )
         return STREAM_INSERT_FAILED;
@@ -3251,8 +3053,8 @@ static int DupStreamNode(Packet* p,
     return STREAM_INSERT_OK;
 }
 
-static inline bool IsRetransmit(StreamSegment* seg, const uint8_t* rdata,
-    uint16_t rsize, uint32_t rseq)
+static inline bool IsRetransmit(
+    TcpSegment *seg, const uint8_t *rdata, uint16_t rsize, uint32_t rseq)
 {
     // If seg->orig_size == seg->size, then it's sequence number wasn't adjusted
     // so can just do a straight compare of the sequence numbers.
@@ -3271,25 +3073,20 @@ static inline bool IsRetransmit(StreamSegment* seg, const uint8_t* rdata,
 static inline void RetransmitProcess(Packet* p, TcpSession*)
 {
     // Data has already been analyzed so don't bother looking at it again.
-    DisableDetect(p);
-
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "Allowing retransmitted data "
-        "-- not blocked previously\n"); );
+    DisableDetect( p );
 }
 
 static inline void RetransmitHandle(Packet* p, TcpSession* tcpssn)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "Calling SE_REXMIT Handler\n"); );
     tcpssn->flow->call_handlers(p, false);
 }
 
 static inline void EndOfFileHandle(Packet* p, TcpSession* tcpssn)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "Calling SE_EOF Handler\n"); );
     tcpssn->flow->call_handlers(p, true);
 }
 
-static inline NormMode get_norm_ips(StreamTracker* st)
+static inline NormMode get_norm_ips(TcpTracker* st)
 {
     if ( st->config->policy == STREAM_POLICY_PROXY )
         return NORM_MODE_OFF;
@@ -3297,13 +3094,13 @@ static inline NormMode get_norm_ips(StreamTracker* st)
     return Normalize_GetMode(NORM_TCP_IPS);
 }
 
-static int StreamQueue(StreamTracker* st, Packet* p, TcpDataBlock* tdb,
-    TcpSession* tcpssn)
+static int StreamQueue(TcpTracker *st, Packet *p, TcpDataBlock *tdb,
+        TcpSession *tcpssn)
 {
-    StreamSegment* ss = NULL;
-    StreamSegment* left = NULL;
-    StreamSegment* right = NULL;
-    StreamSegment* dump_me = NULL;
+    TcpSegment *ss = NULL;
+    TcpSegment *left = NULL;
+    TcpSegment *right = NULL;
+    TcpSegment *dump_me = NULL;
     uint32_t seq = tdb->seq;
     uint32_t seq_end = tdb->end_seq;
     uint16_t len = p->dsize;
@@ -3322,7 +3119,7 @@ static int StreamQueue(StreamTracker* st, Packet* p, TcpDataBlock* tdb,
     uint32_t rseq = tdb->seq;
     PROFILE_VARS;
     STREAM_DEBUG_WRAP(
-        StreamSegment *lastptr = NULL;
+        TcpSegment *lastptr = NULL;
         uint32_t base_seq = st->seglist_base_seq;
         int last = 0;
         );
@@ -3911,8 +3708,9 @@ right_overlap_last:
     return ret;
 }
 
-static void ProcessTcpStream(StreamTracker* rcv, TcpSession* tcpssn,
-    Packet* p, TcpDataBlock* tdb,
+static void ProcessTcpStream(
+    TcpTracker *rcv, TcpSession *tcpssn,
+    Packet *p, TcpDataBlock *tdb,
     StreamTcpConfig* config)
 {
     STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
@@ -3926,7 +3724,7 @@ static void ProcessTcpStream(StreamTracker* rcv, TcpSession* tcpssn,
 #endif
 
     if ((config->flags & STREAM_CONFIG_NO_ASYNC_REASSEMBLY) &&
-        !TwoWayTraffic(tcpssn->flow))
+        !tcpssn->flow->two_way_traffic())
     {
         return;
     }
@@ -4027,8 +3825,8 @@ static void ProcessTcpStream(StreamTracker* rcv, TcpSession* tcpssn,
 }
 
 static int ProcessTcpData(
-    Packet* p, StreamTracker* listener, TcpSession* tcpssn,
-    TcpDataBlock* tdb, StreamTcpConfig* config)
+    Packet *p, TcpTracker *listener, TcpSession *tcpssn,
+    TcpDataBlock *tdb, StreamTcpConfig *config)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(s5TcpDataPerfStats);
@@ -4138,7 +3936,7 @@ static int ProcessTcpData(
     return STREAM_UNALIGNED;
 }
 
-void SetTcpReassemblyPolicy(StreamTracker* st)
+void SetTcpReassemblyPolicy(TcpTracker *st)
 {
     st->reassembly_policy = GetTcpReassemblyPolicy(st->os_policy);
 }
@@ -4166,7 +3964,7 @@ static void SetOSPolicy(Flow* flow, TcpSession* tcpssn)
  * there is no guarantee of memory alignment (and thus performance
  * issues similar to memcmp). */
 static inline int ValidMacAddress(
-    StreamTracker* talker, StreamTracker* listener, Packet* p)
+    TcpTracker *talker, TcpTracker *listener, Packet *p)
 {
     int i, j, ret = 0;
 
@@ -4282,7 +4080,7 @@ static void NewTcpSession(
         if ( (lwssn->ssn_state.session_flags & SSNFLAG_CLIENT_SWAP) &&
             !(lwssn->ssn_state.session_flags & SSNFLAG_CLIENT_SWAPPED) )
         {
-            StreamTracker trk = tmp->client;
+            TcpTracker trk = tmp->client;
             sfip_t ip = lwssn->client_ip;
             uint16_t port = lwssn->client_port;
 
@@ -4295,7 +4093,7 @@ static void NewTcpSession(
             lwssn->client_port = lwssn->server_port;
             lwssn->server_port = port;
 
-            if ( !TwoWayTraffic(lwssn) )
+            if ( !lwssn->two_way_traffic() )
             {
                 if ( lwssn->ssn_state.session_flags & SSNFLAG_SEEN_CLIENT )
                 {
@@ -4614,8 +4412,8 @@ static void NewTcpSessionOnData(
 }
 
 static int RepeatedSyn(
-    StreamTracker* listener, StreamTracker* talker,
-    TcpDataBlock* tdb, TcpSession* tcpssn)
+    TcpTracker *listener, TcpTracker *talker,
+    TcpDataBlock *tdb, TcpSession *tcpssn)
 {
     switch (listener->os_policy)
     {
@@ -4746,10 +4544,10 @@ static int ProcessTcp(
     int got_ts = 0;
     int new_ssn = 0;
     int ts_action = ACTION_NOTHING;
-    TcpSession* tcpssn = NULL;
-    StreamTracker* talker = NULL;
-    StreamTracker* listener = NULL;
-    STREAM_DEBUG_WRAP(char* t = NULL; char* l = NULL; )
+    TcpSession *tcpssn = NULL;
+    TcpTracker *talker = NULL;
+    TcpTracker *listener = NULL;
+    STREAM_DEBUG_WRAP(char *t = NULL; char *l = NULL;)
     PROFILE_VARS;
 
     if (lwssn->protocol != PktType::TCP)
@@ -5048,12 +4846,12 @@ static int ProcessTcp(
     {
         if ( talker && (talker->flags & TF_FORCE_FLUSH) )
         {
-            StreamFlushTalker(p, lwssn);
+            tcpssn->flush_talker(p);
             talker->flags &= ~TF_FORCE_FLUSH;
         }
         if ( listener && (listener->flags & TF_FORCE_FLUSH) )
         {
-            StreamFlushListener(p, lwssn);
+            tcpssn->flush_listener(p);
             listener->flags &= ~TF_FORCE_FLUSH;
         }
         p->packet_flags |= PKT_IGNORE;
@@ -5246,10 +5044,9 @@ static int ProcessTcp(
                 listener->s_mgr.state == TCP_STATE_FIN_WAIT_2 ||
                 listener->s_mgr.state == TCP_STATE_CLOSE_WAIT ||
                 listener->s_mgr.state == TCP_STATE_CLOSING
-                )
-            {
-                StreamFlushTalker(p, lwssn);
-                StreamFlushListener(p, lwssn);
+            ) {
+                tcpssn->flush_talker(p);
+                tcpssn->flush_listener(p);
                 lwssn->free_application_data();
             }
             lwssn->ssn_state.session_flags |= SSNFLAG_RESET;
@@ -5598,7 +5395,7 @@ static int ProcessTcp(
                     // sender of syn w/mss limits payloads from peer
                     // since we store mss on sender side, use listener mss
                     // same reasoning for window size
-                    StreamTracker* st = listener;
+                    TcpTracker* st = listener;
 
                     // trim to fit in window and mss as needed
                     NormalTrimPayloadIfWin(
@@ -5829,34 +5626,34 @@ static inline uint32_t GetForwardDir(const Packet* p)
 // see flush_pdu_ackd() for details
 // the key difference is that we operate on forward moving data
 // because we don't wait until it is acknowledged
-static inline int32_t flush_pdu_ips(
-    TcpSession* ssn, StreamTracker* trk, uint32_t* flags)
+static inline uint32_t flush_pdu_ips(
+    TcpSession* ssn, TcpTracker* trk, uint32_t* flags)
 {
-    int32_t total = 0, avail;
-    StreamSegment* seg;
+    uint32_t total = 0, avail;
+    TcpSegment* seg;
     PROFILE_VARS;
 
     MODULE_PROFILE_START(s5TcpPAFPerfStats);
     avail = get_q_sequenced(trk);
     seg = trk->seglist_next;
 
-    // * must stop if gap (checked in s5_paf_check)
+    // * must stop if gap (checked in paf_check)
     while ( seg && *flags && (total < avail) )
     {
         int32_t flush_pt;
         uint32_t size = seg->size;
         uint32_t end = seg->seq + seg->size;
-        uint32_t pos = s5_paf_position(&trk->paf_state);
+        uint32_t pos = paf_position(&trk->paf_state);
 
         total += size;
 
-        if ( s5_paf_initialized(&trk->paf_state) && SEQ_LEQ(end, pos) )
+        if ( paf_initialized(&trk->paf_state) && SEQ_LEQ(end, pos) )
         {
             seg = seg->next;
             continue;
         }
 
-        flush_pt = s5_paf_check(
+        flush_pt = paf_check(
             trk->splitter, &trk->paf_state, ssn->flow,
             seg->payload, size, total, seg->seq, flags);
 
@@ -5865,9 +5662,9 @@ static inline int32_t flush_pdu_ips(
             MODULE_PROFILE_END(s5TcpPAFPerfStats);
 
             // see flush_pdu_ackd()
-            if ( !trk->splitter->is_paf() && avail > flush_pt )
+            if ( !trk->splitter->is_paf() && avail > (unsigned)flush_pt )
             {
-                s5_paf_jump(&trk->paf_state, avail - flush_pt);
+                paf_jump(&trk->paf_state, avail - (unsigned)flush_pt);
                 return avail;
             }
             return flush_pt;
@@ -5879,7 +5676,7 @@ static inline int32_t flush_pdu_ips(
     return -1;
 }
 
-static inline void fallback(StreamTracker* a)
+static inline void fallback(TcpTracker* a)
 {
     bool c2s = a->splitter->to_server();
 
@@ -5889,8 +5686,8 @@ static inline void fallback(StreamTracker* a)
 }
 
 static inline int CheckFlushPolicyOnData(
-    TcpSession* tcpssn, StreamTracker* talker,
-    StreamTracker* listener, Packet* p)
+    TcpSession *tcpssn, TcpTracker *talker,
+    TcpTracker *listener, Packet *p)
 {
     uint32_t flushed = 0;
 
@@ -5979,11 +5776,11 @@ static inline int CheckFlushPolicyOnData(
 // - if we partially scan a segment we must save state so we
 //   know where we left off and can resume scanning the remainder
 
-static inline int32_t flush_pdu_ackd(
-    TcpSession* ssn, StreamTracker* trk, uint32_t* flags)
+static inline uint32_t flush_pdu_ackd(
+    TcpSession* ssn, TcpTracker* trk, uint32_t* flags)
 {
     uint32_t total = 0;
-    StreamSegment* seg;
+    TcpSegment* seg;
     PROFILE_VARS;
 
     MODULE_PROFILE_START(s5TcpPAFPerfStats);
@@ -5991,15 +5788,15 @@ static inline int32_t flush_pdu_ackd(
 
     // * must stop if not acked
     // * must use adjusted size of seg if not fully acked
-    // * must stop if gap (checked in s5_paf_check)
+    // * must stop if gap (checked in paf_check)
     while ( seg && *flags && SEQ_LT(seg->seq, trk->r_win_base) )
     {
         int32_t flush_pt;
         uint32_t size = seg->size;
         uint32_t end = seg->seq + seg->size;
-        uint32_t pos = s5_paf_position(&trk->paf_state);
+        uint32_t pos = paf_position(&trk->paf_state);
 
-        if ( s5_paf_initialized(&trk->paf_state) && SEQ_LEQ(end, pos) )
+        if ( paf_initialized(&trk->paf_state) && SEQ_LEQ(end, pos) )
         {
             total += size;
             seg = seg->next;
@@ -6010,7 +5807,7 @@ static inline int32_t flush_pdu_ackd(
 
         total += size;
 
-        flush_pt = s5_paf_check(
+        flush_pt = paf_check(
             trk->splitter, &trk->paf_state, ssn->flow,
             seg->payload, size, total, seg->seq, flags);
 
@@ -6029,7 +5826,7 @@ static inline int32_t flush_pdu_ackd(
                 int32_t avail = (trk->r_win_base - trk->seglist_base_seq);
                 if ( avail > flush_pt )
                 {
-                    s5_paf_jump(&trk->paf_state, avail - flush_pt);
+                    paf_jump(&trk->paf_state, avail - flush_pt);
                     return avail;
                 }
             }
@@ -6043,8 +5840,8 @@ static inline int32_t flush_pdu_ackd(
 }
 
 int CheckFlushPolicyOnAck(
-    TcpSession* tcpssn, StreamTracker* talker,
-    StreamTracker* listener, Packet* p)
+    TcpSession *tcpssn, TcpTracker *talker,
+    TcpTracker *listener, Packet *p)
 {
     uint32_t flushed = 0;
 
@@ -6110,8 +5907,8 @@ int CheckFlushPolicyOnAck(
     return flushed;
 }
 
-static void StreamSeglistAddNode(StreamTracker* st, StreamSegment* prev,
-    StreamSegment* ss)
+static void StreamSeglistAddNode(
+    TcpTracker *st, TcpSegment *prev, TcpSegment *ss)
 {
     tcpStats.segs_queued++;
 
@@ -6137,7 +5934,7 @@ static void StreamSeglistAddNode(StreamTracker* st, StreamSegment* prev,
     st->seg_count++;
 }
 
-static int StreamSeglistDeleteNode(StreamTracker* st, StreamSegment* seg)
+static int StreamSeglistDeleteNode (TcpTracker* st, TcpSegment* seg)
 {
     int ret;
     assert(st && seg);
@@ -6177,11 +5974,11 @@ static int StreamSeglistDeleteNode(StreamTracker* st, StreamSegment* seg)
 }
 
 static int StreamSeglistDeleteNodeTrim(
-    StreamTracker* st, StreamSegment* seg, uint32_t flush_seq)
+    TcpTracker* st, TcpSegment* seg, uint32_t flush_seq)
 {
     assert(st && seg);
 
-    if ( s5_paf_active(&st->paf_state) &&
+    if ( paf_active(&st->paf_state) &&
         ((seg->seq + seg->size) > flush_seq) )
     {
         uint32_t delta = flush_seq - seg->seq;
@@ -6202,267 +5999,9 @@ static int StreamSeglistDeleteNodeTrim(
     return StreamSeglistDeleteNode(st, seg);
 }
 
-/* Iterates through the packets that were reassembled for
- * logging of tagged packets.
- */
-int GetTcpRebuiltPackets(Packet* p, Flow* ssn,
-    PacketIterator callback, void* userdata)
+bool StreamGetReassemblyFlushPolicyTcp(Flow *lwssn, char dir)
 {
-    int packets = 0;
-    TcpSession* tcpssn = (TcpSession*)ssn->session;
-    StreamTracker* st;
-    StreamSegment* ss;
-    uint32_t start_seq = ntohl(p->ptrs.tcph->th_seq);
-    uint32_t end_seq = start_seq + p->dsize;
-
-    /* StreamTracker is the opposite of the ip of the reassembled
-     * packet --> it came out the queue for the other side */
-    if (sfip_equals(p->ptrs.ip_api.get_src(), &tcpssn->flow->client_ip))
-    {
-        st = &tcpssn->server;
-    }
-    else
-    {
-        st = &tcpssn->client;
-    }
-
-    // skip over segments not covered by this reassembled packet
-    for (ss = st->seglist; ss && SEQ_LT(ss->seq, start_seq); ss = ss->next)
-        ;
-
-    // return flushed segments only
-    for (; ss && ss->buffered == SL_BUF_FLUSHED; ss = ss->next)
-    {
-        if (SEQ_GEQ(ss->seq,start_seq) && SEQ_LT(ss->seq, end_seq))
-        {
-            DAQ_PktHdr_t pkth;
-            pkth.ts.tv_sec = ss->tv.tv_sec;
-            pkth.ts.tv_usec = ss->tv.tv_usec;
-            pkth.caplen = ss->caplen;
-            pkth.pktlen = ss->pktlen;
-
-            callback(&pkth, ss->pkt, userdata);
-            packets++;
-        }
-        else
-            break;
-    }
-
-    return packets;
-}
-
-/* Iterates through the packets that were reassembled for
- * logging of tagged packets.
- */
-int GetTcpStreamSegments(Packet* p, Flow* ssn,
-    StreamSegmentIterator callback, void* userdata)
-{
-    int packets = 0;
-    TcpSession* tcpssn = (TcpSession*)ssn->session;
-    StreamTracker* st;
-    StreamSegment* ss;
-    uint32_t start_seq = ntohl(p->ptrs.tcph->th_seq);
-    uint32_t end_seq = start_seq + p->dsize;
-
-    /* StreamTracker is the opposite of the ip of the reassembled
-     * packet --> it came out the queue for the other side */
-    if (sfip_equals(p->ptrs.ip_api.get_src(), &tcpssn->flow->client_ip))
-        st = &tcpssn->server;
-    else
-        st = &tcpssn->client;
-
-    // skip over segments not covered by this reassembled packet
-    for (ss = st->seglist; ss && SEQ_LT(ss->seq, start_seq); ss = ss->next)
-        ;
-
-    // return flushed segments only
-    for (; ss && ss->buffered == SL_BUF_FLUSHED; ss = ss->next)
-    {
-        if (SEQ_GEQ(ss->seq,start_seq) && SEQ_LT(ss->seq, end_seq))
-        {
-            DAQ_PktHdr_t pkth;
-            pkth.ts.tv_sec = ss->tv.tv_sec;
-            pkth.ts.tv_usec = ss->tv.tv_usec;
-            pkth.caplen = ss->caplen;
-            pkth.pktlen = ss->pktlen;
-
-            if (callback(&pkth, ss->pkt, ss->data, ss->seq, userdata) != 0)
-                return -1;
-
-            packets++;
-        }
-        else
-            break;
-    }
-
-    return packets;
-}
-
-int StreamAddSessionAlertTcp(
-    Flow* lwssn, Packet* p,
-    uint32_t gid, uint32_t sid)
-{
-    StreamTracker* st;
-    StreamAlertInfo* ai;
-    TcpSession* tcpssn = (TcpSession*)lwssn->session;
-
-    if (sfip_equals(p->ptrs.ip_api.get_src(),&tcpssn->flow->client_ip))
-    {
-        st = &tcpssn->server;
-    }
-    else
-    {
-        st = &tcpssn->client;
-    }
-
-    if (st->alert_count >= MAX_SESSION_ALERTS)
-        return 0;
-
-    ai = st->alerts + st->alert_count;
-    ai->gid = gid;
-    ai->sid = sid;
-    ai->seq = GET_PKT_SEQ(p);
-
-    if ( p->ptrs.tcph->th_flags & TH_FIN )
-        ai->seq--;
-
-    st->alert_count++;
-
-    return 1;
-}
-
-int StreamCheckSessionAlertTcp(Flow* lwssn, Packet* p, uint32_t gid, uint32_t sid)
-{
-    StreamTracker* st;
-    int i;
-    int iRet = 0;
-    TcpSession* tcpssn = (TcpSession*)lwssn->session;
-
-    /* If this is not a rebuilt packet, no need to check further */
-    if (!(p->packet_flags & PKT_REBUILT_STREAM))
-    {
-        return 0;
-    }
-
-    if (sfip_equals(p->ptrs.ip_api.get_src(), &tcpssn->flow->client_ip))
-    {
-        st = &tcpssn->server;
-    }
-    else
-    {
-        st = &tcpssn->client;
-    }
-
-    for (i=0; i<st->alert_count; i++)
-    {
-        /*  This is a rebuilt packet and if we've seen this alert before,
-         *  return that we have previously alerted on original packet.
-         */
-        if ( st->alerts[i].gid == gid &&
-            st->alerts[i].sid == sid )
-        {
-            return -1;
-        }
-    }
-
-    return iRet;
-}
-
-int StreamUpdateSessionAlertTcp(
-    Flow* lwssn, Packet* p,
-    uint32_t gid, uint32_t sid,
-    uint32_t event_id, uint32_t event_second)
-{
-    StreamTracker* st;
-    int i;
-    uint32_t seq_num;
-    TcpSession* tcpssn = (TcpSession*)lwssn->session;
-
-    if (sfip_equals(p->ptrs.ip_api.get_src(), &tcpssn->flow->client_ip))
-    {
-        st = &tcpssn->server;
-    }
-    else
-    {
-        st = &tcpssn->client;
-    }
-
-    seq_num = GET_PKT_SEQ(p);
-
-    if ( p->ptrs.tcph->th_flags & TH_FIN )
-        seq_num--;
-
-    for (i=0; i<st->alert_count; i++)
-    {
-        StreamAlertInfo* ai = st->alerts + i;
-
-        if ( ai->gid == gid &&
-            ai->sid == sid && SEQ_EQ(ai->seq, seq_num))
-        {
-            ai->event_id = event_id;
-            ai->event_second = event_second;
-            return 0;
-        }
-    }
-
-    return -1;
-}
-
-void StreamSetExtraDataTcp(Flow* lwssn, Packet* p, uint32_t xid)
-{
-    StreamTracker* st;
-    TcpSession* tcpssn = (TcpSession*)lwssn->session;
-
-    if (sfip_equals(p->ptrs.ip_api.get_src(),&tcpssn->flow->client_ip))
-        st = &tcpssn->server;
-    else
-        st = &tcpssn->client;
-
-    st->xtradata_mask |= BIT(xid);
-}
-
-void StreamClearExtraDataTcp(Flow* lwssn, Packet* p, uint32_t xid)
-{
-    StreamTracker* st;
-    TcpSession* tcpssn = (TcpSession*)lwssn->session;
-
-    if (sfip_equals(p->ptrs.ip_api.get_src(),&tcpssn->flow->client_ip))
-        st = &tcpssn->server;
-    else
-        st = &tcpssn->client;
-
-    if ( xid )
-        st->xtradata_mask &= ~BIT(xid);
-    else
-        st->xtradata_mask = 0;
-}
-
-char StreamGetReassemblyDirectionTcp(Flow* lwssn)
-{
-    char dir = SSN_DIR_NONE;
-    TcpSession* tcpssn = NULL;
-
-    if (!lwssn)
-        return SSN_DIR_NONE;
-
-    tcpssn = (TcpSession*)lwssn->session;
-
-    if ( tcpssn->server.flush_policy != STREAM_FLPOLICY_IGNORE )
-    {
-        dir |= SSN_DIR_FROM_CLIENT;
-    }
-
-    if ( tcpssn->client.flush_policy != STREAM_FLPOLICY_IGNORE )
-    {
-        dir |= SSN_DIR_FROM_SERVER;
-    }
-
-    return dir;
-}
-
-bool StreamGetReassemblyFlushPolicyTcp(Flow* lwssn, char dir)
-{
-    TcpSession* tcpssn = NULL;
+    TcpSession *tcpssn = NULL;
 
     if (!lwssn)
         return false;
@@ -6479,89 +6018,6 @@ bool StreamGetReassemblyFlushPolicyTcp(Flow* lwssn, char dir)
         return (char)tcpssn->server.flush_policy != STREAM_FLPOLICY_IGNORE;
     }
     return false;
-}
-
-char StreamIsStreamSequencedTcp(Flow* lwssn, char dir)
-{
-    TcpSession* tcpssn = NULL;
-
-    if (!lwssn)
-        return 1;
-
-    tcpssn = (TcpSession*)lwssn->session;
-
-    if (dir & SSN_DIR_FROM_CLIENT)
-    {
-        if ( tcpssn->server.flags & (TF_MISSING_PREV_PKT|TF_MISSING_PKT) )
-            return 0;
-    }
-
-    if (dir & SSN_DIR_FROM_SERVER)
-    {
-        if ( tcpssn->client.flags & (TF_MISSING_PREV_PKT|TF_MISSING_PKT) )
-            return 0;
-    }
-
-    return 1;
-}
-
-/* This will falsly return SSN_MISSING_BEFORE on the first reassembed
- * packet if reassembly for this direction was set mid-session */
-int StreamMissingInReassembledTcp(Flow* lwssn, char dir)
-{
-    TcpSession* tcpssn = NULL;
-
-    if (!lwssn)
-        return SSN_MISSING_NONE;
-
-    tcpssn = (TcpSession*)lwssn->session;
-
-    if (dir & SSN_DIR_FROM_CLIENT)
-    {
-        if ((tcpssn->server.flags & TF_MISSING_PKT) &&
-            (tcpssn->server.flags & TF_MISSING_PREV_PKT))
-            return SSN_MISSING_BOTH;
-        else if (tcpssn->server.flags & TF_MISSING_PREV_PKT)
-            return SSN_MISSING_BEFORE;
-        else if (tcpssn->server.flags & TF_MISSING_PKT)
-            return SSN_MISSING_AFTER;
-    }
-    else if (dir & SSN_DIR_FROM_SERVER)
-    {
-        if ((tcpssn->client.flags & TF_MISSING_PKT) &&
-            (tcpssn->client.flags & TF_MISSING_PREV_PKT))
-            return SSN_MISSING_BOTH;
-        else if (tcpssn->client.flags & TF_MISSING_PREV_PKT)
-            return SSN_MISSING_BEFORE;
-        else if (tcpssn->client.flags & TF_MISSING_PKT)
-            return SSN_MISSING_AFTER;
-    }
-
-    return SSN_MISSING_NONE;
-}
-
-char StreamPacketsMissingTcp(Flow* lwssn, char dir)
-{
-    TcpSession* tcpssn = NULL;
-
-    if (!lwssn)
-        return 0;
-
-    tcpssn = (TcpSession*)lwssn->session;
-
-    if (dir & SSN_DIR_FROM_CLIENT)
-    {
-        if (tcpssn->server.flags & TF_PKT_MISSED)
-            return 1;
-    }
-
-    if (dir & SSN_DIR_FROM_SERVER)
-    {
-        if (tcpssn->client.flags & TF_PKT_MISSED)
-            return 1;
-    }
-
-    return 0;
 }
 
 //-------------------------------------------------------------------------
@@ -6585,7 +6041,7 @@ void TcpSession::reset()
         TcpSessionClear(flow, (TcpSession*)flow->session, 2);
 }
 
-bool TcpSession::setup(Packet*)
+bool TcpSession::setup (Packet*)
 {
     // FIXIT-L this it should not be necessary to reset here
     reset();
@@ -6594,8 +6050,8 @@ bool TcpSession::setup(Packet*)
     event_mask = 0;
     ecn = 0;
 
-    memset(&client, 0, sizeof(client));
-    memset(&server, 0, sizeof(server));
+    memset(&client, 0, offsetof(TcpTracker, alerts));
+    memset(&server, 0, offsetof(TcpTracker, alerts));
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     ingress_index = egress_index = 0;
@@ -6624,21 +6080,20 @@ void TcpSession::clear()
 
 void TcpSession::restart(Packet* p)
 {
-    StreamTracker* talker, * listener;
-    TcpSession* tcpssn = (TcpSession*)p->flow->session;
+    TcpTracker* talker, * listener;
 
     if ( p->packet_flags & PKT_FROM_SERVER )
     {
-        talker = &tcpssn->server;
-        listener = &tcpssn->client;
+        talker = &server;
+        listener = &client;
     }
     else
     {
-        talker = &tcpssn->client;
-        listener = &tcpssn->server;
+        talker = &client;
+        listener = &server;
     }
 
-    // FIXTHIS-H on data / on ack must be based on flush policy
+    // FIXIT-H on data / on ack must be based on flush policy
     if ( p->dsize > 0 )
         CheckFlushPolicyOnData(this, talker, listener, p);
 
@@ -6646,12 +6101,389 @@ void TcpSession::restart(Packet* p)
         CheckFlushPolicyOnAck(this, talker, listener, p);
 }
 
+void TcpSession::set_splitter(bool c2s, StreamSplitter* ss)
+{
+    TcpTracker* trk;
+
+    if ( c2s )
+        trk = &server;
+    else
+        trk = &client;
+
+    if ( trk->splitter && tcp_init )
+        delete trk->splitter;
+
+    trk->splitter = ss;
+
+    if ( ss )
+        paf_setup(&trk->paf_state);
+}
+
+StreamSplitter* TcpSession::get_splitter(bool c2s)
+{
+    if ( c2s )
+        return server.splitter;
+
+    return client.splitter;
+}
+
+void TcpSession::flush_server(Packet *p)
+{
+    int flushed;
+    TcpTracker *flushTracker = &server;
+
+    flushTracker->flags |= TF_FORCE_FLUSH;
+
+    /* If this is a rebuilt packet, don't flush now because we'll
+     * overwrite the packet being processed.
+     */
+    if (p->packet_flags & PKT_REBUILT_STREAM)
+    {
+        /* We'll check & clear the TF_FORCE_FLUSH next time through */
+        return;
+    }
+
+    /* Need to convert the addresses to network order */
+    flushed = flush_stream(this, flushTracker, p, PKT_FROM_SERVER);
+
+    if (flushed)
+        purge_flushed_ackd(this, flushTracker);
+
+    flushTracker->flags &= ~TF_FORCE_FLUSH;
+}
+
+void TcpSession::flush_client(Packet* p)
+{
+    int flushed;
+    TcpTracker *flushTracker = &client;
+
+    flushTracker->flags |= TF_FORCE_FLUSH;
+
+    /* If this is a rebuilt packet, don't flush now because we'll
+     * overwrite the packet being processed.
+     */
+    if (p->packet_flags & PKT_REBUILT_STREAM)
+    {
+        /* We'll check & clear the TF_FORCE_FLUSH next time through */
+        return;
+    }
+
+    /* Need to convert the addresses to network order */
+    flushed = flush_stream(this, flushTracker, p, PKT_FROM_CLIENT);
+
+    if (flushed)
+        purge_flushed_ackd(this, flushTracker);
+
+    flushTracker->flags &= ~TF_FORCE_FLUSH;
+}
+
+void TcpSession::flush_listener(Packet* p)
+{
+    TcpTracker *listener = NULL;
+    int dir = 0;
+    int flushed = 0;
+
+    /* figure out direction of this packet -- we should've already
+     * looked at it, so the packet_flags are already set. */
+    if(p->packet_flags & PKT_FROM_SERVER)
+    {
+        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                    "Flushing listener on packet from server\n"););
+        listener = &client;
+        /* dir of flush is the data from the opposite side */
+        dir = PKT_FROM_SERVER;
+    }
+    else if (p->packet_flags & PKT_FROM_CLIENT)
+    {
+        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                    "Flushing listener on packet from client\n"););
+        listener = &server;
+        /* dir of flush is the data from the opposite side */
+        dir = PKT_FROM_CLIENT;
+    }
+
+    if (dir != 0)
+    {
+        listener->flags |= TF_FORCE_FLUSH;
+        flushed = flush_stream(this, listener, p, dir);
+
+        if (flushed)
+            purge_flushed_ackd(this, listener);
+
+        listener->flags &= ~TF_FORCE_FLUSH;
+    }
+}
+
+void TcpSession::flush_talker(Packet* p)
+{
+    TcpTracker *talker = NULL;
+    int dir = 0;
+    int flushed = 0;
+
+    /* figure out direction of this packet -- we should've already
+     * looked at it, so the packet_flags are already set. */
+    if(p->packet_flags & PKT_FROM_SERVER)
+    {
+        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                    "Flushing talker on packet from server\n"););
+        talker = &server;
+        /* dir of flush is the data from the opposite side */
+        dir = PKT_FROM_CLIENT;
+    }
+    else if (p->packet_flags & PKT_FROM_CLIENT)
+    {
+        STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+                    "Flushing talker on packet from client\n"););
+        talker = &client;
+        /* dir of flush is the data from the opposite side */
+        dir = PKT_FROM_SERVER;
+    }
+
+    if (dir != 0)
+    {
+        talker->flags |= TF_FORCE_FLUSH;
+        flushed = flush_stream(this, talker, p, dir);
+
+        if (flushed)
+            purge_flushed_ackd(this, talker);
+
+        talker->flags &= ~TF_FORCE_FLUSH;
+    }
+}
+
+/* Iterates through the packets that were reassembled for
+ * logging of tagged packets.
+ */
+int TcpSession::get_rebuilt_packets(
+    Packet* p, PacketIterator callback, void *userdata)
+{
+    int packets = 0;
+    TcpTracker *st;
+    TcpSegment *ss;
+    uint32_t start_seq = ntohl(p->ptrs.tcph->th_seq);
+    uint32_t end_seq = start_seq + p->dsize;
+
+    /* TcpTracker is the opposite of the ip of the reassembled
+     * packet --> it came out the queue for the other side */
+    if (sfip_equals(p->ptrs.ip_api.get_src(), &flow->client_ip))
+        st = &server;
+    else
+        st = &client;
+
+    // skip over segments not covered by this reassembled packet
+    for (ss = st->seglist; ss && SEQ_LT(ss->seq, start_seq); ss = ss->next);
+
+    // return flushed segments only
+    for (; ss && ss->buffered == SL_BUF_FLUSHED; ss = ss->next)
+    {
+        if (SEQ_GEQ(ss->seq,start_seq) && SEQ_LT(ss->seq, end_seq))
+        {
+            DAQ_PktHdr_t pkth;
+            pkth.ts.tv_sec = ss->tv.tv_sec;
+            pkth.ts.tv_usec = ss->tv.tv_usec;
+            pkth.caplen = ss->caplen;
+            pkth.pktlen = ss->pktlen;
+
+            callback(&pkth, ss->pkt, userdata);
+            packets++;
+        }
+        else
+            break;
+    }
+
+    return packets;
+}
+
+/* Iterates through the packets that were reassembled for
+ * logging of tagged packets.
+ */
+int TcpSession::get_segments(
+    Packet* p, StreamSegmentIterator callback, void *userdata)
+{
+    int packets = 0;
+    TcpTracker *st;
+    TcpSegment *ss;
+    uint32_t start_seq = ntohl(p->ptrs.tcph->th_seq);
+    uint32_t end_seq = start_seq + p->dsize;
+
+    /* TcpTracker is the opposite of the ip of the reassembled
+     * packet --> it came out the queue for the other side */
+    if (sfip_equals(p->ptrs.ip_api.get_src(), &flow->client_ip))
+        st = &server;
+    else
+        st = &client;
+
+    // skip over segments not covered by this reassembled packet
+    for (ss = st->seglist; ss && SEQ_LT(ss->seq, start_seq); ss = ss->next);
+
+    // return flushed segments only
+    for (; ss && ss->buffered == SL_BUF_FLUSHED; ss = ss->next)
+    {
+        if (SEQ_GEQ(ss->seq,start_seq) && SEQ_LT(ss->seq, end_seq))
+        {
+            DAQ_PktHdr_t pkth;
+            pkth.ts.tv_sec = ss->tv.tv_sec;
+            pkth.ts.tv_usec = ss->tv.tv_usec;
+            pkth.caplen = ss->caplen;
+            pkth.pktlen = ss->pktlen;
+
+            if (callback(&pkth, ss->pkt, ss->data, ss->seq, userdata) != 0)
+                return -1;
+
+            packets++;
+        }
+        else
+            break;
+    }
+
+    return packets;
+}
+
+int TcpSession::update_alert(
+    Packet *p, uint32_t gid, uint32_t sid, uint32_t event_id, uint32_t event_second)
+{
+    TcpTracker *st;
+    int i;
+    uint32_t seq_num;
+
+    if (sfip_equals(p->ptrs.ip_api.get_src(), &flow->client_ip))
+        st = &server;
+    else
+        st = &client;
+
+    seq_num = GET_PKT_SEQ(p);
+
+    if ( p->ptrs.tcph->th_flags & TH_FIN )
+        seq_num--;
+
+    for (i=0; i<st->alert_count; i++)
+    {
+        StreamAlertInfo* ai = st->alerts + i;
+
+        if ( ai->gid == gid &&
+            ai->sid == sid && SEQ_EQ(ai->seq, seq_num))
+        {
+            ai->event_id = event_id;
+            ai->event_second = event_second;
+            return 0;
+        }
+    }
+
+    return -1;
+}
+
+void TcpSession::set_extra_data(Packet* p, uint32_t xid)
+{
+    TcpTracker *st;
+
+    if (sfip_equals(p->ptrs.ip_api.get_src(),&flow->client_ip))
+        st = &server;
+    else
+        st = &client;
+
+    st->xtradata_mask |= BIT(xid);
+}
+
+void TcpSession::clear_extra_data(Packet* p, uint32_t xid)
+{
+    TcpTracker *st;
+
+    if (sfip_equals(p->ptrs.ip_api.get_src(),&flow->client_ip))
+        st = &server;
+    else
+        st = &client;
+
+    if ( xid )
+        st->xtradata_mask &= ~BIT(xid);
+    else
+        st->xtradata_mask = 0;
+}
+
+uint8_t TcpSession::get_reassembly_direction()
+{
+    uint8_t dir = SSN_DIR_NONE;
+
+    if ( server.flush_policy != STREAM_FLPOLICY_IGNORE )
+    {
+        dir |= SSN_DIR_FROM_CLIENT;
+    }
+
+    if ( client.flush_policy != STREAM_FLPOLICY_IGNORE )
+    {
+        dir |= SSN_DIR_FROM_SERVER;
+    }
+
+    return dir;
+}
+
+bool TcpSession::is_sequenced(uint8_t dir)
+{
+    if (dir & SSN_DIR_FROM_CLIENT)
+    {
+        if ( server.flags & (TF_MISSING_PREV_PKT|TF_MISSING_PKT) )
+            return false;
+    }
+
+    if (dir & SSN_DIR_FROM_SERVER)
+    {
+        if ( client.flags & (TF_MISSING_PREV_PKT|TF_MISSING_PKT) )
+            return false;
+    }
+
+    return true;
+}
+
+/* This will falsely return SSN_MISSING_BEFORE on the first reassembed
+ * packet if reassembly for this direction was set mid-session */
+uint8_t TcpSession::missing_in_reassembled(uint8_t dir)
+{
+    if (dir & SSN_DIR_FROM_CLIENT)
+    {
+        if ((server.flags & TF_MISSING_PKT) &&
+            (server.flags & TF_MISSING_PREV_PKT))
+            return SSN_MISSING_BOTH;
+        else if (server.flags & TF_MISSING_PREV_PKT)
+            return SSN_MISSING_BEFORE;
+        else if (server.flags & TF_MISSING_PKT)
+            return SSN_MISSING_AFTER;
+    }
+    else if (dir & SSN_DIR_FROM_SERVER)
+    {
+        if ((client.flags & TF_MISSING_PKT) &&
+            (client.flags & TF_MISSING_PREV_PKT))
+            return SSN_MISSING_BOTH;
+        else if (client.flags & TF_MISSING_PREV_PKT)
+            return SSN_MISSING_BEFORE;
+        else if (client.flags & TF_MISSING_PKT)
+            return SSN_MISSING_AFTER;
+    }
+
+    return SSN_MISSING_NONE;
+}
+
+bool TcpSession::are_packets_missing(uint8_t dir)
+{
+    if (dir & SSN_DIR_FROM_CLIENT)
+    {
+        if (server.flags & TF_PKT_MISSED)
+            return true;
+    }
+
+    if (dir & SSN_DIR_FROM_SERVER)
+    {
+        if (client.flags & TF_PKT_MISSED)
+            return true;
+    }
+
+    return false;
+}
+
 void TcpSession::update_direction(
     char dir, const sfip_t* ip, uint16_t port)
 {
     sfip_t tmpIp;
     uint16_t tmpPort;
-    StreamTracker tmpTracker;
+    TcpTracker tmpTracker;
 
     if (sfip_equals(&flow->client_ip, ip) && (flow->client_port == port))
     {
@@ -6683,9 +6515,9 @@ void TcpSession::update_direction(
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     SwapPacketHeaderFoo(this);
 #endif
-    memcpy(&tmpTracker, &client, sizeof(StreamTracker));
-    memcpy(&client, &server, sizeof(StreamTracker));
-    memcpy(&server, &tmpTracker, sizeof(StreamTracker));
+    memcpy(&tmpTracker, &client, sizeof(TcpTracker));
+    memcpy(&client, &server, sizeof(TcpTracker));
+    memcpy(&server, &tmpTracker, sizeof(TcpTracker));
 }
 
 /*
@@ -6716,9 +6548,8 @@ int TcpSession::process(Packet* p)
     SetupTcpDataBlock(&tdb, p);
 
     StreamTcpConfig* config = get_tcp_cfg(flow->ssn_server);
-    TcpSession* tcpssn = (TcpSession*)flow->session;
 
-    if ( !tcpssn->lws_init )
+    if ( !lws_init )
     {
         // FIXIT most of this now looks out of place or redundant
         if ( config->require_3whs() )
@@ -6742,10 +6573,10 @@ int TcpSession::process(Packet* p)
                     "Handshake, but failed to retrieve session object "
                     "for non SYN packet.\n"); );
 
-                if ( !p->ptrs.tcph->is_rst() && !(tcpssn->event_mask & EVENT_NO_3WHS) )
+                if ( !p->ptrs.tcph->is_rst() && !(event_mask & EVENT_NO_3WHS) )
                 {
                     EventNo3whs();
-                    tcpssn->event_mask |= EVENT_NO_3WHS;
+                    event_mask |= EVENT_NO_3WHS;
                 }
 
                 MODULE_PROFILE_END(s5TcpPerfStats);
@@ -6770,7 +6601,7 @@ midstream_pickup_allowed:
                 return 0;
             }
         }
-        tcpssn->lws_init = true;
+        lws_init = true;
     }
     /*
      * Check if the session is expired.
@@ -6823,12 +6654,56 @@ midstream_pickup_allowed:
 
 bool TcpSession::add_alert(Packet* p, uint32_t gid, uint32_t sid)
 {
-    return StreamAddSessionAlertTcp(p->flow, p, gid, sid) != 0;
+    TcpTracker *st;
+    StreamAlertInfo* ai;
+
+    if (sfip_equals(p->ptrs.ip_api.get_src(),&flow->client_ip))
+        st = &server;
+    else
+        st = &client;
+
+    if (st->alert_count >= MAX_SESSION_ALERTS)
+        return false;
+
+    ai = st->alerts + st->alert_count;
+    ai->gid = gid;
+    ai->sid = sid;
+    ai->seq = GET_PKT_SEQ(p);
+
+    if ( p->ptrs.tcph->th_flags & TH_FIN )
+        ai->seq--;
+
+    st->alert_count++;
+
+    return true;
 }
 
 bool TcpSession::check_alerted(Packet* p, uint32_t gid, uint32_t sid)
 {
-    return StreamCheckSessionAlertTcp(p->flow, p, gid, sid) != 0;
+    /* If this is not a rebuilt packet, no need to check further */
+    if ( !(p->packet_flags & PKT_REBUILT_STREAM) )
+        return false;
+
+    TcpTracker *st;
+
+    if (sfip_equals(p->ptrs.ip_api.get_src(), &flow->client_ip))
+        st = &server;
+    else
+        st = &client;
+
+    for ( int i = 0; i < st->alert_count; i++ )
+    {
+        /*  This is a rebuilt packet and if we've seen this alert before,
+         *  return that we have previously alerted on original packet.
+         */
+        if ( st->alerts[i].gid == gid &&
+             st->alerts[i].sid == sid )
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void TcpSession::flush()

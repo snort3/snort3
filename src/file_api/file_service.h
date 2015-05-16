@@ -32,7 +32,8 @@
 #define FILE_SIGNATURE_SHA256        1
 #define FILE_SIGNATURE_SHA256_STR       "(file) malware detected"
 
-void FileAPIInit(void);
-void close_fileAPI(void);
+void FileAPIInit();
+void close_fileAPI();
+void print_file_stats();
 #endif
 

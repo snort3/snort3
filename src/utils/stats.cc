@@ -39,6 +39,7 @@
 #include "filters/sfthreshold.h"
 #include "time/ppm.h"
 #include "time/profiler.h"
+#include "file_api/file_service.h"
 
 #define STATS_SEPARATOR \
     "--------------------------------------------------"
@@ -158,6 +159,8 @@ static void timing_stats()
 // FIXIT-L 2.0.4 introduces the retry verdict
 // no way to reliably optionally leverage this with dynamic loaded daqs
 
+// FIXIT-L daq stats should be moved to sfdaq
+
 #define MAX_SFDAQ_VERDICT 6
 
 struct DAQStats
@@ -184,7 +187,7 @@ struct DAQStats
 
 const PegInfo daq_names[] =
 {
-    { "pcaps", "total files processed" },
+    { "pcaps", "total files and interfaces processed" },
     { "received", "total packets received from DAQ" },
     { "analyzed", "total packets analyzed from DAQ" },
     { "dropped", "packets dropped" },
@@ -312,6 +315,9 @@ void DropStats()
     // FIXIT-L alert_pkts excludes rep hits
     if ( gpc.total_alert_pkts == gpc.alert_pkts )
         gpc.total_alert_pkts = 0;
+
+    //LogLabel("File Statistics");
+    print_file_stats();
 
     LogLabel("Summary Statistics");
     show_stats((PegCount*)&gpc, pc_names, array_size(pc_names)-1, "detection");

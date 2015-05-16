@@ -39,6 +39,7 @@ set(BUILT_SOURCES
 )
 
 set (UNBUILT_SOURCES
+    daq.txt
     differences.txt
     errors.txt
     enviro.txt

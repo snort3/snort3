@@ -87,7 +87,7 @@ int IpTosOption::eval(Cursor&, Packet* p)
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    if (!p->ptrs.ip_api.is_valid())
+    if(!p->ptrs.ip_api.is_ip())
         return rval;
 
     MODULE_PROFILE_START(ipTosPerfStats);

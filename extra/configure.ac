@@ -32,7 +32,11 @@ AC_PROG_LIBTOOL
 # Use the same defines Snort used
 # (absolutely critical to ensure struct definitions match)
 CXXFLAGS=`pkg-config --cflags snort`
+CFLAGS=`pkg-config --cflags snort`
+AM_CPPFLAGS=`pkg-config --cflags-only-I snort`
 
+CFLAGS="$CFLAGS -std=c99"
+AM_CFLAGS="-std=c99"
 AM_CXXFLAGS="-std=c++11"
 AX_CXX_COMPILE_STDCXX_11
 
@@ -69,10 +73,9 @@ AC_DEFUN([CC_VISIBILITY],
 ])
 CC_VISIBILITY()
 
-# Checks for libraries.
 AC_ARG_WITH(snort-includes,
-            [  --with-snort-includes=DIR    snort include directory],
-            [with_snort_includes="$withval"], [with_snort_includes="no"])
+    AC_HELP_STRING([--with-snort-includes=DIR],[snort include directory]),
+    [with_snort_includes="$withval"],[with_snort_includes="no"])
 
 if test "x$with_snort_includes" != "xno"; then
     AM_CPPFLAGS="${AM_CPPFLAGS} -I${with_snort_includes}"
@@ -85,6 +88,7 @@ AC_CONFIG_FILES([ \
     Makefile \
     src/Makefile \
     src/codecs/Makefile \
+    src/daqs/Makefile \
     src/inspectors/Makefile \
     src/ips_options/Makefile \
     src/loggers/Makefile \

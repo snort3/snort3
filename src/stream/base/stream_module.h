@@ -41,6 +41,8 @@ struct StreamModuleConfig
     FlowConfig icmp_cfg;
     FlowConfig tcp_cfg;
     FlowConfig udp_cfg;
+    FlowConfig user_cfg;
+    FlowConfig file_cfg;
 };
 
 class StreamModule : public Module

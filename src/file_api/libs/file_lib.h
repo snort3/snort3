@@ -106,8 +106,7 @@ extern int64_t file_type_depth;
 extern int64_t file_signature_depth;
 
 void free_file_identifiers(void*);
-#if defined(DEBUG_MSGS) || defined (REG_TEST)
 void file_sha256_print(unsigned char* hash);
-#endif
+
 #endif
 

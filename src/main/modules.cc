@@ -1279,6 +1279,7 @@ bool ProcessModule::end(const char* fqn, int idx, SnortConfig* sc)
 //-------------------------------------------------------------------------
 // file_id module
 //-------------------------------------------------------------------------
+
 static const Parameter file_magic_params[] =
 {
     { "content", Parameter::PT_STRING, nullptr, nullptr,
@@ -1333,7 +1334,6 @@ static const Parameter file_id_params[] =
     { "block_timeout_lookup", Parameter::PT_BOOL, nullptr, "false",
       "block if lookup times out" },
 
-#if defined(DEBUG_MSGS) || defined (REG_TEST)
     { "enable_type", Parameter::PT_BOOL, nullptr, "false",
       "enable type ID" },
 
@@ -1342,9 +1342,18 @@ static const Parameter file_id_params[] =
 
     { "show_data_depth", Parameter::PT_INT, "0:", "100",
       "print this many octets" },
-#endif
+
     { "file_rules", Parameter::PT_LIST, file_rule_params, nullptr,
         "list of file magic rules" },
+
+    { "trace_type", Parameter::PT_BOOL, nullptr, "false",
+      "enable runtime dump of type info" },
+
+    { "trace_signature", Parameter::PT_BOOL, nullptr, "false",
+      "enable runtime dump of signature info" },
+
+    { "trace_stream", Parameter::PT_BOOL, nullptr, "false",
+      "enable runtime dump of file data" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -1384,16 +1393,28 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("block_timeout_lookup") )
         fc->block_timeout_lookup = v.get_bool();
 
-#if defined(DEBUG_MSGS) || defined (REG_TEST)
     else if ( v.is("enable_type") )
-        file_api->enable_file_type(nullptr);
-
+    {
+        if ( v.get_bool() )
+            file_api->enable_file_type(nullptr);
+    }
     else if ( v.is("enable_signature") )
-        file_api->enable_file_signature(nullptr);
-
+    {
+        if ( v.get_bool() )
+            file_api->enable_file_signature(nullptr);
+    }
     else if ( v.is("show_data_depth") )
-        fc->show_data_depth = v.get_long();
-#endif
+        FileConfig::show_data_depth = v.get_long();
+
+    else if ( v.is("trace_type") )
+        FileConfig::trace_type = v.get_bool();
+
+    else if ( v.is("trace_signature") )
+        FileConfig::trace_signature = v.get_bool();
+
+    else if ( v.is("trace_stream") )
+        FileConfig::trace_stream = v.get_bool();
+
     else if ( v.is("file_rules") )
         return true;
 
@@ -1466,7 +1487,7 @@ bool FileIdModule::end(const char* fqn, int idx, SnortConfig* sc)
     if ( !strcmp(fqn, "file_id.file_rules") )
     {
         fc->process_file_rule(rule);
-        fc->print_file_rule(rule);
+        //fc->print_file_rule(rule);
     }
 
     else if ( !strcmp(fqn, "file_id.file_rules.magic") )

@@ -76,7 +76,8 @@ static inline int get_data_size_from_depth_limit(FileContext* context, FileProce
 }
 
 /*Main File Processing functions */
-void file_type_id(FileContext* context, uint8_t* file_data, int data_size, FilePosition position)
+void file_type_id(FileContext* context, uint8_t* file_data,
+    int data_size, FilePosition position)
 {
     FileConfig* file_config =  (FileConfig*) context->file_config;
 
@@ -119,8 +120,8 @@ void file_type_id(FileContext* context, uint8_t* file_data, int data_size, FileP
     }
 }
 
-void file_signature_sha256(FileContext* context, uint8_t* file_data, int data_size, FilePosition
-    position)
+void file_signature_sha256(
+    FileContext* context, uint8_t* file_data, int data_size, FilePosition position)
 {
     if (!context)
         return;
@@ -251,7 +252,6 @@ const char* file_info_from_ID(void* conf, uint32_t id)
     return NULL;
 }
 
-#if defined(DEBUG_MSGS) || defined (REG_TEST)
 /*
  * Print a 32-byte hash value.
  */
@@ -270,6 +270,4 @@ void file_sha256_print(unsigned char* hash)
         hash[24], hash[25], hash[26], hash[27],
         hash[28], hash[29], hash[30], hash[31]);
 }
-
-#endif
 

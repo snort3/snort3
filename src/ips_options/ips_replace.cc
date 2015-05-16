@@ -162,7 +162,7 @@ int ReplaceOption::eval(Cursor& c, Packet* p)
     PROFILE_VARS;
     MODULE_PROFILE_START(replacePerfStats);
 
-    if ( PacketWasCooked(p) )
+    if ( p->is_cooked() )
         return false;
 
     if ( !c.is("pkt_data") )

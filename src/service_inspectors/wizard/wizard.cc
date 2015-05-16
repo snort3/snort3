@@ -26,10 +26,8 @@ using namespace std;
 #include "wiz_module.h"
 #include "flow/flow.h"
 #include "framework/inspector.h"
-#include "stream/stream_splitter.h"
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"
-#include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
 #include "time/profiler.h"
 #include "utils/stats.h"
@@ -43,6 +41,8 @@ struct WizStats
     PegCount tcp_hits;
     PegCount udp_scans;
     PegCount udp_hits;
+    PegCount user_scans;
+    PegCount user_hits;
 };
 
 const PegInfo wiz_pegs[] =
@@ -51,6 +51,8 @@ const PegInfo wiz_pegs[] =
     { "tcp hits", "tcp identifications" },
     { "udp scans", "udp payload scans" },
     { "udp hits", "udp identifications" },
+    { "user scans", "user payload scans" },
+    { "user hits", "user identifications" },
     { nullptr, nullptr }
 };
 
@@ -254,7 +256,7 @@ static const InspectApi wiz_api =
         mod_dtor
     },
     IT_WIZARD,
-    (uint16_t)PktType::TCP | (uint16_t)PktType::UDP,
+    (uint16_t)PktType::TCP | (uint16_t)PktType::UDP | (uint16_t)PktType::USER,
     nullptr, // buffers
     nullptr, // service
     nullptr, // init

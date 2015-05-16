@@ -36,7 +36,7 @@
 #include "flow/flow_cache.h"
 #include "flow/session.h"
 #include "stream/stream.h"
-#include "tcp/stream_paf.h"
+#include "stream/paf.h"
 #include "tcp/stream_tcp.h"
 #include "udp/stream_udp.h"
 #include "icmp/stream_icmp.h"
@@ -62,6 +62,17 @@ Stream::Stream()
     xtradata_func_count = 0;
     extra_data_log = NULL;
     extra_data_config = NULL;
+
+    // FIXIT-L this is a hack around gnus crappy linker:
+    // libstream.a is linked before the other stream libs to ensure that
+    // the plugin symbols are located.  however, this causes the below paf
+    // functions to not be located.  the only alternative to this hack
+    // appears to be breaking up the libs further to avoid the circularity.
+    // not a bad requirement in theory, but in practice a bit restrictive.
+    // links just fine on osx w/o this hack!
+    typedef void (*ugh)();
+    if ( (ugh)paf_setup == (ugh)paf_clear || (ugh)paf_clear == (ugh)paf_check )
+        printf("ugh! this check failed to ensure that gnus links finds paf setup/clear/check\n");
 }
 
 Stream::~Stream() { }
@@ -84,14 +95,14 @@ void Stream::delete_session(const FlowKey* key)
 //-------------------------------------------------------------------------
 
 Flow* Stream::get_session_ptr_from_ip_port(
-    const sfip_t* srcIP, uint16_t srcPort,
-    const sfip_t* dstIP, uint16_t dstPort,
-    uint8_t ip_protocol, uint16_t vlan, uint32_t mplsId,
-    uint16_t addressSpaceId)
+    uint8_t type, uint8_t proto,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
+    uint16_t vlan, uint32_t mplsId, uint16_t addressSpaceId)
 {
     FlowKey key;
 
-    key.init(srcIP, srcPort, dstIP, dstPort, ip_protocol, vlan, mplsId, addressSpaceId);
+    key.init(type, proto, srcIP, srcPort, dstIP, dstPort, vlan, mplsId, addressSpaceId);
 
     return get_session(&key);
 }
@@ -108,9 +119,9 @@ void Stream::populate_session_key(Packet* p, FlowKey* key)
 #endif
 
     key->init(
+        (uint8_t)p->type(), p->get_ip_proto_next(),
         p->ptrs.ip_api.get_src(), p->ptrs.sp,
         p->ptrs.ip_api.get_dst(), p->ptrs.dp,
-        p->get_ip_proto_next(),
         // if the vlan protocol bit is defined, vlan layer gauranteed to exist
         (p->proto_bits & PROTO_BIT__VLAN) ? layer::get_vlan_layer(p)->vid() : 0,
         (p->proto_bits & PROTO_BIT__MPLS) ? p->ptrs.mplsHdr.label : 0,
@@ -141,16 +152,18 @@ FlowData* Stream::get_application_data_from_key(
 }
 
 FlowData* Stream::get_application_data_from_ip_port(
-    const sfip_t* srcIP, uint16_t srcPort,
-    const sfip_t* dstIP, uint16_t dstPort,
-    uint8_t ip_protocol, uint16_t vlan, uint32_t mplsId,
+    uint8_t type, uint8_t proto,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
+    uint16_t vlan, uint32_t mplsId,
     uint16_t addressSpaceID, unsigned flow_id)
 {
     Flow* flow;
 
     flow = get_session_ptr_from_ip_port(
+        type, proto,
         srcIP, srcPort, dstIP, dstPort,
-        ip_protocol, vlan, mplsId, addressSpaceID);
+        vlan, mplsId, addressSpaceID);
 
     return flow->get_application_data(flow_id);
 }
@@ -175,9 +188,9 @@ void Stream::check_session_closed(Packet* p)
 }
 
 int Stream::ignore_session(
-    const sfip_t* srcIP, uint16_t srcPort,
-    const sfip_t* dstIP, uint16_t dstPort,
-    uint8_t protocol, char direction,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
+    PktType protocol, char direction,
     uint32_t flow_id)
 {
     assert(flow_con);
@@ -210,8 +223,7 @@ void Stream::stop_inspection(
     Flow* flow, Packet* p, char dir,
     int32_t /*bytes*/, int /*response*/)
 {
-    if (!flow)
-        return;
+    assert(flow && flow->session);
 
     switch (dir)
     {
@@ -229,14 +241,10 @@ void Stream::stop_inspection(
     if (flow->protocol == PktType::TCP)
     {
         if (flow->ssn_state.ignore_direction & SSN_DIR_FROM_CLIENT)
-        {
-            StreamFlushClient(p, flow);
-        }
+            flow->session->flush_client(p);
 
         if (flow->ssn_state.ignore_direction & SSN_DIR_FROM_SERVER)
-        {
-            StreamFlushServer(p, flow);
-        }
+            flow->session->flush_server(p);
     }
 
     /* TODO: Handle bytes/response parameters */
@@ -387,9 +395,9 @@ void Stream::init_active_response(Packet* p, Flow* flow)
 //-------------------------------------------------------------------------
 
 int Stream::set_application_protocol_id_expected(
-    const sfip_t* srcIP, uint16_t srcPort,
-    const sfip_t* dstIP, uint16_t dstPort,
-    uint8_t protocol, int16_t appId, FlowData* fd)
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
+    PktType protocol, int16_t appId, FlowData* fd)
 {
     assert(flow_con);
 
@@ -510,19 +518,23 @@ int16_t Stream::set_application_protocol_id(Flow* flow, int16_t id)
 // splitter foo
 //-------------------------------------------------------------------------
 
-bool Stream::is_paf_active(Flow* flow, bool to_server)
-{
-    return StreamIsPafActiveTcp(flow, to_server);
-}
-
 void Stream::set_splitter(Flow* flow, bool to_server, StreamSplitter* ss)
 {
-    return StreamSetSplitterTcp(flow, to_server, ss);
+    assert(flow && flow->session);
+    return flow->session->set_splitter(to_server, ss);
 }
 
 StreamSplitter* Stream::get_splitter(Flow* flow, bool to_server)
 {
-    return StreamGetSplitterTcp(flow, to_server);
+    assert(flow && flow->session);
+    return flow->session->get_splitter(to_server);
+}
+
+bool Stream::is_paf_active(Flow* flow, bool to_server)
+{
+    assert(flow && flow->session);
+    StreamSplitter* ss = flow->session->get_splitter(to_server);
+    return ss && ss->is_paf();
 }
 
 //-------------------------------------------------------------------------
@@ -728,24 +740,12 @@ void Stream::set_ip_protocol(Flow* flow)
 
 static bool ok_to_flush(Packet* p)
 {
-    Flow* flow;
-
-    if ((p == NULL) || (p->flow == NULL))
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-            "Don't flush NULL packet or session\n"); );
+    if ( p->packet_flags & PKT_REBUILT_STREAM )
         return false;
-    }
 
-    flow = p->flow;
-
-    if ((flow->protocol != PktType::TCP) ||
-        (p->packet_flags & PKT_REBUILT_STREAM))
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-            "Don't flush on rebuilt packets\n"); );
+    if ( p->type() != PktType::TCP )
         return false;
-    }
+
     return true;
 }
 
@@ -756,7 +756,7 @@ void Stream::flush_request(Packet* p)
 
     /* Flush the listener queue -- this is the same side that
      * the packet gets inserted into */
-    StreamFlushListener(p, p->flow);
+    p->flow->session->flush_listener(p);
 }
 
 void Stream::flush_response(Packet* p)
@@ -766,7 +766,7 @@ void Stream::flush_response(Packet* p)
 
     /* Flush the talker queue -- this is the opposite side that
      * the packet gets inserted into */
-    StreamFlushTalker(p, p->flow);
+    p->flow->session->flush_talker(p);
 }
 
 // return true if added
@@ -794,99 +794,62 @@ int Stream::update_session_alert(
     uint32_t gid, uint32_t sid,
     uint32_t event_id, uint32_t event_second)
 {
-    if ( !flow )
-        return 0;
-
-    /* Don't need to do this for other protos because they don't
-       do any reassembly. */
-    if ( p->type() != PktType::TCP )
-        return 0;
-
-    return StreamUpdateSessionAlertTcp(flow, p, gid, sid, event_id, event_second);
+    assert(flow && flow->session);
+    return flow->session->update_alert(p, gid, sid, event_id, event_second);
 }
 
 void Stream::set_extra_data(
-    Flow* pv, Packet* p, uint32_t flag)
+    Flow* flow, Packet* p, uint32_t flag)
 {
-    Flow* flow = (Flow*)pv;
-
-    if ( !flow )
-        return;
-
-    StreamSetExtraDataTcp(flow, p, flag);
+    assert(flow && flow->session);
+    flow->session->set_extra_data(p, flag);
 }
 
 // FIXIT-L get pv/flow from packet directly?
 void Stream::clear_extra_data(
-    Flow* pv, Packet* p, uint32_t flag)
+    Flow* flow, Packet* p, uint32_t flag)
 {
-    Flow* flow = (Flow*)pv;
-
-    if ( !flow )
-        return;
-
-    StreamClearExtraDataTcp(flow, p, flag);
+    assert(flow && flow->session);
+    flow->session->clear_extra_data(p, flag);
 }
 
 int Stream::traverse_reassembled(
     Packet* p, PacketIterator callback, void* userdata)
 {
     Flow* flow = p->flow;
-
-    if (!flow || flow->protocol != PktType::TCP)
-        return 0;
-
-    /* Only if this is a rebuilt packet */
-    if (!(p->packet_flags & PKT_REBUILT_STREAM))
-        return 0;
-
-    return GetTcpRebuiltPackets(p, flow, callback, userdata);
+    assert(flow && flow->session);
+    return flow->session->get_rebuilt_packets(p, callback, userdata);
 }
 
 int Stream::traverse_stream_segments(
     Packet* p, StreamSegmentIterator callback, void* userdata)
 {
     Flow* flow = p->flow;
-
-    if ((flow == NULL) || (flow->protocol != PktType::TCP))
-        return -1;
-
-    /* Only if this is a rebuilt packet */
-    if (!(p->packet_flags & PKT_REBUILT_STREAM))
-        return -1;
-
-    return GetTcpStreamSegments(p, flow, callback, userdata);
+    assert(flow && flow->session);
+    return flow->session->get_segments(p, callback, userdata);
 }
 
 char Stream::get_reassembly_direction(Flow* flow)
 {
-    if (!flow || flow->protocol != PktType::TCP)
-        return SSN_DIR_NONE;
-
-    return StreamGetReassemblyDirectionTcp(flow);
+    assert(flow && flow->session);
+    return flow->session->get_reassembly_direction();
 }
 
-char Stream::is_stream_sequenced(Flow* flow, char dir)
+bool Stream::is_stream_sequenced(Flow* flow, uint8_t dir)
 {
-    if (!flow || flow->protocol != PktType::TCP)
-        return 1;
-
-    return StreamIsStreamSequencedTcp(flow, dir);
+    assert(flow && flow->session);
+    return flow->session->is_sequenced(dir);
 }
 
-int Stream::missing_in_reassembled(Flow* flow, char dir)
+int Stream::missing_in_reassembled(Flow* flow, uint8_t dir)
 {
-    if (!flow || flow->protocol != PktType::TCP)
-        return SSN_MISSING_NONE;
-
-    return StreamMissingInReassembledTcp(flow, dir);
+    assert(flow && flow->session);
+    return flow->session->missing_in_reassembled(dir);
 }
 
-char Stream::missed_packets(Flow* flow, char dir)
+bool Stream::missed_packets(Flow* flow, uint8_t dir)
 {
-    if (!flow || flow->protocol != PktType::TCP)
-        return 1;
-
-    return StreamPacketsMissingTcp(flow, dir);
+    assert(flow && flow->session);
+    return flow->session->are_packets_missing(dir);
 }
 

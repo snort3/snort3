@@ -2180,7 +2180,7 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     {
         if (mem_in_use > FRAG_MEMCAP)
         {
-            flow_con->prune_flows(IPPROTO_IP, p);
+            flow_con->prune_flows(PktType::IP, p);
         }
 
         f = (Fragment*)SnortAlloc(sizeof(Fragment));
@@ -2330,7 +2330,7 @@ int Defrag::add_frag_node(FragTracker* ft,
     {
         if (mem_in_use > FRAG_MEMCAP)
         {
-            flow_con->prune_flows(IPPROTO_IP, p);
+            flow_con->prune_flows(PktType::IP, p);
         }
 
         /*
@@ -2417,7 +2417,7 @@ int Defrag::dup_frag_node(
     {
         if (mem_in_use > FRAG_MEMCAP)
         {
-            flow_con->prune_flows(IPPROTO_IP, p);
+            flow_con->prune_flows(PktType::IP, p);
         }
 
         /*

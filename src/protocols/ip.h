@@ -49,14 +49,18 @@ namespace ip
 class SO_PUBLIC IpApi
 {
 public:
-//    IpApi();   constructor and destructor MUST remain a trivial. Adding
-//    ~IpApi();  any non-trivial code will cause a compilation failure.
+    enum Type { IAT_NONE, IAT_4, IAT_6, IAT_DATA };
+
+    // constructor and destructor MUST remain a trivial. Adding
+    // any non-trivial code will cause a compilation failure.
     IpApi() = default;
 
     void set(const IP4Hdr* h4);
     void set(const IP6Hdr* h6);
+    void set(sfip_t& src, sfip_t& dst);
     bool set(const uint8_t* raw_ip_data);
     void reset();
+
     // return the 16 bits associated with this IP layers frag_offset/flags
     uint16_t off_w_flags() const;
     // return the frag_offset associated with this IP layers in word size.
@@ -67,7 +71,7 @@ public:
     const uint8_t* ip_data() const; // return a pointer to the ip layers data
 
     // FIXIT-L J get rid of the unnecessary ones
-    // returns the length of the ip header + length in host byte order
+    // returns the sum of the ip header + payload lengths in host byte order
     uint16_t dgram_len() const;
     // returns this ip layer's payload length in host byte order
     uint16_t pay_len() const;
@@ -77,88 +81,64 @@ public:
     bool is_src_loopback() const;
     // true if the current source address ia the loopback address
     bool is_dst_loopback() const;
+
     // overloaded == operators.
     friend bool operator==(const IpApi& lhs, const IpApi& rhs);
     friend bool operator!=(const IpApi& lhs, const IpApi& rhs);
 
     // returns true if this api is set.
     inline bool is_valid() const
-    { return (ip4h || ip6h); }
+    { return (type != IAT_NONE); }
 
     inline bool is_ip6() const
-    { return ip6h; }
+    { return (type == IAT_6); }
 
     inline bool is_ip4() const
-    { return ip4h; }
+    { return (type == IAT_4); }
+
+    inline bool is_ip() const
+    { return is_ip4() or is_ip6(); }
 
     inline const IP4Hdr* get_ip4h() const
-    { return ip4h; }
+    { return (type == IAT_4) ? (IP4Hdr*)iph : nullptr; }
 
     inline const IP6Hdr* get_ip6h() const
-    { return ip6h; }
+    { return (type == IAT_6) ? (IP6Hdr*)iph : nullptr; }
 
     inline const sfip_t* get_src() const
-    { return src_p; }
+    { return (type != IAT_NONE) ? &src : nullptr; }
 
     inline const sfip_t* get_dst() const
-    { return dst_p; }
+    { return (type != IAT_NONE) ? &dst : nullptr; }
 
-    inline uint16_t tos() const
-    { return ip4h ? ip4h->tos() : ip6h ? ip6h->tos() : 0; }
-
-    inline uint8_t ttl() const
-    { return ip4h ? ip4h->ttl() : ip6h ? ip6h->hop_lim() : 0; }
-
-    /* This is different than the Packet's ip_proto_next field - this
-     * variable hold the first non-ip and non-ipv6 extension protocols,
-     * while proto() returns the next or proto() field of the raw IP
-     * header */
-    inline uint8_t proto() const
-    { return ip4h ? ip4h->proto() : ip6h ? ip6h->next() : 0xFF; }
-
-    // NOTE:  ipv4 len contains header while an ipv6 header does not. If you
-    //        want a length, use 'dgram_len() == length with header' or
-    //        'pay_len() == length without header' instead.
-//    inline uint16_t len() const
-//    { return ip4h ? ip4h->len() : ip6h ? ip6h->len() : 0; }
-
-    inline uint16_t raw_len() const
-    { return ip4h ? ip4h->raw_len() : ip6h ? ip6h->raw_len() : 0; }
-
-    inline uint8_t hlen() const
-    { return ip4h ? ip4h->hlen() : ip6h ? ip6h->hlen() : 0; }
-
-    inline uint8_t ver() const
-    { return ip4h ? ip4h->ver() : ip6h ? ip6h->ver() : 0; }
-
-    // only relevent to IP4.
+    // only relevant to IP4
     inline uint8_t get_ip_opt_len() const
-    { return ip4h ? ip4h->get_opt_len() : 0; }
+    { return (type == IAT_4) ? ((IP4Hdr*)iph)->get_opt_len() : 0; }
 
-    // only relevent to IP4.
+    // only relevant to IP4
     inline const uint8_t* get_ip_opt_data() const
-    { return ip4h ? reinterpret_cast<const uint8_t*>(ip4h) + IP4_HEADER_LEN : nullptr; }
+    { return (type == IAT_4) ? reinterpret_cast<const uint8_t*>(iph) + IP4_HEADER_LEN : nullptr; }
 
     inline const snort_in6_addr* get_ip6_src() const
-    { return ip6h ? ip6h->get_src() : nullptr; }
+    { return (type == IAT_6) ? ((IP6Hdr*)iph)->get_src() : nullptr; }
 
     inline const snort_in6_addr* get_ip6_dst() const
-    { return ip6h ? ip6h->get_dst() : nullptr; }
+    { return (type == IAT_6) ? ((IP6Hdr*)iph)->get_dst() : nullptr; }
+
+    uint16_t tos() const;
+    uint8_t ttl() const;
+    uint8_t proto() const;
+    uint16_t raw_len() const;
+    uint8_t hlen() const;
+    uint8_t ver() const;
 
 private:
     sfip_t src;
     sfip_t dst;
-    const sfip_t* src_p;
-    const sfip_t* dst_p;
-    const IP4Hdr* ip4h;
-    const IP6Hdr* ip6h;
+    const void* iph;
+    Type type;
 };
 
-inline bool operator==(const IpApi& lhs, const IpApi& rhs)
-{ return (lhs.ip4h == rhs.ip4h) && (lhs.ip6h == rhs.ip6h); }
-
-inline bool operator!=(const IpApi& lhs, const IpApi& rhs)
-{ return !(lhs == rhs); }
 } // namespace ip
 
 #endif

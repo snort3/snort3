@@ -309,7 +309,7 @@ static void PrintPopConf(POP_PROTO_CONF* config)
 
 static inline int InspectPacket(Packet* p)
 {
-    return PacketHasPAFPayload(p);
+    return p->has_paf_payload();
 }
 
 static int POP_Setup(Packet* p, POPData* ssn)

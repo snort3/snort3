@@ -4,8 +4,11 @@ add_subdirectory(ip)
 add_subdirectory(icmp)
 add_subdirectory(tcp)
 add_subdirectory(udp)
+add_subdirectory(user)
+add_subdirectory(file)
 
 set (STREAM_INCLUDES
+    paf.h
     stream_api.h
     stream_splitter.h
 )
@@ -13,6 +16,7 @@ set (STREAM_INCLUDES
 add_library( stream STATIC
     flush_bucket.cc
     flush_bucket.h
+    paf.cc
     stream.h
     stream_api.cc
     stream_inspectors.cc
@@ -26,6 +30,8 @@ target_link_libraries( stream
     stream_icmp
     stream_tcp
     stream_udp
+    stream_user
+    stream_file
     protocols
 )
 

@@ -35,6 +35,7 @@
 
 #include "snort_types.h"
 #include "file_api.h"
+#include "libs/file_lib.h"
 #include "libs/file_config.h"
 #include "file_mime_config.h"
 
@@ -47,10 +48,16 @@
 #include "file_resume_block.h"
 #include "framework/inspector.h"
 #include "detection_util.h"
-#include "service_inspectors/http_inspect/hi_main.h" // FIXIT-M bad dependency; use
-                                                     // inspector::get_buf()
 
-static bool file_type_id_enabled = false;  // STATIC
+// FIXIT-M bad dependency; use inspector::get_buf()
+#include "service_inspectors/http_inspect/hi_main.h"
+
+int64_t FileConfig::show_data_depth = DEFAULT_FILE_SHOW_DATA_DEPTH;
+bool FileConfig::trace_type = false;
+bool FileConfig::trace_signature = false;
+bool FileConfig::trace_stream = false;
+
+static bool file_type_id_enabled = false;
 static bool file_signature_enabled = false;
 static bool file_processing_initiated = false;
 
@@ -86,8 +93,6 @@ static void set_file_name_from_log(FILE_LogState* log_state, void* ssn);
 static uint32_t str_to_hash(uint8_t* str, int length);
 
 static void file_signature_lookup(void* p, bool is_retransmit);
-
-//static void print_file_stats(int exiting);
 
 static inline void finish_signature_lookup(FileContext* context, Flow* flow);
 static File_Verdict get_file_verdict(Flow* flow);
@@ -274,8 +279,8 @@ static FileContext* get_file_context(void* p, FilePosition position, bool upload
     return context;
 }
 
-#if defined(DEBUG_MSGS) || defined (REG_TEST)
 #define MAX_CONTEXT_INFO_LEN 1024
+
 static void printFileContext(FileContext* context)
 {
     char buf[MAX_CONTEXT_INFO_LEN + 1];
@@ -385,8 +390,6 @@ static void DumpHex(FILE* fp, const uint8_t* data, unsigned len)
         fprintf(fp, "  %s\n", str);
     }
 }
-
-#endif
 
 static inline void updateFileSize(FileContext* context, int data_size, FilePosition position)
 {
@@ -606,13 +609,12 @@ static int file_process(void* p, uint8_t* file_data, int data_size,
         return 0;
     if (position == SNORT_FILE_POSITION_UNKNOWN)
         return 0;
-#if defined(DEBUG_MSGS) && !defined (REG_TEST)
-    if (DEBUG_FILE & GetDebugLevel())
-#endif
-#if defined(DEBUG_MSGS) || defined (REG_TEST)
-    DumpHex(stdout, file_data, data_size);
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE, "stream pointer %p\n", pkt->flow); );
-#endif
+
+    if ( FileConfig::trace_stream )
+    {
+        DumpHex(stdout, file_data, data_size);
+        DEBUG_WRAP(DebugMessage(DEBUG_FILE, "stream pointer %p\n", pkt->flow); );
+    }
 
     context = get_file_context(p, position, upload);
     if (check_http_partial_content(pkt))
@@ -698,16 +700,9 @@ static int file_process(void* p, uint8_t* file_data, int data_size,
     {
         file_signature_sha256(context, file_data, data_size, position);
 
-#if defined(DEBUG_MSGS) || defined (REG_TEST)
-        if (
-#if defined(DEBUG_MSGS) && !defined (REG_TEST)
-            (DEBUG_FILE & GetDebugLevel()) &&
-#endif
-            (context->sha256) )
-        {
+        if ( context->sha256 and FileConfig::trace_signature )
             file_sha256_print(context->sha256);
-        }
-#endif
+
         _file_signature_lookup(context, p, false, suspend_block_verdict);
     }
     updateFileSize(context, data_size, position);
@@ -718,14 +713,10 @@ static void set_file_name(Flow* flow, uint8_t* file_name, uint32_t name_size)
 {
     /* Attempt to get a previously allocated context. */
     FileContext* context = get_file_context(flow);
-
     file_name_set(context, file_name, name_size);
-#if defined(DEBUG_MSGS) || defined (REG_TEST)
-#if defined(DEBUG_MSGS) && !defined (REG_TEST)
-    if (DEBUG_FILE & GetDebugLevel())
-#endif
-    printFileContext(context);
-#endif
+
+    if ( FileConfig::trace_type )
+        printFileContext(context);
 }
 
 /* Return 1: file name available,
@@ -852,9 +843,9 @@ static FilePosition get_file_position(void* pkt)
     FilePosition position = SNORT_FILE_POSITION_UNKNOWN;
     Packet* p = (Packet*)pkt;
 
-    if (PacketHasFullPDU(p))
+    if (p->is_full_pdu())
         position = SNORT_FILE_FULL;
-    else if (PacketHasStartOfPDU(p))
+    else if (p->is_pdu_start())
         position = SNORT_FILE_START;
     else if (p->packet_flags & PKT_PDU_TAIL)
         position = SNORT_FILE_END;
@@ -934,25 +925,34 @@ static uint32_t str_to_hash(uint8_t* str, int length)
     return c;
 }
 
-#if 0
-static void print_file_stats(int exiting)
+void print_file_stats()
 {
     int i;
     uint64_t processed_total[2];
-    uint64_t verdicts_total;
 
     if (!file_stats.files_total)
         return;
 
-    LogMessage("File type stats:\n");
+    uint64_t check_total = 0;
 
+    for (i = 0; i < FILE_ID_MAX; i++)
+    {
+        check_total += file_stats.files_processed[i][0];
+        check_total += file_stats.files_processed[i][1];
+    }
+
+    if ( !check_total )
+        return;
+
+    LogLabel("type stats:");
     LogMessage("         Type              Download   Upload \n");
 
     processed_total[0] = 0;
     processed_total[1] = 0;
+
     for (i = 0; i < FILE_ID_MAX; i++)
     {
-        char* type_name =  file_info_from_ID(snort_conf->file_config, i);
+        const char* type_name =  file_info_from_ID(snort_conf->file_config, i);
         if (type_name &&
             (file_stats.files_processed[i][0] || file_stats.files_processed[i][1] ))
         {
@@ -966,15 +966,25 @@ static void print_file_stats(int exiting)
     LogMessage("            Total          " FMTu64("-10") "  " FMTu64("-10") " \n",
         processed_total[0], processed_total[1]);
 
-    LogMessage("\nFile signature stats:\n");
+    check_total = 0;
 
+    for (i = 0; i < FILE_ID_MAX; i++)
+    {
+        check_total += file_stats.signatures_processed[i][0];
+        check_total += file_stats.signatures_processed[i][1];
+    }
+
+    if ( !check_total )
+        return;
+
+    LogLabel("signature stats:");
     LogMessage("         Type              Download   Upload \n");
 
     processed_total[0] = 0;
     processed_total[1] = 0;
     for (i = 0; i < FILE_ID_MAX; i++)
     {
-        char* type_name =  file_info_from_ID(snort_conf->file_config, i);
+        const char* type_name =  file_info_from_ID(snort_conf->file_config, i);
         if (type_name &&
             (file_stats.signatures_processed[i][0] || file_stats.signatures_processed[i][1] ))
         {
@@ -988,9 +998,10 @@ static void print_file_stats(int exiting)
     LogMessage("            Total          " FMTu64("-10") " " FMTu64("-10") " \n",
         processed_total[0], processed_total[1]);
 
+#if 0
     LogMessage("\nFile type verdicts:\n");
 
-    verdicts_total = 0;
+    uint64_t verdicts_total = 0;
     for (i = 0; i < FILE_VERDICT_MAX; i++)
     {
         verdicts_total+=file_stats.verdicts_type[i];
@@ -1063,6 +1074,7 @@ static void print_file_stats(int exiting)
         }
     }
     LogMessage("   %12s:           " FMTu64("-10") " \n", "Total",verdicts_total);
+#endif
 
     {
         LogMessage("\nFiles processed by protocol IDs:\n");
@@ -1084,9 +1096,6 @@ static void print_file_stats(int exiting)
             }
         }
     }
-
-    LogMessage("\nTotal files processed:     " FMTu64("-10") " \n", file_stats.files_total);
+    //LogMessage("\nTotal files processed:     " FMTu64("-10") " \n", file_stats.files_total);
 }
-
-#endif
 

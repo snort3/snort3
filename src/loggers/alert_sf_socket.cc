@@ -293,7 +293,7 @@ struct SnortActionRequest
 
 void load_sar(Packet* packet, Event* event, SnortActionRequest& sar)
 {
-    if (!event || !packet || !packet->ptrs.ip_api.is_valid())
+    if(!event || !packet || !packet->ptrs.ip_api.is_ip())
         return;
 
     // for now, only support ip4

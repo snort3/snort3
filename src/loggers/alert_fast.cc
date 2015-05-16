@@ -195,7 +195,7 @@ static void LogReassembly(const Packet* p)
 {
     /* Log whether or not this is reassembled data - only indicate
      * if we're actually going to show any of the payload */
-    if ( !SnortConfig::output_app_data() || !p->dsize || !PacketWasCooked(p) )
+    if ( !SnortConfig::output_app_data() || !p->dsize || !p->is_cooked() )
         return;
 
     switch ( p->pseudo_type )
@@ -222,7 +222,7 @@ static void LogReassembly(const Packet* p)
         TextLog_Print(fast_log, "%s\n", "Frag reassembled packet");
         break;
     default:
-        // FIXTHIS do we get here for portscan or sdf?
+        // FIXIT do we get here for portscan or sdf?
         break;
     }
 }
@@ -230,7 +230,6 @@ static void LogReassembly(const Packet* p)
 #endif
 
 #ifndef REG_TEST
-
 static const char* get_pkt_type(Packet* p)
 {
     switch ( p->ptrs.get_pkt_type() )
@@ -243,7 +242,6 @@ static const char* get_pkt_type(Packet* p)
     }
     return "error";
 }
-
 #endif
 
 void FastLogger::alert(Packet* p, const char* msg, Event* event)
@@ -298,7 +296,6 @@ void FastLogger::alert(Packet* p, const char* msg, Event* event)
     }
 
     /* print the packet header to the alert file */
-    if ( p->has_ip() )
     {
         LogPriorityData(fast_log, event, 0);
 #ifndef REG_TEST
@@ -317,6 +314,8 @@ void FastLogger::alert(Packet* p, const char* msg, Event* event)
 #endif
         if (p->has_ip())
             LogIPPkt(fast_log, p);
+        else
+            LogPayload(fast_log, p);
 
 #if 0
         // FIXIT-L -J LogArpHeader unimplemented

@@ -21,6 +21,7 @@
 #define SESSION_H
 
 #include "sfip/sfip_t.h"
+#include "stream/stream_api.h"
 
 struct Packet;
 class Flow;
@@ -40,6 +41,30 @@ public:
 
     virtual bool add_alert(Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return false; }
     virtual bool check_alerted(Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return false; }
+
+    virtual int update_alert(
+        Packet*, uint32_t /*gid*/, uint32_t /*sid*/,
+        uint32_t /*event_id*/, uint32_t /*event_second*/) { return 0; }
+
+    virtual void flush_client(Packet*) { }
+    virtual void flush_server(Packet*) { }
+    virtual void flush_talker(Packet*) { }
+    virtual void flush_listener(Packet*) { }
+
+    virtual void set_splitter(bool /*c2s*/, StreamSplitter*) { }
+    virtual StreamSplitter* get_splitter(bool /*c2s*/) { return nullptr; }
+
+    virtual void set_extra_data(Packet*, uint32_t /*flag*/) { }
+    virtual void clear_extra_data(Packet*, uint32_t /*flag*/) { }
+
+    virtual int get_rebuilt_packets(Packet*, PacketIterator, void* /*userdata*/) { return 0; }
+    virtual int get_segments(Packet*, StreamSegmentIterator, void* /*userdata*/) { return -1; }
+
+    virtual bool is_sequenced(uint8_t /*dir*/) { return true; }
+    virtual bool are_packets_missing(uint8_t /*dir*/) { return true; }
+
+    virtual uint8_t get_reassembly_direction() { return SSN_DIR_NONE; }
+    virtual uint8_t missing_in_reassembled(uint8_t /*dir*/) { return SSN_MISSING_NONE; }
 
 protected:
     Session(Flow* f) { flow = f; }

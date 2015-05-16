@@ -68,7 +68,7 @@ THREAD_LOCAL SimpleStats ftstats;
 
 static inline int InspectClientPacket(Packet* p)
 {
-    return PacketHasPAFPayload(p);
+    return p->has_paf_payload();
 }
 
 static int SnortFTP(

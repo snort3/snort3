@@ -1282,9 +1282,9 @@ static int HttpResponseInspection(HI_SESSION* session, Packet* p, const unsigned
     seq_num = GET_PKT_SEQ(p);
 
     {
-        expected_pkt = !PacketHasStartOfPDU(p);
+        expected_pkt = !p->is_pdu_start();
         parse_cont_encoding = !expected_pkt;
-        not_stream_insert = PacketHasPAFPayload(p);
+        not_stream_insert = p->has_paf_payload();
 
         if ( !expected_pkt )
         {
@@ -1596,7 +1596,7 @@ static int HttpResponseInspection(HI_SESSION* session, Packet* p, const unsigned
 
                         if (p->packet_flags & PKT_STREAM_INSERT)
                         {
-                            if ( PacketHasFullPDU(p) )
+                            if ( p->is_full_pdu() )
                                 expected_pkt = 1;
                             else
                                 sd->resp_state.inspect_reassembled = 1;

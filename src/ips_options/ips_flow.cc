@@ -201,9 +201,7 @@ int FlowCheckOption::eval(Cursor&, Packet* p)
     /* ...only_reassembled */
     if (fcd->only_reassembled & ONLY_STREAM)
     {
-        if ( !(p->packet_flags & PKT_REBUILT_STREAM)
-            && !PacketHasFullPDU(p)
-            )
+        if ( !(p->packet_flags & PKT_REBUILT_STREAM) && !p->is_full_pdu() )
         {
             MODULE_PROFILE_END(flowCheckPerfStats);
             return DETECTION_OPTION_NO_MATCH;

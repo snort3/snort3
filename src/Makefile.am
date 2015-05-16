@@ -48,12 +48,14 @@ network_inspectors/perf_monitor/libperf_monitor.a \
 service_inspectors/libservice_inspectors.a \
 $(lib_list) \
 network_inspectors/port_scan/libport_scan.a \
+stream/libstream.a \
 stream/base/libstream_base.a \
 stream/ip/libstream_ip.a \
 stream/icmp/libstream_icmp.a \
 stream/tcp/libstream_tcp.a \
 stream/udp/libstream_udp.a \
-stream/libstream.a \
+stream/user/libstream_user.a \
+stream/file/libstream_file.a \
 file_api/libfile_api.a \
 file_api/libs/libfile.a \
 service_inspectors/http_inspect/libhttp_inspect.a \

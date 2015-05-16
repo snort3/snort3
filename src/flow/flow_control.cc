@@ -47,39 +47,49 @@ FlowControl::FlowControl()
     icmp_cache = nullptr;
     tcp_cache = nullptr;
     udp_cache = nullptr;
+    user_cache = nullptr;
+    file_cache = nullptr;
     exp_cache = nullptr;
 
+    ip_mem = icmp_mem = nullptr;
     tcp_mem = udp_mem = nullptr;
-    icmp_mem = ip_mem = nullptr;
+    user_mem = file_mem = nullptr;
 
+    get_ip = get_icmp = nullptr;
     get_tcp = get_udp = nullptr;
-    get_icmp = get_ip = nullptr;
+    get_user = get_file = nullptr;
 }
 
 FlowControl::~FlowControl()
 {
+    delete ip_cache;
+    delete icmp_cache;
     delete tcp_cache;
     delete udp_cache;
-    delete icmp_cache;
-    delete ip_cache;
+    delete user_cache;
+    delete file_cache;
     delete exp_cache;
 
+    free(ip_mem);
+    free(icmp_mem);
     free(tcp_mem);
     free(udp_mem);
-    free(icmp_mem);
-    free(ip_mem);
+    free(user_mem);
+    free(file_mem);
 }
 
 //-------------------------------------------------------------------------
 // count foo
 //-------------------------------------------------------------------------
 
+static THREAD_LOCAL PegCount ip_count = 0;
+static THREAD_LOCAL PegCount icmp_count = 0;
 static THREAD_LOCAL PegCount tcp_count = 0;
 static THREAD_LOCAL PegCount udp_count = 0;
-static THREAD_LOCAL PegCount icmp_count = 0;
-static THREAD_LOCAL PegCount ip_count = 0;
+static THREAD_LOCAL PegCount user_count = 0;
+static THREAD_LOCAL PegCount file_count = 0;
 
-uint32_t FlowControl::max_flows(uint8_t proto)
+uint32_t FlowControl::max_flows(PktType proto)
 {
     FlowCache* cache = get_cache(proto);
 
@@ -89,42 +99,50 @@ uint32_t FlowControl::max_flows(uint8_t proto)
     return 0;
 }
 
-PegCount FlowControl::get_prunes(uint8_t proto)
+PegCount FlowControl::get_prunes (PktType proto)
 {
     FlowCache* cache = get_cache(proto);
     return cache ? cache->get_prunes() : 0;
 }
 
-PegCount FlowControl::get_flows(uint8_t proto)
+PegCount FlowControl::get_flows(PktType proto)
 {
     switch ( proto )
     {
-    // FIXIT should be using an enum for these
-    case IPPROTO_TCP:  return tcp_count;
-    case IPPROTO_UDP:  return udp_count;
-    case IPPROTO_ICMP: return icmp_count;
-    case IPPROTO_IP:   return ip_count;
+    case PktType::IP:   return ip_count;
+    case PktType::ICMP: return icmp_count;
+    case PktType::TCP:  return tcp_count;
+    case PktType::UDP:  return udp_count;
+    case PktType::USER: return user_count;
+    case PktType::FILE: return file_count;
     default:            return 0;
     }
 }
 
 void FlowControl::clear_counts()
 {
+    ip_count = icmp_count = 0;
     tcp_count = udp_count = 0;
-    icmp_count = ip_count = 0;
+    user_count = file_count = 0;
 
     FlowCache* cache;
 
-    if ( (cache = get_cache(IPPROTO_IP)) )
+    if ( (cache = get_cache(PktType::IP)) )
         cache->reset_prunes();
 
-    if ( (cache = get_cache(IPPROTO_ICMP)) )
+    if ( (cache = get_cache(PktType::ICMP)) )
         cache->reset_prunes();
 
-    if ( (cache = get_cache(IPPROTO_TCP)) )
+    if ( (cache = get_cache(PktType::TCP)) )
         cache->reset_prunes();
 
-    if ( (cache = get_cache(IPPROTO_UDP)) )
+    if ( (cache = get_cache(PktType::UDP)) )
+        cache->reset_prunes();
+
+    if ( (cache = get_cache(PktType::USER)) )
+        cache->reset_prunes();
+
+    if ( (cache = get_cache(PktType::FILE)) )
         cache->reset_prunes();
 }
 
@@ -132,21 +150,23 @@ void FlowControl::clear_counts()
 // cache foo
 //-------------------------------------------------------------------------
 
-inline FlowCache* FlowControl::get_cache(uint8_t proto)
+inline FlowCache* FlowControl::get_cache (PktType proto)
 {
     switch ( proto )
     {
-    case IPPROTO_TCP:    return tcp_cache;
-    case IPPROTO_UDP:    return udp_cache;
-    case IPPROTO_ICMP:   return icmp_cache;
-    case IPPROTO_IP:     return ip_cache;
-    default:              return nullptr;
+    case PktType::IP:   return ip_cache;
+    case PktType::ICMP: return icmp_cache;
+    case PktType::TCP:  return tcp_cache;
+    case PktType::UDP:  return udp_cache;
+    case PktType::USER: return user_cache;
+    case PktType::FILE: return file_cache;
+    default:            return nullptr;
     }
 }
 
 Flow* FlowControl::find_flow(const FlowKey* key)
 {
-    FlowCache* cache = get_cache(key->protocol);
+    FlowCache* cache = get_cache((PktType)key->protocol);
 
     if ( cache )
         return cache->find(key);
@@ -156,7 +176,7 @@ Flow* FlowControl::find_flow(const FlowKey* key)
 
 Flow* FlowControl::new_flow(const FlowKey* key)
 {
-    FlowCache* cache = get_cache(key->protocol);
+    FlowCache* cache = get_cache((PktType)key->protocol);
 
     if ( !cache )
         return NULL;
@@ -168,7 +188,7 @@ Flow* FlowControl::new_flow(const FlowKey* key)
 // protocol are obviated for existing / initialized flows
 void FlowControl::delete_flow(const FlowKey* key)
 {
-    FlowCache* cache = get_cache(key->protocol);
+    FlowCache* cache = get_cache((PktType)key->protocol);
 
     if ( !cache )
         return;
@@ -181,13 +201,13 @@ void FlowControl::delete_flow(const FlowKey* key)
 
 void FlowControl::delete_flow(Flow* flow, const char* why)
 {
-    FlowCache* cache = get_cache(flow->ip_proto);
+    FlowCache* cache = get_cache(flow->protocol);
 
     if ( cache )
         cache->release(flow, why);
 }
 
-void FlowControl::purge_flows(uint8_t proto)
+void FlowControl::purge_flows (PktType proto)
 {
     FlowCache* cache = get_cache(proto);
 
@@ -195,7 +215,7 @@ void FlowControl::purge_flows(uint8_t proto)
         cache->purge();
 }
 
-void FlowControl::prune_flows(uint8_t proto, Packet* p)
+void FlowControl::prune_flows (PktType proto, Packet* p)
 {
     FlowCache* cache = get_cache(proto);
 
@@ -214,17 +234,23 @@ void FlowControl::timeout_flows(uint32_t flowCount, time_t cur_time)
 {
     Active_Suspend();
 
+    if ( ip_cache )
+        ip_cache->timeout(flowCount, cur_time);
+
+    //if ( icmp_cache )
+    //icmp_cache does not need cleaning
+
     if ( tcp_cache )
         tcp_cache->timeout(flowCount, cur_time);
 
     if ( udp_cache )
         udp_cache->timeout(flowCount, cur_time);
 
-    //if ( icmp_cache )
-    //icmp_cache does not need cleaning
+    if ( user_cache )
+        user_cache->timeout(flowCount, cur_time);
 
-    if ( ip_cache )
-        ip_cache->timeout(flowCount, cur_time);
+    if ( file_cache )
+        file_cache->timeout(flowCount, cur_time);
 
     Active_Resume();
 }
@@ -239,7 +265,8 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
     uint32_t mplsId;
     uint16_t vlanId;
     uint16_t addressSpaceId;
-    uint8_t proto = p->get_ip_proto_next();
+    uint8_t type = (uint8_t)p->type();
+    uint8_t proto = (uint8_t)p->get_ip_proto_next();
 
     if ( p->proto_bits & PROTO_BIT__VLAN )
         vlanId = layer::get_vlan_layer(p)->vid();
@@ -259,18 +286,18 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
 
     if ( (p->ptrs.decode_flags & DECODE_FRAG) )
     {
-        key->init(ip_api.get_src(), ip_api.get_dst(), ip_api.id(),
-            proto, vlanId, mplsId, addressSpaceId);
+        key->init(type, proto, ip_api.get_src(), ip_api.get_dst(), ip_api.id(),
+            vlanId, mplsId, addressSpaceId);
     }
-    else if (p->type() == PktType::ICMP)
+    else if ( type == (uint8_t)PktType::ICMP )
     {
-        key->init(ip_api.get_src(), p->ptrs.icmph->type, ip_api.get_dst(), 0,
-            proto, vlanId, mplsId, addressSpaceId);
+        key->init(type, proto, ip_api.get_src(), p->ptrs.icmph->type, ip_api.get_dst(), 0,
+            vlanId, mplsId, addressSpaceId);
     }
     else
     {
-        key->init(ip_api.get_src(), p->ptrs.sp, ip_api.get_dst(), p->ptrs.dp,
-            proto, vlanId, mplsId, addressSpaceId);
+        key->init(type, proto, ip_api.get_src(), p->ptrs.sp, ip_api.get_dst(), p->ptrs.dp,
+            vlanId, mplsId, addressSpaceId);
     }
 }
 
@@ -281,6 +308,13 @@ static bool is_bidirectional(const Flow* flow)
 }
 
 // FIXIT-L init_roles* should take const Packet*
+static void init_roles_ip(Packet* p, Flow* flow)
+{
+    flow->ssn_state.direction = FROM_SENDER;
+    sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
+    sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
+}
+
 static void init_roles_tcp(Packet* p, Flow* flow)
 {
     if ( p->ptrs.tcph->is_syn_only() )
@@ -326,17 +360,35 @@ static void init_roles_udp(Packet* p, Flow* flow)
     flow->server_port = ntohs(p->ptrs.udph->uh_dport);
 }
 
-static void init_roles_ip(Packet* p, Flow* flow)
+static void init_roles_user(Packet* p, Flow* flow)
 {
-    flow->ssn_state.direction = FROM_SENDER;
-    sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
-    sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
+    if ( p->ptrs.decode_flags & DECODE_C2S )
+    {
+        flow->ssn_state.direction = FROM_CLIENT;
+        sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
+        flow->client_port = p->ptrs.sp;
+        sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
+        flow->server_port = p->ptrs.dp;
+    }
+    else
+    {
+        flow->ssn_state.direction = FROM_SERVER;
+        sfip_copy(flow->client_ip, p->ptrs.ip_api.get_dst());
+        flow->client_port = p->ptrs.dp;
+        sfip_copy(flow->server_ip, p->ptrs.ip_api.get_src());
+        flow->server_port = p->ptrs.sp;
+    }
 }
 
 static void init_roles(Packet* p, Flow* flow)
 {
     switch ( flow->protocol )
     {
+    case PktType::IP:
+    case PktType::ICMP:
+        init_roles_ip(p, flow);
+        break;
+
     case PktType::TCP:
         init_roles_tcp(p, flow);
         break;
@@ -345,9 +397,9 @@ static void init_roles(Packet* p, Flow* flow)
         init_roles_udp(p, flow);
         break;
 
-    case PktType::IP:
-    case PktType::ICMP:
-        init_roles_ip(p, flow);
+    case PktType::USER:
+    case PktType::FILE:
+        init_roles_user(p, flow);
         break;
 
     default:
@@ -416,6 +468,107 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     }
 
     return news;
+}
+
+//-------------------------------------------------------------------------
+// ip
+//-------------------------------------------------------------------------
+
+void FlowControl::init_ip(
+    const FlowConfig& fc, InspectSsnFunc get_ssn)
+{
+    if ( !fc.max_sessions || !get_ssn )
+        return;
+
+    ip_cache = new FlowCache(
+        fc.max_sessions, fc.cache_pruning_timeout,
+        fc.cache_nominal_timeout, 5, 0);
+
+    ip_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
+
+    if ( !ip_mem )
+        return;
+
+    for ( unsigned i = 0; i < fc.max_sessions; ++i )
+        ip_cache->push(ip_mem + i);
+
+    get_ip = get_ssn;
+}
+
+void FlowControl::process_ip(Packet* p)
+{
+    if ( !ip_cache )
+        return;
+
+    FlowKey key;
+    set_key(&key, p);
+    Flow* flow = ip_cache->get(&key);
+
+    if ( !flow )
+        return;
+
+    if ( !flow->session )
+    {
+        flow->init(PktType::IP);
+        flow->session = get_ip(flow);
+    }
+
+    ip_count += process(flow, p);
+
+    if ( flow->next && is_bidirectional(flow) )
+        ip_cache->unlink_uni(flow);
+}
+
+//-------------------------------------------------------------------------
+// icmp
+//-------------------------------------------------------------------------
+
+void FlowControl::init_icmp(
+    const FlowConfig& fc, InspectSsnFunc get_ssn)
+{
+    if ( !fc.max_sessions || !get_ssn )
+        return;
+
+    icmp_cache = new FlowCache(
+        fc.max_sessions, fc.cache_pruning_timeout,
+        fc.cache_nominal_timeout, 5, 0);
+
+    icmp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
+
+    if ( !icmp_mem )
+        return;
+
+    for ( unsigned i = 0; i < fc.max_sessions; ++i )
+        icmp_cache->push(icmp_mem + i);
+
+    get_icmp = get_ssn;
+}
+
+void FlowControl::process_icmp(Packet* p)
+{
+    if ( !icmp_cache )
+    {
+        process_ip(p);
+        return;
+    }
+
+    FlowKey key;
+    set_key(&key, p);
+    Flow* flow = icmp_cache->get(&key);
+
+    if ( !flow )
+        return;
+
+    if ( !flow->session )
+    {
+        flow->init(PktType::ICMP);
+        flow->session = get_icmp(flow);
+    }
+
+    icmp_count += process(flow, p);
+
+    if ( flow->next && is_bidirectional(flow) )
+        icmp_cache->unlink_uni(flow);
 }
 
 //-------------------------------------------------------------------------
@@ -517,114 +670,106 @@ void FlowControl::process_udp(Packet* p)
 }
 
 //-------------------------------------------------------------------------
-// icmp
+// user
 //-------------------------------------------------------------------------
 
-void FlowControl::init_icmp(
+void FlowControl::init_user(
     const FlowConfig& fc, InspectSsnFunc get_ssn)
 {
     if ( !fc.max_sessions || !get_ssn )
         return;
 
-    icmp_cache = new FlowCache(
+    user_cache = new FlowCache(
         fc.max_sessions, fc.cache_pruning_timeout,
         fc.cache_nominal_timeout, 5, 0);
 
-    icmp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
+    user_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 
-    if ( !icmp_mem )
+    if ( !user_mem )
         return;
 
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
-        icmp_cache->push(icmp_mem + i);
+        user_cache->push(user_mem + i);
 
-    get_icmp = get_ssn;
+    get_user = get_ssn;
 }
 
-void FlowControl::process_icmp(Packet* p)
+void FlowControl::process_user(Packet* p)
 {
-    if ( !icmp_cache )
-    {
-        process_ip(p);
+    if ( !user_cache )
         return;
-    }
 
     FlowKey key;
     set_key(&key, p);
-    Flow* flow = icmp_cache->get(&key);
+    Flow* flow = user_cache->get(&key);
 
     if ( !flow )
         return;
 
     if ( !flow->session )
     {
-        flow->init(PktType::ICMP);
-        flow->session = get_icmp(flow);
+        flow->init(PktType::USER);
+        flow->session = get_user(flow);
     }
 
-    icmp_count += process(flow, p);
+    user_count += process(flow, p);
 
     if ( flow->next && is_bidirectional(flow) )
-        icmp_cache->unlink_uni(flow);
+        user_cache->unlink_uni(flow);
 }
 
 //-------------------------------------------------------------------------
-// ip
+// file
 //-------------------------------------------------------------------------
 
-void FlowControl::init_ip(
+void FlowControl::init_file(
     const FlowConfig& fc, InspectSsnFunc get_ssn)
 {
     if ( !fc.max_sessions || !get_ssn )
         return;
 
-    ip_cache = new FlowCache(
+    file_cache = new FlowCache(
         fc.max_sessions, fc.cache_pruning_timeout,
         fc.cache_nominal_timeout, 5, 0);
 
-    ip_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
+    file_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 
-    if ( !ip_mem )
+    if ( !file_mem )
         return;
 
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
-        ip_cache->push(ip_mem + i);
+        file_cache->push(file_mem + i);
 
-    get_ip = get_ssn;
+    get_file = get_ssn;
 }
 
-void FlowControl::process_ip(Packet* p)
+void FlowControl::process_file(Packet* p)
 {
-    if ( !ip_cache )
+    if ( !file_cache )
         return;
 
     FlowKey key;
     set_key(&key, p);
-    Flow* flow = ip_cache->get(&key);
+    Flow* flow = file_cache->get(&key);
 
     if ( !flow )
         return;
 
     if ( !flow->session )
     {
-        flow->init(PktType::IP);
-        flow->session = get_ip(flow);
+        flow->init(PktType::FILE);
+        flow->session = get_file(flow);
     }
 
-    ip_count += process(flow, p);
-
-    if ( flow->next && is_bidirectional(flow) )
-        ip_cache->unlink_uni(flow);
+    file_count += process(flow, p);
 }
 
 //-------------------------------------------------------------------------
 // expected
 //-------------------------------------------------------------------------
 
-void FlowControl::init_exp(
-    const FlowConfig& tcp, const FlowConfig& udp)
+void FlowControl::init_exp(uint32_t max)
 {
-    uint32_t max = tcp.max_sessions + udp.max_sessions;
     max >>= 9;
 
     if ( !max )
@@ -651,9 +796,9 @@ char FlowControl::expected_flow(Flow* flow, Packet* p)
 }
 
 int FlowControl::add_expected(
-    const sfip_t* srcIP, uint16_t srcPort,
-    const sfip_t* dstIP, uint16_t dstPort,
-    uint8_t protocol, char direction,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
+    PktType protocol, char direction,
     FlowData* fd)
 {
     return exp_cache->add_flow(
@@ -661,9 +806,9 @@ int FlowControl::add_expected(
 }
 
 int FlowControl::add_expected(
-    const sfip_t* srcIP, uint16_t srcPort,
-    const sfip_t* dstIP, uint16_t dstPort,
-    uint8_t protocol, int16_t appId, FlowData* fd)
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
+    PktType protocol, int16_t appId, FlowData* fd)
 {
     return exp_cache->add_flow(
         srcIP, srcPort, dstIP, dstPort, protocol, SSN_DIR_BOTH, fd, appId);

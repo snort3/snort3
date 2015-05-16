@@ -958,6 +958,8 @@ src/stream/ip/Makefile \
 src/stream/icmp/Makefile \
 src/stream/tcp/Makefile \
 src/stream/udp/Makefile \
+src/stream/user/Makefile \
+src/stream/file/Makefile \
 src/network_inspectors/Makefile \
 src/network_inspectors/arp_spoof/Makefile \
 src/network_inspectors/binder/Makefile \

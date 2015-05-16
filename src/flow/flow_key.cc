@@ -36,9 +36,10 @@
 //-------------------------------------------------------------------------
 
 inline void FlowKey::init4(
-    const sfip_t* srcIP, uint16_t srcPort,
-    const sfip_t* dstIP, uint16_t dstPort,
-    uint8_t proto, uint32_t mplsId, bool order)
+    uint8_t proto,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
+    uint32_t mplsId, bool order)
 {
     const uint32_t* src;
     const uint32_t* dst;
@@ -97,9 +98,10 @@ inline void FlowKey::init4(
 }
 
 inline void FlowKey::init6(
-    const sfip_t* srcIP, uint16_t srcPort,
-    const sfip_t* dstIP, uint16_t dstPort,
-    uint8_t proto, uint32_t mplsId, bool order)
+    uint8_t proto,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
+    uint32_t mplsId, bool order)
 {
     const sfip_t* src;
     const sfip_t* dst;
@@ -168,10 +170,10 @@ inline void FlowKey::init6(
         mplsLabel = 0;
 }
 
-void FlowKey::init_vlan(uint16_t vlan)
+void FlowKey::init_vlan(uint16_t vlanId)
 {
     if (!SnortConfig::get_vlan_agnostic())
-        vlan_tag = vlan;
+        vlan_tag = vlanId;
     else
         vlan_tag = 0;
 }
@@ -199,10 +201,10 @@ void FlowKey::init_mpls(uint32_t mplsId)
 }
 
 void FlowKey::init(
-    const sfip_t* srcIP, uint16_t srcPort,
-    const sfip_t* dstIP, uint16_t dstPort,
-    uint8_t proto, uint16_t vlan,
-    uint32_t mplsId, uint16_t addrSpaceId)
+    uint8_t type, uint8_t proto, 
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
+    uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId)
 {
     /* Because the key is going to be used for hash lookups,
      * the lower of the values of the IP address field is
@@ -210,21 +212,26 @@ void FlowKey::init(
      * stored in port_l.
      */
     if (srcIP->is_ip4())
-        init4(srcIP, srcPort, dstIP, dstPort, proto, mplsId);
-
+    {
+        version = 4;
+        init4(proto, srcIP, srcPort, dstIP, dstPort, mplsId);
+    }
     else
-        init6(srcIP, srcPort, dstIP, dstPort, proto, mplsId);
+    {
+        version = 6;
+        init6(proto, srcIP, srcPort, dstIP, dstPort, mplsId);
+    }
 
-    protocol = proto;
-    version = 0;
+    protocol = type;
 
-    init_vlan(vlan);
+    init_vlan(vlanId);
     init_address_space(addrSpaceId);
 }
 
 void FlowKey::init(
-    const sfip_t* srcIP, const sfip_t* dstIP,
-    uint32_t id, uint8_t proto, uint16_t vlan,
+    uint8_t type, uint8_t proto,
+    const sfip_t *srcIP, const sfip_t *dstIP,
+    uint32_t id, uint16_t vlanId,
     uint32_t mplsId, uint16_t addrSpaceId)
 {
     // to avoid confusing 2 different datagrams or confusing a datagram
@@ -235,17 +242,16 @@ void FlowKey::init(
     if (srcIP->is_ip4())
     {
         version = 4;
-        protocol = proto;
-        init4(srcIP, srcPort, dstIP, dstPort, proto, mplsId, false);
+        init4(proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
     }
     else
     {
         version = 6;
-        protocol = 0;
-        init6(srcIP, srcPort, dstIP, dstPort, proto, mplsId, false);
+        init6(proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
     }
+    protocol = type;
 
-    init_vlan(vlan);
+    init_vlan(vlanId);
     init_address_space(addrSpaceId);
 }
 

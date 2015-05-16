@@ -1,3 +1,11 @@
+Pending - build 153
+
+-- added DAQs for socket, user, and file in extras
+-- changed -K to -L (log type)
+-- added extra DAQ for user and file
+-- added stream_user for payload processing
+-- added stream_file for file processing
+
 15/05/15 - build 152
 
 -- fixed config error for inspection of rebuilt packets

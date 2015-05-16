@@ -40,17 +40,23 @@ THREAD_LOCAL FlowControl* flow_con = nullptr;
 
 struct BaseStats
 {
+    PegCount ip_flows;
+    PegCount ip_prunes;
+
+    PegCount icmp_flows;
+    PegCount icmp_prunes;
+
     PegCount tcp_flows;
     PegCount tcp_prunes;
 
     PegCount udp_flows;
     PegCount udp_prunes;
 
-    PegCount icmp_flows;
-    PegCount icmp_prunes;
+    PegCount user_flows;
+    PegCount user_prunes;
 
-    PegCount ip_flows;
-    PegCount ip_prunes;
+    PegCount file_flows;
+    PegCount file_prunes;
 };
 
 static BaseStats g_stats;
@@ -58,14 +64,18 @@ static THREAD_LOCAL BaseStats t_stats;
 
 const PegInfo base_pegs[] =
 {
+    { "ip flows", "total ip sessions" },
+    { "ip prunes", "ip sessions pruned" },
+    { "icmp flows", "total icmp sessions" },
+    { "icmp prunes", "icmp sessions pruned" },
     { "tcp flows", "total tcp sessions" },
     { "tcp prunes", "tcp sessions pruned" },
     { "udp flows", "total udp sessions" },
     { "udp prunes", "udp sessions pruned" },
-    { "icmp flows", "total icmp sessions" },
-    { "icmp prunes", "icmp sessions pruned" },
-    { "ip flows", "total ip sessions" },
-    { "ip prunes", "ip sessions pruned" },
+    { "user flows", "total user sessions" },
+    { "user prunes", "user sessions pruned" },
+    { "file flows", "total file sessions" },
+    { "file prunes", "file sessions pruned" },
     { nullptr, nullptr }
 };
 
@@ -74,17 +84,23 @@ void base_sum()
     if ( !flow_con )
         return;
 
-    t_stats.tcp_flows = flow_con->get_flows(IPPROTO_TCP);
-    t_stats.tcp_prunes = flow_con->get_prunes(IPPROTO_TCP);
+    t_stats.ip_flows = flow_con->get_flows(PktType::IP);
+    t_stats.ip_prunes = flow_con->get_prunes(PktType::IP);
 
-    t_stats.udp_flows = flow_con->get_flows(IPPROTO_UDP);
-    t_stats.udp_prunes = flow_con->get_prunes(IPPROTO_UDP);
+    t_stats.icmp_flows = flow_con->get_flows(PktType::ICMP);
+    t_stats.icmp_prunes = flow_con->get_prunes(PktType::ICMP);
 
-    t_stats.icmp_flows = flow_con->get_flows(IPPROTO_ICMP);
-    t_stats.icmp_prunes = flow_con->get_prunes(IPPROTO_ICMP);
+    t_stats.tcp_flows = flow_con->get_flows(PktType::TCP);
+    t_stats.tcp_prunes = flow_con->get_prunes(PktType::TCP);
 
-    t_stats.ip_flows = flow_con->get_flows(IPPROTO_IP);
-    t_stats.ip_prunes = flow_con->get_prunes(IPPROTO_IP);
+    t_stats.udp_flows = flow_con->get_flows(PktType::UDP);
+    t_stats.udp_prunes = flow_con->get_prunes(PktType::UDP);
+
+    t_stats.user_flows = flow_con->get_flows(PktType::USER);
+    t_stats.user_prunes = flow_con->get_prunes(PktType::USER);
+
+    t_stats.file_flows = flow_con->get_flows(PktType::FILE);
+    t_stats.file_prunes = flow_con->get_prunes(PktType::FILE);
 
     sum_stats((PegCount*)&g_stats, (PegCount*)&t_stats,
         array_size(base_pegs)-1);
@@ -160,16 +176,6 @@ void StreamBase::tinit()
     flow_con = new FlowControl;
     InspectSsnFunc f;
 
-    if ( config->tcp_cfg.max_sessions )
-    {
-        if ( (f = InspectorManager::get_session((uint16_t)PktType::TCP)) )
-            flow_con->init_tcp(config->tcp_cfg, f);
-    }
-    if ( config->udp_cfg.max_sessions )
-    {
-        if ( (f = InspectorManager::get_session((uint16_t)PktType::UDP)) )
-            flow_con->init_udp(config->udp_cfg, f);
-    }
     if ( config->ip_cfg.max_sessions )
     {
         if ( (f = InspectorManager::get_session((uint16_t)PktType::IP)) )
@@ -180,18 +186,41 @@ void StreamBase::tinit()
         if ( (f = InspectorManager::get_session((uint16_t)PktType::ICMP)) )
             flow_con->init_icmp(config->icmp_cfg, f);
     }
-    if ( config->tcp_cfg.max_sessions || config->udp_cfg.max_sessions )
+    if ( config->tcp_cfg.max_sessions )
     {
-        flow_con->init_exp(config->tcp_cfg, config->udp_cfg);
+        if ( (f = InspectorManager::get_session((uint16_t)PktType::TCP)) )
+            flow_con->init_tcp(config->tcp_cfg, f);
     }
+    if ( config->udp_cfg.max_sessions )
+    {
+        if ( (f = InspectorManager::get_session((uint16_t)PktType::UDP)) )
+            flow_con->init_udp(config->udp_cfg, f);
+    }
+    if ( config->user_cfg.max_sessions )
+    {
+        if ( (f = InspectorManager::get_session((uint16_t)PktType::USER)) )
+            flow_con->init_user(config->user_cfg, f);
+    }
+    if ( config->file_cfg.max_sessions )
+    {
+        if ( (f = InspectorManager::get_session((uint16_t)PktType::FILE)) )
+            flow_con->init_file(config->file_cfg, f);
+    }
+    uint32_t max = config->tcp_cfg.max_sessions + config->udp_cfg.max_sessions
+        + config->user_cfg.max_sessions;
+
+    if ( max > 0 )
+        flow_con->init_exp(max);
 }
 
 void StreamBase::tterm()
 {
-    flow_con->purge_flows(IPPROTO_TCP);
-    flow_con->purge_flows(IPPROTO_UDP);
-    flow_con->purge_flows(IPPROTO_ICMP);
-    flow_con->purge_flows(IPPROTO_IP);
+    flow_con->purge_flows(PktType::IP);
+    flow_con->purge_flows(PktType::ICMP);
+    flow_con->purge_flows(PktType::TCP);
+    flow_con->purge_flows(PktType::UDP);
+    flow_con->purge_flows(PktType::USER);
+    flow_con->purge_flows(PktType::FILE);
 }
 
 void StreamBase::show(SnortConfig*)
@@ -211,6 +240,16 @@ void StreamBase::eval(Packet* p)
 
     switch ( p->type() )
     {
+    case PktType::IP:
+        if ( p->has_ip() )
+            flow_con->process_ip(p);
+        break;
+
+    case PktType::ICMP:
+        if ( p->ptrs.icmph )
+            flow_con->process_icmp(p);
+        break;
+
     case PktType::TCP:
         if ( p->ptrs.tcph )
             flow_con->process_tcp(p);
@@ -224,14 +263,12 @@ void StreamBase::eval(Packet* p)
             flow_con->process_udp(p);
         break;
 
-    case PktType::ICMP:
-        if ( p->ptrs.icmph )
-            flow_con->process_icmp(p);
+    case PktType::USER:
+        flow_con->process_user(p);
         break;
 
-    case PktType::IP:
-        if ( p->has_ip() )
-            flow_con->process_ip(p);
+    case PktType::FILE:
+        flow_con->process_file(p);
         break;
 
     default:
@@ -292,7 +329,7 @@ static const InspectApi base_api =
         mod_dtor
     },
     IT_STREAM,
-    (unsigned)PktType::ANY_IP,
+    (unsigned)PktType::ANY_SSN,
     nullptr, // buffers
     nullptr, // service
     nullptr, // init

@@ -150,7 +150,7 @@ ReplaceAction::ReplaceAction(ReplaceModule*) :
 
 void ReplaceAction::exec(Packet* p)
 {
-    if ( PacketIsRebuilt(p) )
+    if ( p->is_rebuilt() )
         return;
 
     Replace_ModifyPacket(p);

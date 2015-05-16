@@ -123,18 +123,18 @@ struct ExpectKey
     sfip_t ip2;
     uint16_t port1;
     uint16_t port2;
-    uint32_t protocol;
+    PktType protocol;
 
     bool set(
-        const sfip_t* cliIP, uint16_t cliPort,
-        const sfip_t* srvIP, uint16_t srvPort,
-        uint8_t proto);
+        const sfip_t *cliIP, uint16_t cliPort,
+        const sfip_t *srvIP, uint16_t srvPort,
+        PktType proto);
 };
 
 inline bool ExpectKey::set(
-    const sfip_t* cliIP, uint16_t cliPort,
-    const sfip_t* srvIP, uint16_t srvPort,
-    uint8_t proto)
+    const sfip_t *cliIP, uint16_t cliPort,
+    const sfip_t *srvIP, uint16_t srvPort,
+    PktType proto )
 {
     bool reverse;
     SFIP_RET rval = sfip_compare(cliIP, srvIP);
@@ -155,7 +155,7 @@ inline bool ExpectKey::set(
         port2 = cliPort;
         reverse = true;
     }
-    protocol = static_cast<uint32_t>(proto);
+    protocol = proto;
     return reverse;
 }
 
@@ -343,9 +343,9 @@ ExpectCache::~ExpectCache ()
  * session expiry in seconds.
  */
 int ExpectCache::add_flow(
-    const sfip_t* cliIP, uint16_t cliPort,
-    const sfip_t* srvIP, uint16_t srvPort,
-    uint8_t protocol, char direction,
+    const sfip_t *cliIP, uint16_t cliPort,
+    const sfip_t *srvIP, uint16_t srvPort,
+    PktType protocol, char direction,
     FlowData* fd, int16_t appId)
 {
     assert(!cliPort || !srvPort);
@@ -391,7 +391,7 @@ bool ExpectCache::is_expected(Packet* p)
     const sfip_t* dstIP = p->ptrs.ip_api.get_dst();
 
     ExpectKey key;
-    bool reversed_key = key.set(dstIP, p->ptrs.dp, srcIP, p->ptrs.sp, p->get_ip_proto_next());
+    bool reversed_key = key.set(dstIP, p->ptrs.dp, srcIP, p->ptrs.sp, p->type());
 
     uint16_t port1;
     uint16_t port2;

@@ -2834,7 +2834,7 @@ int StatelessInspection(Packet* p, HI_SESSION* session, HttpSessionData* hsd, in
     {
         {
             /* Might have gotten non-ascii characters, hence no method, but if
-             * PAF is in use, checking "!stream_ins" equates to PacketHasStartOfPDU()
+             * PAF is in use, checking "!stream_ins" equates to is_pdu_start()
              * so we know we're looking for a method and not guessing that we're in
              * the body or somewhere else because we found a non-ascii character */
             if ( !stream_ins )

@@ -2,6 +2,7 @@ AUTOMAKE_OPTIONS=foreign
 
 SUBDIRS = \
 codecs \
+daqs \
 inspectors \
 ips_options \
 loggers \

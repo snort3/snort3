@@ -149,11 +149,11 @@ static const Parameter s_params[] =
       "<port> to listen for telnet connections" },
 #endif
 
-    { "-K", Parameter::PT_SELECT, "none|text|pcap", "none",
-      "<mode> logging mode" },
-
     { "-k", Parameter::PT_ENUM, "all|noip|notcp|noudp|noicmp|none", "all",
       "<mode> checksum mode (all,noip,notcp,noudp,noicmp,none)" },
+
+    { "-L", Parameter::PT_STRING, nullptr, nullptr,
+      "<mode> logging mode (none, text, pcap, or log_*)" },
 
     { "-l", Parameter::PT_STRING, nullptr, nullptr,
       "<logdir> log to this directory instead of current directory" },
@@ -544,11 +544,11 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->remote_control = v.get_long();
 #endif
 
-    else if ( v.is("-K") )
-        config_log_mode(sc, v.get_string());
-
     else if ( v.is("-k") )
         ConfigChecksumMode(sc, v.get_string());
+
+    else if ( v.is("-L") )
+        config_log_mode(sc, v.get_string());
 
     else if ( v.is("-l") )
         ConfigLogDir(sc, v.get_string());

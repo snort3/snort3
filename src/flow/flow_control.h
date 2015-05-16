@@ -42,62 +42,72 @@ public:
     void process_icmp(Packet*);
     void process_tcp(Packet*);
     void process_udp(Packet*);
+    void process_user(Packet*);
+    void process_file(Packet*);
 
     Flow* find_flow(const FlowKey*);
     Flow* new_flow(const FlowKey*);
 
-    void init_tcp(const FlowConfig &, InspectSsnFunc);
-    void init_udp(const FlowConfig &, InspectSsnFunc);
-    void init_icmp(const FlowConfig &, InspectSsnFunc);
-    void init_ip(const FlowConfig &, InspectSsnFunc);
-    void init_exp(const FlowConfig& tcp, const FlowConfig& udp);
+    void init_ip(const FlowConfig&, InspectSsnFunc);
+    void init_icmp(const FlowConfig&, InspectSsnFunc);
+    void init_tcp(const FlowConfig&, InspectSsnFunc);
+    void init_udp(const FlowConfig&, InspectSsnFunc);
+    void init_user(const FlowConfig&, InspectSsnFunc);
+    void init_file(const FlowConfig&, InspectSsnFunc);
+    void init_exp(uint32_t max);
 
     void delete_flow(const FlowKey*);
     void delete_flow(Flow*, const char* why);
-    void purge_flows(uint8_t proto);
-    void prune_flows(uint8_t proto, Packet*);
+    void purge_flows(PktType);
+    void prune_flows(PktType, Packet*);
     void timeout_flows(uint32_t flowCount, time_t cur_time);
 
     char expected_flow(Flow*, Packet*);
     bool is_expected(Packet*);
 
     int add_expected(
-        const sfip_t* srcIP, uint16_t srcPort,
-        const sfip_t* dstIP, uint16_t dstPort,
-        uint8_t protocol, char direction, FlowData*);
+        const sfip_t *srcIP, uint16_t srcPort,
+        const sfip_t *dstIP, uint16_t dstPort,
+        PktType, char direction, FlowData*);
 
     int add_expected(
-        const sfip_t* srcIP, uint16_t srcPort,
-        const sfip_t* dstIP, uint16_t dstPort,
-        uint8_t protocol, int16_t appId, FlowData*);
+        const sfip_t *srcIP, uint16_t srcPort,
+        const sfip_t *dstIP, uint16_t dstPort,
+        PktType, int16_t appId, FlowData*);
 
-    uint32_t max_flows(uint8_t proto);
+    uint32_t max_flows(PktType);
 
-    PegCount get_prunes(uint8_t);
-    PegCount get_flows(uint8_t);
+    PegCount get_prunes(PktType);
+    PegCount get_flows(PktType);
     void clear_counts();
 
 private:
-    class FlowCache* get_cache(uint8_t);
+    class FlowCache* get_cache(PktType);
     void set_key(FlowKey*, Packet*);
 
     unsigned process(Flow*, Packet*);
 
 private:
+    FlowCache* ip_cache;
+    FlowCache* icmp_cache;
     FlowCache* tcp_cache;
     FlowCache* udp_cache;
-    FlowCache* icmp_cache;
-    FlowCache* ip_cache;
+    FlowCache* user_cache;
+    FlowCache* file_cache;
 
+    Flow* ip_mem;
+    Flow* icmp_mem;
     Flow* tcp_mem;
     Flow* udp_mem;
-    Flow* icmp_mem;
-    Flow* ip_mem;
+    Flow* user_mem;
+    Flow* file_mem;
 
+    InspectSsnFunc get_ip;
+    InspectSsnFunc get_icmp;
     InspectSsnFunc get_tcp;
     InspectSsnFunc get_udp;
-    InspectSsnFunc get_icmp;
-    InspectSsnFunc get_ip;
+    InspectSsnFunc get_user;
+    InspectSsnFunc get_file;
 
     class ExpectCache* exp_cache;
 };
