@@ -249,6 +249,12 @@ void paf_setup (PAF_State* ps)
     ps->paf = StreamSplitter::START;
 }
 
+void paf_reset (PAF_State* ps)
+{
+    memset(ps, 0, sizeof(*ps));
+    ps->paf = StreamSplitter::START;
+}
+
 void paf_clear (PAF_State* ps)
 {
     ps->paf = StreamSplitter::ABORT;

@@ -28,19 +28,28 @@
 
 struct UserSegment
 {
-    UserSegment(const uint8_t*, unsigned);
-    ~UserSegment();
+    static UserSegment* init(const uint8_t*, unsigned);
+    static void term(UserSegment*);
 
-    void shift(unsigned n)
-    {
-        assert(len >= n);
-        data += n;
-        len -= n;
-    }
+    unsigned avail();
+    void copy(const uint8_t*, unsigned);
+    void shift(unsigned);
 
-    uint8_t* data;
+    unsigned get_len();
+    uint8_t* get_data();
+
+    bool unused();
+    void use(unsigned);
+    void reset();
+
+    unsigned get_unused_len();
+    uint8_t* get_unused_data();
+
+private:
     unsigned len;
     unsigned offset;
+    unsigned used;
+    uint8_t data[1];
 };
 
 struct UserTracker

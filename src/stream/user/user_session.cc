@@ -38,24 +38,80 @@ THREAD_LOCAL ProfileStats user_perf_stats;
 
 // we always get exactly one copy of user data in order
 // maintain "seg"list of user data stream
+// allocate bucket size to substantially improve performance
 // run user data through paf
 
 //-------------------------------------------------------------------------
-// basic stuff
+// segment stuff
 //-------------------------------------------------------------------------
 
-UserSegment::UserSegment(const uint8_t* p, unsigned n)
+#define OVERHEAD   32
+#define PAGE_SZ    4096
+#define BUCKET     (PAGE_SZ - OVERHEAD)
+
+UserSegment* UserSegment::init(const uint8_t* p, unsigned n)
 {
-    data = new uint8_t[n];
-    memcpy(data, p, n);
-    len = n;
-    offset = 0;
+    unsigned bucket = (n > BUCKET) ? n : BUCKET;
+    UserSegment* us = (UserSegment*)malloc(sizeof(*us)+bucket-1);
+    us->len = 0;
+    us->offset = 0;
+    us->used = 0;
+    us->copy(p, n);
+    return us;
 }
 
-UserSegment::~UserSegment()
+void UserSegment::term(UserSegment* us)
 {
-    delete[] data;
+    free(us);
 }
+
+unsigned UserSegment::avail()
+{
+    unsigned size = offset + len;
+    return (BUCKET > size) ? BUCKET - size : 0;
+}
+
+void UserSegment::copy(const uint8_t* p, unsigned n)
+{
+    memcpy(data+offset+len, p, n);
+    len += n;
+}
+
+void UserSegment::shift(unsigned n)
+{
+    assert(len >= n);
+    offset += n;
+    len -= n;
+}
+
+unsigned UserSegment::get_len()
+{ return len; }
+
+uint8_t* UserSegment::get_data()
+{ return data + offset; }
+
+bool UserSegment::unused()
+{ return used < offset + len; }
+
+void UserSegment::use(unsigned n)
+{
+    used += n;
+    if ( used > offset + len )
+        used = offset + len;
+}
+
+void UserSegment::reset()
+{ used = offset; }
+
+unsigned UserSegment::get_unused_len()
+{ return (offset + len > used) ? offset + len - used : 0; }
+
+uint8_t* UserSegment::get_unused_data()
+{ return data + used; }
+
+//-------------------------------------------------------------------------
+// tracker stuff
+//-------------------------------------------------------------------------
 
 UserTracker::UserTracker()
 { init(); }
@@ -76,10 +132,6 @@ void UserTracker::term()
     splitter = nullptr;
 }
 
-//-------------------------------------------------------------------------
-// tracker packet stuff
-//-------------------------------------------------------------------------
-
 void UserTracker::detect(const Packet* p, const StreamBuffer* sb, uint32_t flags)
 {
     Packet up;
@@ -98,28 +150,46 @@ void UserTracker::detect(const Packet* p, const StreamBuffer* sb, uint32_t flags
     up.packet_flags |= (p->packet_flags & (PKT_FROM_CLIENT|PKT_FROM_SERVER));
     up.packet_flags |= (p->packet_flags & (PKT_STREAM_EST|PKT_STREAM_UNEST_UNI));
 
-    //printf("user detect[%d]\n", up.dsize);
+    //printf("user detect[%d] %*s\n", up.dsize, up.dsize, (char*)up.data);
     Snort::detect_rebuilt_packet(&up);
 }
 
 int UserTracker::scan(Packet* p, uint32_t& flags)
 {
-    UserSegment* last = seg_list.back();
-    flags = p->packet_flags & (PKT_FROM_CLIENT|PKT_FROM_SERVER);
-    //printf("user scan[%d]\n", last->len);
+    if ( seg_list.empty() )
+        return -1;
 
-    int32_t flush_amt = paf_check(
-        splitter, &paf_state, p->flow, last->data, last->len, total, paf_state.seq, &flags);
+    std::list<UserSegment*>::iterator it;
 
-    if ( flush_amt > 0 )
+    for ( it = seg_list.begin(); it != seg_list.end(); ++it)
     {
-        if ( !splitter->is_paf() && total > (unsigned)flush_amt )
+        UserSegment* us = *it;
+
+        if ( !us->unused() )
+            continue;
+
+        flags = p->packet_flags & (PKT_FROM_CLIENT|PKT_FROM_SERVER);
+        unsigned len = us->get_unused_len();
+        //printf("user scan[%d] '%*s'\n", len, len, us->get_unused_data());
+
+        int32_t flush_amt = paf_check(
+            splitter, &paf_state, p->flow, us->get_unused_data(), len,
+            total, paf_state.seq, &flags);
+
+        if ( flush_amt >= 0 )
         {
-            paf_jump(&paf_state, total - flush_amt);
-            return total;
+            us->use(flush_amt);
+
+            if ( !splitter->is_paf() && total > (unsigned)flush_amt )
+            {
+                paf_jump(&paf_state, total - flush_amt);
+                return total;
+            }
+            return flush_amt;
         }
+        us->use(len);
     }
-    return flush_amt;
+    return -1;
 }
 
 void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
@@ -132,15 +202,16 @@ void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
     while ( !seg_list.empty() and flush_amt )
     {
         UserSegment* us = seg_list.front();
-        const uint8_t* data = us->data + us->offset;
+        const uint8_t* data = us->get_data();
+        unsigned len = us->get_len();
         unsigned bytes_copied = 0;
 
-        if ( us->len == flush_amt )
+        if ( len == flush_amt )
             rflags |= (flags & PKT_PDU_TAIL);
 
-        //printf("user reassemble[%d]\n", us->len);
+        //printf("user reassemble[%d]\n", len);
         sb = splitter->reassemble(
-            p->flow, flush_amt, bytes_flushed, data, us->len, rflags, bytes_copied);
+            p->flow, flush_amt, bytes_flushed, data, len, rflags, bytes_copied);
 
         bytes_flushed += bytes_copied;
         rflags &= ~PKT_PDU_HEAD;
@@ -148,12 +219,12 @@ void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
         if ( sb )
             detect(p, sb, flags);
 
-        if ( us->len == bytes_copied )
+        if ( len == bytes_copied )
         {
-            total -= us->len;
-            flush_amt -= us->len;
+            total -= len;
+            flush_amt -= len;
             seg_list.pop_front();
-            delete us;
+            UserSegment::term(us);
         }
         else
         {
@@ -186,10 +257,30 @@ void UserTracker::process(Packet* p)
 void UserTracker::add_data(Packet* p)
 {
     //printf("user add[%d]\n", p->dsize);
-    seg_list.push_back(new UserSegment(p->data, p->dsize));
+   unsigned avail = 0;
+
+    if ( !seg_list.empty() )
+    {
+        UserSegment* us = seg_list.back();
+        avail = us->avail();
+
+        if ( avail )
+        {
+            if ( avail > p->dsize )
+                avail = p->dsize;
+            us->copy(p->data, avail);
+        }
+    }
+
+    if ( avail < p->dsize )
+    {
+        UserSegment* us = UserSegment::init(p->data+avail, p->dsize-avail);
+        seg_list.push_back(us);
+    }
     total += p->dsize;
     process(p);
 }
+
 
 //-------------------------------------------------------------------------
 // private user session methods
@@ -302,18 +393,17 @@ void UserSession::restart(Packet* p)
 {
     bool c2s = p->packet_flags & PKT_FROM_CLIENT;
     UserTracker& ut = c2s ? server : client;
-    std::list<UserSegment*> tmp = std::move(ut.seg_list);
-
+    std::list<UserSegment*>::iterator it;
     ut.total = 0;
 
-    while ( !tmp.empty() )
+    for ( it = ut.seg_list.begin(); it != ut.seg_list.end(); ++it)
     {
-        UserSegment* us = tmp.front();
-        tmp.pop_front();
-        ut.seg_list.push_back(us);
-        ut.total += us->len;
-        ut.process(p);
+        (*it)->reset();
+        ut.total += (*it)->get_len();
     }
+
+    paf_reset(&ut.paf_state);
+    ut.process(p);
 }
 
 //-------------------------------------------------------------------------

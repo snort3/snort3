@@ -42,7 +42,7 @@
 
 #include "framework/logger.h"
 #include "framework/module.h"
-#include "protocols/packet.h" /* for struct in6_addr -- maybe move to snort_types.h? */
+#include "protocols/packet.h"
 #include "snort_types.h"
 #include "main/analyzer.h"
 #include "rules.h"
@@ -564,8 +564,7 @@ static void _Unified2LogPacketAlert(
         logheader.event_second = 0;
     }
 
-    if ((p != NULL) && (p->pkt != NULL) && (p->pkth != NULL)
-        && obApi->payloadObfuscationRequired(p))
+    if ( p and p->pkth and obApi->payloadObfuscationRequired(p) )
     {
         Unified2LogCallbackData unifiedData;
 
@@ -584,7 +583,7 @@ static void _Unified2LogPacketAlert(
         }
     }
 
-    if (p && p->pkt && p->pkth)
+    if ( p and p->pkth )
     {
         logheader.packet_second = htonl((uint32_t)p->pkth->ts.tv_sec);
         logheader.packet_microsecond = htonl((uint32_t)p->pkth->ts.tv_usec);
@@ -627,7 +626,7 @@ static void _Unified2LogPacketAlert(
     {
         if (SafeMemcpy(write_pkt_buffer + sizeof(Serial_Unified2_Header) +
             sizeof(Serial_Unified2Packet) - 4,
-            p->pkt, pkt_length,
+            p->is_data() ? p->data : p->pkt, pkt_length,
             write_pkt_buffer, write_pkt_end) != SAFEMEM_SUCCESS)
         {
             ErrorMessage("%s(%d) Failed to copy packet data. "
@@ -1170,14 +1169,11 @@ void U2Logger::close()
 
 void U2Logger::alert(Packet* p, const char* msg, Event* event)
 {
-    if (p->ptrs.ip_api.is_ip4())
-    {
-        _AlertIP4_v2(p, msg, &config, event);
-    }
-    else
+    if (p->ptrs.ip_api.is_ip6())
     {
         _AlertIP6_v2(p, msg, &config, event);
 
+        // FIXIT-L delete ip6 extra data; support ip6 normally
         if (SnortConfig::get_log_ip6_extra() && p->ptrs.ip_api.is_ip6())
         {
             const sfip_t* ip = p->ptrs.ip_api.get_src();
@@ -1187,6 +1183,10 @@ void U2Logger::alert(Packet* p, const char* msg, Event* event)
             _WriteExtraData(&config, event->event_id, event->ref_time.tv_sec,
                 &ip->ip8[0], sizeof(struct in6_addr),  EVENT_INFO_IPV6_DST);
         }
+    }
+    else // ip4 or data
+    {
+        _AlertIP4_v2(p, msg, &config, event);
     }
 
     if ( p->flow )
@@ -1210,7 +1210,7 @@ void U2Logger::log(Packet* p, const char* msg, Event* event)
 {
     if (p)
     {
-        if ( p->packet_flags & PKT_REBUILT_STREAM )
+        if ( (p->packet_flags & PKT_REBUILT_STREAM) and !p->is_data() )
         {
             DEBUG_WRAP(DebugMessage(DEBUG_LOG,
                 "[*] Reassembled packet, dumping stream packets\n"); );

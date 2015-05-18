@@ -120,7 +120,7 @@ static void parse_pci(FileImpl* impl, const char* s)
     parse_host(s+2, &impl->pci.dst_addr, &impl->pci.dst_port);
 
     // hack until client / server is resolved:
-    if ( impl->pci.src_port <= impl->pci.dst_port )
+    if ( impl->pci.src_port >= impl->pci.dst_port )
         impl->pci.flags |= DAQ_SKT_FLAG_TO_SERVER;
     else
         impl->pci.flags &= ~DAQ_SKT_FLAG_TO_SERVER;

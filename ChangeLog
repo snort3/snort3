@@ -1,5 +1,8 @@
 Pending - build 153
 
+-- use buckets for user seglist
+-- add -L u2
+-- fix u2 to output data only packets
 -- added DAQs for socket, user, and file in extras
 -- changed -K to -L (log type)
 -- added extra DAQ for user and file

@@ -64,13 +64,14 @@
 #define ALERT_CMG   "cmg"
 #define ALERT_JH    "jh"
 #define ALERT_DJR   "djr"
+#define ALERT_U2    "u2"
 #define ALERT_AJK   "ajk"
 #ifdef REG_TEST
 #define ALERT_CON   "console"
 #endif
 
-#define OUTPUT_AJK  "unified2"
-#define OUTPUT_CMG  "alert_fast"
+#define OUTPUT_U2   "unified2"
+#define OUTPUT_FAST "alert_fast"
 #define OUTPUT_PCAP "log_pcap"
 
 static std::string lua_conf;
@@ -612,20 +613,19 @@ void config_alert_mode(SnortConfig* sc, const char* val)
         sc->output_flags |= OUTPUT_FLAG__NO_ALERT;
         EventManager::enable_alerts(false);
     }
-    else if ((strcasecmp(val, ALERT_CMG) == 0) ||
-        (strcasecmp(val, ALERT_JH) == 0) ||
-        (strcasecmp(val, ALERT_DJR) == 0))
+    else if ( !strcasecmp(val, ALERT_CMG) or !strcasecmp(val, ALERT_JH) or
+        !strcasecmp(val, ALERT_DJR) )
     {
-        sc->output = OUTPUT_CMG;
+        sc->output = OUTPUT_FAST;
         sc->output_flags |= OUTPUT_FLAG__SHOW_DATA_LINK;
         sc->output_flags |= OUTPUT_FLAG__APP_DATA;
     }
-    else if (strcasecmp(val, ALERT_AJK) == 0)
-        sc->output = OUTPUT_AJK;
+    else if ( !strcasecmp(val, ALERT_U2) or !strcasecmp(val, ALERT_AJK) )
+        sc->output = OUTPUT_U2;
 
 #ifdef REG_TEST
     else if (strcasecmp(val, ALERT_CON) == 0)
-        sc->output = "alert_fast";
+        sc->output = OUTPUT_FAST;
 #endif
     else
         sc->output = val;
