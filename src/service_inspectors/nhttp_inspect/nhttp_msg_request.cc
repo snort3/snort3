@@ -40,51 +40,48 @@ NHttpMsgRequest::NHttpMsgRequest(const uint8_t* buffer, const uint16_t buf_size,
 
 void NHttpMsgRequest::parse_start_line()
 {
-    // FIXIT-M this needs to be redesigned to parse a truncated request line and extract the method
-    // and URI. The current implementation just gives up if the " HTTP/X.Y" isn't in its proper
-    // place at the end of the line.
-
-    // There should be exactly two spaces. One following the method and one before "HTTP/".
-    // Additional spaces located within the URI are not allowed by RFC but we will tolerate it
-    // <method><SP><URI><SP>HTTP/X.Y
-    if (start_line.start[start_line.length-9] != ' ')
+    // Check the version field
+    if ((start_line.length < 10) || !is_sp_tab[start_line.start[start_line.length-9]] ||
+         memcmp(start_line.start + start_line.length - 8, "HTTP/", 5))
     {
-        // space before "HTTP" missing or in wrong place
         infractions += INF_BAD_REQ_LINE;
+        events.create_event(EVENT_NOT_HTTP);
         return;
     }
 
-    int32_t space;
-    for (space = 0; space < start_line.length-9; space++)
-    {
-        if (start_line.start[space] == ' ')
-            break;
-    }
-    if (space >= start_line.length-9)
-    {
-        // leading space or no space
-        infractions += INF_BAD_REQ_LINE;
-        return;
-    }
+    // The splitter guarantees there will be a non-whitespace at octet 1 and a whitespace within
+    // octets 2-81. The following algorithm uses those assumptions.
+
+    int32_t first_space; // first whitespace in request line
+    for (first_space = 1; !is_sp_tab[start_line.start[first_space]]; first_space++);
+
+    int32_t first_end; // last whitespace in first clump of whitespace
+    for (first_end = first_space+1; is_sp_tab[start_line.start[first_end]]; first_end++);
+    first_end--;
+
+    int32_t last_begin; // first whitespace in clump of whitespace before version
+    for (last_begin = start_line.length - 10; is_sp_tab[start_line.start[last_begin]];
+        last_begin--);
+    last_begin++;
 
     method.start = start_line.start;
-    method.length = space;
-    derive_method_id();
-    uri = new NHttpUri(start_line.start + method.length + 1,
-        start_line.length - method.length - 10, method_id);
+    method.length = first_space;
+    method_id = (MethodId)str_to_code(method.start, method.length, method_list);
+
     version.start = start_line.start + (start_line.length - 8);
     version.length = 8;
-    assert (start_line.length == method.length + uri->get_uri().length + version.length + 2);
-}
+    derive_version_id();
 
-void NHttpMsgRequest::derive_method_id()
-{
-    if (method.length <= 0)
+    if (first_end < last_begin)
     {
-        method_id = METH__NOSOURCE;
-        return;
+        uri = new NHttpUri(start_line.start + first_end + 1, last_begin - first_end - 1,
+            method_id);
     }
-    method_id = (MethodId)str_to_code(method.start, method.length, method_list);
+    else
+    {
+        infractions += INF_NO_URI;
+        events.create_event(EVENT_URI_MISSING);
+    }
 }
 
 const Field& NHttpMsgRequest::get_uri()
@@ -107,6 +104,43 @@ const Field& NHttpMsgRequest::get_uri_norm_legacy()
 
 void NHttpMsgRequest::gen_events()
 {
+    if (infractions && INF_BAD_REQ_LINE)
+        return;
+
+    if ((start_line.start[method.length] == '\t') ||
+        (start_line.start[start_line.length - 9] == '\t'))
+    {
+        infractions += INF_REQUEST_TAB;
+        events.create_event(EVENT_APACHE_WS);
+    }
+
+    for (int k = method.length + 1; k < start_line.length - 9; k++)
+    {
+        if (is_sp_tab[start_line.start[k]])
+        {
+            if (uri && (uri->get_uri().start <= start_line.start + k) &&
+                       (start_line.start + k < uri->get_uri().start + uri->get_uri().length))
+            {
+                // inside the URI
+                if (start_line.start[k] == ' ')
+                {
+                    infractions += INF_URI_SPACE;
+                    events.create_event(EVENT_UNESCAPED_SPACE_URI);
+                }
+            }
+            else
+            {
+                infractions += INF_REQUEST_WS;
+                events.create_event(EVENT_IMPROPER_WS);
+                if (start_line.start[k] == '\t')
+                {
+                    infractions += INF_REQUEST_TAB;
+                    events.create_event(EVENT_APACHE_WS);
+                }
+            }
+        }
+    }
+
     if (method_id == METH__OTHER)
         events.create_event(EVENT_UNKNOWN_METHOD);
 

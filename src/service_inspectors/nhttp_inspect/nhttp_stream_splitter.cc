@@ -164,7 +164,11 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
             return StreamSplitter::FLUSH;
         }
         data = test_data;
-        assert(session_data->type_expected[source_id] != SEC_ABORT);
+        if (session_data->type_expected[source_id] == SEC_ABORT)
+        {
+            session_data = new NHttpFlowData;
+            flow->set_application_data(session_data);
+        }
     }
     else if (NHttpTestManager::use_test_output())
     {
@@ -405,13 +409,15 @@ bool NHttpStreamSplitter::finish(Flow* flow)
     assert(session_data != nullptr);
     session_data->tcp_close[source_id] = true;
     // If there is leftover data for which we returned PAF_SEARCH and never flushed, we need to set
-    // up to process because it is about to go to reassemble().
+    // up to process because it is about to go to reassemble(). But we don't support partial start
+    // lines.
     if ((session_data->section_type[source_id] == SEC__NOTCOMPUTE) &&
         (session_data->splitter[source_id] != nullptr) &&
         (session_data->splitter[source_id]->get_octets_seen() > 0) &&
         (session_data->type_expected[source_id] != SEC_ABORT))
     {
-        if (!session_data->splitter[source_id]->valid())
+        if ((session_data->type_expected[source_id] == SEC_REQUEST) ||
+            (session_data->type_expected[source_id] == SEC_STATUS))
         {
             return false;
         }

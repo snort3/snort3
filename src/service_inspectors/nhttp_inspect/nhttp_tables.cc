@@ -303,7 +303,11 @@ const RuleMap NHttpModule::nhttp_events[] =
     { EVENT_LOSS_OF_SYNC,               "HTTP misformatted or not really HTTP" },
     { EVENT_NOT_HTTP,                   "Input apparently not HTTP" },
     { EVENT_WS_BETWEEN_MSGS,            "White space before or between messages" },
-
+    { EVENT_URI_MISSING,                "Request message without URI" },
+    { EVENT_CTRL_IN_REASON,             "Control character in reason phrase" },
+    { EVENT_IMPROPER_WS,                "Illegal extra whitespace in start line" },
+    { EVENT_BAD_VERS,                   "Corrupted HTTP version" },
+    { EVENT_UNKNOWN_VERS,               "Unknown HTTP version" },
     { 0, nullptr }
 };
 
@@ -334,7 +338,6 @@ const int8_t NHttpEnums::as_hex[256] =
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
 };
 
-
 const bool NHttpEnums::token_char[256] =
 {
     false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
@@ -348,6 +351,33 @@ const bool NHttpEnums::token_char[256] =
 
      true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
      true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true, false,  true, false,  true, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+};
+
+const bool NHttpEnums::is_sp_tab[256] =
+{
+    false, false, false, false, false, false, false, false, false,  true, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+     true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
 
     false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
     false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,

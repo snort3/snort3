@@ -31,27 +31,15 @@ void NHttpMsgStart::analyze()
     start_line.start = msg_text.start;
     start_line.length = msg_text.length;
     parse_start_line();
-    derive_version_id();
 }
 
 void NHttpMsgStart::derive_version_id()
 {
-    if (version.length <= 0)
-    {
-        version_id = VERS__NOSOURCE;
-        return;
-    }
-    if (version.length != 8)
+    if (version.start[6] != '.')
     {
         version_id = VERS__PROBLEMATIC;
         infractions += INF_BAD_VERSION;
-        return;
-    }
-
-    if (memcmp(version.start, "HTTP/", 5) || (version.start[6] != '.'))
-    {
-        version_id = VERS__PROBLEMATIC;
-        infractions += INF_BAD_VERSION;
+        events.create_event(EVENT_BAD_VERS);
     }
     else if ((version.start[5] == '1') && (version.start[7] == '1'))
     {
@@ -70,11 +58,13 @@ void NHttpMsgStart::derive_version_id()
     {
         version_id = VERS__OTHER;
         infractions += INF_UNKNOWN_VERSION;
+        events.create_event(EVENT_UNKNOWN_VERS);
     }
     else
     {
         version_id = VERS__PROBLEMATIC;
         infractions += INF_BAD_VERSION;
+        events.create_event(EVENT_BAD_VERS);
     }
 }
 

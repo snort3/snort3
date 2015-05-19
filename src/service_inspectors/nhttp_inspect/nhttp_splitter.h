@@ -40,7 +40,6 @@ public:
     uint32_t get_octets_seen() const { return octets_seen; }
     virtual uint32_t get_num_excess() const { return 0; }
     virtual uint32_t get_num_head_lines() const { return 0; }
-    virtual bool valid() const { return true; }
 
 protected:
     // number of octets processed by previous split() calls that returned NOTFOUND
@@ -56,7 +55,6 @@ public:
     NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length,
         NHttpInfractions& infractions, NHttpEventGen& events) override;
     uint32_t get_num_excess() const override { return (num_flush > 0) ? num_crlf : 0; }
-    bool valid() const override { return validated; }
 
 protected:
     enum ValidationResult { V_GOOD, V_BAD, V_TBD };

@@ -280,6 +280,41 @@ HTTP/1.0 401 illegal nontext character in reason\xFFphrase delete\r\n\r\n
 @response
 HTTP/1.0 401 \x08illegal nontext character in reason phrase backspace\r\n\r\n
 
+@2029
+@break
+@response
+HTTP/1.0  310 Excessive white space\r\n\r\n
+
+@2030
+@break
+@response
+HTTP/1.0     310 Excessive white space\r\n\r\n
+
+@2031
+@break
+@response
+HTTP/1.1\t310 Tab instead of space\r\n\r\n
+
+@2032
+@break
+@response
+HTTP/1.0 310\tTab instead of space\r\n\r\n
+
+@2033
+@break
+@response
+HTTP/1.0    \t310 Excessive white space and tab\r\n\r\n
+
+@2034
+@break
+@response
+HTTP/1.0 700 \tTab is in reason phrase\r\n\r\n
+
+@2035
+@break
+@response
+HTTP/1.0\t\t\t310 Excessive white space consisting of tabs\r\n\r\n
+
 # ***********************************************************************************************
 # Valid request start lines
 @3001
@@ -392,6 +427,11 @@ GET HtTpS://1.2.3.4.5.a:6/abcdef/ghijklmnop/qrstuvwxyz/?thequery?fieldcontinues?
 @request
 \t\t\t\tBIND /1234567890?abcdef HTTP/1.1\r\n\r\n
 
+@3023
+@break
+@request
+GET12345678901234567890123456789012345678901234567890123456789012345678901234567 http://hostname.com/?# HTTP/1.1\r\n\r\n
+
 # ***********************************************************************************************
 # Invalid request start lines
 @4001
@@ -473,6 +513,36 @@ GE;T http://hostname.com/?# HTTP/1.1\r\n\r\n
 @break
 @request
 GET\xAA http://hostname.com/?# HTTP/1.1\r\n\r\n
+
+@4016
+@break
+@request
+GET   /white/space/abuse HTTP/1.1\r\n\r\n
+
+@4017
+@break
+@request
+GET /white/space/abuse  HTTP/1.1\r\n\r\n
+
+@4018
+@break
+@request
+GET\t/white/space/abuse HTTP/1.1\r\n\r\n
+
+@4019
+@break
+@request
+GET /white/space/abuse\tHTTP/1.1\r\n\r\n
+
+@4020
+@break
+@request
+GET \t /white/space/abuse HTTP/1.1\r\n\r\n
+
+@4021
+@break
+@request
+GET /white/space/abuse       \tHTTP/1.1\r\n\r\n
 
 # ***********************************************************************************************
 # Valid headers without body

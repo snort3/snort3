@@ -125,6 +125,12 @@ enum Infraction
     INF_ENDLESS_HEADER,
     INF_LF_WITHOUT_CR,
     INF_NOT_HTTP,
+    INF_NO_URI,
+    INF_REQUEST_WS,
+    INF_REQUEST_TAB,
+    INF_STATUS_WS,
+    INF_STATUS_TAB,
+    INF_URI_SPACE,
 };
 
 // Formats for output from a header normalization function
@@ -193,11 +199,17 @@ enum EventSid
     EVENT_LOSS_OF_SYNC,
     EVENT_NOT_HTTP,
     EVENT_WS_BETWEEN_MSGS,
+    EVENT_URI_MISSING,
+    EVENT_CTRL_IN_REASON,
+    EVENT_IMPROPER_WS,
+    EVENT_BAD_VERS,
+    EVENT_UNKNOWN_VERS,
     EVENT_MAXVALUE
 };
 
 extern const int8_t as_hex[256];
 extern const bool token_char[256];
+extern const bool is_sp_tab[256];
 } // end namespace NHttpEnums
 
 #endif

@@ -47,7 +47,6 @@ private:
     static const StrCode method_list[];
 
     void parse_start_line() override;
-    void derive_method_id();
 
     Field method;
     NHttpUri* uri = nullptr;

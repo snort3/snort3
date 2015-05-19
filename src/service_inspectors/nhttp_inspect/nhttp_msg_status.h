@@ -32,7 +32,6 @@ class NHttpMsgStatus : public NHttpMsgStart
 public:
     NHttpMsgStatus(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
         NHttpEnums::SourceId source_id_, bool buf_owner);
-    void analyze() override;
     void print_section(FILE* output) override;
     void gen_events() override;
     void update_flow() override;

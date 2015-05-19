@@ -38,61 +38,59 @@ NHttpMsgStatus::NHttpMsgStatus(const uint8_t* buffer, const uint16_t buf_size,
     transaction->set_status(this);
 }
 
-// All the header processing that is done for every message (i.e. not just-in-time) is done here.
-void NHttpMsgStatus::analyze()
-{
-    NHttpMsgStart::analyze();
-    derive_status_code_num();
-}
-
 void NHttpMsgStatus::parse_start_line()
 {
-    // FIXIT-M need to be able to parse a truncated status line and extract version and status
-    // code.
+    // Splitter guarantees line begins with "HTTP/"
 
-    // Eventually we may need to cater to certain format errors, but for now exact match or treat
-    // as error. HTTP/X.Y<SP>###<SP><text>
-    if ((start_line.length < 13) || (start_line.start[8] != ' ') || (start_line.start[12] != ' '))
+    if ((start_line.length < 12) || !is_sp_tab[start_line.start[8]])
     {
         infractions += INF_BAD_STAT_LINE;
+        events.create_event(EVENT_NOT_HTTP);
         return;
     }
+
+    int32_t first_end; // last whitespace in first clump of whitespace
+    for (first_end = 9; is_sp_tab[start_line.start[first_end]] && (first_end < start_line.length);
+        first_end++);
+    first_end--;
+
+    if (start_line.length < first_end + 4)
+    {
+        infractions += INF_BAD_STAT_LINE;
+        events.create_event(EVENT_NOT_HTTP);
+        return;
+    }
+
+    if ((start_line.length > first_end + 4) && !is_sp_tab[start_line.start[first_end + 4]])
+    {
+        infractions += INF_BAD_STAT_LINE;
+        events.create_event(EVENT_NOT_HTTP);
+        return;
+    }
+
     version.start = start_line.start;
     version.length = 8;
-    status_code.start = start_line.start + 9;
+    derive_version_id();
+
+    status_code.start = start_line.start + first_end + 1;
     status_code.length = 3;
-    reason_phrase.start = start_line.start + 13;
-    reason_phrase.length = start_line.length - 13;
-    for (int32_t k = 0; k < reason_phrase.length; k++)
+    derive_status_code_num();
+
+    if (start_line.length > first_end + 5)
     {
-        if ((reason_phrase.start[k] <= 31) || (reason_phrase.start[k] >= 127))
-        {
-            // Illegal character in reason phrase
-            infractions += INF_BAD_PHRASE;
-            break;
-        }
+        reason_phrase.start = start_line.start + first_end + 5;
+        reason_phrase.length = start_line.length - first_end - 5;
     }
-    assert (start_line.length == version.length + status_code.length + reason_phrase.length + 2);
 }
 
 void NHttpMsgStatus::derive_status_code_num()
 {
-    if (status_code.length <= 0)
-    {
-        status_code_num = STAT_NOSOURCE;
-        return;
-    }
-    if (status_code.length != 3)
-    {
-        status_code_num = STAT_PROBLEMATIC;
-        return;
-    }
-
     if ((status_code.start[0] < '0') || (status_code.start[0] > '9') || (status_code.start[1] <
         '0') || (status_code.start[1] > '9') ||
         (status_code.start[2] < '0') || (status_code.start[2] > '9'))
     {
         infractions += INF_BAD_STAT_CODE;
+        events.create_event(EVENT_INVALID_STATCODE);
         status_code_num = STAT_PROBLEMATIC;
         return;
     }
@@ -101,10 +99,50 @@ void NHttpMsgStatus::derive_status_code_num()
     if ((status_code_num < 100) || (status_code_num > 599))
     {
         infractions += INF_BAD_STAT_CODE;
+        events.create_event(EVENT_INVALID_STATCODE);
     }
 }
 
-void NHttpMsgStatus::gen_events() { }
+void NHttpMsgStatus::gen_events()
+{
+    if (infractions && INF_BAD_STAT_LINE)
+        return;
+
+    if (status_code.start > start_line.start + 9)
+    {
+        infractions += INF_STATUS_WS;
+        events.create_event(EVENT_IMPROPER_WS);
+    }
+
+    for (int k = 8; k < status_code.start - start_line.start; k++)
+    {
+        if (start_line.start[k] == '\t')
+        {
+            infractions += INF_STATUS_TAB;
+            events.create_event(EVENT_APACHE_WS);
+        }
+    }
+
+    if (status_code.start - start_line.start + 3 < start_line.length)
+    {
+        if (status_code.start[3] == '\t')
+        {
+            infractions += INF_STATUS_TAB;
+            events.create_event(EVENT_APACHE_WS);
+        }
+    }
+
+    for (int k=0; k < reason_phrase.length; k++)
+    {
+        if ((reason_phrase.start[k] <= 31) || (reason_phrase.start[k] >= 127))
+        {
+            // Illegal character in reason phrase
+            infractions += INF_BAD_PHRASE;
+            events.create_event(EVENT_CTRL_IN_REASON);
+            break;
+        }
+    }
+}
 
 void NHttpMsgStatus::print_section(FILE* output)
 {

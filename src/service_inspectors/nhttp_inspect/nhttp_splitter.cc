@@ -31,9 +31,9 @@ ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length,
         // If we have seen nothing but white space so far ...
         if (num_crlf == octets_seen + k)
         {
-            if ((buffer[k] == 32) || ((buffer[k] >= 9) && (buffer[k] <= 13)))
+            if ((buffer[k] == ' ') || ((buffer[k] >= '\t') && (buffer[k] <= '\r')))
             {
-                if ((buffer[k] != 10) && (buffer[k] != 13))
+                if ((buffer[k] != '\n') && (buffer[k] != '\r'))
                 {
                     // tab, VT, FF, or space between messages
                     infractions += INF_WS_BETWEEN_MSGS;
