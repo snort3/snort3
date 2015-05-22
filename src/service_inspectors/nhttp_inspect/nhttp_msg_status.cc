@@ -105,7 +105,7 @@ void NHttpMsgStatus::derive_status_code_num()
 
 void NHttpMsgStatus::gen_events()
 {
-    if (infractions && INF_BAD_STAT_LINE)
+    if (infractions & INF_BAD_STAT_LINE)
         return;
 
     if (status_code.start > start_line.start + 9)
@@ -156,7 +156,7 @@ void NHttpMsgStatus::print_section(FILE* output)
 void NHttpMsgStatus::update_flow()
 {
     // The following logic to determine body type is by no means the last word on this topic.
-    if (infractions && INF_BAD_STAT_LINE)
+    if (infractions & INF_BAD_STAT_LINE)
     {
         session_data->type_expected[source_id] = SEC_ABORT;
         session_data->half_reset(source_id);

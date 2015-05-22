@@ -54,22 +54,31 @@ void NHttpMsgHeadShared::parse_header_block()
     int32_t bytes_used = 0;
     num_headers = 0;
     int num_seps;
+    // session_data->num_head_lines is computed without consideration of wrapping and may overstate
+    // actual number of headers. Rely on num_headers which is calculated correctly.
     header_line = new Field[session_data->num_head_lines[source_id]];
     while (bytes_used < msg_text.length)
     {
         header_line[num_headers].start = msg_text.start + bytes_used;
         header_line[num_headers].length = find_header_end(header_line[num_headers].start,
-            msg_text.length - bytes_used, &num_seps);
+            msg_text.length - bytes_used, num_seps);
         assert(num_headers < session_data->num_head_lines[source_id]);
+        if (header_line[num_headers].length > MAX_HEADER_LENGTH)
+        {
+            infractions += INF_TOO_LONG_HEADER;
+            events.create_event(EVENT_LONG_HDR);
+        }
         bytes_used += header_line[num_headers++].length + num_seps;
-        if (num_headers >= MAXHEADERS)
+        if (num_headers >= MAX_HEADERS)
         {
             break;
         }
     }
     if (bytes_used < msg_text.length)
     {
+        // FIXIT-M eventually need to separate max header alert from internal maximum
         infractions += INF_TOO_MANY_HEADERS;
+        events.create_event(EVENT_MAX_HEADERS);
     }
 }
 
@@ -80,37 +89,38 @@ void NHttpMsgHeadShared::parse_header_block()
 // The final header in the block will not be terminated by CRLF (splitter design) but will
 // terminate at the end of the buffer. length is returned.
 //
-// Bare LF without CR is accepted as the terminator unless preceded by backslash character. FIXIT-L
-// this does not consider whether \LF is contained within a quoted string and perhaps this should
-// be revisited. The current approach errs in the direction of not incorrectly dividing a single
-// header into two headers.
-//
-// FIXIT-M any abuse of backslashes in headers should be a preprocessor alert.
+// Bare LF without CR is accepted as the terminator.
 
-uint32_t NHttpMsgHeadShared::find_header_end(const uint8_t* buffer, int32_t length, int* const
-    num_seps)
+uint32_t NHttpMsgHeadShared::find_header_end(const uint8_t* buffer, int32_t length, int& num_seps)
 {
-    for (int32_t k=0; k < length-1; k++)
+    // k=1 because the splitter would not give us a header consisting solely of LF.
+    for (int32_t k=1; k < length; k++)
     {
-        if ((buffer[k] != '\\') && (buffer[k+1] == '\n'))
+        if (buffer[k] == '\n')
         {
-            if ((k+2 >= length) || ((buffer[k+2] != ' ') && (buffer[k+2] != '\t')))
+            // Check for wrapping
+            if ((k+1 == length) || !is_sp_tab[buffer[k+1]])
             {
-                *num_seps = (buffer[k] == '\r') ? 2 : 1;
-                return k + 2 - *num_seps;
+                num_seps = (buffer[k-1] == '\r') ? 2 : 1;
+                if (num_seps == 1)
+                {
+                    infractions += INF_LF_WITHOUT_CR;
+                    events.create_event(EVENT_IIS_DELIMITER);
+                }
+                return k + 1 - num_seps;
             }
         }
     }
-    *num_seps = 0;
+    num_seps = 0;
     return length;
 }
 
 // Divide header field lines into field name and field value
 void NHttpMsgHeadShared::parse_header_lines()
 {
-    header_name = new Field[session_data->num_head_lines[source_id]];
-    header_value = new Field[session_data->num_head_lines[source_id]];
-    header_name_id = new HeaderId[session_data->num_head_lines[source_id]];
+    header_name = new Field[num_headers];
+    header_value = new Field[num_headers];
+    header_name_id = new HeaderId[num_headers];
 
     int colon;
     for (int k=0; k < num_headers; k++)
@@ -130,6 +140,7 @@ void NHttpMsgHeadShared::parse_header_lines()
         else
         {
             infractions += INF_BAD_HEADER;
+            events.create_event(EVENT_BAD_HEADER);
         }
     }
 }
@@ -153,15 +164,8 @@ void NHttpMsgHeadShared::derive_header_name_id(int index)
 const Field& NHttpMsgHeadShared::get_header_value_norm(NHttpEnums::HeaderId header_id)
 {
     header_norms[header_id]->normalize(header_id, header_count[header_id], scratch_pad,
-        infractions,
-        header_name_id, header_value, num_headers, header_value_norm[header_id]);
+        infractions, header_name_id, header_value, num_headers, header_value_norm[header_id]);
     return header_value_norm[header_id];
-}
-
-void NHttpMsgHeadShared::gen_events()
-{
-    if (infractions && INF_TOO_MANY_HEADERS)
-        events.create_event(EVENT_MAX_HEADERS);
 }
 
 void NHttpMsgHeadShared::print_headers(FILE* output)

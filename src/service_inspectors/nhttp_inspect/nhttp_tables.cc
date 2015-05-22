@@ -308,6 +308,7 @@ const RuleMap NHttpModule::nhttp_events[] =
     { EVENT_IMPROPER_WS,                "Illegal extra whitespace in start line" },
     { EVENT_BAD_VERS,                   "Corrupted HTTP version" },
     { EVENT_UNKNOWN_VERS,               "Unknown HTTP version" },
+    { EVENT_BAD_HEADER,                 "Format error in HTTP header" },
     { 0, nullptr }
 };
 

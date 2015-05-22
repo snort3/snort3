@@ -104,7 +104,7 @@ const Field& NHttpMsgRequest::get_uri_norm_legacy()
 
 void NHttpMsgRequest::gen_events()
 {
-    if (infractions && INF_BAD_REQ_LINE)
+    if (infractions & INF_BAD_REQ_LINE)
         return;
 
     if ((start_line.start[method.length] == '\t') ||
@@ -145,27 +145,27 @@ void NHttpMsgRequest::gen_events()
         events.create_event(EVENT_UNKNOWN_METHOD);
 
     // URI character encoding events
-    if (uri && (uri->get_uri_infractions() && INF_URI_PERCENT_ASCII))
+    if (uri && (uri->get_uri_infractions() & INF_URI_PERCENT_ASCII))
         events.create_event(EVENT_ASCII);
-    if (uri && (uri->get_uri_infractions() && INF_URI_PERCENT_UCODE))
+    if (uri && (uri->get_uri_infractions() & INF_URI_PERCENT_UCODE))
         events.create_event(EVENT_U_ENCODE);
-    if (uri && (uri->get_uri_infractions() && INF_URI_8BIT_CHAR))
+    if (uri && (uri->get_uri_infractions() & INF_URI_8BIT_CHAR))
         events.create_event(EVENT_BARE_BYTE);
-    if (uri && (uri->get_uri_infractions() && INF_URI_PERCENT_UTF8))
+    if (uri && (uri->get_uri_infractions() & INF_URI_PERCENT_UTF8))
         events.create_event(EVENT_UTF_8);
-    if (uri && (uri->get_uri_infractions() && INF_URI_BAD_CHAR))
+    if (uri && (uri->get_uri_infractions() & INF_URI_BAD_CHAR))
         events.create_event(EVENT_NON_RFC_CHAR);
 
     // URI path events
-    if (uri && (uri->get_path_infractions() && INF_URI_MULTISLASH))
+    if (uri && (uri->get_path_infractions() & INF_URI_MULTISLASH))
         events.create_event(EVENT_MULTI_SLASH);
-    if (uri && (uri->get_path_infractions() && INF_URI_BACKSLASH))
+    if (uri && (uri->get_path_infractions() & INF_URI_BACKSLASH))
         events.create_event(EVENT_IIS_BACKSLASH);
-    if (uri && (uri->get_path_infractions() && INF_URI_SLASH_DOT))
+    if (uri && (uri->get_path_infractions() & INF_URI_SLASH_DOT))
         events.create_event(EVENT_SELF_DIR_TRAV);
-    if (uri && (uri->get_path_infractions() && INF_URI_SLASH_DOT_DOT))
+    if (uri && (uri->get_path_infractions() & INF_URI_SLASH_DOT_DOT))
         events.create_event(EVENT_DIR_TRAV);
-    if (uri && (uri->get_path_infractions() && INF_URI_ROOT_TRAV))
+    if (uri && (uri->get_path_infractions() & INF_URI_ROOT_TRAV))
         events.create_event(EVENT_WEBROOT_DIR);
 }
 
@@ -210,7 +210,7 @@ void NHttpMsgRequest::print_section(FILE* output)
 void NHttpMsgRequest::update_flow()
 {
     // The following logic to determine body type is by no means the last word on this topic.
-    if (infractions && INF_BAD_REQ_LINE)
+    if (infractions & INF_BAD_REQ_LINE)
     {
         session_data->type_expected[source_id] = SEC_ABORT;
         session_data->half_reset(source_id);

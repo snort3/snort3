@@ -39,12 +39,12 @@ private:
     static bool path_check(const uint8_t* in_buf, int32_t in_length,
         NHttpInfractions& infractions);
 
-    static int32_t norm_char_clean(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const
-    void* not_used);
-    static int32_t norm_backslash(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const
-    void* not_used);
-    static int32_t norm_path_clean(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const
-    void* not_used);
+    static int32_t norm_char_clean(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&,
+        const void* not_used);
+    static int32_t norm_backslash(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&,
+        const void* not_used);
+    static int32_t norm_path_clean(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&,
+        const void* not_used);
 };
 
 #endif

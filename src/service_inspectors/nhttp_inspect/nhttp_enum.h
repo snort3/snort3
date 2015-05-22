@@ -131,6 +131,7 @@ enum Infraction
     INF_STATUS_WS,
     INF_STATUS_TAB,
     INF_URI_SPACE,
+    INF_TOO_LONG_HEADER,
 };
 
 // Formats for output from a header normalization function
@@ -204,6 +205,7 @@ enum EventSid
     EVENT_IMPROPER_WS,
     EVENT_BAD_VERS,
     EVENT_UNKNOWN_VERS,
+    EVENT_BAD_HEADER,
     EVENT_MAXVALUE
 };
 

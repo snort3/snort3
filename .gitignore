@@ -47,6 +47,7 @@ doc/snort2lua_cmds.txt
 doc/snort_manual.chunked/
 doc/snort_manual.html
 doc/snort_manual.pdf
+doc/snort_manual.text
 doc/snort_manual.tgz
 doc/snort_manual.xml
 doc/version.txt
@@ -59,6 +60,8 @@ m4/
 missing
 snort
 snort.pc
+src/framework/api_options.h
+src/framework/stamp-h2
 src/snort
 src/tags
 src/test/suite_decl.h

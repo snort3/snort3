@@ -589,13 +589,59 @@ HTTP/2.0 200 OK\r\nContent-type: text/plain\r\nTransfer-Encoding: gzip, identity
 HTTP/2.0 200 OK\r\nContent-type: text/plain\r\nTransfer-Encoding: gzip\r\nTransfer-Encoding: identity\r\nTransfer-Encoding: compress\r\nTransfer-Encoding: deflate
 \r\nTransfer-Encoding: foo\r\nTransfer-Encoding: chunked\r\n\r\n
 
+@5008
+@break
+@request
+GET /max/header/request/200/is/ok HTTP/1.1\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+\r\n
 
 # ***********************************************************************************************
 # Invalid headers without body
-# @6001
+@6001
 @break
 @request
-
+GET /max/header/request/201/is/too/much HTTP/1.1\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\nh1:val\r\nh2:val\r\nh3:val\r\nh4:val\r\nh5:val\r\nh6:val\r\nh7:val\r\nh8:val\r\nh9:val\r\n
+h0:val\r\n\r\n
 
 # ***********************************************************************************************
 # Valid Content-Length and body

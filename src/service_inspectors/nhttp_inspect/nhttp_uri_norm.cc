@@ -26,8 +26,7 @@
 using namespace NHttpEnums;
 
 void UriNormalizer::normalize(const Field& input, Field& result, bool do_path,
-    ScratchPad& scratch_pad,
-    NHttpInfractions& infractions)
+    ScratchPad& scratch_pad, NHttpInfractions& infractions)
 {
     if (result.length != STAT_NOTCOMPUTE)
         return;

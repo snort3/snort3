@@ -38,7 +38,7 @@ public:
         { infractions |= rhs.infractions; return *this; }
     friend NHttpInfractions operator+(NHttpInfractions lhs, const NHttpInfractions& rhs)
         { lhs += rhs; return lhs; }
-    friend bool operator&&(const NHttpInfractions& lhs, const NHttpInfractions& rhs)
+    friend bool operator&(const NHttpInfractions& lhs, const NHttpInfractions& rhs)
         { return (lhs.infractions & rhs.infractions) != 0; }
 
     // The following method is for convenience of debug and test output only! The 64-bit

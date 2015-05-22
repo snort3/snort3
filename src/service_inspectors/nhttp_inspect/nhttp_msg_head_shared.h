@@ -35,7 +35,6 @@ public:
     ~NHttpMsgHeadShared();
 
     void analyze() override;
-    void gen_events() override;
 
     int32_t get_num_headers() const { return num_headers; }
     const Field& get_headers() const { return msg_text; }
@@ -68,14 +67,15 @@ protected:
     static const StrCode trans_code_list[];
 
     void parse_header_block();
-    static uint32_t find_header_end(const uint8_t* buffer, int32_t length, int* const num_seps);
+    uint32_t find_header_end(const uint8_t* buffer, int32_t length, int& num_seps);
     void parse_header_lines();
     void derive_header_name_id(int index);
 
     void print_headers(FILE* output);
 
     // All of these are indexed by the relative position of the header field in the message
-    static const int MAXHEADERS = 200;  // I'm an arbitrary number. FIXIT-L
+    static const int MAX_HEADERS = 200;  // I'm an arbitrary number. FIXIT-L
+    static const int MAX_HEADER_LENGTH = 4096; // Based on max cookie size of some browsers
     int32_t num_headers = NHttpEnums::STAT_NOTCOMPUTE;
     Field* header_line = nullptr;
     Field* header_name = nullptr;

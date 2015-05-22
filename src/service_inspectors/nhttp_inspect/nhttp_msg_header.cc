@@ -39,7 +39,6 @@ NHttpMsgHeader::NHttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
 
 void NHttpMsgHeader::gen_events()
 {
-    NHttpMsgHeadShared::gen_events();
     if (header_count[HEAD_CONTENT_LENGTH] > 1)
         events.create_event(EVENT_MULTIPLE_CONTLEN);
 }
