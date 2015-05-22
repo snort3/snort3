@@ -1,8 +1,7 @@
-Pending - build 153
+15/05/22 - build 153
 
 -- new_http_inspect parsing updates
 -- use buckets for user seglist
--- add -A u2
 -- fix u2 to output data only packets
 -- added DAQs for socket, user, and file in extras
 -- changed -K to -L (log type)
