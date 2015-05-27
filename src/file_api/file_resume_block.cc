@@ -17,10 +17,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 /*
-**  Author(s):  Hui Cao <hcao@sourcefire.com>
+**  Author(s):  Hui Cao <huica@cisco.com>
 **
 **  NOTES
-**  9.25.2012 - Initial Source Code. Hcao
+**  9.25.2012 - Initial Source Code. Hui Cao
 */
 
 #include "file_resume_block.h"
@@ -40,6 +40,11 @@
 
 /* The hash table of expected files */
 static THREAD_LOCAL_TBD SFXHASH* fileHash = NULL;
+extern Log_file_action_func log_file_action;
+extern File_type_callback_func file_type_cb;
+extern File_signature_callback_func file_signature_cb;
+
+static FileState sig_file_state = { FILE_CAPTURE_SUCCESS, FILE_SIG_DONE };
 
 typedef struct _FileHashKey
 {
@@ -93,7 +98,7 @@ static inline void updateFileNode(FileNode* node, File_Verdict verdict,
  * @param file_sig - file signature
  * @param expiry - session expiry in seconds.
  */
-int file_resume_block_add_file(void* pkt, uint32_t file_sig, uint32_t timeout,
+int file_resume_block_add_file(Packet* pkt, uint32_t file_sig, uint32_t timeout,
     File_Verdict verdict, uint32_t file_type_id, uint8_t* signature)
 {
     FileHashKey hashKey;
@@ -147,7 +152,7 @@ int file_resume_block_add_file(void* pkt, uint32_t file_sig, uint32_t timeout,
              * gracefully.
              */
             DEBUG_WRAP(DebugMessage(DEBUG_FILE,
-                "Failed to add file node to hash table\n"); );
+                    "Failed to add file node to hash table\n"); );
             return -1;
         }
     }
@@ -160,20 +165,23 @@ static inline File_Verdict checkVerdict(Packet* p, FileNode* node, SFXHASH_NODE*
 
     /*Query the file policy in case verdict has been changed
       Check file type first*/
-    if (file_type_done && (node->file_type_id))
+    if (file_type_cb)
     {
-        verdict = file_type_done(p, p->flow, node->file_type_id, 0);
+        verdict = file_type_cb(p, p->flow, node->file_type_id, 0, DEFAULT_FILE_ID);
     }
 
-    if (verdict == FILE_VERDICT_UNKNOWN)
+    if ((verdict == FILE_VERDICT_UNKNOWN) ||
+        (verdict == FILE_VERDICT_STOP_CAPTURE))
     {
-        if (file_signature_done)
+        if (file_signature_cb)
         {
-            verdict = file_signature_done(p, p->flow, node->sha256, 0);
+            verdict = file_signature_cb(p, p->flow, node->sha256, 0,
+                &sig_file_state, 0, DEFAULT_FILE_ID);
         }
     }
 
-    if (verdict == FILE_VERDICT_UNKNOWN)
+    if ((verdict == FILE_VERDICT_UNKNOWN) ||
+        (verdict == FILE_VERDICT_STOP_CAPTURE))
     {
         verdict = node->verdict;
     }
@@ -224,7 +232,7 @@ static inline File_Verdict checkVerdict(Packet* p, FileNode* node, SFXHASH_NODE*
     return verdict;
 }
 
-File_Verdict file_resume_block_check(void* pkt, uint32_t file_sig)
+File_Verdict file_resume_block_check(Packet* pkt, uint32_t file_sig)
 {
     File_Verdict verdict = FILE_VERDICT_UNKNOWN;
     const sfip_t* srcIP;

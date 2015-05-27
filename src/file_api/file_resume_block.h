@@ -17,10 +17,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 /*
-**  Author(s):  Hui Cao <hcao@sourcefire.com>
+**  Author(s):  Hui Cao <huica@cisco.com>
 **
 **  NOTES
-**  9.25.2012 - Initial Source Code. Hcao
+**  9.25.2012 - Initial Source Code. Hui Cao
 */
 
 #ifndef FILE_RESUME_BLOCK_H
@@ -31,9 +31,9 @@
 
 void file_resume_block_init(void);
 void file_resume_block_cleanup(void);
-int file_resume_block_add_file(void* pkt, uint32_t file_sig, uint32_t timeout,
+int file_resume_block_add_file(Packet* pkt, uint32_t file_sig, uint32_t timeout,
     File_Verdict verdict, uint32_t file_type_id, uint8_t* signature);
-File_Verdict file_resume_block_check(void* pkt, uint32_t file_sig);
+File_Verdict file_resume_block_check(Packet* pkt, uint32_t file_sig);
 
 #endif
 

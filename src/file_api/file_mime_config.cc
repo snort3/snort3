@@ -17,10 +17,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 /*
-**  Author(s):  Hui Cao <hcao@sourcefire.com>
+**  Author(s):  Hui Cao <huica@cisco.com>
 **
 **  NOTES
-**  9.25.2012 - Initial Source Code. Hcao
+**  9.25.2012 - Initial Source Code. Hui Cao
 */
 
 #include "file_mime_config.h"
@@ -286,34 +286,33 @@ int parse_mime_decode_args(DecodeConfig* decode_conf, char* arg, const char* pre
     return ret;
 }
 
-void check_decode_config(DecodeConfig *currentConfig)
+void check_decode_config(DecodeConfig* currentConfig)
 {
     int max = -1;
 
     if (!currentConfig->max_mime_mem)
         currentConfig->max_mime_mem = DEFAULT_MAX_MIME_MEM;
 
-    if(!currentConfig->b64_depth || !currentConfig->qp_depth
+    if (!currentConfig->b64_depth || !currentConfig->qp_depth
         || !currentConfig->uu_depth || !currentConfig->bitenc_depth)
     {
         currentConfig->max_depth = MAX_DEPTH;
     }
     else
     {
-        if(max < currentConfig->b64_depth)
+        if (max < currentConfig->b64_depth)
             max = currentConfig->b64_depth;
 
-        if(max < currentConfig->qp_depth)
+        if (max < currentConfig->qp_depth)
             max = currentConfig->qp_depth;
 
-        if(max < currentConfig->bitenc_depth)
+        if (max < currentConfig->bitenc_depth)
             max = currentConfig->bitenc_depth;
 
-        if(max < currentConfig->uu_depth)
+        if (max < currentConfig->uu_depth)
             max = currentConfig->uu_depth;
 
         currentConfig->max_depth = max;
     }
-    return;
 }
 

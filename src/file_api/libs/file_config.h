@@ -17,7 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 /*
-**  Author(s):  Hui Cao <hcao@sourcefire.com>
+**  Author(s):  Hui Cao <huica@cisco.com>
 **
 **  NOTES
 **  5.25.2012 - Initial Source Code. Hui Cao
@@ -36,7 +36,10 @@
 #define DEFAULT_FILE_SHOW_DATA_DEPTH 100
 #define DEFAULT_FILE_BLOCK_TIMEOUT 86400 /*1 day*/
 #define DEFAULT_FILE_LOOKUP_TIMEOUT 2    /*2 seconds*/
-
+#define DEFAULT_FILE_CAPTURE_MEM            100         // 100 MiB
+#define DEFAULT_FILE_CAPTURE_MAX_SIZE       1048576     // 1 MiB
+#define DEFAULT_FILE_CAPTURE_MIN_SIZE       0           // 0
+#define DEFAULT_FILE_CAPTURE_BLOCK_SIZE     32768       // 32 KiB
 class FileConfig
 {
 public:
@@ -50,7 +53,11 @@ public:
     int64_t file_block_timeout = DEFAULT_FILE_BLOCK_TIMEOUT;
     int64_t file_lookup_timeout = DEFAULT_FILE_LOOKUP_TIMEOUT;
     bool block_timeout_lookup = false;
-
+    int64_t file_capture_memcap = DEFAULT_FILE_CAPTURE_MEM;
+    int64_t file_capture_max_size = DEFAULT_FILE_CAPTURE_MAX_SIZE;
+    int64_t file_capture_min_size = DEFAULT_FILE_CAPTURE_MIN_SIZE;
+    int64_t file_capture_block_size = DEFAULT_FILE_CAPTURE_BLOCK_SIZE;
+    int64_t file_depth =  0;
     static int64_t show_data_depth;
 
     static bool trace_type;

@@ -17,10 +17,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 /*
-**  Author(s):  Hui Cao <hcao@sourcefire.com>
+**  Author(s):  Hui Cao <huica@cisco.com>
 **
 **  NOTES
-**  9.25.2012 - Initial Source Code. Hcao
+**  9.25.2012 - Initial Source Code. Hui Cao
 */
 
 #ifndef FILE_MIME_CONFIG_H
@@ -36,6 +36,6 @@ bool is_decoding_enabled(DecodeConfig* decode_conf);
 bool is_mime_log_enabled(MAIL_LogConfig* log_config);
 bool is_decoding_conf_changed(DecodeConfig* configNext, DecodeConfig* config, const
     char* preproc_name);
-void check_decode_config(DecodeConfig *currentConfig);
+void check_decode_config(DecodeConfig* currentConfig);
 #endif
 

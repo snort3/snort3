@@ -17,10 +17,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 /*
-**  Author(s):  Hui Cao <hcao@sourcefire.com>
+**  Author(s):  Hui Cao <huica@cisco.com>
 **
 **  NOTES
-**  9.25.2012 - Initial Source Code. Hcao
+**  9.25.2012 - Initial Source Code. Hui Cao
 */
 
 #ifndef FILE_MIME_PROCESS_H

@@ -235,7 +235,7 @@ void Snort::init(int argc, char** argv)
         PluginManager::dump_plugins();
     }
 
-    FileAPIInit();
+    init_fileAPI();
     register_profiles();
 
     SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf);
@@ -257,6 +257,8 @@ void Snort::init(int argc, char** argv)
     }
 
     snort_conf->setup();
+
+    FileAPIPostInit();
 
     // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(snort_conf) )

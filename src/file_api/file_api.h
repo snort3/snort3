@@ -22,10 +22,10 @@
  * Purpose: Definition of the FileAPI.  To be used as a common interface
  *          for file process access for other preprocessors and detection plugins.
  *
- *  Author(s):  Hui Cao <hcao@sourcefire.com>
+ *  Author(s):  Hui Cao <hcao@huica.com>
  *
  *  NOTES
- *  5.25.12 - Initial Source Code. Hcao
+ *  5.25.12 - Initial Source Code. Hui Cao
  */
 
 #ifndef FILE_API_H
@@ -33,12 +33,12 @@
 
 #include <sys/types.h>
 
-#include "libs/file_lib.h"
 #include "stream/stream_api.h"
 #include "main/snort_types.h"
 
 #define     ENABLE_FILE_TYPE_IDENTIFICATION      0x1
 #define     ENABLE_FILE_SIGNATURE_SHA256         0x2
+#define     ENABLE_FILE_CAPTURE                  0x4
 #define     FILE_ALL_ON                          0xFFFFFFFF
 #define     FILE_ALL_OFF                         0x00000000
 #define     MAX_FILE                             1024
@@ -47,12 +47,71 @@
 #define     FILE_RESUME_BLOCK                    0x01
 #define     FILE_RESUME_LOG                      0x02
 
+/*
+ * Generator id. Define here the same as the official register
+ * in generators.h
+ */
+#define GENERATOR_FILE_TYPE         146
+#define GENERATOR_FILE_SIGNATURE    147
+
+#define FILE_SIGNATURE_SHA256       1
+#define FILE_SIGNATURE_SHA256_STR   "(file) malware detected"
+
+enum File_Verdict
+{
+    FILE_VERDICT_UNKNOWN = 0,
+    FILE_VERDICT_LOG,
+    FILE_VERDICT_STOP,
+    FILE_VERDICT_BLOCK,
+    FILE_VERDICT_REJECT,
+    FILE_VERDICT_PENDING,
+    FILE_VERDICT_STOP_CAPTURE,
+    FILE_VERDICT_MAX
+};
+
+enum FilePosition
+{
+    SNORT_FILE_POSITION_UNKNOWN,
+    SNORT_FILE_START,
+    SNORT_FILE_MIDDLE,
+    SNORT_FILE_END,
+    SNORT_FILE_FULL
+};
+
+enum FileCaptureState
+{
+    FILE_CAPTURE_SUCCESS = 0,
+    FILE_CAPTURE_MIN,                 /*smaller than file capture min*/
+    FILE_CAPTURE_MAX,                 /*larger than file capture max*/
+    FILE_CAPTURE_MEMCAP,              /*memcap reached, no more file buffer*/
+    FILE_CAPTURE_FAIL                 /*Other file capture failures*/
+};
+
+enum FileSigState
+{
+    FILE_SIG_PROCESSING = 0,
+    FILE_SIG_DEPTH_FAIL,              /*larger than file signature depth*/
+    FILE_SIG_DONE
+};
+
+enum FileProcessType
+{
+    SNORT_FILE_TYPE_ID,
+    SNORT_FILE_SHA256,
+    SNORT_FILE_CAPTURE
+};
+
+struct FileState
+{
+    FileCaptureState capture_state;
+    FileSigState sig_state;
+};
+
 /* log flags */
 #define MIME_FLAG_MAIL_FROM_PRESENT               0x00000001
 #define MIME_FLAG_RCPT_TO_PRESENT                 0x00000002
 #define MIME_FLAG_FILENAME_PRESENT                0x00000004
 #define MIME_FLAG_EMAIL_HDRS_PRESENT              0x00000008
-
 
 struct FILE_LogState
 {
@@ -121,12 +180,14 @@ struct MimeDataPafInfo
     MimeBoundaryState boundary_state;
 };
 
-typedef int (* Handle_header_line_func)(void *conf, void* pkt, const uint8_t* ptr, const uint8_t* eol, int
+typedef int (*Handle_header_line_func)(void* conf, void* pkt, const uint8_t* ptr,
+    const uint8_t* eol, int
     max_header_len, void* mime_ssn);
-typedef int (* Normalize_data_func)(void *conf, void* pkt, const uint8_t* ptr, const uint8_t* data_end);
-typedef void (* Decode_alert_func)(void* decode_state);
-typedef void (* Reset_state_func)(void *ssn);
-typedef bool (* Is_end_of_data_func)(void* ssn);
+typedef int (*Normalize_data_func)(void* conf, void* pkt, const uint8_t* ptr,
+    const uint8_t* data_end);
+typedef void (*Decode_alert_func)(void* decode_state);
+typedef void (*Reset_state_func)(void* ssn);
+typedef bool (*Is_end_of_data_func)(void* ssn);
 
 struct MimeMethods
 {
@@ -159,103 +220,285 @@ struct MimeState
     DecodeConfig* decode_conf;
     MAIL_LogConfig* log_config;
     MAIL_LogState* log_state;
-    void *config;
+    void* config;
     MimeMethods* methods;
 };
 
-#define FILE_API_VERSION5 2
+struct FileContext;
+struct FileCaptureInfo;
 
-typedef uint32_t (* Get_file_policy_func) (Flow* flow, int16_t app_id, bool upload);
-typedef File_Verdict (* File_type_done_func) (void* p, Flow* flow, uint32_t file_type_id, bool
-    upload);
-typedef File_Verdict (* File_signature_done_func) (void* p, Flow* flow, uint8_t* file_sig, bool
-    upload);
-typedef void (* Log_file_action_func) (Flow* flow, int action);
+#define FILE_API_VERSION 4
+
+#define DEFAULT_FILE_ID   0
+
+typedef uint32_t (*File_policy_callback_func)(Flow* flow, int16_t app_id, bool upload);
+typedef File_Verdict (*File_type_callback_func)(Packet* p, Flow* flow,
+    uint32_t file_type_id, bool upload, uint32_t file_id);
+typedef File_Verdict (*File_signature_callback_func)(Packet* p, Flow* flow,
+    uint8_t* file_sig, uint64_t file_size, FileState* state, bool upload,
+    uint32_t file_id);
+typedef void (*Log_file_action_func)(Flow* flow, int action);
 
 // FIXIT-L constify file_data et al
-typedef int (* File_process_func)(
-    void* p, uint8_t* file_data, int data_size, FilePosition,
+typedef int (*File_process_func)(
+    Packet* p, uint8_t* file_data, int data_size, FilePosition,
     bool upload, bool suspend_block_verdict);
 
-typedef int (* Get_file_name_func) (Flow* flow, uint8_t** file_name, uint32_t* name_len);
-typedef uint64_t (* Get_file_size_func) (Flow* flow);
-typedef bool (* Get_file_direction_func) (Flow* flow);
-typedef uint8_t*(* Get_file_sig_sha256_func) (Flow* flow);
+typedef int (*Get_file_name_func)(Flow* flow, uint8_t** file_name, uint32_t* name_len);
+typedef uint64_t (*Get_file_size_func)(Flow* flow);
+typedef bool (*Get_file_direction_func)(Flow* flow);
+typedef uint8_t*(*Get_file_sig_sha256_func)(Flow* flow);
 
-typedef void (* Set_file_name_func) (Flow* flow, uint8_t*, uint32_t);
-typedef void (* Set_file_direction_func) (Flow* flow, bool);
+typedef void (*Set_file_name_func)(Flow* flow, uint8_t*, uint32_t);
+typedef void (*Set_file_direction_func)(Flow* flow, bool);
 
-typedef int64_t (* Get_file_depth_func) (void);
+typedef int64_t (*Get_file_depth_func)(void);
 
-typedef void (* Set_file_policy_func)(Get_file_policy_func);
-typedef void (* Enable_file_type_func)(File_type_done_func);
-typedef void (* Enable_file_signature_func)(File_signature_done_func);
-typedef void (* Set_file_action_log_func)(Log_file_action_func);
+typedef void (*Set_file_policy_func)(File_policy_callback_func);
+typedef void (*Enable_file_type_func)(File_type_callback_func);
+typedef void (*Enable_file_signature_func)(File_signature_callback_func);
+typedef void (*Enable_file_capture_func)(File_signature_callback_func);
+typedef void (*Set_file_action_log_func)(Log_file_action_func);
 
-typedef int (* Log_file_name_func)(const uint8_t* start, int length, FILE_LogState* log_state,
-    bool* disp_cont);
-typedef void (* Set_file_name_from_log_func)(FILE_LogState* log_state, void* ssn);
-typedef int (* Set_log_buffers_func)(MAIL_LogState** log_state, MAIL_LogConfig* conf);
-typedef int (* File_resume_block_add_file_func)(void* pkt, uint32_t file_sig,
+typedef int (*Set_log_buffers_func)(MAIL_LogState** log_state, MAIL_LogConfig* conf);
+typedef int (*File_resume_block_add_file_func)(Packet* pkt, uint32_t file_sig,
     uint32_t timeout, File_Verdict verdict, uint32_t file_type_id, uint8_t* signature);
-typedef File_Verdict (* File_resume_block_check_func)(void* pkt, uint32_t file_sig);
-typedef uint32_t (* Str_to_hash_func)(uint8_t* str, int length);
-typedef void (* File_signature_lookup_func)(void* p, bool is_retransmit);
-typedef void (* Set_mime_decode_config_defaults_func)(DecodeConfig* decode_conf);
-typedef void (* Set_mime_log_config_defaults_func)(MAIL_LogConfig* log_config);
-typedef int (* Parse_mime_decode_args_func)(DecodeConfig* decode_conf, char* arg, const
+typedef File_Verdict (*File_resume_block_check_func)(Packet* pkt, uint32_t file_sig);
+typedef uint32_t (*Str_to_hash_func)(uint8_t* str, int length);
+typedef void (*File_signature_lookup_func)(Packet* p, bool is_retransmit);
+typedef void (*Set_mime_decode_config_defaults_func)(DecodeConfig* decode_conf);
+typedef void (*Set_mime_log_config_defaults_func)(MAIL_LogConfig* log_config);
+typedef int (*Parse_mime_decode_args_func)(DecodeConfig* decode_conf, char* arg, const
     char* preproc_name);
-typedef void (* Check_decode_config_func)(DecodeConfig* decode_conf);
-typedef const uint8_t* (* Process_mime_data_func)(void* packet, const uint8_t* start, const
+typedef void (*Check_decode_config_func)(DecodeConfig* decode_conf);
+typedef const uint8_t* (*Process_mime_data_func)(void* packet, const uint8_t* start, const
     uint8_t* end,
     MimeState* mime_ssn, bool upload, bool paf_enabled);
-typedef void (* Free_mime_session_func)(MimeState* mime_ssn);
-typedef bool (* Is_decoding_enabled_func)(DecodeConfig* decode_conf);
-typedef bool (* Is_decoding_conf_changed_func)(DecodeConfig* configNext, DecodeConfig* config,
+typedef void (*Free_mime_session_func)(MimeState* mime_ssn);
+typedef bool (*Is_decoding_enabled_func)(DecodeConfig* decode_conf);
+typedef bool (*Is_decoding_conf_changed_func)(DecodeConfig* configNext, DecodeConfig* config,
     const char* preproc_name);
-typedef bool (* Is_mime_log_enabled_func)(MAIL_LogConfig* log_config);
-typedef void (* Finalize_mime_position_func)(Flow* flow, void* decode_state,
+typedef bool (*Is_mime_log_enabled_func)(MAIL_LogConfig* log_config);
+typedef void (*Finalize_mime_position_func)(Flow* flow, void* decode_state,
     FilePosition* position);
-typedef File_Verdict (* Get_file_verdict_func)(Flow* flow);
-typedef void (* Render_block_verdict_func)(void* ctx, void* p);
-typedef bool (*Check_paf_abort_func)(void* ssn);
-typedef FilePosition (*GetFilePosition)(void *pkt);
-typedef void (*Reset_mime_paf_state_func)(MimeDataPafInfo *data_info);
+typedef File_Verdict (*Get_file_verdict_func)(Flow* flow);
+typedef void (*Render_block_verdict_func)(void* ctx, Packet* p);
+typedef FileCaptureState (*Reserve_file_func)(Flow* flow, FileCaptureInfo** file_mem);
+typedef FileCaptureInfo* (*Get_file_func)(FileCaptureInfo* file_mem, uint8_t** buff, int* size);
+typedef void (*Release_file_func)(FileCaptureInfo* data);
+typedef size_t (*File_capture_size_func)(FileCaptureInfo* file_mem);
+
+typedef bool (*Is_file_service_enabled)(void);
+typedef bool (*Check_paf_abort_func)(Flow* ssn);
+typedef FilePosition (*GetFilePosition)(Packet* pkt);
+typedef void (*Reset_mime_paf_state_func)(MimeDataPafInfo* data_info);
 /*  Process data boundary and flush each file based on boundary*/
-typedef bool (*Process_mime_paf_data_func)(MimeDataPafInfo *data_info,  uint8_t data);
-typedef bool (*Check_data_end_func)(void *end_state,  uint8_t data);
+typedef bool (*Process_mime_paf_data_func)(MimeDataPafInfo* data_info,  uint8_t data);
+typedef bool (*Check_data_end_func)(void* end_state,  uint8_t data);
+typedef uint32_t (*Get_file_type_id)(Flow*);
+typedef uint32_t (*Get_new_file_instance)(Flow*);
+
+/*Context based file process functions*/
+typedef struct FileContext* (*Create_file_context_func)(Flow*);
+typedef struct FileContext* (*Get_file_context_func)(Flow*);
+typedef bool (*Set_file_context_func)(Flow*, FileContext*);
+typedef int (*Process_file_func)(FileContext* ctx, Packet* p,
+    uint8_t* file_data, int data_size, FilePosition position,
+    bool suspend_block_verdict);
+typedef int64_t (*Get_max_file_capture_size)(Flow* flow);
 
 typedef struct _file_api
 {
     int version;
 
-    /*File process function, called by preprocessors that provides file data*/
+    /* Check if file type id is enabled.
+     *
+     * Arguments: None
+     *
+     * Returns:
+     *   (bool) true   file processing is enabled
+     *   (bool) false  file processing is disabled
+     */
+    Is_file_service_enabled is_file_service_enabled;
+
+    /* File process function, called by preprocessors that provides file data
+     *
+     * Arguments:
+     *    void* p: packet pointer
+     *    uint8_t* file_data: file data
+     *    int data_size: file data size
+     *    FilePosition: file position
+     *    bool upload: upload or not
+     * Returns:
+     *    1: continue processing/log/block this file
+     *    0: ignore this file (no further processing needed)
+     */
     File_process_func file_process;
 
-    /*File properties*/
+    /*-----File property functions--------*/
+
+    /* Get file name and the length of file name
+     * Note: this is updated after file processing. It will be available
+     * for file event logging, but might not be available during file type
+     * callback or file signature callback, because those callbacks are called
+     * during file processing.
+     *
+     * Arguments:
+     *    void* ssnptr: session pointer
+     *    uint8_t **file_name: address for file name to be saved
+     *    uint32_t *name_len: address to save file name length
+     * Returns
+     *    1: file name available,
+     *    0: file name is unavailable
+     */
     Get_file_name_func get_file_name;
+
+    /* Get file size
+     * Note: this is updated after file processing. It will be available
+     * for file event logging, but might not be available during file type
+     * callback or file signature callback, because those callbacks are called
+     * during file processing.
+     *
+     * Arguments:
+     *    void* ssnptr: session pointer
+     *
+     * Returns
+     *    uint64_t: file size
+     *    Note: 0 means file size is unavailable
+     */
     Get_file_size_func get_file_size;
+
+    /* Get number of bytes processed
+     *
+     * Arguments:
+     *    void* ssnptr: session pointer
+     *
+     * Returns
+     *    uint64_t: processed file data size
+     */
     Get_file_size_func get_file_processed_size;
+
+    /* Get file direction
+     *
+     * Arguments:
+     *    void* ssnptr: session pointer
+     *
+     * Returns
+     *    1: upload
+     *    0: download
+     */
     Get_file_direction_func get_file_direction;
+
+    /* Get file signature sha256
+     *
+     * Arguments:
+     *    void* ssnptr: session pointer
+     *
+     * Returns
+     *    char *: pointer to sha256
+     *    NULL: sha256 is not available
+     */
     Get_file_sig_sha256_func get_sig_sha256;
+
+    /* Set file name and the length of file name
+     *
+     * Arguments:
+     *    void* ssnptr: session pointer
+     *    uint8_t *file_name: file name to be saved
+     *    uint32_t name_len: file name length
+     * Returns
+     *    None
+     */
     Set_file_name_func set_file_name;
+
+    /* Get file direction
+     *
+     * Arguments:
+     *    void* ssnptr: session pointer
+     *    bool:
+     *       1 - upload
+     *       0 - download
+     * Returns
+     *    None
+     */
     Set_file_direction_func set_file_direction;
-    /*File call backs*/
+
+    /*----------File call backs--------------*/
+
+    /* Set file policy callback. This callback is called in the beginning
+     * of session. This callback will decide whether to do file type ID,
+     * file signature, or file capture
+     *
+     * Arguments:
+     *    File_policy_callback_func
+     * Returns
+     *    None
+     */
     Set_file_policy_func set_file_policy_callback;
+
+    /* Enable file type ID and set file type callback.
+     * File type callback is called when file type is identified. Callback
+     * will return a verdict based on file type
+     *
+     * Arguments:
+     *    File_type_callback_func
+     * Returns
+     *    None
+     */
     Enable_file_type_func enable_file_type;
+
+    /* Enable file signature and set file signature callback.
+     * File signature callback is called when file signature is calculated.
+     * Callback will return a verdict based on file signature.
+     * SHA256 is calculated after file transfer is finished.
+     *
+     * Arguments:
+     *    File_signature_callback_func
+     * Returns
+     *    None
+     */
     Enable_file_signature_func enable_file_signature;
+
+    /* Enable file capture and set file signature callback.
+     * File signature callback is called when file signature is calculated.
+     * Callback will return a verdict based on file signature.
+     * SHA256 is calculated after file transfer is finished.
+     *
+     * Note: file signature and file capture will use the same callback, but
+     * enabled separately.
+     *
+     * Arguments:
+     *    File_signature_callback_func
+     * Returns
+     *    None
+     */
+    Enable_file_signature_func enable_file_capture;
+
+    /* Set file action log callback.
+     * File action log callback is called when file resume is detected.
+     * It allows file events to be generated for a resumed file download
+     *
+     * Arguments:
+     *    Log_file_action_func
+     * Returns
+     *    None
+     */
     Set_file_action_log_func set_file_action_log_callback;
 
-    /*File configurations*/
+    /*--------------File configurations-------------*/
+
+    /* Get file depth required for all file processings enabled
+     *
+     * Arguments:
+     *    None
+     *
+     * Returns:
+     *    int64_t: file depth in bytes
+     */
     Get_file_depth_func get_max_file_depth;
 
-    Log_file_name_func log_file_name;
-    Set_file_name_from_log_func set_file_name_from_log;
+    /*--------------Common functions used for MIME processing-------------*/
     Set_log_buffers_func set_log_buffers;
-    File_resume_block_add_file_func file_resume_block_add_file;
-    File_resume_block_check_func file_resume_block_check;
-    Str_to_hash_func str_to_hash;
-    File_signature_lookup_func file_signature_lookup;
     Set_mime_decode_config_defaults_func set_mime_decode_config_defauts;
     Set_mime_log_config_defaults_func set_mime_log_config_defauts;
     Parse_mime_decode_args_func parse_mime_decode_args;
@@ -270,17 +513,153 @@ typedef struct _file_api
     Process_mime_paf_data_func process_mime_paf_data;
     Check_data_end_func check_data_end;
     Check_paf_abort_func check_paf_abort;
-    GetFilePosition get_file_position;
 
+    /*--------------Other helper functions-------------*/
+    File_resume_block_add_file_func file_resume_block_add_file;
+    File_resume_block_check_func file_resume_block_check;
+    Str_to_hash_func str_to_hash;
+    File_signature_lookup_func file_signature_lookup;
     Get_file_verdict_func get_file_verdict;
     Render_block_verdict_func render_block_verdict;
+    /*
+     * Preserve the file in memory until it is released
+     * This function must be called in packet processing thread
+     * Arguments:
+     *   void *ssnptr: session pointer
+     *   void **file_mem: the pointer to store the memory block
+     *       that stores file and its metadata.
+     *       It will set  NULL if no memory or fail to store
+     *
+     * Returns:
+     *   FileCaptureState:
+     *      FILE_CAPTURE_SUCCESS = 0,
+     *      FILE_CAPTURE_MIN,
+     *      FILE_CAPTURE_MAX,
+     *      FILE_CAPTURE_MEMCAP,
+     *      FILE_CAPTURE_FAIL
+     */
+    Reserve_file_func reserve_file;
+
+    /*
+     * Get the file that is reserved in memory. To get a full file,
+     * this function must be called iteratively until NULL is returned
+     * This function can be called in out of band thread
+     *
+     * Arguments:
+     *   void *file_mem: the memory block working on
+     *   uint8_t **buff: address to store buffer address
+     *   int *size: address to store size of file
+     *
+     * Returns:
+     *   the next memory block
+     *   If NULL: no memory or fail to get file
+     */
+    Get_file_func read_file;
+
+    /*
+     * Get the file size captured in the file buffer
+     * This function can be called in out of band thread
+     *
+     * Arguments:
+     *   void *file_mem: the first memory block of file buffer
+     *
+     * Returns:
+     *   the size of file
+     *   If 0: no memory or fail to read file
+     */
+    File_capture_size_func get_file_capture_size;
+
+    /*
+     * Release the file that is reserved in memory.
+     * This function can be called in out of band thread.
+     *
+     * Arguments:
+     *   void *data: the memory block that stores file and its metadata
+     *
+     * Returns:
+     *   None
+     */
+    Release_file_func release_file;
+
+    /* Return the file rule id associated with a session.
+     *
+     * Arguments:
+     *   void *ssnptr: session pointer
+     *
+     * Returns:
+     *   (u32) file-rule id on session; FILE_TYPE_UNKNOWN otherwise.
+     */
+    Get_file_type_id get_file_type_id;
+
+    /* Create a file context to use
+     *
+     * Arguments:
+     *    void* ssnptr: session pointer
+     * Returns:
+     *    FileContext *: file context created.
+     */
+    Create_file_context_func create_file_context;
+
+    /* Set file context to be the current
+     *
+     * Arguments:
+     *    void* ssnptr: session pointer
+     *    FileContext *: file context that will be current
+     * Returns:
+     *    True: changed successfully
+     *    False: fail to change
+     */
+    Set_file_context_func set_current_file_context;
+
+    /* Get current file context
+     *
+     * Arguments:
+     *    void* ssnptr: session pointer
+     * Returns:
+     *    FileContext *: current file context
+     */
+    Get_file_context_func get_current_file_context;
+
+    /* Get main file context that used by preprocessors
+     *
+     * Arguments:
+     *    void* ssnptr: session pointer
+     * Returns:
+     *    FileContext *: main file context
+     */
+    Get_file_context_func get_main_file_context;
+
+    /* Process file function, called by preprocessors that provides file data
+     *
+     * Arguments:
+     *    void* ctx: file context that will be processed
+     *    void* p: packet pointer
+     *    uint8_t* file_data: file data
+     *    int data_size: file data size
+     *    FilePosition: file position
+     *    bool suspend_block_verdict: used for smb to allow file pass
+     * Returns:
+     *    1: continue processing/log/block this file
+     *    0: ignore this file (no further processing needed)
+     */
+    Process_file_func process_file;
+
+    /* Return a unique file instance number
+     *
+     * Arguments:
+     *   void *ssnptr: session pointer
+     * Returns:
+     *   (u32) a unique file instance id.
+     */
+    Get_new_file_instance get_new_file_instance;
+
+    GetFilePosition get_file_position;
+
+    Get_max_file_capture_size get_max_file_capture_size;
 } FileAPI;
 
 /* To be set by Stream */
 SO_PUBLIC extern FileAPI* file_api;
-extern File_type_done_func file_type_done;
-extern File_signature_done_func file_signature_done;
-extern Log_file_action_func log_file_action;
 
 static inline void initFilePosition(FilePosition* position, uint64_t processed_size)
 {
@@ -307,7 +686,7 @@ static inline void finalFilePosition(FilePosition* position)
 
 static inline bool isFileStart(FilePosition position)
 {
-    return ((position == SNORT_FILE_START)|| (position == SNORT_FILE_FULL));
+    return ((position == SNORT_FILE_START) || (position == SNORT_FILE_FULL));
 }
 
 static inline bool isFileEnd(FilePosition position)

@@ -17,10 +17,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 /*
-**  Author(s):  Hui Cao <hcao@sourcefire.com>
+**  Author(s):  Hui Cao <huica@cisco.com>
 **
 **  NOTES
-**  9.25.2012 - Initial Source Code. Hcao
+**  9.25.2012 - Initial Source Code. Hui Cao
 */
 
 #include "file_mime_process.h"
@@ -205,6 +205,22 @@ int log_file_name(const uint8_t* start, int length, FILE_LogState* log_state, bo
     *alt_len += length;
 
     return 0;
+}
+
+
+static void set_file_name_from_log(FILE_LogState* log_state, void* pv)
+{
+    Flow* ssn = (Flow*)pv; // FIXIT-M eliminate need for cast
+
+    if ((log_state) && (log_state->file_logged > log_state->file_current))
+    {
+        file_api->set_file_name(ssn, log_state->filenames + log_state->file_current,
+            log_state->file_logged -log_state->file_current);
+    }
+    else
+    {
+        file_api->set_file_name(ssn, NULL, 0);
+    }
 }
 
 /*
@@ -859,7 +875,7 @@ const uint8_t* process_mime_data_paf(void* packet, const uint8_t* start, const u
             (uint16_t)ds->decoded_bytes, position, upload, false)
             && (isFileStart(position))&& mime_ssn->log_state)
         {
-            file_api->set_file_name_from_log(&(mime_ssn->log_state->file_log), p->flow);
+            set_file_name_from_log(&(mime_ssn->log_state->file_log), p->flow);
         }
         ResetDecodedBytes((Email_DecodeState*)(mime_ssn->decode_state));
     }

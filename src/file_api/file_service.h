@@ -17,23 +17,27 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 /*
-** Author(s):  Hui Cao <hcao@sourcefire.com>
+** Author(s):  Hui Cao <huica@cisco.com>
 **
 ** NOTES
-** 5.25.12 - Initial Source Code. Hcao
+** 5.25.12 - Initial Source Code. Hui Cao
 */
 
 #ifndef FILE_SERVICE_H
 #define FILE_SERVICE_H
 
-#define GENERATOR_FILE_TYPE        146
-#define GENERATOR_FILE_SIGNATURE   147
+#include "libs/file_lib.h"
 
-#define FILE_SIGNATURE_SHA256        1
-#define FILE_SIGNATURE_SHA256_STR       "(file) malware detected"
+/* Initialize file API, this must be called when snort restarts */
+void init_fileAPI(void);
 
-void FileAPIInit();
-void close_fileAPI();
-void print_file_stats();
+void FileAPIPostInit(void);
+
+/* Close file API, this must be called when snort exits */
+void close_fileAPI(void);
+
+/* Get current file context */
+FileContext* get_current_file_context(Flow* flow);
+
 #endif
 

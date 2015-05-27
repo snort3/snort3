@@ -17,7 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 /*
-** Author(s):  Hui Cao <hcao@sourcefire.com>
+** Author(s):  Hui Cao <huica@cisco.com>
 **
 ** NOTES
 ** 5.25.2012 - Initial Source Code. Hcao
@@ -94,7 +94,6 @@ void* FileIdenfifier::calloc_mem(size_t size)
     void* ret;
     IDMemoryBlock memblock;
     ret = SnortAlloc(size);
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"calloc_mem: %p. size: %d\n", ret, size); );
     memory_used += size;
     /*For memory management*/
     memblock.mem = ret;
@@ -238,7 +237,6 @@ bool FileIdenfifier::updateNext(IdentifierNode* start,IdentifierNode** next_ptr,
             }
 
             set_node_state_shared(next);
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE,"MEM:Add new node after next %p.\n", next); );
             next = node;
             sfghash_add(identifier_merge_hash, &sharedIdentifier, next);
         }
@@ -248,14 +246,8 @@ bool FileIdenfifier::updateNext(IdentifierNode* start,IdentifierNode** next_ptr,
             IdentifierNode* current_next = next;
             sharedIdentifier.shared_node = current_next;
             sharedIdentifier.append_node = append;
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE,"MEM:Clone node on %p.\n", current_next); );
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE,"MEM:Before clone: %d.\n",
-                memory_usage()); );
             next = clone_node(current_next);
             set_node_state_shared(next);
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE,"MEM:Cloned node on %p.\n", next); );
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE,"MEM:After clone: %d.\n",
-                memory_usage()); );
             sfghash_add(identifier_merge_hash, &sharedIdentifier, next);
         }
 
@@ -275,18 +267,12 @@ void FileIdenfifier::update_trie(IdentifierNode* start, IdentifierNode* append)
     if ((!start )||(!append)||(start == append))
         return;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Working on %p -> %p at offset %d.\n",
-        start, append, append->offset); );
-
     if (start->offset == append->offset )
     {
         /* when we come here, make sure this tree is not shared
          * Update start trie using append information*/
 
-        if (start->state == ID_NODE_SHARED)
-        {
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "Something is wrong ..."); );
-        }
+        assert(start->state != ID_NODE_SHARED);
 
         if (append->type_id)
         {
@@ -311,10 +297,6 @@ void FileIdenfifier::update_trie(IdentifierNode* start, IdentifierNode* append)
             if (updateNext(start,&start->next[i], append))
                 update_trie(start->next[i], append);
         }
-    }
-    else /*This is impossible*/
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Something is wrong ....."); );
     }
 }
 

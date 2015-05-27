@@ -39,7 +39,7 @@
 #include "filters/sfthreshold.h"
 #include "time/ppm.h"
 #include "time/profiler.h"
-#include "file_api/file_service.h"
+#include "file_api/file_stats.h"
 
 #define STATS_SEPARATOR \
     "--------------------------------------------------"

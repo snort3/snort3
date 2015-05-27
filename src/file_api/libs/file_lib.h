@@ -17,7 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 /*
-**  Author(s):  Hui Cao <hcao@sourcefire.com>
+**  Author(s):  Hui Cao <huica@cisco.com>
 **
 **  NOTES
 **  5.25.12 - Initial Source Code. Hui Cao
@@ -31,22 +31,14 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-
+#include "file_api/file_api.h"
 #include "flow/flow.h"
 
 #define SNORT_FILE_TYPE_UNKNOWN          UINT16_MAX  /**/
 #define SNORT_FILE_TYPE_CONTINUE         0 /**/
 
-typedef enum _File_Verdict
-{
-    FILE_VERDICT_UNKNOWN = 0,
-    FILE_VERDICT_LOG,
-    FILE_VERDICT_STOP,
-    FILE_VERDICT_BLOCK,
-    FILE_VERDICT_REJECT,
-    FILE_VERDICT_PENDING,
-    FILE_VERDICT_MAX
-} File_Verdict;
+struct FileCaptureInfo;
+class FileConfig;
 
 struct FileContext
 {
@@ -61,26 +53,19 @@ struct FileContext
     uint8_t* sha256;
     void* file_type_context;
     void* file_signature_context;
-    void* file_config;
+    FileConfig* file_config;
     time_t expires;
+    uint16_t   app_id;
+    bool file_capture_enabled;
+    FileCaptureInfo *file_capture;
+    uint8_t *current_data;  /*current file data*/
+    uint32_t current_data_len;
     File_Verdict verdict;
     bool suspend_block_verdict;
+    FileState file_state;
+    uint32_t file_id;
+    uint32_t file_config_version;
 };
-
-typedef enum _FilePosition
-{
-    SNORT_FILE_POSITION_UNKNOWN,
-    SNORT_FILE_START,
-    SNORT_FILE_MIDDLE,
-    SNORT_FILE_END,
-    SNORT_FILE_FULL
-} FilePosition;
-
-typedef enum _FileProcessType
-{
-    SNORT_FILE_TYPE_ID,
-    SNORT_FILE_SHA256
-} FileProcessType;
 
 /*Main File Processing functions */
 void file_type_id(FileContext* context, uint8_t* file_data, int data_size, FilePosition position);
@@ -101,7 +86,7 @@ bool file_direction_get(FileContext* context);
 void file_sig_sha256_set(FileContext* context, uint8_t* signature);
 uint8_t* file_sig_sha256_get(FileContext* context);
 
-const char* file_info_from_ID(void* conf, uint32_t);
+const char* file_type_name(void* conf, uint32_t id);
 extern int64_t file_type_depth;
 extern int64_t file_signature_depth;
 

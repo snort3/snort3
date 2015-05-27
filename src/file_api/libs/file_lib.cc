@@ -17,7 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 /*
-**  Author(s):  Hui Cao <hcao@sourcefire.com>
+**  Author(s):  Hui Cao <huica@cisco.com>
 **
 **  NOTES
 **  5.25.12 - Initial Source Code. Hcao
@@ -39,6 +39,7 @@
 #include "file_config.h"
 #include "hash/hashes.h"
 #include "util.h"
+#include "file_api/file_capture.h"
 
 // FIXIT-L these are no longer needed
 #define SHA256CONTEXT SHA256_CTX
@@ -75,61 +76,70 @@ static inline int get_data_size_from_depth_limit(FileContext* context, FileProce
     return data_size;
 }
 
-/*Main File Processing functions */
-void file_type_id(FileContext* context, uint8_t* file_data,
-    int data_size, FilePosition position)
+/* stop file type identification */
+static inline void _finalize_file_type (FileContext* context)
 {
-    FileConfig* file_config =  (FileConfig*) context->file_config;
+    if (SNORT_FILE_TYPE_CONTINUE ==  context->file_type_id)
+        context->file_type_id = SNORT_FILE_TYPE_UNKNOWN;
+    context->file_type_context = NULL;
+}
+/*
+ * Main File type processing function
+ * We use file type context to decide file type across packets
+ *
+ * File type detection is completed either when
+ * 1) file is completed or
+ * 2) file type depth is reached or
+ * 3) file magics are exhausted in depth
+ *
+ */
+void file_type_id( FileContext* context, uint8_t* file_data,
+        int size, FilePosition position)
+{
+    int data_size;
+    FileConfig* file_config = context->file_config;
 
-    if (!context)
+    if (!context || !file_config)
         return;
 
-    if (SNORT_FILE_TYPE_CONTINUE !=  context->file_type_id)
+    /* file type already found and no magics to continue*/
+    if (context->file_type_id && !context->file_type_context)
         return;
 
-    data_size = get_data_size_from_depth_limit(context,SNORT_FILE_TYPE_ID,data_size);
+    /* Check whether file type depth is reached*/
+    data_size = get_data_size_from_depth_limit(context, SNORT_FILE_TYPE_ID, size);
 
     if (data_size < 0)
     {
-        context->file_type_id = SNORT_FILE_TYPE_UNKNOWN;
+        _finalize_file_type(context);
         return;
     }
 
-    switch (position)
+    file_config->find_file_type_id(file_data, data_size, context);
+
+    /* Check whether file transfer is done or type depth is reached*/
+    if ( (position == SNORT_FILE_END)  || (position == SNORT_FILE_FULL) ||
+         (data_size != size) )
     {
-    case SNORT_FILE_START:
-        context->file_type_context = NULL;
-        context->file_type_id = file_config->find_file_type_id(file_data, data_size, context);
-        break;
-    case SNORT_FILE_MIDDLE:
-        context->file_type_id = file_config->find_file_type_id(file_data, data_size, context);
-        break;
-    case SNORT_FILE_END:
-        context->file_type_id = file_config->find_file_type_id(file_data, data_size, context);
-        if (SNORT_FILE_TYPE_CONTINUE ==  context->file_type_id)
-            context->file_type_id = SNORT_FILE_TYPE_UNKNOWN;
-        break;
-    case SNORT_FILE_FULL:
-        context->file_type_context = NULL;
-        context->file_type_id = file_config->find_file_type_id(file_data, data_size, context);
-        if (SNORT_FILE_TYPE_CONTINUE ==  context->file_type_id)
-            context->file_type_id = SNORT_FILE_TYPE_UNKNOWN;
-        break;
-    default:
-        break;
+        _finalize_file_type(context);
     }
 }
 
 void file_signature_sha256(
-    FileContext* context, uint8_t* file_data, int data_size, FilePosition position)
+    FileContext* context, uint8_t* file_data, int size, FilePosition position)
 {
+    int data_size;
+
     if (!context)
         return;
 
-    data_size = get_data_size_from_depth_limit(context,SNORT_FILE_SHA256,data_size);
+    data_size = get_data_size_from_depth_limit(context, SNORT_FILE_SHA256, size);
 
-    if (data_size < 0)
+    if (data_size != size)
+    {
+        context->file_state.sig_state = FILE_SIG_DEPTH_FAIL;
         return;
+    }
 
     switch (position)
     {
@@ -146,9 +156,12 @@ void file_signature_sha256(
     case SNORT_FILE_END:
         if (!context->file_signature_context)
             context->file_signature_context = SnortAlloc(sizeof(SHA256CONTEXT));
+        if (context->processed_bytes == 0)
+            SHA256INIT((SHA256CONTEXT*)context->file_signature_context);
         SHA256UPDATE((SHA256CONTEXT*)context->file_signature_context, file_data, data_size);
         context->sha256 = (uint8_t*)SnortAlloc(SHA256_HASH_SIZE);
         SHA256FINAL(context->sha256, (SHA256CONTEXT*)context->file_signature_context);
+        context->file_state.sig_state = FILE_SIG_DONE;
         break;
     case SNORT_FILE_FULL:
         context->file_signature_context = SnortAlloc(sizeof (SHA256CONTEXT));
@@ -156,15 +169,50 @@ void file_signature_sha256(
         SHA256UPDATE((SHA256CONTEXT*)context->file_signature_context, file_data, data_size);
         context->sha256 = (uint8_t*)SnortAlloc(SHA256_HASH_SIZE);
         SHA256FINAL(context->sha256, (SHA256CONTEXT*)context->file_signature_context);
+        context->file_state.sig_state = FILE_SIG_DONE;
         break;
     default:
         break;
     }
 }
 
-/*File properties
-  Only set the pointer for performance, no deep copy*/
-void file_name_set(FileContext* context, uint8_t* file_name, uint32_t name_size)
+/*File context management*/
+
+FileContext *file_context_create(void)
+{
+    FileContext *context = (FileContext *)SnortAlloc(sizeof(*context));
+    return (context);
+}
+
+static inline void cleanDynamicContext (FileContext *context)
+{
+    if (context->file_signature_context)
+        free(context->file_signature_context);
+    if(context->sha256)
+        free(context->sha256);
+    if(context->file_capture)
+        file_capture_stop(context);
+}
+
+void file_context_reset(FileContext *context)
+{
+    cleanDynamicContext(context);
+    memset(context, 0, sizeof(*context));
+
+}
+
+void file_context_free(void *ctx)
+{
+    FileContext *context = (FileContext *)ctx;
+    if (!context)
+        return;
+    cleanDynamicContext(context);
+    free(context);
+}
+
+/*File properties*/
+/*Only set the pointer for performance, no deep copy*/
+void file_name_set (FileContext *context, uint8_t *file_name, uint32_t name_size)
 {
     if (!context)
         return;
@@ -209,13 +257,13 @@ void file_direction_set(FileContext* context, bool upload)
 {
     if (!context)
         return;
-    context->upload= upload;
+    context->upload = upload;
 }
 
 bool file_direction_get(FileContext* context)
 {
     if (!context)
-        return 0;
+        return false;
     return (context->upload);
 }
 
@@ -233,7 +281,7 @@ uint8_t* file_sig_sha256_get(FileContext* context)
     return (context->sha256);
 }
 
-const char* file_info_from_ID(void* conf, uint32_t id)
+const char* file_type_name(void* conf, uint32_t id)
 {
     FileMagicRule* info = NULL;
     FileConfig* file_config =  (FileConfig*) conf;
@@ -251,6 +299,34 @@ const char* file_info_from_ID(void* conf, uint32_t id)
 
     return NULL;
 }
+/**
+bool file_IDs_from_type(const void *conf, const char *type,
+     uint32_t **ids, uint32_t *count)
+{
+    if ( !type )
+        return false;
+
+    return get_ids_from_type(conf, type, ids, count);
+}
+
+bool file_IDs_from_type_version(const  void *conf, const char *type,
+    const char *version, uint32_t **ids, uint32_t *count )
+{
+    if ( !type || !version )
+        return false;
+
+    return get_ids_from_type_version(conf, type, version, ids, count);
+}
+
+bool file_IDs_from_group(const void *conf, const char *group,
+     uint32_t **ids, uint32_t *count)
+{
+    if ( !group )
+        return false;
+
+    return get_ids_from_group(conf, group, ids, count);
+}
+**/
 
 /*
  * Print a 32-byte hash value.
