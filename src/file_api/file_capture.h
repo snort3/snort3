@@ -1,5 +1,6 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2013-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -20,7 +21,7 @@
  **  Author(s):  Hui Cao <huica@cisco.com>
  **
  **  NOTES
- **  9.25.2012 - Initial Source Code. Hui Cao
+ **  5.05.2013 - Initial Source Code. Hui Cao
  */
 
 #ifndef FILE_CAPTURE_H
