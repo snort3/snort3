@@ -148,37 +148,22 @@ void CloseLogger()
 void LogIPPkt(Packet* p)
 {
     log_mutex.lock();
+    TextLog_NewLine(text_log);
+    LogTimeStamp(text_log, p);
     LogIPPkt(text_log, p);
     TextLog_Flush(text_log);
     log_mutex.unlock();
 }
 
-void snort_print(Packet* p)
+void LogFlow(Packet* p)
 {
-    if (p->ptrs.ip_api.is_ip())
-    {
-        LogIPPkt(text_log, p);
-    }
-#if 0
-    // FIXIT-L ARP logging not impelemted
-    else if (p->proto_bits & PROTO_BIT__ARP)
-    {
-        log_mutex.lock();
-        LogArpHeader(text_log, p);
-        TextLog_Flush(text_log);
-        log_mutex.unlock();
-    }
-#endif
-#if 0
-    else if (p->eplh != NULL)
-    {
-        LogEapolPkt(text_log, p);
-    }
-    else if (p->wifih && SnortConfig::output_wifi_mgmt())
-    {
-        LogWifiPkt(text_log, p);
-    }
-#endif
+    log_mutex.lock();
+    TextLog_NewLine(text_log);
+    LogTimeStamp(text_log, p);
+    TextLog_Print(text_log, " %s ", p->get_type());
+    LogIpAddrs(text_log, p);
+    TextLog_NewLine(text_log);
+    log_mutex.unlock();
 }
 
 void LogNetData(const uint8_t* data, const int len, Packet* p)

@@ -1,7 +1,6 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2002-2013 Sourcefire, Inc.
-// Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+// Copyright (C) 2007-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -572,7 +571,7 @@ void LogIpOptions(TextLog* log, const IP4Hdr* ip4h, const Packet* const p)
  */
 void LogIpAddrs(TextLog* log, Packet* p)
 {
-    if ( p->is_fragment() || ( !p->is_tcp() && !p->is_udp()))
+    if ( p->is_fragment() || (!p->is_tcp() && !p->is_udp() && !p->is_data()) )
     {
         const char* ip_fmt = "%s -> %s";
 
@@ -709,10 +708,6 @@ void LogIPHeader(TextLog* log, Packet* p)
     /* print fragment info if necessary */
     if ( p->is_fragment() )
     {
-#ifdef REG_TEST
-        frag_off >>= 3;
-#endif
-
         TextLog_Print(log, "Frag Offset: 0x%04X   Frag Size: 0x%04X\n",
             frag_off, p->ptrs.ip_api.pay_len());
     }
@@ -887,12 +882,6 @@ static void LogTcpOptions(TextLog* log, const tcp::TcpOptIterator& opt_iter)
         }
         }
     }
-
-#ifdef REG_TEST
-    TextLog_Putc(log, ' ');
-#endif
-
-    TextLog_NewLine(log);
 }
 
 void LogTcpOptions(TextLog* log,  const tcp::TCPHdr* tcph, uint16_t valid_tcp_len)
@@ -947,13 +936,10 @@ void LogTCPHeader(TextLog* log, Packet* p)
     }
 
     /* dump the TCP options */
-#ifdef REG_TEST
-    // emulate snort bug
-    if ( !p->is_cooked() || (p->pseudo_type == PSEUDO_PKT_IP) )
-#endif
     if (tcph->has_options())
     {
         LogTcpOptions(log, p);
+        TextLog_NewLine(log);
     }
 }
 
@@ -1517,7 +1503,7 @@ static void LogCharData(TextLog* log, char* data, int len)
 }
 
 /*
- * Function: LogNetData(TextLog*, uint8_t *,int, Packet *)
+ * Function: LogNetData(TextLog*, uint8_t*,int, Packet*)
  *
  * Purpose: Do a side by side dump of a buffer, hex on
  *          the left, decoded ASCII on the right.
@@ -1528,10 +1514,15 @@ static void LogCharData(TextLog* log, char* data, int len)
  *
  * Returns: void function
  */
-#define BYTES_PER_FRAME 16
-/* middle of packet:"41 02 43 04 45 06 47 08 49 0A 4B 0C 4D 0E 4F 0F  A.C.E.G.I.K.M.O."
-   at end of packet:"41 02 43 04 45 06 47 08                          A.C.E.G."*/
-const char pad3[] = "                                                 ";
+#define SEPARATOR \
+          "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
+
+#define BYTES_PER_FRAME 20
+/* middle:"41 02 43 04 45 06 47 08 49 0A 4B 0C 4D 0E 4F 0F 01 02 03 04  A.C.E.G.I.K.M.O....."
+   at end:"41 02 43 04 45 06 47 08                                      A.C.E.G."*/
+
+static const char pad3[] =
+          "                                                             ";
 
 void LogNetData(TextLog* log, const uint8_t* data, const int len, Packet* p)
 {
@@ -1547,31 +1538,10 @@ void LogNetData(TextLog* log, const uint8_t* data, const int len, Packet* p)
     int i;
 
     byte_pos = char_pos = 0;
-
     ip_ob_start = ip_ob_end = -1;
 
     if ( !len )
-    {
-        TextLog_NewLine(log);
         return;
-    }
-    if ( !data )
-    {
-        TextLog_Print(log, "Got NULL ptr in LogNetData()\n");
-        return;
-    }
-
-    if ( len > IP_MAXPACKET )
-    {
-        if (SnortConfig::log_verbose())
-        {
-            TextLog_Print(
-                log, "Got bogus buffer length (%d) for LogNetData, "
-                "defaulting to %d bytes\n", len, BYTES_PER_FRAME
-                );
-        }
-        end = data + BYTES_PER_FRAME;
-    }
 
     if (p && SnortConfig::obfuscate() )
     {
@@ -1600,6 +1570,15 @@ void LogNetData(TextLog* log, const uint8_t* data, const int len, Packet* p)
                 ip_ob_end = ip_ob_start + 2 + 2*(sizeof(struct in6_addr));
         }
     }
+#if 0
+    TextLog_Print(log, "%s[%d]\n", p->get_pseudo_type(), p->dsize);
+    LogDiv(log);
+#else
+    char div[64];
+    snprintf(div, sizeof(div), "- - - %s[%d]", p->get_pseudo_type(), p->dsize);
+    div[sizeof(div)-1] = '\0';
+    TextLog_Print(log, "%s%s\n", div, SEPARATOR+strlen(div));
+#endif
 
     /* loop thru the whole buffer */
     while ( pb < end )
@@ -1651,25 +1630,18 @@ void LogNetData(TextLog* log, const uint8_t* data, const int len, Packet* p)
         pb += BYTES_PER_FRAME;
         TextLog_NewLine(log);
     }
-#ifndef REG_TEST
-    TextLog_NewLine(log);
-#endif
+    LogDiv(log);
 }
 
-#ifdef REG_TEST
-#define SEPARATOR \
-    "=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+"
-#else
-#define SEPARATOR \
-    "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
-#endif
+void LogDiv(TextLog* log)
+{
+    TextLog_Print(log, "%s\n", SEPARATOR);
+}
 
 static int LogObfuscatedData(TextLog* log, Packet* p)
 {
     uint8_t* payload = NULL;
     uint16_t payload_len = 0;
-
-    TextLog_Print(log, "%s\n", SEPARATOR);
 
     if (obApi->getObfuscatedPayload(p, &payload,
         (uint16_t*)&payload_len) != OB_RET_SUCCESS)
@@ -1677,13 +1649,15 @@ static int LogObfuscatedData(TextLog* log, Packet* p)
         return -1;
     }
 
+    LogDiv(log);
+
     /* dump the application layer data */
     if (SnortConfig::output_app_data() && !SnortConfig::verbose_byte_dump())
     {
         if (SnortConfig::output_char_data())
             LogCharData(log, (char*)payload, payload_len);
         else
-            LogNetData(log, payload, payload_len, NULL);
+            LogNetData(log, payload, payload_len, p);
     }
     else if (SnortConfig::verbose_byte_dump())
     {
@@ -1694,53 +1668,12 @@ static int LogObfuscatedData(TextLog* log, Packet* p)
         SafeMemcpy(buf + dlen, payload, payload_len,
             buf, buf + sizeof(buf));
 
-        LogNetData(log, buf, dlen + payload_len, NULL);
+        LogNetData(log, buf, dlen + payload_len, p);
     }
 
     free(payload);
     return 0;
 }
-
-#ifndef REG_TEST
-static void LogPacketType(TextLog* log, Packet* p)
-{
-    TextLog_NewLine(log);
-
-    if ( !p->dsize || !p->is_cooked() )
-        return;
-
-    switch ( p->pseudo_type )
-    {
-    case PSEUDO_PKT_SMB_SEG:
-        TextLog_Print(log, "%s", "SMB desegmented packet");
-        break;
-    case PSEUDO_PKT_DCE_SEG:
-        TextLog_Print(log, "%s", "DCE/RPC desegmented packet");
-        break;
-    case PSEUDO_PKT_DCE_FRAG:
-        TextLog_Print(log, "%s", "DCE/RPC defragmented packet");
-        break;
-    case PSEUDO_PKT_SMB_TRANS:
-        TextLog_Print(log, "%s", "SMB Transact reassembled packet");
-        break;
-    case PSEUDO_PKT_DCE_RPKT:
-        TextLog_Print(log, "%s", "DCE/RPC reassembled packet");
-        break;
-    case PSEUDO_PKT_TCP:
-        TextLog_Print(log, "%s", "Stream reassembled packet");
-        break;
-    case PSEUDO_PKT_IP:
-        TextLog_Print(log, "%s", "Frag reassembled packet");
-        break;
-    default:
-        // FIXIT-L do we get here for portscan or sdf?
-        TextLog_Print(log, "%s", "Cooked packet");
-        break;
-    } /* switch */
-    TextLog_NewLine(log);
-}
-
-#endif
 
 /*--------------------------------------------------------------------
  * Function: LogIPPkt(TextLog*, int, Packet *)
@@ -1755,20 +1688,8 @@ static void LogPacketType(TextLog* log, Packet* p)
  *--------------------------------------------------------------------
  */
 
-#define DATA_LEN(p) \
-    (p->ptrs.ip_api.actual_ip_len() - (p->ptrs.ip_api.hlen()))
-
 void LogIPPkt(TextLog* log, Packet* p)
 {
-#ifndef REG_TEST
-    LogPacketType(log, p);
-    TextLog_Print(log, "%s\n", SEPARATOR);
-#endif
-
-    /* dump the timestamp */
-    LogTimeStamp(log, p);
-
-    /* dump the ethernet header if we're doing that sort of thing */
     if ( SnortConfig::output_datalink() )
     {
         Log2ndHeader(log, p);
@@ -1776,7 +1697,7 @@ void LogIPPkt(TextLog* log, Packet* p)
         if ( p->proto_bits & PROTO_BIT__MPLS )
             LogMPLSHeader(log, p);
 
-        // FIXIT-J --> log everything in order!!
+        // FIXIT-L --> log everything in order!!
         ip::IpApi tmp_api = p->ptrs.ip_api;
         int8_t num_layer = 0;
         uint8_t tmp_next = p->get_ip_proto_next();
@@ -1785,11 +1706,6 @@ void LogIPPkt(TextLog* log, Packet* p)
         while (layer::set_outer_ip_api(p, p->ptrs.ip_api, p->ip_proto_next, num_layer) &&
             tmp_api != p->ptrs.ip_api)
         {
-#ifdef REG_TEST
-            // In Snort, cooked packets should not print an outer IP Header
-            if (p->is_cooked() && (p->pseudo_type != PSEUDO_PKT_IP))
-                break;
-#endif
             LogOuterIPHeader(log, p);
 
             if (first)
@@ -1797,10 +1713,6 @@ void LogIPPkt(TextLog* log, Packet* p)
                 LogGREHeader(log, p); // checks for valid gre layer before logging
                 first = false;
             }
-
-#ifdef REG_TEST
-            break;
-#endif
         }
 
         p->ip_proto_next = tmp_next;
@@ -1818,20 +1730,18 @@ void LogIPPkt(TextLog* log, Packet* p)
             if ( p->ptrs.tcph != NULL )
                 LogTCPHeader(log, p);
             else
-                LogNetData(log, p->ptrs.ip_api.ip_data(), p->ptrs.ip_api.pay_len(), NULL);
+                LogNetData(log, p->ptrs.ip_api.ip_data(), p->ptrs.ip_api.pay_len(), p);
             break;
 
         case PktType::UDP:
             if ( p->ptrs.udph != NULL )
             {
-#ifdef REG_TEST
                 // for consistency, nothing to log (tcp doesn't log paylen)
                 LogUDPHeader(log, p);
-#endif
             }
             else
             {
-                LogNetData(log, p->ptrs.ip_api.ip_data(), p->ptrs.ip_api.pay_len(), NULL);
+                LogNetData(log, p->ptrs.ip_api.ip_data(), p->ptrs.ip_api.pay_len(), p);
             }
 
             break;
@@ -1844,7 +1754,7 @@ void LogIPPkt(TextLog* log, Packet* p)
             if ( p->ptrs.icmph != NULL )
                 LogICMPHeader(log, p);
             else
-                LogNetData(log, p->ptrs.ip_api.ip_data(), p->ptrs.ip_api.pay_len(), NULL);
+                LogNetData(log, p->ptrs.ip_api.ip_data(), p->ptrs.ip_api.pay_len(), p);
             break;
 
         default:
@@ -1865,20 +1775,6 @@ void LogPayload(TextLog* log, Packet* p)
     /* dump the application layer data */
     if (SnortConfig::output_app_data() && !SnortConfig::verbose_byte_dump())
     {
-#ifdef REG_TEST
-        const uint8_t* tmp_data = 0;
-        uint16_t tmp_dsize = 0;
-
-        if ( p->proto_bits & PROTO_BIT__ICMP_EMBED )
-        {
-            tmp_data = p->data;
-            tmp_dsize = p->dsize;
-            p->data = p->layers[p->num_layers - 1].start;
-
-            // layer.length may be layer's length, not the actual length
-            p->dsize = (uint16_t)((tmp_data - p->data) + tmp_dsize);
-        }
-#endif
         if (SnortConfig::output_char_data())
         {
             LogCharData(log, (char*)p->data, p->dsize);
@@ -1895,44 +1791,32 @@ void LogPayload(TextLog* log, Packet* p)
         }
         else
         {
-            LogNetData(log, p->data, p->dsize, NULL);
+            LogNetData(log, p->data, p->dsize, p);
             if (!IsJSNormData(p->flow))
             {
                 TextLog_Print(log, "%s\n", "Normalized JavaScript for this packet");
-                LogNetData(log, g_file_data.data, g_file_data.len, NULL);
+                LogNetData(log, g_file_data.data, g_file_data.len, p);
             }
             else if (!IsGzipData(p->flow))
             {
                 TextLog_Print(log, "%s\n", "Decompressed Data for this packet");
-                LogNetData(log, g_file_data.data, g_file_data.len, NULL);
+                LogNetData(log, g_file_data.data, g_file_data.len, p);
             }
         }
-
-#ifdef REG_TEST
-        if ( p->proto_bits & PROTO_BIT__ICMP_EMBED )
-        {
-            p->data = tmp_data;
-            p->dsize = tmp_dsize;
-        }
-#endif
     }
     else if (SnortConfig::verbose_byte_dump())
     {
         LogNetData(log, p->pkt, p->pkth->caplen, p);
     }
-#ifdef REG_TEST
-    TextLog_Print(log, "\n%s\n\n", SEPARATOR);
-#endif
 }
 
 /*--------------------------------------------------------------------
  * ARP stuff cloned from log.c
+ * FIXIT-L these must be converted to use TextLog (or just deleted)
  *--------------------------------------------------------------------
  */
 
 #if 0
-// these must be converted to use TextLog
-// (or just deleted)
 /****************************************************************************
  *
  * Function: PrintEapolKey(FILE *)

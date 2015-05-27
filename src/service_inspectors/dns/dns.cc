@@ -1017,7 +1017,7 @@ static void snort_dns(Packet* p)
     PROFILE_VARS;
 
     /* For TCP, do a few extra checks... */
-    if (p->is_udp())
+    if ( p->has_tcp_data() )
     {
         /* If session picked up mid-stream, do not process further.
          * Would be almost impossible to tell where we are in the
@@ -1101,7 +1101,7 @@ void Dns::show(SnortConfig*)
 void Dns::eval(Packet* p)
 {
     // precondition - what we registered for
-    assert((p->is_udp() || p->is_tcp()) && p->dsize && p->data);
+    assert((p->is_udp() and p->dsize and p->data) or p->has_tcp_data());
 
     ++dnsstats.total_packets;
     snort_dns(p);

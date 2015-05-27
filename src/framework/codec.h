@@ -235,7 +235,7 @@ class SO_PUBLIC Codec
 public:
     virtual ~Codec() { }
 
-    // PKT_MAX = ETHERNET_HEADER_LEN () + VLAN_HEADER (4) + ETHERNET_MTU () + IP_MAXPACKET()
+    // PKT_MAX = ETHERNET_HEADER_LEN + VLAN_HEADER + ETHERNET_MTU + IP_MAXPACKET
 
     /* PKT_MAX is sized to ensure that any reassembled packet
      * can accommodate a full datagram at innermost layer
@@ -243,7 +243,7 @@ public:
      * ETHERNET_HEADER_LEN == 14
      * VLAN_HEADER == 4
      * ETHERNET_MTU == 1500
-     * IP_MAXPACKET ==  65535
+     * IP_MAXPACKET ==  65535  FIXIT-L use Packet::max_dsize
      */
     static const uint32_t PKT_MAX = 14 + 4 + 1500 + 65535;
 

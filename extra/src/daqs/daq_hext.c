@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 */
-/* daq_user.c author Russ Combs <rucombs@cisco.com> */
+/* daq_hext.c author Russ Combs <rucombs@cisco.com> */
 
 #include "daq_socket.h"
 
@@ -39,7 +39,7 @@
 #include <sfbpf_dlt.h>
 
 #define DAQ_MOD_VERSION 0
-#define DAQ_NAME "user"
+#define DAQ_NAME "hext"
 #define DAQ_TYPE (DAQ_TYPE_FILE_CAPABLE|DAQ_TYPE_INTF_CAPABLE|DAQ_TYPE_MULTI_INSTANCE)
 
 #define DEF_BUF_SZ 16384
@@ -52,7 +52,7 @@ typedef struct {
     int start;
     int stop;
     int eof;
-    int fsm;
+    int dlt;
 
     unsigned snaplen;
     unsigned idx;
@@ -255,7 +255,7 @@ static int parse(FileImpl* impl)
 // file functions
 //-------------------------------------------------------------------------
 
-static int user_setup(FileImpl* impl)
+static int hext_setup(FileImpl* impl)
 {
     if ( !strcmp(impl->name, "tty") )
     {
@@ -267,7 +267,7 @@ static int user_setup(FileImpl* impl)
             DAQ_NAME, strerror(errno));
         return -1;
     }
-    parse_host("192.168.1.1 12345", &impl->cfg.src_addr, &impl->cfg.src_port);
+    parse_host("192.168.1.2 12345", &impl->cfg.src_addr, &impl->cfg.src_port);
     parse_host("10.1.2.3 80", &impl->cfg.dst_addr, &impl->cfg.dst_port);
 
     impl->cfg.ip_proto = impl->pci.ip_proto = IPPROTO_TCP;
@@ -277,7 +277,7 @@ static int user_setup(FileImpl* impl)
     return 0;
 }
 
-static void user_cleanup(FileImpl* impl)
+static void hext_cleanup(FileImpl* impl)
 {
     if ( impl->fyle != stdin )
         fclose(impl->fyle);
@@ -285,7 +285,7 @@ static void user_cleanup(FileImpl* impl)
     impl->fyle = NULL;
 }
 
-static int user_read(FileImpl* impl)
+static int hext_read(FileImpl* impl)
 {
     int n = 0;
 
@@ -300,7 +300,7 @@ static int user_read(FileImpl* impl)
 
     if ( !n )
     {
-        if ( !impl->eof )
+        if ( (impl->dlt == DLT_SOCKET) && !impl->eof )
         {
             impl->eof = 1;
             return 1;  // <= zero won't make it :(
@@ -324,6 +324,29 @@ static int user_read(FileImpl* impl)
 // daq utilities
 //-------------------------------------------------------------------------
 
+static int get_vars (
+    FileImpl* impl, const DAQ_Config_t* cfg, char* errBuf, size_t errMax
+) {
+    const char* s = NULL;
+    DAQ_Dict* entry;
+
+    for ( entry = cfg->values; entry; entry = entry->next)
+    {
+        if ( !strcmp(entry->key, "dlt") )
+            s = entry->value;
+
+        else
+        {
+            snprintf(errBuf, errMax, "unknown var (%s)", s);
+            return 0;
+        }
+    }
+    if ( s )
+        impl->dlt = atoi(s);
+
+    return 1;
+}
+
 static void set_pkt_hdr(FileImpl* impl, DAQ_PktHdr_t* phdr, ssize_t len)
 {
     struct timeval t;
@@ -340,6 +363,11 @@ static void set_pkt_hdr(FileImpl* impl, DAQ_PktHdr_t* phdr, ssize_t len)
     phdr->address_space_id = 0;
     phdr->opaque = 0;
 
+    if ( impl->dlt != DLT_SOCKET )
+    {
+        phdr->priv_ptr = NULL;
+        return;
+    }
     impl->pci.flags &= ~(DAQ_SKT_FLAG_START_FLOW|DAQ_SKT_FLAG_END_FLOW);
 
     if ( impl->start )
@@ -356,11 +384,11 @@ static void set_pkt_hdr(FileImpl* impl, DAQ_PktHdr_t* phdr, ssize_t len)
 // forward all but drops, retries and blacklists:
 static const int s_fwd[MAX_DAQ_VERDICT] = { 1, 0, 1, 1, 0, 1, 0 };
 
-static int user_daq_process(
+static int hext_daq_process(
     FileImpl* impl, DAQ_Analysis_Func_t cb, void* user)
 {
     DAQ_PktHdr_t hdr;
-    int n = user_read(impl);
+    int n = hext_read(impl);
 
     if ( n < 1 )
         return n;
@@ -379,7 +407,7 @@ static int user_daq_process(
 // daq
 //-------------------------------------------------------------------------
 
-static void user_daq_shutdown (void* handle)
+static void hext_daq_shutdown (void* handle)
 {
     FileImpl* impl = (FileImpl*)handle;
 
@@ -394,7 +422,7 @@ static void user_daq_shutdown (void* handle)
 
 //-------------------------------------------------------------------------
 
-static int user_daq_initialize (
+static int hext_daq_initialize (
     const DAQ_Config_t* cfg, void** handle, char* errBuf, size_t errMax)
 {
     FileImpl* impl = calloc(1, sizeof(*impl));
@@ -405,13 +433,14 @@ static int user_daq_initialize (
         return DAQ_ERROR_NOMEM;
     }
 
-    impl->fyle = NULL;
-    impl->start = impl->stop = 0;
     impl->snaplen = cfg->snaplen ? cfg->snaplen : DEF_BUF_SZ;
+    impl->dlt = DLT_SOCKET;
 
-    impl->idx = 0;
-    impl->fsm = 0;
-    impl->line[0] = '\0';
+    if ( !get_vars(impl, cfg, errBuf, errMax) )
+    {
+        free(impl);
+        return DAQ_ERROR;
+    }
 
     if ( cfg->name )
     {
@@ -425,7 +454,7 @@ static int user_daq_initialize (
     if ( !(impl->buf = malloc(impl->snaplen)) )
     {
         snprintf(errBuf, errMax, "%s: failed to allocate the ipfw buffer", DAQ_NAME);
-        user_daq_shutdown(impl);
+        hext_daq_shutdown(impl);
         return DAQ_ERROR_NOMEM;
     }
 
@@ -437,28 +466,28 @@ static int user_daq_initialize (
 
 //-------------------------------------------------------------------------
 
-static int user_daq_start (void* handle)
+static int hext_daq_start (void* handle)
 {
     FileImpl* impl = (FileImpl*)handle;
 
-    if ( user_setup(impl) )
+    if ( hext_setup(impl) )
         return DAQ_ERROR;
 
     impl->state = DAQ_STATE_STARTED;
     return DAQ_SUCCESS;
 }
 
-static int user_daq_stop (void* handle)
+static int hext_daq_stop (void* handle)
 {
     FileImpl* impl = (FileImpl*)handle;
-    user_cleanup(impl);
+    hext_cleanup(impl);
     impl->state = DAQ_STATE_STOPPED;
     return DAQ_SUCCESS;
 }
 
 //-------------------------------------------------------------------------
 
-static int user_daq_inject (
+static int hext_daq_inject (
     void* handle, const DAQ_PktHdr_t* hdr, const uint8_t* buf, uint32_t len, int rev)
 {
     (void)handle;
@@ -471,7 +500,7 @@ static int user_daq_inject (
 
 //-------------------------------------------------------------------------
 
-static int user_daq_acquire (
+static int hext_daq_acquire (
     void* handle, int cnt, DAQ_Analysis_Func_t callback, DAQ_Meta_Func_t meta, void* user)
 {
     (void)meta;
@@ -482,7 +511,7 @@ static int user_daq_acquire (
 
     while ( hit < cnt || cnt <= 0 )
     {
-        int status = user_daq_process(impl, callback, user);
+        int status = hext_daq_process(impl, callback, user);
 
         if ( status > 0 )
         {
@@ -500,71 +529,71 @@ static int user_daq_acquire (
 
 //-------------------------------------------------------------------------
 
-static int user_daq_breakloop (void* handle)
+static int hext_daq_breakloop (void* handle)
 {
     FileImpl* impl = (FileImpl*)handle;
     impl->stop = 1;
     return DAQ_SUCCESS;
 }
 
-static DAQ_State user_daq_check_status (void* handle)
+static DAQ_State hext_daq_check_status (void* handle)
 {
     FileImpl* impl = (FileImpl*)handle;
     return impl->state;
 }
 
-static int user_daq_get_stats (void* handle, DAQ_Stats_t* stats)
+static int hext_daq_get_stats (void* handle, DAQ_Stats_t* stats)
 {
     FileImpl* impl = (FileImpl*)handle;
     *stats = impl->stats;
     return DAQ_SUCCESS;
 }
 
-static void user_daq_reset_stats (void* handle)
+static void hext_daq_reset_stats (void* handle)
 {
     FileImpl* impl = (FileImpl*)handle;
     memset(&impl->stats, 0, sizeof(impl->stats));
 }
 
-static int user_daq_get_snaplen (void* handle)
+static int hext_daq_get_snaplen (void* handle)
 {
     FileImpl* impl = (FileImpl*)handle;
     return impl->snaplen;
 }
 
-static uint32_t user_daq_get_capabilities (void* handle)
+static uint32_t hext_daq_get_capabilities (void* handle)
 {
     (void)handle;
     return DAQ_CAPA_BLOCK | DAQ_CAPA_REPLACE | DAQ_CAPA_INJECT | DAQ_CAPA_INJECT_RAW
         | DAQ_CAPA_BREAKLOOP | DAQ_CAPA_UNPRIV_START;
 }
 
-static int user_daq_get_datalink_type(void *handle)
+static int hext_daq_get_datalink_type(void *handle)
 {
-    (void)handle;
-    return DLT_SOCKET;
+    FileImpl* impl = (FileImpl*)handle;
+    return impl->dlt;
 }
 
-static const char* user_daq_get_errbuf (void* handle)
+static const char* hext_daq_get_errbuf (void* handle)
 {
     FileImpl* impl = (FileImpl*)handle;
     return impl->error;
 }
 
-static void user_daq_set_errbuf (void* handle, const char* s)
+static void hext_daq_set_errbuf (void* handle, const char* s)
 {
     FileImpl* impl = (FileImpl*)handle;
     DPE(impl->error, "%s", s ? s : "");
 }
 
-static int user_daq_get_device_index(void* handle, const char* device)
+static int hext_daq_get_device_index(void* handle, const char* device)
 {
     (void)handle;
     (void)device;
     return DAQ_ERROR_NOTSUP;
 }
 
-static int user_daq_set_filter (void* handle, const char* filter)
+static int hext_daq_set_filter (void* handle, const char* filter)
 {
     (void)handle;
     (void)filter;
@@ -576,30 +605,30 @@ static int user_daq_set_filter (void* handle, const char* filter)
 #ifdef BUILDING_SO
 DAQ_SO_PUBLIC DAQ_Module_t DAQ_MODULE_DATA =
 #else
-DAQ_Module_t user_daq_module_data =
+DAQ_Module_t hext_daq_module_data =
 #endif
 {
     .api_version = DAQ_API_VERSION,
     .module_version = DAQ_MOD_VERSION,
     .name = DAQ_NAME,
     .type = DAQ_TYPE,
-    .initialize = user_daq_initialize,
-    .set_filter = user_daq_set_filter,
-    .start = user_daq_start,
-    .acquire = user_daq_acquire,
-    .inject = user_daq_inject,
-    .breakloop = user_daq_breakloop,
-    .stop = user_daq_stop,
-    .shutdown = user_daq_shutdown,
-    .check_status = user_daq_check_status,
-    .get_stats = user_daq_get_stats,
-    .reset_stats = user_daq_reset_stats,
-    .get_snaplen = user_daq_get_snaplen,
-    .get_capabilities = user_daq_get_capabilities,
-    .get_datalink_type = user_daq_get_datalink_type,
-    .get_errbuf = user_daq_get_errbuf,
-    .set_errbuf = user_daq_set_errbuf,
-    .get_device_index = user_daq_get_device_index,
+    .initialize = hext_daq_initialize,
+    .set_filter = hext_daq_set_filter,
+    .start = hext_daq_start,
+    .acquire = hext_daq_acquire,
+    .inject = hext_daq_inject,
+    .breakloop = hext_daq_breakloop,
+    .stop = hext_daq_stop,
+    .shutdown = hext_daq_shutdown,
+    .check_status = hext_daq_check_status,
+    .get_stats = hext_daq_get_stats,
+    .reset_stats = hext_daq_reset_stats,
+    .get_snaplen = hext_daq_get_snaplen,
+    .get_capabilities = hext_daq_get_capabilities,
+    .get_datalink_type = hext_daq_get_datalink_type,
+    .get_errbuf = hext_daq_get_errbuf,
+    .set_errbuf = hext_daq_set_errbuf,
+    .get_device_index = hext_daq_get_device_index,
     .modify_flow = NULL,
     .hup_prep = NULL,
     .hup_apply = NULL,

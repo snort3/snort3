@@ -117,9 +117,6 @@ private:
     void set_extra_data(Packet*, uint32_t flag) override;
     void clear_extra_data(Packet*, uint32_t flag) override;
 
-    int get_rebuilt_packets(Packet*, PacketIterator, void* userdata) override;
-    int get_segments(Packet*, StreamSegmentIterator, void* userdata) override;
-
     uint8_t get_reassembly_direction() override;
 
 public:

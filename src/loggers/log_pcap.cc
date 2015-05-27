@@ -154,15 +154,6 @@ static inline size_t SizeOf(const DAQ_PktHdr_t* pkth)
     return PCAP_PKT_HDR_SZ + pkth->caplen;
 }
 
-static int SizeOfCallback(
-    DAQ_PktHdr_t* pkth, uint8_t*, void* userdata)
-{
-    size_t* pSize = (size_t*)userdata;
-    (*pSize) += SizeOf(pkth);
-
-    return 0;
-}
-
 static void LogTcpdumpSingle(
     LtdConfig* data, Packet* p, const char*, Event*)
 {
@@ -180,35 +171,11 @@ static void LogTcpdumpSingle(
     }
 }
 
-static int LogTcpdumpStreamCallback(
-    DAQ_PktHdr_t* pkth, uint8_t* packet_data, void*)
-{
-    pcap_dump((u_char*)context.dumpd,
-        (struct pcap_pkthdr*)pkth,
-        (u_char*)packet_data);
-
-    return 0;
-}
-
 static void LogTcpdumpStream(
-    LtdConfig* data, Packet* p, const char*, Event*)
+    LtdConfig*, Packet*, const char*, Event*)
 {
-    size_t dumpSize = 0;
-
-    stream.traverse_reassembled(p, SizeOfCallback, &dumpSize);
-
-    if ( data->limit && (context.size + dumpSize > data->limit) )
-        TcpdumpRollLogFile(data);
-
-    stream.traverse_reassembled(p, LogTcpdumpStreamCallback, data);
-
-    context.size += dumpSize;
-
-    if (!SnortConfig::line_buffered_logging())
-    {
-        /* we happen to know that pcap_dumper_t* is really just a FILE* */
-        fflush( (FILE*)context.dumpd);
-    }
+// FIXIT-L log reassembled stream data with original packet?
+// (take original packet headers and append reassembled data)
 }
 
 static void TcpdumpInitLogFile(LtdConfig*, int /*nostamps?*/)

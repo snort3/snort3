@@ -121,11 +121,11 @@ struct DecodeData
     PktType type;
 
     ip::IpApi ip_api;
-    mpls::MplsHdr mplsHdr;
+    mpls::MplsHdr mplsHdr;  // FIXIT-L need to zero this?
 
     inline void reset()
     {
-        memset((char*)&tcph, '\0', offsetof(DecodeData, ip_api));
+        memset(this, 0, offsetof(DecodeData, ip_api));
         ip_api.reset();
     }
 

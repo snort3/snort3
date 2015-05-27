@@ -80,15 +80,16 @@ struct StreamAlertInfo
 
 struct TcpSegment
 {
-    uint8_t* data;
+    static TcpSegment* init(struct Packet*, const struct timeval&, const uint8_t*, unsigned);
+    static void term(TcpSegment*);
+    bool is_retransmit(const uint8_t*, uint16_t size, uint32_t);
+
     uint8_t* payload;
 
     TcpSegment *prev;
     TcpSegment *next;
 
     struct timeval tv;
-    uint32_t caplen;
-    uint32_t pktlen;
 
     uint32_t ts;
     uint32_t seq;
@@ -99,11 +100,7 @@ struct TcpSegment
     uint16_t urg_offset;
     uint8_t buffered;
 
-    // this sequence ensures 4-byte alignment of iph in pkt
-    // (only significant if we call the grinder)
-    uint8_t pad1;
-    uint16_t pad2;
-    uint8_t pkt[1];     // variable length
+    uint8_t data[1];     // variable length
 };
 
 enum FlushPolicy
@@ -208,9 +205,6 @@ public:
 
     void set_extra_data(Packet*, uint32_t /*flag*/) override;
     void clear_extra_data(Packet*, uint32_t /*flag*/) override;
-
-    int get_rebuilt_packets(Packet*, PacketIterator, void* /*userdata*/) override;
-    int get_segments(Packet*, StreamSegmentIterator, void* /*userdata*/) override;
 
     bool is_sequenced(uint8_t /*dir*/) override;
     bool are_packets_missing(uint8_t /*dir*/) override;

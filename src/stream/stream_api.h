@@ -136,22 +136,6 @@ public:
     static void flush_request(Packet*);  // flush listener
     static void flush_response(Packet*);  // flush talker
 
-    /* Calls user-provided callback function for each packet of
-     * a reassembled stream.  If the callback function returns non-zero,
-     * iteration ends.
-     *
-     * Returns number of packets
-     */
-    static int traverse_reassembled(Packet*, PacketIterator, void* userdata);  // PKT
-
-    /* Calls user-provided callback function for each segment of
-     * a reassembled stream.  If the callback function returns non-zero,
-     * iteration ends.
-     *
-     * Returns number of packets
-     */
-    static int traverse_stream_segments(Packet*, StreamSegmentIterator, void* userdata);  // PKT
-
     /* Add session alert - true if added
      */
     static bool add_session_alert(Flow*, Packet*, uint32_t gid, uint32_t sid);

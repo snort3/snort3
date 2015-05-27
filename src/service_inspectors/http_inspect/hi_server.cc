@@ -203,7 +203,7 @@ static int IsHttpServerData(HI_SESSION* session, Packet* p, HttpSessionData* sd)
         return HI_INVALID_ARG;
     }
 
-    seq_num = GET_PKT_SEQ(p);
+    seq_num = sd ? sd->resp_state.next_seq : 0;
 
     /*
     **  Let's set up the data pointers.
@@ -1279,7 +1279,7 @@ static int HttpResponseInspection(HI_SESSION* session, Packet* p, const unsigned
 
     clearHttpRespBuffer(Server);
 
-    seq_num = GET_PKT_SEQ(p);
+    seq_num = sd ? sd->resp_state.next_seq : 0;
 
     {
         expected_pkt = !p->is_pdu_start();

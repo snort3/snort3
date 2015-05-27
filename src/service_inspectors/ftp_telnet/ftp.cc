@@ -399,7 +399,7 @@ StreamSplitter* FtpServer::get_splitter(bool c2s)
 void FtpServer::eval(Packet* p)
 {
     // precondition - what we registered for
-    assert(p->is_tcp() && p->data && p->dsize);
+    assert(p->has_tcp_data());
 
     ++ftstats.total_packets;
     snort_ftp(p);

@@ -182,7 +182,12 @@ uint32_t FlowCache::prune_stale(uint32_t thetime, Flow* save_me)
     {
         // FIXIT-L this loops forever if 1 flow in cache
         if (flow == save_me)
+        {
+            if ( hash_table->get_count() == 1 )
+                break;
+
             hash_table->touch();
+        }
 
         else if ((flow->last_data_seen + timeoutAggressive) < thetime)
         {

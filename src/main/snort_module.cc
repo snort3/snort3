@@ -96,10 +96,6 @@ static void x2c(unsigned x)
 // parameters
 //-------------------------------------------------------------------------
 
-#ifdef REG_TEST
-#define REG_TEST_IGNORE " -N --pcap-reset "
-#endif
-
 static const Parameter s_params[] =
 {
     { "-?", Parameter::PT_STRING, "(optional)", nullptr,
@@ -153,7 +149,7 @@ static const Parameter s_params[] =
       "<mode> checksum mode (all,noip,notcp,noudp,noicmp,none)" },
 
     { "-L", Parameter::PT_STRING, nullptr, nullptr,
-      "<mode> logging mode (none, text, pcap, or log_*)" },
+      "<mode> logging mode (none, dump, pcap, or log_*)" },
 
     { "-l", Parameter::PT_STRING, nullptr, nullptr,
       "<logdir> log to this directory instead of current directory" },
@@ -163,11 +159,6 @@ static const Parameter s_params[] =
 
     { "-m", Parameter::PT_INT, "0:", nullptr,
       "<umask> set umask = <umask>" },
-
-#ifdef REG_TEST
-    { "-N", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "ignored - for REG_TEST only" },
-#endif
 
     { "-n", Parameter::PT_INT, "0:", nullptr,
       "<count> stop after count packets" },
@@ -368,11 +359,6 @@ static const Parameter s_params[] =
 
     { "--pcap-reload", Parameter::PT_IMPLIED, nullptr, nullptr,
       "if reading multiple pcaps, reload snort config between pcaps" },
-
-#ifdef REG_TEST
-    { "--pcap-reset", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "ignored - for REG_TEST only" },
-#endif
 
     { "--pcap-show", Parameter::PT_IMPLIED, nullptr, nullptr,
       "print a line saying what pcap is currently being read" },
@@ -839,11 +825,6 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--x2c") )
         x2c(v.get_long());
-
-#ifdef REG_TEST
-    else if ( !strstr(REG_TEST_IGNORE, v.get_name()) )
-        return false;
-#endif
 
     return true;
 }

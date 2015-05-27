@@ -331,9 +331,7 @@ void HttpInspect::eval(Packet* p)
     PROFILE_VARS;
 
     // preconditions - what we registered for
-    // FIXIT remove proto check?  check for tcp or user?
-    //assert(p->is_tcp() && p->dsize && p->data);
-    assert(p->dsize && p->data);
+    assert(p->has_tcp_data());
 
     MODULE_PROFILE_START(hiPerfStats);
     hi_clear_events();

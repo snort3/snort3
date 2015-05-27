@@ -160,28 +160,17 @@ bool CvsOption::operator==(const IpsOption& ips) const
 
 int CvsOption::eval(Cursor&, Packet* p)
 {
-    int ret;
     int rval = DETECTION_OPTION_NO_MATCH;
     CvsRuleOption* cvs_rule_option = &config;
 
-    if (p == NULL)
-    {
-        return rval;
-    }
-
-    if ((p->ptrs.tcph == NULL) || (p->data == NULL) || (p->dsize == 0))
-    {
-        return rval;
-    }
-
-    if (cvs_rule_option == NULL)
+    if ( !p->has_tcp_data() )
     {
         return rval;
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "CVS begin detection\n"); );
 
-    ret = CvsDecode(p->data, p->dsize, cvs_rule_option);
+    int ret = CvsDecode(p->data, p->dsize, cvs_rule_option);
 
     if (ret == CVS_ALERT)
     {

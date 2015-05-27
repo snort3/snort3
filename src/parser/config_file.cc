@@ -57,8 +57,8 @@
 #include "sfip/sf_ip.h"
 
 #define LOG_NONE    "none"
-#define LOG_TEXT    "text"
-#define LOG_PCAP    "pcap"
+#define LOG_DUMP    "dump"
+#define LOG_CODECS  "codecs"
 
 #define ALERT_NONE  "none"
 #define ALERT_CMG   "cmg"
@@ -66,13 +66,9 @@
 #define ALERT_DJR   "djr"
 #define ALERT_U2    "u2"
 #define ALERT_AJK   "ajk"
-#ifdef REG_TEST
-#define ALERT_CON   "console"
-#endif
 
 #define OUTPUT_U2   "unified2"
 #define OUTPUT_FAST "alert_fast"
-#define OUTPUT_PCAP "log_pcap"
 
 static std::string lua_conf;
 static std::string snort_conf_dir;
@@ -340,11 +336,6 @@ void ConfigDirtyPig(SnortConfig* sc, const char*)
         sc->dirty_pig = 1;
 }
 
-void ConfigNoLog(SnortConfig* sc, const char*)
-{
-    sc->output_flags |= OUTPUT_FLAG__NO_LOG;
-}
-
 void ConfigObfuscate(SnortConfig* sc, const char*)
 {
     sc->output_flags |= OUTPUT_FLAG__OBFUSCATE;
@@ -609,10 +600,8 @@ void config_daemon(SnortConfig* sc, const char* val)
 void config_alert_mode(SnortConfig* sc, const char* val)
 {
     if (strcasecmp(val, ALERT_NONE) == 0)
-    {
-        sc->output_flags |= OUTPUT_FLAG__NO_ALERT;
         EventManager::enable_alerts(false);
-    }
+
     else if ( !strcasecmp(val, ALERT_CMG) or !strcasecmp(val, ALERT_JH) or
         !strcasecmp(val, ALERT_DJR) )
     {
@@ -623,10 +612,6 @@ void config_alert_mode(SnortConfig* sc, const char* val)
     else if ( !strcasecmp(val, ALERT_U2) or !strcasecmp(val, ALERT_AJK) )
         sc->output = OUTPUT_U2;
 
-#ifdef REG_TEST
-    else if (strcasecmp(val, ALERT_CON) == 0)
-        sc->output = OUTPUT_FAST;
-#endif
     else
         sc->output = val;
 
@@ -638,21 +623,13 @@ void config_log_mode(SnortConfig* sc, const char* val)
 {
     if (strcasecmp(val, LOG_NONE) == 0)
     {
-        sc->output_flags |= OUTPUT_FLAG__NO_LOG;
         Snort::set_main_hook(snort_ignore);
         EventManager::enable_logs(false);
     }
-    else if (strcasecmp(val, LOG_TEXT) == 0)
-    {
-        Snort::set_main_hook(snort_print);
-    }
-    else if (strcasecmp(val, LOG_PCAP) == 0)
-    {
-        sc->output = OUTPUT_PCAP;
-        Snort::set_main_hook(snort_log);
-    }
     else
     {
+        if ( !strcmp(val, LOG_DUMP) )
+            val = LOG_CODECS;
         sc->output = val;
         Snort::set_main_hook(snort_log);
     }

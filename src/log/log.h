@@ -37,8 +37,8 @@ int RollAlertFile(const char*);
 void OpenLogger();
 void CloseLogger();
 void LogIPPkt(Packet*);
-void snort_print(Packet*);
-void LogNetData(const uint8_t* data, const int len, Packet* p = NULL);
+void LogFlow(Packet*);
+void LogNetData(const uint8_t* data, const int len, Packet*);
 
 #endif
 

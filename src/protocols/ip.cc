@@ -60,7 +60,7 @@ void IpApi::set(const ip::IP6Hdr* h6)
     std::memcpy(&(dst.ip8), &(h6->ip6_dst), 16);
 }
 
-void IpApi::set(sfip_t& sip, sfip_t& dip)
+void IpApi::set(const sfip_t& sip, const sfip_t& dip)
 {
     type = IAT_DATA;
     sfip_set_ip(&src, &sip);

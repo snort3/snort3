@@ -33,12 +33,12 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <net/if.h>
-#else /* !WIN32 */
+#else
 #include <netinet/in_systm.h>
 #ifndef IFNAMSIZ
 #define IFNAMESIZ MAX_ADAPTER_NAME
-#endif /* !IFNAMSIZ */
-#endif /* !WIN32 */
+#endif
+#endif
 
 extern "C" {
 #include <daq.h>
@@ -129,12 +129,12 @@ constexpr int16_t SFTARGET_UNKNOWN_PROTOCOL = -1;
 constexpr uint8_t TCP_OPTLENMAX = 40; /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
 constexpr uint8_t DEFAULT_LAYERMAX = 40;
 
-/*  D A T A  S T R U C T U R E S  *********************************************/
-class Flow;
-
+// Packet is an abstraction describing a unit of work.  it may define a
+// wire packet or it may define a cooked packet.  the latter contains
+// payload data only, no headers.
 struct SO_PUBLIC Packet
 {
-    Flow* flow;   /* for session tracking */
+    class Flow* flow;   /* for session tracking */
 
     uint32_t packet_flags;      /* special flags for the packet */
     uint32_t xtradata_mask;
@@ -160,14 +160,17 @@ struct SO_PUBLIC Packet
 
     PseudoPacketType pseudo_type;    // valid only when PKT_PSEUDO is set
     uint32_t iplist_id;
-    uint16_t max_dsize;
 
-    /**policyId provided in configuration file. Used for correlating configuration
-     * with event output
-     */
+    // for correlating configuration with event output
     uint16_t user_policy_id;
 
     uint8_t ps_proto;  // Used for portscan and unified2 logging
+
+    // IP_MAXPACKET is the minimum allowable max_dsize
+    // there is no requirement that all data fit into an IP datagram
+    // but we do require that an IP datagram fit into Packet space
+    // we can increase beyond this if needed
+    static const uint32_t max_dsize = IP_MAXPACKET;
 
     /*  Boolean functions - general information about this packet */
     inline bool has_ip() const
@@ -200,9 +203,15 @@ struct SO_PUBLIC Packet
     inline bool is_fragment() const
     { return ptrs.decode_flags & DECODE_FRAG; }
 
+    inline bool has_tcp_data() const
+    { return (proto_bits & PROTO_BIT__TCP) and data and dsize; }
+
     /* Get general, non-boolean information */
     inline PktType type() const
     { return ptrs.get_pkt_type(); } // defined in codec.h
+
+    const char* get_type() const;
+    const char* get_pseudo_type() const;
 
     /* the ip_api return the protocol_ID of the protocol directly after the
      * innermost IP layer.  However, especially in IPv6, the next protocol
@@ -237,7 +246,7 @@ struct SO_PUBLIC Packet
 
     inline void reset()
     {
-        memset(&flow, '\0', offsetof(Packet, pkth));
+        memset(this, 0, offsetof(Packet, pkth));
         ptrs.reset();
     }
     bool from_client()
@@ -261,8 +270,6 @@ struct SO_PUBLIC Packet
     bool is_rebuilt()
     { return (packet_flags & (PKT_REBUILT_STREAM|PKT_REBUILT_FRAG)) != 0; }
 };
-
-#define PKT_ZERO_LEN offsetof(Packet, pkth)
 
 /* Macros to deal with sequence numbers - p810 TCP Illustrated vol 2 */
 #define SEQ_LT(a,b)  ((int)((a) - (b)) <  0)

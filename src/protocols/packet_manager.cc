@@ -198,7 +198,7 @@ void PacketManager::decode(
         codec_data.codec_flags |= CODEC_STREAM_REBUILT;
 
     // initialize all Packet information
-    memset(p, 0, PKT_ZERO_LEN);
+    p->reset();
     p->pkth = pkthdr;
     p->pkt = pkt;
     p->ptrs.reset();
@@ -640,6 +640,34 @@ const uint8_t* PacketManager::encode_reject(UnreachResponse type,
     }
 }
 
+static void set_hdr(
+    const Packet* p, Packet* c, const DAQ_PktHdr_t* phdr, uint32_t opaque)
+{
+    c->reset();
+    DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
+
+#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
+    if ( !phdr )
+        phdr = p->pkth;
+
+    pkth->ingress_index = phdr->ingress_index;
+    pkth->ingress_group = phdr->ingress_group;
+    pkth->egress_index = phdr->egress_index;
+    pkth->egress_group = phdr->egress_group;
+    pkth->flags = phdr->flags & (~DAQ_PKT_FLAG_HW_TCP_CS_GOOD);
+    pkth->address_space_id = phdr->address_space_id;
+    pkth->opaque = opaque;
+    UNUSED(p);
+#else
+#ifdef HAVE_DAQ_ACQUIRE_WITH_META
+    pkth->opaque = p->pkth->opaque;
+#endif
+    UNUSED(p);
+    UNUSED(phdr);
+    UNUSED(opaque);
+#endif
+}
+
 //-------------------------------------------------------------------------
 // formatters:
 // - these packets undergo detection
@@ -648,7 +676,29 @@ const uint8_t* PacketManager::encode_reject(UnreachResponse type,
 // - inner layer header is very similar but payload differs
 // - original ttl is always used
 //-------------------------------------------------------------------------
-int PacketManager::encode_format_with_daq_info(
+
+int PacketManager::format_tcp(
+    EncodeFlags, const Packet* p, Packet* c, PseudoPacketType type,
+    const DAQ_PktHdr_t* phdr, uint32_t opaque)
+{
+    c->reset();
+    DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
+    set_hdr(p, c, phdr, opaque);
+
+    c->packet_flags |= PKT_PSEUDO;
+    c->pseudo_type = type;
+    c->user_policy_id = p->user_policy_id;  // cooked packet gets same policy as raw
+
+    // setup pkt capture header
+    pkth->caplen = 0;
+    pkth->pktlen = 0;
+    pkth->ts = p->pkth->ts;
+
+    total_rebuilt_pkts++;  // update local counter
+    return 0;
+}
+
+int PacketManager::encode_format(
     EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type,
     const DAQ_PktHdr_t* phdr, uint32_t opaque)
 {
@@ -661,23 +711,8 @@ int PacketManager::encode_format_with_daq_info(
     if ( num_layers <= 0 )
         return -1;
 
-    memset(c, 0, PKT_ZERO_LEN);
-
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-    pkth->ingress_index = phdr->ingress_index;
-    pkth->ingress_group = phdr->ingress_group;
-    pkth->egress_index = phdr->egress_index;
-    pkth->egress_group = phdr->egress_group;
-    pkth->flags = phdr->flags & (~DAQ_PKT_FLAG_HW_TCP_CS_GOOD);
-    pkth->address_space_id = phdr->address_space_id;
-    pkth->opaque = opaque;
-#elif defined(HAVE_DAQ_ACQUIRE_WITH_META)
-    pkth->opaque = opaque;
-    UNUSED(phdr);
-#else
-    UNUSED(phdr);
-    UNUSED(opaque);
-#endif /* HAVE_DAQ_ADDRESS_SPACE_ID */
+    c->reset();
+    set_hdr(p, c, phdr, opaque);
 
     if ( f & ENC_FLAG_NET )
     {
@@ -748,9 +783,8 @@ int PacketManager::encode_format_with_daq_info(
     len = c->data - c->pkt;
 
     // len < ETHERNET_HEADER_LEN + VLAN_HEADER + ETHERNET_MTU
-    assert((unsigned)len < Codec::PKT_MAX - IP_MAXPACKET);
+    assert((unsigned)len < Codec::PKT_MAX - c->max_dsize);
 
-    c->max_dsize = IP_MAXPACKET - len;
     c->proto_bits = p->proto_bits;
     c->ip_proto_next = p->ip_proto_next;
     c->packet_flags |= PKT_PSEUDO;
@@ -766,26 +800,6 @@ int PacketManager::encode_format_with_daq_info(
     total_rebuilt_pkts++;  // update local counter
     return 0;
 }
-
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-int PacketManager::encode_format(EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type)
-{
-    return encode_format_with_daq_info(f, p, c, type, p->pkth, p->pkth->opaque);
-}
-
-#elif defined(HAVE_DAQ_ACQUIRE_WITH_META)
-int PacketManager::encode_format(EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type)
-{
-    return encode_format_with_daq_info(f, p, c, type, nullptr, p->pkth->opaque);
-}
-
-#else
-int PacketManager::encode_format(EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type)
-{
-    return encode_format_with_daq_info(f, p, c, type, nullptr, 0);
-}
-
-#endif
 
 //-------------------------------------------------------------------------
 // updaters:  these functions set length and checksum fields, only needed

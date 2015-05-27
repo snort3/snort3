@@ -53,10 +53,15 @@ UserSegment* UserSegment::init(const uint8_t* p, unsigned n)
 {
     unsigned bucket = (n > BUCKET) ? n : BUCKET;
     UserSegment* us = (UserSegment*)malloc(sizeof(*us)+bucket-1);
+
+    if ( !us )
+        return nullptr;
+
     us->len = 0;
     us->offset = 0;
     us->used = 0;
     us->copy(p, n);
+
     return us;
 }
 
@@ -275,6 +280,10 @@ void UserTracker::add_data(Packet* p)
     if ( avail < p->dsize )
     {
         UserSegment* us = UserSegment::init(p->data+avail, p->dsize-avail);
+
+        if ( !us )
+            return;
+
         seg_list.push_back(us);
     }
     total += p->dsize;
@@ -486,7 +495,7 @@ int UserSession::process(Packet* p)
 
     UserTracker& ut = p->from_client() ? server : client;
 
-    if ( p->ptrs.decode_flags & DECODE_SOF )
+    if ( p->ptrs.decode_flags & DECODE_SOF or !ut.splitter )
         start(p, flow);
 
     if ( p->data && p->dsize )
@@ -522,12 +531,6 @@ void UserSession::flush_listener(Packet*) { }
 
 void UserSession::set_extra_data(Packet*, uint32_t /*flag*/) { }
 void UserSession::clear_extra_data(Packet*, uint32_t /*flag*/) { }
-
-int UserSession::get_rebuilt_packets(Packet*, PacketIterator, void* /*userdata*/)
-{ return 0; }
-
-int UserSession::get_segments(Packet*, StreamSegmentIterator, void* /*userdata*/)
-{ return 0; }
 
 uint8_t UserSession::get_reassembly_direction()
 { return SSN_DIR_NONE; }

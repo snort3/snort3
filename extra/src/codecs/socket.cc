@@ -85,12 +85,9 @@ static void set_flags(const DAQ_SktHdr_t* pci, CodecData& codec, DecodeData& sno
         snort.decode_flags |= DECODE_SOF;
 
     if ( pci->flags & DAQ_SKT_FLAG_END_FLOW )
-    {
         snort.decode_flags |= DECODE_EOF;
-        codec.lyr_len = 1;  // eat pseudo-octet
-    }
-    else
-        codec.lyr_len = 0;
+
+    codec.lyr_len = 0;
 }
 
 bool SocketCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)

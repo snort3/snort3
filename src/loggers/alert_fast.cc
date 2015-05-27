@@ -153,7 +153,9 @@ bool FastModule::end(const char*, int, SnortConfig*)
 //-------------------------------------------------------------------------
 // logger stuff
 //-------------------------------------------------------------------------
-static const char* s_dispos[] = { " [Allow]", " [CDrop]", " [WDrop]", " [Drop]", " [FDrop]" };
+
+static const char* s_dispos[] =
+{ " [Allow]", " [CDrop]", " [WDrop]", " [Drop]", " [FDrop]" };
 
 class FastLogger : public Logger
 {
@@ -190,71 +192,17 @@ void FastLogger::close()
         TextLog_Term(fast_log);
 }
 
-#ifdef REG_TEST
-static void LogReassembly(const Packet* p)
-{
-    /* Log whether or not this is reassembled data - only indicate
-     * if we're actually going to show any of the payload */
-    if ( !SnortConfig::output_app_data() || !p->dsize || !p->is_cooked() )
-        return;
-
-    switch ( p->pseudo_type )
-    {
-    case PSEUDO_PKT_SMB_SEG:
-        TextLog_Print(fast_log, "%s\n", "SMB desegmented packet");
-        break;
-    case PSEUDO_PKT_DCE_SEG:
-        TextLog_Print(fast_log, "%s\n", "DCE/RPC desegmented packet");
-        break;
-    case PSEUDO_PKT_DCE_FRAG:
-        TextLog_Print(fast_log, "%s\n", "DCE/RPC defragmented packet");
-        break;
-    case PSEUDO_PKT_SMB_TRANS:
-        TextLog_Print(fast_log, "%s\n", "SMB Transact reassembled packet");
-        break;
-    case PSEUDO_PKT_DCE_RPKT:
-        TextLog_Print(fast_log, "%s\n", "DCE/RPC reassembled packet");
-        break;
-    case PSEUDO_PKT_TCP:
-        TextLog_Print(fast_log, "%s\n", "Stream reassembled packet");
-        break;
-    case PSEUDO_PKT_IP:
-        TextLog_Print(fast_log, "%s\n", "Frag reassembled packet");
-        break;
-    default:
-        // FIXIT do we get here for portscan or sdf?
-        break;
-    }
-}
-
-#endif
-
-#ifndef REG_TEST
-static const char* get_pkt_type(Packet* p)
-{
-    switch ( p->ptrs.get_pkt_type() )
-    {
-    case PktType::IP:   return "IP";
-    case PktType::ICMP: return "ICMP";
-    case PktType::TCP:  return "TCP";
-    case PktType::UDP:  return "UDP";
-    default: break;
-    }
-    return "error";
-}
-#endif
-
 void FastLogger::alert(Packet* p, const char* msg, Event* event)
 {
-    tActiveDrop dispos = Active_GetDisposition();
     LogTimeStamp(fast_log, p);
+    tActiveDrop dispos = Active_GetDisposition();
 
     if ( dispos > ACTIVE_ALLOW )
     {
         if ( dispos > ACTIVE_DROP )
             dispos = ACTIVE_DROP;
 
-        TextLog_Puts(fast_log, s_dispos[dispos]);
+        TextLog_Print(fast_log, " %s", s_dispos[dispos]);
     }
 
     {
@@ -283,42 +231,28 @@ void FastLogger::alert(Packet* p, const char* msg, Event* event)
         }
 
         if (msg != NULL)
-        {
-#ifdef REG_TEST
-            string tmp = msg + 1;
-            tmp.pop_back();
-            TextLog_Puts(fast_log, tmp.c_str());
-#else
             TextLog_Puts(fast_log, msg);
-#endif
-        }
+
         TextLog_Puts(fast_log, " [**] ");
     }
 
     /* print the packet header to the alert file */
     {
         LogPriorityData(fast_log, event, 0);
-#ifndef REG_TEST
-        TextLog_Print(fast_log, "{%s} ", get_pkt_type(p));
-#else
-        TextLog_Print(fast_log, "{%s} ", protocol_names[p->get_ip_proto_next()]);
-#endif
+        TextLog_Print(fast_log, "{%s} ", p->get_type());
         LogIpAddrs(fast_log, p);
     }
 
     if ( packet || SnortConfig::output_app_data() )
     {
         TextLog_NewLine(fast_log);
-#ifdef REG_TEST
-        LogReassembly(p);
-#endif
         if (p->has_ip())
             LogIPPkt(fast_log, p);
         else
-            LogPayload(fast_log, p);
+            LogNetData(fast_log, p->data, p->dsize, p);
 
 #if 0
-        // FIXIT-L -J LogArpHeader unimplemented
+        // FIXIT-L LogArpHeader unimplemented
         else if (p->proto_bits & PROTO_BIT__ARP)
             LogArpHeader(fast_log, p);
 #endif

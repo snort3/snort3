@@ -813,22 +813,6 @@ void Stream::clear_extra_data(
     flow->session->clear_extra_data(p, flag);
 }
 
-int Stream::traverse_reassembled(
-    Packet* p, PacketIterator callback, void* userdata)
-{
-    Flow* flow = p->flow;
-    assert(flow && flow->session);
-    return flow->session->get_rebuilt_packets(p, callback, userdata);
-}
-
-int Stream::traverse_stream_segments(
-    Packet* p, StreamSegmentIterator callback, void* userdata)
-{
-    Flow* flow = p->flow;
-    assert(flow && flow->session);
-    return flow->session->get_segments(p, callback, userdata);
-}
-
 char Stream::get_reassembly_direction(Flow* flow)
 {
     assert(flow && flow->session);

@@ -39,11 +39,10 @@ extern "C" {
 # ifndef OBFUSCATION_TEST
 #  define OBFUSCATION_TEST
 # endif
-# define TraverseReassembled  stream.traverse_stream_segments
 static int TraverseReassembled(
-Packet*,
-int (*)(DAQ_PktHdr_t*, uint8_t*, uint8_t*, uint32_t, void*),
-void*
+    Packet*,
+    int (*)(DAQ_PktHdr_t*, uint8_t*, uint8_t*, uint32_t, void*),
+    void*
 );
 #endif
 
@@ -110,21 +109,25 @@ static inline int NumObfuscateMaxLenEntries(void);
 static inline int NumObfuscateSliceEntries(void);
 static inline ObRet ObfuscationEntryOverflow(ob_size_t);
 static inline int PayloadObfuscationRequired(Packet*);
+
 static inline void SetObfuscationEntry(ObfuscationEntry*, Packet*,
-ob_size_t, ob_size_t, ob_char_t);
+    ob_size_t, ob_size_t, ob_char_t);
+
 static inline void SortObfuscationEntries(void);
+
 static inline void SetObfuscationCallbackData(
-ObfuscationCallbackData*, Packet*, ObfuscationCallback, void*);
+    ObfuscationCallbackData*, Packet*, ObfuscationCallback, void*);
+
 static inline void SetObfuscationStreamCallbackData(
-ObfuscationStreamCallbackData*, ObfuscationCallbackData*,
-Packet*, ObfuscationCallback, void*);
+    ObfuscationStreamCallbackData*, ObfuscationCallbackData*,
+    Packet*, ObfuscationCallback, void*);
 
 static ObRet AddObfuscationEntry(Packet*, ob_size_t, ob_size_t, ob_char_t);
 static int ObfuscationEntrySort(const void*, const void*);
+
 static ObRet TraverseObfuscationList(ObfuscationCallbackData*,
-const DAQ_PktHdr_t*, const uint8_t*, ob_size_t);
-static int ObfuscateStreamSegmentsCallback(DAQ_PktHdr_t*,
-uint8_t*, uint8_t*, uint32_t, void*);
+    const DAQ_PktHdr_t*, const uint8_t*, ob_size_t);
+
 static ObRet GetObfuscatedPayloadCallback(const DAQ_PktHdr_t*,
 const uint8_t*, ob_size_t, ob_char_t, void*);
 static void PrintObfuscationEntry(const ObfuscationEntry*, int);
@@ -214,26 +217,12 @@ static ObRet OB_API_ObfuscatePacket(Packet* p,
 }
 
 // obfuscatePacketStreamSegments
-static ObRet OB_API_ObfuscatePacketStreamSegments(Packet* p,
-    ObfuscationCallback user_callback, void* user_data)
+// FIXIT-L traverse_reassembled() deleted
+// this should also be deleted if it is no longer needed
+static ObRet OB_API_ObfuscatePacketStreamSegments(Packet*,
+    ObfuscationCallback, void*)
 {
-    ObfuscationStreamCallbackData stream_callback_data;
-    ObfuscationCallbackData callback_data;
-
-    if (!PayloadObfuscationRequired(p))
-        return OB_RET_ERROR;
-
-    SortObfuscationEntries();
-    SetObfuscationStreamCallbackData(&stream_callback_data, &callback_data,
-        p, user_callback, user_data);
-
-    if (stream.traverse_stream_segments(p, ObfuscateStreamSegmentsCallback,
-        (void*)&stream_callback_data) == -1)
-    {
-        return OB_RET_ERROR;
-    }
-
-    return OB_RET_SUCCESS;
+    return OB_RET_ERROR;
 }
 
 // getObfuscatedPayload
@@ -888,73 +877,6 @@ static ObRet TraverseObfuscationList(ObfuscationCallbackData* data,
 }
 
 /*******************************************************************************
- * Function: ObfuscateStreamSegmentsCallback()
- *
- * Stream API callback for traverse_stream_segments.
- *
- * Arguments
- *  DAQ_PktHdr_t *pkth
- *   The pcap header information associated with the segment packet.
- *  uint8_t *pkt
- *   Pointer to the segment packet data starting at packet headers
- *  uint8_t *payload
- *   Pointer to the segment payload data to be obfuscated
- *  uint32_t
- *   The sequence number of this segment
- *  void *data
- *   The ObfuscationCallBack data
- *
- * Returns
- *   Per stream api traverse_reassembled:
- *   0  if obfuscation was successful.
- *  -1  if we had to bail on the obfuscation due to the user callback
- *      telling us to - this should tell traverse_stream_segments to stop
- *      traversing and not call this anymore.
- *
- ******************************************************************************/
-static int ObfuscateStreamSegmentsCallback(DAQ_PktHdr_t* pkth,
-    uint8_t* pkt, uint8_t* payload, uint32_t seq_num, void* data)
-{
-    ObfuscationStreamCallbackData* callback_data =
-        (ObfuscationStreamCallbackData*)data;
-    ob_size_t payload_size = (uint16_t)(pkth->caplen - (payload - pkt));
-
-    if ((pkt >= payload) || ((ob_size_t)(payload - pkt) > pkth->caplen))
-        return -1;
-
-    if (callback_data->data->user_callback(pkth, pkt, (ob_size_t)(payload - pkt),
-        0, callback_data->data->user_data) != OB_RET_SUCCESS)
-    {
-        return -1;
-    }
-
-    /* If we get an overlap set the entry index to where the last packet
-     * started, else set the last entry index to the end of the one for
-     * the last segment */
-    if (callback_data->next_seq > seq_num)
-    {
-        callback_data->data->entry_index = callback_data->last_entry_index;
-        callback_data->data->total_offset -=
-            (ob_size_t)(callback_data->next_seq - seq_num);
-    }
-    else
-    {
-        callback_data->last_entry_index = callback_data->data->entry_index;
-    }
-
-    if (TraverseObfuscationList(callback_data->data, NULL,
-        payload, payload_size) != OB_RET_SUCCESS)
-    {
-        return -1;
-    }
-
-    /* Update next expected sequence number */
-    callback_data->next_seq = seq_num + payload_size;
-
-    return 0;
-}
-
-/*******************************************************************************
  * Function: GetObfuscationPayloadCallback()
  *
  * ObfuscationCallback for returning an allocated obfuscated payload.
@@ -1445,7 +1367,6 @@ int main(int argc, char* argv[])
 
     packet.reset();
     packet.pseudo_type = 0;
-    packet.max_dsize = 0;
     packet.user_policy_id = 0;
     packet.iplist_id = 0;
     packeet.ps_proto = 0;
@@ -1455,6 +1376,7 @@ int main(int argc, char* argv[])
     pkthtmp->caplen = payload_bytes;
     pkthtmp->ts.tv_sec = 0;
     pkthtmp->ts.tv_usec = 0;
+
     packet.packet_flags |= PKT_PAYLOAD_OBFUSCATE;
     packet.data = payload;
     packet.dsize = payload_bytes;

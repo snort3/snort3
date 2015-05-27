@@ -175,9 +175,7 @@ struct DAQStats
     PegCount verdicts[MAX_SFDAQ_VERDICT];
     PegCount internal_blacklist;
     PegCount internal_whitelist;
-#ifdef REG_TEST
     PegCount skipped;
-#endif
     PegCount fail_open;
     PegCount idle;
 };
@@ -204,9 +202,7 @@ const PegInfo daq_names[] =
     // FIXIT-L these are not exactly DAQ counts - but they are related
     { "internal blacklist", "packets blacklisted internally due to lack of DAQ support" },
     { "internal whitelist", "packets whitelisted internally due to lack of DAQ support" },
-#ifdef REG_TEST
     { "skipped", "packets skipped at startup" },
-#endif
     { "fail open", "packets passed during initialization" },
     { "idle", "attempts to acquire from DAQ without available packets" },
     { nullptr, nullptr }
@@ -287,9 +283,7 @@ static void get_daq_stats(DAQStats& daq_stats)
 
     daq_stats.internal_blacklist = gaux.internal_blacklist;
     daq_stats.internal_whitelist = gaux.internal_whitelist;
-#ifdef REG_TEST
     daq_stats.skipped = snort_conf->pkt_skip;
-#endif
     daq_stats.fail_open = gaux.total_fail_open;
     daq_stats.idle = gaux.idle;
 }

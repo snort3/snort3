@@ -22,7 +22,9 @@
 #include "config.h"
 #endif
 
+#include <arpa/inet.h>
 #include <array>
+
 #include "utils/dnet_header.h"
 #include "main/snort_config.h"
 #include "fpdetect.h"
@@ -575,11 +577,13 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
         src.addr32 = ip4h->get_src();
         dst.addr32 = ip4h->get_dst();
 
-        TextLog_Print(text_log, "%d.%d.%d.%d -> %d.%d.%d.%d",
-            (int)src.addr8[0], (int)src.addr8[1],
-            (int)src.addr8[2], (int)src.addr8[3],
-            (int)dst.addr8[0], (int)dst.addr8[1],
-            (int)dst.addr8[2], (int)dst.addr8[3]);
+        char src_buf[INET_ADDRSTRLEN];
+        char dst_buf[INET_ADDRSTRLEN];
+
+        inet_ntop(AF_INET, &src, src_buf, sizeof(src_buf));
+        inet_ntop(AF_INET, &dst, dst_buf, sizeof(dst_buf));
+
+        TextLog_Print(text_log, "%s -> %s", src_buf, dst_buf);
     }
 
     TextLog_NewLine(text_log);

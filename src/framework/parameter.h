@@ -71,6 +71,9 @@ struct Parameter
     const char* get_string() const;
 
     static const Parameter* find(const Parameter*, const char*);
+
+    // 0-based; -1 if not found; list is | delimited
+    static int index(const char* list, const char* key);
 };
 
 #endif

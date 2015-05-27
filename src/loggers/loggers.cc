@@ -37,7 +37,6 @@ extern const BaseApi* alert_csv;
 extern const BaseApi* alert_fast;
 extern const BaseApi* alert_full;
 extern const BaseApi* alert_syslog;
-extern const BaseApi* alert_test;
 extern const BaseApi* alert_unix_sock;
 extern const BaseApi* log_null;
 extern const BaseApi* log_pcap;
@@ -56,7 +55,6 @@ const BaseApi* loggers[] =
     alert_fast,
     alert_full,
     alert_syslog,
-    alert_test,
     alert_unix_sock,
     // loggers
     log_null,

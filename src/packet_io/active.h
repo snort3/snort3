@@ -234,5 +234,5 @@ SO_PUBLIC int Active_ForceDropResetAction(Packet* p);
 
 SO_PUBLIC const char* Active_GetDispositionString();
 
-#endif // ACTIVE_H
+#endif
 

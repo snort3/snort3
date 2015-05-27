@@ -59,10 +59,10 @@ void NHttpMsgHeadShared::parse_header_block()
     header_line = new Field[session_data->num_head_lines[source_id]];
     while (bytes_used < msg_text.length)
     {
+        assert(num_headers < session_data->num_head_lines[source_id]);
         header_line[num_headers].start = msg_text.start + bytes_used;
         header_line[num_headers].length = find_header_end(header_line[num_headers].start,
             msg_text.length - bytes_used, num_seps);
-        assert(num_headers < session_data->num_head_lines[source_id]);
         if (header_line[num_headers].length > MAX_HEADER_LENGTH)
         {
             infractions += INF_TOO_LONG_HEADER;

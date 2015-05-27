@@ -54,67 +54,81 @@ enum class UnreachResponse
 class SO_PUBLIC PacketManager
 {
 public:
-
     // decode this packet and set all relevent packet fields.
     static void decode(Packet*, const struct _daq_pkthdr*, const uint8_t*, bool cooked = false);
 
     // allocate a Packet for later formatting (cloning)
     static Packet* encode_new(bool allocate_packet_data = true);
+
     // release the allocated Packet
     static void encode_delete(Packet*);
 
     // when encoding, rather than copy the destination MAC address from the
     // inbound packet, manually set the MAC address.
     static void encode_set_dst_mac(uint8_t*);
+
     // get the MAC address which has been set using encode_set_dst_mac().
     // Useful for root decoders setting the MAC address
     static uint8_t* encode_get_dst_mac();
+
     // update the packet's checksums and length variables. Call this function
     // after Snort has changed any data in this packet
     static void encode_update(Packet*);
-    // format packet for detection.  Original ttl is always used.
-    static int encode_format(
-        EncodeFlags f, const Packet* orig, Packet* clone, PseudoPacketType type);
-    // encode the packet with pre-set daq info.
-    static int encode_format_with_daq_info(
-        EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type,
-        const DAQ_PktHdr_t*, uint32_t opaque);
-    // orig is the wire pkt; clone was obtained with New()
+
+    //--------------------------------------------------------------------
+    // FIXIT-L encode_format() should be replaced with a function that
+    // does format and update in one step for packets cooked for internal
+    // use only like stream_tcp and port_scan.  stream_ip packets should
+    // just be decoded from last layer on.  at that point all the
+    // Codec::format methods can be deleted too.  the new function should
+    // be some super set of format_tcp().
+    //--------------------------------------------------------------------
+
+    // format packet for detection.  Original ttl is always used.  orig is
+    // the wire pkt; clone was obtained with New()
+    static int encode_format( EncodeFlags f, const Packet* orig, Packet*
+            clone, PseudoPacketType type, const DAQ_PktHdr_t* = nullptr,
+            uint32_t opaque = 0);
+
+    static int format_tcp(
+        EncodeFlags f, const Packet* orig, Packet* clone, PseudoPacketType type,
+        const DAQ_PktHdr_t* = nullptr, uint32_t opaque = 0);
 
     // Send a TCP response.  TcpResponse params determined the type
     // of response. Len will be set to the response's length.
     // payload && payload_len are optional.
     static const uint8_t* encode_response(
-    TcpResponse, EncodeFlags, const Packet* orig, uint32_t& len,
-    const uint8_t* const payload = nullptr, uint32_t payload_len = 0);
+        TcpResponse, EncodeFlags, const Packet* orig, uint32_t& len,
+        const uint8_t* const payload = nullptr, uint32_t payload_len = 0);
+
     // Send an ICMP unreachable response!
     static const uint8_t* encode_reject(UnreachResponse type,
         EncodeFlags flags, const Packet* p, uint32_t& len);
-
-    // for backwards compatability and convenience.
-    static inline int encode_format_with_daq_info(
-        EncodeFlags f, const Packet* orig, Packet* clone,
-        PseudoPacketType type, uint32_t opaque)
-    { return encode_format_with_daq_info(f, orig, clone, type, nullptr, opaque); }
 
     /* codec support and statistics */
 
     // get the number of packets which have been rebuilt by this thread
     static PegCount get_rebuilt_packet_count(void);
+
     // set the packet to be encoded.
     static void encode_set_pkt(Packet* p);
+
     // get the max payload for the current packet
     static uint16_t encode_get_max_payload(const Packet*);
+
     // reset the current 'clone' packet
     static inline void encode_reset(void)
     { encode_set_pkt(NULL); }
 
     // print codec information.  MUST be called after thread_term.
     static void dump_stats();
+
     // Get the name of the given protocol
     static const char* get_proto_name(uint16_t protocol);
+
     // Get the name of the given protocol
     static const char* get_proto_name(uint8_t protocol);
+
     // print this packets information, layer by layer
     static void log_protocols(TextLog* const, const Packet* const);
 
@@ -133,14 +147,13 @@ public:
     { return CodecManager::s_proto_map[proto]; }
 
 private:
-    //  STATISTICS!!
-
     // The only time we should accumulate is when CodecManager tells us too
     friend void CodecManager::thread_term();
     static void accumulate();
     static void pop_teredo(Packet*, RawData&);
+
     static bool encode(const Packet* p, EncodeFlags,
-    uint8_t lyr_start, uint8_t next_prot, Buffer& buf);
+        uint8_t lyr_start, uint8_t next_prot, Buffer& buf);
 
     // constant offsets into the s_stats array.  Notice the stat_offset
     // constant which is used when adding a protocol specific codec
@@ -155,6 +168,5 @@ private:
     static std::array<PegCount, s_stats.size()> g_stats;
     static const std::array<const char*, stat_offset> stat_names;
 };
-
 #endif
 

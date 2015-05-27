@@ -12,7 +12,6 @@ alert_csv.cc \
 alert_fast.cc \
 alert_full.cc \
 alert_syslog.cc \
-alert_test.cc \
 alert_unixsock.cc \
 log_null.cc \
 log_pcap.cc \
@@ -49,11 +48,6 @@ ehlib_LTLIBRARIES += libalert_syslog.la
 libalert_syslog_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libalert_syslog_la_LDFLAGS = -export-dynamic -shared
 libalert_syslog_la_SOURCES = alert_syslog.cc
-
-ehlib_LTLIBRARIES += libalert_test.la
-libalert_test_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libalert_test_la_LDFLAGS = -export-dynamic -shared
-libalert_test_la_SOURCES = alert_test.cc
 
 ehlib_LTLIBRARIES += libalert_unixsock.la
 libalert_unixsock_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

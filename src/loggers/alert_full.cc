@@ -208,6 +208,7 @@ void FullLogger::alert(Packet* p, const char* msg, Event* event)
     DEBUG_WRAP(DebugMessage(DEBUG_LOG, "Logging Alert data!\n"); );
 
     LogTimeStamp(full_log, p);
+    TextLog_Putc(full_log, ' ');
 
     if (p && p->has_ip())
     {

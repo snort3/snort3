@@ -22,9 +22,10 @@
 #include "config.h"
 #endif
 
+#include <arpa/inet.h>
 #include <limits>
-#include "detection/fpdetect.h"
 
+#include "detection/fpdetect.h"
 #include "protocols/ipv6.h"
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
@@ -540,20 +541,13 @@ void Ipv6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
         const ip::snort_in6_addr* const src = ip6h->get_src();
         const ip::snort_in6_addr* const dst = ip6h->get_dst();
 
-        TextLog_Print(text_log, "%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:"
-            "%02X%02X:%02X%02X:%02X%02X -> %02X%02X:%02X%02X:"
-            "%02X%02X:%02X%02X:%02X%02X:%02X%02X",
-            (int)src->u6_addr8[0], (int)src->u6_addr8[1], (int)src->u6_addr8[2],
-            (int)src->u6_addr8[3], (int)src->u6_addr8[4], (int)src->u6_addr8[5],
-            (int)src->u6_addr8[6], (int)src->u6_addr8[7], (int)src->u6_addr8[8],
-            (int)src->u6_addr8[9], (int)src->u6_addr8[10], (int)src->u6_addr8[11],
-            (int)src->u6_addr8[12], (int)src->u6_addr8[13], (int)src->u6_addr8[14],
-            (int)src->u6_addr8[15], (int)dst->u6_addr8[0], (int)dst->u6_addr8[1],
-            (int)dst->u6_addr8[2], (int)dst->u6_addr8[3], (int)dst->u6_addr8[4],
-            (int)dst->u6_addr8[5], (int)dst->u6_addr8[6], (int)dst->u6_addr8[7],
-            (int)dst->u6_addr8[8], (int)dst->u6_addr8[9], (int)dst->u6_addr8[10],
-            (int)dst->u6_addr8[11], (int)dst->u6_addr8[12], (int)dst->u6_addr8[13],
-            (int)dst->u6_addr8[14], (int)dst->u6_addr8[15]);
+        char src_buf[INET6_ADDRSTRLEN];
+        char dst_buf[INET6_ADDRSTRLEN];
+
+        inet_ntop(AF_INET6, src, src_buf, sizeof(src_buf));
+        inet_ntop(AF_INET6, dst, dst_buf, sizeof(dst_buf));
+
+        TextLog_Print(text_log, "%s -> %s", src_buf, dst_buf);
     }
 
     TextLog_NewLine(text_log);

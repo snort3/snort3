@@ -94,3 +94,72 @@ bool Packet::get_ip_proto_next(uint8_t& lyr, uint8_t& proto) const
     return false;
 }
 
+const char* Packet::get_type() const
+{
+    switch ( ptrs.get_pkt_type() )
+    {
+    case PktType::IP:
+        return "IP";
+
+    case PktType::ICMP:
+        return "ICMP";
+
+    case PktType::TCP:
+        return "TCP";
+
+    case PktType::UDP:
+        return "UDP";
+
+    case PktType::USER:
+    case PktType::FILE:
+        if ( proto_bits & PROTO_BIT__TCP )
+            return "TCP";
+        if ( proto_bits & PROTO_BIT__UDP )
+            return "UDP";
+        break;
+
+    default:
+        break;
+    }
+    return "error";
+}
+
+const char* Packet::get_pseudo_type() const
+{
+    if ( !(packet_flags & PKT_PSEUDO) )
+        return "raw";
+
+    switch ( pseudo_type )
+    {
+    case PSEUDO_PKT_IP:
+        return "stream_ip";
+
+    case PSEUDO_PKT_TCP:
+        return "stream_tcp";
+
+    case PSEUDO_PKT_DCE_RPKT:
+        return "dce2_rpc_reass";
+
+    case PSEUDO_PKT_DCE_SEG:
+        return "dce2_rpc_deseg";
+
+    case PSEUDO_PKT_DCE_FRAG:
+        return "dce2_rpc_defrag";
+
+    case PSEUDO_PKT_SMB_SEG:
+        return "dce2_smb_deseg";
+
+    case PSEUDO_PKT_SMB_TRANS:
+        return "dce2_smb_transact";
+
+    case PSEUDO_PKT_PS:
+        return "port_scan";
+
+    case PSEUDO_PKT_SDF:
+        return "sdf";
+
+    default: break;
+    }
+    return "other";
+}
+

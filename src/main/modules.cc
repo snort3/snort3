@@ -658,9 +658,6 @@ static const Parameter output_params[] =
     { "logdir", Parameter::PT_STRING, nullptr, ".",
       "where to put log files (same as -l)" },
 
-    { "nolog", Parameter::PT_BOOL, nullptr, "false",
-      "turn off logging (alerts still work, same as -N)" },
-
     { "obfuscate", Parameter::PT_BOOL, nullptr, "false",
       "obfuscate the logged IP addresses (same as -O)" },
 
@@ -709,9 +706,6 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("max_data") )
         sc->event_trace_max = v.get_long();
-
-    else if ( v.is("nolog") )
-        v.update_mask(sc->output_flags, OUTPUT_FLAG__NO_LOG);
 
     else if ( v.is("obfuscate") )
         v.update_mask(sc->output_flags, OUTPUT_FLAG__OBFUSCATE);

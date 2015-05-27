@@ -12,10 +12,10 @@ daq_file_la_CFLAGS = -DBUILDING_SO
 daq_file_la_LDFLAGS = -module -export-dynamic -avoid-version -shared
 daq_file_la_SOURCES = daq_file.c daq_socket.h
 
-daqlib_LTLIBRARIES += daq_user.la
-daq_user_la_CFLAGS = -DBUILDING_SO
-daq_user_la_LDFLAGS = -module -export-dynamic -avoid-version -shared
-daq_user_la_SOURCES = daq_user.c daq_socket.h
+daqlib_LTLIBRARIES += daq_hext.la
+daq_hext_la_CFLAGS = -DBUILDING_SO
+daq_hext_la_LDFLAGS = -module -export-dynamic -avoid-version -shared
+daq_hext_la_SOURCES = daq_hext.c daq_socket.h
 
 AM_CFLAGS = @AM_CFLAGS@
 

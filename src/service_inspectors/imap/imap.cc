@@ -826,7 +826,7 @@ void Imap::eval(Packet* p)
 {
     PROFILE_VARS;
     // precondition - what we registered for
-    assert(p->is_tcp() && p->dsize && p->data);
+    assert(p->has_tcp_data());
 
     ++imapstats.total_packets;
 

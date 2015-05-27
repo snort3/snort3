@@ -29,12 +29,14 @@
 #include <iostream>
 
 #include "main/snort_types.h"
+#include "main/snort_config.h"
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "protocols/packet.h"
 #include "protocols/packet_manager.h"
 #include "detection/signature.h"
 #include "log/text_log.h"
+#include "log/log_text.h"
 #include "utils/stats.h"
 
 static THREAD_LOCAL TextLog* test_file = nullptr;
@@ -138,8 +140,6 @@ void CodecLogger::close()
 
 void CodecLogger::log(Packet* p, const char* msg, Event* e)
 {
-    std::string s = std::string(msg);
-
     TextLog_Print(test_file, "pkt:" STDu64 "\t", pc.total_from_daq);
 
     if (e != NULL)
@@ -159,6 +159,10 @@ void CodecLogger::log(Packet* p, const char* msg, Event* e)
     TextLog_NewLine(test_file);
     PacketManager::log_protocols(test_file, p);
     TextLog_NewLine(test_file);
+
+    if ( p->dsize and SnortConfig::output_app_data() )
+        LogNetData(test_file, p->data, p->dsize, p);
+
     TextLog_NewLine(test_file);
 }
 

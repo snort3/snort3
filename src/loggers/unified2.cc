@@ -127,8 +127,6 @@ static THREAD_LOCAL char io_buffer[u2_buf_sz];
 static void Unified2InitFile(Unified2Config*);
 static inline void Unified2RotateFile(Unified2Config*);
 static void _Unified2LogPacketAlert(Packet*, const char*, Unified2Config*, Event*);
-static void _Unified2LogStreamAlert(Packet*, const char*, Unified2Config*, Event*);
-static int Unified2LogStreamCallback(DAQ_PktHdr_t*, uint8_t*, void*);
 static void Unified2Write(uint8_t*, uint32_t, Unified2Config*);
 
 static void _AlertIP4_v2(Packet*, const char*, Unified2Config*, Event*);
@@ -638,67 +636,6 @@ static void _Unified2LogPacketAlert(
     Unified2Write(write_pkt_buffer, write_len, config);
 }
 
-/**
- * Callback for the Stream reassembler to log packets
- *
- */
-static int Unified2LogStreamCallback(DAQ_PktHdr_t* pkth,
-    uint8_t* packet_data, void* userdata)
-{
-    Unified2LogCallbackData* unifiedData = (Unified2LogCallbackData*)userdata;
-    Serial_Unified2_Header hdr;
-    uint32_t write_len = sizeof(Serial_Unified2_Header) + sizeof(Serial_Unified2Packet) - 4;
-
-    if (!userdata || !pkth || !packet_data)
-        return -1;
-
-    write_len += pkth->caplen;
-
-    if ( unifiedData->config->limit &&
-        (u2.current + write_len) > unifiedData->config->limit )
-        Unified2RotateFile(unifiedData->config);
-
-    hdr.type = htonl(UNIFIED2_PACKET);
-    hdr.length = htonl(sizeof(Serial_Unified2Packet) - 4 + pkth->caplen);
-
-    /* Event data will already be set */
-
-    unifiedData->logheader->packet_second = htonl((uint32_t)pkth->ts.tv_sec);
-    unifiedData->logheader->packet_microsecond = htonl((uint32_t)pkth->ts.tv_usec);
-    unifiedData->logheader->packet_length = htonl(pkth->caplen);
-
-    if (SafeMemcpy(write_pkt_buffer, &hdr, sizeof(Serial_Unified2_Header),
-        write_pkt_buffer, write_pkt_end) != SAFEMEM_SUCCESS)
-    {
-        ErrorMessage("%s(%d) Failed to copy Serial_Unified2_Header. "
-            "Not writing unified2 event.\n", __FILE__, __LINE__);
-        return -1;
-    }
-
-    if (SafeMemcpy(write_pkt_buffer + sizeof(Serial_Unified2_Header),
-        unifiedData->logheader, sizeof(Serial_Unified2Packet) - 4,
-        write_pkt_buffer, write_pkt_end) != SAFEMEM_SUCCESS)
-    {
-        ErrorMessage("%s(%d) Failed to copy Serial_Unified2Packet. "
-            "Not writing unified2 event.\n", __FILE__, __LINE__);
-        return -1;
-    }
-
-    if (SafeMemcpy(write_pkt_buffer + sizeof(Serial_Unified2_Header) +
-        sizeof(Serial_Unified2Packet) - 4,
-        packet_data, pkth->caplen,
-        write_pkt_buffer, write_pkt_end) != SAFEMEM_SUCCESS)
-    {
-        ErrorMessage("%s(%d) Failed to copy packet data. "
-            "Not writing unified2 event.\n", __FILE__, __LINE__);
-        return -1;
-    }
-
-    Unified2Write(write_pkt_buffer, write_len, unifiedData->config);
-
-    return 0;
-}
-
 static ObRet Unified2LogObfuscationCallback(const DAQ_PktHdr_t* pkth,
     const uint8_t* packet_data, ob_size_t length,
     ob_char_t ob_char, void* userdata)
@@ -786,59 +723,6 @@ static ObRet Unified2LogObfuscationCallback(const DAQ_PktHdr_t* pkth,
     unifiedData->num_bytes += length;
 
     return OB_RET_SUCCESS;
-}
-
-/**
- * Log a set of packets stored in the stream reassembler
- *
- */
-static void _Unified2LogStreamAlert(
-    Packet* p, const char*, Unified2Config* config, Event* event)
-{
-    Unified2LogCallbackData unifiedData;
-    Serial_Unified2Packet logheader;
-
-    logheader.sensor_id = 0;
-    logheader.linktype = u2.base_proto;
-
-    /* setup the event header */
-    if (event != NULL)
-    {
-        logheader.event_id = htonl(event->event_reference);
-        logheader.event_second = htonl(event->ref_time.tv_sec);
-    }
-    else
-    {
-        logheader.event_id = 0;
-        logheader.event_second = 0;
-    }
-
-    /* queue up the stream for logging */
-    unifiedData.logheader = &logheader;
-    unifiedData.config = config;
-    unifiedData.event = event;
-    unifiedData.num_bytes = 0;
-
-    if ((p != NULL) && (p->pkt != NULL) && (p->pkth != NULL)
-        && obApi->payloadObfuscationRequired(p))
-    {
-        if (obApi->obfuscatePacketStreamSegments(p, Unified2LogObfuscationCallback,
-            (void*)&unifiedData) == OB_RET_SUCCESS)
-        {
-            /* Write the last record */
-            if (unifiedData.num_bytes != 0)
-                Unified2Write(write_pkt_buffer, unifiedData.num_bytes, config);
-            return;
-        }
-
-        /* Reset since we failed */
-        unifiedData.num_bytes = 0;
-    }
-
-    if (!p)
-        return;
-
-    stream.traverse_reassembled(p, Unified2LogStreamCallback, &unifiedData);
 }
 
 /******************************************************************************
@@ -1214,7 +1098,9 @@ void U2Logger::log(Packet* p, const char* msg, Event* event)
         {
             DEBUG_WRAP(DebugMessage(DEBUG_LOG,
                 "[*] Reassembled packet, dumping stream packets\n"); );
-            _Unified2LogStreamAlert(p, msg, &config, event);
+            // FIXIT-L replace with reassembled stream data and 
+            // optionally the first captured packet
+            //_Unified2LogStreamAlert(p, msg, &config, event);
         }
         else
         {

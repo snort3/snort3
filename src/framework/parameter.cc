@@ -435,3 +435,14 @@ const Parameter* Parameter::find(const Parameter* p, const char* s)
     return nullptr;
 }
 
+int Parameter::index(const char* r, const char* s)
+{
+    const char* t = ::find(r, s);
+
+    if ( !t )
+        return -1;
+
+    unsigned idx = get_index(r, t);
+    return (int)idx;
+}
+

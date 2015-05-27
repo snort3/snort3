@@ -513,11 +513,14 @@ with these Snort options:
 * This module is primarily for development and test.
 
 
-=== User Module
+=== Hext Module
 
-The user module generates packets suitable for processing with Snort's
-stream_user from simple text input.  The first character of the line
-determines it's purpose:
+The hext module generates packets suitable for processing by Snort from
+hex/plain text.  Raw packets include full headers and are processed
+normally.  Otherwise the packets contain only payload and are accompanied
+with flow information (4-tuple) suitable for processing by stream_user.
+
+The first character of the line determines it's purpose:
 
     '$' command
     '#' comment
@@ -557,8 +560,8 @@ Strings may contain the following escape sequences:
     \\ = 0x5C = \
 
 Format your input carefully; there is minimal error checking and little
-tolerance for arbitrary whitespace.  You can use Snort's -L user option to
-generate user input from a pcap.
+tolerance for arbitrary whitespace.  You can use Snort's -L hext option to
+generate hext input from a pcap.
 
 * This module only supports ip4 traffic.
 
@@ -566,4 +569,23 @@ generate user input from a pcap.
   Snort.
 
 * This module is primarily for development and test.
+
+The hext DAQ also supports a raw mode which is activated by setting the
+data link type.  For example, you can input full ethernet packets with
+--daq-var dlt=1 (Data link types are defined in the DAQ include
+sfbpf_dlt.h.)  Combine that with the hext logger in raw mode for a quick
+(and dirty) way to edit pcaps.  With --lua "log_hext = { raw = true }", the
+hext logger will dump the full packet in a way that can be read by the hext
+DAQ in raw mode.  Here is an example:
+
+    # 3 [96]
+
+    x02 09 08 07 06 05 02 01 02 03 04 05 08 00 45 00 00 52 00 03  # ..............E..R..
+    x00 00 40 06 5C 90 0A 01 02 03 0A 09 08 07 BD EC 00 50 00 00  # ..@.\............P..
+    x00 02 00 00 00 02 50 10 20 00 8A E1 00 00 47 45 54 20 2F 74  # ......P.  .....GET /t
+    x72 69 67 67 65 72 2F 31 20 48 54 54 50 2F 31 2E 31 0D 0A 48  # rigger/1 HTTP/1.1..H
+    x6F 73 74 3A 20 6C 6F 63 61 6C 68 6F 73 74 0D 0A              # ost: localhost..
+
+A comment indicating packet number and size precedes each packet dump.
+Note that the commands are not applicable in raw mode and have no effect.
 

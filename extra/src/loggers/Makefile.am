@@ -7,10 +7,10 @@ libalert_ex_la_CXXFLAGS = $(AM_CXXFLAGS)
 libalert_ex_la_LDFLAGS = -export-dynamic -shared
 libalert_ex_la_SOURCES = alert_ex.cc
 
-loglib_LTLIBRARIES += liblog_user.la
-liblog_user_la_CXXFLAGS = $(AM_CXXFLAGS)
-liblog_user_la_LDFLAGS = -export-dynamic -shared
-liblog_user_la_SOURCES = log_user.cc
+loglib_LTLIBRARIES += liblog_hext.la
+liblog_hext_la_CXXFLAGS = $(AM_CXXFLAGS)
+liblog_hext_la_LDFLAGS = -export-dynamic -shared
+liblog_hext_la_SOURCES = log_hext.cc
 
 dist_loglib_SCRIPTS = alert.lua
 

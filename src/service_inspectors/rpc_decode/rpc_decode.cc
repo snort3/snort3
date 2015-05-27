@@ -942,7 +942,7 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
 
     DEBUG_WRAP(DebugMessage(DEBUG_RPC, "New size: %d\n", decoded_len);
         DebugMessage(DEBUG_RPC, "converted data:\n");
-        //LogNetData(data, decoded_len, NULL);
+        //LogNetData(data, decoded_len, p);
         );
 
     set_alt_data(DecodeBuffer.data, decoded_len);
@@ -1018,7 +1018,7 @@ void RpcDecode::eval(Packet* p)
     PROFILE_VARS;
 
     // preconditions - what we registered for
-    assert(p->is_tcp() && p->dsize);
+    assert(p->has_tcp_data());
 
     /* If we're stateful that means stream has been configured.
      * In this case we don't look at server packets.

@@ -77,7 +77,6 @@ private:
     unsigned use;
 };
 
-/*  D A T A   S T R U C T U R E S  **********************************/
 // FIXIT-L some of this stuff can be better encapsulated
 
 struct StreamGlobalConfig

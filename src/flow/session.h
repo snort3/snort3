@@ -57,9 +57,6 @@ public:
     virtual void set_extra_data(Packet*, uint32_t /*flag*/) { }
     virtual void clear_extra_data(Packet*, uint32_t /*flag*/) { }
 
-    virtual int get_rebuilt_packets(Packet*, PacketIterator, void* /*userdata*/) { return 0; }
-    virtual int get_segments(Packet*, StreamSegmentIterator, void* /*userdata*/) { return -1; }
-
     virtual bool is_sequenced(uint8_t /*dir*/) { return true; }
     virtual bool are_packets_missing(uint8_t /*dir*/) { return true; }
 

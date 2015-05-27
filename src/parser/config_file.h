@@ -43,7 +43,6 @@ void ConfigDaqMode(SnortConfig*, const char*);
 void ConfigDaqVar(SnortConfig*, const char*);
 void ConfigDaqDir(SnortConfig*, const char*);
 void ConfigDirtyPig(SnortConfig*, const char*);
-void ConfigNoLog(SnortConfig*, const char*);
 void ConfigNoLoggingTimestamps(SnortConfig*, const char*);
 void ConfigObfuscate(SnortConfig*, const char*);
 void ConfigObfuscationMask(SnortConfig*, const char*);

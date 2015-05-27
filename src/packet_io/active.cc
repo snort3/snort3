@@ -489,3 +489,17 @@ static int Active_SendIp(
 
 uint64_t Active_GetInjects(void) { return s_injects; }
 
+const char* Active_GetDispositionString()
+{
+    switch ( active_drop_pkt )
+    {
+    case ACTIVE_ALLOW:      return "allow";
+    case ACTIVE_CANT_DROP:  return "cant_drop";
+    case ACTIVE_WOULD_DROP: return "would_drop";
+    case ACTIVE_DROP:       return "drop";
+    case ACTIVE_FORCE_DROP: return "force_drop";
+    default: break;
+    }
+    return "error";
+}
+

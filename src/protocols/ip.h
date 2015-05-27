@@ -57,7 +57,7 @@ public:
 
     void set(const IP4Hdr* h4);
     void set(const IP6Hdr* h6);
-    void set(sfip_t& src, sfip_t& dst);
+    void set(const sfip_t& src, const sfip_t& dst);
     bool set(const uint8_t* raw_ip_data);
     void reset();
 

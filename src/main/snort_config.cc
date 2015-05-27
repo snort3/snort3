@@ -521,14 +521,6 @@ bool SnortConfig::verify()
         return false;
     }
 
-    if ( (snort_conf->output_flags & OUTPUT_FLAG__NO_LOG) !=
-        (output_flags & OUTPUT_FLAG__NO_LOG) )
-    {
-        ErrorMessage("Snort Reload: Changing from log to no log or vice "
-            "versa requires a restart.\n");
-        return false;
-    }
-
     if ((snort_conf->run_flags & RUN_FLAG__NO_PROMISCUOUS) !=
         (run_flags & RUN_FLAG__NO_PROMISCUOUS))
     {

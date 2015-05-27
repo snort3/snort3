@@ -72,7 +72,7 @@ static inline void paf_jump(PAF_State* ps, uint32_t n)
 }
 
 // called on each in order segment
-uint32_t paf_check(
+int32_t paf_check(
     StreamSplitter* paf_config, PAF_State*, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t total,
     uint32_t seq, uint32_t* flags);

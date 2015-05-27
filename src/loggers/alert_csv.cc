@@ -1,8 +1,5 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2002-2013 Sourcefire, Inc.
-// Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
-// Copyright (C) 2001 Brian Caswell <bmc@mitre.org>
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -19,6 +16,14 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+// alert_csv.cc author Russ Combs <rucombs@cisco.com>
+//
+// this a complete rewrite of the work originally done by:
+//
+//     1998-2002 Martin Roesch <roesch@sourcefire.com>
+//     2001-2001 Brian Caswell <bmc@mitre.org>
+//     2002-2013 Sourcefire, Inc.
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -29,15 +34,16 @@
 #include <stdlib.h>
 
 #include <string>
+#include <vector>
 
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "protocols/packet.h"
-#include "parser.h"
-#include "snort_debug.h"
-#include "mstring.h"
-#include "util.h"
-#include "log.h"
+#include "detection/signature.h"
+#include "main/snort_debug.h"
+#include "utils/util.h"
+#include "utils/stats.h"
+#include "log/log.h"
 #include "log/text_log.h"
 #include "log/log_text.h"
 #include "protocols/tcp.h"
@@ -45,6 +51,7 @@
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
 #include "protocols/eth.h"
+#include "packet_io/active.h"
 
 #define LOG_BUFFER (4*K_BYTES)
 
@@ -56,31 +63,315 @@ static THREAD_LOCAL TextLog* csv_log;
 using namespace std;
 
 //-------------------------------------------------------------------------
+// field formatting functions
+//-------------------------------------------------------------------------
+
+struct Args
+{
+    Packet* pkt;
+    const char* msg;
+    Event* event;
+};
+
+static void ff_action(Args&)
+{
+    TextLog_Puts(csv_log, Active_GetDispositionString());
+}
+
+static void ff_dir(Args& a)
+{
+    const char* dir;
+
+    if ( a.pkt->packet_flags & PKT_FROM_CLIENT )
+        dir = "C2S";
+    else if ( a.pkt->packet_flags & PKT_FROM_SERVER )
+        dir = "S2C";
+    else
+        dir = "UNK";
+
+    TextLog_Puts(csv_log, dir);
+}
+
+static void ff_dgm_len(Args& a)
+{
+    if (a.pkt->has_ip())
+        TextLog_Print(csv_log, "%d", a.pkt->ptrs.ip_api.dgram_len());
+    else
+        TextLog_Print(csv_log, "%d", a.pkt->dsize);
+}
+
+static void ff_dst_addr(Args& a)
+{
+    if ( a.pkt->has_ip() or a.pkt->is_data() )
+        TextLog_Puts(csv_log, inet_ntoa(a.pkt->ptrs.ip_api.get_dst()));
+}
+
+static void ff_dst_ap(Args& a)
+{
+    const char* addr = "";
+    unsigned port = 0;
+
+    if ( a.pkt->has_ip() or a.pkt->is_data() )
+        addr = sfip_to_str(a.pkt->ptrs.ip_api.get_dst());
+
+    if ( a.pkt->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
+        port = a.pkt->ptrs.dp;
+
+    TextLog_Print(csv_log, "%s:%d", addr, port);
+}
+
+static void ff_dst_port(Args& a)
+{
+    if ( a.pkt->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
+        TextLog_Print(csv_log, "%d", a.pkt->ptrs.dp);
+}
+
+static void ff_eth_dst(Args& a)
+{
+    if ( !(a.pkt->proto_bits & PROTO_BIT__ETH) )
+        return;
+
+    const eth::EtherHdr* eh = layer::get_eth_layer(a.pkt);
+
+    TextLog_Print(csv_log, "%02X:%02X:%02X:%02X:%02X:%02X", eh->ether_dst[0],
+        eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
+        eh->ether_dst[4], eh->ether_dst[5]);
+}
+
+static void ff_eth_len(Args& a)
+{
+    if ( !(a.pkt->proto_bits & PROTO_BIT__ETH) )
+        return;
+
+    TextLog_Print(csv_log, "0x%X", a.pkt->pkth->pktlen);
+}
+
+static void ff_eth_src(Args& a)
+{
+    if ( !(a.pkt->proto_bits & PROTO_BIT__ETH) )
+        return;
+
+    const eth::EtherHdr* eh = layer::get_eth_layer(a.pkt);
+
+    TextLog_Print(csv_log, "%02X:%02X:%02X:%02X:%02X:%02X", eh->ether_src[0],
+        eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
+        eh->ether_src[4], eh->ether_src[5]);
+}
+
+static void ff_eth_type(Args& a)
+{
+    if ( !(a.pkt->proto_bits & PROTO_BIT__ETH) )
+        return;
+
+    const eth::EtherHdr* eh = layer::get_eth_layer(a.pkt);
+    TextLog_Print(csv_log, "0x%X", ntohs(eh->ether_type));
+}
+
+static void ff_gid(Args& a)
+{
+    if (a.event )
+        TextLog_Print(csv_log, "%u",  a.event->sig_info->generator);
+}
+
+static void ff_icmp_code(Args& a)
+{
+    if (a.pkt->ptrs.icmph )
+        TextLog_Print(csv_log, "%d", a.pkt->ptrs.icmph->code);
+}
+
+static void ff_icmp_id(Args& a)
+{
+    if (a.pkt->ptrs.icmph )
+        TextLog_Print(csv_log, "%d", ntohs(a.pkt->ptrs.icmph->s_icmp_id));
+}
+
+static void ff_icmp_seq(Args& a)
+{
+    if (a.pkt->ptrs.icmph )
+        TextLog_Print(csv_log, "%d", ntohs(a.pkt->ptrs.icmph->s_icmp_seq));
+}
+
+static void ff_icmp_type(Args& a)
+{
+    if (a.pkt->ptrs.icmph )
+        TextLog_Print(csv_log, "%d", a.pkt->ptrs.icmph->type);
+}
+
+static void ff_ip_id(Args& a)
+{
+    if (a.pkt->has_ip())
+        TextLog_Print(csv_log, "%u", a.pkt->ptrs.ip_api.id());
+}
+
+static void ff_ip_len(Args& a)
+{
+    if (a.pkt->has_ip())
+        TextLog_Print(csv_log, "%d", a.pkt->ptrs.ip_api.pay_len());
+}
+
+static void ff_msg(Args& a)
+{
+    TextLog_Quote(csv_log, a.msg);
+}
+
+static void ff_pkt_gen(Args& a)
+{
+    TextLog_Puts(csv_log, a.pkt->get_pseudo_type());
+}
+
+static void ff_pkt_num(Args&)
+{
+    TextLog_Print(csv_log, STDu64, pc.total_from_daq);
+}
+
+static void ff_proto(Args& a)
+{
+    TextLog_Puts(csv_log, a.pkt->get_type());
+}
+
+static void ff_rev(Args& a)
+{
+    if (a.event )
+        TextLog_Print(csv_log, "%u",  a.event->sig_info->rev);
+}
+
+static void ff_rule(Args& a)
+{
+    TextLog_Print(csv_log, "%u:%u:%u",
+        a.event->sig_info->generator, a.event->sig_info->id, a.event->sig_info->rev);
+}
+
+static void ff_sid(Args& a)
+{
+    if (a.event )
+        TextLog_Print(csv_log, "%u",  a.event->sig_info->id);
+}
+
+static void ff_src_addr(Args& a)
+{
+    if ( a.pkt->has_ip() or a.pkt->is_data() )
+        TextLog_Puts(csv_log, inet_ntoa(a.pkt->ptrs.ip_api.get_src()));
+}
+
+static void ff_src_ap(Args& a)
+{
+    const char* addr = "";
+    unsigned port = 0;
+
+    if ( a.pkt->has_ip() or a.pkt->is_data() )
+        addr = sfip_to_str(a.pkt->ptrs.ip_api.get_src());
+
+    if ( a.pkt->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
+        port = a.pkt->ptrs.sp;
+
+    TextLog_Print(csv_log, "%s:%d", addr, port);
+}
+
+static void ff_src_port(Args& a)
+{
+    if ( a.pkt->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
+        TextLog_Print(csv_log, "%d", a.pkt->ptrs.sp);
+}
+
+static void ff_tcp_ack(Args& a)
+{
+    if (a.pkt->ptrs.tcph )
+        TextLog_Print(csv_log, "0x%lX", (u_long)ntohl(a.pkt->ptrs.tcph->th_ack));
+}
+
+static void ff_tcp_flags(Args& a)
+{
+    if (a.pkt->ptrs.tcph )
+    {
+        char tcpFlags[9];
+        CreateTCPFlagString(a.pkt->ptrs.tcph, tcpFlags);
+        TextLog_Print(csv_log, "%s", tcpFlags);
+    }
+}
+
+static void ff_tcp_len(Args& a)
+{
+    if (a.pkt->ptrs.tcph )
+        TextLog_Print(csv_log, "%d", (a.pkt->ptrs.tcph->off()));
+}
+
+static void ff_tcp_seq(Args& a)
+{
+    if (a.pkt->ptrs.tcph )
+        TextLog_Print(csv_log, "0x%lX", (u_long)ntohl(a.pkt->ptrs.tcph->th_seq));
+}
+
+static void ff_tcp_win(Args& a)
+{
+    if (a.pkt->ptrs.tcph )
+        TextLog_Print(csv_log, "0x%X", ntohs(a.pkt->ptrs.tcph->th_win));
+}
+
+static void ff_tos(Args& a)
+{
+    if (a.pkt->has_ip())
+        TextLog_Print(csv_log, "%d", a.pkt->ptrs.ip_api.tos());
+}
+
+static void ff_ttl(Args& a)
+{
+    if (a.pkt->has_ip())
+        TextLog_Print(csv_log, "%d",a.pkt->ptrs.ip_api.ttl());
+}
+
+static void ff_timestamp(Args& a)
+{
+    LogTimeStamp(csv_log, a.pkt);
+}
+
+static void ff_udp_len(Args& a)
+{
+    if (a.pkt->ptrs.udph )
+        TextLog_Print(csv_log, "%d", ntohs(a.pkt->ptrs.udph->uh_len));
+}
+
+//-------------------------------------------------------------------------
 // module stuff
 //-------------------------------------------------------------------------
 
+typedef void (*CsvFunc)(Args&);
+
+static const CsvFunc csv_func[] =
+{
+    ff_action, ff_dir, ff_dgm_len, ff_dst_addr, ff_dst_ap, ff_dst_port,
+    ff_eth_dst, ff_eth_len, ff_eth_src, ff_eth_type, ff_gid,
+    ff_icmp_code, ff_icmp_id, ff_icmp_seq, ff_icmp_type,
+    ff_ip_id, ff_ip_len, ff_msg, ff_pkt_gen, ff_pkt_num, ff_proto,
+    ff_rev, ff_rule, ff_sid, ff_src_addr, ff_src_ap, ff_src_port,
+    ff_tcp_ack, ff_tcp_flags, ff_tcp_len, ff_tcp_seq, ff_tcp_win,
+    ff_timestamp, ff_tos, ff_ttl, ff_udp_len
+};
+
 #define csv_range \
-    "timestamp | gid | sid | rev | msg | proto | " \
-    "src_addr | dst_addr | src_port | dst_port | " \
-    "eth_src | eth_dst | eth_type | eth_len | " \
-    "ttl | tos | id | ip_len | dgm_len | " \
-    "icmp_type | icmp_code | icmp_id | icmp_seq | " \
-    "tcp_flags | tcp_seq | tcp_ack | tcp_len | tcp_win | " \
-    "udp_len"
+    "action | dir | dgm_len | dst_addr | dst_ap | dst_port | " \
+    "eth_dst | eth_len | eth_src | eth_type | gid | " \
+    "icmp_code | icmp_id | icmp_seq | icmp_type | " \
+    "ip_id | ip_len | msg | pkt_gen | pkt_num | proto | " \
+    "rev | rule | sid | src_addr | src_ap | src_port | " \
+    "tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | " \
+    "timestamp | tos | ttl | udp_len"
 
 #define csv_deflt \
-    "timestamp gid sid rev src_addr src_port dst_addr dst_port"
+    "timestamp pkt_num proto pkt_gen dgm_len dir src_ap dst_ap rule action"
 
 static const Parameter s_params[] =
 {
     { "file", Parameter::PT_BOOL, nullptr, "false",
       "output to " F_NAME " instead of stdout" },
 
-    { "csv", Parameter::PT_MULTI, csv_range, csv_deflt,
+    { "fields", Parameter::PT_MULTI, csv_range, csv_deflt,
       "selected fields will be output in given order left to right" },
 
     { "limit", Parameter::PT_INT, "0:", "0",
       "set limit (0 is unlimited)" },
+
+    { "separator", Parameter::PT_STRING, nullptr, ", ",
+      "separate fields with this character sequence" },
 
     // FIXIT-M provide PT_UNITS that converts to multiplier automatically
     { "units", Parameter::PT_ENUM, "B | K | M | G", "B",
@@ -103,9 +394,10 @@ public:
 
 public:
     bool file;
-    string csvargs;
+    string sep;
     unsigned long limit;
     unsigned units;
+    vector<CsvFunc> fields;
 };
 
 bool CsvModule::set(const char*, Value& v, SnortConfig*)
@@ -113,11 +405,21 @@ bool CsvModule::set(const char*, Value& v, SnortConfig*)
     if ( v.is("file") )
         file = v.get_bool();
 
-    else if ( v.is("csv") )
-        csvargs = SnortStrdup(v.get_string());
+    else if ( v.is("fields") )
+    {
+        string tok;
+        v.set_first_token();
+        fields.clear();
+
+        while ( v.get_next_token(tok) )
+            fields.push_back(csv_func[Parameter::index(csv_range, tok.c_str())]);
+    }
 
     else if ( v.is("limit") )
         limit = v.get_long();
+
+    else if ( v.is("separator") )
+        sep = v.get_string();
 
     else if ( v.is("units") )
         units = v.get_long();
@@ -133,7 +435,17 @@ bool CsvModule::begin(const char*, int, SnortConfig*)
     file = false;
     limit = 0;
     units = 0;
-    csvargs = csv_deflt;
+    sep = ", ";
+
+    if ( fields.empty() )
+    {
+        Value v(csv_deflt);
+        string tok;
+        v.set_first_token();
+
+        while ( v.get_next_token(tok) )
+            fields.push_back(csv_func[Parameter::index(csv_range, tok.c_str())]);
+    }
     return true;
 }
 
@@ -153,7 +465,6 @@ class CsvLogger : public Logger
 {
 public:
     CsvLogger(CsvModule*);
-    ~CsvLogger();
 
     void open() override;
     void close() override;
@@ -163,20 +474,16 @@ public:
 public:
     string file;
     unsigned long limit;
-    char** args;
-    int numargs;
+    vector<CsvFunc> fields;
+    string sep;
 };
 
 CsvLogger::CsvLogger(CsvModule* m)
 {
     file = m->file ? F_NAME : "stdout";
     limit = m->limit;
-    args = mSplit(m->csvargs.c_str(), " \n\t", 0, &numargs, 0);
-}
-
-CsvLogger::~CsvLogger()
-{
-    mSplitFree(&args, numargs);
+    sep = m->sep;
+    fields = std::move(m->fields);
 }
 
 void CsvLogger::open()
@@ -192,209 +499,17 @@ void CsvLogger::close()
 
 void CsvLogger::alert(Packet* p, const char* msg, Event* event)
 {
-    int num;
-    char* type;
-    char tcpFlags[9];
-    const eth::EtherHdr* eh = nullptr;
+    Args a = { p, msg, event };
+    bool first = true;
 
-    assert(p);
-
-    if (p->proto_bits & PROTO_BIT__ETH)
-        eh = layer::get_eth_layer(p);
-
-    // TBD an enum would be an improvement here
-    for (num = 0; num < numargs; num++)
+    for ( CsvFunc f : fields )
     {
-        type = args[num];
+        if ( first )
+            first = false;
+        else
+            TextLog_Puts(csv_log, sep.c_str());
 
-        if (!strcasecmp("timestamp", type))
-        {
-            LogTimeStamp(csv_log, p);
-        }
-        else if (!strcasecmp("gid", type))
-        {
-            if (event != NULL)
-                TextLog_Print(csv_log, "%lu",  (unsigned long)event->sig_info->generator);
-        }
-        else if (!strcasecmp("sid", type))
-        {
-            if (event != NULL)
-                TextLog_Print(csv_log, "%lu",  (unsigned long)event->sig_info->id);
-        }
-        else if (!strcasecmp("rev", type))
-        {
-            if (event != NULL)
-                TextLog_Print(csv_log, "%lu",  (unsigned long)event->sig_info->rev);
-        }
-        else if (!strcasecmp("msg", type))
-        {
-            TextLog_Quote(csv_log, msg);  /* Don't fatal */
-        }
-        else if (!strcasecmp("proto", type))
-        {
-            // api returns zero if invalid
-            switch (p->type())
-            {
-            case PktType::UDP:
-                TextLog_Puts(csv_log, "UDP");
-                break;
-            case PktType::TCP:
-                TextLog_Puts(csv_log, "TCP");
-                break;
-            case PktType::ICMP:
-                TextLog_Puts(csv_log, "ICMP");
-                break;
-            default:
-                break;
-            }
-        }
-        else if (!strcasecmp("eth_src", type))
-        {
-            if (eh)
-            {
-                TextLog_Print(csv_log, "%02X:%02X:%02X:%02X:%02X:%02X", eh->ether_src[0],
-                    eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
-                    eh->ether_src[4], eh->ether_src[5]);
-            }
-        }
-        else if (!strcasecmp("eth_dst", type))
-        {
-            if (eh)
-            {
-                TextLog_Print(csv_log, "%02X:%02X:%02X:%02X:%02X:%02X", eh->ether_dst[0],
-                    eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
-                    eh->ether_dst[4], eh->ether_dst[5]);
-            }
-        }
-        else if (!strcasecmp("eth_type", type))
-        {
-            if (eh != NULL)
-                TextLog_Print(csv_log, "0x%X", ntohs(eh->ether_type));
-        }
-        else if (!strcasecmp("eth_len", type))
-        {
-            if (eh != NULL)
-                TextLog_Print(csv_log, "0x%X", p->pkth->pktlen);
-        }
-        else if (!strcasecmp("udp_len", type))
-        {
-            if (p->ptrs.udph != NULL)
-                TextLog_Print(csv_log, "%d", ntohs(p->ptrs.udph->uh_len));
-        }
-        else if (!strcasecmp("src_port", type))
-        {
-            // api return 0 if invalid
-            switch (p->type())
-            {
-            case PktType::UDP:
-            case PktType::TCP:
-                TextLog_Print(csv_log, "%d", p->ptrs.sp);
-                break;
-            default:
-                break;
-            }
-        }
-        else if (!strcasecmp("dst_port", type))
-        {
-            switch (p->type())
-            {
-            case PktType::UDP:
-            case PktType::TCP:
-                TextLog_Print(csv_log, "%d", p->ptrs.dp);
-                break;
-            default:
-                break;
-            }
-        }
-        else if (!strcasecmp("src_addr", type))
-        {
-            if (p->has_ip())
-                TextLog_Puts(csv_log, inet_ntoa(p->ptrs.ip_api.get_src()));
-        }
-        else if (!strcasecmp("dst_addr", type))
-        {
-            if (p->has_ip())
-                TextLog_Puts(csv_log, inet_ntoa(p->ptrs.ip_api.get_dst()));
-        }
-        else if (!strcasecmp("icmp_type", type))
-        {
-            if (p->ptrs.icmph != NULL)
-                TextLog_Print(csv_log, "%d", p->ptrs.icmph->type);
-        }
-        else if (!strcasecmp("icmp_code", type))
-        {
-            if (p->ptrs.icmph != NULL)
-                TextLog_Print(csv_log, "%d", p->ptrs.icmph->code);
-        }
-        else if (!strcasecmp("icmp_id", type))
-        {
-            if (p->ptrs.icmph != NULL)
-                TextLog_Print(csv_log, "%d", ntohs(p->ptrs.icmph->s_icmp_id));
-        }
-        else if (!strcasecmp("icmp_seq", type))
-        {
-            if (p->ptrs.icmph != NULL)
-                TextLog_Print(csv_log, "%d", ntohs(p->ptrs.icmph->s_icmp_seq));
-        }
-        else if (!strcasecmp("ttl", type))
-        {
-            if (p->has_ip())
-                TextLog_Print(csv_log, "%d",p->ptrs.ip_api.ttl());
-        }
-        else if (!strcasecmp("tos", type))
-        {
-            if (p->has_ip())
-                TextLog_Print(csv_log, "%d", p->ptrs.ip_api.tos());
-        }
-        else if (!strcasecmp("id", type))
-        {
-            if (p->has_ip())
-                TextLog_Print(csv_log, "%u", p->ptrs.ip_api.id());
-        }
-        else if (!strcasecmp("ip_len", type))
-        {
-            if (p->has_ip())
-                TextLog_Print(csv_log, "%d", p->ptrs.ip_api.pay_len());
-        }
-        else if (!strcasecmp("dgm_len", type))
-        {
-            if (p->has_ip())
-            {
-                // XXX might cause a bug when IPv6 is printed?
-                TextLog_Print(csv_log, "%d", p->ptrs.ip_api.dgram_len());
-            }
-        }
-        else if (!strcasecmp("tcp_seq", type))
-        {
-            if (p->ptrs.tcph != NULL)
-                TextLog_Print(csv_log, "0x%lX", (u_long)ntohl(p->ptrs.tcph->th_seq));
-        }
-        else if (!strcasecmp("tcp_ack", type))
-        {
-            if (p->ptrs.tcph != NULL)
-                TextLog_Print(csv_log, "0x%lX", (u_long)ntohl(p->ptrs.tcph->th_ack));
-        }
-        else if (!strcasecmp("tcp_len", type))
-        {
-            if (p->ptrs.tcph != NULL)
-                TextLog_Print(csv_log, "%d", (p->ptrs.tcph->off()));
-        }
-        else if (!strcasecmp("tcp_win", type))
-        {
-            if (p->ptrs.tcph != NULL)
-                TextLog_Print(csv_log, "0x%X", ntohs(p->ptrs.tcph->th_win));
-        }
-        else if (!strcasecmp("tcp_flags",type))
-        {
-            if (p->ptrs.tcph != NULL)
-            {
-                CreateTCPFlagString(p->ptrs.tcph, tcpFlags);
-                TextLog_Print(csv_log, "%s", tcpFlags);
-            }
-        }
-
-        if (num < numargs - 1)
-            TextLog_Putc(csv_log, ',');
+        f(a);
     }
 
     TextLog_NewLine(csv_log);

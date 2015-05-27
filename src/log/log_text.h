@@ -58,16 +58,20 @@ void LogIPPkt(TextLog*, Packet*);
 void LogPayload(TextLog*, Packet*);
 void LogNetData(TextLog*, const uint8_t* data, const int len, Packet*);
 
+void LogDiv(TextLog*);
 void LogTimeStamp(TextLog*, Packet*);
+
 void LogTrHeader(TextLog*, Packet*);
 void Log2ndHeader(TextLog*, Packet*);
 void LogIpAddrs(TextLog*, Packet*);
-SO_PUBLIC void LogIpOptions(TextLog*, const IP4Hdr*, uint16_t valid_ip4_len);
-SO_PUBLIC void LogTcpOptions(TextLog*, const tcp::TCPHdr*, uint16_t valid_tcp_len);
+
 void LogIPHeader(TextLog*, Packet*);
 void LogTCPHeader(TextLog*, Packet*);
 void LogUDPHeader(TextLog*, Packet*);
 void LogICMPHeader(TextLog*, Packet*);
+
+SO_PUBLIC void LogIpOptions(TextLog*, const IP4Hdr*, uint16_t valid_ip4_len);
+SO_PUBLIC void LogTcpOptions(TextLog*, const tcp::TCPHdr*, uint16_t valid_tcp_len);
 
 #endif
 

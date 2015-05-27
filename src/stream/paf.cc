@@ -111,6 +111,8 @@ static uint32_t paf_flush (
     // such as exceeding s5_pkt->max_dsize.  the actual amount
     // flushed would ideally be applied to ps->fpt later.  for
     // now we try to circumvent such cases so we track correctly.
+    // FIXIT-L max_dsize should no longer be exceeded since it excludes
+    // headers.
     case FT_MAX:
         at = s5_len;
         if ( ps->fpt > s5_len )
@@ -262,7 +264,7 @@ void paf_clear (PAF_State* ps)
 
 //--------------------------------------------------------------------
 
-uint32_t paf_check (
+int32_t paf_check (
     StreamSplitter* ss, PAF_State* ps, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t total,
     uint32_t seq, uint32_t* flags)

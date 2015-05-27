@@ -264,7 +264,7 @@ void Telnet::show(SnortConfig*)
 void Telnet::eval(Packet* p)
 {
     // precondition - what we registered for
-    assert(p->is_tcp() && p->dsize && p->data);
+    assert(p->has_tcp_data());
 
     ++tnstats.total_packets;
     snort_telnet(config, p);

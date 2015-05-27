@@ -93,10 +93,7 @@ enum OutputFlag
     OUTPUT_FLAG__OBFUSCATE         = 0x00000100,      /* -B */
     OUTPUT_FLAG__ALERT_IFACE       = 0x00000200,      /* -I */
     OUTPUT_FLAG__NO_TIMESTAMP      = 0x00000400,      /* --nostamps */
-
-    OUTPUT_FLAG__NO_ALERT          = 0x00001000,      /* -A none */
-    OUTPUT_FLAG__NO_LOG            = 0x00002000,      /* -K none */
-    OUTPUT_FLAG__ALERTS            = 0x00004000,      /* -A != none */
+    OUTPUT_FLAG__ALERTS            = 0x00000800,      /* -A */
 };
 
 enum LoggingFlag

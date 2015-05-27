@@ -51,10 +51,8 @@ extern "C" {
 #define DAQ_DEFAULT "pcap"
 #endif
 
-#ifdef REG_TEST
 #ifndef DAQ_CAPA_INJECT_RAW
 #define DAQ_CAPA_INJECT_RAW 0x200
-#endif
 #endif
 
 // common for all daq threads / instances
