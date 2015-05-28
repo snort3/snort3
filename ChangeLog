@@ -1,6 +1,19 @@
-Pending - build 154
+15/05/28 - build 154
 
 -- new_http_inspect parsing and event handling updates
+-- initial port of file capture from Snort
+-- stream_tcp reassembles payload only
+-- remove obsolete REG_TEST logging
+-- refactor encode_format*()
+-- rewrite alert_csv with default suitable for reg tests and debugging
+-- dump 20 hex bytes per line instead of 16
+-- add raw mode hext DAQ and logger; fix dns inspector typo for tcp checks
+-- document raw hext mode
+-- cleanup flush flags vs dir
+-- add alert_csv.separator, delete alert_test
+-- tweak log config; rename daq/log user to hext
+-- cleanup logging
+-- stream_tcp refactoring and cleanup
 
 15/05/22 - build 153
 
