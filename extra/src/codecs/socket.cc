@@ -76,7 +76,8 @@ static void set_key(CodecData& codec, DecodeData& snort)
     codec.proto_bits |= PROTO_BIT__TCP;
 }
 
-static void set_flags(const DAQ_SktHdr_t* pci, CodecData& codec, DecodeData& snort)
+static void set_flags(
+    const DAQ_SktHdr_t* pci, const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     if ( pci->flags & DAQ_SKT_FLAG_TO_SERVER )
         snort.decode_flags |= DECODE_C2S;
@@ -85,9 +86,12 @@ static void set_flags(const DAQ_SktHdr_t* pci, CodecData& codec, DecodeData& sno
         snort.decode_flags |= DECODE_SOF;
 
     if ( pci->flags & DAQ_SKT_FLAG_END_FLOW )
+    {
         snort.decode_flags |= DECODE_EOF;
-
-    codec.lyr_len = 0;
+        codec.lyr_len = raw.len;
+    }
+    else
+        codec.lyr_len = 0;
 }
 
 bool SocketCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
@@ -105,7 +109,7 @@ bool SocketCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort
         snort.set_pkt_type(PktType::FILE);
     }
 
-    set_flags(pci, codec, snort);
+    set_flags(pci, raw, codec, snort);
     return true;
 }
 

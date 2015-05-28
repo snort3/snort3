@@ -21,6 +21,7 @@
 #define NHTTP_EVENT_GEN_H
 
 #include <assert.h>
+#include <stdio.h>
 
 #include "events/event_queue.h"
 
@@ -36,6 +37,8 @@ public:
     void reset() { events_generated = 0; }
     void create_event(NHttpEnums::EventSid sid)
     {
+        if ( sid == NHTTP_NOT_HTTP )
+            printf("found one\n");
         assert(((int)sid > 0) && ((int)sid <= 64));
         if ((events_generated & (((uint64_t)1) << (sid-1))) == 0)
         {

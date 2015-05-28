@@ -120,7 +120,7 @@ static void sock_cleanup(SockImpl* impl)
     impl->sock_c = impl->sock_a = impl->sock_b = -1;
 }
 
-static int sock_recv(SockImpl* impl, int* sock, struct sockaddr_in* psin)
+static int sock_recv(SockImpl* impl, int* sock)
 {
     int n = recv(*sock, impl->buf, impl->snaplen, 0);
 
@@ -130,10 +130,8 @@ static int sock_recv(SockImpl* impl, int* sock, struct sockaddr_in* psin)
         {
             DPE(impl->error, "%s: can't recv from socket (%s)\n",
                 __FUNCTION__, strerror(errno));
-            *sock = -1;
-            psin->sin_addr.s_addr = 0;
-            psin->sin_port = 0;
             impl->pci.flags = DAQ_SKT_FLAG_END_FLOW;
+            *sock = -1;
         }
         return 0;
     }
@@ -210,7 +208,7 @@ static int sock_poll(SockImpl* impl, int* sock, struct sockaddr_in* psin)
         return 0;
 
     else if ( *sock >= 0 && FD_ISSET(*sock, &inputs) )
-        return sock_recv(impl, sock, psin);
+        return sock_recv(impl, sock);
 
     else if ( *sock < 0 && FD_ISSET(impl->sock_c, &inputs) )
         return sock_accept(impl, sock, psin);
@@ -221,6 +219,20 @@ static int sock_poll(SockImpl* impl, int* sock, struct sockaddr_in* psin)
 //-------------------------------------------------------------------------
 // daq utilities
 //-------------------------------------------------------------------------
+
+static void clear(SockImpl* impl)
+{
+    if ( impl->sock_a < 0 )
+    {
+        impl->sin_a.sin_addr.s_addr = 0;
+        impl->sin_a.sin_port = 0;
+    }
+    if ( impl->sock_b < 0 )
+    {
+        impl->sin_b.sin_addr.s_addr = 0;
+        impl->sin_b.sin_port = 0;
+    }
+}
 
 static void set_pkt_hdr(SockImpl* impl, DAQ_PktHdr_t* phdr, ssize_t len)
 {
@@ -256,6 +268,9 @@ static void set_pkt_hdr(SockImpl* impl, DAQ_PktHdr_t* phdr, ssize_t len)
         impl->pci.dst_port = impl->sin_b.sin_port;
         impl->pci.flags |= DAQ_SKT_FLAG_TO_SERVER;
     }
+
+    if ( impl->pci.flags & DAQ_SKT_FLAG_END_FLOW )
+        clear(impl);
 
     phdr->priv_ptr = &impl->pci;
 }

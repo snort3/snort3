@@ -953,7 +953,8 @@ static void enable_file_type(File_type_callback_func callback)
         file_type_id_enabled = true;
         //  file_sevice_reconfig_set(true);
         start_file_processing();
-        LogMessage("File service: file type enabled.\n");
+        // FIXIT-L snort++ does not yet output startup configuration
+        //LogMessage("File service: file type enabled.\n");
     }
 
     if ( callback == NULL )
@@ -979,7 +980,8 @@ static inline void _update_file_sig_callback(File_signature_callback_func cb)
     }
     else if (file_signature_cb != cb)
     {
-        WarningMessage("File service: signature callback redefined.\n");
+        // FIXIT-L this should be a parse warning messgae
+        //WarningMessage("File service: signature callback redefined.\n");
     }
 }
 
@@ -994,7 +996,7 @@ static void enable_file_signature(File_signature_callback_func callback)
         file_sevice_reconfig_set(true);
 #endif
         start_file_processing();
-        LogMessage("File service: file signature enabled.\n");
+        //LogMessage("File service: file signature enabled.\n");
     }
 }
 
@@ -1007,7 +1009,7 @@ static void enable_file_capture(File_signature_callback_func callback)
 #ifdef SNORT_RELOAD
         file_sevice_reconfig_set(true);
 #endif
-        LogMessage("File service: file capture enabled.\n");
+        //LogMessage("File service: file capture enabled.\n");
         /* Enable file signature*/
         enable_file_signature(callback);
     }

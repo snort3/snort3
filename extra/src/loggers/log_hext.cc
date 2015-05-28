@@ -224,7 +224,7 @@ void HextLogger::log(Packet* p, const char*, Event*)
         log_raw(p);
         log_data(p->pkt, p->pkth->caplen);
     }
-    else if ( p->is_tcp() and p->dsize )
+    else if ( p->has_tcp_data() )
     {
         log_header(p);
         log_data(p->data, p->dsize);
