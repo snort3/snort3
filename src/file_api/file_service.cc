@@ -354,7 +354,6 @@ FileContext* create_file_context(Flow* flow)
     if (!file_session)
     {
         FileFlowData* ffd = new FileFlowData;
-        file_session = &ffd->session;
         flow->set_application_data(ffd);
     }
 

@@ -430,8 +430,8 @@ void UdpCodec::update(const ip::IpApi& ip_api, const EncodeFlags flags,
         {
             checksum::Pseudoheader6 ps6;
             const ip::IP6Hdr* const ip6h = ip_api.get_ip6h();
-            memcpy(ps6.sip, &ip6h->ip6_src.u6_addr32, sizeof(ps6.sip));
-            memcpy(ps6.dip, &ip6h->ip6_dst.u6_addr32, sizeof(ps6.dip));
+            memcpy(ps6.sip, ip6h->ip6_src.u6_addr32, sizeof(ps6.sip));
+            memcpy(ps6.dip, ip6h->ip6_dst.u6_addr32, sizeof(ps6.dip));
             ps6.zero = 0;
             ps6.protocol = IPPROTO_ID_UDP;
             ps6.len = htons((uint16_t)updated_len);

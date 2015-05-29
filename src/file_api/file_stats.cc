@@ -90,10 +90,8 @@ void printFileContext(FileContext* context)
 
     if (unused > 0)
     {
-        used = snprintf(cur, unused, "\nProcessed size: %u\n",
+        snprintf(cur, unused, "\nProcessed size: %u\n",
             (unsigned int)context->processed_bytes);
-        unused -= used;
-        cur += used;
     }
 
     buf[sizeof(buf) - 1] = '\0';

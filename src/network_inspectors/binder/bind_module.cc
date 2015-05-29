@@ -151,7 +151,7 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
     else if ( v.is("proto") )
     {
         const PktType mask[] =
-        { 
+        {
             PktType::ANY, PktType::IP, PktType::ICMP, PktType::TCP, PktType::UDP,
             PktType::USER, PktType::FILE
         };

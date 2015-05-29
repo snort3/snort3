@@ -1514,14 +1514,14 @@ static void LogCharData(TextLog* log, char* data, int len)
  *
  * Returns: void function
  */
-#define SEPARATOR \
-          "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
+static const char SEPARATOR[] =
+          "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -";
 
 #define BYTES_PER_FRAME 20
 /* middle:"41 02 43 04 45 06 47 08 49 0A 4B 0C 4D 0E 4F 0F 01 02 03 04  A.C.E.G.I.K.M.O....."
    at end:"41 02 43 04 45 06 47 08                                      A.C.E.G."*/
 
-static const char pad3[] =
+static const char PAD3[] =
           "                                                             ";
 
 void LogNetData(TextLog* log, const uint8_t* data, const int len, Packet* p)
@@ -1607,7 +1607,7 @@ void LogNetData(TextLog* log, const uint8_t* data, const int len, Packet* p)
             }
         }
         /* print ' ' past end of packet and before ascii */
-        TextLog_Puts(log, pad3+(3*i));
+        TextLog_Puts(log, PAD3+(3*i));
 
         /* then print the actual ascii chars
            or a '.' for control chars */

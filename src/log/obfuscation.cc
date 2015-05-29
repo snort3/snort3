@@ -105,22 +105,12 @@ static THREAD_LOCAL ObfuscationStruct ob_struct;
 /*******************************************************************************
  * Private function prototypes
  ******************************************************************************/
-static inline int NumObfuscateMaxLenEntries(void);
-static inline int NumObfuscateSliceEntries(void);
-static inline ObRet ObfuscationEntryOverflow(ob_size_t);
 static inline int PayloadObfuscationRequired(Packet*);
-
-static inline void SetObfuscationEntry(ObfuscationEntry*, Packet*,
-    ob_size_t, ob_size_t, ob_char_t);
 
 static inline void SortObfuscationEntries(void);
 
 static inline void SetObfuscationCallbackData(
     ObfuscationCallbackData*, Packet*, ObfuscationCallback, void*);
-
-static inline void SetObfuscationStreamCallbackData(
-    ObfuscationStreamCallbackData*, ObfuscationCallbackData*,
-    Packet*, ObfuscationCallback, void*);
 
 static ObRet AddObfuscationEntry(Packet*, ob_size_t, ob_size_t, ob_char_t);
 static int ObfuscationEntrySort(const void*, const void*);
@@ -129,7 +119,8 @@ static ObRet TraverseObfuscationList(ObfuscationCallbackData*,
     const DAQ_PktHdr_t*, const uint8_t*, ob_size_t);
 
 static ObRet GetObfuscatedPayloadCallback(const DAQ_PktHdr_t*,
-const uint8_t*, ob_size_t, ob_char_t, void*);
+    const uint8_t*, ob_size_t, ob_char_t, void*);
+
 static void PrintObfuscationEntry(const ObfuscationEntry*, int);
 
 /*******************************************************************************
@@ -477,6 +468,7 @@ static inline void SetObfuscationCallbackData(
  *  None
  *
  ******************************************************************************/
+#if 0
 static inline void SetObfuscationStreamCallbackData(
     ObfuscationStreamCallbackData* stream_callback_data,
     ObfuscationCallbackData* callback_data, Packet* packet,
@@ -490,6 +482,7 @@ static inline void SetObfuscationStreamCallbackData(
     stream_callback_data->next_seq = 0;
     stream_callback_data->last_entry_index = 0;
 }
+#endif
 
 /*******************************************************************************
  * Function: SortObfuscationEntries()

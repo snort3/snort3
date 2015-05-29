@@ -327,8 +327,8 @@ void Icmp6Codec::update(const ip::IpApi& api, const EncodeFlags flags,
         checksum::Pseudoheader6 ps6;
         h->cksum = 0;
 
-        memcpy(ps6.sip, &api.get_src()->ip32, sizeof(ps6.sip));
-        memcpy(ps6.dip, &api.get_dst()->ip32, sizeof(ps6.dip));
+        memcpy(ps6.sip, api.get_src()->ip32, sizeof(ps6.sip));
+        memcpy(ps6.dip, api.get_dst()->ip32, sizeof(ps6.dip));
         ps6.zero = 0;
         ps6.protocol = IPPROTO_ICMPV6;
         ps6.len = htons((uint16_t)updated_len);

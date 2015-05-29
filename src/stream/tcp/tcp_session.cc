@@ -1195,6 +1195,9 @@ static inline void GetPacketHeaderFoo(
         pkth->egress_index = tcpssn->ingress_index;
         pkth->egress_group = tcpssn->ingress_group;
     }
+#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
+    pkth->opaque = 0;
+#endif
     pkth->flags = tcpssn->daq_flags;
     pkth->address_space_id = tcpssn->address_space_id;
 }

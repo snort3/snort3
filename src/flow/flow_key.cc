@@ -201,7 +201,7 @@ void FlowKey::init_mpls(uint32_t mplsId)
 }
 
 void FlowKey::init(
-    uint8_t type, uint8_t proto, 
+    uint8_t type, uint8_t proto,
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
     uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId)
