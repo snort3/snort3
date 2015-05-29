@@ -35,6 +35,7 @@ if ( not conf_dir ) then
 end
 
 dofile(conf_dir .. '/snort_defaults.lua')
+dofile(conf_dir .. '/file_magic.lua')
 
 ---------------------------------------------------------------------------
 -- configure modules
@@ -61,6 +62,8 @@ stream_ip = { }
 stream_icmp = { }
 stream_tcp = { }
 stream_udp = { }
+stream_user = { }
+stream_file = { }
 
 arp_spoof = { }
 back_orifice = { }
@@ -81,6 +84,13 @@ http_inspect = { }
 ftp_server = default_ftp_server
 ftp_client = { }
 ftp_data = { }
+
+file_id =
+{
+    enable_type = true,
+    enable_signature = true,
+    file_rules = file_magic,
+}
 
 wizard = default_wizard
 
