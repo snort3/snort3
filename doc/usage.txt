@@ -1,6 +1,6 @@
-For the following examples "$my_path" is assumed to be the path to
-the Snort++ install directory. Additionally, it is assumed that
-"$my_path/bin" is in your PATH.
+For the following examples "$my_path" is assumed to be the path to the
+Snort++ install directory. Additionally, it is assumed that "$my_path/bin"
+is in your PATH.
 
 
 ==== Environment
@@ -165,6 +165,58 @@ Run 4 packet threads and log in thread number subdirs (0-3):
 NOTE: subdirectories are created automatically if required.  Log filename
 is based on module name that writes the file.  All text mode outputs
 default to stdout.  These options can be combined.
+
+
+==== DAQ Alternatives
+
+Process hext packets from stdin:
+
+    snort -c $my_path/etc/snort/snort.lua \
+        --plugin-path $my_path/lib/snort_extra \
+        --daq-dir $my_path/lib/snort_extra/daqs --daq hext -i tty << END
+    $packet 10.1.2.3 48620 -> 10.9.8.7 80
+    "GET / HTTP/1.1\r\n"
+    "Host: localhost\r\n"
+    "\r\n"
+    END
+
+Process raw ethernet from hext file:
+
+    snort -c $my_path/etc/snort/snort.lua \
+        --plugin-path $my_path/lib/snort_extra \
+        --daq-dir $my_path/lib/snort_extra/daqs --daq hext \
+        --daq-var dlt=1 -r <hext-file>
+
+Process a directory of plain files (ie non-pcap) with 4 threads:
+
+    snort -c $my_path/etc/snort/snort.lua \
+        --plugin-path $my_path/lib/snort_extra \
+        --daq-dir $my_path/lib/snort_extra/daqs --daq file \
+        --pcap-dir path/to/files -z 4
+
+Bridge two TCP connections on port 8000 and inspect the traffic:
+
+    snort -c $my_path/etc/snort/snort.lua \
+        --plugin-path $my_path/lib/snort_extra \
+        --daq-dir $my_path/lib/snort_extra/daqs --daq socket
+
+
+==== Logger Alternatives
+
+Dump TCP stream payload in hext mode:
+
+    snort -c $my_path/etc/snort/snort.lua \
+        --plugin-path $my_path/lib/snort_extra -L hext
+    
+Output timestamp, pkt_num, proto, pkt_gen, dgm_len, dir, src_ap, dst_ap,
+rule, action for each alert:
+
+    snort -c $my_path/etc/snort/snort.lua -A csv
+
+Output the old test format alerts:
+
+    snort -c $my_path/etc/snort/snort.lua \
+        --lua "alert_csv = { fields = 'pkt_num gid sid rev', separator = '\t' }"
 
 
 ==== Shell
