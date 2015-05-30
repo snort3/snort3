@@ -1647,7 +1647,7 @@ bool Smtp::configure(SnortConfig*)
 {
     config->decode_conf.file_depth = file_api->get_max_file_depth();
 
-    if (config->decode_conf.file_depth > 0)
+    if (config->decode_conf.file_depth > -1)
         config->log_config.log_filename = 1;
 
     if (file_api->is_decoding_enabled(&config->decode_conf) )

@@ -29,13 +29,13 @@
 #include "file_api.h"
 
 /* Function prototypes  */
-void set_mime_decode_config_defauts(DecodeConfig* decode_conf);
-void set_mime_log_config_defauts(MAIL_LogConfig* log_config);
-int parse_mime_decode_args(DecodeConfig* decode_conf, char* arg, const char* preproc_name);
-bool is_decoding_enabled(DecodeConfig* decode_conf);
-bool is_mime_log_enabled(MAIL_LogConfig* log_config);
+void set_mime_decode_config_defauts(DecodeConfig*);
+void set_mime_log_config_defauts(MAIL_LogConfig*);
+int parse_mime_decode_args(DecodeConfig*, char* arg, const char* preproc_name);
+bool is_mime_log_enabled(MAIL_LogConfig*);
+bool is_decoding_enabled(DecodeConfig*);
 bool is_decoding_conf_changed(DecodeConfig* configNext, DecodeConfig* config, const
     char* preproc_name);
-void check_decode_config(DecodeConfig* currentConfig);
+void check_decode_config(DecodeConfig*);
 #endif
 

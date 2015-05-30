@@ -37,6 +37,7 @@
 #include "protocols/packet.h"
 #include "detection_util.h"
 #include "framework/data_bus.h"
+#include "file_mime_config.h"
 
 MimePcre mime_boundary_pcre;
 
@@ -333,18 +334,6 @@ static int search_str_found(void* id, void*, int index, void*, void*)
 
     /* Returning non-zero stops search, which is okay since we only look for one at a time */
     return 1;
-}
-
-static inline int is_decoding_enabled(DecodeConfig* pPolicyConfig)
-{
-    if ( (pPolicyConfig->b64_depth > -1) || (pPolicyConfig->qp_depth > -1)
-        || (pPolicyConfig->uu_depth > -1) || (pPolicyConfig->bitenc_depth > -1)
-        || (pPolicyConfig->file_depth > -1))
-    {
-        return 0;
-    }
-    else
-        return -1;
 }
 
 static inline void process_decode_type(const char* start, int length, bool cnt_xf,

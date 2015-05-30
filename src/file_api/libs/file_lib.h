@@ -87,8 +87,6 @@ void file_sig_sha256_set(FileContext* context, uint8_t* signature);
 uint8_t* file_sig_sha256_get(FileContext* context);
 
 const char* file_type_name(void* conf, uint32_t id);
-extern int64_t file_type_depth;
-extern int64_t file_signature_depth;
 
 void free_file_identifiers(void*);
 void file_sha256_print(unsigned char* hash);
