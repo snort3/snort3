@@ -1,3 +1,12 @@
+15/05/31 - build 155
+
+-- update default manuals
+-- fix autotools build of manual wrt plugins
+-- file processing fixup
+-- update usage from blog
+-- add file magic lua
+-- xcode analyzer cleanup
+
 15/05/28 - build 154
 
 -- new_http_inspect parsing and event handling updates

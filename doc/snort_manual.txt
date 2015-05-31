@@ -30,12 +30,6 @@ protocol decoding, anomaly detection, and construction of active responses.
 
 include::codec.txt[]
 
-== Data Modules
-
-Data modules are adjunct configurations for use with certain inspectors.
-
-include::data.txt[]
-
 == Inspector Modules
 
 These modules perform a variety of functions, including analysis of

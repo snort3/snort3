@@ -14,15 +14,14 @@ signals.txt \
 version.txt \
 basic.txt \
 codec.txt \
-data.txt \
 inspector.txt \
 ips_action.txt \
 ips_option.txt \
 logger.txt  \
-snort2lua_cmds.txt
+snort2lua_cmds.txt \
+search_engine.txt
 
 # currently no modules for these
-#search_engine.txt
 #so_rule.txt
 
 unbuilt_sources = \
@@ -66,7 +65,7 @@ $(all_sources)
 
 snort = $(top_builddir)/src/snort
 snort2lua = $(top_builddir)/tools/snort2lua/snort2lua
-plugin_path = $(if $(shell echo $$SNORT_PLUGIN_PATH), --plugin-path=$$SNORT_PLUGIN_PATH )
+plugin_path = $(if $(shell echo $$SNORT_PLUGIN_PATH), --plugin-path=$(SNORT_PLUGIN_PATH) )
 
 FORCE:
 $(unbuilt_sources): FORCE
@@ -103,39 +102,34 @@ basic.txt: $(snort)
 	done > $@
 
 codec.txt: $(snort)
-	for m in `$(snort) --list-modules codec` ; do \
+	for m in `$(snort) $(plugin_path) --list-modules codec` ; do \
 		$(snort) $(plugin_path)  --markup --help-module $$m ; \
 	done > $@
 
-data.txt: $(snort)
-	for m in `$(snort) --list-modules data` ; do \
-		$(snort) $(plugin_path) --markup --help-module $$m ; \
-	done > $@
-
 inspector.txt: $(snort)
-	for m in `$(snort) --list-modules inspector` ; do \
+	for m in `$(snort) $(plugin_path) --list-modules inspector` ; do \
 		$(snort) $(plugin_path) --markup --help-module $$m ; \
 	done > $@
 
 ips_action.txt: $(snort)
-	for m in `$(snort) --list-modules ips_action` ; do \
+	for m in `$(snort) $(plugin_path) --list-modules ips_action` ; do \
 		$(snort) $(plugin_path) --markup --help-module $$m ; \
 	done > $@
 
 ips_option.txt: $(snort)
-	for m in `$(snort) --list-modules ips_option` ; do \
+	for m in `$(snort) $(plugin_path) --list-modules ips_option` ; do \
 		$(snort) $(plugin_path) --markup --help-module $$m ; \
 	done > $@
 
 logger.txt: $(snort)
-	for m in `$(snort) --list-modules logger` ; do \
+	for m in `$(snort) $(plugin_path) --list-modules logger` ; do \
 		$(snort) $(plugin_path) --markup --help-module $$m ; \
 	done > $@
 
-#search_engine.txt: $(snort)
-#	for m in `$(snort) --list-modules search_engine` ; do \
-#		$(snort) $(plugin_path) --markup --help-module $$m ; \
-#	done > $@
+search_engine.txt: $(snort)
+	for m in `$(snort) $(plugin_path) --list-modules search_engine` ; do \
+		$(snort) $(plugin_path) --markup --help-module $$m ; \
+	done > $@
 
 #so_rule.txt: $(snort)
 #	for m in `$(snort) --list-modules so_rule` ; do \

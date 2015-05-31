@@ -194,13 +194,24 @@ static bool register_plugin(
     Symbol* sym = symbols + api->type;
 
     if ( api->size != sym->size )
+    {
+        ParseWarning(WARN_PLUGINS, "%s: size mismatch; expected %d, got %d",
+            api->name, sym->size, api->size);
         return false;
+    }
 
     if ( api->api_version != sym->version )
+    {
+        ParseWarning(WARN_PLUGINS, "%s: version mismatch; expected %d, got %d",
+            api->name, sym->version, api->version);
         return false;
+    }
 
     if ( !compatible_builds(api->options) )
+    {
+        ParseWarning(WARN_PLUGINS, "%s: incompatible builds", api->name);
         return false;
+    }
 
     // validate api ?
 
@@ -253,13 +264,17 @@ static bool load_lib(const char* file)
 
     if ( !(handle = dlopen(file, RTLD_NOW|RTLD_LOCAL)) )
     {
-        WarningMessage("%s\n", dlerror());
+        if ( const char* err = dlerror() )
+            ParseWarning(WARN_PLUGINS, "%s", err);
         return false;
     }
     const BaseApi** api = (const BaseApi**)dlsym(handle, "snort_plugins");
 
     if ( !api )
     {
+        if ( const char* err = dlerror() )
+            ParseWarning(WARN_PLUGINS, "%s", err);
+
         dlclose(handle);
         return false;
     }

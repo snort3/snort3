@@ -781,7 +781,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0-a1 (Build 150) from 2.9.7-177
+o"  )~   Version 3.0.0-a1 (Build 155) from 2.9.7-177
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
@@ -1329,19 +1329,30 @@ asciidoc from <a href="http://www.methods.co.nz/asciidoc/">http://www.methods.co
 </li>
 <li>
 <p>
+check from <a href="http://check.sourceforge.net">http://check.sourceforge.net</a> to build unit tests
+</p>
+</li>
+<li>
+<p>
 dblatex from <a href="http://dblatex.sourceforge.net">http://dblatex.sourceforge.net</a> to build the pdf manual (in
   addition to asciidoc)
 </p>
 </li>
 <li>
 <p>
-w3m from <a href="http://sourceforge.net/projects/w3m/">http://sourceforge.net/projects/w3m/</a> to build the plain text
-  manual
+lzma from <a href="http://www.7-zip.org/sdk.html">http://www.7-zip.org/sdk.html</a> for decompression of SWF fles.
 </p>
 </li>
 <li>
 <p>
-check from <a href="http://check.sourceforge.net">http://check.sourceforge.net</a> to build unit tests
+openssl from <a href="https://www.openssl.org">https://www.openssl.org</a> for SHA and MD5 file signatures and
+  the protected_content rule option.
+</p>
+</li>
+<li>
+<p>
+w3m from <a href="http://sourceforge.net/projects/w3m/">http://sourceforge.net/projects/w3m/</a> to build the plain text
+  manual
 </p>
 </li>
 </ul></div>
@@ -1429,6 +1440,15 @@ run eclipse and do File &gt; Import &gt; Existing Eclipse Project</code></pre>
 </div></div>
 </li>
 </ol></div>
+</li>
+<li>
+<p>
+To build with clang++ on OS X with gcc installed, do this first:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>export CXX=clang++</code></pre>
+</div></div>
 </li>
 </ul></div>
 </div>
@@ -2068,7 +2088,7 @@ bool <strong>daq.decode_data_link</strong> = false: display the second layer hea
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>daq.pcaps</strong>: total files processed
+<strong>daq.pcaps</strong>: total files and interfaces processed
 </p>
 </li>
 <li>
@@ -2439,6 +2459,21 @@ string <strong>file_id.file_rules[].magic[].content</strong>: file magic content
 int <strong>file_id.file_rules[].magic[].offset</strong> = 0: file magic offset { 0: }
 </p>
 </li>
+<li>
+<p>
+bool <strong>file_id.trace_type</strong> = false: enable runtime dump of type info
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.trace_signature</strong> = false: enable runtime dump of signature info
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.trace_stream</strong> = false: enable runtime dump of file data
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -2604,11 +2639,6 @@ bool <strong>output.quiet</strong> = false: suppress non-fatal information (stil
 <li>
 <p>
 string <strong>output.logdir</strong> = .: where to put log files (same as -l)
-</p>
-</li>
-<li>
-<p>
-bool <strong>output.nolog</strong> = false: turn off logging (alerts still work, same as -N)
 </p>
 </li>
 <li>
@@ -2975,7 +3005,7 @@ int <strong>search_engine.max_queue_events</strong> = 5: maximum number of match
 </li>
 <li>
 <p>
-bool <strong>search_engine.no_stream_inserts</strong> = false: don&#8217;t inspect reassembled payload - good for performance, bad for detection
+bool <strong>search_engine.inspect_stream_inserts</strong> = true: inspect reassembled payload - disabling is good for performance, bad for detection
 </p>
 </li>
 <li>
@@ -3078,12 +3108,12 @@ port <strong>snort.-j</strong>: &lt;port&gt; to listen for telnet connections
 </li>
 <li>
 <p>
-select <strong>snort.-K</strong> = none: &lt;mode&gt; logging mode { none|text|pcap }
+enum <strong>snort.-k</strong> = all: &lt;mode&gt; checksum mode (all,noip,notcp,noudp,noicmp,none) { all|noip|notcp|noudp|noicmp|none }
 </p>
 </li>
 <li>
 <p>
-enum <strong>snort.-k</strong> = all: &lt;mode&gt; checksum mode (all,noip,notcp,noudp,noicmp,none) { all|noip|notcp|noudp|noicmp|none }
+string <strong>snort.-L</strong>: &lt;mode&gt; logging mode (none, dump, pcap, or log_*)
 </p>
 </li>
 <li>
@@ -3099,11 +3129,6 @@ implied <strong>snort.-M</strong>: log messages to syslog (not alerts)
 <li>
 <p>
 int <strong>snort.-m</strong>: &lt;umask&gt; set umask = &lt;umask&gt; { 0: }
-</p>
-</li>
-<li>
-<p>
-implied <strong>snort.-N</strong>: ignored - for REG_TEST only
 </p>
 </li>
 <li>
@@ -3138,7 +3163,7 @@ string <strong>snort.-r</strong>: &lt;pcap&gt;&#8230; (same as --pcap-list)
 </li>
 <li>
 <p>
-string <strong>snort.-S</strong>: &lt;n=v&gt; set rules file variable n equal to value v
+string <strong>snort.-S</strong>: &lt;x=v&gt; set config variable x equal to value v
 </p>
 </li>
 <li>
@@ -3203,8 +3228,7 @@ implied <strong>snort.-y</strong>: include year in timestamp in the alert and lo
 </li>
 <li>
 <p>
-int <strong>snort.-z</strong> = 1: &lt;count&gt; maximum number of packet threads (same as --max-packet-threads)
-        0 gets the number of CPU cores reported by the system { 0: }
+int <strong>snort.-z</strong> = 1: &lt;count&gt; maximum number of packet threads (same as --max-packet-threads); 0 gets the number of CPU cores reported by the system { 0: }
 </p>
 </li>
 <li>
@@ -3379,8 +3403,7 @@ implied <strong>snort.--markup</strong>: output help in asciidoc compatible form
 </li>
 <li>
 <p>
-int <strong>snort.--max-packet-threads</strong> = 1: &lt;count&gt; configure maximum number of packet threads (same as -z)
-        0 gets the number of CPU cores reported by the system { 0: }
+int <strong>snort.--max-packet-threads</strong> = 1: &lt;count&gt; configure maximum number of packet threads (same as -z) { 0: }
 </p>
 </li>
 <li>
@@ -3431,11 +3454,6 @@ implied <strong>snort.--pcap-no-filter</strong>: reset to use no filter when get
 <li>
 <p>
 implied <strong>snort.--pcap-reload</strong>: if reading multiple pcaps, reload snort config between pcaps
-</p>
-</li>
-<li>
-<p>
-implied <strong>snort.--pcap-reset</strong>: ignored - for REG_TEST only
 </p>
 </li>
 <li>
@@ -3546,6 +3564,11 @@ implied <strong>snort.--warn-flowbits</strong>: warn about flowbits that are che
 <li>
 <p>
 implied <strong>snort.--warn-hosts</strong>: warn about host table issues
+</p>
+</li>
+<li>
+<p>
+implied <strong>snort.--warn-plugins</strong>: warn about issues that prevent plugins from loading
 </p>
 </li>
 <li>
@@ -4567,6 +4590,34 @@ enum <strong>mpls.mpls_payload_type</strong> = ip4: set encapsulated payload typ
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_token_ring">token_ring</h3>
+<div class="paragraph"><p>What: support for token ring decoding</p></div>
+<div class="paragraph"><p>Type: codec</p></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>116:140</strong> (token_ring) (token_ring) Bad Token Ring Header
+</p>
+</li>
+<li>
+<p>
+<strong>116:141</strong> (token_ring) (token_ring) Bad Token Ring ETHLLC Header
+</p>
+</li>
+<li>
+<p>
+<strong>116:142</strong> (token_ring) (token_ring) Bad Token Ring MRLENHeader
+</p>
+</li>
+<li>
+<p>
+<strong>116:143</strong> (token_ring) (token_ring) Bad Token Ring MR Header
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_udp">udp</h3>
 <div class="paragraph"><p>What: support for user datagram protocol</p></div>
 <div class="paragraph"><p>Type: codec</p></div>
@@ -4681,14 +4732,6 @@ bit_list <strong>udp.gtp_ports</strong> = 2152 3386: set GTP ports { 65535 }
 </li>
 </ul></div>
 </div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_data_modules">Data Modules</h2>
-<div class="sectionbody">
-<div class="paragraph"><p>Data modules are adjunct configurations for use with certain inspectors.</p></div>
-<div class="paragraph"><p>no match
-no match</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -4809,7 +4852,7 @@ addr_list <strong>binder[].when.nets</strong>: list of networks
 </li>
 <li>
 <p>
-enum <strong>binder[].when.proto</strong>: protocol { any | ip | icmp | tcp | udp }
+enum <strong>binder[].when.proto</strong>: protocol { any | ip | icmp | tcp | udp | user | file }
 </p>
 </li>
 <li>
@@ -4878,6 +4921,27 @@ string <strong>binder[].use.name</strong>: symbol name (defaults to type)
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_data_log">data_log</h3>
+<div class="paragraph"><p>What: log selected published data to data.log</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+string <strong>data_log.key</strong> = http_uri: name of data buffer to log
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>data_log.packets</strong>: total packets
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_dns">dns</h3>
 <div class="paragraph"><p>What: dns inspection</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
@@ -4904,6 +4968,40 @@ string <strong>binder[].use.name</strong>: symbol name (defaults to type)
 <li>
 <p>
 <strong>dns.packets</strong>: total packets
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_dpx">dpx</h3>
+<div class="paragraph"><p>What: dynamic inspector example</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+port <strong>dpx.port</strong>: port to check
+</p>
+</li>
+<li>
+<p>
+int <strong>dpx.max</strong> = 0: maximum payload before alert { 0:65535 }
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>256:1</strong> (dpx) too much data sent to port
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>dpx.packets</strong>: total packets
 </p>
 </li>
 </ul></div>
@@ -6146,6 +6244,46 @@ bool <strong>new_http_inspect.test_output</strong> = false: print out HTTP secti
 <strong>219:52</strong> (new_http_inspect) HTTP misformatted or not really HTTP
 </p>
 </li>
+<li>
+<p>
+<strong>219:53</strong> (new_http_inspect) Input apparently not HTTP
+</p>
+</li>
+<li>
+<p>
+<strong>219:54</strong> (new_http_inspect) White space before or between messages
+</p>
+</li>
+<li>
+<p>
+<strong>219:55</strong> (new_http_inspect) Request message without URI
+</p>
+</li>
+<li>
+<p>
+<strong>219:56</strong> (new_http_inspect) Control character in reason phrase
+</p>
+</li>
+<li>
+<p>
+<strong>219:57</strong> (new_http_inspect) Illegal extra whitespace in start line
+</p>
+</li>
+<li>
+<p>
+<strong>219:58</strong> (new_http_inspect) Corrupted HTTP version
+</p>
+</li>
+<li>
+<p>
+<strong>219:59</strong> (new_http_inspect) Unknown HTTP version
+</p>
+</li>
+<li>
+<p>
+<strong>219:60</strong> (new_http_inspect) Format error in HTTP header
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -6978,6 +7116,205 @@ int <strong>port_scan_global.memcap</strong> = 1048576: maximum tracker memory {
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_smtp">smtp</h3>
+<div class="paragraph"><p>What: smtp inspection</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+string <strong>smtp.alt_max_command_line_len[].command</strong>: command string
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.alt_max_command_line_len[].length</strong> = 0: specify non-default maximum for command { 0: }
+</p>
+</li>
+<li>
+<p>
+string <strong>smtp.auth_cmds</strong>: commands that initiate an authentication exchange
+</p>
+</li>
+<li>
+<p>
+string <strong>smtp.binary_data_cmds</strong>: commands that initiate sending of data and use a length value after the command
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.bitenc_decode_depth</strong> = 25: depth used to extract the non-encoded MIME attachments { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.b64_decode_depth</strong> = 25: depth used to decode the base64 encoded MIME attachments { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+string <strong>smtp.data_cmds</strong>: commands that initiate sending of data with an end of data delimiter
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.email_hdrs_log_depth</strong> = 1464: depth for logging email headers { 0:20480 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.ignore_data</strong> = false: ignore data section of mail
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.ignore_tls_data</strong> = false: ignore TLS-encrypted data when processing rules
+</p>
+</li>
+<li>
+<p>
+string <strong>smtp.invalid_cmds</strong>: alert if this command is sent from client side
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.log_email_hdrs</strong> = false: log the SMTP email headers extracted from SMTP data
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.log_filename</strong> = false: log the MIME attachment filenames extracted from the Content-Disposition header within the MIME body
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.log_mailfrom</strong> = false: log the sender&#8217;s email address extracted from the MAIL FROM command
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.log_rcptto</strong> = false: log the recipient&#8217;s email address extracted from the RCPT TO command
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.max_command_line_len</strong> = 0: max Command Line Length { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.max_header_line_len</strong> = 0: max SMTP DATA header line { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.max_response_line_len</strong> = 0: max SMTP response line { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+enum <strong>smtp.normalize</strong> = none: turns on/off normalization { none | cmds | all }
+</p>
+</li>
+<li>
+<p>
+string <strong>smtp.normalize_cmds</strong>: list of commands to normalize
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.qp_decode_depth</strong> = 25: quoted-Printable decoding depth { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.uu_decode_depth</strong> = 25: unix-to-Unix decoding depth { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+string <strong>smtp.valid_cmds</strong>: list of valid commands
+</p>
+</li>
+<li>
+<p>
+enum <strong>smtp.xlink2state</strong> = alert: enable/disable xlink2state alert { disable | alert | drop }
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>124:1</strong> (smtp) Attempted command buffer overflow
+</p>
+</li>
+<li>
+<p>
+<strong>124:2</strong> (smtp) Attempted data header buffer overflow
+</p>
+</li>
+<li>
+<p>
+<strong>124:3</strong> (smtp) Attempted response buffer overflow
+</p>
+</li>
+<li>
+<p>
+<strong>124:4</strong> (smtp) Attempted specific command buffer overflow
+</p>
+</li>
+<li>
+<p>
+<strong>124:5</strong> (smtp) Unknown command
+</p>
+</li>
+<li>
+<p>
+<strong>124:6</strong> (smtp) Illegal command
+</p>
+</li>
+<li>
+<p>
+<strong>124:7</strong> (smtp) Attempted header name buffer overflow
+</p>
+</li>
+<li>
+<p>
+<strong>124:8</strong> (smtp) Attempted X-Link2State command buffer overflow
+</p>
+</li>
+<li>
+<p>
+<strong>124:10</strong> (smtp) Base64 Decoding failed.
+</p>
+</li>
+<li>
+<p>
+<strong>124:11</strong> (smtp) Quoted-Printable Decoding failed.
+</p>
+</li>
+<li>
+<p>
+<strong>124:13</strong> (smtp) Unix-to-Unix Decoding failed.
+</p>
+</li>
+<li>
+<p>
+<strong>124:14</strong> (smtp) Cyrus SASL authentication attack.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>smtp.packets</strong>: total packets
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_ssh">ssh</h3>
 <div class="paragraph"><p>What: ssh inspection</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
@@ -7132,6 +7469,26 @@ int <strong>stream.udp_cache.max_sessions</strong> = 262144: maximum simultaneou
 <div class="ulist"><ul>
 <li>
 <p>
+<strong>stream.ip flows</strong>: total ip sessions
+</p>
+</li>
+<li>
+<p>
+<strong>stream.ip prunes</strong>: ip sessions pruned
+</p>
+</li>
+<li>
+<p>
+<strong>stream.icmp flows</strong>: total icmp sessions
+</p>
+</li>
+<li>
+<p>
+<strong>stream.icmp prunes</strong>: icmp sessions pruned
+</p>
+</li>
+<li>
+<p>
 <strong>stream.tcp flows</strong>: total tcp sessions
 </p>
 </li>
@@ -7152,22 +7509,35 @@ int <strong>stream.udp_cache.max_sessions</strong> = 262144: maximum simultaneou
 </li>
 <li>
 <p>
-<strong>stream.icmp flows</strong>: total icmp sessions
+<strong>stream.user flows</strong>: total user sessions
 </p>
 </li>
 <li>
 <p>
-<strong>stream.icmp prunes</strong>: icmp sessions pruned
+<strong>stream.user prunes</strong>: user sessions pruned
 </p>
 </li>
 <li>
 <p>
-<strong>stream.ip flows</strong>: total ip sessions
+<strong>stream.file flows</strong>: total file sessions
 </p>
 </li>
 <li>
 <p>
-<strong>stream.ip prunes</strong>: ip sessions pruned
+<strong>stream.file prunes</strong>: file sessions pruned
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_stream_file">stream_file</h3>
+<div class="paragraph"><p>What: stream inspector for file flow tracking and processing</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+bool <strong>stream_file.upload</strong> = false: indicate file transfer direction
 </p>
 </li>
 </ul></div>
@@ -7390,7 +7760,7 @@ int <strong>stream_tcp.overlap_limit</strong> = 0: maximum number of allowed ove
 </li>
 <li>
 <p>
-int <strong>stream_tcp.max_pdu</strong> = 16384: maximum reassembled PDU size { 1460:63780 }
+int <strong>stream_tcp.max_pdu</strong> = 16384: maximum reassembled PDU size { 1460:65535 }
 </p>
 </li>
 <li>
@@ -7728,6 +8098,19 @@ bool <strong>stream_udp.ignore_any_rules</strong> = false: process udp content r
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_stream_user">stream_user</h3>
+<div class="paragraph"><p>What: stream inspector for user flow tracking and reassembly</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+int <strong>stream_user.session_timeout</strong> = 30: session tracking timeout { 1:86400 }
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_telnet">telnet</h3>
 <div class="paragraph"><p>What: telnet inspection and normalization</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
@@ -7858,6 +8241,16 @@ string <strong>wizard.spells[].to_client[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>wizard.udp hits</strong>: udp identifications
+</p>
+</li>
+<li>
+<p>
+<strong>wizard.user scans</strong>: user payload scans
+</p>
+</li>
+<li>
+<p>
+<strong>wizard.user hits</strong>: user identifications
 </p>
 </li>
 </ul></div>
@@ -9053,6 +9446,19 @@ string <strong>ttl.~range</strong>: check if packet payload size is <em>size | m
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_urg">urg</h3>
+<div class="paragraph"><p>What: detection for TCP urgent pointer</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+string <strong>urg.~range</strong>: check if urgent offset is min&lt;&gt;max | &lt;max | &gt;min
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_window">window</h3>
 <div class="paragraph"><p>What: rule option to check TCP window field</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
@@ -9101,7 +9507,7 @@ bool <strong>alert_csv.file</strong> = false: output to alert_csv.txt instead of
 </li>
 <li>
 <p>
-multi <strong>alert_csv.csv</strong> = timestamp gid sid rev src_addr src_port dst_addr dst_port: selected fields will be output in given order left to right { timestamp | gid | sid | rev | msg | proto | src_addr | dst_addr | src_port | dst_port | eth_src | eth_dst | eth_type | eth_len | ttl | tos | id | ip_len | dgm_len | icmp_type | icmp_code | icmp_id | icmp_seq | tcp_flags | tcp_seq | tcp_ack | tcp_len | tcp_win | udp_len }
+multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen dgm_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | dir | dgm_len | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | ip_id | ip_len | msg | pkt_gen | pkt_num | proto | rev | rule | sid | src_addr | src_ap | src_port | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len }
 </p>
 </li>
 <li>
@@ -9111,7 +9517,25 @@ int <strong>alert_csv.limit</strong> = 0: set limit (0 is unlimited) { 0: }
 </li>
 <li>
 <p>
+string <strong>alert_csv.separator</strong> = , : separate fields with this character sequence
+</p>
+</li>
+<li>
+<p>
 enum <strong>alert_csv.units</strong> = B: bytes | KB | MB | GB { B | K | M | G }
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_alert_ex">alert_ex</h3>
+<div class="paragraph"><p>What: output gid:sid:rev for alerts</p></div>
+<div class="paragraph"><p>Type: logger</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+bool <strong>alert_ex.upper</strong> = false: true/false &#8594; convert to upper/lower case
 </p>
 </li>
 </ul></div>
@@ -9191,34 +9615,6 @@ multi <strong>alert_syslog.options</strong>: used to open the syslog connection 
 </ul></div>
 </div>
 <div class="sect2">
-<h3 id="_alert_test">alert_test</h3>
-<div class="paragraph"><p>What: output event in custom tsv format</p></div>
-<div class="paragraph"><p>Type: logger</p></div>
-<div class="paragraph"><p>Configuration:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-bool <strong>alert_test.file</strong> = false: output to alert_test.txt instead of stdout
-</p>
-</li>
-<li>
-<p>
-bool <strong>alert_test.rebuilt</strong> = false: include type:count where type is S for stream and F for frag
-</p>
-</li>
-<li>
-<p>
-bool <strong>alert_test.session</strong> = false: include src-dst each of form -addr:port
-</p>
-</li>
-<li>
-<p>
-bool <strong>alert_test.msg</strong> = false: include alert msg
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect2">
 <h3 id="_alert_unixsock">alert_unixsock</h3>
 <div class="paragraph"><p>What: output event over unix socket</p></div>
 <div class="paragraph"><p>Type: logger</p></div>
@@ -9237,6 +9633,34 @@ bool <strong>log_codecs.file</strong> = false: output to log_codecs.txt instead 
 <li>
 <p>
 bool <strong>log_codecs.msg</strong> = false: include alert msg
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_log_hext">log_hext</h3>
+<div class="paragraph"><p>What: output payload suitable for daq hext</p></div>
+<div class="paragraph"><p>Type: logger</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+bool <strong>log_hext.file</strong> = false: output to log_hext.txt instead of stdout
+</p>
+</li>
+<li>
+<p>
+bool <strong>log_hext.raw</strong> = false: output all full packets if true, else just TCP payload
+</p>
+</li>
+<li>
+<p>
+int <strong>log_hext.limit</strong> = 0: set limit (0 is unlimited) { 0: }
+</p>
+</li>
+<li>
+<p>
+enum <strong>log_hext.units</strong> = B: bytes | KB | MB | GB { B | K | M | G }
 </p>
 </li>
 </ul></div>
@@ -9291,6 +9715,774 @@ bool <strong>unified2.vlan_event_types</strong> = false: include vlan IDs in eve
 </p>
 </li>
 </ul></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_daq_modules">DAQ Modules</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>The Data AcQuisition library (DAQ), provides pluggable packet I/O.  The DAQ
+replaces direct calls to libraries like libpcap with an abstraction layer
+that facilitates operation on a variety of hardware and software interfaces
+without requiring changes to Snort.  It is possible to select the DAQ type
+and mode when invoking Snort to perform pcap readback or inline operation,
+etc.  The DAQ library may be useful for other packet processing
+applications and the modular nature allows you to build new modules for
+other platforms.</p></div>
+<div class="paragraph"><p>The DAQ library is provided as an external package on snort.org.  There are
+a few additional modules provided with Snort++.  This section summarizes
+the important things you need to know to use these DAQ modules.  There are
+also 3rd DAQ modules available.</p></div>
+<div class="sect2">
+<h3 id="_building_the_daq_library_and_daq_modules">Building the DAQ Library and DAQ Modules</h3>
+<div class="paragraph"><p>The DAQ is bundled with Snort but must be built first using these steps:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./configure
+make
+sudo make install</code></pre>
+</div></div>
+<div class="paragraph"><p>This will build and install both static and dynamic DAQ modules.</p></div>
+<div class="paragraph"><p>Note that pcap &gt;= 1.0.0 is required.  pcap 1.1.1 is available at the time
+of this writing and is recommended.</p></div>
+<div class="paragraph"><p>Also, libdnet is required for IPQ and NFQ DAQs.  If you get a relocation error
+trying to build those DAQs, you may need to reinstall libdnet and configure it
+with something like this:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./configure "CFLAGS=-fPIC -g -O2"</code></pre>
+</div></div>
+<div class="paragraph"><p>You may also experience problems trying to find the dynamic dnet library
+because it isn&#8217;t always named properly.  Try creating a link to the shared
+library (identified by its .x or .x.y etc. extension) with the same name but
+with ".so" inserted as follows:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ ln -s libdnet.1.1 libdnet.so.1.1
+$ ldconfig -Rv /usr/local/lib 2&gt;&amp;1 | grep dnet
+  Adding /usr/local/lib/libdnet.so.1.1</code></pre>
+</div></div>
+<div class="paragraph"><p>Alternatively, you should be able to fix both issues as follows:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>libtoolize --copy --force
+aclocal -I config
+autoheader
+autoconf
+automake --foreign</code></pre>
+</div></div>
+<div class="paragraph"><p>When the DAQ library is built, both static and dynamic flavors will be
+generated.  The various DAQ modules will be built if the requisite headers and
+libraries are available.  You can disable individual modules, etc. with options
+to configure.  For the complete list of configure options, run:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./configure --help</code></pre>
+</div></div>
+</div>
+<div class="sect2">
+<h3 id="_pcap_module">PCAP Module</h3>
+<div class="paragraph"><p>pcap is the default DAQ.  If snort is run w/o any DAQ arguments, it will
+operate as it always did using this module.  These are equivalent:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./snort -i &lt;device&gt;
+./snort -r &lt;file&gt;</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./snort --daq pcap --daq-mode passive -i &lt;device&gt;
+./snort --daq pcap --daq-mode read-file -r &lt;file&gt;</code></pre>
+</div></div>
+<div class="paragraph"><p>You can specify the buffer size pcap uses with:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./snort --daq pcap --daq-var buffer_size=&lt;#bytes&gt;</code></pre>
+</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+The pcap DAQ does not count filtered packets. *
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_afpacket_module">AFPACKET Module</h3>
+<div class="paragraph"><p>afpacket functions similar to the pcap DAQ but with better performance:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./snort --daq afpacket -i &lt;device&gt;
+        [--daq-var buffer_size_mb=&lt;#MB&gt;]
+        [--daq-var debug]</code></pre>
+</div></div>
+<div class="paragraph"><p>If you want to run afpacket in inline mode, you must craft the device string as
+one or more interface pairs, where each member of a pair is separated by a
+single colon and each pair is separated by a double colon like this:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>eth0:eth1</code></pre>
+</div></div>
+<div class="paragraph"><p>or this:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>eth0:eth1::eth2:eth3</code></pre>
+</div></div>
+<div class="paragraph"><p>By default, the afpacket DAQ allocates 128MB for packet memory.  You can change
+this with:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>--daq-var buffer_size_mb=&lt;#MB&gt;</code></pre>
+</div></div>
+<div class="paragraph"><p>Note that the total allocated is actually higher, here&#8217;s why.  Assuming the
+default packet memory with a snaplen of 1518, the numbers break down like this:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+The frame size is 1518 (snaplen) + the size of the AFPacket header (66
+  bytes) = 1584 bytes.
+</p>
+</li>
+<li>
+<p>
+The number of frames is 128 MB / 1518 = 84733.
+</p>
+</li>
+<li>
+<p>
+The smallest block size that can fit at least one frame is  4 KB = 4096 bytes
+  @ 2 frames per block.
+</p>
+</li>
+<li>
+<p>
+As a result, we need 84733 / 2 = 42366 blocks.
+</p>
+</li>
+<li>
+<p>
+Actual memory allocated is 42366 * 4 KB = 165.5 MB.
+</p>
+</li>
+</ul></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">Linux kernel version 2.6.31 or higher is required for the AFPacket DAQ
+module due to its dependency on both TPACKET v2 and PACKET_TX_RING support.</td>
+</tr></table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_nfq_module">NFQ Module</h3>
+<div class="paragraph"><p>NFQ is the new and improved way to process iptables packets:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./snort --daq nfq \
+    [--daq-var device=&lt;dev&gt;] \
+    [--daq-var proto=&lt;proto&gt;] \
+    [--daq-var queue=&lt;qid&gt;]</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>&lt;dev&gt; ::= ip | eth0, etc; default is IP injection
+&lt;proto&gt; ::= ip4 | ip6 |; default is ip4
+&lt;qid&gt; ::= 0..65535; default is 0</code></pre>
+</div></div>
+<div class="paragraph"><p>This module can not run unprivileged so ./snort -u -g will produce a warning
+and won&#8217;t change user or group.</p></div>
+<div class="paragraph"><p>Notes on iptables are given below.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_ipq_module">IPQ Module</h3>
+<div class="paragraph"><p>IPQ is the old way to process iptables packets.  It replaces the inline version
+available in pre-2.9 versions built with this:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./configure --enable-inline</code></pre>
+</div></div>
+<div class="paragraph"><p>Note that layer 2 resets are not supported with the IPQ DAQ:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>config layer2resets[: &lt;mac&gt;]</code></pre>
+</div></div>
+<div class="paragraph"><p>Start the IPQ DAQ as follows:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./snort --daq ipq \
+    [--daq-var device=&lt;dev&gt;] \
+    [--daq-var proto=&lt;proto&gt;] \</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>&lt;dev&gt; ::= ip | eth0, etc; default is IP injection
+&lt;proto&gt; ::= ip4 | ip6; default is ip4</code></pre>
+</div></div>
+<div class="paragraph"><p>This module can not run unprivileged so ./snort -u -g will produce a warning
+and won&#8217;t change user or group.</p></div>
+<div class="paragraph"><p>Notes on iptables are given below.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_ipfw_module">IPFW Module</h3>
+<div class="paragraph"><p>IPFW is available for BSD systems.  It replaces the inline version available in
+pre-2.9 versions built with this:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./configure --enable-ipfw</code></pre>
+</div></div>
+<div class="paragraph"><p>This command line argument is no longer supported:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./snort -J &lt;port#&gt;</code></pre>
+</div></div>
+<div class="paragraph"><p>Instead, start Snort like this:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./snort --daq ipfw [--daq-var port=&lt;port&gt;]</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>&lt;port&gt; ::= 1..65535; default is 8000</code></pre>
+</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+IPFW only supports ip4 traffic.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Notes on FreeBSD and OpenBSD are given below.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_dump_module">Dump Module</h3>
+<div class="paragraph"><p>The dump DAQ allows you to test the various inline mode features available in
+2.9 Snort like injection and normalization.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./snort -i &lt;device&gt; --daq dump
+./snort -r &lt;pcap&gt; --daq dump</code></pre>
+</div></div>
+<div class="paragraph"><p>By default a file named inline-out.pcap will be created containing all packets
+that passed through or were generated by snort.  You can optionally specify a
+different name.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./snort --daq dump --daq-var file=&lt;name&gt;</code></pre>
+</div></div>
+<div class="paragraph"><p>dump uses the pcap daq for packet acquisition.  It therefore does not count
+filtered packets (a pcap limitation).</p></div>
+<div class="paragraph"><p>Note that the dump DAQ inline mode is not an actual inline mode.  Furthermore,
+you will probably want to have the pcap DAQ acquire in another mode like this:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./snort -r &lt;pcap&gt; -Q --daq dump --daq-var load-mode=read-file
+./snort -i &lt;device&gt; -Q --daq dump --daq-var load-mode=passive</code></pre>
+</div></div>
+</div>
+<div class="sect2">
+<h3 id="_netmap_module">Netmap Module</h3>
+<div class="paragraph"><p>The netmap project is a framework for very high speed packet I/O.  It is
+available on both FreeBSD and Linux with varying amounts of preparatory
+setup required.  Specific notes for each follow.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./snort --daq netmap -i &lt;device&gt;
+        [--daq-var debug]</code></pre>
+</div></div>
+<div class="paragraph"><p>If you want to run netmap in inline mode, you must craft the device string as
+one or more interface pairs, where each member of a pair is separated by a
+single colon and each pair is separated by a double colon like this:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>em1:em2</code></pre>
+</div></div>
+<div class="paragraph"><p>or this:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>em1:em2::em3:em4</code></pre>
+</div></div>
+<div class="paragraph"><p>Inline operation performs Layer 2 forwarding with no MAC filtering, akin to the
+AFPacket module&#8217;s behavior.  All packets received on one interface in an inline
+pair will be forwarded out the other interface unless dropped by the reader and
+vice versa.</p></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/important.png" alt="Important" />
+</td>
+<td class="content">The interfaces will need to be up and in promiscuous mode in order to
+function (<em>ifconfig em1 up promisc</em>).  The DAQ module does not currently do
+either of these configuration steps for itself.</td>
+</tr></table>
+</div>
+<div class="sect3">
+<h4 id="_freebsd">FreeBSD</h4>
+<div class="paragraph"><p>In FreeBSD 10.0, netmap has been integrated into the core OS.  In order to use
+it, you must recompile your kernel with the line</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>device netmap</code></pre>
+</div></div>
+<div class="paragraph"><p>added to your kernel config.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_linux">Linux</h4>
+<div class="paragraph"><p>You will need to download the netmap source code from the project&#8217;s repository:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>https://code.google.com/p/netmap/</code></pre>
+</div></div>
+<div class="paragraph"><p>Follow the instructions on the project&#8217;s homepage for compiling and installing
+the code:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>http://info.iet.unipi.it/~luigi/netmap/</code></pre>
+</div></div>
+<div class="paragraph"><p>It will involve a standalone kernel module (netmap_lin) as well as patching and
+rebuilding the kernel module used to drive your network adapters. The following
+drivers are supported under Linux at the time of writing (June 2014):</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>e1000
+e1000e
+forcedeth
+igb
+ixgbe
+r8169
+virtio</code></pre>
+</div></div>
+<div class="paragraph"><p>TODO:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Support for attaching to only a single ring (queue) on a network adapter.
+</p>
+</li>
+<li>
+<p>
+Support for VALE and netmap pipes.
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_notes_on_iptables">Notes on iptables</h3>
+<div class="paragraph"><p>These notes are just a quick reminder that you need to set up iptables to use
+the IPQ or NFQ DAQs.  Doing so may cause problems with your network so tread
+carefully.  The examples below are intentionally incomplete so please read the
+related documentation first.</p></div>
+<div class="paragraph"><p>Here is a blog post by Marty for historical reference:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>http://archives.neohapsis.com/archives/snort/2000-11/0394.html</code></pre>
+</div></div>
+<div class="paragraph"><p>You can check this out for queue sizing tips:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>http://www.inliniac.net/blog/2008/01/23/improving-snort_inlines-nfq-performance.html</code></pre>
+</div></div>
+<div class="paragraph"><p>You might find useful IPQ info here:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>http://snort-inline.sourceforge.net/</code></pre>
+</div></div>
+<div class="paragraph"><p>Use this to examine your iptables:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>sudo /sbin/iptables -L</code></pre>
+</div></div>
+<div class="paragraph"><p>Use something like this to set up NFQ:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>sudo /sbin/iptables
+    -I &lt;table&gt; [&lt;protocol stuff&gt;] [&lt;state stuff&gt;]
+    -j NFQUEUE --queue-num 1</code></pre>
+</div></div>
+<div class="paragraph"><p>Use something like this to set up IPQ:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>sudo iptables -I FORWARD -j QUEUE</code></pre>
+</div></div>
+<div class="paragraph"><p>Use something like this to "disconnect" snort:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>sudo /sbin/iptables -D &lt;table&gt; &lt;rule pos&gt;</code></pre>
+</div></div>
+<div class="paragraph"><p>Be sure to start Snort prior to routing packets through NFQ with iptables.
+Such packets will be dropped until Snort is started.</p></div>
+<div class="paragraph"><p>The queue-num is the number you must give Snort.</p></div>
+<div class="paragraph"><p>If you are running on a system with both NFQ and IPQ support, you may
+experience some start-up failures of the sort:</p></div>
+<div class="paragraph"><p>The solution seems to be to remove both modules from the kernel like this:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>modprobe -r nfnetlink_queue
+modprobe -r ip_queue</code></pre>
+</div></div>
+<div class="paragraph"><p>and then install the module you want:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>modprobe ip_queue</code></pre>
+</div></div>
+<div class="paragraph"><p>or:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>modprobe nfnetlink_queue</code></pre>
+</div></div>
+<div class="paragraph"><p>These DAQs should be run with a snaplen of 65535 since the kernel defrags the
+packets before queuing.  Also, no need to configure frag3.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_notes_on_freebsd_ipfw">Notes on FreeBSD::IPFW</h3>
+<div class="paragraph"><p>Check the online manual at:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>http://www.freebsd.org/doc/handbook/firewalls-ipfw.html.</code></pre>
+</div></div>
+<div class="paragraph"><p>Here is a brief example to divert icmp packets to Snort at port 8000:</p></div>
+<div class="paragraph"><p>To enable support for divert sockets, place the following lines in the
+kernel configuration file:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>options IPFIREWALL
+options IPDIVERT</code></pre>
+</div></div>
+<div class="paragraph"><p>(The file in this case was: /usr/src/sys/i386/conf/GENERIC; which is platform
+dependent.)</p></div>
+<div class="paragraph"><p>You may need to also set these to use the loadable kernel modules:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>/etc/rc.conf:
+firewall_enable="YES"</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>/boot/loader.conf:
+ipfw_load="YES"
+ipdivert_load="YES"</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ dmesg | grep ipfw
+ipfw2 (+ipv6) initialized, divert loadable, nat loadable, rule-based
+forwarding disabled, default to deny, logging disabled</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ kldload -v ipdivert
+Loaded ipdivert, id=4</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ ipfw add 75 divert 8000 icmp from any to any
+00075 divert 8000 icmp from any to any</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ ipfw list
+...
+00075 divert 8000 icmp from any to any
+00080 allow icmp from any to any
+...</code></pre>
+</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Note that on FreeBSD, divert sockets don&#8217;t work with bridges!
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Please refer to the following articles for more information:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<a href="https://forums.snort.org/forums/support/topics/snort-inline-on-freebsd-ipfw">https://forums.snort.org/forums/support/topics/snort-inline-on-freebsd-ipfw</a>
+</p>
+</li>
+<li>
+<p>
+<a href="http://freebsd.rogness.net/snort_inline/">http://freebsd.rogness.net/snort_inline/</a>
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>NAT gateway can be used with divert sockets if the network environment is
+conducive to using NAT.</p></div>
+<div class="paragraph"><p>The steps to set up NAT with ipfw are as follows:</p></div>
+<div class="olist arabic"><ol class="arabic">
+<li>
+<p>
+Set up NAT with two interface em0 and em1 by adding the following to
+/etc/rc.conf.  Here em0 is connected to external network and em1 to
+host-only LAN.
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>gateway_enable="YES"
+natd_program="/sbin/natd"   # path to natd
+natd_enable="YES"           # Enable natd (if firewall_enable == YES)
+natd_interface="em0"       # Public interface or IP Address
+natd_flags="-dynamic"       # Additional flags
+defaultrouter=""
+ifconfig_em0="DHCP"
+ifconfig_em1="inet 192.168.1.2 netmask 255.255.255.0"
+firewall_enable="YES"
+firewall_script="/etc/rc.firewall"
+firewall_type="simple"</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+Add the following divert rules to divert packets to Snort above and
+below the NAT rule in the "Simple" section of /etc/rc.firewall.
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>...
+# Inspect outbound packets (those arriving on "inside" interface)
+# before NAT translation.
+${fwcmd} add divert 8000 all from any to any in via ${iif}
+case ${natd_enable} in
+[Yy][Ee][Ss])
+    if [ -n "${natd_interface}" ]; then
+        ${fwcmd} add divert natd all from any to any via ${natd_interface}
+    fi
+    ;;
+esac
+...
+# Inspect inbound packets (those arriving on "outside" interface)
+# after NAT translation that aren't blocked for other reasons,
+# after the TCP "established" rule.
+${fwcmd} add divert 8000 all from any to any in via ${oif}</code></pre>
+</div></div>
+</li>
+</ol></div>
+</div>
+<div class="sect2">
+<h3 id="_notes_on_openbsd_ipfw">Notes on OpenBSD::IPFW</h3>
+<div class="paragraph"><p>OpenBSD supports divert sockets as of 4.7, so we use the ipfw DAQ.</p></div>
+<div class="paragraph"><p>Here is one way to set things up:</p></div>
+<div class="olist arabic"><ol class="arabic">
+<li>
+<p>
+Configure the system to forward packets:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ sysctl net.inet.ip.forwarding=1
+$ sysctl net.inet6.ip6.forwarding=1</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>(You can also put that in /etc/sysctl.conf to enable on boot.)</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+Set up interfaces
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ dhclient vic1
+$ dhclient vic2</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+Set up packet filter rules:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ echo "pass out on vic1 divert-packet port 9000 keep-state" &gt; rules.txt
+$ echo "pass out on vic2 divert-packet port 9000 keep-state" &gt;&gt; rules.txt</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ pfctl -v -f rules.txt</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+Analyze packets diverted to port 9000:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ ./snort --daq ipfw --daq-var port=9000</code></pre>
+</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Note that on OpenBSD, divert sockets don&#8217;t work with bridges!
+</p>
+</li>
+</ul></div>
+</li>
+</ol></div>
+</div>
+<div class="sect2">
+<h3 id="_socket_module">Socket Module</h3>
+<div class="paragraph"><p>The socket module provides provides a stream socket server that will accept
+up to 2 simultaneous connections and bridge them together while also
+passing data to Snort++ for inspection.  The first connection accepted is
+considered the client and the second connection accepted is considered the
+server.  If there is only one connection, stream data can&#8217;t be forwarded
+but it is still inspected.</p></div>
+<div class="paragraph"><p>Each read from a socket of up to snaplen bytes is passed as a packet to
+Snort++ along with a DAQ_SktHdr_t pointer in DAQ_PktHdr_t&#8594;priv_ptr.
+DAQ_SktHdr_t conveys IP4 address, ports, protocol, and direction.  Socket
+packets can be configured to be TCP or UDP.  The socket DAQ can be operated
+in inline mode and is able to block packets.</p></div>
+<div class="paragraph"><p>The socket DAQ uses DLT_SOCKET and requires that Snort++ load the socket
+codec which is included in the extra package.</p></div>
+<div class="paragraph"><p>To use the socket DAQ, start Snort++ like this:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>./snort --plugin-path /path/to/lib/snort_extra \
+    --daq socket [--daq-var port=&lt;port&gt;] [--daq-var proto=&lt;proto&gt;] [-Q]</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>&lt;port&gt; ::= 1..65535; default is 8000
+&lt;proto&gt; ::= tcp | udp</code></pre>
+</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+This module only supports ip4 traffic.
+</p>
+</li>
+<li>
+<p>
+This module is only supported by Snort++.  It is not compatible with
+  Snort.
+</p>
+</li>
+<li>
+<p>
+This module is primarily for development and test.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_file_module">File Module</h3>
+<div class="paragraph"><p>The file module provides the ability to process files directly w/o having
+to extract them from pcaps.  Use the file module with Snort&#8217;s stream_file
+to get file type identification and signature services.  The usual IPS
+detection and logging etc. is available too.</p></div>
+<div class="paragraph"><p>You can process all the files in a directory recursively using 8 threads
+with these Snort options:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>--pcap-dir path -z 8</code></pre>
+</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+This module is only supported by Snort++.  It is not compatible with
+  Snort.
+</p>
+</li>
+<li>
+<p>
+This module is primarily for development and test.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_hext_module">Hext Module</h3>
+<div class="paragraph"><p>The hext module generates packets suitable for processing by Snort from
+hex/plain text.  Raw packets include full headers and are processed
+normally.  Otherwise the packets contain only payload and are accompanied
+with flow information (4-tuple) suitable for processing by stream_user.</p></div>
+<div class="paragraph"><p>The first character of the line determines it&#8217;s purpose:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>'$' command
+'#' comment
+'"' quoted string packet data
+'x' hex packet data
+' ' empty line separates packets</code></pre>
+</div></div>
+<div class="paragraph"><p>The available commands are:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$client &lt;ip4&gt; &lt;port&gt;
+$server &lt;ip4&gt; &lt;port&gt;</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$packet -&gt; client
+$packet -&gt; server</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$packet &lt;addr&gt; &lt;port&gt; -&gt; &lt;addr&gt; &lt;port&gt;</code></pre>
+</div></div>
+<div class="paragraph"><p>Client and server are determined as follows.  $packet &#8594; client indicates
+to the client (from server) and $packet &#8594; server indicates a packet to the
+server (from client).  $packet followed by a 4-tuple uses the heuristic
+that the client is the side with the lower port number.</p></div>
+<div class="paragraph"><p>The default client and server are 192.168.1.1 12345 and 10.1.2.3 80
+respectively.  $packet commands with a 4-tuple do not change client and
+server set with the other $packet commands.</p></div>
+<div class="paragraph"><p>$packet commands should be followed by packet data, which may contain any
+combination of hex and strings.  Data for a packet ends with the next
+command or a blank line.  Data after a blank line will start another packet
+with the same tuple as the prior one.</p></div>
+<div class="paragraph"><p>Strings may contain the following escape sequences:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>\r = 0x0D = carriage return
+\n = 0x0A = new line
+\t = 0x09 = tab
+\\ = 0x5C = \</code></pre>
+</div></div>
+<div class="paragraph"><p>Format your input carefully; there is minimal error checking and little
+tolerance for arbitrary whitespace.  You can use Snort&#8217;s -L hext option to
+generate hext input from a pcap.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+This module only supports ip4 traffic.
+</p>
+</li>
+<li>
+<p>
+This module is only supported by Snort++.  It is not compatible with
+  Snort.
+</p>
+</li>
+<li>
+<p>
+This module is primarily for development and test.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>The hext DAQ also supports a raw mode which is activated by setting the
+data link type.  For example, you can input full ethernet packets with
+--daq-var dlt=1 (Data link types are defined in the DAQ include
+sfbpf_dlt.h.)  Combine that with the hext logger in raw mode for a quick
+(and dirty) way to edit pcaps.  With --lua "log_hext = { raw = true }", the
+hext logger will dump the full packet in a way that can be read by the hext
+DAQ in raw mode.  Here is an example:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code># 3 [96]</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>x02 09 08 07 06 05 02 01 02 03 04 05 08 00 45 00 00 52 00 03  # ..............E..R..
+x00 00 40 06 5C 90 0A 01 02 03 0A 09 08 07 BD EC 00 50 00 00  # ..@.\............P..
+x00 02 00 00 00 02 50 10 20 00 8A E1 00 00 47 45 54 20 2F 74  # ......P.  .....GET /t
+x72 69 67 67 65 72 2F 31 20 48 54 54 50 2F 31 2E 31 0D 0A 48  # rigger/1 HTTP/1.1..H
+x6F 73 74 3A 20 6C 6F 63 61 6C 68 6F 73 74 0D 0A              # ost: localhost..</code></pre>
+</div></div>
+<div class="paragraph"><p>A comment indicating packet number and size precedes each packet dump.
+Note that the commands are not applicable in raw mode and have no effect.</p></div>
 </div>
 </div>
 </div>
@@ -10250,6 +11442,786 @@ have a .lua or .rules extension appended to the original filename.</p></div>
 </div>
 </div>
 <div class="sect1">
+<h2 id="_extending_snort">Extending Snort++</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_plugins">Plugins</h3>
+<div class="paragraph"><p>Snort++ uses a variety of plugins to accomplish much of its processing
+objectives, including:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Codec - to decode and encode packets
+</p>
+</li>
+<li>
+<p>
+Inspector - like the prior preprocessors, for normalization, etc.
+</p>
+</li>
+<li>
+<p>
+IpsOption - for detection in Snort++ rules
+</p>
+</li>
+<li>
+<p>
+IpsAction - for custom actions
+</p>
+</li>
+<li>
+<p>
+Logger - for handling events
+</p>
+</li>
+<li>
+<p>
+Mpse - for fast pattern matching
+</p>
+</li>
+<li>
+<p>
+So - for dynamic rules
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Plugins have an associated API defined for each type, all of which share a
+common <em>header</em>, called the BaseApi.  A dynamic library makes its plugins
+available by exporting the snort_plugins symbol, which is a null terminated
+array of BaseApi pointers.</p></div>
+<div class="paragraph"><p>The BaseApi includes type, name, API version, plugin version, and function
+pointers for constructing and destructing a Module.  The specific API add
+various other data and functions for their given roles.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_modules_2">Modules</h3>
+<div class="paragraph"><p>The Module is pervasive in Snort<code>.  It is how everything, including
+plugins, are configured.  It also provides access to builtin rules.  And as
+the glue that binds functionality to Snort</code>, the capabilities of a Module
+are expected to grow to include statistics support, etc.</p></div>
+<div class="paragraph"><p>Module configuration is handled by a list of Parameters.  Most parameters
+can be validated by the framework, which means for example that conversion
+from string to number is done in exactly one place.  Providing the builtin
+rules allows the documentation to include them automatically and also allows
+for autogenerating the rules at startup.</p></div>
+<div class="paragraph"><p>If we are defining a new Inspector called, say, gadget, it might be
+configured in snort.lua like this:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>gadget =
+{
+    brain = true,
+    claw = 3
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>When the gadget table is processed, Snort++ will look for a module called
+gadget.  If that Module has an associated API, it will be used to configure
+a new instance of the plugin.  In this case, a GadgetModule would be
+instantiated, brain and claw would be set, and the Module instance would be
+passed to the GadgetInspector constructor.</p></div>
+<div class="paragraph"><p>Module has three key virtual methods:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>begin()</strong> - called when Snort++ starts processing the associated Lua
+  table.  This is a good place to allocate any required data and set
+  defaults.
+</p>
+</li>
+<li>
+<p>
+<strong>set()</strong> - called to set each parameter after validation.
+</p>
+</li>
+<li>
+<p>
+<strong>end()</strong> - called when Snort++ finishes processing the associated Lua
+  table.  This is where additional integrity checks of related parameters
+  should be done.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>The configured Module is passed to the plugin constructor which pulls the
+configuration data from the Module.  For non-trivial configurations, the
+working paradigm is that Module hands a pointer to the configured data to
+the plugin instance which takes ownership.</p></div>
+<div class="paragraph"><p>Note that there is at most one instance of a given Module, even if multiple
+plugin instances are created which use that Module.  (Multiple instances
+require Snort++ binding configuration.)</p></div>
+</div>
+<div class="sect2">
+<h3 id="_inspectors">Inspectors</h3>
+<div class="paragraph"><p>There are several types of inspector, which determines which inspectors are
+executed when:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+IT_BINDER - determines which inspectors apply to given flows
+</p>
+</li>
+<li>
+<p>
+IT_WIZARD - determines which service inspector to use if none explicitly
+  bound
+</p>
+</li>
+<li>
+<p>
+IT_PACKET - used to process all packets before session and service processing
+  (e.g. normalize)
+</p>
+</li>
+<li>
+<p>
+IT_NETWORK - processes packets w/o service (e.g. arp_spoof, back_orifice)
+</p>
+</li>
+<li>
+<p>
+IT_STREAM - for flow tracking, ip defrag, and tcp reassembly
+</p>
+</li>
+<li>
+<p>
+IT_SERVICE - for http, ftp, telnet, etc.
+</p>
+</li>
+<li>
+<p>
+IT_PROBE - process all packets after all the above (e.g. perf_monitor,
+  port_scan)
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_codecs">Codecs</h3>
+<div class="paragraph"><p>The Snort3.0 Codecs decipher raw packets. These Codecs are now completely
+pluggable; almost every Snort3.0 Codec can be built dynamically and replaced
+with an alternative, customized Codec. The pluggable nature has also made it
+easier to build new Codecs for protocols without having to touch the Snort3.0
+code base.</p></div>
+<div class="paragraph"><p>The first step in creating a Codec is defining its class and protocol. Every
+Codec must inherit from the Snort3.0 Codec class defined in
+"framework/codec.h". The following is an example Codec named "example" and has
+an associated struct that is 14 bytes long.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>#include &lt;cstdint&gt;
+#include &lt;arpa/inet.h&gt;
+#include “framework/codec.h”
+#include "main/snort_types.h"</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>#define EX_NAME “example”
+#define EX_HELP “example codec help string”</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>struct Example
+{
+    uint8_t dst[6];
+    uint8_t src[6];
+    uint16_t ethertype;</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>    static inline uint8_t size()
+    { return 14; }
+}</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>class ExCodec : public Codec
+{
+public:
+    ExCodec() : Codec(EX_NAME) { }
+    ~ExCodec() { }</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>    bool decode(const RawData&amp;, CodecData&amp;, DecodeData&amp;) override;
+    void get_protocol_ids(std::vector&lt;uint16_t&gt;&amp;) override;
+};</code></pre>
+</div></div>
+<div class="paragraph"><p>After defining ExCodec, the next step is adding the Codec&#8217;s decode
+functionality. The function below does this by implementing a valid decode
+function. The first parameter, which is the RawData struct, provides both a
+pointer to the raw data that has come from a wire and the length of that raw
+data. The function takes this information and validates that there are enough
+bytes for this protocol. If the raw data&#8217;s length is less than 14 bytes, the
+function returns false and Snort3.0 discards the packet; the packet is neither
+inspected nor processed. If the length is greater than 14 bytes, the function
+populates two fields in the CodecData struct, next_prot_id and lyr_len. The
+lyr_len field tells Snort3.0 the number of bytes that this layer contains. The
+next_prot_id field provides Snort3.0 the value of the next EtherType or IP
+protocol number.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>bool ExCodec::decode(const RawData&amp; raw, CodecData&amp; codec, DecodeData&amp;)
+{
+   if ( raw.len &lt; Example::size() )
+       return false;</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>    const Example* const ex = reinterpret_cast&lt;const Example*&gt;(raw.data);
+    codec.next_prot_id = ntohs(ex-&gt;ethertype);
+    codec.lyr_len = ex-&gt;size();
+    return true;
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>For instance, assume this decode function receives the following raw data with
+a validated length of 32 bytes:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>00 11 22 33 44 55 66 77    88 99 aa bb 08 00 45 00
+00 38 00 01 00 00 40 06    5c ac 0a 01 02 03 0a 09</code></pre>
+</div></div>
+<div class="paragraph"><p>The Example struct&#8217;s EtherType field is the 13 and 14 bytes. Therefore, this
+function tells Snort that the next protocol has an EtherType of 0x0800.
+Additionally, since the lyr_len is set to 14, Snort knows that the next
+protocol begins 14 bytes after the beginning of this protocol. The Codec with
+EtherType 0x0800, which happens to be the IPv4 Codec, will receive the
+following data with a validated length of 18 ( == 32 – 14):</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>45 00 00 38 00 01 00 00    40 06 5c ac 0a 01 02 03
+0a 09</code></pre>
+</div></div>
+<div class="paragraph"><p>How does Snort3.0 know that the IPv4 Codec has an EtherType of 0x0800? The
+Codec class has a second virtual function named get_protocol_ids(). When
+implementing the function, a Codec can register for any number of values
+between 0x0000 - 0xFFFF. Then, if the next_proto_id is set to a value for which
+this Codec has registered, this Codec&#8217;s decode function will be called. As a
+general note, the protocol ids between [0, 0x00FF] are IP protocol numbers,
+[0x0100, 0x05FF] are custom types, and [0x0600, 0xFFFF] are EtherTypes.</p></div>
+<div class="paragraph"><p>For example, in the get_protocol_ids function below, the ExCodec registers for
+the protocols numbers 17, 787, and 2054. 17 happens to be the protocol number
+for UDP while 2054 is ARP&#8217;s EtherType. Therefore, this Codec will now attempt
+to decode UDP and ARP data. Additionally, if any Codec sets the
+next_protocol_id to 787, ExCodec&#8217;s decode function will be called. Some custom
+protocols are already defined in the file "protocols/protocol_ids.h"</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>void ExCodec::get_protocol_ids(std::vector&lt;uint16_t&gt;&amp;v)
+{
+    v.push_back(0x0011); // == 17  == UDP
+    v.push_back(0x1313); // == 787  == custom
+    v.push_back(0x0806); // == 2054  == ARP
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>To register a Codec for Data Link Type&#8217;s rather than protocols, the function
+get_data_link_type() can be similarly implemented.</p></div>
+<div class="paragraph"><p>The final step to creating a pluggable Codec is the snort_plugins array. This
+array is important because when Snort3.0 loads a dynamic library, the program
+only find plugins that are inside the snort_plugins array. In other words, if a
+plugin has not been added to the snort_plugins array, that plugin will not be
+loaded into Snort3.0.</p></div>
+<div class="paragraph"><p>Although the details will not be covered in this post, the following code
+snippet is a basic CodecApi that Snort3.0 can load. This snippet can be copied
+and used with only three minor changes. First, in the function ctor, ExCodec
+should be replaced with the name of the Codec that is being built. Second,
+EX_NAME must match the Codec&#8217;s name or Snort will be unable to load this Codec.
+Third, EX_HELP should be replaced with the general description of this Codec.
+Once this code snippet has been added, ExCodec is ready to be compiled and
+plugged into Snort3.0.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>static Codec* ctor(Module*)
+{ return new ExCodec; }</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>static void dtor(Codec *cd)
+{ delete cd; }</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>static const CodecApi ex_api =
+{
+    {
+        PT_CODEC,
+        EX_NAME,
+        EX_HELP,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr,
+    },
+    nullptr, // pointer to a function called during Snort's startup.
+    nullptr, // pointer to a function called during Snort's exit.
+    nullptr, // pointer to a function called during thread's startup.
+    nullptr, // pointer to a function called during thread's destruction.
+    ctor, // pointer to the codec constructor.
+    dtor, // pointer to the codec destructor.
+};</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &amp;ex_api.base,
+    nullptr
+};</code></pre>
+</div></div>
+<div class="paragraph"><p>Two example Codecs are available in the extra directory on git and the extra
+tarball on the Snort3.0 page. One of those examples is the Token Ring Codec
+while the other example is the PIM Codec.</p></div>
+<div class="paragraph"><p>As a final note, there are four more virtual functions that a Codec should
+implement: encode, format, update, and log. If the functions are not
+implemented Snort will not throw any errors. However, Snort may also be unable
+to accomplish some of its basic functionality.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+encode is called whenever Snort actively responds and needs to builds a
+  packet, i.e. whenever a rule using an IPS ACTION like react, reject, or rewrite
+  is triggered. This function is used to build the response packet protocol by
+  protocol.
+</p>
+</li>
+<li>
+<p>
+format is called when Snort is rebuilding a packet. For instance, every time
+  Snort reassembles a TCP stream or IP fragment, format is called. Generally,
+  this function either swaps any source and destination fields in the protocol or
+  does nothing.
+</p>
+</li>
+<li>
+<p>
+update is similar to format in that it is called when Snort is reassembling a
+  packet. Unlike format, this function only sets length fields.
+</p>
+</li>
+<li>
+<p>
+log is called when either the log_codecs logger or a custom logger that calls
+  PacketManager::log_protocols is used when running Snort3.0.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_ips_actions">IPS Actions</h3>
+<div class="paragraph"><p>Action plugins specify a builtin action in the API which is used to
+determine verdict.  (Conversely, builtin actions don&#8217;t have an associated
+plugin function.)</p></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_coding_style">Coding Style</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>All new code should try to follow these style guidelines.  These are not
+yet firm so feedback is welcome to get something we can live with.</p></div>
+<div class="sect2">
+<h3 id="_general">General</h3>
+<div class="ulist"><ul>
+<li>
+<p>
+Generally try to follow
+  <a href="http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml">http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml</a>,
+  but there are a few differences.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_naming">Naming</h3>
+<div class="ulist"><ul>
+<li>
+<p>
+Use camel case for namespaces, classes, and types like WhizBangPdfChecker.
+</p>
+</li>
+<li>
+<p>
+Use lower case identifiers with underscore separators, e.g. some_function()
+  and my_var.
+</p>
+</li>
+<li>
+<p>
+Use lower case filenames with underscores.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_comments">Comments</h3>
+<div class="ulist"><ul>
+<li>
+<p>
+Write comments sparingly with a mind towards future proofing.  Often the
+  comments can be obviated with better code.  Clear code is better than a
+  comment.
+</p>
+</li>
+<li>
+<p>
+Function comment blocks are generally just noise that quickly becomes
+  obsolete.  If you absolutely must comment on parameters, put each on a
+  separate line along with the comment.  That way changing the signature
+  may prompt a change to the comments too.
+</p>
+</li>
+<li>
+<p>
+Use FIXIT (not FIXTHIS or TODO or whatever) to mark things left for a
+  day or even just a minute.  That way we can find them easily and won&#8217;t
+  lose track of them.
+</p>
+</li>
+<li>
+<p>
+Presently using FIXIT-X where X = P | H | M | L, indicating perf, high,
+  med, or low priority.  For now, H, M, or L can indicate alpha 1, 2, or 3.
+  Perf changes fall between alpha 1 and 2.
+</p>
+</li>
+<li>
+<p>
+Put the copyright(s) and license in a comment block at the top of each
+  source file (.h and .cc).  Don&#8217;t bother with trivial scripts and make
+  foo.  Some interesting Lua code should get a comment block too.  Copy and
+  paste exactly from src/main.h (don&#8217;t reformat).
+</p>
+</li>
+<li>
+<p>
+Put author, description, etc. in separate comment(s) following the
+  license.  Do not put such comments in the middle of the license foo.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_logging">Logging</h3>
+<div class="ulist"><ul>
+<li>
+<p>
+Messages intended for the user should not look like debug messages. Eg,
+  the function name should not be included.
+</p>
+</li>
+<li>
+<p>
+Most debug messages should just be deleted.
+</p>
+</li>
+<li>
+<p>
+Don&#8217;t bang your error messages (no !).  The user feels bad enough about the
+  problem already w/o you shouting at him.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_types">Types</h3>
+<div class="ulist"><ul>
+<li>
+<p>
+Use logical types to make the code clearer and to help the compiler catch
+  problems.  typedef uint16_t Port; bool foo(Port) is way better than
+  int foo(int port).
+</p>
+</li>
+<li>
+<p>
+Use forward declarations (e.g. struct SnortConfig;) instead of void*.
+</p>
+</li>
+<li>
+<p>
+Try not to use extern data unless absolutely necessary and then put the
+  extern in an appropriate header.
+</p>
+</li>
+<li>
+<p>
+Use const liberally.  In most cases, const char* s = "foo" should be
+  const char* const s = "foo".  The former goes in the initialized data
+  section and the latter in read only data section.
+</p>
+</li>
+<li>
+<p>
+But use const char s[] = "foo" instead of const char* s = "foo" when
+  possible.  The latter form allocates a pointer variable and the data
+  while the former allocates only the data.
+</p>
+</li>
+<li>
+<p>
+Use static wherever possible to minimize public symbols and eliminate
+  unneeded relocations.
+</p>
+</li>
+<li>
+<p>
+Declare functions virtual only in the parent class introducing the
+  function (not in a derived class that is overriding the function).
+  This makes it clear which class introduces the function.
+</p>
+</li>
+<li>
+<p>
+Declare functions as override if they are intended to override a
+  function.  This makes it possible to find derived implementations that
+  didn&#8217;t get updated and therefore won&#8217;t get called due a change in the
+  parent signature.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_macros_aka_defines">Macros (aka defines)</h3>
+<div class="ulist"><ul>
+<li>
+<p>
+In many cases, even in C++, use #define name "value" instead of a
+  const char* const name = "value" because it will eliminate a symbol from
+  the binary.
+</p>
+</li>
+<li>
+<p>
+Use inline functions instead of macros where possible (pretty much all
+  cases except where stringification is necessary).  Functions offer better
+  typing, avoid re-expansions, and a debugger can break there.
+</p>
+</li>
+<li>
+<p>
+All macros except simple const values should be wrapped in () and all
+  args should be wrapped in () too to avoid surprises upon expansion.
+  Example:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>#define SEQ_LT(a,b)  ((int)((a) - (b)) &lt;  0)</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+Multiline macros should be blocked (i.e. inside { }) to avoid if-else type
+  surprises.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_formatting">Formatting</h3>
+<div class="ulist"><ul>
+<li>
+<p>
+Indent 4 space chars &#8230; no tabs!
+</p>
+</li>
+<li>
+<p>
+If you need to indent many times, something could be rewritten or
+  restructured to make it clearer.  Fewer indents is generally easier to
+  write, easier to read, and overall better code.
+</p>
+</li>
+<li>
+<p>
+Braces go on the line immediately following a new scope (function
+  signature, if, else, loop, switch, etc.
+</p>
+</li>
+<li>
+<p>
+Use consistent spacing and line breaks.  Always indent 4 spaces from the
+  breaking line.  Keep lines less than 100 chars; it greatly helps
+  readability.
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>No:
+    calling_a_func_with_a_long_name(arg1,
+                                    arg2,
+                                    arg3);</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>Yes:
+    calling_a_func_with_a_long_name(
+        arg1, arg2, arg3);</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+Put function signature on one line, except when breaking for the arg
+  list:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>No:
+    inline
+    bool foo()
+    { // ...</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>Yes:
+    inline bool foo()
+    { // ...</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+Put conditional code on the line following the if so it is easy to break
+  on the conditional block:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>No:
+    if ( test ) foo();</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>Yes:
+    if ( test )
+        foo();</code></pre>
+</div></div>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_headers">Headers</h3>
+<div class="ulist"><ul>
+<li>
+<p>
+Don&#8217;t hesitate to create a new header if it is needed.  Don&#8217;t lump
+  unrelated stuff into an header because it is convenient.
+</p>
+</li>
+<li>
+<p>
+Write header guards like this (leading underscores are reserved for
+  system stuff).  In my_header.h:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>#ifndef MY_HEADER_H
+#define MY_HEADER_H
+// ...
+#endif</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+Includes from a different directory should specify parent directory.
+  This makes it clear exactly what is included and avoids the primordial
+  soup that results from using -I this -I that -I the_other_thing &#8230; .
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>// given:
+src/foo/foo.cc
+src/bar/bar.cc
+src/bar/baz.cc</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>// in baz.cc
+#include "bar.h"</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>// in foo.cc
+#include "bar/bar.h"</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+Just because it is a #define doesn&#8217;t mean it goes in a header.
+  Everything should be scoped as tightly as possible.  Shared
+  implementation declarations should go in a separate header from the
+  interface.  And so on.
+</p>
+</li>
+<li>
+<p>
+A .cc should include its own .h before any others (including
+  system headers).  This ensures that the header stands on its own and can
+  be used by clients without include prerequisites.
+</p>
+</li>
+<li>
+<p>
+Include required headers, all required headers, and nothing but required
+  headers.  Don&#8217;t just clone a bunch of headers because it is convenient.
+</p>
+</li>
+<li>
+<p>
+Any file depending of #ifdefs should include config.h as shown below.  A
+  .h should include it before any other includes, and a .cc should include
+  it immediately after the include of its own .h.
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+Do not put using statements in headers.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_warnings">Warnings</h3>
+<div class="ulist"><ul>
+<li>
+<p>
+With g++, use at least these compiler flags:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>-Wall -Wextra -pedantic -Wformat -Wformat-security
+-Wunused-but-set-variable -Wno-deprecated-declarations</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+Then Fix All Warnings.  None Allowed.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_other">Other</h3>
+<div class="ulist"><ul>
+<li>
+<p>
+Prefer <em>and</em> over &amp;&amp; and <em>or</em> over || for new source files.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_uncrustify">Uncrustify</h3>
+<div class="paragraph"><p>Currently using uncrustify from at <a href="https://github.com/bengardner/uncrustify">https://github.com/bengardner/uncrustify</a>
+to reformat legacy code and anything that happens to need a makeover at
+some point.</p></div>
+<div class="paragraph"><p>The working config is crusty.cfg in the top level directory.  It does well
+but will munge some things.  Specially formatted INDENT-OFF comments were
+added in 2 places to avoid a real mess.</p></div>
+</div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_reference_2">Reference</h2>
 <div class="sectionbody">
 <div class="sect2">
@@ -10397,9 +12369,9 @@ have a .lua or .rules extension appended to the original filename.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_usage_2">Usage</h3>
-<div class="paragraph"><p>For the following examples "$my_path" is assumed to be the path to
-the Snort++ install directory. Additionally, it is assumed that
-"$my_path/bin" is in your PATH.</p></div>
+<div class="paragraph"><p>For the following examples "$my_path" is assumed to be the path to the
+Snort++ install directory. Additionally, it is assumed that "$my_path/bin"
+is in your PATH.</p></div>
 <div class="sect3">
 <h4 id="_environment">Environment</h4>
 <div class="paragraph"><p>LUA_PATH is used directly by Lua to load and run required libraries.
@@ -10549,7 +12521,7 @@ input source on a separate thread:</p></div>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_plugins">Plugins</h3>
+<h3 id="_plugins_2">Plugins</h3>
 <div class="paragraph"><p>Load external plugins and use the "ex" alert:</p></div>
 <div class="literalblock">
 <div class="content">
@@ -10615,6 +12587,65 @@ the options below to format the paths:</p></div>
 is based on module name that writes the file.  All text mode outputs
 default to stdout.  These options can be combined.</td>
 </tr></table>
+</div>
+<div class="sect3">
+<h4 id="_daq_alternatives">DAQ Alternatives</h4>
+<div class="paragraph"><p>Process hext packets from stdin:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua \
+    --plugin-path $my_path/lib/snort_extra \
+    --daq-dir $my_path/lib/snort_extra/daqs --daq hext -i tty &lt;&lt; END
+$packet 10.1.2.3 48620 -&gt; 10.9.8.7 80
+"GET / HTTP/1.1\r\n"
+"Host: localhost\r\n"
+"\r\n"
+END</code></pre>
+</div></div>
+<div class="paragraph"><p>Process raw ethernet from hext file:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua \
+    --plugin-path $my_path/lib/snort_extra \
+    --daq-dir $my_path/lib/snort_extra/daqs --daq hext \
+    --daq-var dlt=1 -r &lt;hext-file&gt;</code></pre>
+</div></div>
+<div class="paragraph"><p>Process a directory of plain files (ie non-pcap) with 4 threads:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua \
+    --plugin-path $my_path/lib/snort_extra \
+    --daq-dir $my_path/lib/snort_extra/daqs --daq file \
+    --pcap-dir path/to/files -z 4</code></pre>
+</div></div>
+<div class="paragraph"><p>Bridge two TCP connections on port 8000 and inspect the traffic:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua \
+    --plugin-path $my_path/lib/snort_extra \
+    --daq-dir $my_path/lib/snort_extra/daqs --daq socket</code></pre>
+</div></div>
+</div>
+<div class="sect3">
+<h4 id="_logger_alternatives">Logger Alternatives</h4>
+<div class="paragraph"><p>Dump TCP stream payload in hext mode:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua \
+    --plugin-path $my_path/lib/snort_extra -L hext</code></pre>
+</div></div>
+<div class="paragraph"><p>Output timestamp, pkt_num, proto, pkt_gen, dgm_len, dir, src_ap, dst_ap,
+rule, action for each alert:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua -A csv</code></pre>
+</div></div>
+<div class="paragraph"><p>Output the old test format alerts:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort -c $my_path/etc/snort/snort.lua \
+    --lua "alert_csv = { fields = 'pkt_num gid sid rev', separator = '\t' }"</code></pre>
+</div></div>
 </div>
 <div class="sect3">
 <h4 id="_shell">Shell</h4>
@@ -10767,125 +12798,573 @@ into the Snort binary.  For a full list of build features, run ./configure
 </div>
 <div class="sect2">
 <h3 id="_command_line_options">Command Line Options</h3>
-<div class="literalblock">
-<div class="content">
-<pre><code>        0 gets the number of CPU cores reported by the system
-        0 gets the number of CPU cores reported by the system
-* *--alert-before-pass* process alert, drop, sdrop, or reject before pass; default is pass before alert, drop,...
-* *--bpf* &lt;filter options&gt; are standard BPF options, as seen in TCPDump
-* *--c2x* output hex for given char (see also --x2c)
-* *--create-pidfile* create PID file, even when not in Daemon mode
-* *--daq* &lt;type&gt; select packet acquisition module (default is pcap)
-* *--daq-dir* &lt;dir&gt; tell snort where to find desired DAQ
-* *--daq-list* list packet acquisition modules available in optional dir, default is static modules only
-* *--daq-mode* &lt;mode&gt; select the DAQ operating mode
-* *--daq-var* &lt;name=value&gt; specify extra DAQ configuration variable
-* *--dirty-pig* don't flush packets on shutdown
-* *--dump-builtin-rules* [&lt;module prefix&gt;] output stub rules for selected modules
-* *--dump-defaults* [&lt;module prefix&gt;] output module defaults in Lua format
-* *--dump-dynamic-rules* output stub rules for all loaded rules libraries
-* *--dump-version* output the version, the whole version, and only the version
-* *--enable-inline-test* enable Inline-Test Mode Operation
-* *--help* list command line options
-* *--help-commands* [&lt;module prefix&gt;] output matching commands
-* *--help-config* [&lt;module prefix&gt;] output matching config options
-* *--help-counts* [&lt;module prefix&gt;] output matching peg counts
-* *--help-module* &lt;module&gt; output description of given module
-* *--help-modules* list all available modules with brief help
-* *--help-options* &lt;option prefix&gt; output matching command line option quick help (same as -?)
-* *--help-plugins* list all available plugins with brief help
-* *--help-signals* dump available control signals
-* *--id-subdir* create/use instance subdirectories in logdir instead of instance filename prefix
-* *--id-zero* use id prefix / subdirectory even with one packet thread
-* *--list-buffers* output available inspection buffers
-* *--list-builtin* &lt;module prefix&gt; output matching builtin rules
-* *--list-gids* [&lt;module prefix&gt;] output matching generators
-* *--list-modules* [&lt;module type&gt;] list all known modules of given type
-* *--list-plugins* list all known plugins
-* *--logid* &lt;0xid&gt; log Identifier to uniquely id events for multiple snorts (same as -G)
-* *--lua* &lt;chunk&gt; extend/override conf with chunk; may be repeated
-* *--markup* output help in asciidoc compatible format
-* *--max-packet-threads* &lt;count&gt; configure maximum number of packet threads (same as -z)
-* *--nolock-pidfile* do not try to lock Snort PID file
-* *--nostamps* don't include timestamps in log file names
-* *--pause* wait for resume/quit command before processing packets/terminating
-* *--pcap-dir* &lt;dir&gt; a directory to recurse to look for pcaps - read mode is implied
-* *--pcap-file* &lt;file&gt; file that contains a list of pcaps to read - read mode is implied
-* *--pcap-filter* &lt;filter&gt; filter to apply when getting pcaps from file or directory
-* *--pcap-list* &lt;list&gt; a space separated list of pcaps to read - read mode is implied
-* *--pcap-loop* &lt;count&gt; read all pcaps &lt;count&gt; times;  0 will read until Snort is terminated
-* *--pcap-no-filter* reset to use no filter when getting pcaps from file or directory
-* *--pcap-reload* if reading multiple pcaps, reload snort config between pcaps
-* *--pcap-reset* ignored - for REG_TEST only
-* *--pcap-show* print a line saying what pcap is currently being read
-* *--pedantic* warnings are fatal
-* *--plugin-path* &lt;path&gt; where to find plugins
-* *--process-all-events* process all action groups
-* *--rule* &lt;rules&gt; to be added to configuration; may be repeated
-* *--rule-to-hex* output so rule header to stdout for text rule on stdin
-* *--rule-to-text* output plain so rule header to stdout for text rule on stdin
-* *--run-prefix* &lt;pfx&gt; prepend this to each output file
-* *--script-path* &lt;path&gt; where to find luajit scripts
-* *--shell* enable the interactive command line
-* *--show-plugins* list module and plugin versions
-* *--skip* &lt;n&gt; skip 1st n packets
-* *--snaplen* &lt;snap&gt; set snaplen of packet (same as -s)
-* *--stdin-rules* read rules from stdin until EOF or a line starting with END is read
-* *--treat-drop-as-alert* converts drop, sdrop, and reject rules into alert rules during startup
-* *--treat-drop-as-ignore* use drop, sdrop, and reject rules to ignore session traffic when not inline
-* *--version* show version number (same as -V)
-* *--warn-all* enable all warnings
-* *--warn-conf* warn about configuration issues
-* *--warn-daq* warn about DAQ issues, usually related to mode
-* *--warn-flowbits* warn about flowbits that are checked but not set and vice-versa
-* *--warn-hosts* warn about host table issues
-* *--warn-rules* warn about duplicate rules and rule parsing issues
-* *--warn-scripts* warn about issues discovered while processing Lua scripts
-* *--warn-symbols* warn about unknown symbols in your Lua config
-* *--warn-vars* warn about variable definition and usage issues
-* *--x2c* output ASCII char for given hex (see also --c2x)
-* *-?* &lt;option prefix&gt; output matching command line option quick help (same as --help-options)
-* *-A* &lt;mode&gt; set alert mode: none, cmg, or alert_*
-* *-B* &lt;mask&gt; obfuscated IP addresses in alerts and packet dumps using CIDR mask
-* *-C* print out payloads with character data only (no hex)
-* *-D* run Snort in background (daemon) mode
-* *-E* enable daemon restart
-* *-G* &lt;0xid&gt; (same as --logid)
-* *-H* make hash tables deterministic
-* *-K* &lt;mode&gt; logging mode
-* *-M* log messages to syslog (not alerts)
-* *-N* ignored - for REG_TEST only
-* *-O* obfuscate the logged IP addresses
-* *-Q* enable inline mode operation
-* *-R* &lt;rules&gt; include this rules file in the default policy
-* *-S* &lt;n=v&gt; set rules file variable n equal to value v
-* *-T* test and report on the current Snort configuration
-* *-U* use UTC for timestamps
-* *-V* (same as --version)
-* *-W* lists available interfaces
-* *-X* dump the raw packet data starting at the link layer
-* *-c* &lt;conf&gt; use this configuration
-* *-d* dump the Application Layer
-* *-e* display the second layer header info
-* *-f* turn off fflush() calls after binary log writes
-* *-g* &lt;gname&gt; run snort gid as &lt;gname&gt; group (or gid) after initialization
-* *-i* &lt;iface&gt;... list of interfaces
-* *-j* &lt;port&gt; to listen for telnet connections
-* *-k* &lt;mode&gt; checksum mode (all,noip,notcp,noudp,noicmp,none)
-* *-l* &lt;logdir&gt; log to this directory instead of current directory
-* *-m* &lt;umask&gt; set umask = &lt;umask&gt;
-* *-n* &lt;count&gt; stop after count packets
-* *-q* quiet mode - Don't show banner and status report
-* *-r* &lt;pcap&gt;... (same as --pcap-list)
-* *-s* &lt;snap&gt; (same as --snaplen)
-* *-t* &lt;dir&gt; chroots process to &lt;dir&gt; after initialization
-* *-u* &lt;uname&gt; run snort as &lt;uname&gt; or &lt;uid&gt; after initialization
-* *-v* be verbose
-* *-w* dump 802.11 management and control frames
-* *-x* same as --pedantic
-* *-y* include year in timestamp in the alert and log files
-* *-z* &lt;count&gt; maximum number of packet threads (same as --max-packet-threads)</code></pre>
-</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>--alert-before-pass</strong> process alert, drop, sdrop, or reject before pass; default is pass before alert, drop,&#8230;
+</p>
+</li>
+<li>
+<p>
+<strong>--bpf</strong> &lt;filter options&gt; are standard BPF options, as seen in TCPDump
+</p>
+</li>
+<li>
+<p>
+<strong>--c2x</strong> output hex for given char (see also --x2c)
+</p>
+</li>
+<li>
+<p>
+<strong>--create-pidfile</strong> create PID file, even when not in Daemon mode
+</p>
+</li>
+<li>
+<p>
+<strong>--daq</strong> &lt;type&gt; select packet acquisition module (default is pcap)
+</p>
+</li>
+<li>
+<p>
+<strong>--daq-dir</strong> &lt;dir&gt; tell snort where to find desired DAQ
+</p>
+</li>
+<li>
+<p>
+<strong>--daq-list</strong> list packet acquisition modules available in optional dir, default is static modules only
+</p>
+</li>
+<li>
+<p>
+<strong>--daq-mode</strong> &lt;mode&gt; select the DAQ operating mode
+</p>
+</li>
+<li>
+<p>
+<strong>--daq-var</strong> &lt;name=value&gt; specify extra DAQ configuration variable
+</p>
+</li>
+<li>
+<p>
+<strong>--dirty-pig</strong> don&#8217;t flush packets on shutdown
+</p>
+</li>
+<li>
+<p>
+<strong>--dump-builtin-rules</strong> [&lt;module prefix&gt;] output stub rules for selected modules
+</p>
+</li>
+<li>
+<p>
+<strong>--dump-defaults</strong> [&lt;module prefix&gt;] output module defaults in Lua format
+</p>
+</li>
+<li>
+<p>
+<strong>--dump-dynamic-rules</strong> output stub rules for all loaded rules libraries
+</p>
+</li>
+<li>
+<p>
+<strong>--dump-version</strong> output the version, the whole version, and only the version
+</p>
+</li>
+<li>
+<p>
+<strong>--enable-inline-test</strong> enable Inline-Test Mode Operation
+</p>
+</li>
+<li>
+<p>
+<strong>--help</strong> list command line options
+</p>
+</li>
+<li>
+<p>
+<strong>--help-commands</strong> [&lt;module prefix&gt;] output matching commands
+</p>
+</li>
+<li>
+<p>
+<strong>--help-config</strong> [&lt;module prefix&gt;] output matching config options
+</p>
+</li>
+<li>
+<p>
+<strong>--help-counts</strong> [&lt;module prefix&gt;] output matching peg counts
+</p>
+</li>
+<li>
+<p>
+<strong>--help-module</strong> &lt;module&gt; output description of given module
+</p>
+</li>
+<li>
+<p>
+<strong>--help-modules</strong> list all available modules with brief help
+</p>
+</li>
+<li>
+<p>
+<strong>--help-options</strong> &lt;option prefix&gt; output matching command line option quick help (same as -?)
+</p>
+</li>
+<li>
+<p>
+<strong>--help-plugins</strong> list all available plugins with brief help
+</p>
+</li>
+<li>
+<p>
+<strong>--help-signals</strong> dump available control signals
+</p>
+</li>
+<li>
+<p>
+<strong>--id-subdir</strong> create/use instance subdirectories in logdir instead of instance filename prefix
+</p>
+</li>
+<li>
+<p>
+<strong>--id-zero</strong> use id prefix / subdirectory even with one packet thread
+</p>
+</li>
+<li>
+<p>
+<strong>--list-buffers</strong> output available inspection buffers
+</p>
+</li>
+<li>
+<p>
+<strong>--list-builtin</strong> &lt;module prefix&gt; output matching builtin rules
+</p>
+</li>
+<li>
+<p>
+<strong>--list-gids</strong> [&lt;module prefix&gt;] output matching generators
+</p>
+</li>
+<li>
+<p>
+<strong>--list-modules</strong> [&lt;module type&gt;] list all known modules of given type
+</p>
+</li>
+<li>
+<p>
+<strong>--list-plugins</strong> list all known plugins
+</p>
+</li>
+<li>
+<p>
+<strong>--logid</strong> &lt;0xid&gt; log Identifier to uniquely id events for multiple snorts (same as -G)
+</p>
+</li>
+<li>
+<p>
+<strong>--lua</strong> &lt;chunk&gt; extend/override conf with chunk; may be repeated
+</p>
+</li>
+<li>
+<p>
+<strong>--markup</strong> output help in asciidoc compatible format
+</p>
+</li>
+<li>
+<p>
+<strong>--max-packet-threads</strong> &lt;count&gt; configure maximum number of packet threads (same as -z)
+</p>
+</li>
+<li>
+<p>
+<strong>--nolock-pidfile</strong> do not try to lock Snort PID file
+</p>
+</li>
+<li>
+<p>
+<strong>--nostamps</strong> don&#8217;t include timestamps in log file names
+</p>
+</li>
+<li>
+<p>
+<strong>--pause</strong> wait for resume/quit command before processing packets/terminating
+</p>
+</li>
+<li>
+<p>
+<strong>--pcap-dir</strong> &lt;dir&gt; a directory to recurse to look for pcaps - read mode is implied
+</p>
+</li>
+<li>
+<p>
+<strong>--pcap-file</strong> &lt;file&gt; file that contains a list of pcaps to read - read mode is implied
+</p>
+</li>
+<li>
+<p>
+<strong>--pcap-filter</strong> &lt;filter&gt; filter to apply when getting pcaps from file or directory
+</p>
+</li>
+<li>
+<p>
+<strong>--pcap-list</strong> &lt;list&gt; a space separated list of pcaps to read - read mode is implied
+</p>
+</li>
+<li>
+<p>
+<strong>--pcap-loop</strong> &lt;count&gt; read all pcaps &lt;count&gt; times;  0 will read until Snort is terminated
+</p>
+</li>
+<li>
+<p>
+<strong>--pcap-no-filter</strong> reset to use no filter when getting pcaps from file or directory
+</p>
+</li>
+<li>
+<p>
+<strong>--pcap-reload</strong> if reading multiple pcaps, reload snort config between pcaps
+</p>
+</li>
+<li>
+<p>
+<strong>--pcap-show</strong> print a line saying what pcap is currently being read
+</p>
+</li>
+<li>
+<p>
+<strong>--pedantic</strong> warnings are fatal
+</p>
+</li>
+<li>
+<p>
+<strong>--plugin-path</strong> &lt;path&gt; where to find plugins
+</p>
+</li>
+<li>
+<p>
+<strong>--process-all-events</strong> process all action groups
+</p>
+</li>
+<li>
+<p>
+<strong>--rule</strong> &lt;rules&gt; to be added to configuration; may be repeated
+</p>
+</li>
+<li>
+<p>
+<strong>--rule-to-hex</strong> output so rule header to stdout for text rule on stdin
+</p>
+</li>
+<li>
+<p>
+<strong>--rule-to-text</strong> output plain so rule header to stdout for text rule on stdin
+</p>
+</li>
+<li>
+<p>
+<strong>--run-prefix</strong> &lt;pfx&gt; prepend this to each output file
+</p>
+</li>
+<li>
+<p>
+<strong>--script-path</strong> &lt;path&gt; where to find luajit scripts
+</p>
+</li>
+<li>
+<p>
+<strong>--shell</strong> enable the interactive command line
+</p>
+</li>
+<li>
+<p>
+<strong>--show-plugins</strong> list module and plugin versions
+</p>
+</li>
+<li>
+<p>
+<strong>--skip</strong> &lt;n&gt; skip 1st n packets
+</p>
+</li>
+<li>
+<p>
+<strong>--snaplen</strong> &lt;snap&gt; set snaplen of packet (same as -s)
+</p>
+</li>
+<li>
+<p>
+<strong>--stdin-rules</strong> read rules from stdin until EOF or a line starting with END is read
+</p>
+</li>
+<li>
+<p>
+<strong>--treat-drop-as-alert</strong> converts drop, sdrop, and reject rules into alert rules during startup
+</p>
+</li>
+<li>
+<p>
+<strong>--treat-drop-as-ignore</strong> use drop, sdrop, and reject rules to ignore session traffic when not inline
+</p>
+</li>
+<li>
+<p>
+<strong>--version</strong> show version number (same as -V)
+</p>
+</li>
+<li>
+<p>
+<strong>--warn-all</strong> enable all warnings
+</p>
+</li>
+<li>
+<p>
+<strong>--warn-conf</strong> warn about configuration issues
+</p>
+</li>
+<li>
+<p>
+<strong>--warn-daq</strong> warn about DAQ issues, usually related to mode
+</p>
+</li>
+<li>
+<p>
+<strong>--warn-flowbits</strong> warn about flowbits that are checked but not set and vice-versa
+</p>
+</li>
+<li>
+<p>
+<strong>--warn-hosts</strong> warn about host table issues
+</p>
+</li>
+<li>
+<p>
+<strong>--warn-plugins</strong> warn about issues that prevent plugins from loading
+</p>
+</li>
+<li>
+<p>
+<strong>--warn-rules</strong> warn about duplicate rules and rule parsing issues
+</p>
+</li>
+<li>
+<p>
+<strong>--warn-scripts</strong> warn about issues discovered while processing Lua scripts
+</p>
+</li>
+<li>
+<p>
+<strong>--warn-symbols</strong> warn about unknown symbols in your Lua config
+</p>
+</li>
+<li>
+<p>
+<strong>--warn-vars</strong> warn about variable definition and usage issues
+</p>
+</li>
+<li>
+<p>
+<strong>--x2c</strong> output ASCII char for given hex (see also --c2x)
+</p>
+</li>
+<li>
+<p>
+<strong>-?</strong> &lt;option prefix&gt; output matching command line option quick help (same as --help-options)
+</p>
+</li>
+<li>
+<p>
+<strong>-A</strong> &lt;mode&gt; set alert mode: none, cmg, or alert_*
+</p>
+</li>
+<li>
+<p>
+<strong>-B</strong> &lt;mask&gt; obfuscated IP addresses in alerts and packet dumps using CIDR mask
+</p>
+</li>
+<li>
+<p>
+<strong>-C</strong> print out payloads with character data only (no hex)
+</p>
+</li>
+<li>
+<p>
+<strong>-D</strong> run Snort in background (daemon) mode
+</p>
+</li>
+<li>
+<p>
+<strong>-E</strong> enable daemon restart
+</p>
+</li>
+<li>
+<p>
+<strong>-G</strong> &lt;0xid&gt; (same as --logid)
+</p>
+</li>
+<li>
+<p>
+<strong>-H</strong> make hash tables deterministic
+</p>
+</li>
+<li>
+<p>
+<strong>-L</strong> &lt;mode&gt; logging mode (none, dump, pcap, or log_*)
+</p>
+</li>
+<li>
+<p>
+<strong>-M</strong> log messages to syslog (not alerts)
+</p>
+</li>
+<li>
+<p>
+<strong>-O</strong> obfuscate the logged IP addresses
+</p>
+</li>
+<li>
+<p>
+<strong>-Q</strong> enable inline mode operation
+</p>
+</li>
+<li>
+<p>
+<strong>-R</strong> &lt;rules&gt; include this rules file in the default policy
+</p>
+</li>
+<li>
+<p>
+<strong>-S</strong> &lt;x=v&gt; set config variable x equal to value v
+</p>
+</li>
+<li>
+<p>
+<strong>-T</strong> test and report on the current Snort configuration
+</p>
+</li>
+<li>
+<p>
+<strong>-U</strong> use UTC for timestamps
+</p>
+</li>
+<li>
+<p>
+<strong>-V</strong> (same as --version)
+</p>
+</li>
+<li>
+<p>
+<strong>-W</strong> lists available interfaces
+</p>
+</li>
+<li>
+<p>
+<strong>-X</strong> dump the raw packet data starting at the link layer
+</p>
+</li>
+<li>
+<p>
+<strong>-c</strong> &lt;conf&gt; use this configuration
+</p>
+</li>
+<li>
+<p>
+<strong>-d</strong> dump the Application Layer
+</p>
+</li>
+<li>
+<p>
+<strong>-e</strong> display the second layer header info
+</p>
+</li>
+<li>
+<p>
+<strong>-f</strong> turn off fflush() calls after binary log writes
+</p>
+</li>
+<li>
+<p>
+<strong>-g</strong> &lt;gname&gt; run snort gid as &lt;gname&gt; group (or gid) after initialization
+</p>
+</li>
+<li>
+<p>
+<strong>-i</strong> &lt;iface&gt;&#8230; list of interfaces
+</p>
+</li>
+<li>
+<p>
+<strong>-j</strong> &lt;port&gt; to listen for telnet connections
+</p>
+</li>
+<li>
+<p>
+<strong>-k</strong> &lt;mode&gt; checksum mode (all,noip,notcp,noudp,noicmp,none)
+</p>
+</li>
+<li>
+<p>
+<strong>-l</strong> &lt;logdir&gt; log to this directory instead of current directory
+</p>
+</li>
+<li>
+<p>
+<strong>-m</strong> &lt;umask&gt; set umask = &lt;umask&gt;
+</p>
+</li>
+<li>
+<p>
+<strong>-n</strong> &lt;count&gt; stop after count packets
+</p>
+</li>
+<li>
+<p>
+<strong>-q</strong> quiet mode - Don&#8217;t show banner and status report
+</p>
+</li>
+<li>
+<p>
+<strong>-r</strong> &lt;pcap&gt;&#8230; (same as --pcap-list)
+</p>
+</li>
+<li>
+<p>
+<strong>-s</strong> &lt;snap&gt; (same as --snaplen)
+</p>
+</li>
+<li>
+<p>
+<strong>-t</strong> &lt;dir&gt; chroots process to &lt;dir&gt; after initialization
+</p>
+</li>
+<li>
+<p>
+<strong>-u</strong> &lt;uname&gt; run snort as &lt;uname&gt; or &lt;uid&gt; after initialization
+</p>
+</li>
+<li>
+<p>
+<strong>-v</strong> be verbose
+</p>
+</li>
+<li>
+<p>
+<strong>-w</strong> dump 802.11 management and control frames
+</p>
+</li>
+<li>
+<p>
+<strong>-x</strong> same as --pedantic
+</p>
+</li>
+<li>
+<p>
+<strong>-y</strong> include year in timestamp in the alert and log files
+</p>
+</li>
+<li>
+<p>
+<strong>-z</strong> &lt;count&gt; maximum number of packet threads (same as --max-packet-threads); 0 gets the number of CPU cores reported by the system
+</p>
+</li>
+</ul></div>
 </div>
 <div class="sect2">
 <h3 id="_parameters">Parameters</h3>
@@ -10924,7 +13403,7 @@ into the Snort binary.  For a full list of build features, run ./configure
 </li>
 <li>
 <p>
-<strong>implied</strong>: a IPS rule option that takes no value but means true
+<strong>implied</strong>: an IPS rule option that takes no value but means true
 </p>
 </li>
 <li>
@@ -10960,6 +13439,11 @@ into the Snort binary.  For a full list of build features, run ./configure
 <li>
 <p>
 <strong>select</strong>: a string selected from the given range
+</p>
+</li>
+<li>
+<p>
+<strong>string</strong>: any string with no more than the given length, if any
 </p>
 </li>
 </ul></div>
@@ -11058,7 +13542,7 @@ int <strong>active.min_interval</strong> = 255: minimum number of seconds betwee
 </li>
 <li>
 <p>
-multi <strong>alert_csv.csv</strong> = timestamp gid sid rev src_addr src_port dst_addr dst_port: selected fields will be output in given order left to right { timestamp | gid | sid | rev | msg | proto | src_addr | dst_addr | src_port | dst_port | eth_src | eth_dst | eth_type | eth_len | ttl | tos | id | ip_len | dgm_len | icmp_type | icmp_code | icmp_id | icmp_seq | tcp_flags | tcp_seq | tcp_ack | tcp_len | tcp_win | udp_len }
+multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen dgm_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | dir | dgm_len | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | ip_id | ip_len | msg | pkt_gen | pkt_num | proto | rev | rule | sid | src_addr | src_ap | src_port | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len }
 </p>
 </li>
 <li>
@@ -11073,7 +13557,17 @@ int <strong>alert_csv.limit</strong> = 0: set limit (0 is unlimited) { 0: }
 </li>
 <li>
 <p>
+string <strong>alert_csv.separator</strong> = , : separate fields with this character sequence
+</p>
+</li>
+<li>
+<p>
 enum <strong>alert_csv.units</strong> = B: bytes | KB | MB | GB { B | K | M | G }
+</p>
+</li>
+<li>
+<p>
+bool <strong>alert_ex.upper</strong> = false: true/false &#8594; convert to upper/lower case
 </p>
 </li>
 <li>
@@ -11124,26 +13618,6 @@ enum <strong>alert_syslog.level</strong> = info: part of priority applied to eac
 <li>
 <p>
 multi <strong>alert_syslog.options</strong>: used to open the syslog connection { cons | ndelay | perror | pid }
-</p>
-</li>
-<li>
-<p>
-bool <strong>alert_test.file</strong> = false: output to alert_test.txt instead of stdout
-</p>
-</li>
-<li>
-<p>
-bool <strong>alert_test.msg</strong> = false: include alert msg
-</p>
-</li>
-<li>
-<p>
-bool <strong>alert_test.rebuilt</strong> = false: include type:count where type is S for stream and F for frag
-</p>
-</li>
-<li>
-<p>
-bool <strong>alert_test.session</strong> = false: include src-dst each of form -addr:port
 </p>
 </li>
 <li>
@@ -11313,7 +13787,7 @@ bit_list <strong>binder[].when.ports</strong>: list of ports { 65535 }
 </li>
 <li>
 <p>
-enum <strong>binder[].when.proto</strong>: protocol { any | ip | icmp | tcp | udp }
+enum <strong>binder[].when.proto</strong>: protocol { any | ip | icmp | tcp | udp | user | file }
 </p>
 </li>
 <li>
@@ -11638,6 +14112,11 @@ string <strong>daq.vars</strong>: comma separated list of name=value DAQ-specifi
 </li>
 <li>
 <p>
+string <strong>data_log.key</strong> = http_uri: name of data buffer to log
+</p>
+</li>
+<li>
+<p>
 int <strong>detection.asn1</strong> = 256: maximum decode nodes { 1: }
 </p>
 </li>
@@ -11669,6 +14148,16 @@ int <strong>detection_filter.seconds</strong>: length of interval to count hits 
 <li>
 <p>
 enum <strong>detection_filter.track</strong>: track hits by source or destination IP address { by_src | by_dst }
+</p>
+</li>
+<li>
+<p>
+int <strong>dpx.max</strong> = 0: maximum payload before alert { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+port <strong>dpx.port</strong>: port to check
 </p>
 </li>
 <li>
@@ -11809,6 +14298,21 @@ int <strong>file_id.show_data_depth</strong> = 100: print this many octets { 0: 
 <li>
 <p>
 int <strong>file_id.signature_depth</strong> = 10485760: stop signature at this point { 0: }
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.trace_signature</strong> = false: enable runtime dump of signature info
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.trace_stream</strong> = false: enable runtime dump of file data
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.trace_type</strong> = false: enable runtime dump of type info
 </p>
 </li>
 <li>
@@ -12493,12 +14997,37 @@ bool <strong>log_codecs.msg</strong> = false: include alert msg
 </li>
 <li>
 <p>
+bool <strong>log_hext.file</strong> = false: output to log_hext.txt instead of stdout
+</p>
+</li>
+<li>
+<p>
+int <strong>log_hext.limit</strong> = 0: set limit (0 is unlimited) { 0: }
+</p>
+</li>
+<li>
+<p>
+bool <strong>log_hext.raw</strong> = false: output all full packets if true, else just TCP payload
+</p>
+</li>
+<li>
+<p>
+enum <strong>log_hext.units</strong> = B: bytes | KB | MB | GB { B | K | M | G }
+</p>
+</li>
+<li>
+<p>
 int <strong>log_pcap.limit</strong> = 0: set limit (0 is unlimited) { 0: }
 </p>
 </li>
 <li>
 <p>
 enum <strong>log_pcap.units</strong> = B: bytes | KB | MB | GB { B | K | M | G }
+</p>
+</li>
+<li>
+<p>
+string <strong>lowmem_q.var</strong>: additional print text
 </p>
 </li>
 <li>
@@ -12769,11 +15298,6 @@ bool <strong>output.log_ipv6_extra_data</strong> = false: log IPv6 source and de
 <li>
 <p>
 string <strong>output.logdir</strong> = .: where to put log files (same as -l)
-</p>
-</li>
-<li>
-<p>
-bool <strong>output.nolog</strong> = false: turn off logging (alerts still work, same as -N)
 </p>
 </li>
 <li>
@@ -13258,17 +15782,17 @@ bool <strong>search_engine.enable_single_rule_group</strong> = false: put all ru
 </li>
 <li>
 <p>
+bool <strong>search_engine.inspect_stream_inserts</strong> = true: inspect reassembled payload - disabling is good for performance, bad for detection
+</p>
+</li>
+<li>
+<p>
 int <strong>search_engine.max_pattern_len</strong> = 0: truncate patterns when compiling into state machine (0 means no maximum) { 0: }
 </p>
 </li>
 <li>
 <p>
 int <strong>search_engine.max_queue_events</strong> = 5: maximum number of matching fast pattern states to queue per packet
-</p>
-</li>
-<li>
-<p>
-bool <strong>search_engine.no_stream_inserts</strong> = false: don&#8217;t inspect reassembled payload - good for performance, bad for detection
 </p>
 </li>
 <li>
@@ -13339,6 +15863,126 @@ string <strong>sha512.~hash</strong>: data to match
 <li>
 <p>
 int <strong>sid.~</strong>: signature id { 1: }
+</p>
+</li>
+<li>
+<p>
+string <strong>smtp.alt_max_command_line_len[].command</strong>: command string
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.alt_max_command_line_len[].length</strong> = 0: specify non-default maximum for command { 0: }
+</p>
+</li>
+<li>
+<p>
+string <strong>smtp.auth_cmds</strong>: commands that initiate an authentication exchange
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.b64_decode_depth</strong> = 25: depth used to decode the base64 encoded MIME attachments { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+string <strong>smtp.binary_data_cmds</strong>: commands that initiate sending of data and use a length value after the command
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.bitenc_decode_depth</strong> = 25: depth used to extract the non-encoded MIME attachments { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+string <strong>smtp.data_cmds</strong>: commands that initiate sending of data with an end of data delimiter
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.email_hdrs_log_depth</strong> = 1464: depth for logging email headers { 0:20480 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.ignore_data</strong> = false: ignore data section of mail
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.ignore_tls_data</strong> = false: ignore TLS-encrypted data when processing rules
+</p>
+</li>
+<li>
+<p>
+string <strong>smtp.invalid_cmds</strong>: alert if this command is sent from client side
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.log_email_hdrs</strong> = false: log the SMTP email headers extracted from SMTP data
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.log_filename</strong> = false: log the MIME attachment filenames extracted from the Content-Disposition header within the MIME body
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.log_mailfrom</strong> = false: log the sender&#8217;s email address extracted from the MAIL FROM command
+</p>
+</li>
+<li>
+<p>
+bool <strong>smtp.log_rcptto</strong> = false: log the recipient&#8217;s email address extracted from the RCPT TO command
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.max_command_line_len</strong> = 0: max Command Line Length { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.max_header_line_len</strong> = 0: max SMTP DATA header line { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.max_response_line_len</strong> = 0: max SMTP response line { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+enum <strong>smtp.normalize</strong> = none: turns on/off normalization { none | cmds | all }
+</p>
+</li>
+<li>
+<p>
+string <strong>smtp.normalize_cmds</strong>: list of commands to normalize
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.qp_decode_depth</strong> = 25: quoted-Printable decoding depth { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>smtp.uu_decode_depth</strong> = 25: unix-to-Unix decoding depth { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+string <strong>smtp.valid_cmds</strong>: list of valid commands
+</p>
+</li>
+<li>
+<p>
+enum <strong>smtp.xlink2state</strong> = alert: enable/disable xlink2state alert { disable | alert | drop }
 </p>
 </li>
 <li>
@@ -13513,7 +16157,7 @@ implied <strong>snort.--markup</strong>: output help in asciidoc compatible form
 </li>
 <li>
 <p>
-int <strong>snort.--max-packet-threads</strong> = 1: &lt;count&gt; configure maximum number of packet threads (same as -z)
+int <strong>snort.--max-packet-threads</strong> = 1: &lt;count&gt; configure maximum number of packet threads (same as -z) { 0: }
 </p>
 </li>
 <li>
@@ -13564,11 +16208,6 @@ implied <strong>snort.--pcap-no-filter</strong>: reset to use no filter when get
 <li>
 <p>
 implied <strong>snort.--pcap-reload</strong>: if reading multiple pcaps, reload snort config between pcaps
-</p>
-</li>
-<li>
-<p>
-implied <strong>snort.--pcap-reset</strong>: ignored - for REG_TEST only
 </p>
 </li>
 <li>
@@ -13683,6 +16322,11 @@ implied <strong>snort.--warn-hosts</strong>: warn about host table issues
 </li>
 <li>
 <p>
+implied <strong>snort.--warn-plugins</strong>: warn about issues that prevent plugins from loading
+</p>
+</li>
+<li>
+<p>
 implied <strong>snort.--warn-rules</strong>: warn about duplicate rules and rule parsing issues
 </p>
 </li>
@@ -13748,17 +16392,12 @@ implied <strong>snort.-H</strong>: make hash tables deterministic
 </li>
 <li>
 <p>
-select <strong>snort.-K</strong> = none: &lt;mode&gt; logging mode { none|text|pcap }
+string <strong>snort.-L</strong>: &lt;mode&gt; logging mode (none, dump, pcap, or log_*)
 </p>
 </li>
 <li>
 <p>
 implied <strong>snort.-M</strong>: log messages to syslog (not alerts)
-</p>
-</li>
-<li>
-<p>
-implied <strong>snort.-N</strong>: ignored - for REG_TEST only
 </p>
 </li>
 <li>
@@ -13778,7 +16417,7 @@ string <strong>snort.-R</strong>: &lt;rules&gt; include this rules file in the d
 </li>
 <li>
 <p>
-string <strong>snort.-S</strong>: &lt;n=v&gt; set rules file variable n equal to value v
+string <strong>snort.-S</strong>: &lt;x=v&gt; set config variable x equal to value v
 </p>
 </li>
 <li>
@@ -13908,7 +16547,7 @@ implied <strong>snort.-y</strong>: include year in timestamp in the alert and lo
 </li>
 <li>
 <p>
-int <strong>snort.-z</strong> = 1: &lt;count&gt; maximum number of packet threads (same as --max-packet-threads)
+int <strong>snort.-z</strong> = 1: &lt;count&gt; maximum number of packet threads (same as --max-packet-threads); 0 gets the number of CPU cores reported by the system { 0: }
 </p>
 </li>
 <li>
@@ -14018,6 +16657,11 @@ int <strong>stream.udp_cache.pruning_timeout</strong> = 30: minimum inactive tim
 </li>
 <li>
 <p>
+bool <strong>stream_file.upload</strong> = false: indicate file transfer direction
+</p>
+</li>
+<li>
+<p>
 int <strong>stream_icmp.session_timeout</strong> = 30: session tracking timeout { 1:86400 }
 </p>
 </li>
@@ -14098,7 +16742,7 @@ bool <strong>stream_tcp.ignore_any_rules</strong> = false: process tcp content r
 </li>
 <li>
 <p>
-int <strong>stream_tcp.max_pdu</strong> = 16384: maximum reassembled PDU size { 1460:63780 }
+int <strong>stream_tcp.max_pdu</strong> = 16384: maximum reassembled PDU size { 1460:65535 }
 </p>
 </li>
 <li>
@@ -14169,6 +16813,11 @@ bool <strong>stream_udp.ignore_any_rules</strong> = false: process udp content r
 <li>
 <p>
 int <strong>stream_udp.session_timeout</strong> = 30: session tracking timeout { 1:86400 }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream_user.session_timeout</strong> = 30: session tracking timeout { 1:86400 }
 </p>
 </li>
 <li>
@@ -14283,6 +16932,11 @@ bool <strong>unified2.vlan_event_types</strong> = false: include vlan IDs in eve
 </li>
 <li>
 <p>
+string <strong>urg.~range</strong>: check if urgent offset is min&lt;&gt;max | &lt;max | &gt;min
+</p>
+</li>
+<li>
+<p>
 string <strong>window.~range</strong>: check if packet payload size is <em>size | min&lt;&gt;max | &lt;max | &gt;min</em>
 </p>
 </li>
@@ -14334,8 +16988,6 @@ string <strong>wizard.spells[].to_client[].spell</strong>: sequence of data with
 <li>
 <p>
 string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with wild cards (*)
-        0 gets the number of CPU cores reported by the system { 0: }
-        0 gets the number of CPU cores reported by the system { 0: }
 </p>
 </li>
 </ul></div>
@@ -14440,7 +17092,7 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>daq.pcaps</strong>: total files processed
+<strong>daq.pcaps</strong>: total files and interfaces processed
 </p>
 </li>
 <li>
@@ -14461,6 +17113,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>daq.whitelist</strong>: total whitelist verdicts
+</p>
+</li>
+<li>
+<p>
+<strong>data_log.packets</strong>: total packets
 </p>
 </li>
 <li>
@@ -14516,6 +17173,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>dns.packets</strong>: total packets
+</p>
+</li>
+<li>
+<p>
+<strong>dpx.packets</strong>: total packets
 </p>
 </li>
 <li>
@@ -14950,6 +17612,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>smtp.packets</strong>: total packets
+</p>
+</li>
+<li>
+<p>
 <strong>snort.attribute table hosts</strong>: total number of hosts in table
 </p>
 </li>
@@ -14981,6 +17648,16 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>ssh.packets</strong>: total packets
+</p>
+</li>
+<li>
+<p>
+<strong>stream.file flows</strong>: total file sessions
+</p>
+</li>
+<li>
+<p>
+<strong>stream.file prunes</strong>: file sessions pruned
 </p>
 </li>
 <li>
@@ -15021,6 +17698,16 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>stream.udp prunes</strong>: udp sessions pruned
+</p>
+</li>
+<li>
+<p>
+<strong>stream.user flows</strong>: total user sessions
+</p>
+</li>
+<li>
+<p>
+<strong>stream.user prunes</strong>: user sessions pruned
 </p>
 </li>
 <li>
@@ -15293,6 +17980,16 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <strong>wizard.udp scans</strong>: udp payload scans
 </p>
 </li>
+<li>
+<p>
+<strong>wizard.user hits</strong>: user identifications
+</p>
+</li>
+<li>
+<p>
+<strong>wizard.user scans</strong>: user payload scans
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -15415,6 +18112,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>116</strong>: token_ring
+</p>
+</li>
+<li>
+<p>
 <strong>116</strong>: udp
 </p>
 </li>
@@ -15446,6 +18148,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>123</strong>: stream_ip
+</p>
+</li>
+<li>
+<p>
+<strong>124</strong>: smtp
 </p>
 </li>
 <li>
@@ -15491,6 +18198,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>219</strong>: new_http_inspect
+</p>
+</li>
+<li>
+<p>
+<strong>256</strong>: dpx
 </p>
 </li>
 </ul></div>
@@ -15721,6 +18433,26 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>116:134</strong> (wlan) bad 802.11 extra LLC info
+</p>
+</li>
+<li>
+<p>
+<strong>116:140</strong> (token_ring) (token_ring) Bad Token Ring Header
+</p>
+</li>
+<li>
+<p>
+<strong>116:141</strong> (token_ring) (token_ring) Bad Token Ring ETHLLC Header
+</p>
+</li>
+<li>
+<p>
+<strong>116:142</strong> (token_ring) (token_ring) Bad Token Ring MRLENHeader
+</p>
+</li>
+<li>
+<p>
+<strong>116:143</strong> (token_ring) (token_ring) Bad Token Ring MR Header
 </p>
 </li>
 <li>
@@ -16755,6 +19487,66 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>124:1</strong> (smtp) Attempted command buffer overflow
+</p>
+</li>
+<li>
+<p>
+<strong>124:2</strong> (smtp) Attempted data header buffer overflow
+</p>
+</li>
+<li>
+<p>
+<strong>124:3</strong> (smtp) Attempted response buffer overflow
+</p>
+</li>
+<li>
+<p>
+<strong>124:4</strong> (smtp) Attempted specific command buffer overflow
+</p>
+</li>
+<li>
+<p>
+<strong>124:5</strong> (smtp) Unknown command
+</p>
+</li>
+<li>
+<p>
+<strong>124:6</strong> (smtp) Illegal command
+</p>
+</li>
+<li>
+<p>
+<strong>124:7</strong> (smtp) Attempted header name buffer overflow
+</p>
+</li>
+<li>
+<p>
+<strong>124:8</strong> (smtp) Attempted X-Link2State command buffer overflow
+</p>
+</li>
+<li>
+<p>
+<strong>124:10</strong> (smtp) Base64 Decoding failed.
+</p>
+</li>
+<li>
+<p>
+<strong>124:11</strong> (smtp) Quoted-Printable Decoding failed.
+</p>
+</li>
+<li>
+<p>
+<strong>124:13</strong> (smtp) Unix-to-Unix Decoding failed.
+</p>
+</li>
+<li>
+<p>
+<strong>124:14</strong> (smtp) Cyrus SASL authentication attack.
+</p>
+</li>
+<li>
+<p>
 <strong>125:1</strong> (ftp_server) TELNET cmd on FTP command channel
 </p>
 </li>
@@ -17283,6 +20075,51 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <strong>219:52</strong> (new_http_inspect) HTTP misformatted or not really HTTP
 </p>
 </li>
+<li>
+<p>
+<strong>219:53</strong> (new_http_inspect) Input apparently not HTTP
+</p>
+</li>
+<li>
+<p>
+<strong>219:54</strong> (new_http_inspect) White space before or between messages
+</p>
+</li>
+<li>
+<p>
+<strong>219:55</strong> (new_http_inspect) Request message without URI
+</p>
+</li>
+<li>
+<p>
+<strong>219:56</strong> (new_http_inspect) Control character in reason phrase
+</p>
+</li>
+<li>
+<p>
+<strong>219:57</strong> (new_http_inspect) Illegal extra whitespace in start line
+</p>
+</li>
+<li>
+<p>
+<strong>219:58</strong> (new_http_inspect) Corrupted HTTP version
+</p>
+</li>
+<li>
+<p>
+<strong>219:59</strong> (new_http_inspect) Unknown HTTP version
+</p>
+</li>
+<li>
+<p>
+<strong>219:60</strong> (new_http_inspect) Format error in HTTP header
+</p>
+</li>
+<li>
+<p>
+<strong>256:1</strong> (dpx) too much data sent to port
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -17498,6 +20335,7 @@ change -&gt; http_inspect_server: 'u_encode' ==&gt; 'profile.u_encode'
 change -&gt; http_inspect_server: 'utf_8' ==&gt; 'profile.utf_8'
 change -&gt; http_inspect_server: 'webroot' ==&gt; 'profile.webroot'
 change -&gt; http_inspect_server: 'whitespace_chars' ==&gt; 'profile.whitespace_chars'
+change -&gt; imap: 'ports' ==&gt; 'bindings'
 change -&gt; paf_max: 'paf_max [0:63780]' ==&gt; 'max_pdu [1460:63780]'
 change -&gt; perfmonitor: 'accumulate' ==&gt; 'reset = false'
 change -&gt; perfmonitor: 'flow-file' ==&gt; 'flow_file = true'
@@ -17509,6 +20347,7 @@ change -&gt; perfmonitor: 'pktcnt' ==&gt; 'packets'
 change -&gt; perfmonitor: 'snortfile' ==&gt; 'file = true'
 change -&gt; perfmonitor: 'time' ==&gt; 'seconds'
 change -&gt; policy_mode: 'inline_test' ==&gt; 'inline-test'
+change -&gt; pop: 'ports' ==&gt; 'bindings'
 change -&gt; ppm: 'max-pkt-time' ==&gt; 'max_pkt_time'
 change -&gt; ppm: 'max-rule-time' ==&gt; 'max_rule_time'
 change -&gt; ppm: 'pkt-log' ==&gt; 'pkt_log'
@@ -17524,6 +20363,7 @@ change -&gt; rule_state: 'disabled' ==&gt; 'enable'
 change -&gt; rule_state: 'enabled' ==&gt; 'enable'
 change -&gt; sfportscan: 'proto' ==&gt; 'protos'
 change -&gt; sfportscan: 'scan_type' ==&gt; 'scan_types'
+change -&gt; smtp: 'ports' ==&gt; 'bindings'
 change -&gt; ssh: 'server_ports' ==&gt; 'bindings'
 change -&gt; stream5_global: 'max_active_responses' ==&gt; 'max_responses'
 change -&gt; stream5_global: 'max_icmp' ==&gt; 'max_sessions'
@@ -17630,11 +20470,17 @@ deleted -&gt; ftp_telnet_protocol: 'detect_anomalies'
 deleted -&gt; full: '&lt;filename&gt; can no longer be specific'
 deleted -&gt; http_inspect: 'disabled'
 deleted -&gt; http_inspect_server: 'no_alerts'
+deleted -&gt; imap: 'disabled'
+deleted -&gt; imap: 'max_mime_mem'
+deleted -&gt; imap: 'memcap'
 deleted -&gt; perfmonitor: 'atexitonly'
 deleted -&gt; perfmonitor: 'atexitonly: base-stats'
 deleted -&gt; perfmonitor: 'atexitonly: events-stats'
 deleted -&gt; perfmonitor: 'atexitonly: flow-ip-stats'
 deleted -&gt; perfmonitor: 'atexitonly: flow-stats'
+deleted -&gt; pop: 'disabled'
+deleted -&gt; pop: 'max_mime_mem'
+deleted -&gt; pop: 'memcap'
 deleted -&gt; ppm: 'debug-pkts'
 deleted -&gt; react: 'block'
 deleted -&gt; react: 'warn'
@@ -17646,6 +20492,15 @@ deleted -&gt; rule_state: 'action'
 deleted -&gt; sfportscan: 'detect_ack_scans'
 deleted -&gt; sfportscan: 'disabled'
 deleted -&gt; sfportscan: 'logfile'
+deleted -&gt; smtp: 'alert_unknown_cmds'
+deleted -&gt; smtp: 'disabled'
+deleted -&gt; smtp: 'enable_mime_decoding'
+deleted -&gt; smtp: 'inspection_type'
+deleted -&gt; smtp: 'max_mime_depth'
+deleted -&gt; smtp: 'max_mime_mem'
+deleted -&gt; smtp: 'memcap'
+deleted -&gt; smtp: 'no_alerts'
+deleted -&gt; smtp: 'print_cmds'
 deleted -&gt; ssh: 'autodetect'
 deleted -&gt; ssh: 'enable_badmsgdir'
 deleted -&gt; ssh: 'enable_paysize'
@@ -17688,6 +20543,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>alert_ex</strong> (logger): output gid:sid:rev for alerts
+</p>
+</li>
+<li>
+<p>
 <strong>alert_fast</strong> (logger): output event with brief text format
 </p>
 </li>
@@ -17699,11 +20559,6 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>alert_syslog</strong> (logger): output event to syslog
-</p>
-</li>
-<li>
-<p>
-<strong>alert_test</strong> (logger): output event in custom tsv format
 </p>
 </li>
 <li>
@@ -17803,6 +20658,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>data_log</strong> (inspector): log selected published data to data.log
+</p>
+</li>
+<li>
+<p>
 <strong>decode</strong> (basic): general decoder rules
 </p>
 </li>
@@ -17819,6 +20679,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>dns</strong> (inspector): dns inspection
+</p>
+</li>
+<li>
+<p>
+<strong>dpx</strong> (inspector): dynamic inspector example
 </p>
 </li>
 <li>
@@ -18078,7 +20943,17 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>log_hext</strong> (logger): output payload suitable for daq hext
+</p>
+</li>
+<li>
+<p>
 <strong>log_pcap</strong> (logger): log packet in pcap format
+</p>
+</li>
+<li>
+<p>
+<strong>lowmem_q</strong> (search_engine): MPSE that minimizes memory used
 </p>
 </li>
 <li>
@@ -18283,6 +21158,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>smtp</strong> (inspector): smtp inspection
+</p>
+</li>
+<li>
+<p>
 <strong>snort</strong> (basic): command line configuration and shell commands
 </p>
 </li>
@@ -18304,6 +21184,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>stream</strong> (inspector): common flow tracking
+</p>
+</li>
+<li>
+<p>
+<strong>stream_file</strong> (inspector): stream inspector for file flow tracking and processing
 </p>
 </li>
 <li>
@@ -18338,6 +21223,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>stream_user</strong> (inspector): stream inspector for user flow tracking and reassembly
+</p>
+</li>
+<li>
+<p>
 <strong>suppress</strong> (basic): configure event suppressions
 </p>
 </li>
@@ -18358,6 +21248,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>token_ring</strong> (codec): support for token ring decoding
+</p>
+</li>
+<li>
+<p>
 <strong>tos</strong> (ips_option): rule option to check type of service field
 </p>
 </li>
@@ -18374,6 +21269,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>unified2</strong> (logger): output event and packet in unified2 format file
+</p>
+</li>
+<li>
+<p>
+<strong>urg</strong> (ips_option): detection for TCP urgent pointer
 </p>
 </li>
 <li>
@@ -18553,6 +21453,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>codec::pim</strong>: support for protocol independent multicast
+</p>
+</li>
+<li>
+<p>
 <strong>codec::ppp</strong>: support for point-to-point encapsulation (DLT DLT_PPP)
 </p>
 </li>
@@ -18583,6 +21488,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>codec::socket</strong>: support for sockets / proxied sessions (DLT 230)
+</p>
+</li>
+<li>
+<p>
 <strong>codec::sun_nd</strong>: support for Sun ND
 </p>
 </li>
@@ -18599,6 +21509,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>codec::teredo</strong>: support for teredo
+</p>
+</li>
+<li>
+<p>
+<strong>codec::token_ring</strong>: support for token ring decoding
 </p>
 </li>
 <li>
@@ -18638,7 +21553,17 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>inspector::data_log</strong>: log selected published data to data.log
+</p>
+</li>
+<li>
+<p>
 <strong>inspector::dns</strong>: dns inspection
+</p>
+</li>
+<li>
+<p>
+<strong>inspector::dpx</strong>: dynamic inspector example
 </p>
 </li>
 <li>
@@ -18708,12 +21633,22 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>inspector::smtp</strong>: smtp inspection
+</p>
+</li>
+<li>
+<p>
 <strong>inspector::ssh</strong>: ssh inspection
 </p>
 </li>
 <li>
 <p>
 <strong>inspector::stream</strong>: common flow tracking
+</p>
+</li>
+<li>
+<p>
+<strong>inspector::stream_file</strong>: stream inspector for file flow tracking and processing
 </p>
 </li>
 <li>
@@ -18734,6 +21669,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>inspector::stream_udp</strong>: stream inspector for UDP flow tracking
+</p>
+</li>
+<li>
+<p>
+<strong>inspector::stream_user</strong>: stream inspector for user flow tracking and reassembly
 </p>
 </li>
 <li>
@@ -19073,12 +22013,22 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>ips_option::urg</strong>: detection for TCP urgent pointer
+</p>
+</li>
+<li>
+<p>
 <strong>ips_option::window</strong>: rule option to check TCP window field
 </p>
 </li>
 <li>
 <p>
 <strong>logger::alert_csv</strong>: output event in csv format
+</p>
+</li>
+<li>
+<p>
+<strong>logger::alert_ex</strong>: output gid:sid:rev for alerts
 </p>
 </li>
 <li>
@@ -19098,17 +22048,17 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>logger::alert_test</strong>: output event in custom tsv format
-</p>
-</li>
-<li>
-<p>
 <strong>logger::alert_unixsock</strong>: output event over unix socket
 </p>
 </li>
 <li>
 <p>
 <strong>logger::log_codecs</strong>: log protocols in packet by layer
+</p>
+</li>
+<li>
+<p>
+<strong>logger::log_hext</strong>: output payload suitable for daq hext
 </p>
 </li>
 <li>
@@ -19166,783 +22116,22 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <strong>search_engine::ac_std</strong>: Aho-Corasick Full (high memory, best performance) MPSE
 </p>
 </li>
-</ul></div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_extending_snort">Extending Snort++</h3>
-<div class="sect3">
-<h4 id="_plugins_2">Plugins</h4>
-<div class="paragraph"><p>Snort++ uses a variety of plugins to accomplish much of its processing
-objectives, including:</p></div>
-<div class="ulist"><ul>
 <li>
 <p>
-Codec - to decode and encode packets
+<strong>search_engine::lowmem</strong>: Keyword Trie (low memory, moderate performance) MPSE
 </p>
 </li>
 <li>
 <p>
-Inspector - like the prior preprocessors, for normalization, etc.
+<strong>search_engine::lowmem_q</strong>: Keyword Trie (low memory, moderate performance) MPSE with queued events
 </p>
 </li>
 <li>
 <p>
-IpsOption - for detection in Snort++ rules
-</p>
-</li>
-<li>
-<p>
-IpsAction - for custom actions
-</p>
-</li>
-<li>
-<p>
-Logger - for handling events
-</p>
-</li>
-<li>
-<p>
-Mpse - for fast pattern matching
-</p>
-</li>
-<li>
-<p>
-So - for dynamic rules
+<strong>so_rule::3|18758</strong>: SO rule example
 </p>
 </li>
 </ul></div>
-<div class="paragraph"><p>Plugins have an associated API defined for each type, all of which share a
-common <em>header</em>, called the BaseApi.  A dynamic library makes its plugins
-available by exporting the snort_plugins symbol, which is a null terminated
-array of BaseApi pointers.</p></div>
-<div class="paragraph"><p>The BaseApi includes type, name, API version, plugin version, and function
-pointers for constructing and destructing a Module.  The specific API add
-various other data and functions for their given roles.</p></div>
-</div>
-<div class="sect3">
-<h4 id="_modules_2">Modules</h4>
-<div class="paragraph"><p>The Module is pervasive in Snort<code>.  It is how everything, including
-plugins, are configured.  It also provides access to builtin rules.  And as
-the glue that binds functionality to Snort</code>, the capabilities of a Module
-are expected to grow to include statistics support, etc.</p></div>
-<div class="paragraph"><p>Module configuration is handled by a list of Parameters.  Most parameters
-can be validated by the framework, which means for example that conversion
-from string to number is done in exactly one place.  Providing the builtin
-rules allows the documentation to include them automatically and also allows
-for autogenerating the rules at startup.</p></div>
-<div class="paragraph"><p>If we are defining a new Inspector called, say, gadget, it might be
-configured in snort.lua like this:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>gadget =
-{
-    brain = true,
-    claw = 3
-}</code></pre>
-</div></div>
-<div class="paragraph"><p>When the gadget table is processed, Snort++ will look for a module called
-gadget.  If that Module has an associated API, it will be used to configure
-a new instance of the plugin.  In this case, a GadgetModule would be
-instantiated, brain and claw would be set, and the Module instance would be
-passed to the GadgetInspector constructor.</p></div>
-<div class="paragraph"><p>Module has three key virtual methods:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong>begin()</strong> - called when Snort++ starts processing the associated Lua
-  table.  This is a good place to allocate any required data and set
-  defaults.
-</p>
-</li>
-<li>
-<p>
-<strong>set()</strong> - called to set each parameter after validation.
-</p>
-</li>
-<li>
-<p>
-<strong>end()</strong> - called when Snort++ finishes processing the associated Lua
-  table.  This is where additional integrity checks of related parameters
-  should be done.
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>The configured Module is passed to the plugin constructor which pulls the
-configuration data from the Module.  For non-trivial configurations, the
-working paradigm is that Module hands a pointer to the configured data to
-the plugin instance which takes ownership.</p></div>
-<div class="paragraph"><p>Note that there is at most one instance of a given Module, even if multiple
-plugin instances are created which use that Module.  (Multiple instances
-require Snort++ binding configuration.)</p></div>
-</div>
-<div class="sect3">
-<h4 id="_inspectors">Inspectors</h4>
-<div class="paragraph"><p>There are several types of inspector, which determines which inspectors are
-executed when:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-IT_BINDER - determines which inspectors apply to given flows
-</p>
-</li>
-<li>
-<p>
-IT_WIZARD - determines which service inspector to use if none explicitly
-  bound
-</p>
-</li>
-<li>
-<p>
-IT_PACKET - used to process all packets before session and service processing
-  (e.g. normalize)
-</p>
-</li>
-<li>
-<p>
-IT_NETWORK - processes packets w/o service (e.g. arp_spoof, back_orifice)
-</p>
-</li>
-<li>
-<p>
-IT_STREAM - for flow tracking, ip defrag, and tcp reassembly
-</p>
-</li>
-<li>
-<p>
-IT_SERVICE - for http, ftp, telnet, etc.
-</p>
-</li>
-<li>
-<p>
-IT_PROBE - process all packets after all the above (e.g. perf_monitor,
-  port_scan)
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect3">
-<h4 id="_codecs">Codecs</h4>
-<div class="paragraph"><p>The Snort3.0 Codecs decipher raw packets. These Codecs are now completely
-pluggable; almost every Snort3.0 Codec can be built dynamically and replaced
-with an alternative, customized Codec. The pluggable nature has also made it
-easier to build new Codecs for protocols without having to touch the Snort3.0
-code base.</p></div>
-<div class="paragraph"><p>The first step in creating a Codec is defining its class and protocol. Every
-Codec must inherit from the Snort3.0 Codec class defined in
-"framework/codec.h". The following is an example Codec named "example" and has
-an associated struct that is 14 bytes long.</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>#include &lt;cstdint&gt;
-#include &lt;arpa/inet.h&gt;
-#include “framework/codec.h”
-#include "main/snort_types.h"</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>#define EX_NAME “example”
-#define EX_HELP “example codec help string”</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>struct Example
-{
-    uint8_t dst[6];
-    uint8_t src[6];
-    uint16_t ethertype;</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>    static inline uint8_t size()
-    { return 14; }
-}</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>class ExCodec : public Codec
-{
-public:
-    ExCodec() : Codec(EX_NAME) { }
-    ~ExCodec() { }</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>    bool decode(const RawData&amp;, CodecData&amp;, DecodeData&amp;) override;
-    void get_protocol_ids(std::vector&lt;uint16_t&gt;&amp;) override;
-};</code></pre>
-</div></div>
-<div class="paragraph"><p>After defining ExCodec, the next step is adding the Codec&#8217;s decode
-functionality. The function below does this by implementing a valid decode
-function. The first parameter, which is the RawData struct, provides both a
-pointer to the raw data that has come from a wire and the length of that raw
-data. The function takes this information and validates that there are enough
-bytes for this protocol. If the raw data&#8217;s length is less than 14 bytes, the
-function returns false and Snort3.0 discards the packet; the packet is neither
-inspected nor processed. If the length is greater than 14 bytes, the function
-populates two fields in the CodecData struct, next_prot_id and lyr_len. The
-lyr_len field tells Snort3.0 the number of bytes that this layer contains. The
-next_prot_id field provides Snort3.0 the value of the next EtherType or IP
-protocol number.</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>bool ExCodec::decode(const RawData&amp; raw, CodecData&amp; codec, DecodeData&amp;)
-{
-   if ( raw.len &lt; Example::size() )
-       return false;</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>    const Example* const ex = reinterpret_cast&lt;const Example*&gt;(raw.data);
-    codec.next_prot_id = ntohs(ex-&gt;ethertype);
-    codec.lyr_len = ex-&gt;size();
-    return true;
-}</code></pre>
-</div></div>
-<div class="paragraph"><p>For instance, assume this decode function receives the following raw data with
-a validated length of 32 bytes:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>00 11 22 33 44 55 66 77    88 99 aa bb 08 00 45 00
-00 38 00 01 00 00 40 06    5c ac 0a 01 02 03 0a 09</code></pre>
-</div></div>
-<div class="paragraph"><p>The Example struct&#8217;s EtherType field is the 13 and 14 bytes. Therefore, this
-function tells Snort that the next protocol has an EtherType of 0x0800.
-Additionally, since the lyr_len is set to 14, Snort knows that the next
-protocol begins 14 bytes after the beginning of this protocol. The Codec with
-EtherType 0x0800, which happens to be the IPv4 Codec, will receive the
-following data with a validated length of 18 ( == 32 – 14):</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>45 00 00 38 00 01 00 00    40 06 5c ac 0a 01 02 03
-0a 09</code></pre>
-</div></div>
-<div class="paragraph"><p>How does Snort3.0 know that the IPv4 Codec has an EtherType of 0x0800? The
-Codec class has a second virtual function named get_protocol_ids(). When
-implementing the function, a Codec can register for any number of values
-between 0x0000 - 0xFFFF. Then, if the next_proto_id is set to a value for which
-this Codec has registered, this Codec&#8217;s decode function will be called. As a
-general note, the protocol ids between [0, 0x00FF] are IP protocol numbers,
-[0x0100, 0x05FF] are custom types, and [0x0600, 0xFFFF] are EtherTypes.</p></div>
-<div class="paragraph"><p>For example, in the get_protocol_ids function below, the ExCodec registers for
-the protocols numbers 17, 787, and 2054. 17 happens to be the protocol number
-for UDP while 2054 is ARP&#8217;s EtherType. Therefore, this Codec will now attempt
-to decode UDP and ARP data. Additionally, if any Codec sets the
-next_protocol_id to 787, ExCodec&#8217;s decode function will be called. Some custom
-protocols are already defined in the file "protocols/protocol_ids.h"</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>void ExCodec::get_protocol_ids(std::vector&lt;uint16_t&gt;&amp;v)
-{
-    v.push_back(0x0011); // == 17  == UDP
-    v.push_back(0x1313); // == 787  == custom
-    v.push_back(0x0806); // == 2054  == ARP
-}</code></pre>
-</div></div>
-<div class="paragraph"><p>To register a Codec for Data Link Type&#8217;s rather than protocols, the function
-get_data_link_type() can be similarly implemented.</p></div>
-<div class="paragraph"><p>The final step to creating a pluggable Codec is the snort_plugins array. This
-array is important because when Snort3.0 loads a dynamic library, the program
-only find plugins that are inside the snort_plugins array. In other words, if a
-plugin has not been added to the snort_plugins array, that plugin will not be
-loaded into Snort3.0.</p></div>
-<div class="paragraph"><p>Although the details will not be covered in this post, the following code
-snippet is a basic CodecApi that Snort3.0 can load. This snippet can be copied
-and used with only three minor changes. First, in the function ctor, ExCodec
-should be replaced with the name of the Codec that is being built. Second,
-EX_NAME must match the Codec&#8217;s name or Snort will be unable to load this Codec.
-Third, EX_HELP should be replaced with the general description of this Codec.
-Once this code snippet has been added, ExCodec is ready to be compiled and
-plugged into Snort3.0.</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>static Codec* ctor(Module*)
-{ return new ExCodec; }</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>static void dtor(Codec *cd)
-{ delete cd; }</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>static const CodecApi ex_api =
-{
-    {
-        PT_CODEC,
-        EX_NAME,
-        EX_HELP,
-        CDAPI_PLUGIN_V0,
-        0,
-        nullptr,
-        nullptr,
-    },
-    nullptr, // pointer to a function called during Snort's startup.
-    nullptr, // pointer to a function called during Snort's exit.
-    nullptr, // pointer to a function called during thread's startup.
-    nullptr, // pointer to a function called during thread's destruction.
-    ctor, // pointer to the codec constructor.
-    dtor, // pointer to the codec destructor.
-};</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &amp;ex_api.base,
-    nullptr
-};</code></pre>
-</div></div>
-<div class="paragraph"><p>Two example Codecs are available in the extra directory on git and the extra
-tarball on the Snort3.0 page. One of those examples is the Token Ring Codec
-while the other example is the PIM Codec.</p></div>
-<div class="paragraph"><p>As a final note, there are four more virtual functions that a Codec should
-implement: encode, format, update, and log. If the functions are not
-implemented Snort will not throw any errors. However, Snort may also be unable
-to accomplish some of its basic functionality.</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-encode is called whenever Snort actively responds and needs to builds a
-  packet, i.e. whenever a rule using an IPS ACTION like react, reject, or rewrite
-  is triggered. This function is used to build the response packet protocol by
-  protocol.
-</p>
-</li>
-<li>
-<p>
-format is called when Snort is rebuilding a packet. For instance, every time
-  Snort reassembles a TCP stream or IP fragment, format is called. Generally,
-  this function either swaps any source and destination fields in the protocol or
-  does nothing.
-</p>
-</li>
-<li>
-<p>
-update is similar to format in that it is called when Snort is reassembling a
-  packet. Unlike format, this function only sets length fields.
-</p>
-</li>
-<li>
-<p>
-log is called when either the log_codecs logger or a custom logger that calls
-  PacketManager::log_protocols is used when running Snort3.0.
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect3">
-<h4 id="_ips_actions">IPS Actions</h4>
-<div class="paragraph"><p>Action plugins specify a builtin action in the API which is used to
-determine verdict.  (Conversely, builtin actions don&#8217;t have an associated
-plugin function.)</p></div>
-</div>
-<div class="sect3">
-<h4 id="_coding_style">Coding Style</h4>
-<div class="paragraph"><p>All new code should try to follow these style guidelines.  These are not
-yet firm so feedback is welcome to get something we can live with.</p></div>
-<div class="sect4">
-<h5 id="_general">General</h5>
-<div class="ulist"><ul>
-<li>
-<p>
-Generally try to follow
-  <a href="http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml">http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml</a>,
-  but there are a few differences.
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect4">
-<h5 id="_naming">Naming</h5>
-<div class="ulist"><ul>
-<li>
-<p>
-Use camel case for namespaces, classes, and types like WhizBangPdfChecker.
-</p>
-</li>
-<li>
-<p>
-Use lower case identifiers with underscore separators, e.g. some_function()
-  and my_var.
-</p>
-</li>
-<li>
-<p>
-Use lower case filenames with underscores.
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect4">
-<h5 id="_comments">Comments</h5>
-<div class="ulist"><ul>
-<li>
-<p>
-Write comments sparingly with a mind towards future proofing.  Often the
-  comments can be obviated with better code.  Clear code is better than a
-  comment.
-</p>
-</li>
-<li>
-<p>
-Function comment blocks are generally just noise that quickly becomes
-  obsolete.  If you absolutely must comment on parameters, put each on a
-  separate line along with the comment.  That way changing the signature
-  may prompt a change to the comments too.
-</p>
-</li>
-<li>
-<p>
-Use FIXIT (not FIXTHIS or TODO or whatever) to mark things left for a
-  day or even just a minute.  That way we can find them easily and won&#8217;t
-  lose track of them.
-</p>
-</li>
-<li>
-<p>
-Presently using FIXIT-X where X = P | H | M | L, indicating perf, high,
-  med, or low priority.  For now, H, M, or L can indicate alpha 1, 2, or 3.
-  Perf changes fall between alpha 1 and 2.
-</p>
-</li>
-<li>
-<p>
-Put the copyright(s) and license in a comment block at the top of each
-  source file (.h and .cc).  Don&#8217;t bother with trivial scripts and make
-  foo.  Some interesting Lua code should get a comment block too.  Copy and
-  paste exactly from src/main.h (don&#8217;t reformat).
-</p>
-</li>
-<li>
-<p>
-Put author, description, etc. in separate comment(s) following the
-  license.  Do not put such comments in the middle of the license foo.
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect4">
-<h5 id="_logging">Logging</h5>
-<div class="ulist"><ul>
-<li>
-<p>
-Messages intended for the user should not look like debug messages. Eg,
-  the function name should not be included.
-</p>
-</li>
-<li>
-<p>
-Most debug messages should just be deleted.
-</p>
-</li>
-<li>
-<p>
-Don&#8217;t bang your error messages (no !).  The user feels bad enough about the
-  problem already w/o you shouting at him.
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect4">
-<h5 id="_types">Types</h5>
-<div class="ulist"><ul>
-<li>
-<p>
-Use logical types to make the code clearer and to help the compiler catch
-  problems.  typedef uint16_t Port; bool foo(Port) is way better than
-  int foo(int port).
-</p>
-</li>
-<li>
-<p>
-Use forward declarations (e.g. struct SnortConfig;) instead of void*.
-</p>
-</li>
-<li>
-<p>
-Try not to use extern data unless absolutely necessary and then put the
-  extern in an appropriate header.
-</p>
-</li>
-<li>
-<p>
-Use const liberally.  In most cases, const char* s = "foo" should be
-  const char* const s = "foo".  The former goes in the initialized data
-  section and the latter in read only data section.
-</p>
-</li>
-<li>
-<p>
-But use const char s[] = "foo" instead of const char* s = "foo" when
-  possible.  The latter form allocates a pointer variable and the data
-  while the former allocates only the data.
-</p>
-</li>
-<li>
-<p>
-Use static wherever possible to minimize public symbols and eliminate
-  unneeded relocations.
-</p>
-</li>
-<li>
-<p>
-Declare functions virtual only in the parent class introducing the
-  function (not in a derived class that is overriding the function).
-  This makes it clear which class introduces the function.
-</p>
-</li>
-<li>
-<p>
-Declare functions as override if they are intended to override a
-  function.  This makes it possible to find derived implementations that
-  didn&#8217;t get updated and therefore won&#8217;t get called due a change in the
-  parent signature.
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect4">
-<h5 id="_macros_aka_defines">Macros (aka defines)</h5>
-<div class="ulist"><ul>
-<li>
-<p>
-In many cases, even in C++, use #define name "value" instead of a
-  const char* const name = "value" because it will eliminate a symbol from
-  the binary.
-</p>
-</li>
-<li>
-<p>
-Use inline functions instead of macros where possible (pretty much all
-  cases except where stringification is necessary).  Functions offer better
-  typing, avoid re-expansions, and a debugger can break there.
-</p>
-</li>
-<li>
-<p>
-All macros except simple const values should be wrapped in () and all
-  args should be wrapped in () too to avoid surprises upon expansion.
-  Example:
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><code>#define SEQ_LT(a,b)  ((int)((a) - (b)) &lt;  0)</code></pre>
-</div></div>
-</li>
-<li>
-<p>
-Multiline macros should be blocked (i.e. inside { }) to avoid if-else type
-  surprises.
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect4">
-<h5 id="_formatting">Formatting</h5>
-<div class="ulist"><ul>
-<li>
-<p>
-Indent 4 space chars &#8230; no tabs!
-</p>
-</li>
-<li>
-<p>
-If you need to indent many times, something could be rewritten or
-  restructured to make it clearer.  Fewer indents is generally easier to
-  write, easier to read, and overall better code.
-</p>
-</li>
-<li>
-<p>
-Braces go on the line immediately following a new scope (function
-  signature, if, else, loop, switch, etc.
-</p>
-</li>
-<li>
-<p>
-Use consistent spacing and line breaks.  Always indent 4 spaces from the
-  breaking line.  Keep lines less than 100 chars; it greatly helps
-  readability.
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><code>No:
-    calling_a_func_with_a_long_name(arg1,
-                                    arg2,
-                                    arg3);</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>Yes:
-    calling_a_func_with_a_long_name(
-        arg1, arg2, arg3);</code></pre>
-</div></div>
-</li>
-<li>
-<p>
-Put function signature on one line, except when breaking for the arg
-  list:
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><code>No:
-    inline
-    bool foo()
-    { // ...</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>Yes:
-    inline bool foo()
-    { // ...</code></pre>
-</div></div>
-</li>
-<li>
-<p>
-Put conditional code on the line following the if so it is easy to break
-  on the conditional block:
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><code>No:
-    if ( test ) foo();</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>Yes:
-    if ( test )
-        foo();</code></pre>
-</div></div>
-</li>
-</ul></div>
-</div>
-<div class="sect4">
-<h5 id="_headers">Headers</h5>
-<div class="ulist"><ul>
-<li>
-<p>
-Don&#8217;t hesitate to create a new header if it is needed.  Don&#8217;t lump
-  unrelated stuff into an header because it is convenient.
-</p>
-</li>
-<li>
-<p>
-Write header guards like this (leading underscores are reserved for
-  system stuff).  In my_header.h:
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><code>#ifndef MY_HEADER_H
-#define MY_HEADER_H
-// ...
-#endif</code></pre>
-</div></div>
-</li>
-<li>
-<p>
-Includes from a different directory should specify parent directory.
-  This makes it clear exactly what is included and avoids the primordial
-  soup that results from using -I this -I that -I the_other_thing &#8230; .
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><code>// given:
-src/foo/foo.cc
-src/bar/bar.cc
-src/bar/baz.cc</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>// in baz.cc
-#include "bar.h"</code></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>// in foo.cc
-#include "bar/bar.h"</code></pre>
-</div></div>
-</li>
-<li>
-<p>
-Just because it is a #define doesn&#8217;t mean it goes in a header.
-  Everything should be scoped as tightly as possible.  Shared
-  implementation declarations should go in a separate header from the
-  interface.  And so on.
-</p>
-</li>
-<li>
-<p>
-A .cc should include its own .h before any others (including
-  system headers).  This ensures that the header stands on its own and can
-  be used by clients without include prerequisites.
-</p>
-</li>
-<li>
-<p>
-Include required headers, all required headers, and nothing but required
-  headers.  Don&#8217;t just clone a bunch of headers because it is convenient.
-</p>
-</li>
-<li>
-<p>
-Any file depending of #ifdefs should include config.h as shown below.  A
-  .h should include it before any other includes, and a .cc should include
-  it immediately after the include of its own .h.
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><code>#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif</code></pre>
-</div></div>
-</li>
-<li>
-<p>
-Do not put using statements in headers.
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect4">
-<h5 id="_warnings">Warnings</h5>
-<div class="ulist"><ul>
-<li>
-<p>
-With g++, use at least these compiler flags:
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><code>-Wall -Wextra -pedantic -Wformat -Wformat-security
--Wunused-but-set-variable -Wno-deprecated-declarations</code></pre>
-</div></div>
-</li>
-<li>
-<p>
-Then Fix All Warnings.  None Allowed.
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect4">
-<h5 id="_other">Other</h5>
-<div class="ulist"><ul>
-<li>
-<p>
-Prefer <em>and</em> over &amp;&amp; and <em>or</em> over || for new source files.
-</p>
-</li>
-</ul></div>
-</div>
-<div class="sect4">
-<h5 id="_uncrustify">Uncrustify</h5>
-<div class="paragraph"><p>Currently using uncrustify from at <a href="https://github.com/bengardner/uncrustify">https://github.com/bengardner/uncrustify</a>
-to reformat legacy code and anything that happens to need a makeover at
-some point.</p></div>
-<div class="paragraph"><p>The working config is crusty.cfg in the top level directory.  It does well
-but will munge some things.  Specially formatted INDENT-OFF comments were
-added in 2 places to avoid a real mess.</p></div>
-</div>
 </div>
 </div>
 </div>
@@ -19951,7 +22140,7 @@ added in 2 places to avoid a real mess.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-04-29 17:19:10 EDT
+Last updated 2015-05-31 08:37:33 EDT
 </div>
 </div>
 </body>

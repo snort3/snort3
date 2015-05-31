@@ -432,6 +432,9 @@ static const Parameter s_params[] =
     { "--warn-hosts", Parameter::PT_IMPLIED, nullptr, nullptr,
       "warn about host table issues" },
 
+    { "--warn-plugins", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "warn about issues that prevent plugins from loading" },
+
     { "--warn-rules", Parameter::PT_IMPLIED, nullptr, nullptr,
       "warn about duplicate rules and rule parsing issues" },
 
@@ -810,6 +813,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--warn-hosts") )
         sc->warning_flags |= (1 << WARN_HOSTS);
+
+    else if ( v.is("--warn-plugins") )
+        sc->warning_flags |= (1 << WARN_PLUGINS);
 
     else if ( v.is("--warn-rules") )
         sc->warning_flags |= (1 << WARN_RULES);
