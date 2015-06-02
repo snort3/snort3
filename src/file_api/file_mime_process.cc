@@ -385,7 +385,7 @@ static inline void process_decode_type(const char* start, int length, bool cnt_x
 static inline void setup_decode(const char* data, int size, bool cnt_xf, MimeState* mime_ssn)
 {
     /* Check for Encoding Type */
-    if ( !is_decoding_enabled(mime_ssn->decode_conf))
+    if ( is_decoding_enabled(mime_ssn->decode_conf))
     {
         set_mime_buffers(mime_ssn);
         if (mime_ssn->decode_state != NULL)

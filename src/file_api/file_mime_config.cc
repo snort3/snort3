@@ -129,6 +129,7 @@ static int ProcessDecodeDepth(
 
 void set_mime_decode_config_defauts(DecodeConfig* decode_conf)
 {
+    decode_conf->ignore_data = false;
     decode_conf->max_mime_mem = DEFAULT_MIME_MEMCAP;
     decode_conf->b64_depth = DEFAULT_DEPTH;
     decode_conf->qp_depth = DEFAULT_DEPTH;
