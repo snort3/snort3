@@ -2404,11 +2404,8 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
         CloseStreamSession(&sfBase, SESSION_CLOSED_NORMALLY);
     }
 
-    delete tcpssn->client.splitter;
-    delete tcpssn->server.splitter;
-
-    tcpssn->client.splitter = nullptr;
-    tcpssn->server.splitter = nullptr;
+    tcpssn->set_splitter(true, nullptr);
+    tcpssn->set_splitter(false, nullptr);
 
     // release internal protocol specific state
     purge_all(&tcpssn->client);
@@ -2611,7 +2608,7 @@ static void TraceState(
             RMT(a, s_mgr.transition_seq, b)
             );
     fprintf(stdout, "\n");
-    unsigned paf = a->splitter->is_paf() ? 2 : 0;
+    unsigned paf = (a->splitter and a->splitter->is_paf()) ? 2 : 0;
     unsigned fpt = a->flush_policy ? 192 : 0;
 
     fprintf(stdout,
@@ -5021,6 +5018,8 @@ static int ProcessTcp(
             ) {
                 tcpssn->flush_talker(p);
                 tcpssn->flush_listener(p);
+                tcpssn->set_splitter(true, nullptr);
+                tcpssn->set_splitter(false, nullptr);
                 lwssn->free_application_data();
             }
             lwssn->ssn_state.session_flags |= SSNFLAG_RESET;
@@ -5178,7 +5177,7 @@ static int ProcessTcp(
     /*
      * process ACK flags
      */
-    if (p->ptrs.tcph->th_flags & TH_ACK)
+    if ( p->ptrs.tcph->th_flags & TH_ACK )
     {
         STREAM_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
             "Got an ACK...\n"); );
@@ -5309,6 +5308,8 @@ static int ProcessTcp(
             // FIXIT-L safe to ignore when inline?
             break;
         }
+
+        CheckFlushPolicyOnAck(tcpssn, talker, listener, p);
     }
 
     /*
@@ -5398,6 +5399,8 @@ static int ProcessTcp(
                 NormalDropPacketIf(p, NORM_TCP_BLOCK);
             }
         }
+
+        CheckFlushPolicyOnData(tcpssn, talker, listener, p);
     }
 
     if (p->ptrs.tcph->th_flags & TH_FIN)
@@ -5553,12 +5556,6 @@ dupfin:
             lwssn->set_expire(p, config->session_timeout);
         }
     }
-
-    if ( p->dsize > 0 )
-        CheckFlushPolicyOnData(tcpssn, talker, listener, p);
-
-    if ( p->ptrs.tcph->th_flags & TH_ACK )
-        CheckFlushPolicyOnAck(tcpssn, talker, listener, p);
 
     LogTcpEvents(eventcode);
     MODULE_PROFILE_END(s5TcpStatePerfStats);
