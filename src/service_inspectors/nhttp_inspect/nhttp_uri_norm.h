@@ -23,28 +23,27 @@
 #include "nhttp_scratch_pad.h"
 #include "nhttp_field.h"
 #include "nhttp_infractions.h"
+#include "nhttp_event_gen.h"
+#include "nhttp_normalizers.h"
 
 class UriNormalizer
 {
 public:
     static void normalize(const Field& input, Field& result, bool do_path, ScratchPad& scratch_pad,
-        NHttpInfractions& infractions);
+        NHttpInfractions& infractions, NHttpEventGen& events);
 
 private:
     static const NHttpEnums::CharAction uri_char[256];
     static const bool good_percent[256];
 
     static bool no_path_check(const uint8_t* in_buf, int32_t in_length,
-        NHttpInfractions& infractions);
+        NHttpInfractions& infractions, NHttpEventGen& events);
     static bool path_check(const uint8_t* in_buf, int32_t in_length,
-        NHttpInfractions& infractions);
+        NHttpInfractions& infractions, NHttpEventGen& events);
 
-    static int32_t norm_char_clean(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&,
-        const void* not_used);
-    static int32_t norm_backslash(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&,
-        const void* not_used);
-    static int32_t norm_path_clean(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&,
-        const void* not_used);
+    static NormFunc norm_char_clean;
+    static NormFunc norm_backslash;
+    static NormFunc norm_path_clean;
 };
 
 #endif

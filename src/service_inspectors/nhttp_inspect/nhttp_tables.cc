@@ -187,7 +187,7 @@ const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_TRANSCODE
 #endif
 
 /* *INDENT-OFF* */
-const HeaderNormalizer* const NHttpMsgHeadShared::header_norms[HEAD__MAXVALUE] = { [0] = &NORMALIZER_NIL,
+const HeaderNormalizer* const NHttpMsgHeadShared::header_norms[HEAD__MAX_VALUE] = { [0] = &NORMALIZER_NIL,
     [HEAD__OTHER] = &NORMALIZER_BASIC,
     [HEAD_CACHE_CONTROL] = &NORMALIZER_BASIC,
     [HEAD_CONNECTION] = &NORMALIZER_BASIC,

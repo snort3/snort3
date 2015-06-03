@@ -30,8 +30,7 @@
 using namespace NHttpEnums;
 
 NHttpMsgHeader::NHttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
-    NHttpFlowData* session_data_,
-    SourceId source_id_, bool buf_owner) :
+    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner) :
     NHttpMsgHeadShared(buffer, buf_size, session_data_, source_id_, buf_owner)
 {
     transaction->set_header(this, source_id);
@@ -39,7 +38,7 @@ NHttpMsgHeader::NHttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
 
 void NHttpMsgHeader::gen_events()
 {
-    if (header_count[HEAD_CONTENT_LENGTH] > 1)
+    if (get_header_count(HEAD_CONTENT_LENGTH) > 1)
         events.create_event(EVENT_MULTIPLE_CONTLEN);
 }
 
@@ -87,7 +86,7 @@ void NHttpMsgHeader::update_flow()
         session_data->events[source_id].reset();
     }
     else if ((get_header_value_norm(HEAD_CONTENT_LENGTH).length > 0) &&
-        (*(int64_t*)header_value_norm[HEAD_CONTENT_LENGTH].start > 0))
+        (*(int64_t*)get_header_value_norm(HEAD_CONTENT_LENGTH).start > 0))
     {
         // Regular body
         session_data->type_expected[source_id] = SEC_BODY;

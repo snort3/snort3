@@ -25,6 +25,7 @@
 #include "nhttp_uri_norm.h"
 #include "nhttp_field.h"
 #include "nhttp_infractions.h"
+#include "nhttp_event_gen.h"
 
 //-------------------------------------------------------------------------
 // NHttpUri class
@@ -33,8 +34,9 @@
 class NHttpUri
 {
 public:
-    NHttpUri(const uint8_t* start, int32_t length, NHttpEnums::MethodId method) : uri(length,
-        start), method_id(method),
+    NHttpUri(const uint8_t* start, int32_t length, NHttpEnums::MethodId method,
+        NHttpInfractions& infractions_, NHttpEventGen& events_) :
+        uri(length, start), method_id(method), infractions(infractions_), events(events_),
         scratch_pad(2*length+200) { }
     const Field& get_uri() const { return uri; }
     NHttpEnums::UriType get_uri_type() { parse_uri(); return uri_type; }
@@ -46,23 +48,6 @@ public:
     const Field& get_path() { parse_abs_path(); return path; }
     const Field& get_query() { parse_abs_path(); return query; }
     const Field& get_fragment() { parse_abs_path(); return fragment; }
-
-    NHttpInfractions get_format_infractions() { parse_uri(); return format_infractions; }
-    NHttpInfractions get_scheme_infractions() { get_scheme_id(); return scheme_infractions; }
-    NHttpInfractions get_host_infractions() { get_norm_host(); return host_infractions; }
-    NHttpInfractions get_port_infractions() { get_port_value(); return port_infractions; }
-    NHttpInfractions get_path_infractions() { get_norm_path(); return path_infractions; }
-    NHttpInfractions get_query_infractions() { get_norm_query(); return query_infractions; }
-    NHttpInfractions get_fragment_infractions()
-    {
-        get_norm_fragment(); return fragment_infractions;
-    }
-    NHttpInfractions get_uri_infractions()
-    {
-        return get_format_infractions() + get_scheme_infractions() + get_host_infractions() +
-               get_port_infractions() + get_path_infractions() + get_query_infractions() +
-               get_fragment_infractions();
-    }
 
     NHttpEnums::SchemeId get_scheme_id();
     const Field& get_norm_host();
@@ -77,6 +62,8 @@ private:
 
     const Field uri;
     const NHttpEnums::MethodId method_id;
+    NHttpInfractions& infractions;
+    NHttpEventGen& events;
 
     Field scheme;
     Field authority;
@@ -86,14 +73,6 @@ private:
     Field path;
     Field query;
     Field fragment;
-
-    NHttpInfractions format_infractions;
-    NHttpInfractions scheme_infractions;
-    NHttpInfractions host_infractions;
-    NHttpInfractions port_infractions;
-    NHttpInfractions path_infractions;
-    NHttpInfractions query_infractions;
-    NHttpInfractions fragment_infractions;
 
     NHttpEnums::UriType uri_type = NHttpEnums::URI__NOTCOMPUTE;
     NHttpEnums::SchemeId scheme_id = NHttpEnums::SCH__NOTCOMPUTE;

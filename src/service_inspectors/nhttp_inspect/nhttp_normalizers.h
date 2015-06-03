@@ -21,14 +21,16 @@
 #define NHTTP_NORMALIZERS_H
 
 #include "nhttp_infractions.h"
+#include "nhttp_event_gen.h"
 
-int32_t norm_decimal_integer(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&,
-    const void* not_used);
-int32_t norm_to_lower(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const void* not_used);
-int32_t norm_str_code(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const void*);
-int32_t norm_seq_str_code(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, const void*);
-int32_t norm_remove_lws(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&,
-    const void* not_used);
+typedef int32_t (NormFunc)(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, NHttpEventGen&,
+    const void*);
+
+NormFunc norm_decimal_integer;
+NormFunc norm_to_lower;
+NormFunc norm_str_code;
+NormFunc norm_seq_str_code;
+NormFunc norm_remove_lws;
 
 #endif
 

@@ -25,13 +25,15 @@
 using namespace NHttpEnums;
 
 unsigned NHttpFlowData::nhttp_flow_id = 0;
+uint64_t NHttpFlowData::instance_count = 0;
 
 NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id)
 {
     /* FIXIT-L Temporary printf while we shake out stream interface */
     if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output())
     {
-        printf("Flow Data construct %p\n", (void*)this);
+        seq_num = ++instance_count;
+        printf("Flow Data construct %" PRIu64 "\n", seq_num);
         fflush(nullptr);
     }
 }
@@ -41,7 +43,7 @@ NHttpFlowData::~NHttpFlowData()
     /* FIXIT-L Temporary printf while we shake out stream interface */
     if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output())
     {
-        printf("Flow Data destruct %p\n", (void*)this);
+        printf("Flow Data destruct %" PRIu64 "\n", seq_num);
         fflush(nullptr);
     }
     for (int k=0; k <= 1; k++)

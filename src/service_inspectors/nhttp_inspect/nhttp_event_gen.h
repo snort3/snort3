@@ -21,6 +21,7 @@
 #define NHTTP_EVENT_GEN_H
 
 #include <assert.h>
+#include <bitset>
 
 #include "events/event_queue.h"
 
@@ -36,21 +37,21 @@ public:
     void reset() { events_generated = 0; }
     void create_event(NHttpEnums::EventSid sid)
     {
-        assert(((int)sid > 0) && ((int)sid <= 64));
-        if ((events_generated & (((uint64_t)1) << (sid-1))) == 0)
+        assert(((int)sid > 0) && ((int)sid <= MAX));
+        if (!events_generated[sid-1])
         {
             SnortEventqAdd(NHttpEnums::NHTTP_GID, (uint32_t)sid);
-            events_generated |= (((uint64_t)1) << (sid-1));
+            events_generated[sid-1] = true;
         }
     }
 
-    // The following method is for convenience of debug and test output only! The 64-bit
-    // implementation will not be big enough forever and this interface cannot be all over the
-    // code.
-    uint64_t get_raw() const { return events_generated; }
+    // The following method is for convenience of debug and test output only!
+    uint64_t get_raw() const { return
+        (events_generated & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
 
 private:
-    uint64_t events_generated = 0;
+    static const int MAX = NHttpEnums::EVENT__MAX_VALUE;
+    std::bitset<MAX> events_generated = 0;
 };
 
 #endif

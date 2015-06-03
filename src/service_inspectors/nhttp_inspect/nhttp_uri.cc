@@ -34,14 +34,6 @@ void NHttpUri::parse_uri()
     {
         return;
     }
-    if (uri.length <= 0)
-    {
-        uri_type = URI__NOSOURCE;
-        scheme.length = STAT_NOSOURCE;
-        authority.length = STAT_NOSOURCE;
-        abs_path.length = STAT_NOSOURCE;
-        return;
-    }
 
     // Four basic types of HTTP URI
     // "*" means request does not apply to any specific resource
@@ -76,10 +68,8 @@ void NHttpUri::parse_uri()
         // Find the "://" and then the "/"
         int j;
         int k;
-        for (j = 0; (uri.start[j] != ':') && (j < uri.length); j++)
-            ;
-        for (k = j+3; (uri.start[k] != '/') && (k < uri.length); k++)
-            ;
+        for (j = 0; (uri.start[j] != ':') && (j < uri.length); j++);
+        for (k = j+3; (uri.start[k] != '/') && (k < uri.length); k++);
         if ((k < uri.length) && (uri.start[j+1] == '/') && (uri.start[j+2] == '/'))
         {
             uri_type = URI_ABSOLUTE;
@@ -92,7 +82,7 @@ void NHttpUri::parse_uri()
         }
         else
         {
-            format_infractions += INF_BAD_URI;
+            infractions += INF_BAD_URI;
             uri_type = URI__PROBLEMATIC;
             scheme.length = STAT_PROBLEMATIC;
             authority.length = STAT_PROBLEMATIC;
@@ -117,11 +107,11 @@ SchemeId NHttpUri::get_scheme_id()
     uint8_t* lower_scheme;
     if ((lower_scheme = scratch_pad.request(scheme.length)) == nullptr)
     {
-        scheme_infractions += INF_NO_SCRATCH;
+        infractions += INF_NO_SCRATCH;
         scheme_id = SCH__INSUFMEMORY;
         return scheme_id;
     }
-    norm_to_lower(scheme.start, scheme.length, lower_scheme, scheme_infractions, nullptr);
+    norm_to_lower(scheme.start, scheme.length, lower_scheme, infractions, events, nullptr);
     scheme_id = (SchemeId)str_to_code(lower_scheme, scheme.length, scheme_list);
     return scheme_id;
 }
@@ -137,7 +127,7 @@ const Field& NHttpUri::get_norm_host()
         host_norm.length = STAT_NOSOURCE;
         return host_norm;
     }
-    UriNormalizer::normalize(host, host_norm, false, scratch_pad, host_infractions);
+    UriNormalizer::normalize(host, host_norm, false, scratch_pad, infractions, events);
     return host_norm;
 }
 
@@ -152,7 +142,7 @@ const Field& NHttpUri::get_norm_path()
         path_norm.length = STAT_NOSOURCE;
         return path_norm;
     }
-    UriNormalizer::normalize(path, path_norm, true, scratch_pad, path_infractions);
+    UriNormalizer::normalize(path, path_norm, true, scratch_pad, infractions, events);
     return path_norm;
 }
 
@@ -167,7 +157,7 @@ const Field& NHttpUri::get_norm_query()
         query_norm.length = STAT_NOSOURCE;
         return query_norm;
     }
-    UriNormalizer::normalize(query, query_norm, false, scratch_pad, query_infractions);
+    UriNormalizer::normalize(query, query_norm, false, scratch_pad, infractions, events);
     return query_norm;
 }
 
@@ -182,7 +172,7 @@ const Field& NHttpUri::get_norm_fragment()
         fragment_norm.length = STAT_NOSOURCE;
         return fragment_norm;
     }
-    UriNormalizer::normalize(fragment, fragment_norm, false, scratch_pad, fragment_infractions);
+    UriNormalizer::normalize(fragment, fragment_norm, false, scratch_pad, infractions, events);
     return fragment_norm;
 }
 
@@ -203,7 +193,7 @@ int32_t NHttpUri::get_port_value()
         port_value = port_value * 10 + (port.start[k] - '0');
         if ((port.start[k] < '0') || (port.start[k] > '9') || (port_value > 65535))
         {
-            port_infractions += INF_BAD_PORT;
+            infractions += INF_BAD_PORT;
             port_value = STAT_PROBLEMATIC;
             break;
         }
@@ -283,27 +273,24 @@ const Field& NHttpUri::get_norm_legacy()
     }
     if (get_path().length >= 0)
     {
-        UriNormalizer::normalize(path, path_norm, true, scratch_pad, path_infractions);
+        UriNormalizer::normalize(path, path_norm, true, scratch_pad, infractions, events);
     }
     if (get_host().length >= 0)
     {
-        UriNormalizer::normalize(host, host_norm, false, scratch_pad, host_infractions);
+        UriNormalizer::normalize(host, host_norm, false, scratch_pad, infractions, events);
     }
     if (get_query().length >= 0)
     {
-        UriNormalizer::normalize(query, query_norm, false, scratch_pad, query_infractions);
+        UriNormalizer::normalize(query, query_norm, false, scratch_pad, infractions, events);
     }
     if (get_fragment().length >= 0)
     {
         UriNormalizer::normalize(fragment, fragment_norm, false, scratch_pad,
-            fragment_infractions);
+            infractions, events);
     }
 
-    // We can reuse the raw URI for the normalized URI unless at least one part of the URI has been
-    // normalized
-    if ((host_infractions.none_found()) && (path_infractions.none_found()) &&
-        (query_infractions.none_found()) &&
-        (fragment_infractions.none_found()))
+    // We can reuse the raw URI for the normalized URI if no normalization is required
+    if (!(infractions & INF_URI_NEED_NORM))
     {
         legacy_norm.start = uri.start;
         legacy_norm.length = uri.length;

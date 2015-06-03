@@ -135,10 +135,6 @@ bool NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* cons
             printf("Finished processing section from test %" PRIi64 "\n",
                 NHttpTestManager::get_test_number());
         }
-        else
-        {
-            printf("Finished processing section from flow %p\n", (void*)session_data);
-        }
         fflush(stdout);
     }
 

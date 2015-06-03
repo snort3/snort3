@@ -20,6 +20,8 @@
 #ifndef NHTTP_MSG_HEAD_SHARED_H
 #define NHTTP_MSG_HEAD_SHARED_H
 
+#include <bitset>
+
 #include "nhttp_str_to_code.h"
 #include "nhttp_head_norm.h"
 #include "nhttp_msg_section.h"
@@ -43,6 +45,7 @@ public:
     const Field& get_header_value(int k) const { return header_value[k]; }
     NHttpEnums::HeaderId get_header_name_id(int k)  const { return header_name_id[k]; }
     const Field& get_header_value_norm(NHttpEnums::HeaderId header_id);
+    int get_header_count(NHttpEnums::HeaderId header_id) const;
 
 protected:
     NHttpMsgHeadShared(const uint8_t* buffer, const uint16_t buf_size,
@@ -82,10 +85,20 @@ protected:
     NHttpEnums::HeaderId* header_name_id = nullptr;
     Field* header_value = nullptr;
 
-    // Normalized values are indexed by HeaderId
-    // FIXIT-P there is room to optimize memory here
-    int header_count[NHttpEnums::HEAD__MAXVALUE] = { };
-    Field header_value_norm[NHttpEnums::HEAD__MAXVALUE];
+private:
+    static const int MAX = NHttpEnums::HEAD__MAX_VALUE;
+    std::bitset<MAX> headers_present = 0;
+
+    struct NormalizedHeader
+    {
+        NHttpEnums::HeaderId id;
+        int count;
+        Field norm;
+        NormalizedHeader* next;
+    };
+
+    NormalizedHeader* norm_heads = nullptr;
+    NormalizedHeader* get_header_node(NHttpEnums::HeaderId k) const;
 };
 
 #endif

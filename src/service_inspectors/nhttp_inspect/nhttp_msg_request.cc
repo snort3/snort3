@@ -75,7 +75,7 @@ void NHttpMsgRequest::parse_start_line()
     if (first_end < last_begin)
     {
         uri = new NHttpUri(start_line.start + first_end + 1, last_begin - first_end - 1,
-            method_id);
+            method_id, infractions, events);
     }
     else
     {
@@ -143,30 +143,6 @@ void NHttpMsgRequest::gen_events()
 
     if (method_id == METH__OTHER)
         events.create_event(EVENT_UNKNOWN_METHOD);
-
-    // URI character encoding events
-    if (uri && (uri->get_uri_infractions() & INF_URI_PERCENT_ASCII))
-        events.create_event(EVENT_ASCII);
-    if (uri && (uri->get_uri_infractions() & INF_URI_PERCENT_UCODE))
-        events.create_event(EVENT_U_ENCODE);
-    if (uri && (uri->get_uri_infractions() & INF_URI_8BIT_CHAR))
-        events.create_event(EVENT_BARE_BYTE);
-    if (uri && (uri->get_uri_infractions() & INF_URI_PERCENT_UTF8))
-        events.create_event(EVENT_UTF_8);
-    if (uri && (uri->get_uri_infractions() & INF_URI_BAD_CHAR))
-        events.create_event(EVENT_NON_RFC_CHAR);
-
-    // URI path events
-    if (uri && (uri->get_path_infractions() & INF_URI_MULTISLASH))
-        events.create_event(EVENT_MULTI_SLASH);
-    if (uri && (uri->get_path_infractions() & INF_URI_BACKSLASH))
-        events.create_event(EVENT_IIS_BACKSLASH);
-    if (uri && (uri->get_path_infractions() & INF_URI_SLASH_DOT))
-        events.create_event(EVENT_SELF_DIR_TRAV);
-    if (uri && (uri->get_path_infractions() & INF_URI_SLASH_DOT_DOT))
-        events.create_event(EVENT_DIR_TRAV);
-    if (uri && (uri->get_path_infractions() & INF_URI_ROOT_TRAV))
-        events.create_event(EVENT_WEBROOT_DIR);
 }
 
 void NHttpMsgRequest::print_section(FILE* output)
@@ -177,8 +153,7 @@ void NHttpMsgRequest::print_section(FILE* output)
     if (uri != nullptr)
     {
         uri->get_uri().print(output, "URI");
-        if (uri->get_uri_type() != URI__NOSOURCE)
-            fprintf(output, "URI Type: %d\n", uri->get_uri_type());
+        fprintf(output, "URI Type: %d\n", uri->get_uri_type());
         uri->get_scheme().print(output, "Scheme");
         if (uri->get_scheme_id() != SCH__NOSOURCE)
             fprintf(output, "Scheme Id: %d\n", uri->get_scheme_id());
@@ -195,14 +170,6 @@ void NHttpMsgRequest::print_section(FILE* output)
         uri->get_norm_query().print(output, "Normalized Query");
         uri->get_fragment().print(output, "Fragment");
         uri->get_norm_fragment().print(output, "Normalized Fragment");
-        fprintf(output,
-            "URI infractions: overall %" PRIx64 ", format %" PRIx64 ", scheme %" PRIx64 ", host %"
-            PRIx64 ", port %" PRIx64 ", path %" PRIx64 ", query %" PRIx64 ", fragment %" PRIx64
-            "\n",
-            uri->get_uri_infractions().get_raw(), uri->get_format_infractions().get_raw(),
-            uri->get_scheme_infractions().get_raw(), uri->get_host_infractions().get_raw(),
-            uri->get_port_infractions().get_raw(), uri->get_path_infractions().get_raw(),
-            uri->get_query_infractions().get_raw(), uri->get_fragment_infractions().get_raw());
     }
     NHttpMsgSection::print_message_wrapup(output);
 }

@@ -59,22 +59,23 @@ int32_t HeaderNormalizer::derive_header_content(const uint8_t* value, int32_t le
 }
 
 // This method normalizes the header field value for headId.
-int32_t HeaderNormalizer::normalize(const HeaderId head_id, const int count,
-    ScratchPad& scratch_pad,
-    NHttpInfractions& infractions, const HeaderId header_name_id[], const Field header_value[],
-    const int32_t num_headers, Field& result_field) const
+void HeaderNormalizer::normalize(const HeaderId head_id, const int count, ScratchPad& scratch_pad,
+    NHttpInfractions& infractions, NHttpEventGen& events, const HeaderId header_name_id[],
+    const Field header_value[], const int32_t num_headers, Field& result_field) const
 {
     if (result_field.length != STAT_NOTCOMPUTE)
     {
-        return result_field.length;
+        return;
     }
     if (format == NORM_NULL)
     {
-        return result_field.length = STAT_NOTCONFIGURED;
+        result_field.length = STAT_NOTCONFIGURED;
+        return;
     }
     if (count == 0)
     {
-        return result_field.length = STAT_NOSOURCE;
+        result_field.length = STAT_NOSOURCE;
+        return;
     }
 
     // Search Header IDs from all the headers in this message. concatenate_repeats means the header
@@ -96,8 +97,8 @@ int32_t HeaderNormalizer::normalize(const HeaderId head_id, const int count,
                 break;
         }
     }
-    assert((!concatenate_repeats && (num_matches == 1)) || (concatenate_repeats && (num_matches ==
-        count)));
+    assert((!concatenate_repeats && (num_matches == 1)) ||
+            (concatenate_repeats && (num_matches == count)));
     buffer_length += num_matches - 1;    // allow space for concatenation commas
 
     // We are allocating twice as much memory as we need to store the normalized field value. The
@@ -116,7 +117,8 @@ int32_t HeaderNormalizer::normalize(const HeaderId head_id, const int count,
     uint8_t* const scratch = scratch_pad.request(2*buffer_length);
     if (scratch == nullptr)
     {
-        return result_field.length = STAT_INSUFMEMORY;
+        result_field.length = STAT_INSUFMEMORY;
+        return;
     }
 
     uint8_t* const front_half = scratch;
@@ -142,22 +144,23 @@ int32_t HeaderNormalizer::normalize(const HeaderId head_id, const int count,
     {
         if (i%2 != num_normalizers%2)
         {
-            data_length = normalizer[i](back_half, data_length, front_half, infractions,
-                    norm_arg[i]);
+            data_length = normalizer[i](back_half, data_length, front_half, infractions, events,
+                norm_arg[i]);
         }
         else
         {
-            data_length = normalizer[i](front_half, data_length, back_half, infractions,
-                    norm_arg[i]);
+            data_length = normalizer[i](front_half, data_length, back_half, infractions, events,
+                norm_arg[i]);
         }
         if (data_length <= 0)
         {
-            return result_field.length = data_length;
+            result_field.length = data_length;
+            return;
         }
     }
     result_field.start = scratch;
     result_field.length = data_length;
     scratch_pad.commit(data_length);
-    return result_field.length;
+    return;
 }
 

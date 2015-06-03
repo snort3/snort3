@@ -128,13 +128,6 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
 {
     assert(length <= MAX_OCTETS);
 
-    /* FIXIT-L Temporary printf while we shake out stream interface */
-    if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output())
-    {
-        printf("scan() from flow %p direction %d\n", (void*)flow, 1 - (int)to_server());
-        fflush(nullptr);
-    }
-
     // This is the session state information we share with NHttpInspect and store with stream. A
     // session is defined by a TCP connection. Since scan() is the first to see a new TCP
     // connection the new flow data object is created here.
@@ -172,8 +165,8 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
     }
     else if (NHttpTestManager::use_test_output())
     {
-        printf("Scan from flow data %p direction %d length %u\n", (void*)session_data, source_id,
-            length);
+        printf("Scan from flow data %" PRIu64 " direction %d length %u\n", session_data->seq_num,
+            source_id, length);
         fflush(stdout);
     }
 
@@ -260,20 +253,8 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
 
     copied = len;
 
-    // FIXIT-M temporary workaround for high total values
-    if (total > MAX_OCTETS)
-        return nullptr;
-
     assert(total >= offset + len);
     assert(total <= MAX_OCTETS);
-
-    /* FIXIT-L Temporary printf while we shake out stream interface */
-    if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output())
-    {
-        printf("reassemble() from flow %p direction %d total %u length %u offset %u\n",
-            (void*)flow, 1 - (int)to_server(), total, len, offset);
-        fflush(stdout);
-    }
 
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(
         NHttpFlowData::nhttp_flow_id);
@@ -307,7 +288,9 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
         }
         else
         {
-            printf("Reassemble from flow data %p direction %d\n", (void*)session_data, source_id);
+            printf("Reassemble from flow data %" PRIu64
+                " direction %d total %u length %u offset %u\n",
+                session_data->seq_num, source_id, total, len, offset);
             fflush(stdout);
         }
     }
@@ -411,6 +394,7 @@ bool NHttpStreamSplitter::finish(Flow* flow)
     // If there is leftover data for which we returned PAF_SEARCH and never flushed, we need to set
     // up to process because it is about to go to reassemble(). But we don't support partial start
     // lines.
+    // FIXIT-L Partial start line is likely misidentifed traffic and should be some sort of alert
     if ((session_data->section_type[source_id] == SEC__NOTCOMPUTE) &&
         (session_data->splitter[source_id] != nullptr) &&
         (session_data->splitter[source_id]->get_octets_seen() > 0) &&

@@ -33,6 +33,13 @@ NHttpMsgHeadShared::~NHttpMsgHeadShared()
     delete[] header_name;
     delete[] header_name_id;
     delete[] header_value;
+    NormalizedHeader* list_ptr = norm_heads;
+    while (list_ptr != nullptr)
+    {
+        NormalizedHeader* temp_ptr = list_ptr;
+        list_ptr = list_ptr->next;
+        delete temp_ptr;
+    }
 }
 
 // All the header processing that is done for every message (i.e. not just-in-time) is done here.
@@ -44,7 +51,24 @@ void NHttpMsgHeadShared::analyze()
     {
         derive_header_name_id(j);
         if (header_name_id[j] > 0)
-            header_count[header_name_id[j]]++;
+        {
+            if (headers_present[header_name_id[j]])
+            {
+                NormalizedHeader* list_ptr;
+                for (list_ptr = norm_heads; list_ptr->id != header_name_id[j];
+                    list_ptr = list_ptr->next);
+                list_ptr->count++;
+            }
+            else
+            {
+                headers_present[header_name_id[j]] = true;
+                NormalizedHeader* tmp_ptr = norm_heads;
+                norm_heads = new NormalizedHeader;
+                norm_heads->next = tmp_ptr;
+                norm_heads->id = header_name_id[j];
+                norm_heads->count = 1;
+            }
+        }
     }
 }
 
@@ -156,16 +180,35 @@ void NHttpMsgHeadShared::derive_header_name_id(int index)
         return;
     }
     norm_to_lower(header_name[index].start, header_name[index].length, lower_name, infractions,
-        nullptr);
+        events, nullptr);
     header_name_id[index] = (HeaderId)str_to_code(lower_name, header_name[index].length,
         header_list);
 }
 
-const Field& NHttpMsgHeadShared::get_header_value_norm(NHttpEnums::HeaderId header_id)
+NHttpMsgHeadShared::NormalizedHeader* NHttpMsgHeadShared::get_header_node(HeaderId header_id) const
 {
-    header_norms[header_id]->normalize(header_id, header_count[header_id], scratch_pad,
-        infractions, header_name_id, header_value, num_headers, header_value_norm[header_id]);
-    return header_value_norm[header_id];
+    if (!headers_present[header_id])
+        return nullptr;
+
+    NormalizedHeader* list_ptr;
+    for (list_ptr = norm_heads; list_ptr->id != header_id; list_ptr = list_ptr->next);
+    return (list_ptr);
+}
+
+int NHttpMsgHeadShared::get_header_count(HeaderId header_id) const
+{
+    NormalizedHeader* node = get_header_node(header_id);
+    return (node != nullptr) ? node->count : 0;
+}
+
+const Field& NHttpMsgHeadShared::get_header_value_norm(HeaderId header_id)
+{
+    NormalizedHeader* node = get_header_node(header_id);
+    if (node == nullptr)
+        return Field::FIELD_NULL;
+    header_norms[header_id]->normalize(header_id, node->count, scratch_pad, infractions, events,
+        header_name_id, header_value, num_headers, node->norm);
+    return node->norm;
 }
 
 void NHttpMsgHeadShared::print_headers(FILE* output)
@@ -178,7 +221,7 @@ void NHttpMsgHeadShared::print_headers(FILE* output)
         snprintf(title_buf, sizeof(title_buf), "Header ID %d", header_name_id[j]);
         header_value[j].print(output, title_buf);
     }
-    for (int k=1; k <= HEAD__MAXVALUE-1; k++)
+    for (int k=1; k <= HEAD__MAX_VALUE-1; k++)
     {
         if (get_header_value_norm((HeaderId)k).length != STAT_NOSOURCE)
         {

@@ -52,6 +52,9 @@ public:
     friend class NHttpTransaction;
 
 private:
+    static uint64_t instance_count;
+    uint64_t seq_num;
+
     void half_reset(NHttpEnums::SourceId source_id);
 
     // StreamSplitter internal data - scan()

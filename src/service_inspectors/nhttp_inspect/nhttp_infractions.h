@@ -21,6 +21,9 @@
 #define NHTTP_INFRACTIONS_H
 
 #include <assert.h>
+#include <bitset>
+
+#include "nhttp_enum.h"
 
 //-------------------------------------------------------------------------
 // Infractions class
@@ -30,8 +33,7 @@ class NHttpInfractions
 {
 public:
     NHttpInfractions() { }
-    NHttpInfractions(int inf) : infractions(((uint64_t)1) << inf)
-      { assert((inf >= 0) && (inf < 64)); }
+    NHttpInfractions(int inf) { assert((inf >= 0) && (inf < MAX)); infractions[inf] = true; }
     void reset() { infractions = 0; }
     bool none_found() const { return infractions == 0; }
     NHttpInfractions& operator+=(const NHttpInfractions& rhs)
@@ -41,13 +43,13 @@ public:
     friend bool operator&(const NHttpInfractions& lhs, const NHttpInfractions& rhs)
         { return (lhs.infractions & rhs.infractions) != 0; }
 
-    // The following method is for convenience of debug and test output only! The 64-bit
-    // implementation will not be big enough forever and this interface cannot be all over
-    // the code.
-    uint64_t get_raw() const { return infractions; }
+    // The following method is for convenience of debug and test output only!
+    uint64_t get_raw() const { return
+        (infractions & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
 
 private:
-    uint64_t infractions = 0;
+    static const int MAX = NHttpEnums::INF__MAX_VALUE;
+    std::bitset<MAX> infractions = 0;
 };
 
 #endif

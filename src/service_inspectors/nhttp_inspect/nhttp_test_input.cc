@@ -257,7 +257,7 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
 void NHttpTestInput::flush(uint32_t num_octets)
 {
     flush_octets = previous_offset + num_octets;
-    assert(flush_octets <= 63780);
+    assert(flush_octets <= MAX_OCTETS);
     flushed = true;
 }
 
