@@ -148,6 +148,9 @@ static bool paf_callback (
 {
     ps->paf = ss->scan(ssn, data, len, flags, &ps->fpt);
 
+    if ( ps->paf == StreamSplitter::ABORT )
+        return false;
+
     if ( ps->paf != StreamSplitter::SEARCH )
     {
         ps->fpt += s5_idx;
@@ -360,7 +363,10 @@ int32_t paf_check (
     }
     while ( 1 );
 
-    if ( (ps->paf != StreamSplitter::FLUSH) && (s5_len > ss->max(ssn)+fuzz) )
+    if ( ps->paf == StreamSplitter::ABORT )
+        *flags = 0;
+
+    else if ( (ps->paf != StreamSplitter::FLUSH) && (s5_len > ss->max(ssn)+fuzz) )
     {
         uint32_t fp = paf_flush(ss, ps, FT_MAX, flags);
         paf_jump(ps, fp);

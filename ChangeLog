@@ -1,3 +1,10 @@
+15/06/04 - build 156
+
+-- new_http_inspect switch to bitset for event tracking
+-- fixed stream tcp handling of paf abort
+-- fixed stream tcp cleanup on reset
+-- fixed sequence of flush and flow data cleanup for new http inspect
+
 15/05/31 - build 155
 
 -- update default manuals
