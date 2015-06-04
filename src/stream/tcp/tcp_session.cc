@@ -6089,6 +6089,8 @@ void TcpSession::set_splitter(bool c2s, StreamSplitter* ss)
 
     if ( ss )
         paf_setup(&trk->paf_state);
+    else
+        trk->flush_policy = STREAM_FLPOLICY_IGNORE;
 }
 
 StreamSplitter* TcpSession::get_splitter(bool c2s)
