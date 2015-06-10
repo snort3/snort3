@@ -2454,24 +2454,31 @@ static void final_flush(
 }
 
 // flush data on both sides as necessary
-static void FlushQueuedSegs(Flow* lwssn, TcpSession* tcpssn, bool clear, Packet* p = nullptr)
+static void FlushQueuedSegs(
+    Flow* lwssn, TcpSession* tcpssn, bool clear, Packet* p = nullptr)
 {
-    // flush the client (data from server)
-    bool pending = clear and (!tcpssn->client.splitter or tcpssn->client.splitter->finish(lwssn));
+    TcpTracker* trk = &tcpssn->client;
 
-    if ( (pending and (p or tcpssn->client.seglist) and
+    // flush the client (data from server)
+    bool pending = clear and paf_initialized(&trk->paf_state) and
+        (!trk->splitter or trk->splitter->finish(lwssn));
+
+    if ( (pending and (p or trk->seglist) and
         !(lwssn->ssn_state.ignore_direction & SSN_DIR_FROM_SERVER)) )
     {
-        final_flush(tcpssn, tcpssn->client, p, tcpStats.s5tcp1, PKT_FROM_SERVER);
+        final_flush(tcpssn, *trk, p, tcpStats.s5tcp1, PKT_FROM_SERVER);
     }
 
-    // flush the server (data from client)
-    pending = clear and (!tcpssn->server.splitter or tcpssn->server.splitter->finish(lwssn));
+    trk = &tcpssn->server;
 
-    if ( (pending and (p or tcpssn->server.seglist) and
+    // flush the server (data from client)
+    pending = clear and paf_initialized(&trk->paf_state) and
+        (!trk->splitter or trk->splitter->finish(lwssn));
+
+    if ( (pending and (p or trk->seglist) and
         !(lwssn->ssn_state.ignore_direction & SSN_DIR_FROM_CLIENT)) )
     {
-        final_flush(tcpssn, tcpssn->server, p, tcpStats.s5tcp2, PKT_FROM_CLIENT);
+        final_flush(tcpssn, *trk, p, tcpStats.s5tcp2, PKT_FROM_CLIENT);
     }
 }
 

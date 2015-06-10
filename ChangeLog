@@ -1,3 +1,7 @@
+Pending - build 157
+
+-- fix stream_tcp so call splitter finish only if scan was called
+
 15/06/04 - build 156
 
 -- new_http_inspect switch to bitset for event tracking
