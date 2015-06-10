@@ -104,7 +104,7 @@ void PacketManager::pop_teredo(Packet* p, RawData& raw)
 {
     p->proto_bits &= ~PROTO_BIT__TEREDO;
     if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_TEREDO) )
-        Active_ClearTunnelBypass();
+        Active::clear_tunnel_bypass();
 
     const uint8_t mapped_prot = CodecManager::s_proto_map[PROTO_TEREDO];
     s_stats[mapped_prot + stat_offset]--;
@@ -337,9 +337,13 @@ void PacketManager::decode(
     }
 
     // set any final Packet fields
-    p->proto_bits |= codec_data.proto_bits;
     p->data = raw.data;
     p->dsize = (uint16_t)raw.len;
+    p->proto_bits |= codec_data.proto_bits;
+
+    if ( !p->proto_bits )
+        p->proto_bits = PROTO_BIT__OTHER;
+
     MODULE_PROFILE_END(decodePerfStats);
 }
 

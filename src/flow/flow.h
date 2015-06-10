@@ -136,6 +136,7 @@ public:
         SETUP,
         INSPECT,
         BLOCK,
+        RESET,
         ALLOW
     };
     Flow();
@@ -159,9 +160,9 @@ public:
     void markup_packet_flags(Packet*);
     void set_direction(Packet*);
 
-    void set_expire(Packet*, uint32_t timeout);
-    int get_expire(Packet*);
-    bool expired(Packet*);
+    void set_expire(const Packet*, uint32_t timeout);
+    int get_expire(const Packet*);
+    bool expired(const Packet*);
 
     void set_ttl(Packet*, bool client);
 

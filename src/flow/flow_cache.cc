@@ -173,7 +173,7 @@ uint32_t FlowCache::prune_stale(uint32_t thetime, Flow* save_me)
 {
     Flow* flow;
     uint32_t pruned = 0;
-    Active_Suspend();
+    Active::suspend();
 
     /* Pruning, look for flows that have time'd out */
     flow = (Flow*)hash_table->first();
@@ -206,7 +206,7 @@ uint32_t FlowCache::prune_stale(uint32_t thetime, Flow* save_me)
     }
 
     prunes += pruned;
-    Active_Resume();
+    Active::resume();
     return pruned;
 }
 
@@ -218,7 +218,7 @@ uint32_t FlowCache::prune_unis()
 
     Flow* curr = uni_tail->prev;
     uint32_t pruned = 0;
-    Active_Suspend();
+    Active::suspend();
 
     while ( (uni_count > max_uni) && curr && (pruned < cleanup_flows) )
     {
@@ -232,7 +232,7 @@ uint32_t FlowCache::prune_unis()
         ++pruned;
     }
     prunes += pruned;
-    Active_Resume();
+    Active::resume();
     return pruned;
 }
 
@@ -244,7 +244,7 @@ uint32_t FlowCache::prune_excess(bool memCheck, Flow* save_me)
      */
     const uint32_t max_cap = max_flows - cleanup_flows;
     uint32_t pruned = 0;
-    Active_Suspend();
+    Active::suspend();
 
     while (
         (hash_table->get_count() > 1) &&
@@ -281,7 +281,7 @@ uint32_t FlowCache::prune_excess(bool memCheck, Flow* save_me)
             break;
     }
     prunes += pruned;
-    Active_Resume();
+    Active::resume();
     return pruned;
 }
 
@@ -316,7 +316,7 @@ int FlowCache::purge()
 {
     int retCount = 0;
 
-    Active_Suspend();
+    Active::suspend();
     flags |= SESSION_CACHE_FLAG_PURGING;
     Flow* flow = (Flow*)hash_table->first();
 
@@ -329,7 +329,7 @@ int FlowCache::purge()
     }
 
     flags &= ~SESSION_CACHE_FLAG_PURGING;
-    Active_Resume();
+    Active::resume();
 
     return retCount;
 }

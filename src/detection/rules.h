@@ -63,7 +63,6 @@ struct RuleListNode
 {
     ListHead* RuleList;   /* The rule list associated with this node */
     RuleType mode;        /* the rule mode */
-    int rval;             /* 0 == no detection, 1 == detection event */
     int evalIndex;        /* eval index for this rule set */
     char* name;           /* name of this rule list */
     RuleListNode* next;   /* the next RuleListNode */

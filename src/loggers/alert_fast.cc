@@ -154,9 +154,6 @@ bool FastModule::end(const char*, int, SnortConfig*)
 // logger stuff
 //-------------------------------------------------------------------------
 
-static const char* s_dispos[] =
-{ " [Allow]", " [CDrop]", " [WDrop]", " [Drop]", " [FDrop]" };
-
 class FastLogger : public Logger
 {
 public:
@@ -195,29 +192,14 @@ void FastLogger::close()
 void FastLogger::alert(Packet* p, const char* msg, Event* event)
 {
     LogTimeStamp(fast_log, p);
-    tActiveDrop dispos = Active_GetDisposition();
 
-    if ( dispos > ACTIVE_ALLOW )
-    {
-        if ( dispos > ACTIVE_DROP )
-            dispos = ACTIVE_DROP;
-
-        TextLog_Print(fast_log, " %s", s_dispos[dispos]);
-    }
+    if ( Active::get_action() > Active::ACT_PASS )
+        TextLog_Print(fast_log, " [%s]", Active::get_action_string());
 
     {
-#ifdef MARK_TAGGED
-        char c=' ';
-        if (p->packet_flags & PKT_REBUILT_STREAM)
-            c = 'R';
-        else if (p->packet_flags & PKT_REBUILT_FRAG)
-            c = 'F';
-        TextLog_Print(fast_log, " [**] %c ", c);
-#else
         TextLog_Puts(fast_log, " [**] ");
-#endif
 
-        if (event != NULL)
+        if ( event )
         {
             TextLog_Print(fast_log, "[%lu:%lu:%lu] ",
                 (unsigned long)event->sig_info->generator,
@@ -230,7 +212,7 @@ void FastLogger::alert(Packet* p, const char* msg, Event* event)
             TextLog_Print(fast_log, " <%s> ", PRINT_INTERFACE(DAQ_GetInterfaceSpec()));
         }
 
-        if (msg != NULL)
+        if ( msg )
             TextLog_Puts(fast_log, msg);
 
         TextLog_Puts(fast_log, " [**] ");

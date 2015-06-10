@@ -127,14 +127,12 @@ static void InitParser(void)
 
 static void CreateDefaultRules(SnortConfig* sc)
 {
-    if (sc == NULL)
-        return;
-
-    CreateRuleType(sc, ACTION_PASS, RULE_TYPE__PASS, 0, &sc->Pass);
-    CreateRuleType(sc, ACTION_DROP, RULE_TYPE__DROP, 1, &sc->Drop);
-    CreateRuleType(sc, ACTION_SDROP, RULE_TYPE__SDROP, 0, &sc->SDrop);
-    CreateRuleType(sc, ACTION_ALERT, RULE_TYPE__ALERT, 1, &sc->Alert);
-    CreateRuleType(sc, ACTION_LOG, RULE_TYPE__LOG, 1, &sc->Log);
+    CreateRuleType(sc, ACTION_LOG, RULE_TYPE__LOG);
+    CreateRuleType(sc, ACTION_PASS, RULE_TYPE__PASS);
+    CreateRuleType(sc, ACTION_ALERT, RULE_TYPE__ALERT);
+    CreateRuleType(sc, ACTION_DROP, RULE_TYPE__DROP);
+    CreateRuleType(sc, ACTION_BLOCK, RULE_TYPE__BLOCK);
+    CreateRuleType(sc, ACTION_RESET, RULE_TYPE__RESET);
 }
 
 static void FreeRuleTreeNodes(SnortConfig* sc)
@@ -614,9 +612,6 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf)
         fname = "";
 
     InitParser();
-
-    /* Setup the default rule action anchor points
-     * Need to do this now in case we get a user defined rule type */
     CreateDefaultRules(sc);
 
     sc->port_tables = PortTablesNew();
@@ -798,15 +793,13 @@ void ParseRules(SnortConfig* sc)
  * Purpose: Creates a new type of rule and adds it to the end of the rule list
  *
  * Arguments: name = name of this rule type
- *                       mode = the mode for this rule type
- *                   rval = return value for this rule type (for detect events)
- *                       head = list head to use (or NULL to create a new one)
+ *            mode = the mode for this rule type
+ *            rval = return value for this rule type (for detect events)
  *
  * Returns: the ListHead for the rule type
  *
  ***************************************************************************/
-ListHead* CreateRuleType(SnortConfig* sc, const char* name,
-    RuleType mode, int rval, ListHead* head)
+ListHead* CreateRuleType(SnortConfig* sc, const char* name, RuleType mode)
 {
     RuleListNode* node;
     int evalIndex = 0;
@@ -845,20 +838,9 @@ ListHead* CreateRuleType(SnortConfig* sc, const char* name,
         last->next = node;
     }
 
-    /* User defined rule type so we need to create a list head for it */
-    if (head == NULL)
-    {
-        node->RuleList = (ListHead*)SnortAlloc(sizeof(ListHead));
-    }
-    else
-    {
-        /* Our default rules already have list heads */
-        node->RuleList = head;
-    }
-
+    node->RuleList = (ListHead*)SnortAlloc(sizeof(ListHead));
     node->RuleList->ruleListNode = node;
     node->mode = mode;
-    node->rval = rval;
     node->name = SnortStrdup(name);
     node->evalIndex = evalIndex;
 
@@ -870,45 +852,25 @@ ListHead* CreateRuleType(SnortConfig* sc, const char* name,
 
 void FreeRuleLists(SnortConfig* sc)
 {
-    if (sc == NULL)
-        return;
-
     FreeRuleTreeNodes(sc);
 
-    FreeOutputLists(&sc->Drop);
-    FreeOutputLists(&sc->SDrop);
-    FreeOutputLists(&sc->Alert);
-    FreeOutputLists(&sc->Log);
-    FreeOutputLists(&sc->Pass);
+    RuleListNode* node = sc->rule_lists;
 
-    /* Iterate through the user-defined types */
-    if (sc->rule_lists != NULL)
+    while (node != NULL)
     {
-        RuleListNode* node = sc->rule_lists;
+        RuleListNode* tmp = node;
+        node = node->next;
 
-        while (node != NULL)
-        {
-            RuleListNode* tmp = node;
-            node = node->next;
+        FreeOutputLists(tmp->RuleList);
+        free(tmp->RuleList);
 
-            if ( (tmp->RuleList != &sc->Drop) &&
-                (tmp->RuleList != &sc->SDrop) &&
-                (tmp->RuleList != &sc->Alert) &&
-                (tmp->RuleList != &sc->Log) &&
-                (tmp->RuleList != &sc->Pass) )
-            {
-                FreeOutputLists(tmp->RuleList);
-                free(tmp->RuleList);
-            }
+        if (tmp->name)
+            free(tmp->name);
 
-            if (tmp->name)
-                free(tmp->name);
-
-            free(tmp);
-        }
-
-        sc->rule_lists = NULL;
+        free(tmp);
     }
+
+    sc->rule_lists = NULL;
 }
 
 void PortTablesFree(RulePortTables* port_tables)

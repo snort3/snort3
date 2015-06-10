@@ -32,20 +32,23 @@
 #include "detection_util.h"
 #include "detection/tag.h"
 
-static int PassAction(void)
+static void pass()
 {
     pc.pass_pkts++;
-
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"   => Pass rule, returning...\n"); );
-    return 1;
 }
 
-int AlertAction(Packet* p, const OptTreeNode* otn)
+static void log(Packet* p, const OptTreeNode* otn)
+{
+    RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
+    CallLogFuncs(p, otn, rtn->listhead);
+}
+
+static void alert(Packet* p, const OptTreeNode* otn)
 {
     RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
 
     if (rtn == NULL)
-        return 0;
+        return;
 
     /* Call OptTreeNode specific output functions */
     if (otn->outputFuncs)
@@ -55,77 +58,15 @@ int AlertAction(Packet* p, const OptTreeNode* otn)
         CallLogFuncs(p, otn, &lh);
     }
     CallAlertFuncs(p, otn, rtn->listhead);
-
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "   => Finishing alert packet!\n"); );
-
     CallLogFuncs(p, otn, rtn->listhead);
-
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"   => Alert packet finished, returning!\n"); );
-
-    return 1;
-}
-
-static int DropAction(Packet* p, const OptTreeNode* otn)
-{
-    RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
-
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-        "        <!!> Generating Alert and dropping! \"%s\"\n",
-        otn->sigInfo.message); );
-
-    /*
-    **  Set packet flag so output plugins will know we dropped the
-    **  packet we just logged.
-    */
-    Active_DropSession(p);
-
-    CallAlertFuncs(p, otn, rtn->listhead);
-
-    CallLogFuncs(p, otn, rtn->listhead);
-
-    return 1;
-}
-
-static int SDropAction(Packet* p, const OptTreeNode* otn)
-{
-#ifdef DEBUG_MSGS
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-        "        <!!> Dropping without Alerting! \"%s\"\n",
-        otn->sigInfo.message); );
-
-    // Let's silently drop the packet
-    Active_DropSession(p);
-#else
-    UNUSED(otn);
-    UNUSED(p);
-#endif
-    return 1;
-}
-
-static int LogAction(Packet* p, const OptTreeNode* otn)
-{
-    RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
-
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"   => Logging packet data and returning...\n"); );
-
-    CallLogFuncs(p, otn, rtn->listhead);
-
-#ifdef BENCHMARK
-    printf("        <!!> Check count = %d\n", check_count);
-    check_count = 0;
-    printf(" **** cmpcount: %d **** \n", cmpcount);
-#endif
-
-    return 1;
 }
 
 static const char* const rule_type[RULE_TYPE__MAX] =
 {
-    "none", "alert", "drop",
-    "log", "pass", "sdrop"
+    "none", "log", "pass", "alert", "drop", "block", "reset"
 };
 
-const char* get_action_string(int action)
+const char* get_action_string(RuleType action)
 {
     if ( action < RULE_TYPE__MAX )
         return rule_type[action];
@@ -135,17 +76,8 @@ const char* get_action_string(int action)
 
 RuleType get_action_type(const char* s)
 {
-    if (s == NULL)
+    if ( !s )
         return RULE_TYPE__NONE;
-
-    if ( !strcasecmp(s, ACTION_ALERT) )
-        return RULE_TYPE__ALERT;
-
-    else if ( !strcasecmp(s, ACTION_DROP) )
-        return RULE_TYPE__DROP;
-
-    else if ( !strcasecmp(s, ACTION_BLOCK) )
-        return RULE_TYPE__DROP;
 
     else if ( !strcasecmp(s, ACTION_LOG) )
         return RULE_TYPE__LOG;
@@ -153,41 +85,77 @@ RuleType get_action_type(const char* s)
     else if ( !strcasecmp(s, ACTION_PASS) )
         return RULE_TYPE__PASS;
 
-    else if ( !strcasecmp(s, ACTION_SDROP) )
-        return RULE_TYPE__SDROP;
+    else if ( !strcasecmp(s, ACTION_ALERT) )
+        return RULE_TYPE__ALERT;
 
-    else if ( !strcasecmp(s, ACTION_SBLOCK) )
-        return RULE_TYPE__SDROP;
+    else if ( !strcasecmp(s, ACTION_DROP) )
+        return RULE_TYPE__DROP;
+
+    else if ( !strcasecmp(s, ACTION_BLOCK) )
+        return RULE_TYPE__BLOCK;
+
+    else if ( !strcasecmp(s, ACTION_RESET) )
+        return RULE_TYPE__RESET;
 
     return RULE_TYPE__NONE;
 }
 
-void action_execute(int action, Packet* p, OptTreeNode* otn, uint16_t event_id)
+void action_execute(RuleType action, Packet* p, OptTreeNode* otn, uint16_t event_id)
 {
     switch (action)
     {
     case RULE_TYPE__PASS:
+        pass();
         SetTags(p, otn, event_id);
-        PassAction();
         break;
 
     case RULE_TYPE__ALERT:
-        AlertAction(p, otn);
+        alert(p, otn);
         SetTags(p, otn, event_id);
         break;
 
     case RULE_TYPE__LOG:
-        LogAction(p, otn);
+        log(p, otn);
         SetTags(p, otn, event_id);
         break;
 
     case RULE_TYPE__DROP:
-        DropAction(p, otn);
+        Active::drop_packet(p);
+        alert(p, otn);
         SetTags(p, otn, event_id);
         break;
 
-    case RULE_TYPE__SDROP:
-        SDropAction(p, otn);
+    case RULE_TYPE__BLOCK:
+        Active::block_session(p);
+        alert(p, otn);
+        SetTags(p, otn, event_id);
+        break;
+
+    case RULE_TYPE__RESET:
+        Active::reset_session(p);
+        alert(p, otn);
+        SetTags(p, otn, event_id);
+        break;
+
+    default:
+        break;
+    }
+}
+
+void action_apply(RuleType action, Packet* p)
+{
+    switch ( action )
+    {
+    case RULE_TYPE__DROP:
+        Active::drop_packet(p);
+        break;
+
+    case RULE_TYPE__BLOCK:
+        Active::block_session(p);
+        break;
+
+    case RULE_TYPE__RESET:
+        Active::reset_session(p);
         break;
 
     default:

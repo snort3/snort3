@@ -247,7 +247,7 @@ void Normalizer::eval(Packet* p)
     PROFILE_VARS;
     MODULE_PROFILE_START(norm_perf_stats);
 
-    if ( !p->is_rebuilt() && !Active_PacketWasDropped() )
+    if ( !p->is_rebuilt() && !Active::packet_was_dropped() )
         Norm_Packet(&config, p);
 
     MODULE_PROFILE_END(norm_perf_stats);

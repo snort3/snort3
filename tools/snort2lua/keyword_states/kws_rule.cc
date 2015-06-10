@@ -86,6 +86,24 @@ static ConversionState* dep_rule_ctor(Converter& c)
     return new RuleHeader(c);
 }
 
+template<const std::string* name, const std::string* old>
+static ConversionState* conv_rule_ctor(Converter& c)
+{
+    c.get_rule_api().add_hdr_data(*name);
+    c.get_rule_api().add_comment(
+        "The '" + *old + "' ruletype is no longer supported, using " + *name);
+    return new RuleHeader(c);
+}
+
+static ConversionState* drop_rule_ctor(Converter& c)
+{
+    c.get_rule_api().add_hdr_data("block");
+    c.get_rule_api().add_comment(
+        "Ruletype 'drop' discards the current packet only; "
+        "using 'block' to discard all packets on flow");
+    return new RuleHeader(c);
+}
+
 static const std::string alert = "alert";
 static const std::string block = "block";
 static const std::string log = "log";
@@ -101,10 +119,10 @@ static const ConvertMap alert_api = { alert, rule_ctor<& alert>};
 static const ConvertMap block_api = { block, rule_ctor<& block>};
 static const ConvertMap log_api = { log, rule_ctor<& log>};
 static const ConvertMap pass_api = { pass, rule_ctor<& pass>};
-static const ConvertMap drop_api = { drop, rule_ctor<& drop>};
+static const ConvertMap drop_api = { drop, drop_rule_ctor};
 static const ConvertMap reject_api = { reject, rule_ctor<& reject>};
-static const ConvertMap sblock_api = { sblock, rule_ctor<& sblock>};
-static const ConvertMap sdrop_api = { sdrop, rule_ctor<& sdrop>};
+static const ConvertMap sblock_api = { sblock, conv_rule_ctor<& block, &sblock>};
+static const ConvertMap sdrop_api = { sdrop, conv_rule_ctor<& block, &sdrop>};
 static const ConvertMap activate_api = { activate, dep_rule_ctor<& activate>};
 static const ConvertMap dynamic_api = { dynamic, dep_rule_ctor<& dynamic>};
 

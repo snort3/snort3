@@ -67,12 +67,12 @@ Binding::Binding()
     when.ifaces.set();
 
     when.id = 0;
-    when.role = BR_EITHER;
+    when.role = BindWhen::BR_EITHER;
 
     use.index = 0;
-    use.action = BA_INSPECT;
+    use.action = BindUse::BA_INSPECT;
 
-    use.what = BW_NONE;
+    use.what = BindUse::BW_NONE;
     use.object = nullptr;
 }
 
@@ -224,7 +224,7 @@ static Inspector* get_gadget(Flow* flow)
 
 struct Stuff
 {
-    BindAction action;
+    BindUse::Action action;
 
     Inspector* client;
     Inspector* server;
@@ -234,7 +234,7 @@ struct Stuff
 
     Stuff()
     {
-        action = BA_INSPECT;
+        action = BindUse::BA_INSPECT;
         client = server = nullptr;
         wizard = gadget = nullptr;
         data = nullptr;
@@ -249,33 +249,35 @@ struct Stuff
 
 bool Stuff::update(Binding* pb)
 {
-    if ( pb->use.action != BA_INSPECT )
+    if ( pb->use.action != BindUse::BA_INSPECT )
     {
         action = pb->use.action;
         return true;
     }
     switch ( pb->use.what )
     {
-    case BW_NONE:
+    case BindUse::BW_NONE:
         break;
-    case BW_PASSIVE:
+    case BindUse::BW_PASSIVE:
         data = (Inspector*)pb->use.object;
         break;
-    case BW_CLIENT:
+    case BindUse::BW_CLIENT:
         client = (Inspector*)pb->use.object;
         break;
-    case BW_SERVER:
+    case BindUse::BW_SERVER:
         server = (Inspector*)pb->use.object;
         break;
-    case BW_STREAM:
+    case BindUse::BW_STREAM:
         client = server = (Inspector*)pb->use.object;
         break;
-    case BW_WIZARD:
+    case BindUse::BW_WIZARD:
         wizard = (Inspector*)pb->use.object;
         return true;
-    case BW_GADGET:
+    case BindUse::BW_GADGET:
         gadget = (Inspector*)pb->use.object;
         return true;
+    default:
+        break;
     }
     return false;
 }
@@ -284,11 +286,15 @@ bool Stuff::apply_action(Flow* flow)
 {
     switch ( action )
     {
-    case BA_BLOCK:
+    case BindUse::BA_RESET:
+        flow->set_state(Flow::RESET);
+        return false;
+
+    case BindUse::BA_BLOCK:
         flow->set_state(Flow::BLOCK);
         return false;
 
-    case BA_ALLOW:
+    case BindUse::BA_ALLOW:
         flow->set_state(Flow::ALLOW);
         return false;
 
@@ -470,7 +476,7 @@ int Binder::exec(int, void* pv)
 
 void Binder::set_binding(SnortConfig*, Binding* pb)
 {
-    if ( pb->use.action != BA_INSPECT )
+    if ( pb->use.action != BindUse::BA_INSPECT )
         return;
 
     const char* key;
@@ -483,17 +489,17 @@ void Binder::set_binding(SnortConfig*, Binding* pb)
     {
         switch ( InspectorManager::get_type(key) )
         {
-        case IT_STREAM: pb->use.what = BW_STREAM; break;
-        case IT_WIZARD: pb->use.what = BW_WIZARD; break;
-        case IT_SERVICE: pb->use.what = BW_GADGET; break;
-        case IT_PASSIVE: pb->use.what = BW_PASSIVE; break;
+        case IT_STREAM: pb->use.what = BindUse::BW_STREAM; break;
+        case IT_WIZARD: pb->use.what = BindUse::BW_WIZARD; break;
+        case IT_SERVICE: pb->use.what = BindUse::BW_GADGET; break;
+        case IT_PASSIVE: pb->use.what = BindUse::BW_PASSIVE; break;
         default: break;
         }
     }
     if ( !pb->use.object )
-        pb->use.what = BW_NONE;
+        pb->use.what = BindUse::BW_NONE;
 
-    if ( pb->use.what == BW_NONE )
+    if ( pb->use.what == BindUse::BW_NONE )
         ParseError("can't bind %s", key);
 }
 

@@ -153,18 +153,15 @@ static int s_blocked_flag[] =
     U2_BLOCKED_FLAG_CANT,
     U2_BLOCKED_FLAG_WOULD,
     U2_BLOCKED_FLAG_BLOCK,
-    U2_BLOCKED_FLAG_BLOCK
 };
 
 static int GetU2Flags(const Packet*, uint8_t* pimpact)
 {
-    tActiveDrop dispos = Active_GetDisposition();
+    Active::ActiveStatus dispos = Active::get_status();
 
-    if ( dispos >= ACTIVE_DROP )
-    {
+    if ( dispos > Active::AST_ALLOW )
         *pimpact = U2_FLAG_BLOCKED;
-        return U2_BLOCKED_FLAG_BLOCK;
-    }
+
     return s_blocked_flag[dispos];
 }
 

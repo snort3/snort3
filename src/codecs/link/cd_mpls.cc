@@ -141,7 +141,7 @@ bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     int iRet = 0;
 
-    UpdateMPLSStats(&sfBase, raw.len, Active_PacketWasDropped());
+    UpdateMPLSStats(&sfBase, raw.len, Active::packet_was_dropped());
     const uint32_t* tmpMplsHdr =
         reinterpret_cast<const uint32_t*>(raw.data);
 

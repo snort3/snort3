@@ -130,7 +130,7 @@ public:
 
     /* Drop retransmitted packet arriving on session.
      */
-    static void drop_packet(Packet*);  // PKT
+    static void drop_session(const Packet*);
 
     // FIXIT-L these are misnomers in ips mode and may be used incorrectly
     static void flush_request(Packet*);  // flush listener
@@ -159,7 +159,7 @@ public:
      * Returns
      *     Ptr to Flowbits Data
      */
-    static StreamFlowData* get_flow_data(Packet*);
+    static StreamFlowData* get_flow_data(const Packet*);
 
     /* Get reassembly direction for given session
      *
@@ -210,7 +210,7 @@ public:
     static int16_t set_application_protocol_id(Flow*, int16_t appId);
 
     // initialize response count and expiration time
-    static void init_active_response(Packet*, Flow*);
+    static void init_active_response(const Packet*, Flow*);
 
     static void set_splitter(Flow*, bool toServer, class StreamSplitter* = nullptr);
     static StreamSplitter* get_splitter(Flow*, bool toServer);

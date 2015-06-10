@@ -243,20 +243,13 @@ RuleType get_rule_type(const char* s)
     switch ( rt )
     {
     case RULE_TYPE__DROP:
+    case RULE_TYPE__BLOCK:
+    case RULE_TYPE__RESET:
         if ( SnortConfig::treat_drop_as_alert() )
             return RULE_TYPE__ALERT;
 
         if ( ScKeepDropRules() || ScLoadAsDropRules() )
-            return RULE_TYPE__DROP;
-
-        return RULE_TYPE__NONE;
-
-    case RULE_TYPE__SDROP:
-        if ( ScKeepDropRules() && !SnortConfig::treat_drop_as_alert() )
-            return RULE_TYPE__SDROP;
-
-        if ( ScLoadAsDropRules() )
-            return RULE_TYPE__DROP;
+            return rt;
 
         return RULE_TYPE__NONE;
 

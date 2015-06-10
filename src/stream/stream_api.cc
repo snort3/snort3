@@ -298,19 +298,19 @@ void Stream::drop_traffic(Flow* flow, char dir)
     if ((dir & SSN_DIR_FROM_CLIENT) && !(flow->ssn_state.session_flags & SSNFLAG_DROP_CLIENT))
     {
         flow->ssn_state.session_flags |= SSNFLAG_DROP_CLIENT;
-        if ( Active_PacketForceDropped() )
+        if ( Active::packet_force_dropped() )
             flow->ssn_state.session_flags |= SSNFLAG_FORCE_BLOCK;
     }
 
     if ((dir & SSN_DIR_FROM_SERVER) && !(flow->ssn_state.session_flags & SSNFLAG_DROP_SERVER))
     {
         flow->ssn_state.session_flags |= SSNFLAG_DROP_SERVER;
-        if ( Active_PacketForceDropped() )
+        if ( Active::packet_force_dropped() )
             flow->ssn_state.session_flags |= SSNFLAG_FORCE_BLOCK;
     }
 }
 
-void Stream::drop_packet(Packet* p)
+void Stream::drop_session(const Packet* p)
 {
     Flow* flow = p->flow;
 
@@ -369,7 +369,7 @@ int Stream::set_ignore_direction(Flow* flow, int ignore_direction)
 // misc support
 //-------------------------------------------------------------------------
 
-StreamFlowData* Stream::get_flow_data(Packet* p)
+StreamFlowData* Stream::get_flow_data(const Packet* p)
 {
     Flow* flow = p->flow;
 
@@ -379,7 +379,7 @@ StreamFlowData* Stream::get_flow_data(Packet* p)
     return flow->flowdata;
 }
 
-void Stream::init_active_response(Packet* p, Flow* flow)
+void Stream::init_active_response(const Packet* p, Flow* flow)
 {
     if ( !flow )
         return;
@@ -624,7 +624,7 @@ static void active_response(Packet* p, Flow* lwssn)
             (lwssn->session_state & STREAM_STATE_DROP_SERVER) ) ?
             ENC_FLAG_FWD : 0;  // reverse dir is always true
 
-        Active_KillSession(p, &flags);
+        Active::kill_session(p, flags);
         ++lwssn->response_count;
         lwssn->set_expire(p, delay);
 
@@ -649,7 +649,7 @@ bool Stream::blocked_session(Flow* flow, Packet* p)
             p->packet_flags & PKT_FROM_SERVER ?  "server" : "client"); );
 
         DisableDetect(p);
-        Active_DropPacket(p);
+        Active::drop_packet(p);
         active_response(p, flow);
         return true;
     }

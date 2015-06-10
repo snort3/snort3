@@ -486,7 +486,7 @@ static inline void add_file_to_block(Packet* p, File_Verdict verdict,
     uint32_t file_sig;
     FileConfig* file_config =  (FileConfig*)(snort_conf->file_config);
 
-    Active_ForceDropPacket();
+    Active::drop_packet(p, true);
     DisableInspection(p);
     p->packet_flags |= PKT_FILE_EVENT_SET;
 
@@ -570,7 +570,7 @@ static inline void _file_signature_lookup(FileContext* context,
             /*Drop packets if not timeout*/
             if (pkt->pkth->ts.tv_sec <= context->expires)
             {
-                Active_DropPacket(pkt);
+                Active::drop_packet(pkt);
                 return;
             }
             /*Timeout, let packet go through OR block based on config*/
@@ -589,7 +589,7 @@ static inline void _file_signature_lookup(FileContext* context,
             if (file_config)
                 context->expires = (time_t)(file_config->file_lookup_timeout +
                     pkt->pkth->ts.tv_sec);
-            Active_DropPacket(pkt);
+            Active::drop_packet(pkt);
             save_to_pending_context(pkt->flow);
             return;
         }
@@ -651,7 +651,7 @@ static void render_block_verdict(void* ctx, Packet* p)
     {
         file_eventq_add(GENERATOR_FILE_SIGNATURE, FILE_SIGNATURE_SHA256,
             RULE_TYPE__DROP);
-        ActionManager::queue_reject();
+        ActionManager::queue_reject(pkt);
         add_file_to_block(pkt, context->verdict, context->file_type_id,
             context->sha256);
     }
@@ -812,7 +812,7 @@ static int process_file_context(FileContext* context, Packet* pkt, uint8_t* file
         {
             file_eventq_add(GENERATOR_FILE_TYPE, context->file_type_id,
                 RULE_TYPE__DROP);
-            ActionManager::queue_reject();
+            ActionManager::queue_reject(pkt);
             updateFileSize(context, data_size, position);
             context->file_signature_enabled = false;
             add_file_to_block(pkt, verdict, context->file_type_id, NULL);

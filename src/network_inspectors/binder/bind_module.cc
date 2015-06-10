@@ -42,6 +42,7 @@ THREAD_LOCAL BindStats bstats;
 static const PegInfo bind_pegs[] =
 {
     { "packets", "initial bindings" },
+    { "resets", "reset bindings" },
     { "blocks", "block bindings" },
     { "allows", "allow bindings" },
     { "inspects", "inspect bindings" },
@@ -85,7 +86,7 @@ static const Parameter binder_when_params[] =
 
 static const Parameter binder_use_params[] =
 {
-    { "action", Parameter::PT_ENUM, "block | allow | inspect", "inspect",
+    { "action", Parameter::PT_ENUM, "reset | block | allow | inspect", "inspect",
       "what to do with matching traffic" },
 
     { "file", Parameter::PT_STRING, nullptr, nullptr,
@@ -161,14 +162,14 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
         v.get_bits(work->when.ports);
 
     else if ( v.is("role") )
-        work->when.role = (BindRole)v.get_long();
+        work->when.role = (BindWhen::Role)v.get_long();
 
     else if ( v.is("vlans") )
         v.get_bits(work->when.vlans);
 
     // use
     else if ( v.is("action") )
-        work->use.action = (BindAction)(v.get_long());
+        work->use.action = (BindUse::Action)(v.get_long());
 
     else if ( v.is("file") )
     {

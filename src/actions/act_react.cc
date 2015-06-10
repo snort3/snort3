@@ -144,10 +144,9 @@ void ReactAction::exec(Packet* p)
     PROFILE_VARS;
     MODULE_PROFILE_START(reactPerfStats);
 
-    if ( Active_IsRSTCandidate(p) )
+    if ( Active::is_reset_candidate(p) )
         send(p);
 
-    Active_DropSession(p);
     MODULE_PROFILE_END(reactPerfStats);
 }
 
@@ -156,13 +155,11 @@ void ReactAction::send(Packet* p)
     EncodeFlags df = (p->packet_flags & PKT_FROM_SERVER) ? ENC_FLAG_FWD : 0;
     EncodeFlags rf = ENC_FLAG_SEQ | (ENC_FLAG_VAL & config->buf_len);
 
-    Active_IgnoreSession(p);
-
     if ( p->packet_flags & PKT_STREAM_EST )
-        Active_SendData(p, df, (uint8_t*)config->resp_buf, config->buf_len);
+        Active::send_data(p, df, (uint8_t*)config->resp_buf, config->buf_len);
 
-    Active_SendReset(p, rf);
-    Active_SendReset(p, ENC_FLAG_FWD);
+    Active::send_reset(p, rf);
+    Active::send_reset(p, ENC_FLAG_FWD);
 }
 
 //-------------------------------------------------------------------------
@@ -321,7 +318,7 @@ static IpsAction* react_ctor(Module* p)
     rd->rule_msg = m->msg;
 
     react_config(rd); // FIXIT-L this must be done per response
-    Active_SetEnabled(1);
+    Active::set_enabled();
 
     return new ReactAction(rd);
 }

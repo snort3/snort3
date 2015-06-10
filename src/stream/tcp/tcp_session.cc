@@ -1043,7 +1043,7 @@ static inline bool NormalDropPacketIf(Packet* p, NormFlags f)
 
     if ( mode == NORM_MODE_ON )
     {
-        Active_DropPacket(p);
+        Active::drop_packet(p);
         return true;
     }
     return false;
@@ -6048,8 +6048,6 @@ void TcpSession::cleanup()
     TcpSessionCleanup(flow, 1);
 }
 
-// FIXIT-L this was originally called by Stream::drop_packet()
-// which is now calling Session::clear()
 void TcpSession::clear()
 {
     if ( tcp_init )

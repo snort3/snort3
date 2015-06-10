@@ -185,7 +185,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
             codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
         else if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_6IN4) )
-            Active_SetTunnelBypass();
+            Active::set_tunnel_bypass();
     }
 
     IPV6CheckIsatap(ip6h, snort, codec); // check for isatap before overwriting the ip_api.

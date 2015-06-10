@@ -31,6 +31,7 @@
 struct ActionApi;
 class IpsAction;
 struct SnortConfig;
+struct Packet;
 
 //-------------------------------------------------------------------------
 
@@ -49,9 +50,9 @@ public:
     static void thread_term(SnortConfig*);
 
     static void reset_queue();
-    static void queue_reject();
+    static void queue_reject(const Packet*);
     static void queue(IpsAction*);
-    static void execute(struct Packet*);
+    static void execute(Packet*);
 };
 
 #endif

@@ -232,7 +232,7 @@ void FlowControl::prune_flows (PktType proto, Packet* p)
 
 void FlowControl::timeout_flows(uint32_t flowCount, time_t cur_time)
 {
-    Active_Suspend();
+    Active::suspend();
 
     if ( ip_cache )
         ip_cache->timeout(flowCount, cur_time);
@@ -252,7 +252,7 @@ void FlowControl::timeout_flows(uint32_t flowCount, time_t cur_time)
     if ( file_cache )
         file_cache->timeout(flowCount, cur_time);
 
-    Active_Resume();
+    Active::resume();
 }
 
 //-------------------------------------------------------------------------
@@ -452,17 +452,26 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
             stream.stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
         else
             DisableInspection(p);
+
         p->ptrs.decode_flags |= DECODE_PKT_TRUST;
         break;
 
     case Flow::BLOCK:
         if ( news )
             stream.drop_traffic(flow, SSN_DIR_BOTH);
-
-        if ( flow->ssn_state.session_flags & SSNFLAG_FORCE_BLOCK )
-            Active_ForceDropSessionWithoutReset();
         else
-            Active_DropSessionWithoutReset(p);
+            Active::block_again();
+
+        DisableInspection(p);
+        break;
+
+    case Flow::RESET:
+        if ( news )
+            stream.drop_traffic(flow, SSN_DIR_BOTH);
+        else
+            Active::reset_again();
+
+        stream.blocked_session(flow, p);
         DisableInspection(p);
         break;
     }

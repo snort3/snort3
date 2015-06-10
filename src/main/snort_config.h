@@ -29,7 +29,7 @@
 #include <vector>
 #include <sys/stat.h>
 
-#include "detection/rules.h"
+//#include "detection/rules.h"
 #include "sfip/sfip_t.h"
 #include "main/policy.h"
 #include "main/thread.h"
@@ -277,12 +277,6 @@ public:
     int num_rule_types = 0;
     struct RuleListNode* rule_lists = nullptr;
     int evalOrder[RULE_TYPE__MAX + 1];
-
-    ListHead Alert;
-    ListHead Log;
-    ListHead Pass;
-    ListHead Drop;
-    ListHead SDrop;
 
     struct FrameworkConfig* framework_config = nullptr;
 

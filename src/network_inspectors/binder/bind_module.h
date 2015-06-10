@@ -25,6 +25,7 @@
 
 #include "framework/module.h"
 #include "main/thread.h"
+#include "binding.h"
 
 #define BIND_NAME "binder"
 #define BIND_HELP "configure processing based on CIDRs, ports, services, etc."
@@ -32,7 +33,7 @@
 struct BindStats
 {
     PegCount packets;
-    PegCount verdicts[3];
+    PegCount verdicts[BindUse::BA_MAX];
 };
 
 extern THREAD_LOCAL BindStats bstats;

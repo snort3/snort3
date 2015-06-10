@@ -101,7 +101,7 @@ enum DecodeFlags : std::uint16_t
     PROTO_BIT__ICMP_EMBED_ICMP | PROTO_BIT__ICMP_EMBED_OTHER)
 #define PROTO_BIT__IP6_EXT  0x4000
 #define PROTO_BIT__FREE     0x0000 /* No proto bits free */
-#define PROTO_BIT__OTHER    0x8000
+#define PROTO_BIT__OTHER    0x8000  // FIXIT-L delete this after porting is still unused
 #define PROTO_BIT__ALL      0xffff
 
 struct DecodeData

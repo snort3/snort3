@@ -33,6 +33,7 @@ using namespace std;
 #include "parser/parser.h"
 #include "log/messages.h"
 #include "actions/act_replace.h"
+#include "packet_io/active.h"
 
 struct Actor
 {
@@ -116,7 +117,7 @@ void ActionManager::instantiate(
         if ( !s_reject && !strcmp(act->get_name(), "reject") )
             s_reject = act;
 
-        ListHead* lh = CreateRuleType(sc, api->base.name, api->type, 0, nullptr);
+        ListHead* lh = CreateRuleType(sc, api->base.name, api->type);
         assert(lh);
         lh->action = act;
 
@@ -153,8 +154,28 @@ void ActionManager::queue(IpsAction* a)
         s_action = a;
 }
 
-void ActionManager::queue_reject()
+void ActionManager::queue_reject(const Packet* p)
 {
+    if ( !p->ptrs.ip_api.is_ip() )
+        return;
+
+    switch ( p->type() )
+    {
+    case PktType::TCP:
+        if ( !Active::is_reset_candidate(p) )
+            return;
+        break;
+
+    case PktType::UDP:
+    case PktType::ICMP:
+    case PktType::IP:
+        if ( !Active::is_unreachable_candidate(p) )
+            return;
+        break;
+
+    default:
+        return;
+    }
     if ( s_reject )
         queue(s_reject);
 }

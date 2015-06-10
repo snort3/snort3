@@ -113,7 +113,7 @@ static inline RuleTreeNode* getRuntimeRtnFromOtn(
 
 extern rule_index_map_t* ruleIndexMap;
 
-ListHead* CreateRuleType(SnortConfig*, const char*, RuleType, int, ListHead*);
+ListHead* CreateRuleType(SnortConfig* sc, const char* name, RuleType);
 
 void FreeRuleTreeNode(RuleTreeNode*);
 void DestroyRuleTreeNode(RuleTreeNode*);

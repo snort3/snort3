@@ -145,7 +145,7 @@ public:
 ReplaceAction::ReplaceAction(ReplaceModule*) :
     IpsAction(s_name, ACT_RESET)
 {
-    Active_SetEnabled(1);
+    Active::set_enabled();
 }
 
 void ReplaceAction::exec(Packet* p)

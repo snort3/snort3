@@ -21,41 +21,35 @@
 
 #include <stdint.h>
 
+#define ACTION_LOG      "log"
+#define ACTION_PASS     "pass"
 #define ACTION_ALERT    "alert"
 #define ACTION_DROP     "drop"
 #define ACTION_BLOCK    "block"
-#define ACTION_LOG      "log"
-#define ACTION_PASS     "pass"
-#define ACTION_SDROP    "sdrop"
-#define ACTION_SBLOCK   "sblock"
+#define ACTION_RESET    "reset"
 
 enum RuleType
 {
     RULE_TYPE__NONE = 0,
-    RULE_TYPE__ALERT,
-    RULE_TYPE__DROP,
     RULE_TYPE__LOG,
     RULE_TYPE__PASS,
-    RULE_TYPE__SDROP,
+    RULE_TYPE__ALERT,
+    RULE_TYPE__DROP,
+    RULE_TYPE__BLOCK,
+    RULE_TYPE__RESET,
     RULE_TYPE__MAX
 };
 
-const char* get_action_string(int action);
+const char* get_action_string(RuleType);
 RuleType get_action_type(const char*);
-void action_execute(int action, struct Packet*, struct OptTreeNode*, uint16_t event_id);
 
-static inline bool pass_action(int a)
+void action_execute(RuleType, struct Packet*, struct OptTreeNode*, uint16_t event_id);
+void action_apply(RuleType, struct Packet*);
+
+static inline bool pass_action(RuleType a)
 {
     return ( a == RULE_TYPE__PASS );
 }
-
-static inline bool block_action(int a)
-{
-    return ( (a == RULE_TYPE__DROP) ||
-           (a == RULE_TYPE__SDROP) );
-}
-
-int AlertAction(Packet*, const OptTreeNode*);
 
 #endif
 

@@ -596,7 +596,7 @@ void Snort::thread_init(const char* intf)
 
     // this depends on instantiated daq capabilities
     // so it is done here instead of init()
-    Active_Init(snort_conf);
+    Active::init(snort_conf);
 
     SnortEventqNew(snort_conf->event_queue_config);
 
@@ -650,7 +650,7 @@ void Snort::thread_term()
     CleanupTag();
 
     SnortEventqFree();
-    Active_Term();
+    Active::term();
 }
 
 void Snort::decode_rebuilt_packet(
@@ -685,8 +685,6 @@ void Snort::detect_rebuilt_packet(Packet* p)
 DAQ_Verdict Snort::process_packet(
     Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt, bool is_frag)
 {
-    DAQ_Verdict verdict = DAQ_VERDICT_PASS;
-
     set_default_policy();
 
     PacketManager::decode(p, pkthdr, pkt);
@@ -698,9 +696,6 @@ DAQ_Verdict Snort::process_packet(
         p->pseudo_type = PSEUDO_PKT_IP;
     }
 
-    if ( !p->proto_bits )
-        p->proto_bits = PROTO_BIT__OTHER;
-
     set_policy(p);  // FIXIT-M should not need this here
 
     /* just throw away the packet if we are configured to ignore this port */
@@ -710,25 +705,70 @@ DAQ_Verdict Snort::process_packet(
         main_hook(p);
     }
 
-    if ( Active_SessionWasDropped() )
+    // process flow verdicts here
+    if ( Active::session_was_blocked() )
     {
-        if ( !Active_PacketForceDropped() )
-            Active_DropAction(p);
-        else
-            Active_ForceDropAction(p);
-
-        if ( Active_GetTunnelBypass() )
+        if ( Active::get_tunnel_bypass() )
         {
             aux_counts.internal_blacklist++;
-            return verdict;
+            return DAQ_VERDICT_PASS;
         }
 
-        if ( SnortConfig::inline_mode() || Active_PacketForceDropped() )
-            verdict = DAQ_VERDICT_BLACKLIST;
+        if ( SnortConfig::inline_mode() || Active::packet_force_dropped() )
+            return DAQ_VERDICT_BLACKLIST;
         else
-            verdict = DAQ_VERDICT_IGNORE;
+            return DAQ_VERDICT_IGNORE;
     }
 
+    return DAQ_VERDICT_PASS;
+}
+
+// process (wire-only) packet verdicts here
+static DAQ_Verdict update_verdict(DAQ_Verdict verdict, int& inject)
+{
+    if ( Active::packet_was_dropped() )
+    {
+        if ( verdict == DAQ_VERDICT_PASS )
+            verdict = DAQ_VERDICT_BLOCK;
+    }
+    else if ( s_packet->packet_flags & PKT_MODIFIED )
+    {
+        // this packet was normalized and/or has replacements
+        PacketManager::encode_update(s_packet);
+        verdict = DAQ_VERDICT_REPLACE;
+    }
+    else if ( s_packet->packet_flags & PKT_RESIZED )
+    {
+        // we never increase, only trim, but
+        // daq doesn't support resizing wire packet
+        if ( !DAQ_Inject(s_packet->pkth, 0, s_packet->pkt, s_packet->pkth->pktlen) )
+        {
+            inject = 1;
+            verdict = DAQ_VERDICT_BLOCK;
+        }
+    }
+    else if ( (s_packet->packet_flags & PKT_IGNORE) ||
+        (stream.get_ignore_direction(s_packet->flow) == SSN_DIR_BOTH) )
+    {
+        if ( !Active::get_tunnel_bypass() )
+        {
+            verdict = DAQ_VERDICT_WHITELIST;
+        }
+        else
+        {
+            verdict = DAQ_VERDICT_PASS;
+            aux_counts.internal_whitelist++;
+        }
+    }
+    else if ( s_packet->ptrs.decode_flags & DECODE_PKT_TRUST )
+    {
+        stream.set_ignore_direction(s_packet->flow, SSN_DIR_BOTH);
+        verdict = DAQ_VERDICT_WHITELIST;
+    }
+    else
+    {
+        verdict = DAQ_VERDICT_PASS;
+    }
     return verdict;
 }
 
@@ -736,93 +776,33 @@ DAQ_Verdict Snort::packet_callback(
     void*, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
     int inject = 0;
-    DAQ_Verdict verdict = DAQ_VERDICT_PASS;
     PROFILE_VARS;
 
     MODULE_PROFILE_START(totalPerfStats);
 
     pc.total_from_daq++;
-
-    /* Increment counter that we're evaling rules for caching results */
     rule_eval_pkt_count++;
-
-    /* Save off the time of each and every packet */
     packet_time_update(&pkthdr->ts);
 
     if ( snort_conf->pkt_skip && pc.total_from_daq <= snort_conf->pkt_skip )
     {
         MODULE_PROFILE_END(totalPerfStats);
-        return verdict;
+        return DAQ_VERDICT_PASS;
     }
-
-    /* reset the thresholding subsystem checks for this packet */
-    sfthreshold_reset();
 
     MODULE_PROFILE_START(eventqPerfStats);
     SnortEventqReset();
     MODULE_PROFILE_END(eventqPerfStats);
 
+    sfthreshold_reset();
     ActionManager::reset_queue();
 
-    verdict = process_packet(s_packet, pkthdr, pkt);
-
+    DAQ_Verdict verdict = process_packet(s_packet, pkthdr, pkt);
     ActionManager::execute(s_packet);
+    verdict = update_verdict(verdict, inject);
 
-    if ( Active_PacketWasDropped() )
-    {
-        if ( verdict == DAQ_VERDICT_PASS )
-            verdict = DAQ_VERDICT_BLOCK;
-    }
-    else
-    {
-        if ( s_packet->packet_flags & PKT_MODIFIED )
-        {
-            // this packet was normalized and/or has replacements
-            PacketManager::encode_update(s_packet);
-            verdict = DAQ_VERDICT_REPLACE;
-        }
-        else if ( s_packet->packet_flags & PKT_RESIZED )
-        {
-            printf("packet flags = 0x%X\n", s_packet->packet_flags);
-            // we never increase, only trim, but
-            // daq doesn't support resizing wire packet
-            if ( !DAQ_Inject(s_packet->pkth, 0, s_packet->pkt, s_packet->pkth->pktlen) )
-            {
-                verdict = DAQ_VERDICT_BLOCK;
-                inject = 1;
-            }
-        }
-        else
-        {
-            if ( (s_packet->packet_flags & PKT_IGNORE) ||
-                (stream.get_ignore_direction(s_packet->flow) == SSN_DIR_BOTH) )
-            {
-                if ( !Active_GetTunnelBypass() )
-                {
-                    verdict = DAQ_VERDICT_WHITELIST;
-                }
-                else
-                {
-                    verdict = DAQ_VERDICT_PASS;
-                    aux_counts.internal_whitelist++;
-                }
-            }
-            else if ( s_packet->ptrs.decode_flags & DECODE_PKT_TRUST )
-            {
-                stream.set_ignore_direction(s_packet->flow, SSN_DIR_BOTH);
-
-                verdict = DAQ_VERDICT_WHITELIST;
-            }
-            else
-            {
-                verdict = DAQ_VERDICT_PASS;
-            }
-        }
-    }
-
-    /* Collect some "on the wire" stats about packet size, etc */
-    UpdateWireStats(&sfBase, pkthdr->caplen, Active_PacketWasDropped(), inject);
-    Active_Reset();
+    UpdateWireStats(&sfBase, pkthdr->caplen, Active::packet_was_dropped(), inject);
+    Active::reset();
     PacketManager::encode_reset();
 
     if ( flow_con ) // FIXIT-M always instantiate
@@ -830,7 +810,7 @@ DAQ_Verdict Snort::packet_callback(
         flow_con->timeout_flows(4, pkthdr->ts.tv_sec);
     }
 
-    s_packet->pkth = nullptr;  // no longer avail on segv
+    s_packet->pkth = nullptr;  // no longer avail upon sig segv
 
     if ( snort_conf->pkt_cnt && pc.total_from_daq >= snort_conf->pkt_cnt )
         DAQ_BreakLoop(-1);

@@ -4,6 +4,10 @@
 :toc-placement: manual
 :toc-title: Contents
 
+---------------
+:quotes.++:
+---------------
+
 image::snorty.png["Snorty",width="480"]
 include::version.txt[]
 toc::[]

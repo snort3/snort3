@@ -230,7 +230,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
             codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
         else if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_4IN6) )
-            Active_SetTunnelBypass();
+            Active::set_tunnel_bypass();
     }
 
     // set the api now since this layer has been verified as valid

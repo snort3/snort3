@@ -17,8 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// @file    active.c
-// @author  Russ Combs <rcombs@sourcefire.com>
+// active.c author Russ Combs <rcombs@sourcefire.com>
 
 #include "active.h"
 
@@ -43,14 +42,16 @@
 // these can't be pkt flags because we do the handling
 // of these flags following all processing and the drop
 // or response may have been produced by a pseudopacket.
-THREAD_LOCAL tActiveDrop active_drop_pkt = ACTIVE_ALLOW;
-THREAD_LOCAL tActiveSsnDrop active_drop_ssn = ACTIVE_SSN_ALLOW;
-// TBD consider performance of replacing active_drop_pkt/ssn
-// with a active_verdict.  change over if it is a wash or better.
+THREAD_LOCAL Active::ActiveStatus Active::active_status = Active::AST_ALLOW;
+THREAD_LOCAL Active::ActiveAction Active::active_action = Active::ACT_PASS;
 
-THREAD_LOCAL int active_tunnel_bypass = 0;
-THREAD_LOCAL int active_suspend = 0;
-THREAD_LOCAL int active_have_rsp = 0;
+THREAD_LOCAL int Active::active_tunnel_bypass = 0;
+THREAD_LOCAL bool Active::active_suspend = 0;
+
+THREAD_LOCAL uint8_t Active::s_attempts = 0;
+THREAD_LOCAL uint64_t Active::s_injects = 0;
+
+bool Active::s_enabled = false;
 
 typedef int (* send_t) (
     const DAQ_PktHdr_t* h, int rev, const uint8_t* buf, uint32_t len);
@@ -59,23 +60,78 @@ static THREAD_LOCAL eth_t* s_link = NULL;
 static THREAD_LOCAL ip_t* s_ipnet = NULL;
 static THREAD_LOCAL send_t s_send = DAQ_Inject;
 
-static THREAD_LOCAL uint8_t s_attempts = 0;
-static THREAD_LOCAL uint64_t s_injects = 0;
+//--------------------------------------------------------------------
+// helpers
 
-static int s_enabled = 0;
+int Active::send_eth(
+    const DAQ_PktHdr_t*, int, const uint8_t* buf, uint32_t len)
+{
+    ssize_t sent = eth_send(s_link, buf, len);
+    s_injects++;
+    return ( (uint32_t)sent != len );
+}
 
-static int Active_Open(const char*);
-static int Active_Close(void);
+int Active::send_ip(
+    const DAQ_PktHdr_t*, int, const uint8_t* buf, uint32_t len)
+{
+    ssize_t sent = ip_send(s_ipnet, buf, len);
+    s_injects++;
+    return ( (uint32_t)sent != len );
+}
 
-static int Active_SendEth(const DAQ_PktHdr_t*, int, const uint8_t*, uint32_t);
-static int Active_SendIp(const DAQ_PktHdr_t*, int, const uint8_t*, uint32_t);
+static inline EncodeFlags GetFlags(void)
+{
+    EncodeFlags flags = ENC_FLAG_ID;
+    if ( DAQ_RawInjection() || s_ipnet )
+        flags |= ENC_FLAG_RAW;
+    return flags;
+}
+
+// TBD strafed sequence numbers could be divided by window
+// scaling if present.
+
+static uint32_t Strafe(int i, uint32_t flags, const Packet* p)
+{
+    flags &= ENC_FLAG_VAL;
+
+    switch ( i )
+    {
+    case 0:
+        flags |= ENC_FLAG_SEQ;
+        break;
+
+    case 1:
+        flags = p->dsize;
+        flags &= ENC_FLAG_VAL;
+        flags |= ENC_FLAG_SEQ;
+        break;
+
+    case 2:
+    case 3:
+        flags += (p->dsize << 1);
+        flags &= ENC_FLAG_VAL;
+        flags |= ENC_FLAG_SEQ;
+        break;
+
+    case 4:
+        flags += (p->dsize << 2);
+        flags &= ENC_FLAG_VAL;
+        flags |= ENC_FLAG_SEQ;
+        break;
+
+    default:
+        flags += (ntohs(p->ptrs.tcph->th_win) >> 1);
+        flags &= ENC_FLAG_VAL;
+        flags |= ENC_FLAG_SEQ;
+        break;
+    }
+    return flags;
+}
 
 //--------------------------------------------------------------------
 
-void Active_KillSession(Packet* p, EncodeFlags* pf)
+void Active::kill_session(Packet* p, EncodeFlags flags)
 {
-    EncodeFlags flags = pf ? *pf : ENC_FLAG_FWD;
-
     switch ( p->type() )
     {
     case PktType::NONE:
@@ -83,33 +139,35 @@ void Active_KillSession(Packet* p, EncodeFlags* pf)
         return;
 
     case PktType::TCP:
-        Active_SendReset(p, 0);
+        Active::send_reset(p, 0);
         if ( flags & ENC_FLAG_FWD )
-            Active_SendReset(p, ENC_FLAG_FWD);
+            Active::send_reset(p, ENC_FLAG_FWD);
         break;
 
     default:
-        if ( Active_PacketForceDropped() )
-            Active_SendUnreach(p, UnreachResponse::FWD);
+        if ( Active::packet_force_dropped() )
+            Active::send_unreach(p, UnreachResponse::FWD);
         else
-            Active_SendUnreach(p, UnreachResponse::PORT);
+            Active::send_unreach(p, UnreachResponse::PORT);
         break;
     }
 }
 
 //--------------------------------------------------------------------
 
-int Active_Init(SnortConfig* sc)
+bool Active::init(SnortConfig* sc)
 {
     s_attempts = sc->respond_attempts;
+
     if ( s_attempts > MAX_ATTEMPTS )
         s_attempts = MAX_ATTEMPTS;
+
     if ( s_enabled && !s_attempts )
         s_attempts = 1;
 
     if ( s_enabled && (!DAQ_CanInject() || !sc->respond_device.empty()) )
     {
-        if ( SnortConfig::read_mode() || Active_Open(sc->respond_device.c_str()) )
+        if ( SnortConfig::read_mode() || !open(sc->respond_device.c_str()) )
         {
             ParseWarning(WARN_DAQ, "active responses disabled since DAQ "
                 "can't inject packets.");
@@ -121,36 +179,25 @@ int Active_Init(SnortConfig* sc)
         if (NULL != sc->eth_dst)
             PacketManager::encode_set_dst_mac(sc->eth_dst);
     }
-    return 0;
+    return true;
 }
 
-int Active_Term(void)
+void Active::term(void)
 {
-    Active_Close();
-    return 0;
+    Active::close();
 }
 
-int Active_IsEnabled(void) { return s_enabled && s_attempts; }
+bool Active::is_enabled()
+{ return s_enabled and s_attempts; }
 
-void Active_SetEnabled(int on_off)
+void Active::set_enabled(bool on_off)
 {
-    if ( !on_off || on_off > s_enabled )
-        s_enabled = on_off;
-}
-
-static inline EncodeFlags GetFlags(void)
-{
-    EncodeFlags flags = ENC_FLAG_ID;
-    if ( DAQ_RawInjection() || s_ipnet )
-        flags |= ENC_FLAG_RAW;
-    return flags;
+    s_enabled = on_off;
 }
 
 //--------------------------------------------------------------------
 
-static uint32_t Strafe(int, uint32_t, const Packet*);
-
-void Active_SendReset(Packet* p, EncodeFlags ef)
+void Active::send_reset(Packet* p, EncodeFlags ef)
 {
     int i;
     EncodeFlags flags = (GetFlags() | ef) & ~ENC_FLAG_VAL;
@@ -171,7 +218,7 @@ void Active_SendReset(Packet* p, EncodeFlags ef)
     }
 }
 
-void Active_SendUnreach(Packet* p, UnreachResponse type)
+void Active::send_unreach(Packet* p, UnreachResponse type)
 {
     uint32_t len;
     const uint8_t* rej;
@@ -187,7 +234,7 @@ void Active_SendUnreach(Packet* p, UnreachResponse type)
     s_send(p->pkth, 1, rej, len);
 }
 
-bool Active_SendData(
+bool Active::send_data(
     Packet* p, EncodeFlags flags, const uint8_t* buf, uint32_t blen)
 {
     uint16_t toSend;
@@ -243,7 +290,7 @@ bool Active_SendData(
     return true;
 }
 
-void Active_InjectData(
+void Active::inject_data(
     Packet* p, EncodeFlags flags, const uint8_t* buf, uint32_t blen)
 {
     uint32_t plen;
@@ -264,13 +311,10 @@ void Active_InjectData(
 
 //--------------------------------------------------------------------
 
-int Active_IsRSTCandidate(const Packet* p)
+bool Active::is_reset_candidate(const Packet* p)
 {
-    if ( !p->is_tcp() )
-        return 0;
-
-    if ( !p->ptrs.tcph )
-        return 0;
+    if ( !p->is_tcp() or !p->ptrs.tcph )
+        return false;
 
     /*
     **  This ensures that we don't reset packets that we just
@@ -280,7 +324,7 @@ int Active_IsRSTCandidate(const Packet* p)
     return ( !(p->ptrs.tcph->th_flags & TH_RST) );
 }
 
-int Active_IsUNRCandidate(const Packet* p)
+bool Active::is_unreachable_candidate(const Packet* p)
 {
     // FIXIT allow unr to tcp/udp/icmp4/icmp6 only or for all
     switch ( p->type() )
@@ -300,164 +344,117 @@ int Active_IsUNRCandidate(const Packet* p)
     return 0;
 }
 
-//--------------------------------------------------------------------
-// TBD strafed sequence numbers could be divided by window
-// scaling if present.
-
-static uint32_t Strafe(int i, uint32_t flags, const Packet* p)
+void Active::cant_drop()
 {
-    flags &= ENC_FLAG_VAL;
+    if ( active_status < AST_CANT )
+        active_status = AST_CANT;
 
-    switch ( i )
-    {
-    case 0:
-        flags |= ENC_FLAG_SEQ;
-        break;
-
-    case 1:
-        flags = p->dsize;
-        flags &= ENC_FLAG_VAL;
-        flags |= ENC_FLAG_SEQ;
-        break;
-
-    case 2:
-    case 3:
-        flags += (p->dsize << 1);
-        flags &= ENC_FLAG_VAL;
-        flags |= ENC_FLAG_SEQ;
-        break;
-
-    case 4:
-        flags += (p->dsize << 2);
-        flags &= ENC_FLAG_VAL;
-        flags |= ENC_FLAG_SEQ;
-        break;
-
-    default:
-        flags += (ntohs(p->ptrs.tcph->th_win) >> 1);
-        flags &= ENC_FLAG_VAL;
-        flags |= ENC_FLAG_SEQ;
-        break;
-    }
-    return flags;
+    else if ( active_status < AST_WOULD )
+        active_status = AST_WOULD;
 }
 
-//--------------------------------------------------------------------
-// support for decoder and rule actions
-
-static inline void _Active_ForceIgnoreSession(Packet* p)
+void Active::update_status(const Packet* p, bool force)
 {
-    stream.drop_packet(p);
-}
+    if ( suspended() )
+        cant_drop();
 
-static inline void _Active_DoIgnoreSession(Packet* p)
-{
-    if ( SnortConfig::inline_mode() || SnortConfig::treat_drop_as_ignore() )
+    else if ( force )
+        active_status = AST_FORCE;
+
+    else if ( active_status != AST_FORCE)
     {
-        _Active_ForceIgnoreSession(p);
+        if ( SnortConfig::inline_mode() )
+        {
+            if ( DAQ_GetInterfaceMode(p->pkth) != DAQ_MODE_INLINE )
+                active_status = AST_WOULD;
+        }
+        else if ( SnortConfig::inline_test_mode() )
+        {
+            active_status = AST_WOULD;
+        }
     }
 }
 
-int Active_IgnoreSession(Packet* p)
+void Active::daq_update_status(const Packet* p)
 {
-    Active_DropPacket(p);
-    _Active_DoIgnoreSession(p);
-    return 0;
-}
-
-int Active_ForceDropAction(Packet* p)
-{
-    if ( p->has_ip() )
-        return 0;
-
-    // explicitly drop packet
-    Active_ForceDropPacket();
-
-    switch ( p->type() )
+    if ( suspended() )
     {
-    case PktType::TCP:
-    case PktType::UDP:
-        Active_DropSession(p);
-        _Active_ForceIgnoreSession(p);
-    default:
-        break;
+        cant_drop();
     }
-    return 0;
-}
-
-static inline int _Active_DoReset(Packet* p)
-{
-    if ( !Active_IsEnabled() )
-        return 0;
-
-    if ( !p->ptrs.ip_api.is_ip() )
-        return 0;
-
-    switch ( p->type() )
+    else if ( active_status != AST_FORCE )
     {
-    case PktType::TCP:
-        if ( Active_IsRSTCandidate(p) )
-            ActionManager::queue_reject();
-        break;
-
-    case PktType::UDP:
-    case PktType::ICMP:
-    case PktType::IP:
-        if ( Active_IsUNRCandidate(p) )
-            ActionManager::queue_reject();
-        break;
-
-    default:
-        break;
+        if ( DAQ_GetInterfaceMode(p->pkth) != DAQ_MODE_INLINE )
+            active_status = AST_WOULD;
     }
-
-    return 0;
 }
 
-int Active_DropAction(Packet* p)
+void Active::drop_packet(const Packet* p, bool force)
 {
-    Active_IgnoreSession(p);
+    if ( active_action < ACT_DROP )
+        active_action = ACT_DROP;
 
-    if ( !s_attempts || s_enabled < 2 || active_drop_ssn == ACTIVE_SSN_DROP_WITHOUT_RESET )
-        return 0;
-
-    return _Active_DoReset(p);
+    update_status(p, force);
 }
 
-int Active_ForceDropResetAction(Packet* p)
+void Active::daq_drop_packet(const Packet* p)
 {
-    Active_ForceDropAction(p);
+    if ( active_action < ACT_DROP )
+        active_action = ACT_DROP;
 
-    return _Active_DoReset(p);
+    daq_update_status(p);
+}
+
+void Active::block_session(const Packet* p, bool force)
+{
+    update_status(p, force);
+    active_action = ACT_BLOCK;
+
+    if ( force or SnortConfig::inline_mode() or SnortConfig::treat_drop_as_ignore() )
+        stream.drop_session(p);
+}
+
+void Active::reset_session(const Packet* p, bool force)
+{
+    update_status(p, force);
+    active_action = ACT_RESET;
+
+    if ( force or SnortConfig::inline_mode() or SnortConfig::treat_drop_as_ignore() )
+        stream.drop_session(p);
+
+    if ( s_enabled and snort_conf->max_responses )
+    {
+        ActionManager::queue_reject(p);
+        stream.init_active_response(p, p->flow);
+        p->flow->set_state(Flow::RESET);
+    }
 }
 
 //--------------------------------------------------------------------
-// support for non-DAQ injection
 
-static int Active_Open(const char* dev)
+bool Active::open(const char* dev)
 {
     if ( dev && strcasecmp(dev, "ip") )
     {
         s_link = eth_open(dev);
 
         if ( !s_link )
-            FatalError("%s: can't open %s\n",
-                "Active response", dev);
-        s_send = Active_SendEth;
+            FatalError("%s: can't open %s\n", "Active response", dev);
+
+        s_send = send_eth;
     }
     else
     {
         s_ipnet = ip_open();
 
         if ( !s_ipnet )
-            FatalError("%s: can't open ip\n",
-                "Active response");
-        s_send = Active_SendIp;
+            FatalError("%s: can't open ip\n", "Active response");
+
+        s_send = send_ip;
     }
-    return ( s_link || s_ipnet ) ? 0 : -1;
+    return ( s_link or s_ipnet );
 }
 
-static int Active_Close(void)
+void Active::close()
 {
     if ( s_link )
         eth_close(s_link);
@@ -467,39 +464,18 @@ static int Active_Close(void)
 
     s_link = NULL;
     s_ipnet = NULL;
-
-    return 0;
 }
 
-static int Active_SendEth(
-    const DAQ_PktHdr_t*, int, const uint8_t* buf, uint32_t len)
+static const char* act_str[Active::ACT_MAX][Active::AST_MAX] =
 {
-    ssize_t sent = eth_send(s_link, buf, len);
-    s_injects++;
-    return ( (uint32_t)sent != len );
-}
+    { "allow", "error", "error", "error" },
+    { "drop", "cant_drop", "would_drop", "force_drop" },
+    { "block", "cant_block", "would_block", "force_block" },
+    { "reset", "cant_reset", "would_reset", "force_reset" },
+};
 
-static int Active_SendIp(
-    const DAQ_PktHdr_t*, int, const uint8_t* buf, uint32_t len)
+const char* Active::get_action_string()
 {
-    ssize_t sent = ip_send(s_ipnet, buf, len);
-    s_injects++;
-    return ( (uint32_t)sent != len );
-}
-
-uint64_t Active_GetInjects(void) { return s_injects; }
-
-const char* Active_GetDispositionString()
-{
-    switch ( active_drop_pkt )
-    {
-    case ACTIVE_ALLOW:      return "allow";
-    case ACTIVE_CANT_DROP:  return "cant_drop";
-    case ACTIVE_WOULD_DROP: return "would_drop";
-    case ACTIVE_DROP:       return "drop";
-    case ACTIVE_FORCE_DROP: return "force_drop";
-    default: break;
-    }
-    return "error";
+    return act_str[active_action][active_status];
 }
 

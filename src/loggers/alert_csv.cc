@@ -75,7 +75,7 @@ struct Args
 
 static void ff_action(Args&)
 {
-    TextLog_Puts(csv_log, Active_GetDispositionString());
+    TextLog_Puts(csv_log, Active::get_action_string());
 }
 
 static void ff_dir(Args& a)

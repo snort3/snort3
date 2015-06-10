@@ -192,9 +192,7 @@ int fpLogEvent(RuleTreeNode* rtn, OptTreeNode* otn, Packet* p)
     {
         // We still want to drop packets that are drop rules.
         // We just don't want to see the alert.
-        if ( block_action(rtn->type) )
-            Active_DropSession(p);
-
+        action_apply(rtn->type, p);
         fpLogOther(p, rtn, otn, rtn->type);
         return 1;
     }
@@ -240,11 +238,9 @@ int fpLogEvent(RuleTreeNode* rtn, OptTreeNode* otn, Packet* p)
         **  If InlineMode is on, then we still want to drop packets
         **  that are drop rules.  We just don't want to see the alert.
         */
-        if ( block_action(rtn->type) )
-            Active_DropSession(p);
-
-        pc.event_limit++;
+        action_apply((RuleType)action, p);
         fpLogOther(p, rtn, otn, action);
+        pc.event_limit++;
         return 1;
     }
 
@@ -261,7 +257,7 @@ int fpLogEvent(RuleTreeNode* rtn, OptTreeNode* otn, Packet* p)
     OTN_PROFILE_ALERT(otn);
 
     event_id++;
-    action_execute(action, p, otn, event_id);
+    action_execute((RuleType)action, p, otn, event_id);
     fpLogOther(p, rtn, otn, action);
 
     return 0;

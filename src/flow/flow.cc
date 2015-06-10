@@ -329,7 +329,7 @@ void Flow::set_direction(Packet* p)
 
 static constexpr int TCP_HZ = 100;
 
-static inline uint64_t CalcJiffies(Packet* p)
+static inline uint64_t CalcJiffies(const Packet* p)
 {
     uint64_t ret = 0;
     uint64_t sec = (uint64_t)p->pkth->ts.tv_sec * TCP_HZ;
@@ -340,17 +340,17 @@ static inline uint64_t CalcJiffies(Packet* p)
     return ret;
 }
 
-void Flow::set_expire(Packet* p, uint32_t timeout)
+void Flow::set_expire(const Packet* p, uint32_t timeout)
 {
     expire_time = CalcJiffies(p) + (timeout * TCP_HZ);
 }
 
-int Flow::get_expire(Packet* p)
+int Flow::get_expire(const Packet* p)
 {
     return ( CalcJiffies(p) > expire_time );
 }
 
-bool Flow::expired(Packet* p)
+bool Flow::expired(const Packet* p)
 {
     if ( !expire_time )
         return false;

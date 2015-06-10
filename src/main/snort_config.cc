@@ -189,12 +189,6 @@ SnortConfig::SnortConfig()
     sfip_clear(obfuscation_net);
 
     memset(evalOrder, 0, sizeof(evalOrder));
-
-    memset(&Alert, 0, sizeof(Alert));
-    memset(&Log, 0, sizeof(Log));
-    memset(&Pass, 0, sizeof(Pass));
-    memset(&Drop, 0, sizeof(Drop));
-    memset(&SDrop, 0, sizeof(SDrop));
 }
 
 SnortConfig::~SnortConfig()

@@ -27,36 +27,14 @@
 
 class Flow;
 
-enum BindRole
-{
-    BR_EITHER,
-    BR_CLIENT,
-    BR_SERVER
-};
-
-enum BindAction
-{
-    BA_BLOCK,
-    BA_ALLOW,
-    BA_INSPECT
-};
-
-enum BindWhat
-{
-    BW_NONE,
-    BW_PASSIVE,
-    BW_CLIENT,
-    BW_SERVER,
-    BW_STREAM,
-    BW_WIZARD,
-    BW_GADGET,
-};
-
 struct BindWhen
 {
+    enum Role
+    { BR_EITHER, BR_CLIENT, BR_SERVER, BR_MAX };
+
     unsigned id;
     unsigned protos;
-    BindRole role;
+    Role role;
     std::string svc;
     sfip_var_t* nets;
     ByteList ifaces;
@@ -66,13 +44,19 @@ struct BindWhen
 
 struct BindUse
 {
+    enum Action
+    { BA_RESET, BA_BLOCK, BA_ALLOW, BA_INSPECT, BA_MAX };
+
+    enum What
+    { BW_NONE, BW_PASSIVE, BW_CLIENT, BW_SERVER, BW_STREAM, BW_WIZARD, BW_GADGET, BW_MAX };
+
     std::string svc;
     std::string type;
     std::string name;
 
-    BindAction action;
+    Action action;
     unsigned index;
-    BindWhat what;
+    What what;
     void* object;
 };
 

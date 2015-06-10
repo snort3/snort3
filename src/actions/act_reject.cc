@@ -107,28 +107,26 @@ void RejectAction::send(Packet* p)
 {
     uint32_t flags = 0;
 
-    if ( Active_IsRSTCandidate(p) )
+    if ( Active::is_reset_candidate(p) )
         flags |= (mask & REJ_RST_BOTH);
 
-    if ( Active_IsUNRCandidate(p) )
+    if ( Active::is_unreachable_candidate(p) )
         flags |= (mask & REJ_UNR_ALL);
 
     if ( flags & REJ_RST_SRC )
-        Active_SendReset(p, 0);
+        Active::send_reset(p, 0);
 
     if ( flags & REJ_RST_DST )
-        Active_SendReset(p, ENC_FLAG_FWD);
+        Active::send_reset(p, ENC_FLAG_FWD);
 
     if ( flags & REJ_UNR_NET )
-        Active_SendUnreach(p, UnreachResponse::NET);
+        Active::send_unreach(p, UnreachResponse::NET);
 
     if ( flags & REJ_UNR_HOST )
-        Active_SendUnreach(p, UnreachResponse::HOST);
+        Active::send_unreach(p, UnreachResponse::HOST);
 
     if ( flags & REJ_UNR_PORT )
-        Active_SendUnreach(p, UnreachResponse::PORT);
-
-    Active_IgnoreSession(p);
+        Active::send_unreach(p, UnreachResponse::PORT);
 }
 
 //-------------------------------------------------------------------------
@@ -212,7 +210,7 @@ static void mod_dtor(Module* m)
 static IpsAction* rej_ctor(Module* p)
 {
     RejectModule* m = (RejectModule*)p;
-    Active_SetEnabled(1);
+    Active::set_enabled();
     return new RejectAction(m->flags);
 }
 
@@ -235,7 +233,7 @@ static const ActionApi rej_api =
         mod_ctor,
         mod_dtor
     },
-    RULE_TYPE__DROP,
+    RULE_TYPE__RESET,
     nullptr,
     nullptr,
     nullptr,

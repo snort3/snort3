@@ -1,6 +1,12 @@
 Pending - build 157
 
 -- fix stream_tcp so call splitter finish only if scan was called
+-- changed drop rules drop current packet only
+-- unchanged block rules block all packets on flow
+-- added reset rules to function as reject
+-- deleted sdrop and sblock rules; use suppressions instead
+-- refactored active module
+-- updated snort2lua
 
 15/06/04 - build 156
 

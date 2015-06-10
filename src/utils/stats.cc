@@ -263,7 +263,7 @@ static void get_daq_stats(DAQStats& daq_stats)
 {
     uint64_t pkts_recv = g_daq_stats.hw_packets_received;
     uint64_t pkts_drop = g_daq_stats.hw_packets_dropped;
-    uint64_t pkts_inj = g_daq_stats.packets_injected + Active_GetInjects();
+    uint64_t pkts_inj = g_daq_stats.packets_injected + Active::get_injects();
 
     uint64_t pkts_out = 0;
 
