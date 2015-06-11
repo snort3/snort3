@@ -27,6 +27,7 @@ pop \
 rpc_decode \
 smtp \
 ssh \
+ssl \
 wizard
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

@@ -9,6 +9,7 @@ add_subdirectory(pop)
 add_subdirectory(rpc_decode)
 add_subdirectory(smtp)
 add_subdirectory(ssh)
+add_subdirectory(ssl)
 add_subdirectory(wizard)
 
 if (STATIC_INSPECTORS)

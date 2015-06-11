@@ -547,5 +547,32 @@ static const ConvertMap rule_priority =
 };
 
 const ConvertMap* priority_map = &rule_priority;
+
+/************************************
+ *********  SSL STATE  **************
+ ************************************/
+
+static const std::string ssl_state = "ssl_state";
+static const ConvertMap rule_ssl_state =
+{
+    ssl_state,
+    unchanged_rule_ctor<& ssl_state>,
+};
+
+const ConvertMap* ssl_state_map = &rule_ssl_state;
+
+/************************************
+ *********  SSL VERSION **************
+ ************************************/
+
+static const std::string ssl_version = "ssl_version";
+static const ConvertMap rule_ssl_version =
+{
+    ssl_version,
+    unchanged_rule_ctor<& ssl_version>,
+};
+
+const ConvertMap* ssl_version_map = &rule_ssl_version;
+
 } // namespace rule
 

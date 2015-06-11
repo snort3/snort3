@@ -63,9 +63,6 @@ static unsigned int ProcessSSHProtocolVersionExchange(SSH_PROTO_CONF*, SSHData*,
 static unsigned int ProcessSSHKeyExchange(SSHData*, Packet*, uint8_t, unsigned int);
 static unsigned int ProcessSSHKeyInitExchange(SSHData*, Packet*, uint8_t, unsigned int);
 
-/* Ultimately calls SnortEventqAdd
-   Arguments are: gid, sid, rev, classification, priority, message, rule_info */
-
 unsigned SshFlowData::flow_id = 0;
 
 SSHData* SetNewSSHData(Packet* p)

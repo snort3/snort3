@@ -71,6 +71,8 @@ extern const ConvertMap* session_map;
 extern const ConvertMap* sid_map;
 extern const ConvertMap* stream_reassemble_map;
 extern const ConvertMap* stream_size_map;
+extern const ConvertMap* ssl_state_map;
+extern const ConvertMap* ssl_version_map;
 extern const ConvertMap* tag_map;
 extern const ConvertMap* threshold_map;
 extern const ConvertMap* ttl_map;
@@ -128,6 +130,8 @@ const std::vector<const ConvertMap*> rule_options_api =
     sid_map,
     stream_reassemble_map,
     stream_size_map,
+    ssl_state_map,
+    ssl_version_map,
     tag_map,
     threshold_map,
     ttl_map,

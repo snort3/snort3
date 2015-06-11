@@ -18,6 +18,7 @@ service_inspectors/pop/libpop.a \
 service_inspectors/rpc_decode/librpc_decode.a \
 service_inspectors/smtp/libsmtp.a \
 service_inspectors/ssh/libssh.a \
+service_inspectors/ssl/libssl.a \
 service_inspectors/wizard/libwizard.a
 endif
 
