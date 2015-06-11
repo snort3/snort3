@@ -157,8 +157,8 @@ static inline bool SSLPP_is_encrypted(SSL_PROTO_CONF* config, uint32_t ssl_flags
     return false;
 }
 
-static inline uint32_t SSLPP_process_alert(SSL_PROTO_CONF* config, uint32_t ssn_flags, uint32_t
-    new_flags, Packet* packet)
+static inline uint32_t SSLPP_process_alert(
+    SSL_PROTO_CONF*, uint32_t ssn_flags, uint32_t new_flags, Packet* packet)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_SSL, "Process Alert\n"); );
 

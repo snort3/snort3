@@ -1,5 +1,6 @@
-Pending - build 157
+15/06/11 - build 157
 
+-- port ssl from snort
 -- fix stream_tcp so call splitter finish only if scan was called
 -- changed drop rules drop current packet only
 -- unchanged block rules block all packets on flow
