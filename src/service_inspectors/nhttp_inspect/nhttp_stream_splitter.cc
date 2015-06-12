@@ -23,7 +23,7 @@
 #include "nhttp_enum.h"
 #include "nhttp_test_manager.h"
 #include "nhttp_test_input.h"
-#include "nhttp_splitter.h"
+#include "nhttp_cutter.h"
 #include "nhttp_inspect.h"
 #include "nhttp_stream_splitter.h"
 
@@ -32,11 +32,13 @@ using namespace NHttpEnums;
 // Convenience function. All housekeeping that must be done before we can return FLUSH to stream.
 void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset,
     SectionType section_type, uint32_t num_flushed, uint32_t octets_seen, uint32_t num_excess,
-    int32_t num_head_lines) const
+    int32_t num_head_lines, bool is_broken_chunk, uint32_t num_good_chunks) const
 {
     session_data->section_type[source_id] = section_type;
     session_data->num_excess[source_id] = num_excess;
     session_data->num_head_lines[source_id] = num_head_lines;
+    session_data->is_broken_chunk[source_id] = is_broken_chunk;
+    session_data->num_good_chunks[source_id] = num_good_chunks;
     session_data->flush_size[source_id] = num_flushed + octets_seen;
 
     if (!NHttpTestManager::use_test_input())
@@ -49,18 +51,18 @@ void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* f
     }
 }
 
-NHttpSplitter* NHttpStreamSplitter::get_splitter(SectionType type,
+NHttpCutter* NHttpStreamSplitter::get_cutter(SectionType type,
     const NHttpFlowData* session_data) const
 {
     switch (type)
     {
-    case SEC_REQUEST: return (NHttpSplitter*)new NHttpRequestSplitter;
-    case SEC_STATUS: return (NHttpSplitter*)new NHttpStatusSplitter;
+    case SEC_REQUEST: return (NHttpCutter*)new NHttpRequestCutter;
+    case SEC_STATUS: return (NHttpCutter*)new NHttpStatusCutter;
     case SEC_HEADER:
-    case SEC_TRAILER: return (NHttpSplitter*)new NHttpHeaderSplitter;
-    case SEC_BODY: return (NHttpSplitter*)new NHttpBodySplitter(
+    case SEC_TRAILER: return (NHttpCutter*)new NHttpHeaderCutter;
+    case SEC_BODY: return (NHttpCutter*)new NHttpBodyCutter(
         session_data->data_length[source_id]);
-    case SEC_CHUNK: return (NHttpSplitter*)new NHttpChunkSplitter;
+    case SEC_CHUNK: return (NHttpCutter*)new NHttpChunkCutter;
     default: assert(0); return nullptr;
     }
 }
@@ -70,7 +72,13 @@ void NHttpStreamSplitter::chunk_spray(NHttpFlowData* session_data, uint8_t* buff
 {
     uint8_t* buf = buffer + session_data->chunk_offset[source_id];
     ChunkState& curr_state = session_data->chunk_state[source_id];
-    uint32_t& expected = session_data->chunk_expected[source_id];
+    uint32_t& expected = session_data->chunk_expected_length[source_id];
+    bool& is_broken_chunk = session_data->is_broken_chunk[source_id];
+    uint32_t& num_good_chunks = session_data->num_good_chunks[source_id];
+
+    if (is_broken_chunk && (num_good_chunks == 0))
+        curr_state = CHUNK_BAD;
+
     for (uint32_t k=0; k < length; k++)
     {
         switch (curr_state)
@@ -111,9 +119,22 @@ void NHttpStreamSplitter::chunk_spray(NHttpFlowData* session_data, uint8_t* buff
             curr_state = CHUNK_DCRLF2;
             break;
         case CHUNK_DCRLF2:
-            curr_state = CHUNK_NUMBER;
-            expected = 0;
+            if (is_broken_chunk && (--num_good_chunks == 0))
+                curr_state = CHUNK_BAD;
+            else
+            {
+                curr_state = CHUNK_NUMBER;
+                expected = 0;
+            }
             break;
+        case CHUNK_BAD:
+          {
+            const uint32_t skip_amount = length-k;
+            memcpy(buf, data+k, skip_amount);
+            buf += skip_amount;
+            k += skip_amount-1;
+            break;
+          }
         case CHUNK_ZEROS:
             // Not a possible state in reassemble(). Here to avoid compiler warning.
             assert(0);
@@ -175,26 +196,26 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
     if ((type == SEC_ABORT) || (session_data->tcp_close[source_id]))
         return StreamSplitter::ABORT;
 
-    NHttpSplitter*& splitter = session_data->splitter[source_id];
-    if (splitter == nullptr)
+    NHttpCutter*& cutter = session_data->cutter[source_id];
+    if (cutter == nullptr)
     {
-        splitter = get_splitter(type, session_data);
-        assert(splitter != nullptr);
+        cutter = get_cutter(type, session_data);
+        assert(cutter != nullptr);
     }
-    const uint32_t max_length = MAX_OCTETS - splitter->get_octets_seen();
-    const ScanResult split_result = splitter->split(data, (length <= max_length) ? length :
+    const uint32_t max_length = MAX_OCTETS - cutter->get_octets_seen();
+    const ScanResult cut_result = cutter->cut(data, (length <= max_length) ? length :
         max_length, session_data->infractions[source_id], session_data->events[source_id]);
-    switch (split_result)
+    switch (cut_result)
     {
     case SCAN_NOTFOUND:
-        if (splitter->get_octets_seen() == MAX_OCTETS)
+        if (cutter->get_octets_seen() == MAX_OCTETS)
         {
             session_data->infractions[source_id] += INF_ENDLESS_HEADER;
             session_data->events[source_id].create_event(EVENT_LOSS_OF_SYNC);
             // FIXIT-H need to process this data not just discard it.
             session_data->type_expected[source_id] = SEC_ABORT;
-            delete splitter;
-            splitter = nullptr;
+            delete cutter;
+            cutter = nullptr;
             if (!NHttpTestManager::use_test_input())
             {
                 return StreamSplitter::ABORT;
@@ -208,10 +229,9 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
         // Incomplete headers wait patiently for more data
         return NHttpTestManager::use_test_input() ? StreamSplitter::FLUSH : StreamSplitter::SEARCH;
     case SCAN_ABORT:
-    case SCAN_FLUSH_ABORT: // FIXIT-M add support for this
         session_data->type_expected[source_id] = SEC_ABORT;
-        delete splitter;
-        splitter = nullptr;
+        delete cutter;
+        cutter = nullptr;
         if (!NHttpTestManager::use_test_input())
         {
             return StreamSplitter::ABORT;
@@ -222,21 +242,22 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
             return StreamSplitter::FLUSH;
         }
     case SCAN_DISCARD:
-        prepare_flush(session_data, flush_offset, SEC_DISCARD, splitter->get_num_flush(),
-            splitter->get_octets_seen(), 0, 0);
-        delete splitter;
-        splitter = nullptr;
+        prepare_flush(session_data, flush_offset, SEC_DISCARD, cutter->get_num_flush(),
+            cutter->get_octets_seen(), 0, 0, false, 0);
+        delete cutter;
+        cutter = nullptr;
         return StreamSplitter::FLUSH;
     case SCAN_FOUND:
     case SCAN_FOUND_PIECE:
       {
-        const uint32_t flush_octets = splitter->get_num_flush();
-        prepare_flush(session_data, flush_offset, type, flush_octets, splitter->get_octets_seen(),
-            splitter->get_num_excess(), splitter->get_num_head_lines());
-        if (split_result == SCAN_FOUND)
+        const uint32_t flush_octets = cutter->get_num_flush();
+        prepare_flush(session_data, flush_offset, type, flush_octets, cutter->get_octets_seen(),
+            cutter->get_num_excess(), cutter->get_num_head_lines(), cutter->get_is_broken_chunk(),
+            cutter->get_num_good_chunks());
+        if (cut_result == SCAN_FOUND)
         {
-            delete splitter;
-            splitter = nullptr;
+            delete cutter;
+            cutter = nullptr;
         }
         return StreamSplitter::FLUSH;
       }
@@ -342,7 +363,8 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
         const bool not_chunk = session_data->section_type[source_id] != SEC_CHUNK;
 
         if (session_data->flush_size[source_id] < offset + len)
-        {   // FIXIT-M In theory this check should not be necessary
+        {
+            assert(false);
             if (not_chunk && (session_data->section_type[source_id] != SEC_BODY))
             {
                 delete[] buffer;
@@ -385,31 +407,47 @@ bool NHttpStreamSplitter::finish(Flow* flow)
 {
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(
         NHttpFlowData::nhttp_flow_id);
+
+    if (NHttpTestManager::use_test_output() && !NHttpTestManager::use_test_input())
+    {
+        printf("Finish from flow data %" PRIu64 " direction %d\n",
+            session_data ? session_data->seq_num : 0, source_id);
+        fflush(stdout);
+    }
+
     if (session_data == nullptr) // FIXIT-H this should not be necessary
     {
         return false;
     }
     assert(session_data != nullptr);
+
+    if (session_data->type_expected[source_id] == SEC_ABORT)
+    {
+        return false;
+    }
+
     session_data->tcp_close[source_id] = true;
     // If there is leftover data for which we returned PAF_SEARCH and never flushed, we need to set
     // up to process because it is about to go to reassemble(). But we don't support partial start
     // lines.
-    // FIXIT-L Partial start line is likely misidentifed traffic and should be some sort of alert
     if ((session_data->section_type[source_id] == SEC__NOTCOMPUTE) &&
-        (session_data->splitter[source_id] != nullptr) &&
-        (session_data->splitter[source_id]->get_octets_seen() > 0) &&
-        (session_data->type_expected[source_id] != SEC_ABORT))
+        (session_data->cutter[source_id] != nullptr) &&
+        (session_data->cutter[source_id]->get_octets_seen() > 0))
     {
         if ((session_data->type_expected[source_id] == SEC_REQUEST) ||
             (session_data->type_expected[source_id] == SEC_STATUS))
         {
+            session_data->infractions[source_id] += INF_PARTIAL_START;
+            session_data->events[source_id].create_event(EVENT_LOSS_OF_SYNC);
             return false;
         }
-        session_data->section_type[source_id] = session_data->type_expected[source_id];
-        session_data->num_excess[source_id] = 0;
-        session_data->num_head_lines[source_id] =
-            session_data->splitter[source_id]->get_num_head_lines() + 1;
-        session_data->flush_size[source_id] = session_data->splitter[source_id]->get_octets_seen();
+
+        uint32_t not_used;
+        prepare_flush(session_data, &not_used, session_data->type_expected[source_id], 0,
+            session_data->cutter[source_id]->get_octets_seen(), 0,
+            session_data->cutter[source_id]->get_num_head_lines() + 1,
+            session_data->cutter[source_id]->get_is_broken_chunk(),
+            session_data->cutter[source_id]->get_num_good_chunks());
     }
     return true;
 }

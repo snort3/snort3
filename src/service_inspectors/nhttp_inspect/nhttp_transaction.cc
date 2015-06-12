@@ -64,7 +64,9 @@ NHttpTransaction* NHttpTransaction::attach_my_transaction(NHttpFlowData* session
             }
             else if (!session_data->add_to_pipeline(session_data->transaction[SRC_CLIENT]))
             {
-                // The pipeline is full and just overflowed. FIXIT-M alert and set infraction.
+                // The pipeline is full and just overflowed.
+                session_data->infractions[source_id] += INF_PARTIAL_START;
+                session_data->events[source_id].create_event(EVENT_PIPELINE_MAX);
                 delete session_data->transaction[SRC_CLIENT];
             }
         }

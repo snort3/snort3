@@ -45,9 +45,9 @@ void NHttpMsgChunk::print_section(FILE* output)
 
 void NHttpMsgChunk::update_flow()
 {
-    if (session_data->splitter[source_id] == nullptr)
+    if (session_data->cutter[source_id] == nullptr)
     {
-        // Splitter deleted when zero-length chunk received
+        // Cutter deleted when zero-length chunk received
         session_data->body_octets[source_id] = body_octets;
         session_data->type_expected[source_id] = SEC_TRAILER;
         session_data->infractions[source_id].reset();

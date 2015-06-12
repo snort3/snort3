@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include "stream/stream_api.h"
 
-#include "nhttp_splitter.h"
+#include "nhttp_cutter.h"
 #include "nhttp_infractions.h"
 #include "nhttp_event_gen.h"
 
@@ -57,20 +57,25 @@ private:
 
     void half_reset(NHttpEnums::SourceId source_id);
 
+    // 0 element refers to client request, 1 element refers to server response
+
     // StreamSplitter internal data - scan()
-    NHttpSplitter* splitter[2] = { nullptr, nullptr };
+    NHttpCutter* cutter[2] = { nullptr, nullptr };
 
     // StreamSplitter internal data - reassemble()
     uint8_t* section_buffer[2] = { nullptr, nullptr };
     uint32_t chunk_offset[2] = { 0, 0 };
     NHttpEnums::ChunkState chunk_state[2] = { NHttpEnums::CHUNK_NUMBER, NHttpEnums::CHUNK_NUMBER };
-    uint32_t chunk_expected[2] = { 0, 0 };
+    uint32_t chunk_expected_length[2] = { 0, 0 };
+
+    // StreamSplitter internal data - scan() => reassemble()
+    uint32_t num_excess[2] = { 0, 0 };
+    bool is_broken_chunk[2] = { false, false };
+    uint32_t num_good_chunks[2] = { 0, 0 };
 
     // StreamSplitter => Inspector (facts about the most recent message section)
-    // 0 element refers to client request, 1 element refers to server response
     NHttpEnums::SectionType section_type[2] = { NHttpEnums::SEC__NOTCOMPUTE,
                                                 NHttpEnums::SEC__NOTCOMPUTE };
-    uint32_t num_excess[2] = { 0, 0 };
     bool tcp_close[2] = { false, false };
     NHttpInfractions infractions[2];
     NHttpEventGen events[2];

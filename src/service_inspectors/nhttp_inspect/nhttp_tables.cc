@@ -30,7 +30,7 @@
 #include "nhttp_msg_header.h"
 #include "nhttp_module.h"
 #include "nhttp_uri_norm.h"
-#include "nhttp_splitter.h"
+#include "nhttp_cutter.h"
 
 using namespace NHttpEnums;
 
@@ -301,7 +301,7 @@ const RuleMap NHttpModule::nhttp_events[] =
     { EVENT_PDF_CASC_COMP,              "PDF file cascaded compression" },
     { EVENT_PDF_PARSE_FAILURE,          "PDF file parse failure" },
     { EVENT_LOSS_OF_SYNC,               "HTTP misformatted or not really HTTP" },
-    { EVENT_NOT_HTTP,                   "Input apparently not HTTP" },
+    { EVENT_CHUNK_ZEROS,                "Chunk length has excessive leading zeros" },
     { EVENT_WS_BETWEEN_MSGS,            "White space before or between messages" },
     { EVENT_URI_MISSING,                "Request message without URI" },
     { EVENT_CTRL_IN_REASON,             "Control character in reason phrase" },
@@ -309,6 +309,10 @@ const RuleMap NHttpModule::nhttp_events[] =
     { EVENT_BAD_VERS,                   "Corrupted HTTP version" },
     { EVENT_UNKNOWN_VERS,               "Unknown HTTP version" },
     { EVENT_BAD_HEADER,                 "Format error in HTTP header" },
+    { EVENT_CHUNK_OPTIONS,              "Chunk header options present" },
+    { EVENT_URI_BAD_FORMAT,             "URI badly formatted" },
+    { EVENT_URI_BAD_PORT,               "URI bad port number" },
+    { EVENT_BROKEN_CHUNK,               "HTTP chunk misformatted" },
     { 0, nullptr }
 };
 

@@ -45,7 +45,7 @@ void NHttpMsgRequest::parse_start_line()
          memcmp(start_line.start + start_line.length - 8, "HTTP/", 5))
     {
         infractions += INF_BAD_REQ_LINE;
-        events.create_event(EVENT_NOT_HTTP);
+        events.create_event(EVENT_LOSS_OF_SYNC);
         return;
     }
 

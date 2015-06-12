@@ -42,6 +42,7 @@ doc/logger.txt
 doc/modules.txt
 doc/options.txt
 doc/plugins.txt
+doc/search_engine.txt
 doc/signals.txt
 doc/snort2lua_cmds.txt
 doc/snort_manual.chunked/

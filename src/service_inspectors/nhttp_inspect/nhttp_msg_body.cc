@@ -46,7 +46,6 @@ void NHttpMsgBody::analyze()
 
     if (tcp_close && (body_octets < data_length))
         infractions += INF_TRUNCATED;
-    // FIXIT-L try to find a more logical location for this
     set_file_data((uint8_t*)data.start, (unsigned)data.length);
 }
 

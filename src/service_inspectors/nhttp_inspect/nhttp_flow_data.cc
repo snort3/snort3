@@ -50,7 +50,7 @@ NHttpFlowData::~NHttpFlowData()
     {
         delete[] section_buffer[k];
         delete transaction[k];
-        delete splitter[k];
+        delete cutter[k];
     }
     delete_pipeline();
 }

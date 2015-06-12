@@ -59,6 +59,7 @@ public:
 
 private:
     static const StrCode scheme_list[];
+    static const int MAX_PORT_VALUE = 65535;
 
     const Field uri;
     const NHttpEnums::MethodId method_id;

@@ -83,6 +83,7 @@ void NHttpUri::parse_uri()
         else
         {
             infractions += INF_BAD_URI;
+            events.create_event(EVENT_URI_BAD_FORMAT);
             uri_type = URI__PROBLEMATIC;
             scheme.length = STAT_PROBLEMATIC;
             authority.length = STAT_PROBLEMATIC;
@@ -191,9 +192,10 @@ int32_t NHttpUri::get_port_value()
     for (int k = 0; k < port.length; k++)
     {
         port_value = port_value * 10 + (port.start[k] - '0');
-        if ((port.start[k] < '0') || (port.start[k] > '9') || (port_value > 65535))
+        if ((port.start[k] < '0') || (port.start[k] > '9') || (port_value > MAX_PORT_VALUE))
         {
             infractions += INF_BAD_PORT;
+            events.create_event(EVENT_URI_BAD_PORT);
             port_value = STAT_PROBLEMATIC;
             break;
         }

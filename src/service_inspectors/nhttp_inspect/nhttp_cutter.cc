@@ -15,13 +15,13 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// nhttp_splitter.cc author Tom Peters <thopeter@cisco.com>
+// nhttp_cutter.cc author Tom Peters <thopeter@cisco.com>
 
-#include "nhttp_splitter.h"
+#include "nhttp_cutter.h"
 
 using namespace NHttpEnums;
 
-ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length,
+ScanResult NHttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
     NHttpInfractions& infractions, NHttpEventGen& events)
 {
     for (uint32_t k = 0; k < length; k++)
@@ -69,7 +69,7 @@ ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length,
                 break;
             case V_BAD:
                 infractions += INF_NOT_HTTP;
-                events.create_event(EVENT_NOT_HTTP);
+                events.create_event(EVENT_LOSS_OF_SYNC);
                 return SCAN_ABORT;
             case V_TBD:
                 break;
@@ -81,8 +81,10 @@ ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length,
             num_flush = k+1;
             return SCAN_FOUND;
         }
-        if (num_crlf == 1)   // FIXIT-M there needs to be an event for this
+        if (num_crlf == 1)
         {   // CR not followed by LF
+            infractions += INF_LONE_CR;
+            events.create_event(EVENT_LOSS_OF_SYNC);
             return SCAN_ABORT;
         }
         if (buffer[k] == '\r')
@@ -94,7 +96,7 @@ ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length,
     return SCAN_NOTFOUND;
 }
 
-NHttpStartSplitter::ValidationResult NHttpRequestSplitter::validate(uint8_t octet)
+NHttpStartCutter::ValidationResult NHttpRequestCutter::validate(uint8_t octet)
 {
     static const int max_method_length = 80;
 
@@ -105,7 +107,7 @@ NHttpStartSplitter::ValidationResult NHttpRequestSplitter::validate(uint8_t octe
     return V_TBD;
 }
 
-NHttpStartSplitter::ValidationResult NHttpStatusSplitter::validate(uint8_t octet)
+NHttpStartCutter::ValidationResult NHttpStatusCutter::validate(uint8_t octet)
 {
     static const int match_size = 5;
     static const uint8_t match[match_size] = { 'H', 'T', 'T', 'P', '/' };
@@ -117,7 +119,7 @@ NHttpStartSplitter::ValidationResult NHttpStatusSplitter::validate(uint8_t octet
     return V_TBD;
 }
 
-ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length,
+ScanResult NHttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
     NHttpInfractions& infractions, NHttpEventGen& events)
 {
     // Header separators: leading \r\n, leading \n, nonleading \r\n\r\n, nonleading \n\r\n,
@@ -170,7 +172,7 @@ ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length,
     return SCAN_NOTFOUND;
 }
 
-ScanResult NHttpBodySplitter::split(const uint8_t*, uint32_t, NHttpInfractions&, NHttpEventGen&)
+ScanResult NHttpBodyCutter::cut(const uint8_t*, uint32_t, NHttpInfractions&, NHttpEventGen&)
 {
     assert(remaining > 0);
 
@@ -191,14 +193,17 @@ ScanResult NHttpBodySplitter::split(const uint8_t*, uint32_t, NHttpInfractions&,
     }
 }
 
-ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length,
-    NHttpInfractions&, NHttpEventGen&)
+ScanResult NHttpChunkCutter::cut(const uint8_t* buffer, uint32_t length,
+    NHttpInfractions& infractions, NHttpEventGen& events)
 {
     if (new_section)
     {
         new_section = false;
         octets_seen = 0;
+        num_good_chunks = 0;
     }
+
+    // FIXIT-M there are examples of chunk lengths with trailing white space, need to address that
 
     for (uint32_t k=0; k < length; k++)
     {
@@ -208,7 +213,11 @@ ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length,
             if (buffer[k] == '0')
             {
                 num_zeros++;
-                // FIXIT-L add test and alert for excessive zeros
+                if (num_zeros == 5)
+                {
+                    infractions += INF_CHUNK_ZEROS;
+                    events.create_event(EVENT_CHUNK_ZEROS);
+                }
                 break;
             }
             curr_state = CHUNK_NUMBER;
@@ -221,24 +230,27 @@ ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length,
             }
             if (buffer[k] == ';')
             {
-                // FIXIT-L add alert for option use
+                infractions += INF_CHUNK_OPTIONS;
+                events.create_event(EVENT_CHUNK_OPTIONS);
                 curr_state = CHUNK_OPTIONS;
                 break;
             }
             if (as_hex[buffer[k]] == -1)
             {
                 // illegal character present in chunk length
-                // FIXIT-L add alert for loss of sync
-                num_flush = k + 1;
-                return SCAN_FLUSH_ABORT;
+                infractions += INF_CHUNK_BAD_CHAR;
+                events.create_event(EVENT_BROKEN_CHUNK);
+                curr_state = CHUNK_BAD;
+                break;
             }
             expected = expected * 16 + as_hex[buffer[k]];
             if (++digits_seen > 8)
             {
                 // overflow protection: must fit into 32 bits
-                // FIXIT-L add alert for too large chunk size
-                num_flush = k + 1;
-                return SCAN_FLUSH_ABORT;
+                infractions += INF_CHUNK_TOO_LARGE;
+                events.create_event(EVENT_BROKEN_CHUNK);
+                curr_state = CHUNK_BAD;
+                break;
             }
             break;
         case CHUNK_OPTIONS:
@@ -248,17 +260,19 @@ ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length,
             }
             else if (buffer[k] == '\n')
             {
-                // FIXIT-L add alert for loss of sync
-                num_flush = k + 1;
-                return SCAN_FLUSH_ABORT;
+                infractions += INF_CHUNK_BARE_LF;
+                events.create_event(EVENT_BROKEN_CHUNK);
+                curr_state = CHUNK_BAD;
+                break;
             }
             break;
         case CHUNK_HCRLF:
             if (buffer[k] != '\n')
             {
-                // FIXIT-L add alert for loss of sync
-                num_flush = k + 1;
-                return SCAN_FLUSH_ABORT;
+                infractions += INF_CHUNK_LONE_CR;
+                events.create_event(EVENT_BROKEN_CHUNK);
+                curr_state = CHUNK_BAD;
+                break;
             }
             if (expected > 0)
             {
@@ -267,14 +281,16 @@ ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length,
             else if (num_zeros > 0)
             {
                 // Terminating zero-length chunk
-                num_flush = k + 1;
+                num_good_chunks++;
+                num_flush = k+1;
                 return SCAN_FOUND;
             }
             else
             {
-                // FIXIT-L add alert for loss of sync
-                num_flush = k + 1;
-                return SCAN_FLUSH_ABORT;
+                infractions += INF_CHUNK_NO_LENGTH;
+                events.create_event(EVENT_BROKEN_CHUNK);
+                curr_state = CHUNK_BAD;
+                break;
             }
             break;
         case CHUNK_DATA:
@@ -300,23 +316,40 @@ ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length,
         case CHUNK_DCRLF1:
             if (buffer[k] != '\r')
             {
-                // FIXIT-L add alert for CRLF error
-                num_flush = k + 1;
-                return SCAN_FLUSH_ABORT;
+                infractions += INF_CHUNK_BAD_END;
+                events.create_event(EVENT_BROKEN_CHUNK);
+                curr_state = CHUNK_BAD;
+                break;
             }
             curr_state = CHUNK_DCRLF2;
             break;
         case CHUNK_DCRLF2:
             if (buffer[k] != '\n')
             {
-                // FIXIT-L add alert for CRLF error
-                num_flush = k + 1;
-                return SCAN_FLUSH_ABORT;
+                infractions += INF_CHUNK_BAD_END;
+                events.create_event(EVENT_BROKEN_CHUNK);
+                curr_state = CHUNK_BAD;
+                break;
             }
+            num_good_chunks++;
             curr_state = CHUNK_ZEROS;
             num_zeros = 0;
             expected = 0;
             digits_seen = 0;
+            break;
+        case CHUNK_BAD:
+            uint32_t skip_amount = length-k;
+            skip_amount = (skip_amount <= DATA_BLOCK_SIZE-data_seen) ? skip_amount :
+                DATA_BLOCK_SIZE-data_seen;
+            k += skip_amount - 1;
+            if ((data_seen += skip_amount) == DATA_BLOCK_SIZE)
+            {
+                // FIXIT-M need to randomize slice point
+                data_seen = 0;
+                num_flush = k+1;
+                new_section = true;
+                return SCAN_FOUND_PIECE;
+            }
             break;
         }
     }

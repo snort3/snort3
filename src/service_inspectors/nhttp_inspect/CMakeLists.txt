@@ -49,8 +49,8 @@ set (FILE_LIST
     nhttp_field.h
     nhttp_stream_splitter.cc
     nhttp_stream_splitter.h
-    nhttp_splitter.cc
-    nhttp_splitter.h
+    nhttp_cutter.cc
+    nhttp_cutter.h
     nhttp_infractions.h
     nhttp_event_gen.h
 )

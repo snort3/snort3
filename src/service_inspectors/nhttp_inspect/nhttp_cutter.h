@@ -15,10 +15,10 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// nhttp_splitter.h author Tom Peters <thopeter@cisco.com>
+// nhttp_cutter.h author Tom Peters <thopeter@cisco.com>
 
-#ifndef NHTTP_SPLITTER_H
-#define NHTTP_SPLITTER_H
+#ifndef NHTTP_CUTTER_H
+#define NHTTP_CUTTER_H
 
 #include <assert.h>
 
@@ -27,32 +27,34 @@
 #include "nhttp_event_gen.h"
 
 //-------------------------------------------------------------------------
-// NHttpSplitter class
+// NHttpCutter class
 //-------------------------------------------------------------------------
 
-class NHttpSplitter
+class NHttpCutter
 {
 public:
-    virtual ~NHttpSplitter() = default;
-    virtual NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length,
+    virtual ~NHttpCutter() = default;
+    virtual NHttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
         NHttpInfractions& infractions, NHttpEventGen& events) = 0;
     uint32_t get_num_flush() const { return num_flush; }
     uint32_t get_octets_seen() const { return octets_seen; }
     virtual uint32_t get_num_excess() const { return 0; }
     virtual uint32_t get_num_head_lines() const { return 0; }
+    virtual bool get_is_broken_chunk() const { return false; }
+    virtual uint32_t get_num_good_chunks() const { return 0; }
 
 protected:
-    // number of octets processed by previous split() calls that returned NOTFOUND
+    // number of octets processed by previous cut() calls that returned NOTFOUND
     uint32_t octets_seen = 0;
 
     uint32_t num_crlf = 0;
     uint32_t num_flush = 0;
 };
 
-class NHttpStartSplitter : public NHttpSplitter
+class NHttpStartCutter : public NHttpCutter
 {
 public:
-    NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length,
+    NHttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
         NHttpInfractions& infractions, NHttpEventGen& events) override;
     uint32_t get_num_excess() const override { return (num_flush > 0) ? num_crlf : 0; }
 
@@ -65,24 +67,24 @@ private:
     bool validated = false;
 };
 
-class NHttpRequestSplitter : public NHttpStartSplitter
+class NHttpRequestCutter : public NHttpStartCutter
 {
 private:
     uint32_t octets_checked = 0;
     ValidationResult validate(uint8_t octet) override;
 };
 
-class NHttpStatusSplitter : public NHttpStartSplitter
+class NHttpStatusCutter : public NHttpStartCutter
 {
 private:
     uint32_t octets_checked = 0;
     ValidationResult validate(uint8_t octet) override;
 };
 
-class NHttpHeaderSplitter : public NHttpSplitter
+class NHttpHeaderCutter : public NHttpCutter
 {
 public:
-    NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length,
+    NHttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
         NHttpInfractions& infractions, NHttpEventGen& events) override;
     uint32_t get_num_excess() const override { return (num_flush > 0) ? num_crlf : 0; }
     uint32_t get_num_head_lines() const override { return num_head_lines; }
@@ -92,23 +94,25 @@ private:
     int32_t num_head_lines = 0;
 };
 
-class NHttpBodySplitter : public NHttpSplitter
+class NHttpBodyCutter : public NHttpCutter
 {
 public:
-    explicit NHttpBodySplitter(int64_t expected_length) : remaining(expected_length)
+    explicit NHttpBodyCutter(int64_t expected_length) : remaining(expected_length)
         { assert(remaining > 0); }
-    NHttpEnums::ScanResult split(const uint8_t*, uint32_t, NHttpInfractions&, NHttpEventGen&)
+    NHttpEnums::ScanResult cut(const uint8_t*, uint32_t, NHttpInfractions&, NHttpEventGen&)
         override;
 
 private:
     int64_t remaining;
 };
 
-class NHttpChunkSplitter : public NHttpSplitter
+class NHttpChunkCutter : public NHttpCutter
 {
 public:
-    NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length,
+    NHttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
         NHttpInfractions& infractions, NHttpEventGen& events) override;
+    bool get_is_broken_chunk() const { return curr_state == NHttpEnums::CHUNK_BAD; }
+    uint32_t get_num_good_chunks() const { return num_good_chunks; }
 
 private:
     uint32_t data_seen = 0;
@@ -117,6 +121,7 @@ private:
     uint32_t num_zeros = 0;
     uint32_t digits_seen = 0;
     bool new_section = false;
+    uint32_t num_good_chunks = 0;  // that end in the current section
 };
 
 #endif
