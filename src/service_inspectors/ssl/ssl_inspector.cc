@@ -445,7 +445,7 @@ void Ssl::show(SnortConfig*)
 void Ssl::eval(Packet* p)
 {
     // precondition - what we registered for
-    assert(p->is_tcp() && p->dsize && p->data);
+    assert(p->has_tcp_data());
 
     ++sslstats.total_packets;
     snort_ssl(config, p);
