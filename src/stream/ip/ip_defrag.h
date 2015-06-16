@@ -21,8 +21,6 @@
 #ifndef IP_DEFRAG_H
 #define IP_DEFRAG_H
 
-#include "fpcreate.h"
-
 // FIXIT-L integrate into stream api
 //int fpAddFragAlert(Packet *p, OptTreeNode *otn);
 //int fpFragAlerted(Packet *p, OptTreeNode *otn);

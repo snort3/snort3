@@ -25,7 +25,6 @@
 #ifndef PCRM_H
 #define PCRM_H
 
-#include "bitop.h"
 #include "protocols/packet.h"
 
 typedef void* RULE_PTR;
@@ -171,7 +170,8 @@ RULE_PTR prmGetNextRuleUri(PORT_GROUP* pg);
 RULE_PTR prmGetFirstRuleNC(PORT_GROUP* pg);
 RULE_PTR prmGetNextRuleNC(PORT_GROUP* pg);
 
-int prmFindRuleGroup(PORT_RULE_MAP* p, int dport, int sport, PORT_GROUP** src, PORT_GROUP** dst,
+int prmFindRuleGroup(
+    PORT_RULE_MAP* p, int dport, int sport, PORT_GROUP** src, PORT_GROUP** dst,
     PORT_GROUP** gen);
 int prmFindGenericRuleGroup(PORT_RULE_MAP* prm, PORT_GROUP** gen);
 int prmFindByteRuleGroup(BYTE_RULE_MAP* p, int dport, PORT_GROUP** dst, PORT_GROUP** gen);
@@ -180,6 +180,11 @@ PORT_GROUP* prmFindDstRuleGroup(PORT_RULE_MAP* p, int port);
 PORT_GROUP* prmFindSrcRuleGroup(PORT_RULE_MAP* p, int port);
 
 PORT_GROUP* prmFindByteRuleGroupUnique(BYTE_RULE_MAP* p, int port);
+
+int prmFindRuleGroupTcp(PORT_RULE_MAP*, int, int, PORT_GROUP**, PORT_GROUP**, PORT_GROUP**);
+int prmFindRuleGroupUdp(PORT_RULE_MAP*, int, int, PORT_GROUP**, PORT_GROUP**, PORT_GROUP**);
+int prmFindRuleGroupIp(PORT_RULE_MAP*, int, PORT_GROUP**, PORT_GROUP**);
+int prmFindRuleGroupIcmp(PORT_RULE_MAP*, int, PORT_GROUP**, PORT_GROUP**);
 
 #endif
 

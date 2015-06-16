@@ -1,0 +1,177 @@
+These comments are from the original sfportobject.c from which ports/ is
+derived.
+
+author:  marc norton
+date:    11/05/2005
+
+Port objects provides support for generic ports lists comprised of
+individual ports, port ranges, and negation of ports and port ranges.
+
+Port lists require a somewhat more complex scheme to determine the proper
+grouping of rules for each port while minimizing the number of rule groups
+created. We can use a single group of rules in the multi-pattern detection
+phase, however that can have a huge impact on performance.  Instead we try
+to create a smaller grouping of rules that might be applicable to each
+port.
+
+As rules are defined using port ranges, and port lists there will be port
+overlaps between rules. This requires us to determine whether we should
+create one larger rule group to apply to all relevant ports, or to create
+multiple rule groups and apply the smallest applicable one to each port. In
+practice snort has some rules which span almost all 64K ports which might
+cause all rules in all port-rule groups to be merged into one set unless we
+apply a more complex logic than simply merging rule-port groups with common
+ports.  This is the problem addressed by the sfportobject module.
+
+== Port list examples of acceptable usage:
+
+* var has been overloaded, if it includes _port we add as a port-object
+  also.
+
+var http_ports 80
+var http_range_ports 80:81
+var http_list_ports  [80,8080,8138]
+
+* portvar has been added to indicate portvariables, this form does not
+  require _port
+
+    portvar http 80
+    portvar http_range 80:81
+    portvar http_list  [80,8080,8138]
+
+    80
+    $http
+    !90
+    80:81
+    $http_range
+    !90:91
+    [80,8080,8138]
+    $http_list
+    [$http,$http_list]
+    [2001,2008,20022,8100:8150,!8121,!8123]
+    [!any] - uhhh, why do people ask about this ?
+
+Rules are defined using a port, a port-range or a list of these, we call
+these port objects.
+
+As rules are loaded we generate some large rule counts on some ports and
+small rule counts on most ports.  If for each port you build a list of
+rules on that port, we may end up with some ports with a large rule set
+that differs by the addition of a few rules on each port (relative to the
+group sizes) we don't want to generate compeletely different rule groups
+for these as that would then generate multiple large state machines for the
+multi-pattern matching phase of the detection engine which in turn
+could use a lot of memory.
+
+Turns out that one scheme, the one used herein, provides some blending
+of rule groups to minimize memory, and tries to minimize large group sizes
+to keep performance more optimal - although this is at the expense of memory.
+
+== Port variables
+
+* Var has been overloaded. If it's name includes _port as part of the var
+  name it is added to the PortVarTable.
+
+* PortVar has been added. These are always added to the PortVarTable.
+
+== Loading Port lists and rules
+
+* PortTables - we support src and dst tables for tcp/udp/icmp/ip rules.
+
+* PortVar References - we dup the PortVar entries as needed into each table
+  if referenced, so HTTP_PORTS for tcp and udp contain different rules.
+
+If a rule references a PortVar we look it up in the table, if its not
+present we dup it from the PortVarTable, otherwise we just add the rule
+index to the PortVar HTTP_PORTS in the proper table. If a PortVar is not
+used to specify a Port entry in a rule we create a temp port-object, and
+check if it's port-list is already in the table. If it's not we make the
+temp port-object the permanent entry in the  table. If it is, we just add
+the rule index to the existing entry, and delete the temp port-object. When
+the rules are done loading we should have a set of port-objects with
+port-lists that differ by at least one port.  The next step handles the
+cases where we have multiple port-objects with at least one common port.
+
+== Merging Ports and Rules
+
+We maintain for each port a list of port objects and their rules that apply
+to it. This allows us to view combining the rules associated with each port
+object using a few heuristics. A list of port objects applicable to each
+port presents rules in one of four catagories:
+
+1. a single port object, and all rules associated with it.
+
+2. multiple port objects each with a small set of rules associated with it.
+
+3. one port object with a large rule set, and one or more port objects
+   with a small set of rules associated with each.
+
+4. multiple port objects with large rule sets, and zero or more port objects
+   each with a small set of rules associated with it.
+
+== We process these four categories as follows:
+
+1. a single port object (large or small) do nothing, each port referencing
+   this port object is complete.
+
+2. multiple small port objects merge the rules for all port objects into
+   one virtual object, for each port in this category lookup it's combined
+   port object to see if it's already defined, if not create one.  This way
+   all ports that have the same port groups point to the same virtual port
+   object.
+
+3. one large port object, and one or more small port objects add the small
+   rule groups into the large rule set, using the existing port object.
+
+4. multiple large port objects and zero or more small port objects merge
+   the large port objects into a virtual port object and add all rules from
+   both large and small sets into it's rule set.  we use the combined large
+   group ports to form a key, so any ports referencing just these large rule
+   groups, and some small ones will be recognized as the same.  This handles
+   cases where we have 2,3,4.etc large rule groups combined.  Any time we see
+   a 'n' grouping of the same large rule sets we'll look it up and point to it
+   for that port.
+
+ To determine when a port object has a large rule set or a small one we use
+ a simple threshold value. In theory the larger this value is the more
+ merging of rules in category 2 and 3 will occur. When this value is small
+ category 4 should become a more prevalent situation.  However, the
+ behavior of groupings for a given threshold can change as more rules are
+ added to port groups.  Therefore generous statistics are printed after the
+ rules and port objects are compiled into their final groupings.
+
+==  Procedure for using PortLists
+
+1. Process Var's as PortVar's and standard Var's (for now). This allows
+   existing snort features to work, with the Var's.  Add in the PortVar
+   support to parse the Var input into PortObjects, and add these to the
+   PortVartable.
+
+2. Read Rules
+
+a. Read port numbers and lists
+*  Dereference PortVar/Var Names if any are referenced.
+
+b. Create a Port Object
+
+c. Test if this Port object exists already,
+*  If so, add the sid to it.
+*  If not add it ....
+
+== Notes
+
+All any-any port rules are managed separately, and added in to the final
+rules lists of each port group after this analysis. Rules defined with
+ranges are no longer considered any-any rules for the purpose of organizing
+port-rule groupings.  This should help prevent some cross fertilization of
+rule groups with rules that are unneccessary, this causes rule group sizes
+to bloat and performance to slow.
+
+== Hierarchy:
+
+    PortTable -> PortObject's
+
+    PortVar -> PortObject (These are pure, and are dup'ed for use in the PortTables)
+
+    PortObject -> PortObjectItems (port or port range)
+

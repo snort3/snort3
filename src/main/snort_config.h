@@ -143,7 +143,6 @@ public:
     // alert module stuff
     bool default_rule_state = true;
 
-    uint16_t flowbit_size = 0;
     sfip_t homenet;
 
     //------------------------------------------------------
@@ -200,7 +199,7 @@ public:
 
     uint8_t enable_teredo = 0;
     uint8_t enable_esp = 0;
-    PortList* gtp_ports = nullptr;
+    PortBitSet* gtp_ports = nullptr;
 
     uint8_t num_layers = 0;
     uint8_t max_ip6_extensions = 0;
@@ -235,7 +234,7 @@ public:
 
     //------------------------------------------------------
     // various modules
-    struct FastPatternConfig* fast_pattern_config = nullptr;
+    class FastPatternConfig* fast_pattern_config = nullptr;
     struct EventQueueConfig* event_queue_config = nullptr;
 
     class FileConfig* file_config = nullptr;

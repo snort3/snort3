@@ -39,11 +39,12 @@
 #include "snort_debug.h"
 #include "main/analyzer.h"
 #include "snort_config.h"
-#include "util.h"
+#include "utils/util.h"
+#include "ports/port_object.h"
 #include "tag.h"
 #include "pcrm.h"
-#include "fpcreate.h"
-#include "fpdetect.h"
+#include "fp_create.h"
+#include "fp_detect.h"
 #include "filters/sfthreshold.h"
 #include "event_wrapper.h"
 #include "event_queue.h"
@@ -60,10 +61,6 @@
 #include "detection_defines.h"
 #include "protocols/ip.h"
 #include "sfip/sf_ipvar.h"
-
-#ifdef PORTLISTS
-#include "utils/sfportobject.h"
-#endif
 
 #define CHECK_SRC_IP         0x01
 #define CHECK_DST_IP         0x02

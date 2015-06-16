@@ -43,11 +43,13 @@
 #include "parser.h"
 #include "cmd_line.h"
 #include "parse_conf.h"
+#include "parse_ports.h"
 #include "snort_debug.h"
-#include "util.h"
+#include "utils/util.h"
+#include "ports/port_object.h"
+#include "ports/rule_port_tables.h"
 #include "detect.h"
 #include "protocols/packet.h"
-#include "fpcreate.h"
 #include "tag.h"
 #include "signature.h"
 #include "filters/sfthreshold.h"
@@ -63,8 +65,9 @@
 #include "ppm.h"
 #include "filters/rate_filter.h"
 #include "filters/detection_filter.h"
+#include "detection/fp_config.h"
+#include "detection/fp_create.h"
 #include "detection/sfrim.h"
-#include "utils/sfportobject.h"
 #include "packet_io/active.h"
 #include "file_api/libs/file_config.h"
 #include "framework/ips_option.h"
@@ -257,27 +260,27 @@ static int FinishPortListRule(
 
     /* If not an any-any rule test for port bleedover, if we are using a
      * single rule group, don't bother */
-    if (!fpDetectGetSingleRuleGroup(fp) &&
+    if (!fp->get_single_rule_group() &&
         (rtn->flags & (ANY_DST_PORT|ANY_SRC_PORT)) != (ANY_DST_PORT|ANY_SRC_PORT))
     {
         if (!(rtn->flags & ANY_SRC_PORT))
         {
             src_cnt = PortObjectPortCount(rtn->src_portobject);
-            if (src_cnt >= fpDetectGetBleedOverPortLimit(fp))
+            if (src_cnt >= fp->get_bleed_over_port_limit())
                 large_port_group = 1;
         }
 
         if (!(rtn->flags & ANY_DST_PORT))
         {
             dst_cnt = PortObjectPortCount(rtn->dst_portobject);
-            if (dst_cnt >= fpDetectGetBleedOverPortLimit(fp))
+            if (dst_cnt >= fp->get_bleed_over_port_limit())
                 large_port_group = 1;
         }
 
-        if (large_port_group && fpDetectGetBleedOverWarnings(fp))
+        if (large_port_group && fp->get_bleed_over_warnings())
         {
             LogMessage("***Bleedover Port Limit(%d) Exceeded for rule %u:%u "
-                "(%d)ports: ", fpDetectGetBleedOverPortLimit(fp),
+                "(%d)ports: ", fp->get_bleed_over_port_limit(),
                 otn->sigInfo.generator, otn->sigInfo.id,
                 (src_cnt > dst_cnt) ? src_cnt : dst_cnt);
 
@@ -297,7 +300,7 @@ static int FinishPortListRule(
      * If we have an any-any rule or a large port group or
      * were using a single rule group we make it an any-any rule. */
     if (((rtn->flags & (ANY_DST_PORT|ANY_SRC_PORT)) == (ANY_DST_PORT|ANY_SRC_PORT)) ||
-        large_port_group || fpDetectGetSingleRuleGroup(fp))
+        large_port_group || fp->get_single_rule_group())
     {
         if (proto == ETHERNET_TYPE_IP)
         {
@@ -603,14 +606,13 @@ static int ProcessIP(
 *  as src and dst port lists for final rtn/otn processing.
 *
 *  These should not be confused with the port objects used to merge ports and rules
-*  to build PORT_GROUP objects. Those are generated after the otn processing.
+*  to build port group objects. Those are generated after the otn processing.
 *
 */
 static PortObject* ParsePortListTcpUdpPort(
     PortVarTable* pvt, PortTable* noname, const char* port_str)
 {
     PortObject* portobject;
-    //PortObject * pox;
     POParser poparser;
 
     if ((pvt == NULL) || (noname == NULL) || (port_str == NULL))

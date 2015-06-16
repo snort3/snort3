@@ -29,9 +29,8 @@
 struct PortTable;
 struct vartable_t;
 struct sfip_var_t;
-typedef unsigned int PolicyId;
 
-// defined in sfportobject.h
+typedef unsigned int PolicyId;
 typedef struct SFGHASH PortVarTable;
 
 // FIXIT-L split into separate headers

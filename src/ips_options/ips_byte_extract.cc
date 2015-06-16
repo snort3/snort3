@@ -31,7 +31,6 @@
 #include "sfhashfcn.h"
 #include "profiler.h"
 #include "extract.h"
-#include "fpdetect.h"
 #include "framework/ips_option.h"
 #include "framework/cursor.h"
 #include "framework/parameter.h"

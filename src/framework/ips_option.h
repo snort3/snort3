@@ -61,7 +61,6 @@ public:
     { return !(*this == ips); }
 
     // packet threads
-    virtual void config(SnortConfig*) { }
     virtual bool is_relative() { return false; }
     virtual bool fp_research() { return false; }
     virtual int eval(class Cursor&, Packet*) { return true; }

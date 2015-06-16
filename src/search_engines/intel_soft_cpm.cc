@@ -27,7 +27,6 @@
 #include "util.h"
 #include "snort_config.h"
 #include "snort_debug.h"
-#include "fpcreate.h"
 
 /* MACROS *********************************************************************/
 #define GROUP_ARRAY_ALLOC_SIZE 50

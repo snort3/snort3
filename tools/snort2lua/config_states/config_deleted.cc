@@ -432,6 +432,19 @@ static const ConvertMap flexresp2_rows_api =
 const ConvertMap* flexresp2_rows_map = &flexresp2_rows_api;
 
 /*************************************************
+ ****************  flowbits_size  ****************
+ *************************************************/
+
+static const std::string flowbits_size = "flowbits_size";
+static const ConvertMap flowbits_size_api =
+{
+    flowbits_size,
+    deleted_ctor<& flowbits_size>,
+};
+
+const ConvertMap* flowbits_size_map = &flowbits_size_api;
+
+/*************************************************
  ************  include_vlan_in_alerts  ***********
  *************************************************/
 

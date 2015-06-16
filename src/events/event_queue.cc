@@ -53,8 +53,7 @@
 */
 #include "event_queue.h"
 
-#include "fpcreate.h"
-#include "fpdetect.h"
+#include "fp_detect.h"
 #include "util.h"
 #include "sfeventq.h"
 #include "event_wrapper.h"

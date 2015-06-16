@@ -33,12 +33,13 @@
 **               per session tracking).
 **
 */
-#include "fpdetect.h"
+#include "fp_detect.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+#include "fp_config.h"
 #include "snort_config.h"
 #include "detect.h"
 #include "snort_debug.h"
@@ -47,12 +48,11 @@
 #include "rules.h"
 #include "treenodes.h"
 #include "pcrm.h"
-#include "fpcreate.h"
+#include "fp_create.h"
 #include "framework/cursor.h"
 #include "framework/inspector.h"
 #include "framework/ips_action.h"
 #include "framework/mpse.h"
-#include "bitop.h"
 #include "perf_monitor/perf.h"
 #include "perf_monitor/perf_event.h"
 #include "filters/sfthreshold.h"
@@ -63,6 +63,7 @@
 #include "stream/stream_api.h"
 #include "utils/sflsq.h"
 #include "ppm.h"
+#include "service_map.h"
 #include "detection_util.h"
 #include "detection_options.h"
 #include "actions/actions.h"
@@ -311,7 +312,7 @@ int fpAddMatch(OTNX_MATCH_DATA* omd_local, int pLen, OptTreeNode* otn)
     **  If we hit the max number of unique events for any rule type alert,
     **  log or pass, then we don't add it to the list.
     */
-    if ( pmi->iMatchCount >= (int)snort_conf->fast_pattern_config->max_queue_events ||
+    if ( pmi->iMatchCount >= (int)snort_conf->fast_pattern_config->get_max_queue_events() ||
         pmi->iMatchCount >= MAX_EVENT_MATCH)
     {
         pc.match_limit++;
@@ -994,7 +995,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP* port_group, Packet* p,
 
         // FIXIT-M sdf etc. runs here
 
-        if ( fp->inspect_stream_insert || !(p->packet_flags & PKT_STREAM_INSERT) )
+        if ( fp->get_stream_insert() || !(p->packet_flags & PKT_STREAM_INSERT) )
         {
             Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
             InspectionBuffer buf;
@@ -1151,7 +1152,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP* port_group, Packet* p,
     /*
      **  Walk and test the non-content OTNs
      */
-    if (fpDetectGetDebugPrintNcRules(fp))
+    if ( fp->get_debug_print_nc_rules() )
         LogMessage("NC-testing %u rules\n", port_group->pgNoContentCount);
 
 #ifdef PPM_MGR
@@ -1261,7 +1262,7 @@ static inline int fpEvalHeaderUdp(Packet* p, OTNX_MATCH_DATA* omd)
             "src:%x, dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,src,dst,gen); );
     }
 
-    if (fpDetectGetDebugPrintNcRules(snort_conf->fast_pattern_config))
+    if (snort_conf->fast_pattern_config->get_debug_print_nc_rules())
     {
         LogMessage(
             "fpEvalHeaderUdp: sport=%d, dport=%d, src:%p, dst:%p, gen:%p\n",
@@ -1342,7 +1343,7 @@ static inline int fpEvalHeaderTcp(Packet* p, OTNX_MATCH_DATA* omd)
             "dport=%d, src:%x, dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,src,dst,gen); );
     }
 
-    if (fpDetectGetDebugPrintNcRules(snort_conf->fast_pattern_config))
+    if (snort_conf->fast_pattern_config->get_debug_print_nc_rules())
     {
         LogMessage(
             "fpEvalHeaderTcp: sport=%d, dport=%d, src:%p, dst:%p, gen:%p\n",
@@ -1382,7 +1383,7 @@ static inline int fpEvalHeaderIcmp(Packet* p, OTNX_MATCH_DATA* omd)
     if (!prmFindRuleGroupIcmp(snort_conf->prmIcmpRTNX, p->ptrs.icmph->type, &type, &gen))
         return 0;
 
-    if (fpDetectGetDebugPrintNcRules(snort_conf->fast_pattern_config))
+    if (snort_conf->fast_pattern_config->get_debug_print_nc_rules())
     {
         LogMessage(
             "fpEvalHeaderIcmp: icmp->type=%d type=%p gen=%p\n",
@@ -1416,7 +1417,7 @@ static inline int fpEvalHeaderIp(Packet* p, int ip_proto, OTNX_MATCH_DATA* omd)
     if (!prmFindRuleGroupIp(snort_conf->prmIpRTNX, ip_proto, &ip_group, &gen))
         return 0;
 
-    if (fpDetectGetDebugPrintNcRules(snort_conf->fast_pattern_config))
+    if (snort_conf->fast_pattern_config->get_debug_print_nc_rules())
         LogMessage("fpEvalHeaderIp: ip_group=%p, gen=%p\n", (void*)ip_group, (void*)gen);
 
     InitMatchInfo(omd);

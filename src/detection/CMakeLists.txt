@@ -10,23 +10,27 @@ set (DETECTION_INCLUDES
 
 add_library (detection STATIC
     ${DETECTION_INCLUDES}
-    detect.cc 
-    detect.h 
+    detect.cc
+    detect.h
     detection_options.cc
-    detection_util.cc 
-    detection_util.h 
-    fpcreate.cc 
-    fpcreate.h 
-    fpdetect.cc 
-    fpdetect.h 
-    pcrm.cc 
-    pcrm.h 
-    sfrim.cc 
-    sfrim.h 
-    signature.cc 
+    detection_util.cc
+    detection_util.h
+    fp_config.cc
+    fp_config.h
+    fp_create.cc
+    fp_create.h
+    fp_detect.cc
+    fp_detect.h
+    pcrm.cc
+    pcrm.h
+    service_map.cc
+    service_map.h
+    sfrim.cc
+    sfrim.h
+    signature.cc
     treenodes.cc
-    tag.cc 
-    tag.h 
+    tag.cc
+    tag.h
 )
 
 target_link_libraries( detection

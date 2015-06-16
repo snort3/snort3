@@ -235,8 +235,8 @@ struct HTTPINSPECT_CONF
     PROFILES profile;
     CMD_LOOKUP* cmd_lookup;
 
-    ByteList whitespace;
-    ByteList non_rfc_chars;
+    ByteBitSet whitespace;
+    ByteBitSet non_rfc_chars;
 
     HTTPINSPECT_CONF();
     ~HTTPINSPECT_CONF();

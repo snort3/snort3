@@ -31,7 +31,7 @@
 #include "config.h"
 #endif
 
-#include "fpcreate.h"
+#include "fp_create.h"
 #include "snort_debug.h"
 #include "protocols/packet.h"
 #include "time/profiler.h"

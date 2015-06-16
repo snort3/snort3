@@ -34,7 +34,6 @@
 #include "profiler.h"
 #include "log.h"
 #include "event.h"
-#include "utils/sfportobject.h"
 #include "main/snort_types.h"
 
 /*  P R O T O T Y P E S  ******************************************************/

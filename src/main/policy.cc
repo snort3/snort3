@@ -28,7 +28,9 @@
 #include "main/shell.h"
 #include "main/snort_config.h"
 #include "detection/detect.h"
-#include "utils/sfportobject.h"
+#include "ports/port_table.h"
+#include "ports/port_utils.h"
+#include "ports/port_var_table.h"
 
 //-------------------------------------------------------------------------
 // traffic policy

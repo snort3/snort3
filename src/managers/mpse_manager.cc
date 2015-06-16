@@ -30,7 +30,6 @@ using namespace std;
 #include "framework/mpse.h"
 #include "parser/parser.h"
 #include "log/messages.h"
-#include "detection/fpcreate.h"
 
 typedef list<const MpseApi*> EngineList;
 static EngineList s_engines;
@@ -125,10 +124,8 @@ void MpseManager::print_mpse_summary(const MpseApi* api)
     api->print();
 }
 
-void MpseManager::activate_search_engine(SnortConfig* sc)
+void MpseManager::activate_search_engine(const MpseApi* api, SnortConfig* sc)
 {
-    const MpseApi* api = sc->fast_pattern_config->search_api;
-
     if ( api->activate )
         api->activate(sc);
 }

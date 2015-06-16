@@ -28,7 +28,6 @@
 
 #include "bnfa_search.h"
 
-#include "bitop.h"
 #include "snort_debug.h"
 #include "snort_types.h"
 #include "util.h"

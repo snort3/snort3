@@ -26,7 +26,6 @@
 #include "codecs/codec_module.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort_config.h"
-#include "detection/fpdetect.h"
 #include "protocols/ipv6.h"
 
 #define CD_IPV6_ROUTING_NAME "ipv6_routing"

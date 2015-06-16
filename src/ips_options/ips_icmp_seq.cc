@@ -49,7 +49,6 @@
 #include "protocols/packet.h"
 #include "snort_debug.h"
 #include "profiler.h"
-#include "detection/fpdetect.h"
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"

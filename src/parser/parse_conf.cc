@@ -54,13 +54,11 @@
 #include "parse_rule.h"
 #include "snort_debug.h"
 #include "util.h"
-#include "fpcreate.h"
 #include "signature.h"
 #include "snort_config.h"
 #include "hash/sfghash.h"
 #include "sf_vartable.h"
 #include "sfip/sf_ip.h"
-#include "utils/sfportobject.h"
 #include "packet_io/active.h"
 #include "file_api/libs/file_config.h"
 #include "framework/ips_option.h"
@@ -69,6 +67,7 @@
 #include "config_file.h"
 #include "keywords.h"
 #include "vars.h"
+#include "target_based/sftarget_protocol_reference.h"
 
 struct Location
 {

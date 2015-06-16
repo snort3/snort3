@@ -41,7 +41,6 @@
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "profiler.h"
-#include "fpdetect.h"
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "ips_byte_extract.h"

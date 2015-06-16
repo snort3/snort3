@@ -6,12 +6,10 @@ x_includedir = $(pkgincludedir)/utils
 
 x_include_HEADERS = \
 bitop.h \
-bitop_funcs.h \
 dnet_header.h \
 segment_mem.h \
 sflsq.h \
 sfmemcap.h \
-sfportobject.h \
 snort_bounds.h \
 stats.h \
 util.h
@@ -25,7 +23,6 @@ sf_base64decode.cc sf_base64decode.h \
 sf_email_attach_decode.cc sf_email_attach_decode.h \
 sflsq.cc \
 sfmemcap.cc \
-sfportobject.cc \
 sfsnprintfappend.cc sfsnprintfappend.h \
 snort_bounds.h \
 stats.cc \

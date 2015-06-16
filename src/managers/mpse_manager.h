@@ -52,7 +52,7 @@ public:
         void (* tree_free)(void**),
         void (* list_free)(void**));
 
-    static void activate_search_engine(SnortConfig*);
+    static void activate_search_engine(const MpseApi*, SnortConfig*);
     static void setup_search_engine(const MpseApi*, SnortConfig*);
     static void start_search_engine(const MpseApi*);
     static void stop_search_engine(const MpseApi*);

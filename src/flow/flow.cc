@@ -25,7 +25,7 @@
 
 #include "flow/session.h"
 #include "ips_options/ips_flowbits.h"
-#include "utils/bitop_funcs.h"
+#include "utils/bitop.h"
 #include "utils/util.h"
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"

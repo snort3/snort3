@@ -33,18 +33,15 @@
 #include <mutex>
 using namespace std;
 
-#include "rules.h"
-#include "treenodes.h"
-#include "treenodes.h"
-#include "parser.h"
-#include "util.h"
-#include "rules.h"
-#include "treenodes.h"
-#include "treenodes.h"
-#include "snort_types.h"
+#include "detection/fp_detect.h"
+#include "detection/treenodes.h"
+#include "detection/rules.h"
 #include "detection_options.h"
-#include "fpdetect.h"
+#include "parser/parser.h"
+#include "utils/util.h"
+#include "main/snort_types.h"
 #include "framework/module.h"
+#include "hash/sfghash.h"
 
 #ifdef PERF_PROFILING
 

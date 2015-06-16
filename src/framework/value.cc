@@ -84,7 +84,7 @@ void Value::get_addr(sfip_t& addr) const
         memset(&addr, 0, sizeof(addr));
 }
 
-void Value::get_bits(PortList& list) const
+void Value::get_bits(PortBitSet& list) const
 {
     list.reset();
     std::size_t len = str.size();
@@ -97,7 +97,7 @@ void Value::get_bits(PortList& list) const
     }
 }
 
-void Value::get_bits(VlanList& list) const
+void Value::get_bits(VlanBitSet& list) const
 {
     list.reset();
     std::size_t len = str.size();
@@ -110,7 +110,7 @@ void Value::get_bits(VlanList& list) const
     }
 }
 
-void Value::get_bits(ByteList& list) const
+void Value::get_bits(ByteBitSet& list) const
 {
     list.reset();
     std::size_t len = str.size();

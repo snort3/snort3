@@ -279,7 +279,7 @@ bool HttpInspect::get_buf(
     default:
         break;
     }
-    return nullptr;
+    return false;
 }
 
 bool HttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)

@@ -15,12 +15,10 @@ endif ( BUILD_SNPRINTF )
 
 set( UTIL_INCLUDES
     bitop.h
-    bitop_funcs.h
     dnet_header.h
     segment_mem.h
     sflsq.h
     sfmemcap.h
-    sfportobject.h
     snort_bounds.h
     stats.h
     util.h
@@ -42,7 +40,6 @@ ADD_LIBRARY( utils STATIC
     sf_base64decode.h
     sflsq.cc 
     sfmemcap.cc 
-    sfportobject.cc 
     sfsnprintfappend.cc 
     sfsnprintfappend.h
     strvec.cc 

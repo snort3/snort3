@@ -79,9 +79,6 @@ static const Parameter stream_tcp_small_params[] =
     { "maximum_size", Parameter::PT_INT, "0:2048", "0",
       "limit number of small segments queued" },
 
-    { "ignore_ports", Parameter::PT_BIT_LIST, "65535", nullptr,
-      "limit number of small segments queued" },
-
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -246,9 +243,6 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("maximum_size") )
         config->max_consec_small_seg_size = v.get_long();
-
-    else if ( v.is("ignore_ports") )
-        v.get_bits(config->small_seg_ignore);
 
     else if ( v.is("flush_factor") )
         config->flush_factor = v.get_long();

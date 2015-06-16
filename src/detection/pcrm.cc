@@ -199,7 +199,8 @@
 #include <string.h>
 
 #include "util.h"
-#include "fpcreate.h"
+#include "fp_config.h"
+#include "fp_create.h"
 #include "snort_config.h"
 
 /*
@@ -1163,7 +1164,7 @@ int prmFindRuleGroup(
     /* If no Src/Dst rules - use the generic set, if any exist  */
     if ((p->prmGeneric != NULL) && (p->prmGeneric->pgCount > 0))
     {
-        if (fpDetectSplitAnyAny(snort_conf->fast_pattern_config)
+        if (snort_conf->fast_pattern_config->get_split_any_any()
             || ((*src == NULL) && (*dst == NULL)))
         {
             *gen = p->prmGeneric;
@@ -1176,6 +1177,37 @@ int prmFindRuleGroup(
     return 1;
 }
 
+/*
+**  The following functions are wrappers to the pcrm routines,
+**  that utilize the variables that we have intialized by
+**  calling fpCreateFastPacketDetection().  These functions
+**  are also used in the file fpdetect.c, where we do lookups
+**  on the initialized variables.
+*/
+int prmFindRuleGroupIp(PORT_RULE_MAP* prm, int ip_proto, PORT_GROUP** ip_group, PORT_GROUP** gen)
+{
+    PORT_GROUP* src;
+    return prmFindRuleGroup(prm, ip_proto, -1, &src, ip_group, gen);
+}
+
+int prmFindRuleGroupIcmp(PORT_RULE_MAP* prm, int type, PORT_GROUP** type_group, PORT_GROUP** gen)
+{
+    PORT_GROUP* src;
+    return prmFindRuleGroup(prm, type, -1, &src, type_group, gen);
+}
+
+int prmFindRuleGroupTcp(PORT_RULE_MAP* prm, int dport, int sport, PORT_GROUP** src,
+    PORT_GROUP** dst, PORT_GROUP** gen)
+{
+    return prmFindRuleGroup(prm, dport, sport, src, dst, gen);
+}
+
+int prmFindRuleGroupUdp(PORT_RULE_MAP* prm, int dport, int sport, PORT_GROUP** src,
+    PORT_GROUP** dst, PORT_GROUP** gen)
+{
+    return prmFindRuleGroup(prm, dport, sport, src, dst, gen);
+}
+
 int prmFindGenericRuleGroup(PORT_RULE_MAP* p, PORT_GROUP** gen)
 {
     if ( !p or !gen )
@@ -1186,7 +1218,7 @@ int prmFindGenericRuleGroup(PORT_RULE_MAP* p, PORT_GROUP** gen)
     *gen = NULL;
     if ((p->prmGeneric != NULL) && (p->prmGeneric->pgCount > 0))
     {
-        if (fpDetectSplitAnyAny(snort_conf->fast_pattern_config))
+        if (snort_conf->fast_pattern_config->get_split_any_any())
         {
             *gen = p->prmGeneric;
             return 1;

@@ -60,7 +60,6 @@
 #include "utils/util.h"
 #include "time/profiler.h"
 #include "hash/sfhashfcn.h"
-#include "detection/fpdetect.h"
 #include "detection/detection_defines.h"
 #include "detection/treenodes.h"
 #include "framework/ips_option.h"

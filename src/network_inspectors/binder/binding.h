@@ -37,9 +37,9 @@ struct BindWhen
     Role role;
     std::string svc;
     sfip_var_t* nets;
-    ByteList ifaces;
-    VlanList vlans;
-    PortList ports;
+    ByteBitSet ifaces;
+    VlanBitSet vlans;
+    PortBitSet ports;
 };
 
 struct BindUse

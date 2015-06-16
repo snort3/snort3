@@ -44,8 +44,8 @@ include_directories(BEFORE sfip)
 include_directories(BEFORE stream)
 include_directories(BEFORE target_based)
 include_directories(BEFORE time)
+include_directories(BEFORE ports)
 include_directories(BEFORE utils)
-
 
 
 # Build options for specific libraries
@@ -118,6 +118,7 @@ target_link_libraries( snort
     sfrt
     sfip
     hash
+    ports
     utils
     network_inspectors
     search_engines
@@ -154,6 +155,7 @@ add_subdirectory(main)
 add_subdirectory(managers)
 add_subdirectory(packet_io)
 add_subdirectory(parser)
+add_subdirectory(ports)
 add_subdirectory(protocols)
 add_subdirectory(sfip)
 add_subdirectory(sfrt)

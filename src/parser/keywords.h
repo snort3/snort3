@@ -24,7 +24,6 @@
 #include "config.h"
 #endif
 
-#define DEFAULT_LARGE_RULE_GROUP 9
 #define MAX_RULE_COUNT (65535 * 2)
 
 #define RULE_PROTO_OPT__IP    "ip"

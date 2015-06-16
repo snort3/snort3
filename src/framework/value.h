@@ -109,9 +109,9 @@ public:
     bool operator==(double d) const
     { return num == d; }
 
-    void get_bits(PortList&) const;
-    void get_bits(VlanList&) const;
-    void get_bits(ByteList&) const;
+    void get_bits(PortBitSet&) const;
+    void get_bits(VlanBitSet&) const;
+    void get_bits(ByteBitSet&) const;
 
     void lower()
     { std::transform(str.begin(), str.end(), str.begin(), ::tolower); }

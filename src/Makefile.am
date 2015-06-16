@@ -79,6 +79,7 @@ decompress/libdecompress.a \
 sfip/libsfip.a \
 sfrt/libsfrt.a \
 protocols/libprotocols.a \
+ports/libports.a \
 utils/libutils.a
 
 SUBDIRS = \
@@ -102,6 +103,7 @@ managers \
 network_inspectors \
 packet_io \
 parser \
+ports \
 protocols \
 search_engines \
 service_inspectors \

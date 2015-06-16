@@ -27,7 +27,6 @@
 
 #include "utils/dnet_header.h"
 #include "main/snort_config.h"
-#include "fpdetect.h"
 
 #include "protocols/tcp.h"
 #include "protocols/ipv4.h"

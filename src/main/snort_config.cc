@@ -48,7 +48,8 @@
 #include "managers/inspector_manager.h"
 #include "filters/sfthreshold.h"
 #include "filters/detection_filter.h"
-#include "detection/fpcreate.h"
+#include "detection/fp_config.h"
+#include "detection/fp_create.h"
 #include "ips_options/ips_pcre.h"
 #include "protocols/udp.h"
 #include "time/ppm.h"
@@ -236,12 +237,12 @@ SnortConfig::~SnortConfig()
 
     if ( fast_pattern_config &&
         (!snort_conf || this == snort_conf ||
-        (fast_pattern_config->search_api !=
-        snort_conf->fast_pattern_config->search_api)) )
+        (fast_pattern_config->get_search_api() !=
+        snort_conf->fast_pattern_config->get_search_api())) )
     {
-        MpseManager::stop_search_engine(fast_pattern_config->search_api);
+        MpseManager::stop_search_engine(fast_pattern_config->get_search_api());
+        delete fast_pattern_config;
     }
-    FastPatternConfigFree(fast_pattern_config);
 
     delete policy_map;
     InspectorManager::delete_config(this);

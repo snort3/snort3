@@ -51,7 +51,6 @@
 #include "profiler.h"
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
-#include "fpdetect.h"
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"

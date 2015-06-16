@@ -30,6 +30,7 @@
 #include "main/snort_config.h"
 #include "main/thread.h"
 #include "log/messages.h"
+#include "detection/fp_detect.h"
 
 #include "protocols/packet.h"
 #include "protocols/protocol_ids.h"
@@ -44,7 +45,6 @@
 #include "utils/stats.h"
 #include "log/text_log.h"
 #include "main/snort_debug.h"
-#include "detection/fpdetect.h"
 #include "stream/stream_api.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/active.h"

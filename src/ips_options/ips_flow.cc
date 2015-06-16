@@ -35,7 +35,6 @@
 #include "utils/util.h"
 #include "hash/sfhashfcn.h"
 #include "stream/stream_api.h"
-#include "fpdetect.h"
 #include "time/profiler.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"

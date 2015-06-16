@@ -111,20 +111,18 @@ public:
         }
         else if ( v.is("gtp_ports") )
         {
-            if ( sc->gtp_ports == nullptr )
-                sc->gtp_ports = new PortList;
+            if ( !sc->gtp_ports )
+                sc->gtp_ports = new PortBitSet;
 
-//            sc->gtp_ports->reset(); // called in v.get_bits();
             v.get_bits(*(sc->gtp_ports));
         }
         else if ( v.is("enable_gtp") )
         {
             if ( v.get_bool() )
             {
-                if ( sc->gtp_ports == nullptr )
+                if ( !sc->gtp_ports )
                 {
-                    sc->gtp_ports = new PortList;
-                    sc->gtp_ports->reset();
+                    sc->gtp_ports = new PortBitSet;
                     sc->gtp_ports->set(GTP_U_PORT);
                     sc->gtp_ports->set(GTP_U_PORT_V0);
                 }

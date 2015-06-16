@@ -981,6 +981,7 @@ src/service_inspectors/smtp/Makefile \
 src/service_inspectors/ssh/Makefile \
 src/service_inspectors/ssl/Makefile \
 src/service_inspectors/wizard/Makefile \
+src/ports/Makefile \
 src/protocols/Makefile \
 src/search_engines/Makefile \
 src/sfip/Makefile \

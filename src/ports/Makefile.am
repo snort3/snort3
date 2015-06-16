@@ -1,0 +1,26 @@
+AUTOMAKE_OPTIONS=foreign no-dependencies
+
+noinst_LIBRARIES = libports.a
+
+libports_a_SOURCES = \
+port_item.cc \
+port_item.h \
+port_object.cc \
+port_object.h \
+port_object2.cc \
+port_object2.h \
+port_table.cc \
+port_table.h \
+port_utils.cc \
+port_utils.h \
+port_var_table.cc \
+port_var_table.h \
+rule_port_tables.cc \
+rule_port_tables.h
+
+EXTRA_DIST = readme.txt
+
+libutil_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
+
+AM_CXXFLAGS = @AM_CXXFLAGS@
+

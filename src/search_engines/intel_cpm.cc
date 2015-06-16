@@ -33,7 +33,6 @@
 #include "config.h"
 #endif
 
-#include "bitop.h"
 #include "snort_debug.h"
 #include "snort_types.h"
 #include "util.h"

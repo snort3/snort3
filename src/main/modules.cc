@@ -41,7 +41,7 @@ using namespace std;
 #include "parser/config_file.h"
 #include "parser/cmd_line.h"
 #include "detection/signature.h"
-#include "ips_options/ips_flowbits.h"
+#include "file_api/file_api.h"
 #include "file_api/libs/file_config.h"
 #include "filters/sfthd.h"
 #include "filters/sfrf.h"
@@ -51,15 +51,14 @@ using namespace std;
 #include "time/profiler.h"
 #include "parser/parse_ip.h"
 #include "target_based/sftarget_data.h"
-#include "detection/fpcreate.h"
+#include "detection/fp_config.h"
 #include "filters/detection_filter.h"
 #include "filters/sfthreshold.h"
 #include "sfip/sf_ip.h"
 #include "main/thread.h"
 #include "stream/stream_api.h"
 #include "utils/stats.h"
-
-#include "file_api/file_api.h"
+#include "target_based/sftarget_protocol_reference.h"
 
 //-------------------------------------------------------------------------
 // detection module
@@ -243,65 +242,65 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
     FastPatternConfig* fp = sc->fast_pattern_config;
 
     if ( v.is("bleedover_port_limit") )
-        fpDetectSetBleedOverPortLimit(fp, v.get_long());
+        fp->set_bleed_over_port_limit(v.get_long());
 
     else if ( v.is("bleedover_warnings_enabled") )
     {
         if ( v.get_bool() )
-            fpDetectSetBleedOverWarnings(fp);  // FIXIT-L these should take arg
+            fp->set_bleed_over_warnings();  // FIXIT-L these should take arg
     }
     else if ( v.is("enable_single_rule_group") )
     {
         if ( v.get_bool() )
-            fpDetectSetSingleRuleGroup(fp);
+            fp->set_single_rule_group();
     }
     else if ( v.is("debug") )
     {
         if ( v.get_bool() )
-            fpSetDebugMode(fp);
+            fp->set_debug_mode();
     }
     else if ( v.is("debug_print_nocontent_rule_tests") )
     {
         if ( v.get_bool() )
-            fpDetectSetDebugPrintNcRules(fp);
+            fp->set_debug_print_nc_rules();
     }
     else if ( v.is("debug_print_rule_group_build_details") )
     {
         if ( v.get_bool() )
-            fpDetectSetDebugPrintRuleGroupBuildDetails(fp);
+            fp->set_debug_print_rule_group_build_details();
     }
     else if ( v.is("debug_print_rule_groups_uncompiled") )
     {
         if ( v.get_bool() )
-            fpDetectSetDebugPrintRuleGroupsUnCompiled(fp);
+            fp->set_debug_print_rule_groups_uncompiled();
     }
     else if ( v.is("debug_print_rule_groups_compiled") )
     {
         if ( v.get_bool() )
-            fpDetectSetDebugPrintRuleGroupsCompiled(fp);
+            fp->set_debug_print_rule_groups_compiled();
     }
     else if ( v.is("debug_print_fast_pattern") )
-        fpDetectSetDebugPrintFastPatterns(fp, v.get_bool());
+        fp->set_debug_print_fast_patterns(v.get_bool());
 
     else if ( v.is("max_pattern_len") )
-        fpSetMaxPatternLen(fp, v.get_long());
+        fp->set_max_pattern_len(v.get_long());
 
     else if ( v.is("max_queue_events") )
-        fpSetMaxQueueEvents(fp, v.get_long());
+        fp->set_max_queue_events(v.get_long());
 
     else if ( v.is("inspect_stream_inserts") )
-        fpSetStreamInsert(fp, v.get_bool());
+        fp->set_stream_insert(v.get_bool());
 
     else if ( v.is("search_method") )
     {
-        if ( fpSetDetectSearchMethod(fp, v.get_string()) )
+        if ( fp->set_detect_search_method(v.get_string()) )
             return false;
     }
     else if ( v.is("split_any_any") )
-        fpDetectSetSplitAnyAny(fp, v.get_long());
+        fp->set_split_any_any(v.get_long());
 
     else if ( v.is("search_optimize") )
-        fpSetDetectSearchOpt(fp, v.get_long());
+        fp->set_search_opt(v.get_long());
 
     else
         return false;
@@ -551,9 +550,6 @@ static const Parameter alerts_params[] =
     { "event_filter_memcap", Parameter::PT_INT, "0:", "1048576",
       "set available memory for filters" },
 
-    { "flowbits_size", Parameter::PT_INT, "0:2048", "1024",
-      "maximum number of allowed unique flowbits" },
-
     { "order", Parameter::PT_STRING, nullptr, "pass drop alert log",
       "change the order of rule action application" },
 
@@ -597,11 +593,6 @@ bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("event_filter_memcap") )
         sc->threshold_config->memcap = v.get_long();
 
-    else if ( v.is("flowbits_size") )
-    {
-        setFlowbitSize(v.get_long());
-        sc->flowbit_size = (uint16_t)getFlowbitSizeInBytes();
-    }
     else if ( v.is("order") )
         OrderRuleLists(sc, v.get_string());
 

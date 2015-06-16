@@ -35,7 +35,6 @@
 #include "snort_debug.h"
 #include "util.h"
 #include "profiler.h"
-#include "fpdetect.h"
 #include "utils/sf_base64decode.h"
 #include "detection/detection_defines.h"
 #include "detection/detection_util.h"

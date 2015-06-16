@@ -21,11 +21,11 @@
 #include "config.h"
 #endif
 
+#include "codecs/codec_module.h"
 #include "framework/codec.h"
 #include "protocols/ipv6.h"
-#include "codecs/codec_module.h"
+#include "main/snort_config.h"
 #include "protocols/protocol_ids.h"
-#include "detection/fpdetect.h"
 
 #define CD_HOPOPTS_NAME "ipv6_hop_opts"
 #define CD_HOPOPTS_HELP "support for IPv6 hop options"

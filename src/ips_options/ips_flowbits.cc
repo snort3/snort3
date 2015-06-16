@@ -16,13 +16,11 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+
 /*
- *
- *
- *  Major rewrite: Hui Cao <hcao@sourcefire.com>
- *
- *  Add flowbits OR support
- *
+ ** Major rewrite: Hui Cao <hcao@sourcefire.com>
+ **
+ ** Add flowbits OR support
  **
  ** sp_flowbits
  **
@@ -35,8 +33,6 @@
  **
  ** - [Un]set a bitmask stored with the session
  ** - Check the value of the bitmask
- **
- *
  */
 
 #include "ips_flowbits.h"
@@ -51,6 +47,7 @@
 #include <sys/types.h>
 
 #include <string>
+#include <forward_list>
 using namespace std;
 
 #include "main/snort_types.h"
@@ -60,12 +57,12 @@ using namespace std;
 #include "parser/parser.h"
 #include "utils/util.h"
 #include "utils/stats.h"
-#include "bitop_funcs.h"
+#include "utils/sflsq.h"
+#include "bitop.h"
 #include "hash/sfghash.h"
 #include "parser/mstring.h"
 #include "stream/stream_api.h"
 #include "time/profiler.h"
-#include "detection/fpdetect.h"
 #include "hash/sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
@@ -81,7 +78,6 @@ static THREAD_LOCAL ProfileStats flowBitsPerfStats;
 
 #define DEFAULT_FLOWBIT_SIZE  1024
 #define MAX_FLOWBIT_SIZE      2048
-#define CONVERT_BITS_TO_BYTES(size)    ( (size > 1) ? (((size -1) >> 3)+ 1) : 0)
 
 #define FLOWBITS_SET       0x01
 #define FLOWBITS_UNSET     0x02
@@ -100,7 +96,7 @@ static THREAD_LOCAL ProfileStats flowBitsPerfStats;
 **
 **  The types element tracks all the different operations that
 **  may occur for a given object.  This is different from how
-**  the type element is used from the FLOWBITS_ITEM structure.
+**  the type element is used from the FLOWBITS_OP structure.
 */
 struct FLOWBITS_OBJECT
 {
@@ -147,11 +143,9 @@ typedef struct _FLOWBITS_GRP
 
 static SFGHASH* flowbits_grp_hash = NULL;
 
-// one per process
-static unsigned int giFlowbitSizeInBytes = CONVERT_BITS_TO_BYTES(DEFAULT_FLOWBIT_SIZE);
-static unsigned int giFlowbitSize = DEFAULT_FLOWBIT_SIZE;
+static std::forward_list<const FLOWBITS_OP*> op_list;
 
-static int checkFlowBits(
+static int check_flowbits(
     uint8_t type, uint8_t evalType, uint16_t* ids, uint16_t num_ids,
     char* group, Packet* p);
 
@@ -272,7 +266,7 @@ int FlowBitsOption::eval(Cursor&, Packet* p)
 
     MODULE_PROFILE_START(flowBitsPerfStats);
 
-    rval = checkFlowBits(flowbits->type, (uint8_t)flowbits->eval,
+    rval = check_flowbits(flowbits->type, (uint8_t)flowbits->eval,
         flowbits->ids, flowbits->num_ids, flowbits->group, p);
 
     MODULE_PROFILE_END(flowBitsPerfStats);
@@ -283,7 +277,7 @@ int FlowBitsOption::eval(Cursor&, Packet* p)
 // helper methods
 //-------------------------------------------------------------------------
 
-static inline int boUnSetGrpBit(BITOP* BitOp, char* group)
+static inline int clear_group_bit(BITOP* BitOp, char* group)
 {
     FLOWBITS_GRP* flowbits_grp;
     BITOP* GrpBitOp;
@@ -312,7 +306,7 @@ static inline int boUnSetGrpBit(BITOP* BitOp, char* group)
     return 1;
 }
 
-static inline int boToggleGrpBit(BITOP* BitOp, char* group)
+static inline int toggle_group_bit(BITOP* BitOp, char* group)
 {
     FLOWBITS_GRP* flowbits_grp;
     BITOP* GrpBitOp;
@@ -337,18 +331,18 @@ static inline int boToggleGrpBit(BITOP* BitOp, char* group)
     return 1;
 }
 
-static inline int boSetxBitsToGrp(
+static inline int set_xbits_to_group(
     BITOP* BitOp, uint16_t* ids, uint16_t num_ids, char* group)
 {
     unsigned int i;
-    if (!boUnSetGrpBit(BitOp, group))
+    if (!clear_group_bit(BitOp, group))
         return 0;
     for (i = 0; i < num_ids; i++)
         boSetBit(BitOp,ids[i]);
     return 1;
 }
 
-static inline int issetFlowbits(
+static inline int is_set_flowbits(
     StreamFlowData* flowdata, uint8_t eval, uint16_t* ids,
     uint16_t num_ids, char* group)
 {
@@ -405,7 +399,7 @@ static inline int issetFlowbits(
     }
 }
 
-static int checkFlowBits(
+static int check_flowbits(
     uint8_t type, uint8_t evalType, uint16_t* ids, uint16_t num_ids, char* group, Packet* p)
 {
     int rval = DETECTION_OPTION_NO_MATCH;
@@ -430,12 +424,12 @@ static int checkFlowBits(
         break;
 
     case FLOWBITS_SETX:
-        result = boSetxBitsToGrp(&(flowdata->boFlowbits), ids, num_ids, group);
+        result = set_xbits_to_group(&(flowdata->boFlowbits), ids, num_ids, group);
         break;
 
     case FLOWBITS_UNSET:
         if (eval == FLOWBITS_ALL )
-            boUnSetGrpBit(&(flowdata->boFlowbits), group);
+            clear_group_bit(&(flowdata->boFlowbits), group);
         else
         {
             for (i = 0; i < num_ids; i++)
@@ -448,13 +442,13 @@ static int checkFlowBits(
         if (!group)
             boResetBITOP(&(flowdata->boFlowbits));
         else
-            boUnSetGrpBit(&(flowdata->boFlowbits), group);
+            clear_group_bit(&(flowdata->boFlowbits), group);
         result = 1;
         break;
 
     case FLOWBITS_ISSET:
 
-        if (issetFlowbits(flowdata,(uint8_t)eval, ids, num_ids, group))
+        if (is_set_flowbits(flowdata,(uint8_t)eval, ids, num_ids, group))
         {
             result = 1;
         }
@@ -466,7 +460,7 @@ static int checkFlowBits(
         break;
 
     case FLOWBITS_ISNOTSET:
-        if (!issetFlowbits(flowdata, (uint8_t)eval, ids, num_ids, group))
+        if (!is_set_flowbits(flowdata, (uint8_t)eval, ids, num_ids, group))
         {
             result = 1;
         }
@@ -478,7 +472,7 @@ static int checkFlowBits(
 
     case FLOWBITS_TOGGLE:
         if (group)
-            boToggleGrpBit(&(flowdata->boFlowbits),group);
+            toggle_group_bit(&(flowdata->boFlowbits),group);
         else
         {
             for (i = 0; i < num_ids; i++)
@@ -529,24 +523,21 @@ static int checkFlowBits(
 
 static SFGHASH* flowbits_hash = NULL;
 static SF_QUEUE* flowbits_bit_queue = NULL;
-static uint32_t flowbits_count = 0;
-static uint32_t flowbits_grp_count = 0;
+static uint16_t flowbits_count = 0;
+static uint16_t flowbits_grp_count = 0;
 static int flowbits_toggle = 1;
 
-void setFlowbitSize(unsigned size)
+// FIXIT-L consider allocating flowbits on session on demand instead of
+// preallocating.
+
+unsigned int getFlowbitSize()
 {
-    giFlowbitSize = size;
-    giFlowbitSizeInBytes = CONVERT_BITS_TO_BYTES(giFlowbitSize);
+    return flowbits_count;
 }
 
-unsigned int getFlowbitSize(void)
+unsigned int getFlowbitSizeInBytes()
 {
-    return giFlowbitSize;
-}
-
-unsigned int getFlowbitSizeInBytes(void)
-{
-    return giFlowbitSizeInBytes;
+    return flowbits_count ? (flowbits_count + 7) >> 3 : 1;
 }
 
 void FlowbitResetCounts(void)
@@ -583,26 +574,6 @@ int FlowBits_SetOperation(void* option_data)
 // parsing methods
 //-------------------------------------------------------------------------
 
-static void udpateFlowBitGroupInfo(
-    FLOWBITS_GRP* flowbits_grp, char*,
-    FLOWBITS_OBJECT* flowbits_item)
-{
-    char* groupName;
-
-    if (!flowbits_grp)
-        return;
-
-    groupName = flowbits_grp->name;
-
-    if (!groupName)
-        return;
-
-    flowbits_grp->count++;
-    if ( flowbits_grp->max_id < flowbits_item->id )
-        flowbits_grp->max_id = flowbits_item->id;
-    boSetBit(&(flowbits_grp->GrpBitOp),flowbits_item->id);
-}
-
 static bool validateName(char* name)
 {
     unsigned i;
@@ -618,8 +589,7 @@ static bool validateName(char* name)
     return true;
 }
 
-static FLOWBITS_OBJECT* getFlowBitItem(
-    char* flowbitName, FLOWBITS_OP* flowbits, FLOWBITS_GRP* flowbits_grp)
+static FLOWBITS_OBJECT* getFlowBitItem(char* flowbitName, FLOWBITS_OP* flowbits)
 {
     FLOWBITS_OBJECT* flowbits_item;
     int hstatus;
@@ -642,23 +612,19 @@ static FLOWBITS_OBJECT* getFlowBitItem(
         }
         else
         {
-            flowbits_item->id = (uint16_t)flowbits_count;
+            flowbits_item->id = flowbits_count++;
 
-            flowbits_count++;
-
-            if (flowbits_count > giFlowbitSize)
+            if ( !flowbits_count )
             {
-                ParseAbort("The number of flowbit IDs in the "
-                    "current ruleset exceeds the maximum number of IDs "
-                    "that are allowed (%d).", giFlowbitSize);
+                ParseError("The number of flowbit IDs in the current ruleset exceeds "
+                    "the maximum number of IDs that are allowed (65535).");
             }
         }
 
         hstatus = sfghash_add(flowbits_hash, flowbitName, flowbits_item);
+
         if (hstatus != SFGHASH_OK)
-        {
-            FatalError("Could not add flowbits key (%s) to hash.\n",flowbitName);
-        }
+            ParseError("Could not add flowbits key (%s) to hash.",flowbitName);
     }
     flowbits_item->toggle = flowbits_toggle;
     flowbits_item->types |= flowbits->type;
@@ -679,13 +645,12 @@ static FLOWBITS_OBJECT* getFlowBitItem(
     default:
         break;
     }
-    udpateFlowBitGroupInfo(flowbits_grp, flowbitName, flowbits_item);
 
     return flowbits_item;
 }
 
 static void processFlowbits(
-    char* flowbits_names, FLOWBITS_GRP* flowbits_grp, FLOWBITS_OP* flowbits)
+    char* flowbits_names, FLOWBITS_OP* flowbits)
 {
     char** toks;
     int num_toks;
@@ -715,7 +680,7 @@ static void processFlowbits(
         flowbits->num_ids = num_toks;
         for (i = 0; i < num_toks; i++)
         {
-            flowbits_item = getFlowBitItem(toks[i], flowbits, flowbits_grp);
+            flowbits_item = getFlowBitItem(toks[i], flowbits);
             flowbits->ids[i] = flowbits_item->id;
         }
         flowbits->eval = FLOWBITS_OR;
@@ -728,7 +693,7 @@ static void processFlowbits(
         flowbits->num_ids = num_toks;
         for (i = 0; i < num_toks; i++)
         {
-            flowbits_item = getFlowBitItem(toks[i], flowbits, flowbits_grp);
+            flowbits_item = getFlowBitItem(toks[i], flowbits);
             flowbits->ids[i] = flowbits_item->id;
         }
         flowbits->eval = FLOWBITS_AND;
@@ -744,7 +709,7 @@ static void processFlowbits(
     }
     else
     {
-        flowbits_item = getFlowBitItem(flowbits_name, flowbits, flowbits_grp);
+        flowbits_item = getFlowBitItem(flowbits_name, flowbits);
         flowbits->ids = (uint16_t*)SnortAlloc(sizeof(*(flowbits->ids)));
         flowbits->num_ids = 1;
         flowbits->ids[0] = flowbits_item->id;
@@ -847,17 +812,15 @@ static FLOWBITS_GRP* getFlowBitGroup(char* groupName)
 
     flowbits_grp = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, groupName);
 
-    /*New group defined, add*/
-    if (flowbits_grp == NULL)
+    if ( !flowbits_grp )
     {
-        flowbits_grp = (FLOWBITS_GRP*)SnortAlloc(sizeof(FLOWBITS_GRP));
-        boInitBITOP(&(flowbits_grp->GrpBitOp), giFlowbitSizeInBytes);
-        boResetBITOP(&(flowbits_grp->GrpBitOp));
+        // new group defined, add (bitop set later once we know size)
+        flowbits_grp = (FLOWBITS_GRP*)SnortAlloc(sizeof(*flowbits_grp));
         hstatus = sfghash_add(flowbits_grp_hash, groupName, flowbits_grp);
+
         if (hstatus != SFGHASH_OK)
-        {
             ParseAbort("Could not add flowbits group (%s) to hash.\n",groupName);
-        }
+
         flowbits_grp_count++;
         flowbits_grp->group_id = flowbits_grp_count;
         flowbits_grp->name = SnortStrdup(groupName);
@@ -890,7 +853,7 @@ static void processFlowBitsWithGroup(char* flowbitsName, char* groupName, FLOWBI
     FLOWBITS_GRP* flowbits_grp;
 
     flowbits_grp = getFlowBitGroup(groupName);
-    processFlowbits(flowbitsName,flowbits_grp, flowbits);
+    processFlowbits(flowbitsName, flowbits);
 
     if (groupName && !(flowbits->group))
     {
@@ -899,6 +862,9 @@ static void processFlowBitsWithGroup(char* flowbitsName, char* groupName, FLOWBI
     }
     validateFlowbitsSyntax(flowbits);
     DEBUG_WRAP(printOutFlowbits(flowbits));
+
+    if ( flowbits->group )
+        op_list.push_front(flowbits);
 }
 
 static FLOWBITS_OP* flowbits_parse(const char* data)
@@ -1012,6 +978,45 @@ static FLOWBITS_OP* flowbits_parse(const char* data)
     return flowbits;
 }
 
+static void update_group(FLOWBITS_GRP* flowbits_grp, int id)
+{
+    flowbits_grp->count++;
+
+    if ( flowbits_grp->max_id < id )
+        flowbits_grp->max_id = id;
+
+    boSetBit(&(flowbits_grp->GrpBitOp), id);
+}
+
+static void init_groups()
+{
+    if ( !flowbits_hash or !flowbits_grp_hash )
+        return;
+
+    unsigned size = getFlowbitSizeInBytes();
+
+    for ( SFGHASH_NODE* n = sfghash_findfirst(flowbits_grp_hash);
+        n != NULL;
+        n= sfghash_findnext(flowbits_grp_hash) )
+    {
+        FLOWBITS_GRP* fbg = (FLOWBITS_GRP*)n->data;
+        boInitBITOP(&(fbg->GrpBitOp), size);
+        boResetBITOP(&(fbg->GrpBitOp));
+    }
+
+    while ( !op_list.empty() )
+    {
+        const FLOWBITS_OP* fbop = op_list.front();
+        FLOWBITS_GRP* fbg = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, fbop->group);
+        assert(fbg);
+
+        for ( int i = 0; i < fbop->num_ids; ++i )
+            update_group(fbg, fbop->ids[i]);
+
+        op_list.pop_front();
+    }
+}
+
 static void FlowBitsVerify(void)
 {
     SFGHASH_NODE* n;
@@ -1059,6 +1064,7 @@ static void FlowBitsVerify(void)
 
         num_flowbits++;
     }
+    assert(num_flowbits == flowbits_count);
 
     flowbits_toggle ^= 1;
 
@@ -1066,8 +1072,7 @@ static void FlowBitsVerify(void)
         return;
 
     LogLabel("flowbits");
-    LogCount("available", giFlowbitSize);
-    LogCount("used", num_flowbits);
+    LogCount("defined", num_flowbits);
     LogCount("not checked", unchecked);
     LogCount("not set", unset);
 }
@@ -1222,6 +1227,7 @@ static void flowbits_dtor(IpsOption* p)
 // FIXIT-M updating statics during reload is bad, mkay?
 static void flowbits_verify(SnortConfig*)
 {
+    init_groups();
     FlowBitsVerify();
 }
 

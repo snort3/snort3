@@ -73,7 +73,6 @@
 #include "flow/flow_control.h"
 #include "flow/session.h"
 #include "profiler.h"
-#include "fpdetect.h"
 #include "detection_util.h"
 #include "file_api/file_api.h"
 #include "tcp_module.h"
@@ -3733,20 +3732,15 @@ static void ProcessTcpStream(
     {
         if (p->dsize < config->max_consec_small_seg_size)
         {
-            /* check ignore_ports */
-            if ( !config->small_seg_ignore[p->ptrs.dp] )
+            rcv->small_seg_count++;
+
+            if (rcv->small_seg_count > config->max_consec_small_segs)
             {
-                rcv->small_seg_count++;
-
-                if (rcv->small_seg_count > config->max_consec_small_segs)
-                {
-                    /* Above threshold, log it...  in this TCP policy,
-                     * action controlled by preprocessor rule. */
-                    EventMaxSmallSegsExceeded();
-
-                    /* Reset counter, so we're not too noisy */
-                    rcv->small_seg_count = 0;
-                }
+                /* Above threshold, log it...  in this TCP policy,
+                 * action controlled by preprocessor rule. */
+                EventMaxSmallSegsExceeded();
+                 /* Reset counter, so we're not too noisy */
+                rcv->small_seg_count = 0;
             }
         }
     }

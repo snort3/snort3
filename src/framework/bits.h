@@ -22,9 +22,9 @@
 
 #include <bitset>
 
-typedef std::bitset<65536> PortList;
-typedef std::bitset<4096> VlanList;
-typedef std::bitset<256> ByteList;
+typedef std::bitset<65536> PortBitSet;
+typedef std::bitset<4096> VlanBitSet;
+typedef std::bitset<256> ByteBitSet;
 
 #endif
 

@@ -35,7 +35,7 @@
 #include "managers/module_manager.h"
 #include "protocols/packet_manager.h"
 #include "managers/codec_manager.h"
-#include "detection/fpcreate.h"
+#include "detection/fp_create.h"
 #include "filters/sfthreshold.h"
 #include "time/ppm.h"
 #include "time/profiler.h"

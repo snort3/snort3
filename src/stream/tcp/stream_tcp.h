@@ -22,7 +22,6 @@
 #include "flow/flow.h"
 #include "stream/stream_api.h"
 #include "protocols/packet.h"
-#include "framework/bits.h"
 
 struct StreamTcpConfig
 {
@@ -45,8 +44,6 @@ struct StreamTcpConfig
     int hs_timeout;
     int footprint;
     unsigned paf_max;
-
-    PortList small_seg_ignore;
 
     StreamTcpConfig();
 

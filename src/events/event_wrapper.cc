@@ -44,7 +44,7 @@
 #include "treenodes.h"
 #include "signature.h"
 #include "util.h"
-#include "fpdetect.h"
+#include "fp_detect.h"
 #include "snort_debug.h"
 #include "parser/parser.h"
 #include "event.h"

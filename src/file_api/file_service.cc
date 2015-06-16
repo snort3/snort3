@@ -42,7 +42,6 @@
 #include "managers/action_manager.h"
 #include "stream/stream_api.h"
 #include "detect.h"
-#include "fpdetect.h"
 #include "packet_io/active.h"
 #include "file_capture.h"
 #include "file_mime_process.h"

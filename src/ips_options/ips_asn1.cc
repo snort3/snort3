@@ -72,7 +72,6 @@
 #include "detection/detection_util.h"
 #include "detection/detection_defines.h"
 #include "profiler.h"
-#include "fpdetect.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/parameter.h"

@@ -52,7 +52,10 @@
 #include "utils/snort_bounds.h"
 #include "utils/util.h"
 #include "utils/sflsq.h"
-#include "utils/sfportobject.h"
+#include "ports/port_object.h"
+#include "ports/port_table.h"
+#include "ports/port_utils.h"
+#include "ports/rule_port_tables.h"
 #include "main/snort_config.h"
 #include "main/shell.h"
 #include "main/snort_debug.h"
@@ -60,7 +63,7 @@
 #include "detection/treenodes.h"
 #include "detection/rules.h"
 #include "detection/detect.h"
-#include "detection/fpcreate.h"
+#include "detection/fp_config.h"
 #include "detection/tag.h"
 #include "detection/sfrim.h"
 #include "protocols/packet.h"
@@ -182,7 +185,7 @@ static void finish_portlist_table(FastPatternConfig* fp, const char* s, PortTabl
 {
     PortTableSortUniqRules(pt);
 
-    if ( fpDetectGetDebugPrintRuleGroupsUnCompiled(fp) )
+    if (  fp->get_debug_print_rule_groups_uncompiled() )
     {
         LogMessage("***\n***Port-Table : %s Ports/Rules-UnCompiled\n",s);
         PortTablePrintInputEx(pt, rule_index_map_print_index);
@@ -190,7 +193,7 @@ static void finish_portlist_table(FastPatternConfig* fp, const char* s, PortTabl
 
     PortTableCompile(pt);
 
-    if ( fpDetectGetDebugPrintRuleGroupsCompiled(fp) )
+    if (  fp->get_debug_print_rule_groups_compiled() )
     {
         LogMessage("***\n***Port-Table : %s Ports/Rules-Compiled\n",s);
         PortTablePrintCompiledEx(pt, rule_index_map_print_index);
@@ -198,109 +201,10 @@ static void finish_portlist_table(FastPatternConfig* fp, const char* s, PortTabl
     }
 }
 
-static RulePortTables* PortTablesNew(void)
-{
-    RulePortTables* rpt =
-        (RulePortTables*)SnortAlloc(sizeof(RulePortTables));
-
-    /* No content rule objects */
-    rpt->tcp_nocontent = PortObjectNew();
-    if (rpt->tcp_nocontent == NULL)
-        ParseAbort("ParseRulesFile nocontent PortObjectNew() failed");
-    PortObjectAddPortAny(rpt->tcp_nocontent);
-
-    rpt->udp_nocontent = PortObjectNew();
-    if (rpt->udp_nocontent == NULL)
-        ParseAbort("ParseRulesFile nocontent PortObjectNew() failed");
-    PortObjectAddPortAny(rpt->udp_nocontent);
-
-    rpt->icmp_nocontent = PortObjectNew();
-    if (rpt->icmp_nocontent == NULL)
-        ParseAbort("ParseRulesFile nocontent PortObjectNew() failed");
-    PortObjectAddPortAny(rpt->icmp_nocontent);
-
-    rpt->ip_nocontent = PortObjectNew();
-    if (rpt->ip_nocontent == NULL)
-        ParseAbort("ParseRulesFile nocontent PortObjectNew() failed");
-    PortObjectAddPortAny(rpt->ip_nocontent);
-
-    /* Create the Any-Any Port Objects for each protocol */
-    rpt->tcp_anyany = PortObjectNew();
-    if (rpt->tcp_anyany == NULL)
-        ParseAbort("ParseRulesFile tcp any-any PortObjectNew() failed");
-    PortObjectAddPortAny(rpt->tcp_anyany);
-
-    rpt->udp_anyany = PortObjectNew();
-    if (rpt->udp_anyany == NULL)
-        ParseAbort("ParseRulesFile udp any-any PortObjectNew() failed");
-    PortObjectAddPortAny(rpt->udp_anyany);
-
-    rpt->icmp_anyany = PortObjectNew();
-    if (rpt->icmp_anyany == NULL)
-        ParseAbort("ParseRulesFile icmp any-any PortObjectNew() failed");
-    PortObjectAddPortAny(rpt->icmp_anyany);
-
-    rpt->ip_anyany = PortObjectNew();
-    if (rpt->ip_anyany == NULL)
-        ParseAbort("ParseRulesFile ip PortObjectNew() failed");
-    PortObjectAddPortAny(rpt->ip_anyany);
-
-    /* Create the tcp Rules PortTables */
-    rpt->tcp_src = PortTableNew();
-    if (rpt->tcp_src == NULL)
-        ParseAbort("ParseRulesFile tcp-src PortTableNew() failed");
-
-    rpt->tcp_dst = PortTableNew();
-    if (rpt->tcp_dst == NULL)
-        ParseAbort("ParseRulesFile tcp-dst PortTableNew() failed");
-
-    /* Create the udp Rules PortTables */
-    rpt->udp_src = PortTableNew();
-    if (rpt->udp_src == NULL)
-        ParseAbort("ParseRulesFile udp-src PortTableNew() failed");
-
-    rpt->udp_dst = PortTableNew();
-    if (rpt->udp_dst == NULL)
-        ParseAbort("ParseRulesFile udp-dst PortTableNew() failed");
-
-    /* Create the icmp Rules PortTables */
-    rpt->icmp_src = PortTableNew();
-    if (rpt->icmp_src == NULL)
-        ParseAbort("ParseRulesFile icmp-src PortTableNew() failed");
-
-    rpt->icmp_dst = PortTableNew();
-    if (rpt->icmp_dst == NULL)
-        ParseAbort("ParseRulesFile icmp-dst PortTableNew() failed");
-
-    /* Create the ip Rules PortTables */
-    rpt->ip_src = PortTableNew();
-    if (rpt->ip_src == NULL)
-        ParseAbort("ParseRulesFile ip-src PortTableNew() failed");
-
-    rpt->ip_dst = PortTableNew();
-    if (rpt->ip_dst == NULL)
-        ParseAbort("ParseRulesFile ip-dst PortTableNew() failed");
-
-    /*
-     * someday these could be read from snort.conf, something like...
-     * 'config portlist: large-rule-count <val>'
-     */
-    rpt->tcp_src->pt_lrc = DEFAULT_LARGE_RULE_GROUP;
-    rpt->tcp_dst->pt_lrc = DEFAULT_LARGE_RULE_GROUP;
-    rpt->udp_src->pt_lrc = DEFAULT_LARGE_RULE_GROUP;
-    rpt->udp_dst->pt_lrc = DEFAULT_LARGE_RULE_GROUP;
-    rpt->icmp_src->pt_lrc= DEFAULT_LARGE_RULE_GROUP;
-    rpt->icmp_dst->pt_lrc= DEFAULT_LARGE_RULE_GROUP;
-    rpt->ip_src->pt_lrc  = DEFAULT_LARGE_RULE_GROUP;
-    rpt->ip_dst->pt_lrc  = DEFAULT_LARGE_RULE_GROUP;
-
-    return rpt;
-}
-
 static void PortTablesFinish(RulePortTables* port_tables, FastPatternConfig* fp)
 {
     /* TCP-SRC */
-    if (fpDetectGetDebugPrintRuleGroupsCompiled(fp))
+    if ( fp->get_debug_print_rule_groups_compiled() )
     {
         LogMessage("*** TCP-Any-Any Port List\n");
         PortObjectPrintEx(port_tables->tcp_anyany,
@@ -311,7 +215,7 @@ static void PortTablesFinish(RulePortTables* port_tables, FastPatternConfig* fp)
     finish_portlist_table(fp, "tcp dst", port_tables->tcp_dst);
 
     /* UDP-SRC */
-    if (fpDetectGetDebugPrintRuleGroupsCompiled(fp))
+    if ( fp->get_debug_print_rule_groups_compiled() )
     {
         LogMessage("*** UDP-Any-Any Port List\n");
         PortObjectPrintEx(port_tables->udp_anyany,
@@ -322,7 +226,7 @@ static void PortTablesFinish(RulePortTables* port_tables, FastPatternConfig* fp)
     finish_portlist_table(fp, "udp dst", port_tables->udp_dst);
 
     /* ICMP-SRC */
-    if (fpDetectGetDebugPrintRuleGroupsCompiled(fp))
+    if ( fp->get_debug_print_rule_groups_compiled() )
     {
         LogMessage("*** ICMP-Any-Any Port List\n");
         PortObjectPrintEx(port_tables->icmp_anyany,
@@ -333,7 +237,7 @@ static void PortTablesFinish(RulePortTables* port_tables, FastPatternConfig* fp)
     finish_portlist_table(fp, "icmp dst", port_tables->icmp_dst);
 
     /* IP-SRC */
-    if (fpDetectGetDebugPrintRuleGroupsCompiled(fp))
+    if ( fp->get_debug_print_rule_groups_compiled() )
     {
         LogMessage("IP-Any-Any Port List\n");
         PortObjectPrintEx(port_tables->ip_anyany,
@@ -618,7 +522,7 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf)
 
     OtnInit(sc);
 
-    sc->fast_pattern_config = FastPatternConfigNew();
+    sc->fast_pattern_config = new FastPatternConfig();
     sc->event_queue_config = EventQueueConfigNew();
     sc->threshold_config = ThresholdConfigNew();
     sc->rate_filter_config = RateFilter_ConfigNew();
@@ -871,49 +775,6 @@ void FreeRuleLists(SnortConfig* sc)
     }
 
     sc->rule_lists = NULL;
-}
-
-void PortTablesFree(RulePortTables* port_tables)
-{
-    if (port_tables == NULL)
-        return;
-
-    if (port_tables->tcp_src)
-        PortTableFree(port_tables->tcp_src);
-    if (port_tables->tcp_dst)
-        PortTableFree(port_tables->tcp_dst);
-    if (port_tables->udp_src)
-        PortTableFree(port_tables->udp_src);
-    if (port_tables->udp_dst)
-        PortTableFree(port_tables->udp_dst);
-    if (port_tables->icmp_src)
-        PortTableFree(port_tables->icmp_src);
-    if (port_tables->icmp_dst)
-        PortTableFree(port_tables->icmp_dst);
-    if (port_tables->ip_src)
-        PortTableFree(port_tables->ip_src);
-    if (port_tables->ip_dst)
-        PortTableFree(port_tables->ip_dst);
-
-    if (port_tables->tcp_anyany)
-        PortObjectFree(port_tables->tcp_anyany);
-    if (port_tables->udp_anyany)
-        PortObjectFree(port_tables->udp_anyany);
-    if (port_tables->icmp_anyany)
-        PortObjectFree(port_tables->icmp_anyany);
-    if (port_tables->ip_anyany)
-        PortObjectFree(port_tables->ip_anyany);
-
-    if (port_tables->tcp_nocontent)
-        PortObjectFree(port_tables->tcp_nocontent);
-    if (port_tables->udp_nocontent)
-        PortObjectFree(port_tables->udp_nocontent);
-    if (port_tables->icmp_nocontent)
-        PortObjectFree(port_tables->icmp_nocontent);
-    if (port_tables->ip_nocontent)
-        PortObjectFree(port_tables->ip_nocontent);
-
-    free(port_tables);
 }
 
 void PrintRuleOrder(RuleListNode* rule_lists)

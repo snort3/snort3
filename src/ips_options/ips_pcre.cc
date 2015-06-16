@@ -38,7 +38,6 @@
 #include "sfhashfcn.h"
 #include "snort_config.h"
 #include "profiler.h"
-#include "fpdetect.h"
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "detection_util.h"

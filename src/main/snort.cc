@@ -73,8 +73,9 @@ using namespace std;
 #include "parser/cmd_line.h"
 #include "detection/tag.h"
 #include "detection/detect.h"
-#include "detection/fpcreate.h"
-#include "detection/fpdetect.h"
+#include "detection/fp_config.h"
+#include "detection/fp_create.h"
+#include "detection/fp_detect.h"
 #include "detection/detection_util.h"
 #include "filters/sfthreshold.h"
 #include "filters/rate_filter.h"
@@ -275,7 +276,8 @@ void Snort::init(int argc, char** argv)
     /* Need to do this after dynamic detection stuff is initialized, too */
     IpsManager::global_init(snort_conf);
 
-    MpseManager::activate_search_engine(snort_conf);
+    MpseManager::activate_search_engine(
+        snort_conf->fast_pattern_config->get_search_api(), snort_conf);
 
     SFAT_Start();
 
@@ -531,10 +533,10 @@ SnortConfig* Snort::get_reload_config()
         }
     }
 
-    if ( sc->fast_pattern_config->search_api !=
-        snort_conf->fast_pattern_config->search_api )
+    if ( sc->fast_pattern_config->get_search_api() !=
+        snort_conf->fast_pattern_config->get_search_api() )
     {
-        MpseManager::activate_search_engine(sc);
+        MpseManager::activate_search_engine(sc->fast_pattern_config->get_search_api(), sc);
     }
 
     reloading = false;

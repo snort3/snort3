@@ -128,19 +128,6 @@ static const ConvertMap asn1_api =
 const ConvertMap* asn1_map = &asn1_api;
 
 /*************************************************
- ****************  flowbits_size  ****************
- *************************************************/
-
-static const std::string flowbits_size = "flowbits_size";
-static const ConvertMap flowbits_size_api =
-{
-    flowbits_size,
-    config_int_ctor<& flowbits_size, & alerts>,
-};
-
-const ConvertMap* flowbits_size_map = &flowbits_size_api;
-
-/*************************************************
  *************  max_attribute_hosts  *************
  *************************************************/
 
