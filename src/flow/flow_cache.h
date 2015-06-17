@@ -20,16 +20,16 @@
 #ifndef FLOW_CACHE_H
 #define FLOW_CACHE_H
 
+#include "flow/flow_config.h"
 #include "flow/flow_key.h"
+#include "flow/memcap.h"
 #include "stream/stream.h"
 
 class FlowCache
 {
 public:
     FlowCache(
-        int max_flows,
-        uint32_t flow_timeout_min,
-        uint32_t flow_timeout_max,
+        const FlowConfig&,
         uint32_t cleanup_flows,
         uint32_t cleanup_percent);
 
@@ -50,24 +50,26 @@ public:
     int purge();
     int get_count();
 
-    uint32_t get_max_flows() { return max_flows; }
+    uint32_t get_max_flows() { return config.max_sessions; }
     uint32_t get_prunes() { return prunes; }
     void reset_prunes() { prunes = 0; }
 
     void unlink_uni(Flow*);
+
+    Memcap& get_memcap() { return memcap; }
 
 private:
     void link_uni(Flow*);
     int remove(Flow*);
 
 private:
-    uint32_t timeoutAggressive;
-    uint32_t timeoutNominal;
-    uint32_t max_flows;
+    const FlowConfig& config;
     uint32_t cleanup_flows;
     uint32_t prunes;
     uint32_t uni_count;
     uint32_t flags;
+
+    Memcap memcap;
 
     class ZHash* hash_table;
     Flow* uni_head, * uni_tail;

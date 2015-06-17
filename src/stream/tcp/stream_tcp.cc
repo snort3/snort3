@@ -63,7 +63,7 @@ StreamTcp::~StreamTcp()
 
 void StreamTcp::show(SnortConfig*)
 {
-    tcp_show(config);
+    TcpSession::show(config);
 }
 
 bool StreamTcp::configure(SnortConfig*)
@@ -123,12 +123,12 @@ Session* tcp_ssn(Flow* lws)
 
 void tcp_tinit()
 {
-    tcp_sinit();
+    TcpSession::sinit();
 }
 
 void tcp_tterm()
 {
-    tcp_sterm();
+    TcpSession::sterm();
     FlushBucket::clear();
 }
 

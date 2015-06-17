@@ -51,7 +51,6 @@ public:
     StreamModule();
 
     bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
 
     const PegInfo* get_pegs() const override;
     ProfileStats* get_profile() const override;
@@ -62,7 +61,7 @@ public:
     void reset_stats() override;
 
 private:
-    FlowConfig* proto;
+    StreamModuleConfig config;
 };
 
 extern void base_sum();

@@ -21,15 +21,8 @@
 #define FLOW_CONTROL_H
 
 #include "flow/flow.h"
+#include "flow/flow_config.h"
 #include "utils/stats.h"
-
-struct FlowConfig
-{
-    uint64_t mem_cap;
-    uint32_t max_sessions;
-    uint16_t cache_pruning_timeout;
-    uint16_t cache_nominal_timeout;
-};
 
 class FlowControl
 {
@@ -80,6 +73,8 @@ public:
     PegCount get_prunes(PktType);
     PegCount get_flows(PktType);
     void clear_counts();
+
+    class Memcap& get_memcap(PktType);
 
 private:
     class FlowCache* get_cache(PktType);

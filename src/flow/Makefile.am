@@ -7,7 +7,9 @@ x_includedir = $(pkgincludedir)/flow
 
 x_include_HEADERS = \
 flow.h \
-flow_key.h
+flow_config.h \
+flow_key.h \
+memcap.h
 
 libflow_a_SOURCES = \
 flow.cc \

@@ -19,68 +19,59 @@
 // stream_module.cc author Russ Combs <rucombs@cisco.com>
 
 #include "stream_module.h"
+#include "stream/stream.h"
 
 #include <string>
 using namespace std;
-
-#include "stream/stream.h"
-
-static constexpr unsigned K = 1024;
-
-static StreamModuleConfig stream_cfg =
-{
-    // bytes, #, sec, sec
-    { 8*K,  16*K, 30, 180 },  // ip
-    { 8*K,  32*K, 30, 180 },  // icmp
-    { 8*K, 128*K, 30, 180 },  // tcp
-    { 8*K,  64*K, 30, 180 },  // udp
-    { 8*K,   8*K, 30, 180 },  // user
-    { 8*K,   4*K, 30, 180 },  // file
-};
 
 //-------------------------------------------------------------------------
 // stream module
 //-------------------------------------------------------------------------
 
-static const Parameter proto_params[] =
-{
-    { "memcap", Parameter::PT_INT, "0:", "0",
-      "maximum cache memory" },
+#define CACHE_PARAMS(name, ssn, mem, prune, idle) \
+static const Parameter name[] = \
+{ \
+    { "max_sessions", Parameter::PT_INT, "1:", ssn, \
+      "maximum simultaneous sessions tracked before pruning" }, \
+ \
+    { "memcap", Parameter::PT_INT, "0:", mem, \
+      "maximum cache memory before pruning (0 is unlimited)" }, \
+ \
+    { "pruning_timeout", Parameter::PT_INT, "1:", prune, \
+      "minimum inactive time before being eligible for pruning" }, \
+ \
+    { "idle_timeout", Parameter::PT_INT, "1:", idle, \
+      "maximum inactive time before retiring session tracker" }, \
+ \
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr } \
+}
 
-    { "idle_timeout", Parameter::PT_INT, "1:", "60",
-      "maximum inactive time before retiring session tracker" },
+CACHE_PARAMS(ip_params,    "16384",  "23920640", "30", "180");
+CACHE_PARAMS(icmp_params,  "32768",   "1048576", "30", "180");
+CACHE_PARAMS(tcp_params,  "131072", "268435456", "30", "180");
+CACHE_PARAMS(udp_params,   "65536",         "0", "30", "180");
+CACHE_PARAMS(user_params,   "1024",   "1048576", "30", "180");
+CACHE_PARAMS(file_params,   " 128",         "0", "30", "180");
 
-    { "pruning_timeout", Parameter::PT_INT, "1:", "30",
-      "minimum inactive time before being eligible for pruning" },
-
-    { "max_sessions", Parameter::PT_INT, "0:", "262144",
-      "maximum simultaneous tcp sessions tracked before pruning" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
+#define CACHE_TABLE(cache, proto, params) \
+    { cache, Parameter::PT_TABLE, params, nullptr, \
+      "configure " proto " cache limits" }
 
 static const Parameter s_params[] =
 {
-    { "icmp_cache", Parameter::PT_TABLE, proto_params, nullptr,
-      "configure icmp cache limits" },
-
-    { "ip_cache", Parameter::PT_TABLE, proto_params, nullptr,
-      "configure ip cache limits" },
-
-    { "tcp_cache", Parameter::PT_TABLE, proto_params, nullptr,
-      "configure tcp cache limits" },
-
-    { "udp_cache", Parameter::PT_TABLE, proto_params, nullptr,
-      "configure udp cache limits" },
+    CACHE_TABLE("ip_cache",   "ip",   ip_params),
+    CACHE_TABLE("icmp_cache", "icmp", icmp_params),
+    CACHE_TABLE("tcp_cache",  "tcp",  tcp_params),
+    CACHE_TABLE("udp_cache",  "udp",  udp_params),
+    CACHE_TABLE("user_cache", "user", user_params),
+    CACHE_TABLE("file_cache", "file", file_params),
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 StreamModule::StreamModule() :
     Module(MOD_NAME, MOD_HELP, s_params)
-{
-    proto = &stream_cfg.ip_cfg;
-}
+{ }
 
 const PegInfo* StreamModule::get_pegs() const
 { return base_pegs; }
@@ -90,44 +81,47 @@ ProfileStats* StreamModule::get_profile() const
 
 const StreamModuleConfig* StreamModule::get_data()
 {
-    return &stream_cfg;
+    return &config;
 }
 
-bool StreamModule::set(const char*, Value& v, SnortConfig*)
+bool StreamModule::set(const char* fqn, Value& v, SnortConfig*)
 {
-    if ( v.is("memcap") )
-        proto->mem_cap = v.get_long();
+    FlowConfig* fc = nullptr;
 
-    else if ( v.is("max_sessions") )
-        proto->max_sessions = v.get_long();
+    if ( strstr(fqn, "ip_cache") )
+        fc = &config.ip_cfg;
 
-    else if ( v.is("pruning_timeout") )
-        proto->cache_pruning_timeout = v.get_long();
+    else if ( strstr(fqn, "icmp_cache") )
+        fc = &config.icmp_cfg;
 
-    else if ( v.is("idle_timeout") )
-        proto->cache_nominal_timeout = v.get_long();
+    else if ( strstr(fqn, "tcp_cache") )
+        fc = &config.tcp_cfg;
+
+    else if ( strstr(fqn, "udp_cache") )
+        fc = &config.udp_cfg;
+
+    else if ( strstr(fqn, "user_cache") )
+        fc = &config.user_cfg;
+
+    else if ( strstr(fqn, "file_cache") )
+        fc = &config.file_cfg;
 
     else
         return false;
 
-    return true;
-}
+    if ( v.is("memcap") )
+        fc->mem_cap = v.get_long();
 
-bool StreamModule::begin(const char* fqn, int, SnortConfig*)
-{
-    if ( !strcmp(fqn, "stream.tcp_cache") )
-        proto = &stream_cfg.tcp_cfg;
+    else if ( v.is("max_sessions") )
+        fc->max_sessions = v.get_long();
 
-    else if ( !strcmp(fqn, "stream.udp_cache") )
-        proto = &stream_cfg.udp_cfg;
+    else if ( v.is("pruning_timeout") )
+        fc->pruning_timeout = v.get_long();
 
-    else if ( !strcmp(fqn, "stream.icmp_cache") )
-        proto = &stream_cfg.icmp_cfg;
+    else if ( v.is("idle_timeout") )
+        fc->nominal_timeout = v.get_long();
 
-    else if ( !strcmp(fqn, "stream.ip_cache") )
-        proto = &stream_cfg.ip_cfg;
-
-    else if ( strcmp(fqn, "stream") )
+    else
         return false;
 
     return true;

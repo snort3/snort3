@@ -220,6 +220,13 @@ public:
     TcpTracker client;
     TcpTracker server;
 
+    static void set_memcap(class Memcap&);
+
+    static void sinit();
+    static void sterm();
+
+    static void show(StreamTcpConfig*);
+
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     int32_t ingress_index;  /* Index of the inbound interface. */
     int32_t egress_index;   /* Index of the outbound interface. */
@@ -237,8 +244,6 @@ public:
 private:
     int process_dis(Packet*);
 };
-
-void tcp_show(StreamTcpConfig*);
 
 #endif
 

@@ -30,6 +30,7 @@
 #include "flow/flow_control.h"
 #include "stream/stream_api.h"
 #include "time/profiler.h"
+#include "stream/tcp/tcp_session.h"
 
 //-------------------------------------------------------------------------
 // stats
@@ -179,7 +180,11 @@ void StreamBase::tinit()
     if ( config->ip_cfg.max_sessions )
     {
         if ( (f = InspectorManager::get_session((uint16_t)PktType::IP)) )
+        {
             flow_con->init_ip(config->ip_cfg, f);
+            // FIXIT-L update stream_ip to use standard memcap
+            //IpSession::set_memcap(flow_con->get_memcap(PktType::IP));
+        }
     }
     if ( config->icmp_cfg.max_sessions )
     {
@@ -189,7 +194,10 @@ void StreamBase::tinit()
     if ( config->tcp_cfg.max_sessions )
     {
         if ( (f = InspectorManager::get_session((uint16_t)PktType::TCP)) )
+        {
             flow_con->init_tcp(config->tcp_cfg, f);
+            TcpSession::set_memcap(flow_con->get_memcap(PktType::TCP));
+        }
     }
     if ( config->udp_cfg.max_sessions )
     {
@@ -199,7 +207,11 @@ void StreamBase::tinit()
     if ( config->user_cfg.max_sessions )
     {
         if ( (f = InspectorManager::get_session((uint16_t)PktType::USER)) )
+        {
             flow_con->init_user(config->user_cfg, f);
+            // FIXIT-L update stream_ip to use standard memcap
+            //UserSession::set_memcap(flow_con->get_memcap(PktType::USER));
+        }
     }
     if ( config->file_cfg.max_sessions )
     {

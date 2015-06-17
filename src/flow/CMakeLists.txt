@@ -2,7 +2,9 @@
 
 set (FLOW_INCLUDES
     flow.h
+    flow_config.h
     flow_key.h
+    memcap.h
 )
 
 add_library (flow STATIC

@@ -27,7 +27,6 @@
 #include "packet_io/active.h"
 #include "packet_time.h"
 #include "ips_options/ips_flowbits.h"
-#include "stream/stream.h"
 #include "hash/zhash.h"
 #include "main/snort_debug.h"
 
@@ -38,18 +37,11 @@
 //-------------------------------------------------------------------------
 
 FlowCache::FlowCache (
-    int max,
-    uint32_t flow_timeout_min,
-    uint32_t flow_timeout_max,
-    uint32_t cleanup_count,
-    uint32_t cleanup_percent)
+    const FlowConfig& cfg, uint32_t cleanup_count, uint32_t cleanup_percent) :
+    config(cfg), memcap(cfg.mem_cap)
 {
-    timeoutAggressive = flow_timeout_min;
-    timeoutNominal = flow_timeout_max;
-    max_flows = max;
-
     if (cleanup_percent)
-        cleanup_flows = max_flows * cleanup_percent/100;
+        cleanup_flows = config.max_sessions * cleanup_percent/100;
 
     else
         cleanup_flows = cleanup_count;
@@ -57,7 +49,7 @@ FlowCache::FlowCache (
     if ( !cleanup_flows )
         cleanup_flows = 1;
 
-    hash_table = new ZHash(max_flows, sizeof(FlowKey));
+    hash_table = new ZHash(config.max_sessions, sizeof(FlowKey));
     hash_table->set_keyops(FlowKey::hash, FlowKey::compare);
 
     uni_head = new Flow;
@@ -189,7 +181,7 @@ uint32_t FlowCache::prune_stale(uint32_t thetime, Flow* save_me)
             hash_table->touch();
         }
 
-        else if ((flow->last_data_seen + timeoutAggressive) < thetime)
+        else if ((flow->last_data_seen + config.pruning_timeout) < thetime)
         {
             DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "pruning stale flow\n"); );
             flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
@@ -214,7 +206,7 @@ uint32_t FlowCache::prune_unis()
 {
     // we may have many or few unis; need to find reasonable ratio
     // FIXIT-L max_uni should be based on typical ratios seen in perfmon
-    const uint32_t max_uni = (max_flows >> 2) + 1;
+    const uint32_t max_uni = (config.max_sessions >> 2) + 1;
 
     Flow* curr = uni_tail->prev;
     uint32_t pruned = 0;
@@ -242,14 +234,14 @@ uint32_t FlowCache::prune_excess(bool memCheck, Flow* save_me)
      * memcap or free enough flows to be able to create
      * new ones.
      */
-    const uint32_t max_cap = max_flows - cleanup_flows;
+    const uint32_t max_cap = config.max_sessions - cleanup_flows;
     uint32_t pruned = 0;
     Active::suspend();
 
     while (
         (hash_table->get_count() > 1) &&
         ((!memCheck && ((hash_table->get_count() > max_cap) || !pruned)) ||
-        (memCheck && tcp_memcap->at_max()) ))  // FIXIT-M remove explicit dependence on tcp_memcap
+        (memCheck && memcap.at_max()) ))
     {
         unsigned int blocks = 0;
         Flow* flow = (Flow*)hash_table->first();
@@ -297,7 +289,7 @@ void FlowCache::timeout(uint32_t flowCount, time_t cur_time)
 
     while ( flow && flowRetiredCount < flowCount && flowExaminedCount < flowMax )
     {
-        if ((time_t)(flow->last_data_seen + timeoutNominal) > cur_time)
+        if ((time_t)(flow->last_data_seen + config.nominal_timeout) > cur_time)
             break;
 
         flowExaminedCount++;

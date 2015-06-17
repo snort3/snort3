@@ -146,6 +146,14 @@ void FlowControl::clear_counts()
         cache->reset_prunes();
 }
 
+Memcap& FlowControl::get_memcap (PktType proto)
+{
+    static Memcap dummy;
+    FlowCache* cache = get_cache(proto);
+    assert(cache);  // FIXIT-L dummy is a hack
+    return cache ? cache->get_memcap() : dummy;
+}
+
 //-------------------------------------------------------------------------
 // cache foo
 //-------------------------------------------------------------------------
@@ -489,9 +497,7 @@ void FlowControl::init_ip(
     if ( !fc.max_sessions || !get_ssn )
         return;
 
-    ip_cache = new FlowCache(
-        fc.max_sessions, fc.cache_pruning_timeout,
-        fc.cache_nominal_timeout, 5, 0);
+    ip_cache = new FlowCache(fc, 5, 0);
 
     ip_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 
@@ -538,9 +544,7 @@ void FlowControl::init_icmp(
     if ( !fc.max_sessions || !get_ssn )
         return;
 
-    icmp_cache = new FlowCache(
-        fc.max_sessions, fc.cache_pruning_timeout,
-        fc.cache_nominal_timeout, 5, 0);
+    icmp_cache = new FlowCache(fc, 5, 0);
 
     icmp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 
@@ -590,9 +594,7 @@ void FlowControl::init_tcp(
     if ( !fc.max_sessions || !get_ssn )
         return;
 
-    tcp_cache = new FlowCache(
-        fc.max_sessions, fc.cache_pruning_timeout,
-        fc.cache_nominal_timeout, 5, 0);
+    tcp_cache = new FlowCache(fc, 5, 0);
 
     tcp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 
@@ -639,9 +641,7 @@ void FlowControl::init_udp(
     if ( !fc.max_sessions || !get_ssn )
         return;
 
-    udp_cache = new FlowCache(
-        fc.max_sessions, fc.cache_pruning_timeout,
-        fc.cache_nominal_timeout, 5, 0);
+    udp_cache = new FlowCache(fc, 5, 0);
 
     udp_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 
@@ -688,9 +688,7 @@ void FlowControl::init_user(
     if ( !fc.max_sessions || !get_ssn )
         return;
 
-    user_cache = new FlowCache(
-        fc.max_sessions, fc.cache_pruning_timeout,
-        fc.cache_nominal_timeout, 5, 0);
+    user_cache = new FlowCache(fc, 5, 0);
 
     user_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 
@@ -737,9 +735,7 @@ void FlowControl::init_file(
     if ( !fc.max_sessions || !get_ssn )
         return;
 
-    file_cache = new FlowCache(
-        fc.max_sessions, fc.cache_pruning_timeout,
-        fc.cache_nominal_timeout, 5, 0);
+    file_cache = new FlowCache(fc, 5, 0);
 
     file_mem = (Flow*)calloc(fc.max_sessions, sizeof(Flow));
 

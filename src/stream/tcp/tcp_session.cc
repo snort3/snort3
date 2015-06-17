@@ -82,6 +82,7 @@
 #include "protocols/eth.h"
 #include "network_inspectors/normalize/normalize.h"
 #include "filters/sfrf.h"
+#include "flow/memcap.h"
 
 using namespace tcp;
 
@@ -185,10 +186,6 @@ THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 #define PAWS_WINDOW         60
 #define PAWS_24DAYS         2073600         /* 24 days in seconds */
 
-/* for state transition queuing */
-#define CHK_SEQ         0
-#define NO_CHK_SEQ      1
-
 #define STREAM_UNALIGNED       0
 #define STREAM_ALIGNED         1
 
@@ -242,11 +239,6 @@ THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 #define STREAM_INSERT_TIMEOUT       2
 #define STREAM_INSERT_FAILED        3
 
-#define STREAM_DEFAULT_TCP_PACKET_MEMCAP  8388608  /* 8MB */
-#define STREAM_MIN_OVERLAP_LIMIT 0
-#define STREAM_MAX_OVERLAP_LIMIT 255
-#define STREAM_MAX_FLUSH_FACTOR 2048
-
 /* target-based policy types */
 // changes to this enum require changes to stream_api.h::TCP_POLICIES
 #define STREAM_POLICY_FIRST       1
@@ -280,28 +272,12 @@ THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 #define REASSEMBLY_POLICY_VISTA      13
 #define REASSEMBLY_POLICY_DEFAULT    REASSEMBLY_POLICY_BSD
 
-#define STREAM_MAX_MAX_WINDOW       0x3FFFc000 /* max window allowed by TCP */
-/* 65535 << 14 (max wscale) */
-#define STREAM_MIN_MAX_WINDOW       0
-
-#define MAX_PORTS_TO_PRINT      20
-
 #define STREAM_DEFAULT_MAX_QUEUED_BYTES 1048576 /* 1 MB */
-#define STREAM_MIN_MAX_QUEUED_BYTES 1024       /* Don't let this go below 1024 */
-#define STREAM_MAX_MAX_QUEUED_BYTES 0x40000000 /* 1 GB, most we could reach within
-                                            * largest window scale */
 #define AVG_PKT_SIZE            400
 #define STREAM_DEFAULT_MAX_QUEUED_SEGS (STREAM_DEFAULT_MAX_QUEUED_BYTES/AVG_PKT_SIZE)
-#define STREAM_MIN_MAX_QUEUED_SEGS  2          /* Don't let this go below 2 */
-#define STREAM_MAX_MAX_QUEUED_SEGS  0x40000000 /* 1 GB worth of one-byte segments */
 
 #define STREAM_DEFAULT_MAX_SMALL_SEG_SIZE 0    /* disabled */
-#define STREAM_MAX_MAX_SMALL_SEG_SIZE 2048     /* 2048 bytes in single packet, uh, not small */
-#define STREAM_MIN_MAX_SMALL_SEG_SIZE 0        /* 0 means disabled */
-
 #define STREAM_DEFAULT_CONSEC_SMALL_SEGS 0     /* disabled */
-#define STREAM_MAX_CONSEC_SMALL_SEGS 2048      /* 2048 single byte packets without acks is alot */
-#define STREAM_MIN_CONSEC_SMALL_SEGS 0         /* 0 means disabled */
 
 #define SUB_SYN_SENT  0x01
 #define SUB_ACK_SENT  0x02
@@ -1681,25 +1657,6 @@ static inline void UpdateSsn(
         snd->r_win_base = tdb->ack;
 
     snd->l_window = tdb->win;
-}
-
-void tcp_sinit()
-{
-    s5_pkt = PacketManager::encode_new();
-    tcp_memcap = new Memcap(26214400); // FIXIT-M replace with session memcap
-    //AtomSplitter::init();  // FIXIT-L PAF implement
-}
-
-void tcp_sterm()
-{
-    if (s5_pkt)
-    {
-        PacketManager::encode_delete(s5_pkt);
-        s5_pkt = nullptr;
-    }
-
-    delete tcp_memcap;
-    tcp_memcap = nullptr;
 }
 
 static inline void SetupTcpDataBlock(TcpDataBlock* tdb, Packet* p)
@@ -6603,7 +6560,27 @@ void TcpSession::start_proxy()
 // tcp module stuff
 //-------------------------------------------------------------------------
 
-void tcp_show(StreamTcpConfig* tcp_config)
+void TcpSession::set_memcap(Memcap& mc)
+{
+    tcp_memcap = &mc;
+}
+
+void TcpSession::sinit()
+{
+    s5_pkt = PacketManager::encode_new();
+    //AtomSplitter::init();  // FIXIT-L PAF implement
+}
+
+void TcpSession::sterm()
+{
+    if (s5_pkt)
+    {
+        PacketManager::encode_delete(s5_pkt);
+        s5_pkt = nullptr;
+    }
+}
+
+void TcpSession::show(StreamTcpConfig* tcp_config)
 {
     StreamPrintTcpConfig(tcp_config);
 }
