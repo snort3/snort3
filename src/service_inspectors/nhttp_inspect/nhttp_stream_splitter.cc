@@ -88,10 +88,14 @@ void NHttpStreamSplitter::chunk_spray(NHttpFlowData* session_data, uint8_t* buff
                 curr_state = CHUNK_HCRLF;
             else if (data[k] == ';')
                 curr_state = CHUNK_OPTIONS;
+            else if (is_sp_tab[data[k]])
+                curr_state = CHUNK_WHITESPACE;
             else
                 expected = expected * 16 + as_hex[data[k]];
             break;
         case CHUNK_OPTIONS:
+        case CHUNK_WHITESPACE:
+            // No practical difference between white space and options in reassemble()
             if (data[k] == '\r')
                 curr_state = CHUNK_HCRLF;
             break;

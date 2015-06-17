@@ -45,8 +45,8 @@ enum SectionType { SEC_DISCARD = -9, SEC_ABORT = -8, SEC__NOTCOMPUTE=-4, SEC__NO
 enum ScanResult { SCAN_NOTFOUND, SCAN_FOUND, SCAN_FOUND_PIECE, SCAN_DISCARD, SCAN_ABORT };
 
 // State machine for chunk parsing
-enum ChunkState { CHUNK_ZEROS, CHUNK_NUMBER, CHUNK_OPTIONS, CHUNK_HCRLF, CHUNK_DATA, CHUNK_DCRLF1,
-    CHUNK_DCRLF2, CHUNK_BAD };
+enum ChunkState { CHUNK_ZEROS, CHUNK_NUMBER, CHUNK_WHITESPACE, CHUNK_OPTIONS, CHUNK_HCRLF,
+    CHUNK_DATA, CHUNK_DCRLF1, CHUNK_DCRLF2, CHUNK_BAD };
 
 // List of possible HTTP versions. Version 0.9 omitted because 0.9 predates creation of the
 // HTTP/X.Y token. There would never be a message with "HTTP/0.9"
@@ -141,6 +141,7 @@ enum Infraction
     INF_CHUNK_NO_LENGTH,
     INF_CHUNK_BAD_END,
     INF_PARTIAL_START,
+    INF_CHUNK_WHITESPACE,
     INF__MAX_VALUE
 };
 
@@ -220,6 +221,7 @@ enum EventSid
     EVENT_URI_BAD_FORMAT,
     EVENT_URI_BAD_PORT,
     EVENT_BROKEN_CHUNK,
+    EVENT_CHUNK_WHITESPACE,
     EVENT__MAX_VALUE
 };
 

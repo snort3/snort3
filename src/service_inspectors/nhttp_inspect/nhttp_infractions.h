@@ -43,9 +43,11 @@ public:
     friend bool operator&(const NHttpInfractions& lhs, const NHttpInfractions& rhs)
         { return (lhs.infractions & rhs.infractions) != 0; }
 
-    // The following method is for convenience of debug and test output only!
+    // The following methods are for convenience of debug and test output only!
     uint64_t get_raw() const { return
         (infractions & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
+    uint64_t get_raw2() const { return
+        ((infractions >> 64) & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
 
 private:
     static const int MAX = NHttpEnums::INF__MAX_VALUE;

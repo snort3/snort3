@@ -45,9 +45,11 @@ public:
         }
     }
 
-    // The following method is for convenience of debug and test output only!
+    // The following methods are for convenience of debug and test output only!
     uint64_t get_raw() const { return
         (events_generated & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
+    uint64_t get_raw2() const { return
+        ((events_generated >> 64) & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
 
 private:
     static const int MAX = NHttpEnums::EVENT__MAX_VALUE;

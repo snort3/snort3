@@ -57,8 +57,8 @@ void NHttpMsgSection::print_message_title(FILE* output, const char* title) const
 
 void NHttpMsgSection::print_message_wrapup(FILE* output)
 {
-    fprintf(output, "Infractions: %" PRIx64 ", Events: %" PRIx64 ", TCP Close: %s\n",
-        infractions.get_raw(), events.get_raw(), tcp_close ? "True" : "False");
+    fprintf(output, "Infractions: %016" PRIx64 " %016" PRIx64 ", Events: %016" PRIx64 " %016" PRIx64 ", TCP Close: %s\n",
+        infractions.get_raw2(), infractions.get_raw(), events.get_raw2(), events.get_raw(), tcp_close ? "True" : "False");
     for (unsigned k=1; k < HTTP_BUFFER_MAX; k++)
     {
         get_legacy(k).print(output, http_buffer_name[k]);

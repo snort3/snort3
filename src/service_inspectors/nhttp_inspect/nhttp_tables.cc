@@ -313,6 +313,7 @@ const RuleMap NHttpModule::nhttp_events[] =
     { EVENT_URI_BAD_FORMAT,             "URI badly formatted" },
     { EVENT_URI_BAD_PORT,               "URI bad port number" },
     { EVENT_BROKEN_CHUNK,               "HTTP chunk misformatted" },
+    { EVENT_CHUNK_WHITESPACE,           "White space following chunk length" },
     { 0, nullptr }
 };
 

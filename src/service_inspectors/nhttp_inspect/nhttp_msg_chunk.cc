@@ -37,7 +37,7 @@ void NHttpMsgChunk::gen_events() { }
 
 void NHttpMsgChunk::print_section(FILE* output)
 {
-    NHttpMsgSection::print_message_title(output, "chunk");
+    NHttpMsgSection::print_message_title(output, "chunked body");
     fprintf(output, "Cumulative octets %" PRIi64 "\n", body_octets);
     data.print(output, "Data");
     NHttpMsgSection::print_message_wrapup(output);

@@ -228,6 +228,13 @@ ScanResult NHttpChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 curr_state = CHUNK_HCRLF;
                 break;
             }
+            if (is_sp_tab[buffer[k]])
+            {
+                infractions += INF_CHUNK_WHITESPACE;
+                events.create_event(EVENT_CHUNK_WHITESPACE);
+                curr_state = CHUNK_WHITESPACE;
+                break;
+            }
             if (buffer[k] == ';')
             {
                 infractions += INF_CHUNK_OPTIONS;
@@ -248,6 +255,28 @@ ScanResult NHttpChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             {
                 // overflow protection: must fit into 32 bits
                 infractions += INF_CHUNK_TOO_LARGE;
+                events.create_event(EVENT_BROKEN_CHUNK);
+                curr_state = CHUNK_BAD;
+                break;
+            }
+            break;
+        case CHUNK_WHITESPACE:
+            if (buffer[k] == '\r')
+            {
+                curr_state = CHUNK_HCRLF;
+                break;
+            }
+            if (buffer[k] == ';')
+            {
+                infractions += INF_CHUNK_OPTIONS;
+                events.create_event(EVENT_CHUNK_OPTIONS);
+                curr_state = CHUNK_OPTIONS;
+                break;
+            }
+            if (!is_sp_tab[buffer[k]])
+            {
+                // illegal character present in chunk length
+                infractions += INF_CHUNK_BAD_CHAR;
                 events.create_event(EVENT_BROKEN_CHUNK);
                 curr_state = CHUNK_BAD;
                 break;
