@@ -1,6 +1,13 @@
-Pending - build 158
+15/06/19 - build 158
 
--- nhttp g updates
+-- nhttp splitter updates
+-- nhttp handle white space after chunk length
+-- refactor of fpcreate
+-- refactor sfportobject into ports/*
+-- delete flowbits_size, refactor bitop foo
+-- rename PortList to PortBitSet etc. to avoid confusion
+-- fix ssl assertion
+-- cleanup cache config
 
 15/06/11 - build 157
 
