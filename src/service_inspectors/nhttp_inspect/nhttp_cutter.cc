@@ -22,7 +22,7 @@
 using namespace NHttpEnums;
 
 ScanResult NHttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
-    NHttpInfractions& infractions, NHttpEventGen& events)
+    NHttpInfractions& infractions, NHttpEventGen& events, uint32_t, uint32_t)
 {
     for (uint32_t k = 0; k < length; k++)
     {
@@ -120,7 +120,7 @@ NHttpStartCutter::ValidationResult NHttpStatusCutter::validate(uint8_t octet)
 }
 
 ScanResult NHttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
-    NHttpInfractions& infractions, NHttpEventGen& events)
+    NHttpInfractions& infractions, NHttpEventGen& events, uint32_t, uint32_t)
 {
     // Header separators: leading \r\n, leading \n, nonleading \r\n\r\n, nonleading \n\r\n,
     // nonleading \r\n\n, and nonleading \n\n. The separator itself becomes num_excess which is
@@ -172,13 +172,14 @@ ScanResult NHttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
     return SCAN_NOTFOUND;
 }
 
-ScanResult NHttpBodyCutter::cut(const uint8_t*, uint32_t, NHttpInfractions&, NHttpEventGen&)
+ScanResult NHttpBodyCutter::cut(const uint8_t*, uint32_t, NHttpInfractions&, NHttpEventGen&,
+    uint32_t flow_target, uint32_t flow_max)
 {
     assert(remaining > 0);
 
-    // The normal body section size is about 16K. But if there are only 24K or less remaining we
-    // take the whole thing rather than leave a small final section.
-    if (remaining <= FINAL_BLOCK_SIZE)
+    // The normal body section size is flow_target. But if there are only flow_max or less
+    // remaining we take the whole thing rather than leave a small final section.
+    if (remaining <= flow_max)
     {
         num_flush = remaining;
         remaining = 0;
@@ -187,14 +188,14 @@ ScanResult NHttpBodyCutter::cut(const uint8_t*, uint32_t, NHttpInfractions&, NHt
     else
     {
         // FIXIT-M need to implement random increments
-        num_flush = DATA_BLOCK_SIZE;
+        num_flush = flow_target;
         remaining -= num_flush;
         return SCAN_FOUND_PIECE;
     }
 }
 
 ScanResult NHttpChunkCutter::cut(const uint8_t* buffer, uint32_t length,
-    NHttpInfractions& infractions, NHttpEventGen& events)
+    NHttpInfractions& infractions, NHttpEventGen& events, uint32_t flow_target, uint32_t)
 {
     if (new_section)
     {
@@ -325,14 +326,14 @@ ScanResult NHttpChunkCutter::cut(const uint8_t* buffer, uint32_t length,
         case CHUNK_DATA:
           {
             uint32_t skip_amount = (length-k <= expected) ? length-k : expected;
-            skip_amount = (skip_amount <= DATA_BLOCK_SIZE-data_seen) ? skip_amount :
-                DATA_BLOCK_SIZE-data_seen;
+            skip_amount = (skip_amount <= flow_target-data_seen) ? skip_amount :
+                flow_target-data_seen;
             k += skip_amount - 1;
             if ((expected -= skip_amount) == 0)
             {
                 curr_state = CHUNK_DCRLF1;
             }
-            if ((data_seen += skip_amount) == DATA_BLOCK_SIZE)
+            if ((data_seen += skip_amount) == flow_target)
             {
                 // FIXIT-M need to randomize slice point
                 data_seen = 0;
@@ -368,10 +369,10 @@ ScanResult NHttpChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             break;
         case CHUNK_BAD:
             uint32_t skip_amount = length-k;
-            skip_amount = (skip_amount <= DATA_BLOCK_SIZE-data_seen) ? skip_amount :
-                DATA_BLOCK_SIZE-data_seen;
+            skip_amount = (skip_amount <= flow_target-data_seen) ? skip_amount :
+                flow_target-data_seen;
             k += skip_amount - 1;
-            if ((data_seen += skip_amount) == DATA_BLOCK_SIZE)
+            if ((data_seen += skip_amount) == flow_target)
             {
                 // FIXIT-M need to randomize slice point
                 data_seen = 0;

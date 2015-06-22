@@ -82,6 +82,7 @@ void NHttpMsgHeader::update_flow()
         // Chunked body
         session_data->type_expected[source_id] = SEC_CHUNK;
         session_data->body_octets[source_id] = 0;
+        session_data->section_size_target[source_id] = DATA_BLOCK_SIZE;
         session_data->infractions[source_id].reset();
         session_data->events[source_id].reset();
     }
@@ -93,6 +94,8 @@ void NHttpMsgHeader::update_flow()
         session_data->data_length[source_id] = *(int64_t*)get_header_value_norm(
             HEAD_CONTENT_LENGTH).start;
         session_data->body_octets[source_id] = 0;
+        session_data->section_size_target[source_id] = DATA_BLOCK_SIZE;
+        session_data->section_size_max[source_id] = FINAL_BLOCK_SIZE;
         session_data->infractions[source_id].reset();
         session_data->events[source_id].reset();
     }

@@ -35,7 +35,8 @@ class NHttpCutter
 public:
     virtual ~NHttpCutter() = default;
     virtual NHttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
-        NHttpInfractions& infractions, NHttpEventGen& events) = 0;
+        NHttpInfractions& infractions, NHttpEventGen& events, uint32_t flow_target,
+        uint32_t flow_max) = 0;
     uint32_t get_num_flush() const { return num_flush; }
     uint32_t get_octets_seen() const { return octets_seen; }
     virtual uint32_t get_num_excess() const { return 0; }
@@ -55,7 +56,7 @@ class NHttpStartCutter : public NHttpCutter
 {
 public:
     NHttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
-        NHttpInfractions& infractions, NHttpEventGen& events) override;
+        NHttpInfractions& infractions, NHttpEventGen& events, uint32_t, uint32_t) override;
     uint32_t get_num_excess() const override { return (num_flush > 0) ? num_crlf : 0; }
 
 protected:
@@ -85,7 +86,7 @@ class NHttpHeaderCutter : public NHttpCutter
 {
 public:
     NHttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
-        NHttpInfractions& infractions, NHttpEventGen& events) override;
+        NHttpInfractions& infractions, NHttpEventGen& events, uint32_t, uint32_t) override;
     uint32_t get_num_excess() const override { return (num_flush > 0) ? num_crlf : 0; }
     uint32_t get_num_head_lines() const override { return num_head_lines; }
 
@@ -99,8 +100,8 @@ class NHttpBodyCutter : public NHttpCutter
 public:
     explicit NHttpBodyCutter(int64_t expected_length) : remaining(expected_length)
         { assert(remaining > 0); }
-    NHttpEnums::ScanResult cut(const uint8_t*, uint32_t, NHttpInfractions&, NHttpEventGen&)
-        override;
+    NHttpEnums::ScanResult cut(const uint8_t*, uint32_t, NHttpInfractions&, NHttpEventGen&,
+        uint32_t flow_target, uint32_t flow_max) override;
 
 private:
     int64_t remaining;
@@ -110,7 +111,8 @@ class NHttpChunkCutter : public NHttpCutter
 {
 public:
     NHttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
-        NHttpInfractions& infractions, NHttpEventGen& events) override;
+        NHttpInfractions& infractions, NHttpEventGen& events, uint32_t flow_target, uint32_t)
+        override;
     bool get_is_broken_chunk() const { return curr_state == NHttpEnums::CHUNK_BAD; }
     uint32_t get_num_good_chunks() const { return num_good_chunks; }
 

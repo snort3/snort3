@@ -56,6 +56,7 @@ void NHttpMsgChunk::update_flow()
     else
     {
         session_data->body_octets[source_id] = body_octets;
+        session_data->section_size_target[source_id] = DATA_BLOCK_SIZE;
         session_data->infractions[source_id] = infractions;
         session_data->events[source_id] = events;
     }

@@ -70,6 +70,8 @@ void NHttpFlowData::half_reset(SourceId source_id)
     }
     data_length[source_id] = STAT_NOTPRESENT;
     body_octets[source_id] = STAT_NOTPRESENT;
+    section_size_target[source_id] = 0;
+    section_size_max[source_id] = 0;
     infractions[source_id].reset();
     events[source_id].reset();
 }

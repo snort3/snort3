@@ -59,21 +59,21 @@ private:
 
     // 0 element refers to client request, 1 element refers to server response
 
-    // StreamSplitter internal data - scan()
+    // *** StreamSplitter internal data - scan()
     NHttpCutter* cutter[2] = { nullptr, nullptr };
 
-    // StreamSplitter internal data - reassemble()
+    // *** StreamSplitter internal data - reassemble()
     uint8_t* section_buffer[2] = { nullptr, nullptr };
     uint32_t chunk_offset[2] = { 0, 0 };
     NHttpEnums::ChunkState chunk_state[2] = { NHttpEnums::CHUNK_NUMBER, NHttpEnums::CHUNK_NUMBER };
     uint32_t chunk_expected_length[2] = { 0, 0 };
 
-    // StreamSplitter internal data - scan() => reassemble()
+    // *** StreamSplitter internal data - scan() => reassemble()
     uint32_t num_excess[2] = { 0, 0 };
     bool is_broken_chunk[2] = { false, false };
     uint32_t num_good_chunks[2] = { 0, 0 };
 
-    // StreamSplitter => Inspector (facts about the most recent message section)
+    // *** StreamSplitter => Inspector (facts about the most recent message section)
     NHttpEnums::SectionType section_type[2] = { NHttpEnums::SEC__NOTCOMPUTE,
                                                 NHttpEnums::SEC__NOTCOMPUTE };
     bool tcp_close[2] = { false, false };
@@ -82,13 +82,14 @@ private:
     int32_t num_head_lines[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
     uint32_t flush_size[2] = { 0, 0 };
 
-    // Inspector => StreamSplitter (facts about the message section that is coming next)
+    // *** Inspector => StreamSplitter (facts about the message section that is coming next)
     NHttpEnums::SectionType type_expected[2] = { NHttpEnums::SEC_REQUEST, NHttpEnums::SEC_STATUS };
-
     // length of the data from Content-Length field
     int64_t data_length[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
+    uint32_t section_size_target[2] = { 0, 0 };
+    uint32_t section_size_max[2] = { 0, 0 };
 
-    // Inspector's internal data about the current message
+    // *** Inspector's internal data about the current message
     NHttpEnums::VersionId version_id[2] = { NHttpEnums::VERS__NOTPRESENT,
                                             NHttpEnums::VERS__NOTPRESENT };
     NHttpEnums::MethodId method_id = NHttpEnums::METH__NOTPRESENT;

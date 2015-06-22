@@ -208,7 +208,8 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
     }
     const uint32_t max_length = MAX_OCTETS - cutter->get_octets_seen();
     const ScanResult cut_result = cutter->cut(data, (length <= max_length) ? length :
-        max_length, session_data->infractions[source_id], session_data->events[source_id]);
+        max_length, session_data->infractions[source_id], session_data->events[source_id],
+        session_data->section_size_target[source_id], session_data->section_size_max[source_id]);
     switch (cut_result)
     {
     case SCAN_NOTFOUND:
