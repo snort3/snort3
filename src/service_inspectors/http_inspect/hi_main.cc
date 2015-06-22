@@ -653,11 +653,12 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                 if (hsd->mime_ssn)
                 {
                     uint8_t* end = ( uint8_t*)(p->data) + p->dsize;
-                    file_api->process_mime_data(p, p->data, end, hsd->mime_ssn, 1, false);
+                    file_api->process_mime_data(p->flow, p->data, end, hsd->mime_ssn, 1,
+                        SNORT_FILE_POSITION_UNKNOWN);
                 }
                 else if (file_api->get_file_processed_size(p->flow) >0)
                 {
-                    file_api->file_process(p, (uint8_t*)p->data, p->dsize, getFilePoistion(p),
+                    file_api->file_process(p->flow, (uint8_t*)p->data, p->dsize, getFilePoistion(p),
                         true, false);
                 }
             }
@@ -785,11 +786,13 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
 
                         end = (uint8_t*)(session->client.request.post_raw +
                             session->client.request.post_raw_size);
-                        file_api->process_mime_data(p, start, end, hsd->mime_ssn, 1, false);
+                        file_api->process_mime_data(p->flow, start, end, hsd->mime_ssn, 1,
+                            SNORT_FILE_POSITION_UNKNOWN);
                     }
                     else
                     {
-                        if (file_api->file_process(p,(uint8_t*)session->client.request.post_raw,
+                        if (file_api->file_process(p->flow,
+                            (uint8_t*)session->client.request.post_raw,
                             (uint16_t)session->client.request.post_raw_size,
                             getFilePoistion(p), true, false))
                         {
@@ -821,11 +824,13 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                 if (hsd->mime_ssn)
                 {
                     uint8_t* end = ( uint8_t*)(p->data) + p->dsize;
-                    file_api->process_mime_data(p, p->data, end, hsd->mime_ssn, 1, false);
+                    file_api->process_mime_data(p->flow, p->data, end, hsd->mime_ssn, 1,
+                        SNORT_FILE_POSITION_UNKNOWN);
                 }
                 else if (file_api->get_file_processed_size(p->flow) >0)
                 {
-                    file_api->file_process(p, (uint8_t*)p->data, p->dsize, getFilePoistion(p),
+                    file_api->file_process(p->flow, (uint8_t*)p->data, p->dsize,
+                        getFilePoistion(p),
                         true, false);
                 }
             }
@@ -1074,7 +1079,8 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                 }
 
                 if (p->has_paf_payload()
-                    && file_api->file_process(p,(uint8_t*)session->server.response.body,
+                    && file_api->file_process(p->flow,
+                    (uint8_t*)session->server.response.body,
                     (uint16_t)session->server.response.body_size,
                     getFilePoistion(p), false, false))
                 {

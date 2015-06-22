@@ -410,7 +410,7 @@ static inline void setup_decode(const char* data, int size, bool cnt_xf, MimeSta
  * @return  i       index into p->payload where we stopped looking at data
  */
 static const uint8_t* process_mime_header(
-    Packet* p, const uint8_t* ptr,
+    const uint8_t* ptr,
     const uint8_t* data_end_marker, MimeState* mime_ssn)
 {
     const uint8_t* eol = data_end_marker;
@@ -555,7 +555,7 @@ static const uint8_t* process_mime_header(
 
         if (mime_ssn->methods && mime_ssn->methods->handle_header_line)
         {
-            int ret = mime_ssn->methods->handle_header_line(mime_ssn->config, p, ptr, eol, max_header_name_len,
+            int ret = mime_ssn->methods->handle_header_line(mime_ssn->config, ptr, eol, max_header_name_len,
                 mime_ssn);
             if (ret < 0)
                 return NULL;
@@ -690,7 +690,7 @@ static const uint8_t* GetDataEnd(const uint8_t* data_start,
  * @param   i index into p->payload buffer to start looking at data
  * @return  i index into p->payload where we stopped looking at data
  */
-static const uint8_t* process_mime_body(Packet*, const uint8_t* ptr,
+static const uint8_t* process_mime_body(const uint8_t* ptr,
     const uint8_t* data_end, MimeState* mime_ssn, bool is_data_end)
 {
     Email_DecodeState* decode_state = (Email_DecodeState*)(mime_ssn->decode_state);
@@ -745,15 +745,14 @@ static void reset_mime_state(MimeState* mime_ssn)
  *
  * This should be called when mime data is available
  */
-const uint8_t* process_mime_data_paf(void* packet, const uint8_t* start, const uint8_t* end,
+const uint8_t* process_mime_data_paf(Flow* flow, const uint8_t* start, const uint8_t* end,
     MimeState* mime_ssn, bool upload, FilePosition position)
 {
-    Packet* p = (Packet*)packet;
     bool done_data = false;
 
     if (mime_ssn->methods && mime_ssn->methods->is_end_of_data)
     {
-        done_data = mime_ssn->methods->is_end_of_data(p->flow);
+        done_data = mime_ssn->methods->is_end_of_data(flow);
     }
 
     /* if we've just entered the data state, check for a dot + end of line
@@ -776,7 +775,7 @@ const uint8_t* process_mime_data_paf(void* packet, const uint8_t* start, const u
                  * and dot to alt buffer */
                 if (mime_ssn->methods && mime_ssn->methods->normalize_data)
                 {
-                    if (mime_ssn->methods->normalize_data(mime_ssn->config, p, start, end) < 0)
+                    if (mime_ssn->methods->normalize_data(mime_ssn->config, start, end) < 0)
                         return NULL;
                 }
 
@@ -818,14 +817,14 @@ const uint8_t* process_mime_data_paf(void* packet, const uint8_t* start, const u
         }
 #endif
 
-        start = process_mime_header(p, start, end, mime_ssn);
+        start = process_mime_header(start, end, mime_ssn);
         if (start == NULL)
             return NULL;
     }
 
     if (mime_ssn->methods && mime_ssn->methods->normalize_data)
     {
-        if (mime_ssn->methods->normalize_data(mime_ssn->config, p, start, end) < 0)
+        if (mime_ssn->methods->normalize_data(mime_ssn->config, start, end) < 0)
             return NULL;
     }
     /* now we shouldn't have to worry about copying any data to the alt buffer
@@ -837,11 +836,11 @@ const uint8_t* process_mime_data_paf(void* packet, const uint8_t* start, const u
         {
         case STATE_MIME_HEADER:
             DEBUG_WRAP(DebugMessage(DEBUG_FILE, "MIME HEADER STATE ~~~~~~~~~~~~~~~~~~~~~~\n"); );
-            start = process_mime_header(p, start, end, mime_ssn);
+            start = process_mime_header(start, end, mime_ssn);
             break;
         case STATE_DATA_BODY:
             DEBUG_WRAP(DebugMessage(DEBUG_FILE, "DATA BODY STATE ~~~~~~~~~~~~~~~~~~~~~~~~\n"); );
-            start = process_mime_body(p, start, end, mime_ssn, isFileEnd(position) );
+            start = process_mime_body(start, end, mime_ssn, isFileEnd(position) );
             break;
         }
     }
@@ -860,11 +859,11 @@ const uint8_t* process_mime_data_paf(void* packet, const uint8_t* start, const u
         }
 
         /*Process file type/file signature*/
-        if (file_api->file_process(p, (uint8_t*)ds->decodePtr,
+        if (file_api->file_process(flow, (uint8_t*)ds->decodePtr,
             (uint16_t)ds->decoded_bytes, position, upload, false)
             && (isFileStart(position))&& mime_ssn->log_state)
         {
-            set_file_name_from_log(&(mime_ssn->log_state->file_log), p->flow);
+            set_file_name_from_log(&(mime_ssn->log_state->file_log), flow);
         }
         ResetDecodedBytes((Email_DecodeState*)(mime_ssn->decode_state));
     }
@@ -875,7 +874,7 @@ const uint8_t* process_mime_data_paf(void* packet, const uint8_t* start, const u
     {
         reset_mime_state(mime_ssn);
         if (mime_ssn->methods && mime_ssn->methods->reset_state)
-            mime_ssn->methods->reset_state(p->flow);
+            mime_ssn->methods->reset_state(flow);
     }
 
     return end;
@@ -886,23 +885,21 @@ const uint8_t* process_mime_data_paf(void* packet, const uint8_t* start, const u
  *   *
  *    * This should be called when mime data is available
  *     */
-const uint8_t* process_mime_data(void* packet, const uint8_t* start,
-    const uint8_t* data_end_marker, MimeState* mime_ssn, bool upload, bool paf_enabled)
+const uint8_t* process_mime_data(Flow* flow, const uint8_t* start,
+    const uint8_t* data_end_marker, MimeState* mime_ssn, bool upload, FilePosition position)
 {
     const uint8_t* attach_start = start;
     const uint8_t* attach_end;
-    Packet* p = (Packet*)packet;
-    FilePosition position = SNORT_FILE_START;
 
-    if (paf_enabled)
+    if (position != SNORT_FILE_POSITION_UNKNOWN)
     {
-        position = file_api->get_file_position(p);
-        process_mime_data_paf(packet, attach_start, data_end_marker,
+        //FilePosition position = file_api->get_file_position(p);
+        process_mime_data_paf(flow, attach_start, data_end_marker,
             mime_ssn, upload, position);
         return data_end_marker;
     }
 
-    initFilePosition(&position, file_api->get_file_processed_size(p->flow));
+    initFilePosition(&position, file_api->get_file_processed_size(flow));
     /* look for boundary */
     while (start < data_end_marker)
     {
@@ -911,7 +908,7 @@ const uint8_t* process_mime_data(void* packet, const uint8_t* start,
         {
             attach_end = start;
             finalFilePosition(&position);
-            process_mime_data_paf(packet, attach_start, attach_end,
+            process_mime_data_paf(flow, attach_start, attach_end,
                 mime_ssn, upload, position);
             position = SNORT_FILE_START;
             attach_start = start + 1;
@@ -922,8 +919,8 @@ const uint8_t* process_mime_data(void* packet, const uint8_t* start,
 
     if ((start == data_end_marker) && (attach_start < data_end_marker))
     {
-        updateFilePosition(&position, file_api->get_file_processed_size(p->flow));
-        process_mime_data_paf(packet, attach_start, data_end_marker,
+        updateFilePosition(&position, file_api->get_file_processed_size(flow));
+        process_mime_data_paf(flow, attach_start, data_end_marker,
             mime_ssn, upload, position);
     }
 

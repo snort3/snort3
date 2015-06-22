@@ -73,7 +73,7 @@ int FileSession::process(Packet* p)
     MODULE_PROFILE_START(file_ssn_stats);
 
     StreamFileConfig* c = get_file_cfg(p->flow->ssn_server);
-    file_api->file_process(p, (uint8_t*)p->data, p->dsize, position(p), c->upload, false);
+    file_api->file_process(p->flow, (uint8_t*)p->data, p->dsize, position(p), c->upload, false);
     set_file_data((uint8_t*)p->data, p->dsize);
 
     MODULE_PROFILE_END(file_ssn_stats);

@@ -77,7 +77,7 @@ File_signature_callback_func file_signature_cb = NULL;
 Log_file_action_func log_file_action = NULL;
 
 /*Main File Processing functions */
-static int file_process(Packet* p, uint8_t* file_data, int data_size,
+static bool file_process(Flow* flow, uint8_t* file_data, int data_size,
     FilePosition position, bool upload, bool suspend_block_verdict);
 
 /*File properties*/
@@ -115,7 +115,7 @@ static uint32_t get_new_file_instance(Flow* flow);
 FileContext* create_file_context(Flow* flow);
 bool set_current_file_context(Flow* flow, FileContext* ctx);
 FileContext* get_main_file_context(Flow* flow);
-static int process_file_context(FileContext* ctx, Packet* p, uint8_t* file_data,
+static bool process_file_context(FileContext* ctx, Packet* p, uint8_t* file_data,
     int data_size, FilePosition position, bool suspend_block_verdict);
 static FilePosition get_file_position(Packet* pkt);
 static bool check_paf_abort(Flow* flow);
@@ -201,7 +201,6 @@ void init_fileAPI(void)
     fileAPI.set_current_file_context = &set_current_file_context;
     fileAPI.get_current_file_context = &get_current_file_context;
     fileAPI.get_main_file_context = &get_main_file_context;
-    fileAPI.process_file = &process_file_context;
     fileAPI.get_file_position = &get_file_position;
     fileAPI.reset_mime_paf_state = &reset_mime_paf_state;
     fileAPI.process_mime_paf_data = &process_mime_paf_data;
@@ -360,12 +359,11 @@ FileContext* create_file_context(Flow* flow)
     return context;
 }
 
-static inline FileContext* find_main_file_context(Packet* p, FilePosition position,
+static inline FileContext* find_main_file_context(Flow* flow, FilePosition position,
     bool upload)
 {
     FileContext* context = NULL;
-    Packet* pkt = (Packet*)p;
-    Flow* flow = pkt->flow;
+
     FileSession* file_session = get_file_session (flow);
 
     /* Attempt to get a previously allocated context. */
@@ -375,25 +373,14 @@ static inline FileContext* find_main_file_context(Packet* p, FilePosition positi
     if (context and ((position == SNORT_FILE_MIDDLE)or
                 (position == SNORT_FILE_END)))
         return context;
-    else if (context)
+    else if ((context) && (context->verdict != FILE_VERDICT_PENDING))
     {
-        /*Push file event when there is another file in the same packet*/
-        if (pkt->packet_flags & PKT_FILE_EVENT_SET)
-        {
-            SnortEventqLog(pkt);
-            SnortEventqReset();
-            pkt->packet_flags &= ~PKT_FILE_EVENT_SET;
-        }
-
-        if (context->verdict != FILE_VERDICT_PENDING)
-        {
-            /* Reuse the same context */
-            file_context_reset(context);
-            file_stats.files_total++;
-            init_file_context(flow, upload, context);
-            context->file_id = file_session->max_file_id++;
-            return context;
-        }
+        /* Reuse the same context */
+        file_context_reset(context);
+        file_stats.files_total++;
+        init_file_context(flow, upload, context);
+        context->file_id = file_session->max_file_id++;
+        return context;
     }
 
     context = create_file_context(flow);
@@ -539,6 +526,9 @@ static inline void _file_signature_lookup(FileContext* context,
     Packet* pkt, bool is_retransmit, bool suspend_block_verdict)
 {
     File_Verdict verdict = FILE_VERDICT_UNKNOWN;
+
+    if (!pkt)
+        return;
 
     if (file_signature_cb)
     {
@@ -716,22 +706,19 @@ static bool is_file_service_enabled()
 
 /*
  * Return:
- *    1: continue processing/log/block this file
- *    0: ignore this file
+ *    true: continue processing/log/block this file
+ *    false: ignore this file
  */
-static int process_file_context(FileContext* context, Packet* pkt, uint8_t* file_data,
-    int data_size, FilePosition position, bool suspend_block_verdict)
+static bool process_file_context(FileContext* context, Packet* pkt, Flow* flow, uint8_t* file_data,
+        int data_size, FilePosition position, bool suspend_block_verdict)
 {
     if ( FileConfig::trace_stream )
     {
         DumpHex(stdout, file_data, data_size);
-        DEBUG_WRAP(DebugMessage(DEBUG_FILE, "stream pointer %p\n", pkt->flow); );
     }
 
-    Flow* flow = pkt->flow;
-
     if (!context)
-        return 0;
+        return false;
 
     set_current_file_context(flow, context);
     file_stats.file_data_total += data_size;
@@ -739,7 +726,7 @@ static int process_file_context(FileContext* context, Packet* pkt, uint8_t* file
     if ((!context->file_type_enabled)and (!context->file_signature_enabled))
     {
         updateFileSize(context, data_size, position);
-        return 0;
+        return false;
     }
 
     /* if file config is changed, update it*/
@@ -754,11 +741,11 @@ static int process_file_context(FileContext* context, Packet* pkt, uint8_t* file
         context->file_type_context = NULL;
     }
 
-    if (check_http_partial_content(pkt))
+    if (pkt and check_http_partial_content(pkt))
     {
         context->file_type_enabled = false;
         context->file_signature_enabled = false;
-        return 0;
+        return false;
     }
 
     /*file type id*/
@@ -775,12 +762,12 @@ static int process_file_context(FileContext* context, Packet* pkt, uint8_t* file
             context->file_signature_enabled = false;
             updateFileSize(context, data_size, position);
             file_capture_stop(context);
-            return 0;
+            return false;
         }
 
         if (context->file_type_id != SNORT_FILE_TYPE_CONTINUE)
         {
-            if (file_type_cb)
+            if (pkt and file_type_cb)
             {
                 verdict = file_type_cb(pkt, pkt->flow, context->file_type_id,
                     context->upload, context->file_id);
@@ -796,7 +783,6 @@ static int process_file_context(FileContext* context, Packet* pkt, uint8_t* file
             file_eventq_add(GENERATOR_FILE_TYPE, context->file_type_id,
                 RULE_TYPE__ALERT);
             context->file_signature_enabled = false;
-            pkt->packet_flags |= PKT_FILE_EVENT_SET;
         }
         else if (verdict == FILE_VERDICT_BLOCK)
         {
@@ -804,17 +790,21 @@ static int process_file_context(FileContext* context, Packet* pkt, uint8_t* file
                 RULE_TYPE__DROP);
             updateFileSize(context, data_size, position);
             context->file_signature_enabled = false;
-            add_file_to_block(pkt, verdict, context->file_type_id, NULL);
+            if (pkt)
+                add_file_to_block(pkt, verdict, context->file_type_id, NULL);
             return 1;
         }
         else if (verdict == FILE_VERDICT_REJECT)
         {
             file_eventq_add(GENERATOR_FILE_TYPE, context->file_type_id,
                 RULE_TYPE__DROP);
-            ActionManager::queue_reject(pkt);
-            updateFileSize(context, data_size, position);
-            context->file_signature_enabled = false;
-            add_file_to_block(pkt, verdict, context->file_type_id, NULL);
+            if (pkt)
+            {
+                ActionManager::queue_reject(pkt);
+                updateFileSize(context, data_size, position);
+                context->file_signature_enabled = false;
+                add_file_to_block(pkt, verdict, context->file_type_id, NULL);
+            }
             return 1;
         }
         else if (verdict == FILE_VERDICT_STOP)
@@ -860,29 +850,29 @@ static int process_file_context(FileContext* context, Packet* pkt, uint8_t* file
     {
         updateFileSize(context, data_size, position);
     }
-    return 1;
+    return true;
 }
 
 /*
  * Return:
- *    1: continue processing/log/block this file
- *    0: ignore this file
+ *    true: continue processing/log/block this file
+ *    false: ignore this file
  */
-static int file_process(Packet* p, uint8_t* file_data, int data_size,
+static bool file_process(Flow* flow, uint8_t* file_data, int data_size,
     FilePosition position, bool upload, bool suspend_block_verdict)
 {
     FileContext* context;
-
+    Packet* p = NULL;
     /* if both disabled, return immediately*/
     if (!is_file_service_enabled())
-        return 0;
+        return false;
 
     if (position == SNORT_FILE_POSITION_UNKNOWN)
-        return 0;
+        return false;
 
-    context = find_main_file_context(p, position, upload);
+    context = find_main_file_context(flow, position, upload);
 
-    return process_file_context(context, p, file_data, data_size, position,
+    return process_file_context(context, p, flow, file_data, data_size, position,
         suspend_block_verdict);
 }
 

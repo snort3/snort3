@@ -180,10 +180,10 @@ struct MimeDataPafInfo
     MimeBoundaryState boundary_state;
 };
 
-typedef int (*Handle_header_line_func)(void* conf, void* pkt, const uint8_t* ptr,
+typedef int (*Handle_header_line_func)(void* conf, const uint8_t* ptr,
     const uint8_t* eol, int
     max_header_len, void* mime_ssn);
-typedef int (*Normalize_data_func)(void* conf, void* pkt, const uint8_t* ptr,
+typedef int (*Normalize_data_func)(void* conf, const uint8_t* ptr,
     const uint8_t* data_end);
 typedef void (*Decode_alert_func)(void* decode_state);
 typedef void (*Reset_state_func)(void* ssn);
@@ -240,8 +240,8 @@ typedef File_Verdict (*File_signature_callback_func)(Packet* p, Flow* flow,
 typedef void (*Log_file_action_func)(Flow* flow, int action);
 
 // FIXIT-L constify file_data et al
-typedef int (*File_process_func)(
-    Packet* p, uint8_t* file_data, int data_size, FilePosition,
+typedef bool (*File_process_func)(
+    Flow* flow, uint8_t* file_data, int data_size, FilePosition,
     bool upload, bool suspend_block_verdict);
 
 typedef int (*Get_file_name_func)(Flow* flow, uint8_t** file_name, uint32_t* name_len);
@@ -271,9 +271,9 @@ typedef void (*Set_mime_log_config_defaults_func)(MAIL_LogConfig* log_config);
 typedef int (*Parse_mime_decode_args_func)(DecodeConfig* decode_conf, char* arg, const
     char* preproc_name);
 typedef void (*Check_decode_config_func)(DecodeConfig* decode_conf);
-typedef const uint8_t* (*Process_mime_data_func)(void* packet, const uint8_t* start, const
+typedef const uint8_t* (*Process_mime_data_func)(Flow* flow, const uint8_t* start, const
     uint8_t* end,
-    MimeState* mime_ssn, bool upload, bool paf_enabled);
+    MimeState* mime_ssn, bool upload, FilePosition position);
 typedef void (*Free_mime_session_func)(MimeState* mime_ssn);
 typedef bool (*Is_decoding_enabled_func)(DecodeConfig* decode_conf);
 typedef bool (*Is_decoding_conf_changed_func)(DecodeConfig* configNext, DecodeConfig* config,
@@ -302,9 +302,7 @@ typedef uint32_t (*Get_new_file_instance)(Flow*);
 typedef struct FileContext* (*Create_file_context_func)(Flow*);
 typedef struct FileContext* (*Get_file_context_func)(Flow*);
 typedef bool (*Set_file_context_func)(Flow*, FileContext*);
-typedef int (*Process_file_func)(FileContext* ctx, Packet* p,
-    uint8_t* file_data, int data_size, FilePosition position,
-    bool suspend_block_verdict);
+
 typedef int64_t (*Get_max_file_capture_size)(Flow* flow);
 
 typedef struct _file_api
@@ -348,8 +346,8 @@ typedef struct _file_api
      *    uint8_t **file_name: address for file name to be saved
      *    uint32_t *name_len: address to save file name length
      * Returns
-     *    1: file name available,
-     *    0: file name is unavailable
+     *    true: file name available,
+     *    false: file name is unavailable
      */
     Get_file_name_func get_file_name;
 
@@ -629,20 +627,6 @@ typedef struct _file_api
      */
     Get_file_context_func get_main_file_context;
 
-    /* Process file function, called by preprocessors that provides file data
-     *
-     * Arguments:
-     *    void* ctx: file context that will be processed
-     *    void* p: packet pointer
-     *    uint8_t* file_data: file data
-     *    int data_size: file data size
-     *    FilePosition: file position
-     *    bool suspend_block_verdict: used for smb to allow file pass
-     * Returns:
-     *    1: continue processing/log/block this file
-     *    0: ignore this file (no further processing needed)
-     */
-    Process_file_func process_file;
 
     /* Return a unique file instance number
      *

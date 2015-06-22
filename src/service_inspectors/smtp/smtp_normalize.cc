@@ -127,13 +127,13 @@ int SMTP_NormalizeCmd(Packet* p, const uint8_t* ptr, const uint8_t* eolm, const 
          * line into the alt buffer */
         if (!smtp_normalizing)
         {
-            ret = SMTP_CopyToAltBuffer(p, p->data, ptr - p->data);
+            ret = SMTP_CopyToAltBuffer(p->data, ptr - p->data);
             if (ret == -1)
                 return -1;
         }
 
         /* copy the command into the alt buffer */
-        ret = SMTP_CopyToAltBuffer(p, cmd_start, cmd_end - cmd_start);
+        ret = SMTP_CopyToAltBuffer(cmd_start, cmd_end - cmd_start);
         if (ret == -1)
             return -1;
 
@@ -141,17 +141,17 @@ int SMTP_NormalizeCmd(Packet* p, const uint8_t* ptr, const uint8_t* eolm, const 
         if (args_start != args_end)
         {
             /* copy a 'pure' space */
-            ret = SMTP_CopyToAltBuffer(p, space, 1);
+            ret = SMTP_CopyToAltBuffer(space, 1);
             if (ret == -1)
                 return -1;
 
-            ret = SMTP_CopyToAltBuffer(p, args_start, args_end - args_start);
+            ret = SMTP_CopyToAltBuffer(args_start, args_end - args_start);
             if (ret == -1)
                 return -1;
         }
 
         /* copy the end of line marker into the alt buffer */
-        ret = SMTP_CopyToAltBuffer(p, eolm, eol - eolm);
+        ret = SMTP_CopyToAltBuffer(eolm, eol - eolm);
         if (ret == -1)
             return -1;
     }
@@ -159,7 +159,7 @@ int SMTP_NormalizeCmd(Packet* p, const uint8_t* ptr, const uint8_t* eolm, const 
     {
         /* if we're already normalizing and didn't need to normalize this line, just
          * copy it into the alt buffer */
-        ret = SMTP_CopyToAltBuffer(p, ptr, eol - ptr);
+        ret = SMTP_CopyToAltBuffer(ptr, eol - ptr);
         if (ret == -1)
             return -1;
     }

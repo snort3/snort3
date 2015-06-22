@@ -96,7 +96,7 @@ void SMTP_ResetAltBuffer(void)
     DecodeBuf.len = 0;
 }
 
-int SMTP_CopyToAltBuffer(Packet* p, const uint8_t* start, int length)
+int SMTP_CopyToAltBuffer(const uint8_t* start, int length)
 {
     uint8_t* alt_buf;
     int alt_size;
@@ -119,7 +119,7 @@ int SMTP_CopyToAltBuffer(Packet* p, const uint8_t* start, int length)
 
     if (ret != SAFEMEM_SUCCESS)
     {
-        SetDetectLimit(p, 0);
+        //SetDetectLimit(p, 0);
         smtp_normalizing = 0;
         return -1;
     }

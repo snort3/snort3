@@ -63,8 +63,8 @@ int log_file_name(const uint8_t* start, int length, FILE_LogState* log_state, bo
 int set_log_buffers(MAIL_LogState** log_state, MAIL_LogConfig* conf);
 void init_mime(void);
 void free_mime(void);
-const uint8_t* process_mime_data(void *packet, const uint8_t *start, const uint8_t *end,
-                MimeState *mime_ssn, bool upload, bool paf_enabled);
+const uint8_t* process_mime_data(Flow *flow, const uint8_t *start, const uint8_t *end,
+                MimeState *mime_ssn, bool upload, FilePosition position);
 void free_mime_session(MimeState* mime_ssn);
 void finalize_mime_position(Flow* flow, void* decode_state, FilePosition* position);
 void reset_mime_paf_state(MimeDataPafInfo *data_info);

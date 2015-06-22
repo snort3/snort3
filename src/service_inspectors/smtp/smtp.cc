@@ -163,9 +163,9 @@ static void snort_smtp(SMTP_PROTO_CONF* GlobalConf, Packet* p);
 static void SMTP_ResetState(void*);
 void SMTP_DecodeAlert(void* ds);
 
-static int SMTP_HandleHeaderLine(void* conf, void* pkt, const uint8_t* ptr, const uint8_t* eol,
+static int SMTP_HandleHeaderLine(void* conf, const uint8_t* ptr, const uint8_t* eol,
     int max_header_len, void* ssn);
-static int SMTP_NormalizeData(void* conf, void* pkt, const uint8_t* ptr, const uint8_t* data_end);
+static int SMTP_NormalizeData(void* conf, const uint8_t* ptr, const uint8_t* data_end);
 
 MimeMethods smtp_mime_methods = { SMTP_HandleHeaderLine, SMTP_NormalizeData, SMTP_DecodeAlert,
                                   SMTP_ResetState, smtp_is_data_end };
@@ -912,7 +912,7 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
             /* if normalizing, copy line to alt buffer */
             if (smtp_normalizing)
             {
-                ret = SMTP_CopyToAltBuffer(p, ptr, eol - ptr);
+                ret = SMTP_CopyToAltBuffer(ptr, eol - ptr);
                 if (ret == -1)
                     return NULL;
             }
@@ -1133,7 +1133,7 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
     }
     else if (smtp_normalizing) /* Already normalizing */
     {
-        ret = SMTP_CopyToAltBuffer(p, ptr, eol - ptr);
+        ret = SMTP_CopyToAltBuffer(ptr, eol - ptr);
         if (ret == -1)
             return NULL;
     }
@@ -1141,33 +1141,32 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
     return eol;
 }
 
-static int SMTP_NormalizeData(void* conf, void* pkt, const uint8_t* ptr, const uint8_t* data_end)
+static int SMTP_NormalizeData(void* conf, const uint8_t* ptr, const uint8_t* data_end)
 {
-    Packet* p = (Packet*)pkt;
     SMTP_PROTO_CONF* config = (SMTP_PROTO_CONF*)conf;
 
     /* if we're ignoring data and not already normalizing, copy everything
      * up to here into alt buffer so detection engine doesn't have
      * to look at the data; otherwise, if we're normalizing and not
      * ignoring data, copy all of the data into the alt buffer */
-    if (config->decode_conf.ignore_data && !smtp_normalizing)
+    /*if (config->decode_conf.ignore_data && !smtp_normalizing)
     {
-        return SMTP_CopyToAltBuffer(p, p->data, ptr - p->data);
+        return SMTP_CopyToAltBuffer(p->data, ptr - p->data);
     }
-    else if (!config->decode_conf.ignore_data && smtp_normalizing)
+    else */
+    if (!config->decode_conf.ignore_data && smtp_normalizing)
     {
-        return SMTP_CopyToAltBuffer(p, ptr, data_end - ptr);
+        return SMTP_CopyToAltBuffer(ptr, data_end - ptr);
     }
 
     return 0;
 }
 
-static int SMTP_HandleHeaderLine(void* conf, void* pkt, const uint8_t* ptr, const uint8_t* eol,
+static int SMTP_HandleHeaderLine(void* conf, const uint8_t* ptr, const uint8_t* eol,
     int max_header_len, void* ssn)
 {
     int ret;
     int header_line_len;
-    Packet* p = (Packet*)pkt;
     SMTP_PROTO_CONF* config = (SMTP_PROTO_CONF*)conf;
     MimeState* mime_ssn = (MimeState*)ssn;
     /* get length of header line */
@@ -1194,7 +1193,7 @@ static int SMTP_HandleHeaderLine(void* conf, void* pkt, const uint8_t* ptr, cons
      * currently the code does not normalize headers */
     if (smtp_normalizing)
     {
-        ret = SMTP_CopyToAltBuffer(p, ptr, eol - ptr);
+        ret = SMTP_CopyToAltBuffer(ptr, eol - ptr);
         if (ret == -1)
             return (-1);
     }
@@ -1224,6 +1223,7 @@ static void SMTP_ProcessClientPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
     const uint8_t* ptr = p->data;
     const uint8_t* end = p->data + p->dsize;
 
+
     if (smtp_ssn->state == STATE_CONNECT)
     {
         smtp_ssn->state = STATE_COMMAND;
@@ -1231,6 +1231,7 @@ static void SMTP_ProcessClientPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
 
     while ((ptr != NULL) && (ptr < end))
     {
+        FilePosition position;
         switch (smtp_ssn->state)
         {
         case STATE_COMMAND:
@@ -1240,12 +1241,14 @@ static void SMTP_ProcessClientPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
         case STATE_DATA:
         case STATE_BDATA:
             DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"); );
-            ptr = file_api->process_mime_data(p, ptr, end, &(smtp_ssn->mime_ssn), 1, true);
+            position = file_api->get_file_position(p);
+            ptr = file_api->process_mime_data(p->flow, ptr, end, &(smtp_ssn->mime_ssn), 1,
+                position);
             //ptr = SMTP_HandleData(p, ptr, end, &(smtp_ssn->mime_ssn));
             break;
         case STATE_XEXCH50:
             if (smtp_normalizing)
-                SMTP_CopyToAltBuffer(p, ptr, end - ptr);
+                SMTP_CopyToAltBuffer(ptr, end - ptr);
             if (smtp_is_data_end (p->flow))
                 smtp_ssn->state = STATE_COMMAND;
             return;

@@ -71,7 +71,7 @@ static void FTPDataProcess(
 
     set_file_data((uint8_t*)p->data, p->dsize);
 
-    status = file_api->file_process(p, file_data, data_length,
+    status = file_api->file_process(p->flow, file_data, data_length,
         data_ssn->position, data_ssn->direction, false);
 
     /* Filename needs to be set AFTER the first call to file_process( ) */
