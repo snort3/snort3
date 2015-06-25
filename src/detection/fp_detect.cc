@@ -1033,8 +1033,10 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
 
             if ( Mpse* so = port_group->mpse[PM_TYPE_PKT] )
             {
-                if (p->data && p->dsize &&
-                    (p->is_cooked() or !gadget or !stream.is_paf_active(p->flow, true)) )
+                if (p->data && p->dsize /*&&
+                    // FIXIT-P this is a huge win but means that raw packets aren't
+                    // inspected if service reassembly is going on
+                    (p->is_cooked() or !gadget or !stream.is_paf_active(p->flow, true))*/ )
                 {
                     uint16_t pattern_match_size = p->dsize;
 
