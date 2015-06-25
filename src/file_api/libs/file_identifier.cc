@@ -339,7 +339,7 @@ uint32_t FileIdenfifier::find_file_type_id(const uint8_t* buf, int len, uint64_t
 {
     IdentifierNode* current;
     uint64_t end;
-    uint32_t file_type_id;
+    uint32_t file_type_id = SNORT_FILE_TYPE_CONTINUE;
 
     if ((!context)||(!buf)||(len <= 0))
         return 0;
@@ -347,7 +347,7 @@ uint32_t FileIdenfifier::find_file_type_id(const uint8_t* buf, int len, uint64_t
     if (!(*context))
         *context = (void*)(identifier_root);
 
-    current = (IdentifierNode*)context;
+    current = (IdentifierNode*)(*context);
 
     end = file_offset + len;
 

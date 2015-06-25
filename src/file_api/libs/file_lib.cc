@@ -314,6 +314,17 @@ uint8_t* FileContext::get_file_sig_sha256()
     return (sha256);
 }
 
+void FileContext::set_file_config(FileConfig* config)
+{
+    file_config = config;
+}
+
+FileConfig*  FileContext::get_file_config()
+{
+    return file_config;
+}
+
+
 const char* file_type_name(void* conf, uint32_t id)
 {
     FileMagicRule* info = NULL;

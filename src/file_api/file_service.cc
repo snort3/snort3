@@ -189,8 +189,6 @@ void FileAPIPostInit(void)
     if ( file_capture_enabled)
         FileCapture::init_mempool(file_config->file_capture_memcap,
             file_config->file_capture_block_size);
-
-    //file_sevice_reconfig_set(false);
 }
 
 static void start_file_processing(void)
@@ -450,6 +448,8 @@ static bool process_file_context(FileContext* context, Packet* pkt, Flow* flow, 
         return false;
     }
 
+    context->set_file_config(snort_conf->file_config);
+
     /*file type id*/
     if (context->is_file_type_enabled())
     {
@@ -557,10 +557,7 @@ static void enable_file_type(File_type_callback_func callback)
     if (!file_type_id_enabled)
     {
         file_type_id_enabled = true;
-        //  file_sevice_reconfig_set(true);
         start_file_processing();
-        // FIXIT-L snort++ does not yet output startup configuration
-        //LogMessage("File service: file type enabled.\n");
     }
 }
 
@@ -570,11 +567,7 @@ static void enable_file_signature(File_signature_callback_func callback)
     if (!file_signature_enabled)
     {
         file_signature_enabled = true;
-#ifdef SNORT_RELOAD
-        file_sevice_reconfig_set(true);
-#endif
         start_file_processing();
-        //LogMessage("File service: file signature enabled.\n");
     }
 }
 
@@ -584,11 +577,6 @@ static void enable_file_capture(File_signature_callback_func callback)
     if (!file_capture_enabled)
     {
         file_capture_enabled = true;
-#ifdef SNORT_RELOAD
-        file_sevice_reconfig_set(true);
-#endif
-        //LogMessage("File service: file capture enabled.\n");
-        /* Enable file signature*/
         enable_file_signature(callback);
     }
 }

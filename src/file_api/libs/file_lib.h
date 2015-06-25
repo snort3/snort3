@@ -94,6 +94,8 @@ public:
     uint8_t* get_file_sig_sha256();
     void set_file_id(uint32_t size);
     uint32_t get_file_id();
+    void set_file_config(FileConfig* file_config);
+    FileConfig*  get_file_config();
 
     void print_file_sha256();
     void print();
@@ -121,7 +123,6 @@ private:
 
     inline int get_data_size_from_depth_limit(FileProcessType type, int data_size);
     inline void finalize_file_type ();
-
 };
 
 const char* file_type_name(void* conf, uint32_t id);
