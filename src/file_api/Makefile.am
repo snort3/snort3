@@ -12,9 +12,8 @@ file_mime_config.cc file_mime_config.h \
 file_capture.cc file_capture.h \
 circular_buffer.cc circular_buffer.h \
 file_mempool.cc file_mempool.h \
-file_stats.cc file_stats.h \
-file_action.cc file_action.h
- 
+file_stats.cc file_stats.h 
+
 AM_CXXFLAGS = @AM_CXXFLAGS@
 
 SUBDIRS = libs

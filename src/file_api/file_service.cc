@@ -68,7 +68,6 @@ static bool file_type_id_enabled = false;
 static bool file_signature_enabled = false;
 static bool file_capture_enabled = false;
 static bool file_processing_initiated = false;
-static bool file_type_force = false;
 
 /*Main File Processing functions */
 static bool file_process(Flow* flow, uint8_t* file_data, int data_size,
@@ -76,22 +75,15 @@ static bool file_process(Flow* flow, uint8_t* file_data, int data_size,
 
 /*File properties*/
 static bool get_file_name(Flow* flow, uint8_t** file_name, uint32_t* name_size);
-static uint64_t get_file_size(Flow* flow);
 static uint64_t get_file_processed_size(Flow* flow);
-static bool get_file_direction(Flow* flow);
-static uint8_t* get_file_sig_sha256(Flow* flow);
 
 static void set_file_name(Flow* flow, uint8_t* file_name, uint32_t name_size);
-static void set_file_direction(Flow* flow, bool upload);
 
-static void set_file_policy_callback(File_policy_callback_func);
 static void enable_file_type(File_type_callback_func);
 static void enable_file_signature (File_signature_callback_func);
 static void enable_file_capture(File_signature_callback_func);
 
 static int64_t get_max_file_depth(void);
-
-static uint32_t str_to_hash(uint8_t* str, int length);
 
 static inline void finish_signature_lookup(FileContext* context);
 
@@ -145,13 +137,8 @@ void init_fileAPI(void)
     fileAPI.is_file_service_enabled = &is_file_service_enabled;
     fileAPI.file_process = &file_process;
     fileAPI.get_file_name = &get_file_name;
-    fileAPI.get_file_size = &get_file_size;
     fileAPI.get_file_processed_size = &get_file_processed_size;
-    fileAPI.get_file_direction = &get_file_direction;
-    fileAPI.get_sig_sha256 = &get_file_sig_sha256;
     fileAPI.set_file_name = &set_file_name;
-    fileAPI.set_file_direction = &set_file_direction;
-    fileAPI.set_file_policy_callback = &set_file_policy_callback;
     fileAPI.enable_file_type = &enable_file_type;
     fileAPI.enable_file_signature = &enable_file_signature;
     fileAPI.enable_file_capture = &enable_file_capture;
@@ -159,7 +146,6 @@ void init_fileAPI(void)
     fileAPI.set_log_buffers = &set_log_buffers;
     fileAPI.file_resume_block_add_file = &file_resume_block_add_file;
     fileAPI.file_resume_block_check = &file_resume_block_check;
-    fileAPI.str_to_hash = &str_to_hash;
     fileAPI.set_mime_decode_config_defauts = &set_mime_decode_config_defauts;
     fileAPI.set_mime_log_config_defauts = &set_mime_log_config_defauts;
     fileAPI.parse_mime_decode_args = &parse_mime_decode_args;
@@ -170,10 +156,6 @@ void init_fileAPI(void)
     fileAPI.is_decoding_conf_changed = &is_decoding_conf_changed;
     fileAPI.is_mime_log_enabled = &is_mime_log_enabled;
     fileAPI.finalize_mime_position = &finalize_mime_position;
-    fileAPI.reserve_file = &file_capture_reserve;
-    fileAPI.read_file = &file_capture_read;
-    fileAPI.release_file = &file_capture_release;
-    fileAPI.get_file_capture_size = &file_capture_size;
     fileAPI.get_file_type_id = &get_file_type_id;
     fileAPI.get_new_file_instance = &get_new_file_instance;
 
@@ -205,7 +187,7 @@ void FileAPIPostInit(void)
     }
 
     if ( file_capture_enabled)
-        file_capture_init_mempool(file_config->file_capture_memcap,
+        FileCapture::init_mempool(file_config->file_capture_memcap,
             file_config->file_capture_block_size);
 
     //file_sevice_reconfig_set(false);
@@ -225,7 +207,7 @@ void close_fileAPI(void)
 {
     file_resume_block_cleanup();
     free_mime();
-    file_caputure_close();
+    FileCapture::exit();
 }
 
 static inline FileSession* get_file_session(Flow* flow)
@@ -418,6 +400,16 @@ static uint32_t get_file_type_id(Flow* flow)
     return context->get_file_type();
 }
 
+static uint64_t get_file_processed_size(Flow* flow)
+{
+    FileContext* context = get_current_file_context(flow);
+
+    if ( !context )
+        return 0;
+
+    return context->get_processed_bytes();
+}
+
 static uint32_t get_new_file_instance(Flow* flow)
 {
     FileSession* file_session = get_file_session (flow);
@@ -469,7 +461,7 @@ static bool process_file_context(FileContext* context, Packet* pkt, Flow* flow, 
             context->config_file_type(false);
             context->config_file_signature(false);
             context->updateFileSize(data_size, position);
-            file_capture_stop(context);
+            context->stop_file_capture();
             return false;
         }
 
@@ -494,11 +486,9 @@ static bool process_file_context(FileContext* context, Packet* pkt, Flow* flow, 
             context->print_file_sha256();
 
         /*Fails to capture, when out of memory or size limit, need lookup*/
-        if (context->is_file_capture_enabled() and
-            file_capture_process(context, file_data, data_size, position))
+        if (context->is_file_capture_enabled())
         {
-            file_capture_stop(context);
-            return 1;
+            context->file_capture_process(file_data, data_size, position);
         }
     }
     else
@@ -539,7 +529,7 @@ static void set_file_name(Flow* flow, uint8_t* fname, uint32_t name_size)
     if (context)
         context->set_file_name(fname, name_size);
     if ( FileConfig::trace_type )
-        printFileContext(context);
+        context->print();
 }
 
 /* Return true: file name available,
@@ -657,45 +647,3 @@ static FilePosition get_file_position(Packet* pkt)
 
     return position;
 }
-
-static uint32_t str_to_hash(uint8_t* str, int length)
-{
-    uint32_t a,b,c,tmp;
-    int i,j,k,l;
-    a = b = c = 0;
-    for (i=0,j=0; i<length; i+=4)
-    {
-        tmp = 0;
-        k = length - i;
-        if (k > 4)
-            k=4;
-
-        for (l=0; l<k; l++)
-        {
-            tmp |= *(str + i + l) << l*8;
-        }
-
-        switch (j)
-        {
-        case 0:
-            a += tmp;
-            break;
-        case 1:
-            b += tmp;
-            break;
-        case 2:
-            c += tmp;
-            break;
-        }
-        j++;
-
-        if (j == 3)
-        {
-            mix(a,b,c);
-            j = 0;
-        }
-    }
-    final (a,b,c);
-    return c;
-}
-

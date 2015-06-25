@@ -54,8 +54,6 @@ extern FileStats file_stats;
 
 #define FILE_DEBUG_MSGS(msg) DEBUG_WRAP(DebugMessage(DEBUG_FILE, msg); )
 
-void printFileContext(FileContext* context);
-
 void print_file_stats();
 
 /*

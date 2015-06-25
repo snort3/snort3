@@ -289,10 +289,6 @@ typedef void (*Finalize_mime_position_func)(Flow* flow, void* decode_state,
     FilePosition* position);
 typedef File_Verdict (*Get_file_verdict_func)(Flow* flow);
 typedef void (*Render_block_verdict_func)(void* ctx, Packet* p);
-typedef FileCaptureState (*Reserve_file_func)(Flow* flow, FileCaptureInfo** file_mem);
-typedef FileCaptureInfo* (*Get_file_func)(FileCaptureInfo* file_mem, uint8_t** buff, int* size);
-typedef void (*Release_file_func)(FileCaptureInfo* data);
-typedef size_t (*File_capture_size_func)(FileCaptureInfo* file_mem);
 
 typedef bool (*Is_file_service_enabled)(void);
 typedef bool (*Check_paf_abort_func)(Flow* ssn);
@@ -525,65 +521,6 @@ typedef struct _file_api
     File_signature_lookup_func file_signature_lookup;
     Get_file_verdict_func get_file_verdict;
     Render_block_verdict_func render_block_verdict;
-    /*
-     * Preserve the file in memory until it is released
-     * This function must be called in packet processing thread
-     * Arguments:
-     *   void *ssnptr: session pointer
-     *   void **file_mem: the pointer to store the memory block
-     *       that stores file and its metadata.
-     *       It will set  NULL if no memory or fail to store
-     *
-     * Returns:
-     *   FileCaptureState:
-     *      FILE_CAPTURE_SUCCESS = 0,
-     *      FILE_CAPTURE_MIN,
-     *      FILE_CAPTURE_MAX,
-     *      FILE_CAPTURE_MEMCAP,
-     *      FILE_CAPTURE_FAIL
-     */
-    Reserve_file_func reserve_file;
-
-    /*
-     * Get the file that is reserved in memory. To get a full file,
-     * this function must be called iteratively until NULL is returned
-     * This function can be called in out of band thread
-     *
-     * Arguments:
-     *   void *file_mem: the memory block working on
-     *   uint8_t **buff: address to store buffer address
-     *   int *size: address to store size of file
-     *
-     * Returns:
-     *   the next memory block
-     *   If NULL: no memory or fail to get file
-     */
-    Get_file_func read_file;
-
-    /*
-     * Get the file size captured in the file buffer
-     * This function can be called in out of band thread
-     *
-     * Arguments:
-     *   void *file_mem: the first memory block of file buffer
-     *
-     * Returns:
-     *   the size of file
-     *   If 0: no memory or fail to read file
-     */
-    File_capture_size_func get_file_capture_size;
-
-    /*
-     * Release the file that is reserved in memory.
-     * This function can be called in out of band thread.
-     *
-     * Arguments:
-     *   void *data: the memory block that stores file and its metadata
-     *
-     * Returns:
-     *   None
-     */
-    Release_file_func release_file;
 
     /* Return the file rule id associated with a session.
      *

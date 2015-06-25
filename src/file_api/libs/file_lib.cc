@@ -163,6 +163,30 @@ void FileContext::file_signature_sha256_eval(const uint8_t* file_data, int size,
     }
 }
 
+FileCaptureState FileContext::file_capture_process(const uint8_t* file_data,
+    int data_size, FilePosition position)
+{
+    if (!file_capture)
+    {
+        file_capture = new FileCapture;
+    }
+
+    file_state.capture_state =
+        file_capture->file_capture_process(file_data, data_size, position);
+}
+
+void FileContext::stop_file_capture()
+{
+    if (file_capture)
+    {
+       delete file_capture;
+       file_capture = NULL;
+    }
+
+    file_capture_enabled = false;
+}
+
+
 void FileContext::updateFileSize(int data_size, FilePosition position)
 {
     processed_bytes += data_size;
@@ -255,6 +279,10 @@ uint64_t FileContext::get_file_size()
     return file_size;
 }
 
+uint64_t FileContext::get_processed_bytes()
+{
+    return processed_bytes;
+}
 void FileContext::set_file_id(uint32_t id)
 {
     file_id = id;
@@ -328,6 +356,58 @@ void FileContext::print_file_sha256()
         hash[20], hash[21], hash[22], hash[23],
         hash[24], hash[25], hash[26], hash[27],
         hash[28], hash[29], hash[30], hash[31]);
+}
+
+#define MAX_CONTEXT_INFO_LEN 1024
+void FileContext::print()
+{
+    char buf[MAX_CONTEXT_INFO_LEN + 1];
+    int unused;
+    char* cur = buf;
+    int used = 0;
+
+    unused = sizeof(buf) - 1;
+    used = snprintf(cur, unused, "File name: ");
+
+    if (used < 0)
+    {
+        printf("Fail to output file context\n");
+        return;
+    }
+    unused -= used;
+    cur += used;
+
+    if ((file_name_size > 0) && (unused > (int)file_name_size))
+    {
+        strncpy(cur, (char*)file_name, file_name_size);
+        unused -= file_name_size;
+        cur += file_name_size;
+    }
+
+    if (unused > 0)
+    {
+        used = snprintf(cur, unused, "\nFile type: %s(%d)",
+            file_type_name(file_config, file_type_id), file_type_id);
+        unused -= used;
+        cur += used;
+    }
+
+    if (unused > 0)
+    {
+        used = snprintf(cur, unused, "\nFile size: %u",
+            (unsigned int)file_size);
+        unused -= used;
+        cur += used;
+    }
+
+    if (unused > 0)
+    {
+        snprintf(cur, unused, "\nProcessed size: %u\n",
+            (unsigned int)processed_bytes);
+    }
+
+    buf[sizeof(buf) - 1] = '\0';
+    printf("%s", buf);
 }
 
 /**

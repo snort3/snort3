@@ -44,8 +44,6 @@ extern Log_file_action_func log_file_action;
 extern File_type_callback_func file_type_cb;
 extern File_signature_callback_func file_signature_cb;
 
-static FileState sig_file_state = { FILE_CAPTURE_SUCCESS, FILE_SIG_DONE };
-
 typedef struct _FileHashKey
 {
     sfip_t sip;
@@ -162,73 +160,6 @@ int file_resume_block_add_file(Packet* pkt, uint32_t file_sig, uint32_t timeout,
 static inline File_Verdict checkVerdict(Packet* p, FileNode* node, SFXHASH_NODE* hash_node)
 {
     File_Verdict verdict = FILE_VERDICT_UNKNOWN;
-
-    /*Query the file policy in case verdict has been changed
-      Check file type first*/
-    if (file_type_cb)
-    {
-        verdict = file_type_cb(p, p->flow, node->file_type_id, 0, DEFAULT_FILE_ID);
-    }
-
-    if ((verdict == FILE_VERDICT_UNKNOWN) ||
-        (verdict == FILE_VERDICT_STOP_CAPTURE))
-    {
-        if (file_signature_cb)
-        {
-            verdict = file_signature_cb(p, p->flow, node->sha256, 0,
-                &sig_file_state, 0, DEFAULT_FILE_ID);
-        }
-    }
-
-    if ((verdict == FILE_VERDICT_UNKNOWN) ||
-        (verdict == FILE_VERDICT_STOP_CAPTURE))
-    {
-        verdict = node->verdict;
-    }
-
-    if (verdict == FILE_VERDICT_LOG)
-    {
-        sfxhash_free_node(fileHash, hash_node);
-        if (log_file_action)
-        {
-            log_file_action(p->flow, FILE_RESUME_LOG);
-        }
-    }
-    else if (verdict == FILE_VERDICT_BLOCK)
-    {
-        Active::drop_packet(p, true);
-        Active::block_session(p);
-
-        if (log_file_action)
-        {
-            log_file_action(p->flow, FILE_RESUME_BLOCK);
-        }
-        node->verdict = verdict;
-    }
-    else if (verdict == FILE_VERDICT_REJECT)
-    {
-        Active::drop_packet(p, true);
-        Active::reset_session(p);
-
-        if (log_file_action)
-        {
-            log_file_action(p->flow, FILE_RESUME_BLOCK);
-        }
-        node->verdict = verdict;
-    }
-    else if (verdict == FILE_VERDICT_PENDING)
-    {
-        /*Take the cached verdict*/
-        Active::drop_packet(p, true);
-
-        if (FILE_VERDICT_REJECT == node->verdict)
-            ActionManager::queue_reject(p);
-        if (log_file_action)
-        {
-            log_file_action(p->flow, FILE_RESUME_BLOCK);
-        }
-        verdict = node->verdict;
-    }
 
     return verdict;
 }

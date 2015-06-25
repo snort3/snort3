@@ -37,7 +37,7 @@
 #define SNORT_FILE_TYPE_UNKNOWN          UINT16_MAX  /**/
 #define SNORT_FILE_TYPE_CONTINUE         0 /**/
 
-struct FileCaptureInfo;
+struct FileCapture;
 class FileConfig;
 
 
@@ -60,8 +60,6 @@ public:
         file_config(NULL),
         expires(0),
         file_capture(NULL),
-        current_data(NULL), /*current file data*/
-        current_data_len(0),
         verdict(FILE_VERDICT_UNKNOWN),
         suspend_block_verdict(false),
         file_state({FILE_CAPTURE_SUCCESS, FILE_SIG_PROCESSING}),
@@ -73,6 +71,8 @@ public:
     void file_type_eval(const uint8_t* file_data, int data_size, FilePosition position);
     void file_signature_sha256_eval(const uint8_t* file_data, int data_size, FilePosition pos);
     void updateFileSize(int data_size, FilePosition position);
+    void stop_file_capture();
+    FileCaptureState file_capture_process(const uint8_t* file_data, int data_size, FilePosition pos);
 
     uint32_t get_file_type();
     void config_file_type(bool enabled);
@@ -87,6 +87,7 @@ public:
     bool get_file_name( uint8_t** file_name, uint32_t* name_size);
     void set_file_size(uint64_t size);
     uint64_t get_file_size();
+    uint64_t get_processed_bytes();
     void set_file_direction(FileDirection dir);
     FileDirection get_file_direction();
     void set_file_sig_sha256(uint8_t* signature);
@@ -95,7 +96,7 @@ public:
     uint32_t get_file_id();
 
     void print_file_sha256();
-
+    void print();
 private:
     bool file_type_enabled;
     bool file_signature_enabled;
@@ -111,9 +112,7 @@ private:
     void* file_signature_context;
     FileConfig* file_config;
     time_t expires;
-    FileCaptureInfo *file_capture;
-    uint8_t *current_data;  /*current file data*/
-    uint32_t current_data_len;
+    FileCapture *file_capture;
     File_Verdict verdict;
     bool suspend_block_verdict;
     FileState file_state;

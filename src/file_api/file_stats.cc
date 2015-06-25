@@ -41,63 +41,6 @@
 
 FileStats file_stats;
 
-#define MAX_CONTEXT_INFO_LEN 1024
-void printFileContext(FileContext* context)
-{
-    char buf[MAX_CONTEXT_INFO_LEN + 1];
-    int unused;
-    char* cur = buf;
-    int used = 0;
-
-    if (!context)
-    {
-        printf("File context is NULL.\n");
-        return;
-    }
-    unused = sizeof(buf) - 1;
-    used = snprintf(cur, unused, "File name: ");
-
-    if (used < 0)
-    {
-        printf("Fail to output file context\n");
-        return;
-    }
-    unused -= used;
-    cur += used;
-
-    if ((context->file_name_size > 0) && (unused > (int)context->file_name_size))
-    {
-        strncpy(cur, (char*)context->file_name, context->file_name_size);
-        unused -= context->file_name_size;
-        cur += context->file_name_size;
-    }
-
-    if (unused > 0)
-    {
-        used = snprintf(cur, unused, "\nFile type: %s(%d)",
-            file_type_name(context->file_config, context->file_type_id), context->file_type_id);
-        unused -= used;
-        cur += used;
-    }
-
-    if (unused > 0)
-    {
-        used = snprintf(cur, unused, "\nFile size: %u",
-            (unsigned int)context->file_size);
-        unused -= used;
-        cur += used;
-    }
-
-    if (unused > 0)
-    {
-        snprintf(cur, unused, "\nProcessed size: %u\n",
-            (unsigned int)context->processed_bytes);
-    }
-
-    buf[sizeof(buf) - 1] = '\0';
-    printf("%s", buf);
-}
-
 void print_file_stats()
 {
     int i;
@@ -349,6 +292,6 @@ void print_file_stats()
     LogMessage("Total file signature max:          " FMTu64(
             "-10") " \n", file_stats.files_sig_depth);
 
-    file_capture_mem_usage();
+    FileCapture::file_capture_mem_usage();
 }
 
