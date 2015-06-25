@@ -76,7 +76,6 @@ struct DataBuffer
 
 extern SO_PUBLIC const char* http_buffer_name[HTTP_BUFFER_MAX];
 
-extern SO_PUBLIC THREAD_LOCAL DataPointer g_alt_data;
 extern SO_PUBLIC THREAD_LOCAL DataPointer g_file_data;
 
 #define SetDetectLimit(pktPtr, altLen) \
@@ -85,12 +84,6 @@ extern SO_PUBLIC THREAD_LOCAL DataPointer g_file_data;
 }
 
 #define IsLimitedDetect(pktPtr) (pktPtr->packet_flags & PKT_HTTP_DECODE)
-
-static inline void set_alt_data(uint8_t* p, unsigned n)
-{
-    g_alt_data.data = p;
-    g_alt_data.len = n;
-}
 
 static inline void set_file_data(uint8_t* p, unsigned n)
 {
@@ -110,7 +103,6 @@ static inline int EventTrace_IsEnabled(void)
 
 static inline void DetectReset()
 {
-    g_alt_data.len = 0;
     g_file_data.len = 0;
 }
 

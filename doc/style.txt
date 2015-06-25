@@ -84,6 +84,13 @@ yet firm so feedback is welcome to get something we can live with.
   didn't get updated and therefore won't get called due a change in the
   parent signature.
 
+* Use bool functions instead of int unless there is truly a need for
+  multiple error returns.  The C-style use of zero for success and -1 for
+  error is less readable and often leads to messy code that either ignores
+  the various errors anyway or needlessly and ineffectively tries to do
+  something aobut them.
+
+
 === Macros (aka defines)
 
 * In many cases, even in C++, use #define name "value" instead of a

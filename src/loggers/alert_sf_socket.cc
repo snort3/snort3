@@ -33,19 +33,19 @@
 #include <string>
 #include <vector>
 
-#include "snort_types.h"
+#include "main/snort_types.h"
+#include "main/snort_config.h"
+#include "main/snort_debug.h"
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "managers/event_manager.h"
+#include "detection/rules.h"
+#include "detection/treenodes.h"
+#include "events/event.h"
 #include "hash/sfghash.h"
-
-#include "event.h"
-#include "rules.h"
-#include "treenodes.h"
-#include "snort_debug.h"
-#include "util.h"
-#include "main/snort_config.h"
-#include "parser.h"
+#include "parser/parser.h"
+#include "target_based/snort_protocols.h"
+#include "utils/util.h"
 
 struct SfSock
 {
@@ -259,16 +259,11 @@ static OptTreeNode* OptTreeNode_Search(uint32_t, uint32_t sid)
     {
         otn = (OptTreeNode*)hashNode->data;
         rtn = getRuntimeRtnFromOtn(otn);
-        if (rtn)
+
+        if ( rtn and is_network_protocol(rtn->proto) )
         {
-            if ((rtn->proto == IPPROTO_TCP) || (rtn->proto == IPPROTO_UDP)
-                || (rtn->proto == IPPROTO_ICMP) || (rtn->proto == ETHERNET_TYPE_IP))
-            {
-                if (otn->sigInfo.id == sid)
-                {
-                    return otn;
-                }
-            }
+            if (otn->sigInfo.id == sid)
+                return otn;
         }
     }
 

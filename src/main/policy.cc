@@ -63,7 +63,7 @@ public:
     AltPktHandler() { };
 
     void handle(DataEvent& e, Flow*)
-    { Detect((Packet*)e.get_packet()); }  // FIXIT-L not const!
+    { snort_detect((Packet*)e.get_packet()); }  // FIXIT-L not const!
 };
 
 InspectionPolicy::InspectionPolicy()

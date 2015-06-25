@@ -211,14 +211,6 @@ SnortConfig::~SnortConfig()
     if ( event_queue_config )
         EventQueueConfigFree(event_queue_config);
 
-    if ( ip_proto_only_lists )
-    {
-        for (int j = 0; j < NUM_IP_PROTOS; j++)
-            sflist_free_all(ip_proto_only_lists[j], NULL);
-
-        free(ip_proto_only_lists);
-    }
-
     fpDeleteFastPacketDetection(this);
 
     if ( daq_vars )

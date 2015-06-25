@@ -25,22 +25,25 @@
 struct PortObject;
 struct PortTable;
 
+struct PortProto
+{
+    PortTable* src;
+    PortTable* dst;
+    PortObject* any;
+    PortObject* nfp;
+
+    PortProto();
+    ~PortProto();
+};
+
 struct RulePortTables
 {
-    PortTable* tcp_src, * tcp_dst;
-    PortTable* udp_src, * udp_dst;
-    PortTable* icmp_src,* icmp_dst;
-    PortTable* ip_src,  * ip_dst;
+    PortProto ip;
+    PortProto icmp;
+    PortProto tcp;
+    PortProto udp;
 
-    PortObject* tcp_anyany;
-    PortObject* udp_anyany;
-    PortObject* icmp_anyany;
-    PortObject* ip_anyany;
-
-    PortObject* tcp_nocontent;
-    PortObject* udp_nocontent;
-    PortObject* icmp_nocontent;
-    PortObject* ip_nocontent;
+    PortObject* svc_any;
 };
 
 RulePortTables* PortTablesNew();

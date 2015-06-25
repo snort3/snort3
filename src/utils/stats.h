@@ -36,9 +36,16 @@
 #include "main/snort_types.h"
 #include "framework/counts.h"
 
+// FIXIT-L split this out into appropriate modules
 struct PacketCount
 {
     PegCount total_from_daq;
+    PegCount raw_searches;
+    PegCount alt_searches;
+    PegCount key_searches;
+    PegCount header_searches;
+    PegCount body_searches;
+    PegCount file_searches;
     PegCount alert_pkts;
     PegCount total_alert_pkts;
     PegCount log_pkts;

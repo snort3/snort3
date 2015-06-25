@@ -24,6 +24,7 @@ ips_icmp_seq.cc \
 ips_icode.cc \
 ips_id.cc \
 ips_ipopts.cc \
+ips_ip_proto.cc \
 ips_isdataat.cc \
 ips_itype.cc \
 ips_msg.cc \
@@ -52,7 +53,6 @@ ips_dsize.cc \
 ips_file_data.cc \
 ips_flow.cc ips_flow.h \
 ips_flowbits.cc ips_flowbits.h \
-ips_ip_proto.cc ips_ip_proto.h \
 ips_luajit.cc \
 ips_metadata.cc \
 ips_options.cc ips_options.h \

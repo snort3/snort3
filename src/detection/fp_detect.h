@@ -87,7 +87,7 @@ typedef struct
 */
 typedef struct
 {
-    PORT_GROUP* pg;
+    PortGroup* pg;
     Packet* p;
     int check_ports;
 
@@ -99,7 +99,6 @@ void otnx_match_data_init(int);
 void otnx_match_data_term();
 
 int fpAddMatch(OTNX_MATCH_DATA* omd_local, int pLen, OptTreeNode* otn);
-SO_PUBLIC void fpEvalIpProtoOnlyRules(Packet*, uint8_t proto_id);
 OptTreeNode* GetOTN(uint32_t gid, uint32_t sid);
 
 #define TO_SERVER 1

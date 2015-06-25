@@ -96,22 +96,24 @@ bool NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* cons
     switch (session_data->section_type[source_id])
     {
     case SEC_REQUEST:
-        latest_section = new NHttpMsgRequest(data, dsize, session_data, source_id, buf_owner);
+        latest_section = new NHttpMsgRequest(data, dsize, session_data, source_id, buf_owner,
+            flow);
         break;
     case SEC_STATUS:
-        latest_section = new NHttpMsgStatus(data, dsize, session_data, source_id, buf_owner);
+        latest_section = new NHttpMsgStatus(data, dsize, session_data, source_id, buf_owner, flow);
         break;
     case SEC_HEADER:
-        latest_section = new NHttpMsgHeader(data, dsize, session_data, source_id, buf_owner);
+        latest_section = new NHttpMsgHeader(data, dsize, session_data, source_id, buf_owner, flow);
         break;
     case SEC_BODY:
-        latest_section = new NHttpMsgBody(data, dsize, session_data, source_id, buf_owner);
+        latest_section = new NHttpMsgBody(data, dsize, session_data, source_id, buf_owner, flow);
         break;
     case SEC_CHUNK:
-        latest_section = new NHttpMsgChunk(data, dsize, session_data, source_id, buf_owner);
+        latest_section = new NHttpMsgChunk(data, dsize, session_data, source_id, buf_owner, flow);
         break;
     case SEC_TRAILER:
-        latest_section = new NHttpMsgTrailer(data, dsize, session_data, source_id, buf_owner);
+        latest_section = new NHttpMsgTrailer(data, dsize, session_data, source_id, buf_owner,
+            flow);
         break;
     default:
         assert(0);

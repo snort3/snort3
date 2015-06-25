@@ -58,7 +58,7 @@
 #include "framework/inspector.h"
 #include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
-#include "target_based/sftarget_protocol_reference.h"
+#include "target_based/snort_protocols.h"
 #include "protocols/tcp.h"
 #include "framework/data_bus.h"
 
@@ -447,8 +447,6 @@ static RpcStatus RpcPrepRaw(const uint8_t* data, uint32_t fraglen, Packet*)
         return RPC_STATUS__ERROR;
     }
 
-    set_alt_data(DecodeBuffer.data, (RPC_FRAG_HDR_SIZE + fraglen));
-
     return RPC_STATUS__SUCCESS;
 }
 
@@ -476,8 +474,6 @@ static RpcStatus RpcPrepFrag(RpcSsnData* rsdata, Packet*)
         return RPC_STATUS__ERROR;
     }
 
-    set_alt_data(DecodeBuffer.data, RpcBufLen(&rsdata->frag));
-
     if (RpcBufLen(&rsdata->frag) > RPC_MAX_BUF_SIZE)
         RpcBufClean(&rsdata->frag);
 
@@ -499,8 +495,6 @@ static RpcStatus RpcPrepSeg(RpcSsnData* rsdata, Packet*)
         RpcBufClean(&rsdata->seg);
         return RPC_STATUS__ERROR;
     }
-
-    set_alt_data(DecodeBuffer.data, RpcBufLen(&rsdata->seg));
 
     if (RpcBufLen(&rsdata->seg) > RPC_MAX_BUF_SIZE)
     {
@@ -945,8 +939,6 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
         //LogNetData(data, decoded_len, p);
         );
 
-    set_alt_data(DecodeBuffer.data, decoded_len);
-
     return 0;
 }
 
@@ -991,6 +983,11 @@ public:
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;
+    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
+
+    void clear(Packet*) override
+    { DecodeBuffer.len = 0; }
+
 
     StreamSplitter* get_splitter(bool c2s) override
     { return c2s ? new RpcSplitter(c2s) : nullptr; }
@@ -1070,6 +1067,17 @@ void RpcDecode::eval(Packet* p)
     RpcPreprocEvent(&config, rsdata, ConvertRPC(&config, rsdata, p));
 
     MODULE_PROFILE_END(rpcdecodePerfStats);
+}
+
+bool RpcDecode::get_buf(InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b)
+{
+    if ( ibt != InspectionBuffer::IBT_ALT )
+        return false;
+
+    b.len = DecodeBuffer.len;
+    b.data = (b.len > 0) ? DecodeBuffer.data : nullptr;
+
+    return (b.data != nullptr);
 }
 
 //-------------------------------------------------------------------------

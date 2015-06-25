@@ -31,24 +31,27 @@
 #define SERVICE_MAP_H
 
 #include "detection/pcrm.h"
-#include "target_based/sftarget_protocol_reference.h"
+#include "target_based/snort_protocols.h"
 
 struct SFGHASH;
 
 //  Service Rule Map Master Table
 struct srmm_table_t
 {
+    SFGHASH* ip_to_srv;
+    SFGHASH* ip_to_cli;
+
+    SFGHASH* icmp_to_srv;
+    SFGHASH* icmp_to_cli;
+
     SFGHASH* tcp_to_srv;
     SFGHASH* tcp_to_cli;
 
     SFGHASH* udp_to_srv;
     SFGHASH* udp_to_cli;
 
-    SFGHASH* icmp_to_srv;
-    SFGHASH* icmp_to_cli;
-
-    SFGHASH* ip_to_srv;
-    SFGHASH* ip_to_cli;
+    SFGHASH* svc_to_srv;
+    SFGHASH* svc_to_cli;
 };
 
 srmm_table_t* ServiceMapNew();
@@ -60,26 +63,29 @@ void ServicePortGroupMapFree(srmm_table_t*);
 void ServiceTableFree(SFGHASH*);
 void fpPrintServicePortGroupSummary(srmm_table_t*);
 int fpCreateServiceMaps(struct SnortConfig*);
-void fpDeletePortGroup(void*);// FIXIT-FP move to separate port group module
 
-//  Service/Protocol Oridinal To PORT_GROUP table
+//  Service/Protocol Oridinal To PortGroup table
 struct sopg_table_t
 {
-    PORT_GROUP* tcp_to_srv[MAX_PROTOCOL_ORDINAL];
-    PORT_GROUP* tcp_to_cli[MAX_PROTOCOL_ORDINAL];
+    PortGroup* ip_to_srv[MAX_PROTOCOL_ORDINAL];
+    PortGroup* ip_to_cli[MAX_PROTOCOL_ORDINAL];
 
-    PORT_GROUP* udp_to_srv[MAX_PROTOCOL_ORDINAL];
-    PORT_GROUP* udp_to_cli[MAX_PROTOCOL_ORDINAL];
+    PortGroup* icmp_to_srv[MAX_PROTOCOL_ORDINAL];
+    PortGroup* icmp_to_cli[MAX_PROTOCOL_ORDINAL];
 
-    PORT_GROUP* icmp_to_srv[MAX_PROTOCOL_ORDINAL];
-    PORT_GROUP* icmp_to_cli[MAX_PROTOCOL_ORDINAL];
+    PortGroup* tcp_to_srv[MAX_PROTOCOL_ORDINAL];
+    PortGroup* tcp_to_cli[MAX_PROTOCOL_ORDINAL];
 
-    PORT_GROUP* ip_to_srv[MAX_PROTOCOL_ORDINAL];
-    PORT_GROUP* ip_to_cli[MAX_PROTOCOL_ORDINAL];
+    PortGroup* udp_to_srv[MAX_PROTOCOL_ORDINAL];
+    PortGroup* udp_to_cli[MAX_PROTOCOL_ORDINAL];
+
+    PortGroup* svc_to_srv[MAX_PROTOCOL_ORDINAL];
+    PortGroup* svc_to_cli[MAX_PROTOCOL_ORDINAL];
 };
 
 sopg_table_t* ServicePortGroupTableNew();
-PORT_GROUP* fpGetServicePortGroupByOrdinal(
+
+PortGroup* fpGetServicePortGroupByOrdinal(
     sopg_table_t* sopg, int proto, int dir, int16_t proto_ordinal);
 
 #endif

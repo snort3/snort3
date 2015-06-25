@@ -45,33 +45,28 @@ extern THREAD_LOCAL ProfileStats eventqPerfStats;
 extern THREAD_LOCAL ProfileStats detectPerfStats;
 #endif
 
-/* detection/manipulation funcs */
+// main loop hooks
 void snort_ignore(Packet*);
 void snort_inspect(Packet*);
-bool Detect(Packet*);
-void CallOutputPlugins(Packet*);
-int EvalPacket(ListHead*, int, Packet*);
-int EvalHeader(RuleTreeNode*, Packet*, int);
-int EvalOpts(OptTreeNode*, Packet*);
-void TriggerResponses(Packet*, OptTreeNode*);
+void snort_log(Packet*);
 
-int CheckAddrPort(sfip_var_t*, PortObject*, Packet*, uint32_t, int);
+// detection only (no decode or inspection)
+bool snort_detect(Packet*);
 
-/* detection modules */
+// parsing
+int RuleListEnd(Packet*, RuleTreeNode*, RuleFpList*, int);
+int OptListEnd(void* option_data, class Cursor&, Packet*);
+
+// detection
 int CheckBidirectional(Packet*, RuleTreeNode*, RuleFpList*, int);
 int CheckSrcIP(Packet*, RuleTreeNode*, RuleFpList*, int);
 int CheckDstIP(Packet*, RuleTreeNode*, RuleFpList*, int);
-int CheckSrcIPNotEq(Packet*, RuleTreeNode*, RuleFpList*, int);
-int CheckDstIPNotEq(Packet*, RuleTreeNode*, RuleFpList*, int);
 int CheckSrcPortEqual(Packet*, RuleTreeNode*, RuleFpList*, int);
 int CheckDstPortEqual(Packet*, RuleTreeNode*, RuleFpList*, int);
 int CheckSrcPortNotEq(Packet*, RuleTreeNode*, RuleFpList*, int);
 int CheckDstPortNotEq(Packet*, RuleTreeNode*, RuleFpList*, int);
 
-int RuleListEnd(Packet*, RuleTreeNode*, RuleFpList*, int);
-int OptListEnd(void* option_data, class Cursor&, Packet*);
-
-void snort_log(Packet*);
+// alerts
 void CallLogFuncs(Packet*, ListHead*, Event*, const char*);
 void CallLogFuncs(Packet*, const OptTreeNode*, ListHead*);
 void CallAlertFuncs(Packet*, const OptTreeNode*, ListHead*);
@@ -94,5 +89,5 @@ static inline void DisableInspection(Packet*)
  * cache result of check for rule option tree nodes. */
 extern THREAD_LOCAL uint64_t rule_eval_pkt_count;
 
-#endif /* DETECT_H */
+#endif
 

@@ -37,7 +37,7 @@
 #include "parser.h"
 #include "framework/inspector.h"
 #include "utils/sfsnprintfappend.h"
-#include "target_based/sftarget_protocol_reference.h"
+#include "target_based/snort_protocols.h"
 #include "smtp_paf.h"
 #include "smtp_util.h"
 #include "smtp_normalize.h"
@@ -879,7 +879,6 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
                 if (config->ignore_tls_data)
                 {
                     DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Ignoring encrypted data\n"); );
-                    set_alt_data(NULL, 0);
                 }
 
                 return end;
@@ -1392,7 +1391,6 @@ static void SMTP_ProcessServerPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
                 if (config->ignore_tls_data)
                 {
                     DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Ignoring Server TLS encrypted data\n"); );
-                    set_alt_data(NULL, 0);
                 }
 
                 return;
@@ -1498,7 +1496,6 @@ static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
             /* if we're ignoring tls data, set a zero length alt buffer */
             if (config->ignore_tls_data)
             {
-                set_alt_data(NULL, 0);
                 stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
                 return;
             }
@@ -1627,6 +1624,8 @@ public:
     bool configure(SnortConfig*) override;
     void show(SnortConfig*) override;
     void eval(Packet*) override;
+    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
+    void clear(Packet*) override;
 
     StreamSplitter* get_splitter(bool c2s) override
     { return new SmtpSplitter(c2s); }
@@ -1681,6 +1680,22 @@ void Smtp::eval(Packet* p)
     snort_smtp(config, p);
 
     MODULE_PROFILE_END(smtpPerfStats);
+}
+
+bool Smtp::get_buf(
+    InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b)
+{
+    if ( ibt != InspectionBuffer::IBT_ALT )
+        return false;
+
+    b.data = SMTP_GetAltBuffer(b.len);
+
+    return (b.data != nullptr);
+}
+
+void Smtp::clear(Packet*)
+{
+    SMTP_ResetAltBuffer();
 }
 
 //-------------------------------------------------------------------------

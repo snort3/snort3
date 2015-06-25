@@ -78,5 +78,8 @@
 /* list of function prototypes for this preprocessor */
 extern int normalize_telnet(TELNET_SESSION*, Packet*, int iMode, char ignoreEraseCmd);
 
+void reset_telnet_buffer();
+const uint8_t* get_telnet_buffer(unsigned&);
+
 #endif
 

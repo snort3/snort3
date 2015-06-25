@@ -67,7 +67,7 @@
 #include "config_file.h"
 #include "keywords.h"
 #include "vars.h"
-#include "target_based/sftarget_protocol_reference.h"
+#include "target_based/snort_protocols.h"
 
 struct Location
 {
@@ -188,33 +188,30 @@ void ParseIpVar(SnortConfig* sc, const char* var, const char* val)
 }
 
 void add_service_to_otn(
-    SnortConfig* sc, OptTreeNode* otn, const char* value)
+    SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
 {
     if (otn->sigInfo.num_services >= sc->max_metadata_services)
     {
-        ParseError("too many service's specified for rule.");
+        ParseError("too many service's specified for rule, can't add %s", svc_name);
+        return;
     }
-    else
-    {
-        char* svc_name;
-        int svc_count = otn->sigInfo.num_services;
+    int16_t svc_id = FindProtocolReference(svc_name);
 
-        if (otn->sigInfo.services == NULL)
-        {
-            otn->sigInfo.services =
-                (ServiceInfo*)SnortAlloc(sizeof(ServiceInfo) * sc->max_metadata_services);
-        }
+    if ( svc_id == SFTARGET_UNKNOWN_PROTOCOL )
+        svc_id = AddProtocolReference(svc_name);
 
-        svc_name = otn->sigInfo.services[svc_count].service = SnortStrdup(value);
-        otn->sigInfo.services[svc_count].service_ordinal = FindProtocolReference(svc_name);
+    for ( unsigned i = 0; i < otn->sigInfo.num_services; ++i )
+        if ( otn->sigInfo.services[i].service_ordinal == svc_id )
+            return;  // already added
 
-        if (otn->sigInfo.services[svc_count].service_ordinal == SFTARGET_UNKNOWN_PROTOCOL)
-        {
-            otn->sigInfo.services[svc_count].service_ordinal = AddProtocolReference(svc_name);
-        }
+    if ( !otn->sigInfo.services )
+        otn->sigInfo.services =
+            (ServiceInfo*)SnortAlloc(sizeof(ServiceInfo) * sc->max_metadata_services);
 
-        otn->sigInfo.num_services++;
-    }
+    int idx = otn->sigInfo.num_services++;
+
+    otn->sigInfo.services[idx].service = SnortStrdup(svc_name);
+    otn->sigInfo.services[idx].service_ordinal = svc_id;
 }
 
 // only keep drop rules ...

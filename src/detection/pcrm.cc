@@ -149,7 +149,7 @@
 **  ---------
 **
 **   PORT_RULE_MAP * prm;
-**   PORT_GROUP  *src, *dst, *generic;
+**   PortGroup  *src, *dst, *generic;
 **
 **   RULE * prule; //user defined rule structure for user rules
 **
@@ -203,6 +203,8 @@
 #include "fp_create.h"
 #include "snort_config.h"
 
+#define ANYPORT   -1
+
 /*
 **
 **  NAME
@@ -230,896 +232,24 @@ PORT_RULE_MAP* prmNewMap(void)
 /*
 **
 **  NAME
-**    prmNewByteMap::
-**
-**  DESCRIPTION
-**    Allocate new BYTE_RULE_MAP and return pointer.
-**
-**  FORMAL INPUTS
-**    None
-**
-**  FORMAL OUTPUT
-**    BYTE_RULE_MAP * - NULL if failed, ptr otherwise.
-**
-*/
-BYTE_RULE_MAP* prmNewByteMap(void)
-{
-    BYTE_RULE_MAP* p;
-
-    p = (BYTE_RULE_MAP*)calloc(1, sizeof(BYTE_RULE_MAP) );
-
-    return p;
-}
-
-/*
-**
-**  NAME
-**    prmxFreeGroup::
-**
-**  DESCRIPTION
-**    Frees a PORT_GROUP of it's RuleNodes.
-**
-**  FORMAL INPUTS
-**    PORT_GROUP * - port group to free
-**
-**  FORMAL OUTPUT
-**    None
-**
-*/
-static void prmxFreeGroup(PORT_GROUP* pg)
-{
-    RULE_NODE* rn, * rx;
-
-    rn = pg->pgHead;
-    while ( rn )
-    {
-        rx = rn->rnNext;
-        free(rn);
-        rn = rx;
-    }
-    pg->pgHead = NULL;
-
-    rn = pg->pgHeadNC;
-    while ( rn )
-    {
-        rx = rn->rnNext;
-        free(rn);
-        rn = rx;
-    }
-    pg->pgHeadNC = NULL;
-
-    rn = pg->pgUriHead;
-    while ( rn )
-    {
-        rx = rn->rnNext;
-        free(rn);
-        rn = rx;
-    }
-    pg->pgUriHead = NULL;
-}
-
-/*
-**
-**  NAME
-**    prmFreeMap
-**
-**  DESCRIPTION
-**    Frees the memory utilized by a PORT_RULE_MAP.
-**
-**  FORMAL INPUTS
-**    PORT_RULE_MAP * - PORT_RULE_MAP to free
-**
-**  FORMAL OUTPUT
-**    None
-**
-*/
-void prmFreeMap(PORT_RULE_MAP* p)
-{
-    int i;
-
-    if ( p )
-    {
-        for (i=0; i<MAX_PORTS; i++)
-        {
-            if (p->prmSrcPort[i])
-            {
-                prmxFreeGroup(p->prmSrcPort[i]);
-                free(p->prmSrcPort[i]);
-            }
-        }
-
-        for (i=0; i<MAX_PORTS; i++)
-        {
-            if (p->prmDstPort[i])
-            {
-                prmxFreeGroup(p->prmDstPort[i]);
-                free(p->prmDstPort[i]);
-            }
-        }
-
-        if (p->prmGeneric)
-        {
-            prmxFreeGroup(p->prmGeneric);
-            free(p->prmGeneric);
-        }
-
-        free(p);
-    }
-}
-
-/*
-**
-**  NAME
-**    prmFreeByteMap
-**
-**  DESCRIPTION
-**    Frees the memory utilized by a BYTE_RULE_MAP.
-**
-**  FORMAL INPUTS
-**    BYTE_RULE_MAP * - BYTE_RULE_MAP to free
-**
-**  FORMAL OUTPUT
-**    None
-**
-*/
-void prmFreeByteMap(BYTE_RULE_MAP* p)
-{
-    int i;
-
-    if ( p )
-    {
-        for (i=0; i<256; i++)
-        {
-            prmxFreeGroup(&p->prmByteGroup[i]);
-        }
-
-        prmxFreeGroup(&p->prmGeneric);
-
-        free(p);
-    }
-}
-
-/*
-**
-**  NAME
-**    prmxAddPortRule::
-**
-**  DESCRIPTION
-**    Adds a RULE_NODE to a PORT_GROUP.  This particular
-**    function is specific in that it adds "content" rules.
-**    A "content" rule is a snort rule that has a content
-**    flag.
-**
-**    Each RULE_NODE in a PORT_GROUP is given a RULE_NODE
-**    ID.  This allows us to track particulars as to what
-**    rules have been alerted upon, and allows other neat
-**    things like correlating events on different streams.
-**    The RULE_NODE IDs may not be consecutive, because
-**    we can add RULE_NODES into "content", "uri", and
-**    "no content" lists.
-**
-**  FORMAL INPUTS
-**    PORT_GROUP * - PORT_GROUP to add the rule to.
-**    RULE_PTR - void ptr to the user information
-**
-**  FORMAL OUTPUT
-**    int - 0 is successful, 1 is failure
-**
-*/
-int prmxAddPortRule(PORT_GROUP* p, RULE_PTR rd)
-{
-    if ( !p->pgHead )
-    {
-        p->pgHead = (RULE_NODE*)calloc(1,sizeof(RULE_NODE) );
-        if ( !p->pgHead )
-            return 1;
-
-        p->pgHead->rnNext      = 0;
-        p->pgHead->rnRuleData  = rd;
-        p->pgTail              = p->pgHead;
-    }
-    else
-    {
-        p->pgTail->rnNext = (RULE_NODE*)calloc(1,sizeof(RULE_NODE) );
-        if (!p->pgTail->rnNext)
-            return 1;
-
-        p->pgTail             = p->pgTail->rnNext;
-        p->pgTail->rnNext     = 0;
-        p->pgTail->rnRuleData = rd;
-    }
-
-    /*
-    **  Set RULE_NODE ID to unique identifier
-    */
-    p->pgTail->iRuleNodeID = p->pgCount;
-
-    /*
-    **  Update the total Rule Node Count for this PORT_GROUP
-    */
-    p->pgCount++;
-
-    p->pgContentCount++;
-
-    return 0;
-}
-
-/*
-**
-**  NAME
-**    prmxAddPortRuleUri::
-**
-**  DESCRIPTION
-**    Adds a RULE_NODE to a PORT_GROUP.  This particular
-**    function is specific in that it adds "uri" rules.
-**    A "uri" rule is a snort rule that has a uri
-**    flag.
-**
-**    Each RULE_NODE in a PORT_GROUP is given a RULE_NODE
-**    ID.  This allows us to track particulars as to what
-**    rules have been alerted upon, and allows other neat
-**    things like correlating events on different streams.
-**    The RULE_NODE IDs may not be consecutive, because
-**    we can add RULE_NODES into "content", "uri", and
-**    "no content" lists.
-**
-**  FORMAL INPUTS
-**    PORT_GROUP * - PORT_GROUP to add the rule to.
-**    RULE_PTR - void ptr to the user information
-**
-**  FORMAL OUTPUT
-**    int - 0 is successful, 1 is failure
-**
-*/
-int prmxAddPortRuleUri(PORT_GROUP* p, RULE_PTR rd)
-{
-    if ( !p->pgUriHead )
-    {
-        p->pgUriHead = (RULE_NODE*)calloc(1, sizeof(RULE_NODE) );
-        if ( !p->pgUriHead )
-            return 1;
-
-        p->pgUriTail              = p->pgUriHead;
-        p->pgUriHead->rnNext      = 0;
-        p->pgUriHead->rnRuleData  = rd;
-    }
-    else
-    {
-        p->pgUriTail->rnNext = (RULE_NODE*)calloc(1, sizeof(RULE_NODE) );
-        if ( !p->pgUriTail->rnNext)
-            return 1;
-
-        p->pgUriTail             = p->pgUriTail->rnNext;
-        p->pgUriTail->rnNext     = 0;
-        p->pgUriTail->rnRuleData = rd;
-    }
-
-    /*
-    **  Set RULE_NODE ID to unique identifier
-    */
-    p->pgUriTail->iRuleNodeID = p->pgCount;
-
-    /*
-    **  Update the total Rule Node Count for this PORT_GROUP
-    */
-    p->pgCount++;
-
-    p->pgUriContentCount++;
-
-    return 0;
-}
-
-/*
-**
-**  NAME
-**    prmxAddPortRuleNC::
-**
-**  DESCRIPTION
-**    Adds a RULE_NODE to a PORT_GROUP.  This particular
-**    function is specific in that it adds "no content" rules.
-**    A "no content" rule is a snort rule that has no "content"
-**    or "uri" flag, and hence does not need to be pattern
-**    matched.
-**
-**    Each RULE_NODE in a PORT_GROUP is given a RULE_NODE
-**    ID.  This allows us to track particulars as to what
-**    rules have been alerted upon, and allows other neat
-**    things like correlating events on different streams.
-**    The RULE_NODE IDs may not be consecutive, because
-**    we can add RULE_NODES into "content", "uri", and
-**    "no content" lists.
-**
-**  FORMAL INPUTS
-**    PORT_GROUP * - PORT_GROUP to add the rule to.
-**    RULE_PTR - void ptr to the user information
-**
-**  FORMAL OUTPUT
-**    int - 0 is successful, 1 is failure
-**
-*/
-int prmxAddPortRuleNC(PORT_GROUP* p, RULE_PTR rd)
-{
-    if ( !p->pgHeadNC )
-    {
-        p->pgHeadNC = (RULE_NODE*)calloc(1,sizeof(RULE_NODE) );
-        if ( !p->pgHeadNC )
-            return 1;
-
-        p->pgTailNC             = p->pgHeadNC;
-        p->pgHeadNC->rnNext     = 0;
-        p->pgHeadNC->rnRuleData = rd;
-    }
-    else
-    {
-        p->pgTailNC->rnNext = (RULE_NODE*)calloc(1,sizeof(RULE_NODE) );
-        if (!p->pgTailNC->rnNext)
-            return 1;
-
-        p->pgTailNC             = p->pgTailNC->rnNext;
-        p->pgTailNC->rnNext     = 0;
-        p->pgTailNC->rnRuleData = rd;
-    }
-
-    /*
-    **  Set RULE_NODE ID to unique identifier
-    */
-    p->pgTailNC->iRuleNodeID = p->pgCount;
-
-    /*
-    **  Update the Total Rule Node Count for this PORT_GROUP
-    */
-    p->pgCount++;
-
-    p->pgNoContentCount++;
-
-    return 0;
-}
-
-/*
-**
-**  NAME
-**    prmAddNotNode::
-**
-**  DESCRIPTION
-**    NOT SUPPORTED YET.  Build a list of pur NOT nodes i.e. content !"this"
-**    content:!"that".
-**
-*/
-void prmAddNotNode(PORT_GROUP* pg, int id)
-{
-    NOT_RULE_NODE* p = (NOT_RULE_NODE*)calloc(1,sizeof( NOT_RULE_NODE));
-
-    if ( !p )
-        return;
-
-    p->iPos = id;
-
-    if ( !pg->pgNotRuleList )
-    {
-        pg->pgNotRuleList = p;
-        p->next = 0;
-    }
-    else
-    {
-        p->next = pg->pgNotRuleList;
-        pg->pgNotRuleList = p;
-    }
-}
-
-/*
-**
-**  NAME
-**    prmGetFirstRule::
-**
-**  DESCRIPTION
-**    This function returns the first rule user data in
-**    the "content" list of a PORT_GROUP.
-**
-**  FORMAL INPUTS
-**    PORT_GROUP * - PORT_GROUP to retrieve data from.
-**
-**  FORMAL OUTPUT
-**    RULE_PTR - the ptr to the user data.
-**
-*/
-RULE_PTR prmGetFirstRule(PORT_GROUP* pg)
-{
-    pg->pgCur = pg->pgHead;
-
-    if ( !pg->pgCur )
-        return 0;
-
-    return pg->pgCur->rnRuleData;
-}
-
-/*
-**
-**  NAME
-**    prmGetNextRule::
-**
-**  DESCRIPTION
-**    Gets the next "content" rule.  This function allows easy
-**    walking of the "content" rule list.
-**
-**  FORMAL INPUTS
-**    PORT_GROUP * - PORT_GROUP to retrieve data from.
-**
-**  FORMAL OUTPUT
-**    RULE_PTR - ptr to the user data
-**
-*/
-RULE_PTR prmGetNextRule(PORT_GROUP* pg)
-{
-    if ( pg->pgCur )
-        pg->pgCur = pg->pgCur->rnNext;
-
-    if ( !pg->pgCur )
-        return 0;
-
-    return pg->pgCur->rnRuleData;
-}
-
-/*
-**
-**  NAME
-**    prmGetFirstRuleUri::
-**
-**  DESCRIPTION
-**    This function returns the first rule user data in
-**    the "uri" list of a PORT_GROUP.
-**
-**  FORMAL INPUTS
-**    PORT_GROUP * - PORT_GROUP to retrieve data from.
-**
-**  FORMAL OUTPUT
-**    RULE_PTR - the ptr to the user data.
-**
-*/
-RULE_PTR prmGetFirstRuleUri(PORT_GROUP* pg)
-{
-    pg->pgUriCur = pg->pgUriHead;
-
-    if ( !pg->pgUriCur )
-        return 0;
-
-    return pg->pgUriCur->rnRuleData;
-}
-
-/*
-**
-**  NAME
-**    prmGetNextRuleUri::
-**
-**  DESCRIPTION
-**    Gets the next "uri" rule.  This function allows easy
-**    walking of the "uri" rule list.
-**
-**  FORMAL INPUTS
-**    PORT_GROUP * - PORT_GROUP to retrieve data from.
-**
-**  FORMAL OUTPUT
-**    RULE_PTR - ptr to the user data
-**
-*/
-RULE_PTR prmGetNextRuleUri(PORT_GROUP* pg)
-{
-    if ( pg->pgUriCur )
-        pg->pgUriCur = pg->pgUriCur->rnNext;
-
-    if ( !pg->pgUriCur )
-        return 0;
-
-    return pg->pgUriCur->rnRuleData;
-}
-
-/*
-**
-**  NAME
-**    prmGetFirstRuleNC::
-**
-**  DESCRIPTION
-**    This function returns the first rule user data in
-**    the "no content" list of a PORT_GROUP.
-**
-**  FORMAL INPUTS
-**    PORT_GROUP * - PORT_GROUP to retrieve data from.
-**
-**  FORMAL OUTPUT
-**    RULE_PTR - the ptr to the user data.
-**
-*/
-RULE_PTR prmGetFirstRuleNC(PORT_GROUP* pg)
-{
-    pg->pgCurNC = pg->pgHeadNC;
-
-    if ( !pg->pgCurNC )
-        return 0;
-
-    return pg->pgCurNC->rnRuleData;
-}
-
-/*
-**
-**  NAME
-**    prmGetNextRuleNC::
-**
-**  DESCRIPTION
-**    Gets the next "no content" rule.  This function allows easy
-**    walking of the "no content" rule list.
-**
-**  FORMAL INPUTS
-**    PORT_GROUP * - PORT_GROUP to retrieve data from.
-**
-**  FORMAL OUTPUT
-**    RULE_PTR - ptr to the user data
-**
-*/
-RULE_PTR prmGetNextRuleNC(PORT_GROUP* pg)
-{
-    if ( pg->pgCurNC )
-        pg->pgCurNC = pg->pgCurNC->rnNext;
-
-    if ( !pg->pgCurNC )
-        return 0;
-
-    return pg->pgCurNC->rnRuleData;
-}
-
-/*
-**
-**  NAME
-**    prmAddRule::
-**
-**  DESCRIPTION
-**    This function adds a rule to a PORT_RULE_MAP.  Depending on the
-**    values of the sport and dport, the rule gets added in different
-**    groups (src,dst,generic).  The values for dport and sport
-**    can be: 0 -> 64K or -1 for generic (meaning that the rule applies
-**    to all values.
-**
-**    Warning: Consider this carefully.
-**    Some rules use 6000:6005 -> any  for a port designation, we could
-**    add each rule to it's own group, in this case Src=6000 to 6005.
-**    But we opt to add them as ANY rules for now, to reduce groups.
-**
-**    IMPORTANT:
-**    This function adds a rule to the "content" list of rules.
-**
-**  FORMAL INPUTS
-**    PORT_RULE_MAP * - PORT_RULE_MAP to add rule to.
-**    int - the dst port value.
-**    int - the src port value.
-**    RULE_PTR - the ptr to the user data for the rule.
-**
-**  FORMAL OUTPUT
-**    int - 0 is successful, 1 is failure.
-**
-*/
-int prmAddRule(PORT_RULE_MAP* p, int dport, int sport, RULE_PTR rd)
-{
-    if ( dport != ANYPORT && dport < MAX_PORTS )  /* dst=21,25,80,110,139 */
-    {
-        p->prmNumDstRules++;
-
-        /*
-        **  Check to see if this PORT_GROUP has been initialized
-        */
-        if (p->prmDstPort[dport] == NULL)
-        {
-            p->prmDstPort[dport] = (PORT_GROUP*)calloc(1, sizeof(PORT_GROUP));
-            if (p->prmDstPort[dport] == NULL)
-            {
-                return 1;
-            }
-        }
-
-        if (p->prmDstPort[dport]->pgCount==0)
-            p->prmNumDstGroups++;
-
-        prmxAddPortRule(p->prmDstPort[ dport ], rd);
-    }
-
-    if ( sport != ANYPORT && sport < MAX_PORTS) /* src=ANY, SRC=80,21,25,etc. */
-    {
-        p->prmNumSrcRules++;
-
-        /*
-        **  Check to see if this PORT_GROUP has been initialized
-        */
-        if (p->prmSrcPort[sport] == NULL)
-        {
-            p->prmSrcPort[sport] = (PORT_GROUP*)calloc(1, sizeof(PORT_GROUP));
-            if (p->prmSrcPort[sport] == NULL)
-            {
-                return 1;
-            }
-        }
-
-        if (p->prmSrcPort[sport]->pgCount==0)
-            p->prmNumSrcGroups++;
-
-        prmxAddPortRule(p->prmSrcPort[ sport ], rd);
-    }
-
-    if ( sport == ANYPORT && dport == ANYPORT) /* dst=ANY, src=ANY */
-    {
-        p->prmNumGenericRules++;
-
-        /*
-        **  Check to see if this PORT_GROUP has been initialized
-        */
-        if (p->prmGeneric == NULL)
-        {
-            p->prmGeneric = (PORT_GROUP*)calloc(1, sizeof(PORT_GROUP));
-            if (p->prmGeneric == NULL)
-            {
-                return 1;
-            }
-        }
-
-        prmxAddPortRule(p->prmGeneric, rd);
-    }
-
-    return 0;
-}
-
-int prmAddByteRule(BYTE_RULE_MAP* p, int dport, RULE_PTR rd)
-{
-    if ( dport != ANYPORT && dport < 256 )  /* dst=21,25,80,110,139 */
-    {
-        p->prmNumRules++;
-        if ( p->prmByteGroup[dport].pgCount==0 )
-            p->prmNumGroups++;
-
-        prmxAddPortRule(&(p->prmByteGroup[ dport ]), rd);
-    }
-    else if ( dport == ANYPORT ) /* dst=ANY, src=ANY */
-    {
-        p->prmNumGenericRules++;
-
-        prmxAddPortRule(&(p->prmGeneric), rd);
-    }
-
-    return 0;
-}
-
-/*
-**
-**  NAME
-**    prmAddRuleUri::
-**
-**  DESCRIPTION
-**    This function adds a rule to a PORT_RULE_MAP.  Depending on the
-**    values of the sport and dport, the rule gets added in different
-**    groups (src,dst,generic).  The values for dport and sport
-**    can be: 0 -> 64K or -1 for generic (meaning that the rule applies
-**    to all values.
-**
-**    Warning: Consider this carefully.
-**    Some rules use 6000:6005 -> any  for a port designation, we could
-**    add each rule to it's own group, in this case Src=6000 to 6005.
-**    But we opt to add them as ANY rules for now, to reduce groups.
-**
-**    IMPORTANT:
-**    This function adds a rule to the "uri" list of rules.
-**
-**  FORMAL INPUTS
-**    PORT_RULE_MAP * - PORT_RULE_MAP to add rule to.
-**    int - the dst port value.
-**    int - the src port value.
-**    RULE_PTR - the ptr to the user data for the rule.
-**
-**  FORMAL OUTPUT
-**    int - 0 is successful, 1 is failure.
-**
-*/
-int prmAddRuleUri(PORT_RULE_MAP* p, int dport, int sport, RULE_PTR rd)
-{
-    if ( dport != ANYPORT && dport < MAX_PORTS )  /* dst=21,25,80,110,139 */
-    {
-        p->prmNumDstRules++;
-
-        /*
-        **  Check to see if this PORT_GROUP has been initialized
-        */
-        if (p->prmDstPort[dport] == NULL)
-        {
-            p->prmDstPort[dport] = (PORT_GROUP*)calloc(1, sizeof(PORT_GROUP));
-            if (p->prmDstPort[dport] == NULL)
-            {
-                return 1;
-            }
-        }
-
-        if (p->prmDstPort[dport]->pgCount==0)
-            p->prmNumDstGroups++;
-
-        prmxAddPortRuleUri(p->prmDstPort[ dport ], rd);
-    }
-
-    if ( sport != ANYPORT && sport < MAX_PORTS) /* src=ANY, SRC=80,21,25,etc. */
-    {
-        p->prmNumSrcRules++;
-
-        /*
-        **  Check to see if this PORT_GROUP has been initialized
-        */
-        if (p->prmSrcPort[sport] == NULL)
-        {
-            p->prmSrcPort[sport] = (PORT_GROUP*)calloc(1, sizeof(PORT_GROUP));
-            if (p->prmSrcPort[sport] == NULL)
-            {
-                return 1;
-            }
-        }
-
-        if (p->prmSrcPort[sport]->pgCount==0)
-            p->prmNumSrcGroups++;
-
-        prmxAddPortRuleUri(p->prmSrcPort[ sport ], rd);
-    }
-
-    if ( sport == ANYPORT && dport == ANYPORT) /* dst=ANY, src=ANY */
-    {
-        p->prmNumGenericRules++;
-
-        /*
-        **  Check to see if this PORT_GROUP has been initialized
-        */
-        if (p->prmGeneric == NULL)
-        {
-            p->prmGeneric = (PORT_GROUP*)calloc(1, sizeof(PORT_GROUP));
-            if (p->prmGeneric == NULL)
-            {
-                return 1;
-            }
-        }
-
-        prmxAddPortRuleUri(p->prmGeneric, rd);
-    }
-
-    return 0;
-}
-
-/*
-**
-**  NAME
-**    prmAddRuleNC::
-**
-**  DESCRIPTION
-**    This function adds a rule to a PORT_RULE_MAP.  Depending on the
-**    values of the sport and dport, the rule gets added in different
-**    groups (src,dst,generic).  The values for dport and sport
-**    can be: 0 -> 64K or -1 for generic (meaning that the rule applies
-**    to all values.
-**
-**    Warning: Consider this carefully.
-**    Some rules use 6000:6005 -> any  for a port designation, we could
-**    add each rule to it's own group, in this case Src=6000 to 6005.
-**    But we opt to add them as ANY rules for now, to reduce groups.
-**
-**    IMPORTANT:
-**    This function adds a rule to the "no content" list of rules.
-**
-**  FORMAL INPUTS
-**    PORT_RULE_MAP * - PORT_RULE_MAP to add rule to.
-**    int - the dst port value.
-**    int - the src port value.
-**    RULE_PTR - the ptr to the user data for the rule.
-**
-**  FORMAL OUTPUT
-**    int - 0 is successful, 1 is failure.
-**
-*/
-int prmAddRuleNC(PORT_RULE_MAP* p, int dport, int sport, RULE_PTR rd)
-{
-    if ( dport != ANYPORT && dport < MAX_PORTS )  /* dst=21,25,80,110,139 */
-    {
-        p->prmNumDstRules++;
-
-        /*
-        **  Check to see if this PORT_GROUP has been initialized
-        */
-        if (p->prmDstPort[dport] == NULL)
-        {
-            p->prmDstPort[dport] = (PORT_GROUP*)calloc(1, sizeof(PORT_GROUP));
-            if (p->prmDstPort[dport] == NULL)
-            {
-                return 1;
-            }
-        }
-
-        if (p->prmDstPort[dport]->pgCount==0)
-            p->prmNumDstGroups++;
-
-        prmxAddPortRuleNC(p->prmDstPort[ dport ], rd);
-    }
-
-    if ( sport != ANYPORT && sport < MAX_PORTS) /* src=ANY, SRC=80,21,25,etc. */
-    {
-        p->prmNumSrcRules++;
-
-        /*
-        **  Check to see if this PORT_GROUP has been initialized
-        */
-        if (p->prmSrcPort[sport] == NULL)
-        {
-            p->prmSrcPort[sport] = (PORT_GROUP*)calloc(1, sizeof(PORT_GROUP));
-            if (p->prmSrcPort[sport] == NULL)
-            {
-                return 1;
-            }
-        }
-
-        if (p->prmSrcPort[sport]->pgCount==0)
-            p->prmNumSrcGroups++;
-
-        prmxAddPortRuleNC(p->prmSrcPort[ sport ], rd);
-    }
-
-    if ( sport == ANYPORT && dport == ANYPORT) /* dst=ANY, src=ANY */
-    {
-        p->prmNumGenericRules++;
-
-        /*
-        **  Check to see if this PORT_GROUP has been initialized
-        */
-        if (p->prmGeneric == NULL)
-        {
-            p->prmGeneric = (PORT_GROUP*)calloc(1, sizeof(PORT_GROUP));
-            if (p->prmGeneric == NULL)
-            {
-                return 1;
-            }
-        }
-
-        prmxAddPortRuleNC(p->prmGeneric, rd);
-    }
-
-    return 0;
-}
-
-int prmAddByteRuleNC(BYTE_RULE_MAP* p, int dport, RULE_PTR rd)
-{
-    if ( dport != ANYPORT && dport < 256 )  /* dst=21,25,80,110,139 */
-    {
-        p->prmNumRules++;
-        if (p->prmByteGroup[dport].pgCount==0)
-            p->prmNumGroups++;
-
-        prmxAddPortRuleNC(&(p->prmByteGroup[ dport ]), rd);
-    }
-    else if ( dport == ANYPORT) /* dst=ANY, src=ANY */
-    {
-        p->prmNumGenericRules++;
-
-        prmxAddPortRuleNC(&(p->prmGeneric), rd);
-    }
-
-    return 0;
-}
-
-/*
-**
-**  NAME
 **    prmFindRuleGroup::
 **
 **  DESCRIPTION
-**    Given a PORT_RULE_MAP, this function selects the PORT_GROUP or
-**    PORT_GROUPs necessary to fully match a given dport, sport pair.
+**    Given a PORT_RULE_MAP, this function selects the PortGroup or
+**    PortGroups necessary to fully match a given dport, sport pair.
 **    The selection logic looks at both the dport and sport and
 **    determines if one or both are unique.  If one is unique, then
-**    the appropriate PORT_GROUP ptr is set.  If both are unique, then
-**    both th src and dst PORT_GROUP ptrs are set.  If neither of the
-**    ports are unique, then the gen PORT_GROUP ptr is set.
+**    the appropriate PortGroup ptr is set.  If both are unique, then
+**    both th src and dst PortGroup ptrs are set.  If neither of the
+**    ports are unique, then the gen PortGroup ptr is set.
 **
 **  FORMAL INPUTS
-**    PORT_RULE_MAP * - the PORT_RULE_MAP to pick PORT_GROUPs from.
+**    PORT_RULE_MAP * - the PORT_RULE_MAP to pick PortGroups from.
 **    int             - the dst port value (0->64K or -1 for generic)
 **    int             - the src port value (0->64K or -1 for generic)
-**    PORT_GROUP **   - the src PORT_GROUP ptr to set.
-**    PORT_GROUP **   - the dst PORT_GROUP ptr to set.
-**    PORT_GROUP **   - the generic PORT_GROUP ptr to set.
+**    PortGroup **   - the src PortGroup ptr to set.
+**    PortGroup **   - the dst PortGroup ptr to set.
+**    PortGroup **   - the generic PortGroup ptr to set.
 **
 **  FORMAL OUTPUT
 **    int -  0: Don't evaluate
@@ -1127,7 +257,7 @@ int prmAddByteRuleNC(BYTE_RULE_MAP* p, int dport, RULE_PTR rd)
 **
 **  NOTES
 **    Currently, if there is a "unique conflict", we return both the src
-**    and dst PORT_GROUPs.  This conflict forces us to do two searches, one
+**    and dst PortGroups.  This conflict forces us to do two searches, one
 **    for the src and one for the dst.  So we are taking twice the time to
 **    inspect a packet then usual.  Obviously, this is not good.  There
 **    are several options that we have to deal with unique conflicts, but
@@ -1136,13 +266,13 @@ int prmAddByteRuleNC(BYTE_RULE_MAP* p, int dport, RULE_PTR rd)
 **    what to match against.
 **
 */
-int prmFindRuleGroup(
+static int prmFindRuleGroup(
     PORT_RULE_MAP* p,
     int dport,
     int sport,
-    PORT_GROUP** src,
-    PORT_GROUP** dst,
-    PORT_GROUP** gen
+    PortGroup** src,
+    PortGroup** dst,
+    PortGroup** gen
     )
 {
     if ((p == NULL) || (src == NULL)
@@ -1162,7 +292,7 @@ int prmFindRuleGroup(
         *src = p->prmSrcPort[sport];
 
     /* If no Src/Dst rules - use the generic set, if any exist  */
-    if ((p->prmGeneric != NULL) && (p->prmGeneric->pgCount > 0))
+    if ((p->prmGeneric != NULL) && (p->prmGeneric->rule_count > 0))
     {
         if (snort_conf->fast_pattern_config->get_split_any_any()
             || ((*src == NULL) && (*dst == NULL)))
@@ -1184,31 +314,31 @@ int prmFindRuleGroup(
 **  are also used in the file fpdetect.c, where we do lookups
 **  on the initialized variables.
 */
-int prmFindRuleGroupIp(PORT_RULE_MAP* prm, int ip_proto, PORT_GROUP** ip_group, PORT_GROUP** gen)
+int prmFindRuleGroupIp(PORT_RULE_MAP* prm, int ip_proto, PortGroup** ip_group, PortGroup** gen)
 {
-    PORT_GROUP* src;
-    return prmFindRuleGroup(prm, ip_proto, -1, &src, ip_group, gen);
+    PortGroup* src;
+    return prmFindRuleGroup(prm, ip_proto, ANYPORT, &src, ip_group, gen);
 }
 
-int prmFindRuleGroupIcmp(PORT_RULE_MAP* prm, int type, PORT_GROUP** type_group, PORT_GROUP** gen)
+int prmFindRuleGroupIcmp(PORT_RULE_MAP* prm, int type, PortGroup** type_group, PortGroup** gen)
 {
-    PORT_GROUP* src;
-    return prmFindRuleGroup(prm, type, -1, &src, type_group, gen);
+    PortGroup* src;
+    return prmFindRuleGroup(prm, type, ANYPORT, &src, type_group, gen);
 }
 
-int prmFindRuleGroupTcp(PORT_RULE_MAP* prm, int dport, int sport, PORT_GROUP** src,
-    PORT_GROUP** dst, PORT_GROUP** gen)
-{
-    return prmFindRuleGroup(prm, dport, sport, src, dst, gen);
-}
-
-int prmFindRuleGroupUdp(PORT_RULE_MAP* prm, int dport, int sport, PORT_GROUP** src,
-    PORT_GROUP** dst, PORT_GROUP** gen)
+int prmFindRuleGroupTcp(PORT_RULE_MAP* prm, int dport, int sport, PortGroup** src,
+    PortGroup** dst, PortGroup** gen)
 {
     return prmFindRuleGroup(prm, dport, sport, src, dst, gen);
 }
 
-int prmFindGenericRuleGroup(PORT_RULE_MAP* p, PORT_GROUP** gen)
+int prmFindRuleGroupUdp(PORT_RULE_MAP* prm, int dport, int sport, PortGroup** src,
+    PortGroup** dst, PortGroup** gen)
+{
+    return prmFindRuleGroup(prm, dport, sport, src, dst, gen);
+}
+
+int prmFindGenericRuleGroup(PORT_RULE_MAP* p, PortGroup** gen)
 {
     if ( !p or !gen )
     {
@@ -1216,7 +346,7 @@ int prmFindGenericRuleGroup(PORT_RULE_MAP* p, PORT_GROUP** gen)
     }
 
     *gen = NULL;
-    if ((p->prmGeneric != NULL) && (p->prmGeneric->pgCount > 0))
+    if ((p->prmGeneric != NULL) && (p->prmGeneric->rule_count > 0))
     {
         if (snort_conf->fast_pattern_config->get_split_any_any())
         {
@@ -1228,40 +358,9 @@ int prmFindGenericRuleGroup(PORT_RULE_MAP* p, PORT_GROUP** gen)
 }
 
 /*
-*
-*/
-int prmFindByteRuleGroup(BYTE_RULE_MAP* p, int dport, PORT_GROUP** dst, PORT_GROUP** gen)
-{
-    int stat= 0;
-
-    if ( (dport != ANYPORT && dport < 256 ) && p->prmByteGroup[dport].pgCount  )
-    {
-        *dst  = &p->prmByteGroup[dport];
-        stat = 1;
-    }
-    else
-    {
-        *dst=0;
-    }
-
-    /* If no Src/Dst rules - use the generic set, if any exist  */
-    if ( !stat &&  (p->prmGeneric.pgCount > 0) )
-    {
-        *gen  = &p->prmGeneric;
-        stat = 4;
-    }
-    else
-    {
-        *gen = 0;
-    }
-
-    return stat;
-}
-
-/*
 ** Access each Rule group by index (0-MAX_PORTS)
 */
-PORT_GROUP* prmFindDstRuleGroup(PORT_RULE_MAP* p, int port)
+static PortGroup* prmFindDstRuleGroup(PORT_RULE_MAP* p, int port)
 {
     if ( port < 0 || port >= MAX_PORTS )
         return 0;
@@ -1275,7 +374,7 @@ PORT_GROUP* prmFindDstRuleGroup(PORT_RULE_MAP* p, int port)
 /*
 ** Access each Rule group by index (0-MAX_PORTS)
 */
-PORT_GROUP* prmFindSrcRuleGroup(PORT_RULE_MAP* p, int port)
+static PortGroup* prmFindSrcRuleGroup(PORT_RULE_MAP* p, int port)
 {
     if ( port < 0 || port >= MAX_PORTS )
         return 0;
@@ -1289,259 +388,12 @@ PORT_GROUP* prmFindSrcRuleGroup(PORT_RULE_MAP* p, int port)
 /*
 **
 **  NAME
-**    prmCompileGroups::
-**
-**  DESCRIPTION
-**    Add Generic rules to each Unique rule group, this could be
-**    optimized a bit, right now we will process generic rules
-**    twice when packets have 2 unique ports, but this will not
-**    occur often.
-**
-**    The generic rules are added to the Unique rule groups, so that
-**    the setwise methodology can be taking advantage of.
-**
-**  FORMAL INPUTS
-**    PORT_RULE_MAP * - the PORT_RULE_MAP to compile generice rules.
-**
-**  FORMAL OUTPUT
-**    int - 0 is successful;
-**
-*/
-int prmCompileGroups(PORT_RULE_MAP* p)
-{
-    PORT_GROUP* pgGen, * pgSrc, * pgDst;
-    RULE_PTR* prule;
-    int i;
-
-    /*
-    **  Add Generic to Src and Dst groups
-    */
-    pgGen = p->prmGeneric;
-
-    if (!pgGen)
-        return 0;
-
-    for (i=0; i<MAX_PORTS; i++)
-    {
-        /* Add to the Unique Src and Dst Groups as well,
-        ** but don't inc thier prmNUMxxx counts, we want these to be true Unique counts
-        ** we can add the Generic numbers if we want these, besides
-        ** each group has it's own count.
-        */
-
-        if (p->prmSrcPort[i])
-        {
-            pgSrc = p->prmSrcPort[i];
-
-            prule = (RULE_PTR*)prmGetFirstRule(pgGen);
-            while ( prule )
-            {
-                prmxAddPortRule(pgSrc, prule);
-                prule = (RULE_PTR*)prmGetNextRule(pgGen);
-            }
-
-            prule = (RULE_PTR*)prmGetFirstRuleUri(pgGen);
-            while ( prule )
-            {
-                prmxAddPortRuleUri(pgSrc, prule);
-                prule = (RULE_PTR*)prmGetNextRuleUri(pgGen);
-            }
-
-            prule = (RULE_PTR*)prmGetFirstRuleNC(pgGen);
-            while ( prule )
-            {
-                prmxAddPortRuleNC(pgSrc, prule);
-                prule = (RULE_PTR*)prmGetNextRuleNC(pgGen);
-            }
-        }
-
-        if (p->prmDstPort[i])
-        {
-            pgDst = p->prmDstPort[i];
-
-            prule = (RULE_PTR*)prmGetFirstRule(pgGen);
-            while ( prule )
-            {
-                prmxAddPortRule(pgDst, prule);
-                prule = (RULE_PTR*)prmGetNextRule(pgGen);
-            }
-
-            prule = (RULE_PTR*)prmGetFirstRuleUri(pgGen);
-            while ( prule )
-            {
-                prmxAddPortRuleUri(pgDst, prule);
-                prule = (RULE_PTR*)prmGetNextRuleUri(pgGen);
-            }
-
-            prule = (RULE_PTR*)prmGetFirstRuleNC(pgGen);
-            while ( prule )
-            {
-                prmxAddPortRuleNC(pgDst, prule);
-                prule = (RULE_PTR*)prmGetNextRuleNC(pgGen);
-            }
-        }
-    }
-
-    return 0;
-}
-
-/*
-*
-*
-*/
-int prmCompileByteGroups(BYTE_RULE_MAP* p)
-{
-    PORT_GROUP* pgGen, * pgByte;
-    RULE_PTR* prule;
-    int i;
-
-    /*
-    **  Add Generic to Unique groups
-    */
-    pgGen = &p->prmGeneric;
-
-    if ( !pgGen->pgCount )
-        return 0;
-
-    for (i=0; i<256; i++)
-    {
-        if (p->prmByteGroup[i].pgCount)
-        {
-            pgByte = &p->prmByteGroup[i];
-
-            prule = (RULE_PTR*)prmGetFirstRule(pgGen);
-            while ( prule )
-            {
-                prmxAddPortRule(pgByte, prule);
-                prule = (RULE_PTR*)prmGetNextRule(pgGen);
-            }
-
-            prule = (RULE_PTR*)prmGetFirstRuleNC(pgGen);
-            while ( prule )
-            {
-                prmxAddPortRuleNC(pgByte, prule);
-                prule = (RULE_PTR*)prmGetNextRuleNC(pgGen);
-            }
-        }
-    }
-
-    return 0;
-}
-
-/*
-**
-**  NAME
-**    prmShowStats::
-**
-**  DESCRIPTION
-**    This function shows some basic stats on the fast packet
-**    classification.  It show the the number of PORT_GROUPS
-**    for a PORT_RULE_MAP, and the break down of the different
-**    rule types (content, uri, no content).
-**
-**  FORMAL INPUTS
-**    PORT_RULE_MAP * - the PORT_RULE_MAP to show stats on.
-**
-**  FORMAL OUTPUT
-**    int - 0 is successful.
-**
-*/
-int prmShowStats(PORT_RULE_MAP* p)
-{
-    int i;
-    PORT_GROUP* pg;
-
-    LogMessage("Packet Classification Rule Manager Stats ----\n");
-    LogMessage("NumDstGroups   : %d\n",p->prmNumDstGroups);
-    LogMessage("NumSrcGroups   : %d\n",p->prmNumSrcGroups);
-    LogMessage("\n");
-    LogMessage("NumDstRules    : %d\n",p->prmNumDstRules);
-    LogMessage("NumSrcRules    : %d\n",p->prmNumSrcRules);
-    LogMessage("NumGenericRules: %d\n",p->prmNumGenericRules);
-    LogMessage("\n");
-
-    LogMessage("%d Dst Groups In Use, %d Unique Rules, includes generic\n",p->prmNumDstGroups,
-        p->prmNumDstRules);
-    for (i=0; i<MAX_PORTS; i++)
-    {
-        pg = prmFindDstRuleGroup(p, i);
-        if (pg)
-        {
-            LogMessage("  Dst Port %5d : %d uricontent, %d content, %d nocontent \n",i,
-                pg->pgUriContentCount,pg->pgContentCount,pg->pgNoContentCount);
-            if ( pg->avgLen )
-            {
-                LogMessage("MinLen=%d MaxLen=%d AvgLen=%d",pg->minLen,pg->maxLen,pg->avgLen);
-                if (pg->c1)
-                    LogMessage(" [1]=%d",pg->c1);
-                if (pg->c2)
-                    LogMessage(" [2]=%d",pg->c2);
-                if (pg->c3)
-                    LogMessage(" [3]=%d",pg->c3);
-                if (pg->c4)
-                    LogMessage(" [4]=%d",pg->c4);
-                LogMessage("\n");
-            }
-        }
-    }
-
-    LogMessage("%d Src Groups In Use, %d Unique Rules, includes generic\n",p->prmNumSrcGroups,
-        p->prmNumSrcRules);
-    for (i=0; i<MAX_PORTS; i++)
-    {
-        pg = prmFindSrcRuleGroup(p, i);
-        if (pg)
-        {
-            LogMessage("  Src Port %5d : %d uricontent, %d content, %d nocontent \n",i,
-                pg->pgUriContentCount,pg->pgContentCount,pg->pgNoContentCount);
-            if ( pg->avgLen )
-            {
-                LogMessage("MinLen=%d MaxLen=%d AvgLen=%d",pg->minLen,pg->maxLen,pg->avgLen);
-                if (pg->c1)
-                    LogMessage(" [1]=%d",pg->c1);
-                if (pg->c2)
-                    LogMessage(" [2]=%d",pg->c2);
-                if (pg->c3)
-                    LogMessage(" [3]=%d",pg->c3);
-                if (pg->c4)
-                    LogMessage(" [4]=%d",pg->c4);
-                LogMessage("\n");
-            }
-        }
-    }
-
-    pg = p->prmGeneric;
-    if (pg)
-    {
-        LogMessage("   Generic Rules : %d uricontent, %d content, %d nocontent \n",
-            pg->pgUriContentCount,pg->pgContentCount,pg->pgNoContentCount);
-        if ( pg->avgLen )
-        {
-            LogMessage("MinLen=%d MaxLen=%d AvgLen=%d",pg->minLen,pg->maxLen,pg->avgLen);
-            if (pg->c1)
-                LogMessage(" [1]=%d",pg->c1);
-            if (pg->c2)
-                LogMessage(" [2]=%d",pg->c2);
-            if (pg->c3)
-                LogMessage(" [3]=%d",pg->c3);
-            if (pg->c4)
-                LogMessage(" [4]=%d",pg->c4);
-            LogMessage("\n");
-        }
-    }
-
-    return 0;
-}
-
-/*
-**
-**  NAME
 **    prmShowEventStats::
 **
 **  DESCRIPTION
 **    This function is used at the close of the Fast Packet
 **    inspection.  It tells how many non-qualified and qualified
-**    hits occurred for each PORT_GROUP.  A non-qualified hit
+**    hits occurred for each PortGroup.  A non-qualified hit
 **    is defined by an initial match against a packet, but upon
 **    further inspection a hit was not validated.  Non-qualified
 **    hits occur because we can match on the most unique aspect
@@ -1553,7 +405,7 @@ int prmShowStats(PORT_RULE_MAP* p)
 **    cache for event selection.  Qualified hits are not a subset
 **    of non-qualified hits.  Ideally, non-qualified hits should
 **    be zero.  The reason for these stats is that it allows
-**    users to trouble shoot PORT_GROUPs.  A poorly written rule
+**    users to trouble shoot PortGroups.  A poorly written rule
 **    may cause many non-qualified events, and these stats
 **    allow the user to track this down.
 **
@@ -1567,7 +419,7 @@ int prmShowStats(PORT_RULE_MAP* p)
 int prmShowEventStats(PORT_RULE_MAP* p)
 {
     int i;
-    PORT_GROUP* pg;
+    PortGroup* pg;
 
     int NQEvents = 0;
     int QEvents = 0;
@@ -1588,14 +440,14 @@ int prmShowEventStats(PORT_RULE_MAP* p)
         pg = prmFindDstRuleGroup(p, i);
         if (pg)
         {
-            NQEvents += pg->pgNQEvents;
-            QEvents  += pg->pgQEvents;
+            NQEvents += pg->match_count;
+            QEvents  += pg->event_count;
 
-            if ( pg->pgNQEvents + pg->pgQEvents )
+            if ( pg->match_count + pg->event_count )
             {
-                LogMessage("  Dst Port %5d : %d group entries \n",i, pg->pgCount);
-                LogMessage("    NQ Events  : %d\n", pg->pgNQEvents);
-                LogMessage("     Q Events  : %d\n", pg->pgQEvents);
+                LogMessage("  Dst Port %5d : %d group entries \n",i, pg->rule_count);
+                LogMessage("    NQ Events  : %d\n", pg->match_count);
+                LogMessage("     Q Events  : %d\n", pg->event_count);
             }
         }
     }
@@ -1607,14 +459,14 @@ int prmShowEventStats(PORT_RULE_MAP* p)
         pg = prmFindSrcRuleGroup(p, i);
         if (pg)
         {
-            NQEvents += pg->pgNQEvents;
-            QEvents += pg->pgQEvents;
+            NQEvents += pg->match_count;
+            QEvents += pg->event_count;
 
-            if ( pg->pgNQEvents + pg->pgQEvents )
+            if ( pg->match_count + pg->event_count )
             {
-                LogMessage("  Src Port %5d : %d group entries \n",i, pg->pgCount);
-                LogMessage("    NQ Events  : %d\n", pg->pgNQEvents);
-                LogMessage("     Q Events  : %d\n", pg->pgQEvents);
+                LogMessage("  Src Port %5d : %d group entries \n",i, pg->rule_count);
+                LogMessage("    NQ Events  : %d\n", pg->match_count);
+                LogMessage("     Q Events  : %d\n", pg->event_count);
             }
         }
     }
@@ -1622,14 +474,14 @@ int prmShowEventStats(PORT_RULE_MAP* p)
     pg = p->prmGeneric;
     if (pg)
     {
-        NQEvents += pg->pgNQEvents;
-        QEvents += pg->pgQEvents;
+        NQEvents += pg->match_count;
+        QEvents += pg->event_count;
 
-        if ( pg->pgNQEvents + pg->pgQEvents )
+        if ( pg->match_count + pg->event_count )
         {
-            LogMessage("  Generic Rules : %d group entries\n", pg->pgCount);
-            LogMessage("    NQ Events   : %d\n", pg->pgNQEvents);
-            LogMessage("     Q Events   : %d\n", pg->pgQEvents);
+            LogMessage("  Generic Rules : %d group entries\n", pg->rule_count);
+            LogMessage("    NQ Events   : %d\n", pg->match_count);
+            LogMessage("     Q Events   : %d\n", pg->event_count);
         }
     }
 

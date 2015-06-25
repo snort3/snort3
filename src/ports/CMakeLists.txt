@@ -1,5 +1,7 @@
 
 ADD_LIBRARY( ports STATIC
+    port_group.cc
+    port_group.h
     port_item.cc
     port_item.h
     port_object.cc

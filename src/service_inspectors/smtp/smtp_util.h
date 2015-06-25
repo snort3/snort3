@@ -32,7 +32,6 @@
 #include "protocols/packet.h"
 
 void SMTP_GetEOL(const uint8_t*, const uint8_t*, const uint8_t**, const uint8_t**);
-int SMTP_CopyToAltBuffer(const uint8_t*, int);
 int SMTP_CopyEmailHdrs(const uint8_t*, int, MAIL_LogState* log_state);
 int SMTP_CopyEmailID(const uint8_t*, int, int, MAIL_LogState* log_state);
 void SMTP_LogFuncs(SMTP_PROTO_CONF* config, Packet* p, MimeState* mime_ssn);
@@ -41,6 +40,10 @@ void SMTP_ResetAltBuffer(void);
 #ifdef DEBUG_MSGS
 const char* SMTP_PrintBuffer(Packet*);
 #endif
+
+int SMTP_CopyToAltBuffer(const uint8_t*, int);
+const uint8_t* SMTP_GetAltBuffer(unsigned& len);
+void SMTP_ResetAltBuffer();
 
 #endif
 

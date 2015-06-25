@@ -34,10 +34,11 @@
 using namespace NHttpEnums;
 
 NHttpMsgSection::NHttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
-       NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner) :
+       NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_) :
     msg_text(buf_size, buffer),
     session_data(session_data_),
     source_id(source_id_),
+    flow(flow_),
     transaction(NHttpTransaction::attach_my_transaction(session_data, source_id)),
     tcp_close(session_data->tcp_close[source_id]),
     scratch_pad(2*buf_size+500),

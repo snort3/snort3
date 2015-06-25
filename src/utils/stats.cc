@@ -211,6 +211,12 @@ const PegInfo daq_names[] =
 const PegInfo pc_names[] =
 {
     { "analyzed", "packets sent to detection" },
+    { "raw searches", "fast pattern searches in raw packet data" },
+    { "alt searches", "alt fast pattern searches in raw packet data" },
+    { "key searches", "fast pattern searches in key buffer" },
+    { "header searches", "fast pattern searches in header buffer" },
+    { "body searches", "fast pattern searches in body buffer" },
+    { "file searches", "fast pattern searches in file buffer" },
     { "alerts", "alerts not including IP reputation" },
     { "total alerts", "alerts including IP reputation" },
     { "logged", "logged packets" },

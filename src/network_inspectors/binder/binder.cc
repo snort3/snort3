@@ -39,7 +39,7 @@ using namespace std;
 #include "main/policy.h"
 #include "parser/parser.h"
 #include "target_based/sftarget_data.h"
-#include "target_based/sftarget_protocol_reference.h"
+#include "target_based/snort_protocols.h"
 #include "target_based/sftarget_reader.h"
 #include "packet_io/active.h"
 
@@ -455,6 +455,10 @@ int Binder::exec(int, void* pv)
 
     if ( !flow->is_stream() )
         return 0;
+
+    if ( flow->service )
+        // FIXIT-H use Inspector::get_service() (not yet initialized)
+        flow->ssn_state.application_protocol = FindProtocolReference(flow->service);
 
     if ( ins )
     {

@@ -236,6 +236,9 @@ public:
     void show(SnortConfig*) override;
     void eval(Packet*) override;
 
+    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&);
+    void clear(Packet*);
+
 private:
     TELNET_PROTO_CONF* config;
 };
@@ -268,6 +271,22 @@ void Telnet::eval(Packet* p)
 
     ++tnstats.total_packets;
     snort_telnet(config, p);
+}
+
+bool Telnet::get_buf(
+    InspectionBuffer::Type ibt, Packet*, InspectionBuffer& b)
+{
+    if ( ibt != InspectionBuffer::IBT_ALT )
+        return false;
+
+    b.data = get_telnet_buffer(b.len);
+
+    return (b.data != nullptr);
+}
+
+void Telnet::clear(Packet*)
+{
+    reset_telnet_buffer();
 }
 
 //-------------------------------------------------------------------------

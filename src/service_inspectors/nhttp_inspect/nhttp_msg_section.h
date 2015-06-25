@@ -20,6 +20,7 @@
 #ifndef NHTTP_MSG_SECTION_H
 #define NHTTP_MSG_SECTION_H
 
+#include "stream/stream_api.h"
 #include "detection/detection_util.h"
 
 #include "nhttp_scratch_pad.h"
@@ -58,7 +59,7 @@ public:
 
 protected:
     NHttpMsgSection(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
-        NHttpEnums::SourceId source_id_, bool buf_owner);
+        NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_);
 
     // Convenience methods
     void print_message_title(FILE* output, const char* title) const;
@@ -68,6 +69,7 @@ protected:
 
     NHttpFlowData* const session_data;
     const NHttpEnums::SourceId source_id;
+    Flow* const flow;
     NHttpTransaction* transaction;
     const bool tcp_close;
     ScratchPad scratch_pad;

@@ -42,7 +42,7 @@
 #include "parser.h"
 #include "framework/inspector.h"
 #include "utils/sfsnprintfappend.h"
-#include "target_based/sftarget_protocol_reference.h"
+#include "target_based/snort_protocols.h"
 #include "pop_paf.h"
 #include "search_engines/search_tool.h"
 #include "sf_email_attach_decode.h"

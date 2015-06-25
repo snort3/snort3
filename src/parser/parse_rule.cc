@@ -56,7 +56,6 @@
 #include "filters/sfthd.h"
 #include "snort_config.h"
 #include "hash/sfghash.h"
-#include "ips_options/ips_ip_proto.h"
 #include "ips_options/ips_content.h"
 #include "sf_vartable.h"
 #include "sfip/sf_ip.h"
@@ -75,40 +74,38 @@
 #include "managers/so_manager.h"
 #include "config_file.h"
 #include "keywords.h"
+#include "target_based/snort_protocols.h"
 
 #define SRC  0
 #define DST  1
 
 /* Tracking the port_list_t structure for printing and debugging at
  * this point...temporarily... */
-typedef struct
+struct port_entry_t
 {
     int rule_type;
     int proto;
-    int icmp_type;
-    int ip_proto;
     unsigned int gid;
     unsigned int sid;
-    int dir;
-    char content;
-} port_entry_t;
+    bool has_fast_pattern;
+};
 
-typedef struct
+struct port_list_t
 {
     int pl_max;
     int pl_cnt;
     port_entry_t pl_array[MAX_RULE_COUNT];
-} port_list_t;
+};
 
 /* rule counts for port lists */
-typedef struct
+struct rule_count_t
 {
     int src;
     int dst;
-    int aa;  /* any-any */
-    int sd;  /* src+dst ports specified */
-    int nc;  /* no content */
-} rule_count_t;
+    int any;  /* any-any */
+    int both;  /* src+dst ports specified */
+    int nfp;  /* no content */
+};
 
 static int rule_count = 0;
 static int detect_rule_count = 0;
@@ -122,6 +119,7 @@ static rule_count_t tcpCnt;
 static rule_count_t udpCnt;
 static rule_count_t icmpCnt;
 static rule_count_t ipCnt;
+static rule_count_t svcCnt;  // dummy for now
 
 static port_list_t port_list;
 
@@ -148,15 +146,6 @@ static int port_list_add_entry(port_list_t* plist, port_entry_t* pentry)
 }
 
 #if 0
-static port_entry_t* port_list_get(port_list_t* plist, int index)
-{
-    if ( index < plist->pl_max )
-    {
-        return &plist->pl_array[index];
-    }
-    return NULL;
-}
-
 static void port_list_print(port_list_t* plist)
 {
     int i;
@@ -164,8 +153,7 @@ static void port_list_print(port_list_t* plist)
     {
         LogMessage("rule %d { ", i);
         LogMessage(" gid %u sid %u",plist->pl_array[i].gid,plist->pl_array[i].sid);
-        LogMessage(" dir %d",plist->pl_array[i].dir);
-        LogMessage(" content %d", plist->pl_array[i].content);
+        LogMessage(" fp %d", plist->pl_array[i].has_fast_pattern);
         LogMessage(" }\n");
     }
 }
@@ -204,39 +192,44 @@ static int FinishPortListRule(
     PortObject* aaObject;
     rule_count_t* prc;
 
+    assert(otn->proto == proto);
+
     /* Select the Target PortTable for this rule, based on protocol, src/dst
      * dir, and if there is rule content */
-    if (proto == IPPROTO_TCP)
+    if (proto == SNORT_PROTO_TCP)
     {
-        dstTable = port_tables->tcp_dst;
-        srcTable = port_tables->tcp_src;
-        aaObject = port_tables->tcp_anyany;
+        dstTable = port_tables->tcp.dst;
+        srcTable = port_tables->tcp.src;
+        aaObject = port_tables->tcp.any;
         prc = &tcpCnt;
     }
-    else if (proto == IPPROTO_UDP)
+    else if (proto == SNORT_PROTO_UDP)
     {
-        dstTable = port_tables->udp_dst;
-        srcTable = port_tables->udp_src;
-        aaObject = port_tables->udp_anyany;
+        dstTable = port_tables->udp.dst;
+        srcTable = port_tables->udp.src;
+        aaObject = port_tables->udp.any;
         prc = &udpCnt;
     }
-    else if (proto == IPPROTO_ICMP)
+    else if (proto == SNORT_PROTO_ICMP)
     {
-        dstTable = port_tables->icmp_dst;
-        srcTable = port_tables->icmp_src;
-        aaObject = port_tables->icmp_anyany;
+        dstTable = port_tables->icmp.dst;
+        srcTable = port_tables->icmp.src;
+        aaObject = port_tables->icmp.any;
         prc = &icmpCnt;
     }
-    else if (proto == ETHERNET_TYPE_IP)
+    else if (proto == SNORT_PROTO_IP)
     {
-        dstTable = port_tables->ip_dst;
-        srcTable = port_tables->ip_src;
-        aaObject = port_tables->ip_anyany;
+        dstTable = port_tables->ip.dst;
+        srcTable = port_tables->ip.src;
+        aaObject = port_tables->ip.any;
         prc = &ipCnt;
     }
     else
     {
-        return -1;
+        rtn->flags |= ANY_DST_PORT|ANY_DST_PORT;
+        dstTable = srcTable = nullptr;
+        aaObject = port_tables->svc_any;
+        prc = &svcCnt;
     }
 
     /* Count rules with both src and dst specific ports */
@@ -247,16 +240,16 @@ static int FinishPortListRule(
             " >> gid=%u sid=%u\n***\n",
             otn->sigInfo.generator, otn->sigInfo.id));
 
-        prc->sd++;
+        prc->both++;
     }
 
     /* Create/find an index to store this rules sid and gid at,
      * and use as reference in Port Objects */
     rim_index = otn->ruleIndex;
 
-    /* Add up the nocontent rules */
-    if ( !pe->content )
-        prc->nc++;
+    /* Add up the nfp rules */
+    if ( !pe->has_fast_pattern )
+        prc->nfp++;
 
     /* If not an any-any rule test for port bleedover, if we are using a
      * single rule group, don't bother */
@@ -302,7 +295,7 @@ static int FinishPortListRule(
     if (((rtn->flags & (ANY_DST_PORT|ANY_SRC_PORT)) == (ANY_DST_PORT|ANY_SRC_PORT)) ||
         large_port_group || fp->get_single_rule_group())
     {
-        if (proto == ETHERNET_TYPE_IP)
+        if (proto == SNORT_PROTO_IP)
         {
             /* Add the IP rules to the higher level app protocol groups, if they apply
              * to those protocols.  All IP rules should have any-any port descriptors
@@ -312,50 +305,41 @@ static int FinishPortListRule(
                 "Finishing IP any-any rule %u:%u\n",
                 otn->sigInfo.generator,otn->sigInfo.id); );
 
-            switch (GetOtnIpProto(otn))
+            switch ( otn->proto )
             {
-            case IPPROTO_TCP:
-                PortObjectAddRule(port_tables->tcp_anyany, rim_index);
-                tcpCnt.aa++;
+            case SNORT_PROTO_IP:    /* Add to all ip proto any port tables */
+                PortObjectAddRule(port_tables->icmp.any, rim_index);
+                icmpCnt.any++;
+
+                PortObjectAddRule(port_tables->tcp.any, rim_index);
+                tcpCnt.any++;
+
+                PortObjectAddRule(port_tables->udp.any, rim_index);
+                udpCnt.any++;
                 break;
 
-            case IPPROTO_UDP:
-                PortObjectAddRule(port_tables->udp_anyany, rim_index);
-                udpCnt.aa++;
+            case SNORT_PROTO_ICMP:
+                PortObjectAddRule(port_tables->icmp.any, rim_index);
+                icmpCnt.any++;
                 break;
 
-            case IPPROTO_ICMP:
-                PortObjectAddRule(port_tables->icmp_anyany, rim_index);
-                icmpCnt.aa++;
+            case SNORT_PROTO_TCP:
+                PortObjectAddRule(port_tables->tcp.any, rim_index);
+                tcpCnt.any++;
                 break;
 
-            case -1:      /* Add to all ip proto anyany port tables */
-                PortObjectAddRule(port_tables->tcp_anyany, rim_index);
-                tcpCnt.aa++;
-
-                PortObjectAddRule(port_tables->udp_anyany, rim_index);
-                udpCnt.aa++;
-
-                PortObjectAddRule(port_tables->icmp_anyany, rim_index);
-                icmpCnt.aa++;
-
+            case SNORT_PROTO_UDP:
+                PortObjectAddRule(port_tables->udp.any, rim_index);
+                udpCnt.any++;
                 break;
 
             default:
                 break;
             }
-
-            /* Add to the IP ANY ANY */
-            PortObjectAddRule(aaObject, rim_index);
-            prc->aa++;
         }
-        else
-        {
-            /* For other protocols-tcp/udp/icmp add to the any any group */
-            PortObjectAddRule(aaObject, rim_index);
-            prc->aa++;
-        }
-
+        /* For all protocols-add to the any any group */
+        PortObjectAddRule(aaObject, rim_index);
+        prc->any++;
         return 0; /* done */
     }
 
@@ -709,12 +693,12 @@ static PortObject* ParsePortListTcpUdpPort(
  */
 static int ParsePortList(
     RuleTreeNode* rtn, PortVarTable* pvt, PortTable* noname,
-    const char* port_str, int proto, int dst_flag)
+    const char* port_str, int dst_flag)
 {
     PortObject* portobject = NULL;  /* src or dst */
 
     /* Get the protocol specific port object */
-    if ( proto == IPPROTO_TCP || proto == IPPROTO_UDP )
+    if ( rule_proto & (PROTO_BIT__TCP | PROTO_BIT__UDP) )
     {
         portobject = ParsePortListTcpUdpPort(pvt, noname, port_str);
     }
@@ -1088,16 +1072,13 @@ static RuleTreeNode* ProcessHeadNode(
     if (rtn == NULL)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Building New Chain head node\n"); );
+        head_count++;
 
         rtn = (RuleTreeNode*)SnortAlloc(sizeof(RuleTreeNode));
-
         rtn->otnRefCount++;
 
         /* copy the prototype header info into the new header block */
         XferHeader(test_node, rtn);
-
-        head_count++;
-        rtn->head_node_number = head_count;
 
         /* initialize the function list for the new RTN */
         SetupRTNFuncList(rtn);
@@ -1233,6 +1214,7 @@ static void ValidateFastPattern(OptTreeNode* otn)
             if (fpl->isRelative)
             {
                 assert(fp);
+                assert(false);  // fp only is set internally; should not be bad
                 clear_fast_pattern_only(fp);
             }
         }
@@ -1274,10 +1256,11 @@ void parse_rule_init()
     memset(&port_list, 0, sizeof(port_list));
     port_list.pl_max = MAX_RULE_COUNT;
 
-    memset(&tcpCnt, 0, sizeof(tcpCnt));
-    memset(&udpCnt, 0, sizeof(udpCnt));
     memset(&ipCnt, 0, sizeof(ipCnt));
     memset(&icmpCnt, 0, sizeof(icmpCnt));
+    memset(&tcpCnt, 0, sizeof(tcpCnt));
+    memset(&udpCnt, 0, sizeof(udpCnt));
+    memset(&svcCnt, 0, sizeof(svcCnt));
 }
 
 void parse_rule_term()
@@ -1298,8 +1281,12 @@ void parse_rule_print()
     LogCount("option chains", otn_count);
     LogCount("chain headers", head_count);
 
-    LogLabel("rule port counts");
+    LogLabel("port rule counts");
     LogMessage("%8s%8s%8s%8s%8s\n", " ", "tcp", "udp", "icmp", "ip");
+
+    if ( tcpCnt.any || udpCnt.any || icmpCnt.any || ipCnt.any )
+        LogMessage("%8s%8u%8u%8u%8u\n", "any",
+            tcpCnt.any, udpCnt.any, icmpCnt.any, ipCnt.any);
 
     if ( tcpCnt.src || udpCnt.src || icmpCnt.src || ipCnt.src )
         LogMessage("%8s%8u%8u%8u%8u\n", "src",
@@ -1309,17 +1296,20 @@ void parse_rule_print()
         LogMessage("%8s%8u%8u%8u%8u\n", "dst",
             tcpCnt.dst, udpCnt.dst, icmpCnt.dst, ipCnt.dst);
 
-    if ( tcpCnt.aa || udpCnt.aa || icmpCnt.aa || ipCnt.aa )
-        LogMessage("%8s%8u%8u%8u%8u\n", "any",
-            tcpCnt.aa, udpCnt.aa, icmpCnt.aa, ipCnt.aa);
+    if ( tcpCnt.both || udpCnt.both || icmpCnt.both || ipCnt.both )
+        LogMessage("%8s%8u%8u%8u%8u\n", "both",
+            tcpCnt.both, udpCnt.both, icmpCnt.both, ipCnt.both);
 
-    if ( tcpCnt.nc || udpCnt.nc || icmpCnt.nc || ipCnt.nc )
-        LogMessage("%8s%8u%8u%8u%8u\n", "nc",
-            tcpCnt.nc, udpCnt.nc, icmpCnt.nc, ipCnt.nc);
+    if ( tcpCnt.nfp || udpCnt.nfp || icmpCnt.nfp || ipCnt.nfp )
+        LogMessage("%8s%8u%8u%8u%8u\n", "no fp",
+            tcpCnt.nfp, udpCnt.nfp, icmpCnt.nfp, ipCnt.nfp);
 
-    if ( tcpCnt.sd || udpCnt.sd || icmpCnt.sd || ipCnt.sd )
-        LogMessage("%8s%8u%8u%8u%8u\n", "s+d",
-            tcpCnt.sd, udpCnt.sd, icmpCnt.sd, ipCnt.sd);
+    unsigned tcp = tcpCnt.src + tcpCnt.dst + tcpCnt.any + tcpCnt.both + tcpCnt.nfp;
+    unsigned udp = udpCnt.src + udpCnt.dst + udpCnt.any + udpCnt.both + udpCnt.nfp;
+    unsigned icmp = icmpCnt.src + icmpCnt.dst + icmpCnt.any + icmpCnt.both + icmpCnt.nfp;
+    unsigned ip = ipCnt.src + ipCnt.dst + ipCnt.any + ipCnt.both + ipCnt.nfp;
+
+    LogMessage("%8s%8u%8u%8u%8u\n", "total", tcp, udp, icmp, ip);
 
     //print_rule_index_map( ruleIndexMap );
     //port_list_print( &port_list );
@@ -1344,44 +1334,26 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
         ParseError("unconfigured rule action '%s'", s);
 }
 
-void parse_rule_proto(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
+void parse_rule_proto(SnortConfig*, const char* s, RuleTreeNode& rtn)
 {
     if ( s_ignore )
         return;
 
     if ( !strcmp(s, "tcp") )
-    {
-        rtn.proto = IPPROTO_TCP;
-        sc->ip_proto_array[IPPROTO_TCP] = 1;
         rule_proto = PROTO_BIT__TCP;
-    }
+
     else if ( !strcmp(s, "udp") )
-    {
-        rtn.proto = IPPROTO_UDP;
-        sc->ip_proto_array[IPPROTO_UDP] = 1;
         rule_proto = PROTO_BIT__UDP;
-    }
+
     else if ( !strcmp(s, "icmp") )
-    {
-        rtn.proto = IPPROTO_ICMP;
-        sc->ip_proto_array[IPPROTO_ICMP] = 1;
-        sc->ip_proto_array[IPPROTO_ICMPV6] = 1;
         rule_proto = PROTO_BIT__ICMP;
-    }
+
     else if ( !strcmp(s, "ip") )
-    {
-        rtn.proto = ETHERNET_TYPE_IP;
-
-        /* This will be set via ip_protos */
-        // FIXIT-L need to add these for a single ip any any rule?
-        sc->ip_proto_array[IPPROTO_TCP] = 1;
-        sc->ip_proto_array[IPPROTO_UDP] = 1;
-        sc->ip_proto_array[IPPROTO_ICMP] = 1;
-        sc->ip_proto_array[IPPROTO_ICMPV6] = 1;
-
         rule_proto = PROTO_BIT__IP;
-    }
-    else
+
+    rtn.proto = AddProtocolReference(s);
+
+    if ( rtn.proto <= 0 )
     {
         ParseError("bad protocol: %s", s);
         rule_proto = 0;
@@ -1406,7 +1378,7 @@ void parse_rule_ports(
     IpsPolicy* p = get_ips_policy();
 
     if ( ParsePortList(&rtn, p->portVarTable, p->nonamePortVarTable,
-        s, rtn.proto, src ? SRC : DST) )
+        s, src ? SRC : DST) )
     {
         ParseError("bad ports: '%s'", s);
     }
@@ -1514,7 +1486,7 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
         }
     }
 
-    set_fp_content(otn);
+    bool has_fp = set_fp_content(otn);
 
     /* The IPs in the test node get free'd in ProcessHeadNode if there is
      * already a matching RTN.  The portobjects will get free'd when the
@@ -1585,21 +1557,14 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
     pe.gid = otn->sigInfo.generator;
     pe.sid = otn->sigInfo.id;
 
-    /* See what kind of content is going in the fast pattern matcher */
-    {
-        if ( otn_has_plugin(otn, RULE_OPTION_TYPE_CONTENT) )
-        {
-            pe.content = 1;
-        }
-    }
-
-    if (new_rtn->flags & BIDIRECTIONAL)
-        pe.dir = 1;
-
+    pe.has_fast_pattern = has_fp;
     pe.proto = rtn.proto;
     pe.rule_type = rtn.type;
 
     port_list_add_entry(&port_list, &pe);
+
+    if ( is_service_protocol(otn->proto) )
+        add_service_to_otn(sc, otn, get_protocol_name(otn->proto));
 
     /*
      * The src/dst port parsing must be done before the Head Nodes are processed, since they must

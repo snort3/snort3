@@ -16,7 +16,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// Author: Martin Roesch
+// ips_flow.cc derived from sp_clientserver.c by Martin Roesch
 
 #include <sys/types.h>
 
@@ -40,6 +40,7 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
+#include "target_based/snort_protocols.h"
 
 #define s_name "flow"
 
@@ -462,7 +463,7 @@ static IpsOption* flow_ctor(Module* p, OptTreeNode* otn)
     if ( m->data.unestablished )
         otn->unestablished = 1;
 
-    if (otn->proto == IPPROTO_ICMP)
+    if (otn->proto == SNORT_PROTO_ICMP)
     {
         if ( (m->data.only_reassembled != ONLY_FRAG) &&
             (m->data.ignore_reassembled != IGNORE_FRAG) )

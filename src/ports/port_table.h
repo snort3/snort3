@@ -86,11 +86,7 @@ struct PortTable
 PortTable* PortTableNew(void);
 void PortTableFree(PortTable* p);
 
-PortObject* PortTableFindPortObjectByPort(PortTable* pt, int port);
-PortObject* PortTableFindInputPortObjectName(PortTable* pt, char* po_name);
 PortObject* PortTableFindInputPortObjectPorts(PortTable* pt, PortObject* po);
-
-int PortTableNormalizeInputPortObjects(PortTable* p);
 
 int PortTableAddObject(PortTable* p, PortObject* po);
 int PortTableCompile(PortTable* P);
@@ -100,9 +96,6 @@ void PortTablePrintInputEx(PortTable* p,
 
 int PortTablePrintCompiledEx(PortTable* p,
     void (* rule_index_map_print)(int index, char* buf, int bufsize) );
-
-int PortTableCompileMergePortObjects(PortTable* p);
-int PortTableConsistencyCheck(PortTable* p);
 
 void PortTablePrintInput(PortTable* p);
 void PortTablePrintUserRules(PortTable* p);

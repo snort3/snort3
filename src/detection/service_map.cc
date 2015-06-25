@@ -65,17 +65,20 @@ srmm_table_t* ServiceMapNew()
 {
     srmm_table_t* table = (srmm_table_t*)SnortAlloc(sizeof(srmm_table_t));
 
+    table->ip_to_srv = alloc_srvmap();
+    table->ip_to_cli = alloc_srvmap();
+
+    table->icmp_to_srv = alloc_srvmap();
+    table->icmp_to_cli = alloc_srvmap();
+
     table->tcp_to_srv = alloc_srvmap();
     table->tcp_to_cli = alloc_srvmap();
 
     table->udp_to_srv = alloc_srvmap();
     table->udp_to_cli = alloc_srvmap();
 
-    table->icmp_to_srv = alloc_srvmap();
-    table->icmp_to_cli = alloc_srvmap();
-
-    table->ip_to_srv = alloc_srvmap();
-    table->ip_to_cli = alloc_srvmap();
+    table->svc_to_srv = alloc_srvmap();
+    table->svc_to_cli = alloc_srvmap();
 
     return table;
 }
@@ -91,14 +94,20 @@ void ServiceMapFree(srmm_table_t* srvc_map)
     if (srvc_map == NULL)
         return;
 
-    ServiceTableFree(srvc_map->tcp_to_srv);
-    ServiceTableFree(srvc_map->tcp_to_cli);
-    ServiceTableFree(srvc_map->udp_to_srv);
-    ServiceTableFree(srvc_map->udp_to_cli);
-    ServiceTableFree(srvc_map->icmp_to_srv);
-    ServiceTableFree(srvc_map->icmp_to_cli);
     ServiceTableFree(srvc_map->ip_to_srv);
     ServiceTableFree(srvc_map->ip_to_cli);
+
+    ServiceTableFree(srvc_map->icmp_to_srv);
+    ServiceTableFree(srvc_map->icmp_to_cli);
+
+    ServiceTableFree(srvc_map->tcp_to_srv);
+    ServiceTableFree(srvc_map->tcp_to_cli);
+
+    ServiceTableFree(srvc_map->udp_to_srv);
+    ServiceTableFree(srvc_map->udp_to_cli);
+
+    ServiceTableFree(srvc_map->svc_to_srv);
+    ServiceTableFree(srvc_map->svc_to_cli);
 
     free(srvc_map);
 }
@@ -125,17 +134,20 @@ srmm_table_t* ServicePortGroupMapNew()
 {
     srmm_table_t* table = (srmm_table_t*)SnortAlloc(sizeof(srmm_table_t));
 
+    table->ip_to_srv = alloc_spgmm();
+    table->ip_to_cli = alloc_spgmm();
+
+    table->icmp_to_srv = alloc_spgmm();
+    table->icmp_to_cli = alloc_spgmm();
+
     table->tcp_to_srv = alloc_spgmm();
     table->tcp_to_cli = alloc_spgmm();
 
     table->udp_to_srv = alloc_spgmm();
     table->udp_to_cli = alloc_spgmm();
 
-    table->icmp_to_srv = alloc_spgmm();
-    table->icmp_to_cli = alloc_spgmm();
-
-    table->ip_to_srv = alloc_spgmm();
-    table->ip_to_cli = alloc_spgmm();
+    table->svc_to_srv = alloc_spgmm();
+    table->svc_to_cli = alloc_spgmm();
 
     return table;
 }
@@ -144,18 +156,18 @@ static void ServicePortGroupTableFree(SFGHASH* table)
 {
 #if 0
     SFGHASH_NODE* node;
-    PORT_GROUP* pg;
+    PortGroup* pg;
 
     /* Not sure why we wouldn't want to free the data */
     for (node = sfghash_findfirst(table);
         node != NULL;
         node = sfghash_findnext(table))
     {
-        pg = (PORT_GROUP*)node->data;
+        pg = (PortGroup*)node->data;
         if (pg == NULL)
             continue;
 
-        /* XXX XXX (if we need to recycle these) free the PORT_GROUP */
+        /* XXX XXX (if we need to recycle these) free the PortGroup */
         node->data = NULL;
     }
 #endif
@@ -171,14 +183,20 @@ void ServicePortGroupMapFree(srmm_table_t* srvc_pg_map)
     if (srvc_pg_map == NULL)
         return;
 
-    ServicePortGroupTableFree(srvc_pg_map->tcp_to_srv);
-    ServicePortGroupTableFree(srvc_pg_map->tcp_to_cli);
-    ServicePortGroupTableFree(srvc_pg_map->udp_to_srv);
-    ServicePortGroupTableFree(srvc_pg_map->udp_to_cli);
-    ServicePortGroupTableFree(srvc_pg_map->icmp_to_srv);
-    ServicePortGroupTableFree(srvc_pg_map->icmp_to_cli);
     ServicePortGroupTableFree(srvc_pg_map->ip_to_srv);
     ServicePortGroupTableFree(srvc_pg_map->ip_to_cli);
+
+    ServicePortGroupTableFree(srvc_pg_map->icmp_to_srv);
+    ServicePortGroupTableFree(srvc_pg_map->icmp_to_cli);
+
+    ServicePortGroupTableFree(srvc_pg_map->tcp_to_srv);
+    ServicePortGroupTableFree(srvc_pg_map->tcp_to_cli);
+
+    ServicePortGroupTableFree(srvc_pg_map->udp_to_srv);
+    ServicePortGroupTableFree(srvc_pg_map->udp_to_cli);
+
+    ServicePortGroupTableFree(srvc_pg_map->svc_to_srv);
+    ServicePortGroupTableFree(srvc_pg_map->svc_to_cli);
 
     free(srvc_pg_map);
 }
@@ -232,29 +250,30 @@ static int ServiceMapAddOtn(srmm_table_t* srmm, int proto, char* servicename, Op
     if (!otn )
         return 0;
 
-    if ( proto == IPPROTO_TCP)
-    {
-        to_srv = srmm->tcp_to_srv;
-        to_cli = srmm->tcp_to_cli;
-    }
-    else if ( proto == IPPROTO_UDP)
-    {
-        to_srv = srmm->udp_to_srv;
-        to_cli = srmm->udp_to_cli;
-    }
-    else if ( proto == IPPROTO_ICMP )
-    {
-        to_srv = srmm->icmp_to_srv;
-        to_cli = srmm->icmp_to_cli;
-    }
-    else if ( proto ==  ETHERNET_TYPE_IP )
+    if ( proto == SNORT_PROTO_IP )
     {
         to_srv = srmm->ip_to_srv;
         to_cli = srmm->ip_to_cli;
     }
+    else if ( proto == SNORT_PROTO_ICMP )
+    {
+        to_srv = srmm->icmp_to_srv;
+        to_cli = srmm->icmp_to_cli;
+    }
+    else if ( proto == SNORT_PROTO_TCP )
+    {
+        to_srv = srmm->tcp_to_srv;
+        to_cli = srmm->tcp_to_cli;
+    }
+    else if ( proto == SNORT_PROTO_UDP )
+    {
+        to_srv = srmm->udp_to_srv;
+        to_cli = srmm->udp_to_cli;
+    }
     else
     {
-        return 0;
+        to_srv = srmm->svc_to_srv;
+        to_cli = srmm->svc_to_cli;
     }
 
     if ( OtnFlowFromClient(otn) )
@@ -280,6 +299,16 @@ void fpPrintServicePortGroupSummary(srmm_table_t* srvc_pg_map)
     LogMessage("| Service-PortGroup Table Summary \n");
     LogMessage("---------------------------------\n");
 
+    if (srvc_pg_map->ip_to_srv->count)
+        LogMessage("| ip to server   : %d services\n",srvc_pg_map->ip_to_srv->count);
+    if (srvc_pg_map->ip_to_cli->count)
+        LogMessage("| ip to cient    : %d services\n",srvc_pg_map->ip_to_cli->count);
+
+    if (srvc_pg_map->icmp_to_srv->count)
+        LogMessage("| icmp to server : %d services\n",srvc_pg_map->icmp_to_srv->count);
+    if (srvc_pg_map->icmp_to_cli->count)
+        LogMessage("| icmp to cient  : %d services\n",srvc_pg_map->icmp_to_cli->count);
+
     if (srvc_pg_map->tcp_to_srv->count)
         LogMessage("| tcp to server  : %d services\n",srvc_pg_map->tcp_to_srv->count);
     if (srvc_pg_map->tcp_to_cli->count)
@@ -290,15 +319,11 @@ void fpPrintServicePortGroupSummary(srmm_table_t* srvc_pg_map)
     if (srvc_pg_map->udp_to_cli->count)
         LogMessage("| udp to cient   : %d services\n",srvc_pg_map->udp_to_cli->count);
 
-    if (srvc_pg_map->icmp_to_srv->count)
-        LogMessage("| icmp to server : %d services\n",srvc_pg_map->icmp_to_srv->count);
-    if (srvc_pg_map->icmp_to_cli->count)
-        LogMessage("| icmp to cient  : %d services\n",srvc_pg_map->icmp_to_cli->count);
+    if (srvc_pg_map->svc_to_srv->count)
+        LogMessage("| svc to server  : %d services\n",srvc_pg_map->svc_to_srv->count);
+    if (srvc_pg_map->svc_to_cli->count)
+        LogMessage("| svc to cient   : %d services\n",srvc_pg_map->svc_to_cli->count);
 
-    if (srvc_pg_map->ip_to_srv->count)
-        LogMessage("| ip to server   : %d services\n",srvc_pg_map->ip_to_srv->count);
-    if (srvc_pg_map->ip_to_cli->count)
-        LogMessage("| ip to cient    : %d services\n",srvc_pg_map->ip_to_cli->count);
     LogMessage("---------------------------------\n");
 }
 
@@ -325,8 +350,7 @@ int fpCreateServiceMaps(SnortConfig* sc)
         {
             rtn = getRtnFromOtn(otn);
 
-            if (rtn && ((rtn->proto == IPPROTO_TCP) || (rtn->proto == IPPROTO_UDP)
-                || (rtn->proto == IPPROTO_ICMP) || (rtn->proto == ETHERNET_TYPE_IP)))
+            if ( rtn )
             {
                 // skip builtin rules
                 if ( !otn->sigInfo.text_rule )
@@ -354,11 +378,10 @@ sopg_table_t* ServicePortGroupTableNew()
     return (sopg_table_t*)SnortAlloc(sizeof(sopg_table_t));
 }
 
-PORT_GROUP* fpGetServicePortGroupByOrdinal(
+PortGroup* fpGetServicePortGroupByOrdinal(
     sopg_table_t* sopg, int proto, int dir, int16_t proto_ordinal)
 {
-    //SFGHASH_NODE * n;
-    PORT_GROUP* pg = NULL;
+    PortGroup* pg = NULL;
 
     if (proto_ordinal >= MAX_PROTOCOL_ORDINAL)
         return NULL;
@@ -368,41 +391,49 @@ PORT_GROUP* fpGetServicePortGroupByOrdinal(
 
     switch (proto)
     {
-    case IPPROTO_TCP:
-        if (dir == TO_SERVER)
-            pg = sopg->tcp_to_srv[proto_ordinal];
-        else
-            pg = sopg->tcp_to_cli[proto_ordinal];
-
-        break;
-
-    case IPPROTO_UDP:
-        if (dir == TO_SERVER)
-            pg = sopg->udp_to_srv[proto_ordinal];
-        else
-            pg = sopg->udp_to_cli[proto_ordinal];
-
-        break;
-
-    case IPPROTO_ICMP:
-        if (dir == TO_SERVER)
-            pg = sopg->icmp_to_srv[proto_ordinal];
-        else
-            pg = sopg->icmp_to_cli[proto_ordinal];
-
-        break;
-    case ETHERNET_TYPE_IP:
+    case SNORT_PROTO_IP:
         if (dir == TO_SERVER)
             pg = sopg->ip_to_srv[proto_ordinal];
         else
             pg = sopg->ip_to_cli[proto_ordinal];
+        break;
 
+    case SNORT_PROTO_ICMP:
+        if (dir == TO_SERVER)
+            pg = sopg->icmp_to_srv[proto_ordinal];
+        else
+            pg = sopg->icmp_to_cli[proto_ordinal];
+        break;
+
+    case SNORT_PROTO_TCP:
+        if (dir == TO_SERVER)
+            pg = sopg->tcp_to_srv[proto_ordinal];
+        else
+            pg = sopg->tcp_to_cli[proto_ordinal];
+        break;
+
+    case SNORT_PROTO_UDP:
+        if (dir == TO_SERVER)
+            pg = sopg->udp_to_srv[proto_ordinal];
+        else
+            pg = sopg->udp_to_cli[proto_ordinal];
         break;
 
     default:
+        if (dir == TO_SERVER)
+            pg = sopg->svc_to_srv[proto_ordinal];
+        else
+            pg = sopg->svc_to_cli[proto_ordinal];
         break;
     }
 
+    if ( !pg )
+    {
+        if (dir == TO_SERVER)
+            pg = sopg->svc_to_srv[proto_ordinal];
+        else
+            pg = sopg->svc_to_cli[proto_ordinal];
+    }
     return pg;
 }
 

@@ -91,9 +91,15 @@ void SMTP_GetEOL(const uint8_t* ptr, const uint8_t* end,
     *eolm = tmp_eolm;
 }
 
-void SMTP_ResetAltBuffer(void)
+void SMTP_ResetAltBuffer()
 {
     DecodeBuf.len = 0;
+}
+
+const uint8_t* SMTP_GetAltBuffer(unsigned& len)
+{
+    len = DecodeBuf.len;
+    return len ? DecodeBuf.data : nullptr;
 }
 
 int SMTP_CopyToAltBuffer(const uint8_t* start, int length)
@@ -124,8 +130,6 @@ int SMTP_CopyToAltBuffer(const uint8_t* start, int length)
         return -1;
     }
     *alt_len += length;
-
-    set_alt_data(DecodeBuf.data, *alt_len);
 
     return 0;
 }

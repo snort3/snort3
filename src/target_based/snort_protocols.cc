@@ -17,13 +17,11 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
- * Author: Steven Sturges
- * sftarget_protocol_reference.c
- */
+// snort_protocols.cc derived from sftarget_protocol_reference.c by Steven Sturges
 
-#include "sftarget_protocol_reference.h"
+#include "snort_protocols.h"
 
+#include <algorithm>
 #include <string>
 #include <vector>
 using namespace std;
@@ -42,10 +40,6 @@ struct SFTargetProtocolReference
     int16_t ordinal;
 };
 
-int16_t protocolReferenceTCP;
-int16_t protocolReferenceUDP;
-int16_t protocolReferenceICMP;
-
 static SFGHASH* proto_reference_table = NULL;  // STATIC
 static int16_t protocol_number = 1;
 
@@ -57,6 +51,28 @@ const char* get_protocol_name(uint16_t id)
         id = 0;
 
     return id_map[id].c_str();
+}
+
+static bool comp_ind(uint16_t a, uint16_t b)
+{
+    return id_map[a] < id_map[b];
+}
+
+const char* get_protocol_name_sorted(uint16_t id)
+{
+    static vector<uint16_t> ind_map;  // indirect
+
+    if ( ind_map.size() < id_map.size() )
+    {
+        while ( ind_map.size() < id_map.size() )
+            ind_map.push_back((uint16_t)ind_map.size());
+
+        sort(ind_map.begin(), ind_map.end(), comp_ind);
+    }
+    if ( id >= ind_map.size() )
+        return nullptr;
+
+    return id_map[ind_map[id]].c_str();
 }
 
 /* XXX XXX Probably need to do this during swap time since the
@@ -141,11 +157,22 @@ void InitializeProtocolReferenceTable(void)
         FatalError("Failed to Initialize Target-Based Protocol Reference Table\n");
     }
 
-    AddProtocolReference("ip");
+    int16_t proto;
 
-    protocolReferenceTCP = AddProtocolReference("tcp");
-    protocolReferenceUDP = AddProtocolReference("udp");
-    protocolReferenceICMP = AddProtocolReference("icmp");
+    proto = AddProtocolReference("ip");
+    assert(proto == SNORT_PROTO_IP);
+
+    proto = AddProtocolReference("icmp");
+    assert(proto == SNORT_PROTO_ICMP);
+
+    proto = AddProtocolReference("tcp");
+    assert(proto == SNORT_PROTO_TCP);
+
+    proto = AddProtocolReference("udp");
+    assert(proto == SNORT_PROTO_UDP);
+
+    proto = AddProtocolReference("file");
+    assert(proto == SNORT_PROTO_FILE);
 }
 
 void FreeProtoocolReferenceTable(void)
@@ -181,13 +208,13 @@ int16_t GetProtocolReference(Packet* p)
         switch (p->type())
         {
         case PktType::TCP:
-            ipprotocol = protocolReferenceTCP;
+            ipprotocol = SNORT_PROTO_TCP;
             break;
         case PktType::UDP:
-            ipprotocol = protocolReferenceUDP;
+            ipprotocol = SNORT_PROTO_UDP;
             break;
         case PktType::ICMP:
-            ipprotocol = protocolReferenceICMP;
+            ipprotocol = SNORT_PROTO_ICMP;
             break;
         default: /* so compiler doesn't complain about unhandled cases */
             break;

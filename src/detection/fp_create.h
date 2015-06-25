@@ -33,7 +33,7 @@
 #endif
 
 #include "pcrm.h"
-#include "target_based/sftarget_protocol_reference.h"
+#include "target_based/snort_protocols.h"
 
 struct SnortConfig;
 
@@ -63,7 +63,9 @@ void fpShowEventStats(SnortConfig*);
 typedef int (* OtnWalkFcn)(int, struct RuleTreeNode*, struct OptTreeNode*);
 void fpWalkOtns(int, OtnWalkFcn);
 
-void set_fp_content(struct OptTreeNode*);
+void fpDeletePortGroup(void*);
+
+bool set_fp_content(struct OptTreeNode*);
 const char* PatternRawToContent(const char* pattern, int pattern_len);
 
 #endif

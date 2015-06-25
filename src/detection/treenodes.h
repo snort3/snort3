@@ -144,7 +144,6 @@ struct RuleTreeNode
     struct ListHead* listhead;
 
     int proto;
-    int head_node_number;
 
     uint32_t flags;     /* control flags */
 

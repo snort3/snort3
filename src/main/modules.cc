@@ -58,7 +58,7 @@ using namespace std;
 #include "main/thread.h"
 #include "stream/stream_api.h"
 #include "utils/stats.h"
-#include "target_based/sftarget_protocol_reference.h"
+#include "target_based/snort_protocols.h"
 
 //-------------------------------------------------------------------------
 // detection module
@@ -1868,24 +1868,22 @@ private:
 
 bool HostsModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("ip") )
+    if ( host and v.is("ip") )
         v.get_addr(host->ipAddr);
 
-    else if ( v.is("frag_policy") )
-    {
+    else if ( host and v.is("frag_policy") )
         host->hostInfo.fragPolicy = v.get_long() + 1;
-    }
-    else if ( v.is("tcp_policy") )
-    {
+
+    else if ( host and v.is("tcp_policy") )
         host->hostInfo.streamPolicy = v.get_long() + 1;
-    }
-    else if ( v.is("name") )
+
+    else if ( app and v.is("name") )
         app->protocol = AddProtocolReference(v.get_string());
 
-    else if ( v.is("proto") )
+    else if ( app and v.is("proto") )
         app->ipproto = AddProtocolReference(v.get_string());
 
-    else if ( v.is("port") )
+    else if ( app and v.is("port") )
         app->port = v.get_long();
 
     else
