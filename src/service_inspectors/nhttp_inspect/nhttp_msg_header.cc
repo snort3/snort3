@@ -22,6 +22,7 @@
 #include <stdio.h>
 
 #include "detection/detection_util.h"
+#include "file_api/file_api.h"
 
 #include "nhttp_enum.h"
 #include "nhttp_msg_request.h"
@@ -30,8 +31,8 @@
 using namespace NHttpEnums;
 
 NHttpMsgHeader::NHttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
-    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner) :
-    NHttpMsgHeadShared(buffer, buf_size, session_data_, source_id_, buf_owner)
+    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_) :
+    NHttpMsgHeadShared(buffer, buf_size, session_data_, source_id_, buf_owner, flow_)
 {
     transaction->set_header(this, source_id);
 }
@@ -83,6 +84,10 @@ void NHttpMsgHeader::update_flow()
         session_data->type_expected[source_id] = SEC_CHUNK;
         session_data->body_octets[source_id] = 0;
         session_data->section_size_target[source_id] = DATA_BLOCK_SIZE;
+        if (session_data->file_depth_remaining[1-source_id] <= 0)
+        {   // Bidirectional file processing is problematic FIXIT-M
+            session_data->file_depth_remaining[source_id] = file_api->get_max_file_depth();
+        }
         session_data->infractions[source_id].reset();
         session_data->events[source_id].reset();
     }
@@ -96,6 +101,10 @@ void NHttpMsgHeader::update_flow()
         session_data->body_octets[source_id] = 0;
         session_data->section_size_target[source_id] = DATA_BLOCK_SIZE;
         session_data->section_size_max[source_id] = FINAL_BLOCK_SIZE;
+        if (session_data->file_depth_remaining[1-source_id] <= 0)
+        {   // Bidirectional file processing is problematic FIXIT-M
+            session_data->file_depth_remaining[source_id] = file_api->get_max_file_depth();
+        }
         session_data->infractions[source_id].reset();
         session_data->events[source_id].reset();
     }

@@ -94,6 +94,7 @@ private:
                                             NHttpEnums::VERS__NOTPRESENT };
     NHttpEnums::MethodId method_id = NHttpEnums::METH__NOTPRESENT;
     int32_t status_code_num = NHttpEnums::STAT_NOTPRESENT;
+    int64_t file_depth_remaining[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
 
     // number of user data octets seen so far (regular body or chunks)
     int64_t body_octets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };

@@ -22,31 +22,81 @@
 #include <stdio.h>
 
 #include "detection/detection_util.h"
+#include "file_api/file_api.h"
 
 #include "nhttp_enum.h"
+#include "nhttp_msg_request.h"
 #include "nhttp_msg_body.h"
 
 using namespace NHttpEnums;
 
 NHttpMsgBody::NHttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,
-    NHttpFlowData* session_data_,
-    SourceId source_id_, bool buf_owner) :
-    NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner),
-    data_length(session_data->data_length[source_id]), body_octets(
-    session_data->body_octets[source_id])
+    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_) :
+    NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner, flow_),
+    data_length(session_data->data_length[source_id]),
+    body_octets(session_data->body_octets[source_id])
 {
     transaction->set_body(this);
 }
 
 void NHttpMsgBody::analyze()
 {
-    body_octets += msg_text.length;
     data.start = msg_text.start;
     data.length = msg_text.length;
 
+    do_file_processing();
+
+    body_octets += msg_text.length;
+
     if (tcp_close && (body_octets < data_length))
         infractions += INF_TRUNCATED;
+}
+
+void NHttpMsgBody::do_file_processing()
+{
+    // Always set file data. File processing will later set a new value in some cases.
     set_file_data((uint8_t*)data.start, (unsigned)data.length);
+
+    if (session_data->file_depth_remaining[source_id] > 0)
+    {
+        // Using the trick that cutter is deleted when regular or chunked body is complete
+        const bool front = (body_octets == 0);
+        const bool back = (session_data->cutter[source_id] == nullptr) || tcp_close;
+        FilePosition file_position;
+        if (front && back) file_position = SNORT_FILE_FULL;
+        else if (front) file_position = SNORT_FILE_START;
+        else if (back) file_position = SNORT_FILE_END;
+        else file_position = SNORT_FILE_MIDDLE;
+
+        int32_t fp_length = (data.length <= session_data->file_depth_remaining[source_id]) ?
+            data.length : session_data->file_depth_remaining[source_id];
+
+        if (file_api->file_process(flow, const_cast<uint8_t*>(data.start), fp_length,
+            file_position, source_id == SRC_CLIENT, false))
+        {
+            session_data->file_depth_remaining[source_id] -= fp_length;
+
+            // With the first piece of the file we must provide the "name" which means URI
+            if (front)
+            {
+                NHttpMsgRequest* request = transaction->get_request();
+                if (request != nullptr)
+                {
+                    const Field& tranaction_uri = request->get_uri_norm_legacy();
+                    if (tranaction_uri.length > 0)
+                    {
+                        file_api->set_file_name(flow, const_cast<uint8_t*>(tranaction_uri.start),
+                            tranaction_uri.length);
+                    }
+                }
+            }
+        }
+        else
+        {
+            // file processing doesn't want any more data
+            session_data->file_depth_remaining[source_id] = 0;
+        }
+    }
 }
 
 void NHttpMsgBody::gen_events()

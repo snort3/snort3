@@ -27,8 +27,8 @@
 using namespace NHttpEnums;
 
 NHttpMsgChunk::NHttpMsgChunk(const uint8_t* buffer, const uint16_t buf_size,
-    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner) :
-    NHttpMsgBody(buffer, buf_size, session_data_, source_id_, buf_owner)
+    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_) :
+    NHttpMsgBody(buffer, buf_size, session_data_, source_id_, buf_owner, flow_)
 {
     transaction->set_body(this);
 }
