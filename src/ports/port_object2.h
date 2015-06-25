@@ -47,7 +47,7 @@ struct PortObject2
     int port_cnt;               /* count of ports using this object */
     PortBitSet* port_list;      /* for collecting ports that use this object */
 
-    void* data;                 /* user data, PORT_GROUP based on rule_hash  */
+    void* data;                 /* user data, PortGroup based on rule_hash  */
     void (* data_free)(void*);
 };
 

@@ -63,7 +63,7 @@
 #include "detection_util.h"
 
 #include "stream/stream_api.h"
-#include "target_based/sftarget_protocol_reference.h"
+#include "target_based/snort_protocols.h"
 #include "file_api/file_api.h"
 #include "sf_email_attach_decode.h"
 #include "framework/inspector.h"
@@ -346,7 +346,7 @@ void HttpInspect::eval(Packet* p)
      * calling the detection engine -
      * to get the true HTTPInspect only stats, have another
      * var inside HttpInspectMain that tracks the time
-     * spent in Detect().
+     * spent in snort_detect().
      * Subtract the ticks from this if iCallDetect == 0
      */
     MODULE_PROFILE_END(hiPerfStats);

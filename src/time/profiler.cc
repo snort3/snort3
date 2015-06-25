@@ -167,8 +167,7 @@ void ResetRuleProfiling(void)
             if (rtn == NULL)
                 continue;
 
-            if ((rtn->proto == IPPROTO_TCP) || (rtn->proto == IPPROTO_UDP)
-                || (rtn->proto == IPPROTO_ICMP) || (rtn->proto == ETHERNET_TYPE_IP))
+            if ( is_network_protocol(rtn->proto) )
             {
                 //do operation
                 for ( unsigned i = 0; i < get_instance_max(); ++i )

@@ -1517,6 +1517,7 @@ static void LogCharData(TextLog* log, char* data, int len)
 static const char SEPARATOR[] =
           "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -";
 
+// FIXIT-L expecting complaints because this isn't 16  :(
 #define BYTES_PER_FRAME 20
 /* middle:"41 02 43 04 45 06 47 08 49 0A 4B 0C 4D 0E 4F 0F 01 02 03 04  A.C.E.G.I.K.M.O....."
    at end:"41 02 43 04 45 06 47 08                                      A.C.E.G."*/

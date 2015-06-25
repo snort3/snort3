@@ -49,7 +49,7 @@
 #include "framework/inspector.h"
 #include "managers/inspector_manager.h"
 #include "detection/detection_util.h"
-#include "target_based/sftarget_protocol_reference.h"
+#include "target_based/snort_protocols.h"
 
 int16_t ftp_data_app_id = SFTARGET_UNKNOWN_PROTOCOL;
 
@@ -132,7 +132,7 @@ static int SnortFTP(
     iRet = check_ftp(FTPsession, p, iInspectMode);
     if (iRet == FTPP_SUCCESS)
     {
-        /* Ideally, Detect(), called from do_detection, will look at
+        /* Ideally, snort_detect(), called from do_detection, will look at
          * the cmd & param buffers, or the rsp & msg buffers.  Current
          * architecture does not support this...
          * So, we call do_detection() here.  Otherwise, we'd call it

@@ -67,6 +67,17 @@
 
 static THREAD_LOCAL DataBuffer DecodeBuffer;
 
+void reset_telnet_buffer()
+{
+    DecodeBuffer.len = 0;
+}
+
+const uint8_t* get_telnet_buffer(unsigned& len)
+{
+    len = DecodeBuffer.len;
+    return len ? DecodeBuffer.data : nullptr;
+}
+
 /*
  * Function: normalize_telnet(Packet *)
  *
@@ -419,8 +430,6 @@ int normalize_telnet(
                 tnssn->consec_ayt = 0;
         }
     }
-
-    set_alt_data(DecodeBuffer.data, (uint16_t)(write_ptr - start));
 
     return ret;
 }

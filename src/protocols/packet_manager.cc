@@ -251,8 +251,6 @@ void PacketManager::decode(
             {
                 p->ip_proto_next = (uint8_t)codec_data.next_prot_id;
             }
-
-            fpEvalIpProtoOnlyRules(p, p->ip_proto_next);
         }
 
         // If we have reached the MAX_LAYERS, we keep decoding

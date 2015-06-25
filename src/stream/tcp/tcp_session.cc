@@ -4747,13 +4747,16 @@ static int ProcessTcp(
             }
             else if ( p->ptrs.tcph->is_syn_ack() )
             {
-                lwssn->ssn_state.direction = FROM_SERVER;
-                lwssn->session_state = STREAM_STATE_SYN_ACK;
-                lwssn->set_ttl(p, false);
-                NewTcpSessionOnSynAck(p, lwssn, tdb, config);
-                tcpStats.resyns++;
-                tcpssn = (TcpSession*)lwssn->session;
-                new_ssn = 1;
+                if ( config->midstream_allowed(p) )
+                {
+                    lwssn->ssn_state.direction = FROM_SERVER;
+                    lwssn->session_state = STREAM_STATE_SYN_ACK;
+                    lwssn->set_ttl(p, false);
+                    NewTcpSessionOnSynAck(p, lwssn, tdb, config);
+                    tcpStats.resyns++;
+                    tcpssn = (TcpSession*)lwssn->session;
+                    new_ssn = 1;
+                }
 
                 bool require3Way = config->require_3whs();
                 NormalTrackECN(tcpssn, (TCPHdr*)p->ptrs.tcph, require3Way);

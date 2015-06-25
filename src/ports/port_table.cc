@@ -587,282 +587,7 @@ static int _po2_include_po_rules(PortObject2* po2, PortObject* po)
     return 0;
 }
 
-//-------------------------------------------------------------------------
-// PortTable - public
-//-------------------------------------------------------------------------
-
-/*
-    PORT TABLE FUNCTIONS
-*/
-
-/*
-    Create a new table
-*/
-PortTable* PortTableNew(void)
-{
-    PortTable* p;
-
-    p = (PortTable*)calloc(1,sizeof(PortTable));
-    if (!p)
-        return 0;
-
-    p->pt_polist = sflist_new();
-    if (!p->pt_polist )
-    {
-        free(p);
-        return 0;
-    }
-
-    p->pt_lrc      =  PTBL_LRC_DEFAULT; /* 10 rules, user should really control these */
-    p->pt_optimize =  1; /* if disabled, only one merged rule group is used */
-
-    return p;
-}
-
-void PortTableFree(PortTable* p)
-{
-    int i;
-    SFGHASH_NODE* node;
-
-    if (!p)
-        return;
-
-    if (p->pt_polist)
-    {
-        sflist_free_all(p->pt_polist, PortObjectFree);
-    }
-    if (p->pt_mpo_hash)
-    {
-        PortObject2* po;
-        for (node = sfghash_findfirst(p->pt_mpo_hash);
-            node;
-            node = sfghash_findnext(p->pt_mpo_hash))
-        {
-            po = (PortObject2*)node->data;
-            /* Free the data from this entry */
-            PortObject2Free(po);
-        }
-        sfghash_delete(p->pt_mpo_hash);
-    }
-    if (p->pt_plx_list)
-    {
-        sflist_free_all(p->pt_plx_list, plx_free);
-    }
-    if (p->pt_mpxo_hash)
-    {
-#if 0
-        PortObject2* po;
-        for (node = sfghash_findfirst(p->pt_mpxo_hash);
-            node;
-            node = sfghash_findnext(p->pt_mpxo_hash))
-        {
-            po = node->data;
-            /* Free the data from this entry */
-            //PortObject2Free(po);
-        }
-#endif
-        sfghash_delete(p->pt_mpxo_hash);
-    }
-    for (i=0; i<SFPO_MAX_PORTS; i++)
-    {
-#if 0
-        if (p->pt_port_object[i])
-        {
-            PortObject2Free(p->pt_port_object[i]);
-        }
-#endif
-    }
-
-    free(p);
-}
-
-/*
- *  Locate a PortObject by Port number , this only locates the 1st one
- *  This was a hack fro testing....
- */
-PortObject* PortTableFindPortObjectByPort(PortTable* p, int port)
-{
-    PortObject* po;
-    SF_LNODE* pos;
-
-    for (po =(PortObject*)sflist_first(p->pt_polist,&pos);
-        po != NULL;
-        po =(PortObject*)sflist_next(&pos) )
-    {
-        if ( PortObjectHasPort (po, port) )
-        {
-            return po;
-        }
-    }
-
-    return 0;
-}
-
-PortObject* PortTableFindInputPortObjectName(PortTable* pt, char* po_name)
-{
-    SF_LNODE* lpos;
-    PortObject* po;
-
-    if ( !pt )
-        return NULL;
-    if ( !po_name )
-        return NULL;
-
-    /* Normalize each of the input port objects */
-    for (po =(PortObject*)sflist_first(pt->pt_polist,&lpos);
-        po!=0;
-        po =(PortObject*)sflist_next(&lpos) )
-    {
-        if ( po->name )
-        {
-            if ( strcmp(po->name,po_name)==0 )
-            {
-                return po;
-            }
-        }
-    }
-    return NULL;
-}
-
-/*
- * Find PortObject by PortItem Info
- */
-PortObject* PortTableFindInputPortObjectPorts(PortTable* pt, PortObject* pox)
-{
-    SF_LNODE* lpos;
-    PortObject* po;
-
-    if ( !pt )
-        return NULL;
-    if ( !pox )
-        return NULL;
-
-    for (po =(PortObject*)sflist_first(pt->pt_polist,&lpos);
-        po!=0;
-        po =(PortObject*)sflist_next(&lpos) )
-    {
-        if ( PortObjectEqual(po, pox) )
-        {
-            return po;
-        }
-    }
-    return NULL;
-}
-
-int PortTableNormalizeInputPortObjects(PortTable* p)
-{
-    SF_LNODE* lpos;
-    PortObject* po;
-
-    /* Normalize each of the input port objects */
-    for (po =(PortObject*)sflist_first(p->pt_polist,&lpos);
-        po!=0;
-        po =(PortObject*)sflist_next(&lpos) )
-    {
-        PortObjectNormalize(po);
-    }
-    return 0;
-}
-
-/*
-    Add Users PortObjects to the Table
-
-    We save the users port object, so it's no longer the users.
-*/
-int PortTableAddObject(PortTable* p, PortObject* po)
-{
-    SF_LNODE* lpos;
-    PortObject* pox;
-
-    /* Search for the Port Object in the input list, by address */
-    for (pox =(PortObject*)sflist_first(p->pt_polist,&lpos);
-        pox!=0;
-        pox =(PortObject*)sflist_next(&lpos) )
-    {
-        if ( pox == po )
-        {
-            /* already in list - just return */
-            return 0;
-        }
-    }
-
-    /* Save the users port object, if not already in the list */
-    if ( sflist_add_tail(p->pt_polist,po) )
-        return -1;
-
-    return 0;
-}
-
-/*
-* Compile the PortTable
-*
-* This builds a set of Port+Rule objects that are in some way an optimal
-* set of objects to indicate which rules to apply to which ports. Since
-* these groups are calculated consistency checking is done witht he finished
-* objects.
-*/
-int PortTableCompile(PortTable* p)
-{
-    /*
-    *  If not using an optimized Table use the rule_index_map in parser.c
-    */
-    if ( !p->pt_optimize )
-    {
-        return 0;
-    }
-
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"#PortTableCompile: Compiling Port Array Lists\n"); );
-
-    if ( PortTableCompileMergePortObjects(p) )
-    {
-        FatalError("Could not create PortArryayLists\n");
-    }
-
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"Done\n"); fflush(stdout); );
-
-    PortTableConsistencyCheck(p);
-
-    return 0;
-}
-
-void PortTablePrintInputEx(PortTable* p,
-    void (* print_index_map)(int index, char* buf, int bufsize) )
-{
-    PortObject* po;
-    SF_LNODE* pos;
-    for (po =(PortObject*)sflist_first(p->pt_polist,&pos);
-        po != NULL;
-        po =(PortObject*)sflist_next(&pos) )
-    {
-        PortObjectPrintEx(po, print_index_map);
-    }
-}
-
-/*
-   Prints Compiled Ports/Rules Objects
-*/
-int PortTablePrintCompiledEx(PortTable* p,
-    void (* print_index_map)(int index, char* buf, int bufsize) )
-{
-    PortObject2* po = NULL;
-    SFGHASH_NODE* node = NULL;
-
-    LogMessage(" *** PortTableCompiled  [ %d compiled port groups ] \n\n",
-        p->pt_mpo_hash->count);
-
-    for (node = sfghash_findfirst(p->pt_mpo_hash);
-        node!= 0;
-        node = sfghash_findnext(p->pt_mpo_hash) )
-    {
-        po = (PortObject2*)node->data;
-
-        PortObject2PrintEx(po, print_index_map);
-    }
-
-    return 0;
-}
-
-int PortTableCompileMergePortObjects(PortTable* p)
+static int PortTableCompileMergePortObjects(PortTable* p)
 {
     SFGHASH* mhash;
     SFGHASH* mhashx;
@@ -1061,7 +786,7 @@ int PortTableCompileMergePortObjects(PortTable* p)
  *
  * Walk the rules
  */
-int PortTableConsistencyCheck(PortTable* p)
+static int PortTableConsistencyCheck(PortTable* p)
 {
     SFGHASH_NODE* node;
     int i;
@@ -1153,6 +878,194 @@ int PortTableConsistencyCheck(PortTable* p)
     DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
         "***\n***Port Table Compiler Consistency Check Phase-II Passed !!! - Good to go Houston\n****\n");
         );
+    return 0;
+}
+
+//-------------------------------------------------------------------------
+// PortTable - public
+//-------------------------------------------------------------------------
+
+/*
+    PORT TABLE FUNCTIONS
+*/
+
+/*
+    Create a new table
+*/
+PortTable* PortTableNew(void)
+{
+    PortTable* p = (PortTable*)calloc(1,sizeof(PortTable));
+
+    if (!p)
+        return 0;
+
+    p->pt_polist = sflist_new();
+
+    if (!p->pt_polist )
+    {
+        free(p);
+        return 0;
+    }
+
+    p->pt_lrc = PTBL_LRC_DEFAULT; /* 10 rules, user should really control these */
+    p->pt_optimize = 1; /* if disabled, only one merged rule group is used */
+
+    return p;
+}
+
+void PortTableFree(PortTable* p)
+{
+    if (!p)
+        return;
+
+    if (p->pt_polist)
+    {
+        sflist_free_all(p->pt_polist, PortObjectFree);
+    }
+    if (p->pt_mpo_hash)
+    {
+        PortObject2* po;
+
+        for ( SFGHASH_NODE* node = sfghash_findfirst(p->pt_mpo_hash);
+            node;
+            node = sfghash_findnext(p->pt_mpo_hash) )
+        {
+            po = (PortObject2*)node->data;
+            PortObject2Free(po);
+        }
+        sfghash_delete(p->pt_mpo_hash);
+    }
+    if (p->pt_plx_list)
+    {
+        sflist_free_all(p->pt_plx_list, plx_free);
+    }
+    if (p->pt_mpxo_hash)
+    {
+        sfghash_delete(p->pt_mpxo_hash);
+    }
+
+    free(p);
+}
+
+/*
+ * Find PortObject by PortItem Info
+ */
+PortObject* PortTableFindInputPortObjectPorts(PortTable* pt, PortObject* pox)
+{
+    SF_LNODE* lpos;
+    PortObject* po;
+
+    if ( !pt )
+        return NULL;
+    if ( !pox )
+        return NULL;
+
+    for (po =(PortObject*)sflist_first(pt->pt_polist,&lpos);
+        po!=0;
+        po =(PortObject*)sflist_next(&lpos) )
+    {
+        if ( PortObjectEqual(po, pox) )
+        {
+            return po;
+        }
+    }
+    return NULL;
+}
+
+/*
+    Add Users PortObjects to the Table
+
+    We save the users port object, so it's no longer the users.
+*/
+int PortTableAddObject(PortTable* p, PortObject* po)
+{
+    SF_LNODE* lpos;
+    PortObject* pox;
+
+    /* Search for the Port Object in the input list, by address */
+    for (pox =(PortObject*)sflist_first(p->pt_polist,&lpos);
+        pox!=0;
+        pox =(PortObject*)sflist_next(&lpos) )
+    {
+        if ( pox == po )
+        {
+            /* already in list - just return */
+            return 0;
+        }
+    }
+
+    /* Save the users port object, if not already in the list */
+    if ( sflist_add_tail(p->pt_polist,po) )
+        return -1;
+
+    return 0;
+}
+
+/*
+* Compile the PortTable
+*
+* This builds a set of Port+Rule objects that are in some way an optimal
+* set of objects to indicate which rules to apply to which ports. Since
+* these groups are calculated consistency checking is done witht he finished
+* objects.
+*/
+int PortTableCompile(PortTable* p)
+{
+    /*
+    *  If not using an optimized Table use the rule_index_map in parser.c
+    */
+    if ( !p->pt_optimize )
+    {
+        return 0;
+    }
+
+    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"#PortTableCompile: Compiling Port Array Lists\n"); );
+
+    if ( PortTableCompileMergePortObjects(p) )
+    {
+        FatalError("Could not create PortArryayLists\n");
+    }
+
+    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"Done\n"); fflush(stdout); );
+
+    PortTableConsistencyCheck(p);
+
+    return 0;
+}
+
+void PortTablePrintInputEx(PortTable* p,
+    void (* print_index_map)(int index, char* buf, int bufsize) )
+{
+    PortObject* po;
+    SF_LNODE* pos;
+    for (po =(PortObject*)sflist_first(p->pt_polist,&pos);
+        po != NULL;
+        po =(PortObject*)sflist_next(&pos) )
+    {
+        PortObjectPrintEx(po, print_index_map);
+    }
+}
+
+/*
+   Prints Compiled Ports/Rules Objects
+*/
+int PortTablePrintCompiledEx(PortTable* p,
+    void (* print_index_map)(int index, char* buf, int bufsize) )
+{
+    PortObject2* po = NULL;
+    SFGHASH_NODE* node = NULL;
+
+    LogMessage(" *** PortTableCompiled  [ %d compiled port groups ] \n\n",
+        p->pt_mpo_hash->count);
+
+    for (node = sfghash_findfirst(p->pt_mpo_hash);
+        node!= 0;
+        node = sfghash_findnext(p->pt_mpo_hash) )
+    {
+        po = (PortObject2*)node->data;
+        PortObject2PrintEx(po, print_index_map);
+    }
+
     return 0;
 }
 

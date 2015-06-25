@@ -68,7 +68,7 @@
 #include "framework/data_bus.h"
 
 #ifdef PERF_PROFILING
-// FIXIT-M ftp, http, etc. should not be calling Detect()
+// FIXIT-M ftp, http, etc. should not be calling snort_detect()
 static THREAD_LOCAL int ftppDetectCalled = 0;
 static THREAD_LOCAL ProfileStats ftppDetectPerfStats;
 

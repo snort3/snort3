@@ -15,7 +15,7 @@ SET( PLUGIN_LIST
     ips_fragbits.cc
     ips_fragoffset.cc
     ips_gid.cc
-    ips_hash.cc 
+    ips_hash.cc
     ips_http.cc
     ips_http_header.cc
     ips_icmp_id.cc
@@ -23,9 +23,10 @@ SET( PLUGIN_LIST
     ips_icode.cc
     ips_id.cc
     ips_ipopts.cc
+    ips_ip_proto.cc
     ips_isdataat.cc
     ips_itype.cc
-    ips_msg.cc 
+    ips_msg.cc
     ips_priority.cc
     ips_raw_data.cc
     ips_rem.cc
@@ -43,28 +44,26 @@ SET( PLUGIN_LIST
 
 
 set (IPS_SOURCES
-    ips_byte_extract.cc 
+    ips_byte_extract.cc
     ips_byte_extract.h
-    extract.cc 
+    extract.cc
     extract.h
     ips_classtype.cc
-    ips_content.cc 
-    ips_content.h 
+    ips_content.cc
+    ips_content.h
     ips_detection_filter.cc
     ips_dsize.cc
-    ips_file_data.cc 
-    ips_flow.cc 
+    ips_file_data.cc
+    ips_flow.cc
     ips_flow.h
-    ips_flowbits.cc 
+    ips_flowbits.cc
     ips_flowbits.h
-    ips_ip_proto.cc 
-    ips_ip_proto.h
-    ips_luajit.cc 
+    ips_luajit.cc
     ips_metadata.cc
-    ips_options.cc 
+    ips_options.cc
     ips_options.h
     ips_pkt_data.cc
-    ips_pcre.cc 
+    ips_pcre.cc
     ips_pcre.h
     ips_reference.cc
     ips_replace.cc
@@ -73,7 +72,7 @@ set (IPS_SOURCES
 
 
 if (STATIC_IPS_OPTIONS)
-    
+
     add_library ( ips_options STATIC
         ${IPS_SOURCES}
         ${PLUGIN_LIST}

@@ -34,7 +34,7 @@
 #include "ppm.h"
 #include "snort_config.h"
 #include "log/messages.h"
-#include "target_based/sftarget_protocol_reference.h"
+#include "target_based/snort_protocols.h"
 #include "binder/bind_module.h"
 
 using namespace std;

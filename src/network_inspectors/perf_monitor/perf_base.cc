@@ -369,6 +369,7 @@ void UpdateStreamReassStats(SFBASE* sfBase, int len)
  *
  * @param sfBase - pointer to accumulated stats
  */
+// FIXIT-L UpdateFilteredPacketStats() is not used
 void UpdateFilteredPacketStats(SFBASE* sfBase, unsigned int proto)
 {
     switch (proto)

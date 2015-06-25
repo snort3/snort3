@@ -115,7 +115,7 @@ static uint32_t get_new_file_instance(Flow* flow);
 FileContext* create_file_context(Flow* flow);
 bool set_current_file_context(Flow* flow, FileContext* ctx);
 FileContext* get_main_file_context(Flow* flow);
-static bool process_file_context(FileContext* ctx, Packet* p, uint8_t* file_data,
+static bool process_file_context(FileContext* ctx, Packet* p, Flow* flow, uint8_t* file_data,
     int data_size, FilePosition position, bool suspend_block_verdict);
 static FilePosition get_file_position(Packet* pkt);
 static bool check_paf_abort(Flow* flow);

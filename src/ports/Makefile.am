@@ -3,6 +3,8 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 noinst_LIBRARIES = libports.a
 
 libports_a_SOURCES = \
+port_group.cc \
+port_group.h \
 port_item.cc \
 port_item.h \
 port_object.cc \

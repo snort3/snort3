@@ -27,7 +27,7 @@
 #ifndef FILE_STATS_H
 #define FILE_STATS_H
 
-#include "target_based/sftarget_protocol_reference.h"
+#include "target_based/snort_protocols.h"
 #include "target_based/sftarget_reader.h"
 
 #include "main/snort_debug.h"

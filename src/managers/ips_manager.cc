@@ -163,7 +163,7 @@ const char* IpsManager::get_option_keyword()
 }
 
 bool IpsManager::option_begin(
-    SnortConfig* sc, const char* key, int proto)
+    SnortConfig* sc, const char* key, int /*proto*/)
 {
     Option* opt = get_opt(key);
 
@@ -187,12 +187,13 @@ bool IpsManager::option_begin(
         return false;
     }
 
-    if ( opt->api->protos && !(proto & opt->api->protos) )
-    {
-        ParseError("%s not allowed with given rule protocol",
-            opt->api->base.name);
-        return false;
-    }
+    // FIXIT-H allow service too
+    //if ( opt->api->protos && !(proto & opt->api->protos) )
+    //{
+    //    ParseError("%s not allowed with given rule protocol",
+    //        opt->api->base.name);
+    //    return false;
+    //}
 
     current_module = ModuleManager::get_module(key);
 

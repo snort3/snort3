@@ -39,7 +39,7 @@
 
 #include "util.h"
 #include "parser.h"
-#include "sftarget_protocol_reference.h"
+#include "snort_protocols.h"
 #include "sfrt/sfrt.h"
 #include "hash/sfxhash.h"
 #include "utils/util_net.h"

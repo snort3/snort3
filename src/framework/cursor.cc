@@ -19,6 +19,8 @@
 
 #include "cursor.h"
 #include "detection/detection_util.h"
+#include "framework/inspector.h"
+#include "flow/flow.h"
 #include "protocols/packet.h"
 
 Cursor::Cursor(Packet* p)
@@ -34,9 +36,12 @@ Cursor::Cursor(const Cursor& rhs)
 
 void Cursor::reset(Packet* p)
 {
-    if ( g_alt_data.len )
+    InspectionBuffer buf;
+
+    if ( p->flow and p->flow->gadget and
+        p->flow->gadget->get_buf(buf.IBT_ALT, p, buf) )
     {
-        set("pkt_data", g_alt_data.data, g_alt_data.len);
+        set("alt_data", buf.data, buf.len);
     }
     else if ( IsLimitedDetect(p) )
     {

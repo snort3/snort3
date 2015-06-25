@@ -36,9 +36,8 @@ struct InspectionBuffer
 {
     enum Type
     {
-        IBT_KEY, IBT_HEADER, IBT_BODY,
-        IBT_ALT, IBT_FILE, // FIXIT-M alt and file data are tbd
-        IBT_MAX
+        // FIXIT-L file data is tbd
+        IBT_KEY, IBT_HEADER, IBT_BODY, IBT_FILE, IBT_ALT, IBT_MAX
     };
     const uint8_t* data;
     unsigned len;

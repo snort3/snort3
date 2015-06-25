@@ -379,6 +379,10 @@ static PortObject* _POParsePort(POParser* pop)
     return po;
 }
 
+// FIXIT-L this creates 1 PortObject per port in the list
+// and then consolidates into one PortObject; it should
+// just create a single PortObject and put each port into
+// appropriate PortItems
 static PortObject* _POParseString(POParser* pop)
 {
     PortObject* po;

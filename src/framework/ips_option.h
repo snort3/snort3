@@ -45,7 +45,7 @@ enum CursorActionType
     CAT_SET_FILE,
     CAT_SET_BODY,
     CAT_SET_HEADER,
-    CAT_SET_COMMAND,
+    CAT_SET_KEY,
 };
 
 class SO_PUBLIC IpsOption

@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <string>
 using namespace std;
 
 #include "main/snort_types.h"
@@ -47,8 +48,6 @@ static THREAD_LOCAL unsigned s_pkt_num = 0;
 //-------------------------------------------------------------------------
 // impl stuff
 //-------------------------------------------------------------------------
-
-#define LOG_CHARS 20
 
 static void log_raw(const Packet* p)
 {
@@ -71,36 +70,35 @@ static void log_header(const Packet* p)
         src, p->ptrs.sp, dst, p->ptrs.dp);
 }
 
-static void log_data(const uint8_t* p, unsigned n)
+static void log_data(const uint8_t* p, unsigned n, unsigned width)
 {
-    char hex[(3*LOG_CHARS)+1];
-    char txt[LOG_CHARS+1];
+    string txt;
     unsigned odx = 0, idx = 0;
 
     TextLog_NewLine(hext_log);
 
     for ( idx = 0; idx < n; idx++)
     {
-        uint8_t byte = p[idx];
-        sprintf(hex + 3*odx, "%2.02X ", byte);
-        txt[odx++] = isprint(byte) ? byte : '.';
+        if ( !odx )
+            TextLog_Putc(hext_log, 'x');
 
-        if ( odx == LOG_CHARS )
+        uint8_t byte = p[idx];
+        TextLog_Print(hext_log, "%2.02X ", byte);
+        txt += isprint(byte) ? byte : '.';
+
+        if ( ++odx == width )
         {
-            txt[odx] = hex[3*odx] = '\0';
-            TextLog_Print(hext_log, "x%s # %s\n", hex, txt);
+            TextLog_Print(hext_log, " # %s\n", txt.c_str());
+            txt.clear();
             odx = 0;
         }
     }
     if ( odx )
     {
-        txt[odx] = hex[3*odx] = '\0';
-        TextLog_Print(hext_log, "x%s", hex);
-
-        while ( odx++ < LOG_CHARS )
+        while ( odx++ < width )
             TextLog_Print(hext_log, "   ");
 
-        TextLog_Print(hext_log, " # %s\n", txt);
+        TextLog_Print(hext_log, " # %s\n", txt.c_str());
     }
 }
 
@@ -122,6 +120,9 @@ static const Parameter s_params[] =
     { "units", Parameter::PT_ENUM, "B | K | M | G", "B",
       "bytes | KB | MB | GB" },
 
+    { "width", Parameter::PT_INT, "0:", "20",
+      "set line width (0 is unlimited)" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -139,6 +140,7 @@ public:
     bool raw;
     unsigned long limit;
     unsigned units;
+    unsigned width;
 };
 
 bool HextModule::set(const char*, Value& v, SnortConfig*)
@@ -155,6 +157,9 @@ bool HextModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("units") )
         units = v.get_long();
 
+    else if ( v.is("width") )
+        width = v.get_long();
+
     else
         return false;
 
@@ -167,6 +172,7 @@ bool HextModule::begin(const char*, int, SnortConfig*)
     raw = false;
     limit = 0;
     units = 0;
+    width = 0;
     return true;
 }
 
@@ -195,6 +201,7 @@ public:
 private:
     string file;
     unsigned long limit;
+    unsigned width;
     bool raw;
 };
 
@@ -202,6 +209,7 @@ HextLogger::HextLogger(HextModule* m)
 {
     file = m->file ? F_NAME : "stdout";
     limit = m->limit;
+    width = m->width;
     raw = m->raw;
 }
 
@@ -222,12 +230,12 @@ void HextLogger::log(Packet* p, const char*, Event*)
     if ( raw )
     {
         log_raw(p);
-        log_data(p->pkt, p->pkth->caplen);
+        log_data(p->pkt, p->pkth->caplen, width);
     }
     else if ( p->has_tcp_data() )
     {
         log_header(p);
-        log_data(p->data, p->dsize);
+        log_data(p->data, p->dsize, width);
     }
 }
 

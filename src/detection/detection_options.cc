@@ -461,30 +461,25 @@ int detection_option_node_evaluate(
 
             if (eval_data->p->application_protocol_ordinal != 0)
             {
-                for (svc_idx = 0;
-                    svc_idx < otn->sigInfo.num_services;
-                    svc_idx++)
+                for (svc_idx = 0; svc_idx < otn->sigInfo.num_services; svc_idx++)
                 {
-                    if (otn->sigInfo.services[svc_idx].service_ordinal != 0)
+                    if (eval_data->p->application_protocol_ordinal ==
+                        otn->sigInfo.services[svc_idx].service_ordinal)
                     {
-                        if (eval_data->p->application_protocol_ordinal ==
-                            otn->sigInfo.services[svc_idx].service_ordinal)
-                        {
-                            check_ports = 0;
-                            break;         /* out of for */
-                        }
+                        check_ports = 0;  // FIXIT need to check for alert service
+                        break;  /* out of for */
                     }
                 }
 
-                if (otn->sigInfo.num_services && check_ports)         /* none of the services match
-                                                                        */
+                if (otn->sigInfo.num_services && check_ports)
                 {
+                    /* none of the services match */
                     DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
                         "[**] SID %d not matched because of service mismatch (%d!=%d [**]\n",
                         otn->sigInfo.id,
                         eval_data->p->application_protocol_ordinal,
                         otn->sigInfo.services[0].service_ordinal); );
-                    break;         /* out of case */
+                    break;  /* out of case */
                 }
             }
             // Don't include RTN time

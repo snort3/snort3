@@ -162,59 +162,6 @@ int IpProtoOption::eval(Cursor&, Packet* p)
 }
 
 //-------------------------------------------------------------------------
-// public methods
-//-------------------------------------------------------------------------
-
-bool CheckOtnIpProto(OptTreeNode* otn, int proto)
-{
-    if ( !otn )
-        return false;
-
-    IpProtoOption* opt = (IpProtoOption*)
-        get_rule_type_data(otn, RULE_OPTION_TYPE_IP_PROTO);
-
-    if ( !opt )
-        return false;
-
-    IpProtoData* ipd = opt->get_data();
-
-    switch (ipd->comparison_flag)
-    {
-    case IP_PROTO__EQUAL:
-        return ( proto == ipd->protocol );
-
-    case IP_PROTO__NOT_EQUAL:
-        return ( proto != ipd->protocol );
-
-    case IP_PROTO__GREATER_THAN:
-        return ( proto > ipd->protocol );
-
-    case IP_PROTO__LESS_THAN:
-        return ( proto < ipd->protocol );
-    }
-    return false;
-}
-
-int GetOtnIpProto(OptTreeNode* otn)
-{
-    if ( !otn )
-        return -1;
-
-    IpProtoOption* opt = (IpProtoOption*)
-        get_rule_type_data(otn, RULE_OPTION_TYPE_IP_PROTO);
-
-    if ( !opt )
-        return -1;
-
-    IpProtoData* ipd = opt->get_data();
-
-    if ( ipd->comparison_flag == IP_PROTO__EQUAL )
-        return (int)ipd->protocol;
-
-    return -1;
-}
-
-//-------------------------------------------------------------------------
 // class methods
 //-------------------------------------------------------------------------
 
@@ -373,5 +320,13 @@ static const IpsApi ip_proto_api =
     nullptr
 };
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &ip_proto_api.base,
+    nullptr
+};
+#else
 const BaseApi* ips_ip_proto = &ip_proto_api.base;
+#endif
 

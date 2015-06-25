@@ -151,18 +151,19 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "snort_types.h"
-
 #define BNFA_TRACK_Q
 
 #ifdef BNFA_TRACK_Q
-# include "snort_config.h"
+# include "main/snort_config.h"
 #endif
 
-#include "pat_stats.h"
-#include "snort_debug.h"
-#include "util.h"
 #include "search_common.h"
+#include "pat_stats.h"
+
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "utils/stats.h"
+#include "utils/util.h"
 
 /*
  * Used to initialize last state, states are limited to 0-16M
@@ -2481,12 +2482,9 @@ int bnfaPatternCount(bnfa_struct_t* p)
  *  Summary Info Data
  */
 static bnfa_struct_t summary;
-static int summary_cnt=0;
+static int summary_cnt = 0;
 
-/*
-*  Info: Print info a particular state machine.
-*/
-void bnfaPrintInfoEx(bnfa_struct_t* p, const char* text)
+static void bnfaPrintInfoEx(bnfa_struct_t* p)
 {
     unsigned max_memory;
 
@@ -2497,44 +2495,37 @@ void bnfaPrintInfoEx(bnfa_struct_t* p, const char* text)
     max_memory = p->bnfa_memory + p->pat_memory + p->list_memory +
         p->matchlist_memory + p->failstate_memory + p->nextstate_memory;
 
-    if ( text && summary_cnt )
-    {
-        LogMessage("+-[AC-BNFA Search Info%s]------------------------------\n",text);
-        LogMessage("| Instances        : %d\n",summary_cnt);
-    }
-    else
-    {
-        LogMessage("+-[AC-BNFA Search Info]------------------------------\n");
-    }
-    LogMessage("| Patterns         : %d\n",p->bnfaPatternCnt);
-    LogMessage("| Pattern Chars    : %d\n",p->bnfaMaxStates);
-    LogMessage("| Num States       : %d\n",p->bnfaNumStates);
-    LogMessage("| Num Match States : %d\n",p->bnfaMatchStates);
+    LogCount("instances", summary_cnt);
+    LogCount("patterns", p->bnfaPatternCnt);
+    LogCount("pattern chars", p->bnfaMaxStates);
+    LogCount("num states", p->bnfaNumStates);
+    LogCount("num match states", p->bnfaMatchStates);
+
+    double scale;
+
     if ( max_memory < 1024*1024 )
     {
-        LogMessage("| Memory           :   %.2fKbytes\n", (double)max_memory/1024);
-        LogMessage("|   Patterns       :   %.2fK\n",(double)p->pat_memory/1024);
-        LogMessage("|   Match Lists    :   %.2fK\n",(double)p->matchlist_memory/1024);
-        LogMessage("|   Transitions    :   %.2fK\n",(double)p->nextstate_memory/1024);
+        scale = 1024;
+        LogStat("memory (KB)", max_memory/scale);
     }
     else
     {
-        LogMessage("| Memory           :   %.2fMbytes\n", (double)max_memory/(1024*1024) );
-        LogMessage("|   Patterns       :   %.2fM\n",(double)p->pat_memory/(1024*1024) );
-        LogMessage("|   Match Lists    :   %.2fM\n",(double)p->matchlist_memory/(1024*1024) );
-        LogMessage("|   Transitions    :   %.2fM\n",(double)p->nextstate_memory/(1024*1024) );
+        scale = 1024 * 1024;
+        LogStat("memory (MB)", max_memory/scale);
     }
-    LogMessage("+-------------------------------------------------\n");
+    LogStat("patterns", p->pat_memory/scale);
+    LogStat("match lists", p->matchlist_memory/scale);
+    LogStat("transitions", p->nextstate_memory/scale);
 }
 
 void bnfaPrintInfo(bnfa_struct_t* p)
 {
-    bnfaPrintInfoEx(p, NULL);
+    bnfaPrintInfoEx(p);
 }
 
 void bnfaPrintSummary(void)
 {
-    bnfaPrintInfoEx(&summary, " Summary");
+    bnfaPrintInfoEx(&summary);
 }
 
 void bnfaInitSummary(void)

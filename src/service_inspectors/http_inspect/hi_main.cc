@@ -604,7 +604,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
             DisableDetect(p);
             return 0;
         }
-        // see comments on call to Detect() below
+        // see comments on call to snort_detect() below
         MODULE_PROFILE_START(hiDetectPerfStats);
         get_data_bus().publish(PACKET_EVENT, p);
 #ifdef PERF_PROFILING
@@ -658,8 +658,8 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                 }
                 else if (file_api->get_file_processed_size(p->flow) >0)
                 {
-                    file_api->file_process(p->flow, (uint8_t*)p->data, p->dsize, getFilePoistion(p),
-                        true, false);
+                    file_api->file_process(p->flow, (uint8_t*)p->data, p->dsize,
+                        getFilePoistion(p), true, false);
                 }
             }
             return iRet;
@@ -1108,7 +1108,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
         **  main detection engine for each protocol field.
         */
         MODULE_PROFILE_START(hiDetectPerfStats);
-        Detect(p);
+        snort_detect(p);
 #ifdef PERF_PROFILING
         hiDetectCalled = 1;
 #endif
@@ -1124,7 +1124,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
 
     if ( iCallDetect == 0 )
     {
-        /* Detect called at least once from above pkt processing loop. */
+        /* snort_detect called at least once from above pkt processing loop. */
         DisableInspection(p);
     }
 

@@ -43,7 +43,7 @@
 #include "parser.h"
 #include "framework/inspector.h"
 #include "utils/sfsnprintfappend.h"
-#include "target_based/sftarget_protocol_reference.h"
+#include "target_based/snort_protocols.h"
 #include "detect.h"
 
 THREAD_LOCAL ProfileStats sslPerfStats;

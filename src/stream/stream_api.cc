@@ -52,7 +52,7 @@
 #include "protocols/vlan.h"
 #include "tcp/tcp_session.h"
 
-#include "target_based/sftarget_protocol_reference.h"
+#include "target_based/snort_protocols.h"
 #include "target_based/sftarget_hostentry.h"
 
 Stream stream;  // FIXIT-L global for SnortContext
@@ -718,15 +718,15 @@ void Stream::set_ip_protocol(Flow* flow)
     switch (flow->protocol)
     {
     case PktType::TCP:
-        flow->ssn_state.ipprotocol = protocolReferenceTCP;
+        flow->ssn_state.ipprotocol = SNORT_PROTO_TCP;
         break;
 
     case PktType::UDP:
-        flow->ssn_state.ipprotocol = protocolReferenceUDP;
+        flow->ssn_state.ipprotocol = SNORT_PROTO_UDP;
         break;
 
     case PktType::ICMP:
-        flow->ssn_state.ipprotocol = protocolReferenceICMP;
+        flow->ssn_state.ipprotocol = SNORT_PROTO_ICMP;
         break;
 
     default:

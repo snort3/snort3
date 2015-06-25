@@ -149,7 +149,7 @@ void snort_inspect(Packet* p)
         inspected = true;
 
         if ( do_detect )
-            Detect(p);
+            snort_detect(p);
     }
 
     check_tags_flag = 1;
@@ -300,7 +300,7 @@ int CheckTagging(Packet* p)
 
 /****************************************************************************
  *
- * Function: Detect(Packet *)
+ * Function: snort_detect(Packet *)
  *
  * Purpose: Apply the rules lists to the current packet
  *
@@ -310,7 +310,7 @@ int CheckTagging(Packet* p)
  *          0 == no detection
  *
  ***************************************************************************/
-bool Detect(Packet* p)
+bool snort_detect(Packet* p)
 {
     if ((p == NULL) || !p->ptrs.ip_api.is_valid())
     {
@@ -371,7 +371,7 @@ bool Detect(Packet* p)
     }
 }
 
-int CheckAddrPort(
+static int CheckAddrPort(
     sfip_var_t* rule_addr,
     PortObject* po,
     Packet* p,

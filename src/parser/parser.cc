@@ -81,6 +81,7 @@
 #include "actions/actions.h"
 #include "managers/event_manager.h"
 #include "managers/module_manager.h"
+#include "target_based/snort_protocols.h"
 
 static unsigned parse_errors = 0;
 static unsigned parse_warnings = 0;
@@ -203,58 +204,68 @@ static void finish_portlist_table(FastPatternConfig* fp, const char* s, PortTabl
 
 static void PortTablesFinish(RulePortTables* port_tables, FastPatternConfig* fp)
 {
-    /* TCP-SRC */
-    if ( fp->get_debug_print_rule_groups_compiled() )
-    {
-        LogMessage("*** TCP-Any-Any Port List\n");
-        PortObjectPrintEx(port_tables->tcp_anyany,
-            rule_index_map_print_index);
-    }
-
-    finish_portlist_table(fp, "tcp src", port_tables->tcp_src);
-    finish_portlist_table(fp, "tcp dst", port_tables->tcp_dst);
-
-    /* UDP-SRC */
-    if ( fp->get_debug_print_rule_groups_compiled() )
-    {
-        LogMessage("*** UDP-Any-Any Port List\n");
-        PortObjectPrintEx(port_tables->udp_anyany,
-            rule_index_map_print_index);
-    }
-
-    finish_portlist_table(fp, "udp src", port_tables->udp_src);
-    finish_portlist_table(fp, "udp dst", port_tables->udp_dst);
-
-    /* ICMP-SRC */
-    if ( fp->get_debug_print_rule_groups_compiled() )
-    {
-        LogMessage("*** ICMP-Any-Any Port List\n");
-        PortObjectPrintEx(port_tables->icmp_anyany,
-            rule_index_map_print_index);
-    }
-
-    finish_portlist_table(fp, "icmp src", port_tables->icmp_src);
-    finish_portlist_table(fp, "icmp dst", port_tables->icmp_dst);
-
-    /* IP-SRC */
+    /* IP */
     if ( fp->get_debug_print_rule_groups_compiled() )
     {
         LogMessage("IP-Any-Any Port List\n");
-        PortObjectPrintEx(port_tables->ip_anyany,
+        PortObjectPrintEx(port_tables->ip.any,
             rule_index_map_print_index);
     }
 
-    finish_portlist_table(fp, "ip src", port_tables->ip_src);
-    finish_portlist_table(fp, "ip dst", port_tables->ip_dst);
+    finish_portlist_table(fp, "ip src", port_tables->ip.src);
+    finish_portlist_table(fp, "ip dst", port_tables->ip.dst);
 
-    RuleListSortUniq(port_tables->tcp_anyany->rule_list);
-    RuleListSortUniq(port_tables->udp_anyany->rule_list);
-    RuleListSortUniq(port_tables->icmp_anyany->rule_list);
-    RuleListSortUniq(port_tables->ip_anyany->rule_list);
-    RuleListSortUniq(port_tables->tcp_nocontent->rule_list);
-    RuleListSortUniq(port_tables->udp_nocontent->rule_list);
-    RuleListSortUniq(port_tables->icmp_nocontent->rule_list);
-    RuleListSortUniq(port_tables->ip_nocontent->rule_list);
+    /* ICMP */
+    if ( fp->get_debug_print_rule_groups_compiled() )
+    {
+        LogMessage("*** ICMP-Any-Any Port List\n");
+        PortObjectPrintEx(port_tables->icmp.any,
+            rule_index_map_print_index);
+    }
+
+    finish_portlist_table(fp, "icmp src", port_tables->icmp.src);
+    finish_portlist_table(fp, "icmp dst", port_tables->icmp.dst);
+
+    /* TCP */
+    if ( fp->get_debug_print_rule_groups_compiled() )
+    {
+        LogMessage("*** TCP-Any-Any Port List\n");
+        PortObjectPrintEx(port_tables->tcp.any,
+            rule_index_map_print_index);
+    }
+
+    finish_portlist_table(fp, "tcp src", port_tables->tcp.src);
+    finish_portlist_table(fp, "tcp dst", port_tables->tcp.dst);
+
+    /* UDP */
+    if ( fp->get_debug_print_rule_groups_compiled() )
+    {
+        LogMessage("*** UDP-Any-Any Port List\n");
+        PortObjectPrintEx(port_tables->udp.any,
+            rule_index_map_print_index);
+    }
+
+    finish_portlist_table(fp, "udp src", port_tables->udp.src);
+    finish_portlist_table(fp, "udp dst", port_tables->udp.dst);
+
+    /* SVC */
+    if ( fp->get_debug_print_rule_groups_compiled() )
+    {
+        LogMessage("*** SVC-Any-Any Port List\n");
+        PortObjectPrintEx(port_tables->svc_any,
+            rule_index_map_print_index);
+    }
+
+    RuleListSortUniq(port_tables->ip.any->rule_list);
+    RuleListSortUniq(port_tables->icmp.any->rule_list);
+    RuleListSortUniq(port_tables->tcp.any->rule_list);
+    RuleListSortUniq(port_tables->udp.any->rule_list);
+    RuleListSortUniq(port_tables->svc_any->rule_list);
+
+    RuleListSortUniq(port_tables->ip.nfp->rule_list);
+    RuleListSortUniq(port_tables->icmp.nfp->rule_list);
+    RuleListSortUniq(port_tables->tcp.nfp->rule_list);
+    RuleListSortUniq(port_tables->udp.nfp->rule_list);
 }
 
 static void OtnInit(SnortConfig* sc)
@@ -444,8 +455,7 @@ static void IntegrityCheckRules(SnortConfig* sc)
                 continue;
             }
 
-            if ((rtn->proto == IPPROTO_TCP) || (rtn->proto == IPPROTO_UDP)
-                || (rtn->proto == IPPROTO_ICMP) || (rtn->proto == ETHERNET_TYPE_IP))
+            if ( is_network_protocol(rtn->proto) )
             {
                 //do operation
                 ofl_idx = otn->opt_func;
@@ -527,7 +537,6 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf)
     sc->threshold_config = ThresholdConfigNew();
     sc->rate_filter_config = RateFilter_ConfigNew();
     sc->detection_filter_config = DetectionFilterConfigNew();
-    sc->ip_proto_only_lists = (SF_LIST**)SnortAlloc(NUM_IP_PROTOS * sizeof(SF_LIST*));
 
     /* If snort is not run with root privileges, no interfaces will be defined,
      * so user beware if an iface_ADDRESS variable is used in snort.conf and

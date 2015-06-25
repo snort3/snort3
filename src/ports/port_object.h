@@ -43,7 +43,7 @@ struct PortObject
     SF_LIST* item_list;         /* list of port and port-range items */
     SF_LIST* rule_list;         /* list of rules  */
 
-    void* data;                 /* user data, PORT_GROUP based on rule_list - only used by any-any
+    void* data;                 /* user data, PortGroup based on rule_list - only used by any-any
                                   ports */
     void (* data_free)(void*);
 };

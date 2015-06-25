@@ -29,7 +29,6 @@
 #include <vector>
 #include <sys/stat.h>
 
-//#include "detection/rules.h"
 #include "sfip/sfip_t.h"
 #include "main/policy.h"
 #include "main/thread.h"
@@ -270,9 +269,6 @@ public:
 
     struct DetectionFilterConfig* detection_filter_config = nullptr;
 
-    struct sf_list** ip_proto_only_lists = nullptr;
-    uint8_t ip_proto_array[NUM_IP_PROTOS];
-
     int num_rule_types = 0;
     struct RuleListNode* rule_lists = nullptr;
     int evalOrder[RULE_TYPE__MAX + 1];
@@ -291,9 +287,10 @@ public:
      * 1st and then the no content rules for udp/tcp and icmp, and
      * then we process the ip rules. */
     PORT_RULE_MAP* prmIpRTNX = nullptr;
+    PORT_RULE_MAP* prmIcmpRTNX = nullptr;
     PORT_RULE_MAP* prmTcpRTNX = nullptr;
     PORT_RULE_MAP* prmUdpRTNX = nullptr;
-    PORT_RULE_MAP* prmIcmpRTNX = nullptr;
+    PORT_RULE_MAP* prmSvcRTNX = nullptr;
 
     srmm_table_t* srmmTable = nullptr;   /* srvc rule map master table */
     srmm_table_t* spgmmTable = nullptr;  /* srvc port_group map master table */

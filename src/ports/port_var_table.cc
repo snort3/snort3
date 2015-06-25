@@ -19,18 +19,6 @@
 
 #include "port_var_table.h"
 
-#if 0
-#include "port_object.h"
-#include "snort_types.h"
-#include "snort_config.h"
-#include "snort_bounds.h"
-#include "snort_debug.h"
-#include "detection/sfrim.h"
-#include "parser.h"
-#include "util.h"
-#include "hash/sfhashfcn.h"
-#endif
-
 //-------------------------------------------------------------------------
 // PortVarTable
 //-------------------------------------------------------------------------

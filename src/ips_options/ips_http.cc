@@ -133,7 +133,7 @@ static Module* uri_mod_ctor()
 
 static IpsOption* uri_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, PSI_URI, CAT_SET_COMMAND);
+    return new HttpIpsOption(IPS_OPT, PSI_URI, CAT_SET_KEY);
 }
 
 static const IpsApi uri_api =
