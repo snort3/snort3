@@ -41,16 +41,9 @@
 #include "util.h"
 #include "file_api/file_capture.h"
 
-// FIXIT-L these are no longer needed
-#define SHA256CONTEXT SHA256_CTX
-#define SHA256INIT    SHA256_Init
-#define SHA256UPDATE  SHA256_Update
-#define SHA256FINAL   SHA256_Final
-
-static inline int get_data_size_from_depth_limit(FileContext* context, FileProcessType type, int
+inline int FileContext::get_data_size_from_depth_limit(FileProcessType type, int
     data_size)
 {
-    FileConfig* file_config =  (FileConfig*) context->file_config;
     uint64_t max_depth;
 
     if (!file_config)
@@ -68,20 +61,20 @@ static inline int get_data_size_from_depth_limit(FileContext* context, FileProce
         return data_size;
     }
 
-    if (context->processed_bytes > max_depth)
+    if (processed_bytes > max_depth)
         data_size = -1;
-    else if (context->processed_bytes + data_size > max_depth)
-        data_size = (int)(max_depth - context->processed_bytes);
+    else if (processed_bytes + data_size > max_depth)
+        data_size = (int)(max_depth - processed_bytes);
 
     return data_size;
 }
 
 /* stop file type identification */
-static inline void _finalize_file_type (FileContext* context)
+inline void FileContext::finalize_file_type ()
 {
-    if (SNORT_FILE_TYPE_CONTINUE ==  context->file_type_id)
-        context->file_type_id = SNORT_FILE_TYPE_UNKNOWN;
-    context->file_type_context = NULL;
+    if (SNORT_FILE_TYPE_CONTINUE ==  file_type_id)
+        file_type_id = SNORT_FILE_TYPE_UNKNOWN;
+    file_type_context = NULL;
 }
 /*
  * Main File type processing function
@@ -93,192 +86,204 @@ static inline void _finalize_file_type (FileContext* context)
  * 3) file magics are exhausted in depth
  *
  */
-void file_type_id( FileContext* context, uint8_t* file_data,
-        int size, FilePosition position)
+void FileContext::file_type_eval(const uint8_t* file_data, int size, FilePosition position)
 {
     int data_size;
-    FileConfig* file_config = context->file_config;
 
-    if (!context || !file_config)
+    if (!file_config)
         return;
 
     /* file type already found and no magics to continue*/
-    if (context->file_type_id && !context->file_type_context)
+    if (file_type_id && !file_type_context)
         return;
 
     /* Check whether file type depth is reached*/
-    data_size = get_data_size_from_depth_limit(context, SNORT_FILE_TYPE_ID, size);
+    data_size = get_data_size_from_depth_limit(SNORT_FILE_TYPE_ID, size);
 
     if (data_size < 0)
     {
-        _finalize_file_type(context);
+        finalize_file_type();
         return;
     }
 
-    file_config->find_file_type_id(file_data, data_size, context);
+    file_type_id =
+        file_config->find_file_type_id(file_data, data_size, processed_bytes, &file_type_context);
 
     /* Check whether file transfer is done or type depth is reached*/
     if ( (position == SNORT_FILE_END)  || (position == SNORT_FILE_FULL) ||
          (data_size != size) )
     {
-        _finalize_file_type(context);
+        finalize_file_type();
     }
 }
 
-void file_signature_sha256(
-    FileContext* context, uint8_t* file_data, int size, FilePosition position)
+void FileContext::file_signature_sha256_eval(const uint8_t* file_data, int size,
+    FilePosition position)
 {
-    int data_size;
-
-    if (!context)
-        return;
-
-    data_size = get_data_size_from_depth_limit(context, SNORT_FILE_SHA256, size);
+    int data_size = get_data_size_from_depth_limit(SNORT_FILE_SHA256, size);
 
     if (data_size != size)
     {
-        context->file_state.sig_state = FILE_SIG_DEPTH_FAIL;
+        file_state.sig_state = FILE_SIG_DEPTH_FAIL;
         return;
     }
 
     switch (position)
     {
     case SNORT_FILE_START:
-        context->file_signature_context = SnortAlloc(sizeof(SHA256CONTEXT));
-        SHA256INIT((SHA256CONTEXT*)context->file_signature_context);
-        SHA256UPDATE((SHA256CONTEXT*)context->file_signature_context, file_data, data_size);
+        file_signature_context = SnortAlloc(sizeof(SHA256_CTX));
+        SHA256_Init((SHA256_CTX*)file_signature_context);
+        SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
         break;
     case SNORT_FILE_MIDDLE:
-        if (!context->file_signature_context)
-            context->file_signature_context = SnortAlloc(sizeof(SHA256CONTEXT));
-        SHA256UPDATE((SHA256CONTEXT*)context->file_signature_context, file_data, data_size);
+        if (!file_signature_context)
+            file_signature_context = SnortAlloc(sizeof(SHA256_CTX));
+        SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
         break;
     case SNORT_FILE_END:
-        if (!context->file_signature_context)
-            context->file_signature_context = SnortAlloc(sizeof(SHA256CONTEXT));
-        if (context->processed_bytes == 0)
-            SHA256INIT((SHA256CONTEXT*)context->file_signature_context);
-        SHA256UPDATE((SHA256CONTEXT*)context->file_signature_context, file_data, data_size);
-        context->sha256 = (uint8_t*)SnortAlloc(SHA256_HASH_SIZE);
-        SHA256FINAL(context->sha256, (SHA256CONTEXT*)context->file_signature_context);
-        context->file_state.sig_state = FILE_SIG_DONE;
+        if (!file_signature_context)
+            file_signature_context = SnortAlloc(sizeof(SHA256_CTX));
+        if (processed_bytes == 0)
+            SHA256_Init((SHA256_CTX*)file_signature_context);
+        SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
+        sha256 = (uint8_t*)SnortAlloc(SHA256_HASH_SIZE);
+        SHA256_Final(sha256, (SHA256_CTX*)file_signature_context);
+        file_state.sig_state = FILE_SIG_DONE;
         break;
     case SNORT_FILE_FULL:
-        context->file_signature_context = SnortAlloc(sizeof (SHA256CONTEXT));
-        SHA256INIT((SHA256CONTEXT*)context->file_signature_context);
-        SHA256UPDATE((SHA256CONTEXT*)context->file_signature_context, file_data, data_size);
-        context->sha256 = (uint8_t*)SnortAlloc(SHA256_HASH_SIZE);
-        SHA256FINAL(context->sha256, (SHA256CONTEXT*)context->file_signature_context);
-        context->file_state.sig_state = FILE_SIG_DONE;
+        file_signature_context = SnortAlloc(sizeof (SHA256_CTX));
+        SHA256_Init((SHA256_CTX*)file_signature_context);
+        SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
+        sha256 = (uint8_t*)SnortAlloc(SHA256_HASH_SIZE);
+        SHA256_Final(sha256, (SHA256_CTX*)file_signature_context);
+        file_state.sig_state = FILE_SIG_DONE;
         break;
     default:
         break;
     }
 }
 
-/*File context management*/
-
-FileContext *file_context_create(void)
+void FileContext::updateFileSize(int data_size, FilePosition position)
 {
-    FileContext *context = (FileContext *)SnortAlloc(sizeof(*context));
-    return (context);
+    processed_bytes += data_size;
+    if ((position == SNORT_FILE_END)or (position == SNORT_FILE_FULL))
+    {
+        file_size = processed_bytes;
+        processed_bytes = 0;
+    }
 }
 
-static inline void cleanDynamicContext (FileContext *context)
+FileContext::~FileContext ()
 {
-    if (context->file_signature_context)
-        free(context->file_signature_context);
-    if(context->sha256)
-        free(context->sha256);
-    if(context->file_capture)
-        file_capture_stop(context);
+    if (file_signature_context)
+        free(file_signature_context);
+    if(sha256)
+        free(sha256);
+    //if(file_capture)
+      //  file_capture_stop();
 }
 
-void file_context_reset(FileContext *context)
+uint32_t FileContext::get_file_type()
 {
-    cleanDynamicContext(context);
-    memset(context, 0, sizeof(*context));
-
+    return file_type_id;
 }
 
-void file_context_free(void *ctx)
+void FileContext::config_file_type(bool enabled)
 {
-    FileContext *context = (FileContext *)ctx;
-    if (!context)
-        return;
-    cleanDynamicContext(context);
-    free(context);
+    file_type_enabled = enabled;
+}
+
+bool FileContext::is_file_type_enabled()
+{
+    return file_type_enabled;
+}
+
+void FileContext::config_file_signature(bool enabled)
+{
+    file_signature_enabled = enabled;
+}
+
+bool FileContext::is_file_signature_enabled()
+{
+    return file_signature_enabled;
+}
+
+void FileContext::config_file_capture(bool enabled)
+{
+    file_capture_enabled = enabled;
+}
+
+bool FileContext::is_file_capture_enabled()
+{
+    return file_capture_enabled;
 }
 
 /*File properties*/
 /*Only set the pointer for performance, no deep copy*/
-void file_name_set (FileContext *context, uint8_t *file_name, uint32_t name_size)
+void FileContext::set_file_name (const uint8_t *name, uint32_t name_size)
 {
-    if (!context)
-        return;
-    context->file_name = file_name;
-    context->file_name_size = name_size;
+    file_name = (uint8_t*) name;
+    file_name_size = name_size;
 }
 
-/* Return 1: file name available,
- *        0: file name is unavailable
+/* Return true: file name available,
+ *        false: file name is unavailable
  */
 
-int file_name_get(FileContext* context, uint8_t** file_name, uint32_t* name_size)
+bool FileContext::get_file_name(uint8_t** name, uint32_t* name_size)
 {
-    if (!context)
-        return 0;
-    if (file_name)
-        *file_name = context->file_name;
+    if (name)
+        *name = file_name;
     else
-        return 0;
-    if (name_size)
-        *name_size = context->file_name_size;
-    else
-        return 0;
-    return 1;
-}
-
-void file_size_set(FileContext* context, uint64_t file_size)
-{
-    if (!context)
-        return;
-    context->file_size = file_size;
-}
-
-uint64_t file_size_get(FileContext* context)
-{
-    if (!context)
-        return 0;
-    return (context->file_size);
-}
-
-void file_direction_set(FileContext* context, bool upload)
-{
-    if (!context)
-        return;
-    context->upload = upload;
-}
-
-bool file_direction_get(FileContext* context)
-{
-    if (!context)
         return false;
-    return (context->upload);
+
+    if (name_size)
+        *name_size = file_name_size;
+    else
+        return false;
+
+    return true;
 }
 
-void file_sig_sha256_set(FileContext* context, uint8_t* signature)
+void FileContext::set_file_size(uint64_t size)
 {
-    if (!context)
-        return;
-    context->sha256= signature;
+    file_size = size;
 }
 
-uint8_t* file_sig_sha256_get(FileContext* context)
+uint64_t FileContext::get_file_size()
 {
-    if (!context)
-        return NULL;
-    return (context->sha256);
+    return file_size;
+}
+
+void FileContext::set_file_id(uint32_t id)
+{
+    file_id = id;
+}
+
+uint32_t FileContext::get_file_id()
+{
+    return file_id;
+}
+
+
+void FileContext::set_file_direction(FileDirection dir)
+{
+    direction = dir;
+}
+
+FileDirection FileContext::get_file_direction()
+{
+    return (direction);
+}
+
+void FileContext::set_file_sig_sha256(uint8_t* signature)
+{
+    sha256 = signature;
+}
+
+uint8_t* FileContext::get_file_sig_sha256()
+{
+    return (sha256);
 }
 
 const char* file_type_name(void* conf, uint32_t id)
@@ -299,6 +304,32 @@ const char* file_type_name(void* conf, uint32_t id)
 
     return NULL;
 }
+
+/*
+ * Print a 32-byte hash value.
+ */
+void FileContext::print_file_sha256()
+{
+
+    unsigned char* hash = sha256;
+
+    if (!sha256)
+        return;
+
+    printf("SHA256: %02X%02X %02X%02X %02X%02X %02X%02X "
+        "%02X%02X %02X%02X %02X%02X %02X%02X "
+        "%02X%02X %02X%02X %02X%02X %02X%02X "
+        "%02X%02X %02X%02X %02X%02X %02X%02X\n",
+        hash[0], hash[1], hash[2], hash[3],
+        hash[4], hash[5], hash[6], hash[7],
+        hash[8], hash[9], hash[10], hash[11],
+        hash[12], hash[13], hash[14], hash[15],
+        hash[16], hash[17], hash[18], hash[19],
+        hash[20], hash[21], hash[22], hash[23],
+        hash[24], hash[25], hash[26], hash[27],
+        hash[28], hash[29], hash[30], hash[31]);
+}
+
 /**
 bool file_IDs_from_type(const void *conf, const char *type,
      uint32_t **ids, uint32_t *count)
@@ -327,23 +358,3 @@ bool file_IDs_from_group(const void *conf, const char *group,
     return get_ids_from_group(conf, group, ids, count);
 }
 **/
-
-/*
- * Print a 32-byte hash value.
- */
-void file_sha256_print(unsigned char* hash)
-{
-    printf("SHA256: %02X%02X %02X%02X %02X%02X %02X%02X "
-        "%02X%02X %02X%02X %02X%02X %02X%02X "
-        "%02X%02X %02X%02X %02X%02X %02X%02X "
-        "%02X%02X %02X%02X %02X%02X %02X%02X\n",
-        hash[0], hash[1], hash[2], hash[3],
-        hash[4], hash[5], hash[6], hash[7],
-        hash[8], hash[9], hash[10], hash[11],
-        hash[12], hash[13], hash[14], hash[15],
-        hash[16], hash[17], hash[18], hash[19],
-        hash[20], hash[21], hash[22], hash[23],
-        hash[24], hash[25], hash[26], hash[27],
-        hash[28], hash[29], hash[30], hash[31]);
-}
-

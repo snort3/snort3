@@ -334,32 +334,33 @@ void FileIdenfifier::insert_file_rule(FileMagicRule& rule)
  * Find file type is to traverse the tries.
  * Context is saved to continue file type identification as data becomes available
  */
-uint32_t FileIdenfifier::find_file_type_id(uint8_t* buf, int len, FileContext* context)
+uint32_t FileIdenfifier::find_file_type_id(const uint8_t* buf, int len, uint64_t file_offset,
+    void** context)
 {
     IdentifierNode* current;
     uint64_t end;
+    uint32_t file_type_id;
 
     if ((!context)||(!buf)||(len <= 0))
         return 0;
 
-    if (!(context->file_type_context))
-        context->file_type_context = (void*)(identifier_root);
+    if (!(*context))
+        *context = (void*)(identifier_root);
 
-    current = (IdentifierNode*)context->file_type_context;
+    current = (IdentifierNode*)context;
 
-    end = context->processed_bytes + len;
+    end = file_offset + len;
 
-    while (current && (current->offset < end) && len && (current->offset >=
-        context->processed_bytes))
+    while (current && (current->offset < end) && len && (current->offset >= file_offset))
     {
         /*Found file id, save and continue*/
         if (current->type_id)
         {
-            context->file_type_id = current->type_id;
+            file_type_id = current->type_id;
         }
 
         /*Move to the next level*/
-        current = current->next[buf[current->offset - context->processed_bytes ]];
+        current = current->next[buf[current->offset - file_offset ]];
         len--;
     }
 
@@ -367,17 +368,17 @@ uint32_t FileIdenfifier::find_file_type_id(uint8_t* buf, int len, FileContext* c
     if (!current)
     {
         /*Found file type in current buffer, return*/
-        if (context->file_type_id)
-            return context->file_type_id;
+        if (file_type_id)
+            return file_type_id;
         else
             return SNORT_FILE_TYPE_UNKNOWN;
     }
-    else if ((context->file_type_id) && (current->state == ID_NODE_SHARED))
-        return context->file_type_id;
+    else if ((file_type_id) && (current->state == ID_NODE_SHARED))
+        return file_type_id;
     else if (current->offset >= end)
     {
         /*No file type found, save current state and continue*/
-        context->file_type_context = current;
+        *context = current;
         return SNORT_FILE_TYPE_CONTINUE;
     }
     else

@@ -47,7 +47,7 @@ public:
     FileMagicRule* get_rule_from_id(uint32_t);
     void process_file_rule(FileMagicRule&);
     bool process_file_magic(FileMagicData&);
-    uint32_t find_file_type_id(uint8_t* buf, int len, FileContext* context);
+    uint32_t find_file_type_id(const uint8_t* buf, int len, uint64_t file_offset, void** context);
     int64_t file_type_depth = DEFAULT_FILE_TYPE_DEPTH;
     int64_t file_signature_depth = DEFAULT_FILE_SIGNATURE_DEPTH;
     int64_t file_block_timeout = DEFAULT_FILE_BLOCK_TIMEOUT;

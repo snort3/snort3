@@ -93,7 +93,7 @@ public:
     ~FileIdenfifier();
     uint32_t memory_usage(void) {return memory_used;};
     void insert_file_rule(FileMagicRule& rule);
-    uint32_t find_file_type_id(uint8_t* buf, int len, FileContext* context);
+    uint32_t find_file_type_id(const uint8_t* buf, int len, uint64_t offset, void** context);
     FileMagicRule* get_rule_from_id(uint32_t);
 private:
     void identifierMergeHashInit(void);

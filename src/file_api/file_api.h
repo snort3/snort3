@@ -101,6 +101,12 @@ enum FileProcessType
     SNORT_FILE_CAPTURE
 };
 
+enum FileDirection
+{
+   FILE_DOWNLOAD,
+   FILE_UPLOAD
+};
+
 struct FileState
 {
     FileCaptureState capture_state;
@@ -244,7 +250,7 @@ typedef bool (*File_process_func)(
     Flow* flow, uint8_t* file_data, int data_size, FilePosition,
     bool upload, bool suspend_block_verdict);
 
-typedef int (*Get_file_name_func)(Flow* flow, uint8_t** file_name, uint32_t* name_len);
+typedef bool (*Get_file_name_func)(Flow* flow, uint8_t** file_name, uint32_t* name_len);
 typedef uint64_t (*Get_file_size_func)(Flow* flow);
 typedef bool (*Get_file_direction_func)(Flow* flow);
 typedef uint8_t*(*Get_file_sig_sha256_func)(Flow* flow);

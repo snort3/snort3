@@ -22,6 +22,8 @@ add_library ( file_api STATIC
     file_capture.h
     file_mempool.cc
     file_mempool.h
+    file_action.cc
+    file_action.h
 )
 
 target_link_libraries(file_api file)

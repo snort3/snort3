@@ -70,9 +70,10 @@ bool FileConfig::process_file_magic(FileMagicData &magic)
     return true;
 }
 
-uint32_t FileConfig::find_file_type_id(uint8_t* buf, int len, FileContext* context)
+uint32_t FileConfig::find_file_type_id(const uint8_t* buf, int len,
+    uint64_t file_offset, void** context)
 {
-    return fileIdentifier.find_file_type_id(buf, len, context);
+    return fileIdentifier.find_file_type_id(buf, len, file_offset, context);
 }
 
 /*The main function for parsing rule option*/
