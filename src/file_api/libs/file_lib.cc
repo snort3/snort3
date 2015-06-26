@@ -203,8 +203,8 @@ FileContext::~FileContext ()
         free(file_signature_context);
     if(sha256)
         free(sha256);
-    //if(file_capture)
-      //  file_capture_stop();
+    if(file_capture)
+        stop_file_capture();
 }
 
 uint32_t FileContext::get_file_type()
@@ -323,7 +323,6 @@ FileConfig*  FileContext::get_file_config()
 {
     return file_config;
 }
-
 
 const char* file_type_name(void* conf, uint32_t id)
 {

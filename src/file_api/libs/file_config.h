@@ -65,7 +65,7 @@ public:
     static bool trace_stream;
 
 private:
-    FileIdenfifier fileIdentifier;
+    FileIdentifier fileIdentifier;
 };
 
 #endif

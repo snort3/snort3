@@ -64,7 +64,7 @@ void FileMagicRule::clear()
     file_magics.clear();
 }
 
-void FileIdenfifier::identifierMergeHashInit()
+void FileIdentifier::identifierMergeHashInit()
 {
     identifier_merge_hash = sfghash_new(1000, sizeof(IdentifierSharedNode), 0, NULL);
     if (identifier_merge_hash == NULL)
@@ -74,7 +74,7 @@ void FileIdenfifier::identifierMergeHashInit()
     }
 }
 
-FileIdenfifier::~FileIdenfifier()
+FileIdentifier::~FileIdentifier()
 {
     /*Release memory used for identifiers*/
     for (IDMemoryBlocks::iterator idMem = idMemoryBlocks.begin();
@@ -89,7 +89,7 @@ FileIdenfifier::~FileIdenfifier()
     }
 }
 
-void* FileIdenfifier::calloc_mem(size_t size)
+void* FileIdentifier::calloc_mem(size_t size)
 {
     void* ret;
     IDMemoryBlock memblock;
@@ -101,7 +101,7 @@ void* FileIdenfifier::calloc_mem(size_t size)
     return ret;
 }
 
-void FileIdenfifier::set_node_state_shared(IdentifierNode* start)
+void FileIdentifier::set_node_state_shared(IdentifierNode* start)
 {
     int i;
 
@@ -121,7 +121,7 @@ void FileIdenfifier::set_node_state_shared(IdentifierNode* start)
 }
 
 /*Clone a trie*/
-IdentifierNode* FileIdenfifier::clone_node(IdentifierNode* start)
+IdentifierNode* FileIdentifier::clone_node(IdentifierNode* start)
 {
     int index;
     IdentifierNode* node;
@@ -143,7 +143,7 @@ IdentifierNode* FileIdenfifier::clone_node(IdentifierNode* start)
     return node;
 }
 
-void FileIdenfifier::verify_magic_offset(FileMagicData* parent, FileMagicData* current)
+void FileIdentifier::verify_magic_offset(FileMagicData* parent, FileMagicData* current)
 {
     if ((parent) && (parent->content.size() + parent->offset > current->offset))
     {
@@ -154,7 +154,7 @@ void FileIdenfifier::verify_magic_offset(FileMagicData* parent, FileMagicData* c
 }
 
 /*Create a trie for the magic*/
-IdentifierNode* FileIdenfifier::create_trie_from_magic(FileMagicRule& rule, uint32_t type_id)
+IdentifierNode* FileIdentifier::create_trie_from_magic(FileMagicRule& rule, uint32_t type_id)
 {
     IdentifierNode* current;
     IdentifierNode* root = NULL;
@@ -194,7 +194,7 @@ IdentifierNode* FileIdenfifier::create_trie_from_magic(FileMagicRule& rule, uint
 
 /*This function examines whether to update the trie based on shared state*/
 
-bool FileIdenfifier::updateNext(IdentifierNode* start,IdentifierNode** next_ptr,
+bool FileIdentifier::updateNext(IdentifierNode* start,IdentifierNode** next_ptr,
     IdentifierNode* append)
 {
     IdentifierNode* next = (*next_ptr);
@@ -260,7 +260,7 @@ bool FileIdenfifier::updateNext(IdentifierNode* start,IdentifierNode** next_ptr,
 /*
  * Append magic to existing trie
  */
-void FileIdenfifier::update_trie(IdentifierNode* start, IdentifierNode* append)
+void FileIdentifier::update_trie(IdentifierNode* start, IdentifierNode* append)
 {
     int i;
 
@@ -300,7 +300,7 @@ void FileIdenfifier::update_trie(IdentifierNode* start, IdentifierNode* append)
     }
 }
 
-void FileIdenfifier::insert_file_rule(FileMagicRule& rule)
+void FileIdentifier::insert_file_rule(FileMagicRule& rule)
 {
     IdentifierNode* node;
 
@@ -334,7 +334,7 @@ void FileIdenfifier::insert_file_rule(FileMagicRule& rule)
  * Find file type is to traverse the tries.
  * Context is saved to continue file type identification as data becomes available
  */
-uint32_t FileIdenfifier::find_file_type_id(const uint8_t* buf, int len, uint64_t file_offset,
+uint32_t FileIdentifier::find_file_type_id(const uint8_t* buf, int len, uint64_t file_offset,
     void** context)
 {
     IdentifierNode* current;
@@ -385,7 +385,7 @@ uint32_t FileIdenfifier::find_file_type_id(const uint8_t* buf, int len, uint64_t
         return SNORT_FILE_TYPE_UNKNOWN;
 }
 
-FileMagicRule*  FileIdenfifier::get_rule_from_id(uint32_t id)
+FileMagicRule*  FileIdentifier::get_rule_from_id(uint32_t id)
 {
     if ((id < FILE_ID_MAX) && (file_magic_rules[id].id > 0))
     {

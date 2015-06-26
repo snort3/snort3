@@ -84,5 +84,5 @@ void FileConfig::process_file_rule(FileMagicRule &rule)
 
 FileMagicRule*  FileConfig::get_rule_from_id(uint32_t id)
 {
-    return fileIdentifier.get_rule_from_id(id);;
+    return fileIdentifier.get_rule_from_id(id);
 }

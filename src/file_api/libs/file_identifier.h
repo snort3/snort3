@@ -63,10 +63,10 @@ class FileMagicRule
 {
 public:
     void clear(void);
-    uint32_t rev;
+    uint32_t rev = 0;
     std::string message;
     std::string type;
-    uint32_t id;
+    uint32_t id = 0;
     std::string category;
     std::string version;
     FileMagics file_magics;
@@ -87,10 +87,10 @@ struct IDMemoryBlock
 
 typedef std::list<IDMemoryBlock >  IDMemoryBlocks;
 
-class FileIdenfifier
+class FileIdentifier
 {
 public:
-    ~FileIdenfifier();
+    ~FileIdentifier();
     uint32_t memory_usage(void) {return memory_used;};
     void insert_file_rule(FileMagicRule& rule);
     uint32_t find_file_type_id(const uint8_t* buf, int len, uint64_t offset, void** context);
