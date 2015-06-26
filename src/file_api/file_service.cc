@@ -79,9 +79,9 @@ static uint64_t get_file_processed_size(Flow* flow);
 
 static void set_file_name(Flow* flow, uint8_t* file_name, uint32_t name_size);
 
-static void enable_file_type(File_type_callback_func);
-static void enable_file_signature (File_signature_callback_func);
-static void enable_file_capture(File_signature_callback_func);
+static void enable_file_type();
+static void enable_file_signature ();
+static void enable_file_capture();
 
 static int64_t get_max_file_depth(void);
 
@@ -96,8 +96,8 @@ static uint32_t get_new_file_instance(Flow* flow);
 FileContext* create_file_context(Flow* flow);
 bool set_current_file_context(Flow* flow, FileContext* ctx);
 FileContext* get_main_file_context(Flow* flow);
-static bool process_file_context(FileContext* ctx, Packet* p, Flow* flow, uint8_t* file_data,
-    int data_size, FilePosition position, bool suspend_block_verdict);
+static bool process_file_context(FileContext* ctx, Flow* flow, uint8_t* file_data,
+    int data_size, FilePosition position);
 static FilePosition get_file_position(Packet* pkt);
 
 FileAPI fileAPI;
@@ -117,7 +117,7 @@ public:
     static void init()
     { flow_id = FlowData::get_flow_id(); }
 
-    void handle_retransmit(Packet*) override;
+    //void handle_retransmit(Packet*) override;
 
 public:
     static unsigned flow_id;
@@ -125,11 +125,6 @@ public:
 };
 
 unsigned FileFlowData::flow_id = 0;
-
-void FileFlowData::handle_retransmit(Packet* p)
-{
-    //file_signature_callback(p);
-}
 
 void init_fileAPI(void)
 {
@@ -428,8 +423,8 @@ static bool is_file_service_enabled()
  *    true: continue processing/log/block this file
  *    false: ignore this file
  */
-static bool process_file_context(FileContext* context, Packet* pkt, Flow* flow, uint8_t* file_data,
-        int data_size, FilePosition position, bool suspend_block_verdict)
+static bool process_file_context(FileContext* context, Flow* flow, uint8_t* file_data,
+        int data_size, FilePosition position)
 {
     if ( FileConfig::trace_stream )
     {
@@ -444,7 +439,7 @@ static bool process_file_context(FileContext* context, Packet* pkt, Flow* flow, 
 
     if ((!context->is_file_type_enabled()) and (!context->is_file_signature_enabled()))
     {
-        context->updateFileSize(data_size, position);
+        context->update_file_size(data_size, position);
         return false;
     }
 
@@ -453,14 +448,14 @@ static bool process_file_context(FileContext* context, Packet* pkt, Flow* flow, 
     /*file type id*/
     if (context->is_file_type_enabled())
     {
-        context->file_type_eval(file_data, data_size, position);
+        context->process_file_type(file_data, data_size, position);
 
         /*Don't care unknown file type*/
         if (context->get_file_type()== SNORT_FILE_TYPE_UNKNOWN)
         {
             context->config_file_type(false);
             context->config_file_signature(false);
-            context->updateFileSize(data_size, position);
+            context->update_file_size(data_size, position);
             context->stop_file_capture();
             return false;
         }
@@ -475,12 +470,12 @@ static bool process_file_context(FileContext* context, Packet* pkt, Flow* flow, 
     /* file signature calculation */
     if (context->is_file_signature_enabled())
     {
-        context->file_signature_sha256_eval(file_data, data_size, position);
+        context->process_file_signature_sha256(file_data, data_size, position);
 
         file_stats.data_processed[context->get_file_type()][context->get_file_direction()]
             += data_size;
 
-        context->updateFileSize(data_size, position);
+        context->update_file_size(data_size, position);
 
         if ( FileConfig::trace_signature )
             context->print_file_sha256();
@@ -488,12 +483,12 @@ static bool process_file_context(FileContext* context, Packet* pkt, Flow* flow, 
         /*Fails to capture, when out of memory or size limit, need lookup*/
         if (context->is_file_capture_enabled())
         {
-            context->file_capture_process(file_data, data_size, position);
+            context->process_file_capture(file_data, data_size, position);
         }
     }
     else
     {
-        context->updateFileSize(data_size, position);
+        context->update_file_size(data_size, position);
     }
 
     return true;
@@ -508,7 +503,6 @@ static bool file_process(Flow* flow, uint8_t* file_data, int data_size,
     FilePosition position, bool upload, bool suspend_block_verdict)
 {
     FileContext* context;
-    Packet* p = NULL;
     FileDirection direction = upload ? FILE_UPLOAD:FILE_DOWNLOAD;
     /* if both disabled, return immediately*/
     if (!is_file_service_enabled())
@@ -519,8 +513,7 @@ static bool file_process(Flow* flow, uint8_t* file_data, int data_size,
 
     context = find_main_file_context(flow, position, direction);
 
-    return process_file_context(context, p, flow, file_data, data_size, position,
-        suspend_block_verdict);
+    return process_file_context(context, flow, file_data, data_size, position);
 }
 
 static void set_file_name(Flow* flow, uint8_t* fname, uint32_t name_size)
@@ -552,7 +545,7 @@ static bool get_file_name(Flow* flow, uint8_t** file_name, uint32_t* name_size)
  * TBD: Remove per-context "file_type_enabled" checking to simplify implementation.
  *
  */
-static void enable_file_type(File_type_callback_func callback)
+static void enable_file_type()
 {
     if (!file_type_id_enabled)
     {
@@ -561,7 +554,7 @@ static void enable_file_type(File_type_callback_func callback)
     }
 }
 
-static void enable_file_signature(File_signature_callback_func callback)
+static void enable_file_signature()
 {
 
     if (!file_signature_enabled)
@@ -572,12 +565,12 @@ static void enable_file_signature(File_signature_callback_func callback)
 }
 
 /* Enable file capture, also enable file signature */
-static void enable_file_capture(File_signature_callback_func callback)
+static void enable_file_capture()
 {
     if (!file_capture_enabled)
     {
         file_capture_enabled = true;
-        enable_file_signature(callback);
+        enable_file_signature();
     }
 }
 

@@ -260,11 +260,11 @@ typedef void (*Set_file_direction_func)(Flow* flow, bool);
 
 typedef int64_t (*Get_file_depth_func)(void);
 
-typedef void (*Set_file_policy_func)(File_policy_callback_func);
-typedef void (*Enable_file_type_func)(File_type_callback_func);
-typedef void (*Enable_file_signature_func)(File_signature_callback_func);
-typedef void (*Enable_file_capture_func)(File_signature_callback_func);
-typedef void (*Set_file_action_log_func)(Log_file_action_func);
+typedef void (*Set_file_policy_func)();
+typedef void (*Enable_file_type_func)();
+typedef void (*Enable_file_signature_func)();
+typedef void (*Enable_file_capture_func)();
+typedef void (*Set_file_action_log_func)();
 
 typedef int (*Set_log_buffers_func)(MAIL_LogState** log_state, MAIL_LogConfig* conf);
 typedef int (*File_resume_block_add_file_func)(Packet* pkt, uint32_t file_sig,
@@ -330,8 +330,8 @@ typedef struct _file_api
      *    FilePosition: file position
      *    bool upload: upload or not
      * Returns:
-     *    1: continue processing/log/block this file
-     *    0: ignore this file (no further processing needed)
+     *    true: continue processing/log/block this file
+     *    false: ignore this file (no further processing needed)
      */
     File_process_func file_process;
 

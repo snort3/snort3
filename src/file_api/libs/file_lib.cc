@@ -41,6 +41,40 @@
 #include "util.h"
 #include "file_api/file_capture.h"
 
+FileContext::FileContext ()
+{
+    file_type_enabled = false;
+    file_signature_enabled = false;
+    file_capture_enabled = false;
+    file_name = NULL;
+    file_name_size = 0;
+    file_size = 0;
+    direction = FILE_DOWNLOAD;
+    processed_bytes = 0;
+    file_type_id = 0;
+    sha256 = NULL;
+    file_type_context = NULL;
+    file_signature_context = NULL;
+    file_config = NULL;
+    expires  = 0;
+    file_capture = NULL;
+    verdict = FILE_VERDICT_UNKNOWN;
+    suspend_block_verdict = false;
+    file_state = {FILE_CAPTURE_SUCCESS, FILE_SIG_PROCESSING};
+    file_id = 0;
+    file_config_version = 0;
+}
+
+FileContext::~FileContext ()
+{
+    if (file_signature_context)
+        free(file_signature_context);
+    if(sha256)
+        free(sha256);
+    if(file_capture)
+        stop_file_capture();
+}
+
 inline int FileContext::get_data_size_from_depth_limit(FileProcessType type, int
     data_size)
 {
@@ -86,7 +120,7 @@ inline void FileContext::finalize_file_type ()
  * 3) file magics are exhausted in depth
  *
  */
-void FileContext::file_type_eval(const uint8_t* file_data, int size, FilePosition position)
+void FileContext::process_file_type(const uint8_t* file_data, int size, FilePosition position)
 {
     int data_size;
 
@@ -117,7 +151,7 @@ void FileContext::file_type_eval(const uint8_t* file_data, int size, FilePositio
     }
 }
 
-void FileContext::file_signature_sha256_eval(const uint8_t* file_data, int size,
+void FileContext::process_file_signature_sha256(const uint8_t* file_data, int size,
     FilePosition position)
 {
     int data_size = get_data_size_from_depth_limit(SNORT_FILE_SHA256, size);
@@ -163,7 +197,7 @@ void FileContext::file_signature_sha256_eval(const uint8_t* file_data, int size,
     }
 }
 
-FileCaptureState FileContext::file_capture_process(const uint8_t* file_data,
+FileCaptureState FileContext::process_file_capture(const uint8_t* file_data,
     int data_size, FilePosition position)
 {
     if (!file_capture)
@@ -172,7 +206,9 @@ FileCaptureState FileContext::file_capture_process(const uint8_t* file_data,
     }
 
     file_state.capture_state =
-        file_capture->file_capture_process(file_data, data_size, position);
+        file_capture->process_buffer(file_data, data_size, position);
+
+    return file_state.capture_state;
 }
 
 void FileContext::stop_file_capture()
@@ -187,7 +223,7 @@ void FileContext::stop_file_capture()
 }
 
 
-void FileContext::updateFileSize(int data_size, FilePosition position)
+void FileContext::update_file_size(int data_size, FilePosition position)
 {
     processed_bytes += data_size;
     if ((position == SNORT_FILE_END)or (position == SNORT_FILE_FULL))
@@ -195,16 +231,6 @@ void FileContext::updateFileSize(int data_size, FilePosition position)
         file_size = processed_bytes;
         processed_bytes = 0;
     }
-}
-
-FileContext::~FileContext ()
-{
-    if (file_signature_context)
-        free(file_signature_context);
-    if(sha256)
-        free(sha256);
-    if(file_capture)
-        stop_file_capture();
 }
 
 uint32_t FileContext::get_file_type()

@@ -30,8 +30,6 @@
 #endif
 
 #include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "snort_types.h"
 #include "snort_debug.h"
@@ -64,7 +62,7 @@ void FileMagicRule::clear()
     file_magics.clear();
 }
 
-void FileIdentifier::identifierMergeHashInit()
+void FileIdentifier::init_merge_hash()
 {
     identifier_merge_hash = sfghash_new(1000, sizeof(IdentifierSharedNode), 0, NULL);
     if (identifier_merge_hash == NULL)
@@ -153,7 +151,6 @@ void FileIdentifier::verify_magic_offset(FileMagicData* parent, FileMagicData* c
     }
 }
 
-/*Create a trie for the magic*/
 IdentifierNode* FileIdentifier::create_trie_from_magic(FileMagicRule& rule, uint32_t type_id)
 {
     IdentifierNode* current;
@@ -194,7 +191,7 @@ IdentifierNode* FileIdentifier::create_trie_from_magic(FileMagicRule& rule, uint
 
 /*This function examines whether to update the trie based on shared state*/
 
-bool FileIdentifier::updateNext(IdentifierNode* start,IdentifierNode** next_ptr,
+bool FileIdentifier::update_next(IdentifierNode* start,IdentifierNode** next_ptr,
     IdentifierNode* append)
 {
     IdentifierNode* next = (*next_ptr);
@@ -284,7 +281,7 @@ void FileIdentifier::update_trie(IdentifierNode* start, IdentifierNode* append)
 
         for (i = 0; i < MAX_BRANCH; i++)
         {
-            if (updateNext(start,&start->next[i], append->next[i]))
+            if (update_next(start,&start->next[i], append->next[i]))
             {
                 update_trie(start->next[i], append->next[i]);
             }
@@ -294,7 +291,7 @@ void FileIdentifier::update_trie(IdentifierNode* start, IdentifierNode* append)
     {
         for (i = 0; i < MAX_BRANCH; i++)
         {
-            if (updateNext(start,&start->next[i], append))
+            if (update_next(start,&start->next[i], append))
                 update_trie(start->next[i], append);
         }
     }
@@ -307,7 +304,7 @@ void FileIdentifier::insert_file_rule(FileMagicRule& rule)
     if (!identifier_root)
     {
         identifier_root = (IdentifierNode *)calloc_mem(sizeof(*identifier_root));
-        identifierMergeHashInit();
+        init_merge_hash();
     }
 
     if (rule.id > FILE_ID_MAX)
@@ -337,21 +334,21 @@ void FileIdentifier::insert_file_rule(FileMagicRule& rule)
 uint32_t FileIdentifier::find_file_type_id(const uint8_t* buf, int len, uint64_t file_offset,
     void** context)
 {
-    IdentifierNode* current;
-    uint64_t end;
     uint32_t file_type_id = SNORT_FILE_TYPE_CONTINUE;
 
-    if ((!context)||(!buf)||(len <= 0))
-        return 0;
+    assert(context);
+
+    if ( !buf || len <= 0 )
+        return SNORT_FILE_TYPE_CONTINUE;
 
     if (!(*context))
         *context = (void*)(identifier_root);
 
-    current = (IdentifierNode*)(*context);
+    IdentifierNode* current = (IdentifierNode*)(*context);
 
-    end = file_offset + len;
+    uint64_t end = file_offset + len;
 
-    while (current && (current->offset < end) && len && (current->offset >= file_offset))
+    while (current &&  (current->offset >= file_offset))
     {
         /*Found file id, save and continue*/
         if (current->type_id)
@@ -359,30 +356,27 @@ uint32_t FileIdentifier::find_file_type_id(const uint8_t* buf, int len, uint64_t
             file_type_id = current->type_id;
         }
 
+        if ( current->offset >= end )
+        {
+            /* Save current state */
+            *context = current;
+            if (file_type_id)
+                return file_type_id;
+            else
+                return SNORT_FILE_TYPE_CONTINUE;
+        }
+
         /*Move to the next level*/
         current = current->next[buf[current->offset - file_offset ]];
-        len--;
     }
 
-    /*No more checks are needed*/
-    if (!current)
-    {
-        /*Found file type in current buffer, return*/
-        if (file_type_id)
-            return file_type_id;
-        else
-            return SNORT_FILE_TYPE_UNKNOWN;
-    }
-    else if ((file_type_id) && (current->state == ID_NODE_SHARED))
-        return file_type_id;
-    else if (current->offset >= end)
-    {
-        /*No file type found, save current state and continue*/
-        *context = current;
-        return SNORT_FILE_TYPE_CONTINUE;
-    }
-    else
-        return SNORT_FILE_TYPE_UNKNOWN;
+    /*Either end of magics or passed the current offset*/
+    *context = NULL;
+
+    if ( file_type_id == SNORT_FILE_TYPE_CONTINUE )
+        file_type_id = SNORT_FILE_TYPE_UNKNOWN;
+
+    return file_type_id;
 }
 
 FileMagicRule*  FileIdentifier::get_rule_from_id(uint32_t id)

@@ -96,12 +96,12 @@ public:
     uint32_t find_file_type_id(const uint8_t* buf, int len, uint64_t offset, void** context);
     FileMagicRule* get_rule_from_id(uint32_t);
 private:
-    void identifierMergeHashInit(void);
+    void init_merge_hash(void);
     void* calloc_mem(size_t size);
     void set_node_state_shared(IdentifierNode* start);
     IdentifierNode* clone_node(IdentifierNode* start);
     void verify_magic_offset(FileMagicData* parent, FileMagicData* current);
-    bool updateNext(IdentifierNode* start, IdentifierNode** next_ptr, IdentifierNode* append);
+    bool update_next(IdentifierNode* start, IdentifierNode** next_ptr, IdentifierNode* append);
     IdentifierNode* create_trie_from_magic(FileMagicRule& rule, uint32_t type_id);
     void update_trie(IdentifierNode* start, IdentifierNode* append);
 

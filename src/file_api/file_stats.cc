@@ -292,6 +292,6 @@ void print_file_stats()
     LogMessage("Total file signature max:          " FMTu64(
             "-10") " \n", file_stats.files_sig_depth);
 
-    FileCapture::file_capture_mem_usage();
+    FileCapture::print_mem_usage();
 }
 

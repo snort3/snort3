@@ -40,7 +40,7 @@ struct FileCaptureBlock
 class FileCapture
 {
 public:
-    void verifiy_file_capture(FileContext* context);
+    void verifiy(FileContext* context);
     /*
      * Initialize the file memory pool
      *
@@ -65,7 +65,7 @@ public:
      *   0: successful
      *   1: fail to capture the file or file capture is disabled
      */
-    FileCaptureState file_capture_process(const uint8_t* file_data, int data_size,
+    FileCaptureState process_buffer(const uint8_t* file_data, int data_size,
         FilePosition pos);
 
     /*
@@ -92,7 +92,7 @@ public:
      *      FILE_CAPTURE_MEMCAP,
      *      FILE_CAPTURE_FAIL
      */
-    FileCaptureState file_capture_reserve(FileContext* context, FileCaptureBlock** file_mem);
+    FileCaptureState reserve_file(FileContext* context, FileCaptureBlock** file_mem);
 
     /*
      * Get the file that is reserved in memory
@@ -106,7 +106,7 @@ public:
      *   the next memory block
      *   NULL: end of file or fail to get file
      */
-    FileCaptureBlock* file_capture_read(FileCaptureBlock* file_mem, uint8_t** buff, int* size);
+    FileCaptureBlock* read_file(FileCaptureBlock* file_mem, uint8_t** buff, int* size);
 
     /*
      * Get the file size captured in the file buffer
@@ -118,17 +118,17 @@ public:
      *   the size of file
      *   0: no memory or fail to get file
      */
-    size_t file_capture_size(FileCapture* file_mem);
+    size_t capture_size(FileCapture* file_mem);
 
     /*
      * Release the file that is reserved in memory, this function might be
      * called in a different thread.
      */
-    void file_capture_release();
+    void release_file();
 
     /*Log file capture mempool usage*/
 
-    static void file_capture_mem_usage(void);
+    static void print_mem_usage(void);
 
     /*
      *  Exit file capture, release all file capture memory etc,
@@ -138,9 +138,8 @@ public:
 
 private:
 
-    static FileMemPool* _init_file_mempool(int64_t max_file_mem, int64_t block_size);
-    inline FileCaptureBlock* _create_file_buffer(FileMemPool* file_mempool);
-    inline FileCaptureState _save_to_file_buffer(FileMemPool* file_mempool,
+    inline FileCaptureBlock* create_file_buffer(FileMemPool* file_mempool);
+    inline FileCaptureState save_to_file_buffer(FileMemPool* file_mempool,
          const uint8_t* file_data, int data_size, int64_t max_size);
     bool reserved;
     uint64_t file_size; /*file_size*/

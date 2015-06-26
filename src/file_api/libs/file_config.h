@@ -58,8 +58,8 @@ public:
     int64_t file_capture_min_size = DEFAULT_FILE_CAPTURE_MIN_SIZE;
     int64_t file_capture_block_size = DEFAULT_FILE_CAPTURE_BLOCK_SIZE;
     int64_t file_depth =  0;
-    static int64_t show_data_depth;
 
+    static int64_t show_data_depth;
     static bool trace_type;
     static bool trace_signature;
     static bool trace_stream;
