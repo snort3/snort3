@@ -49,9 +49,6 @@
 #include "framework/inspector.h"
 #include "detection_util.h"
 
-// FIXIT-M bad dependency; use inspector::get_buf()
-#include "service_inspectors/http_inspect/hi_main.h"
-
 int64_t FileConfig::show_data_depth = DEFAULT_FILE_SHOW_DATA_DEPTH;
 bool FileConfig::trace_type = false;
 bool FileConfig::trace_signature = false;

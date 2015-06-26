@@ -46,13 +46,14 @@ public:
      FileContext();
      ~FileContext();
 
-    /* main processing functions */
+    // main processing functions
     void process_file_type(const uint8_t* file_data, int data_size, FilePosition position);
     void process_file_signature_sha256(const uint8_t* file_data, int data_size, FilePosition pos);
     void update_file_size(int data_size, FilePosition position);
     void stop_file_capture();
     FileCaptureState process_file_capture(const uint8_t* file_data, int data_size, FilePosition pos);
 
+    // Configuration functions
     void config_file_type(bool enabled);
     bool is_file_type_enabled();
     void config_file_signature(bool enabled);
@@ -60,7 +61,7 @@ public:
     void config_file_capture(bool enabled);
     bool is_file_capture_enabled();
 
-    /*File properties*/
+    //File properties
     uint32_t get_file_type();
     void set_file_name(const uint8_t* file_name, uint32_t name_size);
     bool get_file_name( uint8_t** file_name, uint32_t* name_size);
@@ -78,6 +79,7 @@ public:
 
     void print_file_sha256();
     void print();
+
 private:
     bool file_type_enabled;
     bool file_signature_enabled;
@@ -94,8 +96,6 @@ private:
     FileConfig* file_config;
     time_t expires;
     FileCapture *file_capture;
-    File_Verdict verdict;
-    bool suspend_block_verdict;
     FileState file_state;
     uint32_t file_id;
     uint32_t file_config_version;

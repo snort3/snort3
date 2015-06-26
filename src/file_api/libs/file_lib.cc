@@ -58,8 +58,6 @@ FileContext::FileContext ()
     file_config = NULL;
     expires  = 0;
     file_capture = NULL;
-    verdict = FILE_VERDICT_UNKNOWN;
-    suspend_block_verdict = false;
     file_state = {FILE_CAPTURE_SUCCESS, FILE_SIG_PROCESSING};
     file_id = 0;
     file_config_version = 0;

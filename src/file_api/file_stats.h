@@ -56,10 +56,5 @@ extern FileStats file_stats;
 
 void print_file_stats();
 
-/*
- * Print out file statistics
- */
-void print_file_stats(int exiting);
-
 #endif
 
