@@ -482,6 +482,8 @@ static bool process_file_context(FileContext* context, Flow* flow, uint8_t* file
         {
             context->process_file_capture(file_data, data_size, position);
         }
+
+        finish_signature_lookup(context);
     }
     else
     {

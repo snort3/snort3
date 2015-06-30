@@ -43,24 +43,10 @@
 
 FileContext::FileContext ()
 {
-    file_type_enabled = false;
-    file_signature_enabled = false;
-    file_capture_enabled = false;
-    file_name = NULL;
-    file_name_size = 0;
-    file_size = 0;
-    direction = FILE_DOWNLOAD;
-    processed_bytes = 0;
-    file_type_id = 0;
-    sha256 = NULL;
     file_type_context = NULL;
     file_signature_context = NULL;
     file_config = NULL;
-    expires  = 0;
     file_capture = NULL;
-    file_state = {FILE_CAPTURE_SUCCESS, FILE_SIG_PROCESSING};
-    file_id = 0;
-    file_config_version = 0;
 }
 
 FileContext::~FileContext ()

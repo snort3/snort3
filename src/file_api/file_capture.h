@@ -40,6 +40,7 @@ struct FileCaptureBlock
 class FileCapture
 {
 public:
+    FileCapture();
     void verifiy(FileContext* context);
     /*
      * Initialize the file memory pool

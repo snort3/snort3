@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "util.h"
 
 /* Circular buffer object */
 struct _CircularBuffer
@@ -53,14 +54,14 @@ struct _CircularBuffer
 
 CircularBuffer* cbuffer_init(uint64_t size)
 {
-    CircularBuffer* cb = (CircularBuffer*)calloc(1, sizeof(*cb));
+    CircularBuffer* cb = (CircularBuffer*)SnortAlloc(sizeof(*cb));
 
     if ( !cb )
         return NULL;
 
     cb->size  = size + 1;
 
-    cb->elems = (ElemType*)calloc(cb->size, sizeof(ElemType));
+    cb->elems = (ElemType*)SnortAlloc(cb->size * sizeof(ElemType));
 
     if (!cb->elems)
     {

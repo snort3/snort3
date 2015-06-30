@@ -236,7 +236,7 @@ int set_log_buffers(MAIL_LogState** log_state, MAIL_LogConfig* conf)
         || conf->log_mailfrom || conf->log_rcptto))
     {
         uint32_t bufsz = (2* MAX_EMAIL) + MAX_FILE + conf->email_hdrs_log_depth;
-        *log_state = (MAIL_LogState*)calloc(1, sizeof(MAIL_LogState) + bufsz);
+        *log_state = (MAIL_LogState*)SnortAlloc(sizeof(MAIL_LogState) + bufsz);
 
         if ((*log_state) != NULL)
         {

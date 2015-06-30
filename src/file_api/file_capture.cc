@@ -88,6 +88,16 @@ void FileCapture::verifiy(FileContext* context)
     }
 }
 
+FileCapture::FileCapture()
+{
+    reserved = 0;
+    file_size = 0;
+    last = head = NULL;
+    current_data = NULL;
+    current_data_len = 0;
+    capture_state = FILE_CAPTURE_SUCCESS;
+}
+
 /*
  * Initialize the file memory pool
  *
@@ -112,7 +122,7 @@ void FileCapture::init_mempool(int64_t max_file_mem, int64_t block_len)
 
     int max_files = max_file_mem_in_bytes / block_size;
 
-    FileMemPool* file_mempool = (FileMemPool*)calloc(1, sizeof(FileMemPool));
+    FileMemPool* file_mempool = (FileMemPool*)SnortAlloc(sizeof(FileMemPool));
 
     if ((!file_mempool)||
         (file_mempool_init(file_mempool, max_files, block_size) != 0))

@@ -111,7 +111,7 @@ int file_mempool_init(FileMemPool* mempool, uint64_t num_objects, size_t obj_siz
     /* this is the basis pool that represents all the *data pointers
      * in the list
      */
-    mempool->datapool = (void**)calloc(num_objects, obj_size);
+    mempool->datapool = (void**)SnortAlloc(num_objects * obj_size);
     if (mempool->datapool == NULL)
     {
         ErrorMessage("%s(%d) file_mempool_init(): Failed to init datapool\n",

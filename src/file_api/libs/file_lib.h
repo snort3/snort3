@@ -81,24 +81,24 @@ public:
     void print();
 
 private:
-    bool file_type_enabled;
-    bool file_signature_enabled;
-    bool file_capture_enabled;
-    uint8_t* file_name;
-    uint32_t file_name_size;
-    uint64_t file_size;
-    FileDirection direction;
-    uint64_t processed_bytes;
-    uint32_t file_type_id;
-    uint8_t* sha256;
+    bool file_type_enabled = false;
+    bool file_signature_enabled = false;
+    bool file_capture_enabled = false;
+    uint8_t* file_name = NULL;
+    uint32_t file_name_size = 0;
+    uint64_t file_size = 0;
+    FileDirection direction = FILE_DOWNLOAD;
+    uint64_t processed_bytes = 0;
+    uint32_t file_type_id = SNORT_FILE_TYPE_CONTINUE;
+    uint8_t* sha256 = NULL;
     void* file_type_context;
     void* file_signature_context;
     FileConfig* file_config;
-    time_t expires;
+    time_t expires = 0;
     FileCapture *file_capture;
-    FileState file_state;
-    uint32_t file_id;
-    uint32_t file_config_version;
+    FileState file_state = {FILE_CAPTURE_SUCCESS, FILE_SIG_PROCESSING};
+    uint32_t file_id = 0;
+    uint32_t file_config_version = 0;
 
     inline int get_data_size_from_depth_limit(FileProcessType type, int data_size);
     inline void finalize_file_type ();
