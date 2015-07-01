@@ -428,7 +428,7 @@ const Parameter* Parameter::find(const Parameter* p, const char* s)
 {
     while ( p->name )
     {
-        if ( !strcmp(p->name, s) || p->is_wild_card(s) )
+        if ( !strcmp(p->name, s) || p->is_wild_card() )
             return p;
         ++p;
     }

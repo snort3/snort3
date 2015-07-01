@@ -957,10 +957,15 @@ static int sip_parse_contact(SIPMsg* msg, const char* start, const char* end, SI
  *  SIP_PARSE_SUCCESS
  ********************************************************************/
 
-static int sip_parse_authorization(SIPMsg* msg, const char* start, const char*, SIP_PROTO_CONF*)
+static int sip_parse_authorization(
+    SIPMsg* msg, const char* start, const char* end, SIP_PROTO_CONF*)
 {
+#ifdef DEBUG_MSGS
     DEBUG_WRAP(int length = end -start; )
     DEBUG_WRAP(DebugMessage(DEBUG_SIP, "Authorization value: %.*s\n", length, start); );
+#else
+    UNUSED(end);
+#endif
     msg->authorization = (char*)start;
     return SIP_PARSE_SUCCESS;
 }
@@ -1036,10 +1041,15 @@ static int sip_parse_content_len(SIPMsg* msg, const char* start, const char*,
  *  SIP_PARSE_SUCCESS
  ********************************************************************/
 
-static int sip_parse_content_encode(SIPMsg* msg, const char* start, const char*, SIP_PROTO_CONF*)
+static int sip_parse_content_encode(
+    SIPMsg* msg, const char* start, const char* end, SIP_PROTO_CONF*)
 {
+#ifdef DEBUG_MSGS
     DEBUG_WRAP(int length = end -start; )
     DEBUG_WRAP(DebugMessage(DEBUG_SIP, "Content encode value: %.*s\n", length, start); );
+#else
+    UNUSED(end);
+#endif
     msg->content_encode = (char*)start;
     return SIP_PARSE_SUCCESS;
 }

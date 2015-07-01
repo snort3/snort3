@@ -176,11 +176,9 @@ bool SipMethodModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("*method") )
     {
-        int i_method;
         char* tok = (char*)v.get_string();
         SIPMethodNode *method = NULL;
 
-        num_tokens++;
         if (tok[0] == '!')
         {
             negated = true;
@@ -190,7 +188,7 @@ bool SipMethodModule::set(const char*, Value& v, SnortConfig*)
             negated = false;
 
         /*Only one method is allowed with !*/
-        if (negated && (num_tokens > 1))
+        if (negated && (++num_tokens > 1))
             ParseError("Only one method is allowed with ! for sip_method\n");
 
         method = add_sip_method(tok);
