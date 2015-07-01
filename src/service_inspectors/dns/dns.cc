@@ -1147,7 +1147,7 @@ const InspectApi dns_api =
         mod_ctor,
         mod_dtor
     },
-    IT_NETWORK,
+    IT_SERVICE,
     (uint16_t)PktType::TCP | (uint16_t)PktType::UDP,
     nullptr, // buffers
     "dns",
