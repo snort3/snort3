@@ -137,6 +137,16 @@ static inline void* SnortAlloc(unsigned long size)
     return NULL;
 }
 
+static inline void* new_calloc(size_t num, size_t size)
+{
+    void* ret_val = calloc(num, size);
+    if (ret_val == nullptr)
+    {
+        throw std::bad_alloc();
+    }
+    return ret_val;
+}
+
 static inline long SnortStrtol(const char* nptr, char** endptr, int base)
 {
     long iRet;
