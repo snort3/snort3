@@ -22,6 +22,7 @@ if (STATIC_INSPECTORS)
         nhttp_inspect
         pop
         rpc_decode
+        sip
         smtp
         ssh
         ssl
