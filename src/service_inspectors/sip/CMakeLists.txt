@@ -20,9 +20,9 @@ set( FILE_LIST
 )
 
 if (STATIC_INSPECTORS)
-    add_library( ssh STATIC ${FILE_LIST})
+    add_library( sip STATIC ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
-    add_shared_library(ssh inspectors ${FILE_LIST})
+    add_shared_library(sip inspectors ${FILE_LIST})
 
 endif (STATIC_INSPECTORS)
