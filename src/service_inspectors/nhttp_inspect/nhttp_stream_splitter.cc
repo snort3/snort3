@@ -432,11 +432,12 @@ bool NHttpStreamSplitter::finish(Flow* flow)
     }
 
     session_data->tcp_close[source_id] = true;
+
     // If there is leftover data for which we returned PAF_SEARCH and never flushed, we need to set
     // up to process because it is about to go to reassemble(). But we don't support partial start
     // lines.
     if ((session_data->section_type[source_id] == SEC__NOTCOMPUTE) &&
-        (session_data->cutter[source_id] != nullptr) &&
+        (session_data->cutter[source_id] != nullptr)               &&
         (session_data->cutter[source_id]->get_octets_seen() > 0))
     {
         if ((session_data->type_expected[source_id] == SEC_REQUEST) ||
@@ -453,7 +454,29 @@ bool NHttpStreamSplitter::finish(Flow* flow)
             session_data->cutter[source_id]->get_num_head_lines() + 1,
             session_data->cutter[source_id]->get_is_broken_chunk(),
             session_data->cutter[source_id]->get_num_good_chunks());
+        return true;
     }
+
+    // If there is no more data to process we need to wrap up file processing right now
+    if ((session_data->section_type[source_id] == SEC__NOTCOMPUTE) &&
+        (session_data->file_depth_remaining[source_id] > 0)        &&
+        (session_data->cutter[source_id] != nullptr)               &&
+        (session_data->cutter[source_id]->get_octets_seen() == 0))
+    {
+        if (source_id == SRC_SERVER)
+        {
+            file_api->file_process(flow, nullptr, 0, SNORT_FILE_END, false, false);
+        }
+        else
+        {
+            file_api->process_mime_data(flow, nullptr, 0, session_data->mime_state, true,
+                SNORT_FILE_END);
+            free_mime_session(session_data->mime_state);
+            session_data->mime_state = nullptr;
+        }
+        return false;
+    }
+
     return true;
 }
 

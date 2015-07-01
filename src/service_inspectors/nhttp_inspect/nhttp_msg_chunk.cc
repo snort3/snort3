@@ -21,6 +21,8 @@
 #include <sys/types.h>
 #include <stdio.h>
 
+#include "file_api/file_mime_process.h"
+
 #include "nhttp_enum.h"
 #include "nhttp_msg_chunk.h"
 
@@ -52,6 +54,12 @@ void NHttpMsgChunk::update_flow()
         session_data->type_expected[source_id] = SEC_TRAILER;
         session_data->infractions[source_id].reset();
         session_data->events[source_id].reset();
+
+        if ((source_id == SRC_CLIENT) && (session_data->mime_state != nullptr))
+        {
+            free_mime_session(session_data->mime_state);
+            session_data->mime_state = nullptr;
+        }
     }
     else
     {

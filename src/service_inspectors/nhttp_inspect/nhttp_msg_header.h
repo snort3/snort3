@@ -20,6 +20,8 @@
 #ifndef NHTTP_MSG_HEADER_H
 #define NHTTP_MSG_HEADER_H
 
+#include "file_api/file_api.h"
+
 #include "nhttp_msg_head_shared.h"
 
 //-------------------------------------------------------------------------
@@ -34,6 +36,10 @@ public:
     void print_section(FILE* output) override;
     void gen_events() override;
     void update_flow() override;
+private:
+    // Dummy configurations to support MIME processing
+    MAIL_LogConfig mime_conf;
+    DecodeConfig decode_conf;
 };
 
 #endif

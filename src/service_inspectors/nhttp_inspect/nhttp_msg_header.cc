@@ -21,8 +21,8 @@
 #include <sys/types.h>
 #include <stdio.h>
 
+#include "utils/util.h"
 #include "detection/detection_util.h"
-#include "file_api/file_api.h"
 
 #include "nhttp_enum.h"
 #include "nhttp_msg_request.h"
@@ -104,6 +104,18 @@ void NHttpMsgHeader::update_flow()
         if (session_data->file_depth_remaining[1-source_id] <= 0)
         {   // Bidirectional file processing is problematic FIXIT-M
             session_data->file_depth_remaining[source_id] = file_api->get_max_file_depth();
+            if (source_id == SRC_CLIENT)
+            {
+                // FIXIT-L Cannot use new because file_api insists on freeing the mime_state using
+                // free().
+                session_data->mime_state = (MimeState*) new_calloc(1, sizeof(MimeState));
+                file_api->set_mime_log_config_defauts(&mime_conf);
+                session_data->mime_state->log_config = &mime_conf;
+                file_api->set_mime_decode_config_defauts(&decode_conf);
+                session_data->mime_state->decode_conf = &decode_conf;
+                file_api->set_log_buffers(&session_data->mime_state->log_state,
+                    session_data->mime_state->log_config);
+            }
         }
         session_data->infractions[source_id].reset();
         session_data->events[source_id].reset();

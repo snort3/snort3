@@ -52,6 +52,12 @@ NHttpFlowData::~NHttpFlowData()
         delete transaction[k];
         delete cutter[k];
     }
+
+    if (mime_state != nullptr)
+    {
+        free_mime_session(mime_state);
+    }
+
     delete_pipeline();
 }
 
@@ -60,14 +66,6 @@ void NHttpFlowData::half_reset(SourceId source_id)
     assert((source_id == SRC_CLIENT) || (source_id == SRC_SERVER));
 
     version_id[source_id] = VERS__NOTPRESENT;
-    if (source_id == SRC_CLIENT)
-    {
-        method_id = METH__NOTPRESENT;
-    }
-    else
-    {
-        status_code_num = STAT_NOTPRESENT;
-    }
     data_length[source_id] = STAT_NOTPRESENT;
     body_octets[source_id] = STAT_NOTPRESENT;
     section_size_target[source_id] = 0;
@@ -75,6 +73,20 @@ void NHttpFlowData::half_reset(SourceId source_id)
     file_depth_remaining[source_id] = STAT_NOTPRESENT;
     infractions[source_id].reset();
     events[source_id].reset();
+
+    if (source_id == SRC_CLIENT)
+    {
+        method_id = METH__NOTPRESENT;
+        if (mime_state != nullptr)
+        {
+            free_mime_session(mime_state);
+            mime_state = nullptr;
+        }
+    }
+    else
+    {
+        status_code_num = STAT_NOTPRESENT;
+    }
 }
 
 void NHttpFlowData::show(FILE* out_file) const

@@ -23,6 +23,7 @@
 
 #include "detection/detection_util.h"
 #include "file_api/file_api.h"
+#include "file_api/file_mime_process.h"
 
 #include "nhttp_enum.h"
 #include "nhttp_msg_request.h"
@@ -44,7 +45,16 @@ void NHttpMsgBody::analyze()
     data.start = msg_text.start;
     data.length = msg_text.length;
 
-    do_file_processing();
+    // Always set file data. File processing will later set a new value in some cases.
+    if (data.length > 0)
+    {
+        set_file_data(const_cast<uint8_t*>(data.start), (unsigned)data.length);
+    }
+
+    if (session_data->file_depth_remaining[source_id] > 0)
+    {
+        do_file_processing();
+    }
 
     body_octets += msg_text.length;
 
@@ -54,25 +64,28 @@ void NHttpMsgBody::analyze()
 
 void NHttpMsgBody::do_file_processing()
 {
-    // Always set file data. File processing will later set a new value in some cases.
-    set_file_data((uint8_t*)data.start, (unsigned)data.length);
+    // Using the trick that cutter is deleted when regular or chunked body is complete
+    const bool front = (body_octets == 0);
+    const bool back = (session_data->cutter[source_id] == nullptr) || tcp_close;
+    FilePosition file_position;
+    if (front && back) file_position = SNORT_FILE_FULL;
+    else if (front) file_position = SNORT_FILE_START;
+    else if (back) file_position = SNORT_FILE_END;
+    else file_position = SNORT_FILE_MIDDLE;
 
-    if (session_data->file_depth_remaining[source_id] > 0)
+    // Chunked body with nothing but the zero length chunk?
+    if (front && (data.length == 0))
     {
-        // Using the trick that cutter is deleted when regular or chunked body is complete
-        const bool front = (body_octets == 0);
-        const bool back = (session_data->cutter[source_id] == nullptr) || tcp_close;
-        FilePosition file_position;
-        if (front && back) file_position = SNORT_FILE_FULL;
-        else if (front) file_position = SNORT_FILE_START;
-        else if (back) file_position = SNORT_FILE_END;
-        else file_position = SNORT_FILE_MIDDLE;
+        return;
+    }
 
-        int32_t fp_length = (data.length <= session_data->file_depth_remaining[source_id]) ?
-            data.length : session_data->file_depth_remaining[source_id];
+    const int32_t fp_length = (data.length <= session_data->file_depth_remaining[source_id]) ?
+        data.length : session_data->file_depth_remaining[source_id];
 
+    if (source_id == SRC_SERVER)
+    {
         if (file_api->file_process(flow, const_cast<uint8_t*>(data.start), fp_length,
-            file_position, source_id == SRC_CLIENT, false))
+            file_position, false, false))
         {
             session_data->file_depth_remaining[source_id] -= fp_length;
 
@@ -95,6 +108,18 @@ void NHttpMsgBody::do_file_processing()
         {
             // file processing doesn't want any more data
             session_data->file_depth_remaining[source_id] = 0;
+        }
+    }
+    else
+    {
+        file_api->process_mime_data(flow, data.start, data.start + fp_length,
+            session_data->mime_state, true, file_position);
+
+        session_data->file_depth_remaining[source_id] -= fp_length;
+        if (session_data->file_depth_remaining[source_id] == 0)
+        {
+            free_mime_session(session_data->mime_state);
+            session_data->mime_state = nullptr;
         }
     }
 }
