@@ -60,6 +60,9 @@ struct Parameter
     bool is_positional() const
     { return ( name && *name == '~' ); }
 
+    bool is_wild_card() const
+    { return ( name && *name == '*' ); }
+
     bool is_table() const
     { return ( type == PT_TABLE || type == PT_LIST ); }
 

@@ -76,6 +76,7 @@ port_scan = { }
 rpc_decode = { }
 ssh = { }
 ssl = { }
+sip = { }
 telnet = { }
 
 -- use http_inspect or new_http_inspect (incomplete)

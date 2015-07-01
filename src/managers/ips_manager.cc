@@ -126,12 +126,26 @@ static bool set_arg(
     else if ( p->type == Parameter::PT_INT )
     {
         char* end = nullptr;
+
+        if ( p->is_wild_card() )
+            val = opt;
+
         long n = strtol(val, &end, 0);
 
         if ( !*end )
             v.set(n);
         else
             ok = false;
+    }
+    else if ( p->is_wild_card() )
+    {
+        string s = opt;
+        if ( val and *val )
+        {
+            s += " ";
+            s += val;
+        }
+        v.set(s.c_str());
     }
     else
         v.set(val);

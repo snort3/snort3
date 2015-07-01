@@ -1,3 +1,13 @@
+15/07/02 - build 159
+
+-- added file processing to new_http_inspect
+-- ported sip preprocessor
+-- refactoring port group init and start up output
+-- standardize / generalize fp buffers
+-- add log_hext.width
+-- tweak style guide
+-- fix hosts table parsing
+
 15/06/19 - build 158
 
 -- nhttp splitter updates
