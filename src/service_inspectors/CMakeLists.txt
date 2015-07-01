@@ -24,6 +24,7 @@ if (STATIC_INSPECTORS)
         rpc_decode
         smtp
         ssh
+        ssl
         wizard
     )
 endif()

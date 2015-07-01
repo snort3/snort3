@@ -175,25 +175,13 @@ SmtpModule::~SmtpModule()
 {
     if ( config )
     {
-        if (config->cmds != NULL)
+        if ( config->cmds )
         {
-            SMTPToken* tmp = config->cmds;
-
-            for (; tmp->name != NULL; tmp++)
+            for ( SMTPToken* tmp = config->cmds; tmp->name; tmp++)
                 free((char *)tmp->name);
 
             free(config->cmds);
         }
-
-        if (config->cmd_config != NULL)
-            free(config->cmd_config);
-
-        if (config->cmd_search_mpse != NULL)
-            delete config->cmd_search_mpse;
-
-        if (config->cmd_search != NULL)
-            free(config->cmd_search);
-
         delete config;
     }
 
@@ -354,11 +342,6 @@ bool SmtpModule::begin(const char*, int, SnortConfig*)
         file_api->set_mime_decode_config_defauts(&(config->decode_conf));
         file_api->set_mime_log_config_defauts(&(config->log_config));
         config->log_config.email_hdrs_log_depth = 1464;
-        config->cmd_config = (SMTPCmdConfig*)calloc(CMD_LAST, sizeof(SMTPCmdConfig));
-        if (config->cmd_config == NULL)
-        {
-            FatalError("Failed to allocate memory for SMTP command structure\n");
-        }
     }
 
     return true;

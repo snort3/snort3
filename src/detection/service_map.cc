@@ -48,158 +48,117 @@
 #include "detection/fp_detect.h"
 #include "parser/parser.h"
 
+//-------------------------------------------------------------------------
+// service map stuff
+//-------------------------------------------------------------------------
+
 static SFGHASH* alloc_srvmap()
 {
-    SFGHASH* p = sfghash_new(1000,
-        0,
-        0,
+    SFGHASH* p = sfghash_new(1000, 0, 0,
         /*nodes are lists,free them in sfghash_delete*/
         (void (*)(void*))sflist_free);
-    if (p == NULL)
+
+    if ( !p )
         FatalError("could not allocate a service rule map - no memory?\n");
 
     return p;
+}
+
+static void free_srvmap(SFGHASH* table)
+{
+    if ( table )
+        sfghash_delete(table);
 }
 
 srmm_table_t* ServiceMapNew()
 {
     srmm_table_t* table = (srmm_table_t*)SnortAlloc(sizeof(srmm_table_t));
 
-    table->ip_to_srv = alloc_srvmap();
-    table->ip_to_cli = alloc_srvmap();
-
-    table->icmp_to_srv = alloc_srvmap();
-    table->icmp_to_cli = alloc_srvmap();
-
-    table->tcp_to_srv = alloc_srvmap();
-    table->tcp_to_cli = alloc_srvmap();
-
-    table->udp_to_srv = alloc_srvmap();
-    table->udp_to_cli = alloc_srvmap();
-
-    table->svc_to_srv = alloc_srvmap();
-    table->svc_to_cli = alloc_srvmap();
+    for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; i++ )
+    {
+        table->to_srv[i] = alloc_srvmap();
+        table->to_cli[i] = alloc_srvmap();
+    }
 
     return table;
 }
 
-void ServiceTableFree(SFGHASH* table)
+void ServiceMapFree(srmm_table_t* table)
 {
-    if (table != NULL)
-        sfghash_delete(table);
-}
-
-void ServiceMapFree(srmm_table_t* srvc_map)
-{
-    if (srvc_map == NULL)
+    if ( !table )
         return;
 
-    ServiceTableFree(srvc_map->ip_to_srv);
-    ServiceTableFree(srvc_map->ip_to_cli);
+    for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; i++ )
+    {
+        if ( table->to_srv[i] )
+            free_srvmap(table->to_srv[i]);
 
-    ServiceTableFree(srvc_map->icmp_to_srv);
-    ServiceTableFree(srvc_map->icmp_to_cli);
+        if ( table->to_cli[i] )
+            free_srvmap(table->to_cli[i]);
+    }
 
-    ServiceTableFree(srvc_map->tcp_to_srv);
-    ServiceTableFree(srvc_map->tcp_to_cli);
-
-    ServiceTableFree(srvc_map->udp_to_srv);
-    ServiceTableFree(srvc_map->udp_to_cli);
-
-    ServiceTableFree(srvc_map->svc_to_srv);
-    ServiceTableFree(srvc_map->svc_to_cli);
-
-    free(srvc_map);
+    free(table);
 }
+
+//-------------------------------------------------------------------------
+// service pg stuff
+//-------------------------------------------------------------------------
 
 static SFGHASH* alloc_spgmm()
 {
-    SFGHASH* p;
-
-    /* TODO: keys are ascii service names - for now ! */
-    p = sfghash_new(1000, /* # rows in table */
-        0,            /* size: of key 0 = ascii, >0 = fixed size */
-        0,            /* bool:user keys,  if true just store this pointer, don't copy the key */
+    SFGHASH* p = sfghash_new(
+     1000,  /* # rows in table */
+        0, /* size: of key 0 = ascii, >0 = fixed size */
+        0, /* bool:user keys,  if true just store this pointer, don't copy the key */
         fpDeletePortGroup);
-    /* ??? Why shouldn't we delete the port groups ??? */
-    //(void(*)(void*))0 /* free nodes are port_groups do not delete here */ );
 
-    if (p == NULL)
+    if ( !p )
         FatalError("could not allocate a service port_group map : no memory?\n");
 
     return p;
+}
+
+static void free_spgmm(SFGHASH* table)
+{
+    if ( !table )
+        return;
+
+    sfghash_delete(table);
 }
 
 srmm_table_t* ServicePortGroupMapNew()
 {
     srmm_table_t* table = (srmm_table_t*)SnortAlloc(sizeof(srmm_table_t));
 
-    table->ip_to_srv = alloc_spgmm();
-    table->ip_to_cli = alloc_spgmm();
-
-    table->icmp_to_srv = alloc_spgmm();
-    table->icmp_to_cli = alloc_spgmm();
-
-    table->tcp_to_srv = alloc_spgmm();
-    table->tcp_to_cli = alloc_spgmm();
-
-    table->udp_to_srv = alloc_spgmm();
-    table->udp_to_cli = alloc_spgmm();
-
-    table->svc_to_srv = alloc_spgmm();
-    table->svc_to_cli = alloc_spgmm();
+    for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; i++ )
+    {
+        table->to_srv[i] = alloc_spgmm();
+        table->to_cli[i] = alloc_spgmm();
+    }
 
     return table;
 }
 
-static void ServicePortGroupTableFree(SFGHASH* table)
+void ServicePortGroupMapFree(srmm_table_t* table)
 {
-#if 0
-    SFGHASH_NODE* node;
-    PortGroup* pg;
+    if ( !table )
+        return;
 
-    /* Not sure why we wouldn't want to free the data */
-    for (node = sfghash_findfirst(table);
-        node != NULL;
-        node = sfghash_findnext(table))
+    for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; i++ )
     {
-        pg = (PortGroup*)node->data;
-        if (pg == NULL)
-            continue;
+        if ( table->to_srv[i] )
+            free_spgmm(table->to_srv[i]);
 
-        /* XXX XXX (if we need to recycle these) free the PortGroup */
-        node->data = NULL;
+        if ( table->to_cli[i] )
+            free_spgmm(table->to_cli[i]);
     }
-#endif
 
-    if (table == NULL)
-        return;
-
-    sfghash_delete(table);
+    free(table);
 }
 
-void ServicePortGroupMapFree(srmm_table_t* srvc_pg_map)
-{
-    if (srvc_pg_map == NULL)
-        return;
-
-    ServicePortGroupTableFree(srvc_pg_map->ip_to_srv);
-    ServicePortGroupTableFree(srvc_pg_map->ip_to_cli);
-
-    ServicePortGroupTableFree(srvc_pg_map->icmp_to_srv);
-    ServicePortGroupTableFree(srvc_pg_map->icmp_to_cli);
-
-    ServicePortGroupTableFree(srvc_pg_map->tcp_to_srv);
-    ServicePortGroupTableFree(srvc_pg_map->tcp_to_cli);
-
-    ServicePortGroupTableFree(srvc_pg_map->udp_to_srv);
-    ServicePortGroupTableFree(srvc_pg_map->udp_to_cli);
-
-    ServicePortGroupTableFree(srvc_pg_map->svc_to_srv);
-    ServicePortGroupTableFree(srvc_pg_map->svc_to_cli);
-
-    free(srvc_pg_map);
-}
+//-------------------------------------------------------------------------
+// service pg stuff
+//-------------------------------------------------------------------------
 
 /*
  * Add the otn to the list stored by the key = servicename.
@@ -241,49 +200,24 @@ static void ServiceMapAddOtnRaw(SFGHASH* table, char* servicename, OptTreeNode* 
  */
 static int ServiceMapAddOtn(srmm_table_t* srmm, int proto, char* servicename, OptTreeNode* otn)
 {
-    SFGHASH* to_srv;  /* to srv service rule map */
-    SFGHASH* to_cli;  /* to cli service rule map */
-
     if ( !servicename )
-        return 0;
+        return -1;
 
-    if (!otn )
-        return 0;
+    if ( !otn )
+        return -1;
 
-    if ( proto == SNORT_PROTO_IP )
-    {
-        to_srv = srmm->ip_to_srv;
-        to_cli = srmm->ip_to_cli;
-    }
-    else if ( proto == SNORT_PROTO_ICMP )
-    {
-        to_srv = srmm->icmp_to_srv;
-        to_cli = srmm->icmp_to_cli;
-    }
-    else if ( proto == SNORT_PROTO_TCP )
-    {
-        to_srv = srmm->tcp_to_srv;
-        to_cli = srmm->tcp_to_cli;
-    }
-    else if ( proto == SNORT_PROTO_UDP )
-    {
-        to_srv = srmm->udp_to_srv;
-        to_cli = srmm->udp_to_cli;
-    }
-    else
-    {
-        to_srv = srmm->svc_to_srv;
-        to_cli = srmm->svc_to_cli;
-    }
+    if ( proto > SNORT_PROTO_USER )
+        proto = SNORT_PROTO_USER;
+
+    SFGHASH* to_srv = srmm->to_srv[proto];
+    SFGHASH* to_cli = srmm->to_cli[proto];
 
     if ( OtnFlowFromClient(otn) )
-    {
         ServiceMapAddOtnRaw(to_srv, servicename, otn);
-    }
+
     else if ( OtnFlowFromServer(otn) )
-    {
         ServiceMapAddOtnRaw(to_cli, servicename, otn);
-    }
+
     else /* else add to both sides */
     {
         ServiceMapAddOtnRaw(to_srv, servicename, otn);
@@ -299,30 +233,14 @@ void fpPrintServicePortGroupSummary(srmm_table_t* srvc_pg_map)
     LogMessage("| Service-PortGroup Table Summary \n");
     LogMessage("---------------------------------\n");
 
-    if (srvc_pg_map->ip_to_srv->count)
-        LogMessage("| ip to server   : %d services\n",srvc_pg_map->ip_to_srv->count);
-    if (srvc_pg_map->ip_to_cli->count)
-        LogMessage("| ip to cient    : %d services\n",srvc_pg_map->ip_to_cli->count);
+    for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; i++ )
+    {
+        if ( unsigned n = srvc_pg_map->to_srv[i]->count )
+            LogMessage("| %s to server   : %d services\n", get_protocol_name(i), n);
 
-    if (srvc_pg_map->icmp_to_srv->count)
-        LogMessage("| icmp to server : %d services\n",srvc_pg_map->icmp_to_srv->count);
-    if (srvc_pg_map->icmp_to_cli->count)
-        LogMessage("| icmp to cient  : %d services\n",srvc_pg_map->icmp_to_cli->count);
-
-    if (srvc_pg_map->tcp_to_srv->count)
-        LogMessage("| tcp to server  : %d services\n",srvc_pg_map->tcp_to_srv->count);
-    if (srvc_pg_map->tcp_to_cli->count)
-        LogMessage("| tcp to cient   : %d services\n",srvc_pg_map->tcp_to_cli->count);
-
-    if (srvc_pg_map->udp_to_srv->count)
-        LogMessage("| udp to server  : %d services\n",srvc_pg_map->udp_to_srv->count);
-    if (srvc_pg_map->udp_to_cli->count)
-        LogMessage("| udp to cient   : %d services\n",srvc_pg_map->udp_to_cli->count);
-
-    if (srvc_pg_map->svc_to_srv->count)
-        LogMessage("| svc to server  : %d services\n",srvc_pg_map->svc_to_srv->count);
-    if (srvc_pg_map->svc_to_cli->count)
-        LogMessage("| svc to cient   : %d services\n",srvc_pg_map->svc_to_cli->count);
+        if ( unsigned n = srvc_pg_map->to_cli[i]->count )
+            LogMessage("| %s to client   : %d services\n", get_protocol_name(i), n);
+    }
 
     LogMessage("---------------------------------\n");
 }
@@ -373,67 +291,60 @@ int fpCreateServiceMaps(SnortConfig* sc)
     return 0;
 }
 
-sopg_table_t* ServicePortGroupTableNew()
+//-------------------------------------------------------------------------
+// sopg_table_t stuff
+//-------------------------------------------------------------------------
+
+sopg_table_t::sopg_table_t()
 {
-    return (sopg_table_t*)SnortAlloc(sizeof(sopg_table_t));
+    unsigned n = (unsigned)get_protocol_count();
+
+    for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; ++i )
+    {
+        if ( to_srv[i].size() < n )
+            to_srv[i].resize(n, nullptr);
+
+        if ( to_cli[i].size() < n )
+            to_cli[i].resize(n, nullptr);
+    }
+    user_mode = false;
 }
 
-PortGroup* fpGetServicePortGroupByOrdinal(
-    sopg_table_t* sopg, int proto, int dir, int16_t proto_ordinal)
+PortGroup* sopg_table_t::get_port_group(
+    int proto, bool c2s, int16_t proto_ordinal)
 {
-    PortGroup* pg = NULL;
+    assert(proto < SNORT_PROTO_MAX);
 
-    if (proto_ordinal >= MAX_PROTOCOL_ORDINAL)
-        return NULL;
+    PortGroupVector& v = c2s ? to_srv[proto] : to_cli[proto];
 
-    if (sopg == NULL)
-        return NULL;
+    if ( (unsigned)proto_ordinal > v.size() )
+        return nullptr;
 
-    switch (proto)
+    return v[proto_ordinal];
+}
+
+bool sopg_table_t::set_user_mode()
+{
+    PortGroupVector& v1 = to_srv[SNORT_PROTO_USER];
+
+    for ( unsigned i = 0; i < v1.size(); ++i )
     {
-    case SNORT_PROTO_IP:
-        if (dir == TO_SERVER)
-            pg = sopg->ip_to_srv[proto_ordinal];
-        else
-            pg = sopg->ip_to_cli[proto_ordinal];
-        break;
-
-    case SNORT_PROTO_ICMP:
-        if (dir == TO_SERVER)
-            pg = sopg->icmp_to_srv[proto_ordinal];
-        else
-            pg = sopg->icmp_to_cli[proto_ordinal];
-        break;
-
-    case SNORT_PROTO_TCP:
-        if (dir == TO_SERVER)
-            pg = sopg->tcp_to_srv[proto_ordinal];
-        else
-            pg = sopg->tcp_to_cli[proto_ordinal];
-        break;
-
-    case SNORT_PROTO_UDP:
-        if (dir == TO_SERVER)
-            pg = sopg->udp_to_srv[proto_ordinal];
-        else
-            pg = sopg->udp_to_cli[proto_ordinal];
-        break;
-
-    default:
-        if (dir == TO_SERVER)
-            pg = sopg->svc_to_srv[proto_ordinal];
-        else
-            pg = sopg->svc_to_cli[proto_ordinal];
-        break;
+        if ( v1[i] )
+        {
+            user_mode = true;
+            return true;
+        }
     }
+    v1 = to_cli[SNORT_PROTO_USER];
 
-    if ( !pg )
+    for ( unsigned i = 0; i < v1.size(); ++i )
     {
-        if (dir == TO_SERVER)
-            pg = sopg->svc_to_srv[proto_ordinal];
-        else
-            pg = sopg->svc_to_cli[proto_ordinal];
+        if ( v1[i] )
+        {
+            user_mode = true;
+            break;
+        }
     }
-    return pg;
+    return user_mode;
 }
 

@@ -43,6 +43,9 @@ struct SFTargetProtocolReference
 static SFGHASH* proto_reference_table = NULL;  // STATIC
 static int16_t protocol_number = 1;
 
+int16_t get_protocol_count()
+{ return protocol_number; }
+
 static vector<string> id_map;
 
 const char* get_protocol_name(uint16_t id)
@@ -101,22 +104,6 @@ int16_t AddProtocolReference(const char* protocol)
 
     reference = (SFTargetProtocolReference*)SnortAlloc(sizeof(SFTargetProtocolReference));
     reference->ordinal = protocol_number++;
-    if (protocol_number > MAX_PROTOCOL_ORDINAL)
-    {
-        /* XXX: If we see this warning message, should
-        * increase MAX_PROTOCOL_ORDINAL definition.  The ordinal is
-        * stored as a signed 16bit int, so it can be increased upto
-        * 32k without requiring a change in space.  It is currently
-        * defined as 8192.
-        */
-        LogMessage("WARNING: protocol_number wrapped.   This may result"
-            "in odd behavior and potential false positives.\n");
-
-        /* 1 is the first protocol id we use.
-           0 is not used
-           -1 means unknwon */
-        protocol_number = 1;
-    }
     SnortStrncpy(reference->name, protocol, SFAT_BUFSZ);
 
     sfghash_add(proto_reference_table, reference->name, reference);
@@ -157,22 +144,19 @@ void InitializeProtocolReferenceTable(void)
         FatalError("Failed to Initialize Target-Based Protocol Reference Table\n");
     }
 
-    int16_t proto;
+    bool ok;
 
-    proto = AddProtocolReference("ip");
-    assert(proto == SNORT_PROTO_IP);
+    ok = ( AddProtocolReference("ip") == SNORT_PROTO_IP );
+    ok = ( AddProtocolReference("icmp") == SNORT_PROTO_ICMP ) and ok;
+    ok = ( AddProtocolReference("tcp") == SNORT_PROTO_TCP ) and ok;
+    ok = ( AddProtocolReference("udp") == SNORT_PROTO_UDP ) and ok;
+    ok = ( AddProtocolReference("user") == SNORT_PROTO_USER ) and ok;
+    ok = ( AddProtocolReference("file") == SNORT_PROTO_FILE ) and ok;
 
-    proto = AddProtocolReference("icmp");
-    assert(proto == SNORT_PROTO_ICMP);
+    assert(ok);
 
-    proto = AddProtocolReference("tcp");
-    assert(proto == SNORT_PROTO_TCP);
-
-    proto = AddProtocolReference("udp");
-    assert(proto == SNORT_PROTO_UDP);
-
-    proto = AddProtocolReference("file");
-    assert(proto == SNORT_PROTO_FILE);
+    if ( !ok )
+        FatalError("standard protocol reference mismatch");
 }
 
 void FreeProtoocolReferenceTable(void)

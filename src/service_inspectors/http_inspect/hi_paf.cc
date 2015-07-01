@@ -834,9 +834,11 @@ static void hi_pipe_pop(Hi5State* s_rsp, Flow* ssn)
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
         "%s: nreq=%d, pipe=0x%X\n", __FUNCTION__, nreq, pipe); )
 
+    // FIXIT-L valgrind: Conditional jump or move depends on uninitialised value(s)
     if ( nreq == 0 || nreq == PIPELINE_RUPTURED )
         return;
 
+    // FIXIT-L valgrind: Conditional jump or move depends on uninitialised value(s)
     if ( --nreq < MAX_PIPELINE )
     {
         if ( pipe & 0x1 )

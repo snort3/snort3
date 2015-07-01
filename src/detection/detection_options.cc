@@ -459,14 +459,15 @@ int detection_option_node_evaluate(
             if (pmd)
                 pattern_size = pmd->pattern_size;
 
-            if (eval_data->p->application_protocol_ordinal != 0)
+            if ( eval_data->p->application_protocol_ordinal and
+                ((OTNX_MATCH_DATA*)(eval_data->pomd))->check_ports != 2 )
             {
                 for (svc_idx = 0; svc_idx < otn->sigInfo.num_services; svc_idx++)
                 {
                     if (eval_data->p->application_protocol_ordinal ==
                         otn->sigInfo.services[svc_idx].service_ordinal)
                     {
-                        check_ports = 0;  // FIXIT need to check for alert service
+                        check_ports = 0;
                         break;  /* out of for */
                     }
                 }

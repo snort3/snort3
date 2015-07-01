@@ -290,7 +290,6 @@ public:
     PORT_RULE_MAP* prmIcmpRTNX = nullptr;
     PORT_RULE_MAP* prmTcpRTNX = nullptr;
     PORT_RULE_MAP* prmUdpRTNX = nullptr;
-    PORT_RULE_MAP* prmSvcRTNX = nullptr;
 
     srmm_table_t* srmmTable = nullptr;   /* srvc rule map master table */
     srmm_table_t* spgmmTable = nullptr;  /* srvc port_group map master table */

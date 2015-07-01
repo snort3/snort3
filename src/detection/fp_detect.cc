@@ -33,6 +33,7 @@
 **               per session tracking).
 **
 */
+
 #include "fp_detect.h"
 
 #ifdef HAVE_CONFIG_H
@@ -75,20 +76,6 @@
 #include "protocols/udp.h"
 #include "protocols/icmp4.h"
 
-/*
-**  Static function prototypes
-*/
-int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports);
-static inline int fpEvalHeaderIp(Packet* p, int ip_proto, OTNX_MATCH_DATA*);
-static inline int fpEvalHeaderIcmp(Packet* p, OTNX_MATCH_DATA*);
-static inline int fpEvalHeaderTcp(Packet* p, OTNX_MATCH_DATA*);
-static inline int fpEvalHeaderUdp(Packet* p, OTNX_MATCH_DATA*);
-static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
-    int check_ports, char ip_rule, OTNX_MATCH_DATA*);
-static int rule_tree_match(void* id, void* tree, int index, void* data, void* neg_list);
-static inline int fpAddSessionAlert(Packet* p, OptTreeNode* otn);
-static inline int fpSessionAlerted(Packet* p, OptTreeNode* otn);
-
 #ifdef PERF_PROFILING
 THREAD_LOCAL ProfileStats rulePerfStats;
 THREAD_LOCAL ProfileStats ncrulePerfStats;
@@ -107,10 +94,10 @@ void otnx_match_data_init(int num_rule_types)
 
 void otnx_match_data_term()
 {
-    if (t_omd.matchInfo != NULL)
+    if ( t_omd.matchInfo )
         free(t_omd.matchInfo);
 
-    t_omd.matchInfo = NULL;
+    t_omd.matchInfo = nullptr;
 }
 
 /*
@@ -383,7 +370,7 @@ int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
 
     MODULE_PROFILE_START(ruleRTNEvalPerfStats);
 
-    if (rtn == NULL)
+    if ( !rtn )
     {
         MODULE_PROFILE_END(ruleRTNEvalPerfStats);
         return 0;
@@ -503,7 +490,7 @@ static int rule_tree_match(void* id, void* tree, int index, void* data, void* ne
      * may muck with an unintended rule */
 
     /* Set flag for not contents so they aren't evaluated */
-    for (ncl = (NCListNode*)neg_list; ncl != NULL; ncl = ncl->next)
+    for (ncl = (NCListNode*)neg_list; ncl != nullptr; ncl = ncl->next)
     {
         PMX* neg_pmx = (PMX*)ncl->pmx;
         PatternMatchData* neg_pmd = (PatternMatchData*)neg_pmx->PatternMatchData;
@@ -565,7 +552,7 @@ static int rule_tree_match(void* id, void* tree, int index, void* data, void* ne
                 eval_data.p->dsize = eval_data.p->ptrs.ip_api.pay_len();
 
                 /* Recurse, and evaluate with the inner IP */
-                rule_tree_match(id, tree, index, data, NULL);
+                rule_tree_match(id, tree, index, data, nullptr);
             }
             while (layer::set_inner_ip_api(eval_data.p,
                 eval_data.p->ptrs.ip_api,
@@ -635,6 +622,63 @@ static int sortOrderByContentLength(const void* e1, const void* e2)
         return -1;
 
     return 0;
+}
+
+/*
+**
+**  NAME
+**    fpAddSessionAlert::
+**
+**  DESCRIPTION
+**    This function flags an alert per session.
+**
+**  FORMAL INPUTS
+**    Packet *      - the packet to inspect
+**    OptTreeNode * - the rule that generated the alert
+**
+**  FORMAL OUTPUTS
+**    int - 0 if not flagged
+**          1 if flagged
+**
+*/
+static inline int fpAddSessionAlert(Packet* p, OptTreeNode* otn)
+{
+    if ( !p->flow )
+        return 0;
+
+    if ( !otn )
+        return 0;
+
+    return !stream.add_session_alert(
+        p->flow, p, otn->sigInfo.generator, otn->sigInfo.id);
+}
+
+/*
+**
+**  NAME
+**    fpSessionAlerted::
+**
+**  DESCRIPTION
+**    This function indicates whether or not an alert has been generated previously
+**    in this session, but only if this is a rebuilt packet.
+**
+**  FORMAL INPUTS
+**    Packet *      - the packet to inspect
+**    OptTreeNode * - the rule that generated the alert
+**
+**  FORMAL OUTPUTS
+**    int - 0 if alert NOT previously generated
+**          1 if alert previously generated
+**
+*/
+static inline int fpSessionAlerted(Packet* p, OptTreeNode* otn)
+{
+    SigInfo* si = &otn->sigInfo;
+
+    if (!stream.check_session_alerted(p->flow, p, si->generator, si->id))
+        return 0;
+    else
+        return 1;
 }
 
 /*
@@ -762,7 +806,7 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA* o, Packet* p)
                 otn = o->matchInfo[i].MatchArray[j];
                 rtn = getRtnFromOtn(otn);
 
-                if ((otn != NULL) && (rtn != NULL) && pass_action(rtn->type))
+                if (otn && rtn && pass_action(rtn->type))
                 {
                     /* Already acted on rules, so just don't act on anymore */
                     if ( tcnt > 0 )
@@ -777,7 +821,7 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA* o, Packet* p)
                 {
                     if (o->matchInfo[i].MatchArray[k] == otn)
                     {
-                        otn = NULL;
+                        otn = nullptr;
                         break;
                     }
                 }
@@ -809,7 +853,7 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA* o, Packet* p)
                 }
 
                 /* only log/count one pass */
-                if ((otn != NULL) && (rtn != NULL) && pass_action(rtn->type))
+                if ( otn && rtn && pass_action(rtn->type))
                 {
                     p->packet_flags |= PKT_PASS_RULE;
                     return 1;
@@ -821,106 +865,10 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA* o, Packet* p)
     return 0;
 }
 
-/*
-**
-**  NAME
-**    fpAddSessionAlert::
-**
-**  DESCRIPTION
-**    This function flags an alert per session.
-**
-**  FORMAL INPUTS
-**    Packet *      - the packet to inspect
-**    OptTreeNode * - the rule that generated the alert
-**
-**  FORMAL OUTPUTS
-**    int - 0 if not flagged
-**          1 if flagged
-**
-*/
-static inline int fpAddSessionAlert(Packet* p, OptTreeNode* otn)
-{
-    if ( !p->flow )
-        return 0;
-
-    if ( !otn )
-        return 0;
-
-    return !stream.add_session_alert(
-        p->flow, p, otn->sigInfo.generator, otn->sigInfo.id);
-}
-
-/*
-**
-**  NAME
-**    fpSessionAlerted::
-**
-**  DESCRIPTION
-**    This function indicates whether or not an alert has been generated previously
-**    in this session, but only if this is a rebuilt packet.
-**
-**  FORMAL INPUTS
-**    Packet *      - the packet to inspect
-**    OptTreeNode * - the rule that generated the alert
-**
-**  FORMAL OUTPUTS
-**    int - 0 if alert NOT previously generated
-**          1 if alert previously generated
-**
-*/
-static inline int fpSessionAlerted(Packet* p, OptTreeNode* otn)
-{
-    SigInfo* si = &otn->sigInfo;
-
-    if (!stream.check_session_alerted(p->flow, p, si->generator, si->id))
-        return 0;
-    else
-        return 1;
-}
-
-#if 0
-Not currently used
-/*
- * Prints an OTN in a simple format with:
- *
- * rule proto: # gid: # sid: # sp: # dp # \n
- */
-void printRuleFmt1(SnortConfig* sc, OptTreeNode* otn)
-{
-    RuleTreeNode* rtn = getParserRtnFromOtn(otn);
-
-    LogMessage("rule proto: ");
-
-    if (      rtn->proto== SNORT_PROTO_TCP     )
-        LogMessage("tcp  ");
-    else if ( rtn->proto== SNORT_PROTO_UDP     )
-        LogMessage("udp  ");
-    else if ( rtn->proto== SNORT_PROTO_ICMP    )
-        LogMessage("icmp ");
-    else if ( rtn->proto== SNORT_PROTO_IP)
-        LogMessage("ip   ");
-
-    LogMessage("gid:%u sid:%5u ", otn->sigInfo.generator,otn->sigInfo.id);
-
-    LogMessage(" sp:");
-
-    fflush(stdout); fflush(stderr);
-    PortObjectPrintPortsRaw(rtn->src_portobject);
-    fflush(stdout); fflush(stderr);
-
-    LogMessage(" dp:");
-
-    PortObjectPrintPortsRaw(rtn->dst_portobject);
-    printf("\n");
-    fflush(stdout); fflush(stderr);
-}
-
-#endif
-
 #ifdef PPM_MGR
 #define CHECK_PPM() \
     if (PPM_PACKET_ABORT_FLAG()) \
-        goto fp_eval_header_sw_reset_ip;
+        return 1;
 #else
 #define CHECK_PPM()
 #endif
@@ -945,6 +893,62 @@ void printRuleFmt1(SnortConfig* sc, OptTreeNode* otn)
     if ( len ) \
         SEARCH_DATA(buf, len, cnt)
 
+static int fp_search(
+    PortGroup* port_group, Packet* p,
+    int check_ports, int type, OTNX_MATCH_DATA* omd)
+{
+    Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
+    InspectionBuffer buf;
+
+    omd->pg = port_group;
+    omd->p = p;
+    omd->check_ports = check_ports;
+
+    bool user_mode = snort_conf->sopgTable->user_mode;
+
+    if ( (!user_mode or type < 2) and p->data and p->dsize )
+    {
+        // ports search raw packet only
+        if ( Mpse* so = port_group->mpse[PM_TYPE_PKT] )
+        {
+            uint16_t pattern_match_size = p->dsize;
+
+            if ( IsLimitedDetect(p) && (p->alt_dsize < p->dsize) )
+                pattern_match_size = p->alt_dsize;
+
+            SEARCH_PACKET(p->data, pattern_match_size, pc.pkt_searches);
+
+            if ( pattern_match_size )
+                p->is_cooked() ?  pc.cooked_searches++ : pc.raw_searches++;
+        }
+    }
+
+    if ( (!user_mode or type == 1) and gadget )
+    {
+        // service searches PDU buffers and file
+        SEARCH_BUFFER(buf.IBT_KEY, PM_TYPE_KEY, pc.key_searches);
+        SEARCH_BUFFER(buf.IBT_HEADER, PM_TYPE_HEADER, pc.header_searches);
+        SEARCH_BUFFER(buf.IBT_BODY, PM_TYPE_BODY, pc.body_searches);
+
+        // FIXIT-L PM_TYPE_ALT will never be set unless we add
+        // norm_data keyword or telnet, rpc_decode, smtp keywords
+        // until then we must use the standard packet mpse
+        SEARCH_BUFFER(buf.IBT_ALT, PM_TYPE_PKT, pc.alt_searches);
+    }
+
+    if ( !user_mode or type == 2 )
+    {
+        // file searches file only
+        if ( Mpse* so = port_group->mpse[PM_TYPE_FILE] )
+        {
+            // FIXIT-M file data should be obtained from
+            // inspector gadget as is done with SEARCH_BUFFER
+            SEARCH_PACKET(g_file_data.data, g_file_data.len, pc.file_searches);
+        }
+    }
+    return 0;
+}
+
 /*
 **
 **  NAME
@@ -967,7 +971,7 @@ void printRuleFmt1(SnortConfig* sc, OptTreeNode* otn)
 **
 */
 static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
-    int check_ports, char ip_rule, OTNX_MATCH_DATA* omd)
+    int check_ports, char ip_rule, int type, OTNX_MATCH_DATA* omd)
 {
     const uint8_t* tmp_payload;
     int8_t curr_ip_layer = 0;
@@ -994,90 +998,14 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
         p->packet_flags &= ~PKT_IP_RULE;
     }
 
-    /*
-     **  Init the info for rule ordering selection
-     */
-    //InitMatchInfo(omd);
-
     if (do_detect_content)
     {
         // FIXIT-L sdf etc. ran here
 
         if ( fp->get_stream_insert() || !(p->packet_flags & PKT_STREAM_INSERT) )
-        {
-            Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
-            InspectionBuffer buf;
-
-            omd->pg = port_group;
-            omd->p = p;
-            omd->check_ports = check_ports;
-
-            if ( Mpse* so = port_group->mpse[PM_TYPE_FILE] )
-            {
-                // FIXIT-M file data should be obtained from
-                // inspector gadget as an extension of below
-                SEARCH_PACKET(g_file_data.data, g_file_data.len, pc.file_searches);
-            }
-
-            if ( gadget )
-            {
-                SEARCH_BUFFER(buf.IBT_KEY, PM_TYPE_KEY, pc.key_searches);
-                SEARCH_BUFFER(buf.IBT_HEADER, PM_TYPE_HEADER, pc.header_searches);
-                SEARCH_BUFFER(buf.IBT_BODY, PM_TYPE_BODY, pc.body_searches);
-
-                // FIXIT-L PM_TYPE_ALT will never be set unless we add
-                // norm_data keyword or telnet, rpc_decode, smtp keywords
-                // until then we must use the standard packet mpse
-                SEARCH_BUFFER(buf.IBT_ALT, PM_TYPE_PKT, pc.alt_searches);
-            }
-
-            if ( Mpse* so = port_group->mpse[PM_TYPE_PKT] )
-            {
-                if (p->data && p->dsize /*&&
-                    // FIXIT-P this is a huge win but means that raw packets aren't
-                    // inspected if service reassembly is going on
-                    (p->is_cooked() or !gadget or !stream.is_paf_active(p->flow, true))*/ )
-                {
-                    uint16_t pattern_match_size = p->dsize;
-
-                    if ( IsLimitedDetect(p) && (p->alt_dsize < p->dsize) )
-                        pattern_match_size = p->alt_dsize;
-
-                    SEARCH_PACKET(p->data, pattern_match_size, pc.raw_searches);
-                }
-            }
-        }
+            if ( fp_search(port_group, p, check_ports, type, omd) )
+                return 0;
     }
-
-    /*
-     **  PKT_REBUILT_STREAM packets are re-injected streams.  This means
-     **  that the "packet headers" are completely bogus and only the
-     **  content matches are important.  So for PKT_REBUILT_STREAMs, we
-     **  don't inspect against no-content OTNs since these deal with
-     **  packet headers, packet sizes, etc.
-     **
-     **  NOTE:
-     **  This has been changed when evaluating no-content rules because
-     **  it was interfering with the pass->alert ordering.  We still
-     **  need to check no-contents against rebuilt packets, because of
-     **  this problem.  Immediate solution is to have the detection plugins
-     **  bail if the rule should only be inspected against packets, a.k.a
-     **  dsize checks.
-     **
-     **  NOTE 2:
-     **  PKT_REBUILT_STREAM packets are now cooked (encoded by Snort)
-     **  and have the same encapsulations as the raw packets.  The
-     **  headers are "good enough" for detection (valid TCP sequence
-     **  numbers, but zero checksums) but packet sizes are different.
-     **  Given that TCP segmentation is arbitrary to start with, the
-     **  use of dsize in a rule is questionable for raw or rebuilt.
-     */
-
-    /*
-     **  Walk and test the non-content OTNs
-     */
-    if ( fp->get_debug_print_nc_rules() )
-        LogMessage("NC-testing %u rules\n", port_group->nfp_rule_count);
 
 #ifdef PPM_MGR
     if ( PPM_ENABLED() )
@@ -1086,14 +1014,25 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
 
     do
     {
+        // FIXIT-L restrict to non-data packets?  (non-data includes
+        // defrags).  strictly speaking, nfp (no fast pattern) rules are
+        // not the same as nc (no content).  since these rules may have
+        // content, they must be run against all packets.
+        //if ( p->is_data() )
+        //    break;
+
         if (port_group->nfp_rule_count)
         {
+            // walk and test the nfp OTNs
+            if ( fp->get_debug_print_nc_rules() )
+                LogMessage("NC-testing %u rules\n", port_group->nfp_rule_count);
+
             detection_option_eval_data_t eval_data;
             int rval;
 
             eval_data.pomd = omd;
             eval_data.p = p;
-            eval_data.pmd = NULL;
+            eval_data.pmd = nullptr;
             eval_data.flowbit_failed = 0;
             eval_data.flowbit_noalert = 0;
 
@@ -1114,8 +1053,11 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
                 port_group->match_count++;
                 UpdateNQEvents(&sfEvent);
             }
+            pc.slow_searches++;
         }
 
+        // FIXIT-L need to eval all IP layers, etc.
+        // FIXIT-L why run only nfp rules?
         if (ip_rule)
         {
             /* Evaluate again with the next IP layer */
@@ -1137,228 +1079,157 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
     }
     while (repeat);
 
-#ifdef PPM_MGR  /* Tag only used with PPM right now */
-fp_eval_header_sw_reset_ip:
-#endif
-
     return 0;
 }
 
-/*
-** fpEvalHeaderUdp::
-*/
-static inline int fpEvalHeaderUdp(Packet* p, OTNX_MATCH_DATA* omd)
+static inline void fpEvalHeaderIp(Packet* p, OTNX_MATCH_DATA* omd)
 {
-    PortGroup* src = NULL, * dst = NULL, * gen = NULL;
+    PortGroup* any = nullptr, * ip_group = nullptr;
 
+    if ( !prmFindRuleGroupIp(snort_conf->prmIpRTNX, ANYPORT, &ip_group, &any) )
+        return;
+
+    if ( snort_conf->fast_pattern_config->get_debug_print_nc_rules() )
+        LogMessage("fpEvalHeaderIp: ip_group=%p, any=%p\n", (void*)ip_group, (void*)any);
+
+    if ( ip_group )
+        fpEvalHeaderSW(ip_group, p, 0, 1, 0, omd);
+
+    if  (any )
+        fpEvalHeaderSW(any, p, 0, 1, 0, omd);
+}
+
+static inline void fpEvalHeaderIcmp(Packet* p, OTNX_MATCH_DATA* omd)
+{
+    PortGroup* any = nullptr, * type = nullptr;
+
+    if ( !prmFindRuleGroupIcmp(snort_conf->prmIcmpRTNX, p->ptrs.icmph->type, &type, &any) )
+        return;
+
+    if ( type )
+        fpEvalHeaderSW(type, p, 0, 0, 0, omd);
+
+    if ( any )
+        fpEvalHeaderSW(any, p, 0, 0, 0, omd);
+}
+
+static inline void fpEvalHeaderTcp(Packet* p, OTNX_MATCH_DATA* omd)
+{
+    PortGroup* src = nullptr, * dst = nullptr, * any = nullptr;
+
+    if ( !prmFindRuleGroupTcp(snort_conf->prmTcpRTNX, p->ptrs.dp, p->ptrs.sp, &src, &dst, &any) )
+        return;
+
+    DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,
+        "fpEvalHeaderTcp: sport=%d, "
+        "dport=%d, src:%x, dst:%x, any:%x\n",p->ptrs.sp,p->ptrs.dp,src,dst,any); );
+
+    if ( dst )
+        fpEvalHeaderSW(dst, p, 1, 0, 0, omd);
+
+    if ( src )
+        fpEvalHeaderSW(src, p, 1, 0, 0, omd);
+
+    if ( any )
+        fpEvalHeaderSW(any, p, 1, 0, 0, omd);
+}
+
+static inline void fpEvalHeaderUdp(Packet* p, OTNX_MATCH_DATA* omd)
+{
+    PortGroup* src = nullptr, * dst = nullptr, * any = nullptr;
+
+    if ( !prmFindRuleGroupUdp(snort_conf->prmUdpRTNX, p->ptrs.dp, p->ptrs.sp, &src, &dst, &any) )
+        return;
+
+    DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,
+        "fpEvalHeaderUdp: sport=%d, dport=%d, "
+        "src:%x, dst:%x, any:%x\n",p->ptrs.sp,p->ptrs.dp,src,dst,any); );
+
+    if ( dst )
+        fpEvalHeaderSW(dst, p, 1, 0, 0, omd) ;
+
+    if ( src )
+        fpEvalHeaderSW(src, p, 1, 0, 0, omd) ;
+
+    if ( any )
+        fpEvalHeaderSW(any, p, 1, 0, 0, omd) ;
+}
+
+static inline void fpEvalHeaderSvc(Packet* p, OTNX_MATCH_DATA* omd, int proto)
+{
+    PortGroup* svc = nullptr, * file = nullptr;
+
+    int16_t proto_ordinal = p->flow ? p->flow->ssn_state.application_protocol : 0;
+
+    DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "proto_ordinal=%d\n", proto_ordinal); );
+
+    if (proto_ordinal > 0)
     {
-        /* Check for a service/protocol ordinal for this packet */
-        int16_t proto_ordinal = p->flow ? p->flow->ssn_state.application_protocol : 0;
-
-        DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,"proto_ordinal=%d\n",proto_ordinal); );
-
-        if (proto_ordinal > 0)
+        if (p->packet_flags & PKT_FROM_SERVER) /* to cli */
         {
-            /* Grab the generic group -- the any-any rules */
-            prmFindGenericRuleGroup(snort_conf->prmUdpRTNX, &gen);
+            DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_server\n"); );
 
-            /* TODO:  To From Server ?, else we apply  */
-            dst = fpGetServicePortGroupByOrdinal(snort_conf->sopgTable, SNORT_PROTO_UDP,
-                TO_SERVER, proto_ordinal);
-            src = fpGetServicePortGroupByOrdinal(snort_conf->sopgTable, SNORT_PROTO_UDP,
-                TO_CLIENT, proto_ordinal);
-
-            DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,
-                "fpEvalHeaderUdpp:targetbased-ordinal-lookup: "
-                "sport=%d, dport=%d, proto_ordinal=%d, src:%x, "
-                "dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,proto_ordinal,src,dst,gen); );
+            svc = snort_conf->sopgTable->get_port_group(proto, false, proto_ordinal);
+            file = snort_conf->sopgTable->get_port_group(proto, false, SNORT_PROTO_FILE);
         }
-    }
 
-    if ((src == NULL) && (dst == NULL))
-    {
-        /* we did not have a target based port group, use ports */
-        if (!prmFindRuleGroupUdp(snort_conf->prmUdpRTNX, p->ptrs.dp, p->ptrs.sp, &src, &dst, &gen))
-            return 0;
+        if (p->packet_flags & PKT_FROM_CLIENT) /* to srv */
+        {
+            DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_client\n"); );
+
+            svc = snort_conf->sopgTable->get_port_group(proto, true, proto_ordinal);
+            file = snort_conf->sopgTable->get_port_group(proto, true, SNORT_PROTO_FILE);
+        }
 
         DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,
-            "fpEvalHeaderUdp: sport=%d, dport=%d, "
-            "src:%x, dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,src,dst,gen); );
+            "fpEvalHeaderSvc:targetbased-ordinal-lookup: "
+            "sport=%d, dport=%d, proto_ordinal=%d, proto=%d, src:%x, "
+            "file:%x\n",p->ptrs.sp,p->ptrs.dp,proto_ordinal,proto,svc,file); );
     }
 
-    if (snort_conf->fast_pattern_config->get_debug_print_nc_rules())
-    {
-        LogMessage(
-            "fpEvalHeaderUdp: sport=%d, dport=%d, src:%p, dst:%p, gen:%p\n",
-            p->ptrs.sp, p->ptrs.dp, (void*)src, (void*)dst, (void*)gen);
-    }
+    if ( file )
+        fpEvalHeaderSW(file, p, 2, 0, 2, omd);
 
-    InitMatchInfo(omd);
-
-    if (dst != NULL)
-    {
-        if (fpEvalHeaderSW(dst, p, 1, 0, omd))
-            return 1;
-    }
-
-    if (src != NULL)
-    {
-        if (fpEvalHeaderSW(src, p, 1, 0, omd))
-            return 1;
-    }
-
-    if (gen != NULL)
-    {
-        if (fpEvalHeaderSW(gen, p, 1, 0, omd))
-            return 1;
-    }
-
-    return fpFinalSelectEvent(omd, p);
+    if ( svc )
+        fpEvalHeaderSW(svc, p, 2, 0, 1, omd);
 }
 
-/*
-**  fpEvalHeaderTcp::
-*/
-static inline int fpEvalHeaderTcp(Packet* p, OTNX_MATCH_DATA* omd)
+static void fpEvalPacketUdp(Packet* p)
 {
-    PortGroup* src = NULL, * dst = NULL, * gen = NULL;
+    OTNX_MATCH_DATA* omd = &t_omd;
 
-    {
-        int16_t proto_ordinal = p->flow ? p->flow->ssn_state.application_protocol : 0;
+    uint16_t tmp_sp = p->ptrs.sp;
+    uint16_t tmp_dp = p->ptrs.dp;
+    const udp::UDPHdr* tmp_udph = p->ptrs.udph;
+    const uint8_t* tmp_data = p->data;
+    int tmp_do_detect_content = do_detect_content;
+    uint16_t tmp_dsize = p->dsize;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "proto_ordinal=%d\n", proto_ordinal); );
+    const udp::UDPHdr* udph = layer::get_outer_udp_lyr(p);
 
-        if (proto_ordinal > 0)
-        {
-            /* Grab the generic group -- the any-any rules */
-            prmFindGenericRuleGroup(snort_conf->prmTcpRTNX, &gen);
+    p->ptrs.udph = udph;
+    p->ptrs.sp = ntohs(udph->uh_sport);
+    p->ptrs.dp = ntohs(udph->uh_dport);
+    p->data = (const uint8_t*)udph + udp::UDP_HEADER_LEN;
 
-            if (p->packet_flags & PKT_FROM_SERVER) /* to cli */
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_server\n"); );
+    ip::IpApi tmp_api;
+    int8_t curr_layer = 0;
+    layer::set_outer_ip_api(p, tmp_api, curr_layer);
 
-                src = fpGetServicePortGroupByOrdinal(snort_conf->sopgTable, SNORT_PROTO_TCP,
-                    0 /*to_cli */,  proto_ordinal);
-            }
+    if (tmp_api.pay_len() >  udp::UDP_HEADER_LEN)
+        p->dsize = tmp_api.pay_len() - udp::UDP_HEADER_LEN;
 
-            if (p->packet_flags & PKT_FROM_CLIENT) /* to srv */
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_client\n"); );
+    if (p->dsize)
+        do_detect_content = 1;
 
-                dst = fpGetServicePortGroupByOrdinal(snort_conf->sopgTable, SNORT_PROTO_TCP,
-                    1 /*to_srv */,  proto_ordinal);
-            }
+    fpEvalHeaderUdp(p, omd);
 
-            DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,
-                "fpEvalHeaderTcp:targetbased-ordinal-lookup: "
-                "sport=%d, dport=%d, proto_ordinal=%d, src:%x, "
-                "dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,proto_ordinal,src,dst,gen); );
-        }
-    }
-
-    if ((src == NULL) && (dst == NULL))
-    {
-        /* grab the src/dst groups from the lookup above */
-        if (!prmFindRuleGroupTcp(snort_conf->prmTcpRTNX, p->ptrs.dp, p->ptrs.sp, &src, &dst, &gen))
-            return 0;
-
-        DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,
-            "fpEvalHeaderTcp: sport=%d, "
-            "dport=%d, src:%x, dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,src,dst,gen); );
-    }
-
-    if (snort_conf->fast_pattern_config->get_debug_print_nc_rules())
-    {
-        LogMessage(
-            "fpEvalHeaderTcp: sport=%d, dport=%d, src:%p, dst:%p, gen:%p\n",
-            p->ptrs.sp, p->ptrs.dp, (void*)src, (void*)dst, (void*)gen);
-    }
-
-    InitMatchInfo(omd);
-
-    if (dst != NULL)
-    {
-        if (fpEvalHeaderSW(dst, p, 1, 0, omd))
-            return 1;
-    }
-
-    if (src != NULL)
-    {
-        if (fpEvalHeaderSW(src, p, 1, 0, omd))
-            return 1;
-    }
-
-    if (gen != NULL)
-    {
-        if (fpEvalHeaderSW(gen, p, 1, 0, omd))
-            return 1;
-    }
-
-    return fpFinalSelectEvent(omd, p);
-}
-
-/*
-**  fpEvalHeaderICMP::
-*/
-static inline int fpEvalHeaderIcmp(Packet* p, OTNX_MATCH_DATA* omd)
-{
-    PortGroup* gen = NULL, * type = NULL;
-
-    if (!prmFindRuleGroupIcmp(snort_conf->prmIcmpRTNX, p->ptrs.icmph->type, &type, &gen))
-        return 0;
-
-    if (snort_conf->fast_pattern_config->get_debug_print_nc_rules())
-    {
-        LogMessage(
-            "fpEvalHeaderIcmp: icmp->type=%d type=%p gen=%p\n",
-            p->ptrs.icmph->type, (void*)type, (void*)gen);
-    }
-
-    InitMatchInfo(omd);
-
-    if (type != NULL)
-    {
-        if (fpEvalHeaderSW(type, p, 0, 0, omd))
-            return 1;
-    }
-
-    if (gen != NULL)
-    {
-        if (fpEvalHeaderSW(gen, p, 0, 0, omd))
-            return 1;
-    }
-
-    return fpFinalSelectEvent(omd, p);
-}
-
-/*
-**  fpEvalHeaderIP::
-*/
-static inline int fpEvalHeaderIp(Packet* p, int ip_proto, OTNX_MATCH_DATA* omd)
-{
-    PortGroup* gen = NULL, * ip_group = NULL;
-
-    if (!prmFindRuleGroupIp(snort_conf->prmIpRTNX, ip_proto, &ip_group, &gen))
-        return 0;
-
-    if (snort_conf->fast_pattern_config->get_debug_print_nc_rules())
-        LogMessage("fpEvalHeaderIp: ip_group=%p, gen=%p\n", (void*)ip_group, (void*)gen);
-
-    InitMatchInfo(omd);
-
-    if (ip_group != NULL)
-    {
-        if (fpEvalHeaderSW(ip_group, p, 0, 1, omd))
-            return 1;
-    }
-
-    if (gen != NULL)
-    {
-        if (fpEvalHeaderSW(gen, p, 0, 1, omd))
-            return 1;
-    }
-
-    return fpFinalSelectEvent(omd, p);
+    p->ptrs.sp = tmp_sp;
+    p->ptrs.dp = tmp_dp;
+    p->ptrs.udph = tmp_udph;
+    p->data = tmp_data;
+    p->dsize = tmp_dsize;
+    do_detect_content = tmp_do_detect_content;
 }
 
 /*
@@ -1389,72 +1260,55 @@ static inline int fpEvalHeaderIp(Packet* p, int ip_proto, OTNX_MATCH_DATA* omd)
 int fpEvalPacket(Packet* p)
 {
     OTNX_MATCH_DATA* omd = &t_omd;
+    InitMatchInfo(omd);
 
     /* Run UDP rules against the UDP header of Teredo packets */
+    // FIXIT-L udph is always inner; need to check for outer
     if ( p->ptrs.udph && (p->proto_bits & (PROTO_BIT__TEREDO | PROTO_BIT__GTP)) )
-    {
-        uint16_t tmp_sp = p->ptrs.sp;
-        uint16_t tmp_dp = p->ptrs.dp;
-        const udp::UDPHdr* tmp_udph = p->ptrs.udph;
-        const uint8_t* tmp_data = p->data;
-        int tmp_do_detect_content = do_detect_content;
-        uint16_t tmp_dsize = p->dsize;
-
-        const udp::UDPHdr* udph = layer::get_outer_udp_lyr(p);
-
-        p->ptrs.udph = udph;
-        p->ptrs.sp = ntohs(udph->uh_sport);
-        p->ptrs.dp = ntohs(udph->uh_dport);
-        p->data = (const uint8_t*)udph + udp::UDP_HEADER_LEN;
-
-        ip::IpApi tmp_api;
-        int8_t curr_layer = 0;
-        layer::set_outer_ip_api(p, tmp_api, curr_layer);
-
-        if (tmp_api.pay_len() >  udp::UDP_HEADER_LEN)
-            p->dsize = tmp_api.pay_len() - udp::UDP_HEADER_LEN;
-
-        if (p->dsize)
-            do_detect_content = 1;
-
-        fpEvalHeaderUdp(p, omd);
-
-        p->ptrs.sp = tmp_sp;
-        p->ptrs.dp = tmp_dp;
-        p->ptrs.udph = tmp_udph;
-        p->data = tmp_data;
-        p->dsize = tmp_dsize;
-        do_detect_content = tmp_do_detect_content;
-    }
+        fpEvalPacketUdp(p);
 
     switch (p->type())
     {
-    case PktType::TCP:
-        return fpEvalHeaderTcp(p, omd);
-
-    case PktType::UDP:
-        return fpEvalHeaderUdp(p, omd);
+    case PktType::IP:
+        fpEvalHeaderIp(p, omd);
+        fpEvalHeaderSvc(p, omd, SNORT_PROTO_IP);
+        break;
 
     case PktType::ICMP:
-        return fpEvalHeaderIcmp(p, omd);
+        fpEvalHeaderIcmp(p, omd);
+        fpEvalHeaderSvc(p, omd, SNORT_PROTO_ICMP);
+        break;
+
+    case PktType::TCP:
+        fpEvalHeaderTcp(p, omd);
+        fpEvalHeaderSvc(p, omd, SNORT_PROTO_TCP);
+        break;
+
+    case PktType::UDP:
+        fpEvalHeaderUdp(p, omd);
+        fpEvalHeaderSvc(p, omd, SNORT_PROTO_UDP);
+        break;
 
     case PktType::USER:
-    case PktType::FILE:
-        if ( p->proto_bits & PROTO_BIT__TCP )
-            return fpEvalHeaderTcp(p, omd);
+        if ( snort_conf->sopgTable->user_mode )
+            fpEvalHeaderSvc(p, omd, SNORT_PROTO_USER);
+
+        else if ( p->proto_bits & PROTO_BIT__TCP )
+            fpEvalHeaderTcp(p, omd);
 
         else if ( p->proto_bits & PROTO_BIT__UDP )
-            return fpEvalHeaderUdp(p, omd);
-        else
-            break;
+            fpEvalHeaderUdp(p, omd);
+        break;
 
-    /*
-    **  No Match on TCP/UDP, Do IP
-    */
+    case PktType::FILE:
+        fpEvalHeaderSvc(p, omd, SNORT_PROTO_FILE);
+        break;
+
     default:
-        return fpEvalHeaderIp(p, -1, omd);
+        break;
     }
-    return 0;
+
+    return fpFinalSelectEvent(omd, p);
 }
 
 OptTreeNode* GetOTN(uint32_t gid, uint32_t sid)
@@ -1467,7 +1321,7 @@ OptTreeNode* GetOTN(uint32_t gid, uint32_t sid)
     if ( !getRtnFromOtn(otn) )
     {
         // If not configured to autogenerate and there isn't an RTN, meaning
-        // this rule isn't in the current policy, return NULL.
+        // this rule isn't in the current policy, return nullptr.
         return nullptr;
     }
 

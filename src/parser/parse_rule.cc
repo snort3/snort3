@@ -191,42 +191,44 @@ static int FinishPortListRule(
     PortTable* srcTable;
     PortObject* aaObject;
     rule_count_t* prc;
+    uint32_t orig_flags = rtn->flags;
 
     assert(otn->proto == proto);
 
     /* Select the Target PortTable for this rule, based on protocol, src/dst
      * dir, and if there is rule content */
-    if (proto == SNORT_PROTO_TCP)
+    switch ( proto )
     {
-        dstTable = port_tables->tcp.dst;
-        srcTable = port_tables->tcp.src;
-        aaObject = port_tables->tcp.any;
-        prc = &tcpCnt;
-    }
-    else if (proto == SNORT_PROTO_UDP)
-    {
-        dstTable = port_tables->udp.dst;
-        srcTable = port_tables->udp.src;
-        aaObject = port_tables->udp.any;
-        prc = &udpCnt;
-    }
-    else if (proto == SNORT_PROTO_ICMP)
-    {
-        dstTable = port_tables->icmp.dst;
-        srcTable = port_tables->icmp.src;
-        aaObject = port_tables->icmp.any;
-        prc = &icmpCnt;
-    }
-    else if (proto == SNORT_PROTO_IP)
-    {
+    case SNORT_PROTO_IP:
         dstTable = port_tables->ip.dst;
         srcTable = port_tables->ip.src;
         aaObject = port_tables->ip.any;
         prc = &ipCnt;
-    }
-    else
-    {
-        rtn->flags |= ANY_DST_PORT|ANY_DST_PORT;
+        break;
+
+    case SNORT_PROTO_ICMP:
+        dstTable = port_tables->icmp.dst;
+        srcTable = port_tables->icmp.src;
+        aaObject = port_tables->icmp.any;
+        prc = &icmpCnt;
+        break;
+
+    case SNORT_PROTO_TCP:
+        dstTable = port_tables->tcp.dst;
+        srcTable = port_tables->tcp.src;
+        aaObject = port_tables->tcp.any;
+        prc = &tcpCnt;
+        break;
+
+    case SNORT_PROTO_UDP:
+        dstTable = port_tables->udp.dst;
+        srcTable = port_tables->udp.src;
+        aaObject = port_tables->udp.any;
+        prc = &udpCnt;
+        break;
+
+    default:
+        rtn->flags |= ANY_SRC_PORT|ANY_DST_PORT;
         dstTable = srcTable = nullptr;
         aaObject = port_tables->svc_any;
         prc = &svcCnt;
@@ -340,6 +342,7 @@ static int FinishPortListRule(
         /* For all protocols-add to the any any group */
         PortObjectAddRule(aaObject, rim_index);
         prc->any++;
+        rtn->flags = orig_flags;
         return 0; /* done */
     }
 
@@ -1281,6 +1284,14 @@ void parse_rule_print()
     LogCount("option chains", otn_count);
     LogCount("chain headers", head_count);
 
+    unsigned ip = ipCnt.src + ipCnt.dst + ipCnt.any + ipCnt.both + ipCnt.nfp;
+    unsigned icmp = icmpCnt.src + icmpCnt.dst + icmpCnt.any + icmpCnt.both + icmpCnt.nfp;
+    unsigned tcp = tcpCnt.src + tcpCnt.dst + tcpCnt.any + tcpCnt.both + tcpCnt.nfp;
+    unsigned udp = udpCnt.src + udpCnt.dst + udpCnt.any + udpCnt.both + udpCnt.nfp;
+
+    if ( !ip and !icmp and !tcp and !udp )
+        return;
+
     LogLabel("port rule counts");
     LogMessage("%8s%8s%8s%8s%8s\n", " ", "tcp", "udp", "icmp", "ip");
 
@@ -1301,13 +1312,8 @@ void parse_rule_print()
             tcpCnt.both, udpCnt.both, icmpCnt.both, ipCnt.both);
 
     if ( tcpCnt.nfp || udpCnt.nfp || icmpCnt.nfp || ipCnt.nfp )
-        LogMessage("%8s%8u%8u%8u%8u\n", "no fp",
+        LogMessage("%8s%8u%8u%8u%8u\n", "slow",
             tcpCnt.nfp, udpCnt.nfp, icmpCnt.nfp, ipCnt.nfp);
-
-    unsigned tcp = tcpCnt.src + tcpCnt.dst + tcpCnt.any + tcpCnt.both + tcpCnt.nfp;
-    unsigned udp = udpCnt.src + udpCnt.dst + udpCnt.any + udpCnt.both + udpCnt.nfp;
-    unsigned icmp = icmpCnt.src + icmpCnt.dst + icmpCnt.any + icmpCnt.both + icmpCnt.nfp;
-    unsigned ip = ipCnt.src + ipCnt.dst + ipCnt.any + ipCnt.both + ipCnt.nfp;
 
     LogMessage("%8s%8u%8u%8u%8u\n", "total", tcp, udp, icmp, ip);
 
@@ -1350,6 +1356,10 @@ void parse_rule_proto(SnortConfig*, const char* s, RuleTreeNode& rtn)
 
     else if ( !strcmp(s, "ip") )
         rule_proto = PROTO_BIT__IP;
+
+    else
+        // this will allow other protocols like http to have ports
+        rule_proto = PROTO_BIT__TCP;
 
     rtn.proto = AddProtocolReference(s);
 

@@ -162,10 +162,8 @@ struct SMTPData
 class SmtpFlowData : public FlowData
 {
 public:
-    SmtpFlowData() : FlowData(flow_id)
-    { memset(&session, 0, sizeof(session)); }
-
-    ~SmtpFlowData() { }
+    SmtpFlowData();
+    ~SmtpFlowData();
 
     static void init()
     { flow_id = FlowData::get_flow_id(); }

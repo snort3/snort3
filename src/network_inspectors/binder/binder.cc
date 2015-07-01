@@ -364,7 +364,12 @@ void Stuff::apply_service(Flow* flow, const HostAttributeEntry* host)
         gadget = get_gadget(flow);
 
     if ( gadget )
+    {
         flow->set_gadget(gadget);
+
+        if ( !flow->ssn_state.application_protocol )
+            flow->ssn_state.application_protocol = gadget->get_service();
+    }
 
     else if ( wizard )
         flow->set_clouseau(wizard);
@@ -451,14 +456,15 @@ int Binder::exec(int, void* pv)
     Inspector* ins = find_gadget(flow);
 
     if ( ins )
+    {
         flow->set_gadget(ins);
+        flow->ssn_state.application_protocol = ins->get_service();
+    }
+    else if ( flow->service )
+        flow->ssn_state.application_protocol = FindProtocolReference(flow->service);
 
     if ( !flow->is_stream() )
         return 0;
-
-    if ( flow->service )
-        // FIXIT-H use Inspector::get_service() (not yet initialized)
-        flow->ssn_state.application_protocol = FindProtocolReference(flow->service);
 
     if ( ins )
     {

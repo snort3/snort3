@@ -205,9 +205,6 @@ file_magic =
     { type = "FLV", id = 74, category = "Multimedia", rev = 1,
       magic = { { content = "| 46 4C 56 01 |",offset = 0 } } },
 
-    { type = "WAV", id = 75, category = "Multimedia", rev = 1,
-      magic = { { content = "| 52 49 46 58 |",offset = 0 } } },
-
     { type = "WAV", id = 76, category = "Multimedia", rev = 1,
       magic = { { content = "| 62 65 61 74 |",offset = 0 } } },
 
@@ -343,9 +340,6 @@ file_magic =
     { type = "DWG", id = 130, category = "Graphics", rev = 1,
       magic = { { content = "| 41 43 31 30 |",offset = 0 } } },
 
-    { type = "ISO", id = 131, category = "System files", rev = 1,
-      magic = { { content = "| 00 00 01 BA |",offset = 0 } } },
-
     { type = "MDI", id = 132, category = "Office Documents", rev = 1,
       magic = { { content = "| 45 50 |",offset = 0 } } },
 
@@ -372,9 +366,6 @@ file_magic =
 
     { type = "ONE", id = 140, category = "Office Documents", rev = 1,
       magic = { { content = "| E4 52 5C 7B 8C D8 A7 4D AE B1 53 78 D0 29 96 D3 |",offset = 0 } } },
-
-    { type = "MP4", id = 141, category = "Multimedia", rev = 1,
-      magic = { { content = "| 00 00 00 18 66 74 79 70 33 67 70 35 |",offset = 0 } } },
 
     { type = "MP4", id = 142, category = "Multimedia", rev = 1,
       magic = { { content = "| 00 00 00 14 66 74 79 70 69 73 6F 6D |",offset = 0 } } },

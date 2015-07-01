@@ -343,7 +343,7 @@ static inline bool DataToFlush (const TcpTracker* st)
 {
     // needed by stream_reassemble:action disable; can fire on rebuilt
     // packets, yanking the splitter out from under us :(
-    if ( !st->flush_policy )
+    if ( !st->flush_policy or !st->splitter )
         return false;
 
     if (

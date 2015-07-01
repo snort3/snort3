@@ -36,6 +36,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define MAX_PROTOCOL_ORDINAL 8192  // FIXIT-L use std::vector and get_protocol_count()
+
 typedef struct _File_Stats
 {
     uint64_t files_total;

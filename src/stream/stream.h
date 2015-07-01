@@ -29,7 +29,6 @@
 
 #include "snort_types.h"
 #include "stream/stream_api.h"
-#include "target_based/snort_protocols.h"
 #include "network_inspectors/normalize/norm.h"
 
 //#define DEBUG_STREAM DEBUG
@@ -76,7 +75,6 @@ struct StreamConfig
     class Stream* stream;
 
     struct StreamGlobalConfig* global_config;
-    uint8_t service_filter[MAX_PROTOCOL_ORDINAL];
 };
 
 // shared stream state

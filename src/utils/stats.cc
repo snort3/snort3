@@ -211,8 +211,11 @@ const PegInfo daq_names[] =
 const PegInfo pc_names[] =
 {
     { "analyzed", "packets sent to detection" },
+    { "slow searches", "non-fast pattern rule evaluations" },
     { "raw searches", "fast pattern searches in raw packet data" },
-    { "alt searches", "alt fast pattern searches in raw packet data" },
+    { "cooked searches", "fast pattern searches in cooked packet data" },
+    { "pkt searches", "fast pattern searches in packet data" },
+    { "alt searches", "alt fast pattern searches in packet data" },
     { "key searches", "fast pattern searches in key buffer" },
     { "header searches", "fast pattern searches in header buffer" },
     { "body searches", "fast pattern searches in body buffer" },

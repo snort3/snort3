@@ -817,7 +817,7 @@ static int _bnfa_opt_nfa(bnfa_struct_t* bnfa)
             FailState[ k ] = fs;
         }
     }
-#ifdef DEBUG
+#if 0
     if ( cnt)
         LogMessage("ac-bnfa: %d nfa optimizations found in %d states\n",cnt,bnfa->bnfaNumStates);
 #endif

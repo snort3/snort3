@@ -66,7 +66,6 @@ void fpWalkOtns(int, OtnWalkFcn);
 void fpDeletePortGroup(void*);
 
 bool set_fp_content(struct OptTreeNode*);
-const char* PatternRawToContent(const char* pattern, int pattern_len);
 
 #endif
 

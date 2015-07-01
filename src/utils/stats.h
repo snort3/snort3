@@ -40,7 +40,10 @@
 struct PacketCount
 {
     PegCount total_from_daq;
+    PegCount slow_searches;
     PegCount raw_searches;
+    PegCount cooked_searches;
+    PegCount pkt_searches;
     PegCount alt_searches;
     PegCount key_searches;
     PegCount header_searches;

@@ -73,7 +73,7 @@ public:
 
     int eval(Cursor&, Packet*) override;
 
-private:
+//private:  // FIXTHIS-L privatize
     FlowCheckData config;
 };
 
@@ -227,12 +227,12 @@ int FlowCheckOption::eval(Cursor&, Packet* p)
 
 int OtnFlowFromServer(OptTreeNode* otn)
 {
-    FlowCheckData* fcd =
-        (FlowCheckData*)get_rule_type_data(otn, s_name);
+    FlowCheckOption* fco =
+        (FlowCheckOption*)get_rule_type_data(otn, s_name);
 
-    if (fcd )
+    if (fco )
     {
-        if ( fcd->from_server )
+        if ( fco->config.from_server )
             return 1;
     }
     return 0;
@@ -240,12 +240,12 @@ int OtnFlowFromServer(OptTreeNode* otn)
 
 int OtnFlowFromClient(OptTreeNode* otn)
 {
-    FlowCheckData* fcd =
-        (FlowCheckData*)get_rule_type_data(otn, s_name);
+    FlowCheckOption* fco =
+        (FlowCheckOption*)get_rule_type_data(otn, s_name);
 
-    if (fcd )
+    if (fco )
     {
-        if ( fcd->from_client )
+        if ( fco->config.from_client )
             return 1;
     }
     return 0;
@@ -253,12 +253,12 @@ int OtnFlowFromClient(OptTreeNode* otn)
 
 int OtnFlowIgnoreReassembled(OptTreeNode* otn)
 {
-    FlowCheckData* fcd =
-        (FlowCheckData*)get_rule_type_data(otn, s_name);
+    FlowCheckOption* fco =
+        (FlowCheckOption*)get_rule_type_data(otn, s_name);
 
-    if ( fcd )
+    if ( fco )
     {
-        if ( fcd->ignore_reassembled )
+        if ( fco->config.ignore_reassembled )
             return 1;
     }
     return 0;
@@ -266,12 +266,12 @@ int OtnFlowIgnoreReassembled(OptTreeNode* otn)
 
 int OtnFlowOnlyReassembled(OptTreeNode* otn)
 {
-    FlowCheckData* fcd =
-        (FlowCheckData*)get_rule_type_data(otn, s_name);
+    FlowCheckOption* fco =
+        (FlowCheckOption*)get_rule_type_data(otn, s_name);
 
-    if ( fcd )
+    if ( fco )
     {
-        if ( fcd->only_reassembled )
+        if ( fco->config.only_reassembled )
             return 1;
     }
     return 0;

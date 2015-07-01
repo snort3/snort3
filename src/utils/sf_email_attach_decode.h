@@ -78,8 +78,9 @@ struct Email_DecodeState
     DecodeType decode_type;
     uint8_t decode_present;
     uint32_t prev_encoded_bytes;
-    unsigned char* prev_encoded_buf;
     uint32_t decoded_bytes;
+    uint32_t buf_size;
+    uint8_t* prev_encoded_buf;
     uint8_t* encodeBuf;
     uint8_t* decodeBuf;
     uint8_t* decodePtr;
@@ -111,13 +112,10 @@ static inline int getCodeDepth(int code_depth, int64_t file_depth)
         return code_depth;
 }
 
-static inline void SetEmailDecodeState(Email_DecodeState* ds, void* data, int max_depth,
+static inline void SetEmailDecodeState(Email_DecodeState* ds, void* data, int buf_size,
     int b64_depth, int qp_depth, int uu_depth, int bitenc_depth, int64_t file_depth)
 {
-    if ( max_depth & 7 )
-    {
-        max_depth += (8 - (max_depth & 7));
-    }
+    buf_size = buf_size & ~7; // FIXIT-L is this still required?
 
     ds->decode_type = DECODE_NONE;
     ds->decode_present = 0;
@@ -126,8 +124,8 @@ static inline void SetEmailDecodeState(Email_DecodeState* ds, void* data, int ma
     ds->decoded_bytes = 0;
 
     ds->encodeBuf = (uint8_t*)data;
-    ds->decodeBuf = (uint8_t*)data + max_depth;
-    ds->decodePtr = ds->decodeBuf;
+    ds->decodeBuf = (uint8_t*)data + buf_size;
+    ds->buf_size = buf_size;
 
     ds->b64_state.encode_depth = ds->b64_state.decode_depth = getCodeDepth(b64_depth, file_depth);
     ds->b64_state.encode_bytes_read = ds->b64_state.decode_bytes_read = 0;
@@ -149,13 +147,14 @@ static inline Email_DecodeState* NewEmailDecodeState(
     int uu_depth, int bitenc_depth, int64_t file_depth)
 {
     Email_DecodeState* ds = (Email_DecodeState*)calloc(1, sizeof(*ds) + (2*max_depth));
-    uint8_t* data = ((uint8_t*)ds) + sizeof(*ds);
 
     if ( ds )
+    {
+        uint8_t* data = ((uint8_t*)ds) + sizeof(*ds);
         SetEmailDecodeState(
             ds, data, max_depth, b64_depth, qp_depth,
             uu_depth, bitenc_depth, file_depth);
-
+    }
     return ds;
 }
 
@@ -194,7 +193,7 @@ static inline void ResetBytesRead(Email_DecodeState* ds)
 
 static inline void ResetDecodedBytes(Email_DecodeState* ds)
 {
-    ds->decodePtr = NULL;
+    ds->decodePtr = nullptr;
     ds->decoded_bytes = 0;
     ds->decode_present = 0;
 }

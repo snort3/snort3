@@ -203,8 +203,6 @@
 #include "fp_create.h"
 #include "snort_config.h"
 
-#define ANYPORT   -1
-
 /*
 **
 **  NAME

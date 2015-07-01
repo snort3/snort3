@@ -24,28 +24,33 @@
 
 #include "snort_types.h"
 
-#define MAX_PROTOCOL_ORDINAL 8192  // FIXIT-L use std::vector and eliminate this
-
 // FIXIT-L use logical type instead of int16_t
 // for all reference protocols
 
 // these protocols are always defined because
 // they are used as consts in switch statements
 // other protos are added dynamically as used
-const int16_t SNORT_PROTO_IP   = 1;
-const int16_t SNORT_PROTO_ICMP = 2;
-const int16_t SNORT_PROTO_TCP  = 3;
-const int16_t SNORT_PROTO_UDP  = 4;
-const int16_t SNORT_PROTO_FILE = 5;
+enum SnortProtocols
+{
+    SNORT_PROTO_IP = 1,
+    SNORT_PROTO_ICMP,
+    SNORT_PROTO_TCP,
+    SNORT_PROTO_UDP,
+    SNORT_PROTO_USER,
+    SNORT_PROTO_FILE,
+    SNORT_PROTO_MAX
+};
 
 static inline bool is_network_protocol(int16_t proto)
-{ return (proto > 0 and proto < SNORT_PROTO_FILE); }
+{ return (proto >= SNORT_PROTO_IP and proto <= SNORT_PROTO_UDP); }
 
 static inline bool is_service_protocol(int16_t proto)
 { return !is_network_protocol(proto); }
 
 void InitializeProtocolReferenceTable(void);
 void FreeProtoocolReferenceTable(void);
+
+int16_t get_protocol_count();
 
 const char* get_protocol_name(uint16_t id);
 const char* get_protocol_name_sorted(uint16_t id);

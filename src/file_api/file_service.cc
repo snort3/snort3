@@ -528,7 +528,10 @@ static inline void _file_signature_lookup(FileContext* context,
     File_Verdict verdict = FILE_VERDICT_UNKNOWN;
 
     if (!pkt)
+    {
+        finish_signature_lookup(context);
         return;
+    }
 
     if (file_signature_cb)
     {
