@@ -549,6 +549,58 @@ static const ConvertMap rule_priority =
 const ConvertMap* priority_map = &rule_priority;
 
 /************************************
+ *******  SIP STAT CODE  ************
+ ************************************/
+
+static const std::string sip_stat_code = "sip_stat_code";
+static const ConvertMap rule_sip_stat_code =
+{
+    sip_stat_code,
+    unchanged_rule_ctor<& sip_stat_code>,
+};
+
+const ConvertMap* sip_stat_code_map = &rule_sip_stat_code;
+
+/************************************
+ *******  SIP BODY  ************
+ ************************************/
+
+static const std::string sip_body = "sip_body";
+static const ConvertMap rule_sip_body =
+{
+    sip_body,
+    unchanged_rule_ctor<& sip_body, false>,
+};
+
+const ConvertMap* sip_body_map = &rule_sip_body;
+
+/************************************
+ *******  SIP HEADER  ************
+ ************************************/
+
+static const std::string sip_header = "sip_header";
+static const ConvertMap rule_sip_header =
+{
+    sip_header,
+    unchanged_rule_ctor<& sip_header, false>,
+};
+
+const ConvertMap* sip_header_map = &rule_sip_header;
+
+/************************************
+ *******  SIP METHOD  ************
+ ************************************/
+
+static const std::string sip_method = "sip_method";
+static const ConvertMap rule_sip_method =
+{
+    sip_method,
+    unchanged_rule_ctor<& sip_method>,
+};
+
+const ConvertMap* sip_method_map = &rule_sip_method;
+
+/************************************
  *********  SSL STATE  **************
  ************************************/
 

@@ -348,7 +348,8 @@ int ExpectCache::add_flow(
     PktType protocol, char direction,
     FlowData* fd, int16_t appId)
 {
-    assert(!cliPort || !srvPort);
+    // FIXIT-L sip inspector knows both ports
+    //assert(!cliPort || !srvPort);
 
     ExpectKey hashKey;
     int reversed_key = hashKey.set(cliIP, cliPort, srvIP, srvPort, protocol);

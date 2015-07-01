@@ -28,6 +28,10 @@ extern const BaseApi* sin_http_global;
 extern const BaseApi* sin_http_inspect;
 
 #ifdef STATIC_INSPECTORS
+extern const BaseApi* ips_sip_body;
+extern const BaseApi* ips_sip_header;
+extern const BaseApi* ips_sip_method;
+extern const BaseApi* ips_sip_stat_code;
 extern const BaseApi* ips_ssl_state;
 extern const BaseApi* ips_ssl_version;
 extern const BaseApi* sin_bo;
@@ -39,6 +43,7 @@ extern const BaseApi* sin_imap;
 extern const BaseApi* sin_nhttp;
 extern const BaseApi* sin_pop;
 extern const BaseApi* sin_rpc_decode;
+extern const BaseApi* sin_sip;
 extern const BaseApi* sin_smtp;
 extern const BaseApi* sin_ssh;
 extern const BaseApi* sin_ssl;
@@ -52,6 +57,10 @@ const BaseApi* service_inspectors[] =
     sin_http_inspect,
 
 #ifdef STATIC_INSPECTORS
+    ips_sip_body,
+    ips_sip_header,
+    ips_sip_method,
+    ips_sip_stat_code,
     ips_ssl_state,
     ips_ssl_version,
     sin_bo,
@@ -63,6 +72,7 @@ const BaseApi* service_inspectors[] =
     sin_nhttp,
     sin_pop,
     sin_rpc_decode,
+    sin_sip,
     sin_smtp,
     sin_ssh,
     sin_ssl,

@@ -165,6 +165,9 @@ FlowData* Stream::get_application_data_from_ip_port(
         srcIP, srcPort, dstIP, dstPort,
         vlan, mplsId, addressSpaceID);
 
+    if(!flow)
+        return NULL;
+
     return flow->get_application_data(flow_id);
 }
 

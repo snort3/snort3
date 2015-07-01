@@ -69,6 +69,10 @@ extern const ConvertMap* sameip_map;
 extern const ConvertMap* seq_map;
 extern const ConvertMap* session_map;
 extern const ConvertMap* sid_map;
+extern const ConvertMap* sip_body_map;
+extern const ConvertMap* sip_header_map;
+extern const ConvertMap* sip_method_map;
+extern const ConvertMap* sip_stat_code_map;
 extern const ConvertMap* stream_reassemble_map;
 extern const ConvertMap* stream_size_map;
 extern const ConvertMap* ssl_state_map;
@@ -128,6 +132,10 @@ const std::vector<const ConvertMap*> rule_options_api =
     seq_map,
     session_map,
     sid_map,
+    sip_body_map,
+    sip_header_map,
+    sip_method_map,
+    sip_stat_code_map,
     stream_reassemble_map,
     stream_size_map,
     ssl_state_map,
