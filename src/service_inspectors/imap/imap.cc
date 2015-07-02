@@ -895,7 +895,7 @@ const InspectApi imap_api =
         mod_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::USER,
+    (uint16_t)PktType::PDU,
     nullptr, // buffers
     "imap",
     imap_init,

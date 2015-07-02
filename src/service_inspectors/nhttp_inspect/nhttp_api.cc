@@ -63,7 +63,7 @@ const InspectApi NHttpApi::nhttp_api =
         NHttpApi::nhttp_mod_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::USER,
+    (uint16_t)PktType::PDU,
     legacy_buffers,
     "http",
     NHttpApi::nhttp_init,

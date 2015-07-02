@@ -110,7 +110,7 @@ const char* Packet::get_type() const
     case PktType::UDP:
         return "UDP";
 
-    case PktType::USER:
+    case PktType::PDU:
     case PktType::FILE:
         if ( proto_bits & PROTO_BIT__TCP )
             return "TCP";

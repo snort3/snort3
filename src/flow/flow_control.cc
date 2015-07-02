@@ -113,7 +113,7 @@ PegCount FlowControl::get_flows(PktType proto)
     case PktType::ICMP: return icmp_count;
     case PktType::TCP:  return tcp_count;
     case PktType::UDP:  return udp_count;
-    case PktType::USER: return user_count;
+    case PktType::PDU: return user_count;
     case PktType::FILE: return file_count;
     default:            return 0;
     }
@@ -139,7 +139,7 @@ void FlowControl::clear_counts()
     if ( (cache = get_cache(PktType::UDP)) )
         cache->reset_prunes();
 
-    if ( (cache = get_cache(PktType::USER)) )
+    if ( (cache = get_cache(PktType::PDU)) )
         cache->reset_prunes();
 
     if ( (cache = get_cache(PktType::FILE)) )
@@ -166,7 +166,7 @@ inline FlowCache* FlowControl::get_cache (PktType proto)
     case PktType::ICMP: return icmp_cache;
     case PktType::TCP:  return tcp_cache;
     case PktType::UDP:  return udp_cache;
-    case PktType::USER: return user_cache;
+    case PktType::PDU: return user_cache;
     case PktType::FILE: return file_cache;
     default:            return nullptr;
     }
@@ -405,7 +405,7 @@ static void init_roles(Packet* p, Flow* flow)
         init_roles_udp(p, flow);
         break;
 
-    case PktType::USER:
+    case PktType::PDU:
     case PktType::FILE:
         init_roles_user(p, flow);
         break;
@@ -715,7 +715,7 @@ void FlowControl::process_user(Packet* p)
 
     if ( !flow->session )
     {
-        flow->init(PktType::USER);
+        flow->init(PktType::PDU);
         flow->session = get_user(flow);
     }
 

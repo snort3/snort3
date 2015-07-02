@@ -256,7 +256,7 @@ static const InspectApi wiz_api =
         mod_dtor
     },
     IT_WIZARD,
-    (uint16_t)PktType::TCP | (uint16_t)PktType::UDP | (uint16_t)PktType::USER,
+    (uint16_t)PktType::TCP | (uint16_t)PktType::UDP | (uint16_t)PktType::PDU,
     nullptr, // buffers
     nullptr, // service
     nullptr, // init

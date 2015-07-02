@@ -339,7 +339,7 @@ void Stuff::apply_session(Flow* flow, const HostAttributeEntry* host)
         set_session(flow, INS_UDP);
         break;
 
-    case PktType::USER:
+    case PktType::PDU:
         set_session(flow, INS_USER);
         break;
 

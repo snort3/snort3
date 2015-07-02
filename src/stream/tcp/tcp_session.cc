@@ -2010,7 +2010,7 @@ static int FlushStream(
 // FIXIT-L consolidate encode format, update, and this into new function?
 static void prep_s5_pkt(Flow* flow, Packet* p, uint32_t pkt_flags)
 {
-    s5_pkt->ptrs.set_pkt_type(PktType::USER);
+    s5_pkt->ptrs.set_pkt_type(PktType::PDU);
     s5_pkt->proto_bits |= PROTO_BIT__TCP;
     s5_pkt->packet_flags |= (pkt_flags & PKT_PDU_FULL);
     s5_pkt->flow = flow;

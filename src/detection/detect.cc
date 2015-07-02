@@ -335,7 +335,7 @@ bool snort_detect(Packet* p)
     case PktType::TCP:
     case PktType::UDP:
     case PktType::ICMP:
-    case PktType::USER:
+    case PktType::PDU:
     case PktType::FILE:
     {
         PROFILE_VARS;

@@ -1289,7 +1289,7 @@ int fpEvalPacket(Packet* p)
         fpEvalHeaderSvc(p, omd, SNORT_PROTO_UDP);
         break;
 
-    case PktType::USER:
+    case PktType::PDU:
         if ( snort_conf->sopgTable->user_mode )
             fpEvalHeaderSvc(p, omd, SNORT_PROTO_USER);
 
