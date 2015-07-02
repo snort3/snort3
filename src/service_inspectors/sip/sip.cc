@@ -313,7 +313,10 @@ Sip::Sip(SIP_PROTO_CONF* pc)
 Sip::~Sip()
 {
     if ( config )
+    {
+        SIP_DeleteMethods(config->methods);
         delete config;
+    }
 }
 
 void Sip::show(SnortConfig*)

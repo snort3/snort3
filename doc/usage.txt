@@ -46,23 +46,23 @@ Read a pcap:
 
 Dump the packets to stdout:
 
-    snort -r /path/to/my.pcap -K text
+    snort -r /path/to/my.pcap -L dump
 
 Dump packets with application data and layer 2 headers
 
-    snort -r /path/to/my.pcap -K text -d -e
+    snort -r /path/to/my.pcap -L dump -d -e
 
 NOTE: Command line options must be specified separately. "snort -de" won't
 work.  You can still concatenate options and their arguments, however, so
-"snort -Ktext" will work.
+"snort -Ldump" will work.
 
 Dump packets from all pcaps in a directory:
 
-    snort --pcap-dir /path/to/pcap/dir --pcap-filter '*.pcap' -K text -d -e
+    snort --pcap-dir /path/to/pcap/dir --pcap-filter '*.pcap' -L dump -d -e
 
 Log packets to a directory:
 
-    snort --pcap-dir /path/to/pcap/dir --pcap-filter '*.pcap' -K pcap -l /path/to/log/dir
+    snort --pcap-dir /path/to/pcap/dir --pcap-filter '*.pcap' -L dump -l /path/to/log/dir
 
 
 ==== Configuration

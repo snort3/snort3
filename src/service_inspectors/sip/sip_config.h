@@ -82,7 +82,7 @@ struct SIPMethodNode
     char* methodName;
     int methodLen;
     SIPMethodsFlag methodFlag;
-    struct SIPMethodNode* nextm;
+    SIPMethodNode* nextm;
 };
 
 typedef SIPMethodNode* SIPMethodlist;
@@ -118,10 +118,17 @@ struct SIP_PROTO_CONF
     uint16_t maxContentLen;
     uint8_t ignoreChannel;
 };
-void SIP_ParseMethods(char* cur_tokenp, uint32_t* methodsConfig, SIPMethodlist* pmethods);
+
+void SIP_ParseMethods(
+    const char* cur_tokenp, uint32_t* methodsConfig, SIPMethodlist* pmethods);
+
 void SIP_SetDefaultMethods(SIP_PROTO_CONF* config);
 int SIP_findMethod(char* token, SIPMethod* methods);
-SIPMethodNode* SIP_AddUserDefinedMethod(char* methodName, uint32_t* methodsConfig, SIPMethodlist* pmethods);
+
+SIPMethodNode* SIP_AddUserDefinedMethod(
+    const char* methodName, uint32_t* methodsConfig, SIPMethodlist* pmethods);
+
+void SIP_DeleteMethods(SIPMethodNode*);
 
 #endif
 
