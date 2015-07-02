@@ -20,8 +20,6 @@
 
 #include "sf_email_attach_decode.h"
 
-#include <assert.h>
-
 #include "snort_types.h"
 #include "util.h"
 
@@ -246,12 +244,6 @@ int Base64Decode(const uint8_t* start, const uint8_t* end, Email_DecodeState* ds
     {
         encode_avail = ds->b64_state.encode_depth - ds->b64_state.encode_bytes_read;
         decode_avail = ds->b64_state.decode_depth - ds->b64_state.decode_bytes_read;
-
-        if ( encode_avail > ds->buf_size )
-            encode_avail = ds->buf_size;
-
-        if ( decode_avail > ds->buf_size )
-            decode_avail = ds->buf_size;
     }
 
     encode_buf = ds->encodeBuf;
@@ -348,12 +340,6 @@ int QPDecode(const uint8_t* start, const uint8_t* end, Email_DecodeState* ds)
     {
         encode_avail = ds->qp_state.encode_depth - ds->qp_state.encode_bytes_read;
         decode_avail = ds->qp_state.decode_depth - ds->qp_state.decode_bytes_read;
-
-        if ( encode_avail > ds->buf_size )
-            encode_avail = ds->buf_size;
-
-        if ( decode_avail > ds->buf_size )
-            decode_avail = ds->buf_size;
     }
 
     encode_buf = ds->encodeBuf;
@@ -447,12 +433,6 @@ int UUDecode(const uint8_t* start, const uint8_t* end, Email_DecodeState* ds)
     {
         encode_avail = ds->uu_state.encode_depth - ds->uu_state.encode_bytes_read;
         decode_avail = ds->uu_state.decode_depth - ds->uu_state.decode_bytes_read;
-
-        if ( encode_avail > ds->buf_size )
-            encode_avail = ds->buf_size;
-
-        if ( decode_avail > ds->buf_size )
-            decode_avail = ds->buf_size;
     }
 
     encode_buf = ds->encodeBuf;
@@ -551,9 +531,6 @@ int BitEncExtract(const uint8_t* start, const uint8_t* end, Email_DecodeState* d
 
     ClearPrevEncodeBuf(ds);
 
-    if ( (start < ds->decodeBuf) or (start - ds->decodeBuf >= ds->buf_size) )
-        return DECODE_EXCEEDED;
-
     if (!(ds->bitenc_state.depth))
     {
         bytes_avail = ds->buf_size;
@@ -587,6 +564,7 @@ int BitEncExtract(const uint8_t* start, const uint8_t* end, Email_DecodeState* d
 
     ds->decode_present = 1;
     ds->decoded_bytes = act_size;
+    ds->decodePtr = (uint8_t*)start;
     ds->bitenc_state.bytes_read += act_size;
 
     return DECODE_SUCCESS;

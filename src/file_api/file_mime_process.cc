@@ -800,6 +800,8 @@ const uint8_t* process_mime_data_paf(Flow* flow, const uint8_t* start, const uin
          * in the body which seems more reasonable. */
     }
 
+    // FIXIT-L why is this being set?  we don't search file data until
+    // we set it again below after decoding.  can it be deleted?
     if ( mime_ssn->decode_conf && !mime_ssn->decode_conf->ignore_data)
         set_file_data((uint8_t*)start, (end - start));
 
