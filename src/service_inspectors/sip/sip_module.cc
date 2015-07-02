@@ -131,13 +131,13 @@ static const RuleMap sip_rules[] =
 
 THREAD_LOCAL SIP_Stats sip_stats;
 
-const PegInfo sip_pegs[] =
+static const PegInfo sip_pegs[] =
 {
     { "sessions", "total sessions" },
     { "events", "events generated" },
     { "dialogs", "total dialogs" },
-    { "ignoreChannels", "total channels ignored" },
-    { "ignoreSessions", "total sessions ignored" },
+    { "ignored channels", "total channels ignored" },
+    { "ignored sessions", "total sessions ignored" },
     { "requests", "total requests" },
     { "responses", "total responses" },
     { nullptr, nullptr }
@@ -165,7 +165,7 @@ const PegInfo* SipModule::get_pegs() const
 { return sip_pegs; }
 
 PegCount* SipModule::get_counts() const
-{ return (PegCount*)&sipstats; }
+{ return (PegCount*)&sip_stats; }
 
 ProfileStats* SipModule::get_profile() const
 { return &sipPerfStats; }

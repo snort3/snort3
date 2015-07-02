@@ -250,12 +250,13 @@ static int sip_process_bodyField(SIPMsg* msg, const char* start, const char* end
  ********************************************************************/
 static int sip_find_linebreak(const char* start, char* end, char** lineEnd)
 {
-    int numCRLF;
-    char* s = (char*)start;
+    int numCRLF = 0;
     *lineEnd = NULL;
-    numCRLF = 0;
+
     if (start >= end)
-        return 0;
+        return numCRLF;
+
+    char* s = (char*)start;
 
     while ((s < end) && !('\r' ==*s || '\n' == *s))
     {
@@ -263,7 +264,7 @@ static int sip_find_linebreak(const char* start, char* end, char** lineEnd)
     }
 
     if (s == end)
-        return 0;
+        return numCRLF;
 
     s++;
     numCRLF = 1;
@@ -519,9 +520,12 @@ static int sip_body_parse(SIPMsg* msg, const char* buff, char* end, char** bodyE
     char* next;
     char* start;
     int numOfLineBreaks;
+
+#ifdef DEBUG_MSGS
     length = end - buff;
     DEBUG_WRAP(DebugMessage(DEBUG_SIP, "Body length: %d\n", length); );
     DEBUG_WRAP(DebugMessage(DEBUG_SIP, "Body line: %.*s\n", length, buff); );
+#endif
 
     // Initialize it
     *bodyEnd = end;
