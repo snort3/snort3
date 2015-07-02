@@ -49,6 +49,7 @@
 #include "search_engines/search_tool.h"
 #include "sf_email_attach_decode.h"
 #include "protocols/ssl.h"
+#include "file_api/file_mime_process.h"
 
 THREAD_LOCAL ProfileStats imapPerfStats;
 THREAD_LOCAL SimpleStats imapstats;
@@ -138,6 +139,12 @@ static void IMAP_ResetState(void*);
 void IMAP_DecodeAlert(void* ds);
 
 MimeMethods imap_mime_methods = { NULL, NULL, IMAP_DecodeAlert, IMAP_ResetState, imap_is_data_end };
+
+ImapFlowData::ImapFlowData() : FlowData(flow_id)
+{ memset(&session, 0, sizeof(session)); }
+
+ImapFlowData::~ImapFlowData()
+{ free_mime_session(session.mime_ssn); }
 
 unsigned ImapFlowData::flow_id = 0;
 static IMAPData* get_session_data(Flow* flow)

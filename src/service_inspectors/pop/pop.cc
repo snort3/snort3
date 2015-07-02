@@ -47,6 +47,7 @@
 #include "search_engines/search_tool.h"
 #include "sf_email_attach_decode.h"
 #include "protocols/ssl.h"
+#include "file_api/file_mime_process.h"
 
 THREAD_LOCAL ProfileStats popPerfStats;
 THREAD_LOCAL SimpleStats popstats;
@@ -91,6 +92,12 @@ static void POP_ResetState(void*);
 void POP_DecodeAlert(void* ds);
 
 MimeMethods pop_mime_methods = { NULL, NULL, POP_DecodeAlert, POP_ResetState, pop_is_data_end };
+
+PopFlowData::PopFlowData() : FlowData(flow_id)
+{ memset(&session, 0, sizeof(session)); }
+
+PopFlowData::~PopFlowData()
+{ free_mime_session(session.mime_ssn); }
 
 unsigned PopFlowData::flow_id = 0;
 static POPData* get_session_data(Flow* flow)

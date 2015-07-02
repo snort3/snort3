@@ -212,7 +212,7 @@ static const Parameter search_engine_params[] =
     { "max_queue_events", Parameter::PT_INT, nullptr, "5",
       "maximum number of matching fast pattern states to queue per packet" },
 
-    { "inspect_stream_inserts", Parameter::PT_BOOL, nullptr, "true",
+    { "inspect_stream_inserts", Parameter::PT_BOOL, nullptr, "false",
       "inspect reassembled payload - disabling is good for performance, bad for detection" },
 
     { "search_method", Parameter::PT_STRING, nullptr, "ac_bnfa_q",

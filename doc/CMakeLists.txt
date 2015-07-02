@@ -30,14 +30,6 @@ set (MODULE_SOURCES
     logger.txt
 )
 
-set(BUILT_SOURCES
-    ${HELP_SOURCES}
-    ${LIST_SOURCES}
-    ${MODULE_SOURCES}
-#   version.txt         Requires special formatting. manually added below.
-#   config_changes.txt  If ruby executable found
-)
-
 set (UNBUILT_SOURCES
     daq.txt
     differences.txt
@@ -60,12 +52,22 @@ set (UNBUILT_SOURCES
 #   config_changes.txt  If ruby executable is not found
 )
 
-set (EXTRA_SOURCES
-    ${BUILT_SOURCES}
-    config_changes.txt
-    snort2lua_cmds.txt
-    version.txt
-)
+if (MAKE_PDF_DOC OR MAKE_HTML_DOC OR MAKE_TEXT_DOC)
+    set(BUILT_SOURCES
+        ${HELP_SOURCES}
+        ${LIST_SOURCES}
+        ${MODULE_SOURCES}
+    #   version.txt         Requires special formatting. manually added below.
+    #   config_changes.txt  If ruby executable found
+    )
+
+    set (EXTRA_SOURCES
+        ${BUILT_SOURCES}
+        config_changes.txt
+        snort2lua_cmds.txt
+        version.txt
+    )
+endif()
 
 if (MAKE_HTML_DOC)
     set(HTML_DOCS snort_manual.html)

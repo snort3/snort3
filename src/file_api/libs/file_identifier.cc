@@ -274,7 +274,7 @@ void FileIdentifier::update_trie(IdentifierNode* start, IdentifierNode* append)
         if (append->type_id)
         {
             if (start->type_id)
-                ParseWarning(WARN_RULES, "Duplicated type definition '%d -> %d at offset %d.\n",
+                ParseWarning(WARN_RULES, "Duplicated type definition '%d -> %d at offset %d",
                     start->type_id, append->type_id, append->offset);
             start->type_id = append->type_id;
         }

@@ -68,6 +68,8 @@
 #include "search/intel_soft_cpm.h"
 #endif
 
+static unsigned mpse_count = 0;
+
 static void fpDeletePMX(void* data);
 
 static int fpGetFinalPattern(FastPatternConfig*, PatternMatchData* pmd,
@@ -493,6 +495,7 @@ bool set_fp_content(OptTreeNode* otn)
     CursorActionType curr_cat = CAT_SET_RAW;
     FpFoo best;
     PatternMatchData* pmd = nullptr;
+    bool content = false;
     bool fp_only = true;
 
     for (ofl = otn->opt_func; ofl != NULL; ofl = ofl->next)
@@ -511,6 +514,7 @@ bool set_fp_content(OptTreeNode* otn)
         if ( ofl->type != RULE_OPTION_TYPE_CONTENT )
             continue;
 
+        content = true;
         PatternMatchData* tmp = get_pmd(ofl);
         assert(tmp);
 
@@ -542,9 +546,28 @@ bool set_fp_content(OptTreeNode* otn)
             best = curr;
     }
     if ( !pmd && best.pmd )
-        best.pmd->fp = 1;
+    {
+        pmd = best.pmd;
+        pmd->fp = 1;
+    }
 
-    return pmd or best.pmd;
+    if ( best.pmd and otn->proto == SNORT_PROTO_FILE and best.cat != CAT_SET_FILE )
+    {
+        ParseWarning(WARN_RULES, "file rule %d:%d does not have file_data fast pattern",
+            otn->sigInfo.generator, otn->sigInfo.id);
+
+        best.pmd->fp = 0;
+        return false;
+    }
+
+    if ( pmd )
+        return true;
+
+    if ( content )
+        ParseWarning(WARN_RULES, "content based rule %d:%d has no fast pattern",
+            otn->sigInfo.generator, otn->sigInfo.id);
+
+    return false;
 }
 
 static PatternMatchData* get_fp_content(OptTreeNode* otn, OptFpList*& next)
@@ -616,6 +639,8 @@ static int fpFinishPortGroupRule(
                 ParseError("Failed to create pattern matcher for %d\n", pmd->pm_type);
                 return -1;
             }
+            mpse_count++;
+
             if ( fp->get_search_opt() )
                 pg->mpse[pmd->pm_type]->set_opt(1);
         }
@@ -911,12 +936,6 @@ static int fpCreateRuleMaps(SnortConfig* sc, RulePortTables* p)
     if (fpCreateInitRuleMap(sc->prmUdpRTNX, p->udp.src, p->udp.dst, p->udp.any))
         return -1;
 
-    if ( !(sc->prmSvcRTNX = prmNewMap()) )
-        return -1;
-
-    if (fpCreateInitRuleMap(sc->prmSvcRTNX, nullptr, nullptr, p->svc_any))
-        return -1;
-
     return 0;
 }
 
@@ -946,12 +965,6 @@ static void fpFreeRuleMaps(SnortConfig* sc)
     if (sc->prmUdpRTNX != NULL)
     {
         free(sc->prmUdpRTNX);
-        sc->prmUdpRTNX = NULL;
-    }
-
-    if (sc->prmSvcRTNX != NULL)
-    {
-        free(sc->prmSvcRTNX);
         sc->prmUdpRTNX = NULL;
     }
 }
@@ -1508,7 +1521,7 @@ static void fpBuildServicePortGroupByServiceOtnList(
  *
  */
 static void fpBuildServicePortGroups(
-    SnortConfig* sc, SFGHASH* spg, PortGroup** sopg, SFGHASH* srm, FastPatternConfig* fp)
+    SnortConfig* sc, SFGHASH* spg, PortGroupVector& sopg, SFGHASH* srm, FastPatternConfig* fp)
 {
     SFGHASH_NODE* n;
     char* srvc;
@@ -1520,10 +1533,12 @@ static void fpBuildServicePortGroups(
         n=sfghash_findnext(srm) )
     {
         list = (SF_LIST*)n->data;
+
         if (!list)
             continue;
 
         srvc = (char*)n->key;
+
         if (!srvc)
             continue;
 
@@ -1531,43 +1546,17 @@ static void fpBuildServicePortGroups(
 
         /* Add this PortGroup to the protocol-ordinal -> port_group table */
         pg = (PortGroup*)sfghash_find(spg, srvc);
-        if ( pg )
-        {
-            int16_t id;
-            id = FindProtocolReference(srvc);
 
-            if (id==SFTARGET_UNKNOWN_PROTOCOL)
-            {
-                id = AddProtocolReference(srvc);
-
-                if (id <=0 )
-                    FatalError("Could not AddProtocolReference\n");
-
-                else if ( id >= MAX_PROTOCOL_ORDINAL )
-                    ParseWarning(WARN_RULES, "protocol-ordinal=%d exceeds "
-                        "limit of %d for service=%s\n",id,MAX_PROTOCOL_ORDINAL,srvc);
-            }
-            else if ( id > 0 )
-            {
-                if ( id < MAX_PROTOCOL_ORDINAL )
-                {
-                    //LogMessage("adding protocol-ordinal=%d as service=%s\n",id,srvc);
-                    sopg[ id ] = pg;
-                }
-                else
-                    ParseError("protocol-ordinal=%d exceeds "
-                        "limit of %d for service=%s\n",id,MAX_PROTOCOL_ORDINAL,srvc);
-            }
-            else /* id < 0 */
-            {
-                ParseError("adding protocol-ordinal=%d for "
-                    "service=%s, can't use that\n",id,srvc);
-            }
-        }
-        else
+        if ( !pg )
         {
             ParseError("*** failed to create and find a port group for '%s'\n",srvc);
+            continue;
         }
+        int16_t id = FindProtocolReference(srvc);
+        assert(id != SFTARGET_UNKNOWN_PROTOCOL);
+
+        assert((unsigned)id < sopg.size());
+        sopg[ id ] = pg;
     }
 }
 
@@ -1579,32 +1568,21 @@ static void fpCreateServiceMapPortGroups(SnortConfig* sc)
     FastPatternConfig* fp = sc->fast_pattern_config;
 
     sc->spgmmTable = ServicePortGroupMapNew();
-    sc->sopgTable = ServicePortGroupTableNew();
+    sc->sopgTable = new sopg_table_t;
 
-    fpBuildServicePortGroups(sc, sc->spgmmTable->ip_to_srv, sc->sopgTable->ip_to_srv,
-        sc->srmmTable->ip_to_srv, fp);
-    fpBuildServicePortGroups(sc, sc->spgmmTable->ip_to_cli, sc->sopgTable->ip_to_srv,
-        sc->srmmTable->ip_to_cli, fp);
+    for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; i++ )
+    {
+        fpBuildServicePortGroups(sc, sc->spgmmTable->to_srv[i],
+            sc->sopgTable->to_srv[i], sc->srmmTable->to_srv[i], fp);
 
-    fpBuildServicePortGroups(sc, sc->spgmmTable->icmp_to_srv, sc->sopgTable->icmp_to_srv,
-        sc->srmmTable->icmp_to_srv, fp);
-    fpBuildServicePortGroups(sc, sc->spgmmTable->icmp_to_cli, sc->sopgTable->icmp_to_cli,
-        sc->srmmTable->icmp_to_cli, fp);
-
-    fpBuildServicePortGroups(sc, sc->spgmmTable->tcp_to_srv, sc->sopgTable->tcp_to_srv,
-        sc->srmmTable->tcp_to_srv, fp);
-    fpBuildServicePortGroups(sc, sc->spgmmTable->tcp_to_cli, sc->sopgTable->tcp_to_cli,
-        sc->srmmTable->tcp_to_cli, fp);
-
-    fpBuildServicePortGroups(sc, sc->spgmmTable->udp_to_srv, sc->sopgTable->udp_to_srv,
-        sc->srmmTable->udp_to_srv, fp);
-    fpBuildServicePortGroups(sc, sc->spgmmTable->udp_to_cli, sc->sopgTable->udp_to_cli,
-        sc->srmmTable->udp_to_cli, fp);
-
-    fpBuildServicePortGroups(sc, sc->spgmmTable->svc_to_srv, sc->sopgTable->svc_to_srv,
-        sc->srmmTable->svc_to_srv, fp);
-    fpBuildServicePortGroups(sc, sc->spgmmTable->svc_to_cli, sc->sopgTable->svc_to_cli,
-        sc->srmmTable->svc_to_cli, fp);
+        fpBuildServicePortGroups(sc, sc->spgmmTable->to_cli[i],
+            sc->sopgTable->to_cli[i], sc->srmmTable->to_cli[i], fp);
+    }
+    if ( !sc->sopgTable->set_user_mode() )
+    {
+        fp->set_stream_insert(true);
+        ParseWarning(WARN_RULES, "legacy mode fast pattern searching enabled");
+    }
 }
 
 /*
@@ -1623,7 +1601,7 @@ static void fpPrintRuleList(SF_LIST* list)
     }
 }
 
-static void fpPrintServiceRuleMapTable(SFGHASH* p, const char* msg)
+static void fpPrintServiceRuleMapTable(SFGHASH* p, const char* proto, const char* dir)
 {
     SFGHASH_NODE* n;
 
@@ -1631,7 +1609,9 @@ static void fpPrintServiceRuleMapTable(SFGHASH* p, const char* msg)
         return;
 
     std::string label = "service rule counts - ";
-    label += msg;
+    label += proto;
+    label += " ";
+    label += dir;
     LogLabel(label.c_str());
 
     for ( n = sfghash_findfirst(p);
@@ -1655,20 +1635,12 @@ static void fpPrintServiceRuleMapTable(SFGHASH* p, const char* msg)
 
 static void fpPrintServiceRuleMaps(srmm_table_t* service_map)
 {
-    fpPrintServiceRuleMapTable(service_map->ip_to_srv,   "ip to server");
-    fpPrintServiceRuleMapTable(service_map->ip_to_cli,   "ip to client");
-
-    fpPrintServiceRuleMapTable(service_map->icmp_to_srv, "icmp to server");
-    fpPrintServiceRuleMapTable(service_map->icmp_to_cli, "icmp to client");
-
-    fpPrintServiceRuleMapTable(service_map->tcp_to_srv,  "tcp to server");
-    fpPrintServiceRuleMapTable(service_map->tcp_to_cli,  "tcp to client");
-
-    fpPrintServiceRuleMapTable(service_map->udp_to_srv,  "udp to server");
-    fpPrintServiceRuleMapTable(service_map->udp_to_cli,  "udp to client");
-
-    fpPrintServiceRuleMapTable(service_map->svc_to_srv,  "svc to server");
-    fpPrintServiceRuleMapTable(service_map->svc_to_cli,  "svc to client");
+    for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; ++i )
+    {
+        const char* s = get_protocol_name(i);
+        fpPrintServiceRuleMapTable(service_map->to_srv[i], s, "to server");
+        fpPrintServiceRuleMapTable(service_map->to_cli[i], s, "to client");
+    }
 }
 
 static void fp_print_service_rules(SFGHASH* cli, SFGHASH* srv, const char* msg)
@@ -1706,14 +1678,8 @@ static void fp_print_service_rules(SFGHASH* cli, SFGHASH* srv, const char* msg)
 
 static void fp_print_service_rules_by_proto(srmm_table_t* srmm)
 {
-    // FIXIT-L should these be supported?
-    fp_print_service_rules(srmm->ip_to_srv, srmm->ip_to_cli, "ip");
-    fp_print_service_rules(srmm->icmp_to_srv, srmm->icmp_to_cli, "icmp");
-
-    fp_print_service_rules(srmm->tcp_to_srv, srmm->tcp_to_cli, "tcp");
-    fp_print_service_rules(srmm->udp_to_srv, srmm->udp_to_cli, "udp");
-
-    fp_print_service_rules(srmm->svc_to_srv, srmm->svc_to_cli, "svc");
+    for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; ++i )
+        fp_print_service_rules(srmm->to_srv[i], srmm->to_cli[i], get_protocol_name(i));
 }
 
 static void fp_sum_port_groups(PortGroup* pg, unsigned c[PM_TYPE_MAX])
@@ -1741,20 +1707,11 @@ static void fp_print_service_groups(srmm_table_t* srmm)
     unsigned to_srv[PM_TYPE_MAX] = { 0 };
     unsigned to_cli[PM_TYPE_MAX] = { 0 };
 
-    fp_sum_service_groups(srmm->ip_to_srv, to_srv);
-    fp_sum_service_groups(srmm->ip_to_cli, to_cli);
-
-    fp_sum_service_groups(srmm->icmp_to_srv, to_srv);
-    fp_sum_service_groups(srmm->icmp_to_cli, to_cli);
-
-    fp_sum_service_groups(srmm->tcp_to_srv, to_srv);
-    fp_sum_service_groups(srmm->tcp_to_cli, to_cli);
-
-    fp_sum_service_groups(srmm->udp_to_srv, to_srv);
-    fp_sum_service_groups(srmm->udp_to_cli, to_cli);
-
-    fp_sum_service_groups(srmm->svc_to_srv, to_srv);
-    fp_sum_service_groups(srmm->svc_to_cli, to_cli);
+    for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; ++i )
+    {
+        fp_sum_service_groups(srmm->to_srv[i], to_srv);
+        fp_sum_service_groups(srmm->to_cli[i], to_cli);
+    }
 
     bool label = true;
 
@@ -1857,16 +1814,21 @@ static int fpCreateServicePortGroups(SnortConfig* sc)
 */
 int fpCreateFastPacketDetection(SnortConfig* sc)
 {
-    /* This is somewhat necessary because of how the detection option trees
-     * are added via a callback from the pattern matcher */
-    if ( !get_rule_count() or !sc )
-        return 0;
+    assert(sc);
 
     RulePortTables* port_tables = sc->port_tables;
     FastPatternConfig* fp = sc->fast_pattern_config;
 
-    if ( !port_tables or !fp )
+    assert(port_tables);
+    assert(fp);
+
+    if ( !get_rule_count() )
+    {
+        sc->sopgTable = new sopg_table_t;
         return 0;
+    }
+
+    mpse_count = 0;
 
     MpseManager::start_search_engine(fp->get_search_api());
 
@@ -1907,23 +1869,16 @@ int fpCreateFastPacketDetection(SnortConfig* sc)
     fp_print_port_groups(port_tables);
     fp_print_service_groups(sc->spgmmTable);
 
-    // FIXIT-L cleanup the mpse startup output
-    //LogMessage("\n");
-    //LogMessage("[ Port and Service Based Pattern Matching Memory ]\n" );
+    if ( mpse_count )
+        LogLabel("search engine");
 
-#if 1
-    // FIXIT-L update format of search engine startup foo
-    LogLabel("search engine");
     MpseManager::print_mpse_summary(fp->get_search_api());
 
-    if ( fp->get_max_pattern_len() )
-    {
-        LogMessage("%25.25s: %-12u\n", "max_pattern_len", fp->get_max_pattern_len());
+    if ( fp->get_num_patterns_truncated() )
         LogMessage("%25.25s: %-12u\n", "truncated patterns", fp->get_num_patterns_truncated());
-    }
+
     if ( fp->get_num_patterns_trimmed() )
         LogMessage("%25.25s: %-12u\n", "prefix trims", fp->get_num_patterns_trimmed());
-#endif
 
     MpseManager::setup_search_engine(fp->get_search_api(), sc);
 
@@ -1943,8 +1898,9 @@ void fpDeleteFastPacketDetection(SnortConfig* sc)
 
     ServiceMapFree(sc->srmmTable);
     ServicePortGroupMapFree(sc->spgmmTable);
-    if (sc->sopgTable != NULL)
-        free(sc->sopgTable);
+
+    if ( sc->sopgTable )
+        delete sc->sopgTable;
 }
 
 /*
@@ -1974,15 +1930,11 @@ void fpShowEventStats(SnortConfig* sc)
     LogMessage("\n");
     LogMessage("** UDP Event Stats --\n");
     prmShowEventStats(sc->prmUdpRTNX);
-
-    LogMessage("\n");
-    LogMessage("** SVC Event Stats --\n");
-    prmShowEventStats(sc->prmSvcRTNX);
 }
 
-const char* PatternRawToContent(const char* pattern, int pattern_len)
+static const char* PatternRawToContent(const char* pattern, int pattern_len)
 {
-    static THREAD_LOCAL char content_buf[1024];
+    static char content_buf[1024];
     int max_write_size = sizeof(content_buf) - 64;
     int i, j = 0;
     int hex = 0;
@@ -2063,6 +2015,19 @@ static void PrintFastPatternInfo(OptTreeNode* otn, PatternMatchData* pmd,
     if ((otn == NULL) || (pmd == NULL))
         return;
 
+#if 0
+    std::string hex, txt;
+    char buf[8];
+
+    for ( int i = 0; i < pattern_length; ++i )
+    {
+        snprintf(buf, sizeof(buf), "%2.02X ", (uint8_t)pattern[i]);
+        hex += buf;
+        txt += isprint(pattern[i]) ? pattern[i] : '.';
+
+    }
+    printf("fast pattern[%d] = x%s '%s'\n", pattern_length, hex.c_str(), txt.c_str());
+#else
     LogMessage("%u:%u\n", otn->sigInfo.generator, otn->sigInfo.id);
     LogMessage("  Fast pattern matcher: %s\n", pm_type_strings[pmd->pm_type]);
     LogMessage("  Fast pattern set: %s\n", pmd->fp ? "yes" : "no");
@@ -2103,5 +2068,6 @@ static void PrintFastPatternInfo(OptTreeNode* otn, PatternMatchData* pmd,
 
     LogMessage("  Final pattern\n");
     LogMessage("    %s\n", PatternRawToContent(pattern, pattern_length));
+#endif
 }
 

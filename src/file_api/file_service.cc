@@ -370,7 +370,6 @@ static void DumpHex(FILE* fp, const uint8_t* data, unsigned len)
     }
 }
 
-
 static inline void finish_signature_lookup(FileContext* context)
 {
     if (context->get_file_sig_sha256())

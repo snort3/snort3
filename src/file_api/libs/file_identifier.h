@@ -64,9 +64,9 @@ class FileMagicRule
 public:
     void clear(void);
     uint32_t rev = 0;
+    uint32_t id = 0;
     std::string message;
     std::string type;
-    uint32_t id = 0;
     std::string category;
     std::string version;
     FileMagics file_magics;

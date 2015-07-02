@@ -65,7 +65,8 @@ void init_mime(void);
 void free_mime(void);
 const uint8_t* process_mime_data(Flow *flow, const uint8_t *start, const uint8_t *end,
                 MimeState *mime_ssn, bool upload, FilePosition position);
-void free_mime_session(MimeState* mime_ssn);
+void free_mime_session(MimeState*);
+void free_mime_session(MimeState&);
 void finalize_mime_position(Flow* flow, void* decode_state, FilePosition* position);
 void reset_mime_paf_state(MimeDataPafInfo *data_info);
 /*  Process data boundary and flush each file based on boundary*/

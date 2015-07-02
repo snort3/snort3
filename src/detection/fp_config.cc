@@ -38,7 +38,7 @@ FastPatternConfig::FastPatternConfig()
 {
     memset(this, 0, sizeof(*this));
 
-    inspect_stream_insert = 1;
+    inspect_stream_insert = false;
     max_queue_events = 5;
     bleedover_port_limit = 1024;
 
@@ -48,8 +48,7 @@ FastPatternConfig::FastPatternConfig()
 }
 
 FastPatternConfig::~FastPatternConfig()
-{
-}
+{ }
 
 int FastPatternConfig::set_detect_search_method(const char* method)
 {

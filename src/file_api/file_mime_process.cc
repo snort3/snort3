@@ -851,6 +851,7 @@ const uint8_t* process_mime_data_paf(Flow* flow, const uint8_t* start, const uin
     {
         DecodeConfig* conf= mime_ssn->decode_conf;
         Email_DecodeState* ds = (Email_DecodeState*)(mime_ssn->decode_state);
+
         if (conf)
         {
             int detection_size = getDetectionSize(conf->b64_depth, conf->qp_depth,
@@ -968,20 +969,21 @@ void free_mime(void)
         delete mime_hdr_search_mpse;
 }
 
+void free_mime_session(MimeState& mime_ssn)
+{
+    if ( mime_ssn.decode_state )
+        free(mime_ssn.decode_state);
+
+    if ( mime_ssn.log_state )
+        free(mime_ssn.log_state);
+}
+
 void free_mime_session(MimeState* mime_ssn)
 {
     if (!mime_ssn)
         return;
 
-    if (mime_ssn->decode_state != NULL)
-    {
-        free(mime_ssn->decode_state);
-    }
-    if (mime_ssn->log_state != NULL)
-    {
-        free(mime_ssn->log_state);
-    }
-
+    free_mime_session(*mime_ssn);
     free(mime_ssn);
 }
 

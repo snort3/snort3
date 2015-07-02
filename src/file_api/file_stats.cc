@@ -46,7 +46,6 @@ void print_file_stats()
     int i;
     uint64_t processed_total[2];
     uint64_t processed_data_total[2];
-    uint64_t verdicts_total;
 
     if (!file_stats.files_total)
         return;
@@ -62,7 +61,7 @@ void print_file_stats()
     if ( !check_total )
         return;
 
-    LogLabel("file type stats (files):");
+    LogLabel("file type stats (files)");
 
     LogMessage("         Type              Download   Upload \n");
 
@@ -89,7 +88,7 @@ void print_file_stats()
     LogMessage("            Total          " FMTu64("-10") " " FMTu64("-10") " \n",
         processed_total[0], processed_total[1]);
 
-    LogLabel("file type stats (bytes):");
+    LogLabel("file type stats (bytes)");
 
     LogMessage("         Type              Download   Upload \n");
 
@@ -123,7 +122,7 @@ void print_file_stats()
     if ( !check_total )
         return;
 
-    LogLabel("file signature stats:\n");
+    LogLabel("file signature stats");
 
     LogMessage("         Type              Download   Upload \n");
 
@@ -145,9 +144,10 @@ void print_file_stats()
     LogMessage("            Total          " FMTu64("-10") " " FMTu64("-10") " \n",
         processed_total[0], processed_total[1]);
 
-    LogLabel("file type verdicts:\n");
+#if 0
+    LogLabel("file type verdicts");
 
-    verdicts_total = 0;
+    uint64_t verdicts_total = 0;
     for (i = 0; i < FILE_VERDICT_MAX; i++)
     {
         verdicts_total+=file_stats.verdicts_type[i];
@@ -293,5 +293,7 @@ void print_file_stats()
             "-10") " \n", file_stats.files_sig_depth);
 
     FileCapture::print_mem_usage();
+#endif
+
 }
 

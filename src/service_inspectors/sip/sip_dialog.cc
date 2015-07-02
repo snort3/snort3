@@ -378,7 +378,6 @@ static int SIP_checkMediaChange(SIPMsg* sipMsg, SIP_DialogData* dialog)
 static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF* config)
 {
     SIP_MediaData* mdataA,* mdataB;
-    FlowData *fd;
 
     if (0 == config->ignoreChannel)
         return false;
@@ -404,21 +403,23 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
             sfip_to_str(&mdataA->maddress), mdataA->mport); );
         DEBUG_WRAP(DebugMessage(DEBUG_SIP, "Ignoring channels Destine IP: %s Port: %u\n",
             sfip_to_str(&mdataB->maddress), mdataB->mport); );
+
         /* Call into Streams to mark data channel as something to ignore. */
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-        fd = stream.get_application_data_from_ip_port((uint8_t)PktType::UDP, IPPROTO_UDP, &mdataA->maddress,mdataA->mport,
-            &mdataB->maddress,
-            mdataB->mport, 0, 0, p->pkth->address_space_id, SipFlowData::flow_id);
+        FlowData* fd = stream.get_application_data_from_ip_port(
+            (uint8_t)PktType::UDP, IPPROTO_UDP, &mdataA->maddress,mdataA->mport,
+            &mdataB->maddress, mdataB->mport, 0, 0, p->pkth->address_space_id,
+            SipFlowData::flow_id);
 #else
-        fd = stream.get_application_data_from_ip_port((uint8_t)PktType::UDP, IPPROTO_UDP, &mdataA->maddress,mdataA->mport,
-            &mdataB->maddress,
-            mdataB->mport, 0, 0, 0, SipFlowData::flow_id);
+        FlowData* fd = stream.get_application_data_from_ip_port(
+            (uint8_t)PktType::UDP, IPPROTO_UDP, &mdataA->maddress,mdataA->mport,
+            &mdataB->maddress, mdataB->mport, 0, 0, 0, SipFlowData::flow_id);
+#endif
         if ( fd )
         {
             stream.set_ignore_direction(p->flow, SSN_DIR_BOTH);
         }
         else
-#endif
         {
             stream.ignore_session(&mdataA->maddress, mdataA->mport, &mdataB->maddress,
                 mdataB->mport, p->type(), SipFlowData::flow_id, SSN_DIR_BOTH);

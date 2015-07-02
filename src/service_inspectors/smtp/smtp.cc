@@ -46,6 +46,7 @@
 #include "protocols/ssl.h"
 #include "unified2_common.h"
 #include "detection/detection_util.h"
+#include "file_api/file_mime_process.h"
 
 THREAD_LOCAL ProfileStats smtpPerfStats;
 THREAD_LOCAL SimpleStats smtpstats;
@@ -170,6 +171,12 @@ static int SMTP_NormalizeData(void* conf, const uint8_t* ptr, const uint8_t* dat
 MimeMethods smtp_mime_methods = { SMTP_HandleHeaderLine, SMTP_NormalizeData, SMTP_DecodeAlert,
                                   SMTP_ResetState, smtp_is_data_end };
 
+SmtpFlowData::SmtpFlowData() : FlowData(flow_id)
+{ memset(&session, 0, sizeof(session)); }
+
+SmtpFlowData::~SmtpFlowData()
+{ free_mime_session(session.mime_ssn); }
+
 unsigned SmtpFlowData::flow_id = 0;
 static SMTPData* get_session_data(Flow* flow)
 {
@@ -226,21 +233,16 @@ void SMTP_DecodeAlert(void* ds)
     }
 }
 
-void SMTP_InitCmds(SMTP_PROTO_CONF* config)
+static void SMTP_InitCmds(SMTP_PROTO_CONF* config)
 {
-    const SMTPToken* tmp;
-
     if (config == NULL)
         return;
 
-    /* add one to CMD_LAST for NULL entry */
-    config->cmds = (SMTPToken*)calloc(CMD_LAST + 1, sizeof(SMTPToken));
-    if (config->cmds == NULL)
-    {
-        FatalError("Could not allocate memory for SMTP Command structure.\n");
-    }
+    config->cmd_config = (SMTPCmdConfig*)SnortAlloc(CMD_LAST * sizeof(SMTPCmdConfig));
+    config->cmd_search = (SMTPSearch*)SnortAlloc(CMD_LAST * sizeof(SMTPSearch));
+    config->cmds = (SMTPToken*)SnortAlloc((CMD_LAST + 1) * sizeof(SMTPToken));
 
-    for (tmp = &smtp_known_cmds[0]; tmp->name != NULL; tmp++)
+    for (const SMTPToken* tmp = &smtp_known_cmds[0]; tmp->name != NULL; tmp++)
     {
         config->cmds[tmp->search_id].name_len = tmp->name_len;
         config->cmds[tmp->search_id].search_id = tmp->search_id;
@@ -248,29 +250,27 @@ void SMTP_InitCmds(SMTP_PROTO_CONF* config)
         config->cmds[tmp->search_id].type = tmp->type;
 
         if (config->cmds[tmp->search_id].name == NULL)
-        {
             FatalError("Could not allocate memory for SMTP Command structure.\n");
-        }
-    }
-
-    /* initialize memory for command searches */
-    config->cmd_search = (SMTPSearch*)calloc(CMD_LAST, sizeof(SMTPSearch));
-    if (config->cmd_search == NULL)
-    {
-        FatalError("Could not allocate memory for SMTP Command Structure.\n");
     }
 
     config->num_cmds = CMD_LAST;
 }
 
-void SMTP_CommandSearchInit(SMTP_PROTO_CONF* config)
+static void SMTP_TermCmds(SMTP_PROTO_CONF* config)
+{
+    for ( int i = 0; i <= CMD_LAST; ++i )
+        free((char*)config->cmds[i].name);
+
+    free(config->cmds);
+    free(config->cmd_search);
+    free(config->cmd_config);
+}
+
+static void SMTP_CommandSearchInit(SMTP_PROTO_CONF* config)
 {
     const SMTPToken* tmp;
     config->cmd_search_mpse = new SearchTool();
-    if (config->cmd_search_mpse == NULL)
-    {
-        FatalError("Could not allocate memory for SMTP Command search.\n");
-    }
+
     for (tmp = config->cmds; tmp->name != NULL; tmp++)
     {
         config->cmd_search[tmp->search_id].name = (char *)tmp->name;
@@ -279,6 +279,11 @@ void SMTP_CommandSearchInit(SMTP_PROTO_CONF* config)
     }
 
     config->cmd_search_mpse->prep();
+}
+
+static void SMTP_CommandSearchTerm(SMTP_PROTO_CONF* config)
+{
+    delete config->cmd_search_mpse;
 }
 
 void SMTP_ResponseSearchInit(void)
@@ -314,24 +319,10 @@ static int AddCmd(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum typ
     config->num_cmds++;
 
     /* allocate enough memory for new commmand - alloc one extra for NULL entry */
-    cmds = (SMTPToken*)calloc(config->num_cmds + 1, sizeof(SMTPToken));
-    if (cmds == NULL)
-    {
-        FatalError("Failed to allocate memory for SMTP command structure\n");
-    }
-
-    /* This gets filled in later */
-    cmd_search = (SMTPSearch*)calloc(config->num_cmds, sizeof(SMTPSearch));
-    if (cmd_search == NULL)
-    {
-        FatalError("Failed to allocate memory for SMTP command structure\n");
-    }
-
-    cmd_config = (SMTPCmdConfig*)calloc(config->num_cmds, sizeof(SMTPCmdConfig));
-    if (cmd_config == NULL)
-    {
-        FatalError("Failed to allocate memory for SMTP command structure\n");
-    }
+    // FIXIT-L this constant reallocation is not necessary; use vector
+    cmds = (SMTPToken*)SnortAlloc((config->num_cmds + 1) * sizeof(SMTPToken));
+    cmd_search = (SMTPSearch*)SnortAlloc(config->num_cmds * sizeof(SMTPSearch));
+    cmd_config = (SMTPCmdConfig*)SnortAlloc(config->num_cmds * sizeof(SMTPCmdConfig));
 
     /* copy existing commands into newly allocated memory
      *      * don't need to copy anything from cmd_search since this hasn't been initialized yet */
@@ -402,38 +393,6 @@ static int GetCmdId(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum t
     }
 
     return AddCmd(config, name, type);
-}
-
-void ProcessSmtpCmdsList(SMTP_PROTO_CONF* config, const SmtpCmd* sc)
-{
-    const char* cmd = sc->name.c_str();
-    int id;
-    SMTPCmdTypeEnum type;
-
-    if ( sc->flags & PCMD_AUTH )
-        type = SMTP_CMD_TYPE_AUTH;
-
-    else if (  sc->flags & PCMD_BDATA )
-        type = SMTP_CMD_TYPE_BDATA;
-
-    else if (  sc->flags & PCMD_DATA )
-        type = SMTP_CMD_TYPE_DATA;
-
-    else
-        type = SMTP_CMD_TYPE_NORMAL;
-
-    id = GetCmdId(config, cmd, type);
-    if (  sc->flags & PCMD_INVALID )
-        config->cmd_config[id].alert = true;
-
-    else if ( sc->flags & PCMD_NORM )
-        config->cmd_config[id].normalize = true;
-
-    else
-        config->cmd_config[id].alert = false;
-
-    if ( sc->flags & PCMD_ALT )
-        config->cmd_config[id].max_line_len = sc->number;
 }
 
 void SMTP_PrintConfig(SMTP_PROTO_CONF *config)
@@ -1630,6 +1589,8 @@ public:
     StreamSplitter* get_splitter(bool c2s) override
     { return new SmtpSplitter(c2s); }
 
+    void ProcessSmtpCmdsList(const SmtpCmd*);
+
 private:
     SMTP_PROTO_CONF* config;
 };
@@ -1637,12 +1598,18 @@ private:
 Smtp::Smtp(SMTP_PROTO_CONF* pc)
 {
     config = pc;
+
+    SMTP_RegXtraDataFuncs(config);
+    SMTP_InitCmds(config);
+    SMTP_CommandSearchInit(config);
 }
 
 Smtp::~Smtp()
 {
-    if ( config )
-        delete config;
+    SMTP_CommandSearchTerm(config);
+    SMTP_TermCmds(config);
+
+    delete config;
 }
 
 bool Smtp::configure(SnortConfig*)
@@ -1698,6 +1665,38 @@ void Smtp::clear(Packet*)
     SMTP_ResetAltBuffer();
 }
 
+void Smtp::ProcessSmtpCmdsList(const SmtpCmd* sc)
+{
+    const char* cmd = sc->name.c_str();
+    int id;
+    SMTPCmdTypeEnum type;
+
+    if ( sc->flags & PCMD_AUTH )
+        type = SMTP_CMD_TYPE_AUTH;
+
+    else if (  sc->flags & PCMD_BDATA )
+        type = SMTP_CMD_TYPE_BDATA;
+
+    else if (  sc->flags & PCMD_DATA )
+        type = SMTP_CMD_TYPE_DATA;
+
+    else
+        type = SMTP_CMD_TYPE_NORMAL;
+
+    id = GetCmdId(config, cmd, type);
+    if (  sc->flags & PCMD_INVALID )
+        config->cmd_config[id].alert = true;
+
+    else if ( sc->flags & PCMD_NORM )
+        config->cmd_config[id].normalize = true;
+
+    else
+        config->cmd_config[id].alert = false;
+
+    if ( sc->flags & PCMD_ALT )
+        config->cmd_config[id].max_line_len = sc->number;
+}
+
 //-------------------------------------------------------------------------
 // api stuff
 //-------------------------------------------------------------------------
@@ -1723,16 +1722,14 @@ static Inspector* smtp_ctor(Module* m)
 {
     SmtpModule* mod = (SmtpModule*)m;
     SMTP_PROTO_CONF* conf = mod->get_data();
+    Smtp* smtp = new Smtp(conf);
+
     unsigned i = 0;
-    SMTP_RegXtraDataFuncs(conf);
-    SMTP_InitCmds(conf);
 
     while ( const SmtpCmd* cmd = mod->get_cmd(i++) )
-        ProcessSmtpCmdsList(conf, cmd);
+        smtp->ProcessSmtpCmdsList(cmd);
 
-    SMTP_CommandSearchInit(conf);
-
-    return new Smtp(conf);
+    return smtp;
 }
 
 static void smtp_dtor(Inspector* p)

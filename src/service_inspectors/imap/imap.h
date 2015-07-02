@@ -181,10 +181,8 @@ struct IMAPData
 class ImapFlowData : public FlowData
 {
 public:
-    ImapFlowData() : FlowData(flow_id)
-    { memset(&session, 0, sizeof(session)); }
-
-    ~ImapFlowData() { }
+    ImapFlowData();
+    ~ImapFlowData();
 
     static void init()
     { flow_id = FlowData::get_flow_id(); }
@@ -194,5 +192,5 @@ public:
     IMAPData session;
 };
 
-#endif /* IMAP_H */
+#endif
 

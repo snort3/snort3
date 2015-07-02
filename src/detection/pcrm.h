@@ -28,6 +28,8 @@
 #include "protocols/packet.h"
 #include "ports/port_group.h"
 
+#define ANYPORT (-1)
+
 struct PORT_RULE_MAP
 {
     int prmNumDstRules;

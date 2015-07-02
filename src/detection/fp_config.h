@@ -153,7 +153,6 @@ private:
     unsigned bleedover_port_limit;
 
     int search_opt;
-    int search_method_verbose;
     int portlists_flags;
     int max_pattern_len;
     int num_patterns_truncated;  // due to max_pattern_len

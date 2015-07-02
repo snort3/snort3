@@ -137,10 +137,8 @@ struct POPData
 class PopFlowData : public FlowData
 {
 public:
-    PopFlowData() : FlowData(flow_id)
-    { memset(&session, 0, sizeof(session)); }
-
-    ~PopFlowData() { }
+    PopFlowData();
+    ~PopFlowData();
 
     static void init()
     { flow_id = FlowData::get_flow_id(); }
@@ -150,5 +148,5 @@ public:
     POPData session;
 };
 
-#endif /* POP_H */
+#endif
 

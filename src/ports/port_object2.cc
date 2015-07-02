@@ -219,8 +219,12 @@ PortObject2* PortObject2Dup(PortObject* po)
             poi =(PortObjectItem*)sflist_next(&lpos) )
         {
             poinew = PortObjectItemDup(poi);
+
             if (!poinew)
-                return 0;
+            {
+                free(ponew);
+                return NULL;
+            }
 
             PortObjectAddItem( (PortObject*)ponew, poinew, NULL);
         }
@@ -236,6 +240,7 @@ PortObject2* PortObject2Dup(PortObject* po)
             prule = (int*)calloc(1,sizeof(int));
             if (!prule)
             {
+                free(ponew);
                 return NULL;
             }
             *prule = *prid;

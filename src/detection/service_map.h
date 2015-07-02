@@ -30,6 +30,8 @@
 #ifndef SERVICE_MAP_H
 #define SERVICE_MAP_H
 
+#include <vector>
+
 #include "detection/pcrm.h"
 #include "target_based/snort_protocols.h"
 
@@ -38,20 +40,8 @@ struct SFGHASH;
 //  Service Rule Map Master Table
 struct srmm_table_t
 {
-    SFGHASH* ip_to_srv;
-    SFGHASH* ip_to_cli;
-
-    SFGHASH* icmp_to_srv;
-    SFGHASH* icmp_to_cli;
-
-    SFGHASH* tcp_to_srv;
-    SFGHASH* tcp_to_cli;
-
-    SFGHASH* udp_to_srv;
-    SFGHASH* udp_to_cli;
-
-    SFGHASH* svc_to_srv;
-    SFGHASH* svc_to_cli;
+    SFGHASH* to_srv[SNORT_PROTO_MAX];
+    SFGHASH* to_cli[SNORT_PROTO_MAX];
 };
 
 srmm_table_t* ServiceMapNew();
@@ -60,33 +50,24 @@ void ServiceMapFree(srmm_table_t*);
 srmm_table_t* ServicePortGroupMapNew();
 void ServicePortGroupMapFree(srmm_table_t*);
 
-void ServiceTableFree(SFGHASH*);
 void fpPrintServicePortGroupSummary(srmm_table_t*);
 int fpCreateServiceMaps(struct SnortConfig*);
 
 //  Service/Protocol Oridinal To PortGroup table
+typedef std::vector<PortGroup*> PortGroupVector;
+
 struct sopg_table_t
 {
-    PortGroup* ip_to_srv[MAX_PROTOCOL_ORDINAL];
-    PortGroup* ip_to_cli[MAX_PROTOCOL_ORDINAL];
+    sopg_table_t();
+    bool set_user_mode();
+    PortGroup* get_port_group(int proto, bool c2s, int16_t proto_ordinal);
 
-    PortGroup* icmp_to_srv[MAX_PROTOCOL_ORDINAL];
-    PortGroup* icmp_to_cli[MAX_PROTOCOL_ORDINAL];
+    PortGroupVector to_srv[SNORT_PROTO_MAX];
+    PortGroupVector to_cli[SNORT_PROTO_MAX];
 
-    PortGroup* tcp_to_srv[MAX_PROTOCOL_ORDINAL];
-    PortGroup* tcp_to_cli[MAX_PROTOCOL_ORDINAL];
-
-    PortGroup* udp_to_srv[MAX_PROTOCOL_ORDINAL];
-    PortGroup* udp_to_cli[MAX_PROTOCOL_ORDINAL];
-
-    PortGroup* svc_to_srv[MAX_PROTOCOL_ORDINAL];
-    PortGroup* svc_to_cli[MAX_PROTOCOL_ORDINAL];
+    bool user_mode;
 };
 
-sopg_table_t* ServicePortGroupTableNew();
-
-PortGroup* fpGetServicePortGroupByOrdinal(
-    sopg_table_t* sopg, int proto, int dir, int16_t proto_ordinal);
 
 #endif
 

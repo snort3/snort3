@@ -1125,6 +1125,9 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
     if ( iCallDetect == 0 )
     {
         /* snort_detect called at least once from above pkt processing loop. */
+        // FIXIT this throws off nfp rules like this:
+        // alert tcp any any -> any any ( sid:1; msg:"1"; flags:S; )
+        // (check shutdown counts)
         DisableInspection(p);
     }
 

@@ -359,11 +359,11 @@ static TokenType get_token(
 
 enum FsmAction
 {
-    FSM_ACT, FSM_PRO,
-    FSM_SIP, FSM_SP,
+    FSM_ACT, FSM_PRO,FSM_HDR,
+    FSM_SIP, FSM_SP, FSM_SPX,
     FSM_DIR,
-    FSM_DIP, FSM_DP,
-    FSM_STB, FSM_SOB,
+    FSM_DIP, FSM_DP, FSM_DPX,
+    FSM_SOB, FSM_STB,
     FSM_EOB,
     FSM_KEY, FSM_OPT,
     FSM_VAL, FSM_SET,
@@ -404,14 +404,18 @@ static const State fsm[] =
     { 0, 15, TT_LITERAL, FSM_KEY, "include",  "" },
     { 0,  1, TT_LITERAL, FSM_ACT, nullptr,    "(" },
     { 1,  8, TT_PUNCT,   FSM_STB, "(",        "(:,;)" },
-    { 1,  2, TT_LITERAL, FSM_PRO, nullptr,    "" },
-    { 2,  3, TT_LIST,    FSM_SIP, nullptr,    nullptr },
-    { 2,  3, TT_LITERAL, FSM_SIP, nullptr,    nullptr },
+    { 1,  2, TT_LITERAL, FSM_PRO, nullptr,    "(" },
+    { 2,  8, TT_PUNCT,   FSM_HDR, "(",        "(:,;)" },
+    { 2,  3, TT_LIST,    FSM_SIP, nullptr,    "" },
+    { 2,  3, TT_LITERAL, FSM_SIP, nullptr,    "" },
+    { 3,  5, TT_LITERAL, FSM_SPX, "->",       nullptr },
+    { 3,  5, TT_LITERAL, FSM_SPX, "<>",       nullptr },
     { 3,  4, TT_LIST,    FSM_SP,  nullptr,    nullptr },
     { 3,  4, TT_LITERAL, FSM_SP,  nullptr,    nullptr },
     { 4,  5, TT_LITERAL, FSM_DIR, nullptr,    nullptr },
-    { 5,  6, TT_LIST,    FSM_DIP, nullptr,    nullptr },
-    { 5,  6, TT_LITERAL, FSM_DIP, nullptr,    nullptr },
+    { 5,  6, TT_LIST,    FSM_DIP, nullptr,    "(" },
+    { 5,  6, TT_LITERAL, FSM_DIP, nullptr,    "(" },
+    { 6,  8, TT_PUNCT,   FSM_DPX, "(",        "(:,;)" },
     { 6,  7, TT_LIST,    FSM_DP,  nullptr,    "(:,;)" },
     { 6,  7, TT_LITERAL, FSM_DP,  nullptr,    "(:,;)" },
     { 7,  8, TT_PUNCT,   FSM_SOB, "(",        nullptr },
@@ -456,7 +460,7 @@ static const State* get_state(int num, TokenType type, const string& tok)
             (!s->type || type == s->type) &&
             (!s->match || tok == s->match) )
         {
-            return fsm + i;
+            return s;
         }
     }
     ParseError("syntax error");
@@ -496,12 +500,23 @@ static bool exec(
     case FSM_PRO:
         parse_rule_proto(sc, tok.c_str(), rps.rtn);
         break;
+    case FSM_HDR:
+        parse_rule_nets(sc, "any", true, rps.rtn);
+        parse_rule_ports(sc, "any", true, rps.rtn);
+        parse_rule_dir(sc, "->", rps.rtn);
+        parse_rule_nets(sc, "any", false, rps.rtn);
+        parse_rule_ports(sc, "any", false, rps.rtn);
+        rps.otn = parse_rule_open(sc, rps.rtn);
+        break;
     case FSM_SIP:
         parse_rule_nets(sc, tok.c_str(), true, rps.rtn);
         break;
     case FSM_SP:
         parse_rule_ports(sc, tok.c_str(), true, rps.rtn);
         break;
+    case FSM_SPX:
+        parse_rule_ports(sc, "any", true, rps.rtn);
+        // fall thru ...
     case FSM_DIR:
         parse_rule_dir(sc, tok.c_str(), rps.rtn);
         break;
@@ -511,11 +526,14 @@ static bool exec(
     case FSM_DP:
         parse_rule_ports(sc, tok.c_str(), false, rps.rtn);
         break;
-    case FSM_STB:
-        rps.otn = parse_rule_open(sc, rps.rtn, true);
-        break;
+    case FSM_DPX:
+        parse_rule_ports(sc, "any", false, rps.rtn);
+        // fall thru ...
     case FSM_SOB:
         rps.otn = parse_rule_open(sc, rps.rtn);
+        break;
+    case FSM_STB:
+        rps.otn = parse_rule_open(sc, rps.rtn, true);
         break;
     case FSM_EOB:
     {

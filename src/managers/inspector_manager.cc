@@ -115,6 +115,9 @@ PHInstance::PHInstance(PHClass& p, Module* mod) : pp_class(p)
     {
         handler->set_api(&p.api);
         handler->add_ref();
+
+        if ( p.api.service )
+            handler->set_service(AddProtocolReference(p.api.service));
     }
 }
 
@@ -234,9 +237,6 @@ void InspectorManager::add_plugin(const InspectApi* api)
 {
     PHGlobal* g = new PHGlobal(*api);
     s_handlers.push_back(g);
-
-    if ( api->service )
-        AddProtocolReference(api->service);
 }
 
 static const InspectApi* get_plugin(const char* keyword)
