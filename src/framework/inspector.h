@@ -65,6 +65,10 @@ public:
     virtual void tinit() { }   // allocate configurable thread local
     virtual void tterm() { }   // purge only, deallocate via api
 
+    // screen incoming packets; only liked packets go to eval
+    // default filter is per api proto / paf
+    virtual bool likes(Packet*);
+
     // clear is a bookend to eval() for the active service inspector
     // clear is called when Snort is done with the previously eval'd
     // packet to release any thread-local or flow-based data

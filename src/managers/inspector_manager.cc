@@ -746,8 +746,7 @@ void InspectorManager::full_inspection(FrameworkPolicy* fp, Packet* p)
     if ( !p->dsize )
         DisableDetect(p);
 
-    // FIXIT-M need list of gadgets for ambiguous wizardry
-    else if ( flow->gadget && (!p->is_tcp() || p->has_paf_payload()) )
+    else if ( flow->gadget && flow->gadget->likes(p) )
     {
         flow->gadget->eval(p);
         s_clear = true;

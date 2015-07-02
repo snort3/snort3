@@ -477,7 +477,7 @@ static const InspectApi hi_api =
         mod_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::TCP,
+    (uint16_t)PktType::USER,
     buffers,
     "http",
     hs_init,
