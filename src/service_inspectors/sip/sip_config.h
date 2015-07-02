@@ -60,8 +60,8 @@ struct SIP_Stats
     PegCount dialogs;
     PegCount ignoreChannels;
     PegCount ignoreSessions;
-    PegCount requests[NUM_OF_REQUEST_TYPES];
-    PegCount responses[NUM_OF_RESPONSE_TYPES];
+    PegCount requests; // [NUM_OF_REQUEST_TYPES];    // FIXIT-L support this
+    PegCount responses; // [NUM_OF_RESPONSE_TYPES];  // FIXIT-L support this
 };
 
 extern THREAD_LOCAL SIP_Stats sip_stats;

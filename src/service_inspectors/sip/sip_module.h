@@ -61,7 +61,6 @@
 
 struct SnortConfig;
 
-extern const PegInfo sip_pegs[];
 extern THREAD_LOCAL SimpleStats sipstats;
 extern THREAD_LOCAL ProfileStats sipPerfStats;
 

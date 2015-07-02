@@ -196,6 +196,7 @@ bool SipMethodModule::set(const char*, Value& v, SnortConfig*)
         if(!method)
         {
             ParseError("Failed to add a new method to sip_method\n");
+            return false;
         }
 
         smod.flags |= 1 << (method->methodFlag - 1);

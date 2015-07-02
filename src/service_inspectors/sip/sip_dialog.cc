@@ -80,9 +80,13 @@ static int SIP_processRequest(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialog
     }
 
     methodFlag = sipMsg->methodFlag;
+#if 1
+    sip_stats.requests++;
+#else
     sip_stats.requests[TOTAL_REQUESTS]++;
     if (methodFlag > 0)
         sip_stats.requests[methodFlag]++;
+#endif
     switch (methodFlag)
     {
     case SIP_METHOD_INVITE:
@@ -233,9 +237,13 @@ static int SIP_processResponse(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialo
     assert (NULL != sipMsg);
 
     statusType = sipMsg->status_code / 100;
+#if 1
+    sip_stats.responses++;
+#else
     sip_stats.responses[TOTAL_RESPONSES]++;
     if (statusType < NUM_OF_RESPONSE_TYPES)
         sip_stats.responses[statusType]++;
+#endif
 
     if (NULL == dialog)
         return false;
