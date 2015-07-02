@@ -246,7 +246,12 @@ int Base64Decode(const uint8_t* start, const uint8_t* end, Email_DecodeState* ds
     {
         encode_avail = ds->b64_state.encode_depth - ds->b64_state.encode_bytes_read;
         decode_avail = ds->b64_state.decode_depth - ds->b64_state.decode_bytes_read;
-        assert(decode_avail <= ds->buf_size);
+
+        if ( encode_avail > ds->buf_size )
+            encode_avail = ds->buf_size;
+
+        if ( decode_avail > ds->buf_size )
+            decode_avail = ds->buf_size;
     }
 
     encode_buf = ds->encodeBuf;
@@ -343,7 +348,12 @@ int QPDecode(const uint8_t* start, const uint8_t* end, Email_DecodeState* ds)
     {
         encode_avail = ds->qp_state.encode_depth - ds->qp_state.encode_bytes_read;
         decode_avail = ds->qp_state.decode_depth - ds->qp_state.decode_bytes_read;
-        assert(decode_avail <= ds->buf_size);
+
+        if ( encode_avail > ds->buf_size )
+            encode_avail = ds->buf_size;
+
+        if ( decode_avail > ds->buf_size )
+            decode_avail = ds->buf_size;
     }
 
     encode_buf = ds->encodeBuf;
@@ -437,7 +447,12 @@ int UUDecode(const uint8_t* start, const uint8_t* end, Email_DecodeState* ds)
     {
         encode_avail = ds->uu_state.encode_depth - ds->uu_state.encode_bytes_read;
         decode_avail = ds->uu_state.decode_depth - ds->uu_state.decode_bytes_read;
-        assert(decode_avail <= ds->buf_size);
+
+        if ( encode_avail > ds->buf_size )
+            encode_avail = ds->buf_size;
+
+        if ( decode_avail > ds->buf_size )
+            decode_avail = ds->buf_size;
     }
 
     encode_buf = ds->encodeBuf;
