@@ -115,8 +115,6 @@ static inline int getCodeDepth(int code_depth, int64_t file_depth)
 static inline void SetEmailDecodeState(Email_DecodeState* ds, void* data, int buf_size,
     int b64_depth, int qp_depth, int uu_depth, int bitenc_depth, int64_t file_depth)
 {
-    buf_size = buf_size & ~7; // FIXIT-L is this still required?
-
     ds->decode_type = DECODE_NONE;
     ds->decode_present = 0;
     ds->prev_encoded_bytes = 0;

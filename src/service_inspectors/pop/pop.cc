@@ -750,12 +750,13 @@ bool Pop::configure(SnortConfig* )
     if (config->decode_conf.file_depth > -1)
         config->log_config.log_filename = 1;
 
+    file_api->check_decode_config(&config->decode_conf);
+
     if (file_api->is_decoding_enabled(&config->decode_conf) )
     {
         updateMaxDepth(config->decode_conf.file_depth,
             &config->decode_conf.max_depth);
     }
-    file_api->check_decode_config(&config->decode_conf);
     return true;
 }
 
