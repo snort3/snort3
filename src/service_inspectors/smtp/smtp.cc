@@ -258,7 +258,7 @@ static void SMTP_InitCmds(SMTP_PROTO_CONF* config)
 
 static void SMTP_TermCmds(SMTP_PROTO_CONF* config)
 {
-    for ( int i = 0; i <= CMD_LAST; ++i )
+    for ( int i = 0; i <= config->num_cmds; ++i )
         free((char*)config->cmds[i].name);
 
     free(config->cmds);
@@ -311,7 +311,7 @@ void SMTP_SearchFree(void)
 
 static int AddCmd(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum type)
 {
-    SMTPToken* cmds, * tmp_cmds;
+    SMTPToken* cmds;
     SMTPCmdConfig* cmd_config;
 
     config->num_cmds++;
@@ -335,19 +335,15 @@ static int AddCmd(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum typ
         FatalError("Failed to memory copy SMTP command structure\n");
 
     /* add new command to cmds cmd_config doesn't need anything added - this
-     * will probably be done by a calling function cmd_search will be initialized
-     * when the searches are initialized */
+     * will probably be done by a calling function */
 
-    tmp_cmds = &cmds[config->num_cmds - 1];
-    tmp_cmds->name = SnortStrdup(name);
-    tmp_cmds->name_len = strlen(name);
-    tmp_cmds->search_id = config->num_cmds - 1;
+    SMTPToken* tok = cmds + config->num_cmds - 1;
+    tok->name = SnortStrdup(name);
+    tok->name_len = strlen(name);
+    tok->search_id = config->num_cmds - 1;
 
     if (type)
-        tmp_cmds->type = type;
-
-    if ( !tmp_cmds->name )
-        FatalError("Failed to allocate memory for SMTP command structure\n");
+        tok->type = type;
 
     /* free global memory structures */
     if ( config->cmds )

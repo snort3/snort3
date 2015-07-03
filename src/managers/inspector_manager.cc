@@ -594,7 +594,7 @@ void InspectorManager::instantiate(
 static void instantiate_binder(SnortConfig* sc, FrameworkPolicy* fp)
 {
     BinderModule* m = (BinderModule*)ModuleManager::get_module(bind_id);
-    bool tcp = false, udp = false;
+    bool tcp = false, udp = false, pdu = false;
 
     for ( unsigned i = 0; i < fp->service.num; i++ )
     {
@@ -606,14 +606,15 @@ static void instantiate_binder(SnortConfig* sc, FrameworkPolicy* fp)
 
         tcp = tcp || (api.proto_bits & (unsigned)PktType::TCP);
         udp = udp || (api.proto_bits & (unsigned)PktType::UDP);
+        pdu = pdu || (api.proto_bits & (unsigned)PktType::PDU);
     }
-    if ( tcp )
+    if ( tcp or pdu )
         m->add((unsigned)PktType::TCP, wiz_id);
 
     if ( udp )
         m->add((unsigned)PktType::UDP, wiz_id);
 
-    if ( tcp or udp )
+    if ( tcp or udp or pdu )
         m->add((unsigned)PktType::PDU, wiz_id);
 
     const InspectApi* api = get_plugin(bind_id);
