@@ -936,7 +936,7 @@ static int fp_search(
         SEARCH_BUFFER(buf.IBT_ALT, PM_TYPE_PKT, pc.alt_searches);
     }
 
-    if ( !user_mode or type == 2 )
+    if ( !user_mode or type > 0 )
     {
         // file searches file only
         if ( Mpse* so = port_group->mpse[PM_TYPE_FILE] )
