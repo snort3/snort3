@@ -23,7 +23,7 @@ various other data and functions for their given roles.
 
 === Modules
 
-The Module is pervasive in Snort++.  It is how everything, including
+The Module is pervasive in Snort\++.  It is how everything, including
 plugins, are configured.  It also provides access to builtin rules.  And as
 the glue that binds functionality to Snort++, the capabilities of a Module
 are expected to grow to include statistics support, etc.
