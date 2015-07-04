@@ -280,3 +280,8 @@ include::errors.txt[]
   MY_SERVERS = [[ 172.20.0.0/16 172.21.0.0/16 ]]
   EXTERNAL_NET = '!' .. MY_SERVERS
 
+
+=== Bugs
+
+include::bugs.txt[]
+

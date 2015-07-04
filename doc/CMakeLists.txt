@@ -31,6 +31,7 @@ set (MODULE_SOURCES
 )
 
 set (UNBUILT_SOURCES
+    bugs.txt
     daq.txt
     differences.txt
     errors.txt
