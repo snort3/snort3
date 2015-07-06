@@ -298,7 +298,7 @@ is available.  Snort has started to take this approach to pass some HTTP and
 SIP preprocessor data to app ID.  However, it remains a peripheral feature
 and still requires the production of data that may not be consumed.
 
-The basic processing steps Snort++ takes are similar to Snort's as seen in
+The basic processing steps Snort\++ takes are similar to Snort's as seen in
 the following diagram.  The preprocess step employs specific inspector
 types instead of a generalized list, but the basic procedure includes
 stateless packet decoding, TCP stream reassembly, and service specific
@@ -331,6 +331,6 @@ URI logger.
 
 Inspection events coupled with pluggable inspectors provide a very flexible
 framework for implementing new features.  And JIT buffer stuffers allow
-Snort++ to work smarter, not harder.  These capabilities will be leveraged
+Snort\++ to work smarter, not harder.  These capabilities will be leveraged
 more and more as Snort++ development continues.
 

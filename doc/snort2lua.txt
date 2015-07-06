@@ -4,7 +4,7 @@ syntax while Snort 3.0 configuration files are written in Lua. Snort2Lua is a
 program specifically designed to convert Snort 2.9.X configuration files into
 Lua files that Snort 3.0 can understand.
 
-Snort2Lua reads your legacy Snort conf file(s) and generates Snort\++ Lua
+Snort2Lua reads your legacy Snort conf file(s) and generates Snort++ Lua
 and rules files.  When running this program, the only mandatory option is
 to provide Snort2Lua with a Snort configuration file. The default output
 file file is snort.lua, the default error file will be snort.rej, and the
@@ -58,7 +58,7 @@ As expected, quiet mode produces a Snort\++ configuration.  All errors
 (aside from Fatal Snort2Lua errors), differences, and comments will omitted
 from the final output file.  Default mode will print everything. That mean
 you will be able to see exactly what changes have occurred between Snort and
-Snort\++ in addition to the new syntax, the original file's comments, and
+Snort++ in addition to the new syntax, the original file's comments, and
 all errors that have occurred.  Finally, differences mode will not actually
 output a valid Snort3.0 configuration.  Instead, you can see the exact
 options from the input configuration that have changed.

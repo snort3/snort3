@@ -1,0 +1,62 @@
+==== Build
+
+* configure bombs on OSX with g\++ wrapper to clang because g++ version < 4.8
+(compare g\++ -dumpversion and g++ --version)
+
+    workaround:  export CXX=clang++
+
+* export CXX=clang++ to build with clang; coughs up these warnings:
+
+    Wunused-but-set-variable is not understood by clang
+    clang: warning: argument unused during compilation: '-pthread'
+
+* Cmake doc/ has a problem when SNORT_PLUGIN_PATH is set to get extras
+included in the manual.
+
+* Making in doc/ may fail complaining something about xmllint.  Just make
+again and it will succeed.  Appears to be an unknown dependency but it
+works for me!
+
+
+==== Config
+
+* Parsing issue with IP lists.  can't parse rules with $EXTERNAL_NET
+defined as below because or the space between ! and 10.
+
+    HOME_NET = [[ 10.0.17.0/24 10.0.14.0/24 10.247.0.0/16 10.246.0.0/16 ]]
+    EXTERNAL_NET = '! ' .. HOME_NET
+
+* Multiple versions of luajit scripts are not handled correctly.  The
+first loaded version will always be executed even though plugin manager
+saves the correct version.
+
+
+==== Rules
+
+* metdata:service foo; metadata:service foo; won't cause a duplicate service
+warning as does metadata:service foo, service foo;
+
+* ip_proto doesn't work properly with reassembled packets so it can't be
+used to restrict the protocol of service rules.
+
+
+==== snort2lua
+
+* uricontent:"foo"; content:"bar"; -> http_uri; content:"foo"; content:"bar";
+(missing pkt_data)
+
+* stream_tcp ports and protocols both go into a single binder.when; this is
+incorrect as the when fields are logically anded together (ie must all be
+true).  should create 2 separate bindings.
+
+* There is a bug in pps_stream_tcp.cc.. when stream_tcp: is
+specified without any arguments, snort2lua doesn't convert it
+
+* Loses the ip list delimiters [ ]; change to ( )
+
+    in snort.conf: var HOME_NET [A,B,C]
+    in snort.lua: HOME_NET = [[A B C]]
+
+* Won't convert packet rules (alert tcp etc.) to service rules (alert http
+etc.).
+

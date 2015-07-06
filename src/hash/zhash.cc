@@ -34,13 +34,16 @@
 
 struct ZHashNode
 {
-    ZHashNode* gnext, * gprev; // global list
-    ZHashNode* next,  * prev; // row list
+    ZHashNode* gnext = nullptr; // global list
+    ZHashNode* gprev = nullptr; // global list
 
-    int rindex;
+    ZHashNode* next = nullptr;  // row list
+    ZHashNode* prev = nullptr;  // row list
 
-    void* key;
-    void* data;
+    int rindex = 0;
+
+    void* key = nullptr;
+    void* data = nullptr;
 };
 
 void ZHash::delete_free_list()
@@ -132,7 +135,7 @@ void ZHash::gunlink_node(ZHashNode* node)
 
 void ZHash::link_node(ZHashNode* node)
 {
-    if ( table[node->rindex] )
+    if ( table[node->rindex] )  // UNINITUSE
     {
         node->prev = nullptr;
         node->next=table[node->rindex];
@@ -143,7 +146,7 @@ void ZHash::link_node(ZHashNode* node)
     {
         node->prev=nullptr;
         node->next=nullptr;
-        table[node->rindex] = node;
+        table[node->rindex] = node;  // UNINITUSE
     }
 }
 
@@ -191,7 +194,7 @@ ZHashNode* ZHash::find_node_row(const void* key, int* rindex)
 
     *rindex = index;
 
-    for ( ZHashNode* node=table[index]; node; node=node->next )
+    for ( ZHashNode* node=table[index]; node; node=node->next )  // UNINITUSE
     {
         if ( !sfhashfcn->keycmp_fcn(node->key,key,keysize) )
         {
@@ -307,7 +310,7 @@ void* ZHash::pop()
 
 void* ZHash::get(const void* key)
 {
-    int index;
+    int index = 0;
     ZHashNode* node = find_node_row(key, &index);
 
     if ( node )
@@ -331,7 +334,7 @@ void* ZHash::get(const void* key)
 
 void* ZHash::find(const void* key)
 {
-    int rindex;
+    int rindex = 0;
     ZHashNode* node = find_node_row(key, &rindex);
 
     if ( node )
@@ -401,7 +404,7 @@ bool ZHash::remove()
 
 bool ZHash::remove(const void* key)
 {
-    int row;
+    int row = 0;
     ZHashNode* node = find_node_row(key, &row);
     return remove(node);
 }

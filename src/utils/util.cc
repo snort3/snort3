@@ -24,6 +24,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <dirent.h>
 #include <fnmatch.h>
 #include <stdarg.h>
@@ -735,16 +736,10 @@ int SnortStrnlen(const char* buf, int buf_size)
 
 char* SnortStrdup(const char* str)
 {
-    char* copy = NULL;
+    assert(str);
+    char* copy = strdup(str);
 
-    if (!str)
-    {
-        FatalError("Unable to duplicate string: NULL\n");
-    }
-
-    copy = strdup(str);
-
-    if (copy == NULL)
+    if ( !copy )
     {
         FatalError("Unable to duplicate string: %s\n", str);
     }

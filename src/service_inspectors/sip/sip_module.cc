@@ -251,10 +251,7 @@ bool SipModule::end(const char*, int, SnortConfig*)
         v.set_first_token();
 
         while ( v.get_next_token(tok) )
-        {
-            char* s = SnortStrdup(tok.c_str());
-            SIP_ParseMethods(s, &conf->methodsConfig, &conf->methods);
-        }
+            SIP_ParseMethods(tok.c_str(), &conf->methodsConfig, &conf->methods);
     }
     /*If no methods defined, use the default*/
     if (SIP_METHOD_NULL == conf->methodsConfig)

@@ -91,14 +91,14 @@ void ExpectFlow::clear()
 
 struct ExpectNode
 {
-    time_t expires;
-    int reversed_key;
-    int direction;
-    unsigned count;
-    int16_t appId;
+    time_t expires = 0;
+    int reversed_key = 0;
+    int direction = 0;
+    unsigned count = 0;
+    int16_t appId = 0;
 
-    ExpectFlow* head;
-    ExpectFlow* tail;
+    ExpectFlow* head = nullptr;
+    ExpectFlow* tail = nullptr;
 
     void clear(ExpectFlow*&);
 };
