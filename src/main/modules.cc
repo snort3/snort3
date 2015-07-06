@@ -1325,6 +1325,9 @@ static const Parameter file_id_params[] =
     { "enable_signature", Parameter::PT_BOOL, nullptr, "false",
       "enable signature calculation" },
 
+    { "enable_capture", Parameter::PT_BOOL, nullptr, "false",
+      "enable file capture" },
+
     { "show_data_depth", Parameter::PT_INT, "0:", "100",
       "print this many octets" },
 
@@ -1387,6 +1390,11 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig* sc)
     {
         if ( v.get_bool() )
             file_api->enable_file_signature();
+    }
+    else if ( v.is("enable_capture") )
+    {
+        if ( v.get_bool() )
+            file_api->enable_file_capture();
     }
     else if ( v.is("show_data_depth") )
         FileConfig::show_data_depth = v.get_long();

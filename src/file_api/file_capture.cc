@@ -122,7 +122,7 @@ void FileCapture::init_mempool(int64_t max_file_mem, int64_t block_len)
 
     int max_files = max_file_mem_in_bytes / block_size;
 
-    FileMemPool* file_mempool = (FileMemPool*)SnortAlloc(sizeof(FileMemPool));
+    file_mempool = (FileMemPool*)SnortAlloc(sizeof(FileMemPool));
 
     if ((!file_mempool)||
         (file_mempool_init(file_mempool, max_files, block_size) != 0))
@@ -313,7 +313,7 @@ FileCaptureState FileCapture::process_buffer(const uint8_t* file_data,
          */
         if (!head)
         {
-            head  = create_file_buffer(file_mempool);
+            head = last = create_file_buffer(file_mempool);
 
             if (!head)
             {
