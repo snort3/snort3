@@ -1186,7 +1186,8 @@ static inline void fpEvalHeaderSvc(Packet* p, OTNX_MATCH_DATA* omd, int proto)
             "sport=%d, dport=%d, proto_ordinal=%d, proto=%d, src:%x, "
             "file:%x\n",p->ptrs.sp,p->ptrs.dp,proto_ordinal,proto,svc,file); );
     }
-
+    // FIXIT-P put alert service rules with file data fp in alert file group and
+    // verfiy ports and service during rule eval to avoid searching file data 2x.
     if ( file )
         fpEvalHeaderSW(file, p, 2, 0, 2, omd);
 
