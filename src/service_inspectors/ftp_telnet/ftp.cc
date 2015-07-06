@@ -530,7 +530,7 @@ static const InspectApi fs_api =
         mod_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::TCP,
+    (uint16_t)PktType::PDU,
     nullptr, // buffers
     "ftp",
     fs_init,

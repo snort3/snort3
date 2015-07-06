@@ -827,7 +827,7 @@ const InspectApi pop_api =
         mod_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::TCP,
+    (uint16_t)PktType::PDU,
     nullptr, // buffers
     "pop",
     pop_init,

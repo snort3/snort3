@@ -44,6 +44,9 @@ enum SnortProtocols
 static inline bool is_network_protocol(int16_t proto)
 { return (proto >= SNORT_PROTO_IP and proto <= SNORT_PROTO_UDP); }
 
+static inline bool is_builtin_protocol(int16_t proto)
+{ return proto < SNORT_PROTO_MAX; }
+
 static inline bool is_service_protocol(int16_t proto)
 { return !is_network_protocol(proto); }
 

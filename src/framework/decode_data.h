@@ -49,7 +49,7 @@ enum class PktType : std::uint8_t
     UDP =     0x04,
     ICMP =    0x08,
     ARP =     0x10,
-    USER =    0x20,
+    PDU  =    0x20,
     FILE =    0x40,
     STREAM =  0x22,
     ANY_IP =  0x0F,

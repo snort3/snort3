@@ -1058,7 +1058,7 @@ static void fpPortGroupPrintRuleCount(PortGroup* pg, const char* what)
 
     for (type = PM_TYPE_PKT; type < PM_TYPE_MAX; type++)
     {
-        int count = pg->mpse[type]->get_pattern_count();
+        int count = pg->mpse[type] ? pg->mpse[type]->get_pattern_count() : 0;
 
         if ( count )
             LogMessage("\t%s: %d\n", pm_type_strings[type], count);
@@ -1167,15 +1167,10 @@ static int fpCreatePortObject2PortGroup(
 
             /* look up otn */
             otn = OtnLookup(sc->otn_map, gid, sid);
-            if (otn == NULL)
-            {
-                LogMessage("fpCreatePortObject2PortGroup...failed otn lookup, "
-                    "gid=%u sid=%u\n", gid, sid);
-                continue;
-            }
+            assert(otn);
 
-            if (fpAddPortGroupRule(sc, pg, otn, fp) != 0)
-                continue;
+            if ( is_network_protocol(otn->proto) )
+                fpAddPortGroupRule(sc, pg, otn, fp);
         }
 
         if (fp->get_debug_print_rule_group_build_details())

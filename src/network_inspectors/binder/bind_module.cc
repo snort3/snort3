@@ -154,7 +154,7 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
         const PktType mask[] =
         {
             PktType::ANY, PktType::IP, PktType::ICMP, PktType::TCP, PktType::UDP,
-            PktType::USER, PktType::FILE
+            PktType::PDU, PktType::FILE
         };
         work->when.protos = (unsigned)mask[v.get_long()];
     }

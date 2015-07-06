@@ -58,7 +58,6 @@
 #include "hi_si.h"
 #include "hi_mi.h"
 #include "hi_util.h"
-#include "hi_util_hbm.h"
 #include "hi_return_codes.h"
 #include "util.h"
 #include "utils/util_unfold.h"

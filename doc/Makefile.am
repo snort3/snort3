@@ -27,6 +27,7 @@ search_engine.txt
 unbuilt_sources = \
 snort_manual.txt \
 config_changes.txt \
+bugs.txt \
 daq.txt \
 differences.txt \
 enviro.txt \

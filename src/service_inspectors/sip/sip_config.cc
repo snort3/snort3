@@ -32,8 +32,8 @@
 
 #define SIP_SEPERATORS       "()<>@,;:\\/[]?={}\" "
 
-static SIPMethodNode* SIP_AddMethodToList(char* methodName, SIPMethodsFlag methodConf,
-    SIPMethodlist* p_methodList);
+static SIPMethodNode* SIP_AddMethodToList(
+    const char* methodName, SIPMethodsFlag methodConf, SIPMethodlist* p_methodList);
 
 /*
  *  method names defined by standard, 14 methods defined up to Mar. 2011
@@ -61,7 +61,7 @@ SIPMethod StandardMethods[] =
 
 static SIPMethodsFlag currentUseDefineMethod = SIP_METHOD_USER_DEFINE;
 
-int SIP_findMethod(char* token, SIPMethod* methods)
+int SIP_findMethod(const char* token, SIPMethod* methods)
 {
     int i = 0;
     while (NULL != methods[i].name)
@@ -85,7 +85,7 @@ void SIP_SetDefaultMethods(SIP_PROTO_CONF* config)
     config->methodsConfig = SIP_METHOD_DEFAULT;
     for (i = 0; i < 6; i++)
     {
-        if (SIP_AddMethodToList((char*)StandardMethods[i].name,
+        if (SIP_AddMethodToList(StandardMethods[i].name,
             StandardMethods[i].methodFlag, &config->methods) == NULL)
         {
             FatalError("Failed to add SIP default method: %s.\n", StandardMethods[i].name);
@@ -110,7 +110,7 @@ void SIP_SetDefaultMethods(SIP_PROTO_CONF* config)
  * Returns:
  *
  ********************************************************************/
-void SIP_ParseMethods(char* cur_tokenp, uint32_t* methodsConfig, SIPMethodlist* pmethods)
+void SIP_ParseMethods(const char* cur_tokenp, uint32_t* methodsConfig, SIPMethodlist* pmethods)
 {
     int i_method;
 
@@ -132,57 +132,45 @@ void SIP_ParseMethods(char* cur_tokenp, uint32_t* methodsConfig, SIPMethodlist* 
     }
     else
     {
-        if (SIP_AddUserDefinedMethod(cur_tokenp,
-            methodsConfig, pmethods) == NULL)
+        if (SIP_AddUserDefinedMethod(cur_tokenp, methodsConfig, pmethods) == NULL)
         {
             ParseError("Failed to add user defined SIP method: %s.\n", cur_tokenp);
         }
     }
 }
 
-static SIPMethodNode* SIP_AddMethodToList(char* methodName, SIPMethodsFlag methodConf,
-    SIPMethodlist* p_methodList)
+static SIPMethodNode* SIP_AddMethodToList(
+    const char* methodName, SIPMethodsFlag methodConf, SIPMethodlist* p_methodList)
 {
-    SIPMethodNode* method;
-    int methodLen;
-    SIPMethodNode* lastMethod;
+    if ( !methodName )
+        return nullptr;
 
-    if (NULL == methodName)
-        return NULL;
-    methodLen = strlen(methodName);
-    method =*p_methodList;
-    lastMethod = *p_methodList;
+    int methodLen = strlen(methodName);
+    SIPMethodNode* method = *p_methodList;
+    SIPMethodNode* lastMethod = *p_methodList;
+
     while (method)
     {
         // Already in the list, return
-        if (strcasecmp(method->methodName, methodName) == 0)
+        if ( !strcasecmp(method->methodName, methodName) )
             return method;
+
         lastMethod = method;
         method =  method->nextm;
     }
 
-    method = (SIPMethodNode*)malloc(sizeof (SIPMethodNode));
-    if (NULL == method)
-        return NULL;
-    method->methodName = strdup(methodName);
-    if (NULL == method->methodName)
-    {
-        free(method);
-        return NULL;
-    }
+    method = (SIPMethodNode*)SnortAlloc(sizeof(*method));
+    method->methodName = SnortStrdup(methodName);
+    method->methodLen = methodLen;
+    method->methodFlag = methodConf;
+    method->nextm = nullptr;
 
-    method->methodLen =  methodLen;
-    method->methodFlag =  methodConf;
-    method->nextm = NULL;
     // The first method, point to the first created one
-    if (NULL ==  *p_methodList)
-    {
+    if ( !*p_methodList )
         *p_methodList =  method;
-    }
+
     else
-    {
         lastMethod->nextm = method;
-    }
 
     return method;
 }
@@ -199,8 +187,8 @@ static SIPMethodNode* SIP_AddMethodToList(char* methodName, SIPMethodsFlag metho
  * Returns: user defined method
  *
  ********************************************************************/
-SIPMethodNode* SIP_AddUserDefinedMethod(char* methodName, uint32_t* methodsConfig,
-    SIPMethodlist* pmethods)
+SIPMethodNode* SIP_AddUserDefinedMethod(
+    const char* methodName, uint32_t* methodsConfig, SIPMethodlist* pmethods)
 {
     int i = 0;
     SIPMethodNode* method;
@@ -225,5 +213,16 @@ SIPMethodNode* SIP_AddUserDefinedMethod(char* methodName, uint32_t* methodsConfi
     method = SIP_AddMethodToList(methodName, currentUseDefineMethod, pmethods);
     currentUseDefineMethod = (SIPMethodsFlag)(currentUseDefineMethod + 1);
     return method;
+}
+
+void SIP_DeleteMethods(SIPMethodNode* node)
+{
+    while (node)
+    {
+        SIPMethodNode* next = node->nextm;
+        free(node->methodName);
+        free(node);
+        node = next;
+    }
 }
 

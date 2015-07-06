@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "protocols/packet.h"
 #include "stream/stream_splitter.h"
 
 //-------------------------------------------------------------------------
@@ -92,5 +93,16 @@ StreamSplitter* Inspector::get_splitter(bool to_server)
         return nullptr;
 
     return new AtomSplitter(to_server);
+}
+
+bool Inspector::likes(Packet* p)
+{
+    if ( !((uint16_t)p->type() & api->proto_bits) )
+        return false;
+
+    if ( p->is_tcp() && api->type == IT_SERVICE )
+        return p->has_paf_payload();
+
+    return true;
 }
 

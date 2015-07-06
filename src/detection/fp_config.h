@@ -28,7 +28,7 @@
 
 #define PL_BLEEDOVER_WARNINGS_ENABLED        0x01
 #define PL_DEBUG_PRINT_NC_DETECT_RULES       0x02
-#define PL_DEBUG_PRINT_RULEGROWP_BUILD       0x04
+#define PL_DEBUG_PRINT_RULEGROUP_BUILD       0x04
 #define PL_DEBUG_PRINT_RULEGROUPS_UNCOMPILED 0x08
 #define PL_DEBUG_PRINT_RULEGROUPS_COMPILED   0x10
 #define PL_SINGLE_RULE_GROUP                 0x20
@@ -70,7 +70,7 @@ public:
     { return portlists_flags & PL_DEBUG_PRINT_NC_DETECT_RULES; }
 
     int get_debug_print_rule_group_build_details()
-    { return portlists_flags & PL_DEBUG_PRINT_RULEGROWP_BUILD; }
+    { return portlists_flags & PL_DEBUG_PRINT_RULEGROUP_BUILD; }
 
     int get_debug_print_rule_groups_compiled()
     { return portlists_flags & PL_DEBUG_PRINT_RULEGROUPS_COMPILED; }
@@ -103,7 +103,7 @@ public:
     { portlists_flags |= PL_DEBUG_PRINT_NC_DETECT_RULES; }
 
     void set_debug_print_rule_group_build_details()
-    { portlists_flags |= PL_DEBUG_PRINT_RULEGROWP_BUILD; }
+    { portlists_flags |= PL_DEBUG_PRINT_RULEGROUP_BUILD; }
 
     void set_debug_print_rule_groups_compiled()
     { portlists_flags |= PL_DEBUG_PRINT_RULEGROUPS_COMPILED; }

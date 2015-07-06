@@ -313,7 +313,10 @@ Sip::Sip(SIP_PROTO_CONF* pc)
 Sip::~Sip()
 {
     if ( config )
+    {
+        SIP_DeleteMethods(config->methods);
         delete config;
+    }
 }
 
 void Sip::show(SnortConfig*)
@@ -432,7 +435,7 @@ const InspectApi sip_api =
         mod_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::TCP | (uint16_t)PktType::UDP,
+    (uint16_t)PktType::PDU | (uint16_t)PktType::UDP,
     nullptr, // buffers
     "sip",
     sip_init,

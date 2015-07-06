@@ -936,7 +936,7 @@ static int fp_search(
         SEARCH_BUFFER(buf.IBT_ALT, PM_TYPE_PKT, pc.alt_searches);
     }
 
-    if ( !user_mode or type == 2 )
+    if ( !user_mode or type > 0 )
     {
         // file searches file only
         if ( Mpse* so = port_group->mpse[PM_TYPE_FILE] )
@@ -1186,7 +1186,8 @@ static inline void fpEvalHeaderSvc(Packet* p, OTNX_MATCH_DATA* omd, int proto)
             "sport=%d, dport=%d, proto_ordinal=%d, proto=%d, src:%x, "
             "file:%x\n",p->ptrs.sp,p->ptrs.dp,proto_ordinal,proto,svc,file); );
     }
-
+    // FIXIT-P put alert service rules with file data fp in alert file group and
+    // verfiy ports and service during rule eval to avoid searching file data 2x.
     if ( file )
         fpEvalHeaderSW(file, p, 2, 0, 2, omd);
 
@@ -1289,7 +1290,7 @@ int fpEvalPacket(Packet* p)
         fpEvalHeaderSvc(p, omd, SNORT_PROTO_UDP);
         break;
 
-    case PktType::USER:
+    case PktType::PDU:
         if ( snort_conf->sopgTable->user_mode )
             fpEvalHeaderSvc(p, omd, SNORT_PROTO_USER);
 

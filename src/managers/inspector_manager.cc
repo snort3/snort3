@@ -594,7 +594,7 @@ void InspectorManager::instantiate(
 static void instantiate_binder(SnortConfig* sc, FrameworkPolicy* fp)
 {
     BinderModule* m = (BinderModule*)ModuleManager::get_module(bind_id);
-    bool tcp = false, udp = false;
+    bool tcp = false, udp = false, pdu = false;
 
     for ( unsigned i = 0; i < fp->service.num; i++ )
     {
@@ -606,15 +606,16 @@ static void instantiate_binder(SnortConfig* sc, FrameworkPolicy* fp)
 
         tcp = tcp || (api.proto_bits & (unsigned)PktType::TCP);
         udp = udp || (api.proto_bits & (unsigned)PktType::UDP);
+        pdu = pdu || (api.proto_bits & (unsigned)PktType::PDU);
     }
-    if ( tcp )
+    if ( tcp or pdu )
         m->add((unsigned)PktType::TCP, wiz_id);
 
     if ( udp )
         m->add((unsigned)PktType::UDP, wiz_id);
 
-    if ( tcp or udp )
-        m->add((unsigned)PktType::USER, wiz_id);
+    if ( tcp or udp or pdu )
+        m->add((unsigned)PktType::PDU, wiz_id);
 
     const InspectApi* api = get_plugin(bind_id);
     InspectorManager::instantiate(api, m, sc);
@@ -746,8 +747,7 @@ void InspectorManager::full_inspection(FrameworkPolicy* fp, Packet* p)
     if ( !p->dsize )
         DisableDetect(p);
 
-    // FIXIT-M need list of gadgets for ambiguous wizardry
-    else if ( flow->gadget && (!p->is_tcp() || p->has_paf_payload()) )
+    else if ( flow->gadget && flow->gadget->likes(p) )
     {
         flow->gadget->eval(p);
         s_clear = true;

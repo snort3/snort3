@@ -97,8 +97,8 @@ void base_sum()
     t_stats.udp_flows = flow_con->get_flows(PktType::UDP);
     t_stats.udp_prunes = flow_con->get_prunes(PktType::UDP);
 
-    t_stats.user_flows = flow_con->get_flows(PktType::USER);
-    t_stats.user_prunes = flow_con->get_prunes(PktType::USER);
+    t_stats.user_flows = flow_con->get_flows(PktType::PDU);
+    t_stats.user_prunes = flow_con->get_prunes(PktType::PDU);
 
     t_stats.file_flows = flow_con->get_flows(PktType::FILE);
     t_stats.file_prunes = flow_con->get_prunes(PktType::FILE);
@@ -206,11 +206,11 @@ void StreamBase::tinit()
     }
     if ( config->user_cfg.max_sessions )
     {
-        if ( (f = InspectorManager::get_session((uint16_t)PktType::USER)) )
+        if ( (f = InspectorManager::get_session((uint16_t)PktType::PDU)) )
         {
             flow_con->init_user(config->user_cfg, f);
             // FIXIT-L update stream_ip to use standard memcap
-            //UserSession::set_memcap(flow_con->get_memcap(PktType::USER));
+            //UserSession::set_memcap(flow_con->get_memcap(PktType::PDU));
         }
     }
     if ( config->file_cfg.max_sessions )
@@ -231,7 +231,7 @@ void StreamBase::tterm()
     flow_con->purge_flows(PktType::ICMP);
     flow_con->purge_flows(PktType::TCP);
     flow_con->purge_flows(PktType::UDP);
-    flow_con->purge_flows(PktType::USER);
+    flow_con->purge_flows(PktType::PDU);
     flow_con->purge_flows(PktType::FILE);
 }
 
@@ -275,7 +275,7 @@ void StreamBase::eval(Packet* p)
             flow_con->process_udp(p);
         break;
 
-    case PktType::USER:
+    case PktType::PDU:
         flow_con->process_user(p);
         break;
 
