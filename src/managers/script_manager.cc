@@ -28,9 +28,14 @@
 #include "ips_manager.h"
 #include "framework/ips_option.h"
 #include "framework/logger.h"
+#include "framework/lua_api.h"
 #include "managers/plugin_manager.h"
 #include "parser/parser.h"
 #include "helpers/directory.h"
+
+#ifdef PIGLET
+#include "piglet/piglet_manager.h"
+#endif
 
 // FIXIT-P this approach results in N * K lua states where
 // N ::= number of instances of script + args and
@@ -47,26 +52,6 @@ using namespace std;
 // lua api stuff
 //-------------------------------------------------------------------------
 
-class LuaApi
-{
-protected:
-    LuaApi(string& t, string& s, string& c)
-    {
-        type = t;
-        name = s;
-        chunk = c;
-    }
-
-public:
-    virtual ~LuaApi() { }
-    virtual const BaseApi* get_base() const = 0;
-
-public:
-    string type;
-    string name;
-    string chunk;
-};
-
 static vector<const BaseApi*> base_api;
 static vector<LuaApi*> lua_api;
 
@@ -77,16 +62,19 @@ static vector<LuaApi*> lua_api;
 class IpsLuaApi : public LuaApi
 {
 public:
-    IpsLuaApi(string& t, string& n, string& c, unsigned v);
+    IpsLuaApi(string& n, string& c, unsigned v);
 
     const BaseApi* get_base() const
     { return &api.base; }
 
 public:
     IpsApi api;
+    static const char* type;
 };
 
-IpsLuaApi::IpsLuaApi(string& t, string& s, string& c, unsigned v) : LuaApi(t, s, c)
+const char* IpsLuaApi::type = "ips_option";
+
+IpsLuaApi::IpsLuaApi(string& s, string& c, unsigned v) : LuaApi(s, c)
 {
     extern const IpsApi* ips_luajit;
     api = *ips_luajit;
@@ -101,16 +89,19 @@ IpsLuaApi::IpsLuaApi(string& t, string& s, string& c, unsigned v) : LuaApi(t, s,
 class LogLuaApi : public LuaApi
 {
 public:
-    LogLuaApi(string& t, string& n, string& c, unsigned v);
+    LogLuaApi(string& n, string& c, unsigned v);
 
     const BaseApi* get_base() const
     { return &api.base; }
 
 public:
     LogApi api;
+    static const char* type;
 };
 
-LogLuaApi::LogLuaApi(string& t, string& s, string& c, unsigned v) : LuaApi(t, s, c)
+const char* LogLuaApi::type = "logger";
+
+LogLuaApi::LogLuaApi(string& s, string& c, unsigned v) : LuaApi(s, c)
 {
     extern const LogApi* log_luajit;
     api = *log_luajit;
@@ -160,8 +151,8 @@ static bool get_field(lua_State* L, const char* key, string& value)
 
 static int dump(lua_State*, const void* p, size_t sz, void* ud)
 {
-    string* s = (string*)ud;
-    s->append((char*)p, sz);
+    string* s = static_cast<string*>(ud);
+    s->append(static_cast<const char*>(p), sz);
     return 0;
 }
 
@@ -203,12 +194,6 @@ static void load_script(const char* f)
         return;
     }
 
-    if ( type != "ips_option" && type != "logger" )
-    {
-        ParseError("unknown plugin type in %s = '%s'", f, type.c_str());
-        return;
-    }
-
     if ( !get_field(L, "name", name) )
     {
         ParseError("%s::%s needs name", f, type.c_str());
@@ -226,10 +211,22 @@ static void load_script(const char* f)
         return;
     }
 
-    if ( type == "ips_option" )
-        lua_api.push_back(new IpsLuaApi(type, name, chunk, ver));
+    if ( type == IpsLuaApi::type )
+        lua_api.push_back(new IpsLuaApi(name, chunk, ver));
+
+    else if ( type == LogLuaApi::type )
+        lua_api.push_back(new LogLuaApi(name, chunk, ver));
+
+#ifdef PIGLET
+    else if ( type == "piglet" )
+        Piglet::Manager::add_chunk(f, chunk);
+#endif
+
     else
-        lua_api.push_back(new LogLuaApi(type, name, chunk, ver));
+    {
+        ParseError("unknown plugin type in %s = '%s'", f, type.c_str());
+        return;
+    }
 
     lua_close(L);
 }

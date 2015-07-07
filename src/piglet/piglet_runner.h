@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2003-2013 Sourcefire, Inc.
+// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,22 +15,24 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// piglet_runner.h author Joel Cornett <jocornet@cisco.com>
 
-/**
- * @file   util_str.h
- * @author Chris Green <cmg@sourcefire.com>
- * @date   Fri Jun 27 10:34:37 2003
- *
- * @brief  string utility functions
- *
- * some string handling wrappers
- */
+#ifndef PIGLET_RUNNER_H
+#define PIGLET_RUNNER_H
 
-#ifndef UTIL_STR_H
-#define UTIL_STR_H
+#include "piglet_utils.h"
 
-int str2int(char* str, int* ret, int allow_negative);
-int toggle_option(char* name, char* value, int* opt_value);
+namespace Piglet
+{
+class Runner
+{
+public:
+    static Test run(const Chunk&);
 
-#endif /* UTIL_STR_H */
+private:
+    static void run(Test&);
+};
+} // namespace Piglet
+
+#endif
 

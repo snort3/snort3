@@ -72,7 +72,10 @@ enum RunFlag
     RUN_FLAG__PCAP_RELOAD         = 0x00200000,     /* --pcap-reload */
     RUN_FLAG__TEST                = 0x00400000,     /* -T */
 #ifdef BUILD_SHELL
-    RUN_FLAG__SHELL               = 0x00800000      /* --shell */
+    RUN_FLAG__SHELL               = 0x00800000,     /* --shell */
+#endif
+#ifdef PIGLET
+    RUN_FLAG__PIGLET              = 0x01000000      /* --piglet */
 #endif
 };
 

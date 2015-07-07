@@ -82,6 +82,12 @@ if (BUILD_UNIT_TESTS)
     add_subdirectory(test)
 endif (BUILD_UNIT_TESTS)
 
+if (BUILD_PIGLET)
+    set(PIGLET_LIBRARIES piglet piglet_plugins)
+    add_subdirectory(piglet)
+    add_subdirectory(piglet_plugins)
+endif (BUILD_PIGLET)
+
 
 #  The main Snort executableRA
 add_executable( snort
@@ -138,6 +144,7 @@ target_link_libraries( snort
     ${STATIC_CODEC_LIBRARIES}
     ${STATIC_INSPECTOR_LIBRARIES}
     ${UNIT_TESTS_LIBRARIES}
+    ${PIGLET_LIBRARIES}
     ${EXTERNAL_LIBRARIES}
 )
 

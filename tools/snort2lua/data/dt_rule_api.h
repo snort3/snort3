@@ -32,7 +32,7 @@ class RuleApi;
 
 // Yes, I need to redo this API.
 
-// FIXIT-L J  Simplify this API.  Several options functions are no longer necessary!!
+// FIXIT-L Simplify this API.  Several options functions are no longer necessary!!
 class RuleApi
 {
 public:

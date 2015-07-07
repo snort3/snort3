@@ -88,7 +88,7 @@ bool Resp::convert(std::istringstream& data_stream)
 
                 do
                 {
-                    // FIXIT-?J Once bindings added for reject, this MUST change!
+                    // FIXIT-L Once bindings added for reject, this MUST change!
 
                     if (!tmp.compare("reset_dest"))
                     {

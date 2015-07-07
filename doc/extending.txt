@@ -276,3 +276,49 @@ Action plugins specify a builtin action in the API which is used to
 determine verdict.  (Conversely, builtin actions don't have an associated
 plugin function.)
 
+
+=== Piglet Test Harness
+
+In order to assist with plugin development, an experimental mode called "piglet" mode
+is provided. With piglet mode, you can call individual methods for a specific plugin.
+The piglet tests are specified as Lua scripts. Each piglet test script defines a test
+for a specific plugin.
+
+Here is a minimal example of a piglet test script for the IPv4 Codec plugin:
+
+    plugin =
+    {
+        type = "piglet",
+        version = 1
+    }
+
+    piglet =
+    {
+        name = "my_test_for_ipv4_codec",
+        type = "codec",
+        target = "ipv4",
+        test = function()
+            local raw_data = RawData.new(1024)
+            local codec_data = CodecData.new()
+            local decode_data = DecodeData.new()
+
+            codec("decode", raw_data, codec_data, decode_data)
+            return true
+        end
+    }
+
+More example tests can be found in the piglet_scripts directory. Refer to these
+examples for furthur usage of Lua wrappers to snort data structures (such as Packet).
+
+To run snort in piglet mode, first build snort with the BUILD_PIGLET option turned on
+(pass the flag -DBUILD_PIGLET:BOOL=ON in cmake).
+
+Then, run the following command:
+
+    snort --script-path $test_scripts --piglet
+
+(where $test_scripts is the directory containing your piglet tests).
+
+The test runner will generate a check-like output, indicating the
+the results of each test script.
+

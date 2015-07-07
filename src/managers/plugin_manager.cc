@@ -19,10 +19,6 @@
 
 #include "plugin_manager.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <assert.h>
 #include <sys/stat.h>
 #include <dlfcn.h>
@@ -41,6 +37,12 @@ using namespace std;
 #include "codec_manager.h"
 #include "script_manager.h"
 #include "so_manager.h"
+
+#ifdef PIGLET
+#include "piglet/piglet_api.h"
+#include "piglet/piglet_manager.h"
+#include "piglet_plugins/piglet_plugins.h"
+#endif
 
 #include "framework/codec.h"
 #include "framework/logger.h"
@@ -88,6 +90,10 @@ static Symbol symbols[PT_MAX] =
     { "search_engine", SEAPI_VERSION, sizeof(MpseApi) },
     { "so_rule", SOAPI_VERSION, sizeof(SoApi) },
     { "logger", LOGAPI_VERSION, sizeof(LogApi) }
+#ifdef PIGLET
+    ,
+    { "piglet", Piglet::API_VERSION, Piglet::API_SIZE }
+#endif
 };
 #else
 // this gets around the sequence issue with some compilers
@@ -290,6 +296,7 @@ static void add_plugin(Plugin& p)
         Module* m = p.api->mod_ctor();
         ModuleManager::add_module(m, p.api);
     }
+
     switch ( p.api->type )
     {
     case PT_CODEC:
@@ -319,6 +326,12 @@ static void add_plugin(Plugin& p)
     case PT_LOGGER:
         EventManager::add_plugin((LogApi*)p.api);
         break;
+
+#ifdef PIGLET
+    case PT_PIGLET:
+        Piglet::Manager::add_plugin((Piglet::Api*)p.api);
+        break;
+#endif
 
     default:
         assert(false);
@@ -385,12 +398,20 @@ void PluginManager::load_plugins(const std::string& paths)
     load_list(service_inspectors);
     load_list(search_engines);
     load_list(loggers);
+#ifdef PIGLET
+    // FIXIT: Change the name of this thing
+    load_list(piglets);
+#endif
 
-    // plugins
+#ifdef PIGLET
+    load_list(piglets);
+#endif
+
+    // dynamic plugins
     if ( !paths.empty() )
         ::load_plugins(paths);
 
-    // scripts
+    // script plugins
     // FIXIT-L need path to script for --list-plugins
     load_list(ScriptManager::get_plugins());
 

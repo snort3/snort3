@@ -40,7 +40,7 @@
 
 struct Packet;
 
-// FIXIT-J : can I assume api si always valid?  i.e. if not ip4, then ipv6?
+// FIXIT-L : can I assume api is always valid?  i.e. if not ip4, then ipv6?
 //          or if not ip4, also make sure its not ip6
 
 namespace ip
@@ -70,7 +70,7 @@ public:
     uint32_t id() const;
     const uint8_t* ip_data() const; // return a pointer to the ip layers data
 
-    // FIXIT-L J get rid of the unnecessary ones
+    // FIXIT-L get rid of the unnecessary ones
     // returns the sum of the ip header + payload lengths in host byte order
     uint16_t dgram_len() const;
     // returns this ip layer's payload length in host byte order

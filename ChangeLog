@@ -1,3 +1,18 @@
+15/07/06 - build 160 - Alpha 2
+
+-- fixed duplicate patterns in file_magic.lua
+-- warn about rules with no fast pattern
+-- warn if file rule has no file_data fp
+-- run fast patterns according to packet type
+-- update / expand shutdown output for detection
+-- binder sets service from inspector if not set
+-- allow abbreviated rule headers
+-- fix cmake build on linux w/o asciidoc
+-- add bugs list to manual
+-- fix memory leaks
+-- fix valgrind issues
+-- fix xcode analyzer issues
+
 15/07/02 - build 159
 
 -- added file processing to new_http_inspect

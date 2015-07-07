@@ -392,6 +392,11 @@ static const Parameter s_params[] =
       "enable the interactive command line", },
 #endif
 
+#ifdef PIGLET
+    { "--piglet", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "enable piglet test harness mode" },
+#endif
+
     { "--show-plugins", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list module and plugin versions", },
 
@@ -772,6 +777,11 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 #ifdef BUILD_SHELL
     else if ( v.is("--shell") )
         sc->run_flags |= RUN_FLAG__SHELL;
+#endif
+
+#ifdef PIGLET
+    else if ( v.is("--piglet") )
+        sc->run_flags |= RUN_FLAG__PIGLET;
 #endif
 
     else if ( v.is("--show-plugins") )

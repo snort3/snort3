@@ -65,7 +65,7 @@ bool AlertSyslog::convert(std::istringstream& data_stream)
             data_stream.seekg(pos);
             data_stream >> hostname;    // output previously confirmed
 
-            //FIXIT-J L --- add when we start supporting windows
+            //FIXIT-L --- add when we start supporting windows
             table_api.add_comment("BINDINGS REQUIRED!! hostname --> --> " + hostname);
         }
         else if (!keyword.compare("log_auth"))

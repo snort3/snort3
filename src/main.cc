@@ -67,7 +67,9 @@ using namespace std;
 #include "test/unit_test.h"
 #endif
 
-//#include "framework/so_rule.h"
+#ifdef PIGLET
+#include "piglet/piglet.h"
+#endif
 
 //-------------------------------------------------------------------------
 
@@ -691,7 +693,14 @@ static bool set_mode()
 {
 #ifdef UNIT_TEST
     if ( unit_test_enabled() )
+    {
+#ifdef PIGLET
+        if ( Piglet::Main::run_in_piglet_mode() )
+            exit(unit_test() || Piglet::Main::piglet());
+        else
+#endif
         exit(unit_test());
+    }
 #endif
 
     if ( int k = get_parse_errors() )
@@ -838,6 +847,12 @@ int main(int argc, char* argv[])
         prompt = s;
 
     Snort::setup(argc, argv);
+
+#ifdef PIGLET
+    if ( Piglet::Main::run_in_piglet_mode() )
+        exit(Piglet::Main::piglet());
+    else
+#endif
 
     if ( set_mode() )
         snort_main();

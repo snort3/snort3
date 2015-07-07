@@ -253,11 +253,11 @@ public:
     inline const char* get_name() const
     { return name; }
     // Registers this Codec's data link type (as defined by libpcap)
-    virtual void get_data_link_type(std::vector<int>&) // FIXIT-M J return a vector == efficient in
+    virtual void get_data_link_type(std::vector<int>&) // FIXIT-M return a vector == efficient in
                                                        // c++11
     { }
     // Register the code's protocol ID's and Ethertypes
-    virtual void get_protocol_ids(std::vector<uint16_t>&)  // FIXIT-M J return a vector ==
+    virtual void get_protocol_ids(std::vector<uint16_t>&)  // FIXIT-M return a vector ==
                                                            // efficient in c++11
     { }
 

@@ -101,7 +101,7 @@ bool SocketCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort
     if ( pci->ip_proto )
     {
         set_ip(pci, codec, snort);
-        snort.set_pkt_type(PktType::USER);
+        snort.set_pkt_type(PktType::PDU);
     }
     else
     {

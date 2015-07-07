@@ -96,6 +96,12 @@
 /* enable unit tests in build */
 #cmakedefine UNIT_TEST 1
 
+/* enable piglet in build */
+#cmakedefine PIGLET 1
+
+/* enable static piglet plugins in build */
+#cmakedefine STATIC_PIGLETS 1
+
 /* Set by user */
 #cmakedefine SIGNAL_SNORT_DUMP_STATS @SIGNAL_SNORT_DUMP_STATS@
 

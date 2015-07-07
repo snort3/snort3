@@ -52,8 +52,6 @@ ADD_LIBRARY( utils STATIC
     util_math.h
     util_net.cc 
     util_net.h
-    util_str.cc 
-    util_str.h
     util_utf.cc 
     util_utf.h
     util_unfold.cc 

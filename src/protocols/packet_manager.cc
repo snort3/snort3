@@ -233,7 +233,7 @@ void PacketManager::decode(
 
         if (codec_data.proto_bits & (PROTO_BIT__IP | PROTO_BIT__IP6_EXT))
         {
-            // FIXIT-M J  refactor when ip_proto's become an array
+            // FIXIT-M refactor when ip_proto's become an array
             if ( p->is_fragment() )
             {
                 if ( prev_prot_id == IPPROTO_ID_FRAGMENT )
@@ -860,7 +860,7 @@ void PacketManager::encode_update(Packet* p)
     }
 
     // see IP6_Update() for an explanation of this ...
-    // FIXIT-L J   is this second statement really necessary?
+    // FIXIT-L is this second statement really necessary?
     // PKT_RESIZED include PKT_MODIFIED ... so get rid of that extra flag
     if ( !(p->packet_flags & PKT_MODIFIED)
         || (p->packet_flags & (PKT_RESIZED & ~PKT_MODIFIED))

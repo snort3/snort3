@@ -122,3 +122,7 @@ snort_LDADD += test/libtest.a -lcheck -lrt -lpthread
 SUBDIRS += test
 endif
 
+if BUILD_PIGLET
+snort_LDADD += piglet/libpiglet.a piglet_plugins/libpiglet_plugins.a
+SUBDIRS += piglet piglet_plugins
+endif

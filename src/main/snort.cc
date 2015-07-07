@@ -103,6 +103,11 @@ using namespace std;
 #include "stream/stream.h"
 #include "target_based/sftarget_reader.h"
 
+#ifdef PIGLET
+#include "piglet/piglet.h"
+#include "piglet/piglet_manager.h"
+#endif
+
 //-------------------------------------------------------------------------
 
 static SnortConfig* snort_cmd_line_conf = nullptr;
@@ -150,6 +155,7 @@ static ProfileStats* get_profile(const char* key)
 
     return nullptr;
 }
+
 #endif
 
 static void register_profiles()
@@ -226,6 +232,10 @@ void Snort::init(int argc, char** argv)
     LogMessage("%s  Snort++ %s-%s\n", get_prompt(), VERSION, BUILD);
     LogMessage("--------------------------------------------------\n");
 
+#ifdef PIGLET
+    Piglet::Manager::init();
+#endif
+
     ModuleManager::init();
     ScriptManager::load_scripts(snort_cmd_line_conf->script_path);
     PluginManager::load_plugins(snort_cmd_line_conf->plugin_path);
@@ -247,8 +257,14 @@ void Snort::init(int argc, char** argv)
     sc->merge(snort_cmd_line_conf);
     snort_conf = sc;
 
+#ifdef PIGLET
+    if ( !Piglet::Main::run_in_piglet_mode() )
+#endif
     CodecManager::instantiate();
 
+#ifdef PIGLET
+    if ( !Piglet::Main::run_in_piglet_mode() )
+#endif
     if ( !snort_conf->output.empty() )
         EventManager::instantiate(snort_conf->output.c_str(), snort_conf);
 
@@ -281,6 +297,9 @@ void Snort::init(int argc, char** argv)
 
     SFAT_Start();
 
+#ifdef PIGLET
+    if ( !Piglet::Main::run_in_piglet_mode() )
+#endif
     /* Finish up the pcap list and put in the queues */
     Trough_SetUp();
 
@@ -356,7 +375,12 @@ void Snort::term()
 
     IpsManager::global_term(snort_conf);
     SFAT_Cleanup();
+
+#ifdef PIGLET
+    if ( !Piglet::Main::run_in_piglet_mode() )
+#endif
     Trough_CleanUp();
+
     ClosePidFile();
 
     /* remove pid file */
@@ -547,7 +571,7 @@ void Snort::capture_packet()
 {
     if ( snort_main_thread_pid == gettid() )
     {
-        // FIXIT-J.  main thread crashed.  Do anything?
+        // FIXIT-L.  main thread crashed.  Do anything?
     }
     else
     {

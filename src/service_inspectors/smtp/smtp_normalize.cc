@@ -40,8 +40,6 @@
 #include "smtp.h"
 #include "smtp_util.h"
 
-extern char smtp_normalizing;
-
 /*
  * SMTP_NormalizeCmd
  *
