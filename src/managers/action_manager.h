@@ -28,12 +28,34 @@
 #include "actions/actions.h"
 #include "framework/base_api.h"
 
+#ifdef PIGLET
+#include "framework/ips_action.h"
+#include "piglet/piglet_api.h"
+#endif
+
 struct ActionApi;
 class IpsAction;
 struct SnortConfig;
 struct Packet;
 
 //-------------------------------------------------------------------------
+
+#ifdef PIGLET
+struct IpsActionWrapper
+{
+    IpsActionWrapper(const ActionApi* a, IpsAction* p) :
+        api { a }, instance { p } { }
+
+    ~IpsActionWrapper()
+    {
+        if ( api && instance && api->dtor )
+            api->dtor(instance);
+    }
+
+    const ActionApi* api;
+    IpsAction* instance;
+};
+#endif
 
 class ActionManager
 {
@@ -53,6 +75,10 @@ public:
     static void queue_reject(const Packet*);
     static void queue(IpsAction*);
     static void execute(Packet*);
+
+#ifdef PIGLET
+    static IpsActionWrapper* instantiate(const char*, Module*);
+#endif
 };
 
 #endif

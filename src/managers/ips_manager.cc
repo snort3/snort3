@@ -19,10 +19,6 @@
 
 #include "ips_manager.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <assert.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -344,4 +340,30 @@ bool IpsManager::verify(SnortConfig* sc)
 
     return true;
 }
+
+#ifdef PIGLET
+
+static const IpsApi* find_api(const char* name)
+{
+    for ( auto wrap : s_options )
+        if ( !strcmp(wrap->api->base.name, name) )
+            return wrap->api;
+
+    return nullptr;
+}
+
+IpsOptionWrapper* IpsManager::instantiate(const char* name, Module* m, struct OptTreeNode* otn)
+{
+    auto api = find_api(name);
+    if ( !api || !api->ctor )
+        return nullptr;
+
+    auto p = api->ctor(m, otn);
+    if ( !p )
+        return nullptr;
+
+    return new IpsOptionWrapper(api, p);
+}
+
+#endif
 

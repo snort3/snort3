@@ -80,7 +80,7 @@ enum DecodeFlags : std::uint16_t
     DECODE_EOF =            0x0400,  // user - end of flow
 };
 
-// FIXIT-L J make this an enum!!
+// FIXIT-L make this an enum!!
 #define PROTO_BIT__NONE     0x0000
 #define PROTO_BIT__IP       0x0001
 #define PROTO_BIT__ARP      0x0002

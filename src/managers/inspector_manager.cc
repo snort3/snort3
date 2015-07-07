@@ -194,7 +194,7 @@ void FrameworkPolicy::vectorize()
             passive.add(p);
             break;
 
-        case IT_PACKET :
+        case IT_PACKET:
             packet.add(p);
             break;
 
@@ -281,6 +281,7 @@ static void dump_refs(PHList& trash)
             printf("%s = %u\n", p->get_api()->base.name, p->get_ref(0));
     }
 }
+
 #endif
 
 void InspectorManager::release_plugins()
@@ -784,4 +785,21 @@ void InspectorManager::clear(Packet* p)
 
     s_clear = false;
 }
+
+#ifdef PIGLET
+
+InspectorWrapper* InspectorManager::instantiate(const char* name, Module* m)
+{
+    auto api = ::get_plugin(name);
+    if ( !api || !api->ctor )
+        return nullptr;
+
+    auto p = api->ctor(m);
+    if ( !p )
+        return nullptr;
+
+    return new InspectorWrapper(api, p);
+}
+
+#endif
 

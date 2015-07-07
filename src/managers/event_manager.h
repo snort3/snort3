@@ -21,11 +21,16 @@
 #define EVENT_MANAGER_H
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"
+#include "config.h"
 #endif
 
 #include "snort_types.h"
 #include "framework/base_api.h"
+
+#ifdef PIGLET
+#include "framework/logger.h"
+#include "piglet/piglet_api.h"
+#endif
 
 #define OUTPUT_TYPE_FLAG__NONE  0x0
 #define OUTPUT_TYPE_FLAG__ALERT 0x1
@@ -38,6 +43,23 @@ struct SnortConfig;
 struct LogApi;
 
 //-------------------------------------------------------------------------
+
+#ifdef PIGLET
+struct LoggerWrapper
+{
+    LoggerWrapper(const LogApi* a, Logger* p) :
+        api { a }, instance { p } { }
+
+    ~LoggerWrapper()
+    {
+        if ( api && instance && api->dtor )
+            api->dtor(instance);
+    }
+
+    const LogApi* api;
+    Logger* instance;
+};
+#endif
 
 class EventManager
 {
@@ -63,6 +85,10 @@ public:
 
     static void enable_alerts(bool b) { alert_enabled = b; }
     static void enable_logs(bool b) { log_enabled = b; }
+
+#ifdef PIGLET
+    static LoggerWrapper* instantiate(const char* name, Module*, SnortConfig*);
+#endif
 
 private:
     static void instantiate(struct Output*, Module*, SnortConfig*);

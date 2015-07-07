@@ -250,7 +250,7 @@ void Stream::stop_inspection(
             flow->session->flush_server(p);
     }
 
-    /* TODO: Handle bytes/response parameters */
+    /* FIXIT: Handle bytes/response parameters */
 
     DisableInspection(p);
     flow->set_state(Flow::ALLOW);

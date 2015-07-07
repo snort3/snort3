@@ -380,7 +380,7 @@ void Flow::set_ttl(Packet* p, bool client)
      */
     if (outer_ip_api.is_ip())
     {
-        // FIXIT-J!! -- Do we want more than just the outermost
+        // FIXIT-L!! -- Do we want more than just the outermost
         //            and innermost ttl()?
         outer_ttl = outer_ip_api.ttl();
         inner_ttl = p->ptrs.ip_api.ttl();

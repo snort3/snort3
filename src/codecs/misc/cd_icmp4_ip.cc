@@ -199,7 +199,7 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     }
 
 #if 0
-    // FIXIT-L - J  more ip options fixits
+    // FIXIT-L more ip options fixits
     /* print IP options */
     if (p->ip_option_count > 0)
     {

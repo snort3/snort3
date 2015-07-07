@@ -439,7 +439,7 @@ static const uint8_t* IMAP_HandleCommand(Packet* p, IMAPData* imap_ssn, const ui
     /* get end of line and end of line marker */
     IMAP_GetEOL(ptr, end, &eol, &eolm);
 
-    /* TODO If the end of line marker coincides with the end of data we can't be
+    /* FIXIT If the end of line marker coincides with the end of data we can't be
      * sure that we got a command and not a substring which we could tell through
      * inspection of the next packet. Maybe a command pending state where the first
      * char in the next packet is checked for a space and end of line marker */

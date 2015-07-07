@@ -27,11 +27,33 @@
 #include "snort_types.h"
 #include "framework/base_api.h"
 
+#ifdef PIGLET
+#include "framework/mpse.h"
+#include "piglet/piglet_api.h"
+#endif
+
 struct MpseApi;
 class Mpse;
 struct SnortConfig;
 
 //-------------------------------------------------------------------------
+
+#ifdef PIGLET
+struct MpseWrapper
+{
+    MpseWrapper(const MpseApi* a, Mpse* p) :
+        api { a }, instance { p } { }
+
+    ~MpseWrapper()
+    {
+        if ( api && instance && api->dtor )
+            api->dtor(instance);
+    }
+
+    const MpseApi* api;
+    Mpse* instance;
+};
+#endif
 
 class MpseManager
 {
@@ -59,6 +81,10 @@ public:
     static bool search_engine_trim(const MpseApi*);
     static void print_mpse_summary(const MpseApi*);
     static void print_search_engine_stats();
+
+#ifdef PIGLET
+    static MpseWrapper* instantiate(const char*, Module*);
+#endif
 };
 
 #endif

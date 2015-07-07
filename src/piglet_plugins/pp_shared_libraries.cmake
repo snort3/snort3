@@ -1,0 +1,6 @@
+add_shared_library(pp_codec piglet_plugins pp_codec.cc)
+add_shared_library(pp_inspector piglet_plugins pp_inspector.cc)
+add_shared_library(pp_ips_action piglet_plugins pp_ips_action.cc)
+add_shared_library(pp_ips_option piglet_plugins pp_ips_option.cc)
+add_shared_library(pp_logger piglet_plugins pp_logger.cc)
+add_shared_library(pp_mpse piglet_plugins pp_mpse.cc)

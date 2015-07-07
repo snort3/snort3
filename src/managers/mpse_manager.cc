@@ -172,3 +172,20 @@ void MpseManager::print_search_engine_stats()
 
 #endif
 
+#ifdef PIGLET
+
+MpseWrapper* MpseManager::instantiate(const char* name, Module* m)
+{
+    auto api = ::get_api(name);
+    if ( !api || !api->ctor )
+        return nullptr;
+
+    auto p = api->ctor(nullptr, m, false, nullptr, nullptr, nullptr);
+    if ( !p )
+        return nullptr;
+
+    return new MpseWrapper(api, p);
+}
+
+#endif
+

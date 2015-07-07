@@ -28,9 +28,9 @@
 #include "data/dt_table_api.h"
 #include "data/dt_rule_api.h"
 
-// TODO-1 - J:  Change name to data_api
-// TODO-1 - J:  Remove all unecessary includes
-// TODO-1 - J:  set_default_print name should be change to print_all
+// FIXIT:  Change name to data_api
+// FIXIT:  Remove all unecessary includes
+// FIXIT:  set_default_print name should be change to print_all
 
 /*
  *

@@ -139,7 +139,7 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         codec.ip6_extension_count++;
     }
 
-    // TODO:  Leftover from Snort. Do we really want thsi?
+    // FIXIT:  Leftover from Snort. Do we really want thsi?
     const_cast<uint32_t&>(raw.len) -= (ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
 
     /* Adjust the packet length to account for the padding.

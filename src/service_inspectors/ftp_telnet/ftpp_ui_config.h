@@ -221,7 +221,7 @@ struct FTP_CLIENT_PROTO_CONF
     bool ignore_telnet_erase_cmds;
 
     /* allow_bounce to IP/mask port|port-range
-       TODO: change this to use a quick find of IP/mask */
+       FIXIT: change this to use a quick find of IP/mask */
     BOUNCE_LOOKUP* bounce_lookup;
 
     FTP_CLIENT_PROTO_CONF();

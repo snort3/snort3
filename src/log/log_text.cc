@@ -1050,7 +1050,7 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet* p)
     if (log == NULL || p == NULL)
         return;
 
-    // FIXIT-L -J  -- Allocating a new Packet here is ridiculously excessive.
+    // FIXIT-L -- Allocating a new Packet here is ridiculously excessive.
     Packet* orig_p = PacketManager::encode_new();
     orig_p->reset();
     Packet& op = *orig_p;

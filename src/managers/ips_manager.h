@@ -21,18 +21,43 @@
 #define IPS_MANAGER_H
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"
+#include "config.h"
 #endif
+
+#include <string>
 
 #include "snort_types.h"
 #include "detection/detection_options.h"
 #include "framework/base_api.h"
 #include "framework/ips_option.h"
+#include "framework/module.h"
+#include "detection/treenodes.h"
+
+#ifdef PIGLET
+#include "piglet/piglet_api.h"
+#endif
 
 struct SnortConfig;
 struct IpsApi;
 
 //-------------------------------------------------------------------------
+
+#ifdef PIGLET
+struct IpsOptionWrapper
+{
+    IpsOptionWrapper(const IpsApi* a, IpsOption* p) :
+        api { a }, instance { p } { }
+
+    ~IpsOptionWrapper()
+    {
+        if ( api && instance && api->dtor )
+            api->dtor(instance);
+    }
+
+    const IpsApi* api;
+    IpsOption* instance;
+};
+#endif
 
 class IpsManager
 {
@@ -63,6 +88,10 @@ public:
     static void setup_options();
     static void clear_options();
     static bool verify(SnortConfig*);
+#ifdef PIGLET
+
+    static IpsOptionWrapper* instantiate(const char*, Module*, struct OptTreeNode*);
+#endif
 };
 
 #endif
