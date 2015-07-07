@@ -50,7 +50,7 @@
 
 THREAD_LOCAL ProfileStats smtpPerfStats;
 THREAD_LOCAL SimpleStats smtpstats;
-char smtp_normalizing;
+THREAD_LOCAL bool smtp_normalizing;
 
 /* Globals ****************************************************************/
 
@@ -1386,7 +1386,7 @@ static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
     SMTP_ResetAltBuffer();
 
     /* reset normalization stuff */
-    smtp_normalizing = 0;
+    smtp_normalizing = false;
     SetDetectLimit(p, 0);
 
     if (pkt_dir == SMTP_PKT_FROM_SERVER)

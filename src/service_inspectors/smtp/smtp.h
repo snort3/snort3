@@ -27,6 +27,7 @@
 
 #include "protocols/packet.h"
 #include "stream/stream_api.h"
+#include "main/thread.h"
 #include "profiler.h"
 #include "smtp_config.h"
 
@@ -173,5 +174,7 @@ public:
     SMTPData session;
 };
 
-#endif /* SMTP_H */
+extern THREAD_LOCAL bool smtp_normalizing;
+
+#endif
 

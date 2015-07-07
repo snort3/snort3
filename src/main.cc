@@ -67,8 +67,6 @@ using namespace std;
 #include "test/unit_test.h"
 #endif
 
-//#include "framework/so_rule.h"
-
 //-------------------------------------------------------------------------
 
 static Swapper* swapper = NULL;

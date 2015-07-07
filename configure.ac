@@ -26,7 +26,7 @@
 # initialization
 #--------------------------------------------------------------------------
 
-AC_INIT([snort], [3.0.0-a1], [snort-team@sourcefire.com])
+AC_INIT([snort], [3.0.0-a2], [snort-team@sourcefire.com])
 AC_PREREQ([2.69])
 
 AC_CONFIG_SRCDIR([src/main.h])
