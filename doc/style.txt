@@ -213,6 +213,11 @@ yet firm so feedback is welcome to get something we can live with.
     -Wall -Wextra -pedantic -Wformat -Wformat-security
     -Wunused-but-set-variable -Wno-deprecated-declarations
 
+* With clang, use at least these compiler flags:
+
+    -Wall -Wextra -pedantic -Wformat -Wformat-security
+    -Wno-deprecated-declarations
+
 * Then Fix All Warnings.  None Allowed.
 
 === Other

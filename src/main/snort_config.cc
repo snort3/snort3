@@ -344,7 +344,7 @@ void SnortConfig::merge(SnortConfig* cmd_line)
             p->checksum_drop = cl_drop;
     }
 
-    /* FIXIT-L J do these belong in network policy? */
+    /* FIXIT-L do these belong in network policy? */
     if (cmd_line->num_layers != 0)
         num_layers = cmd_line->num_layers;
 

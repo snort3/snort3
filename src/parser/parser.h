@@ -68,7 +68,11 @@ SO_PUBLIC void ParseMessage(const char*, ...);
 enum WarningGroup
 {
     WARN_DAQ, WARN_CONF, WARN_VARS, WARN_SYMBOLS, WARN_SCRIPTS,
-    WARN_HOSTS, WARN_RULES, WARN_FLOWBITS, WARN_PLUGINS, WARN_MAX
+    WARN_HOSTS, WARN_RULES, WARN_FLOWBITS, WARN_PLUGINS,
+#ifdef PIGLET
+    WARN_PIGLET,
+#endif
+    WARN_MAX
 };
 
 SO_PUBLIC void ParseWarning(WarningGroup, const char*, ...);

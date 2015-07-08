@@ -50,7 +50,7 @@
 
 THREAD_LOCAL ProfileStats smtpPerfStats;
 THREAD_LOCAL SimpleStats smtpstats;
-char smtp_normalizing;
+THREAD_LOCAL bool smtp_normalizing;
 
 /* Globals ****************************************************************/
 
@@ -764,7 +764,7 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
         alert_long_command_line = 1;
     }
 
-    /* TODO If the end of line marker coincides with the end of data we can't be
+    /* FIXIT If the end of line marker coincides with the end of data we can't be
      * sure that we got a command and not a substring which we could tell through
      * inspection of the next packet. Maybe a command pending state where the first
      * char in the next packet is checked for a space and end of line marker */
@@ -1386,7 +1386,7 @@ static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
     SMTP_ResetAltBuffer();
 
     /* reset normalization stuff */
-    smtp_normalizing = 0;
+    smtp_normalizing = false;
     SetDetectLimit(p, 0);
 
     if (pkt_dir == SMTP_PKT_FROM_SERVER)
@@ -1709,7 +1709,7 @@ static Inspector* smtp_ctor(Module* m)
     Smtp* smtp = new Smtp(conf);
 
     unsigned i = 0;
-    const SmtpCmd* cmd; 
+    const SmtpCmd* cmd;
 
     while ( (cmd = mod->get_cmd(i++)) )
         smtp->ProcessSmtpCmdsList(cmd);

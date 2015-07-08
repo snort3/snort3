@@ -23,7 +23,7 @@
 #include <array>
 #include <list>
 
-// FIXIT-L J  update this includes
+// FIXIT-L update this includes
 #include "main/snort_types.h"
 #include "framework/codec.h"
 #include "protocols/packet.h" // FIXIT-L remove
@@ -49,7 +49,7 @@ enum class UnreachResponse
     FWD,
 };
 
-// FIXIT-M J  --  Roll the PacketManager and 'layer' namespace into
+// FIXIT-M --  Roll the PacketManager and 'layer' namespace into
 //                  the Packet struct
 class SO_PUBLIC PacketManager
 {

@@ -154,7 +154,7 @@ int getApplicationProtocolId(const HostAttributeEntry* host_entry,
         }
     }
 
-    /* TODO: client? doesn't make much sense in terms of specific port */
+    /* FIXIT: client? doesn't make much sense in terms of specific port */
 
     return 0;
 }

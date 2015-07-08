@@ -814,7 +814,7 @@ int ParseBounceTo(char* token, FTP_BOUNCE_TO* bounce)
     return FTPP_SUCCESS;
 }
 
-/* TODO: Maybe want to redo this with high-speed searcher for ip/port.
+/* FIXIT: Maybe want to redo this with high-speed searcher for ip/port.
  * Would be great if we could handle both full addresses and
  * subnets quickly -- using CIDR format.  Need something that would
  * return most specific match -- ie a specific host is more specific

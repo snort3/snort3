@@ -26,7 +26,7 @@
 # initialization
 #--------------------------------------------------------------------------
 
-AC_INIT([snort], [3.0.0-a1], [snort-team@sourcefire.com])
+AC_INIT([snort], [3.0.0-a2], [snort-team@sourcefire.com])
 AC_PREREQ([2.69])
 
 AC_CONFIG_SRCDIR([src/main.h])
@@ -336,6 +336,16 @@ if test "x$static_codecs" = "xyes"; then
     AC_DEFINE(STATIC_CODECS, [1], [include internal decoders in binary])
 fi
 
+AC_ARG_ENABLE(static-piglets,
+  AC_HELP_STRING([--disable-static-piglets],[do not include piglets in binary]),
+  static_piglets="$enableval", static_piglets="yes")
+
+AM_CONDITIONAL(STATIC_PIGLETS, [test "x$static_piglets" = "xyes"])
+
+if test "x$static_piglets" = "xyes"; then
+    AC_DEFINE(STATIC_PIGLETS, [1], [include internal piglets in binary])
+fi
+
 AC_ARG_ENABLE(valgrind,
     AC_HELP_STRING([--enable-valgrind],[only use if you are testing with valgrind.]),
     enable_valgrind="$enableval", enable_valgrind="no")
@@ -463,6 +473,20 @@ AM_CONDITIONAL(BUILD_UNIT_TESTS, test "x$enable_unit_tests" = "xyes")
 if test "x$enable_unit_tests" = "xyes"; then
     AC_CHECK_LIB(check,srunner_create)
 fi
+
+#--------------------------------------------------------------------------
+# piglet
+#--------------------------------------------------------------------------
+
+AC_ARG_ENABLE(piglet,
+    AC_HELP_STRING([--enable-piglet],[build piglet test harness]),
+    enable_piglet="$enableval", enable_piglet="no")
+
+if test "x$enable_piglet" = "xyes"; then
+    AC_DEFINE(PIGLET, [1], [enable piglet test harness in build])
+fi
+
+AM_CONDITIONAL(BUILD_PIGLET, test "x$enable_piglet" = "xyes")
 
 #--------------------------------------------------------------------------
 # pcap
@@ -968,6 +992,8 @@ src/network_inspectors/perf_monitor/Makefile \
 src/network_inspectors/port_scan/Makefile \
 src/packet_io/Makefile \
 src/parser/Makefile \
+src/piglet/Makefile \
+src/piglet_plugins/Makefile \
 src/service_inspectors/Makefile     \
 src/service_inspectors/back_orifice/Makefile \
 src/service_inspectors/dns/Makefile \

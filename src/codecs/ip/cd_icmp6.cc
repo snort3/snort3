@@ -265,7 +265,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             if (ni->code > 2)
                 codec_event(codec, DECODE_ICMPV6_NODE_INFO_BAD_CODE);
 
-            /* TODO: Add alert for INFO Response, code == 1 || code == 2)
+            /* FIXIT: Add alert for INFO Response, code == 1 || code == 2)
              * and there is data.
              */
             len = icmp::ICMP6_HEADER_MIN_LEN;

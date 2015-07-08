@@ -1,0 +1,21 @@
+AUTOMAKE_OPTIONS=foreign no-dependencies
+
+noinst_LIBRARIES = libpiglet.a
+
+libpiglet_a_SOURCES = \
+piglet.cc \
+piglet.h \
+piglet_api.cc \
+piglet_api.h \
+piglet_manager.cc \
+piglet_manager.h \
+piglet_runner.cc \
+piglet_runner.h \
+piglet_utils.cc \
+piglet_utils.h \
+../helpers/lua.h \
+../helpers/lua.cc
+
+libpiglet_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
+
+AM_CXXFLAGS = @AM_CXXFLAGS@

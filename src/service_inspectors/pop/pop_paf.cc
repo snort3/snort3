@@ -197,7 +197,7 @@ static inline void reset_client_cmd_info(PopPafData* pfdata)
  */
 static bool find_data_end_multi_line(PopPafData* pfdata, const uint8_t ch, bool mime_data)
 {
-    // TODO:  This will currently flush on MIME boundary, and one line later at end of PDU
+    // FIXIT:  This will currently flush on MIME boundary, and one line later at end of PDU
 
     if (file_api->check_data_end(&(pfdata->end_state), ch))
     {
@@ -276,7 +276,7 @@ static StreamSplitter::Status pop_paf_server(PopPafData* pfdata,
             break;
 
         case POP_PAF_DATA_STATE:
-            // TODO --> statefully get length
+            // FIXIT --> statefully get length
             if ( find_data_end_multi_line(pfdata, ch, true) )
             {
                 *fp = i + 1;
@@ -316,7 +316,7 @@ static StreamSplitter::Status pop_paf_client(Flow* ssn, PopPafData* pfdata,
 {
     uint32_t i;
 
-    // TODO ... ensure current command is smaller than max command length
+    // FIXIT ... ensure current command is smaller than max command length
 
     for (i = 0; i < len; i++)
     {

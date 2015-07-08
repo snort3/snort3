@@ -20,9 +20,18 @@
 #ifndef INSPECTOR_MANAGER_H
 #define INSPECTOR_MANAGER_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "main/snort_types.h"
 #include "framework/base_api.h"
 #include "framework/inspector.h"
+
+#ifdef PIGLET
+#include "framework/inspector.h"
+#include "piglet/piglet_api.h"
+#endif
 
 struct Packet;
 struct FrameworkPolicy;
@@ -30,6 +39,23 @@ struct SnortConfig;
 struct InspectionPolicy;
 
 //-------------------------------------------------------------------------
+
+#ifdef PIGLET
+struct InspectorWrapper
+{
+    InspectorWrapper(const InspectApi* a, Inspector* p) :
+        api { a }, instance { p } { }
+
+    ~InspectorWrapper()
+    {
+        if ( api && instance && api->dtor )
+            api->dtor(instance);
+    }
+
+    const InspectApi* api;
+    Inspector* instance;
+};
+#endif
 
 class InspectorManager
 {
@@ -73,6 +99,10 @@ public:
     static void execute(Packet*);
     static void clear(Packet*);
     static void empty_trash();
+
+#ifdef PIGLET
+    static InspectorWrapper* instantiate(const char*, Module*);
+#endif
 
 private:
     static void bumble(Packet*);

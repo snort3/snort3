@@ -74,9 +74,9 @@ perf_monitor = { }
 pop = { }
 port_scan = { }
 rpc_decode = { }
+sip = { }
 ssh = { }
 ssl = { }
-sip = { }
 telnet = { }
 
 -- use http_inspect or new_http_inspect (incomplete)

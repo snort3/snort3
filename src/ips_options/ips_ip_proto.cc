@@ -17,8 +17,6 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "ips_ip_proto.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

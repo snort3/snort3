@@ -9,6 +9,8 @@ add_library (helpers STATIC
     process.cc
     process.h
     swapper.h
+    lua.cc
+    lua.h
 )
 
 

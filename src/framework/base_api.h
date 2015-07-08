@@ -47,6 +47,9 @@ enum PlugType
     PT_SEARCH_ENGINE,
     PT_SO_RULE,
     PT_LOGGER,
+#ifdef PIGLET
+    PT_PIGLET,
+#endif
     PT_MAX
 };
 

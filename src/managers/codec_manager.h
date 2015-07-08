@@ -22,10 +22,16 @@
 #define MANAGERS_CODEC_MANAGER_H
 
 #include <array>
+#include <string>
 #include <vector>
 #include <cstdint>
 
 #include "main/thread.h"
+
+#ifdef PIGLET
+#include "framework/codec.h"
+#include "piglet/piglet_api.h"
+#endif
 
 struct SnortConfig;
 struct CodecApi;
@@ -41,6 +47,23 @@ extern THREAD_LOCAL ProfileStats decodePerfStats;
 #endif
 
 static const uint16_t max_protocol_id = 65535;
+
+#ifdef PIGLET
+struct CodecWrapper
+{
+    CodecWrapper(const CodecApi* a, Codec* p) :
+        api { a }, instance { p } { }
+
+    ~CodecWrapper()
+    {
+        if ( api && instance && api->dtor )
+            api->dtor(instance);
+    }
+
+    const CodecApi* api;
+    Codec* instance;
+};
+#endif
 
 /*
  *  CodecManager class
@@ -65,6 +88,10 @@ public:
     // print all of the codec plugins
     static void dump_plugins();
 
+#ifdef PIGLET
+    static CodecWrapper* instantiate(const char*, Module*, SnortConfig*);
+#endif
+
 private:
     struct CodecApiWrapper;
 
@@ -83,6 +110,10 @@ private:
     static void instantiate(CodecApiWrapper&, Module*, SnortConfig*);
     static CodecApiWrapper& get_api_wrapper(const CodecApi* cd_api);
     static uint8_t get_codec(const char* const keyword);
+
+#ifdef PIGLET
+    static const CodecApi* find_api(const char*);
+#endif
 };
 
 #endif

@@ -50,7 +50,6 @@
 #include "snort_bounds.h"
 #include "detection/detection_util.h"
 
-extern char smtp_normalizing;
 static THREAD_LOCAL DataBuffer DecodeBuf;
 
 void SMTP_GetEOL(const uint8_t* ptr, const uint8_t* end,
@@ -111,7 +110,7 @@ int SMTP_CopyToAltBuffer(const uint8_t* start, int length)
 
     /* if we make a call to this it means we want to use the alt buffer
      * regardless of whether we copy any data into it or not - barring a failure */
-    smtp_normalizing = 1;
+    smtp_normalizing = true;
 
     /* if start and end the same, nothing to copy */
     if (length == 0)
@@ -126,7 +125,7 @@ int SMTP_CopyToAltBuffer(const uint8_t* start, int length)
     if (ret != SAFEMEM_SUCCESS)
     {
         //SetDetectLimit(p, 0);
-        smtp_normalizing = 0;
+        smtp_normalizing = false;
         return -1;
     }
     *alt_len += length;

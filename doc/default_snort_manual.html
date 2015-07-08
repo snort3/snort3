@@ -781,7 +781,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0-a1 (Build 155) from 2.9.7-177
+o"  )~   Version 3.0.0-a1 (Build 160) from 2.9.7-177
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
@@ -1233,11 +1233,11 @@ one preprocessor supplies another with a function to call when certain data
 is available.  Snort has started to take this approach to pass some HTTP and
 SIP preprocessor data to app ID.  However, it remains a peripheral feature
 and still requires the production of data that may not be consumed.</p></div>
-<div class="paragraph"><p>The basic processing steps Snort<code> takes are similar to Snort&#8217;s as seen in
+<div class="paragraph"><p>The basic processing steps Snort++ takes are similar to Snort&#8217;s as seen in
 the following diagram.  The preprocess step employs specific inspector
 types instead of a generalized list, but the basic procedure includes
 stateless packet decoding, TCP stream reassembly, and service specific
-analysis in both cases.  (Snort</code> provides hooks for arbitrary inspectors,
+analysis in both cases.  (Snort++ provides hooks for arbitrary inspectors,
 but they are not central to basic flow processing and are not shown.)</p></div>
 <div class="imageblock">
 <div class="content">
@@ -1260,8 +1260,8 @@ subscribed for (<em>other</em> in the above diagram).  By adding data_log = { ke
 URI logger.</p></div>
 <div class="paragraph"><p>Inspection events coupled with pluggable inspectors provide a very flexible
 framework for implementing new features.  And JIT buffer stuffers allow
-Snort<code> to work smarter, not harder.  These capabilities will be leveraged
-more and more as Snort</code> development continues.</p></div>
+Snort++ to work smarter, not harder.  These capabilities will be leveraged
+more and more as Snort++ development continues.</p></div>
 </div>
 </div>
 </div>
@@ -1898,6 +1898,127 @@ EXTERNAL_NET = '!' .. MY_SERVERS</code></pre>
 </li>
 </ul></div>
 </div>
+<div class="sect2">
+<h3 id="_bugs">Bugs</h3>
+<div class="sect3">
+<h4 id="_build">Build</h4>
+<div class="ulist"><ul>
+<li>
+<p>
+configure bombs on OSX with g++ wrapper to clang because g<code> version &lt; 4.8
+(compare g\</code> -dumpversion and g++ --version)
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>workaround:  export CXX=clang++</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+export CXX=clang++ to build with clang; coughs up these warnings:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>Wunused-but-set-variable is not understood by clang
+clang: warning: argument unused during compilation: '-pthread'</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+Cmake doc/ has a problem when SNORT_PLUGIN_PATH is set to get extras
+included in the manual.
+</p>
+</li>
+<li>
+<p>
+Making in doc/ may fail complaining something about xmllint.  Just make
+again and it will succeed.  Appears to be an unknown dependency but it
+works for me!
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect3">
+<h4 id="_config">Config</h4>
+<div class="ulist"><ul>
+<li>
+<p>
+Parsing issue with IP lists.  can&#8217;t parse rules with $EXTERNAL_NET
+defined as below because or the space between ! and 10.
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>HOME_NET = [[ 10.0.17.0/24 10.0.14.0/24 10.247.0.0/16 10.246.0.0/16 ]]
+EXTERNAL_NET = '! ' .. HOME_NET</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+Multiple versions of luajit scripts are not handled correctly.  The
+first loaded version will always be executed even though plugin manager
+saves the correct version.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect3">
+<h4 id="_rules">Rules</h4>
+<div class="ulist"><ul>
+<li>
+<p>
+metdata:service foo; metadata:service foo; won&#8217;t cause a duplicate service
+warning as does metadata:service foo, service foo;
+</p>
+</li>
+<li>
+<p>
+ip_proto doesn&#8217;t work properly with reassembled packets so it can&#8217;t be
+used to restrict the protocol of service rules.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect3">
+<h4 id="_snort2lua">snort2lua</h4>
+<div class="ulist"><ul>
+<li>
+<p>
+uricontent:"foo"; content:"bar"; &#8594; http_uri; content:"foo"; content:"bar";
+(missing pkt_data)
+</p>
+</li>
+<li>
+<p>
+stream_tcp ports and protocols both go into a single binder.when; this is
+incorrect as the when fields are logically anded together (ie must all be
+true).  should create 2 separate bindings.
+</p>
+</li>
+<li>
+<p>
+There is a bug in pps_stream_tcp.cc.. when stream_tcp: is
+specified without any arguments, snort2lua doesn&#8217;t convert it
+</p>
+</li>
+<li>
+<p>
+Loses the ip list delimiters [ ]; change to ( )
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>in snort.conf: var HOME_NET [A,B,C]
+in snort.lua: HOME_NET = [[A B C]]</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+Won&#8217;t convert packet rules (alert tcp etc.) to service rules (alert http
+etc.).
+</p>
+</li>
+</ul></div>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -1962,11 +2083,6 @@ int <strong>alerts.detection_filter_memcap</strong> = 1048576: set available mem
 <li>
 <p>
 int <strong>alerts.event_filter_memcap</strong> = 1048576: set available memory for filters { 0: }
-</p>
-</li>
-<li>
-<p>
-int <strong>alerts.flowbits_size</strong> = 1024: maximum number of allowed unique flowbits { 0:2048 }
 </p>
 </li>
 <li>
@@ -2253,6 +2369,51 @@ int <strong>detection.pcre_match_limit_recursion</strong> = 1500: limit pcre sta
 <li>
 <p>
 <strong>detection.analyzed</strong>: packets sent to detection
+</p>
+</li>
+<li>
+<p>
+<strong>detection.slow searches</strong>: non-fast pattern rule evaluations
+</p>
+</li>
+<li>
+<p>
+<strong>detection.raw searches</strong>: fast pattern searches in raw packet data
+</p>
+</li>
+<li>
+<p>
+<strong>detection.cooked searches</strong>: fast pattern searches in cooked packet data
+</p>
+</li>
+<li>
+<p>
+<strong>detection.pkt searches</strong>: fast pattern searches in packet data
+</p>
+</li>
+<li>
+<p>
+<strong>detection.alt searches</strong>: alt fast pattern searches in packet data
+</p>
+</li>
+<li>
+<p>
+<strong>detection.key searches</strong>: fast pattern searches in key buffer
+</p>
+</li>
+<li>
+<p>
+<strong>detection.header searches</strong>: fast pattern searches in header buffer
+</p>
+</li>
+<li>
+<p>
+<strong>detection.body searches</strong>: fast pattern searches in body buffer
+</p>
+</li>
+<li>
+<p>
+<strong>detection.file searches</strong>: fast pattern searches in file buffer
 </p>
 </li>
 <li>
@@ -3005,7 +3166,7 @@ int <strong>search_engine.max_queue_events</strong> = 5: maximum number of match
 </li>
 <li>
 <p>
-bool <strong>search_engine.inspect_stream_inserts</strong> = true: inspect reassembled payload - disabling is good for performance, bad for detection
+bool <strong>search_engine.inspect_stream_inserts</strong> = false: inspect reassembled payload - disabling is good for performance, bad for detection
 </p>
 </li>
 <li>
@@ -4872,7 +5033,7 @@ string <strong>binder[].when.service</strong>: override default configuration
 </li>
 <li>
 <p>
-enum <strong>binder[].use.action</strong> = inspect: what to do with matching traffic { block | allow | inspect }
+enum <strong>binder[].use.action</strong> = inspect: what to do with matching traffic { reset | block | allow | inspect }
 </p>
 </li>
 <li>
@@ -4901,6 +5062,11 @@ string <strong>binder[].use.name</strong>: symbol name (defaults to type)
 <li>
 <p>
 <strong>binder.packets</strong>: initial bindings
+</p>
+</li>
+<li>
+<p>
+<strong>binder.resets</strong>: reset bindings
 </p>
 </li>
 <li>
@@ -6246,7 +6412,7 @@ bool <strong>new_http_inspect.test_output</strong> = false: print out HTTP secti
 </li>
 <li>
 <p>
-<strong>219:53</strong> (new_http_inspect) Input apparently not HTTP
+<strong>219:53</strong> (new_http_inspect) Chunk length has excessive leading zeros
 </p>
 </li>
 <li>
@@ -6282,6 +6448,31 @@ bool <strong>new_http_inspect.test_output</strong> = false: print out HTTP secti
 <li>
 <p>
 <strong>219:60</strong> (new_http_inspect) Format error in HTTP header
+</p>
+</li>
+<li>
+<p>
+<strong>219:61</strong> (new_http_inspect) Chunk header options present
+</p>
+</li>
+<li>
+<p>
+<strong>219:62</strong> (new_http_inspect) URI badly formatted
+</p>
+</li>
+<li>
+<p>
+<strong>219:63</strong> (new_http_inspect) URI bad port number
+</p>
+</li>
+<li>
+<p>
+<strong>219:64</strong> (new_http_inspect) HTTP chunk misformatted
+</p>
+</li>
+<li>
+<p>
+<strong>219:65</strong> (new_http_inspect) White space following chunk length
 </p>
 </li>
 </ul></div>
@@ -7116,6 +7307,250 @@ int <strong>port_scan_global.memcap</strong> = 1048576: maximum tracker memory {
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_sip">sip</h3>
+<div class="paragraph"><p>What: sip inspection</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+bool <strong>sip.ignore_call_channel</strong> = false: enables the support for ignoring audio/video data channel
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_call_id_len</strong> = 256: maximum call id field size { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_contact_len</strong> = 256: maximum contact field size { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_content_len</strong> = 1024: maximum content length of the message body { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_dialogs</strong> = 4: maximum number of dialogs within one stream session { 1:4194303 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_from_len</strong> = 256: maximum from field size { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_requestName_len</strong> = 20: maximum request name field size { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_sessions</strong> = 10000: maximum number of sessions that can be allocated { 1024:4194303 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_to_len</strong> = 256: maximum to field size { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_uri_len</strong> = 256: maximum request uri field size { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_via_len</strong> = 1024: maximum via field size { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+string <strong>sip.methods</strong> = invite cancel ack  bye register options: list of methods to check in sip messages
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>140:1</strong> (sip) Maximum sessions reached
+</p>
+</li>
+<li>
+<p>
+<strong>140:2</strong> (sip) Empty request URI
+</p>
+</li>
+<li>
+<p>
+<strong>140:3</strong> (sip) URI is too long
+</p>
+</li>
+<li>
+<p>
+<strong>140:4</strong> (sip) Empty call-Id
+</p>
+</li>
+<li>
+<p>
+<strong>140:5</strong> (sip) Call-Id is too long
+</p>
+</li>
+<li>
+<p>
+<strong>140:6</strong> (sip) CSeq number is too large or negative
+</p>
+</li>
+<li>
+<p>
+<strong>140:7</strong> (sip) Request name in CSeq is too long
+</p>
+</li>
+<li>
+<p>
+<strong>140:8</strong> (sip) Empty From header
+</p>
+</li>
+<li>
+<p>
+<strong>140:9</strong> (sip) From header is too long
+</p>
+</li>
+<li>
+<p>
+<strong>140:10</strong> (sip) Empty To header
+</p>
+</li>
+<li>
+<p>
+<strong>140:11</strong> (sip) To header is too long
+</p>
+</li>
+<li>
+<p>
+<strong>140:12</strong> (sip) Empty Via header
+</p>
+</li>
+<li>
+<p>
+<strong>140:13</strong> (sip) Via header is too long
+</p>
+</li>
+<li>
+<p>
+<strong>140:14</strong> (sip) Empty Contact
+</p>
+</li>
+<li>
+<p>
+<strong>140:15</strong> (sip) Contact is too long
+</p>
+</li>
+<li>
+<p>
+<strong>140:16</strong> (sip) Content length is too large or negative
+</p>
+</li>
+<li>
+<p>
+<strong>140:17</strong> (sip) Multiple SIP messages in a packet
+</p>
+</li>
+<li>
+<p>
+<strong>140:18</strong> (sip) Content length mismatch
+</p>
+</li>
+<li>
+<p>
+<strong>140:19</strong> (sip) Request name is invalid
+</p>
+</li>
+<li>
+<p>
+<strong>140:20</strong> (sip) Invite replay attack
+</p>
+</li>
+<li>
+<p>
+<strong>140:21</strong> (sip) Illegal session information modification
+</p>
+</li>
+<li>
+<p>
+<strong>140:22</strong> (sip) Response status code is not a 3 digit number
+</p>
+</li>
+<li>
+<p>
+<strong>140:23</strong> (sip) Empty Content-type header
+</p>
+</li>
+<li>
+<p>
+<strong>140:24</strong> (sip) SIP version is invalid
+</p>
+</li>
+<li>
+<p>
+<strong>140:25</strong> (sip) Mismatch in METHOD of request and the CSEQ header
+</p>
+</li>
+<li>
+<p>
+<strong>140:26</strong> (sip) Method is unknown
+</p>
+</li>
+<li>
+<p>
+<strong>140:27</strong> (sip) Maximum dialogs within a session reached
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>sip.sessions</strong>: total sessions
+</p>
+</li>
+<li>
+<p>
+<strong>sip.events</strong>: events generated
+</p>
+</li>
+<li>
+<p>
+<strong>sip.dialogs</strong>: total dialogs
+</p>
+</li>
+<li>
+<p>
+<strong>sip.ignored channels</strong>: total channels ignored
+</p>
+</li>
+<li>
+<p>
+<strong>sip.ignored sessions</strong>: total sessions ignored
+</p>
+</li>
+<li>
+<p>
+<strong>sip.requests</strong>: total requests
+</p>
+</li>
+<li>
+<p>
+<strong>sip.responses</strong>: total responses
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_smtp">smtp</h3>
 <div class="paragraph"><p>What: smtp inspection</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
@@ -7379,6 +7814,55 @@ int <strong>ssh.max_server_version_len</strong> = 80: limit before alerting on s
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_ssl">ssl</h3>
+<div class="paragraph"><p>What: ssl inspection</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+bool <strong>ssl.trust_servers</strong> = false: disables requirement that application (encrypted) data must be observed on both sides
+</p>
+</li>
+<li>
+<p>
+int <strong>ssl.max_heartbeat_length</strong> = 0: maximum length of heartbeat record allowed { 0:65535 }
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>137:1</strong> (ssl) Invalid Client HELLO after Server HELLO Detected
+</p>
+</li>
+<li>
+<p>
+<strong>137:2</strong> (ssl) Invalid Server HELLO without Client HELLO Detected
+</p>
+</li>
+<li>
+<p>
+<strong>137:3</strong> (ssl) Heartbeat Read Overrun Attempt Detected
+</p>
+</li>
+<li>
+<p>
+<strong>137:4</strong> (ssl) Large Heartbeat Response Detected
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>ssl.packets</strong>: total packets
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_stream">stream</h3>
 <div class="paragraph"><p>What: common flow tracking</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
@@ -7386,32 +7870,12 @@ int <strong>ssh.max_server_version_len</strong> = 80: limit before alerting on s
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>stream.icmp_cache.memcap</strong> = 0: maximum cache memory { 0: }
+int <strong>stream.ip_cache.max_sessions</strong> = 16384: maximum simultaneous sessions tracked before pruning { 1: }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.idle_timeout</strong> = 60: maximum inactive time before retiring session tracker { 1: }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.icmp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.icmp_cache.max_sessions</strong> = 262144: maximum simultaneous tcp sessions tracked before pruning { 0: }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.ip_cache.memcap</strong> = 0: maximum cache memory { 0: }
-</p>
-</li>
-<li>
-<p>
-int <strong>stream.ip_cache.idle_timeout</strong> = 60: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.ip_cache.memcap</strong> = 23920640: maximum cache memory before pruning (0 is unlimited) { 0: }
 </p>
 </li>
 <li>
@@ -7421,17 +7885,37 @@ int <strong>stream.ip_cache.pruning_timeout</strong> = 30: minimum inactive time
 </li>
 <li>
 <p>
-int <strong>stream.ip_cache.max_sessions</strong> = 262144: maximum simultaneous tcp sessions tracked before pruning { 0: }
+int <strong>stream.ip_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.memcap</strong> = 0: maximum cache memory { 0: }
+int <strong>stream.icmp_cache.max_sessions</strong> = 32768: maximum simultaneous sessions tracked before pruning { 1: }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.idle_timeout</strong> = 60: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.icmp_cache.memcap</strong> = 1048576: maximum cache memory before pruning (0 is unlimited) { 0: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.icmp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.icmp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.tcp_cache.max_sessions</strong> = 131072: maximum simultaneous sessions tracked before pruning { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.tcp_cache.memcap</strong> = 268435456: maximum cache memory before pruning (0 is unlimited) { 0: }
 </p>
 </li>
 <li>
@@ -7441,17 +7925,17 @@ int <strong>stream.tcp_cache.pruning_timeout</strong> = 30: minimum inactive tim
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.max_sessions</strong> = 262144: maximum simultaneous tcp sessions tracked before pruning { 0: }
+int <strong>stream.tcp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.memcap</strong> = 0: maximum cache memory { 0: }
+int <strong>stream.udp_cache.max_sessions</strong> = 65536: maximum simultaneous sessions tracked before pruning { 1: }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.idle_timeout</strong> = 60: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.udp_cache.memcap</strong> = 0: maximum cache memory before pruning (0 is unlimited) { 0: }
 </p>
 </li>
 <li>
@@ -7461,7 +7945,47 @@ int <strong>stream.udp_cache.pruning_timeout</strong> = 30: minimum inactive tim
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.max_sessions</strong> = 262144: maximum simultaneous tcp sessions tracked before pruning { 0: }
+int <strong>stream.udp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.user_cache.max_sessions</strong> = 1024: maximum simultaneous sessions tracked before pruning { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.user_cache.memcap</strong> = 1048576: maximum cache memory before pruning (0 is unlimited) { 0: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.user_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.user_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.file_cache.max_sessions</strong> =  128: maximum simultaneous sessions tracked before pruning { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.file_cache.memcap</strong> = 0: maximum cache memory before pruning (0 is unlimited) { 0: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.file_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.file_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
 </p>
 </li>
 </ul></div>
@@ -7801,11 +8325,6 @@ int <strong>stream_tcp.small_segments.count</strong> = 0: limit number of small 
 <li>
 <p>
 int <strong>stream_tcp.small_segments.maximum_size</strong> = 0: limit number of small segments queued { 0:2048 }
-</p>
-</li>
-<li>
-<p>
-bit_list <strong>stream_tcp.small_segments.ignore_ports</strong>: limit number of small segments queued { 65535 }
 </p>
 </li>
 <li>
@@ -9320,6 +9839,42 @@ int <strong>sid.~</strong>: signature id { 1: }
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_sip_body">sip_body</h3>
+<div class="paragraph"><p>What: rule option to set the detection cursor to the request body</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+</div>
+<div class="sect2">
+<h3 id="_sip_header">sip_header</h3>
+<div class="paragraph"><p>What: rule option to set the detection cursor to the SIP header buffer</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+</div>
+<div class="sect2">
+<h3 id="_sip_method">sip_method</h3>
+<div class="paragraph"><p>What: detection option for sip stat code</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+string <strong>sip_method.*method</strong>: sip method
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_sip_stat_code">sip_stat_code</h3>
+<div class="paragraph"><p>What: detection option for sip stat code</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+int <strong>sip_stat_code.*code</strong>: stat code { 1:999 }
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_so">so</h3>
 <div class="paragraph"><p>What: rule option to call custom eval function</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
@@ -9341,6 +9896,122 @@ string <strong>so.~func</strong>: name of eval function
 <li>
 <p>
 string <strong>soid.~</strong>: SO rule ID has &lt;gid&gt;|&lt;sid&gt; format, like 3|12345
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_ssl_state">ssl_state</h3>
+<div class="paragraph"><p>What: detection option for ssl state</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+implied <strong>ssl_state.client_hello</strong>: check for client hello
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.server_hello</strong>: check for server hello
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.client_keyx</strong>: check for client keyx
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.server_keyx</strong>: check for server keyx
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.unknown</strong>: check for unknown record
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.!client_hello</strong>: check for records that are not client hello
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.!server_hello</strong>: check for records that are not server hello
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.!client_keyx</strong>: check for records that are not client keyx
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.!server_keyx</strong>: check for records that are not server keyx
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.!unknown</strong>: check for records that are not unknown
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_ssl_version">ssl_version</h3>
+<div class="paragraph"><p>What: detection option for ssl version</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+implied <strong>ssl_version.sslv2</strong>: check for sslv2
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.sslv3</strong>: check for sslv3
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.tls1.0</strong>: check for tls1.0
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.tls1.1</strong>: check for tls1.1
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.tls1.2</strong>: check for tls1.2
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.!sslv2</strong>: check for records that are not sslv2
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.!sslv3</strong>: check for records that are not sslv3
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.!tls1.0</strong>: check for records that are not tls1.0
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.!tls1.1</strong>: check for records that are not tls1.1
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.!tls1.2</strong>: check for records that are not tls1.2
 </p>
 </li>
 </ul></div>
@@ -9661,6 +10332,11 @@ int <strong>log_hext.limit</strong> = 0: set limit (0 is unlimited) { 0: }
 <li>
 <p>
 enum <strong>log_hext.units</strong> = B: bytes | KB | MB | GB { B | K | M | G }
+</p>
+</li>
+<li>
+<p>
+int <strong>log_hext.width</strong> = 20: set line width (0 is unlimited) { 0: }
 </p>
 </li>
 </ul></div>
@@ -10798,7 +11474,7 @@ stream5_tcp: max_active_responses, min_response_seconds moved to
 </ul></div>
 </div>
 <div class="sect2">
-<h3 id="_rules">Rules</h3>
+<h3 id="_rules_2">Rules</h3>
 <div class="ulist"><ul>
 <li>
 <p>
@@ -11059,14 +11735,14 @@ still under development.</p></div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_snort2lua">Snort2Lua</h2>
+<h2 id="_snort2lua_2">Snort2Lua</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>One of the major differences between Snort 2.9.X and Snort 3.0 is the
 configuration. Snort 2.9.X configuration files are written in Snort-specific
 syntax while Snort 3.0 configuration files are written in Lua. Snort2Lua is a
 program specifically designed to convert Snort 2.9.X configuration files into
 Lua files that Snort 3.0 can understand.</p></div>
-<div class="paragraph"><p>Snort2Lua reads your legacy Snort conf file(s) and generates Snort\++ Lua
+<div class="paragraph"><p>Snort2Lua reads your legacy Snort conf file(s) and generates Snort++ Lua
 and rules files.  When running this program, the only mandatory option is
 to provide Snort2Lua with a Snort configuration file. The default output
 file file is snort.lua, the default error file will be snort.rej, and the
@@ -11115,7 +11791,7 @@ As expected, quiet mode produces a Snort++ configuration.  All errors
 (aside from Fatal Snort2Lua errors), differences, and comments will omitted
 from the final output file.  Default mode will print everything. That mean
 you will be able to see exactly what changes have occurred between Snort and
-Snort\++ in addition to the new syntax, the original file&#8217;s comments, and
+Snort++ in addition to the new syntax, the original file&#8217;s comments, and
 all errors that have occurred.  Finally, differences mode will not actually
 output a valid Snort3.0 configuration.  Instead, you can see the exact
 options from the input configuration that have changed.</p></div>
@@ -11495,9 +12171,9 @@ various other data and functions for their given roles.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_modules_2">Modules</h3>
-<div class="paragraph"><p>The Module is pervasive in Snort<code>.  It is how everything, including
+<div class="paragraph"><p>The Module is pervasive in Snort+<code>.  It is how everything, including
 plugins, are configured.  It also provides access to builtin rules.  And as
-the glue that binds functionality to Snort</code>, the capabilities of a Module
+the glue that binds functionality to Snort</code>+, the capabilities of a Module
 are expected to grow to include statistics support, etc.</p></div>
 <div class="paragraph"><p>Module configuration is handled by a list of Parameters.  Most parameters
 can be validated by the framework, which means for example that conversion
@@ -11976,6 +12652,15 @@ Declare functions as override if they are intended to override a
   parent signature.
 </p>
 </li>
+<li>
+<p>
+Use bool functions instead of int unless there is truly a need for
+  multiple error returns.  The C-style use of zero for success and -1 for
+  error is less readable and often leads to messy code that either ignores
+  the various errors anyway or needlessly and ineffectively tries to do
+  something aobut them.
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -12429,12 +13114,12 @@ export SNORT_LUA_PATH=$my_path/etc/snort</code></pre>
 <div class="paragraph"><p>Dump the packets to stdout:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>snort -r /path/to/my.pcap -K text</code></pre>
+<pre><code>snort -r /path/to/my.pcap -L dump</code></pre>
 </div></div>
 <div class="paragraph"><p>Dump packets with application data and layer 2 headers</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>snort -r /path/to/my.pcap -K text -d -e</code></pre>
+<pre><code>snort -r /path/to/my.pcap -L dump -d -e</code></pre>
 </div></div>
 <div class="admonitionblock">
 <table><tr>
@@ -12443,18 +13128,18 @@ export SNORT_LUA_PATH=$my_path/etc/snort</code></pre>
 </td>
 <td class="content">Command line options must be specified separately. "snort -de" won&#8217;t
 work.  You can still concatenate options and their arguments, however, so
-"snort -Ktext" will work.</td>
+"snort -Ldump" will work.</td>
 </tr></table>
 </div>
 <div class="paragraph"><p>Dump packets from all pcaps in a directory:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>snort --pcap-dir /path/to/pcap/dir --pcap-filter '*.pcap' -K text -d -e</code></pre>
+<pre><code>snort --pcap-dir /path/to/pcap/dir --pcap-filter '*.pcap' -L dump -d -e</code></pre>
 </div></div>
 <div class="paragraph"><p>Log packets to a directory:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>snort --pcap-dir /path/to/pcap/dir --pcap-filter '*.pcap' -K pcap -l /path/to/log/dir</code></pre>
+<pre><code>snort --pcap-dir /path/to/pcap/dir --pcap-filter '*.pcap' -L dump -l /path/to/log/dir</code></pre>
 </div></div>
 </div>
 <div class="sect3">
@@ -13642,11 +14327,6 @@ int <strong>alerts.event_filter_memcap</strong> = 1048576: set available memory 
 </li>
 <li>
 <p>
-int <strong>alerts.flowbits_size</strong> = 1024: maximum number of allowed unique flowbits { 0:2048 }
-</p>
-</li>
-<li>
-<p>
 string <strong>alerts.order</strong> = pass drop alert log: change the order of rule action application
 </p>
 </li>
@@ -13742,7 +14422,7 @@ implied <strong>base64_decode.relative</strong>: Apply offset to cursor instead 
 </li>
 <li>
 <p>
-enum <strong>binder[].use.action</strong> = inspect: what to do with matching traffic { block | allow | inspect }
+enum <strong>binder[].use.action</strong> = inspect: what to do with matching traffic { reset | block | allow | inspect }
 </p>
 </li>
 <li>
@@ -15017,6 +15697,11 @@ enum <strong>log_hext.units</strong> = B: bytes | KB | MB | GB { B | K | M | G }
 </li>
 <li>
 <p>
+int <strong>log_hext.width</strong> = 20: set line width (0 is unlimited) { 0: }
+</p>
+</li>
+<li>
+<p>
 int <strong>log_pcap.limit</strong> = 0: set limit (0 is unlimited) { 0: }
 </p>
 </li>
@@ -15782,7 +16467,7 @@ bool <strong>search_engine.enable_single_rule_group</strong> = false: put all ru
 </li>
 <li>
 <p>
-bool <strong>search_engine.inspect_stream_inserts</strong> = true: inspect reassembled payload - disabling is good for performance, bad for detection
+bool <strong>search_engine.inspect_stream_inserts</strong> = false: inspect reassembled payload - disabling is good for performance, bad for detection
 </p>
 </li>
 <li>
@@ -15863,6 +16548,76 @@ string <strong>sha512.~hash</strong>: data to match
 <li>
 <p>
 int <strong>sid.~</strong>: signature id { 1: }
+</p>
+</li>
+<li>
+<p>
+bool <strong>sip.ignore_call_channel</strong> = false: enables the support for ignoring audio/video data channel
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_call_id_len</strong> = 256: maximum call id field size { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_contact_len</strong> = 256: maximum contact field size { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_content_len</strong> = 1024: maximum content length of the message body { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_dialogs</strong> = 4: maximum number of dialogs within one stream session { 1:4194303 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_from_len</strong> = 256: maximum from field size { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_requestName_len</strong> = 20: maximum request name field size { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_sessions</strong> = 10000: maximum number of sessions that can be allocated { 1024:4194303 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_to_len</strong> = 256: maximum to field size { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_uri_len</strong> = 256: maximum request uri field size { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+int <strong>sip.max_via_len</strong> = 1024: maximum via field size { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+string <strong>sip.methods</strong> = invite cancel ack  bye register options: list of methods to check in sip messages
+</p>
+</li>
+<li>
+<p>
+string <strong>sip_method.*method</strong>: sip method
+</p>
+</li>
+<li>
+<p>
+int <strong>sip_stat_code.*code</strong>: stat code { 1:999 }
 </p>
 </li>
 <li>
@@ -16577,17 +17332,147 @@ int <strong>ssh.max_server_version_len</strong> = 80: limit before alerting on s
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.idle_timeout</strong> = 60: maximum inactive time before retiring session tracker { 1: }
+int <strong>ssl.max_heartbeat_length</strong> = 0: maximum length of heartbeat record allowed { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.max_sessions</strong> = 262144: maximum simultaneous tcp sessions tracked before pruning { 0: }
+bool <strong>ssl.trust_servers</strong> = false: disables requirement that application (encrypted) data must be observed on both sides
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.icmp_cache.memcap</strong> = 0: maximum cache memory { 0: }
+implied <strong>ssl_state.!client_hello</strong>: check for records that are not client hello
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.!client_keyx</strong>: check for records that are not client keyx
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.!server_hello</strong>: check for records that are not server hello
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.!server_keyx</strong>: check for records that are not server keyx
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.!unknown</strong>: check for records that are not unknown
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.client_hello</strong>: check for client hello
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.client_keyx</strong>: check for client keyx
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.server_hello</strong>: check for server hello
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.server_keyx</strong>: check for server keyx
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_state.unknown</strong>: check for unknown record
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.!sslv2</strong>: check for records that are not sslv2
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.!sslv3</strong>: check for records that are not sslv3
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.!tls1.0</strong>: check for records that are not tls1.0
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.!tls1.1</strong>: check for records that are not tls1.1
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.!tls1.2</strong>: check for records that are not tls1.2
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.sslv2</strong>: check for sslv2
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.sslv3</strong>: check for sslv3
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.tls1.0</strong>: check for tls1.0
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.tls1.1</strong>: check for tls1.1
+</p>
+</li>
+<li>
+<p>
+implied <strong>ssl_version.tls1.2</strong>: check for tls1.2
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.file_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.file_cache.max_sessions</strong> =  128: maximum simultaneous sessions tracked before pruning { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.file_cache.memcap</strong> = 0: maximum cache memory before pruning (0 is unlimited) { 0: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.file_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.icmp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.icmp_cache.max_sessions</strong> = 32768: maximum simultaneous sessions tracked before pruning { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.icmp_cache.memcap</strong> = 1048576: maximum cache memory before pruning (0 is unlimited) { 0: }
 </p>
 </li>
 <li>
@@ -16597,17 +17482,17 @@ int <strong>stream.icmp_cache.pruning_timeout</strong> = 30: minimum inactive ti
 </li>
 <li>
 <p>
-int <strong>stream.ip_cache.idle_timeout</strong> = 60: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.ip_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.ip_cache.max_sessions</strong> = 262144: maximum simultaneous tcp sessions tracked before pruning { 0: }
+int <strong>stream.ip_cache.max_sessions</strong> = 16384: maximum simultaneous sessions tracked before pruning { 1: }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.ip_cache.memcap</strong> = 0: maximum cache memory { 0: }
+int <strong>stream.ip_cache.memcap</strong> = 23920640: maximum cache memory before pruning (0 is unlimited) { 0: }
 </p>
 </li>
 <li>
@@ -16617,17 +17502,17 @@ int <strong>stream.ip_cache.pruning_timeout</strong> = 30: minimum inactive time
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.idle_timeout</strong> = 60: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.tcp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.max_sessions</strong> = 262144: maximum simultaneous tcp sessions tracked before pruning { 0: }
+int <strong>stream.tcp_cache.max_sessions</strong> = 131072: maximum simultaneous sessions tracked before pruning { 1: }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.memcap</strong> = 0: maximum cache memory { 0: }
+int <strong>stream.tcp_cache.memcap</strong> = 268435456: maximum cache memory before pruning (0 is unlimited) { 0: }
 </p>
 </li>
 <li>
@@ -16637,22 +17522,42 @@ int <strong>stream.tcp_cache.pruning_timeout</strong> = 30: minimum inactive tim
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.idle_timeout</strong> = 60: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.udp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.max_sessions</strong> = 262144: maximum simultaneous tcp sessions tracked before pruning { 0: }
+int <strong>stream.udp_cache.max_sessions</strong> = 65536: maximum simultaneous sessions tracked before pruning { 1: }
 </p>
 </li>
 <li>
 <p>
-int <strong>stream.udp_cache.memcap</strong> = 0: maximum cache memory { 0: }
+int <strong>stream.udp_cache.memcap</strong> = 0: maximum cache memory before pruning (0 is unlimited) { 0: }
 </p>
 </li>
 <li>
 <p>
 int <strong>stream.udp_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.user_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.user_cache.max_sessions</strong> = 1024: maximum simultaneous sessions tracked before pruning { 1: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.user_cache.memcap</strong> = 1048576: maximum cache memory before pruning (0 is unlimited) { 0: }
+</p>
+</li>
+<li>
+<p>
+int <strong>stream.user_cache.pruning_timeout</strong> = 30: minimum inactive time before being eligible for pruning { 1: }
 </p>
 </li>
 <li>
@@ -16793,11 +17698,6 @@ bool <strong>stream_tcp.show_rebuilt_packets</strong> = false: enable cmg like o
 <li>
 <p>
 int <strong>stream_tcp.small_segments.count</strong> = 0: limit number of small segments queued { 0:2048 }
-</p>
-</li>
-<li>
-<p>
-bit_list <strong>stream_tcp.small_segments.ignore_ports</strong>: limit number of small segments queued { 65535 }
 </p>
 </li>
 <li>
@@ -17027,6 +17927,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>binder.resets</strong>: reset bindings
+</p>
+</li>
+<li>
+<p>
 <strong>daq.allow</strong>: total allow verdicts
 </p>
 </li>
@@ -17132,12 +18037,42 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>detection.alt searches</strong>: alt fast pattern searches in packet data
+</p>
+</li>
+<li>
+<p>
 <strong>detection.analyzed</strong>: packets sent to detection
 </p>
 </li>
 <li>
 <p>
+<strong>detection.body searches</strong>: fast pattern searches in body buffer
+</p>
+</li>
+<li>
+<p>
+<strong>detection.cooked searches</strong>: fast pattern searches in cooked packet data
+</p>
+</li>
+<li>
+<p>
 <strong>detection.event limit</strong>: events filtered
+</p>
+</li>
+<li>
+<p>
+<strong>detection.file searches</strong>: fast pattern searches in file buffer
+</p>
+</li>
+<li>
+<p>
+<strong>detection.header searches</strong>: fast pattern searches in header buffer
+</p>
+</li>
+<li>
+<p>
+<strong>detection.key searches</strong>: fast pattern searches in key buffer
 </p>
 </li>
 <li>
@@ -17162,7 +18097,22 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>detection.pkt searches</strong>: fast pattern searches in packet data
+</p>
+</li>
+<li>
+<p>
 <strong>detection.queue limit</strong>: events not queued because queue full
+</p>
+</li>
+<li>
+<p>
+<strong>detection.raw searches</strong>: fast pattern searches in raw packet data
+</p>
+</li>
+<li>
+<p>
+<strong>detection.slow searches</strong>: non-fast pattern rule evaluations
 </p>
 </li>
 <li>
@@ -17612,6 +18562,41 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>sip.dialogs</strong>: total dialogs
+</p>
+</li>
+<li>
+<p>
+<strong>sip.events</strong>: events generated
+</p>
+</li>
+<li>
+<p>
+<strong>sip.ignored channels</strong>: total channels ignored
+</p>
+</li>
+<li>
+<p>
+<strong>sip.ignored sessions</strong>: total sessions ignored
+</p>
+</li>
+<li>
+<p>
+<strong>sip.requests</strong>: total requests
+</p>
+</li>
+<li>
+<p>
+<strong>sip.responses</strong>: total responses
+</p>
+</li>
+<li>
+<p>
+<strong>sip.sessions</strong>: total sessions
+</p>
+</li>
+<li>
+<p>
 <strong>smtp.packets</strong>: total packets
 </p>
 </li>
@@ -17648,6 +18633,11 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>ssh.packets</strong>: total packets
+</p>
+</li>
+<li>
+<p>
+<strong>ssl.packets</strong>: total packets
 </p>
 </li>
 <li>
@@ -18183,6 +19173,16 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>134</strong>: ppm
+</p>
+</li>
+<li>
+<p>
+<strong>137</strong>: ssl
+</p>
+</li>
+<li>
+<p>
+<strong>140</strong>: sip
 </p>
 </li>
 <li>
@@ -19767,6 +20767,161 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
+<strong>137:1</strong> (ssl) Invalid Client HELLO after Server HELLO Detected
+</p>
+</li>
+<li>
+<p>
+<strong>137:2</strong> (ssl) Invalid Server HELLO without Client HELLO Detected
+</p>
+</li>
+<li>
+<p>
+<strong>137:3</strong> (ssl) Heartbeat Read Overrun Attempt Detected
+</p>
+</li>
+<li>
+<p>
+<strong>137:4</strong> (ssl) Large Heartbeat Response Detected
+</p>
+</li>
+<li>
+<p>
+<strong>140:1</strong> (sip) Maximum sessions reached
+</p>
+</li>
+<li>
+<p>
+<strong>140:2</strong> (sip) Empty request URI
+</p>
+</li>
+<li>
+<p>
+<strong>140:3</strong> (sip) URI is too long
+</p>
+</li>
+<li>
+<p>
+<strong>140:4</strong> (sip) Empty call-Id
+</p>
+</li>
+<li>
+<p>
+<strong>140:5</strong> (sip) Call-Id is too long
+</p>
+</li>
+<li>
+<p>
+<strong>140:6</strong> (sip) CSeq number is too large or negative
+</p>
+</li>
+<li>
+<p>
+<strong>140:7</strong> (sip) Request name in CSeq is too long
+</p>
+</li>
+<li>
+<p>
+<strong>140:8</strong> (sip) Empty From header
+</p>
+</li>
+<li>
+<p>
+<strong>140:9</strong> (sip) From header is too long
+</p>
+</li>
+<li>
+<p>
+<strong>140:10</strong> (sip) Empty To header
+</p>
+</li>
+<li>
+<p>
+<strong>140:11</strong> (sip) To header is too long
+</p>
+</li>
+<li>
+<p>
+<strong>140:12</strong> (sip) Empty Via header
+</p>
+</li>
+<li>
+<p>
+<strong>140:13</strong> (sip) Via header is too long
+</p>
+</li>
+<li>
+<p>
+<strong>140:14</strong> (sip) Empty Contact
+</p>
+</li>
+<li>
+<p>
+<strong>140:15</strong> (sip) Contact is too long
+</p>
+</li>
+<li>
+<p>
+<strong>140:16</strong> (sip) Content length is too large or negative
+</p>
+</li>
+<li>
+<p>
+<strong>140:17</strong> (sip) Multiple SIP messages in a packet
+</p>
+</li>
+<li>
+<p>
+<strong>140:18</strong> (sip) Content length mismatch
+</p>
+</li>
+<li>
+<p>
+<strong>140:19</strong> (sip) Request name is invalid
+</p>
+</li>
+<li>
+<p>
+<strong>140:20</strong> (sip) Invite replay attack
+</p>
+</li>
+<li>
+<p>
+<strong>140:21</strong> (sip) Illegal session information modification
+</p>
+</li>
+<li>
+<p>
+<strong>140:22</strong> (sip) Response status code is not a 3 digit number
+</p>
+</li>
+<li>
+<p>
+<strong>140:23</strong> (sip) Empty Content-type header
+</p>
+</li>
+<li>
+<p>
+<strong>140:24</strong> (sip) SIP version is invalid
+</p>
+</li>
+<li>
+<p>
+<strong>140:25</strong> (sip) Mismatch in METHOD of request and the CSEQ header
+</p>
+</li>
+<li>
+<p>
+<strong>140:26</strong> (sip) Method is unknown
+</p>
+</li>
+<li>
+<p>
+<strong>140:27</strong> (sip) Maximum dialogs within a session reached
+</p>
+</li>
+<li>
+<p>
 <strong>141:1</strong> (imap) Unknown IMAP3 command
 </p>
 </li>
@@ -20077,7 +21232,7 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 </li>
 <li>
 <p>
-<strong>219:53</strong> (new_http_inspect) Input apparently not HTTP
+<strong>219:53</strong> (new_http_inspect) Chunk length has excessive leading zeros
 </p>
 </li>
 <li>
@@ -20113,6 +21268,31 @@ string <strong>wizard.spells[].to_server[].spell</strong>: sequence of data with
 <li>
 <p>
 <strong>219:60</strong> (new_http_inspect) Format error in HTTP header
+</p>
+</li>
+<li>
+<p>
+<strong>219:61</strong> (new_http_inspect) Chunk header options present
+</p>
+</li>
+<li>
+<p>
+<strong>219:62</strong> (new_http_inspect) URI badly formatted
+</p>
+</li>
+<li>
+<p>
+<strong>219:63</strong> (new_http_inspect) URI bad port number
+</p>
+</li>
+<li>
+<p>
+<strong>219:64</strong> (new_http_inspect) HTTP chunk misformatted
+</p>
+</li>
+<li>
+<p>
+<strong>219:65</strong> (new_http_inspect) White space following chunk length
 </p>
 </li>
 <li>
@@ -20363,8 +21543,10 @@ change -&gt; rule_state: 'disabled' ==&gt; 'enable'
 change -&gt; rule_state: 'enabled' ==&gt; 'enable'
 change -&gt; sfportscan: 'proto' ==&gt; 'protos'
 change -&gt; sfportscan: 'scan_type' ==&gt; 'scan_types'
+change -&gt; sip: 'ports' ==&gt; 'bindings'
 change -&gt; smtp: 'ports' ==&gt; 'bindings'
 change -&gt; ssh: 'server_ports' ==&gt; 'bindings'
+change -&gt; ssl: 'ports' ==&gt; 'bindings'
 change -&gt; stream5_global: 'max_active_responses' ==&gt; 'max_responses'
 change -&gt; stream5_global: 'max_icmp' ==&gt; 'max_sessions'
 change -&gt; stream5_global: 'max_ip' ==&gt; 'max_sessions'
@@ -20451,6 +21633,7 @@ deleted -&gt; config ' flexresp2_attempts'
 deleted -&gt; config ' flexresp2_interface'
 deleted -&gt; config ' flexresp2_memcap'
 deleted -&gt; config ' flexresp2_rows'
+deleted -&gt; config ' flowbits_size'
 deleted -&gt; config ' include_vlan_in_alerts'
 deleted -&gt; config ' interface'
 deleted -&gt; config ' layer2resets'
@@ -20492,6 +21675,7 @@ deleted -&gt; rule_state: 'action'
 deleted -&gt; sfportscan: 'detect_ack_scans'
 deleted -&gt; sfportscan: 'disabled'
 deleted -&gt; sfportscan: 'logfile'
+deleted -&gt; sip: 'disabled'
 deleted -&gt; smtp: 'alert_unknown_cmds'
 deleted -&gt; smtp: 'disabled'
 deleted -&gt; smtp: 'enable_mime_decoding'
@@ -20509,6 +21693,7 @@ deleted -&gt; ssh: 'enable_recognition'
 deleted -&gt; ssh: 'enable_respoverflow'
 deleted -&gt; ssh: 'enable_srvoverflow'
 deleted -&gt; ssh: 'enable_ssh1crc32'
+deleted -&gt; ssl: 'noinspect_encrypted'
 deleted -&gt; stream5_global: 'disabled'
 deleted -&gt; stream5_global: 'flush_on_alert'
 deleted -&gt; stream5_global: 'no_midstream_drop_alerts'
@@ -21158,6 +22343,31 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>sip</strong> (inspector): sip inspection
+</p>
+</li>
+<li>
+<p>
+<strong>sip_body</strong> (ips_option): rule option to set the detection cursor to the request body
+</p>
+</li>
+<li>
+<p>
+<strong>sip_header</strong> (ips_option): rule option to set the detection cursor to the SIP header buffer
+</p>
+</li>
+<li>
+<p>
+<strong>sip_method</strong> (ips_option): detection option for sip stat code
+</p>
+</li>
+<li>
+<p>
+<strong>sip_stat_code</strong> (ips_option): detection option for sip stat code
+</p>
+</li>
+<li>
+<p>
 <strong>smtp</strong> (inspector): smtp inspection
 </p>
 </li>
@@ -21179,6 +22389,21 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>ssh</strong> (inspector): ssh inspection
+</p>
+</li>
+<li>
+<p>
+<strong>ssl</strong> (inspector): ssl inspection
+</p>
+</li>
+<li>
+<p>
+<strong>ssl_state</strong> (ips_option): detection option for ssl state
+</p>
+</li>
+<li>
+<p>
+<strong>ssl_version</strong> (ips_option): detection option for ssl version
 </p>
 </li>
 <li>
@@ -21633,12 +22858,22 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>inspector::sip</strong>: sip inspection
+</p>
+</li>
+<li>
+<p>
 <strong>inspector::smtp</strong>: smtp inspection
 </p>
 </li>
 <li>
 <p>
 <strong>inspector::ssh</strong>: ssh inspection
+</p>
+</li>
+<li>
+<p>
+<strong>inspector::ssl</strong>: ssl inspection
 </p>
 </li>
 <li>
@@ -21978,12 +23213,42 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>ips_option::sip_body</strong>: rule option to set the detection cursor to the request body
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::sip_header</strong>: rule option to set the detection cursor to the SIP header buffer
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::sip_method</strong>: detection option for sip stat code
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::sip_stat_code</strong>: detection option for sip stat code
+</p>
+</li>
+<li>
+<p>
 <strong>ips_option::so</strong>: rule option to call custom eval function
 </p>
 </li>
 <li>
 <p>
 <strong>ips_option::soid</strong>: rule option to specify a shared object rule ID
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::ssl_state</strong>: detection option for ssl state
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::ssl_version</strong>: detection option for ssl version
 </p>
 </li>
 <li>
@@ -22140,7 +23405,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-05-31 08:37:33 EDT
+Last updated 2015-07-06 07:36:48 EDT
 </div>
 </div>
 </body>

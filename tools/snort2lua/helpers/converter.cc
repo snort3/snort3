@@ -71,7 +71,7 @@ int Converter::parse_include_file(std::string input_file)
     if (!parse_includes)
         return 0;
 
-    // TODO get rid of any variables in the name
+    // FIXIT get rid of any variables in the name
 
     if (convert_conf_mult_files)
     {

@@ -19,10 +19,6 @@
 
 #include "event_manager.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <assert.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -270,4 +266,33 @@ void EventManager::call_loggers(
     for ( auto p : s_loggers.outputs )
         p->log(pkt, message, event);
 }
+
+#ifdef PIGLET
+
+//-------------------------------------------------------------------------
+// piglet breach
+//-------------------------------------------------------------------------
+static const LogApi* find_api(const char* name)
+{
+    for ( auto out : s_outputs )
+        if ( !strcmp(out->api->base.name, name) )
+            return out->api;
+
+    return nullptr;
+}
+
+LoggerWrapper* EventManager::instantiate(const char* name, Module* m, SnortConfig* sc)
+{
+    auto api = find_api(name);
+    if ( !api || !api->ctor )
+        return nullptr;
+
+    auto p = api->ctor(sc, m);
+    if ( !p )
+        return nullptr;
+
+    return new LoggerWrapper(api, p);
+}
+
+#endif
 

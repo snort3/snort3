@@ -1,7 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2002-2013 Sourcefire, Inc.
-// Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -17,11 +15,22 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// piglet_api.cc author Joel Cornett <jocornet@cisco.com>
 
-#ifndef IPS_IP_PROTO_H
-#define IPS_IP_PROTO_H
+#include "piglet_api.h"
 
-#include "treenodes.h"
-
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
+
+namespace Piglet
+{
+//------------------------------------------------------------------------------
+// API constants
+//------------------------------------------------------------------------------
+
+const unsigned int API_VERSION = 1;
+const unsigned int API_SIZE = sizeof(Api);
+const char* API_HELP = "Piglet test harness";
+} // namespace Piglet
 

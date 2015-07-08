@@ -24,7 +24,7 @@
  */
 
 /*
- * TODOs:
+ * FIXITs:
  * - midstream ssn pickup (done, SAS 10/14/2005)
  * - syn flood protection (done, SAS 9/27/2005)
  *
@@ -4555,7 +4555,7 @@ static int ProcessTcp(
             p->ptrs.tcph->is_ack() && !p->ptrs.tcph->is_rst() &&
             (lwssn->session_state & STREAM_STATE_SYN_ACK) )
         {
-            /* TODO: do we need to verify the ACK field is >= the seq of the SYN-ACK?
+            /* FIXIT: do we need to verify the ACK field is >= the seq of the SYN-ACK?
                3-way Handshake complete, create TCP session */
             lwssn->session_state |= STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED;
             NewTcpSessionOn3Way(p, lwssn, tdb, config);

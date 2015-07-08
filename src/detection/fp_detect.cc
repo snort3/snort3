@@ -376,7 +376,7 @@ int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
         return 0;
     }
 
-    /* TODO: maybe add a port test here ... */
+    /* FIXIT: maybe add a port test here ... */
 
     DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "[*] Rule Head %p\n", rtn); )
 
