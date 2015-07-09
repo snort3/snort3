@@ -16,7 +16,7 @@ add_custom_command (
 
 add_custom_target (
     snort_manual_pdf
-    DEPENDS snort_manual.pdf snort_manual.xml
+    DEPENDS snort_manual.pdf
     )
 
 add_dependencies ( snort_manuals snort_manual_pdf )

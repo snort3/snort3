@@ -1,13 +1,11 @@
-AUTOMAKE_OPTIONS=foreign
+AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libpiglet_plugins.a
 libpiglet_plugins_a_SOURCES = \
 piglet_plugins.cc \
 piglet_plugins.h \
 piglet_plugin_common.cc \
-piglet_plugin_common.h \
-../helpers/lua.h \
-../helpers/lua.cc
+piglet_plugin_common.h
 
 # FIXIT-L: plugin list should be automatically generated, as in the CMake build
 plugin_list = \

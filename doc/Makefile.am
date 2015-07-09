@@ -169,8 +169,19 @@ snort_manual.html: default_snort_manual.html
 	cp $< $@
 endif
 
+if MAKE_HTML_DOC
+# a2x generates an intermediate xml file unconditionally
+# and always places it in this dir even if the output is
+# put elsewhere, which breaks parallel builds.  hence we
+# just build all sequentially, which is why text depends
+# on pdf depends on chunked depends on html.
+snort_manual.chunked: $(all_sources) snort_manual.html
+	a2x -f chunked $(html_args) $<
+# there is no default for chunked
+endif
+
 if MAKE_PDF_DOC
-snort_manual.pdf: $(all_sources) snort_manual.html
+snort_manual.pdf: $(all_sources) snort_manual.chunked
 	a2x -f pdf $(pdf_args) $<
 else
 snort_manual.pdf: default_snort_manual.pdf
@@ -178,7 +189,6 @@ snort_manual.pdf: default_snort_manual.pdf
 endif
 
 if MAKE_TEXT_DOC
-# should depend on html but strange timing issues arise
 snort_manual.text: $(all_sources) snort_manual.pdf
 	a2x -f text $<
 else
@@ -188,7 +198,8 @@ endif
 
 if MAKE_HTML_DOC
 install-data-hook:
-	cp -R $(builddir)/snort_manual.chunked $(DESTDIR)$(docdir)/
+	[ -d $(builddir)/snort_manual.chunked ] && \
+	    cp -R $(builddir)/snort_manual.chunked $(DESTDIR)$(docdir)/
 
 uninstall-hook:
 	rm -rf $(DESTDIR)$(docdir)/snort_manual.chunked
