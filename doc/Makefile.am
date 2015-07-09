@@ -163,7 +163,6 @@ if MAKE_HTML_DOC
 # asciidoc native html generation; buggy passthru of base64 data
 snort_manual.html: $(all_sources)
 	asciidoc -b xhtml11 -a toc2 -a icons -a imagesdir=. $<
-	a2x -f chunked $(html_args) $<
 else
 snort_manual.html: default_snort_manual.html
 	cp $< $@
