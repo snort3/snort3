@@ -1,3 +1,6 @@
+include ( help.cmake )
+add_custom_target ( snort_manuals ALL )
+
 set (
     HELP_SOURCES
     commands.txt
@@ -8,13 +11,13 @@ set (
     options.txt
     signals.txt
     help.txt
-    )
+)
 
 set (
     LIST_SOURCES
     builtin.txt
     gids.txt
-    )
+)
 
 set (
     MODULE_SOURCES
@@ -25,7 +28,7 @@ set (
     ips_action.txt
     ips_option.txt
     logger.txt
-    )
+)
 
 set (
     UNBUILT_SOURCES
@@ -48,19 +51,14 @@ set (
     style.txt
     terms.txt
     usage.txt
-    )
-
-include ( help.cmake )
-
-add_custom_target ( snort_manuals ALL )
+)
 
 if ( MAKE_HTML_DOC OR MAKE_TEXT_DOC OR MAKE_PDF_DOC )
     foreach ( output_file ${HELP_SOURCES} )
         add_help_command (
             "${CMAKE_CURRENT_LIST_DIR}/scripts/generate_help.sh"
             "${output_file}"
-            )
-
+        )
         list ( APPEND BUILT_SOURCES "${output_file}" )
     endforeach ()
 
@@ -68,8 +66,7 @@ if ( MAKE_HTML_DOC OR MAKE_TEXT_DOC OR MAKE_PDF_DOC )
         add_help_command (
             "${CMAKE_CURRENT_LIST_DIR}/scripts/generate_list.sh"
             "${output_file}"
-            )
-
+        )
         list ( APPEND BUILT_SOURCES "${output_file}" )
     endforeach ()
 
@@ -77,8 +74,7 @@ if ( MAKE_HTML_DOC OR MAKE_TEXT_DOC OR MAKE_PDF_DOC )
         add_help_command (
             "${CMAKE_CURRENT_LIST_DIR}/scripts/generate_module.sh"
             "${output_file}"
-            )
-
+        )
         list ( APPEND BUILT_SOURCES "${output_file}" )
     endforeach ()
 
@@ -87,8 +83,7 @@ if ( MAKE_HTML_DOC OR MAKE_TEXT_DOC OR MAKE_PDF_DOC )
         COMMAND $<TARGET_FILE:snort> -V 2>&1 | grep -v Using > version.txt
         DEPENDS snort
         COMMENT "Documents: building version.txt"
-        )
-
+    )
     list ( APPEND BUILT_SOURCES version.txt )
 
     add_custom_command (
@@ -96,8 +91,7 @@ if ( MAKE_HTML_DOC OR MAKE_TEXT_DOC OR MAKE_PDF_DOC )
         COMMAND $<TARGET_FILE:snort2lua> --markup --help > snort2lua_cmds.txt
         DEPENDS snort2lua
         COMMENT "Documents: building snort2lua_cmds.txt"
-        )
-
+    )
     list ( APPEND BUILT_SOURCES snort2lua_cmds.txt )
 
     if ( RUBY_EXECUTABLE )
@@ -106,69 +100,207 @@ if ( MAKE_HTML_DOC OR MAKE_TEXT_DOC OR MAKE_PDF_DOC )
             COMMAND ${RUBY_EXECUTABLE}
                 "${CMAKE_CURRENT_LIST_DIR}/get_differences.rb"
                 "${CMAKE_SOURCE_DIR}/tools/snort2lua"
-                > config_changes.txt
+                > "${CMAKE_CURRENT_BINARY_DIR}/config_changes.txt"
             DEPENDS snort2lua get_differences.rb
             COMMENT "Documents: building config_changes.txt"
-            )
-
+        )
         list ( APPEND BUILT_SOURCES config_changes.txt )
     elseif ( RUBY_EXECUTABLE )
         list ( APPEND UNBUILT_SOURCES config_changes.txt )
     endif ( RUBY_EXECUTABLE )
 
-    file ( COPY ${UNBUILT_SOURCES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
-
     add_custom_target (
-        all_doc_sources 
-        DEPENDS ${BUILT_SOURCES} ${UNBUILT_SOURCES}
-        )
+        all_built_sources
+        DEPENDS ${BUILT_SOURCES}
+    )
 
-    set ( DOC_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}" )
-    set ( SNORT_MANUAL_TXT "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt" )
+    foreach ( file_name ${BUILT_SOURCES} )
+        list (
+            APPEND
+            BINARY_DIR_BUILT_SOURCES
+            "${CMAKE_CURRENT_BINARY_DIR}/${file_name}"
+        )
+    endforeach ( file_name )
+
+    foreach ( file_name ${UNBUILT_SOURCES} )
+        list (
+            APPEND
+            LIST_DIR_SOURCES
+            "${CMAKE_CURRENT_LIST_DIR}/${file_name}"
+        )
+    endforeach ( file_name )
+
+    set ( BUILT_DIST ${BINARY_DIR_BUILT_SOURCES} ${BINARY_DIR_UNBUILT_SOURCES} )
 
     if ( MAKE_HTML_DOC )
-        add_subdirectory ( html )
-        list ( APPEND BUILT_DIST "${CMAKE_CURRENT_BINARY_DIR}/html/snort_manual.html" )
+        set (
+            HTML_ASCIIDOC_ARGS
+            -b xhtml11 -a toc2 -a icons -a imagesdir=.
+        )
+
+        set (
+            HTML_A2X_ARGS
+            --format=chunked
+            --attribute=linkcss --attribute=stylesdir --attribute=disable-javascript
+            --xsltproc-opts=\"--stringparam chunk.tocs.and.lots 1\"
+            --attribute=quirks! --attribute=imagesdir=.
+            --resource=.
+        )
+
+        add_custom_command (
+            OUTPUT snort_manual.html
+            COMMAND cp ${LIST_DIR_SOURCES} .
+            COMMAND ${ASCIIDOC_EXE} ${HTML_ASCIIDOC_ARGS} snort_manual.txt
+            DEPENDS all_built_sources
+            COMMENT "Documents: building snort_manual.html"
+        )
+
+        set ( HTML_DOC_TMP "${CMAKE_CURRENT_BINARY_DIR}/html/" )
+
+        add_custom_command (
+            OUTPUT "${HTML_DOC_TMP}/"
+            COMMAND mkdir -p ${HTML_DOC_TMP}
+        )
+
+        add_custom_command (
+            OUTPUT snort_manual.chunked
+            COMMAND cp ${LIST_DIR_SOURCES} ${BINARY_DIR_BUILT_SOURCES} .
+            COMMAND ${ASCIIDOC_A2X_EXE} ${HTML_A2X_ARGS} snort_manual.txt
+            COMMAND cp -r snort_manual.chunked ..
+            DEPENDS all_built_sources "${HTML_DOC_TMP}/"
+            WORKING_DIRECTORY ${HTML_DOC_TMP}
+            COMMENT "Documents: building snort_manual.chunked"
+        )
+
+        add_custom_target (
+            snort_manual_html
+            COMMAND rm -rf ${HTML_DOC_TMP}
+            DEPENDS snort_manual.html snort_manual.chunked
+        )
+
+        add_dependencies ( snort_manuals snort_manual_html )
+
+        list ( APPEND BUILT_DIST "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.html" )
+
+        foreach ( file_name ${UNBUILT_SOURCES} )
+            list (
+                APPEND
+                BINARY_DIR_UNBUILT_SOURCES
+                "${CMAKE_CURRENT_BINARY_DIR}/${file_name}"
+            )
+        endforeach ( file_name )
+        list (
+            APPEND
+            EXTRA_CLEAN
+            "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.html"
+            "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked"
+        )
     endif ( MAKE_HTML_DOC )
 
     if ( MAKE_TEXT_DOC )
-        add_subdirectory ( text )
-        list ( APPEND BUILT_DIST "${CMAKE_CURRENT_BINARY_DIR}/text/snort_manual.text" )
+        set (
+            TEXT_A2X_ARGS
+            --format=text
+        )
+
+        set ( TEXT_DOC_TMP "${CMAKE_CURRENT_BINARY_DIR}/text" )
+
+        add_custom_command (
+            OUTPUT "${TEXT_DOC_TMP}/"
+            COMMAND mkdir -p ${TEXT_DOC_TMP}
+        )
+
+        add_custom_command (
+            OUTPUT snort_manual.text
+            COMMAND cp ${LIST_DIR_SOURCES} ${BINARY_DIR_BUILT_SOURCES} .
+            COMMAND ${ASCIIDOC_A2X_EXE} ${TEXT_A2X_ARGS} snort_manual.txt
+            COMMAND cp snort_manual.text ..
+            DEPENDS all_built_sources "${TEXT_DOC_TMP}/"
+            WORKING_DIRECTORY ${TEXT_DOC_TMP}
+            COMMENT "Documents: building snort_manual.text"
+        )
+
+        add_custom_target (
+            snort_manual_text
+            COMMAND rm -rf ${TEXT_DOC_TMP}
+            DEPENDS snort_manual.text
+        )
+
+        add_dependencies ( snort_manuals snort_manual_text )
+        
+        list ( APPEND BUILT_DIST "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.text" )
+
+        list (
+            APPEND
+            EXTRA_CLEAN
+            "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.text"
+        )
     endif ( MAKE_TEXT_DOC )
 
     if ( MAKE_PDF_DOC )
-        add_subdirectory ( pdf )
-        list ( APPEND BUILT_DIST "${CMAKE_CURRENT_BINARY_DIR}/pdf/snort_manual.pdf" )
+        set (
+            PDF_A2X_ARGS
+            --format=pdf
+            --attribute=imagesdir=.
+        )
+
+        set ( PDF_DOC_TMP "${CMAKE_CURRENT_BINARY_DIR}/pdf" )
+
+        add_custom_command (
+            OUTPUT "${PDF_DOC_TMP}/"
+            COMMAND mkdir -p ${PDF_DOC_TMP}
+        )
+
+        add_custom_command ( 
+            OUTPUT snort_manual.pdf
+            COMMAND cp ${LIST_DIR_SOURCES} ${BINARY_DIR_BUILT_SOURCES} .
+            COMMAND ${ASCIIDOC_A2X_EXE} ${PDF_A2X_ARGS} snort_manual.txt
+            COMMAND cp snort_manual.pdf ..
+            DEPENDS all_built_sources "${PDF_DOC_TMP}/"
+            WORKING_DIRECTORY ${PDF_DOC_TMP}
+            COMMENT "Documents: building snort_manual.pdf"
+        )
+
+        add_custom_target (
+            snort_manual_pdf
+            COMMAND rm -rf ${PDF_DOC_TMP}
+            DEPENDS snort_manual.pdf
+        )
+
+        add_dependencies ( snort_manuals snort_manual_pdf )
+
+        list ( APPEND BUILT_DIST "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.pdf" )
+
+        list (
+            APPEND
+            EXTRA_CLEAN
+            "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.pdf"
+        )
     endif ( MAKE_PDF_DOC )
 
-    foreach ( file_name ${BUILT_SOURCES} )
-        list ( APPEND BUILT_DIST "${CMAKE_CURRENT_BINARY_DIR}/${file_name}" )
-    endforeach ( file_name )
-
-    if ( BUILT_DIST )
-        install ( FILES ${BUILT_DIST} DESTINATION "${SNORT_DATA_DIR}" )
-    endif ( BUILT_DIST )
-
-    if ( UNBUILT_SOURCES )
-        install ( FILES ${UNBUILT_SOURCES} DESTINATION "${SNORT_DATA_DIR}" )
-    endif ( UNBUILT_SOURCES )
 
     if ( MAKE_HTML_DOC )
         install (
             DIRECTORY
-            "${CMAKE_CURRENT_BINARY_DIR}/html/snort_manual.chunked/"
+            "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked/"
             DESTINATION
             "${SNORT_DATA_DIR}/snort_manual.chunked"
-            )
-
-        list ( APPEND EXTRA_CLEAN "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked" )
+        )
     endif ( MAKE_HTML_DOC )
 
-    foreach ( file_name ${UNBUILT_SOURCES} )
-        list ( APPEND EXTRA_CLEAN "${CMAKE_CURRENT_BINARY_DIR}/${file_name}" )
-    endforeach ( file_name )
+    install (
+        FILES
+        ${BUILT_DIST}
+        DESTINATION
+        ${SNORT_DATA_DIR}
+    )
 
-
+    set (
+        EXTRA_CLEAN
+        ${EXTRA_CLEAN}
+        ${BINARY_DIR_BUILT_SOURCES}
+        ${BINARY_DIR_UNBUILT_SOURCES}
+    )
 endif ( MAKE_HTML_DOC OR MAKE_TEXT_DOC OR MAKE_PDF_DOC )
 
 if ( EXTRA_CLEAN )
@@ -176,5 +308,5 @@ if ( EXTRA_CLEAN )
         DIRECTORY
         PROPERTY
         ADDITIONAL_MAKE_CLEAN_FILES ${EXTRA_CLEAN}
-        )
+    )
 endif ( EXTRA_CLEAN )
