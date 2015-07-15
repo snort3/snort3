@@ -12,9 +12,7 @@ piglet_manager.h \
 piglet_runner.cc \
 piglet_runner.h \
 piglet_utils.cc \
-piglet_utils.h \
-../helpers/lua.h \
-../helpers/lua.cc
+piglet_utils.h
 
 libpiglet_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
 
