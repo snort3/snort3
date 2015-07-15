@@ -41,8 +41,7 @@
 #define     ENABLE_FILE_CAPTURE                  0x4
 #define     FILE_ALL_ON                          0xFFFFFFFF
 #define     FILE_ALL_OFF                         0x00000000
-#define     MAX_FILE                             1024
-#define     MAX_EMAIL                            1024
+
 
 #define     FILE_RESUME_BLOCK                    0x01
 #define     FILE_RESUME_LOG                      0x02
@@ -113,125 +112,13 @@ struct FileState
     FileSigState sig_state;
 };
 
-/* log flags */
-#define MIME_FLAG_MAIL_FROM_PRESENT               0x00000001
-#define MIME_FLAG_RCPT_TO_PRESENT                 0x00000002
-#define MIME_FLAG_FILENAME_PRESENT                0x00000004
-#define MIME_FLAG_EMAIL_HDRS_PRESENT              0x00000008
-
-struct FILE_LogState
-{
-    uint8_t* filenames;
-    uint16_t file_logged;
-    uint16_t file_current;
-};
-
-struct MAIL_LogState
-{
-    unsigned char* emailHdrs;
-    uint32_t log_depth;
-    uint32_t hdrs_logged;
-    uint8_t* recipients;
-    uint16_t rcpts_logged;
-    uint8_t* senders;
-    uint16_t snds_logged;
-    FILE_LogState file_log;
-};
-
-struct MAIL_LogConfig
-{
-    uint32_t memcap;
-    char log_mailfrom;
-    char log_rcptto;
-    char log_filename;
-    char log_email_hdrs;
-    uint32_t email_hdrs_log_depth;
-};
-
-/* State tracker for data */
-enum MimeDataState
-{
-    MIME_PAF_FINDING_BOUNDARY_STATE,
-    MIME_PAF_FOUND_BOUNDARY_STATE
-};
-
-/* State tracker for Boundary Signature */
-enum MimeBoundaryState
-{
-    MIME_PAF_BOUNDARY_UNKNOWN = 0,      /* UNKNOWN */
-    MIME_PAF_BOUNDARY_LF,               /* '\n' */
-    MIME_PAF_BOUNDARY_HYPEN_FIRST,      /* First '-' */
-    MIME_PAF_BOUNDARY_HYPEN_SECOND      /* Second '-' */
-};
-
-/* State tracker for end of pop/smtp command */
-enum DataEndState
-{
-    PAF_DATA_END_UNKNOWN,         /* Start or UNKNOWN */
-    PAF_DATA_END_FIRST_CR,        /* First '\r' */
-    PAF_DATA_END_FIRST_LF,        /* First '\n' */
-    PAF_DATA_END_DOT,             /* '.' */
-    PAF_DATA_END_SECOND_CR,       /* Second '\r' */
-    PAF_DATA_END_SECOND_LF        /* Second '\n' */
-};
-
-#define MAX_MIME_BOUNDARY_LEN  70  /* Max length of boundary string, defined in RFC 2046 */
-
-struct MimeDataPafInfo
-{
-    MimeDataState data_state;
-    char boundary[ MAX_MIME_BOUNDARY_LEN + 1];            /* MIME boundary string + '\0' */
-    int boundary_len;
-    char* boundary_search;
-    MimeBoundaryState boundary_state;
-};
-
-typedef int (*Handle_header_line_func)(void* conf, const uint8_t* ptr,
-    const uint8_t* eol, int
-    max_header_len, void* mime_ssn);
-typedef int (*Normalize_data_func)(void* conf, const uint8_t* ptr,
-    const uint8_t* data_end);
-typedef void (*Decode_alert_func)(void* decode_state);
-typedef void (*Reset_state_func)(void* ssn);
-typedef bool (*Is_end_of_data_func)(void* ssn);
-
-struct MimeMethods
-{
-    Handle_header_line_func handle_header_line;
-    Normalize_data_func normalize_data;
-    Decode_alert_func decode_alert;
-    Reset_state_func reset_state;
-    Is_end_of_data_func is_end_of_data;
-};
-
-struct DecodeConfig
-{
-    bool ignore_data;
-    int max_mime_mem;
-    int max_depth;
-    int b64_depth;
-    int qp_depth;
-    int bitenc_depth;
-    int uu_depth;
-    int64_t file_depth;
-};
-
-struct MimeState
-{
-    int data_state;
-    int state_flags;
-    int log_flags;
-    void* decode_state;
-    MimeDataPafInfo mime_boundary;
-    DecodeConfig* decode_conf;
-    MAIL_LogConfig* log_config;
-    MAIL_LogState* log_state;
-    void* config;
-    MimeMethods* methods;
-};
-
 struct FileContext;
 struct FileCaptureInfo;
+struct MAIL_LogState;
+struct MAIL_LogConfig;
+struct DecodeConfig;
+struct MimeState;
+struct MimeDataPafInfo;
 
 #define FILE_API_VERSION 4
 
@@ -619,20 +506,6 @@ static inline bool isFileStart(FilePosition position)
 static inline bool isFileEnd(FilePosition position)
 {
     return ((position == SNORT_FILE_END) || (position == SNORT_FILE_FULL));
-}
-
-static inline bool scanning_boundary(MimeDataPafInfo* mime_info, uint32_t boundary_start,
-    uint32_t* fp)
-{
-    if (boundary_start &&
-        mime_info->data_state == MIME_PAF_FOUND_BOUNDARY_STATE &&
-        mime_info->boundary_state != MIME_PAF_BOUNDARY_UNKNOWN)
-    {
-        *fp = boundary_start;
-        return true;
-    }
-
-    return false;
 }
 
 #endif /* FILE_API_H */

@@ -20,7 +20,7 @@
 #ifndef POP_CONFIG_H
 #define POP_CONFIG_H
 
-#include "file_api/file_api.h"
+#include "file_api/file_mime_process.h"
 
 struct POP_PROTO_CONF
 {

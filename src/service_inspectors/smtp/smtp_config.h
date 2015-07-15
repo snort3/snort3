@@ -20,7 +20,7 @@
 #ifndef SMTP_CONFIG_H
 #define SMTP_CONFIG_H
 
-#include "file_api/file_api.h"
+#include "file_api/file_mime_process.h"
 #include "search_engines/search_tool.h"
 enum NORM_TYPES
 {

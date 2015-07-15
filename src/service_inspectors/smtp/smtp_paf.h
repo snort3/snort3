@@ -22,7 +22,7 @@
 #include "snort_types.h"
 #include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
-#include "file_api/file_api.h"
+#include "file_api/file_mime_process.h"
 
 /* State tracker for SMTP PAF */
 enum SmtpPafState

@@ -20,7 +20,7 @@
 #ifndef IMAP_CONFIG_H
 #define IMAP_CONFIG_H
 
-#include "file_api/file_api.h"
+#include "file_api/file_mime_process.h"
 
 struct IMAP_PROTO_CONF
 {
