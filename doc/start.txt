@@ -41,6 +41,9 @@ Optional:
 * w3m from http://sourceforge.net/projects/w3m/ to build the plain text
   manual
 
+* source-highlight from http://www.gnu.org/software/src-highlite/ to
+  generate the dev guide.
+
 
 === Building
 
