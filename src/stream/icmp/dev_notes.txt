@@ -1,0 +1,13 @@
+This directory contains the implementation of ICMP session tracking and
+processing functions.  When the network protocol for a flow is determined
+to be ICMP the base Stream preprocessor will delegate handling of the
+packets on that flow to this module.
+
+The StreamIcmp class is implemented as a subclass of Inspector and provides
+functions for loading stream ICMP configuration and packet evaluation.  The
+packet eval method is not used as the base Stream Inspector delegates
+packets directly to the ICMP session packet processing method.
+
+Currently only the ICMP Unreachable message is handled by the ICMP session
+module.
+

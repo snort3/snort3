@@ -1,0 +1,12 @@
+This directory contains the implementation of the Stream File flow tracking
+and processing functions.  When the source for a flow is a file the base
+Stream preprocessor delegates handling of the packets on that flow to this
+module.
+
+The StreamFile class is implemented as a subclass of Inspector and provides
+functions for loading stream file configuration and packet evaluation.  The
+packet eval method is not used as the base Stream Inspector delegates
+packets directly to the file session packet processing method.
+
+The file session packet processing function in turn delegates processing of
+the packet to the file_processing method of the FileAPI class. 

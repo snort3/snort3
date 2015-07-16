@@ -1,0 +1,10 @@
+This directory contains the implementation of IP session tracking and
+processing functions.  When the network protocol for a flow is determined
+to be IP the base Stream preprocessor will delegate handling of the packets
+on that flow to this module.
+
+The StreamIp class is implemented as a subclass of Inspector and provides
+functions for loading stream IP configuration and packet evaluation.  The
+packet eval method is not used as the base Stream Inspector delegates
+packets directly to the IP session packet processing method.
+

@@ -1,0 +1,45 @@
+This directory contains the implementation of TCP session tracking and
+processing functions.  When the network protocol for a flow is determined
+to be TCP the base Stream preprocessor will delegate handling of the
+packets on that flow to this module.
+
+The Stream TCP module is currently in process of a complete rewrite.  These
+dev notes describe the current implementation.
+
+The StreamTcp class is implemented as a subclass of Inspector and provides
+functions for loading stream TCP configuration and packet evaluation.  The
+packet eval method is not used as the base Stream Inspector delegates
+packets directly to the TCP session packet processing method.
+
+The TCP session module implements the following functions:
+
+* TCP segment normalization. Variations in handling normalization are
+  configured by policy.
+
+* TCP connection tracking.  The state of the connection from the
+  perspective of each end of the connection is tracked.
+
+* TCP reassembly. Variations in handling reassembly are configured by
+  policy.
+
+* Event generation for anomalies detected while processing the TCP
+  segments.
+
+A TcpSession object is allocated for each TCP flow being tracked.  TCP
+session state is maintained primarily in the TcpTracker data structure.
+State information includes:
+
+* policy settings
+
+* list of tcp segments being reassembled
+
+* TCP connection state
+
+* paf state
+
+* alert history
+
+An instance of this data structure is allocated and managed for each end of
+the connection.
+
+
