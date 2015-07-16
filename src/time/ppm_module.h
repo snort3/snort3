@@ -15,21 +15,25 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-
 // ppm_module.h author Russ Combs <rucombs@cisco.com>
 
 #ifndef PPM_MODULE_H
 #define PPM_MODULE_H
 
+// Configuration module for packet performance monitoring
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+// FIXIT-M: Instead of an empty source file, use CMake/Make to enable/disable
+//          this compilation unit
 #ifdef PPM_MGR
 #include "framework/module.h"
 
 #define GID_PPM 134
 
+// SIDs
 #define PPM_EVENT_RULE_TREE_DISABLED 1
 #define PPM_EVENT_RULE_TREE_ENABLED  2
 #define PPM_EVENT_PACKET_ABORTED     3
@@ -48,6 +52,6 @@ public:
     { return GID_PPM; }
 };
 
-#endif
+#endif // PPM_MGR
 #endif
 

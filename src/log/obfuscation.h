@@ -108,7 +108,7 @@ typedef struct _ObfuscationApi
      *  None
      */
 
-    void (* resetObfuscationEntries)(void);
+    void (* resetObfuscationEntries)();
 
     /*
      * Adds an obfuscation entry to the queue
@@ -258,5 +258,5 @@ typedef struct _ObfuscationApi
 /* For access when including header */
 extern ObfuscationApi* obApi;
 
-#endif  /* OBFUSCATION_H */
+#endif
 

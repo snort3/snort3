@@ -21,6 +21,9 @@
 #ifndef MODULES_H
 #define MODULES_H
 
+// this is for builtin module initialization.
+// ideally, modules.cc would be refactored and several files.
+
 void module_init();
 
 #endif

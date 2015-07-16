@@ -20,9 +20,7 @@
 #ifndef STATS_H
 #define STATS_H
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+// Provides facilities for displaying Snort exit stats
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -36,7 +34,7 @@
 #include "main/snort_types.h"
 #include "framework/counts.h"
 
-// FIXIT-L split this out into appropriate modules
+// FIXIT-L: split this out into appropriate modules
 struct PacketCount
 {
     PegCount total_from_daq;
@@ -87,6 +85,7 @@ extern const PegInfo pc_names[];
 extern const PegInfo proc_names[];
 
 void LogLabel(const char*);
+void LogValue(const char*, const char*);
 void LogCount(const char*, uint64_t);
 void LogStat(const char*, uint64_t n, uint64_t tot);
 void LogStat(const char*, double);

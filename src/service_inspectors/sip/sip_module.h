@@ -21,6 +21,8 @@
 #ifndef SIP_MODULE_H
 #define SIP_MODULE_H
 
+// Interface to the SIP service inspector
+
 #include "framework/module.h"
 #include "framework/bits.h"
 #include "main/thread.h"

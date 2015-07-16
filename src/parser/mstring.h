@@ -21,15 +21,16 @@
 #ifndef MSTRING_H
 #define MSTRING_H
 
+// Provide a variety of string functions not included in libc.
+// Deprecated - Do not use this in new code.
+
 #include "main/snort_types.h"
 
-/*  D E F I N E S  *******************************************************/
 #define TOKS_BUF_SIZE   100
 
-/*  P R O T O T Y P E S  *************************************************/
 SO_PUBLIC char** mSplit(const char*, const char*, const int, int*, const char);
 SO_PUBLIC void mSplitFree(char*** toks, int numtoks);
 SO_PUBLIC int mContainsSubstr(const char*, int, const char*, int);
 
-#endif  /* MSTRING_H */
+#endif
 

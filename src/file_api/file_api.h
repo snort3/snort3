@@ -16,20 +16,16 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-
-/* file_api.h
- *
- * Purpose: Definition of the FileAPI.  To be used as a common interface
- *          for file process access for other preprocessors and detection plugins.
- *
- *  Author(s):  Hui Cao <hcao@huica.com>
- *
- *  NOTES
- *  5.25.12 - Initial Source Code. Hui Cao
- */
+// file_api.h author Hui Cao <hcao@huica.com>
+// 5.25.12 - Initial Source Code. Hui Cao
 
 #ifndef FILE_API_H
 #define FILE_API_H
+
+// File API provides all the convenient functions that are used by inspectors.
+// Currently, it provides three sets of APIs: file processing, MIME processing,
+// and configurations.
+// FIXIT-L file api will be replaced by file class and mime class soon
 
 #include <sys/types.h>
 
@@ -145,7 +141,7 @@ typedef uint8_t*(*Get_file_sig_sha256_func)(Flow* flow);
 typedef void (*Set_file_name_func)(Flow* flow, uint8_t*, uint32_t);
 typedef void (*Set_file_direction_func)(Flow* flow, bool);
 
-typedef int64_t (*Get_file_depth_func)(void);
+typedef int64_t (*Get_file_depth_func)();
 
 typedef void (*Set_file_policy_func)();
 typedef void (*Enable_file_type_func)();
@@ -177,7 +173,7 @@ typedef void (*Finalize_mime_position_func)(Flow* flow, void* decode_state,
 typedef File_Verdict (*Get_file_verdict_func)(Flow* flow);
 typedef void (*Render_block_verdict_func)(void* ctx, Packet* p);
 
-typedef bool (*Is_file_service_enabled)(void);
+typedef bool (*Is_file_service_enabled)();
 typedef bool (*Check_paf_abort_func)(Flow* ssn);
 typedef FilePosition (*GetFilePosition)(Packet* pkt);
 typedef void (*Reset_mime_paf_state_func)(MimeDataPafInfo* data_info);

@@ -22,12 +22,13 @@
  * sf_vartable.h
  * 11/17/06
  *
- * Library for implementing a variable table.
  * All API calls have the prefix "sfvt".
 */
 
 #ifndef SF_VARTABLE_H
 #define SF_VARTABLE_H
+
+// Library for implementing a variable table.
 
 #include <cstdio>
 #include "sfip/sf_returns.h"

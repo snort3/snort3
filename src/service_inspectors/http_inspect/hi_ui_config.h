@@ -34,26 +34,21 @@
 #define HI_UI_CONFIG_H
 
 #include "hi_include.h"
-#include "snort_bounds.h"
-#include "sfrt/sfrt.h"
-#include "sf_ip.h"
 #include "hi_util_kmap.h"
+#include "sfrt/sfrt.h"
+#include "sfip/sf_ip.h"
 #include "file_api/file_api.h"
 #include "file_api/file_mime_process.h"
 #include "decompress/file_decomp.h"
 #include "framework/bits.h"
+#include "utils/snort_bounds.h"
 
-/*
-**  Defines
-*/
 #define HI_UI_CONFIG_MAX_HDR_DEFAULT 0
 #define HI_UI_CONFIG_MAX_HEADERS_DEFAULT 0
 #define HI_UI_CONFIG_MAX_SPACES_DEFAULT 200
 #define HI_UI_CONFIG_MAX_XFF_FIELD_NAMES 8
 
-/*
-**  Special characters treated as whitespace before or after URI
-*/
+// Special characters treated as whitespace before or after URI
 
 #define HI_UI_CONFIG_WS_BEFORE_URI 0x01
 #define HI_UI_CONFIG_WS_AFTER_URI  0x02
@@ -67,8 +62,7 @@ struct HTTPINSPECT_CONF_OPT
     int on;     /**< if true, configuration option is on */
 };
 
-/* The following are used to delineate server profiles for user output
- * and debugging information. */
+// The following are used to delineate server profiles for user output and debugging information.
 enum PROFILES
 {
     HI_DEFAULT,
@@ -96,10 +90,7 @@ struct HTTPINSPECT_GLOBAL_CONF
     int anomalous_servers;
     int proxy_alert;
 
-    /*
-    **  These variables are for tracking the IIS
-    **  Unicode Map configuration.
-    */
+    //  These variables are for tracking the IIS Unicode Map configuration
     uint8_t* iis_unicode_map;
     char* iis_unicode_map_filename;
     int iis_unicode_codepage;

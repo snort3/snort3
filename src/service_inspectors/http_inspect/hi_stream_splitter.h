@@ -1,6 +1,6 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2013-2013 Sourcefire, Inc.
+// Copyright (C) 2011-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -17,33 +17,48 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef KEYWORDS_H
-#define KEYWORDS_H
+//--------------------------------------------------------------------
+// hi stuff
+//
+// @file    hi_stream_splitter.h
+// @author  Russ Combs <rcombs@sourcefire.com>
+//--------------------------------------------------------------------
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef HI_STREAM_SPLITTER_H
+#define HI_STREAM_SPLITTER_H
 
-#define MAX_RULE_COUNT (65535 * 2)
+#include "main/snort_types.h"
+#include "stream/stream_api.h"
+#include "stream/stream_splitter.h"
 
-#define RULE_PROTO_OPT__IP    "ip"
-#define RULE_PROTO_OPT__TCP   "tcp"
-#define RULE_PROTO_OPT__UDP   "udp"
-#define RULE_PROTO_OPT__ICMP  "icmp"
+bool hi_paf_init(uint32_t cap);
+void hi_paf_term(void);
 
-#define RULE_DIR_OPT__DIRECTIONAL    "->"
-#define RULE_DIR_OPT__BIDIRECTIONAL  "<>"
+bool hi_paf_simple_request(Flow*);
 
-#define CHECKSUM_MODE_OPT__ALL      "all"
-#define CHECKSUM_MODE_OPT__NONE     "none"
-#define CHECKSUM_MODE_OPT__IP       "ip"
-#define CHECKSUM_MODE_OPT__NO_IP    "noip"
-#define CHECKSUM_MODE_OPT__TCP      "tcp"
-#define CHECKSUM_MODE_OPT__NO_TCP   "notcp"
-#define CHECKSUM_MODE_OPT__UDP      "udp"
-#define CHECKSUM_MODE_OPT__NO_UDP   "noudp"
-#define CHECKSUM_MODE_OPT__ICMP     "icmp"
-#define CHECKSUM_MODE_OPT__NO_ICMP  "noicmp"
+struct Hi5State
+{
+    uint32_t len;
+    uint16_t flags;
+    uint8_t msg;
+    uint8_t fsm;
+    uint32_t pipe;
+};
+
+class HttpSplitter : public StreamSplitter
+{
+public:
+    HttpSplitter(bool c2s);
+    ~HttpSplitter();
+
+    Status scan(Flow*, const uint8_t* data, uint32_t len,
+        uint32_t flags, uint32_t* fp) override;
+
+    virtual bool is_paf() override { return true; }
+
+public:
+    Hi5State state;
+};
 
 #endif
 

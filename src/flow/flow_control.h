@@ -17,8 +17,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+// flow_control.h author Russ Combs <rucombs@cisco.com>
+
 #ifndef FLOW_CONTROL_H
 #define FLOW_CONTROL_H
+
+// this is where all the flow caches are managed and where all flows are
+// processed.  flows are pruned as needed to process new flows.
 
 #include "flow/flow.h"
 #include "flow/flow_config.h"
@@ -90,6 +95,7 @@ private:
     FlowCache* user_cache;
     FlowCache* file_cache;
 
+    // preallocated arrays
     Flow* ip_mem;
     Flow* icmp_mem;
     Flow* tcp_mem;

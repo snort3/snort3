@@ -16,19 +16,19 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-**  Author(s):  Hui Cao <huica@cisco.com>
-**
-**  NOTES
-**  9.25.2012 - Initial Source Code. Hui Cao
-*/
+
+// file_mime_process.h author Hui Cao <huica@cisco.com>
 
 #ifndef FILE_MIME_PROCESS_H
 #define FILE_MIME_PROCESS_H
 
+// Provides list of MIME processing functions. Encoded file data will be decoded
+// and file name will be extracted from MIME header
+// FIXIT-L This will be refactored soon
+
 #include <pcre.h>
-#include "file_api.h"
-#include "sf_email_attach_decode.h"
+#include "file_api/file_api.h"
+#include "utils/sf_email_attach_decode.h"
 
 #define MAX_FILE                             1024
 #define MAX_EMAIL                            1024

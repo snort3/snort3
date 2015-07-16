@@ -25,6 +25,7 @@
 #include "framework/bits.h"
 #include "main/thread.h"
 #include "pop_config.h"
+// Interface to the IMAP service inspector
 
 #define GID_POP 142
 
@@ -67,4 +68,3 @@ private:
 };
 
 #endif
-

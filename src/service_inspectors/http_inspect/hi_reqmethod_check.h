@@ -18,11 +18,8 @@
 //--------------------------------------------------------------------------
 
 /*
- * hi_reqmethod_check.h: Structure definitions/function prototype(s)
- *            for the request method type check
+ * Structure definitions/function prototype(s) for the request method type check
  */
-
-/* $Id */
 
 #ifndef HI_REQMETHOD_CHECK_H
 #define HI_REQMETHOD_CHECK_H
@@ -37,9 +34,8 @@
 #define HI_RMFLG_CONNECT    (0x40)
 #define HI_RMFLG_ALL        (0xFFFFFFFF)
 
-/* Structure stored as callback data for use by request method
- * detection plugin code.
- */
+// Structure stored as callback data for use by request method detection plugin code.
+
 typedef struct _ReqMethodCheckData
 {
     int type_vector;
@@ -49,5 +45,5 @@ typedef struct _ReqMethodCheckData
 extern int ReqMethodCheckInit(char*, char*, void**);
 extern int ReqMethodCheckEval(void*, uint8_t**, void*);
 
-#endif /* HI_REQMETHOD_CHECK */
+#endif
 

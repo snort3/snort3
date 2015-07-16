@@ -20,18 +20,8 @@
 #ifndef DYN_ARRAY_H
 #define DYN_ARRAY_H
 
-/* Dynamic array bound checks:
- * If index is greater than maxElement then realloc like operation is performed.
- *
- * @param dynArray - dynamic array
- *
- * @param index - 0 based. Index of element that will be accessed by application
- *    either as rvalue or lvalue.
- *
- * @param maxElements - Number of elements already allocated in dynArray.
- *     0 value means no elements are allocated
- *     and therefore dynArray[0] will cause memory allocation.
- */
+// FIXIT-L: Change to vector
+// FIXIT-L: Change return type to bool
 int sfDynArrayCheckBounds(
     void** dynArray, unsigned int index, unsigned int* maxElements);
 

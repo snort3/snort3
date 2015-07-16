@@ -1,0 +1,7 @@
+Telnet, FTP, and FTP-Data service inspectors.  Telnet and FTP are normal
+inspectors, FTP-Data detected from the FTP control channel and used primarily
+for file processing.
+
+FTP and Telnet inspectors share implementation because FTP uses a
+Telnet-based control channel.
+

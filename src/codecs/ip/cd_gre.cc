@@ -92,18 +92,7 @@ void GreCodec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(IPPROTO_ID_GRE); }
 
 /*
- * Function: DecodeGRE(uint8_t *, uint32_t, Packet *)
- *
- * Purpose: Decode Generic Routing Encapsulation Protocol
- *          This will decode normal GRE and PPTP GRE.
- *
- * Arguments: pkt => ptr to the packet data
- *            len => length from here to the end of the packet
- *            p   => pointer to decoded packet struct
- *
- * Returns: void function
- *
- * Notes: see RFCs 1701, 2784 and 2637
+ * see RFCs 1701, 2784 and 2637
  */
 bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {

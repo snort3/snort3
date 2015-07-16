@@ -17,22 +17,12 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/**
- * @file   log_text.h
- * @author Russ Combs <rcombs@sourcefire.com>
- * @date   Fri Jun 27 10:34:37 2003
- *
- * @brief  logging to text file
- *
- * Use these methods to write to a TextLog.
- */
+// log_text.h author Russ Combs <rcombs@sourcefire.com>
 
 #ifndef LOG_TEXT_H
 #define LOG_TEXT_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+// Use these methods to write to a TextLog
 
 #include <stdint.h>
 #include "log/text_log.h"
@@ -41,14 +31,9 @@
 struct Packet;
 struct Event;
 
-namespace ip
-{
-struct IP4Hdr;
-}
-namespace tcp
-{
-struct TCPHdr;
-}
+namespace ip { struct IP4Hdr; }
+namespace tcp { struct TCPHdr; }
+
 typedef ip::IP4Hdr IP4Hdr;
 
 void LogPriorityData(TextLog*, const Event*, bool doNewLine);

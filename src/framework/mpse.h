@@ -20,6 +20,10 @@
 #ifndef MPSE_H
 #define MPSE_H
 
+// MPSE = Multi-Pattern Search Engine - ie fast pattern matching The key
+// methods of an MPSE are the ability to add patterns, compile a state
+// machine from the patterns, and search a buffer for patterns.
+
 #include <string>
 
 #ifdef HAVE_CONFIG_H
@@ -45,9 +49,9 @@
 struct SnortConfig;
 struct MpseApi;
 
-typedef int (* mpse_build_f)(SnortConfig*, void* id, void** existing_tree);
-typedef int (* mpse_negate_f)(void* id, void** list);
-typedef int (* mpse_action_f)(void* id, void* tree, int index, void* data, void* neg_list);
+typedef int (* MpseBuild)(SnortConfig*, void* id, void** existing_tree);
+typedef int (* MpseNegate)(void* id, void** list);
+typedef int (* MpseMatch)(void* id, void* tree, int index, void* data, void* neg_list);
 
 class SO_PUBLIC Mpse
 {
@@ -63,14 +67,14 @@ public:
         bool noCase, bool negate, void* ID, int IID) = 0;
 
     virtual int prep_patterns(
-    SnortConfig*, mpse_build_f, mpse_negate_f) = 0;
+    SnortConfig*, MpseBuild, MpseNegate) = 0;
 
     int search(
-    const unsigned char* T, int n, mpse_action_f,
+    const unsigned char* T, int n, MpseMatch,
     void* data, int* current_state);
 
     virtual int search_all(
-    const unsigned char* T, int n, mpse_action_f,
+    const unsigned char* T, int n, MpseMatch,
     void* data, int* current_state);
 
     virtual void set_opt(int) { }
@@ -87,7 +91,7 @@ protected:
     Mpse(const char* method, bool use_gc);
 
     virtual int _search(
-    const unsigned char* T, int n, mpse_action_f,
+    const unsigned char* T, int n, MpseMatch,
     void* data, int* current_state) = 0;
 
 private:

@@ -1,0 +1,17 @@
+This directory contains all files related to SSH protocol inspection.
+
+The SSH inspector processes the stream reassembled packets and detects the
+following exploits: Challenge-Response Buffer Overflow, CRC 32, Secure CRT,
+and the Protocol Mismatch exploit.
+
+Both Challenge-Response Overflow and CRC 32 attacks occur after the key
+exchange, and are therefore encrypted.  Both attacks involve sending a
+large payload (20kb+) to the server immediately after the authentication
+challenge.  To detect the attacks, the SSH inspector counts the number of
+bytes transmitted to the server.  If those bytes exceed a pre-defined limit
+within a pre-define number of packets, an alert is generated.  Since
+Challenge-Response Overflow only effects SSHv2 and CRC 32 only effects
+SSHv1, the SSH version string exchange is used to distinguish the attacks.
+
+The Secure CRT and protocol mismatch exploits are observable before the key
+exchange.

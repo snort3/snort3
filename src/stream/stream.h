@@ -20,14 +20,10 @@
 #ifndef STREAM_H
 #define STREAM_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <sys/types.h>
 #include <netinet/in.h>
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "stream/stream_api.h"
 #include "network_inspectors/normalize/norm.h"
 

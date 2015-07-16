@@ -46,8 +46,13 @@ typedef struct _SFPROCPIDSTATS
     int iCPUs;
 } SFPROCPIDSTATS;
 
+/* Init CPU usage processing */
 int sfInitProcPidStats(SFPROCPIDSTATS* sfProcPidStats);
+
+/* Fetch the CPU utilization numbers for process */
 int sfProcessProcPidStats(SFPROCPIDSTATS* sfProcPidStats);
+
+/* Free the statistics structure */
 void FreeProcPidStats(SFPROCPIDSTATS* sfProcPidStats);
 
 #endif

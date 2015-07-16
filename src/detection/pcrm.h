@@ -16,14 +16,18 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-** Marc Norton <mnorton@sourcefire.com>
-** Dan Roelker <droelker@sourcefire.com>
-**
-** Packet Classification-Rule Manager
-*/
+
+// pcrm.h is a heavily refactored version of work by:
+//
+// Marc Norton <mnorton@sourcefire.com>
+// Dan Roelker <droelker@sourcefire.com>
+
 #ifndef PCRM_H
 #define PCRM_H
+
+// Packet Classification-Rule Manager
+// runle groups by source and dest ports as well as any
+// (generic refers to any)
 
 #include "protocols/packet.h"
 #include "ports/port_group.h"

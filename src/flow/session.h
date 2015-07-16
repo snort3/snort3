@@ -20,6 +20,9 @@
 #ifndef SESSION_H
 #define SESSION_H
 
+// Session is an abstract base class for the various protocol subclasses.
+// the subclasses do the actual work of tracking, reassembly, etc.
+
 #include "sfip/sfip_t.h"
 #include "stream/stream_api.h"
 

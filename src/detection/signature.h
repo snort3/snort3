@@ -16,13 +16,13 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// Author(s):   Andrew R. Baker <andrewb@sourcefire.com>
+
+// signature.h author Andrew R. Baker <andrewb@sourcefire.com>
+
 #ifndef SIGNATURE_H
 #define SIGNATURE_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+// basic non-detection signature info:  gid, sid, rev, class, priority, etc.
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -94,11 +94,10 @@ struct SigInfo
     ClassType* classType;
     uint32_t priority;
     char* message;
-    ReferenceNode* refs;
+    ReferenceNode* refs;  // FIXIT-L delete this - stored but not used
     bool text_rule;
     unsigned int num_services;
     ServiceInfo* services;
-    const char* os;
 };
 
 SFGHASH* OtnLookupNew(void);
@@ -110,5 +109,5 @@ void OtnRemove(SFGHASH*, OptTreeNode*);
 void OtnDeleteData(void* data);
 void OtnFree(void* data);
 
-#endif /* SIGNATURE */
+#endif
 

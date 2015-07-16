@@ -16,26 +16,14 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-//
 
-/*
- * ssh_config.h: Definitions of SSH conf
- * Author: Chris Sherwin
- */
+// ssh_config.h author Chris Sherwin
 
 #ifndef SSH_CONFIG_H
 #define SSH_CONFIG_H
 
-/*
- * Global SSH preprocessor configuration.
- *
- * MaxEncryptedPackets: Maximum number of encrypted packets examined per
- *				session.
- * MaxClientBytes:	Maximum bytes of encrypted data that can be
- *				sent by client without a server response.
- * MaxServerVersionLen: Maximum length of a server's version string.
- *              Configurable threshold for Secure CRT-style overflow.
- */
+// Configuration for SSH service inspector
+
 struct SSH_PROTO_CONF
 {
     uint16_t MaxEncryptedPackets;
@@ -47,6 +35,4 @@ struct SSH_PROTO_CONF
 #define SSH_DEFAULT_MAX_CLIENT_BYTES    19600
 #define SSH_DEFAULT_MAX_SERVER_VERSION_LEN 80
 
-
 #endif
-

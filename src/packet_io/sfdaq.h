@@ -17,8 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// @file    sfdaq.h
-// @author  Russ Combs <rcombs@sourcefire.com>
+// sfdaq.h author Russ Combs <rcombs@sourcefire.com>
 
 #ifndef SFDAQ_H
 #define SFDAQ_H
@@ -37,8 +36,7 @@ extern "C" {
 #define PKT_TIMEOUT  1000  // ms, worst daq resolution is 1 sec
 
 struct SnortConfig;
-namespace snort
-{
+
 void DAQ_Load(const SnortConfig*);
 void DAQ_Unload(void);
 
@@ -69,7 +67,7 @@ int DAQ_Start(void);
 int DAQ_WasStarted(void);
 int DAQ_Stop(void);
 
-// TBD some stuff may be inlined once encapsulations are straight
+// FIXIT-L some stuff may be inlined once encapsulations are straight
 // (but only where performance justifies exposing implementation!)
 int DAQ_Acquire(int max, DAQ_Analysis_Func_t, uint8_t* user);
 int DAQ_Inject(const DAQ_PktHdr_t*, int rev, const uint8_t* buf, uint32_t len);
@@ -89,14 +87,11 @@ static inline uint16_t DAQ_GetAddressSpaceID(const DAQ_PktHdr_t* h)
 {
     return h->address_space_id;
 }
-
 #endif
 
 // returns total stats if no daq else current stats
 // returns statically allocated stats - don't free
 const DAQ_Stats_t* DAQ_GetStats(void);
-}
-using namespace snort;
 
-#endif // SFDAQ_H
+#endif
 

@@ -20,11 +20,12 @@
 #ifndef PIGLET_MANAGER_H
 #define PIGLET_MANAGER_H
 
+// Factory for instantiating piglet plugins
+
 #include <string>
 #include <vector>
 
 #include "helpers/lua.h"
-
 #include "piglet_api.h"
 #include "piglet_utils.h"
 

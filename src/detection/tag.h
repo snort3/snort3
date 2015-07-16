@@ -21,9 +21,11 @@
 #ifndef TAG_H
 #define TAG_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+// rule option tag causes logging of some number of subsequent packets
+// following an alert.  this module is use by the tag option to implement
+// that functionality.  uses its own hash table.
+//
+// FIXIT-L convert tags to use flow instead of hash table.
 
 #include <cstdint>
 

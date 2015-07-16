@@ -1,0 +1,24 @@
+This is the old Snort HTTP preprocessor ported to Snort++ and made into an
+inspector. A new HTTP inspector currently known as NHttpInspect is under
+development in a neighboring directory. Eventually NHttpInspect will be
+renamed HttpInspect and this module will be retired. Meanwhile the
+abbreviations HI and NHI are sometimes used when it is important to
+distinguish the two modules.
+
+HI and NHI are not intended to be used together. Only configure one of them
+at a time.
+
+The starting point is http_inspect.cc which defines the HttpInspect
+subclass of Inspector. Within that look to member eval() which accepts a
+packet from the framework and processes it.
+
+HI evolved from a stateless packet processor and to a very substantial
+extent it still is one despite having a fully-developed stream splitter.
+That means it often does not know for sure what part of the HTTP message it
+is looking at and it makes great effort to try and overcome that. Always
+keep this in mind when trying to understand what HI is doing.
+
+The other useful thing to remember is HI processes request ("client") and
+response ("server") messages through largely separate code paths and far
+more differently than you would expect from reading the RFC.
+

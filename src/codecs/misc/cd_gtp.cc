@@ -68,12 +68,11 @@ public:
         uint16_t lyr_len, uint32_t& updated_len) override;
 };
 
-/* GTP basic Header  */
 struct GTPHdr
 {
     uint8_t flag;               /* flag: version (bit 6-8), PT (5), E (3), S (2), PN (1) */
-    uint8_t type;               /* message type */
-    uint16_t length;            /* length */
+    uint8_t type;
+    uint16_t length;
 };
 } // anonymous namespace
 
@@ -86,13 +85,6 @@ void GtpCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(PROTO_GTP);
 }
 
-/* Function: DecodeGTP(uint8_t *, uint32_t, Packet *)
- *
- * GTP (GPRS Tunneling Protocol) is layered over UDP.
- * Decode these (if present) and go to DecodeIPv6/DecodeIP.
- *
- */
-
 bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     uint8_t next_hdr_type;
@@ -102,7 +94,6 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     const GTPHdr* const hdr = reinterpret_cast<const GTPHdr*>(raw.data);
 
-    /*Check the length*/
     if (raw.len < GTP_MIN_LEN)
         return false;
     /* We only care about PDU*/
@@ -120,14 +111,12 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "GTP v0 packets.\n"); );
 
         len = GTP_V0_HEADER_LEN;
-        /*Check header fields*/
         if (raw.len < len)
         {
             codec_event(codec, DECODE_GTP_BAD_LEN);
             return false;
         }
 
-        /*Check the length field. */
         if (raw.len != ((unsigned int)ntohs(hdr->length) + len))
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Calculated length %d != %d in header.\n",
@@ -157,7 +146,6 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
             while (next_hdr_type)
             {
                 uint16_t ext_hdr_len;
-                /*check length before reading data*/
                 if (raw.len < (uint32_t)(len + 4))
                 {
                     codec_event(codec, DECODE_GTP_BAD_LEN);
@@ -174,7 +162,6 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
                 /*Extension header length is a unit of 4 octets*/
                 len += ext_hdr_len * 4;
 
-                /*check length before reading data*/
                 if (raw.len < len)
                 {
                     codec_event(codec, DECODE_GTP_BAD_LEN);
@@ -189,7 +176,6 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         codec.lyr_len = len;
         codec.proto_bits |= PROTO_BIT__GTP;
 
-        /*Check the length field. */
         if (raw.len != ((unsigned int)ntohs(hdr->length) + GTP_MIN_LEN))
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Calculated length %d != %d in header.\n",

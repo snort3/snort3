@@ -16,15 +16,21 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// Writen by Patrick Mullen <pmullen@sourcefire.com>
+// sf_base64decode.h author Patrick Mullen <pmullen@sourcefire.com>
 
 #ifndef SF_BASE64DECODE_H
 #define SF_BASE64DECODE_H
 
-#include "main/snort_types.h"
-#include "util_unfold.h"
+// A Base-64 decoder
 
-SO_PUBLIC int sf_base64decode(uint8_t*, uint32_t, uint8_t*, uint32_t, uint32_t*);
+#include "main/snort_types.h"
+
+// FIXIT-L: inbuf should probably be const uint8_t*
+SO_PUBLIC int sf_base64decode(
+    uint8_t* inbuf, uint32_t inbuf_size,
+    uint8_t* outbuf, uint32_t outbuf_size,
+    uint32_t* bytes_written
+);
 
 #endif
 

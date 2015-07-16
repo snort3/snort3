@@ -21,6 +21,10 @@
 #ifndef COUNTS_H
 #define COUNTS_H
 
+// basic stats support - note that where these are used, the number of
+// elements in stats must be the same as the number of elements in the peg
+// info.
+
 #include "main/snort_types.h"
 
 typedef uint64_t PegCount;

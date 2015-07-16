@@ -20,6 +20,8 @@
 #ifndef THREAD_H
 #define THREAD_H
 
+// basic thread management utilities
+
 #include <string>
 #include "main/snort_types.h"
 
@@ -45,6 +47,9 @@ void pin_thread_to_cpu(const char* source);
 SO_PUBLIC unsigned get_instance_id();
 SO_PUBLIC unsigned get_instance_max();
 
+// all modules that use packet thread files should call this function to
+// get a packet thread specific path.  name should be the module name or
+// derived therefrom.
 SO_PUBLIC const char* get_instance_file(std::string&, const char* name);
 
 void take_break();

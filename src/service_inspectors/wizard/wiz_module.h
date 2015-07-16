@@ -21,8 +21,11 @@
 #ifndef WIZ_MODULE_H
 #define WIZ_MODULE_H
 
+// wizard management interface
+
 #include <string>
 #include <vector>
+
 #include "framework/module.h"
 #include "main/thread.h"
 

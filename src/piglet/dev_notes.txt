@@ -1,0 +1,28 @@
+This directory contains the framework used to instantiate, run and collect
+the results from test harness scripts.
+
+The piglet test harness provides a Lua scripted interface to the Snort
+plugins. The tests written by the harness occupy a place somewhere between
+unit tests and integration tests in scope.
+
+When Snort is started in piglet mode, any Lua scripts located in
+"--script-path" are loaded and checked for table named "plugin".  If the
+plugin table's "type" field is set to "piglet", the script is considered to
+be a piglet plugin and the Lua chunk is added to Piglet::Manager.
+
+When the Piglet::Main::piglet() entry point is called, Piglet::Runner
+iterates through the test harness chunks and uses Piglet::Manager to
+instantiate the appropriate Piglet for each plugin type.
+
+Each test harness chunk contains a table named "piglet". This table
+contains fields "target" and "type" which indicate the plugin type and name
+of the plugin to be instantiated and tested.  The table should also contain
+an entry point function called "test".
+
+The Piglets all derive from Piget::BasePlugin and contain code to expose
+the target plugin methods to the Lua chunk.  There is a Piglet subclass for
+each plugin type.  (The enum of plugin types is located in
+framework/base_api.h)
+
+Piglet::Runner than calls the entry point method referenced by piglet.test
+in the Lua script, and then returns the results.

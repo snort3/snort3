@@ -20,6 +20,8 @@
 #ifndef PIGLET_H
 #define PIGLET_H
 
+// Front end for the piglet test harness.
+
 namespace Piglet
 {
 // FIXIT-L: May not need to wrap these functions in a class

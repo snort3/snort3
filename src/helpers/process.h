@@ -19,11 +19,9 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
-#include <signal.h>
+// process oriented services like signal handling, heap info, etc.
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <signal.h>
 #include <stdint.h>
 
 enum PigSignal

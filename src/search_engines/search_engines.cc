@@ -21,7 +21,21 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "framework/mpse.h"
+
+struct BaseApi;
+
+extern const BaseApi* se_ac_banded;
+extern const BaseApi* se_ac_bnfa;
+extern const BaseApi* se_ac_bnfa_q;
+extern const BaseApi* se_ac_full;
+extern const BaseApi* se_ac_full_q;
+extern const BaseApi* se_ac_sparse;
+extern const BaseApi* se_ac_sparse_bands;
+extern const BaseApi* se_ac_std;
+
+#ifdef INTEL_SOFT_CPM
+extern const BaseApi* se_intel_cpm;
+#endif
 
 const BaseApi* search_engines[] =
 {

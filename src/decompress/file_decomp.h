@@ -28,6 +28,8 @@
 #include <string.h>
 
 /* File_Decomp global typedefs (used in child objects) */
+
+/* Function return codes used internally and with caller */
 typedef enum fd_status
 {
     File_Decomp_DecompError = -2,  /* Error from decompression */
@@ -59,16 +61,20 @@ typedef struct fd_session_s* fd_session_p_t, fd_session_t;
 #include <lzma.h>
 #endif
 
-/* Potential decompression modes */
+/* Potential decompression modes, passed in at initalization time. */
 #define FILE_SWF_LZMA_BIT    (0x00000001)
 #define FILE_SWF_ZLIB_BIT    (0x00000002)
 #define FILE_PDF_DEFL_BIT    (0x00000004)
+
+/* The FILE_REVERT and FILT_NORM functionality is currently not implemented */
 #define FILE_FILT_NORM_BIT   (0x40000000)    /* Normalize the PDF /Filter value string */
 #define FILE_REVERT_BIT      (0x80000000)    /* Revert to 'uncompressed' state */
 
 #define FILE_PDF_ANY         (FILE_PDF_DEFL_BIT)
 #define FILE_SWF_ANY         (FILE_SWF_LZMA_BIT | FILE_SWF_ZLIB_BIT)
 
+/* Error codes either passed to caller via the session->Error_Alert of
+   the File_Decomp_Alert() call-back function. */
 enum FileDecompError
 {
     FILE_DECOMP_ERR_SWF_ZLIB_FAILURE,
@@ -96,6 +102,7 @@ typedef enum states
     STATE_COMPLETE    /* Decompression completed */
 } fd_states_t;
 
+/* Primary file decompression session state context */
 struct fd_session_s
 {
     uint8_t* Next_In;   /* next input byte */
@@ -137,6 +144,8 @@ struct fd_session_s
 
 /* Macros */
 
+/* Macros used to sync my decompression context with that
+   of the underlying decompression engine context. */
 #ifndef SYNC_IN
 #define SYNC_IN(dest) \
     dest->next_in = SessionPtr->Next_In; \
@@ -159,6 +168,7 @@ struct fd_session_s
 
 /* Inline Functions */
 
+/* If available, look at the next available byte in the input queue */
 static inline bool Peek_1(fd_session_p_t SessionPtr, uint8_t* c)
 {
     if ( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In > 0) )
@@ -170,6 +180,7 @@ static inline bool Peek_1(fd_session_p_t SessionPtr, uint8_t* c)
         return( false );
 }
 
+/* If available, get a byte from the input queue */
 static inline bool Get_1(fd_session_p_t SessionPtr, uint8_t* c)
 {
     if ( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In > 0) )
@@ -183,6 +194,8 @@ static inline bool Get_1(fd_session_p_t SessionPtr, uint8_t* c)
         return( false );
 }
 
+/* If available, get N bytes from the input queue.  All N must be
+   availble for this call to succeed. */
 static inline bool Get_N(fd_session_p_t SessionPtr, uint8_t** c, uint16_t N)
 {
     if ( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In >= N) )
@@ -197,6 +210,7 @@ static inline bool Get_N(fd_session_p_t SessionPtr, uint8_t** c, uint16_t N)
         return( false );
 }
 
+/* If there's room in the output queue, put one byte. */
 static inline bool Put_1(fd_session_p_t SessionPtr, uint8_t c)
 {
     if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out > 0) )
@@ -210,6 +224,8 @@ static inline bool Put_1(fd_session_p_t SessionPtr, uint8_t c)
         return( false );
 }
 
+/* If the output queue has room available, place N bytes onto the queue.
+   The output queue must have space for N bytes for this call to succeed. */
 static inline bool Put_N(fd_session_p_t SessionPtr, uint8_t* c, uint16_t N)
 {
     if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out >= N) )
@@ -224,6 +240,8 @@ static inline bool Put_N(fd_session_p_t SessionPtr, uint8_t* c, uint16_t N)
         return( false );
 }
 
+/* If the input queue has at least one byte available AND there's at
+   space for at least one byte in the output queue, then move one byte. */
 static inline bool Move_1(fd_session_p_t SessionPtr)
 {
     if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out > 0) &&
@@ -242,6 +260,8 @@ static inline bool Move_1(fd_session_p_t SessionPtr)
         return( false );
 }
 
+/* If the input queue has at least N bytes available AND there's at
+   space for at least N bytes in the output queue, then move all N bytes. */
 static inline bool Move_N(fd_session_p_t SessionPtr, uint16_t N)
 {
     if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out >= N) &&
@@ -262,22 +282,31 @@ static inline bool Move_N(fd_session_p_t SessionPtr, uint16_t N)
 
 /* API Functions */
 
+/* Create a new decompression session object */
 fd_session_p_t File_Decomp_New();
 
+/* Initialize the session */
 fd_status_t File_Decomp_Init(fd_session_p_t SessionPtr);
 
+/* Use an internal decompression buffer */
 fd_status_t File_Decomp_SetBuf(fd_session_p_t SessionPtr);
 
+/* Run the incremental decompression engine */
 fd_status_t File_Decomp(fd_session_p_t SessionPtr);
 
+/* Close the decomp session processing */
 fd_status_t File_Decomp_End(fd_session_p_t SessionPtr);
 
+/* Close the current decomp session, but setup for another */
 fd_status_t File_Decomp_Reset(fd_session_p_t SessionPtr);
 
+/* Abort and delete the session */
 fd_status_t File_Decomp_StopFree(fd_session_p_t SessionPtr);
 
+/* Delete the session object */
 void File_Decomp_Free(fd_session_p_t SessionPtr);
 
+/* Call the error alerting call-back function */
 void File_Decomp_Alert(fd_session_p_t SessionPtr, int Event);
 #endif
 

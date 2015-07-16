@@ -52,17 +52,6 @@ const static uint16_t PPP_IPX = 0x002b;        /* Novell IPX Protocol */
 void PppEncap::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(ETHERTYPE_PPP); }
 
-/*
- * Function: DecodePppPktEncapsulated(Packet *, const uint32_t len, uint8_t*)
- *
- * Purpose: Decode PPP traffic (RFC1661 framing).
- *
- * Arguments: p => pointer to decoded packet struct
- *            len => length of data to process
- *            pkt => pointer to the real live packet data
- *
- * Returns: void function
- */
 bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     static THREAD_LOCAL bool had_vj = false;
@@ -79,9 +68,6 @@ bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
 #endif  /* WORDS_MUSTALIGN */
 
-    /* do a little validation:
-     *
-     */
     if (raw.len < 2)
         return false;
 

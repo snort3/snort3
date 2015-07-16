@@ -22,7 +22,7 @@
 #ifndef SNORT_PROTOCOLS_H
 #define SNORT_PROTOCOLS_H
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 
 // FIXIT-L use logical type instead of int16_t
 // for all reference protocols

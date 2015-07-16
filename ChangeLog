@@ -1,3 +1,11 @@
+15/07/15 - build 161
+
+-- added piglet plugin test harness
+-- added piglet_scripts with codec and inspector examples
+-- added doc/dev_guide.sh
+-- added dev_notes.txt in each src/ subdir
+-- scrubbed headers
+
 15/07/06 - build 160 - Alpha 2
 
 -- fixed duplicate patterns in file_magic.lua

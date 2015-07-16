@@ -17,15 +17,14 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
- * Author: Steven Sturges
- * sftarget_reader.h
- */
+// sftarget_reader.h author Steven Sturges
 
 #ifndef SFTARGET_READER_H
 #define SFTARGET_READER_H
 
-#include "sftarget_data.h"
+// Provides attribute table initialization, lookup, swap, and releasing.
+
+#include "target_based/sftarget_data.h"
 
 #define DEFAULT_MAX_ATTRIBUTE_HOSTS   10000
 #define DEFAULT_MAX_ATTRIBUTE_SERVICES_PER_HOST 100

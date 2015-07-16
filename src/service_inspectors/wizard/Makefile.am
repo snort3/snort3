@@ -4,7 +4,7 @@ file_list = \
 magic.cc magic.h \
 hexes.cc \
 spells.cc \
-wizard.cc wizard.h \
+wizard.cc \
 wiz_module.cc wiz_module.h
 
 if STATIC_INSPECTORS

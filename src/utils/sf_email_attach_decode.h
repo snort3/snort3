@@ -16,21 +16,25 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// Writen by Bhagyashree Bantwal <bbantwal@sourcefire.com>
+// sf_email_attach_decode.h author Bhagyashree Bantwal <bbantwal@cisco.com>
 
 #ifndef SF_EMAIL_ATTACH_DECODE_H
 #define SF_EMAIL_ATTACH_DECODE_H
 
-#include "snort_types.h"
-#include "util_unfold.h"
-#include "sf_base64decode.h"
-#include "snort_bounds.h"
+// Email attachment decoder
+
+#include <stdlib.h>
+
+#include "main/snort_types.h"
 
 #define MAX_BUF 65535
+
+// FIXIT-L: Should make this a (scoped?) enum
 #define DECODE_SUCCESS  0
-#define DECODE_EXCEEDED  1 /* Decode Complete when we reach the max depths */
+#define DECODE_EXCEEDED  1 // Decode Complete when we reach the max depths
 #define DECODE_FAIL    -1
 
+// FIXIT-L: Should be a scoped enum
 typedef enum
 {
     DECODE_NONE = 0,
@@ -73,6 +77,7 @@ struct BitEnc_DecodeState
     int depth;
 };
 
+// Should be a C++ OOP struct with constructor, etc
 struct Email_DecodeState
 {
     DecodeType decode_type;
@@ -97,7 +102,6 @@ struct MimeStats
     uint64_t decoded_bytes[DECODE_ALL];
 };
 
-// end :: start + length
 int EmailDecode(const uint8_t* start, const uint8_t* end, Email_DecodeState*);
 
 static inline int getCodeDepth(int code_depth, int64_t file_depth)
@@ -112,13 +116,14 @@ static inline int getCodeDepth(int code_depth, int64_t file_depth)
         return code_depth;
 }
 
+// FIXIT-L: Should be an (inline?) method of struct Email_DecodeState
 static inline void SetEmailDecodeState(Email_DecodeState* ds, void* data, int buf_size,
     int b64_depth, int qp_depth, int uu_depth, int bitenc_depth, int64_t file_depth)
 {
     ds->decode_type = DECODE_NONE;
     ds->decode_present = 0;
     ds->prev_encoded_bytes = 0;
-    ds->prev_encoded_buf = NULL;
+    ds->prev_encoded_buf = nullptr;
     ds->decoded_bytes = 0;
 
     ds->encodeBuf = (uint8_t*)data;
@@ -140,6 +145,7 @@ static inline void SetEmailDecodeState(Email_DecodeState* ds, void* data, int bu
     ds->bitenc_state.bytes_read = 0;
 }
 
+// FIXIT-L: Should refactor as a constructor for struct Email_DecodeState
 static inline Email_DecodeState* NewEmailDecodeState(
     int max_depth, int b64_depth, int qp_depth,
     int uu_depth, int bitenc_depth, int64_t file_depth)
@@ -156,11 +162,13 @@ static inline Email_DecodeState* NewEmailDecodeState(
     return ds;
 }
 
+// FIXIT-L: Should refactor as a destructor for struct Email_DecodeState
 static inline void DeleteEmailDecodeState(Email_DecodeState* ds)
 {
     free(ds);
 }
 
+// FIXIT-L: An assignment by value is more intuitive than by reference
 static inline void updateMaxDepth(int64_t file_depth, int* max_depth)
 {
     if ((!file_depth) || (file_depth > MAX_BUF))
@@ -173,12 +181,14 @@ static inline void updateMaxDepth(int64_t file_depth, int* max_depth)
     }
 }
 
+// FIXIT-L: Should refactor as a method of struct Email_DecodeState
 static inline void ClearPrevEncodeBuf(Email_DecodeState* ds)
 {
     ds->prev_encoded_bytes = 0;
-    ds->prev_encoded_buf = NULL;
+    ds->prev_encoded_buf = nullptr;
 }
 
+// FIXIT-L: Should refactor as a method of struct Email_DecodeState
 static inline void ResetBytesRead(Email_DecodeState* ds)
 {
     ds->uu_state.begin_found = ds->uu_state.end_found = 0;
@@ -189,6 +199,7 @@ static inline void ResetBytesRead(Email_DecodeState* ds)
     ds->bitenc_state.bytes_read = 0;
 }
 
+// FIXIT-L: Should refactor as a method of struct Email_DecodeState
 static inline void ResetDecodedBytes(Email_DecodeState* ds)
 {
     ds->decodePtr = nullptr;
@@ -196,9 +207,10 @@ static inline void ResetDecodedBytes(Email_DecodeState* ds)
     ds->decode_present = 0;
 }
 
+// FIXIT-L: Should refactor as a method of struct Email_DecodeState
 static inline void ResetEmailDecodeState(Email_DecodeState* ds)
 {
-    if ( ds == NULL )
+    if ( ds == nullptr )
         return;
 
     ds->uu_state.begin_found = ds->uu_state.end_found = 0;
@@ -206,9 +218,10 @@ static inline void ResetEmailDecodeState(Email_DecodeState* ds)
     ClearPrevEncodeBuf(ds);
 }
 
+// FIXIT-L: Should refactor as a method of struct Email_DecodeState
 static inline void ClearEmailDecodeState(Email_DecodeState* ds)
 {
-    if (ds == NULL)
+    if (ds == nullptr)
         return;
 
     ds->decode_type = DECODE_NONE;

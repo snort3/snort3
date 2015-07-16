@@ -1,0 +1,3 @@
+This directory contains codecs that do not fall under the classifications of
+the other codec directories. These codecs primarily handle IP tunnelling
+protocols.

@@ -20,6 +20,10 @@
 #ifndef INSPECTOR_H
 #define INSPECTOR_H
 
+// Inspectors are the workhorse that do all the heavy lifting between
+// decoding a packet and detection.  There are several types that operate
+// in different ways.  These correspond to Snort 2X preprocessors.
+
 #include "main/snort_types.h"
 #include "main/thread.h"
 #include "framework/base_api.h"

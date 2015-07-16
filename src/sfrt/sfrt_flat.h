@@ -19,15 +19,15 @@
 /*
 ** 9/7/2011 - Initial implementation ... Hui Cao <hcao@sourcefire.com>
 **
-** This is based on the original sfrt.h, but using the flat segment memory.
-** When allocating memory, it uses memory in the segment, and returns
-** the offset.
-** When accessing memory, it must use the base address and offset to
-** correctly refer to it.
 */
 
 #ifndef SFRT_FLAT_H
 #define SFRT_FLAT_H
+
+// This is based on the original sfrt.h, but using the flat segment memory.
+// When allocating memory, it uses memory in the segment, and returns the offset.
+// When accessing memory, it must use the base address and offset to
+// correctly refer to it.
 
 #include "utils/segment_mem.h"
 

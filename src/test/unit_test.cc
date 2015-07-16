@@ -46,22 +46,22 @@ static SuiteCtor_f s_suites[] =
 
 void unit_test_mode(const char* s)
 {
-    if ( !s || !strcasecmp(s, "off") )
+    if ( !s || !strcasecmp(s, UNIT_TEST_MODE_OFF) )
         s_mode = CK_LAST;
 
-    else if ( !strcasecmp(s, "silent") )
+    else if ( !strcasecmp(s, UNIT_TEST_MODE_SILENT) )
         s_mode = CK_SILENT;
 
-    else if ( !strcasecmp(s, "minimal") )
+    else if ( !strcasecmp(s, UNIT_TEST_MODE_MINIMAL) )
         s_mode = CK_MINIMAL;
 
-    else if ( !strcasecmp(s, "normal") )
+    else if ( !strcasecmp(s, UNIT_TEST_MODE_NORMAL) )
         s_mode = CK_NORMAL;
 
-    else if ( !strcasecmp(s, "verbose") )
+    else if ( !strcasecmp(s, UNIT_TEST_MODE_VERBOSE) )
         s_mode = CK_VERBOSE;
 
-    else //if ( !strcasecmp(s, "env") )
+    else //if ( !strcasecmp(s, UNIT_TEST_MODE_ENV) )
         s_mode = CK_ENV;
 }
 

@@ -16,21 +16,25 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+// smtp_paf.h author Hui Cao <huica@ciso.com>
+
 #ifndef SMTP_PAF_H
 #define SMTP_PAF_H
 
-#include "snort_types.h"
+// Protocol aware flushing for SMTP
+
+#include "main/snort_types.h"
 #include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
 #include "file_api/file_mime_process.h"
 
-/* State tracker for SMTP PAF */
+// State tracker for SMTP PAF
 enum SmtpPafState
 {
     SMTP_PAF_CMD_STATE,
     SMTP_PAF_DATA_STATE
 };
-/* State tracker for data command */
+// State tracker for data command
 typedef enum _SmtpPafCmdState
 {
     SMTP_PAF_CMD_UNKNOWN,
@@ -47,7 +51,7 @@ struct SmtpCmdSearchInfo
     const char* search_state;
 };
 
-/* State tracker for SMTP PAF */
+// State tracker for SMTP PAF
 struct SmtpPafData
 {
     DataEndState data_end_state;
@@ -73,7 +77,7 @@ public:
     SmtpPafData state;
 };
 
+// Function: Check if IMAP data end is reached
 bool smtp_is_data_end(void* ssn);
 
 #endif
-

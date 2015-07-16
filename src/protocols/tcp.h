@@ -62,7 +62,7 @@
 
 namespace tcp
 {
-constexpr uint8_t TCP_MIN_HEADER_LEN = 20; // this is actually the minimal TCP header lenght
+constexpr uint8_t TCP_MIN_HEADER_LEN = 20; // this is actually the minimal TCP header length
 constexpr int OPT_TRUNC = -1;
 constexpr int OPT_BADLEN = -2;
 
@@ -167,5 +167,5 @@ struct TCPHdr
 };
 }  // namespace tcp
 
-#endif /* TCP_H */
+#endif
 

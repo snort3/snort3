@@ -1,0 +1,3 @@
+This unit contains a mixed bag of legacy utilities that haven't found a home in any
+other directory.  In many cases, the STL provides better options.
+

@@ -20,6 +20,11 @@
 #ifndef SO_RULE_H
 #define SO_RULE_H
 
+// SO rule = shared object rule; allows implementing arbitrary C++ for
+// detection below and beyond the text rule options.  An SO rule is just
+// like a text rule except that it can call function hooks. It can also
+// define its own rule options and any other plugins it may need.
+
 #include "main/snort_types.h"
 #include "framework/base_api.h"
 #include "framework/ips_option.h"

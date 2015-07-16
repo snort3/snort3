@@ -18,7 +18,6 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*  D E F I N E S  ************************************************************/
 #ifndef EVENT_H
 #define EVENT_H
 
@@ -42,16 +41,14 @@ struct sf_timeval32
 struct Event
 {
     const SigInfo* sig_info;
-    uint32_t event_id;        /* event ID */
-    uint32_t event_reference; /* reference to other events that have gone off,
-                                * such as in the case of tagged packets...
-                                */
+    uint32_t event_id;
+    uint32_t event_reference; // reference to other events that have gone off,
+                              // such as in the case of tagged packets...
     struct sf_timeval32 ref_time;   /* reference time for the event reference */
     const char* alt_msg;
 };
 
-void SetEvent(
-Event*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
+void SetEvent(Event*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
 
 #endif
 

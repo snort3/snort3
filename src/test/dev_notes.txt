@@ -1,0 +1,8 @@
+=== Unit Test
+
+This directory contains the unit-test interface as well as specific test
+suites.  Currently, there are unit test suites defined for sfrf, sfrt, and
+sfthd.
+
+The unit tests use the check unit test framework. For more on check, see
+the documentation at http://check.sourceforge.net/.

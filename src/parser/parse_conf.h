@@ -20,7 +20,6 @@
 #ifndef PARSE_CONF_H
 #define PARSE_CONF_H
 
-#include <string>
 #include "detection/rules.h"
 
 void parse_conf_init();

@@ -1,0 +1,66 @@
+The components in this area implement several file decompression
+mechanisms.  They provide real-time decompression to permit inspection
+(rules) of the decompressed content.
+
+In particular the components support these decompression options:
+
+1. Decompress SWF (Adobe Flash) files compressed with the ZLIB algorithm
+
+2. Optionally decompress SWF files compressed with the LZMA algorithm.
+   This is only available if Snort ++ is built with the optional LZMA
+   support.
+
+3. Decompress the Deflate compressed portions if PDF files.
+
+The three modes are individually enabled/disabled at initialization time.
+
+All parsing and decompression is incremental and allows inspection to
+proceed as the file is received and processed.
+
+SWF File Processing:
+
+SWF files exist in three forms: 1) uncompressed, 2) ZLIB compressed, and 3)
+LZMA compressed.  SWF files begin with a file signature block (alway
+uncompressed) to indicate the format of the balance of the file.  The
+balance of the file is formatted and processed as specified.
+
+PDF files are significantly more complex as the compressed content is
+embedded within the PDF syntax and one file may contain one or many
+compressed segments.
+
+Thus the PDF decompression engine implements a lightweight PDF file parser
+to locate the PDF Stream segments and then attempt to decompress Streams
+that are filtered with the FlateDecode compression.  Streams are binary
+objects that are used for much of the PDF actual content.  A Stream object
+can be labeled with a Filter option to indicate that the Steam is encoded
+in some fashion, perhaps having multiple cascaded Filters.
+
+The current implementation supports the most common FlateDecode Filter
+option and does not support cascaded Filters (including cascaded
+FlateDecode's).
+
+The decompressor processors can indicate several error situations.  There
+are two mechanisms used to relay these error codes to the calling context.
+Some errors terminate processing and are passed to the caller in the
+decompression context structure.  Other errors are inline and may be passed
+back to the caller via a provided call-back function.
+
+Possible error conditions are:
+
+* FILE_DECOMP_ERR_SWF_ZLIB_FAILURE - The ZLIB decompression engine returned
+  an error.
+
+* FILE_DECOMP_ERR_SWF_LZMA_FAILURE - The LZMA decompression engine returned
+  an error.
+
+* FILE_DECOMP_ERR_PDF_DEFL_FAILURE - The Deflate (form  of ZLIB)
+  decompression engine returned at error.
+
+* FILE_DECOMP_ERR_PDF_UNSUP_COMP_TYPE - An unsupported PDF Stream Filter
+  type was encountered,
+
+* FILE_DECOMP_ERR_PDF_CASC_COMP - Cascasded FlateDecode Stream Filters were
+  encountered.
+
+* FILE_DECOMP_ERR_PDF_PARSE_FAILURE -  Error while parsing the PDF file.
+

@@ -43,7 +43,6 @@
 #include "cmd_line.h"
 #include "mstring.h"
 #include "config_file.h"
-#include "keywords.h"
 #include "parse_conf.h"
 #include "parse_rule.h"
 #include "parse_stream.h"
@@ -86,7 +85,7 @@
 static unsigned parse_errors = 0;
 static unsigned parse_warnings = 0;
 
-rule_index_map_t* ruleIndexMap = NULL;   /* rule index -> sid:gid map */
+struct rule_index_map_t* ruleIndexMap = nullptr;   /* rule index -> sid:gid map */
 
 static std::string s_aux_rules;
 
@@ -118,12 +117,15 @@ static void InitParser(void)
 {
     parse_rule_init();
 
-    if (ruleIndexMap != NULL)
-        RuleIndexMapFree(&ruleIndexMap);
+    if (ruleIndexMap )
+    {
+        RuleIndexMapFree(ruleIndexMap);
+        ruleIndexMap = nullptr;
+    }
 
-    ruleIndexMap = RuleIndexMapCreate(MAX_RULE_COUNT);
+    ruleIndexMap = RuleIndexMapCreate();
 
-    if (ruleIndexMap == NULL)
+    if ( !ruleIndexMap )
     {
         ParseAbort("failed to create rule index map.");
     }
@@ -647,10 +649,10 @@ void ParserCleanup(void)
 {
     parse_rule_term();
 
-    if (ruleIndexMap != NULL)
+    if (ruleIndexMap )
     {
-        RuleIndexMapFree(&ruleIndexMap);
-        ruleIndexMap = NULL;
+        RuleIndexMapFree(ruleIndexMap);
+        ruleIndexMap = nullptr;
     }
 }
 
@@ -1035,11 +1037,6 @@ int addRtnToOtn(OptTreeNode* otn, RuleTreeNode* rtn)
 
 void rule_index_map_print_index(int index, char* buf, int bufsize)
 {
-    if ( index < ruleIndexMap->num_rules )
-    {
-        SnortSnprintfAppend(buf, bufsize, "%u:%u ",
-            ruleIndexMap->map[index].gid,
-            ruleIndexMap->map[index].sid);
-    }
+    rule_index_map_print_index(ruleIndexMap, index, buf, bufsize);
 }
 

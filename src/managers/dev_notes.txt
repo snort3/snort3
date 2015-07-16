@@ -1,0 +1,32 @@
+Managers provide the ability to instantiate and utilize the various plugins
+in Snort++.  There is a separate manager class for each plugin type, plus
+one for modules, plugins, scripts, and packets.
+
+The only plugin that is reloadable is Inspector.  It has reference counts
+so that it won't be freed while an active flow is using it.
+
+Only the action, codec, and inspector managers have thread local state:
+
+* action manager has an action function
+* codec manager has the grinder and related stats
+* inspector manager has a flag to control calling the clear method
+
+Some Lua files are here as they are coupled closely with C++ code in this
+directory (module_manager.cc):
+
+* snort_config.lua provides the ability to parse a Lua configuration.  It
+  is much easier to traverse the Lua tables via Lua itself.  This file
+  leverages the LuaJIT FFI to open and close tables and set values.
+
+* snort_plugin.lua provides FFI for script plugins (ips options and
+  loggers).  This is pretty thin at the moment and should be expanded to
+  provide more data.
+
+These Lua files get installed in LUA_PATH.
+
+Module manager recursively sets default values for all parameters within a
+module.  While list items have default values, default lists are not
+provided by modules; that is strictly done in Lua with snort_defaults.lua.
+This not only simplifies the code somewhat, it also makes the most sense
+from a user perspective.
+

@@ -36,16 +36,15 @@
 #include <grp.h>
 #include <pwd.h>
 #include <syslog.h>
-#include "utils/dnet_header.h"
 
 #include "parser.h"
 #include "cmd_line.h"
 #include "mstring.h"
-#include "keywords.h"
 
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "main/snort.h"
+#include "utils/dnet_header.h"
 #include "utils/util.h"
 #include "utils/strvec.h"
 #include "utils/snort_bounds.h"
@@ -69,6 +68,17 @@
 
 #define OUTPUT_U2   "unified2"
 #define OUTPUT_FAST "alert_fast"
+
+#define CHECKSUM_MODE_OPT__ALL      "all"
+#define CHECKSUM_MODE_OPT__NONE     "none"
+#define CHECKSUM_MODE_OPT__IP       "ip"
+#define CHECKSUM_MODE_OPT__NO_IP    "noip"
+#define CHECKSUM_MODE_OPT__TCP      "tcp"
+#define CHECKSUM_MODE_OPT__NO_TCP   "notcp"
+#define CHECKSUM_MODE_OPT__UDP      "udp"
+#define CHECKSUM_MODE_OPT__NO_UDP   "noudp"
+#define CHECKSUM_MODE_OPT__ICMP     "icmp"
+#define CHECKSUM_MODE_OPT__NO_ICMP  "noicmp"
 
 static std::string lua_conf;
 static std::string snort_conf_dir;

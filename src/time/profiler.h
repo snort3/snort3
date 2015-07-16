@@ -1,7 +1,6 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
-// Author: Steven Sturges <ssturges@sourcefire.com>
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -18,8 +17,12 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+// profiler.h author Steven Sturges <ssturges@sourcefire.com>
+
 #ifndef PROFILER_H
 #define PROFILER_H
+
+// Facilities for performance profiling
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -41,7 +44,7 @@ struct ProfileStats
 #include "main/thread.h"
 #include "time/cpuclock.h"
 
-/* Sort preferences for rule profiling */
+// Sort preferences for rule profiling
 #define PROFILE_SORT_CHECKS 1
 #define PROFILE_SORT_MATCHES 2
 #define PROFILE_SORT_NOMATCHES 3
@@ -50,7 +53,7 @@ struct ProfileStats
 #define PROFILE_SORT_AVG_TICKS_PER_NOMATCH 6
 #define PROFILE_SORT_TOTAL_TICKS 7
 
-/* MACROS that handle profiling of rules and preprocessors */
+// MACROS that handle profiling of rules and preprocessors
 #define PROFILE_VARS_NAMED(name) uint64_t name ## _ticks_start, name ## _ticks_end
 #define PROFILE_VARS PROFILE_VARS_NAMED(snort)
 
@@ -155,7 +158,11 @@ struct ProfileStats
     }
 #define MODULE_PROFILE_TMPEND(ppstat) MODULE_PROFILE_TMPEND_NAMED(snort, ppstat)
 
-/************** Profiling API ******************/
+
+// -----------------------------------------------------------------------------
+// Profiling API
+// -----------------------------------------------------------------------------
+
 struct ProfileConfig
 {
     int num;
@@ -166,11 +173,11 @@ void ShowRuleProfiles(void);
 void ResetRuleProfiling(void);
 
 // thread local access method
-typedef ProfileStats* (* get_profile_func)(const char*);
+using get_profile_func = ProfileStats* (*)(const char*);
 
 void RegisterProfile(
-const char* keyword, const char* parent,
-get_profile_func, class Module* owner = nullptr);
+    const char* keyword, const char* parent,
+    get_profile_func, class Module* owner = nullptr);
 
 void RegisterProfile(class Module*);
 
@@ -203,7 +210,7 @@ extern THREAD_LOCAL ProfileStats metaPerfStats;
 #define MODULE_PROFILE_REENTER_END_NAMED(name, ppstat)
 #define MODULE_PROFILE_TMPEND(ppstat)
 #define MODULE_PROFILE_TMPEND_NAMED(name, ppstat)
-#endif
+#endif // PERF_PROFILING
 
 static inline void ShowAllProfiles()
 {

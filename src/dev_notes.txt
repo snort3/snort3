@@ -1,0 +1,25 @@
+This directory contains the program entry point, thread management, and
+control functions.
+
+* The main / foreground thread services control inputs from signals, the
+  command line shell (if enabled), etc.
+
+* The packet / background threads service one input source apiece.
+
+The main_loop() starts a new Pig when a new source (interface or pcap,
+etc.) is available if the number of running Pigs is less than configured.
+
+It also does housekeeping functions like servicing signal flags, shell
+commands, etc.
+
+The shell has to be explicitly enabled at build time to be available and
+then must be configured at run time to be activated.  Presently only one
+remote shell at a time is supported.
+
+Unit test and piglet test harness build options also impact actual
+execution.
+
+Reload is implemented by swapping a thread local config pointer by each
+running Pig.  The inspector manager is called to empty trash if the main
+loop is not otherwise busy.
+

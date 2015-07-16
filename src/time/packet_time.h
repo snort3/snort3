@@ -20,12 +20,8 @@
 #ifndef PACKET_TIME_H
 #define PACKET_TIME_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <sys/time.h>
-#include <cstdint>
+#include <stdint.h>
 
 void packet_time_update(const struct timeval* cur_tv);
 time_t packet_time(void);

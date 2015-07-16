@@ -21,9 +21,8 @@
 #ifndef RULES_H
 #define RULES_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+// misc rule and rule list support
+// FIXIT-L refactor this header
 
 #include "main/snort_types.h"
 #include "actions/actions.h"
@@ -59,6 +58,7 @@ struct ListHead
     struct RuleListNode* ruleListNode;
 };
 
+// for top-level rule lists by type (alert, drop, etc.)
 struct RuleListNode
 {
     ListHead* RuleList;   /* The rule list associated with this node */
@@ -68,6 +68,7 @@ struct RuleListNode
     RuleListNode* next;   /* the next RuleListNode */
 };
 
+// for separately overriding rule type
 struct RuleState
 {
     uint32_t sid;

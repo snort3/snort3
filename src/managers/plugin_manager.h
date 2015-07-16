@@ -20,17 +20,9 @@
 #ifndef PLUGIN_MANAGER_H
 #define PLUGIN_MANAGER_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <string>
-
-#include "snort_types.h"
-#include "framework/base_api.h"
-
 //-------------------------------------------------------------------------
-// Loading plugins is a 3 step process:
+// Manages all plugins.  Loading plugins is a 3 step process:
+//
 // 1. ScriptManager loads available scripts and generates an API
 //    for each.
 // 2. PluginManager loads all API including static, dynamic, generated.
@@ -38,6 +30,11 @@
 // 3. API managers, such as IpsManager, use the API to instantiate plugins
 //    based on configuration.
 //-------------------------------------------------------------------------
+
+#include <string>
+
+#include "main/snort_types.h"
+#include "framework/base_api.h"
 
 class Module;
 struct SnortConfig;

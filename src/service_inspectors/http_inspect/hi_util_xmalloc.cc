@@ -17,9 +17,6 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
-**  util.c
-*/
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -27,12 +24,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include <sys/types.h>
 
 #include "main/thread.h"
 
+#include "hi_util_xmalloc.h"
+
 //#define MDEBUG
+// FIXIT-L these ifdefs won't compile without warnings
 
 static THREAD_LOCAL unsigned msize=0;
 
@@ -90,31 +89,5 @@ void xfree(void* p)
     free(p);
 
 #endif
-}
-
-void xshowmem(void)
-{
-#ifdef MDEBUG
-    printf("xmalloc-mem: %u bytes\n",msize);
-#endif
-}
-
-char* xstrdup(const char* str)
-{
-    int data_size;
-    char* data = NULL;
-
-    data_size = strlen(str) + 1;
-    data = (char*)xmalloc(data_size);
-
-    if (data == NULL)
-    {
-        return NULL;
-    }
-
-    strncpy(data, str, data_size - 1);
-    data[data_size - 1] = '\0';
-
-    return data;
 }
 

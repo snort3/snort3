@@ -16,113 +16,59 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
- **  Circular buffer is thread safe for one writer and one reader thread
- **
- **  This implementation is inspired by one slot open approach.
- **  See http://en.wikipedia.org/wiki/Circular_buffer
- **
- **  Author(s):  Hui Cao <huica@cisco.com>
- **
- **  NOTES
- **  5.25.13 - Initial Source Code. Hui Cao
- */
+
+// circular_buffer.h author Hui Cao <huica@cisco.com>
 
 #ifndef CIRCULAR_BUFFER_H
 #define CIRCULAR_BUFFER_H
 
+//  Circular buffer is thread safe for one writer and one reader thread
+//  This implementation is inspired by one slot open approach.
+//  See http://en.wikipedia.org/wiki/Circular_buffer
+
+// FIXIT-L use bool or enum
 #define CB_SUCCESS   0
 #define CB_FAIL      -1
 
-/* Opaque buffer element type.  This would be defined by the application. */
+// Opaque buffer element type.  This would be defined by the application.
 typedef void* ElemType;
 
 struct _CircularBuffer;
 typedef struct _CircularBuffer CircularBuffer;
 
-/*
- * Initialize buffer based on number of elements
- *
- * Args:
- *   uint64_t size: number of elements *
- * Return:
- *   CircularBuffer *: pointer to the buffer
- *   NULL: failed
- *
- */
+// Initialize buffer based on number of elements
 CircularBuffer* cbuffer_init(uint64_t size);
 
-/* Release all memory used*/
 void cbuffer_free(CircularBuffer* cb);
 
-/*
- * Check whether buffer is full
- *
- * Return:
- *   1: full
- *   0: not full
- */
+// FIXIT-L use bool
 int cbuffer_is_full(CircularBuffer* cb);
 
-/*
- * Check whether buffer is empty
- *
- * Return:
- *   1: empty
- *   0: not empty
- */
+// FIXIT-L use bool
 int cbuffer_is_empty(CircularBuffer* cb);
 
-/* Returns number of elements in use*/
+// Returns number of elements in use
 uint64_t cbuffer_used(CircularBuffer* cb);
 
-/* Returns number of free elements*/
+// Returns number of free elements
 uint64_t cbuffer_available(CircularBuffer* cb);
 
-/* Returns total number of elements*/
+// Returns total number of elements
 uint64_t cbuffer_size(CircularBuffer* cb);
 
-/*
- * Add one element to the buffer
- *
- * Args:
- *   CircularBuffer *: buffer
- *   ElemType elem: the element to be added
- * Return:
- *   CB_FAIL
- *   CB_SUCCESS
- */
+// Returns CB_SUCCESS or CB_FAIL
 int cbuffer_write(CircularBuffer* cb, const ElemType elem);
 
-/*
- * Read one element from the buffer and remove it from buffer
- *
- * Args:
- *   CircularBuffer *: buffer
- *   ElemType *elem: the element pointer to be stored
- * Return:
- *   CB_FAIL
- *   CB_SUCCESS
- */
+// Read one element from the buffer and remove it from buffer
+// Returns CB_SUCCESS or CB_FAIL
 int cbuffer_read(CircularBuffer* cb, ElemType* elem);
 
-/*
- * Read one element from the buffer and no change on buffer
- *
- * Args:
- *   CircularBuffer *: buffer
- *   ElemType *elem: the element pointer to be stored
- * Return:
- *   CB_FAIL
- *   CB_SUCCESS
- */
-
+// Read one element from the buffer and no change on buffer
+// Returns CB_SUCCESS or CB_FAIL
 int cbuffer_peek(CircularBuffer* cb, ElemType* elem);
 
-/* Returns total number of reads*/
 uint64_t cbuffer_num_reads(CircularBuffer* cb);
 
-/* Returns total number of writes*/
 uint64_t cbuffer_num_writes(CircularBuffer* cb);
 
 /* Returns total number of writer overruns*/

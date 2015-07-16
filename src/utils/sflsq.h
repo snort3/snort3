@@ -16,37 +16,24 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// sflsq.h author Marc Norton <mnorton@sourcefire.com>
 
-//---------------------------------------------------------------
-// if you are thinking to use these for new code, please consider
-// instead using STL containers which give you all this and much
-// more.  :)
-//---------------------------------------------------------------
-
-/*
-*  sflsq.h
-*
-*  Simple LIST, STACK, QUEUE DICTIONARY(LIST BASED)interface
-*
-*  All of these functions are based on lists, which use
-*  the standard malloc.
-*
-*  Note that NODE_DATA can be redifined with the
-*  define below.
-*
-*  Author: Marc Norton
-*/
 #ifndef SFLSQ_H
 #define SFLSQ_H
 
-/*
-*
-*/
+// Simple LIST, STACK, QUEUE DICTIONARY (LIST BASED) interface
+// All of these functions are based on lists, which use
+// the standard malloc.
+// Use STL containers instead of these if possible.
+
+// FIXIT-L: If we're going to keep this interface around
+//          (instead of using STL data structures)
+//          it would make sense to template the interfaces
+//          instead of using a void* for data
+// Note that NODE_DATA can be redefined with the typedef below
 typedef void* NODE_DATA;
 
-/*
-*    Simple list,stack or queue NODE
-*/
+// Simple list, stack, or queue NODE
 typedef struct sf_lnode
 {
     struct sf_lnode* next;
@@ -55,9 +42,7 @@ typedef struct sf_lnode
 }
 SF_QNODE,SF_SNODE,SF_LNODE;
 
-/*
-*	Integer Stack - uses an array from the subroutines stack
-*/
+// Integer Stack - uses an array from the subroutines stack
 struct SF_ISTACK
 {
     unsigned* stack;
@@ -65,9 +50,7 @@ struct SF_ISTACK
     unsigned n;
 };
 
-/*
-*	Pointer Stack - uses an array from the subroutines stack
-*/
+// Pointer Stack - uses an array from the subroutines stack
 struct SF_PSTACK
 {
     void** stack;
@@ -75,9 +58,7 @@ struct SF_PSTACK
     unsigned n;
 };
 
-/*
-*  Simple Structure for Queue's, stacks, lists
-*/
+// Simple Structure for Queue's, stacks, lists
 struct sf_list
 {
     SF_LNODE* head, * tail;
@@ -88,9 +69,9 @@ typedef sf_list SF_QUEUE;
 typedef sf_list SF_STACK;
 typedef sf_list SF_LIST;
 
-/*
-*  Linked List Interface
-*/
+// -----------------------------------------------------------------------------
+// Linked List Interface
+// -----------------------------------------------------------------------------
 SF_LIST* sflist_new(void);
 void sflist_init(SF_LIST*);
 int sflist_add_tail(SF_LIST*, NODE_DATA);
@@ -108,9 +89,9 @@ void sflist_free_all(SF_LIST*, void (* free)(void*) );
 void sflist_static_free_all(SF_LIST*, void (* nfree)(void*));
 void sflist_static_free(SF_LIST*);
 
-/*
-*   Stack Interface ( LIFO - Last in, First out )
-*/
+// -----------------------------------------------------------------------------
+// Stack Interface ( LIFO - Last in, First out )
+// -----------------------------------------------------------------------------
 SF_STACK* sfstack_new(void);
 int sfstack_add(SF_STACK*, NODE_DATA);
 NODE_DATA sfstack_remove(SF_STACK*);
@@ -120,9 +101,9 @@ void sfstack_free_all(SF_STACK*, void (* free)(void*) );
 void sfstack_static_free_all(SF_STACK*, void (* nfree)(void*));
 void sfstack_static_free(SF_STACK*);
 
-/*
-*   Queue Interface ( FIFO - First in, First out )
-*/
+// -----------------------------------------------------------------------------
+//  Queue Interface ( FIFO - First in, First out )
+// -----------------------------------------------------------------------------
 SF_QUEUE* sfqueue_new(void);
 int sfqueue_add(SF_QUEUE*, NODE_DATA);
 NODE_DATA sfqueue_remove(SF_QUEUE*);
@@ -132,11 +113,9 @@ void sfqueue_free_all(SF_QUEUE*, void (* free)(void*) );
 void sfqueue_static_free_all(SF_QUEUE*,void (* nfree)(void*));
 void sfqueue_static_free(SF_QUEUE*);
 
-/*
-* Performance Stack functions for Integer/Unsigned and Pointers, uses
-* user provided array storage, perhaps from the program stack or a global.
-* These are efficient, and use no memory functions.
-*/
+// Performance Stack functions for Integer/Unsigned and Pointers, uses
+// user provided array storage, perhaps from the program stack or a global.
+// These are efficient, and use no memory functions.
 int sfistack_init(SF_ISTACK*, unsigned* a,  unsigned n);
 int sfistack_push(SF_ISTACK*, unsigned value);
 int sfistack_pop(SF_ISTACK*, unsigned* value);

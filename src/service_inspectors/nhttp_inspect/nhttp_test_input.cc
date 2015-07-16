@@ -152,12 +152,35 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
                 else if ((command_length == strlen("break")) && !memcmp(command_value, "break",
                     strlen("break")))
                 {
+                    // Data leftover from previous test? Trash it.
+                    previous_offset = 0;
+                    data = msg_buf;
                     need_break = true;
                 }
                 else if ((command_length == strlen("tcpclose")) && !memcmp(command_value,
                     "tcpclose", strlen("tcpclose")))
                 {
                     tcp_closed = true;
+                }
+                else if ((command_length > 4) && !memcmp(command_value, "fill", 4))
+                {
+                    int amount = 0;
+                    for (int k = 4; k < command_length; k++)
+                    {
+                        if ((command_value[k] >= '0') && (command_value[k] <= '9'))
+                        {
+                            amount = amount * 10 + (command_value[k] - '0');
+                            assert(amount <= 2*MAX_OCTETS);
+                        }
+                    }
+                    assert(amount > 0);
+                    for (int k = 0; k < amount; k++)
+                    {
+                        // auto-fill ABCDEFGHIJABCD ...
+                        data[length++] = 'A' + k%10;
+                    }
+                    end_offset = previous_offset + length;
+                    return;
                 }
                 else if (command_length > 0)
                 {

@@ -1,0 +1,3 @@
+This directory contains codecs for all of the top-level codecs used. These
+codecs represent the first layer of encapsulation encountered within a captured
+frame, as defined by interface data-link types.

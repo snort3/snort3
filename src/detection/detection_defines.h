@@ -17,17 +17,16 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
-**  @file        detection_defines.h
-**  @author      Steven Sturges
-*/
+// detection_defines.h author Steven Sturges <ssturges@cisco.com>
 
 #ifndef DETECTION_DEFINES_H
 #define DETECTION_DEFINES_H
 
+// FIXIT-L replace with bool
 #define DETECTION_OPTION_EQUAL        0
 #define DETECTION_OPTION_NOT_EQUAL    1
 
+// FIXIT-L replace with IpsOption enum
 #define DETECTION_OPTION_NO_MATCH     0
 #define DETECTION_OPTION_MATCH        1
 #define DETECTION_OPTION_NO_ALERT     2

@@ -26,6 +26,9 @@
 #ifndef SF_IP_H
 #define SF_IP_H
 
+// Provides many convenient functions to process IP. It is a small tool box for
+// IP operations.
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

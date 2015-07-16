@@ -20,13 +20,16 @@
 #ifndef IPS_MANAGER_H
 #define IPS_MANAGER_H
 
+// Factory for IpsOptions.
+// Runtime use of IpsOptions is via detection option tree.
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include <string>
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "detection/detection_options.h"
 #include "framework/base_api.h"
 #include "framework/ips_option.h"
@@ -88,8 +91,8 @@ public:
     static void setup_options();
     static void clear_options();
     static bool verify(SnortConfig*);
-#ifdef PIGLET
 
+#ifdef PIGLET
     static IpsOptionWrapper* instantiate(const char*, Module*, struct OptTreeNode*);
 #endif
 };

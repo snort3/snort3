@@ -22,27 +22,27 @@
 #ifndef PORT_OBJECT_H
 #define PORT_OBJECT_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "framework/bits.h"
 #include "utils/sflsq.h"
 
 //-------------------------------------------------------------------------
 // PortObject supports a set of PortObjectItems
+// associates rules with a PortGroup.
 //-------------------------------------------------------------------------
 
 struct PortObjectItem;
 
 struct PortObject
 {
+    // FIXIT convert char* to C++ string
     char* name;                 /* user name - always use strdup or malloc for this*/
     int id;                     /* internal tracking - compiling sets this value */
 
     SF_LIST* item_list;         /* list of port and port-range items */
     SF_LIST* rule_list;         /* list of rules  */
 
+    // FIXIT-L convert from void* to PortGroup* and
+    // call dtor instead of needing free func
     void* data;                 /* user data, PortGroup based on rule_list - only used by any-any
                                   ports */
     void (* data_free)(void*);

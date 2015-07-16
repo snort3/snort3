@@ -116,7 +116,6 @@ bool PPPoECodec::decode(const RawData& raw,
     CodecData& codec,
     DecodeData&)
 {
-    /* do a little validation */
     if (raw.len < PPPOE_HEADER_LEN)
     {
         codec_event(codec, DECODE_BAD_PPPOE);

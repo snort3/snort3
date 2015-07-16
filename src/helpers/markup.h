@@ -20,6 +20,8 @@
 #ifndef MARKUP_H
 #define MARKUP_H
 
+// used to format help and list output for inclusion into user manual
+
 #include <string>
 
 class Markup

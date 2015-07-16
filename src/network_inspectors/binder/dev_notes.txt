@@ -1,0 +1,27 @@
+The binder maps configuration to traffic when a flow is started (via the
+eval method) and when service is identified (via the exec method).  Binder
+sets the service on the flow to that of the service inspector when it is
+bound to the flow.
+
+If the binder is not explicitly configured but the wizard is configured,
+then the inspector manager will create a default binder with bindings for
+each configured service inspector.
+
+BinderModule creates a vector of Bindings from the Lua binder table which
+is moved to the Binder upon its construction.  Upon start of flow, the
+vector is iterated in search of applicable bindings.  These include:
+
+* stream inspector
+* service inspector
+* passive inspector
+
+Note that although Flow contains both clouseau and gadget, only one of
+those is bound to the flow at a time.  The wizard fills in until service is
+identified at which point clouseau is removed and gadget is installed.
+
+Note that bindings are recursive.  It is possible to bind a policy (config
+file) that has its own binder, and so on.
+
+The implementation is not yet optimized for performance.  A faster method
+of searching for applicable bindings should be developed.
+

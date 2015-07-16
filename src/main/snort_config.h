@@ -20,6 +20,9 @@
 #ifndef SNORT_CONFIG_H
 #define SNORT_CONFIG_H
 
+// SnortConfig encapsulates all data loaded from the config files.
+// FIXIT-L privatize most of this stuff.
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

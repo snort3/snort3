@@ -20,9 +20,11 @@
 #ifndef LUA_API_H
 #define LUA_API_H
 
+// LuaApi makes Lua scripts standard plugins
+
 #include <string>
 
-#include "base_api.h"
+#include "framework/base_api.h"
 
 class LuaApi
 {

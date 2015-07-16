@@ -22,10 +22,6 @@
 #ifndef PORT_VAR_TABLE_H
 #define PORT_VAR_TABLE_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "hash/sfghash.h"
 #include "ports/port_object.h"
 #include "ports/port_table.h"

@@ -79,18 +79,18 @@ public:
     }
 
     int prep_patterns(
-        SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
+        SnortConfig* sc, MpseBuild build_tree, MpseNegate neg_list) override
     {
         return bnfaCompile(sc, obj, build_tree, neg_list);
     }
 
     int _search(
-        const unsigned char* T, int n, mpse_action_f action,
+        const unsigned char* T, int n, MpseMatch match,
         void* data, int* current_state) override
     {
         /* return is actually the state */
         return _bnfa_search_csparse_nfa_q(
-            obj, (unsigned char*)T, n, (bnfa_match_f)action,
+            obj, (unsigned char*)T, n, match,
             data, 0 /* start-state */, current_state);
     }
 

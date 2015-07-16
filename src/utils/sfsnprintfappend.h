@@ -16,23 +16,16 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// sfsnprintfappend.h author Steven Sturges <ststurge@cisco.com>
 
-/*
-*
-*  sfsnprintfappend.h
-*
-*  snprintf that appends to destination buffer
-*
-*
-*  Author: Steven Sturges
-*
-*/
 #ifndef SFSNPRINTFAPPEND_H
 #define SFSNPRINTFAPPEND_H
+
+// snprintf that appends to destination buffer
 
 #include "main/snort_types.h"
 
 SO_PUBLIC int sfsnprintfappend(char* dest, int dsize, const char* format, ...);
 
-#endif /* SFSNPRINTFAPPEND_H */
+#endif
 

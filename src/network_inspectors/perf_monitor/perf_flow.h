@@ -25,8 +25,8 @@
 #ifndef PERF_FLOW_H
 #define PERF_FLOW_H
 
-#include "snort_types.h"
-#include "sfxhash.h"
+#include "main/snort_types.h"
+#include "hash/sfxhash.h"
 #include "sfip/sfip_t.h"
 #include "protocols/packet.h"
 
@@ -62,6 +62,7 @@ typedef struct _icmpflow
     int display[256];
 } ICMPFLOW;
 
+/* Raw flow statistics */
 typedef struct _sfflow
 {
     time_t time;
@@ -90,6 +91,7 @@ typedef struct _sfflow
     SFXHASH* ipMap;
 }  SFFLOW;
 
+/* Processed flow statistics */
 typedef struct _sfflow_stats
 {
     time_t time;

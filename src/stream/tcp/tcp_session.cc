@@ -18,9 +18,10 @@
 //--------------------------------------------------------------------------
 
 /*
- * @file    stream_tcp.c
- * @author  Martin Roesch <roesch@sourcefire.com>
- * @author  Steven Sturges <ssturges@sourcefire.com>
+ * stream_tcp.c authors:
+ *     Martin Roesch <roesch@sourcefire.com>
+ *     Steven Sturges <ssturges@sourcefire.com>
+ *     Russ Combs <rcombs@sourcefire.com>
  */
 
 /*
@@ -1890,7 +1891,7 @@ static inline unsigned int getSegmentFlushSize(
 {
     unsigned int flushSize = ss->size;
 
-    //copy only till flush buffer gets full
+    // copy only till flush buffer gets full
     if ( flushSize > flushBufSize )
         flushSize = flushBufSize;
 

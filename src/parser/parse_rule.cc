@@ -73,29 +73,13 @@
 #include "managers/ips_manager.h"
 #include "managers/so_manager.h"
 #include "config_file.h"
-#include "keywords.h"
 #include "target_based/snort_protocols.h"
+
+#define RULE_DIR_OPT__DIRECTIONAL    "->"
+#define RULE_DIR_OPT__BIDIRECTIONAL  "<>"
 
 #define SRC  0
 #define DST  1
-
-/* Tracking the port_list_t structure for printing and debugging at
- * this point...temporarily... */
-struct port_entry_t
-{
-    int rule_type;
-    int proto;
-    unsigned int gid;
-    unsigned int sid;
-    bool has_fast_pattern;
-};
-
-struct port_list_t
-{
-    int pl_max;
-    int pl_cnt;
-    port_entry_t pl_array[MAX_RULE_COUNT];
-};
 
 /* rule counts for port lists */
 struct rule_count_t
@@ -121,49 +105,7 @@ static rule_count_t icmpCnt;
 static rule_count_t ipCnt;
 static rule_count_t svcCnt;  // dummy for now
 
-static port_list_t port_list;
-
 static bool s_ignore = false;  // for skipping drop rules when not inline, etc.
-
-static int port_list_add_entry(port_list_t* plist, port_entry_t* pentry)
-{
-    if ( !plist )
-    {
-        return -1;
-    }
-
-    if ( plist->pl_cnt >= plist->pl_max )
-    {
-        return -1;
-    }
-
-    SafeMemcpy(&plist->pl_array[plist->pl_cnt], pentry, sizeof(port_entry_t),
-        &plist->pl_array[plist->pl_cnt],
-        (char*)(&plist->pl_array[plist->pl_cnt]) + sizeof(port_entry_t));
-    plist->pl_cnt++;
-
-    return 0;
-}
-
-#if 0
-static void port_list_print(port_list_t* plist)
-{
-    int i;
-    for (i=0; i<plist->pl_cnt; i++)
-    {
-        LogMessage("rule %d { ", i);
-        LogMessage(" gid %u sid %u",plist->pl_array[i].gid,plist->pl_array[i].sid);
-        LogMessage(" fp %d", plist->pl_array[i].has_fast_pattern);
-        LogMessage(" }\n");
-    }
-}
-
-#endif
-
-static void port_list_free(port_list_t* plist)
-{
-    plist->pl_cnt = 0;
-}
 
 /*
  * Finish adding the rule to the port tables
@@ -177,11 +119,10 @@ static void port_list_free(port_list_t* plist)
  *    a)do this for src and dst port
  *    b)add the rule index/id to the portobject(s)
  *    c)if the rule is bidir add the rule and port-object to both src and dst tables
- *
  */
 static int FinishPortListRule(
     RulePortTables* port_tables, RuleTreeNode* rtn, OptTreeNode* otn,
-    int proto, port_entry_t* pe, FastPatternConfig* fp)
+    int proto, bool has_fp, FastPatternConfig* fp)
 {
     int large_port_group = 0;
     int src_cnt = 0;
@@ -250,7 +191,7 @@ static int FinishPortListRule(
     rim_index = otn->ruleIndex;
 
     /* Add up the nfp rules */
-    if ( !pe->has_fast_pattern )
+    if ( has_fp )
         prc->nfp++;
 
     /* If not an any-any rule test for port bleedover, if we are using a
@@ -1064,8 +1005,7 @@ static void SetupRTNFuncList(RuleTreeNode* rtn)
  *
  ***************************************************************************/
 static RuleTreeNode* ProcessHeadNode(
-    SnortConfig* sc, RuleTreeNode* test_node,
-    ListHead* list)
+    SnortConfig* sc, RuleTreeNode* test_node, ListHead* list)
 {
     RuleTreeNode* rtn = findHeadNode(
         sc, test_node, get_ips_policy()->policy_id);
@@ -1255,10 +1195,6 @@ void parse_rule_init()
     otn_count = 0;
     rule_proto = 0;
 
-    port_list_free(&port_list);
-    memset(&port_list, 0, sizeof(port_list));
-    port_list.pl_max = MAX_RULE_COUNT;
-
     memset(&ipCnt, 0, sizeof(ipCnt));
     memset(&icmpCnt, 0, sizeof(icmpCnt));
     memset(&tcpCnt, 0, sizeof(tcpCnt));
@@ -1267,9 +1203,7 @@ void parse_rule_init()
 }
 
 void parse_rule_term()
-{
-    port_list_free(&port_list);
-}
+{ }
 
 void parse_rule_print()
 {
@@ -1318,7 +1252,6 @@ void parse_rule_print()
     LogMessage("%8s%8u%8u%8u%8u\n", "total", tcp, udp, icmp, ip);
 
     //print_rule_index_map( ruleIndexMap );
-    //port_list_print( &port_list );
 }
 
 void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
@@ -1560,19 +1493,6 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
     ValidateFastPattern(otn);
     OtnLookupAdd(sc->otn_map, otn);
 
-    port_entry_t pe;
-    memset(&pe, 0, sizeof(pe));
-
-    /* Get rule option info */
-    pe.gid = otn->sigInfo.generator;
-    pe.sid = otn->sigInfo.id;
-
-    pe.has_fast_pattern = has_fp;
-    pe.proto = rtn.proto;
-    pe.rule_type = rtn.type;
-
-    port_list_add_entry(&port_list, &pe);
-
     if ( is_service_protocol(otn->proto) )
         add_service_to_otn(sc, otn, get_protocol_name(otn->proto));
 
@@ -1582,7 +1502,8 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
      *
      * After otn processing we can finalize port object processing for this rule
      */
-    if (FinishPortListRule(sc->port_tables, new_rtn, otn, rtn.proto, &pe, sc->fast_pattern_config))
+    if ( FinishPortListRule(
+            sc->port_tables, new_rtn, otn, rtn.proto, has_fp, sc->fast_pattern_config) )
         ParseError("Failed to finish a port list rule.");
 
     return nullptr;

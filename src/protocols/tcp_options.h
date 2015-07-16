@@ -178,5 +178,5 @@ private:
 };
 } // namespace tcp
 
-#endif /* PROTOCOLS_TCP_OPTIONS_H */
+#endif
 

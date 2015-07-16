@@ -15,13 +15,14 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-//
 
 #ifndef SMTP_CONFIG_H
 #define SMTP_CONFIG_H
 
+// Configuration for SMTP inspector
 #include "file_api/file_mime_process.h"
 #include "search_engines/search_tool.h"
+
 enum NORM_TYPES
 {
     NORMALIZE_NONE = 0,
@@ -100,8 +101,8 @@ enum SMTPCmdTypeEnum
 struct SMTPCmdConfig
 {
     bool alert;
-    bool normalize;                      /*  1 if we should normalize this command         */
-    int max_line_len;                        /*  Max length of this particular command         */
+    bool normalize;     //  1 if we should normalize this command 
+    int max_line_len;   //  Max length of this particular command
 };
 
 struct SMTPSearch
@@ -142,4 +143,3 @@ struct SMTP_PROTO_CONF
 };
 
 #endif
-

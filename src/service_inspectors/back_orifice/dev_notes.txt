@@ -1,0 +1,7 @@
+Detects Back Orifice traffic by brute forcing the weak encryption
+of the program's network protocol and detects the magic cookie
+that it's servers and clients require to communicate with each
+other.
+
+See also: https://en.wikipedia.org/wiki/Back_Orifice
+

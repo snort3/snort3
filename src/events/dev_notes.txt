@@ -1,0 +1,12 @@
+This unit manages the event queue.  Widely used utility GenerateSnortEvent() is
+in event_wrapper.h.
+
+The event queue has a configurable maximum number of events, which are
+preallocated and stored in a linked list.
+
+There are multiple instances of the event queue accessed via a simple
+stack.  A push is done before processing a rebuilt packet or rebuilt
+payload after which a pop is done.  During that time any wire packet events
+are still pending in the event queue higher up the stack.  This ensures
+that the events for each packet (wire or rebuilt) are processed separately.
+

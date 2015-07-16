@@ -16,22 +16,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
- /*
- * Author: Andy  Mullican
- *
- * Description:
- *
- * This file contains SMTP helper functions.
- *
- * Entry point functions:
- *
- *    safe_strchr()
- *    safe_strstr()
- *    copy_to_space()
- *    safe_sscanf()
- *
- *
- */
+// smtp_util.cc author Andy  Mullican
+// This file contains SMTP helper functions.
 
 #include "smtp_util.h"
 

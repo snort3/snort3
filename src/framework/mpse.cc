@@ -47,13 +47,13 @@ Mpse::Mpse(const char* m, bool use_gc)
 }
 
 int Mpse::search(
-    const unsigned char* T, int n, mpse_action_f action,
+    const unsigned char* T, int n, MpseMatch match,
     void* data, int* current_state)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(mpsePerfStats);
 
-    int ret = _search(T, n, action, data, current_state);
+    int ret = _search(T, n, match, data, current_state);
 
     if ( inc_global_counter )
         s_bcnt += n;
@@ -63,10 +63,10 @@ int Mpse::search(
 }
 
 int Mpse::search_all(
-    const unsigned char* T, int n, mpse_action_f action,
+    const unsigned char* T, int n, MpseMatch match,
     void* data, int* current_state)
 {
-    return _search(T, n, action, data, current_state);
+    return _search(T, n, match, data, current_state);
 }
 
 uint64_t Mpse::get_pattern_byte_count()

@@ -1,0 +1,8 @@
+This directory contains all files related to POP protocol processing.
+
+The protocol aware flushing for POP determines POP PDU and this reassembled
+POP PDU is processed by the POP inspector. Both POP commands/responses are
+parsed and the MIME attachments in POP responses are processed using the
+file API.  The file API extracts and decodes the attachments. file_data is
+then set to the start of these extracted/decoded attachments. This
+inspector also identifies and whitelists the POPS traffic.

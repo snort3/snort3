@@ -69,19 +69,6 @@ constexpr uint16_t ETHERTYPE_ERSPAN_TYPE2 = 0x88be;
 void Erspan2Codec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(ETHERTYPE_ERSPAN_TYPE2); }
 
-/*
- * Function: DecodeERSPANType2(uint8_t *, uint32_t, Packet *)
- *
- * Purpose: Decode Encapsulated Remote Switch Packet Analysis Type 2
- *          This will decode ERSPAN Type 2 Headers
- *
- * Arguments: pkt => ptr to the packet data
- *            len => length from here to the end of the packet
- *            p   => pointer to decoded packet struct
- *
- * Returns: void function
- *
- */
 bool Erspan2Codec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     const ERSpanType2Hdr* const erSpan2Hdr =

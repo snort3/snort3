@@ -21,6 +21,12 @@
 #ifndef MANAGERS_CODEC_MANAGER_H
 #define MANAGERS_CODEC_MANAGER_H
 
+// Factory for Codecs.  Runtime support is provided by PacketManager.
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <array>
 #include <string>
 #include <vector>

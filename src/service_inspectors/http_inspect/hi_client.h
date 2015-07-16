@@ -20,10 +20,6 @@
 #ifndef HI_CLIENT_H
 #define HI_CLIENT_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <sys/types.h>
 
 #include "hi_main.h"
@@ -34,6 +30,7 @@
 #define POST_END 100
 #define NO_URI   101
 
+// Special processing for the HTTP X-Forwarded-For request header
 #define XFF_MODE_MASK      (0x000f)
 #define XFF_EXFF_MASK      (0x000c)
 
@@ -59,14 +56,14 @@ typedef struct s_CONTLEN_PTR
     const u_char* cont_len_start;
     const u_char* cont_len_end;
     uint32_t len;
-}CONTLEN_PTR;
+} CONTLEN_PTR;
 
 typedef struct s_CONT_ENCODING_PTR
 {
     const u_char* cont_encoding_start;
     const u_char* cont_encoding_end;
     uint16_t compress_fmt;
-}CONT_ENCODING_PTR;
+} CONT_ENCODING_PTR;
 
 typedef struct s_HEADER_FIELD_PTR
 {

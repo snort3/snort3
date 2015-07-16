@@ -21,9 +21,7 @@
 #ifndef SNORT_H
 #define SNORT_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+// Snort is the top-level application class.
 
 #include <assert.h>
 #include <sys/types.h>

@@ -19,6 +19,8 @@
 // Writen by Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
 #include "util_jsnorm.h"
+
+#include <string.h>
 #include "main/thread.h"
 
 #define INVALID_HEX_VAL -1

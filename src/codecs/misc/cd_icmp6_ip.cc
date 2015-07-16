@@ -60,7 +60,6 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     /* lay the IP struct over the raw data */
     const ip::IP6Hdr* ip6h = reinterpret_cast<const ip::IP6Hdr*>(raw.data);
 
-    /* do a little validation */
     if ( raw.len < ip::IP6_HEADER_LEN )
     {
         codec_event(codec, DECODE_ICMP_ORIG_IP_TRUNCATED);

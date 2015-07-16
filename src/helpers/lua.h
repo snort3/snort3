@@ -20,6 +20,8 @@
 #ifndef LUA_H
 #define LUA_H
 
+// methods and templates for the C++ / LuaJIT interface
+
 #include <luajit-2.0/lua.hpp>
 
 namespace Lua

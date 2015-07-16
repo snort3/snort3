@@ -26,6 +26,9 @@
 #define FILTER_SPEC_BUF_LEN (40)
 #define PARSE_STACK_LEN     (12)
 
+/* FIXIT-L Other than the API prototypes, the other parts of this header should
+   be private to file_decomp_pdf. */
+
 typedef enum pdf_states
 {
     PDF_STATE_NEW,
@@ -73,10 +76,13 @@ typedef struct fd_PDF_s
 
 /* API Functions */
 
+/* Init the PDF decompressor */
 fd_status_t File_Decomp_Init_PDF(fd_session_p_t SessionPtr);
 
+/* Run the incremental PDF file parser/decompressor */
 fd_status_t File_Decomp_End_PDF(fd_session_p_t SessionPtr);
 
+/* End the decompressor */
 fd_status_t File_Decomp_PDF(fd_session_p_t SessionPtr);
 
 #endif

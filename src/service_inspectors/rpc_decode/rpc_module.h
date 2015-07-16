@@ -20,6 +20,7 @@
 
 #ifndef RPC_MODULE_H
 #define RPC_MODULE_H
+// Interface to the RPC decode service inspector
 
 #include "framework/module.h"
 #include "framework/bits.h"
@@ -54,4 +55,3 @@ public:
 };
 
 #endif
-

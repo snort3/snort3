@@ -45,21 +45,8 @@ public:
 
 static const uint16_t NULL_HDRLEN = 4;
 
-/*
- * Function: DecodeNullPkt(Packet *, char *, DAQ_PktHdr_t*, uint8_t*)
- *
- * Purpose: Decoding on loopback devices.
- *
- * Arguments: p => pointer to decoded packet struct
- *            user => Utility pointer, unused
- *            pkthdr => ptr to the packet header
- *            pkt => pointer to the real live packet data
- *
- * Returns: void function
- */
 bool NullCodec::decode(const RawData& raw, CodecData& data, DecodeData&)
 {
-    /* do a little validation */
     if (raw.len < NULL_HDRLEN)
         return false;
 

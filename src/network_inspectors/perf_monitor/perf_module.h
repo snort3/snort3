@@ -30,6 +30,7 @@
 extern THREAD_LOCAL SimpleStats pmstats;
 extern THREAD_LOCAL ProfileStats perfmonStats;
 
+/* The Module Class for incorporation into Snort++ */
 class PerfMonModule : public Module
 {
 public:

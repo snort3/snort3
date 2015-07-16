@@ -26,6 +26,10 @@
 #ifndef SFIP_SFIP_T_H
 #define SFIP_SFIP_T_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <cstddef>
 #include <stdint.h>
 #include <arpa/inet.h>

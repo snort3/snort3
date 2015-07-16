@@ -17,21 +17,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/**
-**  @file       hi_server.h
-**
-**  @author     Daniel Roelker <droelker@sourcefire.com>
-**
-**  @brief      Header file for HttpInspect Server Module
-**
-**  This file defines the server structure and functions to access server
-**  inspection.
-**
-**  NOTE:
-**      - Initial development.  DJR
-*/
+// hi_server.h author Daniel Roelker <droelker@sourcefire.com>
+
 #ifndef HI_SERVER_H
 #define HI_SERVER_H
+
+// This file declares the server structure and functions to access server
+// inspection.
 
 #include "hi_include.h"
 #include "hi_util.h"

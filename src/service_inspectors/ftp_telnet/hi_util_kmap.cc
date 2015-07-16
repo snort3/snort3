@@ -17,27 +17,9 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
-*
-*  kmap.c  -  a generic map library - maps key + data pairs
-*
-*  Uses Lexical Keyword Trie
-*    The tree uses linked lists to build the finite automata
-*
-*  MapKeyFind(): Performs a setwise strcmp() equivalant.
-*
-*  Notes:
-*
-*  Keys may be ascii or binary, both may be of random sizes.
-*  Each key may be a different size, or all one size.
-*  Fast dictionary lookup, proportional to the length of the key,
-*  and independent of the number of keys in the table.
-*  May use more memory than a hash table, depends.
-*  Memory is allocated as needed, so none is wasted.
-*
-*  Author: Marc Norton
-*
-*/
+// hi_util_kmap.cc author Marc Norton
+// a generic map library - maps key + data pairs
+
 #include "hi_util_kmap.h"
 
 #ifdef HAVE_CONFIG_H

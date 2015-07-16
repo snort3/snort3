@@ -1,0 +1,12 @@
+Standard IPS rule option such as "content", "pcre", "flowbits" etc..
+(non-preprocessor specific) implemented as IpsOption subcclasses.
+
+Most of the IpsOptions can be built statically or dynamically.  Several,
+however, such as content, are still tightly coupled with the code and can
+only be built statically.  The code will hopefully evolve and eliminate
+these cases.
+
+Several options use RangeCheck to implement upper and/or lower bound
+semantics.  The Snort 2X options had various implementations of ranges so
+3X differs in some places.
+

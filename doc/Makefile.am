@@ -54,7 +54,8 @@ EXTRA_DIST = \
 default_snort_manual.text \
 default_snort_manual.html \
 default_snort_manual.pdf \
-online_manual.sh
+online_manual.sh \
+dev_guide.sh
 
 doc_DATA = \
 snort_manual.text \

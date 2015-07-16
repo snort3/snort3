@@ -17,19 +17,12 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
- * Author: Steven Sturges
- * sftarget_data.c
- */
+// sftarget_data.c author Steven Sturges
 
 #ifndef SFTARGET_DATA_H
 #define SFTARGET_DATA_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "sfip_t.h"
+#include "sfip/sfip_t.h"
 
 #define SFAT_OK 0
 #define SFAT_ERROR -1

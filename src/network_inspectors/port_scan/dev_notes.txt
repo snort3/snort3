@@ -1,0 +1,78 @@
+A tool used to locate and alert port scanning activity.
+
+The configuration is in two parts.  The _global entity is use to provide
+parameters for the entire collection of port scanners.  Then one can
+configure many port scanners with distinct characteristics.
+
+port_scan is implemented as a network inspector module to give it access to
+all packets and be able to inspect the IP level information (addresses,
+protocols, ports, etc.)
+
+port_scan still crafts packets so that its information can be logged.  That
+is no longer necessary however, and when port_scan is rewritten, it will
+only log the relevant information as data.
+
+The low, medium, and high thresholds and sense levels are hard-coded in
+ps_detect.cc.
+
+Here are notes from the original (Snort) portscan.c:
+
+The philosophy of portscan detection that we use is based on a generic network
+attack methodology: reconnaissance, network service enumeration, and service
+exploitation.
+
+The reconnaissance phase determines what types of network protocols and
+services that a host supports.  This is the traditional phase where a portscan
+occurs.  An important requirement of this phase is that an attacker does not
+already know what protocols and services are supported by the destination host.
+If an attacker does know what services are open on the destination host then
+there is no need for this phase.  Because of this requirement, we assume that
+if an attacker engages in this phase that they do not have prior knowledege to
+what services are open.  So, the attacker will need to query the ports or
+protocols they are interested in.  Most or at least some of these queries will
+be negative and take the form of either an invalid response (TCP RSTs, ICMP
+unreachables) or no response (in which case the host is firewalled or
+filtered).  We detect portscans from these negative queries.
+
+The primary goal of this portscan detection engine is to catch nmap and variant
+scanners.  The engine tracks connection attempts on TCP, UDP, ICMP, and IP
+Protocols.  If there is a valid response, the connection is marked as valid.
+If there is no response or a invalid response (TCP RST), then we track these
+attempts separately, so we know the number of invalid responses and the number
+of connection attempts that generated no response.  These two values
+differentiate between a normal scan and a filtered scan.
+
+We detect four different scan types, and each scan type has its own negative
+query characteristics.  This is how we determine what type of scan we are
+seeing.  The different scans are:
+
+* Portscan
+* Decoy Portscan
+* Distributed Portscan
+* Portsweep
+
+Portscan:  A portscan is a basic one host to one host scan where multiple ports
+are scanned on the destination host.  We detect these scans by looking for a
+low number of hosts that contacted the destination host and a high number of
+unique ports and a high number of invalid responses or connections.
+
+Distributed Portscan:  A distributed portscan occurs when many hosts connect to
+a single destination host and multiple ports are scanned on the destination
+host.  We detect these scans by looking for a high number of hosts that
+contacted the destination host and a high number of unique ports with a high
+number of invalid responses or connections.
+
+Decoy Portscan:  A decoy portscan is a variation on a distributed portscan, the
+difference being that a decoy portscan connects to a single port multiple
+times.  This shows up in the unqiue port count that is tracked.  There's still
+many hosts connecting to the destination host.
+
+Portsweep:  A portsweep is a basic one host to many host scan where one to a
+few ports are scanned on each host.  We detect these scans by looking at src
+hosts for a high number of contacted hosts and a low number of unique ports
+with a high number of invalid responses or connections.
+
+Each of these scans can also be detected as a filtered portscan, or a portscan
+where there wasn't invalid responses and the responses have been firewalled in
+some way.
+

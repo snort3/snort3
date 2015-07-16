@@ -1331,7 +1331,7 @@ int SetProxy(HI_SESSION* session, const u_char* start,
             {
                 if (session->global_conf->proxy_alert && !ServerConf->allow_proxy)
                     uri_ptr->proxy = *ptr;
-                //If we found :// check to see if it is preceeded by http. If so, this is a proxy
+                // If we found :// check to see if it is preceeded by http. If so, this is a proxy
                 proxy_start = (u_char*)SnortStrcasestr((const char*)uri_ptr->uri, (*ptr -
                     uri_ptr->uri), "http");
                 proxy_end = end;
@@ -2306,7 +2306,7 @@ static inline const u_char* extractHeaderFieldValues(HI_SESSION* session,
     }
     else if (((p - offset) == 0) && ((*p == 'x') || (*p == 'X') || (*p == 't') || (*p == 'T')))
     {
-        //* The default/legacy behavior with two builtin XFF field names */
+        // The default/legacy behavior with two builtin XFF field names
         if ( (ServerConf->enable_xff) && hsd && ((hdrs_args->true_clnt_xff & XFF_HEADERS) == 0) )
         {
             if (IsHeaderFieldName(p, end, HEADER_NAME__XFF, HEADER_LENGTH__XFF))
@@ -2868,9 +2868,9 @@ int StatelessInspection(Packet* p, HI_SESSION* session, HttpSessionData* hsd, in
     {
         Client->request.method_raw = method_ptr.uri;
         Client->request.method_size = method_ptr.uri_end - method_ptr.uri;
-        ///XXX
-        ///Copy out the header into its own buffer...,
-        /// set ptr to end of header.
+        // XXX
+        // Copy out the header into its own buffer...,
+        //  set ptr to end of header.
         //
         // uri_ptr.end points to end of URI & HTTP version identifier.
         if (hi_util_in_bounds(start, end, uri_ptr.uri_end + 1))

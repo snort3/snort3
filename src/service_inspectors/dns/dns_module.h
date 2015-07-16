@@ -20,6 +20,7 @@
 
 #ifndef DNS_MODULE_H
 #define DNS_MODULE_H
+//Interface to the DNS service inspector
 
 #include "framework/module.h"
 #include "framework/bits.h"
@@ -57,4 +58,3 @@ public:
 };
 
 #endif
-
