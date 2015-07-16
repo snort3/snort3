@@ -322,3 +322,9 @@ Then, run the following command:
 The test runner will generate a check-like output, indicating the
 the results of each test script.
 
+
+=== Developers Guide
+
+Run doc/dev_guide.sh to generate /tmp/dev_guide.html, an annotated guide to
+the source tree.
+

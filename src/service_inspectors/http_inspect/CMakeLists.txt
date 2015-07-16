@@ -28,7 +28,6 @@ set (FILE_LIST
     hi_server_norm.h
     hi_si.cc
     hi_si.h
-    hi_stateful_inspect.h
     hi_stream_splitter.cc
     hi_stream_splitter.h
     hi_ui_config.cc

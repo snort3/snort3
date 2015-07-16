@@ -2,7 +2,7 @@ This directory contains the implementation of the Stream preprocessor
 components:
 
 * Stream constants and data types used across stream components or by
-  clients of the stream api.
+  clients of the stream API.
 
 * Prototype definitions and implementation for all stream API methods.
 
@@ -19,7 +19,7 @@ subdirectory located here.  These include the following:
 
 * base - implements the Stream class as a subclass of Inspector, handles
   stream configuration, provides entry point for Stream evaluation of a
-  Packet, stream statistics managment.
+  Packet, stream statistics management.
 
 * tcp - implements module for handling Stream tcp sessions.  This includes
   normalization protocol tracking, normalization, and reassembly.

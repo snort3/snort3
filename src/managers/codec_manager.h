@@ -79,7 +79,7 @@ class CodecManager
 public:
     friend class PacketManager;
 
-    // global plugin initializer. Called by LUA to add register codecs
+    // global plugin initializer
     static void add_plugin(const struct CodecApi*);
     // instantiate a specific codec with a codec specific Module
     static void instantiate(const CodecApi*, Module*, SnortConfig*);

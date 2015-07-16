@@ -1,0 +1,29 @@
+This directory contains the implementation of user session tracking and
+processing functions.  When the source for a flow provides a TCP payload,
+e.g. a socket connection, then the base Stream preprocessor delegates
+handling of the packets on that flow to this module.
+
+The StreamUser class is implemented as a subclass of Inspector and provides
+functions for loading stream user configuration and packet evaluation.  The
+packet eval method is not used as the base Stream Inspector delegates
+packets directly to the user session packet processing method.
+
+The User session module implements the following functions:
+
+* Tracks the client and server side of the connection
+
+* Manages list of TCP payload segments for reassembly into PDU  
+
+* Initializes splitter for selected type of PAF
+
+* Manages flushing the reassembled PDU
+
+A UserSession object is allocated for each flow being tracked.  User
+session state is maintained primarily in the UserTracker data structure
+allocated for the client and server side of the connection. State
+information includes:
+
+* list of segments being reassembled
+
+* PAF state
+
