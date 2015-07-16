@@ -20,6 +20,7 @@
 
 #include "util_jsnorm.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include "main/thread.h"
 
