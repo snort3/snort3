@@ -68,8 +68,6 @@ static THREAD_LOCAL int daq_dlt = -1;
 static THREAD_LOCAL int s_error = DAQ_SUCCESS;
 static THREAD_LOCAL DAQ_Stats_t daq_stats, tot_stats;
 
-namespace snort
-{
 static void DAQ_Accumulate(void);
 
 //--------------------------------------------------------------------
@@ -612,6 +610,5 @@ int DAQ_ModifyFlow(const void* h, uint32_t id)
     UNUSED(id);
     return -1;
 #endif
-}
 }
 

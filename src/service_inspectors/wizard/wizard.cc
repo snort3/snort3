@@ -17,8 +17,6 @@
 //--------------------------------------------------------------------------
 // wizard.cc author Russ Combs <rucombs@cisco.com>
 
-#include "wizard.h"
-
 #include <vector>
 using namespace std;
 

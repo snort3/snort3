@@ -20,11 +20,15 @@
 #ifndef MPSE_MANAGER_H
 #define MPSE_MANAGER_H
 
+// Factory for Mpse.  The same Mpse type is used for rule matching as well
+// as searching by inspectors with a SearchTool.  Runtime use of the Mpse
+// is by the fast pattern detection module.
+
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "framework/base_api.h"
 
 #ifdef PIGLET

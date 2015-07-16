@@ -1,0 +1,8 @@
+This directory contains all files related to RPC Decode inspector.
+
+RPC Decode inspector normalizes the RPC requests from remote machines by
+converting all fragments into one continuous stream. This is very useful
+for doing things like defeating hostile attackers trying to stealth
+themselves from IDS by fragmenting the request so the string 0186A0 is
+broken up. RPC Decode will alert when multiple queries are in a given
+packet, when a complete query exceeds the packet size.

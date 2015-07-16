@@ -226,14 +226,6 @@ void Ipv6Codec::IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
     }
 }
 
-/* Function: IPV6MiscTests(Packet *p)
- *
- * Purpose: A bunch of IPv6 decoder alerts
- *
- * Arguments: p => the Packet to check
- *
- * Returns: void function
- */
 void Ipv6Codec::IPV6MiscTests(const DecodeData& snort, const CodecData& codec)
 {
     const sfip_t* ip_src = snort.ip_api.get_src();
@@ -266,7 +258,6 @@ void Ipv6Codec::IPV6MiscTests(const DecodeData& snort, const CodecData& codec)
     }
 }
 
-/* Check for multiple IPv6 Multicast-related alerts */
 void Ipv6Codec::CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData& codec)
 {
     ip::MulticastScope multicast_scope;

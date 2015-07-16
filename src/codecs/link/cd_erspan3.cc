@@ -82,19 +82,6 @@ constexpr uint16_t ETHERTYPE_ERSPAN_TYPE3 = 0x22eb;
 void Erspan3Codec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(ETHERTYPE_ERSPAN_TYPE3); }
 
-/*
- * Function: DecodeERSPANType3(uint8_t *, uint32_t, Packet *)
- *
- * Purpose: Decode Encapsulated Remote Switch Packet Analysis Type 3
- *          This will decode ERSPAN Type 3 Headers
- *
- * Arguments: pkt => ptr to the packet data
- *            len => length from here to the end of the packet
- *            p   => pointer to decoded packet struct
- *
- * Returns: void function
- *
- */
 bool Erspan3Codec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     const ERSpanType3Hdr* const erSpan3Hdr =

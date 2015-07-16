@@ -85,25 +85,8 @@ void EthCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(PROTO_ETHERNET_802_3);
 }
 
-//--------------------------------------------------------------------
-// decode.c::Ethernet
-//--------------------------------------------------------------------
-
-/*
- * Function: DecodeEthPkt(Packet *, char *, DAQ_PktHdr_t*, uint8_t*)
- *
- * Purpose: Decode those fun loving ethernet packets, one at a time!
- *
- * Arguments: p => pointer to the decoded packet struct
- *            user => Utility pointer (unused)
- *            pkthdr => ptr to the packet header
- *            pkt => pointer to the real live packet data
- *
- * Returns: void function
- */
 bool EthCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-    /* do a little validation */
     if (raw.len < eth::ETH_HEADER_LEN)
     {
         codec_event(codec, DECODE_ETH_HDR_TRUNC);
@@ -177,7 +160,6 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     // not raw ip -> encode layer 2
     bool raw = ( enc.flags & ENC_FLAG_RAW );
 
-    // if not raw ip AND out buf is empty
     if ( !raw && (buf.size() == 0) )
     {
         // for alignment
@@ -187,7 +169,6 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         buf.off = SPARC_TWIDDLE;
     }
 
-    // if not raw ip OR out buf is not empty
     if ( !raw || (buf.size() != 0) )
     {
         // we get here for outer-most layer when not raw ip

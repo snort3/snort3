@@ -1,0 +1,74 @@
+SFRT implements two different routing table lookup methods that have been
+adapted to return a void pointers. Any generic information may be
+associated with a given IP or CIDR block.
+
+As of this writing, the two methods used are Stefan Nilsson and Gunnar
+Karlsson's LC-trie, and a multibit-trie method similar to Gupta et-al.'s
+DIR-n-m.  Presently, the LC-trie is used for testing purposes as the
+current implementation does not allow for fast, dynamic inserts.
+
+The intended use is to associate large IP blocks with specific information.
+
+NOTE information should only move from less specific to more specific, ie:
+
+     First insert:  1.1.0.0/16  ->  some data
+     Second insert: 1.1.2.3     ->  some other data
+
+As opposed to:
+
+     First insert:  1.1.2.3     ->  some other data
+     Second insert: 1.1.0.0/16  ->  some data
+
+If more general information is to overwrite existing entries, the table
+should be free'ed and rebuilt.  This is due to the difficulty of cleaning
+out stale entries with the current implementation.  At runtime, this won't
+be a significant issue since inserts should apply to specific IP addresses
+and not entire blocks of IPs.
+
+
+*Basic Implementation*
+
+The routing tables associate an index into a "data" table with each CIDR.
+Each entry in the data table stores a pointer to actual data.  This
+implementation was chosen so each routing entry only needs one word to
+either index the data array, or point to another table.
+
+Inserts are performed by specifying a CIDR and a pointer to its associated
+data.  Since a new routing table entry may overwrite previous entries,
+a flag selects whether the insert favors the most recent or favors the most
+specific.  Favoring most specific should be the default behvior.  If
+the user wishes to overwrite routing entries with more general data, the
+table should be flushed, rather than using favor-most-recent.
+
+Before modifying the routing or data tables, the insert function performs a
+lookup on the CIDR-to-be-insertted.  If no entry or an entry of differing
+bit length is found, the data is insertted into the data table, and its
+index is used for the new routing table entry.  If an entry is found that
+is as specific as the new CIDR, the index stored points to where the new
+data is written into the data table.
+
+If more specific CIDR blocks overwrote the data table, then the more
+general routing table entries that were not overwritten will be referencing
+the wrong data.  Alternatively, less specific entries can only overwrite
+existing routing table entries if favor-most-recent inserts are used.
+
+Because there is no quick way to clean the data-table if a user wishes to
+use a favor-most-recent insert for more general data, the user should flush
+the table with sfrt_free and create one anew.  Alternatively, a small
+memory leak occurs with the data table, as it will be storing pointers that
+no routing table entry cares about.
+
+The API calls that should be used are:
+
+* sfrt_new    - create new table
+* sfrt_insert - insert entry
+* sfrt_lookup - lookup entry
+* sfrt_free   - free table
+
+*Flat Implementation*
+
+This is based on the original implementation, but using the flat segment memory.
+When allocating memory, it uses memory in the segment, and returns the offset.
+When accessing memory, it must use the base address and offset to correctly
+refer to it.
+

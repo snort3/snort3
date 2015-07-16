@@ -16,7 +16,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// AUTHOR: Steven Sturges <ssturges@sourcefire.com>
+// flow_key.cc author Steven Sturges <ssturges@sourcefire.com>
 
 #include "flow/flow_key.h"
 
@@ -345,8 +345,8 @@ int FlowKey::compare(const void* s1, const void* s2, size_t)
         uint32_t* x, * y;
         x = (uint32_t*)a;
         y = (uint32_t*)b;
-        //x++;
-        //y++;
+        // x++;
+        // y++;
         if (*x - *y)
             return 1;           /* Compares mpls label, no pad */
     }
@@ -390,8 +390,8 @@ int FlowKey::compare(const void* s1, const void* s2, size_t)
         uint32_t* x, * y;
         x = (uint32_t*)a;
         y = (uint32_t*)b;
-        //x++;
-        //y++;
+        // x++;
+        // y++;
         if (*x - *y)
             return 1;           /* Compares mpls label */
     }
@@ -402,8 +402,8 @@ int FlowKey::compare(const void* s1, const void* s2, size_t)
         uint16_t* x, * y;
         x = (uint16_t*)a;
         y = (uint16_t*)b;
-        //x++;
-        //y++;
+        // x++;
+        // y++;
         if (*x - *y)
             return 1;           /* Compares addressSpaceID, no pad */
     }

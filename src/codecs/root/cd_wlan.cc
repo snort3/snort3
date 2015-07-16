@@ -79,7 +79,6 @@ void WlanCodec::get_protocol_ids(std::vector<uint16_t>& v)
 
 bool WlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-    /* do a little validation */
     if (raw.len < MINIMAL_IEEE80211_HEADER_LEN)
         return false;
 

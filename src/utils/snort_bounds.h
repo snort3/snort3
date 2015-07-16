@@ -16,10 +16,12 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// Chris Green <cmg@sourcefire.com>
+// snort_bounds.h author Chris Green <cmg@sourcefire.com>
 
 #ifndef SNORT_BOUNDS_H
 #define SNORT_BOUNDS_H
+
+// Bounds checking for pointers to buffers
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -35,6 +37,7 @@
 #endif
 #include <unistd.h>
 
+// FIXIT-L: Change dependent return types to bool and git rid of these
 #define SAFEMEM_ERROR 0
 #define SAFEMEM_SUCCESS 1
 
@@ -47,12 +50,9 @@
 #define MAXPORTS 65536
 #define MAXPORTS_STORAGE 8192
 
-/*
- * Check to make sure that p is less than or equal to the ptr range
- * pointers
- *
- * 1 means it's in bounds, 0 means it's not
- */
+// Check to make sure that p is less than or equal to the ptr range
+// returns 1 if in bounds, 0 otherwise
+// FIXIT-L: Change return type to bool
 static inline int inBounds(const void* start, const void* end, const void* p)
 {
     const uint8_t* pstart = (uint8_t*)start;
@@ -64,6 +64,7 @@ static inline int inBounds(const void* start, const void* end, const void* p)
     return 0;
 }
 
+// FIXIT-L: Change return type to bool
 static inline int SafeMemCheck(const void* dst, size_t n,
     const void* start, const void* end)
 {
@@ -87,19 +88,10 @@ static inline int SafeMemCheck(const void* dst, size_t n,
     return SAFEMEM_SUCCESS;
 }
 
-/**
- * A Safer Memcpy
- *
- * @param dst where to copy to
- * @param src where to copy from
- * @param n number of bytes to copy
- * @param start start of the dest buffer
- * @param end end of the dst buffer
- *
- * @return SAFEMEM_ERROR on failure, SAFEMEM_SUCCESS on success
- */
-static inline int SafeMemcpy(void* dst, const void* src, size_t n, const void* start, const
-    void* end)
+// returns SAFEMEM_ERROR on failure, SAFEMEM_SUCCESS on success
+// FIXIT-L: Change return type to bool
+static inline int SafeMemcpy(
+    void* dst, const void* src, size_t n, const void* start, const void* end)
 {
     if ( !n )
         return SAFEMEM_SUCCESS;
@@ -111,20 +103,11 @@ static inline int SafeMemcpy(void* dst, const void* src, size_t n, const void* s
     return SAFEMEM_SUCCESS;
 }
 
-/**
- * A Safer Memmove
- * dst and src can be in the same buffer
- *
- * @param dst where to copy to
- * @param src where to copy from
- * @param n number of bytes to copy
- * @param start start of the dest buffer
- * @param end end of the dst buffer
- *
- * @return SAFEMEM_ERROR on failure, SAFEMEM_SUCCESS on success
- */
-static inline int SafeMemmove(void* dst, const void* src, size_t n, const void* start, const
-    void* end)
+// dst and src can be in the same buffer
+// returns SAFEMEM_ERROR on failure, SAFEMEM_SUCCESS on success
+// FIXIT-L: Change return type to bool
+static inline int SafeMemmove(
+    void* dst, const void* src, size_t n, const void* start, const void* end)
 {
     if (SafeMemCheck(dst, n, start, end) != SAFEMEM_SUCCESS)
         ERRORRET;
@@ -134,20 +117,11 @@ static inline int SafeMemmove(void* dst, const void* src, size_t n, const void* 
     return SAFEMEM_SUCCESS;
 }
 
-/**
- * A Safer Memmove
- * dst and src can be in the same buffer
- *
- * @param dst where to copy to
- * @param src where to copy from
- * @param n number of bytes to copy
- * @param start start of the dest buffer
- * @param end end of the dst buffer
- *
- * @return SAFEMEM_ERROR on failure, SAFEMEM_SUCCESS on success
- */
-static inline int SafeBoundsMemmove(void* dst, const void* src, size_t n, const void* start, const
-    void* end)
+// dst and src can be in the same buffer
+// returns SAFEMEM_ERROR on failure, SAFEMEM_SUCCESS on success
+// FIXIT-L: Change return type to bool
+static inline int SafeBoundsMemmove(
+    void* dst, const void* src, size_t n, const void* start, const void* end)
 {
     size_t overlap = 0;
     if (SafeMemCheck(dst, n, start, end) != SAFEMEM_SUCCESS)
@@ -178,19 +152,10 @@ static inline int SafeBoundsMemmove(void* dst, const void* src, size_t n, const 
     return SAFEMEM_SUCCESS;
 }
 
-/**
- * A Safer Memset
- * dst and src can be in the same buffer
- *
- * @param dst where to copy to
- * @param c character to set memory with
- * @param n number of bytes to set
- * @param start start of the dst buffer
- * @param end end of the dst buffer
- *
- * @return SAFEMEM_ERROR on failure, SAFEMEM_SUCCESS on success
- */
-static inline int SafeMemset(void* dst, uint8_t c, size_t n, const void* start, const void* end)
+// returns SAFEMEM_ERROR on failure, SAFEMEM_SUCCESS on success
+// FIXIT-L: Change return type to bool
+static inline int SafeMemset(
+    void* dst, uint8_t c, size_t n, const void* start, const void* end)
 {
     if (SafeMemCheck(dst, n, start, end) != SAFEMEM_SUCCESS)
         ERRORRET;
@@ -198,16 +163,8 @@ static inline int SafeMemset(void* dst, uint8_t c, size_t n, const void* start, 
     return SAFEMEM_SUCCESS;
 }
 
-/**
- * A Safer *a = *b
- *
- * @param start start of the dst buffer
- * @param end end of the dst buffer
- * @param dst the location to write to
- * @param src the source to read from
- *
- * @return 0 on failure, 1 on success
- */
+// returns 0 on failure, 1 on success
+// FIXIT-L: Change return type to bool
 static inline int SafeWrite(uint8_t* start, uint8_t* end, uint8_t* dst, uint8_t* src)
 {
     if (!inBounds(start, end, dst))
@@ -219,6 +176,8 @@ static inline int SafeWrite(uint8_t* start, uint8_t* end, uint8_t* dst, uint8_t*
     return 1;
 }
 
+// returns 0 on failure, 1 on success
+// FIXIT-L: Change return type to bool
 static inline int SafeRead(uint8_t* start, uint8_t* end, uint8_t* src, uint8_t* read)
 {
     if (!inBounds(start,end, src))
@@ -230,10 +189,8 @@ static inline int SafeRead(uint8_t* start, uint8_t* end, uint8_t* src, uint8_t* 
     return 1;
 }
 
-/* An wrapper around snprintf to make it safe.
- *
- * This wrapper of snprintf returns the number of bytes written to the buffer.
- */
+// An wrapper around snprintf to make it safe.
+// returns the number of bytes written to the buffer
 static inline size_t SafeSnprintf(char* str, size_t size, const char* format, ...)
 {
     va_list ap;
@@ -252,5 +209,5 @@ static inline size_t SafeSnprintf(char* str, size_t size, const char* format, ..
     return (size_t)ret;
 }
 
-#endif /* SNORT_BOUNDS_H */
+#endif
 

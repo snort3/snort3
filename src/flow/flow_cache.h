@@ -17,8 +17,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+// flow_cache.h author Russ Combs <rucombs@cisco.com>
+
 #ifndef FLOW_CACHE_H
 #define FLOW_CACHE_H
+
+// there is a FlowCache instance for each protocol.
+// Flows are stored in a ZHash instance by FlowKey.
 
 #include "flow/flow_config.h"
 #include "flow/flow_key.h"

@@ -145,7 +145,6 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     uint32_t ip_len; /* length from the start of the ip hdr to the pkt end */
     uint16_t hlen;  /* ip header length */
 
-    /* do a little validation */
     if (raw.len < ip::IP4_HEADER_LEN)
     {
         if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
@@ -174,11 +173,9 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         return false;
     }
 
-    /* get the IP datagram length */
     ip_len = iph->len();
     hlen = iph->hlen();
 
-    /* header length sanity check */
     if (hlen < ip::IP4_HEADER_LEN)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
@@ -308,7 +305,6 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         if ( !ip_len)
             codec_event(codec, DECODE_ZERO_LENGTH_FRAG);
 
-        /* set the packet fragment flag */
         snort.decode_flags |= DECODE_FRAG;
     }
     else
@@ -338,10 +334,6 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     return true;
 }
-
-//------------------------------------------------------------------
-// decode.c::IP4 misc
-//--------------------------------------------------------------------
 
 void Ipv4Codec::IP4AddrTests(
     const IP4Hdr* iph, const CodecData& codec, DecodeData& snort)
@@ -467,17 +459,6 @@ void Ipv4Codec::IPMiscTests(const IP4Hdr* const ip4h, const CodecData& codec, ui
         codec_event(codec, DECODE_IP_OPTION_SET);
 }
 
-/*
- * Function: DecodeIPOptions(uint8_t *, uint32_t, Packet *)
- *
- * Purpose: Once again, a fairly self-explainatory name
- *
- * Arguments: o_list => ptr to the option list
- *            o_len => length of the option list
- *            p     => pointer to decoded packet struct
- *
- * Returns: void function
- */
 void Ipv4Codec::DecodeIPOptions(const uint8_t* start, uint8_t& o_len, CodecData& codec)
 {
     uint32_t tot_len = 0;

@@ -1,5 +1,6 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2011-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,17 +17,16 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*************************************************************************
- *
- * smtp_util.h
- *
- * Author: Andy Mullican
- * Author: Todd Wease
- *
- *************************************************************************/
+// smtp_util.h authors Andy Mullican and Todd Wease
 
 #ifndef SMTP_UTIL_H
 #define SMTP_UTIL_H
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+// SMTP helper functions
 
 #include "smtp_config.h"
 #include "protocols/packet.h"
@@ -46,4 +46,3 @@ const uint8_t* SMTP_GetAltBuffer(unsigned& len);
 void SMTP_ResetAltBuffer();
 
 #endif
-

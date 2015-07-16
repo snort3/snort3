@@ -1,0 +1,5 @@
+This directory provides the top-level application objects and services.
+SnortConfig is used heavily throughout the code and should be updated so
+that builtin modules can attach state in a generic but readily accessible
+fashion.
+

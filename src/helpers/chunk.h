@@ -20,6 +20,8 @@
 #ifndef CHUNK_H
 #define CHUNK_H
 
+// Lua chunk support
+
 #include <string>
 
 void init_chunk(struct lua_State*&, std::string& chunk, const char* name, std::string& args);

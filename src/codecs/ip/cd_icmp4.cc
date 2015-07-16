@@ -124,21 +124,6 @@ private:
 void Icmp4Codec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(IPPROTO_ID_ICMPV4); }
 
-//--------------------------------------------------------------------
-// decode.c::ICMP
-//--------------------------------------------------------------------
-
-/*
- * Function: DecodeICMP(uint8_t *, const uint32_t, Packet *)
- *
- * Purpose: Decode the ICMP transport layer
- *
- * Arguments: pkt => ptr to the packet data
- *            len => length from here to the end of the packet
- *            p   => pointer to the decoded packet struct
- *
- * Returns: void function
- */
 bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
 {
     if (raw.len < icmp::ICMP_BASE_LEN)
@@ -244,7 +229,6 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
         break;
     }
 
-    /* Run a bunch of ICMP decoder rules */
     ICMP4MiscTests(icmph, codec, (uint16_t)raw.len - len);
 
     snort.set_pkt_type(PktType::ICMP);
@@ -591,7 +575,7 @@ void Icmp4Codec::update(const ip::IpApi&, const EncodeFlags flags,
 
 void Icmp4Codec::format(bool /*reverse*/, uint8_t* raw_pkt, DecodeData& snort)
 {
-    // TBD handle nested icmp4 layers
+    // FIXIT-L handle nested icmp4 layers
     snort.icmph = reinterpret_cast<ICMPHdr*>(raw_pkt);
     snort.set_pkt_type(PktType::ICMP);
 }

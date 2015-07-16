@@ -16,30 +16,24 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
- * Description:
- *
- * Header file for FTPTelnet FTP Client Module
- *
- * This file defines the client reqest structure and functions
- * to access client inspection.
- *
- * NOTES:
- * - 16.09.04:  Initial Development.  SAS
- *
- * Steven A. Sturges <ssturges@sourcefire.com>
- * Daniel J. Roelker <droelker@sourcefire.com>
- * Marc A. Norton <mnorton@sourcefire.com>
- */
+
+// ftp_client.h author Steven A. Sturges <ssturges@sourcefire.com>
+
+// contributors:
+// Daniel J. Roelker <droelker@sourcefire.com>
+// Marc A. Norton <mnorton@sourcefire.com>
+
 #ifndef FTP_CLIENT_H
 #define FTP_CLIENT_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+/*
+ * FTP Client Module
+ *
+ * This file defines the client reqest structure and functions
+ * to access client inspection.
+ */
 
 #include <sys/types.h>
-
 #include "ftpp_include.h"
 
 struct FTP_CLIENT_REQ

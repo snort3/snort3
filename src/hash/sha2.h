@@ -35,10 +35,15 @@
  * the only changes are listed here:
  * -- removed the source control id line from above since n/a
  * -- changed sha2.c const static to static const to squelch warnings
+ * -- added config.h foo
  */
 
 #ifndef __SHA2_H__
 #define __SHA2_H__
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {

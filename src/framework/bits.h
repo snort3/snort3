@@ -20,6 +20,8 @@
 #ifndef BITS_H
 #define BITS_H
 
+// common types used throughout the code
+
 #include <bitset>
 
 typedef std::bitset<65536> PortBitSet;

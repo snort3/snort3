@@ -16,9 +16,8 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-//
 
-//Author: Hui Cao <huica@cisco.com>
+// sip_utils.cc author: Hui Cao <huica@cisco.com>
 
 #include "sip_utils.h"
 

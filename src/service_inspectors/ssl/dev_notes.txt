@@ -1,0 +1,29 @@
+This directory contains all files related to SSL inspector. The SSL
+inspector inspects stream reassembled SSL and TLS traffic and optionally
+determines if and when to stop inspection of it.
+
+Typically, SSL is used over port 443 as HTTPS.  By enabling the SSL
+inspector to inspect port 443, only the SSL handshake of each connection
+will be inspected.  Once the traffic is determined to be encrypted, no
+further inspection of the data on the connection is made.
+
+Each stream reassembled packet containing SSL traffic has an unencrypted
+portion that provides some information about the traffic itself, and the
+state of the connection.  SSL inspector uses this information to determine
+whether or not a handshake is occurring or if a handshake previously
+occurred.
+
+By default, SSL inspector looks for a handshake followed by encrypted
+traffic traveling to both sides.  If one side responds with an indication
+that something has failed, such as the handshake, the session is not marked
+as encrypted.  Verifying that faultless encrypted traffic is sent from both
+endpoints ensures two things: the last client-side handshake packet was not
+crafted to evade Snort, and that the traffic is legitimately encrypted.
+
+In some cases, especially when packets may be missed, the only observed
+response from one endpoint will be TCP ACKs.  Therefore, if a user knows
+that server-side encrypted data can be trusted to mark the session as
+encrypted, the user should use the 'trustservers' option.
+
+SSL inspector also inspects the heartbeat records and identifies the
+heartbleed evasion.

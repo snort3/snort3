@@ -20,6 +20,11 @@
 #ifndef IPS_ACTION_H
 #define IPS_ACTION_H
 
+// IpsAction provides custom rule actions that are executed when a
+// detection event is generated regardless of whether the event is logged.
+// These can be used to execute external controls like updating an external
+// firewall.
+
 #include "main/snort_types.h"
 #include "framework/base_api.h"
 #include "actions/actions.h"

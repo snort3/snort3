@@ -17,19 +17,15 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-** Description
-** This file contains the utility functions used by rule options.
-*/
 
 #ifndef DETECTION_UTIL_H
 #define DETECTION_UTIL_H
 
-#include <assert.h>
+// this is a legacy junk-drawer file that needs to be refactored
+// it provides file and alt data pointers, event trace foo, and
+// some http stuff.
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <assert.h>
 
 #include "main/snort_types.h"
 #include "main/snort_config.h"
@@ -39,6 +35,8 @@
 
 #define DECODE_BLEN 65535
 
+// FIXIT-L this is now used only by http_inspect and new_http_inspect
+// and should be relocated accordingly
 enum HTTP_BUFFER
 {
     HTTP_BUFFER_NONE,
@@ -55,6 +53,8 @@ enum HTTP_BUFFER
     HTTP_BUFFER_MAX
 };
 
+// FIXIT-L this is now used only by http_inspect
+// and should be relocated accordingly
 struct HttpBuffer
 {
     const uint8_t* buf;
@@ -91,6 +91,7 @@ static inline void set_file_data(uint8_t* p, unsigned n)
     g_file_data.len = n;
 }
 
+// FIXIT-L event trace should be placed in its own files
 void EventTrace_Init(void);
 void EventTrace_Term(void);
 

@@ -15,14 +15,9 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-//
 
-/*
- * IMAP preprocessor
- * Author: Bhagyashree Bantwal <bbantwal@cisco.com>
- *
- *
- */
+// imap.cc author Bhagyashree Bantwal <bbantwal@cisco.com>
+
 #include "imap.h"
 
 #ifdef HAVE_CONFIG_H

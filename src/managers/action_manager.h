@@ -20,6 +20,10 @@
 #ifndef ACTION_MANAGER_H
 #define ACTION_MANAGER_H
 
+// Factory for IpsActions.  Also manages their associated action queue,
+// which is just a single response deferred until end of current packet
+// processing.
+
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif

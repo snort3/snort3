@@ -1,0 +1,2 @@
+These codecs handle link-layer protocols that would be presented beyond the
+root encapsulation defined by the capture data-link type.

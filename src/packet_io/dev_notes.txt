@@ -1,0 +1,7 @@
+This unit is the interface for incoming and outgoing packets and manages the
+DAQ.
+
+There is one DAQ instance per active source (interface, pcap, etc.).  The
+DAQ determines the required root decoder, instantiated upon thread
+initialization, and which remains the same for all packets.
+

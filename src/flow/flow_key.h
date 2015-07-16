@@ -20,6 +20,9 @@
 #ifndef FLOW_KEY_H
 #define FLOW_KEY_H
 
+// FlowKey is used to store Flows in the caches.  the data members are
+// sequenced to avoid void space.
+
 #include "main/snort_types.h"
 #include "hash/sfhashfcn.h"
 #include "sfip/sfip_t.h"

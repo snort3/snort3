@@ -26,10 +26,10 @@
 
 #include <stdio.h>
 
-#include "rules.h"
-#include "treenodes.h"
-#include "main/policy.h"
+#include "detection/rules.h"
 #include "detection/sfrim.h"
+#include "detection/treenodes.h"
+#include "main/policy.h"
 
 unsigned get_parse_errors();
 unsigned get_parse_warnings();
@@ -86,10 +86,6 @@ RuleTreeNode* deleteRtnFromOtn(struct OptTreeNode*);
 RuleTreeNode* deleteRtnFromOtn(struct OptTreeNode*, PolicyId);
 
 /*Get RTN for a given OTN and policyId.
- *
- * @param otn pointer to structure OptTreeNode.
- * @param policyId policy id
- *
  * @return pointer to deleted RTN, NULL otherwise.
  */
 static inline RuleTreeNode* getRtnFromOtn(

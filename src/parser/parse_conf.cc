@@ -65,7 +65,6 @@
 #include "managers/action_manager.h"
 #include "actions/actions.h"
 #include "config_file.h"
-#include "keywords.h"
 #include "vars.h"
 #include "target_based/snort_protocols.h"
 
@@ -266,7 +265,7 @@ ListHead* get_rule_list(SnortConfig* sc, const char* s)
     return p ? p->RuleList : nullptr;
 }
 
-// FIXIT-L find this a better home
+// FIXIT-L move to snort config
 void AddRuleState(SnortConfig* sc, const RuleState& rs)
 {
     if (sc == NULL)

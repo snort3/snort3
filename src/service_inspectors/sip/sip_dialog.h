@@ -16,12 +16,13 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-//
 
-//Author: Hui Cao <huica@cisco.com>
+// sip_dialog.h author Hui Cao <huica@cisco.com>
 
 #ifndef SIP_DIALOG_H
 #define SIP_DIALOG_H
+
+// Dialog management for SIP call flow analysis
 
 #include "sip_config.h"
 #include "sip_parser.h"
@@ -35,25 +36,25 @@
 #define RESPONSE6XX     6
 #define TOTAL_REQUESTS 0
 
-typedef struct _SIP_DialogData
+struct SIP_DialogData
 {
     SIP_DialogID dlgID;
     SIP_DialogState state;
     SIPMethodsFlag creator;
     uint16_t status_code;
     SIP_MediaList mediaSessions;
-    struct _SIP_DialogData* nextD;
-    struct _SIP_DialogData* prevD;
-} SIP_DialogData;
+    struct SIP_DialogData* nextD;
+    struct SIP_DialogData* prevD;
+};
 
-typedef struct _SIP_DialogList
+struct SIP_DialogList
 {
     SIP_DialogData* head;
     uint32_t num_dialogs;
-}SIP_DialogList;
+};
 
 int SIP_updateDialog(SIPMsg* sipMsg, SIP_DialogList* dList, Packet* p, SIP_PROTO_CONF*);
 void sip_freeDialogs(SIP_DialogList* list);
 
-#endif /* SIP_DIALOG_H */
+#endif
 

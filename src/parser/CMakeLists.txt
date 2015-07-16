@@ -20,7 +20,6 @@ add_library (parser STATIC
     cmd_line.h
     config_file.cc
     config_file.h
-    keywords.h
     mstring.cc
     mstring.h
     vars.cc

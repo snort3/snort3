@@ -20,6 +20,10 @@
 #ifndef TCP_SESSION_H
 #define TCP_SESSION_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "stream_tcp.h"
 #include "stream/paf.h"
 #include "flow/session.h"

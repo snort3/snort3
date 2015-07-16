@@ -20,6 +20,11 @@
 #ifndef BASE_API_H
 #define BASE_API_H
 
+// BaseApi is the struct at the front of every plugin api and provides the
+// data necessary for common management of plugins.  in addition to basic
+// usage fields, it provides module instantiation and release functions, as
+// well as additional data to help detect mismatched builds etc.
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

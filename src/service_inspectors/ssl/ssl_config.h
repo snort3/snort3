@@ -15,17 +15,15 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-//
 
 #ifndef SSL_CONFIG_H
 #define SSL_CONFIG_H
 
+// Configuration for SSL service inspector
+
 #define SSLPP_TRUSTSERVER_FLAG  0x0002
 
-/*
- * Global SSL preprocessor configuration.
- *
- */
+//FIXIT-L flags could be converted to bool trustservers.
 struct SSL_PROTO_CONF
 {
     uint16_t flags;
@@ -33,4 +31,3 @@ struct SSL_PROTO_CONF
 };
 
 #endif
-

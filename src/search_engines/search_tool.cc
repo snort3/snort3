@@ -62,7 +62,7 @@ void SearchTool::prep()
 int SearchTool::find(
     const char* str,
     unsigned len,
-    mpse_action_f mf,
+    MpseMatch mf,
     int& state,
     bool confine,
     void* user_data)
@@ -84,7 +84,7 @@ int SearchTool::find(
 int SearchTool::find(
     const char* str,
     unsigned len,
-    mpse_action_f mf,
+    MpseMatch mf,
     bool confine,
     void* user_data)
 {
@@ -95,7 +95,7 @@ int SearchTool::find(
 int SearchTool::find_all(
     const char* str,
     unsigned len,
-    mpse_action_f mf,
+    MpseMatch mf,
     bool confine,
     void* user_data)
 {

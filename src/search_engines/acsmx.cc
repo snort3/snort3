@@ -66,29 +66,18 @@
 
 #define MEMASSERT(p,s) if (!p) { fprintf(stderr,"ACSM-No Memory: %s\n",s); exit(0); }
 
-#ifdef DEBUG_AC
 static int max_memory = 0;
-#endif
 
-/*static void Print_DFA( ACSM_STRUCT * acsm );*/
-
-/*
-*
-*/
 static void* AC_MALLOC(int n)
 {
-    void* p;
-    p = calloc (1,n);
-#ifdef DEBUG_AC
+    void* p = calloc (1,n);
+
     if (p)
         max_memory += n;
-#endif
+
     return p;
 }
 
-/*
-*
-*/
 static void AC_FREE(void* p)
 {
     if (p)
@@ -461,10 +450,7 @@ int acsmAddPattern(
 }
 
 static int acsmBuildMatchStateTrees(
-    SnortConfig* sc,
-    ACSM_STRUCT* acsm,
-    int (* build_tree)(SnortConfig*, void* id, void** existing_tree),
-    int (* neg_list_func)(void* id, void** list) )
+    SnortConfig* sc, ACSM_STRUCT* acsm, MpseBuild build_tree, MpseNegate neg_list_func)
 {
     int i, cnt = 0;
     ACSM_PATTERN* mlist;
@@ -556,21 +542,11 @@ static inline int _acsmCompile(ACSM_STRUCT* acsm)
     /* Convert the NFA to a DFA */
     Convert_NFA_To_DFA (acsm);
 
-    /*
-      printf ("ACSMX-Max Memory: %d bytes, %d states\n", max_memory,
-        acsm->acsmMaxStates);
-     */
-
-    //Print_DFA( acsm );
-
     return 0;
 }
 
 int acsmCompile(
-    SnortConfig* sc,
-    ACSM_STRUCT* acsm,
-    int (* build_tree)(SnortConfig*, void* id, void** existing_tree),
-    int (* neg_list_func)(void* id, void** list))
+    SnortConfig* sc, ACSM_STRUCT* acsm, MpseBuild build_tree, MpseNegate neg_list_func)
 {
     int rval;
 
@@ -591,7 +567,7 @@ static THREAD_LOCAL unsigned char Tc[64*1024];
 *   Search Text or Binary Data for Pattern matches
 */
 int acsmSearch(
-    ACSM_STRUCT* acsm, unsigned char* Tx, int n, MpseCallback Match,
+    ACSM_STRUCT* acsm, unsigned char* Tx, int n, MpseMatch match,
     void* data, int* current_state)
 {
     int state = 0;
@@ -623,7 +599,7 @@ int acsmSearch(
             mlist = StateTable[state].MatchList;
             index = T - mlist->n + 1 - Tc;
             nfound++;
-            if (Match (mlist->udata->id, mlist->rule_option_tree, index, data, mlist->neg_list) >
+            if (match (mlist->udata->id, mlist->rule_option_tree, index, data, mlist->neg_list) >
                 0)
             {
                 *current_state = state;
@@ -690,10 +666,6 @@ int acsmPatternCount(ACSM_STRUCT* acsm)
     return acsm->numPatterns;
 }
 
-/*
- *
- */
-/*
 static void Print_DFA( ACSM_STRUCT * acsm )
 {
     int k;
@@ -718,44 +690,20 @@ static void Print_DFA( ACSM_STRUCT * acsm )
     }
 
 }
-*/
 
-int acsmPrintDetailInfo(ACSM_STRUCT*)
+int acsmPrintDetailInfo(ACSM_STRUCT* acsm)
 {
+    Print_DFA( acsm );
     return 0;
 }
 
 int acsmPrintSummaryInfo(void)
 {
-#ifdef XXXXX
-    char* fsa[]=
-    {
-        "TRIE",
-        "NFA",
-        "DFA",
-    };
-
-    ACSM_STRUCT2* p = &summary.acsm;
-
-    if ( !summary.num_states )
-        return;
-
-    LogMessage("+--[Pattern Matcher:Aho-Corasick Summary]----------------------\n");
-    LogMessage("| Alphabet Size    : %d Chars\n",p->acsmAlphabetSize);
-    LogMessage("| Sizeof State     : %d bytes\n",sizeof(acstate_t));
-    LogMessage("| Storage Format   : %s \n",sf[ p->acsmFormat ]);
-    LogMessage("| Num States       : %d\n",summary.num_states);
-    LogMessage("| Num Transitions  : %d\n",summary.num_transitions);
-    LogMessage("| State Density    : %.1f%%\n",100.0*(double)summary.num_transitions/
-        (summary.num_states*p->acsmAlphabetSize));
-    LogMessage("| Finite Automatum : %s\n", fsa[p->acsmFSA]);
-    if ( max_memory < 1024*1024 )
-        LogMessage("| Memory           : %.2fKbytes\n", (float)max_memory/1024);
-    else
-        LogMessage("| Memory           : %.2fMbytes\n", (float)max_memory/(1024*1024) );
-    LogMessage("+-------------------------------------------------------------\n");
-
+#if 0
+      printf ("ACSMX-Max Memory: %d bytes, %d states\n", max_memory,
+        acsm->acsmMaxStates);
 #endif
+
     return 0;
 }
 

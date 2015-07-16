@@ -31,21 +31,25 @@
 # include "config.h"
 #endif
 
-#include "network_inspectors/perf_monitor/sfprocpidstats.h"
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
-#include "network_inspectors/normalize/normalize.h"
+#include "normalize/normalize.h"
+#include "sfprocpidstats.h"
 
 #include <time.h>
 #include <stdio.h>
 
+/* Structure used for access to the low-level (i.e. DAQ level)
+   packet receive and drop counters.  Dropped packets are those
+   lost in the input queue due to snort loading/processing. */
 typedef struct _PKTSTATS
 {
     uint64_t pkts_recv;
     uint64_t pkts_drop;
 }  PKTSTATS;
 
+/* Define the various counter identifiers */
 enum PerfCounts
 {
     PERF_COUNT_IP4_TRIM,
@@ -81,6 +85,7 @@ enum PerfCounts
     PERF_COUNT_MAX
 };
 
+/* The base set of raw counters */
 struct SFBASE
 {
     uint64_t total_wire_packets;
@@ -171,6 +176,7 @@ struct SFBASE
     uint64_t total_iAlerts;
 };
 
+/* Common structure for time indication */
 struct SYSTIMES
 {
     double usertime;
@@ -179,6 +185,7 @@ struct SYSTIMES
     double realtime;
 };
 
+/* The 'processed' performance statistics */
 struct SFBASE_STATS
 {
     uint64_t total_packets;

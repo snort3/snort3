@@ -20,6 +20,10 @@
 #ifndef EVENT_MANAGER_H
 #define EVENT_MANAGER_H
 
+// Factory for Loggers.
+// OutputSet is a group of Loggers that can be attached to external data.
+// Also provides runtime logging.
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

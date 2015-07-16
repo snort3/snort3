@@ -16,24 +16,23 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-
-/*
- ** ppm.h  - packet performance monitor
- **
- ** Author: Marc Norton <mnorton@sourcefire.com>
- */
+// ppm.h author Marc Norton <mnorton@sourcefire.com>
 
 #ifndef PPM_H
 #define PPM_H
+
+// Provide facilities for packet performance monitoring
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+// FIXIT-M: Instead of an empty source file, use CMake/Make to enable/disable
+//          this compilation unit
 #ifdef PPM_MGR
 #include "main/snort_types.h"
 #include "main/thread.h"
-#include "cpuclock.h"
+#include "time/cpuclock.h"
 #include "detection/detection_options.h"
 
 #define cputime get_clockticks
@@ -44,38 +43,38 @@ typedef unsigned int PPM_SECS;
 
 struct ppm_cfg_t
 {
-    /* config section */
+    // config section
     int enabled;
 
     PPM_TICKS max_pkt_ticks;
-    int pkt_log;     /* alert,console,syslog */
-    int pkt_action;  /* suspend */
+    int pkt_log;     // alert,console,syslog
+    int pkt_action;  // suspend
 
     PPM_TICKS max_rule_ticks;
-    uint64_t rule_threshold; /* rules must fail this many times in a row to suspend */
+    uint64_t rule_threshold; // rules must fail this many times in a row to suspend
 
-    int rule_log;    /* alert,console,syslog */
-    int rule_action; /* suspend */
+    int rule_log;    // alert,console,syslog
+    int rule_action; // suspend
 
     uint64_t max_suspend_ticks;
 };
 
 struct ppm_stats_t
 {
-    /* stats section */
+    // stats section
     unsigned int rule_event_cnt;
     unsigned int pkt_event_cnt;
 
-    uint64_t tot_pkt_time;   /* ticks */
+    uint64_t tot_pkt_time;   // ticks
     uint64_t tot_pkts;
 
-    uint64_t tot_rule_time;   /* ticks */
+    uint64_t tot_rule_time;   // ticks
     uint64_t tot_rules;
 
-    uint64_t tot_nc_rule_time;   /* ticks */
+    uint64_t tot_nc_rule_time;   // ticks
     uint64_t tot_nc_rules;
 
-    uint64_t tot_pcre_rule_time;   /* ticks */
+    uint64_t tot_pcre_rule_time;   // ticks
     uint64_t tot_pcre_rules;
 };
 
@@ -98,7 +97,7 @@ typedef struct
     PPM_TICKS max_rule_ticks;
 } ppm_rule_timer_t;
 
-/* global data */
+// global data
 #define PPM_MAX_TIMERS 10
 extern PPM_TICKS ppm_tpu;
 extern THREAD_LOCAL ppm_pkt_timer_t ppm_pkt_times[PPM_MAX_TIMERS];
@@ -115,12 +114,12 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
 #define PPM_LOG_MESSAGE    2
 #define PPM_ACTION_SUSPEND 1
 
-/* Config flags */
+// config flags
 #define PPM_ENABLED()                 (snort_conf->ppm_cfg->enabled > 0)
 #define PPM_PKTS_ENABLED()            (snort_conf->ppm_cfg->max_pkt_ticks > 0)
 #define PPM_RULES_ENABLED()           (snort_conf->ppm_cfg->max_rule_ticks > 0)
 
-/* packet, rule event flags */
+// packet, rule event flags
 #define PPM_PACKET_ABORT_FLAG()       ppm_abort_this_pkt
 #define PPM_RULE_SUSPEND_FLAG()       ppm_suspend_this_rule
 
@@ -156,7 +155,7 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
 #define PPM_PRINT_PKT_TIME(a)    LogMessage(a, ppm_ticks_to_usecs((PPM_TICKS)ppm_pt->tot) );
 
 #ifdef PPM_TEST
-/* use usecs instead of ticks for rule suspension during pcap playback */
+// use usecs instead of ticks for rule suspension during pcap playback
 #define PPM_RULE_TIME(p) ((p->pkth->ts.tv_sec * 1000000) + p->pkth->ts.tv_usec)
 #else
 #define PPM_RULE_TIME(p) ppm_cur_time
@@ -188,14 +187,9 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
     { \
         ppm_pkt_index--; \
         if ( ppm_pkt_index > 0 ) \
-        { \
-            /*ppm_pkt_times[ppm_pkt_index-1].subtract=ppm_pt->tot; */ \
             ppm_pt = &ppm_pkt_times[ppm_pkt_index-1]; \
-        } \
         else \
-        { \
             ppm_pt=0; \
-        } \
     }
 
 #define PPM_INIT_RULE_TIMER() \
@@ -219,11 +213,11 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
         } \
     }
 
-/* use PPM_GET_TIME; first to get the current time */
+// use PPM_GET_TIME; first to get the current time
 #define PPM_PACKET_TEST() \
     if ( ppm_pt ) \
     { \
-        ppm_pt->tot = ppm_cur_time - ppm_pt->start /*- ppm_pt->subtract*/; \
+        ppm_pt->tot = ppm_cur_time - ppm_pt->start; \
         if (ppm_pt->tot > ppm_pt->max_pkt_ticks) \
         { \
             if ( snort_conf->ppm_cfg->pkt_action & PPM_ACTION_SUSPEND ) \
@@ -241,7 +235,7 @@ extern THREAD_LOCAL int ppm_suspend_this_rule;
 #define PPM_DBG_CSV(state, otn, when)
 #endif
 
-/* use PPM_GET_TIME; first to get the current time */
+// use PPM_GET_TIME; first to get the current time
 #define PPM_RULE_TEST(root,p) \
     if ( ppm_rt ) \
     { \
@@ -330,12 +324,12 @@ void ppm_set_rule(detection_option_tree_root_t*, PPM_TICKS);
 #define PPM_PRINT_CFG(x)      ppm_print_cfg(x)
 #define PPM_PRINT_SUMMARY(x)  ppm_print_summary(x)
 
-#else /* !PPM_MGR */
+#else
 
 #define PPM_GET_TIME()
 #define PPM_SET_TIME()
 
-#endif /* PPM_MGR */
+#endif // PPM_MGR
 
-#endif /* PPM_H */
+#endif
 

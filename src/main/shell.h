@@ -20,6 +20,8 @@
 #ifndef SHELL_H
 #define SHELL_H
 
+// Shell encapsulates a Lua state.  There is one for each policy file.
+
 #include <string>
 struct lua_State;
 

@@ -27,9 +27,9 @@
 #include "config.h"
 #endif
 
-#include "sflsq.h"
-#include "sfghash.h"
-#include "sfxhash.h"
+#include "utils/sflsq.h"
+#include "hash/sfghash.h"
+#include "hash/sfxhash.h"
 #include "main/policy.h"
 #include "sfip/sfip_t.h"
 

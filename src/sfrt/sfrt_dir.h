@@ -22,12 +22,13 @@
  * @author  Adam Keeton <akeeton@sourcefire.com>
  * @date    Thu July 20 10:16:26 EDT 2006
  *
- * The implementation uses an multibit-trie that is similar to Gupta et-al's
- * DIR-n-m.
-*/
+ */
 
 #ifndef SFRT_DIR_H
 #define SFRT_DIR_H
+
+ // The implementation uses an multibit-trie that is similar to Gupta et-al's
+ // DIR-n-m.
 
 #include <stdint.h>
 

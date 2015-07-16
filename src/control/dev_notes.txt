@@ -1,0 +1,2 @@
+This module provides functions for registering and running handlers
+that are called when Snort is not doing anything more important.

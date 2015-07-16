@@ -20,6 +20,13 @@
 #ifndef DATA_BUS_H
 #define DATA_BUS_H
 
+// DataEvents are the product of inspection, not detection.  They can be
+// used to implement flexible processing w/o hardcoding the logic to call
+// specific functions under specific conditions.  By using DataEvents with
+// a publish-subscribe mechanism, it is possible to add custom processing
+// at arbitrary points, eg when service is identified, or when a URI is
+// available, or when a flow clears.
+
 #include <map>
 #include <string>
 #include <vector>

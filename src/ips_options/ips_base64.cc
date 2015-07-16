@@ -36,6 +36,7 @@
 #include "util.h"
 #include "profiler.h"
 #include "utils/sf_base64decode.h"
+#include "utils/util_unfold.h"
 #include "detection/detection_defines.h"
 #include "detection/detection_util.h"
 #include "framework/cursor.h"

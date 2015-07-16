@@ -20,6 +20,8 @@
 #ifndef PIGLET_API_H
 #define PIGLET_API_H
 
+// Piglet plugin API
+
 #include <string>
 
 #include "framework/base_api.h"

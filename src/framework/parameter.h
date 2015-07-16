@@ -20,6 +20,9 @@
 #ifndef PARAMETER_H
 #define PARAMETER_H
 
+// Parameter provides basic parsing from Lua types into meaningful C++
+// types.  Modules support a list of parameters.
+//
 // number ranges are given by:
 // nullptr -> any
 // # | #: | :# | #:#

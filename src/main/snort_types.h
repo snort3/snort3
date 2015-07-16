@@ -20,6 +20,8 @@
 #ifndef SNORT_TYPES_H
 #define SNORT_TYPES_H
 
+// defines common types if not already defined
+
 #include <stdint.h>
 #include <inttypes.h>
 #include <sys/types.h>
@@ -137,5 +139,5 @@ typedef uint16_t Port;
 #define __attribute__(x)    /* delete __attribute__ if non-gcc or gcc1 */
 #endif
 
-#endif  /* __SF_TYPES_H__ */
+#endif
 

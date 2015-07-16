@@ -17,8 +17,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+// expect_cache.h author Russ Combs <rucombs@cisco.com>
+
 #ifndef EXPECT_CACHE_H
 #define EXPECT_CACHE_H
+
+// ExpectCache is used to track anticipated flows (like ftp data channels).
+// when the flow is found, it updated with the given info.
 
 #include "sfip/sfip_t.h"
 #include "flow/flow.h"

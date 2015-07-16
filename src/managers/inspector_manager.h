@@ -20,6 +20,9 @@
 #ifndef INSPECTOR_MANAGER_H
 #define INSPECTOR_MANAGER_H
 
+// Factory for Inspectors.
+// Also provides packet evaluation.
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

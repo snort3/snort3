@@ -20,12 +20,12 @@
 #ifndef IPS_FLOWBITS_H
 #define IPS_FLOWBITS_H
 
-void FlowbitResetCounts(void);
+void FlowbitResetCounts();
 int FlowBits_SetOperation(void*);
 
 void setFlowbitSize(unsigned);
-unsigned int getFlowbitSize(void);
-unsigned int getFlowbitSizeInBytes(void);
+unsigned int getFlowbitSize();
+unsigned int getFlowbitSizeInBytes();
 
 #endif
 

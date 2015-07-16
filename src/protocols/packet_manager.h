@@ -20,16 +20,16 @@
 #ifndef PROTOCOLS_PACKET_MANAGER_H
 #define PROTOCOLS_PACKET_MANAGER_H
 
+// PacketManager provides decode and encode services by leveraging Codecs.
+
 #include <array>
 #include <list>
 
-// FIXIT-L update this includes
 #include "main/snort_types.h"
-#include "framework/codec.h"
 #include "protocols/packet.h" // FIXIT-L remove
 #include "framework/counts.h"
+#include "framework/codec.h"
 #include "managers/codec_manager.h"
-#include "main/thread.h"
 
 struct _daq_pkthdr;
 struct TextLog;
@@ -168,5 +168,6 @@ private:
     static std::array<PegCount, s_stats.size()> g_stats;
     static const std::array<const char*, stat_offset> stat_names;
 };
+
 #endif
 

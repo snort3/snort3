@@ -24,10 +24,7 @@
 #include "protocols/packet.h"
 #include "main/snort_types.h"
 
-namespace tcp
-{
-struct TCPHdr;
-} // namespace tcp
+namespace tcp { struct TCPHdr; }
 
 SO_PUBLIC void CreateTCPFlagString(const tcp::TCPHdr* const, char*);
 

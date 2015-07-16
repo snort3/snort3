@@ -20,6 +20,8 @@
 #ifndef FRAMEWORK_DECODE_DATA_H
 #define FRAMEWORK_DECODE_DATA_H
 
+// Captures decode information from Codecs.
+
 #include <type_traits>
 
 #include "protocols/mpls.h"

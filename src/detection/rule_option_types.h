@@ -20,12 +20,18 @@
 #ifndef RULE_OPTION_TYPES_H
 #define RULE_OPTION_TYPES_H
 
+// RULE_OPTION_* is what is left from the original code which gave each
+// option a unique type.  the goal is put everything in the 'other'
+// category which means they are handled generically and this whole type
+// can be eliminated.  however, content, flowbits, and pcre still
+// require special handling.
+
 enum option_type_t
 {
     RULE_OPTION_TYPE_LEAF_NODE,
     RULE_OPTION_TYPE_CONTENT,
     RULE_OPTION_TYPE_FLOWBIT,
-    RULE_OPTION_TYPE_IP_PROTO,
+    RULE_OPTION_TYPE_IP_PROTO,  // FIXIT-L this can be converted to other now
     RULE_OPTION_TYPE_PCRE,
     RULE_OPTION_TYPE_OTHER
 };

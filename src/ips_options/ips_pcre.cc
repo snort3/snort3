@@ -569,7 +569,7 @@ int PcreOption::eval(Cursor& c, Packet*)
     PROFILE_VARS;
     MODULE_PROFILE_START(pcrePerfStats);
 
-    //short circuit this for testing pcre performance impact
+    // short circuit this for testing pcre performance impact
     if (SnortConfig::no_pcre())
     {
         MODULE_PROFILE_END(pcrePerfStats);

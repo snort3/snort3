@@ -55,7 +55,6 @@ void Icmp4IpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 
 bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
-    /* do a little validation */
     if (raw.len < ip::IP4_HEADER_LEN)
     {
         codec_event(codec, DECODE_ICMP_ORIG_IP_TRUNCATED);
@@ -75,7 +74,7 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snor
         return false;
     }
 
-    const uint16_t hlen = ip4h->hlen();    /* set the IP header length */
+    const uint16_t hlen = ip4h->hlen();
 
     if (raw.len < hlen)
     {
@@ -268,7 +267,7 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
             break;
 
         case ICMP_REDIRECT:
-            // XXX-IPv6 "NOT YET IMPLEMENTED - ICMP printing"
+            // FIXIT-L -IPv6 "NOT YET IMPLEMENTED - ICMP printing"
             break;
 
         case icmp::IcmpType::ECHO_4:

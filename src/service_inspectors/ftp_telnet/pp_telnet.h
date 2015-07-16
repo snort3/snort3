@@ -16,20 +16,13 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
- * Description:
- *
- * Header file for FTPTelnet telnet Module
- *
- * This file defines the telnet checking functions
- *
- * NOTES:
- *  - 20.09.04:  Initial Development.  SAS
- *
- * Steven A. Sturges <ssturges@sourcefire.com>
- */
+
+// pp_telnet.h author Steven A. Sturges <ssturges@sourcefire.com>
+
 #ifndef PP_TELNET_H
 #define PP_TELNET_H
+
+// declares the telnet checking functions
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -42,7 +35,6 @@
 /* RFC 1184 defines Abort, Suspend, and End of File telnet optinos */
 #define RFC1184
 
-//#include "protocols/packet.h"
 #include "ftpp_ui_config.h"
 #include "ftpp_si.h"
 

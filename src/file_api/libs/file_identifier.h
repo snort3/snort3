@@ -16,22 +16,19 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-**  Author(s):  Hui Cao <huica@cisco.com>
-**
-**  NOTES
-**  5.25.2012 - Initial Source Code. Hui Cao
-*/
+
+// file_identifier.h author Hui Cao <huica@cisco.com>
 
 #ifndef FILE_IDENTIFIER_H
 #define FILE_IDENTIFIER_H
-#include "file_lib.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include "sfghash.h"
+// File type identification is based on file magic. To improve the detection
+// performance, a trie is created to scan file data once. Currently, only the
+// most specific file type is returned.
+
 #include <list>
+#include "file_lib.h"
+#include "hash/sfghash.h"
 
 #define FILE_ID_MAX          1024
 

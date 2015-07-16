@@ -17,12 +17,10 @@
 //--------------------------------------------------------------------------
 // ring_logic.h author Russ Combs <rucombs@cisco.com>
 
-//-------------------------------------------------------------------
-// simple ring logic
-//-------------------------------------------------------------------
-
 #ifndef RING_LOGIC_H
 #define RING_LOGIC_H
+
+// Logic for simple ring implementation
 
 class RingLogic
 {

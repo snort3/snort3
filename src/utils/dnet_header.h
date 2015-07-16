@@ -21,6 +21,8 @@
 #ifndef UTILS_DNET_HEADER_H
 #define UTILS_DNET_HEADER_H
 
+// Provide the correct dnet interface
+
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -36,7 +38,6 @@
 #pragma GCC diagnostic ignored "-Wpedantic"
 #endif
 
-// Encoder FOO
 #ifdef HAVE_DUMBNET_H
 #include <dumbnet.h>
 #else

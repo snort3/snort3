@@ -83,6 +83,8 @@ THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
 THREAD_LOCAL ProfileStats ruleOTNEvalPerfStats;
 #endif
 
+THREAD_LOCAL uint64_t rule_eval_pkt_count = 0;
+
 THREAD_LOCAL OTNX_MATCH_DATA t_omd;
 
 /* initialize the global OTNX_MATCH_DATA variable */

@@ -51,14 +51,12 @@
 // PortTable - private - plx
 //-------------------------------------------------------------------------
 
-/*
- *  plx_t is a variable sized array of pointers
- */
-typedef struct
+// plx_t is a variable sized array of pointers
+struct plx_t
 {
     int n;
     void** p;
-}plx_t;
+};
 
 static plx_t* plx_new(void* pv_array[], int n)
 {

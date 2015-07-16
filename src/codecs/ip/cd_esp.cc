@@ -85,14 +85,11 @@ void EspCodec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(IPPROTO_ID_ESP); }
 
 /*
- * Function: DecodeESP(const uint8_t *, uint32_t, Packet *)
- *
- * Purpose: Attempt to decode Encapsulated Security Payload.
- *          The contents are probably encrypted, but ESP is sometimes used
- *          with "null" encryption, solely for Authentication.
- *          This is more of a heuristic -- there is no ESP field that specifies
- *          the encryption type (or lack thereof).
- *
+ * Attempt to decode Encapsulated Security Payload.
+ * The contents are probably encrypted, but ESP is sometimes used
+ * with "null" encryption, solely for Authentication.
+ * This is more of a heuristic -- there is no ESP field that specifies
+ * the encryption type (or lack thereof).
  */
 bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
@@ -139,7 +136,7 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         codec.ip6_extension_count++;
     }
 
-    // FIXIT:  Leftover from Snort. Do we really want thsi?
+    // FIXIT-L:  Leftover from Snort. Do we really want thsi?
     const_cast<uint32_t&>(raw.len) -= (ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
 
     /* Adjust the packet length to account for the padding.

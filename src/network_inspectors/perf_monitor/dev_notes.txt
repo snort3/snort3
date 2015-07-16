@@ -1,0 +1,27 @@
+Implement a comprehensive performance collection, processing, and logging
+facility.
+
+There are two broad classes of statistics:  Basic packet processing
+information and Flow statistics.
+
+Basic performance statistics include items such as event counts, packet
+counts, stream counts, dropped packet counter, processor load, etc.  The
+Flow statistics count flows between IP addresses.
+
+The general data flow is:
+
+1. Process the relevant information from each packet as it's being
+   inspected.  Increment local counters.
+
+2. At a configured interval, process the counters into the statistics.
+
+3. At same processing interval, Log these statistics to a file.
+
+4. Switch to another log file for the next cycle.
+
+The type of statistics collection/processing/logging is controlled via configuration.
+
+perf_monitor is implemented as a network_inspector to give it access to the
+per-packet processing mechanism.  It doesn't perform inspection in the
+broad sense, but rather collects and logs information.
+

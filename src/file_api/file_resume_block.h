@@ -16,18 +16,18 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-**  Author(s):  Hui Cao <huica@cisco.com>
-**
-**  NOTES
-**  9.25.2012 - Initial Source Code. Hui Cao
-*/
+
+// file_resume_block.h author Hui Cao <huica@cisco.com>
 
 #ifndef FILE_RESUME_BLOCK_H
 #define FILE_RESUME_BLOCK_H
 
+// If a file transfered through HTTP is blocked, a new session might be created
+// to request the file data left. To block the new session, we use URL and IPs
+// to continue blocking the same file.
+
 #include "protocols/packet.h"
-#include "file_api.h"
+#include "file_api/file_api.h"
 
 void file_resume_block_init(void);
 void file_resume_block_cleanup(void);

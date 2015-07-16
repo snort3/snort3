@@ -20,11 +20,13 @@
 #ifndef TROUGH_H
 #define TROUGH_H
 
+// Trough provides access to sources (interface, file, etc.).
+
 enum SourceType
 {
-    SOURCE_FILE_LIST,
-    SOURCE_LIST,
-    SOURCE_DIR
+    SOURCE_FILE_LIST,  // a file containing a list of sources
+    SOURCE_LIST,       // a list of sources (eg from cmd line)
+    SOURCE_DIR         // a directory of sources; often used wiht filter
 };
 
 void Trough_SetLoopCount(long int);

@@ -17,13 +17,12 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/**
- * @file   text_log.h
- * @author Russ Combs <rcombs@sourcefire.com>
- * @date   Fri Jun 27 10:34:37 2003
- *
- * @brief  declares buffered text stream for logging
- *
+// text_log.h Russ Combs <rcombs@sourcefire.com>
+
+#ifndef TEXT_LOG_H
+#define TEXT_LOG_H
+
+/*
  * Declares a TextLog_*() api for buffered logging.  This allows
  * relatively painless transition from fprintf(), fwrite(), etc.
  * to a buffer that is formatted in memory and written with one
@@ -34,9 +33,6 @@
  * file always has the same name.  Old files are renamed to that
  * name plus a timestamp.
  */
-
-#ifndef TEXT_LOG_H
-#define TEXT_LOG_H
 
 #include <stdio.h>
 #include <string.h>

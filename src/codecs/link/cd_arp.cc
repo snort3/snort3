@@ -63,21 +63,6 @@ void ArpCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(ETHERTYPE_REVARP);
 }
 
-//--------------------------------------------------------------------
-// decode.c::ARP
-//--------------------------------------------------------------------
-
-/*
- * Function: DecodeARP(uint8_t *, uint32_t, Packet *)
- *
- * Purpose: Decode ARP stuff
- *
- * Arguments: pkt => ptr to the packet data
- *            len => length from here to the end of the packet
- *            p   => pointer to decoded packet struct
- *
- * Returns: void function
- */
 bool ArpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     if (raw.len < arp::ETHERARP_HDR_LEN)

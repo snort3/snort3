@@ -20,10 +20,6 @@
 #ifndef CODECS_CHECKSUM_H
 #define CODECS_CHECKSUM_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <stdint.h>
 #include <stdlib.h>
 #include <cstddef>

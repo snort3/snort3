@@ -18,12 +18,18 @@
 //--------------------------------------------------------------------------
 
 // port_group.h derived from pcrm.h by
-/*
-** Marc Norton <mnorton@sourcefire.com>
-** Dan Roelker <droelker@sourcefire.com>
-*/
+//
+// Marc Norton <mnorton@sourcefire.com>
+// Dan Roelker <droelker@sourcefire.com>
+
 #ifndef PortGroup_H
 #define PortGroup_H
+
+// PortGroup contains a set of fast patterns in the form of an MPSE and a
+// set of non-fast-pattern (nfp) rules.  when a PortGroup is selected, the
+// MPSE will run fp rules if there is a match on the associated fast
+// patterns.  it will always run nfp rules since there is no way to filter
+// them out.
 
 enum PmType
 {

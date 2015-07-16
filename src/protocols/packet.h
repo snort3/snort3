@@ -20,8 +20,6 @@
 #ifndef PROTOCOLS_PACKET_H
 #define PROTOCOLS_PACKET_H
 
-/*  I N C L U D E S  **********************************************************/
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -30,14 +28,18 @@
 #include <sys/types.h>
 
 #ifndef WIN32
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <net/if.h>
+
 #else
+
 #include <netinet/in_systm.h>
 #ifndef IFNAMSIZ
 #define IFNAMESIZ MAX_ADAPTER_NAME
 #endif
+
 #endif
 
 extern "C" {
@@ -48,8 +50,6 @@ extern "C" {
 #include "main/snort_types.h"
 #include "framework/decode_data.h"
 #include "protocols/layer.h"
-
-/*  D E F I N E S  ************************************************************/
 
 /* packet status flags */
 #define PKT_REBUILT_FRAG     0x00000001  /* is a rebuilt fragment */
@@ -296,15 +296,15 @@ static inline uint32_t EXTRACT_32BITS(const uint8_t* p)
     memmove(&tmp, p, sizeof(uint32_t));
     return ntohl(tmp);
 }
-
-#endif /* __GNUC__ */
+#endif
 
 #else
 
 /* allows unaligned ntohl parameter - dies w/SIGBUS on SPARCs */
 static inline uint32_t EXTRACT_32BITS(const uint8_t* p)
 { return ntohl(*(uint32_t*)p); }
-#endif /* WORDS_MUSTALIGN */
+
+#endif
 
 #endif
 

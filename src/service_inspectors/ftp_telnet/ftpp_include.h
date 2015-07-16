@@ -31,9 +31,9 @@
 #ifndef FTPP_INCLUDE_H
 #define FTPP_INCLUDE_H
 
-#include "snort_types.h"
-#include "sf_ip.h"
-#include "snort_debug.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "sfip/sf_ip.h"
 #include "protocols/packet.h"
 
 #define GENERATOR_SPP_FTPP_FTP                     125

@@ -16,17 +16,16 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-**  Author(s):  Hui Cao <huica@cisco.com>
-**
-**  NOTES
-**  9.25.2012 - Initial Source Code. Hui Cao
-*/
+
+// file_mime_config.h author Hui Cao <huica@cisco.com>
 
 #ifndef FILE_MIME_CONFIG_H
 #define FILE_MIME_CONFIG_H
 
-#include "file_api.h"
+// List of MIME decode and log configuration functions
+// FIXIT-L This will be refactored soon
+
+#include "file_api/file_api.h"
 
 /* Function prototypes  */
 void set_mime_decode_config_defauts(DecodeConfig*);

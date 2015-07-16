@@ -16,12 +16,14 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// Writen by Bhagyashree Bantwal <bbantwal@sourcefire.com>
+// util_unfold.h author Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
 #ifndef UTIL_UNFOLD_H
 #define UTIL_UNFOLD_H
 
-#include "snort_types.h"
+// Utilities to deal with line endings and other whitespace. AKA "Header unfolding"
+
+#include "main/snort_types.h"
 
 SO_PUBLIC int sf_unfold_header(const uint8_t*, uint32_t, uint8_t*, uint32_t, uint32_t*, int, int*);
 SO_PUBLIC int sf_strip_CRLF(const uint8_t*, uint32_t, uint8_t*, uint32_t, uint32_t*);

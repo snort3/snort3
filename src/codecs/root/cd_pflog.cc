@@ -158,7 +158,6 @@ bool PflogCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     uint32_t hlen;
     uint32_t padlen = PFLOG_PADLEN;
 
-    /* do a little validation */
     if (cap_len < PFLOG2_HDRMIN)
         return false;
 
@@ -219,10 +218,10 @@ bool PflogCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 #endif
 
     default:
-        /* To my knowledge, pflog devices can only
+        /* FIXIT-L add decoder drop event for unknown pflog network type
+         * To my knowledge, pflog devices can only
          * pass IP and IP6 packets. -fleck
          */
-        // TBD add decoder drop event for unknown pflog network type
         break;
     }
 

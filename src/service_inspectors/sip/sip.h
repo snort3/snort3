@@ -17,17 +17,13 @@
 //--------------------------------------------------------------------------
 //
 
-/*
- * sip.h: Definitions, structs, function prototype(s) for
- *		the SIP service inspectors.
- */
-
 #ifndef SIP_H
 #define SIP_H
+// Implementation header with definitions, datatypes and flowdata class for SIP service inspector.
 
 #include "protocols/packet.h"
 #include "stream/stream_api.h"
-#include "profiler.h"
+#include "time/profiler.h"
 #include "sip_config.h"
 #include "sip_dialog.h"
 #include "sip_parser.h"
@@ -58,9 +54,9 @@ public:
     static unsigned flow_id;
     SIPData session;
 };
-
+// API to get SIP flow data from the packet flow
 SIPData* get_sip_session_data(Flow* flow);
+// API to add SIP method
 SIPMethodNode *add_sip_method(char *tok);
 
-#endif /* SIP_H */
-
+#endif

@@ -20,16 +20,24 @@
 #ifndef PROTOCOLS_IP_H
 #define PROTOCOLS_IP_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef WIN32
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <net/if.h>
-#else /* !WIN32 */
+
+#else
+
 #include <netinet/in_systm.h>
 #ifndef IFNAMSIZ
 #define IFNAMESIZ MAX_ADAPTER_NAME
-#endif /* !IFNAMSIZ */
-#endif /* !WIN32 */
+#endif
+
+#endif
 
 #include <cstring>
 

@@ -21,6 +21,8 @@
 #ifndef FLOW_CONFIG_H
 #define FLOW_CONFIG_H
 
+// configured by the stream module for each cache instance
+
 struct FlowConfig
 {
     unsigned max_sessions = 0;

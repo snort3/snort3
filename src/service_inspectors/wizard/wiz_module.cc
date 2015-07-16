@@ -26,7 +26,6 @@
 #include <string>
 using namespace std;
 
-#include "wizard.h"
 #include "magic.h"
 
 //-------------------------------------------------------------------------

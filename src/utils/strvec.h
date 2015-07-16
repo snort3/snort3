@@ -21,6 +21,9 @@
 #ifndef STRVEC_H
 #define STRVEC_H
 
+// Vanilla string vector implementation
+// FIXIT-L: Replace with an STL vector?
+
 void* StringVector_New(void);
 void StringVector_Delete(void*);
 

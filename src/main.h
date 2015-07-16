@@ -15,6 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+
 // main.cc author Russ Combs <rucombs@cisco.com>
 
 #ifndef MAIN_H
@@ -28,6 +29,7 @@ struct lua_State;
 
 const char* get_prompt();
 
+// commands provided by the snort module
 int main_dump_stats(lua_State* = nullptr);
 int main_rotate_stats(lua_State* = nullptr);
 int main_reload_config(lua_State* = nullptr);

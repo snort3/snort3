@@ -43,9 +43,10 @@ using namespace std;
 #include "framework/module.h"
 #include "hash/sfghash.h"
 
+// FIXIT-M: Instead of using preprocessor directives, use the build system
+//          to control compilation of this module
 #ifdef PERF_PROFILING
 
-/* Data types *****************************************************************/
 typedef struct _ProfileStatsNode
 {
     ProfileStats stats;
@@ -79,7 +80,6 @@ typedef struct _Preproc_WorstPerformer
     double pct_of_total;
 } Preproc_WorstPerformer;
 
-/* Globals ********************************************************************/
 static THREAD_LOCAL double ticks_per_microsec = 0.0;
 
 static OTN_WorstPerformer* worstPerformers = NULL;

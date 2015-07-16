@@ -1,0 +1,194 @@
+Rules are grouped by ports and services.  An MPSE instance is created for:
+
+* protocol and source port(s)
+* protocol and dest ports(s)
+* protocol any ports
+* service to server
+* service to client
+
+For each fast pattern match state, a detection option tree is created which
+allows Snort to efficiently evaluate a set of rules.  The non-leaf nodes in
+this tree reference an IpsOption instance.  The leaf nodes are OTNs, which
+represents the rule body.  Attached to the OTN is one or more RTNs, which
+represent the rule head.  There is one RTN for each policy in which the
+rule appears.  (There is just one instance of each unique RTN in each
+policy to save space.)  The RTN criteria are evaluated last to determine if
+an event should be generated.
+
+Note that the fast pattern detection code refers to qualified events and
+non-qualified events.  The latter are just fast pattern hits for which
+no rule fired.  The former are fast pattern hits for which a rule actually
+fired.
+
+Rules w/o fast patterns are grouped per the above and evaluated for each
+packet for which the group is selected.  These are definitely bad for
+performance.
+
+The following was written by Norton and Roelker on 2002/05/15 and predates
+the use of services but is still applicable.
+
+*Fast Packet Classification for Rule and Pattern Matching in SNORT*
+
+* Marc Norton <mnorton@sourcefire.com>
+* Dan Roelker <droelker@sourcefire.com>
+
+A simple method for grouping rules into lists and looking them up quickly
+in realtime.
+
+There is a natural problem when aggregating rules into pattern groups for
+performing multi-pattern matching not seen with single pattern Boyer-Moore
+strategies.  The problem is how to group the rules efficiently when
+considering that there are multiple parameters which govern what rules to
+apply to each packet or connection. The parameters sip, dip, sport, dport,
+and flags form an enormous address space of possible packets that must be
+tested in realtime against a subset of rule patterns. Methods to group
+patterns precisely based on all of these parameters can quickly become
+complicated by both algorithmic implications and implementation details.
+The procedure described herein is quick and simple.
+
+The methodology presented here to solve this problem is based on the
+premise that we can use the source and destination ports to isolate pattern
+groups for pattern matching, and rely on an event validation procedure to
+authenticate other parameters such as sip, dip and flags after a pattern
+match is made. An instrinsic assumption here is that most sip and dip
+values will be acceptable and that the big gain in performance is due to
+the fact that by isolating traffic based on services (ports) we gain the
+most benefit.  Additionally, and just as important, is the requirement that
+we can perform a multi-pattern recognition-inspection phase on a large set
+of patterns many times quicker than we can apply a single pattern test
+against many single patterns.
+
+The current implementation assumes that for each rule the src and dst ports
+each have one of 2 possible values.  Either a specific port number or the
+ANYPORT designation. This does allow us to handle port ranges and NOT port
+rules as well.
+
+We make the following assumptions about classifying packets based on ports:
+
+1. There are Unique ports which represent special services.  For example,
+   ports 21,25,80,110,etc.
+
+2. Patterns can be grouped into Unique Pattern groups, and a Generic
+   Pattern Group
+
+   a. Unique pattern groups exist for source ports 21,25,80,110,etc.
+   b. Unique pattern groups exist for destination ports 21,25,80,etc.
+   c. A Generic pattern group exists for rules applied to every
+      combination of source and destination ports.
+
+We make the following assumptions about packet traffic:
+
+1. Well behaved traffic has one Unique port and one ephemeral port for
+   most packets and sometimes legitimately, as in the case of DNS, has
+   two unique ports that are the same. But we always determine that
+   packets with two different but Unique ports is bogus, and should
+   generate an alert.  For example, if you have traffic going from
+   port 80 to port 20.
+
+2. In fact, state could tell us which side of this connection is a
+   service and which side is a client. Than we could handle this packet
+   more precisely, but this is a rare situation and is still bogus. We
+   can choose not to do pattern inspections on these packets or to do
+   complete inspections.
+
+Rules are placed into each group as follows:
+
+1. Src Port == Unique Service, Dst Port == ANY -> Unique Src Port Table
+     Src Port == Unique Service, Dst Port ==
+     Unique -> Unique Src & Dst Port Tables
+2. Dst Port == Unqiue Service, Src Port == ANY -> Unique Dst Port Table
+     Dst Port == Unqiue Service, Src Port ==
+     Unique -> Unique Dst & Src Port Tables
+3. Dst Port == ANY, Src Port == ANY -> Generic Rule Set,
+     And add to all Unique Src/Dst Rule Sets that have entries
+4. !Dst or !Src Port is the same as ANY Dst or ANY Src port respectively
+5. DstA:DstB is treated as an ANY port group, same for SrcA:SrcB
+
+*Initialization*
+
+For each rule check the dst-port, if it's specific, then add it to the dst
+table.  If the dst-port is Any port, then do not add it to the dst port
+table. Repeat this for the src-port.
+
+If the rule has Any for both ports then it's added generic rule list.
+
+Also, fill in the Unique-Conflicts array, this indicates if it's OK to have
+the same Unique service port for both destination and source. This will
+force an alert if it's not ok.  We optionally pattern match against this
+anyway.
+
+*Processing Rules*
+
+When packets arrive:
+
+1. Categorize the Port Uniqueness:
+
+   a. Check the DstPort[DstPort] for possible rules,
+      if no entry,then no rules exist for this packet with this destination.
+
+   b. Check the SrcPort[SrcPort] for possible rules,
+      if no entry,then no rules exist for this packet with this source.
+
+2. Process the Uniqueness:
+
+    If a AND !b has rules or !a AND b has rules then
+       match against those rules
+
+    If a AND b have rules then
+        if( sourcePort != DstPort )
+            Alert on this traffic and optionally match both rule sets
+       else if( SourcePort == DstPort )
+           Check the Unique-Conflicts array for allowable conflicts
+           if( NOT allowed )
+               Alert on this traffic, optionally match the rules
+    else
+        match both sets of rules against this traffic
+
+    If( !a AND ! b )  then
+        Pattern Match against the Generic Rules ( these apply to all packets)
+
+
+*Pseudocode*
+
+    PORT_RULE_MAP * prm;
+    PortGroup  *src, *dst, *generic;
+
+    RULE * prule; //user defined rule structure for user rules
+
+    prm = prmNewMap();
+
+    for( each rule )
+    {
+        prule = ....get a rule pointer
+
+        prmAddRule( prm, prule->dport, prule->sport, prule );
+    }
+
+    prmCompileGroups( prm );
+
+    while( sniff-packets )
+    {
+        ....
+
+        stat = prmFindRuleGroup( prm, dport, sport, &src, &dst, &generic );
+        switch( stat )
+        {
+        case 0:  // No rules at all
+            break;
+        case 1:  // Dst Rules
+            // pass 'dst->pgPatData', 'dst->pgPatDataUri' to the pattern engine
+            break;
+        case 2:  // Src Rules
+            // pass 'src->pgPatData', 'src->pgPatDataUri' to the pattern engine
+            break;
+        case 3:  // Src/Dst Rules - Both ports represent Unique service ports
+            // pass 'src->pgPatData' ,'src->pgPatDataUri' to the pattern engine
+            // pass 'dst->pgPatData'  'src->pgPatDataUri' to the pattern engine
+            break;
+        case 4:  // Generic Rules Only
+            // pass 'generic->pgPatData' to the pattern engine
+            // pass 'generic->pgPatDataUri' to the pattern engine
+            break;
+        }
+    }
+

@@ -20,11 +20,14 @@
 #ifndef PIGLET_PLUGIN_COMMON_H
 #define PIGLET_PLUGIN_COMMON_H
 
-#include <limits>
-#include <vector>
+// Utils for working with the Lua C API and
+// interfaces for exposing some common structs to Lua.
 
 #include <daq.h>
 #include <luajit-2.0/lua.hpp>
+
+#include <limits>
+#include <vector>
 
 #include "events/event.h"
 #include "detection/signature.h"

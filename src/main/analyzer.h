@@ -20,7 +20,11 @@
 #ifndef ANALYZER_H
 #define ANALYZER_H
 
-#include "snort_types.h"
+// Analyzer provides the packet acquisition and processing loop.  Since it
+// runs in a different thread, it also provides a command facility so that
+// to control the thread and swap configuration.
+
+#include "main/snort_types.h"
 
 enum AnalyzerCommand
 {

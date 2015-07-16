@@ -1,0 +1,7 @@
+This directory contains all files related to IMAP protocol processing.  The
+protocol aware flushing for IMAP determines IMAP PDU and this reassembled
+IMAP PDU is processed by the IMAP inspector. Both IMAP requests/responses
+are parsed and the MIME attachments in IMAP responses are processed using
+the file API. The file API extracts and decodes the attachments. file_data
+is then set to the start of these extracted/decoded attachments. This
+inspector also identifies and whitelists the IMAPS traffic.

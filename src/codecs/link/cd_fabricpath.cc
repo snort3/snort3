@@ -91,12 +91,11 @@ bool FabricPathCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_l
 
     if ( !raw )
     {
-        // if not raw ip AND out buf is empty
         if ( buf.size() == 0)
         {
             buf.off = 0;  // for alignment
         }
-        else // if not raw ip AND buf is not empty
+        else
         {
             // we get here for outer-most layer when not raw ip
             // we also get here for any encapsulated ethernet layer.

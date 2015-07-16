@@ -1,0 +1,32 @@
+A collection of several different event and detection filtering function.
+The types of filters implemented here include:
+
+Detection Filter - One of the last steps of the rule evaluation process.  A
+detection filter can prevent a rule from firing based on a simple
+threshold.  For example, only generate an alert if the filter has been
+evaluated N times in M time period.
+
+Rate Filter - Based on configuration options, generically track multiple
+occurrences of the same event/address tuples.  The configuration can
+specify a limit where-by if the tracked limit is exceeded, the action of
+the event is changed.  For instance, the first N occurrences of Event X in
+time period Y can Alert, but if this rate is exceeded subsequent occurrence
+will Drop.  This function can be used to protect against DOS type of
+attacks.
+
+Event Filter - After the rules engine generates whatever actions it needs
+to, the Event Filter is then invoked to filter the logging of these events.
+Once again, tracking by event/address tuples, block the logging of events
+if the configured counts per time is exceeded.  This will tend to reduce
+the logging system load for rules that fire too often.
+
+All of the filters in this area are a collection of similar services
+brought together to share the same event tracking logic.  sfthreshold.cc
+implements a generic threshold tracking mechanism using a hash table.  This
+hash structure permits the various filter/threshold components to build
+event tracking facilities.
+
+Detection filter support the detection_filter rule option.  Rate and event
+filters have builtin modules defined in main/modules.cc.  Those module
+definitions should be refactored into the appropriate filter directory.
+

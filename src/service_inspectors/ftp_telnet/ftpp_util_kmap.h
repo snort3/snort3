@@ -16,9 +16,8 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
- * Author: Marc A Norton
- */
+
+// ftpp_util_kmap.h author Marc A Norton
 
 #ifndef FTPP_UTIL_KMAP_H
 #define FTPP_UTIL_KMAP_H

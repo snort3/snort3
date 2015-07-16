@@ -1,0 +1,14 @@
+Text output logging facilities are located here:
+
+* log - provides convenience functions for global packet logging.
+
+* log_text - provides convenience functions for logging with a TextLog.
+
+* messages - provides Dumper class and message logging facilities.
+
+* obfuscation - provides an API for logging packets w/o revealing things
+  like IP addresses.
+
+* text_log - provides a class like implementation (TextLog) for multiple
+  instances of text-based log files.
+

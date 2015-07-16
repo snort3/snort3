@@ -42,23 +42,6 @@ public:
 };
 } // namespace
 
-//--------------------------------------------------------------------
-// decode.c::Raw packets
-//--------------------------------------------------------------------
-
-/*
- * Function: DecodeRawPkt(Packet *, char *, DAQ_PktHdr_t*, uint8_t*)
- *
- * Purpose: Decodes packets coming in raw on layer 2, like PPP.  Coded and
- *          in by Jed Pickle (thanks Jed!) and modified for a few little tweaks
- *          by me.
- *
- * Arguments: p => pointer to decoded packet struct
- *            pkthdr => ptr to the packet header
- *            pkt => pointer to the real live packet data
- *
- * Returns: void function
- */
 bool Raw4Codec::decode(const RawData&, CodecData& data, DecodeData&)
 {
     data.next_prot_id = ETHERTYPE_IPV4;

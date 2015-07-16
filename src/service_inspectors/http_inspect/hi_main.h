@@ -26,25 +26,22 @@
 
 #include <zlib.h>
 
+#include "hi_ui_config.h"
 #include "protocols/packet.h"
 #include "stream/stream_api.h"
-#include "hi_ui_config.h"
-#include "util_utf.h"
-#include "detection_util.h"
+#include "detection/detection_util.h"
 #include "search_engines/search_tool.h"
-#include "util_jsnorm.h"
-#include "profiler.h"
+#include "time/profiler.h"
+#include "utils/util_jsnorm.h"
+#include "utils/util_utf.h"
 
 #define MAX_METHOD_LEN  256
 
 #define DEFAULT_HTTP_MEMCAP 150994944 /* 144 MB */
-#define MIN_HTTP_MEMCAP     2304
-#define MAX_HTTP_MEMCAP     603979776 /* 576 MB */
 #define MAX_URI_EXTRACTED   2048
 #define MAX_HOSTNAME        256
 
 #define DEFAULT_MAX_GZIP_MEM 838860
-#define GZIP_MEM_MIN    3276
 #define MAX_GZIP_DEPTH    65535
 #define DEFAULT_COMP_DEPTH 1460
 #define DEFAULT_DECOMP_DEPTH 2920
@@ -92,7 +89,7 @@ typedef struct s_HTTP_RESP_STATE
     int data_extracted;
     uint32_t max_seq;
     bool flow_depth_excd;
-}HTTP_RESP_STATE;
+} HTTP_RESP_STATE;
 
 typedef struct s_HTTP_LOG_STATE
 {
@@ -100,7 +97,7 @@ typedef struct s_HTTP_LOG_STATE
     uint32_t hostname_bytes;
     uint8_t uri_extracted[MAX_URI_EXTRACTED];
     uint8_t hostname_extracted[MAX_HOSTNAME];
-}HTTP_LOG_STATE;
+} HTTP_LOG_STATE;
 
 typedef struct _HttpSessionData
 {

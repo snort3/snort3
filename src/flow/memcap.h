@@ -21,6 +21,9 @@
 #ifndef MEMCAP_H
 #define MEMCAP_H
 
+// this memcap is just a basic tracker to compare a current total against a
+// limit.  this will be updated when memory management is implemented.
+
 #include <stdint.h>
 
 class Memcap

@@ -16,15 +16,14 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-** Author(s):  Hui Cao <huica@cisco.com>
-**
-** NOTES
-** 5.25.12 - Initial Source Code. Hui Cao
-*/
+
+// file_service.h author author Hui Cao <huica@cisco.com>
 
 #ifndef FILE_SERVICE_H
 #define FILE_SERVICE_H
+
+// This provides a wrapper to start/stop file API
+// FIXIT-L This will be refactored soon
 
 #include "libs/file_lib.h"
 

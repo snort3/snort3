@@ -20,6 +20,8 @@
 #ifndef DIRECTORY_H
 #define DIRECTORY_H
 
+// simple directory traversal
+
 #include <dirent.h>
 #include <string>
 

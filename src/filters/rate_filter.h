@@ -17,18 +17,12 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+// rate_filter.h author Dilbagh Chahal <dchahal@sourcefire.com>
+
 #ifndef RATE_FILTER_H
 #define RATE_FILTER_H
 
-/* @file  rate_filter.h
- * @brief rate filter interface for Snort
- * @ingroup rate_filter
- * @author Dilbagh Chahal
-*/
-
-/* @ingroup rate_filter
- * @{
- */
+// rate filter interface for Snort
 
 struct RateFilterConfig;
 struct SnortConfig;
@@ -47,6 +41,5 @@ void RateFilter_PrintConfig(RateFilterConfig*);
 int RateFilter_Test(OptTreeNode*, Packet*);
 void RateFilter_ResetActive(void);
 
-/*@}*/
 #endif
 

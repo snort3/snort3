@@ -47,22 +47,6 @@ public:
 void TransbridgeCodec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(ETHERTYPE_TRANS_ETHER_BRIDGING); }
 
-/*
- * Function: DecodeTransBridging(uint8_t *, const uint32_t, Packet)
- *
- * Purpose: Decode Transparent Ethernet Bridging
- *
- * Arguments: pkt => pointer to the real live packet data
- *            len => length of remaining data in packet
- *            p => pointer to the decoded packet struct
- *
- *
- * Returns: void function
- *
- * Note: This is basically the code from DecodeEthPkt but the calling
- * convention needed to be changed and the stuff at the beginning
- * wasn't needed since we are already deep into the packet
- */
 bool TransbridgeCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if (raw.len < eth::ETH_HEADER_LEN)

@@ -20,8 +20,10 @@
 
 #include "sf_email_attach_decode.h"
 
-#include "snort_types.h"
+#include "snort_bounds.h"
 #include "util.h"
+#include "util_unfold.h"
+#include "sf_base64decode.h"
 
 #define UU_DECODE_CHAR(c) (((c) - 0x20) & 0x3f)
 

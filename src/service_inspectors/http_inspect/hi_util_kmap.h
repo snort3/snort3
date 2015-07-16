@@ -17,23 +17,24 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
-*   kmap.h
-*
-*   Keyword Trie based Map Table
-*
-*   Author: Marc Norton
-*
-*/
+// hi_util_kmap.h author Marc Norton
 
 #ifndef HI_UTIL_KMAP_H
 #define HI_UTIL_KMAP_H
 
+// Keyword Trie based Map Table
+// The tree uses linked lists to build the finite automata
+//
+// MapKeyFind(): Performs a setwise strcmp() equivalant.
+//
+// Keys may be ascii or binary, both may be of random sizes.  Each key may
+// be a different size, or all one size.  Fast dictionary lookup,
+// proportional to the length of the key, and independent of the number of
+// keys in the table.  May use more memory than a hash table, depends.
+// Memory is allocated as needed, so none is wasted.
+
 #define ALPHABET_SIZE 256
 
-/*
-*
-*/
 typedef struct _keynode
 {
     struct  _keynode* next;
@@ -43,9 +44,6 @@ typedef struct _keynode
     void* userdata;          /* data associated with this pattern */
 } KEYNODE;
 
-/*
-*
-*/
 typedef struct _kmapnode
 {
     int nodechar;     /* node character */
@@ -56,9 +54,6 @@ typedef struct _kmapnode
     KEYNODE* knode;
 } KMAPNODE;
 
-/*
-*
-*/
 typedef void (* KMapUserFreeFunc)(void* p);
 
 typedef struct _kmap
@@ -68,16 +63,13 @@ typedef struct _kmap
     KEYNODE* keylist; // list of key+data pairs
     KEYNODE* keynext; // findfirst/findnext node
 
-    KMapUserFreeFunc userfree; // fcn to free user data
+    KMapUserFreeFunc userfree;
 
     int nchars;      // # character nodes
 
     int nocase;
 } KMAP;
 
-/*
-*  PROTOTYPES
-*/
 KMAP* KMapNew(KMapUserFreeFunc userfree);
 void KMapSetNoCase(KMAP* km, int flag);
 int KMapAdd(KMAP* km, void* key, int ksize, void* userdata);

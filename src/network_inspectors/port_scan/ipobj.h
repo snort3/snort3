@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "sflsq.h"
+#include "utils/sflsq.h"
 #include "sfip/sfip_t.h"
 
 struct PORTRANGE

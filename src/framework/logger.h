@@ -20,9 +20,9 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+// Logger is used to log packets and events.  Events are thresholded before
+// they reach the Logger.  Packets may be logged along with events or as a
+// result of tagging.
 
 #include "main/snort_types.h"
 #include "events/event.h"

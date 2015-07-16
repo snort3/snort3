@@ -20,12 +20,12 @@
 #ifndef PERIODIC_H
 #define PERIODIC_H
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 
-typedef void (* PeriodicFunc)(void*);
+using PeriodicFunc = void (*)(void*);
 
 void periodic_register(
-PeriodicFunc, void* arg, uint16_t priority, uint32_t period);
+    PeriodicFunc, void* arg, uint16_t priority, uint32_t period);
 
 void periodic_check();
 void periodic_release();

@@ -20,6 +20,9 @@
 #ifndef HELP_H
 #define HELP_H
 
+// utility methods that provide output modes other than the normal packet
+// processing.  these are called based on command line arguments.
+
 struct SnortConfig;
 
 void config_markup(SnortConfig*, const char*);

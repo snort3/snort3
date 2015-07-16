@@ -19,6 +19,8 @@
 #ifndef ACTIONS_H
 #define ACTIONS_H
 
+// Define action types and provide hooks to apply a given action to a packet
+
 #include <stdint.h>
 
 #define ACTION_LOG      "log"
@@ -28,6 +30,10 @@
 #define ACTION_BLOCK    "block"
 #define ACTION_RESET    "reset"
 
+struct Packet;
+struct OptTreeNode;
+
+// FIXIT-L: Convert to a scoped enum
 enum RuleType
 {
     RULE_TYPE__NONE = 0,
@@ -40,6 +46,7 @@ enum RuleType
     RULE_TYPE__MAX
 };
 
+// FIXIT-L: Could be static methods of class enclosing RuleType enum
 const char* get_action_string(RuleType);
 RuleType get_action_type(const char*);
 
@@ -47,9 +54,7 @@ void action_execute(RuleType, struct Packet*, struct OptTreeNode*, uint16_t even
 void action_apply(RuleType, struct Packet*);
 
 static inline bool pass_action(RuleType a)
-{
-    return ( a == RULE_TYPE__PASS );
-}
+{ return ( a == RULE_TYPE__PASS ); }
 
 #endif
 

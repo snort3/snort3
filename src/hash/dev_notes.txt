@@ -1,0 +1,16 @@
+Message digests and hash maps/table implementations:
+
+* md5: open source implementation based on Colin Plumb's code.
+
+* sha2:  open source implementation by Aaron Gifford.
+
+* sfghash: Generic hash table
+
+* sfxhash: Hash table with supports memcap and automatic memory recovery
+  when out of memory.
+
+* zhash: zero runtime allocations/preallocated hash table.
+
+Use of these hashing utilities is primarily for use by pre-existing code.
+For new code, use standard template library and C++11 features.
+

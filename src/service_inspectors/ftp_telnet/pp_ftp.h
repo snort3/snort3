@@ -16,28 +16,16 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
- * Description:
- *
- * Header file for FTPTelnet FTP Module
- *
- * This file defines the ftp checking functions
- *
- * NOTES:
- *  - 20.09.04:  Initial Development.  SAS
- *
- * Steven A. Sturges <ssturges@sourcefire.com>
- */
+
+// pp_ftp.h author Steven A. Sturges <ssturges@sourcefire.com>
+
 #ifndef PP_FTP_H
 #define PP_FTP_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+// declares the ftp checking functions
 
 #include <sys/types.h>
 
-//#include "protocols/packet.h"
 #include "ftpp_ui_config.h"
 #include "ftpp_si.h"
 

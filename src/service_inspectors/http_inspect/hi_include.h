@@ -20,8 +20,8 @@
 #ifndef HI_INCLUDE_H
 #define HI_INCLUDE_H
 
-#include "snort_types.h"
-#include "snort_debug.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "main/thread.h"
 #include "utils/stats.h"
 
@@ -37,8 +37,8 @@ struct HIStats
 
     PegCount req_headers;      /* Number of successfully extracted request headers */
     PegCount resp_headers;     /* Number of successfully extracted response headers */
-    PegCount req_cookies;          /* Number of successfully extracted request cookies */
-    PegCount resp_cookies;         /* Number of successfully extracted response cookies */
+    PegCount req_cookies;      /* Number of successfully extracted request cookies */
+    PegCount resp_cookies;     /* Number of successfully extracted response cookies */
     PegCount post_params;      /* Number of successfully extract post parameters */
 
     PegCount unicode;

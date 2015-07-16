@@ -16,23 +16,22 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+
+// ftp_server.h author Steven A. Sturges <ssturges@sourcefire.com>
+
+// contributors:
+// Daniel J. Roelker <droelker@sourcefire.com>
+// Marc A. Norton <mnorton@sourcefire.com>
+
+#ifndef FTP_SERVER_H
+#define FTP_SERVER_H
+
 /*
- * Description:
- *
- * Header file for FTPTelnet FTP Server Module
+ * FTP Server Module
  *
  * This file defines the server structure and functions to access server
  * inspection.
- *
- * NOTES:
- * - 16.09.04:  Initial Development.  SAS
- *
- * Steven A. Sturges <ssturges@sourcefire.com>
- * Daniel J. Roelker <droelker@sourcefire.com>
- * Marc A. Norton <mnorton@sourcefire.com>
  */
-#ifndef FTP_SERVER_H
-#define FTP_SERVER_H
 
 #include "ftpp_include.h"
 

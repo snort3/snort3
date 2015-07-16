@@ -20,13 +20,12 @@
 #ifndef SCRIPT_MANAGER_H
 #define SCRIPT_MANAGER_H
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+// Factory for Lua script plugins used for IpsOptions and Loggers implemented
+// in Lua.  Runtime use is via the actual plugin type manager.
 
 #include <string>
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "framework/base_api.h"
 
 //-------------------------------------------------------------------------

@@ -24,9 +24,9 @@
 #include <string>
 #include <vector>
 
-#include "snort_types.h"
-#include "framework/module.h"
+#include "main/snort_types.h"
 #include "main/thread.h"
+#include "framework/module.h"
 #include "stream/stream.h"
 
 #define GID_STREAM_TCP  129

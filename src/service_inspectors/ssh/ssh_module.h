@@ -21,6 +21,8 @@
 #ifndef SSH_MODULE_H
 #define SSH_MODULE_H
 
+// Interface to the SSH service inspector
+
 #include "framework/module.h"
 #include "framework/bits.h"
 #include "main/thread.h"
@@ -69,4 +71,3 @@ private:
 };
 
 #endif
-

@@ -1,0 +1,39 @@
+Builtin fast pattern matching algorithms are implemented here.
+
+MPSE = multi-pattern search engine
+DFA = deterministic finite automaton
+NFA = non-DFA
+
+This code has has evolved through 3 major versions:
+
+1.  acsmx.cc:  ac_std
+2.  acsmx2.cc:  ac_full, ac_full_q, ac_sparse, ac_banded, ac_sparse_bands
+3.  bnfa_search.cc:  ac_bnfa, ac_bnfa_q
+
+Check the comments at the start of the above files for details on the
+implementation.
+
+Version 1 and 2 flavors are all DFAs.  Version 3 flavors are NFAs.  The
+TRIE based implementations were moved to extras.
+
+NFAs require much less memory than DFAs, but DFAs are faster.  The multiple
+DFA flavors try to reduce memory for transition storage by various schemes:
+
+* full - an array of 256 transitions for each state indexed by event (byte)
+* sparse - a list of valid transitions (which must be searched)
+* banded - like full except that the leading and trailing invalid
+  transitions are not stored
+* sparse bands - a list of bands
+
+The *_q flavors use a match queue to defer rule tree evaluation until after
+the full buffer is searched in order to keep the cache warm.  This aspect
+should be orthogonal such that any method can be used with or w/o a match
+queue.
+
+SearchTool makes it easy to use ac_bnfa.  This is used by http, pop, imap,
+and smtp.
+
+Reference - Efficient String matching: An Aid to Bibliographic Search
+Alfred V Aho and Margaret J Corasick, Bell Laboratories
+Copyright (C) 1975 Association for Computing Machinery,Inc
+

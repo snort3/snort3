@@ -92,6 +92,11 @@ void LogLabel(const char* s)
     }
 }
 
+void LogValue(const char* s, const char* v)
+{
+    LogMessage("%25.25s: %s\n", s, v);
+}
+
 void LogCount(const char* s, uint64_t c)
 {
     if ( c )

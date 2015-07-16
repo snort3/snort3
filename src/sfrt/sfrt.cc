@@ -693,7 +693,7 @@ int sfrt_remove(sfip_t* ip, unsigned char len, GENERIC* ptr,
 
     if (!table || !table->data || !table->remove || !table->lookup )
     {
-        //remove operation will fail for LCT since this operation is not implemented
+        // remove operation will fail for LCT since this operation is not implemented
         return RT_REMOVE_FAILURE;
     }
 
@@ -749,7 +749,7 @@ static inline int allocateTableIndex(table_t* table)
 {
     uint32_t index;
 
-    //0 is special index for failed entries.
+    // 0 is special index for failed entries.
     for (index = table->lastAllocatedIndex+1;
         index != table->lastAllocatedIndex;
         index = (index+1) % table->max_size)

@@ -16,15 +16,16 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// 8/7/2011 - Initial implementation ... Hui Cao <hcao@sourcefire.com>
+// segment_mem.h author Hui Cao <huica@cisco.com>
 
 #ifndef SEGMENT_MEM_H
 #define SEGMENT_MEM_H
 
-#include <stdlib.h>
+// Segment memory allocation used by sfrt
+
 #include "main/snort_types.h"
 
-typedef uint32_t MEM_OFFSET;
+using MEM_OFFSET = uint32_t;
 
 int segment_meminit(uint8_t*, size_t);
 MEM_OFFSET segment_malloc(size_t size);

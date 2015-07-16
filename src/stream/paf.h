@@ -26,7 +26,8 @@
 #define PAF_H
 
 #include <stdint.h>
-#include "snort_types.h"
+
+#include "main/snort_types.h"
 #include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
 

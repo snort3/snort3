@@ -16,16 +16,17 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-**  Author(s):  Hui Cao <huica@cisco.com>
-**
-**  NOTES
-**  5.25.2012 - Initial Source Code. Hui Cao
-*/
+
+// file_service_config.h author Hui Cao <huica@cisco.com>
+
 #ifndef FILE_SERVICE_CONFIG_H
 #define FILE_SERVICE_CONFIG_H
-#include "file_service.h"
+
+// FIXIT-L This will be refactored soon
+#include "file_api/file_service.h"
+
 /*configure file services*/
 void file_service_config(const char* args, void** file_config);
+
 #endif
 
