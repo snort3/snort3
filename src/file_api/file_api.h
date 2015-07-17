@@ -253,7 +253,7 @@ typedef struct _file_api
      *    1: upload
      *    0: download
      */
-    Get_file_direction_func get_file_direction;FileCaptureInfo
+    Get_file_direction_func get_file_direction;
 
     /* Get file signature sha256
      *
