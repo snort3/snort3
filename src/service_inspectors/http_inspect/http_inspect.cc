@@ -304,17 +304,11 @@ bool HttpInspect::configure(SnortConfig* sc)
     CheckGzipConfig(config->global);
     CheckMemcap(config->global);
 
-    config->global->decode_conf.file_depth = file_api->get_max_file_depth();
+    config->global->decode_conf->sync_all_depths();
 
-    if (config->global->decode_conf.file_depth > -1)
+    if (config->global->decode_conf->get_file_depth() > -1)
         config->global->mime_conf.log_filename = 1;
 
-    if ( (config->post_extract_size > -1) &&
-        file_api->is_decoding_enabled(&config->global->decode_conf) )
-    {
-        updateMaxDepth(config->global->decode_conf.file_depth,
-            &config->global->decode_conf.max_depth);
-    }
     return !HttpInspectVerifyPolicy(sc, config);
 }
 

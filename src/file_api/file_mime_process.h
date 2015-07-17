@@ -28,6 +28,7 @@
 
 #include <pcre.h>
 #include "file_api/file_api.h"
+#include "file_api/file_mime_config.h"
 #include "utils/sf_email_attach_decode.h"
 
 #define MAX_FILE                             1024
@@ -153,17 +154,6 @@ struct MimeMethods
     Is_end_of_data_func is_end_of_data;
 };
 
-struct DecodeConfig
-{
-    bool ignore_data;
-    int max_mime_mem;
-    int max_depth;
-    int b64_depth;
-    int qp_depth;
-    int bitenc_depth;
-    int uu_depth;
-    int64_t file_depth;
-};
 
 struct MimeState
 {

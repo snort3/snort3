@@ -775,7 +775,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                             if (!hsd->mime_ssn)
                                 return 0;
                             hsd->mime_ssn->log_config = &(conf->global->mime_conf);
-                            hsd->mime_ssn->decode_conf = &(conf->global->decode_conf);
+                            hsd->mime_ssn->decode_conf = conf->global->decode_conf;
                             /*Set log buffers per session*/
                             if (file_api->set_log_buffers(
                                 &(hsd->mime_ssn->log_state), hsd->mime_ssn->log_config) < 0)
@@ -1149,7 +1149,6 @@ int HttpInspectInitializeGlobalConfig(HTTPINSPECT_GLOBAL_CONF* config)
     if (iRet)
         return iRet;
 
-    file_api->set_mime_decode_config_defauts(&(config->decode_conf));
     file_api->set_mime_log_config_defauts(&(config->mime_conf));
 
     return 0;

@@ -112,7 +112,6 @@ struct FileContext;
 struct FileCaptureInfo;
 struct MAIL_LogState;
 struct MAIL_LogConfig;
-struct DecodeConfig;
 struct MimeState;
 struct MimeDataPafInfo;
 
@@ -155,18 +154,11 @@ typedef int (*File_resume_block_add_file_func)(Packet* pkt, uint32_t file_sig,
 typedef File_Verdict (*File_resume_block_check_func)(Packet* pkt, uint32_t file_sig);
 typedef uint32_t (*Str_to_hash_func)(uint8_t* str, int length);
 typedef void (*File_signature_lookup_func)(Packet* p, bool is_retransmit);
-typedef void (*Set_mime_decode_config_defaults_func)(DecodeConfig* decode_conf);
 typedef void (*Set_mime_log_config_defaults_func)(MAIL_LogConfig* log_config);
-typedef int (*Parse_mime_decode_args_func)(DecodeConfig* decode_conf, char* arg, const
-    char* preproc_name);
-typedef void (*Check_decode_config_func)(DecodeConfig* decode_conf);
 typedef const uint8_t* (*Process_mime_data_func)(Flow* flow, const uint8_t* start, const
     uint8_t* end,
     MimeState* mime_ssn, bool upload, FilePosition position);
 typedef void (*Free_mime_session_func)(MimeState* mime_ssn);
-typedef bool (*Is_decoding_enabled_func)(DecodeConfig* decode_conf);
-typedef bool (*Is_decoding_conf_changed_func)(DecodeConfig* configNext, DecodeConfig* config,
-    const char* preproc_name);
 typedef bool (*Is_mime_log_enabled_func)(MAIL_LogConfig* log_config);
 typedef void (*Finalize_mime_position_func)(Flow* flow, void* decode_state,
     FilePosition* position);
@@ -382,14 +374,9 @@ typedef struct _file_api
 
     /*--------------Common functions used for MIME processing-------------*/
     Set_log_buffers_func set_log_buffers;
-    Set_mime_decode_config_defaults_func set_mime_decode_config_defauts;
     Set_mime_log_config_defaults_func set_mime_log_config_defauts;
-    Parse_mime_decode_args_func parse_mime_decode_args;
-    Check_decode_config_func check_decode_config;
     Process_mime_data_func process_mime_data;
     Free_mime_session_func free_mime_session;
-    Is_decoding_enabled_func is_decoding_enabled;
-    Is_decoding_conf_changed_func is_decoding_conf_changed;
     Is_mime_log_enabled_func is_mime_log_enabled;
     Finalize_mime_position_func finalize_mime_position;
     Reset_mime_paf_state_func reset_mime_paf_state;

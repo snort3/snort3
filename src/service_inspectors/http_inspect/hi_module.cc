@@ -174,10 +174,10 @@ HTTPINSPECT_GLOBAL_CONF* HttpInspectModule::get_data()
 bool HttpInspectModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("b64_decode_depth") )
-        config->decode_conf.b64_depth = v.get_long();
+        config->decode_conf->set_b64_depth(v.get_long());
 
     else if ( v.is("bitenc_decode_depth") )
-        config->decode_conf.bitenc_depth = v.get_long();
+        config->decode_conf->set_bitenc_depth(v.get_long());
 
     else if ( v.is("code_page") )
         config->iis_unicode_codepage = v.get_long();
@@ -198,7 +198,7 @@ bool HttpInspectModule::set(const char*, Value& v, SnortConfig*)
         config->max_gzip_mem = v.get_long();
 
     else if ( v.is("max_mime_mem") )
-        config->decode_conf.max_mime_mem = v.get_long();
+        config->decode_conf->set_max_mime_mem(v.get_long());
 
     else if ( v.is("memcap") )
         config->memcap = v.get_long();
@@ -207,10 +207,10 @@ bool HttpInspectModule::set(const char*, Value& v, SnortConfig*)
         config->proxy_alert = v.get_bool();
 
     else if ( v.is("qp_decode_depth") )
-        config->decode_conf.qp_depth = v.get_long();
+        config->decode_conf->set_qp_depth(v.get_long());
 
     else if ( v.is("uu_decode_depth") )
-        config->decode_conf.uu_depth = v.get_long();
+        config->decode_conf->set_uu_depth(v.get_long());
 
     else
         return false;

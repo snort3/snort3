@@ -413,7 +413,7 @@ void SMTP_PrintConfig(SMTP_PROTO_CONF *config)
     LogMessage("%s\n", buf);
 
     LogMessage("    Ignore Data: %s\n",
-        config->decode_conf.ignore_data ? "Yes" : "No");
+        config->decode_conf.is_ignore_data() ? "Yes" : "No");
     LogMessage("    Ignore TLS Data: %s\n",
         config->ignore_tls_data ? "Yes" : "No");
     snprintf(buf, sizeof(buf) - 1, "    Max Command Line Length: ");
@@ -497,6 +497,7 @@ void SMTP_PrintConfig(SMTP_PROTO_CONF *config)
     {
         LogMessage("%s\n", buf);
     }
+    /*
     if (config->decode_conf.b64_depth > -1)
     {
         LogMessage("    Base64 Decoding: %s\n", "Enabled");
@@ -561,7 +562,7 @@ void SMTP_PrintConfig(SMTP_PROTO_CONF *config)
     }
     else
         LogMessage("    Non-Encoded MIME attachment Extraction/text: %s\n", "Disabled");
-
+    */
     LogMessage("    Log Attachment filename: %s\n",
         config->log_config.log_filename ? "Enabled" : "Not Enabled");
 
@@ -1096,7 +1097,7 @@ static int SMTP_NormalizeData(void* conf, const uint8_t* ptr, const uint8_t* dat
         return SMTP_CopyToAltBuffer(p->data, ptr - p->data);
     }
     else */
-    if (!config->decode_conf.ignore_data && smtp_normalizing)
+    if (!config->decode_conf.is_ignore_data() && smtp_normalizing)
     {
         return SMTP_CopyToAltBuffer(ptr, data_end - ptr);
     }
@@ -1597,18 +1598,10 @@ Smtp::~Smtp()
 
 bool Smtp::configure(SnortConfig*)
 {
-    config->decode_conf.file_depth = file_api->get_max_file_depth();
+    config->decode_conf.sync_all_depths();
 
-    if (config->decode_conf.file_depth > -1)
+    if (config->decode_conf.get_file_depth() > -1)
         config->log_config.log_filename = 1;
-
-    file_api->check_decode_config(&config->decode_conf);
-
-    if (file_api->is_decoding_enabled(&config->decode_conf) )
-    {
-        updateMaxDepth(config->decode_conf.file_depth,
-            &config->decode_conf.max_depth);
-    }
 
     return true;
 }

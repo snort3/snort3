@@ -242,11 +242,11 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
                 "Rounding up to the next multiple of 4. The new 'b64_decode_depth' is %d.\n",
                 decode_depth);
         }
-        config->decode_conf.b64_depth = decode_depth;
+        config->decode_conf.set_b64_depth(decode_depth);
     }
 
     else if ( v.is("bitenc_decode_depth") )
-        config->decode_conf.bitenc_depth = v.get_long();
+        config->decode_conf.set_bitenc_depth(v.get_long());
 
     else if ( v.is("command") )
         names = v.get_string();
@@ -261,7 +261,7 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
         config->log_config.email_hdrs_log_depth = v.get_long();
 
     else if ( v.is("ignore_data") )
-        config->decode_conf.ignore_data = v.get_bool();
+        config->decode_conf.set_ignore_data(v.get_bool());
 
     else if ( v.is("ignore_tls_data") )
         config->ignore_tls_data = v.get_bool();
@@ -300,13 +300,13 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
         add_commands(v, PCMD_NORM);
 
     else if ( v.is("qp_decode_depth") )
-        config->decode_conf.qp_depth = v.get_long();
+        config->decode_conf.set_qp_depth(v.get_long());
 
     else if ( v.is("valid_cmds"))
         add_commands(v, PCMD_VALID);
 
     else if ( v.is("uu_decode_depth") )
-        config->decode_conf.uu_depth = v.get_long();
+        config->decode_conf.set_uu_depth(v.get_long());
 
     else if ( v.is("xlink2state") )
         config->xlink2state = (XLINK2STATE)v.get_long();
@@ -336,10 +336,9 @@ bool SmtpModule::begin(const char*, int, SnortConfig*)
         config->max_response_line_len = 0;
         config->max_command_line_len = 0;
         config->xlink2state = ALERT_XLINK2STATE;
-        config->decode_conf.ignore_data = config->ignore_tls_data = false;
+        config->decode_conf.set_ignore_data(config->ignore_tls_data = false);
         config->normalize = NORMALIZE_NONE;
 
-        file_api->set_mime_decode_config_defauts(&(config->decode_conf));
         file_api->set_mime_log_config_defauts(&(config->log_config));
         config->log_config.email_hdrs_log_depth = 1464;
     }

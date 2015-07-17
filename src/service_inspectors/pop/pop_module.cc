@@ -103,16 +103,16 @@ bool PopModule::set(const char*, Value& v, SnortConfig*)
                 "Rounding up to the next multiple of 4. The new 'b64_decode_depth' is %d.\n",
                 decode_depth);
         }
-        config->decode_conf.b64_depth = decode_depth;
+        config->decode_conf.set_b64_depth(decode_depth);
     }
     else if ( v.is("bitenc_decode_depth") )
-        config->decode_conf.bitenc_depth = v.get_long();
+        config->decode_conf.set_bitenc_depth(v.get_long());
 
     else if ( v.is("qp_decode_depth") )
-        config->decode_conf.qp_depth = v.get_long();
+        config->decode_conf.set_qp_depth(v.get_long());
 
     else if ( v.is("uu_decode_depth") )
-        config->decode_conf.uu_depth = v.get_long();
+        config->decode_conf.set_uu_depth(v.get_long());
 
     else
         return false;
@@ -130,7 +130,6 @@ POP_PROTO_CONF* PopModule::get_data()
 bool PopModule::begin(const char*, int, SnortConfig*)
 {
     config = new POP_PROTO_CONF;
-    file_api->set_mime_decode_config_defauts(&(config->decode_conf));
     file_api->set_mime_log_config_defauts(&(config->log_config));
 
     return true;

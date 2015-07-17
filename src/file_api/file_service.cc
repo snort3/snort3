@@ -138,14 +138,9 @@ void init_fileAPI(void)
     fileAPI.set_log_buffers = &set_log_buffers;
     fileAPI.file_resume_block_add_file = &file_resume_block_add_file;
     fileAPI.file_resume_block_check = &file_resume_block_check;
-    fileAPI.set_mime_decode_config_defauts = &set_mime_decode_config_defauts;
     fileAPI.set_mime_log_config_defauts = &set_mime_log_config_defauts;
-    fileAPI.parse_mime_decode_args = &parse_mime_decode_args;
-    fileAPI.check_decode_config = &check_decode_config;
     fileAPI.process_mime_data = &process_mime_data;
     fileAPI.free_mime_session = &free_mime_session;
-    fileAPI.is_decoding_enabled = &is_decoding_enabled;
-    fileAPI.is_decoding_conf_changed = &is_decoding_conf_changed;
     fileAPI.is_mime_log_enabled = &is_mime_log_enabled;
     fileAPI.finalize_mime_position = &finalize_mime_position;
     fileAPI.get_file_type_id = &get_file_type_id;

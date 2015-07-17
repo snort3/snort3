@@ -168,19 +168,6 @@ static inline void DeleteEmailDecodeState(Email_DecodeState* ds)
     free(ds);
 }
 
-// FIXIT-L: An assignment by value is more intuitive than by reference
-static inline void updateMaxDepth(int64_t file_depth, int* max_depth)
-{
-    if ((!file_depth) || (file_depth > MAX_BUF))
-    {
-        *max_depth = MAX_BUF;
-    }
-    else if (file_depth > (*max_depth))
-    {
-        *max_depth = (int)file_depth;
-    }
-}
-
 // FIXIT-L: Should refactor as a method of struct Email_DecodeState
 static inline void ClearPrevEncodeBuf(Email_DecodeState* ds)
 {

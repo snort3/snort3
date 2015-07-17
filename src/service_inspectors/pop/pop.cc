@@ -246,7 +246,7 @@ static void PrintPopConf(POP_PROTO_CONF* config)
         return;
 
     LogMessage("POP config: \n");
-
+/*
     if (config->decode_conf.b64_depth > -1)
     {
         switch (config->decode_conf.b64_depth)
@@ -308,6 +308,7 @@ static void PrintPopConf(POP_PROTO_CONF* config)
         LogMessage("    Non-Encoded MIME attachment Extraction: %s\n", "Disabled");
 
     LogMessage("\n");
+    */
 }
 
 static inline int InspectPacket(Packet* p)
@@ -741,18 +742,11 @@ Pop::~Pop()
 
 bool Pop::configure(SnortConfig* )
 {
-    config->decode_conf.file_depth = file_api->get_max_file_depth();
+    config->decode_conf.sync_all_depths();
 
-    if (config->decode_conf.file_depth > -1)
+    if (config->decode_conf.get_file_depth() > -1)
         config->log_config.log_filename = 1;
 
-    file_api->check_decode_config(&config->decode_conf);
-
-    if (file_api->is_decoding_enabled(&config->decode_conf) )
-    {
-        updateMaxDepth(config->decode_conf.file_depth,
-            &config->decode_conf.max_depth);
-    }
     return true;
 }
 

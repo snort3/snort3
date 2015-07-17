@@ -267,9 +267,9 @@ static void set_mime_buffers(MimeState* ssn)
         DecodeConfig* conf = ssn->decode_conf;
 
         ssn->decode_state = NewEmailDecodeState(
-            conf->max_depth, conf->b64_depth, conf->qp_depth,
-            conf->uu_depth, conf->bitenc_depth,
-            conf->file_depth);
+            conf->get_max_depth(), conf->get_b64_depth(), conf->get_qp_depth(),
+            conf->get_uu_depth(), conf->get_bitenc_depth(),
+            conf->get_file_depth());
     }
 }
 
@@ -385,7 +385,7 @@ static inline void process_decode_type(const char* start, int length, bool cnt_x
 static inline void setup_decode(const char* data, int size, bool cnt_xf, MimeState* mime_ssn)
 {
     /* Check for Encoding Type */
-    if ( is_decoding_enabled(mime_ssn->decode_conf))
+    if ( mime_ssn->decode_conf && mime_ssn->decode_conf->is_decoding_enabled())
     {
         set_mime_buffers(mime_ssn);
         if (mime_ssn->decode_state != NULL)
@@ -802,7 +802,7 @@ const uint8_t* process_mime_data_paf(Flow* flow, const uint8_t* start, const uin
 
     // FIXIT-L why is this being set?  we don't search file data until
     // we set it again below after decoding.  can it be deleted?
-    if ( mime_ssn->decode_conf && !mime_ssn->decode_conf->ignore_data)
+    if ( mime_ssn->decode_conf && (!mime_ssn->decode_conf->is_ignore_data()))
         set_file_data((uint8_t*)start, (end - start));
 
     if ((mime_ssn->data_state == STATE_DATA_HEADER) ||
@@ -856,8 +856,9 @@ const uint8_t* process_mime_data_paf(Flow* flow, const uint8_t* start, const uin
 
         if (conf)
         {
-            int detection_size = getDetectionSize(conf->b64_depth, conf->qp_depth,
-                conf->uu_depth, conf->bitenc_depth, ds);
+            int detection_size = getDetectionSize(conf->get_b64_depth(),
+                conf->get_qp_depth(), conf->get_uu_depth(),
+                conf->get_bitenc_depth(), ds);
             set_file_data(ds->decodePtr, (uint16_t)detection_size);
         }
 
