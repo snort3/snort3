@@ -151,7 +151,7 @@ static inline int extract_file_name(const char** start, int length, bool* disp_c
 }
 
 /* accumulate MIME attachment filenames. The filenames are appended by commas */
-int log_file_name(const uint8_t* start, int length, FILE_LogState* log_state, bool* disp_cont)
+int log_file_name(const uint8_t* start, int length, FileLogState* log_state, bool* disp_cont)
 {
     uint8_t* alt_buf;
     int alt_size;
@@ -209,7 +209,7 @@ int log_file_name(const uint8_t* start, int length, FILE_LogState* log_state, bo
 }
 
 
-static void set_file_name_from_log(FILE_LogState* log_state, void* pv)
+static void set_file_name_from_log(FileLogState* log_state, void* pv)
 {
     Flow* ssn = (Flow*)pv; // FIXIT-M eliminate need for cast
 
@@ -229,18 +229,18 @@ static void set_file_name_from_log(FILE_LogState* log_state, void* pv)
  *         -1: fail
  *
  */
-int set_log_buffers(MAIL_LogState** log_state, MailLogConfig* conf)
+int set_log_buffers(MailLogState** log_state, MailLogConfig* conf)
 {
     if ((*log_state == NULL)
         && (conf->log_email_hdrs || conf->log_filename
         || conf->log_mailfrom || conf->log_rcptto))
     {
         uint32_t bufsz = (2* MAX_EMAIL) + MAX_FILE + conf->email_hdrs_log_depth;
-        *log_state = (MAIL_LogState*)SnortAlloc(sizeof(MAIL_LogState) + bufsz);
+        *log_state = (MailLogState*)SnortAlloc(sizeof(MailLogState) + bufsz);
 
         if ((*log_state) != NULL)
         {
-            uint8_t* buf = ((uint8_t*)(*log_state)) + sizeof(MAIL_LogState);
+            uint8_t* buf = ((uint8_t*)(*log_state)) + sizeof(MailLogState);
             (*log_state)->log_depth = conf->email_hdrs_log_depth;
             (*log_state)->recipients = buf;
             (*log_state)->rcpts_logged = 0;
@@ -989,216 +989,3 @@ void free_mime_session(MimeState* mime_ssn)
     free_mime_session(*mime_ssn);
     free(mime_ssn);
 }
-
-/*
- * When the file ends (a MIME boundary detected), position are updated
- */
-void finalize_mime_position(Flow* flow, void* decode_state, FilePosition* position)
-{
-    /* check to see if there are file data in the session or
-     * new decoding data waiting for processing */
-    if ( file_api->get_file_processed_size(flow) ||
-        (decode_state && ((Email_DecodeState*)decode_state)->decoded_bytes) )
-        finalFilePosition(position);
-}
-
-/* Save the bounday string into paf state*/
-static inline bool store_boundary(MimeDataPafInfo* data_info,  uint8_t val)
-{
-    if (!data_info->boundary_search)
-    {
-        if ((val == '.') || isspace (val))
-            data_info->boundary_search = (char*)&boundary_str[0];
-        return 0;
-    }
-
-    if (*(data_info->boundary_search) == '=')
-    {
-        /*Skip spaces for the end of boundary*/
-        if (val == '=')
-            data_info->boundary_search++;
-        else if (!isspace(val))
-            data_info->boundary_search = NULL;
-    }
-    else if (*(data_info->boundary_search) == '\0')
-    {
-        /*get boundary string*/
-        if (isspace(val) || (val == '"'))
-        {
-            if (!data_info->boundary_len)
-                return 0;
-            else
-            {
-                /*Found boundary string*/
-                data_info->boundary[data_info->boundary_len] = '\0';
-                return 1;
-            }
-        }
-
-        if (data_info->boundary_len < (int)sizeof(data_info->boundary))
-        {
-            data_info->boundary[data_info->boundary_len++] = val;
-        }
-        else
-        {
-            /*Found boundary string*/
-            data_info->boundary[data_info->boundary_len -1] = '\0';
-            return 1;
-        }
-    }
-    else if ((val == *(data_info->boundary_search))
-        || (val == *(data_info->boundary_search) - 'a' + 'A'))
-    {
-        data_info->boundary_search++;
-    }
-    else
-    {
-        if ((val == '.') || isspace (val))
-            data_info->boundary_search = (char*)&boundary_str[0];
-        else
-            data_info->boundary_search = NULL;
-    }
-
-    return 0;
-}
-
-/* check the bounday string in the mail body*/
-static inline bool check_boundary(MimeDataPafInfo* data_info,  uint8_t data)
-{
-    /* Search for boundary signature "--"*/
-    switch (data_info->boundary_state)
-    {
-    case MIME_PAF_BOUNDARY_UNKNOWN:
-        if (data == '\n')
-            data_info->boundary_state = MIME_PAF_BOUNDARY_LF;
-        break;
-
-    case MIME_PAF_BOUNDARY_LF:
-        if (data == '-')
-            data_info->boundary_state = MIME_PAF_BOUNDARY_HYPEN_FIRST;
-        else if (data != '\n')
-            data_info->boundary_state = MIME_PAF_BOUNDARY_UNKNOWN;
-        break;
-
-    case MIME_PAF_BOUNDARY_HYPEN_FIRST:
-        if (data == '-')
-        {
-            data_info->boundary_state = MIME_PAF_BOUNDARY_HYPEN_SECOND;
-            data_info->boundary_search = data_info->boundary;
-        }
-        else if (data == '\n')
-            data_info->boundary_state = MIME_PAF_BOUNDARY_LF;
-        else
-            data_info->boundary_state = MIME_PAF_BOUNDARY_UNKNOWN;
-        break;
-
-    case MIME_PAF_BOUNDARY_HYPEN_SECOND:
-        /* Compare with boundary string stored */
-        if (*(data_info->boundary_search) == '\0')
-        {
-            if (data == '\n')
-            {
-                /*reset boundary search etc.*/
-                data_info->boundary_state = MIME_PAF_BOUNDARY_UNKNOWN;
-                return 1;
-            }
-            else if ((data != '\r') && ((data != '-')))
-                data_info->boundary_state = MIME_PAF_BOUNDARY_UNKNOWN;
-        }
-        else if (*(data_info->boundary_search) == data)
-            data_info->boundary_search++;
-        else
-            data_info->boundary_state = MIME_PAF_BOUNDARY_UNKNOWN;
-
-        break;
-    }
-
-    return 0;
-}
-
-void reset_mime_paf_state(MimeDataPafInfo* data_info)
-{
-    data_info->boundary_search = NULL;
-    data_info->boundary_len = 0;
-    data_info->boundary[0] = '\0';
-    data_info->boundary_state = MIME_PAF_BOUNDARY_UNKNOWN;
-    data_info->data_state = MIME_PAF_FINDING_BOUNDARY_STATE;
-}
-
-/*  Process data boundary and flush each file based on boundary*/
-bool process_mime_paf_data(MimeDataPafInfo* data_info,  uint8_t data)
-{
-    switch (data_info->data_state)
-    {
-    case MIME_PAF_FINDING_BOUNDARY_STATE:
-        /* Search for boundary
-           Store bounday string in PAF state*/
-        if (store_boundary(data_info, data))
-        {
-            /* End of boundary, move to MIME_PAF_FOUND_BOUNDARY_STATE*/
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "Create boudary string: %s\n",
-                data_info->boundary); );
-            data_info->data_state = MIME_PAF_FOUND_BOUNDARY_STATE;
-        }
-
-        break;
-    case MIME_PAF_FOUND_BOUNDARY_STATE:
-        if (check_boundary(data_info,  data))
-        {
-            /* End of boundary, move to MIME_PAF_FOUND_BOUNDARY_STATE*/
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "Found Boudary string: %s\n",
-                data_info->boundary); );
-            return 1;
-        }
-        break;
-    default:
-        break;
-    }
-
-    return 0;
-}
-
-bool check_data_end(void* data_end_state,  uint8_t val)
-{
-    DataEndState state =  *((DataEndState*)data_end_state);
-
-    switch (state)
-    {
-    case PAF_DATA_END_UNKNOWN:
-        if (val == '\n')
-        {
-            state = PAF_DATA_END_FIRST_LF;
-        }
-        break;
-
-    case PAF_DATA_END_FIRST_LF:
-        if (val == '.')
-        {
-            state = PAF_DATA_END_DOT;
-        }
-        else if ((val != '\r') && (val != '\n'))
-        {
-            state = PAF_DATA_END_UNKNOWN;
-        }
-        break;
-    case PAF_DATA_END_DOT:
-        if (val == '\n')
-        {
-            *((DataEndState*)data_end_state) = PAF_DATA_END_UNKNOWN;
-            return 1;
-        }
-        else if (val != '\r')
-        {
-            state = PAF_DATA_END_UNKNOWN;
-        }
-        break;
-
-    default:
-        state = PAF_DATA_END_UNKNOWN;
-        break;
-    }
-
-    *((DataEndState*)data_end_state) = state;
-    return 0;
-}
-

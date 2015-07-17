@@ -12,6 +12,8 @@ add_library ( file_api STATIC
     file_mempool.h
     file_mime_config.cc 
     file_mime_config.h
+    file_mime_paf.h 
+    file_mime_paf.cc 
     file_mime_process.h 
     file_mime_process.cc 
     file_resume_block.cc 

@@ -25,18 +25,9 @@
 
 #include "file_mime_config.h"
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
-#include <stdio.h>
-
 #include "snort_types.h"
 #include "file_api.h"
 #include "file_mime_process.h"
-#include "sf_email_attach_decode.h"
-#include "util.h"
-#include "parser.h"
 
 void DecodeConfig::update_max_depth(int64_t depth)
 {
@@ -131,9 +122,9 @@ bool DecodeConfig::is_decoding_enabled()
 
 void DecodeConfig::set_file_depth(int64_t file_depth)
 {
-    if ((!file_depth) || (file_depth > MAX_BUF))
+    if ((!file_depth) || (file_depth > MAX_DEPTH))
     {
-        max_depth = MAX_BUF;
+        max_depth = MAX_DEPTH;
     }
     else if (file_depth > max_depth)
     {

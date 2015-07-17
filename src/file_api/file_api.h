@@ -110,7 +110,7 @@ struct FileState
 
 struct FileContext;
 struct FileCaptureInfo;
-struct MAIL_LogState;
+struct MailLogState;
 struct MailLogConfig;
 struct MimeState;
 struct MimeDataPafInfo;
@@ -148,7 +148,7 @@ typedef void (*Enable_file_signature_func)();
 typedef void (*Enable_file_capture_func)();
 typedef void (*Set_file_action_log_func)();
 
-typedef int (*Set_log_buffers_func)(MAIL_LogState** log_state, MailLogConfig* conf);
+typedef int (*Set_log_buffers_func)(MailLogState** log_state, MailLogConfig* conf);
 typedef int (*File_resume_block_add_file_func)(Packet* pkt, uint32_t file_sig,
     uint32_t timeout, File_Verdict verdict, uint32_t file_type_id, uint8_t* signature);
 typedef File_Verdict (*File_resume_block_check_func)(Packet* pkt, uint32_t file_sig);
@@ -164,12 +164,7 @@ typedef File_Verdict (*Get_file_verdict_func)(Flow* flow);
 typedef void (*Render_block_verdict_func)(void* ctx, Packet* p);
 
 typedef bool (*Is_file_service_enabled)();
-typedef bool (*Check_paf_abort_func)(Flow* ssn);
 typedef FilePosition (*GetFilePosition)(Packet* pkt);
-typedef void (*Reset_mime_paf_state_func)(MimeDataPafInfo* data_info);
-/*  Process data boundary and flush each file based on boundary*/
-typedef bool (*Process_mime_paf_data_func)(MimeDataPafInfo* data_info,  uint8_t data);
-typedef bool (*Check_data_end_func)(void* end_state,  uint8_t data);
 typedef uint32_t (*Get_file_type_id)(Flow*);
 typedef uint32_t (*Get_new_file_instance)(Flow*);
 
@@ -374,11 +369,6 @@ typedef struct _file_api
     Set_log_buffers_func set_log_buffers;
     Process_mime_data_func process_mime_data;
     Free_mime_session_func free_mime_session;
-    Finalize_mime_position_func finalize_mime_position;
-    Reset_mime_paf_state_func reset_mime_paf_state;
-    Process_mime_paf_data_func process_mime_paf_data;
-    Check_data_end_func check_data_end;
-    Check_paf_abort_func check_paf_abort;
 
     /*--------------Other helper functions-------------*/
     File_resume_block_add_file_func file_resume_block_add_file;

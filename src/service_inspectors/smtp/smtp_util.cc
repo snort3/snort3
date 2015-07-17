@@ -120,7 +120,7 @@ int SMTP_CopyToAltBuffer(const uint8_t* start, int length)
 }
 
 /* Accumulate EOL seperated headers, one or more at a time */
-int SMTP_CopyEmailHdrs(const uint8_t* start, int length, MAIL_LogState* log_state)
+int SMTP_CopyEmailHdrs(const uint8_t* start, int length, MailLogState* log_state)
 {
     int log_avail = 0;
     uint8_t* log_buf;
@@ -161,7 +161,7 @@ int SMTP_CopyEmailHdrs(const uint8_t* start, int length, MAIL_LogState* log_stat
 
 /* Accumulate email addresses from RCPT TO and/or MAIL FROM commands. Email addresses are separated
    by comma */
-int SMTP_CopyEmailID(const uint8_t* start, int length, int command_type, MAIL_LogState* log_state)
+int SMTP_CopyEmailID(const uint8_t* start, int length, int command_type, MailLogState* log_state)
 {
     uint8_t* alt_buf;
     int alt_size;

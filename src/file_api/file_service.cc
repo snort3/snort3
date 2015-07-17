@@ -140,7 +140,6 @@ void init_fileAPI(void)
     fileAPI.file_resume_block_check = &file_resume_block_check;
     fileAPI.process_mime_data = &process_mime_data;
     fileAPI.free_mime_session = &free_mime_session;
-    fileAPI.finalize_mime_position = &finalize_mime_position;
     fileAPI.get_file_type_id = &get_file_type_id;
     fileAPI.get_new_file_instance = &get_new_file_instance;
 
@@ -149,9 +148,7 @@ void init_fileAPI(void)
     fileAPI.get_current_file_context = &get_current_file_context;
     fileAPI.get_main_file_context = &get_main_file_context;
     fileAPI.get_file_position = &get_file_position;
-    fileAPI.reset_mime_paf_state = &reset_mime_paf_state;
-    fileAPI.process_mime_paf_data = &process_mime_paf_data;
-    fileAPI.check_data_end = check_data_end;
+
 
     file_api = &fileAPI;
     init_mime();

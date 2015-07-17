@@ -55,6 +55,7 @@ public:
     int64_t get_file_depth();
     bool is_decoding_enabled();
     void sync_all_depths();
+
 private:
     bool ignore_data = false;
     int max_mime_mem = DEFAULT_MAX_MIME_MEM;

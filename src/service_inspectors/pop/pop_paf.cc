@@ -134,7 +134,7 @@ static inline bool process_command(PopPafData* pfdata, const uint8_t ch)
 static inline void reset_data_states(PopPafData* pfdata)
 {
     // reset MIME info
-    file_api->reset_mime_paf_state(&(pfdata->data_info));
+    reset_mime_paf_state(&(pfdata->data_info));
 
     // reset general pop fields
     pfdata->cmd_continued = false;
@@ -199,7 +199,7 @@ static bool find_data_end_multi_line(PopPafData* pfdata, const uint8_t ch, bool 
 {
     // FIXIT:  This will currently flush on MIME boundary, and one line later at end of PDU
 
-    if (file_api->check_data_end(&(pfdata->end_state), ch))
+    if (check_data_end(&(pfdata->end_state), ch))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_POP, "End of Multi-line response found\n"); );
         pfdata->end_of_data = true;
@@ -211,7 +211,7 @@ static bool find_data_end_multi_line(PopPafData* pfdata, const uint8_t ch, bool 
     // if this is a data command, search for MIME ending
     if (mime_data)
     {
-        if (file_api->process_mime_paf_data(&(pfdata->data_info), ch))
+        if (process_mime_paf_data(&(pfdata->data_info), ch))
         {
             DEBUG_WRAP(DebugMessage(DEBUG_POP, "Mime Boundary found.  Flushing data!\n"); );
             pfdata->cmd_continued = true;

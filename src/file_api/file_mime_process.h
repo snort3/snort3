@@ -24,11 +24,11 @@
 
 // Provides list of MIME processing functions. Encoded file data will be decoded
 // and file name will be extracted from MIME header
-// FIXIT-L This will be refactored soon
 
 #include <pcre.h>
 #include "file_api/file_api.h"
 #include "file_api/file_mime_config.h"
+#include "file_api/file_mime_paf.h"
 #include "utils/sf_email_attach_decode.h"
 
 #define MAX_FILE                             1024
@@ -56,14 +56,14 @@
 /* Maximum length of header chars before colon, based on Exim 4.32 exploit */
 #define MAX_HEADER_NAME_LEN 64
 
-struct FILE_LogState
+struct FileLogState
 {
     uint8_t* filenames;
     uint16_t file_logged;
     uint16_t file_current;
 };
 
-struct MAIL_LogState
+struct MailLogState
 {
     unsigned char* emailHdrs;
     uint32_t log_depth;
@@ -72,55 +72,17 @@ struct MAIL_LogState
     uint16_t rcpts_logged;
     uint8_t* senders;
     uint16_t snds_logged;
-    FILE_LogState file_log;
+    FileLogState file_log;
 };
 
 struct MailLogConfig
 {
-    uint32_t memcap = DEFAULT_MIME_MEMCAP;;
+    uint32_t memcap = DEFAULT_MIME_MEMCAP;
     char log_mailfrom = 0;
     char log_rcptto = 0;
     char log_filename = 0;
     char log_email_hdrs = 0;
     uint32_t email_hdrs_log_depth = 0;
-};
-
-/* State tracker for data */
-enum MimeDataState
-{
-    MIME_PAF_FINDING_BOUNDARY_STATE,
-    MIME_PAF_FOUND_BOUNDARY_STATE
-};
-
-/* State tracker for Boundary Signature */
-enum MimeBoundaryState
-{
-    MIME_PAF_BOUNDARY_UNKNOWN = 0,      /* UNKNOWN */
-    MIME_PAF_BOUNDARY_LF,               /* '\n' */
-    MIME_PAF_BOUNDARY_HYPEN_FIRST,      /* First '-' */
-    MIME_PAF_BOUNDARY_HYPEN_SECOND      /* Second '-' */
-};
-
-/* State tracker for end of pop/smtp command */
-enum DataEndState
-{
-    PAF_DATA_END_UNKNOWN,         /* Start or UNKNOWN */
-    PAF_DATA_END_FIRST_CR,        /* First '\r' */
-    PAF_DATA_END_FIRST_LF,        /* First '\n' */
-    PAF_DATA_END_DOT,             /* '.' */
-    PAF_DATA_END_SECOND_CR,       /* Second '\r' */
-    PAF_DATA_END_SECOND_LF        /* Second '\n' */
-};
-
-#define MAX_MIME_BOUNDARY_LEN  70  /* Max length of boundary string, defined in RFC 2046 */
-
-struct MimeDataPafInfo
-{
-    MimeDataState data_state;
-    char boundary[ MAX_MIME_BOUNDARY_LEN + 1];            /* MIME boundary string + '\0' */
-    int boundary_len;
-    char* boundary_search;
-    MimeBoundaryState boundary_state;
 };
 
 typedef struct _MimePcre
@@ -154,7 +116,6 @@ struct MimeMethods
     Is_end_of_data_func is_end_of_data;
 };
 
-
 struct MimeState
 {
     int data_state;
@@ -164,39 +125,18 @@ struct MimeState
     MimeDataPafInfo mime_boundary;
     DecodeConfig* decode_conf;
     MailLogConfig* log_config;
-    MAIL_LogState* log_state;
+    MailLogState* log_state;
     void* config;
     MimeMethods* methods;
 };
 
-static inline bool scanning_boundary(MimeDataPafInfo* mime_info, uint32_t boundary_start,
-    uint32_t* fp)
-{
-    if (boundary_start &&
-        mime_info->data_state == MIME_PAF_FOUND_BOUNDARY_STATE &&
-        mime_info->boundary_state != MIME_PAF_BOUNDARY_UNKNOWN)
-    {
-        *fp = boundary_start;
-        return true;
-    }
-
-    return false;
-}
-
-
-int log_file_name(const uint8_t* start, int length, FILE_LogState* log_state, bool* disp_cont);
-int set_log_buffers(MAIL_LogState** log_state, MailLogConfig* conf);
+int log_file_name(const uint8_t* start, int length, FileLogState* log_state, bool* disp_cont);
+int set_log_buffers(MailLogState** log_state, MailLogConfig* conf);
 void init_mime(void);
 void free_mime(void);
 const uint8_t* process_mime_data(Flow *flow, const uint8_t *start, const uint8_t *end,
                 MimeState *mime_ssn, bool upload, FilePosition position);
 void free_mime_session(MimeState*);
 void free_mime_session(MimeState&);
-void finalize_mime_position(Flow* flow, void* decode_state, FilePosition* position);
-void reset_mime_paf_state(MimeDataPafInfo *data_info);
-/*  Process data boundary and flush each file based on boundary*/
-bool process_mime_paf_data(MimeDataPafInfo *data_info,  uint8_t val);
-bool check_data_end(void *end_state,  uint8_t val);
-
 #endif
 
