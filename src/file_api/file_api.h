@@ -25,7 +25,6 @@
 // File API provides all the convenient functions that are used by inspectors.
 // Currently, it provides three sets of APIs: file processing, MIME processing,
 // and configurations.
-// FIXIT-L file api will be replaced by file class and mime class soon
 
 #include <sys/types.h>
 
@@ -113,7 +112,6 @@ struct FileCaptureInfo;
 struct MailLogState;
 struct MailLogConfig;
 struct MimeState;
-struct MimeDataPafInfo;
 
 #define FILE_API_VERSION 4
 
@@ -255,7 +253,7 @@ typedef struct _file_api
      *    1: upload
      *    0: download
      */
-    Get_file_direction_func get_file_direction;
+    Get_file_direction_func get_file_direction;FileCaptureInfo
 
     /* Get file signature sha256
      *
