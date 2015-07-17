@@ -138,10 +138,8 @@ void init_fileAPI(void)
     fileAPI.set_log_buffers = &set_log_buffers;
     fileAPI.file_resume_block_add_file = &file_resume_block_add_file;
     fileAPI.file_resume_block_check = &file_resume_block_check;
-    fileAPI.set_mime_log_config_defauts = &set_mime_log_config_defauts;
     fileAPI.process_mime_data = &process_mime_data;
     fileAPI.free_mime_session = &free_mime_session;
-    fileAPI.is_mime_log_enabled = &is_mime_log_enabled;
     fileAPI.finalize_mime_position = &finalize_mime_position;
     fileAPI.get_file_type_id = &get_file_type_id;
     fileAPI.get_new_file_instance = &get_new_file_instance;

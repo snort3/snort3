@@ -339,7 +339,6 @@ bool SmtpModule::begin(const char*, int, SnortConfig*)
         config->decode_conf.set_ignore_data(config->ignore_tls_data = false);
         config->normalize = NORMALIZE_NONE;
 
-        file_api->set_mime_log_config_defauts(&(config->log_config));
         config->log_config.email_hdrs_log_depth = 1464;
     }
 

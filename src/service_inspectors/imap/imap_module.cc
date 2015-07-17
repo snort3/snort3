@@ -130,7 +130,6 @@ IMAP_PROTO_CONF* ImapModule::get_data()
 bool ImapModule::begin(const char*, int, SnortConfig*)
 {
     config = new IMAP_PROTO_CONF;
-    file_api->set_mime_log_config_defauts(&(config->log_config));
 
     return true;
 }

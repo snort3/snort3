@@ -26,7 +26,7 @@
 struct POP_PROTO_CONF
 {
     DecodeConfig decode_conf;
-    MAIL_LogConfig log_config;
+    MailLogConfig log_config;
 };
 
 #endif

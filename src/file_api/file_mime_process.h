@@ -75,14 +75,14 @@ struct MAIL_LogState
     FILE_LogState file_log;
 };
 
-struct MAIL_LogConfig
+struct MailLogConfig
 {
-    uint32_t memcap;
-    char log_mailfrom;
-    char log_rcptto;
-    char log_filename;
-    char log_email_hdrs;
-    uint32_t email_hdrs_log_depth;
+    uint32_t memcap = DEFAULT_MIME_MEMCAP;;
+    char log_mailfrom = 0;
+    char log_rcptto = 0;
+    char log_filename = 0;
+    char log_email_hdrs = 0;
+    uint32_t email_hdrs_log_depth = 0;
 };
 
 /* State tracker for data */
@@ -163,7 +163,7 @@ struct MimeState
     void* decode_state;
     MimeDataPafInfo mime_boundary;
     DecodeConfig* decode_conf;
-    MAIL_LogConfig* log_config;
+    MailLogConfig* log_config;
     MAIL_LogState* log_state;
     void* config;
     MimeMethods* methods;
@@ -185,7 +185,7 @@ static inline bool scanning_boundary(MimeDataPafInfo* mime_info, uint32_t bounda
 
 
 int log_file_name(const uint8_t* start, int length, FILE_LogState* log_state, bool* disp_cont);
-int set_log_buffers(MAIL_LogState** log_state, MAIL_LogConfig* conf);
+int set_log_buffers(MAIL_LogState** log_state, MailLogConfig* conf);
 void init_mime(void);
 void free_mime(void);
 const uint8_t* process_mime_data(Flow *flow, const uint8_t *start, const uint8_t *end,

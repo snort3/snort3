@@ -229,7 +229,7 @@ static void set_file_name_from_log(FILE_LogState* log_state, void* pv)
  *         -1: fail
  *
  */
-int set_log_buffers(MAIL_LogState** log_state, MAIL_LogConfig* conf)
+int set_log_buffers(MAIL_LogState** log_state, MailLogConfig* conf)
 {
     if ((*log_state == NULL)
         && (conf->log_email_hdrs || conf->log_filename

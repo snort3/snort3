@@ -23,7 +23,6 @@
 #define FILE_MIME_CONFIG_H
 
 // List of MIME decode and log configuration functions
-// FIXIT-L This will be refactored soon
 #include "snort_types.h"
 
 /*These are temporary values*/
@@ -68,11 +67,6 @@ private:
     void set_file_depth(int64_t);
     void update_max_depth(int64_t);
 };
-
-/* Function prototypes  */
-struct MAIL_LogConfig;
-void set_mime_log_config_defauts(MAIL_LogConfig*);
-bool is_mime_log_enabled(MAIL_LogConfig*);
 
 #endif
 

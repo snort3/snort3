@@ -130,7 +130,6 @@ POP_PROTO_CONF* PopModule::get_data()
 bool PopModule::begin(const char*, int, SnortConfig*)
 {
     config = new POP_PROTO_CONF;
-    file_api->set_mime_log_config_defauts(&(config->log_config));
 
     return true;
 }

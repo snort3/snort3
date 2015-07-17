@@ -116,7 +116,6 @@ int64_t DecodeConfig::get_file_depth()
     return file_depth;
 }
 
-
 int DecodeConfig::get_max_depth()
 {
     return max_depth;
@@ -148,23 +147,4 @@ void DecodeConfig::sync_all_depths()
 
     set_file_depth(file_depth);
 }
-
-void set_mime_log_config_defauts(MAIL_LogConfig* log_config)
-{
-    log_config->memcap = DEFAULT_MIME_MEMCAP;
-    log_config->log_filename = 0;
-    log_config->log_mailfrom = 0;
-    log_config->log_rcptto = 0;
-    log_config->log_email_hdrs = 0;
-    log_config->email_hdrs_log_depth = 0;
-}
-
-bool is_mime_log_enabled(MAIL_LogConfig* log_config)
-{
-    if (log_config->log_email_hdrs || log_config->log_filename ||
-        log_config->log_mailfrom || log_config->log_rcptto)
-        return true;
-    return false;
-}
-
 

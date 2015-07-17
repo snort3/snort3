@@ -127,7 +127,7 @@ struct SMTP_PROTO_CONF
     int max_header_line_len;
     int max_response_line_len;
     int xlink2state;
-    MAIL_LogConfig log_config;
+    MailLogConfig log_config;
     DecodeConfig decode_conf;
 
     uint32_t xtra_filename_id;

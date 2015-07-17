@@ -102,7 +102,7 @@ struct HTTPINSPECT_GLOBAL_CONF
     int memcap;
 
     DecodeConfig* decode_conf;
-    MAIL_LogConfig mime_conf;
+    MailLogConfig mime_conf;
 
     HTTPINSPECT_GLOBAL_CONF();
     ~HTTPINSPECT_GLOBAL_CONF();

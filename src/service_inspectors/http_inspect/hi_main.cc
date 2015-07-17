@@ -1149,8 +1149,6 @@ int HttpInspectInitializeGlobalConfig(HTTPINSPECT_GLOBAL_CONF* config)
     if (iRet)
         return iRet;
 
-    file_api->set_mime_log_config_defauts(&(config->mime_conf));
-
     return 0;
 }
 

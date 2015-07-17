@@ -38,7 +38,7 @@ public:
     void update_flow() override;
 private:
     // Dummy configurations to support MIME processing
-    MAIL_LogConfig mime_conf;
+    MailLogConfig mime_conf;
     DecodeConfig decode_conf;
 };
 

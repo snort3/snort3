@@ -109,7 +109,6 @@ void NHttpMsgHeader::update_flow()
                 // FIXIT-L Cannot use new because file_api insists on freeing the mime_state using
                 // free().
                 session_data->mime_state = (MimeState*) new_calloc(1, sizeof(MimeState));
-                file_api->set_mime_log_config_defauts(&mime_conf);
                 session_data->mime_state->log_config = &mime_conf;
                 session_data->mime_state->decode_conf = &decode_conf;
                 file_api->set_log_buffers(&session_data->mime_state->log_state,
