@@ -1,0 +1,23 @@
+Session Initiation Protocol (SIP) is an application-layer control
+(signaling) protocol for creating,   modifying, and terminating sessions
+with one or more participants.  These sessions include Internet telephone
+calls, multimedia distribution, and multimedia conferences. SIP inspector
+provides ways to tackle Common Vulnerabilities and Exposures (CVEs) related
+with SIP found over the past few years. It also makes detecting new attacks
+easier.
+
+SIP inspector scans the message headers and tracks dialogs.
+
+* Alert on malformed headers such as Call-ID, Via, To, From, CSeq,
+Contact, Content-Type, Content-length etc.
+
+* SIP is based on an HTTP-like request/response transaction model. SIP
+inspector tracks those dialogs in a linked list. To save memory, it tracks
+limited number of dialogs that can be configured.
+
+* SIP inspector also processes SDP (message body) to track media
+sessions.
+
+The media session information can help AppID identification and improves
+performance by ignoring those media flows.
+

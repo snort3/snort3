@@ -20,6 +20,9 @@
 #ifndef FRAMEWORK_CODEC_H
 #define FRAMEWORK_CODEC_H
 
+// Codec is a type of plugin that provides protocol-specific encoding and
+// decoding.
+
 #include <vector>
 #include <cstdint>
 #include <cstddef>

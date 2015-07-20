@@ -124,17 +124,17 @@ public:
     }
 
     int prep_patterns(
-        SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
+        SnortConfig* sc, MpseBuild build_tree, MpseNegate neg_list) override
     {
         return KTrieCompileWithSnortConf(sc, obj, build_tree, neg_list);
     }
 
     int _search(
-        const unsigned char* T, int n, mpse_action_f action,
+        const unsigned char* T, int n, MpseMatch match,
         void* data, int* current_state) override
     {
         *current_state = 0;
-        return KTrieSearchQ(obj, (unsigned char*)T, n, action, data);
+        return KTrieSearchQ(obj, (unsigned char*)T, n, match, data);
     }
 
     int get_pattern_count() override

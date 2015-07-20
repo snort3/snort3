@@ -16,23 +16,18 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-** Dan Roelker <droelker@sourcefire.com>
-** Marc Norton <mnorton@sourcefire.com>
-**
-** NOTES
-** 5.7.02 - Initial Sourcecode.  Norton/Roelker
-** 6/13/05 - marc norton
-**   Added plugin support for fast pattern match data
-*/
+
+// fp_create.h is derived from fpcreate.h by:
+//
+// Dan Roelker <droelker@sourcefire.com>
+// Marc Norton <mnorton@sourcefire.com>
+
 #ifndef FPCREATE_H
 #define FPCREATE_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+// this is where rule groups are compiled and MPSE are instantiated
 
-#include "pcrm.h"
+#include "detection/pcrm.h"
 #include "target_based/snort_protocols.h"
 
 struct SnortConfig;

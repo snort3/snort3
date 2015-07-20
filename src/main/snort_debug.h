@@ -21,6 +21,11 @@
 #ifndef SNORT_DEBUG_H
 #define SNORT_DEBUG_H
 
+// this provides a set of flags that can be set by environment variable to
+// turn on the output of specific debug messages.
+//
+// FIXIT-L this needs to be replaced with a module facility.
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -36,7 +41,7 @@
 #include <wchar.h>
 #endif
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 
 // this env var uses the lower 32 bits of the flags:
 #define DEBUG_VARIABLE "SNORT_DEBUG"

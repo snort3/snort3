@@ -17,17 +17,19 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
-**  @file        detection_options.h
-**  @author      Steven Sturges
-**  @brief       Support functions for rule option tree
-**
-**  This implements tree processing for rule options, evaluating common
-**  detection options only once per pattern match.
-*/
+// detection_options.h author Steven Sturges <ssturges@cisco.com>
 
 #ifndef DETECTION_OPTIONS_H
 #define DETECTION_OPTIONS_H
+
+// Support functions for rule option tree
+//
+// This implements tree processing for rule options, evaluating common
+// detection options only once per pattern match.
+//
+// These trees are instantiated at parse time, one per MPSE match state.
+// Eval, profiling, and ppm data are attached in an array sized per max
+// packet threads.
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -42,6 +44,7 @@ struct SFXHASH;
 
 typedef int (* eval_func_t)(void* option_data, class Cursor&, Packet*);
 
+// this is per packet thread
 struct dot_node_state_t
 {
     int result;
@@ -79,6 +82,7 @@ struct detection_option_tree_node_t
     dot_node_state_t* state;
 };
 
+// this is per packet thread
 #ifdef PPM_MGR
 struct dot_root_state_t
 {
@@ -130,5 +134,5 @@ void free_detection_option_root(void** existing_tree);
 detection_option_tree_node_t* new_node(option_type_t type, void* data);
 void free_detection_option_tree(detection_option_tree_node_t* node);
 
-#endif /* DETECTION_OPTIONS_H */
+#endif
 

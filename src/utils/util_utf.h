@@ -20,11 +20,15 @@
 #ifndef UTIL_UTF_H
 #define UTIL_UTF_H
 
-/* return codes */
+// Some UTF-{16,32}{le,be} normalization functions
+
+// FIXIT-L: Should get rid of these and change dependent return types to bool
+// return codes
 #define DECODE_UTF_SUCCESS 0
 #define DECODE_UTF_FAILURE -1
 
-/* character set types */
+// FIXIT-L: Should be an enum
+// Character set types 
 #define CHARSET_DEFAULT 0
 #define CHARSET_UTF7 1
 #define CHARSET_UTF16LE 2
@@ -33,26 +37,29 @@
 #define CHARSET_UTF32BE 5
 #define CHARSET_UNKNOWN 255
 
-/* Since payloads don't have to end on 2/4-byte boundaries, callers to
-   DecodeUTF are responsible for keeping a decode_utf_state_t. This carries
-   state between subsequent calls. */
+// Since payloads don't have to end on 2/4-byte boundaries, callers to
+// DecodeUTF are responsible for keeping a decode_utf_state_t. This carries
+// state between subsequent calls.
 typedef struct decode_utf_state
 {
     int state;
     int charset;
 } decode_utf_state_t;
 
-/* Init & Terminate functions for decode_utf_state_t. */
+// Init & Terminate functions for decode_utf_state_t
 int init_decode_utf_state(decode_utf_state_t*);
 int term_decode_utf_state(decode_utf_state_t*);
 
-/* setters & getters */
+// setters & getters
 int set_decode_utf_state_charset(decode_utf_state_t* dstate, int charset);
 int get_decode_utf_state_charset(decode_utf_state_t* dstate);
 
-/* UTF-Decoding function prototypes */
-int DecodeUTF(char* src, unsigned int src_len, char* dst, unsigned int dst_len, int* bytes_copied,
-    decode_utf_state_t* dstate);
+// UTF-Decoding function prototypes
+int DecodeUTF(
+    char* src, unsigned int src_len, char* dst, unsigned int dst_len,
+    int* bytes_copied,
+    decode_utf_state_t* dstate
+);
 
-#endif /* UTIL_UTF_H */
+#endif
 

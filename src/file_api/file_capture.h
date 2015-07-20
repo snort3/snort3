@@ -16,16 +16,20 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
- **
- **  Author(s):  Hui Cao <huica@cisco.com>
- **
- **  NOTES
- **  5.05.2013 - Initial Source Code. Hui Cao
- */
+
+// file_capture.h author Hui Cao <huica@cisco.com>
 
 #ifndef FILE_CAPTURE_H
 #define FILE_CAPTURE_H
+
+// There are several steps for file capture:
+// 1) To improve performance, file data are stored in file mempool first by
+//    calling file_capture_process() during file data processing.
+// 2) If file capture is needed, file_capture_reserve() should be called to
+//    allow file data remains in mempool. Even if a session is closed, the file
+//     data will stay in the mempool.
+// 3) Then file data can be read through file_capture_read()
+// 4) Finally, fila data must be released from mempool file_capture_release()
 
 #include "file_api.h"
 #include "libs/file_lib.h"
@@ -62,104 +66,46 @@ typedef struct _File_Capture_Stats
 
 extern File_Capture_Stats file_capture_stats;
 
-/*
- * Initialize the file memory pool
- *
- * Arguments:
- *    int64_t max_file_mem: memcap in bytes
- *    int64_t block_size:  file block size
- *
- * Returns: NONE
- */
+// this must be called during snort init
 void file_capture_init_mempool(int64_t max_file_mem, int64_t block_size);
 
-/*
- * Capture file data to local buffer
- * This is the main function call to enable file capture
- *
- * Arguments:
- *   FileContext* context: current file context
- *   uint8_t *file_data: current file data
- *   int data_size: current file data size
- *   FilePosition position: position of file data
- *
- * Returns:
- *   0: successful
- *   1: fail to capture the file or file capture is disabled
- */
+// Capture file data to local buffer
+// This is the main function call to enable file capture
+// Returns:
+//   0: successful
+//   1: fail to capture the file or file capture is disabled
 int file_capture_process(FileContext* context,
     uint8_t* file_data, int data_size, FilePosition position);
 
-/*
- * Stop file capture, memory resource will be released if not reserved
- *
- * Returns: NONE
- */
+// Stop file capture, memory resource will be released if not reserved
 void file_capture_stop(FileContext* context);
 
-/*
- * Preserve the file in memory until it is released
- *
- * Arguments:
- *   Flow *ssnptr: flow pointer
- *   FileCaptureInfo **file_mem: the pointer to store the memory block
- *       that stores file and its metadata.
- *       It will set  NULL if no memory or fail to store
- *
- * Returns:
- *   FileCaptureState:
- *      FILE_CAPTURE_SUCCESS = 0,
- *      FILE_CAPTURE_MIN,
- *      FILE_CAPTURE_MAX,
- *      FILE_CAPTURE_MEMCAP,
- *      FILE_CAPTURE_FAIL
- */
+// Preserve the file in memory until it is released
 FileCaptureState file_capture_reserve(Flow* flow, FileCaptureInfo** file_mem);
 
-/*
- * Get the file that is reserved in memory
- *
- * Arguments:
- *   FileCaptureInfo *file_mem: the memory block working on
- *   uint8_t **buff: address to store buffer address
- *   int *size: address to store size of file
- *
- * Returns:
- *   the next memory block
- *   NULL: end of file or fail to get file
- */
+// Get the file that is reserved in memory, this should be called repeatedly
+// until NULL is returned to get the full file
+// Returns:
+//   the next memory block
+//   NULL: end of file or fail to get file
 FileCaptureInfo* file_capture_read(FileCaptureInfo* file_mem, uint8_t** buff, int* size);
 
-/*
- * Get the file size captured in the file buffer
- *
- * Arguments:
- *   FileCaptureInfo *file_mem: the first memory block of file buffer
- *
- * Returns:
- *   the size of file
- *   0: no memory or fail to get file
- */
+// Get the file size captured in the file buffer
+// Returns:
+//   the size of file
+//   0: no memory or fail to get file
 size_t file_capture_size(FileCaptureInfo* file_mem);
 
-/*
- * Release the file that is reserved in memory, this function might be
- * called in a different thread.
- *
- * Arguments:
- *   FileCaptureInfo *data: the memory block that stores file and its metadata
- */
+// Release the file that is reserved in memory, this function might be
+// called in a different thread.
 void file_capture_release(FileCaptureInfo* data);
 
-/*Log file capture mempool usage*/
-
+// Log file capture mempool usage
 void file_capture_mem_usage(void);
 
-/*
- *  Exit file capture, release all file capture memory etc,
- *  this must be called when snort exits
- */
-void file_caputure_close(void);
+// Exit file capture, release all file capture memory etc,
+// this must be called when snort exits
+ void file_caputure_close(void);
 
 #endif
 

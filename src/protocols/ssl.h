@@ -27,6 +27,10 @@
 #ifndef SSL_H
 #define SSL_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <ctype.h>
 #include <stdlib.h>
 
@@ -138,52 +142,52 @@
 #pragma pack(1)
 #endif
 
-typedef struct _SSL_record
+struct SSL_record_t
 {
     uint8_t type;
     uint8_t major;
     uint8_t minor;
     uint16_t length;
-} SSL_record_t;
+};
 
 #define SSL_REC_PAYLOAD_OFFSET (sizeof(uint8_t) * 5)
 
-typedef struct _SSL_heartbeat
+struct SSL_heartbeat
 {
     uint8_t type;
     uint16_t length;
-} SSL_heartbeat;
+};
 
-typedef struct _SSL_handshake
+struct SSL_handshake_t
 {
     uint8_t type;
     uint8_t length[3];
-} SSL_handshake_t;
+};
 
-typedef struct _SSL_handshake_hello
+struct SSL_handshake_hello_t
 {
     uint8_t type;
     uint8_t length[3];
     uint8_t major;
     uint8_t minor;
-} SSL_handshake_hello_t;
+};
 
 // http://www.mozilla.org/projects/security/pki/nss/ssl/draft02.html
-typedef struct _SSLv2_record
+struct SSLv2_record_t
 {
     uint16_t length;
     uint8_t type;
-} SSLv2_record_t;
+};
 
-typedef struct _SSLv2_chello
+struct SSLv2_chello_t
 {
     uint16_t length;
     uint8_t type;
     uint8_t major;
     uint8_t minor;
-} SSLv2_chello_t;
+};
 
-typedef struct _SSLv2_shello
+struct SSLv2_shello_t
 {
     uint16_t length;
     uint8_t type;
@@ -191,7 +195,7 @@ typedef struct _SSLv2_shello
     uint8_t certtype;
     uint8_t major;
     uint8_t minor;
-} SSLv2_shello_t;
+};
 
 #define SSL_V2_MIN_LEN 5
 

@@ -16,23 +16,25 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-** Dan Roelker <droelker@sourcefire.com>
-** Marc Norton <mnorton@sourcefire.com>
-**
-** NOTES
-** 5.15.02 - Initial Source Code. Norton/Roelker
-*/
+
+// fp_detect.h is derived from fpdetect.h by:
+//
+// Dan Roelker <droelker@sourcefire.com>
+// Marc Norton <mnorton@sourcefire.com>
 
 #ifndef FPDETECT_H
 #define FPDETECT_H
+
+// this is where the high-level fast pattern matching action is
+// rule groups are selected based on traffic and any fast pattern
+// matches trigger rule tree evaluation.
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "fp_create.h"
-#include "snort_debug.h"
+#include "detection/fp_create.h"
+#include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "time/profiler.h"
 #include "utils/sflsq.h"
@@ -68,13 +70,13 @@ int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports);
 **  and iMatchIndex gets set to the event that holds the
 **  highest priority.
 */
-typedef struct
+struct MATCH_INFO
 {
     OptTreeNode* MatchArray[MAX_EVENT_MATCH];
     int iMatchCount;
     int iMatchIndex;
     int iMatchMaxLen;
-}MATCH_INFO;
+};
 
 /*
 **  OTNX_MATCH_DATA
@@ -85,7 +87,7 @@ typedef struct
 **  the event to log based on the event comparison
 **  function.
 */
-typedef struct
+struct OTNX_MATCH_DATA
 {
     PortGroup* pg;
     Packet* p;
@@ -93,7 +95,7 @@ typedef struct
 
     MATCH_INFO* matchInfo;
     int iMatchInfoArraySize;
-} OTNX_MATCH_DATA;
+};
 
 void otnx_match_data_init(int);
 void otnx_match_data_term();
@@ -101,8 +103,9 @@ void otnx_match_data_term();
 int fpAddMatch(OTNX_MATCH_DATA* omd_local, int pLen, OptTreeNode* otn);
 OptTreeNode* GetOTN(uint32_t gid, uint32_t sid);
 
-#define TO_SERVER 1
-#define TO_CLIENT 0
+/* counter for number of times we evaluate rules.  Used to
+ * cache result of check for rule option tree nodes. */
+extern THREAD_LOCAL uint64_t rule_eval_pkt_count;
 
 #endif
 

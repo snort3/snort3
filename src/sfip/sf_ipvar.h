@@ -26,6 +26,9 @@
 #ifndef SF_IPVAR_H
 #define SF_IPVAR_H
 
+// Supports basic IP variable operations
+// Manages a doubly linked list of IP variables for the variable table
+
 /* Flags */
 #define SFIP_NEGATED  1
 #define SFIP_ANY      2

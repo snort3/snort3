@@ -1,5 +1,6 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2011-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,23 +17,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-
-/************************************************************************
- *
- * smtp_xlink2state.c
- *
- * Author: Andy  Mullican
- *
- * Description:
- *
- * This file handles the X-Link2State vulnerability.
- *
- * Entry point function:
- *
- *    ParseXLink2State()
- *
- *
- ************************************************************************/
+// smtp_xlink2state.c author Andy  Mullican
+// This file handles the X-Link2State vulnerability.
 
 #include "smtp_xlink2state.h"
 

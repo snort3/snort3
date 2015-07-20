@@ -1,0 +1,22 @@
+Flows are preallocated at startup and stored in protocol specific caches.
+FlowKey is used for quick look up in the cache hash table.
+
+Each flow may have associated inspectors:
+
+* clouseau is the Wizard bound to the flow to help determine the
+  appropriate service inspector
+
+* gadget is the service inspector
+
+* data is a passive service inspector such as a client config.
+
+FlowData is used by various inspectors to store specific data on the flow
+for later use.  Any inspector may store data on the flow, not just clouseau
+gadget.
+
+FlowData reference counts the associated inspector so that the inspector
+can be freed (via garbage collection) after a reload.
+
+There are many flags that may be set on a flow to indicate session tracking
+state, disposition, etc.
+

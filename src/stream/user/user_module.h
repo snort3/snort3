@@ -20,9 +20,9 @@
 #ifndef USER_MODULE_H
 #define USER_MODULE_H
 
-#include "snort_types.h"
-#include "framework/module.h"
+#include "main/snort_types.h"
 #include "main/thread.h"
+#include "framework/module.h"
 #include "stream/stream.h"
 
 struct SnortConfig;

@@ -17,17 +17,12 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+// sfrf.h author Dilbagh Chahal <dchahal@sourcefire.com>
+
 #ifndef SFRF_H
 #define SFRF_H
-/* @file  sfrf.h
- * @brief rate filter implementation for Snort
- * @ingroup rate_filter
- * @author Dilbagh Chahal
- */
-/* @defgroup rate_filter sourcefire.rate_filter
- * Implements rate_filter feature for snort
- * @{
- */
+
+// Implements rate_filter feature for snort
 
 #include "main/policy.h"
 #include "actions/actions.h"

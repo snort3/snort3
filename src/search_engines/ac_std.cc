@@ -64,17 +64,17 @@ public:
     }
 
     int prep_patterns(
-        SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
+        SnortConfig* sc, MpseBuild build_tree, MpseNegate neg_list) override
     {
         return acsmCompile(sc, obj, build_tree, neg_list);
     }
 
     int _search(
-        const unsigned char* T, int n, mpse_action_f action,
+        const unsigned char* T, int n, MpseMatch match,
         void* data, int* current_state) override
     {
         return acsmSearch(
-            obj, (unsigned char*)T, n, action, data, current_state);
+            obj, (unsigned char*)T, n, match, data, current_state);
     }
 
     int print_info() override
@@ -111,14 +111,11 @@ static void ac_dtor(Mpse* p)
 static void ac_init()
 {
     acsmx_init_xlatcase();
-    // TBD this was never implemented for acsmx (only acsmx2)
-    //acsm_init_summary();
 }
 
 static void ac_print()
 {
-    // TBD this was apparently partly cloned from acsmx2 and never finished
-    //acsmPrintSummaryInfo();
+    acsmPrintSummaryInfo();
 }
 
 static const MpseApi ac_api =

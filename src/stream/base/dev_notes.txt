@@ -1,0 +1,14 @@
+This directory contains the implementation of the base Stream preprocessor
+module.  This module is implemented as a subclass of Inspector and
+implements the following capabilities:
+
+* entry point for Stream evaluation of a packet
+
+* stream global configuration management
+
+* stream statistics management.
+
+Each protocol (or packet source) stream supports is implemented as its own
+Inspector and the base class delegates the actual evaluation of a packet to
+the specific module.
+

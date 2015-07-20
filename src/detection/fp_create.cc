@@ -1206,9 +1206,9 @@ static int fpCreatePortTablePortGroups(
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("%d Port Groups in Port Table\n",p->pt_mpo_hash->count);
 
-    for (node=sfghash_findfirst(p->pt_mpo_hash); //p->pt_mpxo_hash
+    for (node=sfghash_findfirst(p->pt_mpo_hash); // p->pt_mpxo_hash
         node;
-        node=sfghash_findnext(p->pt_mpo_hash) ) //p->pt->mpxo_hash
+        node=sfghash_findnext(p->pt_mpo_hash) ) // p->pt->mpxo_hash
     {
         PortObject2* po = (PortObject2*)node->data;
 
@@ -1456,7 +1456,7 @@ void fpWalkOtns(int enabled, OtnWalkFcn fcn)
 
             if ( is_network_protocol(rtn->proto) )
             {
-                //do operation
+                // do operation
                 if ( enabled && !otn->enabled )
                     continue;
 

@@ -21,7 +21,7 @@
 #ifndef STREAM_MODULE_H
 #define STREAM_MODULE_H
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "framework/module.h"
 #include "flow/flow_control.h"
 

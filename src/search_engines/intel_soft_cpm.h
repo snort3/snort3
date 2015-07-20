@@ -20,12 +20,13 @@
 #ifndef INTEL_SOFT_CPM_H
 #define INTEL_SOFT_CPM_H
 
-#include "cpa.h"
-#include "pm/cpa_pm.h"
-#include "cpa_types.h"
-#include "snort_debug.h"
+#include <cpa.h>
+#include <pm/cpa_pm.h>
+#include <cpa_types.h>
 
-/* DATA TYPES *****************************************************************/
+#include "main/snort_debug.h"
+#include "search_common.h"
+
 typedef struct _IntelPmPattern
 {
     void* user_data;
@@ -41,7 +42,7 @@ typedef struct _IntelPmPattern
 } IntelPmPattern;
 
 struct SnortConfig;
-struct _IntelPmHandles;
+
 typedef struct _IntelPm
 {
     Cpa16U patternGroupId;
@@ -49,14 +50,14 @@ typedef struct _IntelPm
     CpaPmSessionCtx sessionCtx;
 
     /* Temporary data for building trees */
-    int (* build_tree)(SnortConfig*, void* id, void** existing_tree);
-    int (* neg_list_func)(void* id, void** list);
+    MpseBuild build_tree;
+    MpseNegate neg_list_func;
 
     void* match_queue;
 
     /* Temporary data for match callback */
     void* data;
-    MpseCallback match;
+    MpseMatch match;
 
     void (* user_free)(void*);
     void (* option_tree_free)(void**);
@@ -69,7 +70,6 @@ typedef struct _IntelPm
     struct _IntelPmHandles* handles;
 } IntelPm;
 
-/* PROTOTYPES *****************************************************************/
 void IntelPmStartInstance(void);
 void IntelPmStopInstance(void);
 
@@ -79,7 +79,7 @@ void* IntelPmNew(
     void (* option_tree_free)(void** p),
     void (* neg_list_free)(void** p));
 
-void IntelPmDelete(IntelPm* ipm);
+void IntelPmDelete(IntelPm*);
 
 int IntelPmAddPattern(
     SnortConfig* sc,
@@ -92,23 +92,20 @@ int IntelPmAddPattern(
     int pat_id);
 
 int IntelPmFinishGroup(
-    SnortConfig*,
-    IntelPm* ipm,
-    int (* build_tree)(SnortConfig*, void* id, void** existing_tree),
-    int (* neg_list_func)(void* id, void** list));
+    SnortConfig*, IntelPm*, MpseBuild, MpseNegate);
 
 void IntelPmCompile(SnortConfig*);
 void IntelPmActivate(SnortConfig*);
 void IntelPmDeactivate(void);
 
 int IntelPmSearch(
-IntelPm *ipm, unsigned char* buffer, int buffer_len, MpseCallback, void* data);
+    IntelPm*, unsigned char* buffer, int buffer_len, MpseMatch, void* data);
 
-int IntelGetPatternCount(IntelPm* ipm);
-int IntelPmPrintInfo(IntelPm* ipm);
+int IntelGetPatternCount(IntelPm*);
+int IntelPmPrintInfo(IntelPm*);
 void IntelPmPrintSummary(SnortConfig*);
 void IntelPmPrintBufferStats(void);
 int IntelPmRelease(struct _IntelPmHandles*);
 
-#endif  /* INTEL_SOFT_CPM_H */
+#endif
 

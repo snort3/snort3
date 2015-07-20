@@ -20,10 +20,17 @@
 #ifndef FILE_DECOMP_SWF_H
 #define FILE_DECOMP_SWF_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <zlib.h>
 #ifdef HAVE_LZMA
 #include <lzma.h>
 #endif
+
+/* FIXIT-L Other than the API prototypes, the other parts of this header should
+   be private to file_decomp_swf. */
 
 /* Both ZLIB & LZMA files have an uncompressed eight byte header.  The signature is
    three bytes.  The header consists of a three byte sig, a one byte version,
@@ -67,10 +74,13 @@ typedef struct fd_SWF_s
 
 /* API Functions */
 
+/* Initialize the SWF file decompressor */
 fd_status_t File_Decomp_Init_SWF(fd_session_p_t SessionPtr);
 
+/* Process the file incrementally */
 fd_status_t File_Decomp_SWF(fd_session_p_t SessionPtr);
 
+/* End the SWF file decompression */
 fd_status_t File_Decomp_End_SWF(fd_session_p_t SessionPtr);
 
 #endif

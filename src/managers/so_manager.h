@@ -20,11 +20,10 @@
 #ifndef SO_MANAGER_H
 #define SO_MANAGER_H
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+// Factory for shared object rules.
+// Runtime is same as for text rules.
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "framework/base_api.h"
 #include "framework/so_rule.h"
 

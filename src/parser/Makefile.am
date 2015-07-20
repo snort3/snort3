@@ -13,7 +13,6 @@ parse_stream.cc parse_stream.h \
 parse_utils.cc parse_utils.h \
 cmd_line.cc cmd_line.h \
 config_file.cc config_file.h \
-keywords.h \
 mstring.cc mstring.h \
 vars.cc vars.h
 

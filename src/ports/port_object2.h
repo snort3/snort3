@@ -22,10 +22,6 @@
 #ifndef PORT_OBJECT2_H
 #define PORT_OBJECT2_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "framework/bits.h"
 #include "hash/sfghash.h"
 #include "utils/sflsq.h"
@@ -38,6 +34,7 @@ struct PortObject;
 
 struct PortObject2
 {
+    // FIXIT convert char* to C++ string
     char* name;                 /* user name - always use strdup or malloc for this*/
     int id;                     /* internal tracking - compiling sets this value */
 
@@ -47,6 +44,8 @@ struct PortObject2
     int port_cnt;               /* count of ports using this object */
     PortBitSet* port_list;      /* for collecting ports that use this object */
 
+    // FIXIT-L convert from void* to PortGroup* and
+    // call dtor instead of needing free func
     void* data;                 /* user data, PortGroup based on rule_hash  */
     void (* data_free)(void*);
 };

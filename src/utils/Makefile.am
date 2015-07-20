@@ -17,7 +17,6 @@ util.h
 libutils_a_SOURCES = \
 boyer_moore.cc boyer_moore.h \
 dyn_array.cc dyn_array.h \
-ring.h ring_logic.h \
 segment_mem.cc \
 sf_base64decode.cc sf_base64decode.h \
 sf_email_attach_decode.cc sf_email_attach_decode.h \

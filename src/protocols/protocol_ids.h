@@ -22,9 +22,9 @@
 
 /*****************************************************************
  *****  NOTE:   Protocols are only included in this file when ****
- *****          their IDs are needed throughout multipled     ****
- *****          files.  If a protocol ID is only need in one  ****
- *****          file, define that number as a                 ****
+ *****          their IDs are needed throughout multiple      ****
+ *****          files.  If a protocol ID is only needed in    ****
+ *****          one file, define that number as a             ****
  *****          static const uint16_t ID_NAME = ZZZZ          ****
  *****          in the specific file.                         ****
  ****************************************************************/

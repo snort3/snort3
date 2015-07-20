@@ -63,17 +63,17 @@ public:
     }
 
     int prep_patterns(
-        SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
+        SnortConfig* sc, MpseBuild build_tree, MpseNegate neg_list) override
     {
         return acsmCompile2(sc, obj, build_tree, neg_list);
     }
 
     int _search(
-        const unsigned char* T, int n, mpse_action_f action,
+        const unsigned char* T, int n, MpseMatch match,
         void* data, int* current_state) override
     {
         return acsmSearchSparseDFA_Banded(
-            obj, (unsigned char*)T, n, action, data, current_state);
+            obj, (unsigned char*)T, n, match, data, current_state);
     }
 
     int print_info() override

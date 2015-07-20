@@ -17,130 +17,96 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+// sfrim.c author Marc Norton
+// modified to use a vector w/o a hard max
+
 #include "sfrim.h"
 
-/*
- *   sfrim.c
- *
- *   Rule Index Map
- *
- *   author: marc norton
- *
- */
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-/*
- * Return Sid associated with index
- * author: marc norton
- */
-unsigned RuleIndexMapSid(rule_index_map_t* map, int index)
-{
-    if ( !map )
-        return 0;
+#include <vector>
 
-    if ( index < map->num_rules )
-    {
-        return map->map[index].sid;
-    }
-    return 0;
+#include "utils/util.h"
+
+struct rule_number_t
+{
+    unsigned gid;
+    unsigned sid;
+
+    rule_number_t(unsigned g, unsigned s)
+    { gid = g; sid = s; }
+};
+
+struct rule_index_map_t
+{
+    std::vector<rule_number_t> map;
+};
+
+rule_index_map_t* RuleIndexMapCreate()
+{
+    rule_index_map_t* rim = new rule_index_map_t;
+    return rim;
 }
 
-/*
- * Return Gid associated with index
- * author: marc norton
- */
-unsigned RuleIndexMapGid(rule_index_map_t* map, int index)
+void RuleIndexMapFree(rule_index_map_t* rim)
 {
-    if ( !map )
-    {
-        return 0;
-    }
-    if ( index < map->num_rules )
-    {
-        return map->map[index].gid;
-    }
-    return 0;
+    assert(rim);
+    delete rim;
 }
 
-/*
- * Create a rule index map table
- * author: marc norton
- */
-rule_index_map_t* RuleIndexMapCreate(int max_rules)
+int RuleIndexMapAdd(rule_index_map_t* rim, unsigned gid, unsigned sid)
 {
-    rule_index_map_t* p = (rule_index_map_t*)calloc(1, sizeof(rule_index_map_t) );
-    if (!p)
-    {
-        return 0;
-    }
-    p->max_rules=max_rules;
-    p->num_rules=0;
-    p->map = (rule_number_t*)calloc(max_rules, sizeof(rule_number_t));
-    if (!p->map )
-    {
-        free(p);
-        return 0;
-    }
-    return p;
-}
+    assert(rim);
 
-/*
- * Free a rule index map table
- * author: marc norton
- */
-void RuleIndexMapFree(rule_index_map_t** p)
-{
-    if ( !p || !*p )
-    {
-        return;
-    }
-    if ( (*p)->map )
-    {
-        free((*p)->map);
-    }
-    free(*p);
-
-    *p = 0;
-}
-
-/*
- * Add a rule to a rule index map table
- * author: marc norton
- */
-int RuleIndexMapAdd(rule_index_map_t* p, unsigned gid, unsigned sid)
-{
-    int index;
-
-    if ( !p )
-    {
-        return -1;
-    }
-    if ( p->num_rules == (p->max_rules - 1) )
-    {
-        return -1;
-    }
-    index = p->num_rules;
-    p->map[ index ].gid = gid;
-    p->map[ index ].sid = sid;
-    p->num_rules++;
+    rule_number_t rn(gid, sid);
+    int index = rim->map.size();
+    rim->map.push_back(rn);
 
     //printf("RuleIndexMapping: index=%d gid=%u sid=%u\n",index,gid,sid);
     return index;
 }
 
-/*
- * print a rule index map table to stdout
- * author: marc norton
- */
-void print_rule_index_map(rule_index_map_t* p)
+unsigned RuleIndexMapSid(rule_index_map_t* rim, int index)
 {
-    int i;
-    printf("***\n*** Rule Index Map (%d entries)\n***\n",p->num_rules);
-    for (i=0; i<p->num_rules; i++)
+    if ( rim and (unsigned)index < rim->map.size() )
     {
-        printf("rule-index-map[%d] { gid:%u sid:%u }\n",i,p->map[i].gid,p->map[i].sid);
+        return rim->map[index].sid;
+    }
+    return 0;
+}
+
+unsigned RuleIndexMapGid(rule_index_map_t* rim, int index)
+{
+    assert(rim);
+
+    if ( (unsigned)index < rim->map.size() )
+    {
+        return rim->map[index].gid;
+    }
+    return 0;
+}
+
+void print_rule_index_map(rule_index_map_t* rim)
+{
+    assert(rim);
+    printf("***\n*** Rule Index Map (%lu entries)\n***\n",rim->map.size());
+
+    for (unsigned i=0; i<rim->map.size(); i++)
+    {
+        printf("rule-index-map[%d] { gid:%u sid:%u }\n",
+            i,rim->map[i].gid,rim->map[i].sid);
     }
     printf("***end rule index map ***\n");
+}
+
+void rule_index_map_print_index(rule_index_map_t* rim, int index, char* buf, int bufsize)
+{
+    if ( (unsigned)index < rim->map.size() )
+    {
+        SnortSnprintfAppend(buf, bufsize, "%u:%u ",
+            rim->map[index].gid, rim->map[index].sid);
+    }
 }
 

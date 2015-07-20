@@ -57,7 +57,7 @@
 #include "hi_util_kmap.h"
 #include "hi_util_xmalloc.h"
 #include "hi_cmd_lookup.h"
-#include "hi_paf.h"
+#include "hi_stream_splitter.h"
 
 #include "profiler.h"
 #include "detection_util.h"

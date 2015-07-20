@@ -42,7 +42,6 @@ public:
 };
 } // namespace
 
-// raw packets are predetermined to be ip4 (above) or ip6 (below) by the DLT
 bool Raw6Codec::decode(const RawData&, CodecData& data, DecodeData&)
 {
     data.next_prot_id = ETHERTYPE_IPV6;

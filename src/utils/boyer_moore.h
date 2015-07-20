@@ -21,9 +21,11 @@
 #ifndef BOYER_MOORE_H
 #define BOYER_MOORE_H
 
-#include "main/snort_types.h"
-// boyer_moore.h was split out of mstring.h
+// Boyer-Moore pattern matching routines
 
+#include "main/snort_types.h"
+
+// FIXIT-M: No associated resource destructor for make_skip & make_shift :(
 int* make_skip(char*, int);
 int* make_shift(char*, int);
 int mSearch(const char*, int, const char*, int, int*, int*);

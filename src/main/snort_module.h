@@ -21,6 +21,9 @@
 #ifndef SNORT_MODULE_H
 #define SNORT_MODULE_H
 
+// the snort module is for handling command line args,
+// shell commands, and basic application stats
+
 class Module* get_snort_module();
 
 #endif

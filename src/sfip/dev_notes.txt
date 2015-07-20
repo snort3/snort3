@@ -1,0 +1,9 @@
+This directory contains IP and IP variables related helper functions.
+
+* Supports basic IP operations and helper functions
+
+* Provides variable table for storing and looking up variables
+
+* Supports basic IP variable operations and manages a list of IP variables 
+   through variable table
+

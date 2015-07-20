@@ -20,6 +20,9 @@
 #ifndef MODULE_MANAGER_H
 #define MODULE_MANAGER_H
 
+// Factory for Modules, including all builtin and plugin modules.
+// Modules are strictly used during parse time.
+
 #include <string>
 
 //-------------------------------------------------------------------------
@@ -42,6 +45,7 @@ public:
     static void show_modules();
     static void show_module(const char*);
 
+    // output for matching module name; prefix is sufficient if not exact
     static void show_configs(const char* = nullptr, bool exact = false);
     static void show_commands(const char* = nullptr, bool exact = false);
     static void show_gids(const char* = nullptr, bool exact = false);

@@ -21,10 +21,12 @@
 #ifndef IPS_FLOW_H
 #define IPS_FLOW_H
 
-int OtnFlowFromServer(OptTreeNode* otn);
-int OtnFlowFromClient(OptTreeNode* otn);
-int OtnFlowIgnoreReassembled(OptTreeNode* otn);
-int OtnFlowOnlyReassembled(OptTreeNode* otn);
+struct OptTreeNode;
+
+int OtnFlowFromServer(OptTreeNode*);
+int OtnFlowFromClient(OptTreeNode*);
+int OtnFlowIgnoreReassembled(OptTreeNode*);
+int OtnFlowOnlyReassembled(OptTreeNode*);
 
 #endif
 

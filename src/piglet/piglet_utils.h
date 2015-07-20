@@ -20,6 +20,8 @@
 #ifndef PIGLET_UTILS_H
 #define PIGLET_UTILS_H
 
+// Miscellaneous data objects used for the piglet test harness
+
 #include <chrono>
 #include <string>
 #include <vector>

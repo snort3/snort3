@@ -19,7 +19,9 @@
 #ifndef SEARCH_COMMON_H
 #define SEARCH_COMMON_H
 
-typedef int (* MpseCallback)(void* id, void* tree, int index, void* data, void* neg_list);
+typedef int (* MpseBuild)(struct SnortConfig*, void* id, void** existing_tree);
+typedef int (* MpseNegate)(void* id, void** list);
+typedef int (* MpseMatch)(void* id, void* tree, int index, void* data, void* neg_list);
 
 #endif
 

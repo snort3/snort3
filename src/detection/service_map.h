@@ -18,17 +18,15 @@
 //--------------------------------------------------------------------------
 
 // service_map.h based fp_create.h by:
-/*
-** Dan Roelker <droelker@sourcefire.com>
-** Marc Norton <mnorton@sourcefire.com>
-**
-** NOTES
-** 5.7.02 - Initial Sourcecode.  Norton/Roelker
-** 6/13/05 - marc norton
-**   Added plugin support for fast pattern match data
-*/
+//
+// Dan Roelker <droelker@sourcefire.com>
+// Marc Norton <mnorton@sourcefire.com>
+
 #ifndef SERVICE_MAP_H
 #define SERVICE_MAP_H
+
+//  for managing rule groups by service
+//  direction to client and to server are separate
 
 #include <vector>
 

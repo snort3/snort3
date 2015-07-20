@@ -20,6 +20,8 @@
 #ifndef VALUE_H
 #define VALUE_H
 
+// Value is used to represent Lua bool, number, and string.
+
 #include <string.h>
 
 #include <algorithm>

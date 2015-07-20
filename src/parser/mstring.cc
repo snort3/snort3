@@ -18,27 +18,6 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/***************************************************************************
- *
- * File: MSTRING.C
- *
- * Purpose: Provide a variety of string functions not included in libc.  Makes
- *          up for the fact that the libstdc++ is hard to get reference
- *          material on and I don't want to write any more non-portable c++
- *          code until I have solid references and libraries to use.
- *
- * History:
- *
- * Date:      Author:  Notes:
- * ---------- ------- ----------------------------------------------
- *  08/19/98    MFR    Initial coding begun
- *  03/06/99    MFR    Added Boyer-Moore pattern match routine, don't use
- *                     mContainsSubstr() any more if you don't have to
- *  12/31/99	JGW    Added a full Boyer-Moore implementation to increase
- *                     performance. Added a case insensitive version of mSearch
- *  07/24/01    MFR    Fixed Regex pattern matcher introduced by Fyodor
- *
- **************************************************************************/
 #include "mstring.h"
 
 #ifdef HAVE_CONFIG_H

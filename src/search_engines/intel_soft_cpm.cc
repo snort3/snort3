@@ -367,10 +367,7 @@ int IntelPmAddPattern(
 }
 
 int IntelPmFinishGroup(
-    SnortConfig* sc,
-    IntelPm* ipm,
-    int (* build_tree)(SnortConfig*, void* id, void** existing_tree),
-    int (* neg_list_func)(void* id, void** list))
+    SnortConfig* sc, IntelPm* ipm, MpseBuild build_tree, MpseNegate net_list_func)
 {
     Cpa32U sessionCtxSize;
     CpaPmSessionProperty sessionProperty;

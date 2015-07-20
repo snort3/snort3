@@ -1,0 +1,15 @@
+IPS actions allow you to execute custom responses to events.
+Unlike loggers, these are invoked before thresholding and can be used to
+control external agents (including loggers).
+
+IPS rules have an associated type that determines what kind of action they
+trigger. The rule types defined in this module are:
+
+* log
+* pass
+* alert
+* drop
+* block
+* reset
+
+There is also a "none" rule type, which is a no-op.

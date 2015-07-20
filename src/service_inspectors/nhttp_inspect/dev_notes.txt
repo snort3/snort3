@@ -1,0 +1,83 @@
+This is the new Snort HTTP inspector. The old Snort HTTP preprocessor has also
+been ported to Snort++ and will be maintained until NHttpInspect is finished.
+At that time NHttpInspect will be renamed HttpInspect and the old HttpInspect
+will be retired. Meanwhile the abbreviations HI and NHI are sometimes used when
+it is important to distinguish the two modules.
+
+HI and NHI are not intended to be used together. Only configure one of them
+at a time.
+
+NHI is divided into two major parts. The NHttpStreamSplitter (splitter) accepts
+TCP payload data from Stream and subdivides it into message sections.
+NHttpInspect (inspector) processes individual message sections.
+
+Unlike other inspectors NHI has an empty eval() member. All processing is done
+by the inspector process() member which is called directly from splitter
+reassemble(). Thus the data flow for processing a message section is one or
+more calls to splitter scan(), followed by one or more calls to splitter
+reassemble(), the last of which calls process(). The reassembled buffer
+returned to the framework is already ready for detection and the subsequent
+eval() call does nothing.
+
+NHttpFlowData is a data class representing all NHI information relating to a
+flow. It serves as persistent memory between invocations of NHI by the
+framework. It also glues together the inspector, the client-to-server splitter,
+and the server-to-client splitter which pass information through the flow data.
+
+Message section is a core concept of NHI. A message section is a piece of an
+HTTP message that is processed together. There are six types of message
+section:
+
+1. Request line (client-to-server start line)
+2. Status line (server-to-client start line)
+3. Headers (all headers after the start line as a group)
+4. Message body (a block of message data usually not much larger than 16K)
+5. Chunked message body (same but from a chunked body)
+6. Trailers (all header lines following a chunked body as a group)
+
+Message sections are represented by message section objects that contain and
+process them. There are nine message section classes that inherit as follows.
+An asterisk denotes a virtual class.
+
+1. NHttpMsgSection* - top level with all common elements
+2. NHttpMsgStart* : NHttpMsgSection - common elements of request and status
+3. NHttpMsgRequest : NHttpMsgStart
+4. NHttpMsgStatus : NHttpMsgStart
+5. NHttpMsgHeadShared* : NHttpMsgSection - common elements of header and trailer
+6. NHttpMsgHeader : NHttpMsgHeadShared
+7. NHttpMsgTrailer : NHttpMsgHeadShared
+8. NHttpMsgBody : NHttpMsgSection - message body processing in general
+9. NHttpMsgChunk : NHttpMsgBody - special features of chunked bodies
+
+An NHttpTransaction is a container that keeps all the sections of a message
+together and associates the request message with the response message.
+Transactions may be organized into pipelines when an HTTP pipeline is present.
+The current transaction and any pipeline live in the flow data. A transaction
+may have only a request because the response is not (yet) received or only a
+response because the corresponding request is unknown or unavailable.
+
+The attach_my_transaction() factory method contains all the logic that makes
+this work. There are many corner cases. Don't mess with it until you fully
+understand it.
+
+Message sections implement the Just-In-Time (JIT) principle for work products.
+A mimimum of essential processing is done under process(). Other work products
+are derived and stored the first time detection or some other customer asks for
+them. The Field class is an important tool for managing JIT. It consists of a
+pointer to a raw message field or derived work product with a length field.
+Various negative length values specify the status of the field. For instance
+STAT_NOTCOMPUTE means the item has not been computed yet, STAT_NOTPRESENT
+means the item does not exist, and STAT_PROBLEMATIC means an attempt to compute
+the item failed. Never dereference the pointer without first checking the
+length value.
+
+All of these values and more are in nhttp_enums.h which is a general repository
+for enumerated values in NHI.
+
+The NHI internal test tool is the NHttpTestInput class. It allows the developer
+to write tests that simulate HTTP messages split into TCP segments at specified
+points. The tests cover all of splitter and inspector and the impact on
+downstream customers such as detection and file processing. A growing set of
+tests is maintained in nhttp_test_msgs.txt. Read the header of that file for
+documentation of how to write tests.
+

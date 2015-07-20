@@ -1,0 +1,14 @@
+The idea of a target-based system is to model the actual targets on the
+network instead of merely modeling the protocols and looking for attacks
+within them.  When TCP/IP stacks are written for different operating
+systems, they are usually implemented by people who read the RFCs and then
+their interpretation of what the RFC outlines into code.  Unfortunately,
+there are ambiguities in the way that the RFCs define some of the edge
+conditions that may occur and when this happens different people implement
+certain aspects of their TCP/IP stacks differently.  For an IDS this is a
+big problem.
+
+The basic idea behind target-based IDS is that we tell the IDS information
+about hosts on the network so that it can avoid attacks based on information
+about how an individual target TCP/IP stack operates.
+

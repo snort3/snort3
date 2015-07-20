@@ -21,6 +21,12 @@
 #ifndef MANAGERS_CODEC_MANAGER_H
 #define MANAGERS_CODEC_MANAGER_H
 
+// Factory for Codecs.  Runtime support is provided by PacketManager.
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <array>
 #include <string>
 #include <vector>
@@ -73,7 +79,7 @@ class CodecManager
 public:
     friend class PacketManager;
 
-    // global plugin initializer. Called by LUA to add register codecs
+    // global plugin initializer
     static void add_plugin(const struct CodecApi*);
     // instantiate a specific codec with a codec specific Module
     static void instantiate(const CodecApi*, Module*, SnortConfig*);

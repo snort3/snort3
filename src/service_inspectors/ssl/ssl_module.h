@@ -21,6 +21,8 @@
 #ifndef SSL_MODULE_H
 #define SSL_MODULE_H
 
+// Interface to the SSL service inspector
+
 #include "framework/module.h"
 #include "framework/bits.h"
 #include "main/thread.h"
@@ -66,4 +68,3 @@ private:
 };
 
 #endif
-

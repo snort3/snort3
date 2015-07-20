@@ -17,6 +17,8 @@
 //--------------------------------------------------------------------------
 // packet_manager.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
+#include "protocols/packet_manager.h"
+
 #include <vector>
 #include <cstring>
 #include <mutex>
@@ -26,7 +28,6 @@
 
 #include "framework/codec.h"
 #include "managers/codec_manager.h"
-#include "protocols/packet_manager.h"
 #include "main/snort_config.h"
 #include "main/thread.h"
 #include "log/messages.h"

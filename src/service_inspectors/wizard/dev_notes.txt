@@ -1,0 +1,39 @@
+The wizard uses hexes and spells to determine the most likely service on a
+flow.  It does not determine the service with certainty; that is the job of
+the service inspector or appId.  The goal is to get the most likely service
+inspector engaged as quickly as possible.
+
+For TCP, the wizard uses a stream splitter to examine the in order data as
+it becomes available.  If the splitter finds a match, it sets the service
+on the flow which will result in a reevaluation of the bindings.  If a
+service inspector is bound, its spliter is activated and the stream is
+rewound to the start.
+
+The wizard is deactivated from the flow upon finding a match or finding
+that there is no possible match.
+
+Hexes, which support binary protocol matching, and spells, which support
+text protocol matching, are similar but deliberately different:
+
+* spells allow wild cards matching any number of consecutive characters
+  whereas hexes allow a single wild char.
+
+* spells are case insensitive whereas hexes are case sensitive.
+
+* spells automatically skip leading whitespace (at very start of flow).
+
+Binary protocols are difficult to match with just a short stream prefix.
+For example suppose one has the pattern "0x12 ?" and another has "? 0x34".
+A match on the first doesn't preclude a match on the second.  The current
+implementation disregards this possibility and takes the first match.
+
+Having the various service inspectors provide the patterns was rejected
+because it would have made it difficult to swap out the wizard with a new
+and different implementation and different pattern logic and syntax.
+Encapsulating everything in the wizard allows the patterns to be easily
+tweaked as well.
+
+The current implementation of the magic is very straightforward.  Due to
+the limited number of patterns, space is not a concern and each state has
+256 byte array of pointers to the next.
+

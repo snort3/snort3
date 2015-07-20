@@ -17,14 +17,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/* @file  sfrf.c
- * @brief rate filter implementation for Snort
- * @ingroup rate_filter
- * @author Dilbagh Chahal
- */
-/* @ingroup rate_filter
- * @{
- */
+// sfrf.cc author Dilbagh Chahal <dchahal@sourcefire.com>
+// rate filter implementation for Snort
 
 #include "sfrf.h"
 

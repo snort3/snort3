@@ -17,12 +17,11 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+// hi_stream_splitter.c author Russ Combs <rcombs@sourcefire.com>
+
 //--------------------------------------------------------------------
 // hi stuff
 //
-// @file    hi_paf.c
-// @author  Russ Combs <rcombs@sourcefire.com>
-
 // the goal is to perform the minimal http paf parsing required for
 // correctness while maintaining loose coupling with hi proper:
 
@@ -44,7 +43,7 @@
 // * Range, Content-Range, and multipart
 //--------------------------------------------------------------------
 
-#include "hi_paf.h"
+#include "hi_stream_splitter.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

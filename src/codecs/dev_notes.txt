@@ -1,0 +1,6 @@
+This directory contains all of the codecs used for parsing raw fields contained
+within captured frames. The codecs contained do not perform processing beyond
+basic per-frame validation. They handle protocols from link layer through
+transport.
+
+Codecs here conform to the API defined by src/framework/codec.h.

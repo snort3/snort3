@@ -1,0 +1,23 @@
+Implement a large group of packet normalizations.  See normalize.h for the
+entire set.  If enabled/configured, examine each packet and make required
+modifications.
+
+The primary utility is to 'repair' protocol issues and provide a cleaner
+packet to the downstream network.  This ensures that packets that Snort
+passes have the best likelihood of reaching their destination since
+otherwise attackers could craft packets that facilitate evasions.  The
+normalizations are done before any related inspection and detection by
+Snort.
+
+Process IP4, IP6, ICMP4, ICMP6, and TCP protocols.  No UDP nor Ethernet
+level normalizations currently exist.
+
+Maintain activity counts and print these counts as part of the Snort exit
+(or on-demain) counts.
+
+If inline and able to perform packet replacement, replace the normalized
+packet in the output stream.
+
+Note that TCP stream normalizations are done within the stream_tcp module.
+The configuration is done together with the above normalizations, however.
+

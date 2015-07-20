@@ -20,6 +20,8 @@
 #ifndef PIGLET_RUNNER_H
 #define PIGLET_RUNNER_H
 
+// Test runner
+
 #include "piglet_utils.h"
 
 namespace Piglet

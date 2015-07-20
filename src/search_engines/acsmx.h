@@ -18,31 +18,25 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
-**   ACSMX.H
-**
-**
-*/
+// acsmx.h author Marc Norton
+
+#ifndef ACSMX_H
+#define ACSMX_H
+
+// version 1
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "snort_types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "main/snort_types.h"
 #include "search_common.h"
 
-#ifndef ACSMX_H
-#define ACSMX_H
-
-/*
-*   Prototypes
-*/
-
 #define ALPHABET_SIZE    256
-
 #define ACSM_FAIL_STATE   -1
 
 typedef struct _acsm_userdata
@@ -109,21 +103,11 @@ ACSM_STRUCT* acsmNew(void (* userfree)(void* p),
 int acsmAddPattern(ACSM_STRUCT* p, const uint8_t* pat, unsigned n,
     bool nocase, bool negative, void* id, int iid);
 
-int acsmCompile(ACSM_STRUCT* acsm,
-    int (* build_tree)(void* id, void** existing_tree),
-    int (* neg_list_func)(void* id, void** list));
-
-struct SnortConfig;
-
-int acsmCompile(
-    SnortConfig*,
-    ACSM_STRUCT* acsm,
-    int (* build_tree)(SnortConfig*, void* id, void** existing_tree),
-    int (* neg_list_func)(void* id, void** list));
+int acsmCompile(struct SnortConfig*, ACSM_STRUCT* acsm, MpseBuild, MpseNegate);
 
 int acsmSearch (
-ACSM_STRUCT * acsm,unsigned char* T, int n, MpseCallback,
-void* data, int* current_state);
+    ACSM_STRUCT * acsm,unsigned char* T, int n, MpseMatch,
+    void* data, int* current_state);
 
 void acsmFree(ACSM_STRUCT* acsm);
 int acsmPatternCount(ACSM_STRUCT* acsm);

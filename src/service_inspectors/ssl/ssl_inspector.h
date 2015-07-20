@@ -15,19 +15,15 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-//
-
-/*
- * ssl.h: Definitions, structs, function prototype(s) for
- *		the SSL service inspectors.
- */
 
 #ifndef SSL_INSPECTOR_H
 #define SSL_INSPECTOR_H
 
+// Implementation header with definitions, datatypes and flowdata class for SSL service inspector.
+
 #include "protocols/packet.h"
 #include "stream/stream_api.h"
-#include "profiler.h"
+#include "time/profiler.h"
 #include "ssl_config.h"
 
 #define SSLPP_ENCRYPTED_FLAGS \
@@ -79,9 +75,9 @@ public:
     static unsigned flow_id;
     SSLData session;
 };
-
+//Function: API to get the ssl flow data from the packet flow.
 SSLData* get_ssl_session_data(Flow* flow);
+
 void SSL_InitGlobals(void);
 
-#endif /* SSL_INSPECTOR_H */
-
+#endif

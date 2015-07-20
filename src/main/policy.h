@@ -20,6 +20,12 @@
 #ifndef SNORT_POLICY_H
 #define SNORT_POLICY_H
 
+// the following policy types are defined:
+//
+// -- network - for packet handling
+// -- inspection - for flow handling
+// -- ips - for rule handling
+
 #include <string>
 #include <vector>
 

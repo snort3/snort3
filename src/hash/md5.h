@@ -4,10 +4,16 @@
  * -- moved #endif for !MD5_H to end of file
  * -- added include stdint.h
  * -- added typedef for __u32
+ * -- added config.h foo
  */
 
 #ifndef MD5_H
 #define MD5_H
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef HEADER_MD5_H
 /* Try to avoid clashes with OpenSSL */
 #define HEADER_MD5_H
@@ -50,5 +56,5 @@ void hmac_md5_final(unsigned char* digest, struct HMACMD5Context* ctx);
 /* void hmac_md5(unsigned char key[16], unsigned char *data, int data_len,
             unsigned char *digest);*/
 
-#endif              /* !MD5_H */
+#endif
 

@@ -24,6 +24,20 @@
 #ifndef MODULE_H
 #define MODULE_H
 
+// Module provides a data-driven way to manage much of Snort++.  For
+// example, it provides an interface to configured components.  There is at
+// most one instance of a Module at any time.  A given module instance is
+// used to configure all related components.  As such it stores data only
+// for the sake of constructing the next component instance.
+//
+// Module will set all parameter defaults immediately after calling
+// begin() so defaults should not be explicitly set in begin() or a ctor
+// called by begin, except as needed for infrastructure and sanity.
+//
+// Note that there are no internal default lists.  Put appropriate default
+// lists in snort_defaults.lua or some such.  Each list item, however, will
+// have any defaults applied.
+
 #include <vector>
 #include <luajit-2.0/lua.hpp>
 

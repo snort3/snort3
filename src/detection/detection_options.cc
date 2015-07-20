@@ -372,8 +372,6 @@ int add_detection_option_tree(
     return DETECTION_OPTION_NOT_EQUAL;
 }
 
-THREAD_LOCAL uint64_t rule_eval_pkt_count = 0;
-
 int detection_option_node_evaluate(
     detection_option_tree_node_t* node, detection_option_eval_data_t* eval_data,
     Cursor& orig_cursor)

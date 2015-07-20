@@ -16,20 +16,11 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-//
 
-/*
- * DNS preprocessor
- * Author: Chris Sherwin
- * Contributors: Adam Keeton, Ryan Jordan
- *
- *
- * Alert for Gobbles, CRC32, protocol mismatch (Cisco catalyst vulnerability),
- * and a SecureCRT vulnerability.  Will also alert if the client or server
- * traffic appears to flow the wrong direction, or if packets appear
- * malformed/spoofed.
- *
- */
+// dns.cc author Steven Sturges
+// Alert for DNS client rdata buffer overflow.
+// Alert for Obsolete or Experimental RData types (per RFC 1035)
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

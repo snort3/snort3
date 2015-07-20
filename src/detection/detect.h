@@ -18,7 +18,6 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*  I N C L U D E S  ************************************************/
 #ifndef DETECT_H
 #define DETECT_H
 
@@ -26,17 +25,16 @@
 #include "config.h"
 #endif
 
-#include "snort_debug.h"
-#include "protocols/packet.h"
-#include "rules.h"
-#include "treenodes.h"
-#include "parser.h"
-#include "profiler.h"
-#include "log.h"
-#include "event.h"
+#include "main/snort_debug.h"
 #include "main/snort_types.h"
+#include "protocols/packet.h"
+#include "detection/rules.h"
+#include "detection/treenodes.h"
+#include "parser/parser.h"
+#include "time/profiler.h"
+#include "log/log.h"
+#include "events/event.h"
 
-/*  P R O T O T Y P E S  ******************************************************/
 extern SO_PUBLIC THREAD_LOCAL int do_detect;
 extern SO_PUBLIC THREAD_LOCAL int do_detect_content;
 
@@ -84,10 +82,6 @@ static inline void DisableInspection(Packet*)
 {
     do_detect = do_detect_content = 0;
 }
-
-/* counter for number of times we evaluate rules.  Used to
- * cache result of check for rule option tree nodes. */
-extern THREAD_LOCAL uint64_t rule_eval_pkt_count;
 
 #endif
 

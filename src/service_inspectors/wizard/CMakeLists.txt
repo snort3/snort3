@@ -5,7 +5,6 @@ set(FILE_LIST
     hexes.cc
     spells.cc
     wizard.cc
-    wizard.h
     wiz_module.cc
     wiz_module.h
 )

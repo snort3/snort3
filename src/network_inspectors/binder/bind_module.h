@@ -21,6 +21,8 @@
 #ifndef BIND_MODULE_H
 #define BIND_MODULE_H
 
+// binder management interface
+
 #include <vector>
 
 #include "framework/module.h"
@@ -50,6 +52,7 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
+    // used to create default binder
     void add(const char* service, const char* type);
     void add(unsigned proto, const char* type);
 

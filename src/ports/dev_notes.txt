@@ -1,5 +1,21 @@
-These comments are from the original sfportobject.c from which ports/ is
-derived.
+Port groups actually refer to a groups of rules based on ports (and
+protocol and direction) only.  The idea is that when we get a packet, say
+going to tcp port 80, we can select an MPSE instance for fast pattern
+matching.  We then need to fully evaluate only rules with matching fast
+patterns.  (Of course, any tcp destination port 80 rules w/o fast patterns
+must be evaluated as well, but the hope is there are very few if any of
+those rules.) Because there are many possible ports with related traffic,
+port groups are typically based on a collection of related ports, eg 80 and
+8080 for HTTP.
+
+When services came along, port groups were used for rules grouped by
+service as well as by ports.  (Note that ports and service considerations
+are not intermixed.)  Thus we could combine the fast patterns of all HTTP
+traffic to the server into one "port group" and select that instead of
+selecting an MPSE by port.
+
+The following comments are from the original sfportobject.c from which
+ports/ is derived.
 
 author:  marc norton
 date:    11/05/2005
@@ -23,14 +39,14 @@ cause all rules in all port-rule groups to be merged into one set unless we
 apply a more complex logic than simply merging rule-port groups with common
 ports.  This is the problem addressed by the sfportobject module.
 
-== Port list examples of acceptable usage:
+*Port list examples of acceptable usage*
 
 * var has been overloaded, if it includes _port we add as a port-object
   also.
 
-var http_ports 80
-var http_range_ports 80:81
-var http_list_ports  [80,8080,8138]
+    var http_ports 80
+    var http_range_ports 80:81
+    var http_list_ports  [80,8080,8138]
 
 * portvar has been added to indicate portvariables, this form does not
   require _port
@@ -63,18 +79,18 @@ for these as that would then generate multiple large state machines for the
 multi-pattern matching phase of the detection engine which in turn
 could use a lot of memory.
 
-Turns out that one scheme, the one used herein, provides some blending
-of rule groups to minimize memory, and tries to minimize large group sizes
-to keep performance more optimal - although this is at the expense of memory.
+Turns out that one scheme, the one used herein, provides some blending of
+rule groups to minimize memory, and tries to minimize large group sizes to
+keep performance more optimal - although this is at the expense of memory.
 
-== Port variables
+*Port Variables*
 
 * Var has been overloaded. If it's name includes _port as part of the var
   name it is added to the PortVarTable.
 
 * PortVar has been added. These are always added to the PortVarTable.
 
-== Loading Port lists and rules
+*Loading Port Lists and Rules*
 
 * PortTables - we support src and dst tables for tcp/udp/icmp/ip rules.
 
@@ -92,7 +108,7 @@ the rules are done loading we should have a set of port-objects with
 port-lists that differ by at least one port.  The next step handles the
 cases where we have multiple port-objects with at least one common port.
 
-== Merging Ports and Rules
+*Merging Ports and Rules*
 
 We maintain for each port a list of port objects and their rules that apply
 to it. This allows us to view combining the rules associated with each port
@@ -109,7 +125,7 @@ port presents rules in one of four catagories:
 4. multiple port objects with large rule sets, and zero or more port objects
    each with a small set of rules associated with it.
 
-== We process these four categories as follows:
+We process these four categories as follows
 
 1. a single port object (large or small) do nothing, each port referencing
    this port object is complete.
@@ -140,7 +156,7 @@ port presents rules in one of four catagories:
  added to port groups.  Therefore generous statistics are printed after the
  rules and port objects are compiled into their final groupings.
 
-==  Procedure for using PortLists
+*Procedure for using PortLists*
 
 1. Process Var's as PortVar's and standard Var's (for now). This allows
    existing snort features to work, with the Var's.  Add in the PortVar
@@ -158,7 +174,7 @@ c. Test if this Port object exists already,
 *  If so, add the sid to it.
 *  If not add it ....
 
-== Notes
+*Notes*
 
 All any-any port rules are managed separately, and added in to the final
 rules lists of each port group after this analysis. Rules defined with
@@ -167,7 +183,7 @@ port-rule groupings.  This should help prevent some cross fertilization of
 rule groups with rules that are unneccessary, this causes rule group sizes
 to bloat and performance to slow.
 
-== Hierarchy:
+*Hierarchy*
 
     PortTable -> PortObject's
 

@@ -16,25 +16,23 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
- **
- **  Author(s):  Hui Cao <huica@cisco.com>
- **
- **  NOTES
- **  5.25.13 - Initial Source Code. Hui Cao
- */
+
+// file_stats.h author Hui Cao <huica@cisco.com>
 
 #ifndef FILE_STATS_H
 #define FILE_STATS_H
+
+#include <stdio.h>
+#include <stdlib.h>
+
+// FIXIT-L This will be refactored soon
 
 #include "target_based/snort_protocols.h"
 #include "target_based/sftarget_reader.h"
 
 #include "main/snort_debug.h"
 #include "libs/file_config.h"
-#include "file_api.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include "file_api/file_api.h"
 
 #define MAX_PROTOCOL_ORDINAL 8192  // FIXIT-L use std::vector and get_protocol_count()
 

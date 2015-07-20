@@ -27,8 +27,9 @@
 #ifndef PERF_EVENT_H
 #define PERF_EVENT_H
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 
+/* Raw event counters */
 typedef struct _SFEVENT
 {
     uint64_t NQEvents;
@@ -37,6 +38,7 @@ typedef struct _SFEVENT
     uint64_t TotalEvents;
 } SFEVENT;
 
+/* Processed event counters */
 typedef struct _SFEVENT_STATS
 {
     uint64_t NQEvents;

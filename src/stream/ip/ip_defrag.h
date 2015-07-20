@@ -21,9 +21,8 @@
 #ifndef IP_DEFRAG_H
 #define IP_DEFRAG_H
 
-// FIXIT-L integrate into stream api
-//int fpAddFragAlert(Packet *p, OptTreeNode *otn);
-//int fpFragAlerted(Packet *p, OptTreeNode *otn);
+// ip datagram reassembly
+
 int drop_all_fragments(Packet* p);
 int fragGetApplicationProtocolId(Packet* p);
 

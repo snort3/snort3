@@ -16,27 +16,26 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
- * smtp.h: Definitions, structs, function prototype(s) for
- *		the SMTP service inspectors.
- * Author: Bhagyashree Bantwal <bbantwal@cisco.com>
- */
+// smtp.h author Bhagyashree Bantwal <bbantwal@cisco.com>
 
 #ifndef SMTP_H
 #define SMTP_H
 
+// Implementation header with definitions, datatypes and flowdata class for
+// SMTP service inspector.
+
 #include "protocols/packet.h"
 #include "stream/stream_api.h"
 #include "main/thread.h"
-#include "profiler.h"
+#include "time/profiler.h"
 #include "smtp_config.h"
 
-/* Direction packet is coming from, if we can figure it out */
+// Direction packet is coming from, if we can figure it out
 #define SMTP_PKT_FROM_UNKNOWN  0
 #define SMTP_PKT_FROM_CLIENT   1
 #define SMTP_PKT_FROM_SERVER   2
 
-/* Inspection type */
+// Inspection type
 #define SMTP_STATELESS  0
 #define SMTP_STATEFUL   1
 
@@ -49,34 +48,29 @@
 #define BOUNDARY     0
 
 #define STATE_CONNECT          0
-#define STATE_COMMAND          1    /* Command state of SMTP transaction */
-#define STATE_DATA             2    /* Data state */
-#define STATE_BDATA            3    /* Binary data state */
-#define STATE_TLS_CLIENT_PEND  4    /* Got STARTTLS */
-#define STATE_TLS_SERVER_PEND  5    /* Got STARTTLS */
-#define STATE_TLS_DATA         6    /* Successful handshake, TLS encrypted data */
+#define STATE_COMMAND          1    // Command state of SMTP transaction
+#define STATE_DATA             2    // Data state
+#define STATE_BDATA            3    // Binary data state
+#define STATE_TLS_CLIENT_PEND  4    // Got STARTTLS
+#define STATE_TLS_SERVER_PEND  5    // Got STARTTLS
+#define STATE_TLS_DATA         6    // Successful handshake, TLS encrypted data 
 #define STATE_AUTH             7
 #define STATE_XEXCH50          8
 #define STATE_UNKNOWN          9
 
 #define STATE_DATA_INIT    0
-#define STATE_DATA_HEADER  1    /* Data header section of data state */
-#define STATE_DATA_BODY    2    /* Data body section of data state */
-#define STATE_MIME_HEADER  3    /* MIME header section within data section */
+#define STATE_DATA_HEADER  1    // Data header section of data state
+#define STATE_DATA_BODY    2    // Data body section of data state
+#define STATE_MIME_HEADER  3    // MIME header section within data section
 #define STATE_DATA_UNKNOWN 4
 
-/* state flags */
-#define SMTP_FLAG_GOT_MAIL_CMD               0x00000001
-#define SMTP_FLAG_GOT_RCPT_CMD               0x00000002
-#define SMTP_FLAG_BDAT                       0x00001000
-#define SMTP_FLAG_ABORT                      0x00002000
-/* state flags */
+// state flags
 #define SMTP_FLAG_GOT_MAIL_CMD               0x00000001
 #define SMTP_FLAG_GOT_RCPT_CMD               0x00000002
 #define SMTP_FLAG_BDAT                       0x00001000
 #define SMTP_FLAG_ABORT                      0x00002000
 
-/* session flags */
+// session flags
 #define SMTP_FLAG_XLINK2STATE_GOTFIRSTCHUNK  0x00000001
 #define SMTP_FLAG_XLINK2STATE_ALERTED        0x00000002
 #define SMTP_FLAG_NEXT_STATE_UNKNOWN         0x00000004
@@ -89,10 +83,7 @@
     SSL_BAD_TYPE_FLAG | \
     SSL_UNKNOWN_FLAG)
 
-/* Maximum length of header chars before colon, based on Exim 4.32 exploit */
-#define MAX_HEADER_NAME_LEN 64
-
-#define MAX_AUTH_NAME_LEN  20  /* Max length of SASL mechanisms, defined in RFC 4422 */
+#define MAX_AUTH_NAME_LEN  20  // Max length of SASL mechanisms, defined in RFC 4422
 
 enum SMTPRespEnum
 {
@@ -177,4 +168,3 @@ public:
 extern THREAD_LOCAL bool smtp_normalizing;
 
 #endif
-

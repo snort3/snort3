@@ -20,6 +20,8 @@
 #ifndef FRAMEWORK_RANGE_H
 #define FRAMEWORK_RANGE_H
 
+// RangeCheck supports common IpsOption evaluation syntax and semantics.
+
 #include "main/snort_types.h"
 
 // unfortunately, <> was implemented inconsistently.  eg:

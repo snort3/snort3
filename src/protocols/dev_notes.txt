@@ -1,0 +1,18 @@
+Headers for the various protocols processed by Snort.  Use these headers
+instead of directly accessing system headers.  Advantages:
+
+* the vagaries of required system includes are minimized and localized here
+
+* these headers are OO in nature and much more user friendly than the often
+  awkard system defined structs
+
+Packet, used throughout Snort, is defined here as well.  Packet represents
+a unit of work, essentially a buffer associated with a flow.  It does not
+necessarily represent a wire packet.
+
+* PktType indicates the general nature of the packet.  This may be the
+  transport protocol for wire packets, FILE for file data, or PDU for a
+  reassembled buffer.
+
+* proto_bits indicates the protocols present in the packet.
+

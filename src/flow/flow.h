@@ -16,14 +16,18 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+// flow.h author Russ Combs <rucombs@cisco.com>
+
 #ifndef FLOW_H
 #define FLOW_H
 
-#include <assert.h>
+// Flow is the object that captures all the data we know about a session,
+// including IP for defragmentation and TCP for desegmentation.  For all
+// protocols, it used to track connection status bindings, and inspector
+// state.  Inspector state is stored in FlowData, and Flow manages a list
+// of FlowData items.
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <assert.h>
 
 #include "utils/bitop.h"
 #include "sfip/sfip_t.h"

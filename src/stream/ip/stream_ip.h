@@ -17,11 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
- * @file    stream_ip.h
- * @author  Russ Combs <rcombs@sourcefire.com>
- *
- */
+// file stream_ip.h author Russ Combs <rcombs@sourcefire.com>
 
 #ifndef STREAM_IP_H
 #define STREAM_IP_H

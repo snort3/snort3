@@ -11,12 +11,14 @@ chunk.cc \
 chunk.h \
 directory.cc \
 directory.h \
+lua.cc \
+lua.h \
 markup.cc \
 markup.h \
 process.cc \
 process.h \
-swapper.h \
-lua.cc \
-lua.h
+ring.h \
+ring_logic.h \
+swapper.h
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

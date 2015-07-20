@@ -20,6 +20,8 @@
 #ifndef SWAPPER_H
 #define SWAPPER_H
 
+// used to make thread local, pointer-based config swaps by packet threads
+
 struct SnortConfig;
 struct tTargetBasedConfig;
 

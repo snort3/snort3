@@ -1,0 +1,15 @@
+Service inspectors are the modules that process individual upper-level
+protocols such as FTP, Telnet, SMTP, and HTTP.
+
+Service inspectors are often subdivided into two classes. The stream
+splitter accepts a stream of protocol data from the transport layer and
+segments it at the PDU boundaries. The inspector processes the resulting
+PDUs.
+
+The wizard is a special service inspector that examines the beginning of a
+data stream and decides what application protocol is present.
+
+http_inspect is the legacy Snort HTTP preprocessor ported to Snort\++ .
+nhttp_inspect is the complete rewrite being developed specifically for
+Snort++.
+

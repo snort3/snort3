@@ -44,9 +44,9 @@ using namespace std;
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "utils/util.h"
-#include "utils/ring.h"
 #include "utils/stats.h"
 #include "helpers/markup.h"
+#include "helpers/ring.h"
 #include "parser/parser.h"
 
 #ifndef SIGNAL_SNORT_RELOAD

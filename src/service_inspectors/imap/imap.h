@@ -15,53 +15,37 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-//
 
-/*
- * imap.h: Definitions, structs, function prototype(s) for
- * Author: Bhagyashree Bantwal <bbantwal@cisco.com>
- */
+// imap.h author Bhagyashree Bantwal <bbantwal@cisco.com>
 
 #ifndef IMAP_H
 #define IMAP_H
 
+// Implementation header with definitions, datatypes and flowdata class for
+// IMAP service inspector.
+
 #include "protocols/packet.h"
 #include "stream/stream_api.h"
-#include "profiler.h"
+#include "time/profiler.h"
 #include "imap_config.h"
-/* Direction packet is coming from, if we can figure it out */
+
+// Direction packet is coming from, if we can figure it out
 #define IMAP_PKT_FROM_UNKNOWN  0
 #define IMAP_PKT_FROM_CLIENT   1
 #define IMAP_PKT_FROM_SERVER   2
 
-#define SEARCH_CMD       0
-#define SEARCH_RESP      1
-#define SEARCH_HDR       2
-#define SEARCH_DATA_END  3
-#define NUM_SEARCHES  4
-
-#define BOUNDARY     0
-
-#define STATE_DATA             0    /* Data state */
-#define STATE_TLS_CLIENT_PEND  1    /* Got STARTTLS */
-#define STATE_TLS_SERVER_PEND  2    /* Got STARTTLS */
-#define STATE_TLS_DATA         3    /* Successful handshake, TLS encrypted data */
+#define STATE_DATA             0    // Data state
+#define STATE_TLS_CLIENT_PEND  1    // Got STARTTLS
+#define STATE_TLS_SERVER_PEND  2    // Got STARTTLS
+#define STATE_TLS_DATA         3    // Successful handshake, TLS encrypted data
 #define STATE_COMMAND          4
 #define STATE_UNKNOWN          5
 
-#define STATE_DATA_INIT    0
-#define STATE_DATA_HEADER  1    /* Data header section of data state */
-#define STATE_DATA_BODY    2    /* Data body section of data state */
-#define STATE_MIME_HEADER  3    /* MIME header section within data section */
-#define STATE_DATA_UNKNOWN 4
-
-/* session flags */
+// session flags
 #define IMAP_FLAG_NEXT_STATE_UNKNOWN         0x00000004
 #define IMAP_FLAG_GOT_NON_REBUILT            0x00000008
 #define IMAP_FLAG_CHECK_SSL                  0x00000010
 
-/* Maximum length of header chars before colon, based on Exim 4.32 exploit */
-#define MAX_HEADER_NAME_LEN 64
 typedef enum _IMAPCmdEnum
 {
     CMD_APPEND = 0,
@@ -141,6 +125,7 @@ typedef enum _IMAPHdrEnum
     HDR_CONT_DISP,
     HDR_LAST
 } IMAPHdrEnum;
+
 struct IMAPSearch
 {
     const char* name;
@@ -152,13 +137,6 @@ struct IMAPToken
     const char* name;
     int name_len;
     int search_id;
-};
-
-struct IMAPCmdConfig
-{
-    char alert;                  /*  1 if alert when seen                          */
-    char normalize;              /*  1 if we should normalize this command         */
-    int max_line_len;            /*  Max length of this particular command         */
 };
 
 struct IMAPSearchInfo

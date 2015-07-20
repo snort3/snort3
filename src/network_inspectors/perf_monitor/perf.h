@@ -76,6 +76,7 @@ typedef struct _SFPERF
     uint32_t flowip_memcap;
 } SFPERF;
 
+/* The perf_monitor state information and collected statistics */
 SO_PUBLIC extern THREAD_LOCAL SFBASE sfBase;
 extern THREAD_LOCAL SFFLOW sfFlow;
 extern THREAD_LOCAL SFEVENT sfEvent;
@@ -96,6 +97,7 @@ void sfPerfStatsSummary(SFPERF*);
 void SetSampleTime(SFPERF*, Packet*);
 void InitPerfStats(SFPERF* sfPerf);
 
+/* functions to set & get the RotatePerfFileFlag */
 static inline void SetRotatePerfFileFlag(void)
 {
     perfmon_rotate_perf_file = 1;

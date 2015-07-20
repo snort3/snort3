@@ -30,7 +30,10 @@
 
 //-------------------------------------------------------------------------
 // Port Object Item supports
-// port, lowport:highport (inclusive), portlist
+// port, lowport:highport (inclusive)
+//
+// so it indicates a single port, a consecutive range of ports, or the any
+// port.  can also be negated.
 //-------------------------------------------------------------------------
 
 struct PortObjectItem

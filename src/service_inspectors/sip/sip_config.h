@@ -16,17 +16,18 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-//
 
-//Author: Hui Cao <huica@cisco.com>
+// sip_config.h author Hui Cao <huica@cisco.com>
 
 #ifndef SIP_CONFIG_H
 #define SIP_CONFIG_H
 
+// Configuration for SIP service inspector
+
 #include "protocols/packet.h"
-#include "sip_common.h"
 #include "framework/counts.h"
 #include "main/thread.h"
+#include "sip_common.h"
 
 #define SIP_METHOD_DEFAULT     0x003f
 #define SIP_METHOD_ALL     0xffffffff
@@ -66,9 +67,8 @@ struct SIP_Stats
 
 extern THREAD_LOCAL SIP_Stats sip_stats;
 
-/*
-   * Header fields and processing functions
-    */
+
+// Header fields and processing functions
 struct SIPMethod
 {
     const char* name;
@@ -87,47 +87,40 @@ struct SIPMethodNode
 
 typedef SIPMethodNode* SIPMethodlist;
 
-/*
-* SIP configuration.
-*
-* maxNumSessions: Maximum amount of run-time memory
-* methods: Which methods to check
-* maxUriLen: Maximum requst_URI size
-* maxCallIdLen: Maximum call_ID size.
-* maxRequestNameLen: Maximum length of request name in the CSeqID.
-* maxFromLen: Maximum From field size
-* maxToLen: Maximum To field size
-* maxViaLen: Maximum Via field size
-* maxContactLen: Maximum Contact field size
-* maxContentLen: Maximum Content length
-* ignoreChannel: Whether to ignore media channels found by SIP PP
-*/
+// SIP configuration.
+
 struct SIP_PROTO_CONF
 {
-    uint32_t maxNumSessions;
+    uint32_t maxNumSessions; // Maximum amount of run-time memory
     uint32_t maxNumDialogsInSession;
     uint32_t methodsConfig;
-    SIPMethodlist methods;
-    uint16_t maxUriLen;
-    uint16_t maxCallIdLen;
-    uint16_t maxRequestNameLen;
-    uint16_t maxFromLen;
-    uint16_t maxToLen;
-    uint16_t maxViaLen;
-    uint16_t maxContactLen;
-    uint16_t maxContentLen;
-    uint8_t ignoreChannel;
+    SIPMethodlist methods;   // Which methods to check
+    uint16_t maxUriLen;      // Maximum requst_URI size
+    uint16_t maxCallIdLen;   // Maximum call_ID size.
+    uint16_t maxRequestNameLen;  // Maximum length of request name in the CSeqID.
+    uint16_t maxFromLen;     // Maximum From field size
+    uint16_t maxToLen;       // Maximum To field size
+    uint16_t maxViaLen;      // Maximum Via field size
+    uint16_t maxContactLen;  // Maximum Contact field size
+    uint16_t maxContentLen;  // Maximum Content length
+    uint8_t ignoreChannel;   // Whether to ignore media channels found by SIP PP
 };
 
+// API to parse method list
 void SIP_ParseMethods(
     const char* cur_tokenp, uint32_t* methodsConfig, SIPMethodlist* pmethods);
 
+// Sets the Default method lists
 void SIP_SetDefaultMethods(SIP_PROTO_CONF* config);
+
+// API to find a method
 int SIP_findMethod(char* token, SIPMethod* methods);
 
+// API to add a user defined method to SIP config
 SIPMethodNode* SIP_AddUserDefinedMethod(
     const char* methodName, uint32_t* methodsConfig, SIPMethodlist* pmethods);
 
+// API to delete a method from SIP config
 void SIP_DeleteMethods(SIPMethodNode*);
 
 #endif

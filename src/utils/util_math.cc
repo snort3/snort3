@@ -29,7 +29,10 @@
  */
 
 #include "util_math.h"
-#include "snort_types.h"
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 /**
  * Calculate the percentage of something.

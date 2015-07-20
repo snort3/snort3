@@ -17,7 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*!@file sfxhash.c
+/* sfxhash.c
  *
  *  A Customized hash table library for storing and accessing key + data pairs.
  *
@@ -101,9 +101,8 @@
 #include "sfprimetable.h"
 #include "hash/sfhashfcn.h"
 
-/**@defgroup sfxhash sourcefire.container.sfxhash
+/*
  * Implements SFXHASH as specialized hash container
- * @{
  */
 
 /*
@@ -150,24 +149,22 @@ int sfxhash_calcrows(int num)
 //  return sf_nearest_prime( nrows );
 }
 
-/*!
- *
+/*
  * Create a new hash table
  *
  * By default, this will "splay" nodes to the top of a free list.
  *
- * @param nrows    number of rows in hash table
- * @param keysize  key size in bytes, same for all keys
- * @param datasize datasize in bytes, zero indicates user manages data
- * @param maxmem   maximum memory to use in bytes
- * @param anr_flag Automatic Node Recovery boolean flag
- * @param anrfree  users Automatic Node Recovery memory release function
- * @param usrfree  users standard memory release function
+ * nrows    number of rows in hash table
+ * keysize  key size in bytes, same for all keys
+ * datasize datasize in bytes, zero indicates user manages data
+ * maxmem   maximum memory to use in bytes
+ * anr_flag Automatic Node Recovery boolean flag
+ * anrfree  users Automatic Node Recovery memory release function
+ * usrfree  users standard memory release function
  *
- * @return SFXHASH*
- * @retval  0 out of memory
- * @retval !0 Valid SFXHASH pointer
- *
+ * return SFXHASH*
+ * retval  0 out of memory
+ * retval !0 Valid SFXHASH pointer
  */
 /*
   Notes:
@@ -262,12 +259,12 @@ SFXHASH* sfxhash_new(int nrows, int keysize, int datasize, unsigned long maxmem,
     return h;
 }
 
-/*!
+/*
  *  Set the maximum nodes used in this hash table.
  *  Specifying 0 is unlimited (or otherwise limited by memcap).
  *
- * @param h SFXHASH table pointer
- * @param max_nodes maximum nodes to allow.
+ * h SFXHASH table pointer
+ * max_nodes maximum nodes to allow.
  *
  */
 void sfxhash_set_max_nodes(SFXHASH* h, int max_nodes)
@@ -281,8 +278,8 @@ void sfxhash_set_max_nodes(SFXHASH* h, int max_nodes)
 /*!
  *  Set Splay mode : Splays nodes to front of list on each access
  *
- * @param t SFXHASH table pointer
- * @param n boolean flag toggles splaying of hash nodes
+ * t SFXHASH table pointer
+ * n boolean flag toggles splaying of hash nodes
  *
  */
 void sfxhash_splaymode(SFXHASH* t, int n)
@@ -297,7 +294,7 @@ void sfxhash_splaymode(SFXHASH* t, int n)
  *  No need to call the user free, since that should've been
  *  done when those nodes were put back in the free list.
  *
- * @param h SFXHASH table pointer
+ * h SFXHASH table pointer
  */
 static void sfxhash_delete_free_list(SFXHASH* t)
 {
@@ -325,7 +322,7 @@ static void sfxhash_delete_free_list(SFXHASH* t)
  *
  *  free key's, free node's, and free the users data.
  *
- * @param h SFXHASH table pointer
+ * h SFXHASH table pointer
  *
  */
 void sfxhash_delete(SFXHASH* h)
@@ -367,9 +364,9 @@ void sfxhash_delete(SFXHASH* h)
 /*!
  *  Empty out the hash table
  *
- * @param h SFXHASH table pointer
+ * h SFXHASH table pointer
  *
- * @return -1 on error
+ * return -1 on error
  */
 int sfxhash_make_empty(SFXHASH* h)
 {
@@ -683,14 +680,14 @@ static SFXHASH_NODE* sfxhash_find_node_row(SFXHASH* t, const void* key, int* rin
  *
  *    This is done because of the successful find.
  *
- * @param t SFXHASH table pointer
- * @param key  users key pointer
- * @param data  users data pointer
+ * t SFXHASH table pointer
+ * key  users key pointer
+ * data  users data pointer
  *
- * @return integer
- * @retval SFXHASH_OK      success
- * @retval SFXHASH_INTABLE already in the table, t->cnode points to the node
- * @retval SFXHASH_NOMEM   not enough memory
+ * eturn integer
+ * retval SFXHASH_OK      success
+ * retval SFXHASH_INTABLE already in the table, t->cnode points to the node
+ * retval SFXHASH_NOMEM   not enough memory
  */
 static int sfxhash_add_ex(SFXHASH* t, const void* key, void* data, void** data_ptr)
 {
@@ -770,13 +767,13 @@ int sfxhash_add(SFXHASH* t, void* key, void* data)
  *
  *    This is done because of the successful find.
  *
- * @param t SFXHASH table pointer
- * @param key  users key pointer
+ * t SFXHASH table pointer
+ * key  users key pointer
  *
- * @return integer
- * @retval SFXHASH_OK      success
- * @retval SFXHASH_INTABLE already in the table, t->cnode points to the node
- * @retval SFXHASH_NOMEM   not enough memory
+ * return integer
+ * retval SFXHASH_OK      success
+ * retval SFXHASH_INTABLE already in the table, t->cnode points to the node
+ * retval SFXHASH_NOMEM   not enough memory
  */
 SFXHASH_NODE* sfxhash_get_node(SFXHASH* t, const void* key)
 {
@@ -837,11 +834,11 @@ SFXHASH_NODE* sfxhash_get_node(SFXHASH* t, const void* key)
 /*!
  * Find a Node based on the key
  *
- * @param t SFXHASH table pointer
- * @param key  users key pointer
+ * t SFXHASH table pointer
+ * key  users key pointer
  *
- * @return SFXHASH_NODE*   valid pointer to the hash node
- * @retval 0               node not found
+ * return SFXHASH_NODE*   valid pointer to the hash node
+ * retval 0               node not found
  *
  */
 SFXHASH_NODE* sfxhash_find_node(SFXHASH* t, const void* key)
@@ -854,11 +851,11 @@ SFXHASH_NODE* sfxhash_find_node(SFXHASH* t, const void* key)
 /*!
  * Find the users data based associated with the key
  *
- * @param t SFXHASH table pointer
- * @param key  users key pointer
+ * t SFXHASH table pointer
+ * key  users key pointer
  *
- * @return void*   valid pointer to the users data
- * @retval 0       node not found
+ * return void*   valid pointer to the users data
+ * retval 0       node not found
  *
  */
 void* sfxhash_find(SFXHASH* t, void* key)
@@ -877,9 +874,9 @@ void* sfxhash_find(SFXHASH* t, void* key)
 /**
  * Get the HEAD of the in use list
  *
- * @param t table pointer
+ * t table pointer
  *
- * @return the head of the list or NULL
+ * return the head of the list or NULL
  */
 SFXHASH_NODE* sfxhash_ghead(SFXHASH* t)
 {
@@ -894,9 +891,9 @@ SFXHASH_NODE* sfxhash_ghead(SFXHASH* t)
 /**
  * Walk the global list
  *
- * @param n current node
+ * n current node
  *
- * @return the next node in the list or NULL when at the end
+ * return the next node in the list or NULL when at the end
  */
 SFXHASH_NODE* sfxhash_gnext(SFXHASH_NODE* n)
 {
@@ -911,9 +908,9 @@ SFXHASH_NODE* sfxhash_gnext(SFXHASH_NODE* n)
 /**
  * Walk the global list
  *
- * @param n current node
+ * n current node
  *
- * @return the next node in the list or NULL when at the end
+ * return the next node in the list or NULL when at the end
  */
 SFXHASH_NODE* sfxhash_gfindnext(SFXHASH* t)
 {
@@ -928,9 +925,9 @@ SFXHASH_NODE* sfxhash_gfindnext(SFXHASH* t)
 /**
  * Get the HEAD of the in use list
  *
- * @param t table pointer
+ * t table pointer
  *
- * @return the head of the list or NULL
+ * return the head of the list or NULL
  */
 SFXHASH_NODE* sfxhash_gfindfirst(SFXHASH* t)
 {
@@ -948,10 +945,10 @@ SFXHASH_NODE* sfxhash_gfindfirst(SFXHASH* t)
 /*!
  * Return the most recently used data from the global list
  *
- * @param t SFXHASH table pointer
+ * t SFXHASH table pointer
  *
- * @return void*   valid pointer to the users data
- * @retval 0       node not found
+ * return void*   valid pointer to the users data
+ * retval 0       node not found
  *
  */
 void* sfxhash_mru(SFXHASH* t)
@@ -969,10 +966,10 @@ void* sfxhash_mru(SFXHASH* t)
 /*!
  * Return the least recently used data from the global list
  *
- * @param t SFXHASH table pointer
+ * t SFXHASH table pointer
  *
- * @return void*   valid pointer to the users data
- * @retval 0       node not found
+ * return void*   valid pointer to the users data
+ * retval 0       node not found
  *
  */
 void* sfxhash_lru(SFXHASH* t)
@@ -990,10 +987,10 @@ void* sfxhash_lru(SFXHASH* t)
 /*!
  * Return the most recently used node from the global list
  *
- * @param t SFXHASH table pointer
+ * t SFXHASH table pointer
  *
- * @return SFXHASH_NODE*   valid pointer to a node
- * @retval 0       node not found
+ * return SFXHASH_NODE*   valid pointer to a node
+ * retval 0       node not found
  *
  */
 SFXHASH_NODE* sfxhash_mru_node(SFXHASH* t)
@@ -1011,10 +1008,10 @@ SFXHASH_NODE* sfxhash_mru_node(SFXHASH* t)
 /*!
  * Return the least recently used node from the global list
  *
- * @param t SFXHASH table pointer
+ * t SFXHASH table pointer
  *
- * @return SFXHASH_NODE*   valid pointer to a node
- * @retval 0       node not found
+ * return SFXHASH_NODE*   valid pointer to a node
+ * retval 0       node not found
  *
  */
 SFXHASH_NODE* sfxhash_lru_node(SFXHASH* t)
@@ -1033,10 +1030,10 @@ SFXHASH_NODE* sfxhash_lru_node(SFXHASH* t)
  * Get some hash table statistics. NOT FOR REAL TIME USE.
  *
  *
- * @param t SFXHASH table pointer
- * @param filled how many
+ * t SFXHASH table pointer
+ * param filled how many
  *
- * @return max depth of the table
+ * return max depth of the table
  *
  */
 unsigned sfxhash_maxdepth(SFXHASH* t)
@@ -1093,11 +1090,11 @@ int sfxhash_free_node(SFXHASH* t, SFXHASH_NODE* hnode)
 /*!
  * Remove a Key + Data Pair from the table.
  *
- * @param t SFXHASH table pointer
- * @param key  users key pointer
+ * t SFXHASH table pointer
+ * key  users key pointer
  *
- * @return 0   success
- * @retval !0  failed
+ * return 0   success
+ * retval !0  failed
  *
  */
 int sfxhash_remove(SFXHASH* t, void* key)
@@ -1154,10 +1151,10 @@ static void sfxhash_next(SFXHASH* t)
 /*!
  * Find and return the first hash table node
  *
- * @param t SFXHASH table pointer
+ * t SFXHASH table pointer
  *
- * @return 0   failed
- * @retval !0  valid SFXHASH_NODE *
+ * return 0   failed
+ * retval !0  valid SFXHASH_NODE *
  *
  */
 SFXHASH_NODE* sfxhash_findfirst(SFXHASH* t)
@@ -1186,10 +1183,10 @@ SFXHASH_NODE* sfxhash_findfirst(SFXHASH* t)
 /*!
  * Find and return the next hash table node
  *
- * @param t SFXHASH table pointer
+ * t SFXHASH table pointer
  *
- * @return 0   failed
- * @retval !0  valid SFXHASH_NODE *
+ * return 0   failed
+ * retval !0  valid SFXHASH_NODE *
  *
  */
 SFXHASH_NODE* sfxhash_findnext(SFXHASH* t)
@@ -1213,9 +1210,9 @@ SFXHASH_NODE* sfxhash_findnext(SFXHASH* t)
 /**
  * Make sfhashfcn use a separate set of opcodes for the backend.
  *
- * @param h sfhashfcn ptr
- * @param hash_fcn user specified hash function
- * @param keycmp_fcn user specified key comparisoin function
+ * h sfhashfcn ptr
+ * hash_fcn user specified hash function
+ * keycmp_fcn user specified key comparisoin function
  */
 
 int sfxhash_set_keyops(SFXHASH* h,
@@ -1385,5 +1382,4 @@ int main(int argc, char** argv)
 }
 
 #endif
-/**@}*/
 

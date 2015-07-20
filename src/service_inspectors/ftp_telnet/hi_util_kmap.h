@@ -17,18 +17,23 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
-*   kmap.h
-*
-*   Keyword Trie based Map Table
-*
-*   Author: Marc Norton
-*
-*/
+// hi_util_kmap.h author Marc Norton
 
 #ifndef HI_UTIL_KMAP_H
 #define HI_UTIL_KMAP_H
+
 // FIXIT-L this is a dup of the file in http_inspect
+//
+// Keyword Trie based Map Table
+// The tree uses linked lists to build the finite automata
+//
+// MapKeyFind(): Performs a setwise strcmp() equivalant.
+//
+// Keys may be ascii or binary, both may be of random sizes.  Each key may
+// be a different size, or all one size.  Fast dictionary lookup,
+// proportional to the length of the key, and independent of the number of
+// keys in the table.  May use more memory than a hash table, depends.
+// Memory is allocated as needed, so none is wasted.
 
 #define ALPHABET_SIZE 256
 

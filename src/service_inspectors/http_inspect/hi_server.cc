@@ -38,7 +38,7 @@
 #include <string.h>
 #include <zlib.h>
 
-#include "hi_paf.h"
+#include "hi_stream_splitter.h"
 #include "main/thread.h"
 
 static THREAD_LOCAL bool headers = false;

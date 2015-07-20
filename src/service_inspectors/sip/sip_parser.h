@@ -16,23 +16,24 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-//
 
-//Author: Hui Cao <huica@cisco.com>
+// sip_parser.h author Hui Cao <huica@cisco.com>
 
 #ifndef SIP_PARSER_H
 #define SIP_PARSER_H
 
+// functions for parsing and querying SIP configuration
+
 #include "sip_config.h"
 
-typedef struct _SIP_DialogID
+struct SIP_DialogID
 {
     uint32_t callIdHash;
     uint32_t fromTagHash;
     uint32_t toTagHash;
-} SIP_DialogID;
+};
 
-typedef struct _SIPMsg
+struct SIPMsg
 {
     uint16_t headerLen;
     uint16_t methodLen;
@@ -55,7 +56,7 @@ typedef struct _SIPMsg
     SIP_MediaSession* mediaSession;
     char* authorization;
     const uint8_t* header;
-    const uint8_t* body_data; /* Set to NULL if not applicable */
+    const uint8_t* body_data; // Set to NULL if not applicable
     uint64_t cseqnum;
 
     uint16_t userNameLen;
@@ -63,8 +64,7 @@ typedef struct _SIPMsg
     uint16_t serverLen;
     bool mediaUpdated;
 
-    /* nothing after this point is zeroed ...
-      Input parameters*/
+    // nothing after this point is zeroed ...  Input parameters
     unsigned char isTcp;
     char* method;
     char* uri;
@@ -83,7 +83,7 @@ typedef struct _SIPMsg
     const char* userAgent;
     const char* userName;
     const char* server;
-} SIPMsg;
+};
 
 #define SIPMSG_ZERO_LEN offsetof(SIPMsg, isTcp)
 

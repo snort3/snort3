@@ -17,35 +17,24 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
-**   ACSMX2.H
-**
-**   Version 2.0
-**
-**   Author: Marc Norton
-*/
+// acsmx2.h author Marc Norton
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef ACSMX2_H
+#define ACSMX2_H
+
+// Version 2.0
 
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "search_common.h"
 
-#ifndef ACSMX2_H
-#define ACSMX2_H
-
-/*
-*   DEFINES and Typedef's
-*/
 #define MAX_ALPHABET_SIZE 256
 
 /*
    FAIL STATE for 1,2,or 4 bytes for state transitions
-
    Uncomment this define to use 32 bit state values
    #define AC32
 */
@@ -64,11 +53,7 @@ typedef    unsigned short acstate_t;
 
 #endif
 
-/*
-*
-*/
-typedef
-    struct _acsm_pattern2
+typedef struct _acsm_pattern2
 {
     struct  _acsm_pattern2* next;
 
@@ -86,16 +71,14 @@ typedef
 /*
 *    transition nodes  - either 8 or 12 bytes
 */
-typedef
-    struct trans_node_s
+typedef struct trans_node_s
 {
-    acstate_t key;            /* The character that got us here - sized to keep structure aligned
-                                on 4 bytes
-                                 to better the caching opportunities. A value that crosses the
-                                cache line
-                                 forces an expensive reconstruction, typing this as acstate_t stops
-                                that. */
-    acstate_t next_state;     /*  */
+    /* The character that got us here - sized to keep structure aligned on 4 bytes
+     * to better the caching opportunities. A value that crosses the cache line
+     * forces an expensive reconstruction, typing this as acstate_t stops that.
+     */
+    acstate_t key;
+    acstate_t next_state;
     struct trans_node_s* next; /* next transition for this state */
 } trans_node_t;
 
@@ -114,13 +97,11 @@ enum
 /*
 *   User specified machine types
 *
-*   TRIE : Keyword trie
 *   NFA  :
 *   DFA  :
 */
 enum
 {
-    FSA_TRIE,
     FSA_NFA,
     FSA_DFA
 };
@@ -181,57 +162,46 @@ int acsmAddPattern2(
     ACSM_STRUCT2* p, const uint8_t* pat, unsigned n,
     bool nocase, bool negative, void* id, int iid);
 
-int acsmCompile2(
-    ACSM_STRUCT2* acsm,
-    int (* build_tree)(void* id, void** existing_tree),
-    int (* neg_list_func)(void* id, void** list));
-
-struct SnortConfig;
-
-int acsmCompile2(
-    SnortConfig*,
-    ACSM_STRUCT2* acsm,
-    int (* build_tree)(SnortConfig*, void* id, void** existing_tree),
-    int (* neg_list_func)(void* id, void** list));
+int acsmCompile2(struct SnortConfig*, ACSM_STRUCT2*, MpseBuild, MpseNegate);
 
 int acsmSearchSparseDFA_Full(
-    ACSM_STRUCT2* acsm,unsigned char* T, int n, MpseCallback Match,
+    ACSM_STRUCT2*, unsigned char* T, int n, MpseMatch,
     void* data, int* current_state);
 
 int acsmSearchSparseDFA_Full_q(
-    ACSM_STRUCT2* acsm,unsigned char* T, int n, MpseCallback Match,
+    ACSM_STRUCT2*, unsigned char* T, int n, MpseMatch,
     void* data, int* current_state);
 
 int acsmSearchSparseDFA_Banded(
-    ACSM_STRUCT2* acsm,unsigned char* T, int n, MpseCallback Match,
+    ACSM_STRUCT2*, unsigned char* T, int n, MpseMatch,
     void* data, int* current_state);
 
 int acsmSearchSparseDFA(
-    ACSM_STRUCT2* acsm,unsigned char* T, int n, MpseCallback Match,
+    ACSM_STRUCT2*, unsigned char* T, int n, MpseMatch,
     void* data, int* current_state);
 
 int acsmSearchSparseNFA(
-    ACSM_STRUCT2* acsm,unsigned char* T, int n, MpseCallback Match,
+    ACSM_STRUCT2*, unsigned char* T, int n, MpseMatch,
     void* data, int* current_state);
 
 int acsmSearchSparseDFA_Full_All(
-    ACSM_STRUCT2* acsm, const unsigned char* Tx, int n, MpseCallback Match,
+    ACSM_STRUCT2*, const unsigned char* Tx, int n, MpseMatch,
     void* data, int* current_state);
 
 int acsmSearchSparseDFA_Full_q_all(
-    ACSM_STRUCT2* acsm, const unsigned char* T, int n, MpseCallback Match,
+    ACSM_STRUCT2*, const unsigned char* T, int n, MpseMatch,
     void* data, int* current_state);
 
 void acsmFree2(ACSM_STRUCT2* acsm);
 int acsmPatternCount2(ACSM_STRUCT2* acsm);
 void acsmCompressStates(ACSM_STRUCT2*, int);
 
-int acsmSelectFormat2(ACSM_STRUCT2* acsm, int format);
-int acsmSelectFSA2(ACSM_STRUCT2* acsm, int fsa);
+int acsmSelectFormat2(ACSM_STRUCT2*, int format);
+int acsmSelectFSA2(ACSM_STRUCT2*, int fsa);
 
-void acsmSetMaxSparseBandZeros2(ACSM_STRUCT2* acsm, int n);
-void acsmSetMaxSparseElements2(ACSM_STRUCT2* acsm, int n);
-int acsmSetAlphabetSize2(ACSM_STRUCT2* acsm, int n);
+void acsmSetMaxSparseBandZeros2(ACSM_STRUCT2*, int n);
+void acsmSetMaxSparseElements2(ACSM_STRUCT2*, int n);
+int acsmSetAlphabetSize2(ACSM_STRUCT2*, int n);
 void acsmSetVerbose2(void);
 
 void acsmPrintInfo2(ACSM_STRUCT2* p);

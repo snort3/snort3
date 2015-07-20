@@ -177,6 +177,11 @@ bool EventQueueModule::set(const char*, Value& v, SnortConfig* sc)
 // search engine module
 //-------------------------------------------------------------------------
 
+// FIXIT-L valid search methods should be obtained from available mpse plugins
+#define SEARCH_METHODS \
+    "ac_banded | ac_bnfa | ac_bnfa_q | ac_full | ac_full_q | " \
+    "ac_sparse | ac_sparse_bands | ac_std"
+
 static const Parameter search_engine_params[] =
 {
     { "bleedover_port_limit", Parameter::PT_INT, "1:", "1024",
@@ -215,7 +220,7 @@ static const Parameter search_engine_params[] =
     { "inspect_stream_inserts", Parameter::PT_BOOL, nullptr, "false",
       "inspect reassembled payload - disabling is good for performance, bad for detection" },
 
-    { "search_method", Parameter::PT_STRING, nullptr, "ac_bnfa_q",
+    { "search_method", Parameter::PT_SELECT, SEARCH_METHODS, "ac_bnfa_q",
       "set fast pattern algorithm - choose available search engine" },
 
     { "split_any_any", Parameter::PT_BOOL, nullptr, "false",

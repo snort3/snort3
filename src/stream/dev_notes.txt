@@ -1,0 +1,39 @@
+This directory contains the implementation of the Stream preprocessor
+components:
+
+* Stream constants and data types used across stream components or by
+  clients of the stream API.
+
+* Prototype definitions and implementation for all stream API methods.
+
+* Virtual base class defining the Stream Splitter interface.
+  Implementation of stream splitters for accumulated TCP over maximum
+  flushing (atom splitter) and length of given segment flushing (log
+  splitter).
+
+* Prototype definitions and implementation for the stream Protocol Aware
+  Flushing API methods (PAF is now realized by stream splitter subclasses).
+
+Major subcomponents of the Stream inspector are each implemented in a
+subdirectory located here.  These include the following:
+
+* base - implements the Stream class as a subclass of Inspector, handles
+  stream configuration, provides entry point for Stream evaluation of a
+  Packet, stream statistics management.
+
+* tcp - implements module for handling Stream tcp sessions.  This includes
+  normalization protocol tracking, normalization, and reassembly.
+
+* upd - implements module for handling Stream udp sessions.  Tracking only.
+
+* icmp - implements module for handling Stream icmp sessions.  Tracking
+  only.
+
+* ip - implements module for handling Stream ip sessions.  Tracking only.
+
+* file - implements module for handling Stream file session.  This directly
+  sets file data and invokes file processing and detection.
+
+* user - implements module for handling Stream user session.  This handles
+  payload only, eg from a socket.  Does splitter based reassembly like TCP.
+

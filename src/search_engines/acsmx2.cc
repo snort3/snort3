@@ -1568,7 +1568,6 @@ int acsmSelectFSA2(ACSM_STRUCT2* acsm, int m)
 {
     switch ( m )
     {
-    case FSA_TRIE:
     case FSA_NFA:
     case FSA_DFA:
         acsm->acsmFSA = m;
@@ -1729,10 +1728,7 @@ static void acsmUpdateMatchStates(ACSM_STRUCT2* acsm)
 }
 
 static int acsmBuildMatchStateTrees2(
-    SnortConfig* sc,
-    ACSM_STRUCT2* acsm,
-    int (* build_tree)(SnortConfig*, void* id, void** existing_tree),
-    int (* neg_list_func)(void* id, void** list) )
+    SnortConfig* sc, ACSM_STRUCT2* acsm, MpseBuild build_tree, MpseNegate neg_list_func)
 {
     int i, cnt = 0;
     ACSM_PATTERN2** MatchList = acsm->acsmMatchList;
@@ -1913,6 +1909,11 @@ static inline int _acsmCompile2(ACSM_STRUCT2* acsm)
                 acsm2_total_memory, acsm->acsmMaxStates, acsm->acsmNumStates);
             List_PrintTransTable(acsm);
         }
+
+        /* Don't need the FailState table anymore */
+        AC_FREE(acsm->acsmFailState, sizeof(acstate_t) * acsm->acsmNumStates,
+            ACSM2_MEMORY_TYPE__FAILSTATE);
+        acsm->acsmFailState = NULL;
     }
 
     /* Select Final Transition Table Storage Mode */
@@ -1977,11 +1978,6 @@ static inline int _acsmCompile2(ACSM_STRUCT2* acsm)
                 acsm2_total_memory, acsm->acsmMaxStates, acsm->acsmNumStates);
             Print_DFA(acsm);
         }
-
-        /* Don't need the FailState table anymore */
-        AC_FREE(acsm->acsmFailState, sizeof(acstate_t) * acsm->acsmNumStates,
-            ACSM2_MEMORY_TYPE__FAILSTATE);
-        acsm->acsmFailState = NULL;
     }
 
     /* load boolean match flags into state table */
@@ -2011,11 +2007,7 @@ static inline int _acsmCompile2(ACSM_STRUCT2* acsm)
 }
 
 int acsmCompile2(
-    SnortConfig* sc,
-    ACSM_STRUCT2* acsm,
-    int (* build_tree)(SnortConfig*, void* id, void** existing_tree),
-    int (* neg_list_func)(void* id, void** list)
-    )
+    SnortConfig* sc, ACSM_STRUCT2* acsm, MpseBuild build_tree, MpseNegate neg_list_func)
 {
     int rval;
 
@@ -2254,7 +2246,7 @@ static inline acstate_t SparseGetNextStateDFA(
 *   Sparse & Sparse-Banded Matrix search
 */
 int acsmSearchSparseDFA(
-    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseCallback Match,
+    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseMatch match,
     void* data, int* current_state)
 {
     acstate_t state;
@@ -2289,7 +2281,7 @@ int acsmSearchSparseDFA(
             {
                 index = T - mlist->n - Tc + 1;
                 nfound++;
-                if (Match (mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) >
+                if (match (mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) >
                     0)
                 {
                     *current_state = state;
@@ -2350,7 +2342,7 @@ static inline int _add_queue(PMQ* b, void* p)
 }
 
 static inline unsigned _process_queue(
-    PMQ* q, MpseCallback Match, void* data)
+    PMQ* q, MpseMatch match, void* data)
 {
     ACSM_PATTERN2* mlist;
     unsigned int i;
@@ -2366,7 +2358,7 @@ static inline unsigned _process_queue(
         mlist = (ACSM_PATTERN2*)q->q[i];
         if (mlist)
         {
-            if (Match (mlist->udata, mlist->rule_option_tree, 0, data, mlist->neg_list) > 0)
+            if (match (mlist->udata, mlist->rule_option_tree, 0, data, mlist->neg_list) > 0)
             {
                 q->inq = 0;
                 return 1;
@@ -2397,7 +2389,7 @@ static inline unsigned _process_queue(
             { \
                 if (_add_queue(&acsm->q,MatchList[state])) \
                 { \
-                    if (_process_queue(&acsm->q, Match,data)) \
+                    if (_process_queue(&acsm->q, match, data)) \
                     { \
                         *current_state = state; \
                         return 1; \
@@ -2409,7 +2401,7 @@ static inline unsigned _process_queue(
     }
 
 int acsmSearchSparseDFA_Full_q(
-    ACSM_STRUCT2* acsm, unsigned char* T, int n, MpseCallback Match,
+    ACSM_STRUCT2* acsm, unsigned char* T, int n, MpseMatch match,
     void* data, int* current_state)
 {
     unsigned char* Tend;
@@ -2456,7 +2448,7 @@ int acsmSearchSparseDFA_Full_q(
     if (MatchList[state])
         _add_queue(&acsm->q,MatchList[state]);
 
-    _process_queue(&acsm->q,Match,data);
+    _process_queue(&acsm->q, match, data);
 
     return 0;
 }
@@ -2485,7 +2477,7 @@ int acsmSearchSparseDFA_Full_q(
                 { \
                     if (_add_queue(&acsm->q,mlist)) \
                     { \
-                        if (_process_queue(&acsm->q, Match,data)) \
+                        if (_process_queue(&acsm->q, match, data)) \
                         { \
                             *current_state = state; \
                             return 1; \
@@ -2498,7 +2490,7 @@ int acsmSearchSparseDFA_Full_q(
     }
 
 int acsmSearchSparseDFA_Full_q_all(
-    ACSM_STRUCT2* acsm, const unsigned char* T, int n, MpseCallback Match,
+    ACSM_STRUCT2* acsm, const unsigned char* T, int n, MpseMatch match,
     void* data, int* current_state)
 {
     const unsigned char* Tend;
@@ -2551,7 +2543,7 @@ int acsmSearchSparseDFA_Full_q_all(
         {
             if (_add_queue(&acsm->q,mlist))
             {
-                if (_process_queue(&acsm->q, Match,data))
+                if (_process_queue(&acsm->q, match, data))
                 {
                     *current_state = state;
                     return 1;
@@ -2560,7 +2552,7 @@ int acsmSearchSparseDFA_Full_q_all(
         }
     }
 
-    _process_queue(&acsm->q,Match,data);
+    _process_queue(&acsm->q, match, data);
 
     return 0;
 }
@@ -2587,7 +2579,7 @@ int acsmSearchSparseDFA_Full_q_all(
             { \
                 index = T - mlist->n - Tx; \
                 nfound++; \
-                if (Match (mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) > \
+                if (match (mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) > \
                     0) \
                 { \
                     *current_state = state; \
@@ -2599,7 +2591,7 @@ int acsmSearchSparseDFA_Full_q_all(
     }
 
 int acsmSearchSparseDFA_Full(
-    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseCallback Match,
+    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseMatch match,
     void* data, int* current_state
     )
 {
@@ -2651,7 +2643,7 @@ int acsmSearchSparseDFA_Full(
     {
         index = T - mlist->n - Tx;
         nfound++;
-        if (Match(mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) > 0)
+        if (match(mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) > 0)
         {
             *current_state = state;
             return nfound;
@@ -2687,7 +2679,7 @@ int acsmSearchSparseDFA_Full(
                 if ( mlist->nocase || (memcmp (mlist->casepatrn, Tx + index, mlist->n) == 0)) \
                 { \
                     nfound++; \
-                    if (Match (mlist->udata, mlist->rule_option_tree, index, data, \
+                    if (match (mlist->udata, mlist->rule_option_tree, index, data, \
                         mlist->neg_list) > 0) \
                     { \
                         *current_state = state; \
@@ -2700,7 +2692,7 @@ int acsmSearchSparseDFA_Full(
     }
 
 int acsmSearchSparseDFA_Full_All(
-    ACSM_STRUCT2* acsm, const unsigned char* Tx, int n, MpseCallback Match,
+    ACSM_STRUCT2* acsm, const unsigned char* Tx, int n, MpseMatch match,
     void* data, int* current_state)
 {
     ACSM_PATTERN2* mlist;
@@ -2755,7 +2747,7 @@ int acsmSearchSparseDFA_Full_All(
         if ( mlist->nocase || (memcmp (mlist->casepatrn, Tx + index, mlist->n) == 0))
         {
             nfound++;
-            if (Match(mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) > 0)
+            if (match(mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) > 0)
             {
                 *current_state = state;
                 return nfound;
@@ -2778,7 +2770,7 @@ int acsmSearchSparseDFA_Full_All(
 *   ps[3] = index of 1st element
 */
 int acsmSearchSparseDFA_Banded(
-    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseCallback Match,
+    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseMatch match,
     void* data, int* current_state)
 {
     acstate_t state;
@@ -2816,7 +2808,7 @@ int acsmSearchSparseDFA_Banded(
             {
                 index = T - mlist->n - Tx;
                 nfound++;
-                if (Match (mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) >
+                if (match (mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) >
                     0)
                 {
                     *current_state = state;
@@ -2839,7 +2831,7 @@ int acsmSearchSparseDFA_Banded(
     {
         index = T - mlist->n - Tx;
         nfound++;
-        if (Match (mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) > 0)
+        if (match (mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) > 0)
         {
             *current_state = state;
             return nfound;
@@ -2855,7 +2847,7 @@ int acsmSearchSparseDFA_Banded(
 *   Sparse Storage Version
 */
 int acsmSearchSparseNFA(
-    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseCallback Match,
+    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseMatch match,
     void* data, int* current_state)
 {
     acstate_t state;
@@ -2895,7 +2887,7 @@ int acsmSearchSparseNFA(
         {
             index = T - mlist->n - Tx;
             nfound++;
-            if (Match (mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) > 0)
+            if (match (mlist->udata, mlist->rule_option_tree, index, data, mlist->neg_list) > 0)
             {
                 *current_state = state;
                 return nfound;
@@ -3025,11 +3017,11 @@ int acsmPrintSummaryInfo2(void)
 {
     const char* sf[]=
     {
-        "Full",
-        "Sparse",
-        "Banded",
-        "Sparse-Bands",
-        "Full-Q"
+        "full",
+        "sparse",
+        "banded",
+        "sparse-bands",
+        "full-queue"
     };
 
     const char* fsa[]=
@@ -3044,59 +3036,56 @@ int acsmPrintSummaryInfo2(void)
     if ( !summary.num_states )
         return 0;
 
-    LogMessage("%s\n", LOG_DIV);
-    LogMessage("aho-corasick summary\n");
+    LogValue("storage format", sf[p->acsmFormat]);
+    LogValue("finite automaton", fsa[p->acsmFSA]);
+    LogCount("alphabet size", p->acsmAlphabetSize);
 
-    LogMessage("%25.25s: %s\n", "storage format", sf[p->acsmFormat]);
-    LogMessage("%25.25s: %s\n", "finite automaton", fsa[p->acsmFSA]);
-    LogMessage("%25.25s: %-12u\n", "alphabet size", p->acsmAlphabetSize);
+    LogCount("instances", summary.num_instances);
+    LogCount("patterns", summary.num_patterns);
+    LogCount("pattern chars", summary.num_characters);
 
-    if (summary.acsm.compress_states)
-        LogMessage("%25.25s: %s\n", "sizeof state", "1, 2, or 4");
+    LogCount("states", summary.num_states);
+    LogCount("transitions", summary.num_transitions);
+    LogCount("match states", summary.num_match_states);
+
+    if ( !summary.acsm.compress_states )
+        LogCount("sizeof state", (int)(sizeof(acstate_t)));
     else
-        LogMessage("%25.25s: %-12u\n", "sizeof state", (int)(sizeof(acstate_t)));
+    {
+        LogValue("sizeof state", "1, 2, or 4");
 
-    LogMessage("%25.25s: %-12u\n", "instances", summary.num_instances);
+        if ( summary.num_1byte_instances )
+            LogCount("1 byte states", summary.num_1byte_instances);
 
-    if ( summary.acsm.compress_states && summary.num_1byte_instances )
-        LogMessage("%25.25s: %-12u\n", "1 byte states", summary.num_1byte_instances);
+        if ( summary.num_2byte_instances )
+            LogCount("2 byte states", summary.num_2byte_instances);
 
-    if ( summary.acsm.compress_states && summary.num_2byte_instances )
-        LogMessage("%25.25s: %-12u\n", "2 byte states", summary.num_2byte_instances);
+        if ( summary.num_4byte_instances )
+            LogCount("4 byte states", summary.num_4byte_instances);
+    }
 
-    if ( summary.acsm.compress_states && summary.num_4byte_instances )
-        LogMessage("%25.25s: %-12u\n", "4 byte states", summary.num_4byte_instances);
-
-    LogMessage("%25.25s: %-12u\n", "characters", summary.num_characters);
-    LogMessage("%25.25s: %-12u\n", "states", summary.num_states);
-    LogMessage("%25.25s: %-12u\n", "transitions", summary.num_transitions);
-
-    //LogMessage("%25.25s: %-12u\n", "", );
-#if 0  // FIXIT-L clean up format; not all this should be printed all the time
-//#ifndef VALGRIND_TESTING
-    // valgrind on macos claims leakage here ...
-    LogMessage("| State Density     : %.1f%%\n",
-        pct(summary.num_transitions, summary.num_states*p->acsmAlphabetSize));
-    LogMessage("| Patterns          : %u\n",summary.num_patterns);
-    LogMessage("| Match States      : %d\n",summary.num_match_states);
-
-    double scale = 1024 * 1024.0;
-    const char* units = "MB";
+    double scale;
 
     if ( acsm2_total_memory < 1024*1024 )
     {
-        scale = 1024.0;
-        units = "KB";
+        scale = 1024;
+        LogValue("memory scale", "KB");
     }
-    LogMessage("| Memory (%s)       : %.2f\n", units, acsm2_total_memory/scale);
-    if (acsm2_pattern_memory > 0)
-        LogMessage("|   Pattern         : %.2f\n", acsm2_pattern_memory/scale);
-    if (acsm2_matchlist_memory > 0)
-        LogMessage("|   Match Lists     : %.2f\n", acsm2_matchlist_memory/scale);
-    if (acsm2_transtable_memory > 0)
-        LogMessage("|   Transitions     : %.2f\n", acsm2_transtable_memory/scale);
-    if (acsm2_failstate_memory > 0)
-        LogMessage("|   Fail States     : %.2f\n", acsm2_failstate_memory/scale);
+    else
+    {
+        scale = 1024 * 1024;
+        LogValue("memory scale", "MB");
+    }
+    LogStat("total memory", acsm2_total_memory/scale);
+    LogStat("pattern memory", acsm2_pattern_memory/scale);
+    LogStat("match list memory", acsm2_matchlist_memory/scale);
+    LogStat("transition memory", acsm2_transtable_memory/scale);
+    LogStat("fail state memory", acsm2_failstate_memory/scale);
+
+#if 0  // FIXIT-L clean up format; not all this should be printed all the time
+//#ifndef VALGRIND_TESTING
+    // valgrind on macos claims leakage here ...
+
     if (acsm2_dfa_memory > 0)
     {
         if (summary.acsm.compress_states)
@@ -3118,7 +3107,7 @@ int acsmPrintSummaryInfo2(void)
 
 #ifdef ACSMX2S_MAIN
 static int acsmSearch2(
-    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseCallback Match,
+    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseMatch match,
     void* data, int* current_state)
 {
     switch ( acsm->acsmFSA )
@@ -3127,39 +3116,35 @@ static int acsmSearch2(
 
         if ( acsm->acsmFormat == ACF_FULL )
         {
-            return acsmSearchSparseDFA_Full(acsm, Tx, n, Match, data,
+            return acsmSearchSparseDFA_Full(acsm, Tx, n, match, data,
                 current_state);
         }
         else if ( acsm->acsmFormat == ACF_FULLQ )
         {
-            return acsmSearchSparseDFA_Full_q(acsm, Tx, n, Match, data,
+            return acsmSearchSparseDFA_Full_q(acsm, Tx, n, match, data,
                 current_state);
         }
         else if ( acsm->acsmFormat == ACF_BANDED )
         {
-            return acsmSearchSparseDFA_Banded(acsm, Tx, n, Match, data,
+            return acsmSearchSparseDFA_Banded(acsm, Tx, n, match, data,
                 current_state);
         }
         else
         {
-            return acsmSearchSparseDFA(acsm, Tx, n, Match, data,
+            return acsmSearchSparseDFA(acsm, Tx, n, match, data,
                 current_state);
         }
 
     case FSA_NFA:
 
-        return acsmSearchSparseNFA(acsm, Tx, n, Match, data,
+        return acsmSearchSparseNFA(acsm, Tx, n, match, data,
             current_state);
-
-    case FSA_TRIE:
-
-        return 0;
     }
     return 0;
 }
 
 static int acsmSearchAll2(
-    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseCallback Match,
+    ACSM_STRUCT2* acsm, unsigned char* Tx, int n, MpseMatch match,
     void* data, int* current_state)
 {
     switch ( acsm->acsmFSA )
@@ -3168,33 +3153,29 @@ static int acsmSearchAll2(
 
         if ( acsm->acsmFormat == ACF_FULL )
         {
-            return acsmSearchSparseDFA_Full_All(acsm, Tx, n, Match, data,
+            return acsmSearchSparseDFA_Full_All(acsm, Tx, n, match, data,
                 current_state);
         }
         else if ( acsm->acsmFormat == ACF_FULLQ )
         {
-            return acsmSearchSparseDFA_Full_q_all(acsm, Tx, n, Match, data,
+            return acsmSearchSparseDFA_Full_q_all(acsm, Tx, n, match, data,
                 current_state);
         }
         else if ( acsm->acsmFormat == ACF_BANDED )
         {
-            return acsmSearchSparseDFA_Banded(acsm, Tx, n, Match, data,
+            return acsmSearchSparseDFA_Banded(acsm, Tx, n, match, data,
                 current_state);
         }
         else
         {
-            return acsmSearchSparseDFA(acsm, Tx, n, Match, data,
+            return acsmSearchSparseDFA(acsm, Tx, n, match, data,
                 current_state);
         }
 
     case FSA_NFA:
 
-        return acsmSearchSparseNFA(acsm, Tx, n, Match, data,
+        return acsmSearchSparseNFA(acsm, Tx, n, match, data,
             current_state);
-
-    case FSA_TRIE:
-
-        return 0;
     }
     return 0;
 }
@@ -3288,10 +3269,6 @@ int main(int argc, char** argv)
         if (strcmp (argv[i], "-dfa") == 0)
         {
             acsm->acsmFSA     = FSA_DFA;
-        }
-        if (strcmp (argv[i], "-trie") == 0)
-        {
-            acsm->acsmFSA     = FSA_TRIE;
         }
     }
 

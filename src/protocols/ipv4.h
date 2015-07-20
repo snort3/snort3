@@ -20,19 +20,27 @@
 #ifndef PROTOCOLS_IPV4_H
 #define PROTOCOLS_IPV4_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <cstdint>
 #include <arpa/inet.h>
 
 #ifndef WIN32
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <net/if.h>
-#else /* !WIN32 */
+
+#else
+
 #include <netinet/in_systm.h>
 #ifndef IFNAMSIZ
 #define IFNAMESIZ MAX_ADAPTER_NAME
-#endif /* !IFNAMSIZ */
-#endif /* !WIN32 */
+#endif
+
+#endif
 
 #include "protocols/protocol_ids.h" // include ipv4 protocol numbers
 

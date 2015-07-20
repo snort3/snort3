@@ -17,11 +17,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
-**  sfmemcap.h
-*/
 #ifndef SFMEMCAP_H
 #define SFMEMCAP_H
+
+// malloc and free wrappers that enforce a memory cap
 
 struct MEMCAP
 {
@@ -30,6 +29,7 @@ struct MEMCAP
     int nblocks;
 };
 
+// FIXIT-L: Could be refactored as a class
 void sfmemcap_init(MEMCAP* mc, unsigned long nbytes);
 MEMCAP* sfmemcap_new(unsigned nbytes);
 void sfmemcap_delete(MEMCAP* mc);

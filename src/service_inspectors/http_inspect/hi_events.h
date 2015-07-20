@@ -25,9 +25,7 @@
 #define GID_HTTP_CLIENT  119
 #define GID_HTTP_SERVER  120
 
-/*
-**  Client Events
-*/
+// Client Events
 typedef enum _HI_CLI_EVENTS
 {
     HI_CLIENT_ASCII =       1,
@@ -68,6 +66,7 @@ typedef enum _HI_CLI_EVENTS
     HI_CLIENT_EVENT_NUM
 } HI_CLI_EVENTS;
 
+// Server Events
 typedef enum _HI_EVENTS
 {
     HI_ANOM_SERVER =         1,
@@ -90,9 +89,7 @@ typedef enum _HI_EVENTS
     HI_SERVER_EVENT_NUM
 } HI_EVENTS;
 
-/*
-**  These defines are the alert names for each event
-*/
+// Client alert text for each event
 #define HI_CLIENT_ASCII_STR                          \
     "ascii encoding"
 #define HI_CLIENT_DOUBLE_DECODE_STR                  \
@@ -163,10 +160,7 @@ typedef enum _HI_EVENTS
 #define HI_CLIENT_PIPELINE_MAX_STR                   \
     "too many pipelined requests"
 
-/*
-**  Server Events
-*/
-
+// Server alert text for each event
 #define HI_ANOM_SERVER_STR                           \
     "anomalous http server on undefined HTTP port"
 #define HI_SERVER_INVALID_STATCODE_STR               \

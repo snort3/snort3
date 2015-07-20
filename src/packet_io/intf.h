@@ -20,10 +20,6 @@
 #ifndef INTF_H
 #define INTF_H
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
 /* This macro helps to simplify the differences between Win32 and
    non-Win32 code when printing out the name of the interface */
 #define PRINT_INTERFACE(i)  (i ? i : "NULL")

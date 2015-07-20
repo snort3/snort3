@@ -1,0 +1,23 @@
+A set of miscellaneous network inspectors for packet analysis, performance
+monitoring, policy binding, etc.  They are grouped here as they operate and
+the network and/or IP protocol layer.
+
+The collection includes:
+
+binder - The flow to config mapping (policy selection)
+
+arp_spoof - Monitor ARP requests/replies for consistancy.  Locate spoofing
+attempts and ARP cache inconsistancies
+
+port_scan - A tool to attempt to locate IP port scanning activity.
+
+perf_monitor - Although not strictly a network inspector, this module
+monitors Snort++ performance criteria.  Implemented as a network_inspector
+as it processes each valid packet.
+
+normalize - A collection of IP/ICMP/TCP and potentially UDP frame level
+normalizations.
+
+This entire set of inspectors is instantiated as a group via
+network_inspectors.cc
+

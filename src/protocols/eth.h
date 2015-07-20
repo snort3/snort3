@@ -23,7 +23,7 @@
 #include <arpa/inet.h>
 
 #define ETHERNET_HEADER_LEN 14
-#define ETHERNET_MTU                  1500
+#define ETHERNET_MTU        1500
 
 namespace eth
 {

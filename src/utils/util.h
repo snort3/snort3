@@ -21,10 +21,12 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+// Miscellaneous functions and macros
+
 #define TIMEBUF_SIZE 26
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"
+#include "config.h"
 #endif
 
 #include <sys/time.h>
@@ -43,8 +45,6 @@
 
 #include "main/snort_types.h"
 #include "log/messages.h"
-
-/* Macros *********************************************************************/
 
 #define SNORT_SNPRINTF_SUCCESS 0
 #define SNORT_SNPRINTF_TRUNCATION 1
@@ -71,10 +71,8 @@
     x[8] = y[8]; x[9] = y[9]; x[10] = y[10]; x[11] = y[11]; \
     x[12] = y[12]; x[13] = y[13]; x[14] = y[14]; x[15] = y[15];
 
-/* Externs ********************************************************************/
 SO_PUBLIC extern char** protocol_names;
 
-/* Public function prototypes *************************************************/
 void StoreSnortInfoStrings(void);
 int DisplayBanner(void);
 int gmt2local(time_t);
@@ -90,10 +88,10 @@ void InitGroups(int, int);
 void SetChroot(std::string root_dir, std::string& log_dir);
 void InitProtoNames(void);
 
-SO_PUBLIC int SnortSnprintf(char*, size_t, const char*, ...) __attribute__((format (printf, 3,
-    4)));
-SO_PUBLIC int SnortSnprintfAppend(char*, size_t, const char*, ...) __attribute__((format (printf,
-    3, 4)));
+SO_PUBLIC int SnortSnprintf(char*, size_t, const char*, ...)
+    __attribute__((format (printf, 3, 4)));
+SO_PUBLIC int SnortSnprintfAppend(char*, size_t, const char*, ...)
+    __attribute__((format (printf, 3, 4)));
 
 SO_PUBLIC char* SnortStrdup(const char*);
 int SnortStrncpy(char*, const char*, size_t);
@@ -115,12 +113,10 @@ void PrintVersion(void);
 void SetNoCores(void);
 #endif
 
-/***********************************************************
- If you use any of the functions in this section, you need
- to call free() on the char * that is returned after you are
- done using it. Otherwise, you will have created a memory
- leak.
-***********************************************************/
+// If you use any of the functions in this section, you need
+// to call free() on the char * that is returned after you are
+// done using it. Otherwise, you will have created a memory
+// leak.
 char* hex(const u_char*, int);
 char* fasthex(const u_char*, int);
 
@@ -141,9 +137,8 @@ static inline void* new_calloc(size_t num, size_t size)
 {
     void* ret_val = calloc(num, size);
     if (ret_val == nullptr)
-    {
         throw std::bad_alloc();
-    }
+
     return ret_val;
 }
 
@@ -168,8 +163,7 @@ static inline unsigned long SnortStrtoul(const char* nptr, char** endptr, int ba
 // Checks to make sure we're not going to evaluate a negative number for which
 // strtoul() gladly accepts and parses returning an underflowed wrapped unsigned
 // long without error.
-//
-// Buffer passed in MUST be NULL terminated.
+// Buffer passed in MUST be '\0' terminated.
 //
 // Returns
 //  int
@@ -278,5 +272,5 @@ SO_PUBLIC const char* get_error(int errnum);
 // reentrant.
 char* get_tok(char* s, const char* delim);
 
-#endif /*__UTIL_H__*/
+#endif
 

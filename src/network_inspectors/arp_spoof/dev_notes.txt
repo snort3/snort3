@@ -1,0 +1,9 @@
+Implement a specialized inspection tool which locates and alerts on ARP
+protocol violations.  This network inspector looks at all ARP ethernet
+frames and attempts to locate ARP spoofing attacks.
+
+It alerts on source or destination address mismatch.  It also alerts on an
+ARP request ocuring on a uni-cast frame (needs to be multi-cast).
+
+A network inspector module as it needs to examine all ethernet frames with
+packet type of ARP.

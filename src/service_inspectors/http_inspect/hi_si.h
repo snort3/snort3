@@ -40,8 +40,8 @@
 #include "hi_client.h"
 #include "hi_server.h"
 #include "hi_ad.h"
-
 #include "sfip/sfip_t.h"
+
 struct Packet;
 
 /*

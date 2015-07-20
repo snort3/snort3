@@ -21,7 +21,7 @@
 #define PARSE_IP_H
 
 #include <sys/types.h>
-#include "snort_types.h"
+#include "main/snort_types.h"
 
 struct sfip_var_t;
 

@@ -66,7 +66,6 @@
 #include "file_api/libs/file_config.h"
 #include "framework/ips_option.h"
 #include "config_file.h"
-#include "keywords.h"
 
 //-------------------------------------------------------------------------
 // var node stuff

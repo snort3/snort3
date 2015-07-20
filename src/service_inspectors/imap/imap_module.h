@@ -21,6 +21,8 @@
 #ifndef IMAP_MODULE_H
 #define IMAP_MODULE_H
 
+// Interface to the IMAP service inspector
+
 #include "framework/module.h"
 #include "framework/bits.h"
 #include "main/thread.h"
@@ -67,4 +69,3 @@ private:
 };
 
 #endif
-

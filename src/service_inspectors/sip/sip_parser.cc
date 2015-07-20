@@ -17,7 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-//Author: Hui Cao <huica@cisco.com>
+// sip_parser.cc author Hui Cao <huica@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -41,7 +41,7 @@
 #define SIP_PARSE_ERROR      (-1)
 #define SIP_PARSE_SUCCESS    (1)
 
-/*Should at least have SIP/2.0 */
+/* Should at least have SIP/2.0 */
 #define SIP_KEYWORD          "SIP/"
 #define SIP_KEYWORD_LEN      4
 #define SIP_VERSION_NUM_LEN  3  /*2.0 or 1.0 or 1.1*/

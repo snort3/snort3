@@ -21,6 +21,8 @@
 #ifndef SMTP_MODULE_H
 #define SMTP_MODULE_H
 
+// Interface to the SMTP service inspector
+
 #include "framework/module.h"
 #include "framework/bits.h"
 #include "main/thread.h"
@@ -39,9 +41,9 @@
 #define SMTP_DECODE_MEMCAP_EXCEEDED 9
 #define SMTP_B64_DECODING_FAILED    10
 #define SMTP_QP_DECODING_FAILED     11
-/* Do not delete or reuse this SID. Commenting this SID as this alert is no longer valid.*
- * * #define SMTP_BITENC_DECODING_FAILED 12
- * */
+//FIXIT-L Move up the sids?
+// Do not delete or reuse this SID. Commenting this SID as this alert is no longer valid.
+//#define SMTP_BITENC_DECODING_FAILED 12
 #define SMTP_UU_DECODING_FAILED     13
 #define SMTP_AUTH_ABORT_AUTH        14
 
@@ -104,4 +106,3 @@ private:
 };
 
 #endif
-

@@ -1,0 +1,6 @@
+The DNS inspector decodes DNS Responses in DNS PDUs and can detect the
+following exploits: DNS Client RData Overflow, Obsolete Record Types, and
+Experimental Record Types.
+
+DNS looks are DNS Response traffic over UDP and TCP and it requires Stream
+inspector to be enabled for TCP decoding.

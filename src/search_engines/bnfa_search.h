@@ -16,15 +16,17 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+
+// bnfa_search.h author Marc Norton <mnorton@sourcefire.com>
+
+#ifndef BNFA_SEARCH_H
+#define BNFA_SEARCH_H
+
 /*
-** bnfa_search.h
-**
 ** Basic NFA based multi-pattern search using Aho_corasick construction,
 ** and compacted sparse storage.
 **
 ** Version 3.0
-**
-** author: marc norton
 ** date:   12/21/05
 */
 
@@ -33,8 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef BNFA_SEARCH_H
-#define BNFA_SEARCH_H
+#include "search_common.h"
 
 /* debugging - allow printing the trie and nfa in list format
    #define ALLOW_LIST_PRINT */
@@ -166,6 +167,7 @@ void bnfa_init_xlatcase();
 bnfa_struct_t* bnfaNew(void (* userfree)(void* p),
     void (* optiontreefree)(void** p),
     void (* neg_list_free)(void** p));
+
 void bnfaSetOpt(bnfa_struct_t* p, int flag);
 void bnfaSetCase(bnfa_struct_t* p, int flag);
 void bnfaFree(bnfa_struct_t* pstruct);
@@ -174,26 +176,15 @@ int bnfaAddPattern(
     bnfa_struct_t* pstruct, const uint8_t* pat, unsigned patlen,
     bool nocase, bool negative, void* userdata);
 
-int bnfaCompile(bnfa_struct_t* pstruct,
-    int (* build_tree)(void* id, void** existing_tree),
-    int (* neg_list_func)(void* id, void** list));
-struct SnortConfig;
-int bnfaCompile(
-    SnortConfig*,
-    bnfa_struct_t* pstruct,
-    int (* build_tree)(SnortConfig*, void* id, void** existing_tree),
-    int (* neg_list_func)(void* id, void** list));
-
-typedef int (* bnfa_match_f)(
-    bnfa_pattern_t*, void* tree, int index, void* data, void* neg_list);
+int bnfaCompile(struct SnortConfig*, bnfa_struct_t*, MpseBuild, MpseNegate);
 
 unsigned _bnfa_search_csparse_nfa(
-bnfa_struct_t * pstruct, const uint8_t* t, int tlen, bnfa_match_f,
-void* sdata, unsigned sindex, int* current_state);
+    bnfa_struct_t * pstruct, const uint8_t* t, int tlen, MpseMatch,
+    void* sdata, unsigned sindex, int* current_state);
 
 unsigned _bnfa_search_csparse_nfa_q(
-bnfa_struct_t * pstruct, unsigned char* t, int tlen, bnfa_match_f,
-void* sdata, unsigned sindex, int* current_state);
+    bnfa_struct_t * pstruct, unsigned char* t, int tlen, MpseMatch,
+    void* sdata, unsigned sindex, int* current_state);
 
 int bnfaPatternCount(bnfa_struct_t* p);
 
@@ -207,8 +198,7 @@ void bnfaPrintInfo(bnfa_struct_t* pstruct);    /* print info on this search engi
  *
  */
 void bnfaPrintInfoEx(bnfa_struct_t* p, const char* text);
-void bnfaAccumInfo(bnfa_struct_t* pstruct);    /* add info to summary over multiple search engines
-                                                 */
+void bnfaAccumInfo(bnfa_struct_t* pstruct);  // add info to summary over multiple search engines
 void bnfaPrintSummary(void); /* print current summary */
 void bnfaInitSummary(void);  /* reset accumulator foir global summary over multiple engines */
 void bnfa_print_qinfo(void);

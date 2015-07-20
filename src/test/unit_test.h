@@ -20,9 +20,19 @@
 #ifndef UNIT_TEST_H
 #define UNIT_TEST_H
 
-// "silent" | "minimal" | "normal" | "verbose" | "env"
-// "env" -> getenv("CK_VERBOSITY") for one of the above
-// can also be set to "off"
+// Unit test interface
+
+// These are the available arguments to unit_test_mode()
+#define UNIT_TEST_MODE_SILENT "silent"
+#define UNIT_TEST_MODE_MINIMAL "minimal"
+#define UNIT_TEST_MODE_NORMAL "normal"
+#define UNIT_TEST_MODE_VERBOSE "verbose"
+#define UNIT_TEST_MODE_ENV "env"
+#define UNIT_TEST_MODE_OFF "off"
+
+// Use "env" test mode to allow setting verbosity via this environment variable
+#define UNIT_TEST_MODE_ENVVAR "CK_VERBOSITY"
+
 void unit_test_mode(const char* = nullptr);
 bool unit_test_enabled();
 int unit_test();

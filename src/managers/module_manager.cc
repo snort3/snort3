@@ -502,7 +502,7 @@ static bool set_value(const char* fqn, Value& v)
 //    item
 // -- recursively set all defaults after calling Module::begin(), skipping
 //    lists and list items
-// -- on close_table(), call Module::begin() for each module, list, and list
+// -- on close_table(), call Module::end() for each module, list, and list
 //    item
 //-------------------------------------------------------------------------
 

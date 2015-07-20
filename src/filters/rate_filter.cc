@@ -17,15 +17,11 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/* @file  rate_filter.c
- * @brief rate filter interface for Snort
- * @ingroup rate_filter
- * @author Dilbagh Chahal
- */
-/* @ingroup rate_filter
- * @{
- */
+// rate_filter.cc author Dilbagh Chahal <dchahal@sourcefire.com>
+
 #include "rate_filter.h"
+
+// rate filter interface for Snort
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -56,9 +52,7 @@ RateFilterConfig* RateFilter_ConfigNew(void)
     return rf_config;
 }
 
-/* Free threshold context
- * @param pContext pointer to global threshold context.
- */
+/* Free threshold context */
 void RateFilter_ConfigFree(RateFilterConfig* config)
 {
     int i;

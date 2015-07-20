@@ -17,14 +17,15 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// fp_config.h is derived from fp_create.h by:
-/*
-** Dan Roelker <droelker@sourcefire.com>
-** Marc Norton <mnorton@sourcefire.com>
-*/
+// fp_config.h is derived from fpcreate.h by:
+//
+// Dan Roelker <droelker@sourcefire.com>
+// Marc Norton <mnorton@sourcefire.com>
 
 #ifndef FP_CONFIG_H
 #define FP_CONFIG_H
+
+// this is a basically a factory for creating MPSE
 
 #define PL_BLEEDOVER_WARNINGS_ENABLED        0x01
 #define PL_DEBUG_PRINT_NC_DETECT_RULES       0x02

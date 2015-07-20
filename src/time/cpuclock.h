@@ -20,14 +20,14 @@
 #ifndef CPUCLOCK_H
 #define CPUCLOCK_H
 
-/* Assembly to find clock ticks. */
+// Assembly to find clock ticks
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include <unistd.h>
 
-/* INTEL LINUX/BSD/.. */
+// INTEL LINUX/BSD/..
 #if (defined(__i386) || defined(__amd64) || defined(__x86_64__))
 #define get_clockticks(val) \
 { \
@@ -49,7 +49,7 @@
     val = _Asm_mov_from_ar (_AREG_ITC); \
 }
 #else
-/* POWER PC */
+// POWER PC
 #if (defined(__GNUC__) && (defined(__powerpc__) || (defined(__ppc__))))
 #define get_clockticks(val) \
 { \
@@ -63,7 +63,7 @@
     val = ((uint64_t)tbl) | (((uint64_t)tbu0) << 32);  \
 }
 #else
-/* SPARC */
+// SPARC
 #ifdef SPARCV9
 #ifdef _LP64
 #define get_clockticks(val) \
@@ -79,14 +79,14 @@
         : "=r" (a), "=r" (b)); \
     val = ((uint64_t)a) | (((uint64_t)b) << 32); \
 }
-#endif /* _LP64 */
+#endif // _LP64
 #else
 #define get_clockticks(val)
-#endif /* SPARC */
-#endif /* POWERPC || PPC */
-#endif /* IA64 && HPUX */
-#endif /* IA64 && GNUC */
-#endif /* I386 || AMD64 || X86_64 */
+#endif // SPARCV9
+#endif // __GNUC__ && __powerpc__ || __ppc__
+#endif // __ia64 && __hpux
+#endif // __ia64 && __GNUC__
+#endif // __i386 || __amd64 || __x86_64__
 
 static inline double get_ticks_per_usec(void)
 {
@@ -99,5 +99,5 @@ static inline double get_ticks_per_usec(void)
     return (double)(end-start)/1e6;
 }
 
-#endif /* CPUCLOCK_H */
+#endif
 

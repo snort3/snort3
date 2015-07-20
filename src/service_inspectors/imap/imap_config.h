@@ -15,19 +15,18 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-//
 
 #ifndef IMAP_CONFIG_H
 #define IMAP_CONFIG_H
+
+// Configuration for Imap service inspector
 
 #include "file_api/file_api.h"
 
 struct IMAP_PROTO_CONF
 {
-    uint32_t memcap;
     DecodeConfig decode_conf;
     MAIL_LogConfig log_config;
 };
 
 #endif
-

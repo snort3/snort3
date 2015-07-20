@@ -17,20 +17,16 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/* stream_api.h
- * AUTHOR: Steven Sturges
- *
- * Purpose: Definition of the StreamAPI.  To be used as a common interface
- *          for TCP (and later UDP & ICMP) Stream access for other
- *          preprocessors and detection plugins.
- */
+// stream_api.h author Steven Sturges
 
 #ifndef STREAM_API_H
 #define STREAM_API_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+/*
+ * Purpose: Definition of the StreamAPI.  To be used as a common interface
+ *          for TCP (and later UDP & ICMP) Stream access for other
+ *          preprocessors and detection plugins.
+ */
 
 #include <sys/types.h>
 
@@ -94,119 +90,100 @@ public:
     SO_PRIVATE Stream();
     SO_PRIVATE ~Stream();
 
+    // Looks in the flow cache for flow session with specified key and returns
+    // pointer to flow session oject if found, otherwise null.
     static Flow* get_session(const FlowKey*);
+
+    // Allocates a flow session object from the flow cache table for the protocol
+    // type of the specified key.  If no cache exists for that protocol type null is
+    // returned.  If a flow already exists for the key a pointer to that session
+    // object is returned.
+    // If a new session object can not be allocated the program is terminated.
     static Flow* new_session(const FlowKey*);
+
+    // Removes the flow session object from the flow cache table and returns
+    // the resources allocated to that flow to the free list.
     static void delete_session(const FlowKey*);
 
+    // Examines the source and destination ip addresses and ports to determine if the
+    // packet is from the client or server side of the flow and sets bits in the
+    // packet_flags field of the Packet struct to indicate the direction determined.
     static uint32_t get_packet_direction(Packet*);
 
+    // Sets the stream session into proxy mode.  FIXIT-L method name is misleading
     static void proxy_started(Flow*, unsigned dir);
 
-    /* Stop inspection for session, up to count bytes (-1 to ignore
-     * for life or until resume).
-     *
-     * If response flag is set, automatically resume inspection up to
-     * count bytes when a data packet in the other direction is seen.
-     *
-     * Also marks the packet to be ignored
-     */
+    // Stop inspection on a flow for up to count bytes (-1 to ignore for life or until resume).
+    // If response flag is set, automatically resume inspection up to count bytes when a data
+    // packet in the other direction is seen.  Also marks the packet to be ignored
+    // FIXIT: method does not currently support the bytes/response parameters
     static void stop_inspection(Flow*, Packet*, char dir, int32_t bytes, int rspFlag);
 
-    /* Turn off inspection for potential session.
-     * Adds session identifiers to a hash table.
-     * TCP only.
-     */
+    // Adds entry to the expected session cache with a flow key generated from the network
+    // n-tuple parameters specified.  Inspection will be turned off for this expected session
+    // when it arrives.
     int ignore_session(
         const sfip_t *addr1, uint16_t p1, const sfip_t *addr2, uint16_t p2,
         PktType, char dir, uint32_t ppId);
 
-    /* Resume inspection for session.
-     */
+    // Resume inspection for flow.
+    // FIXIT-L does this just work for a flow that has been stop by call to stop_inspection??
     static void resume_inspection(Flow*, char dir);
 
-    /* Drop traffic arriving on session.
-     */
+    // Set Active status to force drop the current packet and set flow state to drop
+    // subsequent packets arriving from the direction specified.
     static void drop_traffic(Flow*, char dir);
 
-    /* Drop retransmitted packet arriving on session.
-     */
+    // Mark a flow as dropped, release allocated resources, and set flow state such that any
+    // subsequent packets received on this flow are dropped.
     static void drop_session(const Packet*);
 
-    // FIXIT-L these are misnomers in ips mode and may be used incorrectly
-    static void flush_request(Packet*);  // flush listener
-    static void flush_response(Packet*);  // flush talker
+    // FIXIT-L flush_request & flush response are misnomers in ips mode and may be used incorrectly.
 
-    /* Add session alert - true if added
-     */
+    // Flush queued data on the listener side of a stream flow.  The listener is the side of the
+    // connection the packet is destined, so if the Packet is from the client, then the
+    // server side tracker is flushed.
+    static void flush_request(Packet*);  // flush listener
+
+    // Flush queued data on the talker side of a stream flow.  The talker is the side of the
+    // connection the packet originated from, so if the Packet is from the client, then the
+    // client side tracker is flushed.
+     static void flush_response(Packet*);  // flush talker
+
+    // Add session alert - true if added
     static bool add_session_alert(Flow*, Packet*, uint32_t gid, uint32_t sid);
 
-    /* Check session alert - true if previously alerted
-     */
+    // Check session alert - true if previously alerted
     static bool check_session_alerted(Flow*, Packet* p, uint32_t gid, uint32_t sid);
 
-    /* Set Extra Data Logging
-     *
-     * Returns
-     *      0 success
-     *      -1 failure ( no alerts )
-     */
+    // Set Extra Data Logging
     static int update_session_alert(
         Flow*, Packet* p, uint32_t gid, uint32_t sid,
         uint32_t eventId, uint32_t eventSecond);
 
-    /* Get Flowbits data
-     *
-     * Returns
-     *     Ptr to Flowbits Data
-     */
+    // Get pointer to Flowbits data
     static StreamFlowData* get_flow_data(const Packet*);
 
-    /* Get reassembly direction for given session
-     *
-     * Returns
-     *     direction(s) of reassembly for session
-     */
+    // Get reassembly direction for given session
     static char get_reassembly_direction(Flow*);
 
-    /* Get true/false as to whether stream data is in
-     * sequence or packets are missing
-     *
-     * Returns
-     *     true/false
-     */
+    // Returns true if stream data for the flow is in sequence, otherwise return false.
     static bool is_stream_sequenced(Flow*, uint8_t dir);
 
-    /* Get whether there are missing packets before, after or
-     * before and after reassembled buffer
-     *
-     * Returns
-     *      SSN_MISSING_BOTH if missing before and after
-     *      SSN_MISSING_BEFORE if missing before
-     *      SSN_MISSING_AFTER if missing after
-     *      SSN_MISSING_NONE if none missing
-     */
+    // Get state of missing packets for the flow.
+    //      SSN_MISSING_BOTH if missing before and after
+    //      SSN_MISSING_BEFORE if missing before
+    //      SSN_MISSING_AFTER if missing after
+    //      SSN_MISSING_NONE if none missing
     static int missing_in_reassembled(Flow*, uint8_t dir);
 
-    /* Get true/false as to whether packets were missed on
-     * the stream
-     *
-     * Returns
-     *     true/false
-     */
+    // Returns true if packets were missed on the stream, otherwise returns false.
     static bool missed_packets(Flow*, uint8_t dir);
 
-    /* Get the protocol identifier from a stream
-     *
-     * Returns
-     *     integer protocol identifier
-     */
+    // Get the protocol identifier from a stream
     static int16_t get_application_protocol_id(Flow*);
 
-    /* Set the protocol identifier for a stream
-     *
-     * Returns
-     *     integer protocol identifier
-     */
+    // Set the protocol identifier for a stream
     static int16_t set_application_protocol_id(Flow*, int16_t appId);
 
     // initialize response count and expiration time
@@ -216,33 +193,21 @@ public:
     static StreamSplitter* get_splitter(Flow*, bool toServer);
     static bool is_paf_active(Flow*, bool toServer);
 
-    /* Turn off inspection for potential session.
-     * Adds session identifiers to a hash table.
-     * TCP only.
-     *
-     * Returns
-     *     0 on success
-     *     -1 on failure
-     */
+    // Turn off inspection for potential session. Adds session identifiers to a hash table.
+    // TCP only.
     int set_application_protocol_id_expected(
         const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2, PktType,
         int16_t appId, FlowData*);
 
-    /** Retrieve application session data based on the lookup tuples for
-     *  cases where Snort does not have an active packet that is
-     *  relevant.
-     *
-     * Returns
-     *     Application Data reference (pointer)
-     */
+    // Get pointer to application data for a flow based on the lookup tuples for cases where
+    // Snort does not have an active packet that is relevant.
     static FlowData* get_application_data_from_ip_port(
         uint8_t type, uint8_t proto,
         const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId, unsigned flow_id);
 
-    /*  Get the application data from the session key
-     */
-    static FlowData* get_application_data_from_key(const FlowKey*, unsigned flow_id);
+    // Get pointer to application data for a flow using the FlowKey as the lookup criteria
+     static FlowData* get_application_data_from_key(const FlowKey*, unsigned flow_id);
 
     // -- extra data methods
     uint32_t reg_xtra_data_cb(LogFunction);
@@ -253,28 +218,20 @@ public:
     static void clear_extra_data(Flow*, Packet*, uint32_t);
     void log_extra_data(Flow*, uint32_t mask, uint32_t id, uint32_t sec);
 
-    /** Retrieve stream session pointer based on the lookup tuples for
-     *  cases where Snort does not have an active packet that is
-     *  relevant.
-     *
-     * Returns
-     *     Stream session pointer
-     */
-    static Flow* get_session_ptr_from_ip_port(
+    // Get pointer to a session flow instance for a flow based on the lookup tuples for
+    // cases where Snort does not have an active packet that is relevant.
+     static Flow* get_session_ptr_from_ip_port(
         uint8_t type, uint8_t proto,
         const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
 
-    /* Delete the session if it is in the closed session state.
-     */
+    // Delete the session if it is in the closed session state.
     void check_session_closed(Packet*);
 
-    /*  Create a session key from the Packet
-     */
+    //  Create a session key from the Packet
     static FlowKey* get_session_key(Packet*);
 
-    /*  Populate a session key from the Packet
-     */
+    //  Populate a session key from the Packet
     static void populate_session_key(Packet*, FlowKey*);
 
     void update_direction(Flow*, char dir, const sfip_t* ip, uint16_t port);
@@ -292,7 +249,7 @@ public:
     static int set_ignore_direction(Flow*, int ignore_direction);
 
     // Get the TTL value used at session setup
-    // outer=false to get inner ip ttl for ip in ip; else outer=true
+    // Set outer=false to get inner ip ttl for ip in ip; else outer=true
     static uint8_t get_session_ttl(Flow*, char dir, bool outer);
 
     static bool expired_session(Flow*, Packet*);

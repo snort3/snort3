@@ -1,0 +1,12 @@
+This directory provides base classes and support for the various Snort++
+plugins.  Module provides an abstracted interface to the common plugin
+features such as configuration.  Module corresponds to a top-level Lua
+table of the same name.
+
+Note that plugins must keep configuration (parse time) separate from state
+(run time).  A plugin must store its state on the flow in FlowData or in
+thread local data.  In some cases thread local data is handled by an array
+attached to configuration with one element per packet thread, however those
+cases are rare and should only be needed by the framework code, not the
+plugins.
+

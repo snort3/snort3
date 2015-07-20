@@ -110,10 +110,6 @@ public:
 void Icmp6Codec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(IPPROTO_ID_ICMPV6); }
 
-//--------------------------------------------------------------------
-// decode.c::ICMP6
-//--------------------------------------------------------------------
-
 bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     if (raw.len < icmp::ICMP6_HEADER_MIN_LEN)
@@ -307,13 +303,13 @@ void Icmp6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 
 namespace
 {
-typedef struct
+struct IcmpHdr
 {
     uint8_t type;
     uint8_t code;
     uint16_t cksum;
     uint32_t unused;
-} IcmpHdr;
+};
 } // namespace
 
 void Icmp6Codec::update(const ip::IpApi& api, const EncodeFlags flags,

@@ -20,12 +20,13 @@
 #ifndef TREENODES_H
 #define TREENODES_H
 
+// rule header (RTN) and body (OTN) nodes
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include "main/snort_types.h"
-
 #include "detection/signature.h"
 #include "detection/rule_option_types.h"
 #include "actions/actions.h"
@@ -70,6 +71,8 @@ struct OtnState
     uint64_t ppm_disable_cnt;
 };
 
+// one of these for each rule
+// represents body part of rule
 struct OptTreeNode
 {
     /* plugin/detection functions go here */
@@ -86,7 +89,7 @@ struct OptTreeNode
 
     OptTreeNode* next;
 
-    /* ptr to list of RTNs (head part) */
+    // ptr to list of RTNs (head part); indexed by policyId
     RuleTreeNode** proto_nodes;
 
     OtnState* state;
@@ -119,6 +122,8 @@ struct OptTreeNode
 };
 
 /* function pointer list for rule head nodes */
+// FIXIT-L use bit mask to determine what header checks to do
+// cheaper than traversing a list and uses much less memory
 struct RuleFpList
 {
     /* context data for this test */
@@ -131,6 +136,8 @@ struct RuleFpList
     RuleFpList* next;
 };
 
+// one of these per rule per policy
+// represents head part of rule
 struct RuleTreeNode
 {
     RuleFpList* rule_func; /* match functions.. (Bidirectional etc.. ) */
@@ -149,9 +156,8 @@ struct RuleTreeNode
 
     RuleType type;
 
-    /**reference count from otn. Multiple OTNs can reference this RTN with the same
-     * policy.
-     */
+    // reference count from otn.
+    // Multiple OTNs can reference this RTN with the same policy.
     unsigned int otnRefCount;
 };
 
