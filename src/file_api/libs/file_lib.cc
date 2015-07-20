@@ -36,6 +36,8 @@
 
 #include "file_identifier.h"
 #include "file_config.h"
+#include "hash/hashes.h"
+#include "utils/util.h"
 #include "file_api/file_capture.h"
 
 FileContext::FileContext ()

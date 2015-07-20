@@ -23,7 +23,7 @@
 #define FILE_MIME_CONFIG_H
 
 // List of MIME decode and log configuration functions
-#include "snort_types.h"
+#include "main/snort_types.h"
 
 /*These are temporary values*/
 #define DEFAULT_MAX_MIME_MEM          838860

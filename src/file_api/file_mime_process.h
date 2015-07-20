@@ -29,6 +29,7 @@
 #include "file_api/file_api.h"
 #include "file_api/file_mime_config.h"
 #include "file_api/file_mime_paf.h"
+#include "file_api/file_mime_log.h"
 #include "utils/sf_email_attach_decode.h"
 
 #define MAX_FILE                             1024
