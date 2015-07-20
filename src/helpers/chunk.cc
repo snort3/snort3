@@ -26,6 +26,7 @@
 #include "parser/parser.h"
 #include "framework/cursor.h"
 #include "time/profiler.h"
+#include "lua.h"
 
 using namespace std;
 
@@ -60,6 +61,8 @@ void init_chunk(
     lua_State*& L, string& chunk, const char* name, string& args)
 {
     L = luaL_newstate();
+    Lua::ManageStack ms(L);
+
     luaL_openlibs(L);
 
     Loader ldr(chunk);
@@ -117,8 +120,6 @@ void init_chunk(
         ParseError("%s init() returned false", name);
         return;
     }
-    // initialization complete
-    lua_pop(L, 1);
 }
 
 void term_chunk(lua_State*& L)

@@ -27,7 +27,6 @@
 #include <string>
 #include <vector>
 
-#include "helpers/lua.h"
 #include "log/messages.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
@@ -70,7 +69,7 @@ void Manager::init()
 void Manager::add_plugin(Api* api)
 { plugins[api->target] = api; }
 
-BasePlugin* Manager::instantiate(Lua::Handle& lua, string type, string target)
+BasePlugin* Manager::instantiate(Lua::State& lua, string type, string target)
 {
     auto key = PluginManager::get_type(type.c_str());
     if ( key == PT_MAX )

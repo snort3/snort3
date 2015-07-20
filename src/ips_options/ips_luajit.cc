@@ -22,6 +22,7 @@
 
 #include "main/snort_types.h"
 #include "helpers/chunk.h"
+#include "helpers/lua.h"
 #include "managers/ips_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"
@@ -196,6 +197,8 @@ int LuaJitOption::eval(Cursor& c, Packet*)
     cursor = &c;
 
     lua_State* L = lua[get_instance_id()];
+    Lua::ManageStack ms(L, 1);
+
     lua_getglobal(L, opt_eval);
 
     if ( lua_pcall(L, 0, 1, 0) )
@@ -205,8 +208,8 @@ int LuaJitOption::eval(Cursor& c, Packet*)
         MODULE_PROFILE_END(luaIpsPerfStats);
         return DETECTION_OPTION_NO_MATCH;
     }
+
     bool result = lua_toboolean(L, -1);
-    lua_pop(L, 1);
 
     int ret = result ? DETECTION_OPTION_MATCH : DETECTION_OPTION_NO_MATCH;
     MODULE_PROFILE_END(luaIpsPerfStats);

@@ -23,6 +23,7 @@
 // Piglet plugin API
 
 #include <string>
+#include <luajit-2.0/lua.hpp>
 
 #include "framework/base_api.h"
 #include "helpers/lua.h"
@@ -40,8 +41,8 @@ struct Api;
 class SO_PUBLIC BasePlugin
 {
 public:
-    BasePlugin(Lua::Handle& handle, string t) :
-        lua { handle }, target { t } { }
+    BasePlugin(Lua::State& lua, string t) :
+        L { lua.get_ptr() }, target { t } { }
 
     virtual ~BasePlugin() { }
 
@@ -59,7 +60,7 @@ public:
     { return error; }
 
 protected:
-    Lua::Handle lua;
+    lua_State* L;
 
     string target;
     string error;
@@ -75,7 +76,7 @@ private:
 // Plugin ctor/dtor
 //--------------------------------------------------------------------------
 
-using PluginCtor = BasePlugin* (*)(Lua::Handle&, string, Module*);
+using PluginCtor = BasePlugin* (*)(Lua::State&, string, Module*);
 using PluginDtor = void (*)(BasePlugin*);
 
 //--------------------------------------------------------------------------

@@ -23,6 +23,7 @@
 #include "main/snort_types.h"
 #include "events/event.h"
 #include "helpers/chunk.h"
+#include "helpers/lua.h"
 #include "managers/event_manager.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
@@ -217,6 +218,8 @@ void LuaJitLogger::alert(Packet* p, const char*, Event* e)
     event = e;
 
     lua_State* L = lua[get_instance_id()];
+    Lua::ManageStack ms(L, 1);
+
     lua_getglobal(L, "alert");
 
     if ( lua_pcall(L, 0, 1, 0) )

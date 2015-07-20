@@ -507,6 +507,7 @@ void CsvLogger::alert(Packet* p, const char* msg, Event* event)
         if ( first )
             first = false;
         else
+            // FIXIT-M: Need to check csv_log for nullptr
             TextLog_Puts(csv_log, sep.c_str());
 
         f(a);
