@@ -26,13 +26,13 @@
 #include <string>
 using namespace std;
 
-#include "snort_types.h"
-#include "snort_bounds.h"
-#include "snort_debug.h"
-#include "protocols/packet.h"
-#include "parser.h"
-#include "parser/parse_utils.h"
 #include "ips_content.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "utils/snort_bounds.h"
+#include "protocols/packet.h"
+#include "parser/parser.h"
+#include "parser/parse_utils.h"
 #include "packet_io/sfdaq.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"

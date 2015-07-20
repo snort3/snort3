@@ -24,9 +24,9 @@
 #include <string.h>
 
 #include "pm/cpa_pm_compile.h"
-#include "util.h"
-#include "snort_config.h"
-#include "snort_debug.h"
+#include "utils/util.h"
+#include "main/snort_config.h"
+#include "main/snort_debug.h"
 
 /* MACROS *********************************************************************/
 #define GROUP_ARRAY_ALLOC_SIZE 50

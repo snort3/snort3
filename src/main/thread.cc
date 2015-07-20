@@ -31,7 +31,7 @@
 #include <thread>
 #include <vector>
 
-#include "main/snort_config.h"
+#include "snort_config.h"
 #include "parser/parser.h"
 #include "log/messages.h"
 

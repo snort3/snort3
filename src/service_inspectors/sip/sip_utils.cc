@@ -24,8 +24,8 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "snort_types.h"
 #include <ctype.h>
+#include "main/snort_types.h"
 
 /********************************************************************
  * Function: SIP_IsEmptyStr()

@@ -17,9 +17,11 @@
 //--------------------------------------------------------------------------
 
 #include "smtp_paf.h"
+
 #include <sys/types.h>
-#include "snort_types.h"
-#include "snort_debug.h"
+
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 
 #include "smtp.h"
 

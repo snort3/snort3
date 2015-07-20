@@ -21,9 +21,10 @@
 #include "config.h"
 #endif
 
+#include <pcap.h>
+
 #include "framework/codec.h"
 #include "protocols/protocol_ids.h"
-#include <pcap.h>
 
 #define CD_RAW6_NAME "raw6"
 #define CD_RAW6_HELP_STR "support for unencapsulated IPv6"

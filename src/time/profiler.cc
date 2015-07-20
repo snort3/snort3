@@ -36,7 +36,7 @@ using namespace std;
 #include "detection/fp_detect.h"
 #include "detection/treenodes.h"
 #include "detection/rules.h"
-#include "detection_options.h"
+#include "detection/detection_options.h"
 #include "parser/parser.h"
 #include "utils/util.h"
 #include "main/snort_types.h"

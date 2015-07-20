@@ -28,14 +28,14 @@
 #include <sstream>
 #include <luajit-2.0/lua.hpp>
 
-#include "framework/base_api.h"
-#include "framework/module.h"
-#include "managers/plugin_manager.h"
+#include "plugin_manager.h"
 #include "main/snort_config.h"
 #include "main/modules.h"
 #include "main/shell.h"
 #include "main/snort_types.h"
 #include "main/snort.h"
+#include "framework/base_api.h"
+#include "framework/module.h"
 #include "parser/parser.h"
 #include "parser/parse_conf.h"
 #include "parser/vars.h"

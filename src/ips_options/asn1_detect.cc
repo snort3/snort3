@@ -59,17 +59,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "snort_types.h"
-
-#ifndef SF_SNORT_ENGINE_DLL
-#include "snort_debug.h"
-#else
-/* Ignore debug statements */
-#include <stdint.h>
-#define DEBUG_WRAP(x)
-#endif
-
-#include "ips_options/asn1_util.h"
+#include "asn1_util.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 
 /*
  * Check to make sure that p is less than or equal to the ptr range

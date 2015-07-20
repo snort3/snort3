@@ -21,10 +21,10 @@
 #include "config.h"
 #endif
 
-#include "snort_types.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "protocols/packet.h"
-#include "snort_debug.h"
-#include "profiler.h"
+#include "time/profiler.h"
 #include "flow/flow.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"

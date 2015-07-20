@@ -20,12 +20,12 @@
 #include "config.h"
 #endif
 
-#include "utils/util.h"
 #include "file_decomp.h"
-#include "snort_types.h"
-#include "detection_util.h"
-#include "file_decomp_pdf.h"
-#include "file_decomp_swf.h"
+#include "main/snort_types.h"
+#include "utils/util.h"
+#include "detection/detection_util.h"
+#include "decompress/file_decomp_pdf.h"
+#include "decompress/file_decomp_swf.h"
 
 static const char PDF_Sig[5] = { '%', 'P', 'D', 'F', '-' };
 static const char SWF_ZLIB_Sig[3] = { 'C', 'W', 'S' };

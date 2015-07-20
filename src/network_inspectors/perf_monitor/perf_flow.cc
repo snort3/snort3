@@ -47,12 +47,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "snort_types.h"
-#include "util.h"
-#include "snort_types.h"
 #include "perf.h"
+#include "main/snort_types.h"
+#include "main/snort_types.h"
 #include "sfip/sf_ip.h"
 #include "protocols/icmp4.h"
+#include "utils/util.h"
 
 static void DisplayFlowStats(SFFLOW_STATS* sfFlowStats);
 static void WriteFlowStats(SFFLOW_STATS*, FILE*);

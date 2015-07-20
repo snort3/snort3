@@ -20,8 +20,6 @@
 #include <vector>
 using namespace std;
 
-#include "magic.h"
-#include "wiz_module.h"
 #include "flow/flow.h"
 #include "framework/inspector.h"
 #include "managers/inspector_manager.h"
@@ -30,6 +28,9 @@ using namespace std;
 #include "time/profiler.h"
 #include "utils/stats.h"
 #include "log/messages.h"
+
+#include "magic.h"
+#include "wiz_module.h"
 
 THREAD_LOCAL ProfileStats wizPerfStats;
 

@@ -58,7 +58,7 @@ using namespace std;
 #include "utils/util.h"
 #include "utils/stats.h"
 #include "utils/sflsq.h"
-#include "bitop.h"
+#include "utils/bitop.h"
 #include "hash/sfghash.h"
 #include "parser/mstring.h"
 #include "stream/stream_api.h"

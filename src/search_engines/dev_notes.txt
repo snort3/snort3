@@ -1,8 +1,8 @@
 Builtin fast pattern matching algorithms are implemented here.
 
-MPSE = multi-pattern search engine
-DFA = deterministic finite automaton
-NFA = non-DFA
+* MPSE = multi-pattern search engine
+* DFA = deterministic finite automaton
+* NFA = non-DFA
 
 This code has has evolved through 3 major versions:
 

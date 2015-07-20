@@ -115,18 +115,18 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "snort_types.h"
-#include "detect.h"
-#include "protocols/packet.h"
-#include "event.h"
-#include "parser.h"
-#include "snort_debug.h"
-#include "util.h"
-#include "profiler.h"
-#include "snort_types.h"
+#include "main/snort_types.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "detection/detect.h"
+#include "events/event.h"
+#include "parser/parser.h"
+#include "utils/util.h"
+#include "time/profiler.h"
 #include "framework/inspector.h"
 #include "framework/module.h"
 #include "protocols/udp.h"
+#include "protocols/packet.h"
 
 #define BO_DEFAULT_KEY     31337
 #define BO_MAGIC_SIZE      8

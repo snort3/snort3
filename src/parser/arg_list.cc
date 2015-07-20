@@ -19,7 +19,7 @@
 
 #include "arg_list.h"
 
-#include "string.h"
+#include <string.h>
 
 void ArgList::dump()
 {

@@ -23,7 +23,7 @@
 #include <time.h>
 #include <string>
 
-#include "snort_config.h"
+#include "main/snort_config.h"
 #include "log/text_log.h"
 #include "actions/actions.h"
 #include "utils/stats.h"

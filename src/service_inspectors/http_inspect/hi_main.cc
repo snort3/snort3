@@ -58,27 +58,28 @@
 #include <sys/types.h>
 #include <limits.h>
 
-#include "detect.h"
-#include "protocols/packet.h"
-#include "event.h"
-#include "snort_debug.h"
-#include "util.h"
+#include "detection/detect.h"
+#include "detection/detection_util.h"
+#include "events/event.h"
+#include "main/snort_debug.h"
+#include "utils/util.h"
+#include "utils/sfsnprintfappend.h"
+#include "utils/sf_email_attach_decode.h"
 #include "stream/stream_api.h"
-#include "sfsnprintfappend.h"
+#include "time/profiler.h"
+#include "loggers/unified2_common.h"
+#include "file_api/file_api.h"
+#include "protocols/packet.h"
+#include "protocols/tcp.h"
+#include "framework/data_bus.h"
+
 #include "hi_return_codes.h"
 #include "hi_ui_config.h"
 #include "hi_ui_iis_unicode_map.h"
 #include "hi_si.h"
 #include "hi_mi.h"
 #include "hi_norm.h"
-#include "detection_util.h"
-#include "profiler.h"
 #include "hi_cmd_lookup.h"
-#include "loggers/unified2_common.h"
-#include "file_api/file_api.h"
-#include "sf_email_attach_decode.h"
-#include "protocols/tcp.h"
-#include "framework/data_bus.h"
 
 const HiSearchToken hi_patterns[] =
 {

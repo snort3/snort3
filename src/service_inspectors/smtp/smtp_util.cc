@@ -33,7 +33,7 @@
 #include "smtp.h"
 #include "smtp_config.h"
 #include "stream/stream_api.h"
-#include "snort_bounds.h"
+#include "utils/snort_bounds.h"
 #include "detection/detection_util.h"
 
 static THREAD_LOCAL DataBuffer DecodeBuf;

@@ -24,10 +24,10 @@
 #include <string>
 using namespace std;
 
-#include "snort_types.h"
-#include "parser.h"
-#include "snort_debug.h"
-#include "profiler.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "parser/parser.h"
+#include "time/profiler.h"
 #include "flow/flow.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"

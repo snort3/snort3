@@ -27,13 +27,13 @@ extern "C" {
 #include <daq.h>
 }
 
-#include "snort_types.h"
-#include "snort_debug.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "stream/stream_api.h"
-#include "snort_bounds.h"
 #include "main/thread.h"
-#include "util.h"
+#include "utils/snort_bounds.h"
+#include "utils/util.h"
 
 #ifdef OBFUSCATION_TEST_STANDALONE
 # ifndef OBFUSCATION_TEST

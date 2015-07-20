@@ -25,7 +25,7 @@
 #endif
 
 #include "packet_io/active.h"
-#include "packet_time.h"
+#include "time/packet_time.h"
 #include "ips_options/ips_flowbits.h"
 #include "hash/zhash.h"
 #include "main/snort_debug.h"

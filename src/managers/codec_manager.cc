@@ -23,14 +23,15 @@
 
 #include <algorithm>
 #include <string.h>
-#include "utils/dnet_header.h"
+
+#include "main/snort_config.h"
 #include "framework/codec.h"
 #include "managers/codec_manager.h"
 #include "protocols/packet_manager.h"
 #include "log/messages.h"
 #include "parser/parser.h"
 #include "packet_io/sfdaq.h"
-#include "main/snort_config.h"
+#include "utils/dnet_header.h"
 
 struct CodecManager::CodecApiWrapper
 {

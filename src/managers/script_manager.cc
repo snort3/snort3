@@ -26,10 +26,10 @@
 #include <luajit-2.0/lua.hpp>
 
 #include "ips_manager.h"
+#include "plugin_manager.h"
 #include "framework/ips_option.h"
 #include "framework/logger.h"
 #include "framework/lua_api.h"
-#include "managers/plugin_manager.h"
 #include "parser/parser.h"
 #include "helpers/directory.h"
 

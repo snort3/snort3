@@ -28,15 +28,15 @@
 #include <ctype.h>
 #include <errno.h>
 
-#include "snort_types.h"
-#include "snort_bounds.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "protocols/packet.h"
-#include "parser.h"
-#include "snort_debug.h"
-#include "util.h"
-#include "profiler.h"
+#include "parser/parser.h"
+#include "time/profiler.h"
+#include "utils/util.h"
 #include "utils/sf_base64decode.h"
 #include "utils/util_unfold.h"
+#include "utils/snort_bounds.h"
 #include "detection/detection_defines.h"
 #include "detection/detection_util.h"
 #include "framework/cursor.h"

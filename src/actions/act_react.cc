@@ -51,10 +51,10 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "snort_types.h"
-#include "snort_debug.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "protocols/packet.h"
-#include "profiler.h"
+#include "time/profiler.h"
 #include "packet_io/active.h"
 #include "parser/parser.h"
 #include "framework/ips_action.h"

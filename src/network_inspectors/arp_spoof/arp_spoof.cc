@@ -76,20 +76,20 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "snort_types.h"
-#include "snort_debug.h"
-#include "detect.h"
-#include "protocols/packet.h"
-#include "event.h"
-#include "parser.h"
-#include "util.h"
-#include "profiler.h"
 #include "arp_module.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "detection/detect.h"
+#include "events/event.h"
+#include "parser/parser.h"
+#include "utils/util.h"
+#include "time/profiler.h"
 #include "framework/inspector.h"
+#include "protocols/packet.h"
 #include "protocols/layer.h"
 #include "protocols/arp.h"
-#include "sfip/sf_ip.h"
 #include "protocols/eth.h"
+#include "sfip/sf_ip.h"
 
 static const uint8_t bcast[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 

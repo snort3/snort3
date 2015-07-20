@@ -21,11 +21,11 @@
 #include "config.h"
 #endif
 
-#include "snort_types.h"
-#include "snort_bounds.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "utils/snort_bounds.h"
 #include "protocols/packet.h"
-#include "snort_debug.h"
-#include "profiler.h"
+#include "time/profiler.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"

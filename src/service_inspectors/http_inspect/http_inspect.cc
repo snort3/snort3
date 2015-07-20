@@ -44,10 +44,18 @@
 #include <sys/types.h>
 
 #include "protocols/packet.h"
-#include "snort_debug.h"
-#include "util.h"
-#include "parser.h"
+#include "main/snort_debug.h"
+#include "parser/parser.h"
 #include "decompress/file_decomp.h"
+#include "time/profiler.h"
+#include "detection/detection_util.h"
+#include "stream/stream_api.h"
+#include "target_based/snort_protocols.h"
+#include "file_api/file_api.h"
+#include "utils/sf_email_attach_decode.h"
+#include "utils/util.h"
+#include "framework/inspector.h"
+#include "managers/inspector_manager.h"
 
 #include "hi_client.h"
 #include "hi_ui_config.h"
@@ -58,16 +66,6 @@
 #include "hi_util_xmalloc.h"
 #include "hi_cmd_lookup.h"
 #include "hi_stream_splitter.h"
-
-#include "profiler.h"
-#include "detection_util.h"
-
-#include "stream/stream_api.h"
-#include "target_based/snort_protocols.h"
-#include "file_api/file_api.h"
-#include "sf_email_attach_decode.h"
-#include "framework/inspector.h"
-#include "managers/inspector_manager.h"
 
 int hex_lookup[256];
 int valid_lookup[256];

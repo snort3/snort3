@@ -36,7 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 
 /*
 *  private alloc

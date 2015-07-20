@@ -35,11 +35,11 @@
 #include "config.h"
 #endif
 
-#include "snort_types.h"
 #include "sfprimetable.h"
+#include "main/snort_types.h"
 
 #ifndef MODULUS_HASH
-#include "snort_config.h"
+#include "main/snort_config.h"
 #endif
 
 SFHASHFCN* sfhashfcn_new(int m)

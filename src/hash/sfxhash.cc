@@ -96,10 +96,10 @@
 #include <string.h>
 
 #include "sfxhash.h"
-#include "snort_types.h"
-#include "snort_debug.h"
 #include "sfprimetable.h"
-#include "hash/sfhashfcn.h"
+#include "sfhashfcn.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 
 /*
  * Implements SFXHASH as specialized hash container

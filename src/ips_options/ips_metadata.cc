@@ -25,9 +25,9 @@
 #include <vector>
 using namespace std;
 
-#include "snort_types.h"
-#include "snort_debug.h"
-#include "snort_config.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "main/snort_config.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/parameter.h"

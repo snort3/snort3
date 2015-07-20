@@ -32,9 +32,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "rules.h"
-#include "treenodes.h"
-#include "util.h"
+#include "detection/rules.h"
+#include "detection/treenodes.h"
+#include "utils/util.h"
 #include "utils/sflsq.h"
 #include "hash/sfghash.h"
 #include "hash/sfxhash.h"

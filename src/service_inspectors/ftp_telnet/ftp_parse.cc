@@ -34,10 +34,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <errno.h>
-#include "sf_ip.h"
 
-#include "snort_types.h"
-#include "snort_debug.h"
 #include "ftpp_return_codes.h"
 #include "ftpp_ui_config.h"
 #include "ftp_cmd_lookup.h"
@@ -45,12 +42,16 @@
 #include "ftpp_si.h"
 #include "pp_telnet.h"
 #include "pp_ftp.h"
+
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "stream/stream_api.h"
-#include "profiler.h"
-#include "detection_util.h"
-#include "parser.h"
-#include "mstring.h"
-#include "sfsnprintfappend.h"
+#include "time/profiler.h"
+#include "detection/detection_util.h"
+#include "parser/parser.h"
+#include "parser/mstring.h"
+#include "utils/sfsnprintfappend.h"
+#include "sfip/sf_ip.h"
 
 #define CONF_SEPARATORS " "
 

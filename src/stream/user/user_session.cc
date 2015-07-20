@@ -25,6 +25,7 @@
 
 #include "stream_user.h"
 #include "user_module.h"
+
 #include "stream/stream.h"
 #include "stream/stream_splitter.h"
 #include "stream/paf.h"

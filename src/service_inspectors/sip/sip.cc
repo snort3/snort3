@@ -34,21 +34,20 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#include "snort_types.h"
-#include "snort_debug.h"
-
-#include "sip_utils.h"
-#include "sip_module.h"
-#include "profiler.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "main/snort_config.h"
+#include "time/profiler.h"
 #include "stream/stream_api.h"
 #include "file_api/file_api.h"
-#include "parser.h"
+#include "parser/parser.h"
 #include "framework/inspector.h"
 #include "utils/sfsnprintfappend.h"
 #include "target_based/snort_protocols.h"
-#include "service_inspectors/http_inspect/hi_main.h"
-#include "main/snort_config.h"
 #include "managers/inspector_manager.h"
+
+#include "sip_utils.h"
+#include "sip_module.h"
 
 THREAD_LOCAL ProfileStats sipPerfStats;
 THREAD_LOCAL SimpleStats sipstats;

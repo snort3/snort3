@@ -28,9 +28,6 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#include "snort_types.h"
-#include "snort_debug.h"
-
 #include "ftp_module.h"
 #include "ftpp_si.h"
 #include "ftpp_ui_config.h"
@@ -41,14 +38,16 @@
 #include "ftp_print.h"
 #include "ftp_splitter.h"
 #include "pp_ftp.h"
-#include "profiler.h"
 
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "stream/stream_api.h"
 #include "file_api/file_api.h"
-#include "parser.h"
+#include "parser/parser.h"
 #include "framework/inspector.h"
 #include "detection/detection_util.h"
 #include "protocols/tcp.h"
+#include "time/profiler.h"
 
 #define s_name "ftp_data"
 

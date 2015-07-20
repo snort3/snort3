@@ -26,8 +26,8 @@
 
 #include "parser/cmd_line.h"
 #include "parser/parser.h"
-#include "sflsq.h"
-#include "sfdaq.h"
+#include "utils/sflsq.h"
+#include "packet_io/sfdaq.h"
 #include "utils/util.h"
 #include "main/snort_config.h"
 

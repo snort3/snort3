@@ -34,7 +34,6 @@
 #include <signal.h>
 #include <unistd.h>
 #include <pcap.h>
-#include <timersub.h>
 #include <string.h>
 #include <grp.h>
 #include <pwd.h>
@@ -56,17 +55,18 @@
 #include <sys/stat.h>
 #include <sys/resource.h>
 
-#include "snort_config.h"
-#include "snort_debug.h"
-#include "parser.h"
-#include "packet_io/sfdaq.h"
-#include "build.h"
-#include "snort_types.h"
 #include "sflsq.h"
-#include "ips_options/ips_pcre.h"
-#include "ppm.h"
+#include "main/snort_config.h"
+#include "main/snort_debug.h"
+#include "main/snort_types.h"
+#include "main/build.h"
+#include "parser/parser.h"
+#include "packet_io/sfdaq.h"
 #include "packet_io/active.h"
-#include "packet_time.h"
+#include "ips_options/ips_pcre.h"
+#include "time/ppm.h"
+#include "time/packet_time.h"
+#include "time/timersub.h"
 #include "stream/stream.h"
 
 #ifdef PATH_MAX

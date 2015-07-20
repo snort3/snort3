@@ -30,23 +30,23 @@
 #include "config.h"
 #endif
 
-#include "snort_types.h"
-#include "file_service.h"
-#include "file_mempool.h"
-#include "util.h"
 #include <sys/stat.h>
-//#include "sf_sechash.h"
-#include "snort.h"
-#include "stream/stream_api.h"
-#include "libs/file_config.h"
-#include "file_stats.h"
-
-#include "hash/hashes.h"
-#include "main/snort_config.h"
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/types.h>
+
+#include "file_service.h"
+#include "file_mempool.h"
+#include "file_stats.h"
+#include "libs/file_config.h"
+
+#include "main/snort.h"
+#include "main/snort_types.h"
+#include "main/snort_config.h"
+#include "utils/util.h"
+#include "stream/stream_api.h"
+#include "hash/hashes.h"
 
 // FIXIT-L these are no longer needed
 #define SHA256CONTEXT SHA256_CTX

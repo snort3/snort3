@@ -31,11 +31,11 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "snort_types.h"
 #include "file_api.h"
-#include "sf_email_attach_decode.h"
-#include "util.h"
-#include "parser.h"
+#include "main/snort_types.h"
+#include "utils/sf_email_attach_decode.h"
+#include "utils/util.h"
+#include "parser/parser.h"
 
 #define CONF_SEPARATORS                  " \t\n\r"
 #define CONF_MAX_MIME_MEM                "max_mime_mem"

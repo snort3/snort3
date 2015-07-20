@@ -24,7 +24,7 @@
 
 #include <random>
 
-#include "snort_config.h"
+#include "main/snort_config.h"
 #include "protocols/packet.h"
 
 //-------------------------------------------------------------------------

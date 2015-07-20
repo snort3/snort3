@@ -31,9 +31,9 @@
 #include <time.h>
 #include <errno.h>
 
-#include "snort_types.h"
-#include "snort_debug.h"
 #include "detect.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "framework/ips_option.h"
 
 /****************************************************************************
