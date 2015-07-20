@@ -24,11 +24,10 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#include "snort_types.h"
-#include "snort_debug.h"
-#include "sfhashfcn.h"
-#include "profiler.h"
-#include "sfhashfcn.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "hash/sfhashfcn.h"
+#include "time/profiler.h"
 #include "detection/detection_defines.h"
 #include "framework/range.h"
 #include "framework/ips_option.h"

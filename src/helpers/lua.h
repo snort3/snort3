@@ -22,38 +22,47 @@
 
 // methods and templates for the C++ / LuaJIT interface
 
+#include <string>
 #include <luajit-2.0/lua.hpp>
 
 namespace Lua
 {
-class Handle;
 
+// Resource manager for lua_State
 class State
 {
 public:
-    State(bool = true);
+    State(bool openlibs = true);
     ~State();
 
-    Handle get_handle();
+    State(State&) = delete;
+    State(State&&) = delete;
+
+    lua_State* get_ptr()
+    { return state; }
 
 private:
-    lua_State* _state;
+    lua_State* state;
 };
 
-class Handle
+// Stack maintainer for lua_State
+class ManageStack
 {
 public:
-    Handle(lua_State* state) :
-        _state { state }
-    { }
+    ManageStack(lua_State* L, int extra = 0);
 
-    lua_State* get_state()
-    { return _state; }
+    ManageStack(ManageStack&) = delete;
+    ManageStack(ManageStack&&) = delete;
+
+    ~ManageStack();
 
 private:
-    lua_State* _state;
+    lua_State* state;
+    int top;
 };
 
+
+// FIXIT-L: Should go in its own file
 namespace Interface
 {
 struct Library
@@ -78,6 +87,7 @@ T** create_userdata(lua_State* L, const char* type)
     return t;
 }
 
+// Call from Lua context only
 template<typename T>
 T** check_userdata(lua_State* L, const char* type, int arg)
 {
@@ -88,6 +98,7 @@ T** check_userdata(lua_State* L, const char* type, int arg)
         );
 }
 
+// Call from Lua context only
 template<typename T>
 T* get_userdata(lua_State* L, const char* type, int arg)
 { return *check_userdata<T>(L, type, arg); }

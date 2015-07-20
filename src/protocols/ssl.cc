@@ -23,6 +23,8 @@
  * ssl.c
  * 10/09/07
 */
+#include "ssl.h"
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -33,9 +35,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #endif
-#include "ssl.h"
-#include "snort_types.h"
-#include "packet.h"
+
+#include "main/snort_types.h"
+#include "protocols/packet.h"
 
 #define THREE_BYTE_LEN(x) (x[2] | x[1] << 8 | x[0] << 16)
 

@@ -30,6 +30,9 @@
 #include <list>
 using namespace std;
 
+#include "plugin_manager.h"
+#include "module_manager.h"
+
 #include "main/snort_types.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
@@ -39,9 +42,6 @@ using namespace std;
 #include "loggers/loggers.h"
 #include "parser/parser.h"
 #include "log/messages.h"
-
-#include "plugin_manager.h"
-#include "module_manager.h"
 
 struct Output
 {

@@ -22,8 +22,8 @@
 #include <pcap.h>
 #include <stdio.h>
 
-#include "snort_types.h"
-#include "snort_debug.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "utils/util.h"
 #include "sfip/sf_ip.h"
 

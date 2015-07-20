@@ -18,11 +18,13 @@
  *
  ****************************************************************************/
 
-#include <sys/types.h>
-#include "snort_types.h"
-#include "snort_debug.h"
-
 #include "pop_paf.h"
+
+#include <sys/types.h>
+
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+
 #include "pop.h"
 
 extern POPToken pop_known_cmds[];

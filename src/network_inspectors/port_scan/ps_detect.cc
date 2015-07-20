@@ -42,11 +42,11 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "snort_config.h"
-#include "protocols/packet.h"
-#include "packet_time.h"
-#include "sfxhash.h"
 #include "ipobj.h"
+#include "main/snort_config.h"
+#include "protocols/packet.h"
+#include "time/packet_time.h"
+#include "hash/sfxhash.h"
 #include "stream/stream_api.h"
 #include "sfip/sf_ip.h"
 #include "protocols/tcp.h"

@@ -29,22 +29,22 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#include "snort_types.h"
-#include "snort_debug.h"
-
-#include "imap_module.h"
-#include "profiler.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "time/profiler.h"
 #include "stream/stream_api.h"
 #include "file_api/file_api.h"
-#include "parser.h"
+#include "parser/parser.h"
 #include "framework/inspector.h"
-#include "utils/sfsnprintfappend.h"
 #include "target_based/snort_protocols.h"
-#include "imap_paf.h"
 #include "search_engines/search_tool.h"
-#include "sf_email_attach_decode.h"
+#include "utils/sf_email_attach_decode.h"
+#include "utils/sfsnprintfappend.h"
 #include "protocols/ssl.h"
 #include "file_api/file_mime_process.h"
+
+#include "imap_paf.h"
+#include "imap_module.h"
 
 THREAD_LOCAL ProfileStats imapPerfStats;
 THREAD_LOCAL SimpleStats imapstats;

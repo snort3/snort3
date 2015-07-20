@@ -134,17 +134,16 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "snort_types.h"
-
 #define ACSMX2_TRACK_Q
 
 #ifdef  ACSMX2_TRACK_Q
-# include "snort_config.h"
+#include "main/snort_config.h"
 #endif
 
 #include "pat_stats.h"
-#include "util.h"
-#include "snort_debug.h"
+#include "utils/util.h"
+#include "main/snort_debug.h"
+#include "main/snort_types.h"
 
 #define printf LogMessage
 

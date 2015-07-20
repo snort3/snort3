@@ -37,17 +37,17 @@ extern "C" {
 
 #include <string>
 
+#include "main/snort_debug.h"
+#include "main/snort_config.h"
+#include "main/analyzer.h"
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "protocols/packet.h"
-#include "event.h"
-#include "parser.h"
-#include "snort_debug.h"
-#include "util.h"
-#include "snort_config.h"
-#include "main/analyzer.h"
+#include "events/event.h"
+#include "parser/parser.h"
 #include "packet_io/sfdaq.h"
 #include "stream/stream_api.h"
+#include "utils/util.h"
 #include "utils/stats.h"
 
 /*

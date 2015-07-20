@@ -36,16 +36,16 @@
 #include <string>
 #include <vector>
 
+#include "main/snort_debug.h"
 #include "framework/logger.h"
 #include "framework/module.h"
-#include "protocols/packet.h"
 #include "detection/signature.h"
-#include "main/snort_debug.h"
 #include "utils/util.h"
 #include "utils/stats.h"
 #include "log/log.h"
 #include "log/text_log.h"
 #include "log/log_text.h"
+#include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
 #include "protocols/icmp4.h"
@@ -507,6 +507,7 @@ void CsvLogger::alert(Packet* p, const char* msg, Event* event)
         if ( first )
             first = false;
         else
+            // FIXIT-M: Need to check csv_log for nullptr
             TextLog_Puts(csv_log, sep.c_str());
 
         f(a);

@@ -26,14 +26,16 @@
 #endif
 
 #include <assert.h>
-#include "snort_types.h"
-#include "sip_module.h"
-#include "sip.h"
-#include "snort_debug.h"
+
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "main/snort_config.h"
 #include "sfip/sf_ip.h"
 #include "stream/stream_api.h"
 #include "framework/data_bus.h"
+
+#include "sip_module.h"
+#include "sip.h"
 
 static void SIP_updateMedias(SIP_MediaSession*, SIP_MediaList*);
 static int SIP_compareMedias(SIP_MediaDataList, SIP_MediaDataList);

@@ -28,16 +28,17 @@
 #include <config.h>
 #endif
 
-#include "snort_types.h"
 #include <sys/types.h>
 #include <stdio.h>
-#include "libs/file_config.h"
-#include "utils/stats.h"
+
 #include "file_stats.h"
 #include "file_capture.h"
-#include "log/messages.h"
+#include "libs/file_config.h"
 
-#include "main/snort_config.h" /* for extern SnortConfig *snort_conf */
+#include "main/snort_types.h"
+#include "main/snort_config.h"
+#include "utils/stats.h"
+#include "log/messages.h"
 
 FileStats file_stats;
 

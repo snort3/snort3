@@ -19,9 +19,11 @@
 // sip_module.cc author Bhagyashree Bantwal <bbantwal@cisco.com>
 
 #include "sip_module.h"
-#include "util.h"
+
 #include <assert.h>
 #include <sstream>
+
+#include "utils/util.h"
 
 using namespace std;
 

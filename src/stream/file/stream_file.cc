@@ -25,10 +25,11 @@
 
 #include <assert.h>
 
-#include "file_module.h"
-#include "file_session.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
+
+#include "file_module.h"
+#include "file_session.h"
 
 //-------------------------------------------------------------------------
 // inspector stuff

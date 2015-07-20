@@ -33,11 +33,11 @@
 #include "config.h"
 #endif
 
-#include "snort_debug.h"
-#include "snort_types.h"
-#include "util.h"
-#include "profiler.h"
-#include "snort_config.h"
+#include "main/snort_debug.h"
+#include "main/snort_types.h"
+#include "main/snort_config.h"
+#include "utils/util.h"
+#include "time/profiler.h"
 #include "framework/mpse.h"
 
 //-------------------------------------------------------------------------

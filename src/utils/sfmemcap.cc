@@ -33,9 +33,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "snort_types.h"
-#include "snort_debug.h"
 #include "util.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 
 /*
 *   Set max # bytes & init other variables.

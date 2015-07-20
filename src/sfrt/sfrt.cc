@@ -83,7 +83,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "snort_types.h"
+#include "main/snort_types.h"
 
 const char* rt_error_messages[] =
 {

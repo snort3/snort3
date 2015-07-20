@@ -63,7 +63,7 @@
 #include <time.h>
 #include <assert.h>
 
-#include "hash/sfhashfcn.h"
+#include "sfhashfcn.h"
 #include "sfprimetable.h"
 /*
 *  Private Malloc

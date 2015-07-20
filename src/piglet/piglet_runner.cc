@@ -33,14 +33,12 @@ namespace Piglet
 {
 using namespace std;
 
-// FIXIT-L: Needs to go in helpers/lua.h
-static int load_buffer(lua_State* L, string buffer, string filename)
+static inline int load_buffer(lua_State* L, string buffer, string filename)
 { return luaL_loadbuffer(L, buffer.c_str(), buffer.size(), filename.c_str()); }
 
-static bool get_configuration(Lua::Handle& lua, Test& t)
+static bool get_configuration(lua_State* L, Test& t)
 {
-    // FIXIT: abstract away all direct refs to lua_State pointer
-    lua_State* L = lua.get_state();
+    Lua::ManageStack ms(L);
     const Chunk* chunk = t.chunk;
 
     if ( load_buffer(L, chunk->buffer, chunk->filename) )
@@ -80,10 +78,9 @@ static bool get_configuration(Lua::Handle& lua, Test& t)
     return false;
 }
 
-static bool run_test(Lua::Handle& lua, Test& t)
+static bool run_test(lua_State* L, Test& t)
 {
-    // FIXIT: abstract away all direct refs to lua_State pointer
-    lua_State* L = lua.get_state();
+    Lua::ManageStack ms(L, 2);
 
     lua_getglobal(L, "piglet");
     if ( !lua_istable(L, -1) )
@@ -120,16 +117,15 @@ static bool run_test(Lua::Handle& lua, Test& t)
 void Runner::run(Test& t)
 {
     Lua::State state { true };
-    Lua::Handle handle = state.get_handle();
 
-    if ( get_configuration(handle, t) )
+    if ( get_configuration(state.get_ptr(), t) )
     {
         t << "couldn't configure test";
         t.endl();
         return;
     }
 
-    auto p = Manager::instantiate(handle, t.type, t.target);
+    auto p = Manager::instantiate(state, t.type, t.target);
     if ( p == nullptr )
     {
         t << "couldn't instantiate piglet";
@@ -142,7 +138,7 @@ void Runner::run(Test& t)
         t << "couldn't setup piglet\n";
         t.endl();
     }
-    else if ( run_test(handle, t) )
+    else if ( run_test(state.get_ptr(), t) )
     {
         t << "error in entry point test()";
         t.endl();

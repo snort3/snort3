@@ -23,12 +23,12 @@
 
 #include <string>
 
-#include "snort_types.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "framework/ips_action.h"
 #include "framework/module.h"
 #include "protocols/packet.h"
 #include "packet_io/active.h"
-#include "snort_debug.h"
 
 #define s_name "rewrite"
 

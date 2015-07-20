@@ -20,9 +20,10 @@
 // sip_config.cc author Hui Cao <huica@cisco.com>
 
 #include "sip_config.h"
-#include "util.h"
-#include "snort_debug.h"
-#include "parser.h"
+
+#include "utils/util.h"
+#include "main/snort_debug.h"
+#include "parser/parser.h"
 
 #define SIP_SEPERATORS       "()<>@,;:\\/[]?={}\" "
 

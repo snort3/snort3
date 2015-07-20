@@ -25,12 +25,11 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "snort_types.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "protocols/packet.h"
-#include "snort_debug.h"
-#include "sfhashfcn.h"
-#include "profiler.h"
-#include "sfhashfcn.h"
+#include "hash/sfhashfcn.h"
+#include "time/profiler.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/parameter.h"

@@ -58,9 +58,9 @@ using namespace std;
 #include <thread>
 
 #include "main.h"
-#include "main/build.h"
-#include "main/snort_config.h"
-#include "main/snort_debug.h"
+#include "build.h"
+#include "snort_config.h"
+#include "snort_debug.h"
 #include "helpers/process.h"
 #include "protocols/packet.h"
 #include "protocols/packet_manager.h"

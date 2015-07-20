@@ -21,9 +21,10 @@
 #include "config.h"
 #endif
 
+#include <pcap.h>
+
 #include "framework/codec.h"
 #include "protocols/protocol_ids.h"
-#include <pcap.h>
 
 #define CD_RAW4_NAME "raw4"
 #define CD_RAW4_HELP_STR "support for unencapsulated IPv4"

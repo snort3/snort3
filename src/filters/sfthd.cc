@@ -44,11 +44,10 @@
 
 #include "sfip/sfip_t.h"
 #include "sfip/sf_ipvar.h"
-#include "sflsq.h"
-#include "sfghash.h"
-#include "sfxhash.h"
-
-#include "util.h"
+#include "utils/sflsq.h"
+#include "hash/sfghash.h"
+#include "hash/sfxhash.h"
+#include "utils/util.h"
 #include "utils/dyn_array.h"
 
 //  Debug Printing

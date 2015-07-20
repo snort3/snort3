@@ -42,15 +42,15 @@
 
 #include <string>
 
-#include "snort_types.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "main/snort_config.h"
 #include "framework/logger.h"
 #include "framework/module.h"
-#include "event.h"
+#include "events/event.h"
 #include "protocols/packet.h"
-#include "snort_debug.h"
-#include "parser.h"
-#include "util.h"
-#include "snort_config.h"
+#include "parser/parser.h"
+#include "utils/util.h"
 #include "log/text_log.h"
 #include "log/log_text.h"
 #include "packet_io/sfdaq.h"

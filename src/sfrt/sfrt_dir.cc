@@ -36,7 +36,7 @@
 #include <stdarg.h> /* For variadic */
 #include <stdio.h>
 #include <string.h> /* For memset   */
-#include "snort_types.h"
+#include "main/snort_types.h"
 
 typedef struct
 {

@@ -31,7 +31,8 @@
 #include <stdlib.h>
 
 #include "main/thread.h"
-#include "util.h"
+#include "utils/util.h"
+#include "log/messages.h"
 
 typedef struct _IDLE_HANDLER_ELEMENT
 {

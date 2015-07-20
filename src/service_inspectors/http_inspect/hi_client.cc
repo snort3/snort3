@@ -59,10 +59,11 @@
 #include "hi_mi.h"
 #include "hi_util.h"
 #include "hi_return_codes.h"
-#include "util.h"
-#include "utils/util_unfold.h"
 #include "hi_cmd_lookup.h"
-#include "detection_util.h"
+
+#include "utils/util.h"
+#include "utils/util_unfold.h"
+#include "detection/detection_util.h"
 
 #define HEADER_NAME__COOKIE "Cookie"
 #define HEADER_LENGTH__COOKIE 6

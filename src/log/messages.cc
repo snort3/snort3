@@ -35,7 +35,6 @@
 #include <signal.h>
 #include <unistd.h>
 #include <pcap.h>
-#include <timersub.h>
 #include <string.h>
 #include <grp.h>
 #include <pwd.h>
@@ -47,6 +46,7 @@
 #include "main/snort_debug.h"
 #include "packet_io/sfdaq.h"
 #include "time/packet_time.h"
+#include "time/timersub.h"
 #include "sfip/sf_ip.h"
 
 static int already_fatal = 0;

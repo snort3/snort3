@@ -942,7 +942,7 @@ CXXFLAGS="$CFLAGS"
 echo "$AM_CFLAGS $CFLAGS" > cflags.out
 echo "$AM_CPPFLAGS $CPPFLAGS" > cppflags.out
 
-AM_CPPFLAGS='-I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/main -I$(top_srcdir)/src/parser -I$(top_srcdir)/src/utils -I$(top_srcdir)/src/loggers -I$(top_srcdir)/src/time -I$(top_srcdir)/src/protocols -I$(top_srcdir)/src/network_inspectors -I$(top_srcdir)/src/log -I$(top_srcdir)/src/events -I$(top_srcdir)/src/sfip -I$(top_srcdir)/src/detection -I$(top_srcdir)/src/hash -I$(top_srcdir)/tools/snort2lua'
+AM_CPPFLAGS='-I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/network_inspectors -I$(top_srcdir)/tools/snort2lua'
 
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_CXXFLAGS)

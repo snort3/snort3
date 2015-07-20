@@ -27,23 +27,23 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#include "snort_types.h"
-#include "snort_debug.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "time/profiler.h"
+#include "stream/stream_api.h"
+#include "parser/parser.h"
+#include "framework/inspector.h"
+#include "target_based/snort_protocols.h"
+#include "search_engines/search_tool.h"
+#include "utils/sf_email_attach_decode.h"
+#include "utils/sfsnprintfappend.h"
+#include "protocols/ssl.h"
+#include "file_api/file_api.h"
+#include "file_api/file_mime_process.h"
 
 #include "pop.h"
 #include "pop_module.h"
-#include "profiler.h"
-#include "stream/stream_api.h"
-#include "file_api/file_api.h"
-#include "parser.h"
-#include "framework/inspector.h"
-#include "utils/sfsnprintfappend.h"
-#include "target_based/snort_protocols.h"
 #include "pop_paf.h"
-#include "search_engines/search_tool.h"
-#include "sf_email_attach_decode.h"
-#include "protocols/ssl.h"
-#include "file_api/file_mime_process.h"
 
 THREAD_LOCAL ProfileStats popPerfStats;
 THREAD_LOCAL SimpleStats popstats;

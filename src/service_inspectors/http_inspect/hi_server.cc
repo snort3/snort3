@@ -50,8 +50,9 @@ static THREAD_LOCAL uint8_t dechunk_buffer[65535];
 #include "hi_ui_config.h"
 #include "hi_return_codes.h"
 #include "hi_si.h"
-#include "snort_bounds.h"
-#include "detection_util.h"
+
+#include "detection/detection_util.h"
+#include "utils/snort_bounds.h"
 #include "utils/util_unfold.h"
 #include "protocols/tcp.h"
 

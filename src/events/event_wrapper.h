@@ -21,7 +21,7 @@
 #define EVENT_WRAPPER_H
 
 #include <stdint.h>
-#include "snort_types.h"
+#include "main/snort_types.h"
 
 uint32_t GenerateSnortEvent(struct Packet* p, uint32_t gen_id, uint32_t sig_id);
 

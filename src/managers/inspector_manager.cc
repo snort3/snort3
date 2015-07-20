@@ -25,15 +25,15 @@
 #include <vector>
 
 #include "module_manager.h"
+#include "main/snort_config.h"
 #include "flow/flow.h"
 #include "flow/session.h"
 #include "framework/inspector.h"
 #include "detection/detection_util.h"
-#include "obfuscation.h"
-#include "packet_io/active.h"
-#include "ppm.h"
-#include "snort_config.h"
+#include "log/obfuscation.h"
 #include "log/messages.h"
+#include "packet_io/active.h"
+#include "time/ppm.h"
 #include "target_based/snort_protocols.h"
 #include "binder/bind_module.h"
 

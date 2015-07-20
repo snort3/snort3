@@ -132,6 +132,7 @@ static void config_lua(
 
 Shell::Shell(const char* s)
 {
+    // FIXIT-M: Should wrap in Lua::State
     lua = luaL_newstate();
 
     if ( !lua )
@@ -193,6 +194,7 @@ void Shell::execute(const char* cmd, string& rsp)
 
     try
     {
+        // FIXIT-L: Shares logic with chunk
         err = luaL_loadbuffer(lua, cmd, strlen(cmd), "shell");
 
         if ( !err )

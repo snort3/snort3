@@ -30,12 +30,13 @@
  **  5.25.13 - Initial Source Code. Hui Cao
  */
 
-#include "snort_types.h"
 #include "circular_buffer.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "util.h"
+
+#include "main/snort_types.h"
 
 /* Circular buffer object */
 struct _CircularBuffer

@@ -24,6 +24,7 @@
 
 #include <string>
 
+// FIXIT-M: Merge with helpers/lua
 void init_chunk(struct lua_State*&, std::string& chunk, const char* name, std::string& args);
 void term_chunk(struct lua_State*&);
 

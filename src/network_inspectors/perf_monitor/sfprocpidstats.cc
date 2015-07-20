@@ -39,7 +39,7 @@
 #include <math.h>
 #include <errno.h>
 
-#include "util.h"
+#include "utils/util.h"
 
 #define PROC_STAT       "/proc/stat"
 #define PROC_SELF_CPU   "/proc/self/cpu"

@@ -29,10 +29,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "snort_types.h"
-#include "util.h"
-#include "parser.h"
-
 #include "libs/file_config.h"
 #include "libs/file_lib.h"
+
+#include "main/snort_types.h"
+#include "utils/util.h"
+#include "parser/parser.h"
 

@@ -24,10 +24,10 @@
 #include "config.h"
 #endif
 
-#include "protocols/packet.h"
-#include "snort_config.h"
+#include "main/snort_config.h"
 #include "utils/util.h"
 #include "sfip/sf_ip.h"
+#include "protocols/packet.h"
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
 

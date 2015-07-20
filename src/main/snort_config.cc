@@ -28,6 +28,7 @@
 #endif
 
 #include "snort_types.h"
+#include "thread.h"
 #include "detection/treenodes.h"
 #include "events/event_queue.h"
 #include "stream/stream_api.h"
@@ -54,7 +55,6 @@
 #include "protocols/udp.h"
 #include "time/ppm.h"
 #include "time/profiler.h"
-#include "main/thread.h"
 #include "sfip/sf_ip.h"
 
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;

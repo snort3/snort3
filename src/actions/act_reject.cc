@@ -48,12 +48,12 @@
 #include "config.h"
 #endif
 
-#include "snort_types.h"
-#include "snort_debug.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "protocols/packet.h"
-#include "profiler.h"
+#include "time/profiler.h"
 #include "packet_io/active.h"
-#include "util.h"
+#include "utils/util.h"
 #include "framework/ips_action.h"
 #include "framework/parameter.h"
 #include "framework/module.h"

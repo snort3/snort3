@@ -29,15 +29,16 @@
 #include "config.h"
 #endif
 
-#include "snort_types.h"
+#include "file_mime_config.h"
 #include "file_api.h"
-#include "snort_bounds.h"
-#include "util.h"
+
+#include "main/snort_types.h"
 #include "search_engines/search_tool.h"
 #include "protocols/packet.h"
-#include "detection_util.h"
+#include "detection/detection_util.h"
 #include "framework/data_bus.h"
-#include "file_mime_config.h"
+#include "utils/util.h"
+#include "utils/snort_bounds.h"
 
 typedef struct _MimeToken
 {

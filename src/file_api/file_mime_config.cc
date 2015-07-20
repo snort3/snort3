@@ -26,6 +26,7 @@
 #include "file_mime_config.h"
 
 #include "snort_types.h"
+
 #include "file_api.h"
 #include "file_mime_process.h"
 

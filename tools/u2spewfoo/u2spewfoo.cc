@@ -19,8 +19,6 @@
 //--------------------------------------------------------------------------
 // Author: Adam Keeton
 
-#include "unified2_common.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -39,6 +37,8 @@
 #ifdef HAVE_UUID_UUID_H
 #include <uuid/uuid.h>
 #endif
+
+#include "loggers/unified2_common.h"
 
 #define SUCCESS 314159265
 #define STEVE -1

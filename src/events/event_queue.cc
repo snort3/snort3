@@ -53,14 +53,13 @@
 */
 #include "event_queue.h"
 
-#include "fp_detect.h"
-#include "util.h"
 #include "sfeventq.h"
 #include "event_wrapper.h"
-#include "filters/sfthreshold.h"
-#include "sfeventq.h"
-#include "parser/parser.h"
+#include "detection/fp_detect.h"
+#include "utils/util.h"
 #include "utils/stats.h"
+#include "filters/sfthreshold.h"
+#include "parser/parser.h"
 
 typedef struct s_SNORT_EVENTQ_USER
 {

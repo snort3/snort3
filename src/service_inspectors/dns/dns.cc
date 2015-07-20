@@ -21,6 +21,8 @@
 // Alert for DNS client rdata buffer overflow.
 // Alert for Obsolete or Experimental RData types (per RFC 1035)
 
+#include "dns.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -30,16 +32,15 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#include "snort_types.h"
-#include "snort_debug.h"
-
-#include "dns.h"
-#include "dns_module.h"
-#include "profiler.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "time/profiler.h"
 #include "stream/stream_api.h"
-#include "parser.h"
+#include "parser/parser.h"
 #include "framework/inspector.h"
 #include "utils/sfsnprintfappend.h"
+
+#include "dns_module.h"
 
 THREAD_LOCAL ProfileStats dnsPerfStats;
 THREAD_LOCAL SimpleStats dnsstats;

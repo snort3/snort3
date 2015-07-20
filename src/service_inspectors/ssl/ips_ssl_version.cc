@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "ssl_inspector.h"
 #include "protocols/ssl.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -30,6 +29,8 @@
 #include "detection/detection_defines.h"
 #include "hash/sfhashfcn.h"
 #include "time/profiler.h"
+
+#include "ssl_inspector.h"
 
 //-------------------------------------------------------------------------
 // ssl_version

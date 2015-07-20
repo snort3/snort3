@@ -28,10 +28,10 @@
 #include <ctype.h>
 #include <errno.h>
 
-#include "util.h"
 #include "extract.h"
-#include "snort_bounds.h"
-#include "snort_debug.h"
+#include "main/snort_debug.h"
+#include "utils/util.h"
+#include "utils/snort_bounds.h"
 
 #define TEXTLEN  (PARSELEN + 1)
 

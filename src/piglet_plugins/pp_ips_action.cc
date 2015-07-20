@@ -89,7 +89,7 @@ static const luaL_reg methods[] =
 class Plugin : public Piglet::BasePlugin
 {
 public:
-    Plugin(Lua::Handle&, std::string);
+    Plugin(Lua::State&, std::string);
     virtual ~Plugin() override;
     virtual bool setup() override;
 
@@ -97,11 +97,12 @@ private:
     IpsActionWrapper* wrapper;
 };
 
-Plugin::Plugin(Lua::Handle& handle, std::string target) :
-    BasePlugin(handle, target)
+Plugin::Plugin(Lua::State& state, std::string target) :
+    BasePlugin(state, target)
 {
     auto m = ModuleManager::get_default_module(target.c_str(), snort_conf);
-    // m != nullptr is guaranteed
+    // FIXIT-M: Need a useful error message to let the user know why
+    //          the wrapper was not instantiated
     if ( !m )
         return;
 
@@ -110,8 +111,6 @@ Plugin::Plugin(Lua::Handle& handle, std::string target) :
 
 Plugin::~Plugin()
 {
-    // FIXIT: delete nullptr may be well defined,
-    //       in which case, we don't need this check (look it up)
     if ( wrapper )
         delete wrapper;
 }
@@ -121,8 +120,7 @@ bool Plugin::setup()
     if ( !wrapper )
         return true;
 
-    lua_State* L = lua.get_state();
-
+    Lua::Interface::register_lib(L, &RawBufferLib::lib);
     Lua::Interface::register_lib(L, &PacketLib::lib);
 
     Util::register_instance_lib(
@@ -137,8 +135,8 @@ bool Plugin::setup()
 // API foo
 // -----------------------------------------------------------------------------
 
-static Piglet::BasePlugin* ctor(Lua::Handle& handle, std::string target, Module*)
-{ return new IpsActionPiglet::Plugin(handle, target); }
+static Piglet::BasePlugin* ctor(Lua::State& state, std::string target, Module*)
+{ return new IpsActionPiglet::Plugin(state, target); }
 
 static void dtor(Piglet::BasePlugin* p)
 { delete p; }

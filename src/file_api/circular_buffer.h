@@ -26,6 +26,8 @@
 //  This implementation is inspired by one slot open approach.
 //  See http://en.wikipedia.org/wiki/Circular_buffer
 
+#include "main/snort_types.h"
+
 // FIXIT-L use bool or enum
 #define CB_SUCCESS   0
 #define CB_FAIL      -1

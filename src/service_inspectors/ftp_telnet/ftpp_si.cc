@@ -51,8 +51,8 @@
 
 #include "ftpp_return_codes.h"
 #include "ftpp_ui_config.h"
-#include "stream/stream_api.h"
 #include "ft_main.h"
+#include "stream/stream_api.h"
 
 unsigned FtpFlowData::flow_id = 0;
 unsigned TelnetFlowData::flow_id = 0;

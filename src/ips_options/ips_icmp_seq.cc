@@ -45,16 +45,16 @@
 #include "config.h"
 #endif
 
-#include "snort_types.h"
-#include "protocols/packet.h"
-#include "snort_debug.h"
-#include "profiler.h"
-#include "sfhashfcn.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "time/profiler.h"
+#include "hash/sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
 #include "framework/range.h"
+#include "protocols/packet.h"
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
 

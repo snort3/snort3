@@ -26,6 +26,7 @@
 #include "stream_icmp.h"
 #include "icmp_module.h"
 #include "icmp_session.h"
+
 #include "log/messages.h"
 #include "framework/inspector.h"
 #include "protocols/packet.h"

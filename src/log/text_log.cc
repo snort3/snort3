@@ -33,10 +33,9 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "snort_types.h"
-
 #include "log.h"
-#include "util.h"
+#include "main/snort_types.h"
+#include "utils/util.h"
 
 /* some reasonable minimums */
 #define MIN_BUF  (1* K_BYTES)

@@ -39,15 +39,16 @@
 #include "perf.h"
 #include "perf_base.h"
 #include "perf_module.h"
+
 #include "main/analyzer.h"
-#include "snort_types.h"
-#include "util.h"
-#include "snort_debug.h"
-#include "parser.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "parser/parser.h"
 #include "packet_io/sfdaq.h"
-#include "profiler.h"
+#include "time/profiler.h"
 #include "framework/inspector.h"
 #include "utils/stats.h"
+#include "utils/util.h"
 
 THREAD_LOCAL SFPERF* perfmon_config = nullptr;
 

@@ -34,10 +34,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <errno.h>
-#include "sf_ip.h"
 
-#include "snort_types.h"
-#include "snort_debug.h"
 #include "ftpp_return_codes.h"
 #include "ftpp_ui_config.h"
 #include "ftp_cmd_lookup.h"
@@ -47,11 +44,15 @@
 #include "pp_ftp.h"
 #include "ft_main.h"
 #include "ftp_parse.h"
+
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "stream/stream_api.h"
-#include "profiler.h"
-#include "detection_util.h"
-#include "parser.h"
-#include "sfsnprintfappend.h"
+#include "time/profiler.h"
+#include "detection/detection_util.h"
+#include "parser/parser.h"
+#include "utils/sfsnprintfappend.h"
+#include "sfip/sf_ip.h"
 
 int PrintConfOpt(bool on, const char* Option)
 {

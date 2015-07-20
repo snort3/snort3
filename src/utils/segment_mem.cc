@@ -24,7 +24,7 @@
 #include "config.h"
 #endif
 #include <string.h>
-#include "snort_types.h"
+#include "main/snort_types.h"
 
 #ifndef SIZE_MAX
 #define SIZE_MAX 0xFFFFFFFF  // FIXIT-L use c++ value

@@ -23,8 +23,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "snort_types.h"
-#include "util.h"
+#include "main/snort_types.h"
+#include "utils/util.h"
 
 typedef struct _PeriodicCheckFuncNode
 {

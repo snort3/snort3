@@ -20,7 +20,7 @@
 #ifndef U2BOAT_H
 #define U2BOAT_H
 
-#include "unified2_common.h"
+#include "loggers/unified2_common.h"
 
 typedef struct _record
 {

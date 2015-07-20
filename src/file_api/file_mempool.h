@@ -28,7 +28,7 @@
  //  One more bonus: Double free detection is also added into this library
  //  This is a thread safe version of memory pool for one writer and one reader thread
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "circular_buffer.h"
 
 // FIXIT-L use bool or enum

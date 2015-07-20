@@ -51,6 +51,9 @@ struct EventWrapper
 {
     Event event;
     SigInfo sig_info;
+
+    EventWrapper()
+    { event.sig_info = &sig_info; }
 };
 
 using type = EventWrapper;
@@ -59,10 +62,9 @@ const char* tname = "Event";
 static int event_new(lua_State* L)
 {
     auto t = Interface::create_userdata<type>(L, tname);
-    *t = new EventWrapper;
-    (*t)->event.sig_info = &(*t)->sig_info;
+    *t = new type;
 
-    return 0;
+    return 1;
 }
 
 static int event_get_fields(lua_State* L)
@@ -199,9 +201,7 @@ static int event_set_siginfo_fields(lua_State* L)
 
 static int event_destroy(lua_State* L)
 {
-    auto e = Interface::get_userdata<type>(L, tname, 1);
-    delete e;
-
+    delete Interface::get_userdata<type>(L, tname, 1);
     return 0;
 }
 
@@ -299,7 +299,7 @@ static const luaL_reg methods[] =
 class Plugin : public Piglet::BasePlugin
 {
 public:
-    Plugin(Lua::Handle&, std::string);
+    Plugin(Lua::State&, std::string);
     virtual ~Plugin() override;
     virtual bool setup() override;
 
@@ -307,11 +307,10 @@ private:
     LoggerWrapper* wrapper;
 };
 
-Plugin::Plugin(Lua::Handle& handle, std::string target) :
-    BasePlugin(handle, target)
+Plugin::Plugin(Lua::State& state, std::string target) :
+    BasePlugin(state, target)
 {
     auto m = ModuleManager::get_default_module(target.c_str(), snort_conf);
-    // m != nullptr is guaranteed
     if ( m )
         wrapper = EventManager::instantiate(target.c_str(), m, snort_conf);
 }
@@ -326,8 +325,6 @@ bool Plugin::setup()
 {
     if ( !wrapper )
         return true;
-
-    lua_State* L = lua.get_state();
 
     Interface::register_lib(L, &RawBufferLib::lib);
     Interface::register_lib(L, &PacketLib::lib);
@@ -345,8 +342,8 @@ bool Plugin::setup()
 // API foo
 // -----------------------------------------------------------------------------
 
-static Piglet::BasePlugin* ctor(Lua::Handle& handle, std::string target, Module*)
-{ return new LoggerPiglet::Plugin(handle, target); }
+static Piglet::BasePlugin* ctor(Lua::State& state, std::string target, Module*)
+{ return new LoggerPiglet::Plugin(state, target); }
 
 static void dtor(Piglet::BasePlugin* p)
 { delete p; }

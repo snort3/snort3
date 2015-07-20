@@ -23,8 +23,9 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "snort_types.h"
-#include "snort_debug.h"
+
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 
 /* Create new lookup table
  * @param   table_flat_type Type of table. Uses the types enumeration in route.h

@@ -38,18 +38,16 @@
 */
 #include "sfthreshold.h"
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "main/analyzer.h"
-#include "util.h"
-#include "parser.h"
-
 #include "sfthd.h"
-#include "snort_config.h"
-
-#include <errno.h>
+#include "main/analyzer.h"
+#include "main/snort_config.h"
+#include "utils/util.h"
+#include "parser/parser.h"
 
 /* Data */
 THD_STRUCT* thd_runtime = NULL;

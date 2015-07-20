@@ -19,8 +19,9 @@
  ****************************************************************************/
 
 #include <sys/types.h>
-#include "snort_types.h"
-#include "snort_debug.h"
+
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 
 #include "imap_paf.h"
 #include "imap.h"

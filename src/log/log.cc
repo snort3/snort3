@@ -35,10 +35,10 @@
 using namespace std;
 
 #include "log_text.h"
-#include "main/analyzer.h"
-#include "snort_config.h"
-#include "protocols/tcp.h"
 #include "main/snort_debug.h"
+#include "main/analyzer.h"
+#include "main/snort_config.h"
+#include "protocols/tcp.h"
 
 #define DEFAULT_DAEMON_ALERT_FILE  "alert"
 
