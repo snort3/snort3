@@ -107,7 +107,7 @@ struct POPData
     int prev_response;
     int state_flags;
     int session_flags;
-    MimeState mime_ssn;
+    MimeSession mime_ssn;
 };
 
 class PopFlowData : public FlowData

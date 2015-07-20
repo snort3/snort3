@@ -1111,7 +1111,7 @@ static int SMTP_HandleHeaderLine(void* conf, const uint8_t* ptr, const uint8_t* 
     int ret;
     int header_line_len;
     SMTP_PROTO_CONF* config = (SMTP_PROTO_CONF*)conf;
-    MimeState* mime_ssn = (MimeState*)ssn;
+    MimeSession* mime_ssn = (MimeSession*)ssn;
     /* get length of header line */
     header_line_len = eol - ptr;
 

@@ -153,7 +153,7 @@ struct IMAPData
     int session_flags;
     uint32_t body_len;
     uint32_t body_read;
-    MimeState mime_ssn;
+    MimeSession mime_ssn;
 };
 
 class ImapFlowData : public FlowData

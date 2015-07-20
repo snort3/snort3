@@ -147,7 +147,7 @@ struct SMTPData
     int state_flags;
     int session_flags;
     uint32_t dat_chunk;
-    MimeState mime_ssn;
+    MimeSession mime_ssn;
     SMTPAuthName* auth_name;
 };
 

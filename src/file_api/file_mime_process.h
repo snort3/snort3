@@ -85,11 +85,6 @@ struct MailLogConfig
     uint32_t email_hdrs_log_depth = 0;
 };
 
-typedef struct _MimePcre
-{
-    pcre* re;
-    pcre_extra* pe;
-} MimePcre;
 
 /* log flags */
 #define MIME_FLAG_MAIL_FROM_PRESENT               0x00000001
@@ -116,27 +111,32 @@ struct MimeMethods
     Is_end_of_data_func is_end_of_data;
 };
 
-struct MimeState
+class MimeSession
 {
-    int data_state;
-    int state_flags;
-    int log_flags;
-    void* decode_state;
+public:
+    MimeSession(DecodeConfig*, MailLogConfig);
+    ~MimeSession();
+    static void init();
+    static void close();
+    const uint8_t* process_mime_data(Flow *flow, const uint8_t *start, const uint8_t *end,
+        bool upload, FilePosition position);
+private:
+    int data_state = STATE_DATA_INIT;
+    int state_flags = 0;
+    int log_flags = 0;
+    Email_DecodeState* decode_state;
     MimeDataPafInfo mime_boundary;
-    DecodeConfig* decode_conf;
-    MailLogConfig* log_config;
-    MailLogState* log_state;
-    void* config;
-    MimeMethods* methods;
+    DecodeConfig* decode_conf = NULL;
+    MailLogConfig* log_config = NULL;
+    MailLogState* log_state = NULL;
+    void* config = NULL;
+    MimeMethods* methods = NULL;
+    int log_file_name(const uint8_t* start, int length, FileLogState* log_state, bool* disp_cont);
+    void reset_mime_state();
+    const uint8_t* process_mime_body(const uint8_t* ptr, const uint8_t* data_end,bool is_data_end);
+    const uint8_t* process_mime_data_paf(Flow* flow, const uint8_t* start, const uint8_t* end,
+        bool upload, FilePosition position);
 };
 
-int log_file_name(const uint8_t* start, int length, FileLogState* log_state, bool* disp_cont);
-int set_log_buffers(MailLogState** log_state, MailLogConfig* conf);
-void init_mime(void);
-void free_mime(void);
-const uint8_t* process_mime_data(Flow *flow, const uint8_t *start, const uint8_t *end,
-                MimeState *mime_ssn, bool upload, FilePosition position);
-void free_mime_session(MimeState*);
-void free_mime_session(MimeState&);
 #endif
 

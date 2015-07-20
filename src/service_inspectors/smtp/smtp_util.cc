@@ -230,7 +230,7 @@ int SMTP_CopyEmailID(const uint8_t* start, int length, int command_type, MailLog
     return 0;
 }
 
-void SMTP_LogFuncs(SMTP_PROTO_CONF* config, Packet* p, MimeState* mime_ssn)
+void SMTP_LogFuncs(SMTP_PROTO_CONF* config, Packet* p, MimeSession* mime_ssn)
 {
     if ((mime_ssn->log_flags == 0) || !config)
         return;

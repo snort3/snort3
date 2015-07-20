@@ -771,7 +771,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
 
                         if (!hsd->mime_ssn)
                         {
-                            hsd->mime_ssn = (MimeState*)SnortAlloc(sizeof(MimeState));
+                            hsd->mime_ssn = (MimeSession*)SnortAlloc(sizeof(MimeSession));
                             if (!hsd->mime_ssn)
                                 return 0;
                             hsd->mime_ssn->log_config = &(conf->global->mime_conf);

@@ -109,7 +109,7 @@ typedef struct _HttpSessionData
     uint8_t log_flags;
     uint8_t cli_small_chunk_count;
     uint8_t srv_small_chunk_count;
-    MimeState* mime_ssn;
+    MimeSession* mime_ssn;
     fd_session_p_t fd_state;
 } HttpSessionData;
 
