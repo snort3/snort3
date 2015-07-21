@@ -192,8 +192,7 @@ SMTPData* SetNewSMTPData(SMTP_PROTO_CONF* config, Packet* p)
     smtp_ssn = &fd->session;
 
     smtp_ssn->mime_ssn = new SmtpMime(&(config->decode_conf), &(config->log_config));
-    //smtp_ssn->mime_ssn.methods = &(smtp_mime_methods);
-    //smtp_ssn->mime_ssn.config = config;
+    smtp_ssn->mime_ssn->config = config;
 
     if(stream.is_midstream(p->flow))
     {
@@ -1453,7 +1452,6 @@ int SmtpMime::handle_header_line(void* conf, const uint8_t* ptr, const uint8_t* 
 {
     int ret;
     int header_line_len;
-    SMTP_PROTO_CONF* config = (SMTP_PROTO_CONF*)conf;
     MimeSession* mime_ssn = (MimeSession*)this;
     /* get length of header line */
     header_line_len = eol - ptr;
@@ -1499,8 +1497,6 @@ int SmtpMime::handle_header_line(void* conf, const uint8_t* ptr, const uint8_t* 
 
 int SmtpMime::normalize_data(void* conf, const uint8_t* ptr, const uint8_t* data_end)
 {
-    SMTP_PROTO_CONF* config = (SMTP_PROTO_CONF*)conf;
-
     /* if we're ignoring data and not already normalizing, copy everything
      * up to here into alt buffer so detection engine doesn't have
      * to look at the data; otherwise, if we're normalizing and not

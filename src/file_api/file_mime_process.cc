@@ -547,11 +547,6 @@ void MimeSession::reset_mime_state()
     ClearEmailDecodeState(decode_state);
 }
 
-/*
- * Main function for mime processing
- *
- * This should be called when mime data is available
- */
 const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* start, const uint8_t* end,
    bool upload, FilePosition position)
 {
@@ -681,11 +676,8 @@ const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* sta
     return end;
 }
 
-/*
- *  * Main function for mime processing
- *   *
- *    * This should be called when mime data is available
- *     */
+// Main function for mime processing
+// This should be called when mime data is available
 const uint8_t* MimeSession::process_mime_data(Flow* flow, const uint8_t* start,
     const uint8_t* data_end_marker, bool upload, FilePosition position)
 {

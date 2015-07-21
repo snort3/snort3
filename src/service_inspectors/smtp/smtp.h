@@ -143,7 +143,9 @@ struct SMTPAuthName
 
 class SmtpMime : public MimeSession
 {
+public:
     using MimeSession::MimeSession;
+    SMTP_PROTO_CONF* config;
 private:
     int handle_header_line(void* conf, const uint8_t* ptr, const uint8_t* eol,
         int max_header_len) override;
