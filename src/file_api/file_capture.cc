@@ -36,6 +36,13 @@
 #include <fcntl.h>
 #include <sys/types.h>
 
+#include "file_stats.h"
+
+#include "main/snort_config.h"
+#include "hash/hashes.h"
+#include "utils/util.h"
+
+
 FileMemPool* file_mempool = NULL;
 File_Capture_Stats file_capture_stats;
 

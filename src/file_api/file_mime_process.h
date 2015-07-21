@@ -32,8 +32,6 @@
 #include "file_api/file_mime_log.h"
 #include "utils/sf_email_attach_decode.h"
 
-#define MAX_FILE                             1024
-#define MAX_EMAIL                            1024
 #define BOUNDARY                             0
 
 /* state flags */
@@ -57,43 +55,6 @@
 /* Maximum length of header chars before colon, based on Exim 4.32 exploit */
 #define MAX_HEADER_NAME_LEN 64
 
-struct FileLogState
-{
-    uint8_t* filenames;
-    uint16_t file_logged;
-    uint16_t file_current;
-};
-
-struct MailLogState
-{
-    unsigned char* emailHdrs;
-    uint32_t log_depth;
-    uint32_t hdrs_logged;
-    uint8_t* recipients;
-    uint16_t rcpts_logged;
-    uint8_t* senders;
-    uint16_t snds_logged;
-    FileLogState file_log;
-};
-
-struct MailLogConfig
-{
-    uint32_t memcap = DEFAULT_MIME_MEMCAP;
-    char log_mailfrom = 0;
-    char log_rcptto = 0;
-    char log_filename = 0;
-    char log_email_hdrs = 0;
-    uint32_t email_hdrs_log_depth = 0;
-};
-
-
-/* log flags */
-#define MIME_FLAG_MAIL_FROM_PRESENT               0x00000001
-#define MIME_FLAG_RCPT_TO_PRESENT                 0x00000002
-#define MIME_FLAG_FILENAME_PRESENT                0x00000004
-#define MIME_FLAG_EMAIL_HDRS_PRESENT              0x00000008
-
-
 typedef int (*Handle_header_line_func)(void* conf, const uint8_t* ptr,
     const uint8_t* eol, int
     max_header_len, void* mime_ssn);
@@ -115,25 +76,28 @@ struct MimeMethods
 class MimeSession
 {
 public:
-    MimeSession(DecodeConfig*, MailLogConfig);
+    MimeSession(DecodeConfig*, MailLogConfig*);
     ~MimeSession();
     static void init();
-    static void close();
+    static void exit();
     const uint8_t* process_mime_data(Flow *flow, const uint8_t *start, const uint8_t *end,
         bool upload, FilePosition position);
 private:
     int data_state = STATE_DATA_INIT;
     int state_flags = 0;
     int log_flags = 0;
-    Email_DecodeState* decode_state;
+    Email_DecodeState* decode_state = NULL;
     MimeDataPafInfo mime_boundary;
     DecodeConfig* decode_conf = NULL;
     MailLogConfig* log_config = NULL;
     MailLogState* log_state = NULL;
     void* config = NULL;
     MimeMethods* methods = NULL;
-    int log_file_name(const uint8_t* start, int length, FileLogState* log_state, bool* disp_cont);
+    void set_mime_buffers();
     void reset_mime_state();
+    void process_decode_type(const char* start, int length, bool cnt_xf);
+    void setup_decode(const char* data, int size, bool cnt_xf);
+    const uint8_t* process_mime_header(const uint8_t* ptr, const uint8_t* data_end_marker);
     const uint8_t* process_mime_body(const uint8_t* ptr, const uint8_t* data_end,bool is_data_end);
     const uint8_t* process_mime_data_paf(Flow* flow, const uint8_t* start, const uint8_t* end,
         bool upload, FilePosition position);

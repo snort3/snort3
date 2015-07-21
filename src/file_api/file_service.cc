@@ -136,11 +136,8 @@ void init_fileAPI(void)
     fileAPI.enable_file_signature = &enable_file_signature;
     fileAPI.enable_file_capture = &enable_file_capture;
     fileAPI.get_max_file_depth = &get_max_file_depth;
-    fileAPI.set_log_buffers = &set_log_buffers;
     fileAPI.file_resume_block_add_file = &file_resume_block_add_file;
     fileAPI.file_resume_block_check = &file_resume_block_check;
-    fileAPI.process_mime_data = &process_mime_data;
-    fileAPI.free_mime_session = &free_mime_session;
     fileAPI.get_file_type_id = &get_file_type_id;
     fileAPI.get_new_file_instance = &get_new_file_instance;
 
@@ -152,7 +149,7 @@ void init_fileAPI(void)
 
 
     file_api = &fileAPI;
-    init_mime();
+    MimeSession::init();
     FileFlowData::init();
 }
 
@@ -187,7 +184,7 @@ static void start_file_processing(void)
 void close_fileAPI(void)
 {
     file_resume_block_cleanup();
-    free_mime();
+    MimeSession::exit();
     FileCapture::exit();
 }
 

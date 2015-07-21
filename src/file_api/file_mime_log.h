@@ -43,9 +43,10 @@ class MailLogState
 {
 public:
     MailLogState(MailLogConfig* conf);
+    ~MailLogState();
     /* accumulate MIME attachment filenames. The filenames are appended by commas */
     int log_file_name(const uint8_t* start, int length, bool* disp_cont);
-    void MailLogState::set_file_name_from_log(void* pv);
+    void set_file_name_from_log(void* pv);
 
 private:
     int extract_file_name(const char** start, int length, bool* disp_cont);
@@ -57,6 +58,7 @@ private:
     uint8_t* senders;
     uint16_t snds_logged;
     FileLogState log_state;
+    uint8_t* buf;
 };
 
 struct MailLogConfig

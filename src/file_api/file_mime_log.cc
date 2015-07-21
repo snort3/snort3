@@ -29,8 +29,11 @@
 #include "config.h"
 #endif
 
-#include "snort_types.h"
+#include "main/snort_types.h"
+#include "utils/util.h"
+#include "utils/snort_bounds.h"
 #include "file_api.h"
+
 
 /* Extract the filename from the header */
 int MailLogState::extract_file_name(const char** start, int length, bool* disp_cont)
@@ -124,9 +127,9 @@ int MailLogState::log_file_name(const uint8_t* start, int length, bool* disp_con
 
     length = ret;
 
-    alt_buf = log_state->filenames;
+    alt_buf = log_state.filenames;
     alt_size =  MAX_FILE;
-    alt_len = &(log_state->file_logged);
+    alt_len = &(log_state.file_logged);
     log_avail = alt_size - *alt_len;
 
     if (!alt_buf || (log_avail <= 0))
@@ -150,7 +153,7 @@ int MailLogState::log_file_name(const uint8_t* start, int length, bool* disp_con
         return -1;
     }
 
-    log_state->file_current = *alt_len;
+    log_state.file_current = *alt_len;
     *alt_len += length;
 
     return 0;
@@ -161,10 +164,10 @@ void MailLogState::set_file_name_from_log(void* pv)
 {
     Flow* ssn = (Flow*)pv; // FIXIT-M eliminate need for cast
 
-    if ((log_state) && (log_state->file_logged > log_state->file_current))
+    if (log_state.file_logged > log_state.file_current)
     {
-        file_api->set_file_name(ssn, log_state->filenames + log_state->file_current,
-            log_state->file_logged -log_state->file_current);
+        file_api->set_file_name(ssn, log_state.filenames + log_state.file_current,
+            log_state.file_logged -log_state.file_current);
     }
     else
     {
@@ -178,7 +181,7 @@ MailLogState::MailLogState(MailLogConfig* conf)
         || conf->log_mailfrom || conf->log_rcptto))
     {
         uint32_t bufsz = (2* MAX_EMAIL) + MAX_FILE + conf->email_hdrs_log_depth;
-        uint8_t* buf = (uint8_t*)SnortAlloc(bufsz);
+        buf = (uint8_t*)SnortAlloc(bufsz);
 
         if (buf != NULL)
         {
@@ -187,11 +190,17 @@ MailLogState::MailLogState(MailLogConfig* conf)
             rcpts_logged = 0;
             senders = buf + MAX_EMAIL;
             snds_logged = 0;
-            file_log.filenames = buf + (2*MAX_EMAIL);
-            file_log.file_logged = 0;
-            file_log.file_current = 0;
+            log_state.filenames = buf + (2*MAX_EMAIL);
+            log_state.file_logged = 0;
+            log_state.file_current = 0;
             emailHdrs = buf + (2*MAX_EMAIL) + MAX_FILE;
             hdrs_logged = 0;
         }
     }
+}
+
+MailLogState::~MailLogState()
+{
+    if (buf != NULL)
+        free(buf);
 }

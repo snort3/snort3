@@ -34,7 +34,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "util.h"
+#include "utils/util.h"
 
 #include "main/snort_types.h"
 
