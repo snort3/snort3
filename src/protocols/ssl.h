@@ -32,6 +32,7 @@
 #endif
 
 #include <ctype.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #define SSL_NO_FLAG             0x00000000
