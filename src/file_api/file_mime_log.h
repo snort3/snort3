@@ -59,7 +59,7 @@ public:
 private:
     int extract_file_name(const char** start, int length, bool* disp_cont);
     FileLogState log_state;
-    uint8_t* buf;
+    uint8_t* buf = NULL;
 };
 
 struct MailLogConfig
