@@ -370,20 +370,17 @@ const uint8_t* MimeSession::process_mime_header(const uint8_t* ptr,
             state_flags &= ~MIME_FLAG_DATA_HEADER_CONT;
         }
 
-        if (methods && methods->handle_header_line)
+        int ret = handle_header_line(config, ptr, eol, max_header_name_len);
+        if (ret < 0)
+            return NULL;
+        else if (ret > 0)
         {
-            int ret = methods->handle_header_line(config, ptr, eol, max_header_name_len, NULL);
-            if (ret < 0)
-                return NULL;
-            else if (ret > 0)
-            {
-                /* assume we guessed wrong and are in the body */
-                data_state = STATE_DATA_BODY;
-                state_flags &=
-                    ~(MIME_FLAG_FOLDING | MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_DATA_HEADER_CONT
+            /* assume we guessed wrong and are in the body */
+            data_state = STATE_DATA_BODY;
+            state_flags &=
+                ~(MIME_FLAG_FOLDING | MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_DATA_HEADER_CONT
                     | MIME_FLAG_IN_CONT_TRANS_ENC | MIME_FLAG_IN_CONT_DISP);
-                return ptr;
-            }
+            return ptr;
         }
 
         /* check for folding
@@ -507,7 +504,6 @@ static const uint8_t* GetDataEnd(const uint8_t* data_start,
 const uint8_t* MimeSession::process_mime_body(const uint8_t* ptr,
     const uint8_t* data_end, bool is_data_end)
 {
-    Email_DecodeState* decode_state = (Email_DecodeState*)(decode_state);
 
     if (state_flags & MIME_FLAG_EMAIL_ATTACH)
     {
@@ -527,8 +523,7 @@ const uint8_t* MimeSession::process_mime_body(const uint8_t* ptr,
         {
             if (EmailDecode(attach_start, attach_end, decode_state) < DECODE_SUCCESS )
             {
-                if (methods && methods->decode_alert)
-                    methods->decode_alert(decode_state);
+                decode_alert(decode_state);
             }
         }
     }
@@ -560,12 +555,8 @@ void MimeSession::reset_mime_state()
 const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* start, const uint8_t* end,
    bool upload, FilePosition position)
 {
-    bool done_data = false;
 
-    if (methods && methods->is_end_of_data)
-    {
-        done_data = methods->is_end_of_data(flow);
-    }
+    bool done_data = is_end_of_data(flow);
 
     /* if we've just entered the data state, check for a dot + end of line
      * if found, no data */
@@ -585,11 +576,8 @@ const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* sta
             {
                 /* if we're normalizing and not ignoring data copy data end marker
                  * and dot to alt buffer */
-                if (methods && methods->normalize_data)
-                {
-                    if (methods->normalize_data(config, start, end) < 0)
-                        return NULL;
-                }
+                if (normalize_data(config, start, end) < 0)
+                    return NULL;
 
                 reset_mime_state();
 
@@ -636,11 +624,9 @@ const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* sta
             return NULL;
     }
 
-    if (methods && methods->normalize_data)
-    {
-        if (methods->normalize_data(config, start, end) < 0)
-            return NULL;
-    }
+
+    if (normalize_data(config, start, end) < 0)
+        return NULL;
     /* now we shouldn't have to worry about copying any data to the alt buffer
      *      * only mime headers if we find them and only if we're ignoring data */
 
@@ -689,8 +675,7 @@ const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* sta
     if (done_data)
     {
         reset_mime_state();
-        if (methods && methods->reset_state)
-            methods->reset_state(flow);
+        reset_state(flow);
     }
 
     return end;
@@ -741,6 +726,21 @@ const uint8_t* MimeSession::process_mime_data(Flow* flow, const uint8_t* start,
     }
 
     return data_end_marker;
+}
+
+int MimeSession::get_data_state()
+{
+    return data_state;
+}
+
+void MimeSession::set_data_state(int state)
+{
+    data_state = state;
+}
+
+MailLogState* MimeSession::get_log_state()
+{
+    return log_state;
 }
 
 /*

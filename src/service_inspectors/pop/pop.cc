@@ -85,15 +85,15 @@ THREAD_LOCAL POPSearchInfo pop_search_info;
 
 static void snort_pop(POP_PROTO_CONF* GlobalConf, Packet* p);
 static void POP_ResetState(void*);
-void POP_DecodeAlert(void* ds);
-
-MimeMethods pop_mime_methods = { NULL, NULL, POP_DecodeAlert, POP_ResetState, pop_is_data_end };
 
 PopFlowData::PopFlowData() : FlowData(flow_id)
 { memset(&session, 0, sizeof(session)); }
 
 PopFlowData::~PopFlowData()
-{ free_mime_session(session.mime_ssn); }
+{
+    if (session.mime_ssn)
+        delete(session.mime_ssn);
+}
 
 unsigned PopFlowData::flow_id = 0;
 static POPData* get_session_data(Flow* flow)
@@ -112,14 +112,9 @@ POPData* SetNewPOPData(POP_PROTO_CONF* config, Packet* p)
     p->flow->set_application_data(fd);
     pop_ssn = &fd->session;
 
-    pop_ssn->mime_ssn.log_config = &(config->log_config);
-    pop_ssn->mime_ssn.decode_conf = &(config->decode_conf);
-    pop_ssn->mime_ssn.methods = &(pop_mime_methods);
-    pop_ssn->mime_ssn.config = config;
-    if (file_api->set_log_buffers(&(pop_ssn->mime_ssn.log_state), &(config->log_config)) < 0)
-    {
-        return NULL;
-    }
+    pop_ssn->mime_ssn = new PopMime( &(config->decode_conf), &(config->log_config));
+    //pop_ssn->mime_ssn.methods = &(pop_mime_methods);
+    //pop_ssn->mime_ssn.config = config;
 
     if (p->packet_flags & SSNFLAG_MIDSTREAM)
     {
@@ -129,26 +124,6 @@ POPData* SetNewPOPData(POP_PROTO_CONF* config, Packet* p)
     }
 
     return pop_ssn;
-}
-
-void POP_DecodeAlert(void* ds)
-{
-    Email_DecodeState* decode_state = (Email_DecodeState*)ds;
-    switch ( decode_state->decode_type )
-    {
-    case DECODE_B64:
-        SnortEventqAdd(GID_POP, POP_B64_DECODING_FAILED);
-        break;
-    case DECODE_QP:
-        SnortEventqAdd(GID_POP, POP_QP_DECODING_FAILED);
-        break;
-    case DECODE_UU:
-        SnortEventqAdd(GID_POP, POP_UU_DECODING_FAILED);
-        break;
-
-    default:
-        break;
-    }
 }
 
 void POP_SearchInit(void)
@@ -190,13 +165,6 @@ void POP_SearchFree(void)
         delete pop_resp_search_mpse;
 }
 
-/*
-* Reset POP session state
-*
-* @param  none
-*
-* @return none
-*/
 static void POP_ResetState(void* ssn)
 {
     POPData* pop_ssn = get_session_data((Flow*)ssn);
@@ -521,8 +489,7 @@ static void POP_ProcessServerPacket(Packet* p, POPData* pop_ssn)
             DEBUG_WRAP(DebugMessage(DEBUG_POP, "DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"); );
             //ptr = POP_HandleData(p, ptr, end);
             FilePosition position = file_api->get_file_position(p);
-            ptr = file_api->process_mime_data(p->flow, ptr, end, &(pop_ssn->mime_ssn), 0,
-                position);
+            ptr = pop_ssn->mime_ssn->process_mime_data(p->flow, ptr, end, 0, position);
             continue;
         }
         POP_GetEOL(ptr, end, &eol, &eolm);
@@ -706,6 +673,37 @@ static void snort_pop(POP_PROTO_CONF* config, Packet* p)
         /* Process as a server packet */
         POP_ProcessServerPacket(p, pop_ssn);
     }
+}
+
+void PopMime::decode_alert(void* ds)
+{
+    Email_DecodeState* decode_state = (Email_DecodeState*)ds;
+    switch ( decode_state->decode_type )
+    {
+    case DECODE_B64:
+        SnortEventqAdd(GID_POP, POP_B64_DECODING_FAILED);
+        break;
+    case DECODE_QP:
+        SnortEventqAdd(GID_POP, POP_QP_DECODING_FAILED);
+        break;
+    case DECODE_UU:
+        SnortEventqAdd(GID_POP, POP_UU_DECODING_FAILED);
+        break;
+
+    default:
+        break;
+    }
+}
+
+void PopMime::reset_state(void* ssn)
+{
+    POP_ResetState(ssn);
+}
+
+
+bool PopMime::is_end_of_data(void* session)
+{
+    return pop_is_data_end(session);
 }
 
 //-------------------------------------------------------------------------

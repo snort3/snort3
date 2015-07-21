@@ -55,44 +55,42 @@
 /* Maximum length of header chars before colon, based on Exim 4.32 exploit */
 #define MAX_HEADER_NAME_LEN 64
 
-typedef int (*Handle_header_line_func)(void* conf, const uint8_t* ptr,
-    const uint8_t* eol, int
-    max_header_len, void* mime_ssn);
-typedef int (*Normalize_data_func)(void* conf, const uint8_t* ptr,
-    const uint8_t* data_end);
-typedef void (*Decode_alert_func)(void* decode_state);
-typedef void (*Reset_state_func)(void* ssn);
-typedef bool (*Is_end_of_data_func)(void* ssn);
-
-struct MimeMethods
-{
-    Handle_header_line_func handle_header_line;
-    Normalize_data_func normalize_data;
-    Decode_alert_func decode_alert;
-    Reset_state_func reset_state;
-    Is_end_of_data_func is_end_of_data;
-};
-
 class MimeSession
 {
 public:
     MimeSession(DecodeConfig*, MailLogConfig*);
-    ~MimeSession();
+    virtual ~MimeSession();
     static void init();
     static void exit();
     const uint8_t* process_mime_data(Flow *flow, const uint8_t *start, const uint8_t *end,
         bool upload, FilePosition position);
+    int get_data_state();
+    void set_data_state(int);
+    MailLogState* get_log_state();
+    int log_flags = 0;
 private:
     int data_state = STATE_DATA_INIT;
     int state_flags = 0;
-    int log_flags = 0;
     Email_DecodeState* decode_state = NULL;
     MimeDataPafInfo mime_boundary;
     DecodeConfig* decode_conf = NULL;
     MailLogConfig* log_config = NULL;
     MailLogState* log_state = NULL;
+
+    // SMTP, IMAP, POP might have different implementation for this
     void* config = NULL;
-    MimeMethods* methods = NULL;
+    virtual int handle_header_line(void* conf, const uint8_t* ptr, const uint8_t* eol,
+        int max_header_len)
+    { return 0; }
+    virtual int normalize_data(void* conf, const uint8_t* ptr, const uint8_t* data_end)
+    { return 0; }
+    virtual void decode_alert(void* decode_state)
+    { }
+    virtual void reset_state(void* ssn)
+    { }
+    virtual bool is_end_of_data(void* ssn)
+    { return false; }
+
     void set_mime_buffers();
     void reset_mime_state();
     void process_decode_type(const char* start, int length, bool cnt_xf);

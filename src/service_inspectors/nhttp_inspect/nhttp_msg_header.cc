@@ -106,13 +106,7 @@ void NHttpMsgHeader::update_flow()
             session_data->file_depth_remaining[source_id] = file_api->get_max_file_depth();
             if (source_id == SRC_CLIENT)
             {
-                // FIXIT-L Cannot use new because file_api insists on freeing the mime_state using
-                // free().
-                session_data->mime_state = (MimeSession*) new_calloc(1, sizeof(MimeSession));
-                session_data->mime_state->log_config = &mime_conf;
-                session_data->mime_state->decode_conf = &decode_conf;
-                file_api->set_log_buffers(&session_data->mime_state->log_state,
-                    session_data->mime_state->log_config);
+                session_data->mime_state = new MimeSession(&decode_conf, &mime_conf);
             }
         }
         session_data->infractions[source_id].reset();

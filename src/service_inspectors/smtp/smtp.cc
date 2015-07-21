@@ -165,18 +165,14 @@ static void snort_smtp(SMTP_PROTO_CONF* GlobalConf, Packet* p);
 static void SMTP_ResetState(void*);
 void SMTP_DecodeAlert(void* ds);
 
-static int SMTP_HandleHeaderLine(void* conf, const uint8_t* ptr, const uint8_t* eol,
-    int max_header_len, void* ssn);
-static int SMTP_NormalizeData(void* conf, const uint8_t* ptr, const uint8_t* data_end);
-
-MimeMethods smtp_mime_methods = { SMTP_HandleHeaderLine, SMTP_NormalizeData, SMTP_DecodeAlert,
-                                  SMTP_ResetState, smtp_is_data_end };
-
 SmtpFlowData::SmtpFlowData() : FlowData(flow_id)
 { memset(&session, 0, sizeof(session)); }
 
 SmtpFlowData::~SmtpFlowData()
-{ free_mime_session(session.mime_ssn); }
+{
+    if (session.mime_ssn)
+        delete(session.mime_ssn);
+}
 
 unsigned SmtpFlowData::flow_id = 0;
 static SMTPData* get_session_data(Flow* flow)
@@ -195,14 +191,9 @@ SMTPData* SetNewSMTPData(SMTP_PROTO_CONF* config, Packet* p)
     p->flow->set_application_data(fd);
     smtp_ssn = &fd->session;
 
-    smtp_ssn->mime_ssn.log_config = &(config->log_config);
-    smtp_ssn->mime_ssn.decode_conf = &(config->decode_conf);
-    smtp_ssn->mime_ssn.methods = &(smtp_mime_methods);
-    smtp_ssn->mime_ssn.config = config;
-    if (file_api->set_log_buffers(&(smtp_ssn->mime_ssn.log_state), &(config->log_config)) < 0)
-    {
-        return NULL;
-    }
+    smtp_ssn->mime_ssn = new SmtpMime(&(config->decode_conf), &(config->log_config));
+    //smtp_ssn->mime_ssn.methods = &(smtp_mime_methods);
+    //smtp_ssn->mime_ssn.config = config;
 
     if(stream.is_midstream(p->flow))
     {
@@ -212,26 +203,6 @@ SMTPData* SetNewSMTPData(SMTP_PROTO_CONF* config, Packet* p)
     }
 
     return smtp_ssn;
-}
-
-void SMTP_DecodeAlert(void* ds)
-{
-    Email_DecodeState* decode_state = (Email_DecodeState*)ds;
-    switch ( decode_state->decode_type )
-    {
-    case DECODE_B64:
-        SnortEventqAdd(GID_SMTP, SMTP_B64_DECODING_FAILED);
-        break;
-    case DECODE_QP:
-        SnortEventqAdd(GID_SMTP, SMTP_QP_DECODING_FAILED);
-        break;
-    case DECODE_UU:
-        SnortEventqAdd(GID_SMTP, SMTP_UU_DECODING_FAILED);
-        break;
-
-    default:
-        break;
-    }
 }
 
 static void SMTP_InitCmds(SMTP_PROTO_CONF* config)
@@ -581,13 +552,6 @@ void SMTP_PrintConfig(SMTP_PROTO_CONF *config)
     }
 }
 
-/*
- * * Reset SMTP session state
- * *
- * * @param  none
- * *
- * * @return none
- * */
 static void SMTP_ResetState(void* ssn)
 {
     SMTPData* smtp_ssn = get_session_data((Flow*)ssn);
@@ -835,7 +799,7 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
                     smtp_ssn->session_flags &= ~SMTP_FLAG_CHECK_SSL;
 
                 smtp_ssn->state = STATE_DATA;
-                smtp_ssn->mime_ssn.data_state = STATE_DATA_UNKNOWN;
+                smtp_ssn->mime_ssn->set_data_state(STATE_DATA_UNKNOWN);
 
                 return ptr;
             }
@@ -895,8 +859,8 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
         smtp_ssn->state_flags |= SMTP_FLAG_GOT_MAIL_CMD;
         if ( config->log_config.log_mailfrom )
         {
-            if (!SMTP_CopyEmailID(ptr, eolm - ptr, CMD_MAIL, smtp_ssn->mime_ssn.log_state))
-                smtp_ssn->mime_ssn.log_flags |= MIME_FLAG_MAIL_FROM_PRESENT;
+            if (!SMTP_CopyEmailID(ptr, eolm - ptr, CMD_MAIL, smtp_ssn->mime_ssn->get_log_state()))
+                smtp_ssn->mime_ssn->log_flags |= MIME_FLAG_MAIL_FROM_PRESENT;
         }
 
         break;
@@ -910,8 +874,8 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
 
         if ( config->log_config.log_rcptto)
         {
-            if (!SMTP_CopyEmailID(ptr, eolm - ptr, CMD_RCPT, smtp_ssn->mime_ssn.log_state))
-                smtp_ssn->mime_ssn.log_flags |= MIME_FLAG_RCPT_TO_PRESENT;
+            if (!SMTP_CopyEmailID(ptr, eolm - ptr, CMD_RCPT, smtp_ssn->mime_ssn->get_log_state()))
+                smtp_ssn->mime_ssn->log_flags |= MIME_FLAG_RCPT_TO_PRESENT;
         }
 
         break;
@@ -1084,76 +1048,6 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
     return eol;
 }
 
-static int SMTP_NormalizeData(void* conf, const uint8_t* ptr, const uint8_t* data_end)
-{
-    SMTP_PROTO_CONF* config = (SMTP_PROTO_CONF*)conf;
-
-    /* if we're ignoring data and not already normalizing, copy everything
-     * up to here into alt buffer so detection engine doesn't have
-     * to look at the data; otherwise, if we're normalizing and not
-     * ignoring data, copy all of the data into the alt buffer */
-    /*if (config->decode_conf.ignore_data && !smtp_normalizing)
-    {
-        return SMTP_CopyToAltBuffer(p->data, ptr - p->data);
-    }
-    else */
-    if (!config->decode_conf.is_ignore_data() && smtp_normalizing)
-    {
-        return SMTP_CopyToAltBuffer(ptr, data_end - ptr);
-    }
-
-    return 0;
-}
-
-static int SMTP_HandleHeaderLine(void* conf, const uint8_t* ptr, const uint8_t* eol,
-    int max_header_len, void* ssn)
-{
-    int ret;
-    int header_line_len;
-    SMTP_PROTO_CONF* config = (SMTP_PROTO_CONF*)conf;
-    MimeSession* mime_ssn = (MimeSession*)ssn;
-    /* get length of header line */
-    header_line_len = eol - ptr;
-
-    if (max_header_len)
-        SnortEventqAdd(GID_SMTP, SMTP_HEADER_NAME_OVERFLOW);
-
-    if ((config->max_header_line_len != 0) &&
-        (header_line_len > config->max_header_line_len))
-    {
-        if (mime_ssn->data_state != STATE_DATA_UNKNOWN)
-        {
-            SnortEventqAdd(GID_SMTP, SMTP_DATA_HDR_OVERFLOW);
-        }
-        else
-        {
-            /* assume we guessed wrong and are in the body */
-            return 1;
-        }
-    }
-
-    /* XXX Does VRT want data headers normalized?
-     * currently the code does not normalize headers */
-    if (smtp_normalizing)
-    {
-        ret = SMTP_CopyToAltBuffer(ptr, eol - ptr);
-        if (ret == -1)
-            return (-1);
-    }
-
-    if (config->log_config.log_email_hdrs)
-    {
-        if (mime_ssn->data_state == STATE_DATA_HEADER)
-        {
-            ret = SMTP_CopyEmailHdrs(ptr, eol - ptr, mime_ssn->log_state);
-            if (ret == 0)
-                mime_ssn->log_flags |= MIME_FLAG_EMAIL_HDRS_PRESENT;
-        }
-    }
-
-    return 0;
-}
-
 /*
  * Process client packet
  *
@@ -1185,8 +1079,7 @@ static void SMTP_ProcessClientPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
         case STATE_BDATA:
             DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"); );
             position = file_api->get_file_position(p);
-            ptr = file_api->process_mime_data(p->flow, ptr, end, &(smtp_ssn->mime_ssn), 1,
-                position);
+            ptr = smtp_ssn->mime_ssn->process_mime_data(p->flow, ptr, end, 1, position);
             //ptr = SMTP_HandleData(p, ptr, end, &(smtp_ssn->mime_ssn));
             break;
         case STATE_XEXCH50:
@@ -1488,7 +1381,7 @@ static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
         }
     }
 
-    SMTP_LogFuncs(config, p, &(smtp_ssn->mime_ssn));
+    SMTP_LogFuncs(config, p, smtp_ssn->mime_ssn);
 }
 
 /* Callback to return the MIME attachment filenames accumulated */
@@ -1499,8 +1392,8 @@ int SMTP_GetFilename(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
     if (ssn == NULL)
         return 0;
 
-    *buf = ssn->mime_ssn.log_state->file_log.filenames;
-    *len = ssn->mime_ssn.log_state->file_log.file_logged;
+    *buf = ssn->mime_ssn->get_log_state()->get_file_log_state()->filenames;
+    *len = ssn->mime_ssn->get_log_state()->get_file_log_state()->file_logged;
     *type = EVENT_INFO_SMTP_FILENAME;
     return 1;
 }
@@ -1513,8 +1406,8 @@ int SMTP_GetMailFrom(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
     if (ssn == NULL)
         return 0;
 
-    *buf = ssn->mime_ssn.log_state->senders;
-    *len = ssn->mime_ssn.log_state->snds_logged;
+    *buf = ssn->mime_ssn->get_log_state()->senders;
+    *len = ssn->mime_ssn->get_log_state()->snds_logged;
     *type = EVENT_INFO_SMTP_MAILFROM;
     return 1;
 }
@@ -1527,8 +1420,8 @@ int SMTP_GetRcptTo(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
     if (ssn == NULL)
         return 0;
 
-    *buf = ssn->mime_ssn.log_state->recipients;
-    *len = ssn->mime_ssn.log_state->rcpts_logged;
+    *buf = ssn->mime_ssn->get_log_state()->recipients;
+    *len = ssn->mime_ssn->get_log_state()->rcpts_logged;
     *type = EVENT_INFO_SMTP_RCPTTO;
     return 1;
 }
@@ -1541,8 +1434,8 @@ int SMTP_GetEmailHdrs(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
     if (ssn == NULL)
         return 0;
 
-    *buf = ssn->mime_ssn.log_state->emailHdrs;
-    *len = ssn->mime_ssn.log_state->hdrs_logged;
+    *buf = ssn->mime_ssn->get_log_state()->emailHdrs;
+    *len = ssn->mime_ssn->get_log_state()->hdrs_logged;
     *type = EVENT_INFO_SMTP_EMAIL_HDRS;
     return 1;
 }
@@ -1553,6 +1446,107 @@ static void SMTP_RegXtraDataFuncs(SMTP_PROTO_CONF* config)
     config->xtra_mfrom_id = stream.reg_xtra_data_cb(SMTP_GetMailFrom);
     config->xtra_rcptto_id = stream.reg_xtra_data_cb(SMTP_GetRcptTo);
     config->xtra_ehdrs_id = stream.reg_xtra_data_cb(SMTP_GetEmailHdrs);
+}
+
+int SmtpMime::handle_header_line(void* conf, const uint8_t* ptr, const uint8_t* eol,
+    int max_header_len)
+{
+    int ret;
+    int header_line_len;
+    SMTP_PROTO_CONF* config = (SMTP_PROTO_CONF*)conf;
+    MimeSession* mime_ssn = (MimeSession*)this;
+    /* get length of header line */
+    header_line_len = eol - ptr;
+
+    if (max_header_len)
+        SnortEventqAdd(GID_SMTP, SMTP_HEADER_NAME_OVERFLOW);
+
+    if ((config->max_header_line_len != 0) &&
+        (header_line_len > config->max_header_line_len))
+    {
+        if (mime_ssn->get_data_state() != STATE_DATA_UNKNOWN)
+        {
+            SnortEventqAdd(GID_SMTP, SMTP_DATA_HDR_OVERFLOW);
+        }
+        else
+        {
+            /* assume we guessed wrong and are in the body */
+            return 1;
+        }
+    }
+
+    /* XXX Does VRT want data headers normalized?
+     * currently the code does not normalize headers */
+    if (smtp_normalizing)
+    {
+        ret = SMTP_CopyToAltBuffer(ptr, eol - ptr);
+        if (ret == -1)
+            return (-1);
+    }
+
+    if (config->log_config.log_email_hdrs)
+    {
+        if (mime_ssn->get_data_state() == STATE_DATA_HEADER)
+        {
+            ret = SMTP_CopyEmailHdrs(ptr, eol - ptr, mime_ssn->get_log_state());
+            if (ret == 0)
+                mime_ssn->log_flags |= MIME_FLAG_EMAIL_HDRS_PRESENT;
+        }
+    }
+
+    return 0;
+}
+
+int SmtpMime::normalize_data(void* conf, const uint8_t* ptr, const uint8_t* data_end)
+{
+    SMTP_PROTO_CONF* config = (SMTP_PROTO_CONF*)conf;
+
+    /* if we're ignoring data and not already normalizing, copy everything
+     * up to here into alt buffer so detection engine doesn't have
+     * to look at the data; otherwise, if we're normalizing and not
+     * ignoring data, copy all of the data into the alt buffer */
+    /*if (config->decode_conf.ignore_data && !smtp_normalizing)
+    {
+        return SMTP_CopyToAltBuffer(p->data, ptr - p->data);
+    }
+    else */
+    if (!config->decode_conf.is_ignore_data() && smtp_normalizing)
+    {
+        return SMTP_CopyToAltBuffer(ptr, data_end - ptr);
+    }
+
+    return 0;
+}
+
+void SmtpMime::decode_alert(void* ds)
+{
+    Email_DecodeState* decode_state = (Email_DecodeState*)ds;
+    switch ( decode_state->decode_type )
+    {
+    case DECODE_B64:
+        SnortEventqAdd(GID_SMTP, SMTP_B64_DECODING_FAILED);
+        break;
+    case DECODE_QP:
+        SnortEventqAdd(GID_SMTP, SMTP_QP_DECODING_FAILED);
+        break;
+    case DECODE_UU:
+        SnortEventqAdd(GID_SMTP, SMTP_UU_DECODING_FAILED);
+        break;
+
+    default:
+        break;
+    }
+}
+
+void SmtpMime::reset_state(void* ssn)
+{
+    SMTP_ResetState(ssn);
+}
+
+
+bool SmtpMime::is_end_of_data(void* session)
+{
+    return smtp_is_data_end(session);
 }
 
 //-------------------------------------------------------------------------

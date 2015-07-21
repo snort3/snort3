@@ -47,9 +47,7 @@ public:
     /* accumulate MIME attachment filenames. The filenames are appended by commas */
     int log_file_name(const uint8_t* start, int length, bool* disp_cont);
     void set_file_name_from_log(void* pv);
-
-private:
-    int extract_file_name(const char** start, int length, bool* disp_cont);
+    const FileLogState* get_file_log_state();
     unsigned char* emailHdrs;
     uint32_t log_depth;
     uint32_t hdrs_logged;
@@ -57,13 +55,15 @@ private:
     uint16_t rcpts_logged;
     uint8_t* senders;
     uint16_t snds_logged;
+
+private:
+    int extract_file_name(const char** start, int length, bool* disp_cont);
     FileLogState log_state;
     uint8_t* buf;
 };
 
 struct MailLogConfig
 {
-    uint32_t memcap = DEFAULT_MIME_MEMCAP;
     char log_mailfrom = 0;
     char log_rcptto = 0;
     char log_filename = 0;

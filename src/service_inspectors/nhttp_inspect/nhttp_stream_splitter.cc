@@ -467,11 +467,11 @@ bool NHttpStreamSplitter::finish(Flow* flow)
         {
             file_api->file_process(flow, nullptr, 0, SNORT_FILE_END, false, false);
         }
-        else
+        else if (session_data->mime_state != nullptr)
         {
-            file_api->process_mime_data(flow, nullptr, 0, session_data->mime_state, true,
+            session_data->mime_state->process_mime_data(flow, nullptr, 0, true,
                 SNORT_FILE_END);
-            free_mime_session(session_data->mime_state);
+            delete(session_data->mime_state);
             session_data->mime_state = nullptr;
         }
         return false;

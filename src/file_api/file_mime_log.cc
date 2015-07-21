@@ -175,6 +175,11 @@ void MailLogState::set_file_name_from_log(void* pv)
     }
 }
 
+const FileLogState* MailLogState::get_file_log_state()
+{
+    return &log_state;
+}
+
 MailLogState::MailLogState(MailLogConfig* conf)
 {
     if (conf && (conf->log_email_hdrs || conf->log_filename

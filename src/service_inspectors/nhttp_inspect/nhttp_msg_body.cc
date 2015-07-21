@@ -110,15 +110,15 @@ void NHttpMsgBody::do_file_processing()
             session_data->file_depth_remaining[source_id] = 0;
         }
     }
-    else
+    else if (session_data->mime_state != nullptr)
     {
-        file_api->process_mime_data(flow, data.start, data.start + fp_length,
-            session_data->mime_state, true, file_position);
+        session_data->mime_state->process_mime_data(flow, data.start, data.start + fp_length,
+            true, file_position);
 
         session_data->file_depth_remaining[source_id] -= fp_length;
         if (session_data->file_depth_remaining[source_id] == 0)
         {
-            free_mime_session(session_data->mime_state);
+            delete(session_data->mime_state);
             session_data->mime_state = nullptr;
         }
     }
