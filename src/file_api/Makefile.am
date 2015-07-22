@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libfile_api.a
 
@@ -14,6 +13,5 @@ circular_buffer.cc circular_buffer.h \
 file_mempool.cc file_mempool.h \
 file_stats.cc file_stats.h
  
-AM_CXXFLAGS = @AM_CXXFLAGS@
-
 SUBDIRS = libs
+

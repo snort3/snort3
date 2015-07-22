@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libparser.a
 
@@ -16,4 +15,3 @@ config_file.cc config_file.h \
 mstring.cc mstring.h \
 vars.cc vars.h
 
-AM_CXXFLAGS = @AM_CXXFLAGS@

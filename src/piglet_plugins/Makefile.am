@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libpiglet_plugins.a
 libpiglet_plugins_a_SOURCES = \

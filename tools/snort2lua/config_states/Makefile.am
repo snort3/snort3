@@ -1,5 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
-
 
 noinst_LIBRARIES = libconfig_states.a
 
@@ -34,6 +32,5 @@ config_tunnel_verdicts.cc \
 config_api.h \
 config_api.cc
 
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
+AM_CPPFLAGS = @snort2lua_CPPFLAGS@
 

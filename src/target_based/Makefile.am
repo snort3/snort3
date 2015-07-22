@@ -1,8 +1,5 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libtarget_based.a
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 
 libtarget_based_a_SOURCES = \
 sftarget_reader.cc \

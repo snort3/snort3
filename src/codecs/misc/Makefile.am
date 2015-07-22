@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libmisc_codecs.a
 libmisc_codecs_a_SOURCES = \

@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libevents.a
 
@@ -15,6 +14,4 @@ event_wrapper.cc \
 event_wrapper.h \
 sfeventq.cc \
 sfeventq.h
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 

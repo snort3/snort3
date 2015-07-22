@@ -1,5 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
-
 
 noinst_LIBRARIES = libdata_types.a
 
@@ -21,5 +19,5 @@ dt_rule_suboption.cc \
 dt_var.h \
 dt_var.cc
 
+AM_CPPFLAGS = @snort2lua_CPPFLAGS@
 
-AM_CXXFLAGS = @AM_CXXFLAGS@

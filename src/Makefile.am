@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 bin_PROGRAMS = snort
 
@@ -115,8 +114,6 @@ target_based \
 time \
 utils
 
-AM_CXXFLAGS = @AM_CXXFLAGS@
-
 if BUILD_UNIT_TESTS
 snort_LDADD += test/libtest.a -lcheck -lrt -lpthread
 SUBDIRS += test
@@ -126,3 +123,4 @@ if BUILD_PIGLET
 snort_LDADD += piglet/libpiglet.a piglet_plugins/libpiglet_plugins.a
 SUBDIRS += piglet piglet_plugins
 endif
+

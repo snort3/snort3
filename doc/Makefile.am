@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 BUILT_SOURCES = \
 builtin.txt \

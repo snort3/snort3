@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign  no-dependencies
 
 bin_PROGRAMS = snort2lua
 
@@ -20,6 +19,7 @@ data/libdata.a \
 data/data_types/libdata_types.a
 
 snort2lua_CFLAGS = @CFLAGS@ $(AM_CFLAGS)
+snort2lua_CPPFLAGS = @snort2lua_CPPFLAGS@
 
 SUBDIRS = \
 helpers \
@@ -30,5 +30,5 @@ output_states \
 config_states \
 rule_states
 
-AM_CXXFLAGS = @AM_CXXFLAGS@
+AM_CPPFLAGS = @snort2lua_CPPFLAGS@
 

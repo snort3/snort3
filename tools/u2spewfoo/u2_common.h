@@ -16,25 +16,28 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// u2_common.h derived from u2spewfoo.cc
 
 #ifndef U2BOAT_H
 #define U2BOAT_H
 
+#include <stdio.h>
+#include <stdint.h>
 #include "loggers/unified2_common.h"
 
-typedef struct _record
+struct u2record
 {
     uint32_t type;
     uint32_t length;
     uint8_t* data;
-} u2record;
+};
 
-typedef struct _u2iterator
+struct u2iterator
 {
     FILE* file;
     char* filename;
     u2record current;
-} u2iterator;
+};
 
 #endif
 

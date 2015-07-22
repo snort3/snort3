@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 if STATIC_CODECS
 noinst_LIBRARIES = libroot_codecs.a

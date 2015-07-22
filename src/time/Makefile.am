@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libtime.a
 
@@ -20,4 +19,3 @@ periodic.cc \
 periodic.h \
 timersub.h
 
-AM_CXXFLAGS = @AM_CXXFLAGS@
