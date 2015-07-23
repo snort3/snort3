@@ -36,8 +36,8 @@ extern "C" {
 #include <sfbpf_dlt.h>
 }
 
-#include "snort_config.h"
-#include "util.h"
+#include "main/snort_config.h"
+#include "utils/util.h"
 #include "utils/strvec.h"
 #include "parser/parser.h"
 

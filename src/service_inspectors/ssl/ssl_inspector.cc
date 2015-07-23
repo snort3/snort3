@@ -33,18 +33,18 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#include "snort_types.h"
-#include "snort_debug.h"
-
-#include "ssl.h"
-#include "ssl_module.h"
-#include "profiler.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "time/profiler.h"
 #include "stream/stream_api.h"
-#include "parser.h"
+#include "parser/parser.h"
 #include "framework/inspector.h"
 #include "utils/sfsnprintfappend.h"
 #include "target_based/snort_protocols.h"
-#include "detect.h"
+#include "detection/detect.h"
+#include "protocols/ssl.h"
+
+#include "ssl_module.h"
 
 THREAD_LOCAL ProfileStats sslPerfStats;
 THREAD_LOCAL SimpleStats sslstats;

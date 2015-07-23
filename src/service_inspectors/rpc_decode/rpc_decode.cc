@@ -45,22 +45,23 @@
 
 #include <string>
 
-#include "rpc_module.h"
-#include "protocols/packet.h"
-#include "parser.h"
-#include "snort_debug.h"
-#include "util.h"
-#include "detect.h"
-#include "log.h"
-#include "profiler.h"
-#include "snort_bounds.h"
-#include "detection_util.h"
-#include "framework/inspector.h"
+#include "parser/parser.h"
+#include "main/snort_debug.h"
+#include "detection/detect.h"
+#include "log/log.h"
+#include "time/profiler.h"
+#include "utils/snort_bounds.h"
+#include "utils/util.h"
+#include "detection/detection_util.h"
 #include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
 #include "target_based/snort_protocols.h"
 #include "protocols/tcp.h"
+#include "protocols/packet.h"
 #include "framework/data_bus.h"
+#include "framework/inspector.h"
+
+#include "rpc_module.h"
 
 #define RPC_MAX_BUF_SIZE   256
 #define RPC_FRAG_HDR_SIZE  sizeof(uint32_t)

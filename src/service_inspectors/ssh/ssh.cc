@@ -31,18 +31,18 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#include "snort_types.h"
-#include "snort_debug.h"
-
-#include "ssh.h"
-#include "ssh_module.h"
-#include "profiler.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "time/profiler.h"
 #include "stream/stream_api.h"
 #include "file_api/file_api.h"
-#include "parser.h"
+#include "parser/parser.h"
 #include "framework/inspector.h"
 #include "utils/sfsnprintfappend.h"
 #include "target_based/snort_protocols.h"
+
+#include "ssh.h"
+#include "ssh_module.h"
 
 THREAD_LOCAL ProfileStats sshPerfStats;
 THREAD_LOCAL SimpleStats sshstats;

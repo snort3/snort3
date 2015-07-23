@@ -31,8 +31,8 @@
 #include <ctype.h>
 #include <stdio.h>
 
-#include "util.h"
-#include "sf_vartable.h"
+#include "utils/util.h"
+#include "sfip/sf_vartable.h"
 
 #define LIST_OPEN '['
 #define LIST_CLOSE ']'

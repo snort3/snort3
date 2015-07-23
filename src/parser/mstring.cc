@@ -30,10 +30,10 @@
 #include <ctype.h>
 #include <sys/types.h>
 
-#include "snort_types.h"
-#include "snort_debug.h"
-#include "util.h"
-#include "detection_util.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "detection/detection_util.h"
+#include "utils/util.h"
 
 static char* mSplitAddTok(const char*, const int, const char*, const char);
 

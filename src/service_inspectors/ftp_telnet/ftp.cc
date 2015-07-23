@@ -26,9 +26,6 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#include "snort_types.h"
-#include "snort_debug.h"
-
 #include "ftp_module.h"
 #include "ftpp_si.h"
 #include "ftpp_ui_config.h"
@@ -39,17 +36,19 @@
 #include "ftp_print.h"
 #include "ftp_splitter.h"
 #include "pp_ftp.h"
-#include "profiler.h"
 #include "ftp_data.h"
 #include "telnet.h"
 
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "stream/stream_api.h"
 #include "file_api/file_api.h"
-#include "parser.h"
+#include "parser/parser.h"
 #include "framework/inspector.h"
 #include "managers/inspector_manager.h"
 #include "detection/detection_util.h"
 #include "target_based/snort_protocols.h"
+#include "time/profiler.h"
 
 int16_t ftp_data_app_id = SFTARGET_UNKNOWN_PROTOCOL;
 

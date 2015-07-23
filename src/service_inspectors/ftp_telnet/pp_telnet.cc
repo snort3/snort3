@@ -51,9 +51,10 @@
 
 #include "telnet_module.h"
 #include "ftpp_return_codes.h"
-#include "snort_debug.h"
+
+#include "main/snort_debug.h"
 #include "stream/stream_api.h"
-#include "detection_util.h"
+#include "detection/detection_util.h"
 
 #define NUL 0x00
 #define CR 0x0d

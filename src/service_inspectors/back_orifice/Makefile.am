@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 file_list = \
 back_orifice.cc

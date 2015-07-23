@@ -19,29 +19,50 @@
 
 #include "lua.h"
 
+#include <assert.h>
+
 namespace Lua
 {
 State::State(bool openlibs)
 {
-    _state = luaL_newstate();
+    state = luaL_newstate();
+
+    // Without exceptions, there is no easy way to handle this,
+    // so we must assert().
+    // If this assert is removed,
+    // the destructor should be modified to check for nullptr
+    assert(state);
+
     if ( openlibs )
-        luaL_openlibs(_state);
+        luaL_openlibs(state);
 }
 
 State::~State()
-{ lua_close(_state); }
+{ lua_close(state); }
 
-Handle State::get_handle()
-{ return Handle(_state); }
+ManageStack::ManageStack(lua_State* L, int extra) :
+    state ( L )
+{
+    top = lua_gettop(state);
+    if ( extra > 0 )
+    {
+        bool result = lua_checkstack(state, extra);
+        assert(result);
+    }
+}
+
+ManageStack::~ManageStack()
+{
+    if ( lua_gettop(state) > top )
+        lua_settop(state, top);
+}
 
 namespace Interface
 {
 void register_lib(lua_State* L, const struct Library* lib)
 {
-    int top, meta, table;
-
-    // save this so we can reset the stack afterwards
-    top = lua_gettop(L);
+    ManageStack ms(L, 4);
+    int meta, table;
 
     // register method table
     luaL_register(L, lib->tname, lib->methods);
@@ -61,9 +82,6 @@ void register_lib(lua_State* L, const struct Library* lib)
     lua_pushliteral(L, "__metatable");
     lua_pushvalue(L, table);
     lua_rawset(L, meta);
-
-    // reset stack
-    lua_settop(L, top);
 }
 }
 }

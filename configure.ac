@@ -33,7 +33,7 @@ AC_CONFIG_SRCDIR([src/main.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h src/framework/api_options.h])
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE(foreign nostdinc)
 
 LT_INIT
 
@@ -942,13 +942,15 @@ CXXFLAGS="$CFLAGS"
 echo "$AM_CFLAGS $CFLAGS" > cflags.out
 echo "$AM_CPPFLAGS $CPPFLAGS" > cppflags.out
 
-AM_CPPFLAGS='-I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/main -I$(top_srcdir)/src/parser -I$(top_srcdir)/src/utils -I$(top_srcdir)/src/loggers -I$(top_srcdir)/src/time -I$(top_srcdir)/src/protocols -I$(top_srcdir)/src/network_inspectors -I$(top_srcdir)/src/log -I$(top_srcdir)/src/events -I$(top_srcdir)/src/sfip -I$(top_srcdir)/src/detection -I$(top_srcdir)/src/hash -I$(top_srcdir)/tools/snort2lua'
+AM_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir)/src -I$(top_srcdir)/src/network_inspectors'
+snort2lua_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir)/tools/snort2lua'
 
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_CXXFLAGS)
 AC_SUBST(CONFIGFLAGS)
 AC_SUBST(CCONFIGFLAGS)
 AC_SUBST(ICONFIGFLAGS)
+AC_SUBST(snort2lua_CPPFLAGS)
 
 AC_CONFIG_FILES([ \
 snort.pc \

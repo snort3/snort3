@@ -41,6 +41,8 @@ using namespace Lua;
 
 namespace Util
 {
+
+// Call from Lua context only
 template<typename T>
 T* regurgitate_instance(lua_State* L, int index)
 {
@@ -62,6 +64,7 @@ void register_wrapper(
     lua_setglobal(L, name);
 }
 
+// Call from Lua context only
 template<typename T>
 int tostring(lua_State* L, const char* type)
 {
@@ -74,6 +77,7 @@ template<typename T>
 void register_instance_lib(
     lua_State* L, const luaL_reg* methods, const char* tname, T* instance)
 {
+    Lua::ManageStack ms(L, 4);
     int table, inst;
     const luaL_reg* entry = methods;
 
@@ -118,12 +122,15 @@ extern const struct Lua::Interface::Library lib;
 } // namespace PacketLib
 
 struct _daq_pkthdr* cooked_daq_pkthdr(uint32_t, uint32_t = 0);
+
+// Call from Lua context only
 size_t check_size_param(
     lua_State*,
     int,
     size_t = std::numeric_limits<size_t>::max()
 );
 
+// Call from Lua context only
 size_t opt_size_param(
     lua_State*,
     int,

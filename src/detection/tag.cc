@@ -27,17 +27,16 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "protocols/packet.h"
 #include "rules.h"
 #include "treenodes.h"
-#include "snort_debug.h"
-#include "util.h"
-#include "log.h"
-#include "parser.h"
-#include "snort_config.h"
+#include "main/snort_debug.h"
+#include "main/snort_config.h"
+#include "protocols/packet.h"
+#include "utils/util.h"
+#include "log/log.h"
+#include "parser/parser.h"
 #include "events/event.h"
-
-#include "sfxhash.h"
+#include "hash/sfxhash.h"
 #include "sfip/sfip_t.h"
 #include "sfip/sf_ip.h"
 

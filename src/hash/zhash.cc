@@ -23,10 +23,10 @@
 #include <stdlib.h>
 
 #include "zhash.h"
-#include "snort_types.h"
-#include "snort_debug.h"
-#include "util.h"
-#include "hash/sfhashfcn.h"
+#include "sfhashfcn.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "utils/util.h"
 
 //-------------------------------------------------------------------------
 // private stuff

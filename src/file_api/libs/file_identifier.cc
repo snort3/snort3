@@ -33,11 +33,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "snort_types.h"
-#include "snort_debug.h"
-#include "parser.h"
-#include "util.h"
 #include <algorithm>
+
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "parser/parser.h"
+#include "utils/util.h"
 
 
 typedef struct _IdentifierSharedNode

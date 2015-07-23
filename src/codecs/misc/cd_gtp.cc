@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include "snort_debug.h"
+#include "main/snort_debug.h"
 #include "framework/codec.h"
 #include "protocols/packet.h"
 #include "packet_io/active.h"

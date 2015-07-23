@@ -29,10 +29,10 @@
 using namespace std;
 
 #include "main.h"
-#include "config_file.h"
-#include "helpers/process.h"
 #include "main/snort_config.h"
 #include "main/snort_module.h"
+#include "framework/module.h"
+#include "framework/parameter.h"
 #include "managers/event_manager.h"
 #include "managers/so_manager.h"
 #include "managers/inspector_manager.h"
@@ -41,10 +41,10 @@ using namespace std;
 #include "managers/script_manager.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/intf.h"
+#include "parser/config_file.h"
+#include "helpers/process.h"
 #include "utils/util.h"
 #include "helpers/markup.h"
-#include "framework/module.h"
-#include "framework/parameter.h"
 
 #define snort_help \
     "\n" \

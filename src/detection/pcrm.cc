@@ -38,10 +38,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "util.h"
 #include "fp_config.h"
 #include "fp_create.h"
-#include "snort_config.h"
+#include "main/snort_config.h"
+#include "utils/util.h"
 
 /*
 **

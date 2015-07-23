@@ -31,16 +31,15 @@
 
 #include <string>
 
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "framework/logger.h"
 #include "framework/module.h"
-#include "snort_types.h"
-#include "event.h"
+#include "events/event.h"
 #include "protocols/packet.h"
-#include "parser.h"
-#include "snort_debug.h"
-#include "util.h"
+#include "parser/parser.h"
+#include "utils/util.h"
 #include "packet_io/sfdaq.h"
-#include "event.h"
 
 #define UNSOCK_FILE "snort_alert"
 

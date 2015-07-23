@@ -52,7 +52,7 @@
 #include "hi_norm.h"
 #include "hi_util.h"
 #include "hi_return_codes.h"
-#include "snort_bounds.h"
+#include "utils/snort_bounds.h"
 
 int hi_split_header_cookie(
     HI_SESSION*, u_char* header, int* i_header_len,

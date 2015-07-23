@@ -1,5 +1,3 @@
-## $Id
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libservice_inspectors.a
 
@@ -30,6 +28,4 @@ smtp \
 ssh \
 ssl \
 wizard
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 

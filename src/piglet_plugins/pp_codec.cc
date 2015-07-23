@@ -582,7 +582,7 @@ static const luaL_reg methods[] =
 class Plugin : public Piglet::BasePlugin
 {
 public:
-    Plugin(Lua::Handle&, std::string);
+    Plugin(Lua::State&, std::string);
     virtual ~Plugin() override;
     virtual bool setup() override;
 
@@ -590,11 +590,10 @@ private:
     CodecWrapper* wrapper;
 };
 
-Plugin::Plugin(Lua::Handle& handle, std::string target) :
-    BasePlugin(handle, target)
+Plugin::Plugin(Lua::State& state, std::string target) :
+    BasePlugin(state, target)
 {
     auto m = ModuleManager::get_default_module(target.c_str(), snort_conf);
-
     if ( m )
         wrapper = CodecManager::instantiate(target.c_str(), m, snort_conf);
 }
@@ -607,10 +606,9 @@ Plugin::~Plugin()
 
 bool Plugin::setup()
 {
+    // FIXIT-M: Need better error reporting
     if ( !wrapper )
         return true;
-
-    lua_State* L = lua.get_state();
 
     Interface::register_lib(L, &RawBufferLib::lib);
     Interface::register_lib(L, &RawDataLib::lib);
@@ -631,8 +629,8 @@ bool Plugin::setup()
 // API foo
 // -----------------------------------------------------------------------------
 
-static Piglet::BasePlugin* ctor(Lua::Handle& handle, std::string target, Module*)
-{ return new CodecPiglet::Plugin(handle, target); }
+static Piglet::BasePlugin* ctor(Lua::State& state, std::string target, Module*)
+{ return new CodecPiglet::Plugin(state, target); }
 
 static void dtor(Piglet::BasePlugin* p)
 { delete p; }

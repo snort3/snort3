@@ -25,14 +25,14 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "snort_types.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "detection/treenodes.h"
 #include "protocols/packet.h"
-#include "parser.h"
-#include "snort_debug.h"
-#include "util.h"
-#include "profiler.h"
-#include "sfhashfcn.h"
+#include "parser/parser.h"
+#include "utils/util.h"
+#include "time/profiler.h"
+#include "hash/sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/parameter.h"

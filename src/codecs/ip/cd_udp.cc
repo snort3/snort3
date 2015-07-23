@@ -33,11 +33,10 @@
 #include "protocols/protocol_ids.h"
 #include "codecs/ip/checksum.h"
 #include "log/text_log.h"
-
 #include "framework/codec.h"
 #include "packet_io/active.h"
-#include "snort_config.h"
 #include "parser/config_file.h"
+#include "main/snort_config.h"
 #include "main/snort_debug.h"
 
 #define CD_UDP_NAME "udp"

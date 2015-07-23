@@ -25,10 +25,9 @@
 #include "config.h"
 #endif
 
+#include "main/snort_config.h"
 #include "utils/dnet_header.h"
 #include "stream/stream_api.h"
-#include "snort_config.h"
-
 #include "framework/codec.h"
 #include "managers/action_manager.h"
 #include "protocols/packet_manager.h"

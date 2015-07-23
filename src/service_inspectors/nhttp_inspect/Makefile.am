@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 file_list = \
 nhttp_inspect.cc nhttp_inspect.h \

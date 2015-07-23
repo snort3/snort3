@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = liblog.a
 

@@ -1,5 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
-
 
 noinst_LIBRARIES = libpreprocessor_states.a
 
@@ -31,4 +29,5 @@ pps_stream5_udp.cc \
 preprocessor_api.h \
 preprocessor_api.cc
 
-AM_CXXFLAGS = @AM_CXXFLAGS@
+AM_CPPFLAGS = @snort2lua_CPPFLAGS@
+

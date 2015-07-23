@@ -60,9 +60,9 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "snort_debug.h"
-#include "util.h"
+#include "main/snort_debug.h"
 #include "main/thread.h"
+#include "utils/util.h"
 
 #define MEMASSERT(p,s) if (!p) { fprintf(stderr,"ACSM-No Memory: %s\n",s); exit(0); }
 

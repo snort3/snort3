@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 x_includedir = $(pkgincludedir)/actions
 

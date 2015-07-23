@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 file_list = \
 ft_main.cc ft_main.h \

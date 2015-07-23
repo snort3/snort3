@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 x_includedir = $(pkgincludedir)/framework
 
@@ -35,6 +34,4 @@ module.cc \
 mpse.cc \
 range.cc \
 value.cc
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 

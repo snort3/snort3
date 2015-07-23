@@ -53,8 +53,8 @@
 #include "hi_util.h"
 #include "hi_return_codes.h"
 
-#include "snort_bounds.h"
-#include "detection_util.h"
+#include "detection/detection_util.h"
+#include "utils/snort_bounds.h"
 
 int hi_server_norm(HI_SESSION* session, HttpSessionData* hsd)
 {

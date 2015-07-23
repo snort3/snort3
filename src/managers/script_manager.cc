@@ -26,10 +26,10 @@
 #include <luajit-2.0/lua.hpp>
 
 #include "ips_manager.h"
+#include "plugin_manager.h"
 #include "framework/ips_option.h"
 #include "framework/logger.h"
 #include "framework/lua_api.h"
-#include "managers/plugin_manager.h"
 #include "parser/parser.h"
 #include "helpers/directory.h"
 
@@ -113,6 +113,7 @@ LogLuaApi::LogLuaApi(string& s, string& c, unsigned v) : LuaApi(s, c)
 // lua foo
 //-------------------------------------------------------------------------
 
+// FIXIT-M: could be a template
 static bool get_field(lua_State* L, const char* key, int& value)
 {
     lua_pushstring(L, key);
@@ -149,6 +150,7 @@ static bool get_field(lua_State* L, const char* key, string& value)
     return true;
 }
 
+// FIXIT-M: Move to helpers/lua
 static int dump(lua_State*, const void* p, size_t sz, void* ud)
 {
     string* s = static_cast<string*>(ud);
@@ -156,6 +158,7 @@ static int dump(lua_State*, const void* p, size_t sz, void* ud)
     return 0;
 }
 
+// FIXIT-M: Use Lua::State to wrap lua_State
 static void load_script(const char* f)
 {
     lua_State* L = luaL_newstate();

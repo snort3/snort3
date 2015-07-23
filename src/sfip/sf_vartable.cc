@@ -34,10 +34,10 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "sfip/sf_vartable.h"
 #include "sfip/sf_ipvar.h"
-#include "util.h"
+#include "utils/util.h"
 
 vartable_t* sfvt_alloc_table(void)
 {

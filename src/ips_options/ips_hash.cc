@@ -23,21 +23,20 @@
 #include <errno.h>
 #include <string>
 
-#include "snort_types.h"
-#include "snort_bounds.h"
+#include "ips_byte_extract.h"
+#include "main/snort_types.h"
+#include "utils/snort_bounds.h"
 #include "parser/parser.h"
-#include "sfhashfcn.h"
+#include "parser/parse_utils.h"
+#include "hash/sfhashfcn.h"
+#include "hash/hashes.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
-#include "profiler.h"
-#include "sfhashfcn.h"
+#include "time/profiler.h"
 #include "detection/detection_defines.h"
-#include "ips_byte_extract.h"
 #include "detection/detection_util.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
-#include "hash/hashes.h"
-#include "parser/parse_utils.h"
 
 enum HashPsIdx
 {

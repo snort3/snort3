@@ -37,7 +37,7 @@ public:
     static void init();
 
     static void add_plugin(Api*);
-    static BasePlugin* instantiate(Lua::Handle&, std::string, std::string);
+    static BasePlugin* instantiate(Lua::State&, std::string, std::string);
     static void destroy(BasePlugin*);
 
     static void add_chunk(std::string, std::string);

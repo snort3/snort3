@@ -27,9 +27,9 @@
 
 #include "perf_event.h"
 
-#include "snort_types.h"
-#include "util.h"
 #include "perf.h"
+#include "main/snort_types.h"
+#include "utils/util.h"
 
 int DisplayEventPerfStats(SFEVENT_STATS* sfEventStats);
 

@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign
 
 optlibdir = $(pkglibdir)/so_rules
 optlib_LTLIBRARIES = lib18758.la

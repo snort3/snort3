@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign
 
 daqlibdir = $(pkglibdir)/daqs
 

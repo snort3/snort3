@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign
 
 insexlibdir = $(pkglibdir)/inspectors
 

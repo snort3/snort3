@@ -25,15 +25,16 @@
 
 #ifndef HAVE_PARSER_H
 #include <ctype.h>
-#include "snort_types.h"
-#include "snort_debug.h"
+
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "main/snort_config.h"
+#include "sfip/sf_ip.h"
 
 #include "sip_parser.h"
 #include "sip_config.h"
 #include "sip_utils.h"
 #include "sip_module.h"
-#include "main/snort_config.h"
-#include "sfip/sf_ip.h"
 
 #define MAX_NUM_32BIT  2147483647
 

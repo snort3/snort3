@@ -1,5 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
-
 
 noinst_LIBRARIES = librule_states.a
 
@@ -23,4 +21,5 @@ rule_urilen.cc \
 rule_api.cc \
 rule_api.h
 
-AM_CXXFLAGS = @AM_CXXFLAGS@
+AM_CPPFLAGS = @snort2lua_CPPFLAGS@
+

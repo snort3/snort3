@@ -23,22 +23,21 @@
 #include "config.h"
 #endif
 
-#include <timersub.h>
-
-#include "snort_config.h"
 #include "util.h"
+#include "main/snort_config.h"
 #include "helpers/process.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/active.h"
 #include "packet_io/trough.h"
 #include "target_based/sftarget_reader.h"
 #include "managers/module_manager.h"
-#include "protocols/packet_manager.h"
 #include "managers/codec_manager.h"
+#include "protocols/packet_manager.h"
 #include "detection/fp_create.h"
 #include "filters/sfthreshold.h"
 #include "time/ppm.h"
 #include "time/profiler.h"
+#include "time/timersub.h"
 #include "file_api/file_stats.h"
 
 #define STATS_SEPARATOR \

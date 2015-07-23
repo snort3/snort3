@@ -54,13 +54,13 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#include "snort_types.h"
-#include "util.h"
+#include "perf.h"
+#include "main/snort_types.h"
+#include "main/snort_types.h"
 #include "framework/mpse.h"
 #include "packet_io/sfdaq.h"
-#include "snort_types.h"
-#include "snort_bounds.h"
-#include "perf.h"
+#include "utils/util.h"
+#include "utils/snort_bounds.h"
 #include "stream/stream_api.h"
 #include "utils/stats.h"
 #include "protocols/tcp.h"

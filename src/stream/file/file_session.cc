@@ -23,13 +23,14 @@
 #include "config.h"
 #endif
 
-#include "stream_file.h"
-#include "file_module.h"
 #include "file_api/file_api.h"
 #include "perf_monitor/perf.h"
 #include "time/profiler.h"
 #include "packet_io/sfdaq.h"
 #include "detection/detection_util.h"
+
+#include "stream_file.h"
+#include "file_module.h"
 
 #define DECODE_PDU (DECODE_SOF | DECODE_EOF)
 

@@ -17,9 +17,9 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// Author: Adam Keeton
+// u2spewfoo.cc author Adam Keeton
 
-#include "unified2_common.h"
+#include "u2_common.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -39,30 +39,6 @@
 #ifdef HAVE_UUID_UUID_H
 #include <uuid/uuid.h>
 #endif
-
-#define SUCCESS 314159265
-#define STEVE -1
-#define FAILURE STEVE
-
-#ifndef uint32_t
-typedef unsigned int uint32_t;
-typedef unsigned short uint16_t;
-typedef unsigned char uint8_t;
-#endif
-
-typedef struct _record
-{
-    uint32_t type;
-    uint32_t length;
-    uint8_t* data;
-} u2record;
-
-typedef struct _u2iterator
-{
-    FILE* file;
-    char* filename;
-    u2record current;
-} u2iterator;
 
 static long s_pos = 0, s_off = 0;
 
@@ -104,20 +80,20 @@ static inline void free_iterator(u2iterator* it)
         free(it);
 }
 
-static int get_record(u2iterator* it, u2record* record)
+static bool get_record(u2iterator* it, u2record* record)
 {
     uint32_t bytes_read;
     uint8_t* tmp;
 
     if (!it || !it->file)
-        return FAILURE;
+        return false;
 
     /* check if the log was rotated */
     if (feof(it->file))
     {
         /* Get next timestamped file? */
         puts("Hit the EOF .. and this is not being handled yet.");
-        return FAILURE;
+        return false;
     }
 
     if ( s_off )
@@ -126,7 +102,7 @@ static int get_record(u2iterator* it, u2record* record)
         if (fseek(it->file, s_pos+s_off, SEEK_SET))
         {
             puts("Unable to SEEK on current file .. and this is not being handled yet.");
-            return FAILURE;
+            return false;
         }
         s_off = 0;
     }
@@ -141,13 +117,13 @@ static int get_record(u2iterator* it, u2record* record)
 
     if (bytes_read == 0)
         /* EOF */
-        return FAILURE;
+        return false;
 
     if (bytes_read != sizeof(uint32_t)*2)
     {
         puts("get_record: (1) Failed to read all of record.");
         printf("\tRead %u of %lu bytes\n", bytes_read, (unsigned long)sizeof(uint32_t)*2);
-        return FAILURE;
+        return false;
     }
 
     s_pos = ftell(it->file);
@@ -159,7 +135,7 @@ static int get_record(u2iterator* it, u2record* record)
         puts("get_record: (2) Failed to allocate memory.");
         free(record->data);
         record->data = nullptr;
-        return FAILURE;
+        return false;
     }
 
     record->data = tmp;
@@ -174,12 +150,12 @@ static int get_record(u2iterator* it, u2record* record)
         if ( record->type != UNIFIED2_PACKET ||
             bytes_read < ntohl(((Serial_Unified2Packet*)record->data)->packet_length)
             )
-            return FAILURE;
+            return false;
 
         clearerr(it->file);
     }
 
-    return SUCCESS;
+    return true;
 }
 
 static void extradata_dump(u2record* record)
@@ -586,7 +562,7 @@ static int u2dump(char* file)
         return -1;
     }
 
-    while ( get_record(it, &record) == SUCCESS )
+    while ( get_record(it, &record) )
     {
         if (record.type == UNIFIED2_IDS_EVENT)
             event_dump(&record);

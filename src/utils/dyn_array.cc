@@ -19,10 +19,11 @@
 
 #include "dyn_array.h"
 
-#include "stdlib.h"
-#include "stdio.h"
-#include "string.h"
-#include "snort_debug.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "main/snort_debug.h"
 #include "sfrt/sfrt.h"
 
 /**Number of additional policies allocated with each re-alloc operation. */

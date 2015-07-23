@@ -38,13 +38,13 @@
 #include <sstream>
 using namespace std;
 
-#include "snort_types.h"
 #include "plugin_manager.h"
+#include "main/snort_types.h"
+#include "main/snort_config.h"
+#include "main/snort_debug.h"
 #include "framework/so_rule.h"
 #include "framework/module.h"
-#include "snort_config.h"
-#include "snort_debug.h"
-#include "util.h"
+#include "utils/util.h"
 #include "parser/parser.h"
 #include "log/messages.h"
 

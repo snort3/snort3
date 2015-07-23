@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign
 
 loglibdir = $(pkglibdir)/loggers
 

@@ -1,5 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
-
 
 noinst_LIBRARIES = libkeyword_states.a
 
@@ -21,4 +19,5 @@ kws_suppress.cc \
 keywords_api.h \
 keywords_api.cc
 
-AM_CXXFLAGS = @AM_CXXFLAGS@
+AM_CPPFLAGS = @snort2lua_CPPFLAGS@
+

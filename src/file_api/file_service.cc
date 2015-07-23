@@ -33,21 +33,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "snort_types.h"
 #include "file_api.h"
-#include "libs/file_lib.h"
-#include "libs/file_config.h"
 #include "file_mime_config.h"
 #include "file_stats.h"
-#include "managers/action_manager.h"
-#include "stream/stream_api.h"
-#include "detect.h"
-#include "packet_io/active.h"
 #include "file_capture.h"
 #include "file_mime_process.h"
 #include "file_resume_block.h"
+#include "libs/file_lib.h"
+#include "libs/file_config.h"
+
+#include "main/snort_types.h"
+#include "managers/action_manager.h"
+#include "stream/stream_api.h"
+#include "detection/detect.h"
+#include "detection/detection_util.h"
+#include "packet_io/active.h"
 #include "framework/inspector.h"
-#include "detection_util.h"
 
 // FIXIT-M bad dependency; use inspector::get_buf()
 #include "service_inspectors/http_inspect/hi_main.h"

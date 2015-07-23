@@ -34,12 +34,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "snort_types.h"
 #include "file_identifier.h"
 #include "file_config.h"
-#include "hash/hashes.h"
-#include "util.h"
 #include "file_api/file_capture.h"
+
+#include "main/snort_types.h"
+#include "hash/hashes.h"
+#include "utils/util.h"
 
 // FIXIT-L these are no longer needed
 #define SHA256CONTEXT SHA256_CTX

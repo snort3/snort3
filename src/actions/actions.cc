@@ -30,7 +30,7 @@
 #include "packet_io/active.h"
 #include "detection/signature.h"
 #include "detection/detect.h"
-#include "detection_util.h"
+#include "detection/detection_util.h"
 #include "detection/tag.h"
 
 static void pass()

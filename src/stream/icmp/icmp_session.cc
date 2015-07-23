@@ -23,19 +23,17 @@
 #include "config.h"
 #endif
 
-#include "icmp_module.h"
-#include "icmp_session.h"
-#include "snort_types.h"
-#include "snort_debug.h"
-#include "protocols/packet.h"
-#include "sfxhash.h"
-#include "util.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "hash/sfxhash.h"
+#include "utils/util.h"
 #include "stream/stream.h"
 #include "flow/flow.h"
 #include "flow/flow_control.h"
 #include "flow/session.h"
 #include "perf_monitor/perf.h"
-#include "profiler.h"
+#include "time/profiler.h"
+#include "protocols/packet.h"
 #include "protocols/layer.h"
 #include "protocols/vlan.h"
 #include "protocols/ip.h"
@@ -43,6 +41,9 @@
 #include "protocols/udp.h"
 #include "protocols/tcp.h"
 #include "sfip/sf_ip.h"
+
+#include "icmp_module.h"
+#include "icmp_session.h"
 
 struct IcmpStats
 {

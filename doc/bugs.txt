@@ -10,12 +10,8 @@
     Wunused-but-set-variable is not understood by clang
     clang: warning: argument unused during compilation: '-pthread'
 
-* Cmake doc/ has a problem when SNORT_PLUGIN_PATH is set to get extras
-included in the manual.
-
-* Making in doc/ may fail complaining something about xmllint.  Just make
-again and it will succeed.  Appears to be an unknown dependency but it
-works for me!
+* With cmake, make install will rebuild the docs even though when already
+  built.
 
 
 ==== Config

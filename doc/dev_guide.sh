@@ -5,20 +5,22 @@
 #
 # FIXIT:
 # -- make sidebar width draggable
-# -- make snort includes in headers clickable
 # -- remove header guards?  (outermost #ifndef, #define, #endif)
-# -- use css source instead of the sed at the end of this file?
+# -- use css source instead of the sed fixups?
 
 tmp=/tmp/dev_guide/
 out=$tmp/dev_guide.txt
+html=$tmp/dev_guide.html
 notes=dev_notes.txt
 
+echo "generating working tree in $tmp"
 mkdir -p $tmp || exit -1
 
 src_dirs=`find src -type d`
 
 # copy headers to temp working dir using same tree structure
 # but strip out repetitive copyright blocks
+
 for d in $src_dirs ; do
     mkdir -p $tmp/$d
 
@@ -33,6 +35,8 @@ for d in $src_dirs ; do
         sed -e "1,${n}d" $f > $tmp/$f
     done
 done
+
+echo "generating doc source from headers and dev notes"
 
 # emit doc boilerplate
 cat <<END > $out
@@ -50,7 +54,6 @@ END
 sed -ne "1,/^$/s/..//p" src/main.h >> $out
 echo >> $out
 
-# generate source from headers and dev notes
 for d in $src_dirs ; do
 
     # section heading
@@ -85,7 +88,7 @@ END
     done
 done >> $out
 
-# now generate the dev guide from the source in $tmp
+echo "generating the dev guide from the source in $tmp"
 cd $tmp
 asc_args="-b xhtml11 -a toc2"
 asciidoc $asc_args $out
@@ -112,13 +115,54 @@ a2x_args="--copy -a linkcss -a stylesdir -a disable-javascript -a quirks!"
 
 # fix up some stuff
 # this is quick and dirty and but not future proof
+echo "fixing up the html"
+
 sed -i.sed \
     -e "s/color: fuchsia/color: green/" \
     -e "s/margin-left: 16em/margin-left: 20em/" \
     -e "s/width: 13em/width: 18em/" \
-    dev_guide.html
+    $html
 
+# now convert snort includes into links using the existing anchor points
+# we can't derive the href ids because the toc generator only uses the
+# file w/o path (eg _rules_h instead of _detection_rules_h) and will add
+# numeric suffixes if non-unique (foo/rules.h and bar/rules.h would become
+# _rules_h and _rules_h_2).
+
+# this function generates sed commands like this
+# s|"detection/rules.h"|<a href=#_rules_h>"detection/rules.h"</a>|
+# for each Path added above
+
+gen_cmds()
+{
+    while true ; do
+        read id
+        id=${id/*=\"/}
+        id=${id/\"*/}
+
+        read path
+        path=${path/*Path = /}
+        path=${path/\<*/}
+        path=\"${path:4}\"
+
+        echo "s|$path|<a href=#$id>$path</a>|"
+
+        if ! read sep ; then
+            break
+        fi
+    done
+}
+
+echo "generating link commands"
+grep -B 1 "Path = " $html | gen_cmds > sed_cmds.txt
+
+echo "translating snort includes into links"
+sed -i.sed -f sed_cmds.txt $html
+
+echo "clean up"
 mv dev_guide.* ../
 cd ..
 rm -rf $tmp
+
+echo "done; see /tmp/dev_guide.html"
 

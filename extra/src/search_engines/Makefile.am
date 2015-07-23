@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign
 
 selibdir = $(pkglibdir)/search_engines
 selib_LTLIBRARIES = liblowmem.la

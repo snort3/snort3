@@ -28,7 +28,7 @@
 #include "config.h"
 #endif
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "framework/base_api.h"
 
 #ifdef PIGLET

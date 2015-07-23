@@ -23,7 +23,7 @@
 #include <assert.h>
 #include <sstream>
 
-#include "parser.h"
+#include "parser/parser.h"
 #include "ssl_inspector.h"
 
 using namespace std;

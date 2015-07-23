@@ -28,7 +28,8 @@
 #include <stdarg.h> /* For variadic */
 #include <stdio.h>
 #include <string.h> /* For memset   */
-#include "snort_types.h"
+
+#include "main/snort_types.h"
 
 #if SIZEOF_UNSIGNED_LONG_INT == 8
 #define ARCH_WIDTH 64

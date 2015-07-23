@@ -30,23 +30,7 @@ include_directories(AFTER ${EXTERNAL_INCLUDES})
 
 # prepending all of these to ensure they are included before External Libs
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(BEFORE detection)
-include_directories(BEFORE events)
-include_directories(BEFORE framework)
-include_directories(BEFORE hash)
-include_directories(BEFORE log)
-include_directories(BEFORE loggers)
-include_directories(BEFORE main)
 include_directories(BEFORE network_inspectors)
-include_directories(BEFORE parser)
-include_directories(BEFORE protocols)
-include_directories(BEFORE sfip)
-include_directories(BEFORE stream)
-include_directories(BEFORE target_based)
-include_directories(BEFORE time)
-include_directories(BEFORE ports)
-include_directories(BEFORE utils)
-
 
 # Build options for specific libraries
 # FIXIT is this needed?  see also

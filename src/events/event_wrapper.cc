@@ -39,16 +39,16 @@
 
 #include "event_wrapper.h"
 
-#include "snort_types.h"
-#include "rules.h"
-#include "treenodes.h"
-#include "signature.h"
-#include "util.h"
-#include "fp_detect.h"
-#include "snort_debug.h"
+#include "detection/rules.h"
+#include "detection/treenodes.h"
+#include "detection/signature.h"
+#include "detection/fp_detect.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "parser/parser.h"
-#include "event.h"
+#include "events/event.h"
 #include "detection/detect.h"
+#include "utils/util.h"
 
 /*
  * This function has been updated to find an otn and route the call to fpLogEvent

@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libperf_monitor.a
 
@@ -15,6 +14,4 @@ perf_event.cc perf_event.h \
 perf_flow.cc perf_flow.h \
 perf.cc perf.h \
 $(PROCPIDSTATS_SOURCE)
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 

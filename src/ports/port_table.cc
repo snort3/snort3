@@ -34,13 +34,14 @@
 #include "port_object.h"
 #include "port_object2.h"
 #include "port_utils.h"
-#include "snort_types.h"
-#include "snort_config.h"
-#include "snort_bounds.h"
-#include "snort_debug.h"
+
+#include "main/snort_types.h"
+#include "main/snort_config.h"
+#include "main/snort_debug.h"
 #include "detection/sfrim.h"
-#include "parser.h"
-#include "util.h"
+#include "parser/parser.h"
+#include "utils/util.h"
+#include "utils/snort_bounds.h"
 #include "hash/sfhashfcn.h"
 
 #define PTBL_LRC_DEFAULT 10

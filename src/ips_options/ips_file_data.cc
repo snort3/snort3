@@ -27,9 +27,9 @@
 #include <ctype.h>
 #include <errno.h>
 
-#include "snort_types.h"
-#include "snort_debug.h"
-#include "profiler.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
+#include "time/profiler.h"
 #include "detection/detection_defines.h"
 #include "detection/detection_util.h"
 #include "framework/cursor.h"

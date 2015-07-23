@@ -37,8 +37,8 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "util.h"
-#include "snort_bounds.h"
+#include "utils/util.h"
+#include "utils/snort_bounds.h"
 #include "sfip/sf_ip.h"
 
 /*

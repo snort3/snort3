@@ -32,13 +32,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "util.h"
-#include "parser.h"
-
 #include "sfrf.h"
-#include "rules.h"
-#include "snort_config.h"
 #include "sfthd.h"
+
+#include "utils/util.h"
+#include "parser/parser.h"
+#include "detection/rules.h"
+#include "main/snort_config.h"
 #include "sfip/sf_ip.h"
 
 //static int _printThresholdContext(RateFilterConfig*);

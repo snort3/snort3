@@ -22,12 +22,13 @@
 
 #include <string>
 
+#include "decompress/file_decomp.h"
+#include "utils/util.h"
+
 #include "hi_ui_config.h"
 #include "hi_events.h"
 #include "hi_cmd_lookup.h"
 #include "hi_ui_iis_unicode_map.h"
-#include "decompress/file_decomp.h"
-#include "utils/util.h"
 
 //-------------------------------------------------------------------------
 // http_inspect module
