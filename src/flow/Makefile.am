@@ -1,5 +1,3 @@
-## $Id
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libflow.a
 

@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libfilter.a
 
@@ -6,7 +5,6 @@ x_includedir = $(pkgincludedir)/filters
 
 x_include_HEADERS = \
 sfrf.h
-
 
 libfilter_a_SOURCES = \
 detection_filter.cc \
@@ -19,4 +17,3 @@ sfrf.cc \
 sfthd.cc \
 sfthd.h
 
-AM_CXXFLAGS = @AM_CXXFLAGS@

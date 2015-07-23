@@ -1,5 +1,3 @@
-## $Id
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libnetwork_inspectors.a
 
@@ -21,6 +19,4 @@ binder \
 normalize \
 perf_monitor \
 port_scan
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 

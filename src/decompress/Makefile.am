@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libdecompress.a
 
@@ -10,4 +9,3 @@ file_decomp_pdf.h \
 file_decomp_swf.cc \
 file_decomp_swf.h
 
-AM_CXXFLAGS = @AM_CXXFLAGS@

@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 x_luadir = $(pkgincludedir)/lua
 
@@ -19,6 +18,4 @@ mpse_manager.cc mpse_manager.h \
 plugin_manager.cc plugin_manager.h \
 script_manager.cc script_manager.h \
 so_manager.cc so_manager.h
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 

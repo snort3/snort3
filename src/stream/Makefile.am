@@ -1,5 +1,3 @@
-## $Id
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libstream.a
 
@@ -38,6 +36,4 @@ tcp \
 udp \
 user \
 file
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 

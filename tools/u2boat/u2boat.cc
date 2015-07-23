@@ -16,27 +16,21 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// Author: Ryan Jordan <ryan.jordan@sourcefire.com>
+// u2boat.cc author Ryan Jordan <ryan.jordan@sourcefire.com>
 
-#include <stdio.h>
+#include "../u2spewfoo/u2_common.h"
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <stdint.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <pcap.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "u2boat.h"
 
 #define FAILURE -1
 #define SUCCESS 0

@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign
 
 optlibdir = $(pkglibdir)/ips_options
 optlib_LTLIBRARIES = libips_urg.la

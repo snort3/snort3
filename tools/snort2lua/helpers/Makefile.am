@@ -1,5 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
-
 
 noinst_LIBRARIES = libsnort2lua_helpers.a
 
@@ -15,4 +13,5 @@ s2l_markup.cc \
 s2l_util.h \
 s2l_util.cc
 
-AM_CXXFLAGS = @AM_CXXFLAGS@
+AM_CPPFLAGS = @snort2lua_CPPFLAGS@
+

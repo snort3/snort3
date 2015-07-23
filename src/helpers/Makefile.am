@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libhelpers.a
 
@@ -21,4 +20,3 @@ ring.h \
 ring_logic.h \
 swapper.h
 
-AM_CXXFLAGS = @AM_CXXFLAGS@

@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 x_includedir = $(pkgincludedir)/protocols
 
@@ -39,5 +38,3 @@ ipv4_options.cc \
 tcp_options.cc \
 ssl.cc
 
-
-AM_CXXFLAGS = @AM_CXXFLAGS@

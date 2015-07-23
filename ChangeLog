@@ -1,3 +1,14 @@
+15/07/22 - build 162
+
+-- enable build dependency tracking
+-- cleanup automake and cmake foo
+-- updated bug list
+-- added Lua stack manager and updated code that manipulated a persistent lua_State
+   thanks to Sancho Panza (sancho@posteo.de) for reporting the issue
+-- piglet updates and fixes
+-- dev guide - convert snort includes into links
+-- fixup includes
+
 15/07/15 - build 161
 
 -- added piglet plugin test harness

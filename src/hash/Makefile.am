@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libhash.a
 
@@ -25,6 +24,4 @@ endif
 if BUILD_SSL_SHA
 libhash_a_SOURCES += sha2.c sha2.h
 endif
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 

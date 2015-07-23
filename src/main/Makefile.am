@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 x_includedir = $(pkgincludedir)/main
 
@@ -31,4 +30,3 @@ snort_module.cc \
 snort_module.h \
 thread.cc
 
-AM_CXXFLAGS = @AM_CXXFLAGS@

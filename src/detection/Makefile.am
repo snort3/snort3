@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libdetection.a
 
@@ -34,6 +33,4 @@ signature.cc \
 treenodes.cc \
 tag.cc \
 tag.h
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 

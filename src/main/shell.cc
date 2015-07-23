@@ -26,6 +26,7 @@
 #include <stdexcept>
 
 #include "framework/module.h"
+#include "helpers/lua.h"
 #include "managers/module_manager.h"
 #include "parser/parser.h"
 #include "log/messages.h"
@@ -68,6 +69,8 @@ static int get_line_number(lua_State* L)
 
 static void load_config(lua_State* L, const char* file)
 {
+    Lua::ManageStack ms(L);
+
     if ( luaL_loadfile(L, file) )
     {
         FatalError("can't load %s: %s\n", file, lua_tostring(L, -1));
@@ -75,14 +78,13 @@ static void load_config(lua_State* L, const char* file)
     }
 
     if ( lua_pcall(L, 0, 0, 0) )
-    {
         FatalError("can't init %s: %s\n", file, lua_tostring(L, -1));
-        return;
-    }
 }
 
 static void load_overrides(lua_State* L, string& s)
 {
+    Lua::ManageStack ms(L);
+
     if ( luaL_loadstring(L, s.c_str()) )
     {
         const char* err = lua_tostring(L, -1);
@@ -93,14 +95,13 @@ static void load_overrides(lua_State* L, string& s)
     }
 
     if ( lua_pcall(L, 0, 0, 0) )
-    {
         FatalError("can't init overrides: %s\n", lua_tostring(L, -1));
-        return;
-    }
 }
 
 static void run_config(lua_State* L, const char* t)
 {
+    Lua::ManageStack ms(L);
+
     lua_getglobal(L, "snort_config");
     lua_getglobal(L, t);
 
@@ -191,6 +192,7 @@ void Shell::install(const char* name, const luaL_Reg* reg)
 void Shell::execute(const char* cmd, string& rsp)
 {
     int err = 0;
+    Lua::ManageStack ms(lua);
 
     try
     {

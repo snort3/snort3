@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libtest.a
 
@@ -36,6 +35,4 @@ suite_decl.h:
 
 suite_list.h:
 	$(build_list)
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 

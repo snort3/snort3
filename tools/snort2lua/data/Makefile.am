@@ -1,5 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
-
 
 noinst_LIBRARIES = libdata.a
 
@@ -14,4 +12,5 @@ dt_table_api.cc
 SUBDIRS = \
 data_types
 
-AM_CXXFLAGS = @AM_CXXFLAGS@
+AM_CPPFLAGS = @snort2lua_CPPFLAGS@
+

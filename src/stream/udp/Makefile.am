@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS=foreign no-dependencies
 
 noinst_LIBRARIES = libstream_udp.a
 
@@ -9,6 +8,4 @@ udp_module.cc \
 udp_module.h \
 udp_session.cc \
 udp_session.h
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
 
