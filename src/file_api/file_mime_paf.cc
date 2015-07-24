@@ -35,18 +35,6 @@
 
 static const char* boundary_str = "boundary=";
 
-/*
- * When the file ends (a MIME boundary detected), position are updated
- */
-void finalize_mime_position(Flow* flow, void* decode_state, FilePosition* position)
-{
-    /* check to see if there are file data in the session or
-     * new decoding data waiting for processing */
-    if ( file_api->get_file_processed_size(flow) ||
-        (decode_state && ((Email_DecodeState*)decode_state)->decoded_bytes) )
-        finalFilePosition(position);
-}
-
 /* Save the bounday string into paf state*/
 static inline bool store_boundary(MimeDataPafInfo* data_info,  uint8_t val)
 {

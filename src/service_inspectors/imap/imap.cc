@@ -744,7 +744,7 @@ static void snort_imap(IMAP_PROTO_CONF* config, Packet* p)
 void ImapMime::decode_alert(void* ds)
 {
     Email_DecodeState* decode_state = (Email_DecodeState*)ds;
-    switch ( decode_state->decode_type )
+    switch ( decode_state->get_decode_type() )
     {
     case DECODE_B64:
         SnortEventqAdd(GID_IMAP, IMAP_B64_DECODING_FAILED);

@@ -29,7 +29,7 @@
 #include "file_api/file_mime_config.h"
 #include "file_api/file_mime_paf.h"
 #include "file_api/file_mime_log.h"
-#include "utils/sf_email_attach_decode.h"
+#include "file_api/file_mime_decode.h"
 
 /* state flags */
 #define MIME_FLAG_FOLDING                    0x00000001
@@ -88,9 +88,7 @@ private:
     virtual bool is_end_of_data(void* ssn)
     { return false; }
 
-    void set_mime_buffers();
     void reset_mime_state();
-    void process_decode_type(const char* start, int length, bool cnt_xf);
     void setup_decode(const char* data, int size, bool cnt_xf);
     const uint8_t* process_mime_header(const uint8_t* ptr, const uint8_t* data_end_marker);
     const uint8_t* process_mime_body(const uint8_t* ptr, const uint8_t* data_end,bool is_data_end);

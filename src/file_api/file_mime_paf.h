@@ -85,7 +85,6 @@ static inline bool scanning_boundary(MimeDataPafInfo* mime_info, uint32_t bounda
 }
 
 
-void finalize_mime_position(Flow* flow, void* decode_state, FilePosition* position);
 void reset_mime_paf_state(MimeDataPafInfo *data_info);
 /*  Process data boundary and flush each file based on boundary*/
 bool process_mime_paf_data(MimeDataPafInfo *data_info,  uint8_t val);

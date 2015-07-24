@@ -1509,7 +1509,7 @@ int SmtpMime::normalize_data(void* conf, const uint8_t* ptr, const uint8_t* data
 void SmtpMime::decode_alert(void* ds)
 {
     Email_DecodeState* decode_state = (Email_DecodeState*)ds;
-    switch ( decode_state->decode_type )
+    switch ( decode_state->get_decode_type() )
     {
     case DECODE_B64:
         SnortEventqAdd(GID_SMTP, SMTP_B64_DECODING_FAILED);

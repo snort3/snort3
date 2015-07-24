@@ -30,6 +30,7 @@
 #endif
 
 #include "file_mime_config.h"
+#include "file_mime_decode.h"
 #include "file_api.h"
 
 #include "main/snort_types.h"
@@ -81,17 +82,6 @@ MIMESearchInfo mime_search_info;
 SearchTool* mime_hdr_search_mpse = nullptr;
 MIMESearch mime_hdr_search[HDR_LAST];
 MIMESearch* mime_current_search = NULL;
-
-void MimeSession::set_mime_buffers()
-{
-    if (decode_state == NULL)
-    {
-        decode_state = NewEmailDecodeState(
-            decode_conf->get_max_depth(), decode_conf->get_b64_depth(),
-            decode_conf->get_qp_depth(), decode_conf->get_uu_depth(),
-            decode_conf->get_bitenc_depth(), decode_conf->get_file_depth());
-    }
-}
 
 void get_mime_eol(const uint8_t* ptr, const uint8_t* end,
     const uint8_t** eol, const uint8_t** eolm)
@@ -156,64 +146,24 @@ static int search_str_found(void* id, void*, int index, void*, void*)
     return 1;
 }
 
-void MimeSession::process_decode_type(const char* start, int length, bool cnt_xf)
-{
-    const char* tmp = NULL;
-
-    if (cnt_xf)
-    {
-        if (decode_state->b64_state.encode_depth > -1)
-        {
-            tmp = SnortStrcasestr(start, length, "base64");
-            if ( tmp != NULL )
-            {
-                decode_state->decode_type = DECODE_B64;
-                return;
-            }
-        }
-
-        if (decode_state->qp_state.encode_depth > -1)
-        {
-            tmp = SnortStrcasestr(start, length, "quoted-printable");
-            if ( tmp != NULL )
-            {
-                decode_state->decode_type = DECODE_QP;
-                return;
-            }
-        }
-
-        if (decode_state->uu_state.encode_depth > -1)
-        {
-            tmp = SnortStrcasestr(start, length, "uuencode");
-            if ( tmp != NULL )
-            {
-                decode_state->decode_type = DECODE_UU;
-                return;
-            }
-        }
-    }
-
-    if (decode_state->bitenc_state.depth > -1)
-    {
-        decode_state->decode_type = DECODE_BITENC;
-        return;
-    }
-}
-
 void MimeSession::setup_decode(const char* data, int size, bool cnt_xf)
 {
     /* Check for Encoding Type */
     if ( decode_conf && decode_conf->is_decoding_enabled())
     {
-        set_mime_buffers();
+        if (decode_state == NULL)
+        {
+            decode_state = new Email_DecodeState(
+                decode_conf->get_max_depth(), decode_conf->get_b64_depth(),
+                decode_conf->get_qp_depth(), decode_conf->get_uu_depth(),
+                decode_conf->get_bitenc_depth(), decode_conf->get_file_depth());
+        }
+
         if (decode_state != NULL)
         {
-            ResetBytesRead((Email_DecodeState*)(decode_state));
-            process_decode_type(data, size, cnt_xf);
+            decode_state->ResetBytesRead();
+            decode_state->process_decode_type(data, size, cnt_xf);
             state_flags |= MIME_FLAG_EMAIL_ATTACH;
-            /* check to see if there are other attachments in this packet */
-            if (decode_state->decoded_bytes)
-                state_flags |= MIME_FLAG_MULTIPLE_EMAIL_ATTACH;
         }
     }
 }
@@ -519,9 +469,9 @@ const uint8_t* MimeSession::process_mime_body(const uint8_t* ptr,
             attach_end = data_end;
         }
 
-        if ( attach_start < attach_end )
+        if (( attach_start < attach_end ) && decode_state)
         {
-            if (EmailDecode(attach_start, attach_end, decode_state) < DECODE_SUCCESS )
+            if (decode_state->EmailDecode(attach_start, attach_end) < DECODE_SUCCESS )
             {
                 decode_alert(decode_state);
             }
@@ -544,7 +494,8 @@ void MimeSession::reset_mime_state()
 {
     data_state = STATE_DATA_INIT;
     state_flags = 0;
-    ClearEmailDecodeState(decode_state);
+    if (decode_state)
+        decode_state->ClearEmailDecodeState();
 }
 
 const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* start, const uint8_t* end,
@@ -645,24 +596,26 @@ const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* sta
     if ((decode_state) != NULL)
     {
         DecodeConfig* conf= decode_conf;
-        Email_DecodeState* ds = (Email_DecodeState*)(decode_state);
+        uint8_t* buffer = NULL;
+        uint32_t buf_size = 0;
+
+        decode_state->get_decoded_data(&buffer, &buf_size);
 
         if (conf)
         {
-            int detection_size = getDetectionSize(conf->get_b64_depth(),
-                conf->get_qp_depth(), conf->get_uu_depth(),
-                conf->get_bitenc_depth(), ds);
-            set_file_data(ds->decodePtr, (uint16_t)detection_size);
+            int detection_size = decode_state->getDetectionSize(conf->get_b64_depth(),
+                conf->get_qp_depth(), conf->get_uu_depth(), conf->get_bitenc_depth());
+            set_file_data(buffer, (uint16_t)detection_size);
         }
 
         /*Process file type/file signature*/
-        if (file_api->file_process(flow, (uint8_t*)ds->decodePtr,
-            (uint16_t)ds->decoded_bytes, position, upload, false)
+        if (file_api->file_process(flow, buffer, (uint16_t)buf_size, position, upload, false)
             && (isFileStart(position))&& log_state)
         {
             log_state->set_file_name_from_log(flow);
         }
-        ResetDecodedBytes((Email_DecodeState*)(decode_state));
+
+        decode_state->ResetDecodedBytes();
     }
 
     /* if we got the data end reset state, otherwise we're probably still in the data
@@ -780,7 +733,7 @@ MimeSession::MimeSession(DecodeConfig* dconf, MailLogConfig* lconf)
 MimeSession::~MimeSession()
 {
     if ( decode_state )
-        free(decode_state);
+        delete(decode_state);
 
     if ( log_state )
         delete(log_state);

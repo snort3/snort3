@@ -1,0 +1,130 @@
+//--------------------------------------------------------------------------
+// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 1998-2013 Sourcefire, Inc.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
+// sf_email_attach_decode.h author Bhagyashree Bantwal <bbantwal@cisco.com>
+
+#ifndef FILE_MIME_DECODE_H
+#define FILE_MIME_DECODE_H
+
+// Email attachment decoder
+
+#include <stdlib.h>
+
+#include "main/snort_types.h"
+
+#define MAX_BUF 65535
+
+// FIXIT-L: Should make this a (scoped?) enum
+#define DECODE_SUCCESS  0
+#define DECODE_EXCEEDED  1 // Decode Complete when we reach the max depths
+#define DECODE_FAIL    -1
+
+// FIXIT-L: Should be a scoped enum
+typedef enum
+{
+    DECODE_NONE = 0,
+    DECODE_B64,
+    DECODE_QP,
+    DECODE_UU,
+    DECODE_BITENC,
+    DECODE_ALL
+} DecodeType;
+
+struct Base64_DecodeState
+{
+    uint32_t encode_bytes_read;
+    uint32_t decode_bytes_read;
+    int encode_depth;
+    int decode_depth;
+};
+
+struct QP_DecodeState
+{
+    uint32_t encode_bytes_read;
+    uint32_t decode_bytes_read;
+    int encode_depth;
+    int decode_depth;
+};
+
+struct UU_DecodeState
+{
+    uint32_t encode_bytes_read;
+    uint32_t decode_bytes_read;
+    int encode_depth;
+    int decode_depth;
+    uint8_t begin_found;
+    uint8_t end_found;
+};
+
+struct BitEnc_DecodeState
+{
+    uint32_t bytes_read;
+    int depth;
+};
+
+// Should be a C++ OOP struct with constructor, etc
+class Email_DecodeState
+{
+public:
+    Email_DecodeState(int max_depth, int b64_depth, int qp_depth,
+        int uu_depth, int bitenc_depth, int64_t file_depth);
+    ~Email_DecodeState();
+    void process_decode_type(const char* start, int length, bool cnt_xf);
+    int EmailDecode(const uint8_t* start, const uint8_t* end);
+    int getDetectionSize(int b64_depth, int qp_depth, int uu_depth, int bitenc_depth);
+    void ClearEmailDecodeState();
+    void ResetDecodedBytes();
+    void ResetBytesRead();
+    int get_decoded_data(uint8_t** buf,  uint32_t* size);
+    DecodeType get_decode_type();
+
+private:
+    uint8_t* work_buffer = NULL;
+    DecodeType decode_type = DECODE_NONE;
+    uint8_t decode_present;
+    uint32_t prev_encoded_bytes;
+    uint32_t decoded_bytes = 0;
+    uint32_t buf_size;
+    uint8_t* prev_encoded_buf;
+    uint8_t* encodeBuf;
+    uint8_t* decodeBuf;
+    uint8_t* decodePtr = NULL;
+    Base64_DecodeState b64_state;
+    QP_DecodeState qp_state;
+    UU_DecodeState uu_state;
+    BitEnc_DecodeState bitenc_state;
+    int getCodeDepth(int code_depth, int64_t file_depth);
+    inline void ClearPrevEncodeBuf();
+
+    inline void ResetEmailDecodeState();
+    int Base64Decode(const uint8_t* start, const uint8_t* end);
+    int QPDecode(const uint8_t* start, const uint8_t* end);
+    int UUDecode(const uint8_t* start, const uint8_t* end);
+    int BitEncExtract(const uint8_t* start, const uint8_t* end);
+
+};
+
+struct MimeStats
+{
+    uint64_t memcap_exceeded;
+    uint64_t attachments[DECODE_ALL];
+    uint64_t decoded_bytes[DECODE_ALL];
+};
+
+#endif
+
