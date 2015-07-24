@@ -25,7 +25,6 @@
 // Provides list of MIME processing functions. Encoded file data will be decoded
 // and file name will be extracted from MIME header
 
-#include <pcre.h>
 #include "file_api/file_api.h"
 #include "file_api/file_mime_config.h"
 #include "file_api/file_mime_paf.h"
@@ -67,7 +66,7 @@ public:
     int get_data_state();
     void set_data_state(int);
     MailLogState* get_log_state();
-    int log_flags = 0;
+
 private:
     int data_state = STATE_DATA_INIT;
     int state_flags = 0;

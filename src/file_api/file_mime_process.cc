@@ -433,8 +433,8 @@ const uint8_t* MimeSession::process_mime_header(const uint8_t* ptr,
             bool disp_cont = (state_flags & MIME_FLAG_IN_CONT_DISP_CONT) ? true : false;
             if (log_config->log_filename && log_state )
             {
-                if (!log_state->log_file_name(cont_disp, eolm - cont_disp, &disp_cont) )
-                    log_flags |= MIME_FLAG_FILENAME_PRESENT;
+                log_state->log_file_name(cont_disp, eolm - cont_disp, &disp_cont);
+
             }
             if (disp_cont)
             {

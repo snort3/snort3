@@ -858,8 +858,7 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
         smtp_ssn->state_flags |= SMTP_FLAG_GOT_MAIL_CMD;
         if ( config->log_config.log_mailfrom )
         {
-            if (!SMTP_CopyEmailID(ptr, eolm - ptr, CMD_MAIL, smtp_ssn->mime_ssn->get_log_state()))
-                smtp_ssn->mime_ssn->log_flags |= MIME_FLAG_MAIL_FROM_PRESENT;
+            smtp_ssn->mime_ssn->get_log_state()->log_email_id(ptr, eolm - ptr, EMAIL_SENDER);
         }
 
         break;
@@ -871,10 +870,9 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
             smtp_ssn->state_flags |= SMTP_FLAG_GOT_RCPT_CMD;
         }
 
-        if ( config->log_config.log_rcptto)
+        if (config->log_config.log_rcptto)
         {
-            if (!SMTP_CopyEmailID(ptr, eolm - ptr, CMD_RCPT, smtp_ssn->mime_ssn->get_log_state()))
-                smtp_ssn->mime_ssn->log_flags |= MIME_FLAG_RCPT_TO_PRESENT;
+            smtp_ssn->mime_ssn->get_log_state()->log_email_id(ptr, eolm - ptr, EMAIL_RECIPIENT);
         }
 
         break;
@@ -1391,8 +1389,7 @@ int SMTP_GetFilename(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
     if (ssn == NULL)
         return 0;
 
-    *buf = ssn->mime_ssn->get_log_state()->get_file_log_state()->filenames;
-    *len = ssn->mime_ssn->get_log_state()->get_file_log_state()->file_logged;
+    ssn->mime_ssn->get_log_state()->get_file_name(buf, len);
     *type = EVENT_INFO_SMTP_FILENAME;
     return 1;
 }
@@ -1405,8 +1402,7 @@ int SMTP_GetMailFrom(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
     if (ssn == NULL)
         return 0;
 
-    *buf = ssn->mime_ssn->get_log_state()->senders;
-    *len = ssn->mime_ssn->get_log_state()->snds_logged;
+    ssn->mime_ssn->get_log_state()->get_email_id(buf, len, EMAIL_SENDER);
     *type = EVENT_INFO_SMTP_MAILFROM;
     return 1;
 }
@@ -1419,8 +1415,7 @@ int SMTP_GetRcptTo(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
     if (ssn == NULL)
         return 0;
 
-    *buf = ssn->mime_ssn->get_log_state()->recipients;
-    *len = ssn->mime_ssn->get_log_state()->rcpts_logged;
+    ssn->mime_ssn->get_log_state()->get_email_id(buf, len, EMAIL_RECIPIENT);
     *type = EVENT_INFO_SMTP_RCPTTO;
     return 1;
 }
@@ -1433,8 +1428,7 @@ int SMTP_GetEmailHdrs(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
     if (ssn == NULL)
         return 0;
 
-    *buf = ssn->mime_ssn->get_log_state()->emailHdrs;
-    *len = ssn->mime_ssn->get_log_state()->hdrs_logged;
+    ssn->mime_ssn->get_log_state()->get_email_hdrs(buf, len);
     *type = EVENT_INFO_SMTP_EMAIL_HDRS;
     return 1;
 }
@@ -1486,9 +1480,7 @@ int SmtpMime::handle_header_line(void* conf, const uint8_t* ptr, const uint8_t* 
     {
         if (mime_ssn->get_data_state() == STATE_DATA_HEADER)
         {
-            ret = SMTP_CopyEmailHdrs(ptr, eol - ptr, mime_ssn->get_log_state());
-            if (ret == 0)
-                mime_ssn->log_flags |= MIME_FLAG_EMAIL_HDRS_PRESENT;
+            mime_ssn->get_log_state()->log_email_hdrs(ptr, eol - ptr);
         }
     }
 

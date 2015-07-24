@@ -34,6 +34,15 @@
 #include "utils/snort_bounds.h"
 #include "file_api.h"
 
+#define MAX_FILE                             1024
+#define MAX_EMAIL                            1024
+
+/* log flags */
+#define MIME_FLAG_MAIL_FROM_PRESENT               0x00000001
+#define MIME_FLAG_RCPT_TO_PRESENT                 0x00000002
+#define MIME_FLAG_FILENAME_PRESENT                0x00000004
+#define MIME_FLAG_EMAIL_HDRS_PRESENT              0x00000008
+
 
 /* Extract the filename from the header */
 int MailLogState::extract_file_name(const char** start, int length, bool* disp_cont)
@@ -156,6 +165,8 @@ int MailLogState::log_file_name(const uint8_t* start, int length, bool* disp_con
     log_state.file_current = *alt_len;
     *alt_len += length;
 
+    log_flags |= MIME_FLAG_FILENAME_PRESENT;
+
     return 0;
 }
 
@@ -175,9 +186,175 @@ void MailLogState::set_file_name_from_log(void* pv)
     }
 }
 
-const FileLogState* MailLogState::get_file_log_state()
+/* Accumulate EOL seperated headers, one or more at a time */
+int MailLogState::log_email_hdrs(const uint8_t* start, int length)
 {
-    return &log_state;
+    int log_avail = 0;
+    uint8_t* log_buf;
+    uint32_t logged;
+    int ret = 0;
+
+    if (length <= 0)
+        return -1;
+
+    log_avail = log_depth - hdrs_logged;
+    logged = hdrs_logged;
+    log_buf = (uint8_t*)emailHdrs;
+
+    if (log_avail <= 0)
+    {
+        return -1;
+    }
+
+    if (length > log_avail )
+    {
+        length = log_avail;
+    }
+
+    /* appended by the EOL \r\n */
+
+    ret = SafeMemcpy(log_buf + hdrs_logged, start, length, log_buf, log_buf+ log_depth);
+
+    if (ret != SAFEMEM_SUCCESS)
+    {
+        return -1;
+    }
+
+    hdrs_logged += length;
+
+    log_flags |= MIME_FLAG_EMAIL_HDRS_PRESENT;
+
+    return 0;
+}
+
+/* Accumulate email addresses from RCPT TO and/or MAIL FROM commands. Email addresses are separated
+   by comma */
+int MailLogState::log_email_id(const uint8_t* start, int length, EmailUserType type)
+{
+    uint8_t* alt_buf;
+    int alt_size;
+    uint16_t* alt_len;
+    int ret;
+    int log_avail=0;
+    const uint8_t* tmp_eol;
+
+    if (length <= 0)
+        return -1;
+
+    tmp_eol = (uint8_t*)memchr(start, ':', length);
+    if (tmp_eol == NULL)
+        return -1;
+
+    if ((tmp_eol+1) < (start+length))
+    {
+        length = length - ( (tmp_eol+1) - start );
+        start = tmp_eol+1;
+    }
+    else
+        return -1;
+
+    switch (type)
+    {
+    case EMAIL_SENDER:
+        alt_buf = senders;
+        alt_size = MAX_EMAIL;
+        alt_len = &(snds_logged);
+        break;
+
+    case EMAIL_RECIPIENT:
+        alt_buf = recipients;
+        alt_size = MAX_EMAIL;
+        alt_len = &(rcpts_logged);
+        break;
+
+    default:
+        return -1;
+    }
+
+    log_avail = alt_size - *alt_len;
+
+    if (log_avail <= 0 || !alt_buf)
+        return -1;
+    else if (log_avail < length)
+        length = log_avail;
+
+    if ( *alt_len > 0 && ((*alt_len + 1) < alt_size))
+    {
+        alt_buf[*alt_len] = ',';
+        *alt_len = *alt_len + 1;
+    }
+
+    ret = SafeMemcpy(alt_buf + *alt_len, start, length, alt_buf, alt_buf + alt_size);
+
+    if (ret != SAFEMEM_SUCCESS)
+    {
+        if (*alt_len != 0)
+            *alt_len = *alt_len - 1;
+        return -1;
+    }
+
+    *alt_len += length;
+
+    if (type == EMAIL_SENDER)
+        log_flags |= MIME_FLAG_MAIL_FROM_PRESENT;
+    else
+        log_flags |= MIME_FLAG_RCPT_TO_PRESENT;
+    return 0;
+}
+
+void MailLogState::get_file_name(uint8_t** buf, uint32_t* len)
+{
+    *buf = log_state.filenames;
+    *len = log_state.file_logged;
+}
+
+void MailLogState::get_email_hdrs(uint8_t** buf, uint32_t* len)
+{
+    *buf = emailHdrs;
+    *len = hdrs_logged;
+
+}
+
+void MailLogState::get_email_id(uint8_t** buf, uint32_t* len, EmailUserType type)
+{
+    if (type == EMAIL_SENDER)
+    {
+        *buf = senders;
+        *len = snds_logged;
+    }
+    else
+    {
+        *buf = recipients;
+        *len = rcpts_logged;
+    }
+}
+
+bool MailLogState::is_file_name_present()
+{
+    if (log_flags & MIME_FLAG_FILENAME_PRESENT)
+        return true;
+    return false;
+}
+
+bool MailLogState::is_email_hdrs_present()
+{
+    if (log_flags & MIME_FLAG_EMAIL_HDRS_PRESENT)
+        return true;
+    return false;
+}
+
+bool MailLogState::is_email_from_present()
+{
+    if (log_flags & MIME_FLAG_MAIL_FROM_PRESENT)
+        return true;
+    return false;
+}
+
+bool MailLogState::is_email_to_present()
+{
+    if (log_flags & MIME_FLAG_RCPT_TO_PRESENT)
+        return true;
+    return false;
 }
 
 MailLogState::MailLogState(MailLogConfig* conf)

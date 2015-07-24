@@ -22,15 +22,18 @@
 #ifndef FILE_MIME_LOG_H
 #define FILE_MIME_LOG_H
 
-// Provides list of MIME processing functions. Encoded file data will be decoded
-// and file name will be extracted from MIME header
+// File name will be extracted from MIME header
+// Email headers and emails are also stored in the log buffer
 
 #include "file_api/file_api.h"
 #include "file_api/file_mime_config.h"
 #include "file_api/file_mime_log.h"
 
-#define MAX_FILE                             1024
-#define MAX_EMAIL                            1024
+enum EmailUserType
+{
+    EMAIL_SENDER,
+    EMAIL_RECIPIENT
+};
 
 struct FileLogState
 {
@@ -45,9 +48,23 @@ public:
     MailLogState(MailLogConfig* conf);
     ~MailLogState();
     /* accumulate MIME attachment filenames. The filenames are appended by commas */
-    int log_file_name(const uint8_t* start, int length, bool* disp_cont);
-    void set_file_name_from_log(void* pv);
-    const FileLogState* get_file_log_state();
+    int log_file_name (const uint8_t* start, int length, bool* disp_cont);
+    void set_file_name_from_log (void* pv);
+    int log_email_hdrs (const uint8_t* start, int length);
+    int log_email_id (const uint8_t* start, int length, EmailUserType type);
+    void get_file_name (uint8_t** buf, uint32_t* len);
+    void get_email_hdrs (uint8_t** buf, uint32_t* len);
+    void get_email_id (uint8_t** buf, uint32_t* len, EmailUserType type);
+    bool is_file_name_present();
+    bool is_email_hdrs_present();
+    bool is_email_from_present();
+    bool is_email_to_present();
+
+private:
+    int extract_file_name(const char** start, int length, bool* disp_cont);
+    FileLogState log_state;
+    int log_flags = 0;
+    uint8_t* buf = NULL;
     unsigned char* emailHdrs;
     uint32_t log_depth;
     uint32_t hdrs_logged;
@@ -55,11 +72,6 @@ public:
     uint16_t rcpts_logged;
     uint8_t* senders;
     uint16_t snds_logged;
-
-private:
-    int extract_file_name(const char** start, int length, bool* disp_cont);
-    FileLogState log_state;
-    uint8_t* buf = NULL;
 };
 
 struct MailLogConfig
@@ -70,13 +82,6 @@ struct MailLogConfig
     char log_email_hdrs = 0;
     uint32_t email_hdrs_log_depth = 0;
 };
-
-
-/* log flags */
-#define MIME_FLAG_MAIL_FROM_PRESENT               0x00000001
-#define MIME_FLAG_RCPT_TO_PRESENT                 0x00000002
-#define MIME_FLAG_FILENAME_PRESENT                0x00000004
-#define MIME_FLAG_EMAIL_HDRS_PRESENT              0x00000008
 
 #endif
 
