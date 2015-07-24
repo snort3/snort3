@@ -136,9 +136,9 @@ int MailLogState::log_file_name(const uint8_t* start, int length, bool* disp_con
 
     length = ret;
 
-    alt_buf = log_state.filenames;
+    alt_buf = filenames;
     alt_size =  MAX_FILE;
-    alt_len = &(log_state.file_logged);
+    alt_len = &(file_logged);
     log_avail = alt_size - *alt_len;
 
     if (!alt_buf || (log_avail <= 0))
@@ -162,7 +162,7 @@ int MailLogState::log_file_name(const uint8_t* start, int length, bool* disp_con
         return -1;
     }
 
-    log_state.file_current = *alt_len;
+    file_current = *alt_len;
     *alt_len += length;
 
     log_flags |= MIME_FLAG_FILENAME_PRESENT;
@@ -175,10 +175,10 @@ void MailLogState::set_file_name_from_log(void* pv)
 {
     Flow* ssn = (Flow*)pv; // FIXIT-M eliminate need for cast
 
-    if (log_state.file_logged > log_state.file_current)
+    if (file_logged > file_current)
     {
-        file_api->set_file_name(ssn, log_state.filenames + log_state.file_current,
-            log_state.file_logged -log_state.file_current);
+        file_api->set_file_name(ssn, filenames + file_current,
+            file_logged - file_current);
     }
     else
     {
@@ -304,8 +304,8 @@ int MailLogState::log_email_id(const uint8_t* start, int length, EmailUserType t
 
 void MailLogState::get_file_name(uint8_t** buf, uint32_t* len)
 {
-    *buf = log_state.filenames;
-    *len = log_state.file_logged;
+    *buf = filenames;
+    *len = file_logged;
 }
 
 void MailLogState::get_email_hdrs(uint8_t** buf, uint32_t* len)
@@ -369,16 +369,18 @@ MailLogState::MailLogState(MailLogConfig* conf)
         {
             log_depth = conf->email_hdrs_log_depth;
             recipients = buf;
-            rcpts_logged = 0;
             senders = buf + MAX_EMAIL;
-            snds_logged = 0;
-            log_state.filenames = buf + (2*MAX_EMAIL);
-            log_state.file_logged = 0;
-            log_state.file_current = 0;
+            filenames = buf + (2*MAX_EMAIL);
             emailHdrs = buf + (2*MAX_EMAIL) + MAX_FILE;
-            hdrs_logged = 0;
+
         }
     }
+
+    rcpts_logged = 0;
+    snds_logged = 0;
+    file_logged = 0;
+    file_current = 0;
+    hdrs_logged = 0;
 }
 
 MailLogState::~MailLogState()

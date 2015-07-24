@@ -35,13 +35,6 @@ enum EmailUserType
     EMAIL_RECIPIENT
 };
 
-struct FileLogState
-{
-    uint8_t* filenames;
-    uint16_t file_logged;
-    uint16_t file_current;
-};
-
 class MailLogState
 {
 public:
@@ -62,16 +55,18 @@ public:
 
 private:
     int extract_file_name(const char** start, int length, bool* disp_cont);
-    FileLogState log_state;
     int log_flags = 0;
     uint8_t* buf = NULL;
     unsigned char* emailHdrs;
     uint32_t log_depth;
     uint32_t hdrs_logged;
-    uint8_t* recipients;
+    uint8_t* recipients = NULL;
     uint16_t rcpts_logged;
-    uint8_t* senders;
+    uint8_t* senders = NULL;
     uint16_t snds_logged;
+    uint8_t* filenames = NULL;
+    uint16_t file_logged;
+    uint16_t file_current;
 };
 
 struct MailLogConfig
