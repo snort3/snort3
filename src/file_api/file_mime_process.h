@@ -31,8 +31,6 @@
 #include "file_api/file_mime_log.h"
 #include "utils/sf_email_attach_decode.h"
 
-#define BOUNDARY                             0
-
 /* state flags */
 #define MIME_FLAG_FOLDING                    0x00000001
 #define MIME_FLAG_IN_CONTENT_TYPE            0x00000002
