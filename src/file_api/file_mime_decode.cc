@@ -26,9 +26,11 @@
 #include "utils/util.h"
 #include "utils/sf_email_attach_decode.h"
 
+#define MAX_BUF 65535
+
 #define UU_DECODE_CHAR(c) (((c) - 0x20) & 0x3f)
 
-int Email_DecodeState::getCodeDepth(int code_depth, int64_t file_depth)
+int MimeDecode::getCodeDepth(int code_depth, int64_t file_depth)
 {
     if (file_depth < 0 )
         return code_depth;
@@ -52,39 +54,14 @@ static inline int limitDetection(int depth, int decoded_bytes, int decode_bytes_
         return (depth + decoded_bytes - decode_bytes_total);
 }
 
-int Email_DecodeState::getDetectionSize(int b64_depth, int qp_depth, int uu_depth, int bitenc_depth)
-{
-    int iRet = 0;
-
-    switch (decode_type)
-    {
-    case DECODE_B64:
-        iRet = limitDetection(b64_depth, decoded_bytes, b64_state.decode_bytes_read);
-        break;
-    case DECODE_QP:
-        iRet = limitDetection(qp_depth, decoded_bytes, qp_state.decode_bytes_read);
-        break;
-    case DECODE_UU:
-        iRet = limitDetection(uu_depth, decoded_bytes, uu_state.decode_bytes_read);
-        break;
-    case DECODE_BITENC:
-        iRet = limitDetection(bitenc_depth, decoded_bytes, bitenc_state.bytes_read);
-        break;
-    default:
-        break;
-    }
-
-    return iRet;
-}
-
-inline void Email_DecodeState::ClearPrevEncodeBuf()
+inline void MimeDecode::ClearPrevEncodeBuf()
 {
     prev_encoded_bytes = 0;
     prev_encoded_buf = nullptr;
 }
 
 
-void Email_DecodeState::ResetBytesRead()
+void MimeDecode::reset_bytes_read()
 {
     uu_state.begin_found = uu_state.end_found = 0;
     ClearPrevEncodeBuf();
@@ -94,27 +71,27 @@ void Email_DecodeState::ResetBytesRead()
     bitenc_state.bytes_read = 0;
 }
 
-void Email_DecodeState::ResetDecodedBytes()
+void MimeDecode::reset_decoded_bytes()
 {
     decodePtr = nullptr;
     decoded_bytes = 0;
     decode_present = 0;
 }
 
-inline void Email_DecodeState::ResetEmailDecodeState()
+inline void MimeDecode::reset_decode_state()
 {
     uu_state.begin_found = uu_state.end_found = 0;
-    ResetDecodedBytes();
+    reset_decoded_bytes();
     ClearPrevEncodeBuf();
 }
 
-void Email_DecodeState::ClearEmailDecodeState()
+void MimeDecode::clear_decode_state()
 {
     decode_type = DECODE_NONE;
-    ResetEmailDecodeState();
+    reset_decode_state();
 }
 
-int Email_DecodeState::Base64Decode(const uint8_t* start, const uint8_t* end)
+DecodeResult MimeDecode::Base64Decode(const uint8_t* start, const uint8_t* end)
 {
     uint32_t encode_avail = 0, decode_avail = 0;
     uint8_t* encode_buf, * decode_buf;
@@ -144,7 +121,7 @@ int Email_DecodeState::Base64Decode(const uint8_t* start, const uint8_t* end)
     if (encode_avail ==0 || decode_avail ==0 ||
         (!encode_buf) || (!decode_buf))
     {
-        ResetEmailDecodeState();
+        reset_decode_state();
         return DECODE_EXCEEDED;
     }
 
@@ -172,7 +149,7 @@ int Email_DecodeState::Base64Decode(const uint8_t* start, const uint8_t* end)
     if (sf_strip_CRLF(start, (end-start), encode_buf + prev_bytes, encode_avail,
         &act_encode_size) != 0)
     {
-        ResetEmailDecodeState();
+        reset_decode_state();
         return DECODE_FAIL;
     }
 
@@ -192,12 +169,12 @@ int Email_DecodeState::Base64Decode(const uint8_t* start, const uint8_t* end)
     if (sf_base64decode(encode_buf, act_encode_size, decode_buf, decode_avail, &act_decode_size) !=
         0)
     {
-        ResetEmailDecodeState();
+        reset_decode_state();
         return DECODE_FAIL;
     }
     else if (!act_decode_size && !encode_avail)
     {
-        ResetEmailDecodeState();
+        reset_decode_state();
         return DECODE_FAIL;
     }
 
@@ -210,7 +187,7 @@ int Email_DecodeState::Base64Decode(const uint8_t* start, const uint8_t* end)
     return DECODE_SUCCESS;
 }
 
-int Email_DecodeState::QPDecode(const uint8_t* start, const uint8_t* end)
+DecodeResult MimeDecode::QPDecode(const uint8_t* start, const uint8_t* end)
 {
     uint32_t encode_avail = 0, decode_avail = 0;
     uint8_t* encode_buf, * decode_buf;
@@ -240,7 +217,7 @@ int Email_DecodeState::QPDecode(const uint8_t* start, const uint8_t* end)
     if (encode_avail ==0 || decode_avail ==0 ||
         (!encode_buf) || (!decode_buf))
     {
-        ResetEmailDecodeState();
+        reset_decode_state();
         return DECODE_EXCEEDED;
     }
 
@@ -268,7 +245,7 @@ int Email_DecodeState::QPDecode(const uint8_t* start, const uint8_t* end)
     if (sf_strip_LWS(start, (end-start), encode_buf + prev_bytes, encode_avail,
         &act_encode_size) != 0)
     {
-        ResetEmailDecodeState();
+        reset_decode_state();
         return DECODE_FAIL;
     }
 
@@ -277,12 +254,12 @@ int Email_DecodeState::QPDecode(const uint8_t* start, const uint8_t* end)
     if (sf_qpdecode((char*)encode_buf, act_encode_size, (char*)decode_buf, decode_avail,
         &bytes_read, &act_decode_size) != 0)
     {
-        ResetEmailDecodeState();
+        reset_decode_state();
         return DECODE_FAIL;
     }
     else if (!act_decode_size && !encode_avail)
     {
-        ResetEmailDecodeState();
+        reset_decode_state();
         return DECODE_FAIL;
     }
 
@@ -302,7 +279,7 @@ int Email_DecodeState::QPDecode(const uint8_t* start, const uint8_t* end)
     return DECODE_SUCCESS;
 }
 
-int Email_DecodeState::UUDecode(const uint8_t* start, const uint8_t* end)
+DecodeResult MimeDecode::UUDecode(const uint8_t* start, const uint8_t* end)
 {
     uint32_t encode_avail = 0, decode_avail = 0;
     uint8_t* encode_buf, * decode_buf;
@@ -334,7 +311,7 @@ int Email_DecodeState::UUDecode(const uint8_t* start, const uint8_t* end)
         (!encode_buf) || (!decode_buf))
     {
         uu_state.begin_found = 0;
-        ResetEmailDecodeState();
+        reset_decode_state();
         return DECODE_EXCEEDED;
     }
 
@@ -369,7 +346,7 @@ int Email_DecodeState::UUDecode(const uint8_t* start, const uint8_t* end)
         if (SafeMemcpy((encode_buf + prev_bytes), start, act_encode_size, encode_buf, (encode_buf+
             encode_avail + prev_bytes)) != SAFEMEM_SUCCESS)
         {
-            ResetEmailDecodeState();
+            reset_decode_state();
             return DECODE_FAIL;
         }
     }
@@ -380,13 +357,13 @@ int Email_DecodeState::UUDecode(const uint8_t* start, const uint8_t* end)
         &act_decode_size,
         &(uu_state.begin_found), &(uu_state.end_found)) != 0)
     {
-        ResetEmailDecodeState();
+        reset_decode_state();
         return DECODE_FAIL;
     }
     else if (!act_decode_size && !encode_avail)
     {
         /* Have insufficient data to decode */
-        ResetEmailDecodeState();
+        reset_decode_state();
         return DECODE_FAIL;
     }
 
@@ -414,7 +391,7 @@ int Email_DecodeState::UUDecode(const uint8_t* start, const uint8_t* end)
     return DECODE_SUCCESS;
 }
 
-int Email_DecodeState::BitEncExtract(const uint8_t* start, const uint8_t* end)
+DecodeResult MimeDecode::BitEncExtract(const uint8_t* start, const uint8_t* end)
 {
     uint32_t bytes_avail = 0;
     uint32_t act_size = 0;
@@ -439,7 +416,7 @@ int Email_DecodeState::BitEncExtract(const uint8_t* start, const uint8_t* end)
      * 2. Stop decoding when we are out of memory */
     if (bytes_avail ==0)
     {
-        ResetEmailDecodeState();
+        reset_decode_state();
         return DECODE_EXCEEDED;
     }
 
@@ -460,7 +437,7 @@ int Email_DecodeState::BitEncExtract(const uint8_t* start, const uint8_t* end)
     return DECODE_SUCCESS;
 }
 
-void Email_DecodeState::process_decode_type(const char* start, int length, bool cnt_xf)
+void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf)
 {
     const char* tmp = NULL;
 
@@ -504,9 +481,9 @@ void Email_DecodeState::process_decode_type(const char* start, int length, bool 
     }
 }
 
-int Email_DecodeState::EmailDecode(const uint8_t* start, const uint8_t* end)
+DecodeResult MimeDecode::decode_data(const uint8_t* start, const uint8_t* end)
 {
-    int iRet = DECODE_FAIL;
+    DecodeResult iRet = DECODE_FAIL;
 
     switch (decode_type)
     {
@@ -529,7 +506,32 @@ int Email_DecodeState::EmailDecode(const uint8_t* start, const uint8_t* end)
     return iRet;
 }
 
-int Email_DecodeState::get_decoded_data(uint8_t** buf,  uint32_t* size)
+int MimeDecode::get_detection_depth(int b64_depth, int qp_depth, int uu_depth, int bitenc_depth)
+{
+    int iRet = 0;
+
+    switch (decode_type)
+    {
+    case DECODE_B64:
+        iRet = limitDetection(b64_depth, decoded_bytes, b64_state.decode_bytes_read);
+        break;
+    case DECODE_QP:
+        iRet = limitDetection(qp_depth, decoded_bytes, qp_state.decode_bytes_read);
+        break;
+    case DECODE_UU:
+        iRet = limitDetection(uu_depth, decoded_bytes, uu_state.decode_bytes_read);
+        break;
+    case DECODE_BITENC:
+        iRet = limitDetection(bitenc_depth, decoded_bytes, bitenc_state.bytes_read);
+        break;
+    default:
+        break;
+    }
+
+    return iRet;
+}
+
+int MimeDecode::get_decoded_data(uint8_t** buf,  uint32_t* size)
 {
     if (decoded_bytes > 0)
         *size = decoded_bytes;
@@ -542,12 +544,12 @@ int Email_DecodeState::get_decoded_data(uint8_t** buf,  uint32_t* size)
         return 0;
 }
 
-DecodeType Email_DecodeState::get_decode_type()
+DecodeType MimeDecode::get_decode_type()
 {
     return decode_type;
 }
 
-Email_DecodeState::Email_DecodeState(
+MimeDecode::MimeDecode(
     int max_depth, int b64_depth, int qp_depth,
     int uu_depth, int bitenc_depth, int64_t file_depth)
 {
@@ -578,7 +580,7 @@ Email_DecodeState::Email_DecodeState(
     bitenc_state.bytes_read = 0;
 }
 
-Email_DecodeState::~Email_DecodeState()
+MimeDecode::~MimeDecode()
 {
     if (work_buffer)
         free(work_buffer);

@@ -153,7 +153,7 @@ void MimeSession::setup_decode(const char* data, int size, bool cnt_xf)
     {
         if (decode_state == NULL)
         {
-            decode_state = new Email_DecodeState(
+            decode_state = new MimeDecode(
                 decode_conf->get_max_depth(), decode_conf->get_b64_depth(),
                 decode_conf->get_qp_depth(), decode_conf->get_uu_depth(),
                 decode_conf->get_bitenc_depth(), decode_conf->get_file_depth());
@@ -161,7 +161,7 @@ void MimeSession::setup_decode(const char* data, int size, bool cnt_xf)
 
         if (decode_state != NULL)
         {
-            decode_state->ResetBytesRead();
+            decode_state->reset_bytes_read();
             decode_state->process_decode_type(data, size, cnt_xf);
             state_flags |= MIME_FLAG_EMAIL_ATTACH;
         }
@@ -471,7 +471,7 @@ const uint8_t* MimeSession::process_mime_body(const uint8_t* ptr,
 
         if (( attach_start < attach_end ) && decode_state)
         {
-            if (decode_state->EmailDecode(attach_start, attach_end) < DECODE_SUCCESS )
+            if (decode_state->decode_data(attach_start, attach_end) == DECODE_FAIL )
             {
                 decode_alert(decode_state);
             }
@@ -495,7 +495,7 @@ void MimeSession::reset_mime_state()
     data_state = STATE_DATA_INIT;
     state_flags = 0;
     if (decode_state)
-        decode_state->ClearEmailDecodeState();
+        decode_state->clear_decode_state();
 }
 
 const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* start, const uint8_t* end,
@@ -603,7 +603,7 @@ const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* sta
 
         if (conf)
         {
-            int detection_size = decode_state->getDetectionSize(conf->get_b64_depth(),
+            int detection_size = decode_state->get_detection_depth(conf->get_b64_depth(),
                 conf->get_qp_depth(), conf->get_uu_depth(), conf->get_bitenc_depth());
             set_file_data(buffer, (uint16_t)detection_size);
         }
@@ -615,7 +615,7 @@ const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* sta
             log_state->set_file_name_from_log(flow);
         }
 
-        decode_state->ResetDecodedBytes();
+        decode_state->reset_decoded_bytes();
     }
 
     /* if we got the data end reset state, otherwise we're probably still in the data

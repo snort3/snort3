@@ -21,20 +21,19 @@
 #ifndef FILE_MIME_DECODE_H
 #define FILE_MIME_DECODE_H
 
-// Email attachment decoder
+// Email attachment decoder, supports Base64, QP, UU, and Bit7/8
 
 #include <stdlib.h>
 
 #include "main/snort_types.h"
 
-#define MAX_BUF 65535
+typedef enum
+{
+    DECODE_SUCCESS,
+    DECODE_EXCEEDED, // Decode Complete when we reach the max depths
+    DECODE_FAIL
+} DecodeResult;
 
-// FIXIT-L: Should make this a (scoped?) enum
-#define DECODE_SUCCESS  0
-#define DECODE_EXCEEDED  1 // Decode Complete when we reach the max depths
-#define DECODE_FAIL    -1
-
-// FIXIT-L: Should be a scoped enum
 typedef enum
 {
     DECODE_NONE = 0,
@@ -77,19 +76,25 @@ struct BitEnc_DecodeState
     int depth;
 };
 
-// Should be a C++ OOP struct with constructor, etc
-class Email_DecodeState
+class MimeDecode
 {
 public:
-    Email_DecodeState(int max_depth, int b64_depth, int qp_depth,
+    MimeDecode(int max_depth, int b64_depth, int qp_depth,
         int uu_depth, int bitenc_depth, int64_t file_depth);
-    ~Email_DecodeState();
+    ~MimeDecode();
+
+    // get the decode type from buffer
+    // bool cnt_xf: true if there is transfer encode defined, false otherwise
     void process_decode_type(const char* start, int length, bool cnt_xf);
-    int EmailDecode(const uint8_t* start, const uint8_t* end);
-    int getDetectionSize(int b64_depth, int qp_depth, int uu_depth, int bitenc_depth);
-    void ClearEmailDecodeState();
-    void ResetDecodedBytes();
-    void ResetBytesRead();
+
+    // Main function to decode file data
+    DecodeResult decode_data(const uint8_t* start, const uint8_t* end);
+
+    int get_detection_depth(int b64_depth, int qp_depth, int uu_depth, int bitenc_depth);
+
+    void clear_decode_state();
+    void reset_decoded_bytes();
+    void reset_bytes_read();
     int get_decoded_data(uint8_t** buf,  uint32_t* size);
     DecodeType get_decode_type();
 
@@ -110,21 +115,20 @@ private:
     BitEnc_DecodeState bitenc_state;
     int getCodeDepth(int code_depth, int64_t file_depth);
     inline void ClearPrevEncodeBuf();
-
-    inline void ResetEmailDecodeState();
-    int Base64Decode(const uint8_t* start, const uint8_t* end);
-    int QPDecode(const uint8_t* start, const uint8_t* end);
-    int UUDecode(const uint8_t* start, const uint8_t* end);
-    int BitEncExtract(const uint8_t* start, const uint8_t* end);
-
+    inline void reset_decode_state();
+    DecodeResult Base64Decode(const uint8_t* start, const uint8_t* end);
+    DecodeResult QPDecode(const uint8_t* start, const uint8_t* end);
+    DecodeResult UUDecode(const uint8_t* start, const uint8_t* end);
+    DecodeResult BitEncExtract(const uint8_t* start, const uint8_t* end);
 };
 
-struct MimeStats
-{
-    uint64_t memcap_exceeded;
-    uint64_t attachments[DECODE_ALL];
-    uint64_t decoded_bytes[DECODE_ALL];
-};
+// Todo: add statistics
+//struct MimeStats
+//{
+//    uint64_t memcap_exceeded;
+//    uint64_t attachments[DECODE_ALL];
+//    uint64_t decoded_bytes[DECODE_ALL];
+//};
 
 #endif
 

@@ -677,7 +677,7 @@ static void snort_pop(POP_PROTO_CONF* config, Packet* p)
 
 void PopMime::decode_alert(void* ds)
 {
-    Email_DecodeState* decode_state = (Email_DecodeState*)ds;
+    MimeDecode* decode_state = (MimeDecode*)ds;
     switch ( decode_state->get_decode_type() )
     {
     case DECODE_B64:

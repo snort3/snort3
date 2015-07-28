@@ -68,7 +68,7 @@ public:
 private:
     int data_state = STATE_DATA_INIT;
     int state_flags = 0;
-    Email_DecodeState* decode_state = NULL;
+    MimeDecode* decode_state = NULL;
     MimeDataPafInfo mime_boundary;
     DecodeConfig* decode_conf = NULL;
     MailLogConfig* log_config = NULL;

@@ -1508,7 +1508,7 @@ int SmtpMime::normalize_data(void* conf, const uint8_t* ptr, const uint8_t* data
 
 void SmtpMime::decode_alert(void* ds)
 {
-    Email_DecodeState* decode_state = (Email_DecodeState*)ds;
+    MimeDecode* decode_state = (MimeDecode*)ds;
     switch ( decode_state->get_decode_type() )
     {
     case DECODE_B64:
