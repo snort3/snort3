@@ -371,14 +371,14 @@ int Stream::set_ignore_direction(Flow* flow, int ignore_direction)
 // misc support
 //-------------------------------------------------------------------------
 
-StreamFlowData* Stream::get_flow_data(const Packet* p)
+BitOp* Stream::get_flow_bitop(const Packet* p)
 {
     Flow* flow = p->flow;
 
     if (!flow)
         return NULL;
 
-    return flow->flowdata;
+    return flow->bitop;
 }
 
 void Stream::init_active_response(const Packet* p, Flow* flow)

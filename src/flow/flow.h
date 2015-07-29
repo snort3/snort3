@@ -88,12 +88,6 @@ struct Packet;
 
 typedef void (* StreamAppDataFree)(void*);
 
-struct StreamFlowData
-{
-    BITOP boFlowbits;
-    unsigned char flowb[1];
-};
-
 class SO_PUBLIC FlowData
 {
 public:
@@ -246,7 +240,7 @@ public:  // FIXIT-M privatize if possible
     // these fields are const after initialization
     const FlowKey* key;
     class Session* session;
-    StreamFlowData* flowdata;
+    class BitOp* bitop;
     uint8_t ip_proto; // FIXIT-M  -- do we need both of these?
     PktType protocol; // ^^
 

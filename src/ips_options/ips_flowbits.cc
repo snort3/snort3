@@ -138,7 +138,7 @@ typedef struct _FLOWBITS_GRP
     uint16_t max_id;
     char* name;
     uint32_t group_id;
-    BITOP GrpBitOp;
+    BitOp* GrpBitOp;
 } FLOWBITS_GRP;
 
 static SFGHASH* flowbits_grp_hash = NULL;
@@ -277,10 +277,10 @@ int FlowBitsOption::eval(Cursor&, Packet* p)
 // helper methods
 //-------------------------------------------------------------------------
 
-static inline int clear_group_bit(BITOP* BitOp, char* group)
+static inline int clear_group_bit(BitOp* bitop, char* group)
 {
     FLOWBITS_GRP* flowbits_grp;
-    BITOP* GrpBitOp;
+    BitOp* GrpBitOp;
     unsigned int i, max_bytes;
 
     if ( group == NULL )
@@ -292,24 +292,24 @@ static inline int clear_group_bit(BITOP* BitOp, char* group)
     flowbits_grp = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, group);
     if ( flowbits_grp == NULL )
         return 0;
-    if ((BitOp == NULL) || (BitOp->uiMaxBits <= flowbits_grp->max_id) || flowbits_grp->count == 0)
+    if ((bitop == NULL) || (bitop->get_max_bits() <= flowbits_grp->max_id) || flowbits_grp->count == 0)
         return 0;
-    GrpBitOp = &(flowbits_grp->GrpBitOp);
+    GrpBitOp = flowbits_grp->GrpBitOp;
 
     /* note, max_id is an index, not a count.
      * Calculate max_bytes by adding 8 to max_id, then dividing by 8.  */
     max_bytes = (flowbits_grp->max_id + 8) >> 3;
     for ( i = 0; i < max_bytes; i++ )
     {
-        BitOp->pucBitBuffer[i] &= ~GrpBitOp->pucBitBuffer[i];
+        (*bitop)[i] &= ~((*GrpBitOp)[i]);
     }
     return 1;
 }
 
-static inline int toggle_group_bit(BITOP* BitOp, char* group)
+static inline int toggle_group_bit(BitOp* bitop, char* group)
 {
     FLOWBITS_GRP* flowbits_grp;
-    BITOP* GrpBitOp;
+    BitOp* GrpBitOp;
     unsigned int i, max_bytes;
 
     if ( group == NULL )
@@ -317,33 +317,33 @@ static inline int toggle_group_bit(BITOP* BitOp, char* group)
     flowbits_grp = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, group);
     if ( flowbits_grp == NULL )
         return 0;
-    if ((BitOp == NULL) || (BitOp->uiMaxBits <= flowbits_grp->max_id) || flowbits_grp->count == 0)
+    if ((bitop == NULL) || (bitop->get_max_bits() <= flowbits_grp->max_id) || flowbits_grp->count == 0)
         return 0;
-    GrpBitOp = &(flowbits_grp->GrpBitOp);
+    GrpBitOp = flowbits_grp->GrpBitOp;
 
     /* note, max_id is an index, not a count.
      * Calculate max_bytes by adding 8 to max_id, then dividing by 8.  */
     max_bytes = (flowbits_grp->max_id + 8) >> 3;
     for ( i = 0; i < max_bytes; i++ )
     {
-        BitOp->pucBitBuffer[i] ^= GrpBitOp->pucBitBuffer[i];
+        (*bitop)[i] ^= (*GrpBitOp)[i];
     }
     return 1;
 }
 
 static inline int set_xbits_to_group(
-    BITOP* BitOp, uint16_t* ids, uint16_t num_ids, char* group)
+    BitOp* bitop, uint16_t* ids, uint16_t num_ids, char* group)
 {
     unsigned int i;
-    if (!clear_group_bit(BitOp, group))
+    if (!clear_group_bit(bitop, group))
         return 0;
     for (i = 0; i < num_ids; i++)
-        boSetBit(BitOp,ids[i]);
+        bitop->set(ids[i]);
     return 1;
 }
 
 static inline int is_set_flowbits(
-    StreamFlowData* flowdata, uint8_t eval, uint16_t* ids,
+    BitOp* bitop, uint8_t eval, uint16_t* ids,
     uint16_t num_ids, char* group)
 {
     unsigned int i;
@@ -355,7 +355,7 @@ static inline int is_set_flowbits(
     case FLOWBITS_AND:
         for (i = 0; i < num_ids; i++)
         {
-            if (!boIsBitSet(&(flowdata->boFlowbits), ids[i]))
+            if (!bitop->is_set(ids[i]))
                 return 0;
         }
         return 1;
@@ -363,7 +363,7 @@ static inline int is_set_flowbits(
     case FLOWBITS_OR:
         for (i = 0; i < num_ids; i++)
         {
-            if (boIsBitSet(&(flowdata->boFlowbits), ids[i]))
+            if (bitop->is_set(ids[i]))
                 return 1;
         }
         return 0;
@@ -374,9 +374,9 @@ static inline int is_set_flowbits(
             return 0;
         for ( i = 0; i <= (unsigned int)(flowbits_grp->max_id >>3); i++ )
         {
-            uint8_t val = flowdata->boFlowbits.pucBitBuffer[i] &
-                flowbits_grp->GrpBitOp.pucBitBuffer[i];
-            if (val != flowbits_grp->GrpBitOp.pucBitBuffer[i])
+            uint8_t val = (*bitop)[i] &
+                (*(flowbits_grp->GrpBitOp))[i];
+            if (val != (*(flowbits_grp->GrpBitOp))[i])
                 return 0;
         }
         return 1;
@@ -387,8 +387,8 @@ static inline int is_set_flowbits(
             return 0;
         for ( i = 0; i <= (unsigned int)(flowbits_grp->max_id >>3); i++ )
         {
-            uint8_t val = flowdata->boFlowbits.pucBitBuffer[i] &
-                flowbits_grp->GrpBitOp.pucBitBuffer[i];
+            uint8_t val = (*bitop)[i] &
+                (*(flowbits_grp->GrpBitOp))[i];
             if (val)
                 return 1;
         }
@@ -403,13 +403,13 @@ static int check_flowbits(
     uint8_t type, uint8_t evalType, uint16_t* ids, uint16_t num_ids, char* group, Packet* p)
 {
     int rval = DETECTION_OPTION_NO_MATCH;
-    StreamFlowData* flowdata;
+    BitOp* bitop;
     Flowbits_eval eval = (Flowbits_eval)evalType;
     int result = 0;
     int i;
 
-    flowdata = stream.get_flow_data(p);
-    if (!flowdata)
+    bitop = stream.get_flow_bitop(p);
+    if (!bitop)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_FLOWBITS, "No FLOWBITS_DATA"); );
         return rval;
@@ -419,36 +419,36 @@ static int check_flowbits(
     {
     case FLOWBITS_SET:
         for (i = 0; i < num_ids; i++)
-            boSetBit(&(flowdata->boFlowbits),ids[i]);
+            bitop->set(ids[i]);
         result = 1;
         break;
 
     case FLOWBITS_SETX:
-        result = set_xbits_to_group(&(flowdata->boFlowbits), ids, num_ids, group);
+        result = set_xbits_to_group(bitop, ids, num_ids, group);
         break;
 
     case FLOWBITS_UNSET:
         if (eval == FLOWBITS_ALL )
-            clear_group_bit(&(flowdata->boFlowbits), group);
+            clear_group_bit(bitop, group);
         else
         {
             for (i = 0; i < num_ids; i++)
-                boClearBit(&(flowdata->boFlowbits),ids[i]);
+                bitop->clear(ids[i]);
         }
         result = 1;
         break;
 
     case FLOWBITS_RESET:
         if (!group)
-            boResetBITOP(&(flowdata->boFlowbits));
+            bitop->reset();
         else
-            clear_group_bit(&(flowdata->boFlowbits), group);
+            clear_group_bit(bitop, group);
         result = 1;
         break;
 
     case FLOWBITS_ISSET:
 
-        if (is_set_flowbits(flowdata,(uint8_t)eval, ids, num_ids, group))
+        if (is_set_flowbits(bitop,(uint8_t)eval, ids, num_ids, group))
         {
             result = 1;
         }
@@ -460,7 +460,7 @@ static int check_flowbits(
         break;
 
     case FLOWBITS_ISNOTSET:
-        if (!is_set_flowbits(flowdata, (uint8_t)eval, ids, num_ids, group))
+        if (!is_set_flowbits(bitop, (uint8_t)eval, ids, num_ids, group))
         {
             result = 1;
         }
@@ -472,18 +472,18 @@ static int check_flowbits(
 
     case FLOWBITS_TOGGLE:
         if (group)
-            toggle_group_bit(&(flowdata->boFlowbits),group);
+            toggle_group_bit(bitop, group);
         else
         {
             for (i = 0; i < num_ids; i++)
             {
-                if (boIsBitSet(&(flowdata->boFlowbits),ids[i]))
+                if (bitop->is_set(ids[i]))
                 {
-                    boClearBit(&(flowdata->boFlowbits),ids[i]);
+                    bitop->clear(ids[i]);
                 }
                 else
                 {
-                    boSetBit(&(flowdata->boFlowbits),ids[i]);
+                    bitop->set(ids[i]);
                 }
             }
         }
@@ -985,7 +985,7 @@ static void update_group(FLOWBITS_GRP* flowbits_grp, int id)
     if ( flowbits_grp->max_id < id )
         flowbits_grp->max_id = id;
 
-    boSetBit(&(flowbits_grp->GrpBitOp), id);
+    flowbits_grp->GrpBitOp->set(id);
 }
 
 static void init_groups()
@@ -1000,8 +1000,8 @@ static void init_groups()
         n= sfghash_findnext(flowbits_grp_hash) )
     {
         FLOWBITS_GRP* fbg = (FLOWBITS_GRP*)n->data;
-        boInitBITOP(&(fbg->GrpBitOp), size);
-        boResetBITOP(&(fbg->GrpBitOp));
+        fbg->GrpBitOp = new BitOp(size);
+        fbg->GrpBitOp->reset();
     }
 
     while ( !op_list.empty() )
@@ -1086,7 +1086,8 @@ static void FlowItemFree(void* d)
 static void FlowBitsGrpFree(void* d)
 {
     FLOWBITS_GRP* data = (FLOWBITS_GRP*)d;
-    boFreeBITOP(&(data->GrpBitOp));
+    if(data->GrpBitOp)
+        delete data->GrpBitOp;
     if (data->name)
         free(data->name);
     free(data);
