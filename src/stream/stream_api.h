@@ -162,7 +162,7 @@ public:
         uint32_t eventId, uint32_t eventSecond);
 
     // Get pointer to Flowbits data
-    static StreamFlowData* get_flow_data(const Packet*);
+    static BitOp* get_flow_bitop(const Packet*);
 
     // Get reassembly direction for given session
     static char get_reassembly_direction(Flow*);
