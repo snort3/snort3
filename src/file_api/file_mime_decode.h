@@ -90,12 +90,15 @@ public:
     // Main function to decode file data
     DecodeResult decode_data(const uint8_t* start, const uint8_t* end);
 
+    // Retrieve the decoded data the previous decode_data() call
+    int get_decoded_data(uint8_t** buf,  uint32_t* size);
+
     int get_detection_depth(int b64_depth, int qp_depth, int uu_depth, int bitenc_depth);
 
     void clear_decode_state();
     void reset_decoded_bytes();
     void reset_bytes_read();
-    int get_decoded_data(uint8_t** buf,  uint32_t* size);
+
     DecodeType get_decode_type();
 
 private:
@@ -113,13 +116,13 @@ private:
     QP_DecodeState qp_state;
     UU_DecodeState uu_state;
     BitEnc_DecodeState bitenc_state;
-    int getCodeDepth(int code_depth, int64_t file_depth);
-    inline void ClearPrevEncodeBuf();
+    int get_code_depth(int code_depth, int64_t file_depth);
+    inline void clear_prev_encode_buf();
     inline void reset_decode_state();
-    DecodeResult Base64Decode(const uint8_t* start, const uint8_t* end);
-    DecodeResult QPDecode(const uint8_t* start, const uint8_t* end);
-    DecodeResult UUDecode(const uint8_t* start, const uint8_t* end);
-    DecodeResult BitEncExtract(const uint8_t* start, const uint8_t* end);
+    DecodeResult Base64_decode(const uint8_t* start, const uint8_t* end);
+    DecodeResult QP_decode(const uint8_t* start, const uint8_t* end);
+    DecodeResult UU_decode(const uint8_t* start, const uint8_t* end);
+    DecodeResult BitEnc_extract(const uint8_t* start, const uint8_t* end);
 };
 
 // Todo: add statistics

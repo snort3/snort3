@@ -26,15 +26,13 @@
 #include "utils/util.h"
 #include "utils/sf_email_attach_decode.h"
 
-#define MAX_BUF 65535
-
 #define UU_DECODE_CHAR(c) (((c) - 0x20) & 0x3f)
 
-int MimeDecode::getCodeDepth(int code_depth, int64_t file_depth)
+int MimeDecode::get_code_depth(int code_depth, int64_t file_depth)
 {
     if (file_depth < 0 )
         return code_depth;
-    else if (( file_depth > MAX_BUF) || (!file_depth) )
+    else if (( file_depth > buf_size) || (!file_depth) )
         return 0;
     else if (file_depth > code_depth)
         return (int)file_depth;
@@ -42,7 +40,7 @@ int MimeDecode::getCodeDepth(int code_depth, int64_t file_depth)
         return code_depth;
 }
 
-static inline int limitDetection(int depth, int decoded_bytes, int decode_bytes_total)
+static inline int limit_detection(int depth, int decoded_bytes, int decode_bytes_total)
 {
     if (!depth)
         return decoded_bytes;
@@ -54,7 +52,7 @@ static inline int limitDetection(int depth, int decoded_bytes, int decode_bytes_
         return (depth + decoded_bytes - decode_bytes_total);
 }
 
-inline void MimeDecode::ClearPrevEncodeBuf()
+inline void MimeDecode::clear_prev_encode_buf()
 {
     prev_encoded_bytes = 0;
     prev_encoded_buf = nullptr;
@@ -64,7 +62,7 @@ inline void MimeDecode::ClearPrevEncodeBuf()
 void MimeDecode::reset_bytes_read()
 {
     uu_state.begin_found = uu_state.end_found = 0;
-    ClearPrevEncodeBuf();
+    clear_prev_encode_buf();
     b64_state.encode_bytes_read = b64_state.decode_bytes_read = 0;
     qp_state.encode_bytes_read = qp_state.decode_bytes_read = 0;
     uu_state.encode_bytes_read = uu_state.decode_bytes_read = 0;
@@ -82,7 +80,7 @@ inline void MimeDecode::reset_decode_state()
 {
     uu_state.begin_found = uu_state.end_found = 0;
     reset_decoded_bytes();
-    ClearPrevEncodeBuf();
+    clear_prev_encode_buf();
 }
 
 void MimeDecode::clear_decode_state()
@@ -91,7 +89,7 @@ void MimeDecode::clear_decode_state()
     reset_decode_state();
 }
 
-DecodeResult MimeDecode::Base64Decode(const uint8_t* start, const uint8_t* end)
+DecodeResult MimeDecode::Base64_decode(const uint8_t* start, const uint8_t* end)
 {
     uint32_t encode_avail = 0, decode_avail = 0;
     uint8_t* encode_buf, * decode_buf;
@@ -187,7 +185,7 @@ DecodeResult MimeDecode::Base64Decode(const uint8_t* start, const uint8_t* end)
     return DECODE_SUCCESS;
 }
 
-DecodeResult MimeDecode::QPDecode(const uint8_t* start, const uint8_t* end)
+DecodeResult MimeDecode::QP_decode(const uint8_t* start, const uint8_t* end)
 {
     uint32_t encode_avail = 0, decode_avail = 0;
     uint8_t* encode_buf, * decode_buf;
@@ -279,7 +277,7 @@ DecodeResult MimeDecode::QPDecode(const uint8_t* start, const uint8_t* end)
     return DECODE_SUCCESS;
 }
 
-DecodeResult MimeDecode::UUDecode(const uint8_t* start, const uint8_t* end)
+DecodeResult MimeDecode::UU_decode(const uint8_t* start, const uint8_t* end)
 {
     uint32_t encode_avail = 0, decode_avail = 0;
     uint8_t* encode_buf, * decode_buf;
@@ -391,12 +389,12 @@ DecodeResult MimeDecode::UUDecode(const uint8_t* start, const uint8_t* end)
     return DECODE_SUCCESS;
 }
 
-DecodeResult MimeDecode::BitEncExtract(const uint8_t* start, const uint8_t* end)
+DecodeResult MimeDecode::BitEnc_extract(const uint8_t* start, const uint8_t* end)
 {
     uint32_t bytes_avail = 0;
     uint32_t act_size = 0;
 
-    ClearPrevEncodeBuf();
+    clear_prev_encode_buf();
 
     if (!(bitenc_state.depth))
     {
@@ -488,16 +486,16 @@ DecodeResult MimeDecode::decode_data(const uint8_t* start, const uint8_t* end)
     switch (decode_type)
     {
     case DECODE_B64:
-        iRet = Base64Decode(start, end);
+        iRet = Base64_decode(start, end);
         break;
     case DECODE_QP:
-        iRet = QPDecode(start, end);
+        iRet = QP_decode(start, end);
         break;
     case DECODE_UU:
-        iRet = UUDecode(start, end);
+        iRet = UU_decode(start, end);
         break;
     case DECODE_BITENC:
-        iRet = BitEncExtract(start, end);
+        iRet = BitEnc_extract(start, end);
         break;
     default:
         break;
@@ -513,16 +511,16 @@ int MimeDecode::get_detection_depth(int b64_depth, int qp_depth, int uu_depth, i
     switch (decode_type)
     {
     case DECODE_B64:
-        iRet = limitDetection(b64_depth, decoded_bytes, b64_state.decode_bytes_read);
+        iRet = limit_detection(b64_depth, decoded_bytes, b64_state.decode_bytes_read);
         break;
     case DECODE_QP:
-        iRet = limitDetection(qp_depth, decoded_bytes, qp_state.decode_bytes_read);
+        iRet = limit_detection(qp_depth, decoded_bytes, qp_state.decode_bytes_read);
         break;
     case DECODE_UU:
-        iRet = limitDetection(uu_depth, decoded_bytes, uu_state.decode_bytes_read);
+        iRet = limit_detection(uu_depth, decoded_bytes, uu_state.decode_bytes_read);
         break;
     case DECODE_BITENC:
-        iRet = limitDetection(bitenc_depth, decoded_bytes, bitenc_state.bytes_read);
+        iRet = limit_detection(bitenc_depth, decoded_bytes, bitenc_state.bytes_read);
         break;
     default:
         break;
@@ -565,18 +563,18 @@ MimeDecode::MimeDecode(
     encodeBuf = (uint8_t*)work_buffer;
     decodeBuf = (uint8_t*)work_buffer + max_depth;
 
-    b64_state.encode_depth = b64_state.decode_depth = getCodeDepth(b64_depth, file_depth);
+    b64_state.encode_depth = b64_state.decode_depth = get_code_depth(b64_depth, file_depth);
     b64_state.encode_bytes_read = b64_state.decode_bytes_read = 0;
 
-    qp_state.encode_depth = qp_state.decode_depth = getCodeDepth(qp_depth, file_depth);
+    qp_state.encode_depth = qp_state.decode_depth = get_code_depth(qp_depth, file_depth);
     qp_state.encode_bytes_read = qp_state.decode_bytes_read = 0;
 
-    uu_state.encode_depth = uu_state.decode_depth = getCodeDepth(uu_depth, file_depth);
+    uu_state.encode_depth = uu_state.decode_depth = get_code_depth(uu_depth, file_depth);
     uu_state.encode_bytes_read = uu_state.decode_bytes_read = 0;
     uu_state.begin_found = 0;
     uu_state.end_found = 0;
 
-    bitenc_state.depth = getCodeDepth(bitenc_depth, file_depth);
+    bitenc_state.depth = get_code_depth(bitenc_depth, file_depth);
     bitenc_state.bytes_read = 0;
 }
 
