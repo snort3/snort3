@@ -84,11 +84,12 @@ extern const PegInfo daq_names[];
 extern const PegInfo pc_names[];
 extern const PegInfo proc_names[];
 
-void LogLabel(const char*);
-void LogValue(const char*, const char*);
-void LogCount(const char*, uint64_t);
-void LogStat(const char*, uint64_t n, uint64_t tot);
-void LogStat(const char*, double);
+SO_PUBLIC void LogLabel(const char*);
+SO_PUBLIC void LogValue(const char*, const char*);
+SO_PUBLIC void LogCount(const char*, uint64_t);
+
+SO_PUBLIC void LogStat(const char*, uint64_t n, uint64_t tot);
+SO_PUBLIC void LogStat(const char*, double);
 
 void sum_stats(PegCount* sums, PegCount* counts, unsigned n);
 void show_stats(PegCount*, const PegInfo*, unsigned n,

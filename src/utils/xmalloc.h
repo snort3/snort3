@@ -17,8 +17,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef HI_UTIL_XMALLOC_H
-#define HI_UTIL_XMALLOC_H
+#ifndef XMALLOC_H
+#define XMALLOC_H
 
 #include <sys/types.h>
 

@@ -17,18 +17,20 @@
 //--------------------------------------------------------------------------
 // parameter.cc author Russ Combs <rucombs@cisco.com>
 
-#include "module.h"
+#include "parameter.h"
 
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include "utils/dnet_header.h"
 
 #include <string>
 #include <iomanip>
 #include <sstream>
 #include <vector>
 using namespace std;
+
+#include "value.h"
+#include "utils/dnet_header.h"
 
 static bool valid_bool(Value& v, const char*)
 {

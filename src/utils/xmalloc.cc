@@ -28,7 +28,7 @@
 
 #include "main/thread.h"
 
-#include "hi_util_xmalloc.h"
+#include "xmalloc.h"
 
 //#define MDEBUG
 // FIXIT-L these ifdefs won't compile without warnings

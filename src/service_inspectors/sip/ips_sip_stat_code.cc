@@ -219,5 +219,10 @@ static const IpsApi sip_stat_code_api =
     nullptr
 };
 
+//-------------------------------------------------------------------------
+// plugin
+//-------------------------------------------------------------------------
+
+// added to snort_plugins in sip.cc
 const BaseApi* ips_sip_stat_code = &sip_stat_code_api.base;
 

@@ -35,10 +35,8 @@
 #ifdef HAVE_OPENSSL_MD5
 #include <openssl/md5.h>
 #else
-#include <cstdint>
 extern "C"
 {
-    typedef uint32_t __u32;
 #include "hash/md5.h"
 }
 
@@ -54,15 +52,17 @@ static inline int MD5_Final(unsigned char* md, MD5_CTX* c)
 { MD5Final(md, c); return 0; }
 #endif
 
+#include "main/snort_types.h"
+
 #define MD5_HASH_SIZE    16
 #define SHA256_HASH_SIZE 32
 #define SHA512_HASH_SIZE 64
 #define MAX_HASH_SIZE    64
 
 // digest must be buffer of size given above
-void md5(const unsigned char* data, size_t size, unsigned char* digest);
-void sha256(const unsigned char* data, size_t size, unsigned char* digest);
-void sha512(const unsigned char* data, size_t size, unsigned char* digest);
+SO_PUBLIC void md5(const unsigned char* data, size_t size, unsigned char* digest);
+SO_PUBLIC void sha256(const unsigned char* data, size_t size, unsigned char* digest);
+SO_PUBLIC void sha512(const unsigned char* data, size_t size, unsigned char* digest);
 
 #endif
 

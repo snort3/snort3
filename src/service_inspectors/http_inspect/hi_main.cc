@@ -63,6 +63,7 @@
 #include "events/event.h"
 #include "main/snort_debug.h"
 #include "utils/util.h"
+#include "utils/util_utf.h"
 #include "utils/sfsnprintfappend.h"
 #include "utils/sf_email_attach_decode.h"
 #include "stream/stream_api.h"

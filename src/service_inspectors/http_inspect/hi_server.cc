@@ -40,6 +40,7 @@
 
 #include "hi_stream_splitter.h"
 #include "main/thread.h"
+#include "utils/util_utf.h"
 
 static THREAD_LOCAL bool headers = false;
 static THREAD_LOCAL bool simple_response = false;

@@ -192,7 +192,7 @@ static int FinishPortListRule(
     rim_index = otn->ruleIndex;
 
     /* Add up the nfp rules */
-    if ( has_fp )
+    if ( !has_fp )
         prc->nfp++;
 
     /* If not an any-any rule test for port bleedover, if we are using a

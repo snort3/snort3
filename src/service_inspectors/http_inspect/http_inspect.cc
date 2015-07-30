@@ -52,8 +52,10 @@
 #include "stream/stream_api.h"
 #include "target_based/snort_protocols.h"
 #include "file_api/file_api.h"
+#include "utils/kmap.h"
 #include "utils/sf_email_attach_decode.h"
 #include "utils/util.h"
+#include "utils/xmalloc.h"
 #include "framework/inspector.h"
 #include "managers/inspector_manager.h"
 
@@ -62,8 +64,6 @@
 #include "hi_module.h"
 #include "hi_norm.h"
 #include "hi_main.h"
-#include "hi_util_kmap.h"
-#include "hi_util_xmalloc.h"
 #include "hi_cmd_lookup.h"
 #include "hi_stream_splitter.h"
 
@@ -488,15 +488,16 @@ static const InspectApi hi_api =
     nullptr  // reset
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &hg_api.base,
-    &hi_api.base,
-    nullptr
-};
-#else
+// can't be built dynamically yet
+//#ifdef BUILDING_SO
+//SO_PUBLIC const BaseApi* snort_plugins[] =
+//{
+//    &hg_api.base,
+//    &hi_api.base,
+//    nullptr
+//};
+//#else
 const BaseApi* sin_http_global = &hg_api.base;
 const BaseApi* sin_http_inspect = &hi_api.base;
-#endif
+//#endif
 

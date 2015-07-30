@@ -64,10 +64,12 @@ libacsmx2_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libacsmx2_la_LDFLAGS = -export-dynamic -shared
 libacsmx2_la_SOURCES = $(acsmx2_sources) acsmx2_api.cc pat_stats.cc
 
+if HAVE_INTEL_SOFT_CPM
 mpselib_LTLIBRARIES += libintel_cpm.la
 libintel_cpm_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libintel_cpm_la_LDFLAGS = -export-dynamic -shared
 libintel_cpm_la_SOURCES = $(intel_sources) pat_stats.cc
+endif
 endif
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

@@ -165,6 +165,11 @@ libips_ipopts_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_ipopts_la_LDFLAGS = -export-dynamic -shared
 libips_ipopts_la_SOURCES = ips_ipopts.cc
 
+optlib_LTLIBRARIES += libips_ip_proto.la
+libips_ip_proto_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libips_ip_proto_la_LDFLAGS = -export-dynamic -shared
+libips_ip_proto_la_SOURCES = ips_ip_proto.cc
+
 optlib_LTLIBRARIES += libips_isdataat.la
 libips_isdataat_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_isdataat_la_LDFLAGS = -export-dynamic -shared

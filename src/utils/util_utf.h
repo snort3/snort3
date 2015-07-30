@@ -22,6 +22,8 @@
 
 // Some UTF-{16,32}{le,be} normalization functions
 
+#include "main/snort_types.h"
+
 // FIXIT-L: Should get rid of these and change dependent return types to bool
 // return codes
 #define DECODE_UTF_SUCCESS 0
@@ -40,26 +42,24 @@
 // Since payloads don't have to end on 2/4-byte boundaries, callers to
 // DecodeUTF are responsible for keeping a decode_utf_state_t. This carries
 // state between subsequent calls.
-typedef struct decode_utf_state
+struct decode_utf_state_t
 {
     int state;
     int charset;
-} decode_utf_state_t;
+};
 
 // Init & Terminate functions for decode_utf_state_t
-int init_decode_utf_state(decode_utf_state_t*);
-int term_decode_utf_state(decode_utf_state_t*);
+SO_PUBLIC int init_decode_utf_state(decode_utf_state_t*);
+SO_PUBLIC int term_decode_utf_state(decode_utf_state_t*);
 
 // setters & getters
-int set_decode_utf_state_charset(decode_utf_state_t* dstate, int charset);
-int get_decode_utf_state_charset(decode_utf_state_t* dstate);
+SO_PUBLIC int set_decode_utf_state_charset(decode_utf_state_t*, int charset);
+SO_PUBLIC int get_decode_utf_state_charset(decode_utf_state_t*);
 
 // UTF-Decoding function prototypes
-int DecodeUTF(
+SO_PUBLIC int DecodeUTF(
     char* src, unsigned int src_len, char* dst, unsigned int dst_len,
-    int* bytes_copied,
-    decode_utf_state_t* dstate
-);
+    int* bytes_copied, decode_utf_state_t*);
 
 #endif
 

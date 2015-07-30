@@ -24,17 +24,13 @@
 
 struct BaseApi;
 
-extern const BaseApi* se_ac_banded;
 extern const BaseApi* se_ac_bnfa;
 extern const BaseApi* se_ac_bnfa_q;
-extern const BaseApi* se_ac_full;
-extern const BaseApi* se_ac_full_q;
-extern const BaseApi* se_ac_sparse;
-extern const BaseApi* se_ac_sparse_bands;
-extern const BaseApi* se_ac_std;
 
+#ifdef STATIC_IPS_OPTIONS
 #ifdef INTEL_SOFT_CPM
 extern const BaseApi* se_intel_cpm;
+#endif
 #endif
 
 const BaseApi* search_engines[] =

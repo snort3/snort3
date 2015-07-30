@@ -17,6 +17,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+// file_decomp_swf.h author Ed Borgoyn eborgoyn@sourcefire.com
+
 #ifndef FILE_DECOMP_SWF_H
 #define FILE_DECOMP_SWF_H
 

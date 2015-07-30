@@ -1,28 +1,23 @@
-/*
- * Copyright (C) 2015 Cisco and/or its affiliates. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
-*/
+//--------------------------------------------------------------------------
+// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2007-2013 Sourcefire, Inc.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
-/*
- * Adam Keeton
- * ssl.h
- * 10/09/07
-*/
+// ssl.h author Adam Keeton
 
 #ifndef SSL_H
 #define SSL_H
@@ -34,6 +29,8 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <stdlib.h>
+
+#include "main/snort_types.h"
 
 #define SSL_NO_FLAG             0x00000000
 
@@ -209,16 +206,19 @@ struct SSLv2_shello_t
 #define SSL_HS_PAYLOAD_OFFSET (sizeof(uint8_t) * 4) /* Type and length fields */
 
 #define SSL_BAD_HS(x) (x & SSL_BOGUS_HS_DIR_FLAG)
+
 #define SSL_IS_HANDSHAKE(x) \
     (x & (SSL_CLIENT_HELLO_FLAG | SSL_SERVER_HELLO_FLAG | \
     SSL_CERTIFICATE_FLAG | SSL_SERVER_KEYX_FLAG | \
     SSL_CLIENT_KEYX_FLAG | SSL_CIPHER_SPEC_FLAG))
+
 #define SSL_IS_CHELLO(x) (x & SSL_CLIENT_HELLO_FLAG)
 #define SSL_IS_SHELLO(x) (x & SSL_SERVER_HELLO_FLAG)
 #define SSL_IS_CKEYX(x) (x & SSL_CLIENT_KEYX_FLAG)
 #define SSL_IS_APP(x) ((x & SSL_SAPP_FLAG) || (x & SSL_CAPP_FLAG))
 #define SSL_IS_ALERT(x) (x & SSL_ALERT_FLAG)
 #define SSL_CLEAR_TEMPORARY_FLAGS(x) x &= ~SSL_STATEFLAGS;
+
 /* Verifies that the error flags haven't been triggered */
 #define SSL_IS_CLEAN(x) \
     !(x & (SSL_BOGUS_HS_DIR_FLAG | SSL_TRUNCATED_FLAG | \
@@ -229,11 +229,13 @@ struct SSLv2_shello_t
 #define SSL_HEARTBLEED_RESPONSE 0x02
 #define SSL_HEARTBLEED_UNKNOWN 0x03
 
-uint32_t SSL_decode(const uint8_t* pkt, int size, uint32_t pktflags, uint32_t prevflags,
+SO_PUBLIC uint32_t SSL_decode(
+    const uint8_t* pkt, int size, uint32_t pktflags, uint32_t prevflags,
     uint8_t* alert_flags, uint16_t* partial_rec_len, int hblen);
-bool IsTlsClientHello(const uint8_t* ptr, const uint8_t* end);
-bool IsTlsServerHello(const uint8_t* ptr, const uint8_t* end);
-bool IsSSL(const uint8_t* ptr, int len, int pkt_flags);
+
+SO_PUBLIC bool IsTlsClientHello(const uint8_t* ptr, const uint8_t* end);
+SO_PUBLIC bool IsTlsServerHello(const uint8_t* ptr, const uint8_t* end);
+SO_PUBLIC bool IsSSL(const uint8_t* ptr, int len, int pkt_flags);
 
 #endif
 

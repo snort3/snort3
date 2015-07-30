@@ -1,6 +1,6 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2005-2013 Sourcefire, Inc.
+// Copyright (C) 2003-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -17,10 +17,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// hi_util_kmap.cc author Marc Norton
+// kmap.cc author Marc Norton
 // a generic map library - maps key + data pairs
 
-#include "hi_util_kmap.h"
+#include "kmap.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -33,7 +33,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "hi_util_xmalloc.h"
+#include "xmalloc.h"
 
 //#define MEMASSERT(p) if(!p){printf("KMAP-No Memory: File: %s
 // Line:%d\n",__FILE__,__LINE__);exit(0);}
@@ -146,6 +146,7 @@ void KMapDelete(KMAP* km)
         {
             KMapFreeNode(km,r);
         }
+        km->root[i] = NULL;
     }
 
     /* Free the node list */
@@ -233,11 +234,11 @@ int KMapAdd(KMAP* km, void* key, int n, void* userdata)
 
     if ( n <= 0 )
     {
-        std::size_t tmp_len = strlen( (char*)key);
+        const std::size_t tmp_len = strlen( (char*)key);
         if (tmp_len > std::numeric_limits<int>::max())
             return -99;
 
-        n = tmp_len;
+        n = (int)tmp_len;
     }
 
     if ( km->nocase )
@@ -375,16 +376,16 @@ void* KMapFind(KMAP* ks, void* key, int n)
 {
     const unsigned char* T = (unsigned char*)key;
     KMAPNODE* root;
-    std::string xkey;
     int i;
+    std::string xkey;
 
     if ( n <= 0 )
     {
-        std::size_t tmp_len = strlen( (char*)key);
+        const std::size_t tmp_len = strlen( (char*)key);
         if (tmp_len > std::numeric_limits<int>::max())
             return nullptr;
 
-        n = tmp_len;
+        n = (int)tmp_len;
     }
 
     if ( ks->nocase )
@@ -393,7 +394,7 @@ void* KMapFind(KMAP* ks, void* key, int n)
         for (i=0; i<n; i++)
             xkey[i] = std::tolower(T[i]);
 
-        T = (const unsigned char*)(xkey.c_str());
+        T = (const unsigned char*)xkey.c_str();
     }
     //printf("finding key='%.*s'\n",n,T);
 
@@ -512,8 +513,6 @@ int main(int argc, char** argv)
     char* p;
     char str[80];
 
-    str[79] = '\0';
-
     printf("usage: kmap nkeys (default=10)\n\n");
 
     km = KMapNew(free);    /* use 'free' to free 'userdata' */
@@ -527,7 +526,7 @@ int main(int argc, char** argv)
 
     for (i=1; i<=n; i++)
     {
-        snprintf(str, sizeof(str) - 1, "KeyWord%d",i);
+        SnortSnprintf(str, sizeof(str), "KeyWord%d",i);
         KMapAdd(km, str, 0 /* strlen(str) */, strupr(strdup(str)) );
         printf("Adding Key=%s\n",str);
     }
@@ -536,7 +535,7 @@ int main(int argc, char** argv)
     printf("\nKey Find test...\n");
     for (i=1; i<=n; i++)
     {
-        snprintf(str, sizeof(str) - 1, "KeyWord%d",i);
+        SnortSnprintf(str, sizeof(str), "KeyWord%d",i);
         p = (char*)KMapFind(km, str,  0 /*strlen(str) */);
         if (p)
             printf("key=%s, data=%*s\n",str,strlen(str),p);
@@ -548,7 +547,7 @@ int main(int argc, char** argv)
     printf("\nKey Find test2...\n");
     for (i=1; i<=n; i++)
     {
-        snprintf(str, sizeof(str) - 1, "KeyWord%d",i);
+        SnortSnprintf(str, sizeof(str), "KeyWord%d",i);
         p = (char*)KMapFind(km, str,  0 /*strlen(str) */);
         if (p)
             printf("key=%s, data=%*s\n",str,strlen(str),p);

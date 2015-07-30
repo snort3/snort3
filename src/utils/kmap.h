@@ -17,10 +17,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// hi_util_kmap.h author Marc Norton
+// kmap.h author Marc Norton
 
-#ifndef HI_UTIL_KMAP_H
-#define HI_UTIL_KMAP_H
+#ifndef KMAP_H
+#define KMAP_H
 
 // Keyword Trie based Map Table
 // The tree uses linked lists to build the finite automata
@@ -32,6 +32,8 @@
 // proportional to the length of the key, and independent of the number of
 // keys in the table.  May use more memory than a hash table, depends.
 // Memory is allocated as needed, so none is wasted.
+
+#include "main/snort_types.h"
 
 #define ALPHABET_SIZE 256
 
@@ -70,15 +72,18 @@ typedef struct _kmap
     int nocase;
 } KMAP;
 
-KMAP* KMapNew(KMapUserFreeFunc userfree);
-void KMapSetNoCase(KMAP* km, int flag);
-int KMapAdd(KMAP* km, void* key, int ksize, void* userdata);
-void* KMapFind(KMAP* km, void* key, int ksize);
-void* KMapFindFirst(KMAP* km);
-void* KMapFindNext(KMAP* km);
-KEYNODE* KMapFindFirstKey(KMAP* km);
-KEYNODE* KMapFindNextKey(KMAP* km);
-void KMapDelete(KMAP* km);
+SO_PUBLIC KMAP* KMapNew(KMapUserFreeFunc userfree);
+SO_PUBLIC void KMapDelete(KMAP* km);
+
+SO_PUBLIC void KMapSetNoCase(KMAP* km, int flag);
+SO_PUBLIC int KMapAdd(KMAP* km, void* key, int ksize, void* userdata);
+
+SO_PUBLIC void* KMapFind(KMAP* km, void* key, int ksize);
+SO_PUBLIC void* KMapFindFirst(KMAP* km);
+SO_PUBLIC void* KMapFindNext(KMAP* km);
+
+SO_PUBLIC KEYNODE* KMapFindFirstKey(KMAP* km);
+SO_PUBLIC KEYNODE* KMapFindNextKey(KMAP* km);
 
 #endif
 

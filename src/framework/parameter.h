@@ -27,7 +27,10 @@
 // nullptr -> any
 // # | #: | :# | #:#
 // where # is any valid pos|neg dec|hex|octal number
-struct Parameter
+
+#include "main/snort_types.h"
+
+struct SO_PUBLIC Parameter
 {
     enum Type
     {

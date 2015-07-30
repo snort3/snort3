@@ -27,6 +27,7 @@
 // FIXIT-L This will be refactored soon
 
 #include <pcre.h>
+#include "main/snort_types.h"
 #include "file_api/file_api.h"
 #include "utils/sf_email_attach_decode.h"
 
@@ -59,19 +60,27 @@ typedef struct _MimePcre
     pcre_extra* pe;
 } MimePcre;
 
-int log_file_name(const uint8_t* start, int length, FILE_LogState* log_state, bool* disp_cont);
-int set_log_buffers(MAIL_LogState** log_state, MAIL_LogConfig* conf);
-void init_mime(void);
-void free_mime(void);
-const uint8_t* process_mime_data(Flow *flow, const uint8_t *start, const uint8_t *end,
-                MimeState *mime_ssn, bool upload, FilePosition position);
-void free_mime_session(MimeState*);
-void free_mime_session(MimeState&);
-void finalize_mime_position(Flow* flow, void* decode_state, FilePosition* position);
-void reset_mime_paf_state(MimeDataPafInfo *data_info);
+SO_PUBLIC int log_file_name(
+    const uint8_t* start, int length, FILE_LogState* log_state, bool* disp_cont);
+
+SO_PUBLIC int set_log_buffers(MAIL_LogState** log_state, MAIL_LogConfig* conf);
+
+SO_PUBLIC void init_mime(void);
+SO_PUBLIC void free_mime(void);
+
+SO_PUBLIC const uint8_t* process_mime_data(
+    Flow *flow, const uint8_t *start, const uint8_t *end,
+    MimeState *mime_ssn, bool upload, FilePosition position);
+
+SO_PUBLIC void free_mime_session(MimeState*);
+SO_PUBLIC void free_mime_session(MimeState&);
+
+SO_PUBLIC void finalize_mime_position(Flow* flow, void* decode_state, FilePosition* position);
+SO_PUBLIC void reset_mime_paf_state(MimeDataPafInfo *data_info);
+
 /*  Process data boundary and flush each file based on boundary*/
-bool process_mime_paf_data(MimeDataPafInfo *data_info,  uint8_t val);
-bool check_data_end(void *end_state,  uint8_t val);
+SO_PUBLIC bool process_mime_paf_data(MimeDataPafInfo *data_info,  uint8_t val);
+SO_PUBLIC bool check_data_end(void *end_state,  uint8_t val);
 
 #endif
 

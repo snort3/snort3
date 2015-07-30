@@ -16,15 +16,6 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-*   An abstracted interface to the Multi-Pattern Matching routines,
-*   thats why we're passing 'void *' objects around.
-*
-*   Marc A Norton <mnorton@sourcefire.com>
-*
-*   Updates:
-*   3/06 - Added AC_BNFA search
-*/
 
 #ifdef INTEL_SOFT_CPM
 #include "intel_soft_cpm.h"

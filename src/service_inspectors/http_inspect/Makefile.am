@@ -20,11 +20,9 @@ hi_stateful_inspect.h \
 hi_stream_splitter.cc hi_stream_splitter.h \
 hi_ui_config.cc hi_ui_config.h \
 hi_ui_iis_unicode_map.cc hi_ui_iis_unicode_map.h \
-hi_util.h \
-hi_util_kmap.cc hi_util_kmap.h \
-hi_util_xmalloc.cc hi_util_xmalloc.h
+hi_util.h
 
-# can't be dynamic yet
+# can't be built dynamically yet
 #if STATIC_INSPECTORS
 noinst_LIBRARIES = libhttp_inspect.a
 libhttp_inspect_a_SOURCES = $(file_list)

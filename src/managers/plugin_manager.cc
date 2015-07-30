@@ -254,6 +254,7 @@ static void load_list(
     while ( *api )
     {
         keep = register_plugin(*api, handle, file) || keep;
+        //printf("loaded %s\n", (*api)->name);
         ++api;
     }
     if ( handle && !keep )
@@ -271,7 +272,7 @@ static bool load_lib(const char* file)
     if ( !(handle = dlopen(file, RTLD_NOW|RTLD_LOCAL)) )
     {
         if ( const char* err = dlerror() )
-            ParseWarning(WARN_PLUGINS, "%s", err);
+            ParseWarning(WARN_PLUGINS, "%s (%s)", err, file);
         return false;
     }
     const BaseApi** api = (const BaseApi**)dlsym(handle, "snort_plugins");
@@ -279,7 +280,7 @@ static bool load_lib(const char* file)
     if ( !api )
     {
         if ( const char* err = dlerror() )
-            ParseWarning(WARN_PLUGINS, "%s", err);
+            ParseWarning(WARN_PLUGINS, "%s (%s)", err, file);
 
         dlclose(handle);
         return false;

@@ -31,6 +31,8 @@ ADD_LIBRARY( utils STATIC
     boyer_moore.h
     dyn_array.cc
     dyn_array.h
+    kmap.cc
+    kmap.h
     segment_mem.cc 
     sf_email_attach_decode.cc 
     sf_email_attach_decode.h
@@ -54,6 +56,8 @@ ADD_LIBRARY( utils STATIC
     util_utf.h
     util_unfold.cc 
     util_unfold.h
+    xmalloc.cc
+    xmalloc.h
 )
 
 target_link_libraries(utils
