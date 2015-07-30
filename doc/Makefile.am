@@ -190,7 +190,7 @@ if MAKE_PDF_DOC
 snort_manual.pdf: $(all_sources) snort_manual.html
 	a2x -f pdf $(pdf_args) $(snort_src)
 else
-snort_manual.pdf: default_snort_manual.pdf
+snort_manual.pdf: default_snort_manual.pdf snort_manual.html
 	cp $< $@
 endif
 
@@ -198,7 +198,7 @@ if MAKE_TEXT_DOC
 snort_manual.text: $(all_sources) snort_manual.pdf
 	a2x -f text $(snort_src)
 else
-snort_manual.text: default_snort_manual.text
+snort_manual.text: default_snort_manual.text snort_manual.pdf
 	cp $< $@
 endif
 
