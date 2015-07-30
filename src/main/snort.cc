@@ -258,12 +258,12 @@ void Snort::init(int argc, char** argv)
     snort_conf = sc;
 
 #ifdef PIGLET
-    if ( !Piglet::Main::run_in_piglet_mode() )
+    if ( !Piglet::piglet_mode() )
 #endif
     CodecManager::instantiate();
 
 #ifdef PIGLET
-    if ( !Piglet::Main::run_in_piglet_mode() )
+    if ( !Piglet::piglet_mode() )
 #endif
     if ( !snort_conf->output.empty() )
         EventManager::instantiate(snort_conf->output.c_str(), snort_conf);
@@ -298,7 +298,7 @@ void Snort::init(int argc, char** argv)
     SFAT_Start();
 
 #ifdef PIGLET
-    if ( !Piglet::Main::run_in_piglet_mode() )
+    if ( !Piglet::piglet_mode() )
 #endif
     /* Finish up the pcap list and put in the queues */
     Trough_SetUp();
@@ -377,7 +377,7 @@ void Snort::term()
     SFAT_Cleanup();
 
 #ifdef PIGLET
-    if ( !Piglet::Main::run_in_piglet_mode() )
+    if ( !Piglet::piglet_mode() )
 #endif
     Trough_CleanUp();
 

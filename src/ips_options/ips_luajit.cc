@@ -22,7 +22,7 @@
 
 #include "main/snort_types.h"
 #include "helpers/chunk.h"
-#include "helpers/lua.h"
+#include "lua/lua.h"
 #include "managers/ips_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"

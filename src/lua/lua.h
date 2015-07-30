@@ -61,49 +61,6 @@ private:
     int top;
 };
 
-
-// FIXIT-L: Should go in its own file
-namespace Interface
-{
-struct Library
-{
-    const char* tname;
-    const luaL_reg* methods;
-    const luaL_reg* metamethods;
-};
-
-void register_lib(lua_State*, const struct Library*);
-
-template<typename T>
-T** new_userdata(lua_State* L)
-{ return (T**)lua_newuserdata(L, sizeof(T*)); }
-
-template<typename T>
-T** create_userdata(lua_State* L, const char* type)
-{
-    auto t = new_userdata<T>(L);
-    luaL_getmetatable(L, type);
-    lua_setmetatable(L, -2);
-    return t;
 }
-
-// Call from Lua context only
-template<typename T>
-T** check_userdata(lua_State* L, const char* type, int arg)
-{
-    return static_cast<T**>(
-        const_cast<void*>(
-            luaL_checkudata(L, arg, type)
-            )
-        );
-}
-
-// Call from Lua context only
-template<typename T>
-T* get_userdata(lua_State* L, const char* type, int arg)
-{ return *check_userdata<T>(L, type, arg); }
-}
-}
-
 #endif
 

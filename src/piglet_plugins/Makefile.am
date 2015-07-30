@@ -1,55 +1,43 @@
 
 noinst_LIBRARIES = libpiglet_plugins.a
+
 libpiglet_plugins_a_SOURCES = \
 piglet_plugins.cc \
-piglet_plugins.h \
-piglet_plugin_common.cc \
-piglet_plugin_common.h
+piglet_plugins.h
 
-# FIXIT-L: plugin list should be automatically generated, as in the CMake build
+interface_list = \
+pp_codec_data_iface.cc \
+pp_raw_data_iface.cc \
+pp_enc_state_iface.cc \
+pp_buffer_iface.cc \
+pp_event_iface.cc \
+pp_codec_iface.cc \
+pp_stream_splitter_iface.cc \
+pp_inspector_iface.cc \
+pp_cursor_iface.cc \
+pp_ips_option_iface.cc \
+pp_ips_action_iface.cc \
+pp_logger_iface.cc \
+pp_search_engine_iface.cc \
+pp_so_rule_iface.cc \
+pp_raw_buffer_iface.cc \
+pp_packet_iface.cc \
+pp_decode_data_iface.cc \
+pp_flow_iface.cc \
+pp_event_iface.cc \
+pp_daq_pkthdr_iface.cc
+
 plugin_list = \
 pp_codec.cc \
 pp_inspector.cc \
 pp_ips_action.cc \
 pp_ips_option.cc \
 pp_logger.cc \
-pp_mpse.cc
+pp_search_engine.cc \
+pp_so_rule.cc \
+pp_test.cc
 
-if STATIC_PIGLETS
 libpiglet_plugins_a_SOURCES += $(plugin_list)
-
-else
-pplibdir = $(pkglibdir)/piglet_plugins
-
-pplib_LTLIBRARIES = libpp_codec.la
-libpp_codec_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libpp_codec_la_LDFLAGS = -export-dynamic -shared
-libpp_codec_la_SOURCES = pp_codec.cc
-
-pplib_LTLIBRARIES += libpp_inspector.la
-libpp_inspector_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libpp_inspector_la_LDFLAGS = -export-dynamic -shared
-libpp_inspector_la_SOURCES = pp_inspector.cc
-
-pplib_LTLIBRARIES += libpp_ips_action.la
-libpp_ips_action_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libpp_ips_action_la_LDFLAGS = -export-dynamic -shared
-libpp_ips_action_la_SOURCES = pp_ips_action.cc
-
-pplib_LTLIBRARIES += libpp_ips_option.la
-libpp_ips_option_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libpp_ips_option_la_LDFLAGS = -export-dynamic -shared
-libpp_ips_option_la_SOURCES = pp_ips_option.cc
-
-pplib_LTLIBRARIES += libpp_logger.la
-libpp_logger_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libpp_logger_la_LDFLAGS = -export-dynamic -shared
-libpp_logger_la_SOURCES = pp_logger.cc
-
-pplib_LTLIBRARIES += libpp_mpse.la
-libpp_mpse_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libpp_mpse_la_LDFLAGS = -export-dynamic -shared
-libpp_mpse_la_SOURCES = pp_mpse.cc
-endif
+libpiglet_plugins_a_SOURCES += $(interface_list)
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

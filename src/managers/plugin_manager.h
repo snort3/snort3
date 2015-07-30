@@ -53,6 +53,9 @@ public:
     static const char* get_type_name(PlugType);
 
     static const BaseApi* get_api(PlugType, const char* name);
+#ifdef PIGLET
+    static PlugType get_type_from_name(std::string);
+#endif
     static const char* get_current_plugin();
 
     static void instantiate(const BaseApi*, Module*, SnortConfig*);

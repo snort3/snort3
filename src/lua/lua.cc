@@ -56,33 +56,4 @@ ManageStack::~ManageStack()
     if ( lua_gettop(state) > top )
         lua_settop(state, top);
 }
-
-namespace Interface
-{
-void register_lib(lua_State* L, const struct Library* lib)
-{
-    ManageStack ms(L, 4);
-    int meta, table;
-
-    // register method table
-    luaL_register(L, lib->tname, lib->methods);
-    table = lua_gettop(L);
-
-    // register metamethod table
-    luaL_newmetatable(L, lib->tname);
-    luaL_register(L, nullptr, lib->metamethods);
-    meta = lua_gettop(L);
-
-    // meta.__index = table
-    lua_pushliteral(L, "__index");
-    lua_pushvalue(L, table);
-    lua_rawset(L, meta);
-
-    // meta.__meta = table (hide metatable)
-    lua_pushliteral(L, "__metatable");
-    lua_pushvalue(L, table);
-    lua_rawset(L, meta);
 }
-}
-}
-

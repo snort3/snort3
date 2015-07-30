@@ -19,32 +19,24 @@
 
 #include "piglet_plugins.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#ifdef STATIC_PIGLETS
-
 extern const BaseApi* pp_codec;
 extern const BaseApi* pp_inspector;
 extern const BaseApi* pp_ips_action;
 extern const BaseApi* pp_ips_option;
 extern const BaseApi* pp_logger;
-extern const BaseApi* pp_mpse;
-
-#endif
+extern const BaseApi* pp_search_engine;
+extern const BaseApi* pp_so_rule;
+extern const BaseApi* pp_test;
 
 const struct BaseApi* piglets[] = {
-#ifdef STATIC_PIGLETS
-
     pp_codec,
     pp_inspector,
     pp_ips_action,
     pp_ips_option,
     pp_logger,
-    pp_mpse,
-
-#endif
+    pp_search_engine,
+    pp_so_rule,
+    pp_test,
     nullptr
 };
 

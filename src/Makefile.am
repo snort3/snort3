@@ -75,6 +75,7 @@ hash/libhash.a \
 log/liblog.a \
 packet_io/libpacket_io.a \
 helpers/libhelpers.a \
+lua/liblua.a \
 decompress/libdecompress.a \
 sfip/libsfip.a \
 sfrt/libsfrt.a \
@@ -95,6 +96,7 @@ flow \
 framework \
 hash \
 helpers \
+lua \
 ips_options \
 log \
 loggers \

@@ -15,22 +15,56 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// piglet_api.cc author Joel Cornett <jocornet@cisco.com>
+// pp_enc_state_iface.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "piglet_api.h"
+#include "pp_enc_state_iface.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <luajit-2.0/lua.hpp>
 
-namespace Piglet
+#include "framework/codec.h"
+#include "protocols/ip.h"
+
+static const class ip::IpApi ip_api {};
+
+static const luaL_Reg methods[] =
 {
-//------------------------------------------------------------------------------
-// API constants
-//------------------------------------------------------------------------------
+    {
+        "new",
+        [](lua_State* L)
+        {
+            EncStateIface.create(L, ip_api, 0, 0, 0, 0);
+            return 1;
+        }
+    },
+    { nullptr, nullptr }
+};
 
-const unsigned int API_VERSION = 1;
-const unsigned int API_SIZE = sizeof(Api);
-const char* API_HELP = "Piglet test harness";
-} // namespace Piglet
+static const luaL_Reg metamethods[] =
+{
+    {
+        "__tostring",
+        [](lua_State* L)
+        {
+            auto& self = EncStateIface.get(L);
+            lua_pushfstring(L, "%s@%p", EncStateIface.name, &self);
 
+            return 1;
+        }
+    },
+    {
+        "__gc",
+        [](lua_State* L)
+        {
+            EncStateIface.destroy(L);
+            return 0;
+        }
+    },
+    { nullptr, nullptr }
+};
+
+const struct Lua::TypeInterface<EncState> EncStateIface =
+{
+    "EncState",
+    methods,
+    metamethods
+};

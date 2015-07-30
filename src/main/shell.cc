@@ -26,7 +26,7 @@
 #include <stdexcept>
 
 #include "framework/module.h"
-#include "helpers/lua.h"
+#include "lua/lua.h"
 #include "managers/module_manager.h"
 #include "parser/parser.h"
 #include "log/messages.h"

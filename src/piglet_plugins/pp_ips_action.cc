@@ -23,135 +23,74 @@
 #include "config.h"
 #endif
 
-#include <string>
-#include <luajit-2.0/lua.hpp>
-
-#include "piglet_plugin_common.h"
-#include "piglet/piglet_api.h"
-#include "helpers/lua.h"
+#include "lua/lua_iface.h"
 #include "managers/action_manager.h"
-#include "managers/module_manager.h"
-#include "main/snort_config.h"
-#include "framework/module.h"
-#include "framework/ips_action.h"
+#include "piglet/piglet_api.h"
 
-namespace IpsActionPiglet
-{
-using namespace Lua;
-using namespace PigletCommon;
+#include "pp_packet_iface.h"
+#include "pp_raw_buffer_iface.h"
 
-// -----------------------------------------------------------------------------
-// Lua Interface for IpsAction instance
-// -----------------------------------------------------------------------------
-namespace Instance
-{
-static int instance_exec(lua_State* L)
-{
-    auto p = Interface::get_userdata<PacketLib::type>
-        (L, PacketLib::tname, 1);
+#include "pp_ips_action_iface.h"
 
-    auto i = Util::regurgitate_instance<IpsAction>(L, 1);
-
-    i->exec(p);
-
-    return 0;
-}
-
-static int instance_get_name(lua_State* L)
-{
-    auto i = Util::regurgitate_instance<IpsAction>(L, 1);
-    lua_pushstring(L, i->get_name());
-
-    return 1;
-}
-
-static int instance_get_action(lua_State* L)
-{
-    auto i = Util::regurgitate_instance<IpsAction>(L, 1);
-    lua_pushinteger(L, i->get_action());
-
-    return 1;
-}
-
-static const luaL_reg methods[] =
-{
-    {"exec", instance_exec},
-    {"get_name", instance_get_name},
-    {"get_action", instance_get_action},
-    { nullptr, nullptr }
-};
-} // namespace Instance
-
-// -----------------------------------------------------------------------------
-// Plugin foo
-// -----------------------------------------------------------------------------
-
-class Plugin : public Piglet::BasePlugin
+class IpsActionPiglet : public Piglet::BasePlugin
 {
 public:
-    Plugin(Lua::State&, std::string);
-    virtual ~Plugin() override;
+    IpsActionPiglet(Lua::State&, std::string, Module*, SnortConfig*);
+    virtual ~IpsActionPiglet() override;
     virtual bool setup() override;
 
 private:
     IpsActionWrapper* wrapper;
 };
 
-Plugin::Plugin(Lua::State& state, std::string target) :
-    BasePlugin(state, target)
+IpsActionPiglet::IpsActionPiglet(
+    Lua::State& state, std::string target, Module* m, SnortConfig* sc) :
+    BasePlugin(state, target, m, sc)
 {
-    auto m = ModuleManager::get_default_module(target.c_str(), snort_conf);
-    // FIXIT-M: Need a useful error message to let the user know why
-    //          the wrapper was not instantiated
-    if ( !m )
-        return;
-
-    wrapper = ActionManager::instantiate(target.c_str(), m);
+    if ( module )
+        wrapper = ActionManager::instantiate(target.c_str(), m);
 }
 
-Plugin::~Plugin()
+IpsActionPiglet::~IpsActionPiglet()
 {
     if ( wrapper )
         delete wrapper;
 }
 
-bool Plugin::setup()
+bool IpsActionPiglet::setup()
 {
     if ( !wrapper )
         return true;
 
-    Lua::Interface::register_lib(L, &RawBufferLib::lib);
-    Lua::Interface::register_lib(L, &PacketLib::lib);
+    install(L, RawBufferIface);
+    install(L, PacketIface);
 
-    Util::register_instance_lib(
-        L, Instance::methods, "IpsAction", wrapper->instance
-        );
+    install(L, IpsActionIface, wrapper->instance);
 
     return false;
 }
-} // namespace IpsActionPiglet
 
 // -----------------------------------------------------------------------------
 // API foo
 // -----------------------------------------------------------------------------
-
-static Piglet::BasePlugin* ctor(Lua::State& state, std::string target, Module*)
-{ return new IpsActionPiglet::Plugin(state, target); }
+static Piglet::BasePlugin* ctor(
+    Lua::State& state, std::string target, Module* m, SnortConfig* sc)
+{ return new IpsActionPiglet(state, target, m, sc); }
 
 static void dtor(Piglet::BasePlugin* p)
 { delete p; }
 
-static const struct Piglet::Api ips_action_piglet_api =
+static const struct Piglet::Api piglet_api =
 {
     {
         PT_PIGLET,
-        Piglet::API_SIZE,
-        Piglet::API_VERSION,
+        sizeof(Piglet::Api),
+        PIGLET_API_VERSION,
         0,
         API_RESERVED,
         API_OPTIONS,
         "pp_ips_action",
-        Piglet::API_HELP,
+        "Ips action piglet",
         nullptr,
         nullptr
     },
@@ -160,17 +99,4 @@ static const struct Piglet::Api ips_action_piglet_api =
     PT_IPS_ACTION
 };
 
-#ifdef BUILDING_SO
-
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &ips_action_piglet_api.base,
-    nullptr
-};
-
-#else
-
-const BaseApi* pp_ips_action = &ips_action_piglet_api.base;
-
-#endif
-
+const BaseApi* pp_ips_action = &piglet_api.base;

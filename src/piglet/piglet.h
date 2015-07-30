@@ -24,14 +24,9 @@
 
 namespace Piglet
 {
-// FIXIT-L: May not need to wrap these functions in a class
-class Main
-{
-public:
-    static int piglet();
-    static bool run_in_piglet_mode();
-};
-} // namespace Piglet
+int main(); 
+bool piglet_mode();
+}
 
 #endif
 
