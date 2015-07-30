@@ -26,7 +26,7 @@
 #include "parser/parser.h"
 #include "framework/cursor.h"
 #include "time/profiler.h"
-#include "lua.h"
+#include "lua/lua.h"
 
 using namespace std;
 
