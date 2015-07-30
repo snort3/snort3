@@ -20,7 +20,6 @@
 // Authors:
 // Hui Cao <huica@cisco.com>
 // Bhagyashree Bantwal <bbantwal@cisco.com>
-//
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -246,15 +245,7 @@ static const IpsApi body_api =
 // plugins
 //-------------------------------------------------------------------------
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &header_api.base,
-    &body_api.base,
-    nullptr
-};
-#else
+// added to snort_plugins in sip.cc
 const BaseApi* ips_sip_header = &header_api.base;
 const BaseApi* ips_sip_body = &body_api.base;
-#endif
 

@@ -25,11 +25,6 @@ set (FILE_LIST
     ftpp_si.h
     ftpp_ui_config.cc
     ftpp_ui_config.h
-    ftpp_util_kmap.h
-    hi_util_kmap.cc
-    hi_util_kmap.h
-    hi_util_xmalloc.cc
-    hi_util_xmalloc.h
     pp_ftp.cc
     pp_ftp.h
     pp_telnet.cc

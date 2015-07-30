@@ -19,93 +19,94 @@
 
 #include "piglet_runner.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <string>
+#include <assert.h>
+#include <luajit-2.0/lua.hpp>
 
-#include "helpers/lua.h"
-
+#include "lua/lua_table.h"
+#include "lua/lua_util.h"
+#include "piglet_api.h"
 #include "piglet_manager.h"
+#include "piglet_output.h"
+#include "piglet_utils.h"
 
 namespace Piglet
 {
 using namespace std;
 
-static inline int load_buffer(lua_State* L, string buffer, string filename)
-{ return luaL_loadbuffer(L, buffer.c_str(), buffer.size(), filename.c_str()); }
+static inline bool load_chunk(lua_State* L, const Chunk& chunk)
+{
+    return luaL_loadbuffer(
+        L, chunk.buffer.c_str(), chunk.buffer.size(), chunk.filename.c_str());
+}
 
-static bool get_configuration(lua_State* L, Test& t)
+static bool setup_globals(lua_State* L, Test& t)
+{
+    // Add script_dir env var
+    Lua::set_script_dir(L, SCRIPT_DIR_VARNAME, t.chunk.filename);
+    return false;
+}
+
+static bool configure_test(lua_State* L, Test& t)
 {
     Lua::ManageStack ms(L);
-    const Chunk* chunk = t.chunk;
 
-    if ( load_buffer(L, chunk->buffer, chunk->filename) )
+    if ( load_chunk(L, t.chunk) )
     {
-        t << lua_tostring(L, -1);
-        t.endl();
+        t.set_error("couldn't load test chunk");
+        t.set_error(lua_tostring(L, -1));
         return true;
     }
 
     if ( lua_pcall(L, 0, LUA_MULTRET, 0) )
     {
-        t << lua_tostring(L, -1);
-        t.endl();
+        t.set_error("couldn't run test chunk");
+        t.set_error(lua_tostring(L, -1));
         return true;
     }
 
-    lua_getglobal(L, "piglet");
+    lua_getglobal(L, "plugin");
+
     if ( !lua_istable(L, -1) )
     {
-        t << "global 'piglet' is not a table";
-        t.endl();
+        t.set_error("'plugin' table not found");
         return true;
     }
 
-    lua_getfield(L, -1, "name");
-    t.name = lua_tostring(L, -1);
-    lua_pop(L, 1);
+    Lua::Table table(L, -1);
+    table.get_field("description", t.description);
 
-    lua_getfield(L, -1, "type");
-    t.type = lua_tostring(L, -1);
-    lua_pop(L, 1);
-
-    lua_getfield(L, -1, "target");
-    t.target = lua_tostring(L, -1);
-    lua_pop(L, 1);
-
-    return false;
+    return setup_globals(L, t);
 }
 
 static bool run_test(lua_State* L, Test& t)
 {
     Lua::ManageStack ms(L, 2);
 
-    lua_getglobal(L, "piglet");
+    lua_getglobal(L, "plugin");
     if ( !lua_istable(L, -1) )
     {
-        t << "global 'piglet' is not a table";
-        t.endl();
+        t.set_error("global 'plugin' is not a table");
         return true;
     }
 
     lua_getfield(L, -1, "test");
     if ( !lua_isfunction(L, -1) )
     {
-        t << "'piglet.test' is not a function";
-        t.endl();
+        t.set_error("'plugin.test' is not a function");
         return true;
     }
 
     if ( lua_pcall(L, 0, 1, 0) )
     {
-        t << lua_tostring(L, -1) << "";
-        t.endl();
+        t.set_error(lua_tostring(L, -1));
         return true;
     }
 
-    t.result = lua_toboolean(L, -1);
+    if ( lua_toboolean(L, -1) )
+        t.result = Test::PASSED;
+    else
+        t.result = Test::FAILED;
 
     return false;
 }
@@ -114,54 +115,91 @@ static bool run_test(lua_State* L, Test& t)
 // Private Methods
 // -----------------------------------------------------------------------------
 
-void Runner::run(Test& t)
+void Runner::run(const struct Output& output, Test& t, unsigned i)
 {
     Lua::State state { true };
 
-    if ( get_configuration(state.get_ptr(), t) )
+    if ( configure_test(state.get_ptr(), t) )
     {
-        t << "couldn't configure test";
-        t.endl();
+        t.set_error("couldn't configure test");
         return;
     }
 
-    auto p = Manager::instantiate(state, t.type, t.target);
-    if ( p == nullptr )
-    {
-        t << "couldn't instantiate piglet";
-        t.endl();
-        return;
-    }
+    auto p = Manager::instantiate(state, t.chunk.target, t.type, t.name);
 
-    if ( p->setup() )
-    {
-        t << "couldn't setup piglet\n";
-        t.endl();
-    }
-    else if ( run_test(state.get_ptr(), t) )
-    {
-        t << "error in entry point test()";
-        t.endl();
-    }
+    // FIXIT-L: This injection is a hack so we can log the test header
+    //          with all the parsed information filled in
+    if ( output.on_test_start )
+        output.on_test_start(t, i);
 
-    Manager::destroy(p);
+    if ( p )
+    {
+        if ( p->setup() )
+            t.set_error("environment setup failed");
+        else if ( run_test(state.get_ptr(), t) )
+            t.set_error("test function error");
+
+        Manager::destroy(p);
+    }
+    else
+    {
+        t.set_error("couldn't instantiate piglet");
+    }
 }
 
 // -----------------------------------------------------------------------------
 // Public Methods
 // -----------------------------------------------------------------------------
 
-Test Runner::run(const Chunk& c)
+bool Runner::run_all(const struct Output& output, const vector<Chunk>& chunks)
 {
-    Test test;
-    test.chunk = &c;
-    test.timer.start();
+    Summary summary;
 
-    run(test);
+    // FIXIT-M: The checks for null belong somewhere else (maybe in Output?)
+    if ( output.on_suite_start )
+        output.on_suite_start(chunks);
 
-    test.timer.stop();
+    unsigned i = 0;
+    for ( const auto& chunk : chunks )
+    {
+        Test test(chunk);
 
-    return test;
+        run(output, test, i); // <-- RUN TEST
+
+        // FIXIT-M: This logic belongs somewhere else (maybe in Summary?)
+        switch ( test.result )
+        {
+            case Test::PASSED:
+                summary.passed++;
+                break;
+
+            case Test::FAILED:
+                summary.failed++;
+                break;
+
+            case Test::ERROR:
+                summary.errors++;
+                break;
+
+            default:
+                assert(false);
+                break;
+        }
+
+        if ( output.on_test_end )
+            output.on_test_end(test, i++);
+    }
+
+    if ( output.on_suite_end )
+        output.on_suite_end(summary);
+
+    if ( summary.errors || summary.failed )
+        return false;
+
+    return true;
 }
+
+bool Runner::run_all(const struct Output& output)
+{ return run_all(output, Manager::get_chunks()); }
 } // namespace Piglet
 

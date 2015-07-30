@@ -39,6 +39,7 @@
 #include <sys/types.h>
 
 #include "detection/detection_util.h"
+#include "utils/xmalloc.h"
 
 #include "hi_client_norm.h"
 #include "hi_server_norm.h"
@@ -47,7 +48,6 @@
 #include "hi_return_codes.h"
 #include "hi_si.h"
 #include "hi_util.h"
-#include "hi_util_xmalloc.h"
 
 #define MAX_DIRS        2048
 

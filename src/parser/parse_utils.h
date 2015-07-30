@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// parse_uitls.h author Russ Combs <rucombs@cisco.com>
+// parse_utils.h author Russ Combs <rucombs@cisco.com>
 
 #ifndef PARSE_UTILS_H
 #define PARSE_UTILS_H

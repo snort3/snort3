@@ -26,6 +26,7 @@
 #include <luajit-2.0/lua.hpp>
 
 #include "ips_manager.h"
+#include "lua/lua_util.h"
 #include "plugin_manager.h"
 #include "framework/ips_option.h"
 #include "framework/logger.h"
@@ -161,8 +162,11 @@ static int dump(lua_State*, const void* p, size_t sz, void* ud)
 // FIXIT-M: Use Lua::State to wrap lua_State
 static void load_script(const char* f)
 {
-    lua_State* L = luaL_newstate();
-    luaL_openlibs(L);
+    Lua::State lua;
+    auto L = lua.get_ptr();
+
+    // Set this now so that dependent dofile()s can work correctly
+    Lua::set_script_dir(L, SCRIPT_DIR_VARNAME, f);
 
     if ( luaL_loadfile(L, f) )
     {
@@ -222,7 +226,7 @@ static void load_script(const char* f)
 
 #ifdef PIGLET
     else if ( type == "piglet" )
-        Piglet::Manager::add_chunk(f, chunk);
+        Piglet::Manager::add_chunk(f, name, chunk);
 #endif
 
     else
@@ -230,8 +234,6 @@ static void load_script(const char* f)
         ParseError("unknown plugin type in %s = '%s'", f, type.c_str());
         return;
     }
-
-    lua_close(L);
 }
 
 //-------------------------------------------------------------------------

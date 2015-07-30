@@ -43,10 +43,10 @@
 #include <sstream>
 #include <string>
 
-#include "hi_ui_config.h"
-#include "hi_util_xmalloc.h"
-#include "hi_return_codes.h"
+#include "utils/xmalloc.h"
 #include "utils/util.h"
+#include "hi_ui_config.h"
+#include "hi_return_codes.h"
 
 #define MAX_BUFFER 50000
 #define CODEPAGE_SEPARATORS  " \t\n\r"

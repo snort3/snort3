@@ -28,22 +28,27 @@
 
 namespace Piglet
 {
-using namespace std;
+using time_point = std::chrono::time_point<std::chrono::system_clock>;
+using duration = std::chrono::duration<double>;
 
 // -------------------------------------------------------------------------
 // Timer
 // -------------------------------------------------------------------------
-
 struct Timer
 {
-    chrono::time_point<chrono::system_clock> start_time, stop_time;
+    using system_clock = std::chrono::system_clock;
+    using time_point = std::chrono::time_point<system_clock>;
+    using duration = std::chrono::duration<double>;
+
+    time_point start_time, stop_time;
 
     bool running = false;
 
     void start();
     void stop();
 
-    chrono::duration<double> delta();
+    inline duration delta()
+    { return stop_time - start_time; }
 
     // chrono::microseconds d = chrono::duration_cast<microseconds>(dur);
     // d.count();
@@ -52,34 +57,47 @@ struct Timer
 // -------------------------------------------------------------------------
 // Chunk
 // -------------------------------------------------------------------------
-
 struct Chunk
 {
-    Chunk(string f, string s) :
-        filename(f), buffer(s) { }
+    std::string filename;
+    std::string target;
+    std::string buffer;
 
-    string filename, buffer;
+    Chunk(std::string f, std::string t, std::string b) :
+        filename { f }, target { t }, buffer { b } { }
 };
 
 // -------------------------------------------------------------------------
 // Test
 // -------------------------------------------------------------------------
-
 struct Test
 {
-    string name, type, target;
-    vector<string> messages;
-    string _message;
+    enum Result
+    {
+        NA = -1,
+        PASSED = 0,
+        FAILED,
+        ERROR
+    };
 
-    const Chunk* chunk;
-
-    bool result = false;
-    bool error = false;
-
+    const Chunk& chunk;
     Timer timer;
 
-    Test& operator<<(string);
-    void endl();
+    Result result = NA;
+
+    std::string type;
+    std::string name;
+    std::string description;
+
+    std::vector<std::string> messages;
+
+    inline void set_error(std::string s)
+    {
+        result = ERROR;
+        messages.push_back(s);
+    }
+
+    Test(const Chunk& ch) : chunk { ch } { }
 };
 } // namespace Piglet
 

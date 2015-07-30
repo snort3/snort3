@@ -24,6 +24,7 @@
 // Javascript Normalization
 
 #include <stdint.h>
+#include "main/snort_types.h"
 
 #define ALERT_SPACES_EXCEEDED   0x1
 #define ALERT_LEVELS_EXCEEDED   0x2
@@ -38,8 +39,10 @@ typedef struct
     uint16_t alerts;
 } JSState;
 
-int JSNormalizeDecode(char*, uint16_t, char*, uint16_t destlen, char**, int*, JSState*, uint8_t*);
-void InitJSNormLookupTable(void);
+SO_PUBLIC void InitJSNormLookupTable(void);
+
+SO_PUBLIC int JSNormalizeDecode(
+    char*, uint16_t, char*, uint16_t destlen, char**, int*, JSState*, uint8_t*);
 
 #endif
 

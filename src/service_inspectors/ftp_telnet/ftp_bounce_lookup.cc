@@ -38,7 +38,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "hi_util_kmap.h"
+#include "utils/kmap.h"
 #include "ftpp_ui_config.h"
 #include "ftpp_return_codes.h"
 #include "ft_main.h"

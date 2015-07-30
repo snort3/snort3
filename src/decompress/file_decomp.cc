@@ -16,6 +16,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+// file_decomp.cc author Ed Borgoyn <eborgoyn@sourcefire.com>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

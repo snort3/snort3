@@ -19,9 +19,3 @@ port_var_table.h \
 rule_port_tables.cc \
 rule_port_tables.h
 
-EXTRA_DIST = readme.txt
-
-libutil_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
-

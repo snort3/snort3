@@ -23,15 +23,19 @@
 // Piglet plugin API
 
 #include <string>
-#include <luajit-2.0/lua.hpp>
 
 #include "framework/base_api.h"
-#include "helpers/lua.h"
+#include "lua/lua.h"
+#include "main/snort_types.h"
+
+struct lua_State;
+class Module;
+struct SnortConfig;
+
+#define PIGLET_API_VERSION 1
 
 namespace Piglet
 {
-using namespace std;
-
 //--------------------------------------------------------------------------
 // Base Plugin
 //--------------------------------------------------------------------------
@@ -41,8 +45,10 @@ struct Api;
 class SO_PUBLIC BasePlugin
 {
 public:
-    BasePlugin(Lua::State& lua, string t) :
-        L { lua.get_ptr() }, target { t } { }
+    BasePlugin(Lua::State& lua, std::string t,
+        Module* m = nullptr, SnortConfig* sc = nullptr) :
+        L { lua.get_ptr() }, target { t },
+        module { m }, snort_conf { sc } { }
 
     virtual ~BasePlugin() { }
 
@@ -56,16 +62,20 @@ public:
     const Api* get_api()
     { return api; }
 
-    string get_error()
+    std::string get_error()
     { return error; }
 
 protected:
     lua_State* L;
+    std::string target;
+    Module* module;
+    SnortConfig* snort_conf;
 
-    string target;
-    string error;
+    // FIXIT-L: unused
+    std::string error;
 
-    void set_error(string s)
+    // FIXIT-L: unused
+    void set_error(std::string s)
     { error = s; }
 
 private:
@@ -76,7 +86,7 @@ private:
 // Plugin ctor/dtor
 //--------------------------------------------------------------------------
 
-using PluginCtor = BasePlugin* (*)(Lua::State&, string, Module*);
+using PluginCtor = BasePlugin* (*)(Lua::State&, std::string, Module*, SnortConfig*);
 using PluginDtor = void (*)(BasePlugin*);
 
 //--------------------------------------------------------------------------
@@ -90,14 +100,6 @@ struct Api
     PluginDtor dtor;
     PlugType target;
 };
-
-//--------------------------------------------------------------------------
-// API constant declarations
-//--------------------------------------------------------------------------
-
-extern const unsigned int API_VERSION;
-extern const unsigned int API_SIZE;
-extern const char* API_HELP;
 } // namespace Piglet
 
 #endif

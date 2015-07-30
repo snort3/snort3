@@ -15,13 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-//
-
-/*
- * SIP preprocessor
- *
- *
- */
+// sip.cc author Hui Cao <huica@cisco.com>
 
 #include "sip.h"
 
@@ -448,9 +442,18 @@ const InspectApi sip_api =
 };
 
 #ifdef BUILDING_SO
+extern const BaseApi* ips_sip_header;
+extern const BaseApi* ips_sip_body;
+extern const BaseApi* ips_sip_method;
+extern const BaseApi* ips_sip_stat_code;
+
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &sip_api.base,
+    ips_sip_header,
+    ips_sip_body,
+    ips_sip_method,
+    ips_sip_stat_code,
     nullptr
 };
 #else

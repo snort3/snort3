@@ -22,6 +22,7 @@
 #define UTIL_H
 
 // Miscellaneous functions and macros
+// FIXIT-L this needs to be refactored and stripped of cruft
 
 #define TIMEBUF_SIZE 26
 
@@ -88,18 +89,22 @@ void InitGroups(int, int);
 void SetChroot(std::string root_dir, std::string& log_dir);
 void InitProtoNames(void);
 
+// these functions are deprecated; use C++ strings instead
 SO_PUBLIC int SnortSnprintf(char*, size_t, const char*, ...)
     __attribute__((format (printf, 3, 4)));
 SO_PUBLIC int SnortSnprintfAppend(char*, size_t, const char*, ...)
     __attribute__((format (printf, 3, 4)));
 
 SO_PUBLIC char* SnortStrdup(const char*);
-int SnortStrncpy(char*, const char*, size_t);
-char* SnortStrndup(const char*, size_t);
-int SnortStrnlen(const char*, int);
-const char* SnortStrnPbrk(const char* s, int slen, const char* accept);
-const char* SnortStrnStr(const char* s, int slen, const char* searchstr);
-const char* SnortStrcasestr(const char* s, int slen, const char* substr);
+SO_PUBLIC char* SnortStrndup(const char*, size_t);
+
+SO_PUBLIC const char* SnortStrcasestr(const char* s, int slen, const char* substr);
+SO_PUBLIC const char* SnortStrnStr(const char* s, int slen, const char* searchstr);
+SO_PUBLIC const char* SnortStrnPbrk(const char* s, int slen, const char* accept);
+
+SO_PUBLIC int SnortStrncpy(char*, const char*, size_t);
+SO_PUBLIC int SnortStrnlen(const char*, int);
+
 int CheckValueInRange(const char* value_str, const char* option,
     unsigned long lo, unsigned long hi, unsigned long* value);
 

@@ -6,7 +6,3 @@ stream_base.cc \
 stream_module.cc \
 stream_module.h
 
-libstream_base_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
-
-AM_CXXFLAGS = @AM_CXXFLAGS@
-

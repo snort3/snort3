@@ -49,7 +49,7 @@ void snort_inspect(Packet*);
 void snort_log(Packet*);
 
 // detection only (no decode or inspection)
-bool snort_detect(Packet*);
+SO_PUBLIC bool snort_detect(Packet*);
 
 // parsing
 int RuleListEnd(Packet*, RuleTreeNode*, RuleFpList*, int);

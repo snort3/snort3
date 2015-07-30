@@ -21,7 +21,6 @@ if LINUX
 libloggers_a_SOURCES += alert_sf_socket.cc
 endif
 
-
 if STATIC_LOGGERS
 libloggers_a_SOURCES += $(plugin_list)
 

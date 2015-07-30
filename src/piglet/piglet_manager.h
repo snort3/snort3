@@ -25,9 +25,17 @@
 #include <string>
 #include <vector>
 
-#include "helpers/lua.h"
-#include "piglet_api.h"
-#include "piglet_utils.h"
+namespace Lua
+{
+class State;
+}
+
+namespace Piglet
+{
+struct Chunk;
+struct Api;
+class BasePlugin;
+}
 
 namespace Piglet
 {
@@ -37,10 +45,13 @@ public:
     static void init();
 
     static void add_plugin(Api*);
-    static BasePlugin* instantiate(Lua::State&, std::string, std::string);
+
+    static BasePlugin* instantiate(
+        Lua::State&, const std::string&, std::string&, std::string&);
+
     static void destroy(BasePlugin*);
 
-    static void add_chunk(std::string, std::string);
+    static void add_chunk(std::string, std::string, std::string);
     static const std::vector<Chunk>& get_chunks();
 };
 } // namespace Piglet

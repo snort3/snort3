@@ -1,28 +1,24 @@
-/*
- * Copyright (C) 2015 Cisco and/or its affiliates. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
-*/
+//--------------------------------------------------------------------------
+// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2007-2013 Sourcefire, Inc.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
 
-/*
- * Adam Keeton
- * ssl.c
- * 10/09/07
-*/
+// ssl.h author Adam Keeton
+
 #include "ssl.h"
 
 #ifdef HAVE_CONFIG_H
@@ -36,7 +32,6 @@
 #include <arpa/inet.h>
 #endif
 
-#include "main/snort_types.h"
 #include "protocols/packet.h"
 
 #define THREE_BYTE_LEN(x) (x[2] | x[1] << 8 | x[0] << 16)
@@ -506,7 +501,8 @@ static uint32_t SSL_decode_v2(const uint8_t* pkt, int size, uint32_t pkt_flags)
     return retval | SSL_VER_SSLV2_FLAG;
 }
 
-uint32_t SSL_decode(const uint8_t* pkt, int size, uint32_t pkt_flags, uint32_t prev_flags,
+uint32_t SSL_decode(
+    const uint8_t* pkt, int size, uint32_t pkt_flags, uint32_t prev_flags,
     uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len)
 {
     SSL_record_t* record;
