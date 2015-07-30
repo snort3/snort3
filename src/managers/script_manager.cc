@@ -26,6 +26,7 @@
 #include <luajit-2.0/lua.hpp>
 
 #include "ips_manager.h"
+#include "lua/lua.h"
 #include "lua/lua_util.h"
 #include "plugin_manager.h"
 #include "framework/ips_option.h"

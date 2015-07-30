@@ -1,3 +1,12 @@
+15/07/30 - build 163
+
+-- numerous piglet fixes and enhancements
+-- BitOp rewrite
+-- added more private IP address
+   thanks to Bill Parker for reporting the issue
+-- fixed endianness in private IP address check
+-- fix build of dynamic plugins
+
 15/07/22 - build 162
 
 -- enable build dependency tracking
