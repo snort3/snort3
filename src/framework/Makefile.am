@@ -12,10 +12,11 @@ counts.h \
 cursor.h \
 data_bus.h \
 decode_data.h \
-logger.h \
 inspector.h \
 ips_action.h \
 ips_option.h \
+logger.h \
+lua_api.h \
 module.h \
 mpse.h \
 parameter.h \
