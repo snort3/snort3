@@ -59,15 +59,11 @@ dev_guide.sh
 doc_DATA = \
 snort_manual.text \
 snort_manual.html \
-snort_manual.pdf
+snort_manual.pdf \
+snort_manual.chunked.tgz
 
 dist_doc_DATA = \
 $(all_sources)
-
-# can't put chunked in doc_DATA since the directory won't install correctly
-# so we disable auto install of chunked and do it with an install hook
-noinst_docdir = $(DESTDIR)
-noinst_doc_DATA = snort_manual.chunked
 
 snort = $(top_builddir)/src/snort
 snort2lua = $(top_builddir)/tools/snort2lua/snort2lua
@@ -178,14 +174,7 @@ endif
 # a2x generates an intermediate xml file unconditionally and always places
 # it in this dir even if the output is put elsewhere, which breaks parallel
 # builds.  hence we just build all sequentially, which is why dependencies
-# are:  chunked depends on text depends on pdf depends on html.  chunked is
-# last since we can't depend on the directory.  there is no default for
-# chunked.
-if MAKE_HTML_DOC
-snort_manual.chunked: $(all_sources) snort_manual.text
-	a2x -f chunked $(html_args) $(snort_src)
-endif
-
+# are:  chunked depends on text depends on pdf depends on html.
 if MAKE_PDF_DOC
 snort_manual.pdf: $(all_sources) snort_manual.html
 	a2x -f pdf $(pdf_args) $(snort_src)
@@ -202,10 +191,17 @@ snort_manual.text: default_snort_manual.text snort_manual.pdf
 	cp $< $@
 endif
 
+# autotools makes doesn't seem to like directory targets, especially ones
+# with an unspecified set of files.  to avoid these issues, we generate
+# a tarball and then explode that upon install with a hook.  note that
+# there is no default for chunked.
 if MAKE_HTML_DOC
+snort_manual.chunked.tgz: $(all_sources) snort_manual.text
+	a2x -f chunked $(html_args) $(snort_src)
+	tar zcf $@ snort_manual.chunked
+
 install-data-hook:
-	[ -d $(builddir)/snort_manual.chunked ] && \
-	    cp -R $(builddir)/snort_manual.chunked $(DESTDIR)$(docdir)/
+	tar zxf $(DESTDIR)$(docdir)/snort_manual.chunked.tgz -C $(DESTDIR)$(docdir)/
 
 uninstall-hook:
 	rm -rf $(DESTDIR)$(docdir)/snort_manual.chunked

@@ -16,7 +16,6 @@ hi_return_codes.h \
 hi_server.cc hi_server.h \
 hi_server_norm.cc hi_server_norm.h \
 hi_si.cc hi_si.h \
-hi_stateful_inspect.h \
 hi_stream_splitter.cc hi_stream_splitter.h \
 hi_ui_config.cc hi_ui_config.h \
 hi_ui_iis_unicode_map.cc hi_ui_iis_unicode_map.h \
