@@ -153,15 +153,11 @@ void MimeSession::setup_decode(const char* data, int size, bool cnt_xf)
     {
         if (decode_state == NULL)
         {
-            decode_state = new MimeDecode(
-                decode_conf->get_max_depth(), decode_conf->get_b64_depth(),
-                decode_conf->get_qp_depth(), decode_conf->get_uu_depth(),
-                decode_conf->get_bitenc_depth(), decode_conf->get_file_depth());
+            decode_state = new MimeDecode(decode_conf);
         }
 
         if (decode_state != NULL)
         {
-            decode_state->reset_bytes_read();
             decode_state->process_decode_type(data, size, cnt_xf);
             state_flags |= MIME_FLAG_EMAIL_ATTACH;
         }
@@ -603,8 +599,7 @@ const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* sta
 
         if (conf)
         {
-            int detection_size = decode_state->get_detection_depth(conf->get_b64_depth(),
-                conf->get_qp_depth(), conf->get_uu_depth(), conf->get_bitenc_depth());
+            int detection_size = decode_state->get_detection_depth();
             set_file_data(buffer, (uint16_t)detection_size);
         }
 
