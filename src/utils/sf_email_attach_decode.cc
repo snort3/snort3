@@ -414,17 +414,22 @@ int DataDecode::get_decoded_data(uint8_t** buf,  uint32_t* size)
         return 0;
 }
 
+#define MAX_DEPTH       65536
+
 DataDecode::DataDecode(int max_depth)
 {
-    work_buffer = (uint8_t*)SnortAlloc(2*max_depth);
+    if (!max_depth)
+        buf_size = MAX_DEPTH;
+    else
+        buf_size = max_depth;
 
+    work_buffer = (uint8_t*)SnortAlloc(2*buf_size);
     prev_encoded_bytes = 0;
     prev_encoded_buf = nullptr;
     decoded_bytes = 0;
-    buf_size = max_depth;
 
     encodeBuf = (uint8_t*)work_buffer;
-    decodeBuf = (uint8_t*)work_buffer + max_depth;
+    decodeBuf = (uint8_t*)work_buffer + buf_size;
 
     encode_depth = decode_depth = max_depth;
     encode_bytes_read = decode_bytes_read = 0;

@@ -723,6 +723,7 @@ MimeSession::MimeSession(DecodeConfig* dconf, MailLogConfig* lconf)
     decode_conf = dconf;
     log_config =  lconf;
     log_state = new MailLogState(log_config);
+    reset_mime_paf_state(&mime_boundary);
 }
 
 MimeSession::~MimeSession()
