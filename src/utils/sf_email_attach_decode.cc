@@ -423,16 +423,20 @@ DataDecode::DataDecode(int max_depth)
     else
         buf_size = max_depth;
 
-    work_buffer = (uint8_t*)SnortAlloc(2*buf_size);
+    encode_depth = decode_depth = max_depth;
+    encode_bytes_read = decode_bytes_read = 0;
     prev_encoded_bytes = 0;
     prev_encoded_buf = nullptr;
     decoded_bytes = 0;
 
+    if (max_depth < 0)
+        return;
+
+    work_buffer = (uint8_t*)SnortAlloc(2*buf_size);
     encodeBuf = (uint8_t*)work_buffer;
     decodeBuf = (uint8_t*)work_buffer + buf_size;
 
-    encode_depth = decode_depth = max_depth;
-    encode_bytes_read = decode_bytes_read = 0;
+
 }
 
 DataDecode::~DataDecode()

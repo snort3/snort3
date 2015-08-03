@@ -38,7 +38,7 @@ class DataDecode
 {
 public:
     DataDecode(int max_depth);
-    ~DataDecode();
+    virtual ~DataDecode();
 
     // Main function to decode file data
     virtual DecodeResult decode_data(const uint8_t* start, const uint8_t* end) = 0;
