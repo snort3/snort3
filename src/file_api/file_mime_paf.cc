@@ -30,6 +30,7 @@
 #endif
 
 #include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "file_api.h"
 #include "file_mime_config.h"
 
