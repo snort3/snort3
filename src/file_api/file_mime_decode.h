@@ -66,8 +66,6 @@ private:
     DecodeType decode_type = DECODE_NONE;
     DecodeConfig* config;
     DataDecode* decoder = NULL;
-    int detection_depth = 0;
-
 };
 
 // Todo: add statistics

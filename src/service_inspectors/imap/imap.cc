@@ -741,7 +741,7 @@ static void snort_imap(IMAP_PROTO_CONF* config, Packet* p)
     }
 }
 
-void ImapMime::decode_alert(void* ds)
+void ImapMime::decode_alert(MimeDecode* ds)
 {
     MimeDecode* decode_state = (MimeDecode*)ds;
     switch ( decode_state->get_decode_type() )

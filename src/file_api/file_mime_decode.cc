@@ -56,7 +56,6 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf)
             {
                 decode_type = DECODE_B64;
                 decoder = new B64Decode(config->get_b64_depth());
-                detection_depth = config->get_b64_depth();
                 return;
             }
         }
@@ -68,7 +67,6 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf)
             {
                 decode_type = DECODE_QP;
                 decoder = new QPDecode(config->get_qp_depth());
-                detection_depth = config->get_qp_depth();
                 return;
             }
         }
@@ -80,7 +78,6 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf)
             {
                 decode_type = DECODE_UU;
                 decoder = new UUDecode(config->get_uu_depth());
-                detection_depth = config->get_uu_depth();
                 return;
             }
         }
@@ -90,7 +87,6 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf)
     {
         decode_type = DECODE_BITENC;
         decoder = new BitDecode(config->get_bitenc_depth());
-        detection_depth = config->get_bitenc_depth();
         return;
     }
 }
@@ -102,7 +98,7 @@ DecodeResult MimeDecode::decode_data(const uint8_t* start, const uint8_t* end)
 
 int MimeDecode::get_detection_depth()
 {
-    return (decoder?decoder->get_detection_depth(detection_depth):0);
+    return (decoder?decoder->get_detection_depth():0);
 }
 
 int MimeDecode::get_decoded_data(uint8_t** buf,  uint32_t* size)

@@ -1506,7 +1506,7 @@ int SmtpMime::normalize_data(void* conf, const uint8_t* ptr, const uint8_t* data
     return 0;
 }
 
-void SmtpMime::decode_alert(void* ds)
+void SmtpMime::decode_alert(MimeDecode* ds)
 {
     MimeDecode* decode_state = (MimeDecode*)ds;
     switch ( decode_state->get_decode_type() )

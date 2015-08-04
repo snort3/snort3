@@ -81,7 +81,7 @@ private:
     { return 0; }
     virtual int normalize_data(void* conf, const uint8_t* ptr, const uint8_t* data_end)
     { return 0; }
-    virtual void decode_alert(void* decode_state)
+    virtual void decode_alert(MimeDecode* decode_state)
     { }
     virtual void reset_state(void* ssn)
     { }

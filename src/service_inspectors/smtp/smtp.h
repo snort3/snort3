@@ -150,7 +150,7 @@ private:
     int handle_header_line(void* conf, const uint8_t* ptr, const uint8_t* eol,
         int max_header_len) override;
     int normalize_data(void* conf, const uint8_t* ptr, const uint8_t* data_end) override;
-    void decode_alert(void* decode_state) override;
+    void decode_alert(MimeDecode* decode_state) override;
     void reset_state(void* ssn) override;
     bool is_end_of_data(void* ssn) override;
 };

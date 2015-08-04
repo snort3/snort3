@@ -150,7 +150,7 @@ class ImapMime : public MimeSession
 {
     using MimeSession::MimeSession;
 private:
-    void decode_alert(void* decode_state) override;
+    void decode_alert(MimeDecode* decode_state) override;
     void reset_state(void* ssn) override;
     bool is_end_of_data(void* ssn) override;
 };

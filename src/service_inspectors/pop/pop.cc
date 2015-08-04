@@ -675,7 +675,7 @@ static void snort_pop(POP_PROTO_CONF* config, Packet* p)
     }
 }
 
-void PopMime::decode_alert(void* ds)
+void PopMime::decode_alert(MimeDecode* ds)
 {
     MimeDecode* decode_state = (MimeDecode*)ds;
     switch ( decode_state->get_decode_type() )

@@ -48,24 +48,23 @@ public:
 
     void reset_decoded_bytes();
     virtual void reset_decode_state();
-    int get_detection_depth(int depth);
+    int get_detection_depth();
 
 protected:
-    uint8_t* work_buffer = NULL;
-    uint32_t prev_encoded_bytes;
     uint32_t decoded_bytes = 0;
     uint32_t buf_size;
+    uint32_t prev_encoded_bytes;
     uint8_t* prev_encoded_buf;
-    uint8_t* encodeBuf;
-    uint8_t* decodeBuf;
-    uint8_t* decodePtr = NULL;
+    uint8_t* encodeBuf = nullptr;
+    uint8_t* decodeBuf = nullptr;
+    uint8_t* decodePtr = nullptr;
     uint32_t encode_bytes_read;
     uint32_t decode_bytes_read;
     int encode_depth;
     int decode_depth;
-    bool check_buffer();
+    bool is_buffer_available(uint32_t& encode_avail, uint32_t& decode_avail);
+    void resume_decode(uint32_t& encode_avail, uint32_t& prev_bytes);
     inline void clear_prev_encode_buf();
-
 };
 
 class B64Decode:public DataDecode

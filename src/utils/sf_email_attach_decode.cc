@@ -45,13 +45,11 @@ void DataDecode::reset_decode_state()
     clear_prev_encode_buf();
 }
 
-DecodeResult B64Decode::decode_data(const uint8_t* start, const uint8_t* end)
-{
-    uint32_t encode_avail = 0, decode_avail = 0;
-    uint32_t act_encode_size = 0, act_decode_size = 0;
-    uint32_t prev_bytes = 0;
-    uint32_t i = 0;
 
+// 1. Stop decoding when we have reached either the decode depth or encode depth.
+// 2. Stop decoding when we are out of memory
+bool DataDecode::is_buffer_available(uint32_t& encode_avail, uint32_t& decode_avail)
+{
     if (!(encode_depth))
     {
         encode_avail = decode_avail = buf_size;
@@ -62,35 +60,53 @@ DecodeResult B64Decode::decode_data(const uint8_t* start, const uint8_t* end)
         decode_avail = decode_depth - decode_bytes_read;
     }
 
-    /* 1. Stop decoding when we have reached either the decode depth or encode depth.
-     * 2. Stop decoding when we are out of memory */
     if (encode_avail ==0 || decode_avail ==0 ||
         (!encodeBuf) || (!decodeBuf))
     {
         reset_decode_state();
-        return DECODE_EXCEEDED;
+        return false;
     }
+
+    return true;
+}
+
+void DataDecode::resume_decode(uint32_t& encode_avail, uint32_t& prev_bytes)
+{
+    uint32_t i = 0;
 
     /*The non decoded encoded data in the previous packet is required for successful decoding
-     * in case of base64 data spanned across packets*/
-    if ( prev_encoded_bytes )
-    {
-        if (prev_encoded_bytes > encode_avail)
-            prev_encoded_bytes = encode_avail;
+     * in case of data spanned across packets*/
 
-        if (prev_encoded_buf)
+    if ( !prev_encoded_bytes )
+        return;
+
+    if (prev_encoded_bytes > encode_avail)
+        prev_encoded_bytes = encode_avail;
+
+    if (prev_encoded_buf)
+    {
+        prev_bytes = prev_encoded_bytes;
+        encode_avail = encode_avail - prev_bytes;
+        while (prev_encoded_bytes)
         {
-            prev_bytes = prev_encoded_bytes;
-            encode_avail = encode_avail - prev_bytes;
-            while (prev_encoded_bytes)
-            {
-                /* Since this data cannot be more than 3 bytes*/
-                encodeBuf[i] = prev_encoded_buf[i];
-                i++;
-                prev_encoded_bytes--;
-            }
+            encodeBuf[i] = prev_encoded_buf[i];
+            i++;
+            prev_encoded_bytes--;
         }
     }
+}
+
+DecodeResult B64Decode::decode_data(const uint8_t* start, const uint8_t* end)
+{
+    uint32_t encode_avail = 0, decode_avail = 0;
+    uint32_t act_encode_size = 0, act_decode_size = 0;
+    uint32_t prev_bytes = 0;
+    uint32_t i = 0;
+
+    if (!is_buffer_available(encode_avail, decode_avail))
+        return DECODE_EXCEEDED;
+
+    resume_decode(encode_avail, prev_bytes);
 
     if (sf_strip_CRLF(start, (end-start), encodeBuf + prev_bytes, encode_avail,
         &act_encode_size) != 0)
@@ -135,59 +151,16 @@ DecodeResult B64Decode::decode_data(const uint8_t* start, const uint8_t* end)
 DecodeResult QPDecode::decode_data(const uint8_t* start, const uint8_t* end)
 {
     uint32_t encode_avail = 0, decode_avail = 0;
-    uint8_t* encode_buf, * decode_buf;
     uint32_t act_encode_size = 0, act_decode_size = 0, bytes_read = 0;
     uint32_t prev_bytes = 0;
     uint32_t i = 0;
 
-    if (!(encode_depth))
-    {
-        encode_avail = decode_avail = buf_size;
-    }
-    else if ((encode_depth) < 0)
-    {
+    if (!is_buffer_available(encode_avail, decode_avail))
         return DECODE_EXCEEDED;
-    }
-    else
-    {
-        encode_avail = encode_depth - encode_bytes_read;
-        decode_avail = decode_depth - decode_bytes_read;
-    }
 
-    encode_buf = encodeBuf;
-    decode_buf = decodeBuf;
+    resume_decode(encode_avail, prev_bytes);
 
-    /* 1. Stop decoding when we have reached either the decode depth or encode depth.
-     * 2. Stop decoding when we are out of memory */
-    if (encode_avail ==0 || decode_avail ==0 ||
-        (!encode_buf) || (!decode_buf))
-    {
-        reset_decode_state();
-        return DECODE_EXCEEDED;
-    }
-
-    /*The non decoded encoded data in the previous packet is required for successful decoding
-     * in case of base64 data spanned across packets*/
-    if ( prev_encoded_bytes )
-    {
-        if (prev_encoded_bytes > encode_avail)
-            prev_encoded_bytes = encode_avail;
-
-        if (prev_encoded_buf)
-        {
-            prev_bytes = prev_encoded_bytes;
-            encode_avail = encode_avail - prev_bytes;
-            while (prev_encoded_bytes)
-            {
-                /* Since this data cannot be more than 3 bytes*/
-                encode_buf[i] = prev_encoded_buf[i];
-                i++;
-                prev_encoded_bytes--;
-            }
-        }
-    }
-
-    if (sf_strip_LWS(start, (end-start), encode_buf + prev_bytes, encode_avail,
+    if (sf_strip_LWS(start, (end-start), encodeBuf + prev_bytes, encode_avail,
         &act_encode_size) != 0)
     {
         reset_decode_state();
@@ -196,7 +169,7 @@ DecodeResult QPDecode::decode_data(const uint8_t* start, const uint8_t* end)
 
     act_encode_size = act_encode_size + prev_bytes;
 
-    if (sf_qpdecode((char*)encode_buf, act_encode_size, (char*)decode_buf, decode_avail,
+    if (sf_qpdecode((char*)encodeBuf, act_encode_size, (char*)decodeBuf, decode_avail,
         &bytes_read, &act_decode_size) != 0)
     {
         reset_decode_state();
@@ -211,11 +184,11 @@ DecodeResult QPDecode::decode_data(const uint8_t* start, const uint8_t* end)
     if (bytes_read < act_encode_size)
     {
         prev_encoded_bytes = (act_encode_size - bytes_read);
-        prev_encoded_buf = encode_buf + bytes_read;
+        prev_encoded_buf = encodeBuf + bytes_read;
         act_encode_size = bytes_read;
     }
 
-    decodePtr = decode_buf;
+    decodePtr = decodeBuf;
     decoded_bytes = act_decode_size;
     encode_bytes_read += act_encode_size;
     decode_bytes_read += act_decode_size;
@@ -232,59 +205,14 @@ void UUDecode::reset_decode_state()
 DecodeResult UUDecode::decode_data(const uint8_t* start, const uint8_t* end)
 {
     uint32_t encode_avail = 0, decode_avail = 0;
-    uint8_t* encode_buf, * decode_buf;
     uint32_t act_encode_size = 0, act_decode_size = 0, bytes_read = 0;
     uint32_t prev_bytes = 0;
     uint32_t i = 0;
 
-    if (!(encode_depth))
-    {
-        encode_avail = decode_avail = buf_size;
-    }
-    else if ((encode_depth) < 0)
-    {
-        begin_found = false;
-        return DECODE_EXCEEDED;
-    }
-    else
-    {
-        encode_avail = encode_depth - encode_bytes_read;
-        decode_avail = decode_depth - decode_bytes_read;
-    }
+    if (!is_buffer_available(encode_avail, decode_avail))
+           return DECODE_EXCEEDED;
 
-    encode_buf = encodeBuf;
-    decode_buf = decodeBuf;
-
-    /* 1. Stop decoding when we have reached either the decode depth or encode depth.
-     * 2. Stop decoding when we are out of memory */
-    if (encode_avail ==0 || decode_avail ==0 ||
-        (!encode_buf) || (!decode_buf))
-    {
-        begin_found = false;
-        reset_decode_state();
-        return DECODE_EXCEEDED;
-    }
-
-    /*The non decoded encoded data in the previous packet is required for successful decoding
-     * in case of base64 data spanned across packets*/
-    if ( prev_encoded_bytes )
-    {
-        if (prev_encoded_bytes > encode_avail)
-            prev_encoded_bytes = encode_avail;
-
-        if (prev_encoded_buf)
-        {
-            prev_bytes = prev_encoded_bytes;
-            encode_avail = encode_avail - prev_bytes;
-            while (prev_encoded_bytes)
-            {
-                /* Since this data cannot be more than 3 bytes*/
-                encode_buf[i] = prev_encoded_buf[i];
-                i++;
-                prev_encoded_bytes--;
-            }
-        }
-    }
+    resume_decode(encode_avail, prev_bytes);
 
     if ((uint32_t)(end- start) > encode_avail)
         act_encode_size = encode_avail;
@@ -293,7 +221,7 @@ DecodeResult UUDecode::decode_data(const uint8_t* start, const uint8_t* end)
 
     if (encode_avail > 0)
     {
-        if (SafeMemcpy((encode_buf + prev_bytes), start, act_encode_size, encode_buf, (encode_buf+
+        if (SafeMemcpy((encodeBuf + prev_bytes), start, act_encode_size, encodeBuf, (encodeBuf+
             encode_avail + prev_bytes)) != SAFEMEM_SUCCESS)
         {
             reset_decode_state();
@@ -303,7 +231,7 @@ DecodeResult UUDecode::decode_data(const uint8_t* start, const uint8_t* end)
 
     act_encode_size = act_encode_size + prev_bytes;
 
-    if (sf_uudecode(encode_buf, act_encode_size, decode_buf, decode_avail, &bytes_read,
+    if (sf_uudecode(encodeBuf, act_encode_size, decodeBuf, decode_avail, &bytes_read,
         &act_decode_size,
         &(begin_found), &(end_found)) != 0)
     {
@@ -328,12 +256,12 @@ DecodeResult UUDecode::decode_data(const uint8_t* start, const uint8_t* end)
     if (bytes_read < act_encode_size)
     {
         prev_encoded_bytes = (act_encode_size - bytes_read);
-        prev_encoded_buf = encode_buf + bytes_read;
+        prev_encoded_buf = encodeBuf + bytes_read;
         act_encode_size = bytes_read;
     }
 
+    decodePtr = decodeBuf;
     decoded_bytes = act_decode_size;
-    decodePtr = decode_buf;
     encode_bytes_read += act_encode_size;
     decode_bytes_read += act_decode_size;
 
@@ -351,7 +279,6 @@ DecodeResult BitDecode::decode_data(const uint8_t* start, const uint8_t* end)
     {
         bytes_avail = buf_size;
     }
-    // FIXIT-L this check on start should be obviated by use better member functions
     else if ( decode_depth < 0 )
     {
         return DECODE_EXCEEDED;
@@ -385,20 +312,20 @@ DecodeResult BitDecode::decode_data(const uint8_t* start, const uint8_t* end)
     return DECODE_SUCCESS;
 }
 
-int DataDecode::get_detection_depth(int depth)
+int DataDecode::get_detection_depth()
 {
     // unlimited
-    if (!depth)
+    if (!decode_depth)
         return decoded_bytes;
     // exceeded depth before (decode_bytes_read has been updated)
-    else if (depth < decode_bytes_read - decoded_bytes)
+    else if (decode_depth < decode_bytes_read - decoded_bytes)
         return 0;
     // lower than depth
-    else if (depth > decode_bytes_read)
+    else if (decode_depth > decode_bytes_read)
         return decoded_bytes;
     // cut off
     else
-        return (depth + decoded_bytes - decode_bytes_read);
+        return (decode_depth + decoded_bytes - decode_bytes_read);
 }
 
 int DataDecode::get_decoded_data(uint8_t** buf,  uint32_t* size)
@@ -432,17 +359,16 @@ DataDecode::DataDecode(int max_depth)
     if (max_depth < 0)
         return;
 
-    work_buffer = (uint8_t*)SnortAlloc(2*buf_size);
-    encodeBuf = (uint8_t*)work_buffer;
-    decodeBuf = (uint8_t*)work_buffer + buf_size;
-
-
+    encodeBuf = (uint8_t*)SnortAlloc(buf_size);
+    decodeBuf = (uint8_t*)SnortAlloc(buf_size);
 }
 
 DataDecode::~DataDecode()
 {
-    if (work_buffer)
-        free(work_buffer);
+    if (encodeBuf)
+        free(encodeBuf);
+    if (decodeBuf)
+        free(decodeBuf);
 }
 
 int sf_qpdecode(char* src, uint32_t slen, char* dst, uint32_t dlen, uint32_t* bytes_read,
