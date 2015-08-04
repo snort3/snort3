@@ -1,0 +1,6 @@
+This directory contains all the mime processing related classes and APIs
+
+* MIME processing: provides the common MIME header and MIME body processing for
+service inpsectors such as HTTP, SMTP, POP, and IMAP. If configured, it decodes
+file data that are encoded in Base64, UU-encoding, QP-encoding, and Bit-encoding.
+
