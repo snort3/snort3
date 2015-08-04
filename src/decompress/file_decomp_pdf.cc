@@ -16,6 +16,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+// file_decomp_pdf.cc author Ed Borgoyn <eborgoyn@sourcefire.com>
+
 #include "file_decomp.h"
 #include "file_decomp_pdf.h"
 

@@ -39,10 +39,10 @@
 #define FTPP_UI_CONFIG_H
 
 #include "ftpp_include.h"
-#include "hi_util_kmap.h"
 #include "framework/bits.h"
 #include "sfip/sfip_t.h"
 #include "sfrt/sfrt.h"
+#include "utils/kmap.h"
 #include "utils/snort_bounds.h"
 
 /*

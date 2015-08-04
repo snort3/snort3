@@ -691,17 +691,25 @@ static bool just_validate()
 
 static bool set_mode()
 {
+#ifdef PIGLET
 #ifdef UNIT_TEST
     if ( unit_test_enabled() )
     {
-#ifdef PIGLET
-        if ( Piglet::Main::run_in_piglet_mode() )
-            exit(unit_test() || Piglet::Main::piglet());
+        if ( Piglet::piglet_mode() )
+            exit(unit_test() || Piglet::main());
         else
-#endif
-        exit(unit_test());
+            exit(unit_test());
     }
-#endif
+    else 
+#endif // UNIT_TEST
+    if ( Piglet::piglet_mode() )
+        exit(Piglet::main());
+#else
+#ifdef UNIT_TEST
+    if ( unit_test_enabled() )
+        exit(unit_test());
+#endif // UNIT_TEST
+#endif // PIGLET
 
     if ( int k = get_parse_errors() )
     {
@@ -847,12 +855,6 @@ int main(int argc, char* argv[])
         prompt = s;
 
     Snort::setup(argc, argv);
-
-#ifdef PIGLET
-    if ( Piglet::Main::run_in_piglet_mode() )
-        exit(Piglet::Main::piglet());
-    else
-#endif
 
     if ( set_mode() )
         snort_main();

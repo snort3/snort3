@@ -22,17 +22,38 @@
 
 // Test runner
 
-#include "piglet_utils.h"
+#include <vector>
 
 namespace Piglet
 {
+struct Chunk;
+struct Test;
+struct Output;
+}
+
+namespace Piglet
+{
+struct Summary
+{
+    unsigned passed = 0;
+    unsigned failed = 0;
+    unsigned errors = 0;
+
+    inline unsigned total() const
+    { return passed + failed + errors; }
+};
+
 class Runner
 {
 public:
-    static Test run(const Chunk&);
+    static bool run_all(const struct Output&);
+
+    // FIXIT-M: This should be hidden
+    static bool run_all(const struct Output&, const std::vector<Chunk>&);
 
 private:
-    static void run(Test&);
+    // FIXIT-M: This should also be hidden
+    static void run(const struct Output&, Test&, unsigned);
 };
 } // namespace Piglet
 

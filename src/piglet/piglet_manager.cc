@@ -19,17 +19,21 @@
 
 #include "piglet_manager.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <map>
 #include <string>
 #include <vector>
+#include <assert.h>
 
 #include "log/messages.h"
+#include "main/snort_config.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
+#include "piglet_utils.h"
+#include "piglet_api.h"
+
+#define PLUGIN_KEY_SEP "::"
+
+class Module;
 
 namespace Piglet
 {
@@ -46,13 +50,63 @@ vector<Chunk> chunks;
 // Static Definitions
 // -----------------------------------------------------------------------------
 
-static Api* find_plugin(PlugType key)
+static void split_key(const string& key, string& type, string& name)
+{
+    type.clear();
+    name.clear();
+
+    auto split = key.find(PLUGIN_KEY_SEP);
+
+    // If there is no split, assume that 'key' only contains plugin name
+    if ( split == string::npos )
+    {
+        name = key;
+    }
+    else
+    {
+        type = key.substr(0, split);
+        name = key.substr(split + 2);
+    }
+}
+
+static const Api* find_piglet(PlugType key)
 {
     auto search = plugins.find(key);
     if ( search != plugins.end() )
         return search->second;
 
     return nullptr;
+}
+
+static BasePlugin* instantiate(Lua::State& lua, PlugType key, std::string name)
+{
+    auto piglet_api = find_piglet(key);
+
+    if ( !piglet_api )
+    {
+        ErrorMessage(
+            "piglet: no handler found for plugin type '%s'\n",
+            PluginManager::get_type_name(key)
+        );
+
+        return nullptr;
+    }
+
+    Module* m;
+
+    if ( key == PT_IPS_OPTION )
+        // FIXIT-M: this is just a workaround.
+        // Need to be able to get parsed rule module
+        m = ModuleManager::get_default_module(name.c_str(), snort_conf);
+    else
+        m = ModuleManager::get_module(name.c_str());
+
+    auto piglet = piglet_api->ctor(lua, name, m, snort_conf);
+
+    assert(piglet);
+
+    piglet->set_api(piglet_api);
+    return piglet;
 }
 
 // -----------------------------------------------------------------------------
@@ -69,37 +123,34 @@ void Manager::init()
 void Manager::add_plugin(Api* api)
 { plugins[api->target] = api; }
 
-BasePlugin* Manager::instantiate(Lua::State& lua, string type, string target)
+BasePlugin* Manager::instantiate(
+    Lua::State& lua, const string& target, string& type, string& name)
 {
-    auto key = PluginManager::get_type(type.c_str());
-    if ( key == PT_MAX )
-    {
-        ErrorMessage("piglet: '%s' is not a valid plugin type\n", type.c_str());
-        return nullptr;
-    }
+    PlugType pt = PT_MAX;
+    split_key(target, type, name);
 
-    Module* m = ModuleManager::get_module(target.c_str());
-
-    auto api = find_plugin(key);
-    if ( !api )
-    {
-        ErrorMessage("piglet: no piglet found for plugin type '%s'\n", type.c_str());
-        return nullptr;
-    }
-
-    auto p = api->ctor(lua, target, m);
-    if ( !p )
+    if ( !type.empty() )
+        pt = PluginManager::get_type(type.c_str());
+    else if ( !name.empty() )
+        pt = PluginManager::get_type_from_name(target.c_str());
+    else
     {
         ErrorMessage(
-            "piglet: couldn't instantiate piglet for plugin type '%s'\n",
-            type.c_str()
-            );
+            "piglet: invalid plugin specified: '%s'\n", target.c_str());
+        return nullptr;
+    }
+
+    if ( pt == PT_MAX )
+    {
+        ErrorMessage(
+            "piglet: could not find plugin '%s::%s'",
+            type.c_str(), name.c_str()
+        );
 
         return nullptr;
     }
 
-    p->set_api(api);
-    return p;
+    return ::Piglet::instantiate(lua, pt, name);
 }
 
 void Manager::destroy(BasePlugin* p)
@@ -112,8 +163,8 @@ void Manager::destroy(BasePlugin* p)
     }
 }
 
-void Manager::add_chunk(string filename, string chunk)
-{ chunks.push_back(Chunk(filename, chunk)); }
+void Manager::add_chunk(string filename, string target, string chunk)
+{ chunks.push_back(Chunk(filename, target, chunk)); }
 
 const vector<Chunk>& Manager::get_chunks()
 { return chunks; }

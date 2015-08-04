@@ -17,8 +17,12 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+// file_decomp.h author Ed Borgoyn eborgoyn@sourcefire.com
+
 #ifndef FILE_DECOMP_H
 #define FILE_DECOMP_H
+
+// File_Decomp global typedefs (used in child objects)
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -27,7 +31,7 @@
 #include <stdint.h>
 #include <string.h>
 
-/* File_Decomp global typedefs (used in child objects) */
+#include "main/snort_types.h"
 
 /* Function return codes used internally and with caller */
 typedef enum fd_status
@@ -283,30 +287,30 @@ static inline bool Move_N(fd_session_p_t SessionPtr, uint16_t N)
 /* API Functions */
 
 /* Create a new decompression session object */
-fd_session_p_t File_Decomp_New();
+fd_session_p_t SO_PUBLIC File_Decomp_New();
 
 /* Initialize the session */
-fd_status_t File_Decomp_Init(fd_session_p_t SessionPtr);
+fd_status_t SO_PUBLIC File_Decomp_Init(fd_session_p_t SessionPtr);
 
 /* Use an internal decompression buffer */
-fd_status_t File_Decomp_SetBuf(fd_session_p_t SessionPtr);
+fd_status_t SO_PUBLIC File_Decomp_SetBuf(fd_session_p_t SessionPtr);
 
 /* Run the incremental decompression engine */
-fd_status_t File_Decomp(fd_session_p_t SessionPtr);
+fd_status_t SO_PUBLIC File_Decomp(fd_session_p_t SessionPtr);
 
 /* Close the decomp session processing */
-fd_status_t File_Decomp_End(fd_session_p_t SessionPtr);
+fd_status_t SO_PUBLIC File_Decomp_End(fd_session_p_t SessionPtr);
 
 /* Close the current decomp session, but setup for another */
-fd_status_t File_Decomp_Reset(fd_session_p_t SessionPtr);
+fd_status_t SO_PUBLIC File_Decomp_Reset(fd_session_p_t SessionPtr);
 
 /* Abort and delete the session */
-fd_status_t File_Decomp_StopFree(fd_session_p_t SessionPtr);
+fd_status_t SO_PUBLIC File_Decomp_StopFree(fd_session_p_t SessionPtr);
 
 /* Delete the session object */
-void File_Decomp_Free(fd_session_p_t SessionPtr);
+void SO_PUBLIC File_Decomp_Free(fd_session_p_t SessionPtr);
 
 /* Call the error alerting call-back function */
-void File_Decomp_Alert(fd_session_p_t SessionPtr, int Event);
+void SO_PUBLIC File_Decomp_Alert(fd_session_p_t SessionPtr, int Event);
 #endif
 

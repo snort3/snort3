@@ -251,6 +251,8 @@ Table of Contents
     14.3. Inspectors
     14.4. Codecs
     14.5. IPS Actions
+    14.6. Piglet Test Harness
+    14.7. Developers Guide
 
 15. Coding Style
 
@@ -288,7 +290,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0-a1 (Build 160) from 2.9.7-177
+o"  )~   Version 3.0.0-a2 (Build 163) from 2.9.7-177
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
@@ -700,6 +702,8 @@ Optional:
     signatures and the protected_content rule option.
   * w3m from http://sourceforge.net/projects/w3m/ to build the plain
     text manual
+  * source-highlight from http://www.gnu.org/software/src-highlite/
+    to generate the dev guide.
 
 
 2.2. Building
@@ -1032,11 +1036,11 @@ WARNING: unknown symbol x
     Wunused-but-set-variable is not understood by clang
     clang: warning: argument unused during compilation: '-pthread'
 
-  * Cmake doc/ has a problem when SNORT_PLUGIN_PATH is set to get
-    extras included in the manual.
-  * Making in doc/ may fail complaining something about xmllint. Just
-    make again and it will succeed. Appears to be an unknown
-    dependency but it works for me!
+  * With cmake, make install will rebuild the docs even though when
+    already built.
+  * IPS option hash and inspectors pop, imap, smtp, and ssl fail to
+    build dynamically due to missing symbols in hash/ and protocols/
+    despite them being declared SO_PUBLIC.
 
 2.8.2. Config
 
@@ -1659,8 +1663,10 @@ Configuration:
   * bool search_engine.inspect_stream_inserts = false: inspect
     reassembled payload - disabling is good for performance, bad for
     detection
-  * string search_engine.search_method = ac_bnfa_q: set fast pattern
-    algorithm - choose available search engine
+  * select search_engine.search_method = ac_bnfa_q: set fast pattern
+    algorithm - choose available search engine { ac_banded | ac_bnfa
+    | ac_bnfa_q | ac_full | ac_full_q | ac_sparse | ac_sparse_bands |
+    ac_std }
   * bool search_engine.split_any_any = false: evaluate any-any rules
     separately to save memory
   * bool search_engine.search_optimize = false: tweak state machine
@@ -1828,6 +1834,7 @@ Configuration:
   * string snort.--run-prefix: <pfx> prepend this to each output file
   * string snort.--script-path: <path> where to find luajit scripts
   * implied snort.--shell: enable the interactive command line
+  * implied snort.--piglet: enable piglet test harness mode
   * implied snort.--show-plugins: list module and plugin versions
   * int snort.--skip: <n> skip 1st n packets { 0: }
   * int snort.--snaplen = 1514: <snap> set snaplen of packet (same as
@@ -1857,6 +1864,8 @@ Configuration:
   * implied snort.--warn-vars: warn about variable definition and
     usage issues
   * int snort.--x2c: output ASCII char for given hex (see also --c2x)
+  * string snort.--x2s: output ASCII string for given byte code (see
+    also --x2c)
 
 Commands:
 
@@ -6664,6 +6673,65 @@ determine verdict. (Conversely, builtin actions don’t have an
 associated plugin function.)
 
 
+14.6. Piglet Test Harness
+
+------------
+
+In order to assist with plugin development, an experimental mode
+called "piglet" mode is provided. With piglet mode, you can call
+individual methods for a specific plugin. The piglet tests are
+specified as Lua scripts. Each piglet test script defines a test for
+a specific plugin.
+
+Here is a minimal example of a piglet test script for the IPv4 Codec
+plugin:
+
+plugin =
+{
+    type = "piglet",
+    version = 1
+}
+
+piglet =
+{
+    name = "my_test_for_ipv4_codec",
+    type = "codec",
+    target = "ipv4",
+    test = function()
+        local raw_data = RawData.new(1024)
+        local codec_data = CodecData.new()
+        local decode_data = DecodeData.new()
+
+        codec("decode", raw_data, codec_data, decode_data)
+        return true
+    end
+}
+
+More example tests can be found in the piglet_scripts directory.
+Refer to these examples for furthur usage of Lua wrappers to snort
+data structures (such as Packet).
+
+To run snort in piglet mode, first build snort with the BUILD_PIGLET
+option turned on (pass the flag -DBUILD_PIGLET:BOOL=ON in cmake).
+
+Then, run the following command:
+
+snort --script-path $test_scripts --piglet
+
+(where $test_scripts is the directory containing your piglet tests).
+
+The test runner will generate a check-like output, indicating the the
+results of each test script.
+
+
+14.7. Developers Guide
+
+------------
+
+Run doc/dev_guide.sh to generate /tmp/dev_guide.html, an annotated
+guide to the source tree.
+
+
 ---------------------------------------------------------------------
 
 15. Coding Style
@@ -6681,6 +6749,9 @@ with.
 
   * Generally try to follow http://google-styleguide.googlecode.com/
     svn/trunk/cppguide.xml, but there are a few differences.
+  * Each source directory should have a dev_notes.txt file
+    summarizing the key points for the code in that directory. These
+    are built into the developers guide.
 
 
 15.2. Naming
@@ -6718,7 +6789,11 @@ with.
     reformat).
   * Put author, description, etc. in separate comment(s) following
     the license. Do not put such comments in the middle of the
-    license foo.
+    license foo. Be sure to put the author line ahead of the header
+    guard to exclude them from the developers guide.
+  * Each header should have a comment immediately after the header
+    guard to give an overview of the file so the user knows what’s
+    going on.
 
 
 15.4. Logging
@@ -6864,6 +6939,8 @@ with.
     // in foo.cc
     #include "bar/bar.h"
 
+  * Includes within installed headers should specify parent
+    directory.
   * Just because it is a #define doesn’t mean it goes in a header.
     Everything should be scoped as tightly as possible. Shared
     implementation declarations should go in a separate header from
@@ -6894,6 +6971,11 @@ with.
 
     -Wall -Wextra -pedantic -Wformat -Wformat-security
     -Wunused-but-set-variable -Wno-deprecated-declarations
+
+  * With clang, use at least these compiler flags:
+
+    -Wall -Wextra -pedantic -Wformat -Wformat-security
+    -Wno-deprecated-declarations
 
   * Then Fix All Warnings. None Allowed.
 
@@ -7394,6 +7476,7 @@ run ./configure --help.
     between pcaps
   * --pcap-show print a line saying what pcap is currently being read
   * --pedantic warnings are fatal
+  * --piglet enable piglet test harness mode
   * --plugin-path <path> where to find plugins
   * --process-all-events process all action groups
   * --rule <rules> to be added to configuration; may be repeated
@@ -7428,6 +7511,7 @@ run ./configure --help.
   * --warn-symbols warn about unknown symbols in your Lua config
   * --warn-vars warn about variable definition and usage issues
   * --x2c output ASCII char for given hex (see also --c2x)
+  * --x2s output ASCII string for given byte code (see also --x2c)
   * -? <option prefix> output matching command line option quick help
     (same as --help-options)
   * -A <mode> set alert mode: none, cmg, or alert_*
@@ -8311,8 +8395,10 @@ Some additional details to note:
     compiling into state machine (0 means no maximum) { 0: }
   * int search_engine.max_queue_events = 5: maximum number of
     matching fast pattern states to queue per packet
-  * string search_engine.search_method = ac_bnfa_q: set fast pattern
-    algorithm - choose available search engine
+  * select search_engine.search_method = ac_bnfa_q: set fast pattern
+    algorithm - choose available search engine { ac_banded | ac_bnfa
+    | ac_bnfa_q | ac_full | ac_full_q | ac_sparse | ac_sparse_bands |
+    ac_std }
   * bool search_engine.search_optimize = false: tweak state machine
     construction for better performance
   * bool search_engine.split_any_any = false: evaluate any-any rules
@@ -8485,6 +8571,7 @@ Some additional details to note:
   * implied snort.--pcap-show: print a line saying what pcap is
     currently being read
   * implied snort.--pedantic: warnings are fatal
+  * implied snort.--piglet: enable piglet test harness mode
   * string snort.--plugin-path: <path> where to find plugins
   * implied snort.--process-all-events: process all action groups
   * string snort.--rule: <rules> to be added to configuration; may be
@@ -8525,6 +8612,8 @@ Some additional details to note:
   * implied snort.--warn-vars: warn about variable definition and
     usage issues
   * int snort.--x2c: output ASCII char for given hex (see also --c2x)
+  * string snort.--x2s: output ASCII string for given byte code (see
+    also --x2c)
   * string snort.-?: <option prefix> output matching command line
     option quick help (same as --help-options) { (optional) }
   * string snort.-A: <mode> set alert mode: none, cmg, or alert_*
@@ -10363,6 +10452,14 @@ deleted -> unified2: 'filename'
   * logger::log_null: support for null encapsulation
   * logger::log_pcap: log packet in pcap format
   * logger::unified2: output event and packet in unified2 format file
+  * piglet::pp_codec: Codec piglet
+  * piglet::pp_inspector: Inspector piglet
+  * piglet::pp_ips_action: Ips action piglet
+  * piglet::pp_ips_option: Ips option piglet
+  * piglet::pp_logger: Logger piglet
+  * piglet::pp_search_engine: Search engine piglet
+  * piglet::pp_so_rule: SO rule piglet
+  * piglet::pp_test: Test piglet
   * search_engine::ac_banded: Aho-Corasick Banded (high memory,
     moderate performance)
   * search_engine::ac_bnfa: Aho-Corasick Binary NFA (low memory, high

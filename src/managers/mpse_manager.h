@@ -87,7 +87,7 @@ public:
     static void print_search_engine_stats();
 
 #ifdef PIGLET
-    static MpseWrapper* instantiate(const char*, Module*);
+    static MpseWrapper* instantiate(const char*, Module*, SnortConfig*);
 #endif
 };
 

@@ -19,14 +19,8 @@
 
 #include "piglet_utils.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 namespace Piglet
 {
-using namespace std;
-
 // -------------------------------------------------------------------------
 // Timer
 // -------------------------------------------------------------------------
@@ -35,7 +29,7 @@ void Timer::start()
 {
     if ( !running )
     {
-        start_time = chrono::system_clock::now();
+        start_time = system_clock::now();
         running = true;
     }
 }
@@ -44,29 +38,9 @@ void Timer::stop()
 {
     if ( running )
     {
-        stop_time = chrono::system_clock::now();
+        stop_time = system_clock::now();
         running = false;
     }
-}
-
-chrono::duration<double> Timer::delta()
-{ return stop_time - start_time; }
-
-// -------------------------------------------------------------------------
-// Test
-// -------------------------------------------------------------------------
-
-// FIXIT-M: Need a better way to do error logging.
-Test& Test::operator<<(string s)
-{
-    _message.append(s);
-    return *this;
-}
-
-void Test::endl()
-{
-    if ( !_message.empty() )
-        messages.push_back(_message);
 }
 } // namespace Piglet
 

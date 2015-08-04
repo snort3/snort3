@@ -973,6 +973,7 @@ src/flow/Makefile \
 src/framework/Makefile \
 src/hash/Makefile \
 src/helpers/Makefile \
+src/lua/Makefile \
 src/ips_options/Makefile \
 src/log/Makefile \
 src/loggers/Makefile    \

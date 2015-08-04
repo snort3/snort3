@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "hi_util_kmap.h"
+#include "utils/kmap.h"
 
 /*
  * Function: http_cmd_lookup_init(CMD_LOOKUP **CmdLookup)

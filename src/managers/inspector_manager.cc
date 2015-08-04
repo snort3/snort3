@@ -798,6 +798,8 @@ InspectorWrapper* InspectorManager::instantiate(const char* name, Module* m)
     if ( !p )
         return nullptr;
 
+    p->set_api(api);
+
     return new InspectorWrapper(api, p);
 }
 

@@ -58,15 +58,8 @@ void Flow::init(PktType proto)
 {
     protocol = proto;
 
-    // FIXIT-M this should just use C++11 bitset.
     // FIXIT-M getFlowbitSizeInBytes() should be attribute of ??? (or eliminate)
-    /* use giFlowbitSize - 1, since there is already 1 byte in the
-    * StreamFlowData structure */
-    size_t sz = sizeof(StreamFlowData) + getFlowbitSizeInBytes() - 1;
-    flowdata = (StreamFlowData*)calloc(sz, 1);
-
-    if ( flowdata )
-        boInitStaticBITOP(&(flowdata->boFlowbits), getFlowbitSizeInBytes(), flowdata->flowb);
+    bitop = new BitOp(getFlowbitSizeInBytes());
 }
 
 void Flow::term()
@@ -88,8 +81,8 @@ void Flow::term()
     if ( gadget )
         gadget->rem_ref();
 
-    if ( flowdata )
-        free(flowdata);
+    if ( bitop )
+        delete bitop;
 }
 
 void Flow::reset()
@@ -123,7 +116,7 @@ void Flow::reset()
     // FIXIT-L need a struct to zero here to make future proof
     memset((uint8_t*)this+offset, 0, sizeof(Flow)-offset);
 
-    boResetBITOP(&(flowdata->boFlowbits));
+    bitop->reset();
 }
 
 void Flow::restart(bool freeAppData)
@@ -131,7 +124,7 @@ void Flow::restart(bool freeAppData)
     if ( freeAppData )
         free_application_data();
 
-    boResetBITOP(&(flowdata->boFlowbits));
+    bitop->reset();
 
     ssn_state.ignore_direction = 0;
     ssn_state.session_flags = SSNFLAG_NONE;

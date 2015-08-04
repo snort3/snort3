@@ -85,9 +85,6 @@ int addRtnToOtn(struct OptTreeNode*, RuleTreeNode*, PolicyId);
 RuleTreeNode* deleteRtnFromOtn(struct OptTreeNode*);
 RuleTreeNode* deleteRtnFromOtn(struct OptTreeNode*, PolicyId);
 
-/*Get RTN for a given OTN and policyId.
- * @return pointer to deleted RTN, NULL otherwise.
- */
 static inline RuleTreeNode* getRtnFromOtn(
     const struct OptTreeNode* otn, PolicyId policyId)
 {

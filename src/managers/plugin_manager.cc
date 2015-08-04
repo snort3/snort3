@@ -92,7 +92,7 @@ static Symbol symbols[PT_MAX] =
     { "logger", LOGAPI_VERSION, sizeof(LogApi) }
 #ifdef PIGLET
     ,
-    { "piglet", Piglet::API_VERSION, Piglet::API_SIZE }
+    { "piglet", PIGLET_API_VERSION, sizeof(Piglet::Api) }
 #endif
 };
 #else
@@ -254,6 +254,7 @@ static void load_list(
     while ( *api )
     {
         keep = register_plugin(*api, handle, file) || keep;
+        //printf("loaded %s\n", (*api)->name);
         ++api;
     }
     if ( handle && !keep )
@@ -271,7 +272,7 @@ static bool load_lib(const char* file)
     if ( !(handle = dlopen(file, RTLD_NOW|RTLD_LOCAL)) )
     {
         if ( const char* err = dlerror() )
-            ParseWarning(WARN_PLUGINS, "%s", err);
+            ParseWarning(WARN_PLUGINS, "%s (%s)", err, file);
         return false;
     }
     const BaseApi** api = (const BaseApi**)dlsym(handle, "snort_plugins");
@@ -279,7 +280,7 @@ static bool load_lib(const char* file)
     if ( !api )
     {
         if ( const char* err = dlerror() )
-            ParseWarning(WARN_PLUGINS, "%s", err);
+            ParseWarning(WARN_PLUGINS, "%s (%s)", err, file);
 
         dlclose(handle);
         return false;
@@ -399,11 +400,6 @@ void PluginManager::load_plugins(const std::string& paths)
     load_list(search_engines);
     load_list(loggers);
 #ifdef PIGLET
-    // FIXIT: Change the name of this thing
-    load_list(piglets);
-#endif
-
-#ifdef PIGLET
     load_list(piglets);
 #endif
 
@@ -438,7 +434,7 @@ void PluginManager::show_plugins()
     PlugMap::iterator it;
 
     for ( it = plug_map.begin(); it != plug_map.end(); ++it )
-    {
+    { 
         Plugin& p = it->second;
 
         cout << Markup::item();
@@ -486,6 +482,20 @@ const BaseApi* PluginManager::get_api(PlugType type, const char* name)
 
     return nullptr;
 }
+
+#ifdef PIGLET
+PlugType PluginManager::get_type_from_name(std::string name)
+{
+    for ( auto it = plug_map.begin(); it != plug_map.end(); ++it )
+    {
+        const auto* api = it->second.api;
+        if ( name == api->name )
+            return api->type;
+    }
+
+    return PT_MAX;
+}
+#endif
 
 void PluginManager::instantiate(
     const BaseApi* api, Module* mod, SnortConfig* sc)

@@ -260,5 +260,10 @@ static const IpsApi sip_method_api =
     nullptr
 };
 
+//-------------------------------------------------------------------------
+// plugin
+//-------------------------------------------------------------------------
+
+// added to snort_plugins in sip.cc
 const BaseApi* ips_sip_method = &sip_method_api.base;
 

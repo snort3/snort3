@@ -19,137 +19,86 @@
 
 #include "piglet_plugins.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <string>
-#include <luajit-2.0/lua.hpp>
+#include <assert.h>
 
-#include "framework/module.h"
-#include "framework/inspector.h"
-#include "helpers/lua.h"
-#include "main/snort_config.h"
+#include "lua/lua_iface.h"
 #include "managers/inspector_manager.h"
-#include "managers/module_manager.h"
 #include "piglet/piglet_api.h"
+#include "stream/flush_bucket.h"
 
-#include "piglet_plugin_common.h"
+#include "pp_decode_data_iface.h"
+#include "pp_flow_iface.h"
+#include "pp_packet_iface.h"
+#include "pp_raw_buffer_iface.h"
+#include "pp_stream_splitter_iface.h"
 
-namespace InspectorPiglet
-{
-using namespace Lua;
-using namespace PigletCommon;
+#include "pp_inspector_iface.h"
 
-// -----------------------------------------------------------------------------
-// Lua Interface for Inspector instance
-// -----------------------------------------------------------------------------
-namespace Instance
-{
-static int instance_show(lua_State* L)
-{
-    auto i = Util::regurgitate_instance<Inspector>(L, 1);
-    i->show(snort_conf);
-
-    return 0;
-}
-
-static int instance_eval(lua_State* L)
-{
-    auto p = Interface::get_userdata<PacketLib::type>(L, PacketLib::tname, 1);
-    auto i = Util::regurgitate_instance<Inspector>(L, 1);
-    i->eval(p);
-
-    return 0;
-}
-
-static int instance_clear(lua_State* L)
-{
-    auto p = Interface::get_userdata<PacketLib::type>(L, PacketLib::tname, 1);
-    auto i = Util::regurgitate_instance<Inspector>(L, 1);
-    i->clear(p);
-
-    return 0;
-}
-
-static const luaL_reg methods[] =
-{
-    { "show", instance_show },
-    { "eval", instance_eval },
-    { "clear", instance_clear },
-    { nullptr, nullptr }
-};
-} // namespace Instance
-
-// -----------------------------------------------------------------------------
-// Plugin foo
-// -----------------------------------------------------------------------------
-
-class Plugin : public Piglet::BasePlugin
+class InspectorPiglet : public Piglet::BasePlugin
 {
 public:
-    Plugin(Lua::State&, std::string);
-    virtual ~Plugin() override;
+    InspectorPiglet(Lua::State&, std::string, Module*);
+    virtual ~InspectorPiglet() override;
     virtual bool setup() override;
 
 private:
     InspectorWrapper* wrapper;
 };
 
-Plugin::Plugin(Lua::State& state, std::string target) :
-    BasePlugin(state, target)
+InspectorPiglet::InspectorPiglet(
+    Lua::State& state, std::string target, Module* m) :
+    BasePlugin(state, target, m)
 {
-    auto m = ModuleManager::get_default_module(target.c_str(), snort_conf);
-    if ( !m )
-        return;
+    FlushBucket::set(0);
 
-    wrapper = InspectorManager::instantiate(target.c_str(), m);
+    assert(module);
+    wrapper = InspectorManager::instantiate(target.c_str(), module);
 }
 
-Plugin::~Plugin()
+InspectorPiglet::~InspectorPiglet()
 {
     if ( wrapper )
         delete wrapper;
 }
 
-bool Plugin::setup()
+bool InspectorPiglet::setup()
 {
     if ( !wrapper )
         return true;
 
-    Interface::register_lib(L, &RawBufferLib::lib);
-    Interface::register_lib(L, &DecodeDataLib::lib);
-    Interface::register_lib(L, &PacketLib::lib);
+    install(L, DecodeDataIface);
+    install(L, RawBufferIface);
+    install(L, FlowIface);
+    install(L, PacketIface);
+    install(L, StreamSplitterIface);
 
-    Util::register_instance_lib(
-        L, Instance::methods, "Inspector", wrapper->instance
-        );
+    install(L, InspectorIface, wrapper->instance);
 
     return false;
 }
-} // namespace InspectorPiglet
 
 // -----------------------------------------------------------------------------
 // API foo
 // -----------------------------------------------------------------------------
-
-static Piglet::BasePlugin* ctor(Lua::State& state, std::string target, Module*)
-{ return new InspectorPiglet::Plugin(state, target); }
+static Piglet::BasePlugin* ctor(
+    Lua::State& state, std::string target, Module* m, SnortConfig*)
+{ return new InspectorPiglet(state, target, m); }
 
 static void dtor(Piglet::BasePlugin* p)
 { delete p; }
 
-static const struct Piglet::Api inspector_piglet_api =
+static const struct Piglet::Api piglet_api =
 {
     {
         PT_PIGLET,
-        Piglet::API_SIZE,
-        Piglet::API_VERSION,
+        sizeof(Piglet::Api),
+        PIGLET_API_VERSION,
         0,
         API_RESERVED,
         API_OPTIONS,
         "pp_inspector",
-        Piglet::API_HELP,
+        "Inspector piglet",
         nullptr,
         nullptr
     },
@@ -158,17 +107,4 @@ static const struct Piglet::Api inspector_piglet_api =
     PT_INSPECTOR
 };
 
-#ifdef BUILDING_SO
-
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &inspector_piglet_api.base,
-    nullptr
-};
-
-#else
-
-const BaseApi* pp_inspector = &inspector_piglet_api.base;
-
-#endif
-
+const BaseApi* pp_inspector = &piglet_api.base;

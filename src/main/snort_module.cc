@@ -40,6 +40,7 @@ using namespace std;
 #include "managers/module_manager.h"
 #include "parser/config_file.h"
 #include "parser/parser.h"
+#include "parser/parse_utils.h"
 #include "parser/vars.h"
 #include "packet_io/trough.h"
 #include "utils/stats.h"
@@ -89,6 +90,22 @@ static void c2x(const char* s)
 static void x2c(unsigned x)
 {
     printf("0x%2.2X (%d) = '%c'\n", x, x, x);
+    exit(0);
+}
+
+static void x2s(const char* s)
+{
+    bool inv;
+    string out, in = "\"";
+    in += s;
+    in += "\"";
+
+    if ( parse_byte_code(in.c_str(), inv, out) )
+        printf("%s = '%s'\n", s, out.c_str());
+
+    else
+        printf("%s = '%s'\n", s, "error");
+
     exit(0);
 }
 
@@ -454,6 +471,9 @@ static const Parameter s_params[] =
 
     { "--x2c", Parameter::PT_INT, nullptr, nullptr,
       "output ASCII char for given hex (see also --c2x)" },
+
+    { "--x2s", Parameter::PT_STRING, nullptr, nullptr,
+      "output ASCII string for given byte code (see also --x2c)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -841,6 +861,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--x2c") )
         x2c(v.get_long());
+
+    else if ( v.is("--x2s") )
+        x2s(v.get_string());
 
     return true;
 }

@@ -55,6 +55,7 @@
 
 #include "detection/detection_util.h"
 #include "utils/snort_bounds.h"
+#include "utils/util_utf.h"
 
 int hi_server_norm(HI_SESSION* session, HttpSessionData* hsd)
 {

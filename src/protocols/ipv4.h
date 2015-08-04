@@ -158,19 +158,17 @@ struct IP4Hdr
 
 static inline bool isPrivateIP(uint32_t addr)
 {
-    switch (addr & 0xff)
+    addr = ntohl(addr);
+    switch (addr & 0xFF000000)
     {
-    case 0x0a:
+    case 0x0A000000: // 10.0.0.0/8
         return true;
-        break;
-    case 0xac:
-        if ((addr & 0xf000) == 0x1000)
-            return true;
-        break;
-    case 0xc0:
-        if (((addr & 0xff00) ) == 0xa800)
-            return true;
-        break;
+    case 0xA9000000: // 169.254.0.0/16
+        return (addr & 0x00FF0000) == 0x00FE0000;
+    case 0xAC000000: // 172.16.0.0/12
+        return (addr & 0x00F00000) == 0x00100000;
+    case 0xC0000000: // 192.168.0.0/16
+        return (addr & 0x00FF0000) == 0x00A80000;
     }
     return false;
 }

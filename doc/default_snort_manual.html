@@ -781,7 +781,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0-a1 (Build 160) from 2.9.7-177
+o"  )~   Version 3.0.0-a2 (Build 163) from 2.9.7-177
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
@@ -1355,6 +1355,12 @@ w3m from <a href="http://sourceforge.net/projects/w3m/">http://sourceforge.net/p
   manual
 </p>
 </li>
+<li>
+<p>
+source-highlight from <a href="http://www.gnu.org/software/src-highlite/">http://www.gnu.org/software/src-highlite/</a> to
+  generate the dev guide.
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -1925,15 +1931,15 @@ clang: warning: argument unused during compilation: '-pthread'</code></pre>
 </li>
 <li>
 <p>
-Cmake doc/ has a problem when SNORT_PLUGIN_PATH is set to get extras
-included in the manual.
+With cmake, make install will rebuild the docs even though when already
+  built.
 </p>
 </li>
 <li>
 <p>
-Making in doc/ may fail complaining something about xmllint.  Just make
-again and it will succeed.  Appears to be an unknown dependency but it
-works for me!
+IPS option hash and inspectors pop, imap, smtp, and ssl fail to build
+  dynamically due to missing symbols in hash/ and protocols/ despite them
+  being declared SO_PUBLIC.
 </p>
 </li>
 </ul></div>
@@ -3171,7 +3177,7 @@ bool <strong>search_engine.inspect_stream_inserts</strong> = false: inspect reas
 </li>
 <li>
 <p>
-string <strong>search_engine.search_method</strong> = ac_bnfa_q: set fast pattern algorithm - choose available search engine
+select <strong>search_engine.search_method</strong> = ac_bnfa_q: set fast pattern algorithm - choose available search engine { ac_banded | ac_bnfa | ac_bnfa_q | ac_full | ac_full_q | ac_sparse | ac_sparse_bands | ac_std }
 </p>
 </li>
 <li>
@@ -3669,6 +3675,11 @@ implied <strong>snort.--shell</strong>: enable the interactive command line
 </li>
 <li>
 <p>
+implied <strong>snort.--piglet</strong>: enable piglet test harness mode
+</p>
+</li>
+<li>
+<p>
 implied <strong>snort.--show-plugins</strong>: list module and plugin versions
 </p>
 </li>
@@ -3755,6 +3766,11 @@ implied <strong>snort.--warn-vars</strong>: warn about variable definition and u
 <li>
 <p>
 int <strong>snort.--x2c</strong>: output ASCII char for given hex (see also --c2x)
+</p>
+</li>
+<li>
+<p>
+string <strong>snort.--x2s</strong>: output ASCII string for given byte code (see also --x2c)
 </p>
 </li>
 </ul></div>
@@ -12486,6 +12502,58 @@ log is called when either the log_codecs logger or a custom logger that calls
 determine verdict.  (Conversely, builtin actions don&#8217;t have an associated
 plugin function.)</p></div>
 </div>
+<div class="sect2">
+<h3 id="_piglet_test_harness">Piglet Test Harness</h3>
+<div class="paragraph"><p>In order to assist with plugin development, an experimental mode called "piglet" mode
+is provided. With piglet mode, you can call individual methods for a specific plugin.
+The piglet tests are specified as Lua scripts. Each piglet test script defines a test
+for a specific plugin.</p></div>
+<div class="paragraph"><p>Here is a minimal example of a piglet test script for the IPv4 Codec plugin:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>plugin =
+{
+    type = "piglet",
+    version = 1
+}</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>piglet =
+{
+    name = "my_test_for_ipv4_codec",
+    type = "codec",
+    target = "ipv4",
+    test = function()
+        local raw_data = RawData.new(1024)
+        local codec_data = CodecData.new()
+        local decode_data = DecodeData.new()</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>        codec("decode", raw_data, codec_data, decode_data)
+        return true
+    end
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>More example tests can be found in the piglet_scripts directory. Refer to these
+examples for furthur usage of Lua wrappers to snort data structures (such as Packet).</p></div>
+<div class="paragraph"><p>To run snort in piglet mode, first build snort with the BUILD_PIGLET option turned on
+(pass the flag -DBUILD_PIGLET:BOOL=ON in cmake).</p></div>
+<div class="paragraph"><p>Then, run the following command:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>snort --script-path $test_scripts --piglet</code></pre>
+</div></div>
+<div class="paragraph"><p>(where $test_scripts is the directory containing your piglet tests).</p></div>
+<div class="paragraph"><p>The test runner will generate a check-like output, indicating the
+the results of each test script.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_developers_guide">Developers Guide</h3>
+<div class="paragraph"><p>Run doc/dev_guide.sh to generate /tmp/dev_guide.html, an annotated guide to
+the source tree.</p></div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -12501,6 +12569,13 @@ yet firm so feedback is welcome to get something we can live with.</p></div>
 Generally try to follow
   <a href="http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml">http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml</a>,
   but there are a few differences.
+</p>
+</li>
+<li>
+<p>
+Each source directory should have a dev_notes.txt file summarizing the
+  key points for the code in that directory.  These are built into the
+  developers guide.
 </p>
 </li>
 </ul></div>
@@ -12570,6 +12645,14 @@ Put the copyright(s) and license in a comment block at the top of each
 <p>
 Put author, description, etc. in separate comment(s) following the
   license.  Do not put such comments in the middle of the license foo.
+  Be sure to put the author line ahead of the header guard to exclude them
+  from the developers guide.
+</p>
+</li>
+<li>
+<p>
+Each header should have a comment immediately after the header guard to
+  give an overview of the file so the user knows what&#8217;s going on.
 </p>
 </li>
 </ul></div>
@@ -12826,6 +12909,11 @@ src/bar/baz.cc</code></pre>
 </li>
 <li>
 <p>
+Includes within installed headers should specify parent directory.
+</p>
+</li>
+<li>
+<p>
 Just because it is a #define doesn&#8217;t mean it goes in a header.
   Everything should be scoped as tightly as possible.  Shared
   implementation declarations should go in a separate header from the
@@ -12876,6 +12964,16 @@ With g++, use at least these compiler flags:
 <div class="content">
 <pre><code>-Wall -Wextra -pedantic -Wformat -Wformat-security
 -Wunused-but-set-variable -Wno-deprecated-declarations</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+With clang, use at least these compiler flags:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>-Wall -Wextra -pedantic -Wformat -Wformat-security
+-Wno-deprecated-declarations</code></pre>
 </div></div>
 </li>
 <li>
@@ -13721,6 +13819,11 @@ into the Snort binary.  For a full list of build features, run ./configure
 </li>
 <li>
 <p>
+<strong>--piglet</strong> enable piglet test harness mode
+</p>
+</li>
+<li>
+<p>
 <strong>--plugin-path</strong> &lt;path&gt; where to find plugins
 </p>
 </li>
@@ -13847,6 +13950,11 @@ into the Snort binary.  For a full list of build features, run ./configure
 <li>
 <p>
 <strong>--x2c</strong> output ASCII char for given hex (see also --c2x)
+</p>
+</li>
+<li>
+<p>
+<strong>--x2s</strong> output ASCII string for given byte code (see also --x2c)
 </p>
 </li>
 <li>
@@ -16482,7 +16590,7 @@ int <strong>search_engine.max_queue_events</strong> = 5: maximum number of match
 </li>
 <li>
 <p>
-string <strong>search_engine.search_method</strong> = ac_bnfa_q: set fast pattern algorithm - choose available search engine
+select <strong>search_engine.search_method</strong> = ac_bnfa_q: set fast pattern algorithm - choose available search engine { ac_banded | ac_bnfa | ac_bnfa_q | ac_full | ac_full_q | ac_sparse | ac_sparse_bands | ac_std }
 </p>
 </li>
 <li>
@@ -16977,6 +17085,11 @@ implied <strong>snort.--pedantic</strong>: warnings are fatal
 </li>
 <li>
 <p>
+implied <strong>snort.--piglet</strong>: enable piglet test harness mode
+</p>
+</li>
+<li>
+<p>
 string <strong>snort.--plugin-path</strong>: &lt;path&gt; where to find plugins
 </p>
 </li>
@@ -17103,6 +17216,11 @@ implied <strong>snort.--warn-vars</strong>: warn about variable definition and u
 <li>
 <p>
 int <strong>snort.--x2c</strong>: output ASCII char for given hex (see also --c2x)
+</p>
+</li>
+<li>
+<p>
+string <strong>snort.--x2s</strong>: output ASCII string for given byte code (see also --x2c)
 </p>
 </li>
 <li>
@@ -23343,6 +23461,46 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>piglet::pp_codec</strong>: Codec piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_inspector</strong>: Inspector piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_ips_action</strong>: Ips action piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_ips_option</strong>: Ips option piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_logger</strong>: Logger piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_search_engine</strong>: Search engine piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_so_rule</strong>: SO rule piglet
+</p>
+</li>
+<li>
+<p>
+<strong>piglet::pp_test</strong>: Test piglet
+</p>
+</li>
+<li>
+<p>
 <strong>search_engine::ac_banded</strong>: Aho-Corasick Banded (high memory, moderate performance)
 </p>
 </li>
@@ -23405,7 +23563,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-07-06 07:36:48 EDT
+Last updated 2015-07-31 10:11:05 EDT
 </div>
 </div>
 </body>

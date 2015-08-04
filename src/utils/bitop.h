@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2002-2013 Sourcefire, Inc.
+// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,151 +15,99 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// bitop.h authors Dan Roelker <droelker@sourcefire.com>
-//     and Marc Norton <mnorton@sourcefire.com>
+
+// Author: Bhagya Bantwal <bbantwal@cisco.com>
+// Based on work by:
+// Dan Roelker <droelker@sourcefire.com> and Marc Norton <mnorton@sourcefire.com>
 
 #ifndef BITOP_H
 #define BITOP_H
 
-// A poor man's bit vector implementation
+// A simple, dynamically sized bit vector implementation
 
+#include <assert.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
-#include <sys/types.h>
 
-#include "main/snort_debug.h"
+#include "utils/util.h"
 
-// FIXIT-L replace this with a dynamic bitset or some such
-// at least reimplement into a reasonable class
-
-struct _BITOP
+class BitOp
 {
-    unsigned char* pucBitBuffer;
-    unsigned int uiBitBufferSize;
-    unsigned int uiMaxBits;
+public:
+    BitOp(unsigned int len)
+    {
+        assert(len);
+
+        bit_buf = (uint8_t*)SnortAlloc(len);
+
+        buf_size = (unsigned int)len;
+        max_bits = (unsigned int)(len << 3);
+    }
+
+    ~BitOp()
+    {
+        free(bit_buf);
+    }
+
+    void reset();
+    void set(unsigned int bit);
+    bool is_set(unsigned int bit);
+    void clear(unsigned int bit);
+
+    unsigned int get_max_bits()
+    { return max_bits; }
+
+    //FIXIT-L This should be eliminated and better encapsulated.
+    uint8_t& operator[](unsigned int pos)
+    { if ( pos > buf_size) pos = 0; return bit_buf[pos]; }
+
+private:
+    uint8_t* bit_buf;
+    unsigned int buf_size;
+    unsigned int max_bits;
 };
 
-using BITOP = struct _BITOP;
-
-// Initialize the BITOP struct.
-// Use this if you handle the bitop buffer allocation yourself.
-// You must zero the buffer yourself before use.
-// returns 0 if successful, 1 otherwise
-// FIXIT-L: Change return type to bool
-// FIXIT-L: Change int len -> size_t len
-static inline int boInitStaticBITOP(BITOP* BitOp, int len, unsigned char* buf)
-{
-    if ( len < 1 || !buf || !BitOp )
-        return 1;
-
-    BitOp->pucBitBuffer    = buf;
-    BitOp->uiBitBufferSize = (unsigned int)len;
-    BitOp->uiMaxBits       = (unsigned int)(len << 3);
-
-    return 0;
-}
-
-// Initializes the BITOP structure for use.
-// returns 0 if successful, 1 otherwise
-// FIXIT-L: Change return type to bool
-// FIXIT-L: Change int len -> size_t len
-static inline int boInitBITOP(BITOP* BitOp, int len)
-{
-    if ( len < 1 || !BitOp )
-        return 1;
-
-    // Check for already initialized buffer
-    if ( BitOp->pucBitBuffer )
-        return 0;
-
-    BitOp->pucBitBuffer = (unsigned char*)calloc(1, len);
-    if ( !BitOp->pucBitBuffer )
-        return 1;
-
-    BitOp->uiBitBufferSize = (unsigned int)len;
-    BitOp->uiMaxBits       = (unsigned int)(len << 3);
-
-    return 0;
-}
-
 // Reset the bit buffer so that it can be reused
-// returns 0 if successful, 1 otherwise
-// FIXIT-L: Change return type to bool
-static inline int boResetBITOP(BITOP* BitOp)
+inline void BitOp::reset()
 {
-    if ( !BitOp )
-        return 1;
-
-    memset(BitOp->pucBitBuffer, 0, BitOp->uiBitBufferSize);
-    return 0;
-}
-
-// Reset the bit buffer to all 1's so that it can be reused
-// returns 0 if successful, 1 otherwise
-// FIXIT-L: Change return type to bool
-static inline int boSetAllBits(BITOP* BitOp)
-{
-    if ( !BitOp )
-        return 1;
-
-    memset(BitOp->pucBitBuffer, 0xff, BitOp->uiBitBufferSize);
-    return 0;
+    memset(bit_buf, 0, buf_size);
 }
 
 // Set the bit in the specified position within the bit buffer.
-// returns 0 if successful, 1 otherwise
-// FIXIT-L: Change return type to bool
-static inline int boSetBit(BITOP* BitOp, unsigned int bit)
+inline void BitOp::set(unsigned int bit)
 {
-    if ( !BitOp || BitOp->uiMaxBits <= bit )
-        return 1;
-
-    unsigned char mask = (unsigned char)(0x80 >> (bit & 7));
-
-    BitOp->pucBitBuffer[bit >> 3] |= mask;
-
-    return 0;
+    if ( max_bits <= bit )
+    {
+        assert(false);
+        return;
+    }
+    uint8_t mask = (uint8_t)(0x80 >> (bit & 7));
+    bit_buf[bit >> 3] |= mask;
 }
 
 // Checks if the bit at the specified position is set
-// returns 0 if bit not set, 1 if bit is set.
-// FIXIT-L: Change return type to bool
-static inline int boIsBitSet(BITOP* BitOp, unsigned int bit)
+inline bool BitOp::is_set(unsigned int bit)
 {
-    if ( !BitOp || BitOp->uiMaxBits <= bit )
-        return 0;
-
-    unsigned char mask = (unsigned char)(0x80 >> (bit & 7));
-
-    return mask & BitOp->pucBitBuffer[bit >> 3];
+    if ( max_bits <= bit )
+    {
+        assert(false);
+        return false;
+    }
+    uint8_t mask = (uint8_t)(0x80 >> (bit & 7));
+    return (mask & bit_buf[bit >> 3]);
 }
 
 // Clear the bit in the specified position within the bit buffer.
-static inline void boClearBit(BITOP* BitOp, unsigned int bit)
+inline void BitOp::clear(unsigned int bit)
 {
-    if ( !BitOp || BitOp->uiMaxBits <= bit )
+    if ( max_bits <= bit )
+    {
+        assert(false);
         return;
-
-    unsigned char mask = (unsigned char)(0x80 >> (bit & 7));
-    BitOp->pucBitBuffer[bit >> 3] &= ~mask;
-}
-
-// Clear the byte in the specified position within the bit buffer.
-static inline void boClearByte(BITOP* BitOp, unsigned int pos)
-{
-    if ( BitOp && BitOp->uiMaxBits > pos )
-        BitOp->pucBitBuffer[pos >> 3] = 0;
-}
-
-// Frees memory created by boInitBITOP
-// Only use this function if you used boInitBITOP to create the buffer!
-static inline void boFreeBITOP(BITOP* BitOp)
-{
-    if ( !BitOp || !BitOp->pucBitBuffer )
-        return;
-
-    free(BitOp->pucBitBuffer);
-    BitOp->pucBitBuffer = nullptr;
+    }
+    uint8_t mask = (uint8_t)(0x80 >> (bit & 7));
+    bit_buf[bit >> 3] &= ~mask;
 }
 
 #endif

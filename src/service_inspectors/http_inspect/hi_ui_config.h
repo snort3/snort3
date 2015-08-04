@@ -34,13 +34,13 @@
 #define HI_UI_CONFIG_H
 
 #include "hi_include.h"
-#include "hi_util_kmap.h"
 #include "sfrt/sfrt.h"
 #include "sfip/sf_ip.h"
 #include "file_api/file_mime_process.h"
 #include "file_api/file_api.h"
 #include "decompress/file_decomp.h"
 #include "framework/bits.h"
+#include "utils/kmap.h"
 #include "utils/snort_bounds.h"
 
 #define HI_UI_CONFIG_MAX_HDR_DEFAULT 0

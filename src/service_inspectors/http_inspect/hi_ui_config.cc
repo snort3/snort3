@@ -40,8 +40,8 @@
 #include <string.h>
 #include <sys/types.h>
 
+#include "utils/xmalloc.h"
 #include "hi_return_codes.h"
-#include "hi_util_xmalloc.h"
 #include "hi_cmd_lookup.h"
 
 HTTPINSPECT_GLOBAL_CONF::HTTPINSPECT_GLOBAL_CONF()

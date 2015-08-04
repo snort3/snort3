@@ -271,11 +271,11 @@ static int DecodeUTF32BE(char* src, unsigned int src_len, char* dst, unsigned in
 }
 
 /* Wrapper function for DecodeUTF{16,32}{LE,BE} */
-int DecodeUTF(char* src, unsigned int src_len, char* dst, unsigned int dst_len, int* bytes_copied,
-    decode_utf_state_t* dstate)
+int DecodeUTF(
+    char* src, unsigned int src_len, char* dst, unsigned int dst_len,
+    int* bytes_copied, decode_utf_state_t* dstate)
 {
-    if (src == NULL || dst == NULL || bytes_copied == NULL || dstate == NULL || src_len == 0 ||
-        dst_len == 0)
+    if ( !src || !dst || !bytes_copied || !dstate || !src_len || !dst_len )
         return DECODE_UTF_FAILURE;
 
     switch (dstate->charset)

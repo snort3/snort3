@@ -1,11 +1,8 @@
-
 add_library (helpers STATIC
     chunk.cc
     chunk.h
     directory.cc
     directory.h
-    lua.cc
-    lua.h
     markup.cc
     markup.h
     process.cc
@@ -14,7 +11,6 @@ add_library (helpers STATIC
     ring_logic.h
     swapper.h
 )
-
 
 target_link_libraries(helpers
     log

@@ -304,13 +304,11 @@ void SnortConfig::merge(SnortConfig* cmd_line)
         log_dir = DEFAULT_LOG_DIR;
 
     run_prefix = cmd_line->run_prefix;
-
     id_subdir = cmd_line->id_subdir;
     id_zero = cmd_line->id_zero;
 
     /* Used because of a potential chroot */
     orig_log_dir = log_dir;
-
     event_log_id = cmd_line->event_log_id;
 
     run_flags |= cmd_line->run_flags;

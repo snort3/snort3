@@ -162,10 +162,13 @@ static void set(
 SnortConfig* parse_cmd_line(int argc, char* argv[])
 {
     SnortConfig* sc = new SnortConfig;
+    Module* sm = get_snort_module();
 
     ArgList al(argc, argv);
     const char* key, * val;
     unsigned c = 0;
+
+    sm->begin(nullptr, 0, sc);
 
     // get special options first
     while ( al.get_arg(key, val) )
@@ -185,7 +188,8 @@ SnortConfig* parse_cmd_line(int argc, char* argv[])
 
     if ( !c )
         help_usage(sc, argv[0]);
-    else
+
+    else if ( sm->end(nullptr, 0, sc) )
         check_flags(sc);
 
     if ( int k = get_parse_errors() )

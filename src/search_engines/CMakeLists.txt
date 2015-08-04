@@ -33,15 +33,7 @@ if ( ENABLE_INTEL_SOFT_CPM )
         intel_soft_cpm.cc
         intel_soft_cpm.h
     )
-
 endif (ENABLE_INTEL_SOFT_CPM)
-
-set (PLUGIN_LIST
-    ${ACSMX_SOURCES}
-    ${ACSMX2_SOURCES}
-    ${INTEL_SOURCES}
-)
-
 
 set (SEARCH_ENGINE_SOURCES
     search_common.h
@@ -74,8 +66,10 @@ else ( STATIC_SEARCH_ENGINES)
 
     add_shared_library(acsmx search_engines ${ACSMX_SOURCES} pat_stats.cc)
     add_shared_library(acsmx2 search_engines ${ACSMX2_SOURCES} acsmx2_api.cc pat_stats.cc)
-    add_shared_library(intel_cpm search_engines ${INTEL_SOURCES} pat_stats.cc)
 
+    if ( ENABLE_INTEL_SOFT_CPM )
+        add_shared_library(intel_cpm search_engines ${INTEL_SOURCES} pat_stats.cc)
+    endif ( )
 
 endif (STATIC_SEARCH_ENGINES)
 

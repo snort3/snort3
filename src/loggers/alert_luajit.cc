@@ -23,7 +23,7 @@
 #include "main/snort_types.h"
 #include "events/event.h"
 #include "helpers/chunk.h"
-#include "helpers/lua.h"
+#include "lua/lua.h"
 #include "managers/event_manager.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"

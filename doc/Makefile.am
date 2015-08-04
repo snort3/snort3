@@ -59,7 +59,8 @@ dev_guide.sh
 doc_DATA = \
 snort_manual.text \
 snort_manual.html \
-snort_manual.pdf
+snort_manual.pdf \
+snort_manual.chunked.tgz
 
 dist_doc_DATA = \
 $(all_sources)
@@ -149,6 +150,8 @@ version.txt: $(snort)
 snort2lua_cmds.txt: $(snort2lua)
 	$(snort2lua) --markup --help > $@
 
+snort_src = snort_manual.txt
+
 pdf_args = -a imagesdir=.
 
 html_args = \
@@ -157,48 +160,48 @@ html_args = \
 	--xsltproc-opts="--stringparam chunk.tocs.and.lots 1" \
 	$(pdf_args)
 
+# FIXIT no fuschia for visited; all should be sans serif extracted
+# asciidoc.css doesn't seem to work with -a linkcss asciidoc native html
+# generation; buggy passthru of base64 data.
 if MAKE_HTML_DOC
-# FIXIT no fuschia for visited; all should be sans serif
-# extracted asciidoc.css doesn't seem to work with -a linkcss
-# asciidoc native html generation; buggy passthru of base64 data
 snort_manual.html: $(all_sources)
-	asciidoc -b xhtml11 -a toc2 -a icons -a imagesdir=. $<
+	asciidoc -b xhtml11 -a toc2 -a icons -a imagesdir=. $(snort_src)
 else
 snort_manual.html: default_snort_manual.html
 	cp $< $@
 endif
 
-if MAKE_HTML_DOC
-# a2x generates an intermediate xml file unconditionally
-# and always places it in this dir even if the output is
-# put elsewhere, which breaks parallel builds.  hence we
-# just build all sequentially, which is why text depends
-# on pdf depends on chunked depends on html.
-snort_manual.chunked: $(all_sources) snort_manual.html
-	a2x -f chunked $(html_args) $<
-# there is no default for chunked
-endif
-
+# a2x generates an intermediate xml file unconditionally and always places
+# it in this dir even if the output is put elsewhere, which breaks parallel
+# builds.  hence we just build all sequentially, which is why dependencies
+# are:  chunked depends on text depends on pdf depends on html.
 if MAKE_PDF_DOC
-snort_manual.pdf: $(all_sources) snort_manual.chunked
-	a2x -f pdf $(pdf_args) $<
+snort_manual.pdf: $(all_sources) snort_manual.html
+	a2x -f pdf $(pdf_args) $(snort_src)
 else
-snort_manual.pdf: default_snort_manual.pdf
+snort_manual.pdf: default_snort_manual.pdf snort_manual.html
 	cp $< $@
 endif
 
 if MAKE_TEXT_DOC
 snort_manual.text: $(all_sources) snort_manual.pdf
-	a2x -f text $<
+	a2x -f text $(snort_src)
 else
-snort_manual.text: default_snort_manual.text
+snort_manual.text: default_snort_manual.text snort_manual.pdf
 	cp $< $@
 endif
 
+# autotools makes doesn't seem to like directory targets, especially ones
+# with an unspecified set of files.  to avoid these issues, we generate
+# a tarball and then explode that upon install with a hook.  note that
+# there is no default for chunked.
 if MAKE_HTML_DOC
+snort_manual.chunked.tgz: $(all_sources) snort_manual.text
+	a2x -f chunked $(html_args) $(snort_src)
+	tar zcf $@ snort_manual.chunked
+
 install-data-hook:
-	[ -d $(builddir)/snort_manual.chunked ] && \
-	    cp -R $(builddir)/snort_manual.chunked $(DESTDIR)$(docdir)/
+	tar zxf $(DESTDIR)$(docdir)/snort_manual.chunked.tgz -C $(DESTDIR)$(docdir)/
 
 uninstall-hook:
 	rm -rf $(DESTDIR)$(docdir)/snort_manual.chunked

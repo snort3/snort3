@@ -114,6 +114,7 @@ target_link_libraries( snort
     network_inspectors
     search_engines
     helpers
+    lua
     decompress
     ips_options
     loggers
@@ -157,6 +158,7 @@ add_subdirectory(target_based)
 add_subdirectory(time)
 add_subdirectory(utils)
 add_subdirectory(helpers)
+add_subdirectory(lua)
 add_subdirectory(decompress)
 add_subdirectory(ips_options)
 add_subdirectory(loggers)
