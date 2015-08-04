@@ -10,16 +10,6 @@ add_library ( file_api STATIC
     file_capture.h
     file_mempool.cc
     file_mempool.h
-    file_mime_config.cc 
-    file_mime_config.h
-    file_mime_decode.h 
-    file_mime_decode.cc 
-    file_mime_log.h 
-    file_mime_log.cc 
-    file_mime_paf.h 
-    file_mime_paf.cc 
-    file_mime_process.h 
-    file_mime_process.cc 
     file_resume_block.cc 
     file_resume_block.h 
     file_service.cc 
@@ -30,5 +20,5 @@ add_library ( file_api STATIC
     file_stats.h
 )
 
-target_link_libraries(file_api file)
+target_link_libraries(file_api file mime)
 

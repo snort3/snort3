@@ -22,7 +22,7 @@
 
 #include <stdio.h>
 #include "stream/stream_api.h"
-#include "file_api/file_mime_process.h"
+#include "mime/file_mime_process.h"
 
 #include "nhttp_cutter.h"
 #include "nhttp_infractions.h"

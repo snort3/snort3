@@ -34,14 +34,14 @@
 #include <stdlib.h>
 
 #include "file_api.h"
-#include "file_mime_config.h"
 #include "file_stats.h"
 #include "file_capture.h"
-#include "file_mime_process.h"
 #include "file_resume_block.h"
 #include "libs/file_lib.h"
 #include "libs/file_config.h"
 
+#include "mime/file_mime_config.h"
+#include "mime/file_mime_process.h"
 #include "main/snort_types.h"
 #include "managers/action_manager.h"
 #include "stream/stream_api.h"

@@ -36,7 +36,7 @@
 #include "hi_include.h"
 #include "sfrt/sfrt.h"
 #include "sfip/sf_ip.h"
-#include "file_api/file_mime_process.h"
+#include "mime/file_mime_process.h"
 #include "file_api/file_api.h"
 #include "decompress/file_decomp.h"
 #include "framework/bits.h"

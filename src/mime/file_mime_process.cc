@@ -31,7 +31,7 @@
 
 #include "file_mime_config.h"
 #include "file_mime_decode.h"
-#include "file_api.h"
+#include "file_api/file_api.h"
 
 #include "main/snort_types.h"
 #include "search_engines/search_tool.h"

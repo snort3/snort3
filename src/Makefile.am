@@ -59,6 +59,7 @@ stream/user/libstream_user.a \
 stream/file/libstream_file.a \
 file_api/libfile_api.a \
 file_api/libs/libfile.a \
+mime/libmime.a \
 service_inspectors/http_inspect/libhttp_inspect.a \
 ips_options/libips_options.a \
 parser/libparser.a \
@@ -102,6 +103,7 @@ log \
 loggers \
 main \
 managers \
+mime \
 network_inspectors \
 packet_io \
 parser \

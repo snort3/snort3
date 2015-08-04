@@ -32,7 +32,7 @@
 #include "main/snort_types.h"
 #include "utils/util.h"
 #include "utils/snort_bounds.h"
-#include "file_api.h"
+#include "file_api/file_api.h"
 
 #define MAX_FILE                             1024
 #define MAX_EMAIL                            1024

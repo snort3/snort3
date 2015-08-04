@@ -25,9 +25,10 @@
 
 #include <stdlib.h>
 
-#include "main/snort_types.h"
-#include "utils/sf_email_attach_decode.h"
+#include "sf_email_attach_decode.h"
 #include "file_mime_config.h"
+
+#include "main/snort_types.h"
 
 typedef enum
 {

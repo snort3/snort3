@@ -979,6 +979,7 @@ src/log/Makefile \
 src/loggers/Makefile    \
 src/main/Makefile \
 src/managers/Makefile \
+src/mime/Makefile \
 src/stream/Makefile \
 src/stream/base/Makefile \
 src/stream/ip/Makefile \

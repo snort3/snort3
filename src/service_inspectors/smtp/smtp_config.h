@@ -20,7 +20,7 @@
 #define SMTP_CONFIG_H
 
 // Configuration for SMTP inspector
-#include "file_api/file_mime_process.h"
+#include "mime/file_mime_process.h"
 #include "search_engines/search_tool.h"
 
 enum NORM_TYPES

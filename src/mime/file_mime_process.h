@@ -26,10 +26,10 @@
 // and file name will be extracted from MIME header
 
 #include "file_api/file_api.h"
-#include "file_api/file_mime_config.h"
-#include "file_api/file_mime_paf.h"
-#include "file_api/file_mime_log.h"
-#include "file_api/file_mime_decode.h"
+#include "file_mime_config.h"
+#include "file_mime_paf.h"
+#include "file_mime_log.h"
+#include "file_mime_decode.h"
 
 /* state flags */
 #define MIME_FLAG_FOLDING                    0x00000001

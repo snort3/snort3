@@ -25,9 +25,10 @@
 // File name will be extracted from MIME header
 // Email headers and emails are also stored in the log buffer
 
+#include "file_mime_config.h"
+#include "file_mime_log.h"
 #include "file_api/file_api.h"
-#include "file_api/file_mime_config.h"
-#include "file_api/file_mime_log.h"
+
 
 enum EmailUserType
 {

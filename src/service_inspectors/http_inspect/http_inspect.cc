@@ -53,7 +53,7 @@
 #include "target_based/snort_protocols.h"
 #include "file_api/file_api.h"
 #include "utils/kmap.h"
-#include "utils/sf_email_attach_decode.h"
+#include "mime/sf_email_attach_decode.h"
 #include "utils/util.h"
 #include "utils/xmalloc.h"
 #include "framework/inspector.h"

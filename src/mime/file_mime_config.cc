@@ -27,7 +27,7 @@
 
 #include "main/snort_types.h"
 
-#include "file_api.h"
+#include "file_api/file_api.h"
 #include "file_mime_process.h"
 
 void DecodeConfig::update_max_depth(int64_t depth)

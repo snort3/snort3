@@ -35,11 +35,10 @@
 #include "framework/inspector.h"
 #include "target_based/snort_protocols.h"
 #include "search_engines/search_tool.h"
-#include "utils/sf_email_attach_decode.h"
 #include "utils/sfsnprintfappend.h"
 #include "protocols/ssl.h"
 #include "file_api/file_api.h"
-#include "file_api/file_mime_process.h"
+#include "mime/file_mime_process.h"
 
 #include "pop.h"
 #include "pop_module.h"

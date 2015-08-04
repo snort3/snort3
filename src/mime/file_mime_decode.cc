@@ -19,9 +19,9 @@
 // Author: Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
 #include "file_mime_decode.h"
+#include "sf_base64decode.h"
 
 #include "utils/snort_bounds.h"
-#include "utils/sf_base64decode.h"
 #include "utils/util_unfold.h"
 #include "utils/util.h"
 

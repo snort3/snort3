@@ -27,7 +27,7 @@
 #include "main/snort_types.h"
 #include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
-#include "file_api/file_mime_paf.h"
+#include "mime/file_mime_paf.h"
 
 struct ImapDataInfo
 {

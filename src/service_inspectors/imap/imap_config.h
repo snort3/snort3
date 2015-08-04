@@ -21,7 +21,7 @@
 
 // Configuration for Imap service inspector
 
-#include "file_api/file_mime_process.h"
+#include "mime/file_mime_process.h"
 
 struct IMAP_PROTO_CONF
 {

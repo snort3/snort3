@@ -100,6 +100,7 @@ target_link_libraries( snort
     parser
     file_api
     file
+    mime
     control
     filter
     detection
@@ -146,6 +147,7 @@ add_subdirectory(hash)
 add_subdirectory(log)
 add_subdirectory(main)
 add_subdirectory(managers)
+add_subdirectory(mime)
 add_subdirectory(packet_io)
 add_subdirectory(parser)
 add_subdirectory(ports)

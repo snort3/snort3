@@ -21,7 +21,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 
-#include "file_api/file_mime_process.h"
+#include "mime/file_mime_process.h"
 
 #include "nhttp_enum.h"
 #include "nhttp_msg_chunk.h"

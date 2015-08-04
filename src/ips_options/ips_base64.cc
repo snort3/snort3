@@ -34,7 +34,7 @@
 #include "parser/parser.h"
 #include "time/profiler.h"
 #include "utils/util.h"
-#include "utils/sf_base64decode.h"
+#include "mime/sf_base64decode.h"
 #include "utils/util_unfold.h"
 #include "utils/snort_bounds.h"
 #include "detection/detection_defines.h"

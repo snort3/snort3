@@ -23,7 +23,7 @@
 
 #include "detection/detection_util.h"
 #include "file_api/file_api.h"
-#include "file_api/file_mime_process.h"
+#include "mime/file_mime_process.h"
 
 #include "nhttp_enum.h"
 #include "nhttp_msg_request.h"

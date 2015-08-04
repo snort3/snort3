@@ -19,11 +19,12 @@
 // Author: Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
 #include "sf_email_attach_decode.h"
-
-#include "snort_bounds.h"
-#include "util.h"
-#include "util_unfold.h"
 #include "sf_base64decode.h"
+
+#include "utils/snort_bounds.h"
+#include "utils/util.h"
+#include "utils/util_unfold.h"
+
 
 #define UU_DECODE_CHAR(c) (((c) - 0x20) & 0x3f)
 

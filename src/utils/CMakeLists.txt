@@ -34,10 +34,6 @@ ADD_LIBRARY( utils STATIC
     kmap.cc
     kmap.h
     segment_mem.cc 
-    sf_email_attach_decode.cc 
-    sf_email_attach_decode.h
-    sf_base64decode.cc 
-    sf_base64decode.h
     sflsq.cc 
     sfmemcap.cc 
     sfsnprintfappend.cc 

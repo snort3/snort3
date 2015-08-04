@@ -21,7 +21,7 @@
 #define POP_CONFIG_H
 // Configuration for Pop service inspector
 
-#include "file_api/file_mime_process.h"
+#include "mime/file_mime_process.h"
 
 struct POP_PROTO_CONF
 {

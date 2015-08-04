@@ -3,10 +3,6 @@ This directory contains all the file processing related classes and APIs
 * file_api: provides the interfaces for file processing, used by service
 inpsectors such as HTTP, SMTP, POP, IMAP, SMB, and FTP etc.
 
-* MIME processing: provides the common MIME header and MIME body processing for
-service inpsectors such as HTTP, SMTP, POP, and IMAP. If configured, it decodes
-file data that are encoded in Base64, UU-encoding, QP-encoding, and Bit-encoding.
-
 * File capture: provides the ability to capture file data and save them in the
 mempool, then they can be stored to disk.
 
