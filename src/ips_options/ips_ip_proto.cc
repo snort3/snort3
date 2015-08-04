@@ -118,7 +118,7 @@ int IpProtoOption::eval(Cursor&, Packet* p)
 
     if (!p->has_ip())
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Not IP\n"); );
+        DebugMessage(DEBUG_IPS_OPTION,"Not IP\n");
         return rval;
     }
 

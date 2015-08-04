@@ -24,7 +24,7 @@
 
 namespace Piglet
 {
-int main(); 
+int main();
 bool piglet_mode();
 }
 

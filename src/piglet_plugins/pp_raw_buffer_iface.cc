@@ -85,7 +85,7 @@ static const luaL_Reg methods[] =
 
             auto& self = RawBufferIface.get(L, 1);
             size_t new_size = arg.check_size(2);
-            
+
             self.resize(new_size, '\0');
 
             return 0;

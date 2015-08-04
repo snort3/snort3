@@ -380,23 +380,23 @@ int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
 
     /* FIXIT: maybe add a port test here ... */
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "[*] Rule Head %p\n", rtn); )
+    DebugFormat(DEBUG_DETECT, "[*] Rule Head %p\n", rtn);
 
     if (!rtn->rule_func->RuleHeadFunc(p, rtn, rtn->rule_func, check_ports))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-            "   => Header check failed, checking next node\n"); );
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-            "   => returned from next node check\n"); );
+        DebugMessage(DEBUG_DETECT,
+            "   => Header check failed, checking next node\n");
+        DebugMessage(DEBUG_DETECT,
+            "   => returned from next node check\n");
         MODULE_PROFILE_END(ruleRTNEvalPerfStats);
         return 0;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-        "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n"); );
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "   => RTN %p Matched!\n", rtn); );
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n"); );
+    DebugMessage(DEBUG_DETECT,
+        "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+    DebugFormat(DEBUG_DETECT, "   => RTN %p Matched!\n", rtn);
+    DebugMessage(DEBUG_DETECT,
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n");
     /*
     **  Return that there is a rule match and log the event outside
     **  of this routine.
@@ -1122,9 +1122,9 @@ static inline void fpEvalHeaderTcp(Packet* p, OTNX_MATCH_DATA* omd)
     if ( !prmFindRuleGroupTcp(snort_conf->prmTcpRTNX, p->ptrs.dp, p->ptrs.sp, &src, &dst, &any) )
         return;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,
-        "fpEvalHeaderTcp: sport=%d, "
-        "dport=%d, src:%x, dst:%x, any:%x\n",p->ptrs.sp,p->ptrs.dp,src,dst,any); );
+    DebugFormat(DEBUG_ATTRIBUTE,
+        "fpEvalHeaderTcp: sport=%d, dport=%d, src:%x, dst:%x, any:%x\n",
+        p->ptrs.sp,p->ptrs.dp,src,dst,any);
 
     if ( dst )
         fpEvalHeaderSW(dst, p, 1, 0, 0, omd);
@@ -1143,9 +1143,9 @@ static inline void fpEvalHeaderUdp(Packet* p, OTNX_MATCH_DATA* omd)
     if ( !prmFindRuleGroupUdp(snort_conf->prmUdpRTNX, p->ptrs.dp, p->ptrs.sp, &src, &dst, &any) )
         return;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,
-        "fpEvalHeaderUdp: sport=%d, dport=%d, "
-        "src:%x, dst:%x, any:%x\n",p->ptrs.sp,p->ptrs.dp,src,dst,any); );
+    DebugFormat(DEBUG_ATTRIBUTE,
+        "fpEvalHeaderUdp: sport=%d, dport=%d, src:%x, dst:%x, any:%x\n",
+        p->ptrs.sp,p->ptrs.dp,src,dst,any);
 
     if ( dst )
         fpEvalHeaderSW(dst, p, 1, 0, 0, omd) ;
@@ -1163,13 +1163,13 @@ static inline void fpEvalHeaderSvc(Packet* p, OTNX_MATCH_DATA* omd, int proto)
 
     int16_t proto_ordinal = p->flow ? p->flow->ssn_state.application_protocol : 0;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "proto_ordinal=%d\n", proto_ordinal); );
+    DebugFormat(DEBUG_ATTRIBUTE, "proto_ordinal=%d\n", proto_ordinal);
 
     if (proto_ordinal > 0)
     {
         if (p->packet_flags & PKT_FROM_SERVER) /* to cli */
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_server\n"); );
+            DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_server\n");
 
             svc = snort_conf->sopgTable->get_port_group(proto, false, proto_ordinal);
             file = snort_conf->sopgTable->get_port_group(proto, false, SNORT_PROTO_FILE);
@@ -1177,16 +1177,16 @@ static inline void fpEvalHeaderSvc(Packet* p, OTNX_MATCH_DATA* omd, int proto)
 
         if (p->packet_flags & PKT_FROM_CLIENT) /* to srv */
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_client\n"); );
+            DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_client\n");
 
             svc = snort_conf->sopgTable->get_port_group(proto, true, proto_ordinal);
             file = snort_conf->sopgTable->get_port_group(proto, true, SNORT_PROTO_FILE);
         }
 
-        DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,
+        DebugFormat(DEBUG_ATTRIBUTE,
             "fpEvalHeaderSvc:targetbased-ordinal-lookup: "
             "sport=%d, dport=%d, proto_ordinal=%d, proto=%d, src:%x, "
-            "file:%x\n",p->ptrs.sp,p->ptrs.dp,proto_ordinal,proto,svc,file); );
+            "file:%x\n",p->ptrs.sp,p->ptrs.dp,proto_ordinal,proto,svc,file);
     }
     // FIXIT-P put alert service rules with file data fp in alert file group and
     // verfiy ports and service during rule eval to avoid searching file data 2x.

@@ -122,7 +122,7 @@ public:
 static void get_alert_pkt(
     Packet* p, const char* msg, Event* event)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_LOG, "Logging Alert data!\n"); );
+    DebugMessage(DEBUG_LOG, "Logging Alert data!\n");
 
     // FIXIT-L ugh ...
     memset((char*)&us.alert,0,sizeof(us.alert));

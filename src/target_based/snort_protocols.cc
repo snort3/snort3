@@ -91,10 +91,10 @@ int16_t AddProtocolReference(const char* protocol)
     reference = (SFTargetProtocolReference*)sfghash_find(proto_reference_table, (void*)protocol);
     if (reference)
     {
-        DEBUG_WRAP(
-            DebugMessage(DEBUG_ATTRIBUTE,
+        DebugFormat(DEBUG_ATTRIBUTE,
             "Protocol Reference for %s exists as %d\n",
-            protocol, reference->ordinal); );
+            protocol, reference->ordinal);
+
         return reference->ordinal;
     }
 
@@ -109,10 +109,9 @@ int16_t AddProtocolReference(const char* protocol)
 
     sfghash_add(proto_reference_table, reference->name, reference);
 
-    DEBUG_WRAP(
-        DebugMessage(DEBUG_ATTRIBUTE,
+    DebugFormat(DEBUG_ATTRIBUTE,
         "Added Protocol Reference for %s as %d\n",
-        protocol, reference->ordinal); );
+        protocol, reference->ordinal);
 
     return reference->ordinal;
 }

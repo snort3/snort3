@@ -95,9 +95,9 @@ static void plx_print(plx_t* p)
 {
     DEBUG_WRAP(
         int i;
-        DebugMessage(DEBUG_PORTLISTS, "plx-n=%d\n", p->n);
+        DebugFormat(DEBUG_PORTLISTS, "plx-n=%d\n", p->n);
         for (i=0; i<p->n; i++)
-            DebugMessage(DEBUG_PORTLISTS, "plx[%d]=%lu\n", i, p->p[i]);
+            DebugFormat(DEBUG_PORTLISTS, "plx[%d]=%lu\n", i, p->p[i]);
         );
 }
 
@@ -271,17 +271,17 @@ static PortObject2* _merge_N_pol(
     /*
     * Check for the merged port object in the plx table
     */
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-        "++++n=%d sfghash_find-mhashx\n",pol_cnt); );
+    DebugFormat(DEBUG_PORTLISTS,
+        "++++n=%d sfghash_find-mhashx\n",pol_cnt);
     ponew = (PortObject2*)sfghash_find(mhashx, &plx);
     if ( ponew )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-            "n=%d ponew found in mhashx\n",pol_cnt); );
+        DebugFormat(DEBUG_PORTLISTS,
+            "n=%d ponew found in mhashx\n",pol_cnt);
         return ponew;
     }
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-        "n=%d posnew not found in mhashx\n",pol_cnt); );
+    DebugFormat(DEBUG_PORTLISTS,
+        "n=%d posnew not found in mhashx\n",pol_cnt);
 
     /*
     *  Merge the port objects together - ports and rules
@@ -299,46 +299,46 @@ static PortObject2* _merge_N_pol(
     {
         for (i=1; i<pol_cnt; i++)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"*** %d rules in object %d\n",
-                ((PortObject*)pol[i])->rule_list->count,i); );
+            DebugFormat(DEBUG_PORTLISTS,"*** %d rules in object %d\n",
+                ((PortObject*)pol[i])->rule_list->count,i);
             PortObjectAppendEx2(ponew, (PortObject*)pol[i]);
-            DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
+            DebugFormat(DEBUG_PORTLISTS,
                 "*** merged port-object[%d], %d rules\n",
-                i,ponew->rule_hash->count); );
+                i,ponew->rule_hash->count);
         }
         PortObjectNormalize( (PortObject*)ponew);
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
+    DebugFormat(DEBUG_PORTLISTS,
         "*** merged %d port objects, %d rules\n",
-        pol_cnt,ponew->rule_hash->count); );
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"*** merged ponew - follows: \n"); );
+        pol_cnt,ponew->rule_hash->count);
+    DebugMessage(DEBUG_PORTLISTS,"*** merged ponew - follows: \n");
     // PortObjectPrint2(ponew);
 
     /*
     * Add the Merged PortObject2 to the PortObject2 hash table
     * keyed by ports.
     */
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"n=%d sfghash_add-mhash\n",pol_cnt); );
+    DebugFormat(DEBUG_PORTLISTS,"n=%d sfghash_add-mhash\n",pol_cnt);
     stat =sfghash_add(mhash, &ponew, ponew);
     if ( stat != SFGHASH_OK )
     {
         /* This is possible since PLX hash on a different key */
         if ( stat == SFGHASH_INTABLE )
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"n=%d sfghash_add-mhash ponew in table\n",
-                pol_cnt); );
-            DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"n=%d sfghash_find-mhash ponew\n",pol_cnt); );
+            DebugFormat(DEBUG_PORTLISTS,"n=%d sfghash_add-mhash ponew in table\n",
+                pol_cnt);
+            DebugFormat(DEBUG_PORTLISTS,"n=%d sfghash_find-mhash ponew\n",pol_cnt);
             pox = (PortObject2*)sfghash_find(mhash,&ponew);
             if ( pox )
             {
                 PortObject2AppendPortObject2(pox,ponew);
-                DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-                    "sfportobject.c: merge_N_pol() line=%d  SFGHASH_INTABLE\n",__LINE__); );
+                DebugFormat(DEBUG_PORTLISTS,
+                    "sfportobject.c: merge_N_pol() line=%d  SFGHASH_INTABLE\n",__LINE__);
                 PortObject2Free(ponew);
                 ponew = pox;
-                DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-                    "n=%d sfghash_find-mhash ponew found, new rules merged\n",pol_cnt); );
+                DebugFormat(DEBUG_PORTLISTS,
+                    "n=%d sfghash_find-mhash ponew found, new rules merged\n",pol_cnt);
             }
             else
             {
@@ -351,8 +351,8 @@ static PortObject2* _merge_N_pol(
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"***%d ports merged object added to mhash  table\n",
-        pol_cnt); );
+    DebugFormat(DEBUG_PORTLISTS,"***%d ports merged object added to mhash  table\n",
+        pol_cnt);
 
     /*
     * Create a plx node and add it to plx table
@@ -368,7 +368,7 @@ static PortObject2* _merge_N_pol(
     /*
      * Add the plx node to the PLX hash table
      */
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"n=%d sfghash_add-mhashx\n",pol_cnt); );
+    DebugFormat(DEBUG_PORTLISTS,"n=%d sfghash_add-mhashx\n",pol_cnt);
     stat = sfghash_add(mhashx, &plx_tmp, ponew);
     if ( stat != SFGHASH_OK )
     {
@@ -382,8 +382,7 @@ static PortObject2* _merge_N_pol(
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"Added-%d Merged Rule Groups to PLX HASH\n",pol_cnt);
-        );
+    DebugFormat(DEBUG_PORTLISTS,"Added-%d Merged Rule Groups to PLX HASH\n",pol_cnt);
 
     /*
     *  Validate hash table entry
@@ -461,8 +460,8 @@ static PortObject2* PortTableCompileMergePortObjectList2(
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"*** %d small rule groups, %d large rule groups\n",
-        nsmall,nlarge); );
+    DebugFormat(DEBUG_PORTLISTS,"*** %d small rule groups, %d large rule groups\n",
+        nsmall,nlarge);
 
     /*
     * Sort the pointers to the input port objects so
@@ -475,9 +474,9 @@ static PortObject2* PortTableCompileMergePortObjectList2(
 
     DEBUG_WRAP(
         for (i=0; i<nsmall; i++)
-            DebugMessage(DEBUG_PORTLISTS, "posmall[%d]=%lu\n",i,posmall[i]);
+            DebugFormat(DEBUG_PORTLISTS, "posmall[%d]=%lu\n",i,posmall[i]);
         for (i=0; i<nlarge; i++)
-            DebugMessage(DEBUG_PORTLISTS, "polarge[%d]=%lu\n",i,polarge[i]);
+            DebugFormat(DEBUG_PORTLISTS, "polarge[%d]=%lu\n",i,polarge[i]);
         );
 
     /*
@@ -505,7 +504,7 @@ static PortObject2* PortTableCompileMergePortObjectList2(
     */
     if ( nlarge )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"***nlarge=%d \n",nlarge); );
+        DebugFormat(DEBUG_PORTLISTS,"***nlarge=%d \n",nlarge);
         ponew =  _merge_N_pol(mhash, mhashx, plx_list, polarge, nlarge, &plx_large);
     }
 
@@ -514,7 +513,7 @@ static PortObject2* PortTableCompileMergePortObjectList2(
     */
     if ( nsmall )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"***nsmall=%d \n",nsmall); );
+        DebugFormat(DEBUG_PORTLISTS,"***nsmall=%d \n",nsmall);
         posnew =  _merge_N_pol(mhash, mhashx, plx_list, posmall, nsmall, &plx_small);
     }
     /*
@@ -524,8 +523,8 @@ static PortObject2* PortTableCompileMergePortObjectList2(
     */
     if ( nlarge && nsmall )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-            "*** appending small rules to larger rule group\n"); );
+        DebugMessage(DEBUG_PORTLISTS,
+            "*** appending small rules to larger rule group\n");
         if (ponew != posnew)
         {
             /* Append small port object, just the rules */
@@ -535,14 +534,14 @@ static PortObject2* PortTableCompileMergePortObjectList2(
             PortObjectRemovePorts( (PortObject*)posnew, (PortObject*)ponew);
         }
 
-        DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"*** final - using small+large rule group \n"); );
+        DebugMessage(DEBUG_PORTLISTS,"*** final - using small+large rule group \n");
     }
     else if ( nsmall )
     {
         /* Only a small port object */
         ponew = posnew;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"*** final - using small rule group only \n"); );
+        DebugMessage(DEBUG_PORTLISTS,"*** final - using small rule group only \n");
     }
     else if ( nlarge )
     {
@@ -592,7 +591,7 @@ static int PortTableCompileMergePortObjects(PortTable* p)
     SFGHASH* mhashx;
     SF_LIST* plx_list;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"***\n***Merging PortObjects->PortObjects2\n***\n"); );
+    DebugMessage(DEBUG_PORTLISTS,"***\n***Merging PortObjects->PortObjects2\n***\n");
 
     std::unique_ptr<PortObject*[]> upA(new PortObject*[SFPO_MAX_LPORTS]);
     PortObject** pol = upA.get();
@@ -628,8 +627,8 @@ static int PortTableCompileMergePortObjects(PortTable* p)
 
     p->pt_mpxo_hash = mhashx;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-        "***\n*** PortList-Merging, Large Rule groups must have %d rules\n",p->pt_lrc); );
+    DebugFormat(DEBUG_PORTLISTS,
+        "***\n*** PortList-Merging, Large Rule groups must have %d rules\n",p->pt_lrc);
 
     plx_list = sflist_new();
     sflist_init(plx_list);
@@ -669,7 +668,7 @@ static int PortTableCompileMergePortObjects(PortTable* p)
             continue;
         }
 
-        DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"*** merging list for port[%d] \n",i); fflush(
+        DEBUG_WRAP(DebugFormat(DEBUG_PORTLISTS,"*** merging list for port[%d] \n",i); fflush(
             stdout); );
 
         /* merge the rules into an optimal port object */
@@ -773,8 +772,8 @@ static int PortTableCompileMergePortObjects(PortTable* p)
         /* set the new list - this is a list of port items for this port object */
         po->item_list = plist;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"port-object id = %d, port cnt = %d\n",po->id,
-            po->port_cnt); );
+        DebugFormat(DEBUG_PORTLISTS,"port-object id = %d, port cnt = %d\n",po->id,
+            po->port_cnt);
     }
 
     return 0;
@@ -830,8 +829,8 @@ static int PortTableConsistencyCheck(PortTable* p)
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-        "***\n***Port Table Compiler Consistency Check Phase-I Passed !\n"); );
+    DebugMessage(DEBUG_PORTLISTS,
+        "***\n***Port Table Compiler Consistency Check Phase-I Passed !\n");
 
     /*
     * This phase checks the Input port object rules/ports against
@@ -874,9 +873,9 @@ static int PortTableConsistencyCheck(PortTable* p)
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-        "***\n***Port Table Compiler Consistency Check Phase-II Passed !!! - Good to go Houston\n****\n");
-        );
+    DebugMessage(DEBUG_PORTLISTS,
+        "***\n***Port Table Compiler Consistency Check Phase-II Passed !!!"
+        " - Good to go Houston\n****\n");
     return 0;
 }
 
@@ -1018,7 +1017,7 @@ int PortTableCompile(PortTable* p)
         return 0;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"#PortTableCompile: Compiling Port Array Lists\n"); );
+    DebugMessage(DEBUG_PORTLISTS,"#PortTableCompile: Compiling Port Array Lists\n");
 
     if ( PortTableCompileMergePortObjects(p) )
     {

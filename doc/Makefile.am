@@ -205,6 +205,12 @@ install-data-hook:
 
 uninstall-hook:
 	rm -rf $(DESTDIR)$(docdir)/snort_manual.chunked
+
+snort_online.html: $(all_sources)
+	$(srcdir)/online_manual.sh
+
+dev_guide.html: $(snort)
+	$(srcdir)/dev_guide.sh $(top_srcdir)
 endif
 
 delete_unbuilt = $(if $(and $(findstring $(builddir),$(srcdir)),$(findstring $(srcdir),$(builddir))), ,$(unbuilt_sources))
@@ -215,5 +221,5 @@ clean-local:
 	rm -f $(doc_DATA)
 	rm -f snort_manual.{fo,xml}
 	rm -rf snort_manual.chunked
-	rm -f *.css *.tgz
+	rm -f *.css *.tgz *.html
 

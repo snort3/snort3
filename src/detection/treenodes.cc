@@ -52,7 +52,7 @@ OptFpList* AddOptFuncToList(RuleOptEvalFunc ro_eval_func, OptTreeNode* otn)
 {
     OptFpList* ofp = (OptFpList*)SnortAlloc(sizeof(OptFpList));
 
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Adding new rule to list\n"); );
+    DebugMessage(DEBUG_CONFIGRULES,"Adding new rule to list\n");
 
     /* if there are no nodes on the function list... */
     if (otn->opt_func == NULL)
@@ -70,7 +70,7 @@ OptFpList* AddOptFuncToList(RuleOptEvalFunc ro_eval_func, OptTreeNode* otn)
         tmp->next = ofp;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Set OptTestFunc to %p\n", ro_eval_func); );
+    DebugFormat(DEBUG_CONFIGRULES,"Set OptTestFunc to %p\n", ro_eval_func);
 
     ofp->OptTestFunc = ro_eval_func;
 

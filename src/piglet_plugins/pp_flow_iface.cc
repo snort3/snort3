@@ -59,7 +59,7 @@ static const luaL_Reg metamethods[] =
         {
             auto& self = FlowIface.get(L);
             lua_pushfstring(L, "%s@%p", FlowIface.name, &self);
- 
+
             return 1;
         }
     },

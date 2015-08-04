@@ -40,7 +40,7 @@ static std::vector<int> data_link_types;
 static std::vector<uint16_t> protocol_ids;
 
 static const ip::IpApi ip_api {};
- 
+
 struct TextLogWrapper
 {
     TextLog* text_log;

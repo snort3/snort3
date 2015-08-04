@@ -95,8 +95,8 @@ static int SnortFTP(
 
     if (iInspectMode == FTPP_SI_SERVER_MODE)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-            "Server packet: %.*s\n", p->dsize, p->data));
+        DebugFormat(DEBUG_FTPTELNET,
+            "Server packet: %.*s\n", p->dsize, p->data);
 
         // FIXIT-L breaks target-based non-standard ports
         //if ( !ScPafEnabled() )
@@ -107,17 +107,17 @@ static int SnortFTP(
     {
         if ( !InspectClientPacket(p) )
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                "Client packet will be reassembled\n"));
+            DebugMessage(DEBUG_FTPTELNET,
+                "Client packet will be reassembled\n");
             MODULE_PROFILE_END(ftpPerfStats);
             return FTPP_SUCCESS;
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
+            DebugFormat(DEBUG_FTPTELNET,
                 "Client packet: rebuilt %s: %.*s\n",
                 (p->packet_flags & PKT_REBUILT_STREAM) ? "yes" : "no",
-                p->dsize, p->data));
+                p->dsize, p->data);
         }
     }
 

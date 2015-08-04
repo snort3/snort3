@@ -144,7 +144,7 @@ int RpcOption::eval(Cursor&, Packet* p)
         /* Fail if the packet is too short to match */
         if (p->dsize<28)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "RPC packet too small"); );
+            DebugMessage(DEBUG_IPS_OPTION, "RPC packet too small");
             MODULE_PROFILE_END(rpcCheckPerfStats);
             return rval;
         }
@@ -154,20 +154,20 @@ int RpcOption::eval(Cursor&, Packet* p)
          Fail if the packet is too short to match */
         if (p->dsize<24)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "RPC packet too small"); );
+            DebugMessage(DEBUG_IPS_OPTION, "RPC packet too small");
             MODULE_PROFILE_END(rpcCheckPerfStats);
             return rval;
         }
     }
 
 #ifdef DEBUG_MSGS
-    DebugMessage(DEBUG_PLUGIN,"<---xid---> <---dir---> <---rpc--->"
+    DebugMessage(DEBUG_IPS_OPTION,"<---xid---> <---dir---> <---rpc--->"
         " <---prog--> <---vers--> <---proc-->\n");
     for (i=0; i<24; i++)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "%02X ",c[i]); );
+        DebugFormat(DEBUG_IPS_OPTION, "%02X ",c[i]);
     }
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"\n"); );
+    DebugMessage(DEBUG_IPS_OPTION,"\n");
 #endif
 
     /* Read xid */
@@ -179,7 +179,7 @@ int RpcOption::eval(Cursor&, Packet* p)
     /* We only look at calls */
     if (direction != CALL)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "RPC packet not a call"); );
+        DebugMessage(DEBUG_IPS_OPTION, "RPC packet not a call");
         MODULE_PROFILE_END(rpcCheckPerfStats);
         return rval;
     }
@@ -190,7 +190,7 @@ int RpcOption::eval(Cursor&, Packet* p)
     /* Fail if it is not right */
     if (rpcvers != RPC_MSG_VERSION)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC msg version invalid"); );
+        DebugMessage(DEBUG_IPS_OPTION,"RPC msg version invalid");
         MODULE_PROFILE_END(rpcCheckPerfStats);
         return rval;
     }
@@ -200,26 +200,26 @@ int RpcOption::eval(Cursor&, Packet* p)
     vers = IXDR_GET_LONG (c);
     proc = IXDR_GET_LONG (c);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC decoded to: %lu %lu %lu\n",
-        prog,vers,proc); );
+    DebugFormat(DEBUG_IPS_OPTION,"RPC decoded to: %lu %lu %lu\n",
+        prog,vers,proc);
 
-    DEBUG_WRAP(
-        DebugMessage(DEBUG_PLUGIN, "RPC matching on: %d %d %d\n",
+    DebugFormat(DEBUG_IPS_OPTION, "RPC matching on: %d %d %d\n",
         ds_ptr->flags & RPC_CHECK_PROG,ds_ptr->flags & RPC_CHECK_VERS,
-        ds_ptr->flags & RPC_CHECK_PROC); );
+        ds_ptr->flags & RPC_CHECK_PROC);
+
     if (!(ds_ptr->flags & RPC_CHECK_PROG) ||
         ds_ptr->program == prog)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC program matches"); );
+        DebugMessage(DEBUG_IPS_OPTION,"RPC program matches");
         if (!(ds_ptr->flags & RPC_CHECK_VERS) ||
             ds_ptr->vers == vers)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC version matches"); );
+            DebugMessage(DEBUG_IPS_OPTION,"RPC version matches");
             if (!(ds_ptr->flags & RPC_CHECK_PROC) ||
                 ds_ptr->proc == proc)
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC proc matches"); );
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Yippee! Found one!"); );
+                DebugMessage(DEBUG_IPS_OPTION,"RPC proc matches");
+                DebugMessage(DEBUG_IPS_OPTION, "Yippee! Found one!");
                 rval = DETECTION_OPTION_MATCH;
             }
         }
@@ -227,7 +227,7 @@ int RpcOption::eval(Cursor&, Packet* p)
     else
     {
         /* you can put debug comments here or not */
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC not equal\n"); );
+        DebugMessage(DEBUG_IPS_OPTION,"RPC not equal\n");
     }
 
     /* if the test isn't successful, return 0 */

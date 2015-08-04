@@ -155,7 +155,7 @@ void PortObject2Free(void* pvoid)
     PortObject2* po = (PortObject2*)pvoid;
     DEBUG_WRAP(static int pof2_cnt = 0; pof2_cnt++; );
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"PortObjectFree2-Cnt: %d ptr=%p\n",pof2_cnt,pvoid); );
+    DebugFormat(DEBUG_PORTLISTS,"PortObjectFree2-Cnt: %d ptr=%p\n",pof2_cnt,pvoid);
 
     if ( !po )
         return;

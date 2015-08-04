@@ -37,7 +37,7 @@ struct Arg
     { luaL_checktype(L, n, type); }
 
     // Types
-    inline bool is_type(int n, int type) 
+    inline bool is_type(int n, int type)
     { return lua_type(L, n) == type; }
 
     inline bool is_number(int n)

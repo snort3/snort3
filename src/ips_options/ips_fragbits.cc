@@ -155,9 +155,9 @@ int FragBitsOption::eval(Cursor&, Packet* p)
     const uint16_t frag_offset = p->ptrs.ip_api.off_w_flags();
     MODULE_PROFILE_START(fragBitsPerfStats);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "           <!!> CheckFragBits: ");
-        DebugMessage(DEBUG_PLUGIN, "[rule: 0x%X:%d   pkt: 0x%X] ",
-        fb->frag_bits, fb->mode, frag_offset & bitmask); );
+    DebugMessage(DEBUG_IPS_OPTION, "           <!!> CheckFragBits: ");
+        DebugFormat(DEBUG_IPS_OPTION, "[rule: 0x%X:%d   pkt: 0x%X] ",
+        fb->frag_bits, fb->mode, frag_offset & bitmask);
 
     switch (fb->mode)
     {
@@ -165,12 +165,12 @@ int FragBitsOption::eval(Cursor&, Packet* p)
         /* check if the rule bits match the bits in the packet */
         if (fb->frag_bits == (frag_offset & bitmask))
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got Normal bits match\n"); );
+            DebugMessage(DEBUG_IPS_OPTION,"Got Normal bits match\n");
             rval = DETECTION_OPTION_MATCH;
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Normal test failed\n"); );
+            DebugMessage(DEBUG_IPS_OPTION,"Normal test failed\n");
         }
         break;
 
@@ -178,12 +178,12 @@ int FragBitsOption::eval(Cursor&, Packet* p)
         /* check if the rule bits don't match the bits in the packet */
         if ((fb->frag_bits & (frag_offset & bitmask)) == 0)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got NOT bits match\n"); );
+            DebugMessage(DEBUG_IPS_OPTION,"Got NOT bits match\n");
             rval = DETECTION_OPTION_MATCH;
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"NOT test failed\n"); );
+            DebugMessage(DEBUG_IPS_OPTION,"NOT test failed\n");
         }
         break;
 
@@ -191,12 +191,12 @@ int FragBitsOption::eval(Cursor&, Packet* p)
         /* check if the rule bits are present in the packet */
         if ((fb->frag_bits & (frag_offset & bitmask)) == fb->frag_bits)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got ALL bits match\n"); );
+            DebugMessage(DEBUG_IPS_OPTION,"Got ALL bits match\n");
             rval = DETECTION_OPTION_MATCH;
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"ALL test failed\n"); );
+            DebugMessage(DEBUG_IPS_OPTION,"ALL test failed\n");
         }
         break;
 
@@ -204,12 +204,12 @@ int FragBitsOption::eval(Cursor&, Packet* p)
         /* check if any of the rule bits match the bits in the packet */
         if ((fb->frag_bits & (frag_offset & bitmask)) != 0)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got ANY bits match\n"); );
+            DebugMessage(DEBUG_IPS_OPTION,"Got ANY bits match\n");
             rval = DETECTION_OPTION_MATCH;
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"ANY test failed\n"); );
+            DebugMessage(DEBUG_IPS_OPTION,"ANY test failed\n");
         }
         break;
     default:

@@ -47,7 +47,7 @@ static int POPGetChar(POParser* pop)
         pop->slen--;
         pop->s++;
         pop->pos++;
-        DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"GetChar: %c, %d bytes left\n",c, pop->slen); );
+        DebugFormat(DEBUG_PORTLISTS,"GetChar: %c, %d bytes left\n",c, pop->slen);
         return c;
     }
     return 0;
@@ -221,7 +221,7 @@ static char* POParserName(POParser* pop)
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,">>> POParserName : %s\n",pop->token); );
+    DebugFormat(DEBUG_PORTLISTS,">>> POParserName : %s\n",pop->token);
 
     return strdup(pop->token);
 }
@@ -269,7 +269,7 @@ static uint16_t POParserGetShort(POParser* pop)
         return 0;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"GetUNumber: %d\n",c); );
+    DebugFormat(DEBUG_PORTLISTS,"GetUNumber: %d\n",c);
 
     return c;
 }
@@ -539,7 +539,7 @@ PortObject* PortObjectParseString(PortVarTable* pvTable, POParser* pop,
 {
     PortObject* po, * potmp;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"PortObjectParseString: %s\n",s); );
+    DebugFormat(DEBUG_PORTLISTS,"PortObjectParseString: %s\n",s);
 
     POParserInit(pop, s, pvTable);
 

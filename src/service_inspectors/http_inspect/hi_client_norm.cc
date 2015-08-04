@@ -105,9 +105,9 @@ int hi_split_header_cookie(
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_HTTPINSPECT,
+            DebugFormat(DEBUG_HTTPINSPECT,
                 "HttpInspect: no leading header: %d to %d\n",
-                this_header_end - this_header_start, this_header_len); );
+                this_header_end - this_header_start, this_header_len);
         }
 
         /* Trim the cookie and only copy what we can store in the buf */
@@ -126,8 +126,8 @@ int hi_split_header_cookie(
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_HTTPINSPECT, "HttpInspect: trimming cookie: %d to %d\n",
-                cookie->cookie_end - cookie->cookie, this_cookie_len); );
+            DebugFormat(DEBUG_HTTPINSPECT, "HttpInspect: trimming cookie: %d to %d\n",
+                cookie->cookie_end - cookie->cookie, this_cookie_len);
         }
 
         /* update for the next one */
@@ -181,9 +181,9 @@ int hi_split_header_cookie(
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_HTTPINSPECT,
+            DebugFormat(DEBUG_HTTPINSPECT,
                 "HttpInspect: no leading header: %d to %d\n",
-                this_header_end - this_header_start, this_header_len); );
+                this_header_end - this_header_start, this_header_len);
         }
     }
 

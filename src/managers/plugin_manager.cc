@@ -434,7 +434,7 @@ void PluginManager::show_plugins()
     PlugMap::iterator it;
 
     for ( it = plug_map.begin(); it != plug_map.end(); ++it )
-    { 
+    {
         Plugin& p = it->second;
 
         cout << Markup::item();

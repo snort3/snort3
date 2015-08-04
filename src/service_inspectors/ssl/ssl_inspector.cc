@@ -160,7 +160,7 @@ static inline bool SSLPP_is_encrypted(SSL_PROTO_CONF* config, uint32_t ssl_flags
 static inline uint32_t SSLPP_process_alert(
     SSL_PROTO_CONF*, uint32_t ssn_flags, uint32_t new_flags, Packet* packet)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_SSL, "Process Alert\n"); );
+    DebugMessage(DEBUG_SSL, "Process Alert\n");
 
     ssn_flags |= new_flags;
 
@@ -171,7 +171,7 @@ static inline uint32_t SSLPP_process_alert(
         !(new_flags & SSL_CHANGE_CIPHER_FLAG) &&
         !(new_flags & SSL_HEARTBEAT_SEEN))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_SSL, "Disabling detect\n"); );
+        DebugMessage(DEBUG_SSL, "Disabling detect\n");
         DisableDetect(packet);
     }
 
@@ -188,7 +188,7 @@ static inline uint32_t SSLPP_process_alert(
 
 static inline uint32_t SSLPP_process_hs(uint32_t ssl_flags, uint32_t new_flags)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_SSL, "Process Handshake\n"); );
+    DebugMessage(DEBUG_SSL, "Process Handshake\n");
 
     if (!SSL_BAD_HS(new_flags))
     {
@@ -208,7 +208,7 @@ static inline uint32_t SSLPP_process_hs(uint32_t ssl_flags, uint32_t new_flags)
 static inline uint32_t SSLPP_process_app(SSL_PROTO_CONF* config, uint32_t ssn_flags, uint32_t
     new_flags, Packet* packet)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_SSL, "Process Application\n"); );
+    DebugMessage(DEBUG_SSL, "Process Application\n");
 
     if (SSLPP_is_encrypted(config, ssn_flags | new_flags, packet) )
     {
@@ -217,7 +217,7 @@ static inline uint32_t SSLPP_process_app(SSL_PROTO_CONF* config, uint32_t ssn_fl
         // Heartbleed check is disabled. Stop inspection on this session.
         if (!config->max_heartbeat_len)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_SSL, "STOPPING INSPECTION (process_app)\n"); );
+            DebugMessage(DEBUG_SSL, "STOPPING INSPECTION (process_app)\n");
             stream.stop_inspection(packet->flow,
                 packet, SSN_DIR_BOTH, -1, 0);
             counts.stopped++;
@@ -246,7 +246,7 @@ static inline void SSLPP_process_other(SSL_PROTO_CONF* config, SSLData* sd, uint
 
         if (!config->max_heartbeat_len)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_SSL, "STOPPING INSPECTION (process_other)\n"); );
+            DebugMessage(DEBUG_SSL, "STOPPING INSPECTION (process_other)\n");
             stream.stop_inspection(packet->flow,
                 packet, SSN_DIR_BOTH, -1, 0);
         }

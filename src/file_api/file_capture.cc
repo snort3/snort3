@@ -57,14 +57,11 @@
 FileMemPool* file_mempool = NULL;
 File_Capture_Stats file_capture_stats;
 
-/*
- * Verify file capture information and file context information matched
- * This is used for debug purpose
- */
+#ifdef DEBUG_MSGS
+// verify file capture information and file context information matched
 
-#ifdef DEBUG
-static void verify_file_capture_info(FileContext* context,
-    FileCaptureInfo* fileInfo)
+static void verify_file_capture_info(
+    FileContext* context, FileCaptureInfo* fileInfo)
 {
     /* file capture length should be one of two possible values */
     if (context->processed_bytes)
@@ -87,8 +84,8 @@ static void verify_file_capture_info(FileContext* context,
     }
 }
 
-static void verifiy_file_capture(FileContext* context,
-    FileCaptureInfo* fileInfo)
+static void verifiy_file_capture(
+    FileContext* context, FileCaptureInfo* fileInfo)
 {
     SHA256CONTEXT sha_ctx;
     uint8_t* buff;
@@ -119,7 +116,6 @@ static void verifiy_file_capture(FileContext* context,
         }
     }
 }
-
 #endif
 
 /*
@@ -349,7 +345,7 @@ static inline int _save_to_file_buffer(FileMemPool* file_mempool,
 
     fileInfo->file_size += data_size;
 
-    DEBUG_WRAP(verify_file_capture_info(context, fileInfo); )
+    DEBUG_WRAP(verify_file_capture_info(context, fileInfo); );
     return 0;
 }
 
