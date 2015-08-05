@@ -18,8 +18,8 @@
 //--------------------------------------------------------------------------
 // sf_email_attach_decode.h author Bhagyashree Bantwal <bbantwal@cisco.com>
 
-#ifndef SF_EMAIL_ATTACH_DECODE_H
-#define SF_EMAIL_ATTACH_DECODE_H
+#ifndef DECODE_BIT_H
+#define DECODE_BIT_H
 
 // Email attachment decoder
 
@@ -27,35 +27,19 @@
 
 #include "main/snort_types.h"
 
-typedef enum
-{
-    DECODE_SUCCESS,
-    DECODE_EXCEEDED, // Decode Complete when we reach the max depths
-    DECODE_FAIL
-} DecodeResult;
-
-class DataDecode
+class BitDecode:public DataDecode
 {
 public:
-    DataDecode(int max_depth);
-    virtual ~DataDecode();
+    BitDecode(int max_depth);
+    ~BitDecode();
 
     // Main function to decode file data
-    virtual DecodeResult decode_data(const uint8_t* start, const uint8_t* end) = 0;
+    DecodeResult decode_data(const uint8_t* start, const uint8_t* end) override;
 
-    // Retrieve the decoded data the previous decode_data() call
-    int get_decoded_data(uint8_t** buf,  uint32_t* size);
+    void reset_decode_state() override;
 
-    virtual void reset_decoded_bytes();
-
-    virtual void reset_decode_state();
-
-    int get_detection_depth();
-
-protected:
-    uint32_t decoded_bytes = 0;
-    uint32_t decode_bytes_read;
-    uint8_t* decodePtr = nullptr;
+private:
+    uint32_t buf_size;
     int decode_depth;
 };
 

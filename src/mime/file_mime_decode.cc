@@ -18,9 +18,13 @@
 //--------------------------------------------------------------------------
 // Author: Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
+#include <mime/decode_uu.h>
 #include "file_mime_decode.h"
 #include "sf_base64decode.h"
-
+#include "decode_b64.h"
+#include "decode_bit.h"
+#include "decode_qp.h"
+#include "decode_uu.h"
 #include "utils/snort_bounds.h"
 #include "utils/util_unfold.h"
 #include "utils/util.h"

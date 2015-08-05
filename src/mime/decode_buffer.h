@@ -18,44 +18,38 @@
 //--------------------------------------------------------------------------
 // sf_email_attach_decode.h author Bhagyashree Bantwal <bbantwal@cisco.com>
 
-#ifndef SF_EMAIL_ATTACH_DECODE_H
-#define SF_EMAIL_ATTACH_DECODE_H
+#ifndef DECODE_BUFFER_H
+#define DECODE_BUFFER_H
 
-// Email attachment decoder
+// Manage decode buffers
 
 #include <stdlib.h>
 
 #include "main/snort_types.h"
 
-typedef enum
-{
-    DECODE_SUCCESS,
-    DECODE_EXCEEDED, // Decode Complete when we reach the max depths
-    DECODE_FAIL
-} DecodeResult;
-
-class DataDecode
+class DecodeBuffer
 {
 public:
-    DataDecode(int max_depth);
-    virtual ~DataDecode();
+    DecodeBuffer(int max_depth);
+    ~DecodeBuffer();
+    bool is_buffer_available(uint32_t& encode_avail, uint32_t& decode_avail);
+    void resume_decode(uint32_t& encode_avail, uint32_t& prev_bytes);
+    void save_buffer(uint8_t* buff, uint32_t buff_size);
+    void update_buffer(uint32_t act_encode_size, uint32_t act_decode_size);
+    void reset();
+    uint8_t* get_decode_buff() {return decodeBuf;};
+    uint8_t* get_encode_buff() {return encodeBuf;};
+    uint32_t get_decode_bytes_read() {return decode_bytes_read;};
 
-    // Main function to decode file data
-    virtual DecodeResult decode_data(const uint8_t* start, const uint8_t* end) = 0;
-
-    // Retrieve the decoded data the previous decode_data() call
-    int get_decoded_data(uint8_t** buf,  uint32_t* size);
-
-    virtual void reset_decoded_bytes();
-
-    virtual void reset_decode_state();
-
-    int get_detection_depth();
-
-protected:
-    uint32_t decoded_bytes = 0;
+private:
+    uint32_t buf_size;
+    uint32_t prev_encoded_bytes;
+    uint8_t* prev_encoded_buf;
+    uint8_t* encodeBuf = nullptr;
+    uint8_t* decodeBuf = nullptr;
+    uint32_t encode_bytes_read;
     uint32_t decode_bytes_read;
-    uint8_t* decodePtr = nullptr;
+    int encode_depth;
     int decode_depth;
 };
 

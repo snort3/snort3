@@ -15,6 +15,8 @@ add_library ( mime STATIC
     sf_email_attach_decode.h
     sf_base64decode.cc 
     sf_base64decode.h
+    uu_decode.cc
+    uu_decode.h
 )
 
 target_link_libraries(mime file_api)

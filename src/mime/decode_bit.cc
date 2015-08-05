@@ -19,60 +19,74 @@
 // Author: Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
 #include "sf_email_attach_decode.h"
+#include "decode_bit.h"
 
 #include "utils/snort_bounds.h"
 #include "utils/util.h"
 
-void DataDecode::reset_decoded_bytes()
-{
-    decodePtr = nullptr;
-    decoded_bytes = 0;
-}
-
-void DataDecode::reset_decode_state()
+void BitDecode::reset_decode_state()
 {
     reset_decoded_bytes();
 }
 
-int DataDecode::get_detection_depth()
+DecodeResult BitDecode::decode_data(const uint8_t* start, const uint8_t* end)
 {
-    // unlimited
-    if (!decode_depth)
-        return decoded_bytes;
-    // exceeded depth before (decode_bytes_read has been updated)
-    else if (decode_depth < decode_bytes_read - decoded_bytes)
-        return 0;
-    // lower than depth
-    else if (decode_depth > decode_bytes_read)
-        return decoded_bytes;
-    // cut off
-    else
-        return (decode_depth + decoded_bytes - decode_bytes_read);
-}
+    uint32_t bytes_avail = 0;
+    uint32_t act_size = 0;
 
-int DataDecode::get_decoded_data(uint8_t** buf,  uint32_t* size)
-{
-    if (decoded_bytes > 0)
-        *size = decoded_bytes;
+    if (!(decode_depth))
+    {
+        bytes_avail = buf_size;
+    }
+    else if ( decode_depth < 0 )
+    {
+        return DECODE_EXCEEDED;
+    }
     else
-        return 0;
+    {
+        bytes_avail = decode_depth - decode_bytes_read;
+    }
 
-    if (decodePtr != NULL)
-        *buf = decodePtr;
+    /* 1. Stop decoding when we have reached either the decode depth or encode depth.
+     * 2. Stop decoding when we are out of memory */
+    if (bytes_avail ==0)
+    {
+        reset_decode_state();
+        return DECODE_EXCEEDED;
+    }
+
+    if ( (uint32_t)(end-start) < bytes_avail )
+    {
+        act_size = ( end - start);
+    }
     else
-        return 0;
+    {
+        act_size = bytes_avail;
+    }
+
+    decoded_bytes = act_size;
+    decodePtr = (uint8_t*)start;
+    decode_bytes_read += act_size;
+
+    return DECODE_SUCCESS;
 }
 
 #define MAX_DEPTH       65536
 
-DataDecode::DataDecode(int max_depth)
+BitDecode::BitDecode(int max_depth):DataDecode(max_depth)
 {
+    if (!max_depth)
+        buf_size = MAX_DEPTH;
+    else
+        buf_size = max_depth;
     decode_depth = max_depth;
     decode_bytes_read = 0;
     decoded_bytes = 0;
 }
 
-DataDecode::~DataDecode()
+BitDecode::~BitDecode()
 {
 
 }
+
+
