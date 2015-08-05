@@ -15,9 +15,13 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// pp_codec_data_iface.cc author Joel Cornett <jocornet@cisco.com>
+// pp_daq_pkthdr_iface.cc author Joel Cornett <jocornet@cisco.com>
 
 #include "pp_daq_pkthdr_iface.h"
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <luajit-2.0/lua.hpp>
 
@@ -39,8 +43,12 @@ static void daq_header_set(lua_State* L, int tindex, struct _daq_pkthdr& daq)
     table.get_field("egress_group", daq.egress_group);
     table.get_field("flags", daq.flags);
     table.get_field("opaque", daq.opaque);
+#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
+#ifdef HAVE_DAQ_FLOW_ID
     table.get_field("flow_id", daq.flow_id);
+#endif
     table.get_field("address_space_id", daq.address_space_id);
+#endif
 
     // FIXIT-L: Do we want to be able to set the priv_ptr field?
 }
@@ -81,8 +89,12 @@ static const luaL_Reg methods[] =
             table.set_field("egress_group", self.egress_group);
             table.set_field("flags", self.flags);
             table.set_field("opaque", self.opaque);
+#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
+#ifdef HAVE_DAQ_FLOW_ID
             table.set_field("flow_id", self.flow_id);
+#endif
             table.set_field("address_space_id", self.address_space_id);
+#endif
 
             // FIXIT-L: Do we want to be able to read the priv_ptr field?
 

@@ -216,6 +216,20 @@ check_cxx_source_compiles(
     HAVE_DAQ_ADDRESS_SPACE_ID
 )
 
+check_cxx_source_compiles(
+    "
+    #include <daq.h>
+
+    int main()
+    {
+        DAQ_PktHdr_t hdr;
+        hdr.flow_id = 0;
+        return 0;
+    }
+    "
+    HAVE_DAQ_FLOW_ID
+)
+
 set (CMAKE_REQUIRED_FLAGS)
 set (CMAKE_REQUIRED_INCLUDES)
 set (CMAKE_REQUIRED_LIBRARIES)

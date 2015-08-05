@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// pp_codec_data_iface.cc author Joel Cornett <jocornet@cisco.com>
+// pp_daq_pkthdr_iface.h author Joel Cornett <jocornet@cisco.com>
 
 #ifndef PP_DAQ_PKTHDR_IFACE_H
 #define PP_DAQ_PKTHDR_IFACE_H

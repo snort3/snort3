@@ -41,6 +41,7 @@ Optional Features:
     --disable-corefiles      Prevent Snort from generating core files
     --enable-intel-soft-cpm  Enable Intel Soft CPM support
     --enable-unit-tests      Build unit tests
+    --enable-piglet          Build piglet test capability
     --enable-large-pcap      Enable support for pcaps larger than 2 GB
     --disable-static-daq     Link static DAQ modules.
     --enable-shell           enable command line shell support
@@ -288,6 +289,12 @@ while [ $# -ne 0 ]; do
             ;;
         --enable-unit-tests)
             append_cache_entry BUILD_UNIT_TESTS    BOOL   true
+            ;;
+        --disable-piglet)
+            append_cache_entry BUILD_PIGLET    BOOL   false
+            ;;
+        --enable-piglet)
+            append_cache_entry BUILD_PIGLET    BOOL   true
             ;;
         --disable-html-docs)
             append_cache_entry MAKE_HTML_DOC    BOOL   false
