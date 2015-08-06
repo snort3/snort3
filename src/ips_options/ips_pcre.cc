@@ -254,7 +254,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     }
 
     /* now compile the re */
-    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "pcre: compiling %s\n", re); );
+    DebugFormat(DEBUG_PATTERN_MATCH, "pcre: compiling %s\n", re);
     pcre_data->re = pcre_compile(re, compile_flags, &error, &erroffset, NULL);
 
     if (pcre_data->re == NULL)
@@ -374,8 +374,8 @@ static bool pcre_search(
         || len <= 0
         || found_offset == NULL)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-            "Returning 0 because we didn't have the required parameters!\n"); );
+        DebugMessage(DEBUG_PATTERN_MATCH,
+            "Returning 0 because we didn't have the required parameters!\n");
         return false;
     }
 
@@ -425,7 +425,7 @@ static bool pcre_search(
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "pcre_exec error : %d \n", result); );
+        DebugFormat(DEBUG_PATTERN_MATCH, "pcre_exec error : %d \n", result);
         return false;
     }
 

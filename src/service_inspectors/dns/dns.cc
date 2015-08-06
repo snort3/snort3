@@ -778,8 +778,7 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
         if ((dnsSessionData->curr_rec_state == DNS_RESP_STATE_Q_NAME) &&
             (dnsSessionData->curr_rec == 0))
         {
-            DEBUG_WRAP(
-                DebugMessage(DEBUG_DNS,
+            DebugFormat(DEBUG_DNS,
                 "DNS Header: length %d, id 0x%x, flags 0x%x, "
                 "questions %d, answers %d, authorities %d, additionals %d\n",
                 dnsSessionData->length, dnsSessionData->hdr.id,
@@ -787,7 +786,6 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
                 dnsSessionData->hdr.answers,
                 dnsSessionData->hdr.authorities,
                 dnsSessionData->hdr.additionals);
-                );
         }
 
         if (!(dnsSessionData->hdr.flags & DNS_HDR_FLAG_RESPONSE))
@@ -806,12 +804,11 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
 
                 if (dnsSessionData->curr_rec_state == DNS_RESP_STATE_Q_COMPLETE)
                 {
-                    DEBUG_WRAP(
-                        DebugMessage(DEBUG_DNS,
+                    DebugFormat(DEBUG_DNS,
                         "DNS Question %d: type %d, class %d\n",
                         i, dnsSessionData->curr_q.type,
                         dnsSessionData->curr_q.dns_class);
-                        );
+
                     dnsSessionData->curr_rec_state = DNS_RESP_STATE_Q_NAME;
                     dnsSessionData->curr_rec++;
                 }
@@ -847,15 +844,13 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
                 switch (dnsSessionData->curr_rec_state)
                 {
                 case DNS_RESP_STATE_RR_RDATA_START:
-                    DEBUG_WRAP(
-                        DebugMessage(DEBUG_DNS,
+                    DebugFormat(DEBUG_DNS,
                         "DNS ANSWER RR %d: type %d, class %d, "
                         "ttl %d rdlength %d\n", i,
                         dnsSessionData->curr_rr.type,
                         dnsSessionData->curr_rr.dns_class,
                         dnsSessionData->curr_rr.ttl,
                         dnsSessionData->curr_rr.length);
-                        );
 
                     dnsSessionData->bytes_seen_curr_rec = 0;
                     dnsSessionData->curr_rec_state = DNS_RESP_STATE_RR_RDATA_MID;
@@ -902,15 +897,13 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
                 switch (dnsSessionData->curr_rec_state)
                 {
                 case DNS_RESP_STATE_RR_RDATA_START:
-                    DEBUG_WRAP(
-                        DebugMessage(DEBUG_DNS,
+                    DebugFormat(DEBUG_DNS,
                         "DNS AUTH RR %d: type %d, class %d, "
                         "ttl %d rdlength %d\n", i,
                         dnsSessionData->curr_rr.type,
                         dnsSessionData->curr_rr.dns_class,
                         dnsSessionData->curr_rr.ttl,
                         dnsSessionData->curr_rr.length);
-                        );
 
                     dnsSessionData->bytes_seen_curr_rec = 0;
                     dnsSessionData->curr_rec_state = DNS_RESP_STATE_RR_RDATA_MID;
@@ -957,15 +950,13 @@ void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
                 switch (dnsSessionData->curr_rec_state)
                 {
                 case DNS_RESP_STATE_RR_RDATA_START:
-                    DEBUG_WRAP(
-                        DebugMessage(DEBUG_DNS,
+                    DebugFormat(DEBUG_DNS,
                         "DNS ADDITONAL RR %d: type %d, class %d, "
                         "ttl %d rdlength %d\n", i,
                         dnsSessionData->curr_rr.type,
                         dnsSessionData->curr_rr.dns_class,
                         dnsSessionData->curr_rr.ttl,
                         dnsSessionData->curr_rr.length);
-                        );
 
                     dnsSessionData->bytes_seen_curr_rec = 0;
                     dnsSessionData->curr_rec_state = DNS_RESP_STATE_RR_RDATA_MID;

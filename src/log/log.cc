@@ -80,7 +80,7 @@ FILE* OpenAlertFile(const char* filearg)
     std::string name;
     const char* filename = get_instance_file(name, filearg);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT,"Opening alert file: %s\n", filename); );
+    DebugFormat(DEBUG_INIT,"Opening alert file: %s\n", filename);
 
     if ((file = fopen(filename, "a")) == NULL)
     {
@@ -117,7 +117,7 @@ int RollAlertFile(const char* filearg)
 
     SnortSnprintf(newname, sizeof(newname)-1, "%s.%lu", oldname, (unsigned long)now);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT,"Rolling alert file: %s\n", newname); );
+    DebugFormat(DEBUG_INIT,"Rolling alert file: %s\n", newname);
 
     if ( rename(oldname, newname) )
     {

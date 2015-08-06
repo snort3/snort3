@@ -646,9 +646,9 @@ bool Stream::blocked_session(Flow* flow, Packet* p)
         ((p->packet_flags & PKT_FROM_CLIENT) &&
         (flow->ssn_state.session_flags & SSNFLAG_DROP_CLIENT)) )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+        DebugFormat(DEBUG_STREAM_STATE,
             "Blocking %s packet as session was blocked\n",
-            p->packet_flags & PKT_FROM_SERVER ?  "server" : "client"); );
+            p->packet_flags & PKT_FROM_SERVER ?  "server" : "client");
 
         DisableDetect(p);
         Active::drop_packet(p);
@@ -667,9 +667,9 @@ bool Stream::ignored_session(Flow* flow, Packet* p)
         ((p->packet_flags & PKT_FROM_CLIENT) &&
         (flow->ssn_state.ignore_direction & SSN_DIR_FROM_SERVER)) )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+        DebugFormat(DEBUG_STREAM_STATE,
             "Stream Ignoring packet from %d. Session marked as ignore\n",
-            p->packet_flags & PKT_FROM_CLIENT ? "sender" : "responder"); );
+            p->packet_flags & PKT_FROM_CLIENT ? "sender" : "responder");
 
         DisableInspection(p);
         return true;
@@ -703,7 +703,7 @@ bool Stream::expired_session(Flow* flow, Packet* p)
     if ( (flow->session_state & STREAM_STATE_TIMEDOUT)
         || StreamExpire(p, flow) )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "Stream IP session timeout!\n"); );
+        DebugMessage(DEBUG_STREAM, "Stream IP session timeout!\n");
         flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
         return true;
     }

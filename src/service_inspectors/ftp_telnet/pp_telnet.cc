@@ -168,7 +168,7 @@ int normalize_telnet(
 
     if (!normalization_required)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET, "Nothing to process!\n"); );
+        DebugMessage(DEBUG_FTPTELNET, "Nothing to process!\n");
         if (tnssn && iMode == FTPP_SI_CLIENT_MODE)
             tnssn->consec_ayt = 0;
         return FTPP_SUCCESS;
@@ -405,10 +405,10 @@ int normalize_telnet(
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
+            DebugFormat(DEBUG_FTPTELNET,
                 "overwriting %2X(%c) with %2X(%c)\n",
                 (unsigned char)(*write_ptr&0xFF), *write_ptr,
-                (unsigned char)(*read_ptr & 0xFF), *read_ptr); );
+                (unsigned char)(*read_ptr & 0xFF), *read_ptr);
 
             /* overwrite the negotiation bytes with the follow-on bytes */
             switch (*((unsigned char*)(read_ptr)))

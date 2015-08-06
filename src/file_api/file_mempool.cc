@@ -37,8 +37,8 @@
 
 #define FREE_MAGIC    0x2525252525252525
 typedef uint64_t MagicType;
-#ifdef DEBUG
 
+#ifdef DEBUG_MSGS
 static inline void file_mempool_verify(FileMemPool* mempool)
 {
     uint64_t free_size;
@@ -68,7 +68,6 @@ static inline void file_mempool_verify(FileMemPool* mempool)
             __FILE__, __LINE__);
     }
 }
-
 #endif
 
 static inline void file_mempool_free_pools(FileMemPool* mempool)

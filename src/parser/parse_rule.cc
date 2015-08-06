@@ -179,10 +179,10 @@ static int FinishPortListRule(
     /* Count rules with both src and dst specific ports */
     if (!(rtn->flags & ANY_DST_PORT) && !(rtn->flags & ANY_SRC_PORT))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
+        DebugFormat(DEBUG_PORTLISTS,
             "***\n***Info:  src & dst ports are both specific"
             " >> gid=%u sid=%u\n***\n",
-            otn->sigInfo.generator, otn->sigInfo.id));
+            otn->sigInfo.generator, otn->sigInfo.id);
 
         prc->both++;
     }
@@ -245,9 +245,9 @@ static int FinishPortListRule(
              * to those protocols.  All IP rules should have any-any port descriptors
              * and fall into this test.  IP rules that are not tcp/udp/icmp go only into the
              * IP table */
-            DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
+            DebugFormat(DEBUG_PORTLISTS,
                 "Finishing IP any-any rule %u:%u\n",
-                otn->sigInfo.generator,otn->sigInfo.id); );
+                otn->sigInfo.generator,otn->sigInfo.id);
 
             switch ( otn->proto )
             {
@@ -295,8 +295,8 @@ static int FinishPortListRule(
 
         prc->dst++;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-            "Finishing rule: dst port rule\n"); );
+        DebugMessage(DEBUG_PORTLISTS,
+            "Finishing rule: dst port rule\n");
 
         /* find the proper port object */
         pox = PortTableFindInputPortObjectPorts(dstTable, rtn->dst_portobject);
@@ -562,14 +562,14 @@ static PortObject* ParsePortListTcpUdpPort(
         /*||isalpha(port_str[0])*/ /*TODO: interferes with protocol names for ports*/
         const char* name = port_str + 1;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"PortVarTableFind: finding '%s'\n", port_str); );
+        DebugFormat(DEBUG_PORTLISTS,"PortVarTableFind: finding '%s'\n", port_str);
 
         /* look it up  in the port var table */
         portobject = PortVarTableFind(pvt, name);
         if (portobject == NULL)
             ParseAbort("***PortVar Lookup failed on '%s'.", port_str);
 
-        DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"PortVarTableFind: '%s' found!\n", port_str); );
+        DebugFormat(DEBUG_PORTLISTS,"PortVarTableFind: '%s' found!\n", port_str);
     }
     /* 3rd -  and finally process a raw port list */
     else
@@ -577,13 +577,13 @@ static PortObject* ParsePortListTcpUdpPort(
         /* port list = [p,p,p:p,p,...] or p or p:p , no embedded spaces due to tokenizer */
         PortObject* pox;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-            "parser.c->PortObjectParseString: parsing '%s'\n",port_str); );
+        DebugFormat(DEBUG_PORTLISTS,
+            "parser.c->PortObjectParseString: parsing '%s'\n",port_str);
 
         portobject = PortObjectParseString(pvt, &poparser, 0, port_str, 0);
 
-        DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-            "parser.c->PortObjectParseString: '%s' done.\n",port_str); );
+        DebugFormat(DEBUG_PORTLISTS,
+            "parser.c->PortObjectParseString: '%s' done.\n",port_str);
 
         if ( !portobject )
         {
@@ -596,16 +596,16 @@ static PortObject* ParsePortListTcpUdpPort(
         pox = PortTableFindInputPortObjectPorts(noname, portobject);
         if ( pox )
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
+            DebugFormat(DEBUG_PORTLISTS,
                 "parser.c: already have '%s' as a PortObject - "
-                "calling PortObjectFree(portbject) line=%d\n",port_str,__LINE__); );
+                "calling PortObjectFree(portbject) line=%d\n",port_str,__LINE__);
             PortObjectFree(portobject);
             portobject = pox;
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-                "parser.c: adding '%s' as a PortObject line=%d\n",port_str,__LINE__); );
+            DebugFormat(DEBUG_PORTLISTS,
+                "parser.c: adding '%s' as a PortObject line=%d\n",port_str,__LINE__);
             /* Add to the un-named port var table */
             if (PortTableAddObject(noname, portobject))
             {
@@ -657,7 +657,7 @@ static int ParsePortList(
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"Rule-PortVar Parsed: %s \n",port_str); );
+    DebugFormat(DEBUG_PORTLISTS,"Rule-PortVar Parsed: %s \n",port_str);
 
     /* !ports - port lists can be mixed 80:90,!82,
     * so the old NOT flag is depracated for port lists
@@ -822,7 +822,7 @@ void AddRuleFuncToList(
 {
     RuleFpList* idx;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Adding new rule to list\n"); );
+    DebugMessage(DEBUG_CONFIGRULES,"Adding new rule to list\n");
 
     idx = rtn->rule_func;
     if (idx == NULL)
@@ -867,7 +867,7 @@ static void AddrToFunc(RuleTreeNode* rtn, int mode)
     case SRC:
         if ((rtn->flags & ANY_SRC_IP) == 0)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"CheckSrcIP -> "); );
+            DebugMessage(DEBUG_CONFIGRULES,"CheckSrcIP -> ");
             AddRuleFuncToList(CheckSrcIP, rtn);
         }
 
@@ -876,7 +876,7 @@ static void AddrToFunc(RuleTreeNode* rtn, int mode)
     case DST:
         if ((rtn->flags & ANY_DST_IP) == 0)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"CheckDstIP -> "); );
+            DebugMessage(DEBUG_CONFIGRULES,"CheckDstIP -> ");
             AddRuleFuncToList(CheckDstIP, rtn);
         }
 
@@ -914,12 +914,12 @@ static void PortToFunc(RuleTreeNode* rtn, int any_flag, int except_flag, int mod
         switch (mode)
         {
         case SRC:
-            DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"CheckSrcPortNotEq -> "); );
+            DebugMessage(DEBUG_CONFIGRULES,"CheckSrcPortNotEq -> ");
             AddRuleFuncToList(CheckSrcPortNotEq, rtn);
             break;
 
         case DST:
-            DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"CheckDstPortNotEq -> "); );
+            DebugMessage(DEBUG_CONFIGRULES,"CheckDstPortNotEq -> ");
             AddRuleFuncToList(CheckDstPortNotEq, rtn);
             break;
         }
@@ -930,12 +930,12 @@ static void PortToFunc(RuleTreeNode* rtn, int any_flag, int except_flag, int mod
     switch (mode)
     {
     case SRC:
-        DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"CheckSrcPortEqual -> "); );
+        DebugMessage(DEBUG_CONFIGRULES,"CheckSrcPortEqual -> ");
         AddRuleFuncToList(CheckSrcPortEqual, rtn);
         break;
 
     case DST:
-        DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"CheckDstPortEqual -> "); );
+        DebugMessage(DEBUG_CONFIGRULES,"CheckDstPortEqual -> ");
         AddRuleFuncToList(CheckDstPortEqual, rtn);
         break;
     }
@@ -955,12 +955,12 @@ static void PortToFunc(RuleTreeNode* rtn, int any_flag, int except_flag, int mod
  ***************************************************************************/
 static void SetupRTNFuncList(RuleTreeNode* rtn)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Initializing RTN function list!\n"); );
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Functions: "); );
+    DebugMessage(DEBUG_CONFIGRULES,"Initializing RTN function list!\n");
+    DebugMessage(DEBUG_CONFIGRULES,"Functions: ");
 
     if (rtn->flags & BIDIRECTIONAL)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"CheckBidirectional->\n"); );
+        DebugMessage(DEBUG_CONFIGRULES,"CheckBidirectional->\n");
         AddRuleFuncToList(CheckBidirectional, rtn);
     }
     else
@@ -985,7 +985,7 @@ static void SetupRTNFuncList(RuleTreeNode* rtn)
         AddrToFunc(rtn, DST);
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"RuleListEnd\n"); );
+    DebugMessage(DEBUG_CONFIGRULES,"RuleListEnd\n");
 
     /* tack the end (success) function to the list */
     AddRuleFuncToList(RuleListEnd, rtn);
@@ -1015,7 +1015,7 @@ static RuleTreeNode* ProcessHeadNode(
      * stick it at the end of the list */
     if (rtn == NULL)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Building New Chain head node\n"); );
+        DebugMessage(DEBUG_CONFIGRULES,"Building New Chain head node\n");
         head_count++;
 
         rtn = (RuleTreeNode*)SnortAlloc(sizeof(RuleTreeNode));
@@ -1030,8 +1030,8 @@ static RuleTreeNode* ProcessHeadNode(
         /* add link to parent listhead */
         rtn->listhead = list;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,
-            "New Chain head flags = 0x%X\n", rtn->flags); );
+        DebugFormat(DEBUG_CONFIGRULES,
+            "New Chain head flags = 0x%X\n", rtn->flags);
     }
     else
     {

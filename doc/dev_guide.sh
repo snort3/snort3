@@ -8,6 +8,12 @@
 # -- remove header guards?  (outermost #ifndef, #define, #endif)
 # -- use css source instead of the sed fixups?
 
+if [ "$1" ] ; then
+    pushd .
+    cd $1 || exit -1
+    echo "cd $1"
+fi
+
 tmp=/tmp/dev_guide/
 out=$tmp/dev_guide.txt
 html=$tmp/dev_guide.html
@@ -160,9 +166,9 @@ echo "translating snort includes into links"
 sed -i.sed -f sed_cmds.txt $html
 
 echo "clean up"
-mv dev_guide.* ../
-cd ..
+popd
+mv $html ./
 rm -rf $tmp
 
-echo "done; see /tmp/dev_guide.html"
+echo "done; see ./dev_guide.html"
 

@@ -169,8 +169,8 @@ IMAPData* SetNewIMAPData(IMAP_PROTO_CONF* config, Packet* p)
 
     if (p->packet_flags & SSNFLAG_MIDSTREAM)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "Got midstream packet - "
-            "setting state to unknown\n"); );
+        DebugMessage(DEBUG_IMAP, "Got midstream packet - "
+            "setting state to unknown\n");
         imap_ssn->state = STATE_UNKNOWN;
     }
 
@@ -385,16 +385,16 @@ static int IMAP_Setup(Packet* p, IMAPData* ssn)
 
         if (ssn->session_flags & IMAP_FLAG_NEXT_STATE_UNKNOWN)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "Found gap in previous reassembly buffer - "
-                "set state to unknown\n"); );
+            DebugMessage(DEBUG_IMAP, "Found gap in previous reassembly buffer - "
+                "set state to unknown\n");
             ssn->state = STATE_UNKNOWN;
             ssn->session_flags &= ~IMAP_FLAG_NEXT_STATE_UNKNOWN;
         }
 
         if (missing_in_rebuilt == SSN_MISSING_BEFORE)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "Found missing packets before "
-                "in reassembly buffer - set state to unknown\n"); );
+            DebugMessage(DEBUG_IMAP, "Found missing packets before "
+                "in reassembly buffer - set state to unknown\n");
             ssn->state = STATE_UNKNOWN;
         }
     }
@@ -449,15 +449,15 @@ static const uint8_t* IMAP_HandleCommand(Packet* p, IMAPData* imap_ssn, const ui
     {
         if (imap_ssn->state == STATE_UNKNOWN)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "Command not found, but state is "
-                "unknown - checking for SSL\n"); );
+            DebugMessage(DEBUG_IMAP, "Command not found, but state is "
+                "unknown - checking for SSL\n");
 
             /* check for encrypted */
 
             if ((imap_ssn->session_flags & IMAP_FLAG_CHECK_SSL) &&
                 (IsSSL(ptr, end - ptr, p->packet_flags)))
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "Packet is SSL encrypted\n"); );
+                DebugMessage(DEBUG_IMAP, "Packet is SSL encrypted\n");
 
                 imap_ssn->state = STATE_TLS_DATA;
 
@@ -466,7 +466,7 @@ static const uint8_t* IMAP_HandleCommand(Packet* p, IMAPData* imap_ssn, const ui
             }
             else
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "Not SSL - try data state\n"); );
+                DebugMessage(DEBUG_IMAP, "Not SSL - try data state\n");
                 /* don't check for ssl again in this packet */
                 if (imap_ssn->session_flags & IMAP_FLAG_CHECK_SSL)
                     imap_ssn->session_flags &= ~IMAP_FLAG_CHECK_SSL;
@@ -480,7 +480,7 @@ static const uint8_t* IMAP_HandleCommand(Packet* p, IMAPData* imap_ssn, const ui
         else
         {
             SnortEventqAdd(GID_IMAP, IMAP_UNKNOWN_CMD);
-            DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "No known command found\n"); );
+            DebugMessage(DEBUG_IMAP, "No known command found\n");
             return eol;
         }
     }
@@ -540,7 +540,7 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
     {
         if (imap_ssn->state == STATE_DATA)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"); );
+            DebugMessage(DEBUG_IMAP, "DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
             if ( imap_ssn->body_len > imap_ssn->body_read)
             {
                 uint32_t len = imap_ssn->body_len - imap_ssn->body_read;
@@ -629,13 +629,13 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_IMAP,
-                "Server response not found - see if it's SSL data\n"); );
+            DebugMessage(DEBUG_IMAP,
+                "Server response not found - see if it's SSL data\n");
 
             if ((imap_ssn->session_flags & IMAP_FLAG_CHECK_SSL) &&
                 (IsSSL(ptr, end - ptr, p->packet_flags)))
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "Server response is an SSL packet\n"); );
+                DebugMessage(DEBUG_IMAP, "Server response is an SSL packet\n");
 
                 imap_ssn->state = STATE_TLS_DATA;
 
@@ -648,7 +648,7 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
             if ( (*ptr != '*') && (*ptr !='+') && (*ptr != '\r') && (*ptr != '\n') )
             {
                 SnortEventqAdd(GID_IMAP, IMAP_UNKNOWN_RESP);
-                DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "Server response not found\n"); );
+                DebugMessage(DEBUG_IMAP, "Server response not found\n");
             }
         }
 
@@ -697,8 +697,8 @@ static void snort_imap(IMAP_PROTO_CONF* config, Packet* p)
         {
             if (IsTlsClientHello(p->data, p->data + p->dsize))
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_IMAP,
-                    "TLS DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~\n"); );
+                DebugMessage(DEBUG_IMAP,
+                    "TLS DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 
                 imap_ssn->state = STATE_TLS_SERVER_PEND;
                 return;
@@ -715,7 +715,7 @@ static void snort_imap(IMAP_PROTO_CONF* config, Packet* p)
             return;
         }
         IMAP_ProcessClientPacket(p, imap_ssn);
-        DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "IMAP client packet\n"); );
+        DebugMessage(DEBUG_IMAP, "IMAP client packet\n");
     }
     else
     {
@@ -742,7 +742,7 @@ static void snort_imap(IMAP_PROTO_CONF* config, Packet* p)
         if ( !InspectPacket(p))
         {
             /* Packet will be rebuilt, so wait for it */
-            DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "Client packet will be reassembled\n"));
+            DebugMessage(DEBUG_IMAP, "Client packet will be reassembled\n");
             return;
         }
         else if (!(p->packet_flags & PKT_REBUILT_STREAM))
@@ -762,8 +762,8 @@ static void snort_imap(IMAP_PROTO_CONF* config, Packet* p)
              * that were not rebuilt, state is going to be messed up
              * so set state to unknown. It's likely this was the
              * beginning of the conversation so reset state */
-            DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "Got non-rebuilt packets before "
-                "this rebuilt packet\n"); );
+            DebugMessage(DEBUG_IMAP, "Got non-rebuilt packets before "
+                "this rebuilt packet\n");
 
             imap_ssn->state = STATE_UNKNOWN;
             imap_ssn->session_flags &= ~IMAP_FLAG_GOT_NON_REBUILT;

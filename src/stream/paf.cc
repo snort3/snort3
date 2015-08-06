@@ -75,9 +75,9 @@ static uint32_t paf_flush (
     uint32_t at = 0;
     *flags &= ~(PKT_PDU_HEAD | PKT_PDU_TAIL);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
+    DebugFormat(DEBUG_STREAM_PAF,
         "%s: type=%d, fpt=%u, len=%u, tot=%u\n",
-        __FUNCTION__, ft, ps->fpt, s5_len, ps->tot); )
+        __FUNCTION__, ft, ps->fpt, s5_len, ps->tot);
 
     switch ( ft )
     {
@@ -171,9 +171,9 @@ static inline bool paf_eval (
     StreamSplitter* ss, PAF_State* ps, Flow* ssn,
     uint32_t flags, const uint8_t* data, uint32_t len, FlushType* ft)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
+    DebugFormat(DEBUG_STREAM_PAF,
         "%s: paf=%d, idx=%u, len=%u, fpt=%u\n",
-        __FUNCTION__, ps->paf, s5_idx, s5_len, ps->fpt); )
+        __FUNCTION__, ps->paf, s5_idx, s5_len, ps->fpt);
 
     uint16_t fuzz = 0; // FIXIT-L PAF add a little zippedy-do-dah
 
@@ -272,9 +272,9 @@ int32_t paf_check (
     const uint8_t* data, uint32_t len, uint32_t total,
     uint32_t seq, uint32_t* flags)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
+    DebugFormat(DEBUG_STREAM_PAF,
         "%s: len=%u, amt=%u, seq=%u, cur=%u, pos=%u, fpt=%u, tot=%u, paf=%d\n",
-        __FUNCTION__, len, total, seq, ps->seq, ps->pos, ps->fpt, ps->tot, ps->paf); )
+        __FUNCTION__, len, total, seq, ps->seq, ps->pos, ps->fpt, ps->tot, ps->paf);
 
     if ( !paf_initialized(ps) )
     {

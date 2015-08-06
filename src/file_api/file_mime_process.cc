@@ -812,11 +812,11 @@ const uint8_t* process_mime_data_paf(Flow* flow, const uint8_t* start, const uin
 #ifdef DEBUG_MSGS
         if (mime_ssn->data_state == STATE_DATA_HEADER)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "DATA HEADER STATE ~~~~~~~~~~~~~~~~~~~~~~\n"); );
+            DebugMessage(DEBUG_FILE, "DATA HEADER STATE ~~~~~~~~~~~~~~~~~~~~~~\n");
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "DATA UNKNOWN STATE ~~~~~~~~~~~~~~~~~~~~~\n"); );
+            DebugMessage(DEBUG_FILE, "DATA UNKNOWN STATE ~~~~~~~~~~~~~~~~~~~~~\n");
         }
 #endif
 
@@ -838,11 +838,11 @@ const uint8_t* process_mime_data_paf(Flow* flow, const uint8_t* start, const uin
         switch (mime_ssn->data_state)
         {
         case STATE_MIME_HEADER:
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "MIME HEADER STATE ~~~~~~~~~~~~~~~~~~~~~~\n"); );
+            DebugMessage(DEBUG_FILE, "MIME HEADER STATE ~~~~~~~~~~~~~~~~~~~~~~\n");
             start = process_mime_header(start, end, mime_ssn);
             break;
         case STATE_DATA_BODY:
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "DATA BODY STATE ~~~~~~~~~~~~~~~~~~~~~~~~\n"); );
+            DebugMessage(DEBUG_FILE, "DATA BODY STATE ~~~~~~~~~~~~~~~~~~~~~~~~\n");
             start = process_mime_body(start, end, mime_ssn, isFileEnd(position) );
             break;
         }
@@ -1136,8 +1136,8 @@ bool process_mime_paf_data(MimeDataPafInfo* data_info,  uint8_t data)
         if (store_boundary(data_info, data))
         {
             /* End of boundary, move to MIME_PAF_FOUND_BOUNDARY_STATE*/
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "Create boudary string: %s\n",
-                data_info->boundary); );
+            DebugFormat(DEBUG_FILE, "Create boudary string: %s\n",
+                data_info->boundary);
             data_info->data_state = MIME_PAF_FOUND_BOUNDARY_STATE;
         }
 
@@ -1146,8 +1146,8 @@ bool process_mime_paf_data(MimeDataPafInfo* data_info,  uint8_t data)
         if (check_boundary(data_info,  data))
         {
             /* End of boundary, move to MIME_PAF_FOUND_BOUNDARY_STATE*/
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "Found Boudary string: %s\n",
-                data_info->boundary); );
+            DebugFormat(DEBUG_FILE, "Found Boudary string: %s\n",
+                data_info->boundary);
             return 1;
         }
         break;

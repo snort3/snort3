@@ -552,8 +552,8 @@ VarEntry* VarDefine(
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-        "VarDefine: name=%s value=%s\n",name,value); );
+    DebugFormat(DEBUG_PORTLISTS,
+        "VarDefine: name=%s value=%s\n",name,value);
 
     /* Check to see if this variable is just being aliased */
     if (var_table != NULL)
@@ -580,8 +580,8 @@ VarEntry* VarDefine(
         ParseAbort("could not expand var('%s').", name);
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-        "VarDefine: name=%s value=%s (expanded)\n",name,value); );
+    DebugFormat(DEBUG_PORTLISTS,
+        "VarDefine: name=%s value=%s (expanded)\n",name,value);
 
     DisallowCrossTableDuplicateVars(sc, name, VAR_TYPE__DEFAULT);
 
@@ -792,7 +792,7 @@ const char* ExpandVars(SnortConfig* sc, const char* string)
 
     i = j = 0;
     l_string = strlen(string);
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES, "ExpandVars, Before: %s\n", string); );
+    DebugFormat(DEBUG_CONFIGRULES, "ExpandVars, Before: %s\n", string);
 
     while (i < l_string && j < (int)sizeof(estring) - 1)
     {
@@ -912,7 +912,7 @@ const char* ExpandVars(SnortConfig* sc, const char* string)
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES, "ExpandVars, After: %s\n", estring); );
+    DebugFormat(DEBUG_CONFIGRULES, "ExpandVars, After: %s\n", estring);
 
     return estring;
 }
@@ -922,7 +922,7 @@ void AddVarToTable(SnortConfig* sc, const char* name, const char* value)
     //TODO: snort.cfg and rules should use PortVar instead ...this allows compatability for now.
     if (strstr(name, "_PORT") || strstr(name, "PORT_"))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"PortVar\n"); );
+        DebugMessage(DEBUG_CONFIGRULES,"PortVar\n");
         PortVarDefine(sc, name, value);
     }
     else

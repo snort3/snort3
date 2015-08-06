@@ -112,7 +112,7 @@ void SIP_ParseMethods(const char* cur_tokenp, uint32_t* methodsConfig, SIPMethod
     /* If the user specified methods, remove default methods for now since
      * it now needs to be set explicitly. */
     *methodsConfig =  SIP_METHOD_NULL;
-    DEBUG_WRAP(DebugMessage(DEBUG_SIP, "Method token: %s\n",cur_tokenp); );
+    DebugFormat(DEBUG_SIP, "Method token: %s\n",cur_tokenp);
     // Check whether this is a standard method
 
     i_method = SIP_findMethod(cur_tokenp, StandardMethods);

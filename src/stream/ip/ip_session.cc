@@ -74,15 +74,15 @@ static inline void UpdateSession(Packet* p, Flow* lws)
     {
         if ( p->packet_flags & PKT_FROM_CLIENT )
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Stream: Updating on packet from client\n"); );
+            DebugMessage(DEBUG_STREAM_STATE,
+                "Stream: Updating on packet from client\n");
 
             lws->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Stream: Updating on packet from server\n"); );
+            DebugMessage(DEBUG_STREAM_STATE,
+                "Stream: Updating on packet from server\n");
 
             lws->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
         }
@@ -90,8 +90,8 @@ static inline void UpdateSession(Packet* p, Flow* lws)
         if ( (lws->ssn_state.session_flags & SSNFLAG_SEEN_CLIENT) &&
             (lws->ssn_state.session_flags & SSNFLAG_SEEN_SERVER) )
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "Stream: session established!\n"); );
+            DebugMessage(DEBUG_STREAM_STATE,
+                "Stream: session established!\n");
 
             lws->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
 
@@ -121,8 +121,8 @@ void IpSession::clear()
 
 bool IpSession::setup(Packet*)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM,
-        "Stream IP session created!\n"); );
+    DebugMessage(DEBUG_STREAM,
+        "Stream IP session created!\n");
 
     memset(&tracker, 0, sizeof(tracker));
     // FIXIT count ip session creates here

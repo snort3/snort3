@@ -550,7 +550,7 @@ static void _Unified2LogPacketAlert(
         logheader.event_id = htonl(event->event_reference);
         logheader.event_second = htonl(event->ref_time.tv_sec);
 
-        DEBUG_WRAP(DebugMessage(DEBUG_LOG, "------------\n"));
+        DebugMessage(DEBUG_LOG, "------------\n");
     }
     else
     {
@@ -1092,15 +1092,15 @@ void U2Logger::log(Packet* p, const char* msg, Event* event)
     {
         if ( (p->packet_flags & PKT_REBUILT_STREAM) and !p->is_data() )
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_LOG,
-                "[*] Reassembled packet, dumping stream packets\n"); );
+            DebugMessage(DEBUG_LOG,
+                "[*] Reassembled packet, dumping stream packets\n");
             // FIXIT-L replace with reassembled stream data and 
             // optionally the first captured packet
             //_Unified2LogStreamAlert(p, msg, &config, event);
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_LOG, "[*] Logging unified 2 packets...\n"); );
+            DebugMessage(DEBUG_LOG, "[*] Logging unified 2 packets...\n");
             _Unified2LogPacketAlert(p, msg, &config, event);
         }
     }

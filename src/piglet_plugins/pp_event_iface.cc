@@ -97,7 +97,7 @@ static const luaL_Reg methods[] =
             {
                 Lua::ManageStack ms(L);
                 Lua::Table si_table(L, lua_gettop(L));
-                
+
                 si_table.get_field("generator", si->generator);
                 si_table.get_field("id", si->id);
                 si_table.get_field("rev", si->rev);

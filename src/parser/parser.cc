@@ -466,7 +466,7 @@ static void IntegrityCheckRules(SnortConfig* sc)
                 while (ofl_idx != NULL)
                 {
                     opt_func_count++;
-                    //DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "%p->",ofl_idx->OptTestFunc););
+                    //DebugFormat(DEBUG_DETECT, "%p->",ofl_idx->OptTestFunc);
                     ofl_idx = ofl_idx->next;
                 }
 
@@ -474,12 +474,12 @@ static void IntegrityCheckRules(SnortConfig* sc)
                 {
                     ParseError("zero Length OTN List");
                 }
-                //DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"\n"););
+                //DebugMessage(DEBUG_DETECT,"\n");
             }
         }
     }
 
-    //DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "OK\n"););
+    //DebugMessage(DEBUG_DETECT, "OK\n");
 }
 
 static void parse_file(SnortConfig* sc, Shell* sh)

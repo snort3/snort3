@@ -95,8 +95,9 @@ void snort_inspect(Packet* p)
         pktcnt = PPM_INC_PKT_CNT();
         PPM_GET_TIME();
         PPM_INIT_PKT_TIMER();
+
 #ifdef DEBUG_MSGS
-        if ( DebugThis(DEBUG_PPM) )
+        if ( Debug::enabled(DEBUG_PPM) )
         {
             /* for debugging, info gathering, so don't worry about
             *  (unsigned) casting of pktcnt, were not likely to debug
@@ -114,15 +115,14 @@ void snort_inspect(Packet* p)
     // If the packet has errors, we won't analyze it.
     if ( p->ptrs.decode_flags & DECODE_ERR_FLAGS )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
+        DebugFormat(DEBUG_DETECT,
             "Packet errors = 0x%x, ignoring traffic!\n",
-            (p->ptrs.decode_flags & DECODE_ERR_FLAGS)); );
+            (p->ptrs.decode_flags & DECODE_ERR_FLAGS));
 
         if ( SnortConfig::inline_mode() and
             SnortConfig::checksum_drop(p->ptrs.decode_flags & DECODE_ERR_CKSUM_ALL) )
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-                "Dropping bad packet\n"); );
+            DebugMessage(DEBUG_DECODE, "Dropping bad packet\n");
             Active::drop_packet(p);
         }
     }
@@ -178,15 +178,16 @@ void snort_inspect(Packet* p)
         PPM_GET_TIME();
         PPM_TOTAL_PKT_TIME();
         PPM_ACCUM_PKT_TIME();
+
 #ifdef DEBUG_MSGS
-        if ( DebugThis(DEBUG_PPM) )
+        if ( Debug::enabled(DEBUG_PPM) )
         {
+            // FIXIT-L logs should be debugs
             LogMessage("PPM: Pkt[%u] Used= ",(unsigned)pktcnt);
             PPM_PRINT_PKT_TIME("%g usecs\n");
             LogMessage("PPM: Process-EndPkt[%u]\n\n",(unsigned)pktcnt);
         }
 #endif
-
         PPM_PKT_LOG(p);
     }
     if ( PPM_RULES_ENABLED() )
@@ -281,12 +282,12 @@ int CheckTagging(Packet* p)
     if (check_tags_flag == 1 && !(p->packet_flags & PKT_REBUILT_STREAM))
     {
         void* listhead = NULL;
-        DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "calling CheckTagList\n"); );
+        DebugMessage(DEBUG_FLOW, "calling CheckTagList\n");
 
         if (CheckTagList(p, &event, &listhead))
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "Matching tag node found, "
-                "calling log functions\n"); );
+            DebugMessage(DEBUG_FLOW, "Matching tag node found, "
+                "calling log functions\n");
 
             /* if we find a match, we want to send the packet to the
              * logging mechanism
@@ -384,14 +385,14 @@ static int CheckAddrPort(
     int except_port_flag = 0;        /* port exception flag set */
     int ip_match = 0;                /* flag to indicate addr match made */
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "CheckAddrPort: "); );
+    DebugMessage(DEBUG_DETECT, "CheckAddrPort: ");
     /* set up the packet particulars */
     if (mode & CHECK_SRC_IP)
     {
         pkt_addr = p->ptrs.ip_api.get_src();
         pkt_port = p->ptrs.sp;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"SRC "); );
+        DebugMessage(DEBUG_DETECT,"SRC ");
 
         if (mode & INVERSE)
         {
@@ -411,7 +412,7 @@ static int CheckAddrPort(
         pkt_addr = p->ptrs.ip_api.get_dst();
         pkt_port = p->ptrs.dp;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "DST "); );
+        DebugMessage(DEBUG_DETECT, "DST ");
 
         if (mode & INVERSE)
         {
@@ -427,8 +428,7 @@ static int CheckAddrPort(
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "addr %lx, port %d ", pkt_addr,
-        pkt_port); );
+    DebugFormat(DEBUG_DETECT, "addr %lx, port %d ", pkt_addr, pkt_port);
 
     if (!rule_addr)
         goto bail;
@@ -440,7 +440,7 @@ static int CheckAddrPort(
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT, ", global exception flag set"); );
+        DebugMessage(DEBUG_DETECT, ", global exception flag set");
         /* global exception flag is up, we can't match on *any*
          * of the source addresses
          */
@@ -454,18 +454,18 @@ static int CheckAddrPort(
 bail:
     if (!ip_match)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT, ", no address match,  "
-            "packet rejected\n"); );
+        DebugMessage(DEBUG_DETECT, ", no address match,  "
+            "packet rejected\n");
         return 0;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT, ", addresses accepted"); );
+    DebugMessage(DEBUG_DETECT, ", addresses accepted");
 
     /* if the any port flag is up, we're all done (success) */
     if (any_port_flag)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT, ", any port match, "
-            "packet accepted\n"); );
+        DebugMessage(DEBUG_DETECT, ", any port match, "
+            "packet accepted\n");
         return 1;
     }
 
@@ -480,26 +480,26 @@ bail:
         /* if the exception flag isn't up, fail */
         if (!except_port_flag)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_DETECT, ", port mismatch,  "
-                "packet rejected\n"); );
+            DebugMessage(DEBUG_DETECT, ", port mismatch,  "
+                "packet rejected\n");
             return 0;
         }
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT, ", port mismatch exception"); );
+        DebugMessage(DEBUG_DETECT, ", port mismatch exception");
     }
     else
     {
         /* if the exception flag is up, fail */
         if (except_port_flag)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-                ", port match exception,  packet rejected\n"); );
+            DebugMessage(DEBUG_DETECT,
+                ", port match exception,  packet rejected\n");
             return 0;
         }
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT, ", ports match"); );
+        DebugMessage(DEBUG_DETECT, ", ports match");
     }
 
     /* ports and address match */
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT, ", packet accepted!\n"); );
+    DebugMessage(DEBUG_DETECT, ", packet accepted!\n");
     return 1;
 }
 
@@ -509,79 +509,78 @@ bail:
 int CheckBidirectional(Packet* p, RuleTreeNode* rtn_idx,
     RuleFpList*, int check_ports)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "Checking bidirectional rule...\n"); );
+    DebugMessage(DEBUG_DETECT, "Checking bidirectional rule...\n");
 
     if (CheckAddrPort(rtn_idx->sip, CHECK_ADDR_SRC_ARGS(rtn_idx), p,
         rtn_idx->flags, CHECK_SRC_IP | (check_ports ? CHECK_SRC_PORT : 0)))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "   Src->Src check passed\n"); );
+        DebugMessage(DEBUG_DETECT, "   Src->Src check passed\n");
         if (!CheckAddrPort(rtn_idx->dip, CHECK_ADDR_DST_ARGS(rtn_idx), p,
             rtn_idx->flags, CHECK_DST_IP | (check_ports ? CHECK_DST_PORT : 0)))
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-                "   Dst->Dst check failed,"
-                " checking inverse combination\n"); );
+            DebugMessage(DEBUG_DETECT,
+                "   Dst->Dst check failed, checking inverse combination\n");
             if (CheckAddrPort(rtn_idx->dip, CHECK_ADDR_DST_ARGS(rtn_idx), p,
                 rtn_idx->flags, (CHECK_SRC_IP | INVERSE | (check_ports ? CHECK_SRC_PORT : 0))))
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-                    "   Inverse Dst->Src check passed\n"); );
+                DebugMessage(DEBUG_DETECT,
+                    "   Inverse Dst->Src check passed\n");
                 if (!CheckAddrPort(rtn_idx->sip, CHECK_ADDR_SRC_ARGS(rtn_idx), p,
                     rtn_idx->flags, (CHECK_DST_IP | INVERSE | (check_ports ? CHECK_DST_PORT : 0))))
                 {
-                    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-                        "   Inverse Src->Dst check failed\n"); );
+                    DebugMessage(DEBUG_DETECT,
+                        "   Inverse Src->Dst check failed\n");
                     return 0;
                 }
                 else
                 {
-                    DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "Inverse addr/port match\n"); );
+                    DebugMessage(DEBUG_DETECT, "Inverse addr/port match\n");
                 }
             }
             else
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "   Inverse Dst->Src check failed,"
-                    " trying next rule\n"); );
+                DebugMessage(DEBUG_DETECT, "   Inverse Dst->Src check failed,"
+                    " trying next rule\n");
                 return 0;
             }
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "dest IP/port match\n"); );
+            DebugMessage(DEBUG_DETECT, "dest IP/port match\n");
         }
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-            "   Src->Src check failed, trying inverse test\n"); );
+        DebugMessage(DEBUG_DETECT,
+            "   Src->Src check failed, trying inverse test\n");
         if (CheckAddrPort(rtn_idx->dip, CHECK_ADDR_DST_ARGS(rtn_idx), p,
             rtn_idx->flags, CHECK_SRC_IP | INVERSE | (check_ports ? CHECK_SRC_PORT : 0)))
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-                "   Dst->Src check passed\n"); );
+            DebugMessage(DEBUG_DETECT,
+                "   Dst->Src check passed\n");
 
             if (!CheckAddrPort(rtn_idx->sip, CHECK_ADDR_SRC_ARGS(rtn_idx), p,
                 rtn_idx->flags, CHECK_DST_IP | INVERSE | (check_ports ? CHECK_DST_PORT : 0)))
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-                    "   Src->Dst check failed\n"); );
+                DebugMessage(DEBUG_DETECT,
+                    "   Src->Dst check failed\n");
                 return 0;
             }
             else
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-                    "Inverse addr/port match\n"); );
+                DebugMessage(DEBUG_DETECT,
+                    "Inverse addr/port match\n");
             }
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"   Inverse test failed, "
-                "testing next rule...\n"); );
+            DebugMessage(DEBUG_DETECT,"   Inverse test failed, "
+                "testing next rule...\n");
             return 0;
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"   Bidirectional success!\n"); );
+    DebugMessage(DEBUG_DETECT,"   Bidirectional success!\n");
     return 1;
 }
 
@@ -600,7 +599,7 @@ int CheckBidirectional(Packet* p, RuleTreeNode* rtn_idx,
  ***************************************************************************/
 int CheckSrcIP(Packet* p, RuleTreeNode* rtn_idx, RuleFpList* fp_list, int check_ports)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"CheckSrcIPEqual: "); );
+    DebugMessage(DEBUG_DETECT,"CheckSrcIPEqual: ");
 
     if (!(rtn_idx->flags & EXCEPT_SRC_IP))
     {
@@ -615,7 +614,7 @@ int CheckSrcIP(Packet* p, RuleTreeNode* rtn_idx, RuleFpList* fp_list, int check_
         /* global exception flag is up, we can't match on *any*
          * of the source addresses
          */
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"  global exception flag, \n"); );
+        DebugMessage(DEBUG_DETECT,"  global exception flag, \n");
 
         if ( sfvar_ip_in(rtn_idx->sip, p->ptrs.ip_api.get_src()) )
             return 0;
@@ -623,7 +622,7 @@ int CheckSrcIP(Packet* p, RuleTreeNode* rtn_idx, RuleFpList* fp_list, int check_
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"  Mismatch on SIP\n"); );
+    DebugMessage(DEBUG_DETECT,"  Mismatch on SIP\n");
 
     return 0;
 
@@ -646,7 +645,7 @@ int CheckSrcIP(Packet* p, RuleTreeNode* rtn_idx, RuleFpList* fp_list, int check_
  ***************************************************************************/
 int CheckDstIP(Packet* p, RuleTreeNode* rtn_idx, RuleFpList* fp_list, int check_ports)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "CheckDstIPEqual: "); )
+    DebugMessage(DEBUG_DETECT, "CheckDstIPEqual: ");
 
     if (!(rtn_idx->flags & EXCEPT_DST_IP))
     {
@@ -660,7 +659,7 @@ int CheckDstIP(Packet* p, RuleTreeNode* rtn_idx, RuleFpList* fp_list, int check_
     {
         /* global exception flag is up, we can't match on *any*
          * of the source addresses */
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"  global exception flag, \n"); );
+        DebugMessage(DEBUG_DETECT,"  global exception flag, \n");
 
         if ( sfvar_ip_in(rtn_idx->dip, p->ptrs.ip_api.get_dst()) )
             return 0;
@@ -674,7 +673,7 @@ int CheckDstIP(Packet* p, RuleTreeNode* rtn_idx, RuleFpList* fp_list, int check_
 int CheckSrcPortEqual(Packet* p, RuleTreeNode* rtn_idx,
     RuleFpList* fp_list, int check_ports)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"CheckSrcPortEqual: "); );
+    DebugMessage(DEBUG_DETECT,"CheckSrcPortEqual: ");
 
     /* Check if attributes provided match earlier */
     if (check_ports == 0)
@@ -683,12 +682,12 @@ int CheckSrcPortEqual(Packet* p, RuleTreeNode* rtn_idx,
     }
     if ( PortObjectHasPort(rtn_idx->src_portobject,p->ptrs.sp) )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "  SP match!\n"); );
+        DebugMessage(DEBUG_DETECT, "  SP match!\n");
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "   SP mismatch!\n"); );
+        DebugMessage(DEBUG_DETECT, "   SP mismatch!\n");
     }
 
     return 0;
@@ -697,7 +696,7 @@ int CheckSrcPortEqual(Packet* p, RuleTreeNode* rtn_idx,
 int CheckSrcPortNotEq(Packet* p, RuleTreeNode* rtn_idx,
     RuleFpList* fp_list, int check_ports)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"CheckSrcPortNotEq: "); );
+    DebugMessage(DEBUG_DETECT,"CheckSrcPortNotEq: ");
 
     /* Check if attributes provided match earlier */
     if (check_ports == 0)
@@ -706,12 +705,12 @@ int CheckSrcPortNotEq(Packet* p, RuleTreeNode* rtn_idx,
     }
     if ( !PortObjectHasPort(rtn_idx->src_portobject,p->ptrs.sp) )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "  !SP match!\n"); );
+        DebugMessage(DEBUG_DETECT, "  !SP match!\n");
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "  !SP mismatch!\n"); );
+        DebugMessage(DEBUG_DETECT, "  !SP mismatch!\n");
     }
 
     return 0;
@@ -720,7 +719,7 @@ int CheckSrcPortNotEq(Packet* p, RuleTreeNode* rtn_idx,
 int CheckDstPortEqual(Packet* p, RuleTreeNode* rtn_idx,
     RuleFpList* fp_list, int check_ports)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"CheckDstPortEqual: "); );
+    DebugMessage(DEBUG_DETECT,"CheckDstPortEqual: ");
 
     /* Check if attributes provided match earlier */
     if (check_ports == 0)
@@ -729,12 +728,12 @@ int CheckDstPortEqual(Packet* p, RuleTreeNode* rtn_idx,
     }
     if ( PortObjectHasPort(rtn_idx->dst_portobject,p->ptrs.dp) )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT, " DP match!\n"); );
+        DebugMessage(DEBUG_DETECT, " DP match!\n");
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT," DP mismatch!\n"); );
+        DebugMessage(DEBUG_DETECT," DP mismatch!\n");
     }
     return 0;
 }
@@ -742,7 +741,7 @@ int CheckDstPortEqual(Packet* p, RuleTreeNode* rtn_idx,
 int CheckDstPortNotEq(Packet* p, RuleTreeNode* rtn_idx,
     RuleFpList* fp_list, int check_ports)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"CheckDstPortNotEq: "); );
+    DebugMessage(DEBUG_DETECT,"CheckDstPortNotEq: ");
 
     /* Check if attributes provided match earlier */
     if (check_ports == 0)
@@ -751,12 +750,12 @@ int CheckDstPortNotEq(Packet* p, RuleTreeNode* rtn_idx,
     }
     if ( !PortObjectHasPort(rtn_idx->dst_portobject,p->ptrs.dp) )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT, " !DP match!\n"); );
+        DebugMessage(DEBUG_DETECT, " !DP match!\n");
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DETECT," !DP mismatch!\n"); );
+        DebugMessage(DEBUG_DETECT," !DP mismatch!\n");
     }
 
     return 0;

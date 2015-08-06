@@ -1083,14 +1083,14 @@ static bool check_paf_abort(Flow* ssn)
     uint32_t flags = stream.get_session_flags((Flow*)ssn);
     if (flags & SSNFLAG_MIDSTREAM)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FILE,
-                "Aborting PAF because of midstream pickup.\n"));
+        DebugMessage(DEBUG_FILE,
+            "Aborting PAF because of midstream pickup.\n");
         return true;
     }
     else if (!(flags & SSNFLAG_ESTABLISHED))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FILE,
-                "Aborting PAF because of unestablished session.\n"));
+        DebugMessage(DEBUG_FILE,
+            "Aborting PAF because of unestablished session.\n");
         return true;
     }
     return false;

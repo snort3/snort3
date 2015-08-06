@@ -200,7 +200,7 @@ static bool find_data_end_mime_data(const uint8_t ch, ImapPafData* pfdata)
     if (literal_complete(pfdata)
         && check_imap_data_end(&(pfdata->data_end_state), ch))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "IMAP PAF: End of Data!\n"); );
+        DebugMessage(DEBUG_IMAP, "IMAP PAF: End of Data!\n");
         reset_data_states(pfdata);
         return true;
     }
@@ -208,8 +208,8 @@ static bool find_data_end_mime_data(const uint8_t ch, ImapPafData* pfdata)
     // check for mime flush point
     if (file_api->process_mime_paf_data(&(pfdata->mime_info), ch))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "IMAP PAF: Mime Boundary found."
-            " Flushing data!\n"); );
+        DebugMessage(DEBUG_IMAP, "IMAP PAF: Mime Boundary found."
+            " Flushing data!\n");
         return true;
     }
 
@@ -428,7 +428,7 @@ static StreamSplitter::Status imap_paf_server(ImapPafData* pfdata,
 
     if (flush_len)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "IMAP PAF: flushing data!\n"); );
+        DebugMessage(DEBUG_IMAP, "IMAP PAF: flushing data!\n");
 
         // flush at the final termination sequence
         *fp = flush_len;
@@ -463,8 +463,8 @@ static StreamSplitter::Status imap_paf_client(const uint8_t* data, uint32_t len,
 
     if (pch != NULL)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "IMAP PAF: Flushing client"
-            " data!\n"); );
+        DebugMessage(DEBUG_IMAP, "IMAP PAF: Flushing client"
+            " data!\n");
         *fp = (uint32_t)(pch - (const char*)data) + 1;
         return StreamSplitter::FLUSH;
     }
@@ -511,12 +511,12 @@ StreamSplitter::Status ImapSplitter::scan(
 
     if (flags & PKT_FROM_SERVER)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "PAF: From server.\n"); );
+        DebugMessage(DEBUG_IMAP, "PAF: From server.\n");
         return imap_paf_server(pfdata, data, len, fp);
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_IMAP, "PAF: From client.\n"); );
+        DebugMessage(DEBUG_IMAP, "PAF: From client.\n");
         return imap_paf_client(data, len, fp);
     }
 }

@@ -129,11 +129,11 @@ bool PPPoECodec::decode(const RawData& raw,
     switch (ppp_type)
     {
     case PppoepktType::DISCOVERY:
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "(PPPOE Discovery) "); );
+        DebugMessage(DEBUG_DECODE, "(PPPOE Discovery) ");
         break;
 
     case PppoepktType::SESSION:
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "(PPPOE Session) "); );
+        DebugMessage(DEBUG_DECODE, "(PPPOE Session) ");
         break;
     }
 
@@ -251,7 +251,7 @@ bool PPPoECodec::decode(const RawData& raw,
 
     if (ppp_type == PppoepktType::DISCOVERY)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Returning early on PPPOE discovery packet\n"); );
+        DebugMessage(DEBUG_DECODE, "Returning early on PPPOE discovery packet\n");
         return true;
     }
 

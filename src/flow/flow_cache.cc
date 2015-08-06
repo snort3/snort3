@@ -183,7 +183,7 @@ uint32_t FlowCache::prune_stale(uint32_t thetime, Flow* save_me)
 
         else if ((flow->last_data_seen + config.pruning_timeout) < thetime)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "pruning stale flow\n"); );
+            DebugMessage(DEBUG_STREAM, "pruning stale flow\n");
             flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
             release(flow, "stale/timeout");
             pruned++;
@@ -294,7 +294,7 @@ void FlowCache::timeout(uint32_t flowCount, time_t cur_time)
 
         flowExaminedCount++;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "retiring stale flow\n"); );
+        DebugMessage(DEBUG_STREAM, "retiring stale flow\n");
         flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
         release(flow, "stale/timeout");
 

@@ -27,8 +27,6 @@
 #include "stream/stream_api.h"
 #include "network_inspectors/normalize/norm.h"
 
-//#define DEBUG_STREAM DEBUG
-
 #define STREAM_DEFAULT_SSN_TIMEOUT  30        /* seconds to timeout a session */
 #define STREAM_MAX_SSN_TIMEOUT      3600*24   /* max timeout (approx 1 day) */
 #define STREAM_MIN_SSN_TIMEOUT      1         /* min timeout (1 second) */

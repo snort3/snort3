@@ -167,7 +167,7 @@ int CvsOption::eval(Cursor&, Packet* p)
         return rval;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "CVS begin detection\n"); );
+    DebugMessage(DEBUG_IPS_OPTION, "CVS begin detection\n");
 
     int ret = CvsDecode(p->data, p->dsize, cvs_rule_option);
 
@@ -207,12 +207,12 @@ static int CvsDecode(const uint8_t* data, uint16_t data_len,
         if (command.cmd_str == NULL)
             return CVS_NO_ALERT;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "CVS command\n"
+        DebugFormat(DEBUG_IPS_OPTION, "CVS command\n"
             "  comand: %.*s\n"
             "argument: %.*s\n",
             command.cmd_str_len, (char*)command.cmd_str,
             command.cmd_arg == NULL ? 4 : command.cmd_arg_len,
-            command.cmd_arg == NULL ? "none" : (char*)command.cmd_arg); );
+            command.cmd_arg == NULL ? "none" : (char*)command.cmd_arg);
 
         switch (cvs_rule_option->type)
         {

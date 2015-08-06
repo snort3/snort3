@@ -204,8 +204,8 @@ void ArpSpoof::eval(Packet* p)
             SnortEventqAdd(GID_ARP_SPOOF,
                 ARPSPOOF_UNICAST_ARP_REQUEST);
 
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-                "MODNAME: Unicast request\n"); );
+            DebugMessage(DEBUG_INSPECTOR,
+                "MODNAME: Unicast request\n");
         }
         else if (memcmp((u_char*)eh->ether_src,
             (u_char*)ah->arp_sha, 6) != 0)
@@ -213,8 +213,8 @@ void ArpSpoof::eval(Packet* p)
             SnortEventqAdd(GID_ARP_SPOOF,
                 ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
 
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-                "MODNAME: Ethernet/ARP mismatch request\n"); );
+            DebugMessage(DEBUG_INSPECTOR,
+                "MODNAME: Ethernet/ARP mismatch request\n");
         }
         break;
     case ARPOP_REPLY:
@@ -224,8 +224,8 @@ void ArpSpoof::eval(Packet* p)
             SnortEventqAdd(GID_ARP_SPOOF,
                 ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
 
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-                "MODNAME: Ethernet/ARP mismatch reply src\n"); );
+            DebugMessage(DEBUG_INSPECTOR,
+                "MODNAME: Ethernet/ARP mismatch reply src\n");
         }
         else if (memcmp((u_char*)eh->ether_dst,
             (u_char*)ah->arp_tha, 6) != 0)
@@ -233,8 +233,8 @@ void ArpSpoof::eval(Packet* p)
             SnortEventqAdd(GID_ARP_SPOOF,
                 ARPSPOOF_ETHERFRAME_ARP_MISMATCH_DST);
 
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-                "MODNAME: Ethernet/ARP mismatch reply dst\n"); );
+            DebugMessage(DEBUG_INSPECTOR,
+                "MODNAME: Ethernet/ARP mismatch reply dst\n");
         }
         break;
     }
@@ -247,14 +247,14 @@ void ArpSpoof::eval(Packet* p)
     if ((ipme = LookupIPMacEntryByIP(config->ipmel,
             ah->arp_spa32)) == NULL)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-            "MODNAME: LookupIPMacEntryByIp returned NULL\n"); );
+        DebugMessage(DEBUG_INSPECTOR,
+            "MODNAME: LookupIPMacEntryByIp returned NULL\n");
         return;
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-            "MODNAME: LookupIPMacEntryByIP returned %p\n", ipme); );
+        DebugFormat(DEBUG_INSPECTOR,
+            "MODNAME: LookupIPMacEntryByIP returned %p\n", ipme);
 
         /* If the Ethernet source address or the ARP source hardware address
          * in p doesn't match the MAC address in ipme, then generate an alert
@@ -267,8 +267,8 @@ void ArpSpoof::eval(Packet* p)
             SnortEventqAdd(GID_ARP_SPOOF,
                 ARPSPOOF_ARP_CACHE_OVERWRITE_ATTACK);
 
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-                "MODNAME: Attempted ARP cache overwrite attack\n"); );
+            DebugMessage(DEBUG_INSPECTOR,
+                "MODNAME: Attempted ARP cache overwrite attack\n");
 
             return;
         }

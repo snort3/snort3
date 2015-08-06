@@ -600,7 +600,7 @@ static bool hi_fsm_compile(void)
     hi_fsm = (State*)malloc(hi_fsm_size*sizeof(*hi_fsm));
     if ( hi_fsm == NULL )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF, "Unable to allocate memory for hi_fsm."); );
+        DebugMessage(DEBUG_STREAM_PAF, "Unable to allocate memory for hi_fsm.");
         return false;
     }
     next = max;
@@ -744,13 +744,13 @@ static inline StreamSplitter::Status hi_exec(Hi5State* s, Action a, int c)
         break;
     case ACT_LNB:
         s->flags |= HIF_LEN;
-        DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-            "%s: lnb=%u\n", __FUNCTION__, s->len); )
+        DebugFormat(DEBUG_STREAM_PAF,
+            "%s: lnb=%u\n", __FUNCTION__, s->len);
         break;
     case ACT_LNC:
         s->flags |= HIF_LEN;
-        DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-            "%s: lnc=%u\n", __FUNCTION__, s->len); )
+        DebugFormat(DEBUG_STREAM_PAF,
+            "%s: lnc=%u\n", __FUNCTION__, s->len);
         if ( s->len )
             return StreamSplitter::SKIP;
         s->flags &= ~HIF_NOF;
@@ -801,8 +801,8 @@ static void hi_pipe_push(Hi5State* s_req, Flow* ssn)
     uint32_t nreq = s_req->pipe & 0xFF;
     uint32_t pipe = s_req->pipe >> 8;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: nreq=%d, pipe=0x%X\n", __FUNCTION__, nreq, pipe); )
+    DebugFormat(DEBUG_STREAM_PAF,
+        "%s: nreq=%d, pipe=0x%X\n", __FUNCTION__, nreq, pipe);
 
     if ( nreq == MAX_PIPELINE )
     {
@@ -830,8 +830,8 @@ static void hi_pipe_pop(Hi5State* s_rsp, Flow* ssn)
     uint32_t nreq = s_req->pipe & 0xFF;
     uint32_t pipe = s_req->pipe >> 8;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: nreq=%d, pipe=0x%X\n", __FUNCTION__, nreq, pipe); )
+    DebugFormat(DEBUG_STREAM_PAF,
+        "%s: nreq=%d, pipe=0x%X\n", __FUNCTION__, nreq, pipe);
 
     // FIXIT-L valgrind: Conditional jump or move depends on uninitialised value(s)
     if ( nreq == 0 || nreq == PIPELINE_RUPTURED )
@@ -885,10 +885,10 @@ static StreamSplitter::Status hi_scan_fsm(Hi5State* s, int c)
 #ifdef HI_TRACE
     get_state(prev, before, sizeof(before));
     get_state(s->fsm, after, sizeof(after));
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
+    DebugFormat(DEBUG_STREAM_PAF,
         "%s: %s(%u)[0x%2X, '%c'] -> %d,%s(%u)\n",
         __FUNCTION__, before, prev, c, isgraph(c) ? c : '.',
-        cell->action, after, s->fsm); )
+        cell->action, after, s->fsm);
 #endif
 
     status = hi_exec(s, (Action)cell->action, c);
@@ -898,8 +898,8 @@ static StreamSplitter::Status hi_scan_fsm(Hi5State* s, int c)
 
 static StreamSplitter::Status hi_eoh(Hi5State* s, Flow* ssn)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: flags=0x%X, len=%u\n", __FUNCTION__, s->flags, s->len); )
+    DebugFormat(DEBUG_STREAM_PAF,
+        "%s: flags=0x%X, len=%u\n", __FUNCTION__, s->flags, s->len);
 
     if ( (s->flags & HIF_REQ) )
         hi_pipe_push(s, ssn);
@@ -950,8 +950,8 @@ static inline StreamSplitter::Status hi_scan_msg(
     Hi5State* s, int c, uint32_t* fp, Flow* ssn)
 {
     StreamSplitter::Status paf = StreamSplitter::SEARCH;
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s[%d]: 0x%2X, '%c'\n", __FUNCTION__, s->msg, c, isgraph(c) ? c : '.'); )
+    DebugFormat(DEBUG_STREAM_PAF,
+        "%s[%d]: 0x%2X, '%c'\n", __FUNCTION__, s->msg, c, isgraph(c) ? c : '.');
 
     if ( c == '\r' )
     {
@@ -1047,8 +1047,8 @@ static void hi_reset(Hi5State* s, uint32_t flags)
     }
     s->flags = 0;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: fsm=%u, flags=0x%X\n", __FUNCTION__, s->fsm, s->flags); )
+    DebugFormat(DEBUG_STREAM_PAF,
+        "%s: fsm=%u, flags=0x%X\n", __FUNCTION__, s->fsm, s->flags);
 }
 
 //--------------------------------------------------------------------
@@ -1077,8 +1077,7 @@ StreamSplitter::Status HttpSplitter::scan(
     uint32_t n = 0;
     *fp = 0;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: len=%u\n", __FUNCTION__, len); )
+    DebugFormat(DEBUG_STREAM_PAF, "%s: len=%u\n", __FUNCTION__, len);
 
     if ( hip->flags & HIF_ERR )
     {
@@ -1119,8 +1118,8 @@ StreamSplitter::Status HttpSplitter::scan(
             break;
         }
     }
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: paf=%d, rfp=%u\n", __FUNCTION__, paf, *fp); )
+    DebugFormat(DEBUG_STREAM_PAF,
+        "%s: paf=%d, rfp=%u\n", __FUNCTION__, paf, *fp);
 
     hi_paf_calls++;
     hi_paf_bytes += n;
@@ -1134,8 +1133,8 @@ StreamSplitter::Status HttpSplitter::scan(
 
 bool hi_paf_init(uint32_t cap)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: cap=%u\n",  __FUNCTION__, cap); )
+    DebugFormat(DEBUG_STREAM_PAF,
+        "%s: cap=%u\n",  __FUNCTION__, cap);
 
     hi_cap = cap;
 
@@ -1152,9 +1151,9 @@ bool hi_paf_init(uint32_t cap)
 void hi_paf_term(void)
 {
     free(hi_fsm);
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
+    DebugFormat(DEBUG_STREAM_PAF,
         "%s: calls=%u, bytes=%u\n",  __FUNCTION__,
-        hi_paf_calls, hi_paf_bytes); )
+        hi_paf_calls, hi_paf_bytes);
 
     hi_fsm = NULL;
     hi_fsm_size = 0;

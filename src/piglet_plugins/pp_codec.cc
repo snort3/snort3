@@ -86,7 +86,7 @@ static void dtor(Piglet::BasePlugin* p)
 { delete p; }
 
 static const struct Piglet::Api piglet_api =
-{ 
+{
      {
         PT_PIGLET,
         sizeof(Piglet::Api),

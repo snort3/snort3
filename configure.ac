@@ -799,6 +799,24 @@ if test "x$have_daq_address_space_id" = "xyes"; then
         [DAQ version supports address space ID in header.])
 fi
 
+AC_MSG_CHECKING([for daq flow ID])
+AC_RUN_IFELSE(
+[AC_LANG_PROGRAM(
+[[
+#include <daq.h>
+]],
+[[
+   DAQ_PktHdr_t hdr;
+   hdr.flow_id = 0;
+]])],
+[have_daq_flow_id="yes"],
+[have_daq_flow_id="no"])
+AC_MSG_RESULT($have_daq_flow_id)
+if test "x$have_daq_flow_id" = "xyes"; then
+    AC_DEFINE([HAVE_DAQ_FLOW_ID],[1],
+        [DAQ version supports flow ID in header.])
+fi
+
 #--------------------------------------------------------------------------
 # zlib
 #--------------------------------------------------------------------------

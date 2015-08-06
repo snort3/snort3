@@ -63,7 +63,7 @@ static const luaL_Reg methods[] =
         {
             auto& p = PacketIface.get(L);
             auto& self = InspectorIface.get(L);
-            
+
             self.clear(&p);
 
             return 0;

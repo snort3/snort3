@@ -203,7 +203,7 @@ static bool find_data_end_multi_line(PopPafData* pfdata, const uint8_t ch, bool 
 
     if (file_api->check_data_end(&(pfdata->end_state), ch))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_POP, "End of Multi-line response found\n"); );
+        DebugMessage(DEBUG_POP, "End of Multi-line response found\n");
         pfdata->end_of_data = true;
         pfdata->pop_state = POP_PAF_SINGLE_LINE_STATE;
         reset_data_states(pfdata);
@@ -215,7 +215,7 @@ static bool find_data_end_multi_line(PopPafData* pfdata, const uint8_t ch, bool 
     {
         if (file_api->process_mime_paf_data(&(pfdata->data_info), ch))
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_POP, "Mime Boundary found.  Flushing data!\n"); );
+            DebugMessage(DEBUG_POP, "Mime Boundary found.  Flushing data!\n");
             pfdata->cmd_continued = true;
             return true;
         }
@@ -244,8 +244,8 @@ static inline bool find_data_end_single_line(PopPafData* pfdata, const uint8_t c
         else
             reset_data_states(pfdata);
 
-        DEBUG_WRAP(DebugMessage(DEBUG_POP, "End of single-line response "
-            "found.  Flushing data!\n"); );
+        DebugMessage(DEBUG_POP, "End of single-line response "
+            "found.  Flushing data!\n");
         return true;
     }
 
@@ -400,12 +400,12 @@ StreamSplitter::Status PopSplitter::scan(
 
     if (flags & PKT_FROM_SERVER)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_POP, "PAF: From server.\n"); );
+        DebugMessage(DEBUG_POP, "PAF: From server.\n");
         return pop_paf_server(pfdata, data, len, fp);
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_POP, "PAF: From client.\n"); );
+        DebugMessage(DEBUG_POP, "PAF: From client.\n");
         return pop_paf_client(ssn, pfdata, data, len, fp);
     }
 }

@@ -347,8 +347,8 @@ int Asn1DoDetect(const uint8_t* data, uint16_t dsize, ASN1_CTXT* ctxt, const uin
     case REL_OFFSET:
         if (!rel_ptr)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_ASN1, "[*] No rel_ptr for "
-                "relative offset, so we are bailing.\n"); );
+            DebugMessage(DEBUG_ASN1, "[*] No rel_ptr for "
+                "relative offset, so we are bailing.\n");
             return 0;
         }
 
@@ -360,8 +360,8 @@ int Asn1DoDetect(const uint8_t* data, uint16_t dsize, ASN1_CTXT* ctxt, const uin
         */
         if (!inBounds(start, end + 1, rel_ptr))
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_ASN1, "[*] ASN.1 bounds "
-                "check failed for rel_ptr.\n"); );
+            DebugMessage(DEBUG_ASN1, "[*] ASN.1 bounds "
+                "check failed for rel_ptr.\n");
             return 0;
         }
 
@@ -369,8 +369,8 @@ int Asn1DoDetect(const uint8_t* data, uint16_t dsize, ASN1_CTXT* ctxt, const uin
 
         if (!inBounds(start, end, offset))
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_ASN1, "[*] ASN.1 bounds "
-                "check failed rel_ptr+offset.\n"); );
+            DebugMessage(DEBUG_ASN1, "[*] ASN.1 bounds "
+                "check failed rel_ptr+offset.\n");
             return 0;
         }
 
@@ -382,8 +382,8 @@ int Asn1DoDetect(const uint8_t* data, uint16_t dsize, ASN1_CTXT* ctxt, const uin
 
         if (!inBounds(start, end, offset))
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_ASN1, "[*] ASN.1 bounds "
-                "check failed.\n"); );
+            DebugMessage(DEBUG_ASN1, "[*] ASN.1 bounds "
+                "check failed.\n");
             return 0;
         }
 
@@ -399,8 +399,8 @@ int Asn1DoDetect(const uint8_t* data, uint16_t dsize, ASN1_CTXT* ctxt, const uin
     iRet = asn1_decode(offset, size, &asn1);
     if (iRet && !asn1)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_ASN1, "[*] ASN.1 decode failed "
-            "miserably.\n"); );
+        DebugMessage(DEBUG_ASN1, "[*] ASN.1 decode failed "
+            "miserably.\n");
         return 0;
     }
 

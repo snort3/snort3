@@ -178,8 +178,8 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     if (hlen < ip::IP4_HEADER_LEN)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "Bogus IP header length of %i bytes\n", hlen); );
+        DebugFormat(DEBUG_DECODE,
+            "Bogus IP header length of %i bytes\n", hlen);
 
         codec_event(codec, DECODE_IPV4_INVALID_HEADER_LEN);
         return false;
@@ -187,10 +187,10 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     if (ip_len > raw.len)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+        DebugFormat(DEBUG_DECODE,
             "IP Len field is %d bytes bigger than captured length.\n"
             "    (ip.len: %lu, cap.len: %lu)\n",
-            ip_len - raw.len, ip_len, raw.len); );
+            ip_len - raw.len, ip_len, raw.len);
 
         codec_event(codec, DECODE_IPV4_DGRAM_GT_CAPLEN);
         return false;
@@ -212,9 +212,9 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     if (ip_len < hlen)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+        DebugFormat(DEBUG_DECODE,
             "IP dgm len (%d bytes) < IP hdr "
-            "len (%d bytes), packet discarded\n", ip_len, hlen); );
+            "len (%d bytes), packet discarded\n", ip_len, hlen);
 
         codec_event(codec, DECODE_IPV4_DGRAM_LT_IPHDR);
         return false;

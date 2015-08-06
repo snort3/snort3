@@ -312,7 +312,7 @@ void CleanupTag(void)
 
 static void TagSession(Packet* p, TagData* tag, uint32_t time, uint16_t event_id, void* log_list)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "TAGGING SESSION\n"); );
+    DebugMessage(DEBUG_FLOW, "TAGGING SESSION\n");
 
     AddTagNode(p, tag, TAG_SESSION, time, event_id, log_list);
 }
@@ -321,7 +321,7 @@ static void TagHost(Packet* p, TagData* tag, uint32_t time, uint16_t event_id, v
 {
     int mode;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "TAGGING HOST\n"); );
+    DebugMessage(DEBUG_FLOW, "TAGGING HOST\n");
 
     switch (tag->tag_direction)
     {
@@ -346,7 +346,7 @@ static void AddTagNode(Packet* p, TagData* tag, int mode, uint32_t now,
     TagNode* returned;
     SFXHASH* tag_cache_ptr = NULL;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "Adding new Tag Head\n"); );
+    DebugMessage(DEBUG_FLOW, "Adding new Tag Head\n");
 
     if ( tag->tag_metric & TAG_METRIC_SESSION )
     {
@@ -361,12 +361,12 @@ static void AddTagNode(Packet* p, TagData* tag, int mode, uint32_t now,
     }
     if (mode == TAG_SESSION)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FLOW,"Session Tag!\n"); );
+        DebugMessage(DEBUG_FLOW,"Session Tag!\n");
         tag_cache_ptr = ssn_tag_cache_ptr;
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FLOW,"Host Tag!\n"); );
+        DebugMessage(DEBUG_FLOW,"Host Tag!\n");
         tag_cache_ptr = host_tag_cache_ptr;
     }
     idx = TagAlloc(tag_cache_ptr);
@@ -416,7 +416,7 @@ static void AddTagNode(Packet* p, TagData* tag, int mode, uint32_t now,
 
     if (returned == NULL)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FLOW,"Looking the other way!!\n"); );
+        DebugMessage(DEBUG_FLOW,"Looking the other way!!\n");
         SwapTag(idx);
         returned = (TagNode*)sfxhash_find(tag_cache_ptr, idx);
         SwapTag(idx);
@@ -424,7 +424,7 @@ static void AddTagNode(Packet* p, TagData* tag, int mode, uint32_t now,
 
     if (returned == NULL)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FLOW,"Inserting a New Tag!\n"); );
+        DebugMessage(DEBUG_FLOW,"Inserting a New Tag!\n");
 
         /* if we're supposed to be tagging the other side, swap it
            around -- Lawrence Reed */
@@ -435,16 +435,16 @@ static void AddTagNode(Packet* p, TagData* tag, int mode, uint32_t now,
 
         if (sfxhash_add(tag_cache_ptr, idx, idx) != SFXHASH_OK)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FLOW,
+            DebugMessage(DEBUG_FLOW,
                 "sfxhash_add failed, that's going to "
-                "make life difficult\n"); );
+                "make life difficult\n");
             TagFree(tag_cache_ptr, idx);
             return;
         }
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FLOW,"Existing Tag found!\n"); );
+        DebugMessage(DEBUG_FLOW,"Existing Tag found!\n");
 
         if (idx->metric & TAG_METRIC_SECONDS)
             returned->seconds = idx->seconds;
@@ -471,14 +471,14 @@ int CheckTagList(Packet* p, Event* event, void** log_list)
 
     if(p == NULL || !p->ptrs.ip_api.is_ip())
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "bailing from CheckTagList, p->iph == NULL\n"); );
+        DebugMessage(DEBUG_FLOW, "bailing from CheckTagList, p->iph == NULL\n");
         return 0;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FLOW,"Host Tags Active: %d   Session Tags Active: %d\n",
-        sfxhash_count(host_tag_cache_ptr), sfxhash_count(ssn_tag_cache_ptr)); );
+    DebugFormat(DEBUG_FLOW,"Host Tags Active: %d   Session Tags Active: %d\n",
+        sfxhash_count(host_tag_cache_ptr), sfxhash_count(ssn_tag_cache_ptr));
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "[*] Checking session tag list (forward)...\n"); );
+    DebugMessage(DEBUG_FLOW, "[*] Checking session tag list (forward)...\n");
 
     sfip_copy(idx.key.sip, p->ptrs.ip_api.get_src());
     sfip_copy(idx.key.dip, p->ptrs.ip_api.get_dst());
@@ -495,13 +495,13 @@ int CheckTagList(Packet* p, Event* event, void** log_list)
         idx.key.dp = p->ptrs.sp;
         idx.key.sp = p->ptrs.dp;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "   Checking session tag list (reverse)...\n"); );
+        DebugMessage(DEBUG_FLOW, "   Checking session tag list (reverse)...\n");
         returned = (TagNode*)sfxhash_find(ssn_tag_cache_ptr, &idx);
 
         if (returned == NULL)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "   Checking host tag list "
-                "(forward)...\n"); );
+            DebugMessage(DEBUG_FLOW, "   Checking host tag list "
+                "(forward)...\n");
 
             returned = (TagNode*)sfxhash_find(host_tag_cache_ptr, &idx);
 
@@ -518,25 +518,25 @@ int CheckTagList(Packet* p, Event* event, void** log_list)
 
             if (returned != NULL)
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_FLOW,"   [*!*] Found host node\n"); );
+                DebugMessage(DEBUG_FLOW,"   [*!*] Found host node\n");
                 taglist = host_tag_cache_ptr;
             }
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FLOW,"   [*!*] Found session node\n"); );
+            DebugMessage(DEBUG_FLOW,"   [*!*] Found session node\n");
             taglist = ssn_tag_cache_ptr;
         }
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FLOW,"   [*!*] Found session node\n"); );
+        DebugMessage(DEBUG_FLOW,"   [*!*] Found session node\n");
         taglist = ssn_tag_cache_ptr;
     }
 
     if (returned != NULL)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "    ! Found tag node !\n"); );
+        DebugMessage(DEBUG_FLOW, "    ! Found tag node !\n");
 
         returned->last_access = p->pkth->ts.tv_sec;
         returned->pkt_count++;
@@ -596,8 +596,8 @@ int CheckTagList(Packet* p, Event* event, void** log_list)
 
         if ( !returned->metric )
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FLOW,
-                "    Prune condition met for tag, removing from list\n"); );
+            DebugMessage(DEBUG_FLOW,
+                "    Prune condition met for tag, removing from list\n");
 
             if (sfxhash_remove(taglist, returned) != SFXHASH_OK)
             {
@@ -608,8 +608,8 @@ int CheckTagList(Packet* p, Event* event, void** log_list)
 
     if ( (u_int)(p->pkth->ts.tv_sec) > last_prune_time + TAG_PRUNE_QUANTUM )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FLOW,
-            "Exceeded Prune Quantum, pruning tag trees\n"); );
+        DebugMessage(DEBUG_FLOW,
+            "Exceeded Prune Quantum, pruning tag trees\n");
         PruneTagCache(p->pkth->ts.tv_sec, 0);
         last_prune_time = p->pkth->ts.tv_sec;
     }
@@ -691,7 +691,7 @@ static int PruneTime(SFXHASH* tree, uint32_t thetime)
 
 void SetTags(Packet* p, OptTreeNode* otn, uint16_t event_id)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "Setting tags\n"); );
+    DebugMessage(DEBUG_FLOW, "Setting tags\n");
 
     if (otn != NULL && otn->tag != NULL)
     {
@@ -703,19 +703,19 @@ void SetTags(Packet* p, OptTreeNode* otn, uint16_t event_id)
             switch (otn->tag->tag_type)
             {
             case TAG_SESSION:
-                DEBUG_WRAP(DebugMessage(DEBUG_FLOW,"Setting session tag:\n");
-                    DebugMessage(DEBUG_FLOW,"SIP: %s  SP: %d   ",
+                DebugMessage(DEBUG_FLOW,"Setting session tag:\n");
+                DebugFormat(DEBUG_FLOW,"SIP: %s  SP: %d   ",
                     sfip_ntoa(p->ptrs.ip_api.get_src()), p->ptrs.sp);
-                    DebugMessage(DEBUG_FLOW,"DIP: %s  DP: %d\n",
-                    sfip_ntoa(p->ptrs.ip_api.get_dst()),p->ptrs.dp); );
+                DebugFormat(DEBUG_FLOW,"DIP: %s  DP: %d\n",
+                    sfip_ntoa(p->ptrs.ip_api.get_dst()),p->ptrs.dp);
                 TagSession(p, otn->tag, p->pkth->ts.tv_sec, event_id, log_list);
                 break;
             case TAG_HOST:
-                DEBUG_WRAP(DebugMessage(DEBUG_FLOW,"Setting host tag:\n");
-                    DebugMessage(DEBUG_FLOW,"SIP: %s  SP: %d   ",
+                DebugMessage(DEBUG_FLOW,"Setting host tag:\n");
+                DebugFormat(DEBUG_FLOW,"SIP: %s  SP: %d   ",
                     sfip_ntoa(p->ptrs.ip_api.get_src()),p->ptrs.sp);
-                    DebugMessage(DEBUG_FLOW, "DIP: %s  DP: %d\n",
-                    sfip_ntoa(p->ptrs.ip_api.get_dst()),p->ptrs.dp); );
+                DebugFormat(DEBUG_FLOW, "DIP: %s  DP: %d\n",
+                    sfip_ntoa(p->ptrs.ip_api.get_dst()),p->ptrs.dp);
                 TagHost(p, otn->tag, p->pkth->ts.tv_sec, event_id, log_list);
                 break;
 
