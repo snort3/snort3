@@ -35,9 +35,11 @@ using namespace std;
 #include "help.h"
 #include "shell.h"
 #include "detection/detect.h"
+#include "framework/base_api.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
 #include "managers/module_manager.h"
+#include "managers/plugin_manager.h"
 #include "parser/config_file.h"
 #include "parser/parser.h"
 #include "parser/parse_utils.h"
@@ -117,12 +119,15 @@ static void x2s(const char* s)
 // help as well.
 //-------------------------------------------------------------------------
 
+static const char* get_alert_mode()
+{ return PluginManager::get_available_plugins(PT_LOGGER); }
+
 static const Parameter s_params[] =
 {
     { "-?", Parameter::PT_STRING, "(optional)", nullptr,
       "<option prefix> output matching command line option quick help (same as --help-options)" },
 
-    { "-A", Parameter::PT_STRING, nullptr, nullptr,
+    { "-A", Parameter::PT_DYNAMIC, (void*)get_alert_mode, nullptr,
       "<mode> set alert mode: none, cmg, or alert_*" },
 
     { "-B", Parameter::PT_IMPLIED, nullptr, nullptr,

@@ -371,6 +371,8 @@ bool Parameter::validate(Value& v) const
         return valid_multi(v, (const char*)range);
     case PT_ENUM:
         return valid_enum(v, (const char*)range);
+    case PT_DYNAMIC:
+        return valid_select(v, ((RangeQuery)range)());
 
     // address values
     case PT_MAC:
@@ -396,7 +398,7 @@ bool Parameter::validate(Value& v) const
 
 static const char* const pt2str[Parameter::PT_MAX] =
 {
-    "table", "list",
+    "table", "list", "dynamic",
     "bool", "int", "real", "port",
     "string", "select", "multi", "enum",
     "mac", "ip4", "addr",
@@ -407,6 +409,23 @@ const char* Parameter::get_type() const
 {
     assert(type < Parameter::PT_MAX);
     return pt2str[type];
+}
+
+const char* Parameter::get_range() const
+{
+    switch ( type )
+    {
+    case PT_TABLE:
+    case PT_LIST:
+        return nullptr;
+
+    case PT_DYNAMIC:
+        return ((RangeQuery)range)();
+
+    default:
+        break;
+    }
+    return (char*)range;
 }
 
 bool Parameter::get_bool() const

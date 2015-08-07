@@ -102,12 +102,12 @@ void help_args(const char* pfx)
 
             cout << " " << Markup::escape(p->help);
 
-            if ( p->has_text_range() )
+            if ( const char* r = p->get_range() )
             {
-                if ( *((char*)p->range) == '(' )
-                    cout << " " << (char*)p->range;
+                if ( *r == '(' )
+                    cout << " " << r;
                 else
-                    cout << " (" << (char*)p->range << ")";
+                    cout << " (" << r << ")";
             }
             cout << endl;
         }
