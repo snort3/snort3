@@ -95,12 +95,20 @@ void help_args(const char* pfx)
         if ( p->help && (!n || !strncasecmp(name, pfx, n)) )
         {
             cout << Markup::item();
-            cout << Markup::emphasis_on();
 
+            cout << Markup::emphasis_on();
             cout << Markup::escape(p->name);
             cout << Markup::emphasis_off();
 
             cout << " " << Markup::escape(p->help);
+
+            if ( p->has_text_range() )
+            {
+                if ( *((char*)p->range) == '(' )
+                    cout << " " << (char*)p->range;
+                else
+                    cout << " (" << (char*)p->range << ")";
+            }
             cout << endl;
         }
         ++p;

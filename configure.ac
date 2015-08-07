@@ -61,6 +61,8 @@ if test "x$CXX" = "xg++"; then
     fi
 fi
 
+PKG_PROG_PKG_CONFIG
+
 #--------------------------------------------------------------------------
 # api options
 #--------------------------------------------------------------------------
@@ -471,7 +473,14 @@ fi
 AM_CONDITIONAL(BUILD_UNIT_TESTS, test "x$enable_unit_tests" = "xyes")
 
 if test "x$enable_unit_tests" = "xyes"; then
-    AC_CHECK_LIB(check,srunner_create)
+    PKG_CHECK_EXISTS([check], [ have_check_pkgconfig="yes" ], [ have_check_pkgconfig="no" ])
+
+    if test "${have_check_pkgconfig}" = "yes" ; then
+        CPPFLAGS="${CPPFLAGS} `pkg-config --cflags check 2>/dev/null`"
+        LIBS="${LIBS} `pkg-config --libs check 2>/dev/null`"
+    else
+        AC_CHECK_LIB(check,srunner_create)
+    fi
 fi
 
 #--------------------------------------------------------------------------
@@ -559,8 +568,6 @@ fi
 #--------------------------------------------------------------------------
 # luajit
 #--------------------------------------------------------------------------
-
-PKG_PROG_PKG_CONFIG
 
 PKG_CHECK_EXISTS([luajit], [ have_luajit_pkgconfig="yes" ], [ have_luajit_pkgconfig="no" ])
 

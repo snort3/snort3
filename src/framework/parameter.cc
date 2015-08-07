@@ -132,8 +132,12 @@ static bool is_sep(char c)
 
 static const char* find(const char* r, const char* s)
 {
-    const char* t = strstr(r, s);
     unsigned n = strlen(s);
+
+    if ( !n )
+        return nullptr;
+
+    const char* t = strstr(r, s);
 
     while ( t )
     {

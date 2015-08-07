@@ -117,12 +117,12 @@ time \
 utils
 
 if BUILD_UNIT_TESTS
-snort_LDADD += test/libtest.a -lcheck -lrt -lpthread
 SUBDIRS += test
+snort_LDADD += test/libtest.a
 endif
 
 if BUILD_PIGLET
-snort_LDADD += piglet/libpiglet.a piglet_plugins/libpiglet_plugins.a
 SUBDIRS += piglet piglet_plugins
+snort_LDADD += piglet/libpiglet.a piglet_plugins/libpiglet_plugins.a
 endif
 

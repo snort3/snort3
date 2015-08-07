@@ -111,6 +111,10 @@ static void x2s(const char* s)
 
 //-------------------------------------------------------------------------
 // parameters
+//
+// users aren't used to seeing the standard help format for command line
+// args so the few cases where there is a default, we include it in the
+// help as well.
 //-------------------------------------------------------------------------
 
 static const Parameter s_params[] =
@@ -163,7 +167,7 @@ static const Parameter s_params[] =
 #endif
 
     { "-k", Parameter::PT_ENUM, "all|noip|notcp|noudp|noicmp|none", "all",
-      "<mode> checksum mode (all,noip,notcp,noudp,noicmp,none)" },
+      "<mode> checksum mode; default is all" },
 
     { "-L", Parameter::PT_STRING, nullptr, nullptr,
       "<mode> logging mode (none, dump, pcap, or log_*)" },
@@ -199,7 +203,7 @@ static const Parameter s_params[] =
       "<x=v> set config variable x equal to value v" },
 
     { "-s", Parameter::PT_INT, "68:65535", "1514",
-      "<snap> (same as --snaplen)" },
+      "<snap> (same as --snaplen); default is 1514" },
 
     { "-T", Parameter::PT_IMPLIED, nullptr, nullptr,
       "test and report on the current Snort configuration" },
@@ -238,7 +242,7 @@ static const Parameter s_params[] =
 
     { "-z", Parameter::PT_INT, "0:", "1",
       "<count> maximum number of packet threads (same as --max-packet-threads); "
-      "0 gets the number of CPU cores reported by the system" },
+      "0 gets the number of CPU cores reported by the system; default is 1" },
 
     { "--alert-before-pass", Parameter::PT_IMPLIED, nullptr, nullptr,
       "process alert, drop, sdrop, or reject before pass; "
@@ -433,7 +437,8 @@ static const Parameter s_params[] =
       "use drop, sdrop, and reject rules to ignore session traffic when not inline" },
 
 #ifdef UNIT_TEST
-    { "--unit-test", Parameter::PT_STRING, nullptr, nullptr,
+    { "--unit-test", Parameter::PT_SELECT,
+      "silent | minimal | normal | verbose | env (export CK_VERBOSITY)", nullptr,
       "<verbosity> run unit tests with given libcheck output mode" },
 #endif
     { "--version", Parameter::PT_IMPLIED, nullptr, nullptr,

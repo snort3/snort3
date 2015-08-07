@@ -75,6 +75,9 @@ struct SO_PUBLIC Parameter
     bool is_quoted() const
     { return ( type > PT_PORT ); }
 
+    bool has_text_range() const
+    { return !is_table() and range != nullptr; }
+
     bool get_bool() const;
     double get_number() const;
     const char* get_string() const;
