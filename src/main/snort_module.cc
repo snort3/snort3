@@ -119,15 +119,14 @@ static void x2s(const char* s)
 // help as well.
 //-------------------------------------------------------------------------
 
-static const char* get_alert_mode()
-{ return PluginManager::get_available_plugins(PT_LOGGER); }
-
 static const Parameter s_params[] =
 {
     { "-?", Parameter::PT_STRING, "(optional)", nullptr,
       "<option prefix> output matching command line option quick help (same as --help-options)" },
 
-    { "-A", Parameter::PT_DYNAMIC, (void*)get_alert_mode, nullptr,
+    // FIXIT should use PluginManager::get_available_plugins(PT_LOGGER)
+    // but plugins not yet loaded upon set
+    { "-A", Parameter::PT_STRING, nullptr, nullptr,
       "<mode> set alert mode: none, cmg, or alert_*" },
 
     { "-B", Parameter::PT_IMPLIED, nullptr, nullptr,
