@@ -1,3 +1,11 @@
+15/08/06 - build 164
+
+-- add range and default to command line args
+-- fix unit test build on osx
+-- DAQ packet header conditional compilation for piglet
+-- add make targets for dev_guide.html and snort_online.html
+-- cleanup debug macros
+
 15/07/30 - build 163
 
 -- numerous piglet fixes and enhancements
