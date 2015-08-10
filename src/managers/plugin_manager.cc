@@ -548,3 +548,23 @@ void PluginManager::instantiate(
         assert(false);
 }
 
+const char* PluginManager::get_available_plugins(PlugType t)
+{
+    static std::string s;
+    s.clear();
+
+    for ( auto it = plug_map.begin(); it != plug_map.end(); ++it )
+    {
+        const auto* api = it->second.api;
+
+        if ( t != api->type )
+            continue;
+
+        if ( !s.empty() )
+            s += " | ";
+
+        s += api->name;
+    }
+    return s.c_str();
+}
+

@@ -9,6 +9,7 @@ The following types are used:
 * *bit_list*: a list of consecutive integer values from 1 to the range
   maximum
 * *bool*: true or false
+* *dynamic*: a select type determined by loaded plugins
 * *enum*: a string selected from the given range
 * *implied*: an IPS rule option that takes no value but means true
 * *int*: a whole number in the given range

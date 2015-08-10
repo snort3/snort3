@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 // unit_test.h author Russ Combs <rucombs@cisco.com>
-//
+
 #include "unit_test.h"
 
 #include <stdlib.h>

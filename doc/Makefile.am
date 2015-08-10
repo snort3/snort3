@@ -221,5 +221,6 @@ clean-local:
 	rm -f $(doc_DATA)
 	rm -f snort_manual.{fo,xml}
 	rm -rf snort_manual.chunked
-	rm -f *.css *.tgz *.html
+	rm -f *.css *.tgz
+	rm -f {online_manual,dev_guide}.html
 

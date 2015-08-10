@@ -194,12 +194,12 @@ static void dump_field_std(const string& key, const Parameter* p)
     cout << " " << Markup::emphasis(Markup::escape(key));
 
     if ( p->deflt )
-        cout << " = " << Markup::escape((char*)p->deflt);
+        cout << " = " << Markup::escape(p->deflt);
 
     cout << ": " << p->help;
 
-    if ( p->range )
-        cout << " { " << Markup::escape((char*)p->range) << " }";
+    if ( const char* r = p->get_range() )
+        cout << " { " << Markup::escape(r) << " }";
 
     cout << endl;
 }
@@ -211,14 +211,14 @@ static void dump_field_tab(const string& key, const Parameter* p)
     cout << "\t" << Markup::emphasis(Markup::escape(key));
 
     if ( p->deflt )
-        cout << "\t" << Markup::escape((char*)p->deflt);
+        cout << "\t" << Markup::escape(p->deflt);
     else
         cout << "\t";
 
     cout << "\t" << p->help;
 
-    if ( p->range )
-        cout << "\t" << Markup::escape((char*)p->range);
+    if ( const char* r = p->get_range() )
+        cout << "\t" << Markup::escape(r);
     else
         cout << "\t";
 
