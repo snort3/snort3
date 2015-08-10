@@ -162,6 +162,7 @@ START_TEST (test_sfrt_remove_after_insert)
     sfrt_free(dir);
 }
 END_TEST
+
 /*Add all IPs, then delete all of them*/
 START_TEST(test_sfrt_remove_after_insert_all)
 {
@@ -262,7 +263,6 @@ START_TEST(test_sfrt_remove_after_insert_all)
 
     sfrt_free(dir);
 }
-
 END_TEST
 
 Suite* TEST_SUITE_sfrt(void)

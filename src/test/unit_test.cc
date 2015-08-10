@@ -31,6 +31,7 @@
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
+#include <check.h>
 
 #include "suite_decl.h"
 
@@ -70,7 +71,7 @@ bool unit_test_enabled()
     return s_mode != CK_LAST;
 }
 
-int unit_test()
+static bool run_check()
 {
     int nErr;
     SuiteCtor_f* ctor = s_suites;
@@ -88,7 +89,7 @@ int unit_test()
         ++ctor;
     }
     if ( !pr )
-        return -1;
+        return false;
 
     // tbd - possible to support forking?
     srunner_set_fork_status(pr, CK_NOFORK);
@@ -105,6 +106,32 @@ int unit_test()
     nErr = srunner_ntests_failed(pr);
 
     srunner_free(pr);
-    return (nErr == 0) ? 0 : -1;
+    return !nErr;
+}
+
+// check defines fail, so we must squash that because
+// catch uses stream and that has a fail method
+#undef fail
+#define CATCH_CONFIG_RUNNER
+#include "catch.hpp"
+
+static bool run_catch()
+{
+  Catch::Session session;
+  // write to session.configData() or session.Config() to customize
+  return session.run();
+}
+
+int unit_test()
+{
+    int ok = 0;
+
+    if ( !run_check() )
+        ok = -1;
+
+    if ( !run_catch() )
+        ok = -1;
+
+    return ok;
 }
 

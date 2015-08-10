@@ -905,26 +905,30 @@ START_TEST (test_setup)
 {
     fail_unless(SetupCheck(_i) == 1, "SetupCheck()");
 }
-END_TEST START_TEST(test_rule)
+END_TEST
+
+START_TEST(test_rule)
 {
     fail_unless(RuleCheck(_i) == 1, "RuleCheck()");
 }
+END_TEST
 
-END_TEST START_TEST(test_event)
+START_TEST(test_event)
 {
     fail_unless(EventCheck(_i) == 1, "EventCheck()");
 }
+END_TEST
 
-END_TEST START_TEST(test_packet)
+START_TEST(test_packet)
 {
     fail_unless(PacketCheck(_i) == 1, "PacketCheck()");
 }
+END_TEST
 
-END_TEST START_TEST(test_cap)
+START_TEST(test_cap)
 {
     fail_unless(CapCheck(_i) == 1, "CapCheck()");
 }
-
 END_TEST
 
 Suite* TEST_SUITE_sfthd(void)
