@@ -462,26 +462,30 @@ START_TEST (test_funcs)
 {
     fail_unless(FuncCheck(_i) == 1, "FuncCheck()");
 }
-END_TEST START_TEST(test_alloc)
+END_TEST
+
+START_TEST(test_alloc)
 {
     fail_unless(AllocCheck(_i) == 1, "AllocCheck()");
 }
+END_TEST
 
-END_TEST START_TEST(test_raw)
+START_TEST(test_raw)
 {
     fail_unless(RawCheck(_i) == 1, "RawCheck()");
 }
+END_TEST
 
-END_TEST START_TEST(test_set)
+START_TEST(test_set)
 {
     fail_unless(SetCheck(_i) == 1, "SetCheck()");
 }
+END_TEST
 
-END_TEST START_TEST(test_copy)
+START_TEST(test_copy)
 {
     fail_unless(CopyCheck(_i) == 1, "CopyCheck()");
 }
-
 END_TEST
 
 Suite* TEST_SUITE_sfip(void)
