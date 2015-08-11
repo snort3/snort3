@@ -27,7 +27,7 @@
 
 #include "main/snort_types.h"
 
-#include "file_api/file_api.h"
+#include "file_api/file_service.h"
 #include "file_mime_process.h"
 
 void DecodeConfig::update_max_depth(int64_t depth)
@@ -135,7 +135,7 @@ void DecodeConfig::set_file_depth(int64_t file_depth)
 // update file depth and max_depth etc
 void DecodeConfig::sync_all_depths()
 {
-    file_depth = get_max_file_depth();
+    file_depth = FileService::get_max_file_depth();
 
     set_file_depth(file_depth);
 }

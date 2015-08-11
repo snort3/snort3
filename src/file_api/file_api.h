@@ -196,12 +196,8 @@ static inline bool isFileEnd(FilePosition position)
     return ((position == SNORT_FILE_END) || (position == SNORT_FILE_FULL));
 }
 
-void enable_file_type();
-void enable_file_signature ();
-void enable_file_capture();
 uint64_t get_file_processed_size(Flow* flow);
 FilePosition get_file_position(Packet* pkt);
-int64_t get_max_file_depth(void);
 
 #endif /* FILE_API_H */
 

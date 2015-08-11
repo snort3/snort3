@@ -22,21 +22,38 @@
 #ifndef FILE_SERVICE_H
 #define FILE_SERVICE_H
 
-// This provides a wrapper to start/stop file API
-// FIXIT-L This will be refactored soon
+// This provides a wrapper to start/stop file service
 
-#include "libs/file_lib.h"
+#include <sys/types.h>
 
-/* Initialize file API, this must be called when snort restarts */
-void init_fileAPI(void);
+class FileService
+{
+public:
+    // This must be called when snort restarts
+    static void init(void);
 
-void FileAPIPostInit(void);
+    // Called after permission is dropped
+    static void post_init(void);
 
-/* Close file API, this must be called when snort exits */
-void close_fileAPI(void);
+    // This must be called when snort exits
+    static void close(void);
 
-/* Get current file context */
-FileContext* get_current_file_context(Flow* flow);
+    static void enable_file_type();
+    static void enable_file_signature ();
+    static void enable_file_capture();
+    static bool is_file_type_id_enabled() {return file_type_id_enabled;};
+    static bool is_file_signature_enabled() {return file_signature_enabled;};
+    static bool is_file_capture_enabled() {return file_capture_enabled;};
+    static bool is_file_service_enabled();
+    static int64_t get_max_file_depth();
 
+private:
+    static void start_file_processing(void);
+    static bool file_type_id_enabled;
+    static bool file_signature_enabled;
+    static bool file_capture_enabled;
+    static bool file_processing_initiated;
+
+};
 #endif
 

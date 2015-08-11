@@ -54,6 +54,12 @@ int64_t FileConfig::show_data_depth = DEFAULT_FILE_SHOW_DATA_DEPTH;
 bool FileConfig::trace_type = false;
 bool FileConfig::trace_signature = false;
 bool FileConfig::trace_stream = false;
+
+bool FileService::file_type_id_enabled = false;
+bool FileService::file_signature_enabled = false;
+bool FileService::file_capture_enabled = false;
+bool FileService::file_processing_initiated = false;
+
 typedef struct _FileSession
 {
     FileContext* current_context;
@@ -62,10 +68,8 @@ typedef struct _FileSession
     uint32_t max_file_id;
 } FileSession;
 
-static bool file_type_id_enabled = false;
-static bool file_signature_enabled = false;
-static bool file_capture_enabled = false;
-static bool file_processing_initiated = false;
+/* Get current file context */
+FileContext* get_current_file_context(Flow* flow);
 
 /*Main File Processing functions */
 static bool file_process(Flow* flow, uint8_t* file_data, int data_size,
@@ -80,7 +84,6 @@ int64_t get_max_file_depth(void);
 
 static inline void finish_signature_lookup(FileContext* context);
 
-static bool is_file_service_enabled(void);
 static uint32_t get_file_type_id(Flow* flow);
 static uint32_t get_new_file_instance(Flow* flow);
 
@@ -117,7 +120,7 @@ public:
 
 unsigned FileFlowData::flow_id = 0;
 
-void init_fileAPI(void)
+void FileService::init(void)
 {
     fileAPI.file_process = &file_process;
     fileAPI.set_file_name = &set_file_name;
@@ -127,7 +130,7 @@ void init_fileAPI(void)
     FileFlowData::init();
 }
 
-void FileAPIPostInit(void)
+void FileService::post_init(void)
 {
     FileConfig* file_config = (FileConfig*)(snort_conf->file_config);
 
@@ -145,7 +148,14 @@ void FileAPIPostInit(void)
             file_config->file_capture_block_size);
 }
 
-static void start_file_processing(void)
+void FileService::close(void)
+{
+    file_resume_block_cleanup();
+    MimeSession::exit();
+    FileCapture::exit();
+}
+
+void FileService::start_file_processing(void)
 {
     if (!file_processing_initiated)
     {
@@ -155,11 +165,86 @@ static void start_file_processing(void)
     }
 }
 
-void close_fileAPI(void)
+/*
+ * - Only accepts 1 (ONE) callback being registered.
+ *
+ * - Call with NULL callback to "force" (guarantee) file type identification.
+ *
+ * TBD: Remove per-context "file_type_enabled" checking to simplify implementation.
+ *
+ */
+void FileService::enable_file_type()
 {
-    file_resume_block_cleanup();
-    MimeSession::exit();
-    FileCapture::exit();
+    if (!file_type_id_enabled)
+    {
+        file_type_id_enabled = true;
+        start_file_processing();
+    }
+}
+
+void FileService::enable_file_signature()
+{
+
+    if (!file_signature_enabled)
+    {
+        file_signature_enabled = true;
+        start_file_processing();
+    }
+}
+
+/* Enable file capture, also enable file signature */
+void FileService::enable_file_capture()
+{
+    if (!file_capture_enabled)
+    {
+        file_capture_enabled = true;
+        enable_file_signature();
+    }
+}
+
+
+bool FileService::is_file_service_enabled()
+{
+    return (file_type_id_enabled or file_signature_enabled);
+}
+
+
+/* Get maximal file depth based on configuration
+ * This function must be called after all file services are configured/enabled.
+ */
+int64_t FileService::get_max_file_depth(void)
+{
+    FileConfig* file_config =  (FileConfig*)(snort_conf->file_config);
+
+    if (!file_config)
+        return -1;
+
+    if (file_config->file_depth)
+        return file_config->file_depth;
+
+    file_config->file_depth = -1;
+
+    if (file_type_id_enabled)
+    {
+        file_config->file_depth = file_config->file_type_depth;
+    }
+
+    if (file_signature_enabled)
+    {
+        if (file_config->file_signature_depth > file_config->file_depth)
+            file_config->file_depth = file_config->file_signature_depth;
+    }
+
+    if (file_config->file_depth > 0)
+    {
+        /*Extra byte for deciding whether file data will be over limit*/
+        file_config->file_depth++;
+        return (file_config->file_depth);
+    }
+    else
+    {
+        return -1;
+    }
 }
 
 static inline FileSession* get_file_session(Flow* flow)
@@ -177,7 +262,7 @@ FileContext* get_current_file_context(Flow* flow)
     else
         return NULL;
 }
-uint16_t   app_id;
+
 FileContext* get_main_file_context(Flow* flow)
 {
     FileSession* file_session = get_file_session (flow);
@@ -227,9 +312,9 @@ static void file_session_free(FileSession* file_session)
 
 static inline void init_file_context(FileDirection direction, FileContext* context)
 {
-    context->config_file_type(file_type_id_enabled);
-    context->config_file_signature(file_signature_enabled);
-    context->config_file_capture(file_capture_enabled);
+    context->config_file_type(FileService::is_file_type_id_enabled());
+    context->config_file_signature(FileService::is_file_signature_enabled());
+    context->config_file_capture(FileService::is_file_capture_enabled());
     context->set_file_direction(direction);
 }
 
@@ -371,11 +456,6 @@ static uint32_t get_new_file_instance(Flow* flow)
         return 0;
 }
 
-static bool is_file_service_enabled()
-{
-    return (file_type_id_enabled or file_signature_enabled);
-}
-
 /*
  * Return:
  *    true: continue processing/log/block this file
@@ -465,7 +545,7 @@ static bool file_process(Flow* flow, uint8_t* file_data, int data_size,
     FileContext* context;
     FileDirection direction = upload ? FILE_UPLOAD:FILE_DOWNLOAD;
     /* if both disabled, return immediately*/
-    if (!is_file_service_enabled())
+    if (!FileService::is_file_service_enabled())
         return false;
 
     if (position == SNORT_FILE_POSITION_UNKNOWN)
@@ -497,81 +577,6 @@ static bool get_file_name(Flow* flow, uint8_t** file_name, uint32_t* name_size)
         return false;
 }
 
-/*
- * - Only accepts 1 (ONE) callback being registered.
- *
- * - Call with NULL callback to "force" (guarantee) file type identification.
- *
- * TBD: Remove per-context "file_type_enabled" checking to simplify implementation.
- *
- */
-void enable_file_type()
-{
-    if (!file_type_id_enabled)
-    {
-        file_type_id_enabled = true;
-        start_file_processing();
-    }
-}
-
-void enable_file_signature()
-{
-
-    if (!file_signature_enabled)
-    {
-        file_signature_enabled = true;
-        start_file_processing();
-    }
-}
-
-/* Enable file capture, also enable file signature */
-void enable_file_capture()
-{
-    if (!file_capture_enabled)
-    {
-        file_capture_enabled = true;
-        enable_file_signature();
-    }
-}
-
-/* Get maximal file depth based on configuration
- * This function must be called after all file services are configured/enabled.
- */
-int64_t get_max_file_depth(void)
-{
-    FileConfig* file_config =  (FileConfig*)(snort_conf->file_config);
-
-    if (!file_config)
-        return -1;
-
-    if (file_config->file_depth)
-        return file_config->file_depth;
-
-    file_config->file_depth = -1;
-
-    if (file_type_id_enabled)
-    {
-        file_config->file_depth = file_config->file_type_depth;
-    }
-
-    if (file_signature_enabled)
-    {
-        if (file_config->file_signature_depth > file_config->file_depth)
-            file_config->file_depth = file_config->file_signature_depth;
-    }
-
-    if (file_config->file_depth > 0)
-    {
-        /*Extra byte for deciding whether file data will be over limit*/
-        file_config->file_depth++;
-        return (file_config->file_depth);
-    }
-    else
-    {
-        return -1;
-    }
-}
-
 FilePosition get_file_position(Packet* pkt)
 {
     FilePosition position = SNORT_FILE_POSITION_UNKNOWN;
@@ -588,3 +593,5 @@ FilePosition get_file_position(Packet* pkt)
 
     return position;
 }
+
+

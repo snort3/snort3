@@ -56,6 +56,7 @@
 #include "stream/stream_api.h"
 #include "detection/detection_util.h"
 #include "sfip/sfip_t.h"
+#include "file_api/file_service.h"
 
 #ifndef MAXHOSTNAMELEN /* Why doesn't Windows define this? */
 #define MAXHOSTNAMELEN 256
@@ -1065,7 +1066,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                             sfip_copy(session->clientIP, p->ptrs.ip_api.get_dst());
                             session->clientPort = 0;
 
-                            if ((get_max_file_depth() > 0) ||
+                            if ((FileService::get_max_file_depth() > 0) ||
                                 !(session->server_conf->data_chan))
                             {
                                 FtpDataFlowData* fd = new FtpDataFlowData(p);
@@ -1137,7 +1138,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                         /*
                         session->serverPort = ntohs(p->ptrs.tcph->th_sport) -1;
                         */
-                        if ((get_max_file_depth() > 0) ||
+                        if ((FileService::get_max_file_depth() > 0) ||
                             !(session->server_conf->data_chan))
                         {
                             FtpDataFlowData* fd = new FtpDataFlowData(p);
@@ -1721,7 +1722,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                 else if (CmdConf->data_xfer_cmd)
                 {
                     /* If we are not ignoring the data channel OR file processing is enabled */
-                    if (!ftpssn->server_conf->data_chan || (get_max_file_depth() > -1))
+                    if (!ftpssn->server_conf->data_chan || (FileService::get_max_file_depth() > -1))
                     {
                         /* The following  check cleans up filename  for failed data
                          * transfers.  If  the  transfer had  been  successful  the

@@ -52,6 +52,7 @@
 #include "stream/stream_api.h"
 #include "target_based/snort_protocols.h"
 #include "file_api/file_api.h"
+#include "file_api/file_service.h"
 #include "utils/kmap.h"
 #include <mime/decode_base.h>
 #include "utils/util.h"
@@ -134,7 +135,7 @@ static void CheckMemcap(HTTPINSPECT_GLOBAL_CONF* pPolicyConfig)
 static void updateConfigFromFileProcessing(HTTPINSPECT_CONF* ServerConf)
 {
     /*Either one is unlimited*/
-    int64_t fileDepth = get_max_file_depth();
+    int64_t fileDepth = FileService::get_max_file_depth();
 
     /*Config file policy*/
     if (fileDepth > -1)

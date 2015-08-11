@@ -43,6 +43,7 @@
 #include "main/snort_debug.h"
 #include "stream/stream_api.h"
 #include "file_api/file_api.h"
+#include "file_api/file_service.h"
 #include "parser/parser.h"
 #include "framework/inspector.h"
 #include "detection/detection_util.h"
@@ -247,7 +248,7 @@ void FtpData::eval(Packet* p)
     // precondition - what we registered for
     assert(p->has_tcp_data());
 
-    if ( get_max_file_depth() < 0 )
+    if ( FileService::get_max_file_depth() < 0 )
         return;
 
     PROFILE_VARS;

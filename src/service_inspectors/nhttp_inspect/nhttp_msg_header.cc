@@ -23,6 +23,7 @@
 
 #include "utils/util.h"
 #include "detection/detection_util.h"
+#include "file_api/file_service.h"
 
 #include "nhttp_enum.h"
 #include "nhttp_msg_request.h"
@@ -86,7 +87,7 @@ void NHttpMsgHeader::update_flow()
         session_data->section_size_target[source_id] = DATA_BLOCK_SIZE;
         if (session_data->file_depth_remaining[1-source_id] <= 0)
         {   // Bidirectional file processing is problematic FIXIT-M
-            session_data->file_depth_remaining[source_id] = get_max_file_depth();
+            session_data->file_depth_remaining[source_id] = FileService::get_max_file_depth();
         }
         session_data->infractions[source_id].reset();
         session_data->events[source_id].reset();
@@ -103,7 +104,7 @@ void NHttpMsgHeader::update_flow()
         session_data->section_size_max[source_id] = FINAL_BLOCK_SIZE;
         if (session_data->file_depth_remaining[1-source_id] <= 0)
         {   // Bidirectional file processing is problematic FIXIT-M
-            session_data->file_depth_remaining[source_id] = get_max_file_depth();
+            session_data->file_depth_remaining[source_id] = FileService::get_max_file_depth();
             if (source_id == SRC_CLIENT)
             {
                 session_data->mime_state = new MimeSession(&decode_conf, &mime_conf);
