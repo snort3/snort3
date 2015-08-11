@@ -25,7 +25,7 @@
 
 #include <stdlib.h>
 
-#include "sf_email_attach_decode.h"
+#include "decode_base.h"
 #include "file_mime_config.h"
 
 #include "main/snort_types.h"

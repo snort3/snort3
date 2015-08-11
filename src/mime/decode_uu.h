@@ -23,7 +23,7 @@
 
 // UU decoder
 
-#include "sf_email_attach_decode.h"
+#include "decode_base.h"
 #include "decode_buffer.h"
 
 class UUDecode:public DataDecode

@@ -11,12 +11,19 @@ add_library ( mime STATIC
     file_mime_paf.cc 
     file_mime_process.h 
     file_mime_process.cc 
-    sf_email_attach_decode.cc 
-    sf_email_attach_decode.h
-    sf_base64decode.cc 
-    sf_base64decode.h
-    uu_decode.cc
-    uu_decode.h
+    decode_base.h.cc 
+    decode_base.h
+    decode_b64.cc
+    decode_b64.h
+    decode_bit.cc
+    decode_bit.h
+    decode_buffer.cc
+    decode_buffer.h
+    decode_qp.cc
+    decode_qp.h
+    decode_uu.cc
+    decode_uu.h
+    
 )
 
 target_link_libraries(mime file_api)

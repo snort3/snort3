@@ -18,7 +18,7 @@
 //--------------------------------------------------------------------------
 // Author: Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
-#include "sf_email_attach_decode.h"
+#include <mime/decode_base.h>
 #include "decode_bit.h"
 
 #include "utils/snort_bounds.h"

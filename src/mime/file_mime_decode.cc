@@ -20,7 +20,6 @@
 
 #include <mime/decode_uu.h>
 #include "file_mime_decode.h"
-#include "sf_base64decode.h"
 #include "decode_b64.h"
 #include "decode_bit.h"
 #include "decode_qp.h"

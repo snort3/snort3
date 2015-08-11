@@ -26,8 +26,9 @@
 // and file name will be extracted from MIME header
 
 #include <pcre.h>
+
+#include "decode_base.h"
 #include "file_mime_config.h"
-#include "sf_email_attach_decode.h"
 #include "file_api/file_api.h"
 
 

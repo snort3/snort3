@@ -27,6 +27,7 @@
 
 #include "main/snort_types.h"
 #include "decode_buffer.h"
+#include "decode_base.h"
 
 class B64Decode:public DataDecode
 {
@@ -42,6 +43,13 @@ public:
 private:
     DecodeBuffer* buffer = nullptr;
 };
+
+// FIXIT-L: inbuf should probably be const uint8_t*
+SO_PUBLIC int sf_base64decode(
+    uint8_t* inbuf, uint32_t inbuf_size,
+    uint8_t* outbuf, uint32_t outbuf_size,
+    uint32_t* bytes_written
+);
 
 #endif
 

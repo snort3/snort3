@@ -65,7 +65,7 @@
 #include "utils/util.h"
 #include "utils/util_utf.h"
 #include "utils/sfsnprintfappend.h"
-#include "mime/sf_email_attach_decode.h"
+#include <mime/decode_base.h>
 #include "stream/stream_api.h"
 #include "time/profiler.h"
 #include "loggers/unified2_common.h"
