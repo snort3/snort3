@@ -348,7 +348,7 @@ is called like this:
 
 * ++Codec.get_data_link_type() -> { int, int, ... }++
 * ++Codec.get_protocol_ids() -> { int, int, ... }++
-* ++Codec.decode(DAQHeader, CodecData, DecodeData) -> bool++
+* ++Codec.decode(DAQHeader, RawBuffer, CodecData, DecodeData) -> bool++
 * ++Codec.log(RawBuffer, uint[lyr_len])++
 * ++Codec.encode(RawBuffer, EncState, Buffer) -> bool++
 * ++Codec.update(uint[flags_hi], uint[flags_lo], RawBuffer, uint[lyr_len] -> int++
@@ -441,9 +441,9 @@ or even:
 
 *CodecData*
 
-* ++CodecData.new() -> Cursor++
-* ++CodecData.new(uint[next_prot_id]) -> Cursor++
-* ++CodecData.new(fields) -> Cursor++
+* ++CodecData.new() -> CodecData++
+* ++CodecData.new(uint[next_prot_id]) -> CodecData++
+* ++CodecData.new(fields) -> CodecData++
 
 * ++CodecData:get() -> fields++
 * ++CodecData:set(fields)++
