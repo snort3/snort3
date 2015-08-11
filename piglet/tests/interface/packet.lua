@@ -42,16 +42,35 @@ tests =
         assert(p)
     end,
 
-    initialize_with_data = function()
+    init_with_string = function()
+        local p = Packet.new("foobar")
+        assert(p)
+    end,
+
+    init_with_size = function()
+        local p = Packet.new(128)
+        assert(p)
+    end,
+
+    init_with_raw_buffer = function()
         local rb = RawBuffer.new()
         local p = Packet.new(rb)
         assert(p)
     end,
 
-    initialize_with_daq = function()
-        local rb = RawBuffer.new()
+    init_with_daq = function()
         local daq = DAQHeader.new()
-        local p = Packet.new(rb, daq)
+        local p = Packet.new(daq)
+        assert(p)
+    end,
+
+    init_with_table = function()
+        local p = Packet.new(VALUES)
+        assert_table_eq("get()", VALUES, p:get())
+    end,
+
+    init_with_everything = function()
+        local p = Packet.new("foobar", DAQHeader.new(), { packet_flags = 4 })
         assert(p)
     end,
 
@@ -78,17 +97,5 @@ tests =
         assert_table_eq("get()", DEFAULT_VALUES, p:get())
         p:set(VALUES)
         assert_table_eq("set()", VALUES, p:get())
-    end,
-
-    set_pkt = function()
-        local rb = RawBuffer.new()
-        local p = Packet.new()
-        p:set_pkt(rb)
-    end,
-
-    set_daq = function()
-        local daq = DAQHeader.new()
-        local p = Packet.new()
-        p:set_daq(daq)
     end
 }

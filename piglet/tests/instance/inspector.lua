@@ -5,7 +5,9 @@ plugin =
     test = function()
         dofile(SCRIPT_DIR .. "/common.lua")
         return run_all(tests)
-    end
+    end,
+    -- FIXIT-L: Need this to keep Inspector.configure() happy
+    use_defaults = true
 }
 
 HEADER = [[
@@ -59,7 +61,7 @@ tests =
         local p, rb = get_packet()
         local ib = RawBuffer.new()
 
-        local rv = Inspector.get_buf_from_key(0, p, ib)
+        local rv = Inspector.get_buf_from_id(0, p, ib)
         assert(not rv)
     end,
 
@@ -69,5 +71,22 @@ tests =
 
         spl = Inspector.get_splitter(true)
         assert(type(spl) == "userdata")
+    end,
+
+    configure = function()
+        assert(Inspector.configure())
+    end,
+
+    tinit = function()
+        Inspector.tinit()
+    end,
+
+    tterm = function()
+        Inspector.tterm()
+    end,
+
+    likes = function()
+        local p = Packet.new()
+        assert(not Inspector.likes(p))
     end
 }

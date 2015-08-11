@@ -25,13 +25,44 @@
 
 #include "detection/signature.h"
 #include "events/event.h"
+#include "lua/lua_arg.h"
 #include "lua/lua_table.h"
+#include "pp_raw_buffer_iface.h"
 
+// FIXIT-H: Should be its own object
 static struct SigInfo* create_sig_info()
 {
     auto si = new SigInfo;
     memset(si, 0, sizeof(SigInfo));
     return si;
+}
+
+static void set_fields(lua_State* L, int tindex, Event& self)
+{
+    Lua::Table table(L, tindex);
+
+    table.get_field("event_id", self.event_id);
+    table.get_field("event_reference", self.event_reference);
+
+    const char* s = nullptr;
+    // FIXIT-L: Shouldn't need both conditions
+    if ( table.get_field("alt_msg", s) && s )
+    {
+        self.alt_msg = RawBufferIface.create(L, s).c_str();
+        Lua::add_ref(L, &self, "alt_msg", lua_gettop(L));
+        lua_pop(L, 1);
+    }
+}
+
+static void get_fields(lua_State* L, int tindex, Event& self)
+{
+    Lua::Table table(L, tindex);
+
+    table.set_field("event_id", self.event_id);
+    table.set_field("event_reference", self.event_reference);
+
+    if ( self.alt_msg )
+        table.set_field("alt_msg", self.alt_msg);
 }
 
 static const luaL_Reg methods[] =
@@ -40,8 +71,14 @@ static const luaL_Reg methods[] =
         "new",
         [](lua_State* L)
         {
+            Lua::Args args(L);
+
             auto& self = EventIface.create(L);
+            // FIXIT-M: This should be a separate object
+            // (to make resource tracking more uniform)
             self.sig_info = create_sig_info();
+
+            args[1].opt_table(set_fields, self);
 
             return 1;
         }
@@ -54,9 +91,7 @@ static const luaL_Reg methods[] =
             auto& self = EventIface.get(L);
             lua_newtable(L);
 
-            Lua::Table table(L, lua_gettop(L));
-            table.set_field("event_id", self.event_id);
-            table.set_field("event_reference", self.event_reference);
+            get_fields(L, lua_gettop(L), self);
 
             auto si = self.sig_info;
 
@@ -74,7 +109,7 @@ static const luaL_Reg methods[] =
                 si_table.set_field("text_rule", si->text_rule);
                 si_table.set_field("num_services", si->num_services);
 
-                table.set_field_from_stack("sig_info", si_table.index);
+                Lua::Table(L, 2).set_field_from_stack("sig_info", si_table.index);
             }
 
             return 1;
@@ -107,8 +142,7 @@ static const luaL_Reg methods[] =
                 si_table.get_field("num_services", si->num_services);
             }
 
-            table.get_field("event_id", self.event_id);
-            table.get_field("event_reference", self.event_reference);
+            set_fields(L, 2, self);
 
             return 0;
         }
@@ -121,12 +155,7 @@ static const luaL_Reg metamethods[] =
     {
         "__tostring",
         [](lua_State* L)
-        {
-            auto& self = EventIface.get(L);
-            lua_pushfstring(L, "%s@%p", EventIface.name, &self);
-
-            return 1;
-        }
+        { return EventIface.default_tostring(L); }
     },
     {
         "__gc",

@@ -19,25 +19,41 @@
 
 #include "pp_codec_data_iface.h"
 
+#include <string.h>
 #include <luajit-2.0/lua.hpp>
 
 #include "framework/codec.h"
 #include "lua/lua_table.h"
 #include "lua/lua_arg.h"
 
-static void set_fields(lua_State* L, int tindex, CodecData& cd)
+static void set_fields(lua_State* L, int tindex, CodecData& self)
 {
     Lua::Table table(L, tindex);
 
-    table.get_field("next_prot_id", cd.next_prot_id);
-    table.get_field("lyr_len", cd.lyr_len);
-    table.get_field("invalid_bytes", cd.invalid_bytes);
-    table.get_field("proto_bits", cd.proto_bits);
-    table.get_field("codec_flags", cd.codec_flags);
-    table.get_field("ip_layer_cnt", cd.ip_layer_cnt);
-    table.get_field("ip6_extension_count", cd.ip6_extension_count);
-    table.get_field("curr_ip6_extension", cd.curr_ip6_extension);
-    table.get_field("ip6_csum_proto", cd.ip6_csum_proto);
+    table.get_field("next_prot_id", self.next_prot_id);
+    table.get_field("lyr_len", self.lyr_len);
+    table.get_field("invalid_bytes", self.invalid_bytes);
+    table.get_field("proto_bits", self.proto_bits);
+    table.get_field("codec_flags", self.codec_flags);
+    table.get_field("ip_layer_cnt", self.ip_layer_cnt);
+    table.get_field("ip6_extension_count", self.ip6_extension_count);
+    table.get_field("curr_ip6_extension", self.curr_ip6_extension);
+    table.get_field("ip6_csum_proto", self.ip6_csum_proto);
+}
+
+static void get_fields(lua_State* L, int tindex, CodecData& self)
+{
+    Lua::Table table(L, tindex);
+
+    table.set_field("next_prot_id", self.next_prot_id);
+    table.set_field("lyr_len", self.lyr_len);
+    table.set_field("invalid_bytes", self.invalid_bytes);
+    table.set_field("proto_bits", self.proto_bits);
+    table.set_field("codec_flags", self.codec_flags);
+    table.set_field("ip_layer_cnt", self.ip_layer_cnt);
+    table.set_field("ip6_extension_count", self.ip6_extension_count);
+    table.set_field("curr_ip6_extension", self.curr_ip6_extension);
+    table.set_field("ip6_csum_proto", self.ip6_csum_proto);
 }
 
 static const luaL_Reg methods[] =
@@ -46,17 +62,15 @@ static const luaL_Reg methods[] =
         "new",
         [](lua_State* L)
         {
-            Lua::Arg arg(L);
+            Lua::Args args(L);
 
             auto& self = CodecDataIface.create(L, 0);
+            memset(&self, 0, sizeof(self));
 
-            if ( arg.count )
-            {
-                if ( arg.is_table(1) )
-                    set_fields(L, 1, self);
-                else
-                    self.next_prot_id = arg.check_size(1);
-            }
+            if ( args[1].is_table() )
+                args[1].check_table(set_fields, self);
+            else if ( args[1].is_size() )
+                self.next_prot_id = args[1].check_size();
 
             return 1;
         }
@@ -64,38 +78,12 @@ static const luaL_Reg methods[] =
     {
         "get",
         [](lua_State* L)
-        {
-            auto& self = CodecDataIface.get(L);
-            lua_newtable(L);
-
-            Lua::Table table(L, lua_gettop(L));
-
-            table.set_field("next_prot_id", self.next_prot_id);
-            table.set_field("lyr_len", self.lyr_len);
-            table.set_field("invalid_bytes", self.invalid_bytes);
-            table.set_field("proto_bits", self.proto_bits);
-            table.set_field("codec_flags", self.codec_flags);
-            table.set_field("ip_layer_cnt", self.ip_layer_cnt);
-            table.set_field("ip6_extension_count", self.ip6_extension_count);
-            table.set_field("curr_ip6_extension", self.curr_ip6_extension);
-            table.set_field("ip6_csum_proto", self.ip6_csum_proto);
-
-            return 1;
-        }
+        { return CodecDataIface.default_getter(L, get_fields); }
     },
     {
         "set",
         [](lua_State* L)
-        {
-            Lua::Arg arg(L);
-
-            auto& self = CodecDataIface.get(L, 1);
-
-            arg.check_table(2);
-            set_fields(L, 2, self);
-
-            return 0;
-        }
+        { return CodecDataIface.default_setter(L, set_fields); }
     },
     { nullptr, nullptr }
 };
@@ -105,20 +93,12 @@ static const luaL_Reg metamethods[] =
     {
         "__tostring",
         [](lua_State* L)
-        {
-            auto& self = CodecDataIface.get(L);
-            lua_pushfstring(L, "%s@%p", CodecDataIface.name, &self);
-
-            return 1;
-        }
+        { return CodecDataIface.default_tostring(L); }
     },
     {
         "__gc",
         [](lua_State* L)
-        {
-            CodecDataIface.destroy(L);
-            return 0;
-        }
+        { return CodecDataIface.default_gc(L); }
     },
     { nullptr, nullptr }
 };

@@ -21,6 +21,7 @@
 
 #include <limits>
 #include <vector>
+#include <assert.h>
 #include <luajit-2.0/lua.hpp>
 
 #include "framework/codec.h"
@@ -31,14 +32,12 @@
 
 #include "pp_buffer_iface.h"
 #include "pp_codec_data_iface.h"
+#include "pp_daq_pkthdr_iface.h"
 #include "pp_decode_data_iface.h"
 #include "pp_enc_state_iface.h"
 #include "pp_raw_buffer_iface.h"
-#include "pp_raw_data_iface.h"
 
-static std::vector<int> data_link_types;
-static std::vector<uint16_t> protocol_ids;
-
+// FIXIT-M: This should be its own object
 static const ip::IpApi ip_api {};
 
 struct TextLogWrapper
@@ -46,7 +45,10 @@ struct TextLogWrapper
     TextLog* text_log;
 
     TextLogWrapper(const char* name)
-    { text_log = TextLog_Init(name); }
+    {
+        text_log = TextLog_Init(name);
+        assert(text_log);
+    }
 
     ~TextLogWrapper()
     {
@@ -91,13 +93,32 @@ static const luaL_Reg methods[] =
         "decode",
         [](lua_State* L)
         {
-            auto& rd = RawDataIface.get(L, 1);
-            auto& cd = CodecDataIface.get(L, 2);
-            auto& dd = DecodeDataIface.get(L, 3);
+            bool result;
+
+            auto& daq = DAQHeaderIface.get(L, 1);
+            auto& cd = CodecDataIface.get(L, 3);
+            auto& dd = DecodeDataIface.get(L, 4);
 
             auto& self = CodecIface.get(L);
 
-            bool result = self.decode(rd, cd, dd);
+            if ( RawBufferIface.is(L, 2) )
+            {
+                RawData rd(&daq, get_data(RawBufferIface.get(L, 2)));
+                result = self.decode(rd, cd, dd);
+            }
+            else
+            {
+                size_t len = 0;
+                RawData rd(
+                    &daq,
+                    reinterpret_cast<const uint8_t*>(
+                        luaL_checklstring(L, 2, &len)
+                    )
+                );
+
+                result = self.decode(rd, cd, dd);
+            }
+
             lua_pushboolean(L, result);
 
             return 1;
@@ -107,20 +128,15 @@ static const luaL_Reg methods[] =
         "log",
         [](lua_State* L)
         {
-            Lua::Arg arg(L);
+            Lua::Args args(L);
 
             auto& rb = RawBufferIface.get(L, 1);
-            uint16_t lyr_len = arg.opt_size(2, rb.size(), rb.size());
+            uint16_t lyr_len = args[2].opt_size(rb.size(), rb.size());
 
             auto& self = CodecIface.get(L);
 
             TextLogWrapper tl_wrap("stdout");
-            // FIXIT-L: Do we need to check for null tl_wrap.text_log?
-            self.log(
-                tl_wrap.text_log,
-                reinterpret_cast<const uint8_t*>(rb.data()),
-                lyr_len
-            );
+            self.log(tl_wrap.text_log, get_data(rb), lyr_len);
 
             return 0;
         }
@@ -135,8 +151,7 @@ static const luaL_Reg methods[] =
 
             auto& self = CodecIface.get(L);
 
-            bool result = self.encode(
-                reinterpret_cast<const uint8_t*>(rb.data()), rb.size(), es, b);
+            bool result = self.encode(get_data(rb), rb.size(), es, b);
 
             lua_pushboolean(L, result);
 
@@ -147,23 +162,23 @@ static const luaL_Reg methods[] =
         "update",
         [](lua_State* L)
         {
-            Lua::Arg arg(L);
+            Lua::Args args(L);
 
-            // FIXIT-M: We can't represent all flags int lua_Integer type
-            uint64_t flags = arg.check_size(1);
-            auto& rb = RawBufferIface.get(L, 2);
-            uint16_t lyr_len = arg.opt_size(3, 0, rb.size());
+            uint32_t flags_hi = args[1].check_size();
+            uint32_t flags_lo = args[2].check_size();
+            auto& rb = RawBufferIface.get(L, 3);
+
+            // FIXIT-L: Args vs Iface is not orthogonal
+            uint16_t lyr_len = args[4].opt_size(0, rb.size());
 
             auto& self = CodecIface.get(L);
 
             uint32_t updated_len = 0;
 
-            self.update(
-                ip_api, flags,
-                const_cast<uint8_t*>(
-                    reinterpret_cast<const uint8_t*>(rb.data())),
-                lyr_len, updated_len
-            );
+            uint64_t flags = (static_cast<uint64_t>(flags_hi) << 8) | flags_lo;
+
+            self.update(ip_api, flags, get_mutable_data(rb), lyr_len,
+                updated_len);
 
             lua_pushinteger(L, updated_len);
 
@@ -174,17 +189,15 @@ static const luaL_Reg methods[] =
         "format",
         [](lua_State* L)
         {
-            bool reverse = lua_toboolean(L, 1);
+            Lua::Args args(L);
+
+            bool reverse = args[1].get_bool();
             auto& rb = RawBufferIface.get(L, 2);
             auto& dd = DecodeDataIface.get(L, 3);
 
             auto& self = CodecIface.get(L);
-            self.format(
-                reverse,
-                const_cast<uint8_t*>(
-                    reinterpret_cast<const uint8_t*>(rb.data())),
-                dd
-            );
+
+            self.format(reverse, get_mutable_data(rb), dd);
 
             return 0;
         }

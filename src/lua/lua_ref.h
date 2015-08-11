@@ -15,10 +15,19 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// lua_iface.cc author Joel Cornett <jocornet@cisco.com>
+// lua_ref.h author Joel Cornett <jocornet@cisco.com>
 
-#include "lua_iface.h"
+#ifndef LUA_REF_H
+#define LUA_REF_H
 
-#include <luajit-2.0/lua.hpp>
+// Keep references to C objects in Lua to prevent premature garbage collection
 
-namespace Lua { }
+struct lua_State;
+
+namespace Lua
+{
+void add_ref(lua_State*, void*, const char*, int);
+void remove_ref(lua_State*, void*, const char*);
+void remove_refs(lua_State*, void*);
+}
+#endif

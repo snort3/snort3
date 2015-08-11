@@ -31,7 +31,6 @@
 #include "pp_decode_data_iface.h"
 #include "pp_enc_state_iface.h"
 #include "pp_raw_buffer_iface.h"
-#include "pp_raw_data_iface.h"
 
 #include "pp_codec_iface.h"
 
@@ -64,7 +63,6 @@ bool CodecPiglet::setup()
 
     install(L, RawBufferIface);
     install(L, DecodeDataIface);
-    install(L, RawDataIface);
     install(L, CodecDataIface);
     install(L, EncStateIface);
     install(L, BufferIface);

@@ -1,7 +1,8 @@
 add_library (lua STATIC
     lua.cc
     lua.h
-    lua_iface.cc
+    lua_ref.cc
+    lua_ref.h
     lua_iface.h
     lua_util.cc
     lua_util.h

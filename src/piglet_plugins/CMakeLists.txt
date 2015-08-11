@@ -1,7 +1,6 @@
 set (
     PP_CODEC_DEPENDENCIES
     pp_codec_data_iface.cc
-    pp_raw_data_iface.cc
     pp_enc_state_iface.cc
     pp_buffer_iface.cc
     pp_event_iface.cc

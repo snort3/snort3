@@ -22,9 +22,14 @@
 #include <luajit-2.0/lua.hpp>
 
 #include "framework/codec.h"
+#include "lua/lua_arg.h"
 #include "protocols/ip.h"
 
+// FIXIT-H: This should also be its own object (copyable)
 static const class ip::IpApi ip_api {};
+
+static inline uint64_t get_encode_flag(uint32_t hi, uint32_t lo)
+{ return (static_cast<uint64_t>(hi) << 4) | lo; }
 
 static const luaL_Reg methods[] =
 {
@@ -32,10 +37,21 @@ static const luaL_Reg methods[] =
         "new",
         [](lua_State* L)
         {
-            EncStateIface.create(L, ip_api, 0, 0, 0, 0);
+            Lua::Args args(L);
+
+            uint32_t efl_hi = args[1].opt_size();
+            uint32_t efl_lo = args[2].opt_size();
+            uint8_t next_proto = args[3].opt_size();
+            uint8_t ttl = args[4].opt_size();
+            uint16_t dsize = args[5].opt_int();
+
+            EncStateIface.create(L, ip_api, get_encode_flag(efl_hi, efl_lo),
+                    next_proto, ttl, dsize);
+
             return 1;
         }
     },
+    // FIXIT-L: Add get and set methods
     { nullptr, nullptr }
 };
 
@@ -44,20 +60,12 @@ static const luaL_Reg metamethods[] =
     {
         "__tostring",
         [](lua_State* L)
-        {
-            auto& self = EncStateIface.get(L);
-            lua_pushfstring(L, "%s@%p", EncStateIface.name, &self);
-
-            return 1;
-        }
+        { return EncStateIface.default_tostring(L); }
     },
     {
         "__gc",
         [](lua_State* L)
-        {
-            EncStateIface.destroy(L);
-            return 0;
-        }
+        { return EncStateIface.default_gc(L); }
     },
     { nullptr, nullptr }
 };

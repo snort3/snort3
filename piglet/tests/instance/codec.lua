@@ -28,13 +28,12 @@ tests =
     end,
 
     decode = function()
-        local rb = RawBuffer.new()
+        local daq = DAQHeader.new()
+        local rb = RawBuffer.new("foobar")
         local cd = CodecData.new()
         local dd = DecodeData.new()
-        local daq = DAQHeader.new()
-        local rd = RawData.new(rb, daq)
 
-        local rv = Codec.decode(rd, cd, dd)
+        local rv = Codec.decode(daq, rb, cd, dd)
         assert(not rv)
     end,
 
@@ -59,11 +58,11 @@ tests =
         local rb = RawBuffer.new(64)
 
         -- FIXIT-H: checksum calculation is failing (temporarily set UPD_COOKED (0x1))
-        local rv = Codec.update(1, rb)
+        local rv = Codec.update(0, 1, rb)
         assert(rv == 0)
 
         -- FIXIT-H: checksum calculation is failing (temporarily set UPD_COOKED (0x1))
-        local rv = Codec.update(1, rb, 64)
+        local rv = Codec.update(0, 1, rb, 64)
         assert(rv == 0)
     end,
 

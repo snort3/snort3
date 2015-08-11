@@ -45,9 +45,14 @@ SIGINFO_VALUES =
 
 tests =
 {
-    initialize = function()
+    init_default = function()
         local event = Event.new()
         assert(event)
+    end,
+
+    init_with_table = function()
+        local event = Event.new(VALUES)
+        assert_table_eq("get()", VALUES, event:get())
     end,
 
     get_and_set = function()
