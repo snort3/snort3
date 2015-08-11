@@ -109,9 +109,6 @@ struct FileState
 
 struct FileContext;
 struct FileCaptureInfo;
-struct MailLogState;
-struct MailLogConfig;
-struct MimeState;
 
 #define FILE_API_VERSION 4
 
@@ -146,30 +143,9 @@ typedef void (*Enable_file_signature_func)();
 typedef void (*Enable_file_capture_func)();
 typedef void (*Set_file_action_log_func)();
 
-typedef int (*Set_log_buffers_func)(MailLogState** log_state, MailLogConfig* conf);
-typedef int (*File_resume_block_add_file_func)(Packet* pkt, uint32_t file_sig,
-    uint32_t timeout, File_Verdict verdict, uint32_t file_type_id, uint8_t* signature);
-typedef File_Verdict (*File_resume_block_check_func)(Packet* pkt, uint32_t file_sig);
-typedef uint32_t (*Str_to_hash_func)(uint8_t* str, int length);
-typedef void (*File_signature_lookup_func)(Packet* p, bool is_retransmit);
-typedef const uint8_t* (*Process_mime_data_func)(Flow* flow, const uint8_t* start, const
-    uint8_t* end,
-    MimeState* mime_ssn, bool upload, FilePosition position);
-typedef void (*Free_mime_session_func)(MimeState* mime_ssn);
-typedef void (*Finalize_mime_position_func)(Flow* flow, void* decode_state,
-    FilePosition* position);
-typedef File_Verdict (*Get_file_verdict_func)(Flow* flow);
-typedef void (*Render_block_verdict_func)(void* ctx, Packet* p);
-
 typedef bool (*Is_file_service_enabled)();
 typedef FilePosition (*GetFilePosition)(Packet* pkt);
 typedef uint32_t (*Get_file_type_id)(Flow*);
-typedef uint32_t (*Get_new_file_instance)(Flow*);
-
-/*Context based file process functions*/
-typedef struct FileContext* (*Create_file_context_func)(Flow*);
-typedef struct FileContext* (*Get_file_context_func)(Flow*);
-typedef bool (*Set_file_context_func)(Flow*, FileContext*);
 
 typedef int64_t (*Get_max_file_capture_size)(Flow* flow);
 
@@ -363,18 +339,6 @@ typedef struct _file_api
      */
     Get_file_depth_func get_max_file_depth;
 
-    /*--------------Common functions used for MIME processing-------------*/
-    Set_log_buffers_func set_log_buffers;
-    Process_mime_data_func process_mime_data;
-    Free_mime_session_func free_mime_session;
-
-    /*--------------Other helper functions-------------*/
-    File_resume_block_add_file_func file_resume_block_add_file;
-    File_resume_block_check_func file_resume_block_check;
-    Str_to_hash_func str_to_hash;
-    File_signature_lookup_func file_signature_lookup;
-    Get_file_verdict_func get_file_verdict;
-    Render_block_verdict_func render_block_verdict;
 
     /* Return the file rule id associated with a session.
      *
@@ -385,54 +349,6 @@ typedef struct _file_api
      *   (u32) file-rule id on session; FILE_TYPE_UNKNOWN otherwise.
      */
     Get_file_type_id get_file_type_id;
-
-    /* Create a file context to use
-     *
-     * Arguments:
-     *    void* ssnptr: session pointer
-     * Returns:
-     *    FileContext *: file context created.
-     */
-    Create_file_context_func create_file_context;
-
-    /* Set file context to be the current
-     *
-     * Arguments:
-     *    void* ssnptr: session pointer
-     *    FileContext *: file context that will be current
-     * Returns:
-     *    True: changed successfully
-     *    False: fail to change
-     */
-    Set_file_context_func set_current_file_context;
-
-    /* Get current file context
-     *
-     * Arguments:
-     *    void* ssnptr: session pointer
-     * Returns:
-     *    FileContext *: current file context
-     */
-    Get_file_context_func get_current_file_context;
-
-    /* Get main file context that used by preprocessors
-     *
-     * Arguments:
-     *    void* ssnptr: session pointer
-     * Returns:
-     *    FileContext *: main file context
-     */
-    Get_file_context_func get_main_file_context;
-
-
-    /* Return a unique file instance number
-     *
-     * Arguments:
-     *   void *ssnptr: session pointer
-     * Returns:
-     *   (u32) a unique file instance id.
-     */
-    Get_new_file_instance get_new_file_instance;
 
     GetFilePosition get_file_position;
 

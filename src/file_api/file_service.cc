@@ -136,17 +136,9 @@ void init_fileAPI(void)
     fileAPI.enable_file_signature = &enable_file_signature;
     fileAPI.enable_file_capture = &enable_file_capture;
     fileAPI.get_max_file_depth = &get_max_file_depth;
-    fileAPI.file_resume_block_add_file = &file_resume_block_add_file;
-    fileAPI.file_resume_block_check = &file_resume_block_check;
     fileAPI.get_file_type_id = &get_file_type_id;
-    fileAPI.get_new_file_instance = &get_new_file_instance;
 
-    fileAPI.create_file_context = &create_file_context;
-    fileAPI.set_current_file_context = &set_current_file_context;
-    fileAPI.get_current_file_context = &get_current_file_context;
-    fileAPI.get_main_file_context = &get_main_file_context;
     fileAPI.get_file_position = &get_file_position;
-
 
     file_api = &fileAPI;
     MimeSession::init();

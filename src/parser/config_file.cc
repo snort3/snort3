@@ -49,7 +49,6 @@
 #include "utils/strvec.h"
 #include "utils/snort_bounds.h"
 #include "ips_options/ips_flowbits.h"
-#include "file_api/file_service_config.h"
 #include "packet_io/sfdaq.h"
 #include "managers/event_manager.h"
 #include "detection/detect.h"

@@ -14,8 +14,6 @@ add_library ( file_api STATIC
     file_resume_block.h 
     file_service.cc 
     file_service.h 
-    file_service_config.cc 
-    file_service_config.h 
     file_stats.cc 
     file_stats.h
 )

@@ -36,6 +36,15 @@ enum EmailUserType
     EMAIL_RECIPIENT
 };
 
+struct MailLogConfig
+{
+    char log_mailfrom = 0;
+    char log_rcptto = 0;
+    char log_filename = 0;
+    char log_email_hdrs = 0;
+    uint32_t email_hdrs_log_depth = 0;
+};
+
 class MailLogState
 {
 public:
@@ -68,15 +77,6 @@ private:
     uint8_t* filenames = NULL;
     uint16_t file_logged;
     uint16_t file_current;
-};
-
-struct MailLogConfig
-{
-    char log_mailfrom = 0;
-    char log_rcptto = 0;
-    char log_filename = 0;
-    char log_email_hdrs = 0;
-    uint32_t email_hdrs_log_depth = 0;
 };
 
 #endif
