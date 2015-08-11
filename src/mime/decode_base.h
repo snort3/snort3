@@ -18,8 +18,8 @@
 //--------------------------------------------------------------------------
 // sf_email_attach_decode.h author Bhagyashree Bantwal <bbantwal@cisco.com>
 
-#ifndef SF_EMAIL_ATTACH_DECODE_H
-#define SF_EMAIL_ATTACH_DECODE_H
+#ifndef DECODE_BASE_H
+#define DECODE_BASE_H
 
 // Email attachment decoder
 
