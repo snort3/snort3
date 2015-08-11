@@ -26,7 +26,9 @@
 #include <string>
 using namespace std;
 
+#ifdef UNIT_TEST
 #include "test/catch.hpp"
+#endif
 
 //--------------------------------------------------------------------------
 // private parsing methods
@@ -253,6 +255,7 @@ bool RangeCheck::eval(long c)
 // unit tests: EQ, NOT, LT, LE, GT, GE, LG, LEG
 //--------------------------------------------------------------------------
 
+#ifdef UNIT_TEST
 TEST_CASE("dflt op", "[RangeCheck]")
 {
     RangeCheck rc;
@@ -530,4 +533,5 @@ TEST_CASE("parsing", "[RangeCheck]")
         CHECK(!rc.parse(" <=> 5 "));
     }
 }
+#endif
 
