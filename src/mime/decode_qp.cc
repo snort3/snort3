@@ -34,38 +34,37 @@ void QPDecode::reset_decode_state()
 
 DecodeResult QPDecode::decode_data(const uint8_t* start, const uint8_t* end)
 {
-    uint32_t encode_avail = 0, decode_avail = 0;
     uint32_t act_encode_size = 0, act_decode_size = 0, bytes_read = 0;
-    uint32_t prev_bytes = 0;
     uint32_t i = 0;
 
-    if (!buffer->is_buffer_available(encode_avail, decode_avail))
+    if (!buffer->check_restore_buffer())
     {
         reset_decode_state();
         return DECODE_EXCEEDED;
     }
 
-    buffer->resume_decode(encode_avail, prev_bytes);
+    uint32_t encode_avail = buffer->get_encode_avail() - buffer->get_prev_encoded_bytes();
 
-    if (sf_strip_LWS(start, (end-start), buffer->get_encode_buff() + prev_bytes, encode_avail,
-        &act_encode_size) != 0)
+    if (sf_strip_LWS(start, (end-start), buffer->get_encode_buff() + buffer->get_prev_encoded_bytes(),
+        encode_avail, &act_encode_size) != 0)
     {
         reset_decode_state();
         return DECODE_FAIL;
     }
 
-    act_encode_size = act_encode_size + prev_bytes;
+    act_encode_size = act_encode_size + buffer->get_prev_encoded_bytes();
 
     if (sf_qpdecode((char *)buffer->get_encode_buff(), act_encode_size,
-        (char *)buffer->get_decode_buff(), decode_avail, &bytes_read, &act_decode_size) != 0)
+        (char *)buffer->get_decode_buff(), buffer->get_decode_avail(),
+        &bytes_read, &act_decode_size) != 0)
     {
         reset_decode_state();
         return DECODE_FAIL;
     }
     else if (!act_decode_size && !encode_avail)
     {
-        reset_decode_state();
-        return DECODE_FAIL;
+       reset_decode_state();
+       return DECODE_FAIL;
     }
 
     if (bytes_read < act_encode_size)

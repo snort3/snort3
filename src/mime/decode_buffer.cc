@@ -30,19 +30,14 @@ void DecodeBuffer::reset()
     prev_encoded_buf = nullptr;
 }
 
-// 1. Stop decoding when we have reached either the decode depth or encode depth.
-// 2. Stop decoding when we are out of memory
-bool DecodeBuffer::is_buffer_available(uint32_t& encode_avail, uint32_t& decode_avail)
+bool DecodeBuffer::check_restore_buffer()
 {
-    if (!(encode_depth))
-    {
-        encode_avail = decode_avail = buf_size;
-    }
-    else
-    {
-        encode_avail = encode_depth - encode_bytes_read;
-        decode_avail = decode_depth - decode_bytes_read;
-    }
+    // 1. Stop decoding when we have reached either the decode depth or encode depth.
+    // 2. Stop decoding when we are out of memory
+
+    uint32_t decode_avail = get_decode_avail();
+
+    uint32_t encode_avail =  get_encode_avail();
 
     if (encode_avail ==0 || decode_avail ==0 ||
         (!encodeBuf) || (!decodeBuf))
@@ -50,7 +45,51 @@ bool DecodeBuffer::is_buffer_available(uint32_t& encode_avail, uint32_t& decode_
         return false;
     }
 
+    /*The non decoded encoded data in the previous packet is required for successful decoding
+     * in case of data spanned across packets*/
+
+    if ( !prev_encoded_bytes )
+        return true;
+
+    if (prev_encoded_bytes > encode_avail)
+        prev_encoded_bytes = encode_avail;
+
+
+    uint32_t prev_bytes = prev_encoded_bytes;
+
+    uint32_t i = 0;
+    while (prev_bytes)
+    {
+        encodeBuf[i] = prev_encoded_buf[i];
+        i++;
+        prev_bytes--;
+    }
+
     return true;
+}
+
+uint32_t DecodeBuffer::get_decode_avail()
+{
+    if (!(code_depth))
+    {
+        return buf_size;
+    }
+    else
+    {
+        return (code_depth - decode_bytes_read);
+    }
+}
+
+uint32_t DecodeBuffer::get_encode_avail()
+{
+    if (!(code_depth))
+    {
+        return buf_size;
+    }
+    else
+    {
+        return (code_depth - encode_bytes_read);
+    }
 }
 
 #define MAX_DEPTH       65536
@@ -62,7 +101,7 @@ DecodeBuffer::DecodeBuffer(int max_depth)
     else
         buf_size = max_depth;
 
-    encode_depth = decode_depth = max_depth;
+    code_depth = max_depth;
     encode_bytes_read = decode_bytes_read = 0;
     prev_encoded_bytes = 0;
     prev_encoded_buf = nullptr;
@@ -80,32 +119,6 @@ DecodeBuffer::~DecodeBuffer()
         free(encodeBuf);
     if (decodeBuf)
         free(decodeBuf);
-}
-
-void DecodeBuffer::resume_decode(uint32_t& encode_avail, uint32_t& prev_bytes)
-{
-    uint32_t i = 0;
-
-    /*The non decoded encoded data in the previous packet is required for successful decoding
-     * in case of data spanned across packets*/
-
-    if ( !prev_encoded_bytes )
-        return;
-
-    if (prev_encoded_bytes > encode_avail)
-        prev_encoded_bytes = encode_avail;
-
-    if (prev_encoded_buf)
-    {
-        prev_bytes = prev_encoded_bytes;
-        encode_avail = encode_avail - prev_bytes;
-        while (prev_encoded_bytes)
-        {
-            encodeBuf[i] = prev_encoded_buf[i];
-            i++;
-            prev_encoded_bytes--;
-        }
-    }
 }
 
 void DecodeBuffer::update_buffer(uint32_t act_encode_size, uint32_t act_decode_size)

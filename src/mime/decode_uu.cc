@@ -41,18 +41,16 @@ void UUDecode::reset_decode_state()
 
 DecodeResult UUDecode::decode_data(const uint8_t* start, const uint8_t* end)
 {
-    uint32_t encode_avail = 0, decode_avail = 0;
     uint32_t act_encode_size = 0, act_decode_size = 0, bytes_read = 0;
-    uint32_t prev_bytes = 0;
     uint32_t i = 0;
 
-    if (!buffer->is_buffer_available(encode_avail, decode_avail))
+    if (!buffer->check_restore_buffer())
     {
         reset_decode_state();
         return DECODE_EXCEEDED;
     }
 
-    buffer->resume_decode(encode_avail, prev_bytes);
+    uint32_t encode_avail = buffer->get_encode_avail() - buffer->get_prev_encoded_bytes();
 
     if ((uint32_t)(end- start) > encode_avail)
         act_encode_size = encode_avail;
@@ -61,19 +59,19 @@ DecodeResult UUDecode::decode_data(const uint8_t* start, const uint8_t* end)
 
     if (encode_avail > 0)
     {
-        if (SafeMemcpy((buffer->get_encode_buff() + prev_bytes), start, act_encode_size,
-            buffer->get_encode_buff(), (buffer->get_encode_buff()+
-                encode_avail + prev_bytes)) != SAFEMEM_SUCCESS)
+        if (SafeMemcpy((buffer->get_encode_buff() + buffer->get_prev_encoded_bytes()),
+            start, act_encode_size, buffer->get_encode_buff(), (buffer->get_encode_buff()+
+                encode_avail + buffer->get_prev_encoded_bytes())) != SAFEMEM_SUCCESS)
         {
             reset_decode_state();
             return DECODE_FAIL;
         }
     }
 
-    act_encode_size = act_encode_size + prev_bytes;
+    act_encode_size = act_encode_size + buffer->get_prev_encoded_bytes();
 
     if (sf_uudecode(buffer->get_encode_buff(), act_encode_size, buffer->get_decode_buff(),
-        decode_avail, &bytes_read, &act_decode_size,
+        buffer->get_decode_avail(), &bytes_read, &act_decode_size,
         &(begin_found), &(end_found)) != 0)
     {
         reset_decode_state();

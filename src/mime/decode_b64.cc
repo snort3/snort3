@@ -34,27 +34,25 @@ void B64Decode::reset_decode_state()
 
 DecodeResult B64Decode::decode_data(const uint8_t* start, const uint8_t* end)
 {
-    uint32_t encode_avail = 0, decode_avail = 0;
     uint32_t act_encode_size = 0, act_decode_size = 0;
-    uint32_t prev_bytes = 0;
     uint32_t i = 0;
 
-    if (!buffer->is_buffer_available(encode_avail, decode_avail))
+    if (!buffer->check_restore_buffer())
     {
         reset_decode_state();
         return DECODE_EXCEEDED;
     }
 
-    buffer->resume_decode(encode_avail, prev_bytes);
+    uint32_t encode_avail = buffer->get_encode_avail() - buffer->get_prev_encoded_bytes();
 
-    if (sf_strip_CRLF(start, (end-start), buffer->get_encode_buff() + prev_bytes, encode_avail,
-        &act_encode_size) != 0)
+    if (sf_strip_CRLF(start, (end-start), buffer->get_encode_buff() + buffer->get_prev_encoded_bytes(),
+        encode_avail, &act_encode_size) != 0)
     {
         reset_decode_state();
         return DECODE_FAIL;
     }
 
-    act_encode_size = act_encode_size + prev_bytes;
+    act_encode_size = act_encode_size + buffer->get_prev_encoded_bytes();
 
     i = (act_encode_size)%4;
 
@@ -67,7 +65,7 @@ DecodeResult B64Decode::decode_data(const uint8_t* start, const uint8_t* end)
     }
 
     if (sf_base64decode(buffer->get_encode_buff(), act_encode_size,
-        buffer->get_decode_buff(), decode_avail, &act_decode_size) != 0)
+        buffer->get_decode_buff(), buffer->get_decode_avail(), &act_decode_size) != 0)
     {
         reset_decode_state();
         return DECODE_FAIL;

@@ -21,7 +21,7 @@
 #ifndef DECODE_BUFFER_H
 #define DECODE_BUFFER_H
 
-// Manage decode buffers
+// Manage decode/encode buffers
 
 #include <stdlib.h>
 
@@ -32,14 +32,23 @@ class DecodeBuffer
 public:
     DecodeBuffer(int max_depth);
     ~DecodeBuffer();
-    bool is_buffer_available(uint32_t& encode_avail, uint32_t& decode_avail);
-    void resume_decode(uint32_t& encode_avail, uint32_t& prev_bytes);
+
+    // Make sure buffer is available and restore the buffer saved
+    bool check_restore_buffer();
+
+    // Save buffer for future use (restore)
     void save_buffer(uint8_t* buff, uint32_t buff_size);
+
+    // Move forward buffer pointer
     void update_buffer(uint32_t act_encode_size, uint32_t act_decode_size);
+
     void reset();
     uint8_t* get_decode_buff() {return decodeBuf;};
     uint8_t* get_encode_buff() {return encodeBuf;};
     uint32_t get_decode_bytes_read() {return decode_bytes_read;};
+    uint32_t get_decode_avail();
+    uint32_t get_encode_avail();
+    uint32_t get_prev_encoded_bytes() {return prev_encoded_bytes;};
 
 private:
     uint32_t buf_size;
@@ -49,8 +58,7 @@ private:
     uint8_t* decodeBuf = nullptr;
     uint32_t encode_bytes_read;
     uint32_t decode_bytes_read;
-    int encode_depth;
-    int decode_depth;
+    int code_depth;
 };
 
 #endif
