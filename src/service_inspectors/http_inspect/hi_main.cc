@@ -432,7 +432,7 @@ static inline FilePosition getFilePoistion(Packet* p)
         position = SNORT_FILE_START;
     else if (p->packet_flags & PKT_PDU_TAIL)
         position = SNORT_FILE_END;
-    else if (file_api->get_file_processed_size(p->flow))
+    else if (get_file_processed_size(p->flow))
         position = SNORT_FILE_MIDDLE;
 
     return position;
@@ -658,7 +658,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                     hsd->mime_ssn->process_mime_data(p->flow, p->data, end, 1,
                         SNORT_FILE_POSITION_UNKNOWN);
                 }
-                else if (file_api->get_file_processed_size(p->flow) >0)
+                else if (get_file_processed_size(p->flow) >0)
                 {
                     file_api->file_process(p->flow, (uint8_t*)p->data, p->dsize,
                         getFilePoistion(p), true, false);
@@ -820,7 +820,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                     hsd->mime_ssn->process_mime_data(p->flow, p->data, end, 1,
                         SNORT_FILE_POSITION_UNKNOWN);
                 }
-                else if (file_api->get_file_processed_size(p->flow) >0)
+                else if (get_file_processed_size(p->flow) >0)
                 {
                     file_api->file_process(p->flow, (uint8_t*)p->data, p->dsize,
                         getFilePoistion(p),

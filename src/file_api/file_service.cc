@@ -73,19 +73,13 @@ static bool file_process(Flow* flow, uint8_t* file_data, int data_size,
 
 /*File properties*/
 static bool get_file_name(Flow* flow, uint8_t** file_name, uint32_t* name_size);
-static uint64_t get_file_processed_size(Flow* flow);
 
 static void set_file_name(Flow* flow, uint8_t* file_name, uint32_t name_size);
 
-static void enable_file_type();
-static void enable_file_signature ();
-static void enable_file_capture();
-
-static int64_t get_max_file_depth(void);
+int64_t get_max_file_depth(void);
 
 static inline void finish_signature_lookup(FileContext* context);
 
-static FilePosition get_file_position(Packet* pkt);
 static bool is_file_service_enabled(void);
 static uint32_t get_file_type_id(Flow* flow);
 static uint32_t get_new_file_instance(Flow* flow);
@@ -96,7 +90,6 @@ bool set_current_file_context(Flow* flow, FileContext* ctx);
 FileContext* get_main_file_context(Flow* flow);
 static bool process_file_context(FileContext* ctx, Flow* flow, uint8_t* file_data,
     int data_size, FilePosition position);
-static FilePosition get_file_position(Packet* pkt);
 
 FileAPI fileAPI;
 FileAPI* file_api = NULL;
@@ -126,19 +119,8 @@ unsigned FileFlowData::flow_id = 0;
 
 void init_fileAPI(void)
 {
-    fileAPI.version = FILE_API_VERSION;
-    fileAPI.is_file_service_enabled = &is_file_service_enabled;
     fileAPI.file_process = &file_process;
-    fileAPI.get_file_name = &get_file_name;
-    fileAPI.get_file_processed_size = &get_file_processed_size;
     fileAPI.set_file_name = &set_file_name;
-    fileAPI.enable_file_type = &enable_file_type;
-    fileAPI.enable_file_signature = &enable_file_signature;
-    fileAPI.enable_file_capture = &enable_file_capture;
-    fileAPI.get_max_file_depth = &get_max_file_depth;
-    fileAPI.get_file_type_id = &get_file_type_id;
-
-    fileAPI.get_file_position = &get_file_position;
 
     file_api = &fileAPI;
     MimeSession::init();
@@ -369,7 +351,7 @@ static uint32_t get_file_type_id(Flow* flow)
     return context->get_file_type();
 }
 
-static uint64_t get_file_processed_size(Flow* flow)
+uint64_t get_file_processed_size(Flow* flow)
 {
     FileContext* context = get_current_file_context(flow);
 
@@ -523,7 +505,7 @@ static bool get_file_name(Flow* flow, uint8_t** file_name, uint32_t* name_size)
  * TBD: Remove per-context "file_type_enabled" checking to simplify implementation.
  *
  */
-static void enable_file_type()
+void enable_file_type()
 {
     if (!file_type_id_enabled)
     {
@@ -532,7 +514,7 @@ static void enable_file_type()
     }
 }
 
-static void enable_file_signature()
+void enable_file_signature()
 {
 
     if (!file_signature_enabled)
@@ -543,7 +525,7 @@ static void enable_file_signature()
 }
 
 /* Enable file capture, also enable file signature */
-static void enable_file_capture()
+void enable_file_capture()
 {
     if (!file_capture_enabled)
     {
@@ -555,7 +537,7 @@ static void enable_file_capture()
 /* Get maximal file depth based on configuration
  * This function must be called after all file services are configured/enabled.
  */
-static int64_t get_max_file_depth(void)
+int64_t get_max_file_depth(void)
 {
     FileConfig* file_config =  (FileConfig*)(snort_conf->file_config);
 
@@ -590,7 +572,7 @@ static int64_t get_max_file_depth(void)
     }
 }
 
-static FilePosition get_file_position(Packet* pkt)
+FilePosition get_file_position(Packet* pkt)
 {
     FilePosition position = SNORT_FILE_POSITION_UNKNOWN;
     Packet* p = (Packet*)pkt;

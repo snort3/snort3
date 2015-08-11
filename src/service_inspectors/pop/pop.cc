@@ -487,7 +487,7 @@ static void POP_ProcessServerPacket(Packet* p, POPData* pop_ssn)
         {
             DEBUG_WRAP(DebugMessage(DEBUG_POP, "DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"); );
             //ptr = POP_HandleData(p, ptr, end);
-            FilePosition position = file_api->get_file_position(p);
+            FilePosition position = get_file_position(p);
             ptr = pop_ssn->mime_ssn->process_mime_data(p->flow, ptr, end, 0, position);
             continue;
         }

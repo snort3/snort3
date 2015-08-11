@@ -1389,17 +1389,17 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("enable_type") )
     {
         if ( v.get_bool() )
-            file_api->enable_file_type();
+            enable_file_type();
     }
     else if ( v.is("enable_signature") )
     {
         if ( v.get_bool() )
-            file_api->enable_file_signature();
+            enable_file_signature();
     }
     else if ( v.is("enable_capture") )
     {
         if ( v.get_bool() )
-            file_api->enable_file_capture();
+            enable_file_capture();
     }
     else if ( v.is("show_data_depth") )
         FileConfig::show_data_depth = v.get_long();

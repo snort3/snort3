@@ -640,7 +640,7 @@ const uint8_t* MimeSession::process_mime_data(Flow* flow, const uint8_t* start,
         return data_end_marker;
     }
 
-    initFilePosition(&position, file_api->get_file_processed_size(flow));
+    initFilePosition(&position, get_file_processed_size(flow));
     /* look for boundary */
     while (start < data_end_marker)
     {
@@ -660,7 +660,7 @@ const uint8_t* MimeSession::process_mime_data(Flow* flow, const uint8_t* start,
 
     if ((start == data_end_marker) && (attach_start < data_end_marker))
     {
-        updateFilePosition(&position, file_api->get_file_processed_size(flow));
+        updateFilePosition(&position, get_file_processed_size(flow));
         process_mime_data_paf(flow, attach_start, data_end_marker,
             upload, position);
     }

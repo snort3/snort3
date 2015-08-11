@@ -1074,7 +1074,7 @@ static void SMTP_ProcessClientPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
         case STATE_DATA:
         case STATE_BDATA:
             DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"); );
-            position = file_api->get_file_position(p);
+            position = get_file_position(p);
             ptr = smtp_ssn->mime_ssn->process_mime_data(p->flow, ptr, end, 1, position);
             //ptr = SMTP_HandleData(p, ptr, end, &(smtp_ssn->mime_ssn));
             break;

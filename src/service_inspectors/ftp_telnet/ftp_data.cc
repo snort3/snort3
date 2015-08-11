@@ -161,8 +161,7 @@ static int SnortFTPData(Packet* p)
     }
     else
     {
-        initFilePosition(&data_ssn->position,
-            file_api->get_file_processed_size(p->flow));
+        initFilePosition(&data_ssn->position, get_file_processed_size(p->flow));
     }
 
     FTPDataProcess(p, data_ssn, (uint8_t*)p->data, p->dsize);
@@ -196,7 +195,7 @@ void FtpDataFlowData::handle_eof(Packet* p)
     if (!PROTO_IS_FTP_DATA(data_ssn) || !FTPDataDirection(p, data_ssn))
         return;
 
-    initFilePosition(&data_ssn->position, file_api->get_file_processed_size(p->flow));
+    initFilePosition(&data_ssn->position, get_file_processed_size(p->flow));
     finalFilePosition(&data_ssn->position);
 
     stream.flush_request(p);
@@ -248,7 +247,7 @@ void FtpData::eval(Packet* p)
     // precondition - what we registered for
     assert(p->has_tcp_data());
 
-    if ( file_api->get_max_file_depth() < 0 )
+    if ( get_max_file_depth() < 0 )
         return;
 
     PROFILE_VARS;

@@ -135,7 +135,7 @@ void DecodeConfig::set_file_depth(int64_t file_depth)
 // update file depth and max_depth etc
 void DecodeConfig::sync_all_depths()
 {
-    file_depth = file_api->get_max_file_depth();
+    file_depth = get_max_file_depth();
 
     set_file_depth(file_depth);
 }

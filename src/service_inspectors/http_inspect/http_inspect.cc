@@ -134,7 +134,7 @@ static void CheckMemcap(HTTPINSPECT_GLOBAL_CONF* pPolicyConfig)
 static void updateConfigFromFileProcessing(HTTPINSPECT_CONF* ServerConf)
 {
     /*Either one is unlimited*/
-    int64_t fileDepth = file_api->get_max_file_depth();
+    int64_t fileDepth = get_max_file_depth();
 
     /*Config file policy*/
     if (fileDepth > -1)

@@ -110,8 +110,6 @@ struct FileState
 struct FileContext;
 struct FileCaptureInfo;
 
-#define FILE_API_VERSION 4
-
 #define DEFAULT_FILE_ID   0
 
 typedef uint32_t (*File_policy_callback_func)(Flow* flow, int16_t app_id, bool upload);
@@ -127,41 +125,10 @@ typedef bool (*File_process_func)(
     Flow* flow, uint8_t* file_data, int data_size, FilePosition,
     bool upload, bool suspend_block_verdict);
 
-typedef bool (*Get_file_name_func)(Flow* flow, uint8_t** file_name, uint32_t* name_len);
-typedef uint64_t (*Get_file_size_func)(Flow* flow);
-typedef bool (*Get_file_direction_func)(Flow* flow);
-typedef uint8_t*(*Get_file_sig_sha256_func)(Flow* flow);
-
 typedef void (*Set_file_name_func)(Flow* flow, uint8_t*, uint32_t);
-typedef void (*Set_file_direction_func)(Flow* flow, bool);
-
-typedef int64_t (*Get_file_depth_func)();
-
-typedef void (*Set_file_policy_func)();
-typedef void (*Enable_file_type_func)();
-typedef void (*Enable_file_signature_func)();
-typedef void (*Enable_file_capture_func)();
-typedef void (*Set_file_action_log_func)();
-
-typedef bool (*Is_file_service_enabled)();
-typedef FilePosition (*GetFilePosition)(Packet* pkt);
-typedef uint32_t (*Get_file_type_id)(Flow*);
-
-typedef int64_t (*Get_max_file_capture_size)(Flow* flow);
 
 typedef struct _file_api
 {
-    int version;
-
-    /* Check if file type id is enabled.
-     *
-     * Arguments: None
-     *
-     * Returns:
-     *   (bool) true   file processing is enabled
-     *   (bool) false  file processing is disabled
-     */
-    Is_file_service_enabled is_file_service_enabled;
 
     /* File process function, called by preprocessors that provides file data
      *
@@ -179,69 +146,6 @@ typedef struct _file_api
 
     /*-----File property functions--------*/
 
-    /* Get file name and the length of file name
-     * Note: this is updated after file processing. It will be available
-     * for file event logging, but might not be available during file type
-     * callback or file signature callback, because those callbacks are called
-     * during file processing.
-     *
-     * Arguments:
-     *    void* ssnptr: session pointer
-     *    uint8_t **file_name: address for file name to be saved
-     *    uint32_t *name_len: address to save file name length
-     * Returns
-     *    true: file name available,
-     *    false: file name is unavailable
-     */
-    Get_file_name_func get_file_name;
-
-    /* Get file size
-     * Note: this is updated after file processing. It will be available
-     * for file event logging, but might not be available during file type
-     * callback or file signature callback, because those callbacks are called
-     * during file processing.
-     *
-     * Arguments:
-     *    void* ssnptr: session pointer
-     *
-     * Returns
-     *    uint64_t: file size
-     *    Note: 0 means file size is unavailable
-     */
-    Get_file_size_func get_file_size;
-
-    /* Get number of bytes processed
-     *
-     * Arguments:
-     *    void* ssnptr: session pointer
-     *
-     * Returns
-     *    uint64_t: processed file data size
-     */
-    Get_file_size_func get_file_processed_size;
-
-    /* Get file direction
-     *
-     * Arguments:
-     *    void* ssnptr: session pointer
-     *
-     * Returns
-     *    1: upload
-     *    0: download
-     */
-    Get_file_direction_func get_file_direction;
-
-    /* Get file signature sha256
-     *
-     * Arguments:
-     *    void* ssnptr: session pointer
-     *
-     * Returns
-     *    char *: pointer to sha256
-     *    NULL: sha256 is not available
-     */
-    Get_file_sig_sha256_func get_sig_sha256;
-
     /* Set file name and the length of file name
      *
      * Arguments:
@@ -253,106 +157,7 @@ typedef struct _file_api
      */
     Set_file_name_func set_file_name;
 
-    /* Get file direction
-     *
-     * Arguments:
-     *    void* ssnptr: session pointer
-     *    bool:
-     *       1 - upload
-     *       0 - download
-     * Returns
-     *    None
-     */
-    Set_file_direction_func set_file_direction;
 
-    /*----------File call backs--------------*/
-
-    /* Set file policy callback. This callback is called in the beginning
-     * of session. This callback will decide whether to do file type ID,
-     * file signature, or file capture
-     *
-     * Arguments:
-     *    File_policy_callback_func
-     * Returns
-     *    None
-     */
-    Set_file_policy_func set_file_policy_callback;
-
-    /* Enable file type ID and set file type callback.
-     * File type callback is called when file type is identified. Callback
-     * will return a verdict based on file type
-     *
-     * Arguments:
-     *    File_type_callback_func
-     * Returns
-     *    None
-     */
-    Enable_file_type_func enable_file_type;
-
-    /* Enable file signature and set file signature callback.
-     * File signature callback is called when file signature is calculated.
-     * Callback will return a verdict based on file signature.
-     * SHA256 is calculated after file transfer is finished.
-     *
-     * Arguments:
-     *    File_signature_callback_func
-     * Returns
-     *    None
-     */
-    Enable_file_signature_func enable_file_signature;
-
-    /* Enable file capture and set file signature callback.
-     * File signature callback is called when file signature is calculated.
-     * Callback will return a verdict based on file signature.
-     * SHA256 is calculated after file transfer is finished.
-     *
-     * Note: file signature and file capture will use the same callback, but
-     * enabled separately.
-     *
-     * Arguments:
-     *    File_signature_callback_func
-     * Returns
-     *    None
-     */
-    Enable_file_signature_func enable_file_capture;
-
-    /* Set file action log callback.
-     * File action log callback is called when file resume is detected.
-     * It allows file events to be generated for a resumed file download
-     *
-     * Arguments:
-     *    Log_file_action_func
-     * Returns
-     *    None
-     */
-    Set_file_action_log_func set_file_action_log_callback;
-
-    /*--------------File configurations-------------*/
-
-    /* Get file depth required for all file processings enabled
-     *
-     * Arguments:
-     *    None
-     *
-     * Returns:
-     *    int64_t: file depth in bytes
-     */
-    Get_file_depth_func get_max_file_depth;
-
-
-    /* Return the file rule id associated with a session.
-     *
-     * Arguments:
-     *   void *ssnptr: session pointer
-     *
-     * Returns:
-     *   (u32) file-rule id on session; FILE_TYPE_UNKNOWN otherwise.
-     */
-    Get_file_type_id get_file_type_id;
-
-    GetFilePosition get_file_position;
-
-    Get_max_file_capture_size get_max_file_capture_size;
 } FileAPI;
 
 /* To be set by Stream */
@@ -390,6 +195,13 @@ static inline bool isFileEnd(FilePosition position)
 {
     return ((position == SNORT_FILE_END) || (position == SNORT_FILE_FULL));
 }
+
+void enable_file_type();
+void enable_file_signature ();
+void enable_file_capture();
+uint64_t get_file_processed_size(Flow* flow);
+FilePosition get_file_position(Packet* pkt);
+int64_t get_max_file_depth(void);
 
 #endif /* FILE_API_H */
 
