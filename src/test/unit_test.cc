@@ -119,7 +119,7 @@ static bool run_catch()
 {
   Catch::Session session;
   // write to session.configData() or session.Config() to customize
-  return session.run();
+  return session.run() == 0;
 }
 
 int unit_test()

@@ -6,6 +6,7 @@ x_includedir = $(pkgincludedir)/lua
 
 x_include_HEADERS = \
 lua.h \
+lua_ref.h \
 lua_iface.h \
 lua_table.h \
 lua_arg.h \
@@ -15,7 +16,8 @@ lua_util.h
 liblua_a_SOURCES = \
 lua.cc \
 lua.h \
-lua_iface.cc \
+lua_ref.cc \
+lua_ref.h \
 lua_iface.h \
 lua_util.cc \
 lua_util.h \

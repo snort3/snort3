@@ -20,11 +20,10 @@
 #ifndef LUA_IFACE_H
 #define LUA_IFACE_H
 
-#include <vector>
 #include <luajit-2.0/lua.hpp>
 
 #include "lua.h"
-#include "lua_stack.h"
+#include "lua_ref.h"
 #include "lua_table.h"
 
 namespace Lua
@@ -78,6 +77,8 @@ template<typename T>
 struct TypeInterface
 {
     using type = T;
+    using AccessorCallback = void (*)(lua_State*, int, T&);
+
     const char* name;
     const luaL_Reg* methods;
     const luaL_Reg* metamethods;
@@ -88,12 +89,57 @@ struct TypeInterface
     T& get(lua_State* L, int arg = 1) const
     { return **regurgitate(L, arg); }
 
+    bool is(lua_State* L, int arg = 1) const
+    {
+        ManageStack ms(L, 1);
+
+        if ( lua_type(L, arg) != LUA_TUSERDATA )
+            return false;
+
+        // Check the registry for metatable with name
+        lua_getfield(L, LUA_REGISTRYINDEX, name);
+        lua_getmetatable(L, arg);
+
+        if ( !lua_rawequal(L, -1, -2) )
+            return false;
+
+        return true;
+    }
+
     T** allocate(lua_State*) const;
 
     template<typename... Args>
     T& create(lua_State*, Args&&...) const;
 
     void destroy(lua_State*, T** = nullptr) const;
+
+    int default_tostring(lua_State* L) const
+    {
+        lua_pushfstring(L, "%s@0x%p", this->name, &this->get(L));
+        return 1;
+    }
+
+    int default_gc(lua_State* L) const
+    {
+        this->destroy(L);
+        return 0;
+    }
+
+    int default_getter(lua_State* L, AccessorCallback acb) const
+    {
+        auto& self = this->get(L);
+        lua_newtable(L);
+        acb(L, lua_gettop(L), self);
+        return 1;
+    }
+
+    int default_setter(lua_State* L, AccessorCallback acb) const
+    {
+        auto& self = this->get(L, 1);
+        luaL_checktype(L, 2, LUA_TTABLE);
+        acb(L, 2, self);
+        return 0;
+    }
 };
 
 template<typename T>
@@ -126,6 +172,7 @@ void TypeInterface<T>::destroy(lua_State* L, T** t) const
 
     if ( *t )
     {
+        remove_refs(L, static_cast<void*>(*t));
         delete *t;
         t = nullptr;
     }
@@ -153,6 +200,16 @@ T& InstanceInterface<T>::get(lua_State* L, int up) const
 }
 
 // -----------------------------------------------------------------------------
+// Library
+// -----------------------------------------------------------------------------
+
+struct Library
+{
+    const char* name;
+    const luaL_Reg* methods;
+};
+
+// -----------------------------------------------------------------------------
 // Installers
 // -----------------------------------------------------------------------------
 template<typename T>
@@ -178,5 +235,10 @@ void install(lua_State* L, const struct InstanceInterface<T>& iface, T* instance
     int inst = lua_gettop(L);
     register_with_closure(L, iface.methods, table, inst);
 }
+
+static inline void install(lua_State* L, const struct Library& lib)
+{ register_methods(L, lib.methods, lib.name); }
+
 }
+
 #endif

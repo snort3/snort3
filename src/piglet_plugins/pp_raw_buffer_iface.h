@@ -26,6 +26,12 @@
 
 using RawBuffer = std::string;
 
+static inline const uint8_t* get_data(RawBuffer& rb)
+{ return reinterpret_cast<const uint8_t*>(rb.data()); }
+
+static inline uint8_t* get_mutable_data(RawBuffer& rb)
+{ return const_cast<uint8_t*>(get_data(rb)); }
+
 extern const struct Lua::TypeInterface<RawBuffer> RawBufferIface;
 
 #endif

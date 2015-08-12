@@ -51,6 +51,12 @@ static bool configure_test(lua_State* L, Test& t)
 {
     Lua::ManageStack ms(L);
 
+    if ( setup_globals(L, t) )
+    {
+        t.set_error("couldn't setup globals");
+        return true;
+    }
+
     if ( load_chunk(L, t.chunk) )
     {
         t.set_error("couldn't load test chunk");
@@ -75,8 +81,9 @@ static bool configure_test(lua_State* L, Test& t)
 
     Lua::Table table(L, -1);
     table.get_field("description", t.description);
+    table.get_field("use_defaults", t.use_defaults);
 
-    return setup_globals(L, t);
+    return false;
 }
 
 static bool run_test(lua_State* L, Test& t)
@@ -125,7 +132,8 @@ void Runner::run(const struct Output& output, Test& t, unsigned i)
         return;
     }
 
-    auto p = Manager::instantiate(state, t.chunk.target, t.type, t.name);
+    auto p = Manager::instantiate(
+        state, t.chunk.target, t.type, t.name, t.use_defaults);
 
     // FIXIT-L: This injection is a hack so we can log the test header
     //          with all the parsed information filled in

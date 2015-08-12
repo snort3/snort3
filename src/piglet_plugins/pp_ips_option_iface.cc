@@ -22,11 +22,48 @@
 #include <luajit-2.0/lua.hpp>
 
 #include "framework/ips_option.h"
+#include "lua/lua_stack.h"
 #include "pp_packet_iface.h"
 #include "pp_cursor_iface.h"
 
 static const luaL_Reg methods[] =
 {
+    {
+        "hash",
+        [](lua_State* L)
+        {
+            uint32_t result = IpsOptionIface.get(L).hash();
+            Lua::Stack<uint32_t>::push(L, result);
+            return 1;
+        }
+    },
+    {
+        "is_relative",
+        [](lua_State* L)
+        {
+            bool result = IpsOptionIface.get(L).is_relative();
+            lua_pushboolean(L, result);
+            return 1;
+        }
+    },
+    {
+        "fp_research",
+        [](lua_State* L)
+        {
+            bool result = IpsOptionIface.get(L).fp_research();
+            lua_pushboolean(L, result);
+            return 1;
+        }
+    },
+    {
+        "get_cursor_type",
+        [](lua_State* L)
+        {
+            CursorActionType cat = IpsOptionIface.get(L).get_cursor_type();
+            Lua::Stack<unsigned>::push(L, static_cast<unsigned>(cat));
+            return 1;
+        }
+    },
     {
         "eval",
         [](lua_State* L)

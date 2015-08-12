@@ -28,6 +28,8 @@ add_custom_command(
 add_library(unit_tests STATIC
     suite_decl.h
     suite_list.h
+    lua_stack_test.cc
+    lua_test_common.h
     sfip_test.cc
     sfrf_test.cc
     sfrt_test.cc

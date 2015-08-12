@@ -76,6 +76,18 @@ struct Table
     }
 
     template<typename T>
+    inline bool get_default(const char* k, T& v, T d = 0)
+    {
+        if ( !get_field<T>(k, v) )
+        {
+            v = d;
+            return false;
+        }
+
+        return true;
+    }
+
+    template<typename T>
     inline bool raw_get_field(const char* k, T& v)
     {
         lua_pushstring(L, k);

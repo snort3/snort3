@@ -22,7 +22,31 @@
 #include <luajit-2.0/lua.hpp>
 
 #include "framework/cursor.h"
+#include "lua/lua_arg.h"
+#include "lua/lua_ref.h"
+#include "protocols/packet.h"
 #include "pp_packet_iface.h"
+#include "pp_raw_buffer_iface.h"
+
+static void reset_from_packet(
+    lua_State* L, Cursor& self, Packet& p, int p_idx)
+{
+    self.reset(&p);
+    Lua::add_ref(L, &self, "data", p_idx);
+}
+
+static void reset_from_raw_buffer(
+    lua_State* L, Cursor& self, RawBuffer& rb, int rb_idx)
+{
+    Packet p;
+    p.reset();
+
+    p.data = get_data(rb);
+    p.dsize = rb.size();
+
+    self.reset(&p);
+    Lua::add_ref(L, &self, "data", rb_idx);
+}
 
 static const luaL_Reg methods[] =
 {
@@ -30,10 +54,77 @@ static const luaL_Reg methods[] =
         "new",
         [](lua_State* L)
         {
-            auto& p = PacketIface.get(L);
-            CursorIface.create(L, &p);
+            Lua::Args args(L);
+            Packet p;
+            p.reset();
+
+            auto& self = CursorIface.create(L, &p);
+
+            if ( args.count )
+            {
+                if ( PacketIface.is(L, 1) )
+                {
+                    reset_from_packet(L, self, PacketIface.get(L, 1), 1);
+                }
+                else if ( args[1].is_string() )
+                {
+                    size_t len = 0;
+                    const char* s = args[1].check_string(len);
+                    auto& rb = RawBufferIface.create(L, s, len);
+                    reset_from_raw_buffer(L, self, rb, lua_gettop(L));
+                    lua_pop(L, 1);
+                }
+                else
+                {
+                    reset_from_raw_buffer(L, self, RawBufferIface.get(L, 1), 1);
+                }
+            }
 
             return 1;
+        }
+    },
+    {
+        "reset",
+        [](lua_State* L)
+        {
+            Lua::Args args(L);
+
+            auto& self = CursorIface.get(L, 1);
+
+            if ( args.count > 1 )
+            {
+                if ( PacketIface.is(L, 2) )
+                {
+                    auto& p = PacketIface.get(L, 2);
+                    reset_from_packet(L, self, p, 2);
+                }
+                else
+                {
+                    if ( args[2].is_string() )
+                    {
+                        size_t len = 0;
+                        const char* s = args[2].check_string(len);
+                        auto& rb = RawBufferIface.create(L, s, len);
+                        reset_from_raw_buffer(L, self, rb, lua_gettop(L));
+                    }
+                    else
+                    {
+                        auto& rb = RawBufferIface.get(L, 2);
+                        reset_from_raw_buffer(L, self, rb, 2);
+                    }
+                }
+            }
+            else
+            {
+                Packet p;
+
+                p.reset();
+                self.reset(&p);
+
+                Lua::remove_ref(L, &self, "data");
+            }
+
+            return 0;
         }
     },
     { nullptr, nullptr }
@@ -44,20 +135,12 @@ static const luaL_Reg metamethods[] =
     {
         "__tostring",
         [](lua_State* L)
-        {
-            auto& self = CursorIface.get(L);
-            lua_pushfstring(L, "%s@%p", CursorIface.name, &self);
-
-            return 1;
-        }
+        { return CursorIface.default_tostring(L); }
     },
     {
         "__gc",
         [](lua_State* L)
-        {
-            CursorIface.destroy(L);
-            return 0;
-        }
+        { return CursorIface.default_gc(L); }
     },
     { nullptr, nullptr }
 };

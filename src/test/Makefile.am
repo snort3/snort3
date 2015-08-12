@@ -6,6 +6,8 @@ suite_decl.h \
 suite_list.h
 
 libtest_a_SOURCES = \
+lua_stack_test.cc \
+lua_test_common.h \
 sfip_test.cc \
 sfrf_test.cc \
 sfrt_test.cc \

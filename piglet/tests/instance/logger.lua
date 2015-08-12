@@ -2,6 +2,7 @@ plugin =
 {
     type = "piglet",
     name = "logger::alert_csv",
+    use_defaults = true,
     test = function()
         Logger.open()
         dofile(SCRIPT_DIR .. "/common.lua")

@@ -28,6 +28,13 @@ codecs/root/libroot_codecs.a \
 codecs/link/liblink_codecs.a
 endif
 
+
+if BUILD_PIGLET
+pig_list = \
+piglet/libpiglet.a \
+piglet_plugins/libpiglet_plugins.a
+endif
+
 snort_LDFLAGS = -export-dynamic
 
 # order libs to avoid undefined symbols
@@ -40,7 +47,7 @@ loggers/libloggers.a \
 codecs/libcodecs.a \
 codecs/ip/libip_codecs.a \
 codecs/misc/libmisc_codecs.a \
-${codec_list} \
+$(codec_list) \
 codecs/libcodec_module.a \
 network_inspectors/libnetwork_inspectors.a \
 network_inspectors/binder/libbinder.a \
@@ -60,6 +67,7 @@ stream/file/libstream_file.a \
 file_api/libfile_api.a \
 file_api/libs/libfile.a \
 service_inspectors/http_inspect/libhttp_inspect.a \
+$(pig_list) \
 ips_options/libips_options.a \
 parser/libparser.a \
 search_engines/libsearch_engines.a \
@@ -123,6 +131,5 @@ endif
 
 if BUILD_PIGLET
 SUBDIRS += piglet piglet_plugins
-snort_LDADD += piglet/libpiglet.a piglet_plugins/libpiglet_plugins.a
 endif
 

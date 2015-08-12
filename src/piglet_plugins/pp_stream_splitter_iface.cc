@@ -38,19 +38,16 @@ static const luaL_Reg methods[] =
         "scan",
         [](lua_State* L)
         {
-            Lua::Arg arg(L);
+            Lua::Args args(L);
 
             auto& self = StreamSplitterIface.get(L, 1);
             auto& flow = FlowIface.get(L, 2);
             auto& rb = RawBufferIface.get(L, 3);
-            uint32_t len = arg.opt_size(4, rb.size(), rb.size());
-            uint32_t flags = arg.opt_size(5);
+            uint32_t len = args[4].opt_size(rb.size(), rb.size());
+            uint32_t flags = args[5].opt_size();
 
             uint32_t fp = 0;
-            auto status = self.scan(
-                &flow, reinterpret_cast<const uint8_t*>(rb.data()),
-                len, flags, &fp
-            );
+            auto status = self.scan(&flow, get_data(rb), len, flags, &fp);
 
             stack_push<StreamSplitter::Status, unsigned>(L, status);
             Lua::Stack<uint32_t>::push(L, fp);
@@ -62,23 +59,20 @@ static const luaL_Reg methods[] =
         "reassemble",
         [](lua_State* L)
         {
-            Lua::Arg arg(L);
+            Lua::Args args(L);
 
             auto& self = StreamSplitterIface.get(L, 1);
             auto& flow = FlowIface.get(L, 2);
-            unsigned total = arg.check_size(3);
-            unsigned offset = arg.check_size(4);
+            unsigned total = args[3].check_size();
+            unsigned offset = args[4].check_size();
             auto& rb = RawBufferIface.get(L, 5);
-            unsigned len = arg.opt_size(6, rb.size());
-            uint32_t flags = arg.opt_size(7);
+            unsigned len = args[6].opt_size(rb.size());
+            uint32_t flags = args[7].opt_size();
 
             unsigned copied = 0;
 
-            auto sb = self.reassemble(
-                &flow, total, offset,
-                reinterpret_cast<const uint8_t*>(rb.data()), len,
-                flags, copied
-            );
+            auto sb = self.reassemble(&flow, total, offset, get_data(rb), len,
+                flags, copied);
 
             Lua::Stack<unsigned>::push(L, copied);
 
@@ -99,7 +93,6 @@ static const luaL_Reg methods[] =
             auto& flow = FlowIface.get(L, 2);
 
             bool result = self.finish(&flow);
-
             lua_pushboolean(L, result);
 
             return 1;
@@ -113,20 +106,12 @@ static const luaL_Reg metamethods[] =
     {
         "__tostring",
         [](lua_State* L)
-        {
-            auto& self = StreamSplitterIface.get(L);
-            lua_pushfstring(L, "%s@%p", StreamSplitterIface.name, &self);
-
-            return 1;
-        }
+        { return StreamSplitterIface.default_tostring(L); }
     },
     {
         "__gc",
         [](lua_State* L)
-        {
-            StreamSplitterIface.destroy(L);
-            return 0;
-        }
+        { return StreamSplitterIface.default_gc(L); }
     },
     { nullptr, nullptr }
 };

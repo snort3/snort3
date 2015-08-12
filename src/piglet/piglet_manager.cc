@@ -78,7 +78,8 @@ static const Api* find_piglet(PlugType key)
     return nullptr;
 }
 
-static BasePlugin* instantiate(Lua::State& lua, PlugType key, std::string name)
+static BasePlugin* instantiate(
+    Lua::State& lua, PlugType key, std::string name, bool use_defaults)
 {
     auto piglet_api = find_piglet(key);
 
@@ -93,8 +94,7 @@ static BasePlugin* instantiate(Lua::State& lua, PlugType key, std::string name)
     }
 
     Module* m;
-
-    if ( key == PT_IPS_OPTION )
+    if ( key == PT_IPS_OPTION || use_defaults )
         // FIXIT-M: this is just a workaround.
         // Need to be able to get parsed rule module
         m = ModuleManager::get_default_module(name.c_str(), snort_conf);
@@ -124,7 +124,8 @@ void Manager::add_plugin(Api* api)
 { plugins[api->target] = api; }
 
 BasePlugin* Manager::instantiate(
-    Lua::State& lua, const string& target, string& type, string& name)
+    Lua::State& lua, const string& target,
+    string& type, string& name, bool use_defaults)
 {
     PlugType pt = PT_MAX;
     split_key(target, type, name);
@@ -150,7 +151,7 @@ BasePlugin* Manager::instantiate(
         return nullptr;
     }
 
-    return ::Piglet::instantiate(lua, pt, name);
+    return ::Piglet::instantiate(lua, pt, name, use_defaults);
 }
 
 void Manager::destroy(BasePlugin* p)

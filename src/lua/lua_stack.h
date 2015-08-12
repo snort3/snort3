@@ -22,70 +22,171 @@
 
 #include <string>
 #include <type_traits>
-
 #include <luajit-2.0/lua.hpp>
-
-#include "lua_util.h"
 
 namespace Lua
 {
-template<typename T, typename Integral = void>
+template<typename T>
+static inline constexpr bool IsInteger()
+{ return std::is_integral<T>::value && !std::is_same<T, bool>::value; }
+
+template<typename T, typename Integral = void, typename Unsigned = void>
 struct Stack {};
 
+// unsigned integer
 template<typename T>
-struct Stack<T, typename std::enable_if<std::is_integral<T>::value>::type>
+struct Stack<T, typename std::enable_if<IsInteger<T>()>::type,
+    typename std::enable_if<std::is_unsigned<T>::value>::type>
 {
     static inline void push(lua_State* L, const T& v)
-    { lua_pushnumber(L, v); }
+    { lua_pushinteger(L, v); }
 
     static inline T get(lua_State* L, int n)
-    { return lua_tonumber(L, n); }
+    { return lua_tointeger(L, n); }
 
     static inline constexpr int type()
     { return LUA_TNUMBER; }
-};
 
-template<>
-struct Stack<const char*>
-{
-    static inline void push(lua_State* L, const char* v)
-    { lua_pushstring(L, v); }
-
-    static inline const char* get(lua_State* L, int n)
-    { return lua_tostring(L, n); }
-
-    static inline constexpr int type()
-    { return LUA_TSTRING; }
-};
-
-template<>
-struct Stack<std::string>
-{
-    static inline void push(lua_State* L, const std::string& v)
-    { lua_pushlstring(L, v.c_str(), v.size()); }
-
-    static inline std::string get(lua_State* L, int n)
+    static inline bool validate(lua_State* L, int n, T& v)
     {
-        size_t len = 0;
-        const char* s = lua_tolstring(L, n, &len);
-        return std::string(s, len);
+        if ( lua_type(L, n) != type() )
+            return false;
+
+        lua_Integer tmp = lua_tointeger(L, n);
+        if ( tmp < 0 )
+            return false;
+
+        v = tmp;
+        return true;
     }
 
-    static inline constexpr int type()
-    { return LUA_TSTRING; }
+    static inline bool validate(lua_State* L, int n)
+    {
+        T v;
+        return validate(L, n, v);
+    }
 };
+
+// integer
+template<typename T>
+struct Stack<T, typename std::enable_if<IsInteger<T>()>::type,
+    typename std::enable_if<!std::is_unsigned<T>::value>::type>
+{
+    static inline void push(lua_State* L, const T& v)
+    { lua_pushinteger(L, v); }
+
+    static inline T get(lua_State* L, int n)
+    { return lua_tointeger(L, n); }
+
+    static inline constexpr int type()
+    { return LUA_TNUMBER; }
+
+    static inline bool validate(lua_State* L, int n, T& v)
+    {
+        if ( lua_type(L, n) != type() )
+            return false;
+
+        v = lua_tointeger(L, n);
+        return true;
+    }
+
+    static inline bool validate(lua_State* L, int n)
+    {
+        T v;
+        return validate(L, n, v);
+    }
+};
+
+// default
+template<typename T>
+struct Stack<T, typename std::enable_if<!IsInteger<T>()>::type>
+{
+    static inline void push(lua_State*, T);
+    static inline void push(lua_State*, T, size_t);
+
+    static inline T get(lua_State*, int);
+    static inline T get(lua_State*, int, size_t&);
+
+    static inline constexpr int type();
+
+    static inline bool validate(lua_State* L, int n, T& v)
+    {
+        if ( lua_type(L, n) != type() )
+            return false;
+
+        v = get(L, n);
+        return true;
+    }
+
+    static inline bool validate(lua_State* L, int n)
+    {
+        T v;
+        return validate(L, n, v);
+    }
+
+    static inline bool validate(lua_State*, int, T&, size_t&);
+};
+
+// const char*
+template<>
+inline void Stack<const char*>::push(lua_State* L, const char* s)
+{ lua_pushstring(L, s); }
 
 template<>
-struct Stack<bool>
+inline void Stack<const char*>::push(lua_State* L, const char* s, size_t len)
+{ lua_pushlstring(L, s, len); }
+
+template<>
+inline const char* Stack<const char*>::get(lua_State* L, int n)
+{ return lua_tostring(L, n); }
+
+template<>
+inline const char* Stack<const char*>::get(lua_State* L, int n, size_t& len)
+{ return lua_tolstring(L, n, &len); }
+
+template<>
+inline constexpr int Stack<const char*>::type()
+{ return LUA_TSTRING; }
+
+template<>
+inline bool Stack<const char*>::validate(
+    lua_State* L, int n, const char*& v, size_t& len)
 {
-    static inline void push(lua_State* L, const bool& v)
-    { lua_pushboolean(L, v); }
+    if ( lua_type(L, n) != type() )
+        return false;
 
-    static inline bool get(lua_State* L, int n)
-    { return lua_toboolean(L, n); }
+    v = get(L, n, len);
+    return true;
+}
 
-    static inline constexpr int type()
-    { return LUA_TBOOLEAN; }
-};
+// string
+template<>
+inline void Stack<std::string>::push(lua_State* L, std::string s)
+{ lua_pushlstring(L, s.c_str(), s.length()); }
+
+template<>
+inline std::string Stack<std::string>::get(lua_State* L, int n)
+{
+    size_t len = 0;
+    const char* s = lua_tolstring(L, n, &len);
+    return std::string(s, len);
+}
+
+template<>
+inline constexpr int Stack<std::string>::type()
+{ return LUA_TSTRING; }
+
+// bool
+template<>
+inline void Stack<bool>::push(lua_State* L, bool v)
+{ lua_pushboolean(L, v); }
+
+template<>
+inline bool Stack<bool>::get(lua_State* L, int n)
+{ return lua_toboolean(L, n); }
+
+template<>
+inline constexpr int Stack<bool>::type()
+{ return LUA_TBOOLEAN; }
 }
 #endif

@@ -38,7 +38,6 @@
 #include "pp_flow_iface.h"
 #include "pp_packet_iface.h"
 #include "pp_raw_buffer_iface.h"
-#include "pp_raw_data_iface.h"
 
 class TestPiglet : public Piglet::BasePlugin
 {
@@ -62,7 +61,6 @@ bool TestPiglet::setup()
     install(L, FlowIface);
     install(L, PacketIface);
     install(L, RawBufferIface);
-    install(L, RawDataIface);
 
     return false;
 }

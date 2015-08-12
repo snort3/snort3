@@ -88,6 +88,7 @@ struct Test
     std::string type;
     std::string name;
     std::string description;
+    bool use_defaults = false;
 
     std::vector<std::string> messages;
 
