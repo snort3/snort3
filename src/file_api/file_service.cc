@@ -80,8 +80,6 @@ static bool get_file_name(Flow* flow, uint8_t** file_name, uint32_t* name_size);
 
 static void set_file_name(Flow* flow, uint8_t* file_name, uint32_t name_size);
 
-int64_t get_max_file_depth(void);
-
 static inline void finish_signature_lookup(FileContext* context);
 
 static uint32_t get_file_type_id(Flow* flow);
