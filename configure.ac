@@ -1008,6 +1008,7 @@ src/stream/Makefile \
 src/stream/base/Makefile \
 src/stream/ip/Makefile \
 src/stream/icmp/Makefile \
+src/stream/libtcp/Makefile \
 src/stream/tcp/Makefile \
 src/stream/udp/Makefile \
 src/stream/user/Makefile \

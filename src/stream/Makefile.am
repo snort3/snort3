@@ -23,6 +23,7 @@ stream_splitter.cc
 #base/libstream_base.a
 #ip/libstream_ip.a
 #icmp/libstream_icmp.a
+#libtcp/libstream_libtcp.a
 #tcp/libstream_tcp.a
 #udp/libstream_udp.a
 #user/libstream_user.a
@@ -32,6 +33,7 @@ SUBDIRS = \
 base \
 ip \
 icmp \
+libtcp \
 tcp \
 udp \
 user \

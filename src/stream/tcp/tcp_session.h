@@ -28,8 +28,18 @@
 #include "stream/paf.h"
 #include "flow/session.h"
 
+// TBD-EDM - these includes are for functions moved to a new file to group related functionality
+// in specific files ... these functional groups will be further refactored as the stream tcp
+// rewrite continues...
+#include "tcp_reassembly.h"
+// TBD-EDM
+
 /* Only track a maximum number of alerts per session */
 #define MAX_SESSION_ALERTS 8
+
+#ifdef DEBUG
+extern const char* const flush_policy_names[];
+#endif
 
 struct StateMgr
 {
@@ -75,48 +85,9 @@ struct StreamAlertInfo
     uint32_t event_second;
 };
 
-//-----------------------------------------------------------------
-// we make a lot of TcpSegments, TcpTrackers, and TcpSessions
-// so they are organized by member size/alignment requirements to
-// minimize unused space in the structs.
-// ... however, use of padding below is critical, adjust if needed
-//-----------------------------------------------------------------
-
-struct TcpSegment
-{
-    static TcpSegment* init(struct Packet*, const struct timeval&, const uint8_t*, unsigned);
-    static void term(TcpSegment*);
-    bool is_retransmit(const uint8_t*, uint16_t size, uint32_t);
-
-    uint8_t* payload;
-
-    TcpSegment *prev;
-    TcpSegment *next;
-
-    struct timeval tv;
-
-    uint32_t ts;
-    uint32_t seq;
-
-    uint16_t orig_dsize;
-    uint16_t size;
-
-    uint16_t urg_offset;
-    uint8_t buffered;
-
-    uint8_t data[1];     // variable length
-};
-
-enum FlushPolicy
-{
-    STREAM_FLPOLICY_IGNORE,     /* ignore this traffic */
-    STREAM_FLPOLICY_ON_ACK,     /* protocol aware flushing (PAF) */
-    STREAM_FLPOLICY_ON_DATA,    /* protocol aware ips */
-};
-
 struct TcpTracker
 {
-    StateMgr s_mgr;         /* state tracking goodies */
+    StateMgr s_mgr; /* state tracking goodies */
     class StreamSplitter* splitter;
     FlushPolicy flush_policy;
 
@@ -126,8 +97,8 @@ struct TcpTracker
     PAF_State paf_state;    // for tracking protocol aware flushing
 
     StreamTcpConfig* config;
-    TcpSegment *seglist;       /* first queued segment */
-    TcpSegment *seglist_tail;  /* last queued segment */
+    TcpSegment *seglist; /* first queued segment */
+    TcpSegment *seglist_tail; /* last queued segment */
 
     // FIXIT-P seglist_base_seq is the sequence number to flush from
     // and is valid even when seglist is empty.  seglist_next is
@@ -140,45 +111,45 @@ struct TcpTracker
      * of a connection, the l_unackd value would represent the client side of
      * the connection's last unacked sequence number
      */
-    uint32_t l_unackd;     /* local unack'd seq number */
-    uint32_t l_nxt_seq;    /* local next expected sequence */
-    uint32_t l_window;     /* local receive window */
+    uint32_t l_unackd; /* local unack'd seq number */
+    uint32_t l_nxt_seq; /* local next expected sequence */
+    uint32_t l_window; /* local receive window */
 
-    uint32_t r_nxt_ack;    /* next expected ack from remote side */
-    uint32_t r_win_base;   /* remote side window base sequence number
-                            * (i.e. the last ack we got) */
-    uint32_t isn;          /* initial sequence number */
-    uint32_t ts_last;      /* last timestamp (for PAWS) */
-    uint32_t ts_last_pkt;  /* last packet timestamp we got */
+    uint32_t r_nxt_ack; /* next expected ack from remote side */
+    uint32_t r_win_base; /* remote side window base sequence number
+     * (i.e. the last ack we got) */
+    uint32_t isn; /* initial sequence number */
+    uint32_t ts_last; /* last timestamp (for PAWS) */
+    uint32_t ts_last_pkt; /* last packet timestamp we got */
 
-    uint32_t seglist_base_seq;   /* seq of first queued segment */
-    uint32_t seg_count;          /* number of current queued segments */
-    uint32_t seg_bytes_total;    /* total bytes currently queued */
-    uint32_t seg_bytes_logical;  /* logical bytes queued (total - overlaps) */
+    uint32_t seglist_base_seq; /* seq of first queued segment */
+    uint32_t seg_count; /* number of current queued segments */
+    uint32_t seg_bytes_total; /* total bytes currently queued */
+    uint32_t seg_bytes_logical; /* logical bytes queued (total - overlaps) */
     uint32_t total_bytes_queued; /* total bytes queued (life of session) */
-    uint32_t total_segs_queued;  /* number of segments queued (life) */
-    uint32_t overlap_count;      /* overlaps encountered */
+    uint32_t total_segs_queued; /* number of segments queued (life) */
+    uint32_t overlap_count; /* overlaps encountered */
     uint32_t small_seg_count;
-    uint32_t flush_count;        /* number of flushed queued segments */
-    uint32_t xtradata_mask;      /* extra data available to log */
+    uint32_t flush_count; /* number of flushed queued segments */
+    uint32_t xtradata_mask; /* extra data available to log */
 
     uint16_t os_policy;
     uint16_t reassembly_policy;
 
-    uint16_t wscale;       /* window scale setting */
-    uint16_t mss;          /* max segment size */
+    uint16_t wscale; /* window scale setting */
+    uint16_t mss; /* max segment size */
 
-    uint8_t  mac_addr[6];
-    uint8_t  flags;        /* bitmap flags (TF_xxx) */
+    uint8_t mac_addr[6];
+    uint8_t flags; /* bitmap flags (TF_xxx) */
 
-    uint8_t  alert_count;  /* number alerts stored (up to MAX_SESSION_ALERTS) */
+    uint8_t alert_count; /* number alerts stored (up to MAX_SESSION_ALERTS) */
     StreamAlertInfo alerts[MAX_SESSION_ALERTS]; /* history of alerts */
 };
 
 // FIXIT-L session tracking must be split from reassembly
 // into a separate module a la ip_session.cc and ip_defrag.cc
 // (of course defrag should also be cleaned up)
-class TcpSession : public Session
+class TcpSession: public Session
 {
 public:
     TcpSession(Flow*);
@@ -195,9 +166,8 @@ public:
     bool add_alert(Packet*, uint32_t gid, uint32_t sid) override;
     bool check_alerted(Packet*, uint32_t gid, uint32_t sid) override;
 
-    int update_alert(
-        Packet*, uint32_t /*gid*/, uint32_t /*sid*/,
-        uint32_t /*event_id*/, uint32_t /*event_second*/) override;
+    int update_alert(Packet*, uint32_t /*gid*/, uint32_t /*sid*/,
+            uint32_t /*event_id*/, uint32_t /*event_second*/) override;
 
     void flush_client(Packet*) override;
     void flush_server(Packet*) override;
@@ -232,11 +202,11 @@ public:
     static void show(StreamTcpConfig*);
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-    int32_t ingress_index;  /* Index of the inbound interface. */
-    int32_t egress_index;   /* Index of the outbound interface. */
-    int32_t ingress_group;  /* Index of the inbound group. */
-    int32_t egress_group;   /* Index of the outbound group. */
-    uint32_t daq_flags;     /* Flags for the packet (DAQ_PKT_FLAG_*) */
+    int32_t ingress_index; /* Index of the inbound interface. */
+    int32_t egress_index; /* Index of the outbound interface. */
+    int32_t ingress_group; /* Index of the inbound group. */
+    int32_t egress_group; /* Index of the outbound group. */
+    uint32_t daq_flags; /* Flags for the packet (DAQ_PKT_FLAG_*) */
     uint16_t address_space_id;
 #endif
 

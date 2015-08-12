@@ -30,6 +30,48 @@ using namespace std;
 // stream_tcp module
 //-------------------------------------------------------------------------
 
+THREAD_LOCAL ProfileStats s5TcpPerfStats;
+THREAD_LOCAL ProfileStats s5TcpNewSessPerfStats;
+THREAD_LOCAL ProfileStats s5TcpStatePerfStats;
+THREAD_LOCAL ProfileStats s5TcpDataPerfStats;
+THREAD_LOCAL ProfileStats s5TcpInsertPerfStats;
+THREAD_LOCAL ProfileStats s5TcpPAFPerfStats;
+THREAD_LOCAL ProfileStats s5TcpFlushPerfStats;
+THREAD_LOCAL ProfileStats s5TcpBuildPacketPerfStats;
+THREAD_LOCAL ProfileStats s5TcpProcessRebuiltPerfStats;
+
+const PegInfo tcp_pegs[] = {
+    { "sessions", "total sessions" },
+    { "timeouts", "sessions timed out" },
+    { "resyns", "SYN received on established session" },
+    { "discards", "tcp packets discarded" },
+    { "events", "events generated" },
+    { "ignored", "tcp packets ignored" },
+    { "untracked", "tcp packets not tracked" },
+    { "syn trackers", "tcp session tracking started on syn" },
+    { "syn-ack trackers", "tcp session tracking started on syn-ack" },
+    { "3way trackers", "tcp session tracking started on ack" },
+    { "data trackers", "tcp session tracking started on data" },
+    { "trackers created", "tcp session trackers created" },
+    { "trackers released", "tcp session trackers released" },
+    { "segs queued", "total segments queued" },
+    { "segs released", "total segments released" },
+    { "segs split", "tcp segments split when reassembling PDUs" },
+    { "segs used", "queued tcp segments applied to reassembled PDUs" },
+    { "rebuilt packets", "total reassembled PDUs" },
+    { "rebuilt buffers", "rebuilt PDU sections" },
+    { "overlaps", "overlapping segments queued" },
+    { "gaps", "missing data between PDUs" },
+    { "max segs", "number of times the maximum queued segment limit was reached" },
+    { "max bytes", "number of times the maximum queued byte limit was reached" },
+    { "internal events", "135:X events generated" },
+    { "client cleanups", "number of times data from server was flushed when session released" },
+    { "server cleanups", "number of times data from client was flushed when session released" },
+    { nullptr, nullptr }
+};
+
+THREAD_LOCAL TcpStats tcpStats;
+
 #define STREAM_TCP_SYN_ON_EST_STR \
     "SYN on established session"
 #define STREAM_TCP_DATA_ON_SYN_STR \
