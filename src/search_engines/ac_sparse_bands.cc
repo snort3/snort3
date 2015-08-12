@@ -72,7 +72,7 @@ public:
         const unsigned char* T, int n, MpseMatch match,
         void* data, int* current_state) override
     {
-        return acsmSearchSparseNFA(
+        return acsmSearchSparseDFA(
             obj, (unsigned char*)T, n, match, data, current_state);
     }
 
