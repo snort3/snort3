@@ -647,12 +647,12 @@ static void set_hdr(
     const Packet* p, Packet* c, const DAQ_PktHdr_t* phdr, uint32_t opaque)
 {
     c->reset();
-    DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     if ( !phdr )
         phdr = p->pkth;
 
+    DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
     pkth->ingress_index = phdr->ingress_index;
     pkth->ingress_group = phdr->ingress_group;
     pkth->egress_index = phdr->egress_index;
@@ -660,12 +660,13 @@ static void set_hdr(
     pkth->flags = phdr->flags & (~DAQ_PKT_FLAG_HW_TCP_CS_GOOD);
     pkth->address_space_id = phdr->address_space_id;
     pkth->opaque = opaque;
-    UNUSED(p);
 #else
 #ifdef HAVE_DAQ_ACQUIRE_WITH_META
+    DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
     pkth->opaque = p->pkth->opaque;
-#endif
+#else
     UNUSED(p);
+#endif
     UNUSED(phdr);
     UNUSED(opaque);
 #endif
