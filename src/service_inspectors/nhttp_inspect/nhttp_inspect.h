@@ -27,6 +27,7 @@
 #include "log/messages.h"
 
 #include "nhttp_enum.h"
+#include "nhttp_module.h"
 #include "nhttp_stream_splitter.h"
 
 class NHttpApi;
@@ -37,7 +38,7 @@ class NHttpInspect : public Inspector
 public:
     static THREAD_LOCAL uint8_t body_buffer[NHttpEnums::MAX_OCTETS];
 
-    NHttpInspect(bool test_input, bool test_output);
+    NHttpInspect(NHttpParaList params_);
 
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
     bool get_buf(unsigned, Packet*, InspectionBuffer&) override;
@@ -61,6 +62,8 @@ private:
         NHttpEnums::SourceId source_id_, bool buf_owner) const;
 
     static THREAD_LOCAL NHttpMsgSection* latest_section;
+
+    const NHttpParaList params;
 };
 
 #endif

@@ -25,6 +25,7 @@
 
 #include "nhttp_scratch_pad.h"
 #include "nhttp_field.h"
+#include "nhttp_module.h"
 #include "nhttp_flow_data.h"
 #include "nhttp_transaction.h"
 #include "nhttp_infractions.h"
@@ -50,7 +51,7 @@ public:
     const Field& get_legacy(unsigned buffer_id);
 
     // Should this section be sent directly to detection after inspection?
-    bool worth_detection() { return (msg_text.length > 0); }
+    virtual bool worth_detection() const { return (msg_text.length > 0); }
 
     NHttpEnums::MethodId get_method_id() const { return method_id; }
 
@@ -59,18 +60,21 @@ public:
 
 protected:
     NHttpMsgSection(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
-        NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_);
+        NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_, const NHttpParaList*
+        params_);
 
     // Convenience methods
     void print_message_title(FILE* output, const char* title) const;
     void print_message_wrapup(FILE* output);
+    void update_depth() const;
 
     const Field msg_text;
 
     NHttpFlowData* const session_data;
     const NHttpEnums::SourceId source_id;
     Flow* const flow;
-    NHttpTransaction* transaction;
+    const NHttpParaList* const params;
+    NHttpTransaction* const transaction;
     const bool tcp_close;
     ScratchPad scratch_pad;
 

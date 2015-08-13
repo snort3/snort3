@@ -31,8 +31,9 @@
 using namespace NHttpEnums;
 
 NHttpMsgHeader::NHttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
-    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_) :
-    NHttpMsgHeadShared(buffer, buf_size, session_data_, source_id_, buf_owner, flow_)
+    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
+    const NHttpParaList* params_) :
+    NHttpMsgHeadShared(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
 {
     transaction->set_header(this, source_id);
 }
@@ -82,14 +83,7 @@ void NHttpMsgHeader::update_flow()
         // FIXIT-M inspect for Content-Length header which should not be present
         // Chunked body
         session_data->type_expected[source_id] = SEC_CHUNK;
-        session_data->body_octets[source_id] = 0;
-        session_data->section_size_target[source_id] = DATA_BLOCK_SIZE;
-        if (session_data->file_depth_remaining[1-source_id] <= 0)
-        {   // Bidirectional file processing is problematic FIXIT-M
-            session_data->file_depth_remaining[source_id] = file_api->get_max_file_depth();
-        }
-        session_data->infractions[source_id].reset();
-        session_data->events[source_id].reset();
+        prepare_body();
     }
     else if ((get_header_value_norm(HEAD_CONTENT_LENGTH).length > 0) &&
         (*(int64_t*)get_header_value_norm(HEAD_CONTENT_LENGTH).start > 0))
@@ -98,27 +92,7 @@ void NHttpMsgHeader::update_flow()
         session_data->type_expected[source_id] = SEC_BODY;
         session_data->data_length[source_id] = *(int64_t*)get_header_value_norm(
             HEAD_CONTENT_LENGTH).start;
-        session_data->body_octets[source_id] = 0;
-        session_data->section_size_target[source_id] = DATA_BLOCK_SIZE;
-        session_data->section_size_max[source_id] = FINAL_BLOCK_SIZE;
-        if (session_data->file_depth_remaining[1-source_id] <= 0)
-        {   // Bidirectional file processing is problematic FIXIT-M
-            session_data->file_depth_remaining[source_id] = file_api->get_max_file_depth();
-            if (source_id == SRC_CLIENT)
-            {
-                // FIXIT-L Cannot use new because file_api insists on freeing the mime_state using
-                // free().
-                session_data->mime_state = (MimeState*) new_calloc(1, sizeof(MimeState));
-                file_api->set_mime_log_config_defauts(&mime_conf);
-                session_data->mime_state->log_config = &mime_conf;
-                file_api->set_mime_decode_config_defauts(&decode_conf);
-                session_data->mime_state->decode_conf = &decode_conf;
-                file_api->set_log_buffers(&session_data->mime_state->log_state,
-                    session_data->mime_state->log_config);
-            }
-        }
-        session_data->infractions[source_id].reset();
-        session_data->events[source_id].reset();
+        prepare_body();
     }
     else
     {
@@ -128,5 +102,48 @@ void NHttpMsgHeader::update_flow()
         session_data->half_reset(source_id);
     }
     session_data->section_type[source_id] = SEC__NOTCOMPUTE;
+}
+
+// Common activities of preparing for upcoming regular body or chunked body
+void NHttpMsgHeader::prepare_body()
+{
+    session_data->body_octets[source_id] = 0;
+    const int64_t& depth = (source_id == SRC_CLIENT) ? params->request_depth :
+        params->response_depth;
+    session_data->detect_depth_remaining[source_id] = (depth != -1) ? depth : INT64_MAX;
+    setup_file_processing();
+    setup_decompression();
+    update_depth();
+    session_data->infractions[source_id].reset();
+    session_data->events[source_id].reset();
+}
+
+void NHttpMsgHeader::setup_file_processing()
+{
+    // FIXIT-M Bidirectional file processing is problematic so we don't do it. When the library
+    // fully supports it remove the outer if statement that prevents it from being done.
+    if (session_data->file_depth_remaining[1-source_id] == 0)
+    {
+        if ((session_data->file_depth_remaining[source_id] = file_api->get_max_file_depth()) < 0)
+        {
+           session_data->file_depth_remaining[source_id] = 0;
+        }
+        if (source_id == SRC_CLIENT)
+        {
+            // FIXIT-L Cannot use new because file_api insists on freeing the mime_state using
+            // free().
+            session_data->mime_state = (MimeState*) new_calloc(1, sizeof(MimeState));
+            file_api->set_mime_log_config_defauts(&mime_conf);
+            session_data->mime_state->log_config = &mime_conf;
+            file_api->set_mime_decode_config_defauts(&decode_conf);
+            session_data->mime_state->decode_conf = &decode_conf;
+            file_api->set_log_buffers(&session_data->mime_state->log_state,
+                session_data->mime_state->log_config);
+        }
+    }
+}
+
+void NHttpMsgHeader::setup_decompression()
+{
 }
 

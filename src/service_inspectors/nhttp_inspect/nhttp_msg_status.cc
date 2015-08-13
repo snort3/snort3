@@ -31,8 +31,9 @@
 using namespace NHttpEnums;
 
 NHttpMsgStatus::NHttpMsgStatus(const uint8_t* buffer, const uint16_t buf_size,
-    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_) :
-    NHttpMsgStart(buffer, buf_size, session_data_, source_id_, buf_owner, flow_)
+    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
+    const NHttpParaList* params_) :
+    NHttpMsgStart(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
 {
     transaction->set_status(this);
 }

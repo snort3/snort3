@@ -29,8 +29,9 @@
 using namespace NHttpEnums;
 
 NHttpMsgTrailer::NHttpMsgTrailer(const uint8_t* buffer, const uint16_t buf_size,
-    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_) :
-    NHttpMsgHeadShared(buffer, buf_size, session_data_, source_id_, buf_owner, flow_)
+    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
+    const NHttpParaList* params_) :
+    NHttpMsgHeadShared(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
 {
     transaction->set_trailer(this, source_id);
 }
