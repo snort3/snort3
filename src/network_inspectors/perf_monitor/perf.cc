@@ -66,7 +66,7 @@ void sfInitPerformanceStatistics(SFPERF* sfPerf)
     memset(sfPerf, 0, sizeof(SFPERF));
     sfPerf->sample_interval = 60;
     sfPerf->flow_max_port_to_track = 1023;
-    sfPerf->perf_flags |= SFPERF_BASE | SFPERF_SUMMARY;
+    sfPerf->perf_flags |= SFPERF_BASE | SFPERF_TIME_COUNT;
     sfPerf->pkt_cnt = 10000;
     sfPerf->max_file_size = MAX_PERF_FILE_SIZE;
     sfPerf->flowip_memcap = 50*1024*1024;
