@@ -7,6 +7,9 @@
 *.out
 *.rej
 *.swp
+*.gcno
+*.gcda
+*.gcov
 *~
 ._Xcode*
 Cbuild/
@@ -46,6 +49,7 @@ doc/search_engine.txt
 doc/signals.txt
 doc/snort2lua_cmds.txt
 doc/snort_manual.chunked/
+doc/snort_manual.chunked.tgz
 doc/snort_manual.html
 doc/snort_manual.pdf
 doc/snort_manual.text

@@ -26,13 +26,15 @@ const Parameter NHttpModule::nhttp_params[] =
 {
     { "test_input", Parameter::PT_BOOL, nullptr, "false", "read HTTP messages from text file" },
     { "test_output", Parameter::PT_BOOL, nullptr, "false", "print out HTTP section data" },
+    { "request_depth", Parameter::PT_INT, "-1:", "-1",
+          "maximum request message body bytes to examine (-1 no limit)" },
+    { "response_depth", Parameter::PT_INT, "-1:", "-1",
+          "maximum response message body bytes to examine (-1 no limit)" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 bool NHttpModule::begin(const char*, int, SnortConfig*)
 {
-    test_input = false;
-    test_output = false;
     return true;
 }
 
@@ -40,11 +42,19 @@ bool NHttpModule::set(const char*, Value& val, SnortConfig*)
 {
     if (val.is("test_input"))
     {
-        test_input = val.get_bool();
+        params.test_input = val.get_bool();
     }
     else if (val.is("test_output"))
     {
-        test_output = val.get_bool();
+        params.test_output = val.get_bool();
+    }
+    else if (val.is("request_depth"))
+    {
+        params.request_depth = val.get_long();
+    }
+    else if (val.is("response_depth"))
+    {
+        params.response_depth = val.get_long();
     }
     else
     {

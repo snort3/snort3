@@ -49,8 +49,10 @@ public:
 
 protected:
     NHttpMsgHeadShared(const uint8_t* buffer, const uint16_t buf_size,
-        NHttpFlowData* session_data_, NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_)
-        : NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner, flow_) { }
+        NHttpFlowData* session_data_, NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_,
+        const NHttpParaList* params_)
+        : NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
+        { }
 
     // Header normalization strategies. There should be one defined for every different way we can
     // process a header field value.

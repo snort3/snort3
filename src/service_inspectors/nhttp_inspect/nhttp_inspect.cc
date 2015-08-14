@@ -37,13 +37,13 @@
 
 using namespace NHttpEnums;
 
-NHttpInspect::NHttpInspect(bool test_input, bool test_output)
+NHttpInspect::NHttpInspect(NHttpParaList params_) : params(params_)
 {
-    if (test_input)
+    if (params.test_input)
     {
         NHttpTestManager::activate_test_input();
     }
-    if (test_output)
+    if (params.test_output)
     {
         NHttpTestManager::activate_test_output();
     }
@@ -97,23 +97,27 @@ bool NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* cons
     {
     case SEC_REQUEST:
         latest_section = new NHttpMsgRequest(data, dsize, session_data, source_id, buf_owner,
-            flow);
+            flow, &params);
         break;
     case SEC_STATUS:
-        latest_section = new NHttpMsgStatus(data, dsize, session_data, source_id, buf_owner, flow);
+        latest_section = new NHttpMsgStatus(data, dsize, session_data, source_id, buf_owner, flow,
+            &params);
         break;
     case SEC_HEADER:
-        latest_section = new NHttpMsgHeader(data, dsize, session_data, source_id, buf_owner, flow);
+        latest_section = new NHttpMsgHeader(data, dsize, session_data, source_id, buf_owner, flow,
+            &params);
         break;
     case SEC_BODY:
-        latest_section = new NHttpMsgBody(data, dsize, session_data, source_id, buf_owner, flow);
+        latest_section = new NHttpMsgBody(data, dsize, session_data, source_id, buf_owner, flow,
+            &params);
         break;
     case SEC_CHUNK:
-        latest_section = new NHttpMsgChunk(data, dsize, session_data, source_id, buf_owner, flow);
+        latest_section = new NHttpMsgChunk(data, dsize, session_data, source_id, buf_owner, flow,
+            &params);
         break;
     case SEC_TRAILER:
         latest_section = new NHttpMsgTrailer(data, dsize, session_data, source_id, buf_owner,
-            flow);
+            flow, &params);
         break;
     default:
         assert(0);

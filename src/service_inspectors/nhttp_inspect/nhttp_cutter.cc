@@ -172,10 +172,27 @@ ScanResult NHttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
     return SCAN_NOTFOUND;
 }
 
-ScanResult NHttpBodyCutter::cut(const uint8_t*, uint32_t, NHttpInfractions&, NHttpEventGen&,
-    uint32_t flow_target, uint32_t flow_max)
+ScanResult NHttpBodyCutter::cut(const uint8_t*, uint32_t length, NHttpInfractions&,
+    NHttpEventGen&, uint32_t flow_target, uint32_t flow_max)
 {
     assert(remaining > 0);
+
+    // Are we skipping to the next message?
+    if (flow_target == 0)
+    {
+        if (remaining <= length)
+        {
+            num_flush = remaining;
+            remaining = 0;
+            return SCAN_DISCARD;
+        }
+        else
+        {
+            num_flush = length;
+            remaining -= num_flush;
+            return SCAN_DISCARD_PIECE;
+        }
+    }
 
     // The normal body section size is flow_target. But if there are only flow_max or less
     // remaining we take the whole thing rather than leave a small final section.
@@ -197,14 +214,15 @@ ScanResult NHttpBodyCutter::cut(const uint8_t*, uint32_t, NHttpInfractions&, NHt
 ScanResult NHttpChunkCutter::cut(const uint8_t* buffer, uint32_t length,
     NHttpInfractions& infractions, NHttpEventGen& events, uint32_t flow_target, uint32_t)
 {
+    // Are we skipping through the rest of this chunked body to the trailers and the next message?
+    const bool discard_mode = (flow_target == 0);
+
     if (new_section)
     {
         new_section = false;
         octets_seen = 0;
         num_good_chunks = 0;
     }
-
-    // FIXIT-M there are examples of chunk lengths with trailing white space, need to address that
 
     for (uint32_t k=0; k < length; k++)
     {
@@ -313,7 +331,7 @@ ScanResult NHttpChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 // Terminating zero-length chunk
                 num_good_chunks++;
                 num_flush = k+1;
-                return SCAN_FOUND;
+                return !discard_mode ? SCAN_FOUND : SCAN_DISCARD;
             }
             else
             {
@@ -326,8 +344,10 @@ ScanResult NHttpChunkCutter::cut(const uint8_t* buffer, uint32_t length,
         case CHUNK_DATA:
           {
             uint32_t skip_amount = (length-k <= expected) ? length-k : expected;
-            skip_amount = (skip_amount <= flow_target-data_seen) ? skip_amount :
-                flow_target-data_seen;
+            if (!discard_mode && (skip_amount > flow_target-data_seen))
+            { // Do not exceed requested section size
+                skip_amount = flow_target-data_seen;
+            }
             k += skip_amount - 1;
             if ((expected -= skip_amount) == 0)
             {
@@ -368,6 +388,11 @@ ScanResult NHttpChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             digits_seen = 0;
             break;
         case CHUNK_BAD:
+            // If we are skipping to the trailers and next message the broken chunk thwarts us
+            if (discard_mode)
+            {
+                return SCAN_ABORT;
+            }
             uint32_t skip_amount = length-k;
             skip_amount = (skip_amount <= flow_target-data_seen) ? skip_amount :
                 flow_target-data_seen;
@@ -384,6 +409,11 @@ ScanResult NHttpChunkCutter::cut(const uint8_t* buffer, uint32_t length,
         }
     }
     octets_seen += length;
+    if (discard_mode)
+    {
+        num_flush = length;
+        return SCAN_DISCARD_PIECE;
+    }
     return SCAN_NOTFOUND;
 }
 

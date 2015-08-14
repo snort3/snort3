@@ -2,6 +2,7 @@
 add_subdirectory(base)
 add_subdirectory(ip)
 add_subdirectory(icmp)
+add_subdirectory(libtcp)
 add_subdirectory(tcp)
 add_subdirectory(udp)
 add_subdirectory(user)
@@ -28,6 +29,7 @@ target_link_libraries( stream
     stream_base
     stream_ip
     stream_icmp
+    stream_libtcp
     stream_tcp
     stream_udp
     stream_user

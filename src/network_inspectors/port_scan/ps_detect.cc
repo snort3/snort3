@@ -784,9 +784,10 @@ int PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     **  Otherwise, only consider streams not picked up midstream.
     */
     if ( p->flow )
-    {
         session_flags = stream.get_session_flags(p->flow);
 
+    if ( session_flags & (SSNFLAG_SEEN_CLIENT|SSNFLAG_SEEN_SERVER) )
+    {
         if ((session_flags & SSNFLAG_SEEN_CLIENT) &&
             !(session_flags & SSNFLAG_SEEN_SERVER) &&
             (config->include_midstream || !(session_flags & SSNFLAG_MIDSTREAM)))

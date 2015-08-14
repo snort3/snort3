@@ -31,18 +31,22 @@ class NHttpMsgBody : public NHttpMsgSection
 {
 public:
     NHttpMsgBody(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
-        NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_);
+        NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_,
+        const NHttpParaList* params_);
     void analyze() override;
     void print_section(FILE* output) override;
     void gen_events() override;
     void update_flow() override;
-    Field& get_data() { return data; }
+    Field& get_detect_data() { return detect_data; }
+    bool worth_detection() const override { return (detect_data.length > 0); }
 
 protected:
-    int64_t data_length; // FIXIT-M this has no meaning in chunk subclass. Potential source of errors.
+    int64_t data_length; // FIXIT-M this has no meaning in chunk subclass. Potential source of
+                         // errors.
     int64_t body_octets;
 
-    Field data;
+    Field detect_data;
+    Field file_data;
 
     void do_file_processing();
 };

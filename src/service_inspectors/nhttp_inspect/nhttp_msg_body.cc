@@ -32,8 +32,9 @@
 using namespace NHttpEnums;
 
 NHttpMsgBody::NHttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,
-    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_) :
-    NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner, flow_),
+    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
+    const NHttpParaList* params_) :
+    NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_),
     data_length(session_data->data_length[source_id]),
     body_octets(session_data->body_octets[source_id])
 {
@@ -42,13 +43,18 @@ NHttpMsgBody::NHttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,
 
 void NHttpMsgBody::analyze()
 {
-    data.start = msg_text.start;
-    data.length = msg_text.length;
+    detect_data.length = (msg_text.length <= session_data->detect_depth_remaining[source_id]) ?
+       msg_text.length : session_data->detect_depth_remaining[source_id];
+    detect_data.start = msg_text.start;
+    session_data->detect_depth_remaining[source_id] -= detect_data.length;
 
     // Always set file data. File processing will later set a new value in some cases.
-    if (data.length > 0)
+    // FIXIT-M should file data length here be independent of file_depth_remaining?
+    file_data.length = msg_text.length;
+    if (file_data.length > 0)
     {
-        set_file_data(const_cast<uint8_t*>(data.start), (unsigned)data.length);
+        file_data.start = msg_text.start;
+        set_file_data(const_cast<uint8_t*>(file_data.start), (unsigned)file_data.length);
     }
 
     if (session_data->file_depth_remaining[source_id] > 0)
@@ -74,17 +80,17 @@ void NHttpMsgBody::do_file_processing()
     else file_position = SNORT_FILE_MIDDLE;
 
     // Chunked body with nothing but the zero length chunk?
-    if (front && (data.length == 0))
+    if (front && (file_data.length == 0))
     {
         return;
     }
 
-    const int32_t fp_length = (data.length <= session_data->file_depth_remaining[source_id]) ?
-        data.length : session_data->file_depth_remaining[source_id];
+    const int32_t fp_length = (file_data.length <= session_data->file_depth_remaining[source_id]) ?
+        file_data.length : session_data->file_depth_remaining[source_id];
 
     if (source_id == SRC_SERVER)
     {
-        if (file_api->file_process(flow, const_cast<uint8_t*>(data.start), fp_length,
+        if (file_api->file_process(flow, const_cast<uint8_t*>(file_data.start), fp_length,
             file_position, false, false))
         {
             session_data->file_depth_remaining[source_id] -= fp_length;
@@ -112,7 +118,7 @@ void NHttpMsgBody::do_file_processing()
     }
     else
     {
-        file_api->process_mime_data(flow, data.start, data.start + fp_length,
+        file_api->process_mime_data(flow, file_data.start, file_data.start + fp_length,
             session_data->mime_state, true, file_position);
 
         session_data->file_depth_remaining[source_id] -= fp_length;
@@ -133,7 +139,8 @@ void NHttpMsgBody::print_section(FILE* output)
     NHttpMsgSection::print_message_title(output, "body");
     fprintf(output, "Expected data length %" PRIi64 ", octets seen %" PRIi64 "\n", data_length,
         body_octets);
-    data.print(output, "Data");
+    detect_data.print(output, "Detect data");
+    file_data.print(output, "File data");
     NHttpMsgSection::print_message_wrapup(output);
 }
 
@@ -143,8 +150,7 @@ void NHttpMsgBody::update_flow()
     {
         // More body coming
         session_data->body_octets[source_id] = body_octets;
-        session_data->section_size_target[source_id] = DATA_BLOCK_SIZE;
-        session_data->section_size_max[source_id] = FINAL_BLOCK_SIZE;
+        update_depth();
         session_data->infractions[source_id] = infractions;
         session_data->events[source_id] = events;
     }

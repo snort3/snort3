@@ -2856,7 +2856,7 @@ int acsmSearchSparseNFA(
     unsigned char* T;
     int index;
     acstate_t** NextState= acsm->acsmNextState;
-    acstate_t* FailState= acsm->acsmFailState;
+    acstate_t* FailState = acsm->acsmFailState;
     ACSM_PATTERN2** MatchList = acsm->acsmMatchList;
     unsigned char Tchar;
 

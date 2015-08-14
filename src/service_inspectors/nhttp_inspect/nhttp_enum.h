@@ -27,6 +27,7 @@ namespace NHttpEnums
 static const int MAX_OCTETS = 65535;
 static const int DATA_BLOCK_SIZE = 16384;
 static const int FINAL_BLOCK_SIZE = 24576;
+static const int GZIP_BLOCK_SIZE = 4096;
 static const uint32_t NHTTP_GID = 219;
 
 // Field status codes for when no valid value is present in length or integer value. Positive
@@ -43,7 +44,8 @@ enum SectionType { SEC_DISCARD = -19, SEC_ABORT = -18, SEC__NOTCOMPUTE=-14, SEC_
     SEC_REQUEST = 2, SEC_STATUS, SEC_HEADER, SEC_BODY, SEC_CHUNK, SEC_TRAILER };
 
 // Result of scanning by splitter
-enum ScanResult { SCAN_NOTFOUND, SCAN_FOUND, SCAN_FOUND_PIECE, SCAN_DISCARD, SCAN_ABORT };
+enum ScanResult { SCAN_NOTFOUND, SCAN_FOUND, SCAN_FOUND_PIECE, SCAN_DISCARD, SCAN_DISCARD_PIECE,
+    SCAN_ABORT };
 
 // State machine for chunk parsing
 enum ChunkState { CHUNK_ZEROS, CHUNK_NUMBER, CHUNK_WHITESPACE, CHUNK_OPTIONS, CHUNK_HCRLF,

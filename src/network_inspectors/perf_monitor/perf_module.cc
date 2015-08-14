@@ -40,7 +40,7 @@ static const Parameter s_params[] =
     { "flow_ip_memcap", Parameter::PT_INT, "8200:", "52428800",
       "maximum memory for flow tracking" },
 
-    { "max_file_size", Parameter::PT_INT, "4096:", "4096",
+    { "max_file_size", Parameter::PT_INT, "4096:", "4294967295",
       "files will be rolled over if they exceed this size" },
 
     { "flow_ports", Parameter::PT_INT, "0:", "1023",
@@ -93,7 +93,14 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
         config.pkt_cnt = v.get_long();
 
     else if ( v.is("seconds") )
+    {
         config.sample_interval = v.get_long();
+        if ( config.sample_interval == 0 )
+        {
+            config.perf_flags |= SFPERF_SUMMARY;
+            config.perf_flags &= ~SFPERF_TIME_COUNT;
+        }
+    }
 
     else if ( v.is("flow_ip_memcap") )
     {

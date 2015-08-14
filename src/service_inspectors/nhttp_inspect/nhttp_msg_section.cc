@@ -34,11 +34,13 @@
 using namespace NHttpEnums;
 
 NHttpMsgSection::NHttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
-       NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_) :
+       NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
+       const NHttpParaList* params_) :
     msg_text(buf_size, buffer),
     session_data(session_data_),
     source_id(source_id_),
     flow(flow_),
+    params(params_),
     transaction(NHttpTransaction::attach_my_transaction(session_data, source_id)),
     tcp_close(session_data->tcp_close[source_id]),
     scratch_pad(2*buf_size+500),
@@ -73,6 +75,18 @@ void NHttpMsgSection::print_message_wrapup(FILE* output)
     fprintf(output, "\n");
 }
 
+void NHttpMsgSection::update_depth() const
+{
+    const int64_t& depth = (session_data->file_depth_remaining[source_id] >=
+                            session_data->detect_depth_remaining[source_id]) ?
+        session_data->file_depth_remaining[source_id] :
+        session_data->detect_depth_remaining[source_id];
+    session_data->section_size_target[source_id] = (depth <= DATA_BLOCK_SIZE) ? depth :
+        DATA_BLOCK_SIZE;
+    session_data->section_size_max[source_id] = (depth <= FINAL_BLOCK_SIZE) ? depth :
+        FINAL_BLOCK_SIZE;
+}
+
 const Field& NHttpMsgSection::get_legacy(unsigned buffer_id)
 {
     // When current section is trailers, that is what will be used for header and cookie buffers.
@@ -81,7 +95,7 @@ const Field& NHttpMsgSection::get_legacy(unsigned buffer_id)
     case HTTP_BUFFER_CLIENT_BODY:
       {
         NHttpMsgBody* body = transaction->get_body();
-        return (body != nullptr) ? body->get_data() : Field::FIELD_NULL;
+        return (body != nullptr) ? body->get_detect_data() : Field::FIELD_NULL;
       }
     case HTTP_BUFFER_COOKIE:
       {
