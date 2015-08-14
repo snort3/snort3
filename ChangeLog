@@ -1,3 +1,15 @@
+15/08/14 - build 165
+
+-- flow depth support for new_http_inspect
+-- TCP session refactoring and create libtcp
+-- fix ac_sparse_bands search method
+-- doc and build tweaks for piglets
+-- expanded piglet interfaces and other enhancements
+-- fix unit test return value
+-- add catch.hpp include from https://github.com/philsquared/Catch
+-- run catch unit tests after check unit tests
+-- fix documentation errors in users manual
+
 15/08/07 - build 164
 
 -- add range and default to command line args
