@@ -3,15 +3,14 @@ plugin =
     type = "piglet",
     name = "piglet::raw_buffer",
     test = function()
-        -- Put the dofile here so that it doesn't get loaded twice
-        dofile(SCRIPT_DIR .. "/common.lua")
-        return run_all(tests)
+        dofile(SCRIPT_DIR .. "/../common.lua")
+        return run_tests(tests)
     end
 }
 
 INIT_SIZE = 16
 INIT_STRING = "foobar"
-INIT_16_CONTENT = "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
+INIT_16_CONTENT = string.rep("00 ", 16)
 
 tests =
 {
@@ -24,7 +23,7 @@ tests =
     initialize_with_size = function()
         local rb = RawBuffer.new(INIT_SIZE)
         assert(rb:size() == INIT_SIZE)
-        assert(rb:read() == INIT_16_CONTENT:as_content_hex())
+        assert(rb:read() == INIT_16_CONTENT:encode_hex())
     end,
 
     initialize_with_string = function()
@@ -74,16 +73,16 @@ tests =
         assert(#rv == 0, "length should equal 0, not " .. tostring(rv))
 
         -- read oor with 1 arg (-1, 10)
-        assert_err(function() rb:read(-1) end, "bad argument")
-        assert_err(function() rb:read(2) end, "bad argument")
+        check.raises(function() rb:read(-1) end)
+        check.raises(function() rb:read(2) end)
 
         -- read with 2 args
         rv = rb:read(0, 0)
         assert(#rv == 0, "length should equal 0, not " .. tostring(rv))
 
         -- read oor with 2 args
-        assert_err(function() rb:read(-1, 0) end, "bad argument")
-        assert_err(function() rb:read(0, 2) end, "bad argument")
+        check.raises(function() rb:read(-1, 0) end)
+        check.raises(function() rb:read(0, 2) end)
     end,
 
     read_nonempty = function()
@@ -102,7 +101,7 @@ tests =
         assert(rv == "fo")
 
         -- read oob with 1 arg
-        assert_err(function() rb:read(10) end, "bad argument")
+        check.raises(function() rb:read(10) end)
 
         -- read with 2 args (full string), offset, length
         rv = rb:read(0, rb:size())
@@ -117,8 +116,8 @@ tests =
         assert(rv == "ooba")
 
         -- read oob with 2 args (offset/length)
-        assert_err(function() rb:read(-1, rb:size()) end, "bad argument")
-        assert_err(function() rb:read(0, rb:size() + 1) end, "bad argument")
+        check.raises(function() rb:read(-1, rb:size()) end)
+        check.raises(function() rb:read(0, rb:size() + 1) end)
     end,
     
     resize = function()

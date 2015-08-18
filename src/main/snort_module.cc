@@ -410,7 +410,7 @@ static const Parameter s_params[] =
       "<pfx> prepend this to each output file" },
 
     { "--script-path", Parameter::PT_STRING, nullptr, nullptr,
-      "<path> where to find luajit scripts" },
+      "<path> to a luajit script or directory containing luajit scripts" },
 
 #ifdef BUILD_SHELL
     { "--shell", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -801,7 +801,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_prefix = v.get_string();
 
     else if ( v.is("--script-path") )
-        ConfigScriptPath(sc, v.get_string());
+        ConfigScriptPaths(sc, v.get_string());
 
 #ifdef BUILD_SHELL
     else if ( v.is("--shell") )

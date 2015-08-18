@@ -571,10 +571,10 @@ void ConfigPluginPath(SnortConfig* sc, const char* args)
         sc->plugin_path = args;
 }
 
-void ConfigScriptPath(SnortConfig* sc, const char* args)
+void ConfigScriptPaths(SnortConfig* sc, const char* args)
 {
     if ( sc && args )
-        sc->script_path = args;
+        sc->script_paths.push_back(args);
 }
 
 void config_syslog(SnortConfig* sc, const char*)

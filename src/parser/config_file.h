@@ -54,7 +54,7 @@ void ConfigProcessAllEvents(SnortConfig*, const char*);
 void ConfigUtc(SnortConfig*, const char*);
 void ConfigVerbose(SnortConfig*, const char*);
 void ConfigPluginPath(SnortConfig*, const char*);
-void ConfigScriptPath(SnortConfig*, const char*);
+void ConfigScriptPaths(SnortConfig*, const char*);
 void ConfigDstMac(SnortConfig*, const char*);
 
 void ConfigSetGid(SnortConfig*, const char*);

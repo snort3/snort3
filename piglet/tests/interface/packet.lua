@@ -3,9 +3,8 @@ plugin =
     type = "piglet",
     name = "piglet::packet",
     test = function()
-        -- Put the dofile here so that it doesn't get loaded twice
-        dofile(SCRIPT_DIR .. "/common.lua")
-        return run_all(tests)
+        dofile(SCRIPT_DIR .. "/../common.lua")
+        return run_tests(tests)
     end
 }
 
@@ -66,7 +65,7 @@ tests =
 
     init_with_table = function()
         local p = Packet.new(VALUES)
-        assert_table_eq("get()", VALUES, p:get())
+        check.tables_equal(VALUES, p:get())
     end,
 
     init_with_everything = function()
@@ -94,8 +93,8 @@ tests =
 
     get_and_set = function()
         local p = Packet.new()
-        assert_table_eq("get()", DEFAULT_VALUES, p:get())
+        check.tables_equal(DEFAULT_VALUES, p:get())
         p:set(VALUES)
-        assert_table_eq("set()", VALUES, p:get())
+        check.tables_equal(VALUES, p:get())
     end
 }

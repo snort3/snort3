@@ -24,7 +24,8 @@ pp_packet_iface.cc \
 pp_decode_data_iface.cc \
 pp_flow_iface.cc \
 pp_event_iface.cc \
-pp_daq_pkthdr_iface.cc
+pp_daq_pkthdr_iface.cc \
+pp_ip_api_iface.cc
 
 plugin_list = \
 pp_codec.cc \

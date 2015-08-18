@@ -193,7 +193,7 @@ public:
 
     std::string chroot_dir;        /* -t or config chroot */
     std::string plugin_path;
-    std::string script_path;
+    std::vector<std::string> script_paths;
 
     mode_t file_mask = 0;
 
