@@ -1314,7 +1314,7 @@ int main(int argc, char* argv[])
         }
         break;
         case 'p':
-            payload_file = SnortStrdup(optarg);
+            payload_file = strdup(optarg);
             if (payload_file == NULL)
             {
                 PrintUsage(argv[0]);

@@ -51,7 +51,7 @@ static u2iterator* new_iterator(char* filename)
 
     if (!f)
     {
-        printf("new_iterator: Failed to open file: %s\n\tErrno: %s\n",
+        printf("FATAL: Failed to open file: %s\n\tErrno: %s\n",
             filename, strerror(errno));
         return NULL;
     }
@@ -60,7 +60,7 @@ static u2iterator* new_iterator(char* filename)
 
     if (!ret)
     {
-        printf("new_iterator: Failed to malloc %lu bytes.\n", (unsigned long)sizeof(u2iterator));
+        printf("FATAL: Failed to initialize iterator\n");
         fclose(f);
         return NULL;
     }
@@ -69,7 +69,7 @@ static u2iterator* new_iterator(char* filename)
     ret->filename = strdup(filename);
     if (!ret->filename )
     {
-        printf("new_iterator: Failed to strdup %s\n", filename);
+        printf("FATAL: Failed to initialize iterator for %s\n", filename);
         free(ret);
         fclose(f);
         return NULL;
