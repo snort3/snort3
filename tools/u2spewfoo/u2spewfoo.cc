@@ -67,6 +67,13 @@ static u2iterator* new_iterator(char* filename)
 
     ret->file = f;
     ret->filename = strdup(filename);
+    if (!ret->filename )
+    {
+        printf("new_iterator: Failed to strdup %s\n", filename);
+        free(ret);
+        fclose(f);
+        return NULL;
+    }
     return ret;
 }
 

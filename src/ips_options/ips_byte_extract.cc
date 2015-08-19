@@ -459,7 +459,7 @@ bool ExtractModule::set(const char*, Value& v, SnortConfig*)
         data.offset = v.get_long();
 
     else if ( v.is("~name") )
-        data.name = strdup(v.get_string());
+        data.name = SnortStrdup(v.get_string());
 
     else if ( v.is("relative") )
         data.relative_flag = 1;

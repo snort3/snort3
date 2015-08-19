@@ -234,7 +234,7 @@ static int port_parse(char* portstr, PORTSET* portset)
     char* port_end;
     char* port2;
 
-    port_begin = strdup(portstr);
+    port_begin = SnortStrdup(portstr);
 
     port1 = port_begin;
     port2 = strstr(port_begin, "-");
