@@ -215,7 +215,7 @@ static inline NormMode get_norm_ips(TcpTracker* st)
     return Normalize_GetMode(NORM_TCP_IPS);
 }
 
-inline uint32_t SegsToFlush(const TcpTracker* st, unsigned max)
+uint32_t SegsToFlush(const TcpTracker* st, unsigned max)
 {
     uint32_t n = st->seg_count - st->flush_count;
     TcpSegment* s;
