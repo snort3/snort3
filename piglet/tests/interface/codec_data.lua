@@ -3,9 +3,8 @@ plugin =
     type = "piglet",
     name = "piglet::codec_data",
     test = function()
-        -- Put the dofile here so that it doesn't get loaded twice
-        dofile(SCRIPT_DIR .. "/common.lua")
-        return run_all(tests)
+        dofile(SCRIPT_DIR .. "/../common.lua")
+        return run_tests(tests)
     end
 }
 
@@ -52,8 +51,8 @@ tests =
 
     initialize_with_table = function()
         local cd = CodecData.new()
-        assert_table_eq("get()", DEFAULT_VALUES, cd:get())
+        check.tables_equal(DEFAULT_VALUES, cd:get())
         cd:set(VALUES)
-        assert_table_eq("set()", VALUES, cd:get())
+        check.tables_equal(VALUES, cd:get())
     end
 }

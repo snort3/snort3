@@ -3,8 +3,8 @@ plugin =
     type = "piglet",
     name = "ips_option::content",
     test = function()
-        dofile(SCRIPT_DIR .. "/common.lua")
-        return run_all(tests)
+        dofile(SCRIPT_DIR .. "/../common.lua")
+        return run_tests(tests)
     end
 }
 

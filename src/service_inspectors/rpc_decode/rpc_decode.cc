@@ -89,7 +89,6 @@ struct RpcSsnData
     int events;
     uint32_t frag_len;
     uint32_t ignore;
-    uint32_t nseq;
     RpcBuffer seg;
     RpcBuffer frag;
 };
@@ -195,7 +194,6 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
 {
     const uint8_t* data = p->data;
     uint16_t dsize = p->dsize;
-    uint32_t seq = ntohl(p->ptrs.tcph->th_seq);
     int need;
     RpcStatus status;
 
@@ -203,34 +201,6 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
         "STATEFUL: Start *******************************\n");
     DebugFormat(DEBUG_RPC,
         "STATEFUL: Ssn: %p\n", rsdata);
-
-    if ((rsdata->nseq != seq) && (rsdata->nseq != 0))
-    {
-        uint32_t overlap;
-
-        if (rsdata->nseq < seq)
-        {
-            /* Missed packets - stop tracking */
-            DebugMessage(DEBUG_RPC,
-                "STATEFUL: Missed data\n");
-            return RPC_STATUS__ERROR;
-        }
-
-        overlap = rsdata->nseq - seq;
-        if (dsize <= overlap)
-        {
-            DebugMessage(DEBUG_RPC,
-                "STATEFUL: All data overlapped\n");
-            return RPC_STATUS__SUCCESS;
-        }
-
-        data += overlap;
-        dsize -= (uint16_t)overlap;
-
-        seq += overlap;
-    }
-
-    rsdata->nseq = seq + dsize;
 
     if (rsdata->ignore)
     {
@@ -448,6 +418,8 @@ static RpcStatus RpcPrepRaw(const uint8_t* data, uint32_t fraglen, Packet*)
         return RPC_STATUS__ERROR;
     }
 
+    DecodeBuffer.len = (RPC_FRAG_HDR_SIZE + fraglen);
+
     return RPC_STATUS__SUCCESS;
 }
 
@@ -478,6 +450,8 @@ static RpcStatus RpcPrepFrag(RpcSsnData* rsdata, Packet*)
     if (RpcBufLen(&rsdata->frag) > RPC_MAX_BUF_SIZE)
         RpcBufClean(&rsdata->frag);
 
+    DecodeBuffer.len = RpcBufLen(&rsdata->frag);
+
     return RPC_STATUS__SUCCESS;
 }
 
@@ -504,6 +478,8 @@ static RpcStatus RpcPrepSeg(RpcSsnData* rsdata, Packet*)
             "STATEFUL: Ignoring %u bytes\n", rsdata->ignore);
         RpcBufClean(&rsdata->seg);
     }
+
+    DecodeBuffer.len = (uint16_t)RpcBufLen(&rsdata->seg);
 
     return RPC_STATUS__SUCCESS;
 }
@@ -939,6 +915,7 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
         DebugMessage(DEBUG_RPC, "converted data:\n");
     //LogNetData(data, decoded_len, p);
 
+    DecodeBuffer.len = (uint16_t)decoded_len;
     return 0;
 }
 
@@ -1044,9 +1021,7 @@ void RpcDecode::eval(Packet* p)
             rsdata = RpcSsnDataNew(p);
     }
 
-    if (RpcSsnIsActive(rsdata)
-        && ((p->packet_flags & PKT_REBUILT_STREAM)
-        || (rsdata->nseq == 0)))
+    if ( RpcSsnIsActive(rsdata) and (p->packet_flags & PKT_REBUILT_STREAM) )
     {
         RpcStatus ret = RpcStatefulInspection(&config, rsdata, p);
 

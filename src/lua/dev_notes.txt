@@ -1,0 +1,12 @@
+Templates and helpers for interfacing with luajit virtual machines are here:
+
+* *State* is a RAII wrapper to the lua_State* pointer
+* *ManageStack* prevents the stack from growing too large and ensures that
+  the stack has enough room.
+* *Args* provides type checking access to the lua stack from within an
+  embedded C/C\++ function
+* *lua_iface.h* contains wrappers for exposing C\++ objects to lua
+* *lua_ref.h* provides a very basic reference tracking system to prevent
+  Lua from garbage collecting objects that may be in use but are otherwise
+  untracked in the lua vm.
+* *lua_stack.h* provides templated functions to interface with the stack

@@ -30,6 +30,7 @@
 
 #include "pp_decode_data_iface.h"
 #include "pp_flow_iface.h"
+#include "pp_ip_api_iface.h"
 #include "pp_packet_iface.h"
 #include "pp_raw_buffer_iface.h"
 #include "pp_stream_splitter_iface.h"
@@ -72,6 +73,7 @@ bool InspectorPiglet::setup()
     install(L, DecodeDataIface);
     install(L, RawBufferIface);
     install(L, FlowIface);
+    install(L, IpApiIface);
     install(L, PacketIface);
     install(L, StreamSplitterIface);
 

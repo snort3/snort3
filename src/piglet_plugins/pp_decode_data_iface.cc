@@ -26,10 +26,8 @@
 #include "lua/lua_arg.h"
 #include "lua/lua_table.h"
 #include "protocols/ipv4.h"
-// #include "protocols/tcp.h"
-// #include "protocols/udp.h"
-// #include "protocols/icmp4.h"
 
+#include "pp_ip_api_iface.h"
 #include "pp_raw_buffer_iface.h"
 
 // FIXIT-H: Add Internet Header objects
@@ -91,28 +89,22 @@ static const luaL_Reg methods[] =
         [](lua_State* L)
         { return DecodeDataIface.default_getter(L, get_fields); }
     },
-    // FIXIT-L: Need a more sophisticated interface to decode data ip_api
     {
-        "set_ipv4_hdr",
+        // Return a reference to the IpApi attached to DecodeData
+        "get_ip_api",
         [](lua_State* L)
         {
             Lua::Args args(L);
 
             auto& self = DecodeDataIface.get(L, 1);
-            auto& rb = RawBufferIface.get(L, 2);
-            size_t offset = args[3].opt_size(0, rb.size());
 
-            // Need enough room for an IPv4 header
-            if ( (rb.size() - offset) < sizeof(IP4Hdr) )
-                luaL_error(
-                    L, "need %d bytes, got %d",
-                    sizeof(IP4Hdr), rb.size()
-                );
+            auto** ip_api = IpApiIface.allocate(L);
+            *ip_api = &self.ip_api;
 
-            self.ip_api.set(
-                reinterpret_cast<const IP4Hdr*>(rb.data() + offset));
+            // Make sure the decode data doesn't run out from under the ref
+            Lua::add_ref(L, *ip_api, "decode_data", lua_gettop(L)); 
 
-            return 0;
+            return 1;
         }
     },
     // FIXIT-L: add access to mplsHdr field
