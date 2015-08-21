@@ -51,7 +51,7 @@ static u2iterator* new_iterator(char* filename)
 
     if (!f)
     {
-        printf("FATAL: Failed to open file: %s\n\tErrno: %s\n",
+        printf("ERROR: Failed to open file: %s\n\tErrno: %s\n",
             filename, strerror(errno));
         return NULL;
     }
@@ -60,7 +60,7 @@ static u2iterator* new_iterator(char* filename)
 
     if (!ret)
     {
-        printf("FATAL: Failed to initialize iterator\n");
+        printf("ERROR: Failed to initialize iterator\n");
         fclose(f);
         return NULL;
     }
@@ -69,7 +69,7 @@ static u2iterator* new_iterator(char* filename)
     ret->filename = strdup(filename);
     if (!ret->filename )
     {
-        printf("FATAL: Failed to initialize iterator for %s\n", filename);
+        printf("ERROR: Failed to initialize iterator for %s\n", filename);
         free(ret);
         fclose(f);
         return NULL;
@@ -128,7 +128,7 @@ static bool get_record(u2iterator* it, u2record* record)
 
     if (bytes_read != sizeof(uint32_t)*2)
     {
-        puts("get_record: (1) Failed to read all of record.");
+        puts("ERROR: Failed to read record metadata.");
         printf("\tRead %u of %lu bytes\n", bytes_read, (unsigned long)sizeof(uint32_t)*2);
         return false;
     }
@@ -139,7 +139,7 @@ static bool get_record(u2iterator* it, u2record* record)
 
     if (!tmp)
     {
-        puts("get_record: (2) Failed to allocate memory.");
+        puts("ERROR: Failed to allocate record memory.");
         free(record->data);
         record->data = nullptr;
         return false;
@@ -151,7 +151,7 @@ static bool get_record(u2iterator* it, u2record* record)
 
     if (bytes_read != record->length)
     {
-        puts("get_record: (3) Failed to read all of record data.");
+        puts("ERROR: Failed to read all record data.");
         printf("\tRead %u of %u bytes\n", bytes_read, record->length);
 
         if ( record->type != UNIFIED2_PACKET ||
