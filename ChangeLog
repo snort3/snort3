@@ -1,3 +1,14 @@
+15/08/21 - build 166
+
+-- fix link error with g++ 4.8.3
+-- support multiple script-path args and single files
+-- piglet bug fixes
+-- add usage examples with live interfaces
+   thanks to Aman Mangal <mangalaman93@gmail.com> for reporting the problem
+-- fixed port_scan packet selection
+-- fixed rpc_decode sequence number handling and buffer setup
+-- perf_monitor fixes for file output
+
 15/08/14 - build 165
 
 -- flow depth support for new_http_inspect
