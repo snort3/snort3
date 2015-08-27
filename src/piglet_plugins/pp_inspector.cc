@@ -22,6 +22,7 @@
 #include <string>
 #include <assert.h>
 
+#include "log/messages.h"
 #include "lua/lua_iface.h"
 #include "managers/inspector_manager.h"
 #include "piglet/piglet_api.h"
@@ -29,6 +30,7 @@
 
 #include "pp_decode_data_iface.h"
 #include "pp_flow_iface.h"
+#include "pp_ip_api_iface.h"
 #include "pp_packet_iface.h"
 #include "pp_raw_buffer_iface.h"
 #include "pp_stream_splitter_iface.h"
@@ -38,42 +40,44 @@
 class InspectorPiglet : public Piglet::BasePlugin
 {
 public:
-    InspectorPiglet(Lua::State&, std::string, Module*);
+    InspectorPiglet(Lua::State&, std::string, Module*, SnortConfig*);
     virtual ~InspectorPiglet() override;
     virtual bool setup() override;
 
 private:
-    InspectorWrapper* wrapper;
+    Inspector* instance;
 };
 
 InspectorPiglet::InspectorPiglet(
-    Lua::State& state, std::string target, Module* m) :
-    BasePlugin(state, target, m)
+    Lua::State& state, std::string target, Module* m, SnortConfig* sc) :
+    BasePlugin(state, target, m, sc)
 {
     FlushBucket::set(0);
 
     assert(module);
-    wrapper = InspectorManager::instantiate(target.c_str(), module);
+    assert(snort_conf);
+
+    instance = InspectorManager::instantiate(target.c_str(), module, snort_conf);
 }
 
-InspectorPiglet::~InspectorPiglet()
-{
-    if ( wrapper )
-        delete wrapper;
-}
+InspectorPiglet::~InspectorPiglet() { }
 
 bool InspectorPiglet::setup()
 {
-    if ( !wrapper )
+    if ( !instance )
+    {
+        Piglet::error("couldn't instantiate Inspector '%s'", target.c_str());
         return true;
+    }
 
     install(L, DecodeDataIface);
     install(L, RawBufferIface);
     install(L, FlowIface);
+    install(L, IpApiIface);
     install(L, PacketIface);
     install(L, StreamSplitterIface);
 
-    install(L, InspectorIface, wrapper->instance);
+    install(L, InspectorIface, instance);
 
     return false;
 }
@@ -82,8 +86,8 @@ bool InspectorPiglet::setup()
 // API foo
 // -----------------------------------------------------------------------------
 static Piglet::BasePlugin* ctor(
-    Lua::State& state, std::string target, Module* m, SnortConfig*)
-{ return new InspectorPiglet(state, target, m); }
+    Lua::State& state, std::string target, Module* m, SnortConfig* sc)
+{ return new InspectorPiglet(state, target, m, sc); }
 
 static void dtor(Piglet::BasePlugin* p)
 { delete p; }

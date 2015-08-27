@@ -3,9 +3,8 @@ plugin =
     type = "piglet",
     name = "piglet::daq_header",
     test = function()
-        -- Put the dofile here so that it doesn't get loaded twice
-        dofile(SCRIPT_DIR .. "/common.lua")
-        return run_all(tests)
+        dofile(SCRIPT_DIR .. "/../common.lua")
+        return run_tests(tests)
     end
 }
 
@@ -42,11 +41,11 @@ tests =
     initialize_default = function()
         local daq = DAQHeader.new()
         assert(daq)
-        assert("default", DEFAULT_VALUES, daq:get())
+        check.tables_equal(DEFAULT_VALUES, daq:get())
     end,
 
     initialize_with_table = function()
         local daq = DAQHeader.new(VALUES)
-        assert_table_eq("init", VALUES, daq:get())
+        check.tables_equal(VALUES, daq:get())
     end
 }

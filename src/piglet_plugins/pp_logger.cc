@@ -29,6 +29,7 @@
 
 #include "pp_decode_data_iface.h"
 #include "pp_event_iface.h"
+#include "pp_ip_api_iface.h"
 #include "pp_packet_iface.h"
 #include "pp_raw_buffer_iface.h"
 
@@ -67,6 +68,7 @@ bool LoggerPiglet::setup()
 
     install(L, RawBufferIface);
     install(L, DecodeDataIface);
+    install(L, IpApiIface);
     install(L, PacketIface);
     install(L, EventIface);
 

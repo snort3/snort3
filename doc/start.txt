@@ -133,6 +133,8 @@ Then give it a go:
     $my_path/bin/snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules \
         --pcap-filter \*.pcap --pcap-dir <dir> -A alert_fast -n 1000 --max-packet-threads 8
 
+For more examples, see the usage section.
+
 
 === Tips
 

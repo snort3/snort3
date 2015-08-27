@@ -3,8 +3,8 @@ plugin =
     type = "piglet",
     name = "codec::ipv4",
     test = function()
-        dofile(SCRIPT_DIR .. "/common.lua")
-        return run_all(tests)
+        dofile(SCRIPT_DIR .. "/../common.lua")
+        return run_tests(tests)
     end
 }
 
@@ -19,12 +19,12 @@ tests =
 
     get_data_link_type = function()
         local rv = Codec.get_data_link_type()
-        assert_list_eq("data_link_types", DATA_LINK_TYPES, rv)
+        check.arrays_equal(DATA_LINK_TYPES, rv)
     end,
 
     get_protocol_ids = function()
         local rv = Codec.get_protocol_ids()
-        assert_list_eq("data_link_types", PROTOCOL_IDS, rv)
+        check.arrays_equal(PROTOCOL_IDS, rv)
     end,
 
     decode = function()

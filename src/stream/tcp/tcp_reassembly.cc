@@ -215,7 +215,7 @@ static inline NormMode get_norm_ips(TcpTracker* st)
     return Normalize_GetMode(NORM_TCP_IPS);
 }
 
-inline uint32_t SegsToFlush(const TcpTracker* st, unsigned max)
+uint32_t SegsToFlush(const TcpTracker* st, unsigned max)
 {
     uint32_t n = st->seg_count - st->flush_count;
     TcpSegment* s;
@@ -1379,52 +1379,54 @@ int CheckFlushPolicyOnAck(TcpSession *tcpssn, TcpTracker *talker,
     DebugFormat(DEBUG_STREAM_STATE, "Talker flush policy: %s\n", flush_policy_names[talker->flush_policy]);
     DebugFormat(DEBUG_STREAM_STATE, "Listener flush policy: %s\n", flush_policy_names[listener->flush_policy]);
 
-    switch (talker->flush_policy) {
-        case STREAM_FLPOLICY_IGNORE:
-            DebugMessage(DEBUG_STREAM_STATE, "STREAM_FLPOLICY_IGNORE\n");
-            return 0;
+    switch (talker->flush_policy)
+    {
+    case STREAM_FLPOLICY_IGNORE:
+        DebugMessage(DEBUG_STREAM_STATE, "STREAM_FLPOLICY_IGNORE\n");
+        return 0;
 
-        case STREAM_FLPOLICY_ON_ACK:
+    case STREAM_FLPOLICY_ON_ACK:
+        {
+            uint32_t flags = GetReverseDir(p);
+            int32_t flush_amt = flush_pdu_ackd(tcpssn, talker, &flags);
+
+            while (flush_amt >= 0)
             {
-                uint32_t flags = GetReverseDir(p);
-                int32_t flush_amt = flush_pdu_ackd(tcpssn, talker, &flags);
+                if (!flush_amt)
+                    flush_amt = talker->seglist_next->seq
+                        - talker->seglist_base_seq;
 
-                while (flush_amt >= 0)
-                {
-                    if (!flush_amt)
-                        flush_amt = talker->seglist_next->seq
-                            - talker->seglist_base_seq;
+                talker->seglist_next = talker->seglist;
+                talker->seglist_base_seq = talker->seglist->seq;
 
-                    talker->seglist_next = talker->seglist;
-                    talker->seglist_base_seq = talker->seglist->seq;
+                // for consistency with other cases, should return total
+                // but that breaks flushing pipelined pdus
+                flushed = flush_to_seq(tcpssn, talker, flush_amt, p, flags);
 
-                    // for consistency with other cases, should return total
-                    // but that breaks flushing pipelined pdus
-                    flushed = flush_to_seq(tcpssn, talker, flush_amt, p, flags);
-
-                    // ideally we would purge just once after this loop
-                    // but that throws off base
+                // ideally we would purge just once after this loop
+                // but that throws off base
+                if ( flushed and talker->seglist )
                     purge_to_seq(tcpssn, talker, talker->seglist->seq + flushed);
 
-                    // if we didn't flush as expected, bail
-                    // (we can flush less than max dsize)
-                    if (!flushed)
-                        break;
+                // if we didn't flush as expected, bail
+                // (we can flush less than max dsize)
+                if (!flushed)
+                    break;
 
-                    flags = GetReverseDir(p);
-                    flush_amt = flush_pdu_ackd(tcpssn, talker, &flags);
-                }
-                if (!flags && talker->splitter->is_paf())
-                {
-                    fallback(talker);
-                    return CheckFlushPolicyOnAck(tcpssn, talker, listener, p);
-                }
+                flags = GetReverseDir(p);
+                flush_amt = flush_pdu_ackd(tcpssn, talker, &flags);
             }
-            break;
+            if (!flags && talker->splitter->is_paf())
+            {
+                fallback(talker);
+                return CheckFlushPolicyOnAck(tcpssn, talker, listener, p);
+            }
+        }
+        break;
 
-        case STREAM_FLPOLICY_ON_DATA:
-            purge_flushed_ackd(tcpssn, talker);
-            break;
+    case STREAM_FLPOLICY_ON_DATA:
+        purge_flushed_ackd(tcpssn, talker);
+        break;
     }
 
     return flushed;

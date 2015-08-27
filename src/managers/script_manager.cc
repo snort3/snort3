@@ -23,6 +23,7 @@
 
 #include <string>
 #include <vector>
+#include <sys/stat.h>
 #include <luajit-2.0/lua.hpp>
 
 #include "ips_manager.h"
@@ -241,26 +242,43 @@ static void load_script(const char* f)
 // public methods
 //-------------------------------------------------------------------------
 
-void ScriptManager::load_scripts(const std::string& paths)
+void ScriptManager::load_scripts(const std::vector<std::string>& paths)
 {
+    struct stat s;
+
     if ( paths.empty() )
         return;
 
-    const char* t = paths.c_str();
-    vector<char> buf(t, t+strlen(t)+1);
-    char* last, * s;
-
-    s = strtok_r(&buf[0], ":", &last);
-
-    while ( s )
+    for ( auto path : paths )
     {
-        Directory d(s);
-        const char* f;
+        size_t pos = path.find_first_not_of(":");
 
-        while ( (f = d.next(script_ext)) )
-            load_script(f);
+        while ( pos != std::string::npos )
+        {
+            size_t end_pos = path.find_first_of(":", pos);
 
-        s = strtok_r(nullptr, ":", &last);
+            std::string d = path.substr(
+                pos, (end_pos == std::string::npos) ? end_pos : end_pos - pos);
+
+            pos = ( end_pos == std::string::npos ) ? end_pos : end_pos + 1;
+
+            if ( d.empty() )
+                continue;
+
+            if ( stat(d.c_str(), &s) )
+                continue;
+
+            if ( s.st_mode & S_IFDIR )
+            {
+                Directory dir(d.c_str());
+                const char* f;
+                while ( (f = dir.next(script_ext)) )
+                    load_script(f);
+            }
+
+            else
+                load_script(d.c_str());
+        }
     }
 }
 

@@ -43,23 +43,6 @@ struct InspectionPolicy;
 
 //-------------------------------------------------------------------------
 
-#ifdef PIGLET
-struct InspectorWrapper
-{
-    InspectorWrapper(const InspectApi* a, Inspector* p) :
-        api { a }, instance { p } { }
-
-    ~InspectorWrapper()
-    {
-        if ( api && instance && api->dtor )
-            api->dtor(instance);
-    }
-
-    const InspectApi* api;
-    Inspector* instance;
-};
-#endif
-
 class InspectorManager
 {
 public:
@@ -104,7 +87,7 @@ public:
     static void empty_trash();
 
 #ifdef PIGLET
-    static InspectorWrapper* instantiate(const char*, Module*);
+    static Inspector* instantiate(const char*, Module*, SnortConfig*);
 #endif
 
 private:

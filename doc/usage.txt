@@ -111,6 +111,15 @@ input source on a separate thread:
     snort -c $my_path/etc/snort/snort.lua --pcap-dir /path/to/pcap/dir \
         --pcap-filter '*.pcap' --max-packet-threads 8
 
+Run Snort++ on 2 interfaces, eth0 and eth1:
+
+    snort -c $my_path/etc/snort/snort.lua -i "eth0 eth1" -z 2 -A cmg
+
+Run Snort++ inline with the afpacket DAQ:
+
+    snort -c $my_path/etc/snort/snort.lua --daq afpacket -i "eth0:eth1" \
+        -A cmg
+
 
 === Plugins
 

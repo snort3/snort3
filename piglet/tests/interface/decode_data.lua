@@ -3,9 +3,8 @@ plugin =
     type = "piglet",
     name = "piglet::decode_data",
     test = function()
-        -- Put the dofile here so that it doesn't get loaded twice
-        dofile(SCRIPT_DIR .. "/common.lua")
-        return run_all(tests)
+        dofile(SCRIPT_DIR .. "/../common.lua")
+        return run_tests(tests)
     end
 }
 
@@ -25,16 +24,31 @@ VALUES =
     type = 4
 }
 
+IP4 = [[
+45  | 00  | 00  46 | 00 00 | 00 00 | 01 | 06
+00 00 | 00 00 00 01 | 00 00 00 02
+
+00 00 | 00 00 | 00 00 00 00 | 00 00 00 00 | 06 02
+00 00 ff ff | 00 00 | 00 00 | 00 00
+]]
+
 tests =
 {
     initialize_default = function()
         local dd = DecodeData.new()
         assert(dd)
-        assert("default", DEFAULT_VALUES, dd:get())
+        check.tables_equal(DEFAULT_VALUES, dd:get())
     end,
 
     initialize_with_table = function()
         local dd = DecodeData.new(VALUES)
-        assert_table_eq("init", VALUES, dd:get())
+        check.tables_equal(VALUES, dd:get())
+    end,
+
+    ip_api = function()
+        local dd = DecodeData.new(VALUES)
+        local ip = dd:get_ip_api()
+        local raw = IP4:encode_hex()
+        ip:set_ip4(raw)
     end
 }

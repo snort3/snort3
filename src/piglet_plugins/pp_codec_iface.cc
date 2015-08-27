@@ -35,10 +35,11 @@
 #include "pp_daq_pkthdr_iface.h"
 #include "pp_decode_data_iface.h"
 #include "pp_enc_state_iface.h"
+#include "pp_ip_api_iface.h"
 #include "pp_raw_buffer_iface.h"
 
-// FIXIT-M: This should be its own object
-static const ip::IpApi ip_api {};
+// FIXIT-M delete this, and make the IpApi arg in codec.update required
+static const ip::IpApi default_ip_api {};
 
 struct TextLogWrapper
 {
@@ -164,12 +165,24 @@ static const luaL_Reg methods[] =
         {
             Lua::Args args(L);
 
-            uint32_t flags_hi = args[1].check_size();
-            uint32_t flags_lo = args[2].check_size();
-            auto& rb = RawBufferIface.get(L, 3);
+            // FIXIT-M this hacky arg offset stuff is for backwards compatibilty
+            // it will be removed in later updates
+
+            int off = 0;
+            const auto* ip_api = &default_ip_api;
+
+            if ( IpApiIface.is(L, 1) )
+            {
+                ip_api = &IpApiIface.get(L, 1);
+                off++;
+            }
+
+            uint32_t flags_hi = args[off + 1].check_size();
+            uint32_t flags_lo = args[off + 2].check_size();
+            auto& rb = RawBufferIface.get(L, off + 3);
 
             // FIXIT-L: Args vs Iface is not orthogonal
-            uint16_t lyr_len = args[4].opt_size(0, rb.size());
+            uint16_t lyr_len = args[off + 4].opt_size(0, rb.size());
 
             auto& self = CodecIface.get(L);
 
@@ -177,7 +190,7 @@ static const luaL_Reg methods[] =
 
             uint64_t flags = (static_cast<uint64_t>(flags_hi) << 8) | flags_lo;
 
-            self.update(ip_api, flags, get_mutable_data(rb), lyr_len,
+            self.update(*ip_api, flags, get_mutable_data(rb), lyr_len,
                 updated_len);
 
             lua_pushinteger(L, updated_len);
