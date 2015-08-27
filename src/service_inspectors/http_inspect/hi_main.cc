@@ -70,6 +70,7 @@
 #include "time/profiler.h"
 #include "loggers/unified2_common.h"
 #include "file_api/file_api.h"
+#include "file_api/file_flows.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "framework/data_bus.h"
@@ -660,7 +661,8 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                 }
                 else if (get_file_processed_size(p->flow) >0)
                 {
-                    file_api->file_process(p->flow, (uint8_t*)p->data, p->dsize,
+                    FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
+                    file_flows->file_process((uint8_t*)p->data, p->dsize,
                         getFilePoistion(p), true, false);
                 }
             }
@@ -784,7 +786,8 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                     }
                     else
                     {
-                        if (file_api->file_process(p->flow,
+                        FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
+                        if (file_flows && file_flows->file_process(
                             (uint8_t*)session->client.request.post_raw,
                             (uint16_t)session->client.request.post_raw_size,
                             getFilePoistion(p), true, false))
@@ -822,7 +825,8 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                 }
                 else if (get_file_processed_size(p->flow) >0)
                 {
-                    file_api->file_process(p->flow, (uint8_t*)p->data, p->dsize,
+                    FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
+                    file_flows->file_process((uint8_t*)p->data, p->dsize,
                         getFilePoistion(p),
                         true, false);
                 }
@@ -1071,8 +1075,9 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                     set_file_data((uint8_t*)session->server.response.body, detect_data_size);
                 }
 
+                FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
                 if (p->has_paf_payload()
-                    && file_api->file_process(p->flow,
+                    && file_flows &&  file_flows->file_process(
                     (uint8_t*)session->server.response.body,
                     (uint16_t)session->server.response.body_size,
                     getFilePoistion(p), false, false))

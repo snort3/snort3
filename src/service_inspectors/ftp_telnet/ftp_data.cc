@@ -44,6 +44,7 @@
 #include "stream/stream_api.h"
 #include "file_api/file_api.h"
 #include "file_api/file_service.h"
+#include "file_api/file_flows.h"
 #include "parser/parser.h"
 #include "framework/inspector.h"
 #include "detection/detection_util.h"
@@ -71,7 +72,12 @@ static void FTPDataProcess(
 
     set_file_data((uint8_t*)p->data, p->dsize);
 
-    status = file_api->file_process(p->flow, file_data, data_length,
+    FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
+
+    if (!file_flows)
+        return;
+
+    status = file_flows->file_process(file_data, data_length,
         data_ssn->position, data_ssn->direction, false);
 
     /* Filename needs to be set AFTER the first call to file_process( ) */

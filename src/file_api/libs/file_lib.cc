@@ -17,11 +17,11 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 /*
-**  Author(s):  Hui Cao <huica@cisco.com>
-**
-**  NOTES
-**  5.25.12 - Initial Source Code. Hcao
-*/
+ **  Author(s):  Hui Cao <huica@cisco.com>
+ **
+ **  NOTES
+ **  5.25.12 - Initial Source Code. Hcao
+ */
 
 #include "file_lib.h"
 
@@ -128,7 +128,7 @@ void FileContext::process_file_type(const uint8_t* file_data, int size, FilePosi
 
     /* Check whether file transfer is done or type depth is reached*/
     if ( (position == SNORT_FILE_END)  || (position == SNORT_FILE_FULL) ||
-         (data_size != size) )
+        (data_size != size) )
     {
         finalize_file_type();
     }
@@ -198,8 +198,8 @@ void FileContext::stop_file_capture()
 {
     if (file_capture)
     {
-       delete file_capture;
-       file_capture = NULL;
+        delete file_capture;
+        file_capture = NULL;
     }
 
     file_capture_enabled = false;
@@ -352,6 +352,58 @@ const char* file_type_name(void* conf, uint32_t id)
     return NULL;
 }
 
+void FileContext::print_file_data(FILE* fp, const uint8_t* data, int len, int max_depth)
+{
+    char str[18];
+    int i;
+    int pos;
+    char c;
+
+    if (max_depth < len)
+        len = max_depth;
+
+    fprintf(fp,"Show length: %d \n", len);
+    for (i=0, pos=0; i<len; i++, pos++)
+    {
+        if (pos == 17)
+        {
+            str[pos] = 0;
+            fprintf(fp, "  %s\n", str);
+            pos = 0;
+        }
+        else if (pos == 8)
+        {
+            str[pos] = ' ';
+            pos++;
+            fprintf(fp, "%s", " ");
+        }
+        c = (char)data[i];
+        if (isprint(c) and (c == ' ' or !isspace(c)))
+            str[pos] = c;
+        else
+            str[pos] = '.';
+        fprintf(fp, "%02X ", data[i]);
+    }
+    if (pos)
+    {
+        str[pos] = 0;
+        for (; pos < 17; pos++)
+        {
+            if (pos == 8)
+            {
+                str[pos] = ' ';
+                pos++;
+                fprintf(fp, "%s", "    ");
+            }
+            else
+            {
+                fprintf(fp, "%s", "   ");
+            }
+        }
+        fprintf(fp, "  %s\n", str);
+    }
+}
+
 /*
  * Print a 32-byte hash value.
  */
@@ -456,4 +508,4 @@ bool file_IDs_from_group(const void *conf, const char *group,
 
     return get_ids_from_group(conf, group, ids, count);
 }
-**/
+ **/

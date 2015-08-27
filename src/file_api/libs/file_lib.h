@@ -23,8 +23,9 @@
 #define FILE_LIB_H
 
 // This will be basis of file class
-// FIXIT-L This will be refactored soon
+
 #include <stdint.h>
+#include <stdio.h>
 
 #include "file_api/file_api.h"
 #include "flow/flow.h"
@@ -73,6 +74,7 @@ public:
     FileConfig*  get_file_config();
 
     void print_file_sha256();
+    static void print_file_data(FILE* fp, const uint8_t* data, int len, int max_depth);
     void print();
 
 private:

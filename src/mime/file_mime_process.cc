@@ -32,6 +32,7 @@
 #include "file_mime_config.h"
 #include "file_mime_decode.h"
 #include "file_api/file_api.h"
+#include "file_api/file_flows.h"
 
 #include "main/snort_types.h"
 #include "search_engines/search_tool.h"
@@ -604,8 +605,9 @@ const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* sta
         }
 
         /*Process file type/file signature*/
-        if (file_api->file_process(flow, buffer, (uint16_t)buf_size, position, upload, false)
-            && (isFileStart(position))&& log_state)
+        FileFlows* file_flows = FileFlows::get_file_flows(flow);
+        if (file_flows && file_flows->file_process(buffer, buf_size, position, upload, false)
+            && (isFileStart(position)) && log_state)
         {
             log_state->set_file_name_from_log(flow);
         }
