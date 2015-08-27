@@ -444,6 +444,8 @@ static const Parameter s_params[] =
     { "--unit-test", Parameter::PT_SELECT,
       "silent | minimal | normal | verbose | env (export CK_VERBOSITY)", nullptr,
       "<verbosity> run unit tests with given libcheck output mode" },
+    { "--catch-tags", Parameter::PT_STRING, nullptr, nullptr,
+        "comma separated list of cat unit test tags" },
 #endif
     { "--version", Parameter::PT_IMPLIED, nullptr, nullptr,
       "show version number (same as -V)" },
@@ -834,6 +836,8 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 #ifdef UNIT_TEST
     else if ( v.is("--unit-test") )
         unit_test_mode(v.get_string());
+    else if ( v.is("--catch-tags") )
+        unit_test_catch_test_filter(v.get_string());
 #endif
     else if ( v.is("--version") )
         help_version(sc, v.get_string());
