@@ -54,7 +54,7 @@ extern THREAD_LOCAL ProfileStats ruleOTNEvalPerfStats;
 */
 int fpEvalPacket(Packet* p);
 
-int fpLogEvent(RuleTreeNode* rtn, OptTreeNode* otn, Packet* p);
+int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p);
 int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports);
 
 /*
@@ -72,7 +72,7 @@ int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports);
 */
 struct MATCH_INFO
 {
-    OptTreeNode* MatchArray[MAX_EVENT_MATCH];
+    const OptTreeNode* MatchArray[MAX_EVENT_MATCH];
     int iMatchCount;
     int iMatchIndex;
     int iMatchMaxLen;
@@ -100,7 +100,7 @@ struct OTNX_MATCH_DATA
 void otnx_match_data_init(int);
 void otnx_match_data_term();
 
-int fpAddMatch(OTNX_MATCH_DATA* omd_local, int pLen, OptTreeNode* otn);
+int fpAddMatch(OTNX_MATCH_DATA* omd_local, int pLen, const OptTreeNode* otn);
 OptTreeNode* GetOTN(uint32_t gid, uint32_t sid);
 
 /* counter for number of times we evaluate rules.  Used to

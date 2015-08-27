@@ -177,7 +177,7 @@ static inline void otn_set_plugin(OptTreeNode* otn, int id)
 
 bool otn_set_agent(OptTreeNode*, IpsOption*);
 
-void otn_trigger_actions(OptTreeNode*, Packet*);
+void otn_trigger_actions(const OptTreeNode*, Packet*);
 
 #endif
 

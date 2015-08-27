@@ -101,7 +101,8 @@ RuleType get_action_type(const char* s)
     return RULE_TYPE__NONE;
 }
 
-void action_execute(RuleType action, Packet* p, OptTreeNode* otn, uint16_t event_id)
+void action_execute(RuleType action, Packet* p, const OptTreeNode* otn,
+    uint16_t event_id)
 {
     switch (action)
     {

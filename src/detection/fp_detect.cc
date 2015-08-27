@@ -57,8 +57,8 @@
 #include "framework/inspector.h"
 #include "framework/ips_action.h"
 #include "framework/mpse.h"
-#include "perf_monitor/perf.h"
-#include "perf_monitor/perf_event.h"
+#include "network_inspectors/perf_monitor/perf.h"
+#include "network_inspectors/perf_monitor/perf_event.h"
 #include "filters/sfthreshold.h"
 #include "filters/rate_filter.h"
 #include "events/event_wrapper.h"
@@ -135,7 +135,7 @@ static inline void InitMatchInfo(OTNX_MATCH_DATA* o)
 // called by fpLogEvent(), which does the filtering etc.
 // this handles the non-rule-actions (responses).
 static inline void fpLogOther(
-    Packet* p, RuleTreeNode* rtn, OptTreeNode* otn, int action)
+    Packet* p, const RuleTreeNode* rtn, const OptTreeNode* otn, int action)
 {
     if ( EventTrace_IsEnabled() )
         EventTrace_Log(p, otn, action);
@@ -154,7 +154,7 @@ static inline void fpLogOther(
 **    function was pulled out of fpEvalSomething, so now we can log an
 **    event no matter where we are.
 */
-int fpLogEvent(RuleTreeNode* rtn, OptTreeNode* otn, Packet* p)
+int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
 {
     int action = -1, rateAction = -1;
     int override, filterEvent = 0;
@@ -280,7 +280,7 @@ int fpLogEvent(RuleTreeNode* rtn, OptTreeNode* otn, Packet* p)
 **    int - 1 max_events variable hit, 0 successful.
 **
 */
-int fpAddMatch(OTNX_MATCH_DATA* omd_local, int pLen, OptTreeNode* otn)
+int fpAddMatch(OTNX_MATCH_DATA* omd_local, int pLen, const OptTreeNode* otn)
 {
     MATCH_INFO* pmi;
     int evalIndex;
@@ -643,7 +643,7 @@ static int sortOrderByContentLength(const void* e1, const void* e2)
 **          1 if flagged
 **
 */
-static inline int fpAddSessionAlert(Packet* p, OptTreeNode* otn)
+static inline int fpAddSessionAlert(Packet* p, const OptTreeNode* otn)
 {
     if ( !p->flow )
         return 0;
@@ -673,9 +673,9 @@ static inline int fpAddSessionAlert(Packet* p, OptTreeNode* otn)
 **          1 if alert previously generated
 **
 */
-static inline int fpSessionAlerted(Packet* p, OptTreeNode* otn)
+static inline int fpSessionAlerted(Packet* p, const OptTreeNode* otn)
 {
-    SigInfo* si = &otn->sigInfo;
+    const SigInfo* si = &otn->sigInfo;
 
     if (!stream.check_session_alerted(p->flow, p, si->generator, si->id))
         return 0;
@@ -761,7 +761,7 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA* o, Packet* p)
     int i;
     int j;
     int k;
-    OptTreeNode* otn;
+    const OptTreeNode* otn;
     int tcnt = 0;
     EventQueueConfig* eq = snort_conf->event_queue_config;
     RuleTreeNode* rtn;

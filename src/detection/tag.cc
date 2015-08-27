@@ -689,7 +689,7 @@ static int PruneTime(SFXHASH* tree, uint32_t thetime)
     return pruned;
 }
 
-void SetTags(Packet* p, OptTreeNode* otn, uint16_t event_id)
+void SetTags(Packet* p, const OptTreeNode* otn, uint16_t event_id)
 {
     DebugMessage(DEBUG_FLOW, "Setting tags\n");
 

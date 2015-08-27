@@ -86,7 +86,7 @@ bool otn_set_agent(OptTreeNode* otn, IpsOption* opt)
     return true;
 }
 
-void otn_trigger_actions(OptTreeNode* otn, Packet* p)
+void otn_trigger_actions(const OptTreeNode* otn, Packet* p)
 {
     if ( otn->agent )
         otn->agent->action(p);
