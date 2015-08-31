@@ -27,7 +27,7 @@
 #include "tcp_defs.h"
 
 class TcpSession;
-class TcpTracker;
+struct TcpTracker;
 
 //-----------------------------------------------------------------
 // we make a lot of TcpSegments so it is organized by member

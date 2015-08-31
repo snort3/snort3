@@ -760,7 +760,7 @@ int PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     PS_TRACKER* scanned)
 {
     Packet* p;
-    uint32_t session_flags;
+    uint32_t session_flags = 0x0;
     sfip_t cleared;
     sfip_clear(cleared);
 

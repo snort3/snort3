@@ -1,3 +1,7 @@
+15/08/31 - build 167
+
+-- fix xcode warnings
+
 15/08/21 - build 166
 
 -- fix link error with g++ 4.8.3
