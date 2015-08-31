@@ -68,6 +68,10 @@
 #include "file_api/libs/file_config.h"
 #include "framework/ips_option.h"
 
+#ifdef UNIT_TEST
+#include "test/catch.hpp"
+#endif
+
 //-------------------------------------------------------------------------
 // var node stuff
 //-------------------------------------------------------------------------
@@ -931,3 +935,72 @@ void AddVarToTable(SnortConfig* sc, const char* name, const char* value)
     }
 }
 
+//--------------------------------------------------------------------------
+// unit tests 
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+TEST_CASE("config_set_var-success", "[vars]")
+{
+    SnortConfig *sc = new SnortConfig;
+
+    sc->var_list = NULL;
+
+    config_set_var(sc, "A=B");
+
+    REQUIRE(sc->var_list != NULL);
+    REQUIRE(sc->var_list->name != NULL);
+    REQUIRE(sc->var_list->value != NULL);
+    REQUIRE(*(sc->var_list->name) == 'A');
+    REQUIRE(*(sc->var_list->value) == 'B');
+}
+
+TEST_CASE("config_set_var-existing-success", "[vars]")
+{
+    SnortConfig *sc = new SnortConfig;
+    VarNode *vn1 = new VarNode;
+    VarNode *vn2 = new VarNode;
+
+    sc->var_list = vn1;
+    vn1->name = "C";
+    vn1->next = vn2;
+    vn2->name = "D";
+    vn2->next = NULL;
+
+    config_set_var(sc, "A=B");
+
+    REQUIRE(sc->var_list != NULL);
+    REQUIRE(sc->var_list->name != NULL);
+    REQUIRE(sc->var_list->value != NULL);
+    REQUIRE(*(sc->var_list->name) == 'A');
+    REQUIRE(*(sc->var_list->value) == 'B');
+}
+
+#ifdef fatal
+TEST_CASE("config_set_var-duplicate-error", "[vars]")
+{
+    SnortConfig *sc = new SnortConfig;
+    VarNode *vn1 = new VarNode;
+    VarNode *vn2 = new VarNode;
+
+    sc->var_list = vn1;
+    vn1->name = "C";
+    vn1->next = vn2;
+    vn2->name = "A";
+    vn2->next = NULL;
+
+    config_set_var(sc, "A=B");
+}
+#endif // #ifdef fatal
+
+#ifdef fatal
+TEST_CASE("config_set_var-no_equals_sign-error", "[vars]")
+{
+    SnortConfig *sc = new SnortConfig;
+
+    config_set_var(sc, "A");
+}
+#endif // #ifdef fatal
+
+#endif

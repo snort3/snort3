@@ -29,6 +29,10 @@
 #include "decompress/file_decomp_pdf.h"
 #include "decompress/file_decomp_swf.h"
 
+#ifdef UNIT_TEST
+#include "test/catch.hpp"
+#endif
+
 static const char PDF_Sig[5] = { '%', 'P', 'D', 'F', '-' };
 static const char SWF_ZLIB_Sig[3] = { 'C', 'W', 'S' };
 #ifdef HAVE_LZMA
@@ -330,7 +334,7 @@ fd_status_t File_Decomp(fd_session_p_t SessionPtr)
 {
     fd_status_t Return_Code;
 
-    if ( (SessionPtr->State == STATE_NEW) ||
+    if ( (SessionPtr == NULL) || (SessionPtr->State == STATE_NEW) ||
         (SessionPtr->Next_In == NULL) || (SessionPtr->Next_Out == NULL) )
         return( File_Decomp_Error );
 
@@ -419,3 +423,108 @@ void File_Decomp_Alert(fd_session_p_t SessionPtr, int Event)
         (SessionPtr->Alert_Callback)(SessionPtr->Alert_Context, Event);
 }
 
+//--------------------------------------------------------------------------
+// unit tests 
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+TEST_CASE("File_Decomp_StopFree-null", "[file_decomp]")
+{
+    REQUIRE(File_Decomp_StopFree((fd_session_p_t)NULL) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_Reset-null", "[file_decomp]")
+{
+    REQUIRE(File_Decomp_Reset((fd_session_p_t)NULL) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_End-null", "[file_decomp]")
+{
+    REQUIRE(File_Decomp_End((fd_session_p_t)NULL) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_Init-null", "[file_decomp]")
+{
+    REQUIRE(File_Decomp_Init((fd_session_p_t)NULL) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_SetBuf-null", "[file_decomp]")
+{
+    REQUIRE(File_Decomp_SetBuf((fd_session_p_t)NULL) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_SetBuf-Decompr_Depth-error", "[file_decomp]")
+{
+    fd_session_p_t p_s;
+
+    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    p_s->Total_Out = 20;
+    p_s->Decompr_Depth = 10;
+    REQUIRE(File_Decomp_SetBuf(p_s) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_SetBuf-Compr_Depth-error", "[file_decomp]")
+{
+    fd_session_p_t p_s;
+
+    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    p_s->Total_In = 20;
+    p_s->Compr_Depth = 10;
+    REQUIRE(File_Decomp_SetBuf(p_s) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_New", "[file_decomp]")
+{
+    fd_session_p_t p_s;
+
+    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    REQUIRE(p_s->State == STATE_NEW);
+    REQUIRE(p_s->Sig_State == 0);
+    REQUIRE(p_s->Total_In == 0);
+    REQUIRE(p_s->Total_Out == 0);
+    REQUIRE(p_s->Avail_In == 0);
+    REQUIRE(p_s->Avail_Out == 0);
+    REQUIRE(p_s->Next_In == NULL);
+    REQUIRE(p_s->Next_Out == NULL);
+}
+
+TEST_CASE("File_Decomp-null", "[file_decomp]")
+{
+    REQUIRE(File_Decomp((fd_session_p_t)NULL) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp-not_active", "[file_decomp]")
+{
+    fd_session_p_t p_s;
+
+    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    REQUIRE(File_Decomp(p_s) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp-complete_state", "[file_decomp]")
+{
+    fd_session_p_t p_s;
+
+    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    p_s->State = STATE_COMPLETE;
+    REQUIRE(File_Decomp(p_s) == File_Decomp_Error);
+}
+
+TEST_CASE("Initialize_Decompression-not_active", "[file_decomp]")
+{
+    fd_session_p_t p_s;
+
+    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    REQUIRE(Initialize_Decompression(p_s) == File_Decomp_Error);
+}
+
+TEST_CASE("Process_Decompression-not_active", "[file_decomp]")
+{
+    fd_session_p_t p_s;
+
+    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    REQUIRE(Process_Decompression(p_s) == File_Decomp_Error);
+}
+
+#endif
