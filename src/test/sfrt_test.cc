@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #if defined(__clang__)
 #pragma clang diagnostic push
@@ -104,6 +105,7 @@ START_TEST (test_sfrt_remove_after_insert)
             sfip_pton(ip_entry->ip_str, &ip);
 
             ip2_str = strdup(ip_entry->ip_str);
+            assert(ip2_str != NULL);
             p = strchr(ip2_str, '/');
             if (p)
             {
@@ -196,6 +198,7 @@ START_TEST(test_sfrt_remove_after_insert_all)
             sfip_pton(ip_entry->ip_str, &ip);
 
             ip2_str = strdup(ip_entry->ip_str);
+            assert(ip2_str != NULL);
             p = strchr(ip2_str, '/');
             if (p)
             {
