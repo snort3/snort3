@@ -130,6 +130,9 @@ struct TCPHdr
     inline bool is_rst() const
     { return (th_flags & TH_RST); }
 
+    inline bool is_fin() const
+       { return (th_flags & TH_FIN); }
+
     /*  raw data access */
     inline uint16_t raw_src_port() const
     { return th_sport; }

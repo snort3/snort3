@@ -43,3 +43,8 @@ TcpStateMachine::TcpStateMachine()
 
 }
 
+void TcpStateMachine::eval( TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tracker )
+{
+    tracker.set_tcp_event( tcp_seg, tracker.is_client_tracker( ) );
+    tcp_state_handlers[ tracker.get_tcp_state( ) ]->eval( tcp_seg, tracker );
+}

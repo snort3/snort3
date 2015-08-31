@@ -1,0 +1,18 @@
+This directory contains the implementation of common TCP session tracking functions.
+
+This TCP library module provides the following functions:
+
+* TCP Segment Descriptor - this class provides access to the various fields of the TCP
+  header and payload
+
+* TCP Stream Tracker - this class encapsulates all the state information required for
+  tracking one side of the TCP connection.  For each flow that is tracked there will be
+  two instances of this tracker, one for each direction.
+
+* TCP State Handler - abstract class interface that defines a method for handling each
+  possible TCP event.  For each TCP state a subclass of this class is created with a
+  state specific implementation for each event handling method.
+
+* TCP State Machine - this class is the engine that dispatches processing to the correct
+  event handling method of the handler for the current TCP state of the flow.
+
