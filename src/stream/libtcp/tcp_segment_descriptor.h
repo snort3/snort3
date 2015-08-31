@@ -23,6 +23,7 @@
 #define TCP_SEGMENT_DESCRIPTOR_H
 
 #include "flow/flow.h"
+#include "protocols/tcp.h"
 #include "protocols/packet.h"
 
 class TcpSegmentDescriptor
@@ -30,6 +31,20 @@ class TcpSegmentDescriptor
 public:
     TcpSegmentDescriptor( Flow*, Packet* );
     virtual ~TcpSegmentDescriptor();
+
+    const Flow* get_flow() const
+    {
+        return flow;
+    }
+
+    const Packet* get_pkt() const
+    {
+        return pkt;
+    }
+    const tcp::TCPHdr* get_tcph() const
+    {
+        return tcph;
+    }
 
     uint32_t get_ack() const
     {
@@ -41,38 +56,64 @@ public:
         return end_seq;
     }
 
-    const Flow* get_flow() const
-    {
-        return flow;
-    }
-
-    const Packet* get_pkt() const
-    {
-        return pkt;
-    }
-
     uint32_t get_seq() const
     {
-        return seq;
+    	return seq;
     }
 
     uint32_t get_ts() const
     {
-        return ts;
+    	return ts;
     }
 
-    uint32_t get_win() const
+    uint16_t get_win() const
     {
-        return win;
+    	return win;
+    }
+
+    uint16_t get_dst_port() const
+    {
+        return dst_port;
+    }
+
+    uint16_t get_src_port() const
+    {
+        return src_port;
+    }
+
+    uint8_t get_direction() const
+    {
+        return direction;
+    }
+
+    void set_direction(uint8_t direction)
+    {
+        this->direction = direction;
+    }
+
+    uint32_t get_data_len() const
+    {
+        return data_len;
+    }
+
+    void set_data_len(uint32_t data_len)
+    {
+        this->data_len = data_len;
     }
 
 private:
-    Packet* pkt;
     Flow*   flow;
+    Packet* pkt;
 
+    uint8_t direction;
+
+    const tcp::TCPHdr* tcph;
+    uint32_t data_len;
+    uint16_t src_port;
+    uint16_t dst_port;
     uint32_t seq;
     uint32_t ack;
-    uint32_t win;
+    uint16_t win;
     uint32_t end_seq;
     uint32_t ts;
 };

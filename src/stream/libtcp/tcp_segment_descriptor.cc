@@ -22,9 +22,20 @@
 #include "tcp_segment_descriptor.h"
 
 TcpSegmentDescriptor::TcpSegmentDescriptor(Flow*, Packet*)
+	flow( flow )
 {
-    // TODO Auto-generated constructor stub
+    direction = flow->ssn_state.direction;
 
+    tcph = pkt->ptrs.tcph;
+    data_len = pkt->dsize;
+
+    src_port = ntohs(tcph->th_sport);
+    dst_port = ntohs(pkt->ptrs.tcph->th_dport);
+    seq = ntohl(pkt->ptrs.tcph->th_seq);
+    ack = ntohl(pkt->ptrs.tcph->th_ack);
+    win = ntohs(pkt->ptrs.tcph->th_win);
+    end_seq = seq + (uint32_t) pkt->dsize;
+    ts = 0;
 }
 
 TcpSegmentDescriptor::~TcpSegmentDescriptor()

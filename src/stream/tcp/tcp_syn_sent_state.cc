@@ -24,6 +24,10 @@ using namespace std;
 
 #include "tcp_syn_sent_state.h"
 
+#ifdef UNIT_TEST
+#include "test/catch.hpp"
+#endif
+
 TcpSynSentState::TcpSynSentState()
 {
     // TODO Auto-generated constructor stub
@@ -95,3 +99,6 @@ void TcpSynSentState::rst_recv(TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &
     default_state_action( &tcp_seg, &tracker, __func__ );
 }
 
+#ifdef UNIT_TEST
+
+#endif

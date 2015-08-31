@@ -15,6 +15,8 @@ tcp_reassembly.h \
 tcp_reassembly.cc \
 tcp_session.cc \
 tcp_session.h \
+tcp_closed_state.h \
+tcp_closed_state.cc \
 tcp_listen_state.cc \
 tcp_listen_state.h \
 tcp_syn_sent_state.cc \

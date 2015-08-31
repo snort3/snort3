@@ -20,10 +20,13 @@
 // Created on: Jun 24, 2015
 
 #include "tcp_stream_tracker.h"
+#include "stream/stream.h"
 
-TcpStreamTracker::TcpStreamTracker( bool client )
+TcpStreamTracker::TcpStreamTracker( bool client ) :
+	client_tracker( client )
 {
-    tcp_state = ( client ) ? TcpStateMachine::TCP_CLOSED : TcpStateMachine::TCP_LISTEN;
+    tcp_state = ( client ) ? TCP_CLOSED : TCP_LISTEN;
+    tcp_event = TCP_MAX_EVENTS;
 }
 
 TcpStreamTracker::~TcpStreamTracker()
@@ -31,3 +34,51 @@ TcpStreamTracker::~TcpStreamTracker()
     // TODO Auto-generated destructor stub
 }
 
+void TcpStreamTracker::set_tcp_event( TcpSegmentDescriptor &tcp_seg, bool client )
+{
+   bool talker;
+
+    if( tcp_seg.get_direction( ) == FROM_CLIENT )
+        talker = ( client ) ? true : false;
+    else
+        talker = ( client ) ? false : true;
+
+    if( talker )
+    {
+        if( tcp_seg.get_tcph()->is_syn_only() )
+            tcp_event = TCP_SYN_SENT_EVENT;
+        else if( tcp_seg.get_tcph()->is_syn_ack() )
+            tcp_event = TCP_SYN_ACK_SENT_EVENT;
+        else if( tcp_seg.get_tcph()->is_ack() )
+        {
+            if( tcp_seg.get_data_len() > 0 )
+                tcp_event = TCP_DATA_SEG_SENT_EVENT;
+            else
+                tcp_event = TCP_ACK_SENT_EVENT;
+        }
+        else if( tcp_seg.get_tcph()->is_rst() )
+            tcp_event = TCP_RST_SENT_EVENT;
+        else if( tcp_seg.get_tcph()->is_fin( ) )
+            tcp_event = TCP_FIN_SENT_EVENT;
+        else
+            tcp_event = TCP_MAX_EVENTS;
+    }
+    else          // server is listening events
+    {
+        if( tcp_seg.get_tcph()->is_syn_only() )
+             tcp_event = TCP_SYN_RECV_EVENT;
+         else if( tcp_seg.get_tcph()->is_syn_ack() )
+             tcp_event = TCP_SYN_ACK_RECV_EVENT;
+         else if( tcp_seg.get_tcph()->is_ack() )
+         {
+             if( tcp_seg.get_data_len() > 0 )
+                 tcp_event = TCP_DATA_SEG_RECV_EVENT;
+             else
+                 tcp_event = TCP_ACK_RECV_EVENT;
+         }
+         else if( tcp_seg.get_tcph()->is_rst() )
+             tcp_event = TCP_RST_RECV_EVENT;
+         else if( tcp_seg.get_tcph()->is_fin( ) )
+             tcp_event = TCP_FIN_RECV_EVENT;
+    }
+}

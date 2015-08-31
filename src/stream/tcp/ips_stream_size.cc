@@ -118,6 +118,7 @@ int SizeOption::eval(Cursor&, Packet* pkt)
         /* the seq num wrapping case... */
         client_size = tcpssn->client.isn - tcpssn->client.l_nxt_seq;
     }
+
     if (tcpssn->server.l_nxt_seq > tcpssn->server.isn)
     {
         /* the normal case... */
