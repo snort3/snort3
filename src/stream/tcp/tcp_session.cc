@@ -61,6 +61,12 @@
 #include "tcp_normalization.h"
 #include "tcp_reassembly.h"
 #include "tcp_debug_trace.h"
+
+#include "stream/libtcp/tcp_state_handler.h"
+#include "tcp_closed_state.h"
+#include "tcp_listen_state.h"
+#include "tcp_syn_sent_state.h"
+#include "tcp_syn_recv_state.h"
 // TBD-EDM
 
 #include "main/snort_types.h"
@@ -2528,6 +2534,9 @@ void TcpSession::reset()
 
 bool TcpSession::setup(Packet*)
 {
+
+	TcpStateHandler* tsh = new TcpStateHandler;
+
     // FIXIT-L this it should not be necessary to reset here
     reset();
 
@@ -2543,6 +2552,14 @@ bool TcpSession::setup(Packet*)
     ingress_group = egress_group = 0;
     daq_flags = address_space_id = 0;
 #endif
+
+    delete tsh;
+    tsh = new TcpClosedState;
+    delete tsh;
+    tsh = new TcpListenState;
+    delete tsh;
+    tsh = new TcpSynSentState;
+    delete tsh;
 
     tcpStats.sessions++;
     return true;

@@ -16,39 +16,32 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_segment_descriptor.cc author davis mcpherson <davmcphe@@cisco.com>
+// tcp_closed_state.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jul 30, 2015
 
-#include "tcp_segment_descriptor.h"
+#ifndef TCP_CLOSED_STATE_H
+#define TCP_CLOSED_STATE_H
 
-TcpSegmentDescriptor::TcpSegmentDescriptor( Flow* flow, Packet* pkt ) :
-	flow( flow )
+#include "stream/libtcp/tcp_state_handler.h"
+
+class TcpClosedState: public TcpStateHandler
 {
-    direction = flow->ssn_state.direction;
+public:
+    TcpClosedState();
+    virtual ~TcpClosedState();
 
-    tcph = pkt->ptrs.tcph;
-    data_len = pkt->dsize;
+    void syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
+    void syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
+    void syn_ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
+    void syn_ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
+    void ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
+    void ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
+    void data_seg_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
+    void data_seg_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
+    void fin_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
+    void fin_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
+    void rst_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
+    void rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
+};
 
-#if 1
-    src_port = ntohs(tcph->th_sport);
-    dst_port = ntohs(pkt->ptrs.tcph->th_dport);
-    seq = ntohl(pkt->ptrs.tcph->th_seq);
-    ack = ntohl(pkt->ptrs.tcph->th_ack);
-    win = ntohs(pkt->ptrs.tcph->th_win);
-    end_seq = seq + (uint32_t) pkt->dsize;
-    ts = 0;
-#else
-	seq = pkt->ptrs.tcph->th_seq;
-    ack = pkt->ptrs.tcph->th_ack;
-    win = pkt->ptrs.tcph->th_win;
-    end_seq = seq + (uint32_t) pkt->dsize;
-    ts = 0;
 #endif
-
-}
-
-TcpSegmentDescriptor::~TcpSegmentDescriptor()
-{
-    // TODO Auto-generated destructor stub
-}
-

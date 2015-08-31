@@ -35,6 +35,10 @@ public:
 
     virtual void eval(TcpSegmentDescriptor&, TcpStreamTracker&);
 
+	TcpStreamTracker::TcpEvents get_tcp_event() const {
+		return tcp_event;
+	}
+
 protected:
     virtual void syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
     virtual void syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
@@ -51,6 +55,7 @@ protected:
 
     void default_state_action( TcpSegmentDescriptor*, TcpStreamTracker*, const char* );
 
+    TcpStreamTracker::TcpEvents tcp_event;
 };
 
 #endif
