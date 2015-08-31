@@ -98,7 +98,7 @@ d. Or use ccmake directly to configure and generate from an arbitrary build
 First set up the environment:
 
     export LUA_PATH=$my_path/include/snort/lua/\?.lua\;\;
-    export SNORT_LUA_PATH=$my_path/etc/snort
+    export SNORT_LUA_PATH=$my_path/etc/snort/
 
 Then give it a go:
 
