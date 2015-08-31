@@ -36,6 +36,7 @@
 void unit_test_mode(const char* = nullptr);
 bool unit_test_enabled();
 int unit_test();
+void unit_test_catch_test_filter(const char* s);
 
 #endif
 

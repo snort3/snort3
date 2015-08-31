@@ -17,6 +17,9 @@
 //--------------------------------------------------------------------------
 // unit_test.h author Russ Combs <rucombs@cisco.com>
 
+#include <vector>
+#include <string>
+
 #include "unit_test.h"
 
 #include <stdlib.h>
@@ -36,6 +39,7 @@
 #include "suite_decl.h"
 
 static print_output s_mode = CK_LAST;
+static std::vector<std::string> test_tags;
 
 typedef Suite* (* SuiteCtor_f)();
 
@@ -64,6 +68,11 @@ void unit_test_mode(const char* s)
 
     else //if ( !strcasecmp(s, UNIT_TEST_MODE_ENV) )
         s_mode = CK_ENV;
+}
+
+void unit_test_catch_test_filter(const char* s)
+{
+    test_tags.push_back( s );
 }
 
 bool unit_test_enabled()
@@ -119,6 +128,11 @@ static bool run_catch()
 {
   Catch::Session session;
   // write to session.configData() or session.Config() to customize
+  if( s_mode == CK_VERBOSE )
+      session.configData().showSuccessfulTests = true;
+  if( test_tags.size() > 0 )
+      session.configData().testsOrTags = test_tags;
+
   return session.run() == 0;
 }
 
