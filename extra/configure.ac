@@ -23,7 +23,9 @@ AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE(foreign)
+
+LT_INIT
 
 # Checks for programs.
 AC_PROG_CXX

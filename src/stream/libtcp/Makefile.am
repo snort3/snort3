@@ -2,6 +2,8 @@
 noinst_LIBRARIES = libstream_libtcp.a
 
 libstream_libtcp_a_SOURCES = \
+tcp_segment_descriptor.cc \
+tcp_segment_descriptor.h \
 tcp_stream_tracker.cc \
 tcp_stream_tracker.h \
 tcp_state_handler.cc \

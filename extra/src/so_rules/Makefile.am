@@ -8,10 +8,10 @@ lib18758_la_SOURCES = sid_18758.cc sid_18758.h
 BUILT_SOURCES = \
 sid_18758.h
 
-%.h : %.txt
+.h : .txt
 	snort --rule-to-text < $< > $@
 
-%.h : %.pro
+.h : .pro
 	snort --rule-to-hex < $< > $@
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
