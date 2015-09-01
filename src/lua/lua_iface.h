@@ -20,6 +20,7 @@
 #ifndef LUA_IFACE_H
 #define LUA_IFACE_H
 
+#include <cassert>
 #include <luajit-2.0/lua.hpp>
 
 #include "lua.h"
@@ -84,10 +85,21 @@ struct TypeInterface
     const luaL_Reg* metamethods;
 
     T** regurgitate(lua_State* L, int arg = 1) const
-    { return ::Lua::regurgitate<T>(L, name, arg); }
+    {
+        T** handle = ::Lua::regurgitate<T>(L, name, arg);
+        assert(handle);
+        return handle;
+    }
+
+    T* get_ptr(lua_State* L, int arg = 1) const
+    {
+        T* ptr = *regurgitate(L, arg);
+        assert(ptr);
+        return ptr;
+    }
 
     T& get(lua_State* L, int arg = 1) const
-    { return **regurgitate(L, arg); }
+    { return *get_ptr(L, arg); }
 
     bool is(lua_State* L, int arg = 1) const
     {
@@ -145,36 +157,41 @@ struct TypeInterface
 template<typename T>
 T** TypeInterface<T>::allocate(lua_State* L) const
 {
-    auto t = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
+    T** handle = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
+
+    assert(handle);
 
     luaL_getmetatable(L, name);
     lua_setmetatable(L, -2);
 
-    return t;
+    *handle = nullptr;
+    return handle;
 }
 
 template<typename T>
 template<typename... Args>
 T& TypeInterface<T>::create(lua_State* L, Args&&... args) const
 {
-    auto t = allocate(L);
+    T** handle = allocate(L);
 
-    *t = new T(std::forward<Args>(args)...);
+    *handle = new T(std::forward<Args>(args)...);
 
-    return **t;
+    assert(*handle);
+
+    return **handle;
 }
 
 template<typename T>
-void TypeInterface<T>::destroy(lua_State* L, T** t) const
+void TypeInterface<T>::destroy(lua_State* L, T** handle) const
 {
-    if ( !t )
-        t = regurgitate(L, 1);
+    if ( !handle )
+        handle = regurgitate(L, 1);
 
-    if ( *t )
+    if ( *handle )
     {
-        remove_refs(L, static_cast<void*>(*t));
-        delete *t;
-        t = nullptr;
+        remove_refs(L, static_cast<void*>(*handle));
+        delete *handle;
+        *handle = nullptr;
     }
 }
 
@@ -188,26 +205,25 @@ struct InstanceInterface
     const char* name;
     const luaL_Reg* methods;
 
-    T& get(lua_State*, int = 1) const;
+    T& get(lua_State* L, int up = 1) const
+    { return *get_ptr_from_plain_index(L, lua_upvalueindex(up)); }
+
+    T* get_ptr(lua_State* L, int up = 1) const
+    { return get_ptr_from_plain_index(L, lua_upvalueindex(up)); }
+
+private:
+    T* get_ptr_from_plain_index(lua_State*, int) const;
 };
 
 template<typename T>
-T& InstanceInterface<T>::get(lua_State* L, int up) const
+T* InstanceInterface<T>::get_ptr_from_plain_index(lua_State* L, int n) const
 {
-    int idx = lua_upvalueindex(up);
-    luaL_checktype(L, idx, LUA_TLIGHTUSERDATA);
-    return *static_cast<T*>(const_cast<void*>(lua_topointer(L, idx)));
+    luaL_checktype(L, n, LUA_TLIGHTUSERDATA);
+    T* ptr = static_cast<T*>(const_cast<void*>(lua_topointer(L, n)));
+
+    assert(ptr);
+    return ptr;
 }
-
-// -----------------------------------------------------------------------------
-// Library
-// -----------------------------------------------------------------------------
-
-struct Library
-{
-    const char* name;
-    const luaL_Reg* methods;
-};
 
 // -----------------------------------------------------------------------------
 // Installers
@@ -235,9 +251,6 @@ void install(lua_State* L, const struct InstanceInterface<T>& iface, T* instance
     int inst = lua_gettop(L);
     register_with_closure(L, iface.methods, table, inst);
 }
-
-static inline void install(lua_State* L, const struct Library& lib)
-{ register_methods(L, lib.methods, lib.name); }
 
 }
 

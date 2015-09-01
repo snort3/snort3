@@ -6,6 +6,7 @@ stream_tcp.cc \
 stream_tcp.h \
 tcp_module.cc \
 tcp_module.h \
+tcp_debug_trace.h \
 tcp_defs.h \
 tcp_events.h \
 tcp_normalization.h \

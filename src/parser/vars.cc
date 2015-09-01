@@ -68,6 +68,10 @@
 #include "file_api/libs/file_config.h"
 #include "framework/ips_option.h"
 
+#ifdef UNIT_TEST
+#include "test/catch.hpp"
+#endif
+
 //-------------------------------------------------------------------------
 // var node stuff
 //-------------------------------------------------------------------------
@@ -80,8 +84,9 @@ void config_set_var(SnortConfig* sc, const char* val)
 
         if (equal_ptr == NULL)
         {
-            FatalError("Format for command line variable definitions "
+            ParseError("Format for command line variable definitions "
                 "is:\n -S var=value\n");
+            return;
         }
 
         /* Save these and parse when snort conf is parsed so
@@ -98,8 +103,9 @@ void config_set_var(SnortConfig* sc, const char* val)
             {
                 if (strcasecmp(tmp->name, node->name) == 0)
                 {
-                    FatalError("Duplicate variable name: %s.\n",
+                    ParseError("Duplicate variable name: %s.\n",
                         tmp->name);
+                    return;
                 }
 
                 tmp = tmp->next;
@@ -380,7 +386,7 @@ int VarIsIpList(vartable_t* ip_vartable, const char* value)
  *
  * Function: DisallowCrossTableDuplicateVars(char *, int)
  *
- * Purpose: FatalErrors if the a variable name is redefined across variable
+ * Purpose: ParseErrors if the a variable name is redefined across variable
  *          types.  Enforcing this mutual exclusion prevents the
  *          catatrophe where the variable lookup fall-through (see VarSearch)
  *          finds an unintended variable from the wrong table.  Note:  VarSearch
@@ -720,7 +726,7 @@ const char* VarSearch(SnortConfig* sc, const char* name)
  *
  * Arguments: name => the name of the variable
  *
- * Returns: char * to contents of variable or FatalErrors on an
+ * Returns: char * to contents of variable or ParseErrors on an
  *          undefined variable name
  *
  ***************************************************************************/
@@ -931,3 +937,68 @@ void AddVarToTable(SnortConfig* sc, const char* name, const char* value)
     }
 }
 
+//--------------------------------------------------------------------------
+// unit tests 
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+TEST_CASE("config_set_var-success", "[vars]")
+{
+    SnortConfig* sc = new SnortConfig;
+
+    sc->var_list = NULL;
+
+    config_set_var(sc, "A=B");
+
+    REQUIRE(sc->var_list != NULL);
+    REQUIRE(sc->var_list->name != NULL);
+    REQUIRE(sc->var_list->value != NULL);
+    REQUIRE(*(sc->var_list->name) == 'A');
+    REQUIRE(*(sc->var_list->value) == 'B');
+}
+
+TEST_CASE("config_set_var-existing-success", "[vars]")
+{
+    SnortConfig* sc = new SnortConfig;
+    VarNode* vn1 = new VarNode;
+    VarNode* vn2 = new VarNode;
+
+    sc->var_list = vn1;
+    vn1->name = (char*)"C";
+    vn1->next = vn2;
+    vn2->name = (char*)"D";
+    vn2->next = NULL;
+
+    config_set_var(sc, "A=B");
+
+    REQUIRE(sc->var_list != NULL);
+    REQUIRE(sc->var_list->name != NULL);
+    REQUIRE(sc->var_list->value != NULL);
+    REQUIRE(*(sc->var_list->name) == 'A');
+    REQUIRE(*(sc->var_list->value) == 'B');
+}
+
+TEST_CASE("config_set_var-duplicate-error", "[vars]")
+{
+    SnortConfig* sc = new SnortConfig;
+    VarNode* vn1 = new VarNode;
+    VarNode* vn2 = new VarNode;
+
+    sc->var_list = vn1;
+    vn1->name = (char*)"C";
+    vn1->next = vn2;
+    vn2->name = (char*)"A";
+    vn2->next = NULL;
+
+    config_set_var(sc, "A=B");
+}
+
+TEST_CASE("config_set_var-no_equals_sign-error", "[vars]")
+{
+    SnortConfig* sc = new SnortConfig;
+
+    config_set_var(sc, "A");
+}
+
+#endif

@@ -1010,7 +1010,7 @@ static void snort_dns(Packet* p)
             return;
         }
 
-        if ( stream.is_stream_sequenced(p->flow, SSN_DIR_FROM_CLIENT) )
+        if ( !stream.is_stream_sequenced(p->flow, SSN_DIR_FROM_CLIENT) )
         {
             return;
         }
@@ -1131,7 +1131,7 @@ const InspectApi dns_api =
         mod_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::TCP | (uint16_t)PktType::UDP,
+    (uint16_t)PktType::TCP | (uint16_t)PktType::UDP | (uint16_t)PktType::PDU,
     nullptr, // buffers
     "dns",
     dns_init,

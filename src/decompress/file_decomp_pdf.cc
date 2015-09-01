@@ -32,6 +32,10 @@
 
 #include "main/thread.h"
 
+#ifdef UNIT_TEST
+#include "test/catch.hpp"
+#endif
+
 /* Define characters and tokens in PDF grammar */
 #define TOK_STRM_OPEN      "stream"
 #define TOK_STRM_CLOSE     "endstream"
@@ -1146,3 +1150,54 @@ fd_status_t File_Decomp_PDF(fd_session_p_t SessionPtr)
     return( File_Decomp_OK );
 }
 
+//--------------------------------------------------------------------------
+// unit tests 
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+TEST_CASE("File_Decomp_PDF-null", "[file_decomp]")
+{
+    REQUIRE(File_Decomp_PDF((fd_session_p_t)NULL) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_Init_PDF-null", "[file_decomp]")
+{
+    REQUIRE(File_Decomp_Init_PDF((fd_session_p_t)NULL) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_End_PDF-null", "[file_decomp]")
+{
+    REQUIRE(File_Decomp_End_PDF((fd_session_p_t)NULL) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_PDF-not_pdf-error", "[file_decomp]")
+{
+    fd_session_p_t p_s;
+
+    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    p_s->File_Type = FILE_TYPE_SWF;
+    REQUIRE(File_Decomp_PDF(p_s) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_PDF-bad_state-error", "[file_decomp]")
+{
+    fd_session_p_t p_s;
+
+    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    p_s->File_Type = FILE_TYPE_PDF;
+    p_s->Decomp_State.PDF.State = PDF_STATE_NEW;
+    REQUIRE(File_Decomp_PDF(p_s) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_End_PDF-bad_type-error", "[file_decomp]")
+{
+    fd_session_p_t p_s;
+
+    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    p_s->Decomp_Type = FILE_COMPRESSION_TYPE_LZMA;
+    p_s->Decomp_State.PDF.State = PDF_STATE_PROCESS_STREAM;
+    REQUIRE(File_Decomp_End_PDF(p_s) == File_Decomp_Error);
+}
+
+#endif

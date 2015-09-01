@@ -223,7 +223,7 @@ static char* POParserName(POParser* pop)
 
     DebugFormat(DEBUG_PORTLISTS,">>> POParserName : %s\n",pop->token);
 
-    return strdup(pop->token);
+    return SnortStrdup(pop->token);
 }
 
 /*
