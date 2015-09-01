@@ -59,6 +59,7 @@ protected:
     static const HeaderNormalizer NORMALIZER_NIL;
     static const HeaderNormalizer NORMALIZER_BASIC;
     static const HeaderNormalizer NORMALIZER_CAT;
+    static const HeaderNormalizer NORMALIZER_COOKIE;
     static const HeaderNormalizer NORMALIZER_NOREPEAT;
     static const HeaderNormalizer NORMALIZER_DECIMAL;
     static const HeaderNormalizer NORMALIZER_TRANSCODE;

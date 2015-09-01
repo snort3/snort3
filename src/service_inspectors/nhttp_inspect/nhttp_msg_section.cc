@@ -98,6 +98,10 @@ const Field& NHttpMsgSection::get_legacy(unsigned buffer_id)
         return (body != nullptr) ? body->get_detect_data() : Field::FIELD_NULL;
       }
     case HTTP_BUFFER_COOKIE:
+    case HTTP_BUFFER_RAW_COOKIE:
+    // FIXIT-M when real cookie normalization is implemented these need to become separate cases.
+    // Currently "normalization" is aggregation of multiple cookies. That is correct for raw
+    // cookies and all there is for normalized cookies.
       {
         NHttpMsgHeadShared* header = transaction->get_latest_header(source_id);
         if (header == nullptr)
@@ -114,22 +118,6 @@ const Field& NHttpMsgSection::get_legacy(unsigned buffer_id)
       {
         NHttpMsgRequest* request = transaction->get_request();
         return (request != nullptr) ? request->get_method() : Field::FIELD_NULL;
-      }
-    case HTTP_BUFFER_RAW_COOKIE:
-      {
-        NHttpMsgHeadShared* header = transaction->get_latest_header(source_id);
-        if (header == nullptr)
-            return Field::FIELD_NULL;
-        HeaderId cookie_head = (source_id == SRC_CLIENT) ? HEAD_COOKIE : HEAD_SET_COOKIE;
-        // FIXIT-M there can be multiple cookie header in one message.
-        for (int k=0; k < header->get_num_headers(); k++)
-        {
-            if (header->get_header_name_id(k) == cookie_head)
-            {
-                return header->get_header_value(k);
-            }
-        }
-        return Field::FIELD_NULL;
       }
     case HTTP_BUFFER_RAW_HEADER:
       {
