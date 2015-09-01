@@ -46,7 +46,6 @@
 FileMemPool* file_mempool = NULL;
 File_Capture_Stats file_capture_stats;
 
-#ifdef DEBUG_MSGS
 // verify file capture information and file context information matched
 
 void FileCapture::verifiy(FileContext* context)
