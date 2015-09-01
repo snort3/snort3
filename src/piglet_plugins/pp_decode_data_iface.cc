@@ -98,11 +98,13 @@ static const luaL_Reg methods[] =
 
             auto& self = DecodeDataIface.get(L, 1);
 
-            auto** ip_api = IpApiIface.allocate(L);
-            *ip_api = &self.ip_api;
+            auto ip_api_handle = IpApiIface.allocate(L);
+
+            // *pointer* to DecodeData::ip_api;
+            *ip_api_handle = &self.ip_api;
 
             // Make sure the decode data doesn't run out from under the ref
-            Lua::add_ref(L, *ip_api, "decode_data", lua_gettop(L)); 
+            Lua::add_ref(L, *ip_api_handle, "decode_data", lua_gettop(L)); 
 
             return 1;
         }
