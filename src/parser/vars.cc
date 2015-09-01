@@ -963,9 +963,9 @@ TEST_CASE("config_set_var-existing-success", "[vars]")
     VarNode *vn2 = new VarNode;
 
     sc->var_list = vn1;
-    vn1->name = "C";
+    vn1->name = (char *)"C";
     vn1->next = vn2;
-    vn2->name = "D";
+    vn2->name = (char *)"D";
     vn2->next = NULL;
 
     config_set_var(sc, "A=B");
@@ -985,9 +985,9 @@ TEST_CASE("config_set_var-duplicate-error", "[vars]")
     VarNode *vn2 = new VarNode;
 
     sc->var_list = vn1;
-    vn1->name = "C";
+    vn1->name = (char *)"C";
     vn1->next = vn2;
-    vn2->name = "A";
+    vn2->name = (char *)"A";
     vn2->next = NULL;
 
     config_set_var(sc, "A=B");
