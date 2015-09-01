@@ -219,6 +219,14 @@ void Value::update_mask(uint64_t& mask, uint64_t flag, bool invert)
 //---------------------
 
 #ifdef UNIT_TEST
+
+//The test strings used with some of the APIs below that return IP/MAC addrs
+//are random character strings and not actual addresses. This is fine since 
+//there is no IP address specific processing or validation. The internal 
+//representation of the data is a C string and the purpose was to exercise the 
+//APIs to ensure things like length checks are done correctly and the 
+//string value/zero is returned based on the result etc. 
+
 TEST_CASE("mac addr negative test", "[Value]")
 {
     uint8_t * test_str;
@@ -294,9 +302,6 @@ TEST_CASE("get addr IPv4 test", "[Value]")
         test_val.get_addr_ip4(addr);
         CHECK(memcmp(addr,zero,4)==0);
     }
-
- 
-
 }
 
 TEST_CASE("get addr IPv6 test", "[Value]")
@@ -326,9 +331,6 @@ TEST_CASE("get addr IPv6 test", "[Value]")
         test_val.get_addr_ip6(addr);
         CHECK(memcmp(addr,zero,16)==0);
     }
-
- 
-
 }
 
 TEST_CASE("token test", "[Value]")
@@ -361,7 +363,6 @@ TEST_CASE("get as string", "[Value]")
     CHECK((str_val !=NULL));
     CHECK((strcmp(str_val,"true")==0));
 
-
     test_val.set(num_val);
     str_val = (char *)test_val.get_as_string();
     CHECK((str_val !=NULL));
@@ -372,7 +373,6 @@ TEST_CASE("get as string", "[Value]")
 
 TEST_CASE("update mask", "[Value]")
 {
-
     uint8_t mask8;
     uint16_t mask16;
     uint32_t mask32;
@@ -383,18 +383,15 @@ TEST_CASE("update mask", "[Value]")
     uint64_t flag64;
     bool invert;
 
-    
     flag8 = 0x10;
     flag16 = 0x1000;
     flag32 = 0x10000000;
     flag64 = 0x1000000000000000;
 
     SECTION("val true")
-
     {
         Value test_val(true);
         
-
         SECTION("invert true")
         {
             invert = true;
@@ -416,7 +413,7 @@ TEST_CASE("update mask", "[Value]")
             CHECK(mask64 == 0x0100000000000000);
         }
 
-         SECTION("invert false")
+        SECTION("invert false")
         {
             invert = false;
             mask8 = 0x01;
@@ -435,14 +432,12 @@ TEST_CASE("update mask", "[Value]")
             test_val.update_mask(mask64, flag64, invert);
             CHECK(mask64 == 0x1100000000000000);
         }
-
     }
-    SECTION("val false")
 
+    SECTION("val false")
     {
         Value test_val(true);
-        
-
+       
         SECTION("invert false")
         {
             invert = true;
@@ -464,7 +459,7 @@ TEST_CASE("update mask", "[Value]")
             CHECK(mask64 == 0x0100000000000000);
         }
 
-         SECTION("invert true")
+        SECTION("invert true")
         {
             invert = false;
             mask8 = 0x01;
@@ -483,12 +478,8 @@ TEST_CASE("update mask", "[Value]")
             test_val.update_mask(mask64, flag64, invert);
             CHECK(mask64 == 0x1100000000000000);
         }
-
     }
-
-
 }
-
 
 #endif
 
