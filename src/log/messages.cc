@@ -182,9 +182,9 @@ void ErrorMessageThrottled(ThrottleInfo* throttleInfo, const char* format,...)
         return;
 
     throttleInfo->count++;
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT,
+    DebugFormat(DEBUG_INIT,
         "current_time: %d, throttle (%p): count " STDu64 ", last update: %d\n",
-        (int)current_time, throttleInfo, throttleInfo->count, (int)throttleInfo->lastUpdate); )
+        (int)current_time, throttleInfo, throttleInfo->count, (int)throttleInfo->lastUpdate);
     /*Note: we only output the first error message,
      * and the statistics after at least duration_to_log seconds
      * when the same type of error message is printed out again */

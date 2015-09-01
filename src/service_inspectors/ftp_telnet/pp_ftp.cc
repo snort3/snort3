@@ -1210,8 +1210,8 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                 /* Could check that response msg includes "TLS" */
                 session->encr_state = AUTH_TLS_ENCRYPTED;
                 SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
-                DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                    "FTP stream is now TLS encrypted\n"); );
+                DebugMessage(DEBUG_FTPTELNET,
+                    "FTP stream is now TLS encrypted\n");
             }
             break;
         case AUTH_SSL_CMD_ISSUED:
@@ -1220,8 +1220,8 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                 /* Could check that response msg includes "SSL" */
                 session->encr_state = AUTH_SSL_ENCRYPTED;
                 SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
-                DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                    "FTP stream is now SSL encrypted\n"); );
+                DebugMessage(DEBUG_FTPTELNET,
+                    "FTP stream is now SSL encrypted\n");
             }
             break;
         case AUTH_UNKNOWN_CMD_ISSUED:
@@ -1229,8 +1229,8 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
             {
                 session->encr_state = AUTH_UNKNOWN_ENCRYPTED;
                 SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
-                DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                    "FTP stream is now encrypted\n"); );
+                DebugMessage(DEBUG_FTPTELNET,
+                    "FTP stream is now encrypted\n");
             }
             break;
         }
@@ -1393,8 +1393,8 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                         /* Mark this session & packet as one to ignore */
                         stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
                     }
-                    DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                        "FTP client stream is now encrypted\n"); );
+                    DebugMessage(DEBUG_FTPTELNET,
+                        "FTP client stream is now encrypted\n");
                 }
                 break;
             }
@@ -1472,8 +1472,8 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                         /* Mark this session & packet as one to ignore */
                         stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
                     }
-                    DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                        "FTP server stream is now encrypted\n"); );
+                    DebugMessage(DEBUG_FTPTELNET,
+                        "FTP server stream is now encrypted\n");
                 }
                 break;
             }
@@ -1553,8 +1553,8 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                     }
                     else
                     {
-                        DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                            "invalid FTP response code."); );
+                        DebugMessage(DEBUG_FTPTELNET,
+                            "invalid FTP response code.");
                         ftpssn->server.response.state = FTP_RESPONSE_INV;
                     }
                 }
@@ -1584,8 +1584,8 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
             }
             else if (!space && ftpssn->server.response.state == 0)
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                    "Missing LF from end of FTP command\n"); );
+                DebugMessage(DEBUG_FTPTELNET,
+                    "Missing LF from end of FTP command\n");
             }
             else
             {
@@ -1609,8 +1609,8 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                     }
                     else
                     {
-                        DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                            "Missing LF from end of FTP command with params\n"); );
+                        DebugMessage(DEBUG_FTPTELNET,
+                            "Missing LF from end of FTP command with params\n");
                     }
                 }
             }
@@ -1620,8 +1620,8 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
             /* Nothing left --> no parameters/message.  Not even an LF */
             req->param_begin = NULL;
             req->param_end = NULL;
-            DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                "Missing LF from end of FTP command sans params\n"); );
+            DebugMessage(DEBUG_FTPTELNET,
+                "Missing LF from end of FTP command sans params\n");
         }
 
         /* Set the pointer for the next request/response
@@ -1635,16 +1635,16 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
         switch (state)
         {
         case FTP_CMD_INV:
-            DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
+            DebugFormat(DEBUG_FTPTELNET,
                 "Illegal FTP command found: %.*s\n",
-                req->cmd_size, req->cmd_begin));
+                req->cmd_size, req->cmd_begin);
             iRet = FTPP_ALERT;
             break;
         case FTP_RESPONSE: /* Response */
-            DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
+            DebugFormat(DEBUG_FTPTELNET,
                 "FTP response: code: %.*s : M len %d : M %.*s\n",
                 req->cmd_size, req->cmd_begin, req->param_size,
-                req->param_size, req->param_begin));
+                req->param_size, req->param_begin);
             if ((ftpssn->client_conf->max_resp_len > 0) &&
                 (req->param_size > ftpssn->client_conf->max_resp_len))
             {
@@ -1660,10 +1660,10 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
             }
             break;
         case FTP_RESPONSE_CONT: /* Response continued */
-            DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
+            DebugFormat(DEBUG_FTPTELNET,
                 "FTP response: continuation of code: %d : M len %d : M %.*s\n",
                 ftpssn->server.response.state, req->param_size,
-                req->param_size, req->param_begin));
+                req->param_size, req->param_begin);
             if ((ftpssn->client_conf->max_resp_len > 0) &&
                 (req->param_size > ftpssn->client_conf->max_resp_len))
             {
@@ -1673,10 +1673,10 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
             }
             break;
         case FTP_RESPONSE_ENDCONT: /* Continued response end */
-            DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
+            DebugFormat(DEBUG_FTPTELNET,
                 "FTP response: final continue of code: %.*s : M len %d : "
                 "M %.*s\n", req->cmd_size, req->cmd_begin,
-                req->param_size, req->param_size, req->param_begin));
+                req->param_size, req->param_size, req->param_begin);
             if ((ftpssn->client_conf->max_resp_len > 0) &&
                 (req->param_size > ftpssn->client_conf->max_resp_len))
             {
@@ -1686,9 +1686,9 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
             }
             break;
         default:
-            DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET, "FTP command: CMD: %.*s : "
+            DebugFormat(DEBUG_FTPTELNET, "FTP command: CMD: %.*s : "
                 "P len %d : P %.*s\n", req->cmd_size, req->cmd_begin,
-                req->param_size, req->param_size, req->param_begin));
+                req->param_size, req->param_size, req->param_begin);
             if (CmdConf)
             {
                 unsigned max = CmdConf->max_param_len;
@@ -1699,9 +1699,9 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                 {
                     /* Alert on param length overrun */
                     SnortEventqAdd(GID_FTP, FTP_PARAMETER_LENGTH_OVERFLOW);
-                    DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET, "FTP command: %.*s"
+                    DebugFormat(DEBUG_FTPTELNET, "FTP command: %.*s"
                         "parameter length overrun %d > %d \n",
-                        req->cmd_size, req->cmd_begin, req->param_size, max));
+                        req->cmd_size, req->cmd_begin, req->param_size, max);
                     iRet = FTPP_ALERT;
                 }
 

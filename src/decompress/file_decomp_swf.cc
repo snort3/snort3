@@ -32,6 +32,10 @@
 #include <lzma.h>
 #endif
 
+#ifdef UNIT_TEST
+#include "test/catch.hpp"
+#endif
+
 #ifdef HAVE_LZMA
 #define LZMA_HEADER_LEN  (13)
 #define LZMA_PRP_OFFSET  (0)
@@ -335,3 +339,62 @@ fd_status_t File_Decomp_SWF(fd_session_p_t SessionPtr)
     return( File_Decomp_OK );
 }
 
+//--------------------------------------------------------------------------
+// unit tests 
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+TEST_CASE("File_Decomp_SWF-null", "[file_decomp]")
+{
+    REQUIRE(File_Decomp_SWF((fd_session_p_t)NULL) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_Init_SWF-null", "[file_decomp]")
+{
+    REQUIRE(File_Decomp_Init_SWF((fd_session_p_t)NULL) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_End_SWF-null", "[file_decomp]")
+{
+    REQUIRE(File_Decomp_End_SWF((fd_session_p_t)NULL) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_SWF-not_swf-error", "[file_decomp]")
+{
+    fd_session_p_t p_s;
+
+    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    p_s->File_Type = FILE_TYPE_PDF;
+    REQUIRE(File_Decomp_SWF(p_s) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_SWF-bad_state-error", "[file_decomp]")
+{
+    fd_session_p_t p_s;
+
+    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    p_s->File_Type = FILE_TYPE_SWF;
+    p_s->Decomp_State.SWF.State = SWF_STATE_NEW;
+    REQUIRE(File_Decomp_SWF(p_s) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_Init_SWF-bad_type-error", "[file_decomp]")
+{
+    fd_session_p_t p_s;
+
+    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    p_s->Decomp_Type = FILE_COMPRESSION_TYPE_DEFLATE;
+    REQUIRE(File_Decomp_Init_SWF(p_s) == File_Decomp_Error);
+}
+
+TEST_CASE("File_Decomp_End_SWF-bad_type-error", "[file_decomp]")
+{
+    fd_session_p_t p_s;
+
+    REQUIRE((p_s = File_Decomp_New()) != (fd_session_p_t)NULL);
+    p_s->Decomp_Type = FILE_COMPRESSION_TYPE_DEFLATE;
+    REQUIRE(File_Decomp_End_SWF(p_s) == File_Decomp_Error);
+}
+
+#endif

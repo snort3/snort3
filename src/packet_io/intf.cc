@@ -75,8 +75,8 @@ char* GetFirstInterface(void)
     char* iface = NULL;
     char errorbuf[PCAP_ERRBUF_SIZE];
 
-    DEBUG_WRAP(DebugMessage(
-        DEBUG_INIT, "interface is NULL, looking up interface...."); );
+    DebugMessage(
+        DEBUG_INIT, "interface is NULL, looking up interface....");
 
     /* look up the device and get the handle */
     iface = pcap_lookupdev(errorbuf);
@@ -87,8 +87,7 @@ char* GetFirstInterface(void)
             "Please specify one with -i switch\n", errorbuf);
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "found interface %s\n",
-        PRINT_INTERFACE(iface)); );
+    DebugFormat(DEBUG_INIT, "found interface %s\n", PRINT_INTERFACE(iface));
 
     iface = SnortStrdup(iface);
     return iface;

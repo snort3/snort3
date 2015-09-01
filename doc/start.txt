@@ -98,7 +98,7 @@ d. Or use ccmake directly to configure and generate from an arbitrary build
 First set up the environment:
 
     export LUA_PATH=$my_path/include/snort/lua/\?.lua\;\;
-    export SNORT_LUA_PATH=$my_path/etc
+    export SNORT_LUA_PATH=$my_path/etc/snort/
 
 Then give it a go:
 
@@ -115,23 +115,25 @@ Then give it a go:
 
 * Verify config, with or w/o rules:
 
-    $my_path/bin/snort -c $my_path/etc/snort.lua
-    $my_path/bin/snort -c $my_path/etc/snort.lua -R $my_path/etc/sample.rules
+    $my_path/bin/snort -c $my_path/etc/snort/snort.lua
+    $my_path/bin/snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules
 
 * Run IDS mode.  To keep it brief, look at the first n packets in each file:
 
-    $my_path/bin/snort -c $my_path/etc/snort.lua -R $my_path/etc/sample.rules \
+    $my_path/bin/snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules \
         -r <pcap> -A alert_test -n 100000
 
 * Let's suppress 1:2123.  We could edit the conf or just do this:
 
-    $my_path/bin/snort -c $my_path/etc/snort.lua -R $my_path/etc/sample.rules \
+    $my_path/bin/snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules \
         -r <pcap> -A alert_test -n 100000 --lua "suppress = { { gid = 1, sid = 2123 } }"
 
 * Go whole hog on a directory with multiple packet threads:
 
-    $my_path/bin/snort -c $my_path/etc/snort.lua -R $my_path/etc/sample.rules \
+    $my_path/bin/snort -c $my_path/etc/snort/snort.lua -R $my_path/etc/snort/sample.rules \
         --pcap-filter \*.pcap --pcap-dir <dir> -A alert_fast -n 1000 --max-packet-threads 8
+
+For more examples, see the usage section.
 
 
 === Tips

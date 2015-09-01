@@ -195,8 +195,8 @@ SMTPData* SetNewSMTPData(SMTP_PROTO_CONF* config, Packet* p)
 
     if(stream.is_midstream(p->flow))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Got midstream packet - "
-            "setting state to unknown\n"); );
+        DebugMessage(DEBUG_SMTP, "Got midstream packet - "
+            "setting state to unknown\n");
         smtp_ssn->state = STATE_UNKNOWN;
     }
 
@@ -594,16 +594,16 @@ static int SMTP_Setup(Packet* p, SMTPData* ssn)
 
         if (ssn->session_flags & SMTP_FLAG_NEXT_STATE_UNKNOWN)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Found gap in previous reassembly buffer - "
-                "set state to unknown\n"); );
+            DebugMessage(DEBUG_SMTP, "Found gap in previous reassembly buffer - "
+                "set state to unknown\n");
             ssn->state = STATE_UNKNOWN;
             ssn->session_flags &= ~SMTP_FLAG_NEXT_STATE_UNKNOWN;
         }
 
         if (missing_in_rebuilt == SSN_MISSING_BEFORE)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Found missing packets before "
-                "in reassembly buffer - set state to unknown\n"); );
+            DebugMessage(DEBUG_SMTP, "Found missing packets before "
+                "in reassembly buffer - set state to unknown\n");
             ssn->state = STATE_UNKNOWN;
         }
     }
@@ -769,29 +769,29 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
          * state.  Check to see if we're encrypted */
         if (smtp_ssn->state == STATE_UNKNOWN)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Command not found, but state is "
-                "unknown - checking for SSL\n"); );
+            DebugMessage(DEBUG_SMTP, "Command not found, but state is "
+                "unknown - checking for SSL\n");
 
             /* check for encrypted */
 
             if ((smtp_ssn->session_flags & SMTP_FLAG_CHECK_SSL) &&
                 (IsSSL(ptr, end - ptr, p->packet_flags)))
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Packet is SSL encrypted\n"); );
+                DebugMessage(DEBUG_SMTP, "Packet is SSL encrypted\n");
 
                 smtp_ssn->state = STATE_TLS_DATA;
 
                 /* Ignore data */
                 if (config->ignore_tls_data)
                 {
-                    DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Ignoring encrypted data\n"); );
+                    DebugMessage(DEBUG_SMTP, "Ignoring encrypted data\n");
                 }
 
                 return end;
             }
             else
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Not SSL - try data state\n"); );
+                DebugMessage(DEBUG_SMTP, "Not SSL - try data state\n");
                 /* don't check for ssl again in this packet */
                 if (smtp_ssn->session_flags & SMTP_FLAG_CHECK_SSL)
                     smtp_ssn->session_flags &= ~SMTP_FLAG_CHECK_SSL;
@@ -804,7 +804,7 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "No known command found\n"); );
+            DebugMessage(DEBUG_SMTP, "No known command found\n");
 
             if (smtp_ssn->state != STATE_AUTH)
             {
@@ -921,15 +921,15 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
             if ((smtp_ssn->state_flags & SMTP_FLAG_GOT_RCPT_CMD) ||
                 smtp_ssn->state == STATE_UNKNOWN)
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Set to data state.\n"); );
+                DebugMessage(DEBUG_SMTP, "Set to data state.\n");
 
                 smtp_ssn->state = STATE_DATA;
                 smtp_ssn->state_flags &= ~(SMTP_FLAG_GOT_MAIL_CMD | SMTP_FLAG_GOT_RCPT_CMD);
             }
             else
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Didn't get MAIL -> RCPT command sequence - "
-                    "stay in command state.\n"); );
+                DebugMessage(DEBUG_SMTP, "Didn't get MAIL -> RCPT command sequence - "
+                    "stay in command state.\n");
             }
 
             break;
@@ -1068,12 +1068,12 @@ static void SMTP_ProcessClientPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
         switch (smtp_ssn->state)
         {
         case STATE_COMMAND:
-            DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "COMMAND STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~\n"); );
+            DebugMessage(DEBUG_SMTP, "COMMAND STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
             ptr = SMTP_HandleCommand(config, p, smtp_ssn, ptr, end);
             break;
         case STATE_DATA:
         case STATE_BDATA:
-            DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"); );
+            DebugMessage(DEBUG_SMTP, "DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
             position = get_file_position(p);
             ptr = smtp_ssn->mime_ssn->process_mime_data(p->flow, ptr, end, 1, position);
             //ptr = SMTP_HandleData(p, ptr, end, &(smtp_ssn->mime_ssn));
@@ -1088,13 +1088,13 @@ static void SMTP_ProcessClientPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
             ptr = SMTP_HandleCommand(config, p, smtp_ssn, ptr, end);
             break;
         case STATE_UNKNOWN:
-            DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "UNKNOWN STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~\n"); );
+            DebugMessage(DEBUG_SMTP, "UNKNOWN STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
             /* If state is unknown try command state to see if we can
              * regain our bearings */
             ptr = SMTP_HandleCommand(config, p, smtp_ssn, ptr, end);
             break;
         default:
-            DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Bad SMTP state\n"); );
+            DebugMessage(DEBUG_SMTP, "Bad SMTP state\n");
             return;
         }
     }
@@ -1102,7 +1102,7 @@ static void SMTP_ProcessClientPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
 #ifdef DEBUG_MSGS
     if (smtp_normalizing)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Normalized data\n%s\n", SMTP_PrintBuffer(p)); );
+        DebugFormat(DEBUG_SMTP, "Normalized data\n%s\n", SMTP_PrintBuffer(p));
     }
 #endif
 }
@@ -1203,27 +1203,27 @@ static void SMTP_ProcessServerPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
             /* only add response if not a dash after response code */
             if ((dash == eolm) || ((dash < eolm) && (*dash != '-')))
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Server sent %s response\n",
-                    smtp_resps[smtp_search_info.id].name); );
+                DebugFormat(DEBUG_SMTP, "Server sent %s response\n",
+                    smtp_resps[smtp_search_info.id].name);
             }
 #endif
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_SMTP,
-                "Server response not found - see if it's SSL data\n"); );
+            DebugMessage(DEBUG_SMTP,
+                "Server response not found - see if it's SSL data\n");
 
             if ((smtp_ssn->session_flags & SMTP_FLAG_CHECK_SSL) &&
                 (IsSSL(ptr, end - ptr, p->packet_flags)))
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Server response is an SSL packet\n"); );
+                DebugMessage(DEBUG_SMTP, "Server response is an SSL packet\n");
 
                 smtp_ssn->state = STATE_TLS_DATA;
 
                 /* Ignore data */
                 if (config->ignore_tls_data)
                 {
-                    DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Ignoring Server TLS encrypted data\n"); );
+                    DebugMessage(DEBUG_SMTP, "Ignoring Server TLS encrypted data\n");
                 }
 
                 return;
@@ -1284,7 +1284,7 @@ static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
     {
         int next_state = 0;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "SMTP server packet\n"); );
+        DebugMessage(DEBUG_SMTP, "SMTP server packet\n");
 
         /* Process as a server packet */
         SMTP_ProcessServerPacket(config, p, smtp_ssn, &next_state);
@@ -1297,12 +1297,12 @@ static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
 #ifdef DEBUG_MSGS
         if (pkt_dir == SMTP_PKT_FROM_CLIENT)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "SMTP client packet\n"); );
+            DebugMessage(DEBUG_SMTP, "SMTP client packet\n");
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "SMTP packet NOT from client or server! "
-                "Processing as a client packet\n"); );
+            DebugMessage(DEBUG_SMTP, "SMTP packet NOT from client or server! "
+                "Processing as a client packet\n");
         }
 #endif
 
@@ -1311,8 +1311,8 @@ static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
         {
             if (IsTlsClientHello(p->data, p->data + p->dsize))
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_SMTP,
-                    "TLS DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~\n"); );
+                DebugMessage(DEBUG_SMTP,
+                    "TLS DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 
                 smtp_ssn->state = STATE_TLS_SERVER_PEND;
             }
@@ -1338,7 +1338,7 @@ static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
             if ( !InspectPacket(p))
             {
                 /* Packet will be rebuilt, so wait for it */
-                DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Client packet will be reassembled\n"));
+                DebugMessage(DEBUG_SMTP, "Client packet will be reassembled\n");
                 return;
             }
             else if (!(p->packet_flags & PKT_REBUILT_STREAM))
@@ -1358,8 +1358,8 @@ static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
                  * that were not rebuilt, state is going to be messed up
                  * so set state to unknown. It's likely this was the
                  * beginning of the conversation so reset state */
-                DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Got non-rebuilt packets before "
-                    "this rebuilt packet\n"); );
+                DebugMessage(DEBUG_SMTP, "Got non-rebuilt packets before "
+                    "this rebuilt packet\n");
 
                 smtp_ssn->state = STATE_UNKNOWN;
                 smtp_ssn->session_flags &= ~SMTP_FLAG_GOT_NON_REBUILT;
@@ -1367,10 +1367,10 @@ static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
 
 #ifdef DEBUG_MSGS
             /* Interesting to see how often packets are rebuilt */
-            DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Payload: %s\n%s\n",
+            DebugFormat(DEBUG_SMTP, "Payload: %s\n%s\n",
                 (p->packet_flags & PKT_REBUILT_STREAM) ?
                 "reassembled" : "not reassembled",
-                SMTP_PrintBuffer(p)); );
+                SMTP_PrintBuffer(p));
 #endif
 
             SMTP_ProcessClientPacket(config, p, smtp_ssn);

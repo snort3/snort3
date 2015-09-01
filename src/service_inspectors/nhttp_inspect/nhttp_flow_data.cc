@@ -29,7 +29,6 @@ uint64_t NHttpFlowData::instance_count = 0;
 
 NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id)
 {
-    /* FIXIT-L Temporary printf while we shake out stream interface */
     if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output())
     {
         seq_num = ++instance_count;
@@ -40,7 +39,6 @@ NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id)
 
 NHttpFlowData::~NHttpFlowData()
 {
-    /* FIXIT-L Temporary printf while we shake out stream interface */
     if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output())
     {
         printf("Flow Data destruct %" PRIu64 "\n", seq_num);
@@ -71,8 +69,12 @@ void NHttpFlowData::half_reset(SourceId source_id)
     section_size_target[source_id] = 0;
     section_size_max[source_id] = 0;
     file_depth_remaining[source_id] = STAT_NOTPRESENT;
+    detect_depth_remaining[source_id] = STAT_NOTPRESENT;
     infractions[source_id].reset();
     events[source_id].reset();
+    chunk_offset[source_id] = 0;
+    chunk_state[source_id] = CHUNK_NUMBER;
+    chunk_expected_length[source_id] = 0;
 
     if (source_id == SRC_CLIENT)
     {

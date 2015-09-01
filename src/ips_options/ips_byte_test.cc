@@ -295,17 +295,17 @@ int ByteTestOption::eval(Cursor& c, Packet*)
 
         if ( payload_bytes_grabbed < 0 )
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                "String Extraction Failed\n"); );
+            DebugMessage(DEBUG_PATTERN_MATCH,
+                "String Extraction Failed\n");
 
             MODULE_PROFILE_END(byteTestPerfStats);
             return rval;
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
+    DebugFormat(DEBUG_PATTERN_MATCH,
         "Grabbed %d bytes at offset %d, value = 0x%08X(%u)\n",
-        payload_bytes_grabbed, btd->offset, value, value); );
+        payload_bytes_grabbed, btd->offset, value, value);
 
     switch (btd->opcode)
     {
@@ -352,8 +352,8 @@ int ByteTestOption::eval(Cursor& c, Packet*)
 
     if (btd->not_flag)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-            "checking for not success...flag\n"); );
+        DebugMessage(DEBUG_PATTERN_MATCH,
+            "checking for not success...flag\n");
         if (!success)
         {
             rval = DETECTION_OPTION_MATCH;

@@ -16,7 +16,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 // unit_test.h author Russ Combs <rucombs@cisco.com>
-//
+
+#include <vector>
+#include <string>
+
 #include "unit_test.h"
 
 #include <stdlib.h>
@@ -31,10 +34,12 @@
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
+#include <check.h>
 
 #include "suite_decl.h"
 
 static print_output s_mode = CK_LAST;
+static std::vector<std::string> test_tags;
 
 typedef Suite* (* SuiteCtor_f)();
 
@@ -65,12 +70,17 @@ void unit_test_mode(const char* s)
         s_mode = CK_ENV;
 }
 
+void unit_test_catch_test_filter(const char* s)
+{
+    test_tags.push_back( s );
+}
+
 bool unit_test_enabled()
 {
     return s_mode != CK_LAST;
 }
 
-int unit_test()
+static bool run_check()
 {
     int nErr;
     SuiteCtor_f* ctor = s_suites;
@@ -88,7 +98,7 @@ int unit_test()
         ++ctor;
     }
     if ( !pr )
-        return -1;
+        return false;
 
     // tbd - possible to support forking?
     srunner_set_fork_status(pr, CK_NOFORK);
@@ -105,6 +115,37 @@ int unit_test()
     nErr = srunner_ntests_failed(pr);
 
     srunner_free(pr);
-    return (nErr == 0) ? 0 : -1;
+    return !nErr;
+}
+
+// check defines fail, so we must squash that because
+// catch uses stream and that has a fail method
+#undef fail
+#define CATCH_CONFIG_RUNNER
+#include "catch.hpp"
+
+static bool run_catch()
+{
+  Catch::Session session;
+  // write to session.configData() or session.Config() to customize
+  if( s_mode == CK_VERBOSE )
+      session.configData().showSuccessfulTests = true;
+  if( test_tags.size() > 0 )
+      session.configData().testsOrTags = test_tags;
+
+  return session.run() == 0;
+}
+
+int unit_test()
+{
+    int ok = 0;
+
+    if ( !run_check() )
+        ok = -1;
+
+    if ( !run_catch() )
+        ok = -1;
+
+    return ok;
 }
 

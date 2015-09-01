@@ -31,9 +31,9 @@ static const luaL_Reg methods[] =
         "new",
         [](lua_State* L)
         {
-            Lua::Arg arg(L);
+            Lua::Args args(L);
 
-            PktType type = static_cast<PktType>(arg.opt_size(1));
+            PktType type = static_cast<PktType>(args[1].opt_size());
 
             FlowIface.create(L).init(type);
 
@@ -59,7 +59,7 @@ static const luaL_Reg metamethods[] =
         {
             auto& self = FlowIface.get(L);
             lua_pushfstring(L, "%s@%p", FlowIface.name, &self);
- 
+
             return 1;
         }
     },

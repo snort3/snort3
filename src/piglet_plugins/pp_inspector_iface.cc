@@ -26,6 +26,7 @@
 
 #include "framework/inspector.h"
 #include "lua/lua_arg.h"
+#include "main/snort_config.h"
 #include "pp_packet_iface.h"
 #include "pp_raw_buffer_iface.h"
 #include "pp_stream_splitter_iface.h"
@@ -46,6 +47,44 @@ static inline bool get_buf(
 static const luaL_Reg methods[] =
 {
     {
+        "configure",
+        [](lua_State* L)
+        {
+            auto& self = InspectorIface.get(L);
+            // FIXIT-L: Do we need an opaque SnortConfig interface?
+            bool result = self.configure(snort_conf);
+            lua_pushboolean(L, result);
+            return 1;
+        }
+    },
+    {
+        "tinit",
+        [](lua_State* L)
+        {
+            InspectorIface.get(L).tinit();
+            return 0;
+        },
+    },
+    {
+        "tterm",
+        [](lua_State* L)
+        {
+            InspectorIface.get(L).tterm();
+            return 0;
+        }
+    },
+    {
+        "likes",
+        [](lua_State* L)
+        {
+            auto& p = PacketIface.get(L, 1);
+            auto& self = InspectorIface.get(L);
+            bool result = self.likes(&p);
+            lua_pushboolean(L, result);
+            return 1;
+        }
+    },
+    {
         "eval",
         [](lua_State* L)
         {
@@ -63,27 +102,26 @@ static const luaL_Reg methods[] =
         {
             auto& p = PacketIface.get(L);
             auto& self = InspectorIface.get(L);
-            
+
             self.clear(&p);
 
             return 0;
         }
     },
+    // FIXIT-M: Add meta() method
+    // FIXIT-M: Add exec() method
     {
         "get_buf_from_key",
         [](lua_State* L)
         {
-            bool result;
+            Lua::Args args(L);
 
             auto& p = PacketIface.get(L, 2);
             auto& rb = RawBufferIface.get(L, 3);
+
             auto& self = InspectorIface.get(L);
 
-            {
-                auto key = Lua::Stack<std::string>::get(L, 1);
-                result = get_buf(self, key.c_str(), p, rb);
-            }
-
+            bool result = get_buf(self, args[1].check_string(), p, rb);
             lua_pushboolean(L, result);
 
             return 1;
@@ -93,16 +131,15 @@ static const luaL_Reg methods[] =
         "get_buf_from_id",
         [](lua_State* L)
         {
-            Lua::Arg arg(L);
+            Lua::Args args(L);
 
-            int id = arg.check_int(1);
+            int id = args[1].check_int();
             auto& p = PacketIface.get(L, 2);
             auto& rb = RawBufferIface.get(L, 3);
 
             auto& self = InspectorIface.get(L);
 
             bool result = get_buf(self, id, p, rb);
-
             lua_pushboolean(L, result);
 
             return 1;
@@ -112,20 +149,15 @@ static const luaL_Reg methods[] =
         "get_buf_from_type",
         [](lua_State* L)
         {
-            Lua::Arg arg(L);
+            Lua::Args args(L);
 
-            int type = arg.check_int(1);
+            auto type = static_cast<InspectionBuffer::Type>(args[1].check_int());
             auto& p = PacketIface.get(L, 2);
             auto& rb = RawBufferIface.get(L, 3);
 
             auto& self = InspectorIface.get(L);
 
-            bool result = get_buf(
-                self,
-                static_cast<InspectionBuffer::Type>(type),
-                p, rb
-            );
-
+            bool result = get_buf(self, type, p, rb);
             lua_pushboolean(L, result);
 
             return 1;
@@ -135,9 +167,9 @@ static const luaL_Reg methods[] =
         "get_splitter",
         [](lua_State* L)
         {
-            Lua::Arg arg(L);
+            Lua::Args args(L);
 
-            bool to_server = arg.check_boolean(1);
+            bool to_server = args[1].check_bool();
             auto& self = InspectorIface.get(L);
 
             auto** sp = StreamSplitterIface.allocate(L);

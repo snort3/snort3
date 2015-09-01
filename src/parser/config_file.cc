@@ -231,34 +231,34 @@ void ConfigCreatePidFile(SnortConfig* sc, const char*)
 
 void ConfigDaemon(SnortConfig* sc, const char*)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Daemon mode flag set\n"); );
+    DebugMessage(DEBUG_INIT, "Daemon mode flag set\n");
     sc->run_flags |= RUN_FLAG__DAEMON;
     sc->logging_flags |= LOGGING_FLAG__QUIET;
 }
 
 void ConfigDecodeDataLink(SnortConfig* sc, const char*)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Decode DLL set\n"); );
+    DebugMessage(DEBUG_INIT, "Decode DLL set\n");
     sc->output_flags |= OUTPUT_FLAG__SHOW_DATA_LINK;
 }
 
 void ConfigDumpCharsOnly(SnortConfig* sc, const char*)
 {
     /* dump the application layer as text only */
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Character payload dump set\n"); );
+    DebugMessage(DEBUG_INIT, "Character payload dump set\n");
     sc->output_flags |= OUTPUT_FLAG__CHAR_DATA;
 }
 
 void ConfigDumpPayload(SnortConfig* sc, const char*)
 {
     /* dump the application layer */
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Payload dump set\n"); );
+    DebugMessage(DEBUG_INIT, "Payload dump set\n");
     sc->output_flags |= OUTPUT_FLAG__APP_DATA;
 }
 
 void ConfigDumpPayloadVerbose(SnortConfig* sc, const char*)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Verbose packet bytecode dumps enabled\n"); );
+    DebugMessage(DEBUG_INIT, "Verbose packet bytecode dumps enabled\n");
     sc->output_flags |= OUTPUT_FLAG__VERBOSE_DUMP;
 }
 
@@ -360,7 +360,7 @@ void ConfigObfuscationMask(SnortConfig* sc, const char* args)
     if ( !args )
         return;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Got obfus data: %s\n", args); );
+    DebugFormat(DEBUG_INIT, "Got obfus data: %s\n", args);
 
     sc->output_flags |= OUTPUT_FLAG__OBFUSCATE;
 
@@ -470,14 +470,14 @@ void ConfigSetUid(SnortConfig* sc, const char* args)
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "UserID: %d GroupID: %d.\n",
-        sc->user_id, sc->group_id); );
+    DebugFormat(DEBUG_INIT, "UserID: %d GroupID: %d.\n",
+        sc->user_id, sc->group_id);
 }
 
 void ConfigShowYear(SnortConfig* sc, const char*)
 {
     sc->output_flags |= OUTPUT_FLAG__INCLUDE_YEAR;
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Enabled year in timestamp\n"); );
+    DebugMessage(DEBUG_INIT, "Enabled year in timestamp\n");
 }
 
 void ConfigTreatDropAsAlert(SnortConfig* sc, const char*)
@@ -528,7 +528,7 @@ void ConfigUtc(SnortConfig* sc, const char*)
 void ConfigVerbose(SnortConfig* sc, const char*)
 {
     sc->logging_flags |= LOGGING_FLAG__VERBOSE;
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Verbose Flag active\n"); );
+    DebugMessage(DEBUG_INIT, "Verbose Flag active\n");
 }
 
 void ConfigTunnelVerdicts(SnortConfig* sc, const char* args)
@@ -570,10 +570,10 @@ void ConfigPluginPath(SnortConfig* sc, const char* args)
         sc->plugin_path = args;
 }
 
-void ConfigScriptPath(SnortConfig* sc, const char* args)
+void ConfigScriptPaths(SnortConfig* sc, const char* args)
 {
     if ( sc && args )
-        sc->script_path = args;
+        sc->script_paths.push_back(args);
 }
 
 void config_syslog(SnortConfig* sc, const char*)

@@ -3,8 +3,8 @@ plugin =
     type = "piglet",
     name = "codec::ipv4",
     test = function()
-        dofile(SCRIPT_DIR .. "/common.lua")
-        return run_all(tests)
+        dofile(SCRIPT_DIR .. "/../common.lua")
+        return run_tests(tests)
     end
 }
 
@@ -19,22 +19,21 @@ tests =
 
     get_data_link_type = function()
         local rv = Codec.get_data_link_type()
-        assert_list_eq("data_link_types", DATA_LINK_TYPES, rv)
+        check.arrays_equal(DATA_LINK_TYPES, rv)
     end,
 
     get_protocol_ids = function()
         local rv = Codec.get_protocol_ids()
-        assert_list_eq("data_link_types", PROTOCOL_IDS, rv)
+        check.arrays_equal(PROTOCOL_IDS, rv)
     end,
 
     decode = function()
-        local rb = RawBuffer.new()
+        local daq = DAQHeader.new()
+        local rb = RawBuffer.new("foobar")
         local cd = CodecData.new()
         local dd = DecodeData.new()
-        local daq = DAQHeader.new()
-        local rd = RawData.new(rb, daq)
 
-        local rv = Codec.decode(rd, cd, dd)
+        local rv = Codec.decode(daq, rb, cd, dd)
         assert(not rv)
     end,
 
@@ -59,11 +58,11 @@ tests =
         local rb = RawBuffer.new(64)
 
         -- FIXIT-H: checksum calculation is failing (temporarily set UPD_COOKED (0x1))
-        local rv = Codec.update(1, rb)
+        local rv = Codec.update(0, 1, rb)
         assert(rv == 0)
 
         -- FIXIT-H: checksum calculation is failing (temporarily set UPD_COOKED (0x1))
-        local rv = Codec.update(1, rb, 64)
+        local rv = Codec.update(0, 1, rb, 64)
         assert(rv == 0)
     end,
 

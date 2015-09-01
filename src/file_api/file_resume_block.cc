@@ -132,7 +132,7 @@ int file_resume_block_add_file(Packet* pkt, uint32_t file_sig, uint32_t timeout,
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FILE, "Adding file node\n"); );
+        DebugMessage(DEBUG_FILE, "Adding file node\n");
 
         updateFileNode(&new_node, verdict, file_type_id, signature);
 
@@ -152,8 +152,8 @@ int file_resume_block_add_file(Packet* pkt, uint32_t file_sig, uint32_t timeout,
              * for key.  This means bigger problems, but fail
              * gracefully.
              */
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE,
-                    "Failed to add file node to hash table\n"); );
+            DebugMessage(DEBUG_FILE,
+                    "Failed to add file node to hash table\n");
             return -1;
         }
     }
@@ -247,7 +247,7 @@ File_Verdict file_resume_block_check(Packet* pkt, uint32_t file_sig)
     /* No hash table, or its empty?  Get out of dodge.  */
     if ((!fileHash) || (!sfxhash_count(fileHash)))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FILE, "No expected sessions\n"); );
+        DebugMessage(DEBUG_FILE, "No expected sessions\n");
         return verdict;
     }
     srcIP = p->ptrs.ip_api.get_src();
@@ -268,10 +268,10 @@ File_Verdict file_resume_block_check(Packet* pkt, uint32_t file_sig)
 
     if (node)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FILE, "Found resumed file\n"); );
+        DebugMessage(DEBUG_FILE, "Found resumed file\n");
         if (node->expires && p->pkth->ts.tv_sec > node->expires)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "File expired\n"); );
+            DebugMessage(DEBUG_FILE, "File expired\n");
             sfxhash_free_node(fileHash, hash_node);
             return verdict;
         }

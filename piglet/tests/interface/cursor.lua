@@ -3,18 +3,40 @@ plugin =
     type = "piglet",
     name = "piglet::cursor",
     test = function()
-        -- Put the dofile here so that it doesn't get loaded twice
-        dofile(SCRIPT_DIR .. "/common.lua")
-        return run_all(tests)
+        dofile(SCRIPT_DIR .. "/../common.lua")
+        return run_tests(tests)
     end
 }
 
 tests =
 {
-    initialize = function()
-        local rb = RawBuffer.new()
-        local p = Packet.new(rb)
-        local cur = Cursor.new(p)
+    init_default = function()
+        local cur = Cursor.new()
         assert(cur)
+    end,
+
+    init_from_string = function()
+        local cur = Cursor.new("abcdefgh")
+        assert(cur)
+    end,
+
+    init_from_raw_buffer = function()
+        local cur = Cursor.new(RawBuffer.new("abcdefgh"))
+        assert(cur)
+    end,
+
+    reset_default = function()
+        local cur = Cursor.new()
+        cur:reset()
+    end,
+
+    reset_from_string = function()
+        local cur = Cursor.new()
+        cur:reset("abcdefgh")
+    end,
+
+    reset_from_raw_buffer = function()
+        local cur = Cursor.new()
+        cur:reset(RawBuffer.new("abcdefgh"))
     end
 }

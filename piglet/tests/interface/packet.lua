@@ -3,9 +3,8 @@ plugin =
     type = "piglet",
     name = "piglet::packet",
     test = function()
-        -- Put the dofile here so that it doesn't get loaded twice
-        dofile(SCRIPT_DIR .. "/common.lua")
-        return run_all(tests)
+        dofile(SCRIPT_DIR .. "/../common.lua")
+        return run_tests(tests)
     end
 }
 
@@ -42,16 +41,35 @@ tests =
         assert(p)
     end,
 
-    initialize_with_data = function()
+    init_with_string = function()
+        local p = Packet.new("foobar")
+        assert(p)
+    end,
+
+    init_with_size = function()
+        local p = Packet.new(128)
+        assert(p)
+    end,
+
+    init_with_raw_buffer = function()
         local rb = RawBuffer.new()
         local p = Packet.new(rb)
         assert(p)
     end,
 
-    initialize_with_daq = function()
-        local rb = RawBuffer.new()
+    init_with_daq = function()
         local daq = DAQHeader.new()
-        local p = Packet.new(rb, daq)
+        local p = Packet.new(daq)
+        assert(p)
+    end,
+
+    init_with_table = function()
+        local p = Packet.new(VALUES)
+        check.tables_equal(VALUES, p:get())
+    end,
+
+    init_with_everything = function()
+        local p = Packet.new("foobar", DAQHeader.new(), { packet_flags = 4 })
         assert(p)
     end,
 
@@ -75,20 +93,8 @@ tests =
 
     get_and_set = function()
         local p = Packet.new()
-        assert_table_eq("get()", DEFAULT_VALUES, p:get())
+        check.tables_equal(DEFAULT_VALUES, p:get())
         p:set(VALUES)
-        assert_table_eq("set()", VALUES, p:get())
-    end,
-
-    set_pkt = function()
-        local rb = RawBuffer.new()
-        local p = Packet.new()
-        p:set_pkt(rb)
-    end,
-
-    set_daq = function()
-        local daq = DAQHeader.new()
-        local p = Packet.new()
-        p:set_daq(daq)
+        check.tables_equal(VALUES, p:get())
     end
 }

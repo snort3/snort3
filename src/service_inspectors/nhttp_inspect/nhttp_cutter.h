@@ -100,7 +100,7 @@ class NHttpBodyCutter : public NHttpCutter
 public:
     explicit NHttpBodyCutter(int64_t expected_length) : remaining(expected_length)
         { assert(remaining > 0); }
-    NHttpEnums::ScanResult cut(const uint8_t*, uint32_t, NHttpInfractions&, NHttpEventGen&,
+    NHttpEnums::ScanResult cut(const uint8_t*, uint32_t length, NHttpInfractions&, NHttpEventGen&,
         uint32_t flow_target, uint32_t flow_max) override;
 
 private:

@@ -19,6 +19,7 @@
 
 #include "pp_decode_data_iface.h"
 
+#include <assert.h>
 #include <luajit-2.0/lua.hpp>
 
 #include "framework/decode_data.h"
@@ -26,19 +27,32 @@
 #include "lua/lua_table.h"
 #include "protocols/ipv4.h"
 
+#include "pp_ip_api_iface.h"
 #include "pp_raw_buffer_iface.h"
 
-static void set_fields(lua_State* L, int tindex, DecodeData& dd)
+// FIXIT-H: Add Internet Header objects
+// FIXIT-H: Add Enum Interface
+static void set_fields(lua_State* L, int tindex, DecodeData& self)
 {
     Lua::Table table(L, tindex);
 
-    table.get_field("sp", dd.sp);
-    table.get_field("dp", dd.dp);
-    table.get_field("decode_flags", dd.decode_flags);
+    table.get_field("sp", self.sp);
+    table.get_field("dp", self.dp);
+    table.get_field("decode_flags", self.decode_flags);
 
     uint8_t pkt_type = 0;
     table.get_field("type", pkt_type);
-    dd.type = static_cast<PktType>(pkt_type);
+    self.type = static_cast<PktType>(pkt_type);
+}
+
+static void get_fields(lua_State* L, int tindex, DecodeData& self)
+{
+    Lua::Table table(L, tindex);
+
+    table.set_field("sp", self.sp);
+    table.set_field("dp", self.dp);
+    table.set_field("decode_flags", self.decode_flags);
+    table.set_field("type", static_cast<uint8_t>(self.type));
 }
 
 static const luaL_Reg methods[] =
@@ -47,15 +61,12 @@ static const luaL_Reg methods[] =
         "new",
         [](lua_State* L)
         {
-            Lua::Arg arg(L);
+            Lua::Args args(L);
 
             auto& self = DecodeDataIface.create(L);
+            self.reset();
 
-            if ( arg.count )
-            {
-                arg.check_table(1);
-                set_fields(L, 1, self);
-            }
+            args[1].opt_table(set_fields, self);
 
             return 1;
         }
@@ -64,67 +75,36 @@ static const luaL_Reg methods[] =
         "reset",
         [](lua_State* L)
         {
-            auto& self = DecodeDataIface.get(L);
-            self.reset();
-
+            DecodeDataIface.get(L).reset();
             return 0;
         }
     },
     {
         "set",
         [](lua_State* L)
-        {
-            Lua::Arg arg(L);
-
-            auto& self = DecodeDataIface.get(L, 1);
-
-            arg.check_table(2);
-            set_fields(L, 2, self);
-
-            return 0;
-        }
+        { return DecodeDataIface.default_setter(L, set_fields); }
     },
     {
         "get",
         [](lua_State* L)
-        {
-            auto& self = DecodeDataIface.get(L);
-            lua_newtable(L);
-
-            Lua::Table table(L, lua_gettop(L));
-            table.set_field("sp", self.sp);
-            table.set_field("dp", self.dp);
-            table.set_field("decode_flags", self.decode_flags);
-            table.set_field(
-                "type",
-                static_cast<uint8_t>(self.type)
-            );
-
-            return 1;
-        }
+        { return DecodeDataIface.default_getter(L, get_fields); }
     },
-    // FIXIT-L: Need a more sophisticated interface to decode data ip_api
     {
-        "set_ipv4_hdr",
+        // Return a reference to the IpApi attached to DecodeData
+        "get_ip_api",
         [](lua_State* L)
         {
-            Lua::Arg arg(L);
+            Lua::Args args(L);
 
             auto& self = DecodeDataIface.get(L, 1);
-            auto& rb = RawBufferIface.get(L, 2);
-            size_t offset = arg.opt_size(3, 0, rb.size());
 
-            // Need enough room for an IPv4 header
-            if ( (rb.size() - offset) < sizeof(IP4Hdr) )
-                luaL_error(
-                    L, "need %d bytes, got %d",
-                    sizeof(IP4Hdr), rb.size()
-                );
+            auto** ip_api = IpApiIface.allocate(L);
+            *ip_api = &self.ip_api;
 
-            self.ip_api.set(
-                reinterpret_cast<const IP4Hdr*>(rb.data() + offset));
+            // Make sure the decode data doesn't run out from under the ref
+            Lua::add_ref(L, *ip_api, "decode_data", lua_gettop(L)); 
 
-            return 0;
+            return 1;
         }
     },
     // FIXIT-L: add access to mplsHdr field
@@ -136,19 +116,12 @@ static const luaL_Reg metamethods[] =
     {
         "__tostring",
         [](lua_State* L)
-        {
-            auto& self = DecodeDataIface.get(L);
-            lua_pushfstring(L, "%s@%p", DecodeDataIface.name, &self);
-            return 1;
-        }
+        { return DecodeDataIface.default_tostring(L); }
     },
     {
         "__gc",
         [](lua_State* L)
-        {
-            DecodeDataIface.destroy(L);
-            return 0;
-        }
+        { return DecodeDataIface.default_gc(L); }
     },
     { nullptr, nullptr }
 };

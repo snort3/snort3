@@ -217,16 +217,16 @@ static inline int SIP_Process(Packet* p, SIPData* sessp, SIP_PROTO_CONF* config)
     pRopts->body_data = sipMsg.body_data;
     pRopts->status_code = sipMsg.status_code;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_SIP, "SIP message header length: %d\n",
-        sipMsg.headerLen));
-    DEBUG_WRAP(DebugMessage(DEBUG_SIP, "Parsed method: %.*s, Flag: 0x%x\n",
-        sipMsg.methodLen, sipMsg.method, sipMsg.methodFlag));
-    DEBUG_WRAP(DebugMessage(DEBUG_SIP, "Parsed status code:  %d\n",
-        sipMsg.status_code));
-    DEBUG_WRAP(DebugMessage(DEBUG_SIP, "Parsed header address: %p.\n",
-        sipMsg.header));
-    DEBUG_WRAP(DebugMessage(DEBUG_SIP, "Parsed body address: %p.\n",
-        sipMsg.body_data));
+    DebugFormat(DEBUG_SIP, "SIP message header length: %d\n",
+        sipMsg.headerLen);
+    DebugFormat(DEBUG_SIP, "Parsed method: %.*s, Flag: 0x%x\n",
+        sipMsg.methodLen, sipMsg.method, sipMsg.methodFlag);
+    DebugFormat(DEBUG_SIP, "Parsed status code:  %d\n",
+        sipMsg.status_code);
+    DebugFormat(DEBUG_SIP, "Parsed header address: %p.\n",
+        sipMsg.header);
+    DebugFormat(DEBUG_SIP, "Parsed body address: %p.\n",
+        sipMsg.body_data);
 
     sip_freeMsg(&sipMsg);
     return status;

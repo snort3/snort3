@@ -789,9 +789,9 @@ char FlowControl::expected_flow(Flow* flow, Packet* p)
 
     if ( ignore )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+        DebugFormat(DEBUG_STREAM_STATE,
             "Stream: Ignoring packet from %d. Marking flow marked as ignore.\n",
-            p->packet_flags & PKT_FROM_CLIENT ? "sender" : "responder"); );
+            p->packet_flags & PKT_FROM_CLIENT ? "sender" : "responder");
 
         flow->ssn_state.ignore_direction = ignore;
         DisableInspection(p);

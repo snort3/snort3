@@ -27,6 +27,15 @@
 #define NHTTP_NAME "new_http_inspect"
 #define NHTTP_HELP "new HTTP inspector"
 
+struct NHttpParaList
+{
+public:
+    bool test_input;
+    bool test_output;
+    long request_depth;
+    long response_depth;
+};
+
 class NHttpModule : public Module
 {
 public:
@@ -36,14 +45,12 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     unsigned get_gid() const override { return NHttpEnums::NHTTP_GID; }
     const RuleMap* get_rules() const override { return nhttp_events; }
-    bool get_test_input() const { return test_input; }
-    bool get_test_output() const { return test_output; }
+    NHttpParaList get_params() const { return params; }
 
 private:
     static const Parameter nhttp_params[];
     static const RuleMap nhttp_events[];
-    bool test_input = false;
-    bool test_output = false;
+    NHttpParaList params;
 };
 
 #endif

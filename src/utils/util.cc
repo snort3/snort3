@@ -863,13 +863,11 @@ void SetChroot(std::string directory, std::string& logstore)
         return;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT,"SetChroot: %s\n",
-        CurrentWorkingDir()); );
+    DebugFormat(DEBUG_INIT,"SetChroot: %s\n", CurrentWorkingDir());
 
     const char* logdir = GetAbsolutePath(logstore.c_str());
 
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "SetChroot: %s\n",
-        CurrentWorkingDir()));
+    DebugFormat(DEBUG_INIT, "SetChroot: %s\n", CurrentWorkingDir());
 
     /* change to the directory */
     if (chdir(directory.c_str()) != 0)
@@ -890,7 +888,7 @@ void SetChroot(std::string directory, std::string& logstore)
 
     abslen = strlen(absdir);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "ABS: %s %d\n", absdir, abslen); );
+    DebugFormat(DEBUG_INIT, "ABS: %s %d\n", absdir, abslen);
 
     /* make the chroot call */
     if (chroot(absdir) < 0)
@@ -900,8 +898,8 @@ void SetChroot(std::string directory, std::string& logstore)
         return;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT,"chroot success (%s ->", absdir); );
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT,"%s)\n ", CurrentWorkingDir()); );
+    DebugFormat(DEBUG_INIT,"chroot success (%s ->", absdir);
+    DebugFormat(DEBUG_INIT,"%s)\n ", CurrentWorkingDir());
 
     /* change to "/" in the new directory */
     if (chdir("/") < 0)
@@ -911,8 +909,7 @@ void SetChroot(std::string directory, std::string& logstore)
         return;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT,"chdir success (%s)\n",
-        CurrentWorkingDir()); );
+    DebugFormat(DEBUG_INIT,"chdir success (%s)\n", CurrentWorkingDir());
 
     if (strncmp(absdir, logdir, strlen(absdir)))
     {
@@ -929,8 +926,8 @@ void SetChroot(std::string directory, std::string& logstore)
         logstore = logdir + abslen;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT,"new logdir from %s to %s\n",
-        logdir, logstore.c_str()));
+    DebugFormat(DEBUG_INIT,"new logdir from %s to %s\n",
+        logdir, logstore.c_str());
 
     LogMessage("Chroot directory = %s\n", directory.c_str());
 }

@@ -23,8 +23,10 @@
 // Piglet plugin API
 
 #include <string>
+#include <utility>
 
 #include "framework/base_api.h"
+#include "log/messages.h"
 #include "lua/lua.h"
 #include "main/snort_types.h"
 
@@ -100,6 +102,15 @@ struct Api
     PluginDtor dtor;
     PlugType target;
 };
+
+template<typename... Args>
+static inline void error(std::string fmt, Args&&... args)
+{
+    fmt.insert(0, "piglet: ");
+    fmt.append("\n");
+    ErrorMessage(fmt.c_str(), std::forward<Args>(args)...);
+}
+
 } // namespace Piglet
 
 #endif

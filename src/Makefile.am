@@ -28,6 +28,13 @@ codecs/root/libroot_codecs.a \
 codecs/link/liblink_codecs.a
 endif
 
+
+if BUILD_PIGLET
+pig_list = \
+piglet/libpiglet.a \
+piglet_plugins/libpiglet_plugins.a
+endif
+
 snort_LDFLAGS = -export-dynamic
 
 # order libs to avoid undefined symbols
@@ -40,7 +47,7 @@ loggers/libloggers.a \
 codecs/libcodecs.a \
 codecs/ip/libip_codecs.a \
 codecs/misc/libmisc_codecs.a \
-${codec_list} \
+$(codec_list) \
 codecs/libcodec_module.a \
 network_inspectors/libnetwork_inspectors.a \
 network_inspectors/binder/libbinder.a \
@@ -53,6 +60,7 @@ stream/libstream.a \
 stream/base/libstream_base.a \
 stream/ip/libstream_ip.a \
 stream/icmp/libstream_icmp.a \
+stream/libtcp/libstream_libtcp.a \
 stream/tcp/libstream_tcp.a \
 stream/udp/libstream_udp.a \
 stream/user/libstream_user.a \
@@ -61,6 +69,7 @@ file_api/libfile_api.a \
 file_api/libs/libfile.a \
 mime/libmime.a \
 service_inspectors/http_inspect/libhttp_inspect.a \
+$(pig_list) \
 ips_options/libips_options.a \
 parser/libparser.a \
 search_engines/libsearch_engines.a \
@@ -119,12 +128,11 @@ time \
 utils
 
 if BUILD_UNIT_TESTS
-snort_LDADD += test/libtest.a -lcheck -lrt -lpthread
 SUBDIRS += test
+snort_LDADD += test/libtest.a
 endif
 
 if BUILD_PIGLET
-snort_LDADD += piglet/libpiglet.a piglet_plugins/libpiglet_plugins.a
 SUBDIRS += piglet piglet_plugins
 endif
 

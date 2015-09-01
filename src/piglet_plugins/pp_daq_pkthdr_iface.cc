@@ -19,30 +19,61 @@
 
 #include "pp_daq_pkthdr_iface.h"
 
-#include <luajit-2.0/lua.hpp>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "lua/lua_table.h"
+#include <string.h>
+#include <luajit-2.0/lua.hpp>
 
 extern "C" {
 #include <daq.h>
 }
 
-static void daq_header_set(lua_State* L, int tindex, struct _daq_pkthdr& daq)
+#include "lua/lua_arg.h"
+#include "lua/lua_table.h"
+
+
+static void set_fields(lua_State* L, int tindex, struct _daq_pkthdr& self)
 {
     Lua::Table table(L, tindex);
 
-    table.get_field("caplen", daq.caplen);
-    table.get_field("pktlen", daq.pktlen);
-    table.get_field("ingress_index", daq.ingress_index);
-    table.get_field("egress_index", daq.egress_index);
-    table.get_field("ingress_group", daq.ingress_group);
-    table.get_field("egress_group", daq.egress_group);
-    table.get_field("flags", daq.flags);
-    table.get_field("opaque", daq.opaque);
-    table.get_field("flow_id", daq.flow_id);
-    table.get_field("address_space_id", daq.address_space_id);
+    table.get_field("caplen", self.caplen);
+    table.get_field("pktlen", self.pktlen);
+    table.get_field("ingress_index", self.ingress_index);
+    table.get_field("egress_index", self.egress_index);
+    table.get_field("ingress_group", self.ingress_group);
+    table.get_field("egress_group", self.egress_group);
+    table.get_field("flags", self.flags);
+    table.get_field("opaque", self.opaque);
+#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
+#ifdef HAVE_DAQ_FLOW_ID
+    table.get_field("flow_id", self.flow_id);
+#endif
+    table.get_field("address_space_id", self.address_space_id);
+#endif
 
     // FIXIT-L: Do we want to be able to set the priv_ptr field?
+}
+
+static void get_fields(lua_State* L, int tindex, struct _daq_pkthdr& self)
+{
+    Lua::Table table(L, tindex);
+
+    table.set_field("caplen", self.caplen);
+    table.set_field("pktlen", self.pktlen);
+    table.set_field("ingress_index", self.ingress_index);
+    table.set_field("egress_index", self.egress_index);
+    table.set_field("ingress_group", self.ingress_group);
+    table.set_field("egress_group", self.egress_group);
+    table.set_field("flags", self.flags);
+    table.set_field("opaque", self.opaque);
+#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
+#ifdef HAVE_DAQ_FLOW_ID
+    table.set_field("flow_id", self.flow_id);
+#endif
+    table.set_field("address_space_id", self.address_space_id);
+#endif
 }
 
 static const luaL_Reg methods[] =
@@ -51,15 +82,12 @@ static const luaL_Reg methods[] =
         "new",
         [](lua_State* L)
         {
-            auto& self = DAQHeaderIface.create(L);
+            Lua::Args args(L);
 
-            // If we had an initializer argument, there
-            // will be two items on the stack now
-            if ( lua_gettop(L) > 1 )
-            {
-                luaL_checktype(L, 1, LUA_TTABLE);
-                daq_header_set(L, 1, self);
-            }
+            auto& self = DAQHeaderIface.create(L);
+            memset(&self, 0, sizeof(self));
+
+            args[1].opt_table(set_fields, self);
 
             return 1;
         }
@@ -67,39 +95,12 @@ static const luaL_Reg methods[] =
     {
         "get",
         [](lua_State* L)
-        {
-            auto& self = DAQHeaderIface.get(L);
-            lua_newtable(L);
-
-            Lua::Table table(L, lua_gettop(L));
-
-            table.set_field("caplen", self.caplen);
-            table.set_field("pktlen", self.pktlen);
-            table.set_field("ingress_index", self.ingress_index);
-            table.set_field("egress_index", self.egress_index);
-            table.set_field("ingress_group", self.ingress_group);
-            table.set_field("egress_group", self.egress_group);
-            table.set_field("flags", self.flags);
-            table.set_field("opaque", self.opaque);
-            table.set_field("flow_id", self.flow_id);
-            table.set_field("address_space_id", self.address_space_id);
-
-            // FIXIT-L: Do we want to be able to read the priv_ptr field?
-
-            return 1;
-        }
+        { return DAQHeaderIface.default_getter(L, get_fields); }
     },
     {
         "set",
         [](lua_State* L)
-        {
-            auto& self = DAQHeaderIface.get(L, 1);
-            luaL_checktype(L, 2, LUA_TTABLE);
-
-            daq_header_set(L, 2, self);
-
-            return 0;
-        }
+        { return DAQHeaderIface.default_setter(L, set_fields); }
     },
     { nullptr, nullptr }
 };
@@ -109,20 +110,12 @@ static const luaL_Reg metamethods[] =
     {
         "__tostring",
         [](lua_State* L)
-        {
-            auto& self = DAQHeaderIface.get(L);
-            lua_pushfstring(L, "%s@%p", DAQHeaderIface.name, &self);
-
-            return 1;
-        }
+        { return DAQHeaderIface.default_tostring(L); }
     },
     {
         "__gc",
         [](lua_State* L)
-        {
-            DAQHeaderIface.destroy(L);
-            return 0;
-        }
+        { return DAQHeaderIface.default_gc(L); }
     },
     { nullptr, nullptr }
 };

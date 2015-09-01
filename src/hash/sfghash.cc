@@ -706,9 +706,9 @@ int main(int argc, char** argv)
     {
         snprintf(str, sizeof(str), "KeyWord%d",i+1);
         str[sizeof(str) - 1] = '\0';
-        sfghash_add(t, str,  strupr(strdup(str)) );
+        sfghash_add(t, str,  strupr(SnortStrdup(str)) );
 
-        sfatom_add(str,  strupr(strdup(str)) );
+        sfatom_add(str,  strupr(SnortStrdup(str)) );
     }
 
     /* Find and Display Nodes in the Hash Table */

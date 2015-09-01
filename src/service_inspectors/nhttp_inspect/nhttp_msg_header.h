@@ -32,7 +32,8 @@ class NHttpMsgHeader : public NHttpMsgHeadShared
 {
 public:
     NHttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
-        NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_);
+        NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_,
+        const NHttpParaList* params_);
     void print_section(FILE* output) override;
     void gen_events() override;
     void update_flow() override;
@@ -40,6 +41,10 @@ private:
     // Dummy configurations to support MIME processing
     MailLogConfig mime_conf;
     DecodeConfig decode_conf;
+
+    void prepare_body();
+    void setup_file_processing();
+    void setup_decompression();
 };
 
 #endif

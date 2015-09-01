@@ -411,7 +411,7 @@ static int check_flowbits(
     bitop = stream.get_flow_bitop(p);
     if (!bitop)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FLOWBITS, "No FLOWBITS_DATA"); );
+        DebugMessage(DEBUG_FLOWBITS, "No FLOWBITS_DATA");
         return rval;
     }
 
@@ -664,7 +664,7 @@ static void processFlowbits(
         return;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FLOWBITS, "flowbits tag id parsing %s\n",flowbits_names); );
+    DebugFormat(DEBUG_FLOWBITS, "flowbits tag id parsing %s\n",flowbits_names);
 
     flowbits_name = SnortStrdup(flowbits_names);
 
@@ -834,15 +834,15 @@ static void printOutFlowbits(FLOWBITS_OP* flowbits)
 {
     int i;
 
-    DebugMessage(DEBUG_FLOWBITS,"flowbits: type = %d\n",flowbits->type);
-    DebugMessage(DEBUG_FLOWBITS,"flowbits: name = %s\n",flowbits->name);
-    DebugMessage(DEBUG_FLOWBITS,"flowbits: eval = %d\n",flowbits->eval);
-    DebugMessage(DEBUG_FLOWBITS,"flowbits: num_ids = %d\n",flowbits->num_ids);
-    DebugMessage(DEBUG_FLOWBITS,"flowbits: grp_id = %d\n",flowbits->group_id);
-    DebugMessage(DEBUG_FLOWBITS,"flowbits: group_name = %s\n",flowbits->group);
+    DebugFormat(DEBUG_FLOWBITS,"flowbits: type = %d\n",flowbits->type);
+    DebugFormat(DEBUG_FLOWBITS,"flowbits: name = %s\n",flowbits->name);
+    DebugFormat(DEBUG_FLOWBITS,"flowbits: eval = %d\n",flowbits->eval);
+    DebugFormat(DEBUG_FLOWBITS,"flowbits: num_ids = %d\n",flowbits->num_ids);
+    DebugFormat(DEBUG_FLOWBITS,"flowbits: grp_id = %d\n",flowbits->group_id);
+    DebugFormat(DEBUG_FLOWBITS,"flowbits: group_name = %s\n",flowbits->group);
     for (i = 0; i < flowbits->num_ids; i++)
     {
-        DebugMessage(DEBUG_FLOWBITS,"flowbits: value = %d\n",flowbits->ids[i]);
+        DebugFormat(DEBUG_FLOWBITS,"flowbits: value = %d\n",flowbits->ids[i]);
     }
 }
 

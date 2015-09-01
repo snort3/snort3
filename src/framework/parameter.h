@@ -32,10 +32,13 @@
 
 struct SO_PUBLIC Parameter
 {
+    typedef const char* (*RangeQuery)();
+
     enum Type
     {
         PT_TABLE,      // range is Parameter*, no default
         PT_LIST,       // range is Parameter*, no default
+        PT_DYNAMIC,    // range is RangeQuery function ptr
         PT_BOOL,       // if you are reading this, get more coffee
         PT_INT,        // signed 64 bits or less determined by range
         PT_REAL,       // double
@@ -55,11 +58,12 @@ struct SO_PUBLIC Parameter
     };
     const char* name;
     Type type;
-    const void* range;  // nullptr|const char*|const Parameter*
+    const void* range;  // nullptr|const char*|RangeQuery|const Parameter*
     const char* deflt;
     const char* help;
 
     const char* get_type() const;
+    const char* get_range() const;
 
     bool validate(class Value&) const;
 

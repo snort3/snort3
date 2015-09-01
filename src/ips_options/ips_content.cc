@@ -407,7 +407,7 @@ static int CheckANDPatternMatch(PatternMatchData* idx, Cursor& c)
     PROFILE_VARS;
     MODULE_PROFILE_START(contentPerfStats);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "CheckPatternANDMatch: "); );
+    DebugMessage(DEBUG_PATTERN_MATCH, "CheckPatternANDMatch: ");
 
     found = uniSearchReal(idx, c);
 
@@ -427,11 +427,11 @@ static int CheckANDPatternMatch(PatternMatchData* idx, Cursor& c)
     if ( found )
     {
         rval = DETECTION_OPTION_MATCH;
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Pattern match found\n"); );
+        DebugMessage(DEBUG_PATTERN_MATCH, "Pattern match found\n");
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Pattern match failed\n"); );
+        DebugMessage(DEBUG_PATTERN_MATCH, "Pattern match failed\n");
     }
 
     MODULE_PROFILE_END(contentPerfStats);
@@ -530,8 +530,7 @@ static void parse_offset(PatternMatchData* pmd, const char* data)
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "Pattern offset = %d\n",
-        pmd->offset); );
+    DebugFormat(DEBUG_PARSER, "Pattern offset = %d\n", pmd->offset);
 }
 
 static void parse_depth(PatternMatchData* pmd, const char* data)
@@ -571,8 +570,7 @@ static void parse_depth(PatternMatchData* pmd, const char* data)
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "Pattern depth = %d\n",
-        pmd->depth); );
+    DebugFormat(DEBUG_PATTERN_MATCH, "Pattern depth = %d\n", pmd->depth);
 }
 
 static void parse_distance(PatternMatchData* pmd, const char* data)
@@ -642,8 +640,7 @@ static void parse_within(PatternMatchData* pmd, const char* data)
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "Pattern within = %d\n",
-        pmd->depth); );
+    DebugFormat(DEBUG_PATTERN_MATCH, "Pattern within = %d\n", pmd->depth);
 
     pmd->relative = 1;
 }

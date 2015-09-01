@@ -3,12 +3,14 @@ plugin =
     type = "piglet",
     name = "inspector::telnet",
     test = function()
-        dofile(SCRIPT_DIR .. "/common.lua")
-        return run_all(tests)
-    end
+        dofile(SCRIPT_DIR .. "/../common.lua")
+        return run_tests(tests)
+    end,
+    -- FIXIT-L: Need this to keep Inspector.configure() happy
+    use_defaults = true
 }
 
-HEADER = [[
+IP4 = [[
 45  | 00  | 00  46 | 00 00 | 00 00 | 01 | 06
 00 00 | 00 00 00 01 | 00 00 00 02
 
@@ -19,7 +21,7 @@ HEADER = [[
 DATA = "abcdefghijklmnopqrstuvwxyz"
 
 get_packet = function()
-    return get_ipv4_packet(HEADER:as_content_hex(), DATA)
+    return packet.construct_ip4(IP4:encode_hex(), DATA)
 end
 
 tests =
@@ -59,7 +61,7 @@ tests =
         local p, rb = get_packet()
         local ib = RawBuffer.new()
 
-        local rv = Inspector.get_buf_from_key(0, p, ib)
+        local rv = Inspector.get_buf_from_id(0, p, ib)
         assert(not rv)
     end,
 
@@ -69,5 +71,22 @@ tests =
 
         spl = Inspector.get_splitter(true)
         assert(type(spl) == "userdata")
+    end,
+
+    configure = function()
+        assert(Inspector.configure())
+    end,
+
+    tinit = function()
+        Inspector.tinit()
+    end,
+
+    tterm = function()
+        Inspector.tterm()
+    end,
+
+    likes = function()
+        local p = Packet.new()
+        assert(not Inspector.likes(p))
     end
 }

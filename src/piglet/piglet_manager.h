@@ -47,7 +47,8 @@ public:
     static void add_plugin(Api*);
 
     static BasePlugin* instantiate(
-        Lua::State&, const std::string&, std::string&, std::string&);
+        Lua::State&, const std::string&,
+        std::string&, std::string&, bool = false);
 
     static void destroy(BasePlugin*);
 

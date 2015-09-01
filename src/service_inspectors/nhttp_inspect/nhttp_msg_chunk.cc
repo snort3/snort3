@@ -29,8 +29,9 @@
 using namespace NHttpEnums;
 
 NHttpMsgChunk::NHttpMsgChunk(const uint8_t* buffer, const uint16_t buf_size,
-    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_) :
-    NHttpMsgBody(buffer, buf_size, session_data_, source_id_, buf_owner, flow_)
+    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
+    const NHttpParaList* params_) :
+    NHttpMsgBody(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
 {
     transaction->set_body(this);
 }
@@ -41,7 +42,8 @@ void NHttpMsgChunk::print_section(FILE* output)
 {
     NHttpMsgSection::print_message_title(output, "chunked body");
     fprintf(output, "Cumulative octets %" PRIi64 "\n", body_octets);
-    data.print(output, "Data");
+    detect_data.print(output, "Detect data");
+    file_data.print(output, "File data");
     NHttpMsgSection::print_message_wrapup(output);
 }
 
@@ -64,7 +66,7 @@ void NHttpMsgChunk::update_flow()
     else
     {
         session_data->body_octets[source_id] = body_octets;
-        session_data->section_size_target[source_id] = DATA_BLOCK_SIZE;
+        update_depth();
         session_data->infractions[source_id] = infractions;
         session_data->events[source_id] = events;
     }

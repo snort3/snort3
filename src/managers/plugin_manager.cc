@@ -434,7 +434,7 @@ void PluginManager::show_plugins()
     PlugMap::iterator it;
 
     for ( it = plug_map.begin(); it != plug_map.end(); ++it )
-    { 
+    {
         Plugin& p = it->second;
 
         cout << Markup::item();
@@ -546,5 +546,25 @@ void PluginManager::instantiate(
 
     else
         assert(false);
+}
+
+const char* PluginManager::get_available_plugins(PlugType t)
+{
+    static std::string s;
+    s.clear();
+
+    for ( auto it = plug_map.begin(); it != plug_map.end(); ++it )
+    {
+        const auto* api = it->second.api;
+
+        if ( t != api->type )
+            continue;
+
+        if ( !s.empty() )
+            s += " | ";
+
+        s += api->name;
+    }
+    return s.c_str();
 }
 

@@ -61,6 +61,8 @@ if test "x$CXX" = "xg++"; then
     fi
 fi
 
+PKG_PROG_PKG_CONFIG
+
 #--------------------------------------------------------------------------
 # api options
 #--------------------------------------------------------------------------
@@ -471,7 +473,14 @@ fi
 AM_CONDITIONAL(BUILD_UNIT_TESTS, test "x$enable_unit_tests" = "xyes")
 
 if test "x$enable_unit_tests" = "xyes"; then
-    AC_CHECK_LIB(check,srunner_create)
+    PKG_CHECK_EXISTS([check], [ have_check_pkgconfig="yes" ], [ have_check_pkgconfig="no" ])
+
+    if test "${have_check_pkgconfig}" = "yes" ; then
+        CPPFLAGS="${CPPFLAGS} `pkg-config --cflags check 2>/dev/null`"
+        LIBS="${LIBS} `pkg-config --libs check 2>/dev/null`"
+    else
+        AC_CHECK_LIB(check,srunner_create)
+    fi
 fi
 
 #--------------------------------------------------------------------------
@@ -559,8 +568,6 @@ fi
 #--------------------------------------------------------------------------
 # luajit
 #--------------------------------------------------------------------------
-
-PKG_PROG_PKG_CONFIG
 
 PKG_CHECK_EXISTS([luajit], [ have_luajit_pkgconfig="yes" ], [ have_luajit_pkgconfig="no" ])
 
@@ -799,6 +806,24 @@ if test "x$have_daq_address_space_id" = "xyes"; then
         [DAQ version supports address space ID in header.])
 fi
 
+AC_MSG_CHECKING([for daq flow ID])
+AC_RUN_IFELSE(
+[AC_LANG_PROGRAM(
+[[
+#include <daq.h>
+]],
+[[
+   DAQ_PktHdr_t hdr;
+   hdr.flow_id = 0;
+]])],
+[have_daq_flow_id="yes"],
+[have_daq_flow_id="no"])
+AC_MSG_RESULT($have_daq_flow_id)
+if test "x$have_daq_flow_id" = "xyes"; then
+    AC_DEFINE([HAVE_DAQ_FLOW_ID],[1],
+        [DAQ version supports flow ID in header.])
+fi
+
 #--------------------------------------------------------------------------
 # zlib
 #--------------------------------------------------------------------------
@@ -984,6 +1009,7 @@ src/stream/Makefile \
 src/stream/base/Makefile \
 src/stream/ip/Makefile \
 src/stream/icmp/Makefile \
+src/stream/libtcp/Makefile \
 src/stream/tcp/Makefile \
 src/stream/udp/Makefile \
 src/stream/user/Makefile \

@@ -88,7 +88,7 @@ static inline StreamSplitter::Status smtp_paf_server(SmtpPafData* pfdata,
 
     if (pch != NULL)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Find end of line!\n"); );
+        DebugMessage(DEBUG_SMTP, "Find end of line!\n");
         *fp = (uint32_t)(pch - (const char*)data) + 1;
         return StreamSplitter::FLUSH;
     }
@@ -228,8 +228,8 @@ static inline bool process_command(SmtpPafData* pfdata,  uint8_t val)
         /* Continue finding the data length ...*/
         if (get_length(val, &pfdata->length) != SMTP_PAF_LENGTH_CONTINUE)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Find data length: %d\n",
-                pfdata->length); );
+            DebugFormat(DEBUG_SMTP, "Find data length: %d\n",
+                pfdata->length);
             pfdata->cmd_info.cmd_state = SMTP_PAF_CMD_DATA_END_STATE;
         }
         break;
@@ -262,7 +262,7 @@ static inline bool process_data(SmtpPafData* pfdata,  uint8_t data)
 {
     if (flush_based_length(pfdata)|| check_data_end(&(pfdata->data_end_state), data))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "End of data\n"); );
+        DebugMessage(DEBUG_SMTP, "End of data\n");
         /*Clean up states*/
         pfdata->smtp_state = SMTP_PAF_CMD_STATE;
         pfdata->end_of_data = true;
@@ -283,7 +283,7 @@ static inline StreamSplitter::Status smtp_paf_client(SmtpPafData* pfdata,
     uint32_t i;
     uint32_t boundary_start = 0;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "From client: %s \n", data); );
+    DebugFormat(DEBUG_SMTP, "From client: %s \n", data);
     for (i = 0; i < len; i++)
     {
         uint8_t ch = data[i];
@@ -292,7 +292,7 @@ static inline StreamSplitter::Status smtp_paf_client(SmtpPafData* pfdata,
         case SMTP_PAF_CMD_STATE:
             if (process_command(pfdata, ch))
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Flush command: %s \n", data); );
+                DebugFormat(DEBUG_SMTP, "Flush command: %s \n", data);
                 *fp = i + 1;
                 return StreamSplitter::FLUSH;
             }
@@ -300,7 +300,7 @@ static inline StreamSplitter::Status smtp_paf_client(SmtpPafData* pfdata,
         case SMTP_PAF_DATA_STATE:
             if (process_data(pfdata, ch))
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "Flush data!\n"); );
+                DebugMessage(DEBUG_SMTP, "Flush data!\n");
                 *fp = i + 1;
                 return StreamSplitter::FLUSH;
             }
@@ -359,12 +359,12 @@ StreamSplitter::Status SmtpSplitter::scan(
 
     if (flags & PKT_FROM_SERVER)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "PAF: From server.\n"); );
+        DebugMessage(DEBUG_SMTP, "PAF: From server.\n");
         return smtp_paf_server(pfdata, data, len, fp);
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_SMTP, "PAF: From client.\n"); );
+        DebugMessage(DEBUG_SMTP, "PAF: From client.\n");
         return smtp_paf_client(pfdata, data, len, fp);
     }
 }

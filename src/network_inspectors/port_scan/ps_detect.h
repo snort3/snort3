@@ -58,10 +58,10 @@ struct PortscanConfig
 
 struct PS_PROTO
 {
-    short connection_count;
-    short priority_count;
-    short u_ip_count;
-    short u_port_count;
+    int connection_count;
+    int priority_count;
+    int u_ip_count;
+    int u_port_count;
 
     unsigned short high_p;
     unsigned short low_p;
@@ -115,9 +115,9 @@ struct PS_PKT
 #define PS_TYPE_DISTPORTSCAN 0x08
 #define PS_TYPE_ALL          0x0f
 
-#define PS_SENSE_HIGH        1
+#define PS_SENSE_HIGH        3
 #define PS_SENSE_MEDIUM      2
-#define PS_SENSE_LOW         3
+#define PS_SENSE_LOW         1
 
 #define PS_ALERT_ONE_TO_ONE                1
 #define PS_ALERT_ONE_TO_ONE_DECOY          2

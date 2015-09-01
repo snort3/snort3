@@ -35,9 +35,11 @@ using namespace std;
 #include "help.h"
 #include "shell.h"
 #include "detection/detect.h"
+#include "framework/base_api.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
 #include "managers/module_manager.h"
+#include "managers/plugin_manager.h"
 #include "parser/config_file.h"
 #include "parser/parser.h"
 #include "parser/parse_utils.h"
@@ -111,6 +113,10 @@ static void x2s(const char* s)
 
 //-------------------------------------------------------------------------
 // parameters
+//
+// users aren't used to seeing the standard help format for command line
+// args so the few cases where there is a default, we include it in the
+// help as well.
 //-------------------------------------------------------------------------
 
 static const Parameter s_params[] =
@@ -118,6 +124,8 @@ static const Parameter s_params[] =
     { "-?", Parameter::PT_STRING, "(optional)", nullptr,
       "<option prefix> output matching command line option quick help (same as --help-options)" },
 
+    // FIXIT should use PluginManager::get_available_plugins(PT_LOGGER)
+    // but plugins not yet loaded upon set
     { "-A", Parameter::PT_STRING, nullptr, nullptr,
       "<mode> set alert mode: none, cmg, or alert_*" },
 
@@ -163,7 +171,7 @@ static const Parameter s_params[] =
 #endif
 
     { "-k", Parameter::PT_ENUM, "all|noip|notcp|noudp|noicmp|none", "all",
-      "<mode> checksum mode (all,noip,notcp,noudp,noicmp,none)" },
+      "<mode> checksum mode; default is all" },
 
     { "-L", Parameter::PT_STRING, nullptr, nullptr,
       "<mode> logging mode (none, dump, pcap, or log_*)" },
@@ -199,7 +207,7 @@ static const Parameter s_params[] =
       "<x=v> set config variable x equal to value v" },
 
     { "-s", Parameter::PT_INT, "68:65535", "1514",
-      "<snap> (same as --snaplen)" },
+      "<snap> (same as --snaplen); default is 1514" },
 
     { "-T", Parameter::PT_IMPLIED, nullptr, nullptr,
       "test and report on the current Snort configuration" },
@@ -238,7 +246,7 @@ static const Parameter s_params[] =
 
     { "-z", Parameter::PT_INT, "0:", "1",
       "<count> maximum number of packet threads (same as --max-packet-threads); "
-      "0 gets the number of CPU cores reported by the system" },
+      "0 gets the number of CPU cores reported by the system; default is 1" },
 
     { "--alert-before-pass", Parameter::PT_IMPLIED, nullptr, nullptr,
       "process alert, drop, sdrop, or reject before pass; "
@@ -402,7 +410,7 @@ static const Parameter s_params[] =
       "<pfx> prepend this to each output file" },
 
     { "--script-path", Parameter::PT_STRING, nullptr, nullptr,
-      "<path> where to find luajit scripts" },
+      "<path> to a luajit script or directory containing luajit scripts" },
 
 #ifdef BUILD_SHELL
     { "--shell", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -433,8 +441,11 @@ static const Parameter s_params[] =
       "use drop, sdrop, and reject rules to ignore session traffic when not inline" },
 
 #ifdef UNIT_TEST
-    { "--unit-test", Parameter::PT_STRING, nullptr, nullptr,
+    { "--unit-test", Parameter::PT_SELECT,
+      "silent | minimal | normal | verbose | env (export CK_VERBOSITY)", nullptr,
       "<verbosity> run unit tests with given libcheck output mode" },
+    { "--catch-tags", Parameter::PT_STRING, nullptr, nullptr,
+        "comma separated list of cat unit test tags" },
 #endif
     { "--version", Parameter::PT_IMPLIED, nullptr, nullptr,
       "show version number (same as -V)" },
@@ -792,7 +803,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_prefix = v.get_string();
 
     else if ( v.is("--script-path") )
-        ConfigScriptPath(sc, v.get_string());
+        ConfigScriptPaths(sc, v.get_string());
 
 #ifdef BUILD_SHELL
     else if ( v.is("--shell") )
@@ -825,6 +836,8 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 #ifdef UNIT_TEST
     else if ( v.is("--unit-test") )
         unit_test_mode(v.get_string());
+    else if ( v.is("--catch-tags") )
+        unit_test_catch_test_filter(v.get_string());
 #endif
     else if ( v.is("--version") )
         help_version(sc, v.get_string());

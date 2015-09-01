@@ -1018,16 +1018,18 @@ START_TEST (test_setup)
 {
     fail_unless(SetupCheck(_i) == 1, "SetupCheck()");
 }
-END_TEST START_TEST(test_event)
+END_TEST
+
+START_TEST(test_event)
 {
     fail_unless(EventCheck(_i) == 1, "EventCheck()");
 }
+END_TEST
 
-END_TEST START_TEST(test_cap)
+START_TEST(test_cap)
 {
     fail_unless(CapCheck(_i) == 1, "CapCheck()");
 }
-
 END_TEST
 
 Suite* TEST_SUITE_sfrf(void)

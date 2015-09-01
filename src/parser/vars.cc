@@ -68,6 +68,10 @@
 #include "file_api/libs/file_config.h"
 #include "framework/ips_option.h"
 
+#ifdef UNIT_TEST
+#include "test/catch.hpp"
+#endif
+
 //-------------------------------------------------------------------------
 // var node stuff
 //-------------------------------------------------------------------------
@@ -552,8 +556,8 @@ VarEntry* VarDefine(
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-        "VarDefine: name=%s value=%s\n",name,value); );
+    DebugFormat(DEBUG_PORTLISTS,
+        "VarDefine: name=%s value=%s\n",name,value);
 
     /* Check to see if this variable is just being aliased */
     if (var_table != NULL)
@@ -580,8 +584,8 @@ VarEntry* VarDefine(
         ParseAbort("could not expand var('%s').", name);
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
-        "VarDefine: name=%s value=%s (expanded)\n",name,value); );
+    DebugFormat(DEBUG_PORTLISTS,
+        "VarDefine: name=%s value=%s (expanded)\n",name,value);
 
     DisallowCrossTableDuplicateVars(sc, name, VAR_TYPE__DEFAULT);
 
@@ -792,7 +796,7 @@ const char* ExpandVars(SnortConfig* sc, const char* string)
 
     i = j = 0;
     l_string = strlen(string);
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES, "ExpandVars, Before: %s\n", string); );
+    DebugFormat(DEBUG_CONFIGRULES, "ExpandVars, Before: %s\n", string);
 
     while (i < l_string && j < (int)sizeof(estring) - 1)
     {
@@ -912,7 +916,7 @@ const char* ExpandVars(SnortConfig* sc, const char* string)
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES, "ExpandVars, After: %s\n", estring); );
+    DebugFormat(DEBUG_CONFIGRULES, "ExpandVars, After: %s\n", estring);
 
     return estring;
 }
@@ -922,7 +926,7 @@ void AddVarToTable(SnortConfig* sc, const char* name, const char* value)
     //TODO: snort.cfg and rules should use PortVar instead ...this allows compatability for now.
     if (strstr(name, "_PORT") || strstr(name, "PORT_"))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"PortVar\n"); );
+        DebugMessage(DEBUG_CONFIGRULES,"PortVar\n");
         PortVarDefine(sc, name, value);
     }
     else
@@ -931,3 +935,72 @@ void AddVarToTable(SnortConfig* sc, const char* name, const char* value)
     }
 }
 
+//--------------------------------------------------------------------------
+// unit tests 
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+TEST_CASE("config_set_var-success", "[vars]")
+{
+    SnortConfig *sc = new SnortConfig;
+
+    sc->var_list = NULL;
+
+    config_set_var(sc, "A=B");
+
+    REQUIRE(sc->var_list != NULL);
+    REQUIRE(sc->var_list->name != NULL);
+    REQUIRE(sc->var_list->value != NULL);
+    REQUIRE(*(sc->var_list->name) == 'A');
+    REQUIRE(*(sc->var_list->value) == 'B');
+}
+
+TEST_CASE("config_set_var-existing-success", "[vars]")
+{
+    SnortConfig *sc = new SnortConfig;
+    VarNode *vn1 = new VarNode;
+    VarNode *vn2 = new VarNode;
+
+    sc->var_list = vn1;
+    vn1->name = (char *)"C";
+    vn1->next = vn2;
+    vn2->name = (char *)"D";
+    vn2->next = NULL;
+
+    config_set_var(sc, "A=B");
+
+    REQUIRE(sc->var_list != NULL);
+    REQUIRE(sc->var_list->name != NULL);
+    REQUIRE(sc->var_list->value != NULL);
+    REQUIRE(*(sc->var_list->name) == 'A');
+    REQUIRE(*(sc->var_list->value) == 'B');
+}
+
+#ifdef fatal
+TEST_CASE("config_set_var-duplicate-error", "[vars]")
+{
+    SnortConfig *sc = new SnortConfig;
+    VarNode *vn1 = new VarNode;
+    VarNode *vn2 = new VarNode;
+
+    sc->var_list = vn1;
+    vn1->name = (char *)"C";
+    vn1->next = vn2;
+    vn2->name = (char *)"A";
+    vn2->next = NULL;
+
+    config_set_var(sc, "A=B");
+}
+#endif // #ifdef fatal
+
+#ifdef fatal
+TEST_CASE("config_set_var-no_equals_sign-error", "[vars]")
+{
+    SnortConfig *sc = new SnortConfig;
+
+    config_set_var(sc, "A");
+}
+#endif // #ifdef fatal
+
+#endif

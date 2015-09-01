@@ -3,9 +3,8 @@ plugin =
     type = "piglet",
     name = "piglet::event",
     test = function()
-        -- Put the dofile here so that it doesn't get loaded twice
-        dofile(SCRIPT_DIR .. "/common.lua")
-        return run_all(tests)
+        dofile(SCRIPT_DIR .. "/../common.lua")
+        return run_tests(tests)
     end
 }
 
@@ -45,20 +44,25 @@ SIGINFO_VALUES =
 
 tests =
 {
-    initialize = function()
+    init_default = function()
         local event = Event.new()
         assert(event)
     end,
 
+    init_with_table = function()
+        local event = Event.new(VALUES)
+        check.tables_equal(VALUES, event:get())
+    end,
+
     get_and_set = function()
         local event = Event.new()
-        assert_table_eq("get()", DEFAULT_VALUES, event:get())
-        assert_table_eq("get().sig_info", DEFAULT_SIGINFO_VALUES, event:get().sig_info)
+        check.tables_equal(DEFAULT_VALUES, event:get())
+        check.tables_equal(DEFAULT_SIGINFO_VALUES, event:get().sig_info)
 
         event:set(VALUES)
         event:set({ sig_info = SIGINFO_VALUES })
 
-        assert_table_eq("set()", VALUES, event:get())
-        assert_table_eq("get().sig_info", SIGINFO_VALUES, event:get().sig_info)
+        check.tables_equal(VALUES, event:get())
+        check.tables_equal(SIGINFO_VALUES, event:get().sig_info)
     end
 }

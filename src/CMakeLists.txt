@@ -79,58 +79,58 @@ add_executable( snort
     main.cc
 )
 
+# order libs to avoid undefined symbols
+# from gnu linker
 target_link_libraries( snort
-    main
     target_based
-    log
-    protocols
-    framework
-    normalize
-    perf_monitor
-    stream
-    stream_base
-    stream_ip
-    stream_icmp
-    stream_tcp
-    stream_udp
-    stream_user
-    stream_file
-    http_inspect
-    flow
-    parser
-    file_api
-    file
-    mime
-    control
-    filter
-    detection
-    packet_io
-    time
-    events
-    sfrt
-    sfip
-    hash
-    ports
-    utils
-    network_inspectors
-    search_engines
-    helpers
-    lua
-    decompress
-    ips_options
-    loggers
-    service_inspectors
-    stream
-    ips_actions
-    port_scan
     managers
+    main
+    loggers
     codecs
     ip_codecs
     misc_codecs
     ${STATIC_CODEC_LIBRARIES}
+    network_inspectors
+    service_inspectors
     ${STATIC_INSPECTOR_LIBRARIES}
-    ${UNIT_TESTS_LIBRARIES}
+    port_scan
+    stream
+    stream_base
+    stream_ip
+    stream_icmp
+    stream_libtcp
+    stream_tcp
+    stream_udp
+    stream_user
+    stream_file
+    file
+    file_api
+    mime
+    http_inspect
     ${PIGLET_LIBRARIES}
+    ips_options
+    parser
+    search_engines
+    flow
+    control
+    filter
+    detection
+    framework
+    time
+    ips_actions
+    events
+    hash
+    log
+    packet_io
+    helpers
+    lua
+    decompress
+    sfip
+    sfrt
+    protocols
+    ports
+    utils
+    ${UNIT_TESTS_LIBRARIES}
     ${EXTERNAL_LIBRARIES}
 )
 

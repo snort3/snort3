@@ -33,8 +33,7 @@ static const luaL_Reg methods[] =
         "open",
         [](lua_State* L)
         {
-            auto& self = LoggerIface.get(L);
-            self.open();
+            LoggerIface.get(L).open();
             return 0;
         }
     },
@@ -42,8 +41,7 @@ static const luaL_Reg methods[] =
         "close",
         [](lua_State* L)
         {
-            auto& self = LoggerIface.get(L);
-            self.close();
+            LoggerIface.get(L).close();
             return 0;
         }
     },
@@ -51,8 +49,7 @@ static const luaL_Reg methods[] =
         "reset",
         [](lua_State* L)
         {
-            auto& self = LoggerIface.get(L);
-            self.reset();
+            LoggerIface.get(L).reset();
             return 0;
         }
     },
@@ -60,14 +57,14 @@ static const luaL_Reg methods[] =
         "alert",
         [](lua_State* L)
         {
-            Lua::Arg arg(L);
+            Lua::Args args(L);
 
             auto& p = PacketIface.get(L, 1);
-            const char* msg = arg.check_string(2);
             auto& e = EventIface.get(L, 3);
 
             auto& self = LoggerIface.get(L);
 
+            const char* msg = args[2].check_string();
             self.alert(&p, msg, &e);
 
             return 0;
@@ -77,14 +74,14 @@ static const luaL_Reg methods[] =
         "log",
         [](lua_State* L)
         {
-            Lua::Arg arg(L);
+            Lua::Args args(L);
 
             auto& p = PacketIface.get(L, 1);
-            const char* msg = arg.check_string(2);
             auto& e = EventIface.get(L, 3);
 
             auto& self = LoggerIface.get(L);
 
+            const char* msg = args[2].check_string();
             self.log(&p, msg, &e);
 
             return 0;

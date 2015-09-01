@@ -2,16 +2,18 @@ plugin =
 {
     type = "piglet",
     name = "logger::alert_csv",
+    use_defaults = true,
     test = function()
+        dofile(SCRIPT_DIR .. "/../common.lua")
+
         Logger.open()
-        dofile(SCRIPT_DIR .. "/common.lua")
-        local rv = run_all(tests)
+        local rv = run_tests(tests)
         Logger.close()
         return rv
     end
 }
 
-HEADER = [[
+IP4 = [[
 45  | 00  | 00  46 | 00 00 | 00 00 | 01 | 06
 00 00 | 00 00 00 01 | 00 00 00 02
 
@@ -21,13 +23,9 @@ HEADER = [[
 
 DATA = "abcdefghijklmnopqrstuvwxyz"
 
-get_packet = function()
-    return get_ipv4_packet(HEADER:as_content_hex(), DATA)
-end
-
 tests =
 {
-    initialize = function()
+    exists = function()
         assert(Logger)
     end,
 
@@ -36,17 +34,19 @@ tests =
     end,
 
     alert = function()
-        local p, rb = get_packet()
+        local p = packet.construct_ip4(IP4:encode_hex(), DATA)
         local e = Event.new()
-        e:set({ generator = 135, id = 2 })
+
+        e:set { generator = 135, id = 2 }
 
         Logger.alert(p, "foo", e)
     end,
     
     log = function()
-        local p, rb = get_packet()
+        local p = packet.construct_ip4(IP4:encode_hex(), DATA)
         local e = Event.new()
-        e:set({ generator = 135, id = 2 })
+
+        e:set { generator = 135, id = 2 }
 
         Logger.log(p, "foo", e)
     end

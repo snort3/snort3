@@ -329,10 +329,10 @@ void print_option_tree(detection_option_tree_node_t* node, int level)
         offset++;
 
     DEBUG_WRAP(
-        DebugMessage(DEBUG_DETECT, "%d%*s%*d 0x%x\n",
-        level, indent - offset, option_type_str[node->option_type],
-        54 - indent, node->num_children,
-        node->option_data);
+        DebugFormat(DEBUG_DETECT, "%d%*s%*d 0x%x\n",
+            level, indent - offset, option_type_str[node->option_type],
+            54 - indent, node->num_children, node->option_data);
+
         for (i=0; i<node->num_children; i++)
             print_option_tree(node->children[i], level+1);
         );
@@ -474,11 +474,11 @@ int detection_option_node_evaluate(
                 if (otn->sigInfo.num_services && check_ports)
                 {
                     /* none of the services match */
-                    DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
+                    DebugFormat(DEBUG_DETECT,
                         "[**] SID %d not matched because of service mismatch (%d!=%d [**]\n",
                         otn->sigInfo.id,
                         eval_data->p->application_protocol_ordinal,
-                        otn->sigInfo.services[0].service_ordinal); );
+                        otn->sigInfo.services[0].service_ordinal);
                     break;  /* out of case */
                 }
             }

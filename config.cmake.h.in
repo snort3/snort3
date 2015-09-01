@@ -327,6 +327,8 @@
 /* DAQ version supports address space ID in header. */
 #cmakedefine HAVE_DAQ_ADDRESS_SPACE_ID 1
 
+/* DAQ version supports flow ID in header. */
+#cmakedefine HAVE_DAQ_FLOW_ID 1
 
 
 /* Available compiler options */
@@ -338,8 +340,5 @@
 #cmakedefine HAVE_LINUXTHREADS 1
 
 
-
-
 #endif
-
 

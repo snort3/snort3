@@ -32,6 +32,7 @@ using namespace std;
 
 #include "framework/module.h"
 #include "managers/module_manager.h"
+#include "managers/plugin_manager.h"
 #include "main.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
@@ -177,10 +178,8 @@ bool EventQueueModule::set(const char*, Value& v, SnortConfig* sc)
 // search engine module
 //-------------------------------------------------------------------------
 
-// FIXIT-L valid search methods should be obtained from available mpse plugins
-#define SEARCH_METHODS \
-    "ac_banded | ac_bnfa | ac_bnfa_q | ac_full | ac_full_q | " \
-    "ac_sparse | ac_sparse_bands | ac_std"
+static const char* get_search_methods()
+{ return PluginManager::get_available_plugins(PT_SEARCH_ENGINE); }
 
 static const Parameter search_engine_params[] =
 {
@@ -220,7 +219,7 @@ static const Parameter search_engine_params[] =
     { "inspect_stream_inserts", Parameter::PT_BOOL, nullptr, "false",
       "inspect reassembled payload - disabling is good for performance, bad for detection" },
 
-    { "search_method", Parameter::PT_SELECT, SEARCH_METHODS, "ac_bnfa_q",
+    { "search_method", Parameter::PT_DYNAMIC, (void*)get_search_methods, "ac_bnfa_q",
       "set fast pattern algorithm - choose available search engine" },
 
     { "split_any_any", Parameter::PT_BOOL, nullptr, "false",

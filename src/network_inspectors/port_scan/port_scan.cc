@@ -1028,7 +1028,7 @@ static const InspectApi sp_api =
         mod_dtor
     },
     IT_PROBE,
-    (uint16_t)PktType::IP,
+    (uint16_t)PktType::ANY_IP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

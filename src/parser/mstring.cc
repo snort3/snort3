@@ -54,9 +54,9 @@ int main()
 /*   shift=make_shift(find,sizeof(find)-1);
      skip=make_skip(find,sizeof(find)-1); */
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,"%d\n",
+    DebugFormat(DEBUG_PATTERN_MATCH,"%d\n",
         mSearch(test, sizeof(test) - 1, find,
-        sizeof(find) - 1, shift, skip)); );
+        sizeof(find) - 1, shift, skip));
 
     return 0;
 }
@@ -512,8 +512,8 @@ int mContainsSubstr(const char* buf, int b_len, const char* pat, int p_len)
         {
             if (m_cnt == (p_len - 1))
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                    "\n%ld compares for match\n", loopcnt); );
+                DebugFormat(DEBUG_PATTERN_MATCH,
+                    "\n%ld compares for match\n", loopcnt);
                 return 1;
             }
             m_cnt++;

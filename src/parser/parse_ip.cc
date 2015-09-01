@@ -44,8 +44,7 @@ sfip_var_t* sfip_var_from_string(const char* addr)
 
     ip_vartable = get_ips_policy()->ip_vartable;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Got address string: %s\n",
-        addr); );
+    DebugFormat(DEBUG_CONFIGRULES,"Got address string: %s\n", addr);
 
     ret = (sfip_var_t*)SnortAlloc(sizeof(sfip_var_t));
 

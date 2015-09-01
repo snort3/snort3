@@ -30,11 +30,11 @@
 
 static int init_from_string(lua_State* L)
 {
-    Lua::Arg arg(L);
+    Lua::Args args(L);
 
     size_t len = 0;
-    const char* s = arg.check_string(1, &len);
-    size_t size = arg.opt_size(2, len);
+    const char* s = args[1].check_string(len);
+    size_t size = args[2].opt_size(len);
 
     // instantiate and adjust size if necessary
     RawBufferIface.create(L, s, len).resize(size, '\0');
@@ -44,9 +44,9 @@ static int init_from_string(lua_State* L)
 
 static int init_from_size(lua_State* L)
 {
-    Lua::Arg arg(L);
+    Lua::Args args(L);
 
-    size_t size = arg.opt_size(1);
+    size_t size = args[1].opt_size();
 
     RawBufferIface.create(L, size, '\0');
 
@@ -59,9 +59,9 @@ static const luaL_Reg methods[] =
         "new",
         [](lua_State* L)
         {
-            Lua::Arg arg(L);
+            Lua::Args args(L);
 
-            if ( arg.is_string(1) )
+            if ( args[1].is_string() )
                 return init_from_string(L);
 
             return init_from_size(L);
@@ -73,7 +73,6 @@ static const luaL_Reg methods[] =
         {
             auto& self = RawBufferIface.get(L);
             lua_pushinteger(L, self.size());
-
             return 1;
         }
     },
@@ -81,11 +80,11 @@ static const luaL_Reg methods[] =
         "resize",
         [](lua_State* L)
         {
-            Lua::Arg arg(L);
+            Lua::Args args(L);
 
             auto& self = RawBufferIface.get(L, 1);
-            size_t new_size = arg.check_size(2);
-            
+            size_t new_size = args[2].check_size();
+
             self.resize(new_size, '\0');
 
             return 0;
@@ -95,13 +94,13 @@ static const luaL_Reg methods[] =
         "write",
         [](lua_State* L)
         {
-            Lua::Arg arg(L);
+            Lua::Args args(L);
 
             auto& self = RawBufferIface.get(L, 1);
 
             size_t len = 0;
-            const char* s = arg.check_string(2, &len);
-            size_t offset = arg.opt_size(3);
+            const char* s = args[2].check_string(len);
+            size_t offset = args[3].opt_size();
 
             size_t required = offset + len;
             if ( self.size() < required )
@@ -116,19 +115,19 @@ static const luaL_Reg methods[] =
         "read",
         [](lua_State* L)
         {
-            Lua::Arg arg(L);
+            Lua::Args args(L);
 
             auto& self = RawBufferIface.get(L, 1);
 
-            if ( arg.count > 2 )
+            if ( args.count > 2 )
             {
-                size_t start = arg.check_size(2, self.size());
-                size_t end = arg.check_size(3, start, self.size());
+                size_t start = args[2].check_size(self.size());
+                size_t end = args[3].check_size(start, self.size());
                 lua_pushlstring(L, self.data() + start, end - start);
             }
             else
             {
-                size_t end = arg.opt_size(2, self.size(), self.size());
+                size_t end = args[2].opt_size(self.size(), self.size());
                 lua_pushlstring(L, self.data(), end);
             }
 
@@ -145,17 +144,14 @@ static const luaL_Reg metamethods[] =
         [](lua_State* L)
         {
             auto& self = RawBufferIface.get(L);
-            lua_pushfstring(L, "%s@%p", RawBufferIface.name, &self);
+            lua_pushlstring(L, self.data(), self.size());
             return 1;
         }
     },
     {
         "__gc",
         [](lua_State* L)
-        {
-            RawBufferIface.destroy(L);
-            return 0;
-        }
+        { return RawBufferIface.default_gc(L); }
     },
     { nullptr, nullptr }
 };

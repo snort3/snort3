@@ -25,13 +25,6 @@
 #endif
 
 #include <stdio.h>
-#ifndef __USE_ISOC95
-# define __USE_ISOC95
-# include <wchar.h>
-# undef __USE_ISOC95
-#else
-# include <wchar.h>
-#endif
 #include <stdarg.h>
 #include <syslog.h>
 #include <stdlib.h>
@@ -40,54 +33,36 @@
 #include "snort_config.h"
 
 #ifdef DEBUG_MSGS
-const char* DebugMessageFile = NULL;  // FIXIT-M use access methods
-int DebugMessageLine = 0;  // FIXIT-M use access methods
 
-int DebugThis(uint64_t level)
+bool Debug::init = false;
+uint64_t Debug::mask = 0;
+
+bool Debug::enabled(uint64_t flag)
 {
-    if (!(level & GetDebugLevel()))
-        return 0;
+    if ( !init )
+    {
+        const char* b = getenv(DEBUG_BUILTIN);
+        const char* p = getenv(DEBUG_PLUGIN);
 
-    return 1;
+        mask = p ? (strtoul(p, nullptr, 0) << 32) : 0;
+        mask |= (b ? strtoul(b, NULL, 0) : 0);
+
+        init = true;
+    }
+
+    return (mask & flag) != 0;
 }
 
-uint64_t GetDebugLevel(void)
+void Debug::print(
+    const char* file, int line, uint64_t dbg, const char* fmt, ...)
 {
-    static int debug_init = 0;
-    static uint64_t debug_level = 0;
-
-    const char* key;
-
-    if ( debug_init )
-        return debug_level;
-
-    key = getenv(DEBUG_PP_VAR);
-
-    if ( key )
-        debug_level = strtoul(key, NULL, 0);
-
-    debug_level <<= 32;
-
-    key = getenv(DEBUG_VARIABLE);
-
-    if ( key )
-        debug_level |= strtoul(key, NULL, 0);
-
-    debug_init = 1;
-
-    return debug_level;
-}
-
-void DebugMessageFunc(uint64_t level, const char* fmt, ...)
-{
-    va_list ap;
-
-    if (!(level & GetDebugLevel()))
+    if ( !enabled(dbg) )
         return;
 
+    va_list ap;
     va_start(ap, fmt);
 
-    if ((snort_conf != NULL) && SnortConfig::daemon_mode())
+    if ( snort_conf and SnortConfig::daemon_mode())
     {
         char buf[STD_BUF];
         int buf_len = sizeof(buf);
@@ -96,10 +71,9 @@ void DebugMessageFunc(uint64_t level, const char* fmt, ...)
         buf[buf_len - 1] = '\0';
 
         /* filename and line number information */
-        if (DebugMessageFile != NULL)
+        if ( file )
         {
-            snprintf(buf, buf_len - 1, "%s:%d: ",
-                DebugMessageFile, DebugMessageLine);
+            snprintf(buf, buf_len - 1, "%s:%d: ", file, line);
             buf_ptr += strlen(buf);
             buf_len -= strlen(buf);
         }
@@ -109,60 +83,13 @@ void DebugMessageFunc(uint64_t level, const char* fmt, ...)
     }
     else
     {
-        if (DebugMessageFile != NULL)
-            printf("%s:%d: ", DebugMessageFile, DebugMessageLine);
+        if ( file )
+            printf("%s:%d: ", file, line);
         vprintf(fmt, ap);
     }
 
     va_end(ap);
 }
 
-#ifdef SF_WCHAR
-void DebugWideMessageFunc(uint64_t level, const wchar_t* fmt, ...)
-{
-    va_list ap;
-    wchar_t buf[STD_BUF+1];
-
-    if (!(level & GetDebugLevel()))
-    {
-        return;
-    }
-    buf[STD_BUF]= (wchar_t)0;
-
-    /* filename and line number information */
-    if (DebugMessageFile != NULL)
-        printf("%s:%d: ", DebugMessageFile, DebugMessageLine);
-
-    va_start(ap, fmt);
-
-    if (SnortConfig::daemon_mode())
-    {
-#ifdef HAVE_VSWPRINTF
-        vswprintf(buf, STD_BUF, fmt, ap);
-#endif
-        //syslog(LOG_DAEMON | LOG_DEBUG, "%s", buf);
-    }
-    else
-    {
-#ifdef HAVE_WPRINTF
-        vwprintf(fmt, ap);
-#endif
-    }
-
-    va_end(ap);
-}
-
-#endif
-#else /* DEBUG_MSGS */
-void DebugMessageFunc(uint64_t /*level*/, const char* /*fmt*/, ...)
-{
-}
-
-#ifdef SF_WCHAR
-void DebugWideMessageFunc(uint64_t /*level*/, const wchar_t* /*fmt*/, ...)
-{
-}
-
-#endif
 #endif /* DEBUG_MSGS */
 

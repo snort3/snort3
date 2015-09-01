@@ -96,6 +96,8 @@ private:
     NHttpEnums::MethodId method_id = NHttpEnums::METH__NOTPRESENT;
     int32_t status_code_num = NHttpEnums::STAT_NOTPRESENT;
     int64_t file_depth_remaining[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
+    int64_t detect_depth_remaining[2] = { NHttpEnums::STAT_NOTPRESENT,
+        NHttpEnums::STAT_NOTPRESENT };
     MimeSession* mime_state = nullptr;  // SRC_CLIENT only
 
     // number of user data octets seen so far (regular body or chunks)

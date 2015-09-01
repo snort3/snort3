@@ -36,14 +36,14 @@
 #include "pp_enc_state_iface.h"
 #include "pp_event_iface.h"
 #include "pp_flow_iface.h"
+#include "pp_ip_api_iface.h"
 #include "pp_packet_iface.h"
 #include "pp_raw_buffer_iface.h"
-#include "pp_raw_data_iface.h"
 
 class TestPiglet : public Piglet::BasePlugin
 {
 public:
-    TestPiglet(Lua::State& state, std::string target) : 
+    TestPiglet(Lua::State& state, std::string target) :
         BasePlugin(state, target) { }
 
     virtual bool setup() override;
@@ -60,9 +60,9 @@ bool TestPiglet::setup()
     install(L, EncStateIface);
     install(L, EventIface);
     install(L, FlowIface);
+    install(L, IpApiIface);
     install(L, PacketIface);
     install(L, RawBufferIface);
-    install(L, RawDataIface);
 
     return false;
 }

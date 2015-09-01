@@ -52,7 +52,7 @@ typedef struct _File_Stats
 
 extern FileStats file_stats;
 
-#define FILE_DEBUG_MSGS(msg) DEBUG_WRAP(DebugMessage(DEBUG_FILE, msg); )
+#define FILE_DEBUG_MSGS(msg) DebugMessage(DEBUG_FILE, msg)
 
 void print_file_stats();
 

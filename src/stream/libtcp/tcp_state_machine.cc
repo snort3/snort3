@@ -15,10 +15,31 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// lua_iface.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "lua_iface.h"
+// tcp_state_machine.cc author davis mcpherson <davmcphe@@cisco.com>
+// Created on: Jul 29, 2015
 
-#include <luajit-2.0/lua.hpp>
+#include "tcp_state_machine.h"
 
-namespace Lua { }
+const char* tcp_state_names[] =
+{ "TCP_LISTEN", "TCP_SYN_SENT", "TCP_SYN_RECV", "TCP_ESTABLISHED","TCP_FIN_WAIT1",
+  "TCP_FIN_WAIT2", "TCP_CLOSE_WAIT", "TCP_CLOSING", "TCP_LAST_ACK",
+  "TCP_TIME_WAIT", "TCP_CLOSED"
+};
+
+const char *tcp_event_names[] = { "TCP_SYN_SENT_EVENT", "TCP_SYN_RECV_EVENT",
+        "TCP_SYN_ACK_SENT_EVENT", "TCP_SYN_ACK_RECV_EVENT", "TCP_ACK_SENT_EVENT",
+        "TCP_ACK_RECV_EVENT", "TCP_DATA_SEG_SENT_EVENT", "TCP_DATA_SEG_RECV_EVENT",
+        "TCP_FIN_SENT_EVENT", "TCP_FIN_RECV_EVENT", "TCP_RST_SENT_EVENT", "TCP_RST_RECV_EVENT" };
+
+
+TcpStateMachine::~TcpStateMachine()
+{
+    // TODO Auto-generated destructor stub
+}
+TcpStateMachine::TcpStateMachine()
+{
+    // TODO Auto-generated constructor stub
+
+}
+

@@ -247,10 +247,14 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
             return StreamSplitter::FLUSH;
         }
     case SCAN_DISCARD:
+    case SCAN_DISCARD_PIECE:
         prepare_flush(session_data, flush_offset, SEC_DISCARD, cutter->get_num_flush(),
             cutter->get_octets_seen(), 0, 0, false, 0);
-        delete cutter;
-        cutter = nullptr;
+        if (cut_result == SCAN_DISCARD)
+        {
+            delete cutter;
+            cutter = nullptr;
+        }
         return StreamSplitter::FLUSH;
     case SCAN_FOUND:
     case SCAN_FOUND_PIECE:
@@ -335,7 +339,29 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             fprintf(NHttpTestManager::get_output_file(), "Discarded %u octets\n\n", len);
             fflush(NHttpTestManager::get_output_file());
         }
-        session_data->section_type[source_id] = SEC__NOTCOMPUTE;
+        if (flags & PKT_PDU_TAIL)
+        {
+            session_data->section_type[source_id] = SEC__NOTCOMPUTE;
+
+            // When we are skipping through a message body beyond flow depth this is the end of
+            // the line. Here we do the message section's normal job of updating the flow for the
+            // next stage.
+            if (session_data->cutter[source_id] == nullptr)
+            {
+                if (session_data->type_expected[source_id] == SEC_BODY)
+                {
+                    session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ?
+                        SEC_REQUEST : SEC_STATUS;
+                    session_data->half_reset(source_id);
+                }
+                else if (session_data->type_expected[source_id] == SEC_CHUNK)
+                {
+                    session_data->type_expected[source_id] = SEC_TRAILER;
+                    session_data->infractions[source_id].reset();
+                    session_data->events[source_id].reset();
+                }
+            }
+        }
         return nullptr;
     }
 

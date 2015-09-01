@@ -15,15 +15,18 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// pp_raw_data_iface.h author Joel Cornett <jocornet@cisco.com>
+// pp_ip_api_iface.h author Joel Cornett <jocornet@cisco.com>
 
-#ifndef PP_RAW_DATA_IFACE_H
-#define PP_RAW_DATA_IFACE_H
+#ifndef PP_IP_API_IFACE_H
+#define PP_IP_API_IFACE_H
 
 #include "lua/lua_iface.h"
 
-struct RawData;
+namespace ip
+{
+class IpApi;
+}
 
-extern const struct Lua::TypeInterface<RawData> RawDataIface;
+extern const struct Lua::TypeInterface<ip::IpApi> IpApiIface;
 
 #endif

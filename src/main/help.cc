@@ -95,12 +95,20 @@ void help_args(const char* pfx)
         if ( p->help && (!n || !strncasecmp(name, pfx, n)) )
         {
             cout << Markup::item();
-            cout << Markup::emphasis_on();
 
+            cout << Markup::emphasis_on();
             cout << Markup::escape(p->name);
             cout << Markup::emphasis_off();
 
             cout << " " << Markup::escape(p->help);
+
+            if ( const char* r = p->get_range() )
+            {
+                if ( *r == '(' )
+                    cout << " " << r;
+                else
+                    cout << " (" << r << ")";
+            }
             cout << endl;
         }
         ++p;
@@ -147,7 +155,7 @@ enum HelpType
 static void show_help(SnortConfig* sc, const char* val, HelpType ht)
 {
     snort_conf = new SnortConfig;
-    ScriptManager::load_scripts(sc->script_path);
+    ScriptManager::load_scripts(sc->script_paths);
     PluginManager::load_plugins(sc->plugin_path);
     ModuleManager::init();
 

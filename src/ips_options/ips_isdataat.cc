@@ -167,8 +167,8 @@ int IsDataAtOption::eval(Cursor& c, Packet*)
 
     if (inBounds(c.buffer(), c.endo(), start_ptr))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-            "[*] IsDataAt succeeded!  there is data...\n"); );
+        DebugMessage(DEBUG_PATTERN_MATCH,
+            "[*] IsDataAt succeeded!  there is data...\n");
         rval = DETECTION_OPTION_MATCH;
     }
 

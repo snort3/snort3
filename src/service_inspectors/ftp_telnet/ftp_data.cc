@@ -127,8 +127,8 @@ static int SnortFTPData(Packet* p)
 
         if (!PROTO_IS_FTP(ftp_ssn))
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                "FTP-DATA Invalid FTP_SESSION retrieved durring lookup\n"); );
+            DebugMessage(DEBUG_FTPTELNET,
+                "FTP-DATA Invalid FTP_SESSION retrieved durring lookup\n");
 
             if (data_ssn->data_chan)
                 stream.set_ignore_direction(p->flow, SSN_DIR_BOTH);

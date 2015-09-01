@@ -306,9 +306,8 @@ static sfSFSValue* findFlowIPStats(SFFLOW* sfFlow, const sfip_t* src_addr, const
         node = sfxhash_get_node(sfFlow->ipMap, &key);
         if (!node)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_STREAM,
+            DebugMessage(DEBUG_STREAM,
                 "Key/Value pair didn't exist in the flow stats table and we couldn't add it!\n");
-                );
             return NULL;
         }
         memset(node->data, 0, sizeof(sfSFSValue));

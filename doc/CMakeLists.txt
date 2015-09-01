@@ -195,6 +195,19 @@ if ( MAKE_HTML_DOC OR MAKE_TEXT_DOC OR MAKE_PDF_DOC )
             "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.html"
             "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked"
         )
+
+        add_custom_target (
+            snort_online.html
+            COMMAND ${CMAKE_SOURCE_DIR}/doc/online_manual.sh
+            DEPENDS all_built_sources
+        )
+
+        add_custom_target (
+            dev_guide.html
+            COMMAND ${CMAKE_SOURCE_DIR}/doc/dev_guide.sh ${CMAKE_SOURCE_DIR}
+            DEPENDS all_built_sources
+        )
+
     endif ( MAKE_HTML_DOC )
 
     if ( MAKE_TEXT_DOC )

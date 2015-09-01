@@ -360,8 +360,8 @@ static int BoGetDirection(Packet* p, char* pkt_data)
         pkt_data++;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Data length = %lu\n", len); );
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "ID = %lu\n", id); );
+    DebugFormat(DEBUG_INSPECTOR, "Data length = %lu\n", len);
+    DebugFormat(DEBUG_INSPECTOR, "ID = %lu\n", id);
 
     /* Do more len checking */
 
@@ -400,17 +400,17 @@ static int BoGetDirection(Packet* p, char* pkt_data)
 
     if ( type & 0x80 )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Partial packet\n"); );
+        DebugMessage(DEBUG_INSPECTOR, "Partial packet\n");
     }
     if ( type & 0x40 )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Continued packet\n"); );
+        DebugMessage(DEBUG_INSPECTOR, "Continued packet\n");
     }
 
     /* Extract type of BO packet */
     type = type & 0x3F;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Type = 0x%x\n", type); );
+    DebugFormat(DEBUG_INSPECTOR, "Type = 0x%x\n", type);
 
     /* Only examine data if this is a ping request or response */
     if ( type == BO_TYPE_PING )
@@ -528,9 +528,9 @@ void BackOrifice::eval(Packet* p)
 
                 if (*magic_data != plaintext)
                 {
-                    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
+                    DebugFormat(DEBUG_INSPECTOR,
                         "Failed check one on 0x%X : 0x%X\n",
-                        *magic_data, plaintext); );
+                        *magic_data, plaintext);
                     MODULE_PROFILE_END(boPerfStats);
                     return;
                 }
@@ -540,21 +540,21 @@ void BackOrifice::eval(Packet* p)
             }
 
             /* if we fall thru there's a detect */
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
+            DebugMessage(DEBUG_INSPECTOR,
                 "Detected Back Orifice Data!\n");
-                DebugMessage(DEBUG_PLUGIN, "hash value: %d\n", key); );
+                DebugFormat(DEBUG_INSPECTOR, "hash value: %d\n", key);
 
             bo_direction = BoGetDirection(p, pkt_data);
 
             if ( bo_direction == BO_FROM_CLIENT )
             {
                 SnortEventqAdd(GID_BO, BO_CLIENT_TRAFFIC_DETECT);
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Client packet\n"); );
+                DebugMessage(DEBUG_INSPECTOR, "Client packet\n");
             }
             else if ( bo_direction == BO_FROM_SERVER )
             {
                 SnortEventqAdd(GID_BO, BO_SERVER_TRAFFIC_DETECT);
-                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Server packet\n"); );
+                DebugMessage(DEBUG_INSPECTOR, "Server packet\n");
             }
             else
             {

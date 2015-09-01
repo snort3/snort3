@@ -105,8 +105,7 @@ uint32_t SFAT_NumberOfHosts(void)
 
 void FreeApplicationEntry(ApplicationEntry* app)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "Freeing ApplicationEntry: 0x%x\n",
-        app); );
+    DebugFormat(DEBUG_ATTRIBUTE, "Freeing ApplicationEntry: 0x%x\n", app);
     free(app);
 }
 
@@ -127,8 +126,7 @@ void FreeHostEntry(HostAttributeEntry* host)
     if (!host)
         return;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE, "Freeing HostEntry: 0x%x\n",
-        host); );
+    DebugFormat(DEBUG_ATTRIBUTE, "Freeing HostEntry: 0x%x\n", host);
 
     /* Free the service list */
     if (host->services)
@@ -203,11 +201,11 @@ void PrintHostAttributeEntry(HostAttributeEntry* host)
     if (!host)
         return;
 
-    DebugMessage(DEBUG_ATTRIBUTE, "Host IP: %s/%d\n",
+    DebugFormat(DEBUG_ATTRIBUTE, "Host IP: %s/%d\n",
         inet_ntoa(&host->ipAddr),
         host->ipAddr.bits);
 
-    DebugMessage(DEBUG_ATTRIBUTE,
+    DebugFormat(DEBUG_ATTRIBUTE,
         "\tPolicy Information: frag:%s (%u) stream: %s (%u)\n",
         "look-me-up", host->hostInfo.fragPolicy,
         "look-me-up", host->hostInfo.streamPolicy);
@@ -216,8 +214,8 @@ void PrintHostAttributeEntry(HostAttributeEntry* host)
 
     for (i=0, app = host->services; app; app = app->next,i++)
     {
-        DebugMessage(DEBUG_ATTRIBUTE, "\tService #%d:\n", i);
-        DebugMessage(DEBUG_ATTRIBUTE, "\t\tIPProtocol: %s\tPort: %s\tProtocol %s\n",
+        DebugFormat(DEBUG_ATTRIBUTE, "\tService #%d:\n", i);
+        DebugFormat(DEBUG_ATTRIBUTE, "\t\tIPProtocol: %s\tPort: %s\tProtocol %s\n",
             app->ipproto, app->port, app->protocol);
     }
     if (i==0)
@@ -226,13 +224,13 @@ void PrintHostAttributeEntry(HostAttributeEntry* host)
     DebugMessage(DEBUG_ATTRIBUTE, "\tClients:\n");
     for (i=0, app = host->clients; app; app = app->next,i++)
     {
-        DebugMessage(DEBUG_ATTRIBUTE, "\tClient #%d:\n", i);
-        DebugMessage(DEBUG_ATTRIBUTE, "\t\tIPProtocol: %s\tProtocol %s\n",
+        DebugFormat(DEBUG_ATTRIBUTE, "\tClient #%d:\n", i);
+        DebugFormat(DEBUG_ATTRIBUTE, "\t\tIPProtocol: %s\tProtocol %s\n",
             app->ipproto, app->protocol);
 
         if (app->fields & APPLICATION_ENTRY_PORT)
         {
-            DebugMessage(DEBUG_ATTRIBUTE, "\t\tPort: %s\n", app->port);
+            DebugFormat(DEBUG_ATTRIBUTE, "\t\tPort: %s\n", app->port);
         }
     }
     if (i==0)

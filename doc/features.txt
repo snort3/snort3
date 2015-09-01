@@ -1,4 +1,4 @@
-Listed below are the features that must be explicitly enabled so they are built
+The features listed below must be explicitly enabled so they are built
 into the Snort binary.  For a full list of build features, run ./configure
 --help.
 

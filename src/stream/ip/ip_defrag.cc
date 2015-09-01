@@ -459,7 +459,7 @@ static inline int FragCheckFirstLast(const Packet* const p,
     {
         ft->frag_flags |= FRAG_GOT_FIRST;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "Got first frag\n"); );
+        DebugMessage(DEBUG_FRAG, "Got first frag\n");
     }
     else if ((!(p->ptrs.decode_flags & DECODE_MF)) && (frag_offset > 0)) /* set for last frag too
                                                                            */
@@ -474,7 +474,7 @@ static inline int FragCheckFirstLast(const Packet* const p,
 
         if (ft->frag_flags & FRAG_GOT_LAST)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "Got last frag again!\n"); );
+            DebugMessage(DEBUG_FRAG, "Got last frag again!\n");
             switch (ft->frag_policy)
             {
             case FRAG_POLICY_BSD:
@@ -539,10 +539,10 @@ static inline int FragCheckFirstLast(const Packet* const p,
         {
             ft->calculated_size = endOfThisFrag;
 
-            DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "Got last frag, Bytes: %d, "
+            DebugFormat(DEBUG_FRAG, "Got last frag, Bytes: %d, "
                 "Calculated size: %d\n",
                 ft->frag_bytes,
-                ft->calculated_size); );
+                ft->calculated_size);
         }
     }
 
@@ -551,9 +551,9 @@ static inline int FragCheckFirstLast(const Packet* const p,
         ft->frag_flags |= FRAG_NO_BSD_VULN;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "Frag Status: %s:%s\n",
+    DebugFormat(DEBUG_FRAG, "Frag Status: %s:%s\n",
         ft->frag_flags&FRAG_GOT_FIRST ? "FIRST" : "No FIRST",
-        ft->frag_flags&FRAG_GOT_LAST ? "LAST" : "No LAST"); );
+        ft->frag_flags&FRAG_GOT_LAST ? "LAST" : "No LAST");
     return retVal;
 }
 
@@ -659,9 +659,9 @@ static inline int checkTinyFragments(
         {
             if (p->dsize <= engine->min_fragment_length)
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+                DebugFormat(DEBUG_FRAG,
                     "Frag: Received fragment size(%d) is not more than configured min_fragment_length (%d)\n",
-                    p->dsize, engine->min_fragment_length); );
+                    p->dsize, engine->min_fragment_length);
                 EventTinyFragments(engine);
                 return 1;
             }
@@ -669,9 +669,9 @@ static inline int checkTinyFragments(
             ///detect tiny fragments after processing overlaps.
             if (trimmedLength <= engine->min_fragment_length)
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+                DebugFormat(DEBUG_FRAG,
                     "Frag: # of New octets in Received fragment(%d) is not more than configured min_fragment_length (%d)\n",
-                    trimmedLength, engine->min_fragment_length); );
+                    trimmedLength, engine->min_fragment_length);
                 EventTinyFragments(engine);
                 return 1;
             }
@@ -693,8 +693,8 @@ int drop_all_fragments(
     //drop this and all following fragments
     if (ft && !(ft->frag_flags & FRAG_DROP_FRAGMENTS))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-            "Frag: Will drop all fragments on this packet\n"); );
+        DebugMessage(DEBUG_FRAG,
+            "Frag: Will drop all fragments on this packet\n");
         ft->frag_flags |= FRAG_DROP_FRAGMENTS;
     }
 
@@ -712,8 +712,8 @@ int drop_all_fragments(
  */
 static inline int FragIsComplete(FragTracker* ft)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-        "[$] Checking completion criteria\n"); );
+    DebugMessage(DEBUG_FRAG,
+        "[$] Checking completion criteria\n");
 
     /*
      * check to see if the first and last frags have arrived
@@ -721,8 +721,8 @@ static inline int FragIsComplete(FragTracker* ft)
     if ((ft->frag_flags & FRAG_GOT_FIRST) &&
         (ft->frag_flags & FRAG_GOT_LAST))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-            "   Got First and Last frags\n"); );
+        DebugMessage(DEBUG_FRAG,
+            "   Got First and Last frags\n");
 
         /*
          * if we've accumulated enough data to match the calculated size
@@ -730,8 +730,8 @@ static inline int FragIsComplete(FragTracker* ft)
          */
         if (ft->frag_bytes == ft->calculated_size)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                "   [!] frag_bytes = calculated_size!\n"); );
+            DebugMessage(DEBUG_FRAG,
+                "   [!] frag_bytes = calculated_size!\n");
 
             sfBase.iFragCompletes++;
 
@@ -740,17 +740,17 @@ static inline int FragIsComplete(FragTracker* ft)
 
         if (ft->frag_bytes > ft->calculated_size)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                "   [!] frag_bytes > calculated_size!\n"); );
+            DebugMessage(DEBUG_FRAG,
+                "   [!] frag_bytes > calculated_size!\n");
 
             sfBase.iFragCompletes++;
 
             return 1;
         }
 
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+        DebugFormat(DEBUG_FRAG,
             "   Calc size (%d) != frag bytes (%d)\n",
-            ft->calculated_size, ft->frag_bytes); );
+            ft->calculated_size, ft->frag_bytes);
 
         /*
          * no dice
@@ -758,9 +758,9 @@ static inline int FragIsComplete(FragTracker* ft)
         return 0;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+    DebugFormat(DEBUG_FRAG,
         "   Missing First or Last frags (frag_flags: 0x%X)\n",
-        ft->frag_flags); );
+        ft->frag_flags);
 
     return 0;
 }
@@ -814,9 +814,9 @@ static void FragRebuild(FragTracker* ft, Packet* p)
             /* Adjust the IP header size in pseudo packet for the new length */
             uint8_t new_ip_hlen = ip::IP4_HEADER_LEN + ft->ip_options_len;
 
-            DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+            DebugFormat(DEBUG_FRAG,
                 "Adjusting IP Header to %d bytes\n",
-                new_ip_hlen); );
+                new_ip_hlen);
             iph->set_hlen(new_ip_hlen >> 2);
 
             ret = SafeMemcpy(rebuild_ptr, ft->ip_options_data,
@@ -843,8 +843,8 @@ static void FragRebuild(FragTracker* ft, Packet* p)
         iph->ip_off = 0x0000;
         dpkt->ptrs.decode_flags &= ~DECODE_FRAG;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-            "[^^] Walking fraglist:\n"); );
+        DebugMessage(DEBUG_FRAG,
+            "[^^] Walking fraglist:\n");
     }
 
     /*
@@ -852,7 +852,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
      */
     for (frag = ft->fraglist; frag; frag = frag->next)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+        DebugFormat(DEBUG_FRAG,
             "   frag: %p\n"
             "   frag->data: %p\n"
             "   frag->offset: %d\n"
@@ -860,7 +860,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
             "   frag->prev: %p\n"
             "   frag->next: %p\n",
             frag, frag->data, frag->offset,
-            frag->size, frag->prev, frag->next); );
+            frag->size, frag->prev, frag->next);
 
         /*
          * We somehow got a frag that had data beyond the calculated
@@ -934,8 +934,8 @@ static void FragRebuild(FragTracker* ft, Packet* p)
     /*
      * process the packet through the detection engine
      */
-    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-        "Processing rebuilt packet:\n"); );
+    DebugMessage(DEBUG_FRAG,
+        "Processing rebuilt packet:\n");
 
     ip_stats.reassembles++;
 
@@ -946,9 +946,8 @@ static void FragRebuild(FragTracker* ft, Packet* p)
      * Note, that this won't print out the IP Options or any other
      * data that is established when the packet is decoded.
      */
-    if (DEBUG_FRAG & GetDebugLevel())
+    if ( Debug::enabled(DEBUG_FRAG) )
         LogIPPkt(dpkt);
-
 #endif
 
     encap_frag_cnt++;
@@ -958,8 +957,8 @@ static void FragRebuild(FragTracker* ft, Packet* p)
     SnortEventqPop();
     encap_frag_cnt--;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-        "Done with rebuilt packet, marking rebuilt...\n"); );
+    DebugMessage(DEBUG_FRAG,
+        "Done with rebuilt packet, marking rebuilt...\n");
 
     ft->frag_flags = ft->frag_flags | FRAG_REBUILT;
 }
@@ -1035,8 +1034,8 @@ static void delete_frag(Fragment* frag)
  */
 static inline void delete_node(FragTracker* ft, Fragment* node)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "Deleting list node %p (p %p n %p)\n",
-        node, node->prev, node->next); );
+    DebugFormat(DEBUG_FRAG, "Deleting list node %p (p %p n %p)\n",
+        node, node->prev, node->next);
 
     if (node->prev)
     {
@@ -1073,8 +1072,8 @@ static void delete_tracker(FragTracker* ft)
     Fragment* idx = ft->fraglist;  /* pointer to the fraglist to delete */
     Fragment* dump_me = NULL;      /* ptr to the Fragment element to drop */
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-        "delete_tracker %d nodes to dump\n", ft->fraglist_count); );
+    DebugFormat(DEBUG_FRAG,
+        "delete_tracker %d nodes to dump\n", ft->fraglist_count);
 
     /*
      * delete all the nodes in a fraglist
@@ -1202,13 +1201,13 @@ void Defrag::process(Packet* p, FragTracker* ft)
 #ifdef DEBUG
         if ( p->is_ip4() )
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+            DebugFormat(DEBUG_FRAG,
                 "[FRAG] Fragment discarded due to low TTL "
                 "[0x%X->0x%X], TTL: %d  " "Offset: %d Length: %d\n",
                 ntohl(p->ptrs.ip_api.get_ip4h()->get_src()),
                 ntohl(p->ptrs.ip_api.get_ip4h()->get_dst()),
                 p->ptrs.ip_api.ttl(), frag_offset,
-                p->dsize); );
+                p->dsize);
         }
 #endif
 
@@ -1279,14 +1278,14 @@ void Defrag::process(Packet* p, FragTracker* ft)
 #ifdef DEBUG
             if ( p->is_ip4() )
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+                DebugFormat(DEBUG_FRAG,
                     "[FRAG] Fragment discarded due to large TTL Delta "
                     "[0x%X->0x%X], TTL: %d  orig TTL: %d "
                     "Offset: %d Length: %d\n",
                     ntohl(p->ptrs.ip_api.get_ip4h()->get_src()),
                     ntohl(p->ptrs.ip_api.get_ip4h()->get_dst()),
                     p->ptrs.ip_api.ttl(), ft->ttl, frag_offset,
-                    p->dsize); );
+                    p->dsize);
             }
 #endif
             ip_stats.discards++;
@@ -1324,8 +1323,8 @@ void Defrag::process(Packet* p, FragTracker* ft)
      */
     if (FragIsComplete(ft))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-            "[*] Fragment is complete, rebuilding!\n"); );
+        DebugMessage(DEBUG_FRAG,
+            "[*] Fragment is complete, rebuilding!\n");
 
         /*
          * if the frag completes but it's bad we're just going to drop it
@@ -1464,8 +1463,8 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
             /*
              * bonk/boink/jolt/etc attack...
              */
-            DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                "[..] Short frag (Bonk, etc) attack!\n"); );
+            DebugMessage(DEBUG_FRAG,
+                "[..] Short frag (Bonk, etc) attack!\n");
 
             EventAnomShortFrag(fe);
 
@@ -1488,8 +1487,8 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
             if (ft->frag_flags & FRAG_GOT_LAST)
             {
                 /* oversize frag attack */
-                DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                    "[..] Oversize frag pkt!\n"); );
+                DebugMessage(DEBUG_FRAG,
+                    "[..] Oversize frag pkt!\n");
 
                 EventAnomOversize(fe);
 
@@ -1505,8 +1504,8 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
         /*
          * zero size frag...
          */
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-            "[..] Zero size frag!\n"); );
+        DebugMessage(DEBUG_FRAG,
+            "[..] Zero size frag!\n");
 
         EventAnomZeroFrag(fe);
 
@@ -1519,8 +1518,8 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
         /*
          * oversize pkt...
          */
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-            "[..] Oversize frag!\n"); );
+        DebugMessage(DEBUG_FRAG,
+            "[..] Oversize frag!\n");
 
         EventAnomBadsizeLg(fe);
 
@@ -1539,9 +1538,9 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
 
     ft->frag_pkts++;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+    DebugFormat(DEBUG_FRAG,
         "Walking frag list (%d nodes), new frag %d@%d\n",
-        ft->fraglist_count, fragLength, frag_offset); );
+        ft->fraglist_count, fragLength, frag_offset);
 
     /*
      * Need to figure out where in the frag list this frag should go
@@ -1552,10 +1551,10 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
         i++;
         right = idx;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+        DebugFormat(DEBUG_FRAG,
             "%d right o %d s %d ptr %p prv %p nxt %p\n",
             i, right->offset, right->size, right,
-            right->prev, right->next); );
+            right->prev, right->next);
 
         if (right->offset >= frag_offset)
         {
@@ -1576,9 +1575,9 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
      */
     if (left)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+        DebugFormat(DEBUG_FRAG,
             "Dealing with previous (left) frag %d@%d\n",
-            left->size, left->offset); );
+            left->size, left->offset);
 
         /*
          * generate the overlap of the current packet fragment
@@ -1603,8 +1602,8 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
                     /*
                      * teardrop attack...
                      */
-                    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                        "[..] Teardrop attack!\n"); );
+                    DebugMessage(DEBUG_FRAG,
+                        "[..] Teardrop attack!\n");
 
                     EventAttackTeardrop(fe);
 
@@ -1634,17 +1633,17 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
                 frag_offset += (int16_t)overlap;
                 slide = (int16_t)overlap;
 
-                DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+                DebugFormat(DEBUG_FRAG,
                     "left overlap, new frag moves: %d bytes, "
-                    "slide: %d\n", overlap, slide); );
+                    "slide: %d\n", overlap, slide);
 
                 if (frag_end <= frag_offset)
                 {
                     /*
                      * zero size frag
                      */
-                    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                        "zero size frag\n"); );
+                    DebugMessage(DEBUG_FRAG,
+                        "zero size frag\n");
 
                     EventAnomZeroFrag(fe);
 
@@ -1652,8 +1651,8 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
                     return FRAG_INSERT_ANOMALY;
                 }
 
-                DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "left overlap, "
-                    "truncating new pkt (slide: %d)\n", slide); );
+                DebugFormat(DEBUG_FRAG, "left overlap, "
+                    "truncating new pkt (slide: %d)\n", slide);
 
                 break;
 
@@ -1708,17 +1707,17 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
                 }
 
 left_overlap_last:
-                DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "[!!] left overlap, "
+                DebugFormat(DEBUG_FRAG, "[!!] left overlap, "
                     "truncating old pkt (offset: %d overlap: %d)\n",
-                    left->offset, overlap); );
+                    left->offset, overlap);
 
                 if (left->size <= 0)
                 {
                     dump_me = left;
 
-                    DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "retrans, "
+                    DebugFormat(DEBUG_FRAG, "retrans, "
                         "dumping old frag (offset: %d overlap: %d)\n",
-                        dump_me->offset, overlap); );
+                        dump_me->offset, overlap);
 
                     left = left->prev;
 
@@ -1733,8 +1732,8 @@ left_overlap_last:
              */
             if (frag_end < frag_offset)
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                    "frag_end < frag_offset!"); );
+                DebugMessage(DEBUG_FRAG,
+                    "frag_end < frag_offset!");
 
                 EventAnomBadsizeSm(fe);
 
@@ -1744,16 +1743,16 @@ left_overlap_last:
         }
         else
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "No left overlap!\n"); );
+            DebugMessage(DEBUG_FRAG, "No left overlap!\n");
         }
     }
 
     if ((uint16_t)fragLength > pkt_snaplen)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+        DebugFormat(DEBUG_FRAG,
             "Overly large fragment %d 0x%x 0x%x %d\n",
             fragLength, p->ptrs.ip_api.dgram_len(), p->ptrs.ip_api.off(),
-            net_frag_offset); );
+            net_frag_offset);
         MODULE_PROFILE_END(fragInsertPerfStats);
         return FRAG_INSERT_FAILED;
     }
@@ -1766,9 +1765,9 @@ left_overlap_last:
      */
     while (right && (right->offset < frag_end) && !done)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+        DebugFormat(DEBUG_FRAG,
             "Next (right)fragment %d@%d\n",
-            right->size, right->offset); );
+            right->size, right->offset);
 
         trunc = 0;
         overlap = frag_end - right->offset;
@@ -1784,8 +1783,8 @@ left_overlap_last:
                     /*
                      * teardrop attack...
                      */
-                    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                        "[..] Teardrop attack!\n"); );
+                    DebugMessage(DEBUG_FRAG,
+                        "[..] Teardrop attack!\n");
 
                     EventAttackTeardrop(fe);
 
@@ -1805,8 +1804,8 @@ left_overlap_last:
             ip_stats.overlaps++;
             ft->overlap_count++;
 
-            DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                "Right-side overlap %d bytes\n", overlap); );
+            DebugFormat(DEBUG_FRAG,
+                "Right-side overlap %d bytes\n", overlap);
 
             /*
              * once again, engine-based policy processing
@@ -1832,18 +1831,18 @@ left_overlap_last:
                     right->size -= (int16_t)overlap;
                     ft->frag_bytes -= (int16_t)overlap;
                 }
-                DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "[!!] right overlap, "
+                DebugFormat(DEBUG_FRAG, "[!!] right overlap, "
                     "truncating old frag (offset: %d, "
                     "overlap: %d)\n", right->offset, overlap);
                     DebugMessage(DEBUG_FRAG,
-                    "Exiting right overlap loop...\n"); );
+                    "Exiting right overlap loop...\n");
                 if (right->size <= 0)
                 {
                     dump_me = right;
 
-                    DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "retrans, "
+                    DebugFormat(DEBUG_FRAG, "retrans, "
                         "dumping old frag (offset: %d overlap: %d)\n",
-                        dump_me->offset, overlap); );
+                        dump_me->offset, overlap);
 
                     right = right->next;
 
@@ -1859,12 +1858,12 @@ left_overlap_last:
             case FRAG_POLICY_SOLARIS:
             case FRAG_POLICY_BSD_RIGHT:
                 trunc = (int16_t)overlap;
-                DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "[!!] right overlap, "
+                DebugFormat(DEBUG_FRAG, "[!!] right overlap, "
                     "truncating new frag (offset: %d "
                     "overlap: %d)\n",
                     right->offset, overlap);
                     DebugMessage(DEBUG_FRAG,
-                    "Exiting right overlap loop...\n"); );
+                    "Exiting right overlap loop...\n");
                 break;
             }
 
@@ -1912,9 +1911,9 @@ left_overlap_last:
                     dump_me = right;
                     ft->frag_bytes -= right->size;
 
-                    DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "retrans, "
+                    DebugFormat(DEBUG_FRAG, "retrans, "
                         "dumping old frag (offset: %d overlap: %d)\n",
-                        dump_me->offset, overlap); );
+                        dump_me->offset, overlap);
 
                     right = right->next;
 
@@ -1960,18 +1959,18 @@ left_overlap_last:
                     trunc = (int16_t)overlap;
                 }
 
-                DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "right overlap, "
+                DebugFormat(DEBUG_FRAG, "right overlap, "
                     "rejecting new overlap data (overlap: %d, "
-                    "trunc: %d)\n", overlap, trunc); );
+                    "trunc: %d)\n", overlap, trunc);
 
                 if (frag_end - trunc <= frag_offset)
                 {
                     /*
                      * zero size frag
                      */
-                    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+                    DebugFormat(DEBUG_FRAG,
                         "zero size frag (len: %d  overlap: %d)\n",
-                        fragLength, overlap); );
+                        fragLength, overlap);
 
                     ip_stats.discards++;
 
@@ -2058,9 +2057,9 @@ right_overlap_last:
                 dump_me = right;
                 ft->frag_bytes -= right->size;
 
-                DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "retrans, "
+                DebugFormat(DEBUG_FRAG, "retrans, "
                     "dumping old frag (offset: %d overlap: %d)\n",
-                    dump_me->offset, overlap); );
+                    dump_me->offset, overlap);
 
                 right = right->next;
 
@@ -2078,7 +2077,7 @@ right_overlap_last:
         (ft->overlap_count >= fe->max_overlaps))
     {
         // overlap limit exceeded. Raise event on all subsequent fragments
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "Reached overlap limit.\n"); );
+        DebugMessage(DEBUG_FRAG, "Reached overlap limit.\n");
 
         EventExcessiveOverlap(fe);
 
@@ -2093,12 +2092,12 @@ right_overlap_last:
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-            "Fully truncated right overlap\n"); );
+        DebugMessage(DEBUG_FRAG,
+            "Fully truncated right overlap\n");
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-        "insert(): returning normally\n"); );
+    DebugMessage(DEBUG_FRAG,
+        "insert(): returning normally\n");
 
     MODULE_PROFILE_END(fragInsertPerfStats);
     return ret;
@@ -2131,10 +2130,10 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     /* Just to double check */
     if (fragLength > pkt_snaplen)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+        DebugFormat(DEBUG_FRAG,
             "Overly large fragment length:%d(0x%x) off:0x%x(%d)\n",
             fragLength, p->ptrs.ip_api.dgram_len(), p->ptrs.ip_api.off(),
-            p->ptrs.ip_api.off()); );
+            p->ptrs.ip_api.off());
 
         /* Ah, crap.  Return that tracker. */
         return 0;
@@ -2225,8 +2224,8 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
             /*
              * bonk/boink/jolt/etc attack...
              */
-            DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-                "[..] Short frag (Bonk, etc) attack!\n"); );
+            DebugMessage(DEBUG_FRAG,
+                "[..] Short frag (Bonk, etc) attack!\n");
 
             EventAnomShortFrag(&engine);
 
@@ -2299,10 +2298,10 @@ int Defrag::add_frag_node(FragTracker* ft,
         /*
          * zero size frag
          */
-        DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+        DebugFormat(DEBUG_FRAG,
             "zero size frag after left & right trimming "
             "(len: %d  slide: %d  trunc: %d)\n",
-            len, slide, trunc); );
+            len, slide, trunc);
 
         ip_stats.discards++;
 
@@ -2310,13 +2309,13 @@ int Defrag::add_frag_node(FragTracker* ft,
         newfrag = ft->fraglist;
         while (newfrag)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+            DebugFormat(DEBUG_FRAG,
                 "Size: %d, offset: %d, len %d, "
                 "Prev: 0x%x, Next: 0x%x, This: 0x%x, Ord: %d, %s\n",
                 newfrag->size, newfrag->offset,
                 newfrag->flen, newfrag->prev,
                 newfrag->next, newfrag, newfrag->ord,
-                newfrag->last ? "Last" : ""); );
+                newfrag->last ? "Last" : "");
             newfrag = newfrag->next;
         }
 #endif
@@ -2362,31 +2361,31 @@ int Defrag::add_frag_node(FragTracker* ft,
     newfrag->offset = frag_offset;
     newfrag->last = lastfrag;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+    DebugFormat(DEBUG_FRAG,
         "[+] Adding new frag, offset %d, size %d\n"
         "   nf->data = nf->fptr(%p) + slide (%d)\n"
         "   nf->size = len(%d) - slide(%d) - trunc(%d)\n",
         newfrag->offset, newfrag->size, newfrag->fptr,
-        slide, fragLength, slide, trunc); );
+        slide, fragLength, slide, trunc);
 
     /*
      * insert the new frag into the list
      */
     add_node(ft, left, newfrag);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+    DebugFormat(DEBUG_FRAG,
         "[*] Inserted new frag %d@%d ptr %p data %p prv %p nxt %p\n",
         newfrag->size, newfrag->offset, newfrag, newfrag->data,
-        newfrag->prev, newfrag->next); );
+        newfrag->prev, newfrag->next);
 
     /*
      * record the current size of the data in the fraglist
      */
     ft->frag_bytes += newfrag->size;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+    DebugFormat(DEBUG_FRAG,
         "[#] accumulated bytes on FragTracker %d, count"
-        " %d\n", ft->frag_bytes, ft->fraglist_count); );
+        " %d\n", ft->frag_bytes, ft->fraglist_count);
 
     *retFrag = newfrag;
     return FRAG_INSERT_OK;
@@ -2453,19 +2452,19 @@ int Defrag::dup_frag_node(
      */
     add_node(ft, left, newfrag);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+    DebugFormat(DEBUG_FRAG,
         "[*] Inserted new frag %d@%d ptr %p data %p prv %p nxt %p\n",
         newfrag->size, newfrag->offset, newfrag, newfrag->data,
-        newfrag->prev, newfrag->next); );
+        newfrag->prev, newfrag->next);
 
     /*
      * record the current size of the data in the fraglist
      */
     ft->frag_bytes += newfrag->size;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
+    DebugFormat(DEBUG_FRAG,
         "[#] accumulated bytes on FragTracker %d, count"
-        " %d\n", ft->frag_bytes, ft->fraglist_count); );
+        " %d\n", ft->frag_bytes, ft->fraglist_count);
 
     *retFrag = newfrag;
     return FRAG_INSERT_OK;
