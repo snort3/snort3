@@ -172,6 +172,9 @@ const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_BASIC
 const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_CAT
 { NORM_FIELD, true, norm_remove_lws, nullptr, nullptr, nullptr, nullptr, nullptr };
 
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_COOKIE
+{ NORM_FIELD, true, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+
 const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_DECIMAL
 { NORM_INT64, false, norm_decimal_integer, nullptr, nullptr, nullptr, nullptr, nullptr };
 
@@ -194,8 +197,8 @@ const HeaderNormalizer* const NHttpMsgHeadShared::header_norms[HEAD__MAX_VALUE] 
     [HEAD_DATE] = &NORMALIZER_BASIC,
     [HEAD_PRAGMA] = &NORMALIZER_BASIC,
     [HEAD_TRAILER] = &NORMALIZER_BASIC,
-    [HEAD_COOKIE] = &NORMALIZER_BASIC,
-    [HEAD_SET_COOKIE] = &NORMALIZER_BASIC,
+    [HEAD_COOKIE] = &NORMALIZER_COOKIE,
+    [HEAD_SET_COOKIE] = &NORMALIZER_COOKIE,
     [HEAD_TRANSFER_ENCODING] = &NORMALIZER_TRANSCODE,
     [HEAD_UPGRADE] = &NORMALIZER_BASIC,
     [HEAD_VIA] = &NORMALIZER_BASIC,

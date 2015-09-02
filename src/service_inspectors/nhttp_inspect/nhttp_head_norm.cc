@@ -131,8 +131,7 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count, Scratc
         {
             *working++ = ',';
             data_length++;
-            while (header_name_id[++curr_match] != head_id)
-                ;
+            while (header_name_id[++curr_match] != head_id);
         }
         int32_t growth = derive_header_content(header_value[curr_match].start,
             header_value[curr_match].length, working);
