@@ -67,7 +67,6 @@ FileFlows* FileFlows::get_file_flows(Flow* flow)
     {
         fd = new FileFlows;
         flow->set_application_data(fd);
-
     }
 
     return fd;
@@ -144,7 +143,7 @@ static inline void finish_signature_lookup(FileContext* context)
  *    true: continue processing/log/block this file
  *    false: ignore this file
  */
-bool FileFlows::process_file_context(FileContext* context, const uint8_t* file_data,
+bool FileFlows::file_process(FileContext* context, const uint8_t* file_data,
     int data_size, FilePosition position)
 {
     if ( FileConfig::trace_stream )
@@ -238,7 +237,7 @@ bool FileFlows::file_process(const uint8_t* file_data, int data_size,
 
     context = find_main_file_context(position, direction);
 
-    return process_file_context(context, file_data, data_size, position);
+    return file_process(context, file_data, data_size, position);
 }
 
 void FileFlows::set_file_name(uint8_t* fname, uint32_t name_size)

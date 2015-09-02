@@ -49,6 +49,8 @@ public:
     void set_file_name(uint8_t* fname, uint32_t name_size);
     bool file_process(const uint8_t* file_data, int data_size,
         FilePosition position, bool upload, bool suspend_block_verdict);
+    bool file_process(FileContext* context, const uint8_t* file_data, int data_size,
+        FilePosition position);
 
     //void handle_retransmit(Packet*) override;
     static unsigned flow_id;
@@ -56,8 +58,6 @@ public:
 private:
     void save_to_pending_context();
     FileContext* find_main_file_context(FilePosition position, FileDirection direction);
-    bool process_file_context(FileContext* context, const uint8_t* file_data, int data_size,
-        FilePosition position);
     FileContext* main_context = NULL;
     FileContext* pending_context = NULL;
     FileContext* current_context = NULL;

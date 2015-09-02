@@ -24,6 +24,7 @@
 #endif
 
 #include "file_api/file_api.h"
+#include "file_api/file_flows.h"
 #include "perf_monitor/perf.h"
 #include "time/profiler.h"
 #include "packet_io/sfdaq.h"
@@ -74,7 +75,11 @@ int FileSession::process(Packet* p)
     MODULE_PROFILE_START(file_ssn_stats);
 
     StreamFileConfig* c = get_file_cfg(p->flow->ssn_server);
-    file_api->file_process(p->flow, (uint8_t*)p->data, p->dsize, position(p), c->upload, false);
+
+    FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
+
+    if (file_flows)
+        file_flows->file_process((uint8_t*)p->data, p->dsize, position(p), c->upload, false);
     set_file_data((uint8_t*)p->data, p->dsize);
 
     MODULE_PROFILE_END(file_ssn_stats);

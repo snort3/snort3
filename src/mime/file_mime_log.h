@@ -45,6 +45,8 @@ struct MailLogConfig
     uint32_t email_hdrs_log_depth = 0;
 };
 
+class Flow;
+
 class MailLogState
 {
 public:
@@ -52,7 +54,7 @@ public:
     ~MailLogState();
     /* accumulate MIME attachment filenames. The filenames are appended by commas */
     int log_file_name (const uint8_t* start, int length, bool* disp_cont);
-    void set_file_name_from_log (void* pv);
+    void set_file_name_from_log (Flow* flow);
     int log_email_hdrs (const uint8_t* start, int length);
     int log_email_id (const uint8_t* start, int length, EmailUserType type);
     void get_file_name (uint8_t** buf, uint32_t* len);

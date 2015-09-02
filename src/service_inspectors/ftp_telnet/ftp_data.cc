@@ -83,8 +83,7 @@ static void FTPDataProcess(
     /* Filename needs to be set AFTER the first call to file_process( ) */
     if (data_ssn->filename && !(data_ssn->packet_flags & FTPDATA_FLG_FILENAME_SET))
     {
-        file_api->set_file_name(p->flow,
-            (uint8_t*)data_ssn->filename, data_ssn->file_xfer_info);
+        file_flows->set_file_name((uint8_t*)data_ssn->filename, data_ssn->file_xfer_info);
         data_ssn->packet_flags |= FTPDATA_FLG_FILENAME_SET;
     }
 

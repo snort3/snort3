@@ -486,7 +486,11 @@ static inline void setFileName(Packet* p)
     uint32_t len = 0;
     uint32_t type = 0;
     GetHttpUriData(p->flow, &buf, &len, &type);
-    file_api->set_file_name (p->flow, buf, len);
+
+    FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
+
+    if (file_flows)
+        file_flows->set_file_name (buf, len);
 }
 
 /*

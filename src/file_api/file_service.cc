@@ -56,31 +56,8 @@ bool FileService::file_signature_enabled = false;
 bool FileService::file_capture_enabled = false;
 bool FileService::file_processing_initiated = false;
 
-typedef struct _FileSession
-{
-    FileContext* current_context;
-    FileContext* main_context;
-    FileContext* pending_context;
-    uint32_t max_file_id;
-} FileSession;
-
-/*Main File Processing functions */
-static bool file_process(Flow* flow, uint8_t* file_data, int data_size,
-    FilePosition position, bool upload, bool suspend_block_verdict);
-
-static void set_file_name(Flow* flow, uint8_t* file_name, uint32_t name_size);
-
-
-FileAPI fileAPI;
-FileAPI* file_api = NULL;
-
-
 void FileService::init(void)
 {
-    fileAPI.file_process = &file_process;
-    fileAPI.set_file_name = &set_file_name;
-
-    file_api = &fileAPI;
     MimeSession::init();
     FileFlows::init();
 }
@@ -215,38 +192,3 @@ uint64_t get_file_processed_size(Flow* flow)
 
     return context->get_processed_bytes();
 }
-
-
-
-/*
- * Return:
- *    true: continue processing/log/block this file
- *    false: ignore this file
- */
-static bool file_process(Flow* flow, uint8_t* file_data, int data_size,
-    FilePosition position, bool upload, bool suspend_block_verdict)
-{
-
-}
-
-static void set_file_name(Flow* flow, uint8_t* fname, uint32_t name_size)
-{
-    FileFlows* file_flows = FileFlows::get_file_flows(flow);
-
-    if (!file_flows)
-        return ;
-
-    FileContext* context = file_flows->get_current_file_context();
-
-    if (context)
-        context->set_file_name(fname, name_size);
-    if ( FileConfig::trace_type )
-        context->print();
-
-}
-
-
-
-
-
-

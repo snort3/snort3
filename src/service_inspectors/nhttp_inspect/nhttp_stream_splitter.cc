@@ -26,6 +26,7 @@
 #include "nhttp_cutter.h"
 #include "nhttp_inspect.h"
 #include "nhttp_stream_splitter.h"
+#include "file_api/file_flows.h"
 
 using namespace NHttpEnums;
 
@@ -491,7 +492,9 @@ bool NHttpStreamSplitter::finish(Flow* flow)
     {
         if (source_id == SRC_SERVER)
         {
-            file_api->file_process(flow, nullptr, 0, SNORT_FILE_END, false, false);
+            FileFlows* file_flows = FileFlows::get_file_flows(flow);
+            if (file_flows)
+                file_flows->file_process(nullptr, 0, SNORT_FILE_END, false, false);
         }
         else if (session_data->mime_state != nullptr)
         {

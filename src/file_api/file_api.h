@@ -120,49 +120,6 @@ typedef File_Verdict (*File_signature_callback_func)(Packet* p, Flow* flow,
     uint32_t file_id);
 typedef void (*Log_file_action_func)(Flow* flow, int action);
 
-// FIXIT-L constify file_data et al
-typedef bool (*File_process_func)(
-    Flow* flow, uint8_t* file_data, int data_size, FilePosition,
-    bool upload, bool suspend_block_verdict);
-
-typedef void (*Set_file_name_func)(Flow* flow, uint8_t*, uint32_t);
-
-typedef struct _file_api
-{
-
-    /* File process function, called by preprocessors that provides file data
-     *
-     * Arguments:
-     *    void* p: packet pointer
-     *    uint8_t* file_data: file data
-     *    int data_size: file data size
-     *    FilePosition: file position
-     *    bool upload: upload or not
-     * Returns:
-     *    true: continue processing/log/block this file
-     *    false: ignore this file (no further processing needed)
-     */
-    File_process_func file_process;
-
-    /*-----File property functions--------*/
-
-    /* Set file name and the length of file name
-     *
-     * Arguments:
-     *    void* ssnptr: session pointer
-     *    uint8_t *file_name: file name to be saved
-     *    uint32_t name_len: file name length
-     * Returns
-     *    None
-     */
-    Set_file_name_func set_file_name;
-
-
-} FileAPI;
-
-/* To be set by Stream */
-SO_PUBLIC extern FileAPI* file_api;
-
 static inline void initFilePosition(FilePosition* position, uint64_t processed_size)
 {
     *position = SNORT_FILE_START;

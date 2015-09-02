@@ -33,6 +33,7 @@
 #include "utils/util.h"
 #include "utils/snort_bounds.h"
 #include "file_api/file_api.h"
+#include "file_api/file_flows.h"
 
 #define MAX_FILE                             1024
 #define MAX_EMAIL                            1024
@@ -171,18 +172,21 @@ int MailLogState::log_file_name(const uint8_t* start, int length, bool* disp_con
 }
 
 
-void MailLogState::set_file_name_from_log(void* pv)
+void MailLogState::set_file_name_from_log(Flow* flow)
 {
-    Flow* ssn = (Flow*)pv; // FIXIT-M eliminate need for cast
+    FileFlows* files = FileFlows::get_file_flows(flow);
+
+    if (!files)
+        return;
 
     if (file_logged > file_current)
     {
-        file_api->set_file_name(ssn, filenames + file_current,
+        files->set_file_name(filenames + file_current,
             file_logged - file_current);
     }
     else
     {
-        file_api->set_file_name(ssn, NULL, 0);
+        files->set_file_name(NULL, 0);
     }
 }
 
