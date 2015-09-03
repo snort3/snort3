@@ -19,8 +19,8 @@
 // stream_libtcp_unit_test.h author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jul 30, 2015
 
-#ifndef STREAM_LIBTCP_UNIT_TEST
-#define STREAM_LIBTCP_UNIT_TEST
+#ifndef STREAM_LIBTCP_UNIT_TEST_H
+#define STREAM_LIBTCP_UNIT_TEST_H
 
 #include <stdint.h>
 

@@ -63,7 +63,6 @@ Packet *get_syn_packet( Flow* flow )
 	pkt->dsize = 0;
 	pkt->packet_flags = PKT_FROM_CLIENT;
 	return pkt;
-
 }
 
 Packet *get_syn_ack_packet( Flow* flow )
@@ -76,7 +75,6 @@ Packet *get_syn_ack_packet( Flow* flow )
 	pkt->dsize = 0;
 	pkt->packet_flags = PKT_FROM_SERVER;
 	return pkt;
-
 }
 
 Packet *get_ack_packet( Flow* flow )
@@ -89,7 +87,6 @@ Packet *get_ack_packet( Flow* flow )
 	pkt->dsize = 0;
 	pkt->packet_flags = PKT_FROM_CLIENT;
 	return pkt;
-
 }
 
 Packet *get_fin_packet( Flow* flow )
@@ -102,7 +99,6 @@ Packet *get_fin_packet( Flow* flow )
 	pkt->dsize = 0;
 	pkt->packet_flags = PKT_FROM_CLIENT;
 	return pkt;
-
 }
 
 Packet *get_rst_packet( Flow* flow )
@@ -115,7 +111,6 @@ Packet *get_rst_packet( Flow* flow )
 	pkt->dsize = 0;
 	pkt->packet_flags = PKT_FROM_CLIENT;
 	return pkt;
-
 }
 
 Packet *get_data_packet( Flow* flow )
@@ -128,7 +123,6 @@ Packet *get_data_packet( Flow* flow )
 	pkt->dsize = 42;
 	pkt->packet_flags = PKT_FROM_CLIENT;
 	return pkt;
-
 }
 #endif
 
