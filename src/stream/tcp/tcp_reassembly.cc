@@ -1442,15 +1442,16 @@ bool StreamGetReassemblyFlushPolicyTcp(Flow *flow, char dir)
 
     tcpssn = (TcpSession*) flow->session;
 
-    if (dir & SSN_DIR_FROM_CLIENT)
+    if (dir & FROM_CLIENT)
     {
         return (char) tcpssn->client.flush_policy != STREAM_FLPOLICY_IGNORE;
     }
 
-    if (dir & SSN_DIR_FROM_SERVER)
+    if (dir & FROM_SERVER)
     {
         return (char) tcpssn->server.flush_policy != STREAM_FLPOLICY_IGNORE;
     }
+
     return false;
 }
 
