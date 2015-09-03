@@ -29,7 +29,6 @@ TcpSegmentDescriptor::TcpSegmentDescriptor( Flow* flow, Packet* pkt ) :
     tcph = pkt->ptrs.tcph;
     data_len = pkt->dsize;
 
-#if 1
     src_port = ntohs(tcph->th_sport);
     dst_port = ntohs(pkt->ptrs.tcph->th_dport);
     seq = ntohl(pkt->ptrs.tcph->th_seq);
@@ -37,14 +36,6 @@ TcpSegmentDescriptor::TcpSegmentDescriptor( Flow* flow, Packet* pkt ) :
     win = ntohs(pkt->ptrs.tcph->th_win);
     end_seq = seq + (uint32_t) pkt->dsize;
     ts = 0;
-#else
-	seq = pkt->ptrs.tcph->th_seq;
-    ack = pkt->ptrs.tcph->th_ack;
-    win = pkt->ptrs.tcph->th_win;
-    end_seq = seq + (uint32_t) pkt->dsize;
-    ts = 0;
-#endif
-
 }
 
 TcpSegmentDescriptor::~TcpSegmentDescriptor()
