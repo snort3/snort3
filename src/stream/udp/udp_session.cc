@@ -145,7 +145,7 @@ bool UdpSession::setup(Packet* p)
     flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
 
     flow->protocol = p->type();
-    flow->ssn_state.direction = FROM_SENDER;
+    flow->ssn_state.direction = FROM_CLIENT;
 
     StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
     flow->set_expire(p, pc->session_timeout);
@@ -154,10 +154,7 @@ bool UdpSession::setup(Packet* p)
     AddUDPSession(&sfBase);
 
     if (perfmon_config && (perfmon_config->perf_flags & SFPERF_FLOWIP))
-    {
-        UpdateFlowIPState(&sfFlow, &flow->client_ip,
-            &flow->server_ip, SFS_STATE_UDP_CREATED);
-    }
+        UpdateFlowIPState(&sfFlow, &flow->client_ip, &flow->server_ip, SFS_STATE_UDP_CREATED);
 
     if ( flow_con->expected_flow(flow, p) )
         return false;
@@ -180,18 +177,17 @@ void UdpSession::update_direction(
 
     if (sfip_equals(&flow->client_ip, ip) && (flow->client_port == port))
     {
-        if ((dir == SSN_DIR_FROM_SENDER) && (flow->ssn_state.direction == SSN_DIR_FROM_SENDER))
+        if ((dir == SSN_DIR_FROM_CLIENT) && (flow->ssn_state.direction == FROM_CLIENT))
         {
-            /* Direction already set as SENDER */
+            /* Direction already set as CLIENT */
             return;
         }
     }
     else if (sfip_equals(&flow->server_ip, ip) && (flow->server_port == port))
     {
-        if ((dir == SSN_DIR_FROM_RESPONDER) &&
-            (flow->ssn_state.direction == SSN_DIR_FROM_RESPONDER))
+        if ((dir == SSN_DIR_FROM_SERVER) && (flow->ssn_state.direction == FROM_SERVER))
         {
-            /* Direction already set as RESPONDER */
+            /* Direction already set as SERVER */
             return;
         }
     }

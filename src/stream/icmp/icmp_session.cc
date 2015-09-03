@@ -248,7 +248,7 @@ void IcmpSession::update_direction(char dir, const sfip_t* ip, uint16_t)
 {
     if (sfip_equals(&icmp_sender_ip, ip))
     {
-        if ((dir == SSN_DIR_FROM_SENDER) && (flow->ssn_state.direction == SSN_DIR_FROM_SENDER))
+        if ((dir == SSN_DIR_FROM_CLIENT) && (flow->ssn_state.direction == FROM_CLIENT))
         {
             /* Direction already set as SENDER */
             return;
@@ -256,8 +256,7 @@ void IcmpSession::update_direction(char dir, const sfip_t* ip, uint16_t)
     }
     else if (sfip_equals(&icmp_responder_ip, ip))
     {
-        if ((dir == SSN_DIR_FROM_RESPONDER) &&
-            (flow->ssn_state.direction == SSN_DIR_FROM_RESPONDER))
+        if ((dir == SSN_DIR_FROM_SERVER) && (flow->ssn_state.direction == FROM_SERVER))
         {
             /* Direction already set as RESPONDER */
             return;

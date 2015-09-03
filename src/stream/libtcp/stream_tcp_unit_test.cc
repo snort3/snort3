@@ -61,7 +61,7 @@ Packet *get_syn_packet( Flow* flow )
 	pkt->pkt = cooked_syn;
 	pkt->ptrs.tcph = ( tcp::TCPHdr * ) ( cooked_syn + 34 );
 	pkt->dsize = 0;
-	pkt->packet_flags &= PKT_FROM_CLIENT;
+	pkt->packet_flags = PKT_FROM_CLIENT;
 	return pkt;
 
 }
@@ -74,7 +74,7 @@ Packet *get_syn_ack_packet( Flow* flow )
 	pkt->pkt = cooked_syn_ack;
 	pkt->ptrs.tcph = ( tcp::TCPHdr * ) ( cooked_syn_ack + 34 );
 	pkt->dsize = 0;
-	pkt->packet_flags &= PKT_FROM_SERVER;
+	pkt->packet_flags = PKT_FROM_SERVER;
 	return pkt;
 
 }
@@ -87,7 +87,7 @@ Packet *get_ack_packet( Flow* flow )
 	pkt->pkt = cooked_ack;
 	pkt->ptrs.tcph = ( tcp::TCPHdr * ) ( cooked_ack + 34 );
 	pkt->dsize = 0;
-	pkt->packet_flags &= PKT_FROM_CLIENT;
+	pkt->packet_flags = PKT_FROM_CLIENT;
 	return pkt;
 
 }
@@ -100,7 +100,7 @@ Packet *get_fin_packet( Flow* flow )
 	pkt->pkt = cooked_fin;
 	pkt->ptrs.tcph = ( tcp::TCPHdr * ) ( cooked_fin + 34 );
 	pkt->dsize = 0;
-	pkt->packet_flags &= PKT_FROM_CLIENT;
+	pkt->packet_flags = PKT_FROM_CLIENT;
 	return pkt;
 
 }
@@ -113,7 +113,7 @@ Packet *get_rst_packet( Flow* flow )
 	pkt->pkt = cooked_rst;
 	pkt->ptrs.tcph = ( tcp::TCPHdr * ) ( cooked_rst + 34 );
 	pkt->dsize = 0;
-	pkt->packet_flags &= PKT_FROM_CLIENT;
+	pkt->packet_flags = PKT_FROM_CLIENT;
 	return pkt;
 
 }
@@ -126,7 +126,7 @@ Packet *get_data_packet( Flow* flow )
 	pkt->pkt = cooked_data;
 	pkt->ptrs.tcph = ( tcp::TCPHdr * ) ( cooked_data + 34 );
 	pkt->dsize = 42;
-	pkt->packet_flags &= PKT_FROM_CLIENT;
+	pkt->packet_flags = PKT_FROM_CLIENT;
 	return pkt;
 
 }

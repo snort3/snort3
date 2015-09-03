@@ -1178,7 +1178,8 @@ static inline void CopyMacAddr(Packet* p, TcpSession* tcpssn, int dir)
             tcpssn->client.mac_addr[i] = eh->ether_src[i];
             tcpssn->server.mac_addr[i] = eh->ether_dst[i];
         }
-    } else
+    }
+    else
     {
         /* Server is SRC */
         for (i = 0; i < 6; i++)
@@ -2904,7 +2905,8 @@ uint8_t TcpSession::missing_in_reassembled(uint8_t dir)
             return SSN_MISSING_BEFORE;
         else if (server.flags & TF_MISSING_PKT)
             return SSN_MISSING_AFTER;
-    } else if (dir & SSN_DIR_FROM_SERVER)
+    }
+    else if (dir & SSN_DIR_FROM_SERVER)
     {
         if ((client.flags & TF_MISSING_PKT)
                 && (client.flags & TF_MISSING_PREV_PKT))
@@ -2943,8 +2945,7 @@ void TcpSession::update_direction(char dir, const sfip_t* ip, uint16_t port)
 
     if (sfip_equals(&flow->client_ip, ip) && (flow->client_port == port))
     {
-        if ((dir == SSN_DIR_FROM_CLIENT)
-                && (flow->ssn_state.direction == SSN_DIR_FROM_CLIENT))
+        if ((dir == SSN_DIR_FROM_CLIENT) && (flow->ssn_state.direction == FROM_CLIENT))
         {
             /* Direction already set as client */
             return;
@@ -2952,8 +2953,7 @@ void TcpSession::update_direction(char dir, const sfip_t* ip, uint16_t port)
     }
     else if (sfip_equals(&flow->server_ip, ip) && (flow->server_port == port))
     {
-        if ((dir == SSN_DIR_FROM_SERVER)
-                && (flow->ssn_state.direction == SSN_DIR_FROM_SERVER))
+        if ((dir == SSN_DIR_FROM_SERVER) && (flow->ssn_state.direction == FROM_SERVER))
         {
             /* Direction already set as server */
             return;

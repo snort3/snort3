@@ -774,7 +774,7 @@ static DAQ_Verdict update_verdict(DAQ_Verdict verdict, int& inject)
         }
     }
     else if ( (s_packet->packet_flags & PKT_IGNORE) ||
-        (stream.get_ignore_direction(s_packet->flow) == SSN_DIR_BOTH) )
+              (stream.get_ignore_direction(s_packet->flow) == SSN_DIR_BOTH) )
     {
         if ( !Active::get_tunnel_bypass() )
         {

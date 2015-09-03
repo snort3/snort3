@@ -35,6 +35,10 @@
 #include "flow/flow.h"
 #include "main/snort_types.h"
 
+/* traffic direction identification */
+#define FROM_SERVER     0
+#define FROM_CLIENT     1
+
 #define SSN_MISSING_NONE   0x00
 #define SSN_MISSING_BEFORE 0x01
 #define SSN_MISSING_AFTER  0x02
@@ -42,9 +46,7 @@
 
 #define SSN_DIR_NONE           0x00
 #define SSN_DIR_FROM_CLIENT    0x01
-#define SSN_DIR_FROM_SENDER    0x01
 #define SSN_DIR_FROM_SERVER    0x02
-#define SSN_DIR_FROM_RESPONDER 0x02
 #define SSN_DIR_BOTH           0x03
 
 // sequence must match FRAG_POLICY_* enum in stream_ip.h (1-based)
