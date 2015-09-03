@@ -17,6 +17,8 @@
 //--------------------------------------------------------------------------
 // packet.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
+#include <assert.h>
+
 #include "protocols/packet.h"
 #include "protocols/protocol_ids.h"
 
@@ -110,18 +112,27 @@ const char* Packet::get_type() const
     case PktType::UDP:
         return "UDP";
 
+    case PktType::ARP:
+        return "ARP";
+
     case PktType::PDU:
     case PktType::FILE:
         if ( proto_bits & PROTO_BIT__TCP )
             return "TCP";
         if ( proto_bits & PROTO_BIT__UDP )
             return "UDP";
-        break;
+        assert(false);
+        return "Error";
+
+    case PktType::NONE:
+        return "None";
 
     default:
-        break;
+        assert(false);
+        return "Error";
     }
-    return "error";
+    assert(false);
+    return "Error";
 }
 
 const char* Packet::get_pseudo_type() const
