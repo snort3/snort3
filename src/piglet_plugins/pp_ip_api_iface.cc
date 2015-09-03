@@ -103,8 +103,9 @@ static const luaL_Reg metamethods[] =
         "__gc",
         [](lua_State* L)
         {
-            auto& self = IpApiIface.get(L);
-            Lua::remove_refs(L, static_cast<void*>(&self));
+            // don't need to delete, because this object is a pointer to
+            // a member of a DecodeData
+            Lua::remove_refs(L, static_cast<void*>(&IpApiIface.get(L)));
             return 0;
         }
     },

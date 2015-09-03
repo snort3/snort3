@@ -40,6 +40,7 @@
 #include <errno.h>
 
 #include "utils/util.h"
+#include "main/thread.h"
 
 #define PROC_STAT       "/proc/stat"
 #define PROC_SELF_CPU   "/proc/self/cpu"

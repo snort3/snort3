@@ -103,7 +103,7 @@ int32_t norm_remove_lws(const uint8_t* in_buf, int32_t in_length, uint8_t* out_b
     int32_t length = 0;
     for (int32_t k = 0; k < in_length; k++)
     {
-        if ((in_buf[k] != ' ') && (in_buf[k] != '\t'))
+        if (!is_sp_tab[in_buf[k]])
             out_buf[length++] = in_buf[k];
     }
     return length;
