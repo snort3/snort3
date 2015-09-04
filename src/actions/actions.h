@@ -50,7 +50,9 @@ enum RuleType
 const char* get_action_string(RuleType);
 RuleType get_action_type(const char*);
 
-void action_execute(RuleType, struct Packet*, struct OptTreeNode*, uint16_t event_id);
+void action_execute(RuleType, struct Packet*, const struct OptTreeNode*,
+    uint16_t event_id);
+
 void action_apply(RuleType, struct Packet*);
 
 static inline bool pass_action(RuleType a)

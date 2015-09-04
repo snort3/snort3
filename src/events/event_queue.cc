@@ -121,7 +121,7 @@ void EventQueueConfigFree(EventQueueConfig* eqc)
 
 // Return 0 if no OTN since -1 return indicates queue limit reached. See
 // fpFinalSelectEvent()
-int SnortEventqAdd(OptTreeNode* otn)
+int SnortEventqAdd(const OptTreeNode* otn)
 {
     RuleTreeNode* rtn = getRtnFromOtn(otn);
 

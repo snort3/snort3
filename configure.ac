@@ -414,7 +414,7 @@ AC_ARG_ENABLE(debug-msgs,
 
 if test "x$enable_debug_msgs" = "xyes"; then
     CPPFLAGS="$CPPFLAGS -DDEBUG_MSGS"
-    AC_DEFINE(DEBUG_MSGS, [1], [enalbe debug messages])
+    AC_DEFINE(DEBUG_MSGS, [1], [enable debug messages])
 fi
 
 AC_ARG_ENABLE(debug,

@@ -115,7 +115,7 @@ int RateFilter_Create(
             0 - rate threshold not reached
 */
 int RateFilter_Test(
-    OptTreeNode* otn,
+    const OptTreeNode* otn,
     Packet* p)
 {
     unsigned gid = otn->sigInfo.generator;

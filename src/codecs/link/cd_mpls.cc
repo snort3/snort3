@@ -20,7 +20,7 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "network_inspectors/perf_monitor/perf.h"
+#include "perf_monitor/perf.h"
 #include "protocols/mpls.h"
 #include "packet_io/active.h"
 #include "protocols/protocol_ids.h"

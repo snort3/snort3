@@ -1,11 +1,11 @@
 
-if( BUILD_PROCPIDSTATS )
+if( LINUX_SMP )
     set (PROCPIDSTATS_SOURCE
         sfprocpidstats.cc 
         sfprocpidstats.h
     )
 
-endif(BUILD_PROCPIDSTATS)
+endif(LINUX_SMP)
 
 
 add_library ( perf_monitor STATIC

@@ -171,18 +171,32 @@ void NHttpMsgHeadShared::parse_header_lines()
 
 void NHttpMsgHeadShared::derive_header_name_id(int index)
 {
-    // Normalize header field name to lower case for matching purposes
+    const int32_t& length = header_name[index].length;
+    const uint8_t*& buffer = header_name[index].start;
+
+    // Normalize header field name to lower case and remove LWS for matching purposes
+    int32_t lower_length = 0;
     uint8_t* lower_name;
-    if ((lower_name = scratch_pad.request(header_name[index].length)) == nullptr)
+    if ((lower_name = scratch_pad.request(length)) == nullptr)
     {
         infractions += INF_NO_SCRATCH;
         header_name_id[index] = HEAD__INSUFMEMORY;
         return;
     }
-    norm_to_lower(header_name[index].start, header_name[index].length, lower_name, infractions,
-        events, nullptr);
-    header_name_id[index] = (HeaderId)str_to_code(lower_name, header_name[index].length,
-        header_list);
+    for (int32_t k=0; k < length; k++)
+    {
+        if (!is_sp_tab[buffer[k]])
+        {
+            lower_name[lower_length++] = ((buffer[k] < 'A') || (buffer[k] > 'Z')) ?
+                buffer[k] : buffer[k] - ('A' - 'a');
+        }
+        else
+        {
+            infractions += INF_HEAD_NAME_WHITESPACE;
+            events.create_event(EVENT_HEAD_NAME_WHITESPACE);
+        }
+    }
+    header_name_id[index] = (HeaderId)str_to_code(lower_name, lower_length, header_list);
 }
 
 NHttpMsgHeadShared::NormalizedHeader* NHttpMsgHeadShared::get_header_node(HeaderId header_id) const
