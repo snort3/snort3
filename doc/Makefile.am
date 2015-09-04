@@ -59,8 +59,7 @@ dev_guide.sh
 doc_DATA = \
 snort_manual.text \
 snort_manual.html \
-snort_manual.pdf \
-snort_manual.chunked.tgz
+snort_manual.pdf
 
 dist_doc_DATA = \
 $(all_sources)
@@ -165,6 +164,8 @@ html_args = \
 # generation; buggy passthru of base64 data.
 if MAKE_HTML_DOC
 snort_manual.html: $(all_sources)
+	a2x -f chunked $(html_args) $(snort_src)
+	tar zcf $@ snort_manual.chunked
 	asciidoc -b xhtml11 -a toc2 -a icons -a imagesdir=. $(snort_src)
 else
 snort_manual.html: default_snort_manual.html
@@ -196,10 +197,6 @@ endif
 # a tarball and then explode that upon install with a hook.  note that
 # there is no default for chunked.
 if MAKE_HTML_DOC
-snort_manual.chunked.tgz: $(all_sources) snort_manual.text
-	a2x -f chunked $(html_args) $(snort_src)
-	tar zcf $@ snort_manual.chunked
-
 install-data-hook:
 	tar zxf $(DESTDIR)$(docdir)/snort_manual.chunked.tgz -C $(DESTDIR)$(docdir)/
 

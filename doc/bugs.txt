@@ -30,6 +30,13 @@ defined as below because or the space between ! and 10.
 first loaded version will always be executed even though plugin manager
 saves the correct version.
 
+* On 32-bit systems, the default snort.lua config will yield:
+
+    ERROR: invalid perf_monitor.max_file_size = 4.29497e+09
+
+* Using -L when -c is also used will not actually log; nor will it warn or
+  error out.  This is likely to confuse.
+
 
 ==== Rules
 

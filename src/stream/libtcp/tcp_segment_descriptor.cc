@@ -21,7 +21,7 @@
 
 #include "tcp_segment_descriptor.h"
 
-TcpSegmentDescriptor::TcpSegmentDescriptor( Flow* flow, Packet* pkt )
+TcpSegmentDescriptor::TcpSegmentDescriptor(Flow*, Packet*)
 {
     // TODO Auto-generated constructor stub
 
