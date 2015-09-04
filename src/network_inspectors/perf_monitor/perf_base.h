@@ -34,7 +34,7 @@
 #include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
-#include "normalize/normalize.h"
+#include "network_inspectors/normalize/normalize.h"
 #include "sfprocpidstats.h"
 
 #include <time.h>
