@@ -57,7 +57,7 @@
 #include "framework/inspector.h"
 #include "framework/ips_action.h"
 #include "framework/mpse.h"
-#include "network_inspectors/perf_monitor/perf.h"
+#include "perf_monitor/perf.h"
 #include "network_inspectors/perf_monitor/perf_event.h"
 #include "filters/sfthreshold.h"
 #include "filters/rate_filter.h"

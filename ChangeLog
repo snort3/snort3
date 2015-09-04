@@ -1,3 +1,18 @@
+15/09/04 - build 168
+
+-- fixed build of chunked manual (thanks to Bill Parker for reporting the issue)
+-- const cleanup
+-- new_http_inspect cookie processing updates
+-- fixed cmake build issue with SMP stats enabled
+-- fixed compiler warnings
+-- added unit tests
+-- updated error messages in u2spewfoo
+-- changed error format for consistency with Snort
+-- fixed u2spewfoo build issue
+-- added strdup sanity checks (thanks to Bill Parker for reporting the issue)
+-- DNS bug fix for TCP
+-- added --catch-tags [footag],[bartag] for unit test selection
+
 15/08/31 - build 167
 
 -- fix xcode warnings

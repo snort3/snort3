@@ -91,7 +91,7 @@
 #include "main/snort_debug.h"
 #include "time/profiler.h"
 #include "time/timersub.h"
-#include "network_inspectors/perf_monitor/perf.h"
+#include "perf_monitor/perf.h"
 #include "utils/stats.h"
 #include "utils/snort_bounds.h"
 #include "detection/detect.h"
