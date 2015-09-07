@@ -95,7 +95,7 @@ static inline void set_file_data(uint8_t* p, unsigned n)
 void EventTrace_Init(void);
 void EventTrace_Term(void);
 
-void EventTrace_Log(const Packet*, OptTreeNode*, int action);
+void EventTrace_Log(const Packet*, const OptTreeNode*, int action);
 
 static inline int EventTrace_IsEnabled(void)
 {

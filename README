@@ -24,7 +24,7 @@ out as they become available.
 
     Project = Snort++
     Binary = snort
-    Version = 3.0.0-a1
+    Version = 3.0.0-a2
 
 Here are some key features in this alpha release:
 

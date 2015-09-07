@@ -57,7 +57,7 @@ struct TagData
 void InitTag(void);
 void CleanupTag(void);
 int CheckTagList(Packet*, Event*, void**);
-void SetTags(Packet*, OptTreeNode*, uint16_t);
+void SetTags(Packet*, const OptTreeNode*, uint16_t);
 void TagCacheReset(void);
 
 #endif /* TAG_H */

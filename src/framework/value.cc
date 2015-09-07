@@ -229,7 +229,6 @@ void Value::update_mask(uint64_t& mask, uint64_t flag, bool invert)
 
 TEST_CASE("mac addr negative test", "[Value]")
 {
-    uint8_t * test_str;
     unsigned int num_chars;
     uint8_t mac[6];
     uint8_t zero[6];
@@ -237,7 +236,7 @@ TEST_CASE("mac addr negative test", "[Value]")
     memset(zero,0,6);
     Value test_val("12345");
 
-    test_str = (uint8_t *)test_val.get_buffer(num_chars);
+    test_val.get_buffer(num_chars);
     REQUIRE(num_chars == 5);
 
     test_val.get_mac(mac);

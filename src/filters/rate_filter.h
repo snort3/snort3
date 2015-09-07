@@ -38,7 +38,7 @@ struct SnortConfig;
 int RateFilter_Create(SnortConfig* sc, RateFilterConfig*, tSFRFConfigNode*);
 void RateFilter_PrintConfig(RateFilterConfig*);
 
-int RateFilter_Test(OptTreeNode*, Packet*);
+int RateFilter_Test(const OptTreeNode*, Packet*);
 void RateFilter_ResetActive(void);
 
 #endif

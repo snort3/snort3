@@ -84,7 +84,7 @@ static void LogBuffer(const char* s, const uint8_t* p, unsigned n)
     }
 }
 
-void EventTrace_Log(const Packet* p, OptTreeNode* otn, int action)
+void EventTrace_Log(const Packet* p, const OptTreeNode* otn, int action)
 {
     const char* acts = get_action_string((RuleType)action);
 
