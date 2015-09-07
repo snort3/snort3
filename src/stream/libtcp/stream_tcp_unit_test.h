@@ -26,12 +26,12 @@
 
 #include "protocols/packet.h"
 
-Packet *get_syn_packet( Flow* flow );
-Packet *get_syn_ack_packet( Flow* flow );
-Packet *get_ack_packet( Flow* flow );
-Packet *get_fin_packet( Flow* flow );
-Packet *get_rst_packet( Flow* flow );
-Packet *get_data_packet( Flow* flow );
+Packet *get_syn_packet( Flow* );
+Packet *get_syn_ack_packet( Flow* );
+Packet *get_ack_packet( Flow* );
+Packet *get_fin_packet( Flow* );
+Packet *get_rst_packet( Flow* );
+Packet *get_data_packet( Flow* );
 
 #endif
 
