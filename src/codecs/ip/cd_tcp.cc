@@ -659,7 +659,7 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         ps.len = htons((uint16_t)len);
         tcph_out->th_sum = checksum::tcp_cksum((uint16_t*)tcph_out, len, &ps);
     }
-    else
+    else if (ip_api.is_ip6())
     {
         checksum::Pseudoheader6 ps6;
         int len = buf.size();
