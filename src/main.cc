@@ -692,24 +692,16 @@ static bool just_validate()
 static bool set_mode()
 {
 #ifdef PIGLET
-#ifdef UNIT_TEST
-    if ( unit_test_enabled() )
-    {
-        if ( Piglet::piglet_mode() )
-            exit(unit_test() || Piglet::main());
-        else
-            exit(unit_test());
-    }
-    else 
-#endif // UNIT_TEST
     if ( Piglet::piglet_mode() )
         exit(Piglet::main());
-#else
+#endif
 #ifdef UNIT_TEST
-    if ( unit_test_enabled() )
-        exit(unit_test());
-#endif // UNIT_TEST
-#endif // PIGLET
+    if ( check_enabled() )
+        exit(check_test());
+
+    if ( catch_enabled() )
+        exit(catch_test());
+#endif
 
     if ( int k = get_parse_errors() )
     {

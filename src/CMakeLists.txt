@@ -98,8 +98,8 @@ target_link_libraries( snort
     stream_base
     stream_ip
     stream_icmp
-    stream_libtcp
     stream_tcp
+    stream_libtcp
     stream_udp
     stream_user
     stream_file

@@ -1162,8 +1162,7 @@ static int fpCreatePortObject2PortGroup(
                 continue;
 
             /* look up gid:sid */
-            gid = RuleIndexMapGid(ruleIndexMap, *prindex);
-            sid = RuleIndexMapSid(ruleIndexMap, *prindex);
+            parser_get_rule_ids(*prindex, gid, sid);
 
             /* look up otn */
             otn = OtnLookup(sc->otn_map, gid, sid);

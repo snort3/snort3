@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2005-2013 Sourcefire, Inc.
+// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -17,21 +16,22 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// sfrim.h author Marc Norton
+// stream_libtcp_unit_test.h author davis mcpherson <davmcphe@@cisco.com>
+// Created on: Jul 30, 2015
 
-#ifndef SFRIM_H
-#define SFRIM_H
+#ifndef STREAM_LIBTCP_UNIT_TEST_H
+#define STREAM_LIBTCP_UNIT_TEST_H
 
-// provides an ordinal for each rule so they can be looked up by a number
-// used during parse time when rules are compiled
+#include <stdint.h>
 
-struct rule_index_map_t;
+#include "protocols/packet.h"
 
-rule_index_map_t* RuleIndexMapCreate();
-void RuleIndexMapFree(rule_index_map_t*);
-
-int RuleIndexMapAdd(rule_index_map_t*, unsigned gid, unsigned sid);
-bool RuleIndexMapGet(rule_index_map_t* map, int index, unsigned& gid, unsigned& sid);
+Packet *get_syn_packet( Flow* );
+Packet *get_syn_ack_packet( Flow* );
+Packet *get_ack_packet( Flow* );
+Packet *get_fin_packet( Flow* );
+Packet *get_rst_packet( Flow* );
+Packet *get_data_packet( Flow* );
 
 #endif
 

@@ -31,6 +31,9 @@
 #include "detection/treenodes.h"
 #include "main/policy.h"
 
+void parser_init();
+void parser_term();
+
 unsigned get_parse_errors();
 unsigned get_parse_warnings();
 
@@ -52,7 +55,6 @@ const char* VarGet(SnortConfig*, const char*);
 char* ProcessFileOption(SnortConfig*, const char*);
 void SetRuleStates(SnortConfig*);
 
-void ParserCleanup(void);
 void FreeRuleLists(SnortConfig*);
 void VarTablesFree(SnortConfig*);
 void PortTablesFree(struct RulePortTables*);
@@ -108,13 +110,13 @@ static inline RuleTreeNode* getRuntimeRtnFromOtn(
     return getRtnFromOtn(otn);
 }
 
-extern rule_index_map_t* ruleIndexMap;
-
 ListHead* CreateRuleType(SnortConfig* sc, const char* name, RuleType);
 
 void FreeRuleTreeNode(RuleTreeNode*);
 void DestroyRuleTreeNode(RuleTreeNode*);
 
+int parser_get_rule_index(unsigned gid, unsigned sid);
+void parser_get_rule_ids(int index, unsigned& gid, unsigned& sid);
 void rule_index_map_print_index(int index, char* buf, int);
 
 #endif

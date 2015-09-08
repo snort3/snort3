@@ -9,4 +9,7 @@ tcp_stream_tracker.h \
 tcp_state_handler.cc \
 tcp_state_handler.h \
 tcp_state_machine.cc \
-tcp_state_machine.h
+tcp_state_machine.h \
+tcp_segment_descriptor.cc \
+tcp_segment_descriptor.h \
+stream_tcp_unit_test.cc

@@ -12,6 +12,7 @@ add_library( stream_tcp STATIC
     tcp_reassembly.cc
     tcp_session.cc
     tcp_session.h
+    tcp_closed_state.cc
     tcp_listen_state.cc
     tcp_syn_sent_state.cc
     tcp_syn_recv_state.cc

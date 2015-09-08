@@ -60,8 +60,8 @@ stream/libstream.a \
 stream/base/libstream_base.a \
 stream/ip/libstream_ip.a \
 stream/icmp/libstream_icmp.a \
-stream/libtcp/libstream_libtcp.a \
 stream/tcp/libstream_tcp.a \
+stream/libtcp/libstream_libtcp.a \
 stream/udp/libstream_udp.a \
 stream/user/libstream_user.a \
 stream/file/libstream_file.a \

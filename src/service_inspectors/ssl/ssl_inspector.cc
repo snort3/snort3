@@ -218,8 +218,7 @@ static inline uint32_t SSLPP_process_app(SSL_PROTO_CONF* config, uint32_t ssn_fl
         if (!config->max_heartbeat_len)
         {
             DebugMessage(DEBUG_SSL, "STOPPING INSPECTION (process_app)\n");
-            stream.stop_inspection(packet->flow,
-                packet, SSN_DIR_BOTH, -1, 0);
+            stream.stop_inspection(packet->flow, packet, SSN_DIR_BOTH, -1, 0);
             counts.stopped++;
         }
         else if (!(new_flags & SSL_HEARTBEAT_SEEN))
@@ -247,8 +246,7 @@ static inline void SSLPP_process_other(SSL_PROTO_CONF* config, SSLData* sd, uint
         if (!config->max_heartbeat_len)
         {
             DebugMessage(DEBUG_SSL, "STOPPING INSPECTION (process_other)\n");
-            stream.stop_inspection(packet->flow,
-                packet, SSN_DIR_BOTH, -1, 0);
+            stream.stop_inspection(packet->flow, packet, SSN_DIR_BOTH, -1, 0);
         }
         else if (!(new_flags & SSL_HEARTBEAT_SEEN))
         {

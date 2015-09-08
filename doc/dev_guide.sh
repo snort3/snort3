@@ -1,18 +1,28 @@
 #!/bin/bash
 # run from top of source tree (where configure.ac lives)
+# or supply top_srcdir as argument
 # this will create /tmp/dev_guide.{txt,html}
-# use dev_guide.html to browse the source notes and headers
+# use ./dev_guide.html to browse the source notes and headers
 #
 # FIXIT:
 # -- make sidebar width draggable
 # -- remove header guards?  (outermost #ifndef, #define, #endif)
 # -- use css source instead of the sed fixups?
 
+usage()
+{
+    echo "usage: $0 [<top_srcdir>]"
+    exit -1
+}
+
+pushd .
+
 if [ "$1" ] ; then
-    pushd .
-    cd $1 || exit -1
+    cd $1 || usage
     echo "cd $1"
 fi
+
+[ -d src ] || usage
 
 tmp=/tmp/dev_guide/
 out=$tmp/dev_guide.txt
