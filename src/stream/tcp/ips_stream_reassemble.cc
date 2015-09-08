@@ -309,6 +309,7 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
         CHECK( ( reassembler->srod.fastpath == 0 ) );
     }
 
+#if 0
     SECTION("eval enable off")
     {
         reassembler->srod.direction = SSN_DIR_FROM_SERVER;
@@ -321,6 +322,8 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
         CHECK( ( ( ( TcpSession* ) pkt->flow->session)->server.flush_policy
                 == STREAM_FLPOLICY_IGNORE ) );
     }
+#endif
+
 }
 
 
