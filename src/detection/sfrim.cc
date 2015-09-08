@@ -22,13 +22,19 @@
 
 #include "sfrim.h"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <vector>
 
-#include "utils/util.h"
+#ifdef UNIT_TEST
+#include "test/catch.hpp"
+#endif
 
 struct rule_number_t
 {
@@ -79,4 +85,38 @@ bool RuleIndexMapGet(rule_index_map_t* rim, int index, unsigned& gid, unsigned& 
     gid = sid = 0;
     return false;
 }
+
+//--------------------------------------------------------------------------
+// unit tests
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+TEST_CASE("basic", "[RuleIndexMap]")
+{
+    rule_index_map_t* rim = RuleIndexMapCreate();
+    unsigned gid, sid;
+
+    CHECK(RuleIndexMapAdd(rim, 1, 2) == 0);
+    CHECK(RuleIndexMapAdd(rim, 2, 4) == 1);
+    CHECK(RuleIndexMapAdd(rim, 4, 8) == 2);
+
+    SECTION("valid")
+    {
+        CHECK(RuleIndexMapGet(rim, 1, gid, sid));
+
+        CHECK(gid == 2);
+        CHECK(sid == 4);
+    }
+    SECTION("invalid")
+    {
+        CHECK(!RuleIndexMapGet(rim, 3, gid, sid));
+
+        CHECK(gid == 0);
+        CHECK(sid == 0);
+    }
+    RuleIndexMapFree(rim);
+}
+
+#endif
 
