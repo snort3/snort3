@@ -661,3 +661,7 @@ int sfip_ismapped(const sfip_t* ip)
     return 1;
 }
 
+// FIXIT-L this is a hack to get catch to run these tests
+// otherwise just acts like they aren't there
+#include "sfip_test.cc"
+

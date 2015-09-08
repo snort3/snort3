@@ -3,6 +3,13 @@ set (FILTER_INCLUDES
     sfrf.h 
 )
 
+if ( BUILD_UNIT_TESTS )
+    set(TEST_FILES
+        sfrf_test.cc
+        sfthd_test.cc
+    )
+endif()
+
 add_library (filter STATIC
     detection_filter.cc
     detection_filter.h
@@ -14,8 +21,8 @@ add_library (filter STATIC
     sfthd.cc
     sfthd.h
     ${FILTER_INCLUDES}
+    ${TEST_FILES}
 )
-
 
 install(FILES ${FILTER_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/filters"

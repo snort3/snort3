@@ -817,3 +817,6 @@ int main()
 
 #endif /* DEBUG_SFRT */
 
+// FIXIT-L see sfip/sf_ip.cc
+#include "sfrt_test.cc"
+
