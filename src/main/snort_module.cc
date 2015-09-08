@@ -441,10 +441,6 @@ static const Parameter s_params[] =
       "use drop, sdrop, and reject rules to ignore session traffic when not inline" },
 
 #ifdef UNIT_TEST
-    { "--check-test", Parameter::PT_SELECT,
-      "silent | minimal | normal | verbose | env (export CK_VERBOSITY)", nullptr,
-      "<verbosity> run unit tests with given libcheck output mode" },
-
     { "--catch-test", Parameter::PT_STRING, nullptr, nullptr,
         "comma separated list of cat unit test tags or 'all'" },
 #endif
@@ -835,9 +831,6 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         ConfigTreatDropAsIgnore(sc, v.get_string());
 
 #ifdef UNIT_TEST
-    else if ( v.is("--check-test") )
-        unit_test_mode(v.get_string());
-
     else if ( v.is("--catch-test") )
         unit_test_catch_test_filter(v.get_string());
 #endif
