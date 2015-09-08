@@ -101,8 +101,7 @@ struct OptTreeNode
 
     int session_flag;    /* record session data */
 
-    // unique index generated in ruleIndexMap
-    int ruleIndex;
+    unsigned ruleIndex; // unique index
 
     bool enabled;
 

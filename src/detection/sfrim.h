@@ -31,12 +31,7 @@ rule_index_map_t* RuleIndexMapCreate();
 void RuleIndexMapFree(rule_index_map_t*);
 
 int RuleIndexMapAdd(rule_index_map_t*, unsigned gid, unsigned sid);
-
-unsigned RuleIndexMapSid(rule_index_map_t* map, int index);
-unsigned RuleIndexMapGid(rule_index_map_t* map, int index);
-
-void print_rule_index_map(rule_index_map_t*);
-void rule_index_map_print_index(rule_index_map_t*, int index, char* buf, int bufsize);
+bool RuleIndexMapGet(rule_index_map_t* map, int index, unsigned& gid, unsigned& sid);
 
 #endif
 

@@ -68,45 +68,15 @@ int RuleIndexMapAdd(rule_index_map_t* rim, unsigned gid, unsigned sid)
     return index;
 }
 
-unsigned RuleIndexMapSid(rule_index_map_t* rim, int index)
+bool RuleIndexMapGet(rule_index_map_t* rim, int index, unsigned& gid, unsigned& sid)
 {
     if ( rim and (unsigned)index < rim->map.size() )
     {
-        return rim->map[index].sid;
+        gid = rim->map[index].gid;
+        sid = rim->map[index].sid;
+        return true;
     }
-    return 0;
-}
-
-unsigned RuleIndexMapGid(rule_index_map_t* rim, int index)
-{
-    assert(rim);
-
-    if ( (unsigned)index < rim->map.size() )
-    {
-        return rim->map[index].gid;
-    }
-    return 0;
-}
-
-void print_rule_index_map(rule_index_map_t* rim)
-{
-    assert(rim);
-    printf("***\n*** Rule Index Map (%lu entries)\n***\n",rim->map.size());
-
-    for (unsigned i=0; i<rim->map.size(); i++)
-    {
-        printf("rule-index-map[%d] { gid:%u sid:%u }\n",
-            i,rim->map[i].gid,rim->map[i].sid);
-    }
-    printf("***end rule index map ***\n");
-}
-
-void rule_index_map_print_index(rule_index_map_t* rim, int index, char* buf, int bufsize)
-{
-    if ( (unsigned)index < rim->map.size() )
-    {
-        SnortSnprintfAppend(buf, bufsize, "%u:%u ",
-            rim->map[index].gid, rim->map[index].sid);
-    }
+    gid = sid = 0;
+    return false;
 }
 

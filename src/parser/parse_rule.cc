@@ -1251,8 +1251,6 @@ void parse_rule_print()
             tcpCnt.nfp, udpCnt.nfp, icmpCnt.nfp, ipCnt.nfp);
 
     LogMessage("%8s%8u%8u%8u%8u\n", "total", tcp, udp, icmp, ip);
-
-    //print_rule_index_map( ruleIndexMap );
 }
 
 void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
@@ -1483,10 +1481,7 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
     }
 
     if ( !otn_dup )
-    {
-        otn->ruleIndex = RuleIndexMapAdd(
-            ruleIndexMap, otn->sigInfo.generator, otn->sigInfo.id);
-    }
+        otn->ruleIndex = parser_get_rule_index(otn->sigInfo.generator, otn->sigInfo.id);
 
     OptFpList* fpl = AddOptFuncToList(OptListEnd, otn);
     fpl->type = RULE_OPTION_TYPE_LEAF_NODE;
