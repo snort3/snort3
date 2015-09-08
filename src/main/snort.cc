@@ -249,6 +249,7 @@ void Snort::init(int argc, char** argv)
     init_fileAPI();
     register_profiles();
 
+    parser_init();
     SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf);
 
     /* Merge the command line and config file confs to take care of
@@ -310,6 +311,8 @@ void Snort::init(int argc, char** argv)
 
     if ( !snort_conf->bpf_filter.empty() )
         LogMessage("Snort BPF option: %s\n", snort_conf->bpf_filter.c_str());
+
+    parser_term();
 }
 
 // this function should only include initialization that must be done as a
@@ -403,7 +406,6 @@ void Snort::term()
     RateFilter_Cleanup();
 
     periodic_release();
-    ParserCleanup();
 
 #ifdef PERF_PROFILING
     CleanupProfileStatsNodeList();
@@ -509,6 +511,7 @@ SnortConfig* Snort::get_reload_config()
     ModuleManager::reset_errors();
     trim_heap();
 
+    parser_init();
     SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf);
     sc->merge(snort_cmd_line_conf);
 
@@ -516,6 +519,7 @@ SnortConfig* Snort::get_reload_config()
     {
         delete sc;
         reloading = false;
+        parser_term();
         return NULL;
     }
 
@@ -525,6 +529,7 @@ SnortConfig* Snort::get_reload_config()
     {
         delete sc;
         reloading = false;
+        parser_term();
         return NULL;
     }
 
@@ -564,6 +569,8 @@ SnortConfig* Snort::get_reload_config()
     }
 
     reloading = false;
+    parser_term();
+
     return sc;
 }
 

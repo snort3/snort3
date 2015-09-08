@@ -22,13 +22,19 @@
 
 #include "sfrim.h"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <vector>
 
-#include "utils/util.h"
+#ifdef UNIT_TEST
+#include "test/catch.hpp"
+#endif
 
 struct rule_number_t
 {
@@ -68,45 +74,49 @@ int RuleIndexMapAdd(rule_index_map_t* rim, unsigned gid, unsigned sid)
     return index;
 }
 
-unsigned RuleIndexMapSid(rule_index_map_t* rim, int index)
+bool RuleIndexMapGet(rule_index_map_t* rim, int index, unsigned& gid, unsigned& sid)
 {
     if ( rim and (unsigned)index < rim->map.size() )
     {
-        return rim->map[index].sid;
+        gid = rim->map[index].gid;
+        sid = rim->map[index].sid;
+        return true;
     }
-    return 0;
+    gid = sid = 0;
+    return false;
 }
 
-unsigned RuleIndexMapGid(rule_index_map_t* rim, int index)
+//--------------------------------------------------------------------------
+// unit tests
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+TEST_CASE("basic", "[RuleIndexMap]")
 {
-    assert(rim);
+    rule_index_map_t* rim = RuleIndexMapCreate();
+    unsigned gid, sid;
 
-    if ( (unsigned)index < rim->map.size() )
+    CHECK(RuleIndexMapAdd(rim, 1, 2) == 0);
+    CHECK(RuleIndexMapAdd(rim, 2, 4) == 1);
+    CHECK(RuleIndexMapAdd(rim, 4, 8) == 2);
+
+    SECTION("valid")
     {
-        return rim->map[index].gid;
+        CHECK(RuleIndexMapGet(rim, 1, gid, sid));
+
+        CHECK(gid == 2);
+        CHECK(sid == 4);
     }
-    return 0;
+    SECTION("invalid")
+    {
+        CHECK(!RuleIndexMapGet(rim, 3, gid, sid));
+
+        CHECK(gid == 0);
+        CHECK(sid == 0);
+    }
+    RuleIndexMapFree(rim);
 }
 
-void print_rule_index_map(rule_index_map_t* rim)
-{
-    assert(rim);
-    printf("***\n*** Rule Index Map (%lu entries)\n***\n",rim->map.size());
-
-    for (unsigned i=0; i<rim->map.size(); i++)
-    {
-        printf("rule-index-map[%d] { gid:%u sid:%u }\n",
-            i,rim->map[i].gid,rim->map[i].sid);
-    }
-    printf("***end rule index map ***\n");
-}
-
-void rule_index_map_print_index(rule_index_map_t* rim, int index, char* buf, int bufsize)
-{
-    if ( (unsigned)index < rim->map.size() )
-    {
-        SnortSnprintfAppend(buf, bufsize, "%u:%u ",
-            rim->map[index].gid, rim->map[index].sid);
-    }
-}
+#endif
 

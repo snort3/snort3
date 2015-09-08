@@ -39,6 +39,7 @@
 #include "suite_decl.h"
 
 static print_output s_mode = CK_LAST;
+static bool s_catch = false;
 static std::vector<std::string> test_tags;
 
 typedef Suite* (* SuiteCtor_f)();
@@ -72,12 +73,20 @@ void unit_test_mode(const char* s)
 
 void unit_test_catch_test_filter(const char* s)
 {
-    test_tags.push_back( s );
+    if ( s && strcmp(s, "all") )
+        test_tags.push_back( s );
+
+    s_catch = true;
 }
 
-bool unit_test_enabled()
+bool check_enabled()
 {
     return s_mode != CK_LAST;
+}
+
+bool catch_enabled()
+{
+    return s_catch;
 }
 
 static bool run_check()
@@ -127,25 +136,30 @@ static bool run_check()
 static bool run_catch()
 {
   Catch::Session session;
+
   // write to session.configData() or session.Config() to customize
   if( s_mode == CK_VERBOSE )
       session.configData().showSuccessfulTests = true;
+
   if( test_tags.size() > 0 )
       session.configData().testsOrTags = test_tags;
 
   return session.run() == 0;
 }
 
-int unit_test()
+int check_test()
 {
-    int ok = 0;
-
     if ( !run_check() )
-        ok = -1;
+        return -1;
 
+    return 0;
+}
+
+int catch_test()
+{
     if ( !run_catch() )
-        ok = -1;
+        return -1;
 
-    return ok;
+    return 0;
 }
 

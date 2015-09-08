@@ -441,11 +441,12 @@ static const Parameter s_params[] =
       "use drop, sdrop, and reject rules to ignore session traffic when not inline" },
 
 #ifdef UNIT_TEST
-    { "--unit-test", Parameter::PT_SELECT,
+    { "--check-test", Parameter::PT_SELECT,
       "silent | minimal | normal | verbose | env (export CK_VERBOSITY)", nullptr,
       "<verbosity> run unit tests with given libcheck output mode" },
-    { "--catch-tags", Parameter::PT_STRING, nullptr, nullptr,
-        "comma separated list of cat unit test tags" },
+
+    { "--catch-test", Parameter::PT_STRING, nullptr, nullptr,
+        "comma separated list of cat unit test tags or 'all'" },
 #endif
     { "--version", Parameter::PT_IMPLIED, nullptr, nullptr,
       "show version number (same as -V)" },
@@ -834,9 +835,10 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         ConfigTreatDropAsIgnore(sc, v.get_string());
 
 #ifdef UNIT_TEST
-    else if ( v.is("--unit-test") )
+    else if ( v.is("--check-test") )
         unit_test_mode(v.get_string());
-    else if ( v.is("--catch-tags") )
+
+    else if ( v.is("--catch-test") )
         unit_test_catch_test_filter(v.get_string());
 #endif
     else if ( v.is("--version") )

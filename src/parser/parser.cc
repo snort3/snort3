@@ -85,7 +85,7 @@
 static unsigned parse_errors = 0;
 static unsigned parse_warnings = 0;
 
-struct rule_index_map_t* ruleIndexMap = nullptr;   /* rule index -> sid:gid map */
+static struct rule_index_map_t* ruleIndexMap = nullptr;
 
 static std::string s_aux_rules;
 
@@ -113,22 +113,21 @@ unsigned get_parse_warnings()
 // private / implementation methods
 //-------------------------------------------------------------------------
 
-static void InitParser(void)
+void parser_init(void)
 {
     parse_rule_init();
-
-    if (ruleIndexMap )
-    {
-        RuleIndexMapFree(ruleIndexMap);
-        ruleIndexMap = nullptr;
-    }
 
     ruleIndexMap = RuleIndexMapCreate();
 
     if ( !ruleIndexMap )
-    {
         ParseAbort("failed to create rule index map.");
-    }
+}
+
+void parser_term()
+{
+    parse_rule_term();
+    RuleIndexMapFree(ruleIndexMap);
+    ruleIndexMap = nullptr;
 }
 
 static void CreateDefaultRules(SnortConfig* sc)
@@ -527,7 +526,6 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf)
     if ( !fname )
         fname = "";
 
-    InitParser();
     CreateDefaultRules(sc);
 
     sc->port_tables = PortTablesNew();
@@ -642,17 +640,6 @@ void SetRuleStates(SnortConfig* sc)
         }
 
         otn->enabled = rule_state->state;
-    }
-}
-
-void ParserCleanup(void)
-{
-    parse_rule_term();
-
-    if (ruleIndexMap )
-    {
-        RuleIndexMapFree(ruleIndexMap);
-        ruleIndexMap = nullptr;
     }
 }
 
@@ -1037,6 +1024,20 @@ int addRtnToOtn(OptTreeNode* otn, RuleTreeNode* rtn)
 
 void rule_index_map_print_index(int index, char* buf, int bufsize)
 {
-    rule_index_map_print_index(ruleIndexMap, index, buf, bufsize);
+    unsigned gid, sid;
+    parser_get_rule_ids(index, gid, sid);
+    SnortSnprintfAppend(buf, bufsize, "%u:%u ", gid, sid);
+}
+
+void parser_get_rule_ids(int idx, unsigned& gid, unsigned& sid)
+{
+    assert(ruleIndexMap);
+    RuleIndexMapGet(ruleIndexMap, idx, gid, sid);
+}
+
+int parser_get_rule_index(unsigned gid, unsigned sid)
+{
+    assert(ruleIndexMap);
+    return RuleIndexMapAdd(ruleIndexMap, gid, sid);
 }
 

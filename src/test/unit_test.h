@@ -34,9 +34,12 @@
 #define UNIT_TEST_MODE_ENVVAR "CK_VERBOSITY"
 
 void unit_test_mode(const char* = nullptr);
-bool unit_test_enabled();
-int unit_test();
 void unit_test_catch_test_filter(const char* s);
 
+bool check_enabled();
+bool catch_enabled();
+
+int check_test();
+int catch_test();
 #endif
 
