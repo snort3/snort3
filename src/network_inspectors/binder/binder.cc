@@ -205,7 +205,7 @@ static void set_session(Flow* flow)
 
 static void set_service(Flow* flow, const HostAttributeEntry* host)
 {
-    stream.set_application_protocol_id_from_host_entry(flow, host, SSN_DIR_FROM_SERVER);
+    stream.set_application_protocol_id_from_host_entry(flow, host, FROM_SERVER);
 }
 
 static Inspector* get_gadget(Flow* flow)

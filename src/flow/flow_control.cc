@@ -318,7 +318,7 @@ static bool is_bidirectional(const Flow* flow)
 // FIXIT-L init_roles* should take const Packet*
 static void init_roles_ip(Packet* p, Flow* flow)
 {
-    flow->ssn_state.direction = FROM_SENDER;
+    flow->ssn_state.direction = FROM_CLIENT;
     sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
     sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
 }
@@ -361,7 +361,7 @@ static void init_roles_tcp(Packet* p, Flow* flow)
 
 static void init_roles_udp(Packet* p, Flow* flow)
 {
-    flow->ssn_state.direction = FROM_SENDER;
+    flow->ssn_state.direction = FROM_CLIENT;
     sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
     flow->client_port = ntohs(p->ptrs.udph->uh_sport);
     sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());

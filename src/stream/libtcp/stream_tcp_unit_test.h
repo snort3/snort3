@@ -16,30 +16,22 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_state_machine.h author davis mcpherson <davmcphe@@cisco.com>
-// Created on: Jul 29, 2015
+// stream_libtcp_unit_test.h author davis mcpherson <davmcphe@@cisco.com>
+// Created on: Jul 30, 2015
 
-#ifndef TCP_STATE_MACHINE_H
-#define TCP_STATE_MACHINE_H
+#ifndef STREAM_LIBTCP_UNIT_TEST_H
+#define STREAM_LIBTCP_UNIT_TEST_H
 
-#include "tcp_state_handler.h"
-#include "tcp_stream_tracker.h"
-#include "tcp_segment_descriptor.h"
+#include <stdint.h>
 
-extern const char* tcp_state_names[];
-extern const char* tcp_event_names[];
+#include "protocols/packet.h"
 
-class TcpStateMachine
-{
-public:
-    virtual ~TcpStateMachine();
-
-    virtual void eval(TcpSegmentDescriptor&, TcpStreamTracker&);
-
-private:
-    TcpStateMachine();
-
-    TcpStateHandler *tcp_state_handlers[ TcpStreamTracker::TCP_MAX_STATES ];
-};
+Packet *get_syn_packet( Flow* );
+Packet *get_syn_ack_packet( Flow* );
+Packet *get_ack_packet( Flow* );
+Packet *get_fin_packet( Flow* );
+Packet *get_rst_packet( Flow* );
+Packet *get_data_packet( Flow* );
 
 #endif
+

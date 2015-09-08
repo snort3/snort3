@@ -387,9 +387,9 @@ static inline uint8_t GetTTL(const Packet* const p, bool forward)
         return 0;
 
     if ( p->packet_flags & PKT_FROM_CLIENT )
-        dir = forward ? SSN_DIR_FROM_CLIENT : SSN_DIR_FROM_SERVER;
+        dir = forward ? FROM_CLIENT : FROM_SERVER;
     else
-        dir = forward ? SSN_DIR_FROM_SERVER : SSN_DIR_FROM_CLIENT;
+        dir = forward ? FROM_SERVER : FROM_CLIENT;
 
     // outermost ip is considered to be outer here,
     // even if it is the only ip layer ...

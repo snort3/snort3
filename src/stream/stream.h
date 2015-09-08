@@ -47,12 +47,6 @@
 #define STREAM_CONFIG_IPS                      0x00000400
 #define STREAM_CONFIG_NO_ASYNC_REASSEMBLY      0x00000800
 
-/* traffic direction identification */
-#define FROM_SERVER     0
-#define FROM_RESPONDER  0
-#define FROM_CLIENT     1
-#define FROM_SENDER     1
-
 // FIXIT-L some of this stuff can be better encapsulated
 
 struct StreamGlobalConfig
