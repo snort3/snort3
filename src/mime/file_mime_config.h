@@ -55,6 +55,7 @@ public:
     int64_t get_file_depth();
     bool is_decoding_enabled();
     void sync_all_depths();
+    void print_decode_conf();
 
 private:
     bool ignore_data = false;

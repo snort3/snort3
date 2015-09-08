@@ -132,6 +132,7 @@ void DecodeConfig::set_file_depth(int64_t file_depth)
         max_depth = (int)file_depth;
     }
 }
+
 // update file depth and max_depth etc
 void DecodeConfig::sync_all_depths()
 {
@@ -140,3 +141,70 @@ void DecodeConfig::sync_all_depths()
     set_file_depth(file_depth);
 }
 
+void DecodeConfig::print_decode_conf()
+{
+    if (b64_depth > -1)
+    {
+        LogMessage("    Base64 Decoding: %s\n", "Enabled");
+        switch (b64_depth)
+        {
+        case 0:
+            LogMessage("    Base64 Decoding Depth: %s\n", "Unlimited");
+            break;
+        default:
+            LogMessage("    Base64 Decoding Depth: %d\n", b64_depth);
+            break;
+        }
+    }
+    else
+        LogMessage("    Base64 Decoding: %s\n", "Disabled");
+
+    if (qp_depth > -1)
+    {
+        LogMessage("    Quoted-Printable Decoding: %s\n","Enabled");
+        switch (qp_depth)
+        {
+        case 0:
+            LogMessage("    Quoted-Printable Decoding Depth: %s\n", "Unlimited");
+            break;
+        default:
+            LogMessage("    Quoted-Printable Decoding Depth: %d\n", qp_depth);
+            break;
+        }
+    }
+    else
+        LogMessage("    Quoted-Printable Decoding: %s\n", "Disabled");
+
+    if (uu_depth > -1)
+    {
+        LogMessage("    Unix-to-Unix Decoding: %s\n","Enabled");
+        switch (uu_depth)
+        {
+        case 0:
+            LogMessage("    Unix-to-Unix Decoding Depth: %s\n", "Unlimited");
+            break;
+        default:
+            LogMessage("    Unix-to-Unix Decoding Depth: %d\n", uu_depth);
+            break;
+        }
+    }
+    else
+        LogMessage("    Unix-to-Unix Decoding: %s\n", "Disabled");
+
+    if (bitenc_depth > -1)
+    {
+        LogMessage("    Non-Encoded MIME attachment Extraction: %s\n","Enabled");
+        switch (bitenc_depth)
+        {
+        case 0:
+            LogMessage("    Non-Encoded MIME attachment Extraction Depth: %s\n", "Unlimited");
+            break;
+        default:
+            LogMessage("    Non-Encoded MIME attachment Extraction Depth: %d\n",
+                bitenc_depth);
+            break;
+        }
+    }
+    else
+        LogMessage("    Non-Encoded MIME attachment Extraction/text: %s\n", "Disabled");
+}

@@ -17,7 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// file_service.h author author Hui Cao <huica@cisco.com>
+// author Hui Cao <huica@cisco.com>
 
 #ifndef FILE_FLOWS_H
 #define FILE_FLOWS_H
@@ -46,9 +46,14 @@ public:
     void set_current_file_context(FileContext* ctx);
 
     uint32_t get_new_file_instance();
+
     void set_file_name(uint8_t* fname, uint32_t name_size);
+
+    // This is used when there is only one file per session
     bool file_process(const uint8_t* file_data, int data_size,
         FilePosition position, bool upload, bool suspend_block_verdict);
+
+    // This is used for each file context. Support multiple files per session
     bool file_process(FileContext* context, const uint8_t* file_data, int data_size,
         FilePosition position);
 

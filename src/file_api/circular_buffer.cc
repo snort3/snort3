@@ -24,7 +24,7 @@
  **
  **  Circular buffer is thread safe for one writer and one reader thread
  **
- **  This implementaton is inspired by one slot open approach.
+ **  This implementation is inspired by one slot open approach.
  **  See http://en.wikipedia.org/wiki/Circular_buffer
  **
  **  5.25.13 - Initial Source Code. Hui Cao
@@ -84,7 +84,6 @@ void cbuffer_free(CircularBuffer* cb)
     free(cb);
 }
 
-/* We use mirror flag to detection full or empty efficiently*/
 int cbuffer_is_full(CircularBuffer* cb)
 {
     uint64_t next = cb->end + 1;
@@ -95,7 +94,7 @@ int cbuffer_is_full(CircularBuffer* cb)
     return (next == cb->start);
 }
 
-/* We use mirror flag to detection full or empty efficiently*/
+
 int cbuffer_is_empty(CircularBuffer* cb)
 {
     return (cb->end == cb->start);

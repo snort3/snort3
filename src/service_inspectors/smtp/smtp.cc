@@ -466,72 +466,9 @@ void SMTP_PrintConfig(SMTP_PROTO_CONF *config)
     {
         LogMessage("%s\n", buf);
     }
-    /*
-    if (config->decode_conf.b64_depth > -1)
-    {
-        LogMessage("    Base64 Decoding: %s\n", "Enabled");
-        switch (config->decode_conf.b64_depth)
-        {
-        case 0:
-            LogMessage("    Base64 Decoding Depth: %s\n", "Unlimited");
-            break;
-        default:
-            LogMessage("    Base64 Decoding Depth: %d\n", config->decode_conf.b64_depth);
-            break;
-        }
-    }
-    else
-        LogMessage("    Base64 Decoding: %s\n", "Disabled");
 
-    if (config->decode_conf.qp_depth > -1)
-    {
-        LogMessage("    Quoted-Printable Decoding: %s\n","Enabled");
-        switch (config->decode_conf.qp_depth)
-        {
-        case 0:
-            LogMessage("    Quoted-Printable Decoding Depth: %s\n", "Unlimited");
-            break;
-        default:
-            LogMessage("    Quoted-Printable Decoding Depth: %d\n", config->decode_conf.qp_depth);
-            break;
-        }
-    }
-    else
-        LogMessage("    Quoted-Printable Decoding: %s\n", "Disabled");
+    config->decode_conf.print_decode_conf();
 
-    if (config->decode_conf.uu_depth > -1)
-    {
-        LogMessage("    Unix-to-Unix Decoding: %s\n","Enabled");
-        switch (config->decode_conf.uu_depth)
-        {
-        case 0:
-            LogMessage("    Unix-to-Unix Decoding Depth: %s\n", "Unlimited");
-            break;
-        default:
-            LogMessage("    Unix-to-Unix Decoding Depth: %d\n", config->decode_conf.uu_depth);
-            break;
-        }
-    }
-    else
-        LogMessage("    Unix-to-Unix Decoding: %s\n", "Disabled");
-
-    if (config->decode_conf.bitenc_depth > -1)
-    {
-        LogMessage("    Non-Encoded MIME attachment Extraction: %s\n","Enabled");
-        switch (config->decode_conf.bitenc_depth)
-        {
-        case 0:
-            LogMessage("    Non-Encoded MIME attachment Extraction Depth: %s\n", "Unlimited");
-            break;
-        default:
-            LogMessage("    Non-Encoded MIME attachment Extraction Depth: %d\n",
-                config->decode_conf.bitenc_depth);
-            break;
-        }
-    }
-    else
-        LogMessage("    Non-Encoded MIME attachment Extraction/text: %s\n", "Disabled");
-    */
     LogMessage("    Log Attachment filename: %s\n",
         config->log_config.log_filename ? "Enabled" : "Not Enabled");
 
