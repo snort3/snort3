@@ -19,6 +19,10 @@
 
 #include "lua.h"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <assert.h>
 
 namespace Lua
