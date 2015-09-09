@@ -22,7 +22,7 @@
 #include "tcp_segment_descriptor.h"
 
 TcpSegmentDescriptor::TcpSegmentDescriptor( Flow* flow, Packet* pkt ) :
-	flow( flow )
+	flow( flow ), pkt( pkt )
 {
     direction = flow->ssn_state.direction;
 
