@@ -243,50 +243,6 @@ int gmt2local(time_t t)
     return(dt);
 }
 
-/****************************************************************************
- *
- * Function: strip(char *)
- *
- * Purpose: Strips a data buffer of CR/LF/TABs.  Replaces CR/LF's with
- *          NULL and TABs with spaces.
- *
- * Arguments: data => ptr to the data buf to be stripped
- *
- * Returns: void
- *
- * 3/7/07 - changed to return void - use strlen to get size of string
- *
- * Note that this function will turn all '\n' and '\r' into null chars
- * so, e.g. 'Hello\nWorld\n' => 'Hello\x00World\x00'
- * note that the string is now just 'Hello' and the length is shortened
- * by more than just an ending '\n' or '\r'
- ****************************************************************************/
-void strip(char* data)
-{
-    int size;
-    char* end;
-    char* idx;
-
-    idx = data;
-    end = data + strlen(data);
-    size = end - idx;
-
-    while (idx != end)
-    {
-        if ((*idx == '\n') ||
-            (*idx == '\r'))
-        {
-            *idx = 0;
-            size--;
-        }
-        if (*idx == '\t')
-        {
-            *idx = ' ';
-        }
-        idx++;
-    }
-}
-
 static FILE* pid_lockfile = NULL;
 static FILE* pid_file = NULL;
 
@@ -1002,82 +958,6 @@ char* GetAbsolutePath(const char* dir)
     return (char*)buf;
 }
 
-/****************************************************************************
- *
- * Function: hex(u_char *xdata, int length)
- *
- * Purpose: This function takes takes a buffer "xdata" and its length then
- *          returns a string of hex with no spaces
- *
- * Arguments: xdata is the buffer, length is the length of the buffer in
- *            bytes
- *
- * Returns: char * -- You must free this char * when you are done with it.
- *
- ***************************************************************************/
-char* hex(const u_char* xdata, int length)
-{
-    int x;
-    char* rval = NULL;
-    char* buf = NULL;
-
-    if (xdata == NULL)
-        return NULL;
-
-    buf = (char*)calloc((length * 2) + 1, sizeof(char));
-
-    if (buf != NULL)
-    {
-        rval = buf;
-
-        for (x = 0; x < length; x++)
-        {
-            SnortSnprintf(buf, 3, "%02X", xdata[x]);
-            buf += 2;
-        }
-
-        rval[length * 2] = '\0';
-    }
-
-    return rval;
-}
-
-/****************************************************************************
- *
- * Function: fasthex(u_char *xdata, int length)
- *
- * Purpose: Outputs a purdy fugly hex output, only used by mstring with
- * DEBUG_MSGS enabled.
- *
- * Arguments: xdata is the buffer, length is the length of the buffer in
- *            bytes
- *
- * Returns: char * -- You must free this char * when you are done with it.
- *
- ***************************************************************************/
-char* fasthex(const u_char* xdata, int length)
-{
-    char conv[] = "0123456789ABCDEF";
-    char* retbuf = NULL;
-    const u_char* index;
-    const u_char* end;
-    char* ridx;
-
-    index = xdata;
-    end = xdata + length;
-    retbuf = (char*)SnortAlloc(((length * 2) + 1) * sizeof(char));
-    ridx = retbuf;
-
-    while (index < end)
-    {
-        *ridx++ = conv[((*index & 0xFF)>>4)];
-        *ridx++ = conv[((*index & 0xFF)&0x0F)];
-        index++;
-    }
-
-    return retbuf;
-}
-
 int CheckValueInRange(const char* value_str, const char* option,
     unsigned long lo, unsigned long hi, unsigned long* value)
 {
@@ -1113,23 +993,6 @@ int CheckValueInRange(const char* value_str, const char* option,
     }
 
     return 0;
-}
-
-/*
- * This function will print versioning information regardless of whether or
- * not the quiet flag is set.  If the quiet flag has been set and we want
- * to honor it, check it before calling this function.
- */
-void PrintVersion(void)
-{
-    /* Unset quiet flag so LogMessage will print, then restore just
-     * in case anything other than exiting after this occurs */
-    int save_quiet_flag = snort_conf->logging_flags & LOGGING_FLAG__QUIET;
-
-    snort_conf->logging_flags &= ~LOGGING_FLAG__QUIET;
-    DisplayBanner();
-
-    snort_conf->logging_flags |= save_quiet_flag;
 }
 
 void SetNoCores(void)
