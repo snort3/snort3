@@ -38,6 +38,9 @@
 #include "parser/parser.h"
 #include "utils/util.h"
 
+#ifdef UNIT_TEST
+#include "test/catch.hpp"
+#endif
 
 typedef struct _IdentifierSharedNode
 {
@@ -389,3 +392,167 @@ FileMagicRule*  FileIdentifier::get_rule_from_id(uint32_t id)
     else
         return NULL;
 }
+
+//--------------------------------------------------------------------------
+// unit tests
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+TEST_CASE ("FileIdMemory", "[FileMagic]")
+{
+    FileIdentifier rc;
+
+    CHECK(rc.memory_usage() == 0);
+}
+
+TEST_CASE ("FileIdRulePDF", "[FileMagic]")
+{
+    FileMagicData magic;
+
+    magic.content = "PDF";
+    magic.offset = 0;
+
+    FileMagicRule rule;
+
+    rule.type = "pdf";
+    rule.file_magics.push_back(magic);
+    rule.id = 1;
+
+    FileIdentifier rc;
+
+    rc.insert_file_rule(rule);
+
+    const char* data = "PDF";
+
+    void *context = NULL;
+
+    CHECK(rc.find_file_type_id((const uint8_t *)data, strlen(data), 0, &context) == 1);
+
+}
+
+TEST_CASE ("FileIdRuleUnknow", "[FileMagic]")
+{
+    FileMagicData magic;
+
+    magic.content = "PDF";
+    magic.offset = 0;
+
+    FileMagicRule rule;
+
+    rule.type = "pdf";
+    rule.file_magics.push_back(magic);
+    rule.id = 1;
+
+    FileIdentifier rc;
+
+    rc.insert_file_rule(rule);
+
+    const char* data = "DDF";
+
+    void *context = NULL;
+
+    CHECK(rc.find_file_type_id((const uint8_t *)data, strlen(data), 0, &context) ==
+        SNORT_FILE_TYPE_UNKNOWN);
+
+}
+
+TEST_CASE ("FileIdRuleEXE", "[FileMagic]")
+{
+    FileMagicData magic;
+
+    magic.content = "PDF";
+    magic.offset = 0;
+
+    FileMagicRule rule;
+
+    rule.type = "exe";
+    rule.file_magics.push_back(magic);
+    rule.id = 1;
+
+    FileIdentifier rc;
+    rc.insert_file_rule(rule);
+
+    magic.clear();
+    magic.content = "EXE";
+    magic.offset = 0;
+
+    rule.clear();
+    rule.type = "exe";
+    rule.file_magics.push_back(magic);
+    rule.id = 3;
+
+    rc.insert_file_rule(rule);
+
+    const char* data = "PDFooo";
+    void *context = NULL;
+
+    CHECK(rc.find_file_type_id((const uint8_t *)data, strlen(data), 0, &context) == 1);
+}
+
+TEST_CASE ("FileIdRulePDFEXE", "[FileMagic]")
+{
+    FileMagicData magic;
+
+    magic.content = "PDF";
+    magic.offset = 0;
+
+    FileMagicRule rule;
+
+    rule.type = "exe";
+    rule.file_magics.push_back(magic);
+    rule.id = 1;
+
+    FileIdentifier rc;
+    rc.insert_file_rule(rule);
+
+    magic.clear();
+    magic.content = "EXE";
+    magic.offset = 3;
+
+    rule.clear();
+    rule.type = "exe";
+    rule.file_magics.push_back(magic);
+    rule.id = 3;
+
+    rc.insert_file_rule(rule);
+
+    const char* data = "PDFEXE";
+    void *context = NULL;
+
+    // Match the last one
+    CHECK(rc.find_file_type_id((const uint8_t *)data, strlen(data), 0, &context) == 3);
+}
+
+TEST_CASE ("FileIdRuleFirst", "[FileMagic]")
+{
+    FileMagicData magic;
+
+    magic.content = "PDF";
+    magic.offset = 0;
+
+    FileMagicRule rule;
+
+    rule.type = "exe";
+    rule.file_magics.push_back(magic);
+    rule.id = 1;
+
+    FileIdentifier rc;
+    rc.insert_file_rule(rule);
+
+    magic.clear();
+    magic.content = "EXE";
+    magic.offset = 3;
+
+    rule.clear();
+    rule.type = "exe";
+    rule.file_magics.push_back(magic);
+    rule.id = 3;
+
+    rc.insert_file_rule(rule);
+
+    const char* data = "PDF";
+    void *context = NULL;
+
+    CHECK(rc.find_file_type_id((const uint8_t *)data, strlen(data), 0, &context) == 1);
+}
+#endif
