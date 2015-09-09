@@ -78,7 +78,6 @@ void StoreSnortInfoStrings(void);
 int DisplayBanner(void);
 int gmt2local(time_t);
 void ts_print(register const struct timeval*, char*);
-void strip(char*);
 void CheckLogDir(void);
 char* read_infile(const char* key, const char* fname);
 void CleanupProtoNames(void);
@@ -112,18 +111,9 @@ char* CurrentWorkingDir(void);
 char* GetAbsolutePath(const char* dir);
 char* StripPrefixDir(char* prefix, char* dir);
 
-void PrintVersion(void);
-
 #if defined(NOCOREFILE)
 void SetNoCores(void);
 #endif
-
-// If you use any of the functions in this section, you need
-// to call free() on the char * that is returned after you are
-// done using it. Otherwise, you will have created a memory
-// leak.
-char* hex(const u_char*, int);
-char* fasthex(const u_char*, int);
 
 static inline void* SnortAlloc(unsigned long size)
 {
