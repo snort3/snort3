@@ -28,6 +28,9 @@ codecs/root/libroot_codecs.a \
 codecs/link/liblink_codecs.a
 endif
 
+if BUILD_UNIT_TESTS
+test_list = test/libtest.a
+endif
 
 if BUILD_PIGLET
 pig_list = \
@@ -40,6 +43,7 @@ snort_LDFLAGS = -export-dynamic
 # order libs to avoid undefined symbols
 # from gnu linker
 snort_LDADD = \
+$(test_list) \
 target_based/libtarget_based.a \
 managers/libmanagers.a \
 main/libmain.a \
@@ -129,7 +133,6 @@ utils
 
 if BUILD_UNIT_TESTS
 SUBDIRS += test
-snort_LDADD += test/libtest.a
 endif
 
 if BUILD_PIGLET

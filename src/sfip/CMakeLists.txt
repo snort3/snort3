@@ -6,8 +6,13 @@ set(SFIP_INCLUDES
     sfip_t.h
 )
 
+if ( BUILD_UNIT_TESTS )
+    set(TEST_FILES sfip_test.cc)
+endif()
+
 add_library ( sfip STATIC
     ${SFIP_INCLUDES}
+    ${TEST_FILES}
     sf_ip.cc
     sf_ipvar.cc
     sf_vartable.cc

@@ -472,17 +472,6 @@ fi
 
 AM_CONDITIONAL(BUILD_UNIT_TESTS, test "x$enable_unit_tests" = "xyes")
 
-if test "x$enable_unit_tests" = "xyes"; then
-    PKG_CHECK_EXISTS([check], [ have_check_pkgconfig="yes" ], [ have_check_pkgconfig="no" ])
-
-    if test "${have_check_pkgconfig}" = "yes" ; then
-        CPPFLAGS="${CPPFLAGS} `pkg-config --cflags check 2>/dev/null`"
-        LIBS="${LIBS} `pkg-config --libs check 2>/dev/null`"
-    else
-        AC_CHECK_LIB(check,srunner_create)
-    fi
-fi
-
 #--------------------------------------------------------------------------
 # piglet
 #--------------------------------------------------------------------------

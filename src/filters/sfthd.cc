@@ -17,13 +17,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*!
- *
- * \file sfthd.c
+/*
+ * sfthd.cc author Marc Norton
  *
  * An Abstracted Event Thresholding System
- *
- * Marc Norton
  *
  * 3/5/07 - man - fixed memory leak in global config to limit
  * of one gid=0, or multiple gid!=0 but not both.
@@ -1330,4 +1327,9 @@ int sfthd_show_objects(ThresholdObjects* thd_objs)
 }
 
 #endif // THD_DEBUG
+
+#ifdef UNIT_TEST
+// FIXIT-L see sfip/sf_ip.cc
+#include "sfthd_test.cc"
+#endif
 

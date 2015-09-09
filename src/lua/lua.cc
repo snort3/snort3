@@ -19,6 +19,10 @@
 
 #include "lua.h"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <assert.h>
 
 namespace Lua
@@ -57,3 +61,9 @@ ManageStack::~ManageStack()
         lua_settop(state, top);
 }
 }
+
+#ifdef UNIT_TEST
+// FIXIT-L see sfip/sf_ip.cc
+#include "lua_stack_test.cc"
+#endif
+

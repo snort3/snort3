@@ -18,9 +18,8 @@
 //--------------------------------------------------------------------------
 
 /*
- * @file    sfrt.c
- * @author  Adam Keeton <akeeton@sourcefire.com>
- * @date    Thu July 20 10:16:26 EDT 2006
+ * sfrt.cc author Adam Keeton <akeeton@sourcefire.com>
+ * Thu July 20 10:16:26 EDT 2006
  *
  * Route implements two different routing table lookup mechanisms.  The table
  * lookups have been adapted to return a void pointer so any information can
@@ -816,4 +815,9 @@ int main()
 }
 
 #endif /* DEBUG_SFRT */
+
+#ifdef UNIT_TEST
+// FIXIT-L see sfip/sf_ip.cc
+#include "sfrt_test.cc"
+#endif
 

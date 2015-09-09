@@ -696,9 +696,6 @@ static bool set_mode()
         exit(Piglet::main());
 #endif
 #ifdef UNIT_TEST
-    if ( check_enabled() )
-        exit(check_test());
-
     if ( catch_enabled() )
         exit(catch_test());
 #endif

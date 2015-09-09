@@ -28,8 +28,6 @@ Optional:
 * asciidoc from http://www.methods.co.nz/asciidoc/ to build the HTML
   manual
 
-* check from http://check.sourceforge.net to build unit tests
-
 * dblatex from http://dblatex.sourceforge.net to build the pdf manual (in
   addition to asciidoc)
 
@@ -163,9 +161,8 @@ General Use
 * You can process multiple sources at one time by using the -z or
   --max-threads option.
 
-* Unit tests are configured with --enable-unit-tests (libcheck is
-  required).  They can then be run with snort --unit-test [<mode>] where mode
-  is a libcheck print_mode (silent, minimal, normal, etc.).
+* Unit tests are configured with --enable-unit-tests.  They can then be run
+  with snort --catch-test [tags]|all.
 
 Lua Configuration
 

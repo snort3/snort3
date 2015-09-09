@@ -25,16 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
-#endif
-
-#include <check.h>
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+#include "test/catch.hpp"
 
 #include "main/snort_types.h"
 #include "main/snort_config.h"
@@ -930,17 +921,7 @@ static void Init(unsigned cap)
     }
 }
 
-static void InitDefault(void)
-{
-    Init(MEM_DEFAULT);
-}
-
-static void InitMincap(void)
-{
-    Init(MEM_MINIMUM);
-}
-
-static void Term(void)
+static void Term()
 {
     int i;
 
@@ -1014,40 +995,37 @@ static int CapCheck(int i)
 
 //---------------------------------------------------------------
 
-START_TEST (test_setup)
+TEST_CASE("sfrf default memcap", "[sfrf]")
 {
-    fail_unless(SetupCheck(_i) == 1, "SetupCheck()");
+    Init(MEM_DEFAULT);
+
+    SECTION("setup")
+    {
+        for ( unsigned i = 0; i < NUM_NODES; ++i )
+            CHECK(SetupCheck(i) == 1);
+    }
+    SECTION("event")
+    {
+        for ( unsigned i = 0; i < NUM_NODES; ++i )
+            CHECK(EventCheck(i) == 1);
+    }
+    Term();
 }
-END_TEST
 
-START_TEST(test_event)
+TEST_CASE("sfrf minimum memcap", "[sfrf]")
 {
-    fail_unless(EventCheck(_i) == 1, "EventCheck()");
-}
-END_TEST
+    Init(MEM_MINIMUM);
 
-START_TEST(test_cap)
-{
-    fail_unless(CapCheck(_i) == 1, "CapCheck()");
-}
-END_TEST
-
-Suite* TEST_SUITE_sfrf(void)
-{
-    Suite* ps = suite_create("sfrf");
-
-    TCase* tc = tcase_create("normal");
-    tcase_add_unchecked_fixture(tc, InitDefault, Term);
-    tcase_add_loop_test(tc, test_setup, 0, NUM_NODES);
-    tcase_add_loop_test(tc, test_event, 0, NUM_EVENTS);
-    suite_add_tcase(ps, tc);
-
-    tc = tcase_create("mincap");
-    tcase_add_unchecked_fixture(tc, InitMincap, Term);
-    tcase_add_loop_test(tc, test_setup, 0, NUM_NODES);
-    tcase_add_loop_test(tc, test_cap, 0, NUM_EVENTS);
-    suite_add_tcase(ps, tc);
-
-    return ps;
+    SECTION("setup")
+    {
+        for ( unsigned i = 0; i < NUM_NODES; ++i )
+            CHECK(SetupCheck(i) == 1);
+    }
+    SECTION("cap")
+    {
+        for ( unsigned i = 0; i < NUM_NODES; ++i )
+            CHECK(CapCheck(i) == 1);
+    }
+    Term();
 }
 

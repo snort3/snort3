@@ -5,20 +5,6 @@
 #include <string.h>
 #include <luajit-2.0/lua.hpp>
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
-#endif
-
-#include <check.h>
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
-
-static inline void l_assert_strn_eq(const char* a, const char* b, size_t n)
-{ ck_assert(!strncmp(a, b, n)); }
-
 static inline void l_end_lua_state(lua_State*& L_ptr)
 {
     if ( L_ptr )
