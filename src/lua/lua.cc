@@ -57,3 +57,6 @@ ManageStack::~ManageStack()
         lua_settop(state, top);
 }
 }
+
+#include "lua_stack_test.cc"
+

@@ -23,6 +23,8 @@ lua_util.cc \
 lua_util.h \
 lua_table.h \
 lua_arg.h \
-lua_stack.h
+lua_stack.h \
+lua_stack_test.cc \
+lua_test_common.h
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
