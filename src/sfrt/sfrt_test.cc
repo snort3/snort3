@@ -18,20 +18,12 @@
 //--------------------------------------------------------------------------
 // sfrt_test.cc author Hui Cao <hcao@sourcefire.com>
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
+#include <string.h>
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
-#endif
-
-#include <check.h>
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+#include "test/catch.hpp"
 
 #include "main/snort_types.h"
 #include "sfrt/sfrt.h"
@@ -63,18 +55,13 @@ static IP_entry ip_lists[] =
     { "1001:db8:85a3::/29", 122 },
     { "255.255.255.255", 0 }
 };
+
 //---------------------------------------------------------------
 
 static int s_debug = 0;
 
-//---------------------------------------------------------------
-// check specific stuff: http://check.sourceforge.net/
-//
-// you can run gcc with -fprofile-arcs -ftest-coverage
-// and then gcov foo.c to determine coverage of unit tests
-
 /* Add one ip, then delete that IP*/
-START_TEST (test_sfrt_remove_after_insert)
+static void test_sfrt_remove_after_insert()
 {
     table_t* dir;
     unsigned num_entries;
@@ -86,7 +73,7 @@ START_TEST (test_sfrt_remove_after_insert)
 
     dir = sfrt_new(DIR_16_4x4_16x5_4x4, IPv6, num_entries + 1, 200);
 
-    fail_unless(dir != NULL, "sfrt_new()");
+    CHECK(dir != NULL); // "sfrt_new()"
 
     for (index=0; index<num_entries; index++)
     {
@@ -119,8 +106,8 @@ START_TEST (test_sfrt_remove_after_insert)
         {
             printf("Insert IP addr: %s, family: %d\n", sfip_to_str(&ip), ip.family);
         }
-        fail_unless(sfrt_insert(&ip, ip.bits, &(ip_entry->value), RT_FAVOR_TIME, dir) ==
-            RT_SUCCESS,"sfrt_insert()");
+        CHECK(sfrt_insert(&ip, ip.bits, &(ip_entry->value), RT_FAVOR_TIME, dir) ==
+            RT_SUCCESS); // "sfrt_insert()"
 
         if ( s_debug )
         {
@@ -135,7 +122,7 @@ START_TEST (test_sfrt_remove_after_insert)
                 printf("value input: %d, output: NULL\n", ip_entry->value);
         }
 
-        fail_unless(result != NULL, "sfrt_lookup()");
+        CHECK(result != NULL); // "sfrt_lookup()"
 
         if ( s_debug )
         {
@@ -143,16 +130,15 @@ START_TEST (test_sfrt_remove_after_insert)
             printf("value input: %d, output: %d\n", ip_entry->value, *result);
         }
 
-        fail_unless(sfrt_remove(&ip, ip.bits, (void**)&result, RT_FAVOR_TIME, dir) == RT_SUCCESS,
-            "sfrt_remove()");
-        fail_unless(result != NULL,"sfrt_remove()");
+        CHECK(sfrt_remove(&ip, ip.bits, (void**)&result, RT_FAVOR_TIME, dir) == RT_SUCCESS);
+        CHECK(result != NULL); //sfrt_remove()"
 
         val = *result;
         if ( s_debug )
             printf("value expected: %d, actual: %d\n", ip_entry->value, val);
 
-        fail_unless(val == ip_entry->value,"sfrt_remove(): value return");
-        fail_unless(sfrt_lookup(&ip, dir) == NULL,"sfrt_lookup(): value return");
+        CHECK(val == ip_entry->value); //sfrt_remove(): value return"
+        CHECK(sfrt_lookup(&ip, dir) == NULL); // "sfrt_lookup(): value return"
     }
 
     if ( s_debug )
@@ -163,10 +149,9 @@ START_TEST (test_sfrt_remove_after_insert)
 
     sfrt_free(dir);
 }
-END_TEST
 
 /*Add all IPs, then delete all of them*/
-START_TEST(test_sfrt_remove_after_insert_all)
+static void test_sfrt_remove_after_insert_all()
 {
     table_t* dir;
     unsigned num_entries;
@@ -179,7 +164,7 @@ START_TEST(test_sfrt_remove_after_insert_all)
 
     dir = sfrt_new(DIR_16_4x4_16x5_4x4, IPv6, num_entries + 1, 200);
 
-    fail_unless(dir != NULL, "sfrt_new()");
+    CHECK(dir != NULL); // "sfrt_new()"
 
     /*insert all entries*/
     for (index=0; index<num_entries; index++)
@@ -208,15 +193,15 @@ START_TEST(test_sfrt_remove_after_insert_all)
             free(ip2_str);
         }
 
-        fail_unless(sfrt_insert(&ip, ip.bits, &(ip_entry->value), RT_FAVOR_TIME, dir) ==
-            RT_SUCCESS,"sfrt_insert()");
+        CHECK(sfrt_insert(&ip, ip.bits, &(ip_entry->value), RT_FAVOR_TIME, dir) ==
+            RT_SUCCESS); // "sfrt_insert()"
 
         result = (int*)sfrt_lookup(&ip, dir);
 
         if ( s_debug )
             printf("value input: %d, output: %d\n", ip_entry->value, result ? *result : -1);
 
-        fail_unless(result != NULL, "sfrt_lookup()");
+        CHECK(result != NULL); // "sfrt_lookup()"
     }
 
     if ( s_debug )
@@ -237,15 +222,14 @@ START_TEST(test_sfrt_remove_after_insert_all)
         if (ip_entry->ip_str)
             sfip_pton(ip_entry->ip_str, &ip);
 
-        fail_unless(sfrt_remove(&ip, ip.bits, (void**)&result, RT_FAVOR_TIME, dir) == RT_SUCCESS,
-            "sfrt_remove()");
+        CHECK(sfrt_remove(&ip, ip.bits, (void**)&result, RT_FAVOR_TIME, dir) == RT_SUCCESS);
 
         val = *result;
         if ( s_debug )
             printf("value expected: %d, actual: %d\n", ip_entry->value, val);
 
-        fail_unless(val == ip_entry->value,"sfrt_remove(): value return");
-        fail_unless(sfrt_lookup(&ip, dir) == NULL,"sfrt_lookup(): value return");
+        CHECK(val == ip_entry->value); //sfrt_remove(): value return"
+        CHECK(!sfrt_lookup(&ip, dir));
 
         /*check the next entry still exist*/
         if (index + 1 < num_entries)
@@ -254,7 +238,7 @@ START_TEST(test_sfrt_remove_after_insert_all)
             /*Parse IP*/
             if (ip_entry->ip_str)
                 sfip_pton(ip_entry->ip_str, &ip);
-            fail_unless(sfrt_lookup(&ip, dir) != NULL,"sfrt_lookup(): value return");
+            CHECK(sfrt_lookup(&ip, dir)); // "sfrt_lookup(): value return"
         }
     }
 
@@ -266,17 +250,16 @@ START_TEST(test_sfrt_remove_after_insert_all)
 
     sfrt_free(dir);
 }
-END_TEST
 
-Suite* TEST_SUITE_sfrt(void)
+TEST_CASE("sfrt", "[sfrt]")
 {
-    Suite* ps = suite_create("sfrt");
-
-    TCase* tc = tcase_create("sfrt_remove");
-    tcase_add_test(tc, test_sfrt_remove_after_insert);
-    tcase_add_test(tc, test_sfrt_remove_after_insert_all);
-
-    suite_add_tcase(ps, tc);
-    return ps;
+    SECTION("remove after insert")
+    {
+        test_sfrt_remove_after_insert();
+    }
+    SECTION("remove after insert all")
+    {
+        test_sfrt_remove_after_insert_all();
+    }
 }
 

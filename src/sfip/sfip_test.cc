@@ -20,20 +20,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
-#endif
-
-#include <check.h>
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+#include "test/catch.hpp"
 
 #include "main/snort_types.h"
-#include "sfip/sf_ip.h"
+#include "sf_ip.h"
 
 //---------------------------------------------------------------
 
@@ -60,13 +52,13 @@ static const char* const codes[] =
     "conflict"
 };
 
-typedef struct
+struct FuncTest
 {
     const char* func;
     const char* arg1;
     const char* arg2;
     int expected;
-} FuncTest;
+};
 
 //---------------------------------------------------------------
 
@@ -453,56 +445,34 @@ static int CopyCheck(int i)
 }
 
 //---------------------------------------------------------------
-// check specific stuff: http://check.sourceforge.net/
-//
-// you can run gcc with -fprofile-arcs -ftest-coverage
-// and then gcov foo.c to determine coverage of unit tests
 
-START_TEST (test_funcs)
+TEST_CASE("sfip exec", "[sfip]")
 {
-    fail_unless(FuncCheck(_i) == 1, "FuncCheck()");
+    for ( unsigned i = 0; i < NUM_TESTS; ++i )
+        CHECK(FuncCheck(i) == 1);
 }
-END_TEST
 
-START_TEST(test_alloc)
+TEST_CASE("sfip set", "[sfip]")
 {
-    fail_unless(AllocCheck(_i) == 1, "AllocCheck()");
+    for ( unsigned i = 0; i < NUM_TESTS; ++i )
+        CHECK(SetCheck(i) == 1);
 }
-END_TEST
 
-START_TEST(test_raw)
+TEST_CASE("sfip copy", "[sfip]")
 {
-    fail_unless(RawCheck(_i) == 1, "RawCheck()");
+    for ( unsigned i = 0; i < NUM_TESTS; ++i )
+        CHECK(CopyCheck(i) == 1);
 }
-END_TEST
 
-START_TEST(test_set)
+TEST_CASE("sfip alloc", "[sfip]")
 {
-    fail_unless(SetCheck(_i) == 1, "SetCheck()");
+    for ( unsigned i = 0; i < NUM_TESTS; ++i )
+        CHECK(AllocCheck(i) == 1);
 }
-END_TEST
 
-START_TEST(test_copy)
+TEST_CASE("sfip raw", "[sfip]")
 {
-    fail_unless(CopyCheck(_i) == 1, "CopyCheck()");
-}
-END_TEST
-
-Suite* TEST_SUITE_sfip(void)
-{
-    Suite* ps = suite_create("sf_ip");
-
-    TCase* tc = tcase_create("funcs");
-    tcase_add_loop_test(tc, test_funcs, 0, NUM_TESTS);
-    tcase_add_loop_test(tc, test_set, 0, NUM_TESTS);
-    tcase_add_loop_test(tc, test_copy, 0, NUM_TESTS);
-    suite_add_tcase(ps, tc);
-
-    tc = tcase_create("alloc");
-    tcase_add_loop_test(tc, test_alloc, 0, NUM_TESTS);
-    tcase_add_loop_test(tc, test_raw, 0, 2);
-    suite_add_tcase(ps, tc);
-
-    return ps;
+    for ( unsigned i = 0; i < 2; ++i )
+        CHECK(RawCheck(i) == 1);
 }
 

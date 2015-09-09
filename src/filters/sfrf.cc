@@ -832,5 +832,6 @@ static tSFRFTrackingNode* _getSFRFTrackingNode(
     return dynNode;
 }
 
-/*@}*/
+// FIXIT-L see sfip/sf_ip.cc
+#include "sfrf_test.cc"
 

@@ -1331,3 +1331,6 @@ int sfthd_show_objects(ThresholdObjects* thd_objs)
 
 #endif // THD_DEBUG
 
+// FIXIT-L see sfip/sf_ip.cc
+#include "sfthd_test.cc"
+

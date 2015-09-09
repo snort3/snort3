@@ -22,16 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
-#endif
-
-#include <check.h>
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+#include "test/catch.hpp"
 
 #include "sfip/sf_ip.h"
 #include "parser/parse_ip.h"
@@ -773,27 +764,27 @@ static void Init(ThreshData* base, int max)
     }
 }
 
-static void InitDefault(void)
+static void InitDefault()
 {
     pThdObjs = sfthd_objs_new();
     pThd = sfthd_new(MEM_DEFAULT, MEM_DEFAULT);
     Init(thData, NUM_THDS);
 }
 
-static void InitMincap(void)
+static void InitMincap()
 {
     pThdObjs = sfthd_objs_new();
     pThd = sfthd_new(MEM_MINIMUM, MEM_MINIMUM+1);
     Init(thData, NUM_THDS);
 }
 
-static void InitDetect(void)
+static void InitDetect()
 {
     dThd = sfthd_local_new(MEM_DEFAULT);
     Init(ruleData, NUM_RULS);
 }
 
-static void Term(void)
+static void Term()
 {
     sfthd_objs_free(pThdObjs);
     pThdObjs = NULL;
@@ -901,58 +892,54 @@ static int PacketCheck(int i)
 
 //---------------------------------------------------------------
 
-START_TEST (test_setup)
+TEST_CASE("sfthd normal", "[sfthd]")
 {
-    fail_unless(SetupCheck(_i) == 1, "SetupCheck()");
+    InitDefault();
+
+    SECTION("setup")
+    {
+        for ( unsigned i = 0; i < NUM_THDS; ++i )
+            CHECK(SetupCheck(i) == 1);
+    }
+    SECTION("event")
+    {
+        for ( unsigned i = 0; i < NUM_EVTS; ++i )
+            CHECK(EventCheck(i) == 1);
+    }
+    Term();
 }
-END_TEST
 
-START_TEST(test_rule)
+TEST_CASE("sfthd mincap", "[sfthd]")
 {
-    fail_unless(RuleCheck(_i) == 1, "RuleCheck()");
+    InitMincap();
+
+    SECTION("setup")
+    {
+        for ( unsigned i = 0; i < NUM_THDS; ++i )
+            CHECK(SetupCheck(i) == 1);
+    }
+    SECTION("cap")
+    {
+        for ( unsigned i = 0; i < NUM_EVTS; ++i )
+            CHECK(CapCheck(i) == 1);
+    }
+    Term();
 }
-END_TEST
 
-START_TEST(test_event)
+TEST_CASE("sfthd detect", "[sfthd]")
 {
-    fail_unless(EventCheck(_i) == 1, "EventCheck()");
-}
-END_TEST
+    InitDetect();
 
-START_TEST(test_packet)
-{
-    fail_unless(PacketCheck(_i) == 1, "PacketCheck()");
-}
-END_TEST
-
-START_TEST(test_cap)
-{
-    fail_unless(CapCheck(_i) == 1, "CapCheck()");
-}
-END_TEST
-
-Suite* TEST_SUITE_sfthd(void)
-{
-    Suite* ps = suite_create("sfthd");
-
-    TCase* tc = tcase_create("normal");
-    tcase_add_unchecked_fixture(tc, InitDefault, Term);
-    tcase_add_loop_test(tc, test_setup, 0, NUM_THDS);
-    tcase_add_loop_test(tc, test_event, 0, NUM_EVTS);
-    suite_add_tcase(ps, tc);
-
-    tc = tcase_create("mincap");
-    tcase_add_unchecked_fixture(tc, InitMincap, Term);
-    tcase_add_loop_test(tc, test_setup, 0, NUM_THDS);
-    tcase_add_loop_test(tc, test_cap, 0, NUM_EVTS);
-    suite_add_tcase(ps, tc);
-
-    tc = tcase_create("detect");
-    tcase_add_unchecked_fixture(tc, InitDetect, Term);
-    tcase_add_loop_test(tc, test_rule, 0, NUM_RULS);
-    tcase_add_loop_test(tc, test_packet, 0, NUM_PKTS);
-    suite_add_tcase(ps, tc);
-
-    return ps;
+    SECTION("rules")
+    {
+        for ( unsigned i = 0; i < NUM_RULS; ++i )
+            CHECK(RuleCheck(i) == 1);
+    }
+    SECTION("packets")
+    {
+        for ( unsigned i = 0; i < NUM_PKTS; ++i )
+            CHECK(PacketCheck(i) == 1);
+    }
+    Term();
 }
 
