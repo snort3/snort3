@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/unistd.h>
+#include <sys/socket.h>
 
 #include <daq_api.h>
 #include <sfbpf_dlt.h>
