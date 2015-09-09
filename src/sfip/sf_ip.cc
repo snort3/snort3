@@ -661,7 +661,10 @@ int sfip_ismapped(const sfip_t* ip)
     return 1;
 }
 
+#ifdef UNIT_TEST
 // FIXIT-L this is a hack to get catch to run these tests
-// otherwise just acts like they aren't there
+// otherwise the linker omits the auto registration foo
+// and the tests will not run
 #include "sfip_test.cc"
+#endif
 

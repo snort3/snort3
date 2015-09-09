@@ -58,5 +58,8 @@ ManageStack::~ManageStack()
 }
 }
 
+#ifdef UNIT_TEST
+// FIXIT-L see sfip/sf_ip.cc
 #include "lua_stack_test.cc"
+#endif
 
