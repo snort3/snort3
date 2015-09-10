@@ -196,17 +196,11 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         return false;
     }
 #if 0
-    // There is no need to alert when (ip_len < len).
-    // Libpcap will capture more bytes than are part of the IP payload.
-    // These could be Ethernet trailers, ESP trailers, etc.
-    // This code is left in, commented, to keep us from re-writing it later.
     else if (ip_len < len)
     {
-        if (SnortConfig::log_verbose())
-            ErrorMessage("IP Len field is %d bytes "
-                "smaller than captured length.\n"
-                "    (ip.len: %lu, cap.len: %lu)\n",
-                len - ip_len, ip_len, len);
+        // There is no need to alert when (ip_len < len).
+        // Libpcap will capture more bytes than are part of the IP payload.
+        // These could be Ethernet trailers, ESP trailers, etc.
     }
 #endif
 

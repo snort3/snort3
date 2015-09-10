@@ -92,19 +92,15 @@ bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
     switch (protocol)
     {
     case PPP_VJ_COMP:
-        if (!had_vj)
-            ErrorMessage("PPP link seems to use VJ compression, "
-                "cannot handle compressed packets\n");
         had_vj = true;
         return false;
+
     case PPP_VJ_UCOMP:
         /* VJ compression modifies the protocol field. It must be set
          * to tcp (only TCP packets can be VJ compressed) */
         if (raw.len < (uint32_t)(codec.lyr_len + ip::IP4_HEADER_LEN))
         {
-            if (SnortConfig::log_verbose())
-                ErrorMessage("PPP VJ min packet length > captured len"
-                    "(%d bytes)\n", raw.len);
+            // PPP VJ min packet length > captured len
             return false;
         }
 
