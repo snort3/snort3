@@ -47,10 +47,21 @@ struct EtherARP
 constexpr uint16_t ETHERARP_HDR_LEN = 28; /*  sizeof EtherARP != 28 */
 } // namespace arp
 
+#ifndef ARPOP_REQUEST
 constexpr uint16_t ARPOP_REQUEST = 1;  /* ARP request  */
+#endif
+
+#ifndef ARPOP_REPLY
 constexpr uint16_t ARPOP_REPLY = 2;    /* ARP reply    */
+#endif
+
+#ifndef ARPOP_RREQUEST
 constexpr uint16_t ARPOP_RREQUEST = 3; /* RARP request */
+#endif
+
+#ifndef ARPOP_RREPLY
 constexpr uint16_t ARPOP_RREPLY = 4;   /* RARP reply   */
+#endif
 
 #endif
 
