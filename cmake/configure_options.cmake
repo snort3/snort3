@@ -44,12 +44,6 @@ set_if_true (BUILD_PIGLET PIGLET)
 set_if_true (STATIC_PIGLETS STATIC_PIGLETS)
 
 
-if(LINUX AND BUILD_CONTROL_SOCKET)
-    add_definitions("-DCONTROL_SOCKET")
-    message(WARNING "The control socket is only supported on Linux systems.")
-    message(STATUS "Building the control socket.")
-endif(LINUX AND BUILD_CONTROL_SOCKET)
-
 # convert cmake options into CXX flags
 if(ENABLE_DEBUG)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")

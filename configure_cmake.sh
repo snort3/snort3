@@ -170,12 +170,6 @@ while [ $# -ne 0 ]; do
         --enable-static-search-engines)
             append_cache_entry STATIC_SEARCH_ENGINES       BOOL   true
             ;;
-        --disable-control-socket)
-            append_cache_entry BUILD_CONTROL_SOCKET    BOOL   false
-            ;;
-        --enable-control-socket)
-            append_cache_entry BUILD_CONTROL_SOCKET    BOOL   true
-            ;;
         --disable-side-channel)
             append_cache_entry BUILD_SIDE_CHANNEL       BOOL   false
             ;;

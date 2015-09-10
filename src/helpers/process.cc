@@ -199,7 +199,7 @@ static int add_signal(int sig, sighandler_t signal_handler, int check_needed)
 {
 #ifdef VALGRIND_TESTING
     if ( sig == SIGUSR2 )
-        return;  // used by valgrind
+        return 0;  // used by valgrind
 #endif
     sighandler_t pre_handler;
 
