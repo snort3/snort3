@@ -5,7 +5,7 @@ To compile with g++ instead:
 
       export CXX=g++
 
-* clang; coughs up these warnings:
+* clang coughs up these warnings:
 
     Wunused-but-set-variable is not understood by clang
     clang: warning: argument unused during compilation: '-pthread'
