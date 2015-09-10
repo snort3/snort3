@@ -29,7 +29,6 @@
 #include "file_mime_log.h"
 #include "file_api/file_api.h"
 
-
 enum EmailUserType
 {
     EMAIL_SENDER,

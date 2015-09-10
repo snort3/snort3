@@ -31,7 +31,6 @@
 #include "file_mime_config.h"
 #include "file_api/file_api.h"
 
-
 /* State tracker for data */
 enum MimeDataState
 {
@@ -70,7 +69,6 @@ struct MimeDataPafInfo
     MimeBoundaryState boundary_state;
 };
 
-
 static inline bool scanning_boundary(MimeDataPafInfo* mime_info, uint32_t boundary_start,
     uint32_t* fp)
 {
@@ -84,7 +82,6 @@ static inline bool scanning_boundary(MimeDataPafInfo* mime_info, uint32_t bounda
 
     return false;
 }
-
 
 void reset_mime_paf_state(MimeDataPafInfo *data_info);
 /*  Process data boundary and flush each file based on boundary*/

@@ -30,7 +30,7 @@
 
 #include "main/snort_types.h"
 
-typedef enum
+enum
 {
     DECODE_NONE = 0,
     DECODE_B64,
@@ -69,7 +69,7 @@ private:
     DataDecode* decoder = NULL;
 };
 
-// Todo: add statistics
+// FIXIT-L: add statistics
 //struct MimeStats
 //{
 //    uint64_t memcap_exceeded;
