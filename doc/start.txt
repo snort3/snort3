@@ -86,9 +86,9 @@ d. Or use ccmake directly to configure and generate from an arbitrary build
     ccmake -G "Eclipse CDT4 - Unix Makefiles" /path/to/Snort++/tree
     run eclipse and do File > Import > Existing Eclipse Project
 
-* To build with clang++ on OS X with gcc installed, do this first:
+* To build with g++ on OS X where clang is installed, do this first:
 
-    export CXX=clang++
+    export CXX=g++
 
 
 === Run

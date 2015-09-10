@@ -1,11 +1,11 @@
 ==== Build
 
-* configure bombs on OSX with g\++ wrapper to clang because g++ version < 4.8
-(compare g\++ -dumpversion and g++ --version)
+* configure will use clang++ by default if it is installed. 
+To compile with g++ instead:
 
-    workaround:  export CXX=clang++
+      export CXX=g++
 
-* export CXX=clang++ to build with clang; coughs up these warnings:
+* clang coughs up these warnings:
 
     Wunused-but-set-variable is not understood by clang
     clang: warning: argument unused during compilation: '-pthread'
