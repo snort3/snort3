@@ -1,3 +1,12 @@
+15/09/04 - build 169
+
+-- fix chunked manual install
+-- add event direction bug
+-- fix OpenBSD build
+-- convert check unit tests to catch
+-- code cleanup
+-- fix dev guide builds from top_srcdir
+
 15/09/04 - build 168
 
 -- fixed build of chunked manual (thanks to Bill Parker for reporting the issue)
