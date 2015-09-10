@@ -165,7 +165,7 @@ html_args = \
 if MAKE_HTML_DOC
 snort_manual.html: $(all_sources)
 	a2x -f chunked $(html_args) $(snort_src)
-	tar zcf $@ snort_manual.chunked
+	tar zcf snort_manual.tgz snort_manual.chunked
 	asciidoc -b xhtml11 -a toc2 -a icons -a imagesdir=. $(snort_src)
 else
 snort_manual.html: default_snort_manual.html
@@ -175,7 +175,7 @@ endif
 # a2x generates an intermediate xml file unconditionally and always places
 # it in this dir even if the output is put elsewhere, which breaks parallel
 # builds.  hence we just build all sequentially, which is why dependencies
-# are:  chunked depends on text depends on pdf depends on html.
+# are:  text depends on pdf depends on html.
 if MAKE_PDF_DOC
 snort_manual.pdf: $(all_sources) snort_manual.html
 	a2x -f pdf $(pdf_args) $(snort_src)
@@ -198,7 +198,7 @@ endif
 # there is no default for chunked.
 if MAKE_HTML_DOC
 install-data-hook:
-	tar zxf $(DESTDIR)$(docdir)/snort_manual.chunked.tgz -C $(DESTDIR)$(docdir)/
+	tar zxf $(builddir)/snort_manual.tgz -C $(DESTDIR)$(docdir)/
 
 uninstall-hook:
 	rm -rf $(DESTDIR)$(docdir)/snort_manual.chunked
