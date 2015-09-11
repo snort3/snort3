@@ -11,10 +11,5 @@ libtoken_ring_la_CXXFLAGS = $(AM_CXXFLAGS)
 libtoken_ring_la_LDFLAGS = -export-dynamic -shared
 libtoken_ring_la_SOURCES = token_ring.cc
 
-cdlib_LTLIBRARIES += libsocket.la
-libsocket_la_CXXFLAGS = $(AM_CXXFLAGS)
-libsocket_la_LDFLAGS = -export-dynamic -shared
-libsocket_la_SOURCES = socket.cc
-
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

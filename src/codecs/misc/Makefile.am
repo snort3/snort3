@@ -8,6 +8,7 @@ cd_gtp.cc \
 cd_icmp4_ip.cc \
 cd_icmp6_ip.cc \
 cd_llc.cc \
+cd_socket.cc \
 cd_teredo.cc
 
 if STATIC_CODECS
@@ -35,6 +36,11 @@ cdlib_LTLIBRARIES += libcd_llc.la
 libcd_llc_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_llc_la_LDFLAGS = -export-dynamic -shared
 libcd_llc_la_SOURCES = cd_llc.cc
+
+cdlib_LTLIBRARIES += libcd_socket.la
+libcd_socket_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_socket_la_LDFLAGS = -export-dynamic -shared
+libcd_socket_la_SOURCES = cd_socket.cc
 
 cdlib_LTLIBRARIES += libcd_teredo.la
 libcd_teredo_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

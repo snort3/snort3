@@ -19,9 +19,6 @@
 # header, you must also add that symbol to CPPFLAGS.  This ensures that
 # external modules like those in examples can use pkg-config to get the
 # same symbols Snort did.  See PERF_PROFILING for an example.
-# 
-# those should be going to AM_CPPFLAGS but adding the include paths breaks
-# with both += and x='$x ...' forms.
 #--------------------------------------------------------------------------
 # initialization
 #--------------------------------------------------------------------------
@@ -48,7 +45,9 @@ AC_PROG_LIBTOOL
 AC_C_BIGENDIAN
 AC_C_INLINE
 
-AM_CXXFLAGS="-std=c++11"
+CFLAGS="$CFLAGS -std=c99"
+CXXFLAGS="$CXXFLAGS -std=c++11"
+
 AX_CXX_COMPILE_STDCXX_11
 
 # g++ 4.7 passes the c++11 check but is not sufficient
@@ -168,8 +167,9 @@ AC_DEFUN([CC_VISIBILITY],
 [
     AC_REQUIRE([AC_PROG_CC])
     AC_MSG_CHECKING([for visibility support])
+    gl_save_CFLAGS="$CFLAGS"
+
     AC_CACHE_VAL(gl_cv_cc_visibility, [
-        gl_save_CFLAGS="$CFLAGS"
         # Add -Werror flag since some compilers, e.g. icc 7.1, don't support it,
         # but only warn about it instead of compilation failing
         CFLAGS="$CFLAGS -Werror -fvisibility=hidden"
@@ -185,7 +185,8 @@ AC_DEFUN([CC_VISIBILITY],
     AC_MSG_RESULT([$gl_cv_cc_visibility])
     CFLAGS="$gl_save_CFLAGS"
     if test "x$gl_cv_cc_visibility" = "xyes"; then
-        AM_CXXFLAGS="$AM_CXXFLAGS -fvisibility=hidden"
+        CFLAGS="$CFLAGS -fvisibility=hidden"
+        CXXFLAGS="$CXXFLAGS -fvisibility=hidden"
         AC_DEFINE([HAVE_VISIBILITY],[1],
             [Define if the compiler supports visibility declarations.])
     fi
@@ -423,6 +424,7 @@ AC_ARG_ENABLE(debug,
 
 if test "x$enable_debug" = "xyes"; then
     CFLAGS="$CFLAGS -g"
+    CXXFLAGS="$CXXFLAGS -g"
     CPPFLAGS="$CPPFLAGS -DDEBUG"
     AC_DEFINE(DEBUG, [1], [enable debug build])
 else
@@ -436,6 +438,7 @@ AC_ARG_ENABLE(gdb,
 
 if test "x$enable_gdb" = "xyes"; then
     CFLAGS="$CFLAGS -g -ggdb"
+    CXXFLAGS="$CXXFLAGS -g -ggdb"
 fi
 
 AC_ARG_ENABLE(gprof-profile,
@@ -446,6 +449,7 @@ AC_ARG_ENABLE(gprof-profile,
 if test "x$enable_gprof_profile" = "xyes"; then
     if test -n "$GCC"; then
         CFLAGS="$CFLAGS -pg"
+        CXXFLAGS="$CXXFLAGS -pg"
     fi
     AC_DEFINE(PROFILE, [1], [enable gprof profiling])
 fi
@@ -603,7 +607,6 @@ AC_ARG_WITH(pcre_includes,
 
 if test "x$with_libpcre_includes" != "xno"; then
     CPPFLAGS="${CPPFLAGS} -I${with_libpcre_includes}"
-    ICONFIGFLAGS="${ICONFIGFLAGS} -I${with_libpcre_includes}"
 else
     CPPFLAGS="${CPPFLAGS} `pcre-config --cflags`"
 fi
@@ -719,7 +722,6 @@ AC_ARG_WITH(daq_includes,
 
 if test "x$with_daq_includes" != "xno"; then
    CPPFLAGS="${CPPFLAGS} -I${with_daq_includes}"
-   ICONFIGFLAGS="${ICONFIGFLAGS} -I${with_daq_includes}"
 fi
 
 AC_ARG_WITH(daq_libraries,
@@ -842,7 +844,7 @@ LIBS="$LIBS -lz"
 
 AX_PTHREAD
 LIBS="$PTHREAD_LIBS $LIBS"
-CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
 LDFLAGS="$LDFLAGS $PTHREAD_LDFLAGS"
 
 #--------------------------------------------------------------------------
@@ -885,7 +887,6 @@ AC_ARG_WITH(openssl_includes,
 
 if test "x$with_openssl_includes" != "xno"; then
     CPPFLAGS="${CPPFLAGS} -I${with_openssl_includes}"
-    ICONFIGFLAGS="${ICONFIGFLAGS} -I${with_openssl_includes}"
 fi
 
 AC_ARG_WITH(openssl_libraries,
@@ -945,26 +946,19 @@ fi
 
 AC_DEFINE_UNQUOTED([API_OPTIONS], ["$API_OPTIONS"], [plugin api related build options])
 
-# :(
-# FIXIT should be using AM_* flavors instead
-CFLAGS="${CFLAGS} ${CCONFIGFLAGS}"
-CFLAGS=`echo $CFLAGS | sed -e 's/-I\/usr\/include //g'`
-CPPFLAGS="${CPPFLAGS} ${CONFIGFLAGS}"
-CPPFLAGS=`echo $CPPFLAGS | sed -e 's/-I\/usr\/include //g'`
-
-CXXFLAGS="$CFLAGS"
-echo "$AM_CFLAGS $CFLAGS" > cflags.out
-echo "$AM_CPPFLAGS $CPPFLAGS" > cppflags.out
+# hmmm, why are we doing this again?
+#CFLAGS=`echo $CFLAGS | sed -e 's/-I\/usr\/include //g'`
+#CXXFLAGS=`echo $CXXFLAGS | sed -e 's/-I\/usr\/include //g'`
+#CPPFLAGS=`echo $CPPFLAGS | sed -e 's/-I\/usr\/include //g'`
 
 AM_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir)/src -I$(top_srcdir)/src/network_inspectors'
 snort2lua_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir)/tools/snort2lua'
 
 AC_SUBST(AM_CPPFLAGS)
-AC_SUBST(AM_CXXFLAGS)
-AC_SUBST(CONFIGFLAGS)
-AC_SUBST(CCONFIGFLAGS)
-AC_SUBST(ICONFIGFLAGS)
 AC_SUBST(snort2lua_CPPFLAGS)
+
+AC_SUBST(AM_CFLAGS)
+AC_SUBST(AM_CXXFLAGS)
 
 AC_CONFIG_FILES([ \
 snort.pc \
@@ -1037,6 +1031,7 @@ src/time/Makefile \
 src/utils/Makefile \
 lua/Makefile \
 doc/Makefile \
+daqs/Makefile \
 m4/Makefile \
 tools/Makefile \
 tools/u2boat/Makefile \
@@ -1063,7 +1058,9 @@ AC_MSG_RESULT([
     includedir:     ${includedir}
 
     compiler:       ${CC}
+    compiler++:     ${CXX}
     cflags:         ${CFLAGS}
+    cxxflags:       ${CXXFLAGS}
     cppflags:       ${CPPFLAGS}
     ldflags:        ${LDFLAGS}
     libs:           ${LIBS}

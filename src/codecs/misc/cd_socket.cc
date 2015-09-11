@@ -145,9 +145,13 @@ static const CodecApi socket_api =
     dtor
 };
 
+#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &socket_api.base,
     nullptr
 };
+#else
+const BaseApi* cd_socket = &socket_api.base;
+#endif
 
