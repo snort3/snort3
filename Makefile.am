@@ -4,6 +4,7 @@ src \
 lua \
 tools \
 doc \
+daqs \
 m4
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

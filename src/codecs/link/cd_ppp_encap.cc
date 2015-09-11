@@ -54,7 +54,6 @@ void PppEncap::get_protocol_ids(std::vector<uint16_t>& v)
 
 bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
-    static THREAD_LOCAL bool had_vj = false;
     uint16_t protocol;
 
     DebugMessage(DEBUG_DECODE, "PPP Packet!\n");
@@ -92,7 +91,6 @@ bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
     switch (protocol)
     {
     case PPP_VJ_COMP:
-        had_vj = true;
         return false;
 
     case PPP_VJ_UCOMP:

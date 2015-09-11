@@ -18,9 +18,6 @@ helpers/libsnort2lua_helpers.a \
 data/libdata.a \
 data/data_types/libdata_types.a
 
-snort2lua_CFLAGS = @CFLAGS@ $(AM_CFLAGS)
-snort2lua_CPPFLAGS = @snort2lua_CPPFLAGS@
-
 SUBDIRS = \
 helpers \
 data \
