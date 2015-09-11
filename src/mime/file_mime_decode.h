@@ -30,7 +30,7 @@
 
 #include "main/snort_types.h"
 
-enum
+enum DecodeType
 {
     DECODE_NONE = 0,
     DECODE_B64,
@@ -38,7 +38,7 @@ enum
     DECODE_UU,
     DECODE_BITENC,
     DECODE_ALL
-} DecodeType;
+} ;
 
 class MimeDecode
 {

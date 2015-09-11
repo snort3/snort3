@@ -84,7 +84,7 @@ private:
     uint8_t* file_name = NULL;
     uint32_t file_name_size = 0;
     uint64_t file_size = 0;
-    FileDirection direction = FILE_DOWNLOAD;
+    FileDirection direction = DIRECTION_UNKNOWN;
     uint64_t processed_bytes = 0;
     uint32_t file_type_id = SNORT_FILE_TYPE_CONTINUE;
     uint8_t* sha256 = NULL;
@@ -102,8 +102,6 @@ private:
 };
 
 const char* file_type_name(void* conf, uint32_t id);
-
-void free_file_identifiers(void*);
 
 #endif
 

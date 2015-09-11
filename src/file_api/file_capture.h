@@ -52,9 +52,6 @@ public:
 
     // Capture file data to local buffer
     // This is the main function call to enable file capture
-    // Returns:
-    //   0: successful
-    //   1: fail to capture the file or file capture is disabled
     FileCaptureState process_buffer(const uint8_t* file_data, int data_size,
         FilePosition pos);
 

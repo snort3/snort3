@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 1998-2013 Sourcefire, Inc.
+// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// sf_email_attach_decode.h author Bhagyashree Bantwal <bbantwal@cisco.com>
+// Hui Cao <huica@cisco.com>
 
 #ifndef DECODE_B64_H
 #define DECODE_B64_H
@@ -29,7 +28,7 @@
 #include "decode_buffer.h"
 #include "decode_base.h"
 
-class B64Decode:public DataDecode
+class B64Decode: public DataDecode
 {
 public:
     B64Decode(int max_depth);

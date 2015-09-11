@@ -97,6 +97,7 @@ enum FileProcessType
 
 enum FileDirection
 {
+   DIRECTION_UNKNOWN,
    FILE_DOWNLOAD,
    FILE_UPLOAD
 };
