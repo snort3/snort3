@@ -45,9 +45,6 @@
 /* include internal decoders in binary */
 #cmakedefine STATIC_CODECS 1
 
-/* built control socket */ 
-#cmakedefine CONTROL_SOCKET 1
-
 /* build side channel */
 #cmakedefine SIDE_CHANNEL 1
 

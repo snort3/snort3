@@ -383,7 +383,7 @@ bool UdpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         ps.len = udph_out->uh_len;
         udph_out->uh_chk = checksum::udp_cksum((uint16_t*)udph_out, len, &ps);
     }
-    else
+    else if (ip_api.is_ip6())
     {
         checksum::Pseudoheader6 ps6;
         const ip::IP6Hdr* const ip6h = ip_api.get_ip6h();
