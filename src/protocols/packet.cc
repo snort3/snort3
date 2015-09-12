@@ -137,6 +137,9 @@ const char* Packet::get_pseudo_type() const
     case PSEUDO_PKT_TCP:
         return "stream_tcp";
 
+    case PSEUDO_PKT_USER:
+        return "stream_user";
+
     case PSEUDO_PKT_DCE_RPKT:
         return "dce2_rpc_reass";
 

@@ -11,7 +11,7 @@ Required:
 
 * daq from http://www.snort.org for packet IO
 
-* dnet from http://code.google.com/p/libdnet/ for network utility functions
+* dnet from https://github.com/dugsong/libdnet.git for network utility functions
 
 * LuaJIT from http://luajit.org for configuration and scripting
 

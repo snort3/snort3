@@ -151,8 +151,9 @@ void UserTracker::detect(const Packet* p, const StreamBuffer* sb, uint32_t flags
 
     up.proto_bits = p->proto_bits;
     up.application_protocol_ordinal = p->application_protocol_ordinal;
+    up.pseudo_type = PSEUDO_PKT_USER;
 
-    up.packet_flags = flags | PKT_REBUILT_STREAM;
+    up.packet_flags = flags | PKT_REBUILT_STREAM | PKT_PSEUDO;
     up.packet_flags |= (p->packet_flags & (PKT_FROM_CLIENT|PKT_FROM_SERVER));
     up.packet_flags |= (p->packet_flags & (PKT_STREAM_EST|PKT_STREAM_UNEST_UNI));
 

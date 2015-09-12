@@ -181,8 +181,7 @@ default to stdout.  These options can be combined.
 Process hext packets from stdin:
 
     snort -c $my_path/etc/snort/snort.lua \
-        --plugin-path $my_path/lib/snort_extra \
-        --daq-dir $my_path/lib/snort_extra/daqs --daq hext -i tty << END
+        --daq-dir $my_path/lib/snort/daqs --daq hext -i tty << END
     $packet 10.1.2.3 48620 -> 10.9.8.7 80
     "GET / HTTP/1.1\r\n"
     "Host: localhost\r\n"
@@ -192,30 +191,27 @@ Process hext packets from stdin:
 Process raw ethernet from hext file:
 
     snort -c $my_path/etc/snort/snort.lua \
-        --plugin-path $my_path/lib/snort_extra \
-        --daq-dir $my_path/lib/snort_extra/daqs --daq hext \
+        --daq-dir $my_path/lib/snort/daqs --daq hext \
         --daq-var dlt=1 -r <hext-file>
 
-Process a directory of plain files (ie non-pcap) with 4 threads:
+Process a directory of plain files (ie non-pcap) with 4 threads with 8K
+buffers:
 
     snort -c $my_path/etc/snort/snort.lua \
-        --plugin-path $my_path/lib/snort_extra \
-        --daq-dir $my_path/lib/snort_extra/daqs --daq file \
-        --pcap-dir path/to/files -z 4
+        --daq-dir $my_path/lib/snort/daqs --daq file \
+        --pcap-dir path/to/files -z 4 -s 8192
 
 Bridge two TCP connections on port 8000 and inspect the traffic:
 
     snort -c $my_path/etc/snort/snort.lua \
-        --plugin-path $my_path/lib/snort_extra \
-        --daq-dir $my_path/lib/snort_extra/daqs --daq socket
+        --daq-dir $my_path/lib/snort/daqs --daq socket
 
 
 ==== Logger Alternatives
 
 Dump TCP stream payload in hext mode:
 
-    snort -c $my_path/etc/snort/snort.lua \
-        --plugin-path $my_path/lib/snort_extra -L hext
+    snort -c $my_path/etc/snort/snort.lua -L hext
     
 Output timestamp, pkt_num, proto, pkt_gen, dgm_len, dir, src_ap, dst_ap,
 rule, action for each alert:

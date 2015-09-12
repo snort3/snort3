@@ -696,7 +696,7 @@ AC_CHECK_HEADERS(dumbnet.h,,DUMBNET_H="no")
 if test "x$DNET_H" = "xno" -a "x$DUMBNET_H" = "xno"; then
     echo
     echo "   ERROR:  dnet header not found, go get it from"
-    echo "   http://code.google.com/p/libdnet/ or use the --with-dnet-*"
+    echo "   https://github.com/dugsong/libdnet.git or use the --with-dnet-*"
     echo "   options, if you have it installed in an unusual place"
     exit
 fi

@@ -273,7 +273,7 @@ static int file_daq_acquire (
     int hit = 0, miss = 0;
     impl->stop = 0;
 
-    while ( hit < cnt || cnt <= 0 )
+    while ( (hit < cnt || cnt <= 0) && !impl->stop )
     {
         int status = file_daq_process(impl, callback, user);
 
@@ -285,7 +285,7 @@ static int file_daq_acquire (
         else if ( status < 0 )
             return status;
 
-        else if ( ++miss == 2 || impl->stop )
+        else if ( ++miss == 2 )
             break;
     }
     return DAQ_SUCCESS;
