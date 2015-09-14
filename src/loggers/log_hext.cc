@@ -172,7 +172,7 @@ bool HextModule::begin(const char*, int, SnortConfig*)
     raw = false;
     limit = 0;
     units = 0;
-    width = 0;
+    width = 20;
     return true;
 }
 
@@ -276,9 +276,13 @@ static const LogApi hext_api =
     hext_dtor
 };
 
+#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &hext_api.base,
     nullptr
 };
+#else
+const BaseApi* log_hext = &hext_api.base;
+#endif
 

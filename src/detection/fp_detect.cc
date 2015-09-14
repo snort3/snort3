@@ -1304,7 +1304,7 @@ int fpEvalPacket(Packet* p)
         break;
 
     case PktType::FILE:
-        fpEvalHeaderSvc(p, omd, SNORT_PROTO_FILE);
+        fpEvalHeaderSvc(p, omd, SNORT_PROTO_USER);
         break;
 
     default:

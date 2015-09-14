@@ -34,8 +34,11 @@ saves the correct version.
 
     ERROR: invalid perf_monitor.max_file_size = 4.29497e+09
 
-* Using -L when -c is also used will not actually log; nor will it warn or
-  error out.  This is likely to confuse.
+* When using -c and -L together, the last on the command line wins (-c -L
+  will dump; -L -c will analyze).
+
+* Modules instantiated by command line only will not get default settings
+  unless hard-coded.  This notably applies to -A and -L options.
 
 
 ==== Rules
