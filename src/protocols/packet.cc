@@ -20,6 +20,7 @@
 #include <assert.h>
 
 #include "protocols/packet.h"
+#include "protocols/packet_manager.h"
 #include "protocols/protocol_ids.h"
 
 #if 0
@@ -119,17 +120,22 @@ const char* Packet::get_type() const
     case PktType::FILE:
         if ( proto_bits & PROTO_BIT__TCP )
             return "TCP";
+
         if ( proto_bits & PROTO_BIT__UDP )
             return "UDP";
+
         assert(false);
         return "Error";
 
     case PktType::NONE:
+        if ( num_layers > 0 )
+            return PacketManager::get_proto_name(layers[num_layers-1].prot_id);
+
+        assert(false);
         return "None";
 
     default:
-        assert(false);
-        return "Error";
+        break;
     }
     assert(false);
     return "Error";

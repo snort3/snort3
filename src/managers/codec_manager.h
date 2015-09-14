@@ -104,6 +104,8 @@ private:
     static std::vector<CodecApiWrapper> s_codecs;
     static std::array<uint8_t, max_protocol_id> s_proto_map;
     static std::array<Codec*, UINT8_MAX> s_protocols;
+
+    static THREAD_LOCAL uint16_t grinder_id;
     static THREAD_LOCAL uint8_t grinder;
     static THREAD_LOCAL uint8_t max_layers;
 
