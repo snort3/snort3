@@ -27,6 +27,7 @@ add_subdirectory (src)
 add_subdirectory (tools)
 add_subdirectory (lua)
 add_subdirectory (doc)
+add_subdirectory (daqs)
 
 # Miscelaneous stuff.  Does NOT directly effect snort's building environment
 include (cmake/packaging_data.cmake)

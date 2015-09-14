@@ -29,6 +29,7 @@
 #include "time/profiler.h"
 #include "packet_io/sfdaq.h"
 #include "detection/detection_util.h"
+#include "target_based/snort_protocols.h"
 
 #include "stream_file.h"
 #include "file_module.h"
@@ -74,6 +75,7 @@ int FileSession::process(Packet* p)
     PROFILE_VARS;
     MODULE_PROFILE_START(file_ssn_stats);
 
+    p->flow->ssn_state.application_protocol = SNORT_PROTO_USER;
     StreamFileConfig* c = get_file_cfg(p->flow->ssn_server);
 
     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);

@@ -189,8 +189,9 @@ void PacketManager::decode(
 {
     PROFILE_VARS;
     DecodeData unsure_encap_ptrs;
-    uint16_t prev_prot_id = FINISHED_DECODE;
+
     uint8_t mapped_prot = CodecManager::grinder;
+    uint16_t prev_prot_id = CodecManager::grinder_id;
 
     RawData raw(pkthdr, pkt);
     CodecData codec_data(FINISHED_DECODE);

@@ -17,7 +17,10 @@
 //--------------------------------------------------------------------------
 // packet.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
+#include <assert.h>
+
 #include "protocols/packet.h"
+#include "protocols/packet_manager.h"
 #include "protocols/protocol_ids.h"
 
 #if 0
@@ -110,18 +113,32 @@ const char* Packet::get_type() const
     case PktType::UDP:
         return "UDP";
 
+    case PktType::ARP:
+        return "ARP";
+
     case PktType::PDU:
     case PktType::FILE:
         if ( proto_bits & PROTO_BIT__TCP )
             return "TCP";
+
         if ( proto_bits & PROTO_BIT__UDP )
             return "UDP";
-        break;
+
+        assert(false);
+        return "Error";
+
+    case PktType::NONE:
+        if ( num_layers > 0 )
+            return PacketManager::get_proto_name(layers[num_layers-1].prot_id);
+
+        assert(false);
+        return "None";
 
     default:
         break;
     }
-    return "error";
+    assert(false);
+    return "Error";
 }
 
 const char* Packet::get_pseudo_type() const
@@ -136,6 +153,9 @@ const char* Packet::get_pseudo_type() const
 
     case PSEUDO_PKT_TCP:
         return "stream_tcp";
+
+    case PSEUDO_PKT_USER:
+        return "stream_user";
 
     case PSEUDO_PKT_DCE_RPKT:
         return "dce2_rpc_reass";

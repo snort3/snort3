@@ -49,6 +49,8 @@ std::array<uint8_t, max_protocol_id> CodecManager::s_proto_map {
 std::array<Codec*, UINT8_MAX> CodecManager::s_protocols {
     { 0 }
 };
+
+THREAD_LOCAL uint16_t CodecManager::grinder_id = 0;
 THREAD_LOCAL uint8_t CodecManager::grinder = 0;
 THREAD_LOCAL uint8_t CodecManager::max_layers = DEFAULT_LAYERMAX;
 
@@ -223,6 +225,10 @@ void CodecManager::thread_init(SnortConfig* sc)
                         s_protocols[grinder]->get_name(), cd->get_name(),
                         cd->get_name());
 
+                std::vector<uint16_t> ids;
+                s_protocols[i]->get_protocol_ids(ids);
+
+                grinder_id = ( ids.size() > 0 ) ? ids[0] : FINISHED_DECODE;
                 grinder = (uint8_t)i;
             }
         }

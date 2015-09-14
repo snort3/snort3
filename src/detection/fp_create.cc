@@ -1864,9 +1864,10 @@ int fpCreateFastPacketDetection(SnortConfig* sc)
     fp_print_service_groups(sc->spgmmTable);
 
     if ( mpse_count )
+    {
         LogLabel("search engine");
-
-    MpseManager::print_mpse_summary(fp->get_search_api());
+        MpseManager::print_mpse_summary(fp->get_search_api());
+    }
 
     if ( fp->get_num_patterns_truncated() )
         LogMessage("%25.25s: %-12u\n", "truncated patterns", fp->get_num_patterns_truncated());

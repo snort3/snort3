@@ -16,5 +16,3 @@ daq_hext_la_CFLAGS = -DBUILDING_SO
 daq_hext_la_LDFLAGS = -module -export-dynamic -avoid-version -shared
 daq_hext_la_SOURCES = daq_hext.c daq_socket.h
 
-AM_CFLAGS = @AM_CFLAGS@
-
