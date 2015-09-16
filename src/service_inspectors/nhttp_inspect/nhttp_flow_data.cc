@@ -53,7 +53,7 @@ NHttpFlowData::~NHttpFlowData()
 
     if (mime_state != nullptr)
     {
-        delete(mime_state);
+        delete mime_state;
     }
 
     delete_pipeline();

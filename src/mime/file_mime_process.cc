@@ -629,14 +629,15 @@ const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* sta
 // Main function for mime processing
 // This should be called when mime data is available
 const uint8_t* MimeSession::process_mime_data(Flow* flow, const uint8_t* start,
-    const uint8_t* data_end_marker, bool upload, FilePosition position)
+    int data_size, bool upload, FilePosition position)
 {
     const uint8_t* attach_start = start;
     const uint8_t* attach_end;
 
+    const uint8_t* data_end_marker = start + data_size;
+
     if (position != SNORT_FILE_POSITION_UNKNOWN)
     {
-        //FilePosition position = file_api->get_file_position(p);
         process_mime_data_paf(flow, attach_start, data_end_marker,
             upload, position);
         return data_end_marker;

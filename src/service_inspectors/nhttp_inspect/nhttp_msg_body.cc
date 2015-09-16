@@ -93,7 +93,7 @@ void NHttpMsgBody::do_file_processing()
     {
         FileFlows* file_flows = FileFlows::get_file_flows(flow);
 
-        if (file_flows && file_flows->file_process(const_cast<uint8_t*>(file_data.start), fp_length,
+        if (file_flows && file_flows->file_process(file_data.start, fp_length,
             file_position, false, false))
         {
             session_data->file_depth_remaining[source_id] -= fp_length;
@@ -107,8 +107,7 @@ void NHttpMsgBody::do_file_processing()
                     const Field& tranaction_uri = request->get_uri_norm_legacy();
                     if (tranaction_uri.length > 0)
                     {
-                        file_flows->set_file_name(const_cast<uint8_t*>(tranaction_uri.start),
-                            tranaction_uri.length);
+                        file_flows->set_file_name(tranaction_uri.start, tranaction_uri.length);
                     }
                 }
             }
@@ -119,15 +118,15 @@ void NHttpMsgBody::do_file_processing()
             session_data->file_depth_remaining[source_id] = 0;
         }
     }
-    else if (session_data->mime_state != nullptr)
+    else
     {
         session_data->mime_state->process_mime_data(flow, file_data.start,
-            file_data.start + fp_length, true, file_position);
+            fp_length, true, file_position);
 
         session_data->file_depth_remaining[source_id] -= fp_length;
         if (session_data->file_depth_remaining[source_id] == 0)
         {
-            delete(session_data->mime_state);
+            delete session_data->mime_state;
             session_data->mime_state = nullptr;
         }
     }

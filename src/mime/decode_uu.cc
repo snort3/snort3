@@ -20,14 +20,11 @@
 
 #include <mime/decode_base.h>
 #include "decode_uu.h"
-
 #include "utils/snort_bounds.h"
 #include "utils/util.h"
 #include "utils/util_unfold.h"
 
-
 #define UU_DECODE_CHAR(c) (((c) - 0x20) & 0x3f)
-
 
 void UUDecode::reset_decode_state()
 {

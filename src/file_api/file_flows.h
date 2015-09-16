@@ -21,7 +21,7 @@
 #ifndef FILE_FLOWS_H
 #define FILE_FLOWS_H
 
-// This provides a wrapper to start/stop file service
+// This provides a wrapper to manage several file contexts
 
 #include <sys/types.h>
 #include "main/snort_types.h"
@@ -46,7 +46,7 @@ public:
 
     uint32_t get_new_file_instance();
 
-    void set_file_name(uint8_t* fname, uint32_t name_size);
+    void set_file_name(const uint8_t* fname, uint32_t name_size);
 
     // This is used when there is only one file per session
     bool file_process(const uint8_t* file_data, int data_size,

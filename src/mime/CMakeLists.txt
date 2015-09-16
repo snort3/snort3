@@ -11,7 +11,7 @@ add_library ( mime STATIC
     file_mime_paf.cc 
     file_mime_process.h 
     file_mime_process.cc 
-    decode_base.h.cc 
+    decode_base.cc 
     decode_base.h
     decode_b64.cc
     decode_b64.h

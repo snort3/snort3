@@ -240,7 +240,7 @@ bool FileFlows::file_process(const uint8_t* file_data, int data_size,
     return file_process(context, file_data, data_size, position);
 }
 
-void FileFlows::set_file_name(uint8_t* fname, uint32_t name_size)
+void FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size)
 {
     FileContext* context = get_current_file_context();
     if (context)
@@ -248,7 +248,6 @@ void FileFlows::set_file_name(uint8_t* fname, uint32_t name_size)
     if ( FileConfig::trace_type )
         context->print();
 }
-
 
 FilePosition get_file_position(Packet* pkt)
 {

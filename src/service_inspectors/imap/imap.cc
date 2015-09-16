@@ -452,9 +452,9 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
             DebugMessage(DEBUG_IMAP, "DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
             if ( imap_ssn->body_len > imap_ssn->body_read)
             {
-                uint32_t len = imap_ssn->body_len - imap_ssn->body_read;
+                int len = imap_ssn->body_len - imap_ssn->body_read;
 
-                if ( (uint32_t)(end - ptr) < len )
+                if ( (end - ptr) < len )
                 {
                     data_end = end;
                     len = data_end - ptr;
@@ -463,7 +463,9 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
                     data_end = ptr + len;
 
                 FilePosition position = get_file_position(p);
-                ptr = imap_ssn->mime_ssn->process_mime_data(p->flow, ptr, end, 0,
+
+                int data_len = end - ptr;
+                ptr = imap_ssn->mime_ssn->process_mime_data(p->flow, ptr, data_len, 0,
                     position);
                 if ( ptr < data_end)
                     len = len - (data_end - ptr);

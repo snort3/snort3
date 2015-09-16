@@ -59,7 +59,7 @@ void NHttpMsgChunk::update_flow()
 
         if ((source_id == SRC_CLIENT) && (session_data->mime_state != nullptr))
         {
-            delete(session_data->mime_state);
+            delete session_data->mime_state;
             session_data->mime_state = nullptr;
         }
     }

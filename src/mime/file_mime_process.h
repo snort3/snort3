@@ -59,7 +59,7 @@ public:
     virtual ~MimeSession();
     static void init();
     static void exit();
-    const uint8_t* process_mime_data(Flow *flow, const uint8_t *start, const uint8_t *end,
+    const uint8_t* process_mime_data(Flow *flow, const uint8_t *data, int data_size,
         bool upload, FilePosition position);
     int get_data_state();
     void set_data_state(int);

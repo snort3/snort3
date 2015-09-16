@@ -170,7 +170,7 @@ SmtpFlowData::SmtpFlowData() : FlowData(flow_id)
 SmtpFlowData::~SmtpFlowData()
 {
     if (session.mime_ssn)
-        delete(session.mime_ssn);
+        delete session.mime_ssn;
 }
 
 unsigned SmtpFlowData::flow_id = 0;
@@ -1002,6 +1002,8 @@ static void SMTP_ProcessClientPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
     while ((ptr != NULL) && (ptr < end))
     {
         FilePosition position;
+        int len = end - ptr;
+
         switch (smtp_ssn->state)
         {
         case STATE_COMMAND:
@@ -1012,7 +1014,7 @@ static void SMTP_ProcessClientPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
         case STATE_BDATA:
             DebugMessage(DEBUG_SMTP, "DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
             position = get_file_position(p);
-            ptr = smtp_ssn->mime_ssn->process_mime_data(p->flow, ptr, end, 1, position);
+            ptr = smtp_ssn->mime_ssn->process_mime_data(p->flow, ptr, len, 1, position);
             //ptr = SMTP_HandleData(p, ptr, end, &(smtp_ssn->mime_ssn));
             break;
         case STATE_XEXCH50:

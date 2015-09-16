@@ -81,7 +81,7 @@ private:
     bool file_type_enabled = false;
     bool file_signature_enabled = false;
     bool file_capture_enabled = false;
-    uint8_t* file_name = NULL;
+    uint8_t* file_name = nullptr;
     uint32_t file_name_size = 0;
     uint64_t file_size = 0;
     FileDirection direction = DIRECTION_UNKNOWN;
