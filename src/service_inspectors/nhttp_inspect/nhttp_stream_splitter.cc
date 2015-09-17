@@ -496,7 +496,7 @@ bool NHttpStreamSplitter::finish(Flow* flow)
             if (file_flows)
                 file_flows->file_process(nullptr, 0, SNORT_FILE_END, false, false);
         }
-        else if (session_data->mime_state != nullptr)
+        else
         {
             session_data->mime_state->process_mime_data(flow, nullptr, 0, true,
                 SNORT_FILE_END);

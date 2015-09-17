@@ -42,20 +42,20 @@
 #include "utils/util.h"
 #include "utils/snort_bounds.h"
 
-typedef struct _MimeToken
+struct MimeToken
 {
     const char* name;
     int name_len;
     int search_id;
-} MimeToken;
+} ;
 
-typedef enum _MimeHdrEnum
+enum MimeHdrEnum
 {
     HDR_CONTENT_TYPE = 0,
     HDR_CONT_TRANS_ENC,
     HDR_CONT_DISP,
     HDR_LAST
-} MimeHdrEnum;
+};
 
 const MimeToken mime_hdrs[] =
 {
@@ -65,18 +65,18 @@ const MimeToken mime_hdrs[] =
     { NULL,             0, 0 }
 };
 
-typedef struct _MIMESearch
+struct MIMESearch
 {
     const char* name;
     int name_len;
-} MIMESearch;
+} ;
 
-typedef struct _MIMESearchInfo
+struct MIMESearchInfo
 {
     int id;
     int index;
     int length;
-} MIMESearchInfo;
+} ;
 
 MIMESearchInfo mime_search_info;
 
@@ -498,7 +498,6 @@ void MimeSession::reset_mime_state()
 const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* start, const uint8_t* end,
    bool upload, FilePosition position)
 {
-
     bool done_data = is_end_of_data(flow);
 
     /* if we've just entered the data state, check for a dot + end of line
@@ -566,7 +565,6 @@ const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* sta
         if (start == NULL)
             return NULL;
     }
-
 
     if (normalize_data(config, start, end) < 0)
         return NULL;
