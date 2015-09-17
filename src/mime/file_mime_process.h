@@ -47,7 +47,6 @@
 #define STATE_DATA_HEADER  1    /* Data header section of data state */
 #define STATE_DATA_BODY    2    /* Data body section of data state */
 #define STATE_MIME_HEADER  3    /* MIME header section within data section */
-#define STATE_DATA_UNKNOWN 4
 
 /* Maximum length of header chars before colon, based on Exim 4.32 exploit */
 #define MAX_HEADER_NAME_LEN 64

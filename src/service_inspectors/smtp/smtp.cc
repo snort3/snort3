@@ -734,7 +734,7 @@ static const uint8_t* SMTP_HandleCommand(SMTP_PROTO_CONF* config, Packet* p, SMT
                     smtp_ssn->session_flags &= ~SMTP_FLAG_CHECK_SSL;
 
                 smtp_ssn->state = STATE_DATA;
-                smtp_ssn->mime_ssn->set_data_state(STATE_DATA_UNKNOWN);
+                smtp_ssn->mime_ssn->set_data_state(STATE_DATA_INIT);
 
                 return ptr;
             }
@@ -1394,15 +1394,8 @@ int SmtpMime::handle_header_line(void* conf, const uint8_t* ptr, const uint8_t* 
     if ((config->max_header_line_len != 0) &&
         (header_line_len > config->max_header_line_len))
     {
-        if (mime_ssn->get_data_state() != STATE_DATA_UNKNOWN)
-        {
-            SnortEventqAdd(GID_SMTP, SMTP_DATA_HDR_OVERFLOW);
-        }
-        else
-        {
-            /* assume we guessed wrong and are in the body */
-            return 1;
-        }
+        SnortEventqAdd(GID_SMTP, SMTP_DATA_HDR_OVERFLOW);
+
     }
 
     /* XXX Does VRT want data headers normalized?

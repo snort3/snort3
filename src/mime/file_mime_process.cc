@@ -250,8 +250,7 @@ const uint8_t* MimeSession::process_mime_header(const uint8_t* ptr,
 
             /* Check for Exim 4.32 exploit where number of chars before colon is greater than 64 */
             header_name_len = colon - ptr;
-            if ((data_state != STATE_DATA_UNKNOWN) &&
-                (colon < eolm) && (header_name_len > MAX_HEADER_NAME_LEN))
+            if ((colon < eolm) && (header_name_len > MAX_HEADER_NAME_LEN))
             {
                 max_header_name_len = header_name_len;
             }
@@ -396,9 +395,7 @@ const uint8_t* MimeSession::process_mime_header(const uint8_t* ptr,
             cont_disp = NULL;
         }
 
-        /* if state was unknown, at this point assume we know */
-        if (data_state == STATE_DATA_UNKNOWN)
-            data_state = STATE_DATA_HEADER;
+        data_state = STATE_DATA_HEADER;
 
         ptr = eol;
 
@@ -502,8 +499,7 @@ const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* sta
 
     /* if we've just entered the data state, check for a dot + end of line
      * if found, no data */
-    if ((data_state == STATE_DATA_INIT) ||
-        (data_state == STATE_DATA_UNKNOWN))
+    if ((data_state == STATE_DATA_INIT))
     {
         if ((start < end) && (*start == '.'))
         {
@@ -547,8 +543,7 @@ const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* sta
     if ( decode_conf && (!decode_conf->is_ignore_data()))
         set_file_data((uint8_t*)start, (end - start));
 
-    if ((data_state == STATE_DATA_HEADER) ||
-        (data_state == STATE_DATA_UNKNOWN))
+    if (data_state == STATE_DATA_HEADER)
     {
 #ifdef DEBUG_MSGS
         if (data_state == STATE_DATA_HEADER)
