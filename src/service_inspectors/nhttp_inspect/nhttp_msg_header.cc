@@ -126,17 +126,21 @@ void NHttpMsgHeader::setup_file_processing()
     // fully supports it remove the outer if statement that prevents it from being done.
     if (session_data->file_depth_remaining[1-source_id] == 0)
     {
-        FileFlows* file_flows = FileFlows::get_file_flows(flow);
-        if (!file_flows)
-            return;
-
         if ((session_data->file_depth_remaining[source_id] = FileService::get_max_file_depth()) < 0)
         {
            session_data->file_depth_remaining[source_id] = 0;
+           return;
         }
+
         if (source_id == SRC_CLIENT)
         {
             session_data->mime_state = new MimeSession(&decode_conf, &mime_conf);
+        }
+        else
+        {
+            FileFlows* file_flows = FileFlows::get_file_flows(flow);
+            if (!file_flows)
+                session_data->file_depth_remaining[source_id] = 0;
         }
     }
 }

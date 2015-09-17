@@ -493,8 +493,7 @@ bool NHttpStreamSplitter::finish(Flow* flow)
         if (source_id == SRC_SERVER)
         {
             FileFlows* file_flows = FileFlows::get_file_flows(flow);
-            if (file_flows)
-                file_flows->file_process(nullptr, 0, SNORT_FILE_END, false, false);
+            file_flows->file_process(nullptr, 0, SNORT_FILE_END, false, false);
         }
         else
         {
