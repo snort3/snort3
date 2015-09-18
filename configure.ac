@@ -526,22 +526,6 @@ if test "x$LPCAP" = "xno"; then
   fi
 fi
 
-AC_MSG_CHECKING([for pcap_lex_destroy])
-AC_RUN_IFELSE(
-[AC_LANG_PROGRAM(
-[[
-#include <pcap.h>
-]],
-[[
-   pcap_lex_destroy();
-]])],
-[have_pcap_lex_destroy="yes"],
-[have_pcap_lex_destroy="no"])
-AC_MSG_RESULT($have_pcap_lex_destroy)
-if test "x$have_pcap_lex_destroy" = "xyes"; then
-    AC_DEFINE([HAVE_PCAP_LEX_DESTROY],[1],[Can cleanup lex buffer stack created by pcap bpf filter])
-fi
-
 AC_MSG_CHECKING([for pcap_lib_version])
 AC_LINK_IFELSE(
     [AC_LANG_PROGRAM(

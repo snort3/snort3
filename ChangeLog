@@ -1,4 +1,18 @@
-15/09/04 - build 169
+15/09/17 - build 170
+
+-- removed unused control socket defines from cmake
+-- fixed build error with valgrind build option
+-- cleanup *FLAGS use in configure.ac
+-- change configure.ac compiler search order to prefer clang over gcc
+-- update where to get dnet
+-- update usage and bug list
+-- move extra daqs and extra hext logger to main source tree
+-- fix breakloop in file daq
+-- fix plain file processing
+-- fix detection of stream_user and stream_file data
+-- log innermost proto for type of broken packets
+
+15/09/10 - build 169
 
 -- fix chunked manual install
 -- add event direction bug
