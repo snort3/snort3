@@ -741,6 +741,9 @@ DAQ_Verdict Snort::process_packet(
     // process flow verdicts here
     if ( Active::session_was_blocked() )
     {
+        if ( !Active::can_block() )
+            return DAQ_VERDICT_PASS;
+
         if ( Active::get_tunnel_bypass() )
         {
             aux_counts.internal_blacklist++;
@@ -759,7 +762,7 @@ DAQ_Verdict Snort::process_packet(
 // process (wire-only) packet verdicts here
 static DAQ_Verdict update_verdict(DAQ_Verdict verdict, int& inject)
 {
-    if ( Active::packet_was_dropped() )
+    if ( Active::packet_was_dropped() and Active::can_block() )
     {
         if ( verdict == DAQ_VERDICT_PASS )
             verdict = DAQ_VERDICT_BLOCK;
