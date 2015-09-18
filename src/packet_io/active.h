@@ -83,6 +83,9 @@ public:
     static ActiveStatus get_status()
     { return active_status; }
 
+    static bool can_block()
+    { return active_status == AST_ALLOW or active_status == AST_FORCE; }
+
     static const char* get_action_string();
 
     static void drop_packet(const Packet*, bool force = false);
