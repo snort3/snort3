@@ -9,3 +9,26 @@ into the Snort binary.  For a full list of build features, run ./configure
 
 *  *--enable-shell*: enable local and remote command line shell support.
 
+These features are built only if the required libraries and headers are
+present.  There is no need to explicitly enable.
+
+* *lzma*: from http://www.7-zip.org/sdk.html for decompression of SWF fles.
+
+* *openssl*: from https://www.openssl.org for SHA and MD5 file signatures and
+  the protected_content rule option.
+
+* *intel-soft-cpm": an optional pattern matcher based on a library from
+  Intel.
+
+If you need to use headers and/or libraries in non-standard locations, you
+can use these options:
+
+* *--with-pkg-includes*: specify the directory containing the package
+  headers.
+
+* *--with-pkg-libraries*: specify the directory containing the package
+  libraries.
+
+These can be use for pcap, luajit, pcre, dnet, daq, lzma, openssl, and
+intel-soft-cpm packages.
+
