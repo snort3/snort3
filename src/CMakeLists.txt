@@ -105,6 +105,7 @@ target_link_libraries( snort
     stream_file
     file
     file_api
+    mime
     http_inspect
     ${PIGLET_LIBRARIES}
     ips_options
@@ -146,6 +147,7 @@ add_subdirectory(hash)
 add_subdirectory(log)
 add_subdirectory(main)
 add_subdirectory(managers)
+add_subdirectory(mime)
 add_subdirectory(packet_io)
 add_subdirectory(parser)
 add_subdirectory(ports)

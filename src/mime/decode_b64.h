@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2012-2013 Sourcefire, Inc.
+// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,23 +15,40 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/*
-** Author(s):  Hui Cao <huica@cisco.com>
-**
-** NOTES
-** 5.25.2012 - Initial Source Code. Hui Cao
-*/
+// Hui Cao <huica@cisco.com>
 
-#include "file_service_config.h"
+#ifndef DECODE_B64_H
+#define DECODE_B64_H
 
-#include <sys/types.h>
-#include <stdio.h>
+// Email attachment decoder
+
 #include <stdlib.h>
 
-#include "libs/file_config.h"
-#include "libs/file_lib.h"
-
 #include "main/snort_types.h"
-#include "utils/util.h"
-#include "parser/parser.h"
+#include "decode_buffer.h"
+#include "decode_base.h"
+
+class B64Decode: public DataDecode
+{
+public:
+    B64Decode(int max_depth);
+    ~B64Decode();
+
+    // Main function to decode file data
+    DecodeResult decode_data(const uint8_t* start, const uint8_t* end) override;
+
+    void reset_decode_state() override;
+
+private:
+    DecodeBuffer* buffer = nullptr;
+};
+
+// FIXIT-L: inbuf should probably be const uint8_t*
+SO_PUBLIC int sf_base64decode(
+    uint8_t* inbuf, uint32_t inbuf_size,
+    uint8_t* outbuf, uint32_t outbuf_size,
+    uint32_t* bytes_written
+);
+
+#endif
 

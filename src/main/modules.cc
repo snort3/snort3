@@ -43,7 +43,7 @@ using namespace std;
 #include "parser/config_file.h"
 #include "parser/cmd_line.h"
 #include "parser/parse_ip.h"
-#include "file_api/file_api.h"
+#include "file_api/file_service.h"
 #include "file_api/libs/file_config.h"
 #include "filters/sfthd.h"
 #include "filters/sfrf.h"
@@ -1329,6 +1329,9 @@ static const Parameter file_id_params[] =
     { "enable_signature", Parameter::PT_BOOL, nullptr, "false",
       "enable signature calculation" },
 
+    { "enable_capture", Parameter::PT_BOOL, nullptr, "false",
+      "enable file capture" },
+
     { "show_data_depth", Parameter::PT_INT, "0:", "100",
       "print this many octets" },
 
@@ -1385,12 +1388,17 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("enable_type") )
     {
         if ( v.get_bool() )
-            file_api->enable_file_type(nullptr);
+            FileService::enable_file_type();
     }
     else if ( v.is("enable_signature") )
     {
         if ( v.get_bool() )
-            file_api->enable_file_signature(nullptr);
+            FileService::enable_file_signature();
+    }
+    else if ( v.is("enable_capture") )
+    {
+        if ( v.get_bool() )
+            FileService::enable_file_capture();
     }
     else if ( v.is("show_data_depth") )
         FileConfig::show_data_depth = v.get_long();

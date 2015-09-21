@@ -53,7 +53,7 @@ NHttpFlowData::~NHttpFlowData()
 
     if (mime_state != nullptr)
     {
-        free_mime_session(mime_state);
+        delete mime_state;
     }
 
     delete_pipeline();
@@ -81,7 +81,7 @@ void NHttpFlowData::half_reset(SourceId source_id)
         method_id = METH__NOTPRESENT;
         if (mime_state != nullptr)
         {
-            free_mime_session(mime_state);
+            delete(mime_state);
             mime_state = nullptr;
         }
     }

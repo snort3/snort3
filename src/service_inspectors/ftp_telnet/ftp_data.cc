@@ -43,6 +43,8 @@
 #include "main/snort_debug.h"
 #include "stream/stream_api.h"
 #include "file_api/file_api.h"
+#include "file_api/file_service.h"
+#include "file_api/file_flows.h"
 #include "parser/parser.h"
 #include "framework/inspector.h"
 #include "detection/detection_util.h"
@@ -70,14 +72,18 @@ static void FTPDataProcess(
 
     set_file_data((uint8_t*)p->data, p->dsize);
 
-    status = file_api->file_process(p->flow, file_data, data_length,
+    FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
+
+    if (!file_flows)
+        return;
+
+    status = file_flows->file_process(file_data, data_length,
         data_ssn->position, data_ssn->direction, false);
 
     /* Filename needs to be set AFTER the first call to file_process( ) */
     if (data_ssn->filename && !(data_ssn->packet_flags & FTPDATA_FLG_FILENAME_SET))
     {
-        file_api->set_file_name(p->flow,
-            (uint8_t*)data_ssn->filename, data_ssn->file_xfer_info);
+        file_flows->set_file_name((uint8_t*)data_ssn->filename, data_ssn->file_xfer_info);
         data_ssn->packet_flags |= FTPDATA_FLG_FILENAME_SET;
     }
 
@@ -161,8 +167,7 @@ static int SnortFTPData(Packet* p)
     }
     else
     {
-        initFilePosition(&data_ssn->position,
-            file_api->get_file_processed_size(p->flow));
+        initFilePosition(&data_ssn->position, get_file_processed_size(p->flow));
     }
 
     FTPDataProcess(p, data_ssn, (uint8_t*)p->data, p->dsize);
@@ -196,7 +201,7 @@ void FtpDataFlowData::handle_eof(Packet* p)
     if (!PROTO_IS_FTP_DATA(data_ssn) || !FTPDataDirection(p, data_ssn))
         return;
 
-    initFilePosition(&data_ssn->position, file_api->get_file_processed_size(p->flow));
+    initFilePosition(&data_ssn->position, get_file_processed_size(p->flow));
     finalFilePosition(&data_ssn->position);
 
     stream.flush_request(p);
@@ -248,7 +253,7 @@ void FtpData::eval(Packet* p)
     // precondition - what we registered for
     assert(p->has_tcp_data());
 
-    if ( file_api->get_max_file_depth() < 0 )
+    if ( FileService::get_max_file_depth() < 0 )
         return;
 
     PROFILE_VARS;

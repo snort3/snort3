@@ -24,7 +24,7 @@
  **
  **  Circular buffer is thread safe for one writer and one reader thread
  **
- **  This implementaton is inspired by one slot open approach.
+ **  This implementation is inspired by one slot open approach.
  **  See http://en.wikipedia.org/wiki/Circular_buffer
  **
  **  5.25.13 - Initial Source Code. Hui Cao
@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "utils/util.h"
 
 #include "main/snort_types.h"
 
@@ -54,14 +55,14 @@ struct _CircularBuffer
 
 CircularBuffer* cbuffer_init(uint64_t size)
 {
-    CircularBuffer* cb = (CircularBuffer*)calloc(1, sizeof(*cb));
+    CircularBuffer* cb = (CircularBuffer*)SnortAlloc(sizeof(*cb));
 
     if ( !cb )
         return NULL;
 
     cb->size  = size + 1;
 
-    cb->elems = (ElemType*)calloc(cb->size, sizeof(ElemType));
+    cb->elems = (ElemType*)SnortAlloc(cb->size * sizeof(ElemType));
 
     if (!cb->elems)
     {
@@ -83,7 +84,6 @@ void cbuffer_free(CircularBuffer* cb)
     free(cb);
 }
 
-/* We use mirror flag to detection full or empty efficiently*/
 int cbuffer_is_full(CircularBuffer* cb)
 {
     uint64_t next = cb->end + 1;
@@ -94,7 +94,7 @@ int cbuffer_is_full(CircularBuffer* cb)
     return (next == cb->start);
 }
 
-/* We use mirror flag to detection full or empty efficiently*/
+
 int cbuffer_is_empty(CircularBuffer* cb)
 {
     return (cb->end == cb->start);

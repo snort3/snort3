@@ -23,6 +23,8 @@
 
 #include "utils/util.h"
 #include "detection/detection_util.h"
+#include "file_api/file_service.h"
+#include "file_api/file_flows.h"
 
 #include "nhttp_enum.h"
 #include "nhttp_msg_request.h"
@@ -124,21 +126,21 @@ void NHttpMsgHeader::setup_file_processing()
     // fully supports it remove the outer if statement that prevents it from being done.
     if (session_data->file_depth_remaining[1-source_id] == 0)
     {
-        if ((session_data->file_depth_remaining[source_id] = file_api->get_max_file_depth()) < 0)
+        if ((session_data->file_depth_remaining[source_id] = FileService::get_max_file_depth()) < 0)
         {
            session_data->file_depth_remaining[source_id] = 0;
+           return;
         }
+
         if (source_id == SRC_CLIENT)
         {
-            // FIXIT-L Cannot use new because file_api insists on freeing the mime_state using
-            // free().
-            session_data->mime_state = (MimeState*) new_calloc(1, sizeof(MimeState));
-            file_api->set_mime_log_config_defauts(&mime_conf);
-            session_data->mime_state->log_config = &mime_conf;
-            file_api->set_mime_decode_config_defauts(&decode_conf);
-            session_data->mime_state->decode_conf = &decode_conf;
-            file_api->set_log_buffers(&session_data->mime_state->log_state,
-                session_data->mime_state->log_config);
+            session_data->mime_state = new MimeSession(&decode_conf, &mime_conf);
+        }
+        else
+        {
+            FileFlows* file_flows = FileFlows::get_file_flows(flow);
+            if (!file_flows)
+                session_data->file_depth_remaining[source_id] = 0;
         }
     }
 }

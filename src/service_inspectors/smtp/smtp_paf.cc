@@ -73,7 +73,7 @@ static inline SmtpPafData* get_state(Flow* flow, bool c2s)
 static inline void reset_data_states(SmtpPafData* pfdata)
 {
     // reset MIME info
-    file_api->reset_mime_paf_state(&(pfdata->data_info));
+    reset_mime_paf_state(&(pfdata->data_info));
 
     pfdata->length = 0;
 }
@@ -260,7 +260,7 @@ static inline bool flush_based_length(SmtpPafData* pfdata)
  *   * Process data boundary and flush each file based on boundary*/
 static inline bool process_data(SmtpPafData* pfdata,  uint8_t data)
 {
-    if (flush_based_length(pfdata)|| file_api->check_data_end(&(pfdata->data_end_state), data))
+    if (flush_based_length(pfdata)|| check_data_end(&(pfdata->data_end_state), data))
     {
         DebugMessage(DEBUG_SMTP, "End of data\n");
         /*Clean up states*/
@@ -270,7 +270,7 @@ static inline bool process_data(SmtpPafData* pfdata,  uint8_t data)
         return true;
     }
 
-    return file_api->process_mime_paf_data(&(pfdata->data_info), data);
+    return process_mime_paf_data(&(pfdata->data_info), data);
 }
 
 /* Process commands/data from client

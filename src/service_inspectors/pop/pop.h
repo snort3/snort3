@@ -101,13 +101,22 @@ struct POPSearchInfo
     int length;
 };
 
+class PopMime : public MimeSession
+{
+    using MimeSession::MimeSession;
+private:
+    void decode_alert(MimeDecode* decode_state) override;
+    void reset_state(void* ssn) override;
+    bool is_end_of_data(void* ssn) override;
+};
+
 struct POPData
 {
     int state;
     int prev_response;
     int state_flags;
     int session_flags;
-    MimeState mime_ssn;
+    PopMime* mime_ssn;
 };
 
 class PopFlowData : public FlowData

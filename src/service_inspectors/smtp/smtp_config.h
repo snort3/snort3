@@ -20,8 +20,7 @@
 #define SMTP_CONFIG_H
 
 // Configuration for SMTP inspector
-
-#include "file_api/file_api.h"
+#include "mime/file_mime_process.h"
 #include "search_engines/search_tool.h"
 
 enum NORM_TYPES
@@ -128,7 +127,7 @@ struct SMTP_PROTO_CONF
     int max_header_line_len;
     int max_response_line_len;
     int xlink2state;
-    MAIL_LogConfig log_config;
+    MailLogConfig log_config;
     DecodeConfig decode_conf;
 
     uint32_t xtra_filename_id;

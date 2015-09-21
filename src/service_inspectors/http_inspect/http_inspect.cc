@@ -52,8 +52,9 @@
 #include "stream/stream_api.h"
 #include "target_based/snort_protocols.h"
 #include "file_api/file_api.h"
+#include "file_api/file_service.h"
 #include "utils/kmap.h"
-#include "utils/sf_email_attach_decode.h"
+#include <mime/decode_base.h>
 #include "utils/util.h"
 #include "utils/xmalloc.h"
 #include "framework/inspector.h"
@@ -134,7 +135,7 @@ static void CheckMemcap(HTTPINSPECT_GLOBAL_CONF* pPolicyConfig)
 static void updateConfigFromFileProcessing(HTTPINSPECT_CONF* ServerConf)
 {
     /*Either one is unlimited*/
-    int64_t fileDepth = file_api->get_max_file_depth();
+    int64_t fileDepth = FileService::get_max_file_depth();
 
     /*Config file policy*/
     if (fileDepth > -1)
@@ -302,17 +303,11 @@ bool HttpInspect::configure(SnortConfig* sc)
     CheckGzipConfig(config->global);
     CheckMemcap(config->global);
 
-    config->global->decode_conf.file_depth = file_api->get_max_file_depth();
+    config->global->decode_conf->sync_all_depths();
 
-    if (config->global->decode_conf.file_depth > -1)
+    if (config->global->decode_conf->get_file_depth() > -1)
         config->global->mime_conf.log_filename = 1;
 
-    if ( (config->post_extract_size > -1) &&
-        file_api->is_decoding_enabled(&config->global->decode_conf) )
-    {
-        updateMaxDepth(config->global->decode_conf.file_depth,
-            &config->global->decode_conf.max_depth);
-    }
     return !HttpInspectVerifyPolicy(sc, config);
 }
 

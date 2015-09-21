@@ -40,7 +40,7 @@ static inline ImapPafData* get_state(Flow* flow, bool c2s)
 static inline void reset_data_states(ImapPafData* pfdata)
 {
     // reset MIME info
-    file_api->reset_mime_paf_state(&(pfdata->mime_info));
+    reset_mime_paf_state(&(pfdata->mime_info));
 
     // reset server info
     pfdata->imap_state = IMAP_PAF_CMD_IDENTIFIER;
@@ -206,7 +206,7 @@ static bool find_data_end_mime_data(const uint8_t ch, ImapPafData* pfdata)
     }
 
     // check for mime flush point
-    if (file_api->process_mime_paf_data(&(pfdata->mime_info), ch))
+    if (process_mime_paf_data(&(pfdata->mime_info), ch))
     {
         DebugMessage(DEBUG_IMAP, "IMAP PAF: Mime Boundary found."
             " Flushing data!\n");

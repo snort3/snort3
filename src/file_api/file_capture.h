@@ -33,14 +33,70 @@
 
 #include "file_api.h"
 #include "libs/file_lib.h"
+#include "file_mempool.h"
 
-struct FileCaptureInfo
+struct FileCaptureBlock
 {
     uint32_t length;
+    FileCaptureBlock* next;  /* next block of file data */
+};
+
+class FileCapture
+{
+public:
+    FileCapture();
+    void verifiy(FileContext* context);
+
+    // this must be called during snort init
+    static void init_mempool(int64_t max_file_mem, int64_t block_size);
+
+    // Capture file data to local buffer
+    // This is the main function call to enable file capture
+    FileCaptureState process_buffer(const uint8_t* file_data, int data_size,
+        FilePosition pos);
+
+    // Stop file capture, memory resource will be released if not reserved
+    void stop();
+
+    // Preserve the file in memory until it is released
+    FileCaptureState reserve_file(FileContext* context, FileCaptureBlock** file_mem);
+
+    // Get the file that is reserved in memory, this should be called repeatedly
+    // until NULL is returned to get the full file
+    // Returns:
+    //   the next memory block
+    //   NULL: end of file or fail to get file
+    FileCaptureBlock* read_file(FileCaptureBlock* file_mem, uint8_t** buff, int* size);
+
+    // Get the file size captured in the file buffer
+    // Returns:
+    //   the size of file
+    //   0: no memory or fail to get file
+    size_t capture_size(FileCapture* file_mem);
+
+    // Release the file that is reserved in memory, this function might be
+    // called in a different thread.
+    void release_file();
+
+    // Log file capture mempool usage
+    static void print_mem_usage(void);
+
+    // Exit file capture, release all file capture memory etc,
+    // this must be called when snort exits
+    static void exit(void);
+
+private:
+
+    inline FileCaptureBlock* create_file_buffer(FileMemPool* file_mempool);
+    inline FileCaptureState save_to_file_buffer(FileMemPool* file_mempool,
+         const uint8_t* file_data, int data_size, int64_t max_size);
     bool reserved;
-    FileCaptureInfo* last;  /* last block of file data */
-    FileCaptureInfo* next;  /* next block of file data */
     uint64_t file_size; /*file_size*/
+    FileCaptureBlock* last;  /* last block of file data */
+    FileCaptureBlock* head;  /* first block of file data */
+    const uint8_t *current_data;  /*current file data*/
+    uint32_t current_data_len;
+    FileCaptureState capture_state;
 };
 
 typedef struct _File_Capture_Stats
@@ -65,47 +121,6 @@ typedef struct _File_Capture_Stats
 } File_Capture_Stats;
 
 extern File_Capture_Stats file_capture_stats;
-
-// this must be called during snort init
-void file_capture_init_mempool(int64_t max_file_mem, int64_t block_size);
-
-// Capture file data to local buffer
-// This is the main function call to enable file capture
-// Returns:
-//   0: successful
-//   1: fail to capture the file or file capture is disabled
-int file_capture_process(FileContext* context,
-    uint8_t* file_data, int data_size, FilePosition position);
-
-// Stop file capture, memory resource will be released if not reserved
-void file_capture_stop(FileContext* context);
-
-// Preserve the file in memory until it is released
-FileCaptureState file_capture_reserve(Flow* flow, FileCaptureInfo** file_mem);
-
-// Get the file that is reserved in memory, this should be called repeatedly
-// until NULL is returned to get the full file
-// Returns:
-//   the next memory block
-//   NULL: end of file or fail to get file
-FileCaptureInfo* file_capture_read(FileCaptureInfo* file_mem, uint8_t** buff, int* size);
-
-// Get the file size captured in the file buffer
-// Returns:
-//   the size of file
-//   0: no memory or fail to get file
-size_t file_capture_size(FileCaptureInfo* file_mem);
-
-// Release the file that is reserved in memory, this function might be
-// called in a different thread.
-void file_capture_release(FileCaptureInfo* data);
-
-// Log file capture mempool usage
-void file_capture_mem_usage(void);
-
-// Exit file capture, release all file capture memory etc,
-// this must be called when snort exits
- void file_caputure_close(void);
 
 #endif
 

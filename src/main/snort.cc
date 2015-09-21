@@ -246,7 +246,7 @@ void Snort::init(int argc, char** argv)
         PluginManager::dump_plugins();
     }
 
-    init_fileAPI();
+    FileService::init();
     register_profiles();
 
     parser_init();
@@ -276,7 +276,7 @@ void Snort::init(int argc, char** argv)
 
     snort_conf->setup();
 
-    FileAPIPostInit();
+    FileService::post_init();
 
     // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(snort_conf) )
@@ -400,7 +400,7 @@ void Snort::term()
 
     //MpseManager::print_search_engine_stats();
 
-    close_fileAPI();
+    FileService::close();
 
     sfthreshold_free();  // FIXDAQ etc.
     RateFilter_Cleanup();

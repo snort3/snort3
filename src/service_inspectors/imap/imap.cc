@@ -38,10 +38,9 @@
 #include "framework/inspector.h"
 #include "target_based/snort_protocols.h"
 #include "search_engines/search_tool.h"
-#include "utils/sf_email_attach_decode.h"
 #include "utils/sfsnprintfappend.h"
 #include "protocols/ssl.h"
-#include "file_api/file_mime_process.h"
+#include "mime/file_mime_process.h"
 
 #include "imap_paf.h"
 #include "imap_module.h"
@@ -129,17 +128,16 @@ IMAPSearch imap_cmd_search[CMD_LAST];
 THREAD_LOCAL const IMAPSearch* imap_current_search = NULL;
 THREAD_LOCAL IMAPSearchInfo imap_search_info;
 
-static void snort_imap(IMAP_PROTO_CONF* GlobalConf, Packet* p);
-static void IMAP_ResetState(void*);
-void IMAP_DecodeAlert(void* ds);
-
-MimeMethods imap_mime_methods = { NULL, NULL, IMAP_DecodeAlert, IMAP_ResetState, imap_is_data_end };
+static void POP_ResetState(void*);
 
 ImapFlowData::ImapFlowData() : FlowData(flow_id)
 { memset(&session, 0, sizeof(session)); }
 
 ImapFlowData::~ImapFlowData()
-{ free_mime_session(session.mime_ssn); }
+{
+    if(session.mime_ssn)
+        delete(session.mime_ssn);
+}
 
 unsigned ImapFlowData::flow_id = 0;
 static IMAPData* get_session_data(Flow* flow)
@@ -158,14 +156,9 @@ IMAPData* SetNewIMAPData(IMAP_PROTO_CONF* config, Packet* p)
     p->flow->set_application_data(fd);
     imap_ssn = &fd->session;
 
-    imap_ssn->mime_ssn.log_config = &(config->log_config);
-    imap_ssn->mime_ssn.decode_conf = &(config->decode_conf);
-    imap_ssn->mime_ssn.methods = &(imap_mime_methods);
-    imap_ssn->mime_ssn.config = config;
-    if (file_api->set_log_buffers(&(imap_ssn->mime_ssn.log_state), &(config->log_config)) < 0)
-    {
-        return NULL;
-    }
+    imap_ssn->mime_ssn= new ImapMime(&(config->decode_conf),&(config->log_config));
+    //imap_ssn->mime_ssn.methods = &(imap_mime_methods);
+    //imap_ssn->mime_ssn.config = config;
 
     if (p->packet_flags & SSNFLAG_MIDSTREAM)
     {
@@ -177,26 +170,6 @@ IMAPData* SetNewIMAPData(IMAP_PROTO_CONF* config, Packet* p)
     imap_ssn->body_read = imap_ssn->body_len = 0;
 
     return imap_ssn;
-}
-
-void IMAP_DecodeAlert(void* ds)
-{
-    Email_DecodeState* decode_state = (Email_DecodeState*)ds;
-    switch ( decode_state->decode_type )
-    {
-    case DECODE_B64:
-        SnortEventqAdd(GID_IMAP, IMAP_B64_DECODING_FAILED);
-        break;
-    case DECODE_QP:
-        SnortEventqAdd(GID_IMAP, IMAP_QP_DECODING_FAILED);
-        break;
-    case DECODE_UU:
-        SnortEventqAdd(GID_IMAP, IMAP_UU_DECODING_FAILED);
-        break;
-
-    default:
-        break;
-    }
 }
 
 void IMAP_SearchInit(void)
@@ -238,13 +211,6 @@ void IMAP_SearchFree(void)
         delete imap_resp_search_mpse;
 }
 
-/*
-* Reset IMAP session state
-*
-* @param  none
-*
-* @return none
-*/
 static void IMAP_ResetState(void* ssn)
 {
     IMAPData* imap_ssn = get_session_data((Flow*)ssn);
@@ -295,67 +261,10 @@ static void PrintImapConf(IMAP_PROTO_CONF* config)
 
     LogMessage("IMAP config: \n");
 
-    if (config->decode_conf.b64_depth > -1)
-    {
-        switch (config->decode_conf.b64_depth)
-        {
-        case 0:
-            LogMessage("    Base64 Decoding Depth: %s\n", "Unlimited");
-            break;
-        default:
-            LogMessage("    Base64 Decoding Depth: %d\n", config->decode_conf.b64_depth);
-            break;
-        }
-    }
-    else
-        LogMessage("    Base64 Decoding: %s\n", "Disabled");
-
-    if (config->decode_conf.qp_depth > -1)
-    {
-        switch (config->decode_conf.qp_depth)
-        {
-        case 0:
-            LogMessage("    Quoted-Printable Decoding Depth: %s\n", "Unlimited");
-            break;
-        default:
-            LogMessage("    Quoted-Printable Decoding Depth: %d\n", config->decode_conf.qp_depth);
-            break;
-        }
-    }
-    else
-        LogMessage("    Quoted-Printable Decoding: %s\n", "Disabled");
-    if (config->decode_conf.uu_depth > -1)
-    {
-        switch (config->decode_conf.uu_depth)
-        {
-        case 0:
-            LogMessage("    Unix-to-Unix Decoding Depth: %s\n", "Unlimited");
-            break;
-        default:
-            LogMessage("    Unix-to-Unix Decoding Depth: %d\n", config->decode_conf.uu_depth);
-            break;
-        }
-    }
-    else
-        LogMessage("    Unix-to-Unix Decoding: %s\n", "Disabled");
-
-    if (config->decode_conf.bitenc_depth > -1)
-    {
-        switch (config->decode_conf.bitenc_depth)
-        {
-        case 0:
-            LogMessage("    Non-Encoded MIME attachment Extraction Depth: %s\n", "Unlimited");
-            break;
-        default:
-            LogMessage("    Non-Encoded MIME attachment Extraction Depth: %d\n",
-                config->decode_conf.bitenc_depth);
-            break;
-        }
-    }
-    else
-        LogMessage("    Non-Encoded MIME attachment Extraction: %s\n", "Disabled");
+    config->decode_conf.print_decode_conf();
 
     LogMessage("\n");
+
 }
 
 static inline int InspectPacket(Packet* p)
@@ -543,9 +452,9 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
             DebugMessage(DEBUG_IMAP, "DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
             if ( imap_ssn->body_len > imap_ssn->body_read)
             {
-                uint32_t len = imap_ssn->body_len - imap_ssn->body_read;
+                int len = imap_ssn->body_len - imap_ssn->body_read;
 
-                if ( (uint32_t)(end - ptr) < len )
+                if ( (end - ptr) < len )
                 {
                     data_end = end;
                     len = data_end - ptr;
@@ -553,8 +462,10 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
                 else
                     data_end = ptr + len;
 
-                FilePosition position = file_api->get_file_position(p);
-                ptr = file_api->process_mime_data(p->flow, ptr, end, &(imap_ssn->mime_ssn), 0,
+                FilePosition position = get_file_position(p);
+
+                int data_len = end - ptr;
+                ptr = imap_ssn->mime_ssn->process_mime_data(p->flow, ptr, data_len, 0,
                     position);
                 if ( ptr < data_end)
                     len = len - (data_end - ptr);
@@ -773,6 +684,37 @@ static void snort_imap(IMAP_PROTO_CONF* config, Packet* p)
     }
 }
 
+void ImapMime::decode_alert(MimeDecode* ds)
+{
+    MimeDecode* decode_state = (MimeDecode*)ds;
+    switch ( decode_state->get_decode_type() )
+    {
+    case DECODE_B64:
+        SnortEventqAdd(GID_IMAP, IMAP_B64_DECODING_FAILED);
+        break;
+    case DECODE_QP:
+        SnortEventqAdd(GID_IMAP, IMAP_QP_DECODING_FAILED);
+        break;
+    case DECODE_UU:
+        SnortEventqAdd(GID_IMAP, IMAP_UU_DECODING_FAILED);
+        break;
+
+    default:
+        break;
+    }
+}
+
+void ImapMime::reset_state(void* ssn)
+{
+    IMAP_ResetState(ssn);
+}
+
+
+bool ImapMime::is_end_of_data(void* session)
+{
+    return imap_is_data_end(session);
+}
+
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
@@ -807,18 +749,10 @@ Imap::~Imap()
 
 bool Imap::configure(SnortConfig*)
 {
-    config->decode_conf.file_depth = file_api->get_max_file_depth();
+    config->decode_conf.sync_all_depths();
 
-    if (config->decode_conf.file_depth > -1)
+    if (config->decode_conf.get_file_depth() > -1)
         config->log_config.log_filename = 1;
-
-    file_api->check_decode_config(&config->decode_conf);
-
-    if (file_api->is_decoding_enabled(&config->decode_conf) )
-    {
-        updateMaxDepth(config->decode_conf.file_depth,
-            &config->decode_conf.max_depth);
-    }
 
     return true;
 }

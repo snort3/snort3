@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <sys/types.h>
 
+#include "file_api/file_flows.h"
 #include "nhttp_enum.h"
 #include "nhttp_test_manager.h"
 #include "nhttp_test_input.h"
@@ -491,13 +492,14 @@ bool NHttpStreamSplitter::finish(Flow* flow)
     {
         if (source_id == SRC_SERVER)
         {
-            file_api->file_process(flow, nullptr, 0, SNORT_FILE_END, false, false);
+            FileFlows* file_flows = FileFlows::get_file_flows(flow);
+            file_flows->file_process(nullptr, 0, SNORT_FILE_END, false, false);
         }
         else
         {
-            file_api->process_mime_data(flow, nullptr, 0, session_data->mime_state, true,
+            session_data->mime_state->process_mime_data(flow, nullptr, 0, true,
                 SNORT_FILE_END);
-            free_mime_session(session_data->mime_state);
+            delete session_data->mime_state;
             session_data->mime_state = nullptr;
         }
         return false;

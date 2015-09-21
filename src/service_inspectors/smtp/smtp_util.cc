@@ -119,138 +119,32 @@ int SMTP_CopyToAltBuffer(const uint8_t* start, int length)
     return 0;
 }
 
-/* Accumulate EOL seperated headers, one or more at a time */
-int SMTP_CopyEmailHdrs(const uint8_t* start, int length, MAIL_LogState* log_state)
+void SMTP_LogFuncs(SMTP_PROTO_CONF* config, Packet* p, MimeSession* mime_ssn)
 {
-    int log_avail = 0;
-    uint8_t* log_buf;
-    uint32_t* hdrs_logged;
-    int ret = 0;
-
-    if ((log_state == NULL) || (length <= 0))
-        return -1;
-
-    log_avail = (log_state->log_depth - log_state->hdrs_logged);
-    hdrs_logged = &(log_state->hdrs_logged);
-    log_buf = (uint8_t*)log_state->emailHdrs;
-
-    if (log_avail <= 0)
-    {
-        return -1;
-    }
-
-    if (length > log_avail )
-    {
-        length = log_avail;
-    }
-
-    /* appended by the EOL \r\n */
-
-    ret = SafeMemcpy(log_buf + *hdrs_logged, start, length, log_buf, log_buf+
-        (log_state->log_depth));
-
-    if (ret != SAFEMEM_SUCCESS)
-    {
-        return -1;
-    }
-
-    *hdrs_logged += length;
-
-    return 0;
-}
-
-/* Accumulate email addresses from RCPT TO and/or MAIL FROM commands. Email addresses are separated
-   by comma */
-int SMTP_CopyEmailID(const uint8_t* start, int length, int command_type, MAIL_LogState* log_state)
-{
-    uint8_t* alt_buf;
-    int alt_size;
-    uint16_t* alt_len;
-    int ret;
-    int log_avail=0;
-    const uint8_t* tmp_eol;
-
-    if ((log_state == NULL) || (length <= 0))
-        return -1;
-
-    tmp_eol = (uint8_t*)memchr(start, ':', length);
-    if (tmp_eol == NULL)
-        return -1;
-
-    if ((tmp_eol+1) < (start+length))
-    {
-        length = length - ( (tmp_eol+1) - start );
-        start = tmp_eol+1;
-    }
-    else
-        return -1;
-
-    switch (command_type)
-    {
-    case CMD_MAIL:
-        alt_buf = log_state->senders;
-        alt_size = MAX_EMAIL;
-        alt_len = &(log_state->snds_logged);
-        break;
-
-    case CMD_RCPT:
-        alt_buf = log_state->recipients;
-        alt_size = MAX_EMAIL;
-        alt_len = &(log_state->rcpts_logged);
-        break;
-
-    default:
-        return -1;
-    }
-
-    log_avail = alt_size - *alt_len;
-
-    if (log_avail <= 0 || !alt_buf)
-        return -1;
-    else if (log_avail < length)
-        length = log_avail;
-
-    if ( *alt_len > 0 && ((*alt_len + 1) < alt_size))
-    {
-        alt_buf[*alt_len] = ',';
-        *alt_len = *alt_len + 1;
-    }
-
-    ret = SafeMemcpy(alt_buf + *alt_len, start, length, alt_buf, alt_buf + alt_size);
-
-    if (ret != SAFEMEM_SUCCESS)
-    {
-        if (*alt_len != 0)
-            *alt_len = *alt_len - 1;
-        return -1;
-    }
-
-    *alt_len += length;
-
-    return 0;
-}
-
-void SMTP_LogFuncs(SMTP_PROTO_CONF* config, Packet* p, MimeState* mime_ssn)
-{
-    if ((mime_ssn->log_flags == 0) || !config)
+    if (!mime_ssn)
         return;
 
-    if (mime_ssn->log_flags & MIME_FLAG_FILENAME_PRESENT)
+    MailLogState* log = mime_ssn->get_log_state();
+
+    if (!log || !config)
+        return;
+
+    if (log->is_file_name_present())
     {
         stream.set_extra_data(p->flow, p, config->xtra_filename_id);
     }
 
-    if (mime_ssn->log_flags & MIME_FLAG_MAIL_FROM_PRESENT)
+    if (log->is_email_from_present())
     {
         stream.set_extra_data(p->flow, p, config->xtra_mfrom_id);
     }
 
-    if (mime_ssn->log_flags & MIME_FLAG_RCPT_TO_PRESENT)
+    if (log->is_email_to_present())
     {
         stream.set_extra_data(p->flow, p, config->xtra_rcptto_id);
     }
 
-    if (mime_ssn->log_flags & MIME_FLAG_EMAIL_HDRS_PRESENT)
+    if (log->is_email_hdrs_present())
     {
         stream.set_extra_data(p->flow, p, config->xtra_ehdrs_id);
     }

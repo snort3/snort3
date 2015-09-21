@@ -30,8 +30,6 @@
 #endif
 
 #include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include <algorithm>
 
@@ -40,6 +38,9 @@
 #include "parser/parser.h"
 #include "utils/util.h"
 
+#ifdef UNIT_TEST
+#include "test/catch.hpp"
+#endif
 
 typedef struct _IdentifierSharedNode
 {
@@ -65,7 +66,7 @@ void FileMagicRule::clear()
     file_magics.clear();
 }
 
-void FileIdenfifier::identifierMergeHashInit()
+void FileIdentifier::init_merge_hash()
 {
     identifier_merge_hash = sfghash_new(1000, sizeof(IdentifierSharedNode), 0, NULL);
     if (identifier_merge_hash == NULL)
@@ -75,7 +76,7 @@ void FileIdenfifier::identifierMergeHashInit()
     }
 }
 
-FileIdenfifier::~FileIdenfifier()
+FileIdentifier::~FileIdentifier()
 {
     /*Release memory used for identifiers*/
     for (IDMemoryBlocks::iterator idMem = idMemoryBlocks.begin();
@@ -90,7 +91,7 @@ FileIdenfifier::~FileIdenfifier()
     }
 }
 
-void* FileIdenfifier::calloc_mem(size_t size)
+void* FileIdentifier::calloc_mem(size_t size)
 {
     void* ret;
     IDMemoryBlock memblock;
@@ -102,7 +103,7 @@ void* FileIdenfifier::calloc_mem(size_t size)
     return ret;
 }
 
-void FileIdenfifier::set_node_state_shared(IdentifierNode* start)
+void FileIdentifier::set_node_state_shared(IdentifierNode* start)
 {
     int i;
 
@@ -122,7 +123,7 @@ void FileIdenfifier::set_node_state_shared(IdentifierNode* start)
 }
 
 /*Clone a trie*/
-IdentifierNode* FileIdenfifier::clone_node(IdentifierNode* start)
+IdentifierNode* FileIdentifier::clone_node(IdentifierNode* start)
 {
     int index;
     IdentifierNode* node;
@@ -144,7 +145,7 @@ IdentifierNode* FileIdenfifier::clone_node(IdentifierNode* start)
     return node;
 }
 
-void FileIdenfifier::verify_magic_offset(FileMagicData* parent, FileMagicData* current)
+void FileIdentifier::verify_magic_offset(FileMagicData* parent, FileMagicData* current)
 {
     if ((parent) && (parent->content.size() + parent->offset > current->offset))
     {
@@ -154,8 +155,7 @@ void FileIdenfifier::verify_magic_offset(FileMagicData* parent, FileMagicData* c
     }
 }
 
-/*Create a trie for the magic*/
-IdentifierNode* FileIdenfifier::create_trie_from_magic(FileMagicRule& rule, uint32_t type_id)
+IdentifierNode* FileIdentifier::create_trie_from_magic(FileMagicRule& rule, uint32_t type_id)
 {
     IdentifierNode* current;
     IdentifierNode* root = NULL;
@@ -195,7 +195,7 @@ IdentifierNode* FileIdenfifier::create_trie_from_magic(FileMagicRule& rule, uint
 
 /*This function examines whether to update the trie based on shared state*/
 
-bool FileIdenfifier::updateNext(IdentifierNode* start,IdentifierNode** next_ptr,
+bool FileIdentifier::update_next(IdentifierNode* start,IdentifierNode** next_ptr,
     IdentifierNode* append)
 {
     IdentifierNode* next = (*next_ptr);
@@ -261,7 +261,7 @@ bool FileIdenfifier::updateNext(IdentifierNode* start,IdentifierNode** next_ptr,
 /*
  * Append magic to existing trie
  */
-void FileIdenfifier::update_trie(IdentifierNode* start, IdentifierNode* append)
+void FileIdentifier::update_trie(IdentifierNode* start, IdentifierNode* append)
 {
     int i;
 
@@ -285,7 +285,7 @@ void FileIdenfifier::update_trie(IdentifierNode* start, IdentifierNode* append)
 
         for (i = 0; i < MAX_BRANCH; i++)
         {
-            if (updateNext(start,&start->next[i], append->next[i]))
+            if (update_next(start,&start->next[i], append->next[i]))
             {
                 update_trie(start->next[i], append->next[i]);
             }
@@ -295,20 +295,20 @@ void FileIdenfifier::update_trie(IdentifierNode* start, IdentifierNode* append)
     {
         for (i = 0; i < MAX_BRANCH; i++)
         {
-            if (updateNext(start,&start->next[i], append))
+            if (update_next(start,&start->next[i], append))
                 update_trie(start->next[i], append);
         }
     }
 }
 
-void FileIdenfifier::insert_file_rule(FileMagicRule& rule)
+void FileIdentifier::insert_file_rule(FileMagicRule& rule)
 {
     IdentifierNode* node;
 
     if (!identifier_root)
     {
         identifier_root = (IdentifierNode *)calloc_mem(sizeof(*identifier_root));
-        identifierMergeHashInit();
+        init_merge_hash();
     }
 
     if (rule.id > FILE_ID_MAX)
@@ -335,57 +335,55 @@ void FileIdenfifier::insert_file_rule(FileMagicRule& rule)
  * Find file type is to traverse the tries.
  * Context is saved to continue file type identification as data becomes available
  */
-uint32_t FileIdenfifier::find_file_type_id(uint8_t* buf, int len, FileContext* context)
+uint32_t FileIdentifier::find_file_type_id(const uint8_t* buf, int len, uint64_t file_offset,
+    void** context)
 {
-    IdentifierNode* current;
-    uint64_t end;
+    uint32_t file_type_id = SNORT_FILE_TYPE_CONTINUE;
 
-    if ((!context)||(!buf)||(len <= 0))
-        return 0;
+    assert(context);
 
-    if (!(context->file_type_context))
-        context->file_type_context = (void*)(identifier_root);
+    if ( !buf || len <= 0 )
+        return SNORT_FILE_TYPE_CONTINUE;
 
-    current = (IdentifierNode*)context->file_type_context;
+    if (!(*context))
+        *context = (void*)(identifier_root);
 
-    end = context->processed_bytes + len;
+    IdentifierNode* current = (IdentifierNode*)(*context);
 
-    while (current && (current->offset < end) && len && (current->offset >=
-        context->processed_bytes))
+    uint64_t end = file_offset + len;
+
+    while (current &&  (current->offset >= file_offset))
     {
         /*Found file id, save and continue*/
         if (current->type_id)
         {
-            context->file_type_id = current->type_id;
+            file_type_id = current->type_id;
+        }
+
+        if ( current->offset >= end )
+        {
+            /* Save current state */
+            *context = current;
+            if (file_type_id)
+                return file_type_id;
+            else
+                return SNORT_FILE_TYPE_CONTINUE;
         }
 
         /*Move to the next level*/
-        current = current->next[buf[current->offset - context->processed_bytes ]];
-        len--;
+        current = current->next[buf[current->offset - file_offset ]];
     }
 
-    /*No more checks are needed*/
-    if (!current)
-    {
-        /*Found file type in current buffer, return*/
-        if (context->file_type_id)
-            return context->file_type_id;
-        else
-            return SNORT_FILE_TYPE_UNKNOWN;
-    }
-    else if ((context->file_type_id) && (current->state == ID_NODE_SHARED))
-        return context->file_type_id;
-    else if (current->offset >= end)
-    {
-        /*No file type found, save current state and continue*/
-        context->file_type_context = current;
-        return SNORT_FILE_TYPE_CONTINUE;
-    }
-    else
-        return SNORT_FILE_TYPE_UNKNOWN;
+    /*Either end of magics or passed the current offset*/
+    *context = NULL;
+
+    if ( file_type_id == SNORT_FILE_TYPE_CONTINUE )
+        file_type_id = SNORT_FILE_TYPE_UNKNOWN;
+
+    return file_type_id;
 }
 
-FileMagicRule*  FileIdenfifier::get_rule_from_id(uint32_t id)
+FileMagicRule*  FileIdentifier::get_rule_from_id(uint32_t id)
 {
     if ((id < FILE_ID_MAX) && (file_magic_rules[id].id > 0))
     {
@@ -394,3 +392,167 @@ FileMagicRule*  FileIdenfifier::get_rule_from_id(uint32_t id)
     else
         return NULL;
 }
+
+//--------------------------------------------------------------------------
+// unit tests
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+TEST_CASE ("FileIdMemory", "[FileMagic]")
+{
+    FileIdentifier rc;
+
+    CHECK(rc.memory_usage() == 0);
+}
+
+TEST_CASE ("FileIdRulePDF", "[FileMagic]")
+{
+    FileMagicData magic;
+
+    magic.content = "PDF";
+    magic.offset = 0;
+
+    FileMagicRule rule;
+
+    rule.type = "pdf";
+    rule.file_magics.push_back(magic);
+    rule.id = 1;
+
+    FileIdentifier rc;
+
+    rc.insert_file_rule(rule);
+
+    const char* data = "PDF";
+
+    void *context = NULL;
+
+    CHECK(rc.find_file_type_id((const uint8_t *)data, strlen(data), 0, &context) == 1);
+
+}
+
+TEST_CASE ("FileIdRuleUnknow", "[FileMagic]")
+{
+    FileMagicData magic;
+
+    magic.content = "PDF";
+    magic.offset = 0;
+
+    FileMagicRule rule;
+
+    rule.type = "pdf";
+    rule.file_magics.push_back(magic);
+    rule.id = 1;
+
+    FileIdentifier rc;
+
+    rc.insert_file_rule(rule);
+
+    const char* data = "DDF";
+
+    void *context = NULL;
+
+    CHECK(rc.find_file_type_id((const uint8_t *)data, strlen(data), 0, &context) ==
+        SNORT_FILE_TYPE_UNKNOWN);
+
+}
+
+TEST_CASE ("FileIdRuleEXE", "[FileMagic]")
+{
+    FileMagicData magic;
+
+    magic.content = "PDF";
+    magic.offset = 0;
+
+    FileMagicRule rule;
+
+    rule.type = "exe";
+    rule.file_magics.push_back(magic);
+    rule.id = 1;
+
+    FileIdentifier rc;
+    rc.insert_file_rule(rule);
+
+    magic.clear();
+    magic.content = "EXE";
+    magic.offset = 0;
+
+    rule.clear();
+    rule.type = "exe";
+    rule.file_magics.push_back(magic);
+    rule.id = 3;
+
+    rc.insert_file_rule(rule);
+
+    const char* data = "PDFooo";
+    void *context = NULL;
+
+    CHECK(rc.find_file_type_id((const uint8_t *)data, strlen(data), 0, &context) == 1);
+}
+
+TEST_CASE ("FileIdRulePDFEXE", "[FileMagic]")
+{
+    FileMagicData magic;
+
+    magic.content = "PDF";
+    magic.offset = 0;
+
+    FileMagicRule rule;
+
+    rule.type = "exe";
+    rule.file_magics.push_back(magic);
+    rule.id = 1;
+
+    FileIdentifier rc;
+    rc.insert_file_rule(rule);
+
+    magic.clear();
+    magic.content = "EXE";
+    magic.offset = 3;
+
+    rule.clear();
+    rule.type = "exe";
+    rule.file_magics.push_back(magic);
+    rule.id = 3;
+
+    rc.insert_file_rule(rule);
+
+    const char* data = "PDFEXE";
+    void *context = NULL;
+
+    // Match the last one
+    CHECK(rc.find_file_type_id((const uint8_t *)data, strlen(data), 0, &context) == 3);
+}
+
+TEST_CASE ("FileIdRuleFirst", "[FileMagic]")
+{
+    FileMagicData magic;
+
+    magic.content = "PDF";
+    magic.offset = 0;
+
+    FileMagicRule rule;
+
+    rule.type = "exe";
+    rule.file_magics.push_back(magic);
+    rule.id = 1;
+
+    FileIdentifier rc;
+    rc.insert_file_rule(rule);
+
+    magic.clear();
+    magic.content = "EXE";
+    magic.offset = 3;
+
+    rule.clear();
+    rule.type = "exe";
+    rule.file_magics.push_back(magic);
+    rule.id = 3;
+
+    rc.insert_file_rule(rule);
+
+    const char* data = "PDF";
+    void *context = NULL;
+
+    CHECK(rc.find_file_type_id((const uint8_t *)data, strlen(data), 0, &context) == 1);
+}
+#endif

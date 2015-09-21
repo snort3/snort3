@@ -23,8 +23,9 @@
 #define FILE_LIB_H
 
 // This will be basis of file class
-// FIXIT-L This will be refactored soon
+
 #include <stdint.h>
+#include <stdio.h>
 
 #include "file_api/file_api.h"
 #include "flow/flow.h"
@@ -32,59 +33,75 @@
 #define SNORT_FILE_TYPE_UNKNOWN          UINT16_MAX  /**/
 #define SNORT_FILE_TYPE_CONTINUE         0 /**/
 
-struct FileCaptureInfo;
+struct FileCapture;
 class FileConfig;
 
-struct FileContext
+class FileContext
 {
-    bool file_type_enabled;
-    bool file_signature_enabled;
-    uint8_t* file_name;
-    uint32_t file_name_size;
-    uint64_t file_size;
-    bool upload;
-    uint64_t processed_bytes;
-    uint32_t file_type_id;
-    uint8_t* sha256;
+public:
+     FileContext();
+     ~FileContext();
+
+    // main processing functions
+    void process_file_type(const uint8_t* file_data, int data_size, FilePosition position);
+    void process_file_signature_sha256(const uint8_t* file_data, int data_size, FilePosition pos);
+    void update_file_size(int data_size, FilePosition position);
+    void stop_file_capture();
+    FileCaptureState process_file_capture(const uint8_t* file_data, int data_size, FilePosition pos);
+
+    // Configuration functions
+    void config_file_type(bool enabled);
+    bool is_file_type_enabled();
+    void config_file_signature(bool enabled);
+    bool is_file_signature_enabled();
+    void config_file_capture(bool enabled);
+    bool is_file_capture_enabled();
+
+    //File properties
+    uint32_t get_file_type();
+    void set_file_name(const uint8_t* file_name, uint32_t name_size);
+    bool get_file_name( uint8_t** file_name, uint32_t* name_size);
+    void set_file_size(uint64_t size);
+    uint64_t get_file_size();
+    uint64_t get_processed_bytes();
+    void set_file_direction(FileDirection dir);
+    FileDirection get_file_direction();
+    void set_file_sig_sha256(uint8_t* signature);
+    uint8_t* get_file_sig_sha256();
+    void set_file_id(uint32_t size);
+    uint32_t get_file_id();
+    void set_file_config(FileConfig* file_config);
+    FileConfig*  get_file_config();
+
+    void print_file_sha256();
+    static void print_file_data(FILE* fp, const uint8_t* data, int len, int max_depth);
+    void print();
+
+private:
+    bool file_type_enabled = false;
+    bool file_signature_enabled = false;
+    bool file_capture_enabled = false;
+    uint8_t* file_name = nullptr;
+    uint32_t file_name_size = 0;
+    uint64_t file_size = 0;
+    FileDirection direction = DIRECTION_UNKNOWN;
+    uint64_t processed_bytes = 0;
+    uint32_t file_type_id = SNORT_FILE_TYPE_CONTINUE;
+    uint8_t* sha256 = NULL;
     void* file_type_context;
     void* file_signature_context;
     FileConfig* file_config;
-    time_t expires;
-    uint16_t   app_id;
-    bool file_capture_enabled;
-    FileCaptureInfo *file_capture;
-    uint8_t *current_data;  /*current file data*/
-    uint32_t current_data_len;
-    File_Verdict verdict;
-    bool suspend_block_verdict;
-    FileState file_state;
-    uint32_t file_id;
-    uint32_t file_config_version;
+    time_t expires = 0;
+    FileCapture *file_capture;
+    FileState file_state = {FILE_CAPTURE_SUCCESS, FILE_SIG_PROCESSING};
+    uint32_t file_id = 0;
+    uint32_t file_config_version = 0;
+
+    inline int get_data_size_from_depth_limit(FileProcessType type, int data_size);
+    inline void finalize_file_type ();
 };
 
-/*Main File Processing functions */
-void file_type_id(FileContext* context, uint8_t* file_data, int data_size, FilePosition position);
-void file_signature_sha256(FileContext* context, uint8_t* file_data, int data_size, FilePosition
-    position);
-
-/*File context management*/
-FileContext* file_context_create(void);
-void file_context_reset(FileContext* context);
-void file_context_free(void* context);
-/*File properties*/
-void file_name_set(FileContext* context, uint8_t* file_name, uint32_t name_size);
-int file_name_get(FileContext* context, uint8_t** file_name, uint32_t* name_size);
-void file_size_set(FileContext* context, uint64_t file_size);
-uint64_t file_size_get(FileContext* context);
-void file_direction_set(FileContext* context, bool upload);
-bool file_direction_get(FileContext* context);
-void file_sig_sha256_set(FileContext* context, uint8_t* signature);
-uint8_t* file_sig_sha256_get(FileContext* context);
-
 const char* file_type_name(void* conf, uint32_t id);
-
-void free_file_identifiers(void*);
-void file_sha256_print(unsigned char* hash);
 
 #endif
 

@@ -146,6 +146,15 @@ struct IMAPSearchInfo
     int length;
 };
 
+class ImapMime : public MimeSession
+{
+    using MimeSession::MimeSession;
+private:
+    void decode_alert(MimeDecode* decode_state) override;
+    void reset_state(void* ssn) override;
+    bool is_end_of_data(void* ssn) override;
+};
+
 struct IMAPData
 {
     int state;
@@ -153,7 +162,7 @@ struct IMAPData
     int session_flags;
     uint32_t body_len;
     uint32_t body_read;
-    MimeState mime_ssn;
+    ImapMime* mime_ssn;
 };
 
 class ImapFlowData : public FlowData

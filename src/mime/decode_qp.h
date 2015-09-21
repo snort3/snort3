@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2012-2013 Sourcefire, Inc.
+// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,25 +15,36 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// Hui Cao <huica@cisco.com>
 
-// file_mime_config.h author Hui Cao <huica@cisco.com>
+#ifndef DECODE_QP_H
+#define DECODE_QP_H
 
-#ifndef FILE_MIME_CONFIG_H
-#define FILE_MIME_CONFIG_H
+// Email attachment decoder
 
-// List of MIME decode and log configuration functions
-// FIXIT-L This will be refactored soon
+#include <stdlib.h>
 
-#include "file_api/file_api.h"
+#include "main/snort_types.h"
+#include "decode_buffer.h"
 
-/* Function prototypes  */
-void set_mime_decode_config_defauts(DecodeConfig*);
-void set_mime_log_config_defauts(MAIL_LogConfig*);
-int parse_mime_decode_args(DecodeConfig*, char* arg, const char* preproc_name);
-bool is_mime_log_enabled(MAIL_LogConfig*);
-bool is_decoding_enabled(DecodeConfig*);
-bool is_decoding_conf_changed(DecodeConfig* configNext, DecodeConfig* config, const
-    char* preproc_name);
-void check_decode_config(DecodeConfig*);
+class QPDecode:public DataDecode
+{
+public:
+    QPDecode(int max_depth);
+    ~QPDecode();
+
+    // Main function to decode file data
+    DecodeResult decode_data(const uint8_t* start, const uint8_t* end) override;
+
+    void reset_decode_state() override;
+
+private:
+    DecodeBuffer* buffer = nullptr;
+
+};
+
+int sf_qpdecode(char* src, uint32_t slen, char* dst, uint32_t dlen, uint32_t* bytes_read,
+    uint32_t* bytes_copied);
+
 #endif
 

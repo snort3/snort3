@@ -36,6 +36,7 @@
 #include "hi_include.h"
 #include "sfrt/sfrt.h"
 #include "sfip/sf_ip.h"
+#include "mime/file_mime_process.h"
 #include "file_api/file_api.h"
 #include "decompress/file_decomp.h"
 #include "framework/bits.h"
@@ -100,8 +101,8 @@ struct HTTPINSPECT_GLOBAL_CONF
     int decompr_depth;
     int memcap;
 
-    DecodeConfig decode_conf;
-    MAIL_LogConfig mime_conf;
+    DecodeConfig* decode_conf;
+    MailLogConfig mime_conf;
 
     HTTPINSPECT_GLOBAL_CONF();
     ~HTTPINSPECT_GLOBAL_CONF();

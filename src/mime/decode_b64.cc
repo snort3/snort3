@@ -16,9 +16,83 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// Writen by Patrick Mullen <pmullen@sourcefire.com>
+// Author: Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
-#include "sf_base64decode.h"
+#include <mime/decode_base.h>
+
+#include "decode_b64.h"
+
+#include "utils/snort_bounds.h"
+#include "utils/util.h"
+#include "utils/util_unfold.h"
+
+void B64Decode::reset_decode_state()
+{
+    reset_decoded_bytes();
+    buffer->reset();
+}
+
+DecodeResult B64Decode::decode_data(const uint8_t* start, const uint8_t* end)
+{
+    uint32_t act_encode_size = 0, act_decode_size = 0;
+    uint32_t i = 0;
+
+    if (!buffer->check_restore_buffer())
+    {
+        reset_decode_state();
+        return DECODE_EXCEEDED;
+    }
+
+    uint32_t encode_avail = buffer->get_encode_avail() - buffer->get_prev_encoded_bytes();
+
+    if (sf_strip_CRLF(start, (end-start), buffer->get_encode_buff() + buffer->get_prev_encoded_bytes(),
+        encode_avail, &act_encode_size) != 0)
+    {
+        reset_decode_state();
+        return DECODE_FAIL;
+    }
+
+    act_encode_size = act_encode_size + buffer->get_prev_encoded_bytes();
+
+    i = (act_encode_size)%4;
+
+    /* Encoded data should be in multiples of 4. Then we need to wait for the remainder encoded data to
+     * successfully decode the base64 data. This happens when base64 data is spanned across packets*/
+    if (i)
+    {
+        act_encode_size = act_encode_size - i;
+        buffer->save_buffer(buffer->get_encode_buff() + act_encode_size, i);
+    }
+
+    if (sf_base64decode(buffer->get_encode_buff(), act_encode_size,
+        buffer->get_decode_buff(), buffer->get_decode_avail(), &act_decode_size) != 0)
+    {
+        reset_decode_state();
+        return DECODE_FAIL;
+    }
+    else if (!act_decode_size && !encode_avail)
+    {
+        reset_decode_state();
+        return DECODE_FAIL;
+    }
+
+    decoded_bytes = act_decode_size;
+    decodePtr = buffer->get_decode_buff();
+    buffer->update_buffer(act_encode_size, act_decode_size);
+    decode_bytes_read = buffer->get_decode_bytes_read();
+    return DECODE_SUCCESS;
+}
+
+B64Decode::B64Decode(int max_depth):DataDecode(max_depth)
+{
+    buffer = new DecodeBuffer(max_depth);
+}
+
+B64Decode::~B64Decode()
+{
+   if (buffer)
+       delete buffer;
+}
 
 uint8_t sf_decode64tab[256] =
 {

@@ -22,7 +22,7 @@
 
 #include <stdio.h>
 #include "stream/stream_api.h"
-#include "file_api/file_mime_process.h"
+#include "mime/file_mime_process.h"
 
 #include "nhttp_cutter.h"
 #include "nhttp_infractions.h"
@@ -98,7 +98,7 @@ private:
     int64_t file_depth_remaining[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
     int64_t detect_depth_remaining[2] = { NHttpEnums::STAT_NOTPRESENT,
         NHttpEnums::STAT_NOTPRESENT };
-    MimeState* mime_state = nullptr;  // SRC_CLIENT only
+    MimeSession* mime_state = nullptr;  // SRC_CLIENT only
 
     // number of user data octets seen so far (regular body or chunks)
     int64_t body_octets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };

@@ -21,12 +21,12 @@
 
 // Configuration for Imap service inspector
 
-#include "file_api/file_api.h"
+#include "mime/file_mime_process.h"
 
 struct IMAP_PROTO_CONF
 {
     DecodeConfig decode_conf;
-    MAIL_LogConfig log_config;
+    MailLogConfig log_config;
 };
 
 #endif

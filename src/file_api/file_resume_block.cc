@@ -41,9 +41,9 @@
 
 /* The hash table of expected files */
 static THREAD_LOCAL_TBD SFXHASH* fileHash = NULL;
-extern Log_file_action_func log_file_action;
-extern File_type_callback_func file_type_cb;
-extern File_signature_callback_func file_signature_cb;
+Log_file_action_func log_file_action;
+File_type_callback_func file_type_cb;
+File_signature_callback_func file_signature_cb;
 
 static FileState sig_file_state = { FILE_CAPTURE_SUCCESS, FILE_SIG_DONE };
 

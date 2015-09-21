@@ -1,0 +1,9 @@
+This directory contains all the mime processing related classes and APIs
+
+* MIME processing: provides the common MIME header and MIME body processing for
+service inpsectors such as HTTP, SMTP, POP, and IMAP.
+* Decode: supports Base64, UU-encoding, QP-encoding, and Bit-encoding
+* Log: logs file names and email headers
+* Configuration: configure decode and log
+* PAF: provides common processing for PAF (Protocol Aware Flushing)
+

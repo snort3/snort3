@@ -1,6 +1,6 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2012-2013 Sourcefire, Inc.
+// Copyright (C) 1998-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,17 +16,35 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// sf_email_attach_decode.h author Bhagyashree Bantwal <bbantwal@cisco.com>
 
-// file_service_config.h author Hui Cao <huica@cisco.com>
+#ifndef DECODE_UU_H
+#define DECODE_UU_H
 
-#ifndef FILE_SERVICE_CONFIG_H
-#define FILE_SERVICE_CONFIG_H
+// UU decoder
 
-// FIXIT-L This will be refactored soon
-#include "file_api/file_service.h"
+#include "decode_base.h"
+#include "decode_buffer.h"
 
-/*configure file services*/
-void file_service_config(const char* args, void** file_config);
+class UUDecode:public DataDecode
+{
+public:
+    UUDecode(int max_depth);
+    ~UUDecode();
+
+    // Main function to decode file data
+    DecodeResult decode_data(const uint8_t* start, const uint8_t* end) override;
+
+    void reset_decode_state() override;
+
+private:
+    bool begin_found = false;
+    bool end_found = false;
+    DecodeBuffer* buffer = nullptr;
+};
+
+int sf_uudecode(uint8_t* src, uint32_t slen, uint8_t* dst, uint32_t dlen, uint32_t* bytes_read,
+    uint32_t* bytes_copied, bool* begin_found, bool* end_found);
 
 #endif
 

@@ -65,11 +65,12 @@
 #include "utils/util.h"
 #include "utils/util_utf.h"
 #include "utils/sfsnprintfappend.h"
-#include "utils/sf_email_attach_decode.h"
+#include <mime/decode_base.h>
 #include "stream/stream_api.h"
 #include "time/profiler.h"
 #include "loggers/unified2_common.h"
 #include "file_api/file_api.h"
+#include "file_api/file_flows.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "framework/data_bus.h"
@@ -432,7 +433,7 @@ static inline FilePosition getFilePoistion(Packet* p)
         position = SNORT_FILE_START;
     else if (p->packet_flags & PKT_PDU_TAIL)
         position = SNORT_FILE_END;
-    else if (file_api->get_file_processed_size(p->flow))
+    else if (get_file_processed_size(p->flow))
         position = SNORT_FILE_MIDDLE;
 
     return position;
@@ -485,7 +486,11 @@ static inline void setFileName(Packet* p)
     uint32_t len = 0;
     uint32_t type = 0;
     GetHttpUriData(p->flow, &buf, &len, &type);
-    file_api->set_file_name (p->flow, buf, len);
+
+    FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
+
+    if (file_flows)
+        file_flows->set_file_name (buf, len);
 }
 
 /*
@@ -654,13 +659,13 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
             {
                 if (hsd->mime_ssn)
                 {
-                    uint8_t* end = ( uint8_t*)(p->data) + p->dsize;
-                    file_api->process_mime_data(p->flow, p->data, end, hsd->mime_ssn, 1,
+                    hsd->mime_ssn->process_mime_data(p->flow, p->data, p->dsize, 1,
                         SNORT_FILE_POSITION_UNKNOWN);
                 }
-                else if (file_api->get_file_processed_size(p->flow) >0)
+                else if (get_file_processed_size(p->flow) >0)
                 {
-                    file_api->file_process(p->flow, (uint8_t*)p->data, p->dsize,
+                    FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
+                    file_flows->file_process((uint8_t*)p->data, p->dsize,
                         getFilePoistion(p), true, false);
                 }
             }
@@ -769,31 +774,22 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                         /* mime parsing
                          * mime boundary should be processed before this
                          */
-                        uint8_t* end;
 
                         if (!hsd->mime_ssn)
                         {
-                            hsd->mime_ssn = (MimeState*)SnortAlloc(sizeof(MimeState));
-                            if (!hsd->mime_ssn)
-                                return 0;
-                            hsd->mime_ssn->log_config = &(conf->global->mime_conf);
-                            hsd->mime_ssn->decode_conf = &(conf->global->decode_conf);
-                            /*Set log buffers per session*/
-                            if (file_api->set_log_buffers(
-                                &(hsd->mime_ssn->log_state), hsd->mime_ssn->log_config) < 0)
-                            {
-                                return 0;
-                            }
+                            hsd->mime_ssn = new MimeSession(conf->global->decode_conf,
+                                &(conf->global->mime_conf));
                         }
 
-                        end = (uint8_t*)(session->client.request.post_raw +
-                            session->client.request.post_raw_size);
-                        file_api->process_mime_data(p->flow, start, end, hsd->mime_ssn, 1,
+                        hsd->mime_ssn->process_mime_data(p->flow, start,
+                            session->client.request.post_raw +
+                            session->client.request.post_raw_size - start, 1,
                             SNORT_FILE_POSITION_UNKNOWN);
                     }
                     else
                     {
-                        if (file_api->file_process(p->flow,
+                        FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
+                        if (file_flows && file_flows->file_process(
                             (uint8_t*)session->client.request.post_raw,
                             (uint16_t)session->client.request.post_raw_size,
                             getFilePoistion(p), true, false))
@@ -825,13 +821,13 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
             {
                 if (hsd->mime_ssn)
                 {
-                    uint8_t* end = ( uint8_t*)(p->data) + p->dsize;
-                    file_api->process_mime_data(p->flow, p->data, end, hsd->mime_ssn, 1,
+                    hsd->mime_ssn->process_mime_data(p->flow, p->data, p->dsize, 1,
                         SNORT_FILE_POSITION_UNKNOWN);
                 }
-                else if (file_api->get_file_processed_size(p->flow) >0)
+                else if (get_file_processed_size(p->flow) >0)
                 {
-                    file_api->file_process(p->flow, (uint8_t*)p->data, p->dsize,
+                    FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
+                    file_flows->file_process((uint8_t*)p->data, p->dsize,
                         getFilePoistion(p),
                         true, false);
                 }
@@ -1080,8 +1076,9 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                     set_file_data((uint8_t*)session->server.response.body, detect_data_size);
                 }
 
+                FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
                 if (p->has_paf_payload()
-                    && file_api->file_process(p->flow,
+                    && file_flows &&  file_flows->file_process(
                     (uint8_t*)session->server.response.body,
                     (uint16_t)session->server.response.body_size,
                     getFilePoistion(p), false, false))
@@ -1151,9 +1148,6 @@ int HttpInspectInitializeGlobalConfig(HTTPINSPECT_GLOBAL_CONF* config)
     if (iRet)
         return iRet;
 
-    file_api->set_mime_decode_config_defauts(&(config->decode_conf));
-    file_api->set_mime_log_config_defauts(&(config->mime_conf));
-
     return 0;
 }
 
@@ -1173,7 +1167,8 @@ void FreeHttpSessionData(void* data)
     if (hsd->true_ip)
         sfip_free(hsd->true_ip);
 
-    file_api->free_mime_session(hsd->mime_ssn);
+    if (hsd->mime_ssn)
+        delete hsd->mime_ssn;
 
     if ( hsd->fd_state != 0 )
     {

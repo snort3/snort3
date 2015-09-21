@@ -35,11 +35,10 @@
 #include "framework/inspector.h"
 #include "target_based/snort_protocols.h"
 #include "search_engines/search_tool.h"
-#include "utils/sf_email_attach_decode.h"
 #include "utils/sfsnprintfappend.h"
 #include "protocols/ssl.h"
 #include "file_api/file_api.h"
-#include "file_api/file_mime_process.h"
+#include "mime/file_mime_process.h"
 
 #include "pop.h"
 #include "pop_module.h"
@@ -85,15 +84,15 @@ THREAD_LOCAL POPSearchInfo pop_search_info;
 
 static void snort_pop(POP_PROTO_CONF* GlobalConf, Packet* p);
 static void POP_ResetState(void*);
-void POP_DecodeAlert(void* ds);
-
-MimeMethods pop_mime_methods = { NULL, NULL, POP_DecodeAlert, POP_ResetState, pop_is_data_end };
 
 PopFlowData::PopFlowData() : FlowData(flow_id)
 { memset(&session, 0, sizeof(session)); }
 
 PopFlowData::~PopFlowData()
-{ free_mime_session(session.mime_ssn); }
+{
+    if (session.mime_ssn)
+        delete(session.mime_ssn);
+}
 
 unsigned PopFlowData::flow_id = 0;
 static POPData* get_session_data(Flow* flow)
@@ -112,14 +111,9 @@ POPData* SetNewPOPData(POP_PROTO_CONF* config, Packet* p)
     p->flow->set_application_data(fd);
     pop_ssn = &fd->session;
 
-    pop_ssn->mime_ssn.log_config = &(config->log_config);
-    pop_ssn->mime_ssn.decode_conf = &(config->decode_conf);
-    pop_ssn->mime_ssn.methods = &(pop_mime_methods);
-    pop_ssn->mime_ssn.config = config;
-    if (file_api->set_log_buffers(&(pop_ssn->mime_ssn.log_state), &(config->log_config)) < 0)
-    {
-        return NULL;
-    }
+    pop_ssn->mime_ssn = new PopMime( &(config->decode_conf), &(config->log_config));
+    //pop_ssn->mime_ssn.methods = &(pop_mime_methods);
+    //pop_ssn->mime_ssn.config = config;
 
     if (p->packet_flags & SSNFLAG_MIDSTREAM)
     {
@@ -129,26 +123,6 @@ POPData* SetNewPOPData(POP_PROTO_CONF* config, Packet* p)
     }
 
     return pop_ssn;
-}
-
-void POP_DecodeAlert(void* ds)
-{
-    Email_DecodeState* decode_state = (Email_DecodeState*)ds;
-    switch ( decode_state->decode_type )
-    {
-    case DECODE_B64:
-        SnortEventqAdd(GID_POP, POP_B64_DECODING_FAILED);
-        break;
-    case DECODE_QP:
-        SnortEventqAdd(GID_POP, POP_QP_DECODING_FAILED);
-        break;
-    case DECODE_UU:
-        SnortEventqAdd(GID_POP, POP_UU_DECODING_FAILED);
-        break;
-
-    default:
-        break;
-    }
 }
 
 void POP_SearchInit(void)
@@ -190,13 +164,6 @@ void POP_SearchFree(void)
         delete pop_resp_search_mpse;
 }
 
-/*
-* Reset POP session state
-*
-* @param  none
-*
-* @return none
-*/
 static void POP_ResetState(void* ssn)
 {
     POPData* pop_ssn = get_session_data((Flow*)ssn);
@@ -247,67 +214,10 @@ static void PrintPopConf(POP_PROTO_CONF* config)
 
     LogMessage("POP config: \n");
 
-    if (config->decode_conf.b64_depth > -1)
-    {
-        switch (config->decode_conf.b64_depth)
-        {
-        case 0:
-            LogMessage("    Base64 Decoding Depth: %s\n", "Unlimited");
-            break;
-        default:
-            LogMessage("    Base64 Decoding Depth: %d\n", config->decode_conf.b64_depth);
-            break;
-        }
-    }
-    else
-        LogMessage("    Base64 Decoding: %s\n", "Disabled");
-
-    if (config->decode_conf.qp_depth > -1)
-    {
-        switch (config->decode_conf.qp_depth)
-        {
-        case 0:
-            LogMessage("    Quoted-Printable Decoding Depth: %s\n", "Unlimited");
-            break;
-        default:
-            LogMessage("    Quoted-Printable Decoding Depth: %d\n", config->decode_conf.qp_depth);
-            break;
-        }
-    }
-    else
-        LogMessage("    Quoted-Printable Decoding: %s\n", "Disabled");
-    if (config->decode_conf.uu_depth > -1)
-    {
-        switch (config->decode_conf.uu_depth)
-        {
-        case 0:
-            LogMessage("    Unix-to-Unix Decoding Depth: %s\n", "Unlimited");
-            break;
-        default:
-            LogMessage("    Unix-to-Unix Decoding Depth: %d\n", config->decode_conf.uu_depth);
-            break;
-        }
-    }
-    else
-        LogMessage("    Unix-to-Unix Decoding: %s\n", "Disabled");
-
-    if (config->decode_conf.bitenc_depth > -1)
-    {
-        switch (config->decode_conf.bitenc_depth)
-        {
-        case 0:
-            LogMessage("    Non-Encoded MIME attachment Extraction Depth: %s\n", "Unlimited");
-            break;
-        default:
-            LogMessage("    Non-Encoded MIME attachment Extraction Depth: %d\n",
-                config->decode_conf.bitenc_depth);
-            break;
-        }
-    }
-    else
-        LogMessage("    Non-Encoded MIME attachment Extraction: %s\n", "Disabled");
+    config->decode_conf.print_decode_conf();
 
     LogMessage("\n");
+
 }
 
 static inline int InspectPacket(Packet* p)
@@ -519,9 +429,9 @@ static void POP_ProcessServerPacket(Packet* p, POPData* pop_ssn)
         {
             DebugMessage(DEBUG_POP, "DATA STATE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
             //ptr = POP_HandleData(p, ptr, end);
-            FilePosition position = file_api->get_file_position(p);
-            ptr = file_api->process_mime_data(p->flow, ptr, end, &(pop_ssn->mime_ssn), 0,
-                position);
+            FilePosition position = get_file_position(p);
+            int len = end - ptr;
+            ptr = pop_ssn->mime_ssn->process_mime_data(p->flow, ptr, len, 0, position);
             continue;
         }
         POP_GetEOL(ptr, end, &eol, &eolm);
@@ -707,6 +617,37 @@ static void snort_pop(POP_PROTO_CONF* config, Packet* p)
     }
 }
 
+void PopMime::decode_alert(MimeDecode* ds)
+{
+    MimeDecode* decode_state = (MimeDecode*)ds;
+    switch ( decode_state->get_decode_type() )
+    {
+    case DECODE_B64:
+        SnortEventqAdd(GID_POP, POP_B64_DECODING_FAILED);
+        break;
+    case DECODE_QP:
+        SnortEventqAdd(GID_POP, POP_QP_DECODING_FAILED);
+        break;
+    case DECODE_UU:
+        SnortEventqAdd(GID_POP, POP_UU_DECODING_FAILED);
+        break;
+
+    default:
+        break;
+    }
+}
+
+void PopMime::reset_state(void* ssn)
+{
+    POP_ResetState(ssn);
+}
+
+
+bool PopMime::is_end_of_data(void* session)
+{
+    return pop_is_data_end(session);
+}
+
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
@@ -741,18 +682,11 @@ Pop::~Pop()
 
 bool Pop::configure(SnortConfig* )
 {
-    config->decode_conf.file_depth = file_api->get_max_file_depth();
+    config->decode_conf.sync_all_depths();
 
-    if (config->decode_conf.file_depth > -1)
+    if (config->decode_conf.get_file_depth() > -1)
         config->log_config.log_filename = 1;
 
-    file_api->check_decode_config(&config->decode_conf);
-
-    if (file_api->is_decoding_enabled(&config->decode_conf) )
-    {
-        updateMaxDepth(config->decode_conf.file_depth,
-            &config->decode_conf.max_depth);
-    }
     return true;
 }
 
