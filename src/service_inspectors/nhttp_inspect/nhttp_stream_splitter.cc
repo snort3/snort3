@@ -20,13 +20,13 @@
 #include <assert.h>
 #include <sys/types.h>
 
+#include "file_api/file_flows.h"
 #include "nhttp_enum.h"
 #include "nhttp_test_manager.h"
 #include "nhttp_test_input.h"
 #include "nhttp_cutter.h"
 #include "nhttp_inspect.h"
 #include "nhttp_stream_splitter.h"
-#include "file_api/file_flows.h"
 
 using namespace NHttpEnums;
 
