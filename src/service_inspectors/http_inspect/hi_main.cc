@@ -774,7 +774,6 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                         /* mime parsing
                          * mime boundary should be processed before this
                          */
-                        uint8_t* end;
 
                         if (!hsd->mime_ssn)
                         {
@@ -783,7 +782,9 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                         }
 
                         hsd->mime_ssn->process_mime_data(p->flow, start,
-                            session->client.request.post_raw_size, 1, SNORT_FILE_POSITION_UNKNOWN);
+                            session->client.request.post_raw +
+                            session->client.request.post_raw_size - start, 1,
+                            SNORT_FILE_POSITION_UNKNOWN);
                     }
                     else
                     {
@@ -1167,7 +1168,7 @@ void FreeHttpSessionData(void* data)
         sfip_free(hsd->true_ip);
 
     if (hsd->mime_ssn)
-        delete(hsd->mime_ssn);
+        delete hsd->mime_ssn;
 
     if ( hsd->fd_state != 0 )
     {
