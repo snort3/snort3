@@ -383,6 +383,20 @@ static const ConvertMap enable_ttcp_drops_api =
 const ConvertMap* enable_ttcp_drops_map = &enable_ttcp_drops_api;
 
 /*************************************************
+ ***********  nolog***********
+ *************************************************/
+
+static const std::string nolog = "nolog";
+static const ConvertMap nolog_api =
+{
+    nolog,
+    deleted_ctor<& nolog>,
+};
+
+const ConvertMap* nolog_map = &nolog_api;
+
+
+/*************************************************
  **************  flexresp2_attempts  *************
  *************************************************/
 

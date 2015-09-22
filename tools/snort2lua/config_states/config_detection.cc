@@ -55,7 +55,10 @@ bool Detection::convert(std::istringstream& data_stream)
             tmpval = false;
 
         else if (!keyword.compare("no_stream_inserts"))
-            tmpval = table_api.add_option("no_stream_inserts", true);
+        {
+            table_api.add_diff_option_comment("no_stream_inserts", "inspect_stream_inserts");
+            tmpval = table_api.add_option("inspect_stream_inserts", false);
+        }
 
         else if (!keyword.compare("debug"))
             tmpval = table_api.add_option("debug", true);

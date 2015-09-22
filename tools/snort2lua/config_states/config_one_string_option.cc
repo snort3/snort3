@@ -184,7 +184,7 @@ const ConvertMap* daq_mode_map = &daq_mode_api;
  *************************************************/
 
 static const std::string daq_var = "daq_var";
-static const std::string var = "var";
+static const std::string var = "vars";
 static const ConvertMap daq_var_api =
 {
     daq_var,

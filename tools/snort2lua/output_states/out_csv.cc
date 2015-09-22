@@ -56,6 +56,7 @@ bool AlertCsv::convert(std::istringstream& data_stream)
     if (!(data_stream >> keyword))
         return retval;
 
+    table_api.add_diff_option_comment("csv", "fields");
     // parsing the format list.
     std::istringstream format(keyword);
     while (std::getline(format, val, ','))
@@ -66,22 +67,19 @@ bool AlertCsv::convert(std::istringstream& data_stream)
             table_api.add_deleted_comment("default");
 
         else if (!val.compare("timestamp"))
-            tmpval = table_api.add_list("csv", "timestamp");
+            tmpval = table_api.add_list("fields", "timestamp");
 
         else if (!val.compare("msg"))
-            tmpval = table_api.add_list("csv", "msg");
+            tmpval = table_api.add_list("fields", "msg");
 
         else if (!val.compare("proto"))
-            tmpval = table_api.add_list("csv", "proto");
+            tmpval = table_api.add_list("fields", "proto");
 
         else if (!val.compare("ttl"))
-            tmpval = table_api.add_list("csv", "ttl");
-
-        else if (!val.compare("id"))
-            tmpval = table_api.add_list("csv", "id");
+            tmpval = table_api.add_list("fields", "ttl");
 
         else if (!val.compare("tos"))
-            tmpval = table_api.add_list("csv", "tos");
+            tmpval = table_api.add_list("fields", "tos");
 
         else if (!val.compare("trheader"))
             tmpval = table_api.add_deleted_comment("trheader");
@@ -89,117 +87,123 @@ bool AlertCsv::convert(std::istringstream& data_stream)
         else if (!val.compare("dst"))
         {
             table_api.add_diff_option_comment("dst", "dst_addr");
-            tmpval = table_api.add_list("csv", "dst_addr");
+            tmpval = table_api.add_list("fields", "dst_addr");
         }
         else if (!val.compare("src"))
         {
             table_api.add_diff_option_comment("src", "src_addr");
-            tmpval = table_api.add_list("csv", "src_addr");
+            tmpval = table_api.add_list("fields", "src_addr");
         }
         else if (!val.compare("sig_generator"))
         {
             table_api.add_diff_option_comment("sig_generator", "gid");
-            tmpval = table_api.add_list("csv", "gid");
+            tmpval = table_api.add_list("fields", "gid");
         }
         else if (!val.compare("sig_id"))
         {
             table_api.add_diff_option_comment("sig_id", "sid");
-            tmpval = table_api.add_list("csv", "sid");
+            tmpval = table_api.add_list("fields", "sid");
         }
         else if (!val.compare("sig_rev"))
         {
             table_api.add_diff_option_comment("sig_rev", "rev");
-            tmpval = table_api.add_list("csv", "rev");
+            tmpval = table_api.add_list("fields", "rev");
         }
         else if (!val.compare("srcport"))
         {
             table_api.add_diff_option_comment("srcport", "src_port");
-            tmpval = table_api.add_list("csv", "src_port");
+            tmpval = table_api.add_list("fields", "src_port");
         }
         else if (!val.compare("dstport"))
         {
             table_api.add_diff_option_comment("dstport", "dst_port");
-            tmpval = table_api.add_list("csv", "dst_port");
+            tmpval = table_api.add_list("fields", "dst_port");
         }
         else if (!val.compare("ethsrc"))
         {
             table_api.add_diff_option_comment("ethsrc", "eth_src");
-            tmpval = table_api.add_list("csv", "eth_src");
+            tmpval = table_api.add_list("fields", "eth_src");
         }
         else if (!val.compare("ethdst"))
         {
             table_api.add_diff_option_comment("ethdst", "eth_dst");
-            tmpval = table_api.add_list("csv", "eth_dst");
+            tmpval = table_api.add_list("fields", "eth_dst");
         }
         else if (!val.compare("ethlen"))
         {
             table_api.add_diff_option_comment("ethlen", "eth_len");
-            tmpval = table_api.add_list("csv", "eth_len");
+            tmpval = table_api.add_list("fields", "eth_len");
         }
         else if (!val.compare("ethtype"))
         {
             table_api.add_diff_option_comment("ethtype", "eth_type");
-            tmpval = table_api.add_list("csv", "eth_type");
+            tmpval = table_api.add_list("fields", "eth_type");
         }
         else if (!val.compare("tcpflags"))
         {
             table_api.add_diff_option_comment("tcpflags", "tcp_flags");
-            tmpval = table_api.add_list("csv", "tcp_flags");
+            tmpval = table_api.add_list("fields", "tcp_flags");
         }
         else if (!val.compare("tcpseq"))
         {
             table_api.add_diff_option_comment("tcpseq", "tcp_seq");
-            tmpval = table_api.add_list("csv", "tcp_seq");
+            tmpval = table_api.add_list("fields", "tcp_seq");
         }
         else if (!val.compare("tcpack"))
         {
             table_api.add_diff_option_comment("tcpack", "tcp_ack");
-            tmpval = table_api.add_list("csv", "tcp_ack");
+            tmpval = table_api.add_list("fields", "tcp_ack");
         }
         else if (!val.compare("tcplen"))
         {
             table_api.add_diff_option_comment("tcplen", "tcp_len");
-            tmpval = table_api.add_list("csv", "tcp_len");
+            tmpval = table_api.add_list("fields", "tcp_len");
         }
         else if (!val.compare("tcpwindow"))
         {
             table_api.add_diff_option_comment("tcpwindow", "tcp_win");
-            tmpval = table_api.add_list("csv", "tcp_win");
+            tmpval = table_api.add_list("fields", "tcp_win");
         }
         else if (!val.compare("dgmlen"))
         {
             table_api.add_diff_option_comment("dgmlen", "dgm_len");
-            tmpval = table_api.add_list("csv", "dgm_len");
+            tmpval = table_api.add_list("fields", "dgm_len");
+        }
+
+        else if (!val.compare("id"))
+        {
+            table_api.add_diff_option_comment("id", "ip_id");
+            tmpval = table_api.add_list("fields", "ip_id");
         }
         else if (!val.compare("iplen"))
         {
             table_api.add_diff_option_comment("iplen", "ip_len");
-            tmpval = table_api.add_list("csv", "ip_len");
+            tmpval = table_api.add_list("fields", "ip_len");
         }
         else if (!val.compare("icmptype"))
         {
             table_api.add_diff_option_comment("icmptype", "icmp_type");
-            tmpval = table_api.add_list("csv", "icmp_type");
+            tmpval = table_api.add_list("fields", "icmp_type");
         }
         else if (!val.compare("icmpcode"))
         {
             table_api.add_diff_option_comment("icmpcode", "icmp_code");
-            tmpval = table_api.add_list("csv", "icmp_code");
+            tmpval = table_api.add_list("fields", "icmp_code");
         }
         else if (!val.compare("icmpid"))
         {
             table_api.add_diff_option_comment("icmpid", "icmp_id");
-            tmpval = table_api.add_list("csv", "icmp_id");
+            tmpval = table_api.add_list("fields", "icmp_id");
         }
         else if (!val.compare("icmpseq"))
         {
             table_api.add_diff_option_comment("icmpseq", "icmp_seq");
-            tmpval = table_api.add_list("csv", "icmp_seq");
+            tmpval = table_api.add_list("fields", "icmp_seq");
         }
         else if (!val.compare("udplength"))
         {
             table_api.add_diff_option_comment("udplength", "udp_len");
-            tmpval = table_api.add_list("csv", "udp_len");
+            tmpval = table_api.add_list("fields", "udp_len");
         }
         else
         {
