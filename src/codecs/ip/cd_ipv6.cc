@@ -194,7 +194,9 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     IPV6MiscTests(snort, codec);
     CheckIPV6Multicast(ip6h, codec);
-    CheckBadNextHeader(ip6h, codec);
+
+    if (ip6h->is_bad_next_header())
+        codec_event(codec, DECODE_IPV6_BAD_NEXT_HEADER);
 
     const_cast<uint32_t&>(raw.len) = ip6h->len() + ip::IP6_HEADER_LEN;
     snort.set_pkt_type(PktType::IP);
@@ -467,30 +469,6 @@ void Ipv6Codec::CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData
     {
         /* Addresses not listed above are reserved. */
         codec_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
-    }
-}
-
-void Ipv6Codec::CheckBadNextHeader(const ip::IP6Hdr* const ip6h, const CodecData& codec)
-{
-    switch (ip6h->next()) {
-        case IPPROTO_NONE:
-        case IPPROTO_TCP:
-        case IPPROTO_UDP:
-        case IPPROTO_ICMPV6:
-        case IPPROTO_HOPOPTS:
-        case IPPROTO_DSTOPTS:
-        case IPPROTO_ROUTING:
-        case IPPROTO_FRAGMENT:
-        case IPPROTO_AH:
-        case IPPROTO_GRE:
-        case IPPROTO_IPIP:
-        case IPPROTO_IPV6:
-        case IPPROTO_ESP:
-            return;
-
-        default:
-            codec_event(codec, DECODE_IPV6_BAD_NEXT_HEADER);
-            break;
     }
 }
 

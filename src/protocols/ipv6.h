@@ -143,6 +143,25 @@ struct IP6Hdr
     inline bool is_dst_multicast_scope_global() const
     { return (static_cast<MulticastScope>(ip6_dst.u6_addr8[1]) == MulticastScope::GLOBAL); }
 
+    inline bool is_bad_next_header() const
+    {
+        switch (ip6_next)
+        {
+            case IPPROTO_NONE:
+            case IPPROTO_TCP:
+            case IPPROTO_UDP:
+            case IPPROTO_ICMPV6:
+            case IPPROTO_HOPOPTS:
+            case IPPROTO_DSTOPTS:
+            case IPPROTO_ROUTING:
+            case IPPROTO_FRAGMENT:
+                return false;
+            default:
+                break;
+        }
+        return true;
+    }
+
     /*  setters  */
     inline void set_len(uint16_t new_len)
     { ip6_payload_len = htons(new_len); }
@@ -157,6 +176,7 @@ struct IP6Hdr
 
     inline uint16_t raw_len() const
     { return ip6_payload_len; }
+
 };
 
 enum class HopByHopOptions : uint8_t
