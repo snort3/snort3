@@ -24,7 +24,6 @@
 #include "main/snort_types.h"
 
 double calc_percent(double amt, double total);
-double calc_percent64(uint64_t amt, uint64_t total);
 
 #endif
 

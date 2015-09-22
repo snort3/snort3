@@ -36,3 +36,7 @@ libutil_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 
+if BUILD_UNIT_TESTS
+SUBDIRS = test
+endif
+

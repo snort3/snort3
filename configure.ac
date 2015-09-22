@@ -252,25 +252,25 @@ AC_CHECK_LIB(dl, dlsym, DLLIB="yes", DLLIB="no")
 AC_ARG_VAR(SIGNAL_SNORT_RELOAD, set the SIGNAL_SNORT_RELOAD value)
 
 if test "x$SIGNAL_SNORT_RELOAD" != "x" ; then
-   AC_DEFINE_UNQUOTED([SIGNAL_SNORT_RELOAD], [$SIGNAL_SNORT_RELOAD], [Set by user])
+    AC_DEFINE_UNQUOTED([SIGNAL_SNORT_RELOAD], [$SIGNAL_SNORT_RELOAD], [Set by user])
 fi
 
 AC_ARG_VAR(SIGNAL_SNORT_DUMP_STATS, set the SIGNAL_SNORT_DUMP_STATS value)
 
 if test "x$SIGNAL_SNORT_DUMP_STATS" != "x" ; then
-   AC_DEFINE_UNQUOTED([SIGNAL_SNORT_DUMP_STATS], [$SIGNAL_SNORT_DUMP_STATS], [Set by user])
+    AC_DEFINE_UNQUOTED([SIGNAL_SNORT_DUMP_STATS], [$SIGNAL_SNORT_DUMP_STATS], [Set by user])
 fi
 
 AC_ARG_VAR(SIGNAL_SNORT_ROTATE_STATS, set the SIGNAL_SNORT_ROTATE_STATS value)
 
 if test "x$SIGNAL_SNORT_ROTATE_STATS" != "x" ; then
-   AC_DEFINE_UNQUOTED([SIGNAL_SNORT_ROTATE_STATS], [$SIGNAL_SNORT_ROTATE_STATS], [Set by user])
+    AC_DEFINE_UNQUOTED([SIGNAL_SNORT_ROTATE_STATS], [$SIGNAL_SNORT_ROTATE_STATS], [Set by user])
 fi
 
 AC_ARG_VAR(SIGNAL_SNORT_READ_ATTR_TBL, set the SIGNAL_SNORT_READ_ATTR_TBL value)
 
 if test "x$SIGNAL_SNORT_READ_ATTR_TBL" != "x" ; then
-   AC_DEFINE_UNQUOTED([SIGNAL_SNORT_READ_ATTR_TBL], [$SIGNAL_SNORT_READ_ATTR_TBL], [Set by user])
+    AC_DEFINE_UNQUOTED([SIGNAL_SNORT_READ_ATTR_TBL], [$SIGNAL_SNORT_READ_ATTR_TBL], [Set by user])
 fi
 
 #--------------------------------------------------------------------------
@@ -471,6 +471,13 @@ AC_ARG_ENABLE(unit_tests,
     enable_unit_tests="$enableval", enable_unit_tests="no")
 
 if test "x$enable_unit_tests" = "xyes"; then
+    PKG_CHECK_EXISTS([cpputest], [ have_cpputest_pc="yes" ], [ have_cpputest_pc="no" ])
+
+    if test "${have_cpputest_pc}" = "yes" ; then
+        CPPFLAGS="${CPPFLAGS} `${PKG_CONFIG} --cflags cpputest`"
+        LDFLAGS="${LDFLAGS} `${PKG_CONFIG} --libs cpputest`"
+    fi
+
     AC_DEFINE(UNIT_TEST, [1], [enable unit tests in build])
 fi
 
@@ -499,7 +506,7 @@ AC_ARG_WITH(pcap_includes,
     [with_libpcap_includes="$withval"],[with_libpcap_includes="no"])
 
 if test "x$with_libpcap_includes" != "xno"; then
-   CPPFLAGS="${CPPFLAGS} -I${with_libpcap_includes}"
+    CPPFLAGS="${CPPFLAGS} -I${with_libpcap_includes}"
 fi
 
 AC_ARG_WITH(pcap_libraries,
@@ -507,7 +514,7 @@ AC_ARG_WITH(pcap_libraries,
     [with_libpcap_libraries="$withval"],[with_libpcap_libraries="no"])
 
 if test "x$with_libpcap_libraries" != "xno"; then
-   LDFLAGS="${LDFLAGS} -L${with_libpcap_libraries}"
+    LDFLAGS="${LDFLAGS} -L${with_libpcap_libraries}"
 fi
 
 LPCAP=""
@@ -600,7 +607,7 @@ AC_ARG_WITH(pcre_libraries,
     [with_libpcre_libraries="$withval"],[with_libpcre_libraries="no"])
 
 if test "x$with_libpcre_libraries" != "xno"; then
-    LDFLAGS="${LDFLAGS}  -L${with_libpcre_libraries}"
+    LDFLAGS="${LDFLAGS} -L${with_libpcre_libraries}"
 else
     LDFLAGS="${LDFLAGS} `pcre-config --libs`"
 fi
@@ -705,7 +712,7 @@ AC_ARG_WITH(daq_includes,
     [with_daq_includes="$withval"],[with_daq_includes="no"])
 
 if test "x$with_daq_includes" != "xno"; then
-   CPPFLAGS="${CPPFLAGS} -I${with_daq_includes}"
+    CPPFLAGS="${CPPFLAGS} -I${with_daq_includes}"
 fi
 
 AC_ARG_WITH(daq_libraries,
@@ -713,7 +720,7 @@ AC_ARG_WITH(daq_libraries,
     [with_daq_libraries="$withval"],[with_daq_libraries="no"])
 
 if test "x$with_daq_libraries" != "xno"; then
-   LDFLAGS="${LDFLAGS} -L${with_daq_libraries}"
+    LDFLAGS="${LDFLAGS} -L${with_daq_libraries}"
 fi
 
 AC_ARG_ENABLE(static_daq,
@@ -768,8 +775,8 @@ AC_RUN_IFELSE(
 #include <daq.h>
 ]],
 [[
-   DAQ_PktHdr_t hdr;
-   hdr.address_space_id = 0;
+    DAQ_PktHdr_t hdr;
+    hdr.address_space_id = 0;
 ]])],
 [have_daq_address_space_id="yes"],
 [have_daq_address_space_id="no"])
@@ -788,8 +795,8 @@ AC_RUN_IFELSE(
 #include <daq.h>
 ]],
 [[
-   DAQ_PktHdr_t hdr;
-   hdr.flow_id = 0;
+    DAQ_PktHdr_t hdr;
+    hdr.flow_id = 0;
 ]])],
 [have_daq_flow_id="yes"],
 [have_daq_flow_id="no"])
@@ -1014,6 +1021,7 @@ src/target_based/Makefile \
 src/test/Makefile \
 src/time/Makefile \
 src/utils/Makefile \
+src/utils/test/Makefile \
 lua/Makefile \
 doc/Makefile \
 daqs/Makefile \
