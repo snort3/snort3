@@ -46,33 +46,33 @@ else (BUILD_EXTRA_PLUGINS)
 
     include(CheckCXXCompilerFlag)
     set (CMAKE_REQUIRED_FLAGS "-fvisibility=hidden")
-    check_cxx_compiler_flag ("" HAVE_VISIBILITY)
+    check_cxx_compiler_flag (${CMAKE_REQUIRED_FLAGS} HAVE_VISIBILITY)
     if (HAVE_VISIBILITY)
-        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_VISIBILITY")
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_REQUIRED_FLAGS}")
     endif ()
     unset(CMAKE_REQUIRED_FLAGS)
 
     # Some shared library flags for the two platforms which I am using
     set(CMAKE_REQUIRED_FLAGS "-Wl,-undefined,dynamic_lookup")
-    check_cxx_compiler_flag("" HAVE_DYNAMIC_LOOKUP)
+    check_cxx_compiler_flag(${CMAKE_REQUIRED_FLAGS} HAVE_DYNAMIC_LOOKUP)
     if(HAVE_DYNAMIC_LOOKUP)
-        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-undefined,dynamic_lookup")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_REQUIRED_FLAGS}")
     endif()
     unset (CMAKE_REQUIRED_FLAGS)
 
 
     set (CMAKE_REQUIRED_FLAGS "-Wl,-export-dynamic")
-    check_cxx_compiler_flag ("" HAVE_EXPORT_DYNAMIC)
+    check_cxx_compiler_flag (${CMAKE_REQUIRED_FLAGS} HAVE_EXPORT_DYNAMIC)
     if (HAVE_EXPORT_DYNAMIC)
-        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-export-dynamic")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_REQUIRED_FLAGS}")
     endif ()
     unset(CMAKE_REQUIRED_FLAGS)
 
 
     set (CMAKE_REQUIRED_FLAGS "-Wl,-shared")
-    check_cxx_compiler_flag ("" HAVE_SHARED)
+    check_cxx_compiler_flag (${CMAKE_REQUIRED_FLAGS} HAVE_SHARED)
     if (HAVE_SHARED)
-        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-shared")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_REQUIRED_FLAGS}")
     endif ()
     unset(CMAKE_REQUIRED_FLAGS)
 
