@@ -64,10 +64,12 @@ public:
     void set_data_state(int);
     MailLogState* get_log_state();
 
+protected:
+    MimeDecode* decode_state = NULL;
+
 private:
     int data_state = STATE_DATA_INIT;
     int state_flags = 0;
-    MimeDecode* decode_state = NULL;
     MimeDataPafInfo mime_boundary;
     DecodeConfig* decode_conf = NULL;
     MailLogConfig* log_config = NULL;
@@ -75,17 +77,11 @@ private:
 
     // SMTP, IMAP, POP might have different implementation for this
     void* config = NULL;
-    virtual int handle_header_line(void* conf, const uint8_t* ptr, const uint8_t* eol,
-        int max_header_len)
-    { return 0; }
-    virtual int normalize_data(void* conf, const uint8_t* ptr, const uint8_t* data_end)
-    { return 0; }
-    virtual void decode_alert(MimeDecode* decode_state)
-    { }
-    virtual void reset_state(void* ssn)
-    { }
-    virtual bool is_end_of_data(void* ssn)
-    { return false; }
+    virtual int handle_header_line(const uint8_t*, const uint8_t*, int) { return 0; }
+    virtual int normalize_data(const uint8_t* , const uint8_t* ) { return 0; }
+    virtual void decode_alert() {}
+    virtual void reset_state(Flow* ) {}
+    virtual bool is_end_of_data(Flow* ) { return false; }
 
     void reset_mime_state();
     void setup_decode(const char* data, int size, bool cnt_xf);

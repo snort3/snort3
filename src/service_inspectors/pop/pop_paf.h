@@ -80,7 +80,7 @@ public:
 };
 
 // Function: Callback to check if POP data end is reached
-bool pop_is_data_end(void* ssn);
+bool pop_is_data_end(Flow* ssn);
 
 #endif
 

@@ -150,9 +150,9 @@ class ImapMime : public MimeSession
 {
     using MimeSession::MimeSession;
 private:
-    void decode_alert(MimeDecode* decode_state) override;
-    void reset_state(void* ssn) override;
-    bool is_end_of_data(void* ssn) override;
+    void decode_alert() override;
+    void reset_state(Flow* ssn) override;
+    bool is_end_of_data(Flow* ssn) override;
 };
 
 struct IMAPData

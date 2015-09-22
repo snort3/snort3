@@ -94,7 +94,7 @@ void NHttpMsgBody::do_file_processing()
         FileFlows* file_flows = FileFlows::get_file_flows(flow);
 
         if (file_flows->file_process(file_data.start, fp_length,
-            file_position, false, false))
+            file_position, false))
         {
             session_data->file_depth_remaining[source_id] -= fp_length;
 

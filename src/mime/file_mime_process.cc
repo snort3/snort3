@@ -316,7 +316,7 @@ const uint8_t* MimeSession::process_mime_header(const uint8_t* ptr,
             state_flags &= ~MIME_FLAG_DATA_HEADER_CONT;
         }
 
-        int ret = handle_header_line(config, ptr, eol, max_header_name_len);
+        int ret = handle_header_line(ptr, eol, max_header_name_len);
         if (ret < 0)
             return NULL;
         else if (ret > 0)
@@ -467,7 +467,7 @@ const uint8_t* MimeSession::process_mime_body(const uint8_t* ptr,
         {
             if (decode_state->decode_data(attach_start, attach_end) == DECODE_FAIL )
             {
-                decode_alert(decode_state);
+                decode_alert();
             }
         }
     }
@@ -514,7 +514,7 @@ const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* sta
             {
                 /* if we're normalizing and not ignoring data copy data end marker
                  * and dot to alt buffer */
-                if (normalize_data(config, start, end) < 0)
+                if (normalize_data(start, end) < 0)
                     return NULL;
 
                 reset_mime_state();
@@ -561,7 +561,7 @@ const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* sta
             return NULL;
     }
 
-    if (normalize_data(config, start, end) < 0)
+    if (normalize_data(start, end) < 0)
         return NULL;
     /* now we shouldn't have to worry about copying any data to the alt buffer
      *      * only mime headers if we find them and only if we're ignoring data */
@@ -599,7 +599,7 @@ const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* sta
 
         /*Process file type/file signature*/
         FileFlows* file_flows = FileFlows::get_file_flows(flow);
-        if (file_flows && file_flows->file_process(buffer, buf_size, position, upload, false)
+        if (file_flows && file_flows->file_process(buffer, buf_size, position, upload)
             && (isFileStart(position)) && log_state)
         {
             log_state->set_file_name_from_log(flow);

@@ -147,12 +147,12 @@ public:
     using MimeSession::MimeSession;
     SMTP_PROTO_CONF* config;
 private:
-    int handle_header_line(void* conf, const uint8_t* ptr, const uint8_t* eol,
+    int handle_header_line(const uint8_t* ptr, const uint8_t* eol,
         int max_header_len) override;
-    int normalize_data(void* conf, const uint8_t* ptr, const uint8_t* data_end) override;
-    void decode_alert(MimeDecode* decode_state) override;
-    void reset_state(void* ssn) override;
-    bool is_end_of_data(void* ssn) override;
+    int normalize_data(const uint8_t* ptr, const uint8_t* data_end) override;
+    void decode_alert() override;
+    void reset_state(Flow* ssn) override;
+    bool is_end_of_data(Flow* ssn) override;
 };
 
 struct SMTPData

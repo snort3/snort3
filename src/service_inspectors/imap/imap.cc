@@ -128,8 +128,6 @@ IMAPSearch imap_cmd_search[CMD_LAST];
 THREAD_LOCAL const IMAPSearch* imap_current_search = NULL;
 THREAD_LOCAL IMAPSearchInfo imap_search_info;
 
-static void POP_ResetState(void*);
-
 ImapFlowData::ImapFlowData() : FlowData(flow_id)
 { memset(&session, 0, sizeof(session)); }
 
@@ -211,9 +209,9 @@ void IMAP_SearchFree(void)
         delete imap_resp_search_mpse;
 }
 
-static void IMAP_ResetState(void* ssn)
+static void IMAP_ResetState(Flow* ssn)
 {
-    IMAPData* imap_ssn = get_session_data((Flow*)ssn);
+    IMAPData* imap_ssn = get_session_data(ssn);
     imap_ssn->state = STATE_COMMAND;
     imap_ssn->state_flags = 0;
     imap_ssn->body_read = imap_ssn->body_len = 0;
@@ -684,9 +682,8 @@ static void snort_imap(IMAP_PROTO_CONF* config, Packet* p)
     }
 }
 
-void ImapMime::decode_alert(MimeDecode* ds)
+void ImapMime::decode_alert()
 {
-    MimeDecode* decode_state = (MimeDecode*)ds;
     switch ( decode_state->get_decode_type() )
     {
     case DECODE_B64:
@@ -704,13 +701,13 @@ void ImapMime::decode_alert(MimeDecode* ds)
     }
 }
 
-void ImapMime::reset_state(void* ssn)
+void ImapMime::reset_state(Flow* ssn)
 {
     IMAP_ResetState(ssn);
 }
 
 
-bool ImapMime::is_end_of_data(void* session)
+bool ImapMime::is_end_of_data(Flow* session)
 {
     return imap_is_data_end(session);
 }

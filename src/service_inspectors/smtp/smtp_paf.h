@@ -78,6 +78,6 @@ public:
 };
 
 // Function: Check if IMAP data end is reached
-bool smtp_is_data_end(void* ssn);
+bool smtp_is_data_end(Flow* ssn);
 
 #endif

@@ -81,7 +81,7 @@ int FileSession::process(Packet* p)
     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
 
     if (file_flows)
-        file_flows->file_process((uint8_t*)p->data, p->dsize, position(p), c->upload, false);
+        file_flows->file_process((uint8_t*)p->data, p->dsize, position(p), c->upload);
     set_file_data((uint8_t*)p->data, p->dsize);
 
     MODULE_PROFILE_END(file_ssn_stats);

@@ -666,7 +666,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                 {
                     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
                     file_flows->file_process((uint8_t*)p->data, p->dsize,
-                        getFilePoistion(p), true, false);
+                        getFilePoistion(p), true);
                 }
             }
             return iRet;
@@ -792,7 +792,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                         if (file_flows && file_flows->file_process(
                             (uint8_t*)session->client.request.post_raw,
                             (uint16_t)session->client.request.post_raw_size,
-                            getFilePoistion(p), true, false))
+                            getFilePoistion(p), true))
                         {
                             setFileName(p);
                         }
@@ -828,8 +828,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                 {
                     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
                     file_flows->file_process((uint8_t*)p->data, p->dsize,
-                        getFilePoistion(p),
-                        true, false);
+                        getFilePoistion(p), true);
                 }
             }
 
@@ -1081,7 +1080,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                     && file_flows &&  file_flows->file_process(
                     (uint8_t*)session->server.response.body,
                     (uint16_t)session->server.response.body_size,
-                    getFilePoistion(p), false, false))
+                    getFilePoistion(p), false))
                 {
                     setFileName(p);
                 }

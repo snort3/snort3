@@ -35,7 +35,6 @@ void QPDecode::reset_decode_state()
 DecodeResult QPDecode::decode_data(const uint8_t* start, const uint8_t* end)
 {
     uint32_t act_encode_size = 0, act_decode_size = 0, bytes_read = 0;
-    uint32_t i = 0;
 
     if (!buffer->check_restore_buffer())
     {

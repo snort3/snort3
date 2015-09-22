@@ -161,8 +161,7 @@ THREAD_LOCAL const SMTPSearch* smtp_current_search = NULL;
 THREAD_LOCAL SMTPSearchInfo smtp_search_info;
 
 static void snort_smtp(SMTP_PROTO_CONF* GlobalConf, Packet* p);
-static void SMTP_ResetState(void*);
-void SMTP_DecodeAlert(void* ds);
+static void SMTP_ResetState(Flow*);
 
 SmtpFlowData::SmtpFlowData() : FlowData(flow_id)
 { memset(&session, 0, sizeof(session)); }
@@ -487,9 +486,9 @@ void SMTP_PrintConfig(SMTP_PROTO_CONF *config)
     }
 }
 
-static void SMTP_ResetState(void* ssn)
+static void SMTP_ResetState(Flow* ssn)
 {
-    SMTPData* smtp_ssn = get_session_data((Flow*)ssn);
+    SMTPData* smtp_ssn = get_session_data(ssn);
     smtp_ssn->state = STATE_COMMAND;
     smtp_ssn->state_flags = 0;
 }
@@ -1379,7 +1378,7 @@ static void SMTP_RegXtraDataFuncs(SMTP_PROTO_CONF* config)
     config->xtra_ehdrs_id = stream.reg_xtra_data_cb(SMTP_GetEmailHdrs);
 }
 
-int SmtpMime::handle_header_line(void* conf, const uint8_t* ptr, const uint8_t* eol,
+int SmtpMime::handle_header_line(const uint8_t* ptr, const uint8_t* eol,
     int max_header_len)
 {
     int ret;
@@ -1418,7 +1417,7 @@ int SmtpMime::handle_header_line(void* conf, const uint8_t* ptr, const uint8_t* 
     return 0;
 }
 
-int SmtpMime::normalize_data(void* conf, const uint8_t* ptr, const uint8_t* data_end)
+int SmtpMime::normalize_data(const uint8_t* ptr, const uint8_t* data_end)
 {
     /* if we're ignoring data and not already normalizing, copy everything
      * up to here into alt buffer so detection engine doesn't have
@@ -1437,9 +1436,8 @@ int SmtpMime::normalize_data(void* conf, const uint8_t* ptr, const uint8_t* data
     return 0;
 }
 
-void SmtpMime::decode_alert(MimeDecode* ds)
+void SmtpMime::decode_alert()
 {
-    MimeDecode* decode_state = (MimeDecode*)ds;
     switch ( decode_state->get_decode_type() )
     {
     case DECODE_B64:
@@ -1457,13 +1455,13 @@ void SmtpMime::decode_alert(MimeDecode* ds)
     }
 }
 
-void SmtpMime::reset_state(void* ssn)
+void SmtpMime::reset_state(Flow* ssn)
 {
     SMTP_ResetState(ssn);
 }
 
 
-bool SmtpMime::is_end_of_data(void* session)
+bool SmtpMime::is_end_of_data(Flow* session)
 {
     return smtp_is_data_end(session);
 }
