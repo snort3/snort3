@@ -92,20 +92,9 @@ bool StreamTcp::parse_small_segments(std::istringstream& stream)
     table_api.close_table();
 
     if (!(stream >> ignore_ports))
+        table_api.add_deleted_comment("ignore_ports");
         return true;
 
-    // otherwise the next argument MUST be ignore_ports
-    if (ignore_ports.compare("ignore_ports"))
-        return false;
-
-    table_api.open_table("small_segments");
-    long long port;
-
-    // extracting into an int since thats what they should be!
-    while (stream >> port)
-        table_api.add_list("ignore_ports", std::to_string(port));
-
-    table_api.close_table();
 
     if (!stream.eof())
         return false;

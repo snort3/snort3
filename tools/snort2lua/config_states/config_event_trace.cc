@@ -52,7 +52,7 @@ bool EventTrace::convert(std::istringstream& data_stream)
         bool tmpval = true;
 
         if (!keyword.compare("file"))
-            tmpval = table_api.add_option("file", arg);
+            table_api.add_deleted_comment("file");
 
         else if (!keyword.compare("max_data"))
             tmpval = table_api.add_option("max_data", std::stoi(arg));

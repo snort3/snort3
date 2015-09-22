@@ -313,18 +313,6 @@ static const ConvertMap log_ipv6_extra_data_api =
 
 const ConvertMap* log_ipv6_extra_data_map = &log_ipv6_extra_data_api;
 
-/*************************************************
- ********************  nolog  ********************
- *************************************************/
-
-static const std::string nolog = "nolog";
-static const ConvertMap nolog_api =
-{
-    nolog,
-    config_true_no_opt_ctor<& nolog, & output>
-};
-
-const ConvertMap* nolog_map = &nolog_api;
 
 /*************************************************
  ********************  nopcre  *******************
