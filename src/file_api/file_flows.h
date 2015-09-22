@@ -50,7 +50,7 @@ public:
 
     // This is used when there is only one file per session
     bool file_process(const uint8_t* file_data, int data_size,
-        FilePosition position, bool upload, bool suspend_block_verdict);
+        FilePosition position, bool upload);
 
     // This is used for each file context. Support multiple files per session
     bool file_process(FileContext* context, const uint8_t* file_data, int data_size,

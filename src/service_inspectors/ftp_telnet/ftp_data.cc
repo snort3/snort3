@@ -78,7 +78,7 @@ static void FTPDataProcess(
         return;
 
     status = file_flows->file_process(file_data, data_length,
-        data_ssn->position, data_ssn->direction, false);
+        data_ssn->position, data_ssn->direction);
 
     /* Filename needs to be set AFTER the first call to file_process( ) */
     if (data_ssn->filename && !(data_ssn->packet_flags & FTPDATA_FLG_FILENAME_SET))

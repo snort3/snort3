@@ -83,7 +83,7 @@ THREAD_LOCAL const POPSearch* pop_current_search = NULL;
 THREAD_LOCAL POPSearchInfo pop_search_info;
 
 static void snort_pop(POP_PROTO_CONF* GlobalConf, Packet* p);
-static void POP_ResetState(void*);
+static void POP_ResetState(Flow*);
 
 PopFlowData::PopFlowData() : FlowData(flow_id)
 { memset(&session, 0, sizeof(session)); }
@@ -164,9 +164,9 @@ void POP_SearchFree(void)
         delete pop_resp_search_mpse;
 }
 
-static void POP_ResetState(void* ssn)
+static void POP_ResetState(Flow* ssn)
 {
-    POPData* pop_ssn = get_session_data((Flow*)ssn);
+    POPData* pop_ssn = get_session_data(ssn);
     pop_ssn->state = STATE_COMMAND;
     pop_ssn->prev_response = 0;
     pop_ssn->state_flags = 0;
@@ -617,9 +617,8 @@ static void snort_pop(POP_PROTO_CONF* config, Packet* p)
     }
 }
 
-void PopMime::decode_alert(MimeDecode* ds)
+void PopMime::decode_alert()
 {
-    MimeDecode* decode_state = (MimeDecode*)ds;
     switch ( decode_state->get_decode_type() )
     {
     case DECODE_B64:
@@ -637,13 +636,13 @@ void PopMime::decode_alert(MimeDecode* ds)
     }
 }
 
-void PopMime::reset_state(void* ssn)
+void PopMime::reset_state(Flow* ssn)
 {
     POP_ResetState(ssn);
 }
 
 
-bool PopMime::is_end_of_data(void* session)
+bool PopMime::is_end_of_data(Flow* session)
 {
     return pop_is_data_end(session);
 }

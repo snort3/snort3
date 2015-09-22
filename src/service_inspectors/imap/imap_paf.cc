@@ -521,9 +521,8 @@ StreamSplitter::Status ImapSplitter::scan(
     }
 }
 
-bool imap_is_data_end(void* session)
+bool imap_is_data_end(Flow* ssn)
 {
-    Flow* ssn = (Flow*)session;
     ImapPafData* s = get_state(ssn, true);
     return s->end_of_data;
 }

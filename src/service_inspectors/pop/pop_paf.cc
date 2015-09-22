@@ -410,9 +410,8 @@ StreamSplitter::Status PopSplitter::scan(
     }
 }
 
-bool pop_is_data_end(void* session)
+bool pop_is_data_end(Flow* ssn)
 {
-    Flow* ssn = (Flow*)session;
     PopPafData* s = get_state(ssn, false);
     return s->end_of_data;
 }

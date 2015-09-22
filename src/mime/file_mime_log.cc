@@ -195,14 +195,12 @@ int MailLogState::log_email_hdrs(const uint8_t* start, int length)
 {
     int log_avail = 0;
     uint8_t* log_buf;
-    uint32_t logged;
     int ret = 0;
 
     if (length <= 0)
         return -1;
 
     log_avail = log_depth - hdrs_logged;
-    logged = hdrs_logged;
     log_buf = (uint8_t*)emailHdrs;
 
     if (log_avail <= 0)

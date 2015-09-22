@@ -224,7 +224,7 @@ bool FileFlows::file_process(FileContext* context, const uint8_t* file_data,
  *    false: ignore this file
  */
 bool FileFlows::file_process(const uint8_t* file_data, int data_size,
-    FilePosition position, bool upload, bool suspend_block_verdict)
+    FilePosition position, bool upload)
 {
     FileContext* context;
     FileDirection direction = upload ? FILE_UPLOAD:FILE_DOWNLOAD;
