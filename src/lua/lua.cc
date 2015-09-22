@@ -48,11 +48,9 @@ ManageStack::ManageStack(lua_State* L, int extra) :
     state ( L )
 {
     top = lua_gettop(state);
+
     if ( extra > 0 )
-    {
-        bool result = lua_checkstack(state, extra);
-        assert(result);
-    }
+        assert(lua_checkstack(state, extra));
 }
 
 ManageStack::~ManageStack()
