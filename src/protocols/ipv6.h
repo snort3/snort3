@@ -143,7 +143,7 @@ struct IP6Hdr
     inline bool is_dst_multicast_scope_global() const
     { return (static_cast<MulticastScope>(ip6_dst.u6_addr8[1]) == MulticastScope::GLOBAL); }
 
-    inline bool is_bad_next_header() const
+    inline bool is_valid_next_header() const
     {
         switch (ip6_next)
         {
@@ -155,11 +155,11 @@ struct IP6Hdr
             case IPPROTO_DSTOPTS:
             case IPPROTO_ROUTING:
             case IPPROTO_FRAGMENT:
-                return false;
+                return true;
             default:
                 break;
         }
-        return true;
+        return false;
     }
 
     /*  setters  */
