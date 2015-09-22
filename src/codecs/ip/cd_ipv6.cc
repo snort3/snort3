@@ -106,6 +106,7 @@ private:
         const CodecData&);
     void IPV6MiscTests(const DecodeData&, const CodecData&);
     void CheckIPV6Multicast(const ip::IP6Hdr* const, const CodecData&);
+    void CheckBadNextHeader(const ip::IP6Hdr* const, const CodecData&);
     bool CheckTeredoPrefix(const ip::IP6Hdr* const hdr);
 };
 } // namespace
@@ -193,6 +194,9 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     IPV6MiscTests(snort, codec);
     CheckIPV6Multicast(ip6h, codec);
+
+    if (ip6h->is_valid_next_header() == false)
+        codec_event(codec, DECODE_IPV6_BAD_NEXT_HEADER);
 
     const_cast<uint32_t&>(raw.len) = ip6h->len() + ip::IP6_HEADER_LEN;
     snort.set_pkt_type(PktType::IP);
