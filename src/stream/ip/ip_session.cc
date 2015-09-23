@@ -117,6 +117,7 @@ IpSession::IpSession(Flow* flow) : Session(flow)
 void IpSession::clear()
 {
     IpSessionCleanup(flow, &tracker);
+    sfBase.iCurrentFrags--;
 }
 
 bool IpSession::setup(Packet*)
@@ -125,7 +126,9 @@ bool IpSession::setup(Packet*)
         "Stream IP session created!\n");
 
     memset(&tracker, 0, sizeof(tracker));
-    // FIXIT count ip session creates here
+    sfBase.iCurrentFrags++;
+    if (sfBase.iCurrentFrags > sfBase.iMaxFrags)
+        sfBase.iMaxFrags = sfBase.iCurrentFrags;
 
 #ifdef ENABLE_EXPECTED_IP
     if ( flow_con->expected_session(flow, p))

@@ -49,8 +49,10 @@ static const Parameter s_params[] =
     { "reset", Parameter::PT_BOOL, nullptr, "true",
       "reset (clear) statistics after each reporting interval" },
 
+#ifndef LINUX_SMP
     { "max", Parameter::PT_BOOL, nullptr, "false",
       "calculate theoretical maximum performance" },
+#endif
 
     { "console", Parameter::PT_BOOL, nullptr, "false",
       "output to console" },
