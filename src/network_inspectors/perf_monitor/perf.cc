@@ -551,6 +551,14 @@ void InitPerfStats(SFPERF* sfPerf)
 {
     perfmon_config = sfPerf;  // FIXIT-L sfPerf isn't propagated far enough
 
+#ifdef LINUX_SMP
+    memset(&sfBase, 0, offsetof(SFBASE, sfProcPidStats));
+#else
+    memset(&sfBase, 0, sizeof(SFBASE));
+#endif
+    memset(&sfFlow, 0, sizeof(SFFLOW));
+    memset(&sfEvent, 0, sizeof(SFEVENT));
+
     if (sfPerf->perf_flags & SFPERF_BASE)
         InitBaseStats(&sfBase);
 

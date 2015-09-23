@@ -1092,7 +1092,6 @@ static void delete_tracker(FragTracker* ft)
     }
 
     sfBase.iFragDeletes++;
-    sfBase.iCurrentFrags--;
 }
 
 static void release_tracker(FragTracker* ft)
@@ -2193,9 +2192,6 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
 
     ip_stats.nodes_created++;
     sfBase.iFragCreates++;
-    sfBase.iCurrentFrags++;
-    if (sfBase.iCurrentFrags > sfBase.iMaxFrags)
-        sfBase.iMaxFrags = sfBase.iCurrentFrags;
 
     /* initialize the fragment list */
     ft->fraglist = NULL;

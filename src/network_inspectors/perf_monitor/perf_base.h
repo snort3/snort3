@@ -140,10 +140,6 @@ struct SFBASE
 
     uint64_t iPegs[PERF_COUNT_MAX][NORM_MODE_MAX];   // normalizer
 
-#ifdef LINUX_SMP
-    SFPROCPIDSTATS sfProcPidStats;
-#endif
-
     uint64_t iTotalUDPSessions;
     uint64_t iNewUDPSessions;
     uint64_t iDeletedUDPSessions;
@@ -174,6 +170,10 @@ struct SFBASE
     uint64_t frag_mem_in_use;
     uint64_t stream_mem_in_use;
     uint64_t total_iAlerts;
+
+#ifdef LINUX_SMP
+    SFPROCPIDSTATS sfProcPidStats;
+#endif
 };
 
 /* Common structure for time indication */
