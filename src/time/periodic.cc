@@ -23,103 +23,100 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include <list>
+
+#ifdef UNIT_TEST
+#include "test/catch.hpp"
+#endif
+
 #include "main/snort_types.h"
 #include "utils/util.h"
 
-typedef struct _PeriodicCheckFuncNode
+struct PeriodicCheckFuncNode
 {
+    PeriodicFunc func;
     void* arg;
-    uint16_t priority;
+
     uint32_t period;
     uint32_t time_left;
-    PeriodicFunc func;
-    struct _PeriodicCheckFuncNode* next;
-} PeriodicCheckFuncNode;
 
-static PeriodicCheckFuncNode* periodic_check_funcs;
+    uint16_t priority;
+};
+
+typedef std::list<PeriodicCheckFuncNode> PeriodicList;
+static PeriodicList periodic_list;
 
 void periodic_register(
     PeriodicFunc periodic_func, void* arg,
     uint16_t priority, uint32_t period)
 {
-    PeriodicCheckFuncNode** list= &periodic_check_funcs;
-    PeriodicCheckFuncNode* node;
+    PeriodicCheckFuncNode node;
 
-    if (list == NULL)
-        return;
+    node.func = periodic_func;
+    node.arg = arg;
+    node.period = period;
+    node.time_left = period;
+    node.priority = priority;
 
-    node = (PeriodicCheckFuncNode*)SnortAlloc(sizeof(PeriodicCheckFuncNode));
+    std::list<PeriodicCheckFuncNode>::iterator it = periodic_list.begin();
 
-    if (*list == NULL)
-    {
-        *list = node;
-    }
-    else
-    {
-        PeriodicCheckFuncNode* tmp = *list;
-        PeriodicCheckFuncNode* last = NULL;
+    while ( it != periodic_list.end() and it->priority < priority )
+        ++it;
 
-        do
-        {
-            /* Insert higher priority stuff first.  Lower priority
-             * number means higher priority */
-            if (priority < tmp->priority)
-                break;
-
-            last = tmp;
-            tmp = tmp->next;
-        }
-        while (tmp != NULL);
-
-        /* Priority higher than first item in list */
-        if (last == NULL)
-        {
-            node->next = tmp;
-            *list = node;
-        }
-        else
-        {
-            node->next = tmp;
-            last->next = node;
-        }
-    }
-
-    node->func = periodic_func;
-    node->arg = arg;
-    node->priority = priority;
-    node->period = period;
-    node->time_left = period;
+    // insert higher priority first
+    periodic_list.insert(it, node);
 }
 
 void periodic_release()
 {
-    PeriodicCheckFuncNode* head = periodic_check_funcs;
-
-    while (head != NULL)
-    {
-        PeriodicCheckFuncNode* tmp = head->next;
-        /* don't free sig->arg, that's free'd by the CleanExit func */
-        free(head);
-        head = tmp;
-    }
-    periodic_check_funcs = NULL;
+    periodic_list.clear();
 }
 
 void periodic_check()
 {
-    PeriodicCheckFuncNode* fn = periodic_check_funcs;
-
-    while ( fn )
+    for ( auto& it : periodic_list )
     {
-        if ( !fn->time_left )
+        if ( !it.time_left )
         {
-            fn->func(fn->arg);
-            fn->time_left = fn->period;
+            it.func(it.arg);
+            it.time_left = it.period;
         }
         else
-            fn->time_left--;
-
-        fn = fn->next;
+            it.time_left--;
     }
 }
+
+//--------------------------------------------------------------------------
+// tests
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+static void* s_arg = nullptr;
+
+static void test(void* pv)
+{ s_arg = pv; }
+
+TEST_CASE("periodic", "[periodic]")
+{
+    const char* arg1 = "arg1";
+    const char* arg2 = "arg2";
+
+    periodic_register(test, (void*)arg1, 1, 2);
+    periodic_register(test, (void*)arg2, 1, 1);
+
+    periodic_register(test, nullptr, 0, 3);
+    periodic_register(test, nullptr, 3, 4);
+
+    periodic_check();
+    CHECK(!s_arg);
+
+    periodic_check();
+    CHECK(s_arg == arg2);
+
+    periodic_check();
+    CHECK(s_arg == arg1);
+
+    periodic_release();
+}
+#endif
 

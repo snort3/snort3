@@ -16,63 +16,69 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-/**
- * @file   idle_processing.c
- * @author Ron Dempster <rdempster@sourcefire.com>
- * @date   Tue Jun 17 17:09:59 2003
- *
- * @brief  Allow functions to be registered to be called when packet
- *         processing is idle.
- *
- */
+
+// idle_processing.c author Ron Dempster <rdempster@sourcefire.com>
+//
+// Allow functions to be registered to be called when packet
+// processing is idle.
 
 #include "idle_processing.h"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdlib.h>
+#include <vector>
 
-#include "main/thread.h"
-#include "utils/util.h"
-#include "log/messages.h"
+#ifdef UNIT_TEST
+#include "test/catch.hpp"
+#endif
 
-typedef struct _IDLE_HANDLER_ELEMENT
+typedef std::vector<IdleHook> IdleList;
+static IdleList idle_list;
+
+void IdleProcessingRegisterHandler(IdleHook f)
 {
-    struct _IDLE_HANDLER_ELEMENT* next;
-    IdleProcessingHandler handler;
-} IdleHandlerElement;
-
-static IdleHandlerElement* idle_handlers = nullptr;
-
-int IdleProcessingRegisterHandler(IdleProcessingHandler func)
-{
-    IdleHandlerElement* e;
-
-    if ((e = (IdleHandlerElement*)calloc(1, sizeof(*e))) == NULL)
-    {
-        WarningMessage("%s\n", "Failed to allocate an idle handler element");
-        return -1;
-    }
-    e->handler = func;
-    e->next = idle_handlers;
-    idle_handlers = e;
-    return 0;
+    idle_list.push_back(f);
 }
 
 void IdleProcessingExecute(void)
 {
-    IdleHandlerElement* e;
-
-    for (e = idle_handlers; e; e = e->next)
-        e->handler();
+    for ( auto f : idle_list )
+        f();
 }
 
 void IdleProcessingCleanUp(void)
 {
-    IdleHandlerElement* e;
-
-    while ((e = idle_handlers))
-    {
-        idle_handlers = e->next;
-        free(e);
-    }
+    idle_list.clear();
 }
+
+//--------------------------------------------------------------------------
+// tests
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+static unsigned s_niph1 = 0;
+static unsigned s_niph2 = 0;
+
+static void iph1() { s_niph1++; }
+static void iph2() { s_niph2++; }
+
+TEST_CASE("idle callback", "[control]")
+{
+    IdleProcessingRegisterHandler(iph1);
+    IdleProcessingRegisterHandler(iph2);
+
+    IdleProcessingExecute();
+    CHECK(s_niph1 == 1);
+    CHECK(s_niph2 == 1);
+
+    IdleProcessingExecute();
+    CHECK(s_niph1 == 2);
+    CHECK(s_niph2 == 2);
+
+    IdleProcessingCleanUp();
+}
+#endif
 

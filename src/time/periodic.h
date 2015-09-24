@@ -24,8 +24,8 @@
 
 using PeriodicFunc = void (*)(void*);
 
-void periodic_register(
-    PeriodicFunc, void* arg, uint16_t priority, uint32_t period);
+// lower number is higher priority
+void periodic_register(PeriodicFunc, void* arg, uint16_t priority, uint32_t period);
 
 void periodic_check();
 void periodic_release();

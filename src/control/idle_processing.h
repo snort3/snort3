@@ -20,10 +20,10 @@
 #ifndef IDLE_PROCESSING_H
 #define IDLE_PROCESSING_H
 
-using IdleProcessingHandler = void (*)();
+using IdleHook = void (*)();
 
 // FIXIT-L: These should be static class methods
-int IdleProcessingRegisterHandler(IdleProcessingHandler);
+void IdleProcessingRegisterHandler(IdleHook);
 void IdleProcessingExecute(void);
 void IdleProcessingCleanUp(void);
 
