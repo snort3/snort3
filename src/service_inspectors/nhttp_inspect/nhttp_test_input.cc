@@ -31,20 +31,40 @@ NHttpTestInput::NHttpTestInput(const char* file_name)
         throw std::runtime_error("Cannot open test input file");
 }
 
-NHttpTestInput::~NHttpTestInput()
+void NHttpTestInput::reset()
 {
-    fclose(test_data_file);
+    flushed = false;
+    last_source_id = SRC_CLIENT;
+    just_flushed = true;
+    tcp_closed = false;
+    flush_octets = 0;
+    previous_offset = 0;
+    end_offset = 0;
+    close_pending = false;
+    close_notified = false;
+    need_break = false;
 }
 
 // Read from the test data file and present to StreamSplitter. In the process we may need to skip
 // comments, execute simple commands, and handle escape sequences. The best way to understand this
 // function is to read the comments at the top of the file of test cases.
-void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, bool& need_break)
+void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, uint64_t seq_num)
 {
-    need_break = false;
+    bool skip_to_break = false;
+    if (seq_num != curr_seq_num)
+    {
+        assert(source_id == SRC_CLIENT);
+        curr_seq_num = seq_num;
+        // If we have not yet found the break command we need to skim past everything and not
+        // return any data until we find it.
+        skip_to_break = !need_break;
+        reset();
+    }
+
     // Don't proceed if we have previously flushed data not reassembled yet.
     // Piggyback on traffic moving in the correct direction.
-    if (flushed || (source_id != last_source_id))
+    // Once a break is read we must wait for a new flow.
+    else if (flushed || (source_id != last_source_id) || need_break)
     {
         length = 0;
         return;
@@ -52,21 +72,22 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
 
     if (just_flushed)
     {
-        // StreamSplitter just flushed and it has all been sent by reassemble. There may or may not
-        // be leftover data from the last paragraph that was not flushed.
+        // Beginning of a new test or StreamSplitter just flushed and it has all been sent by
+        // reassemble(). There may or may not be leftover data from the last paragraph that was not
+        // flushed.
         just_flushed = false;
         data = msg_buf;
         // compute the leftover data
-        length = (flush_octets <= end_offset) ? (end_offset - flush_octets) : 0;
+        end_offset = (flush_octets <= end_offset) ? (end_offset - flush_octets) : 0;
         previous_offset = 0;
-        end_offset = length;
-        if (length > 0)
+        if (end_offset > 0)
         {
             // Must present unflushed leftovers to StreamSplitter again. If we don't take this
             // opportunity to left justify our data in the buffer we may "walk" to the right until
             // we run out of buffer space.
-            memmove(msg_buf, msg_buf+flush_octets, length);
+            memmove(msg_buf, msg_buf+flush_octets, end_offset);
             flush_octets = 0;
+            length = end_offset - previous_offset;
             return;
         }
         // If we reach here then StreamSplitter has already flushed all data read so far
@@ -75,7 +96,6 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
     else
     {
         // The data we gave StreamSplitter last time was not flushed
-        length = 0;
         previous_offset = end_offset;
         data = msg_buf + previous_offset;
     }
@@ -114,7 +134,7 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
             {
                 state = PARAGRAPH;
                 ending = false;
-                data[length++] = (uint8_t)new_char;
+                msg_buf[end_offset++] = (uint8_t)new_char;
             }
             break;
         case COMMENT:
@@ -127,13 +147,12 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
             if (new_char == '\n')
             {
                 state = WAITING;
-                // FIXIT-L should not change direction with unflushed data remaining from previous
-                // paragraph. At the minimum need to test for this and assert.
                 if ((command_length == strlen("request")) && !memcmp(command_value, "request",
                     strlen("request")))
                 {
+                    assert(end_offset == 0);
                     last_source_id = SRC_CLIENT;
-                    if (source_id != last_source_id)
+                    if (!skip_to_break)
                     {
                         length = 0;
                         return;
@@ -142,8 +161,9 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
                 else if ((command_length == strlen("response")) && !memcmp(command_value,
                     "response", strlen("response")))
                 {
+                    assert(end_offset == 0);
                     last_source_id = SRC_SERVER;
-                    if (source_id != last_source_id)
+                    if (!skip_to_break)
                     {
                         length = 0;
                         return;
@@ -152,10 +172,11 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
                 else if ((command_length == strlen("break")) && !memcmp(command_value, "break",
                     strlen("break")))
                 {
-                    // Data leftover from previous test? Trash it.
-                    previous_offset = 0;
-                    data = msg_buf;
-                    need_break = true;
+                    reset();
+                    if (!skip_to_break)
+                        need_break = true;
+                    length = 0;
+                    return;
                 }
                 else if ((command_length == strlen("tcpclose")) && !memcmp(command_value,
                     "tcpclose", strlen("tcpclose")))
@@ -177,10 +198,15 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
                     for (int k = 0; k < amount; k++)
                     {
                         // auto-fill ABCDEFGHIJABCD ...
-                        data[length++] = 'A' + k%10;
+                        msg_buf[end_offset++] = 'A' + k%10;
                     }
-                    end_offset = previous_offset + length;
-                    return;
+                    if (skip_to_break)
+                        end_offset = 0;
+                    else
+                    {
+                        length = end_offset - previous_offset;
+                        return;
+                    }
                 }
                 else if (command_length > 0)
                 {
@@ -202,7 +228,7 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
                     else
                     {
                         // Bad command in test file
-                        assert(0);
+                        assert(false);
                     }
                 }
             }
@@ -214,7 +240,7 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
                 }
                 else
                 {
-                    assert(0);
+                    assert(false);
                 }
             }
             break;
@@ -226,32 +252,41 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
             }
             else if (new_char == '\n')
             {
-                if (ending)
+                if (!ending)
                 {
-                    // Found the second consecutive blank line that ends the paragraph.
-                    end_offset = previous_offset + length;
+                    ending = true;
+                }
+                // Found the second consecutive blank line that ends the paragraph.
+                else if (skip_to_break)
+                {
+                    end_offset = 0;
+                    ending = false;
+                    state = WAITING;
+                }
+                else
+                {
+                    length = end_offset - previous_offset;
                     return;
                 }
-                ending = true;
             }
             else
             {
                 ending = false;
-                data[length++] = (uint8_t)new_char;
+                msg_buf[end_offset++] = (uint8_t)new_char;
             }
             break;
         case ESCAPE:
             switch (new_char)
             {
-            case 'n':  state = PARAGRAPH; data[length++] = '\n'; break;
-            case 'r':  state = PARAGRAPH; data[length++] = '\r'; break;
-            case 't':  state = PARAGRAPH; data[length++] = '\t'; break;
-            case '#':  state = PARAGRAPH; data[length++] = '#';  break;
-            case '@':  state = PARAGRAPH; data[length++] = '@';  break;
-            case '\\': state = PARAGRAPH; data[length++] = '\\'; break;
+            case 'n':  state = PARAGRAPH; msg_buf[end_offset++] = '\n'; break;
+            case 'r':  state = PARAGRAPH; msg_buf[end_offset++] = '\r'; break;
+            case 't':  state = PARAGRAPH; msg_buf[end_offset++] = '\t'; break;
+            case '#':  state = PARAGRAPH; msg_buf[end_offset++] = '#';  break;
+            case '@':  state = PARAGRAPH; msg_buf[end_offset++] = '@';  break;
+            case '\\': state = PARAGRAPH; msg_buf[end_offset++] = '\\'; break;
             case 'x':
             case 'X':  state = HEXVAL; hex_val = 0; num_digits = 0; break;
-            default:   assert(0); state = PARAGRAPH; break;
+            default:   assert(false); state = PARAGRAPH; break;
             }
             break;
         case HEXVAL:
@@ -262,19 +297,22 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, 
             else if ((new_char >= 'A') && (new_char <= 'F'))
                 hex_val = hex_val * 16 + 10 + (new_char - 'A');
             else
-                assert(0);
+                assert(false);
             if (++num_digits == 2)
             {
-                data[length++] = hex_val;
+                msg_buf[end_offset++] = hex_val;
                 state = PARAGRAPH;
             }
             break;
         }
         // Don't allow a buffer overrun.
-        assert(previous_offset + length < sizeof(msg_buf));
+        assert(end_offset < sizeof(msg_buf));
     }
     // End-of-file. Return everything we have so far.
-    end_offset = previous_offset + length;
+    if (skip_to_break)
+        end_offset = 0;
+    length = end_offset - previous_offset;
+    return;
 }
 
 void NHttpTestInput::flush(uint32_t num_octets)
@@ -282,12 +320,6 @@ void NHttpTestInput::flush(uint32_t num_octets)
     flush_octets = previous_offset + num_octets;
     assert(flush_octets <= MAX_OCTETS);
     flushed = true;
-}
-
-void NHttpTestInput::discard(uint32_t num_octets)
-{
-    flush_octets = previous_offset + num_octets;
-    just_flushed = true;
 }
 
 void NHttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId source_id,
@@ -309,7 +341,7 @@ void NHttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sou
     // 2. exactly equal - process data now and signal the close next time around
     // 3. more than whole buffer - signal the close now and truncate and send next time around
     // 4. there was no flush - signal the close now and send the leftovers next time around
-    if ((tcp_closed) && (flush_octets >= end_offset))
+    if (tcp_closed && (!flushed || (flush_octets >= end_offset)))
     {
         if (close_pending)
         {
@@ -323,8 +355,8 @@ void NHttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sou
         else if (!flushed)
         {
             // Failure to flush means scan() reached end of paragraph and returned PAF_SEARCH.
-            // Convert remaining data to flush and notify caller about close.
-            flush(end_offset - previous_offset);
+            // Notify caller about close and they will do a zero-length flush().
+            previous_offset = end_offset;
             tcp_close = true;
             close_notified = true;
         }

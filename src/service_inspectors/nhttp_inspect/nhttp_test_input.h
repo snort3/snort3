@@ -29,16 +29,20 @@ class NHttpTestInput
 {
 public:
     NHttpTestInput(const char* fileName);
-    ~NHttpTestInput();
-    void scan(uint8_t*& data, uint32_t& length, NHttpEnums::SourceId source_id, bool& need_break);
+    void scan(uint8_t*& data, uint32_t& length, NHttpEnums::SourceId source_id, uint64_t seq_num);
     void flush(uint32_t num_octets);
-    void discard(uint32_t num_octets);
     void reassemble(uint8_t** buffer, unsigned& length, NHttpEnums::SourceId source_id,
         bool& tcp_close);
 
 private:
     FILE* test_data_file;
     uint8_t msg_buf[2 * NHttpEnums::MAX_OCTETS];
+
+    // break command has been read and we are waiting for a new flow to start
+    bool need_break = false;
+
+    // Sequence number of the flow we are currently piggybacking on
+    uint64_t curr_seq_num = 0;
 
     // data has been flushed and must be sent by reassemble() before more data may be given to
     // scan()
@@ -56,10 +60,10 @@ private:
     // number of octets that have been flushed and must be sent by reassemble
     uint32_t flush_octets = 0;
 
-    // last character in the buffer previously shown to PAF but not flushed yet
+    // number of characters in the buffer previously shown to PAF but not flushed yet
     uint32_t previous_offset = 0;
 
-    // last read character in the buffer
+    // number of characters in the buffer
     uint32_t end_offset = 0;
 
     // Need to send close with next pass through reassemble()
@@ -67,6 +71,8 @@ private:
 
     // Close notification already provided
     bool close_notified = false;
+
+    void reset();
 };
 
 #endif

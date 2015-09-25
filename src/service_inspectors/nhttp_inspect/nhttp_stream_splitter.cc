@@ -42,14 +42,15 @@ void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* f
     session_data->num_good_chunks[source_id] = num_good_chunks;
     session_data->flush_size[source_id] = num_flushed + octets_seen;
 
-    if (!NHttpTestManager::use_test_input())
-    {
-        *flush_offset = num_flushed;
-    }
-    else
+#ifdef REG_TEST
+    if (NHttpTestManager::use_test_input())
     {
         NHttpTestManager::get_test_input_source()->flush(num_flushed);
     }
+    else
+#endif
+
+    *flush_offset = num_flushed;
 }
 
 NHttpCutter* NHttpStreamSplitter::get_cutter(SectionType type,
@@ -64,7 +65,7 @@ NHttpCutter* NHttpStreamSplitter::get_cutter(SectionType type,
     case SEC_BODY: return (NHttpCutter*)new NHttpBodyCutter(
         session_data->data_length[source_id]);
     case SEC_CHUNK: return (NHttpCutter*)new NHttpChunkCutter;
-    default: assert(0); return nullptr;
+    default: assert(false); return nullptr;
     }
 }
 
@@ -142,7 +143,7 @@ void NHttpStreamSplitter::chunk_spray(NHttpFlowData* session_data, uint8_t* buff
           }
         case CHUNK_ZEROS:
             // Not a possible state in reassemble(). Here to avoid compiler warning.
-            assert(0);
+            assert(false);
             break;
         }
     }
@@ -165,29 +166,23 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
     }
     assert(session_data != nullptr);
 
+    const SectionType type = session_data->type_expected[source_id];
+
+    if (type == SEC_ABORT)
+        return StreamSplitter::ABORT;
+
+#ifdef REG_TEST
     if (NHttpTestManager::use_test_input())
     {
         // This block substitutes a completely new data buffer supplied by the test tool in place
-        // of the "real" data. It also rewrites the buffer length and TCP close indicator.
+        // of the "real" data. It also rewrites the buffer length.
         *flush_offset = length;
-        bool need_break;
         uint8_t* test_data = nullptr;
-        NHttpTestManager::get_test_input_source()->scan(test_data, length, source_id, need_break);
-        if (need_break)
-        {
-            session_data = new NHttpFlowData;
-            flow->set_application_data(session_data);
-        }
+        NHttpTestManager::get_test_input_source()->scan(test_data, length, source_id,
+            session_data->seq_num);
         if (length == 0)
-        {
             return StreamSplitter::FLUSH;
-        }
         data = test_data;
-        if (session_data->type_expected[source_id] == SEC_ABORT)
-        {
-            session_data = new NHttpFlowData;
-            flow->set_application_data(session_data);
-        }
     }
     else if (NHttpTestManager::use_test_output())
     {
@@ -195,10 +190,9 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
             source_id, length);
         fflush(stdout);
     }
+#endif
 
-    const SectionType type = session_data->type_expected[source_id];
-
-    if ((type == SEC_ABORT) || (session_data->tcp_close[source_id]))
+    if (session_data->tcp_close[source_id])
         return StreamSplitter::ABORT;
 
     NHttpCutter*& cutter = session_data->cutter[source_id];
@@ -222,31 +216,20 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
             session_data->type_expected[source_id] = SEC_ABORT;
             delete cutter;
             cutter = nullptr;
-            if (!NHttpTestManager::use_test_input())
-            {
-                return StreamSplitter::ABORT;
-            }
-            else
-            {
-                NHttpTestManager::get_test_input_source()->discard(length);
-                return StreamSplitter::FLUSH;
-            }
+            return StreamSplitter::ABORT;
         }
         // Incomplete headers wait patiently for more data
-        return NHttpTestManager::use_test_input() ? StreamSplitter::FLUSH : StreamSplitter::SEARCH;
+#ifdef REG_TEST
+        if (NHttpTestManager::use_test_input())
+            return StreamSplitter::FLUSH;
+        else
+#endif
+        return StreamSplitter::SEARCH;
     case SCAN_ABORT:
         session_data->type_expected[source_id] = SEC_ABORT;
         delete cutter;
         cutter = nullptr;
-        if (!NHttpTestManager::use_test_input())
-        {
-            return StreamSplitter::ABORT;
-        }
-        else
-        {
-            NHttpTestManager::get_test_input_source()->discard(length);
-            return StreamSplitter::FLUSH;
-        }
+        return StreamSplitter::ABORT;
     case SCAN_DISCARD:
     case SCAN_DISCARD_PIECE:
         prepare_flush(session_data, flush_offset, SEC_DISCARD, cutter->get_num_flush(),
@@ -272,7 +255,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
         return StreamSplitter::FLUSH;
       }
     default:
-        assert(0);
+        assert(false);
         return StreamSplitter::ABORT;
     }
 }
@@ -291,6 +274,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
         NHttpFlowData::nhttp_flow_id);
     assert(session_data != nullptr);
 
+#ifdef REG_TEST
     if (NHttpTestManager::use_test_output())
     {
         if (NHttpTestManager::use_test_input())
@@ -325,6 +309,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             fflush(stdout);
         }
     }
+#endif
 
     if (session_data->section_type[source_id] == SEC__NOTCOMPUTE)
     {   // FIXIT-M In theory this check should not be necessary
@@ -335,11 +320,13 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
     // is how scan() handles things we don't need to examine.
     if (session_data->section_type[source_id] == SEC_DISCARD)
     {
+#ifdef REG_TEST
         if (NHttpTestManager::use_test_output())
         {
             fprintf(NHttpTestManager::get_output_file(), "Discarded %u octets\n\n", len);
             fflush(NHttpTestManager::get_output_file());
         }
+#endif
         if (flags & PKT_PDU_TAIL)
         {
             session_data->section_type[source_id] = SEC__NOTCOMPUTE;
@@ -421,12 +408,14 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             nhttp_buf.length = section_length;
             assert((nhttp_buf.length <= MAX_OCTETS) && (nhttp_buf.length != 0));
             buffer = nullptr;
+#ifdef REG_TEST
             if (NHttpTestManager::use_test_output())
             {
                 fprintf(NHttpTestManager::get_output_file(), "Sent to detection %u octets\n\n",
                     nhttp_buf.length);
                 fflush(NHttpTestManager::get_output_file());
             }
+#endif
             return &nhttp_buf;
         }
         my_inspector->clear(session_data, source_id);
@@ -440,12 +429,14 @@ bool NHttpStreamSplitter::finish(Flow* flow)
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(
         NHttpFlowData::nhttp_flow_id);
 
+#ifdef REG_TEST
     if (NHttpTestManager::use_test_output() && !NHttpTestManager::use_test_input())
     {
         printf("Finish from flow data %" PRIu64 " direction %d\n",
             session_data ? session_data->seq_num : 0, source_id);
         fflush(stdout);
     }
+#endif
 
     if (session_data == nullptr) // FIXIT-H this should not be necessary
     {

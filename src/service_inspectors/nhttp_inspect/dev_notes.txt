@@ -77,7 +77,65 @@ for enumerated values in NHI.
 The NHI internal test tool is the NHttpTestInput class. It allows the developer
 to write tests that simulate HTTP messages split into TCP segments at specified
 points. The tests cover all of splitter and inspector and the impact on
-downstream customers such as detection and file processing. A growing set of
-tests is maintained in nhttp_test_msgs.txt. Read the header of that file for
-documentation of how to write tests.
+downstream customers such as detection and file processing.
+
+Test tool usage instructions:
+
+The test input comes from the file nhttp_test_msgs.txt in the current directory. Enter HTTP test
+message text as you want it to be presented to the StreamSplitter.
+
+The easiest way to format is to put a blank line between message sections so that each message
+section is its own "paragraph". Within a paragraph the placement of single new lines does not have
+any effect. Format a paragraph any way you are comfortable. Extra blank lines between paragraphs
+also do not have any effect.
+
+Each paragraph represents a TCP segment. The splitter can be tested by putting multiple sections in
+the same paragraph (splitter must split) or continuing a section in the next paragraph (splitter
+must search and reassemble).
+
+Lines beginning with # are comments. Lines beginning with @ are commands. This does not apply to
+lines in the middle of a paragraph.
+
+Command lines are left justified, lower case, with no whitespace:
+  @break resets HTTP Inspect data structures and begins a new test. Use it liberally to prevent
+     unrelated tests from interfering with each other.
+  @tcpclose simulates a half-duplex TCP close following the next paragraph of data.
+  @request and @response set the message direction. Applies to subsequent paragraphs until changed.
+     The initial direction is always request and the break command resets the direction to request.
+  @fill<decimal number> create a paragraph consisting of <number> octets of auto-fill data
+     ABCDEFGHIJABC ... Primarily useful for chunk testing.
+  @<decimal number> sets the test number and hence the test output file name. Applies to subsequent
+     sections until changed. Don't reuse numbers.
+
+Escape sequences begin with '\'. They may be used within a paragraph or to begin a paragraph.
+  \r - carriage return
+  \n - linefeed
+  \t - tab
+  \\ - backslash
+  \# - #
+  \@ - @
+  \xnn or \Xnn - where nn is a two-digit hexadecimal number. Insert an arbitrary 8-bit number as
+     the next character. a-f and A-F are both acceptable.
+
+Data is separated into segments for presentation to the splitter whenever a paragraph ends (blank
+line).
+
+Whenever a segment contains insufficient data to make up a body, fill data will be generated to
+make up the difference based on the Content-Length field. Specifically, flushing more data than in
+the current segment will trigger filling. The user should include at least one character of body
+data either as part of the previous header segment or at the beginning of a new segment following
+the headers. All data bytes included in the file will be used followed by required fill data in the
+pattern ABC...XYZABC...
+
+The current chunk reassembly algorithm does not flush data beyond the current segment. The fill
+feature does not work with chunked bodies but the fill command can be used.
+
+Fill data will not be provided for a paragraph that is preceded by tcpclose. The body will
+terminate at the end of the paragraph.
+
+This test tool does not implement the feature of being hardened against bad input. If you write a
+badly formatted or improper test case the program may assert or crash. The responsibility is on the
+developer to get it right. Currently that is the best use of resources.
+
+Test input is currently designed for single-threaded operation only.
 

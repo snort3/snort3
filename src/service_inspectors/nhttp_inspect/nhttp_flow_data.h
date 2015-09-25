@@ -53,9 +53,6 @@ public:
     friend class NHttpTransaction;
 
 private:
-    static uint64_t instance_count;
-    uint64_t seq_num;
-
     void half_reset(NHttpEnums::SourceId source_id);
 
     // 0 element refers to client request, 1 element refers to server response
@@ -116,6 +113,11 @@ private:
     bool add_to_pipeline(NHttpTransaction* latest);
     NHttpTransaction* take_from_pipeline();
     void delete_pipeline();
+
+#ifdef REG_TEST
+    static uint64_t instance_count;
+    uint64_t seq_num;
+#endif
 };
 
 #endif

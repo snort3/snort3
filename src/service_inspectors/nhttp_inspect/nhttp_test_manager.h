@@ -43,7 +43,6 @@ public:
 
 private:
     NHttpTestManager() = delete;
-    // Test input read from file
 
     static bool test_input;
     static NHttpTestInput* test_input_source;

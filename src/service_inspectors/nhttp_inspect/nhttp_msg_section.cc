@@ -145,7 +145,7 @@ const Field& NHttpMsgSection::get_legacy(unsigned buffer_id)
         return (request != nullptr) ? request->get_uri_norm_legacy() : Field::FIELD_NULL;
       }
     default:
-        assert(0);
+        assert(false);
         return Field::FIELD_NULL;
     }
 }

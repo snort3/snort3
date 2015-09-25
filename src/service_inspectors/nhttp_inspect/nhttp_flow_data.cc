@@ -25,25 +25,35 @@
 using namespace NHttpEnums;
 
 unsigned NHttpFlowData::nhttp_flow_id = 0;
+
+#ifdef REG_TEST
 uint64_t NHttpFlowData::instance_count = 0;
+#endif
 
 NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id)
 {
-    if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output())
+#ifdef REG_TEST
+    if (NHttpTestManager::use_test_output())
     {
         seq_num = ++instance_count;
-        printf("Flow Data construct %" PRIu64 "\n", seq_num);
-        fflush(nullptr);
+        if (!NHttpTestManager::use_test_input())
+        {
+            printf("Flow Data construct %" PRIu64 "\n", seq_num);
+            fflush(nullptr);
+        }
     }
+#endif
 }
 
 NHttpFlowData::~NHttpFlowData()
 {
+#ifdef REG_TEST
     if (!NHttpTestManager::use_test_input() && NHttpTestManager::use_test_output())
     {
         printf("Flow Data destruct %" PRIu64 "\n", seq_num);
         fflush(nullptr);
     }
+#endif
     for (int k=0; k <= 1; k++)
     {
         delete[] section_buffer[k];

@@ -39,6 +39,7 @@ using namespace NHttpEnums;
 
 NHttpInspect::NHttpInspect(NHttpParaList params_) : params(params_)
 {
+#ifdef REG_TEST
     if (params.test_input)
     {
         NHttpTestManager::activate_test_input();
@@ -47,6 +48,7 @@ NHttpInspect::NHttpInspect(NHttpParaList params_) : params(params_)
     {
         NHttpTestManager::activate_test_output();
     }
+#endif
 }
 
 THREAD_LOCAL uint8_t NHttpInspect::body_buffer[MAX_OCTETS];
@@ -120,7 +122,7 @@ bool NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* cons
             flow, &params);
         break;
     default:
-        assert(0);
+        assert(false);
         if (buf_owner)
         {
             delete[] data;
@@ -132,6 +134,7 @@ bool NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* cons
     latest_section->update_flow();
     latest_section->gen_events();
 
+#ifdef REG_TEST
     if (NHttpTestManager::use_test_output())
     {
         latest_section->print_section(NHttpTestManager::get_output_file());
@@ -143,6 +146,7 @@ bool NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* cons
         }
         fflush(stdout);
     }
+#endif
 
     return latest_section->worth_detection();
 }
