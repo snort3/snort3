@@ -454,17 +454,16 @@ int detection_option_node_evaluate(
             int check_ports = 1;
             int eval_rtn_result;
             unsigned int svc_idx;
+            int16_t app_proto = eval_data->p->get_application_protocol();
 
             if (pmd)
                 pattern_size = pmd->pattern_size;
 
-            if ( eval_data->p->application_protocol_ordinal and
-                ((OTNX_MATCH_DATA*)(eval_data->pomd))->check_ports != 2 )
+            if ( app_proto and ((OTNX_MATCH_DATA*)(eval_data->pomd))->check_ports != 2 )
             {
                 for (svc_idx = 0; svc_idx < otn->sigInfo.num_services; svc_idx++)
                 {
-                    if (eval_data->p->application_protocol_ordinal ==
-                        otn->sigInfo.services[svc_idx].service_ordinal)
+                    if ( app_proto == otn->sigInfo.services[svc_idx].service_ordinal )
                     {
                         check_ports = 0;
                         break;  /* out of for */
@@ -476,9 +475,7 @@ int detection_option_node_evaluate(
                     /* none of the services match */
                     DebugFormat(DEBUG_DETECT,
                         "[**] SID %d not matched because of service mismatch (%d!=%d [**]\n",
-                        otn->sigInfo.id,
-                        eval_data->p->application_protocol_ordinal,
-                        otn->sigInfo.services[0].service_ordinal);
+                        otn->sigInfo.id, app_proto, otn->sigInfo.services[0].service_ordinal);
                     break;  /* out of case */
                 }
             }

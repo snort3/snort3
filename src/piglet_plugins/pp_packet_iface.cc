@@ -37,11 +37,6 @@ static void set_fields(lua_State* L, int tindex, Packet& self)
     table.get_field("packet_flags", self.packet_flags);
     table.get_field("xtradata_mask", self.xtradata_mask);
     table.get_field("proto_bits", self.proto_bits);
-    table.get_field(
-        "application_protocol_ordinal",
-        self.application_protocol_ordinal
-    );
-
     table.get_field("alt_dsize", self.alt_dsize);
     table.get_field("num_layers", self.num_layers);
     table.get_field("iplist_id", self.iplist_id);
@@ -56,11 +51,6 @@ static void get_fields(lua_State* L, int tindex, Packet& self)
     table.set_field("packet_flags", self.packet_flags);
     table.set_field("xtradata_mask", self.xtradata_mask);
     table.set_field("proto_bits", self.proto_bits);
-    table.set_field(
-        "application_protocol_ordinal",
-        self.application_protocol_ordinal
-    );
-
     table.set_field("alt_dsize", self.alt_dsize);
     table.set_field("num_layers", self.num_layers);
     table.set_field("iplist_id", self.iplist_id);

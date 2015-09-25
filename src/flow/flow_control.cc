@@ -438,9 +438,6 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
         ++news;
     }
-    // FIXIT-L service should be deleted from packet
-    // and obtained directly from flow
-    p->application_protocol_ordinal = flow->ssn_state.application_protocol;
     flow->set_direction(p);
 
     switch ( flow->flow_state )

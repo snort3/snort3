@@ -49,6 +49,7 @@ extern "C" {
 
 #include "main/snort_types.h"
 #include "framework/decode_data.h"
+#include "flow/flow.h"
 #include "protocols/layer.h"
 
 /* packet status flags */
@@ -139,10 +140,10 @@ struct SO_PUBLIC Packet
 
     uint32_t packet_flags;      /* special flags for the packet */
     uint32_t xtradata_mask;
-    uint16_t proto_bits;        /* protocols contained within this packet */
-    int16_t application_protocol_ordinal;
 
+    uint16_t proto_bits;        /* protocols contained within this packet */
     uint16_t alt_dsize;         /* the dsize of a packet before munging (used for log)*/
+
     uint8_t num_layers;         /* index into layers for next encap */
     uint8_t ip_proto_next;      /* the protocol ID after IP and all IP6 extension */
 
@@ -270,6 +271,12 @@ struct SO_PUBLIC Packet
 
     bool is_rebuilt()
     { return (packet_flags & (PKT_REBUILT_STREAM|PKT_REBUILT_FRAG)) != 0; }
+
+    int16_t get_application_protocol()
+    { return flow ? flow->ssn_state.application_protocol : 0; }
+
+    void set_application_protocol(int16_t ap)
+    { if ( flow ) flow->ssn_state.application_protocol = ap; }
 };
 
 /* Macros to deal with sequence numbers - p810 TCP Illustrated vol 2 */

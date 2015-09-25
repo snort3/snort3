@@ -910,9 +910,6 @@ static inline int _flush_to_seq(TcpSession *tcpssn, TcpTracker *st,
             sfBase.iStreamFlushes++;
             bytes_processed += flushed_bytes;
 
-            s5_pkt->application_protocol_ordinal =
-                p->application_protocol_ordinal;
-
             ShowRebuiltPacket(tcpssn, s5_pkt);
             tcpStats.rebuilt_packets++;
             UpdateStreamReassStats(&sfBase, flushed_bytes);

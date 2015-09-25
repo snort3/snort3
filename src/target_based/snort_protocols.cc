@@ -173,8 +173,8 @@ int16_t GetProtocolReference(Packet* p)
     if (!p)
         return protocol;
 
-    if (p->application_protocol_ordinal != 0)
-        return p->application_protocol_ordinal;
+    if ( int16_t app_proto = p->get_application_protocol() )
+        return app_proto;
 
     do /* Simple do loop to break out of quickly, not really a loop */
     {
@@ -183,10 +183,9 @@ int16_t GetProtocolReference(Packet* p)
         {
             /* Use session information via Stream API */
             protocol = stream.get_application_protocol_id(p->flow);
-            if (protocol != 0)
-            {
+
+            if ( protocol )
                 break;
-            }
         }
 
         switch (p->type())
@@ -208,37 +207,26 @@ int16_t GetProtocolReference(Packet* p)
          * destination port
          */
         host_entry = SFAT_LookupHostEntryByDst(p);
-        if (host_entry)
-        {
-            protocol = getApplicationProtocolId(host_entry,
-                ipprotocol,
-                p->ptrs.dp,
-                SFAT_SERVICE);
-        }
 
-        if (protocol != 0)
-        {
+        if (host_entry)
+            protocol = getApplicationProtocolId(host_entry, ipprotocol, p->ptrs.dp, SFAT_SERVICE);
+
+        if ( protocol )
             break;
-        }
 
         /* If not found, do same for src host/src port. */
         host_entry = SFAT_LookupHostEntryBySrc(p);
+
         if (host_entry)
-        {
-            protocol = getApplicationProtocolId(host_entry,
-                ipprotocol,
-                p->ptrs.sp,
-                SFAT_SERVICE);
-        }
-        if (protocol != 0)
-        {
+            protocol = getApplicationProtocolId(host_entry, ipprotocol, p->ptrs.sp, SFAT_SERVICE);
+
+        if ( protocol )
             break;
-        }
     }
     while (0);   /* Simple do loop to break out of quickly, not really a loop */
 
     /* Store it to alleviate future lookups */
-    p->application_protocol_ordinal = protocol;
+    p->set_application_protocol(protocol);
 
     return protocol;
 }

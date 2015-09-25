@@ -1157,11 +1157,11 @@ static inline void fpEvalHeaderUdp(Packet* p, OTNX_MATCH_DATA* omd)
         fpEvalHeaderSW(any, p, 1, 0, 0, omd) ;
 }
 
-static inline void fpEvalHeaderSvc(Packet* p, OTNX_MATCH_DATA* omd, int proto)
+static inline bool fpEvalHeaderSvc(Packet* p, OTNX_MATCH_DATA* omd, int proto)
 {
     PortGroup* svc = nullptr, * file = nullptr;
 
-    int16_t proto_ordinal = p->flow ? p->flow->ssn_state.application_protocol : 0;
+    int16_t proto_ordinal = p->get_application_protocol();
 
     DebugFormat(DEBUG_ATTRIBUTE, "proto_ordinal=%d\n", proto_ordinal);
 
@@ -1190,11 +1190,15 @@ static inline void fpEvalHeaderSvc(Packet* p, OTNX_MATCH_DATA* omd, int proto)
     }
     // FIXIT-P put alert service rules with file data fp in alert file group and
     // verfiy ports and service during rule eval to avoid searching file data 2x.
+    int check_ports = (proto == SNORT_PROTO_USER) ? 2 : 1;
+
     if ( file )
-        fpEvalHeaderSW(file, p, 2, 0, 2, omd);
+        fpEvalHeaderSW(file, p, check_ports, 0, 2, omd);
 
     if ( svc )
-        fpEvalHeaderSW(svc, p, 2, 0, 1, omd);
+        fpEvalHeaderSW(svc, p, check_ports, 0, 1, omd);
+
+    return svc != nullptr;
 }
 
 static void fpEvalPacketUdp(Packet* p)
@@ -1296,11 +1300,17 @@ int fpEvalPacket(Packet* p)
         if ( snort_conf->sopgTable->user_mode )
             fpEvalHeaderSvc(p, omd, SNORT_PROTO_USER);
 
+        // use ports if we don't know service or don't have rules
         else if ( p->proto_bits & PROTO_BIT__TCP )
-            fpEvalHeaderTcp(p, omd);
-
+        {
+            if ( !p->get_application_protocol() or !fpEvalHeaderSvc(p, omd, SNORT_PROTO_TCP) )
+                fpEvalHeaderTcp(p, omd);
+        }
         else if ( p->proto_bits & PROTO_BIT__UDP )
-            fpEvalHeaderUdp(p, omd);
+        {
+            if ( !p->get_application_protocol() or !fpEvalHeaderSvc(p, omd, SNORT_PROTO_UDP) )
+                fpEvalHeaderUdp(p, omd);
+        }
         break;
 
     case PktType::FILE:
