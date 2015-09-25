@@ -32,7 +32,7 @@ notes=dev_notes.txt
 echo "generating working tree in $tmp"
 mkdir -p $tmp || exit -1
 
-src_dirs=`find src -type d`
+src_dirs=`find src -type d -name "[^.]?*"`
 
 # copy headers to temp working dir using same tree structure
 # but strip out repetitive copyright blocks
