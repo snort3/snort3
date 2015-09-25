@@ -1,3 +1,14 @@
+15/09/25 - build 171
+
+-- fix metadata:service to work like 2x
+-- fixed issues when building with LINUX_SMP
+-- fixed frag tracker accounting
+-- fix Xcode builds
+-- implement 116:281 decoder rule
+-- udpated snort2lua
+-- add cpputest for unit testing
+-- don't apply cooked verdicts to raw packets
+
 15/09/17 - build 170
 
 -- removed unused control socket defines from cmake
