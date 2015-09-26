@@ -423,8 +423,12 @@ void Active::reset_session(const Packet* p, bool force)
     if ( s_enabled and snort_conf->max_responses )
     {
         ActionManager::queue_reject(p);
-        stream.init_active_response(p, p->flow);
-        p->flow->set_state(Flow::RESET);
+
+        if ( p->flow )
+        {
+            stream.init_active_response(p, p->flow);
+            p->flow->set_state(Flow::RESET);
+        }
     }
 }
 
