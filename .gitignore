@@ -10,6 +10,8 @@
 *.gcno
 *.gcda
 *.gcov
+*.trs
+*_test
 *~
 ._Xcode*
 Cbuild/
@@ -72,6 +74,7 @@ src/tags
 src/test/suite_decl.h
 src/test/suite_list.h
 stamp-h1
+test-driver
 tools/snort2lua/snort2lua
 tools/snort2lua/tags
 tools/u2boat/u2boat

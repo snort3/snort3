@@ -62,8 +62,7 @@ NHttpCutter* NHttpStreamSplitter::get_cutter(SectionType type,
     case SEC_STATUS: return (NHttpCutter*)new NHttpStatusCutter;
     case SEC_HEADER:
     case SEC_TRAILER: return (NHttpCutter*)new NHttpHeaderCutter;
-    case SEC_BODY: return (NHttpCutter*)new NHttpBodyCutter(
-        session_data->data_length[source_id]);
+    case SEC_BODY: return (NHttpCutter*)new NHttpBodyCutter(session_data->data_length[source_id]);
     case SEC_CHUNK: return (NHttpCutter*)new NHttpChunkCutter;
     default: assert(false); return nullptr;
     }
@@ -192,8 +191,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
     }
 #endif
 
-    if (session_data->tcp_close[source_id])
-        return StreamSplitter::ABORT;
+    assert(!session_data->tcp_close[source_id]);
 
     NHttpCutter*& cutter = session_data->cutter[source_id];
     if (cutter == nullptr)
@@ -379,18 +377,9 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
 
     if (flags & PKT_PDU_TAIL)
     {
-        const bool not_chunk = session_data->section_type[source_id] != SEC_CHUNK;
+        assert (session_data->flush_size[source_id] >= offset + len);
 
-        if (session_data->flush_size[source_id] < offset + len)
-        {
-            assert(false);
-            if (not_chunk && (session_data->section_type[source_id] != SEC_BODY))
-            {
-                delete[] buffer;
-            }
-            buffer = nullptr;
-            return nullptr;
-        }
+        const bool not_chunk = session_data->section_type[source_id] != SEC_CHUNK;
 
         const uint32_t section_length = not_chunk ? offset + len :
             session_data->chunk_offset[source_id];
