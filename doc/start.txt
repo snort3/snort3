@@ -31,7 +31,7 @@ Optional:
 * dblatex from http://dblatex.sourceforge.net to build the pdf manual (in
   addition to asciidoc)
 
-* lzma from http://www.7-zip.org/sdk.html for decompression of SWF fles.
+* lzma >= 5.1.2 from http://tukaani.org/xz/ for decompression of SWF fles.
 
 * openssl from https://www.openssl.org for SHA and MD5 file signatures and
   the protected_content rule option.
