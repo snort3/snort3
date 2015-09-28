@@ -16,22 +16,22 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 */
-/* daq_socket.h author Russ Combs <rucombs@cisco.com> */
+/* daq_user.h author Russ Combs <rucombs@cisco.com> */
 /* this is a C include, not C++ */
 
-#ifndef DAQ_AUX_H
-#define DAQ_AUX_H
+#ifndef DAQ_USER_H
+#define DAQ_USER_H
 
 #include <stdint.h>
 
-/* for socket / proxy connections handling payload only */
-#define DLT_SOCKET 230
+/* for raw payload only */
+#define DLT_USER 230
 
-#define DAQ_SKT_FLAG_TO_SERVER  0x01
-#define DAQ_SKT_FLAG_START_FLOW 0x02
-#define DAQ_SKT_FLAG_END_FLOW   0x04
+#define DAQ_USR_FLAG_TO_SERVER  0x01
+#define DAQ_USR_FLAG_START_FLOW 0x02
+#define DAQ_USR_FLAG_END_FLOW   0x04
 
-/* socket DAQ sets priv_ptr to this */
+/* user-related DAQs set priv_ptr to this */
 typedef struct
 {
     uint32_t src_addr;
@@ -40,7 +40,7 @@ typedef struct
     uint16_t dst_port;
     uint8_t ip_proto;
     uint8_t flags;
-} DAQ_SktHdr_t;
+} DAQ_UsrHdr_t;
 
 #endif
 

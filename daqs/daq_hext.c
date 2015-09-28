@@ -18,7 +18,7 @@
 */
 /* daq_hext.c author Russ Combs <rucombs@cisco.com> */
 
-#include "daq_socket.h"
+#include "daq_user.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -62,8 +62,8 @@ typedef struct {
     char line[MAX_LINE_SZ];
     char error[DAQ_ERRBUF_SIZE];
 
-    DAQ_SktHdr_t pci;
-    DAQ_SktHdr_t cfg;
+    DAQ_UsrHdr_t pci;
+    DAQ_UsrHdr_t cfg;
 
     DAQ_State state;
     DAQ_Stats_t stats;
@@ -85,7 +85,7 @@ static void set_c2s(FileImpl* impl, int c2s)
         impl->pci.dst_addr = impl->cfg.src_addr;
         impl->pci.src_port = impl->cfg.dst_port;
         impl->pci.dst_port = impl->cfg.src_port;
-        impl->pci.flags &= ~DAQ_SKT_FLAG_TO_SERVER;
+        impl->pci.flags &= ~DAQ_USR_FLAG_TO_SERVER;
     }
 }
 
@@ -122,9 +122,9 @@ static void parse_pci(FileImpl* impl, const char* s)
 
     // hack until client / server is resolved:
     if ( impl->pci.src_port >= impl->pci.dst_port )
-        impl->pci.flags |= DAQ_SKT_FLAG_TO_SERVER;
+        impl->pci.flags |= DAQ_USR_FLAG_TO_SERVER;
     else
-        impl->pci.flags &= ~DAQ_SKT_FLAG_TO_SERVER;
+        impl->pci.flags &= ~DAQ_USR_FLAG_TO_SERVER;
 }
 
 static unsigned flush(FileImpl* impl)
@@ -272,7 +272,7 @@ static int hext_setup(FileImpl* impl)
     parse_host("10.1.2.3 80", &impl->cfg.dst_addr, &impl->cfg.dst_port);
 
     impl->cfg.ip_proto = impl->pci.ip_proto = IPPROTO_TCP;
-    impl->cfg.flags = impl->pci.flags = DAQ_SKT_FLAG_TO_SERVER;
+    impl->cfg.flags = impl->pci.flags = DAQ_USR_FLAG_TO_SERVER;
     impl->start = 1;
 
     return 0;
@@ -301,7 +301,7 @@ static int hext_read(FileImpl* impl)
 
     if ( !n )
     {
-        if ( (impl->dlt == DLT_SOCKET) && !impl->eof )
+        if ( (impl->dlt == DLT_USER) && !impl->eof )
         {
             impl->eof = 1;
             return 1;  // <= zero won't make it :(
@@ -364,20 +364,20 @@ static void set_pkt_hdr(FileImpl* impl, DAQ_PktHdr_t* phdr, ssize_t len)
     phdr->address_space_id = 0;
     phdr->opaque = 0;
 
-    if ( impl->dlt != DLT_SOCKET )
+    if ( impl->dlt != DLT_USER )
     {
         phdr->priv_ptr = NULL;
         return;
     }
-    impl->pci.flags &= ~(DAQ_SKT_FLAG_START_FLOW|DAQ_SKT_FLAG_END_FLOW);
+    impl->pci.flags &= ~(DAQ_USR_FLAG_START_FLOW|DAQ_USR_FLAG_END_FLOW);
 
     if ( impl->start )
     {
-        impl->pci.flags |= DAQ_SKT_FLAG_START_FLOW;
+        impl->pci.flags |= DAQ_USR_FLAG_START_FLOW;
         impl->start = 0;
     }
     else if ( impl->eof )
-        impl->pci.flags |= DAQ_SKT_FLAG_END_FLOW;
+        impl->pci.flags |= DAQ_USR_FLAG_END_FLOW;
 
     phdr->priv_ptr = &impl->pci;
 }
@@ -435,7 +435,7 @@ static int hext_daq_initialize (
     }
 
     impl->snaplen = cfg->snaplen ? cfg->snaplen : DEF_BUF_SZ;
-    impl->dlt = DLT_SOCKET;
+    impl->dlt = DLT_USER;
 
     if ( !get_vars(impl, cfg, errBuf, errMax) )
     {

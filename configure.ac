@@ -937,12 +937,9 @@ fi
 
 AC_DEFINE_UNQUOTED([API_OPTIONS], ["$API_OPTIONS"], [plugin api related build options])
 
-# hmmm, why are we doing this again?
-#CFLAGS=`echo $CFLAGS | sed -e 's/-I\/usr\/include //g'`
-#CXXFLAGS=`echo $CXXFLAGS | sed -e 's/-I\/usr\/include //g'`
-#CPPFLAGS=`echo $CPPFLAGS | sed -e 's/-I\/usr\/include //g'`
+AM_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir) -I$(top_srcdir)/src \
+    -I$(top_srcdir)/src/network_inspectors'
 
-AM_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir)/src -I$(top_srcdir)/src/network_inspectors'
 snort2lua_CPPFLAGS='-I$(top_builddir) -I$(top_srcdir)/tools/snort2lua'
 
 AC_SUBST(AM_CPPFLAGS)

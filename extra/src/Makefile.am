@@ -1,6 +1,7 @@
 
 SUBDIRS = \
 codecs \
+daqs \
 inspectors \
 ips_options \
 loggers \

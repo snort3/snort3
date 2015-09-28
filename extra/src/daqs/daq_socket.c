@@ -18,7 +18,7 @@
 */
 /* daq_socket.c author Russ Combs <rucombs@cisco.com> */
 
-#include "daq_socket.h"
+#include "daqs/daq_user.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -62,7 +62,7 @@ typedef struct {
     struct sockaddr_in sin_a;
     struct sockaddr_in sin_b;
 
-    DAQ_SktHdr_t pci;
+    DAQ_UsrHdr_t pci;
 
     uint8_t* buf;
     char error[DAQ_ERRBUF_SIZE];
@@ -130,7 +130,7 @@ static int sock_recv(SockImpl* impl, int* sock)
         {
             DPE(impl->error, "%s: can't recv from socket (%s)\n",
                 __FUNCTION__, strerror(errno));
-            impl->pci.flags = DAQ_SKT_FLAG_END_FLOW;
+            impl->pci.flags = DAQ_USR_FLAG_END_FLOW;
             *sock = -1;
         }
         return 0;
@@ -176,7 +176,7 @@ static int sock_accept(SockImpl* impl, int* sock, struct sockaddr_in* psin)
     banner = impl->use_a ? "client\n" : "server\n";
     sock_send(impl, *sock, (const uint8_t*)banner, 7);
 
-    impl->pci.flags = DAQ_SKT_FLAG_START_FLOW;
+    impl->pci.flags = DAQ_USR_FLAG_START_FLOW;
     return 0;
 }
 
@@ -258,7 +258,7 @@ static void set_pkt_hdr(SockImpl* impl, DAQ_PktHdr_t* phdr, ssize_t len)
         impl->pci.dst_addr = impl->sin_a.sin_addr.s_addr;
         impl->pci.src_port = impl->sin_b.sin_port;
         impl->pci.dst_port = impl->sin_a.sin_port;
-        impl->pci.flags &= ~DAQ_SKT_FLAG_TO_SERVER;
+        impl->pci.flags &= ~DAQ_USR_FLAG_TO_SERVER;
     }
     else
     {
@@ -266,10 +266,10 @@ static void set_pkt_hdr(SockImpl* impl, DAQ_PktHdr_t* phdr, ssize_t len)
         impl->pci.dst_addr = impl->sin_b.sin_addr.s_addr;
         impl->pci.src_port = impl->sin_a.sin_port;
         impl->pci.dst_port = impl->sin_b.sin_port;
-        impl->pci.flags |= DAQ_SKT_FLAG_TO_SERVER;
+        impl->pci.flags |= DAQ_USR_FLAG_TO_SERVER;
     }
 
-    if ( impl->pci.flags & DAQ_SKT_FLAG_END_FLOW )
+    if ( impl->pci.flags & DAQ_USR_FLAG_END_FLOW )
         clear(impl);
 
     phdr->priv_ptr = &impl->pci;
@@ -547,7 +547,7 @@ static uint32_t socket_daq_get_capabilities (void* handle)
 static int socket_daq_get_datalink_type(void *handle)
 {
     (void)handle;
-    return DLT_SOCKET;
+    return DLT_USER;
 }
 
 static const char* socket_daq_get_errbuf (void* handle)

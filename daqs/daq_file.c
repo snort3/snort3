@@ -18,7 +18,7 @@
 */
 /* daq_file.c author Russ Combs <rucombs@cisco.com> */
 
-#include "daq_socket.h"
+#include "daq_user.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -55,7 +55,7 @@ typedef struct {
     uint8_t* buf;
     char error[DAQ_ERRBUF_SIZE];
 
-    DAQ_SktHdr_t pci;
+    DAQ_UsrHdr_t pci;
     DAQ_State state;
     DAQ_Stats_t stats;
 } FileImpl;
@@ -137,11 +137,11 @@ static void set_pkt_hdr(FileImpl* impl, DAQ_PktHdr_t* phdr, ssize_t len)
 
     if ( impl->start )
     {
-        impl->pci.flags = DAQ_SKT_FLAG_START_FLOW;
+        impl->pci.flags = DAQ_USR_FLAG_START_FLOW;
         impl->start = 0;
     }
     else if ( impl->eof )
-        impl->pci.flags = DAQ_SKT_FLAG_END_FLOW;
+        impl->pci.flags = DAQ_USR_FLAG_END_FLOW;
 
     else
         impl->pci.flags = 0;
@@ -335,7 +335,7 @@ static uint32_t file_daq_get_capabilities (void* handle)
 static int file_daq_get_datalink_type(void *handle)
 {
     (void)handle;
-    return DLT_SOCKET;
+    return DLT_USER;
 }
 
 static const char* file_daq_get_errbuf (void* handle)

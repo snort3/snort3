@@ -5,7 +5,6 @@ noinst_LIBRARIES = liblink_codecs.a
 
 liblink_codecs_a_SOURCES = \
 cd_arp.cc \
-cd_eapol.cc \
 cd_erspan2.cc \
 cd_erspan3.cc \
 cd_fabricpath.cc \
@@ -16,7 +15,6 @@ cd_trans_bridge.cc \
 cd_vlan.cc
 
 else
-
 ehlibdir = $(pkglibdir)/codecs
 
 ehlib_LTLIBRARIES = libcd_arp.la
@@ -63,15 +61,6 @@ ehlib_LTLIBRARIES += libcd_pppoe.la
 libcd_pppoe_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_pppoe_la_LDFLAGS = -export-dynamic -shared
 libcd_pppoe_la_SOURCES = cd_pppoe.cc
-
-
-ehlib_LTLIBRARIES += libcd_eapol.la
-libcd_eapol_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libcd_eapol_la_LDFLAGS = -export-dynamic -shared
-libcd_eapol_la_SOURCES = cd_eapol.cc
-
-
 endif
-
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

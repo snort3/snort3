@@ -2,7 +2,6 @@
 if(STATIC_CODECS)
     set( PLUGIN_SOURCES
         cd_arp.cc
-        cd_eapol.cc
         cd_erspan2.cc
         cd_erspan3.cc
         cd_fabricpath.cc
@@ -24,7 +23,6 @@ else(STATIC_CODECS)
     add_shared_library(cd_pppoe codecs cd_pppoe.cc)
     add_shared_library(cd_trans_bridge codecs cd_trans_bridge.cc)
     add_shared_library(cd_vlan codecs cd_vlan.cc)
-    add_shared_library(cd_eapol codecs cd_eapol.cc)
 
 endif(STATIC_CODECS)
 

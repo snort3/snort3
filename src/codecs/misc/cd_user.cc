@@ -15,37 +15,37 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// cd_socket.cc author Russ Combs <rucombs@cisco.com>
+// cd_user.cc author Russ Combs <rucombs@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include "framework/codec.h"
-#include "../daqs/daq_socket.h"
+#include "daqs/daq_user.h"
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
 
-#define CD_NAME "socket"
-#define CD_HELP_STR "support for sockets / proxied sessions"
-#define CD_HELP ADD_DLT(CD_HELP_STR, DLT_SOCKET)
+#define CD_NAME "user"
+#define CD_HELP_STR "support for user sessions"
+#define CD_HELP ADD_DLT(CD_HELP_STR, DLT_USER)
 
-class SocketCodec : public Codec
+class UserCodec : public Codec
 {
 public:
-    SocketCodec() : Codec(CD_NAME) { };
-    ~SocketCodec() { };
+    UserCodec() : Codec(CD_NAME) { };
+    ~UserCodec() { };
 
     void get_data_link_type(std::vector<int>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
-void SocketCodec::get_data_link_type(std::vector<int>& v)
+void UserCodec::get_data_link_type(std::vector<int>& v)
 {
-    v.push_back(DLT_SOCKET);
+    v.push_back(DLT_USER);
 }
 
-static void set_ip(const DAQ_SktHdr_t* pci, CodecData& codec, DecodeData& snort)
+static void set_ip(const DAQ_UsrHdr_t* pci, CodecData& codec, DecodeData& snort)
 {
     // FIXIT support ip6
     sfip_t sip, dip;
@@ -77,15 +77,15 @@ static void set_key(CodecData& codec, DecodeData& snort)
 }
 
 static void set_flags(
-    const DAQ_SktHdr_t* pci, const RawData& raw, CodecData& codec, DecodeData& snort)
+    const DAQ_UsrHdr_t* pci, const RawData& raw, CodecData& codec, DecodeData& snort)
 {
-    if ( pci->flags & DAQ_SKT_FLAG_TO_SERVER )
+    if ( pci->flags & DAQ_USR_FLAG_TO_SERVER )
         snort.decode_flags |= DECODE_C2S;
 
-    if ( pci->flags & DAQ_SKT_FLAG_START_FLOW )
+    if ( pci->flags & DAQ_USR_FLAG_START_FLOW )
         snort.decode_flags |= DECODE_SOF;
 
-    if ( pci->flags & DAQ_SKT_FLAG_END_FLOW )
+    if ( pci->flags & DAQ_USR_FLAG_END_FLOW )
     {
         snort.decode_flags |= DECODE_EOF;
         codec.lyr_len = raw.len;
@@ -94,9 +94,9 @@ static void set_flags(
         codec.lyr_len = 0;
 }
 
-bool SocketCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
+bool UserCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
-    const DAQ_SktHdr_t* pci = (DAQ_SktHdr_t*)raw.pkth->priv_ptr;
+    const DAQ_UsrHdr_t* pci = (DAQ_UsrHdr_t*)raw.pkth->priv_ptr;
 
     if ( pci->ip_proto )
     {
@@ -118,12 +118,12 @@ bool SocketCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{ return new SocketCodec; }
+{ return new UserCodec; }
 
 static void dtor(Codec* cd)
 { delete cd; }
 
-static const CodecApi socket_api =
+static const CodecApi user_api =
 {
     {
         PT_CODEC,
@@ -148,10 +148,10 @@ static const CodecApi socket_api =
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &socket_api.base,
+    &user_api.base,
     nullptr
 };
 #else
-const BaseApi* cd_socket = &socket_api.base;
+const BaseApi* cd_user = &user_api.base;
 #endif
 
