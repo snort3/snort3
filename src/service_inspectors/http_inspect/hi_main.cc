@@ -1050,7 +1050,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                         session->server.response.body = Data;
                         session->server.response.body_size = Data_Len;
 
-                        hi_set_event(GID_HTTP_SERVER, hsd->fd_state->Error_Event);
+                        File_Decomp_Alert(hsd->fd_state, hsd->fd_state->Error_Event);
                         File_Decomp_StopFree(hsd->fd_state);
                         hsd->fd_state = NULL;
                     }
