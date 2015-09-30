@@ -110,6 +110,10 @@ void NHttpFlowData::show(FILE* out_file) const
     fprintf(out_file, "Status code: %d\n", status_code_num);
     fprintf(out_file, "Type expected: %d/%d\n", type_expected[0], type_expected[1]);
     fprintf(out_file, "Data length: %" PRIi64 "/%" PRIi64 "\n", data_length[0], data_length[1]);
+    fprintf(out_file, "Detect depth remaining: %" PRIi64 "/%" PRIi64 "\n",
+        detect_depth_remaining[0], detect_depth_remaining[1]);
+    fprintf(out_file, "File depth remaining: %" PRIi64 "/%" PRIi64 "\n", file_depth_remaining[0],
+        file_depth_remaining[1]);
     fprintf(out_file, "Body octets: %" PRIi64 "/%" PRIi64 "\n", body_octets[0], body_octets[1]);
     fprintf(out_file, "Pipelining: front %d back %d overflow %d underflow %d\n", pipeline_front,
         pipeline_back, pipeline_overflow, pipeline_underflow);

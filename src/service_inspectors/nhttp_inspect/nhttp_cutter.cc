@@ -308,6 +308,7 @@ ScanResult NHttpChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             }
             else if (buffer[k] == '\n')
             {
+                // FIXIT-L better to keep parsing chunks after bare LF (several changes needed)?
                 infractions += INF_CHUNK_BARE_LF;
                 events.create_event(EVENT_BROKEN_CHUNK);
                 curr_state = CHUNK_BAD;

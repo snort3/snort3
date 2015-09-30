@@ -124,7 +124,7 @@ void NHttpMsgHeader::setup_file_processing()
 {
     // FIXIT-M Bidirectional file processing is problematic so we don't do it. When the library
     // fully supports it remove the outer if statement that prevents it from being done.
-    if (session_data->file_depth_remaining[1-source_id] == 0)
+    if (session_data->file_depth_remaining[1-source_id] <= 0)
     {
         if ((session_data->file_depth_remaining[source_id] = FileService::get_max_file_depth()) < 0)
         {
@@ -142,6 +142,10 @@ void NHttpMsgHeader::setup_file_processing()
             if (!file_flows)
                 session_data->file_depth_remaining[source_id] = 0;
         }
+    }
+    else
+    {
+        session_data->file_depth_remaining[source_id] = 0;
     }
 }
 
