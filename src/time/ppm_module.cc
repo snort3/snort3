@@ -102,7 +102,10 @@ bool PpmModule::set(const char*, Value& v, SnortConfig* sc)
         ppm_set_max_pkt_time(sc->ppm_cfg, v.get_long());
 
     else if ( v.is("fastpath_expensive_packets") )
-        ppm_set_pkt_action(sc->ppm_cfg, PPM_ACTION_SUSPEND);
+    {
+        if (v.get_bool())
+            ppm_set_pkt_action(sc->ppm_cfg, PPM_ACTION_SUSPEND);
+    }
 
     else if ( v.is("pkt_log") )
     {
