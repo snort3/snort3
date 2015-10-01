@@ -65,10 +65,10 @@ used to restrict the protocol of service rules.
 
 * stream_tcp ports and protocols both go into a single binder.when; this is
 incorrect as the when fields are logically anded together (ie must all be
-true).  should create 2 separate bindings.
+true). Should create 2 separate bindings.
 
 * There is a bug in pps_stream_tcp.cc.. when stream_tcp: is
-specified without any arguments, snort2lua doesn't convert it
+specified without any arguments, snort2lua doesn't convert it.
 
 * Loses the ip list delimiters [ ]; change to ( )
 
@@ -77,4 +77,7 @@ specified without any arguments, snort2lua doesn't convert it
 
 * Won't convert packet rules (alert tcp etc.) to service rules (alert http
 etc.).
+
+* alert_fast and alert_full: output configuration includes "file = 'foo.bar'", but file is a bool
+and you cannot specify an output file name in the configuration.
 
