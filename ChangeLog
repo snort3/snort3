@@ -1,3 +1,13 @@
+15/10/01 - build 172
+
+-- check for bool value before setting fastpath config option in PPM
+-- update manual related to liblzma
+-- fix file processing
+-- refactor non-ethernet plugins
+-- fix file_decomp error logic
+-- enable active response without flow
+-- update bug list
+
 15/09/25 - build 171
 
 -- fix metadata:service to work like 2x

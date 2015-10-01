@@ -38,6 +38,8 @@
 #include <string.h>
 #include <time.h>
 
+#include "main/snort_types.h"
+
 #define K_BYTES (1024)
 #define M_BYTES (K_BYTES*K_BYTES)
 #define G_BYTES (K_BYTES*M_BYTES)
@@ -46,18 +48,19 @@
 // or some such to get stdout or syslog
 struct TextLog;
 
-TextLog* TextLog_Init(
+SO_PUBLIC TextLog* TextLog_Init(
     const char* name, unsigned int maxBuf = 0, size_t maxFile = 0);
-void TextLog_Term(TextLog*);
+SO_PUBLIC void TextLog_Term(TextLog*);
 
-bool TextLog_Putc(TextLog* const, char);
-bool TextLog_Quote(TextLog* const, const char*);
-bool TextLog_Write(TextLog* const, const char*, int len);
-bool TextLog_Print(TextLog* const, const char* format, ...);
-bool TextLog_Flush(TextLog* const);
-int TextLog_Tell(TextLog* const);
-int TextLog_Avail(TextLog* const);
-void TextLog_Reset(TextLog* const);
+SO_PUBLIC bool TextLog_Putc(TextLog* const, char);
+SO_PUBLIC bool TextLog_Quote(TextLog* const, const char*);
+SO_PUBLIC bool TextLog_Write(TextLog* const, const char*, int len);
+SO_PUBLIC bool TextLog_Print(TextLog* const, const char* format, ...);
+
+SO_PUBLIC bool TextLog_Flush(TextLog* const);
+SO_PUBLIC int TextLog_Tell(TextLog* const);
+SO_PUBLIC int TextLog_Avail(TextLog* const);
+SO_PUBLIC void TextLog_Reset(TextLog* const);
 
 /*-------------------------------------------------------------------
   * helper functions

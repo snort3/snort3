@@ -108,7 +108,7 @@ struct FileState
     FileSigState sig_state;
 };
 
-struct FileContext;
+class FileContext;
 struct FileCaptureInfo;
 
 #define DEFAULT_FILE_ID   0

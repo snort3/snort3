@@ -105,10 +105,16 @@ void TcpStateHandler::eval( TcpSegmentDescriptor &tcp_seg, TcpStreamTracker &tra
     }
 }
 
-void TcpStateHandler::default_state_action( TcpSegmentDescriptor* tcp_seg, TcpStreamTracker* tracker, const char* func_name )
+void TcpStateHandler::default_state_action(
+    TcpSegmentDescriptor* tcp_seg, TcpStreamTracker* tracker, const char* func_name )
 {
+#ifdef DEBUG_MSGS
     DebugFormat(DEBUG_STREAM_STATE, "Default Implementation of: %s tcp_seg: %p tracker: %p\n",
-            func_name, tcp_seg, tracker );
+        func_name, tcp_seg, tracker );
+#else
+    UNUSED(tcp_seg);
+    UNUSED(func_name);
+#endif
 
     tcp_event = tracker->get_tcp_event();
 }

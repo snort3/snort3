@@ -33,9 +33,9 @@
 #ifndef __GNUC__
 #define __attribute__(x)  /*NOTHING*/
 #endif
-void LogMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
-void WarningMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
-void ErrorMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
+SO_PUBLIC void LogMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
+SO_PUBLIC void WarningMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
+SO_PUBLIC void ErrorMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 
 struct ThrottleInfo
 {

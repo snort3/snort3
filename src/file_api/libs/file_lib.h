@@ -33,7 +33,7 @@
 #define SNORT_FILE_TYPE_UNKNOWN          UINT16_MAX  /**/
 #define SNORT_FILE_TYPE_CONTINUE         0 /**/
 
-struct FileCapture;
+class FileCapture;
 class FileConfig;
 
 class FileContext
@@ -91,11 +91,9 @@ private:
     void* file_type_context;
     void* file_signature_context;
     FileConfig* file_config;
-    time_t expires = 0;
     FileCapture *file_capture;
     FileState file_state = {FILE_CAPTURE_SUCCESS, FILE_SIG_PROCESSING};
     uint32_t file_id = 0;
-    uint32_t file_config_version = 0;
 
     inline int get_data_size_from_depth_limit(FileProcessType type, int data_size);
     inline void finalize_file_type ();

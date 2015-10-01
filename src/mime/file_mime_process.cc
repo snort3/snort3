@@ -492,14 +492,14 @@ void MimeSession::reset_mime_state()
         decode_state->clear_decode_state();
 }
 
-const uint8_t* MimeSession::process_mime_data_paf(Flow* flow, const uint8_t* start, const uint8_t* end,
-   bool upload, FilePosition position)
+const uint8_t* MimeSession::process_mime_data_paf(
+    Flow* flow, const uint8_t* start, const uint8_t* end, bool upload, FilePosition position)
 {
     bool done_data = is_end_of_data(flow);
 
     /* if we've just entered the data state, check for a dot + end of line
      * if found, no data */
-    if ((data_state == STATE_DATA_INIT))
+    if ( data_state == STATE_DATA_INIT )
     {
         if ((start < end) && (*start == '.'))
         {
