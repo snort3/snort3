@@ -17,6 +17,11 @@ To compile with g++ instead:
   dynamically due to missing symbols in hash/ and protocols/ despite them
   being declared SO_PUBLIC.
 
+* Enabling large pcap may erroneously affect the number of packets processed
+  from pcaps
+
+* Enabling debug messages may erroneously affect the number of packets
+  processed from pcaps
 
 ==== Config
 
@@ -29,10 +34,6 @@ defined as below because or the space between ! and 10.
 * Multiple versions of luajit scripts are not handled correctly.  The
 first loaded version will always be executed even though plugin manager
 saves the correct version.
-
-* On 32-bit systems, the default snort.lua config will yield:
-
-    ERROR: invalid perf_monitor.max_file_size = 4.29497e+09
 
 * When using -c and -L together, the last on the command line wins (-c -L
   will dump; -L -c will analyze).
