@@ -425,7 +425,7 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
 #endif
         if ( fd )
         {
-            stream.set_ignore_direction(p->flow, SSN_DIR_BOTH);
+            p->flow->set_ignore_direction(SSN_DIR_BOTH);
         }
         else
         {

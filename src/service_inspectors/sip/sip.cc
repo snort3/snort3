@@ -335,6 +335,7 @@ void Sip::eval(Packet* p)
 {
     // precondition - what we registered for
     assert((p->is_udp() and p->dsize and p->data) or p->has_tcp_data());
+    assert(p->flow);
 
     ++sipstats.total_packets;
     snort_sip(config, p);

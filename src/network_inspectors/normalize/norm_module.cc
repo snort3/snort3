@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "stream/stream.h"
+#include "stream/tcp/tcp_normalizer.h"
 
 using namespace std;
 
@@ -394,7 +395,7 @@ const PegInfo* NormalizeModule::get_pegs() const
         p++;
     }
 
-    p = Stream_GetNormPegs();
+    p = TcpNormalizer::get_normalization_pegs();
     assert(p);
 
     while ( p->name )
@@ -422,7 +423,7 @@ PegCount* NormalizeModule::get_counts() const
         counts.push_back(p[i][NORM_MODE_TEST]);
     }
 
-    p = Stream_GetNormCounts(c);
+    p = TcpNormalizer::get_normalization_counts(c);
 
     for ( unsigned i = 0; i < c; ++i )
     {

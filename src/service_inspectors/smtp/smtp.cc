@@ -1076,7 +1076,7 @@ static void SMTP_ProcessServerPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
         {
             smtp_ssn->state = STATE_TLS_DATA;
         }
-        else if (!(stream.get_session_flags(p->flow) & SSNFLAG_MIDSTREAM)
+        else if (!(p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
             && !stream.missed_packets(p->flow, SSN_DIR_BOTH))
         {
             /* Check to see if the raw packet is in order */
@@ -1527,6 +1527,7 @@ void Smtp::eval(Packet* p)
     PROFILE_VARS;
     // precondition - what we registered for
     assert(p->has_tcp_data());
+    assert(p->flow);
 
     ++smtpstats.total_packets;
 

@@ -91,7 +91,7 @@ static void FTPDataProcess(
      * and preprocessor was configured to ignore ftp-data sessions. */
     if (!status && data_ssn->data_chan)
     {
-        stream.set_ignore_direction(p->flow, SSN_DIR_BOTH);
+        p->flow->set_ignore_direction(SSN_DIR_BOTH);
     }
 }
 
@@ -130,7 +130,8 @@ static int SnortFTPData(Packet* p)
                 "FTP-DATA Invalid FTP_SESSION retrieved durring lookup\n");
 
             if (data_ssn->data_chan)
-                stream.set_ignore_direction(p->flow, SSN_DIR_BOTH);
+                p->flow->set_ignore_direction(SSN_DIR_BOTH);
+
 
             return -2;
         }
@@ -144,7 +145,7 @@ static int SnortFTPData(Packet* p)
         case FTPP_FILE_IGNORE:
             /* This wasn't a file transfer; ignore it */
             if (data_ssn->data_chan)
-                stream.set_ignore_direction(p->flow, SSN_DIR_BOTH);
+                p->flow->set_ignore_direction(SSN_DIR_BOTH);
             return 0;
 
         default:

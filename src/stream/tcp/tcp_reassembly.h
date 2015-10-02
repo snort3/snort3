@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -37,9 +37,9 @@ struct TcpTracker;
 
 struct TcpSegment
 {
-    static TcpSegment* init(struct Packet*, const struct timeval&, const uint8_t*, unsigned);
-    static void term(TcpSegment*);
-    bool is_retransmit(const uint8_t*, uint16_t size, uint32_t);
+    static TcpSegment* init( struct Packet*, const struct timeval&, const uint8_t*, unsigned );
+    static void term( TcpSegment* );
+    bool is_retransmit( const uint8_t*, uint16_t size, uint32_t );
 
     uint8_t* payload;
 
@@ -77,8 +77,8 @@ void purge_all(TcpTracker *st);
 int flush_stream(TcpSession *tcpssn, TcpTracker *st, Packet *p, uint32_t dir);
 int purge_flushed_ackd(TcpSession *tcpssn, TcpTracker *st);
 void FlushQueuedSegs(Flow* flow, TcpSession* tcpssn, bool clear, Packet* p = nullptr);
-int StreamQueue(TcpTracker *st, Packet *p, TcpDataBlock *tdb, TcpSession *tcpssn);
-int AddStreamNode(TcpTracker *st, Packet *p, TcpDataBlock* tdb, int16_t len, uint32_t slide,
+int StreamQueue(TcpTracker *st, TcpDataBlock *tdb, TcpSession *tcpssn);
+int AddStreamNode(TcpTracker *st, TcpDataBlock* tdb, int16_t len, uint32_t slide,
         uint32_t trunc, uint32_t seq, TcpSegment *left);
 uint32_t SegsToFlush(const TcpTracker* st, unsigned max);
 int CheckFlushPolicyOnData(TcpSession *, TcpTracker *, TcpTracker *, Packet *);

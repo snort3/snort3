@@ -1005,7 +1005,7 @@ static void snort_dns(Packet* p)
         /* If session picked up mid-stream, do not process further.
          * Would be almost impossible to tell where we are in the
          * data stream. */
-        if ( stream.get_session_flags(p->flow) & SSNFLAG_MIDSTREAM )
+        if ( p->flow->get_session_flags() & SSNFLAG_MIDSTREAM )
         {
             return;
         }
@@ -1085,6 +1085,7 @@ void Dns::eval(Packet* p)
 {
     // precondition - what we registered for
     assert((p->is_udp() and p->dsize and p->data) or p->has_tcp_data());
+    assert(p->flow);
 
     ++dnsstats.total_packets;
     snort_dns(p);

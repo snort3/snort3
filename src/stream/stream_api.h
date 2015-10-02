@@ -241,14 +241,8 @@ public:
     static void set_application_protocol_id_from_host_entry(
         Flow*, const struct HostAttributeEntry*, int direction);
 
-    static uint32_t set_session_flags(Flow*, uint32_t flags);
-    static uint32_t get_session_flags(Flow*);
-
     static bool is_midstream(Flow* flow)
     { return flow->ssn_state.session_flags & SSNFLAG_MIDSTREAM; }
-
-    static int get_ignore_direction(Flow*);
-    static int set_ignore_direction(Flow*, int ignore_direction);
 
     // Get the TTL value used at session setup
     // Set outer=false to get inner ip ttl for ip in ip; else outer=true

@@ -23,6 +23,7 @@
 #define TCP_DEFS_H
 
 #include "main/snort_debug.h"
+#include "protocols/packet.h"
 
 /* TCP states */
 #define TCP_STATE_NONE         0
@@ -95,8 +96,27 @@
 #define REASSEMBLY_POLICY_VISTA      13
 #define REASSEMBLY_POLICY_DEFAULT    REASSEMBLY_POLICY_BSD
 
+/* target-based policy types */
+// changes to this enum require changes to stream_api.h::TCP_POLICIES
+#define STREAM_POLICY_FIRST       1
+#define STREAM_POLICY_LAST        2
+#define STREAM_POLICY_LINUX       3
+#define STREAM_POLICY_OLD_LINUX   4
+#define STREAM_POLICY_BSD         5
+#define STREAM_POLICY_MACOS       6
+#define STREAM_POLICY_SOLARIS     7
+#define STREAM_POLICY_IRIX        8
+#define STREAM_POLICY_HPUX11      9
+#define STREAM_POLICY_HPUX10     10
+#define STREAM_POLICY_WINDOWS    11
+#define STREAM_POLICY_WINDOWS2K3 12
+#define STREAM_POLICY_VISTA      13
+#define STREAM_POLICY_PROXY      14
+#define STREAM_POLICY_DEFAULT    STREAM_POLICY_BSD
+
 struct TcpDataBlock
 {
+    Packet* pkt;
     uint32_t seq;
     uint32_t ack;
     uint32_t win;

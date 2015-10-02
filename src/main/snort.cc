@@ -100,6 +100,7 @@ using namespace std;
 #include "control/idle_processing.h"
 #include "file_api/file_service.h"
 #include "flow/flow_control.h"
+#include "flow/flow.h"
 #include "stream/stream.h"
 #include "target_based/sftarget_reader.h"
 
@@ -784,7 +785,7 @@ static DAQ_Verdict update_verdict(DAQ_Verdict verdict, int& inject)
         }
     }
     else if ( (s_packet->packet_flags & PKT_IGNORE) ||
-        (stream.get_ignore_direction(s_packet->flow) == SSN_DIR_BOTH) )
+        (s_packet->flow && s_packet->flow->get_ignore_direction( ) == SSN_DIR_BOTH) )
     {
         if ( !Active::get_tunnel_bypass() )
         {
@@ -798,7 +799,8 @@ static DAQ_Verdict update_verdict(DAQ_Verdict verdict, int& inject)
     }
     else if ( s_packet->ptrs.decode_flags & DECODE_PKT_TRUST )
     {
-        stream.set_ignore_direction(s_packet->flow, SSN_DIR_BOTH);
+        if(s_packet->flow)
+            s_packet->flow->set_ignore_direction(SSN_DIR_BOTH);
         verdict = DAQ_VERDICT_WHITELIST;
     }
     else

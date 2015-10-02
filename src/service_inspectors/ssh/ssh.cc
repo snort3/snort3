@@ -186,7 +186,7 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
     /* If we picked up mid-stream or missed any packets (midstream pick up
      *      * means we've already missed packets) set missed packets flag and make
      *           * sure we don't do any more reassembly on this session */
-    if ((stream.get_session_flags(p->flow) & SSNFLAG_MIDSTREAM)
+    if ((p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
         || stream.missed_packets(p->flow, SSN_DIR_BOTH))
     {
         /* Order only matters if the packets are not encrypted */
@@ -809,6 +809,7 @@ void Ssh::eval(Packet* p)
 {
     // precondition - what we registered for
     assert(p->has_tcp_data());
+    assert(p->flow);
 
     ++sshstats.total_packets;
     snort_ssh(config, p);

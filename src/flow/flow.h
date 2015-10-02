@@ -156,6 +156,7 @@ public:
     void call_handlers(Packet* p, bool eof = false);
 
     void markup_packet_flags(Packet*);
+
     void set_direction(Packet*);
 
     void set_expire(const Packet*, uint32_t timeout);
@@ -163,6 +164,39 @@ public:
     bool expired(const Packet*);
 
     void set_ttl(Packet*, bool client);
+
+    uint32_t update_session_flags( uint32_t flags )
+    {
+        return ssn_state.session_flags = flags;
+    }
+
+    uint32_t set_session_flags(uint32_t flags)
+    {
+        return ssn_state.session_flags |= flags;
+    }
+
+    uint32_t clear_session_flags(uint32_t flags)
+    {
+        return ssn_state.session_flags &= ~flags;
+    }
+
+    uint32_t get_session_flags(void)
+    {
+        return ssn_state.session_flags;
+    }
+
+    int get_ignore_direction(void)
+    {
+        return ssn_state.ignore_direction;
+    }
+
+    int set_ignore_direction(char ignore_direction)
+    {
+        if (ssn_state.ignore_direction != ignore_direction)
+            ssn_state.ignore_direction = ignore_direction;
+
+        return ssn_state.ignore_direction;
+    }
 
     bool two_way_traffic()
     { return (ssn_state.session_flags & SSNFLAG_SEEN_BOTH) == SSNFLAG_SEEN_BOTH; }
@@ -260,7 +294,6 @@ public:  // FIXIT-M privatize if possible
     unsigned policy_id;
 
     FlowState flow_state;
-    LwState ssn_state;
 
     // FIXIT-L can client and server ip and port be removed from flow?
     sfip_t client_ip; // FIXIT-L family and bits should be changed to uint16_t
@@ -281,6 +314,10 @@ public:  // FIXIT-M privatize if possible
     uint8_t  outer_client_ttl, outer_server_ttl;
 
     uint8_t  response_count;
+
+public:
+    LwState ssn_state;
+
 };
 
 #endif

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2015 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -31,7 +31,7 @@
 #include "tcp_module.h"
 #include "tcp_session.h"
 #include "tcp_events.h"
-#include "tcp_normalization.h"
+#include "tcp_normalizer.h"
 #include "tcp_reassembly.h"
 #include "tcp_defs.h"
 
@@ -365,7 +365,7 @@ static inline int SegmentFastTrack(TcpSegment *tail, TcpDataBlock *tdb)
     return 0;
 }
 
-int AddStreamNode(TcpTracker *st, Packet *p, TcpDataBlock* tdb, int16_t len, uint32_t slide,
+int AddStreamNode(TcpTracker *st, TcpDataBlock* tdb, int16_t len, uint32_t slide,
         uint32_t trunc, uint32_t seq, TcpSegment *left)
 {
     TcpSegment *ss = NULL;
@@ -379,7 +379,7 @@ int AddStreamNode(TcpTracker *st, Packet *p, TcpDataBlock* tdb, int16_t len, uin
          */
         DebugFormat(DEBUG_STREAM_STATE, "zero size TCP data after left & right trimming " "(len: %d slide: %d trunc: %d)\n", len, slide, trunc);
         inc_tcp_discards();
-        NormalTrimPayloadIfWin(p, 0, tdb);
+        st->normalizer->trim_win_payload( tdb );
 
 #ifdef DEBUG_STREAM_EX
         {
@@ -403,7 +403,7 @@ int AddStreamNode(TcpTracker *st, Packet *p, TcpDataBlock* tdb, int16_t len, uin
     }
 
     // FIXIT-L don't allocate overlapped part
-    ss = TcpSegment::init(p, p->pkth->ts, p->data, p->dsize);
+    ss = TcpSegment::init(tdb->pkt, tdb->pkt->pkth->ts, tdb->pkt->data, tdb->pkt->dsize);
 
     if (!ss)
         return STREAM_INSERT_FAILED;
@@ -414,9 +414,9 @@ int AddStreamNode(TcpTracker *st, Packet *p, TcpDataBlock* tdb, int16_t len, uin
     ss->ts = tdb->ts;
 
     /* handle the urg ptr */
-    if (p->ptrs.tcph->th_flags & TH_URG)
+    if (tdb->pkt->ptrs.tcph->th_flags & TH_URG)
     {
-        if (p->ptrs.tcph->urp() < p->dsize)
+        if (tdb->pkt->ptrs.tcph->urp() < tdb->pkt->dsize)
         {
             switch (st->os_policy)
             {
@@ -424,7 +424,7 @@ int AddStreamNode(TcpTracker *st, Packet *p, TcpDataBlock* tdb, int16_t len, uin
                 case STREAM_POLICY_OLD_LINUX:
                     /* Linux, Old linux discard data from urgent pointer
                        If urg pointer is 0, it's treated as a 1 */
-                    ss->urg_offset = p->ptrs.tcph->urp();
+                    ss->urg_offset = tdb->pkt->ptrs.tcph->urp();
                     if (ss->urg_offset == 0)
                     {
                         ss->urg_offset = 1;
@@ -444,8 +444,8 @@ int AddStreamNode(TcpTracker *st, Packet *p, TcpDataBlock* tdb, int16_t len, uin
                 case STREAM_POLICY_IRIX:
                     /* Others discard data from urgent pointer
                        If urg pointer is beyond this packet, it's treated as a 0 */
-                    ss->urg_offset = p->ptrs.tcph->urp();
-                    if (ss->urg_offset > p->dsize)
+                    ss->urg_offset = tdb->pkt->ptrs.tcph->urp();
+                    if (ss->urg_offset > tdb->pkt->dsize)
                     {
                         ss->urg_offset = 0;
                     }
@@ -458,7 +458,7 @@ int AddStreamNode(TcpTracker *st, Packet *p, TcpDataBlock* tdb, int16_t len, uin
     st->seg_bytes_logical += ss->size;
     st->total_bytes_queued += ss->size;
 
-    p->packet_flags |= PKT_STREAM_INSERT;
+    tdb->pkt->packet_flags |= PKT_STREAM_INSERT;
 
     DebugFormat(DEBUG_STREAM_STATE, "added %d bytes on segment list @ seq: 0x%X, total %lu, %d segments queued\n",
             ss->size, ss->seq, st->seg_bytes_logical, SegsToFlush(st, 0));
@@ -1460,14 +1460,14 @@ void purge_all(TcpTracker *st)
     st->seg_bytes_total = st->seg_bytes_logical = 0;
 }
 
-int StreamQueue(TcpTracker *st, Packet *p, TcpDataBlock *tdb, TcpSession *tcpssn)
+int StreamQueue(TcpTracker *st, TcpDataBlock *tdb, TcpSession *tcpssn)
 {
     TcpSegment *left = NULL;
     TcpSegment *right = NULL;
     TcpSegment *dump_me = NULL;
     uint32_t seq = tdb->seq;
     uint32_t seq_end = tdb->end_seq;
-    uint16_t len = p->dsize;
+    uint16_t len = tdb->pkt->dsize;
     int trunc = 0;
     int overlap = 0;
     int slide = 0;
@@ -1478,8 +1478,8 @@ int StreamQueue(TcpTracker *st, Packet *p, TcpDataBlock *tdb, TcpSession *tcpssn
     int32_t dist_tail;
     uint16_t reassembly_policy;
     // To check for retransmitted data
-    const uint8_t* rdata = p->data;
-    uint16_t rsize = p->dsize;
+    const uint8_t* rdata = tdb->pkt->data;
+    uint16_t rsize = tdb->pkt->dsize;
     uint32_t rseq = tdb->seq;
     PROFILE_VARS;
     DEBUG_WRAP(
@@ -1516,8 +1516,7 @@ int StreamQueue(TcpTracker *st, Packet *p, TcpDataBlock *tdb, TcpSession *tcpssn
                 st->seglist_tail->seq, st->seglist_tail->size);
 
         // BLOCK add to existing block and/or allocate new block
-        ret = AddStreamNode(st, p, tdb, len, slide /* 0 */, trunc /* 0 */, seq,
-                left /* tail */);
+        ret = AddStreamNode(st, tdb, len, slide /* 0 */, trunc /* 0 */, seq, left /* tail */);
 
         MODULE_PROFILE_END(s5TcpInsertPerfStats);
         return ret;
@@ -1641,13 +1640,13 @@ int StreamQueue(TcpTracker *st, Packet *p, TcpDataBlock *tdb, TcpSession *tcpssn
                 case REASSEMBLY_POLICY_OLD_LINUX:
                 case REASSEMBLY_POLICY_MACOS:
                     DebugMessage(DEBUG_STREAM_STATE, "left overlap, honoring old data\n");
-                    if (SEQ_LT(left->seq, tdb->seq) && SEQ_GT(left->seq + left->size, tdb->seq + p->dsize))
+                    if (SEQ_LT(left->seq, tdb->seq) && SEQ_GT(left->seq + left->size, tdb->seq + tdb->pkt->dsize))
                     {
                         if (ips_data == NORM_MODE_ON)
                         {
                             unsigned offset = tdb->seq - left->seq;
-                            memcpy((uint8_t*) p->data, left->payload + offset, p->dsize);
-                            p->packet_flags |= PKT_MODIFIED;
+                            memcpy((uint8_t*) tdb->pkt->data, left->payload + offset, tdb->pkt->dsize);
+                            tdb->pkt->packet_flags |= PKT_MODIFIED;
                         }
                         normStats[PC_TCP_IPS_DATA][ips_data]++;
                         sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA][ips_data]++;
@@ -1658,8 +1657,8 @@ int StreamQueue(TcpTracker *st, Packet *p, TcpDataBlock *tdb, TcpSession *tcpssn
                         {
                             unsigned offset = tdb->seq - left->seq;
                             unsigned length = left->seq + left->size - tdb->seq;
-                            memcpy((uint8_t*) p->data, left->payload + offset, length);
-                            p->packet_flags |= PKT_MODIFIED;
+                            memcpy((uint8_t*) tdb->pkt->data, left->payload + offset, length);
+                            tdb->pkt->packet_flags |= PKT_MODIFIED;
                         }
                         normStats[PC_TCP_IPS_DATA][ips_data]++;
                         sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA][ips_data]++;
@@ -1722,7 +1721,7 @@ int StreamQueue(TcpTracker *st, Packet *p, TcpDataBlock *tdb, TcpSession *tcpssn
                          * seq by + (seq + len) and
                          * size by - (seq + len - left->seq).
                          */
-                        ret = DupStreamNode(p, st, left, &right);
+                        ret = DupStreamNode(tdb->pkt, st, left, &right);
                         if (ret != STREAM_INSERT_OK)
                         {
                             /* No warning, its done in StreamSeglistAddNode */
@@ -1781,14 +1780,14 @@ int StreamQueue(TcpTracker *st, Packet *p, TcpDataBlock *tdb, TcpSession *tcpssn
         /* Treat sequence number overlap as a retransmission
          * Only check right side since left side happens rarely
          */
-        RetransmitHandle(p, tcpssn);
+        RetransmitHandle(tdb->pkt, tcpssn);
 
         if (overlap < right->size)
         {
             if (right->is_retransmit(rdata, rsize, rseq))
             {
                 // All data was retransmitted
-                RetransmitProcess(p, tcpssn);
+                RetransmitProcess(tdb->pkt, tcpssn);
                 addthis = 0;
                 break;
             }
@@ -1836,9 +1835,9 @@ int StreamQueue(TcpTracker *st, Packet *p, TcpDataBlock *tdb, TcpSession *tcpssn
                     if (ips_data == NORM_MODE_ON)
                     {
                         unsigned offset = right->seq - tdb->seq;
-                        unsigned length = tdb->seq + p->dsize - right->seq;
-                        memcpy((uint8_t*) p->data + offset, right->payload, length);
-                        p->packet_flags |= PKT_MODIFIED;
+                        unsigned length = tdb->seq + tdb->pkt->dsize - right->seq;
+                        memcpy((uint8_t*) tdb->pkt->data + offset, right->payload, length);
+                        tdb->pkt->packet_flags |= PKT_MODIFIED;
                     }
                     normStats[PC_TCP_IPS_DATA][ips_data]++;
                     sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA][ips_data]++;
@@ -1867,7 +1866,7 @@ int StreamQueue(TcpTracker *st, Packet *p, TcpDataBlock *tdb, TcpSession *tcpssn
                 if (rsize == 0)
                 {
                     // All data was retransmitted
-                    RetransmitProcess(p, tcpssn);
+                    RetransmitProcess(tdb->pkt, tcpssn);
                     addthis = 0;
                 }
                 continue;
@@ -1927,8 +1926,8 @@ int StreamQueue(TcpTracker *st, Packet *p, TcpDataBlock *tdb, TcpSession *tcpssn
                     if (ips_data == NORM_MODE_ON)
                     {
                         unsigned offset = right->seq - tdb->seq;
-                        memcpy((uint8_t*) p->data + offset, right->payload, right->size);
-                        p->packet_flags |= PKT_MODIFIED;
+                        memcpy((uint8_t*) tdb->pkt->data + offset, right->payload, right->size);
+                        tdb->pkt->packet_flags |= PKT_MODIFIED;
                     }
                     normStats[PC_TCP_IPS_DATA][ips_data]++;
                     sfBase.iPegs[PERF_COUNT_TCP_IPS_DATA][ips_data]++;
@@ -1966,7 +1965,7 @@ int StreamQueue(TcpTracker *st, Packet *p, TcpDataBlock *tdb, TcpSession *tcpssn
                     /* insert this one, and see if we need to chunk it up
                        Adjust slide so that is correct relative to orig seq */
                     slide = seq - tdb->seq;
-                    ret = AddStreamNode(st, p, tdb, len, slide, trunc, seq, left);
+                    ret = AddStreamNode(st, tdb, len, slide, trunc, seq, left);
                     if (ret != STREAM_INSERT_OK)
                     {
                         /* no warning, already done above */
@@ -2025,7 +2024,7 @@ right_overlap_last:
     {
         /* Adjust slide so that is correct relative to orig seq */
         slide = seq - tdb->seq;
-        ret = AddStreamNode(st, p, tdb, len, slide, trunc, seq, left);
+        ret = AddStreamNode(st, tdb, len, slide, trunc, seq, left);
     }
     else
     {

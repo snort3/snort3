@@ -331,47 +331,6 @@ void Stream::drop_session(const Packet* p)
         drop_traffic(flow, SSN_DIR_BOTH);
 }
 
-uint32_t Stream::set_session_flags(Flow* flow, uint32_t flags)
-{
-    if ( !flow )
-        return 0;
-
-    if ((flow->ssn_state.session_flags & flags) != flags)
-    {
-        flow->ssn_state.session_flags |= flags;
-    }
-    return flow->ssn_state.session_flags;
-}
-
-uint32_t Stream::get_session_flags(Flow* flow)
-{
-    if ( !flow )
-        return 0;
-
-    return flow->ssn_state.session_flags;
-}
-
-int Stream::get_ignore_direction(Flow* flow)
-{
-    if ( !flow )
-        return 0;
-
-    return flow->ssn_state.ignore_direction;
-}
-
-int Stream::set_ignore_direction(Flow* flow, int ignore_direction)
-{
-    if ( !flow )
-        return 0;
-
-    if (flow->ssn_state.ignore_direction != ignore_direction)
-    {
-        flow->ssn_state.ignore_direction = ignore_direction;
-    }
-
-    return flow->ssn_state.ignore_direction;
-}
-
 //-------------------------------------------------------------------------
 // misc support
 //-------------------------------------------------------------------------
@@ -853,24 +812,24 @@ TEST_CASE("Stream API", "[stream_api][stream]")
 
     SECTION("set/get ignore direction")
     {
-        int dir = Stream::set_ignore_direction( flow, SSN_DIR_NONE);
+        int dir = flow->set_ignore_direction( SSN_DIR_NONE);
         CHECK( ( dir == SSN_DIR_NONE ) );
-        dir = Stream::get_ignore_direction( flow );
+        dir = flow->get_ignore_direction( );
         CHECK( ( dir == SSN_DIR_NONE ) );
 
-        dir = Stream::set_ignore_direction( flow, SSN_DIR_FROM_CLIENT);
+        dir = flow->set_ignore_direction( SSN_DIR_FROM_CLIENT);
         CHECK( ( dir == SSN_DIR_FROM_CLIENT ) );
-        dir = Stream::get_ignore_direction( flow );
+        dir = flow->get_ignore_direction( );
         CHECK( ( dir == SSN_DIR_FROM_CLIENT ) );
 
-        dir = Stream::set_ignore_direction( flow, SSN_DIR_FROM_SERVER);
+        dir = flow->set_ignore_direction( SSN_DIR_FROM_SERVER);
         CHECK( ( dir == SSN_DIR_FROM_SERVER ) );
-        dir = Stream::get_ignore_direction( flow );
+        dir = flow->get_ignore_direction( );
         CHECK( ( dir == SSN_DIR_FROM_SERVER ) );
 
-        dir = Stream::set_ignore_direction( flow, SSN_DIR_BOTH);
+        dir = flow->set_ignore_direction( SSN_DIR_BOTH);
         CHECK( ( dir == SSN_DIR_BOTH ) );
-        dir = Stream::get_ignore_direction( flow );
+        dir = flow->get_ignore_direction( );
         CHECK( ( dir == SSN_DIR_BOTH ) );
     }
 
@@ -881,12 +840,12 @@ TEST_CASE("Stream API", "[stream_api][stream]")
         int dir;
 
         Stream::stop_inspection( flow, pkt, SSN_DIR_FROM_CLIENT, 0, 0 );
-        dir = Stream::get_ignore_direction( flow );
+        dir = flow->get_ignore_direction( );
         CHECK( ( dir == SSN_DIR_FROM_CLIENT ) );
         CHECK( ( flow->flow_state == Flow::ALLOW ) );
 
         Stream::stop_inspection( flow, pkt, SSN_DIR_FROM_SERVER, 0, 0 );
-        dir = Stream::get_ignore_direction( flow );
+        dir = flow->get_ignore_direction( );
         CHECK( ( dir == SSN_DIR_FROM_SERVER ) );
         CHECK( ( flow->flow_state == Flow::ALLOW ) );
 

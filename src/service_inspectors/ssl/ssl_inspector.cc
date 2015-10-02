@@ -144,7 +144,7 @@ static inline bool SSLPP_is_encrypted(SSL_PROTO_CONF* config, uint32_t ssl_flags
         }
         /* Check if we're either midstream or if packets were missed after the
          *          * connection was established */
-        else if ((stream.get_session_flags (packet->flow) & SSNFLAG_MIDSTREAM) ||
+        else if ((packet->flow->get_session_flags() & SSNFLAG_MIDSTREAM) ||
             (stream.missed_packets(packet->flow, SSN_DIR_BOTH)))
         {
             if ((ssl_flags & (SSL_CAPP_FLAG | SSL_SAPP_FLAG)) == (SSL_CAPP_FLAG | SSL_SAPP_FLAG))
@@ -444,6 +444,7 @@ void Ssl::eval(Packet* p)
 {
     // precondition - what we registered for
     assert(p->has_tcp_data());
+    assert(p->flow);
 
     ++sslstats.total_packets;
     snort_ssl(config, p);

@@ -9,8 +9,10 @@ tcp_module.h \
 tcp_debug_trace.h \
 tcp_defs.h \
 tcp_events.h \
-tcp_normalization.h \
-tcp_normalization.cc \
+tcp_normalizer.h \
+tcp_normalizer.cc \
+tcp_normalizers.h \
+tcp_normalizers.cc \
 tcp_reassembly.h \
 tcp_reassembly.cc \
 tcp_session.cc \

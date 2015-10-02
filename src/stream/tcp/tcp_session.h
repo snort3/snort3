@@ -28,6 +28,8 @@
 #include "stream/paf.h"
 #include "flow/session.h"
 
+class TcpNormalizer;
+
 // TBD-EDM - these includes are for functions moved to a new file to group related functionality
 // in specific files ... these functional groups will be further refactored as the stream tcp
 // rewrite continues...
@@ -134,6 +136,7 @@ struct TcpTracker
     uint32_t xtradata_mask; /* extra data available to log */
 
     uint16_t os_policy;
+    TcpNormalizer* normalizer;
     uint16_t reassembly_policy;
 
     uint16_t wscale; /* window scale setting */

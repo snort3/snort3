@@ -71,14 +71,14 @@ struct TCPHdr
     uint16_t th_sport;     /* source port */
     uint16_t th_dport;     /* destination port */
     uint32_t th_seq;       /* sequence number */
-    uint32_t th_ack;       /* acknowledgement number */
+    uint32_t th_ack;       /* acknowledgment number */
     uint8_t th_offx2;      /* offset and reserved */
     uint8_t th_flags;
     uint16_t th_win;       /* window */
     uint16_t th_sum;       /* checksum */
     uint16_t th_urp;       /* urgent pointer */
 
-    /* Fomatted data access and booleans */
+    /* Formatted data access and booleans */
     inline uint8_t hlen() const
     { return (th_offx2 & 0xf0) >> 2; }
 
@@ -119,10 +119,10 @@ struct TCPHdr
     { return (th_flags & TH_SYN); }
 
     inline bool is_syn_only() const
-    { return (th_flags & (TH_SYN|TH_ACK)) == TH_SYN; }
+    { return (th_flags & (TH_SYN | TH_ACK | TH_RST | TH_FIN)) == TH_SYN; }
 
     inline bool is_syn_ack() const
-    { return are_flags_set(TH_SYN|TH_ACK); }
+    { return are_flags_set(TH_SYN | TH_ACK); }
 
     inline bool is_ack() const
     { return (th_flags & TH_ACK); }
