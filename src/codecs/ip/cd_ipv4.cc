@@ -312,7 +312,10 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     snort.set_pkt_type(PktType::IP);
     codec.proto_bits |= PROTO_BIT__IP;
     IPMiscTests(iph, codec, ip::IP4_HEADER_LEN + ip_opt_len);
+
     codec.lyr_len = hlen - codec.invalid_bytes;
+    codec.curr_ip6_extension = 0;  // necessary since next protos numbers share
+    codec.ip6_extension_count = 0; // same space for both ip4 and ip6
 
     /* if this packet isn't a fragment
      * or if it is, its a UDP packet and offset is 0 */

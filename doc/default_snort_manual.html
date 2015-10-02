@@ -781,7 +781,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0-a2 (Build 167) from 2.9.7-177
+o"  )~   Version 3.0.0-a2 (Build 172) from 2.9.7-177
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
@@ -1290,7 +1290,7 @@ daq from <a href="http://www.snort.org">http://www.snort.org</a> for packet IO
 </li>
 <li>
 <p>
-dnet from <a href="http://code.google.com/p/libdnet/">http://code.google.com/p/libdnet/</a> for network utility functions
+dnet from <a href="https://github.com/dugsong/libdnet.git">https://github.com/dugsong/libdnet.git</a> for network utility functions
 </p>
 </li>
 <li>
@@ -1329,18 +1329,13 @@ asciidoc from <a href="http://www.methods.co.nz/asciidoc/">http://www.methods.co
 </li>
 <li>
 <p>
-check from <a href="http://check.sourceforge.net">http://check.sourceforge.net</a> to build unit tests
-</p>
-</li>
-<li>
-<p>
 dblatex from <a href="http://dblatex.sourceforge.net">http://dblatex.sourceforge.net</a> to build the pdf manual (in
   addition to asciidoc)
 </p>
 </li>
 <li>
 <p>
-lzma from <a href="http://www.7-zip.org/sdk.html">http://www.7-zip.org/sdk.html</a> for decompression of SWF fles.
+lzma &gt;= 5.1.2 from <a href="http://tukaani.org/xz/">http://tukaani.org/xz/</a> for decompression of SWF fles.
 </p>
 </li>
 <li>
@@ -1449,11 +1444,11 @@ run eclipse and do File &gt; Import &gt; Existing Eclipse Project</code></pre>
 </li>
 <li>
 <p>
-To build with clang++ on OS X with gcc installed, do this first:
+To build with g++ on OS X where clang is installed, do this first:
 </p>
 <div class="literalblock">
 <div class="content">
-<pre><code>export CXX=clang++</code></pre>
+<pre><code>export CXX=g++</code></pre>
 </div></div>
 </li>
 </ul></div>
@@ -1464,7 +1459,7 @@ To build with clang++ on OS X with gcc installed, do this first:
 <div class="literalblock">
 <div class="content">
 <pre><code>export LUA_PATH=$my_path/include/snort/lua/\?.lua\;\;
-export SNORT_LUA_PATH=$my_path/etc/snort</code></pre>
+export SNORT_LUA_PATH=$my_path/etc/snort/</code></pre>
 </div></div>
 <div class="paragraph"><p>Then give it a go:</p></div>
 <div class="ulist"><ul>
@@ -1581,9 +1576,8 @@ You can process multiple sources at one time by using the -z or
 </li>
 <li>
 <p>
-Unit tests are configured with --enable-unit-tests (libcheck is
-  required).  They can then be run with snort --unit-test [&lt;mode&gt;] where mode
-  is a libcheck print_mode (silent, minimal, normal, etc.).
+Unit tests are configured with --enable-unit-tests.  They can then be run
+  with snort --catch-test [tags]|all.
 </p>
 </li>
 </ul></div>
@@ -1912,17 +1906,17 @@ EXTERNAL_NET = '!' .. MY_SERVERS</code></pre>
 <div class="ulist"><ul>
 <li>
 <p>
-configure bombs on OSX with g++ wrapper to clang because g<code> version &lt; 4.8
-(compare g\</code> -dumpversion and g++ --version)
+configure will use clang<code> by default if it is installed.
+To compile with g</code> instead:
 </p>
 <div class="literalblock">
 <div class="content">
-<pre><code>workaround:  export CXX=clang++</code></pre>
+<pre><code>export CXX=g++</code></pre>
 </div></div>
 </li>
 <li>
 <p>
-export CXX=clang++ to build with clang; coughs up these warnings:
+clang coughs up these warnings:
 </p>
 <div class="literalblock">
 <div class="content">
@@ -1941,6 +1935,18 @@ With cmake, make install will rebuild the docs even though when already
 IPS option hash and inspectors pop, imap, smtp, and ssl fail to build
   dynamically due to missing symbols in hash/ and protocols/ despite them
   being declared SO_PUBLIC.
+</p>
+</li>
+<li>
+<p>
+Enabling large pcap may erroneously affect the number of packets processed
+  from pcaps
+</p>
+</li>
+<li>
+<p>
+Enabling debug messages may erroneously affect the number of packets
+  processed from pcaps
 </p>
 </li>
 </ul></div>
@@ -1966,6 +1972,18 @@ first loaded version will always be executed even though plugin manager
 saves the correct version.
 </p>
 </li>
+<li>
+<p>
+When using -c and -L together, the last on the command line wins (-c -L
+  will dump; -L -c will analyze).
+</p>
+</li>
+<li>
+<p>
+Modules instantiated by command line only will not get default settings
+  unless hard-coded.  This notably applies to -A and -L options.
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect3">
@@ -1981,6 +1999,18 @@ warning as does metadata:service foo, service foo;
 <p>
 ip_proto doesn&#8217;t work properly with reassembled packets so it can&#8217;t be
 used to restrict the protocol of service rules.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect3">
+<h4 id="_rules_2">Rules</h4>
+<div class="ulist"><ul>
+<li>
+<p>
+Inspector events generated while parsing TCP payload in non-IPS mode will
+  indicate the wrong direction (ie they will be based on the ACK packet).
+  (Same is true for Snort.)
 </p>
 </li>
 </ul></div>
@@ -2580,6 +2610,11 @@ bool <strong>file_id.enable_type</strong> = false: enable type ID
 <li>
 <p>
 bool <strong>file_id.enable_signature</strong> = false: enable signature calculation
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.enable_capture</strong> = false: enable file capture
 </p>
 </li>
 <li>
@@ -3711,7 +3746,7 @@ implied <strong>snort.--treat-drop-as-ignore</strong>: use drop, sdrop, and reje
 </li>
 <li>
 <p>
-select <strong>snort.--unit-test</strong>: &lt;verbosity&gt; run unit tests with given libcheck output mode { silent | minimal | normal | verbose | env (export CK_VERBOSITY) }
+string <strong>snort.--catch-test</strong>: comma separated list of cat unit test tags or <em>all</em>
 </p>
 </li>
 <li>
@@ -6161,22 +6196,22 @@ int <strong>imap.uu_decode_depth</strong> = 1460:  Unix-to-Unix decoding depth {
 <div class="ulist"><ul>
 <li>
 <p>
-bool <strong>new_http_inspect.test_input</strong> = false: read HTTP messages from text file
-</p>
-</li>
-<li>
-<p>
-bool <strong>new_http_inspect.test_output</strong> = false: print out HTTP section data
-</p>
-</li>
-<li>
-<p>
 int <strong>new_http_inspect.request_depth</strong> = -1: maximum request message body bytes to examine (-1 no limit) { -1: }
 </p>
 </li>
 <li>
 <p>
 int <strong>new_http_inspect.response_depth</strong> = -1: maximum response message body bytes to examine (-1 no limit) { -1: }
+</p>
+</li>
+<li>
+<p>
+bool <strong>new_http_inspect.test_input</strong> = false: read HTTP messages from text file
+</p>
+</li>
+<li>
+<p>
+bool <strong>new_http_inspect.test_output</strong> = false: print out HTTP section data
 </p>
 </li>
 </ul></div>
@@ -11506,7 +11541,7 @@ stream5_tcp: max_active_responses, min_response_seconds moved to
 </ul></div>
 </div>
 <div class="sect2">
-<h3 id="_rules_2">Rules</h3>
+<h3 id="_rules_3">Rules</h3>
 <div class="ulist"><ul>
 <li>
 <p>
@@ -14247,8 +14282,7 @@ default to stdout.  These options can be combined.</td>
 <div class="literalblock">
 <div class="content">
 <pre><code>snort -c $my_path/etc/snort/snort.lua \
-    --plugin-path $my_path/lib/snort_extra \
-    --daq-dir $my_path/lib/snort_extra/daqs --daq hext -i tty &lt;&lt; END
+    --daq-dir $my_path/lib/snort/daqs --daq hext -i tty &lt;&lt; END
 $packet 10.1.2.3 48620 -&gt; 10.9.8.7 80
 "GET / HTTP/1.1\r\n"
 "Host: localhost\r\n"
@@ -14259,24 +14293,22 @@ END</code></pre>
 <div class="literalblock">
 <div class="content">
 <pre><code>snort -c $my_path/etc/snort/snort.lua \
-    --plugin-path $my_path/lib/snort_extra \
-    --daq-dir $my_path/lib/snort_extra/daqs --daq hext \
+    --daq-dir $my_path/lib/snort/daqs --daq hext \
     --daq-var dlt=1 -r &lt;hext-file&gt;</code></pre>
 </div></div>
-<div class="paragraph"><p>Process a directory of plain files (ie non-pcap) with 4 threads:</p></div>
+<div class="paragraph"><p>Process a directory of plain files (ie non-pcap) with 4 threads with 8K
+buffers:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>snort -c $my_path/etc/snort/snort.lua \
-    --plugin-path $my_path/lib/snort_extra \
-    --daq-dir $my_path/lib/snort_extra/daqs --daq file \
-    --pcap-dir path/to/files -z 4</code></pre>
+    --daq-dir $my_path/lib/snort/daqs --daq file \
+    --pcap-dir path/to/files -z 4 -s 8192</code></pre>
 </div></div>
 <div class="paragraph"><p>Bridge two TCP connections on port 8000 and inspect the traffic:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>snort -c $my_path/etc/snort/snort.lua \
-    --plugin-path $my_path/lib/snort_extra \
-    --daq-dir $my_path/lib/snort_extra/daqs --daq socket</code></pre>
+    --daq-dir $my_path/lib/snort/daqs --daq socket</code></pre>
 </div></div>
 </div>
 <div class="sect3">
@@ -14284,8 +14316,7 @@ END</code></pre>
 <div class="paragraph"><p>Dump TCP stream payload in hext mode:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>snort -c $my_path/etc/snort/snort.lua \
-    --plugin-path $my_path/lib/snort_extra -L hext</code></pre>
+<pre><code>snort -c $my_path/etc/snort/snort.lua -L hext</code></pre>
 </div></div>
 <div class="paragraph"><p>Output timestamp, pkt_num, proto, pkt_gen, dgm_len, dir, src_ap, dst_ap,
 rule, action for each alert:</p></div>
@@ -14380,7 +14411,7 @@ kill -hup &lt;pid&gt;</code></pre>
 </div>
 <div class="sect2">
 <h3 id="_optional_features">Optional Features</h3>
-<div class="paragraph"><p>Listed below are the features that must be explicitly enabled so they are built
+<div class="paragraph"><p>The features listed below must be explicitly enabled so they are built
 into the Snort binary.  For a full list of build features, run ./configure
 --help.</p></div>
 <div class="ulist"><ul>
@@ -14401,6 +14432,45 @@ into the Snort binary.  For a full list of build features, run ./configure
 </p>
 </li>
 </ul></div>
+<div class="paragraph"><p>These features are built only if the required libraries and headers are
+present.  There is no need to explicitly enable.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>lzma</strong>: from <a href="http://www.7-zip.org/sdk.html">http://www.7-zip.org/sdk.html</a> for decompression of SWF fles.
+</p>
+</li>
+<li>
+<p>
+<strong>openssl</strong>: from <a href="https://www.openssl.org">https://www.openssl.org</a> for SHA and MD5 file signatures and
+  the protected_content rule option.
+</p>
+</li>
+<li>
+<p>
+*intel-soft-cpm": an optional pattern matcher based on a library from
+  Intel.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>If you need to use headers and/or libraries in non-standard locations, you
+can use these options:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>--with-pkg-includes</strong>: specify the directory containing the package
+  headers.
+</p>
+</li>
+<li>
+<p>
+<strong>--with-pkg-libraries</strong>: specify the directory containing the package
+  libraries.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>These can be use for pcap, luajit, pcre, dnet, daq, lzma, openssl, and
+intel-soft-cpm packages.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_environment_variables">Environment Variables</h3>
@@ -14465,6 +14535,11 @@ into the Snort binary.  For a full list of build features, run ./configure
 <li>
 <p>
 <strong>--c2x</strong> output hex for given char (see also --x2c)
+</p>
+</li>
+<li>
+<p>
+<strong>--catch-test</strong> comma separated list of cat unit test tags or <em>all</em>
 </p>
 </li>
 <li>
@@ -14760,11 +14835,6 @@ into the Snort binary.  For a full list of build features, run ./configure
 <li>
 <p>
 <strong>--treat-drop-as-ignore</strong> use drop, sdrop, and reject rules to ignore session traffic when not inline
-</p>
-</li>
-<li>
-<p>
-<strong>--unit-test</strong> &lt;verbosity&gt; run unit tests with given libcheck output mode (silent | minimal | normal | verbose | env (export CK_VERBOSITY))
 </p>
 </li>
 <li>
@@ -15901,6 +15971,11 @@ int <strong>file_id.block_timeout</strong> = 86400: stop blocking after this man
 <li>
 <p>
 bool <strong>file_id.block_timeout_lookup</strong> = false: block if lookup times out
+</p>
+</li>
+<li>
+<p>
+bool <strong>file_id.enable_capture</strong> = false: enable file capture
 </p>
 </li>
 <li>
@@ -17755,6 +17830,11 @@ string <strong>snort.--c2x</strong>: output hex for given char (see also --x2c)
 </li>
 <li>
 <p>
+string <strong>snort.--catch-test</strong>: comma separated list of cat unit test tags or <em>all</em>
+</p>
+</li>
+<li>
+<p>
 implied <strong>snort.--create-pidfile</strong>: create PID file, even when not in Daemon mode
 </p>
 </li>
@@ -18046,11 +18126,6 @@ implied <strong>snort.--treat-drop-as-alert</strong>: converts drop, sdrop, and 
 <li>
 <p>
 implied <strong>snort.--treat-drop-as-ignore</strong>: use drop, sdrop, and reject rules to ignore session traffic when not inline
-</p>
-</li>
-<li>
-<p>
-select <strong>snort.--unit-test</strong>: &lt;verbosity&gt; run unit tests with given libcheck output mode { silent | minimal | normal | verbose | env (export CK_VERBOSITY) }
 </p>
 </li>
 <li>
@@ -23726,7 +23801,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>codec::socket</strong>: support for sockets / proxied sessions (DLT 230)
+<strong>codec::slip</strong>: support for slip protocol (DLT 8)
 </p>
 </li>
 <li>
@@ -23762,6 +23837,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>codec::udp</strong>: support for user datagram protocol
+</p>
+</li>
+<li>
+<p>
+<strong>codec::user</strong>: support for user sessions (DLT 230)
 </p>
 </li>
 <li>
@@ -24458,7 +24538,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-08-31 11:38:10 EDT
+Last updated 2015-10-01 17:52:34 EDT
 </div>
 </div>
 </body>

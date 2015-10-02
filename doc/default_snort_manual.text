@@ -291,7 +291,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0-a2 (Build 167) from 2.9.7-177
+o"  )~   Version 3.0.0-a2 (Build 172) from 2.9.7-177
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2015 Cisco and/or its affiliates. All rights reserved.
@@ -680,8 +680,8 @@ Required:
   * autotools or cmake to build from source
   * g++ >= 4.8 or other recent C++11 compiler
   * daq from http://www.snort.org for packet IO
-  * dnet from http://code.google.com/p/libdnet/ for network utility
-    functions
+  * dnet from https://github.com/dugsong/libdnet.git for network
+    utility functions
   * LuaJIT from http://luajit.org for configuration and scripting
   * pcap from http://www.tcpdump.org for tcpdump style logging
   * pcre from http://www.pcre.org for regular expression pattern
@@ -694,11 +694,10 @@ Optional:
 
   * asciidoc from http://www.methods.co.nz/asciidoc/ to build the
     HTML manual
-  * check from http://check.sourceforge.net to build unit tests
   * dblatex from http://dblatex.sourceforge.net to build the pdf
     manual (in addition to asciidoc)
-  * lzma from http://www.7-zip.org/sdk.html for decompression of SWF
-    fles.
+  * lzma >= 5.1.2 from http://tukaani.org/xz/ for decompression of
+    SWF fles.
   * openssl from https://www.openssl.org for SHA and MD5 file
     signatures and the protected_content rule option.
   * w3m from http://sourceforge.net/projects/w3m/ to build the plain
@@ -753,9 +752,10 @@ Optional:
         ccmake -G "Eclipse CDT4 - Unix Makefiles" /path/to/Snort++/tree
         run eclipse and do File > Import > Existing Eclipse Project
 
-  * To build with clang++ on OS X with gcc installed, do this first:
+  * To build with g++ on OS X where clang is installed, do this
+    first:
 
-    export CXX=clang++
+    export CXX=g++
 
 
 2.3. Run
@@ -765,7 +765,7 @@ Optional:
 First set up the environment:
 
 export LUA_PATH=$my_path/include/snort/lua/\?.lua\;\;
-export SNORT_LUA_PATH=$my_path/etc/snort
+export SNORT_LUA_PATH=$my_path/etc/snort/
 
 Then give it a go:
 
@@ -828,10 +828,8 @@ General Use
     install/lib.
   * You can process multiple sources at one time by using the -z or
     --max-threads option.
-  * Unit tests are configured with --enable-unit-tests (libcheck is
-    required). They can then be run with snort --unit-test [<mode>]
-    where mode is a libcheck print_mode (silent, minimal, normal,
-    etc.).
+  * Unit tests are configured with --enable-unit-tests. They can then
+    be run with snort --catch-test [tags]|all.
 
 Lua Configuration
 
@@ -1029,12 +1027,12 @@ WARNING: unknown symbol x
 
 2.8.1. Build
 
-  * configure bombs on OSX with g++ wrapper to clang because g
-    version < 4.8 (compare g\ -dumpversion and g++ --version)
+  * configure will use clang by default if it is installed. To
+    compile with g instead:
 
-    workaround:  export CXX=clang++
+    export CXX=g++
 
-  * export CXX=clang++ to build with clang; coughs up these warnings:
+  * clang coughs up these warnings:
 
     Wunused-but-set-variable is not understood by clang
     clang: warning: argument unused during compilation: '-pthread'
@@ -1044,6 +1042,10 @@ WARNING: unknown symbol x
   * IPS option hash and inspectors pop, imap, smtp, and ssl fail to
     build dynamically due to missing symbols in hash/ and protocols/
     despite them being declared SO_PUBLIC.
+  * Enabling large pcap may erroneously affect the number of packets
+    processed from pcaps
+  * Enabling debug messages may erroneously affect the number of
+    packets processed from pcaps
 
 2.8.2. Config
 
@@ -1056,6 +1058,11 @@ WARNING: unknown symbol x
   * Multiple versions of luajit scripts are not handled correctly.
     The first loaded version will always be executed even though
     plugin manager saves the correct version.
+  * When using -c and -L together, the last on the command line wins
+    (-c -L will dump; -L -c will analyze).
+  * Modules instantiated by command line only will not get default
+    settings unless hard-coded. This notably applies to -A and -L
+    options.
 
 2.8.3. Rules
 
@@ -1065,7 +1072,13 @@ WARNING: unknown symbol x
   * ip_proto doesn’t work properly with reassembled packets so it
     can’t be used to restrict the protocol of service rules.
 
-2.8.4. snort2lua
+2.8.4. Rules
+
+  * Inspector events generated while parsing TCP payload in non-IPS
+    mode will indicate the wrong direction (ie they will be based on
+    the ACK packet). (Same is true for Snort.)
+
+2.8.5. snort2lua
 
   * uricontent:"foo"; content:"bar"; → http_uri; content:"foo";
     content:"bar"; (missing pkt_data)
@@ -1348,6 +1361,7 @@ Configuration:
   * bool file_id.enable_type = false: enable type ID
   * bool file_id.enable_signature = false: enable signature
     calculation
+  * bool file_id.enable_capture = false: enable file capture
   * int file_id.show_data_depth = 100: print this many octets { 0: }
   * int file_id.file_rules[].rev = 0: rule revision { 0: }
   * string file_id.file_rules[].msg: information about the file type
@@ -1849,9 +1863,8 @@ Configuration:
     reject rules into alert rules during startup
   * implied snort.--treat-drop-as-ignore: use drop, sdrop, and reject
     rules to ignore session traffic when not inline
-  * select snort.--unit-test: <verbosity> run unit tests with given
-    libcheck output mode { silent | minimal | normal | verbose | env
-    (export CK_VERBOSITY) }
+  * string snort.--catch-test: comma separated list of cat unit test
+    tags or all
   * implied snort.--version: show version number (same as -V)
   * implied snort.--warn-all: enable all warnings
   * implied snort.--warn-conf: warn about configuration issues
@@ -2954,14 +2967,14 @@ Type: inspector
 
 Configuration:
 
-  * bool new_http_inspect.test_input = false: read HTTP messages from
-    text file
-  * bool new_http_inspect.test_output = false: print out HTTP section
-    data
   * int new_http_inspect.request_depth = -1: maximum request message
     body bytes to examine (-1 no limit) { -1: }
   * int new_http_inspect.response_depth = -1: maximum response
     message body bytes to examine (-1 no limit) { -1: }
+  * bool new_http_inspect.test_input = false: read HTTP messages from
+    text file
+  * bool new_http_inspect.test_output = false: print out HTTP section
+    data
 
 Rules:
 
@@ -7562,8 +7575,7 @@ default to stdout. These options can be combined.
 Process hext packets from stdin:
 
 snort -c $my_path/etc/snort/snort.lua \
-    --plugin-path $my_path/lib/snort_extra \
-    --daq-dir $my_path/lib/snort_extra/daqs --daq hext -i tty << END
+    --daq-dir $my_path/lib/snort/daqs --daq hext -i tty << END
 $packet 10.1.2.3 48620 -> 10.9.8.7 80
 "GET / HTTP/1.1\r\n"
 "Host: localhost\r\n"
@@ -7573,29 +7585,26 @@ END
 Process raw ethernet from hext file:
 
 snort -c $my_path/etc/snort/snort.lua \
-    --plugin-path $my_path/lib/snort_extra \
-    --daq-dir $my_path/lib/snort_extra/daqs --daq hext \
+    --daq-dir $my_path/lib/snort/daqs --daq hext \
     --daq-var dlt=1 -r <hext-file>
 
-Process a directory of plain files (ie non-pcap) with 4 threads:
+Process a directory of plain files (ie non-pcap) with 4 threads with
+8K buffers:
 
 snort -c $my_path/etc/snort/snort.lua \
-    --plugin-path $my_path/lib/snort_extra \
-    --daq-dir $my_path/lib/snort_extra/daqs --daq file \
-    --pcap-dir path/to/files -z 4
+    --daq-dir $my_path/lib/snort/daqs --daq file \
+    --pcap-dir path/to/files -z 4 -s 8192
 
 Bridge two TCP connections on port 8000 and inspect the traffic:
 
 snort -c $my_path/etc/snort/snort.lua \
-    --plugin-path $my_path/lib/snort_extra \
-    --daq-dir $my_path/lib/snort_extra/daqs --daq socket
+    --daq-dir $my_path/lib/snort/daqs --daq socket
 
 16.4.2. Logger Alternatives
 
 Dump TCP stream payload in hext mode:
 
-snort -c $my_path/etc/snort/snort.lua \
-    --plugin-path $my_path/lib/snort_extra -L hext
+snort -c $my_path/etc/snort/snort.lua -L hext
 
 Output timestamp, pkt_num, proto, pkt_gen, dgm_len, dir, src_ap,
 dst_ap, rule, action for each alert:
@@ -7676,9 +7685,9 @@ The available signals may vary from platform to platform.
 
 ------------
 
-Listed below are the features that must be explicitly enabled so they
-are built into the Snort binary. For a full list of build features,
-run ./configure --help.
+The features listed below must be explicitly enabled so they are
+built into the Snort binary. For a full list of build features, run .
+/configure --help.
 
   * --enable-ppm: enable packet and rule performance monitoring and
     coarse latency enforcement.
@@ -7686,6 +7695,27 @@ run ./configure --help.
     profiling.
   * --enable-shell: enable local and remote command line shell
     support.
+
+These features are built only if the required libraries and headers
+are present. There is no need to explicitly enable.
+
+  * lzma: from http://www.7-zip.org/sdk.html for decompression of SWF
+    fles.
+  * openssl: from https://www.openssl.org for SHA and MD5 file
+    signatures and the protected_content rule option.
+  * *intel-soft-cpm": an optional pattern matcher based on a library
+    from Intel.
+
+If you need to use headers and/or libraries in non-standard
+locations, you can use these options:
+
+  * --with-pkg-includes: specify the directory containing the package
+    headers.
+  * --with-pkg-libraries: specify the directory containing the
+    package libraries.
+
+These can be use for pcap, luajit, pcre, dnet, daq, lzma, openssl,
+and intel-soft-cpm packages.
 
 
 16.6. Environment Variables
@@ -7722,6 +7752,7 @@ run ./configure --help.
   * --bpf <filter options> are standard BPF options, as seen in
     TCPDump
   * --c2x output hex for given char (see also --x2c)
+  * --catch-test comma separated list of cat unit test tags or all
   * --create-pidfile create PID file, even when not in Daemon mode
   * --daq <type> select packet acquisition module (default is pcap)
   * --daq-dir <dir> tell snort where to find desired DAQ
@@ -7811,9 +7842,6 @@ run ./configure --help.
     alert rules during startup
   * --treat-drop-as-ignore use drop, sdrop, and reject rules to
     ignore session traffic when not inline
-  * --unit-test <verbosity> run unit tests with given libcheck output
-    mode (silent | minimal | normal | verbose | env (export
-    CK_VERBOSITY))
   * --version show version number (same as -V)
   * --warn-all enable all warnings
   * --warn-conf warn about configuration issues
@@ -8172,6 +8200,7 @@ Some additional details to note:
     seconds { 0: }
   * bool file_id.block_timeout_lookup = false: block if lookup times
     out
+  * bool file_id.enable_capture = false: enable file capture
   * bool file_id.enable_signature = false: enable signature
     calculation
   * bool file_id.enable_type = false: enable type ID
@@ -8816,6 +8845,8 @@ Some additional details to note:
   * string snort.--bpf: <filter options> are standard BPF options, as
     seen in TCPDump
   * string snort.--c2x: output hex for given char (see also --x2c)
+  * string snort.--catch-test: comma separated list of cat unit test
+    tags or all
   * implied snort.--create-pidfile: create PID file, even when not in
     Daemon mode
   * string snort.--daq: <type> select packet acquisition module
@@ -8918,9 +8949,6 @@ Some additional details to note:
     reject rules into alert rules during startup
   * implied snort.--treat-drop-as-ignore: use drop, sdrop, and reject
     rules to ignore session traffic when not inline
-  * select snort.--unit-test: <verbosity> run unit tests with given
-    libcheck output mode { silent | minimal | normal | verbose | env
-    (export CK_VERBOSITY) }
   * implied snort.--version: show version number (same as -V)
   * implied snort.--warn-all: enable all warnings
   * implied snort.--warn-conf: warn about configuration issues
@@ -10607,7 +10635,7 @@ deleted -> unified2: 'filename'
   * codec::pppoe_sess: support for point-to-point session
   * codec::raw4: support for unencapsulated IPv4 (DLT 12) (DLT 228)
   * codec::raw6: support for unencapsulated IPv6 (DLT 229)
-  * codec::socket: support for sockets / proxied sessions (DLT 230)
+  * codec::slip: support for slip protocol (DLT 8)
   * codec::sun_nd: support for Sun ND
   * codec::swipe: support for Swipe
   * codec::tcp: support for transmission control protocol
@@ -10615,6 +10643,7 @@ deleted -> unified2: 'filename'
   * codec::token_ring: support for token ring decoding
   * codec::trans_bridge: support for trans-bridging
   * codec::udp: support for user datagram protocol
+  * codec::user: support for user sessions (DLT 230)
   * codec::vlan: support for local area network
   * codec::wlan: support for wireless local area network protocol
     (DLT 105)
