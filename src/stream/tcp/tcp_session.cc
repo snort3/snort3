@@ -540,7 +540,7 @@ static inline int ValidSeq(
 }
 
 #else
-static inline int ValidSeq( Flow* flow, TcpTracker *st, TcpDataBlock *tdb)
+static inline int ValidSeq( TcpTracker *st, TcpDataBlock *tdb)
 {
     int right_ok;
     uint32_t left_seq;
@@ -902,7 +902,7 @@ static void ProcessTcpStream(TcpTracker *rcv, TcpSession *tcpssn, TcpDataBlock *
         return;
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-    SetPacketHeaderFoo(tcpssn, p);
+    SetPacketHeaderFoo(tcpssn, tdb->pkt);
 #endif
 
     if (rcv->flush_policy == STREAM_FLPOLICY_IGNORE)
@@ -2038,7 +2038,7 @@ static int ProcessTcp(Flow* flow, TcpDataBlock* tdb, StreamTcpConfig* config)
         /* check for valid seqeuence/retrans */
         if (listener->config->policy != STREAM_POLICY_PROXY
                 and (listener->s_mgr.state >= TCP_STATE_ESTABLISHED)
-                and !ValidSeq(flow, listener, tdb))
+                and !ValidSeq( listener, tdb ))
         {
             DebugMessage(DEBUG_STREAM_STATE, "bad sequence number, bailing\n");
             inc_tcp_discards();
