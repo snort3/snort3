@@ -206,8 +206,7 @@ uint32_t TcpNormalizer::get_tcp_timestamp(TcpDataBlock* tdb, bool strip)
             if(!stripped)
             {
                 tdb->ts = EXTRACT_32BITS(opt.data);
-                DebugFormat(DEBUG_STREAM_STATE, "Found timestamp %lu\n", *ts);
-
+                DebugFormat(DEBUG_STREAM_STATE, "Found timestamp %lu\n", tdb->ts);
                 return TF_TSTAMP;
             }
         }
@@ -293,7 +292,7 @@ int TcpNormalizer::validate_paws_timestamp( TcpDataBlock* tdb, int* eventcode )
     {
         /* this packet is from way too far into the future */
         DebugFormat(DEBUG_STREAM_STATE, "packet PAWS timestamp way too far ahead of last packet %d %d...\n",
-                p->pkth->ts.tv_sec, peer_tracker->ts_last_pkt);
+                tdb->pkt->pkth->ts.tv_sec, peer_tracker->ts_last_pkt);
         //inc_tcp_discards();
         *eventcode |= EVENT_BAD_TIMESTAMP;
         packet_dropper(tdb, NORM_TCP_OPT);

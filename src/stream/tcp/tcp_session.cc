@@ -546,7 +546,7 @@ static inline int ValidSeq( Flow* flow, TcpTracker *st, TcpDataBlock *tdb)
     uint32_t left_seq;
 
     DebugFormat(DEBUG_STREAM_STATE, "Checking end_seq (%X) > r_win_base (%X) && seq (%X) < r_nxt_ack(%X)\n",
-            tdb->end_seq, st->r_win_base, tdb->seq, st->r_nxt_ack + st->normalizer->get_stream_window(flow, st, tdb));
+            tdb->end_seq, st->r_win_base, tdb->seq, st->r_nxt_ack + st->normalizer->get_stream_window(tdb));
 
     if (SEQ_LT(st->r_nxt_ack, st->r_win_base))
         left_seq = st->r_nxt_ack;
@@ -887,7 +887,7 @@ static void NewQueue(TcpTracker *st, TcpDataBlock *tdb)
     AddStreamNode(st, tdb, tdb->pkt->dsize, overlap, 0, tdb->seq + overlap, NULL);
 
     DebugFormat(DEBUG_STREAM_STATE, "Attached new queue to seglist, %d bytes queued, base_seq 0x%X\n",
-            p->dsize-overlap, st->seglist_base_seq);
+            tdb->pkt->dsize-overlap, st->seglist_base_seq);
 
     MODULE_PROFILE_END(s5TcpInsertPerfStats);
 }
@@ -896,7 +896,7 @@ static void NewQueue(TcpTracker *st, TcpDataBlock *tdb)
 static void ProcessTcpStream(TcpTracker *rcv, TcpSession *tcpssn, TcpDataBlock *tdb,
         StreamTcpConfig* config)
 {
-    DebugFormat(DEBUG_STREAM_STATE, "In ProcessTcpStream(), %d bytes to queue\n", p->dsize);
+    DebugFormat(DEBUG_STREAM_STATE, "In ProcessTcpStream(), %d bytes to queue\n", tdb->pkt->dsize);
 
     if (tdb->pkt->packet_flags & PKT_IGNORE)
         return;
