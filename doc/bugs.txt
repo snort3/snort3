@@ -50,9 +50,6 @@ warning as does metadata:service foo, service foo;
 * ip_proto doesn't work properly with reassembled packets so it can't be
 used to restrict the protocol of service rules.
 
-
-==== Rules
-
 * Inspector events generated while parsing TCP payload in non-IPS mode will
   indicate the wrong direction (ie they will be based on the ACK packet).
   (Same is true for Snort.)
@@ -80,4 +77,12 @@ etc.).
 
 * alert_fast and alert_full: output configuration includes "file = 'foo.bar'", but file is a bool
 and you cannot specify an output file name in the configuration.
+
+
+==== obfuscation
+
+* -B <mask> feature does not work. It does ordinary IP address obfuscation instead of using the
+mask.
+
+* Obfuscation does not work for csv format.
 

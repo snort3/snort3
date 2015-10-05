@@ -129,7 +129,7 @@ static const Parameter s_params[] =
     { "-A", Parameter::PT_STRING, nullptr, nullptr,
       "<mode> set alert mode: none, cmg, or alert_*" },
 
-    { "-B", Parameter::PT_IMPLIED, nullptr, nullptr,
+    { "-B", Parameter::PT_ADDR, nullptr, "255.255.255.255/32",
       "<mask> obfuscated IP addresses in alerts and packet dumps using CIDR mask" },
 
     { "-C", Parameter::PT_IMPLIED, nullptr, nullptr,
