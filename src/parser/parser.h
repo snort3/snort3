@@ -44,8 +44,7 @@ void push_parse_location(const char* name, unsigned line = 0);
 void pop_parse_location();
 void inc_parse_position();
 
-/* rule setup funcs */
-SnortConfig* ParseSnortConf(const SnortConfig*);
+SnortConfig* ParseSnortConf(const SnortConfig*, const char* fname = nullptr);
 void ParseRules(SnortConfig*);
 
 void OrderRuleLists(SnortConfig*, const char*);

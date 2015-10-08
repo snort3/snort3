@@ -297,16 +297,19 @@ int main_rotate_stats(lua_State*)
     return 0;
 }
 
-int main_reload_config(lua_State*)
+int main_reload_config(lua_State* L)
 {
     if ( swapper )
     {
         request.respond("== reload pending; retry\n");
         return 0;
     }
+    Lua::ManageStack(L, 1);
+    const char* fname = luaL_checkstring(L, 1);
+
     request.respond(".. reloading configuration\n");
     SnortConfig* old = snort_conf;
-    SnortConfig* sc = Snort::get_reload_config();
+    SnortConfig* sc = Snort::get_reload_config(fname);
 
     if ( !sc )
     {
@@ -325,14 +328,27 @@ int main_reload_config(lua_State*)
     return 0;
 }
 
-int main_reload_hosts(lua_State*)
+int main_reload_hosts(lua_State* L)
 {
     if ( swapper )
     {
         request.respond("== reload pending; retry\n");
         return 0;
     }
-    request.respond(".. reloading hosts table\n");
+    Lua::ManageStack(L, 1);
+    const char* fname = luaL_checkstring(L, 1);
+
+    if ( fname and *fname )
+        request.respond(".. reloading hosts table\n");
+    else
+    {
+        request.respond("== filename required\n");
+        return 0;
+    }
+
+    Shell sh = Shell(fname);
+    sh.configure(snort_conf);
+
     tTargetBasedConfig* old = SFAT_GetConfig();
     tTargetBasedConfig* tc = SFAT_Swap();
 
@@ -410,6 +426,7 @@ int main_help(lua_State*)
     while ( cmd->name )
     {
         string info = cmd->name;
+        info += cmd->get_arg_list();
         info += ": ";
         info += cmd->help;
         info += "\n";

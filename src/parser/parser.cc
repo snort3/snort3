@@ -513,7 +513,7 @@ static void parse_file(SnortConfig* sc, Shell* sh)
  *      configuration file to parse the rules.
  *
  ***************************************************************************/
-SnortConfig* ParseSnortConf(const SnortConfig* boot_conf)
+SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname)
 {
     SnortConfig* sc = new SnortConfig;
 
@@ -521,7 +521,8 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf)
     sc->warning_flags = boot_conf->warning_flags;
     VarNode* tmp = boot_conf->var_list;
 
-    const char* fname = get_snort_conf();
+    if ( !fname )
+        fname = get_snort_conf();
 
     if ( !fname )
         fname = "";

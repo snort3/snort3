@@ -1020,7 +1020,8 @@ void ModuleManager::show_commands(const char* pfx, bool exact)
             cout << Markup::escape(p->mod->get_name());
             cout << "." << Markup::escape(c->name);
             cout << Markup::emphasis_off();
-            cout << "(): " << Markup::escape(c->help);
+            cout << c->get_arg_list();
+            cout << ": " << Markup::escape(c->help);
             cout << endl;
             c++;
         }

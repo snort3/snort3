@@ -506,14 +506,14 @@ void Snort::cleanup()
 
 // FIXIT-M refactor this so startup and reload call the same core function to
 // instantiate things that can be reloaded
-SnortConfig* Snort::get_reload_config()
+SnortConfig* Snort::get_reload_config(const char* fname)
 {
     reloading = true;
     ModuleManager::reset_errors();
     trim_heap();
 
     parser_init();
-    SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf);
+    SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf, fname);
     sc->merge(snort_cmd_line_conf);
 
     if ( ModuleManager::get_errors() || !sc->verify() )

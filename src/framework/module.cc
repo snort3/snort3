@@ -26,14 +26,28 @@ static const Parameter null_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+std::string Command::get_arg_list() const
+{
+    std::string args = "(";
+    const Parameter* p = params;
+
+    while ( p and p->name )
+    {
+        if ( p != params )
+            args += ", ";
+        args += p->name;
+        ++p;
+    }
+    args += ")";
+    return args;
+}
+
 void Module::init(const char* s, const char* h)
 {
     name = s;
     help = h;
     params = null_params;
     list = false;
-    cmds = nullptr;
-    rules = nullptr;
     num_counts = -1;
 }
 

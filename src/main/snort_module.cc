@@ -55,27 +55,33 @@ using namespace std;
 // commands
 //-------------------------------------------------------------------------
 
+static const Parameter s_reload[] =
+{
+    { "filename", Parameter::PT_STRING, nullptr, nullptr,
+      "name of file to load" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 #ifdef BUILD_SHELL
 static const Command snort_cmds[] =
 {
-    { "show_plugins", main_dump_plugins, "show available plugins" },
-    { "dump_stats", main_dump_stats, "show summary statistics" },
-    { "rotate_stats", main_rotate_stats, "roll perfmonitor log files" },
-    { "reload_config", main_reload_config, "load new configuration" },
-
-    // FIXIT-M need to load hosts from dedicated file
-    //{ "reload_hosts", main_reload_hosts, "load a new hosts table" },
+    { "show_plugins", main_dump_plugins, nullptr, "show available plugins" },
+    { "dump_stats", main_dump_stats, nullptr, "show summary statistics" },
+    { "rotate_stats", main_rotate_stats, nullptr, "roll perfmonitor log files" },
+    { "reload_config", main_reload_config, s_reload, "load new configuration" },
+    { "reload_hosts", main_reload_hosts, s_reload, "load a new hosts table" },
 
     // FIXIT-M rewrite trough to permit updates on the fly
-    //{ "process", main_process, "process given pcap" },
+    //{ "process", main_process, nullptr, "process given pcap" },
 
-    { "pause", main_pause, "suspend packet processing" },
-    { "resume", main_resume, "continue packet processing" },
-    { "detach", main_detach, "exit shell w/o shutdown" },
-    { "quit", main_quit, "shutdown and dump-stats" },
-    { "help", main_help, "this output" },
+    { "pause", main_pause, nullptr, "suspend packet processing" },
+    { "resume", main_resume, nullptr, "continue packet processing" },
+    { "detach", main_detach, nullptr, "exit shell w/o shutdown" },
+    { "quit", main_quit, nullptr, "shutdown and dump-stats" },
+    { "help", main_help, nullptr, "this output" },
 
-    { nullptr, nullptr, nullptr }
+    { nullptr, nullptr, nullptr, nullptr }
 };
 #endif
 

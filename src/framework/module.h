@@ -38,6 +38,7 @@
 // lists in snort_defaults.lua or some such.  Each list item, however, will
 // have any defaults applied.
 
+#include <string>
 #include <vector>
 #include <luajit-2.0/lua.hpp>
 
@@ -46,13 +47,14 @@
 #include "framework/parameter.h"
 #include "framework/counts.h"
 
-struct SnortConfig;
-
 struct Command
 {
     const char* name;
     lua_CFunction func;
+    const Parameter* params;
     const char* help;
+
+    std::string get_arg_list() const;
 };
 
 struct RuleMap
@@ -62,6 +64,7 @@ struct RuleMap
 };
 
 struct ProfileStats;
+struct SnortConfig;
 
 class SO_PUBLIC Module
 {
@@ -151,9 +154,6 @@ private:
 
     const Parameter* params;
     bool list;
-
-    const Command* cmds;
-    const RuleMap* rules;
 
     std::vector<PegCount> counts;
     int num_counts;

@@ -40,7 +40,7 @@ typedef void (* MainHook_f)(Packet*);
 class Snort
 {
 public:
-    static SnortConfig* get_reload_config();
+    static SnortConfig* get_reload_config(const char* fname);
     static void setup(int argc, char* argv[]);
     static void cleanup();
 
