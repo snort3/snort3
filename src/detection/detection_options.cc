@@ -212,7 +212,7 @@ uint32_t detection_option_tree_hash(detection_option_tree_node_t* node)
 #endif
     }
 
-    final(a,b,c);
+    finalize(a,b,c);
 
     return c;
 }

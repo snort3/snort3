@@ -112,7 +112,7 @@ uint32_t ByteExtractOption::hash() const
     mix(a,b,c);
     mix_str(a,b,c,get_name());
 
-    final(a,b,c);
+    finalize(a,b,c);
 
     return c;
 }

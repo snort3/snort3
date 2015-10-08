@@ -136,7 +136,7 @@ uint32_t Asn1Option::hash() const
 
     a += data->offset_type;
 
-    final(a,b,c);
+    finalize(a,b,c);
 
     return c;
 }

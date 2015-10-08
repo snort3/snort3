@@ -144,7 +144,7 @@ uint32_t ContentOption::hash() const
 
     a += pmd->depth_var;
 
-    final(a,b,c);
+    finalize(a,b,c);
 
     return c;
 }

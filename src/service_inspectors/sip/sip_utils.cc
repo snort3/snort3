@@ -186,7 +186,7 @@ uint32_t strToHash(const char* str, int length)
             j = 0;
         }
     }
-    final (a,b,c);
+    finalize(a,b,c);
     return c;
 }
 

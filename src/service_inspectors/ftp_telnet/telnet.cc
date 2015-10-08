@@ -236,8 +236,8 @@ public:
     void show(SnortConfig*) override;
     void eval(Packet*) override;
 
-    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&);
-    void clear(Packet*);
+    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
+    void clear(Packet*) override;
 
 private:
     TELNET_PROTO_CONF* config;

@@ -39,7 +39,7 @@
     c -= b;  c ^= rot(b, 4);  b += a; \
 }
 
-#define final(a,b,c) \
+#define finalize(a,b,c) \
 { \
     c ^= b; c -= rot(b,14); \
     a ^= c; a -= rot(c,11); \

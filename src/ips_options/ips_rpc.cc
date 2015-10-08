@@ -94,7 +94,7 @@ uint32_t RpcOption::hash() const
     a += data->flags;
 
     mix_str(a,b,c,get_name());
-    final(a,b,c);
+    finalize(a,b,c);
 
     return c;
 }

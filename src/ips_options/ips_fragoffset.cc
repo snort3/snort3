@@ -70,7 +70,7 @@ uint32_t FragOffsetOption::hash() const
     c = (uint32_t)config.max;
 
     mix_str(a,b,c,get_name());
-    final(a,b,c);
+    finalize(a,b,c);
 
     return c;
 }

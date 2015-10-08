@@ -113,8 +113,8 @@ public:
     NHttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
         NHttpInfractions& infractions, NHttpEventGen& events, uint32_t flow_target, uint32_t)
         override;
-    bool get_is_broken_chunk() const { return curr_state == NHttpEnums::CHUNK_BAD; }
-    uint32_t get_num_good_chunks() const { return num_good_chunks; }
+    bool get_is_broken_chunk() const override { return curr_state == NHttpEnums::CHUNK_BAD; }
+    uint32_t get_num_good_chunks() const override { return num_good_chunks; }
 
 private:
     uint32_t data_seen = 0;

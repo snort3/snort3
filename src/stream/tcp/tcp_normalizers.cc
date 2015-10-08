@@ -307,7 +307,7 @@ bool TcpNormalizerProxy::validate_rst( TcpDataBlock *tdb )
     return false;
 }
 
-int TcpNormalizerProxy::handle_paws(TcpDataBlock*, Packet*, int*, int*)
+int TcpNormalizerProxy::handle_paws(TcpDataBlock*, int*, int*)
 {
     return ACTION_NOTHING;
 }

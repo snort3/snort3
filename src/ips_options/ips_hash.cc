@@ -114,7 +114,7 @@ uint32_t HashOption::hash() const
     c += hmd->offset_var;
 
     mix_str(a,b,c,get_name());
-    final(a,b,c);
+    finalize(a,b,c);
 
     return c;
 }

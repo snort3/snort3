@@ -94,7 +94,7 @@ uint32_t FlowCheckOption::hash() const
     mix_str(a,b,c,get_name());
 
     a += data->unestablished;
-    final(a,b,c);
+    finalize(a,b,c);
 
     return c;
 }

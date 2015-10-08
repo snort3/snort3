@@ -536,7 +536,7 @@ uint32_t PcreOption::hash() const
     a += data->options;
 
     mix_str(a,b,c,get_name());
-    final(a,b,c);
+    finalize(a,b,c);
 
     return c;
 }

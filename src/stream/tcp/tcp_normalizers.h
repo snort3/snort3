@@ -56,9 +56,9 @@ public:
         paws_ts_fudge = 1;
     }
 
-    bool validate_rst( TcpDataBlock* );
-    bool is_paws_ts_checked_required( TcpDataBlock* );
-    int handle_repeated_syn( TcpDataBlock* );
+    bool validate_rst( TcpDataBlock* ) override;
+    bool is_paws_ts_checked_required( TcpDataBlock* ) override;
+    int handle_repeated_syn( TcpDataBlock* ) override;
 };
 
 class TcpNormalizerOldLinux : public TcpNormalizer
@@ -187,9 +187,9 @@ public:
             TcpNormalizer( STREAM_POLICY_PROXY, session, tracker )
     { }
 
-    bool validate_rst(TcpDataBlock* );
-    int handle_paws( TcpDataBlock*, Packet*, int*, int* );
-    int handle_repeated_syn( TcpDataBlock* );
+    bool validate_rst(TcpDataBlock* ) override;
+    int handle_paws( TcpDataBlock*,int*, int* ) override;
+    int handle_repeated_syn( TcpDataBlock* ) override;
 };
 
 class TcpNormalizerFactory

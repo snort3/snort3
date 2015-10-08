@@ -66,7 +66,7 @@ uint32_t TcpSeqOption::hash() const
     c = config.max;
 
     mix_str(a,b,c,get_name());
-    final(a,b,c);
+    finalize(a,b,c);
 
     return c;
 }

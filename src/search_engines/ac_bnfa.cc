@@ -63,7 +63,7 @@ public:
             bnfaFree(obj);
     }
 
-    void set_opt(int flag)
+    void set_opt(int flag) override
     {
         if (obj)
             bnfaSetOpt(obj, flag);

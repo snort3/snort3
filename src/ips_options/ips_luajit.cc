@@ -172,7 +172,7 @@ uint32_t LuaJitOption::hash() const
     uint32_t a = 0, b = 0, c = 0;
     mix_str(a,b,c,get_name());
     mix_str(a,b,c,config.c_str());
-    final(a,b,c);
+    finalize(a,b,c);
     return c;
 }
 

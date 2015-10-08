@@ -224,7 +224,7 @@ uint32_t FlowBitsOption::hash() const
 
     c += data->group_id;
 
-    final(a,b,c);
+    finalize(a,b,c);
 
     return c;
 }

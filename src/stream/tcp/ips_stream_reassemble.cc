@@ -87,7 +87,7 @@ uint32_t ReassembleOption::hash() const
     a = srod.fastpath;
 
     mix_str(a,b,c,get_name());
-    final(a,b,c);
+    finalize(a,b,c);
 
     return c;
 }

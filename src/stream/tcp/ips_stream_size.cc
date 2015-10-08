@@ -76,7 +76,7 @@ uint32_t SizeOption::hash() const
     a = direction;
 
     mix_str(a,b,c,get_name());
-    final(a,b,c);
+    finalize(a,b,c);
 
     return c;
 }

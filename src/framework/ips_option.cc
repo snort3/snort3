@@ -36,7 +36,7 @@ uint32_t IpsOption::hash() const
 {
     uint32_t a=0, b=0, c=0;
     mix_str(a,b,c,get_name());
-    final(a,b,c);
+    finalize(a,b,c);
     return c;
 }
 

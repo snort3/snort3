@@ -113,7 +113,7 @@ uint32_t SessionOption::hash() const
     c = 0;
 
     mix_str(a,b,c,get_name());
-    final(a,b,c);
+    finalize(a,b,c);
 
     return c;
 }

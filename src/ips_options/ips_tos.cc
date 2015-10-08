@@ -64,7 +64,7 @@ uint32_t IpTosOption::hash() const
     c = config.max;
 
     mix_str(a,b,c,get_name());
-    final(a,b,c);
+    finalize(a,b,c);
 
     return c;
 }

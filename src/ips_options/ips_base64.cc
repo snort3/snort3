@@ -100,7 +100,7 @@ uint32_t Base64DecodeOption::hash() const
     mix(a,b,c);
     mix_str(a,b,c,get_name());
 
-    final(a,b,c);
+    finalize(a,b,c);
 
     return c;
 }
@@ -300,7 +300,7 @@ public:
     CursorActionType get_cursor_type() const override
     { return CAT_SET_OTHER; }
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 };
 
 int Base64DataOption::eval(Cursor& c, Packet*)

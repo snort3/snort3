@@ -298,7 +298,7 @@ uint32_t FlowKey::hash(SFHASHFCN*, unsigned char* d, int)
     tmp2 = *(uint32_t*)(d+offset); /* after offset that has been moved */
     c += tmp2; /* address space id and 16bits of zero'd pad */
 #endif
-    final(a,b,c);
+    finalize(a,b,c);
 
     return c;
 }
