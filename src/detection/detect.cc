@@ -154,11 +154,6 @@ void snort_inspect(Packet* p)
 
     check_tags_flag = 1;
 
-    MODULE_PROFILE_START(eventqPerfStats);
-    SnortEventqLog(p);
-    SnortEventqReset();
-    MODULE_PROFILE_END(eventqPerfStats);
-
     /* Check for normally closed session */
     stream.check_session_closed(p);
 
@@ -199,6 +194,10 @@ void snort_inspect(Packet* p)
         PPM_END_PKT_TIMER();
     }
 #endif
+    MODULE_PROFILE_START(eventqPerfStats);
+    SnortEventqLog(p);
+    SnortEventqReset();
+    MODULE_PROFILE_END(eventqPerfStats);
 }
 
 void snort_log(Packet* p)
