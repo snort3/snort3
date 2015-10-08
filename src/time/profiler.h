@@ -46,12 +46,12 @@ struct ProfileStats
 
 // Sort preferences for rule profiling
 #define PROFILE_SORT_CHECKS 1
-#define PROFILE_SORT_MATCHES 2
-#define PROFILE_SORT_NOMATCHES 3
-#define PROFILE_SORT_AVG_TICKS 4
-#define PROFILE_SORT_AVG_TICKS_PER_MATCH 5
-#define PROFILE_SORT_AVG_TICKS_PER_NOMATCH 6
-#define PROFILE_SORT_TOTAL_TICKS 7
+#define PROFILE_SORT_AVG_TICKS 2
+#define PROFILE_SORT_TOTAL_TICKS 3
+#define PROFILE_SORT_MATCHES 4
+#define PROFILE_SORT_NOMATCHES 5
+#define PROFILE_SORT_AVG_TICKS_PER_MATCH 6
+#define PROFILE_SORT_AVG_TICKS_PER_NOMATCH 7
 
 // MACROS that handle profiling of rules and preprocessors
 #define PROFILE_VARS_NAMED(name) uint64_t name ## _ticks_start, name ## _ticks_end
