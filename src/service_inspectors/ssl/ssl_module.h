@@ -40,7 +40,6 @@
 
 struct SnortConfig;
 
-extern THREAD_LOCAL SimpleStats sslstats;
 extern THREAD_LOCAL ProfileStats sslPerfStats;
 
 class SslModule : public Module
@@ -51,7 +50,6 @@ public:
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
 
     unsigned get_gid() const override
     { return GID_SSL; }

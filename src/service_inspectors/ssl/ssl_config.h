@@ -16,18 +16,42 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+#include "framework/counts.h"
+
 #ifndef SSL_CONFIG_H
 #define SSL_CONFIG_H
 
 // Configuration for SSL service inspector
 
-#define SSLPP_TRUSTSERVER_FLAG  0x0002
-
-//FIXIT-L flags could be converted to bool trustservers.
 struct SSL_PROTO_CONF
 {
-    uint16_t flags;
+    bool trustservers;
     int max_heartbeat_len;
 };
+
+struct SSLStats
+{
+    PegCount packets;
+    PegCount decoded;
+    PegCount hs_chello;
+    PegCount hs_shello;
+    PegCount hs_cert;
+    PegCount hs_sdone;
+    PegCount hs_ckey;
+    PegCount hs_skey;
+    PegCount cipher_change;
+    PegCount hs_finished;
+    PegCount capp;
+    PegCount sapp;
+    PegCount alerts;
+    PegCount unrecognized;
+    PegCount completed_hs;
+    PegCount bad_handshakes;
+    PegCount stopped;
+    PegCount disabled;
+};
+
+extern const PegInfo ssl_peg_names[];
+extern THREAD_LOCAL SSLStats sslstats;
 
 #endif

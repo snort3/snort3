@@ -73,7 +73,7 @@ const RuleMap* SslModule::get_rules() const
 { return ssl_rules; }
 
 const PegInfo* SslModule::get_pegs() const
-{ return simple_pegs; }
+{ return ssl_peg_names; }
 
 PegCount* SslModule::get_counts() const
 { return (PegCount*)&sslstats; }
@@ -86,7 +86,7 @@ bool SslModule::set(const char*, Value& v, SnortConfig*)
     if ( v.is("trust_servers") )
     {
         if (v.get_bool())
-            conf->flags |= SSLPP_TRUSTSERVER_FLAG;
+            conf->trustservers = true;
     }
     else if ( v.is("max_heartbeat_length") )
         conf->max_heartbeat_len = v.get_long();
@@ -108,14 +108,7 @@ bool SslModule::begin(const char*, int, SnortConfig*)
 {
     conf = new SSL_PROTO_CONF;
     conf->max_heartbeat_len = 0;
-    conf->flags = 0;
-    return true;
-}
-
-bool SslModule::end(const char*, int, SnortConfig*)
-{
-    SSL_InitGlobals();
-
+    conf->trustservers = false;
     return true;
 }
 

@@ -47,8 +47,7 @@
 #include "ssl_module.h"
 
 THREAD_LOCAL ProfileStats sslPerfStats;
-THREAD_LOCAL SimpleStats sslstats;
-THREAD_LOCAL SSL_counters_t counts;
+THREAD_LOCAL SSLStats sslstats;
 
 /*
  * Function prototype(s)
@@ -56,6 +55,30 @@ THREAD_LOCAL SSL_counters_t counts;
 static void snort_ssl(SSL_PROTO_CONF* GlobalConf, Packet* p);
 
 unsigned SslFlowData::flow_id = 0;
+
+const PegInfo ssl_peg_names[] =
+{
+    { "packets", "total packets processed" },
+    { "decoded", "ssl packets decoded" },
+    { "client hello", "total client hellos" },
+    { "server hello", "total server hellos" },
+    { "certificate", "total ssl certificates" },
+    { "server done", "total server done" },
+    { "client key exchange", "total client key exchanges" },
+    { "server key exchange", "total server key exchanges" },
+    { "change cipher", "total change cipher records" },
+    { "finished", "total handshakes finished" },
+    { "client application", "total client application records" },
+    { "server application", "total server application records" },
+    { "alert", "total ssl alert records" },
+    { "unrecognized records", "total unrecognized records" },
+    { "handshakes completed", "total completed ssl handshakes" },
+    { "bad handshakes", "total bad handshakes" },
+    { "sessions ignored", "total sessions ignore" },
+    { "detection disabled", "total detection disabled" },
+
+    { nullptr, nullptr }
+};
 
 SSLData* SetNewSSLData(Packet* p)
 {
@@ -72,17 +95,12 @@ SSLData* get_ssl_session_data(Flow* flow)
     return fd ? &fd->session : NULL;
 }
 
-void SSL_InitGlobals(void)
-{
-    memset(&counts, 0, sizeof(counts));
-}
-
 static void PrintSslConf(SSL_PROTO_CONF* config)
 {
     if (config == NULL)
         return;
     LogMessage("SSL config:\n");
-    if ( config->flags & SSLPP_TRUSTSERVER_FLAG )
+    if ( config->trustservers )
     {
         LogMessage("    Server side data is trusted\n");
     }
@@ -93,42 +111,42 @@ static void PrintSslConf(SSL_PROTO_CONF* config)
 static void SSL_UpdateCounts(const uint32_t new_flags)
 {
     if (new_flags & SSL_CHANGE_CIPHER_FLAG)
-        counts.cipher_change++;
+        sslstats.cipher_change++;
 
     if (new_flags & SSL_ALERT_FLAG)
-        counts.alerts++;
+        sslstats.alerts++;
 
     if (new_flags & SSL_CLIENT_HELLO_FLAG)
-        counts.hs_chello++;
+        sslstats.hs_chello++;
 
     if (new_flags & SSL_SERVER_HELLO_FLAG)
-        counts.hs_shello++;
+        sslstats.hs_shello++;
 
     if (new_flags & SSL_CERTIFICATE_FLAG)
-        counts.hs_cert++;
+        sslstats.hs_cert++;
 
     if (new_flags & SSL_SERVER_KEYX_FLAG)
-        counts.hs_skey++;
+        sslstats.hs_skey++;
 
     if (new_flags & SSL_CLIENT_KEYX_FLAG)
-        counts.hs_ckey++;
+        sslstats.hs_ckey++;
 
     if (new_flags & SSL_SFINISHED_FLAG)
-        counts.hs_finished++;
+        sslstats.hs_finished++;
 
     if (new_flags & SSL_HS_SDONE_FLAG)
-        counts.hs_sdone++;
+        sslstats.hs_sdone++;
 
     if (new_flags & SSL_SAPP_FLAG)
-        counts.sapp++;
+        sslstats.sapp++;
 
     if (new_flags & SSL_CAPP_FLAG)
-        counts.capp++;
+        sslstats.capp++;
 }
 
 static inline bool SSLPP_is_encrypted(SSL_PROTO_CONF* config, uint32_t ssl_flags, Packet* packet)
 {
-    if (config->flags & SSLPP_TRUSTSERVER_FLAG)
+    if (config->trustservers)
     {
         if (ssl_flags & SSL_SAPP_FLAG)
             return true;
@@ -139,7 +157,7 @@ static inline bool SSLPP_is_encrypted(SSL_PROTO_CONF* config, uint32_t ssl_flags
         if (((ssl_flags & SSLPP_ENCRYPTED_FLAGS) == SSLPP_ENCRYPTED_FLAGS) ||
             ((ssl_flags & SSLPP_ENCRYPTED_FLAGS2) == SSLPP_ENCRYPTED_FLAGS2))
         {
-            counts.completed_hs++;
+            sslstats.completed_hs++;
             return true;
         }
         /* Check if we're either midstream or if packets were missed after the
@@ -199,7 +217,7 @@ static inline uint32_t SSLPP_process_hs(uint32_t ssl_flags, uint32_t new_flags)
     }
     else
     {
-        counts.bad_handshakes++;
+        sslstats.bad_handshakes++;
     }
 
     return ssl_flags;
@@ -219,7 +237,7 @@ static inline uint32_t SSLPP_process_app(SSL_PROTO_CONF* config, uint32_t ssn_fl
         {
             DebugMessage(DEBUG_SSL, "STOPPING INSPECTION (process_app)\n");
             stream.stop_inspection(packet->flow, packet, SSN_DIR_BOTH, -1, 0);
-            counts.stopped++;
+            sslstats.stopped++;
         }
         else if (!(new_flags & SSL_HEARTBEAT_SEEN))
         {
@@ -255,7 +273,7 @@ static inline void SSLPP_process_other(SSL_PROTO_CONF* config, SSLData* sd, uint
     }
     else
     {
-        counts.unrecognized++;
+        sslstats.unrecognized++;
 
         /* Special handling for SSLv2 */
         if (new_flags & SSL_VER_SSLV2_FLAG)
@@ -332,7 +350,7 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
     }
     if (sd->ssn_flags & SSL_ENCRYPTED_FLAG )
     {
-        counts.decoded++;
+        sslstats.decoded++;
 
         SSL_UpdateCounts(new_flags);
 
@@ -360,7 +378,7 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
     {
         SnortEventqAdd(GID_SSL, SSL_INVALID_CLIENT_HELLO);
     }
-    else if (!(config->flags & SSLPP_TRUSTSERVER_FLAG))
+    else if (!(config->trustservers))
     {
         if ( (SSL_IS_SHELLO(new_flags) && !SSL_IS_CHELLO(sd->ssn_flags) ))
         {
@@ -369,7 +387,7 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
         }
     }
 
-    counts.decoded++;
+    sslstats.decoded++;
 
     SSL_UpdateCounts(new_flags);
 
@@ -446,7 +464,7 @@ void Ssl::eval(Packet* p)
     assert(p->has_tcp_data());
     assert(p->flow);
 
-    ++sslstats.total_packets;
+    sslstats.packets++;
     snort_ssl(config, p);
 }
 

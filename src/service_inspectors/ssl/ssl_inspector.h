@@ -39,27 +39,6 @@ struct SSLData
     uint16_t partial_rec_len[4];
 };
 
-struct SSL_counters_t
-{
-    uint64_t stopped;
-    uint64_t disabled;
-    uint64_t decoded;
-    uint64_t alerts;
-    uint64_t cipher_change;
-    uint64_t unrecognized;
-    uint64_t completed_hs;
-    uint64_t bad_handshakes;
-    uint64_t hs_chello;
-    uint64_t hs_shello;
-    uint64_t hs_cert;
-    uint64_t hs_skey;
-    uint64_t hs_ckey;
-    uint64_t hs_finished;
-    uint64_t hs_sdone;
-    uint64_t capp;
-    uint64_t sapp;
-};
-
 class SslFlowData : public FlowData
 {
 public:
@@ -77,7 +56,5 @@ public:
 };
 //Function: API to get the ssl flow data from the packet flow.
 SSLData* get_ssl_session_data(Flow* flow);
-
-void SSL_InitGlobals(void);
 
 #endif
