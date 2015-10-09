@@ -17,22 +17,18 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
- * Author: Steven Sturges
- * sftarget_hostentry.c
- */
+// sftarget_hostentry.c author Steven Sturges
 
 #include "sftarget_hostentry.h"
 
-int hasService(const HostAttributeEntry* host_entry,
-    int ipprotocol,
-    int protocol,
-    int application)
+#if 0
+static bool hasService(const HostAttributeEntry* host_entry,
+    int ipprotocol, int protocol, int application)
 {
     ApplicationEntry* service;
 
     if (!host_entry)
-        return SFTARGET_NOMATCH;
+        return false;
 
     for (service = host_entry->services; service; service = service->next)
     {
@@ -42,33 +38,29 @@ int hasService(const HostAttributeEntry* host_entry,
             {
                 if (!application)
                 {
-                    /* match of ipproto, proto.
-                     * application not speicifed */
-                    return SFTARGET_MATCH;
+                    /* match of ipproto, proto.  application not speicifed */
+                    return true;
                 }
             }
             else if (!protocol)
             {
-                /* match of ipproto.
-                 * protocol not speicifed */
-                return SFTARGET_MATCH;
+                /* match of ipproto.  protocol not speicifed */
+                return true;
             }
         }
         /* No ipprotocol specified, huh? */
     }
 
-    return SFTARGET_NOMATCH;
+    return false;
 }
 
-int hasClient(const HostAttributeEntry* host_entry,
-    int ipprotocol,
-    int protocol,
-    int application)
+static bool hasClient(const HostAttributeEntry* host_entry,
+    int ipprotocol, int protocol, int application)
 {
     ApplicationEntry* client;
 
     if (!host_entry)
-        return SFTARGET_NOMATCH;
+        return false;
 
     for (client = host_entry->clients; client; client = client->next)
     {
@@ -78,57 +70,34 @@ int hasClient(const HostAttributeEntry* host_entry,
             {
                 if (!application)
                 {
-                    /* match of ipproto, proto.
-                     * application not speicifed */
-                    return SFTARGET_MATCH;
+                    /* match of ipproto, proto.  application not speicifed */
+                    return true;
                 }
             }
             else if (!protocol)
             {
-                /* match of ipproto.
-                 * protocol not speicifed */
-                return SFTARGET_MATCH;
+                /* match of ipproto.  protocol not speicifed */
+                return true;
             }
         }
         /* No ipprotocol specified, huh? */
     }
 
-    return SFTARGET_NOMATCH;
+    return false;
 }
 
-int hasProtocol(const HostAttributeEntry* host_entry,
-    int ipprotocol,
-    int protocol,
-    int application)
+bool hasProtocol(const HostAttributeEntry* host_entry,
+    int ipprotocol, int protocol, int application)
 {
-    int ret = SFTARGET_NOMATCH;
+    if ( hasService(host_entry, ipprotocol, protocol, application) )
+        return true;
 
-    ret = hasService(host_entry, ipprotocol, protocol, application);
-    if (ret == SFTARGET_MATCH)
-        return ret;
+    if ( hasClient(host_entry, ipprotocol, protocol, application) )
+        return true;
 
-    ret = hasClient(host_entry, ipprotocol, protocol, application);
-    if (ret == SFTARGET_MATCH)
-        return ret;
-
-    return ret;
+    return false;
 }
-
-uint16_t getFragPolicy(const HostAttributeEntry* host_entry)
-{
-    if (!host_entry)
-        return SFAT_UNKNOWN_FRAG_POLICY;
-
-    return host_entry->hostInfo.fragPolicy;
-}
-
-uint16_t getStreamPolicy(const HostAttributeEntry* host_entry)
-{
-    if (!host_entry)
-        return SFAT_UNKNOWN_STREAM_POLICY;
-
-    return host_entry->hostInfo.streamPolicy;
-}
+#endif
 
 int getApplicationProtocolId(const HostAttributeEntry* host_entry,
     int ipprotocol,

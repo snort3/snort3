@@ -25,44 +25,14 @@
 #include "target_based/sftarget_reader.h"
 #include "target_based/sftarget_data.h"
 
-#define SFTARGET_MATCH 1
-#define SFTARGET_NOMATCH 0
-
 /* API for HostAttributeEntry 'class' */
 
-// FIXIT-L used locally only
-int hasService(const HostAttributeEntry* hostEntry,
-    int ipprotocol,
-    int protocol,
-    int application);
+#if 0
+bool hasProtocol(const HostAttributeEntry*, int ipprotocol, int protocol, int application);
+#endif
 
-// FIXIT-L used locally only
-int hasClient(const HostAttributeEntry* hostEntry,
-    int ipprotocol,
-    int protocol,
-    int application);
-
-// FIXIT-L not used anywhere
-int hasProtocol(const HostAttributeEntry* hostEntry,
-    int ipprotocol,
-    int protocol,
-    int application);
-
-// FIXIT-L not used anywhere
-int getProtocol(const HostAttributeEntry* hostEntry,
-    int ipprotocol,
-    uint16_t port);
-
-int getApplicationProtocolId(const HostAttributeEntry* host_entry,
-    int ipprotocol,
-    uint16_t port,
-    char direction);
-
-// FIXIT-L not used anywhere
-#define SFAT_UNKNOWN_STREAM_POLICY 0
-uint16_t getStreamPolicy(const HostAttributeEntry* host_entry);
-#define SFAT_UNKNOWN_FRAG_POLICY 0
-uint16_t getFragPolicy(const HostAttributeEntry* host_entry);
+int getApplicationProtocolId(
+    const HostAttributeEntry*, int ipprotocol, uint16_t port, char direction);
 
 #endif
 

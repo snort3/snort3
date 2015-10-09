@@ -165,6 +165,7 @@ void FreeProtoocolReferenceTable(void)
     proto_reference_table = NULL;
 }
 
+#if 0
 int16_t GetProtocolReference(Packet* p)
 {
     int16_t protocol = 0;
@@ -230,4 +231,5 @@ int16_t GetProtocolReference(Packet* p)
 
     return protocol;
 }
+#endif
 

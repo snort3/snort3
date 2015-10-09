@@ -61,7 +61,9 @@ const char* get_protocol_name_sorted(uint16_t id);
 int16_t AddProtocolReference(const char* protocol);
 SO_PUBLIC int16_t FindProtocolReference(const char* protocol);
 
+#if 0
 int16_t GetProtocolReference(struct Packet*);
+#endif
 
 #endif
 

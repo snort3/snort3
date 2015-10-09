@@ -28,11 +28,11 @@
 #define SFAT_ERROR -1
 #define SFAT_BUFSZ 1024
 
-typedef enum
+enum ServiceClient
 {
     ATTRIBUTE_SERVICE,
     ATTRIBUTE_CLIENT
-} ServiceClient;
+};
 
 #define APPLICATION_ENTRY_PORT 0x01
 #define APPLICATION_ENTRY_IPPROTO 0x02
@@ -40,18 +40,16 @@ typedef enum
 #define APPLICATION_ENTRY_APPLICATION 0x08
 #define APPLICATION_ENTRY_VERSION 0x10
 
-typedef struct _ApplicationEntry
+struct ApplicationEntry
 {
-    struct _ApplicationEntry* next;
+    ApplicationEntry* next;
 
     uint16_t port;
     uint16_t ipproto;
     uint16_t protocol;
 
     uint8_t fields;
-} ApplicationEntry;
-
-typedef ApplicationEntry ApplicationList;
+};
 
 #define HOST_INFO_OS 1
 #define HOST_INFO_VENDOR 2
@@ -72,8 +70,8 @@ struct HostAttributeEntry
 {
     sfip_t ipAddr;
     HostInfo hostInfo;
-    ApplicationList* services;
-    ApplicationList* clients;
+    ApplicationEntry* services;
+    ApplicationEntry* clients;
 };
 
 int SFAT_AddHost(HostAttributeEntry*);
@@ -83,5 +81,5 @@ int SFAT_AddHostEntryToMap(HostAttributeEntry*);
 HostAttributeEntry* SFAT_CreateHostEntry(void);
 ApplicationEntry* SFAT_CreateApplicationEntry(void);
 
-#endif /* SFTARGET_DATA_H */
+#endif
 

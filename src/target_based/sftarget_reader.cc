@@ -157,7 +157,7 @@ void FreeHostEntry(HostAttributeEntry* host)
     free(host);
 }
 
-static void AppendApplicationData(ApplicationList** list, ApplicationEntry* app)
+static void AppendApplicationData(ApplicationEntry** list, ApplicationEntry* app)
 {
     if (!list)
         return;
@@ -175,6 +175,7 @@ int SFAT_AddService(HostAttributeEntry* host, ApplicationEntry* app)
     return SFAT_OK;
 }
 
+#if 0
 int SFAT_AddApplicationData(HostAttributeEntry* host, ApplicationEntry* app)
 {
     uint8_t required_fields =
@@ -191,6 +192,7 @@ int SFAT_AddApplicationData(HostAttributeEntry* host, ApplicationEntry* app)
 
     return SFAT_OK;
 }
+#endif
 
 #ifdef DEBUG_MSGS
 void PrintHostAttributeEntry(HostAttributeEntry* host)

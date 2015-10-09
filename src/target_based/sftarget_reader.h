@@ -52,8 +52,11 @@ uint32_t SFAT_NumberOfHosts(void);
 HostAttributeEntry* SFAT_LookupHostEntryByIP(const sfip_t* ipAddr);
 HostAttributeEntry* SFAT_LookupHostEntryBySrc(Packet* p);
 HostAttributeEntry* SFAT_LookupHostEntryByDst(Packet* p);
-void SFAT_UpdateApplicationProtocol(
-    sfip_t* ipAddr, uint16_t port, uint16_t protocol, uint16_t id);
+
+#if 0
+int SFAT_AddApplicationData(HostAttributeEntry*, struct ApplicationEntry*);
+#endif
+void SFAT_UpdateApplicationProtocol(sfip_t*, uint16_t port, uint16_t protocol, uint16_t id);
 
 // reload functions
 struct tTargetBasedConfig;
