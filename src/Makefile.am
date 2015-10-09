@@ -44,9 +44,7 @@ snort_LDFLAGS = -export-dynamic
 # from gnu linker
 snort_LDADD = \
 $(test_list) \
-target_based/libtarget_based.a \
 managers/libmanagers.a \
-main/libmain.a \
 loggers/libloggers.a \
 codecs/libcodecs.a \
 codecs/ip/libip_codecs.a \
@@ -75,8 +73,10 @@ mime/libmime.a \
 service_inspectors/http_inspect/libhttp_inspect.a \
 $(pig_list) \
 ips_options/libips_options.a \
-parser/libparser.a \
 search_engines/libsearch_engines.a \
+target_based/libtarget_based.a \
+main/libmain.a \
+parser/libparser.a \
 flow/libflow.a \
 control/libcontrol.a \
 filters/libfilter.a \

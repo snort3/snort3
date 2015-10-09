@@ -431,7 +431,7 @@ TEST_CASE( "throttled error logger", "[ThrottledErrorLogger]" )
     SECTION( "2nd message within 1 second" )
     {
         const char msg[] = "second message";
-        logger.log("");
+        logger.log(" ");
 
         REQUIRE_FALSE( logger.log("%s\n", msg) );
     }
@@ -441,7 +441,7 @@ TEST_CASE( "throttled error logger", "[ThrottledErrorLogger]" )
         logger.throttle_duration = 0;
         const char msg[] = "zero duration";
 
-        logger.log(""); // trigger throttling
+        logger.log(" "); // trigger throttling
         REQUIRE( logger.log("%s\n", msg) );
 
         CHECK( check_message(logger.last_message(), msg) );
@@ -450,7 +450,7 @@ TEST_CASE( "throttled error logger", "[ThrottledErrorLogger]" )
     SECTION( "message @ duration" )
     {
         const char msg[] = "at duration";
-        logger.log(""); // trigger throttling
+        logger.log(" "); // trigger throttling
 
         set_packet_time(dur - 1);
         CHECK_FALSE( logger.log("%s\n", msg) );
@@ -459,7 +459,7 @@ TEST_CASE( "throttled error logger", "[ThrottledErrorLogger]" )
     SECTION( "message after duration" )
     {
         const char msg[] = "after duration";
-        logger.log(""); // trigger throttling
+        logger.log(" "); // trigger throttling
 
         set_packet_time(dur);
         REQUIRE( logger.log("%s\n", msg) );
@@ -472,7 +472,7 @@ TEST_CASE( "throttled error logger", "[ThrottledErrorLogger]" )
         const char msg[] = "reversed packet time";
 
         set_packet_time(10);
-        logger.log("");
+        logger.log(" ");
 
         set_packet_time(4);
         REQUIRE( logger.log("%s\n", msg) );
