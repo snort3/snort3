@@ -41,8 +41,14 @@ State::State(bool openlibs)
         luaL_openlibs(state);
 }
 
+State::State(State&& o) :
+    state { std::move(o.state) } { }
+
 State::~State()
-{ lua_close(state); }
+{
+    if ( state )
+        lua_close(state);
+}
 
 ManageStack::ManageStack(lua_State* L, int extra) :
     state ( L )

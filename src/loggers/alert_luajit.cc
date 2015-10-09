@@ -18,6 +18,7 @@
 // alert_luajit.cc author Russ Combs <rucombs@cisco.com>
 
 #include <assert.h>
+#include <vector>
 #include <luajit-2.0/lua.hpp>
 
 #include "main/snort_types.h"
@@ -177,7 +178,7 @@ public:
 
 private:
     std::string config;
-    struct lua_State** lua;
+    std::vector<Lua::State> states;
 };
 
 LuaJitLogger::LuaJitLogger(const char* name, std::string& chunk, LuaLogModule* mod)
@@ -189,25 +190,19 @@ LuaJitLogger::LuaJitLogger(const char* name, std::string& chunk, LuaLogModule* m
 
     unsigned max = get_instance_max();
 
-    lua = new lua_State*[max];
-
     // FIXIT-L might make more sense to have one instance
     // with one lua state in each thread instead of one
     // instance with one lua state per thread
     // (same for LuaJitOption)
-    for ( unsigned i = 0; i < max; ++i )
-        init_chunk(lua[i], chunk, name, config);
+    for ( unsigned i = 0; i < max; i++ )
+    {
+        states.emplace_back(true);
+        init_chunk(states[i], chunk, name, config);
+    }
 }
 
 LuaJitLogger::~LuaJitLogger()
-{
-    unsigned max = get_instance_max();
-
-    for ( unsigned i = 0; i < max; ++i )
-        term_chunk(lua[i]);
-
-    delete[] lua;
-}
+{ }
 
 void LuaJitLogger::alert(Packet* p, const char*, Event* e)
 {
@@ -217,17 +212,21 @@ void LuaJitLogger::alert(Packet* p, const char*, Event* e)
     packet = p;
     event = e;
 
-    lua_State* L = lua[get_instance_id()];
-    Lua::ManageStack ms(L, 1);
+    lua_State* L = states[get_instance_id()];
 
-    lua_getglobal(L, "alert");
-
-    if ( lua_pcall(L, 0, 1, 0) )
     {
-        const char* err = lua_tostring(L, -1);
-        ErrorMessage("%s\n", err);
-        MODULE_PROFILE_END(luaLogPerfStats);
+        Lua::ManageStack ms(L, 1);
+
+        lua_getglobal(L, "alert");
+
+        if ( lua_pcall(L, 0, 1, 0) )
+        {
+            const char* err = lua_tostring(L, -1);
+            ErrorMessage("%s\n", err);
+            MODULE_PROFILE_END(luaLogPerfStats);
+        }
     }
+
     MODULE_PROFILE_END(luaLogPerfStats);
 }
 

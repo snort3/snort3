@@ -36,10 +36,15 @@ public:
     ~State();
 
     State(State&) = delete;
-    State(State&&) = delete;
+
+    // Enable move constructor
+    State(State&& other);
 
     lua_State* get_ptr()
     { return state; }
+
+    operator lua_State*()
+    { return get_ptr(); }
 
 private:
     lua_State* state;

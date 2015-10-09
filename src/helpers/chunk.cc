@@ -28,6 +28,10 @@
 #include "time/profiler.h"
 #include "lua/lua.h"
 
+#ifdef UNIT_TEST
+#include "test/catch.hpp"
+#endif
+
 using namespace std;
 
 #define opt_init "init"
@@ -36,94 +40,117 @@ using namespace std;
 // lua stuff
 //-------------------------------------------------------------------------
 
-struct Loader
+bool init_chunk(
+    lua_State* L, string& chunk, const char* name, string& args)
 {
-    Loader(string& s) : chunk(s) { done = false; }
-    string& chunk;
-    bool done;
-};
+    Lua::ManageStack ms(L, 1);
 
-static const char* ldchunk(lua_State*, void* ud, size_t* size)
-{
-    Loader* ldr = (Loader*)ud;
-
-    if ( ldr->done )
-    {
-        *size = 0;
-        return nullptr;
-    }
-    ldr->done = true;
-    *size = ldr->chunk.size();
-    return ldr->chunk.c_str();
-}
-
-void init_chunk(
-    lua_State*& L, string& chunk, const char* name, string& args)
-{
-    L = luaL_newstate();
-    Lua::ManageStack ms(L);
-
-    luaL_openlibs(L);
-
-    Loader ldr(chunk);
-
-    // first load the chunk
-    if ( lua_load(L, ldchunk, &ldr, name) )
+    if ( luaL_loadbuffer(L, chunk.c_str(), chunk.size(), name) )
     {
         ParseError("%s luajit failed to load chunk %s", name, lua_tostring(L, -1));
-        return;
+        return false;
     }
 
     // now exec the chunk to define functions etc in L
     if ( lua_pcall(L, 0, 0, 0) )
     {
         ParseError("%s luajit failed to init chunk %s", name, lua_tostring(L, -1));
-        return;
+        return false;
     }
 
     // load the args table
-    if ( luaL_loadstring(L, args.c_str()) )
-    {
-        ParseError("%s luajit failed to load args %s", name, lua_tostring(L, -1));
-        return;
-    }
-
-    // exec the args table to define it in L
-    if ( lua_pcall(L, 0, 0, 0) )
+    if ( luaL_dostring(L, args.c_str()) )
     {
         ParseError("%s luajit failed to init args %s", name, lua_tostring(L, -1));
-        return;
+        return false;
     }
 
     // exec the init func if defined
     lua_getglobal(L, opt_init);
 
+    // init func is not defined
     if ( !lua_isfunction(L, -1) )
-        return;
+        return true;
 
-    if ( lua_pcall(L, 0, 1, 0) )
-    {
-        const char* err = lua_tostring(L, -1);
-        ParseError("%s %s", name, err);
-        return;
-    }
-    // string is an error message
-    if ( lua_isstring(L, -1) )
-    {
-        const char* err = lua_tostring(L, -1);
-        ParseError("%s %s", name, err);
-        return;
-    }
-    // bool is the result
-    if ( !lua_toboolean(L, -1) )
-    {
+    if ( lua_pcall(L, 0, 1, 0) || lua_type(L, -1) == LUA_TSTRING )
+        ParseError("%s %s", name, lua_tostring(L, -1));
+
+    else if ( !lua_toboolean(L, -1) )
         ParseError("%s init() returned false", name);
-        return;
-    }
+
+    else
+        return true;
+
+    return false;
 }
 
-void term_chunk(lua_State*& L)
+#ifdef UNIT_TEST
+TEST_CASE( "chunk initialization", "[chunk]" )
 {
-    lua_close(L);
+    Lua::State lua(true);
+    bool result;
+
+    string test_chunk = "function init() return true end";
+    string test_args_table = "args = { a = 1, b = 2 }";
+    const char* test_name = "test_alert_luajit";
+
+    SECTION( "normal initialization" )
+    {
+        CHECK( init_chunk(lua, test_chunk, test_name, test_args_table) );
+    }
+
+    SECTION( "init() edge cases" )
+    {
+        SECTION( "init is not a function" )
+        {
+            string test_init_not_a_function_chunk = "init = 1";
+            CHECK(
+                init_chunk(lua, test_init_not_a_function_chunk,
+                    test_name, test_args_table)
+            );
+        }
+
+        SECTION( "init is not defined" )
+        {
+            string test_init_not_defined_chunk = "";
+            CHECK(
+                init_chunk(lua, test_init_not_defined_chunk,
+                    test_name, test_args_table)
+            );
+        }
+    }
+
+    SECTION( "initialization errors" )
+    {
+        SECTION( "malformed chunk" )
+        {
+            string test_malformed_chunk = "function init()";
+            CHECK_FALSE(
+                init_chunk(
+                    lua, test_malformed_chunk, test_name, test_args_table)
+            );
+        }
+
+        SECTION( "malformed args table" )
+        {
+            string test_malformed_args_table = "args = {";
+            CHECK_FALSE(
+                init_chunk(
+                    lua, test_chunk, test_name, test_malformed_args_table)
+            );
+        }
+
+        SECTION( "init returns false" )
+        {
+            string test_init_returns_false_chunk =
+                "function init() return false end";
+
+            CHECK_FALSE(
+                init_chunk(lua, test_init_returns_false_chunk,
+                    test_name, test_args_table)
+            );
+        }
+    }
 }
+#endif
 
