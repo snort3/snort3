@@ -88,7 +88,7 @@ bool NHttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
     return true;
 }
 
-bool NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
+const Field& NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
     SourceId source_id, bool buf_owner) const
 {
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(
@@ -127,7 +127,7 @@ bool NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* cons
         {
             delete[] data;
         }
-        return false;
+        return Field::FIELD_NULL;
     }
 
     latest_section->analyze();
@@ -148,7 +148,7 @@ bool NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* cons
     }
 #endif
 
-    return latest_section->worth_detection();
+    return latest_section->get_detect_buf();
 }
 
 void NHttpInspect::clear(Packet* p)

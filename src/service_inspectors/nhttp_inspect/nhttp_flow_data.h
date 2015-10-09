@@ -95,6 +95,8 @@ private:
     int64_t file_depth_remaining[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
     int64_t detect_depth_remaining[2] = { NHttpEnums::STAT_NOTPRESENT,
         NHttpEnums::STAT_NOTPRESENT };
+    NHttpEnums::CompressId compression[2] = { NHttpEnums::CMP__NOTPRESENT,
+        NHttpEnums::CMP__NOTPRESENT };
     MimeSession* mime_state = nullptr;  // SRC_CLIENT only
 
     // number of user data octets seen so far (regular body or chunks)

@@ -80,6 +80,7 @@ void NHttpFlowData::half_reset(SourceId source_id)
     section_size_max[source_id] = 0;
     file_depth_remaining[source_id] = STAT_NOTPRESENT;
     detect_depth_remaining[source_id] = STAT_NOTPRESENT;
+    compression[source_id] = CMP__NOTPRESENT;
     infractions[source_id].reset();
     events[source_id].reset();
     chunk_offset[source_id] = 0;

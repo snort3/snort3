@@ -27,6 +27,7 @@
 #include "log/messages.h"
 
 #include "nhttp_enum.h"
+#include "nhttp_field.h"
 #include "nhttp_module.h"
 #include "nhttp_stream_splitter.h"
 
@@ -51,14 +52,13 @@ public:
     void tterm() override { }
     NHttpStreamSplitter* get_splitter(bool is_client_to_server) override
     {
-        return new
-               NHttpStreamSplitter(is_client_to_server, this);
+        return new NHttpStreamSplitter(is_client_to_server, this);
     }
 private:
     friend NHttpApi;
     friend NHttpStreamSplitter;
 
-    bool process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
+    const Field& process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
         NHttpEnums::SourceId source_id_, bool buf_owner) const;
 
     static THREAD_LOCAL NHttpMsgSection* latest_section;

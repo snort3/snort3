@@ -156,31 +156,42 @@ const StrCode NHttpMsgHeadShared::header_list[] =
 const StrCode NHttpMsgHeadShared::trans_code_list[] =
 {
     { TRANSCODE_CHUNKED,         "chunked" },
-    { TRANSCODE_IDENTITY,        "identity" },
     { TRANSCODE_GZIP,            "gzip" },
-    { TRANSCODE_COMPRESS,        "compress" },
     { TRANSCODE_DEFLATE,         "deflate" },
+    { TRANSCODE_COMPRESS,        "compress" },
+    { TRANSCODE_X_GZIP,          "x-gzip" },
+    { TRANSCODE_X_COMPRESS,      "x-compress" },
+    { TRANSCODE_IDENTITY,        "identity" },
     { 0,                         nullptr }
 };
 
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_NIL
-{ NORM_NULL, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+const StrCode NHttpMsgHeadShared::content_code_list[] =
+{
+    { CONTENTCODE_GZIP,          "gzip" },
+    { CONTENTCODE_DEFLATE,       "deflate" },
+    { CONTENTCODE_COMPRESS,      "compress" },
+    { CONTENTCODE_EXI,           "exi" },
+    { CONTENTCODE_PACK200_GZIP,  "pack200-gzip" },
+    { CONTENTCODE_X_GZIP,        "x-gzip" },
+    { CONTENTCODE_X_COMPRESS,    "x-compress" },
+    { CONTENTCODE_IDENTITY,      "identity" },
+    { 0,                         nullptr }
+};
 
 const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_BASIC
-{ NORM_FIELD, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+{ false, nullptr, nullptr, nullptr };
+
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_NUMBER
+{ false, norm_remove_lws, nullptr, nullptr };
+
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_TOKEN_LIST
+{ true, norm_remove_lws, norm_to_lower, nullptr };
 
 const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_CAT
-{ NORM_FIELD, true, norm_remove_lws, nullptr, nullptr, nullptr, nullptr, nullptr };
+{ true, norm_remove_lws, nullptr, nullptr };
 
 const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_COOKIE
-{ NORM_FIELD, true, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
-
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_DECIMAL
-{ NORM_INT64, false, norm_decimal_integer, nullptr, nullptr, nullptr, nullptr, nullptr };
-
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_TRANSCODE
-{ NORM_ENUM64, true, norm_remove_lws, nullptr, norm_to_lower, nullptr, norm_seq_str_code,
-  NHttpMsgHeadShared::trans_code_list };
+{ true, nullptr, nullptr, nullptr };
 
 #if defined(__clang__)
 // Designated initializers are not supported in C++11. However we're going to play compilation
@@ -190,7 +201,8 @@ const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_TRANSCODE
 #endif
 
 /* *INDENT-OFF* */
-const HeaderNormalizer* const NHttpMsgHeadShared::header_norms[HEAD__MAX_VALUE] = { [0] = &NORMALIZER_NIL,
+const HeaderNormalizer* const NHttpMsgHeadShared::header_norms[HEAD__MAX_VALUE] = {
+    [0] = &NORMALIZER_BASIC,
     [HEAD__OTHER] = &NORMALIZER_BASIC,
     [HEAD_CACHE_CONTROL] = &NORMALIZER_BASIC,
     [HEAD_CONNECTION] = &NORMALIZER_BASIC,
@@ -199,7 +211,7 @@ const HeaderNormalizer* const NHttpMsgHeadShared::header_norms[HEAD__MAX_VALUE] 
     [HEAD_TRAILER] = &NORMALIZER_BASIC,
     [HEAD_COOKIE] = &NORMALIZER_COOKIE,
     [HEAD_SET_COOKIE] = &NORMALIZER_COOKIE,
-    [HEAD_TRANSFER_ENCODING] = &NORMALIZER_TRANSCODE,
+    [HEAD_TRANSFER_ENCODING] = &NORMALIZER_TOKEN_LIST,
     [HEAD_UPGRADE] = &NORMALIZER_BASIC,
     [HEAD_VIA] = &NORMALIZER_BASIC,
     [HEAD_WARNING] = &NORMALIZER_BASIC,
@@ -232,9 +244,9 @@ const HeaderNormalizer* const NHttpMsgHeadShared::header_norms[HEAD__MAX_VALUE] 
     [HEAD_VARY] = &NORMALIZER_BASIC,
     [HEAD_WWW_AUTHENTICATE] = &NORMALIZER_BASIC,
     [HEAD_ALLOW] = &NORMALIZER_BASIC,
-    [HEAD_CONTENT_ENCODING] = &NORMALIZER_BASIC,
+    [HEAD_CONTENT_ENCODING] = &NORMALIZER_TOKEN_LIST,
     [HEAD_CONTENT_LANGUAGE] = &NORMALIZER_BASIC,
-    [HEAD_CONTENT_LENGTH] = &NORMALIZER_DECIMAL,
+    [HEAD_CONTENT_LENGTH] = &NORMALIZER_NUMBER,
     [HEAD_CONTENT_LOCATION] = &NORMALIZER_BASIC,
     [HEAD_CONTENT_MD5] = &NORMALIZER_BASIC,
     [HEAD_CONTENT_RANGE] = &NORMALIZER_BASIC,

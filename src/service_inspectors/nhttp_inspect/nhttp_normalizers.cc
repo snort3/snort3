@@ -30,35 +30,8 @@ using namespace NHttpEnums;
 // software. New functions must follow the standard signature. The void* at the end is for any
 // special configuration data the function requires.
 
-int32_t norm_decimal_integer(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
-    NHttpInfractions& infractions, NHttpEventGen&, const void*)
-{
-    // Limited to 18 decimal digits, not including leading zeros, to fit comfortably into int64_t
-    int64_t total = 0;
-    int non_leading_zeros = 0;
-    for (int32_t k=0; k < in_length; k++)
-    {
-        int value = in_buf[k] - '0';
-        if (non_leading_zeros || (value != 0))
-            non_leading_zeros++;
-        if (non_leading_zeros > 18)
-        {
-            infractions += INF_BAD_HEADER_DATA;
-            return STAT_PROBLEMATIC;
-        }
-        if ((value < 0) || (value > 9))
-        {
-            infractions += INF_BAD_HEADER_DATA;
-            return STAT_PROBLEMATIC;
-        }
-        total = total*10 + value;
-    }
-    ((int64_t*)out_buf)[0] = total;
-    return sizeof(int64_t);
-}
-
 int32_t norm_to_lower(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
-    NHttpInfractions&, NHttpEventGen&, const void*)
+    NHttpInfractions&, NHttpEventGen&)
 {
     for (int32_t k=0; k < in_length; k++)
     {
@@ -68,37 +41,9 @@ int32_t norm_to_lower(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf
     return in_length;
 }
 
-int32_t norm_str_code(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
-    NHttpInfractions&, NHttpEventGen&, const void* table)
-{
-    ((int64_t*)out_buf)[0] = str_to_code(in_buf, in_length, (const StrCode*)table);
-    return sizeof(int64_t);
-}
-
-int32_t norm_seq_str_code(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
-    NHttpInfractions&, NHttpEventGen&, const void* table)
-{
-    int32_t num_codes = 0;
-    const uint8_t* start = in_buf;
-    while (true)
-    {
-        int32_t length;
-        for (length = 0; (start + length < in_buf + in_length) && (start[length] != ','); length++)
-            ;
-        if (length == 0)
-            ((uint32_t*)out_buf)[num_codes++] = STAT_EMPTYSTRING;
-        else
-            ((int64_t*)out_buf)[num_codes++] = str_to_code(start, length, (const StrCode*)table);
-        if (start + length >= in_buf + in_length)
-            break;
-        start += length + 1;
-    }
-    return num_codes * sizeof(int64_t);
-}
-
 // Remove all space and tab characters (known as LWS or linear white space in the RFC)
 int32_t norm_remove_lws(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
-    NHttpInfractions&, NHttpEventGen&, const void*)
+    NHttpInfractions&, NHttpEventGen&)
 {
     int32_t length = 0;
     for (int32_t k = 0; k < in_length; k++)
@@ -107,5 +52,39 @@ int32_t norm_remove_lws(const uint8_t* in_buf, int32_t in_length, uint8_t* out_b
             out_buf[length++] = in_buf[k];
     }
     return length;
+}
+
+// Other header-value processing functions (not using the standard normalization signature)
+// Convert a decimal field such as Content-Length to an integer.
+int64_t norm_decimal_integer(const Field& input)
+{
+    assert(input.length > 0);
+    // Limited to 18 decimal digits, not including leading zeros, to fit comfortably into int64_t
+    int64_t total = 0;
+    int non_leading_zeros = 0;
+    for (int32_t k=0; k < input.length; k++)
+    {
+        int value = input.start[k] - '0';
+        if ((non_leading_zeros > 0) || (value != 0))
+            non_leading_zeros++;
+        if (non_leading_zeros > 18)
+            return STAT_PROBLEMATIC;
+        if ((value < 0) || (value > 9))
+            return STAT_PROBLEMATIC;
+        total = total*10 + value;
+    }
+    return total;
+}
+
+// Find the last token in a comma-separated field and convert it to an enum
+int32_t norm_last_token_code(const Field& input, const StrCode table[])
+{
+    assert(input.length > 0);
+    const uint8_t* last_start;
+    for (last_start = input.start + input.length - 1; (*last_start != ',') &&
+        (last_start >= input.start); last_start--);
+    last_start++;
+    const int32_t last_length = input.length - (last_start - input.start);
+    return str_to_code(last_start, last_length, table);
 }
 

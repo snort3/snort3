@@ -240,7 +240,7 @@ void NHttpMsgHeadShared::print_headers(FILE* output)
         if (get_header_value_norm((HeaderId)k).length != STAT_NOSOURCE)
         {
             snprintf(title_buf, sizeof(title_buf), "Normalized header %d", k);
-            get_header_value_norm((HeaderId)k).print(output, title_buf, true);
+            get_header_value_norm((HeaderId)k).print(output, title_buf);
         }
     }
 }

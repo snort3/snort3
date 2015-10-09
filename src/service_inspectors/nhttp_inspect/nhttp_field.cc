@@ -28,7 +28,7 @@ using namespace NHttpEnums;
 
 const Field Field::FIELD_NULL { STAT_NOSOURCE };
 
-void Field::print(FILE* output, const char* name, bool int_vals) const
+void Field::print(FILE* output, const char* name) const
 {
     if ((length == STAT_NOTPRESENT) || (length == STAT_NOTCOMPUTE) || (length == STAT_NOSOURCE))
     {
@@ -55,16 +55,6 @@ void Field::print(FILE* output, const char* name, bool int_vals) const
         if ((k%120 == (119 - out_count)) && (k+1 < print_length))
         {
             fprintf(output, "\n");
-        }
-    }
-
-    if (int_vals && (print_length%8 == 0))
-    {
-        fprintf(output, "\nInteger values =");
-        for (int j=0; j < print_length; j+=8)
-        {
-            // FIXIT-L rewrite to eliminate doubtful cast
-            fprintf(output, " %" PRIu64, *((const uint64_t*)(start+j)));
         }
     }
     fprintf(output, "\n");

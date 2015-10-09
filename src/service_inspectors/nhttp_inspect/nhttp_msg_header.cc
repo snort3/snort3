@@ -26,7 +26,6 @@
 #include "file_api/file_service.h"
 #include "file_api/file_flows.h"
 
-#include "nhttp_enum.h"
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_header.h"
 
@@ -55,6 +54,8 @@ void NHttpMsgHeader::print_section(FILE* output)
 
 void NHttpMsgHeader::update_flow()
 {
+    session_data->section_type[source_id] = SEC__NOTCOMPUTE;
+
     // The following logic to determine body type is by no means the last word on this topic.
     // FIXIT-H need to distinguish methods such as POST that should have a body from those that
     // should not.
@@ -68,42 +69,54 @@ void NHttpMsgHeader::update_flow()
         // present
         session_data->type_expected[SRC_SERVER] = SEC_STATUS;
         session_data->half_reset(SRC_SERVER);
+        return;
     }
-    else if ((source_id == SRC_SERVER) && (transaction->get_request() != nullptr) &&
+
+    if ((source_id == SRC_SERVER) && (transaction->get_request() != nullptr) &&
         (transaction->get_request()->get_method_id() == METH_HEAD))
     {
         // No body allowed by RFC for response to HEAD method
         session_data->type_expected[SRC_SERVER] = SEC_STATUS;
         session_data->half_reset(SRC_SERVER);
+        return;
     }
+
     // If there is a Transfer-Encoding header, see if the last of the encoded values is "chunked".
     // FIXIT-L do something with Transfer-Encoding header with chunked present but not last.
-    else if ((get_header_value_norm(HEAD_TRANSFER_ENCODING).length > 0)                     &&
-        ((*(int64_t*)(get_header_value_norm(HEAD_TRANSFER_ENCODING).start +
-        (get_header_value_norm(HEAD_TRANSFER_ENCODING).length - 8))) == TRANSCODE_CHUNKED) )
+    // FIXIT-L do something with Transfer-Encoding header present but no chunked at all.
+    if (get_header_value_norm(HEAD_TRANSFER_ENCODING).length > 0)
     {
-        // FIXIT-M inspect for Content-Length header which should not be present
-        // Chunked body
-        session_data->type_expected[source_id] = SEC_CHUNK;
-        prepare_body();
+        if (norm_last_token_code(get_header_value_norm(HEAD_TRANSFER_ENCODING),
+            NHttpMsgHeadShared::trans_code_list) == TRANSCODE_CHUNKED)
+        {
+            // FIXIT-M inspect for Content-Length header which should not be present
+            // Chunked body
+            session_data->type_expected[source_id] = SEC_CHUNK;
+            prepare_body();
+            return;
+        }
     }
-    else if ((get_header_value_norm(HEAD_CONTENT_LENGTH).length > 0) &&
-        (*(int64_t*)get_header_value_norm(HEAD_CONTENT_LENGTH).start > 0))
+
+    if (get_header_value_norm(HEAD_CONTENT_LENGTH).length > 0)
     {
-        // Regular body
-        session_data->type_expected[source_id] = SEC_BODY;
-        session_data->data_length[source_id] = *(int64_t*)get_header_value_norm(
-            HEAD_CONTENT_LENGTH).start;
-        prepare_body();
+        const int64_t content_length =
+            norm_decimal_integer(get_header_value_norm(HEAD_CONTENT_LENGTH));
+        if (content_length > 0)
+        {
+            // Regular body
+            session_data->type_expected[source_id] = SEC_BODY;
+            session_data->data_length[source_id] = content_length;
+            prepare_body();
+            return;
+        }
+        if (content_length < 0)
+            infractions += INF_BAD_HEADER_DATA;
     }
-    else
-    {
-        // No body
-        session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST :
-            SEC_STATUS;
-        session_data->half_reset(source_id);
-    }
-    session_data->section_type[source_id] = SEC__NOTCOMPUTE;
+
+    // No body
+    session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
+    session_data->half_reset(source_id);
+    return;
 }
 
 // Common activities of preparing for upcoming regular body or chunked body
@@ -151,5 +164,21 @@ void NHttpMsgHeader::setup_file_processing()
 
 void NHttpMsgHeader::setup_decompression()
 {
+    // FIXIT-M add support for compression in transfer encoding
+    // FIXIT-M add support for multiple content encoding values
+    const Field& norm_content_encoding = get_header_value_norm(HEAD_CONTENT_ENCODING);
+    if (norm_content_encoding.length > 0)
+    {
+        const Contentcoding compress_code = (Contentcoding)norm_last_token_code(
+            norm_content_encoding, NHttpMsgHeadShared::content_code_list);
+        if ((compress_code == CONTENTCODE_GZIP) || (compress_code == CONTENTCODE_X_GZIP))
+            session_data->compression[source_id] = CMP_GZIP;
+        else if (compress_code == CONTENTCODE_DEFLATE)
+            session_data->compression[source_id] = CMP_DEFLATE;
+        else
+            session_data->compression[source_id] = CMP_NONE;
+    }
+    else
+        session_data->compression[source_id] = CMP_NONE;
 }
 

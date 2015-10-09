@@ -22,6 +22,7 @@
 
 #include "file_api/file_flows.h"
 #include "nhttp_enum.h"
+#include "nhttp_field.h"
 #include "nhttp_test_manager.h"
 #include "nhttp_test_input.h"
 #include "nhttp_cutter.h"
@@ -385,16 +386,16 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             session_data->chunk_offset[source_id];
         session_data->chunk_offset[source_id] = 0;
 
-        const bool send_to_detection = my_inspector->process(buffer,
+        const Field& send_to_detection = my_inspector->process(buffer,
             section_length - session_data->num_excess[source_id], flow, source_id,
             not_chunk && (session_data->section_type[source_id] != SEC_BODY));
 
         // Buffers are reset to nullptr without delete[] because NHttpMsgSection holds the pointer
         // and is responsible
-        if (send_to_detection)
+        if (send_to_detection.length > 0)
         {
-            nhttp_buf.data = buffer;
-            nhttp_buf.length = section_length;
+            nhttp_buf.data = send_to_detection.start;
+            nhttp_buf.length = send_to_detection.length;
             assert((nhttp_buf.length <= MAX_OCTETS) && (nhttp_buf.length != 0));
             buffer = nullptr;
 #ifdef REG_TEST

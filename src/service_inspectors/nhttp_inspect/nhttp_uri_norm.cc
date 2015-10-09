@@ -57,14 +57,11 @@ void UriNormalizer::normalize(const Field& input, Field& result, bool do_path,
     uint8_t* const back_half = scratch + buffer_length;
 
     int32_t data_length;
-    data_length = norm_char_clean(input.start, input.length, front_half, infractions, events,
-        nullptr);
+    data_length = norm_char_clean(input.start, input.length, front_half, infractions, events);
     if (do_path)
     {
-        data_length = norm_backslash(front_half, data_length, back_half, infractions, events,
-            nullptr);
-        data_length = norm_path_clean(back_half, data_length, front_half, infractions, events,
-            nullptr);
+        data_length = norm_backslash(front_half, data_length, back_half, infractions, events);
+        data_length = norm_path_clean(back_half, data_length, front_half, infractions, events);
     }
 
     scratch_pad.commit(data_length);
@@ -105,7 +102,7 @@ bool UriNormalizer::path_check(const uint8_t* in_buf, int32_t in_length,
 }
 
 int32_t UriNormalizer::norm_char_clean(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
-    NHttpInfractions& infractions, NHttpEventGen& events, const void*)
+    NHttpInfractions& infractions, NHttpEventGen& events)
 {
     int32_t length = 0;
     for (int32_t k = 0; k < in_length; k++)
@@ -185,7 +182,7 @@ int32_t UriNormalizer::norm_char_clean(const uint8_t* in_buf, int32_t in_length,
 
 // Convert URI backslashes to slashes
 int32_t UriNormalizer::norm_backslash(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
-    NHttpInfractions& infractions, NHttpEventGen& events, const void*)
+    NHttpInfractions& infractions, NHttpEventGen& events)
 {
     for (int32_t k = 0; k < in_length; k++)
     {
@@ -203,7 +200,7 @@ int32_t UriNormalizer::norm_backslash(const uint8_t* in_buf, int32_t in_length, 
 
 // Caution: worst case output length is one greater than input length
 int32_t UriNormalizer::norm_path_clean(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
-    NHttpInfractions& infractions, NHttpEventGen& events, const void*)
+    NHttpInfractions& infractions, NHttpEventGen& events)
 {
     int32_t length = 0;
     // It simplifies the code that handles /./ and /../ to pretend there is an extra '/' after the

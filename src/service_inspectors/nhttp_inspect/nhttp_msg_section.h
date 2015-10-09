@@ -50,8 +50,8 @@ public:
 
     const Field& get_legacy(unsigned buffer_id);
 
-    // Should this section be sent directly to detection after inspection?
-    virtual bool worth_detection() const { return (msg_text.length > 0); }
+    // Provide buffer to be sent to detection
+    virtual const Field& get_detect_buf() const { return msg_text; }
 
     NHttpEnums::MethodId get_method_id() const { return method_id; }
 

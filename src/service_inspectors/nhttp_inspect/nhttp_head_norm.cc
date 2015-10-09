@@ -67,16 +67,8 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count, Scratc
     {
         return;
     }
-    if (format == NORM_NULL)
-    {
-        result_field.length = STAT_NOTCONFIGURED;
-        return;
-    }
-    if (count == 0)
-    {
-        result_field.length = STAT_NOSOURCE;
-        return;
-    }
+
+    assert(count > 0);
 
     // Search Header IDs from all the headers in this message. concatenate_repeats means the header
     // can properly be present more than once. The standard normalization is to concatenate all the
@@ -143,13 +135,11 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count, Scratc
     {
         if (i%2 != num_normalizers%2)
         {
-            data_length = normalizer[i](back_half, data_length, front_half, infractions, events,
-                norm_arg[i]);
+            data_length = normalizer[i](back_half, data_length, front_half, infractions, events);
         }
         else
         {
-            data_length = normalizer[i](front_half, data_length, back_half, infractions, events,
-                norm_arg[i]);
+            data_length = normalizer[i](front_half, data_length, back_half, infractions, events);
         }
         if (data_length <= 0)
         {

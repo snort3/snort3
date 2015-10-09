@@ -22,6 +22,7 @@
 
 #include "file_api/file_api.h"
 
+#include "nhttp_enum.h"
 #include "nhttp_msg_head_shared.h"
 
 //-------------------------------------------------------------------------

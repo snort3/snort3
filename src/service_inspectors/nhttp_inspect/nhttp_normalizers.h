@@ -22,15 +22,16 @@
 
 #include "nhttp_infractions.h"
 #include "nhttp_event_gen.h"
+#include "nhttp_field.h"
+#include "nhttp_str_to_code.h"
 
-typedef int32_t (NormFunc)(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, NHttpEventGen&,
-    const void*);
+typedef int32_t (NormFunc)(const uint8_t*, int32_t, uint8_t*, NHttpInfractions&, NHttpEventGen&);
 
-NormFunc norm_decimal_integer;
 NormFunc norm_to_lower;
-NormFunc norm_str_code;
-NormFunc norm_seq_str_code;
 NormFunc norm_remove_lws;
+
+int64_t norm_decimal_integer(const Field& input);
+int32_t norm_last_token_code(const Field& input, const StrCode table[]);
 
 #endif
 

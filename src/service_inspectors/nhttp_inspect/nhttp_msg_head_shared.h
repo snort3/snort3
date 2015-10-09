@@ -56,13 +56,11 @@ protected:
 
     // Header normalization strategies. There should be one defined for every different way we can
     // process a header field value.
-    static const HeaderNormalizer NORMALIZER_NIL;
     static const HeaderNormalizer NORMALIZER_BASIC;
+    static const HeaderNormalizer NORMALIZER_NUMBER;
+    static const HeaderNormalizer NORMALIZER_TOKEN_LIST;
     static const HeaderNormalizer NORMALIZER_CAT;
     static const HeaderNormalizer NORMALIZER_COOKIE;
-    static const HeaderNormalizer NORMALIZER_NOREPEAT;
-    static const HeaderNormalizer NORMALIZER_DECIMAL;
-    static const HeaderNormalizer NORMALIZER_TRANSCODE;
 
     // Master table of known header fields and their normalization strategies.
     static const HeaderNormalizer* const header_norms[];
@@ -70,6 +68,7 @@ protected:
     // Tables of header field names and header value names
     static const StrCode header_list[];
     static const StrCode trans_code_list[];
+    static const StrCode content_code_list[];
 
     void parse_header_block();
     uint32_t find_header_end(const uint8_t* buffer, int32_t length, int& num_seps);

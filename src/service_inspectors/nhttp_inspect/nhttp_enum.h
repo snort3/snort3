@@ -27,7 +27,8 @@ namespace NHttpEnums
 static const int MAX_OCTETS = 65535;
 static const int DATA_BLOCK_SIZE = 16384;
 static const int FINAL_BLOCK_SIZE = 24576;
-static const int GZIP_BLOCK_SIZE = 4096;
+static const int GZIP_BLOCK_SIZE = 2048;
+static const int FINAL_GZIP_BLOCK_SIZE = 3072;
 static const uint32_t NHTTP_GID = 219;
 
 // Field status codes for when no valid value is present in length or integer value. Positive
@@ -75,6 +76,9 @@ enum UriType { URI__NOTCOMPUTE=-14, URI__PROBLEMATIC=-12, URI_ASTERISK = 2, URI_
 // URI schemes
 enum SchemeId { SCH__NOSOURCE=-16, SCH__NOTCOMPUTE=-14, SCH__INSUFMEMORY=-13, SCH__NOTPRESENT=-11,
     SCH_OTHER = 1, SCH_HTTP, SCH_HTTPS, SCH_FTP, SCH_GOPHER, SCH_FILE };
+
+// Body compression tpyes
+enum CompressId { CMP__NOTPRESENT=-11, CMP_NONE=2, CMP_GZIP, CMP_DEFLATE };
 
 // Every header we have ever heard of
 enum HeaderId { HEAD__NOTCOMPUTE=-14, HEAD__INSUFMEMORY=-13, HEAD__PROBLEMATIC=-12,
@@ -150,15 +154,17 @@ enum Infraction
     INF__MAX_VALUE
 };
 
-// Formats for output from a header normalization function
-enum NormFormat { NORM_NULL, NORM_FIELD, NORM_INT64, NORM_ENUM64, NORM_ENUM64LIST };
-
 // Types of character for URI scanning
 enum CharAction { CHAR_NORMAL=2, CHAR_PERCENT, CHAR_PATH, CHAR_INVALID, CHAR_EIGHTBIT };
 
 // Transfer codings
-enum Transcoding { TRANSCODE__OTHER=1, TRANSCODE_CHUNKED, TRANSCODE_IDENTITY, TRANSCODE_GZIP,
-    TRANSCODE_COMPRESS, TRANSCODE_DEFLATE };
+enum Transcoding { TRANSCODE__OTHER=1, TRANSCODE_CHUNKED, TRANSCODE_GZIP, TRANSCODE_DEFLATE,
+    TRANSCODE_COMPRESS, TRANSCODE_X_GZIP, TRANSCODE_X_COMPRESS, TRANSCODE_IDENTITY };
+
+// Content codings
+enum Contentcoding { CONTENTCODE__OTHER=1, CONTENTCODE_GZIP, CONTENTCODE_DEFLATE,
+    CONTENTCODE_COMPRESS, CONTENTCODE_EXI, CONTENTCODE_PACK200_GZIP, CONTENTCODE_X_GZIP,
+    CONTENTCODE_X_COMPRESS, CONTENTCODE_IDENTITY };
 
 enum EventSid
 {

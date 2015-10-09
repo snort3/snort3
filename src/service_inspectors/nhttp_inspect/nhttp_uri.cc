@@ -112,7 +112,7 @@ SchemeId NHttpUri::get_scheme_id()
         scheme_id = SCH__INSUFMEMORY;
         return scheme_id;
     }
-    norm_to_lower(scheme.start, scheme.length, lower_scheme, infractions, events, nullptr);
+    norm_to_lower(scheme.start, scheme.length, lower_scheme, infractions, events);
     scheme_id = (SchemeId)str_to_code(lower_scheme, scheme.length, scheme_list);
     return scheme_id;
 }

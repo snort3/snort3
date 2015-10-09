@@ -39,15 +39,8 @@
 class HeaderNormalizer
 {
 public:
-    constexpr HeaderNormalizer(
-        NHttpEnums::NormFormat _format, bool _concatenate_repeats,
-        NormFunc* f1, const void* f1_arg,
-        NormFunc* f2, const void* f2_arg,
-        NormFunc* f3, const void* f3_arg) :
-        format(_format),
-        concatenate_repeats(_concatenate_repeats),
-        normalizer { f1, f2, f3 },
-        norm_arg { f1_arg, f2_arg, f3_arg },
+    constexpr HeaderNormalizer(bool _concatenate_repeats, NormFunc* f1, NormFunc* f2, NormFunc* f3)
+        : concatenate_repeats(_concatenate_repeats), normalizer { f1, f2, f3 },
         num_normalizers((f1 != nullptr) + (f1 != nullptr)*(f2 != nullptr) + (f1 != nullptr)*(f2 !=
             nullptr)*(f3 != nullptr)) { }
 
@@ -55,15 +48,12 @@ public:
         NHttpInfractions& infractions, NHttpEventGen& events,
         const NHttpEnums::HeaderId header_name_id[], const Field header_value[],
         const int32_t num_headers, Field& result_field) const;
-    NHttpEnums::NormFormat get_format() const { return format; }
 
 private:
     static int32_t derive_header_content(const uint8_t* value, int32_t length, uint8_t* buffer);
 
-    const NHttpEnums::NormFormat format;
     const bool concatenate_repeats;
     NormFunc* const normalizer[3];
-    const void* const norm_arg[3];
     const int num_normalizers;
 };
 

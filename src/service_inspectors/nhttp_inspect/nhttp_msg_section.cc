@@ -81,10 +81,25 @@ void NHttpMsgSection::update_depth() const
                             session_data->detect_depth_remaining[source_id]) ?
         session_data->file_depth_remaining[source_id] :
         session_data->detect_depth_remaining[source_id];
-    session_data->section_size_target[source_id] = (depth <= DATA_BLOCK_SIZE) ? depth :
-        DATA_BLOCK_SIZE;
-    session_data->section_size_max[source_id] = (depth <= FINAL_BLOCK_SIZE) ? depth :
-        FINAL_BLOCK_SIZE;
+
+    switch (session_data->compression[source_id])
+    {
+    case CMP_NONE:
+      {
+        session_data->section_size_target[source_id] = (depth <= DATA_BLOCK_SIZE) ? depth :
+            DATA_BLOCK_SIZE;
+        session_data->section_size_max[source_id] = (depth <= FINAL_BLOCK_SIZE) ? depth :
+            FINAL_BLOCK_SIZE;
+        break;
+      }
+    case CMP_GZIP:
+    case CMP_DEFLATE:
+        session_data->section_size_target[source_id] = (depth > 0) ? GZIP_BLOCK_SIZE : 0;
+        session_data->section_size_max[source_id] = (depth > 0) ? FINAL_GZIP_BLOCK_SIZE : 0;
+        break;
+    default:
+        assert(false);
+    }
 }
 
 const Field& NHttpMsgSection::get_legacy(unsigned buffer_id)
