@@ -61,8 +61,6 @@
 #define SECONDS_PER_HOUR  3600  /* number of seconds in a hour */
 #define SECONDS_PER_MIN     60     /* number of seconds in a minute */
 
-#define STD_BUF  1024
-
 #define COPY4(x, y) \
     x[0] = y[0]; x[1] = y[1]; x[2] = y[2]; x[3] = y[3];
 

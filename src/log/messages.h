@@ -33,19 +33,37 @@
 #ifndef __GNUC__
 #define __attribute__(x)  /*NOTHING*/
 #endif
+
+#define STD_BUF 1024
+
 SO_PUBLIC void LogMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 SO_PUBLIC void WarningMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 SO_PUBLIC void ErrorMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 
-struct ThrottleInfo
+// FIXIT-L should we be using STL timekeeping types for this?
+class ThrottledErrorLogger
 {
-    time_t lastUpdate;
-    /*Within this duration (in seconds), maximal one distinct message is logged*/
-    uint32_t duration_to_log;
-    uint64_t count;
-};
+public:
+    ThrottledErrorLogger(uint32_t);
 
-void ErrorMessageThrottled(ThrottleInfo*,const char*, ...) __attribute__((format (printf, 2, 3)));
+    bool log(const char*, ...) __attribute__((format (printf, 2, 3)));
+    void reset();
+
+    uint32_t throttle_duration;
+    uint32_t duration_to_log;
+
+    const char* last_message() const
+    { return buf; }
+
+private:
+    bool throttle();
+
+    time_t last;
+    int delta;
+    uint64_t count;
+
+    char buf[STD_BUF + 1];
+};
 
 // FIXIT-M do not call FatalError() during runtime
 SO_PUBLIC NORETURN void FatalError(const char*, ...) __attribute__((format (printf, 1, 2)));

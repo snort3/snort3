@@ -49,6 +49,10 @@
 #include "time/timersub.h"
 #include "sfip/sf_ip.h"
 
+#ifdef UNIT_TEST
+#include "test/catch.hpp"
+#endif
+
 static int already_fatal = 0;
 
 /*
@@ -159,53 +163,53 @@ void ErrorMessage(const char* format,...)
     va_end(ap);
 }
 
-/*
- * Function: ErrorMessageThrottled(ThrottleInfo *,const char *, ...)
- *
- * Purpose: Print a message to stderr, and throttle when
- *          too many messages are printed.
- *
- * Arguments: throttleInfo => point to the saved throttle state information
- *            format => the formatted error string to print out
- *            ... => format commands/fillers
- *
- * Returns: void function
- */
+ThrottledErrorLogger::ThrottledErrorLogger(uint32_t dur) :
+    throttle_duration { dur }
+{ reset(); }
 
-void ErrorMessageThrottled(ThrottleInfo* throttleInfo, const char* format,...)
+bool ThrottledErrorLogger::log(const char* format, ...)
 {
-    char buf[STD_BUF+1];
+    if ( !snort_conf )
+        return false;
+
+    if ( throttle() )
+        return false;
+
     va_list ap;
-    time_t current_time = packet_time();
 
-    if ((snort_conf == NULL)||(!throttleInfo))
-        return;
+    va_start(ap, format);
+    int index = vsnprintf(buf, STD_BUF, format, ap);
+    va_end(ap);
 
-    throttleInfo->count++;
-    DebugFormat(DEBUG_INIT,
-        "current_time: %d, throttle (%p): count " STDu64 ", last update: %d\n",
-        (int)current_time, throttleInfo, throttleInfo->count, (int)throttleInfo->lastUpdate);
-    /*Note: we only output the first error message,
-     * and the statistics after at least duration_to_log seconds
-     * when the same type of error message is printed out again */
-    if (current_time - (time_t)throttleInfo->duration_to_log > throttleInfo->lastUpdate)
+    if ( index && ( count > 1 ) )
+        snprintf(&buf[index - 1], STD_BUF - index,
+            " (suppressed " STDu64 " times in the last %d seconds).\n",
+            count, delta);
+
+    ErrorMessage("%s", buf);
+    return true;
+}
+
+void ThrottledErrorLogger::reset()
+{ count = 0; }
+
+bool ThrottledErrorLogger::throttle()
+{
+    time_t cur = packet_time();
+    bool result = false;
+
+    if ( count++ )
     {
-        int index;
-        va_start(ap, format);
-        index = vsnprintf(buf, STD_BUF, format, ap);
-        va_end(ap);
+        delta = cur - last;
+        result = (decltype(throttle_duration))delta < throttle_duration;
 
-        if (index && (throttleInfo->count > 1))
-        {
-            snprintf(&buf[index - 1], STD_BUF-index,
-                " (suppressed " STDu64 " times in the last %d seconds).\n",
-                throttleInfo->count, (int)(current_time - throttleInfo->lastUpdate));
-        }
-
-        ErrorMessage("%s",buf);
-        throttleInfo->lastUpdate = current_time;
-        throttleInfo->count = 0;
+        if ( !result )
+            count = 0;
     }
+
+    last = cur;
+
+    return result;
 }
 
 /*
@@ -390,3 +394,91 @@ char* ObfuscateIpToText(const sfip_t* ip)
     return ip_buf;
 }
 
+#ifdef UNIT_TEST
+
+static void set_packet_time(time_t x)
+{
+    struct timeval t { x, 0 };
+    packet_time_update(&t);
+}
+
+static bool check_message(const char* buffer, const char* msg)
+{
+    if ( strncmp(buffer, msg, strnlen(msg, STD_BUF)) != 0 )
+    {
+        INFO( buffer );
+        return false;
+    }
+
+    return true;
+}
+
+TEST_CASE( "throttled error logger", "[ThrottledErrorLogger]" )
+{
+    uint32_t dur = 5;
+    ThrottledErrorLogger logger(dur);
+
+    set_packet_time(0);
+
+    SECTION( "1st message" )
+    {
+        const char msg[] = "first message";
+        REQUIRE( logger.log("%s\n", msg) );
+
+        CHECK( check_message(logger.last_message(), msg) );
+    }
+
+    SECTION( "2nd message within 1 second" )
+    {
+        const char msg[] = "second message";
+        logger.log("");
+
+        REQUIRE_FALSE( logger.log("%s\n", msg) );
+    }
+
+    SECTION( "0 duration" )
+    {
+        logger.throttle_duration = 0;
+        const char msg[] = "zero duration";
+
+        logger.log(""); // trigger throttling
+        REQUIRE( logger.log("%s\n", msg) );
+
+        CHECK( check_message(logger.last_message(), msg) );
+    }
+
+    SECTION( "message @ duration" )
+    {
+        const char msg[] = "at duration";
+        logger.log(""); // trigger throttling
+
+        set_packet_time(dur - 1);
+        CHECK_FALSE( logger.log("%s\n", msg) );
+    }
+
+    SECTION( "message after duration" )
+    {
+        const char msg[] = "after duration";
+        logger.log(""); // trigger throttling
+
+        set_packet_time(dur);
+        REQUIRE( logger.log("%s\n", msg) );
+
+        CHECK( check_message(logger.last_message(), msg) );
+    }
+
+    SECTION( "reversed packet time" )
+    {
+        const char msg[] = "reversed packet time";
+
+        set_packet_time(10);
+        logger.log("");
+
+        set_packet_time(4);
+        REQUIRE( logger.log("%s\n", msg) );
+
+        CHECK( check_message(logger.last_message(), msg) );
+    }
+}
+
+#endif
