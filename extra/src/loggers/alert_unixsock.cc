@@ -35,11 +35,10 @@
 #include "main/snort_debug.h"
 #include "framework/logger.h"
 #include "framework/module.h"
+#include "detection/signature.h"
 #include "events/event.h"
 #include "protocols/packet.h"
-#include "parser/parser.h"
 #include "utils/util.h"
-#include "packet_io/sfdaq.h"
 
 #define UNSOCK_FILE "snort_alert"
 
@@ -139,14 +138,11 @@ static void get_alert_pkt(
 
     if (p && p->pkt)
     {
-        uint32_t snaplen = DAQ_GetSnapLen();
-        memmove( (void*)&us.alert.pkth, (const void*)p->pkth,
-            sizeof(us.alert.pkth));
-        memmove(us.alert.pkt, (const void*)p->pkt,
-            us.alert.pkth.caplen > snaplen ? snaplen : us.alert.pkth.caplen);
+        memmove( (void*)&us.alert.pkth, (const void*)p->pkth, sizeof(us.alert.pkth));
+        memmove(us.alert.pkt, (const void*)p->pkt, us.alert.pkth.caplen);
     }
     else
-        us.alert.val|=NOPACKET_STRUCT;
+        us.alert.val |= NOPACKET_STRUCT;
 
     if (msg)
     {
@@ -298,13 +294,9 @@ static LogApi unix_sock_api
     unix_sock_dtor
 };
 
-#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &unix_sock_api.base,
     nullptr
 };
-#else
-const BaseApi* alert_unix_sock = &unix_sock_api.base;
-#endif
 

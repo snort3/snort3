@@ -58,6 +58,7 @@ using namespace std;
 #include "control/idle_processing.h"
 #include "target_based/sftarget_reader.h"
 #include "flow/flow_control.h"
+#include "lua/lua.h"
 #include "helpers/process.h"
 #include "helpers/swapper.h"
 #include "time/profiler.h"

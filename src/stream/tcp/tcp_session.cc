@@ -2559,6 +2559,9 @@ void TcpSession::clear()
 
 void TcpSession::restart(Packet* p)
 {
+    // sanity check since this is called externally
+    assert(p->ptrs.tcph);
+
     TcpTracker* talker, *listener;
 
     if (p->packet_flags & PKT_FROM_SERVER)

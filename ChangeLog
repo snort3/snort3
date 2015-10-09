@@ -1,3 +1,20 @@
+15/10/09 - build 173
+
+-- added pkt_num rule option to extras
+-- fix final -> finalize changes for extras
+-- moved alert_unixsock and log_null to extras
+-- removed duplicate pat_stats source from extras
+-- prevent tcp session restart on rebuilt packets
+   thanks to rmkml for reporting the issue
+-- fixed profiler configuration
+-- fixed ppm event logging
+-- added filename to reload commands
+-- fixed -B switch
+-- reverted tcp syn only logic to match 2X
+-- ensure ip6 extension decoder state is reset for ip4 too since ip4
+   packets may have ip6 next proto
+-- update default manuals
+
 15/10/01 - build 172
 
 -- check for bool value before setting fastpath config option in PPM

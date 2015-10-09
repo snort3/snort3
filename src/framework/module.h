@@ -82,7 +82,7 @@ public:
     { return true; }
 
     virtual bool set(const char*, Value&, SnortConfig*)
-    { return !get_parameters(); }
+    { return false; }
 
     // ips events:
     virtual unsigned get_gid() const

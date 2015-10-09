@@ -54,7 +54,6 @@ public:
     static void thread_rotate();
 
     static void capture_packet();
-    static void decode_rebuilt_packet(Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, Flow*);
     static void detect_rebuilt_packet(Packet*);
 
     static DAQ_Verdict process_packet(

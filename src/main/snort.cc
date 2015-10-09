@@ -687,21 +687,6 @@ void Snort::thread_term()
     Active::term();
 }
 
-void Snort::decode_rebuilt_packet(
-    Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt,
-    Flow* lws)
-{
-    SnortEventqPush();
-    PacketManager::decode(p, pkthdr, pkt, true);
-
-    p->flow = lws;
-
-    set_policy(p);  // FIXIT-M rebuilt should reuse original bindings from flow
-
-    SnortEventqReset();
-    SnortEventqPop();
-}
-
 void Snort::detect_rebuilt_packet(Packet* p)
 {
     int tmp_do_detect = do_detect;

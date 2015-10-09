@@ -48,7 +48,7 @@ struct ThrottleInfo
 void ErrorMessageThrottled(ThrottleInfo*,const char*, ...) __attribute__((format (printf, 2, 3)));
 
 // FIXIT-M do not call FatalError() during runtime
-NORETURN void FatalError(const char*, ...) __attribute__((format (printf, 1, 2)));
+SO_PUBLIC NORETURN void FatalError(const char*, ...) __attribute__((format (printf, 1, 2)));
 
 SO_PUBLIC void PrintPacketData(const uint8_t*, const uint32_t);
 SO_PUBLIC char* ObfuscateIpToText(const sfip_t*);

@@ -766,7 +766,7 @@ void InspectorManager::full_inspection(FrameworkPolicy* fp, Packet* p)
     if ( !flow->service )
         ::execute(p, fp->network.vec, fp->network.num);
 
-    else if ( flow->clouseau )
+    else if ( flow->clouseau and !p->is_cooked() )
         bumble(p);
 
     if ( !p->dsize )

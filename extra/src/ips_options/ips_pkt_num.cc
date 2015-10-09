@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// ips_urg.cc author Russ Combs <rucombs@cisco.com>
+// ips_pkt_num.cc author Russ Combs <rucombs@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -38,20 +38,21 @@
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "time/profiler.h"
+#include "utils/stats.h"
 
-static const char* s_name = "urg";
-static const char* s_help = "detection for TCP urgent pointer";
+static const char* s_name = "pkt_num";
+static const char* s_help = "alert on raw packet number";
 
-static THREAD_LOCAL ProfileStats tcpUrgPerfStats;
+static THREAD_LOCAL ProfileStats pkt_num_perf_stats;
 
 //-------------------------------------------------------------------------
 // option
 //-------------------------------------------------------------------------
 
-class TcpUrgOption : public IpsOption
+class PktNumOption : public IpsOption
 {
 public:
-    TcpUrgOption(const RangeCheck& c) : IpsOption(s_name)
+    PktNumOption(const RangeCheck& c) : IpsOption(s_name)
     { config = c; }
 
     uint32_t hash() const override;
@@ -63,7 +64,7 @@ private:
     RangeCheck config;
 };
 
-uint32_t TcpUrgOption::hash() const
+uint32_t PktNumOption::hash() const
 {
     uint32_t a, b, c;
 
@@ -77,29 +78,29 @@ uint32_t TcpUrgOption::hash() const
     return c;
 }
 
-bool TcpUrgOption::operator==(const IpsOption& ips) const
+bool PktNumOption::operator==(const IpsOption& ips) const
 {
     if ( strcmp(s_name, ips.get_name()) )
         return false;
 
-    TcpUrgOption& rhs = (TcpUrgOption&)ips;
+    PktNumOption& rhs = (PktNumOption&)ips;
     return ( config == rhs.config );
 }
 
-int TcpUrgOption::eval(Cursor&, Packet* p)
+int PktNumOption::eval(Cursor&, Packet*)
 {
     PROFILE_VARS;
-    MODULE_PROFILE_START(tcpUrgPerfStats);
+    MODULE_PROFILE_START(pkt_num_perf_stats);
 
-    int rval = DETECTION_OPTION_NO_MATCH;
+    int rval;
 
-    if ( p->ptrs.tcph and p->ptrs.tcph->are_flags_set(TH_URG) and
-        config.eval(p->ptrs.tcph->urp()) )
-    {
+    if ( config.eval(pc.total_from_daq) )
         rval = DETECTION_OPTION_MATCH;
-    }
 
-    MODULE_PROFILE_END(tcpUrgPerfStats);
+    else
+        rval = DETECTION_OPTION_NO_MATCH;
+
+    MODULE_PROFILE_END(pkt_num_perf_stats);
     return rval;
 }
 
@@ -110,32 +111,32 @@ int TcpUrgOption::eval(Cursor&, Packet* p)
 static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if urgent offset is min<>max | <max | >min" },
+      "check if packet number is in given range" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-class UrgModule : public Module
+class PktNumModule : public Module
 {
 public:
-    UrgModule() : Module(s_name, s_help, s_params) { }
+    PktNumModule() : Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &tcpUrgPerfStats; }
+    { return &pkt_num_perf_stats; }
 
     RangeCheck data;
 };
 
-bool UrgModule::begin(const char*, int, SnortConfig*)
+bool PktNumModule::begin(const char*, int, SnortConfig*)
 {
     data.init();
     return true;
 }
 
-bool UrgModule::set(const char*, Value& v, SnortConfig*)
+bool PktNumModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( !v.is("~range") )
         return false;
@@ -149,7 +150,7 @@ bool UrgModule::set(const char*, Value& v, SnortConfig*)
 
 static Module* mod_ctor()
 {
-    return new UrgModule;
+    return new PktNumModule;
 }
 
 static void mod_dtor(Module* m)
@@ -157,18 +158,18 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* urg_ctor(Module* p, OptTreeNode*)
+static IpsOption* pkt_num_ctor(Module* p, OptTreeNode*)
 {
-    UrgModule* m = (UrgModule*)p;
-    return new TcpUrgOption(m->data);
+    PktNumModule* m = (PktNumModule*)p;
+    return new PktNumOption(m->data);
 }
 
-static void urg_dtor(IpsOption* p)
+static void pkt_num_dtor(IpsOption* p)
 {
     delete p;
 }
 
-static const IpsApi urg_api =
+static const IpsApi pkt_num_api =
 {
     {
         PT_IPS_OPTION,
@@ -188,14 +189,14 @@ static const IpsApi urg_api =
     nullptr, // pterm
     nullptr, // tinit
     nullptr, // tterm
-    urg_ctor,
-    urg_dtor,
+    pkt_num_ctor,
+    pkt_num_dtor,
     nullptr
 };
 
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &urg_api.base,
+    &pkt_num_api.base,
     nullptr
 };
 

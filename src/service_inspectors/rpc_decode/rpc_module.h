@@ -42,9 +42,6 @@ class RpcDecodeModule : public Module
 public:
     RpcDecodeModule();
 
-    bool set(const char*, Value&, SnortConfig*) override
-    { return false; }
-
     unsigned get_gid() const override
     { return GID_RPC_DECODE; }
 

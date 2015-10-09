@@ -129,6 +129,7 @@ MagicSplitter::~MagicSplitter()
     wizard->rem_ref();
 }
 
+// FIXIT-M stop search on hit and failure (no possible match)
 StreamSplitter::Status MagicSplitter::scan(
     Flow* f, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t*)

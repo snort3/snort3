@@ -33,7 +33,7 @@
 #include "framework/module.h"
 
 #define s_name "log_null"
-#define s_help "support for null encapsulation"
+#define s_help "disable logging of packets"
 
 //-------------------------------------------------------------------------
 // log_null module
@@ -70,13 +70,9 @@ static LogApi null_api
     null_dtor
 };
 
-#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &null_api.base,
     nullptr
 };
-#else
-const BaseApi* log_null = &null_api.base;
-#endif
 
