@@ -132,7 +132,6 @@ const Field& NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Fl
 
     latest_section->analyze();
     latest_section->update_flow();
-    latest_section->gen_events();
 
 #ifdef REG_TEST
     if (NHttpTestManager::use_test_output())

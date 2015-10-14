@@ -36,7 +36,6 @@ public:
         NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_,
         const NHttpParaList* params_);
     void print_section(FILE* output) override;
-    void gen_events() override;
     void update_flow() override;
 private:
     // Dummy configurations to support MIME processing

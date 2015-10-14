@@ -64,9 +64,6 @@ void NHttpMsgBody::analyze()
     }
 
     body_octets += msg_text.length;
-
-    if (tcp_close && (body_octets < data_length))
-        infractions += INF_TRUNCATED;
 }
 
 void NHttpMsgBody::do_file_processing()
@@ -130,10 +127,6 @@ void NHttpMsgBody::do_file_processing()
             session_data->mime_state = nullptr;
         }
     }
-}
-
-void NHttpMsgBody::gen_events()
-{
 }
 
 void NHttpMsgBody::print_section(FILE* output)

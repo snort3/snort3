@@ -36,10 +36,6 @@ NHttpMsgTrailer::NHttpMsgTrailer(const uint8_t* buffer, const uint16_t buf_size,
     transaction->set_trailer(this, source_id);
 }
 
-void NHttpMsgTrailer::gen_events()
-{
-}
-
 void NHttpMsgTrailer::print_section(FILE* output)
 {
     NHttpMsgSection::print_message_title(output, "trailer");

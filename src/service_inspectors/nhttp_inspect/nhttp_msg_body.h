@@ -35,7 +35,6 @@ public:
         const NHttpParaList* params_);
     void analyze() override;
     void print_section(FILE* output) override;
-    void gen_events() override;
     void update_flow() override;
     Field& get_detect_data() { return detect_data; }
     const Field& get_detect_buf() const override { return detect_data; }

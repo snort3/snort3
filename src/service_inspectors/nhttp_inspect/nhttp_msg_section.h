@@ -42,9 +42,6 @@ public:
     // Minimum necessary processing for every message
     virtual void analyze() = 0;
 
-    // Internal client that triggers JIT processing for optional inspections
-    virtual void gen_events() = 0;
-
     // Manages the splitter and communication between message sections
     virtual void update_flow() = 0;
 

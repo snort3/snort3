@@ -36,8 +36,6 @@ NHttpMsgChunk::NHttpMsgChunk(const uint8_t* buffer, const uint16_t buf_size,
     transaction->set_body(this);
 }
 
-void NHttpMsgChunk::gen_events() { }
-
 void NHttpMsgChunk::print_section(FILE* output)
 {
     NHttpMsgSection::print_message_title(output, "chunked body");

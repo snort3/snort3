@@ -31,6 +31,7 @@ void NHttpMsgStart::analyze()
     start_line.start = msg_text.start;
     start_line.length = msg_text.length;
     parse_start_line();
+    gen_events();
 }
 
 void NHttpMsgStart::derive_version_id()
@@ -67,6 +68,4 @@ void NHttpMsgStart::derive_version_id()
         events.create_event(EVENT_BAD_VERS);
     }
 }
-
-void NHttpMsgStart::gen_events() { }
 

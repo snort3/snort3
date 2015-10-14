@@ -39,12 +39,6 @@ NHttpMsgHeader::NHttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
     transaction->set_header(this, source_id);
 }
 
-void NHttpMsgHeader::gen_events()
-{
-    if (get_header_count(HEAD_CONTENT_LENGTH) > 1)
-        events.create_event(EVENT_MULTIPLE_CONTLEN);
-}
-
 void NHttpMsgHeader::print_section(FILE* output)
 {
     NHttpMsgSection::print_message_title(output, "header");
@@ -55,6 +49,11 @@ void NHttpMsgHeader::print_section(FILE* output)
 void NHttpMsgHeader::update_flow()
 {
     session_data->section_type[source_id] = SEC__NOTCOMPUTE;
+
+    // FIXIT-L put this test here for now. May want to integrate into the following code and
+    // do more careful checks for inappropriate Content-Length.
+    if (get_header_count(HEAD_CONTENT_LENGTH) > 1)
+        events.create_event(EVENT_MULTIPLE_CONTLEN);
 
     // The following logic to determine body type is by no means the last word on this topic.
     // FIXIT-H need to distinguish methods such as POST that should have a body from those that

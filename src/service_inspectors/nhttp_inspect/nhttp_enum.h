@@ -97,7 +97,7 @@ enum HeaderId { HEAD__NOTCOMPUTE=-14, HEAD__INSUFMEMORY=-13, HEAD__PROBLEMATIC=-
 // All the infractions we might find while parsing and analyzing a message
 enum Infraction
 {
-    INF_TRUNCATED = 0,
+    INF_NOT_USED_1 = 0,
     INF_HEAD_TOO_LONG,
     INF_BAD_REQ_LINE,
     INF_BAD_STAT_LINE,
