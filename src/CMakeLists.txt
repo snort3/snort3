@@ -82,9 +82,8 @@ add_executable( snort
 # order libs to avoid undefined symbols
 # from gnu linker
 target_link_libraries( snort
-    target_based
+    ${UNIT_TESTS_LIBRARIES}
     managers
-    main
     loggers
     codecs
     ip_codecs
@@ -109,8 +108,10 @@ target_link_libraries( snort
     http_inspect
     ${PIGLET_LIBRARIES}
     ips_options
-    parser
     search_engines
+    target_based
+    main
+    parser
     flow
     control
     filter
@@ -130,7 +131,6 @@ target_link_libraries( snort
     protocols
     ports
     utils
-    ${UNIT_TESTS_LIBRARIES}
     ${EXTERNAL_LIBRARIES}
 )
 
