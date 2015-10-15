@@ -11,7 +11,7 @@ AM_CXXFLAGS = @AM_CXXFLAGS@
 
 EXTRA_DIST = \
 snort.pc.in \
-README \
+README.md \
 COPYING \
 LICENSE
 
