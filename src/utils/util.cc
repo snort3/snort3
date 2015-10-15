@@ -251,9 +251,11 @@ void CreatePidFile(pid_t pid)
     snort_conf->pid_filename = snort_conf->log_dir;
     snort_conf->pid_filename += "/snort.pid";
 
+    std::string pid_lockfilename;
+
     if ( !SnortConfig::no_lock_pid_file() )
     {
-        std::string pid_lockfilename = snort_conf->pid_filename;
+        pid_lockfilename = snort_conf->pid_filename;
         pid_lockfilename += ".lck";
         int lock_fd;
 
@@ -296,6 +298,8 @@ void CreatePidFile(pid_t pid)
             snort_conf->pid_filename.c_str(), error);
         snort_conf->pid_filename.clear();
     }
+    if ( !pid_lockfilename.empty() )
+        unlink(pid_lockfilename.c_str());
 }
 
 /****************************************************************************

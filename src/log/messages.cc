@@ -70,19 +70,19 @@ void LogMessage(const char* format,...)
     char buf[STD_BUF+1];
     va_list ap;
 
-    if (snort_conf == NULL)
+    if ( !snort_conf )
     {
         va_start(ap, format);
         vfprintf(stdout, format, ap);
         va_end(ap);
         return;
     }
-    if (SnortConfig::log_quiet() && !SnortConfig::daemon_mode() && !SnortConfig::log_syslog())
+    if ( SnortConfig::log_quiet() )
         return;
 
     va_start(ap, format);
 
-    if (SnortConfig::daemon_mode() || SnortConfig::log_syslog())
+    if ( SnortConfig::log_syslog() )
     {
         vsnprintf(buf, STD_BUF, format, ap);
         buf[STD_BUF] = '\0';

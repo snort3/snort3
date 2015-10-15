@@ -40,14 +40,6 @@ using namespace std;
 
 static void check_flags(SnortConfig* sc)
 {
-    if ((sc->run_flags & RUN_FLAG__TEST) &&
-        (sc->run_flags & RUN_FLAG__DAEMON))
-    {
-        FatalError("Cannot use test mode and daemon mode together.\n"
-            "To verify configuration, run first in test "
-            "mode and then restart in daemon mode.\n");
-    }
-
     if ((sc->run_flags & RUN_FLAG__INLINE) &&
         (sc->run_flags & RUN_FLAG__INLINE_TEST))
     {

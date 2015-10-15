@@ -233,7 +233,6 @@ void ConfigDaemon(SnortConfig* sc, const char*)
 {
     DebugMessage(DEBUG_INIT, "Daemon mode flag set\n");
     sc->run_flags |= RUN_FLAG__DAEMON;
-    sc->logging_flags |= LOGGING_FLAG__QUIET;
 }
 
 void ConfigDecodeDataLink(SnortConfig* sc, const char*)
@@ -583,8 +582,6 @@ void config_syslog(SnortConfig* sc, const char*)
     if (syslog_configured)
         return;
 
-    /* If daemon or logging to syslog use "snort" as identifier and
-     * start logging there now */
     openlog("snort", LOG_PID | LOG_CONS, LOG_DAEMON);
 
     sc->logging_flags |= LOGGING_FLAG__SYSLOG;
@@ -597,10 +594,6 @@ void config_daemon(SnortConfig* sc, const char* val)
 
     if (daemon_configured)
         return;
-
-    /* If daemon or logging to syslog use "snort" as identifier and
-     * start logging there now */
-    openlog("snort", LOG_PID | LOG_CONS, LOG_DAEMON);
 
     ConfigDaemon(sc, val);
     daemon_configured = true;

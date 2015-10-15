@@ -306,85 +306,8 @@ static void signal_waiting_parent(void)
     }
 }
 
-/* All threads need to be created after daemonizing.  If created in
- * the parent thread, when it goes away, so will all of the threads.
- * The child does not "inherit" threads created in the parent. */
-
-void daemonize()
+static void snuff_stdio()
 {
-    int exit_val = 0;
-    pid_t cpid;
-
-    if (SnortConfig::daemon_restart())
-        return;
-
-    LogMessage("Initializing daemon mode\n");
-
-    /* Don't daemonize if we've already daemonized and
-     * received a SIGNAL_SNORT_RELOAD. */
-    if (getppid() != 1)
-    {
-        /* Register signal handler that parent can trap signal */
-        add_signal(SIGNAL_SNORT_CHILD_READY, child_ready_handler, 1);
-
-        if (errno != 0)
-            errno = 0;
-
-        /* now fork the child */
-        printf("Spawning daemon child...\n");
-        cpid = fork();
-
-        if (cpid > 0)
-        {
-            /* Continue waiting until receiving signal from child */
-            int status;
-            /* Parent */
-            printf("My daemon child %d lives...\n", cpid);
-
-            /* Don't exit quite yet.  Wait for the child
-             * to signal that is there and created the PID
-             * file.
-             */
-            do
-            {
-#ifdef DEBUG
-                printf("Parent waiting for child...\n");
-#endif
-                sleep(1);
-            }
-            while ( !child_ready_signal );
-
-            if (waitpid(cpid, &status, WNOHANG) == cpid)
-            {
-                if (WIFEXITED(status))
-                {
-                    LogMessage("Child exited unexpectedly\n");
-                    exit_val = -1;
-                }
-                else if (WIFSIGNALED(status))
-                {
-                    LogMessage("Child terminated unexpectedly\n");
-                    exit_val = -2;
-                }
-            }
-#ifdef DEBUG
-            printf("Child terminated unexpectedly (%d)\n", status);
-#endif
-            printf("Daemon parent exiting (%d)\n", exit_val);
-
-            exit(exit_val);                /* parent */
-        }
-
-        if (cpid < 0)
-        {
-            /* Daemonizing failed... */
-            perror("fork");
-            exit(1);
-        }
-    }
-    /* Child */
-    setsid();
-
     errno = 0;
     bool err = false;
 
@@ -392,37 +315,70 @@ void daemonize()
     err = close(1) || err;
     err = close(2) || err;
 
-#ifdef DEBUG
-    /* redirect stdin/stdout/stderr to a file */
-    const int mode = S_IWUSR | S_IRUSR | S_IRGRP;
-    const char* file = "/tmp/snort.debug";
-
-    err = open(file, O_CREAT | O_RDWR, mode) || err;  /* stdin, fd 0 */
-
-    /* Change ownership to that which we will drop privileges to */
-    if ((snort_conf->user_id != -1) || (snort_conf->group_id != -1))
-    {
-        uid_t user_id = getuid();
-        gid_t group_id = getgid();
-
-        if (snort_conf->user_id != -1)
-            user_id = snort_conf->user_id;
-        if (snort_conf->group_id != -1)
-            group_id = snort_conf->group_id;
-
-        err = chown(file, user_id, group_id) || err;
-    }
-#else
     /* redirect stdin/stdout/stderr to /dev/null */
     const char* file = "/dev/null";
     err = open(file, O_RDWR) || err;  /* stdin, fd 0 */
-#endif
 
     err = dup(0) || err;  /* stdout, fd 0 => fd 1 */
     err = dup(0) || err;  /* stderr, fd 0 => fd 2 */
 
     if ( err )
         perror("daemonization errors");
+}
+
+/* All threads need to be created after daemonizing.  If created in
+ * the parent thread, when it goes away, so will all of the threads.
+ * The child does not "inherit" threads created in the parent. */
+
+void daemonize()
+{
+    pid_t cpid;
+
+    if ( SnortConfig::daemon_restart() )
+        return;
+
+    /* Don't daemonize if we've already daemonized and
+     * received a SIGNAL_SNORT_RELOAD. */
+    if ( getppid() == 1 )
+        return;
+
+    LogMessage("Initializing daemon mode\n");
+
+    /* Register signal handler so that parent can trap signal */
+    add_signal(SIGNAL_SNORT_CHILD_READY, child_ready_handler, 1);
+
+    if (errno != 0)
+        errno = 0;
+
+    printf("Forking snort process\n");
+    cpid = fork();
+
+    if ( cpid < 0 )
+    {
+        perror("Process fork failed");
+        exit(1);
+    }
+
+    if ( cpid > 0 )
+    {
+        /* Parent */
+        printf("Child process is %d\n", cpid);
+
+        while ( !child_ready_signal )
+        {
+            printf("Waiting for child ready signal\n");
+            sleep(1);
+        }
+
+        printf("Parent process exiting\n");
+        exit(0);
+    }
+
+    /* Child */
+    setsid();
+
+    if ( SnortConfig::log_quiet() or SnortConfig::log_syslog() )
+        snuff_stdio();
 
     signal_waiting_parent();
 }

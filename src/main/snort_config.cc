@@ -315,13 +315,6 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     output_flags |= cmd_line->output_flags;
     logging_flags |= cmd_line->logging_flags;
 
-    if ((cmd_line->run_flags & RUN_FLAG__TEST) &&
-        (run_flags & RUN_FLAG__DAEMON))
-    {
-        /* Just ignore deamon setting in conf file */
-        run_flags &= ~RUN_FLAG__DAEMON;
-    }
-
     stdin_rules = cmd_line->stdin_rules;
 
     // only set by cmd_line to override other conf output settings

@@ -336,12 +336,8 @@ void Snort::init(int argc, char** argv)
 // opening iface
 void Snort::unprivileged_init()
 {
-    /* create the PID file */
-    if ( !SnortConfig::read_mode() &&
-        (SnortConfig::daemon_mode() || SnortConfig::create_pid_file()))
-    {
+    if ( SnortConfig::create_pid_file() )
         CreatePidFile(snort_main_thread_pid);
-    }
 
     /* Drop the Chrooted Settings */
     if ( !snort_conf->chroot_dir.empty() )
