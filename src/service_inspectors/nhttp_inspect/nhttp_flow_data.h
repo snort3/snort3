@@ -48,7 +48,8 @@ public:
     friend class NHttpMsgHeadShared;
     friend class NHttpMsgTrailer;
     friend class NHttpMsgBody;
-    friend class NHttpMsgChunk;
+    friend class NHttpMsgBodyChunk;
+    friend class NHttpMsgBodyCl;
     friend class NHttpStreamSplitter;
     friend class NHttpTransaction;
 
@@ -78,7 +79,6 @@ private:
     NHttpInfractions infractions[2];
     NHttpEventGen events[2];
     int32_t num_head_lines[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
-    uint32_t flush_size[2] = { 0, 0 };
 
     // *** Inspector => StreamSplitter (facts about the message section that is coming next)
     NHttpEnums::SectionType type_expected[2] = { NHttpEnums::SEC_REQUEST, NHttpEnums::SEC_STATUS };

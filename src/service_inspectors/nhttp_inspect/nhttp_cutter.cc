@@ -172,7 +172,7 @@ ScanResult NHttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
     return SCAN_NOTFOUND;
 }
 
-ScanResult NHttpBodyCutter::cut(const uint8_t*, uint32_t length, NHttpInfractions&,
+ScanResult NHttpBodyClCutter::cut(const uint8_t*, uint32_t length, NHttpInfractions&,
     NHttpEventGen&, uint32_t flow_target, uint32_t flow_max)
 {
     assert(remaining > 0);
@@ -211,7 +211,7 @@ ScanResult NHttpBodyCutter::cut(const uint8_t*, uint32_t length, NHttpInfraction
     }
 }
 
-ScanResult NHttpChunkCutter::cut(const uint8_t* buffer, uint32_t length,
+ScanResult NHttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
     NHttpInfractions& infractions, NHttpEventGen& events, uint32_t flow_target, uint32_t)
 {
     // Are we skipping through the rest of this chunked body to the trailers and the next message?

@@ -15,33 +15,25 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// nhttp_msg_body.h author Tom Peters <thopeter@cisco.com>
+// nhttp_msg_body_chunk.h author Tom Peters <thopeter@cisco.com>
 
-#ifndef NHTTP_MSG_BODY_H
-#define NHTTP_MSG_BODY_H
+#ifndef NHTTP_MSG_BODY_CHUNK_H
+#define NHTTP_MSG_BODY_CHUNK_H
 
-#include "nhttp_msg_section.h"
-#include "nhttp_field.h"
+#include "nhttp_msg_body.h"
 
 //-------------------------------------------------------------------------
-// NHttpMsgBody class
+// NHttpMsgBodyChunk class
 //-------------------------------------------------------------------------
 
-class NHttpMsgBody : public NHttpMsgSection
+class NHttpMsgBodyChunk : public NHttpMsgBody
 {
 public:
-    void analyze() override;
-    const Field& get_detect_buf() const override { return detect_data; }
-
-protected:
-    NHttpMsgBody(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
-        NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_,
-        const NHttpParaList* params_);
-    void do_file_processing();
-
-    int64_t body_octets;
-    Field detect_data;
-    Field file_data;
+    NHttpMsgBodyChunk(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
+        NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_, const NHttpParaList* params_)
+        : NHttpMsgBody(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_) {}
+    void print_section(FILE* output) override;
+    void update_flow() override;
 };
 
 #endif

@@ -110,7 +110,7 @@ const Field& NHttpMsgSection::get_legacy(unsigned buffer_id)
     case HTTP_BUFFER_CLIENT_BODY:
       {
         NHttpMsgBody* body = transaction->get_body();
-        return (body != nullptr) ? body->get_detect_data() : Field::FIELD_NULL;
+        return (body != nullptr) ? body->get_detect_buf() : Field::FIELD_NULL;
       }
     case HTTP_BUFFER_COOKIE:
     case HTTP_BUFFER_RAW_COOKIE:

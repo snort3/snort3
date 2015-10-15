@@ -27,7 +27,7 @@
 #include "nhttp_event_gen.h"
 
 //-------------------------------------------------------------------------
-// NHttpCutter class
+// NHttpCutter class and subclasses
 //-------------------------------------------------------------------------
 
 class NHttpCutter
@@ -95,10 +95,10 @@ private:
     int32_t num_head_lines = 0;
 };
 
-class NHttpBodyCutter : public NHttpCutter
+class NHttpBodyClCutter : public NHttpCutter
 {
 public:
-    explicit NHttpBodyCutter(int64_t expected_length) : remaining(expected_length)
+    explicit NHttpBodyClCutter(int64_t expected_length) : remaining(expected_length)
         { assert(remaining > 0); }
     NHttpEnums::ScanResult cut(const uint8_t*, uint32_t length, NHttpInfractions&, NHttpEventGen&,
         uint32_t flow_target, uint32_t flow_max) override;
@@ -107,7 +107,7 @@ private:
     int64_t remaining;
 };
 
-class NHttpChunkCutter : public NHttpCutter
+class NHttpBodyChunkCutter : public NHttpCutter
 {
 public:
     NHttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,

@@ -36,7 +36,6 @@ NHttpMsgBody::NHttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,
     NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
     const NHttpParaList* params_) :
     NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_),
-    data_length(session_data->data_length[source_id]),
     body_octets(session_data->body_octets[source_id])
 {
     transaction->set_body(this);
@@ -127,35 +126,5 @@ void NHttpMsgBody::do_file_processing()
             session_data->mime_state = nullptr;
         }
     }
-}
-
-void NHttpMsgBody::print_section(FILE* output)
-{
-    NHttpMsgSection::print_message_title(output, "body");
-    fprintf(output, "Expected data length %" PRIi64 ", octets seen %" PRIi64 "\n", data_length,
-        body_octets);
-    detect_data.print(output, "Detect data");
-    file_data.print(output, "File data");
-    NHttpMsgSection::print_message_wrapup(output);
-}
-
-void NHttpMsgBody::update_flow()
-{
-    if (body_octets < data_length)
-    {
-        // More body coming
-        session_data->body_octets[source_id] = body_octets;
-        update_depth();
-        session_data->infractions[source_id] = infractions;
-        session_data->events[source_id] = events;
-    }
-    else
-    {
-        // End of message
-        session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST :
-            SEC_STATUS;
-        session_data->half_reset(source_id);
-    }
-    session_data->section_type[source_id] = SEC__NOTCOMPUTE;
 }
 

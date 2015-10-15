@@ -15,25 +15,31 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// nhttp_msg_chunk.h author Tom Peters <thopeter@cisco.com>
+// nhttp_msg_body_cl.h author Tom Peters <thopeter@cisco.com>
 
-#ifndef NHTTP_MSG_CHUNK_H
-#define NHTTP_MSG_CHUNK_H
+#ifndef NHTTP_MSG_BODY_CL_H
+#define NHTTP_MSG_BODY_CL_H
 
+#include "nhttp_msg_section.h"
 #include "nhttp_msg_body.h"
+#include "nhttp_field.h"
 
 //-------------------------------------------------------------------------
-// NHttpMsgChunk class
+// NHttpMsgBodyCl class
 //-------------------------------------------------------------------------
 
-class NHttpMsgChunk : public NHttpMsgBody
+class NHttpMsgBodyCl : public NHttpMsgBody
 {
 public:
-    NHttpMsgChunk(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
-        NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_,
-        const NHttpParaList* params_);
+    NHttpMsgBodyCl(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
+        NHttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_, const NHttpParaList* params_)
+        : NHttpMsgBody(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_),
+        data_length(session_data->data_length[source_id]) {}
     void print_section(FILE* output) override;
     void update_flow() override;
+
+protected:
+    int64_t data_length;
 };
 
 #endif

@@ -15,58 +15,49 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// nhttp_msg_chunk.cc author Tom Peters <thopeter@cisco.com>
+// nhttp_msg_body_cl.cc author Tom Peters <thopeter@cisco.com>
 
 #include <string.h>
 #include <sys/types.h>
 #include <stdio.h>
 
+#include "detection/detection_util.h"
+#include "file_api/file_api.h"
+#include "file_api/file_flows.h"
 #include "mime/file_mime_process.h"
 
 #include "nhttp_enum.h"
-#include "nhttp_msg_chunk.h"
+#include "nhttp_msg_request.h"
+#include "nhttp_msg_body_cl.h"
 
 using namespace NHttpEnums;
 
-NHttpMsgChunk::NHttpMsgChunk(const uint8_t* buffer, const uint16_t buf_size,
-    NHttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
-    const NHttpParaList* params_) :
-    NHttpMsgBody(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
+void NHttpMsgBodyCl::print_section(FILE* output)
 {
-    transaction->set_body(this);
-}
-
-void NHttpMsgChunk::print_section(FILE* output)
-{
-    NHttpMsgSection::print_message_title(output, "chunked body");
-    fprintf(output, "Cumulative octets %" PRIi64 "\n", body_octets);
+    NHttpMsgSection::print_message_title(output, "Content-Length body");
+    fprintf(output, "Expected data length %" PRIi64 ", octets seen %" PRIi64 "\n", data_length,
+        body_octets);
     detect_data.print(output, "Detect data");
     file_data.print(output, "File data");
     NHttpMsgSection::print_message_wrapup(output);
 }
 
-void NHttpMsgChunk::update_flow()
+void NHttpMsgBodyCl::update_flow()
 {
-    if (session_data->cutter[source_id] == nullptr)
+    if (session_data->cutter[source_id] != nullptr)
     {
-        // Cutter deleted when zero-length chunk received
-        session_data->body_octets[source_id] = body_octets;
-        session_data->type_expected[source_id] = SEC_TRAILER;
-        session_data->infractions[source_id].reset();
-        session_data->events[source_id].reset();
-
-        if ((source_id == SRC_CLIENT) && (session_data->mime_state != nullptr))
-        {
-            delete session_data->mime_state;
-            session_data->mime_state = nullptr;
-        }
-    }
-    else
-    {
+        // More body coming
         session_data->body_octets[source_id] = body_octets;
         update_depth();
         session_data->infractions[source_id] = infractions;
         session_data->events[source_id] = events;
+    }
+    else
+    {
+        // End of message
+        session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST :
+            SEC_STATUS;
+        session_data->half_reset(source_id);
     }
     session_data->section_type[source_id] = SEC__NOTCOMPUTE;
 }

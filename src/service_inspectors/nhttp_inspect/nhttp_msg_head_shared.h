@@ -34,8 +34,6 @@
 class NHttpMsgHeadShared : public NHttpMsgSection
 {
 public:
-    ~NHttpMsgHeadShared();
-
     void analyze() override;
 
     int32_t get_num_headers() const { return num_headers; }
@@ -53,6 +51,7 @@ protected:
         const NHttpParaList* params_)
         : NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
         { }
+    ~NHttpMsgHeadShared();
 
     // Header normalization strategies. There should be one defined for every different way we can
     // process a header field value.

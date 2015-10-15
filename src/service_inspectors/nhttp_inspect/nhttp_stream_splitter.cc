@@ -33,15 +33,14 @@ using namespace NHttpEnums;
 
 // Convenience function. All housekeeping that must be done before we can return FLUSH to stream.
 void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset,
-    SectionType section_type, uint32_t num_flushed, uint32_t octets_seen, uint32_t num_excess,
-    int32_t num_head_lines, bool is_broken_chunk, uint32_t num_good_chunks) const
+    SectionType section_type, uint32_t num_flushed, uint32_t num_excess, int32_t num_head_lines,
+    bool is_broken_chunk, uint32_t num_good_chunks) const
 {
     session_data->section_type[source_id] = section_type;
     session_data->num_excess[source_id] = num_excess;
     session_data->num_head_lines[source_id] = num_head_lines;
     session_data->is_broken_chunk[source_id] = is_broken_chunk;
     session_data->num_good_chunks[source_id] = num_good_chunks;
-    session_data->flush_size[source_id] = num_flushed + octets_seen;
 
 #ifdef REG_TEST
     if (NHttpTestManager::use_test_input())
@@ -59,13 +58,20 @@ NHttpCutter* NHttpStreamSplitter::get_cutter(SectionType type,
 {
     switch (type)
     {
-    case SEC_REQUEST: return (NHttpCutter*)new NHttpRequestCutter;
-    case SEC_STATUS: return (NHttpCutter*)new NHttpStatusCutter;
+    case SEC_REQUEST:
+        return (NHttpCutter*)new NHttpRequestCutter;
+    case SEC_STATUS:
+        return (NHttpCutter*)new NHttpStatusCutter;
     case SEC_HEADER:
-    case SEC_TRAILER: return (NHttpCutter*)new NHttpHeaderCutter;
-    case SEC_BODY: return (NHttpCutter*)new NHttpBodyCutter(session_data->data_length[source_id]);
-    case SEC_CHUNK: return (NHttpCutter*)new NHttpChunkCutter;
-    default: assert(false); return nullptr;
+    case SEC_TRAILER:
+        return (NHttpCutter*)new NHttpHeaderCutter;
+    case SEC_BODY:
+        return (NHttpCutter*)new NHttpBodyClCutter(session_data->data_length[source_id]);
+    case SEC_CHUNK:
+        return (NHttpCutter*)new NHttpBodyChunkCutter;
+    default:
+        assert(false);
+        return nullptr;
     }
 }
 
@@ -231,8 +237,8 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
         return StreamSplitter::ABORT;
     case SCAN_DISCARD:
     case SCAN_DISCARD_PIECE:
-        prepare_flush(session_data, flush_offset, SEC_DISCARD, cutter->get_num_flush(),
-            cutter->get_octets_seen(), 0, 0, false, 0);
+        prepare_flush(session_data, flush_offset, SEC_DISCARD, cutter->get_num_flush(), 0, 0,
+            false, 0);
         if (cut_result == SCAN_DISCARD)
         {
             delete cutter;
@@ -243,8 +249,8 @@ StreamSplitter::Status NHttpStreamSplitter::scan(Flow* flow, const uint8_t* data
     case SCAN_FOUND_PIECE:
       {
         const uint32_t flush_octets = cutter->get_num_flush();
-        prepare_flush(session_data, flush_offset, type, flush_octets, cutter->get_octets_seen(),
-            cutter->get_num_excess(), cutter->get_num_head_lines(), cutter->get_is_broken_chunk(),
+        prepare_flush(session_data, flush_offset, type, flush_octets, cutter->get_num_excess(),
+            cutter->get_num_head_lines(), cutter->get_is_broken_chunk(),
             cutter->get_num_good_chunks());
         if (cut_result == SCAN_FOUND)
         {
@@ -378,8 +384,6 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
 
     if (flags & PKT_PDU_TAIL)
     {
-        assert (session_data->flush_size[source_id] >= offset + len);
-
         const bool not_chunk = session_data->section_type[source_id] != SEC_CHUNK;
 
         const uint32_t section_length = not_chunk ? offset + len :
@@ -457,8 +461,7 @@ bool NHttpStreamSplitter::finish(Flow* flow)
         }
 
         uint32_t not_used;
-        prepare_flush(session_data, &not_used, session_data->type_expected[source_id], 0,
-            session_data->cutter[source_id]->get_octets_seen(), 0,
+        prepare_flush(session_data, &not_used, session_data->type_expected[source_id], 0, 0,
             session_data->cutter[source_id]->get_num_head_lines() + 1,
             session_data->cutter[source_id]->get_is_broken_chunk(),
             session_data->cutter[source_id]->get_num_good_chunks());

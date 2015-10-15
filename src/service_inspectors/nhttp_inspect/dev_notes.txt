@@ -31,12 +31,13 @@ section:
 1. Request line (client-to-server start line)
 2. Status line (server-to-client start line)
 3. Headers (all headers after the start line as a group)
-4. Message body (a block of message data usually not much larger than 16K)
+4. Content-Length message body (a block of message data usually not much larger than 16K from a
+   body defined by the Content-Length header)
 5. Chunked message body (same but from a chunked body)
 6. Trailers (all header lines following a chunked body as a group)
 
 Message sections are represented by message section objects that contain and
-process them. There are nine message section classes that inherit as follows.
+process them. There are ten message section classes that inherit as follows.
 An asterisk denotes a virtual class.
 
 1. NHttpMsgSection* - top level with all common elements
@@ -46,8 +47,9 @@ An asterisk denotes a virtual class.
 5. NHttpMsgHeadShared* : NHttpMsgSection - common elements of header and trailer
 6. NHttpMsgHeader : NHttpMsgHeadShared
 7. NHttpMsgTrailer : NHttpMsgHeadShared
-8. NHttpMsgBody : NHttpMsgSection - message body processing in general
-9. NHttpMsgChunk : NHttpMsgBody - special features of chunked bodies
+8. NHttpMsgBody* : NHttpMsgSection - common elements of message body processing
+9. NHttpMsgBodyCl : NHttpMsgBody
+10. NHttpMsgBodyChunk : NHttpMsgBody
 
 An NHttpTransaction is a container that keeps all the sections of a message
 together and associates the request message with the response message.
