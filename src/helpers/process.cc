@@ -287,100 +287,77 @@ void help_signals()
 // daemonize
 //-------------------------------------------------------------------------
 
-/* Signal the parent that child is ready */
-static void signal_waiting_parent(void)
-{
-    pid_t ppid = getppid();
-#ifdef DEBUG
-    printf("Signaling parent %d from child %d\n", ppid, getpid());
-#endif
-
-    if (kill(ppid, SIGNAL_SNORT_CHILD_READY))
-    {
-        LogMessage("Daemon initialized, failed to signal parent pid: "
-            "%d, failure: %d, %s\n", ppid, errno, get_error(errno));
-    }
-    else
-    {
-        LogMessage("Daemon initialized, signaled parent pid: %d\n", ppid);
-    }
-}
-
 static void snuff_stdio()
 {
-    errno = 0;
     bool err = false;
 
-    err = close(0) || err;
-    err = close(1) || err;
-    err = close(2) || err;
+    err = close(0) or err;
+    err = close(1) or err;
+    err = close(2) or err;
 
     /* redirect stdin/stdout/stderr to /dev/null */
-    const char* file = "/dev/null";
-    err = open(file, O_RDWR) || err;  /* stdin, fd 0 */
+    err = open("/dev/null", O_RDWR) or err;  /* stdin, fd 0 */
 
-    err = dup(0) || err;  /* stdout, fd 0 => fd 1 */
-    err = dup(0) || err;  /* stderr, fd 0 => fd 2 */
+    err = dup(0) or err;  /* stdout, fd 0 => fd 1 */
+    err = dup(0) or err;  /* stderr, fd 0 => fd 2 */
 
     if ( err )
-        perror("daemonization errors");
+        // message is hit or miss but we will exit with failure
+        FatalError("daemonization errors - %s", strerror(errno));
 }
 
-/* All threads need to be created after daemonizing.  If created in
- * the parent thread, when it goes away, so will all of the threads.
- * The child does not "inherit" threads created in the parent. */
+// All threads need to be created after daemonizing.  If created in the
+// parent thread, when it goes away, so will all of the threads.  The child
+// does not "inherit" threads created in the parent.
 
+// Similar to daemon(1, 0).  We also add a signal to confirm child was at
+// least started ok.  Should daemon() become posix compliant, we can switch
+// to that.  We can also consider updating to have the child execve().
+// Note that there are system tools for daemonization these days.  See
+// daemon(3) and search deprecated daemonomicon for more.
 void daemonize()
 {
-    pid_t cpid;
-
-    if ( SnortConfig::daemon_restart() )
-        return;
-
-    /* Don't daemonize if we've already daemonized and
-     * received a SIGNAL_SNORT_RELOAD. */
+    // don't daemonize more than once
     if ( getppid() == 1 )
         return;
 
-    LogMessage("Initializing daemon mode\n");
+    LogMessage("initializing daemon mode\n");
 
-    /* Register signal handler so that parent can trap signal */
+    // register signal handler so that parent can trap signal
     add_signal(SIGNAL_SNORT_CHILD_READY, child_ready_handler, 1);
 
-    if (errno != 0)
-        errno = 0;
-
-    printf("Forking snort process\n");
-    cpid = fork();
+    pid_t cpid = fork();
 
     if ( cpid < 0 )
-    {
-        perror("Process fork failed");
-        exit(1);
-    }
+        FatalError("fork failed - %s", strerror(errno));
 
     if ( cpid > 0 )
     {
-        /* Parent */
-        printf("Child process is %d\n", cpid);
+        // parent
+        int i = 0;
 
-        while ( !child_ready_signal )
-        {
-            printf("Waiting for child ready signal\n");
+        while ( !child_ready_signal and i++ < 10 )
             sleep(1);
-        }
 
-        printf("Parent process exiting\n");
+        if ( !child_ready_signal )
+            FatalError("daemonization failed");
+        else
+            LogMessage("child process is %d\n", cpid);
+
         exit(0);
     }
 
-    /* Child */
+    // child
     setsid();
 
     if ( SnortConfig::log_quiet() or SnortConfig::log_syslog() )
         snuff_stdio();
 
-    signal_waiting_parent();
+    pid_t ppid = getppid();
+
+    if ( kill(ppid, SIGNAL_SNORT_CHILD_READY) )
+        LogMessage("daemonization incomplete, failed to signal parent "
+            "%d: %s\n", ppid, get_error(errno));
 }
 
 //-------------------------------------------------------------------------

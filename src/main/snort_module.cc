@@ -150,9 +150,6 @@ static const Parameter s_params[] =
     { "-d", Parameter::PT_IMPLIED, nullptr, nullptr,
       "dump the Application Layer" },
 
-    { "-E", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "enable daemon restart" },
-
     { "-e", Parameter::PT_IMPLIED, nullptr, nullptr,
       "display the second layer header info" },
 
@@ -544,11 +541,6 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("-d") )
         ConfigDumpPayload(sc, v.get_string());
 
-    else if ( v.is("-E") )
-    {
-        sc->run_flags |= RUN_FLAG__DAEMON_RESTART;
-        config_daemon(sc, v.get_string());
-    }
     else if ( v.is("-e") )
         ConfigDecodeDataLink(sc, v.get_string());
 

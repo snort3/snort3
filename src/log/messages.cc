@@ -111,15 +111,12 @@ void WarningMessage(const char* format,...)
     char buf[STD_BUF+1];
     va_list ap;
 
-    if (snort_conf == NULL)
-        return;
-
-    if (SnortConfig::log_quiet() && !SnortConfig::daemon_mode() && !SnortConfig::log_syslog())
+    if ( snort_conf and SnortConfig::log_quiet() )
         return;
 
     va_start(ap, format);
 
-    if (SnortConfig::daemon_mode() || SnortConfig::log_syslog())
+    if ( snort_conf and SnortConfig::log_syslog() )
     {
         vsnprintf(buf, STD_BUF, format, ap);
         buf[STD_BUF] = '\0';
@@ -150,7 +147,7 @@ void ErrorMessage(const char* format,...)
 
     va_start(ap, format);
 
-    if ( snort_conf && (SnortConfig::daemon_mode() || SnortConfig::log_syslog()) )
+    if ( snort_conf and SnortConfig::log_syslog() )
     {
         vsnprintf(buf, STD_BUF, format, ap);
         buf[STD_BUF] = '\0';
@@ -242,7 +239,7 @@ NORETURN void FatalError(const char* format,...)
 
     buf[STD_BUF] = '\0';
 
-    if ((snort_conf != NULL) && (SnortConfig::daemon_mode() || SnortConfig::log_syslog()))
+    if ( snort_conf and SnortConfig::log_syslog() )
     {
         syslog(LOG_CONS | LOG_DAEMON | LOG_ERR, "FATAL ERROR: %s", buf);
     }

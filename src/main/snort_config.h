@@ -46,8 +46,7 @@ enum RunFlag
 {
     RUN_FLAG__READ                = 0x00000001,     /* -r --pcap-dir, etc. */
     RUN_FLAG__DAEMON              = 0x00000002,     /* -D */
-    RUN_FLAG__DAEMON_RESTART      = 0x00000004,     /* --restart */
-    RUN_FLAG__NO_PROMISCUOUS      = 0x00000008,     /* -p */
+    RUN_FLAG__NO_PROMISCUOUS      = 0x00000004,     /* -p */
 
     RUN_FLAG__INLINE              = 0x00000010,     /* -Q */
     RUN_FLAG__STATIC_HASH         = 0x00000020,     /* -H */
@@ -381,9 +380,6 @@ public:
 
     static bool daemon_mode()
     { return snort_conf->run_flags & RUN_FLAG__DAEMON; }
-
-    static bool daemon_restart()
-    { return snort_conf->run_flags & RUN_FLAG__DAEMON_RESTART; }
 
     static bool read_mode()
     { return snort_conf->run_flags & RUN_FLAG__READ; }

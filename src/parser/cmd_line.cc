@@ -190,17 +190,3 @@ SnortConfig* parse_cmd_line(int argc, char* argv[])
     return sc;
 }
 
-//-------------------------------------------------------------------------
-
-void set_daemon_args(int argc, char* argv[])
-{
-    for ( int i = 1; i < argc; ++i )
-    {
-        if ( !strcmp(argv[i], "-D") )
-        {
-            argv[i][1] = 'E';
-            break;
-        }
-    }
-}
-

@@ -62,7 +62,7 @@ void Debug::print(
     va_list ap;
     va_start(ap, fmt);
 
-    if ( snort_conf and SnortConfig::daemon_mode())
+    if ( snort_conf and SnortConfig::log_syslog() )
     {
         char buf[STD_BUF];
         int buf_len = sizeof(buf);
